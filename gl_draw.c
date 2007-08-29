@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.90 2007-08-23 14:35:53 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.91 2007-08-29 22:53:48 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -748,17 +748,21 @@ qbool R_CharAvailable (wchar num)
 #define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
 #define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
 
-__inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4])
+__inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar)
 {
 	float frow, fcol;
 	int i = 0;
 	int slot = 0;
+	int char_size = (bigchar ? 64 : 8);
+	qbool bigcharset_found = false;
 
-	if (y <= (-8 * scale))
-		return;				// Totally off screen.
+	// Totally off screen.
+	if (y <= (-char_size * scale))
+		return;
 
+	// Space.
 	if (num == 32)
-		return;				// Space.
+		return;
 
 	// Only apply overall opacity if it's not fully opague.
 	apply_overall_alpha = (apply_overall_alpha && (overall_alpha < 1.0));
@@ -783,29 +787,71 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 	// Set the overall alpha.
 	glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
 
-	// Is this is a wchar, find a charset that has the char in it.
-	if ((num & 0xFF00) != 0)
+	if (bigchar)
 	{
-		for (i = 1; i < MAX_CHARSETS; i++)
+		mpic_t *p = NULL;
+
+		if ((p = Draw_CachePicSafe("textures/bigcharsets/mcharset.png", false, true)))
 		{
-			if (char_range[i] == (num & 0xFF00))
-			{
-				slot = i;
-				break;
-			}
+			bigcharset_found = true;
+		}
+		else if ((p = Draw_CachePicSafe("textures/mcharset.png", false, true)))
+		{
+			bigcharset_found = true;
+		}
+		else
+		{
+			bigcharset_found = false;
 		}
 
-		if (i == MAX_CHARSETS)
-			num = '?';
+		if (bigcharset_found)
+		{
+			int sx = 0;
+			int sy = 0;
+			int char_width = (p->width / 8);
+			int char_height = (p->height / 8);
+			char c = (char)(num & 0xFF);
+
+			Draw_GetBigfontSourceCoords(c, char_width, char_height, &sx, &sy);
+
+			if (sx >= 0)
+			{
+				// Don't apply alpha here, since we already applied it above.
+				Draw_SAlphaSubPic(x, y, p, sx, sy, char_width, char_height, (((float)char_size / char_width) * scale), 1);
+			}
+
+			return;
+		}
+
+		// TODO : Force players to have mcharset.png or fallback to overscaling normal font? :s
 	}
+	
+	if (!bigchar) // || (bigchar && !bigcharset_found))
+	{
+		// Is this is a wchar, find a charset that has the char in it.
+		if ((num & 0xFF00) != 0)
+		{
+			for (i = 1; i < MAX_CHARSETS; i++)
+			{
+				if (char_range[i] == (num & 0xFF00))
+				{
+					slot = i;
+					break;
+				}
+			}
 
-	num &= 0xFF;	// Only use the first byte.
+			if (i == MAX_CHARSETS)
+				num = '?';
+		}
 
-	// Find the texture coordinates for the character.
-	frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num * (16 chars per row)
-	fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
+		num &= 0xFF;	// Only use the first byte.
 
-	GL_Bind(char_textures[slot]);
+		// Find the texture coordinates for the character.
+		frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num * (16 chars per row)
+		fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
+
+		GL_Bind(char_textures[slot]);
+	}
 
 	// Draw the character polygon.
 	glBegin(GL_QUADS);
@@ -835,34 +881,41 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 	glColor4ubv(color_white);
 }
 
+void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha)
+{
+	byte rgba[4];
+	COLOR_TO_RGBA(color, rgba);
+	Draw_CharacterBase(x, y, char2wc(c), scale, true, rgba, true);
+}
+
 void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scale)
 {
 	byte rgba[4];
 	COLOR_TO_RGBA(color, rgba);
-	Draw_CharacterBase(x, y, num, scale, true, rgba);
+	Draw_CharacterBase(x, y, num, scale, true, rgba, false);
 }
 
 void Draw_SCharacter (int x, int y, int num, float scale)
 {
-	Draw_CharacterBase(x, y, char2wc(num), scale, true, color_white);
+	Draw_CharacterBase(x, y, char2wc(num), scale, true, color_white, false);
 }
 
 void Draw_SCharacterW (int x, int y, wchar num, float scale)
 {
-	Draw_CharacterBase(x, y, num, scale, true, color_white);
+	Draw_CharacterBase(x, y, num, scale, true, color_white, false);
 }
 
 void Draw_CharacterW (int x, int y, wchar num)
 {
-	Draw_CharacterBase(x, y, num, 1, true, color_white);
+	Draw_CharacterBase(x, y, num, 1, true, color_white, false);
 }
 
 void Draw_Character (int x, int y, int num)
 {
-	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white);
+	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white, false);
 }
 
-__inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
+__inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
 {
 	byte rgba[4];
 	qbool color_is_white = true;
@@ -955,65 +1008,70 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 		rgba[3] *= alpha;
 
 		// Draw the character but don't apply overall opacity, we've already done that.
-		Draw_CharacterBase(x, y, curr_char, scale, false, rgba);
+		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar);
 
-		x += (8 * scale);
+		x += ((bigchar ? 64 : 8) * scale) + char_gap;
 	}
+}
+
+void Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
+{
+	Draw_StringBase(x, y, str2wcs(text), color, color_count, false, scale, alpha, true, char_gap);
 }
 
 void Draw_SColoredAlphaString (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
 {
-	Draw_StringBase(x, y, text, color, color_count, red, scale, alpha);
+	Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0);
 }
 
 void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale)
 {
-	Draw_StringBase(x, y, text, color, color_count, red, scale, 1);
+	Draw_StringBase(x, y, text, color, color_count, red, scale, 1, false, 0);
 }
 
 void Draw_SString (int x, int y, const char *text, float scale)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, scale, 1);
+	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, scale, 1, false, 0);
 }
 
 void Draw_SAlt_String (int x, int y, const char *text, float scale)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, scale, 1);
+	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, scale, 1, false, 0);
 }
 
 void Draw_ColoredString3W(int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red)
 {
-	Draw_StringBase(x, y, text, color, color_count, red, 1, 1);
+	Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0);
 }
 
 void Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *color, int color_count, int red)
 {
-	Draw_StringBase(x, y, str2wcs(text), color, color_count, red, 1, 1);
+	Draw_StringBase(x, y, str2wcs(text), color, color_count, red, 1, 1, false, 0);
 }
 
 void Draw_ColoredString(int x, int y, const char *text, int red)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, red, 1, 1);
+	Draw_StringBase(x, y, str2wcs(text), NULL, 0, red, 1, 1, false, 0);
 }
 
 void Draw_Alt_String(int x, int y, const char *text)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, 1, 1);
+	Draw_StringBase(x, y, str2wcs(text), NULL, 0, true, 1, 1, false, 0);
 }
 
 void Draw_AlphaString(int x, int y, const char *text, float alpha)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, 1, alpha);
+	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, 1, alpha, false, 0);
 }
 
 void Draw_StringW (int x, int y, const wchar *text)
 {
-	Draw_StringBase(x, y, text, NULL, 0, false, 1, 1);
+	Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0);
 }
 
 void Draw_String (int x, int y, const char *text)
 {
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, 1, 1);
+	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, 1, 1, false, 0);
 }
 
 void Draw_Crosshair (void)

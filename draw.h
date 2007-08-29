@@ -83,6 +83,8 @@ typedef struct clrinfo_s
 	int i;		// Index when this colors starts.
 } clrinfo_t;
 
+void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *sx, int *sy);
+void Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap);
 void Draw_String (int x, int y, const char *str);
 void Draw_StringW (int x, int y, const wchar *ws);
 void Draw_Alt_String (int x, int y, const char *str);
@@ -92,12 +94,13 @@ void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int cl
 void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red);
 void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
 
-mpic_t *Draw_CachePicSafe (char *path, qbool true, qbool only24bit);
+mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit);
 mpic_t *Draw_CachePic (char *path);
 mpic_t *Draw_CacheWadPic (char *name);
 void Draw_Crosshair(void);
 void Draw_TextBox (int x, int y, int width, int lines);
 
+void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha);
 void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scale);
 void Draw_SCharacter (int x, int y, int num, float scale);
 void Draw_SString (int x, int y, const char *str, float scale);

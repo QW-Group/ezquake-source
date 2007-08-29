@@ -564,6 +564,57 @@ void Draw_Character (int x, int y, int num)
 	Draw_CharacterW (x, y, char2wc(num));
 }
 
+void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha)
+{
+	qbool bigcharset_found = false;
+	int char_size = 64;
+	mpic_t *p = NULL;
+
+	if ((p = Draw_CachePicSafe("textures/bigcharsets/mcharset.png", false, true)))
+	{
+		bigcharset_found = true;
+	}
+	else if ((p = Draw_CachePicSafe("textures/mcharset.png", false, true)))
+	{
+		bigcharset_found = true;
+	}
+	else
+	{
+		bigcharset_found = false;
+	}
+
+	if (bigcharset_found)
+	{
+		int sx = 0;
+		int sy = 0;
+		int char_width = (p->width / 8);
+		int char_height = (p->height / 8);
+
+		Draw_GetBigfontSourceCoords(c, char_width, char_height, &sx, &sy);
+
+		if (sx >= 0)
+		{
+			// FIXME: Hmmm, scale needs * 0.1 here to behave like in GL, something wrong with Draw_SAlphaSubPic?
+			Draw_SAlphaSubPic(x, y, p, sx, sy, char_width, char_height, ((0.1 * (float)char_size / char_width) * scale), 1);
+		}
+
+		return;
+	}
+}
+
+void Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
+{
+	color_t c;
+	memset(&c, 0, sizeof(color_t));
+
+	while (*text)
+	{
+		Draw_BigCharacter (x, y, *text, c, scale, alpha);
+		text++;
+		x += 64 + char_gap;
+	}
+}
+
 void Draw_String (int x, int y, const char *str)
 {
 	while (*str)

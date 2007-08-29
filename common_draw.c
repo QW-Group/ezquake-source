@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.21 2007-08-13 22:25:16 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.22 2007-08-29 22:53:48 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -1219,5 +1219,46 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 		{
 			Draw_Character(x + (cur_x)* 8, y + cur_y, c);
 		}
+	}
+}
+
+//
+// Finds the coordinates in the bigfont texture of a given character.
+//
+void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *sx, int *sy)
+{
+	if (c >= 'A' && c <= 'Z')
+	{
+		(*sx) = ((c - 'A') % 8) * char_width;
+		(*sy) = ((c - 'A') / 8) * char_height;
+	}
+	else if (c >= 'a' && c <= 'z')
+	{
+		// Skip A-Z, hence + 26.
+		(*sx) = ((c - 'a' + 26) % 8) * char_width;
+		(*sy) = ((c - 'a' + 26) / 8) * char_height;
+	}
+	else if (c >= '0' && c <= '1')
+	{
+		// Skip A-Z and a-z.
+		(*sx) = ((c - '0' + 26 * 2) % 8 ) * char_width;
+		(*sy) = ((c - '0' + 26 * 2) / 8) * char_height;
+	}
+	else if (c == ':')
+	{
+		// Skip A-Z, a-z and 0-9.
+		(*sx) = ((c - '0' + 26 * 2 + 10) % 8) * char_width;
+		(*sy) = ((c - '0' + 26 * 2 + 10) / 8) * char_height;
+	}
+	else if (c == '/')
+	{
+		// Skip A-Z, a-z, 0-9 and :
+		(*sx) = ((c - '0' + 26 * 2 + 11) % 8) * char_width;
+		(*sy) = ((c - '0' + 26 * 2 + 11) / 8) * char_height;
+	}
+	else
+	{
+		(*sx) = -1;
+		(*sy) = -1;
 	}
 }
