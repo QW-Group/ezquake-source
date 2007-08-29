@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.150 2007-08-13 22:25:16 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.151 2007-08-29 13:27:26 dkure Exp $
 */
 //
 // common HUD elements
@@ -147,6 +147,17 @@ int TP_IsAmmoLow(int weapon)
     case 8:  return ammo <= tp_need_cells.value;
     default: return 0;
     }
+}
+
+int TP_TeamFortressEngineerSpanner(void) {
+	char *player_skin=Info_ValueForKey(cl.players[cl.playernum].userinfo,"skin");
+	char *model_name=cl.model_precache[cl.viewent.current.modelindex]->name;
+	if (cl.teamfortress && (strcasecmp(player_skin, "tf_eng") == 0)
+			&& (strcasecmp(model_name, "progs/v_span.mdl") == 0)) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 qbool HUD_HealthLow(void)
@@ -1489,6 +1500,8 @@ void SCR_HUD_DrawAmmoIconCurrent (hud_t *hud)
 			num = 3;
 		else if (HUD_Stats(STAT_ITEMS) & IT_CELLS)
 			num = 4;
+		else if (TP_TeamFortressEngineerSpanner())
+			num = 4;
 		else
 			return;
 	}
@@ -1877,6 +1890,8 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
 			else if (HUD_Stats(STAT_ITEMS) & IT_ROCKETS)
 				num = 3;
 			else if (HUD_Stats(STAT_ITEMS) & IT_CELLS)
+				num = 4;
+			else if (TP_TeamFortressEngineerSpanner())
 				num = 4;
 			else
 				return;
