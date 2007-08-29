@@ -154,7 +154,7 @@
 #DEFINE WEAPON_CLASS    LAVA                "lava"
 #DEFINE WEAPON_CLASS    TRAP                "trap"
 #DEFINE WEAPON_CLASS    TELEFRAG            "telefrag"			"tele"
-#DEFINE WEAPON_CLASS    DISCHARGE           "discharge"			"dschrge"
+#DEFINE WEAPON_CLASS    DISCHARGE           "discharge"			"dcharge"
 #DEFINE WEAPON_CLASS    SQUISH              "squish"
 #DEFINE WEAPON_CLASS    FALL                "fall"
 #DEFINE WEAPON_CLASS    STOMP               "stomp" // ktpro/ktx stomp kills
@@ -264,7 +264,7 @@
 // "up2 destroys his sentrygun"
 
 // TeamFortress
-#DEFINE WEAPON_CLASS    GRAPPLE             "grapple"           "grpl"
+#DEFINE WEAPON_CLASS    GRAPPLE             "grapple"           "grap"
 #DEFINE WEAPON_CLASS    BIOWEAPON           "bioweapon"         "bio"
 #DEFINE WEAPON_CLASS    SNIPER_RIFLE        "sniper rifle"      "snipe"
 #DEFINE WEAPON_CLASS    FLAME_THROWER       "flame thrower"     "flame"
@@ -402,7 +402,6 @@
 // General Kills
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" is split from crotch to sternum by "		 "'s axe swing"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" is split in two with a powerful axe blow from "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE				" was knife-murdered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was put on the chop block by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was sliced and diced by " "'s blade"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					"'s death put another notch on "  "'s axe"
@@ -418,6 +417,7 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" thought " " was tossing him a spare grenade"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" tried to pick up "  "'s hot potato"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" tries to hatch " "'s grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE				" was knife-murdered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" caught one too many nails from "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" ran into "  "'s nails"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" was turned into " "'s pin-cushion"
@@ -437,10 +437,10 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	TOASTER				" swims with " "'s toaster"
 
 // Player Deaths
-#DEFINE OBITUARY	PLAYER_DEATH	DISPENSER			" detonates an ammo box too close to him"
+#DEFINE OBITUARY	PLAYER_DEATH	BIOWEAPON			" died impossibly!"
 #DEFINE OBITUARY	PLAYER_DEATH	DISPENSER			" dispenses with himself."
+#DEFINE OBITUARY	PLAYER_DEATH	EMPGREN				" detonates an ammo box too close to him"
 #DEFINE OBITUARY	PLAYER_DEATH	FALL				" makes a crater"
-#DEFINE OBITUARY	PLAYER_DEATH	NOWEAPON			" died impossibly!"
 #DEFINE OBITUARY	PLAYER_DEATH	NOWEAPON			" shoots his teammate one too many times"
 #DEFINE OBITUARY	PLAYER_DEATH	SENTRYGUN			" obstructs his team's sentry gun"
 #DEFINE OBITUARY	PLAYER_DEATH	TRAP				" tried to use the "
@@ -492,11 +492,15 @@
 #DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN			" intercepts his sentry gun's rocket"
 #DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN			" gets too friendly with his sentrygun"
 #DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN			" crossed his sentry gun's line of fire"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" shoots his teammate one too many times."
+//#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			"It's " "'s party and he'll cry if he wants to!"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" gets too selfish with his gifts"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" wasn't born so beautiful after all"
 
 // Team Kills
 #DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" mows down teammate "
 #DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" checks his glasses after killing "
-#DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" gets a frag for the other team with "		"'s death"
+#DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" gets a frag for the other team with " "'s death"
 #DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" killed his supposed friend "
 #DEFINE OBITUARY	X_TEAMKILLED_BY_Y	NOWEAPON		" didn't survive the operation by "
 
@@ -511,40 +515,51 @@
 #DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was torn up by an enemy Rottweiler"
 #DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was stopped by an enemy autoturret"
 #DEFINE OBITUARY	PLAYER_DEATH	TRAP				" didn't survive the operation."
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" tripped off the worldmap."
 
 //FLAG ALERTS
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" TOOK the ENEMY key"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" GOT the RED flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" GOT the BLUE flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the red flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the blue flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got red's flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got blue's flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken your Key."
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy Key."
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy key."
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ηοτ βμυε§σ ζμαη®"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ηοτ ςεδ§σ ζμαη®"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ÒΕΔ flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΤΟΟΛ ΩΟΥÒ key!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΤΟΟΛ the ΕΞΕΝΩ key!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has your key!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the blue key!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the red key!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has your flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took your flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the blue flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Has the Blue Flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Has the Red Flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΗΟΤ the ΕΞΕΝΩ flag!"					//2fort5 .br
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΗΟΤ the ÒΕΔ flag!"					//2fort5 .br
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the Blue Flag" 					//Dissect
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΤΟΟΛ ΩΟΥÒ key!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΤΟΟΛ the ΕΞΕΝΩ key!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ηοτ βμυε§σ ζμαη®"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ηοτ ςεδ§σ ζμαη®"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" θασ τθε Òεδ Ζμαη" 					//Dissect
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" GOT the BLUE flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" GOT the RED flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Has the Blue Flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Has the Red Flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE ΒΜΥΕ FlaG!"					//Fcast
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE ÒΕΔ FlaG!"					//Fcast
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" TOOK the ENEMY key"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got blue's flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got red's flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy Key."
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy key."
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ΑΪΥÒΕ flag!"			//Excel
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ΓÒΙΝΣΟΞ flag"			//Excel
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE ÒΕΔ FlaG!"					//Fcast
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE ΒΜΥΕ FlaG!"					//Fcast
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ÒΕΔ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the blue flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the red flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken your Key."
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the Blue Flag" 					//Dissect
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the blue flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the blue key!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the red flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the red key!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has your flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has your key!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the blue flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took your flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the Blue Ζμαη!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red Ζμαη!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the Red Flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the Blue Flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΗΟΤ the ΒΜΥΕ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ΗΟΤ the ÒΕΔ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the ÒΕΔ ΣΝΥÒΖ flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the ΒΜΥΕ ΣΝΥÒΖ flag"
 
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped red's flag"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped blue's flag"
@@ -582,13 +597,23 @@
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Circles CP– cap"						//Dissect 4
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Rook CP— cap"							//Dissect 5
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Attic CP cap"						//Dissect 6
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captures the Βμυε Χαςεθουσε ­ ΓΠ±"	//Canalzon 1
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captures the Αςγθ Òοον ­ ΓΠ²"			//Canalzon 2
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captures the Μιβςαςω ­ ΓΠ³"			//Canalzon 3
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captures the Σναμμ Χαςεθουσε ­ ΓΠ΄"	//Canalzon 4
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captures the Ζουξταιξ ­ ΓΠµ"			//Canalzon 5
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captures the Βαμγοξω ­ ΓΠ¶"			//Canalzon 6
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captures the Βοατθουσε ­ ΓΠ·"			//Canalzon 7
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captures the Òεδ Χαςεθουσε ­ ΓΠΈ"		//Canalzon 8
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ the ÒΕΔ flag!"				//kw4
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ the ΒΜΥΕ flag!"				//kw4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Βμυε Χαςεθουσε ­ ΓΠ±"		//Canalzon 1 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Αςγθ Òοον ­ ΓΠ²"			//Canalzon 2 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Μιβςαςω ­ ΓΠ³"			//Canalzon 3 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Σναμμ Χαςεθουσε ­ ΓΠ΄"	//Canalzon 4 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Ζουξταιξ ­ ΓΠµ"			//Canalzon 5 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Βαμγοξω ­ ΓΠ¶"			//Canalzon 6 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Βοατθουσε ­ ΓΠ·"			//Canalzon 7 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫΒμυε τεανέ captures the Òεδ Χαςεθουσε ­ ΓΠΈ"		//Canalzon 8 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Βμυε Χαςεθουσε ­ ΓΠ±"		//Canalzon 1 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Αςγθ Òοον ­ ΓΠ²"			//Canalzon 2 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Μιβςαςω ­ ΓΠ³"				//Canalzon 3 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Σναμμ Χαςεθουσε ­ ΓΠ΄"		//Canalzon 4 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Ζουξταιξ ­ ΓΠµ"			//Canalzon 5 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Βαμγοξω ­ ΓΠ¶"				//Canalzon 6 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Βοατθουσε ­ ΓΠ·"			//Canalzon 7 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ captures the Òεδ Χαςεθουσε ­ ΓΠΈ"		//Canalzon 8 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ ΓΑΠΤΥÒΕΔ the ÒΕΔ flag!"					//kw4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"ΫÒεδ τεανέ ΓΑΠΤΥÒΕΔ the ΒΜΥΕ flag!"				//kw4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ the ΒΜΥΕ flag!"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ΓΑΠΤΥÒΕΔ the ÒΕΔ flag!"
