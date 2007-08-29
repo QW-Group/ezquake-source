@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.106 2007-08-23 15:56:52 qqshka Exp $
+$Id: cl_parse.c,v 1.107 2007-08-29 21:59:44 borisu Exp $
 */
 
 #include "quakedef.h"
@@ -2403,7 +2403,7 @@ void CL_ParsePrint (void)
 			if (s0[0] == ':') // ok, it was qtv chat, skip #id: and insert user defined prefix, [qtv] by default
 			{
 				s0++;
-				snprintf(qtvstr, sizeof(qtvstr), "%s%s\n", qtv_chatprefix.string, s0);
+				snprintf(qtvstr, sizeof(qtvstr), "%s%s\n", TP_ParseFunChars(qtv_chatprefix.string,false), s0);
 				s0 = qtvstr;
 			}
 			else
