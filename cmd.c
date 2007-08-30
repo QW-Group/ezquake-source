@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.71 2007-07-28 20:24:53 johnnycz Exp $
+    $Id: cmd.c,v 1.72 2007-08-30 20:46:46 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -583,7 +583,7 @@ void Cmd_AliasList_f (void)
 		a = sorted_aliases[i];
 		if (c==1 || ReSearchMatch(a->name)) {
 			Com_Printf ("\x02%s :", sorted_aliases[i]->name);
-			Com_Printf (" %s\n\n", sorted_aliases[i]->value);
+			Com_Printf (" %s\n", sorted_aliases[i]->value);
 			m++;
 		}
 	}
