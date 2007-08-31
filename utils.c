@@ -17,10 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.38 2007-07-11 23:07:34 cokeman1982 Exp $
+	$Id: utils.c,v 1.39 2007-08-31 15:57:53 johnnycz Exp $
 */
 
 #include "quakedef.h"
+#include "pcre.h"
 #include "hud.h"
 #include "utils.h"
 
