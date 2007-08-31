@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.33 2007-08-24 16:55:03 dkure Exp $
+	$Id: hud_editor.c,v 1.34 2007-08-31 14:57:42 johnnycz Exp $
 
 */
 
@@ -105,7 +105,7 @@ typedef enum hud_alignmode_s
 	// Not including before/after for now.
 } hud_alignmode_t;
 
-hud_alignmode_t	hud_alignmode = align_center;
+hud_alignmode_t	hud_alignmode = hud_align_center;
 
 // Possible positions for a grep handle.
 typedef enum hud_greppos_s
