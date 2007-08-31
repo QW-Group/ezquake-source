@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.72 2007-08-30 20:46:46 johnnycz Exp $
+    $Id: cmd.c,v 1.73 2007-08-31 19:18:44 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -331,6 +331,7 @@ void Cmd_StuffCmds_f (void)
 		return;
 
 	text = (char *) Q_malloc (len + 1);
+	text[0] = '\0';
 	for (k = 1; k < com_argc; k++) {
 		strcat (text, com_argv[k]);
 		if (k != com_argc - 1)

@@ -1,5 +1,5 @@
 /*
-    $Id: fs.c,v 1.9 2007-08-24 17:02:15 dkure Exp $
+    $Id: fs.c,v 1.10 2007-08-31 19:18:44 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -642,7 +642,8 @@ vfsfile_t *FS_OpenTCP(char *name)
 //		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true)) == -1)
 //			Com_Printf ("FS_OpenTCP: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
 
-		newf = Q_malloc(sizeof(*newf));
+		newf = Q_malloc(sizeof(tcpfile_t));
+		memset(newf, 0, sizeof(tcpfile_t));
 		newf->sock				= sock;
 		newf->funcs.Close		= VFSTCP_Close;
 		newf->funcs.Flush		= NULL;

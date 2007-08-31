@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.51 2007-08-29 20:53:26 borisu Exp $
+$Id: cvar.c,v 1.52 2007-08-31 19:18:44 johnnycz Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -711,6 +711,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 		return v;
 	}
 	v = (cvar_t *) Q_malloc(sizeof(cvar_t));
+	memset(v, 0, sizeof(cvar_t));
 	// Cvar doesn't exist, so we create it
 	v->next = cvar_vars;
 	cvar_vars = v;

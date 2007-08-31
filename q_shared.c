@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.23 2007-08-24 16:52:38 dkure Exp $
+    $Id: q_shared.c,v 1.24 2007-08-31 19:18:45 johnnycz Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -789,7 +789,7 @@ void *Q_malloc (size_t size)
 	if (!p)
 		Sys_Error ("Q_malloc: Not enough memory free; check disk space\n");
 
-	memset(p, 0, size);
+	// memset(p, 0, size);
 
 	return p;
 }
