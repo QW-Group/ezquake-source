@@ -1,4 +1,7 @@
+// $Id: xsd_document.c,v 1.6 2007-08-31 15:22:03 johnnycz Exp $
+
 #include "quakedef.h"
+#include "expat.h"
 #include "xsd.h"
 #include "xsd_document.h"
 

@@ -1,4 +1,7 @@
+// $Id: xsd.c,v 1.7 2007-08-31 15:22:03 johnnycz Exp $
+
 #include "quakedef.h"
+#include "expat.h"
 #include "xsd.h"
 
 typedef xml_t * (*XSD_DocumentLoadType)(FILE *f, int len);

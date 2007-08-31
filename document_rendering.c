@@ -7,6 +7,7 @@
 
 #define LINE_MAX_LEN    512
 
+#include "expat.h"
 #include "xsd.h"
 #include "document_rendering.h"
 

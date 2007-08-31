@@ -7,6 +7,7 @@
 #include "quakedef.h"
 #include "EX_misc.h"
 #include "Ctrl.h"
+#include "expat.h"
 #include "xsd.h"
 #include "document_rendering.h"
 #include "Ctrl_PageViewer.h"

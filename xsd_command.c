@@ -1,4 +1,7 @@
+// $Id: xsd_command.c,v 1.5 2007-08-31 15:22:03 johnnycz Exp $
+
 #include "quakedef.h"
+#include "expat.h"
 #include "xsd_command.h"
 
 
