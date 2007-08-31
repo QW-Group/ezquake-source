@@ -1,4 +1,5 @@
 #include "quakedef.h"
+#include "xsd.h"
 
 typedef xml_t * (*XSD_DocumentLoadType)(FILE *f, int len);
 typedef void (*XSD_DocumentFreeType)(xml_t *);

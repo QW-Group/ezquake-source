@@ -7,6 +7,7 @@
 
 #define LINE_MAX_LEN    512
 
+#include "xsd.h"
 #include "document_rendering.h"
 
 typedef struct document_rendering_context_s

@@ -5,6 +5,7 @@
 // for QuakeWorld Tutorial menu, look into help_files.c
 
 #include "quakedef.h"
+#include "xsd.h"
 
 #define CONSOLE_HELP_MARGIN 2
 

@@ -10,6 +10,8 @@
 #include "quakedef.h"
 #include "menu.h"
 #include "EX_FileList.h"
+#include "xsd.h"
+#include "document_rendering.h"
 #include "Ctrl_PageViewer.h"
 #include "Ctrl_Tab.h"
 

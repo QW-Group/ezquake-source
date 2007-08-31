@@ -1,4 +1,5 @@
 #include "quakedef.h"
+#include "xsd.h"
 #include "xsd_document.h"
 
 

@@ -7,7 +7,6 @@
 #define __CTRL_PAGEVIEWER_H__
 
 
-#include "document_rendering.h"
 
 typedef struct CPageViewer_page_s
 {
