@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.45 2007-07-29 12:23:46 disconn3ct Exp $
+$Id: mvd_utils.c,v 1.46 2007-08-31 14:44:34 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1324,7 +1324,10 @@ void MVD_Status (void){
 
 	x = ELEMENT_X_COORD(mvd_status);
 	y = ELEMENT_Y_COORD(mvd_status);
-	strncpy(str,mvd_new_info[id].p_info->name,sizeof(str));
+	if (mvd_new_info[id].p_info)
+		strncpy(str,mvd_new_info[id].p_info->name,sizeof(str));
+	else
+		str[0] = '\0';
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 	strncpy(str,"&cf40Took",sizeof(str));
 
