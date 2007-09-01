@@ -1,5 +1,5 @@
 /*
-    $Id: fs.c,v 1.10 2007-08-31 19:18:44 johnnycz Exp $
+    $Id: fs.c,v 1.11 2007-09-01 16:06:45 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -720,7 +720,7 @@ static void FS_PakOper_Process(pak_operation_t op)
 		return;
 	}
 	if (c < 2) {
-		Com_Printf("Usage: %s <pakname> [<pakname> [<pakname> ...]\n", op == PAKOP_ADD ? "addpak" : "removepak");
+		Com_Printf("Usage: %s <pakname> [<pakname> [<pakname> ...]\n", Cmd_Argv(0));
 		return;
 	}
 
