@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.73 2007-08-31 19:18:44 johnnycz Exp $
+    $Id: cmd.c,v 1.74 2007-09-01 16:10:55 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1866,7 +1866,7 @@ void Cmd_If_Exists_f(void)
 	        ( (isalias = !strcmp(type, "alias")) && Cmd_FindAlias (name) )			||
 #ifndef SERVERONLY
 	        ( (istrigger = !strcmp(type, "trigger")) && CL_FindReTrigger (name) )	||
-	        ( (ishud = !strcmp(type, "hud")) && Hud_FindElement (name) ) )
+	        ( (ishud = !strcmp(type, "hud")) && Hud_ElementExists (name) ) )
 #endif
 		exists = true;
 	else {

@@ -1,9 +1,8 @@
 /*
-$Id: mvd_utils.c,v 1.46 2007-08-31 14:44:34 johnnycz Exp $
+$Id: mvd_utils.c,v 1.47 2007-09-01 16:10:55 johnnycz Exp $
 */
 
 #include "quakedef.h"
-#include "cl_screen.h"
 #include "parser.h"
 #include "localtime.h"
 #ifdef GLQUAKE

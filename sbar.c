@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.38 2007-07-23 19:43:01 cokeman1982 Exp $
+	$Id: sbar.c,v 1.39 2007-09-01 16:10:55 johnnycz Exp $
 */
 // sbar.c -- status bar code
 
@@ -105,8 +105,6 @@ cvar_t	scr_scoreboard_forcecolors = {"scr_scoreboard_forcecolors", "1"};
 cvar_t	scr_scoreboard_showfrags = {"scr_scoreboard_showfrags", "1"};
 cvar_t	scr_scoreboard_drawtitle = {"scr_scoreboard_drawtitle", "1"};
 cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "0"};
-
-cvar_t	scr_newHud = {"scr_newhud", "0"};
 
 #ifdef GLQUAKE
 cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
@@ -239,8 +237,6 @@ void Sbar_Init (void) {
 
 	Cvar_Register (&scr_compactHud);
 	Cvar_Register (&scr_compactHudAlign);
-
-	Cvar_Register (&scr_newHud); // HUD -> hexum
 
 // --> mqwcl 0.96 oldhud customisation
     //Cvar_Register (&sbar_teamfrags);
@@ -1754,7 +1750,7 @@ void Sbar_Draw(void) {
 	qbool headsup;
 	char st[512];
 
-	extern cvar_t scr_tracking, scr_spectatorMessage;
+	extern cvar_t scr_tracking, scr_spectatorMessage, scr_newHud;
 
 	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
 	if (sb_updates >= vid.numpages && !headsup)

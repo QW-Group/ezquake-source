@@ -17,7 +17,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-// screen.h
+
+/**
+  $Id: screen.h,v 1.8 2007-09-01 16:10:55 johnnycz Exp $
+  
+  Common declarations for modules associated with drawing on screen
+  cl_screen.c, sbar.c
+*/
+
 
 #define		SCR_NEED_CONSOLE_BACKGROUND		(cls.state < ca_active && !cl.intermission)
 
@@ -33,10 +40,10 @@ extern	float		scr_con_current;
 extern	float		scr_conlines;		// lines of console to display
 
 extern	int			scr_fullupdate;	// set to 0 to force full redraw
-extern	int			sb_lines;
+extern	int			sb_lines;	// sbar.c !!
 
 extern	int			clearnotify;	// set to 0 whenever notify text is drawn
-extern	qbool	scr_disabled_for_loading;
+extern	qbool		scr_disabled_for_loading;
 
 extern	cvar_t		scr_viewsize;
 
@@ -44,40 +51,23 @@ extern	cvar_t		scr_viewsize;
 extern	int			scr_copytop;
 extern	int			scr_copyeverything;
 
-qbool	scr_skipupdate;
+extern	qbool		scr_skipupdate;
+extern	qbool		block_drawing;
 
-qbool	block_drawing;
-
-// QW262 HUD -->
-typedef char* (*Hud_Func)();
-
-typedef struct hud_element_s {
-	struct hud_element_s*	next;
-	char					*name;
-	unsigned				flags;
-	signed char				coords[4]; // pos_type, x, y, bg
-	unsigned				width;
-	float					blink;
-	void*					contents;
-	int					charset;
-	float					alpha;
-	char					*f_hover, *f_button;
-	unsigned				scr_width, scr_height;
-} hud_element_t;
-
-#define		HUD_CVAR		1
-#define		HUD_FUNC		2
-#define		HUD_STRING		4
-#define		HUD_BLINK_F		8
-#define		HUD_BLINK_B		16
-#define		HUD_IMAGE		32
-
-#define		HUD_ENABLED		512
-// <-- QW262 HUD
-
+// QW262 HUD
 void Hud_262Init (void);
-hud_element_t *Hud_FindElement(char *name);
+
+qbool Hud_ElementExists(const char* name);
 
 // Flash & Conc for TF
 extern qbool	concussioned;
 extern qbool flashed;
+
+#define	ELEMENT_X_COORD(var)	((var##_x.value < 0) ? vid.width - strlen(str) * 8 + 8 * var##_x.value: 8 * var##_x.value)
+#define	ELEMENT_Y_COORD(var)	((var##_y.value < 0) ? vid.height - sb_lines + 8 * var##_y.value : 8 * var##_y.value)
+
+qbool SCR_OnChangeMVHudPos(cvar_t *var, char *newval);
+void SCR_SetupAutoID (void);
+
+// the current position of the mouse pointer
+extern double cursor_x, cursor_y;

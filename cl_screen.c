@@ -16,11 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.133 2007-08-19 16:48:48 borisu Exp $
+$Id: cl_screen.c,v 1.134 2007-09-01 16:10:55 johnnycz Exp $
 */
-#include <time.h>
+
+/// declarations may be found in screen.h
+
 #include "quakedef.h"
-#include "cl_screen.h"
+#include <time.h>
 #include "vx_tracker.h"
 #ifdef GLQUAKE
 #include "gl_model.h"
@@ -68,13 +70,21 @@ int				glx, gly, glwidth, glheight;
 */
 #define			DEFAULT_SSHOT_FORMAT		"png"
 
-
-char *COM_FileExtension (char *in);
-
 extern byte	current_pal[768];	// Tonik
 
-extern cvar_t	scr_newHud;		// HUD -> hexum
-
+typedef struct hud_element_s {
+	struct hud_element_s*	next;
+	char					*name;
+	unsigned				flags;
+	signed char				coords[4]; // pos_type, x, y, bg
+	unsigned				width;
+	float					blink;
+	void*					contents;
+	int					charset;
+	float					alpha;
+	char					*f_hover, *f_button;
+	unsigned				scr_width, scr_height;
+} hud_element_t;
 
 // only the refresh window will be updated unless these variables are flagged
 int		scr_copytop;
@@ -82,6 +92,9 @@ int		scr_copyeverything;
 
 float	scr_con_current;
 float	scr_conlines;           // lines of console to display
+
+qbool	scr_skipupdate;
+qbool	block_drawing;
 
 float	oldscreensize, oldfov, oldsbar;
 
@@ -106,6 +119,8 @@ cvar_t	scr_showpause			= {"showpause", "1"};
 cvar_t	scr_printspeed			= {"scr_printspeed", "8"};
 qbool	OnChange_scr_allowsnap(cvar_t *, char *);
 cvar_t	scr_allowsnap			= {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
+
+cvar_t	scr_newHud = {"scr_newhud", "0"};
 
 cvar_t	scr_clock				= {"cl_clock", "0"};
 cvar_t	scr_clock_format		= {"cl_clock_format", "%H:%M:%S", 0, OnChange_scr_clock_format};
@@ -208,12 +223,9 @@ void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 void Draw_AlphaString (int x, int y, char *str, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
-
 qbool OnChange_scr_allowsnap(cvar_t *var, char *s) {
 	return (cls.state >= ca_connected && cbuf_current == &cbuf_svc);
 }
-
-
 
 
 /**************************** CENTER PRINTING ********************************/
@@ -1750,10 +1762,19 @@ void Parse_TeamInfo(char *s)
 
 /**************************************** 262 HUD *****************************/
 // QW262 -->
+typedef char* (*Hud_Func)();
+#define		HUD_CVAR		1
+#define		HUD_FUNC		2
+#define		HUD_STRING		4
+#define		HUD_BLINK_F		8
+#define		HUD_BLINK_B		16
+#define		HUD_IMAGE		32
+#define		HUD_ENABLED		512
+
 static hud_element_t *hud_list=NULL;
 static hud_element_t *prev;
 
-hud_element_t *Hud_FindElement(char *name)
+hud_element_t *Hud_FindElement(const char *name)
 {
 	hud_element_t *elem;
 
@@ -1765,6 +1786,11 @@ hud_element_t *Hud_FindElement(char *name)
 	}
 
 	return NULL;
+}
+
+qbool Hud_ElementExists(const char* name)
+{
+	return Hud_FindElement(name) != NULL;
 }
 
 static hud_element_t* Hud_NewElement(void)
@@ -3631,6 +3657,10 @@ void SCR_Init (void)
 	Cvar_Register (&scr_fov);
 	Cvar_Register (&default_fov);
 	Cvar_Register (&scr_viewsize);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
+	Cvar_Register (&scr_newHud);
+	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&scr_consize);
