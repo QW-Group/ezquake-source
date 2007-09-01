@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-$Id: win_glimp.c,v 1.23 2007-08-16 23:00:11 cokeman1982 Exp $
+$Id: win_glimp.c,v 1.24 2007-09-01 10:37:11 qqshka Exp $
 
 */
 /*
@@ -227,7 +227,7 @@ static qbool GLW_StartDriverAndSetMode( const char *drivername,
 {
 	rserr_t err;
 
-	err = GLW_SetMode( drivername, r_mode.integer, colorbits, cdsFullscreen );
+	err = GLW_SetMode( drivername, mode, colorbits, cdsFullscreen );
 
 	switch ( err )
 	{
