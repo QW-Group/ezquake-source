@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.73 2007-08-20 17:35:58 zwoch Exp $
+		$Id: menu_options.c,v 1.74 2007-09-02 22:38:19 himan Exp $
 
 */
 
@@ -47,7 +47,7 @@ typedef enum {
 	OPTPG_PLAYER,
 	OPTPG_FPS,
 	OPTPG_HUD,
-	OPTPG_MULTIVIEW,
+	OPTPG_DEMO_PLAYBACK,
 	OPTPG_BINDS,
 	OPTPG_VIDEO,
 	OPTPG_CONFIG,
@@ -295,9 +295,9 @@ qbool CT_Opt_Settings_Mouse_Event(const mouse_state_t *ms)
 // </SETTINGS>
 //=============================================================================
 
-
-settings_page settmultiview;
-setting settmultiview_arr[] = {
+// Demo playback
+settings_page settdemo_playback;
+setting settdemo_playback_arr[] = {
 	ADDSET_SEPARATOR("Multiview"),
 	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
 	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
@@ -313,21 +313,26 @@ setting settmultiview_arr[] = {
 	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
 	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
 	ADDSET_BOOL     ("Status", mvd_status),
+
+	ADDSET_SEPARATOR("Binds"),
+	ADDSET_BIND("Stop", "disconnect"),
+	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
+	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused.")
 };
 
-void CT_Opt_Multiview_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
-	Settings_Draw(x, y, w, h, &settmultiview);
+void CT_Opt_Demo_Playback_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
+	Settings_Draw(x, y, w, h, &settdemo_playback);
 }
 
-int CT_Opt_Multiview_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settmultiview, k);
+int CT_Opt_Demo_Playback_Key (int k, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settdemo_playback, k);
 }
 
-void OnShow_SettMultiview(void) { Settings_OnShow(&settmultiview); }
+void OnShow_SettDemo_Playback(void) { Settings_OnShow(&settdemo_playback); }
 
-qbool CT_Opt_Multiview_Mouse_Event(const mouse_state_t *ms)
+qbool CT_Opt_Demo_Playback_Mouse_Event(const mouse_state_t *ms)
 {
-	return Settings_Mouse_Event(&settmultiview, ms);
+	return Settings_Mouse_Event(&settdemo_playback, ms);
 }
 
 
@@ -368,16 +373,13 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
 	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
 	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Console"),
 	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
 	ADDSET_NAMED	("Fun Chars More", con_funchars_mode, funcharsmode_enum),
-	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
 	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
 	ADDSET_BOOL		("Timestamps", con_timestamps),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
-	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Console height", scr_consize, 0.1, 1.0, 0.05),
 	ADDSET_BASIC_SECTION(),
 
@@ -409,15 +411,17 @@ setting settplayer_arr[] = {
 	ADDSET_SKIN		("Skin", skin),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
-	ADDSET_SEPARATOR("Team Colors"),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_SEPARATOR("Team Skin & Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
 	ADDSET_SKIN		("Skin", cl_teamskin),
 	ADDSET_SKIN		("Quad Skin", cl_teamquadskin),
 	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
 	ADDSET_SKIN		("Quad+Pent Skin", cl_teambothskin),
-	ADDSET_SEPARATOR("Enemy Colors"),
+	ADDSET_SEPARATOR("Enemy Skin & Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
 	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
 	ADDSET_SKIN		("Skin", cl_enemyskin),
@@ -534,11 +538,6 @@ setting settbinds_arr[] = {
     ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_BASIC_SECTION(),
-
-	ADDSET_SEPARATOR("Demo Playback"),
-	ADDSET_BIND("Stop", "disconnect"),
-	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
-	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused.")
 };
 
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
@@ -692,9 +691,9 @@ const char* gl_texturemode_enum[] = {
 
 setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
-	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjust for high performance."),
-	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjust for high image-quality."),
-	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphics effects presets here."),
+	ADDSET_ACTION	("Load High-Performance Preset", LoadFastPreset, "Adjust graphic settings for high performance. May increase FPS."),
+	ADDSET_ACTION	("Load High-Quality preset", LoadHQPreset, "Adjust graphic settings for high image-quality. May decrease FPS."),
+	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphic presets."),
 
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ADVANCED_SECTION(),
@@ -702,7 +701,7 @@ setting settfps_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
-	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
+	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 
 	ADDSET_SEPARATOR("Environment"),
@@ -899,9 +898,10 @@ setting settvideo_arr[] = {
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
 	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
 
-	ADDSET_SEPARATOR("Font Size"),
+	ADDSET_SEPARATOR("Font"),
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
+	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
 #endif
 
 	ADDSET_SEPARATOR("Miscellaneous"),
@@ -912,8 +912,8 @@ setting settvideo_arr[] = {
 	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
 	ADDSET_BASIC_SECTION(),
 #ifdef _WIN32
-	ADDSET_BOOL("Activity Flash", vid_flashonactivity),
-	ADDSET_BOOL("New Caption", cl_window_caption)
+	ADDSET_BOOL("Taskbar Flash", vid_flashonactivity),
+	ADDSET_BOOL("Taskbar Name", cl_window_caption),
 #endif
 #endif
 };
@@ -1215,11 +1215,11 @@ CTabPage_Handlers_t options_hud_handlers = {
 	CT_Opt_HUD_Mouse_Event
 };
 
-CTabPage_Handlers_t options_multiview_handlers = {
-	CT_Opt_Multiview_Draw,
-	CT_Opt_Multiview_Key,
-	OnShow_SettMultiview,
-	CT_Opt_Multiview_Mouse_Event
+CTabPage_Handlers_t options_demo_playback_handlers = {
+	CT_Opt_Demo_Playback_Draw,
+	CT_Opt_Demo_Playback_Key,
+	OnShow_SettDemo_Playback,
+	CT_Opt_Demo_Playback_Mouse_Event
 };
 
 CTabPage_Handlers_t options_controls_handlers = {
@@ -1301,7 +1301,7 @@ void Menu_Options_Init(void) {
 
 	Settings_Page_Init(settgeneral, settgeneral_arr);
 	Settings_Page_Init(settfps, settfps_arr);
-	Settings_Page_Init(settmultiview, settmultiview_arr);
+	Settings_Page_Init(settdemo_playback, settdemo_playback_arr);
 	Settings_Page_Init(setthud, setthud_arr);
 	Settings_Page_Init(settplayer, settplayer_arr);
 	Settings_Page_Init(settbinds, settbinds_arr);
@@ -1367,7 +1367,7 @@ void Menu_Options_Init(void) {
 	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, &options_player_handlers);
 	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, &options_graphics_handlers);
 	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, &options_hud_handlers);
-	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, &options_multiview_handlers);
+	CTab_AddPage(&options_tab, "demo playback", OPTPG_DEMO_PLAYBACK, &options_demo_playback_handlers);
 	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, &options_controls_handlers);
 	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, &options_video_handlers);
 	CTab_AddPage(&options_tab, "config", OPTPG_CONFIG, &options_config_handlers);
