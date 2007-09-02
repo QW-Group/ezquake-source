@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.43 2007-07-11 23:07:34 cokeman1982 Exp $
+    $Id: config_manager.c,v 1.44 2007-09-02 22:20:32 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -586,6 +586,17 @@ static void ResetBinds(void)
 	Key_SetBinding('q',      "impulse 12");
 	Key_SetBinding('t',      "messagemode");
 	Key_SetBinding('y',      "messagemode2");
+	Key_SetBinding('1',		 "impulse 1");
+	Key_SetBinding('2',		 "impulse 2");
+	Key_SetBinding('3',		 "impulse 3");
+	Key_SetBinding('4',		 "impulse 4");
+	Key_SetBinding('5',		 "impulse 5");
+	Key_SetBinding('6',		 "impulse 6");
+	Key_SetBinding('7',		 "impulse 7");
+	Key_SetBinding('8',		 "impulse 8");
+	Key_SetBinding('9',		 "impulse 9");
+	Key_SetBinding('0',		 "impulse 10");
+
 	Key_SetBinding(K_ALT,    "+zoom");
 	Key_SetBinding(K_F12,    "screenshot");
 	Key_SetBinding(K_TAB,    "+showscores");
