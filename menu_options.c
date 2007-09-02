@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.74 2007-09-02 22:38:19 himan Exp $
+		$Id: menu_options.c,v 1.75 2007-09-02 23:29:43 himan Exp $
 
 */
 
@@ -216,65 +216,6 @@ const char *priority_enum[] = { "low", "-1", "normal", "0", "high", "1" };
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
-setting settgeneral_arr[] = {
-	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the \"QuakeWorld for Freshies\" guide by Apollyon."),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
-	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
-#ifdef _WIN32
-	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
-#endif
-	ADDSET_BOOL		("Advanced Options", menu_advanced),
-
-	//Connection
-	ADDSET_SEPARATOR("Connection"),
-	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
-	ADDSET_ENUM		("Quality", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
-
-	//Sound & Volume
-	ADDSET_SEPARATOR("Sound & Volume"),
-	ADDSET_NUMBER	("Primary Volume", s_volume, 0, 1, 0.05),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
-	ADDSET_NUMBER	("Chat Volume", con_sound_mm1_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Team Chat Volume", con_sound_mm2_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
-	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
-	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
-	ADDSET_BASIC_SECTION(),
-
-	//Chat Settings
-	ADDSET_SEPARATOR("Chat settings"),
-	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
-	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
-	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
-	ADDSET_BASIC_SECTION(),
-	//Match Tools
-	ADDSET_SEPARATOR("Match Tools"),
-	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
-	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
-	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_ENUM 	("Sshot Format", scr_sshot_format, scr_sshot_format_enum),
-#ifdef _WIN32
-	ADDSET_ENUM     ("Demo Format", demo_format, demoformat_enum),
-#endif
-	ADDSET_BASIC_SECTION(),
-	ADDSET_ADVANCED_SECTION(), // I think all of paths should be advanced? -Up2
-	//Paths
-	ADDSET_SEPARATOR("Paths"),
-	ADDSET_NAMED    ("Media Paths Type", cl_mediaroot, mediaroot_enum),
-	ADDSET_STRING   ("Screenshots Path", scr_sshot_dir),
-	ADDSET_STRING	("Demos Path", demo_dir),
-	ADDSET_STRING   ("Logs Path", log_dir),
-	ADDSET_STRING	("Qizmo Path", qizmo_dir),
-	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
-	ADDSET_BASIC_SECTION(),
-};
-
 settings_page settgeneral;
 
 void CT_Opt_Settings_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
@@ -295,30 +236,7 @@ qbool CT_Opt_Settings_Mouse_Event(const mouse_state_t *ms)
 // </SETTINGS>
 //=============================================================================
 
-// Demo playback
 settings_page settdemo_playback;
-setting settdemo_playback_arr[] = {
-	ADDSET_SEPARATOR("Multiview"),
-	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
-	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("HUD Flip", cl_mvhudflip),
-	ADDSET_BOOL		("HUD Vertical", cl_mvhudvertical),
-	ADDSET_BOOL		("Inset View", cl_mvinset),
-	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
-	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_SEPARATOR("Multiview Demos"),
-	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
-	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
-	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
-	ADDSET_BOOL     ("Status", mvd_status),
-
-	ADDSET_SEPARATOR("Binds"),
-	ADDSET_BIND("Stop", "disconnect"),
-	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
-	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused.")
-};
 
 void CT_Opt_Demo_Playback_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
 	Settings_Draw(x, y, w, h, &settdemo_playback);
@@ -335,57 +253,7 @@ qbool CT_Opt_Demo_Playback_Mouse_Event(const mouse_state_t *ms)
 	return Settings_Mouse_Event(&settdemo_playback, ms);
 }
 
-
 settings_page setthud;
-setting setthud_arr[] = {
-	ADDSET_SEPARATOR("Head Up Display"),
-	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
-	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
-	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
-#ifdef GLQUAKE
-	ADDSET_NUMBER	("Crosshair alpha", gl_crosshairalpha, 0.1, 1, 0.1),
-	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
-#endif
-	ADDSET_SEPARATOR("New HUD"),
-	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
-	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOLLATE ("Teamholdbar", hud_teamholdbar_show),
-	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_BOOLLATE ("FPS", hud_fps_show),
-	ADDSET_BOOLLATE ("Clock", hud_clock_show),
-#ifdef GLQUAKE
-	ADDSET_BOOLLATE ("Radar", hud_radar_show),
-#endif
-	ADDSET_SEPARATOR("Quake Classic HUD"),
-	ADDSET_BOOL		("Status Bar", cl_sbar),
-	ADDSET_BOOL		("HUD Left", cl_hudswap),
-	ADDSET_BOOL		("Show FPS", show_fps),
-	ADDSET_BOOL		("Show Clock", scr_clock),
-	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
-#ifdef GLQUAKE
-	ADDSET_SEPARATOR("Tracker Messages"),
-	ADDSET_BOOL		("Flags", amf_tracker_flags),
-	ADDSET_BOOL		("Frags", amf_tracker_frags),
-	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
-	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
-	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
-	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
-	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_SEPARATOR("Console"),
-	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
-	ADDSET_NAMED	("Fun Chars More", con_funchars_mode, funcharsmode_enum),
-	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
-	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
-	ADDSET_BOOL		("Timestamps", con_timestamps),
-	ADDSET_NUMBER	("Console height", scr_consize, 0.1, 1.0, 0.05),
-	ADDSET_BASIC_SECTION(),
-
-#endif
-
-};
 
 void CT_Opt_HUD_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
 	Settings_Draw(x, y, w, h, &setthud);
@@ -401,35 +269,7 @@ qbool CT_Opt_HUD_Mouse_Event(const mouse_state_t *ms)
 {
 	return Settings_Mouse_Event(&setthud, ms);
 }
-//// PLAYER SETTINGS /////
 settings_page settplayer;
-setting settplayer_arr[] = {
-	ADDSET_SEPARATOR("Player Settings"),
-	ADDSET_STRING	("Name", name),
-	ADDSET_STRING	("Teamchat Prefix", cl_fakename),
-	ADDSET_STRING	("Team", team),
-	ADDSET_SKIN		("Skin", skin),
-	ADDSET_COLOR	("Shirt Color", topcolor),
-	ADDSET_COLOR	("Pants Color", bottomcolor),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_SEPARATOR("Team Skin & Colors"),
-	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
-	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
-	ADDSET_SKIN		("Skin", cl_teamskin),
-	ADDSET_SKIN		("Quad Skin", cl_teamquadskin),
-	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
-	ADDSET_SKIN		("Quad+Pent Skin", cl_teambothskin),
-	ADDSET_SEPARATOR("Enemy Skin & Colors"),
-	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
-	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
-	ADDSET_SKIN		("Skin", cl_enemyskin),
-	ADDSET_SKIN		("Quad Skin", cl_enemyquadskin),
-	ADDSET_SKIN		("Pent Skin", cl_enemypentskin),
-	ADDSET_SKIN		("Quad+Pent Skin", cl_enemybothskin),
-};
-
 void CT_Opt_Player_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
 	Settings_Draw(x, y, w, h, &settplayer);
 }
@@ -456,89 +296,6 @@ const char* in_m_os_parameters_enum[] = { "off", "Keep accel settings", "Keep sp
 void Menu_Input_Restart(void) { Cbuf_AddText("in_restart\n"); }
 
 settings_page settbinds;
-setting settbinds_arr[] = {
-	ADDSET_SEPARATOR("Movement"),
-	ADDSET_BIND("Attack", "+attack"),
-	ADDSET_BIND("Jump/Swim up", "+jump"),
-	ADDSET_BIND("Move Forward", "+forward"),
-	ADDSET_BIND("Move Backward", "+back"),
-	ADDSET_BIND("Move Left", "+moveleft"),
-	ADDSET_BIND("Move Right", "+moveright"),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BIND("Swim Up", "+moveup"),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_BIND("Swim Down", "+movedown"),
-	ADDSET_BIND("Zoom In/Out", "+zoom"),
-
-	ADDSET_SEPARATOR("Weapons"),
-	ADDSET_BIND("Previous Weapon", "impulse 12"),
-	ADDSET_BIND("Next Weapon", "impulse 10"),
-	ADDSET_BIND("Axe", "weapon 1"),
-	ADDSET_BIND("Shotgun", "weapon 2"),
-	ADDSET_BIND("Super Shotgun", "weapon 3"),
-	ADDSET_BIND("Nailgun", "weapon 4"),
-	ADDSET_BIND("Super Nailgun", "weapon 5"),
-	ADDSET_BIND("Grenade Launcher", "weapon 6"),
-	ADDSET_BIND("Rocket Launcher", "weapon 7"),
-	ADDSET_BIND("Thunderbolt", "weapon 8"),
-
-	ADDSET_SEPARATOR("Teamplay"),
-	ADDSET_BIND("Report Status", "tp_msgreport"),
-	ADDSET_BIND("Lost location", "tp_msglost"),
-	ADDSET_BIND("Location safe", "tp_msgsafe"),
-	ADDSET_BIND("Point at item", "tp_msgpoint"),
-	ADDSET_BIND("Took item", "tp_msgtook"),
-	ADDSET_BIND("Need items", "tp_msgneed"),
-	ADDSET_BIND("Coming from location", "tp_msgcoming"),
-	ADDSET_BIND("Help location", "tp_msghelp"),
-	ADDSET_BIND("Enemy Quad Dead", "tp_msgquaddead"),
-	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
-	ADDSET_BIND("Get Quad", "tp_msggetquad"),
-	ADDSET_BIND("Get Pent", "tp_msggetpent"),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BIND("Trick at location", "tp_msgtrick"),
-	ADDSET_BIND("Replace at location", "tp_msgreplace"),
-	ADDSET_BASIC_SECTION(),
-
-	ADDSET_SEPARATOR("Communication"),
-	ADDSET_BIND("Chat", "messagemode"),
-	ADDSET_BIND("Teamchat", "messagemode2"),
-	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
-
-	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_BIND("Show Scores", "+showscores"),
-	ADDSET_BIND("Screenshot", "screenshot"),
-	ADDSET_BIND("Quit", "quit"),
-
-	ADDSET_SEPARATOR("Mouse Settings"),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Freelook", freelook),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 15, 0.25),
-	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Invert mouse will make you look down when the mouse is moved up."),
-#ifdef _WIN32
-    ADDSET_ADVANCED_SECTION(),
-    ADDSET_STRING   ("X sensitivity", m_yaw),
-    ADDSET_STRING   ("Y sensitivity", m_pitch),
-    ADDSET_NAMED    ("Mouse Input Type", in_mouse, in_mouse_enum),
-    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
-    ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
-    ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
-    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
-    ADDSET_BASIC_SECTION(),
-#endif
-    ADDSET_SEPARATOR("Weapon Handling"),
-	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to picked up weapon if more powerful than what you're holding."),
-	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
-	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
-    ADDSET_SEPARATOR("Movement"),
-	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum forward speed at all times."),
-	ADDSET_ADVANCED_SECTION(),
-    ADDSET_BOOL		("Smart Jump", cl_smartjump),
-	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
-	ADDSET_BASIC_SECTION(),
-};
 
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
 	Settings_Draw(x2, y2, w, h, &settbinds);
@@ -687,85 +444,6 @@ const char* gl_texturemode_enum[] = {
 };
 #endif
 
-// START contents of Menu -> Options -> Graphics tab
-
-setting settfps_arr[] = {
-	ADDSET_SEPARATOR("Presets"),
-	ADDSET_ACTION	("Load High-Performance Preset", LoadFastPreset, "Adjust graphic settings for high performance. May increase FPS."),
-	ADDSET_ACTION	("Load High-Quality preset", LoadHQPreset, "Adjust graphic settings for high image-quality. May decrease FPS."),
-	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphic presets."),
-
-	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Disable lin.interp.", cl_nolerp),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
-	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
-	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
-	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
-
-	ADDSET_SEPARATOR("Environment"),
-
-	ADDSET_BOOL		("Simple Sky", r_fastsky),
-	ADDSET_BOOL		("Simple walls", r_drawflat),
-	ADDSET_BOOL		("Simple turbs", r_fastturb),
-	ADDSET_BOOL		("Draw flame", r_drawflame),
-	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
-	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
-	ADDSET_SEPARATOR("Projectiles"),
-
-	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
-	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
-	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
-	ADDSET_BOOL		("Rocket Light", r_rocketlight),
-	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
-	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
-#ifdef GLQUAKE
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Hide Nails", amf_hidenails),
-	ADDSET_BOOL		("Hide Rockets", amf_hiderockets),
-	ADDSET_BASIC_SECTION(),
-#endif
-	ADDSET_SEPARATOR("Lighting"),
-	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
-#ifdef GLQUAKE
-	ADDSET_BOOL		("Colored Lights", gl_colorlights),
-	ADDSET_BOOL		("Fast Lights", gl_flashblend),
-	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
-	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
-	ADDSET_BOOL		("Particle Shaft", amf_lightning),
-#endif
-	ADDSET_SEPARATOR("Weapon Model"),
-#ifdef GLQUAKE
-	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
-#else
-	ADDSET_BOOL		("Show", cl_drawgun),
-#endif
-	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
-	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
-#ifdef GLQUAKE
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_SEPARATOR("Textures"),
-	ADDSET_BOOL		("Luma", gl_lumaTextures),
-	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
-	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
-	ADDSET_BOOL		("No Textures", gl_textureless),
-
-	ADDSET_BASIC_SECTION(),
-	ADDSET_SEPARATOR("Field of View"),
-	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
-	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
-	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
-	ADDSET_BOOL		("Gun Kick", v_gunkick),
-	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),
-	ADDSET_NUMBER	("Kick Roll", v_kickroll, 0, 10, 0.5),
-	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
-	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
-	ADDSET_BASIC_SECTION(),
-#endif
-};
 
 settings_page settfps;
 
@@ -879,44 +557,7 @@ void BitDepthToggle(qbool back) {
 }
 void FullScreenToggle(qbool back) { mvs_selected.fullscreen = mvs_selected.fullscreen ? 0 : 1; }
 
-setting settvideo_arr[] = {
-	//Video
-	ADDSET_SEPARATOR("Video"),
-	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
-	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
-	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
-	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 
-#ifndef __APPLE__
-	ADDSET_SEPARATOR("Screen settings"),
-	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
-#ifdef GLQUAKE
-	ADDSET_BOOL("Vertical sync", r_swapInterval),
-#endif
-	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
-	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
-	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
-	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
-
-	ADDSET_SEPARATOR("Font"),
-	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
-	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
-	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
-#endif
-
-	ADDSET_SEPARATOR("Miscellaneous"),
-
-	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
-	ADDSET_ADVANCED_SECTION(),
-#ifdef GLQUAKE
-	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
-	ADDSET_BASIC_SECTION(),
-#ifdef _WIN32
-	ADDSET_BOOL("Taskbar Flash", vid_flashonactivity),
-	ADDSET_BOOL("Taskbar Name", cl_window_caption),
-#endif
-#endif
-};
 settings_page settvideo;
 
 #endif
@@ -1058,32 +699,6 @@ void MOpt_LoadCfg(void) { Cbuf_AddText("cfg_load\n"); }
 void MOpt_SaveCfg(void) { Cbuf_AddText("cfg_save\n"); }
 
 settings_page settconfig;
-setting settconfig_arr[] = {
-    ADDSET_SEPARATOR("Load & Save"),
-    ADDSET_ACTION("Reload settings", MOpt_LoadCfg, "Reset the settings to last saved configuration."),
-    ADDSET_ACTION("Save settings", MOpt_SaveCfg, "Save the settings"),
-	ADDSET_ADVANCED_SECTION(),
-    ADDSET_BOOL("Save to profile dir", cfg_use_home),
-    ADDSET_BASIC_SECTION(),
-    ADDSET_SEPARATOR("Export & Import"),
-	ADDSET_ACTION("Import config ...", MOpt_ImportConfig, "You can load a configuration from a file here."),
-	ADDSET_ACTION("Export config ...", MOpt_ExportConfig, "Will export your current configuration to a file."),
-    ADDSET_SEPARATOR("Scripts"),
-	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Choose and load quake scripts here."),
-	ADDSET_SEPARATOR("Config Saving Options"),
-    ADDSET_ACTION("Reset Saving Options", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults."),
-    ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL("Backup old file", cfg_backup),
-	ADDSET_NAMED("Load Legacy", cfg_legacy_exec, MOpt_legacywrite_enum),
-	ADDSET_BOOL("Save Legacy", cfg_legacy_write),
-	ADDSET_BOOL("Aliases", cfg_save_aliases),
-	ADDSET_BOOL("Binds", cfg_save_binds),
-	ADDSET_BOOL("Cmdline", cfg_save_cmdline),
-	ADDSET_BOOL("Init Commands", cfg_save_cmds),
-	ADDSET_BOOL("Variables", cfg_save_cvars),
-	ADDSET_NAMED("Userinfo", cfg_save_userinfo, MOpt_userinfo_enum)
-};
 
 #define INPUTBOXWIDTH 300
 #define INPUTBOXHEIGHT 48
@@ -1276,6 +891,408 @@ void Menu_Options_Draw(void) {
 	CTab_Draw(&options_tab, x, y, w, h);
 }
 
+// MAIN TAB
+setting settgeneral_arr[] = {
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the \"QuakeWorld for Freshies\" guide by Apollyon."),
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
+	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
+#ifdef _WIN32
+	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
+#endif
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
+
+	//Chat Settings
+	ADDSET_SEPARATOR("Chat settings"),
+	ADDSET_BIND("Chat", "messagemode"),
+	ADDSET_BIND("Teamchat", "messagemode2"),
+	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
+	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
+	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
+	ADDSET_BASIC_SECTION(),
+	
+	//Connection
+	ADDSET_SEPARATOR("Connection"),
+	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
+	ADDSET_ENUM		("Quality", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
+
+	//Sound & Volume
+	ADDSET_SEPARATOR("Sound & Volume"),
+	ADDSET_NUMBER	("Primary Volume", s_volume, 0, 1, 0.05),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
+	ADDSET_NUMBER	("Chat Volume", con_sound_mm1_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Team Chat Volume", con_sound_mm2_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
+	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
+	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
+	ADDSET_BASIC_SECTION(),
+
+	//Match Tools
+	ADDSET_SEPARATOR("Match Tools"),
+	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
+	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
+	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM 	("Sshot Format", scr_sshot_format, scr_sshot_format_enum),
+#ifdef _WIN32
+	ADDSET_ENUM     ("Demo Format", demo_format, demoformat_enum),
+#endif
+	ADDSET_BASIC_SECTION(),
+	
+	ADDSET_ADVANCED_SECTION(), // I think all of paths should be advanced? -Up2	
+	//Paths
+	ADDSET_SEPARATOR("Paths"),
+	ADDSET_NAMED    ("Media Paths Type", cl_mediaroot, mediaroot_enum),
+	ADDSET_STRING   ("Screenshots Path", scr_sshot_dir),
+	ADDSET_STRING	("Demos Path", demo_dir),
+	ADDSET_STRING   ("Logs Path", log_dir),
+	ADDSET_STRING	("Qizmo Path", qizmo_dir),
+	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
+	ADDSET_BASIC_SECTION(),
+};
+
+// PLAYER TAB
+setting settplayer_arr[] = {
+	ADDSET_SEPARATOR("Player Settings"),
+	ADDSET_STRING	("Name", name),
+	ADDSET_STRING	("Teamchat Prefix", cl_fakename),
+	ADDSET_STRING	("Team", team),
+	ADDSET_SKIN		("Skin", skin),
+	ADDSET_COLOR	("Shirt Color", topcolor),
+	ADDSET_COLOR	("Pants Color", bottomcolor),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
+	ADDSET_BASIC_SECTION(),
+	
+	ADDSET_SEPARATOR("Weapon Handling"),
+	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to the weapon picked up if it is more powerful than what you're currently holding."),
+	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
+	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
+	
+    ADDSET_SEPARATOR("Movement"),
+	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum forward speed at all times."),
+	ADDSET_ADVANCED_SECTION(),
+    ADDSET_BOOL		("Smart Jump", cl_smartjump),
+	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
+	ADDSET_BASIC_SECTION(),
+	
+	ADDSET_SEPARATOR("Team Skin & Colors"),
+	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
+	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
+	ADDSET_SKIN		("Skin", cl_teamskin),
+	ADDSET_SKIN		("Quad Skin", cl_teamquadskin),
+	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
+	ADDSET_SKIN		("Quad+Pent Skin", cl_teambothskin),
+	
+	ADDSET_SEPARATOR("Enemy Skin & Colors"),
+	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
+	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
+	ADDSET_SKIN		("Skin", cl_enemyskin),
+	ADDSET_SKIN		("Quad Skin", cl_enemyquadskin),
+	ADDSET_SKIN		("Pent Skin", cl_enemypentskin),
+	ADDSET_SKIN		("Quad+Pent Skin", cl_enemybothskin),
+};
+
+// GRAPHICS TAB
+// please only put binds in here
+setting settfps_arr[] = {
+	ADDSET_SEPARATOR("Presets"),
+	ADDSET_ACTION	("Load High-Performance Preset", LoadFastPreset, "Adjust graphic settings for high performance. May increase FPS."),
+	ADDSET_ACTION	("Load High-Quality preset", LoadHQPreset, "Adjust graphic settings for high image-quality. May decrease FPS."),
+	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphic presets."),
+
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Disable lin.interp.", cl_nolerp),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
+	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
+	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
+	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
+
+	ADDSET_SEPARATOR("Environment"),
+
+	ADDSET_BOOL		("Simple Sky", r_fastsky),
+	ADDSET_BOOL		("Simple walls", r_drawflat),
+	ADDSET_BOOL		("Simple turbs", r_fastturb),
+	ADDSET_BOOL		("Draw flame", r_drawflame),
+	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
+	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
+	ADDSET_SEPARATOR("Projectiles"),
+
+	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
+	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
+	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
+	ADDSET_BOOL		("Rocket Light", r_rocketlight),
+	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
+	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
+#ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Hide Nails", amf_hidenails),
+	ADDSET_BOOL		("Hide Rockets", amf_hiderockets),
+	ADDSET_BASIC_SECTION(),
+#endif
+	ADDSET_SEPARATOR("Lighting"),
+	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
+#ifdef GLQUAKE
+	ADDSET_BOOL		("Colored Lights", gl_colorlights),
+	ADDSET_BOOL		("Fast Lights", gl_flashblend),
+	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
+	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
+	ADDSET_BOOL		("Particle Shaft", amf_lightning),
+#endif
+	ADDSET_SEPARATOR("Weapon Model"),
+#ifdef GLQUAKE
+	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
+#else
+	ADDSET_BOOL		("Show", cl_drawgun),
+#endif
+	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
+	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
+#ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SEPARATOR("Textures"),
+	ADDSET_BOOL		("Luma", gl_lumaTextures),
+	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
+	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
+	ADDSET_BOOL		("No Textures", gl_textureless),
+
+	ADDSET_BASIC_SECTION(),
+	ADDSET_SEPARATOR("Field of View"),
+	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
+	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
+	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
+	ADDSET_BOOL		("Gun Kick", v_gunkick),
+	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),
+	ADDSET_NUMBER	("Kick Roll", v_kickroll, 0, 10, 0.5),
+	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
+	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
+	ADDSET_BASIC_SECTION(),
+#endif
+};
+
+// HUD TAB
+setting setthud_arr[] = {
+	ADDSET_SEPARATOR("Head Up Display"),
+	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
+	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
+	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
+#ifdef GLQUAKE
+	ADDSET_NUMBER	("Crosshair alpha", gl_crosshairalpha, 0.1, 1, 0.1),
+	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
+#endif
+	ADDSET_SEPARATOR("New HUD"),
+	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
+	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOLLATE ("Teamholdbar", hud_teamholdbar_show),
+	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_BOOLLATE ("FPS", hud_fps_show),
+	ADDSET_BOOLLATE ("Clock", hud_clock_show),
+#ifdef GLQUAKE
+	ADDSET_BOOLLATE ("Radar", hud_radar_show),
+#endif
+	ADDSET_SEPARATOR("Quake Classic HUD"),
+	ADDSET_BOOL		("Status Bar", cl_sbar),
+	ADDSET_BOOL		("HUD Left", cl_hudswap),
+	ADDSET_BOOL		("Show FPS", show_fps),
+	ADDSET_BOOL		("Show Clock", scr_clock),
+	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
+#ifdef GLQUAKE
+	ADDSET_SEPARATOR("Tracker Messages"),
+	ADDSET_BOOL		("Flags", amf_tracker_flags),
+	ADDSET_BOOL		("Frags", amf_tracker_frags),
+	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
+	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
+	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
+	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
+	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SEPARATOR("Console"),
+	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
+	ADDSET_NAMED	("Fun Chars More", con_funchars_mode, funcharsmode_enum),
+	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
+	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
+	ADDSET_BOOL		("Timestamps", con_timestamps),
+	ADDSET_NUMBER	("Console height", scr_consize, 0.1, 1.0, 0.05),
+	ADDSET_BASIC_SECTION(),
+
+#endif
+
+};
+
+// DEMO PLAYBACK TAB
+setting settdemo_playback_arr[] = {
+	ADDSET_SEPARATOR("Multiview"),
+	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
+	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("HUD Flip", cl_mvhudflip),
+	ADDSET_BOOL		("HUD Vertical", cl_mvhudvertical),
+	ADDSET_BOOL		("Inset View", cl_mvinset),
+	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
+	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_SEPARATOR("Multiview Demos"),
+	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
+	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
+	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
+	ADDSET_BOOL     ("Status", mvd_status),
+
+	ADDSET_SEPARATOR("Demo Binds"),
+	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
+	ADDSET_BIND("Stop", "disconnect"),
+	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused."),
+	ADDSET_BIND("Fast Forward", "cl_demospeed 5;echo Demo paused."),
+};
+
+// CONTROLS TAB
+setting settbinds_arr[] = {
+	ADDSET_SEPARATOR("Mouse Settings"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Freelook", freelook),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 15, 0.25),
+	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Invert mouse will make you look down when the mouse is moved up."),
+#ifdef _WIN32
+    ADDSET_ADVANCED_SECTION(),
+    ADDSET_STRING   ("X-axis sensitivity", m_yaw),
+    ADDSET_STRING   ("Y-axis sensitivity", m_pitch),
+    ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
+    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
+    ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
+    ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
+    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
+    ADDSET_BASIC_SECTION(),
+#endif
+
+	ADDSET_SEPARATOR("Movement"),
+	ADDSET_BIND("Attack", "+attack"),
+	ADDSET_BIND("Jump/Swim up", "+jump"),
+	ADDSET_BIND("Move Forward", "+forward"),
+	ADDSET_BIND("Move Backward", "+back"),
+	ADDSET_BIND("Move Left", "+moveleft"),
+	ADDSET_BIND("Move Right", "+moveright"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BIND("Swim Up", "+moveup"),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_BIND("Swim Down", "+movedown"),
+	ADDSET_BIND("Zoom In/Out", "+zoom"),
+
+	ADDSET_SEPARATOR("Weapons"),
+	ADDSET_BIND("Previous Weapon", "impulse 12"),
+	ADDSET_BIND("Next Weapon", "impulse 10"),
+	ADDSET_BIND("Axe", "weapon 1"),
+	ADDSET_BIND("Shotgun", "weapon 2"),
+	ADDSET_BIND("Super Shotgun", "weapon 3"),
+	ADDSET_BIND("Nailgun", "weapon 4"),
+	ADDSET_BIND("Super Nailgun", "weapon 5"),
+	ADDSET_BIND("Grenade Launcher", "weapon 6"),
+	ADDSET_BIND("Rocket Launcher", "weapon 7"),
+	ADDSET_BIND("Thunderbolt", "weapon 8"),
+
+	ADDSET_SEPARATOR("Teamplay"),
+	ADDSET_BIND("Report Status", "tp_msgreport"),
+	ADDSET_BIND("Lost location", "tp_msglost"),
+	ADDSET_BIND("Location safe", "tp_msgsafe"),
+	ADDSET_BIND("Point at item", "tp_msgpoint"),
+	ADDSET_BIND("Took item", "tp_msgtook"),
+	ADDSET_BIND("Need items", "tp_msgneed"),
+	ADDSET_BIND("Coming from location", "tp_msgcoming"),
+	ADDSET_BIND("Help location", "tp_msghelp"),
+	ADDSET_BIND("Enemy Quad Dead", "tp_msgquaddead"),
+	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
+	ADDSET_BIND("Get Quad", "tp_msggetquad"),
+	ADDSET_BIND("Get Pent", "tp_msggetpent"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BIND("Trick at location", "tp_msgtrick"),
+	ADDSET_BIND("Replace at location", "tp_msgreplace"),
+	ADDSET_BASIC_SECTION(),
+
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_BIND("Show Scores", "+showscores"),
+	ADDSET_BIND("Screenshot", "screenshot"),
+	ADDSET_BIND("Quit", "quit"),
+	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
+
+};
+
+// VIDEO TAB
+setting settvideo_arr[] = {
+	//Video
+	ADDSET_SEPARATOR("Video"),
+	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
+	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
+	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
+	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
+
+#ifndef __APPLE__
+	ADDSET_SEPARATOR("Screen settings"),
+	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
+#ifdef GLQUAKE
+	ADDSET_BOOL("Vertical sync", r_swapInterval),
+#endif
+	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
+	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
+	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
+	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
+
+	ADDSET_SEPARATOR("Font"),
+	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
+	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
+	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
+#endif
+
+	ADDSET_SEPARATOR("Miscellaneous"),
+
+	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
+	ADDSET_ADVANCED_SECTION(),
+#ifdef GLQUAKE
+	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
+	ADDSET_BASIC_SECTION(),
+#ifdef _WIN32
+	ADDSET_BOOL("Taskbar Flash", vid_flashonactivity),
+	ADDSET_BOOL("Taskbar Name", cl_window_caption),
+#endif
+#endif
+};
+
+// CONFIG TAB
+setting settconfig_arr[] = {
+    ADDSET_SEPARATOR("Load & Save"),
+    ADDSET_ACTION("Reload settings", MOpt_LoadCfg, "Reset the settings to last saved configuration."),
+    ADDSET_ACTION("Save settings", MOpt_SaveCfg, "Save the settings"),
+	ADDSET_ADVANCED_SECTION(),
+    ADDSET_BOOL("Save to profile dir", cfg_use_home),
+    ADDSET_BASIC_SECTION(),
+    ADDSET_SEPARATOR("Export & Import"),
+	ADDSET_ACTION("Import config ...", MOpt_ImportConfig, "You can load a configuration from a file here."),
+	ADDSET_ACTION("Export config ...", MOpt_ExportConfig, "Will export your current configuration to a file."),
+    ADDSET_SEPARATOR("Scripts"),
+	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Choose and load quake scripts here."),
+	ADDSET_SEPARATOR("Config Saving Options"),
+    ADDSET_ACTION("Reset Saving Options", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults."),
+    ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL("Backup old file", cfg_backup),
+	ADDSET_NAMED("Load Legacy", cfg_legacy_exec, MOpt_legacywrite_enum),
+	ADDSET_BOOL("Save Legacy", cfg_legacy_write),
+	ADDSET_BOOL("Aliases", cfg_save_aliases),
+	ADDSET_BOOL("Binds", cfg_save_binds),
+	ADDSET_BOOL("Cmdline", cfg_save_cmdline),
+	ADDSET_BOOL("Init Commands", cfg_save_cmds),
+	ADDSET_BOOL("Variables", cfg_save_cvars),
+	ADDSET_NAMED("Userinfo", cfg_save_userinfo, MOpt_userinfo_enum)
+};
+
 qbool Menu_Options_Mouse_Event(const mouse_state_t *ms)
 {
 	mouse_state_t nms = *ms;
@@ -1295,7 +1312,6 @@ qbool Menu_Options_Mouse_Event(const mouse_state_t *ms)
 
 	return CTab_Mouse_Event(&options_tab, &nms);
 }
-
 void Menu_Options_Init(void) {
 	Settings_MainInit();
 
