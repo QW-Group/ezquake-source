@@ -25,6 +25,7 @@
 #include "EX_FileList.h"
 #include "utils.h"
 #include "keys.h"
+#include "fs.h"
 
 
 // column width

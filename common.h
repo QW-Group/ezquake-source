@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.57 2007-08-24 17:00:31 dkure Exp $
+    $Id: common.h,v 1.58 2007-09-02 21:59:28 johnnycz Exp $
 */
 // common.h  -- general definitions
 
@@ -187,9 +187,10 @@ extern char *SYSINFO_GetString(void);
 char *va(char *format, ...); // does a varargs printf into a temp buffer
 
 //============================================================================
+// Quake File System
+// for more File System control, include fs.h in your sources
 
 extern int fs_filesize, fs_filepos;
-extern qbool com_filefrompak;
 extern char *com_filesearchpath;
 extern char	fs_netpath[MAX_OSPATH];
 struct cache_user_s;
@@ -197,17 +198,7 @@ struct cache_user_s;
 extern char	com_gamedir[MAX_OSPATH];
 extern char	com_basedir[MAX_OSPATH];
 extern char	com_gamedirfile[MAX_QPATH];
-
 extern char com_homedir[MAX_PATH];
-
-// QW262 -->
-#ifndef SERVERONLY
-#define UserdirSet (userdirfile[0] != '\0')
-extern	char userdirfile[MAX_OSPATH];
-extern	char com_userdir[MAX_OSPATH];
-void COM_SetUserDirectory (char *dir, char *type);
-#endif
-// <-- QW262
 
 extern qbool file_from_pak;		// set if file came from a pak file
 extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
@@ -215,20 +206,20 @@ extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir 
 void FS_InitFilesystem (void);
 void FS_SetGamedir (char *dir);
 int FS_FOpenFile (char *filename, FILE **file);
+int FS_FOpenPathFile (char *filename, FILE **file);
 byte *FS_LoadStackFile (char *path, void *buffer, int bufsize);
 byte *FS_LoadTempFile (char *path);
 byte *FS_LoadHunkFile (char *path);
 void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
 byte *FS_LoadHeapFile (char *path);
-qbool FS_AddPak (char *pakfile);
-qbool FS_RemovePak (const char *pakfile);
-
 qbool COM_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
 qbool COM_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
 void COM_CreatePath (char *path);
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode);
+char *COM_LegacyDir (char *media_dir);
 
-char *COM_LegacyDir(char *media_dir);
+
+//============================================================================
 
 char *Info_ValueForKey (char *s, char *key);
 void Info_RemoveKey (char *s, char *key);
@@ -350,92 +341,29 @@ void SV_Frame (double time);
 
 int isspace2(int c);
 
-#ifdef WITH_ZLIB
-#include "zlib.h"
-int COM_GZipPack (char *source_path,
-				  char *destination_path,
-				  qbool overwrite);
-
-int COM_GZipUnpack (char *source_path,		// The path to the compressed source file.
-					char *destination_path, // The destination file path.
-					qbool overwrite);		// Overwrite the destination file if it exists?
-
-int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
-						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
-						  int unpack_path_size,		// The size of the buffer.	
-						  char *append_extension);	// The extension if any that should be appended to the filename.
-
-int COM_ZlibInflate(FILE *source, FILE *dest);
-
-int COM_ZlibUnpack (char *source_path,		// The path to the compressed source file.
-					char *destination_path, // The destination file path.
-					qbool overwrite);		// Overwrite the destination file if it exists?
-
-int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
-						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
-						  int unpack_path_size,		// The size of the buffer.	
-						  char *append_extension);	// The extension if any that should be appended to the filename.
-#endif // WITH_ZLIB
-
-#ifdef WITH_ZIP
-#include "unzip.h"
-qbool COM_ZipIsArchive (char *zip_path);
-
-int COM_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
-							   char *path,						// The path that should be broken up into parts.
-							   char *archive_path,				// The buffer that should contain the archive path after the breakup.
-							   int archive_path_size,			// The size of the archive path buffer.
-							   char *inzip_path,				// The buffer that should contain the inzip path after the breakup.
-							   int inzip_path_size);			// The size of the inzip path buffer.
-
-unzFile COM_ZipUnpackOpenFile (const char *zip_path);
-
-int COM_ZipUnpackCloseFile (unzFile zip_file);
-
-int COM_ZipUnpack (unzFile zip_file, 
-				   char *destination_path, 
-				   qbool case_sensitive, 
-				   qbool keep_path, 
-				   qbool overwrite, 
-				   const char *password);
-
-int COM_ZipUnpackToTemp (unzFile zip_file, 
-				   qbool case_sensitive, 
-				   qbool keep_path, 
-				   const char *password,
-				   char *unpack_path,					// The path where the file was unpacked.
-				   int unpack_path_size);				// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.)
-
-int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_ZipUnpackOpenFile(..)
-						  const char *filename_inzip,	// The name of the file to unpack inside the zip.
-						  const char *destination_path, // The destination path where to extract the file to.
-						  qbool case_sensitive,			// Should we look for the filename case sensitivly?
-						  qbool keep_path,				// Should the path inside the zip be preserved when unpacking?
-						  qbool overwrite,				// Overwrite any existing file with the same name when unpacking?
-						  const char *password);		// The password to use when extracting the file.
-
-int COM_ZipUnpackOneFileToTemp (unzFile zip_file, 
-						  const char *filename_inzip,
-						  qbool case_sensitive, 
-						  qbool keep_path,
-						  const char *password,
-						  char *unpack_path,			// The path where the file was unpacked.
-						  int unpack_path_size);			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
-
-int COM_ZipUnpackCurrentFile (unzFile zip_file, 
-							  const char *destination_path, 
-							  qbool case_sensitive, 
-							  qbool keep_path, 
-							  qbool overwrite, 
-							  const char *password);
-
-int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent);
-
-int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
-
-#endif // WITH_ZIP
-
 // HUD -> hexum
 extern  int         host_screenupdatecount; // kazik, incremented every screen update, never reset
+
+#ifndef SERVERONLY
+
+// regexp match support for group operations in scripts
+qbool IsRegexp(const char *str);
+qbool ReSearchInit (const char *wildcard);
+qbool ReSearchMatch (const char *str);
+void ReSearchDone (void);
+
+unsigned char CharToBrown(unsigned char ch);
+unsigned char CharToWhite(unsigned char ch);
+void CharsToBrown(char* start, char* end);
+void CharsToWhite(char* start, char* end);
+
+#else
+
+#define IsRegexp(name) (false)
+#define ReSearchInit(wildcard) (true)
+#define ReSearchMatch(str) (false)
+#define ReSearchDone() {}
+
+#endif
 
 #endif /* !__COMMON_H__ */

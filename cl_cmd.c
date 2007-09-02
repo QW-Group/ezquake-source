@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.53 2007-07-29 00:15:03 qqshka Exp $
+	$Id: cl_cmd.c,v 1.54 2007-09-02 21:59:28 johnnycz Exp $
 */
 
 #include <time.h>
@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "menu.h"
 #include "qtv.h"
+#include "fs.h"
 
 
 extern qbool Match_Running ;

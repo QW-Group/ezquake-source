@@ -133,26 +133,4 @@ void Cvar_ResetCurrentGroup(void);
 qbool Cvar_CreateTempVar (void);	// when parsing config.cfg
 void Cvar_CleanUpTempVars (void);	// clean up afterwards
 
-#ifndef SERVERONLY
-
-// regexp match support for group operations in scripts
-qbool IsRegexp(char *str);
-qbool ReSearchInit (char *wildcard);
-qbool ReSearchMatch (char *str);
-void ReSearchDone (void);
-
-unsigned char CharToBrown(unsigned char ch);
-unsigned char CharToWhite(unsigned char ch);
-void CharsToBrown(char* start, char* end);
-void CharsToWhite(char* start, char* end);
-
-#else
-
-#define IsRegexp(name) (false)
-#define ReSearchInit(wildcard) (true)
-#define ReSearchMatch(str) (false)
-#define ReSearchDone() {}
-
-#endif
-
 #endif /* !__CVAR_H__ */

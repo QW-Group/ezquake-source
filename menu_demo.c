@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.30 2007-05-13 13:41:43 johnnycz Exp $
+		$Id: menu_demo.c,v 1.31 2007-09-02 21:59:29 johnnycz Exp $
 
 */
 
@@ -32,6 +32,7 @@
 #include "Ctrl_Tab.h"
 #include "menu.h"
 #include "keys.h"
+#include "fs.h"
 
 
 #ifdef _WIN32
