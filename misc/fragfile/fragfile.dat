@@ -149,6 +149,7 @@
 #DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN     "q lightning gun"	"&c009q&r-lg"
 
 #DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"			"rail"		//for dmm8
+#DEFINE WEAPON_CLASS    COIL_GUN            "coil gun"			"coil"		//for KTX instagib
 
 #DEFINE WEAPON_CLASS    DROWN               "drowned"
 #DEFINE WEAPON_CLASS    LAVA                "lava"
@@ -223,6 +224,7 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" was crushed by "      // ktpro stomp kill
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" was jumped by "       // ktpro stomp kill
 #DEFINE OBITUARY	X_FRAGS_Y		STOMP				" stomps "              // ktpro stomp kill
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" was literally stomped into particles by " // KTX instagib
 
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was ax-murdered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SHOTGUN			" was lead poisoned by "
@@ -244,6 +246,8 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" rides " "'s rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	LIGHTNING_GUN		" accepts "  "'s shaft"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_LIGHTNING_GUN		" gets a natural disaster from "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was axed to pieces by " // KTX instagib
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	COIL_GUN			" was gibbed by " // KTX instagib
 
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	RAIL_GUN			" was railed by "		//for dmm8
 
@@ -560,6 +564,9 @@
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" гот the ред flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the ред═смурф flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the блуе═смурф flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" тоок ыоур flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" тоок the енемы flag!"
+
 
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped red's flag"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped blue's flag"
@@ -617,3 +624,5 @@
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"шрЕД ТЕАМщ цаптуред the блуе flag!"				//kw4
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" цаптуред the блуе flag!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" цаптуред the ред flag!"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" цаптуред ыоур flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" цаптуред the енемы flag!"
