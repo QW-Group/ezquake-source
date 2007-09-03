@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.13 2007-09-03 15:23:54 dkure Exp $
+$Id: fs.c,v 1.14 2007-09-03 15:46:30 johnnycz Exp $
 */
 
 
@@ -1115,18 +1115,23 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 }
 
 void FS_InitFilesystem( void ) {
+#ifndef WITH_FTE_VFS
+	FILE *f;
+#else
+	vfsfile_t *vfs;
+#endif
+
 	FS_InitModuleFS();
 
 	FS_InitFilesystemEx( false ); // first attempt, simplified
 
 #ifndef WITH_FTE_VFS
-	FILE *f;
 	if ( FS_FOpenFile( "gfx.wad", &f ) >= 0 ) { // we found gfx.wad, seems we have proper com_basedir
 		fclose( f );
 		return;
 	}
 #else
-	vfsfile_t *vfs = FS_OpenVFS("gfx.wad", "rb", FS_ANY); 
+	vfs = FS_OpenVFS("gfx.wad", "rb", FS_ANY); 
 	if (vfs) { // // we found gfx.wad, seems we have proper com_basedir
 		VFS_CLOSE(vfs);
 		return;
@@ -2684,7 +2689,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.13 2007-09-03 15:23:54 dkure Exp $
+ * $Id: fs.c,v 1.14 2007-09-03 15:46:30 johnnycz Exp $
  *             
  */
 
