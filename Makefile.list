@@ -5,12 +5,10 @@ CLIENT_C_FILES := \
 	Ctrl_ScrollBar \
 	Ctrl_Tab \
 	EX_FileList \
-	EX_FunNames \
 	EX_browser \
 	EX_browser_net \
 	EX_browser_ping \
 	EX_browser_sources \
-	EX_misc \
 	ez_controls \
 	auth \
 	cl_cam \

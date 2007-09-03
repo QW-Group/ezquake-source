@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.108 2007-09-03 15:38:19 dkure Exp $
+$Id: cl_parse.c,v 1.109 2007-09-03 19:02:28 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2381,6 +2381,83 @@ void MakeChatRed(char *t, int mm2)
     }
 }
 */
+
+int SeparateChat(char *chat, int *out_type, char **out_msg)
+{
+    int server_cut = 31;    // maximum characters sent in nick by server
+
+    int i;
+    int classified = -1;
+    int type = 0;
+    char *msg=NULL;
+    for (i=0; i <= MAX_CLIENTS; i++)
+    {
+        int client = -1;
+        char buf[512];
+
+        if (i == MAX_CLIENTS)
+        {
+            strcpy(buf, "console: ");
+            //Tmp_MakeRed(buf);
+            if (!strncmp(chat, buf, strlen(buf)))
+            {
+                client = i;
+                type = CHAT_MM1;
+                msg = chat + strlen(buf);
+            }
+        }
+        else
+        {
+            if (!cl.players[i].name[0])
+                continue;
+
+            sprintf(buf, "%.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            //Tmp_MakeRed(buf);
+            if (!strncmp(chat, buf, strlen(buf)))
+            {
+                client = i;
+                type = CHAT_MM1;
+                msg = chat + strlen(buf);
+            }
+
+            sprintf(buf, "(%.*s): ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            //Tmp_MakeRed(buf);
+            if (!strncmp(chat, buf, strlen(buf)))
+            {
+                client = i;
+                type = CHAT_MM2;
+                msg = chat + strlen(buf);
+            }
+
+            sprintf(buf, "[SPEC] %.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            //Tmp_MakeRed(buf);
+            if (!strncmp(chat, buf, strlen(buf)))
+            {
+                client = i;
+                type = CHAT_SPEC;
+                msg = chat + strlen(buf);
+            }
+        }
+
+        if (client >= 0)
+        {
+            if (classified < 0)
+                classified = client;
+            else
+                return -1;
+        }
+    }
+    
+    if (classified < 0)
+        return -1;
+
+    if (out_msg)
+        *out_msg = msg;
+    if (out_type)
+        *out_type = type;
+
+    return classified;
+}
 
 extern qbool TP_SuppressMessage (wchar *);
 extern cvar_t cl_chatsound, msg_filter;

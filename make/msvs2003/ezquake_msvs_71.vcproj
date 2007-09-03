@@ -1330,12 +1330,6 @@
 					RelativePath="..\..\EX_FileList.c">
 				</File>
 				<File
-					RelativePath="..\..\EX_FunNames.c">
-				</File>
-				<File
-					RelativePath="..\..\EX_misc.c">
-				</File>
-				<File
 					RelativePath="..\..\fchecks.c">
 				</File>
 				<File
@@ -1677,12 +1671,6 @@
 				</File>
 				<File
 					RelativePath="..\..\EX_FileList.h">
-				</File>
-				<File
-					RelativePath="..\..\EX_FunNames.h">
-				</File>
-				<File
-					RelativePath="..\..\EX_misc.h">
 				</File>
 				<File
 					RelativePath="..\..\fchecks.h">

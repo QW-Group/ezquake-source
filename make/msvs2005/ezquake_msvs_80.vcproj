@@ -1852,14 +1852,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\EX_FunNames.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_misc.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\fchecks.c"
 					>
 				</File>
@@ -2272,14 +2264,6 @@
 				</File>
 				<File
 					RelativePath="..\..\document_rendering.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_FunNames.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_misc.h"
 					>
 				</File>
 				<File

@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.43 2007-09-03 15:35:11 dkure Exp $
+	$Id: EX_browser.c,v 1.44 2007-09-03 19:02:28 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -25,6 +25,7 @@
 #include "Ctrl.h"
 #include "Ctrl_Tab.h"
 #include "menu.h"
+#include "utils.h"
 
 
 int source_unique = 0;

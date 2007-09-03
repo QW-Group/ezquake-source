@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.40 2007-09-03 17:05:46 johnnycz Exp $
+	$Id: utils.c,v 1.41 2007-09-03 19:02:28 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -426,6 +426,74 @@ int Player_GetSlot(char *arg)
 	return PLAYER_NUM_NOMATCH;
 }
 
+
+/********************************** Clipboard ****************************************/
+
+#ifndef _WIN32
+#define CLIPBOARDSIZE 1024
+static char clipboard[CLIPBOARDSIZE] = "\0";    // for clipboard implementation
+#endif
+// copies given text to clipboard
+void CopyToClipboard(const char *text)
+{
+#ifdef _WIN32
+    if (OpenClipboard(NULL))
+    {
+        HANDLE i;
+        LPTSTR  lptstrCopy;
+        HGLOBAL hglbCopy;
+
+        EmptyClipboard();
+        hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text)+1);
+        lptstrCopy = GlobalLock(hglbCopy);
+        strcpy((char *)lptstrCopy, text);
+        GlobalUnlock(hglbCopy);
+        i = SetClipboardData(CF_TEXT, hglbCopy);
+
+        CloseClipboard();
+    }
+#else
+    strncpy(clipboard, text, CLIPBOARDSIZE);
+    clipboard[CLIPBOARDSIZE-1] = 0;
+#endif
+}
+
+// reads from clipboard
+char *ReadFromClipboard(void)
+{
+#ifdef _WIN32
+    static char clipbuf[1024];
+    int     i;
+    HANDLE  th;
+    char    *clipText;
+
+    clipbuf[0] = 0;
+
+    if (OpenClipboard(NULL))
+    {
+        th = GetClipboardData(CF_TEXT);
+        if (th)
+        {
+            clipText = GlobalLock(th);
+            if (clipText)
+            {
+                strncpy(clipbuf, clipText, 1023);
+                clipbuf[1023] = 0;
+                for (i=0; i < strlen(clipbuf); i++)
+                    if (clipbuf[i]=='\n' || clipbuf[i]=='\t' || clipbuf[i]=='\b')
+                        clipbuf[i] = ' ';
+            }
+            GlobalUnlock(th);
+        }
+        CloseClipboard();
+    }
+    return clipbuf;
+#else
+    return clipboard;
+#endif
+}
+
+
 /********************************** String Utils ****************************************/
 
 qbool Util_F_Match (const char *_msg, char *f_request) {
@@ -534,6 +602,172 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
 	}	
 }
 
+// compares two fun strings
+int funcmp(const char *s1, const char *s2)
+{
+    char *t1, *t2;
+    int ret;
+
+    if (s1 == NULL  &&  s2 == NULL)
+        return 0;
+
+    if (s1 == NULL)
+        return -1;
+
+    if (s2 == NULL)
+        return 1;
+
+    t1 = Q_strdup(s1);
+    t2 = Q_strdup(s2);
+
+    FunToSort(t1);
+    FunToSort(t2);
+
+    ret = strcmp(t1, t2);
+
+    Q_free(t1);
+    Q_free(t2);
+
+    return ret;
+}
+
+void FunToSort(char *text)
+{
+	char *tmp;
+	char *s, *d;
+	unsigned char c;
+	tmp = (char *)Q_malloc(strlen(text) + 1);
+
+	s = text;
+	d = tmp;
+
+	while ((c = (unsigned char)(*s++)) != 0) {
+		if (c >= 18  &&  c <= 27)
+			c += 30;
+		else if (c >= 146  &&  c <= 155)
+			c -= 98;
+		else if (c >= 32  &&  c <= 126)
+			c = tolower(c);
+		else if (c >= 160  &&  c <= 254)
+			c  = tolower(c-128);
+		else {
+			switch (c) {
+					case 1:
+					case 2:
+					case 3:
+					case 4:
+					case 6:
+					case 7:
+					case 8:
+					case 9:
+					case 132:   // kwadrat
+					c = 210; break;
+					case 5:
+					case 14:
+					case 15:
+					case 28:
+					case 133:
+					case 142:
+					case 143:
+					case 156:   // dot
+					c = 201; break;
+					case 29:
+					case 157:   // <
+					c = 202; break;
+					case 30:
+					case 158:   // -
+					c = 203; break;
+					case 31:
+					case 159:   // >
+					c = 204; break;
+					case 128:   // '('
+					c = 205; break;
+					case 129:   // '='
+					c = 206; break;
+					case 130:   // ')'
+					c = 207; break;
+					case 131:   // '+'
+					c = 208; break;
+					case 127:
+					case 255:   // <-
+					c = 209; break;
+					case 134:   // d1
+					c = 211; break;
+					case 135:   // d2
+					c = 212; break;
+					case 136:   // d3
+					c = 213; break;
+					case 137:   // d4
+					c = 214; break;
+					case 16:
+					case 144:   // '['
+					c = '['; break;
+					case 17:
+					case 145:   // ']'
+					c = ']'; break;
+					case 141:   // '>'
+					c = 200; break;
+					case 10:
+					case 11:
+					case 12:
+					case 13:
+					case 138:
+					case 139:
+					case 140:   // ' '
+					c = ' '; break;
+			}
+		}
+
+		*d++ = c;
+	}
+	*d = 0;
+
+	strcpy(text, tmp);
+	free(tmp);
+}
+
+#ifdef UNUSED_CODE
+// todo: these functions are unused and there might already exist
+// equivalent functions in our project; in such case remove them
+unsigned char CharToBrown(unsigned char ch)
+{
+	if ( ch > 32 && ch <= 127 )
+		return ch + 128;
+	else
+		return ch;
+}
+
+unsigned char CharToWhite(unsigned char ch)
+{
+	if ( ch > 160 )
+		return ch - 128;
+	else
+		return ch;
+}
+#endif
+
+void CharsToBrown(char* start, char* end)
+{
+	char *p = start;
+
+	while (p < end) {
+		if ( *p > 32 && *p <= 127 )
+			*p += 128;
+		p++;
+	}
+}
+
+void CharsToWhite(char* start, char* end)
+{
+	char *p = start;
+
+	while (p < end) {
+		if ( *p > 160 )
+			*p -= 128;
+		p++;
+	}
+}
+
 /********************************** TF Utils ****************************************/
 
 static char *Utils_TF_ColorToTeam_Failsafe(int color) {
@@ -604,6 +838,8 @@ int Utils_TF_TeamToColor(char *team) {
 		return 11;
 	return 0;
 }
+
+/********************************** REGEXP ****************************************/
 
 qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 {
@@ -759,44 +995,6 @@ void ReSearchDone (void)
 	wildcard_level--;
 	if (wildcard_re[wildcard_level]) (pcre_free)(wildcard_re[wildcard_level]);
 	if (wildcard_re_extra[wildcard_level]) (pcre_free)(wildcard_re_extra[wildcard_level]);
-}
-
-unsigned char CharToBrown(unsigned char ch)
-{
-	if ( ch > 32 && ch <= 127 )
-		return ch + 128;
-	else
-		return ch;
-}
-
-unsigned char CharToWhite(unsigned char ch)
-{
-	if ( ch > 160 )
-		return ch - 128;
-	else
-		return ch;
-}
-
-void CharsToBrown(char* start, char* end)
-{
-	char *p = start;
-
-	while (p < end) {
-		if ( *p > 32 && *p <= 127 )
-			*p += 128;
-		p++;
-	}
-}
-
-void CharsToWhite(char* start, char* end)
-{
-	char *p = start;
-
-	while (p < end) {
-		if ( *p > 160 )
-			*p -= 128;
-		p++;
-	}
 }
 // <-- QW262
 #endif
