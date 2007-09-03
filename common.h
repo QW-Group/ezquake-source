@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.58 2007-09-02 21:59:28 johnnycz Exp $
+    $Id: common.h,v 1.59 2007-09-03 15:36:28 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -212,6 +212,12 @@ byte *FS_LoadTempFile (char *path);
 byte *FS_LoadHunkFile (char *path);
 void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
 byte *FS_LoadHeapFile (char *path);
+#ifndef WITH_FTE_VFS
+void FS_AddGameDirectory (char *path_to_dir, char *dir);
+#else
+void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
+#endif
+
 qbool COM_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
 qbool COM_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
 void COM_CreatePath (char *path);
