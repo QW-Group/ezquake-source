@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.78 2007-08-18 14:09:26 johnnycz Exp $
+	$Id: menu.c,v 1.79 2007-09-03 15:40:56 dkure Exp $
 
 */
 
@@ -688,8 +688,8 @@ void M_SinglePlayer_Draw (void) {
 }
 
 static void CheckSPGame (void) {
+#ifndef WITH_FTE_VFS
 	FILE *f;
-
 	FS_FOpenFile ("spprogs.dat", &f);
 	if (f) {
 		fclose (f);
@@ -697,6 +697,16 @@ static void CheckSPGame (void) {
 	} else {
 		m_singleplayer_notavail = true;
 	}
+
+#else
+	vfsfile_t *v;
+	if ((v = FS_OpenVFS("spprogs.dat", "rb", FS_ANY))) {
+		VFS_CLOSE(v);
+		m_singleplayer_notavail = false;
+	} else {
+		m_singleplayer_notavail = true;
+	}
+#endif
 }
 
 static void StartNewGame (void) {
@@ -869,34 +879,60 @@ menu_window_t load_window, save_window;
 void M_ScanSaves (char *sp_gamedir) {
 	int i, j, version;
 	char name[MAX_OSPATH];
+#ifndef WITH_FTE_VFS
 	FILE *f;
+#else
+	vfsfile_t *f;
+#endif
 
 	for (i = 0; i < MAX_SAVEGAMES; i++) {
 		strcpy (m_filenames[i], "--- UNUSED SLOT ---");
 		loadable[i] = false;
+
 		snprintf (name, sizeof(name), "%s/save/s%i.sav", sp_gamedir, i);
+#ifndef WITH_FTE_VFS
 		if (!(f = fopen (name, "r")))
 			continue;
 		fscanf (f, "%i\n", &version);
 		fscanf (f, "%79s\n", name);
 		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
+#else
+		if (!(f = FS_OpenVFS(name, "rb", FS_ANY)))
+			continue;
+		VFS_GETS(f, name, sizeof(name));
+		version = atoi(name);
+		VFS_GETS(f, name, sizeof(name));
+		strncpy(m_filenames[i], name, sizeof(m_filenames[i]));
+#endif
 
 		// change _ back to space
 		for (j = 0; j < SAVEGAME_COMMENT_LENGTH; j++)
 			if (m_filenames[i][j] == '_')
 				m_filenames[i][j] = ' ';
 		loadable[i] = true;
+#ifndef WITH_FTE_VFS
 		fclose (f);
+#else
+		VFS_CLOSE(f);
+#endif
 	}
 }
 
 void M_Menu_Load_f (void) {
+#ifndef WITH_FTE_VFS
 	FILE *f;
 
 	if (FS_FOpenFile ("spprogs.dat", &f) == -1)
 		return;
+#else
+	vfsfile_t *f;
+
+	if (!(f = FS_OpenVFS("spprogs.dat", "rb", FS_ANY)))
+		return;
+#endif
 
 	M_EnterMenu (m_load);
+	// FTE-FIXME: file_from_gamedir is not set in FS_OpenVFS
 	M_ScanSaves (!file_from_gamedir ? "qw" : com_gamedir);
 }
 
