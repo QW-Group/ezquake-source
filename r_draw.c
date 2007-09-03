@@ -781,10 +781,10 @@ static qbool customcrosshairdata[64];
 static qbool customcrosshair_loaded;
 void customCrosshair_Init(void)
 {
-#ifndef WTIH_FTE_VFS
+#ifndef WITH_FTE_VFS
 	FILE *f;
 #else
-	vfsfile_t *v;
+	vfsfile_t *f;
 	vfserrno_t err;
 #endif
 	int i = 0, c;
@@ -793,7 +793,7 @@ void customCrosshair_Init(void)
 #ifndef WITH_FTE_VFS
 	if (FS_FOpenFile("crosshairs/crosshair.txt", &f) == -1)
 #else
-	if (!(v = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY)))
+	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY)))
 #endif
 		return;
 
@@ -809,11 +809,11 @@ void customCrosshair_Init(void)
 		}
 
 #else
-		VFS_READ(v, &c, sizeof(char), &err);
+		VFS_READ(f, &c, sizeof(char), &err);
 		if (err == VFSERR_EOF)
 		{
 			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
-			VFS_CLOSE(v);
+			VFS_CLOSE(f);
 			return;
 		}
 #endif
@@ -826,7 +826,7 @@ void customCrosshair_Init(void)
 #ifndef WITH_FTE_VFS
 			fclose(f);
 #else
-			VFS_CLOSE(v);
+			VFS_CLOSE(f);
 #endif
 			return;
 		}
@@ -838,7 +838,7 @@ void customCrosshair_Init(void)
 #ifndef WITH_FTE_VFS
 	fclose(f);
 #else
-	VFS_CLOSE(v);
+	VFS_CLOSE(f);
 #endif
 	customcrosshair_loaded = true;
 }
