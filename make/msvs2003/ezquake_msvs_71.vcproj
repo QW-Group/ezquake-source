@@ -710,6 +710,9 @@
 					RelativePath="..\..\fs.c">
 				</File>
 				<File
+					RelativePath="..\..\hash.c">
+				</File>
+				<File
 					RelativePath="..\..\host.c">
 				</File>
 				<File
