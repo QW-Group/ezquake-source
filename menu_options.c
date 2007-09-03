@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.75 2007-09-02 23:29:43 himan Exp $
+		$Id: menu_options.c,v 1.76 2007-09-03 05:14:07 himan Exp $
 
 */
 
@@ -196,8 +196,8 @@ const char* bandwidth_enum[] = {
 	"ADSL (> 256k)", "30000" };
 
 const char* cl_c2sImpulseBackup_enum[] = {
-	"Perfect", "0", "Low packetloss", "2", "Medium packetloss", "4",
-	"High packetloss", "6" };
+	"Perfect", "0", "Low", "2", "Medium", "4",
+	"High", "6" };
 
 #ifdef _WIN32
 const char* demoformat_enum[] = { "QuakeWorld Demo", "qwd", "Qizmo compressed QWD", "qwz", "MultiViewDemo", "mvd" };
@@ -236,21 +236,21 @@ qbool CT_Opt_Settings_Mouse_Event(const mouse_state_t *ms)
 // </SETTINGS>
 //=============================================================================
 
-settings_page settdemo_playback;
+settings_page settdemo_spec;
 
-void CT_Opt_Demo_Playback_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
-	Settings_Draw(x, y, w, h, &settdemo_playback);
+void CT_Opt_Demo_Spec_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
+	Settings_Draw(x, y, w, h, &settdemo_spec);
 }
 
-int CT_Opt_Demo_Playback_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settdemo_playback, k);
+int CT_Opt_Demo_Spec_Key (int k, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settdemo_spec, k);
 }
 
-void OnShow_SettDemo_Playback(void) { Settings_OnShow(&settdemo_playback); }
+void OnShow_SettDemo_Spec(void) { Settings_OnShow(&settdemo_spec); }
 
-qbool CT_Opt_Demo_Playback_Mouse_Event(const mouse_state_t *ms)
+qbool CT_Opt_Demo_Spec_Mouse_Event(const mouse_state_t *ms)
 {
-	return Settings_Mouse_Event(&settdemo_playback, ms);
+	return Settings_Mouse_Event(&settdemo_spec, ms);
 }
 
 settings_page setthud;
@@ -830,11 +830,11 @@ CTabPage_Handlers_t options_hud_handlers = {
 	CT_Opt_HUD_Mouse_Event
 };
 
-CTabPage_Handlers_t options_demo_playback_handlers = {
-	CT_Opt_Demo_Playback_Draw,
-	CT_Opt_Demo_Playback_Key,
-	OnShow_SettDemo_Playback,
-	CT_Opt_Demo_Playback_Mouse_Event
+CTabPage_Handlers_t options_demo_spec_handlers = {
+	CT_Opt_Demo_Spec_Draw,
+	CT_Opt_Demo_Spec_Key,
+	OnShow_SettDemo_Spec,
+	CT_Opt_Demo_Spec_Mouse_Event
 };
 
 CTabPage_Handlers_t options_controls_handlers = {
@@ -893,30 +893,30 @@ void Menu_Options_Draw(void) {
 
 // MAIN TAB
 setting settgeneral_arr[] = {
-	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
+	ADDSET_SEPARATOR("Setup & Options"),
 	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the \"QuakeWorld for Freshies\" guide by Apollyon."),
 	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
 	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
 #endif
-	ADDSET_BOOL		("Advanced Options", menu_advanced),
 
 	//Chat Settings
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_BIND("Chat", "messagemode"),
 	ADDSET_BIND("Teamchat", "messagemode2"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
-	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
 	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
 	ADDSET_BASIC_SECTION(),
 	
 	//Connection
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
-	ADDSET_ENUM		("Quality", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
+	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
 
 	//Sound & Volume
 	ADDSET_SEPARATOR("Sound & Volume"),
@@ -928,16 +928,19 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
 	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
-	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
 	ADDSET_BASIC_SECTION(),
+	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
 
 	//Match Tools
 	ADDSET_SEPARATOR("Match Tools"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
 	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_ENUM 	("Sshot Format", scr_sshot_format, scr_sshot_format_enum),
+	ADDSET_ENUM 	("Screenshot Format", scr_sshot_format, scr_sshot_format_enum),
 #ifdef _WIN32
 	ADDSET_ENUM     ("Demo Format", demo_format, demoformat_enum),
 #endif
@@ -957,6 +960,7 @@ setting settgeneral_arr[] = {
 
 // PLAYER TAB
 setting settplayer_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	ADDSET_SEPARATOR("Player Settings"),
 	ADDSET_STRING	("Name", name),
 	ADDSET_STRING	("Teamchat Prefix", cl_fakename),
@@ -964,9 +968,6 @@ setting settplayer_arr[] = {
 	ADDSET_SKIN		("Skin", skin),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
-	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Weapon Handling"),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to the weapon picked up if it is more powerful than what you're currently holding."),
@@ -998,71 +999,20 @@ setting settplayer_arr[] = {
 };
 
 // GRAPHICS TAB
-// please only put binds in here
 setting settfps_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
+	
 	ADDSET_SEPARATOR("Presets"),
 	ADDSET_ACTION	("Load High-Performance Preset", LoadFastPreset, "Adjust graphic settings for high performance. May increase FPS."),
 	ADDSET_ACTION	("Load High-Quality preset", LoadHQPreset, "Adjust graphic settings for high image-quality. May decrease FPS."),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphic presets."),
 
-	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Disable lin.interp.", cl_nolerp),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
-	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
-	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
-	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
-
-	ADDSET_SEPARATOR("Environment"),
-
-	ADDSET_BOOL		("Simple Sky", r_fastsky),
-	ADDSET_BOOL		("Simple walls", r_drawflat),
-	ADDSET_BOOL		("Simple turbs", r_fastturb),
-	ADDSET_BOOL		("Draw flame", r_drawflame),
-	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
-	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
-	ADDSET_SEPARATOR("Projectiles"),
-
-	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
-	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
-	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
-	ADDSET_BOOL		("Rocket Light", r_rocketlight),
-	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
-	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
-#ifdef GLQUAKE
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Hide Nails", amf_hidenails),
-	ADDSET_BOOL		("Hide Rockets", amf_hiderockets),
-	ADDSET_BASIC_SECTION(),
-#endif
-	ADDSET_SEPARATOR("Lighting"),
-	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
-#ifdef GLQUAKE
-	ADDSET_BOOL		("Colored Lights", gl_colorlights),
-	ADDSET_BOOL		("Fast Lights", gl_flashblend),
-	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
-	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
-	ADDSET_BOOL		("Particle Shaft", amf_lightning),
-#endif
-	ADDSET_SEPARATOR("Weapon Model"),
-#ifdef GLQUAKE
-	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
-#else
-	ADDSET_BOOL		("Show", cl_drawgun),
-#endif
-	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
-	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
-#ifdef GLQUAKE
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_SEPARATOR("Textures"),
-	ADDSET_BOOL		("Luma", gl_lumaTextures),
-	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
-	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
-	ADDSET_BOOL		("No Textures", gl_textureless),
-
-	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Field of View"),
+	ADDSET_ADVANCED_SECTION(),
+#ifdef GLQUAKE
+	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
+	ADDSET_BASIC_SECTION(),
+#ifdef _WIN32
 	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_ADVANCED_SECTION(),
@@ -1075,10 +1025,70 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
 	ADDSET_BASIC_SECTION(),
 #endif
+
+	ADDSET_SEPARATOR("Weapon Model"),
+#ifdef GLQUAKE
+	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
+#else
+	ADDSET_BOOL		("Show", cl_drawgun),
+#endif
+	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
+	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
+#ifdef GLQUAKE
+	
+	ADDSET_SEPARATOR("Environment"),
+	ADDSET_BOOL		("Simple Sky", r_fastsky),
+	ADDSET_BOOL		("Simple walls", r_drawflat),
+	ADDSET_BOOL		("Simple turbs", r_fastturb),
+	ADDSET_BOOL		("Draw flame", r_drawflame),
+	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
+	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
+	
+	ADDSET_SEPARATOR("Projectiles"),
+	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
+	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
+	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
+	ADDSET_BOOL		("Rocket Light", r_rocketlight),
+	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
+	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
+#ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Hide Nails", amf_hidenails),
+	ADDSET_BOOL		("Hide Rockets", amf_hiderockets),
+	ADDSET_BASIC_SECTION(),
+#endif
+
+	ADDSET_SEPARATOR("Lighting"),
+	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
+#ifdef GLQUAKE
+	ADDSET_BOOL		("Colored Lights", gl_colorlights),
+	ADDSET_BOOL		("Fast Lights", gl_flashblend),
+	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
+	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
+	ADDSET_BOOL		("Particle Shaft", amf_lightning),
+#endif
+
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Disable lin.interp.", cl_nolerp),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
+	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
+	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
+	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
+
+	ADDSET_ADVANCED_SECTION(),	
+	ADDSET_SEPARATOR("Textures"),
+	ADDSET_BOOL		("Luma", gl_lumaTextures),
+	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
+	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
+	ADDSET_BOOL		("No Textures", gl_textureless),
+	ADDSET_BASIC_SECTION(),
 };
 
 // HUD TAB
 setting setthud_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	ADDSET_SEPARATOR("Head Up Display"),
 	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
 	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
@@ -1129,7 +1139,8 @@ setting setthud_arr[] = {
 };
 
 // DEMO PLAYBACK TAB
-setting settdemo_playback_arr[] = {
+setting settdemo_spec_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	ADDSET_SEPARATOR("Multiview"),
 	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
 	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
@@ -1154,7 +1165,9 @@ setting settdemo_playback_arr[] = {
 };
 
 // CONTROLS TAB
+// please try to put mostly binds in here
 setting settbinds_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	ADDSET_SEPARATOR("Mouse Settings"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Freelook", freelook),
@@ -1220,6 +1233,7 @@ setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_BIND("Show Scores", "+showscores"),
 	ADDSET_BIND("Screenshot", "screenshot"),
+	ADDSET_BIND("Pause", "pause"),
 	ADDSET_BIND("Quit", "quit"),
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
 
@@ -1227,6 +1241,7 @@ setting settbinds_arr[] = {
 
 // VIDEO TAB
 setting settvideo_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	//Video
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
@@ -1254,11 +1269,6 @@ setting settvideo_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 
 	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
-	ADDSET_ADVANCED_SECTION(),
-#ifdef GLQUAKE
-	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
-	ADDSET_BASIC_SECTION(),
-#ifdef _WIN32
 	ADDSET_BOOL("Taskbar Flash", vid_flashonactivity),
 	ADDSET_BOOL("Taskbar Name", cl_window_caption),
 #endif
@@ -1267,17 +1277,20 @@ setting settvideo_arr[] = {
 
 // CONFIG TAB
 setting settconfig_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
+	
     ADDSET_SEPARATOR("Load & Save"),
     ADDSET_ACTION("Reload settings", MOpt_LoadCfg, "Reset the settings to last saved configuration."),
     ADDSET_ACTION("Save settings", MOpt_SaveCfg, "Save the settings"),
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL("Save to profile dir", cfg_use_home),
     ADDSET_BASIC_SECTION(),
-    ADDSET_SEPARATOR("Export & Import"),
-	ADDSET_ACTION("Import config ...", MOpt_ImportConfig, "You can load a configuration from a file here."),
+    
+	ADDSET_SEPARATOR("Export & Import"),
+	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Find and load scripts here."),
+	ADDSET_ACTION("Import config ...", MOpt_ImportConfig, "You can load a configuration file from here."),
 	ADDSET_ACTION("Export config ...", MOpt_ExportConfig, "Will export your current configuration to a file."),
-    ADDSET_SEPARATOR("Scripts"),
-	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Choose and load quake scripts here."),
+	
 	ADDSET_SEPARATOR("Config Saving Options"),
     ADDSET_ACTION("Reset Saving Options", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults."),
     ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
@@ -1317,7 +1330,7 @@ void Menu_Options_Init(void) {
 
 	Settings_Page_Init(settgeneral, settgeneral_arr);
 	Settings_Page_Init(settfps, settfps_arr);
-	Settings_Page_Init(settdemo_playback, settdemo_playback_arr);
+	Settings_Page_Init(settdemo_spec, settdemo_spec_arr);
 	Settings_Page_Init(setthud, setthud_arr);
 	Settings_Page_Init(settplayer, settplayer_arr);
 	Settings_Page_Init(settbinds, settbinds_arr);
@@ -1383,7 +1396,7 @@ void Menu_Options_Init(void) {
 	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, &options_player_handlers);
 	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, &options_graphics_handlers);
 	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, &options_hud_handlers);
-	CTab_AddPage(&options_tab, "demo playback", OPTPG_DEMO_PLAYBACK, &options_demo_playback_handlers);
+	CTab_AddPage(&options_tab, "demo/spec", OPTPG_DEMO_PLAYBACK, &options_demo_spec_handlers);
 	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, &options_controls_handlers);
 	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, &options_video_handlers);
 	CTab_AddPage(&options_tab, "config", OPTPG_CONFIG, &options_config_handlers);
