@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.79 2007-09-03 15:40:56 dkure Exp $
+	$Id: menu.c,v 1.80 2007-09-03 21:07:20 himan Exp $
 
 */
 
@@ -2120,7 +2120,7 @@ void M_ServerList_Key (key) {
 
 // START shaman [Quake 1.09 quit screen]
 void M_Quit_Draw (void) {
-	M_DrawTextBox (0, 0, 38, 23);
+	M_DrawTextBox (0, 0, 38, 26);
 	M_PrintWhite (16, 12,  "  Quake version 1.09 by id Software\n\n");
 	M_PrintWhite (16, 28,  "Programming        Art \n");
 	M_Print (16, 36,  " John Carmack       Adrian Carmack\n");
@@ -2136,12 +2136,13 @@ void M_Quit_Draw (void) {
 	M_Print (16, 116, " Barrett Alexander  Shawn Green\n");
 	M_PrintWhite (16, 124, "Sound Effects\n");
 	M_Print (16, 132, " Trent Reznor and Nine Inch Nails\n\n");
-	M_PrintWhite (16, 140, "Quake is a trademark of Id Software,\n");
-	M_PrintWhite (16, 148, "inc., (c)1996 Id Software, inc. All\n");
-	M_PrintWhite (16, 156, "rights reserved. NIN logo is a\n");
-	M_PrintWhite (16, 164, "registered trademark licensed to\n");
-	M_PrintWhite (16, 172, "Nothing Interactive, Inc. All rights\n");
-	M_PrintWhite (16, 180, "reserved. Press y to exit\n");
+	M_PrintWhite (16, 148, "Quake is a trademark of Id Software,\n");
+	M_PrintWhite (16, 156, "inc., (c)1996 Id Software, inc. All\n");
+	M_PrintWhite (16, 164, "rights reserved. NIN logo is a\n");
+	M_PrintWhite (16, 172, "registered trademark licensed to\n");
+	M_PrintWhite (16, 180, "Nothing Interactive, Inc. All rights\n");
+	M_PrintWhite (16, 188, "reserved.\n\n");
+	M_Print (16, 204, "          Press y to exit\n");
 }
 // END shaman [Quake 1.09 quit screen]
 

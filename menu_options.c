@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.78 2007-09-03 16:09:46 johnnycz Exp $
+		$Id: menu_options.c,v 1.79 2007-09-03 21:07:20 himan Exp $
 
 */
 
@@ -181,7 +181,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
-	ruleset, scr_sshot_dir, log_dir, cl_nolerp
+	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption;
@@ -212,7 +212,6 @@ const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full pa
 const char *priority_enum[] = { "low", "-1", "normal", "0", "high", "1" };
 #endif
 
-// START contents of Menu-> Options-> Main tab
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
@@ -898,6 +897,7 @@ setting settgeneral_arr[] = {
 	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the \"QuakeWorld for Freshies\" guide by Apollyon."),
 	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
+	ADDSET_BOOL		("Confirm Quit", cl_confirmquit),
 #ifdef _WIN32
 	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
 #endif
@@ -1238,6 +1238,7 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
 
 };
+
 #ifdef GLQUAKE
 // VIDEO TAB
 setting settvideo_arr[] = {
