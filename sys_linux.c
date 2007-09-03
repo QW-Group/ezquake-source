@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.26 2007-08-24 16:48:22 dkure Exp $
+	$Id: sys_linux.c,v 1.27 2007-09-03 15:07:29 dkure Exp $
 
 */
 #include <unistd.h>
@@ -491,7 +491,7 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 }
 // kazik <--
 
-#ifdef FTE_FS
+#ifdef WITH_FTE_VFS
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm)
 {
 #include <dirent.h>
@@ -570,7 +570,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	return true;
 }
 
-#endif /* FTE_FS */
+#endif /* WITH_FTE_VFS */
 
 /********************************* CLIPBOARD *********************************/
 
