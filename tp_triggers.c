@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: tp_triggers.c,v 1.6 2007-09-03 15:38:19 dkure Exp $
+	$Id: tp_triggers.c,v 1.7 2007-09-03 17:05:45 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "rulesets.h"
 #include "tp_triggers.h"
+#include "utils.h"
 
 cvar_t tp_msgtriggers = {"tp_msgtriggers", "1"};
 cvar_t tp_soundtrigger = {"tp_soundtrigger", "~"};

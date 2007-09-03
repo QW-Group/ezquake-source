@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 /**
-  $Id: screen.h,v 1.8 2007-09-01 16:10:55 johnnycz Exp $
+  $Id: screen.h,v 1.9 2007-09-03 17:05:45 johnnycz Exp $
   
   Common declarations for modules associated with drawing on screen
   cl_screen.c, sbar.c
@@ -71,3 +71,6 @@ void SCR_SetupAutoID (void);
 
 // the current position of the mouse pointer
 extern double cursor_x, cursor_y;
+
+// kazik, HUD, incremented every screen update, never reset
+extern  int         host_screenupdatecount;

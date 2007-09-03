@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.93 2007-09-02 21:59:28 johnnycz Exp $
+    $Id: common.c,v 1.94 2007-09-03 17:05:44 johnnycz Exp $
 
 */
 
@@ -978,107 +978,3 @@ void Com_Printf_State(int state, char *fmt, ...) {
 	if (state == PRINT_ERR_FATAL)
 		Sys_Error(msg);
 }
-
-int isspace2(int c) {
-	if (c == 0x09 || c == 0x0D || c == 0x0A || c == 0x20)
-		return 1;
-	return 0;
-}
-
-#ifndef SERVERONLY
-// QW262 -->
-// regexp match support for group operations in scripts
-int			wildcard_level = 0;
-pcre		*wildcard_re[4];
-pcre_extra	*wildcard_re_extra[4];
-
-qbool IsRegexp(const char *str)
-{
-	if (*str == '+' || *str == '-') // +/- aliases; valid regexp can not start with +/-
-		return false;
-
-	return (strcspn(str, "\\\"()[]{}.*+?^$|")) != strlen(str) ? true : false;
-}
-
-qbool ReSearchInit (const char *wildcard)
-{
-	const char	*error;
-	int		error_offset;
-
-	if (wildcard_level == 4) {
-		Com_Printf("Error: Regexp commands nested too deep\n");
-		return false;
-	}
-	wildcard_re[wildcard_level] = pcre_compile(wildcard, 0, &error, &error_offset, NULL);
-	if (error) {
-		Com_Printf ("Invalid regexp: %s\n", error);
-		return false;
-	}
-
-	error = NULL;
-	wildcard_re_extra[wildcard_level] = pcre_study(wildcard_re[wildcard_level], 0, &error);
-	if (error) {
-		Com_Printf ("Regexp study error: %s\n", &error);
-		return false;
-	}
-
-	wildcard_level++;
-	return true;
-}
-
-qbool ReSearchMatch (const char *str)
-{
-	int result;
-	int offsets[99];
-
-	result = pcre_exec(wildcard_re[wildcard_level-1],
-	                   wildcard_re_extra[wildcard_level-1], str, strlen(str), 0, 0, offsets, 99);
-	return (result>0) ? true : false;
-}
-
-void ReSearchDone (void)
-{
-	wildcard_level--;
-	if (wildcard_re[wildcard_level]) (pcre_free)(wildcard_re[wildcard_level]);
-	if (wildcard_re_extra[wildcard_level]) (pcre_free)(wildcard_re_extra[wildcard_level]);
-}
-
-unsigned char CharToBrown(unsigned char ch)
-{
-	if ( ch > 32 && ch <= 127 )
-		return ch + 128;
-	else
-		return ch;
-}
-
-unsigned char CharToWhite(unsigned char ch)
-{
-	if ( ch > 160 )
-		return ch - 128;
-	else
-		return ch;
-}
-
-void CharsToBrown(char* start, char* end)
-{
-	char *p = start;
-
-	while (p < end) {
-		if ( *p > 32 && *p <= 127 )
-			*p += 128;
-		p++;
-	}
-}
-
-void CharsToWhite(char* start, char* end)
-{
-	char *p = start;
-
-	while (p < end) {
-		if ( *p > 160 )
-			*p -= 128;
-		p++;
-	}
-}
-// <-- QW262
-#endif

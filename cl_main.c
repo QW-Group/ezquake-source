@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.168 2007-08-24 16:55:04 dkure Exp $
+$Id: cl_main.c,v 1.169 2007-09-03 17:05:42 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -70,8 +70,6 @@ $Id: cl_main.c,v 1.168 2007-08-24 16:55:04 dkure Exp $
 #endif
 #include "fs.h"
 #include "help.h"
-
-int	host_screenupdatecount; // kazik - HUD -> hexum
 
 
 qbool OnChange_allow_scripts (cvar_t *var, char *value);

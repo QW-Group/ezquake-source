@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.15 2007-05-28 10:47:36 johnnycz Exp $
+	$Id: utils.h,v 1.16 2007-09-03 17:05:46 johnnycz Exp $
 
 */
 
@@ -57,8 +57,34 @@ int Utils_TF_TeamToColor(char *);
 
 void Replace_In_String (char *src,int n, char delim, int arg, ...);
 
+/// REGEXP functions
+
 qbool Utils_RegExpMatch(char *regexp, char *matchstring);
 qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **resultstring, int *resultlength, int group);
+
+#ifndef SERVERONLY
+
+// regexp match support for group operations in scripts
+qbool IsRegexp(const char *str);
+qbool ReSearchInit (const char *wildcard);
+qbool ReSearchMatch (const char *str);
+void ReSearchDone (void);
+
+unsigned char CharToBrown(unsigned char ch);
+unsigned char CharToWhite(unsigned char ch);
+void CharsToBrown(char* start, char* end);
+void CharsToWhite(char* start, char* end);
+
+#else
+
+#define IsRegexp(name) (false)
+#define ReSearchInit(wildcard) (true)
+#define ReSearchMatch(str) (false)
+#define ReSearchDone() {}
+
+#endif
+
+/// RANDOM GENERATORS
 
 float f_rnd( float from, float to );
 int i_rnd( int from, int to );

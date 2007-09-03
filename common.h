@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.59 2007-09-03 15:36:28 dkure Exp $
+    $Id: common.h,v 1.60 2007-09-03 17:05:45 johnnycz Exp $
 */
 // common.h  -- general definitions
 
@@ -344,32 +344,5 @@ void Con_Init (void);
 void SV_Init (void);
 void SV_Shutdown (char *finalmsg);
 void SV_Frame (double time);
-
-int isspace2(int c);
-
-// HUD -> hexum
-extern  int         host_screenupdatecount; // kazik, incremented every screen update, never reset
-
-#ifndef SERVERONLY
-
-// regexp match support for group operations in scripts
-qbool IsRegexp(const char *str);
-qbool ReSearchInit (const char *wildcard);
-qbool ReSearchMatch (const char *str);
-void ReSearchDone (void);
-
-unsigned char CharToBrown(unsigned char ch);
-unsigned char CharToWhite(unsigned char ch);
-void CharsToBrown(char* start, char* end);
-void CharsToWhite(char* start, char* end);
-
-#else
-
-#define IsRegexp(name) (false)
-#define ReSearchInit(wildcard) (true)
-#define ReSearchMatch(str) (false)
-#define ReSearchDone() {}
-
-#endif
 
 #endif /* !__COMMON_H__ */

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.74 2007-09-01 16:10:55 johnnycz Exp $
+    $Id: cmd.c,v 1.75 2007-09-03 17:05:44 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tp_triggers.h"
 #endif /* !SERVERONLY */
 #include "parser.h"
+#include "utils.h"
 
 #ifndef SERVERONLY
 qbool CL_CheckServerCommand (void);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.29 2007-08-24 16:52:38 dkure Exp $
+    $Id: q_shared.h,v 1.30 2007-09-03 17:05:45 johnnycz Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -68,6 +68,8 @@ typedef enum {false, true} qbool;
 //#define bound(a,b,c) (max((a), min((b), (c))))
 #define bound(a,b,c) ((a) >= (c) ? (a) : \
 					(b) < (a) ? (a) : (b) > (c) ? (c) : (b))
+
+#define isspace2(c) ((c) == 0x09 || (c) == 0x0D || (c) == 0x0A || (c) == 0x20)
 
 //============================================================================
 
