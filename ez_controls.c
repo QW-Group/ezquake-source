@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.30 2007-09-03 15:38:19 dkure Exp $
+$Id: ez_controls.c,v 1.31 2007-09-03 16:49:55 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -34,6 +34,7 @@ $Id: ez_controls.c,v 1.30 2007-09-03 15:38:19 dkure Exp $
 void EZ_double_linked_list_Add(ez_double_linked_list_t *list, void *payload)
 {
 	ez_dllist_node_t *item = (ez_dllist_node_t *)Q_malloc(sizeof(ez_dllist_node_t));
+	memset(item, 0, sizeof(ez_dllist_node_t));
 
 	item->payload = payload;
 	item->next = NULL;
@@ -438,6 +439,7 @@ ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 	}
 
 	control = (ez_control_t *)Q_malloc(sizeof(ez_control_t));
+	memset(control, 0, sizeof(ez_control_t));
 
 	EZ_control_Init(control, tree, parent, name, description, x, y, width, height, background_name, flags);
 
@@ -1094,8 +1096,6 @@ int EZ_control_OnParentResize(ez_control_t *self)
 {
 	if (self->parent && (self->flags & CONTROL_RESIZEABLE))
 	{
-		//int x = 0;
-		//int y = 0;
 		int width = self->width;
 		int height = self->height;
 
@@ -1156,11 +1156,11 @@ int EZ_control_OnMove(ez_control_t *self)
 			self->absolute_x = self->parent->absolute_virtual_x + self->parent->virtual_width + (self->x - self->width);
 		}
 
-		if (self->anchor_flags & anchor_top)
+		if ((self->anchor_flags & anchor_top) && !(self->anchor_flags & anchor_bottom))
 		{
 			self->absolute_y = self->parent->absolute_virtual_y + self->y;
 		}
-		else if (self->anchor_flags & anchor_bottom)
+		else if ((self->anchor_flags & anchor_bottom) && !(self->anchor_flags & anchor_top))
 		{
 			self->absolute_y = self->parent->absolute_virtual_y + self->parent->virtual_height + (self->y - self->height);
 		}
@@ -1686,7 +1686,10 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 	}
 
 	label = (ez_label_t *)Q_malloc(sizeof(ez_label_t));
+	memset(label, 0, sizeof(ez_label_t));
+
 	EZ_label_Init(label, tree, parent, name, description, x, y, width, height, background_name, flags, text_flags, text, text_color);
+	
 	return label;
 }
 
@@ -1766,7 +1769,10 @@ ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
 	}
 
 	button = (ez_button_t *)Q_malloc(sizeof(ez_button_t));
+	memset(button, 0, sizeof(ez_button_t));
+
 	EZ_button_Init(button, tree, parent, name, description, x, y, width, height, background_name, hover_image, pressed_image, flags);
+	
 	return button;
 }
 
