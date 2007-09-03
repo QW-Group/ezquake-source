@@ -1,12 +1,12 @@
 /*
  * EditBox functions
  *
- *    $Id: Ctrl_EditBox.c,v 1.9 2007-05-28 10:47:31 johnnycz Exp $
+ *    $Id: Ctrl_EditBox.c,v 1.10 2007-09-03 19:26:21 johnnycz Exp $
  */
 
 
 #include "quakedef.h"
-#include "EX_misc.h"
+#include "utils.h"
 #include "Ctrl_EditBox.h"
 #include "keys.h"
 

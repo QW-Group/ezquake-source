@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.44 2007-09-03 19:02:28 johnnycz Exp $
+	$Id: EX_browser.c,v 1.45 2007-09-03 19:26:21 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -18,8 +18,6 @@
 #include "keys.h"
 #include "EX_browser.h"
 #include "Ctrl_EditBox.h"
-#include "EX_misc.h"
-#include "EX_FunNames.h"
 #include "settings.h"
 #include "settings_page.h"
 #include "Ctrl.h"

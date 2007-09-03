@@ -1,11 +1,10 @@
 /*
-	$Id: common_draw.c,v 1.22 2007-08-29 22:53:48 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.23 2007-09-03 19:26:22 johnnycz Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
 
 #include "quakedef.h"
-#include "EX_misc.h"
 #include "localtime.h"
 #include "common_draw.h"
 #include "stats_grid.h"

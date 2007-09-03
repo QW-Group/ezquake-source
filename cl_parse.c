@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.109 2007-09-03 19:02:28 johnnycz Exp $
+$Id: cl_parse.c,v 1.110 2007-09-03 19:26:21 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -31,7 +31,7 @@ $Id: cl_parse.c,v 1.109 2007-09-03 19:02:28 johnnycz Exp $
 #include "ignore.h"
 #include "fchecks.h"
 #include "config_manager.h"
-#include "EX_misc.h"
+#include "utils.h"
 #include "localtime.h"
 #include "sbar.h"
 #include "textencoding.h"
@@ -2382,6 +2382,9 @@ void MakeChatRed(char *t, int mm2)
 }
 */
 
+#define  CHAT_MM1   1
+#define  CHAT_MM2   2
+#define  CHAT_SPEC  3
 int SeparateChat(char *chat, int *out_type, char **out_msg)
 {
     int server_cut = 31;    // maximum characters sent in nick by server

@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.152 2007-08-29 15:06:04 dkure Exp $
+	$Id: hud_common.c,v 1.153 2007-09-03 19:26:22 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -8,7 +8,6 @@
 
 #include "quakedef.h"
 #include "common_draw.h"
-#include "EX_misc.h"
 #include "mp3_player.h"
 #include "png.h"
 #include "image.h"

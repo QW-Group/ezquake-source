@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.135 2007-09-03 17:05:43 johnnycz Exp $
+$Id: cl_screen.c,v 1.136 2007-09-03 19:26:21 johnnycz Exp $
 */
 
 /// declarations may be found in screen.h
@@ -36,7 +36,7 @@ $Id: cl_screen.c,v 1.135 2007-09-03 17:05:43 johnnycz Exp $
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
-#include "EX_misc.h"
+#include "utils.h"
 #include "vx_stuff.h"
 #ifdef GLQUAKE
 #include "gl_model.h"

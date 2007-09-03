@@ -4,12 +4,11 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.35 2007-09-01 16:10:55 johnnycz Exp $
+	$Id: hud_editor.c,v 1.36 2007-09-03 19:26:22 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
-#include "EX_misc.h"
 #include "qsound.h"
 #include "menu.h"
 #include "keys.h"

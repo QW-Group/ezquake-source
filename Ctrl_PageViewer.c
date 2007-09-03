@@ -5,7 +5,6 @@
 
 
 #include "quakedef.h"
-#include "EX_misc.h"
 #include "Ctrl.h"
 #include "expat.h"
 #include "xsd.h"

@@ -16,12 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.45 2007-05-28 10:47:34 johnnycz Exp $
+    $Id: snd_dma.c,v 1.46 2007-09-03 19:26:22 johnnycz Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
 #include "quakedef.h"
-#include "EX_misc.h"
 #include "qsound.h"
 #define SELF_SOUND 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
 
