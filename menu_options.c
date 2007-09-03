@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.76 2007-09-03 05:14:07 himan Exp $
+		$Id: menu_options.c,v 1.77 2007-09-03 05:50:46 himan Exp $
 
 */
 
@@ -1011,8 +1011,8 @@ setting settfps_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 #ifdef GLQUAKE
 	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
+#endif
 	ADDSET_BASIC_SECTION(),
-#ifdef _WIN32
 	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_ADVANCED_SECTION(),
@@ -1024,7 +1024,6 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
 	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
 	ADDSET_BASIC_SECTION(),
-#endif
 
 	ADDSET_SEPARATOR("Weapon Model"),
 #ifdef GLQUAKE
@@ -1034,7 +1033,6 @@ setting settfps_arr[] = {
 #endif
 	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
 	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
-#ifdef GLQUAKE
 	
 	ADDSET_SEPARATOR("Environment"),
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
@@ -1077,6 +1075,7 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 
+#ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),	
 	ADDSET_SEPARATOR("Textures"),
 	ADDSET_BOOL		("Luma", gl_lumaTextures),
@@ -1084,6 +1083,7 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
 	ADDSET_BASIC_SECTION(),
+#endif
 };
 
 // HUD TAB
@@ -1267,11 +1267,10 @@ setting settvideo_arr[] = {
 #endif
 
 	ADDSET_SEPARATOR("Miscellaneous"),
-
 	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
+#ifdef _WIN32
 	ADDSET_BOOL("Taskbar Flash", vid_flashonactivity),
 	ADDSET_BOOL("Taskbar Name", cl_window_caption),
-#endif
 #endif
 };
 
