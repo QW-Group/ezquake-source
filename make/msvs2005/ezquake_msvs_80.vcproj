@@ -1115,10 +1115,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\common.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\crc.c"
 					>
 				</File>
@@ -1152,10 +1148,6 @@
 				</File>
 				<File
 					RelativePath="..\..\pmovetst.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\q_shared.c"
 					>
 				</File>
 				<File
@@ -1923,10 +1915,6 @@
 					RelativePath="..\..\textencoding.c"
 					>
 				</File>
-				<File
-					RelativePath="..\..\utils.c"
-					>
-				</File>
 				<Filter
 					Name="XML"
 					>
@@ -2156,6 +2144,22 @@
 					</File>
 				</Filter>
 			</Filter>
+			<Filter
+				Name="Common"
+				>
+				<File
+					RelativePath="..\..\common.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\q_shared.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\utils.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -2187,10 +2191,6 @@
 				</File>
 				<File
 					RelativePath="..\..\cmodel.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\common.h"
 					>
 				</File>
 				<File
@@ -2502,6 +2502,10 @@
 			<Filter
 				Name="Main_h"
 				>
+				<File
+					RelativePath="..\..\common.h"
+					>
+				</File>
 				<File
 					RelativePath="..\..\q_shared.h"
 					>
