@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.5 2007-09-02 21:59:29 johnnycz Exp $
+    $Id: fs.h,v 1.6 2007-09-03 15:23:54 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -49,10 +49,16 @@ typedef struct vfsfile_s {
 	qbool seekingisabadplan;
 } vfsfile_t;
 
+// FIXME: D-Kure Clean up this structure
 typedef enum {
 	FS_NONE_OS, // file name used as is, opened with OS functions (no paks)
-	FS_GAME_OS, // file used as com_basedir/filename, opened with OS functions (no paks)
-	FS_ANY      // file searched on quake file system even in paks, u may use only "rb" mode for file since u can't write to pak
+	FS_GAME_OS, // file used as com_basedir/filename, opened with OS functions 
+				// (no paks)
+	FS_BASE,	// file is relative to the com_basedir/com_homedir
+	FS_HOME,
+	FS_PAK,
+	FS_ANY      // file searched on quake file system even in paks, u may use
+				// only "rb" mode for file since u can't write to pak
 } relativeto_t;
 
 // mostly analogs for stdio functions
@@ -63,16 +69,24 @@ qbool			VFS_SEEK   (struct vfsfile_s *vf, unsigned long pos);
 int				VFS_READ   (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno_t *err);
 int				VFS_WRITE  (struct vfsfile_s *vf, void *buffer, int bytestowrite);
 void			VFS_FLUSH  (struct vfsfile_s *vf);
-char		   *VFS_GETS   (struct vfsfile_s *vf, char *buffer, int buflen); // return null terminated string
+char		   *VFS_GETS   (struct vfsfile_s *vf, char *buffer, int buflen); 
+				// return null terminated string
 
-void			VFS_TICK   (void);  // fill in/out our internall buffers (do read/write on socket)
+void			VFS_TICK   (void);  // fill in/out our internall buffers 
+									// (do read/write on socket)
 
-// open some temp VFS file, which actually result from tmpfile() at least when i commenting this
+// open some temp VFS file, which actually result from tmpfile() at least 
+// when i commenting this
 vfsfile_t *FS_OpenTemp(void);
 // some general function to open VFS file, except TCP
 vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto);
 // TCP VFS file
 vfsfile_t *FS_OpenTCP(char *name);
+
+#ifdef WITH_FTE_VFS
+extern cvar_t com_fs_cache;
+
+#endif /* WITH_FTE_VFS */
 
 // ====================================================================
 // GZIP & ZIP De/compression
@@ -159,6 +173,5 @@ int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent);
 int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
 
 #endif // WITH_ZIP
-
 
 #endif // __FS_H__
