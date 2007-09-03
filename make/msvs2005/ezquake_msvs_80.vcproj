@@ -825,6 +825,118 @@
 						/>
 					</FileConfiguration>
 				</File>
+				<Filter
+					Name="VX"
+					>
+					<File
+						RelativePath="..\..\collision.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vx_camera.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\vx_coronas.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\vx_motiontrail.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\vx_stuff.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\vx_tracker.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vx_vertexlights.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="System"
@@ -995,10 +1107,6 @@
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
 				>
 				<File
-					RelativePath="..\..\cmd.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\cmodel.c"
 					>
 				</File>
@@ -1011,19 +1119,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\console.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\crc.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\cvar.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\ez_controls.c"
 					>
 				</File>
 				<File
@@ -1047,10 +1143,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\menu.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\pmove.c"
 					>
 				</File>
@@ -1063,19 +1155,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\sbar.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\sha1.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\skin.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\teamplay.c"
 					>
 				</File>
 				<File
@@ -1094,10 +1178,6 @@
 			<Filter
 				Name="Draw"
 				>
-				<File
-					RelativePath="..\..\common_draw.c"
-					>
-				</File>
 				<File
 					RelativePath="..\..\r_aclip.c"
 					>
@@ -1756,14 +1836,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\collision.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\config_manager.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\cpu.c"
 					>
 					<FileConfiguration
@@ -1782,86 +1854,6 @@
 							Name="VCCLCompilerTool"
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl_EditBox.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl_PageViewer.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl_ScrollBar.c"
-					>
-					<FileConfiguration
-						Name="GLDebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="GLRelease|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl_Tab.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\document_rendering.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_browser.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_browser_net.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_browser_ping.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_browser_sources.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_FileList.c"
-					>
 				</File>
 				<File
 					RelativePath="..\..\EX_FunNames.c"
@@ -1884,26 +1876,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\help.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\help_files.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\hud.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\hud_common.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\hud_editor.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\ignore.c"
 					>
 				</File>
@@ -1913,26 +1885,6 @@
 				</File>
 				<File
 					RelativePath="..\..\logging.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\match_tools.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\menu_demo.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\menu_ingame.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\menu_options.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\menu_proxy.c"
 					>
 				</File>
 				<File
@@ -1956,10 +1908,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\parser.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\qtv.c"
 					>
 				</File>
@@ -1968,149 +1916,53 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\settings_page.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\stats_grid.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\textencoding.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tp_msgs.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tp_triggers.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\utils.c"
 					>
 				</File>
-				<File
-					RelativePath="..\..\vx_camera.c"
+				<Filter
+					Name="XML"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
+					<File
+						RelativePath="..\..\xsd.c"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
+					</File>
+					<File
+						RelativePath="..\..\xsd_command.c"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\vx_coronas.c"
+					</File>
+					<File
+						RelativePath="..\..\xsd_document.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\xsd_variable.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Server Browser"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
+					<File
+						RelativePath="..\..\EX_browser.c"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
+					</File>
+					<File
+						RelativePath="..\..\EX_browser_net.c"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\vx_motiontrail.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
+					</File>
+					<File
+						RelativePath="..\..\EX_browser_ping.c"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
+					</File>
+					<File
+						RelativePath="..\..\EX_browser_sources.c"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\vx_stuff.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\vx_tracker.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vx_vertexlights.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\xsd.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xsd_command.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xsd_document.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xsd_variable.c"
-					>
-				</File>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Network"
@@ -2124,15 +1976,187 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Scripting"
+				>
+				<File
+					RelativePath="..\..\cmd.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\config_manager.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\console.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cvar.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\help.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\match_tools.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\parser.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\teamplay.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tp_msgs.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tp_triggers.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="GUI"
+				>
+				<File
+					RelativePath="..\..\common_draw.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\document_rendering.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_controls.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\hud.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\hud_common.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\hud_editor.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\sbar.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\stats_grid.c"
+					>
+				</File>
+				<Filter
+					Name="Menu"
+					>
+					<File
+						RelativePath="..\..\help_files.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\menu.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\menu_demo.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\menu_ingame.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\menu_options.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\menu_proxy.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\settings_page.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="MQWCL Controls"
+					>
+					<File
+						RelativePath="..\..\Ctrl.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Ctrl_EditBox.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Ctrl_PageViewer.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Ctrl_ScrollBar.c"
+						>
+						<FileConfiguration
+							Name="GLDebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="GLRelease|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\Ctrl_Tab.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\EX_FileList.c"
+						>
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd"
 			>
-			<File
-				RelativePath="..\..\cpu.h"
-				>
-			</File>
 			<Filter
 				Name="Misc_h"
 				Filter="h;hpp;hxx;hm;inl;fi;fd"
@@ -2170,18 +2194,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\cvar.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\embed_tcl.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\ez_controls.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\fs.h"
 					>
 				</File>
@@ -2206,14 +2218,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\sbar.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\screen.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\sha1.h"
 					>
 				</File>
@@ -2223,10 +2227,6 @@
 				</File>
 				<File
 					RelativePath="..\..\sys.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\teamplay.h"
 					>
 				</File>
 				<File
@@ -2263,39 +2263,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\config_manager.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl_EditBox.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl_PageViewer.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Ctrl_Tab.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\cvar_groups.h"
+					RelativePath="..\..\cpu.h"
 					>
 				</File>
 				<File
 					RelativePath="..\..\document_rendering.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_browser.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\EX_FileList.h"
 					>
 				</File>
 				<File
@@ -2315,26 +2287,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\gl_texture.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\help.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\hud.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\hud_common.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\hud_editor.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\ignore.h"
 					>
 				</File>
@@ -2344,22 +2296,6 @@
 				</File>
 				<File
 					RelativePath="..\..\logging.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\menu_demo.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\menu_ingame.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\menu_options.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\menu_proxy.h"
 					>
 				</File>
 				<File
@@ -2383,10 +2319,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\parser.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\qtv.h"
 					>
 				</File>
@@ -2399,113 +2331,41 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\settings.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\settings_page.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\stats_grid.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\textencoding.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tp_msgs.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tp_triggers.h"
 					>
 				</File>
 				<File
 					RelativePath="..\..\utils.h"
 					>
 				</File>
-				<File
-					RelativePath="..\..\vx_camera.h"
+				<Filter
+					Name="XML_h"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
+					<File
+						RelativePath="..\..\xsd.h"
 						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
+					</File>
+					<File
+						RelativePath="..\..\xsd_command.h"
 						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\vx_stuff.h"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
+					</File>
+					<File
+						RelativePath="..\..\xsd_document.h"
 						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
+					</File>
+					<File
+						RelativePath="..\..\xsd_variable.h"
 						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\vx_tracker.h"
+					</File>
+				</Filter>
+				<Filter
+					Name="Server Browser_h"
 					>
-				</File>
-				<File
-					RelativePath="..\..\vx_vertexlights.h"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
+					<File
+						RelativePath="..\..\EX_browser.h"
 						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\xsd.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xsd_command.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xsd_document.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xsd_variable.h"
-					>
-				</File>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="OpenGL_h"
@@ -2543,9 +2403,81 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\gl_texture.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\gl_warp_sin.h"
 					>
 				</File>
+				<Filter
+					Name="VX_h"
+					>
+					<File
+						RelativePath="..\..\vx_camera.h"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\vx_stuff.h"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\vx_tracker.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vx_vertexlights.h"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Software_h"
@@ -2660,6 +2592,122 @@
 				</File>
 				<File
 					RelativePath="..\..\protocol.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="GUI_h"
+				>
+				<File
+					RelativePath="..\..\Ctrl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Ctrl_EditBox.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Ctrl_PageViewer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Ctrl_Tab.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\EX_FileList.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_controls.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\hud.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\hud_common.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\hud_editor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\menu_demo.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\menu_ingame.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\menu_options.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\menu_proxy.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\sbar.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\screen.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\settings.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\settings_page.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\stats_grid.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Scripting_h"
+				>
+				<File
+					RelativePath="..\..\config_manager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cvar.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cvar_groups.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\embed_tcl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\help.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\parser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\teamplay.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tp_msgs.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tp_triggers.h"
 					>
 				</File>
 			</Filter>
