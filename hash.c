@@ -8,6 +8,7 @@
 #endif
 #endif
 
+#ifdef WITH_FTE_VFS
 void Hash_InitTable(hashtable_t *table, int numbucks, void *mem)
 {
 	table->numbuckets = numbucks;
@@ -271,3 +272,5 @@ void Hash_RemoveKey(hashtable_t *table, int key)
 	}
 	return;
 }
+
+#endif // WITH_FTE_VFS
