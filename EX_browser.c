@@ -1,8 +1,9 @@
 /*
-	$Id: EX_browser.c,v 1.42 2007-07-29 12:23:46 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.43 2007-09-03 15:35:11 dkure Exp $
 */
 
 #include "quakedef.h"
+#include "fs.h"
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
@@ -2082,10 +2083,14 @@ void Serverinfo_Sources_Key(int key)
 void RemoveSourceProc(void)
 {
     source_data *s;
+#ifndef WITH_FTE_VFS
     FILE *f;
+    int removed = 0;
+#else
+	vfsfile_t *f;
+#endif
     int length;
     char *filebuf; // *p, *q;
-    int removed = 0;
     s = sources[Sources_pos];
     if (s->type == type_dummy)
         return;
@@ -2102,16 +2107,28 @@ void RemoveSourceProc(void)
 
     // and from file
     //length = COM_FileOpenRead (SOURCES_PATH, &f);
+#ifndef WITH_FTE_VFS
     length = FS_FOpenFile("sb/sources.txt", &f);
-
     if (length < 0)
     {
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
         return;
     }
 
+#else
+	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
+	length = fs_filesize;
+	if (!f) {
+        //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
+		return;
+	}
+#endif
+
+
     filebuf = (char *)Q_malloc(length + 512);
     filebuf[0] = 0;
+#ifndef WITH_FTE_VFS
+	// FTE-FIXME: D-Kure, not compiled as I need to recode with with VFS layer support
     while (!feof(f))
     {
         char c = 'A';
@@ -2175,15 +2192,29 @@ void RemoveSourceProc(void)
 
         removed = 1;
     }
+#endif
+
+#ifndef WITH_FTE_VFS
     fclose(f);
+#else
+	VFS_CLOSE(f);
+#endif
 
     //f = fopen(SOURCES_PATH, "wb");
     //if (f != NULL)
+#ifndef WITH_FTE_VFS
     if (COM_FCreateFile("sb/sources.txt", &f, "ezquake", "wb"))
     {
         fwrite(filebuf, 1, strlen(filebuf), f);
         fclose(f);
     }
+#else
+	if ((f = FS_OpenVFS("sb/sources.txt", "wb", FS_ANY))) 
+	{
+		VFS_WRITE(f, filebuf, strlen(filebuf));
+		VFS_CLOSE(f);
+	}
+#endif
     free(filebuf);
 }
 

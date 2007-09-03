@@ -1,4 +1,5 @@
 #include "quakedef.h"
+#include "fs.h"
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -61,12 +62,21 @@ void Delete_Source(source_data *s)
 // which require the source to be dumped to file in corrected form
 qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers, int *pserversn)
 {
+#ifndef WITH_FTE_VFS
     FILE *f;
+#else
+	vfsfile_t *f;
+#endif
     int length;
     qbool should_dump = false;
 
     //length = COM_FileOpenRead (fname, &f);
+#ifndef WITH_FTE_VFS
     length = FS_FOpenFile(fname, &f);
+#else
+	f = FS_OpenVFS(fname, "rb", FS_ANY);
+	length = fs_filesize;
+#endif
 
     if (length <= 0)
     {
@@ -75,6 +85,8 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
     }
     else
     {
+#ifndef WITH_FTE_VFS
+		// FTE-FIXME: D-Kure: This needs to be re worked with VFS layer support, use VFS_GETS
         while (!feof(f))
         {
             char c = 'A';
@@ -99,6 +111,9 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
                 should_dump = true;
         }
         fclose(f);
+#else
+		VFS_CLOSE(f);
+#endif
     }
 
     return should_dump;
@@ -474,7 +489,11 @@ char * next_quote(char *s)
 void Reload_Sources(void)
 {
     int i;
+#ifndef WITH_FTE_VFS
     FILE *f;
+#else
+	vfsfile_t *f;
+#endif
     int length;
     source_data *s;
 
@@ -483,7 +502,12 @@ void Reload_Sources(void)
     sourcesn = 0;
 
     //length = COM_FileOpenRead (SOURCES_PATH, &f);
+#ifndef WITH_FTE_VFS
     length = FS_FOpenFile("sb/sources.txt", &f);
+#else
+	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
+	length = fs_filesize;
+#endif
 
     if (length < 0)
     {
@@ -499,6 +523,8 @@ void Reload_Sources(void)
     sourcesn = 1;
 
     s = Create_Source();
+#ifndef WITH_FTE_VFS
+	// FTE-FIXME: D-Kure this needs to be re worked with VFS layer using VFS_GETS
     while (!feof(f))
     {
         char c = 'A';
@@ -555,10 +581,15 @@ void Reload_Sources(void)
         sources[sourcesn]->unique = i;
         sourcesn++;
     }
+#endif
 
     Delete_Source(s);
 
+#ifndef WITH_FTE_VFS
     fclose(f);
+#else
+	VFS_CLOSE(f);
+#endif
     //Com_Printf("Read %d sources for Server Browser\n", sourcesn);
 
     // update all file sources
