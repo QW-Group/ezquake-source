@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.14 2007-09-03 15:46:30 johnnycz Exp $
+$Id: fs.c,v 1.15 2007-09-03 15:49:59 dkure Exp $
 */
 
 
@@ -34,6 +34,9 @@ $Id: fs.c,v 1.14 2007-09-03 15:46:30 johnnycz Exp $
 #ifndef CLIENTONLY
 #include "server.h"
 #endif // CLIENTONLY
+
+// To include pak3 support add this define
+//#define WITH_PK3
 
 static hashtable_t filesystemhash;
 static qbool com_fschanged = true;
@@ -2689,7 +2692,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.14 2007-09-03 15:46:30 johnnycz Exp $
+ * $Id: fs.c,v 1.15 2007-09-03 15:49:59 dkure Exp $
  *             
  */
 
@@ -3390,8 +3393,6 @@ searchpathfuncs_t doomwadfilefuncs = {
 //========================
 
 void *com_pathforfile;	//fread and stuff is preferable if null
-
-// FTE-FIXME currently this is not even compiled in!
 
 #ifndef ZEXPORT
 #define ZEXPORT VARGS
@@ -4374,11 +4375,13 @@ searchpath_t *COM_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, vo
 		COM_AddDataFiles(probablepath, search, "pak", &packfilefuncs);//q1/hl/h2/q2
 	//pk2s never existed.
 #ifdef WITH_ZIP
+#ifdef WITH_PK3
 	if (loadstuff & 4)
 		COM_AddDataFiles(probablepath, search, "pk3", &zipfilefuncs);	//q3 + offspring
 	if (loadstuff & 8)
 		COM_AddDataFiles(probablepath, search, "pk4", &zipfilefuncs);	//q4
 	//we could easily add zip, but it's friendlier not to
+#endif
 #endif
 
 #ifdef DOOMWADS
