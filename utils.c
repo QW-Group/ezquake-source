@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.41 2007-09-03 19:02:28 johnnycz Exp $
+	$Id: utils.c,v 1.42 2007-09-03 20:34:52 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1035,3 +1035,73 @@ int i_rnd( int from, int to )
 
 	return bound(from, r, to);
 }
+
+//
+// Gets the next part of a string that fits within a specified width.
+//
+//		input			= The string we want to wordwrap.
+//		target			= The string that we should put the next line in.
+//		start_index		= The index in the input string where we start wordwrapping.
+//		end_index		= The returned end index of the word wrapped string.
+//		target_max_size = The length of the target string buffer.
+//		max_pixel_width	= The pixel width that the string should be wordwrapped within.
+//		char_size		= The size of the characters in the string.
+//
+int Util_GetNextWordwrapString(const char *input, char *target, int start_index, int *end_index_ret, int target_max_size, int max_pixel_width, int char_size)
+{
+	int input_len		= strlen(input + start_index);		// The length of the remaining string to wordwrap.
+	int max_char_width	= (max_pixel_width / char_size);	// The max number of characters that fits on one line.
+
+	// Don't exceed the max target length.
+	int target_size		= min(target_max_size, min(input_len, max_char_width));
+	int end_index		= start_index + target_size;
+
+	// Check for a word boundary if possible, so that we don't break the line in the middle of a word.
+	{
+		int i = target_size;
+		
+		while (i > 0)
+		{
+			if (input[start_index + i] == ' ')
+			{
+				// We found a space, so do the break here instead.
+				target_size = i;
+				break;
+			}
+
+			i--;
+		}
+	}
+
+	// Remove any leading spaces.
+	while (input[start_index] && input[start_index] == ' ')
+	{
+		start_index++;
+	}
+
+	end_index = (start_index + target_size);
+
+	// Remove any trailing spaces.
+	while (input[end_index] && input[end_index] == ' ')
+	{
+		end_index++;
+	}
+
+	// Return the end index.
+	if (end_index_ret)
+	{
+		(*end_index_ret) = end_index;
+	}
+
+	if (target_size <= 0)
+	{
+		return 0;
+	}
+
+	// Write the current word wrapped line to the target buffer.
+	snprintf(target, target_size + 1, "%s", input + start_index);
+
+	return target_size;
+}
+
+

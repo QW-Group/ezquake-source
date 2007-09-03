@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.18 2007-09-03 19:26:22 johnnycz Exp $
+	$Id: utils.h,v 1.19 2007-09-03 20:34:52 cokeman1982 Exp $
 
 */
 
@@ -118,5 +118,18 @@ void ReSearchDone (void);
 
 float f_rnd( float from, float to );
 int i_rnd( int from, int to );
+
+//
+// Gets the next part of a string that fits within a specified width.
+//
+//		input			= The string we want to wordwrap.
+//		target			= The string that we should put the next line in.
+//		start_index		= The index in the input string where we start wordwrapping.
+//		end_index		= The returned end index of the word wrapped string.
+//		target_max_size = The length of the target string buffer.
+//		max_pixel_width	= The pixel width that the string should be wordwrapped within.
+//		char_size		= The size of the characters in the string.
+//
+int Util_GetNextWordwrapString(const char *input, char *target, int start_index, int *end_index, int target_max_size, int max_pixel_width, int char_size);
 
 #endif /* !__UTILS_H__ */
