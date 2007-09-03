@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.77 2007-09-03 05:50:46 himan Exp $
+		$Id: menu_options.c,v 1.78 2007-09-03 16:09:46 johnnycz Exp $
 
 */
 
@@ -1238,7 +1238,7 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
 
 };
-
+#ifdef GLQUAKE
 // VIDEO TAB
 setting settvideo_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
@@ -1252,9 +1252,7 @@ setting settvideo_arr[] = {
 #ifndef __APPLE__
 	ADDSET_SEPARATOR("Screen settings"),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
-#ifdef GLQUAKE
 	ADDSET_BOOL("Vertical sync", r_swapInterval),
-#endif
 	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
@@ -1273,6 +1271,7 @@ setting settvideo_arr[] = {
 	ADDSET_BOOL("Taskbar Name", cl_window_caption),
 #endif
 };
+#endif // GLQUAKE
 
 // CONFIG TAB
 setting settconfig_arr[] = {
