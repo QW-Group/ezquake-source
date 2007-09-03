@@ -16,13 +16,14 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.44 2007-09-02 22:20:32 johnnycz Exp $
+    $Id: config_manager.c,v 1.45 2007-09-03 15:38:19 dkure Exp $
 */
 
 #include "quakedef.h"
 #include "input.h"
 #include "utils.h"
 #include "keys.h"
+#include "fs.h"
 
 
 void Key_WriteBindings (FILE *);
@@ -705,7 +706,11 @@ static void Config_PrintPreamble(FILE *f)
 
 static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 {
+#ifndef WITH_FTE_VFS
 	FILE *f;
+#else
+	vfsfile_t *v;
+#endif
 
 	ResetVariables(CVAR_SERVERINFO, !resetall);
 
@@ -725,10 +730,17 @@ static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 	{
 		Cbuf_AddText ("cl_warncmd 0\n");
 		Cbuf_AddText ("exec default.cfg\n");
+#ifndef WITH_FTE_VFS
 		if (FS_FOpenFile("autoexec.cfg", &f) != -1) {
 			Cbuf_AddText ("exec autoexec.cfg\n");
 			fclose(f);
 		}
+#else
+		if ((v = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
+			Cbuf_AddText ("exec autoexec.cfg\n");
+			VFS_CLOSE(v);
+		}
+#endif
 		Cbuf_AddText ("cl_warncmd 1\n");
 	}
 }

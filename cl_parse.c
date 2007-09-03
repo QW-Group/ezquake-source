@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.107 2007-08-29 21:59:44 borisu Exp $
+$Id: cl_parse.c,v 1.108 2007-09-03 15:38:19 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -411,18 +411,31 @@ int CL_CalcNetStatistics(
 
 //Returns true if the file exists, otherwise it attempts to start a download from the server.
 qbool CL_CheckOrDownloadFile (char *filename) {
+#ifndef WITH_FTE_VFS
 	FILE *f;
+#else
+	vfsfile_t *v;
+#endif
+
 
 	if (strstr (filename, "..")) {
 		Com_Printf ("Refusing to download a path with ..\n");
 		return true;
 	}
 
+#ifndef WITH_FTE_VFS
 	FS_FOpenFile (filename, &f);
 	if (f) {	// it exists, no need to download
 		fclose (f);
 		return true;
 	}
+#else
+	v = FS_OpenVFS(filename, "rb", FS_ANY);
+	if (v) {
+		VFS_CLOSE(v);
+		return true;
+	}
+#endif // WITH_FTE_VFS
 
 	//ZOID - can't download when recording
 	if (cls.demorecording) {

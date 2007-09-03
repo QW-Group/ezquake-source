@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.30 2007-06-18 00:49:28 qqshka Exp $
+	$Id: sv_user.c,v 1.31 2007-09-03 15:33:27 dkure Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -546,7 +546,11 @@ void SV_CompleteDownoload(void)
 	if (!sv_client->download)
 		return;
 
+#ifndef WITH_FTE_VFS
 	fclose (sv_client->download);
+#else
+	VFS_CLOSE (sv_client->download);
+#endif
 	sv_client->download = NULL;
 }
 
@@ -560,6 +564,10 @@ void SV_NextChunkedDownload(int chunknum, int percent, int chunked_download_numb
 #define CHUNKSIZE 1024
 	char buffer[CHUNKSIZE];
 	int i;
+#ifndef WITH_FTE_VFS
+#else
+	vfserrno_t err;
+#endif
 
 // mvdsv specific
 //	sv_client->file_percent = bound(0, percent, 100); //bliP: file percent
@@ -582,10 +590,17 @@ void SV_NextChunkedDownload(int chunknum, int percent, int chunked_download_numb
 		if (sv_client->datagram.cursize + CHUNKSIZE+5+50 > sv_client->datagram.maxsize)
 			return;	//choked!
 
+#ifndef WITH_FTE_VFS
 	if (fseek(sv_client->download, sv_client->download_position + chunknum*CHUNKSIZE, SEEK_SET))
 		return; // FIXME: ERROR of some kind
 
 	i = fread(buffer, 1, CHUNKSIZE, sv_client->download);
+#else
+	if (VFS_SEEK(sv_client->download, chunknum*CHUNKSIZE))
+		return; // FIXME: ERROR of some kind
+	i = VFS_READ(sv_client->download, buffer, CHUNKSIZE, &err);
+#endif
+
 
 	if (i > 0)
 	{
@@ -627,6 +642,10 @@ void SV_NextChunkedDownload(int chunknum, int percent, int chunked_download_numb
 void Cmd_NextDL_f (void) {
 	byte buffer[FILE_TRANSFER_BUF_SIZE];
 	int r, percent, size;
+#ifndef WITH_FTE_VFS
+#else
+	vfserrno_t err;
+#endif
 
 	if (!sv_client->download)
 		return;
@@ -641,7 +660,11 @@ void Cmd_NextDL_f (void) {
 
 	r = sv_client->downloadsize - sv_client->downloadcount;
 	r = min(r, 768);
+#ifndef WITH_FTE_VFS
 	r = fread (buffer, 1, r, sv_client->download);
+#else
+	r = VFS_READ(sv_client->download, buffer, r, &err);
+#endif
 	ClientReliableWrite_Begin (sv_client, svc_download, 6+r);
 	ClientReliableWrite_Short (sv_client, r);
 
@@ -778,7 +801,11 @@ void Cmd_Download_f (void) {
 
 	// cancel current download, if any
 	if (sv_client->download) {
+#ifndef WITH_FTE_VFS
 		fclose (sv_client->download);
+#else
+		VFS_CLOSE(sv_client->download);
+#endif
 		sv_client->download = NULL;
 	}
 
@@ -787,7 +814,13 @@ void Cmd_Download_f (void) {
 	for (p = name; *p; p++)
 		*p = (char)tolower(*p);
 
+	// FIXME D-Kure WITH_FTE_VFS replacement
+#ifndef WITH_FTE_VFS
 	sv_client->downloadsize = FS_FOpenFile (name, &sv_client->download);
+#else
+	sv_client->download = FS_OpenVFS(name, "rb", FS_ANY);
+	sv_client->downloadsize = fs_filesize;
+#endif
 	sv_client->downloadcount = 0;
 
 	if (!sv_client->download) {
@@ -796,6 +829,7 @@ void Cmd_Download_f (void) {
 	}
 
 #ifdef PROTOCOL_VERSION_FTE
+#ifndef WITH_FTE_VFS
 	// chunked download used fseek(), since this is may be pak file, we need offset in pak file
 	if ((sv_client->download_position = ftell(sv_client->download)) == -1L)
 	{
@@ -804,10 +838,15 @@ void Cmd_Download_f (void) {
 		goto deny_download;
 	}
 #endif
+#endif
 
 	// special check for maps that came from a pak file
 	if (!strcasecmp(dirname, "maps") && file_from_pak && !allow_download_pakmaps.value) {
+#ifndef WITH_FTE_VFS
 		fclose (sv_client->download);
+#else
+		VFS_CLOSE(sv_client->download);
+#endif
 		sv_client->download = NULL;
 		goto deny_download;
 	}

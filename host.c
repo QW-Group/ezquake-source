@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.45 2007-08-13 06:24:04 disconn3ct Exp $
+	$Id: host.c,v 1.46 2007-09-03 15:38:19 dkure Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "quakedef.h"
 #include "EX_browser.h"
+#include "fs.h"
 #ifdef WITH_TCL
 #include "embed_tcl.h"
 #endif
@@ -555,7 +556,11 @@ void Startup_Place(void)
 
 void Host_Init (int argc, char **argv, int default_memsize)
 {
+#ifndef WITH_FTE_VFS
 	FILE *f;
+#else
+	vfsfile_t *vf;
+#endif // WITH_FTE_VFS
 	cvar_t *v;
 
 #ifdef id386
@@ -577,7 +582,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_Init ();
 	Key_Init ();
 
+//#ifdef WITH_FTE_VFS
+//	COM_InitFilesystem();
+//#else
 	FS_InitFilesystem ();
+//#endif
 
 	Commands_For_Configs_Init ();
 
@@ -588,10 +597,16 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 		snprintf(cfg, sizeof(cfg), "%s/config.cfg", com_homedir);
 
+#ifndef WITH_FTE_VFS
 		if ((f = fopen(cfg, "r"))) { // found cfg in home dir, use it
 		    extern void LoadHomeCfg(const char *filename);
 
 			fclose(f);
+#else
+		if ((vf = FS_OpenVFS(cfg, "rb", FS_ANY))) {
+		    extern void LoadHomeCfg(const char *filename);
+			VFS_CLOSE(vf);
+#endif
 
 			Com_Printf("Using home config %s\n", cfg);
 			LoadHomeCfg("config.cfg"); // well, we can't use exec here, because exec does't support full path by design
@@ -599,8 +614,14 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		else {
 			snprintf(cfg, sizeof(cfg), "%s/ezquake/configs/config.cfg", com_basedir);
 
+#ifndef WITH_FTE_VFS
 			if ((f = fopen(cfg, "r"))) { // found cfg in ezquake dir, use it, if not found in home dir
 				fclose(f);
+#else
+			// D-Kure: FIXME: These cases seem to be covered by FS_ANY
+			if ((vf = FS_OpenVFS(cfg, "rb", FS_ANY))) {
+				VFS_CLOSE(vf);
+#endif
 
 				Cbuf_AddText("exec configs/config.cfg\n");
 			}
@@ -692,10 +713,17 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			Cbuf_AddText ("exec config.cfg\n");
 			fclose(f);
 		} */
+#ifndef WITH_FTE_VFS
 		if (FS_FOpenFile("autoexec.cfg", &f) != -1) {
 			Cbuf_AddText ("exec autoexec.cfg\n");
 			fclose(f);
 		}
+#else
+		if ((vf = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
+			Cbuf_AddText ("exec autoexec.cfg\n");
+			VFS_CLOSE(vf);
+		}
+#endif
 		Cmd_StuffCmds_f ();		// process command line arguments
 		Cbuf_AddText ("cl_warncmd 1\n");
 	}

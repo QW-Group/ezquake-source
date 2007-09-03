@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.16 2007-08-11 20:24:06 cokeman1982 Exp $
+	$Id: r_part.c,v 1.17 2007-09-03 15:38:19 dkure Exp $
 
 */
 
@@ -252,9 +252,16 @@ void Classic_ClearParticles (void) {
 
 #ifndef CLIENTONLY
 void R_ReadPointFile_f (void) {
+#ifndef WITH_FTE_VFS
 	FILE *f;
+	int r;
+#else
+	vfsfile_t *v;
+	char line[1024];
+    char *s;
+#endif
 	vec3_t org;
-	int r, c;
+	int c;
 	particle_t *p;
 	char name[MAX_OSPATH];
 
@@ -263,7 +270,11 @@ void R_ReadPointFile_f (void) {
 
 	snprintf (name, sizeof(name), "maps/%s.pts", host_mapname.string);
 
+#ifndef WITH_FTE_VFS
 	if (FS_FOpenFile (name, &f) == -1) {
+#else
+	if (!(v = FS_OpenVFS(name, "rb", FS_ANY))) {
+#endif
 		Com_Printf ("couldn't open %s\n", name);
 		return;
 	}
@@ -271,9 +282,28 @@ void R_ReadPointFile_f (void) {
 	Com_Printf ("Reading %s...\n", name);
 	c = 0;
 	while (1) {
+#ifndef WITH_FTE_VFS
 		r = fscanf (f,"%f %f %f\n", &org[0], &org[1], &org[2]);
 		if (r != 3)
 			break;
+
+#else
+		VFS_GETS(v, line, sizeof(line));
+		s = COM_Parse(line);
+		org[0] = atof(com_token);
+
+		s = COM_Parse(s);
+		if (!s) 
+			break;
+		org[1] = atof(com_token);
+
+		s = COM_Parse(s);
+		if (!s)
+			break;
+		org[2] = atof(com_token);
+		if (COM_Parse(s))
+			break;
+#endif
 
 		c++;
 		if (!free_particles) {
@@ -292,7 +322,11 @@ void R_ReadPointFile_f (void) {
 		VectorCopy (org, p->org);
 	}
 
+#ifndef WITH_FTE_VFS
 	fclose (f);
+#else
+	VFS_CLOSE(v);
+#endif
 	Com_Printf ("%i points read\n", c);
 }
 #endif

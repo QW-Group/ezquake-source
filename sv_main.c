@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.27 2007-07-28 23:19:32 disconn3ct Exp $
+	$Id: sv_main.c,v 1.28 2007-09-03 15:33:27 dkure Exp $
 */
 
 #include "qwsvdef.h"
@@ -161,7 +161,11 @@ void SV_DropClient (client_t *drop) {
 		Com_Printf ("Client %s removed\n",drop->name);
 
 	if (drop->download) {
+#ifndef WITH_FTE_VFS
 		fclose (drop->download);
+#else
+		VFS_CLOSE(drop->download);
+#endif
 		drop->download = NULL;
 	}
 	if (drop->upload) {

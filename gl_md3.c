@@ -411,7 +411,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 				COM_StripExtension(sinf->name, sinf->name);
 				strcat(sinf->name, "_default.skin");
 
-				sfile=sfilestart=(char *)FS_LoadFile(sinf->name, 1);
+				sfile = sfilestart = (char *) FS_LoadHunkFile(sinf->name);
 
 				strcpy(sinf->name, mod->name);	//backup
 				COM_StripExtension(sinf->name, sinf->name);

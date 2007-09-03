@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: server.h,v 1.22 2007-08-24 17:00:09 dkure Exp $
+	$Id: server.h,v 1.23 2007-09-03 15:33:27 dkure Exp $
 */
 // server.h
 
@@ -190,7 +190,11 @@ typedef struct client_s {
 
 	client_frame_t	frames[UPDATE_BACKUP];	// updates can be deltad from here
 
+#ifndef WITH_FTE_VFS
 	FILE		*download;			// file being downloaded
+#else
+	vfsfile_t   *download;			// file being downloaded
+#endif
 #ifdef PROTOCOL_VERSION_FTE
 	int			download_position; // chunked download used fseek(), since this is may be pak file, we need offset in pak file
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.48 2007-07-18 23:36:31 cokeman1982 Exp $
+    $Id: image.c,v 1.49 2007-09-03 15:38:19 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -560,6 +560,7 @@ static qbool PNG_LoadLibrary(void) {
 }
 
 
+#ifndef WITH_FTE_VFS
 static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
 	FILE *f = (FILE *) qpng_get_io_ptr(png_ptr);
 	fread(data, 1, length, f);
@@ -574,9 +575,30 @@ static void PNG_IO_user_flush_data(png_structp png_ptr) {
 	FILE *f = (FILE *) qpng_get_io_ptr(png_ptr);
 	fflush(f);
 }
+#else
+static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
+	vfsfile_t *v = (vfsfile_t *) qpng_get_io_ptr(png_ptr);
+	vfserrno_t err;
+	VFS_READ(v, data, length, &err);
+}
+
+static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size_t length) {
+	vfsfile_t *v = (vfsfile_t *) qpng_get_io_ptr(png_ptr);
+	VFS_WRITE(v, data, length);
+}
+
+static void PNG_IO_user_flush_data(png_structp png_ptr) {
+	vfsfile_t *v = (vfsfile_t *) qpng_get_io_ptr(png_ptr);
+	VFS_FLUSH(v);
+}
+#endif
 
 
+#ifndef WITH_FTE_VFS
 byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, *real_height) 
+#else
+byte *Image_LoadPNG (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, *real_height) 
+#endif // WITH_FTE_VFS
 {
 	byte header[8], **rowpointers, *data;
 	png_structp png_ptr;
@@ -587,31 +609,52 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight,
 	if (!png_handle)
 		return NULL;
 
+#ifndef WITH_FTE_VFS
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
 		return NULL;
+#else
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+		return NULL;
+#endif // WITH_FTE_VFS
 
 	fread(header, 1, 8, fin);
 
 	if (qpng_sig_cmp(header, 0, 8)) {
 		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		return NULL;
 	}
 
 	if (!(png_ptr = qpng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		return NULL;
 	}
 
 	if (!(pnginfo = qpng_create_info_struct(png_ptr))) {
 		qpng_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		return NULL;
 	}
 
 	if (setjmp(png_ptr->jmpbuf)) {
 		qpng_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		return NULL;
 	}
 
@@ -631,13 +674,21 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight,
 	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) {
 		Com_DPrintf ("PNG image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
 		qpng_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		return NULL;
 	}
 
 	if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) {
 		qpng_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		return NULL;
 	}
 
@@ -672,7 +723,11 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight,
 	if (bitdepth != 8 || bytesperpixel != 4) {
 		Com_DPrintf ("Unsupported PNG image %s: Bad color depth and/or bpp\n", COM_SkipPath(filename));
 		qpng_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		return NULL;
 	}
 
@@ -687,7 +742,11 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight,
 
 	qpng_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 	Q_free(rowpointers);
+#ifndef WITH_FTE_VFS
 	fclose(fin);
+#else
+	VFS_CLOSE(fin);
+#endif
 	return data;
 }
 
@@ -816,6 +875,7 @@ int Image_WritePNGPLTE (char *filename, int compression,
 
 #else
 
+#ifndef WITH_FTE_VFS
 static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) 
 {
 	FILE *f = (FILE *) png_get_io_ptr(png_ptr);
@@ -834,16 +894,34 @@ static void PNG_IO_user_flush_data(png_structp png_ptr)
 	fflush(f);
 }
 
+#else
+static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
+	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
+	vfserrno_t err;
+	VFS_READ(v, data, length, &err);
+}
+
+static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size_t length) {
+	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
+	VFS_WRITE(v, data, length);
+}
+
+static void PNG_IO_user_flush_data(png_structp png_ptr) {
+	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
+	VFS_FLUSH(v);
+}
+#endif // WITH_FTE_VFS
+
 #define PNG_HEADER_LENGTH	8
 #define PNG_LOAD_TEXT		1
 #define PNG_LOAD_DATA		2
 
+#ifndef WITH_FTE_VFS
 static qbool PNG_HasHeader (FILE *fin)
 {
 	byte header[PNG_HEADER_LENGTH];
 
 	fread(header, 1, PNG_HEADER_LENGTH, fin);
-
 	if (png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) 
 	{
 		fclose(fin);
@@ -854,7 +932,30 @@ static qbool PNG_HasHeader (FILE *fin)
 	return true;
 }
 
+#else
+static qbool PNG_HasHeader (vfsfile_t *fin)
+{
+	byte header[PNG_HEADER_LENGTH];
+	vfserrno_t err;
+
+	VFS_READ(fin, header, PNG_HEADER_LENGTH, &err);
+	if (png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) 
+	{
+		VFS_CLOSE(fin);
+		fin = NULL;
+		return false;
+	}
+
+	return true;
+}
+#endif // WITH_FTE_VFS
+
+
+#ifndef WITH_FTE_VFS
 png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
+#else
+png_data *Image_LoadPNG_All (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
+#endif // WITH_FTE_VFS
 {
 	byte **rowpointers = NULL;
 	byte *data = NULL;
@@ -869,7 +970,11 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 
 	// Check if we were given a non-null file pointer
 	// if so then use it, otherwise try to open the specified filename.
+#ifndef WITH_FTE_VFS
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+#else
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+#endif
 	{
 		return NULL;
 	}
@@ -884,7 +989,11 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	// Try creating a PNG structure for reading the file.
 	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) 
 	{
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		fin = NULL;
 		return NULL;
 	}
@@ -893,7 +1002,11 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	if (!(pnginfo = png_create_info_struct(png_ptr))) 
 	{
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		fin = NULL;
 		return NULL;
 	}
@@ -903,7 +1016,11 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	if (setjmp(png_ptr->jmpbuf)) 
 	{
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 		fclose(fin);
+#else
+		VFS_CLOSE(fin);
+#endif
 		fin = NULL;
 		return NULL;
 	}
@@ -940,7 +1057,11 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		{
 			Com_DPrintf ("PNG image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
 			png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 			fclose(fin);
+#else
+			VFS_CLOSE(fin);
+#endif
 			fin = NULL;
 			return NULL;
 		}
@@ -950,7 +1071,11 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) 
 		{
 			png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 			fclose(fin);
+#else
+			VFS_CLOSE(fin);
+#endif
 			fin = NULL;
 			return NULL;
 		}
@@ -1043,7 +1168,11 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		{
 			Com_DPrintf ("Unsupported PNG image %s: Bad color depth and/or bpp\n", COM_SkipPath(filename));
 			png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+#ifndef WITH_FTE_VFS
 			fclose(fin);
+#else
+			VFS_CLOSE(fin);
+#endif
 			fin = NULL;
 			return NULL;
 		}
@@ -1102,7 +1231,11 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	// Clean up.
 	png_destroy_read_struct (&png_ptr, &pnginfo, NULL);
 	Q_free (rowpointers);
-	fclose (fin);
+#ifndef WITH_FTE_VFS
+	fclose(fin);
+#else
+	VFS_CLOSE(fin);
+#endif
 	fin = NULL;
 
 	// If we don't care about the data.
@@ -1157,7 +1290,11 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 	return textchunks;
 }
 
+#ifndef WITH_FTE_VFS
 byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+#else
+byte *Image_LoadPNG (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+#endif // WITH_FTE_VFS
 {
 	byte *data = NULL;
 	png_data *pdata;
@@ -1351,18 +1488,33 @@ static void TGA_upsample32(byte *dest, byte *src)
 
 #define TGA_ERROR(msg)	{if (msg) {Com_DPrintf((msg), COM_SkipPath(filename));} Q_free(fileBuffer); return NULL;}
 
+#ifndef WITH_FTE_VFS
 byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+#else
+byte *Image_LoadTGA(vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+#endif // WITH_FTE_VFS
 {
 	TGAHeader_t header;
 	int i, x, y, bpp, alphabits, compressed, mytype, row_inc, runlen, readpixelcount;
 	int image_width = -1, image_height = -1;
 	byte *fileBuffer, *in, *out, *data, *enddata, rgba[4], palette[256 * 4];
 
+#ifndef WITH_FTE_VFS
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
 		return NULL;
 	fileBuffer = (byte *) Q_malloc(fs_filesize);
 	fread(fileBuffer, 1, fs_filesize, fin);
 	fclose(fin);
+
+#else
+	vfserrno_t err;
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+		return NULL;
+	fileBuffer = (byte *) Q_malloc(fs_filesize);
+
+	VFS_READ(fin, fileBuffer, fs_filesize, &err);
+	VFS_CLOSE(fin);
+#endif // WITH_FTE_VFS
 
 	if (fs_filesize < 19)
 		TGA_ERROR(NULL);
@@ -1981,7 +2133,11 @@ jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 	src->maxlen = maxlen;
 }
 
+#ifndef WITH_FTE_VFS
 byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+#else
+byte *Image_LoadJPEG(vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+#endif // WITH_FTE_VFS
 {
 	byte *mem = NULL, *in, *out;
 	int i, image_width, image_height;
@@ -2002,10 +2158,15 @@ byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight,
 	JSAMPARRAY buffer;		// Output row buffer.
 	int size_stride;		// physical row width in output buffer.
 
+#ifndef WITH_FTE_VFS
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+#else
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+#endif
 		return NULL;
 
 	infile = (byte *) Q_malloc(length = fs_filesize);
+#ifndef WITH_FTE_VFS
 	if (fread (infile, 1, fs_filesize, fin) != fs_filesize) 
 	{
 		Com_DPrintf ("Image_LoadJPEG: fread() failed on %s\n", COM_SkipPath(filename));
@@ -2015,6 +2176,18 @@ byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight,
 	}
 
 	fclose(fin);
+#else
+	vfserrno_t err;
+	if (VFS_READ(fin, infile, fs_filesize, &err) != fs_filesize) 
+	{
+		Com_DPrintf ("Image_LoadJPEG: fread() failed on %s\n", COM_SkipPath(filename));
+		VFS_CLOSE(fin);
+		Q_free(infile);
+		return NULL;
+	}
+
+	VFS_CLOSE(fin);
+#endif // WITH_FTE_VFS
 
 	// Step 1: allocate and initialize JPEG decompression object.
 
@@ -2126,16 +2299,25 @@ typedef struct pcx_s
     byte			data;		
 } pcx_t;
 
+#ifndef WITH_FTE_VFS
 byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+#else
+byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+#endif // WITH_FTE_VFS
 {
 	pcx_t *pcx;
 	byte *pcxbuf, *data, *out, *pix;
 	int x, y, dataByte, runLength, width, height;
 
+#ifndef WITH_FTE_VFS
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+#else
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+#endif // WITH_FTE_VFS
 		return NULL;
 
 	pcxbuf = (byte *) Q_malloc(fs_filesize);
+#ifndef WITH_FTE_VFS
 	if (fread (pcxbuf, 1, fs_filesize, fin) != fs_filesize) 
 	{
 		Com_DPrintf ("Image_LoadPCX: fread() failed on %s\n", COM_SkipPath(filename));
@@ -2144,6 +2326,17 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight,
 		return NULL;
 	}
 	fclose(fin);
+#else
+	vfserrno_t err;
+	if (VFS_READ(fin, pcxbuf, fs_filesize, &err) != fs_filesize) 
+	{
+		Com_DPrintf ("Image_LoadPCX: fread() failed on %s\n", COM_SkipPath(filename));
+		VFS_CLOSE(fin);
+		Q_free(pcxbuf);
+		return NULL;
+	}
+	VFS_CLOSE(fin);
+#endif // WITH_FTE_VFS
 
 	pcx = (pcx_t *) pcxbuf;
 	pcx->xmax = LittleShort (pcx->xmax);
@@ -2248,7 +2441,11 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight,
 #ifdef GLQUAKE
 
 // This does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture.
+#ifndef WITH_FTE_VFS
 byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+#else
+byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+#endif // WITH_FTE_VFS
 {
 	int image_width, image_height;
 	unsigned *out;

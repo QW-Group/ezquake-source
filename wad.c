@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: wad.c,v 1.17 2007-05-28 10:47:37 johnnycz Exp $
+	$Id: wad.c,v 1.18 2007-09-03 15:38:19 dkure Exp $
 */
 // wad.c
 
@@ -245,7 +245,11 @@ WAD3 Texture Loading for BSP 3.0 Support
 
 typedef struct {
 	char name[MAX_QPATH];
+#ifndef WITH_FTE_VFS
 	FILE *file;
+#else
+	vfsfile_t *file;
+#endif
 	int position;
 	int size;
 } texwadlump_t;
@@ -258,21 +262,37 @@ void WAD3_LoadWadFile (char *filename)
 	lumpinfo_t *lumps, *lump_p;
 	wadinfo_t header;
 	int i, j, infotableofs, numlumps, lowmark;
+#ifndef WITH_FTE_VFS
 	FILE *file;
+#else
+	vfsfile_t *file;
+	vfserrno_t err;
+#endif
 
 	if (wad3_numlumps == TEXWAD_MAXIMAGES)
 		return;
 
+#ifndef WITH_FTE_VFS
 	if (FS_FOpenFile (va("textures/halflife/%s", filename), &file) == -1)
 		if (FS_FOpenFile (va("textures/wad3/%s", filename), &file) == -1)
 			if (FS_FOpenFile (va("textures/%s", filename), &file) == -1)
 				if (FS_FOpenFile (filename, &file) == -1)
+#else
+	if (!(file = FS_OpenVFS(va("textures/halflife/%s", filename), "rb", FS_ANY)))
+		if (!(file = FS_OpenVFS(va("textures/wad3/%s", filename), "rb", FS_ANY)))
+			if (!(file = FS_OpenVFS(va("textures/%s", filename), "rb", FS_ANY)))
+				if (!(file = FS_OpenVFS(filename, "rb", FS_ANY)))
+
+#endif
 				{
 					Com_Printf ("WAD3_LoadWadFile: couldn't load halflife wad \"%s\"", filename);
 					return;
 				}
-
+#ifndef WITH_FTE_VFS
 	if (fread(&header, 1, sizeof(wadinfo_t), file) != sizeof(wadinfo_t)) {
+#else
+	if (VFS_READ(file, &header, sizeof(wadinfo_t), &err) != sizeof(wadinfo_t)) {
+#endif
 		Com_Printf ("WAD3_LoadWadFile: unable to read wad header\n");
 		return;
 	}
@@ -289,7 +309,11 @@ void WAD3_LoadWadFile (char *filename)
 	}
 
 	infotableofs = LittleLong(header.infotableofs);
+#ifndef WITH_FTE_VFS
 	if (fseek(file, infotableofs, SEEK_SET)) {
+#else
+	if (VFS_SEEK(file, infotableofs)) {
+#endif
 		Com_Printf ("WAD3_LoadWadFile: unable to seek to lump table\n");
 		return;
 	}
@@ -300,7 +324,11 @@ void WAD3_LoadWadFile (char *filename)
 		return;
 	}
 
+#ifndef WITH_FTE_VFS
 	if (fread(lumps, 1, sizeof(lumpinfo_t) * numlumps, file) != sizeof(lumpinfo_t) * numlumps) {
+#else
+	if (VFS_READ(file, lumps, sizeof(lumpinfo_t)*numlumps, &err) != sizeof(lumpinfo_t) * numlumps) {
+#endif
 		Com_Printf ("WAD3_LoadWadFile: unable to read lump table\n");
 		Hunk_FreeToLowMark(lowmark);
 		return;
@@ -358,7 +386,12 @@ byte *WAD3_LoadTexture (texture_t *tx)
 	int i, j = 0;
 	miptex_t *mt;
 	byte *data;
+#ifndef WITH_FTE_VFS
 	FILE *file;
+#else
+	vfsfile_t *file;
+	vfserrno_t err;
+#endif
 
 	if (tx->offsets[0])
 		return ConvertWad3ToRGBA(tx->width, tx->height, (byte *)(tx + 1), (tx->name[0] == '{'));
@@ -368,12 +401,20 @@ byte *WAD3_LoadTexture (texture_t *tx)
 			continue;
 		
 		file = texwadlump[i].file;
+#ifndef WITH_FTE_VFS
 		if (fseek(file, texwadlump[i].position, SEEK_SET)) {
+#else
+		if (VFS_SEEK(file, texwadlump[i].position)) {
+#endif
 			Com_Printf("WAD3_LoadTexture: corrupt WAD3 file\n");
 			return NULL;
 		}
 		mt = Q_malloc(texwadlump[i].size);
+#ifndef WITH_FTE_VFS
 		if (fread(mt, 1, texwadlump[i].size, file) < texwadlump[i].size) {
+#else
+		if (VFS_READ(file, mt, texwadlump[i].size, &err) < texwadlump[i].size) {
+#endif
 			Com_Printf("WAD3_LoadTexture: corrupt WAD3 file\n");
 			Q_free (mt);
 			return NULL;

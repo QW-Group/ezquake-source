@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.29 2007-08-27 19:50:06 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.30 2007-09-03 15:38:19 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -1094,8 +1094,8 @@ int EZ_control_OnParentResize(ez_control_t *self)
 {
 	if (self->parent && (self->flags & CONTROL_RESIZEABLE))
 	{
-		int x = 0;
-		int y = 0;
+		//int x = 0;
+		//int y = 0;
 		int width = self->width;
 		int height = self->height;
 

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.35 2007-08-21 14:53:48 qqshka Exp $
+$Id: gl_texture.c,v 1.36 2007-09-03 15:38:19 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -468,12 +468,23 @@ gltexture_t *GL_FindTexture (char *identifier) {
 
 static gltexture_t *current_texture = NULL;
 
+#ifndef WITH_FTE_VFS
 #define CHECK_TEXTURE_ALREADY_LOADED	\
 	if (CheckTextureLoaded(mode)) {		\
 		current_texture = NULL;			\
 		fclose(f);						\
 		return NULL;					\
 	}
+
+#else
+#define CHECK_TEXTURE_ALREADY_LOADED	\
+	if (CheckTextureLoaded(mode)) {		\
+		current_texture = NULL;			\
+		VFS_CLOSE(f);					\
+		return NULL;					\
+	}
+#endif
+
 
 static qbool CheckTextureLoaded(int mode) {
 	int scaled_width, scaled_height;
@@ -493,7 +504,11 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 {
 	char basename[MAX_QPATH], name[MAX_QPATH];
 	byte *c, *data = NULL;
+#ifndef WITH_FTE_VFS
 	FILE *f;
+#else
+	vfsfile_t *f;
+#endif // WITH_FTE_VFS
 
 	COM_StripExtension(filename, basename);
 	for (c = (byte *) basename; *c; c++)
@@ -503,12 +518,21 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	}
 
 	snprintf (name, sizeof(name), "%s.link", basename);
+#ifndef WITH_FTE_VFS
 	if (FS_FOpenFile (name, &f) != -1)
 	{
 		char link[128];
 		int len;
 		fgets(link, 128, f);
 		fclose (f);
+#else
+	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
+	{
+		char link[128];
+		int len;
+		VFS_GETS(f, link, sizeof(link));
+
+#endif // WITH_FTE_VFS
 		len = strlen(link);
 
 		// Strip endline.
@@ -525,7 +549,11 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 		}
 
 		snprintf (name, sizeof(name), "textures/%s", link);
+#ifndef WITH_FTE_VFS
        	if (FS_FOpenFile (name, &f) != -1) 
+#else
+		if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
+#endif // WITH_FTE_VFS
 		{
        		CHECK_TEXTURE_ALREADY_LOADED;
        		if( !data && !strcasecmp(link + len - 3, "tga") )
@@ -559,7 +587,11 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	}
 
 	snprintf (name, sizeof(name), "%s.tga", basename);
+#ifndef WITH_FTE_VFS
 	if (FS_FOpenFile (name, &f) != -1) 
+#else
+	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
+#endif // WITH_FTE_VFS
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
 		if ((data = Image_LoadTGA (f, name, matchwidth, matchheight, real_width, real_height)))
@@ -568,7 +600,11 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 
 	#ifdef WITH_PNG
 	snprintf (name, sizeof(name), "%s.png", basename);
+#ifndef WITH_FTE_VFS
 	if (FS_FOpenFile (name, &f) != -1) 
+#else
+	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
+#endif // WITH_FTE_VFS
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
 		if ((data = Image_LoadPNG (f, name, matchwidth, matchheight, real_width, real_height)))
@@ -578,7 +614,11 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 
 	#ifdef WITH_JPEG
 	snprintf (name, sizeof(name), "%s.jpg", basename);
+#ifndef WITH_FTE_VFS
 	if (FS_FOpenFile (name, &f) != -1) 
+#else
+	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
+#endif // WITH_FTE_VFS
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
 		if ((data = Image_LoadJPEG (f, name, matchwidth, matchheight, real_width, real_height)))
@@ -589,7 +629,11 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	snprintf (name, sizeof(name), "%s.pcx", basename);
 	
 	// TEX_NO_PCX - preventing loading skins here.
+#ifndef WITH_FTE_VFS
 	if (!(mode & TEX_NO_PCX) && FS_FOpenFile (name, &f) != -1)
+#else
+	if (!(mode & TEX_NO_PCX) && (f = FS_OpenVFS(name, "rb", FS_ANY))) 
+#endif // WITH_FTE_VFS
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
 		if ((data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight, real_width, real_height)))

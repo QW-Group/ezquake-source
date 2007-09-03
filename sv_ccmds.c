@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_ccmds.c,v 1.10 2007-05-03 12:03:55 johnnycz Exp $
+	$Id: sv_ccmds.c,v 1.11 2007-09-03 15:33:27 dkure Exp $
 */
 
 #include "qwsvdef.h"
@@ -100,7 +100,11 @@ qbool SV_SetPlayer (void) {
 //handle a map <mapname> command from the console or progs.
 void SV_Map_f (void) {
 	char level[MAX_QPATH], expanded[MAX_QPATH];
+#ifndef WITH_FTE_VFS
 	FILE *f;
+#else
+	vfsfile_t *f;
+#endif
 	qbool devmap;
 
 	if (Cmd_Argc() != 2) {
@@ -112,11 +116,19 @@ void SV_Map_f (void) {
 
 	// check to make sure the level exists
 	snprintf (expanded, sizeof(expanded), "maps/%s.bsp", level);
+#ifndef WITH_FTE_VFS
 	if (FS_FOpenFile (expanded, &f) == -1) {
 		Com_Printf ("Can't find %s\n", expanded);
 		return;
 	}
 	fclose (f);
+#else
+	if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY))) {
+		Com_Printf ("Can't find %s\n", expanded);
+		return;
+	}
+	VFS_CLOSE(f);
+#endif // WITH_FTE_VFS
 
 #ifndef SERVERONLY
 	if (!dedicated)
