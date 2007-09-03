@@ -1,4 +1,4 @@
-// $Id: xsd_variable.c,v 1.4 2007-08-31 15:22:03 johnnycz Exp $
+// $Id: xsd_variable.c,v 1.5 2007-09-03 15:31:11 dkure Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -175,8 +175,12 @@ static void OnCharacterData(void *userData, const XML_Char *s, int len)
 }
 
 // read variable content from file, return 0 if error
-xml_t * XSD_Variable_LoadFromHandle(FILE *f, int filelen)
-{
+#ifndef WITH_FTE_VFS
+xml_t * XSD_Variable_LoadFromHandle(FILE *f, int filelen) {
+#else
+xml_t * XSD_Variable_LoadFromHandle(vfsfile_t *v, int filelen) {
+	vfserrno_t err;
+#endif
     xml_variable_t *document;
     XML_Parser parser = NULL;
     int len;
@@ -201,7 +205,11 @@ xml_t * XSD_Variable_LoadFromHandle(FILE *f, int filelen)
     parser_stack.document = (xml_t *) document;
     XML_SetUserData(parser, &parser_stack);
 
+#ifndef WITH_FTE_VFS
     while ((len = fread(buf, 1, min(XML_READ_BUFSIZE, filelen-pos), f)) > 0)
+#else
+    while ((len = VFS_READ(v, buf, min(XML_READ_BUFSIZE, filelen-pos), &err)) > 0)
+#endif
     {
         if (XML_Parse(parser, buf, len, 0) != XML_STATUS_OK)
             goto error;
@@ -227,15 +235,24 @@ error:
 // read variable content from file, return 0 if error
 xml_variable_t * XSD_Variable_Load(char *filename)
 {
-    FILE *f = NULL;
     xml_variable_t *document;
+#ifndef WITH_FTE_VFS
+    FILE *f = NULL;
 	int len;
 
     if ((len = FS_FOpenFile(filename, &f)) < 0)
-        return NULL;
-
+		return NULL;
     document = (xml_variable_t *) XSD_Variable_LoadFromHandle(f, len);
     fclose(f);
+#else
+	vfsfile_t *v;
+
+	if (!(v = FS_OpenVFS(filename, "rb", FS_ANY))) {
+		return NULL;
+	}
+    document = (xml_variable_t *) XSD_Variable_LoadFromHandle(v, fs_filesize);
+	VFS_CLOSE(v);
+#endif
     return document;
 }
 
