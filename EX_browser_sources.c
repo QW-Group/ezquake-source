@@ -499,6 +499,7 @@ void Reload_Sources(void)
     FILE *f;
 #else
 	vfsfile_t *f;
+	char ln[2000];
 #endif
     int length;
     source_data *s;
@@ -546,7 +547,6 @@ void Reload_Sources(void)
         while (!feof(f)  &&  c != '\n')
             fscanf(f, "%c", &c);
 #else
-	char ln[2000];
     while (VFS_GETS(f, ln, sizeof(ln)))
     {
 		char line[2000];
