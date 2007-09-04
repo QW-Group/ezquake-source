@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.81 2007-09-04 09:03:19 himan Exp $
+		$Id: menu_options.c,v 1.82 2007-09-04 19:07:32 himan Exp $
 
 */
 
@@ -912,19 +912,6 @@ setting settgeneral_arr[] = {
 	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
 #endif
 
-	//Chat Settings
-	ADDSET_SEPARATOR("Chat settings"),
-	ADDSET_BIND("Chat", "messagemode"),
-	ADDSET_BIND("Teamchat", "messagemode2"),
-	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
-	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Ignore Qizmo Observers", ignore_qizmo_spec),
-	ADDSET_ENUM 	("Ignore Flood", ignore_flood, ignore_flood_enum),
-	ADDSET_NUMBER 	("Ignore Flood Duration", ignore_flood_duration, 0, 10, 1),
-	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
-	ADDSET_BASIC_SECTION(),
-	
 	//Connection
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
@@ -942,12 +929,25 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
+	
+	ADDSET_SEPARATOR("Console"),
+	ADDSET_BOOL		("Timestamps", con_timestamps),
+	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
+	ADDSET_NUMBER	("Size", scr_consize, 0, 1, 0.1),
+	ADDSET_NUMBER	("Speed", scr_conspeed, 1000, 9999, 1000),
+#ifdef GLQUAKE
+	ADDSET_NUMBER	("Alpha", scr_conalpha, 0, 1, 0.1),
+	ADDSET_NAMED	("Map Preview", scr_conback, scr_conback_enum),
+#endif
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NAMED	("Fun Chars Mode", con_funchars_mode, funcharsmode_enum),
+	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
+	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
+	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
+	ADDSET_BASIC_SECTION(),
 
 	//Match Tools
 	ADDSET_SEPARATOR("Match Tools"),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
-	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
 	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
@@ -982,6 +982,9 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
+	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Weapon Handling"),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to the weapon picked up if it is more powerful than what you're currently holding."),
@@ -1057,6 +1060,7 @@ setting settfps_arr[] = {
 #endif
 	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
 	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
+	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
 	
 	ADDSET_SEPARATOR("Environment"),
 	ADDSET_ADVANCED_SECTION(),
@@ -1085,6 +1089,8 @@ setting settfps_arr[] = {
 
 	ADDSET_SEPARATOR("Lighting"),
 	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
+	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
+	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
 #ifdef GLQUAKE
 	ADDSET_BOOL		("Colored Lights", gl_colorlights),
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
@@ -1093,23 +1099,11 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 #endif
 
-	ADDSET_SEPARATOR("Console"),
-	ADDSET_BOOL		("Timestamps", con_timestamps),
-	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
-	ADDSET_NUMBER	("Size", scr_consize, 0, 1, 0.1),
-	ADDSET_NUMBER	("Speed", scr_conspeed, 1000, 9999, 1000),
-#ifdef GLQUAKE
-	ADDSET_NUMBER	("Alpha", scr_conalpha, 0, 1, 0.1),
-	ADDSET_NAMED	("Map Preview", scr_conback, scr_conback_enum),
-#endif
-
-	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Disable lin.interp.", cl_nolerp),
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_BOOL		("Linear interpolation", cl_nolerp),
 	ADDSET_BASIC_SECTION(),
-	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
-	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
-	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
+
 
 };
 
@@ -1124,6 +1118,7 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Crosshair alpha", gl_crosshairalpha, 0.1, 1, 0.1),
 	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
 #endif
+
 	ADDSET_SEPARATOR("New HUD"),
 	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
 	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
@@ -1136,6 +1131,7 @@ setting setthud_arr[] = {
 #ifdef GLQUAKE
 	ADDSET_BOOLLATE ("Radar", hud_radar_show),
 #endif
+
 	ADDSET_SEPARATOR("Quake Classic HUD"),
 	ADDSET_BOOL		("Status Bar", cl_sbar),
 	ADDSET_BOOL		("HUD Left", cl_hudswap),
@@ -1143,6 +1139,7 @@ setting setthud_arr[] = {
 	ADDSET_BOOL		("Show Clock", scr_clock),
 	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
 #ifdef GLQUAKE
+
 	ADDSET_SEPARATOR("Tracker Messages"),
 	ADDSET_BOOL		("Flags", amf_tracker_flags),
 	ADDSET_BOOL		("Frags", amf_tracker_frags),
@@ -1151,15 +1148,6 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
 	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
 	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_SEPARATOR("Console"),
-	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
-	ADDSET_NAMED	("Fun Chars More", con_funchars_mode, funcharsmode_enum),
-	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
-	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
-	ADDSET_BOOL		("Timestamps", con_timestamps),
-	ADDSET_NUMBER	("Console height", scr_consize, 0.1, 1.0, 0.05),
-	ADDSET_BASIC_SECTION(),
 
 #endif
 
@@ -1195,6 +1183,18 @@ setting settdemo_spec_arr[] = {
 // please try to put mostly binds in here
 setting settbinds_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
+	ADDSET_SEPARATOR("Chat settings"),
+	ADDSET_BIND		("Chat", "messagemode"),
+	ADDSET_BIND		("Teamchat", "messagemode2"),
+	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
+	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Ignore Qizmo Observers", ignore_qizmo_spec),
+	ADDSET_ENUM 	("Ignore Flood", ignore_flood, ignore_flood_enum),
+	ADDSET_NUMBER 	("Ignore Flood Duration", ignore_flood_duration, 0, 10, 1),
+	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
+	ADDSET_BASIC_SECTION(),
+	
 	ADDSET_SEPARATOR("Mouse Settings"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Freelook", freelook),
