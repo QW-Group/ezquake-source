@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.80 2007-09-04 05:37:35 himan Exp $
+		$Id: menu_options.c,v 1.81 2007-09-04 09:03:19 himan Exp $
 
 */
 
@@ -80,7 +80,7 @@ enum {mode_fastest, mode_faithful, mode_eyecandy, mode_movies, mode_undef} fps_m
 enum {mode_fastest, mode_default, mode_undef} fps_mode = mode_default;
 #endif
 
-extern cvar_t scr_fov, scr_newHud, cl_staticsounds, r_fullbrightSkins, cl_deadbodyfilter, cl_muzzleflash;
+extern cvar_t scr_fov, scr_newHud, cl_staticsounds, r_fullbrightSkins, cl_deadbodyfilter, cl_muzzleflash, r_fullbright;
 extern cvar_t scr_sshot_format;
 void ResetConfigs_f(void);
 
@@ -919,7 +919,7 @@ setting settgeneral_arr[] = {
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
+	ADDSET_BOOL		("Ignore Qizmo Observers", ignore_qizmo_spec),
 	ADDSET_ENUM 	("Ignore Flood", ignore_flood, ignore_flood_enum),
 	ADDSET_NUMBER 	("Ignore Flood Duration", ignore_flood_duration, 0, 10, 1),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
@@ -981,6 +981,7 @@ setting settplayer_arr[] = {
 	ADDSET_SKIN		("Skin", skin),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
+	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 	
 	ADDSET_SEPARATOR("Weapon Handling"),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to the weapon picked up if it is more powerful than what you're currently holding."),
@@ -1058,6 +1059,9 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
 	
 	ADDSET_SEPARATOR("Environment"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Fullbright World", r_fullbright),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
 	ADDSET_BOOL		("Simple walls", r_drawflat),
 	ADDSET_BOOL		("Simple turbs", r_fastturb),
@@ -1106,7 +1110,6 @@ setting settfps_arr[] = {
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
-	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 
 };
 
