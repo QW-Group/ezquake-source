@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.170 2007-09-04 09:23:16 johnnycz Exp $
+$Id: cl_main.c,v 1.171 2007-09-04 09:58:56 himan Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -99,7 +99,8 @@ cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
-cvar_t  show_fps2 = {"draw_fps","0"};
+cvar_t  show_fps2 = {"scr_scoreboard_drawfps","0"};
+Cmd_AddLegacyCommand ("draw_fps", "scr_scoreboard_drawfps");
 
 cvar_t  localid = {"localid", ""};
 

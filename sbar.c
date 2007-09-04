@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.39 2007-09-01 16:10:55 johnnycz Exp $
+	$Id: sbar.c,v 1.40 2007-09-04 09:58:56 himan Exp $
 */
 // sbar.c -- status bar code
 
@@ -1089,13 +1089,13 @@ static void Sbar_DeathmatchOverlay (int start) {
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
 	char myminutes[4], fragsstr[10];
-	int             draw_fps;
+	int             scr_scoreboard_drawfps;
     int             offset;
     player_info_t *s;
 	mpic_t *pic;
 
-    draw_fps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
-    offset = 8 * draw_fps;
+    scr_scoreboard_drawfps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
+    offset = 8 * scr_scoreboard_drawfps;
     if (!start  &&  hud_faderankings.value)
 		Draw_FadeScreen();
 
@@ -1188,7 +1188,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 		Draw_Fill (xofs - 1, y - 9, rank_width + 2, 1, 0);						//Border - Top
 	Draw_AlphaFill (xofs, y - 8, rank_width, 9, 1, SCOREBOARD_HEADINGALPHA);	//Draw heading row
 
-	Draw_String(xofs + 1, y - 8, cl.teamplay ? (draw_fps ? " ping pl  fps frags team name" : " ping pl time frags team name") : (draw_fps ? " ping pl  fps frags name" : " ping pl time frags name"));
+	Draw_String(xofs + 1, y - 8, cl.teamplay ? (scr_scoreboard_drawfps ? " ping pl  fps frags team name" : " ping pl time frags team name") : (scr_scoreboard_drawfps ? " ping pl  fps frags name" : " ping pl time frags name"));
 
 
 	if (statswidth) {
@@ -1299,7 +1299,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 			total = bound(0, total, 999); // limit to 3 symbols int
 			sprintf (myminutes, "%3i", total);
 
-			if (draw_fps) {
+			if (scr_scoreboard_drawfps) {
 				if (s->last_fps > 0 && !s->spectator) {
 					sprintf (myminutes, "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
 					if (s->last_fps < 70) {
