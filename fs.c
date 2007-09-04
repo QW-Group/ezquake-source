@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.18 2007-09-04 10:31:03 dkure Exp $
+$Id: fs.c,v 1.19 2007-09-04 12:19:58 dkure Exp $
 */
 
 
@@ -2699,7 +2699,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.18 2007-09-04 10:31:03 dkure Exp $
+ * $Id: fs.c,v 1.19 2007-09-04 12:19:58 dkure Exp $
  *             
  */
 
@@ -3404,6 +3404,8 @@ searchpathfuncs_t doomwadfilefuncs = {
 	FSPAK_OpenVFS
 };
 #endif
+
+#ifdef WITH_PK3
 //========================
 //ZIP files (*.zip *.pk3)
 //========================
@@ -4364,6 +4366,7 @@ searchpathfuncs_t zipfilefuncs = {
 };
 
 #endif
+#endif // WITH_PK3
 
 
 //=============================================================================
