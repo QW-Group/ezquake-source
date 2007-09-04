@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.79 2007-09-03 21:07:20 himan Exp $
+		$Id: menu_options.c,v 1.80 2007-09-04 05:37:35 himan Exp $
 
 */
 
@@ -181,13 +181,13 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
-	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit
+	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption;
 #endif
 #ifdef GLQUAKE
-extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
+extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback;
 #endif
 
 const char* bandwidth_enum[] = { 
@@ -198,10 +198,20 @@ const char* bandwidth_enum[] = {
 const char* cl_c2sImpulseBackup_enum[] = {
 	"Perfect", "0", "Low", "2", "Medium", "4",
 	"High", "6" };
+	
+
+const char* ignore_flood_enum[] = {
+	"Off", "0", "say/spec", "1", "say/say_team/spec", "2" };
 
 #ifdef _WIN32
 const char* demoformat_enum[] = { "QuakeWorld Demo", "qwd", "Qizmo compressed QWD", "qwz", "MultiViewDemo", "mvd" };
 #endif
+
+const char* cl_chatmode_enum[] = {
+	"All Commands", "All Chat", "First Word" };
+	
+const char* scr_conback_enum[] = {
+	"Off", "On Load", "Always", };
 
 const char* s_khz_enum[] = {
 	"11 kHz", "11", "22 kHz", "22", "44 kHz", "44" };
@@ -910,6 +920,8 @@ setting settgeneral_arr[] = {
 	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
+	ADDSET_ENUM 	("Ignore Flood", ignore_flood, ignore_flood_enum),
+	ADDSET_NUMBER 	("Ignore Flood Duration", ignore_flood_duration, 0, 10, 1),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
 	ADDSET_BASIC_SECTION(),
 	
@@ -940,6 +952,7 @@ setting settgeneral_arr[] = {
 	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
 	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Log Readable", log_readable),
 	ADDSET_ENUM 	("Screenshot Format", scr_sshot_format, scr_sshot_format_enum),
 #ifdef _WIN32
 	ADDSET_ENUM     ("Demo Format", demo_format, demoformat_enum),
@@ -1025,6 +1038,16 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
 	ADDSET_BASIC_SECTION(),
 
+#ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),	
+	ADDSET_SEPARATOR("Textures"),
+	ADDSET_BOOL		("Luma", gl_lumaTextures),
+	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
+	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
+	ADDSET_BOOL		("No Textures", gl_textureless),
+	ADDSET_BASIC_SECTION(),
+#endif	
+	
 	ADDSET_SEPARATOR("Weapon Model"),
 #ifdef GLQUAKE
 	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
@@ -1066,6 +1089,16 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 #endif
 
+	ADDSET_SEPARATOR("Console"),
+	ADDSET_BOOL		("Timestamps", con_timestamps),
+	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
+	ADDSET_NUMBER	("Size", scr_consize, 0, 1, 0.1),
+	ADDSET_NUMBER	("Speed", scr_conspeed, 1000, 9999, 1000),
+#ifdef GLQUAKE
+	ADDSET_NUMBER	("Alpha", scr_conalpha, 0, 1, 0.1),
+	ADDSET_NAMED	("Map Preview", scr_conback, scr_conback_enum),
+#endif
+
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Disable lin.interp.", cl_nolerp),
@@ -1075,15 +1108,6 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 
-#ifdef GLQUAKE
-	ADDSET_ADVANCED_SECTION(),	
-	ADDSET_SEPARATOR("Textures"),
-	ADDSET_BOOL		("Luma", gl_lumaTextures),
-	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
-	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
-	ADDSET_BOOL		("No Textures", gl_textureless),
-	ADDSET_BASIC_SECTION(),
-#endif
 };
 
 // HUD TAB
@@ -1192,12 +1216,12 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Jump/Swim up", "+jump"),
 	ADDSET_BIND("Move Forward", "+forward"),
 	ADDSET_BIND("Move Backward", "+back"),
-	ADDSET_BIND("Move Left", "+moveleft"),
-	ADDSET_BIND("Move Right", "+moveright"),
+	ADDSET_BIND("Strafe Left", "+moveleft"),
+	ADDSET_BIND("Strafe Right", "+moveright"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Swim Up", "+moveup"),
-	ADDSET_BASIC_SECTION(),
 	ADDSET_BIND("Swim Down", "+movedown"),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BIND("Zoom In/Out", "+zoom"),
 
 	ADDSET_SEPARATOR("Weapons"),
@@ -1214,18 +1238,22 @@ setting settbinds_arr[] = {
 
 	ADDSET_SEPARATOR("Teamplay"),
 	ADDSET_BIND("Report Status", "tp_msgreport"),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Lost location", "tp_msglost"),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BIND("Location safe", "tp_msgsafe"),
 	ADDSET_BIND("Point at item", "tp_msgpoint"),
 	ADDSET_BIND("Took item", "tp_msgtook"),
 	ADDSET_BIND("Need items", "tp_msgneed"),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Coming from location", "tp_msgcoming"),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BIND("Help location", "tp_msghelp"),
-	ADDSET_BIND("Enemy Quad Dead", "tp_msgquaddead"),
-	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Get Quad", "tp_msggetquad"),
 	ADDSET_BIND("Get Pent", "tp_msggetpent"),
-	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BIND("Enemy Quad Dead", "tp_msgquaddead"),
+	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
 	ADDSET_BIND("Trick at location", "tp_msgtrick"),
 	ADDSET_BIND("Replace at location", "tp_msgreplace"),
 	ADDSET_BASIC_SECTION(),
@@ -1235,12 +1263,14 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Screenshot", "screenshot"),
 	ADDSET_BIND("Pause", "pause"),
 	ADDSET_BIND("Quit", "quit"),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
+	ADDSET_BASIC_SECTION(),
 
 };
 
-#ifdef GLQUAKE
 // VIDEO TAB
+#ifdef GLQUAKE
 setting settvideo_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	//Video
