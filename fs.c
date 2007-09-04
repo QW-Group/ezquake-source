@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.15 2007-09-03 15:49:59 dkure Exp $
+$Id: fs.c,v 1.16 2007-09-04 05:08:21 dkure Exp $
 */
 
 
@@ -89,7 +89,6 @@ void FS_ForceToPure(char *str, char *crcs, int seed);
 int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
 void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int COM_FileOpenRead (char *path, FILE **hndl);
-byte *COM_LoadFile (char *path, int usehunk);
 
 typedef struct
 {
@@ -433,10 +432,8 @@ int FS_FOpenFile (char *filename, FILE **file) {
 	*file = NULL;
 	file_from_pak = false;
 	file_from_gamedir = true;
-#ifndef WITH_FTE_VFS
 	fs_filesize = -1;
 	fs_filepos = 0;
-#endif
 	fs_netpath[0] = 0;
 
 	// search through the path, one element at a time
@@ -2692,7 +2689,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.15 2007-09-03 15:49:59 dkure Exp $
+ * $Id: fs.c,v 1.16 2007-09-04 05:08:21 dkure Exp $
  *             
  */
 
@@ -2776,6 +2773,7 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	qbool text   = !!strchr(mode, 't');
 	char newmode[3];
 	int modec = 0;
+	fs_filesize = -1;
 
 	if (read)
 		newmode[modec++] = 'r';
@@ -2803,6 +2801,8 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	file->funcs.Close      = VFSOS_Close;
 
 	file->handle = f;
+
+	fs_filesize = VFS_GETLEN((vfsfile_t *)file);
 
 	return (vfsfile_t*)file;
 }
@@ -3167,6 +3167,7 @@ vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
 	pack_t *pack = (pack_t*)handle;
 	vfspack_t *vfs;
+	fs_filesize = -1;
 
 	if (strcmp(mode, "rb"))
 		return NULL; //urm, unable to write/append
@@ -3186,6 +3187,8 @@ vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	vfs->funcs.Seek       = VFSPAK_Seek;
 	vfs->funcs.Tell       = VFSPAK_Tell;
 	vfs->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
+
+	fs_filesize = VFS_GETLEN((vfsfile_t *)vfs);
 
 	return (vfsfile_t *)vfs;
 }
@@ -4298,6 +4301,7 @@ vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	int rawofs;
 	zipfile_t *zip = handle;
 	vfszip_t *vfsz;
+	fs_filesize = -1;
 
 	if (strcmp(mode, "rb"))
 		return NULL; //urm, unable to write/append
@@ -4328,6 +4332,8 @@ vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	}
 
 	zip->references++;
+
+	fs_filesize = VFS_GETLEN((vfsfile_t *)vfsz);
 
 	return (vfsfile_t*)vfsz;
 }
@@ -5024,6 +5030,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 	flocation_t loc;
 	vfsfile_t *vfs;
 
+
 	// FTE-FIXME: Need to find the extension of the file so we know what function to use to open it
 
 	//blanket-bans
@@ -5042,8 +5049,10 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 		{
 			snprintf(fullname, sizeof(fullname), "%s%s", com_homedir, filename);
 			vfs = VFSOS_Open(fullname, mode);
-			if (vfs)
+			if (vfs) {
+				fs_filesize = VFS_GETLEN(vfs);
 				return vfs;
+			}
 		}
 
 		snprintf(fullname, sizeof(fullname), "%s", filename);
@@ -5054,8 +5063,10 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 		{
 			snprintf(fullname, sizeof(fullname), "%s%s/%s", com_homedir, com_gamedirfile, filename);
 			vfs = VFSOS_Open(fullname, mode);
-			if (vfs)
+			if (vfs) {
+				fs_filesize = VFS_GETLEN(vfs);
 				return vfs;
+			}
 		}
 
 		snprintf(fullname, sizeof(fullname), "%s%s/%s", com_basedir, com_gamedirfile, filename);
