@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.73 2007-08-26 17:53:08 himan Exp $
+    $Id: keys.c,v 1.74 2007-09-04 09:43:40 johnnycz Exp $
 
 */
 
@@ -48,7 +48,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t cl_chatmode          = {"cl_chatmode", "2"};
 cvar_t con_funchars_mode    = {"con_funchars_mode", "0"};
 cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
-cvar_t cl_newCompletion     = {"cl_newCompletion", "1" }; // addeded by jogi
 
 #ifdef WITH_KEYMAP
 // variable to enable/disable key informations (e.g. scancode) to the consoloe:
@@ -361,7 +360,7 @@ extern cmd_alias_t *cmd_alias;
 extern cvar_t *cvar_vars;
 
 void CompleteCommandNew (void)
-{
+{	// by jogi
 	char *cmd, token[MAXCMDLINE], *s;
 	wchar temp[MAXCMDLINE];
 //	int c, a, v, start, end, i, diff_len, size, test, my_string_length,
@@ -617,118 +616,6 @@ void CompleteCommandNew (void)
 	}
 }
 
-void CompleteCommand (void) {
-	char *cmd, token[MAXCMDLINE], *s;
-	wchar temp[MAXCMDLINE];
-	int c, a, v, start, end, i, diff_len, size;
-
-	if (key_linepos < 2 || isspace(key_lines[edit_line][key_linepos - 1]))
-		return;
-
-	for (start = key_linepos - 1; start >= 1 && !isspace(key_lines[edit_line][start]); start--)
-		;
-	if (start == 0)
-		start = 1;
-	if (isspace(key_lines[edit_line][start]))
-		start++;
-	end = key_linepos - 1;
-
-	size = min(end - start + 1, sizeof(token) - 1);
-	memcpy(token, wcs2str(&key_lines[edit_line][start]), size);
-	token[size] = 0;
-
-	s = token;
-	if (*s == '\\' || *s == '/') {
-		s++;
-		start++;
-	}
-	if (start > end)
-		return;
-
-	compl_len = strlen (s);
-	compl_clen = 0;
-
-	c = Cmd_CompleteCountPossible (s);
-	a = Cmd_AliasCompleteCountPossible (s);
-	v = Cvar_CompleteCountPossible (s);
-
-	if (c + a + v > 1) {
-		cmd_function_t	*cmd;
-		cmd_alias_t *alias;
-		cvar_t	*var;
-
-		Com_Printf ("\n");
-
-		if (c) {
-			Com_Printf ("\x02" "Commands:\n");
-			for (cmd=cmd_functions ; cmd ; cmd=cmd->next) {
-				if (!strncasecmp (s, cmd->name, compl_len)) {
-					PaddedPrint (cmd->name);
-					FindCommonSubString (cmd->name);
-				}
-			}
-			if (con.x)
-				Com_Printf ("\n");
-		}
-
-		if (v) {
-			Com_Printf ("\x02" "Variables:\n");
-			for (var=cvar_vars ; var ; var=var->next) {
-				if (!strncasecmp (s, var->name, compl_len)) {
-					PaddedPrint (var->name);
-					FindCommonSubString (var->name);
-				}
-			}
-			if (con.x)
-				Com_Printf ("\n");
-		}
-
-		if (a) {
-			Com_Printf ("\x02" "Aliases:\n");
-			for (alias=cmd_alias ; alias ; alias=alias->next)
-				if (!strncasecmp (s, alias->name, compl_len)) {
-					PaddedPrint (alias->name);
-					FindCommonSubString (alias->name);
-				}
-			if (con.x)
-				Com_Printf ("\n");
-		}
-
-	}
-
-	if (c + a + v == 1) {
-		cmd = Cmd_CompleteCommand (s);
-		if (!cmd)
-			cmd = Cvar_CompleteVariable (s);
-		if (!cmd)
-			return;	// this should never happen
-	} else if (compl_clen) {
-		compl_common[compl_clen] = 0;
-		cmd = compl_common;
-	} else {
-		CompleteName();
-		return;
-	}
-	diff_len = strlen(cmd) - (end - start + 1);
-	qwcslcpy(temp, key_lines[edit_line] + end + 1, sizeof(temp)/sizeof(temp[0]));
-	qwcslcpy(key_lines[edit_line] + end + 1 + diff_len, temp, MAXCMDLINE - (end + 1 + diff_len));
-	for (i = 0; start + i < MAXCMDLINE && i < strlen(cmd); i++)
-		key_lines[edit_line][start + i] = cmd[i];
-	key_linepos += diff_len;
-	key_lines[edit_line][min(key_linepos + qwcslen(temp), MAXCMDLINE - 1)] = 0;
-	if (start == 1 && key_linepos + qwcslen(temp) < MAXCMDLINE - 1) {
-		for (i = key_linepos + qwcslen(temp); i > 0; i--)
-			key_lines[edit_line][i + 1] = key_lines[edit_line][i];
-		key_lines[edit_line][1] = '/';
-		key_linepos++;
-	}
-	if (c + a + v == 1 && !key_lines[edit_line][key_linepos] && key_linepos < MAXCMDLINE - 1) {
-		key_lines[edit_line][key_linepos] = ' ';
-		key_lines[edit_line][++key_linepos] = 0;
-	}
-}
-
-
 
 extern char readableChars[];
 char disallowed[] = {'\n', '\f', '\\', '/', '\"', ' ' , ';'};
@@ -952,18 +839,7 @@ void Key_Console (int key, int unichar)
 			// added by jogi start
 			else
 			{
-				if (cl_newCompletion.value)
-				{
-					CompleteCommandNew ();
-				}
-				else if (!(cl_newCompletion.value))
-				{
-					CompleteCommand ();
-				}
-				else
-				{
-					Com_Printf("cl_newCompletion has to be set to either 0 or 1\n");
-				}
+				CompleteCommandNew ();
 			}
 			// added by stopp
 			return;
@@ -1882,7 +1758,6 @@ void Key_Init (void) {
 	Cmd_AddCommand ("unbindall",Key_Unbindall_f);
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&cl_chatmode);
-	Cvar_Register (&cl_newCompletion);
 	Cvar_Register (&con_funchars_mode);
     Cvar_Register (&con_tilde_mode);
 
