@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.171 2007-09-04 09:58:56 himan Exp $
+$Id: cl_main.c,v 1.172 2007-09-04 10:10:05 himan Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -100,7 +100,6 @@ cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
 cvar_t  show_fps2 = {"scr_scoreboard_drawfps","0"};
-Cmd_AddLegacyCommand ("draw_fps", "scr_scoreboard_drawfps");
 
 cvar_t  localid = {"localid", ""};
 
@@ -1094,6 +1093,7 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&cl_shownet);
 	Cvar_Register (&show_fps2);
+	Cmd_AddLegacyCommand ("draw_fps", "scr_scoreboard_drawfps");
 	Cvar_Register (&cl_confirmquit);
 	Cvar_Register (&cl_window_caption);
 	Cvar_Register (&cl_onload);
