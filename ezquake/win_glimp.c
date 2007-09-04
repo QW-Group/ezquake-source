@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.13.2.4 2007-05-29 13:31:48 disconn3ct Exp $
+	$Id: win_glimp.c,v 1.13.2.5 2007-09-04 19:47:09 cokeman1982 Exp $
 
 */
 /*
@@ -1514,6 +1514,10 @@ void GLimp_Init( void )
 	if ( strstr( buf, "banshee" ) || strstr( buf, "voodoo3" ) )
 	{
 		glConfig.hardwareType = GLHW_3DFX_2D3D;
+	}
+	else if ( strstr( buf, "intel" ) )
+	{
+		glConfig.hardwareType = GLHW_INTEL;
 	}
 	// VOODOO GRAPHICS w/ 2MB
 	else if ( strstr( buf, "voodoo graphics/1 tmu/2 mb" ) )

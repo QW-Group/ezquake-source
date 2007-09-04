@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.58.2.4 2007-05-11 15:28:07 johnnycz Exp $
+	$Id: gl_draw.c,v 1.58.2.5 2007-09-04 19:47:05 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -26,7 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stats_grid.h"
 #include "utils.h"
 #include "sbar.h"
-
+#ifndef  __APPLE__
+#include "tr_types.h"
+#endif
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t scr_coloredText, con_shift;
@@ -2132,12 +2134,32 @@ void Draw_FadeScreen (void) {
 }
 
 //=============================================================================
-
-//Draws the little blue disc in the corner of the screen.
-//Call before beginning any disc IO.
-void Draw_BeginDisc (void) {
+// Draws the little blue disc in the corner of the screen.
+// Call before beginning any disc IO.
+void Draw_BeginDisc (void)
+{
 	if (!draw_disc)
 		return;
+
+	// Intel cards, most notably Intel 915GM/910GML has problems with
+	// writing directly to the front buffer and then flipping the back buffer,
+	// so don't draw the I/O disc on those cards, it will cause the console
+	// to flicker.
+	//
+	// From Intels dev network:
+	// "Using two dimensional data within a 3D scene is sometimes used to render
+	// objects like scoreboards and road signs. When that blit request is sent 
+	// to or from a buffer, the data contained within must be updated, causing 
+	// a pipeline flush and disabling Zone Rendering. One easy way to generate 
+	// the same effect is to use a quad or a billboard that is aligned to the 
+	// view frustrum. Similarly, a flip operation while rendering to a back buffer 
+	// will cause serialization. Be sure you are done altering the back buffer
+	// before you flip.
+#ifndef __APPLE__
+	if (glConfig.hardwareType == GLHW_INTEL)
+		return;
+#endif
+
 	glDrawBuffer  (GL_FRONT);
 	Draw_Pic (vid.width - 24, 0, draw_disc);
 	glDrawBuffer  (GL_BACK);

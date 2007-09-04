@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.18.2.2 2007-05-01 23:44:20 cokeman1982 Exp $
+	$Id: gl_rmisc.c,v 1.18.2.3 2007-09-04 19:47:07 cokeman1982 Exp $
 */
 // gl_rmisc.c
 
@@ -30,7 +30,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #endif
 #include "rulesets.h"
-
+#ifndef  __APPLE__
+#include "tr_types.h"
+#endif
 
 void R_InitOtherTextures (void) {
 /*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
@@ -326,11 +328,19 @@ void R_TimeRefresh_f (void) {
 		return;
 	}
 
-	glDrawBuffer  (GL_FRONT);
+#ifndef __APPLE__
+	if (glConfig.hardwareType != GLHW_INTEL)
+	{
+		// Causes the console to flicker on Intel cards.
+		glDrawBuffer  (GL_FRONT);
+	}
+#endif
+	
 	glFinish ();
 
 	start = Sys_DoubleTime ();
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < 128; i++) 
+	{
 		r_refdef.viewangles[1] = i * (360.0 / 128.0);
 		R_RenderView ();
 	}
@@ -340,7 +350,13 @@ void R_TimeRefresh_f (void) {
 	time = stop-start;
 	Com_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
-	glDrawBuffer  (GL_BACK);
+#ifndef __APPLE__
+	if (glConfig.hardwareType != GLHW_INTEL)
+	{
+		glDrawBuffer  (GL_BACK);
+	}
+#endif
+
 	GL_EndRendering ();
 }
 
