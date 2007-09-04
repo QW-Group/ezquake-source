@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.169 2007-09-03 17:05:42 johnnycz Exp $
+$Id: cl_main.c,v 1.170 2007-09-04 09:23:16 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -116,7 +116,6 @@ qbool OnChange_cl_fakeshaft (cvar_t *var, char *value);
 cvar_t	cl_fakeshaft = {"cl_fakeshaft", "0", 0, OnChange_cl_fakeshaft};
 cvar_t	cl_parseWhiteText = {"cl_parseWhiteText", "1"};
 cvar_t	cl_filterdrawviewmodel = {"cl_filterdrawviewmodel", "0"};
-cvar_t	cl_oldPL = {"cl_oldPL", "0"};
 cvar_t	cl_demoPingInterval = {"cl_demoPingInterval", "5"};
 cvar_t  demo_getpings      = {"demo_getpings",    "1"};
 cvar_t	cl_chatsound = {"s_chat_custom", "1"};
@@ -1165,7 +1164,6 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_predict_players);
 	Cvar_Register (&cl_solid_players);
 	Cvar_Register (&cl_predict_half);
-	Cvar_Register (&cl_oldPL);
 	Cvar_Register (&cl_timeout);
 	Cvar_Register (&cl_useproxy);
 	Cvar_Register (&cl_crypt_rcon);

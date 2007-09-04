@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.110 2007-09-03 19:26:21 johnnycz Exp $
+$Id: cl_parse.c,v 1.111 2007-09-04 09:23:16 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -168,7 +168,6 @@ packet_info_t network_stats[NETWORK_STATS_SIZE];
 int packet_latency[NET_TIMINGS];
 
 int CL_CalcNet (void) {
-	extern cvar_t cl_oldPL;
 	int a, i, j, lost, packetcount;
 	frame_t	*frame;
 
@@ -228,7 +227,8 @@ int CL_CalcNet (void) {
 
 	lost = packetcount = 0;
 	for (a = 0; a < NET_TIMINGS; a++)	{
-		if (!cl_oldPL.value && a < UPDATE_BACKUP && (cls.realtime -
+		// fix for packetloss on high ping
+		if (a < UPDATE_BACKUP && (cls.realtime -
 			cl.frames[(cls.netchan.outgoing_sequence-a)&UPDATE_MASK].senttime) < cls.latency)
 			continue;
 
