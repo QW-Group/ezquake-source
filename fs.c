@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.16 2007-09-04 05:08:21 dkure Exp $
+$Id: fs.c,v 1.17 2007-09-04 07:49:56 dkure Exp $
 */
 
 
@@ -102,6 +102,15 @@ typedef struct
 	int		dirlen;
 	int		dirofs;
 } dwadheader_t;
+
+typedef enum {
+	FS_LOAD_FILE_PAK = 2,
+	FS_LOAD_FILE_PK3 = 4,
+	FS_LOAD_FILE_PK4 = 8,
+	FS_LOAD_FILE_DOOMWAD = 16,
+	FS_LOAD_FILE_ALL = FS_LOAD_FILE_PAK | FS_LOAD_FILE_PK3 
+		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD,
+} FS_Load_File_Types;
 
 //FTE-FIXME: This seems like com_homedir
 //char	com_configdir[MAX_OSPATH];	//homedir/fte/configs
@@ -926,9 +935,9 @@ void FS_SetGamedir (char *dir)
 #ifndef WITH_FTE_VFS
 		FS_AddGameDirectory(com_basedir, dir);
 #else
-		FS_AddGameDirectory(va("%s%s", com_basedir, dir), (unsigned int)-1);
+		FS_AddGameDirectory(va("%s%s", com_basedir, dir), FS_LOAD_FILE_ALL);
 		if (*com_homedir)
-			FS_AddGameDirectory(va("%s%s", com_homedir, dir), (unsigned int)-1);
+			FS_AddGameDirectory(va("%s%s", com_homedir, dir), FS_LOAD_FILE_ALL);
 #endif
 	}
 
@@ -2689,7 +2698,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.16 2007-09-04 05:08:21 dkure Exp $
+ * $Id: fs.c,v 1.17 2007-09-04 07:49:56 dkure Exp $
  *             
  */
 
@@ -2727,14 +2736,17 @@ void FS_InitModuleFS (void)
  * 4) Replace some of the functions (marked with XXX) with the ezquake equivlant
  * 		D-Kure: This functions seem to be in common.c and are marked 
  * 		        FS_* instead of COM_*.
+ *
  * 5) Replace all strncpy calls with strlcpy
  *      <Cokeman> allthough strncpy isn't safe
  *      <Cokeman> strlcpy is
+ *
  * 6) pak3 support does not work yet, firstly we need to disable it to avoid
  *    seg faults in ezQuake, then we need to get it working
  *
  * 7) Fix the rendering bug...
  *    D-Kure: I think this is only to do with png/24bit files as lmp's seem to work
+ *    Fixed: This was a fs_filesize not being set correctly on FS_OpenVFS
  *
  * 8) EX_browser*.c need to be updated to use VFS_GETS parsing rather then 
  *    fscanf() & feof()
@@ -4361,7 +4373,7 @@ searchpath_t	*com_base_searchpaths;	// without gamedirs
 
 static void COM_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
 
-searchpath_t *COM_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, unsigned int loadstuff)
+searchpath_t *COM_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff)
 {
 	searchpath_t *search;
 
@@ -4377,21 +4389,21 @@ searchpath_t *COM_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, vo
 	com_fschanged = true;
 
 	//add any data files too
-	if (loadstuff & 2)
+	if (loadstuff & FS_LOAD_FILE_PAK)
 		COM_AddDataFiles(probablepath, search, "pak", &packfilefuncs);//q1/hl/h2/q2
 	//pk2s never existed.
 #ifdef WITH_ZIP
 #ifdef WITH_PK3
-	if (loadstuff & 4)
+	if (loadstuff & FS_LOAD_FILE_PK3)
 		COM_AddDataFiles(probablepath, search, "pk3", &zipfilefuncs);	//q3 + offspring
-	if (loadstuff & 8)
+	if (loadstuff & FS_LOAD_FILE_PK4)
 		COM_AddDataFiles(probablepath, search, "pk4", &zipfilefuncs);	//q4
 	//we could easily add zip, but it's friendlier not to
 #endif
 #endif
 
 #ifdef DOOMWADS
-	if (loadstuff & 16)
+	if (loadstuff & FS_LOAD_FILE_DOOMWAD)
 		COM_AddDataFiles(probablepath, search, "wad", &doomwadfilefuncs);	//q4
 #endif
 
@@ -5049,10 +5061,8 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 		{
 			snprintf(fullname, sizeof(fullname), "%s%s", com_homedir, filename);
 			vfs = VFSOS_Open(fullname, mode);
-			if (vfs) {
-				fs_filesize = VFS_GETLEN(vfs);
+			if (vfs)
 				return vfs;
-			}
 		}
 
 		snprintf(fullname, sizeof(fullname), "%s", filename);
@@ -5394,7 +5404,7 @@ static int COM_AddWildDataFiles (char *descriptor, int size, void *vparam)
 		return true;
 
 	sprintf (pakfile, "%s%s/", param->parentdesc, descriptor);
-	COM_AddPathHandle(pakfile, funcs, pak, true, false, (unsigned int)-1);
+	COM_AddPathHandle(pakfile, funcs, pak, true, false, FS_LOAD_FILE_ALL);
 
 	return true;
 }
@@ -5423,7 +5433,7 @@ static void COM_AddDataFiles(char *pathto, searchpath_t *search, char *extension
 		if (!handle)
 			break;
 		snprintf (pakfile, sizeof(pakfile), "%spak%i.%s/", pathto, i, extension);
-		COM_AddPathHandle(pakfile, funcs, handle, true, false, (unsigned int)-1);
+		COM_AddPathHandle(pakfile, funcs, handle, true, false, FS_LOAD_FILE_ALL);
 	}
 
 	sprintf (pakfile, "*.%s", extension);
@@ -5453,7 +5463,7 @@ then loads and adds pak1.pak pak2.pak ...
 */
 // XXX: This seems very similar to FS_AddUserDirectory, but AddUserDirectory 
 // has some modifications
-void FS_AddGameDirectory (char *dir, unsigned int loadstuff)
+void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 {
 	searchpath_t	*search;
 
@@ -5602,9 +5612,9 @@ void COM_Gamedir (char *dir)
 	//
 	Cache_Flush ();
 
-	FS_AddGameDirectory(va("%s%s", com_basedir, dir), (unsigned int)-1);
+	FS_AddGameDirectory(va("%s%s", com_basedir, dir), FS_LOAD_FILE_ALL);
 	if (*com_homedir)
-		FS_AddGameDirectory(va("%s%s", com_homedir, dir), (unsigned int)-1);
+		FS_AddGameDirectory(va("%s%s", com_homedir, dir), FS_LOAD_FILE_ALL);
 
 
 #ifndef SERVERONLY
@@ -5797,7 +5807,7 @@ FS_ReloadPackFiles
 
 Called when the client has downloaded a new pak/pk3 file
 */
-void FS_ReloadPackFilesFlags(unsigned int reloadflags)
+void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 {
 	searchpath_t	*oldpaths;
 	searchpath_t	*oldbase;
@@ -5859,7 +5869,7 @@ void FS_UnloadPackFiles(void)
 
 void FS_ReloadPackFiles(void)
 {
-	FS_ReloadPackFilesFlags((unsigned int)-1);
+	FS_ReloadPackFilesFlags(FS_LOAD_FILE_ALL);
 }
 
 void FS_ReloadPackFiles_f(void)
@@ -5867,7 +5877,7 @@ void FS_ReloadPackFiles_f(void)
 	if (atoi(Cmd_Argv(1)))
 		FS_ReloadPackFilesFlags(atoi(Cmd_Argv(1)));
 	else
-		FS_ReloadPackFilesFlags((unsigned int)-1);
+		FS_ReloadPackFilesFlags(FS_LOAD_FILE_ALL);
 }
 
 /*
@@ -5999,7 +6009,7 @@ void COM_InitFilesystem (void)
 	{
 		do	//use multiple -basegames
 		{
-			FS_AddGameDirectory (va("%s%s", com_basedir, com_argv[i+1]), (unsigned int)-1);
+			FS_AddGameDirectory (va("%s%s", com_basedir, com_argv[i+1]), FS_LOAD_FILE_ALL);
 
 			i = COM_CheckParmOffset("-basegame", i);
 		}
@@ -6008,17 +6018,17 @@ void COM_InitFilesystem (void)
 	else
 	{
 		if (gamemode_info[gamenum].dir1)
-			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir1), (unsigned int)-1);
+			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir1), FS_LOAD_FILE_ALL);
 		if (gamemode_info[gamenum].dir2)
-			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir2), (unsigned int)-1);
+			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir2), FS_LOAD_FILE_ALL);
 		if (gamemode_info[gamenum].dir3)
-			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir3), (unsigned int)-1);
+			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir3), FS_LOAD_FILE_ALL);
 		if (gamemode_info[gamenum].dir4)
-			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir4), (unsigned int)-1);
+			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir4), FS_LOAD_FILE_ALL);
 	}
 
 	if (*com_homedir)
-		FS_AddGameDirectory (va("%sfte", com_homedir), (unsigned int)-1);
+		FS_AddGameDirectory (va("%sfte", com_homedir), FS_LOAD_FILE_ALL);
 
 	// any set gamedirs will be freed up to here
 	com_base_searchpaths = com_searchpaths;
@@ -6026,7 +6036,7 @@ void COM_InitFilesystem (void)
 	i = COM_CheckParm ("-game");	//effectivly replace with +gamedir x (But overridable)
 	if (i && i < com_argc-1)
 	{
-		FS_AddGameDirectory (va("%s%s", com_basedir, com_argv[i+1]), (unsigned int)-1);
+		FS_AddGameDirectory (va("%s%s", com_basedir, com_argv[i+1]), FS_LOAD_FILE_ALL);
 
 #ifndef CLIENTONLY
 		Info_SetValueForStarKey (svs.info, "*gamedir", com_argv[i+1], MAX_SERVERINFO_STRING);
