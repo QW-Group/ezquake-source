@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.17 2007-09-04 07:49:56 dkure Exp $
+$Id: fs.c,v 1.18 2007-09-04 10:31:03 dkure Exp $
 */
 
 
@@ -290,6 +290,7 @@ void COM_Path_f (void)
 }
 #endif// WITH_FTE_VFS
 
+// FTE-FIXME: D-Kure This removes a sanity check
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 {
 	searchpath_t *search;
@@ -297,11 +298,11 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 
 	if (path == NULL)
 		path = com_gamedir;
+#ifndef WITH_FTE_VFS
 	else {
 		// check if given path is in one of mounted filesystem
 		// we do not allow others
 		for (search = com_searchpaths ; search ; search = search->next) {
-#ifndef WITH_FTE_VFS
 			if (search->pack != NULL)
 				continue;   // no writes to pak files
 
@@ -310,11 +311,11 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 			        *(search->filename + strlen(search->filename) - strlen(path) - 1) == '/') {
 				break;
 			}
-#endif
 		}
 		if (search == NULL)
 			Sys_Error("COM_FCreateFile: out of Quake filesystem\n");
 	}
+#endif
 
 	if (mode == NULL)
 		mode = "wb";
@@ -2698,7 +2699,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.17 2007-09-04 07:49:56 dkure Exp $
+ * $Id: fs.c,v 1.18 2007-09-04 10:31:03 dkure Exp $
  *             
  */
 
@@ -3597,7 +3598,7 @@ int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 	unzlocal_getShortSane(s->file, &pi);
 	file_info.version_needed = pi;
 	unzlocal_getShortSane(s->file, &pi);
-	pi = file_info.flag;
+	file_info.flag = pi;
 	unzlocal_getShortSane(s->file, &pi);
 	file_info.compression_method = pi;
 	unzlocal_getLong(s->file, &file_info.dosDate);
