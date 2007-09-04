@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.45 2007-09-03 19:26:21 johnnycz Exp $
+	$Id: EX_browser.c,v 1.46 2007-09-04 10:32:25 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -2082,11 +2082,12 @@ void Serverinfo_Sources_Key(int key)
 void RemoveSourceProc(void)
 {
     source_data *s;
+    int removed = 0;
 #ifndef WITH_FTE_VFS
     FILE *f;
-    int removed = 0;
 #else
 	vfsfile_t *f;
+	char ln[2000];
 #endif
     int length;
     char *filebuf; // *p, *q;
@@ -2127,7 +2128,6 @@ void RemoveSourceProc(void)
     filebuf = (char *)Q_malloc(length + 512);
     filebuf[0] = 0;
 #ifndef WITH_FTE_VFS
-	// FTE-FIXME: D-Kure, not compiled as I need to recode with with VFS layer support
     while (!feof(f))
     {
         char c = 'A';
@@ -2135,11 +2135,11 @@ void RemoveSourceProc(void)
         char *p, *q;
 
         if (fscanf(f, "%[ -~	]s", line) != 1)
-	{
-	    while (!feof(f)  &&  c != '\n')
-		fscanf(f, "%c", &c);
-            continue;
-	}
+		{
+			while (!feof(f)  &&  c != '\n')
+				fscanf(f, "%c", &c);
+			continue;
+		}
         while (!feof(f)  &&  c != '\n')
         {
             int len;
@@ -2148,6 +2148,14 @@ void RemoveSourceProc(void)
             line[len] = c;
             line[len+1] = 0;
         }
+#else
+	while(VFS_GETS(f, ln, sizeof(ln))) {
+		char line[2000];
+		char *p, *q;
+
+		if (sscanf(ln, "%[ -~    ]s", line) != 1)
+			continue;
+#endif
 
         if (removed)
         {
@@ -2191,7 +2199,6 @@ void RemoveSourceProc(void)
 
         removed = 1;
     }
-#endif
 
 #ifndef WITH_FTE_VFS
     fclose(f);

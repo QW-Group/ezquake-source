@@ -66,6 +66,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
     FILE *f;
 #else
 	vfsfile_t *f;
+	char line[2000];
 #endif
     int length;
     qbool should_dump = false;
@@ -100,7 +101,11 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 
             if (ret != 1)
                 continue;
-
+#else
+		while (VFS_GETS(f, line, sizeof(line)))
+		{
+            netadr_t addr;
+#endif
             if (!strchr(line, ':'))
                 strcat(line, ":27000");
             if (!NET_StringToAdr(line, &addr))
@@ -110,6 +115,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
             if (line[0] <= '0'  ||  line[0] >= '9')
                 should_dump = true;
         }
+#ifndef WITH_FTE_VFS
         fclose(f);
 #else
 		VFS_CLOSE(f);
@@ -539,6 +545,21 @@ void Reload_Sources(void)
 	}
         while (!feof(f)  &&  c != '\n')
             fscanf(f, "%c", &c);
+#else
+	char ln[2000];
+    while (VFS_GETS(f, ln, sizeof(ln)))
+    {
+		char line[2000];
+        char c = 'A';
+        char *p, *q;
+
+        if (sscanf(ln, "%[ -~	]s", line) != 1) {
+			while (VFS_READ(f, &c, 1, NULL)  &&  c != '\n')
+				continue;
+		}
+		while (VFS_READ(f, &c, 1, NULL)  &&  c != '\n')
+			continue;
+#endif
 
         p = next_nonspace(line);
         if (*p == '/')
@@ -581,7 +602,6 @@ void Reload_Sources(void)
         sources[sourcesn]->unique = i;
         sourcesn++;
     }
-#endif
 
     Delete_Source(s);
 
