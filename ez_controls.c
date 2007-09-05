@@ -17,11 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.31 2007-09-03 16:49:55 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.32 2007-09-05 18:42:16 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
 #include "keys.h"
+#include "utils.h"
 #include "ez_controls.h"
 
 // =========================================================================================
@@ -1709,6 +1710,8 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->super.CLASS_ID = EZ_LABEL_ID;
 	label->super.inheritance_level = EZ_LABEL_INHERITANCE_LEVEL;
 
+	label->super.events.OnDraw = EZ_label_OnDraw;
+
 	label->super.flags	|= CONTROL_CONTAINED;
 	label->scale		= 1.0;
 	label->text			= text;
@@ -1737,10 +1740,70 @@ void EZ_label_SetText(ez_label_t *self, char *text)
 //
 int EZ_label_OnDraw(ez_control_t *self)
 {
-	ez_label_t *label = (ez_label_t *)self;
+	#define LINE_SIZE 1024
+	int x, y, i = 0;
+	char line[LINE_SIZE];
+	ez_label_t *label	= (ez_label_t *)self;
+	int char_size		= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
+	int last_index		= 0;
+
+	// Let the super class draw first.
 	EZ_control_OnDraw(self);
 
-	Draw_SColoredString(self->absolute_x, self->absolute_y, str2wcs(label->text), &label->color, 1, false, label->scale);
+	// Get the position we're drawing at.
+	EZ_control_GetDrawingPosition(self, &x, &y);
+
+	if (label->text_flags & LABEL_WRAPTEXT)
+	{
+		//
+		// Wrap the text within the label.
+		//
+
+		while (Util_GetNextWordwrapString(label->text, line, last_index, &last_index, LINE_SIZE, self->virtual_width, Q_rint(label->scale * char_size)))
+		{
+			if (label->text_flags & LABEL_LARGEFONT)
+			{
+				Draw_BigString(x, y + (i * char_size * label->scale), line, &label->color, 1, label->scale, 1, 0);
+			}
+			else
+			{
+				Draw_SColoredString(x, y + (i * char_size * label->scale), str2wcs(line), &label->color, 1, false, label->scale);
+			}
+
+			i++;
+		}
+	}
+	else
+	{
+		//
+		// Normal text, not wrapped.
+		//
+
+		int curr_line = 0;
+
+		// Find any newlines and draw line by line.
+		for (i = 0; i <= strlen(label->text); i++)
+		{
+			if ((label->text[i] == '\n') || (label->text[i] == '\0'))
+			{
+				// We found the end of a line, copy the contents of the line to the line buffer.
+				// FIXME: Having a fixed size line buffer for wordwrapping works fine, but not here.
+				snprintf(line, min(LINE_SIZE, (i - last_index + 1)), "%s", (label->text + last_index));
+				last_index = i + 1;	// Skip the newline character.
+
+				if (label->text_flags & LABEL_LARGEFONT)
+				{
+					Draw_BigString(x, y + (curr_line * char_size * label->scale), line, &label->color, 1, label->scale, 1, 0);
+				}
+				else
+				{
+					Draw_SColoredString(x, y + (curr_line * char_size * label->scale), str2wcs(line), &label->color, 1, false, label->scale);
+				}
+
+				curr_line++;
+			}
+		}
+	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
 
