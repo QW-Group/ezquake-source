@@ -1391,7 +1391,7 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count) {
 
 			AddParticle(p_smoke, neworg, 1, 4, 0.825f + ((rand() % 10) - 5) / 40.0, NULL, zerodir);
 			z = particlecount / chunkcount;
-			if (!z || (i % (particlecount / chunkcount) == 0))
+			if (!z || (i % z == 0))
 				AddParticle(p_chunk, neworg, 1, 0.75, 3.75, NULL, zerodir);
 		}
 	}
