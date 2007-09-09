@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.173 2007-09-04 12:05:35 qqshka Exp $
+$Id: cl_main.c,v 1.174 2007-09-09 00:44:37 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -177,6 +177,8 @@ cvar_t  msg_filter = {"msg_filter", "0"};
 // END shaman RFE 1022306
 
 cvar_t cl_onload = {"cl_onload", "menu", CVAR_ARCHIVE};
+
+cvar_t demo_autotrack = {"demo_autotrack", "0", CVAR_ARCHIVE}; // use or not autotrack info from mvd demos
 
 clientPersistent_t	cls;
 clientState_t		cl;
@@ -1144,6 +1146,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&qizmo_dir);
 	Cvar_Register (&qwdtools_dir);
 	Cvar_Register (&demo_getpings);
+	Cvar_Register (&demo_autotrack);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register (&cl_staticsounds);

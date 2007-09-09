@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.111 2007-09-04 09:23:16 johnnycz Exp $
+$Id: cl_parse.c,v 1.112 2007-09-09 00:44:37 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2743,13 +2743,24 @@ void CL_ParseStufftext (void) {
 
 	else if (!strcmp (s, "cmd snap") || (!strncmp (s, "r_skyname ", 10) && !strchr (s, '\n')))
 		Cbuf_AddTextEx (&cbuf_svc, va("%s\n", s));
-	else if (!strncmp(s, "//tinfo ", 8)) {
+	else if (!strncmp(s, "//tinfo ", sizeof("//tinfo ")-1))
+	{
 #ifdef GLQUAKE
 		extern void Parse_TeamInfo(char *s);
 		Parse_TeamInfo( s + 2 );
 #else
 		// do nothing in soft, but do not abuse with unknown command tinfo
 #endif
+	}
+	else if (!strncmp(s, "//at ", sizeof("//at ")-1))
+	{	// this is autotrack info from mvd demo/qtv stream, they are almost same
+
+		extern cvar_t demo_autotrack;
+
+		if (demo_autotrack.integer)
+		{
+			Cbuf_AddTextEx (&cbuf_svc, va("track %s\n", s + sizeof("//at ")-1));
+		}
 	}
 	else
 		Cbuf_AddTextEx (&cbuf_svc, s);
