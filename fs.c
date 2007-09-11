@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.19 2007-09-04 12:19:58 dkure Exp $
+$Id: fs.c,v 1.20 2007-09-11 22:32:59 borisu Exp $
 */
 
 
@@ -1464,7 +1464,7 @@ qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 
-	if (pos < 0 || pos > vfsp->length)
+	if (pos > vfsp->length)
 		return false;
 
 	vfsp->currentpos = pos + vfsp->startpos;
@@ -2699,7 +2699,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.19 2007-09-04 12:19:58 dkure Exp $
+ * $Id: fs.c,v 1.20 2007-09-11 22:32:59 borisu Exp $
  *             
  */
 
