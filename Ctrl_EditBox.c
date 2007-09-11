@@ -1,7 +1,7 @@
 /*
  * EditBox functions
  *
- *    $Id: Ctrl_EditBox.c,v 1.10 2007-09-03 19:26:21 johnnycz Exp $
+ *    $Id: Ctrl_EditBox.c,v 1.11 2007-09-11 21:47:40 borisu Exp $
  */
 
 
@@ -30,8 +30,8 @@ void CEditBox_Draw(CEditBox *e, int x, int y, qbool active)
 		e->disp = e->pos;
 	if (e->disp  >  strlen(e->text) - e->width + 1)
 		e->disp = strlen(e->text) - e->width + 1;
-	if (e->disp  <  0)
-		e->disp = 0;
+//	if (e->disp  <  0)
+//		e->disp = 0;
 
 	sprintf(buf, "%-*.*s", e->width, e->width, active ? e->text+e->disp : e->text);
 	Draw_String(x, y, buf);
