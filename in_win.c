@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: in_win.c,v 1.37 2007-05-12 17:14:26 qqshka Exp $
+$Id: in_win.c,v 1.38 2007-09-11 22:05:18 borisu Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -340,7 +340,7 @@ int IN_GetMouseRate(void) {
 }
 
 void IN_SMouseRead (int *mx, int *my) {
-	static acc_x, acc_y;
+	static int acc_x, acc_y;
 	int	x = 0, y = 0;
 	double t1, t2, maxtime, mintime;
 	int mouserate;
