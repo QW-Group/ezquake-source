@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.13 2007-07-04 19:30:50 tonik Exp $
+	$Id: keymap.c,v 1.14 2007-09-11 22:37:20 borisu Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -469,7 +469,7 @@ static void IN_Keymap_WriteHeader_f (FILE *f) {
 	fprintf (f, "// ZQuake/FuhQuake keymap file\n\n");
 	fprintf (f, "keymap_name \"%s\"\n\n", keymap_name.string ? keymap_name.string : "Custom");
 	fprintf (f,
-	         "//--------------------------------------------------------------------------\n"
+	        "//--------------------------------------------------------------------------\n"
 	        "//Syntax:\n"
 	        "//  keycode [ext] <scancode> <key> [<shiftkey>] [<altgrkey>]\n"
 	        "//    ext       the extended flag is set for this (raw) scancode.\n"
@@ -484,7 +484,7 @@ static void IN_Keymap_WriteHeader_f (FILE *f) {
 	        "//    altgrkey  this is the key which will be displayed when pressed together\n"
 	        "//                with the ALTGR-key\n"
 	        "//Note: the characters a-z used as unshifted key will automatically be converted\n"
-	        "//      to uppercase shifted keys, if no other mapping is set for that key.\n",
+	        "//      to uppercase shifted keys, if no other mapping is set for that key.\n"
 	        "//--------------------------------------------------------------------------\n");
 	fprintf (f,
 	        "//The following special keynames for are known (some only exists on international\n"
