@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.30 2007-09-03 17:05:45 johnnycz Exp $
+    $Id: q_shared.h,v 1.31 2007-09-11 21:40:42 borisu Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -39,6 +39,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4244 4127 4201 4214 4514 4305 4115 4018 4996)
+#endif
+
+#ifdef __INTEL_COMPILER
+#pragma warning( disable : 188)
 #endif
 
 typedef unsigned char byte;
