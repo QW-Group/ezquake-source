@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.46 2007-09-03 15:38:19 dkure Exp $
+	$Id: host.c,v 1.47 2007-09-11 21:52:51 borisu Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -456,7 +456,7 @@ char *Host_PrintBars(char *s, int len)
 	temp[0] = 0;
 
 	count = (len - 2 - 2 - strlen(s)) / 2;
-	if (count < 0 || count > sizeof(temp) / 2 - 8)
+	if (count > sizeof(temp) / 2 - 8)
 		return temp;
 
 	strcat(temp, "\x1d");
