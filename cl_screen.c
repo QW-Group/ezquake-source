@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.136 2007-09-03 19:26:21 johnnycz Exp $
+$Id: cl_screen.c,v 1.137 2007-09-11 22:00:18 borisu Exp $
 */
 
 /// declarations may be found in screen.h
@@ -2156,7 +2156,7 @@ void Hud_Elem_Blink(hud_element_t *elem)
 	blinktime = atof(Cmd_Argv(2))/1000.0;
 	mask = atoi(Cmd_Argv(3));
 
-	if (mask < 0 || mask > 3) return; // bad mask
+	if (mask > 3) return; // bad mask
 	if (blinktime < 0.0 || blinktime > 5.0) return;
 
 	elem->blink = blinktime;
@@ -2425,7 +2425,7 @@ void SCR_DrawHud (void)
 				st = TP_ParseFunChars(st, false);
 				l = strlen_color(st);
 			} else if (elem->flags & HUD_FUNC) {
-				func = elem->contents;
+				func = (Hud_Func)elem->contents;
 				st =(*func)();
 				l = strlen(st);
 			/*} else if (elem->flags & HUD_IMAGE) {
