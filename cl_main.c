@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.174 2007-09-09 00:44:37 qqshka Exp $
+$Id: cl_main.c,v 1.175 2007-09-11 18:25:04 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -616,7 +616,14 @@ void CL_Observe_f (void) {
 	Cbuf_AddText(va("%s\n", proxy ? "say ,reconnect" : "reconnect"));
 }
 
-
+// just toggle mode between spec and player
+void Cl_ToggleSpec_f (void)
+{
+	if (spectator.string[0])
+		CL_Join_f();
+	else
+		CL_Observe_f();
+}
 
 void CL_DNS_f (void) {
 	char address[128], *s;
@@ -795,6 +802,11 @@ void CL_Disconnect (void) {
 	cls.qport++; //a hack I picked up from qizmo
 
 	SZ_Clear(&cls.cmdmsg);
+
+// { // so join/observe not confused
+	Info_SetValueForStarKey (cl.serverinfo, "*z_ext", "", sizeof(cl.serverinfo));
+	cl.z_ext = 0;
+// }
 
 	Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
 }
@@ -1230,7 +1242,7 @@ void CL_InitLocal (void) {
 
 	Cmd_AddCommand ("join", CL_Join_f);
 	Cmd_AddCommand ("observe", CL_Observe_f);
-
+	Cmd_AddCommand ("togglespec", Cl_ToggleSpec_f);
 
 	Cmd_AddCommand ("dns", CL_DNS_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
