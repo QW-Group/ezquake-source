@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.92 2007-09-03 15:38:19 dkure Exp $
+$Id: gl_draw.c,v 1.93 2007-09-12 12:54:31 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -787,7 +787,7 @@ qbool R_CharAvailable (wchar num)
 #define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
 #define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
 
-__inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar)
+static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar)
 {
 	float frow, fcol;
 	int i = 0;
