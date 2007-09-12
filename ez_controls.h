@@ -137,6 +137,8 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 //
 // Raises an event.
 //
+#ifdef __INTEL_COMPILER
+
 #define CONTROL_RAISE_EVENT(retval, ctrl, eventhandler, ...)										\
 {																									\
 	int temp = 0;																					\
@@ -147,21 +149,54 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	if(p) (*p) = temp;																				\
 }																									\
 
+#else
+
+#define CONTROL_RAISE_EVENT(retval, ctrl, eventhandler, ...)										\
+{																									\
+	int temp = 0;																					\
+	int *p = (int *)retval;																			\
+	((ez_control_t *)ctrl)->override_count = ((ez_control_t *)ctrl)->inheritance_level;				\
+	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))											\
+	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ctrl), ##__VA_ARGS__);				\
+	if(p) (*p) = temp;																				\
+}																									\
+
+#endif
+
 //
 // Calls a event handler function.
 //
+#ifdef __INTEL_COMPILER
+
 #define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventhandler, ...)														\
 {																														\
 	int *p = (int *)retval, temp = 0;																					\
 	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))														\
 	{																													\
 		if(((ez_control_t *)ctrl)->override_count == 0)																	\
-			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)((ez_control_t *)ctrl, __VA_ARGS__);	\
+			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)((ez_control_t *)ctrl, __VA_ARGS__);		\
 		else																											\
 			((ez_control_t *)ctrl)->override_count--;																	\
 	}																													\
 	if(p) (*p) = temp;																									\
 }																														\
+
+#else
+
+#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventhandler, ...)														\
+{																														\
+	int *p = (int *)retval, temp = 0;																					\
+	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))														\
+	{																													\
+		if(((ez_control_t *)ctrl)->override_count == 0)																	\
+		temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)((ez_control_t *)ctrl, ##__VA_ARGS__);		\
+		else																											\
+			((ez_control_t *)ctrl)->override_count--;																	\
+}																														\
+	if(p) (*p) = temp;																									\
+}																														\
+
+#endif
 
 //
 // Validates a method call -
