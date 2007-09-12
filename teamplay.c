@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.82 2007-08-11 19:44:19 cokeman1982 Exp $
+    $Id: teamplay.c,v 1.83 2007-09-12 14:02:21 borisu Exp $
 */
 
 #include <time.h>
@@ -2228,7 +2228,8 @@ int TP_CategorizeMessage (const char *s, int *offset)
 		if (!player->name[0])
 			continue;
 		name = Info_ValueForKey (player->userinfo, "name");
-		len = bound(0, strlen(name), 31);
+		len = strlen(name);
+		len = min (len, 31);
 		// check messagemode1
 		if (len + 2 <= msglen && s[len] == ':' && s[len + 1] == ' ' && !strncmp(name, s, len))	{
 			if (player->spectator)
