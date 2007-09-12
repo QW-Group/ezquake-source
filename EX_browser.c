@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.46 2007-09-04 10:32:25 dkure Exp $
+	$Id: EX_browser.c,v 1.47 2007-09-12 20:51:03 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -267,56 +267,43 @@ void PasteServerToConsole(server_data *s)
 //
 
 
-server_data * Create_Server(char *ip)
+server_data * Create_Server (char *ip)
 {
-    server_data *s;
+	server_data *s;
 
-    s = (server_data *) Q_malloc (sizeof(server_data));
-    s->display.name[0] = 0;
-    s->display.ping[0] = 0;
-    s->ping = -1;
-    s->display.map[0] = 0;
-    s->display.gamedir[0] = 0;
-    s->display.players[0] = 0;
-    s->display.fraglimit[0] = 0;
-    s->display.timelimit[0] = 0;
-    if (!NET_StringToAdr (ip, &(s->address)))
-    {
-        free(s);
-        return NULL;
+	s = (server_data *) Q_malloc (sizeof(server_data));
+	memset (s, 0, sizeof(server_data));
+
+	s->ping = -1;
+
+	if (!NET_StringToAdr (ip, &(s->address)))
+	{
+		Q_free(s);
+		return NULL;
     }
-    if (!strchr(ip, ':'))
-        s->address.port = htons(27500);
-    sprintf(s->display.ip, "%d.%d.%d.%d:%d",
-        s->address.ip[0], s->address.ip[1], s->address.ip[2], s->address.ip[3],
-        ntohs(s->address.port));
 
-    s->keysn = 0;
-    s->playersn = 0;
-    s->spectatorsn = 0;
-    return s;
+	if (!strchr(ip, ':'))
+		s->address.port = htons(27500);
+
+	snprintf (s->display.ip, sizeof (s->display.ip), "%d.%d.%d.%d:%d",
+			s->address.ip[0], s->address.ip[1], s->address.ip[2], s->address.ip[3],
+			ntohs(s->address.port));
+
+	return s;
 }
 
-server_data * Create_Server2(netadr_t n)
+server_data * Create_Server2 (netadr_t n)
 {
-    server_data *s;
+	server_data *s;
 
-    s = (server_data *) Q_malloc (sizeof(server_data));
+	s = (server_data *) Q_malloc (sizeof (server_data));
+	memset (s, 0, sizeof(server_data));
 
-    memcpy(&(s->address), &n, sizeof(n));
-    strcpy(s->display.ip, NET_AdrToString(n));
+	memcpy (&(s->address), &n, sizeof (netadr_t));
+	strlcpy (s->display.ip, NET_AdrToString(n), sizeof (s->display.ip));
 
-    s->display.name[0] = 0;
-    s->display.ping[0] = 0;
-    s->ping = -1;
-    s->display.map[0] = 0;
-    s->display.gamedir[0] = 0;
-    s->display.players[0] = 0;
-    s->display.fraglimit[0] = 0;
-    s->display.timelimit[0] = 0;
-    s->keysn = 0;
-    s->playersn = 0;
-    s->spectatorsn = 0;
+	s->ping = -1;
+
     return s;
 }
 
@@ -2685,39 +2672,42 @@ void Sort_All_Players(void)
 
 void Rebuild_All_Players(void)
 {
-    int i, j;
-    int players = 0;
+	int i, j, players = 0;
 
     // clear
-    if (all_players != NULL)
-    {
-        for (i=0; i < all_players_n; i++)
-            free(all_players[i]);
-        free(all_players);
-    }
+	if (all_players != NULL)
+	{
+		for (i = 0; i < all_players_n; i++)
+			Q_free(all_players[i]);
 
-    // count players
-    for (i=0; i < serversn; i++)
-        players += servers[i]->playersn + servers[i]->spectatorsn;
+		Q_free(all_players);
+	}
 
-    // alloc memory
-    all_players = (player_host **) Q_malloc(players * sizeof(player_host *));
+	// count players
+	for (i = 0; i < serversn; i++)
+		players += servers[i]->playersn + servers[i]->spectatorsn;
 
-    // make players
-    all_players_n = 0;
-    for (i=0; i < serversn; i++)
-        for (j=0; j < servers[i]->playersn + servers[i]->spectatorsn; j++)
-        {
-            all_players[all_players_n] = (player_host *) Q_malloc(sizeof(player_host));
-            strncpy(all_players[all_players_n]->name,
-                    servers[i]->players[j]->name, 20);
-            servers[i]->players[j]->name[20] = 0;
-            all_players[all_players_n]->serv = servers[i];
-            all_players_n++;
-        }
-    resort_all_players = 1;
-    rebuild_all_players = 0;
-    //Players_pos = 0;
+	// alloc memory
+	all_players = (player_host **) Q_malloc (players * sizeof (player_host *));
+
+	// make players
+	all_players_n = 0;
+	for (i = 0; i < serversn; i++)
+	{
+		for (j = 0; j < servers[i]->playersn + servers[i]->spectatorsn; j++)
+		{
+			all_players[all_players_n] = (player_host *) Q_malloc (sizeof (player_host));
+			strlcpy (all_players[all_players_n]->name,
+					servers[i]->players[j]->name,
+					sizeof (all_players[all_players_n]->name));
+			all_players[all_players_n]->serv = servers[i];
+			all_players_n++;
+		}
+	}
+
+	resort_all_players = 1;
+	rebuild_all_players = 0;
+	//Players_pos = 0;
 }
 
 void Shutdown_SB(void)
