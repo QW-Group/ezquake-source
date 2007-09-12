@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.83 2007-09-12 14:02:21 borisu Exp $
+    $Id: teamplay.c,v 1.84 2007-09-12 16:44:08 johnnycz Exp $
 */
 
 #include <time.h>
@@ -1569,13 +1569,20 @@ qbool OnChangeColorForcing(cvar_t *var, char *string)
 
 qbool OnChangeSkinForcing(cvar_t *var, char *string)
 {
-	extern cvar_t noskins, cl_name_as_skin;
+	extern cvar_t noskins, cl_name_as_skin, enemyforceskins;
 
 	if (cl.teamfortress || (cl.fpd & FPD_NO_FORCE_SKIN))
 		return false;
 
 	if (var == &cl_name_as_skin && (!cls.demoplayback && !cl.spectator))
 		return false; // allow in demos or for specs
+
+	if (var == &enemyforceskins && (!cl.spectator && cls.state != ca_disconnected)) {
+		if (Q_atoi(string))
+			Cbuf_AddText("say Forcing enemy skins\n");
+		else
+			Cbuf_AddText("say Not forcing enemy skins\n");
+	}
 
 	if (cls.state == ca_active) {
 		float oldskins;
@@ -2141,6 +2148,63 @@ int	TP_CountPlayers (void)
 			count++;
 	}
 	return count;
+}
+
+// tells the playernum of the player in the current point of view
+int TP_CurrentTrackNum(void)
+{
+	if (!cl.spectator) return cl.playernum;
+	else return Cam_TrackNum();
+}
+
+// returns true if the player in the current POV is from given team
+qbool TP_ThisPOV_IsHisTeam(const char* team)
+{
+	int pn = TP_CurrentTrackNum();
+	
+	if (pn < 0 || pn > MAX_CLIENTS)
+		return false;
+	else
+		return !strcmp(team, cl.players[pn].team);
+}
+
+// returns the team of the player in the current POV
+// if no player tracked in the POV, returns NULL pointer
+static char* TP_ThisPOV_Team() {
+	int n = TP_CurrentTrackNum();
+	if (n >= 0 && n < MAX_CLIENTS)
+		return cl.players[n].team;
+	else
+		return NULL;
+}
+
+int TP_PlayersNumber(int userid, const char* team)
+{
+	qbool t1 = TP_ThisPOV_IsHisTeam(team); // is the looked up one our teammate?
+	qbool t2;
+	char *pt = TP_ThisPOV_Team();
+	int pc = 0, i;
+	player_info_t* cp;
+
+	Com_Printf("PNum(%d,%s)", userid, team);
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		cp = &cl.players[i];
+		if (!cp->name || !cp->name[0] || cp->spectator) continue;
+		if (pt)
+			t2 = !strcmp(cp->team, pt);	// is the current one our teammate?
+		else
+			t2 = false;
+
+		if ((t1 && t2) || (!t1 && !t2)) {
+			pc++;
+		}
+		if (cp->userid == userid) {
+			Com_Printf(" ret:%d (%s,%s) [%d]", pc, t1?"1":"0",t2?"1":"2",i);
+			return pc;
+		}
+	}
+
+	return 0;
 }
 
 char *TP_MapName(void)

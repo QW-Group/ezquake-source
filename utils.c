@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.43 2007-09-05 17:42:42 cokeman1982 Exp $
+	$Id: utils.c,v 1.44 2007-09-12 16:44:08 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -190,6 +190,22 @@ void Util_Process_FilenameEx(char *string, qbool allow_root) {
 	if (!allow_root && string[0] == '/')
 		for (i = 1; i <= strlen(string); i++)
 			string[i - 1] = string[i];
+}
+
+void Util_ToValidFileName(const char* i, char* o, size_t buffersize)
+{
+	int k;
+	unsigned char c;
+	buffersize--;	// keep space for terminating zero
+
+	for (k = 0; *i && k < buffersize; i++, k++) {
+		c = (*i) & 127;
+		if (c < 32 || c == '?' || c == '*' || c == ':' || c == '<' || c == '>' || c == '"')
+			o[k] = '_'; // u can't use skin with such chars, so replace with some safe char
+		else
+			o[k] = c;
+	}
+	o[k] = '\0';
 }
 
 void Util_Process_Filename(char *string) {

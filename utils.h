@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.19 2007-09-03 20:34:52 cokeman1982 Exp $
+	$Id: utils.h,v 1.20 2007-09-12 16:44:08 johnnycz Exp $
 
 */
 
@@ -49,6 +49,7 @@ qbool Util_Is_Valid_FilenameEx(char *s, qbool drive_prefix_valid);
 char *Util_Invalid_Filename_Msg(char *s);
 void Util_Process_Filename(char *string);
 void Util_Process_FilenameEx(char *string, qbool allow_root);
+void Util_ToValidFileName(const char* input, char* output, size_t buffersize);
 
 ///
 /// Player utils

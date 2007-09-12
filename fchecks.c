@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.17 2007-05-28 10:47:33 johnnycz Exp $
+	$Id: fchecks.c,v 1.18 2007-09-12 16:44:08 johnnycz Exp $
 
 */
 
@@ -75,11 +75,19 @@ void FChecks_FServerResponse (void) {
 }
 
 void FChecks_SkinsResponse(float fbskins) {
+	char* sf;
+	extern cvar_t enemyforceskins;
+
+	if (enemyforceskins.integer)
+		sf = ", enemy skins forcing";
+	else
+		sf = "";
+
 	if (fbskins > 0) {
-		Cbuf_AddText (va("say all skins %d%% fullbright\n", (int) (fbskins * 100)));	
+		Cbuf_AddText (va("say all skins %d%% fullbright%s\n", (int) (fbskins * 100), sf));
 	}
 	else {
-		Cbuf_AddText (va("say not using fullbright skins\n"));	
+		Cbuf_AddText (va("say not using fullbright skins%s\n", sf));
 	}
 }
 

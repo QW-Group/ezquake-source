@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.21 2007-08-23 15:56:52 qqshka Exp $
+	$Id: skin.c,v 1.22 2007-09-12 16:44:08 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "image.h"
 #include "qtv.h"
+#include "utils.h"
 
 
 qbool OnChangeSkinForcing(cvar_t *var, char *string);
@@ -38,6 +39,8 @@ cvar_t	baseskin = {"baseskin", "base"};
 cvar_t	noskins = {"noskins", "0"};
 
 cvar_t	cl_name_as_skin = {"cl_name_as_skin", "0", 0, OnChangeSkinForcing};
+cvar_t  enemyforceskins = {"enemyforceskins", "0", 0, OnChangeSkinForcing};
+cvar_t  teamforceskins = {"teamforceskins", "0", 0, OnChangeSkinForcing};
 
 char	allskins[MAX_OSPATH];
 
@@ -46,38 +49,59 @@ skin_t	skins[MAX_CACHED_SKINS];
 
 int		numskins;
 
+// return type of skin forcing if it's allowed for the player in the POV
+static int Skin_ForcingType(const char *team)
+{
+	if (teamforceskins.integer && TP_ThisPOV_IsHisTeam(team))
+		return teamforceskins.integer;	// allow for teammates
+
+	if (enemyforceskins.integer && !TP_ThisPOV_IsHisTeam(team)) {
+		if (cls.demoplayback || cl.spectator) { // allow for demos
+			return enemyforceskins.integer;
+		} else {  // for gameplay respect the FPD
+			if (!(cl.fpd & FPD_NO_FORCE_SKIN) && !(cl.fpd & FPD_NO_FORCE_COLOR))
+				return enemyforceskins.integer;
+			else
+				return 0;
+		}
+	}
+
+	// this was always only for demos
+	if (cl_name_as_skin.integer && (cls.demoplayback || cl.spectator)) {
+		return cl_name_as_skin.integer;
+	}
+
+	return 0;
+}
 
 // get player skin as player name or player id
 char *Skin_AsNameOrId (player_info_t *sc) {
 	static char name[MAX_OSPATH];
+	int pn;
+	char* mask;
 
-	if (!cls.demoplayback && !cl.spectator)
-		return NULL; // allow in demos or for specs
-
-	if (!cl_name_as_skin.value)
-		return NULL;
-
-	if (cl_name_as_skin.value == 1) { // get skin as player name
-		char *s = sc->name;
-		int i;
-
-		for (i = 0; *s && i < sizeof(name) - 1; s++) {
-			name[i] = s[0] & 127; // strip high bit
-
-			if ((unsigned char)name[i] < 32 
-				|| name[i] == '?' || name[i] == '*' || name[i] == ':' || name[i] == '<' || name[i] == '>' || name[i] == '"'
-			   )
-				name[i] = '_'; // u can't use skin with such chars, so replace with some safe char
-
-			i++;
-		}
-		name[i] = 0;
+	switch (Skin_ForcingType(sc->team)) {
+	case 1: // get skin as player name
+		Util_ToValidFileName(sc->name, name, sizeof(name));
 		return name;
+	break;
+
+	case 2: // get skin as id
+		snprintf(name, sizeof(name), "%d", sc->userid);
+		return name;
+	break;
+
+	case 3: // get player's number (first teammate gets 1, second 2, ...)
+		pn = TP_PlayersNumber(sc->userid, sc->team);
+		if (pn) {
+			mask = TP_ThisPOV_IsHisTeam(sc->team) ? "t%d" : "e%d";
+			snprintf(name, sizeof(name), mask, pn);
+			return name;
+		}
+	break;
 	}
 
-	// get skin as id
-	snprintf(name, sizeof(name), "%d", sc->userid);
-	return name;
+	return NULL;
 }
 
 char *Skin_FindName (player_info_t *sc) {

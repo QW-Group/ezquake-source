@@ -51,11 +51,16 @@ void TP_StatChanged (int stat, int value);
 void TP_CheckPickupSound (char *s, vec3_t org);
 qbool TP_CheckSoundTrigger (wchar *str);
 
-
 char *TP_PlayerName(void);
 char *TP_PlayerTeam(void);
 char *TP_MapName(void);
 int	TP_CountPlayers(void);
+
+// returns true if the player in the current POV is from given team
+qbool TP_ThisPOV_IsHisTeam(const char* team);
+
+// assigns numbers 1..n to teammates and enemies, returns given players number
+int TP_PlayersNumber(int userid, const char* team);
 
 // teamcolor & enemycolor
 extern cvar_t cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
