@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.84 2007-09-12 16:44:08 johnnycz Exp $
+    $Id: teamplay.c,v 1.85 2007-09-12 17:27:25 johnnycz Exp $
 */
 
 #include <time.h>
@@ -2186,7 +2186,6 @@ int TP_PlayersNumber(int userid, const char* team)
 	int pc = 0, i;
 	player_info_t* cp;
 
-	Com_Printf("PNum(%d,%s)", userid, team);
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		cp = &cl.players[i];
 		if (!cp->name || !cp->name[0] || cp->spectator) continue;
@@ -2198,10 +2197,8 @@ int TP_PlayersNumber(int userid, const char* team)
 		if ((t1 && t2) || (!t1 && !t2)) {
 			pc++;
 		}
-		if (cp->userid == userid) {
-			Com_Printf(" ret:%d (%s,%s) [%d]", pc, t1?"1":"0",t2?"1":"2",i);
+		if (cp->userid == userid)
 			return pc;
-		}
 	}
 
 	return 0;
