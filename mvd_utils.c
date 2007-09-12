@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.47 2007-09-01 16:10:55 johnnycz Exp $
+$Id: mvd_utils.c,v 1.48 2007-09-12 16:01:44 borisu Exp $
 */
 
 #include "quakedef.h"
@@ -49,7 +49,7 @@ typedef struct mvd_ks_w_s {
 } mvd_ks_w_t;
 
 typedef struct mvd_ks_s {
-	mvd_ks_w_t normal[7];	// weapon kills axe - lg
+	mvd_ks_w_t normal[8];	// weapon kills axe - lg
 	mvd_ks_w_t q[7];
 	mvd_ks_w_t p[7];
 	mvd_ks_w_t r[7];
