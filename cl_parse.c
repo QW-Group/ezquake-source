@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.112 2007-09-09 00:44:37 qqshka Exp $
+$Id: cl_parse.c,v 1.113 2007-09-12 22:29:52 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2414,7 +2414,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
             if (!cl.players[i].name[0])
                 continue;
 
-            sprintf(buf, "%.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            snprintf(buf,  sizeof (buf), "%.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
             //Tmp_MakeRed(buf);
             if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2423,7 +2423,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
                 msg = chat + strlen(buf);
             }
 
-            sprintf(buf, "(%.*s): ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            snprintf(buf,  sizeof (buf), "(%.*s): ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
             //Tmp_MakeRed(buf);
             if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2432,7 +2432,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
                 msg = chat + strlen(buf);
             }
 
-            sprintf(buf, "[SPEC] %.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            snprintf(buf,  sizeof (buf), "[SPEC] %.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
             //Tmp_MakeRed(buf);
             if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2681,7 +2681,7 @@ void CL_ParsePrint (void)
 						SYSTEMTIME lt;
 						char tmpbuf[16];
 						GetLocalTime (&lt);
-						sprintf(tmpbuf, "%2d:%02d ", lt.wHour, lt.wMinute);
+						snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
 						//MakeChatRed(tmpbuf, false);
 						Com_Printf(tmpbuf);
 					}

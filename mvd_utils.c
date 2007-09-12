@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.48 2007-09-12 16:01:44 borisu Exp $
+$Id: mvd_utils.c,v 1.49 2007-09-12 22:29:53 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -872,7 +872,7 @@ int MVD_AutoTrackBW_f(int i){
 }
 
 void MVD_AutoTrack_f(void) {
-	char arg[50];
+	char arg[64];
 	int id;
 
 	#ifdef DEBUG
@@ -888,7 +888,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_1_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_1){
-				sprintf(arg,"track1 %i \n",id);
+				snprintf(arg, sizeof (arg), "track1 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_1 = id;
 			}
@@ -898,7 +898,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_2_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_2){
-				sprintf(arg,"track2 %i \n",id);
+				snprintf(arg, sizeof (arg), "track2 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_2 = id;
 			}
@@ -908,7 +908,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_3_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_3){
-				sprintf(arg,"track3 %i \n",id);
+				snprintf(arg, sizeof (arg), "track3 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_3 = id;
 			}
@@ -918,7 +918,7 @@ void MVD_AutoTrack_f(void) {
 	 		multitrack_val = mvd_multitrack_4_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_4){
-				sprintf(arg,"track4 %i \n",id);
+				snprintf(arg, sizeof (arg), "track4 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_4 = id;
 			}
@@ -928,7 +928,7 @@ void MVD_AutoTrack_f(void) {
 
 		id = MVD_FindBestPlayer_f();
 		if ( id != last_track){
-			sprintf(arg,"track \"%s\"\n",cl.players[id].name);
+			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
 			Cbuf_AddText(arg);
 			last_track = id;
 		}
@@ -1482,9 +1482,9 @@ char *mvd_name_to_xml(char *s){
 		if(i<0)
 			i+=256;
 		if (strlen(buf)>0 ){
-			sprintf(buf,"%s",va("%s			<char>%i</char>\n",buf,i));
+			snprintf(buf, sizeof (buf), "%s",va("%s			<char>%i</char>\n",buf,i));
 		}else
-			sprintf(buf,"%s",va("\n			<char>%i</char>\n",i));
+			snprintf(buf, sizeof (buf), "%s",va("\n			<char>%i</char>\n",i));
 	}
 	return buf;
 

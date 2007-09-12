@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.31 2007-09-03 15:33:27 dkure Exp $
+	$Id: sv_user.c,v 1.32 2007-09-12 22:29:53 disconn3ct Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -903,11 +903,11 @@ void SV_Say (qbool team) {
 		strlcpy (t1, Info_ValueForKey (sv_client->userinfo, "team"), sizeof(t1));
 
 	if (sv_client->spectator && (!sv_spectalk.value || team))
-		sprintf (text, "[SPEC] %s: ", sv_client->name);
+		snprintf (text, sizeof (text), "[SPEC] %s: ", sv_client->name);
 	else if (team)
-		sprintf (text, "(%s): ", sv_client->name);
+		snprintf (text, sizeof (text), "(%s): ", sv_client->name);
 	else {
-		sprintf (text, "%s: ", sv_client->name);
+		snprintf (text, sizeof (text), "%s: ", sv_client->name);
 	}
 
 	if (fp_messages) {
@@ -1049,9 +1049,9 @@ void Cmd_Pause_f (void) {
 	}
 
 	if (!((int)sv_paused.value & 1))
-		sprintf (st, "%s paused the game\n", sv_client->name);
+		snprintf (st, sizeof (st), "%s paused the game\n", sv_client->name);
 	else
-		sprintf (st, "%s unpaused the game\n", sv_client->name);
+		snprintf (st, sizeof (st), "%s unpaused the game\n", sv_client->name);
 
 	SV_TogglePause(st);
 }

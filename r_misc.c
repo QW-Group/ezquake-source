@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_misc.c,v 1.15 2007-03-28 13:17:14 qqshka Exp $
+	$Id: r_misc.c,v 1.16 2007-09-12 22:29:53 disconn3ct Exp $
 
 */
 
@@ -231,7 +231,7 @@ void R_NetGraph (void) {
 	}
 
 	if (r_netgraph.value != 3) {
-		sprintf(st, "%3i%% packet loss", lost);
+		snprintf(st, sizeof (st), "%3i%% packet loss", lost);
 		Draw_String(8, y2, st);
 	}
 }
@@ -363,7 +363,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
     {
         if (avgping < 0)
         {
-            sprintf(st, "%3i%% packet loss", lost);
+            snprintf(st, sizeof (st), "%3i%% packet loss", lost);
             st[(width-1)/8] = 0;
             Draw_String(x+3, y2, st);
         }
@@ -373,9 +373,9 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
             if (lost > 99)
                 lost = 99;
 
-            strcpy(st, "\x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1F");
-            //sprintf(st, "%3i%% packet loss, %3i ms ping", lost, avgping);
-            sprintf(buf, " %i \xf %i%% ", avgping, lost);
+            strlcpy(st, "\x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1F", sizeof (st));
+            //snprintf(st, sizeof (st), "%3i%% packet loss, %3i ms ping", lost, avgping);
+            snprintf(buf, sizeof (buf), " %i \xf %i%% ", avgping, lost);
             strncpy(st + strlen(st) - strlen(buf) - 3, buf, strlen(buf));
             Draw_String(x+4, y2, st);
         }

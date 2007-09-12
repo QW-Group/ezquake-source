@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.14 2007-09-11 22:37:20 borisu Exp $
+	$Id: keymap.c,v 1.15 2007-09-12 22:29:53 disconn3ct Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -424,7 +424,7 @@ void IN_Keymap_Save_f (void)
 		char   dummy[ MAX_QPATH ];
 
 		strlcpy (dummy, filename, sizeof(dummy) - 3);
-		sprintf(filename, "qw/%s", dummy);
+		snprintf(filename, sizeof (filename), "qw/%s", dummy);
 	}
 
 	COM_CreatePath (filename);
@@ -672,7 +672,7 @@ static void IN_Keycode_Set_f (qbool showerr, char *filename, unsigned int lineco
 
 	linetext[0] = (char)'\0';
 	if (filename != NULL)
-		sprintf (linetext, "%s (line %u): ", filename, linecount);
+		snprintf (linetext, sizeof (linetext), "%s (line %u): ", filename, linecount);
 
 	if (cl_warncmd.value <= 0 && developer.value <= 0)
 		showerr = false;

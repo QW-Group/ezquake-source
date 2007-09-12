@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.47 2007-09-12 20:51:03 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.48 2007-09-12 22:29:53 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -30,40 +30,39 @@ int source_unique = 0;
 
 typedef enum
 {
-    SBPG_SERVERS,	// Servers page
+	SBPG_SERVERS,	// Servers page
 	SBPG_SOURCES,	// Sources page
 	SBPG_PLAYERS,	// Players page
 	SBPG_OPTIONS	// Options page
-}	sb_tab_t;
+} sb_tab_t;
 CTab_t sb_tab;
 
-extern cvar_t     scr_scaleMenu;
+extern cvar_t scr_scaleMenu;
 #ifdef GLQUAKE
-extern int        menuwidth;
-extern int        menuheight;
+extern int menuwidth;
+extern int menuheight;
 #else
 #define menuwidth vid.width
 #define menuheight vid.height
 #endif
 
-extern cvar_t cl_useproxy;
-extern int connected2proxy;
-extern void M_Menu_ServerList_f (void);
-extern void M_Menu_Main_f (void);
-extern void M_ToggleMenu_f (void);
-extern void M_Draw (void);
-
 // searching
 #define MAX_SEARCH 20
 #define SEARCH_TIME 3
 double searchtime = -10;
-enum {search_none = 0, search_server, search_player} searchtype = search_none;
+
+enum {
+	search_none = 0,
+	search_server,
+	search_player
+} searchtype = search_none;
+
 char searchstring[MAX_SEARCH+1];
 
 // add source
 CEditBox edit1, edit2;
 int adding_source = 0;
-int newsource_master;   // 0 = file
+int newsource_master; // 0 = file
 int newsource_pos;
 
 // add server
@@ -113,8 +112,8 @@ cvar_t  sb_hidefull      = {"sb_hidefull",         "0"};
 cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
 
 cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"}; // not in menu
-cvar_t  sb_mastercache     = {"sb_mastercache",     "1"}; // not in menu
-cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"}; // not in menu
+cvar_t  sb_mastercache     = {"sb_mastercache",    "1"};  // not in menu
+cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"};  // not in menu
 
 settings_page sbsettings;
 setting sbsettings_arr[] = {
@@ -167,98 +166,89 @@ int abort_ping;
 
 void cvar_toggle (cvar_t *var)
 {
-    if (var->value == 0)
-        Cvar_SetValue(var, 1);
-    else
-        Cvar_SetValue(var, 0);
+	Cvar_SetValue (var, (var->value == 0) ? 1 : 0);
 }
 
-void    Cvar2_Set (cvar_t *var, float value)
+static void Join_Server (server_data *s)
 {
-    char buf[128];
+	Cbuf_AddText ("join ");
+	Cbuf_AddText (s->display.ip);
+	Cbuf_AddText ("\n");
 
-    sprintf(buf, "%f", value);
-    Cvar_Set(var, buf);
-}
-
-void Join_Server(server_data *s)
-{
-    Cbuf_AddText("join ");
-    Cbuf_AddText(s->display.ip);
-    Cbuf_AddText("\n");
-
-    if (sb_autohide.value)
-    {
+	if (sb_autohide.value)
+	{
 		if (sb_autohide.value > 1  ||  strcmp(s->display.gamedir, "qizmo")) {
-            key_dest = key_game;
+			key_dest = key_game;
 			m_state = m_none;
 			M_Draw();
 		}
-    }
+	}
 }
 
-void Observe_Server(server_data *s)
+static void Observe_Server (server_data *s)
 {
-    Cbuf_AddText("observe ");
-    Cbuf_AddText(s->display.ip);
-    Cbuf_AddText("\n");
+	Cbuf_AddText ("observe ");
+	Cbuf_AddText (s->display.ip);
+	Cbuf_AddText ("\n");
 
-    if (sb_autohide.value)
-    {
+	if (sb_autohide.value)
+	{
 		if (sb_autohide.value > 1  ||  strcmp(s->display.gamedir, "qizmo")) {
-            key_dest = key_game;
+			key_dest = key_game;
 			m_state = m_none;
 			M_Draw();
 		}
-    }
+	}
 }
 
 // case insensitive and red-insensitive compare
-int strcmp2(const char * s1, const char * s2)
+static int strcmp2 (const char * s1, const char * s2)
 {
-    if (s1 == NULL  &&  s2 == NULL)
-        return 0;
+	if (s1 == NULL  &&  s2 == NULL)
+		return 0;
 
-    if (s1 == NULL)
-        return -1;
+	if (s1 == NULL)
+		return -1;
 
-    if (s2 == NULL)
-        return 1;
+	if (s2 == NULL)
+		return 1;
 
-    while (*s1  ||  *s2)
+	while (*s1  ||  *s2)
     {
-        if (tolower(*s1 & 0x7f) != tolower(*s2 & 0x7f))
-            return tolower(*s1 & 0x7f) - tolower(*s2 & 0x7f);
-        s1++;
-        s2++;
-    }
-    return 0;
+		if (tolower(*s1 & 0x7f) != tolower(*s2 & 0x7f))
+			return tolower(*s1 & 0x7f) - tolower(*s2 & 0x7f);
+		s1++;
+		s2++;
+	}
+
+	return 0;
 }
 
-void CopyServerToClipboard(server_data *s)
+static void CopyServerToClipboard (server_data *s)
 {
-    char buf[2048];
-    if (isCtrlDown()  ||  s->display.name[0] == 0)
-        strcpy(buf, s->display.ip);
-    else
-        sprintf(buf, "%s (%s)",
-            s->display.name,
-            s->display.ip);
-    CopyToClipboard(buf);
+	char buf[2048];
+
+	if (isCtrlDown() || s->display.name[0] == 0)
+		strlcpy (buf, s->display.ip, sizeof(buf));
+	else
+		snprintf (buf, sizeof (buf), "%s (%s)",
+			s->display.name,
+			s->display.ip);
+
+	CopyToClipboard(buf);
 }
 
-void PasteServerToConsole(server_data *s)
+static void PasteServerToConsole (server_data *s)
 {
-    char buf[2048];
-    sprintf(buf, "%s (%s)",
-            s->display.name,
-            s->display.ip);
-    if (isCtrlDown())
-        Cbuf_AddText("say_team ");
-    else
-        Cbuf_AddText("say ");
-    Cbuf_AddText(buf);
-    Cbuf_AddText("\n");
+	char buf[2048];
+
+	snprintf(buf, sizeof (buf), "%s (%s)",
+			s->display.name,
+			s->display.ip);
+
+	Cbuf_AddText (isCtrlDown() ? "say_team " :  "say ");
+	Cbuf_AddText (buf);
+	Cbuf_AddText ("\n");
 }
 
 
@@ -307,28 +297,32 @@ server_data * Create_Server2 (netadr_t n)
     return s;
 }
 
-void Reset_Server(server_data *s)
+void Reset_Server (server_data *s)
 {
-    int i;
-    for (i=0; i < s->keysn; i++)
-    {
-        free(s->keys[i]);
-        free(s->values[i]);
+	int i;
+
+	for (i = 0; i < s->keysn; i++)
+	{
+		Q_free(s->keys[i]);
+		Q_free(s->values[i]);
     }
-    s->keysn = 0;
-    for (i=0; i < s->playersn + s->spectatorsn; i++)
-        free(s->players[i]);
-    s->playersn = 0;
-    s->spectatorsn = 0;
+
+	s->keysn = 0;
+
+	for (i = 0; i < s->playersn + s->spectatorsn; i++)
+		Q_free(s->players[i]);
+
+	s->playersn = 0;
+	s->spectatorsn = 0;
 	s->support_teams = false;
 
-    rebuild_all_players = 1;    // rebuild all-players list
+	rebuild_all_players = 1; // rebuild all-players list
 }
 
-void Delete_Server(server_data *s)
+void Delete_Server (server_data *s)
 {
-    Reset_Server(s);
-    free(s);
+	Reset_Server(s);
+	Q_free(s);
 }
 
 
@@ -336,53 +330,56 @@ char confirm_text[64];
 qbool confirmation;
 void (*confirm_func)(void);
 
-void SB_Confirmation(const char *text, void (*func)(void))
+void SB_Confirmation (const char *text, void (*func)(void))
 {
-    strcpy(confirm_text, text);
-    confirm_func = func;
-    confirmation = 1;
+	strlcpy (confirm_text, text, sizeof (confirm_text));
+	confirm_func = func;
+	confirmation = 1;
 }
 
-void SB_Confirmation_Draw()
+void SB_Confirmation_Draw (void)
 {
-    int x, y, w, h;
-    w = 32 + 8*max(strlen(confirm_text), strlen("Are you sure? <y/n>"));
-    h = 24;
+	int x, y, w, h;
 
-    x = (vid.width - w)/2;
-    y = (vid.height - h)/2;
-    x = (x/8) * 8;
-    y = (y/8) * 8;
+#define CONFIRM_TEXT_DEFAULT "Are you sure? <y/n>"
 
-    Draw_TextBox (x-16, y-16, w/8+1, h/8+2);
+	w = 32 + 8 * max (strlen (confirm_text), strlen (CONFIRM_TEXT_DEFAULT));
+	h = 24;
 
-    UI_Print_Center(x, y, w, confirm_text, false);
-    UI_Print_Center(x, y+16, w, "Are you sure? <y/n>", true);
+	x = (vid.width - w) / 2;
+	y = (vid.height - h) / 2;
+	x = (x / 8) * 8;
+	y = (y / 8) * 8;
+
+	Draw_TextBox (x - 16, y - 16, w / 8 + 1, h / 8 + 2);
+
+	UI_Print_Center (x, y, w, confirm_text, false);
+	UI_Print_Center (x, y+16, w, CONFIRM_TEXT_DEFAULT, true);
 }
 
-void SB_Confirmation_Key(int key)
+void SB_Confirmation_Key (int key)
 {
-    switch (key)
-    {
-    case K_BACKSPACE:
-    case K_ESCAPE:
-    case 'n':
-    case 'N':
-        confirmation = 0;
-        break;
-    case 'y':
-    case 'Y':
-        confirmation = 0;
-        confirm_func();
-    }
+	switch (key)
+	{
+	case K_BACKSPACE:
+	case K_ESCAPE:
+	case 'n':
+	case 'N':
+		confirmation = 0;
+		break;
+	case 'y':
+	case 'Y':
+		confirmation = 0;
+		confirm_func();
+	}
 }
 
 /* Menu drawing */
 
-    int Servers_pos;
-    int Sources_pos;
-    int Players_pos;
-    int Options_pos;
+int Servers_pos;
+int Sources_pos;
+int Players_pos;
+int Options_pos;
 
 server_data * show_serverinfo;
 int serverinfo_pos;
@@ -406,114 +403,115 @@ void Serverinfo_Key (int key);
 
 int sourcesn_updated = 0;
 
-int Sources_Compare_Func(const void * p_s1, const void * p_s2)
+int Sources_Compare_Func (const void * p_s1, const void * p_s2)
 {
-    int reverse = 0;
-    char *sort_string = sb_sortsources.string;
-    const source_data *s1 = *((source_data **)p_s1);
-    const source_data *s2 = *((source_data **)p_s2);
+	int reverse = 0;
+	char *sort_string = sb_sortsources.string;
+	const source_data *s1 = *((source_data **)p_s1);
+	const source_data *s2 = *((source_data **)p_s2);
 
-    if (show_serverinfo)
-    {
-        if (!(s1->last_update.wYear)  &&  s2->last_update.wYear)
-            return 1;
-        if (!s2->last_update.wYear  &&  s1->last_update.wYear)
-            return -1;
-        if (!s1->last_update.wYear  &&  !s2->last_update.wYear)
-            return s1 - s2;
-    }
+	if (show_serverinfo)
+	{
+		if (!(s1->last_update.wYear)  &&  s2->last_update.wYear)
+			return 1;
+		if (!s2->last_update.wYear  &&  s1->last_update.wYear)
+			return -1;
+		if (!s1->last_update.wYear  &&  !s2->last_update.wYear)
+			return s1 - s2;
+	}
 
-    while (true)
-    {
-        int d;  // difference
+	while (true)
+	{
+		int d;  // difference
 
-        if (*sort_string == '-')
-        {
-            reverse = 1;
-            sort_string++;
-            continue;
-        }
+		if (*sort_string == '-')
+		{
+			reverse = 1;
+			sort_string++;
+			continue;
+		}
 
-        switch (*sort_string++)
-        {
-            case '1':
-                d = s1->type - s2->type; break;
-            case '2':
-                d = funcmp(s1->name, s2->name); break;
-            case '3':
-                d = s1->unique - s2->unique; break;
-            default:
-                d = s1 - s2;
-        }
+		switch (*sort_string++)
+		{
+			case '1':
+				d = s1->type - s2->type; break;
+			case '2':
+				d = funcmp(s1->name, s2->name); break;
+			case '3':
+				d = s1->unique - s2->unique; break;
+			default:
+				d = s1 - s2;
+		}
 
-        if (d)
-            return reverse ? -d : d;
-    }
+		if (d)
+			return reverse ? -d : d;
+	}
 }
 void Sort_Sources (void)
 {
-    int i;
-    qsort(sources+1, sourcesn-1, sizeof(sources[0]), Sources_Compare_Func);
-    sourcesn_updated = 1;
-    for (i=1; i < sourcesn; i++)
-        if (sources[i]->last_update.wYear)
-            sourcesn_updated ++;
+	int i;
+
+    qsort (sources+1, sourcesn-1, sizeof(sources[0]), Sources_Compare_Func);
+
+	sourcesn_updated = 1;
+
+	for (i = 1; i < sourcesn; i++)
+		if (sources[i]->last_update.wYear)
+			sourcesn_updated ++;
 }
 
 
 int serverinfo_players_pos;
 int serverinfo_sources_pos;
 int serverinfo_sources_disp;
+extern int autoupdate_serverinfo; // declared in EX_browser_net.c
 void Serverinfo_Stop(void)
 {
-    extern int autoupdate_serverinfo;       // declared in EX_browser_net.c
-    show_serverinfo = NULL;
-    autoupdate_serverinfo = 0;
+	show_serverinfo = NULL;
+	autoupdate_serverinfo = 0;
 }
 
-void Serverinfo_Start(server_data *s)
+void Serverinfo_Start (server_data *s)
 {
-    extern int autoupdate_serverinfo;       // declared in EX_browser_net.c
+	if (show_serverinfo)
+		Serverinfo_Stop();
 
-    if (show_serverinfo)
-        Serverinfo_Stop();
+	serverinfo_players_pos = 0;
+	serverinfo_sources_pos = 0;
 
-    serverinfo_players_pos = 0;
-    serverinfo_sources_pos = 0;
-
-    autoupdate_serverinfo = 1;
-    show_serverinfo = s;
+	autoupdate_serverinfo = 1;
+	show_serverinfo = s;
 
     // sort for eliminating ot-updated
-    Sort_Sources();
-    resort_sources = 1; // and mark for resort on next sources draw
+	Sort_Sources();
+	resort_sources = 1; // and mark for resort on next sources draw
 
-    Start_Autoupdate(s);
+	Start_Autoupdate(s);
 
-    // testing connection
-    if (testing_connection)
+	// testing connection
+	if (testing_connection)
     {
-        char buf[256];
-        sprintf(buf, "%d.%d.%d.%d",
-            show_serverinfo->address.ip[0],
-            show_serverinfo->address.ip[1],
-            show_serverinfo->address.ip[2],
-            show_serverinfo->address.ip[3]);
-        SB_Test_Init(buf);
-        testing_connection = 1;
-    }
+		char buf[256];
+		snprintf(buf, sizeof (buf), "%d.%d.%d.%d",
+				show_serverinfo->address.ip[0],
+				show_serverinfo->address.ip[1],
+				show_serverinfo->address.ip[2],
+				show_serverinfo->address.ip[3]);
+		SB_Test_Init(buf);
+		testing_connection = 1;
+	}
 }
 
-void Serverinfo_Change(server_data *s)
+void Serverinfo_Change (server_data *s)
 {
-    Alter_Autoupdate(s);
-    show_serverinfo = s;
+	Alter_Autoupdate(s);
+	show_serverinfo = s;
 
     // testing connection
-    if (testing_connection)
+	if (testing_connection)
     {
         char buf[256];
-        sprintf(buf, "%d.%d.%d.%d",
+        snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
             show_serverinfo->address.ip[0],
             show_serverinfo->address.ip[1],
             show_serverinfo->address.ip[2],
@@ -540,7 +538,7 @@ qbool AddUnboundServer(char *addr)
     for (i=0; i < sources[0]->serversn; i++)
         if (!memcmp(&s->address, &sources[0]->servers[i]->address, sizeof(netadr_t)))
         {
-            free(s);
+            Q_free(s);
             s = sources[0]->servers[i];
             existed = true;
             break;
@@ -587,11 +585,11 @@ void AddServer_f(void)
 
 void Add_ColumnColored(int x, int y, int *pos, const char *t, int w, const char* color)
 {
-	char buf[100];
+	char buf[128];
     if ((*pos) - w - 1  <=  5)
         return;
 
-	snprintf(buf, sizeof(buf), "&c%s%s", color, t);
+	snprintf (buf, sizeof(buf), "&c%s%s", color, t);
 	
     (*pos) -= w;
 	UI_Print_Center(x + (*pos)*8, y, 8*(w+4), buf, false);
@@ -612,7 +610,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
 {
     int i;
     int d_gamedir, d_map;
-    char buf[1000], line[1000];
+    char buf[1024], line[1024];
 
     memset(line, '\x1E', w/8);
     line[w/8] = 0;
@@ -620,7 +618,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
     line[0] = '\x1D';
     if (total > 0)
     {
-        sprintf(buf, "%d/%d", count+1, total);
+        snprintf(buf, sizeof (buf), "%d/%d", count+1, total);
         memset(line+w/8-3-strlen(buf), ' ', strlen(buf)+1);
     }
     UI_Print(x, y+h-24, line, false);
@@ -636,7 +634,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
     if (searchtype)
     {
         int i;
-        sprintf(line, "search for: %-7s", searchstring);
+        snprintf(line, sizeof (line), "search for: %-7s", searchstring);
         line[w/8] = 0;
         for (i=0; i < strlen(line); i++)
             line[i] ^= 128;
@@ -755,11 +753,11 @@ void Add_Server_Draw(void)
         Draw_Character (x+59, y+50, 13);
 }
 
-void Servers_OnShow(void)
+void Servers_OnShow (void)
 {
 	static qbool updated = false;
 
-	if(sb_autoupdate.value && !updated) {
+	if (sb_autoupdate.value && !updated) {
 		GetServerPingsAndInfos();
 		updated = true;
 	}
@@ -769,23 +767,23 @@ void Servers_OnShow(void)
 
 void Servers_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
-    char line[1000];
-    int i, pos, listsize;
+	char line[1024];
+	int i, pos, listsize;
 
-    if (rebuild_servers_list)
-        Rebuild_Servers_List();
+	if (rebuild_servers_list)
+		Rebuild_Servers_List();
 
-    if (searchtype != search_server  ||  searchtime + SEARCH_TIME < cls.realtime)
-        searchtype = search_none;
+	if (searchtype != search_server  ||  searchtime + SEARCH_TIME < cls.realtime)
+		searchtype = search_none;
 
-    if (resort_servers)
-    {
-        Sort_Servers();
-        resort_servers = 0;
-    }
+	if (resort_servers)
+	{
+		Sort_Servers();
+		resort_servers = 0;
+	}
 
-    if (serversn_passed > 0)
-    {
+	if (serversn_passed > 0)
+	{
         Servers_pos = max(Servers_pos, 0);
         Servers_pos = min(Servers_pos, serversn_passed-1);
 
@@ -986,7 +984,7 @@ void UpdatingSources_Draw(void)
 void Serverinfo_Draw ()
 {
     extern int server_during_update;
-    char buf[500];
+    char buf[512];
 
     int x, y, w, h;
     w = 200 + 40;
@@ -1204,7 +1202,7 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
         Draw_Fill (x+21*8, y+listsize*8+8   +1, 40, 4, top2);
         Draw_Fill (x+21*8, y+listsize*8+8+4 +1, 40, 4, bottom2);
 
-        sprintf(buf, "      score:  %3d  -  %3d", frags1, frags2);
+        snprintf(buf, sizeof (buf), "      score:  %3d  -  %3d", frags1, frags2);
         UI_Print(x, y+listsize*8+8, buf, false);
     }
 }
@@ -1224,11 +1222,11 @@ void Serverinfo_Rules_Draw(int x, int y, int w, int h)
 
     for (i=0; i < listsize; i++)
     {
-        char buf[100];
+        char buf[128];
 
         if (serverinfo_rules_pos + i >= s->keysn)
             break;
-        sprintf(buf, "%-13.13s %-*s",
+        snprintf(buf, sizeof (buf), "%-13.13s %-*s",
             s->keys[serverinfo_rules_pos+i],
             w/8-1-13,
             s->values[serverinfo_rules_pos+i]);
@@ -1270,7 +1268,7 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
     UI_Print(x, y, " type    name", true);
     for (i=0; i < listsize; i++)
     {
-        char buf[100], buf2[16];
+        char buf[128], buf2[16];
 
         if (serverinfo_sources_disp + i >= sourcesn_updated)
             break;
@@ -1282,7 +1280,7 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
         else if (sources[serverinfo_sources_disp+i]->type == type_dummy)
             strcpy(buf2, "dummy ");
 
-        sprintf(buf, "%s   %s", buf2, sources[serverinfo_sources_disp+i]->name);
+        snprintf(buf, sizeof (buf), "%s   %s", buf2, sources[serverinfo_sources_disp+i]->name);
         buf[w/8] = 0;
 
         UI_Print(x, y+i*8+8, buf,
@@ -1341,7 +1339,7 @@ void Add_Source_Draw(void)
 void Sources_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
     int i, listsize;
-    char line[1000];
+    char line[1024];
     SYSTEMTIME curtime;
 
     if (sourcesn <= 0)
@@ -1392,19 +1390,19 @@ void Sources_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
             if (s->last_update.wYear)
             {
                 if (s->last_update.wYear != curtime.wYear)
-                    sprintf(time, "%4dy", s->last_update.wYear);
+                    snprintf(time, sizeof (time), "%4dy", s->last_update.wYear);
                 else if (s->last_update.wMonth != curtime.wMonth ||
                          s->last_update.wDay != curtime.wDay)
-                    sprintf(time, "%02d-%02d", s->last_update.wMonth, s->last_update.wDay);
+                    snprintf(time, sizeof (time),  "%02d-%02d", s->last_update.wMonth, s->last_update.wDay);
                 else
-                    sprintf(time, "%2d:%02d",
+                    snprintf(time, sizeof (time),  "%2d:%02d",
                         s->last_update.wHour,
                         s->last_update.wMinute);
             }
             else
                 strcpy(time, "never");
 
-        sprintf(line, "%s %c%-17.17s %4d  %s ", type,
+        snprintf(line, sizeof (line), "%s %c%-17.17s %4d  %s ", type,
             sourcenum==Sources_pos ? 141 : ' ',
             s->name, s->serversn, time);
 
@@ -1436,10 +1434,10 @@ void Sources_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
             }
         }
 
-        sprintf(line, "%d sources selected (%d servers)", sel_sources, sel_servers);
+        snprintf(line, sizeof (line), "%d sources selected (%d servers)", sel_sources, sel_servers);
         UI_Print_Center(x, y+h-16, w, line, false);
 
-        sprintf(line, "of %d total (%d servers)", sourcesn, total_servers);
+        snprintf(line, sizeof (line), "of %d total (%d servers)", sourcesn, total_servers);
         UI_Print_Center(x, y+h-8, w, line, false);
     }
 
@@ -1452,7 +1450,7 @@ void Sources_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 void Players_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
     int i, listsize;
-    char line[2000];
+    char line[2048];
     int hw = min(w/8 - 16, 60) -4; // hostname width (in chars)
 
     if (ping_phase)
@@ -1482,7 +1480,7 @@ void Players_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
     listsize = (int)(h/8) - (sb_status.value ? 3 : 0);
 
     //UI_Print_Center(x, y, w, "name            server              ", true);
-    sprintf(line, "name            %-*s png", hw, "server");
+    snprintf(line, sizeof (line), "name            %-*s png", hw, "server");
     UI_Print_Center(x, y, w, line, true);
 
     listsize--;     // subtract one line (column titles)
@@ -1502,7 +1500,7 @@ void Players_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
         if (num >= all_players_n)
             break;
 
-        sprintf(line, "%-15.15s%c%-*.*s %3s",
+        snprintf(line, sizeof (line), "%-15.15s%c%-*.*s %3s",
                 s->name, num==Players_pos ? 141 : ' ',
                 hw, hw, s->serv->display.name, s->serv->display.ping);
 
@@ -1830,7 +1828,7 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
             case '8':   // sorting mode
 				if (isAltDown()) // fixme
                 {
-                    char buf[30];
+                    char buf[32];
                     if ((sb_sortservers.string[0] == '-' && sb_sortservers.string[1] == key)
                         || sb_sortservers.string[0] == key)
                     {
@@ -1957,7 +1955,7 @@ void Serverinfo_Key(int key)
             if (!testing_connection)
             {
                 char buf[256];
-                sprintf(buf, "%d.%d.%d.%d",
+                snprintf(buf, sizeof (buf), "%d.%d.%d.%d",
                         show_serverinfo->address.ip[0],
                         show_serverinfo->address.ip[1],
                         show_serverinfo->address.ip[2],
@@ -2074,7 +2072,7 @@ void RemoveSourceProc(void)
     FILE *f;
 #else
 	vfsfile_t *f;
-	char ln[2000];
+	char ln[2048];
 #endif
     int length;
     char *filebuf; // *p, *q;
@@ -2118,7 +2116,7 @@ void RemoveSourceProc(void)
     while (!feof(f))
     {
         char c = 'A';
-        char line[2000];
+        char line[2048];
         char *p, *q;
 
         if (fscanf(f, "%[ -~	]s", line) != 1)
@@ -2137,7 +2135,7 @@ void RemoveSourceProc(void)
         }
 #else
 	while(VFS_GETS(f, ln, sizeof(ln))) {
-		char line[2000];
+		char line[2048];
 		char *p, *q;
 
 		if (sscanf(ln, "%[ -~    ]s", line) != 1)
@@ -2277,7 +2275,7 @@ int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)
             if ((sb_sortsources.string[0] == '-' && sb_sortsources.string[1] == key)
                 || sb_sortsources.string[0] == key)
             {
-                char buf[30];
+                char buf[32];
                 if (sb_sortsources.string[0] == '-')
                     strncpy(buf, sb_sortsources.string+1, 20);
                 else
@@ -2290,7 +2288,7 @@ int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)
             }
             else
             {
-                char buf[30];
+                char buf[32];
                 strncpy(buf+1, sb_sortsources.string, 20);
                 buf[0] = key;
                 buf[20] = 0;
@@ -2413,7 +2411,7 @@ int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
                 if ((sb_sortplayers.string[0] == '-' && sb_sortplayers.string[1] == key)
                     || sb_sortplayers.string[0] == key)
                 {
-                    char buf[30];
+                    char buf[32];
                     if (sb_sortplayers.string[0] == '-')
                         strncpy(buf, sb_sortplayers.string+1, 20);
                     else
@@ -2426,7 +2424,7 @@ int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
                 }
                 else
                 {
-                    char buf[30];
+                    char buf[32];
                     strncpy(buf+1, sb_sortplayers.string, 20);
                     buf[0] = key;
                     buf[20] = 0;

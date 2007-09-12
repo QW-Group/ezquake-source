@@ -1079,7 +1079,7 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     cvar_t *var;
     char buf[128];
 
-    sprintf(buf, "hud_%s_%s", hud_name, subvar);
+    snprintf (buf, sizeof (buf), "hud_%s_%s", hud_name, subvar);
     var = (cvar_t *)Q_malloc(sizeof(cvar_t));
     memset(var, 0, sizeof(cvar_t));
 

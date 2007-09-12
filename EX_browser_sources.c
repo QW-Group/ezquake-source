@@ -66,7 +66,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
     FILE *f;
 #else
 	vfsfile_t *f;
-	char line[2000];
+	char line[2048];
 #endif
     int length;
     qbool should_dump = false;
@@ -91,7 +91,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
         while (!feof(f))
         {
             char c = 'A';
-            char line[2000];
+            char line[2048];
             netadr_t addr;
             int ret;
 
@@ -128,14 +128,14 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 void Precache_Source(source_data *s)
 {
     int i;
-    char name[1000];
+    char name[1024];
     server_data *servers[MAX_SERVERS];
     int serversn = 0;
 
     if (s->type != type_master)
         return;
     
-    sprintf(name, "sb/cache/%d_%d_%d_%d_[%d].txt",
+    snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
             s->address.address.ip[0], s->address.address.ip[1],
             s->address.address.ip[2], s->address.address.ip[3],
             ntohs(s->address.address.port));
@@ -173,8 +173,8 @@ void Update_Source(source_data *s)
     if (s->type == type_file)
     {
         // read servers from file
-        char name[1000];
-        sprintf(name, "sb/%s", s->address.filename);
+        char name[1024];
+        snprintf(name, sizeof (name), "sb/%s", s->address.filename);
         should_dump = Update_Source_From_File(s, name, servers, &serversn);
         GetLocalTime(&(s->last_update));
     }
@@ -226,8 +226,8 @@ void Update_Source(source_data *s)
 
             for (i=6; i+5 < ret; i+=6)
             {
-                char buf[30];
-                sprintf(buf, "%u.%u.%u.%u:%u",
+                char buf[32];
+                snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
                     (int)answer[i+0], (int)answer[i+1],
                     (int)answer[i+2], (int)answer[i+3],
                     256 * (int)answer[i+4] + (int)answer[i+5]);
@@ -386,8 +386,8 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 
                     for (i=6; i+5 < ret; i+=6)
                     {
-                        char buf[30];
-                        sprintf(buf, "%u.%u.%u.%u:%u",
+                        char buf[32];
+                        snprintf (buf, sizeof (buf), "%u.%u.%u.%u:%u",
                             (int)answer[i+0], (int)answer[i+1],
                             (int)answer[i+2], (int)answer[i+3],
                             256 * (int)answer[i+4] + (int)answer[i+5]);
@@ -499,7 +499,7 @@ void Reload_Sources(void)
     FILE *f;
 #else
 	vfsfile_t *f;
-	char ln[2000];
+	char ln[2048];
 #endif
     int length;
     source_data *s;
@@ -535,7 +535,7 @@ void Reload_Sources(void)
     while (!feof(f))
     {
         char c = 'A';
-        char line[2000];
+        char line[2048];
         char *p, *q;
 
         if (fscanf(f, "%[ -~	]s", line) != 1)
@@ -549,7 +549,7 @@ void Reload_Sources(void)
 #else
     while (VFS_GETS(f, ln, sizeof(ln)))
     {
-		char line[2000];
+		char line[2048];
         char c = 'A';
         char *p, *q;
 
@@ -659,11 +659,11 @@ void DumpSource(source_data *s)
     char buf[1024];
 
     if (s->type == type_file)
-        sprintf(buf, "sb/%s", s->address.filename);
+        snprintf(buf, sizeof (buf), "sb/%s", s->address.filename);
     else if (s->type == type_master)
     {
         Sys_mkdir("sb/cache");
-        sprintf(buf, "sb/cache/%d_%d_%d_%d_[%d].txt",
+        snprintf(buf, sizeof (buf), "sb/cache/%d_%d_%d_%d_[%d].txt",
                 s->address.address.ip[0], s->address.address.ip[1],
                 s->address.address.ip[2], s->address.address.ip[3],
                 ntohs(s->address.address.port));

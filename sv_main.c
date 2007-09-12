@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.28 2007-09-03 15:33:27 dkure Exp $
+	$Id: sv_main.c,v 1.29 2007-09-12 22:29:53 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -343,8 +343,8 @@ void SVC_Log (void) {
 
 	Com_DPrintf ("sending log %i to %s\n", svs.logsequence-1, NET_AdrToString(net_from));
 
-	sprintf (data, "stdlog %i\n", svs.logsequence-1);
-	strcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)]);
+	snprintf (data, sizeof (data), "stdlog %i\n", svs.logsequence-1);
+	strlcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)], sizeof (data));
 
 	NET_SendPacket (NS_SERVER, strlen(data)+1, data, net_from);
 }
@@ -1247,7 +1247,7 @@ void SV_ExtractFromUserinfo (client_t *cl) {
 					p = val + 4;
 			}
 
-			sprintf(newname, "(%d)%-.40s", dupc++, p);
+			snprintf(newname, sizeof (newname), "(%d)%-.40s", dupc++, p);
 			Info_SetValueForKey (cl->userinfo, "name", newname, MAX_INFO_STRING);
 			val = Info_ValueForKey (cl->userinfo, "name");
 		} else

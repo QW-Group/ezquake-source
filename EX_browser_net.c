@@ -72,7 +72,7 @@ void SetPing(server_data *s, int ping)
     if (ping < 0)
         strcpy(s->display.ping, "n/a");
     else
-        sprintf(s->display.ping, "%3d", ping > 999 ? 999 : ping);
+        snprintf (s->display.ping, sizeof (s->display.ping), "%3d", ping > 999 ? 999 : ping);
         
     s->ping = ping;
 }
@@ -213,35 +213,35 @@ void Parse_Serverinfo(server_data *s, char *info)
     // fill-in display
     tmp = ValueForKey(s, "hostname");
     if (tmp != NULL)
-        sprintf(s->display.name, "%-.*s", COL_NAME, tmp);
+        snprintf (s->display.name, sizeof (s->display.name),"%-.*s", COL_NAME, tmp);
     else
         return;
 
     tmp = ValueForKey(s, "fraglimit");
     if (tmp != NULL)
-        sprintf(s->display.fraglimit, "%*.*s", COL_FRAGLIMIT, COL_FRAGLIMIT, strlen(tmp) > COL_FRAGLIMIT ? "999" : tmp);
+        snprintf(s->display.fraglimit, sizeof (s->display.fraglimit), "%*.*s", COL_FRAGLIMIT, COL_FRAGLIMIT, strlen(tmp) > COL_FRAGLIMIT ? "999" : tmp);
 
     tmp = ValueForKey(s, "timelimit");
     if (tmp != NULL)
-        sprintf(s->display.timelimit, "%*.*s", COL_TIMELIMIT, COL_TIMELIMIT, strlen(tmp) > COL_TIMELIMIT ? "99" : tmp);
+        snprintf(s->display.timelimit, sizeof (s->display.timelimit), "%*.*s", COL_TIMELIMIT, COL_TIMELIMIT, strlen(tmp) > COL_TIMELIMIT ? "99" : tmp);
 
     tmp = ValueForKey(s, "*gamedir");
     s->qizmo = false;
 	if (tmp != NULL)
-        sprintf(s->display.gamedir, "%.*s", COL_GAMEDIR, tmp==NULL ? "" : tmp);
+        snprintf(s->display.gamedir, sizeof (s->display.gamedir) ,"%.*s", COL_GAMEDIR, tmp==NULL ? "" : tmp);
     else
     {
         tmp = ValueForKey(s, "*progs");
         if (tmp != NULL  &&  !strcmp(tmp, "666"))
 		{
-            sprintf(s->display.gamedir, "qizmo");
+            snprintf(s->display.gamedir, sizeof (s->display.gamedir), "qizmo");
 			s->qizmo = true;
 		}
     }
 
     tmp = ValueForKey(s, "map");
     if (tmp != NULL)
-        sprintf(s->display.map, "%-.*s", COL_MAP, tmp==NULL ? "" : tmp);
+        snprintf(s->display.map, sizeof (s->display.map), "%-.*s", COL_MAP, tmp==NULL ? "" : tmp);
 
     tmp = ValueForKey(s, "maxclients");
     if (tmp != NULL  &&  strlen(tmp) > 2)
@@ -251,7 +251,7 @@ void Parse_Serverinfo(server_data *s, char *info)
 	else if (i > 0 && i < atoi(tmp)) { s->occupancy = SERVER_NONEMPTY; }
 	else { s->occupancy = SERVER_FULL; }
     if (tmp != NULL)
-        sprintf(s->display.players, "%2d/%-2s", i, tmp==NULL ? "" : tmp);
+        snprintf(s->display.players, sizeof (s->display.players), "%2d/%-2s", i, tmp==NULL ? "" : tmp);
 }
 
 int server_during_update = 0;
@@ -456,8 +456,8 @@ extern int PingHost(char *host_to_ping, short port, int count, int time_out);
 void GetServerPing(server_data *serv)
 {
     int p;
-    char buf[20];
-    sprintf(buf, "%d.%d.%d.%d",
+    char buf[32];
+    snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
         serv->address.ip[0],
         serv->address.ip[1],
         serv->address.ip[2],

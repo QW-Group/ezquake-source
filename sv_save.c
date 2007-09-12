@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_save.c,v 1.10 2007-03-06 16:49:52 disconn3ct Exp $
+	$Id: sv_save.c,v 1.11 2007-09-12 22:29:53 disconn3ct Exp $
 */
 
 #ifndef SERVERONLY
@@ -38,7 +38,7 @@ void SV_SavegameComment (char *buffer) {
 	for (i = 0; i < SAVEGAME_COMMENT_LENGTH; i++)
 		buffer[i] = ' ';
 	memcpy (buffer, cl.levelname, min(strlen(cl.levelname), 21));
-	sprintf (kills, "kills:%3i/%-3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+	snprintf (kills, sizeof (kills), "kills:%3i/%-3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	memcpy (buffer + 22, kills, strlen(kills));
 
 	// convert space to _ to make stdio happy
@@ -138,7 +138,7 @@ void SV_LoadGame_f (void) {
 		return;
 	}
 
-	sprintf (name, "%s/save/%s", com_gamedir, Cmd_Argv(1));
+	snprintf (name, sizeof (name), "%s/save/%s", com_gamedir, Cmd_Argv(1));
 	COM_DefaultExtension (name, ".sav");
 
 	Com_Printf ("Loading game from %s...\n", name);

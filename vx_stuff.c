@@ -287,33 +287,33 @@ void SCR_DrawAMFstats (void)
 	numlines = 6;
 	numlines += 2; //margins
 
-	sprintf(st, "Particle Count: %3d ", ParticleCount);
+	snprintf(st, sizeof (st), "Particle Count: %3d ", ParticleCount);
 	x = vid.width - strlen(st)*8 -8;
 	y = vid.height*0.1;
 	Draw_AlphaWindow(x-8, y-8, x+strlen(st)*8, y+numlines*8-8, 1, 0.33);
 	Draw_String(x, y, st);
 
-	sprintf(st, "Highest: %3d ", ParticleCountHigh);
+	snprintf(st, sizeof (st), "Highest: %3d ", ParticleCountHigh);
 	x = vid.width - strlen(st) * 8 - 8;
 	y = y + 8;
 	Draw_String(x, y, st);
 
-	sprintf(st, "Corona Count: %3d ", CoronaCount);
+	snprintf(st, sizeof (st), "Corona Count: %3d ", CoronaCount);
 	x = vid.width - strlen(st) * 8 - 8;
 	y = y + 8;
 	Draw_String(x, y, st);
 
-	sprintf(st, "Highest: %3d ", CoronaCountHigh);
+	snprintf(st, sizeof (st), "Highest: %3d ", CoronaCountHigh);
 	x = vid.width - strlen(st) * 8 - 8;
 	y = y + 8;
 	Draw_String(x, y, st);
 
-	sprintf(st, "Motion Trails: %3d ", MotionBlurCount);
+	snprintf(st, sizeof (st), "Motion Trails: %3d ", MotionBlurCount);
 	x = vid.width - strlen(st) * 8 - 8;
 	y = y + 8;
 	Draw_String(x, y, st);
 
-	sprintf(st, "Highest: %3d ", MotionBlurCountHigh);
+	snprintf(st, sizeof (st), "Highest: %3d ", MotionBlurCountHigh);
 	x = vid.width - strlen(st) * 8 - 8;
 	y = y + 8;
 	Draw_String(x, y, st);
@@ -322,13 +322,13 @@ void SCR_DrawAMFstats (void)
 
 void Amf_SetMode_f(void)
 {
-	char mode[10];
+	char mode[32];
 	if (Cmd_Argc() != 2)
 	{
 		Com_Printf("Usage: %s [modename]\n", Cmd_Argv(0));
 		return;
 	}
-	sprintf(mode, Cmd_Argv(1));
+	snprintf(mode, sizeof (mode), Cmd_Argv(1));
 	if (!strcmp(mode, "newtrails"))
 	{
 			Cvar_SetValue (&amf_buildingsparks, 3);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.74 2007-09-04 09:43:40 johnnycz Exp $
+    $Id: keys.c,v 1.75 2007-09-12 22:29:53 disconn3ct Exp $
 
 */
 
@@ -97,7 +97,7 @@ typedef struct
 	char *name;
 	char *type;
 } jogi_avail_complete_t;
-jogi_avail_complete_t jogi_avail_complete[1000];
+jogi_avail_complete_t jogi_avail_complete[1024];
 
 
 typedef struct {
@@ -1366,7 +1366,7 @@ char *Key_KeynumToString (int keynum, char *buffer) {
 	if ( keynum > 32 && keynum < 127 ) {
 		// printable ascii
 		if (keynum == 34) // treat " special
-			sprintf(tinystr, "#%u", keynum);
+			snprintf(tinystr, sizeof (tinystr), "#%u", keynum);
 		else {
 			tinystr[ 0 ] = keynum;
 			tinystr[ 1 ] = '\0';
@@ -1935,7 +1935,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		kb = keybindings[key];
 		if (kb)
 			if (kb[0] == '+' && keyactive[key]) {
-				sprintf (cmd, "-%s %i\n", kb+1, key);
+				snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
 				Cbuf_AddText (cmd);
 				keyactive[key] = false;
 			}
@@ -1943,7 +1943,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		if (keyshift[key] != key) {
 			kb = keybindings[keyshift[key]];
 			if (kb && kb[0] == '+' && keyactive[keyshift[key]]) {
-				sprintf (cmd, "-%s %i\n", kb+1, key);
+				snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
 				Cbuf_AddText (cmd);
 				keyactive[keyshift[key]] = false;
 			}
@@ -1968,7 +1968,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		kb = keybindings[key];
 		if (kb) {
 			if (kb[0] == '+'){	// button commands add keynum as a parm
-				sprintf (cmd, "%s %i\n", kb, key);
+				snprintf (cmd, sizeof (cmd), "%s %i\n", kb, key);
 				Cbuf_AddText (cmd);
 				keyactive[key] = true;
 			} else {

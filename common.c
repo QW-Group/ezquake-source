@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.94 2007-09-03 17:05:44 johnnycz Exp $
+    $Id: common.c,v 1.95 2007-09-12 22:29:52 disconn3ct Exp $
 
 */
 
@@ -729,7 +729,7 @@ void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize) {
 	if (!value || !strlen(value))
 		return;
 
-	sprintf (new, "\\%s\\%s", key, value);
+	snprintf (new, sizeof (new), "\\%s\\%s", key, value);
 
 	if ((int) (strlen(new) + strlen(s)) >= maxsize) {
 		Com_Printf ("Info string length exceeded\n");

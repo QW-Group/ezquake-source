@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.137 2007-09-11 22:00:18 borisu Exp $
+$Id: cl_screen.c,v 1.138 2007-09-12 22:29:52 disconn3ct Exp $
 */
 
 /// declarations may be found in screen.h
@@ -4726,7 +4726,7 @@ void SCR_DrawMVStatusStrings(void)
 		{
 			// mvinset and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%.5s   %s %s:%-3s",name,
+			snprintf(strng, sizeof (strng), "%.5s   %s %s:%-3s",name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -4735,7 +4735,7 @@ void SCR_DrawMVStatusStrings(void)
 		{
 			// Resolution width <= 512 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%.2s  %s %s:%-3s",name,
+			snprintf(strng, sizeof (strng), "%.2s  %s %s:%-3s",name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -4744,7 +4744,7 @@ void SCR_DrawMVStatusStrings(void)
 		{
 			// > 512 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%s   %s %s:%-3s", name,
+			snprintf(strng, sizeof (strng),"%s   %s %s:%-3s", name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -4754,7 +4754,7 @@ void SCR_DrawMVStatusStrings(void)
 		{
 			// mvinset
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%s %.5s  %c%03d %03d %s:%-3s", pups,
+			snprintf(strng, sizeof (strng),"%s %.5s  %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
@@ -4766,7 +4766,7 @@ void SCR_DrawMVStatusStrings(void)
 		{
 			// <= 512 and alive
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%s %.2s %c%03d %03d %s:%-3s", pups,
+			snprintf(strng, sizeof (strng),"%s %.2s %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
@@ -4777,7 +4777,7 @@ void SCR_DrawMVStatusStrings(void)
 		else
 		{
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
-			sprintf(strng, "%s %s  %c%03d %03d %s:%-3s", pups,
+			snprintf(strng, sizeof (strng),"%s %s  %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],

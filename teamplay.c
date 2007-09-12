@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.85 2007-09-12 17:27:25 johnnycz Exp $
+    $Id: teamplay.c,v 1.86 2007-09-12 22:29:53 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -601,7 +601,7 @@ char *Macro_LastDrop (void)
 
 char *Macro_GameDir(void)
 {
-	sprintf(macro_buf, "%s", cls.gamedirfile);
+	snprintf(macro_buf, sizeof (macro_buf), "%s", cls.gamedirfile);
 	return macro_buf;
 }
 
@@ -969,14 +969,22 @@ static void CountNearbyPlayers(qbool dead)
 	}
 }
 
+static int check_mtfl_ruleset (void)
+{
+	if (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)) {
+		snprintf(macro_buf, sizeof (macro_buf),"\xffz%d\xff", BANNED_BY_MTFL);
+		return 1;
+	}
+	return 0;
+}
 
 char *Macro_CountNearbyEnemyPlayers (void)
 {
-	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
-		return "banned by MTFL ruleset"; // there should be more smart way to do it
+	if (check_mtfl_ruleset())
+		return macro_buf; // there should be more smart way to do it
 
 	CountNearbyPlayers(false);
-	sprintf(macro_buf, "\xffz%d\xff", vars.numenemies);
+	snprintf(macro_buf, sizeof (macro_buf),"\xffz%d\xff", vars.numenemies);
 	suppress = true;
 	return macro_buf;
 }
@@ -984,14 +992,14 @@ char *Macro_CountNearbyEnemyPlayers (void)
 
 char *Macro_Count_Last_NearbyEnemyPlayers (void)
 {
-	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
-		return "banned by MTFL ruleset"; // there should be more smart way to do it
+	if (check_mtfl_ruleset())
+		return macro_buf; // there should be more smart way to do it
 
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
-		sprintf(macro_buf, "\xffz%d\xff", vars.last_numenemies);
+		snprintf (macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.last_numenemies);
 	} else {
 		CountNearbyPlayers(false);
-		sprintf(macro_buf, "\xffz%d\xff", vars.numenemies);
+		snprintf (macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numenemies);
 	}
 	suppress = true;
 	return macro_buf;
@@ -1000,11 +1008,11 @@ char *Macro_Count_Last_NearbyEnemyPlayers (void)
 
 char *Macro_CountNearbyFriendlyPlayers (void)
 {
-	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
-		return "banned by MTFL ruleset"; // there should be more smart way to do it
+	if (check_mtfl_ruleset())
+		return BANNED_BY_MTFL; // there should be more smart way to do it
 
 	CountNearbyPlayers(false);
-	sprintf(macro_buf, "\xffz%d\xff", vars.numfriendlies);
+	snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numfriendlies);
 	suppress = true;
 	return macro_buf;
 }
@@ -1012,14 +1020,14 @@ char *Macro_CountNearbyFriendlyPlayers (void)
 
 char *Macro_Count_Last_NearbyFriendlyPlayers (void)
 {
-	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
-		return "banned by MTFL ruleset"; // there should be more smart way to do it
+	if (check_mtfl_ruleset())
+		return macro_buf; // there should be more smart way to do it
 
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
-		sprintf(macro_buf, "\xffz%d\xff", vars.last_numfriendlies);
+		snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.last_numfriendlies);
 	} else {
 		CountNearbyPlayers(false);
-		sprintf(macro_buf, "\xffz%d\xff", vars.numfriendlies);
+		snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numfriendlies);
 	}
 	suppress = true;
 	return macro_buf;
@@ -1875,7 +1883,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	for (node = locdata; node; node = node->next) {
 		char row[2*MAX_LOC_NAME];
 
-		sprintf(row, "%4d %4d %4d %s\n", Q_rint(8*node->coord[0]), Q_rint(8*node->coord[1]), Q_rint(8*node->coord[2]), node->name);
+		snprintf(row, sizeof (row),"%4d %4d %4d %s\n", Q_rint(8*node->coord[0]), Q_rint(8*node->coord[1]), Q_rint(8*node->coord[2]), node->name);
 		strcat(buf, row);
 	}
 

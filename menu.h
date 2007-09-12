@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.20 2007-08-18 14:09:26 johnnycz Exp $
+	$Id: menu.h,v 1.21 2007-09-12 22:29:53 disconn3ct Exp $
 
 */
 
@@ -40,6 +40,7 @@ void M_EnterProxyMenu (void);
 void M_DrawTextBox (int x, int y, int width, int lines);
 void M_Menu_Quit_f (void);
 void M_Demos_Playlist_stop_f (void);
+void M_Menu_ServerList_f (void);
 void M_DrawTransPic (int x, int y, mpic_t *pic);
 void M_DrawPic (int x, int y, mpic_t *pic);
 void M_PrintWhite (int cx, int cy, char *str);

@@ -154,7 +154,7 @@ void Cam_Unlock(void)
 
 void Cam_Lock(int playernum) 
 {
-	char st[40];
+	char st[32];
 
 	if (Cmd_FindAlias("f_trackspectate"))
 	{
@@ -164,7 +164,7 @@ void Cam_Lock(int playernum)
 	if (cl_multiview.value && cls.mvdplayback)
 		return; 
 
-	sprintf(st, "ptrack %i", playernum);
+	snprintf(st, sizeof (st), "ptrack %i", playernum);
 
 	if (cls.mvdplayback) {
 		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));

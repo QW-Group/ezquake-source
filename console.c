@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.59 2007-07-28 23:57:38 cokeman1982 Exp $
+	$Id: console.c,v 1.60 2007-09-12 22:29:53 disconn3ct Exp $
 */
 // console.c
 
@@ -207,7 +207,7 @@ void Calendar_f(void)
         if (day > 0)
         {
             char buf[8];
-            sprintf(buf, "%3d", day);
+            snprintf(buf, sizeof (buf), "%3d", day);
             if (day == tm.wDay)
                 ; // MakeStringYellow(buf);
             else

@@ -1173,7 +1173,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
         char newdir[MAX_PATH+1];
         char olddir[MAX_PATH+1];
 
-        sprintf(newdir, "%c:\\", tolower(key));
+        snprintf(newdir, sizeof (newdir), "%c:\\", tolower(key));
 
         // validate
         if (Sys_getcwd(olddir, MAX_PATH+1) == 0)

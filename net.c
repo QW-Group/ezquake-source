@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.16 2007-05-03 12:03:54 johnnycz Exp $
+    $Id: net.c,v 1.17 2007-09-12 22:29:53 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -94,7 +94,7 @@ char *NET_AdrToString (netadr_t a)
 	if (a.type == NA_LOOPBACK)
 		return "loopback";
 
-	sprintf (s, "%i.%i.%i.%i:%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs(a.port));
+	snprintf (s, sizeof (s), "%i.%i.%i.%i:%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs(a.port));
 	return s;
 }
 
@@ -102,7 +102,7 @@ char *NET_BaseAdrToString (netadr_t a)
 {
 	static char s[64];
 	
-	sprintf (s, "%i.%i.%i.%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3]);
+	snprintf (s, sizeof (s), "%i.%i.%i.%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3]);
 	return s;
 }
 

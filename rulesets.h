@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void Rulesets_Init(void);
 char *Rulesets_Ruleset(void);
 
+#define BANNED_BY_MTFL "banned by MTFL ruleset"
 
 qbool Rulesets_AllowTimerefresh(void);
 float Rulesets_MaxFPS(void);

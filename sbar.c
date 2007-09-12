@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.40 2007-09-04 09:58:56 himan Exp $
+	$Id: sbar.c,v 1.41 2007-09-12 22:29:53 disconn3ct Exp $
 */
 // sbar.c -- status bar code
 
@@ -1297,18 +1297,18 @@ static void Sbar_DeathmatchOverlay (int start) {
 			total = (cl.intermission ? cl.completed_time : cls.demoplayback ? cls.demotime : cls.realtime) - s->entertime;
 			total = (int) total / 60;
 			total = bound(0, total, 999); // limit to 3 symbols int
-			sprintf (myminutes, "%3i", total);
+			snprintf (myminutes, sizeof (myminutes), "%3i", total);
 
 			if (scr_scoreboard_drawfps) {
 				if (s->last_fps > 0 && !s->spectator) {
-					sprintf (myminutes, "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
+					snprintf (myminutes, sizeof (myminutes), "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
 					if (s->last_fps < 70) {
 						for (d=0; d < strlen(myminutes); d++)
 							myminutes[d] ^= 128;
 					}
 				}
 				else {
-					sprintf (myminutes, "   ");
+					snprintf (myminutes, sizeof (myminutes), "   ");
 				}
 			}
 
