@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.93 2007-09-12 12:54:31 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.94 2007-09-12 12:59:29 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -954,7 +954,7 @@ void Draw_Character (int x, int y, int num)
 	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white, false);
 }
 
-__inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
+static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
 {
 	byte rgba[4];
 	qbool color_is_white = true;
