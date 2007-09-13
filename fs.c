@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.21 2007-09-13 13:20:43 dkure Exp $
+$Id: fs.c,v 1.22 2007-09-13 14:11:52 dkure Exp $
 */
 
 
@@ -42,8 +42,8 @@ static hashtable_t filesystemhash;
 static qbool com_fschanged = true;
 
 // FTE-FIXME: Give this a better name
-// FTE-FIXME: This is not added anywhere???
-cvar_t com_fs_cache = {"com_fs_cahce", "0"};
+// FTE-FIXME: D-Kure: This causes segfault for me
+cvar_t com_fs_cache = {"com_fs_cache", "0"};
 
 // FTE-FIXME: Move this somewhere better
 void COM_Path_f (void);
@@ -91,6 +91,7 @@ void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *pa
 int COM_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);
 qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
+void FS_FlushFSHash(void);
 
 typedef struct
 {
@@ -524,6 +525,7 @@ byte *FS_LoadFile (char *path, int usehunk)
 	if (!h)
 		return NULL;
 #else
+	// FTE-FIXME: This only checks the pak files, not the base dir's
     FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
 	if (!loc.search)
 		        return NULL;    //wasn't found
@@ -919,6 +921,8 @@ void FS_SetGamedir (char *dir)
 		com_searchpaths = next;
 	}
 #else
+	FS_FlushFSHash();
+
 	// free up any current game dir info
 	while (com_searchpaths != com_base_searchpaths)
 	{
@@ -936,16 +940,16 @@ void FS_SetGamedir (char *dir)
 
 	sprintf (com_gamedir, "%s/%s", com_basedir, dir);
 
+#ifndef WITH_FTE_VFS
 	if (strcmp(dir, "id1") && strcmp(dir, "qw") && strcmp(dir, "ezquake"))
 	{
-#ifndef WITH_FTE_VFS
 		FS_AddGameDirectory(com_basedir, dir);
-#else
-		FS_AddGameDirectory(va("%s%s", com_basedir, dir), FS_LOAD_FILE_ALL);
-		if (*com_homedir)
-			FS_AddGameDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
-#endif
 	}
+#else
+	FS_AddGameDirectory(va("%s/%s", com_basedir, dir), FS_LOAD_FILE_ALL);
+	if (*com_homedir)
+		FS_AddGameDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
+#endif
 
 #ifdef GLQUAKE
 	// Reload gamedir specific conback as its not flushed
@@ -2689,6 +2693,7 @@ void FS_InitModuleFS (void)
 	Com_Printf("Initialising standard quake filesystem\n");
 #else
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
+	Cvar_Register(&com_fs_cache);
 	Com_Printf("Initialising quake VFS filesystem\n");
 #endif
 }
@@ -2715,7 +2720,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.21 2007-09-13 13:20:43 dkure Exp $
+ * $Id: fs.c,v 1.22 2007-09-13 14:11:52 dkure Exp $
  *             
  */
 
