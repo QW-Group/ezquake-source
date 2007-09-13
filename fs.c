@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.24 2007-09-13 15:30:48 dkure Exp $
+$Id: fs.c,v 1.25 2007-09-13 15:42:27 dkure Exp $
 */
 
 
@@ -1056,6 +1056,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
     if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0)) 
 	{
 		*com_homedir = 0;
+	}
 
 	// <Cokeman> yea, but it shouldn't be in My Documents
 	// <Cokeman> it should be in the application data dir
@@ -2722,7 +2723,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.24 2007-09-13 15:30:48 dkure Exp $
+ * $Id: fs.c,v 1.25 2007-09-13 15:42:27 dkure Exp $
  *             
  */
 
