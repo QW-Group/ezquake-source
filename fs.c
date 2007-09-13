@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.23 2007-09-13 14:49:30 disconn3ct Exp $
+$Id: fs.c,v 1.24 2007-09-13 15:30:48 dkure Exp $
 */
 
 
@@ -1053,15 +1053,17 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 #ifdef _WIN32
     // gets "C:\documents and settings\johnny\my documents" path
-    //if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0))
+    if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0)) 
+	{
+		*com_homedir = 0;
 
 	// <Cokeman> yea, but it shouldn't be in My Documents
 	// <Cokeman> it should be in the application data dir
 	// c:\documents and settings\<user>\application data
-    if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_APPDATA, 0))
-    {
-        *com_homedir = 0;
-    }
+    //if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_APPDATA, 0))
+    //{
+    //    *com_homedir = 0;
+    //}
 #else
 	ev = getenv("HOME");
 	if (ev)
@@ -2720,7 +2722,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.23 2007-09-13 14:49:30 disconn3ct Exp $
+ * $Id: fs.c,v 1.24 2007-09-13 15:30:48 dkure Exp $
  *             
  */
 
