@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.48 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.49 2007-09-13 14:49:29 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2083,8 +2083,8 @@ void RemoveSourceProc(void)
     // remove from SB
     if (Sources_pos < sourcesn - 1)
     {
-        free(sources+Sources_pos);
-        memmove(sources+Sources_pos,
+		free(sources+Sources_pos); // FIXME
+		memmove(sources+Sources_pos,
                 sources+Sources_pos + 1,
                 (sourcesn-Sources_pos-1)*sizeof(source_data *));
     }
@@ -2206,7 +2206,7 @@ void RemoveSourceProc(void)
 		VFS_CLOSE(f);
 	}
 #endif
-    free(filebuf);
+	Q_free(filebuf);
 }
 
 int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)

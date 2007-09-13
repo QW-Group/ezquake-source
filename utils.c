@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.44 2007-09-12 16:44:08 johnnycz Exp $
+	$Id: utils.c,v 1.45 2007-09-13 14:49:30 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -739,7 +739,7 @@ void FunToSort(char *text)
 	*d = 0;
 
 	strcpy(text, tmp);
-	free(tmp);
+	Q_free(tmp);
 }
 
 #ifdef UNUSED_CODE

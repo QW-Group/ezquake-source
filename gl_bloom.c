@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 	Ported by Cokeman, June 2007
 	last edit:
-	$Id: gl_bloom.c,v 1.4 2007-07-08 15:25:24 cokeman1982 Exp $
+	$Id: gl_bloom.c,v 1.5 2007-09-13 14:49:30 disconn3ct Exp $
 
 */
 
@@ -134,113 +134,99 @@ static float sampleText_tch;
 // =================
 void R_Bloom_InitBackUpTexture( int width, int height )
 {
-	unsigned char   *data;
-
-	data = malloc( width * height * 4 );
-	memset( data, 0, width * height * 4 );
+	unsigned char *data;
+	
+	data = (unsigned char *) Q_calloc (width * height, sizeof (int));
 
 	r_screenbackuptexture_size = width;
 
-	r_bloombackuptexture = GL_LoadTexture ( "***r_bloombackuptexture***", width, height, data, 0, 4);
+	r_bloombackuptexture = GL_LoadTexture ("***r_bloombackuptexture***", width, height, data, 0, 4);
 
-	free ( data );
+	Q_free (data);
 }
 
 // =================
 // R_Bloom_InitEffectTexture
 // =================
-void R_Bloom_InitEffectTexture( void )
+void R_Bloom_InitEffectTexture (void)
 {
-	unsigned char   *data;
-	float   bloomsizecheck;
+	unsigned char *data;
+	float bloomsizecheck;
 
-	if( r_bloom_sample_size.value < 32 )
-	{
+	if (r_bloom_sample_size.value < 32)
 		Cvar_SetValue (&r_bloom_sample_size, 32);
-	}
 
 	// Make sure bloom size is a power of 2.
 	BLOOM_SIZE = r_bloom_sample_size.value;
-	bloomsizecheck = (float)BLOOM_SIZE;
-	while(bloomsizecheck > 1.0f)
-	{
-		bloomsizecheck /= 2.0f;
-	}
+	bloomsizecheck = (float) BLOOM_SIZE;
 
-	if( bloomsizecheck != 1.0f )
+	while (bloomsizecheck > 1.0f)
+		bloomsizecheck /= 2.0f;
+
+	if (bloomsizecheck != 1.0f)
 	{
 		BLOOM_SIZE = 32;
-		while( BLOOM_SIZE < r_bloom_sample_size.value )
-		{
+
+		while (BLOOM_SIZE < r_bloom_sample_size.value)
 			BLOOM_SIZE *= 2;
-		}
 	}
 
 	// Make sure bloom size doesn't have stupid values.
-	if( BLOOM_SIZE > screen_texture_width ||
-		BLOOM_SIZE > screen_texture_height )
-	{
+	if (BLOOM_SIZE > screen_texture_width || BLOOM_SIZE > screen_texture_height)
 		BLOOM_SIZE = min( screen_texture_width, screen_texture_height );
-	}
 
-	if( BLOOM_SIZE != r_bloom_sample_size.value )
-	{
+	if (BLOOM_SIZE != r_bloom_sample_size.value)
 		Cvar_SetValue (&r_bloom_sample_size, BLOOM_SIZE);
-	}
 
-	data = malloc( BLOOM_SIZE * BLOOM_SIZE * 4 );
-	memset( data, 0, BLOOM_SIZE * BLOOM_SIZE * 4 );
+	data = (unsigned char *) Q_calloc (BLOOM_SIZE * BLOOM_SIZE, sizeof (int));
 
-	r_bloomeffecttexture = GL_LoadTexture ( "***r_bloomeffecttexture***", BLOOM_SIZE, BLOOM_SIZE, data, 0, 4);
+	r_bloomeffecttexture = GL_LoadTexture ("***r_bloomeffecttexture***", BLOOM_SIZE, BLOOM_SIZE, data, 0, 4);
 
-	free ( data );
+	Q_free (data);
 }
 
 // =================
 // R_Bloom_InitTextures
 // =================
+extern int texture_extension_number;
 void R_Bloom_InitTextures( void )
 {
-	unsigned char   *data;
-	int     size;
-	int		maxtexsize;
+	unsigned char *data;
+	int maxtexsize;
+	size_t size;
 
 	// Find closer power of 2 to screen size.
-	for (screen_texture_width = 1;  screen_texture_width  < glwidth;  screen_texture_width *= 2) ;
-	for (screen_texture_height = 1; screen_texture_height < glheight; screen_texture_height *= 2) ;
+	for (screen_texture_width = 1;  screen_texture_width  < glwidth;  screen_texture_width *= 2);
+	for (screen_texture_height = 1; screen_texture_height < glheight; screen_texture_height *= 2);
 
     // Disable blooms if we can't handle a texture of that size.
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxtexsize);
-	if( screen_texture_width > maxtexsize ||
-		screen_texture_height > maxtexsize ) 
+	glGetIntegerv (GL_MAX_TEXTURE_SIZE, &maxtexsize);
+	if (screen_texture_width > maxtexsize || screen_texture_height > maxtexsize)
 	{
 		screen_texture_width = screen_texture_height = 0;
 		Cvar_SetValue (&r_bloom, 0);
-		Com_Printf( "WARNING: 'R_InitBloomScreenTexture' too high resolution for Light Bloom. Effect disabled\n" );
+		Com_Printf ("WARNING: 'R_InitBloomScreenTexture' too high resolution for Light Bloom. Effect disabled\n");
 		return;
 	}
 
 	// Init the screen texture.
-	size = screen_texture_width * screen_texture_height * 4;
-	data = malloc( size );
-	memset( data, 255, size );
+	size = screen_texture_width * screen_texture_height * sizeof (int);
+	data = Q_malloc (size);
+	memset (data, 255, size);
 	//r_bloomscreentexture = GL_LoadTexture ( "***r_screenbackuptexture***", screen_texture_width, screen_texture_height, data, 0, 4); // false, false, 4);
 	
 	if (!r_bloomscreentexture)
-	{
-		extern int texture_extension_number;
 		r_bloomscreentexture = texture_extension_number++;
-	}
 
-	GL_Bind(r_bloomscreentexture);
+	GL_Bind (r_bloomscreentexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	free ( data );
+	Q_free (data);
 
 	// Validate bloom size and init the bloom effect texture.
-	R_Bloom_InitEffectTexture ();
+	R_Bloom_InitEffectTexture();
 
 	// If screensize is more than 2x the bloom effect texture, set up for stepped downsampling.
 	r_bloomdownsamplingtexture = 0;
@@ -248,21 +234,16 @@ void R_Bloom_InitTextures( void )
 	if( glwidth > (BLOOM_SIZE * 2) && !r_bloom_fast_sample.value )
 	{
 		r_screendownsamplingtexture_size = (int)(BLOOM_SIZE * 2);
-		data = malloc( r_screendownsamplingtexture_size * r_screendownsamplingtexture_size * 4 );
-		memset( data, 0, r_screendownsamplingtexture_size * r_screendownsamplingtexture_size * 4 );
+		data = Q_calloc (r_screendownsamplingtexture_size * r_screendownsamplingtexture_size, sizeof (int));
 		r_bloomdownsamplingtexture = GL_LoadTexture ( "***r_bloomdownsamplingtexture***", r_screendownsamplingtexture_size, r_screendownsamplingtexture_size, data, 0, 4);
-		free ( data );
+		Q_free (data);
 	}
 
 	// Init the screen backup texture.
-	if( r_screendownsamplingtexture_size )
-	{
-		R_Bloom_InitBackUpTexture( r_screendownsamplingtexture_size, r_screendownsamplingtexture_size );
-	}
+	if (r_screendownsamplingtexture_size)
+		R_Bloom_InitBackUpTexture (r_screendownsamplingtexture_size, r_screendownsamplingtexture_size);
 	else
-	{
-		R_Bloom_InitBackUpTexture( BLOOM_SIZE, BLOOM_SIZE );
-	}
+		R_Bloom_InitBackUpTexture (BLOOM_SIZE, BLOOM_SIZE);
 }
 
 // =================

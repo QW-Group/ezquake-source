@@ -1,4 +1,4 @@
-// $Id: xsd_document.c,v 1.7 2007-09-03 15:31:11 dkure Exp $
+// $Id: xsd_document.c,v 1.8 2007-09-13 14:49:30 disconn3ct Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -38,104 +38,104 @@ static void XSD_Free_Tags(document_tag_t *t);
 static void XSD_Free_Tag_P(document_tag_p_t *p)
 {
     XSD_Free_Tags(p->tags);
-    free(p);
+    Q_free(p);
 }
 
 // free document_tag_section_t
 static void XSD_Free_Tag_Section(document_tag_section_t *s)
 {
     if (s->id)
-        free(s->id);
+        Q_free(s->id);
     if (s->title)
-        free(s->title);
+        Q_free(s->title);
     XSD_Free_Tags(s->tags);
-    free(s);
+    Q_free(s);
 }
 
 // free document_tag_em_t
 static void XSD_Free_Tag_Em(document_tag_em_t *i)
 {
     XSD_Free_Tags(i->tags);
-    free(i);
+    Q_free(i);
 }
 
 // free document_tag_color_t
 static void XSD_Free_Tag_Color(document_tag_color_t *c)
 {
     XSD_Free_Tags(c->tags);
-    free(c);
+    Q_free(c);
 }
 
 // free document_tag_a_t
 static void XSD_Free_Tag_A(document_tag_a_t *a)
 {
     if (a->href)
-        free(a->href);
+        Q_free(a->href);
     XSD_Free_Tags(a->tags);
-    free(a);
+    Q_free(a);
 }
 
 // free document_tag_img_t
 static void XSD_Free_Tag_Img(document_tag_img_t *i)
 {
     XSD_Free_Tags(i->tags);
-    free(i);
+    Q_free(i);
 }
 
 // free document_tag_br_t
 static void XSD_Free_Tag_Br(document_tag_br_t *br)
 {
-    free(br);
+    Q_free(br);
 }
 
 // free document_tag_sp_t
 static void XSD_Free_Tag_Sp(document_tag_sp_t *sp)
 {
-    free(sp);
+    Q_free(sp);
 }
 
 // free document_tag_hr_t
 static void XSD_Free_Tag_Hr(document_tag_hr_t *hr)
 {
-    free(hr);
+    Q_free(hr);
 }
 
 // free document_tag_pre_t
 static void XSD_Free_Tag_Pre(document_tag_pre_t *pre)
 {
     if (pre->text)
-        free(pre->text);
+        Q_free(pre->text);
     if (pre->alt)
-        free(pre->alt);
-    free(pre);
+        Q_free(pre->alt);
+    Q_free(pre);
 }
 
 // free document_tag_h_t
 static void XSD_Free_Tag_H(document_tag_h_t *h)
 {
     XSD_Free_Tags(h->tags);
-    free(h);
+    Q_free(h);
 }
 
 // free document_tag_list_t
 static void XSD_Free_Tag_List(document_tag_list_t *l)
 {
     XSD_Free_Tags((document_tag_t *)l->items);
-    free(l);
+    Q_free(l);
 }
 
 // free document_tag_li_t
 static void XSD_Free_Tag_Li(document_tag_li_t *l)
 {
     XSD_Free_Tags(l->tags);
-    free(l);
+    Q_free(l);
 }
 
 // free document_tag_list_t
 static void XSD_Free_Tag_Dict(document_tag_dict_t *l)
 {
     XSD_Free_Tags((document_tag_t *)l->items);
-    free(l);
+    Q_free(l);
 }
 
 // free document_tag_di_t
@@ -143,15 +143,15 @@ static void XSD_Free_Tag_Di(document_tag_di_t *l)
 {
     XSD_Free_Tags(l->name);
     XSD_Free_Tags(l->description);
-    free(l);
+    Q_free(l);
 }
 
 // free document_tag_text_t tag
 static void XSD_Free_Tag_Text(document_tag_text_t *t)
 {
     if (t->text)
-        free(t->text);
-    free(t);
+        Q_free(t->text);
+    Q_free(t);
 }
 
 // free tag chain
@@ -241,15 +241,15 @@ void XSD_Document_Free(xml_t *doc)
     xml_document_t *document = (xml_document_t *) doc;
 
     if (document->title)
-        free(document->title);
+        Q_free(document->title);
 
     XSD_Free_Tags(document->content);
 
     if (document->document_type)
-        free(document->document_type);
+        Q_free(document->document_type);
 
     // delete document
-    free(document);
+    Q_free(document);
 }
 
 // find last tag in chain
@@ -931,8 +931,8 @@ static void OnEndElement_Blocks(void *userData, const XML_Char *name)
     if (stack->path[0] == 0)
     {
         XSD_RestoreStack(stack);
-        free(stack->parser_specific);
-        free(stack);
+        Q_free(stack->parser_specific);
+        Q_free(stack);
         return;
     }
 

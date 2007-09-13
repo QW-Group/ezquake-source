@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.153 2007-09-03 19:26:22 johnnycz Exp $
+	$Id: hud_common.c,v 1.154 2007-09-13 14:49:30 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -227,7 +227,7 @@ int HUD_AmmoLowByWeapon(int weapon)
 void SCR_HUD_DrawFPS(hud_t *hud)
 {
     int x, y, width, height;
-    char st[80];
+    char st[128];
 
     static cvar_t
         *hud_fps_show_min = NULL,
@@ -243,9 +243,9 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
 
     if (hud_fps_show_min->value)
-        sprintf(st, "%3.*f\xf%3.*f", (int) hud_fps_decimals->value, cls.min_fps + 0.05, (int) hud_fps_decimals->value, cls.fps + 0.05);
+        snprintf (st, sizeof (st), "%3.*f\xf%3.*f", (int) hud_fps_decimals->value, cls.min_fps + 0.05, (int) hud_fps_decimals->value, cls.fps + 0.05);
     else
-        sprintf(st, "%3.*f", (int) hud_fps_decimals->value, cls.fps + 0.05);
+        snprintf (st, sizeof (st), "%3.*f", (int) hud_fps_decimals->value, cls.fps + 0.05);
 
     if (hud_fps_title->value)
         strcat(st, " fps");
@@ -1707,7 +1707,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 	switch ((int)hud_digits_trim.value)
 	{
 	case 0:
-		sprintf(buf, "%d", num);
+		snprintf(buf, sizeof (buf), "%d", num);
 		len = strlen(buf);
 		if (len > digits)
 		{
@@ -1725,19 +1725,19 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 
 		overflow = num >= t;		// 10090 >= 1000
 		num %= t;					// num = 90
-	    sprintf(buf, "%d", num);	// "90"
+	    snprintf(buf, sizeof (buf), "%d", num);	// "90"
     	len = strlen(buf);			// 2
 		t = digits - len;			// t = 3-2 = 1
 		if (t > 0 && overflow)		// 1 > 0 && true
 		{
-			sprintf(buf + t, "%d", num);	// " 90"
+			snprintf(buf + t, sizeof (buf) - t, "%d", num);	// " 90"
 			for (i = 0; i < t; i++)
 				buf[i] = '0';				// "090"
 			len = digits;
 		}
 		break;
 	case 2:
-	    sprintf(buf, "%d", num);
+	    snprintf (buf, sizeof (buf), "%d", num);
 		buf[digits] = '\0';
     	len = strlen(buf);
 	}
@@ -1925,7 +1925,7 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
         if (!HUD_PrepareDraw(hud, 42*scale, 11*scale, &x, &y))
             return;
 
-        sprintf (buf, "%3i", value);
+        snprintf (buf, sizeof (buf), "%3i", value);
         Draw_SSubPic(x, y, sb_ibar, 3+((num-1)*48), 0, 42, 11, scale);
         if (buf[0] != ' ')  Draw_SCharacter (x +  7*scale, y, 18+buf[0]-'0', scale);
         if (buf[1] != ' ')  Draw_SCharacter (x + 15*scale, y, 18+buf[1]-'0', scale);
@@ -2670,7 +2670,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 		char *t = buf;
 		int char_x;
 		int char_y;
-		sprintf(buf, "%d", frags);
+		snprintf(buf, sizeof (buf), "%d", frags);
 
 		char_x = max(x, x + (width  - (int)strlen(buf) * char_size) / 2);
 		char_y = max(y, posy);
@@ -2689,7 +2689,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 	else
 	{
 		// Normal text size.
-		sprintf(buf, "%3d", frags);
+		snprintf(buf, sizeof (buf), "%3d", frags);
 		Draw_String(x - 2 + (width - char_size * strlen(buf) - 2) / 2, posy, buf);
 	}
 
@@ -3952,13 +3952,13 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 			case MP3_NOTRUNNING	:
 			default :
 				status = MP3_NOTRUNNING;
-				title_length = sprintf(title, "%s is not running.", MP3_PLAYERNAME_ALLCAPS);
+				title_length = snprintf (title, sizeof (title), "%s is not running.", MP3_PLAYERNAME_ALLCAPS);
 				break;
 		}
 
 		if(title_length < 0)
 		{
-			sprintf(title, "Error retrieving current song.");
+			snprintf(title, sizeof (title), "Error retrieving current song.");
 		}
 	}
 
@@ -3973,14 +3973,14 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 void SCR_HUD_DrawMP3_Time(hud_t *hud)
 {
 #if defined(_WIN32) || defined(__XMMS__)
-	int x=0, y=0, width=0, height=0;
+	int x = 0, y = 0, width = 0, height = 0;
 	int elapsed = 0;
 	int remain = 0;
 	int total = 0;
 	static char time_string[MP3_MAXSONGTITLE];
 	static char elapsed_string[MP3_MAXSONGTITLE];
-	double t;		// current time
-	static double lastframetime;	// last refresh
+	double t; // current time
+	static double lastframetime; // last refresh
 
 	static cvar_t *style = NULL, *on_scoreboard;
 
@@ -4005,7 +4005,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 
 		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0)
 		{
-			sprintf(time_string, "\x10-:-\x11");
+			snprintf (time_string, sizeof (time_string), "\x10-:-\x11");
 		}
 		else
 		{
@@ -4013,36 +4013,36 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 			{
 				case 1 :
 					remain = total - elapsed;
-					strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
-					sprintf(time_string, va("\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
+					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
+					snprintf (time_string, sizeof (time_string), "\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 2 :
 					remain = total - elapsed;
-					sprintf(time_string, va("\x10-%s\x11", SecondsToMinutesString(remain)));
+					snprintf (time_string, sizeof (time_string), "\x10-%s\x11", SecondsToMinutesString (remain));
 					break;
 				case 3 :
-					sprintf(time_string, va("\x10%s\x11", SecondsToMinutesString(elapsed)));
+					snprintf (time_string, sizeof (time_string), "\x10%s\x11", SecondsToMinutesString (elapsed));
 					break;
 				case 4 :
 					remain = total - elapsed;
-					strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
-					sprintf(time_string, va("%s/%s", elapsed_string, SecondsToMinutesString(total)));
+					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
+					snprintf (time_string, sizeof (time_string), "%s/%s", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 5 :
-					strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
-					sprintf(time_string, va("-%s/%s", elapsed_string, SecondsToMinutesString(total)));
+					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
+					snprintf (time_string, sizeof (time_string), "-%s/%s", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 6 :
 					remain = total - elapsed;
-					sprintf(time_string, va("-%s", SecondsToMinutesString(remain)));
+					snprintf (time_string, sizeof (time_string), "-%s", SecondsToMinutesString (remain));
 					break;
 				case 7 :
-					sprintf(time_string, va("%s", SecondsToMinutesString(elapsed)));
+					snprintf (time_string, sizeof (time_string), "%s", SecondsToMinutesString (elapsed));
 					break;
 				case 0 :
 				default :
-					strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
-					sprintf(time_string, va("\x10%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
+					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
+					snprintf (time_string, sizeof (time_string), "\x10%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
 					break;
 			}
 		}
@@ -4052,17 +4052,13 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	// Don't allow showing the timer during ruleset smackdown,
 	// can be used for timing powerups.
 	if(!strncasecmp(Rulesets_Ruleset(), "smackdown", 9))
-	{
-		sprintf(time_string, va("\x10%s\x11", "Not allowed"));
-	}
+		snprintf (time_string, sizeof (time_string), "\x10%s\x11", "Not allowed");
 
-	width = strlen(time_string)*8;
+	width = strlen (time_string) * 8;
 	height = 8;
 
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
-	{
 		Draw_String(x, y, time_string);
-	}
 #endif
 }
 

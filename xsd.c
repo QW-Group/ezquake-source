@@ -1,4 +1,4 @@
-// $Id: xsd.c,v 1.8 2007-09-03 15:31:11 dkure Exp $
+// $Id: xsd.c,v 1.9 2007-09-13 14:49:30 disconn3ct Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -59,7 +59,7 @@ char *XSD_AddText(char *dst, const char *src, int src_len)
         strcpy(buf, dst);
         memcpy(buf+strlen(buf), src, src_len);
         buf[src_len+strlen(dst)] = 0;
-        free(dst);
+        Q_free(dst);
     }
 
     return buf;
@@ -102,8 +102,8 @@ char *XSD_StripSpaces (char *str)
     buf[q] = 0;
 
     ret = (char *) Q_strdup(buf);
-    free(buf);
-    free(str);
+    Q_free(buf);
+    Q_free(str);
     return ret;
 }
 

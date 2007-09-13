@@ -277,8 +277,8 @@ int oldPingHost(char *host_to_ping, int count)
         break;
     }
 
-    free(icmp_data);
-    free(recvbuf);
+    Q_free(icmp_data);
+    Q_free(recvbuf);
 
     return success;
 } 
@@ -533,9 +533,9 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
         }
     }
 
-    free(icmp_data);
-    free(recvbuf);
-    free(hosts);
+    Q_free(icmp_data);
+    Q_free(recvbuf);
+    Q_free(hosts);
 
     return success;
     
@@ -769,7 +769,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 		}
 	}
 
-	free(hosts);
+	Q_free(hosts);
 
 	return 1;
 }
@@ -856,7 +856,7 @@ void SB_Test_SendPacket(void)
     bwrote = sendto(sock,icmp_data,datasize,0,(struct sockaddr*)&dest,
                     sizeof(dest));
 
-    free(icmp_data); 
+    Q_free(icmp_data); 
 }
 
 void SB_Test_GetPackets(void)
@@ -923,7 +923,7 @@ void SB_Test_GetPackets(void)
         }
     }
 
-    free(recvbuf); 
+    Q_free(recvbuf); 
 }
 
 void SB_Test_Draw(void)

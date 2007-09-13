@@ -445,7 +445,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
             SetPing(servers[i], -1);
 
     closesocket(newsocket);
-    free(hosts);
+	Q_free(hosts);
 
     return 0;
 }

@@ -37,7 +37,7 @@ CTab_t * CTab_New(void)
 void CTab_Free(CTab_t *tab)
 {
     CTab_Clear(tab);
-    free(tab);
+    Q_free(tab);
 }
 
 

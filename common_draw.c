@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.23 2007-09-03 19:26:22 johnnycz Exp $
+	$Id: common_draw.c,v 1.24 2007-09-13 14:49:29 disconn3ct Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -31,7 +31,7 @@ draws demo name, status and progress
 int SCR_DrawDemoStatus(void)
 {
     extern cvar_t demo_statustime;
-    char st[100];
+    char st[128];
     int x, y;
     int w, i;
     int mins, secs;
@@ -53,13 +53,13 @@ int SCR_DrawDemoStatus(void)
         Draw_String(vid.width/2-4*6, y-16, "paused");
 
     // speed
-    sprintf(st, "%d%%", cls.demospeed);
+    snprintf (st, sizeof (st), "%d%%", cls.demospeed);
     Draw_String(x+8, y-16, st);
 
     // status - time
     mins = ((int)(hosttime-cls.demostarttime)) / 60;
     secs = ((int)(hosttime-cls.demostarttime)) % 60;
-    sprintf(st, "%d:%02d", mins, secs);
+    snprintf (st, sizeof (st), "%d:%02d", mins, secs);
     Draw_String(x+8*(w-strlen(st)-1), y-16, st);
 
     // progress bar
@@ -379,19 +379,19 @@ void SCR_DrawClients(void)
     x = (vid.width-320)/2 + 4;
 
     strcpy(line, " # ");
-    sprintf(buf, "%*.*s ", uid_w, uid_w, "uid");
+    snprintf(buf, sizeof (buf), "%*.*s ", uid_w, uid_w, "uid");
     strcat(line, buf);
-    sprintf(buf, "%-*.*s ", 16-uid_w, 16-uid_w, "name");
+    snprintf(buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, "name");
     strcat(line, buf);
     strcat(line, "team skin     rate");
     Draw_String(x, y, line);
     y+=8;
 
     strcpy(line, "\x1D\x1F \x1D");
-    sprintf(buf, "%*.*s", uid_w-2, uid_w-2, "\x1E\x1E\x1E\x1E");
+    snprintf(buf, sizeof (buf), "%*.*s", uid_w-2, uid_w-2, "\x1E\x1E\x1E\x1E");
     strcat(line, buf);
     strcat(line, "\x1F \x1D");
-    sprintf(buf, "%*.*s", 16-uid_w-2, 16-uid_w-2, "\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E");
+    snprintf(buf, sizeof (buf), "%*.*s", 16-uid_w-2, 16-uid_w-2, "\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E");
     strcat(line, buf);
     strcat(line, "\x1F \x1D\x1E\x1E\x1F \x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1F \x1D\x1E\x1E\x1F");
     Draw_String(x, y, line);
@@ -407,25 +407,25 @@ void SCR_DrawClients(void)
 
         line[0] = 0;
 
-        sprintf(buf, "%2d ", i);
+        snprintf(buf, sizeof (buf), "%2d ", i);
         strcat(line, buf);
 
-        sprintf(buf, "%*d ", uid_w, cl.players[i].userid);
+        snprintf(buf, sizeof (buf), "%*d ", uid_w, cl.players[i].userid);
         strcat(line, buf);
 
-        sprintf(buf, "%-*.*s ", 16-uid_w, 16-uid_w, cl.players[i].name);
+        snprintf(buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, cl.players[i].name);
         strcat(line, buf);
 
-        sprintf(buf, "%-4.4s ", Info_ValueForKey(cl.players[i].userinfo, "team"));
+        snprintf(buf, sizeof (buf), "%-4.4s ", Info_ValueForKey(cl.players[i].userinfo, "team"));
         strcat(line, buf);
 
         if (cl.players[i].spectator)
             strcpy(buf, "<spec>   ");
         else
-            sprintf(buf, "%-8.8s ", Info_ValueForKey(cl.players[i].userinfo, "skin"));
+            snprintf(buf, sizeof (buf), "%-8.8s ", Info_ValueForKey(cl.players[i].userinfo, "skin"));
         strcat(line, buf);
 
-        sprintf(buf, "%4d", min(9999, atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
+        snprintf(buf, sizeof (buf), "%4d", min(9999, atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
         strcat(line, buf);
 
         Draw_String(x, y, line);
@@ -607,41 +607,41 @@ void SCR_NetStats(int x, int y, float period)
     Draw_Alt_String(x+36, y, "latency");
     y+=12;
 
-    sprintf(line, "min  %4.1f %3d ms", f_min, ping_min);
+    snprintf (line, sizeof (line), "min  %4.1f %3d ms", f_min, ping_min);
     Draw_String(x, y, line);
     y+=8;
 
-    sprintf(line, "avg  %4.1f %3d ms", f_avg, ping_avg);
+    snprintf(line, sizeof (line), "avg  %4.1f %3d ms", f_avg, ping_avg);
     Draw_String(x, y, line);
     y+=8;
 
-    sprintf(line, "max  %4.1f %3d ms", f_max, ping_max);
+    snprintf(line, sizeof (line), "max  %4.1f %3d ms", f_max, ping_max);
     Draw_String(x, y, line);
     y+=8;
 
-    sprintf(line, "dev     %5.2f ms", ping_dev);
+    snprintf(line, sizeof (line), "dev     %5.2f ms", ping_dev);
     Draw_String(x, y, line);
     y+=12;
 
     Draw_Alt_String(x+20, y, "packet loss");
     y+=12;
 
-    sprintf(line, "lost       %3d %%", lost_lost);
+    snprintf(line, sizeof (line), "lost       %3d %%", lost_lost);
     Draw_String(x, y, line);
     y+=8;
 
-    sprintf(line, "rate cut   %3d %%", lost_rate);
+    snprintf(line, sizeof (line), "rate cut   %3d %%", lost_rate);
     Draw_String(x, y, line);
     y+=8;
 
     if (with_delta)
-        sprintf(line, "bad delta  %3d %%", lost_delta);
+        snprintf(line, sizeof (line), "bad delta  %3d %%", lost_delta);
     else
         strcpy(line, "no delta compr");
     Draw_String(x, y, line);
     y+=8;
 
-    sprintf(line, "total      %3d %%", lost_total);
+    snprintf(line, sizeof (line), "total      %3d %%", lost_total);
     Draw_String(x, y, line);
     y+=12;
 
@@ -649,23 +649,23 @@ void SCR_NetStats(int x, int y, float period)
     Draw_Alt_String(x+4, y, "packet size/BPS");
     y+=12;
 
-    sprintf(line, "out    %3d %5d", size_out, bandwidth_out);
+    snprintf(line, sizeof (line), "out    %3d %5d", size_out, bandwidth_out);
     Draw_String(x, y, line);
     y+=8;
 
-    sprintf(line, "in     %3d %5d", size_in, bandwidth_in);
+    snprintf(line, sizeof (line), "in     %3d %5d", size_in, bandwidth_in);
     Draw_String(x, y, line);
     y+=8;
 
-    sprintf(line, "total  %3d %5d", size_all, bandwidth_all);
+    snprintf(line, sizeof (line), "total  %3d %5d", size_all, bandwidth_all);
     Draw_String(x, y, line);
     y+=8;
 }
 
-char* SCR_GetTime(SYSTEMTIME *tm)
+char* SCR_GetTime (SYSTEMTIME *tm)
 {
 	static char buf[32];
-	sprintf(buf, "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
+	snprintf(buf, sizeof (buf), "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
 	return buf;
 }
 

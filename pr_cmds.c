@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: pr_cmds.c,v 1.23 2007-04-15 14:54:50 johnnycz Exp $
+$Id: pr_cmds.c,v 1.24 2007-09-13 14:49:30 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -1351,7 +1351,7 @@ void PF_infokey (void) {
 			strlcpy(ov, NET_BaseAdrToString (svs.clients[e1 - 1].netchan.remote_address), sizeof(ov));
 			value = ov;
 		} else if (!strcmp(key, "*z_ext")) {
-			sprintf(ov, "%d", svs.clients[e1-1].extensions);
+			snprintf (ov, sizeof (ov), "%d", svs.clients[e1-1].extensions);
 			value = ov;
 		} else if (!strcmp(key, "ping")) {
 			ping = SV_CalcPing (&svs.clients[e1 - 1]);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.114 2007-09-13 13:15:59 dkure Exp $
+$Id: cl_parse.c,v 1.115 2007-09-13 14:49:29 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1293,7 +1293,7 @@ void CL_NextUpload(void) {
 
 	Com_Printf ("Upload completed\n");
 
-	free(upload_data);
+	Q_free(upload_data);
 	upload_data = 0;
 	upload_pos = upload_size = 0;
 }
@@ -1304,7 +1304,7 @@ qbool CL_IsUploading(void) {
 
 void CL_StopUpload(void) {
 	if (upload_data) {
-		free(upload_data);
+		Q_free(upload_data);
 		upload_data = NULL;
 	}
 }
@@ -2330,7 +2330,7 @@ void MakeChatRed(char *t, int mm2)
     {
         int white = 0;
         char *d, *s;
-        char *buf = (char *)malloc(strlen(t)+2);
+        char *buf = (char *) Q_malloc (strlen (t) + 2);
 
         d = buf;
         s = t;
@@ -2370,7 +2370,7 @@ void MakeChatRed(char *t, int mm2)
         }
         *d = 0;
         strcpy(t, buf);
-        free(buf);
+        Q_free(buf);
     }
     else
     {

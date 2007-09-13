@@ -595,10 +595,11 @@ int R_SetSky(char *skyname)
 
 cleanup:
 	for (i = 0; i < 6; i++) {
-		if (data[i])
-			free(data[i]);
-		else
+		if (data[i]) {
+			Q_free(data[i]);
+		} else {
 			break;
+		}
 	}
 	return error;
 }

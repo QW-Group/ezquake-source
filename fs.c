@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.22 2007-09-13 14:11:52 dkure Exp $
+$Id: fs.c,v 1.23 2007-09-13 14:49:30 disconn3ct Exp $
 */
 
 
@@ -770,7 +770,7 @@ void FS_AddUserPaks (char *dir) {
 	char	userpak[32];
 
 	// add paks listed in paks.lst
-	sprintf (pakfile, "%s/pak.lst", dir);
+	snprintf (pakfile, sizeof (pakfile), "%s/pak.lst", dir);
 	f = fopen(pakfile, "r");
 	if (f) {
 		int len;
@@ -796,14 +796,14 @@ void FS_AddUserPaks (char *dir) {
 			if (!strncasecmp(userpak,"gl", 2))
 				continue;
 #endif
-			sprintf (pakfile, "%s/%s", dir, userpak);
+			snprintf (pakfile, sizeof (pakfile), "%s/%s", dir, userpak);
 			FS_AddPak(pakfile);
 		}
 		fclose(f);
 	}
 	// add userdir.pak
 	if (UserdirSet) {
-		sprintf (pakfile, "%s/%s.pak", dir, userdirfile);
+		snprintf (pakfile, sizeof (pakfile), "%s/%s.pak", dir, userdirfile);
 		FS_AddPak(pakfile);
 	}
 }
@@ -938,7 +938,7 @@ void FS_SetGamedir (char *dir)
 	// Flush all data, so it will be forced to reload.
 	Cache_Flush ();
 
-	sprintf (com_gamedir, "%s/%s", com_basedir, dir);
+	snprintf (com_gamedir, sizeof (com_gamedir), "%s/%s", com_basedir, dir);
 
 #ifndef WITH_FTE_VFS
 	if (strcmp(dir, "id1") && strcmp(dir, "qw") && strcmp(dir, "ezquake"))
@@ -2720,7 +2720,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.22 2007-09-13 14:11:52 dkure Exp $
+ * $Id: fs.c,v 1.23 2007-09-13 14:49:30 disconn3ct Exp $
  *             
  */
 
@@ -2866,7 +2866,7 @@ int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
 	{	//this is actually a directory
 
 		char childpath[256];
-		sprintf(childpath, "%s*", filename);
+		snprintf(childpath, sizeof (childpath), "%s*", filename);
 		Sys_EnumerateFiles((char*)data, childpath, FSOS_RebuildFSHash, data);
 		return true;
 	}
@@ -3310,26 +3310,26 @@ newsection:
 				if (!strcmp(filename, "s_start"))
 				{
 					section = 2;
-					sprintf (newfiles[i].name, "sprites/%s", filename);	//the model loader has a hack to recognise .dsp
+					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);	//the model loader has a hack to recognise .dsp
 					break;
 				}
 				if (!strcmp(filename, "p_start"))
 				{
 					section = 3;
-					sprintf (newfiles[i].name, "patches/%s", filename); //the map loader will find these.
+					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename); //the map loader will find these.
 					break;
 				}
 				if (!strcmp(filename, "f_start"))
 				{
 					section = 4;
-					sprintf (newfiles[i].name, "flats/%s", filename);	//the map loader will find these
+					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);	//the map loader will find these
 					break;
 				}
 				if ((filename[0] == 'e' && filename[2] == 'm') || !strncmp(filename, "map", 3))
 				{	//this is the start of a beutiful new map
 					section = 1;
 					strcpy(sectionname, filename);
-					sprintf (newfiles[i].name, "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
+					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
 					newfiles[i].filepos = 0;
 					newfiles[i].filelen = 4;
 					break;
@@ -3342,7 +3342,7 @@ newsection:
 				}
 			}
 
-			sprintf (newfiles[i].name, "wad/%s", filename);	//but there are many files that we don't recognise/know about. archive them off to keep the vfs moderatly clean.
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "wad/%s", filename);	//but there are many files that we don't recognise/know about. archive them off to keep the vfs moderatly clean.
 			break;
 		case 1:	//map section
 			if (strcmp(filename, "things") &&
@@ -3359,7 +3359,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			sprintf (newfiles[i].name, "maps/%s%s.%s", neatwadname, sectionname, filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
 			break;
 		case 5:	//glbsp output section
 			if (strcmp(filename, "gl_vert") &&
@@ -3371,7 +3371,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			sprintf (newfiles[i].name, "maps/%s%s.%s", neatwadname, sectionname, filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
 			break;
 		case 2:	//sprite section
 			if (!strcmp(filename, "s_end"))
@@ -3379,7 +3379,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			sprintf (newfiles[i].name, "sprites/%s", filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);
 			break;
 		case 3:	//patches section
 			if (!strcmp(filename, "p_end"))
@@ -3387,7 +3387,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			sprintf (newfiles[i].name, "patches/%s", filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename);
 			break;
 		case 4:	//flats section
 			if (!strcmp(filename, "f_end"))
@@ -3395,7 +3395,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			sprintf (newfiles[i].name, "flats/%s", filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);
 			break;
 		}
 	}
@@ -4588,7 +4588,7 @@ FILE *COM_WriteFileOpen (char *filename)	//like fopen, but based around quake's 
 	FILE	*f;
 	char	name[MAX_OSPATH];
 
-	sprintf (name, "%s/%s", com_gamedir, filename);
+	snprintf (name, sizeof (name), "%s/%s", com_gamedir, filename);
 
 	COM_CreatePath(name);
 
@@ -5357,7 +5357,7 @@ static int COM_AddWildDataFiles (char *descriptor, int size, void *vparam)
 	char			pakfile[MAX_OSPATH];
 	flocation_t loc;
 
-	sprintf (pakfile, "%s%s", param->parentdesc, descriptor);
+	snprintf (pakfile, sizeof (pakfile), "%s%s", param->parentdesc, descriptor);
 
 	for (search = com_searchpaths; search; search = search->next)
 	{
@@ -5376,7 +5376,7 @@ static int COM_AddWildDataFiles (char *descriptor, int size, void *vparam)
 	if (!pak)
 		return true;
 
-	sprintf (pakfile, "%s%s/", param->parentdesc, descriptor);
+	snprintf (pakfile, sizeof (pakfile), "%s%s/", param->parentdesc, descriptor);
 	COM_AddPathHandle(pakfile, funcs, pak, true, false, FS_LOAD_FILE_ALL);
 
 	return true;
@@ -5409,7 +5409,7 @@ static void COM_AddDataFiles(char *pathto, searchpath_t *search, char *extension
 		COM_AddPathHandle(pakfile, funcs, handle, true, false, FS_LOAD_FILE_ALL);
 	}
 
-	sprintf (pakfile, "*.%s", extension);
+	snprintf (pakfile, sizeof (pakfile), "*.%s", extension);
 	wp.funcs = funcs;
 	wp.parentdesc = pathto;
 	wp.parentpath = search;

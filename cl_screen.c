@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.138 2007-09-12 22:29:52 disconn3ct Exp $
+$Id: cl_screen.c,v 1.139 2007-09-13 14:49:29 disconn3ct Exp $
 */
 
 /// declarations may be found in screen.h
@@ -3232,7 +3232,7 @@ int SCR_Screenshot(char *name) {
 					? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 
-	free(buffer);
+	Q_free(buffer);
 	return success;
 }
 
@@ -3442,7 +3442,7 @@ void SCR_RSShot_f (void) {
 	success = Image_WriteTGA (filename, pixels, width, height)
 		? SSHOT_SUCCESS : SSHOT_FAILED;
 
-	free(base);
+	Q_free(base);
 
 #else		//GLQUAKE
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.80 2007-09-03 21:07:20 himan Exp $
+	$Id: menu.c,v 1.81 2007-09-13 14:49:30 disconn3ct Exp $
 
 */
 
@@ -1524,7 +1524,7 @@ void M_Menu_MP3_Playlist_Read(void) {
 		return;
 
 	playlist_size = MP3_ParsePlaylist_EXTM3U(playlist_buf, length, playlist_entries, PLAYLIST_MAXENTRIES, PLAYLIST_MAXTITLE);
-	free(playlist_buf);
+	Q_free(playlist_buf);
 }
 
 #else

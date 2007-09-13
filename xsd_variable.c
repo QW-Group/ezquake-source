@@ -1,4 +1,4 @@
-// $Id: xsd_variable.c,v 1.5 2007-09-03 15:31:11 dkure Exp $
+// $Id: xsd_variable.c,v 1.6 2007-09-13 14:49:30 disconn3ct Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -17,49 +17,49 @@ void XSD_Variable_Free(xml_t *doc)
     xml_variable_t *document = (xml_variable_t *) doc;
 
     if (document->name)
-        free(document->name);
+        Q_free(document->name);
 
     if (document->description)
-        free(document->description);
+        Q_free(document->description);
 
     if (document->remarks)
-        free(document->remarks);
+        Q_free(document->remarks);
 
     switch (document->value_type)
     {
     case t_boolean:
         if (document->value.boolean_value.true_description)
-            free(document->value.boolean_value.true_description);
+            Q_free(document->value.boolean_value.true_description);
         if (document->value.boolean_value.false_description)
-            free(document->value.boolean_value.false_description);
+            Q_free(document->value.boolean_value.false_description);
         break;
     case t_integer:
         if (document->value.integer_description)
-            free(document->value.integer_description);
+            Q_free(document->value.integer_description);
         break;
     case t_float:
         if (document->value.float_description)
-            free(document->value.float_description);
+            Q_free(document->value.float_description);
         break;
     case t_string:
         if (document->value.string_description)
-            free(document->value.string_description);
+            Q_free(document->value.string_description);
         break;
     case t_enum:
         while (document->value.enum_value)
         {
             variable_enum_value_t *next = document->value.enum_value->next;
-            free(document->value.enum_value);
+            Q_free(document->value.enum_value);
             document->value.enum_value = next;
         }
         break;
     }
 
     if (document->document_type)
-        free(document->document_type);
+        Q_free(document->document_type);
 
     // delete document
-    free(document);
+    Q_free(document);
 }
 
 static void OnStartElement(void *userData, const XML_Char *name, const XML_Char **atts)

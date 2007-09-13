@@ -1,4 +1,4 @@
-// $Id: xsd_command.c,v 1.6 2007-09-03 15:31:11 dkure Exp $
+// $Id: xsd_command.c,v 1.7 2007-09-13 14:49:30 disconn3ct Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -17,21 +17,21 @@ void XSD_Command_Free(xml_t *doc)
     xml_command_t *document = (xml_command_t *) doc;
 
     if (document->name)
-        free(document->name);
+        Q_free(document->name);
 
     if (document->description)
-        free(document->description);
+        Q_free(document->description);
 
     if (document->remarks)
-        free(document->remarks);
+        Q_free(document->remarks);
 
     if (document->syntax)
-        free(document->syntax);
+        Q_free(document->syntax);
 
     while (document->arguments)
     {
         command_argument_t *next = document->arguments->next;
-        free(document->arguments);
+        Q_free(document->arguments);
         document->arguments = next;
     }
 
@@ -39,7 +39,7 @@ void XSD_Command_Free(xml_t *doc)
         Q_free(document->document_type);
 
     // delete document
-    free(document);
+    Q_free(document);
 }
 
 static void OnStartElement(void *userData, const XML_Char *name, const XML_Char **atts)

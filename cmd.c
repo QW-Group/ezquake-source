@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.75 2007-09-03 17:05:44 johnnycz Exp $
+    $Id: cmd.c,v 1.76 2007-09-13 14:49:29 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1713,10 +1713,10 @@ void Cmd_If_New(void)
 	error = Expr_Eval_Bool(expr, &pars_ex, &result);
 	if (error != EXPR_EVAL_SUCCESS) {
 		Com_Printf("Error in condition: %s (\"%s\")\n", Parser_Error_Description(error), expr);
-		free(expr);
+		Q_free(expr);
 		return;
 	}
-	free(expr);
+	Q_free(expr);
 
 	then_pos++;	// skip "then"
 
@@ -1912,7 +1912,7 @@ void Cmd_Eval_f(void)
 		case ET_INT:  Com_Printf("Result: %i (integer)\n", value.i_val); break;
 		case ET_DBL:  Com_Printf("Result: %f (double)\n",  value.d_val); break;
 		case ET_BOOL: Com_Printf("Result: %s (bool)\n", value.b_val ? "true" : "false"); break;
-		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); free(value.s_val); break;
+		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); Q_free(value.s_val); break;
 		default:      Com_Printf("Error: Unknown value type\n"); break;
 		}
 	}

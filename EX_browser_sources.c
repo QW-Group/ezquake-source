@@ -42,9 +42,8 @@ void Reset_Source(source_data *s)
     if (servers != NULL)
     {
         for (i=0; i < s->serversn; i++)
-            free(s->servers[i]);
-        free(s->servers);
-        s->servers = NULL;
+            Q_free(s->servers[i]);
+        Q_free(s->servers);
     }
     s->serversn = 0;
     s->last_update.wYear = 0;
@@ -54,7 +53,7 @@ void Reset_Source(source_data *s)
 void Delete_Source(source_data *s)
 {
     Reset_Source(s);
-    free(s);
+    Q_free(s);
 }
 
 
