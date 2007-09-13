@@ -207,9 +207,6 @@ void SB_Test_Init(char *address);
 void SB_Test_Change(char *address);
 void SB_Test_Frame(void);
 
-// case insensitive and red-insensitive compare
-int strcmp2(const char * s1, const char * s2);
-
 // browser menu module
 void Browser_Init(void);
 void Browser_Draw(void);
