@@ -649,13 +649,13 @@ void R_AliasSetupLighting(entity_t *ent) {
 		ambientlight = shadelight = 24;
 
 	// never allow players to go totally black
-	if (clmodel->modhint == MOD_PLAYER) {
+	if (clmodel->modhint == MOD_PLAYER || clmodel->flags & RF_PLAYERMODEL) {
 		if (ambientlight < 8)
 			ambientlight = shadelight = 8;
 	}
 
 
-	if (clmodel->modhint == MOD_PLAYER) {
+	if (clmodel->modhint == MOD_PLAYER || clmodel->flags & RF_PLAYERMODEL) {
 		fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);
 		if (fbskins == 1 && gl_fb_models.value == 1) {
 			ambientlight = shadelight = 4096;

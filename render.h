@@ -35,6 +35,7 @@ typedef struct efrag_s {
 #define	RF_WEAPONMODEL	1
 #define	RF_NOSHADOW		2
 #define	RF_LIMITLERP	4
+#define	RF_PLAYERMODEL	8
 
 typedef struct entity_s {
 	vec3_t					origin;
