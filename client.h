@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: client.h,v 1.70 2007-08-24 16:51:27 dkure Exp $
+$Id: client.h,v 1.71 2007-09-13 16:02:10 tonik Exp $
 
 */
 // client.h
@@ -68,6 +68,10 @@ typedef struct {
 	int			effects;
 
 	int			flags;			// dead, gib, etc
+
+#ifdef VWEP_TEST
+	byte		vw_index;
+#endif
 
 	byte			pm_type;
 	float		waterjumptime;
@@ -237,6 +241,9 @@ ca_active			// everything is in, so frames can be rendered
 typedef enum {
 	dl_none,
 	dl_model,
+#ifdef VWEP_TEST
+	dl_vwep_model,
+#endif
 	dl_sound,
 	dl_skin,
 	dl_single
@@ -386,6 +393,9 @@ typedef struct {
 	qbool		teamfortress;		// true if gamedir is "fortress"
 	int			fpd;				// FAQ proxy flags
 	int			z_ext;				// ZQuake protocol extensions flags
+#ifdef VWEP_TEST
+	qbool		vwep_enabled;
+#endif
 	int			timelimit;
 	int			fraglimit;
 	float		maxfps;
@@ -460,9 +470,15 @@ typedef struct {
 
 	// information that is static for the entire time connected to a server
 	char		model_name[MAX_MODELS][MAX_QPATH];
+#ifdef VWEP_TEST
+	char		vw_model_name[MAX_VWEP_MODELS][MAX_QPATH];	// VWep support
+#endif
 	char		sound_name[MAX_SOUNDS][MAX_QPATH];
 
 	struct model_s	*model_precache[MAX_MODELS];
+#ifdef VWEP_TEST
+	struct model_s	*vw_model_precache[MAX_VWEP_MODELS];	// VWep support
+#endif
 	struct sfx_s	*sound_precache[MAX_SOUNDS];
 
 	cmodel_t	*clipmodels[MAX_MODELS];

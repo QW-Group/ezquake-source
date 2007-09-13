@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.82 2007-09-13 14:56:05 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.83 2007-09-13 16:02:11 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -336,6 +336,29 @@ static void CL_WriteSetDemoMessage (void)
 	// Flush the demo file to disk.
 	CL_Demo_Flush();
 }
+
+#ifdef VWEP_TEST
+// FIXME: same as in sv_user.c. Move to common.c?
+static char *TrimModelName (char *full)
+{
+	static char shortn[MAX_QPATH];
+	int len;
+
+	if (!strncmp(full, "progs/", 6) && !strchr(full + 6, '/'))
+		strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
+	else
+		strlcpy (shortn, full, sizeof(shortn));
+
+	len = strlen(shortn);
+	if (len > 4 && !strcmp(shortn + len - 4, ".mdl")
+		&& strchr(shortn, '.') == shortn + len - 4)
+	{	// strip .mdl
+		shortn[len - 4] = '\0';
+	}
+
+	return shortn;
+}
+#endif // VWEP_TEST
 
 //
 // Write startup data to demo (called when demo started and cls.state == ca_active)
@@ -1399,29 +1422,6 @@ char *CL_DemoDirectory(void)
 	strlcpy(dir, COM_LegacyDir(demo_dir.string), sizeof(dir));
 	return dir;
 }
-
-#ifdef VWEP_TEST
-// FIXME: same as in sv_user.c. Move to common.c?
-static char *TrimModelName (char *full)
-{
-	static char shortn[MAX_QPATH];
-	int len;
-
-	if (!strncmp(full, "progs/", 6) && !strchr(full + 6, '/'))
-		strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
-	else
-		strlcpy (shortn, full, sizeof(shortn));
-
-	len = strlen(shortn);
-	if (len > 4 && !strcmp(shortn + len - 4, ".mdl")
-		&& strchr(shortn, '.') == shortn + len - 4)
-	{	// strip .mdl
-		shortn[len - 4] = '\0';
-	}
-
-	return shortn;
-}
-#endif // VWEP_TEST
 
 //
 // Start recording a demo.

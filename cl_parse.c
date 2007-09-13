@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.115 2007-09-13 14:49:29 disconn3ct Exp $
+$Id: cl_parse.c,v 1.116 2007-09-13 16:02:11 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -619,7 +619,7 @@ void VWepModel_NextDownload (void)
 		if (!cl.vw_model_name[i][0])
 			continue;
 
-		if (strcmp(cl.vw_model_name[i], "*"))
+		if (strcmp(cl.vw_model_name[i], "-"))
 			cl.vw_model_precache[i] = Mod_ForName (cl.vw_model_name[i], false);
 
 		if (!cl.vw_model_precache[i]) {
@@ -628,7 +628,7 @@ void VWepModel_NextDownload (void)
 		}
 	}
 
-	if (!strcmp(cl.vw_model_name[0], "*") || cl.vw_model_precache[0])
+	if (!strcmp(cl.vw_model_name[0], "-") || cl.vw_model_precache[0])
 		cl.vwep_enabled = true;
 	else {
 		// if the vwep player model is required but not present,
@@ -2095,9 +2095,9 @@ void CL_ParseVWepPrecache (char *str)
 	if (p && p[1]) {
 		p++;	// skip the space
 
-		if (!strcmp(p, "*")) {
+		if (!strcmp(p, "-")) {
 			// empty model
-			strcpy (cl.vw_model_name[num], "*");
+			strcpy (cl.vw_model_name[num], "-");
 		}
 		else {
 			if (strstr(p, "..") || p[0] == '/' || p[0] == '\\')

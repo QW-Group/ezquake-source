@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.40 2007-08-12 17:21:21 cokeman1982 Exp $
+	$Id: cl_ents.c,v 1.41 2007-09-13 16:02:11 tonik Exp $
 
 */
 
@@ -1634,12 +1634,8 @@ void CL_ParsePlayerinfo (void) {
 		}
 
 #ifdef VWEP_TEST
-		if (cl.z_ext & Z_EXT_VWEP) {
+		if (cl.z_ext & Z_EXT_VWEP)
 			state->vw_index = state->command.impulse;
-			state->vw_frame = state->command.msec;
-		} else {
-			state->vw_index = state->vw_frame = 0;
-		}
 #endif
 
 		for (i = 0; i < 3; i++) {
@@ -1806,7 +1802,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int vw_frame)
 	if ((unsigned)vw_index >= MAX_VWEP_MODELS)
 		return false;
 
-	if (cl.vw_model_name[vw_index][0] == '*')
+	if (cl.vw_model_name[vw_index][0] == '-')
 		return true;	// empty vwep model
 
 	if (!cl.vw_model_precache[vw_index])
@@ -1818,11 +1814,12 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int vw_frame)
 	VectorCopy (ent->angles, newent.angles);
 	newent.model = cl.vw_model_precache[vw_index];
 	newent.frame = vw_frame;
+	newent.oldframe = vw_frame;
 	newent.skinnum = 0;
 	newent.colormap = vid.colormap;
-	newent.renderfx = RF_PLAYERMODEL;	// not really, but use same lighting rules
+	newent.flags = RF_PLAYERMODEL;	// not really, but use same lighting rules
 
-	V_AddEntity (&newent);
+	CL_AddEntity (&newent);
 	return true;
 }
 #endif
@@ -2012,18 +2009,18 @@ void CL_LinkPlayers (void) {
 #ifdef VWEP_TEST
 		if (cl.vwep_enabled && state->vw_index) {
 			qbool vwep;
-			vwep = CL_AddVWepModel (&ent, state->vw_index, state->vw_frame);
+			vwep = CL_AddVWepModel (&ent, state->vw_index, state->frame);
 			if (vwep) {
-				if (cl.vw_model_name[0][0] != '*') {
+				if (cl.vw_model_name[0][0] != '-') {
 					ent.model = cl.vw_model_precache[0];
-					ent.renderfx = RF_PLAYERMODEL;
-					V_AddEntity (&ent);
+					ent.flags = RF_PLAYERMODEL;
+					CL_AddEntity (&ent);
 				} else {
 					// server said don't add vwep player model
 				}
 			}
 			else
-				V_AddEntity (&ent);
+				CL_AddEntity (&ent);
 		}
 		else
 #endif
