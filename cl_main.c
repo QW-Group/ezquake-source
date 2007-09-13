@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.176 2007-09-12 16:44:08 johnnycz Exp $
+$Id: cl_main.c,v 1.177 2007-09-13 18:10:08 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -663,6 +663,7 @@ void CL_ClearState (void) {
 	int i;
 	extern float scr_centertime_off;
 	extern cshift_t	cshift_empty;
+	extern void CL_ProcessServerInfo (void);
 
 	S_StopAllSounds (true);
 
@@ -707,6 +708,8 @@ void CL_ClearState (void) {
 
 	if (!com_serveractive)
 		Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
+
+	CL_ProcessServerInfo(); // force set some default variables, because server may not sent fullserverinfo
 }
 
 //Sends a disconnect message to the server
