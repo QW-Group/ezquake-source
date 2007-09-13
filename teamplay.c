@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.86 2007-09-12 22:29:53 disconn3ct Exp $
+    $Id: teamplay.c,v 1.87 2007-09-13 12:01:45 dkure Exp $
 */
 
 #include <time.h>
@@ -972,7 +972,7 @@ static void CountNearbyPlayers(qbool dead)
 static int check_mtfl_ruleset (void)
 {
 	if (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)) {
-		snprintf(macro_buf, sizeof (macro_buf),"\xffz%d\xff", BANNED_BY_MTFL);
+		snprintf(macro_buf, sizeof (macro_buf),"\xffz%s\xff", BANNED_BY_MTFL);
 		return 1;
 	}
 	return 0;
