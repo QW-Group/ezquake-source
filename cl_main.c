@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.177 2007-09-13 18:10:08 qqshka Exp $
+$Id: cl_main.c,v 1.178 2007-09-13 18:29:50 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1436,7 +1436,7 @@ static double CL_MinFrameTime (void) {
 static double MinPhysFrameTime ()
 {
 	// server policy
-	float fpscap = (cl.maxfps ? cl.maxfps : 72.0);
+	float fpscap = (cl.maxfps ? cl.maxfps : (cl.teamfortress ? 72.0 : 77.0));
 
 	// the user can lower it for testing (or really shit connection)
 	if (cl_physfps.value)
