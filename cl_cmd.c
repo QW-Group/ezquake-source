@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.54 2007-09-02 21:59:28 johnnycz Exp $
+	$Id: cl_cmd.c,v 1.55 2007-09-13 18:11:30 qqshka Exp $
 */
 
 #include <time.h>
@@ -770,6 +770,54 @@ void CL_Serverinfo_f (void) {
 		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
 }
 
+//============================================================================
+
+typedef struct
+{
+	const char	*name;
+	int			bit;
+} z_ext_map_t;
+
+static z_ext_map_t z_map[] =
+{
+	{ "PM_TYPE",		Z_EXT_PM_TYPE },
+	{ "PM_TYPE_NEW",	Z_EXT_PM_TYPE_NEW },
+	{ "VIEWHEIGHT",		Z_EXT_VIEWHEIGHT },
+	{ "SERVERTIME",		Z_EXT_SERVERTIME },
+	{ "PITCHLIMITS",	Z_EXT_PITCHLIMITS },
+	{ "JOIN_OBSERVES",	Z_EXT_JOIN_OBSERVE },
+	{ "PF_ONGROUND",	Z_EXT_PF_ONGROUND }
+};
+
+static int z_map_cnt = sizeof(z_map)/sizeof(z_map[0]);
+
+int get_z_ext_list(int bits, char *buf, int bufsize)
+{
+	int i, cnt;
+
+	buf[0] = 0; // hope buf size at least one byte
+
+	for (i = cnt = 0; i < z_map_cnt; i++)
+	{
+		if (z_map[i].bit != (z_map[i].bit & bits))
+			continue; // not match
+
+		if (cnt)
+			strlcat(buf, " ", bufsize);
+		strlcat(buf, z_map[i].name, bufsize);
+		cnt++;
+	}
+
+	return cnt;
+}
+
+void CL_Z_Ext_List_f (void)
+{
+	char buf[1024] = {0};
+
+	Com_Printf("ZQuake protocol extensions:\n");
+	Com_Printf("%s\n", get_z_ext_list(cl.z_ext, buf, sizeof(buf)) ? buf : "NONE");
+}
 
 //============================================================================
 
@@ -859,6 +907,8 @@ void CL_InitCommands (void) {
 #ifdef _WIN32
 	Cmd_AddCommand ("windows", CL_Windows_f);
 #endif
+
+	Cmd_AddCommand ("z_ext_list", CL_Z_Ext_List_f);
 }
 
 /*
