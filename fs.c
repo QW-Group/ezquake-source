@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.20 2007-09-11 22:32:59 borisu Exp $
+$Id: fs.c,v 1.21 2007-09-13 13:20:43 dkure Exp $
 */
 
 
@@ -89,6 +89,8 @@ void FS_ForceToPure(char *str, char *crcs, int seed);
 int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
 void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int COM_FileOpenRead (char *path, FILE **hndl);
+void FS_ReloadPackFiles_f(void);
+qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
 
 typedef struct
 {
@@ -293,7 +295,9 @@ void COM_Path_f (void)
 // FTE-FIXME: D-Kure This removes a sanity check
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 {
+#ifndef WITH_FTE_VFS
 	searchpath_t *search;
+#endif
 	char fullpath[MAX_OSPATH];
 
 	if (path == NULL)
@@ -354,7 +358,6 @@ qbool COM_WriteFile (char *filename, void *data, int len)
 	fclose (f);
 	return true;
 }
-#endif // WITH_FTE_VFS
 
 //The filename used as is
 qbool COM_WriteFile_2 (char *filename, void *data, int len)
@@ -374,6 +377,7 @@ qbool COM_WriteFile_2 (char *filename, void *data, int len)
 	fclose (f);
 	return true;
 }
+#endif // WITH_FTE_VFS
 
 
 //Only used for CopyFile and download
@@ -924,6 +928,7 @@ void FS_SetGamedir (char *dir)
 		com_searchpaths = next;
 	}
 
+	com_fschanged=true;
 #endif
 
 	// Flush all data, so it will be forced to reload.
@@ -938,7 +943,7 @@ void FS_SetGamedir (char *dir)
 #else
 		FS_AddGameDirectory(va("%s%s", com_basedir, dir), FS_LOAD_FILE_ALL);
 		if (*com_homedir)
-			FS_AddGameDirectory(va("%s%s", com_homedir, dir), FS_LOAD_FILE_ALL);
+			FS_AddGameDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
 #endif
 	}
 
@@ -1044,7 +1049,12 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 #ifdef _WIN32
     // gets "C:\documents and settings\johnny\my documents" path
-    if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0))
+    //if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0))
+
+	// <Cokeman> yea, but it shouldn't be in My Documents
+	// <Cokeman> it should be in the application data dir
+	// c:\documents and settings\<user>\application data
+    if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_APPDATA, 0))
     {
         *com_homedir = 0;
     }
@@ -1347,7 +1357,7 @@ vfsfile_t *FS_OpenTemp(void)
 	if (!f)
 		return NULL;
 
-	file = Q_malloc(sizeof(vfsosfile_t));
+	file = Q_calloc(1, sizeof(vfsosfile_t));
 
 	file->funcs.ReadBytes	= VFSOS_ReadBytes;
 	file->funcs.WriteBytes	= VFSOS_WriteBytes;
@@ -1394,7 +1404,7 @@ vfsfile_t *VFSOS_Open(char *name, FILE *f, char *mode)
 	if (!f)
 		return NULL;
 
-	file = Q_malloc(sizeof(vfsosfile_t));
+	file = Q_calloc(1, sizeof(vfsosfile_t));
 
 	file->funcs.ReadBytes	= (strchr(mode, 'r') ? VFSOS_ReadBytes  : NULL);
 	file->funcs.WriteBytes	= (strchr(mode, 'w') ? VFSOS_WriteBytes : NULL);
@@ -1502,7 +1512,7 @@ vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 	if (strcmp(mode, "rb") || !handle || fsize < 0 || fpos < 0)
 		return NULL; // support only "rb" mode
 
-	vfs = Q_malloc(sizeof(vfspack_t));
+	vfs = Q_calloc(1, sizeof(vfspack_t));
 
 	vfs->handle = handle;
 
@@ -1810,7 +1820,7 @@ vfsfile_t *FS_OpenTCP(char *name)
 //		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true)) == -1)
 //			Com_Printf ("FS_OpenTCP: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
 
-		newf = Q_malloc(sizeof(tcpfile_t));
+		newf = Q_calloc(1, sizeof(tcpfile_t));
 		memset(newf, 0, sizeof(tcpfile_t));
 		newf->sock				= sock;
 		newf->funcs.Close		= VFSTCP_Close;
@@ -2675,6 +2685,12 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("loadpak", FS_PakAdd_f);
 	Cmd_AddCommand("removepak", FS_PakRem_f);
 	Cmd_AddCommand("path", COM_Path_f);
+#ifndef WITH_FTE_VFS
+	Com_Printf("Initialising standard quake filesystem\n");
+#else
+	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
+	Com_Printf("Initialising quake VFS filesystem\n");
+#endif
 }
 
 //================================================================================================
@@ -2699,7 +2715,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.20 2007-09-11 22:32:59 borisu Exp $
+ * $Id: fs.c,v 1.21 2007-09-13 13:20:43 dkure Exp $
  *             
  */
 
@@ -2804,7 +2820,7 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	if (!f)
 		return NULL;
 
-	file = Q_malloc(sizeof(vfsosfile_t));
+	file = Q_calloc(1, sizeof(vfsosfile_t));
 
 	file->funcs.ReadBytes  = ( strchr(mode, 'r')                      ? VFSOS_ReadBytes  : NULL);
 	file->funcs.WriteBytes = ((strchr(mode, 'w') || strchr(mode, 'a'))? VFSOS_WriteBytes : NULL);
@@ -3185,7 +3201,7 @@ vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	if (strcmp(mode, "rb"))
 		return NULL; //urm, unable to write/append
 
-	vfs = Q_malloc(sizeof(vfspack_t));
+	vfs = Q_calloc(1, sizeof(vfspack_t));
 
 	vfs->parentpak = pack;
 	vfs->parentpak->references++;
@@ -4321,7 +4337,7 @@ vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	if (strcmp(mode, "rb"))
 		return NULL; //urm, unable to write/append
 
-	vfsz = Q_malloc(sizeof(vfszip_t));
+	vfsz = Q_calloc(1, sizeof(vfszip_t));
 
 	vfsz->parent = zip;
 	vfsz->index = loc->index;
@@ -4549,24 +4565,19 @@ The filename will be prefixed by the current game directory
 */
 qbool COM_WriteFile (char *filename, void *data, int len)
 {
-	vfsfile_t *vfs;
-
 	Sys_Printf ("COM_WriteFile: %s\n", filename);
-
-	FS_CreatePath(filename, FS_GAME_OS);
-	vfs = FS_OpenVFS(filename, "wb", FS_GAME_OS);
-	if (vfs)
-	{
-		VFS_WRITE(vfs, data, len);
-		VFS_CLOSE(vfs);
-	} else {
-		return false;
-	}
-
-	com_fschanged=true;
-	return true;
+	return FS_WriteFile(filename, data, len, FS_GAME_OS);
 }
 
+//The filename used as is
+qbool COM_WriteFile_2 (char *filename, void *data, int len)
+{
+	Sys_Printf ("COM_WriteFile_2: %s\n", filename);
+	return FS_WriteFile(filename, data, len, FS_NONE_OS);
+}
+
+
+#if 0
 FILE *COM_WriteFileOpen (char *filename)	//like fopen, but based around quake's paths.
 {
 	FILE	*f;
@@ -4580,6 +4591,7 @@ FILE *COM_WriteFileOpen (char *filename)	//like fopen, but based around quake's 
 
 	return f;
 }
+#endif
 
 
 /*
@@ -4604,41 +4616,6 @@ void	COM_CreatePath (char *path)
 	}
 }
 
-
-/*
-===========
-COM_CopyFile
-
-Copies a file over from the net to the local cache, creating any directories
-needed.  This is for the convenience of developers using ISDN from home.
-===========
-*/
-void COM_CopyFile (char *netpath, char *cachepath)
-{
-	FILE	*in, *out;
-	int		remaining, count;
-	char	buf[4096];
-
-	remaining = COM_FileOpenRead (netpath, &in);
-	COM_CreatePath (cachepath);	// create directories up to the cache file
-	out = fopen(cachepath, "wb");
-	if (!out)
-		Sys_Error ("Error opening %s", cachepath);
-
-	while (remaining)
-	{
-		if (remaining < sizeof(buf))
-			count = remaining;
-		else
-			count = sizeof(buf);
-		fread (buf, 1, count, in);
-		fwrite (buf, 1, count, out);
-		remaining -= count;
-	}
-
-	fclose (in);
-	fclose (out);
-}
 
 int fs_hash_dups;
 int fs_hash_files;
@@ -5063,7 +5040,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 	case FS_NONE_OS: 	//OS access only, no paks, open file as is
 		if (*com_homedir)
 		{
-			snprintf(fullname, sizeof(fullname), "%s%s", com_homedir, filename);
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
 			vfs = VFSOS_Open(fullname, mode);
 			if (vfs)
 				return vfs;
@@ -5075,7 +5052,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 	case FS_GAME_OS:	//OS access only, no paks
 		if (*com_homedir)
 		{
-			snprintf(fullname, sizeof(fullname), "%s%s/%s", com_homedir, com_gamedirfile, filename);
+			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
 			vfs = VFSOS_Open(fullname, mode);
 			if (vfs) {
 				fs_filesize = VFS_GETLEN(vfs);
@@ -5083,13 +5060,13 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 			}
 		}
 
-		snprintf(fullname, sizeof(fullname), "%s%s/%s", com_basedir, com_gamedirfile, filename);
+		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
 		return VFSOS_Open(fullname, mode);
 
 /* XXX: Removed as we don't really use this
  *	case FS_SKINS:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_homedir, filename);
+			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, filename);
 		else
 			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_basedir, filename);
 		break;
@@ -5098,7 +5075,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 	case FS_BASE:
 //		if (*com_homedir)
 //		{
-//			snprintf(fullname, sizeof(fullname), "%s%s", com_homedir, filename);
+//			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
 //			vfs = VFSOS_Open(fullname, mode);
 //			if (vfs)
 //				return vfs;
@@ -5110,7 +5087,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
  * case FS_CONFIGONLY:
 		if (*com_homedir)
 		{
-			snprintf(fullname, sizeof(fullname), "%s.ezquake/%s", com_homedir, filename);
+			snprintf(fullname, sizeof(fullname), "%s/.ezquake/%s", com_homedir, filename);
 			vfs = VFSOS_Open(fullname, mode);
 			if (vfs)
 				return vfs;
@@ -5120,7 +5097,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
  */
 	case FS_HOME:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s%s/%s", com_homedir, com_gamedirfile, filename);
+			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
 		else
 			return NULL;
 		return VFSOS_Open(fullname, mode);
@@ -5168,7 +5145,7 @@ int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t 
 	{
 	case FS_GAME_OS:
 		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s%s/", com_homedir, com_gamedirfile);
+			snprintf(oldfullname, sizeof(oldfullname), "%s/%s/", com_homedir, com_gamedirfile);
 		else
 			snprintf(oldfullname, sizeof(oldfullname), "%s%s/", com_basedir, com_gamedirfile);
 		break;
@@ -5194,14 +5171,14 @@ int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t 
 	{
 	case FS_GAME_OS:
 		if (*com_homedir)
-			snprintf(newfullname, sizeof(newfullname), "%s%s/", com_homedir, com_gamedirfile);
+			snprintf(newfullname, sizeof(newfullname), "%s/%s/", com_homedir, com_gamedirfile);
 		else
 			snprintf(newfullname, sizeof(newfullname), "%s%s/", com_basedir, com_gamedirfile);
 		break;
 
 /*	case FS_SKINS:
 		if (*com_homedir)
-			snprintf(newfullname, sizeof(newfullname), "%sqw/skins/", com_homedir);
+			snprintf(newfullname, sizeof(newfullname), "%s/qw/skins/", com_homedir);
 		else
 			snprintf(newfullname, sizeof(newfullname), "%sqw/skins/", com_basedir);
 		break;
@@ -5231,14 +5208,14 @@ int FS_Rename(char *oldf, char *newf, relativeto_t relativeto)
 	{
 	case FS_GAME_OS:
 		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s%s/", com_homedir, com_gamedirfile);
+			snprintf(oldfullname, sizeof(oldfullname), "%s/%s/", com_homedir, com_gamedirfile);
 		else
 			snprintf(oldfullname, sizeof(oldfullname), "%s%s/", com_basedir, com_gamedirfile);
 		break;
 
 /*	case FS_SKINS:
 		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%sqw/skins/", com_homedir);
+			snprintf(oldfullname, sizeof(oldfullname), "%s/qw/skins/", com_homedir);
 		else
 			snprintf(oldfullname, sizeof(oldfullname), "%sqw/skins/", com_basedir);
 		break;
@@ -5270,21 +5247,21 @@ int FS_Remove(char *fname, int relativeto)
 	{
 	case FS_GAME_OS:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s%s/%s", com_homedir, com_gamedirfile, fname);
+			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, fname);
 		else
 			snprintf(fullname, sizeof(fullname), "%s%s/%s", com_basedir, com_gamedirfile, fname);
 		break;
 
 /*	case FS_SKINS:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_homedir, fname);
+			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, fname);
 		else
 			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_basedir, fname);
 		break;
  */
 	case FS_BASE:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s%s", com_homedir, fname);
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, fname);
 		else
 			snprintf(fullname, sizeof(fullname), "%s%s", com_basedir, fname);
 		break;
@@ -5301,7 +5278,10 @@ void FS_CreatePath(char *pname, int relativeto)
 	switch (relativeto)
 	{
 	case FS_NONE_OS:
-		snprintf(fullname, sizeof(fullname), "%s", pname);
+		if (*com_homedir)
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, pname);
+		else
+			snprintf(fullname, sizeof(fullname), "%s", pname);
 		break;
 
 	case FS_GAME_OS:
@@ -5311,19 +5291,19 @@ void FS_CreatePath(char *pname, int relativeto)
 	case FS_BASE:
 	case FS_ANY:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s%s", com_homedir, pname);
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, pname);
 		else
 			snprintf(fullname, sizeof(fullname), "%s%s", com_basedir, pname);
 		break;
 /*	case FS_SKINS:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_homedir, pname);
+			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, pname);
 		else
 			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_basedir, pname);
 		break;
 	case FS_CONFIGONLY:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%sfte/%s", com_homedir, pname);
+			snprintf(fullname, sizeof(fullname), "%s/fte/%s", com_homedir, pname);
 		else
 			snprintf(fullname, sizeof(fullname), "%sfte/%s", com_basedir, pname);
 		break;*/
@@ -5336,40 +5316,24 @@ void FS_CreatePath(char *pname, int relativeto)
 
 qbool FS_WriteFile (char *filename, void *data, int len, int relativeto)
 {
+	char name[MAX_PATH];
 	vfsfile_t *f;
+
+	snprintf (name, sizeof(name), "%s", filename);
+
 	FS_CreatePath(filename, relativeto);
 	f = FS_OpenVFS(filename, "wb", relativeto);
-	if (!f)
+	if (f) 
+	{
+		VFS_WRITE(f, data, len);
+		VFS_CLOSE(f);
+	} else {
 		return false;
-	VFS_WRITE(f, data, len);
-	VFS_CLOSE(f);
+	}
+
+	com_fschanged=true;
 
 	return true;
-}
-
-void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm)
-{
-	searchpath_t    *search;
-	for (search = com_searchpaths; search ; search = search->next)
-	{
-	// is the element a pak file?
-		if (!search->funcs->EnumerateFiles(search->handle, match, func, parm))
-			break;
-	}
-}
-
-void COM_FlushTempoaryPacks(void)
-{
-	searchpath_t *next;
-	while (com_searchpaths && com_searchpaths->istemporary)
-	{
-		com_searchpaths->funcs->ClosePath(com_searchpaths->handle);
-		next = com_searchpaths->next;
-		Q_free (com_searchpaths);
-		com_searchpaths = next;
-
-		com_fschanged = true;
-	}
 }
 
 typedef struct {
@@ -5457,6 +5421,8 @@ void COM_FlushFSCache(void)
 	if (com_fs_cache.value != 2)
 		com_fschanged=true;
 }
+
+
 /*
 ================
 FS_AddGameDirectory
@@ -5495,208 +5461,6 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 	strcpy(p, dir);
 	COM_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
 }
-
-char *COM_NextPath (char *prevpath)
-{
-	searchpath_t	*s;
-	char			*prev;
-
-	if (!prevpath)
-		return com_gamedir;
-
-	prev = com_gamedir;
-	for (s=com_searchpaths ; s ; s=s->next)
-	{
-		if (s->funcs != &osfilefuncs)
-			continue;
-
-		if (prevpath == prev)
-			return s->handle;
-		prev = s->handle;
-	}
-
-	return NULL;
-}
-
-#ifndef CLIENTONLY
-char *COM_GetPathInfo (int i, int *crc)
-{
-#ifdef WEBSERVER
-	extern cvar_t httpserver;
-#endif
-
-	searchpath_t	*s;
-	static char name[MAX_OSPATH];
-	char			*protocol;
-
-	for (s=com_searchpaths ; s ; s=s->next)
-	{
-		i--;
-		if (!i)
-			break;
-	}
-	if (i)	//too high.
-		return NULL;
-
-#ifdef WEBSERVER
-	if (httpserver.value)
-		protocol = va("http://%s/", NET_AdrToString (net_local_sv_ipadr));
-	else
-#endif
-		protocol = "qw://";
-
-	*crc = 0;//s->crc;
-	strcpy(name, "FIXME");
-//	Q_strncpyz(name, va("%s%s", protocol, COM_SkipPath(s->filename)), sizeof(name));
-	return name;
-}
-#endif
-
-
-/*
-================
-COM_Gamedir
-
-Sets the gamedir and path to a different directory.
-================
-*/
-// XXX: This is pretty much FS_Gamedir, this could be removed and replaced with FS_Gamedir
-void COM_Gamedir (char *dir)
-{
-	searchpath_t	*next;
-
-	if (!*dir || strstr(dir, "..") || strstr(dir, "/")
-		|| strstr(dir, "\\") || strstr(dir, ":") )
-	{
-		// FTE-FIXME: Implement this with Com_Printf
-		// Con_TPrintf (TL_GAMEDIRAINTPATH);
-		return;
-	}
-
-	if (!strcmp(com_gamedirfile, dir))
-		return;		// still the same
-
-	FS_ForceToPure(NULL, NULL, 0);
-
-#ifndef SERVERONLY
-// FTE-FIXME: Add this function
-//Host_WriteConfiguration();	//before we change anything.
-#endif
-
-	strcpy (com_gamedirfile, dir);
-
-#ifndef CLIENTONLY
-	// FTE-FIXME: 'server_t' has no member named 'gamedirchanged'
-	// FTE-FIXME: Find out what gamedirchanged does in fte
-	//sv.gamedirchanged = true;
-#endif
-#ifndef SERVERONLY
-	// FTE-FIXME: 'clientState_t' has no member named 'gamedirchanged'
-	// FTE-FIXME: Find out what gamedirchanged does in fte
-	//cl.gamedirchanged = true;
-#endif
-
-	FS_FlushFSHash();
-
-	//
-	// free up any current game dir info
-	//
-	while (com_searchpaths != com_base_searchpaths)
-	{
-		com_searchpaths->funcs->ClosePath(com_searchpaths->handle);
-		next = com_searchpaths->next;
-		Q_free (com_searchpaths);
-		com_searchpaths = next;
-	}
-
-	com_fschanged = true;
-
-	//
-	// flush all data, so it will be forced to reload
-	//
-	Cache_Flush ();
-
-	FS_AddGameDirectory(va("%s%s", com_basedir, dir), FS_LOAD_FILE_ALL);
-	if (*com_homedir)
-		FS_AddGameDirectory(va("%s%s", com_homedir, dir), FS_LOAD_FILE_ALL);
-
-
-#ifndef SERVERONLY
-	{
-		char	fn[MAX_OSPATH];
-		FILE *f;
-
-//		if (qrenderer)	//only do this if we have already started the renderer
-//			Cbuf_InsertText("vid_restart\n", RESTRICT_LOCAL);
-
-		sprintf(fn, "%s/%s", com_gamedir, "config.cfg");
-		if ((f = fopen(fn, "r")) != NULL)
-		{
-			fclose(f);
-//			FTE-FIXME: find what RESTRICT_LOCAL refers to
-//			FTE-FIXME: Change this to an ezquake version
-//			Cbuf_InsertText("cl_warncmd 0\n"
-//							"exec config.cfg\n"
-//							"exec fte.cfg\n"
-//							"exec frontend.cfg\n"
-//							"cl_warncmd 1\n", RESTRICT_LOCAL, false);
-		}
-	}
-
-// FTE-FIXME: Does ezquake have Q3SHADERS??? i dont think so
-#ifdef Q3SHADERS
-	{
-		extern void Shader_Init(void);
-		Shader_Init();	// FIXME!
-	}
-#endif
-
-// FTE-FIXME: Add Validation_FlushFileList
-// Validation_FlushFileList();	//prevent previous hacks from making a difference.
-
-	// FIXME: load new palette, if different cause a vid_restart.
-
-#endif
-}
-
-#define NEXCFG "set sv_maxairspeed \"400\"\nset sv_mintic \"0.01\"\ncl_nolerp 0\n"
-
-// FTE-FIXME: These shouldn't be needed, these are only for extra games 
-//        and searching of directories
-typedef struct {
-	char *gamename;	//sent to the master server when this is the current gamemode.
-	char *exename;	//used if the exe name contains this
-	char *argname;	//used if this was used as a parameter.
-	char *auniquefile;	//used if this file is relative from the gamedir
-
-	char *customexec;
-
-	char *dir1;
-	char *dir2;
-	char *dir3;
-	char *dir4;
-} gamemode_info_t;
-gamemode_info_t gamemode_info[] = {
-//note that there is no basic 'fte' gamemode, this is because we aim for network compatability. Darkplaces-Quake is the closest we get.
-//this is to avoid having too many gamemodes anyway.
-
-// FTE-FIXME: These shouldn't be needed, these are only for extra games 
-//        and searching of directories
-//rogue/hipnotic have no special files - the detection conflicts and stops us from running regular quake
-	{"Darkplaces-Quake",	"darkplaces",	"-quake",		"id1/pak0.pak",		NULL,	"id1",		"qw",				"fte"},
-	{"Darkplaces-Hipnotic",	"hipnotic",		"-hipnotic",	NULL,				NULL,	"id1",		"qw",	"hipnotic",	"fte"},
-	{"Darkplaces-Rogue",	"rogue",		"-rogue",		NULL,				NULL,	"id1",		"qw",	"rogue",	"fte"},
-	{"Nexuiz",				"nexuiz",		"-nexuiz",		"nexuiz.exe",		NEXCFG,	"id1",		"qw",	"data",		"fte"},
-
-	//supported commercial mods (some are currently only partially supported)
-	{"FTE-Hexen2",			"hexen",		"-hexen2",		"data1/pak0.pak",	NULL,	"data1",						"fte"},
-	{"FTE-Quake2",			"q2",			"-q2",			"baseq2/pak0.pak",	NULL,	"baseq2",						"fte"},
-	{"FTE-Quake3",			"q3",			"-q3",			"baseq3/pak0.pk3",	NULL,	"baseq3",						"fte"},
-
-	{"FTE-JK2",				"jk2",			"-jk2",			"base/assets0.pk3",	NULL,	"base",							"fte"},
-
-	{NULL}
-};
 
 //space-seperate pk3 names followed by space-seperated crcs
 //note that we'll need to reorder and filter out files that don't match the crc.
@@ -5884,168 +5648,15 @@ void FS_ReloadPackFiles_f(void)
 		FS_ReloadPackFilesFlags(FS_LOAD_FILE_ALL);
 }
 
-/*
-================
-COM_InitFilesystem
-================
-*/
-// XXX: This seems to be the same as FS_InitFilesystem && FS_InitFilesystemEx
-void COM_InitFilesystem (void)
+void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm)
 {
-	FILE *f;
-	int		i;
-
-	char *ev;
-
-
-	int gamenum=-1;
-
-	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
-
-//
-// -basedir <path>
-// Overrides the system supplied base directory (under id1)
-//
-	i = COM_CheckParm ("-basedir");
-	if (i && i < com_argc-1) {
-		strcpy(com_basedir, com_argv[i+1]);
-	} else {
-		// FTE-FIXME: Find what host_parms is for ezquake
-		//strcpy(com_basedir, host_parms.basedir);
-	}
-
-	if (*com_basedir)
-	{
-		if (com_basedir[strlen(com_basedir)-1] == '\\')
-			com_basedir[strlen(com_basedir)-1] = '/';
-		else if (com_basedir[strlen(com_basedir)-1] != '/')
-		{
-			com_basedir[strlen(com_basedir)+1] = '\0';
-			com_basedir[strlen(com_basedir)] = '/';
-		}
-	}
-
-
-
-	// FTE-FIXME: com_gamename??? i think we can ignore this
-	//Cvar_Register(&com_gamename, "evil hacks");
-	//
-	// XXX: TODO: FTE-FIXME: Remove thie whole game name stuff
-	//identify the game from a telling file
-	for (i = 0; gamemode_info[i].gamename; i++)
-	{
-		if (!gamemode_info[i].auniquefile)
-			continue;	//no more
-		f = fopen(va("%s%s", com_basedir, gamemode_info[i].auniquefile), "rb");
-		if (f)
-		{
-			fclose(f);
-			gamenum = i;
-			break;
-		}
-	}
-	//use the game based on an exe name over the filesystem one.
-	for (i = 0; gamemode_info[i].gamename; i++)
-	{
-		if (strstr(com_argv[0], gamemode_info[i].exename))
-			gamenum = i;
-	}
-	//use the game based on an parameter over all else.
-	for (i = 0; gamemode_info[i].gamename; i++)
-	{
-		if (COM_CheckParm(gamemode_info[i].argname))
-			gamenum = i;
-	}
-
-	if (gamenum<0)
-	{
-		for (i = 0; gamemode_info[i].gamename; i++)
-		{
-			if (!strcmp(gamemode_info[i].argname, "-quake"))
-				gamenum = i;
-		}
-	}
-	// FTE-FIXME: I think we can ignore this
-	//Cvar_Set(&com_gamename, gamemode_info[gamenum].gamename);
-
-	//if (gamemode_info[gamenum].customexec)
-	//	Cbuf_AddText(gamemode_info[gamenum].customexec, RESTRICT_LOCAL);
-
-#ifdef _WIN32
-	{	//win32 sucks.
-		ev = getenv("HOMEDRIVE");
-		if (ev)
-			strcpy(com_homedir, ev);
-		else
-			strcpy(com_homedir, "");
-		ev = getenv("HOMEPATH");
-		if (ev)
-			strcat(com_homedir, ev);
-		else
-			strcat(com_homedir, "/");
-	}
-#else
-	//yay for unix!.
-	ev = getenv("HOME");
-	if (ev)
-		strncpy(com_homedir, ev, sizeof(com_homedir));
-	else
-		*com_homedir = '\0';
-#endif
-
-	if (!COM_CheckParm("-usehome"))
-		*com_homedir = '\0';
-
-	if (COM_CheckParm("-nohome"))
-		*com_homedir = '\0';
-
-	if (*com_homedir)
-	{
-		strcat(com_homedir, "/.fte/");
-		Com_Printf("Using home directory \"%s\"\n", com_homedir);
-	}
-
-//
-// start up with id1 by default
-//
-	i = COM_CheckParm ("-basegame");
-	if (i && i < com_argc-1)
-	{
-		do	//use multiple -basegames
-		{
-			FS_AddGameDirectory (va("%s%s", com_basedir, com_argv[i+1]), FS_LOAD_FILE_ALL);
-
-			i = COM_CheckParmOffset("-basegame", i);
-		}
-		while (i && i < com_argc-1);
-	}
-	else
-	{
-		if (gamemode_info[gamenum].dir1)
-			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir1), FS_LOAD_FILE_ALL);
-		if (gamemode_info[gamenum].dir2)
-			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir2), FS_LOAD_FILE_ALL);
-		if (gamemode_info[gamenum].dir3)
-			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir3), FS_LOAD_FILE_ALL);
-		if (gamemode_info[gamenum].dir4)
-			FS_AddGameDirectory (va("%s%s", com_basedir, gamemode_info[gamenum].dir4), FS_LOAD_FILE_ALL);
-	}
-
-	if (*com_homedir)
-		FS_AddGameDirectory (va("%sfte", com_homedir), FS_LOAD_FILE_ALL);
-
-	// any set gamedirs will be freed up to here
-	com_base_searchpaths = com_searchpaths;
-
-	i = COM_CheckParm ("-game");	//effectivly replace with +gamedir x (But overridable)
-	if (i && i < com_argc-1)
-	{
-		FS_AddGameDirectory (va("%s%s", com_basedir, com_argv[i+1]), FS_LOAD_FILE_ALL);
-
-#ifndef CLIENTONLY
-		Info_SetValueForStarKey (svs.info, "*gamedir", com_argv[i+1], MAX_SERVERINFO_STRING);
-#endif
-	}
+    searchpath_t    *search;
+    for (search = com_searchpaths; search ; search = search->next)
+    {
+    // is the element a pak file?
+        if (!search->funcs->EnumerateFiles(search->handle, match, func, parm))
+            break;
+    }
 }
 
 #endif /* WITH_FTE_VFS */
