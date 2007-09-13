@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.113 2007-09-12 22:29:52 disconn3ct Exp $
+$Id: cl_parse.c,v 1.114 2007-09-13 13:15:59 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -414,7 +414,7 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 #ifndef WITH_FTE_VFS
 	FILE *f;
 #else
-	vfsfile_t *v;
+	vfsfile_t *f;
 #endif
 
 
@@ -430,9 +430,9 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 		return true;
 	}
 #else
-	v = FS_OpenVFS(filename, "rb", FS_ANY);
-	if (v) {
-		VFS_CLOSE(v);
+	f = FS_OpenVFS(filename, "rb", FS_ANY);
+	if (f) {
+		VFS_CLOSE(f);
 		return true;
 	}
 #endif // WITH_FTE_VFS
