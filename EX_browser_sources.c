@@ -87,7 +87,6 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
     else
     {
 #ifndef WITH_FTE_VFS
-		// FTE-FIXME: D-Kure: This needs to be re worked with VFS layer support, use VFS_GETS
         while (!feof(f))
         {
             char c = 'A';
@@ -539,26 +538,22 @@ void Reload_Sources(void)
         char *p, *q;
 
         if (fscanf(f, "%[ -~	]s", line) != 1)
-	{
-	    while (!feof(f)  &&  c != '\n')
-		fscanf(f, "%c", &c);
-            continue;
-	}
+		{
+			while (!feof(f)  &&  c != '\n')
+				fscanf(f, "%c", &c);
+			continue;
+		}
         while (!feof(f)  &&  c != '\n')
             fscanf(f, "%c", &c);
 #else
     while (VFS_GETS(f, ln, sizeof(ln)))
     {
 		char line[2048];
-        char c = 'A';
         char *p, *q;
 
         if (sscanf(ln, "%[ -~	]s", line) != 1) {
-			while (VFS_READ(f, &c, 1, NULL)  &&  c != '\n')
-				continue;
-		}
-		while (VFS_READ(f, &c, 1, NULL)  &&  c != '\n')
 			continue;
+		}
 #endif
 
         p = next_nonspace(line);
