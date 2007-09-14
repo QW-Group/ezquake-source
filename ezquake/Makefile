@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.62.2.4 2007-08-02 17:12:46 zwoch Exp $
+#	$Id: Makefile,v 1.62.2.5 2007-09-14 13:01:11 disconn3ct Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -12,7 +12,7 @@ CC_BASEVERSION = $(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 # TYPE = release debug
 TYPE=release
 STRIP = $(_E)strip
-#STRIPFLAGS = --strip-unneeded --remove-section=.comment
+STRIPFLAGS = --strip-unneeded --remove-section=.comment
 
 # ARCH = x86 ppc
 # OS = linux darwin freebsd
@@ -21,16 +21,15 @@ OS = $(shell uname -s | tr A-Z a-z)
 
 # add special architecture based flags
 ifeq ($(ARCH),x86_64)
-	ARCH_CFLAGS = -march=k8 -D__LITTLE_ENDIAN__
+	ARCH_CFLAGS = -mtune=nocona -mmmx -msse -msse2 -m64
 endif
 ifeq ($(ARCH),x86)
-	ARCH_CFLAGS = -march=i686 -D__LITTLE_ENDIAN__ -Did386
+	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
 endif
 ifeq ($(ARCH),ppc)
-	ARCH_CFLAGS = -arch i386 -arch ppc
+	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
 endif
 
-# TODO: LIB_PREFIX must be $(OS)-$(ARCH)
 ifeq ($(OS),linux)
 	DEFAULT_TARGET = glx
 	OS_GL_CFLAGS = -DWITH_DGA -DWITH_EVDEV -DWITH_VMODE
@@ -81,10 +80,10 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 	$(MKDIR)
 
 # compiler flags
-PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP
-BASE_CFLAGS = -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I ./libs
+PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP #-DWITH_FTE_VFS
+BASE_CFLAGS = -pipe -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I ./libs
 
-RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fexpensive-optimizations -funroll-loops
+RELEASE_CFLAGS = -O2 -fno-strict-aliasing -ffast-math -funroll-loops
 DEBUG_CFLAGS = -ggdb
 
 # opengl builds
@@ -96,8 +95,13 @@ else
 CFLAGS = $(BASE_CFLAGS) $(DEBUG_CFLAGS) -D_DEBUG
 endif
 
+ifeq ($(TYPE),release)
 LDFLAGS = -lm -lpthread
-COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a
+else
+LDFLAGS = -ggdb -lm -lpthread
+endif
+
+COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a libs/$(LIB_PREFIX)/asmlibe.a
 GL_LIBS = libs/$(LIB_PREFIX)/libjpeg.a
 
 ifeq ($(OS),freebsd)
@@ -215,7 +219,7 @@ $(SVGA_S_OBJS): $(SVGA_DIR)/%.o: %.s
 
 MAC_C_OBJS = $(addprefix $(MAC_DIR)/, $(addsuffix .o, $(MAC_C_FILES)))
 MAC_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-MAC_LDFLAGS = $(LDFLAGS) -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
+MAC_LDFLAGS = $(LDFLAGS) -arch i686 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 
 mac: _DIR = $(MAC_DIR)
 mac: _OBJS = $(MAC_C_OBJS) $(COMMON_LIBS) $(GL_LIBS)

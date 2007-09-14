@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.136.2.9 2007-05-29 13:42:17 disconn3ct Exp $
+	$Id: cl_main.c,v 1.136.2.10 2007-09-14 13:01:06 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -87,6 +87,7 @@ cvar_t	cl_independentPhysics = {"cl_independentPhysics", "1", CVAR_INIT};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
+cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
 cvar_t  show_fps2 = {"draw_fps","0"};
 
@@ -126,6 +127,7 @@ cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
 // START shaman :: balancing variables
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
 // END shaman :: balancing variables
+cvar_t cl_newlerp				= {"cl_newlerp", "0"};
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
 cvar_t cl_fix_mvd				= {"cl_fix_mvd", "0", CVAR_ARCHIVE};
 
@@ -1016,6 +1018,7 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&cl_model_bobbing);
 	Cvar_Register (&cl_nolerp);
+	Cvar_Register (&cl_newlerp);
 	Cvar_Register (&cl_lerp_monsters);
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_physfps);	//#fps
@@ -1070,6 +1073,7 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register (&cl_predict_players);
 	Cvar_Register (&cl_solid_players);
+	Cvar_Register (&cl_predict_half);
 	Cvar_Register (&cl_oldPL);
 	Cvar_Register (&cl_timeout);
 	Cvar_Register (&cl_useproxy);

@@ -14,12 +14,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.7.2.3 2007-05-31 13:06:33 disconn3ct Exp $
+	$Id: in_linux.c,v 1.7.2.4 2007-09-14 13:01:10 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 #include "input.h"
 #include "keys.h"
+
+#ifdef _Soft_SVGA
+#include <vgamouse.h>
+#endif
 
 #ifdef NDEBUG
 #define win_mouse	"1"

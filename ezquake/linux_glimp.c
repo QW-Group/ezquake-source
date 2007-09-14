@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.10.2.1 2007-05-30 19:01:44 vvd0 Exp $
+    $Id: linux_glimp.c,v 1.10.2.2 2007-09-14 13:01:10 disconn3ct Exp $
 
 */
 /*
@@ -1650,6 +1650,9 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 	*x = *y = 0;
 	*width  = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
+
+	if (cls.state != ca_active)
+		glClear (GL_COLOR_BUFFER_BIT);
 }
 
 void GL_EndRendering (void) {

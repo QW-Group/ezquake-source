@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.30.2.2 2007-05-05 22:03:40 disconn3ct Exp $
+	$Id: cl_ents.c,v 1.30.2.3 2007-09-14 13:01:06 disconn3ct Exp $
 
 */
 
@@ -39,8 +39,9 @@ void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info)
 #define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
 
 extern cvar_t cl_predict_players, cl_solid_players, cl_rocket2grenade;
+extern cvar_t cl_predict_half;
 extern cvar_t cl_model_bobbing;		
-extern cvar_t cl_nolerp, cl_lerp_monsters;
+extern cvar_t cl_nolerp, cl_lerp_monsters, cl_newlerp;
 
 static struct predicted_player {
 	int flags;
@@ -315,6 +316,12 @@ void CL_DecayLights (void) {
 	}
 }
 
+qbool NewLerp_AbleModel(int idx)
+{
+	return !cls.demoplayback && cl_newlerp.value && 
+			(idx == cl_modelindices[mi_rocket] || idx == cl_modelindices[mi_grenade] || idx == cl_modelindices[mi_spike]);
+}
+
 void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 	centity_t *cent;
 
@@ -339,7 +346,39 @@ void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 		
 		if (changed) {
 			if (!VectorCompare(state->origin, cent->current.origin) || !VectorCompare(state->angles, cent->current.angles)) {
-				VectorCopy(cent->current.origin, cent->old_origin);
+			    if (NewLerp_AbleModel(state->modelindex))
+			    {
+			    	float s  = (cls.mvdplayback ? nextdemotime - olddemotime : cl.time - cent->startlerp); // time delta
+			    	float s2 = 1.0 / (s ? s : 1); // here no function which divide vector by X value, so we multiplay vector by 1/X
+			    	vec3_t tmp, tmp2;
+					VectorSubtract(state->origin, cent->current.origin, tmp); // origin delta, also move direction
+					VectorScale(tmp, s2, tmp2); // we divide origin delta by time delta, that velocity in other words
+
+					if (cent->deltalerp == -1) {
+						VectorCopy(tmp2, cent->velocity); // we got first velocity for our enitity, just save it
+					}
+					else {
+						VectorAdd(tmp2, cent->velocity, cent->velocity);
+						VectorScale(cent->velocity, 0.5, cent->velocity); // (previous velocity + current) / 2, we got average velocity
+					}
+
+//					Com_Printf("v: %6.1f %6.1f %6.1f %f %f\n", VectorLength(tmp), VectorLength(tmp2), VectorLength(cent->velocity), s2, s);
+
+					if (cent->deltalerp == -1) { // seems we get second update for enitity from server, just save some vectors
+						VectorCopy(cent->current.origin, cent->old_origin);
+						VectorCopy(cent->current.origin, cent->lerp_origin);
+					}
+					else {
+						// its correction due to round/interploation, we have our own vision where object, and server vision,
+						// use 90% of our vision and 10% of server, that make things smooth and somehow accurate
+						VectorInterpolate(cent->lerp_origin, cl_newlerp.value, cent->current.origin, cent->old_origin);
+					}
+			    }
+				else 
+				{
+					VectorCopy(cent->current.origin, cent->old_origin);
+				}
+
 				VectorCopy(cent->current.angles, cent->old_angles);
 				if (cls.mvdplayback) {
 					cent->deltalerp = nextdemotime - olddemotime;
@@ -690,7 +729,18 @@ void CL_LinkPacketEntities (void) {
 			time = cls.mvdplayback ? cls.demotime : cl.time;
 			lerp = (time - cent->startlerp) / (cent->deltalerp);
 			lerp = min(lerp, 1);	
-			VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
+
+			if (NewLerp_AbleModel(cent->current.modelindex))
+			{
+				float d = time - cent->startlerp;
+
+				if (d >= 2 * cent->deltalerp) // seems enitity stopped move
+					VectorCopy(cent->lerp_origin, ent.origin);
+				else // interpolate
+					VectorMA(cent->old_origin, d, cent->velocity, ent.origin);
+			}
+			else
+				VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
 		}
 	
 
@@ -1106,7 +1156,18 @@ void CL_LinkPacketEntities (void) {
 			time = cls.mvdplayback ? cls.demotime : cl.time;
 			lerp = (time - cent->startlerp) / (cent->deltalerp);
 			lerp = min(lerp, 1);	
-			VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
+
+			if (NewLerp_AbleModel(cent->current.modelindex))
+			{
+				float d = time - cent->startlerp;
+
+				if (d >= 2 * cent->deltalerp) // seems enitity stopped move
+					VectorCopy(cent->lerp_origin, ent.origin);
+				else // interpolate
+					VectorMA(cent->old_origin, d, cent->velocity, ent.origin);
+			}
+			else
+				VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
 		}
 	
 
@@ -1731,7 +1792,7 @@ void CL_LinkPlayers (void) {
 		ent.angles[ROLL] = 4 * V_CalcRoll (ent.angles, state->velocity);
 
 		// only predict half the move to minimize overruns
-		msec = 500 * (playertime - state->state_time);
+		msec = (cl_predict_half.value ? 500 : 1000) * (playertime - state->state_time);
 		if (msec <= 0 || !cl_predict_players.value || cls.mvdplayback) {		
 			VectorCopy (state->origin, ent.origin);
 		} else {

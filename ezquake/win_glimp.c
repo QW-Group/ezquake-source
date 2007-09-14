@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.13.2.5 2007-09-04 19:47:09 cokeman1982 Exp $
+	$Id: win_glimp.c,v 1.13.2.6 2007-09-14 13:01:12 disconn3ct Exp $
 
 */
 /*
@@ -1283,6 +1283,9 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 	*x = *y = 0;
 	*width  = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
+
+	if (cls.state != ca_active)
+		glClear (GL_COLOR_BUFFER_BIT);
 }
 
 extern void CheckWindowedMouse(void);	

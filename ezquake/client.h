@@ -156,6 +156,8 @@ typedef struct {
 	vec3_t			lerp_origin;	
 	vec3_t			trail_origin;	
 
+	vec3_t			velocity; // hack
+
 	int				flags;
 
 	vec3_t			old_origin;

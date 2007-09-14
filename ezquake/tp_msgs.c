@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.21 2007-07-21 17:11:57 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.22 2007-09-14 13:01:12 disconn3ct Exp $
 
 */
 
@@ -86,7 +86,7 @@ use the %-macros nor the $-macros.
 #define tp_sep_red		"$R$R"      // enemy, lost
 #define tp_sep_green	"$G$G"      // killed quad/ring/pent enemy, safe
 #define tp_sep_yellow	"$Y$Y"      // help
-#define tp_sep_white	"$W$W"		// Two white bubbles, location of item
+#define tp_sep_white	"$x04$x04"  // Two white bubbles, location of item
 #define tp_sep_blue		"$B$B"      // 
  
 typedef const char * MSGPART;

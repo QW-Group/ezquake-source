@@ -55,11 +55,11 @@ void SB_RootInit(void)
 		Com_DPrintf ("SB_RootInit: socket: (%i): %s\n", qerrno, strerror(qerrno));
 	}
 
-	if (sock < 0 || COM_CheckParm("-nosockraw")
 #ifdef _WIN32
-		|| WinVISTA
+	if (sock < 0 || COM_CheckParm("-nosockraw") || WinVISTA) {
+#else
+	if (sock < 0 || COM_CheckParm("-nosockraw")) {
 #endif
-	) {
 		useNewPing = true;
 		return;
 	}

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.13.2.3 2007-05-27 14:40:50 disconn3ct Exp $
+	$Id: auth.c,v 1.13.2.4 2007-09-14 13:01:05 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -42,7 +42,7 @@ void Auth_Init(void);
 
 
 char *Auth_Generate_Crc(void) {
-	static char hash[30], *failsafe = "";
+	static char hash[31], *failsafe = "";
 	signed_buffer_t *p;
 
 	if (!Modules_SecurityLoaded())
@@ -101,7 +101,7 @@ static int Auth_CheckString (char *id, const char *s, int flags, int offset, int
 	if (!(index = strstr(s + offset, "  crc: ")) || strlen(index) != 30 + 1 + 7 || index[30 + 7] != '\n')
 		return AUTH_BADFORMAT;
 
-	memcpy (hash, va ("%s", index + 7), sizeof (hash));
+	memcpy (hash, index + 7, sizeof (hash));
 	if (out_data)
 		strlcpy(out_data, s + offset + strlen(id), bound(1, index - (s + offset + strlen(id)) + 1, out_size));
 

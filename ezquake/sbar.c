@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.34.2.1 2007-05-01 16:46:48 cokeman1982 Exp $
+	$Id: sbar.c,v 1.34.2.2 2007-09-14 13:01:12 disconn3ct Exp $
 */
 // sbar.c -- status bar code
 
@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "utils.h"
 #include "sbar.h"
+#include "keys.h"
 
 int sb_updates;		// if >= vid.numpages, no update needed
 extern cvar_t show_fps2;
@@ -1182,9 +1183,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 		if (scr_scoreboard_drawtitle.value) {
 			pic = Draw_CachePic ("gfx/ranking.lmp");
 			Draw_Pic (xofs + (rank_width - pic->width) / 2, y, pic);
-			start = 36;
+			start = 36 + hud_rankingpos.value;
 		} else {
-			start = 12;
+			start = 12 + hud_rankingpos.value;
 		}
 	}
 
@@ -1413,6 +1414,11 @@ static void Sbar_TeamOverlay (void) {
 	team_t *tm;
 	mpic_t *pic;
 
+	// gavoja -->
+	if (key_dest == key_console)
+		return;
+	// gavoja <--
+
 #ifndef CLIENTONLY
 	// FIXME
 	// check number of connections instead?
@@ -1449,9 +1455,9 @@ static void Sbar_TeamOverlay (void) {
 	if (scr_scoreboard_drawtitle.value) {
 		pic = Draw_CachePic ("gfx/ranking.lmp");
 		Draw_Pic (xofs + (rank_width - pic->width) / 2, y, pic);
-		y = 26;
+		y = 26 + hud_rankingpos.value;
 	} else {
-		y = 2;
+		y = 2 + hud_rankingpos.value;
 	}
 
 	if (!scr_scoreboard_borderless.value)
