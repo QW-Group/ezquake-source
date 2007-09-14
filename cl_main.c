@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.178 2007-09-13 18:29:50 qqshka Exp $
+$Id: cl_main.c,v 1.179 2007-09-14 10:48:03 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1225,10 +1225,6 @@ void CL_InitLocal (void) {
 	}
 
  	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
-
-#ifdef VWEP_TEST
-	Info_SetValueForStarKey (cls.userinfo, "*vwtest", "1", MAX_INFO_STRING);
-#endif
 
 	if (COM_CheckParm("-noindphys")) {
 		Cvar_SetValue(&cl_independentPhysics, 0);

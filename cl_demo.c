@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.83 2007-09-13 16:02:11 tonik Exp $
+	$Id: cl_demo.c,v 1.84 2007-09-14 10:48:02 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -479,18 +479,21 @@ static void CL_WriteStartupData (void)
 	if ((cl.z_ext & Z_EXT_VWEP) && cl.vw_model_name[0][0]) {
 		// send VWep precaches
 		// pray we don't overflow
+		char ss[1024] = "//vwep ";
 		for (i = 0; i < MAX_VWEP_MODELS; i++) {
 			s = cl.vw_model_name[i];
 			if (!*s)
-				continue;
-			MSG_WriteByte (&buf, svc_serverinfo);
-			MSG_WriteString (&buf, "#vw");
-			MSG_WriteString (&buf, va("%i %s", i, TrimModelName(s)));
+				break;
+			if (i > 0)
+				strlcat (ss, " ", sizeof(ss));
+			strlcat (ss, TrimModelName(s), sizeof(ss));
 		}
-		// send end-of-list messsage
-		MSG_WriteByte (&buf, svc_serverinfo);
-		MSG_WriteString (&buf, "#vw");
-		MSG_WriteString (&buf, "");
+		strlcat (ss, "\n", sizeof(ss));
+		if (strlen(ss) < sizeof(ss)-1)		// didn't overflow?
+		{
+			MSG_WriteByte (&buf, svc_stufftext);
+			MSG_WriteString (&buf, ss);
+		}
 	}
 	// don't bother flushing, the vwep list is not that large (I hope)
 #endif
