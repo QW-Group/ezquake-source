@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.46 2007-09-14 17:12:33 tonik Exp $
+	$Id: cl_ents.c,v 1.47 2007-09-14 17:16:04 tonik Exp $
 
 */
 
@@ -2032,6 +2032,8 @@ void CL_LinkPlayers (void) {
 				if (cl.vw_model_name[0][0] != '-') {
 					ent.model = cl.vw_model_precache[0];
 					ent.renderfx |= RF_PLAYERMODEL;
+					// HACK HACK HACK: I couldn't get RF_PLAYERMODEL to work so I did this
+					ent.model->modhint = MOD_PLAYER;
 					CL_AddEntity (&ent);
 				} else {
 					// server said don't add vwep player model
