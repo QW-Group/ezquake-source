@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.136.2.10 2007-09-14 13:01:06 disconn3ct Exp $
+	$Id: cl_main.c,v 1.136.2.11 2007-09-14 21:40:59 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -127,7 +127,7 @@ cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
 // START shaman :: balancing variables
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
 // END shaman :: balancing variables
-cvar_t cl_newlerp				= {"cl_newlerp", "0"};
+cvar_t cl_newlerp				= {"cl_newlerp", "0.1"};
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
 cvar_t cl_fix_mvd				= {"cl_fix_mvd", "0", CVAR_ARCHIVE};
 
