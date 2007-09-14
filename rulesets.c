@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.54 2007-06-15 12:26:07 johnnycz Exp $
+	$Id: rulesets.c,v 1.55 2007-09-14 23:00:17 himan Exp $
 
 */
 
@@ -342,6 +342,17 @@ void Rulesets_Init (void)
 false = OK to change
 false = block cvar change
 */
+
+qbool OnChange_indphys (cvar_t *var, char *value)
+{
+	if (cls.state != ca_disconnected) {
+		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
+		return true;
+	}
+
+	return false;
+}
+
 qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value)
 {
 	float fbskins = bound (0.0, Q_atof (value), cl.fbskins);

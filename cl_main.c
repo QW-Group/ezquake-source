@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.179 2007-09-14 10:48:03 tonik Exp $
+$Id: cl_main.c,v 1.180 2007-09-14 23:00:17 himan Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -93,7 +93,8 @@ cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0", CVAR_ARCHIVE};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
-cvar_t	cl_independentPhysics = {"cl_independentPhysics", "1", CVAR_INIT};
+qbool OnChange_indphys (cvar_t *var, char *value);
+cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, OnChange_indphys};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
