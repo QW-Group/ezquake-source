@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.11 2007-03-11 06:01:42 disconn3ct Exp $
+    $Id: snd_mem.c,v 1.12 2007-09-14 13:29:29 disconn3ct Exp $
 */
 // snd_mem.c -- sound caching
 
@@ -229,8 +229,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return sc;
 
 	// load it in
-	strcpy(namebuffer, "sound/");
-	strcat(namebuffer, s->name);
+	snprintf (namebuffer, sizeof (namebuffer), "sound/%s", s->name);
 
 	if (!(data = FS_LoadStackFile (namebuffer, stackbuf, sizeof(stackbuf)))) {
 		Com_Printf ("Couldn't load %s\n", namebuffer);

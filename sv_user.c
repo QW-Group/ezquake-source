@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.32 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: sv_user.c,v 1.33 2007-09-14 13:29:30 disconn3ct Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -163,13 +163,13 @@ void Cmd_New_f (void) {
 	MSG_WriteByte (&sv_client->netchan.message, sv.edicts->v.sounds);
 
 	// send server info string
-	strcpy (info, svs.info);
+	strlcpy (info, svs.info, sizeof (info));
 
 	// append skybox name if there's enough room
 	if (sv.sky[0]) {
 		if (!strstr(svs.info, "\\sky\\") && strlen(info) + 5 + strlen(sv.sky) < MAX_SERVERINFO_STRING) {
-			strcat (info, "\\sky\\");
-			strcat (info, sv.sky);
+			strlcat (info, "\\sky\\", sizeof (info));
+			strlcat (info, sv.sky, sizeof (info));
 		}
 	}
 
@@ -944,8 +944,8 @@ void SV_Say (qbool team) {
 		p[strlen(p) - 1] = 0;
 	}
 
-	strcat(text, p);
-	strcat(text, "\n");
+	strlcat (text, p, sizeof (text));
+	strlcat (text, "\n", sizeof (text));
 
 	Sys_Printf ("%s", text);
 
@@ -1122,7 +1122,7 @@ void Cmd_SetInfo_f (void) {
 	if (Cmd_Argv(1)[0] == '*')
 		return;		// don't set priveledged values
 
-	strcpy(oldval, Info_ValueForKey(sv_client->userinfo, Cmd_Argv(1)));
+	strlcpy(oldval, Info_ValueForKey(sv_client->userinfo, Cmd_Argv(1)), sizeof (oldval));
 
 	Info_SetValueForKey (sv_client->userinfo, Cmd_Argv(1), Cmd_Argv(2), MAX_INFO_STRING);
 	// name is extracted below in ExtractFromUserInfo

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.117 2007-09-14 10:48:03 tonik Exp $
+$Id: cl_parse.c,v 1.118 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2721,10 +2721,12 @@ void CL_ParseStufftext (void) {
 			Cbuf_AddTextEx (&cbuf_svc, va("track %s\n", s + sizeof("//at ")-1));
 		}
 	}
+#ifdef VWEP_TEST
 	else if (!strncmp(s, "//vwep ", 7) && s[strlen(s)-1] == '\n') {
 		CL_ParseVWepPrecache(s);
 		return;
 	}
+#endif
 	else
 		Cbuf_AddTextEx (&cbuf_svc, s);
 

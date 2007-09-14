@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2001-2002       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -17,12 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: modules.h,v 1.7 2006-06-13 13:13:02 vvd0 Exp $
+	$Id: modules.h,v 1.8 2007-09-14 13:29:29 disconn3ct Exp $
 */
 
-#ifndef _MODULES_H
-
-#define _MODULES_H
+#ifndef __MODULES_H__
+#define __MODULES_H__
 
 #include "security.h"
 
@@ -30,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <dlfcn.h>
 #endif
 
+#if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC && !defined __XMMS__)
 extern char _temp_modulename[MAX_OSPATH];
 
 
@@ -73,22 +72,23 @@ typedef enum qlib_id_s {qlib_nummodules} qlib_id_t;
 typedef enum qlib_id_s {qlib_libpng, qlib_libjpeg, qlib_nummodules} qlib_id_t;
 #endif
 
-typedef void (*qlib_shutdown_fn)(void);
+typedef void (*qlib_shutdown_fn) (void);
 
-void QLib_Init(void);
-void QLib_Shutdown(void);
-void QLib_RegisterModule(qlib_id_t module, qlib_shutdown_fn shutdown);
+void QLib_Init (void);
+void QLib_Shutdown (void);
+void QLib_RegisterModule (qlib_id_t module, qlib_shutdown_fn shutdown);
 qbool QLib_isModuleLoaded (qlib_id_t module);
-qbool QLib_ProcessProcdef(QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procdefs, int size);
-void QLib_MissingModuleError(int, char *libname, char *cmdline, char *features);
+qbool QLib_ProcessProcdef (QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procdefs, int size);
+void QLib_MissingModuleError (int, char *libname, char *cmdline, char *features);
+#endif
 
 qbool Modules_SecurityLoaded (void);
-void Modules_Init(void);
-qbool VerifyData(signed_buffer_t *p);
-void Modules_Shutdown(void);
+void Modules_Init (void);
+qbool VerifyData (signed_buffer_t *p);
+void Modules_Shutdown (void);
 
 extern Security_Verify_Response_t Security_Verify_Response;
 extern Security_Generate_Crc_t Security_Generate_Crc;
 extern Security_IsModelModified_t Security_IsModelModified;
 
-#endif
+#endif /* !__MODULES_H__ */

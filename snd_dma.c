@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.46 2007-09-03 19:26:22 johnnycz Exp $
+    $Id: snd_dma.c,v 1.47 2007-09-14 13:29:29 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -289,7 +289,7 @@ static sfx_t *S_FindName (char *name)
 		Sys_Error ("S_FindName: out of sfx_t");
 
 	sfx = &known_sfx[i];
-	strcpy (sfx->name, name);
+	strlcpy (sfx->name, name, sizeof (sfx->name));
 
 	num_sfx++;
 
@@ -810,7 +810,7 @@ static void S_Play_f (void)
 		return;
 
 	for (i = 1; i < Cmd_Argc(); i++) {
-		strcpy(name, Cmd_Argv(i));
+		strlcpy (name, Cmd_Argv(i), sizeof (name));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
 		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, 1.0, 0.0);
@@ -828,7 +828,7 @@ static void S_PlayVol_f (void)
 		return;
 
 	for (i = 1; i < Cmd_Argc(); i += 2) {
-		strcpy(name, Cmd_Argv(i));
+		strlcpy (name, Cmd_Argv(i), sizeof (name));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
 		vol = Q_atof(Cmd_Argv(i + 1));

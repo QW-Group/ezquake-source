@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.47 2007-09-11 21:52:51 borisu Exp $
+	$Id: host.c,v 1.48 2007-09-14 13:29:28 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -639,7 +639,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	NET_Init ();
 	NET_InitClient ();
 	Netchan_Init ();
+
+#if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC && !defined __XMMS__)
 	QLib_Init();
+#endif
+
 	Sys_Init ();
 	CM_Init ();
 	PM_Init ();
@@ -752,7 +756,11 @@ void Host_Shutdown (void)
 #endif
 
 	SV_Shutdown ("Server quit\n");
+
+#if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC)
 	QLib_Shutdown();
+#endif
+
 	CL_Shutdown ();
 	NET_Shutdown ();
 #ifndef SERVERONLY

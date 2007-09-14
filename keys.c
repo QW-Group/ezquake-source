@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.75 2007-09-12 22:29:53 disconn3ct Exp $
+    $Id: keys.c,v 1.76 2007-09-14 13:29:28 disconn3ct Exp $
 
 */
 
@@ -620,29 +620,33 @@ void CompleteCommandNew (void)
 extern char readableChars[];
 char disallowed[] = {'\n', '\f', '\\', '/', '\"', ' ' , ';'};
 
-void RemoveColors(char *name) {
+static void RemoveColors (char *name, size_t len)
+{
 	char *s = name;
 
 	if (!s || !*s)
 		return;
 
 	while (*s) {
-		*s = readableChars[(unsigned char) *s] & 127;
-		if (strchr(disallowed, *s))
+		*s = readableChars[(unsigned char)*s] & 127;
+
+		if (strchr (disallowed, *s))
 			*s = '_';
+
 		s++;
 	}
+
 	// get rid of whitespace
 	s = name;
 	for (s = name; *s == '_'; s++) ;
-	memmove(name, s, strlen(s) + 1);
+		memmove (name, s, strlen(s) + 1);
 
 	for (s = name + strlen(name); s > name  &&  (*(s - 1) == '_'); s--) ;
 
 	*s = 0;
 
 	if (!name[0])
-		strcpy(name, "_");
+		strlcpy (name, "_", len);
 }
 
 
@@ -661,7 +665,7 @@ int FindBestNick (char *s,int use) {
 
 		if (cl.players[i].name[0]) {
 			strlcpy(name, cl.players[i].name, sizeof(name));
-			RemoveColors(name);
+			RemoveColors (name, sizeof (name));
 			for (j = 0; j < strlen(name); j++)
 				name[j] = tolower(name[j]);
 			if ((match = strstr(name, s))  &&  (best == -1 || match - name < best)) {
@@ -1299,39 +1303,42 @@ void Key_Message (int key, wchar unichar) {
 
 //Returns a key number to be used to index keybindings[] by looking at the given string.
 //Single ascii characters return themselves, while the K_* names are matched up.
-#define UNKNOWN_S	"UNKNOWN"
-int Key_StringToKeynum (char *str) {
+#define UNKNOWN_S "UNKNOWN"
+int Key_StringToKeynum (char *str)
+{
 	keyname_t *kn;
 #ifdef WITH_KEYMAP
-	int        i;
-	int        keynum;
-	char       ret[11];
+	int i;
+	int keynum;
+	char ret[11];
 #endif // WITH_KEYMAP
 
 	if (!str || !str[0])
 		return -1;
+
 	if (!str[1])
 		return (int)(unsigned char)str[0];
 
 #ifdef WITH_KEYMAP
 	if (str[0] == '#') {
-		keynum = Q_atoi(str + 1);
-/*		if (keynum < 32 || keynum > 127)
-			return -1;*/
-		return keynum;
+		keynum = Q_atoi (str + 1);
+/*
+		if (keynum < 32 || keynum > 127)
+			return -1;
+*/
+	return keynum;
 	}
 #endif // WITH_KEYMAP else
 
 	for (kn = keynames; kn->name; kn++) {
-		if (!strcasecmp(str,kn->name))
-			return kn->keynum;
+		if (!strcasecmp (str,kn->name))
+		return kn->keynum;
 	}
 
 #ifdef WITH_KEYMAP
-	for (i = 0; i < 255; i++)
-	{
-		snprintf(ret, sizeof(ret), UNKNOWN_S "%d", i);
-		if (!strcasecmp(str, ret))
+	for (i = 0; i < 255; i++) {
+		snprintf(ret, sizeof (ret), UNKNOWN_S "%d", i);
+		if (!strcasecmp (str, ret))
 			return UNKNOWN + i;
 	}
 #endif // WITH_KEYMAP
@@ -1350,52 +1357,54 @@ Returns a string (either a single ascii char, or a K_* name) for the
 given keynum.
 ===================
 */
-char *Key_KeynumToString (int keynum, char *buffer) {
+char *Key_KeynumToString (int keynum, char *buffer)
+{
 	static char	*retval;
-	keyname_t	*kn			= NULL;
-	static char	tinystr[5]	= { "\0" };
+	static char	tinystr[5] = {"\0"};
 	static char	ret[11];
+	keyname_t *kn = NULL;
+
 	retval = NULL;
 
-	if ( keynum < 0 )
+	if (keynum < 0) {
 		retval = "<KEY NOT FOUND>";
-	else
-	if ( keynum == 0 )
-		retval = "<NO KEY>";
-	else
-	if ( keynum > 32 && keynum < 127 ) {
-		// printable ascii
-		if (keynum == 34) // treat " special
-			snprintf(tinystr, sizeof (tinystr), "#%u", keynum);
-		else {
-			tinystr[ 0 ] = keynum;
-			tinystr[ 1 ] = '\0';
-		}
-		retval = tinystr;
-	}
-	else {
-		for (kn=keynames; kn->name != NULL; kn++) {
-			if (keynum == kn->keynum)
-			{
-				retval = kn->name;
-				break;
+	} else {
+		if (keynum == 0) {
+			retval = "<NO KEY>";
+		} else {
+			if (keynum > 32 && keynum < 127) {
+				// printable ascii
+				if (keynum == 34) { // treat " special
+					snprintf (tinystr, sizeof (tinystr), "#%u", keynum);
+				} else {
+					tinystr[0] = keynum;
+					tinystr[1] = '\0';
+				}
+
+				retval = tinystr;
+			} else {
+				for (kn = keynames; kn->name != NULL; kn++) {
+					if (keynum == kn->keynum) {
+						retval = kn->name;
+						break;
+					}
+				}
 			}
 		}
 	}
 
-	if ( retval == NULL )
-	{
-		snprintf(ret, sizeof(ret), UNKNOWN_S "%d", keynum - UNKNOWN);
+	if (retval == NULL) {
+		snprintf (ret, sizeof (ret), UNKNOWN_S "%d", keynum - UNKNOWN);
 		retval = ret;
 	}
 
 	// use the buffer if given
-	if ( buffer != NULL ) {
-		strcpy( buffer, retval );
-		return( buffer );
+	if (buffer != NULL) {
+		strcpy (buffer, retval);
+		return (buffer);
 	}
 
-	return( retval );
+	return (retval);
 }
 #else // WITH_KEYMAP
 //FIXME: handle quote special (general escape sequence?)

@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.20 2007-07-13 13:01:20 qqshka Exp $
+	$Id: tr_init.c,v 1.21 2007-09-14 13:29:30 disconn3ct Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -159,7 +159,7 @@ static void InitOpenGL( void )
 		
 		GLimp_Init();
 
-		strcpy( renderer_buffer, glConfig.renderer_string );
+		strlcpy( renderer_buffer, glConfig.renderer_string , sizeof (renderer_buffer) );
 		Q_strlwr( renderer_buffer );
 
 		// OpenGL driver constants

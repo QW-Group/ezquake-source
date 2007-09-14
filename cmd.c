@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.76 2007-09-13 14:49:29 disconn3ct Exp $
+    $Id: cmd.c,v 1.77 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -668,7 +668,8 @@ void Cmd_Alias_f (void)
 		a->hash_next = cmd_alias_hash[key];
 		cmd_alias_hash[key] = a;
 	}
-	strcpy (a->name, s);
+
+	strlcpy (a->name, s, sizeof (a->name));
 
 	a->flags = 0;
 	// QW262 -->
@@ -947,8 +948,9 @@ char *Cmd_MakeArgs (int start)
 	c = Cmd_Argc();
 	for (i = start; i < c; i++) {
 		if (i > start)
-			strncat (text, " ", sizeof(text) - strlen(text) - 1);
-		strncat (text, Cmd_Argv(i), sizeof(text) - strlen(text) - 1);
+			strlcat (text, " ", sizeof (text) - strlen (text));
+
+		strlcat (text, Cmd_Argv(i), sizeof (text) - strlen (text));
 	}
 
 	return text;
@@ -1128,27 +1130,19 @@ void Cmd_CmdList (qbool use_regex)
 	int i, c, m = 0, count;
 	cmd_function_t *cmd;
 	char *pattern;
-	qbool forwarded_only = !strcmp(">", Cmd_Argv(1)); // "cmdlist >" mean show only commands forwarded to server
 
 #define MAX_SORTED_CMDS (sizeof (sorted_cmds) / sizeof (sorted_cmds[0]))
 
-	for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next)
-	{
-		if (forwarded_only && cmd->function)
-			continue; // if function is NULL then this is forwarded to server command
-
+	for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next, count++)
 		sorted_cmds[count] = cmd;
-		count++;
-	}
 	qsort (sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
 
 	if (count == MAX_SORTED_CMDS)
 		assert(!"count == MAX_SORTED_CMDS");
 
-	c = Cmd_Argc();
-	pattern = (!forwarded_only && c > 1) ? Cmd_Argv(1) : NULL;
+	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
-	if (use_regex && c > 1)
+	if (use_regex && ((c = Cmd_Argc()) > 1))
 		if (!ReSearchInit(Cmd_Argv(1)))
 			return;
 
@@ -1817,8 +1811,9 @@ void Cmd_If_Old (void)
 			if (!strcasecmp(Cmd_Argv(i), "else"))
 				break;
 			if (buf[0])
-				strncat (buf, " ", sizeof(buf) - strlen(buf) - 2);
-			strncat (buf, Cmd_Argv(i), sizeof(buf) - strlen(buf) - 2);
+				strlcat (buf, " ", sizeof (buf) - strlen (buf) - 1);
+
+			strlcat (buf, Cmd_Argv(i), sizeof (buf) - strlen (buf) - 1);
 		}
 	} else {
 		for (i = 4; i < c ; i++) {
@@ -1829,12 +1824,13 @@ void Cmd_If_Old (void)
 			return;
 		for (i++; i < c; i++) {
 			if (buf[0])
-				strncat (buf, " ", sizeof(buf) - strlen(buf) - 2);
-			strncat (buf, Cmd_Argv(i), sizeof(buf) - strlen(buf) - 2);
+				strlcat (buf, " ", sizeof (buf) - strlen (buf) - 1);
+
+			strlcat (buf, Cmd_Argv(i), sizeof (buf) - strlen (buf) - 1);
 		}
 	}
 
-	strncat (buf, "\n", sizeof(buf) - strlen(buf) - 1);
+	strlcat (buf, "\n", sizeof (buf) - strlen (buf));
 	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, buf);
 }
 

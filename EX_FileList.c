@@ -161,7 +161,7 @@ void FL_AddFileType(filelist_t *fl, int id, char *ext)
     if (strlen(ext) > MAX_EXTENSION_LENGTH)
         return;
 
-    strcpy(fl->filetypes[num].extension, ext);
+    strlcpy (fl->filetypes[num].extension, ext, sizeof (fl->filetypes[num].extension));
     fl->filetypes[num].id = id;
 
     fl->num_filetypes ++;
@@ -325,7 +325,7 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
         }
 
         if (namebuf[0] == 0)
-            strcpy(namebuf, "_");
+            strlcpy (namebuf, "_", sizeof (namebuf));
     }
 
     // Replace all non-standard characters with '_'
@@ -446,24 +446,24 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 //
 // sort directory
 //
-void FL_SortDir(filelist_t *fl)
+void FL_SortDir (filelist_t *fl)
 {
-    char name[MAX_PATH+1] = "";
+	char name[MAX_PATH+1] = "";
 
-    if (fl->num_entries <= 0  ||
-        fl->sort_mode->string == NULL  ||
-        fl->sort_mode->string[0] == 0)
-        return;
+	if (fl->num_entries <= 0  ||
+		fl->sort_mode->string == NULL  ||
+		fl->sort_mode->string[0] == 0)
+		return;
 
-    FL_CompareFunc_FileList = fl;
-    if (fl->current_entry >= 0  &&  fl->current_entry < fl->num_entries)
-        strcpy(name, fl->entries[fl->current_entry].name);
+	FL_CompareFunc_FileList = fl;
+	if (fl->current_entry >= 0 && fl->current_entry < fl->num_entries)
+		strlcpy (name, fl->entries[fl->current_entry].name, sizeof (name));
 
-    qsort(fl->entries, fl->num_entries, sizeof(filedesc_t), FL_CompareFunc);
+	qsort (fl->entries, fl->num_entries, sizeof(filedesc_t), FL_CompareFunc);
 
-    FL_GotoFile(fl, name);
+	FL_GotoFile (fl, name);
 
-    fl->need_resort = false;
+	fl->need_resort = false;
 }
 
 //

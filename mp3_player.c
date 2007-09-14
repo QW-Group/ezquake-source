@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.22 2007-03-11 06:01:41 disconn3ct Exp $
+	$Id: mp3_player.c,v 1.23 2007-09-14 13:29:29 disconn3ct Exp $
 */
 
 #ifdef __FreeBSD__
@@ -178,7 +178,7 @@ void MP3_Execute_f(void) {
 	length = strlen(path);
 	if (length && (path[length - 1] == '\\' || path[length - 1] == '/'))
 		path[length - 1] = 0;
-	strcat(path, "/winamp.exe");
+	strlcat (path, "/winamp.exe", sizeof (path));
 	if (!CreateProcess (NULL, va("%s /CLASS=\"ezQuake Winamp\"", path), 
 		NULL, NULL, FALSE, GetPriorityClass(GetCurrentProcess()), NULL, NULL, &si, &pi))
 	{
@@ -354,7 +354,7 @@ void MP3_Execute_f(void) {
 	}
 	if (length && path[length - 1] == '/')
 		path[length - 1] = 0;
-	strcat(path, "/xmms");
+	strlcat (path, "/xmms", sizeof (path));
 
 	if (!(XMMS_pid = fork())) {
 		execv(path, argv);
@@ -600,7 +600,7 @@ void MP3_LoadPlaylist_f(void) {
 		return;
 	}
 
-	COM_ForceExtension(playlist, ".m3u");
+	COM_ForceExtensionEx (playlist, ".m3u", sizeof (playlist));
 	
 	SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_DELETE);
 	cds.dwData = IPC_PLAYFILE;
@@ -629,7 +629,7 @@ long MP3_GetPlaylist(char **buf) {
 	pathlength = strlen(path);
 	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
 		path[pathlength - 1] = 0;
-	strcat(path, "/winamp.m3u");
+	strlcat (path, "/winamp.m3u", sizeof (path));
 	filelength = COM_FileOpenRead(path, &f);
 	if (!f)
 		return -1;

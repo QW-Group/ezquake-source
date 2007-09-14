@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_save.c,v 1.11 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: sv_save.c,v 1.12 2007-09-14 13:29:30 disconn3ct Exp $
 */
 
 #ifndef SERVERONLY
@@ -188,7 +188,7 @@ void SV_LoadGame_f (void) {
 	for (i = 0; i < MAX_LIGHTSTYLES; i++) {
 		fscanf (f, "%s\n", str);
 		sv.lightstyles[i] = (char *) Hunk_Alloc (strlen(str) + 1);
-		strcpy (sv.lightstyles[i], str);
+		strlcpy (sv.lightstyles[i], str, strlen(str) + 1);
 	}
 
 	// load the edicts out of the savegame file

@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2001-2002       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -16,15 +15,14 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: fchecks.h,v 1.4 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
-#ifndef _FCHECKS_H_
+#ifndef __FCHECKS_H__
+#define __FCHECKS_H__
 
-#define  _FCHECKS_H_
-
-void FChecks_Init(void);
+void FChecks_Init (void);
 void FChecks_CheckRequest (const char *);
 
-extern cvar_t allow_scripts;
-
-#endif
+#endif /* !__FCHECKS_H__ */

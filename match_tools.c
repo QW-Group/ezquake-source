@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.28 2007-05-03 12:03:54 johnnycz Exp $
+	$Id: match_tools.c,v 1.29 2007-09-14 13:29:29 disconn3ct Exp $
 */
 
 
@@ -166,8 +166,9 @@ static char *MT_NameAndClean_TeamMembers(char *team) {
 			continue;
 		if (!strcmp(cl.players[i].team, team)) {
 			if (namebuf[0])
-				strncat(namebuf, match_name_and.string, sizeof(namebuf) - strlen(namebuf) - 1);
-			strncat(namebuf, MT_CleanString(cl.players[i].name, false), sizeof(namebuf) - strlen(namebuf) - 1);
+				strlcat(namebuf, match_name_and.string, sizeof (namebuf) - strlen (namebuf));
+
+			strlcat(namebuf, MT_CleanString(cl.players[i].name, false), sizeof (namebuf) - strlen (namebuf));
 		}
 	}
 	return namebuf;
@@ -394,9 +395,9 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 
 #define BUF matchinfo.multiteamnames
 	for (i = 0; i < numteams; i++) {
-		strncat(BUF, MT_CleanString(teamnames[i], false), sizeof(BUF) - strlen(BUF) - 1);
+		strlcat (BUF, MT_CleanString(teamnames[i], false), sizeof (BUF) - strlen (BUF));
 		if (i < numteams - 1)
-			strncat(BUF, match_name_versus.string, sizeof(BUF) - strlen(BUF) - 1);
+			strlcat (BUF, match_name_versus.string, sizeof (BUF) - strlen (BUF));
 	}
 #undef BUF
 
@@ -406,9 +407,9 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 		teamsize = MT_CountTeamMembers(teamnames[i]);
 		if (*teamnames[i])
 			maxteamsize = max(maxteamsize, teamsize);
-		strncat(BUF, va("%d", teamsize), sizeof(BUF) - strlen(BUF) - 1);
+		strlcat (BUF, va("%d", teamsize), sizeof (BUF) - strlen (BUF));
 		if (i < numteams - 1)
-			strncat(BUF, match_name_on.string, sizeof(BUF) - strlen(BUF) - 1);
+			strlcat(BUF, match_name_on.string, sizeof (BUF) - strlen (BUF));
 	}
 	matchinfo.maxteamsize = maxteamsize;
 #undef BUF

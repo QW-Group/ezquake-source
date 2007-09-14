@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.84 2007-09-14 10:48:02 tonik Exp $
+	$Id: cl_demo.c,v 1.85 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1337,17 +1337,19 @@ static qbool OnChange_demo_format(cvar_t *var, char *string)
 static void CL_WriteDemoPimpMessage(void)
 {
 	int i;
-	char pimpmessage[256] = {0}, border[64] = {0};
+	char pimpmessage[256], border[64];
 
 	if (cls.demoplayback)
 		return;
 
-	strcat(border, "\x1d");
-	for (i = 0; i < 34; i++)
-		strcat(border, "\x1e");
-	strcat(border, "\x1f");
+	strlcpy (border, "\x1d", sizeof (border));
 
-	snprintf(pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
+	for (i = 0; i < 34; i++)
+		strlcat (border, "\x1e", sizeof (border));
+
+	strlcat (border, "\x1f", sizeof (border));
+
+	snprintf (pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
 		border,
 		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
 		border
@@ -1495,7 +1497,7 @@ void CL_Record_f (void)
 
 			// Open the demo file for writing.
 			strlcpy(nameext, Cmd_Argv(1), sizeof(nameext));
-			COM_ForceExtension (nameext, ".qwd");
+			COM_ForceExtensionEx (nameext, ".qwd", sizeof (nameext));
 
 			// Get the path for the demo and try opening the file for writing.
 			snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);

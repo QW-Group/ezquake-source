@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.24 2007-08-21 21:26:32 cokeman1982 Exp $
+	$Id: gl_rmisc.c,v 1.25 2007-09-14 13:29:28 disconn3ct Exp $
 */
 // gl_rmisc.c
 
@@ -57,7 +57,7 @@ void R_InitTextures (void) {
 	// create a simple checkerboard texture for the default
 	r_notexture_mip = (texture_t *) Hunk_AllocName (sizeof(texture_t) + 16 * 16 + 8 * 8+4 * 4 + 2 * 2, "notexture");
 	
-	strcpy(r_notexture_mip->name, "notexture");
+	strlcpy(r_notexture_mip->name, "notexture", sizeof (r_notexture_mip->name));
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);
 	r_notexture_mip->offsets[1] = r_notexture_mip->offsets[0] + 16 * 16;

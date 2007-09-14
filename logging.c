@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: logging.c,v 1.10 2007-03-11 06:01:40 disconn3ct Exp $
+	$Id: logging.c,v 1.11 2007-09-14 13:29:29 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -113,7 +113,7 @@ static void Log_log_f(void) {
 			Com_Printf(Util_Invalid_Filename_Msg("filename"));
 			return;
 		}
-		COM_ForceExtension (logfilename, ".log");
+		COM_ForceExtensionEx (logfilename, ".log", sizeof (logfilename));
 		fulllogname = va("%s/%s", Log_LogDirectory(), logfilename);
 		if (!(templog = fopen (fulllogname, log_readable.value ? "w" : "wb"))) {
 			COM_CreatePath(fulllogname);
@@ -228,7 +228,7 @@ void Log_AutoLogging_StartMatch(char *logname) {
 	strlcpy(auto_matchname, logname, sizeof(auto_matchname));
 
 	strlcpy (extendedname, TEMP_LOG_NAME, sizeof(extendedname));
-	COM_ForceExtension(extendedname, ".log");
+	COM_ForceExtensionEx (extendedname, ".log", sizeof (extendedname));
 	fullname = va("%s/%s", MT_TempDirectory(), extendedname);
 
 

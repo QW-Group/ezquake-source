@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2001-2002       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -17,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.15 2007-05-28 10:47:31 johnnycz Exp $
+	$Id: auth.c,v 1.16 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -26,150 +25,159 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 
 
-cvar_t	auth_validateclients	= {"auth_validate", "1"};		
-cvar_t	auth_viewcrc			= {"auth_viewcrc", "0"};				
-cvar_t	auth_warninvalid		= {"auth_warninvalid", "0"};
+cvar_t auth_validateclients = {"auth_validate", "1"};		
+cvar_t auth_viewcrc = {"auth_viewcrc", "0"};				
+cvar_t auth_warninvalid = {"auth_warninvalid", "0"};
 
-static void Auth_UnauthenticateClient(int userid);
-static void Auth_AuthenticateClient(int userid);
-static void Auth_Verify_Clients_f(void);
-void Auth_Init(void);
+static void Auth_UnauthenticateClient (int userid);
+static void Auth_AuthenticateClient (int userid);
+static void Auth_Verify_Clients_f (void);
 
 #define AUTH_NOTHING	0
 #define AUTH_BADFORMAT	1
 #define AUTH_BADCRC		2
 #define AUTH_GOODCRC	3
 
+extern void PaddedPrint (char *s);
 
-char *Auth_Generate_Crc(void) {
-	static char hash[30], *failsafe = "";
+char *Auth_Generate_Crc (void)
+{
+	static char hash[30];
+	char *failsafe = "";
 	signed_buffer_t *p;
 
-	if (!Modules_SecurityLoaded())
+	if (!Modules_SecurityLoaded ())
 		return failsafe;
 
-	p = Security_Generate_Crc(cl.playernum, cl.players[cl.playernum].userinfo, cl.serverinfo);
+	p = Security_Generate_Crc (cl.playernum, cl.players[cl.playernum].userinfo, cl.serverinfo);
 
 	if (!VerifyData(p))
 		return failsafe;
 
-	memcpy(hash, (char *) (p->buf), sizeof(hash));
+	memcpy (hash, (char *) (p->buf), sizeof (hash));
 
 	return hash;
 }
 
-static qbool verify_response(int index, char *hash) {
+static qbool verify_response (int index, char *hash)
+{
 	int *n;
 	signed_buffer_t *p;
 	qbool retval, failsafe = false;
 
-	if (!Modules_SecurityLoaded())
+	if (!Modules_SecurityLoaded ())
 		return failsafe;
 
-	p = Security_Verify_Response(index, hash, cl.players[index].userinfo, cl.serverinfo);
+	p = Security_Verify_Response (index, hash, cl.players[index].userinfo, cl.serverinfo);
 
-	if (!VerifyData(p))
+	if (!VerifyData (p))
 		return failsafe;
 
 	n = (int *) (p->buf);
 	retval = *n ? true : false;
+
 	return retval;
 }
 
-static int Auth_CheckString (char *id, const char *s, int flags, int offset, int *out_slot, char *out_data, int out_size) {
+static int Auth_CheckString (char *id, const char *s, int flags, int offset, int *out_slot, char *out_data, int out_size)
+{
 	int len, slot;
 	char name[32], *index;
 	char hash[30];
 
-	if (!Modules_SecurityLoaded())
+	if (!Modules_SecurityLoaded ())
 		return AUTH_NOTHING;
 
-
-	if (!auth_validateclients.value || flags != 1 || strncmp(s + offset, id, strlen(id)))
+	if (!auth_validateclients.integer || flags != 1 || strncmp (s + offset, id, strlen (id)))
 		return AUTH_NOTHING;
 
-	len = bound (0, offset - 2, sizeof(name) - 1);
-	strlcpy(name, s, len + 1);
+	len = bound (0, offset - 2, sizeof (name) - 1);
+	strlcpy (name, s, len + 1);
 
-	if ((slot = Player_NametoSlot(name)) == PLAYER_NAME_NOMATCH)
+	if ((slot = Player_NametoSlot (name)) == PLAYER_NAME_NOMATCH)
 		return AUTH_NOTHING;
 
 	if (out_slot)
 		*out_slot = slot;
 
-
-	if (!(index = strstr(s + offset, "  crc: ")) || strlen(index) != 30 + 1 + 7 || index[30 + 7] != '\n')
+	if (!(index = strstr (s + offset, "  crc: ")) || strlen (index) != 30 + 1 + 7 || index[30 + 7] != '\n')
 		return AUTH_BADFORMAT;
 
-	memcpy (hash, va ("%s", index + 7), sizeof (hash));
-	if (out_data)
-		strlcpy(out_data, s + offset + strlen(id), bound(1, index - (s + offset + strlen(id)) + 1, out_size));
+	memcpy (hash, index + 7, sizeof (hash));
 
-	if (!auth_viewcrc.value) {
+	if (out_data)
+		strlcpy (out_data, s + offset + strlen (id), bound (1, index - (s + offset + strlen (id)) + 1, out_size));
+
+	if (!auth_viewcrc.integer) {
 		index[0] = 0x0A;
 		index[1] = 0;
 	}
 
-	return (verify_response(slot, hash)) ? AUTH_GOODCRC : AUTH_BADCRC;
+	return (verify_response (slot, hash)) ? AUTH_GOODCRC : AUTH_BADCRC;
 }
 
 
-static void Auth_CheckFServerResponse (const char *s, int flags, int offset) {
+static void Auth_CheckFServerResponse (const char *s, int flags, int offset)
+{
 	int response, slot;
 	char data[16], *port;
 
-	response = Auth_CheckString("ezQuake f_server response: ", s, flags, offset, &slot, data, sizeof(data));
+	response = Auth_CheckString ("ezQuake f_server response: ", s, flags, offset, &slot, data, sizeof (data));
 	if (response == AUTH_NOTHING || (!cls.demoplayback && slot == cl.playernum))
 		return;
 
 	if (response == AUTH_BADFORMAT || response == AUTH_BADCRC) {
 		Auth_UnauthenticateClient(slot);
 	} else if (response == AUTH_GOODCRC) {
-		Auth_AuthenticateClient(slot);
+		Auth_AuthenticateClient (slot);
+
 		if ((port = strchr(data, ':')))
 			*port = 0;
-		strlcpy(cl.players[slot].f_server, data, sizeof(cl.players[slot].f_server));
+
+		strlcpy (cl.players[slot].f_server, data, sizeof (cl.players[slot].f_server));
 	}
 }
 
-
-static void Auth_UnauthenticateClient(int slot) {
-	if (strncmp(Info_ValueForKey(cl.players[slot].userinfo, "*client"), "ezQuake", 7) && auth_validateclients.value != 2)
+static void Auth_UnauthenticateClient (int slot)
+{
+	if (strncmp (Info_ValueForKey(cl.players[slot].userinfo, "*client"), "ezQuake", 7) && auth_validateclients.integer != 2)
 		return;
 
 	cl.players[slot].validated = false;
 	cl.players[slot].f_server[0] = 0;
-	if (auth_warninvalid.value)
-		Com_Printf("Warning Invalid Client: User %s  (userid: %d)\n", cl.players[slot].name, Player_SlottoId(slot));
+	if (auth_warninvalid.integer)
+		Com_Printf ("Warning Invalid Client: User %s  (userid: %d)\n", cl.players[slot].name, Player_SlottoId (slot));
 }
 
-static void Auth_AuthenticateClient(int slot) {
-	if (strncmp(Info_ValueForKey(cl.players[slot].userinfo, "*client"), "ezQuake", 7) && auth_validateclients.value != 2)
+static void Auth_AuthenticateClient (int slot)
+{
+	if (strncmp (Info_ValueForKey(cl.players[slot].userinfo, "*client"), "ezQuake", 7) && auth_validateclients.integer != 2)
 		return;
 
 	cl.players[slot].validated = true;
 }
 
-static void Auth_CheckAuthResponse (const char *s, int flags, int offset) {
+static void Auth_CheckAuthResponse (const char *s, int flags, int offset)
+{
 	int response, slot;
 
-	response = Auth_CheckString("ezQuake " VERSION_NUMBER " ", s, flags, offset, &slot, NULL, 0);
+	response = Auth_CheckString ("ezQuake " VERSION_NUMBER " ", s, flags, offset, &slot, NULL, 0);
 	if (response == AUTH_NOTHING || (!cls.demoplayback && slot == cl.playernum))
 		return;
 
 	if (response == AUTH_BADFORMAT || response == AUTH_BADCRC)
-		Auth_UnauthenticateClient(slot);
+		Auth_UnauthenticateClient (slot);
 	else if (response == AUTH_GOODCRC)
-		Auth_AuthenticateClient(slot);
+		Auth_AuthenticateClient (slot);
 }
 
-static void Auth_Verify_Clients_f(void) {
+static void Auth_Verify_Clients_f(void)
+{
 	int i;
 	int authClients[MAX_CLIENTS], unauthClients[MAX_CLIENTS], otherClients[MAX_CLIENTS];
 	int authClientsCount, unauthClientsCount, otherClientsCount;
-	extern void PaddedPrint (char *s);
 
-	if (!Modules_SecurityLoaded()) {
+	if (!Modules_SecurityLoaded ()) {
 		Com_Printf_State (PRINT_FAIL, "Security module not initialized\n");
 		return;
 	}
@@ -177,32 +185,33 @@ static void Auth_Verify_Clients_f(void) {
 	authClientsCount = unauthClientsCount = otherClientsCount = 0;
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (cl.players[i].name[0] && !cl.players[i].spectator && (cls.demoplayback || i != cl.playernum)) {
-			if (auth_validateclients.value != 2 && strncmp(Info_ValueForKey(cl.players[i].userinfo, "*client"), "ezQuake", 7)) {
+			if (auth_validateclients.integer != 2 && strncmp (Info_ValueForKey (cl.players[i].userinfo, "*client"), "ezQuake", 7)) {
 				otherClients[otherClientsCount++] = i;
 			} else {
 				if (cl.players[i].validated)
 					authClients[authClientsCount++] = i;
-				else if (auth_validateclients.value != 2)
+				else if (auth_validateclients.integer != 2)
 					unauthClients[unauthClientsCount++] = i;
 			}
 		}
 	}
 
-	if (authClientsCount || auth_validateclients.value == 2) {
+	if (authClientsCount || auth_validateclients.integer == 2) {
 		Com_Printf ("\x02" "Authenticated ezQuake Clients:\n");
 		for (i = 0; i < authClientsCount; i++)
 			PaddedPrint (cl.players[authClients[i]].name);
 	}
+
 	if (con.x)
 		Com_Printf ("\n");
 
-	if (auth_validateclients.value != 2) {
-
+	if (auth_validateclients.integer != 2) {
 		if (unauthClientsCount) {
 			Com_Printf ("\x02" "Unauthenticated ezQuake Clients:\n");
 			for (i = 0; i < unauthClientsCount; i++)
 				PaddedPrint (cl.players[unauthClients[i]].name);
 		}
+
 		if (con.x)
 			Com_Printf ("\n");
 
@@ -211,22 +220,23 @@ static void Auth_Verify_Clients_f(void) {
 			for (i = 0; i < otherClientsCount; i++)
 				PaddedPrint (cl.players[otherClients[i]].name);
 		}
+
 		if (con.x)
 			Com_Printf ("\n");
 	}
-	if ((auth_validateclients.value != 2 && authClientsCount + unauthClientsCount + otherClientsCount > 0) || auth_validateclients.value == 2)
-		Com_Printf("\n");
+
+	if ((auth_validateclients.integer != 2 && authClientsCount + unauthClientsCount + otherClientsCount > 0) || auth_validateclients.integer == 2)
+		Com_Printf ("\n");
 }
 
+void Auth_Init (void)
+{
+	Cvar_SetCurrentGroup (CVAR_GROUP_CHAT);
+	Cvar_Register (&auth_viewcrc);
+	Cvar_ResetCurrentGroup ();
 
-void Auth_Init(void) {
-	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
-	Cvar_Register(&auth_viewcrc);
-
-	Cvar_ResetCurrentGroup();
-	
-	Cvar_Register(&auth_validateclients);
-	Cvar_Register(&auth_warninvalid);
+	Cvar_Register (&auth_validateclients);
+	Cvar_Register (&auth_warninvalid);
 
 	Cmd_AddCommand ("validate_clients", Auth_Verify_Clients_f);
 }

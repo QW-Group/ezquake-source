@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_ccmds.c,v 1.12 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: sv_ccmds.c,v 1.13 2007-09-14 13:29:29 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -169,9 +169,9 @@ void SV_Kick_f (void) {
 		if (cl->userid == uid) {
 			if (c > 2) {
 				for (j = 2; j < c; j++) {
-					strncat (reason, Cmd_Argv(j), sizeof(reason) - strlen(reason) - 1);
+					strlcat (reason, Cmd_Argv(j), sizeof (reason) - strlen(reason));
 					if (j < c - 1)
-						strncat (reason, " ", sizeof(reason) - strlen(reason) - 1);
+						strlcat (reason, " ", sizeof (reason) - strlen(reason));
 				}
 			}
 			saved_state = cl->state;
@@ -300,7 +300,7 @@ void SV_ConSay_f (void) {
 	if (Cmd_Argc () < 2)
 		return;
 
-	strcpy (text, "console: ");
+	strlcpy (text, "console: ", sizeof (text));
 	p = Cmd_Args();
 
 	if (*p == '"') {
@@ -308,7 +308,7 @@ void SV_ConSay_f (void) {
 		p[strlen(p) - 1] = 0;
 	}
 
-	strcat(text, p);
+	strlcat (text, p, sizeof (text));
 
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++) {
 		if (client->state != cs_spawned)
@@ -548,7 +548,7 @@ void SV_Snap (int uid) {
 		Com_Printf ("Snap: Couldn't create a file, clean some out.\n"); 
 		return;
 	}
-	strcpy(cl->uploadfn, checkname);
+	strlcpy (cl->uploadfn, checkname, sizeof (cl->uploadfn));
 
 	memcpy(&cl->snap_from, &net_from, sizeof(net_from));
 	cl->remote_snap  =  (sv_redirected != RD_NONE);

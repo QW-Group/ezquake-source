@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.87 2007-09-13 12:01:45 dkure Exp $
+    $Id: teamplay.c,v 1.88 2007-09-14 13:29:30 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -1721,12 +1721,13 @@ qbool TP_LoadLocFile (char *path, qbool quiet)
 	if (!*path)
 		return false;
 
-	strcpy (locname, "locs/");
-	if (strlen(path) + strlen(locname) + 2 + 4 > MAX_OSPATH) {
+	strlcpy (locname, "locs/", sizeof (locname));
+	if (strlen (path) + strlen(locname) + 2 + 4 > MAX_OSPATH) {
 		Com_Printf ("TP_LoadLocFile: path name > MAX_OSPATH\n");
 		return false;
 	}
-	strncat (locname, path, sizeof(locname) - strlen(locname) - 1);
+
+	strlcat (locname, path, sizeof (locname) - strlen (locname));
 	COM_DefaultExtension(locname, ".loc");
 
 	mark = Hunk_LowMark ();
@@ -1861,14 +1862,14 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 
 	// Get the default path for loc-files and make sure the path
 	// won't be too long.
-	strcpy (locname, va("%s/%s/", com_gamedirfile, "locs"));
+	strlcpy (locname, va("%s/%s/", com_gamedirfile, "locs"), sizeof (locname));
 	if (strlen(path) + strlen(locname) + 2 + 4 > MAX_OSPATH) {
 		Com_Printf ("TP_SaveLocFile: path name > MAX_OSPATH\n");
 		return false;
 	}
 
 	// Add an extension if it doesn't exist already.
-	strncat (locname, path, sizeof(locname) - strlen(locname) - 1);
+	strlcat (locname, path, sizeof (locname) - strlen (locname));
 	COM_DefaultExtension(locname, ".loc");
 
 	// Allocate a buffer to hold the file contents.
@@ -2421,8 +2422,9 @@ static void FlagCommand (int *flags, int defaultflags)
 		for (i = 0 ; i < NUM_ITEMFLAGS ; i++)
 			if (*flags & (1 << i)) {
 				if (*str)
-					strncat (str, " ", sizeof(str) - strlen(str) - 1);
-				strncat (str, pknames[i], sizeof(str) - strlen(str) - 1);
+					strlcat (str, " ", sizeof (str) - strlen (str));
+
+				strlcat (str, pknames[i], sizeof (str) - strlen (str));
 			}
 		Com_Printf ("%s\n", str);
 		return;
@@ -3109,16 +3111,16 @@ void TP_FindPoint (void)
 		}
 		if (beststate->effects & EF_BLUE)
         {
-			strncat(buf, tp_name_quaded.string, sizeof(buf) - strlen(buf) - 1);
+			strlcat (buf, tp_name_quaded.string, sizeof (buf) - strlen (buf));
             flag |= it_quaded;
         }
 		if (beststate->effects & EF_RED)
         {
-			strncat(buf, va("%s%s", buf[0] ? " " : "", tp_name_pented.string), sizeof(buf) - strlen(buf) - 1);
+			strlcat (buf, va("%s%s", buf[0] ? " " : "", tp_name_pented.string), sizeof (buf) - strlen (buf));
             flag |= it_pented;
         }
-		strncat(buf, va("%s%s", buf[0] ? " " : "", name), sizeof(buf) - strlen(buf) - 1);
-		strlcpy (vars.pointname, buf, sizeof(vars.pointname));
+		strlcat (buf, va("%s%s", buf[0] ? " " : "", name), sizeof (buf) - strlen (buf));
+		strlcpy (vars.pointname, buf, sizeof (vars.pointname));
         vars.pointflag = flag;
 		strlcpy (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));
 

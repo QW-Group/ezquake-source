@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.17 2007-09-12 22:29:53 disconn3ct Exp $
+    $Id: net.c,v 1.18 2007-09-14 13:29:29 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -130,7 +130,7 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_qstorage *sadr)
 	if (strlen(s) >= sizeof(copy) - 1)
 		return false;
 
-	strcpy (copy, s);
+	strlcpy (copy, s, sizeof (copy));
 	// strip off a trailing :port if present
 	for (colon = copy ; *colon ; colon++)
 	{
@@ -768,9 +768,8 @@ void NET_GetLocalAddress (int socket, netadr_t *out)
 	netadr_t adr = {0};
 	qbool notvalid = false;
 
-	strcpy(buff, "localhost");
-	gethostname(buff, sizeof(buff));
-	buff[sizeof(buff) - 1] = 0;
+	strlcpy (buff, "localhost", sizeof (buff));
+	gethostname (buff, sizeof (buff));
 
 	if (!NET_StringToAdr (buff, &adr))	//urm
 		NET_StringToAdr ("127.0.0.1", &adr);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.139 2007-09-13 14:49:29 disconn3ct Exp $
+$Id: cl_screen.c,v 1.140 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
 /// declarations may be found in screen.h
@@ -650,7 +650,7 @@ void SCR_DrawClock (void) {
 	int x, y;
 	time_t t;
 	struct tm *ptm;
-	char str[80];
+	char str[64];
 
 	if (!scr_clock.value || scr_newHud.value == 1) // newHud  has its own clock
 		return;
@@ -658,13 +658,13 @@ void SCR_DrawClock (void) {
 	if (scr_clock.value == 2) {
 		time (&t);
 		if ((ptm = localtime (&t))) {
-			strftime (str, sizeof(str) - 1, scr_clock_format.string[0] ? scr_clock_format.string : "%H:%M:%S", ptm);
+			strftime (str, sizeof (str) - 1, scr_clock_format.string[0] ? scr_clock_format.string : "%H:%M:%S", ptm);
 		} else {
-			strcpy (str, "#bad date#");
+			strlcpy (str, "#bad date#", sizeof (str));
 		}
 	} else {
 		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
-		strlcpy (str, SecondsToHourString((int) time), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) time), sizeof (str));
 	}
 
 	x = ELEMENT_X_COORD(scr_clock);

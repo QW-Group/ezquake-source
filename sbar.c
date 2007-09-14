@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.41 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: sbar.c,v 1.42 2007-09-14 13:29:29 disconn3ct Exp $
 */
 // sbar.c -- status bar code
 
@@ -1195,13 +1195,13 @@ static void Sbar_DeathmatchOverlay (int start) {
 		char temp[32] = {0};
 
 		if (stats_team)
-			strcat(temp, "kills tks dths");
+			strlcat (temp, "kills tks dths", sizeof (temp));
 		else
-			strcat(temp, "kills dths");
+			strlcat(temp, "kills dths", sizeof (temp));
 		if (stats_touches)
-			strcat(temp, " tchs");
+			strlcat(temp, " tchs", sizeof (temp));
 		if (stats_caps)
-			strcat(temp, " caps");
+			strlcat(temp, " caps", sizeof (temp));
 
 		stats_xoffset = (cl.teamplay ? 41 * 8 : 36 * 8);
 		Draw_String(xofs + 1 + stats_xoffset, y - 8, temp);
@@ -1378,9 +1378,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 					snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF00%3i ", playerstats[0], playerstats[1]);
 
 				if (stats_touches)
-					strcat (scorerow, va("  &cFD0%2i ", playerstats[4]));
+					strlcat (scorerow, va("  &cFD0%2i ", playerstats[4]), sizeof (scorerow));
 				if (stats_caps)
-					strcat (scorerow, va("  &c24F%2i ", playerstats[6]));
+					strlcat (scorerow, va("  &c24F%2i ", playerstats[6]), sizeof (scorerow));
 
 				Draw_ColoredString(x + stats_xoffset - 9 * 8, y, scorerow, 0);
 			}
@@ -1407,10 +1407,10 @@ static void Sbar_TeamOverlay (void) {
 	team_t *tm;
 	mpic_t *pic;
 
-       // gavoja -->
-       if (key_dest == key_console)
-               return;
-       // gavoja <--
+	// gavoja -->
+	if (key_dest == key_console)
+		return;
+	// gavoja <--
 
 #ifndef CLIENTONLY
 	// FIXME

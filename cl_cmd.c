@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.55 2007-09-13 18:11:30 qqshka Exp $
+	$Id: cl_cmd.c,v 1.56 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -862,7 +862,7 @@ void CL_WriteConfig_f (void) {
 	}
 
 	strlcpy (name, Cmd_Argv(1), sizeof(name));
-	COM_ForceExtension (name, ".cfg");
+	COM_ForceExtensionEx (name, ".cfg", sizeof (name));
 
 	Com_Printf ("Writing %s\n", name);
 

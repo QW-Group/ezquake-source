@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.29 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: sv_main.c,v 1.30 2007-09-14 13:29:29 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -234,7 +234,7 @@ void SV_FullClientUpdate (client_t *client, sizebuf_t *buf) {
 	MSG_WriteByte (buf, i);
 	MSG_WriteFloat (buf, svs.realtime - client->connection_started);
 
-	strcpy (info, client->userinfo);
+	strlcpy (info, client->userinfo, sizeof (info));
 	Info_RemovePrefixedKeys (info, '_');	// server passwords, etc
 
 	MSG_WriteByte (buf, svc_updateuserinfo);
@@ -822,13 +822,14 @@ void SV_WriteIP_f (void) {
 	fclose (f);
 }
 
-void SV_SendBan (void) {
+void SV_SendBan (void)
+{
 	char data[128];
 
 	data[0] = data[1] = data[2] = data[3] = 0xff;
 	data[4] = A2C_PRINT;
 	data[5] = 0;
-	strcat (data, "\nbanned.\n");
+	strlcat (data, "\nbanned.\n", sizeof (data));
 
 	NET_SendPacket (NS_SERVER, strlen(data), data, net_from);
 }
@@ -1204,7 +1205,7 @@ void SV_ExtractFromUserinfo (client_t *cl) {
 
 	if (p != newname && !*p) {
 		//white space only
-		strcpy(newname, "unnamed");
+		strlcpy (newname, "unnamed", sizeof (newname));
 		p = newname;
 	}
 

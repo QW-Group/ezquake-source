@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.35 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: gl_model.c,v 1.36 2007-09-14 13:29:28 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -156,7 +156,7 @@ model_t *Mod_FindName (char *name) {
 	if (i == mod_numknown) {
 		if (mod_numknown == MAX_MOD_KNOWN)
 			Sys_Error ("mod_numknown == MAX_MOD_KNOWN");
-		strcpy (mod->name, name);
+		strlcpy (mod->name, name, sizeof (mod->name));
 		mod->needload = true;
 		mod_numknown++;
 	}
@@ -1362,7 +1362,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 			snprintf (name, sizeof (name), "*%i", i+1);
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
-			strcpy (loadmodel->name, name);
+			strlcpy (loadmodel->name, name, sizeof (loadmodel->name));
 			mod = loadmodel;
 		}
 	}
@@ -1393,7 +1393,7 @@ void *Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame) {
 
 	pdaliasframe = (daliasframe_t *)pin;
 
-	strcpy (frame->name, pdaliasframe->name);
+	strlcpy (frame->name, pdaliasframe->name, sizeof (frame->name));
 	frame->firstpose = posenum;
 	frame->numposes = 1;
 

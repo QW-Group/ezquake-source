@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2001-2002       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -17,22 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.18 2007-09-12 16:44:08 johnnycz Exp $
-
+	$Id: fchecks.c,v 1.19 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include "quakedef.h"
-#ifdef GLQUAKE
-#include "gl_model.h"
-#include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "rulesets.h"
 #include "version.h"
 #include "auth.h"
@@ -41,25 +28,38 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "modules.h"
 
 
-static float f_system_reply_time, f_cmdline_reply_time, f_scripts_reply_time, f_fshaft_reply_time, f_ruleset_reply_time, f_reply_time, f_mod_reply_time, f_version_reply_time, f_skins_reply_time, f_server_reply_time;
-
-extern cvar_t r_fullbrightSkins;
-extern cvar_t cl_fakeshaft;
-extern cvar_t allow_scripts;
+static float
+f_system_reply_time,
+f_cmdline_reply_time,
+f_scripts_reply_time,
+f_fshaft_reply_time,
+f_ruleset_reply_time,
+f_reply_time,
+f_mod_reply_time,
+f_version_reply_time,
+f_skins_reply_time,
+f_server_reply_time;
 
 cvar_t allow_f_system  = {"allow_f_system",  "1"};
 cvar_t allow_f_cmdline = {"allow_f_cmdline", "1"};
 
-extern char * SYSINFO_GetString(void);
+extern cvar_t enemyforceskins;
+extern cvar_t cl_independentPhysics;
+extern cvar_t allow_scripts;
+extern cvar_t r_fullbrightSkins;
+extern cvar_t cl_fakeshaft;
 
-void FChecks_VersionResponse(void) {
+
+static void FChecks_VersionResponse (void)
+{
 	if (Modules_SecurityLoaded())
 		Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "  crc: %s\n", VersionString(), Auth_Generate_Crc()));
 	else
 		Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
 }
 
-void FChecks_FServerResponse (void) {
+static void FChecks_FServerResponse (void)
+{
 	netadr_t adr;
 
 	if (!NET_StringToAdr (cls.servername, &adr))
@@ -74,46 +74,41 @@ void FChecks_FServerResponse (void) {
 		Cbuf_AddText(va("say ezQuake f_server response: %s\n", NET_AdrToString(adr)));
 }
 
-void FChecks_SkinsResponse(float fbskins) {
-	char* sf;
-	extern cvar_t enemyforceskins;
-
-	if (enemyforceskins.integer)
-		sf = ", enemy skins forcing";
-	else
-		sf = "";
-
-	if (fbskins > 0) {
-		Cbuf_AddText (va("say all skins %d%% fullbright%s\n", (int) (fbskins * 100), sf));
-	}
-	else {
-		Cbuf_AddText (va("say not using fullbright skins%s\n", sf));
-	}
-}
-
-void FChecks_ScriptsResponse (void)
+static void FChecks_SkinsResponse (float fbskins)
 {
-    if (allow_scripts.value < 1)
-        Cbuf_AddText("say not using scripts\n");
-    else if (allow_scripts.value < 2)
-        Cbuf_AddText("say using simple scripts\n");
-    else
-        Cbuf_AddText("say using advanced scripts\n");
+	char *sf = enemyforceskins.integer ? ", enemy skins forcing" : ""; 
+
+	if (fbskins > 0)
+		Cbuf_AddText (va("say all skins %d%% fullbright%s\n", (int) (fbskins * 100), sf));
+	else
+		Cbuf_AddText (va("say not using fullbright skins%s\n", sf));
 }
 
-static qbool FChecks_ScriptsRequest (const char *s) {
+static void FChecks_ScriptsResponse (void)
+{
+	if (allow_scripts.integer < 1)
+		Cbuf_AddText ("say not using scripts\n");
+	else if (allow_scripts.integer < 2)
+		Cbuf_AddText ("say using simple scripts\n");
+	else
+		Cbuf_AddText ("say using advanced scripts\n");
+}
+
+static qbool FChecks_ScriptsRequest (const char *s)
+{
 	if (cl.spectator || (f_scripts_reply_time && cls.realtime - f_scripts_reply_time < 20))
 		return false;
 
-	if (Util_F_Match(s, "f_scripts"))	{
+	if (Util_F_Match(s, "f_scripts")) {
 		FChecks_ScriptsResponse();
 		f_scripts_reply_time = cls.realtime;
 		return true;
 	}
+
 	return false;
 }
 
-void FChecks_FakeshaftResponse (void)
+static void FChecks_FakeshaftResponse (void)
 {
 	if (cl_fakeshaft.value > 0.999)
 		Cbuf_AddText("say fakeshaft on\n");
@@ -123,7 +118,8 @@ void FChecks_FakeshaftResponse (void)
 		Cbuf_AddText(va("say fakeshaft %.1f%%\n", cl_fakeshaft.value * 100.0));
 }
 
-static qbool FChecks_FakeshaftRequest (const char *s) {
+static qbool FChecks_FakeshaftRequest (const char *s)
+{
 	if (cl.spectator || (f_fshaft_reply_time && cls.realtime - f_fshaft_reply_time < 20))
 		return false;
 
@@ -132,10 +128,12 @@ static qbool FChecks_FakeshaftRequest (const char *s) {
 		f_fshaft_reply_time = cls.realtime;
 		return true;
 	}
+
 	return false;
 }
 
-static qbool FChecks_VersionRequest (const char *s) {
+static qbool FChecks_VersionRequest (const char *s)
+{
 	if (cl.spectator || (f_version_reply_time && cls.realtime - f_version_reply_time < 20))
 		return false;
 
@@ -144,14 +142,14 @@ static qbool FChecks_VersionRequest (const char *s) {
 		f_version_reply_time = cls.realtime;
 		return true;
 	}
+
 	return false;
 }
 
-static qbool FChecks_SkinRequest (const char *s) {
-	float fbskins;		
-
-	fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);	
-	if (cl.spectator || (f_skins_reply_time && cls.realtime - f_skins_reply_time < 20))	
+static qbool FChecks_SkinRequest (const char *s)
+{
+	float fbskins = bound (0, r_fullbrightSkins.value, cl.fbskins);
+	if (cl.spectator || (f_skins_reply_time && cls.realtime - f_skins_reply_time < 20))
 		return false;
 
 	if (Util_F_Match(s, "f_skins"))	{
@@ -159,46 +157,50 @@ static qbool FChecks_SkinRequest (const char *s) {
 		f_skins_reply_time = cls.realtime;
 		return true;
 	}
+
 	return false;
 }
 
-static qbool FChecks_CheckFModRequest (const char *s) {
+static qbool FChecks_CheckFModRequest (const char *s)
+{
 	if (cl.spectator || (f_mod_reply_time && cls.realtime - f_mod_reply_time < 20))
 		return false;
 
-	if (Util_F_Match(s, "f_modified"))	{
+	if (Util_F_Match(s, "f_modified")) {
 		FMod_Response();
 		f_mod_reply_time = cls.realtime;
 		return true;
 	}
+
 	return false;
 }
 
-static qbool FChecks_CheckFServerRequest (const char *s) {
+static qbool FChecks_CheckFServerRequest (const char *s)
+{
 	netadr_t adr;
 
 	if (cl.spectator || (f_server_reply_time && cls.realtime - f_server_reply_time < 20))
 		return false;
 
-	if (Util_F_Match(s, "f_server") && NET_StringToAdr (cls.servername, &adr))	{
+	if (Util_F_Match(s, "f_server") && NET_StringToAdr (cls.servername, &adr)) {
 		FChecks_FServerResponse();
 		f_server_reply_time = cls.realtime;
 		return true;
 	}
+
 	return false;
 }
 
-static qbool FChecks_CheckFRulesetRequest (const char *s) {
-	extern cvar_t cl_independentPhysics;
-	extern cvar_t allow_scripts;
+static qbool FChecks_CheckFRulesetRequest (const char *s)
+{
 	char *sScripts, *sIPhysics, *sp1, *sp2;
 
 	if (cl.spectator || (f_ruleset_reply_time && cls.realtime - f_ruleset_reply_time < 20))
 		return false;
 
 	if (Util_F_Match(s, "f_ruleset"))	{
-		sScripts = (allow_scripts.value) ? "" : "\x90rj scripts blocked\x91";
-		sIPhysics = (cl_independentPhysics.value) ? "" : "\x90indep. physics off\x91";
+		sScripts = (allow_scripts.integer) ? "" : "\x90rj scripts blocked\x91";
+		sIPhysics = (cl_independentPhysics.integer) ? "" : "\x90indep. physics off\x91";
 		sp1 = *sScripts || *sIPhysics ? " " : "";
 		sp2 = *sIPhysics && *sScripts ? " " : "";
 
@@ -206,54 +208,56 @@ static qbool FChecks_CheckFRulesetRequest (const char *s) {
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}
+
 	return false;
 }
 
-static qbool FChecks_CmdlineRequest (const char *s) {
+static qbool FChecks_CmdlineRequest (const char *s)
+{
 	if (cl.spectator || (f_cmdline_reply_time && cls.realtime - f_cmdline_reply_time < 20))
 		return false;
 
 	if (Util_F_Match(s, "f_cmdline"))	{
-	    if (!allow_f_cmdline.value) {
+		if (!allow_f_cmdline.integer) {
 			Cbuf_AddText("say disabled\n");
-		}
-		else {
+		} else {
 			Cbuf_AddText("say ");
 			Cbuf_AddText(com_args_original);
 			Cbuf_AddText("\n");
 		}
+
 		f_cmdline_reply_time = cls.realtime;
 		return true;
 	}
+
 	return false;
 }
 
-static qbool FChecks_SystemRequest (const char *s) {
+static qbool FChecks_SystemRequest (const char *s)
+{
 	if (cl.spectator || (f_system_reply_time && cls.realtime - f_system_reply_time < 20))
 		return false;
 
 	if (Util_F_Match(s, "f_system")) {
-	    char *sys_string;
+		char *sys_string;
 
-		if (allow_f_system.value)
-			sys_string = SYSINFO_GetString();
-		else
-			sys_string = "disabled";
+		sys_string = (allow_f_system.integer) ? SYSINFO_GetString() : "disabled";
 
 		//if (sys_string != NULL && sys_string[0]) {
-			Cbuf_AddText("say ");
-			Cbuf_AddText(sys_string);
-			Cbuf_AddText("\n");
+		Cbuf_AddText("say ");
+		Cbuf_AddText(sys_string);
+		Cbuf_AddText("\n");
 		//}
 
 		f_system_reply_time = cls.realtime;
 		return true;
 	}
-	
+
 	return false;
 }
 
-void FChecks_CheckRequest (const char *s) {
+void FChecks_CheckRequest (const char *s)
+{
 	qbool fcheck = false;
 
 	fcheck |= FChecks_VersionRequest (s);
@@ -265,12 +269,14 @@ void FChecks_CheckRequest (const char *s) {
 	fcheck |= FChecks_CheckFModRequest (s);
 	fcheck |= FChecks_CheckFServerRequest (s);
 	fcheck |= FChecks_CheckFRulesetRequest (s);
+
 	if (fcheck)
 		f_reply_time = cls.realtime;
 }
 
-void FChecks_Init(void) {
-	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
+void FChecks_Init (void)
+{
+	Cvar_SetCurrentGroup (CVAR_GROUP_CHAT);
 	Cvar_Register (&allow_f_system);
 	Cvar_Register (&allow_f_cmdline);
 	Cvar_ResetCurrentGroup();

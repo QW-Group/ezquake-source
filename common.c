@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.95 2007-09-12 22:29:52 disconn3ct Exp $
+    $Id: common.c,v 1.96 2007-09-14 13:29:28 disconn3ct Exp $
 
 */
 
@@ -253,7 +253,7 @@ void COM_DefaultExtension (char *path, char *extension)
 		src--;
 	}
 
-	strncat (path, extension, MAX_OSPATH);
+	strlcat (path, extension, MAX_OSPATH);
 }
 
 // If path doesn't have an extension or has a different extension, append(!) specified extension
@@ -267,29 +267,29 @@ void COM_ForceExtension (char *path, char *extension)
 	if (src >= path && !strcmp(src, extension))
 		return;
 
-	strncat (path, extension, MAX_OSPATH);
+	strlcat (path, extension, MAX_OSPATH);
 }
 
 // If path doesn't have an extension or has a different extension, append(!) specified extension
 // a bit extended version of COM_ForceExtension(), we suply size of path, so append safe, sure if u provide right path size
-void COM_ForceExtensionEx (char *path, char *extension, int path_size)
+void COM_ForceExtensionEx (char *path, const char *extension, size_t path_size)
 {
 	char *src;
 
-	if (path_size < 1 || path_size <= strlen(extension)) // too small buffer, can't even theoreticaly append extension
+	if (path_size < 1 || path_size <= strlen (extension)) // too small buffer, can't even theoreticaly append extension
 		Sys_Error("COM_ForceExtensionEx: internall error"); // this is looks like a bug, be fatal then
 
-	src = path + strlen(path) - strlen(extension);
-	if (src >= path && !strcmp(src, extension))
+	src = path + strlen (path) - strlen (extension);
+	if (src >= path && !strcmp (src, extension))
 		return; // seems we alredy have this extension
 
-	strlcat(path, extension, path_size);
+	strlcat (path, extension, path_size);
 
-	src = path + strlen(path) - strlen(extension);
-	if (src >= path && !strcmp(src, extension))
+	src = path + strlen (path) - strlen (extension);
+	if (src >= path && !strcmp (src, extension))
 		return; // seems we succeed
 
-	Com_Printf("Failed to force extension %s for %s\n", extension, path); // its good to know about failure
+	Com_Printf ("Failed to force extension %s for %s\n", extension, path); // its good to know about failure
 }
 
 //

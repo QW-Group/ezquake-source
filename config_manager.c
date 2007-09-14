@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.45 2007-09-03 15:38:19 dkure Exp $
+    $Id: config_manager.c,v 1.46 2007-09-14 13:29:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -861,21 +861,16 @@ void DumpHUD(char *name)
 void SaveConfig_f(void)
 {
 	char filename[MAX_PATH] = {0}, *arg1, *filename_ext, *backupname_ext;
+	size_t len;
 	FILE *f;
 
-/* load config.cfg by default if no params
-	if (Cmd_Argc() != 2) {
-		Com_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
-		return;
-	}
-*/
 
 	arg1 = COM_SkipPath(Cmd_Argv(1));
 	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
 
-	COM_ForceExtension(filename, ".cfg");
+	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 
-	if (cfg_backup.value) {
+	if (cfg_backup.integer) {
 		if (cfg_use_home.integer) // use home dir for cfg
 			filename_ext = va("%s/%s", com_homedir, filename);
 		else // use ezquake dir
@@ -883,13 +878,15 @@ void SaveConfig_f(void)
 
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
-			backupname_ext = (char *) Q_malloc(strlen(filename_ext) + 5);
-			strcpy(backupname_ext, filename_ext);
-			strcat(backupname_ext, ".bak");
+			len = strlen(filename_ext) + 5;
+			backupname_ext = (char *) Q_malloc(len);
+			snprintf (backupname_ext, len, "%s.bak", filename_ext);
+
 			if ((f = fopen(backupname_ext, "r"))) {
 				fclose(f);
 				remove(backupname_ext);
 			}
+
 			rename(filename_ext, backupname_ext);
 			Q_free(backupname_ext);
 		}
@@ -922,7 +919,7 @@ void LoadHomeCfg(const char *filename)
     FILE *f;
 
 	snprintf(fullname, sizeof(fullname) - 4, "%s/%s", com_homedir, filename);
-	COM_ForceExtension(fullname, ".cfg");
+	COM_ForceExtensionEx (fullname, ".cfg", sizeof (filename));
 
 	if (!(f = fopen(fullname, "r"))) {
 	    Com_DPrintf("LoadHomeCfg: %s not found\n", filename); // hrm
@@ -956,7 +953,7 @@ void LoadConfig_f(void)
 	arg1 = COM_SkipPath(Cmd_Argv(1));
 	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
 
-	COM_ForceExtension(filename, ".cfg");
+	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 
 	use_home = cfg_use_home.integer;
 
@@ -1015,7 +1012,7 @@ void DumpHUD_f(void)
 		return;
 	}
 	filename = COM_SkipPath(Cmd_Argv(1));
-	COM_ForceExtension(filename, ".cfg");
+	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 	DumpHUD(filename);
 	Com_Printf("HUD variables exported.\n");
 }
