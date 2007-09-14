@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.42 2007-09-14 14:44:59 tonik Exp $
+	$Id: cl_ents.c,v 1.43 2007-09-14 14:49:40 tonik Exp $
 
 */
 
@@ -1636,6 +1636,8 @@ void CL_ParsePlayerinfo (void) {
 #ifdef VWEP_TEST
 		if (cl.z_ext & Z_EXT_VWEP && !(state->flags & PF_GIB))
 			state->vw_index = state->command.impulse;
+		else
+			state->vw_index = 0;
 #endif
 
 		for (i = 0; i < 3; i++) {
