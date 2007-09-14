@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_alias.c,v 1.8 2007-03-29 01:19:53 qqshka Exp $
+	$Id: r_alias.c,v 1.9 2007-09-14 10:20:41 tonik Exp $
 
 */
 
@@ -563,13 +563,13 @@ void R_AliasSetupLighting (entity_t *ent) {
 		ambientlight = shadelight = 24;
 
 	// never allow players to go totally black
-	if (currententity->model->modhint == MOD_PLAYER) {
+	if (currententity->model->modhint == MOD_PLAYER || currententity->flags & RF_PLAYERMODEL) {
 		if (ambientlight < 8)
 			ambientlight = shadelight = 8;
 	}
 
 
-	if (currententity->model->modhint == MOD_PLAYER) {
+	if (currententity->model->modhint == MOD_PLAYER || currententity->flags & RF_PLAYERMODEL) {
 		extern cvar_t r_fullbrightSkins;
 		fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);
 		if (fbskins) {
