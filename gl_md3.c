@@ -64,7 +64,7 @@ void R_DrawAlias3Model (entity_t *ent)
 
 	R_RotateForEntity (ent);
 
-	r_modelalpha = ((ent->flags & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
+	r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
 	if (ent->alpha)
 		r_modelalpha = ent->alpha;
 
@@ -72,7 +72,7 @@ void R_DrawAlias3Model (entity_t *ent)
 		glEnable(GL_BLEND);
 //	glDisable(GL_ALPHA_TEST);
 
-	scale = (ent->flags & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
+	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
 	glScalef(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
 	glColor4f(1, 1, 1, r_modelalpha);

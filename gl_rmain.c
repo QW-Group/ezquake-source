@@ -381,7 +381,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 
 			order += 2;
 
-			if ((currententity->flags & RF_LIMITLERP)) {
+			if ((currententity->renderfx & RF_LIMITLERP)) {
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 			}
 
@@ -645,7 +645,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 		shadelight = 192 - ambientlight;
 
 	// always give the gun some light
-	if ((ent->flags & RF_WEAPONMODEL) && ambientlight < 24)
+	if ((ent->renderfx & RF_WEAPONMODEL) && ambientlight < 24)
 		ambientlight = shadelight = 24;
 
 	// never allow players to go totally black
@@ -761,7 +761,7 @@ void R_DrawAliasModel (entity_t *ent) {
 
 
 	//culling
-	if (!(ent->flags & RF_WEAPONMODEL)) {
+	if (!(ent->renderfx & RF_WEAPONMODEL)) {
 		if (ent->angles[0] || ent->angles[1] || ent->angles[2]) {
 			if (R_CullSphere (ent->origin, max(oldframe->radius, frame->radius)))
 				return;
@@ -794,7 +794,7 @@ void R_DrawAliasModel (entity_t *ent) {
 		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
 		// double size of eyes, since they are really hard to see in gl
 		glScalef (paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
-	} else if (ent->flags & RF_WEAPONMODEL) {	
+	} else if (ent->renderfx & RF_WEAPONMODEL) {	
 		scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
         glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
         glScalef (paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
@@ -815,7 +815,7 @@ void R_DrawAliasModel (entity_t *ent) {
 	texture = paliashdr->gl_texturenum[skinnum][anim];
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 
-	r_modelalpha = ((ent->flags & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
+	r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
 	//VULT MOTION TRAILS
 	if (ent->alpha)
 		r_modelalpha = ent->alpha;
@@ -841,7 +841,8 @@ void R_DrawAliasModel (entity_t *ent) {
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
-	if (ent->model->modhint == MOD_PLAYER && playernum >= 0 && playernum < MAX_CLIENTS)
+	if (ent->model->modhint == MOD_PLAYER && playernum >= 0 && playernum < MAX_CLIENTS
+		|| ent->renderfx & RF_PLAYERMODEL)
 	{
 		extern qbool VX_TrackerIsEnemy(int player);
 		cv = VX_TrackerIsEnemy(playernum) ? &r_enemyskincolor : &r_teamskincolor;
@@ -964,7 +965,7 @@ void R_DrawAliasModel (entity_t *ent) {
 	glPopMatrix ();
 
 	//VULT MOTION TRAILS - No shadows on motion trails
-	if ((r_shadows.value && !full_light && !(ent->flags & RF_NOSHADOW)) && !ent->alpha) {
+	if ((r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha) {
 		float theta;
 		static float shadescale = 0;
 
@@ -1115,7 +1116,7 @@ void R_DrawViewModel (void) {
 	VectorCopy(cent->current.origin, gun.origin);
 	VectorCopy(cent->current.angles, gun.angles);
 	gun.colormap = vid.colormap;
-	gun.flags = RF_WEAPONMODEL | RF_NOSHADOW;
+	gun.renderfx = RF_WEAPONMODEL | RF_NOSHADOW;
 	if (r_lerpmuzzlehack.value) {
 		if (cent->current.modelindex != cl_modelindices[mi_vaxe] &&
 			cent->current.modelindex != cl_modelindices[mi_vbio] &&
@@ -1125,7 +1126,7 @@ void R_DrawViewModel (void) {
 			cent->current.modelindex != cl_modelindices[mi_vmedi] &&
 			cent->current.modelindex != cl_modelindices[mi_vspan])
 		{
-			gun.flags |= RF_LIMITLERP;			
+			gun.renderfx |= RF_LIMITLERP;			
 			r_lerpdistance =  135;
 		}
 	}

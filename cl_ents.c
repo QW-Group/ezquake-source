@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.45 2007-09-14 15:42:04 tonik Exp $
+	$Id: cl_ents.c,v 1.46 2007-09-14 17:12:33 tonik Exp $
 
 */
 
@@ -203,9 +203,10 @@ void CL_AddEntity (entity_t *ent) {
 #ifdef GLQUAKE
 	if (ent->model->type == mod_sprite) {
 		vislist = &cl_alphaents;
-	} else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES) {
+	} else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES
+		|| ent->renderfx & RF_PLAYERMODEL) {
 		vislist = &cl_firstpassents;
-		ent->flags |= RF_NOSHADOW;
+		ent->renderfx |= RF_NOSHADOW;
 	} else {
 		vislist = &cl_visents;
 	}
@@ -1834,7 +1835,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int vw_frame)
 	newent.oldframe = vw_frame;
 	newent.skinnum = 0;
 	newent.colormap = vid.colormap;
-	newent.flags = RF_PLAYERMODEL;	// not really, but use same lighting rules
+	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
 
 	CL_AddEntity (&newent);
 	return true;
@@ -2030,7 +2031,7 @@ void CL_LinkPlayers (void) {
 			if (vwep) {
 				if (cl.vw_model_name[0][0] != '-') {
 					ent.model = cl.vw_model_precache[0];
-					ent.flags = RF_PLAYERMODEL;
+					ent.renderfx |= RF_PLAYERMODEL;
 					CL_AddEntity (&ent);
 				} else {
 					// server said don't add vwep player model

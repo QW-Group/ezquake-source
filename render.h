@@ -44,7 +44,7 @@ typedef struct entity_s {
 	byte					*colormap;
 	int						skinnum;		// for Alias models
 	struct player_info_s	*scoreboard;	// identify player
-	int						flags;
+	int						renderfx;		// RF_ bit mask
 
 	int						oldframe;
 	int						frame;
