@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2001-2002       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -16,14 +15,15 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: auth.h,v 1.2.4.1 2007-09-15 16:47:26 disconn3ct Exp $
 */
 
-#ifndef __AUTH_H_
+#ifndef __AUTH_H__
+#define __AUTH_H__
 
-#define __AUTH_H_
+void Auth_Init (void);
+char *Auth_Generate_Crc (void);
+void Auth_CheckResponse (wchar *, int, int);
 
-void Auth_Init(void);
-char *Auth_Generate_Crc(void);
-void Auth_CheckResponse (char *, int, int);
-
-#endif
+#endif /* !__AUTH_H__ */

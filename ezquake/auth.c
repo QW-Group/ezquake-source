@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.13.2.4 2007-09-14 13:01:05 disconn3ct Exp $
+	$Id: auth.c,v 1.13.2.5 2007-09-15 16:47:26 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -76,20 +76,25 @@ static qbool verify_response(int index, char *hash) {
 	return retval;
 }
 
-static int Auth_CheckString (char *id, const char *s, int flags, int offset, int *out_slot, char *out_data, int out_size) {
+static int Auth_CheckString (char *id, wchar *i_hate_wide_chars, int flags, int offset, int *out_slot, char *out_data, int out_size) {
+#define HASH_SIZE 30
+#define CRC_TEXT "  crc: "
 	int len, slot;
 	char name[32], *index;
-	char hash[30];
+	char hash[HASH_SIZE];
+	char s[1024];
+	wchar *windex;
 
 	if (!Modules_SecurityLoaded())
 		return AUTH_NOTHING;
 
+	memcpy (s, wcs2str_malloc(i_hate_wide_chars), min (sizeof (s), qwcslen (i_hate_wide_chars)));
 
-	if (!auth_validateclients.value || flags != 1 || strncmp(s + offset, id, strlen(id)))
+	if (!auth_validateclients.value || flags != 1 || strncmp (s + offset, id, strlen(id)))
 		return AUTH_NOTHING;
 
 	len = bound (0, offset - 2, sizeof(name) - 1);
-	strlcpy(name, s, len + 1);
+	strlcpy (name, s, len + 1);
 
 	if ((slot = Player_NametoSlot(name)) == PLAYER_NAME_NOMATCH)
 		return AUTH_NOTHING;
@@ -97,24 +102,26 @@ static int Auth_CheckString (char *id, const char *s, int flags, int offset, int
 	if (out_slot)
 		*out_slot = slot;
 
-
-	if (!(index = strstr(s + offset, "  crc: ")) || strlen(index) != 30 + 1 + 7 || index[30 + 7] != '\n')
+	if (!(index = strstr(s + offset, CRC_TEXT)) || strlen (index) != HASH_SIZE + strlen (CRC_TEXT) + 1 || index[HASH_SIZE + strlen (CRC_TEXT)] != '\n')
 		return AUTH_BADFORMAT;
 
-	memcpy (hash, index + 7, sizeof (hash));
+	memcpy (hash, index + strlen (CRC_TEXT), sizeof (hash));
+
 	if (out_data)
 		strlcpy(out_data, s + offset + strlen(id), bound(1, index - (s + offset + strlen(id)) + 1, out_size));
 
-	if (!auth_viewcrc.value) {
-		index[0] = 0x0A;
-		index[1] = 0;
+	if (!auth_viewcrc.integer) {
+		windex = qwcsstr (i_hate_wide_chars + offset, str2wcs(CRC_TEXT));
+
+		windex[0] = 0x0A;
+		windex[1] = 0;
 	}
 
 	return (verify_response(slot, hash)) ? AUTH_GOODCRC : AUTH_BADCRC;
 }
 
 
-static void Auth_CheckFServerResponse (const char *s, int flags, int offset) {
+static void Auth_CheckFServerResponse (wchar *s, int flags, int offset) {
 	int response, slot;
 	char data[16], *port;
 
@@ -150,10 +157,10 @@ static void Auth_AuthenticateClient(int slot) {
 	cl.players[slot].validated = true;
 }
 
-static void Auth_CheckAuthResponse (const char *s, int flags, int offset) {
+static void Auth_CheckAuthResponse (wchar *s, int flags, int offset) {
 	int response, slot;
 
-	response = Auth_CheckString("ezQuake " VERSION_NUMBER " ", s, flags, offset, &slot, NULL, 0);
+	response = Auth_CheckString ("ezQuake " VERSION_NUMBER " ", s, flags, offset, &slot, NULL, 0);
 	if (response == AUTH_NOTHING || (!cls.demoplayback && slot == cl.playernum))
 		return;
 
@@ -231,7 +238,7 @@ void Auth_Init(void) {
 	Cmd_AddCommand ("validate_clients", Auth_Verify_Clients_f);
 }
 
-void Auth_CheckResponse (const char *s, int flags, int offset)
+void Auth_CheckResponse (wchar *s, int flags, int offset)
 {
 	Auth_CheckAuthResponse (s, flags, offset);
 	Auth_CheckFServerResponse (s, flags, offset);

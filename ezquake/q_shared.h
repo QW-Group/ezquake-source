@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.22.2.1 2007-05-01 23:44:51 cokeman1982 Exp $
+    $Id: q_shared.h,v 1.22.2.2 2007-09-15 16:47:26 disconn3ct Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -186,11 +186,13 @@ char *wcs2str_malloc (const wchar *ws); // you must freed returned string after 
 #define qwcschr wcschr
 #define qwcsrchr wcsrchr
 #define qwcslen wcslen
+#define qwcsstr wcsstr
 #else
 wchar *qwcscpy (wchar *dest, const wchar *src);
 wchar *qwcschr (const wchar *ws, wchar wc);
 wchar *qwcsrchr (const wchar *ws, wchar wc);
 size_t qwcslen (const wchar *s);
+wchar *qwcsstr (const wchar *str, const wchar *strSearch);
 #endif
 
 // NOTE: size is not the number of bytes to copy, but the number of characters. sizeof(dest) / sizeof(wchar) should be used.

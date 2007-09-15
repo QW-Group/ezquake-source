@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.11 2007-05-28 10:01:25 johnnycz Exp $
+	$Id: cl_parse.c,v 1.82.2.12 2007-09-15 16:47:26 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2077,7 +2077,9 @@ void CL_ParsePrint (void)
 
 		flags = TP_CategorizeMessage (s0, &offset);
 		FChecks_CheckRequest (s0);
-		Auth_CheckResponse (s0, flags, offset);
+		Auth_CheckResponse (s, flags, offset);
+
+		s0 = wcs2str (s); // Auth_CheckResponse may modify the source string, so s0 should be updated
 
 		if (Ignore_Message(s0, flags, offset)) // @CHECKME@
 			return;
