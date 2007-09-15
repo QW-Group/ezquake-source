@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.51 2007-09-15 17:21:05 disconn3ct Exp $
+	$Id: cl_ents.c,v 1.52 2007-09-15 19:11:52 tonik Exp $
 
 */
 
@@ -827,6 +827,9 @@ void CL_LinkPacketEntities (void) {
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
 		}
+		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
+		&& cl.vw_model_precache[0] && r_drawvweps.value)
+			ent.model = cl.vw_model_precache[0];
 		ent.skinnum = state->skinnum;
 	
 		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) {
@@ -1267,6 +1270,9 @@ void CL_LinkPacketEntities (void) {
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
 		}
+		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
+		&& cl.vw_model_precache[0] && r_drawvweps.value)
+			ent.model = cl.vw_model_precache[0];
 		ent.skinnum = state->skinnum;
 
 		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) {
@@ -1939,6 +1945,10 @@ void CL_LinkPlayers (void) {
 
 		if (!(ent.model = cl.model_precache[state->modelindex]))
 			Host_Error ("CL_LinkPlayers: bad modelindex");
+		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
+		&& cl.vw_model_precache[0] && r_drawvweps.value
+		&& cls.mvdplayback /* for non-mvd, let the server decide */)
+			ent.model = cl.vw_model_precache[0];
 		ent.skinnum = state->skinnum;
 		ent.colormap = info->translations;
 		ent.scoreboard = (state->modelindex == cl_modelindices[mi_player]) ? info : NULL;
