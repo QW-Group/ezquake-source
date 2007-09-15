@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.180 2007-09-14 23:00:17 himan Exp $
+$Id: cl_main.c,v 1.181 2007-09-15 13:14:08 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -149,6 +149,8 @@ cvar_t r_explosionlight			= {"r_explosionLight", "1"};
 cvar_t r_flagcolor				= {"r_flagColor", "0"};
 cvar_t r_lightflicker			= {"r_lightflicker", "1"};
 cvar_t r_powerupglow			= {"r_powerupGlow", "1"};
+cvar_t cl_novweps				= {"cl_novweps", "0"};
+cvar_t r_drawvweps				= {"r_drawvweps", "1"};
 // START shaman :: balancing variables
 cvar_t r_rockettrail			= {"r_rocketTrail", "1"}; // 9
 cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"}; // 3
@@ -363,6 +365,8 @@ static void CL_SendConnectPacket(
 								) {
 	char data[2048];
 	char biguserinfo[MAX_INFO_STRING + 32];
+	int extensions;
+	extern cvar_t cl_novweps;
 
 	if (cls.state != ca_disconnected)
 		return;
@@ -379,7 +383,8 @@ static void CL_SendConnectPacket(
 
 	// let the server know what extensions we support
 	strcpy (biguserinfo, cls.userinfo);
-	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", CLIENT_EXTENSIONS), sizeof(biguserinfo));
+	extensions = CLIENT_EXTENSIONS &~ (cl_novweps.value ? Z_EXT_VWEP : 0);
+	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", extensions), sizeof(biguserinfo));
 
 	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
 
@@ -1141,6 +1146,8 @@ void CL_InitLocal (void) {
 	Cvar_Register (&r_rockettrail);
 	Cvar_Register (&r_grenadetrail);
 	Cvar_Register (&r_powerupglow);
+	Cvar_Register (&cl_novweps);
+	Cvar_Register (&r_drawvweps);
 	Cvar_Register (&r_rocketlight);
 	Cvar_Register (&r_explosionlight);
 	Cvar_Register (&r_rocketlightcolor);

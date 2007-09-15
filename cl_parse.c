@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.119 2007-09-14 15:25:31 tonik Exp $
+$Id: cl_parse.c,v 1.120 2007-09-15 13:14:08 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -592,15 +592,17 @@ void CL_ParseVWepPrecache (char *str);
 void VWepModel_NextDownload (void)
 {
 	int		i;
+	extern cvar_t cl_novweps;
 
-	if (cls.mvdplayback && cls.downloadnumber == 0) {
-		CL_ParseVWepPrecache ("//vwep vwplayer w_axe w_shot w_shot2 w_nail w_nail2 w_rock w_rock2 w_light");
-	}
-
-	if ((!cl.z_ext & Z_EXT_VWEP || !cl.vw_model_name[0][0]) && !cls.mvdplayback) {
+	if (((!cl.z_ext & Z_EXT_VWEP || !cl.vw_model_name[0][0]) && !cls.mvdplayback)
+	|| cl_novweps.value) {
 		// no vwep support, go straight to prespawn
 		CL_Prespawn ();
 		return;
+	}
+
+	if (cls.mvdplayback && cls.downloadnumber == 0) {
+		CL_ParseVWepPrecache ("//vwep vwplayer w_axe w_shot w_shot2 w_nail w_nail2 w_rock w_rock2 w_light");
 	}
 
 	if (cls.downloadnumber == 0) {
