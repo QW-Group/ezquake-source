@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.82 2007-09-04 19:07:32 himan Exp $
+		$Id: menu_options.c,v 1.83 2007-09-15 10:13:44 zwoch Exp $
 
 */
 
@@ -1291,12 +1291,14 @@ setting settvideo_arr[] = {
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
 	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
+#endif
 
 	ADDSET_SEPARATOR("Font"),
+#ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
-	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
 #endif
+	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
 
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
