@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.56 2007-09-14 13:29:28 disconn3ct Exp $
+	$Id: cl_cmd.c,v 1.57 2007-09-15 13:28:10 qqshka Exp $
 */
 
 #include <time.h>
@@ -786,7 +786,8 @@ static z_ext_map_t z_map[] =
 	{ "SERVERTIME",		Z_EXT_SERVERTIME },
 	{ "PITCHLIMITS",	Z_EXT_PITCHLIMITS },
 	{ "JOIN_OBSERVES",	Z_EXT_JOIN_OBSERVE },
-	{ "PF_ONGROUND",	Z_EXT_PF_ONGROUND }
+	{ "PF_ONGROUND",	Z_EXT_PF_ONGROUND },
+	{ "VWEP",			Z_EXT_VWEP }
 };
 
 static int z_map_cnt = sizeof(z_map)/sizeof(z_map[0]);
@@ -799,7 +800,7 @@ int get_z_ext_list(int bits, char *buf, int bufsize)
 
 	for (i = cnt = 0; i < z_map_cnt; i++)
 	{
-		if (z_map[i].bit != (z_map[i].bit & bits))
+		if (!z_map[i].bit || z_map[i].bit != (z_map[i].bit & bits))
 			continue; // not match
 
 		if (cnt)
