@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.47 2007-09-14 17:16:04 tonik Exp $
+	$Id: cl_ents.c,v 1.48 2007-09-15 11:27:46 tonik Exp $
 
 */
 
@@ -1495,7 +1495,7 @@ void SetupPlayerEntity(int num, player_state_t *state) {
 			cent->frametime = cl.time;
 			cent->oldframe = cent->current.frame;
 		}
-		
+
 		if (!VectorCompare(state->origin, cent->current.origin) || !VectorCompare(state->viewangles, cent->current.angles)) {
 			VectorCopy(cent->current.origin, cent->old_origin);
 			VectorCopy(cent->current.angles, cent->old_angles);
@@ -1813,7 +1813,7 @@ CL_AddVWepModel
 ================
 */
 #ifdef VWEP_TEST
-static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int vw_frame)
+static qbool CL_AddVWepModel (entity_t *ent, int vw_index)
 {
 	entity_t	newent;
 
@@ -1831,8 +1831,9 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int vw_frame)
 	VectorCopy (ent->origin, newent.origin);
 	VectorCopy (ent->angles, newent.angles);
 	newent.model = cl.vw_model_precache[vw_index];
-	newent.frame = vw_frame;
-	newent.oldframe = vw_frame;
+	newent.frame = ent->frame;
+	newent.oldframe = ent->oldframe;
+	newent.framelerp = ent->framelerp;
 	newent.skinnum = 0;
 	newent.colormap = vid.colormap;
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
@@ -2027,7 +2028,7 @@ void CL_LinkPlayers (void) {
 #ifdef VWEP_TEST
 		if (cl.vwep_enabled && state->vw_index) {
 			qbool vwep;
-			vwep = CL_AddVWepModel (&ent, state->vw_index, state->frame);
+			vwep = CL_AddVWepModel (&ent, state->vw_index);
 			if (vwep) {
 				if (cl.vw_model_name[0][0] != '-') {
 					ent.model = cl.vw_model_precache[0];
