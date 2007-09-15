@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.33 2007-09-15 15:57:07 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.34 2007-09-15 21:51:11 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1254,7 +1254,29 @@ int EZ_control_OnDraw(ez_control_t *self)
 int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar)
 {
 	int key_handled = false;
+	int key_handled_tmp = false;
+
+	ez_control_t *payload = NULL;
+	ez_dllist_node_t *iter = self->children.head;
+
 	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyEvent, key, unichar);
+
+	if (key_handled)
+	{
+		return true;
+	}
+
+	// Tell the children of the key event.
+	while (iter)
+	{
+		payload = (ez_control_t *)iter->payload;
+		CONTROL_RAISE_EVENT(&key_handled_tmp, payload, OnKeyEvent, key, unichar);
+
+		key_handled = (key_handled || key_handled_tmp);
+
+		iter = iter->next;
+	}
+
 	return key_handled;
 }
 
@@ -1714,6 +1736,7 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->super.inheritance_level		= EZ_LABEL_INHERITANCE_LEVEL;
 
 	label->super.events.OnDraw			= EZ_label_OnDraw;
+	label->super.events.OnKeyEvent		= EZ_label_OnKeyEvent;
 	label->super.events.OnMouseDown		= EZ_label_OnMouseDown;
 	label->super.events.OnMouseUp		= EZ_label_OnMouseUp;
 	label->super.events.OnMouseHover	= EZ_label_OnMouseHover;
@@ -1758,9 +1781,7 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	int scaled_char_size	= Q_rint(char_size * label->scale);
 
 	if (label->text_flags & LABEL_WRAPTEXT)
-	{
-		memset(label->wordwraps, -1, sizeof(label->wordwraps));
-	
+	{	
 		// Wordwrap the string to the virtual size of the control and save the
 		// indexes where each row ends in an array.
 		while ((i < LABEL_MAX_WRAPS) && Util_GetNextWordwrapString(label->text, NULL, current_index + 1, &current_index, LABEL_LINE_SIZE, label->super.virtual_width, scaled_char_size))
@@ -1768,6 +1789,8 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 			label->wordwraps[i] = current_index;
 			i++;
 		}
+
+		label->wordwraps[i] = -1;
 	}
 	else
 	{
@@ -1781,6 +1804,8 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 			
 			current_index++;
 		}
+
+		label->wordwraps[i] = -1;
 	}
 }
 
@@ -1801,6 +1826,35 @@ void EZ_label_SetTextScale(ez_label_t *label, float scale)
 void EZ_label_SetTextColor(ez_label_t *label, byte r, byte g, byte b, byte alpha)
 {
 	label->color.c = RGBA_TO_COLOR(r, g, b, alpha);
+}
+
+//
+// Label - Gets the size of the selected text.
+//
+int EZ_label_GetSelectedTextSize(ez_label_t *label)
+{
+	if ((label->select_start > -1) && (label->select_end > -1))
+	{
+		return abs(label->select_end - label->select_start) + 1;
+	}
+
+	return 0;
+}
+
+//
+// Label - Gets the selected text.
+//
+void EZ_label_GetSelectedText(ez_label_t *label, char *target, int target_size)
+{
+	if ((label->select_start > -1) && (label->select_end > -1))
+	{
+		int sublen = abs(label->select_end - label->select_start) + 1;
+		
+		if (sublen > 0)
+		{
+			snprintf(target, min(sublen, target_size), "%s", label->text + min(label->select_start, label->select_end));
+		}
+	}
 }
 
 //
@@ -1919,7 +1973,6 @@ int EZ_label_OnDraw(ez_control_t *self)
 		}
 	}
 
-	/*
 	Draw_String(x + (self->width / 2), y + (self->height / 2), va("%i %i (%i %i) %i", label->row_clicked, label->col_clicked, label->select_start, label->select_end, label->caret_pos));
 
 	{
@@ -1932,7 +1985,6 @@ int EZ_label_OnDraw(ez_control_t *self)
 			Draw_String(x + (self->width / 2), y + (self->height / 2) + 8, tmp);
 		}
 	}
-	*/
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
 
@@ -2003,6 +2055,139 @@ static int EZ_label_FindMouseTextIndex(ez_label_t *label, mouse_state_t *ms)
 	}
 
 	return -1;
+}
+
+//
+// Label - Set the caret position.
+//
+void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos)
+{
+	label->caret_pos = caret_pos;
+}
+
+//
+// Label - Moves the caret up or down.
+//
+static void EZ_label_MoveCaretVertically(ez_label_t *label, qbool up)
+{
+	int i			= 0;
+	int curr_row	= 0;
+	int curr_col	= 0;
+	int caret_row	= 0;
+	int caret_col	= 0;
+	qbool found		= false;
+	int text_len	= strlen(label->text);
+
+	for (i = 0; i < text_len; i++)
+	{
+		if (found)
+		{
+			if (!up)
+			{
+				if ((curr_row == caret_row + 1) && (curr_col == caret_col))
+				{
+					label->caret_pos = i;
+					break;
+				}
+			}
+			else
+			{
+				if ((curr_row == caret_row - 1) && (curr_col == caret_col))
+				{
+					label->caret_pos = i;
+					break;
+				}
+			}
+		}
+
+		if (label->caret_pos == i)
+		{
+			// We found the current row and column.
+			caret_row = curr_row;
+			caret_col = curr_col;
+			
+			// Restart from the beginning, we need to find the row above.
+			if (up && !found)
+			{
+				i = -1;
+				curr_row = 0;
+				curr_col = 0;
+			}
+
+			found = true;
+
+			// Do the restart.
+			if (up)
+			{
+				continue;
+			}
+		}
+
+		if (label->wordwraps[curr_row] == i)
+		{
+			// New line.
+			curr_row++;
+			curr_col = 0;
+		}
+		else
+		{
+			curr_col++;
+		}
+	}
+}
+
+//
+// Label - Key event.
+//
+int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar)
+{
+	ez_label_t *label	= (ez_label_t *)self;
+	int key_handled		= false;
+	int text_len		= strlen(label->text);
+	int caret_delta		= 0;
+
+	key_handled = EZ_control_OnKeyEvent(self, key, unichar);
+
+	if (key_handled)
+	{
+		return true;
+	}
+
+	key_handled = true;
+
+	switch (key)
+	{
+		case K_LEFTARROW :
+		{
+			label->caret_pos--;
+			break;
+		}
+		case K_RIGHTARROW :
+		{
+			label->caret_pos++;
+			break;
+		}
+		case K_UPARROW :
+		{
+			EZ_label_MoveCaretVertically(label, true);
+			break;
+		}
+		case K_DOWNARROW :
+		{
+			EZ_label_MoveCaretVertically(label, false);
+			break;
+		}
+		default :
+		{
+			key_handled = false;
+			break;
+		}
+	}
+
+	clamp(label->caret_pos, 0, text_len);
+
+	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyEvent, key, unichar);
+	return key_handled;
 }
 
 //

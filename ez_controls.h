@@ -633,6 +633,16 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 int EZ_label_Destroy(ez_control_t *self, qbool destroy_children);
 
 //
+// Label - Gets the size of the selected text.
+//
+int EZ_label_GetSelectedTextSize(ez_label_t *label);
+
+//
+// Label - Gets the selected text.
+//
+void EZ_label_GetSelectedText(ez_label_t *label, char *target, int target_size);
+
+//
 // Label - Set the text scale for the label.
 //
 void EZ_label_SetTextScale(ez_label_t *label, float scale);
@@ -656,6 +666,11 @@ int EZ_label_OnResize(ez_control_t *self);
 // Label - On Draw.
 //
 int EZ_label_OnDraw(ez_control_t *label);
+
+//
+// Label - Key event.
+//
+int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar);
 
 //
 // Label - Handles the mouse down event.
