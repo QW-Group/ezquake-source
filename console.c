@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.60 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: console.c,v 1.61 2007-09-15 18:58:55 qqshka Exp $
 */
 // console.c
 
@@ -1312,7 +1312,7 @@ void DrawCP (int lines) {
 	if (!cp_initialized || lines <= 0)
 		return;
 
-	if (!bound(0, con_particles_alpha.value, 1))
+	if (!bound(0, con_particles_alpha.value, 1) || con_particles_images.integer < 1)
 		return;
 
 	cp_time = Sys_DoubleTime();
