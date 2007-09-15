@@ -592,15 +592,25 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 #define LABEL_AUTOSIZE		(1 << 1)	// Autosize the label to fit the text (if it's not wrapped).
 #define LABEL_AUTOELLIPSIS	(1 << 2)	// Show ... at the end of the text if it doesn't fit within the label.
 #define LABEL_WRAPTEXT		(1 << 3)	// Wrap the text to fit inside the label.
+#define LABEL_SELECTING		(1 << 4)	// Are we selecting text?
+
+#define LABEL_MAX_WRAPS		512
+#define LABEL_LINE_SIZE		1024
 
 typedef struct ez_label_s
 {
-	ez_control_t		super;
+	ez_control_t	super;
 
-	char				*text;
-	int					text_flags;
-	clrinfo_t			color;
-	float				scale;
+	char			*text;						// The text to be shown in the label.
+	int				text_flags;					// Flags for how the text in the label is formatted.
+	int				wordwraps[LABEL_MAX_WRAPS];	// Indexes for where the text has been wordwrapped.
+	clrinfo_t		color;						// The text color of the label.
+	float			scale;						// The scale of the text in the label.
+	int				select_start;				// At what index the currently selected text starts at (from the beginning of the string).
+	int				select_end;					// The end index of the selected text.
+	int				caret_pos;					// The position of the caret.
+	int				row_clicked;				// The row that was clicked.
+	int				col_clicked;				// The column that was clicked.
 } ez_label_t;
 
 ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent, 
@@ -617,11 +627,50 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 				  int flags, int text_flags,
 				  char *text, clrinfo_t text_color);
 
-void EZ_button_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha);
+//
+// Label - Destroys a label control.
+//
+int EZ_label_Destroy(ez_control_t *self, qbool destroy_children);
 
-void EZ_button_SetText(ez_label_t *self, const char *text);
+//
+// Label - Set the text scale for the label.
+//
+void EZ_label_SetTextScale(ez_label_t *label, float scale);
 
+//
+// Label - Sets the color of the text in the label.
+//
+void EZ_label_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha);
+
+//
+// Label - Sets the text of the label (will be reallocated and copied to the heap).
+//
+void EZ_label_SetText(ez_label_t *self, const char *text);
+
+//
+// Label - Happens when the control has resized.
+//
+int EZ_label_OnResize(ez_control_t *self);
+
+//
+// Label - On Draw.
+//
 int EZ_label_OnDraw(ez_control_t *label);
+
+//
+// Label - Handles the mouse down event.
+//
+int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms);
+
+//
+// Label - Handles the mouse up event.
+//
+int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms);
+
+//
+// Label - The mouse is hovering within the bounds of the label.
+//
+int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 
 // =========================================================================================
 // Button

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.32 2007-09-05 18:42:16 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.33 2007-09-15 15:57:07 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1347,7 +1347,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
 	prev_mouse_inside = POINT_IN_RECTANGLE(ms->x_old, ms->y_old, self->absolute_x, self->absolute_y, self->width, self->height);
 
-	// If the control contained within it's parent,
+	// If the control is contained within it's parent,
 	// the mouse must be within the parents bounds also for
 	// the control to generate any mouse events.
 	if (is_contained)
@@ -1379,16 +1379,19 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 
 		if (ms->button_down && (ms->button_down != old_ms->button_down))
 		{
+			// Mouse down.
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseDown, ms);
 		}
 
 		if (ms->button_up && (ms->button_up != old_ms->button_up))
 		{
+			// Mouse up.
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseUp, ms);
 		}
 	}
 	else if((!is_contained && prev_mouse_inside) || (is_contained && !prev_mouse_inside_parent))
 	{
+		// Mouse leave.
 		CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseLeave, ms);
 	}
 
@@ -1707,32 +1710,135 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	// Initialize the inherited class first.
 	EZ_control_Init(&label->super, tree, parent, name, description, x, y, width, height, background_name, flags);
 
-	label->super.CLASS_ID = EZ_LABEL_ID;
-	label->super.inheritance_level = EZ_LABEL_INHERITANCE_LEVEL;
+	label->super.CLASS_ID				= EZ_LABEL_ID;
+	label->super.inheritance_level		= EZ_LABEL_INHERITANCE_LEVEL;
 
-	label->super.events.OnDraw = EZ_label_OnDraw;
+	label->super.events.OnDraw			= EZ_label_OnDraw;
+	label->super.events.OnMouseDown		= EZ_label_OnMouseDown;
+	label->super.events.OnMouseUp		= EZ_label_OnMouseUp;
+	label->super.events.OnMouseHover	= EZ_label_OnMouseHover;
+	label->super.events.OnResize		= EZ_label_OnResize;
+	label->super.events.OnDestroy		= EZ_label_Destroy;
 
 	label->super.flags	|= CONTROL_CONTAINED;
 	label->scale		= 1.0;
-	label->text			= text;
+	label->text			= NULL;
 	label->text_flags	|= text_flags;
 	label->color		= text_color;
+	label->select_start = -1;
+	label->select_end	= -1;
+
+	if (text)
+	{
+		EZ_label_SetText(label, text);
+	}
+}
+
+//
+// Label - Destroys a label control.
+//
+int EZ_label_Destroy(ez_control_t *self, qbool destroy_children)
+{
+	ez_label_t *label = (ez_label_t *)self;
+
+	Q_free(label->text);
+
+	// FIXME: Can we just free a part like this here? How about children, will they be properly destroyed?
+	return EZ_control_Destroy(&label->super, destroy_children);
+}
+
+//
+// Label - Calculates where in the label text that the wordwraps will be done.
+//
+static void EZ_label_CalculateWordwraps(ez_label_t *label)
+{
+	int i = 0;
+	int current_index = -1;
+	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
+	int scaled_char_size	= Q_rint(char_size * label->scale);
+
+	if (label->text_flags & LABEL_WRAPTEXT)
+	{
+		memset(label->wordwraps, -1, sizeof(label->wordwraps));
+	
+		// Wordwrap the string to the virtual size of the control and save the
+		// indexes where each row ends in an array.
+		while ((i < LABEL_MAX_WRAPS) && Util_GetNextWordwrapString(label->text, NULL, current_index + 1, &current_index, LABEL_LINE_SIZE, label->super.virtual_width, scaled_char_size))
+		{
+			label->wordwraps[i] = current_index;
+			i++;
+		}
+	}
+	else
+	{
+		while (label->text[current_index])
+		{
+			if (label->text[current_index] == '\n')
+			{
+				label->wordwraps[i] = current_index;
+				i++;
+			}
+			
+			current_index++;
+		}
+	}
+}
+
+//
+// Label - Set the text scale for the label.
+//
+void EZ_label_SetTextScale(ez_label_t *label, float scale)
+{
+	label->scale = scale;
+
+	// We need to recalculate the wordwrap stuff since the size changed.
+	EZ_label_CalculateWordwraps(label);
 }
 
 //
 // Label - Sets the text color of a label.
 //
-void EZ_label_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha)
+void EZ_label_SetTextColor(ez_label_t *label, byte r, byte g, byte b, byte alpha)
 {
-	self->color.c = RGBA_TO_COLOR(r, g, b, alpha);
+	label->color.c = RGBA_TO_COLOR(r, g, b, alpha);
 }
 
 //
 // Label - Sets the text of a label.
 //
-void EZ_label_SetText(ez_label_t *self, char *text)
+void EZ_label_SetText(ez_label_t *label, const char *text)
 {
-	self->text = text;
+	int text_len = strlen(text) + 1;
+
+	Q_free(label->text);
+
+	if (text)
+	{
+		label->text = Q_calloc(text_len, sizeof(char));
+		memset(label->text, 0, text_len * sizeof(char));
+		strlcpy(label->text, text, text_len);
+	}
+
+	// Calculate where to wrap the text.
+	EZ_label_CalculateWordwraps(label);
+}
+
+//
+// Label - Happens when the control has resized.
+//
+int EZ_label_OnResize(ez_control_t *self)
+{
+	ez_label_t *label	= (ez_label_t *)self;
+	
+	// Let the super class try first.
+	EZ_control_OnResize(self);
+
+	// Calculate where to wrap the text.
+	EZ_label_CalculateWordwraps(label);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnResize);
+
+	return 0;
 }
 
 //
@@ -1740,12 +1846,16 @@ void EZ_label_SetText(ez_label_t *self, char *text)
 //
 int EZ_label_OnDraw(ez_control_t *self)
 {
-	#define LINE_SIZE 1024
 	int x, y, i = 0;
-	char line[LINE_SIZE];
-	ez_label_t *label	= (ez_label_t *)self;
-	int char_size		= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
-	int last_index		= 0;
+	char line[LABEL_LINE_SIZE];
+	ez_label_t *label		= (ez_label_t *)self;
+	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
+	int scaled_char_size	= char_size * label->scale;
+	int last_index			= -1;
+	int curr_row			= 0;
+	int curr_col			= 0;
+	color_t selection_color	= RGBA_TO_COLOR(178, 0, 255, 125);
+	color_t caret_color		= RGBA_TO_COLOR(255, 0, 0, 125);
 
 	// Let the super class draw first.
 	EZ_control_OnDraw(self);
@@ -1753,61 +1863,226 @@ int EZ_label_OnDraw(ez_control_t *self)
 	// Get the position we're drawing at.
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
-	if (label->text_flags & LABEL_WRAPTEXT)
+	// Find any newlines and draw line by line.
+	for (i = 0; i <= strlen(label->text); i++)
 	{
-		//
-		// Wrap the text within the label.
-		//
-
-		while (Util_GetNextWordwrapString(label->text, line, last_index, &last_index, LINE_SIZE, self->virtual_width, Q_rint(label->scale * char_size)))
+		// Draw selection markers.
 		{
+			if (((label->select_start > -1) && (label->select_end > -1)	// Is something selected at all?
+				&& (label->select_end != label->select_start))			// Only highlight if we have at least 1 char selected.
+				&&
+				(((i >= label->select_start) && (i < label->select_end))
+				|| (i >= label->select_end) && (i < label->select_start))
+				)
+			{
+				// If this is one of the selected letters, draw a selection thingie behind it.
+				// TODO : Make this an XOR drawing ontop of the text instead?
+				Draw_AlphaFillRGB(
+					x + (curr_col * scaled_char_size), 
+					y + (curr_row * scaled_char_size), 
+					scaled_char_size, scaled_char_size, 
+					selection_color);
+			}
+
+			if (i == label->caret_pos)
+			{
+				// Draw the caret.
+				Draw_AlphaFillRGB(
+					x + (curr_col * scaled_char_size), 
+					y + (curr_row * scaled_char_size), 
+					max(5, Q_rint(scaled_char_size * 0.1)), scaled_char_size, 
+					caret_color);
+			}
+		}
+
+		if (i == label->wordwraps[curr_row] || label->text[i] == '\0')
+		{
+			// We found the end of a line, copy the contents of the line to the line buffer.
+			snprintf(line, min(LABEL_LINE_SIZE, (i - last_index) + 1), "%s", (label->text + last_index + 1));
+			last_index = i;	// Skip the newline character
+
 			if (label->text_flags & LABEL_LARGEFONT)
 			{
-				Draw_BigString(x, y + (i * char_size * label->scale), line, &label->color, 1, label->scale, 1, 0);
+				Draw_BigString(x, y + (curr_row * scaled_char_size), line, &label->color, 1, label->scale, 1, 0);
 			}
 			else
 			{
-				Draw_SColoredString(x, y + (i * char_size * label->scale), str2wcs(line), &label->color, 1, false, label->scale);
+				Draw_SColoredString(x, y + (curr_row * scaled_char_size), str2wcs(line), &label->color, 1, false, label->scale);
 			}
 
-			i++;
+			curr_row++;
+			curr_col = 0;
 		}
-	}
-	else
-	{
-		//
-		// Normal text, not wrapped.
-		//
-
-		int curr_line = 0;
-
-		// Find any newlines and draw line by line.
-		for (i = 0; i <= strlen(label->text); i++)
+		else
 		{
-			if ((label->text[i] == '\n') || (label->text[i] == '\0'))
-			{
-				// We found the end of a line, copy the contents of the line to the line buffer.
-				// FIXME: Having a fixed size line buffer for wordwrapping works fine, but not here.
-				snprintf(line, min(LINE_SIZE, (i - last_index + 1)), "%s", (label->text + last_index));
-				last_index = i + 1;	// Skip the newline character.
-
-				if (label->text_flags & LABEL_LARGEFONT)
-				{
-					Draw_BigString(x, y + (curr_line * char_size * label->scale), line, &label->color, 1, label->scale, 1, 0);
-				}
-				else
-				{
-					Draw_SColoredString(x, y + (curr_line * char_size * label->scale), str2wcs(line), &label->color, 1, false, label->scale);
-				}
-
-				curr_line++;
-			}
+			curr_col++;
 		}
 	}
+
+	/*
+	Draw_String(x + (self->width / 2), y + (self->height / 2), va("%i %i (%i %i) %i", label->row_clicked, label->col_clicked, label->select_start, label->select_end, label->caret_pos));
+
+	{
+		char tmp[1024];
+
+		int sublen = abs(label->select_end - label->select_start);
+		if (sublen > 0)
+		{
+			snprintf(tmp, sublen + 1, "%s", label->text + min(label->select_start, label->select_end));
+			Draw_String(x + (self->width / 2), y + (self->height / 2) + 8, tmp);
+		}
+	}
+	*/
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
 
 	return 0;
+}
+
+//
+// Label - PRIVATE - Finds at what text index the mouse was clicked.
+//
+static int EZ_label_FindMouseTextIndex(ez_label_t *label, mouse_state_t *ms)
+{
+	// TODO : Support big font gaps.
+	int x, y, i;
+	int row, col;						// The row and column that the mouse is over.
+	int cur_row				= 0;		// Current row index.
+	int cur_col				= 0;		// Current column index.
+	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
+	int scaled_char_size	= Q_rint(char_size * label->scale);
+	int text_len			= strlen(label->text);
+
+	// Get the position we're drawing at.
+	EZ_control_GetDrawingPosition((ez_control_t *)label, &x, &y);
+
+	// Find the row and column where the mouse is.
+	row = ((ms->y - y) / scaled_char_size);
+	col = ((ms->x - x) / scaled_char_size);
+
+	label->row_clicked = row;
+	label->col_clicked = col;
+
+	// Find which index in the string the row an column corresponds to.
+	for (i = 0; i <= text_len; i++)
+	{
+		if ((cur_row < LABEL_MAX_WRAPS) && (i == label->wordwraps[cur_row]))
+		{
+			// A newline was found, go to the next row.
+			cur_row++;
+
+			// Skip the new line.
+			i++;
+
+			// Don't continue if the current row is past the
+			// row the mouse is on. Then we'll use the last index
+			// on the previous row.
+			if (cur_row > row)
+			{
+				return i - 1;
+			}
+			
+			// We're on a new line so restart the column count.
+			cur_col = 0;
+		}
+
+		// If both the current row and column match with the row and column
+		// the mouse is in, it means we've found the text index.
+		if ((cur_row == row) && (cur_col == col))
+		{
+			// We found the index, stop looking.
+			return i;
+		}
+
+		cur_col++;
+	}
+
+	if (row > cur_row)
+	{
+		return text_len;
+	}
+
+	return -1;
+}
+
+//
+// Label - The mouse is hovering within the bounds of the label.
+//
+int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *ms)
+{
+	qbool mouse_handled = false;
+	ez_label_t *label = (ez_label_t *)self;
+
+	// Call the super class first.
+	mouse_handled = EZ_control_OnMouseHover(self, ms);
+
+	// Find at what index in the text where the mouse is currently over.
+	if (label->text_flags & LABEL_SELECTING)
+	{
+		label->select_end = EZ_label_FindMouseTextIndex(label, ms);
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMouseHover, ms);
+
+	return mouse_handled;
+}
+
+//
+// Label - Handles the mouse down event.
+//
+int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
+{
+	qbool mouse_handled = false;
+	ez_label_t *label = (ez_label_t *)self;
+
+	// Call the super class first.
+	mouse_handled = EZ_control_OnMouseDown(self, ms);
+
+	// Find at what index in the text the mouse was clicked.
+	label->select_start = EZ_label_FindMouseTextIndex(label, ms);
+
+	// Reset the caret and selection end since we just started a new select / caret positioning.
+	label->select_end = -1;
+	label->caret_pos = -1;
+
+	// We just started to select some text.
+	label->text_flags |= LABEL_SELECTING;
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMouseDown, ms);
+
+	return mouse_handled;
+}
+
+//
+// Label - Handles the mouse up event.
+//
+int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
+{
+	qbool mouse_handled = false;
+	ez_label_t *label = (ez_label_t *)self;
+
+	// Call the super class first.
+	mouse_handled = EZ_control_OnMouseUp(self, ms);
+
+	// Find at what index in the text where the mouse was released.
+	if ((self->flags & CONTROL_FOCUSED) && (label->text_flags & LABEL_SELECTING))
+	{
+		label->select_end = EZ_label_FindMouseTextIndex(label, ms);
+		label->caret_pos = label->select_end;
+	}
+	else
+	{
+		label->select_start	= -1;
+		label->select_end	= -1;
+		label->caret_pos	= -1;
+	}
+
+	// We've stopped selecting.
+	label->text_flags &= ~LABEL_SELECTING;
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMouseUp, ms);
+
+	return mouse_handled;
 }
 
 // =========================================================================================
@@ -2025,3 +2300,5 @@ int EZ_button_OnDraw(ez_control_t *self)
 
 	return 0;
 }
+
+
