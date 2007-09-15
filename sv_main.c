@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.30 2007-09-14 13:29:29 disconn3ct Exp $
+	$Id: sv_main.c,v 1.31 2007-09-15 13:55:30 tonik Exp $
 */
 
 #include "qwsvdef.h"
@@ -1174,6 +1174,9 @@ void SV_InitLocal (void) {
 
 	if (strcmp(com_gamedirfile, "qw"))
 		Info_SetValueForStarKey (svs.info, "*gamedir", com_gamedirfile, MAX_SERVERINFO_STRING);
+
+	if (!Info_ValueForKey(svs.info, "maxfps")[0])
+		Info_SetValueForKey (svs.info, "maxfps", "77", MAX_SERVERINFO_STRING);
 
 	// init fraglog stuff
 	svs.logsequence = 1;
