@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.26 2007-09-15 16:48:05 disconn3ct Exp $
+    $Id: q_shared.c,v 1.27 2007-09-15 21:00:32 disconn3ct Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -349,7 +349,7 @@ char wc2char (wchar wc)
 wchar *str2wcs (const char *s)
 {
 	static wchar buf[65536]; //ouch! ouch!
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(buf) - 1; i++) {
 		if (s[i] == 0)
@@ -363,7 +363,7 @@ wchar *str2wcs (const char *s)
 char *wcs2str (const wchar *ws)
 {
 	static char buf[65536];	//ouch! ouch!
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(buf) - 1; i++) {
 		if (ws[i] == 0)
@@ -377,7 +377,7 @@ char *wcs2str (const wchar *ws)
 // PLZ free returned string after it no longer need!!!
 char *wcs2str_malloc (const wchar *ws)
 {
-	int i;
+	size_t i;
 	size_t len = qwcslen(ws);
 	char *buf = (char *) Q_malloc (len + 1);
 
@@ -423,7 +423,7 @@ wchar *qwcsstr (const wchar *str, const wchar *strSearch)
 
 size_t qwcslen (const wchar *ws)
 {
-	int i = 0;
+	size_t i = 0;
 	while (*ws++)
 		i++;
 	return i;

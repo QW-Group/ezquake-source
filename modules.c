@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: modules.c,v 1.12 2007-09-14 13:29:29 disconn3ct Exp $
+	$Id: modules.c,v 1.13 2007-09-15 21:00:32 disconn3ct Exp $
 */
 
 #ifdef __FreeBSD__
@@ -73,7 +73,7 @@ static void *hSecurity = NULL;
 void Modules_Init (void)
 {
 	qbool have_security;
-	char *version_string, binary_type[32], *renderer;
+	char version_string[128], binary_type[32], *renderer;
 	int retval;
 
 	have_security = security_loaded = false;
@@ -123,7 +123,7 @@ void Modules_Init (void)
 #else
 	renderer = QW_RENDERER;
 #endif
-	version_string = va ("%s-p:%s-r:%s-b:%d", binary_type, QW_PLATFORM, renderer, build_number());
+	snprintf (version_string, sizeof (version_string), "%s-p:%s-r:%s-b:%d", binary_type, QW_PLATFORM, renderer, build_number());
 
 	retval = Security_Init (version_string);
 	security_loaded = (retval == 0) ? true : false;
