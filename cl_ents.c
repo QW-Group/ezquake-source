@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.52 2007-09-15 19:11:52 tonik Exp $
+	$Id: cl_ents.c,v 1.53 2007-09-15 19:43:28 tonik Exp $
 
 */
 
@@ -1623,12 +1623,10 @@ void CL_ParsePlayerinfo (void) {
 		if (flags & DF_WEAPONFRAME)
 			state->weaponframe = MSG_ReadByte ();
 
-#ifdef VWEP_TEST
 		if (cl.vwep_enabled && !(state->flags & PF_GIB))
 			state->vw_index = MVD_WeaponModelNumber(info->stats[STAT_WEAPON]);
 		else
 			state->vw_index = 0;
-#endif
 	} else {
 
 		flags = state->flags = MSG_ReadShort ();
@@ -1658,12 +1656,10 @@ void CL_ParsePlayerinfo (void) {
 				info->fps = -1; // kazik
 		}
 
-#ifdef VWEP_TEST
 		if (cl.z_ext & Z_EXT_VWEP && !(state->flags & PF_GIB))
 			state->vw_index = state->command.impulse;
 		else
 			state->vw_index = 0;
-#endif
 
 		for (i = 0; i < 3; i++) {
 			if (flags & (PF_VELOCITY1 << i) )
@@ -1821,7 +1817,6 @@ void CL_AddFlagModels (entity_t *ent, int team) {
 CL_AddVWepModel
 ================
 */
-#ifdef VWEP_TEST
 static qbool CL_AddVWepModel (entity_t *ent, int vw_index)
 {
 	entity_t	newent;
@@ -1850,7 +1845,6 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index)
 	CL_AddEntity (&newent);
 	return true;
 }
-#endif
 
 //Create visible entities in the correct position for all current players
 void CL_LinkPlayers (void) {
@@ -2038,7 +2032,6 @@ void CL_LinkPlayers (void) {
 		}
 #endif
 
-#ifdef VWEP_TEST
 		if (cl.vwep_enabled && r_drawvweps.value && state->vw_index) {
 			qbool vwep;
 			vwep = CL_AddVWepModel (&ent, state->vw_index);
@@ -2057,8 +2050,7 @@ void CL_LinkPlayers (void) {
 				CL_AddEntity (&ent);
 		}
 		else
-#endif
-		CL_AddEntity (&ent);
+			CL_AddEntity (&ent);
 	}
 }
 

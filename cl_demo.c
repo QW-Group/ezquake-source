@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.85 2007-09-14 13:29:28 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.86 2007-09-15 19:43:28 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -337,9 +337,8 @@ static void CL_WriteSetDemoMessage (void)
 	CL_Demo_Flush();
 }
 
-#ifdef VWEP_TEST
 // FIXME: same as in sv_user.c. Move to common.c?
-static char *TrimModelName (char *full)
+static char *TrimModelName (const char *full)
 {
 	static char shortn[MAX_QPATH];
 	int len;
@@ -358,7 +357,6 @@ static char *TrimModelName (char *full)
 
 	return shortn;
 }
-#endif // VWEP_TEST
 
 //
 // Write startup data to demo (called when demo started and cls.state == ca_active)
@@ -474,9 +472,8 @@ static void CL_WriteStartupData (void)
 		SZ_Clear (&buf);
 	}
 
-#ifdef VWEP_TEST
 // vwep modellist
-	if ((cl.z_ext & Z_EXT_VWEP) && cl.vw_model_name[0][0]) {
+	if (cl.vwep_enabled && cl.vw_model_name[0][0]) {
 		// send VWep precaches
 		// pray we don't overflow
 		char ss[1024] = "//vwep ";
@@ -496,7 +493,6 @@ static void CL_WriteStartupData (void)
 		}
 	}
 	// don't bother flushing, the vwep list is not that large (I hope)
-#endif
 
 	//
 	// Modellist.

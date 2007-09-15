@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.121 2007-09-15 16:48:05 disconn3ct Exp $
+$Id: cl_parse.c,v 1.122 2007-09-15 19:43:28 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -587,7 +587,6 @@ void CL_Prespawn (void)
 VWepModel_NextDownload
 =================
 */
-#ifdef VWEP_TEST
 void CL_ParseVWepPrecache (char *str);
 void VWepModel_NextDownload (void)
 {
@@ -645,7 +644,6 @@ void VWepModel_NextDownload (void)
 	// all done
 	CL_Prespawn ();
 }
-#endif
 
 void Model_NextDownload (void) {
 	int	i;
@@ -683,15 +681,10 @@ void Model_NextDownload (void) {
 		if (cl.model_name[i][0] == '*')
 			cl.clipmodels[i] = CM_InlineModel(cl.model_name[i]);
 	}
-	// all done
-#ifdef VWEP_TEST
 	// done with normal models, request vwep models if necessary
 	cls.downloadtype = dl_vwep_model;
 	cls.downloadnumber = 0;
 	VWepModel_NextDownload ();
-#else
-	CL_Prespawn();
-#endif
 }
 
 void Sound_NextDownload (void) {
@@ -980,11 +973,9 @@ void CL_RequestNextDownload (void) {
 	case dl_model:
 		Model_NextDownload ();
 		break;
-#ifdef VWEP_TEST
 	case dl_vwep_model:
 		VWepModel_NextDownload ();
 		break;
-#endif
 	case dl_sound:
 		Sound_NextDownload ();
 		break;
@@ -2052,7 +2043,6 @@ void CL_ProcessServerInfo (void) {
 		TP_RefreshSkins();
 }
 
-#ifdef VWEP_TEST
 // parse a string looking like this: //vwep vwplayer w_axe w_shot w_shot2
 void CL_ParseVWepPrecache (char *str)
 {
@@ -2095,7 +2085,6 @@ void CL_ParseVWepPrecache (char *str)
 
 	Com_DPrintf ("VWEP precache: %i models\n", num);
 }
-#endif
 
 void CL_ParseServerInfoChange (void) {
 	char key[MAX_INFO_STRING], value[MAX_INFO_STRING];
@@ -2730,12 +2719,10 @@ void CL_ParseStufftext (void) {
 			Cbuf_AddTextEx (&cbuf_svc, va("track %s\n", s + sizeof("//at ")-1));
 		}
 	}
-#ifdef VWEP_TEST
 	else if (!strncmp(s, "//vwep ", 7) && s[strlen(s)-1] == '\n') {
 		CL_ParseVWepPrecache(s);
 		return;
 	}
-#endif
 	else
 		Cbuf_AddTextEx (&cbuf_svc, s);
 
