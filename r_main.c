@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.25 2007-08-12 22:45:18 cokeman1982 Exp $
+	$Id: r_main.c,v 1.26 2007-09-15 17:00:29 tonik Exp $
 
 */
 
@@ -683,7 +683,7 @@ void R_DrawViewModel (void) {
 	VectorCopy(cent->current.origin, gun.origin);
 	VectorCopy(cent->current.angles, gun.angles);
 	gun.colormap = vid.colormap;
-	gun.flags = RF_WEAPONMODEL | RF_NOSHADOW;
+	gun.renderfx = RF_WEAPONMODEL | RF_NOSHADOW;
 	if (r_lerpmuzzlehack.value) {
 		if (cent->current.modelindex != cl_modelindices[mi_vaxe] &&
 			cent->current.modelindex != cl_modelindices[mi_vbio] &&
@@ -694,7 +694,7 @@ void R_DrawViewModel (void) {
 			cent->current.modelindex != cl_modelindices[mi_vspan])
 		{
 			extern float r_lerpdistance;
-			gun.flags |= RF_LIMITLERP;			
+			gun.renderfx |= RF_LIMITLERP;			
 			r_lerpdistance =  135;
 		}
 	}

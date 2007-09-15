@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_alias.c,v 1.9 2007-09-14 10:20:41 tonik Exp $
+	$Id: r_alias.c,v 1.10 2007-09-15 17:00:28 tonik Exp $
 
 */
 
@@ -325,7 +325,7 @@ void R_AliasSetUpTransform (int trivial_accept) {
 	tmatrix[1][1] = pmdl->scale[1];
 	tmatrix[2][2] = pmdl->scale[2];
 
-	if ((currententity->flags & RF_WEAPONMODEL)) {		
+	if ((currententity->renderfx & RF_WEAPONMODEL)) {		
 		scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2; 
 		tmatrix[0][0] *= scale;
 	}
@@ -377,7 +377,7 @@ void R_AliasTransformFinalVert (finalvert_t *fv, auxvert_t *av, trivertx_t *pver
 
 
 	lerpfrac = r_framelerp;
-	if ((currententity->flags & RF_LIMITLERP)) {
+	if ((currententity->renderfx & RF_LIMITLERP)) {
 		
 		lerpfrac = VectorL2Compare(pverts1->v, pverts2->v, r_lerpdistance) ? r_framelerp : 1;
 	}
@@ -559,17 +559,17 @@ void R_AliasSetupLighting (entity_t *ent) {
 		shadelight = 192 - ambientlight;
 
 	// always give the gun some light
-	if ((currententity->flags & RF_WEAPONMODEL) && ambientlight < 24)
+	if ((currententity->renderfx & RF_WEAPONMODEL) && ambientlight < 24)
 		ambientlight = shadelight = 24;
 
 	// never allow players to go totally black
-	if (currententity->model->modhint == MOD_PLAYER || currententity->flags & RF_PLAYERMODEL) {
+	if (currententity->model->modhint == MOD_PLAYER || currententity->renderfx & RF_PLAYERMODEL) {
 		if (ambientlight < 8)
 			ambientlight = shadelight = 8;
 	}
 
 
-	if (currententity->model->modhint == MOD_PLAYER || currententity->flags & RF_PLAYERMODEL) {
+	if (currententity->model->modhint == MOD_PLAYER || currententity->renderfx & RF_PLAYERMODEL) {
 		extern cvar_t r_fullbrightSkins;
 		fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);
 		if (fbskins) {
@@ -653,7 +653,7 @@ void R_AliasDrawModel (entity_t *ent) {
 		r_framelerp = min (ent->framelerp, 1);
 
 
-	if (!(ent->flags & RF_WEAPONMODEL)) {
+	if (!(ent->renderfx & RF_WEAPONMODEL)) {
 		if (!R_AliasCheckBBox(ent))
 			return;
 	}
@@ -686,7 +686,7 @@ void R_AliasDrawModel (entity_t *ent) {
 
 	acolormap = ent->colormap;
 
-	if (!(ent->flags & RF_WEAPONMODEL))
+	if (!(ent->renderfx & RF_WEAPONMODEL))
 		ziscale = (float) 0x8000 * (float) 0x10000;
 	else
 		ziscale = (float) 0x8000 * (float) 0x10000 * 3.0;
