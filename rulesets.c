@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2001-2002       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -17,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.55 2007-09-14 23:00:17 himan Exp $
-
+	$Id: rulesets.c,v 1.56 2007-09-15 13:24:13 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -63,6 +61,8 @@ typedef struct rulesetDef_s
 static rulesetDef_t rulesetDef = {rs_default, 72.0, false, false, false};
 qbool OnChange_ruleset (cvar_t *var, char *value);
 cvar_t ruleset = {"ruleset", "default", 0, OnChange_ruleset};
+
+extern void Cmd_ReInitAllMacro (void);
 
 qbool RuleSets_DisallowExternalTexture (model_t *mod)
 {
@@ -265,7 +265,113 @@ static void Rulesets_Default (void)
 	rulesetDef.ruleset = rs_default;
 }
 
-void Cmd_ReInitAllMacro (void);
+void Rulesets_Init (void)
+{
+	int temp;
+
+	Cvar_Register (&ruleset);
+
+	if ((temp = COM_CheckParm ("-ruleset")) && temp + 1 < com_argc) {
+		if (!strcasecmp (com_argv[temp + 1], "smackdown")) {
+			Cvar_Set (&ruleset, "smackdown");
+			return;
+		} else if (!strcasecmp (com_argv[temp + 1], "mtfl")) {
+			Cvar_Set (&ruleset, "mtfl");
+			return;
+		} else if (strcasecmp (com_argv[temp + 1], "default")){
+			Cvar_Set (&ruleset, "default");
+			return;
+		} else {
+			Rulesets_Default ();
+			return;
+		}
+	}
+}
+
+
+/*
+ *false = OK to change
+ * false = block cvar change
+ */
+
+qbool OnChange_indphys (cvar_t *var, char *value)
+{
+	if (cls.state != ca_disconnected) {
+		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
+		return true;
+	}
+
+	return false;
+}
+
+qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value)
+{
+	float fbskins = bound (0.0, Q_atof (value), cl.fbskins);
+
+	if (!cl.spectator && cls.state != ca_disconnected) {
+		if (fbskins > 0.0)
+			Cbuf_AddText (va("say all skins %d%% fullbright\n", (int) (fbskins * 100.0)));
+		else
+			Cbuf_AddText (va("say not using fullbright skins\n"));
+	}
+
+	return false;
+}
+
+qbool OnChange_allow_scripts (cvar_t *var, char *value)
+{
+	char *p;
+	qbool progress;
+	int val;
+
+	p = Info_ValueForKey (cl.serverinfo, "status");
+	progress = (strstr (p, "left")) ? true : false;
+	val = Q_atoi (value);;
+
+	if (cls.state >= ca_connected && progress && !cl.spectator) {
+		Com_Printf ("%s changes are not allowed during the match.\n", var->name);
+		return true;
+	}
+
+	if (!cl.spectator && cls.state != ca_disconnected) {
+		if (val < 1)
+			Cbuf_AddText ("say not using scripts\n");
+		else if (val < 2)
+			Cbuf_AddText ("say using simple scripts\n");
+		else
+			Cbuf_AddText ("say using advanced scripts\n");
+	}
+
+	return false;
+}
+
+qbool OnChange_cl_fakeshaft (cvar_t *var, char *value)
+{
+	char *p;
+	qbool progress;
+	float fakeshaft;
+
+	p = Info_ValueForKey (cl.serverinfo, "status");
+	progress = (strstr (p, "left")) ? true : false;
+	fakeshaft = Q_atof (value);
+
+	if (cls.state >= ca_connected && progress && !cl.spectator) {
+		Com_Printf ("%s changes are not allowed during the match.\n", var->name);
+		return true;
+	}
+
+	if (!cl.spectator && cls.state != ca_disconnected) {
+		if (fakeshaft > 0.999)
+			Cbuf_AddText ("say fakeshaft on\n");
+		else if (fakeshaft < 0.001)
+			Cbuf_AddText ("say fakeshaft off\n");
+		else
+			Cbuf_AddText (va("say fakeshaft %.1f%%\n", fakeshaft * 100.0));
+	}
+
+	return false;
+}
+
 qbool OnChange_ruleset (cvar_t *var, char *value)
 {
 	if (cls.state != ca_disconnected) {
@@ -310,93 +416,6 @@ qbool OnChange_ruleset (cvar_t *var, char *value)
 	}
 
 	Cmd_ReInitAllMacro ();
-
-	return false;
-}
-
-void Rulesets_Init (void)
-{
-	int temp;
-
-	Cvar_Register (&ruleset);
-
-	if ((temp = COM_CheckParm ("-ruleset")) && temp + 1 < com_argc) {
-		if (!strcasecmp (com_argv[temp + 1], "smackdown")) {
-			Cvar_Set (&ruleset, "smackdown");
-			return;
-		} else if (!strcasecmp (com_argv[temp + 1], "mtfl")) {
-			Cvar_Set (&ruleset, "mtfl");
-			return;
-		} else if (strcasecmp (com_argv[temp + 1], "default")){
-			Cvar_Set (&ruleset, "default");
-			return;
-		} else {
-			Rulesets_Default ();
-			return;
-		}
-	}
-}
-
-
-/*
-false = OK to change
-false = block cvar change
-*/
-
-qbool OnChange_indphys (cvar_t *var, char *value)
-{
-	if (cls.state != ca_disconnected) {
-		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
-		return true;
-	}
-
-	return false;
-}
-
-qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value)
-{
-	float fbskins = bound (0.0, Q_atof (value), cl.fbskins);
-
-	if (!cl.spectator && cls.state != ca_disconnected) {
-		if (fbskins > 0.0)
-			Cbuf_AddText (va("say all skins %d%% fullbright\n", (int) (fbskins * 100.0)));
-		else
-			Cbuf_AddText (va("say not using fullbright skins\n"));
-	}
-
-	return false;
-}
-
-qbool OnChange_allow_scripts (cvar_t *var, char *value)
-{
-	int val = Q_atoi (value);
-
-	// TODO: dont allow change if match in progress
-	if (!cl.spectator && cls.state != ca_disconnected) {
-		if (val < 1)
-			Cbuf_AddText("say not using scripts\n");
-		else if (val < 2)
-			Cbuf_AddText("say using simple scripts\n");
-		else
-			Cbuf_AddText("say using advanced scripts\n");
-	}
-
-	return false;
-}
-
-qbool OnChange_cl_fakeshaft (cvar_t *var, char *value)
-{
-	float fakeshaft = Q_atof (value);
-
-	// TODO: dont allow change if match in progress
-	if (!cl.spectator && cls.state != ca_disconnected) {
-		if (fakeshaft > 0.999)
-			Cbuf_AddText("say fakeshaft on\n");
-		else if (fakeshaft < 0.001)
-			Cbuf_AddText("say fakeshaft off\n");
-		else
-			Cbuf_AddText(va("say fakeshaft %.1f%%\n", fakeshaft * 100.0));
-	}
 
 	return false;
 }
