@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.h,v 1.3 2007-09-14 13:29:28 disconn3ct Exp $
+	$Id: auth.h,v 1.4 2007-09-15 16:48:04 disconn3ct Exp $
 */
 
 #ifndef __AUTH_H__
@@ -24,6 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void Auth_Init (void);
 char *Auth_Generate_Crc (void);
-void Auth_CheckResponse (char *, int, int);
+void Auth_CheckResponse (wchar *, int, int);
 
 #endif /* !__AUTH_H__ */

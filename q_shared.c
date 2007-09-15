@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.25 2007-09-12 19:48:20 johnnycz Exp $
+    $Id: q_shared.c,v 1.26 2007-09-15 16:48:05 disconn3ct Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -391,6 +391,36 @@ char *wcs2str_malloc (const wchar *ws)
 }
 
 #ifndef _WIN32
+// disconnect: We assume both str and strSearch are NULL-terminated
+wchar *qwcsstr (const wchar *str, const wchar *strSearch)
+{
+	size_t i, j, search;
+	size_t str_len;
+	size_t strSearch_len;
+
+	str_len = qwcslen (str);
+	strSearch_len = qwcslen (strSearch);
+	search = 0;
+
+	if (str_len && strSearch_len) { // paranoid check
+		for (i = 0; i < str_len - 1; i++) { // -1 because last wchar is NULL
+			for (j = 0; j <  strSearch_len - 1; j++) { // -1 because last wchar is NULL
+				if (str [j + i] != strSearch[j]) {
+					search = 0;
+					break;
+				} else {
+					search = i;
+				}
+			}
+
+			if (search)
+				break;
+		}
+	}
+
+	return (wchar *)(str + search);
+}
+
 size_t qwcslen (const wchar *ws)
 {
 	int i = 0;
