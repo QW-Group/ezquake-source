@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.13.2.5 2007-09-15 16:47:26 disconn3ct Exp $
+	$Id: auth.c,v 1.13.2.6 2007-09-15 23:05:45 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -40,9 +40,10 @@ void Auth_Init(void);
 #define AUTH_BADCRC		2
 #define AUTH_GOODCRC	3
 
-
+#define HASH_SIZE 30
 char *Auth_Generate_Crc(void) {
-	static char hash[31], *failsafe = "";
+	static char hash[HASH_SIZE+1]; // +1 for NULL-termination
+	static char *failsafe = "";
 	signed_buffer_t *p;
 
 	if (!Modules_SecurityLoaded())
@@ -77,7 +78,6 @@ static qbool verify_response(int index, char *hash) {
 }
 
 static int Auth_CheckString (char *id, wchar *i_hate_wide_chars, int flags, int offset, int *out_slot, char *out_data, int out_size) {
-#define HASH_SIZE 30
 #define CRC_TEXT "  crc: "
 	int len, slot;
 	char name[32], *index;
