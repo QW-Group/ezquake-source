@@ -841,8 +841,8 @@ void R_DrawAliasModel (entity_t *ent) {
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
-	if (((ent->model->modhint == MOD_PLAYER) && (playernum >= 0) && (playernum < MAX_CLIENTS)) 
-		|| ent->renderfx & RF_PLAYERMODEL)
+	if ((ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL)
+		&& playernum >= 0 && playernum < MAX_CLIENTS)
 	{
 		extern qbool VX_TrackerIsEnemy(int player);
 		cv = VX_TrackerIsEnemy(playernum) ? &r_enemyskincolor : &r_teamskincolor;
