@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.20 2007-09-12 16:44:08 johnnycz Exp $
+	$Id: utils.h,v 1.21 2007-09-15 15:26:17 cokeman1982 Exp $
 
 */
 
@@ -131,6 +131,6 @@ int i_rnd( int from, int to );
 //		max_pixel_width	= The pixel width that the string should be wordwrapped within.
 //		char_size		= The size of the characters in the string.
 //
-int Util_GetNextWordwrapString(const char *input, char *target, int start_index, int *end_index, int target_max_size, int max_pixel_width, int char_size);
+qbool Util_GetNextWordwrapString(const char *input, char *target, int start_index, int *end_index, int target_max_size, int max_pixel_width, int char_size);
 
 #endif /* !__UTILS_H__ */

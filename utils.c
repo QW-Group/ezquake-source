@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.45 2007-09-13 14:49:30 disconn3ct Exp $
+	$Id: utils.c,v 1.46 2007-09-15 15:26:17 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1063,56 +1063,57 @@ int i_rnd( int from, int to )
 //		max_pixel_width	= The pixel width that the string should be wordwrapped within.
 //		char_size		= The size of the characters in the string.
 //
-int Util_GetNextWordwrapString(const char *input, char *target, int start_index, int *end_index_ret, int target_max_size, int max_pixel_width, int char_size)
+qbool Util_GetNextWordwrapString(const char *input, char *target, int start_index, int *end_index_ret, int target_max_size, int max_pixel_width, int char_size)
 {
-	int i;
-	int input_len		= strlen(input + start_index);		// The length of the remaining string to wordwrap.
-	int max_char_width	= (max_pixel_width / char_size);	// The max number of characters that fits on one line.
+	qbool wrap_found	= false;
+	int retval			= true;
 
-	// Don't exceed the max target length.
-	int target_size		= min(target_max_size, min(input_len, max_char_width));
-	int end_index		= start_index + target_size;
-	qbool break_found	= false;
+	int max_char_width	= Q_rint((float)max_pixel_width / char_size - 1);	// The max number of characters allowed (excluding white spaces at the end).
+	int end_index		= start_index;										// The index of the last character to include in this line.
+	int input_len		= strlen(input + start_index) + 1;					// Length of the input including \0.
+	int max_width		= min(max_char_width, input_len);					// The max width allowed for the line.
 
-	// Always break on newlines.
-	for (i = 0; i < target_size; i++)
+	// New lines take precendence as a wrap.
+	for (end_index = start_index; end_index < (start_index + max_width); end_index++)
 	{
-		if (input[start_index + i] == '\n')
+		if (input[end_index] == '\n')
 		{
-			// A new line takes precedence.
-			target_size = i;
-			break_found = true;
+			wrap_found = true;
+			break;
+		}
+
+		// Have we reached the end of the string?
+		if (input[end_index] == '\0')
+		{
+			retval = false;
 			break;
 		}
 	}
 
-	// Check for a word boundary if possible, so that we don't break the line in the middle of a word
-	// but only if this isn't the end of the input string.
-	if (!break_found && input[start_index + target_size])
-	{		
-		for (i = target_size; i > 0; i--)
+	if (!wrap_found)
+	{
+		if (input[end_index] != ' ')
 		{
-			if (input[start_index + i] == ' ')
+			// We're in the middle of a word, try to find a word boundary instead.
+			int i;
+
+			for (i = end_index; i > start_index; i--)
 			{
-				// We found a space, so do the break here instead.
-				target_size = i;
-				break;
+				if (input[i] == ' ')
+				{
+					end_index = i;
+					break;
+				}
 			}
 		}
-	}
-
-	// Remove any leading spaces.
-	while (input[start_index] && (input[start_index] == ' ' || input[start_index] == '\n'))
-	{
-		start_index++;
-	}
-
-	end_index = (start_index + target_size + 1);
-
-	// Remove any trailing spaces.
-	while (input[end_index] && (input[end_index] == ' ' || input[end_index] == '\n'))
-	{
-		end_index++;
+		else
+		{
+			// Eat up all white spaces at the end of the line.
+			while (input[end_index + 1] == ' ')
+			{
+				end_index++;
+			}
+		}
 	}
 
 	// Return the end index.
@@ -1121,15 +1122,15 @@ int Util_GetNextWordwrapString(const char *input, char *target, int start_index,
 		(*end_index_ret) = end_index;
 	}
 
-	if (target_size <= 0)
+	// Copy the wrap string to the target buffer.
+	if (target)
 	{
-		return 0;
+		snprintf(target, min(target_max_size, max_width), "%s", input + start_index);
 	}
 
-	// Write the current word wrapped line to the target buffer.
-	snprintf(target, min(target_max_size, target_size + 1), "%s", input + start_index);
-
-	return target_size;
+	return retval;
 }
+
+
 
 
