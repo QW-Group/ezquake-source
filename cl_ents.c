@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.53 2007-09-15 19:43:28 tonik Exp $
+	$Id: cl_ents.c,v 1.54 2007-09-15 21:03:07 tonik Exp $
 
 */
 
@@ -1623,7 +1623,8 @@ void CL_ParsePlayerinfo (void) {
 		if (flags & DF_WEAPONFRAME)
 			state->weaponframe = MSG_ReadByte ();
 
-		if (cl.vwep_enabled && !(state->flags & PF_GIB))
+		if (cl.vwep_enabled && !(state->flags & PF_GIB)
+		&& state->modelindex == cl_modelindices[mi_player] /* no vweps for ring! */)
 			state->vw_index = MVD_WeaponModelNumber(info->stats[STAT_WEAPON]);
 		else
 			state->vw_index = 0;
