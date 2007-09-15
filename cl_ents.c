@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.48 2007-09-15 11:27:46 tonik Exp $
+	$Id: cl_ents.c,v 1.49 2007-09-15 12:45:39 tonik Exp $
 
 */
 
@@ -42,6 +42,7 @@ extern cvar_t cl_predict_players, cl_solid_players, cl_rocket2grenade;
 extern cvar_t cl_predict_half;
 extern cvar_t cl_model_bobbing;		
 extern cvar_t cl_nolerp, cl_lerp_monsters, cl_newlerp;
+extern cvar_t r_drawvweps;		
 
 static struct predicted_player {
 	int flags;
@@ -802,6 +803,13 @@ void CL_LinkPacketEntities (void) {
 		if (!state->modelindex)		// if set to invisible, skip
 			continue;
 
+		if (cl_gibfilter.value && (state->modelindex == cl_modelindices[mi_h_player] || 
+		 state->modelindex == cl_modelindices[mi_gib1] || state->modelindex == cl_modelindices[mi_gib2] || state->modelindex == cl_modelindices[mi_gib3]))
+			continue;
+
+		if (!(model = cl.model_precache[state->modelindex]))
+			Host_Error ("CL_LinkPacketEntities: bad modelindex");
+
 		if (state->modelindex == cl_modelindices[mi_player]) {
 			i = state->frame;
 
@@ -811,15 +819,10 @@ void CL_LinkPacketEntities (void) {
 			} else if (cl_deadbodyfilter.value) {
 				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
 					continue;
+			} else if (cl.vwep_enabled && r_drawvweps.value && ISDEAD(i) && cl.vw_model_precache[0]) {
+				model = cl.vw_model_precache[0];
 			}
 		}
-
-		if (cl_gibfilter.value && (state->modelindex == cl_modelindices[mi_h_player] || 
-		 state->modelindex == cl_modelindices[mi_gib1] || state->modelindex == cl_modelindices[mi_gib2] || state->modelindex == cl_modelindices[mi_gib3]))
-			continue;
-
-		if (!(model = cl.model_precache[state->modelindex]))
-			Host_Error ("CL_LinkPacketEntities: bad modelindex");
 
 		ent.model = model;
 		if (state->modelindex == cl_modelindices[mi_rocket]) {
@@ -1922,6 +1925,8 @@ void CL_LinkPlayers (void) {
 		if (!state->modelindex)
 			continue;
 
+		ent.model = cl.model_precache[state->modelindex];
+
 		if (state->modelindex == cl_modelindices[mi_player]) {
 			i = state->frame;
 
@@ -1931,10 +1936,12 @@ void CL_LinkPlayers (void) {
 			} else if (cl_deadbodyfilter.value) {
 				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
 					continue;
+			} else if (cl.vwep_enabled && r_drawvweps.value && ISDEAD(i) && cl.vw_model_precache[0]) {
+				ent.model = cl.vw_model_precache[0];
 			}
 		}
 
-		if (!(ent.model = cl.model_precache[state->modelindex]))
+		if (!ent.model)
 			Host_Error ("CL_LinkPlayers: bad modelindex");
 		ent.skinnum = state->skinnum;
 		ent.colormap = info->translations;
@@ -2026,7 +2033,7 @@ void CL_LinkPlayers (void) {
 #endif
 
 #ifdef VWEP_TEST
-		if (cl.vwep_enabled && state->vw_index) {
+		if (cl.vwep_enabled && r_drawvweps.value && state->vw_index) {
 			qbool vwep;
 			vwep = CL_AddVWepModel (&ent, state->vw_index);
 			if (vwep) {
