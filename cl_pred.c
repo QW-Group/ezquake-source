@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
-cvar_t	cl_pushlatency = {"pushlatency", "0"};
+cvar_t	cl_pushlatency = {"pushlatency", "-999"};
 
 extern cvar_t cl_independentPhysics;
 
