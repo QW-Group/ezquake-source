@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.52.2.4 2007-09-15 13:27:55 disconn3ct Exp $
+	$Id: rulesets.c,v 1.52.2.5 2007-09-16 13:27:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -347,18 +347,8 @@ qbool OnChange_allow_scripts (cvar_t *var, char *value)
 
 qbool OnChange_cl_fakeshaft (cvar_t *var, char *value)
 {
-	char *p;
-	qbool progress;
-	float fakeshaft;
+	float fakeshaft = Q_atof (value);
 
-	p = Info_ValueForKey (cl.serverinfo, "status");
-	progress = (strstr (p, "left")) ? true : false;
-	fakeshaft = Q_atof (value);
-
-	if (cls.state >= ca_connected && progress && !cl.spectator) {
-		Com_Printf ("%s changes are not allowed during the match.\n", var->name);
-		return true;
-	}
 
 	if (!cl.spectator && cls.state != ca_disconnected) {
 		if (fakeshaft > 0.999)
