@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.14 2007-08-29 21:04:45 himan Exp $
+	$Id: qtv.c,v 1.15 2007-09-16 03:07:33 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -125,6 +125,19 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 
 void QTV_Say_f (void)
 {
+	char *s = Cmd_Args();
+	char text[1024] = {0};
+	int len;
+
+	// get rid of quotes, if any
+	if (s[0] == '\"' && s[(len = strlen(s))-1] == '\"' && len > 2)
+	{
+		snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s + 1);
+		if (len = strlen(text))
+			text[len - 1] = 0;
+		Cmd_TokenizeString(text);
+	}
+
 	QTV_ForwardToServerEx (true, true);
 }
 
