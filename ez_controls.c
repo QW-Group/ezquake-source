@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.34 2007-09-15 21:51:11 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.35 2007-09-16 00:41:00 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -175,6 +175,13 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 	control->bound_left		= (p && contained && (left	 < p->bound_left))		? (p->bound_left)	: left;
 	control->bound_right	= (p && contained && (right	 > p->bound_right))		? (p->bound_right)	: right;
 
+	// Make sure that the left bounds isn't greater than the right bounds and so on.
+	// This would lead to controls being visible in a few incorrect cases.
+	clamp(control->bound_top, 0, control->bound_bottom);
+	clamp(control->bound_bottom, control->bound_top, vid.height);
+	clamp(control->bound_left, 0, control->bound_right);
+	clamp(control->bound_right, control->bound_left, vid.width);
+
 	// Calculate the bounds for the children.
 	for (iter = control->children.head; iter; iter = iter->next)
 	{
@@ -296,7 +303,6 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 		// Find the next control that can be focused.
 		while(node_iter && !found)
 		{
-			// ez_control_t *ha = (ez_control_t *)node_iter->payload;
 			found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter);
 			node_iter = (next_control) ? node_iter->next : node_iter->previous;
 		}
@@ -2217,7 +2223,7 @@ int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *ms)
 //
 int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 {
-	qbool mouse_handled = false;
+	int mouse_handled = false;
 	ez_label_t *label = (ez_label_t *)self;
 
 	// Call the super class first.
@@ -2233,7 +2239,7 @@ int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 	// We just started to select some text.
 	label->text_flags |= LABEL_SELECTING;
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMouseDown, ms);
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseDown, ms);
 
 	return mouse_handled;
 }
@@ -2243,7 +2249,7 @@ int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 //
 int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
 {
-	qbool mouse_handled = false;
+	int mouse_handled = false;
 	ez_label_t *label = (ez_label_t *)self;
 
 	// Call the super class first.
@@ -2265,7 +2271,7 @@ int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
 	// We've stopped selecting.
 	label->text_flags &= ~LABEL_SELECTING;
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMouseUp, ms);
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseUp, ms);
 
 	return mouse_handled;
 }
