@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.17 2007-09-15 16:48:04 disconn3ct Exp $
+	$Id: auth.c,v 1.18 2007-09-16 14:03:03 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -92,7 +92,7 @@ static int Auth_CheckString (char *id, wchar *i_hate_wide_chars, int flags, int 
 	if (!Modules_SecurityLoaded ())
 		return AUTH_NOTHING;
 
-	memcpy (s, wcs2str_malloc(i_hate_wide_chars), min (sizeof (s), qwcslen (i_hate_wide_chars)));
+	snprintf (s, sizeof (s), "%s", wcs2str (i_hate_wide_chars));
 
 	if (!auth_validateclients.integer || flags != 1 || strncmp (s + offset, id, strlen (id)))
 		return AUTH_NOTHING;
@@ -106,7 +106,9 @@ static int Auth_CheckString (char *id, wchar *i_hate_wide_chars, int flags, int 
 	if (out_slot)
 		*out_slot = slot;
 
-	if (!(index = strstr(s + offset, CRC_TEXT)) || strlen (index) != HASH_SIZE + strlen (CRC_TEXT) + 1 || index[HASH_SIZE + strlen (CRC_TEXT)] != '\n')
+	if (!(index = strstr(s + offset, CRC_TEXT)) ||
+		strlen (index) != HASH_SIZE + strlen (CRC_TEXT) ||
+		index[HASH_SIZE + strlen (CRC_TEXT) - 1] != '\n')
 		return AUTH_BADFORMAT;
 
 	memcpy (hash, index + strlen (CRC_TEXT), sizeof (hash));
