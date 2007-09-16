@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.183 2007-09-15 13:44:15 tonik Exp $
+$Id: cl_main.c,v 1.184 2007-09-16 13:31:21 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1218,19 +1218,12 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
-
-
 	Cvar_ResetCurrentGroup();
 
 	snprintf(st, sizeof(st), "ezQuake %i", build_number());
 
-	if (COM_CheckParm("-norjscripts"))
-	{
-		Cvar_SetValue(&allow_scripts, 0);
-		// TODO: we should block allow_scripts changes only if match in progress
-		// And print some warning if this cmdline switch used
-		Cvar_SetFlags(&allow_scripts, Cvar_GetFlags(&allow_scripts) | CVAR_ROM);
-	}
+	if (COM_CheckParm ("-norjscripts") || COM_CheckParm ("-noscripts"))
+		Cvar_SetValue (&allow_scripts, 0);
 
  	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
 
