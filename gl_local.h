@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.31 2007-07-08 15:20:03 cokeman1982 Exp $
+	$Id: gl_local.h,v 1.32 2007-09-16 01:29:49 qqshka Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -194,6 +194,7 @@ extern	cvar_t	gl_smoothmodels;
 extern	cvar_t	gl_affinemodels;
 extern	cvar_t	gl_polyblend;
 extern	cvar_t	gl_flashblend;
+extern	cvar_t	gl_rl_globe;
 extern	cvar_t	gl_nocolors;
 extern	cvar_t	gl_finish;
 extern	cvar_t	gl_fb_bmodels;

@@ -141,6 +141,7 @@ cvar_t	gl_affinemodels = {"gl_affinemodels", "0"};
 cvar_t	gl_polyblend = {"gl_polyblend", "1"}; // 0
 
 cvar_t	gl_flashblend = {"gl_flashblend", "0"};
+cvar_t	gl_rl_globe = {"gl_rl_globe", "0"};
 cvar_t	gl_playermip = {"gl_playermip", "0"};
 cvar_t	gl_nocolors = {"gl_nocolors", "0"};
 cvar_t	gl_finish = {"gl_finish", "0"};
@@ -1546,6 +1547,7 @@ void R_Init (void) {
 	Cvar_Register (&gl_fb_models);
 	Cvar_Register (&gl_lightmode);
 	Cvar_Register (&gl_flashblend);
+	Cvar_Register (&gl_rl_globe);
 	Cvar_Register (&r_shadows);
 	Cvar_Register (&r_fullbright);
 	Cvar_Register (&r_lightmap);

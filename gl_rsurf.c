@@ -1124,7 +1124,7 @@ void R_DrawBrushModel (entity_t *e) {
 			if ((cl_dlights[k].die < r_refdef2.time) || !cl_dlights[k].radius)
 				continue;
 
-			if (!gl_flashblend.value || (cl_dlights[k].bubble && gl_flashblend.value != 2))
+			if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2))
 				R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
 		}
 	}

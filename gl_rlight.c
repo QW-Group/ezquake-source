@@ -157,9 +157,6 @@ void R_RenderDlights (void) {
 	int i;
 	dlight_t *l;
 
-	if (!gl_flashblend.value)
-		return;
-
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't advanced yet for this frame
 	glDepthMask (GL_FALSE);
 	glDisable (GL_TEXTURE_2D);
@@ -168,12 +165,25 @@ void R_RenderDlights (void) {
 	glBlendFunc (GL_ONE, GL_ONE);
 
 	l = cl_dlights;
-	for (i = 0; i < MAX_DLIGHTS; i++, l++) {
+	for (i = 0; i < MAX_DLIGHTS; i++, l++)
+	{
 		if (l->die < r_refdef2.time || !l->radius)
 			continue;
-		if (l->bubble && ((int) gl_flashblend.value != 2))	
-			R_MarkLights ( l, 1 << i, cl.worldmodel->nodes);
-		else
+
+		if (l->bubble == 2) // light from rl
+		{
+			if (gl_rl_globe.integer & 1)
+				R_RenderDlight (l);
+			if (gl_rl_globe.integer & 2)
+				R_MarkLights (l, 1 << i, cl.worldmodel->nodes);
+
+			continue;
+		}
+
+		// do it always
+		R_MarkLights (l, 1 << i, cl.worldmodel->nodes);
+
+		if (gl_flashblend.integer && !(l->bubble && gl_flashblend.integer != 2))
 			R_RenderDlight (l);
 	}
 
@@ -470,23 +480,7 @@ R_PushDlights
 */
 void R_PushDlights (void)
 {
-	int		i;
-	dlight_t	*l;
-
-	//VULT: Always draw lights
-/*	if (gl_flashblend.value)
-		return;*/
-
-	r_dlightframecount = r_framecount + 1;	// because the count hasn't
-											//  advanced yet for this frame
-	l = cl_dlights;
-
-	for (i=0 ; i<MAX_DLIGHTS ; i++, l++)
-	{
-		if (l->die < r_refdef2.time || !l->radius)
-			continue;
-		R_MarkLights ( l, 1<<i, cl.worldmodel->nodes );
-	}
+	// qqshka: using R_RenderDlights() instead
 }
 
 

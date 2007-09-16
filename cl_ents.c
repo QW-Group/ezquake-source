@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.54 2007-09-15 21:03:07 tonik Exp $
+	$Id: cl_ents.c,v 1.55 2007-09-16 01:29:48 qqshka Exp $
 
 */
 
@@ -974,24 +974,26 @@ void CL_LinkPacketEntities (void) {
 				rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
 				if (rocketlightsize >= 1)
 				{
+					int bubble = gl_rl_globe.integer ? 2 : 1;
+
 					if ((r_rockettrail.value < 8 || r_rockettrail.value == 12) && model->modhint != MOD_LAVABALL)
 					{
 						dlightColorEx(r_rocketlightcolor.value, r_rocketlightcolor.string, lt_rocket, false, &cst_lt);
-						CL_NewDlightEx(state->number, ent.origin, rocketlightsize, 0.1, &cst_lt, 1);
+						CL_NewDlightEx(state->number, ent.origin, rocketlightsize, 0.1, &cst_lt, bubble);
 						if (!ISPAUSED && amf_coronas.value) //VULT CORONAS
 							NewCorona(C_ROCKETLIGHT, ent.origin);
 					}
 					else if (r_rockettrail.value == 9 || r_rockettrail.value == 11)
 					{
-						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_default, 1);
+						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_default, bubble);
 					}
 					else if (r_rockettrail.value == 8)
 					{ //PLASMA ROCKETS
-						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_blue, 1);
+						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_blue, bubble);
 					}
 					else if (r_rockettrail.value == 10)
 					{ //FUEL ROD GUN
-						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_green, 1);
+						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_green, bubble);
 					}
 				}
 			}
