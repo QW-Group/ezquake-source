@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.124 2007-09-16 08:50:33 tonik Exp $
+$Id: cl_parse.c,v 1.125 2007-09-16 10:36:03 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -2049,12 +2049,19 @@ void CL_ParseVWepPrecache (char *str)
 	int i, num;
 	const char *p;
 
+	Cmd_TokenizeString (str + 2 /* skip the // */);
+
+	if (Cmd_Argc() < 2) {
+		cl.vwep_enabled = 0;
+		return;
+	}
+
 	if (cls.state == ca_active) {
+		// vweps can be turned off on the fly, but not back on
 		Com_DPrintf ("CL_ParseVWepPrecache: ca_active, ignoring\n");
 		return;
 	}
 
-	Cmd_TokenizeString (str + 2 /* skip the // */);
 	num = min(Cmd_Argc()-1, MAX_VWEP_MODELS);
 
 	for (i = 0; i < num; i++) {
