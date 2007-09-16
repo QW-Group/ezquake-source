@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.123 2007-09-16 08:42:00 tonik Exp $
+$Id: cl_parse.c,v 1.124 2007-09-16 08:50:33 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -3128,7 +3128,15 @@ void CL_ParseServerMessage (void) {
 				if (j == Cam_TrackNum())
 					VectorCopy (newangles, cl.viewangles);
 			} else {
+#ifdef I_WANT_HAX
+				// TODO: detect respawns
+				if (!Cvar_VariableValue("cl_teleports_keep_pitch"))
+					cl.viewangles[0] = newangles[0];
+				cl.viewangles[1] = newangles[1];
+				cl.viewangles[2] = newangles[2];
+#else
 				VectorCopy (newangles, cl.viewangles);
+#endif
 			}
 			break;
 
