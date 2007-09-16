@@ -219,7 +219,7 @@ wchar *decode_string (const char *s)
 
 	// copy remainder as is
 	qwcslcat (buf, str2wcs(s), sizeof(buf)/sizeof(buf[0]));
-	return buf;
+	return maybe_transliterate(buf);
 }
 
 
