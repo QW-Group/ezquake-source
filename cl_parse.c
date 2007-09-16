@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.122 2007-09-15 19:43:28 tonik Exp $
+$Id: cl_parse.c,v 1.123 2007-09-16 08:42:00 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -3012,6 +3012,7 @@ void CL_ParseServerMessage (void) {
 	int cmd, i, j = 0;
 	char *s;
 	extern int mvd_fixangle;
+	vec3_t newangles;
 	int msg_svc_start;
 	int oldread = 0;
 
@@ -3118,17 +3119,16 @@ void CL_ParseServerMessage (void) {
 			break;
 
 		case svc_setangle:
+			if (cls.mvdplayback)
+				j = MSG_ReadByte ();
+			for (i = 0; i < 3; i++)
+				newangles[i] = MSG_ReadAngle();
 			if (cls.mvdplayback) {
-				j = MSG_ReadByte();
 				mvd_fixangle |= 1 << j;
-				if (j != Cam_TrackNum()) {
-					for (i = 0; i < 3; i++)
-						MSG_ReadAngle();
-				}
-			}
-			if (!cls.mvdplayback || (cls.mvdplayback && j == Cam_TrackNum())) {
-				for (i = 0; i < 3; i++)
-					cl.viewangles[i] = MSG_ReadAngle ();
+				if (j == Cam_TrackNum())
+					VectorCopy (newangles, cl.viewangles);
+			} else {
+				VectorCopy (newangles, cl.viewangles);
 			}
 			break;
 
