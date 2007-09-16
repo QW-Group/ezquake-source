@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: in_win.c,v 1.38 2007-09-11 22:05:18 borisu Exp $
+$Id: in_win.c,v 1.39 2007-09-16 17:48:37 qqshka Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -40,7 +40,6 @@ $Id: in_win.c,v 1.38 2007-09-11 22:05:18 borisu Exp $
 #include "keys.h"
 
 
-#define DINPUT_BUFFERSIZE 16
 //#define iDirectInputCreate(a,b,c,d)	pDirectInputCreate(a,b,c,d)
 
 //HRESULT (WINAPI *pDirectInputCreate)(HINSTANCE hinst, DWORD dwVersion,
@@ -194,14 +193,16 @@ void Joy_AdvancedUpdate_f (void);
 void IN_JoyMove (usercmd_t *cmd);
 
 // directinput features
-cvar_t	m_rate			= {"m_rate",	      "125", CVAR_SILENT};
-cvar_t	m_showrate		= {"m_showrate",      "0",   CVAR_SILENT};
-cvar_t  in_mouse		= {"in_mouse",        "1",   CVAR_LATCH};  // NOTE: "1" is mt_normal
-cvar_t  in_m_smooth		= {"in_m_smooth",     "0",   CVAR_LATCH};
+cvar_t	m_rate				= {"m_rate",	         "125", CVAR_SILENT};
+cvar_t	m_showrate			= {"m_showrate",         "0",   CVAR_SILENT};
+cvar_t  in_mouse			= {"in_mouse",           "1",   CVAR_LATCH};  // NOTE: "1" is mt_normal
+cvar_t  in_m_smooth			= {"in_m_smooth",        "0",   CVAR_LATCH};
 
-cvar_t  in_m_mwhook		= {"in_m_mwhook",     "0",   CVAR_LATCH};
+cvar_t  in_m_mwhook			= {"in_m_mwhook",        "0",   CVAR_LATCH};
 
-cvar_t  in_m_os_parameters = {"in_m_os_parameters", "0",   CVAR_LATCH};
+cvar_t  in_m_os_parameters	= {"in_m_os_parameters", "0",   CVAR_LATCH};
+
+cvar_t  in_di_bufsize		= {"in_di_bufsize",      "16",  CVAR_LATCH}; // if you change default, then change DI_BufSize() too
 
 qbool use_m_smooth = false;
 HANDLE m_event;
@@ -246,6 +247,42 @@ int		 last_wseq_printed = 0;
 		INPUT_CASE_DIMOFS_BUTTON(7);		\
 
 #if DIRECTINPUT_VERSION >= 0x700
+
+static unsigned int DI_BufSize(void)
+{
+	return bound(16, in_di_bufsize.integer, 256);
+}
+
+static void SetBufferSize(void) {
+	static DIPROPDWORD dipdw = {
+		{ sizeof(dipdw), sizeof(dipdw.diph), 0, DIPH_DEVICE },
+		0
+	};
+	HRESULT hr;
+	unsigned int bufsize;
+
+	if (in_di_bufsize.integer)
+	{  // we don't wont dynamic buffer change
+		Com_Printf_State(PRINT_OK, "DirectInput overflow, increasing skipped because of %s.\n", in_di_bufsize.name);
+		return;
+	}
+
+	bufsize = max(dipdw.dwData, DI_BufSize()); // well, DI_BufSize() return 16, since in_di_bufsize is zero
+	dipdw.dwData = bufsize + max(1, bufsize / 2);
+
+	Com_Printf_State(PRINT_INFO, "DirectInput overflow, increasing buffer size to %u.\n", dipdw.dwData);
+
+	IN_DeactivateMouse();
+
+	hr = IDirectInputDevice_SetProperty(g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
+
+	IN_ActivateMouse();
+
+	if(FAILED(hr)) {
+		Com_Printf_State (PRINT_FAIL, "Unable to increase DirectInput buffer size.\n");
+	}
+}
+
 DWORD WINAPI IN_SMouseProc (void* lpParameter) {
 	// read mouse events and generate history tables
 	DWORD ret;
@@ -279,6 +316,9 @@ DWORD WINAPI IN_SMouseProc (void* lpParameter) {
 					dinput_acquired	= false;
 					break;
 				}
+
+				if(hr == DI_BUFFEROVERFLOW)
+					SetBufferSize();
 
 				/* Unable to read data or no data available	*/
 				if (FAILED(hr) || !dwElements)
@@ -697,7 +737,7 @@ qbool IN_InitDInput (void) {
 			0,                          // diph.dwObj
 			DIPH_DEVICE,                // diph.dwHow
 		},
-		DINPUT_BUFFERSIZE,              // dwData
+		DI_BufSize(),              // dwData
 	};
 	DIDATAFORMAT qdf = {
 		sizeof(DIDATAFORMAT),			// this structure
@@ -755,7 +795,7 @@ qbool IN_InitDInput (void) {
 		return false;
 	}
 
-	// set the buffer size to DINPUT_BUFFERSIZE elements.
+	// set the buffer size to DI_BufSize() elements.
 	// the buffer size is a DWORD property associated with the device
 	hr = IDirectInputDevice7_SetProperty(g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
 
@@ -893,6 +933,7 @@ void IN_Init (void) {
     Cvar_Register (&in_m_smooth);
     Cvar_Register (&in_m_mwhook);
     Cvar_Register (&in_m_os_parameters);
+    Cvar_Register (&in_di_bufsize);
 
     if (!host_initialized)
     {
@@ -1069,6 +1110,9 @@ void IN_MouseMove (usercmd_t *cmd) {
 					IDirectInputDevice_Acquire(g_pMouse);
 					break;
 				}
+
+				if(hr == DI_BUFFEROVERFLOW)
+					SetBufferSize();
 
 				/* Unable to read data or no data available */
 				if (FAILED(hr) || !dwElements)
