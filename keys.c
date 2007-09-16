@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.76 2007-09-14 13:29:28 disconn3ct Exp $
+    $Id: keys.c,v 1.77 2007-09-16 03:09:56 qqshka Exp $
 
 */
 
@@ -770,16 +770,16 @@ void Key_Console (int key, int unichar)
 
 				if (((keydown[K_CTRL] && key == K_ENTER) || keydown[K_SHIFT]) && cls.state >= ca_connected)
 				{
-					if ((keydown[K_CTRL] && key == K_ENTER))
+					if (*(key_lines[edit_line] + 1)) // do we have something to say?
 					{
-						Cbuf_AddText ("say_team ");
+						Cbuf_AddText ((keydown[K_CTRL] && key == K_ENTER) ? "say_team \"" : "say \"");
+						Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
+						Cbuf_AddText ("\"");
 					}
 					else
 					{
-						Cbuf_AddText ("say ");
+						no_lf = false;									
 					}
-
-					Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
 				}
 				else
 				{
@@ -799,8 +799,16 @@ void Key_Console (int key, int unichar)
 							{
 								if (cl_chatmode.value == 2 || cl_chatmode.value == 1)
 								{
-									Cbuf_AddText ("say ");
-									Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
+									if (*(key_lines[edit_line] + 1)) // do we have something to say?
+									{
+										Cbuf_AddText ("say \"");
+										Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
+										Cbuf_AddText ("\"");
+									}
+									else
+									{
+										no_lf = false;									
+									}
 								}
 								else
 								{
