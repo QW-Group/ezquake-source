@@ -86,7 +86,7 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms);
 //
 // Control Tree - Key event.
 //
-qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar);
+qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down);
 
 //
 // Tree Control - Finds any orphans and adds them to the root control.
@@ -120,7 +120,8 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 //
 typedef int (*ez_control_handler_fp) (struct ez_control_s *self);
 typedef int (*ez_control_mouse_handler_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
-typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, int unichar);
+typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, int unichar, qbool down);
+typedef int (*ez_control_keyspecific_handler_fp) (struct ez_control_s *self, int key, int unichar);
 typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
 
 #define CONTROL_IS_CONTAINED(self) (self->parent && (self->flags & CONTROL_CONTAINED))
@@ -210,23 +211,25 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 
 typedef struct ez_control_events_s
 {
-	ez_control_mouse_handler_fp		OnMouseEvent;
-	ez_control_mouse_handler_fp		OnMouseClick;
-	ez_control_mouse_handler_fp		OnMouseUp;
-	ez_control_mouse_handler_fp		OnMouseDown;
-	ez_control_mouse_handler_fp		OnMouseHover;
-	ez_control_mouse_handler_fp		OnMouseEnter;
-	ez_control_mouse_handler_fp		OnMouseLeave;
-	ez_control_key_handler_fp		OnKeyEvent;
-	ez_control_handler_fp			OnLayoutChildren;
-	ez_control_handler_fp			OnDraw;
-	ez_control_destroy_handler_fp	OnDestroy;
-	ez_control_handler_fp			OnMove;
-	ez_control_handler_fp			OnScroll;
-	ez_control_handler_fp			OnResize;
-	ez_control_handler_fp			OnParentResize;
-	ez_control_handler_fp			OnGotFocus;
-	ez_control_handler_fp			OnLostFocus;
+	ez_control_mouse_handler_fp			OnMouseEvent;
+	ez_control_mouse_handler_fp			OnMouseClick;
+	ez_control_mouse_handler_fp			OnMouseUp;
+	ez_control_mouse_handler_fp			OnMouseDown;
+	ez_control_mouse_handler_fp			OnMouseHover;
+	ez_control_mouse_handler_fp			OnMouseEnter;
+	ez_control_mouse_handler_fp			OnMouseLeave;
+	ez_control_key_handler_fp			OnKeyEvent;
+	ez_control_keyspecific_handler_fp	OnKeyDown;
+	ez_control_keyspecific_handler_fp	OnKeyUp;
+	ez_control_handler_fp				OnLayoutChildren;
+	ez_control_handler_fp				OnDraw;
+	ez_control_destroy_handler_fp		OnDestroy;
+	ez_control_handler_fp				OnMove;
+	ez_control_handler_fp				OnScroll;
+	ez_control_handler_fp				OnResize;
+	ez_control_handler_fp				OnParentResize;
+	ez_control_handler_fp				OnGotFocus;
+	ez_control_handler_fp				OnLostFocus;
 } ez_control_events_t;
 
 typedef enum ez_anchor_e
@@ -535,9 +538,19 @@ int EZ_control_OnLayoutChildren(ez_control_t *self);
 int EZ_control_OnDraw(ez_control_t *self);
 
 //
+// Control - Key down event.
+//
+int EZ_control_OnKeyDown(ez_control_t *self, int key, int unichar);
+
+//
+// Control - Key up event.
+//
+int EZ_control_OnKeyUp(ez_control_t *self, int key, int unichar);
+
+//
 // Control - Key event.
 //
-int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar);
+int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar, qbool down);
 
 //
 // Control -
@@ -593,6 +606,7 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 #define LABEL_AUTOELLIPSIS	(1 << 2)	// Show ... at the end of the text if it doesn't fit within the label.
 #define LABEL_WRAPTEXT		(1 << 3)	// Wrap the text to fit inside the label.
 #define LABEL_SELECTING		(1 << 4)	// Are we selecting text?
+#define LABEL_SELECTED		(1 << 5)	// Is any text selected?
 
 #define LABEL_MAX_WRAPS		512
 #define LABEL_LINE_SIZE		1024
@@ -658,6 +672,11 @@ void EZ_label_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha)
 void EZ_label_SetText(ez_label_t *self, const char *text);
 
 //
+// Label - Set the caret position.
+//
+void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos);
+
+//
 // Label - Happens when the control has resized.
 //
 int EZ_label_OnResize(ez_control_t *self);
@@ -668,9 +687,19 @@ int EZ_label_OnResize(ez_control_t *self);
 int EZ_label_OnDraw(ez_control_t *label);
 
 //
+// Label - Key down event.
+//
+int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar);
+
+//
+// Label - Key up event.
+//
+int EZ_label_OnKeyUp(ez_control_t *self, int key, int unichar);
+
+//
 // Label - Key event.
 //
-int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar);
+int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar, qbool down);
 
 //
 // Label - Handles the mouse down event.

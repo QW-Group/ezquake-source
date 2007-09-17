@@ -4,12 +4,13 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.36 2007-09-03 19:26:22 johnnycz Exp $
+	$Id: hud_editor.c,v 1.37 2007-09-17 11:12:29 cokeman1982 Exp $
 
 */
 
 #include "quakedef.h"
 #include "qsound.h"
+#include "utils.h"
 #include "menu.h"
 #include "keys.h"
 #include "Ctrl.h"
@@ -2226,9 +2227,47 @@ int Test_OnLostFocus(ez_control_t *self)
 	return 0;
 }
 
+void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y);
 int Test_OnButtonDraw(ez_control_t *self)
 {
-	Draw_String(self->absolute_x, self->absolute_y, "It works!");
+	int x, y;
+	EZ_control_GetDrawingPosition(self, &x, &y);
+
+	return 0;
+}
+
+int Test_OnControlDraw(ez_control_t *self)
+{
+	int x, y, i;
+	EZ_control_GetDrawingPosition(self, &x, &y);
+
+	/*for (i = 0; i < 30; i++)
+	{
+		Draw_String(x, y + i*8, va("%d%d%d%d", i, i, i, i));
+	}*/
+
+	/*
+	{
+		char str[] = "Hello this is a sentence that's supposed to fit within a box of stuff, I hope this works...";
+		char line[1024];
+		int last_index = 0;
+		int i = 0;
+
+		while (Util_GetNextWordwrapString(str, line, last_index, &last_index, sizeof(str) / sizeof(char), self->width, 8))
+		{
+			Draw_String(x, y + i*8, line);
+			i++;
+		}
+	}
+	*/
+
+	/*{
+		clrinfo_t color;
+		color.i = 0;
+		color.c = RGBA_TO_COLOR(0, 255, 0, 255);
+		Draw_BigString(x, y, "Hej", &color, 1, 1, 1, 0);
+	}*/
+
 	return 0;
 }
 
@@ -2340,7 +2379,7 @@ static void HUD_Editor(void)
 		HUD_Editor_DrawHelp();
 	}
 
-	//EZ_tree_Draw(&help_control_tree);
+	EZ_tree_Draw(&help_control_tree);
 }
 
 //
@@ -2413,15 +2452,21 @@ qbool HUD_Editor_MouseEvent(mouse_state_t *ms)
 	return false;
 }
 
+ez_control_t *root = NULL;
+ez_control_t *child1 = NULL;
+ez_control_t *child2 = NULL;
+ez_button_t *button = NULL;
+ez_label_t *label = NULL;
+
 //
 // Handles key events sent to the HUD editor.
 //
-void HUD_Editor_Key(int key, int unichar)
+void HUD_Editor_Key(int key, int unichar, qbool down)
 {
 	static int planmode = 1;
 	int togglekeys[2];
 
-	//EZ_tree_KeyEvent(&help_control_tree, key, unichar);
+	EZ_tree_KeyEvent(&help_control_tree, key, unichar, down);
 
 	M_FindKeysForCommand("toggleconsole", togglekeys);
 	if ((key == togglekeys[0]) || (key == togglekeys[1]))
@@ -2430,40 +2475,55 @@ void HUD_Editor_Key(int key, int unichar)
 		return;
 	}
 
-	switch (key)
+	if (down)
 	{
-		case K_ESCAPE:
-			HUD_Editor_Toggle_f();
-			break;
-		case 'p' :
-			// Toggle HUD plan mode.
-			planmode = !planmode;
-			Cvar_SetValue(&hud_planmode, planmode);
-			break;
-		case 'h' :
-			// Toggle the help window.
-			hud_editor_showhelp = !hud_editor_showhelp;
-			break;
-		case K_SPACE :
-			// Toggle hud element outlines.
-			hud_editor_showoutlines = !hud_editor_showoutlines;
-			break;
-		case K_F1 :
-			// Toggle moving.
-			Cvar_SetValue(&hud_editor_allowmove, !hud_editor_allowmove.value);
-			break;
-		case K_F2 :
-			// Toggle resizing.
-			Cvar_SetValue(&hud_editor_allowresize, !hud_editor_allowresize.value);
-			break;
-		case K_F3 :
-			// Toggle aligning.
-			Cvar_SetValue(&hud_editor_allowalign, !hud_editor_allowalign.value);
-			break;
-		case K_F4 :
-			// Toggle placing.
-			Cvar_SetValue(&hud_editor_allowplace, !hud_editor_allowplace.value);
-			break;
+		switch (key)
+		{
+			case K_ESCAPE:
+				HUD_Editor_Toggle_f();
+				break;
+			case 'p' :
+				// Toggle HUD plan mode.
+				planmode = !planmode;
+				Cvar_SetValue(&hud_planmode, planmode);
+				break;
+			case 'h' :
+				// Toggle the help window.
+				hud_editor_showhelp = !hud_editor_showhelp;
+				break;
+			case K_SPACE :
+				// Toggle hud element outlines.
+				hud_editor_showoutlines = !hud_editor_showoutlines;
+				break;
+			case K_F1 :
+				// Toggle moving.
+				Cvar_SetValue(&hud_editor_allowmove, !hud_editor_allowmove.value);
+				break;
+			case K_F2 :
+				// Toggle resizing.
+				Cvar_SetValue(&hud_editor_allowresize, !hud_editor_allowresize.value);
+				break;
+			case K_F3 :
+				// Toggle aligning.
+				Cvar_SetValue(&hud_editor_allowalign, !hud_editor_allowalign.value);
+				break;
+			case K_F4 :
+				// Toggle placing.
+				Cvar_SetValue(&hud_editor_allowplace, !hud_editor_allowplace.value);
+				break;
+			case K_UPARROW :
+				EZ_control_SetScrollChange(child1, 0, 1);
+				break;
+			case K_DOWNARROW :
+				EZ_control_SetScrollChange(child1, 0, -1);
+				break;
+			case K_LEFTARROW :
+				EZ_control_SetScrollChange(child1, 1, 0);
+				break;
+			case K_RIGHTARROW :
+				EZ_control_SetScrollChange(child1, -1, 0);
+				break;
+		}
 	}
 }
 
@@ -2473,37 +2533,70 @@ void HUD_Editor_Key(int key, int unichar)
 void HUD_Editor_Init(void)
 {
 	extern mpic_t *SCR_LoadCursorImage(char *cursorimage);
-/*
-	ez_control_t *root = NULL;
-	ez_control_t *child1 = NULL;
-	ez_control_t *child2 = NULL;
+	
+#if 0
+	clrinfo_t color;
 
-	ez_button_t *button = NULL;
+	color.c = RGBA_TO_COLOR(255, 255, 255, 255);
+	color.i = 0;
 
-	root = EZ_control_Create(&help_control_tree, NULL, "Test window", "Test", 50, 50, 200, 200, NULL, CONTROL_FOCUSABLE | CONTROL_MOVABLE);
+	// Root
+	{
+		root = EZ_control_Create(&help_control_tree, NULL, "Test window", "Test", 50, 50, 400, 400, NULL, CONTROL_FOCUSABLE | CONTROL_MOVABLE | CONTROL_RESIZE_H | CONTROL_RESIZE_V );
+		EZ_control_SetBackgroundColor(root, 0, 0, 0, 100);
+	}
 
-	child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, NULL, CONTROL_FOCUSABLE | CONTROL_RESIZE_H | CONTROL_RESIZE_V | CONTROL_MOVABLE | CONTROL_CONTAINED);
-	button = EZ_button_Create(&help_control_tree, child1, "My button", "A crazy button!", 15, 15, 15, 15, NULL, NULL, NULL, CONTROL_CONTAINED);
+	// Child 1
+	{
+		child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, NULL, CONTROL_FOCUSABLE | CONTROL_RESIZE_H | CONTROL_RESIZE_V | CONTROL_MOVABLE | CONTROL_CONTAINED | CONTROL_SCROLLABLE);
 
-	child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, NULL, CONTROL_FOCUSABLE | CONTROL_CONTAINED);
+		EZ_control_SetOnGotFocus(child1, Test_OnGotFocus);
+		EZ_control_SetOnLostFocus(child1, Test_OnLostFocus);
 
-	//EZ_control_SetOnDraw((ez_control_t *)button, Test_OnButtonDraw);
+		EZ_control_SetOnDraw(child1, Test_OnControlDraw);
+		EZ_control_SetMinVirtualSize(child1, child1->width * 2, child1->height * 2);
+		EZ_control_SetVirtualSize(child1, child1->width, child1->height * 2);
 
-	EZ_control_SetOnGotFocus(child1, Test_OnGotFocus);
-	EZ_control_SetOnLostFocus(child1, Test_OnLostFocus);
+		EZ_control_SetBackgroundColor(child1, 150, 150, 0, 100);
+	}
 
-	EZ_control_SetOnGotFocus(child2, Test_OnGotFocus);
-	EZ_control_SetOnLostFocus(child2, Test_OnLostFocus);
+	// Child 2
+	{
+		child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, NULL, CONTROL_FOCUSABLE | CONTROL_CONTAINED);
 
-	EZ_control_SetBackgroundColor(root, 0, 0, 0, 100);
-	EZ_control_SetBackgroundColor(child1, 150, 150, 0, 100);
-	EZ_control_SetBackgroundColor(child2, 150, 150, 200, 100);
+		EZ_control_SetOnGotFocus(child2, Test_OnGotFocus);
+		EZ_control_SetOnLostFocus(child2, Test_OnLostFocus);
 
-	EZ_button_SetFocusedColor(button, 255, 0, 0, 255);
-	EZ_button_SetNormalColor(button, 255, 255, 0, 100);
-	EZ_button_SetPressedColor(button, 255, 255, 0, 255);
-	EZ_button_SetHoverColor(button, 255, 0, 0, 150);
-*/
+		EZ_control_SetBackgroundColor(child2, 150, 150, 200, 100);
+	}
+
+	// Button.
+	{
+		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", -15, -15, 15, 15, NULL, NULL, NULL, CONTROL_CONTAINED | CONTROL_RESIZEABLE);
+		EZ_control_SetOnDraw((ez_control_t *)button, Test_OnButtonDraw);
+
+		EZ_button_SetFocusedColor(button, 255, 0, 0, 255);
+		EZ_button_SetNormalColor(button, 255, 255, 0, 100);
+		EZ_button_SetPressedColor(button, 255, 255, 0, 255);
+		EZ_button_SetHoverColor(button, 255, 0, 0, 150);
+		EZ_control_SetAnchor((ez_control_t *)button, (anchor_right | anchor_bottom));
+	}
+	
+	// Label.
+	{
+		label = EZ_label_Create(&help_control_tree, root, 
+			"My label", "A crazy label!", 200, 200, 200, 80, NULL, 
+			CONTROL_FOCUSABLE | CONTROL_CONTAINED | CONTROL_RESIZEABLE /*| CONTROL_MOVABLE*/ | CONTROL_RESIZE_V | CONTROL_RESIZE_H, 
+			LABEL_WRAPTEXT /*| LABEL_LARGEFONT*/, 
+			"Hello\nthis is a test are you fine because I am", color);
+
+		EZ_label_SetTextScale(label, 2.0);
+
+		EZ_control_SetAnchor((ez_control_t *)label, anchor_top | anchor_left | anchor_right | anchor_bottom); 
+		EZ_control_SetMinVirtualSize((ez_control_t *)label, 5, 5);
+	}
+#endif 
+	
 	// Register commands.
 	Cmd_AddCommand("hud_editor", HUD_Editor_Toggle_f);
 

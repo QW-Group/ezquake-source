@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.77 2007-09-16 03:09:56 qqshka Exp $
+    $Id: keys.c,v 1.78 2007-09-17 11:12:29 cokeman1982 Exp $
 
 */
 
@@ -1867,15 +1867,12 @@ static qbool Key_ConsoleKey(int key)
     return true;
 }
 
-//Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
+// Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
 void Key_EventEx (int key, wchar unichar, qbool down)
 {
 	char *kb, cmd[1024];
 
-	//	Com_Printf ("%i : %i\n", key, down); //@@@
-
-	/* disconnect: really FIXME CTRL+r or CTRL+[ with in_builinkeymap 1 cause to unichar < 32 */
-	//FIXME
+	// FIXME: disconnect: really FIXME CTRL+r or CTRL+[ with in_builinkeymap 1 cause to unichar < 32 
 	if (/*unichar < 32 ||*/ (unichar > 127 && unichar <= 256))
 		unichar = 0;
 
@@ -1893,161 +1890,202 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	if (!down)
 		key_repeats[key] = 0;
 
-#ifndef WITH_KEYMAP
+	#ifndef WITH_KEYMAP
 	key_lastpress = key;
-#endif // WITH_KEYMAP
+	#endif // WITH_KEYMAP
 
 	// update auto-repeat status
-	if (down) {
+	if (down) 
+	{
 		key_repeats[key]++;
-		if (key_repeats[key] > 1) {
+		
+		if (key_repeats[key] > 1) 
+		{
 			if ((key != K_BACKSPACE && key != K_DEL
 				&& key != K_LEFTARROW && key != K_RIGHTARROW
 				&& key != K_UPARROW && key != K_DOWNARROW
 				&& key != K_PGUP && key != K_PGDN && (key < 32 || key > 126 || key == '`'))
 				|| (key_dest == key_game && cls.state == ca_active))
+			{
 				return;	// ignore most autorepeats
+			}
 		}
 	}
 
-	// handle escape specialy, so the user can never unbind it
-	if (key == K_ESCAPE) {
+	// Handle escape specialy, so the user can never unbind it.
+	if (key == K_ESCAPE)
+	{
 		if (!down)
+		{
 			return;
-		switch (key_dest) {
-		case key_message:
-			Key_Message (key, unichar);
-			break;
-		case key_menu:
-			M_Keydown (key, unichar);
-			break;
-		case key_game:
-			M_ToggleMenu_f ();
-			break;
-		case key_console:
-			if (!SCR_NEED_CONSOLE_BACKGROUND)
-				Con_ToggleConsole_f ();
-			else
-				M_ToggleMenu_f ();
-			break;
-		case key_hudeditor:
-			HUD_Editor_Key(key, unichar);
-			break;
-		default:
-			assert(!"Bad key_dest");
 		}
+
+		switch (key_dest) 
+		{
+			case key_message:
+				Key_Message (key, unichar);
+				break;
+			case key_menu:
+				M_Keydown (key, unichar);
+				break;
+			case key_game:
+				M_ToggleMenu_f ();
+				break;
+			case key_console:
+				if (!SCR_NEED_CONSOLE_BACKGROUND)
+					Con_ToggleConsole_f ();
+				else
+					M_ToggleMenu_f ();
+				break;
+			case key_hudeditor:
+				HUD_Editor_Key(key, unichar, down);
+				break;
+			default:
+				assert(!"Bad key_dest");
+		}
+
 		return;
 	}
 
-    // special case for accessing the menu via mouse when in console in disconnected mode:
+    // Special case for accessing the menu via mouse when in console in disconnected mode:
     if (key == K_MOUSE2 && key_dest == key_game && cls.state == ca_disconnected)
     {
         M_ToggleMenu_f();
     }
 
-	// key up events only generate commands if the game key binding is a button command (leading + sign).
-	// These will occur even in console mode, to keep the character from continuing an action started before a
-	// console switch.  Button commands include the kenum as a parameter, so multiple downs can be matched with ups
-	if (!down) {
-		kb = keybindings[key];
-		if (kb)
-			if (kb[0] == '+' && keyactive[key]) {
-				snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
-				Cbuf_AddText (cmd);
-				keyactive[key] = false;
-			}
-#ifndef WITH_KEYMAP
-		if (keyshift[key] != key) {
-			kb = keybindings[keyshift[key]];
-			if (kb && kb[0] == '+' && keyactive[keyshift[key]]) {
-				snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
-				Cbuf_AddText (cmd);
-				keyactive[keyshift[key]] = false;
-			}
+	if (!down)
+	{
+		// Key up event.
+		switch (key_dest)
+		{
+			case key_hudeditor :
+				HUD_Editor_Key(key, unichar, down);
+				break;
 		}
-#endif // WITH_KEYMAP
+
+		// Key up events only generate commands if the game key binding is a button command (leading + sign).
+		// These will occur even in console mode, to keep the character from continuing an action started before a
+		// console switch.  Button commands include the kenum as a parameter, so multiple downs can be matched with ups
+		{
+			kb = keybindings[key];
+			if (kb)
+			{
+				if (kb[0] == '+' && keyactive[key]) 
+				{
+					snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
+					Cbuf_AddText (cmd);
+					keyactive[key] = false;
+				}
+			}
+			#ifndef WITH_KEYMAP
+			if (keyshift[key] != key) 
+			{
+				kb = keybindings[keyshift[key]];
+				if (kb && kb[0] == '+' && keyactive[keyshift[key]]) 
+				{
+					snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
+					Cbuf_AddText (cmd);
+					keyactive[keyshift[key]] = false;
+				}
+			}
+			#endif // WITH_KEYMAP
+		}
+		
 		return;
 	}
 
-#if defined( __linux__ ) && defined(GLQUAKE)
-  // switch windowed<->fullscreen if pressed alt+enter, I succeed only with left alt, dunno why...
-  if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
-  {
-    Key_ClearStates(); // Zzzz
-    Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );
-	Cbuf_AddText( "vid_restart\n" );
-    return;
-  }
-#endif
+	#if defined( __linux__ ) && defined(GLQUAKE)
+	// switch windowed<->fullscreen if pressed alt+enter, I succeed only with left alt, dunno why...
+	if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
+	{
+		Key_ClearStates(); // Zzzz
+		Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );
+		Cbuf_AddText( "vid_restart\n" );
+		return;
+	}
+	#endif // __linux__ GLQUAKE
 
 	// if not a consolekey, send to the interpreter no matter what mode is
-	if (!Key_ConsoleKey(key)) {
+	if (!Key_ConsoleKey(key)) 
+	{
 		kb = keybindings[key];
-		if (kb) {
-			if (kb[0] == '+'){	// button commands add keynum as a parm
+		
+		if (kb) 
+		{
+			if (kb[0] == '+')
+			{	
+				// Button commands add keynum as a parm.
 				snprintf (cmd, sizeof (cmd), "%s %i\n", kb, key);
 				Cbuf_AddText (cmd);
 				keyactive[key] = true;
-			} else {
+			} 
+			else 
+			{
 				Cbuf_AddText (kb);
 				Cbuf_AddText ("\n");
 			}
 		}
+
 		return;
 	}
 
-  if (!down)
-  {
-    Com_Printf("DOWN\n");
-		return;		// other systems only care about key down events
-  }
+	if (!down)
+	{
+		return;	 // Other systems only care about key down events.
+	}
 
-
-#ifndef WITH_KEYMAP
+	#ifndef WITH_KEYMAP
 	if (keydown[K_SHIFT])
 		key = keyshift[key];
-#endif // WITH_KEYMAP
+	#endif // WITH_KEYMAP
 
-	switch (key_dest) {
-	case key_message:
-		Key_Message (key, unichar);
-		break;
-	case key_menu:
-		M_Keydown (key, unichar);
-		break;
+	// Key down event.
+	switch (key_dest) 
+	{
+		case key_message:
+			Key_Message (key, unichar);
+			break;
 
-	case key_game:
-	case key_console:
-		Key_Console (key, unichar);
-		break;
+		case key_menu:
+			M_Keydown (key, unichar);
+			break;
 
-	case key_hudeditor:
-		HUD_Editor_Key(key, unichar);
-		break;
+		case key_game:
+		case key_console:
+			Key_Console (key, unichar);
+			break;
 
-	default:
-		assert(!"Bad key_dest");
+		case key_hudeditor:
+			HUD_Editor_Key(key, unichar, down);
+			break;
+
+		default:
+			assert(!"Bad key_dest");
 	}
 }
+
 void Key_Event (int key, qbool down)
 {
 	assert (key >= 0 && key <= 255);
 
-    if (key >= K_MOUSE1 && key <= K_MOUSE8) {
+    if (key >= K_MOUSE1 && key <= K_MOUSE8)
+	{
         // if the Mouse_ButtonEvent return true means that the window which received
         // a mouse click handled it and we do not have to send old
         // K_MOUSE* key event
-        if (Mouse_ButtonEvent(key, down)) return;
+        if (Mouse_ButtonEvent(key, down)) 
+			return;
     }
 
 	if (key == K_MWHEELDOWN || key == K_MWHEELUP) {
 		// same logic applies here as for handling K_MOUSE1..8 buttons
-		if (Mouse_ButtonEvent(key, down)) return;
+		if (Mouse_ButtonEvent(key, down)) 
+			return;
 	}
 
-#ifdef WITH_KEYMAP
+	#ifdef WITH_KEYMAP
 	Key_EventEx (key, key, down);
-#else
+	#else
 	{
 		wchar unichar;
 		unichar = keydown[K_SHIFT] ? keyshift[key] : key;
@@ -2055,13 +2093,15 @@ void Key_Event (int key, qbool down)
 			unichar = 0;
 		Key_EventEx (key, unichar, down);
 	}
-#endif
+	#endif // WITH_KEYMAP
 }
 
-void Key_ClearStates (void) {
+void Key_ClearStates (void) 
+{
 	int		i;
 
-	for (i = 0; i < sizeof(keydown) / sizeof(*keydown); i++) {
+	for (i = 0; i < sizeof(keydown) / sizeof(*keydown); i++) 
+	{
 		keydown[i] = false;
 		key_repeats[i] = false;
 	}

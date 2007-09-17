@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.36 2007-09-17 01:55:39 dkure Exp $
+$Id: ez_controls.c,v 1.37 2007-09-17 11:12:27 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -277,7 +277,6 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 {
 	qbool found = false;
 	ez_dllist_node_t *node_iter = NULL;
-	// ez_control_t *payload = NULL;
 
 	if(tree->focused_node)
 	{
@@ -318,9 +317,11 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 //
 // Control Tree - Key event.
 //
-qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar)
+qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 {
 	int key_handled = false;
+	ez_control_t *payload = NULL;
+	ez_dllist_node_t *iter = NULL;
 
 	if (!tree)
 	{
@@ -340,12 +341,21 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar)
 				// or the previous (Shift + TAB)
 				EZ_tree_ChangeFocus(tree, !isShiftDown());
 				key_handled = true;
+				break;
 			}
 		}
+	}
 
-		if (!key_handled)
+	// Find the focused control and send the key events to it.
+	for (iter = tree->drawlist.head; iter; iter = iter->next)
+	{
+		payload = (ez_control_t *)iter->payload;
+
+		// Notify the control of the key event.
+		if (payload->flags & CONTROL_FOCUSED)
 		{
-			CONTROL_RAISE_EVENT(&key_handled, tree->root, OnKeyEvent, key, unichar);
+			CONTROL_RAISE_EVENT(&key_handled, payload, OnKeyEvent, key, unichar, down);
+			break;
 		}
 	}
 
@@ -520,6 +530,8 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->events.OnDraw				= EZ_control_OnDraw;
 	control->events.OnGotFocus			= EZ_control_OnGotFocus;
 	control->events.OnKeyEvent			= EZ_control_OnKeyEvent;
+	control->events.OnKeyDown			= EZ_control_OnKeyDown;
+	control->events.OnKeyUp				= EZ_control_OnKeyUp;
 	control->events.OnLostFocus			= EZ_control_OnLostFocus;
 	control->events.OnLayoutChildren	= EZ_control_OnLayoutChildren;
 	control->events.OnMove				= EZ_control_OnMove;
@@ -1255,33 +1267,65 @@ int EZ_control_OnDraw(ez_control_t *self)
 }
 
 //
-// Control - Key event.
+// Control - Key down event.
 //
-int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar)
+int EZ_control_OnKeyDown(ez_control_t *self, int key, int unichar)
 {
 	int key_handled = false;
-	int key_handled_tmp = false;
 
-	ez_control_t *payload = NULL;
-	ez_dllist_node_t *iter = self->children.head;
+	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyDown, key, unichar);
 
-	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyEvent, key, unichar);
+	return key_handled;
+}
+
+//
+// Control - Key up event.
+//
+int EZ_control_OnKeyUp(ez_control_t *self, int key, int unichar)
+{
+	int key_handled = false;
+
+	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyUp, key, unichar);
+
+	return key_handled;
+}
+
+//
+// Control - Key event.
+//
+int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar, qbool down)
+{
+	int key_handled			= false;
+	ez_control_t *payload	= NULL;
+	ez_dllist_node_t *iter	= self->children.head;
+
+	if (down)
+	{
+		CONTROL_RAISE_EVENT(&key_handled, self, OnKeyDown, key, unichar);
+	}
+	else
+	{
+		CONTROL_RAISE_EVENT(&key_handled, self, OnKeyUp, key, unichar);
+	}
 
 	if (key_handled)
 	{
 		return true;
 	}
 
+	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyEvent, key, unichar, down);
+
 	// Tell the children of the key event.
-	while (iter)
+	/*while (iter)
 	{
 		payload = (ez_control_t *)iter->payload;
-		CONTROL_RAISE_EVENT(&key_handled_tmp, payload, OnKeyEvent, key, unichar);
+		CONTROL_RAISE_EVENT(&key_handled_tmp, payload, OnKeyEvent, key, unichar, down);
 
+		// FIXME: How do we decide what control that gets the key events?
 		key_handled = (key_handled || key_handled_tmp);
 
 		iter = iter->next;
-	}
+	}*/
 
 	return key_handled;
 }
@@ -1742,7 +1786,8 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->super.inheritance_level		= EZ_LABEL_INHERITANCE_LEVEL;
 
 	label->super.events.OnDraw			= EZ_label_OnDraw;
-	label->super.events.OnKeyEvent		= EZ_label_OnKeyEvent;
+	label->super.events.OnKeyDown		= EZ_label_OnKeyDown;
+	label->super.events.OnKeyUp			= EZ_label_OnKeyUp;
 	label->super.events.OnMouseDown		= EZ_label_OnMouseDown;
 	label->super.events.OnMouseUp		= EZ_label_OnMouseUp;
 	label->super.events.OnMouseHover	= EZ_label_OnMouseHover;
@@ -1795,8 +1840,6 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 			label->wordwraps[i] = current_index;
 			i++;
 		}
-
-		label->wordwraps[i] = -1;
 	}
 	else
 	{
@@ -1810,9 +1853,9 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 			
 			current_index++;
 		}
-
-		label->wordwraps[i] = -1;
 	}
+
+	label->wordwraps[i] = -1;
 }
 
 //
@@ -1880,6 +1923,7 @@ void EZ_label_SetText(ez_label_t *label, const char *text)
 	}
 
 	// Calculate where to wrap the text.
+	// TODO : Add OnTextChange instead!
 	EZ_label_CalculateWordwraps(label);
 }
 
@@ -2079,31 +2123,28 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, qbool up)
 	int i			= 0;
 	int curr_row	= 0;
 	int curr_col	= 0;
-	int caret_row	= 0;
-	int caret_col	= 0;
-	qbool found		= false;
+	int caret_row	= 0;					// The row the caret is at.
+	int caret_col	= 0;					// The column the caret is in.
+	qbool found		= false;				// Did we find the current position caret row/col yet?
 	int text_len	= strlen(label->text);
 
-	for (i = 0; i < text_len; i++)
+	// 1. Find the current row and column of the caret.
+	// 2. Find the index of the character above/below that position,
+	//    and set the caret to that position, if there is no char
+	//    exactly above that point, jump to the end of the line
+	//    of the previous/next row instead.
+	for (i = 0; i <= text_len; i++)
 	{
+		// We found the caret row and column, now move the caret up or down.
 		if (found)
 		{
-			if (!up)
+			int target_row = caret_row + (up ? -1 : 1);
+
+			if ((curr_row == target_row) && (curr_col == caret_col))
 			{
-				if ((curr_row == caret_row + 1) && (curr_col == caret_col))
-				{
-					label->caret_pos = i;
-					break;
-				}
-			}
-			else
-			{
-				if ((curr_row == caret_row - 1) && (curr_col == caret_col))
-				{
-					label->caret_pos = i;
-					break;
-				}
-			}
+				label->caret_pos = i;
+				break;
+			}	
 		}
 
 		if (label->caret_pos == i)
@@ -2112,7 +2153,8 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, qbool up)
 			caret_row = curr_row;
 			caret_col = curr_col;
 			
-			// Restart from the beginning, we need to find the row above.
+			// Restart from the beginning of the string so that
+			// we can find the target row if we're moving UP.
 			if (up && !found)
 			{
 				i = -1;
@@ -2122,15 +2164,31 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, qbool up)
 
 			found = true;
 
-			// Do the restart.
+			// We're moving the caret up so restart from the beginning.
 			if (up)
 			{
 				continue;
 			}
 		}
 
-		if (label->wordwraps[curr_row] == i)
+		// Found a new line.
+		if ((i == label->wordwraps[curr_row])	// New line.
+			|| (i == text_len))					// End of string.
 		{
+			// Check for the special case where there is no character
+			// above/below the caret to jump to. In that case we need to jump to
+			// the last character of the previous/next line instead.
+			if (found)
+			{
+				int target_row = caret_row + (up ? -1 : 1);
+
+				if ((curr_row == target_row) && (caret_col > curr_col))
+				{
+					label->caret_pos = i;
+					break;
+				}
+			}
+
 			// New line.
 			curr_row++;
 			curr_col = 0;
@@ -2143,16 +2201,15 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, qbool up)
 }
 
 //
-// Label - Key event.
+// Label - Key down event.
 //
-int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar)
+int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 {
 	ez_label_t *label	= (ez_label_t *)self;
 	int key_handled		= false;
 	int text_len		= strlen(label->text);
-	//int caret_delta		= 0; // D-Kure, never used
 
-	key_handled = EZ_control_OnKeyEvent(self, key, unichar);
+	key_handled = EZ_control_OnKeyDown(self, key, unichar);
 
 	if (key_handled)
 	{
@@ -2161,6 +2218,7 @@ int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar)
 
 	key_handled = true;
 
+	// Key down.
 	switch (key)
 	{
 		case K_LEFTARROW :
@@ -2183,6 +2241,12 @@ int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar)
 			EZ_label_MoveCaretVertically(label, false);
 			break;
 		}
+		case K_SHIFT :
+		{
+			label->select_start = label->caret_pos;
+			label->text_flags |= LABEL_SELECTING;
+			break;
+		}
 		default :
 		{
 			key_handled = false;
@@ -2190,9 +2254,52 @@ int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar)
 		}
 	}
 
+	// Select while holding down shift.
+	if (isShiftDown() && (label->select_start > -1))
+	{
+		label->text_flags |= LABEL_SELECTING;
+		label->select_end = label->caret_pos;
+	}
+	else
+	{
+		label->text_flags &= ~LABEL_SELECTING;
+		label->select_start = -1;
+		label->select_end = -1;
+	}
+
 	clamp(label->caret_pos, 0, text_len);
 
-	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyEvent, key, unichar);
+	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyDown, key, unichar);
+	return key_handled;
+}
+
+//
+// Label - Key up event.
+//
+int EZ_label_OnKeyUp(ez_control_t *self, int key, int unichar)
+{
+	ez_label_t *label	= (ez_label_t *)self;
+	int key_handled		= false;
+
+	key_handled = EZ_control_OnKeyUp(self, key, unichar);
+
+	if (key_handled)
+	{
+		return true;
+	}
+
+	key_handled = true;
+
+	// Key up.
+	switch (key)
+	{
+		case K_SHIFT :
+		{
+			label->text_flags &= ~LABEL_SELECTING;
+			break;
+		}
+	}
+
 	return key_handled;
 }
 
@@ -2241,7 +2348,7 @@ int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseDown, ms);
 
-	return mouse_handled;
+	return true;
 }
 
 //
