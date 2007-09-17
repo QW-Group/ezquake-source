@@ -45,6 +45,7 @@ typedef struct entity_s {
 	int						skinnum;		// for Alias models
 	struct player_info_s	*scoreboard;	// identify player
 	int						renderfx;		// RF_ bit mask
+	int						effects;		// EF_ flags like EF_BLUE and etc, atm this used for powerup shells
 
 	int						oldframe;
 	int						frame;

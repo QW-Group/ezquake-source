@@ -162,6 +162,8 @@ cvar_t gl_part_blobs = {"gl_part_blobs", "0"}; // 1
 cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"}; // 1
 cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
 
+cvar_t gl_powerupshells = {"gl_powerupshells", "0"};
+
 cvar_t  gl_fogenable		= {"gl_fog", "0"};
 
 cvar_t  gl_fogstart			= {"gl_fogstart", "50.0"};
@@ -321,6 +323,12 @@ vec3_t	shadevector;
 qbool	full_light;
 float		shadelight, ambientlight;
 
+#define NUMVERTEXNORMALS	162
+
+float	r_avertexnormals[NUMVERTEXNORMALS][3] = {
+#include "anorms.h"
+};
+
 // precalculated dot products for quantized angles
 #define SHADEDOT_QUANT 64
 byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS] =
@@ -335,11 +343,35 @@ float	r_framelerp;
 float	r_modelalpha;
 float	r_lerpdistance;
 float   r_modelcolor[3];
+float	r_shellcolor[3];
 
 //VULT COLOURED MODEL LIGHTS
 extern vec3_t lightcolor;
 float apitch, ayaw;
 vec3_t vertexlight;
+
+int shelltexture = 0;
+
+int GL_GenerateShellTexture(void)
+{
+	int x, y, d;
+	byte data[32][32][4];
+	for (y = 0;y < 32;y++)
+	{
+		for (x = 0;x < 32;x++)
+		{
+			d = (sin(x * M_PI / 8.0f) + cos(y * M_PI / 8.0f)) * 64 + 64;
+			if (d < 0)
+				d = 0;
+			if (d > 255)
+				d = 255;
+			data[y][x][0] = data[y][x][1] = data[y][x][2] = d;
+			data[y][x][3] = 255;
+		}
+	}
+
+	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
+}
 
 void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) {
     int *order, count;
@@ -360,76 +392,139 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 
     order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
-	if (r_modelalpha < 1)
-		glEnable(GL_BLEND);
+	if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && gl_powerupshells.integer */ )
+	{
+		float scroll[2];
+		float v[3];
 
-    while ((count = *order++)) {
-		if (count < 0) {
-			count = -count;
-			glBegin(GL_TRIANGLE_FAN);
-		} else if (count > 0) {
-			glBegin(GL_TRIANGLE_STRIP);
+		// LordHavoc: set the state to what we need for rendering a shell
+		if (!shelltexture)
+			shelltexture = GL_GenerateShellTexture();
+		GL_Bind (shelltexture);
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_ONE, GL_ONE);
+		glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], 0.4f); // alpha so we can see colour underneath still
+
+		scroll[0] = cos(cl.time * 1.5); // FIXME: cl.time ????
+		scroll[1] = sin(cl.time * 1.1);
+
+		// get the vertex count and primitive type
+		for (;;)
+		{
+			count = *order++;
+			if (!count)
+				break;
+
+			if (count < 0)
+			{
+				count = -count;
+				glBegin(GL_TRIANGLE_FAN);
+			}
+			else
+				glBegin(GL_TRIANGLE_STRIP);
+
+			do
+			{
+				order += 2;
+
+				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * 5 + verts1->v[0];
+				v[1] = r_avertexnormals[verts1->lightnormalindex][1] * 5 + verts1->v[1];
+				v[2] = r_avertexnormals[verts1->lightnormalindex][2] * 5 + verts1->v[2];
+				v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * 5 + verts2->v[0] - v[0]);
+				v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * 5 + verts2->v[1] - v[1]);
+				v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * 5 + verts2->v[2] - v[2]);
+				glTexCoord2f(v[0] * (1.0f / 256.0f) + scroll[0], v[1] * (1.0f / 256.0f) + scroll[1]);
+				glVertex3f(v[0], v[1], v[2]);
+
+				verts1++;
+				verts2++;
+			} while (--count);
+
+			glEnd();
+		}
+		// LordHavoc: reset the state to what the rest of the renderer expects
+		glDisable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	else
+	{
+		if (r_modelalpha < 1)
+			glEnable(GL_BLEND);
+
+		for ( ;; )
+		{
+			count = *order++;
+			if (!count)
+				break;
+
+			if (count < 0)
+			{
+				count = -count;
+				glBegin(GL_TRIANGLE_FAN);
+			}
+			else
+				glBegin(GL_TRIANGLE_STRIP);
+
+			do {
+				// texture coordinates come from the draw list
+				if (mtex)
+				{
+					qglMultiTexCoord2f (GL_TEXTURE0_ARB, ((float *) order)[0], ((float *) order)[1]);
+					qglMultiTexCoord2f (GL_TEXTURE1_ARB, ((float *) order)[0], ((float *) order)[1]);
+				}
+				else
+					glTexCoord2f (((float *) order)[0], ((float *) order)[1]);
+
+				order += 2;
+
+				if ((currententity->renderfx & RF_LIMITLERP))
+					lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+
+				// VULT VERTEX LIGHTING
+				if (amf_lighting_vertex.value && !full_light)
+				{
+					l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
+				}
+				else
+				{
+					l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
+					l = (l * shadelight + ambientlight) / 256.0;
+				}
+				l = min(l , 1);
+				//VULT COLOURED MODEL LIGHTS
+				if (amf_lighting_colour.value && !full_light)
+				{
+					for (i=0;i<3;i++)
+						lc[i] = lightcolor[i] / 256 + l;
+
+					//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
+					if (r_modelcolor[0] < 0)
+						glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
+					else
+						glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
+				}
+				else
+				{
+					if (r_modelcolor[0] < 0)
+						glColor4f(l, l, l, r_modelalpha); // normal color
+					else
+						glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
+				}
+
+				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
+				glVertex3fv(interpolated_verts);
+				
+
+				verts1++;
+				verts2++;
+			} while (--count);
+
+			glEnd();
 		}
 
-		do {
-			// texture coordinates come from the draw list
-			if (mtex) {
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, ((float *) order)[0], ((float *) order)[1]);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, ((float *) order)[0], ((float *) order)[1]);
-			} else {
-				glTexCoord2f (((float *) order)[0], ((float *) order)[1]);
-			}
-
-			order += 2;
-
-			if ((currententity->renderfx & RF_LIMITLERP)) {
-				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
-			}
-
-			// VULT VERTEX LIGHTING
-			if (amf_lighting_vertex.value && !full_light)
-			{
-				l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
-			}
-			else
-			{
-				l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
-				l = (l * shadelight + ambientlight) / 256.0;
-			}
-			l = min(l , 1);
-			//VULT COLOURED MODEL LIGHTS
-			if (amf_lighting_colour.value && !full_light)
-			{
-				for (i=0;i<3;i++)
-					lc[i] = lightcolor[i] / 256 + l;
-
-				//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
-				if (r_modelcolor[0] < 0)
-					glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
-				else
-					glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
-			}
-			else
-			{
-				if (r_modelcolor[0] < 0)
-					glColor4f(l, l, l, r_modelalpha); // normal color
-				else
-					glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
-			}
-
-			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
-			glVertex3fv(interpolated_verts);
-			
-
-			verts1++;
-			verts2++;
-		} while (--count);
-
-		glEnd();
-    }
-
-	if (r_modelalpha < 1)
-		glDisable(GL_BLEND);
+		if (r_modelalpha < 1)
+			glDisable(GL_BLEND);
+	}
 }
 
 void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex) {
@@ -695,7 +790,7 @@ void R_DrawAliasModel (entity_t *ent) {
 	//static int setstep;
 
 	extern	cvar_t r_viewmodelsize, cl_drawgun;
-	
+
 	VectorCopy (ent->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);
 
@@ -852,6 +947,8 @@ void R_DrawAliasModel (entity_t *ent) {
 	if (cv && cv->string[0])
 	    color32bit = StringToRGB(cv->string);
 
+	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
+
 	if (color32bit) {
 		//
 		// seems we select force some color for such model
@@ -877,11 +974,11 @@ void R_DrawAliasModel (entity_t *ent) {
 		}
    
 		R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+		
+		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
 	else
 	{
-		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
-
 		if (fb_texture && gl_mtexable) {
 			
 			GL_DisableMultitexture ();
@@ -919,7 +1016,32 @@ void R_DrawAliasModel (entity_t *ent) {
 		}
 	}
 
-	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
+	// FIXME: think need put it after caustics
+	if (gl_powerupshells.integer)
+	{
+		memset(r_shellcolor, 0, sizeof(r_shellcolor));
+
+		if (ent->renderfx & RF_WEAPONMODEL)
+		{
+			if (cl.stats[STAT_ITEMS] & IT_QUAD)
+				r_shellcolor[2] = 1;
+			if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
+				r_shellcolor[0] = 1;
+		}
+		if (ent->effects & EF_BLUE)
+			r_shellcolor[2] = 1;
+		if (ent->effects & EF_RED)
+			r_shellcolor[0] = 1;
+
+		if ( r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2] )
+		{
+			GL_DisableMultitexture();
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+		}
+
+		memset(r_shellcolor, 0, sizeof(r_shellcolor));
+	}
 
 // Underwater caustics on alias models of QRACK -->
 	#define GL_RGB_SCALE 0x8573
@@ -1492,6 +1614,7 @@ void R_Init (void) {
 	Cvar_Register (&r_lerpmuzzlehack);
 	Cvar_Register (&r_drawflame);
 	Cvar_Register (&gl_detail);
+	Cvar_Register (&gl_powerupshells);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);

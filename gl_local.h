@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.32 2007-09-16 01:29:49 qqshka Exp $
+	$Id: gl_local.h,v 1.33 2007-09-17 01:10:13 qqshka Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -139,6 +139,7 @@ extern	int	playerfbtextures[MAX_CLIENTS];
 extern	int	skyboxtextures;
 extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	int underwatertexture, detailtexture;
+extern	int shelltexture;
 
 // Tomaz - Fog Begin
 extern  cvar_t  gl_fogenable;
@@ -213,6 +214,8 @@ extern  cvar_t gl_part_telesplash;
 extern  cvar_t gl_part_blobs;
 extern  cvar_t gl_part_lavasplash;
 extern	cvar_t gl_part_inferno;
+
+extern	cvar_t gl_powerupshells;
 
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel;
 extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;

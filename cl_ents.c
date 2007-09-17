@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.56 2007-09-16 15:55:33 tonik Exp $
+	$Id: cl_ents.c,v 1.57 2007-09-17 01:10:13 qqshka Exp $
 
 */
 
@@ -803,6 +803,8 @@ void CL_LinkPacketEntities (void) {
 		if (!state->modelindex)		// if set to invisible, skip
 			continue;
 
+		ent.effects = state->effects; // Electro - added for shells
+
 		if (state->modelindex == cl_modelindices[mi_player]) {
 			i = state->frame;
 
@@ -1247,6 +1249,8 @@ void CL_LinkPacketEntities (void) {
 
 		if (!state->modelindex)		// if set to invisible, skip
 			continue;
+
+		ent.effects = state->effects; // Electro - added for shells
 
 		if (state->modelindex == cl_modelindices[mi_player]) {
 			i = state->frame;
@@ -1844,6 +1848,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index)
 	newent.skinnum = 0;
 	newent.colormap = vid.colormap;
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
+	newent.effects = ent->effects; // Electro - added for shells
 
 	CL_AddEntity (&newent);
 	return true;
@@ -1950,6 +1955,7 @@ void CL_LinkPlayers (void) {
 		ent.colormap = info->translations;
 		ent.scoreboard = (state->modelindex == cl_modelindices[mi_player]) ? info : NULL;
 		ent.frame = state->frame;
+		ent.effects = state->effects; // Electro - added for shells
 		if (cent->frametime >= 0 && cent->frametime <= cl.time) {
 			ent.oldframe = cent->oldframe;
 			ent.framelerp = (cl.time - cent->frametime) * 10;
