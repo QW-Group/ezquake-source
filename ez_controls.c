@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.37 2007-09-17 11:12:27 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.38 2007-09-17 11:24:08 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1975,8 +1975,10 @@ int EZ_label_OnDraw(ez_control_t *self)
 			if (((label->select_start > -1) && (label->select_end > -1)	// Is something selected at all?
 				&& (label->select_end != label->select_start))			// Only highlight if we have at least 1 char selected.
 				&&
-				(((i >= label->select_start) && (i < label->select_end))
-				|| (i >= label->select_end) && (i < label->select_start))
+					(
+					((i >= label->select_start) && (i < label->select_end))
+					|| ((i >= label->select_end) && (i < label->select_start))
+					)
 				)
 			{
 				// If this is one of the selected letters, draw a selection thingie behind it.
