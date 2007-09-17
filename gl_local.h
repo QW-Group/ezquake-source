@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.34 2007-09-17 19:37:55 qqshka Exp $
+	$Id: gl_local.h,v 1.35 2007-09-17 20:13:52 qqshka Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -217,6 +217,7 @@ extern	cvar_t gl_part_inferno;
 
 extern	cvar_t gl_powerupshells;
 extern	cvar_t gl_powerupshells_style;
+extern	cvar_t gl_powerupshells_size;
 
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel;
 extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;

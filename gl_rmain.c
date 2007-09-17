@@ -164,6 +164,7 @@ cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
 
 cvar_t gl_powerupshells = {"gl_powerupshells", "0"};
 cvar_t gl_powerupshells_style = {"gl_powerupshells_style", "0"};
+cvar_t gl_powerupshells_size = {"gl_powerupshells_size", "5"};
 
 cvar_t  gl_fogenable		= {"gl_fog", "0"};
 
@@ -397,6 +398,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 	{
 		float scroll[2];
 		float v[3];
+		float shell_size = bound(5, gl_powerupshells_size.value, 50);
 
 		// LordHavoc: set the state to what we need for rendering a shell
 		if (!shelltexture)
@@ -433,12 +435,12 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 			{
 				order += 2;
 
-				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * 5 + verts1->v[0];
-				v[1] = r_avertexnormals[verts1->lightnormalindex][1] * 5 + verts1->v[1];
-				v[2] = r_avertexnormals[verts1->lightnormalindex][2] * 5 + verts1->v[2];
-				v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * 5 + verts2->v[0] - v[0]);
-				v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * 5 + verts2->v[1] - v[1]);
-				v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * 5 + verts2->v[2] - v[2]);
+				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
+				v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
+				v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
+				v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
+				v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
+				v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
 				glTexCoord2f(v[0] * (1.0f / 256.0f) + scroll[0], v[1] * (1.0f / 256.0f) + scroll[1]);
 				glVertex3f(v[0], v[1], v[2]);
 
@@ -1620,6 +1622,7 @@ void R_Init (void) {
 	Cvar_Register (&gl_detail);
 	Cvar_Register (&gl_powerupshells);
 	Cvar_Register (&gl_powerupshells_style);
+	Cvar_Register (&gl_powerupshells_size);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);
