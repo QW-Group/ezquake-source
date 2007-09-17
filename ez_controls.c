@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.38 2007-09-17 11:24:08 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.39 2007-09-17 22:13:40 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1794,6 +1794,8 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->super.events.OnResize		= EZ_label_OnResize;
 	label->super.events.OnDestroy		= EZ_label_Destroy;
 
+	label->events.OnTextChanged			= EZ_label_OnTextChanged;
+
 	label->super.flags	|= CONTROL_CONTAINED;
 	label->scale		= 1.0;
 	label->text			= NULL;
@@ -1826,8 +1828,8 @@ int EZ_label_Destroy(ez_control_t *self, qbool destroy_children)
 //
 static void EZ_label_CalculateWordwraps(ez_label_t *label)
 {
-	int i = 0;
-	int current_index = -1;
+	int i					= 0;
+	int current_index		= -1;
 	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
 	int scaled_char_size	= Q_rint(char_size * label->scale);
 
@@ -1907,6 +1909,60 @@ void EZ_label_GetSelectedText(ez_label_t *label, char *target, int target_size)
 }
 
 //
+// Label - Appends text at the given position in the text.
+//
+void EZ_label_AppendText(ez_label_t *label, int position, const char *append_text)
+{
+	int text_len		= strlen(label->text);
+	int append_text_len	= strlen(append_text);
+
+	clamp(position, 0, text_len);
+
+	if (!label->text)
+	{
+		return;
+	}
+
+	// Reallocate the string to fit the new text.
+	label->text = (char *)Q_realloc((void *)label->text, (text_len + append_text_len + 1) * sizeof(char));
+
+	// Move the part of the string after the specified position.
+	memmove(
+		label->text + position + append_text_len,		// Destination, make room for the append text.
+		label->text + position,							// Move everything after the specified position.
+		(text_len + 1 - position) * sizeof(char));
+
+	// Copy the append text into the newly created space in the string.
+	memcpy(label->text + position, append_text, append_text_len * sizeof(char));
+
+	CONTROL_RAISE_EVENT(NULL, label, OnTextChanged);
+}
+
+//
+// Label - Removes text between two given indexes.
+//
+void EZ_label_RemoveText(ez_label_t *label, int start_index, int end_index)
+{
+	int text_len = strlen(label->text);
+	clamp(start_index, 0, text_len);
+	clamp(end_index, start_index, text_len);
+
+	if (!label->text)
+	{
+		return;
+	}
+
+	memmove(
+		label->text + start_index,					// Destination.
+		label->text + end_index,					// Source.
+		(text_len - end_index + 1) * sizeof(char));	// Size.
+	
+	label->text = Q_realloc(label->text, (strlen(label->text) + 1) * sizeof(char));
+
+	CONTROL_RAISE_EVENT(NULL, label, OnTextChanged);
+}
+
+//
 // Label - Sets the text of a label.
 //
 void EZ_label_SetText(ez_label_t *label, const char *text)
@@ -1918,13 +1974,10 @@ void EZ_label_SetText(ez_label_t *label, const char *text)
 	if (text)
 	{
 		label->text = Q_calloc(text_len, sizeof(char));
-		memset(label->text, 0, text_len * sizeof(char));
 		strlcpy(label->text, text, text_len);
 	}
 
-	// Calculate where to wrap the text.
-	// TODO : Add OnTextChange instead!
-	EZ_label_CalculateWordwraps(label);
+	CONTROL_RAISE_EVENT(NULL, label, OnTextChanged);
 }
 
 //
@@ -2203,13 +2256,30 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, qbool up)
 }
 
 //
+// Label - The text changed in the label.
+//
+int EZ_label_OnTextChanged(ez_control_t *self)
+{
+	ez_label_t *label = (ez_label_t *)self;
+	
+	EZ_label_CalculateWordwraps(label);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, label, OnTextChanged);
+
+	return 0;
+}
+
+//
 // Label - Key down event.
 //
 int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 {
 	ez_label_t *label	= (ez_label_t *)self;
 	int key_handled		= false;
+	qbool caret_moved	= false;
 	int text_len		= strlen(label->text);
+	int start			= 0;
+	int end				= 0;
 
 	key_handled = EZ_control_OnKeyDown(self, key, unichar);
 
@@ -2220,53 +2290,159 @@ int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 
 	key_handled = true;
 
+	// If text is selected, find out which is the start and end index.
+	if (LABEL_TEXT_SELECTED(label))
+	{
+		start = (label->select_start < label->select_end) ? label->select_start : label->select_end;
+		end	  = (label->select_start < label->select_end) ? label->select_end : label->select_start;
+	}
+
 	// Key down.
 	switch (key)
 	{
 		case K_LEFTARROW :
 		{
 			label->caret_pos--;
+			caret_moved = true;
 			break;
 		}
 		case K_RIGHTARROW :
 		{
 			label->caret_pos++;
+			caret_moved = true;
 			break;
 		}
 		case K_UPARROW :
 		{
 			EZ_label_MoveCaretVertically(label, true);
+			caret_moved = true;
 			break;
 		}
 		case K_DOWNARROW :
 		{
 			EZ_label_MoveCaretVertically(label, false);
+			caret_moved = true;
 			break;
 		}
+		case K_LSHIFT :
+		case K_RSHIFT :
 		case K_SHIFT :
 		{
+			// Start selecting.
 			label->select_start = label->caret_pos;
 			label->text_flags |= LABEL_SELECTING;
 			break;
 		}
+		case K_RCTRL :
+		case K_LCTRL :
+		case K_CTRL :
+		{
+			break;
+		}
+		case K_DEL :
+		case K_BACKSPACE :
+		{
+			if (LABEL_TEXT_SELECTED(label))
+			{
+				// Remove a selected chunk of text.				
+				EZ_label_RemoveText(label, start, end);
+				
+				// When deleting we need to move the cursor so that
+				// it's at the "same point" in the text afterwards.
+				if (key == K_DEL)
+				{
+					label->caret_pos = label->select_start;
+				}
+			}
+			else if (key == K_BACKSPACE)
+			{
+				// Remove a single character.
+				EZ_label_RemoveText(label, label->caret_pos - 1, label->caret_pos);
+				label->caret_pos--;
+			}
+			else if (key == K_DEL)
+			{
+				EZ_label_RemoveText(label, label->caret_pos, label->caret_pos + 1);
+				label->caret_pos++;
+			}
+			break;
+		}
 		default :
 		{
-			key_handled = false;
+			// User typing text into the label.
+
+			char c = (char)key;
+
+			if (LABEL_TEXT_SELECTED(label))
+			{
+				if (isCtrlDown() && ((c == 'c') || (c == 'C')))
+				{
+					// Ctrl + c (Copy to clipboard).
+					int selected_len = EZ_label_GetSelectedTextSize(label) + 1;
+					char *selected_text = (char *)Q_malloc(selected_len * sizeof(char));
+
+					EZ_label_GetSelectedText(label, selected_text, selected_len);
+
+					CopyToClipboard(selected_text);
+					break;
+				}
+			}
+			else if (isCtrlDown() && ((c == 'v') || (c == 'V')))
+			{
+				// Ctrl + v (Paste from clipboard).
+				char *pasted_text = ReadFromClipboard();
+				EZ_label_AppendText(label, label->caret_pos, pasted_text);
+				break;
+			}
+
+			if ((label->caret_pos >= 0) 
+				&& (	
+						((c >= 'a') && (c <= 'z'))
+						||	
+						((c >= 'A') && (c <= 'Z'))
+					)
+				)
+			{
+				char char_str[2];				
+
+				// First remove any selected text.
+				if (LABEL_TEXT_SELECTED(label))
+				{					
+					EZ_label_RemoveText(label, start, end);
+
+					// Make sure the caret stays in the same place.
+					label->caret_pos = (label->select_start < label->select_end) ? label->select_start : label->select_end;
+				}
+
+				// Turn off selecting mode, since we don't want to be selecting
+				// when typing capital letters for instance.
+				label->select_start = -1;
+				label->select_end = -1;
+				label->text_flags &= ~LABEL_SELECTING;
+
+				// Add the text.
+				snprintf(char_str, 2, "%c", (char)key);
+				EZ_label_AppendText(label, label->caret_pos, char_str);
+				label->caret_pos++;
+			}
 			break;
 		}
 	}
 
-	// Select while holding down shift.
-	if (isShiftDown() && (label->select_start > -1))
+	if (caret_moved)
 	{
-		label->text_flags |= LABEL_SELECTING;
-		label->select_end = label->caret_pos;
-	}
-	else
-	{
-		label->text_flags &= ~LABEL_SELECTING;
-		label->select_start = -1;
-		label->select_end = -1;
+		// Select while holding down shift.
+		if (isShiftDown() && (label->select_start > -1))
+		{
+			label->text_flags |= LABEL_SELECTING;
+			label->select_end = label->caret_pos;
+		}
+		else
+		{
+			label->text_flags &= ~LABEL_SELECTING;
+			label->select_start = -1;
+			label->select_end = -1;
+		}
 	}
 
 	clamp(label->caret_pos, 0, text_len);

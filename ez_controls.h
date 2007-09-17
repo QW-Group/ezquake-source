@@ -127,8 +127,8 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 #define CONTROL_IS_CONTAINED(self) (self->parent && (self->flags & CONTROL_CONTAINED))
 #define MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, axis, h)									\
 	(ctrl->parent																					\
-	&& (((int) mouse_state->axis <= ctrl->parent->absolute_##axis)							\
-	|| ((int) mouse_state->axis >= (ctrl->parent->absolute_##axis + ctrl->parent->h))))	\
+	&& (((int) mouse_state->axis <= ctrl->parent->absolute_##axis)									\
+	|| ((int) mouse_state->axis >= (ctrl->parent->absolute_##axis + ctrl->parent->h))))				\
 
 #define MOUSE_OUTSIDE_PARENT_X(ctrl, mouse_state) MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, x, width)
 #define MOUSE_OUTSIDE_PARENT_Y(ctrl, mouse_state) MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, y, height)
@@ -140,29 +140,29 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 //
 #ifdef __INTEL_COMPILER
 
-#define CONTROL_RAISE_EVENT(retval, ctrl, eventhandler, ...)										\
-{																									\
-	int temp = 0;																					\
-	int *p = (int *)retval;																			\
-	((ez_control_t *)ctrl)->override_count = ((ez_control_t *)ctrl)->inheritance_level;				\
-	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))											\
-	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ctrl), __VA_ARGS__);				\
-	if(p) (*p) = temp;																				\
-}																									\
+#define CONTROL_RAISE_EVENT(retval, ctrl, eventhandler, ...)												\
+{																											\
+	int temp = 0;																							\
+	int *p = (int *)retval;																					\
+	((ez_control_t *)ctrl)->override_count = ((ez_control_t *)ctrl)->inheritance_level;						\
+	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))													\
+		temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), __VA_ARGS__);	\
+	if(p) (*p) = temp;																						\
+}																											\
 
 #else
 
-#define CONTROL_RAISE_EVENT(retval, ctrl, eventhandler, ...)										\
-{																									\
-	int temp = 0;																					\
-	int *p = (int *)retval;																			\
-	((ez_control_t *)ctrl)->override_count = ((ez_control_t *)ctrl)->inheritance_level;				\
-	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))											\
-	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ctrl), ##__VA_ARGS__);				\
-	if(p) (*p) = temp;																				\
-}																									\
+#define CONTROL_RAISE_EVENT(retval, ctrl, eventhandler, ...)												\
+{																											\
+	int temp = 0;																							\
+	int *p = (int *)retval;																					\
+	((ez_control_t *)ctrl)->override_count = ((ez_control_t *)ctrl)->inheritance_level;						\
+	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))													\
+		temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), ##__VA_ARGS__);	\
+	if(p) (*p) = temp;																						\
+}																											\
 
-#endif
+#endif // __INTEL_COMPILER
 
 //
 // Calls a event handler function.
@@ -607,24 +607,35 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 #define LABEL_WRAPTEXT		(1 << 3)	// Wrap the text to fit inside the label.
 #define LABEL_SELECTING		(1 << 4)	// Are we selecting text?
 #define LABEL_SELECTED		(1 << 5)	// Is any text selected?
+#define LABEL_APPENDABLE	(1 << 6)	// Are we allowed to append text to the label?
 
 #define LABEL_MAX_WRAPS		512
 #define LABEL_LINE_SIZE		1024
 
+// Is any text selected in the label?
+#define LABEL_TEXT_SELECTED(label) ((label->select_start > -1) && (label->select_end > - 1) && abs(label->select_end - label->select_start) > 0)
+
+typedef struct ez_label_events_s
+{
+	ez_control_handler_fp	OnTextChanged;			// Event raised when the text in the label is changed.
+} ez_label_events_t;
+
 typedef struct ez_label_s
 {
-	ez_control_t	super;
+	ez_control_t		super;
 
-	char			*text;						// The text to be shown in the label.
-	int				text_flags;					// Flags for how the text in the label is formatted.
-	int				wordwraps[LABEL_MAX_WRAPS];	// Indexes for where the text has been wordwrapped.
-	clrinfo_t		color;						// The text color of the label.
-	float			scale;						// The scale of the text in the label.
-	int				select_start;				// At what index the currently selected text starts at (from the beginning of the string).
-	int				select_end;					// The end index of the selected text.
-	int				caret_pos;					// The position of the caret.
-	int				row_clicked;				// The row that was clicked.
-	int				col_clicked;				// The column that was clicked.
+	ez_label_events_t	events;						// Specific events for the label control.
+	ez_label_events_t	event_handlers;				// Specific event handlers for the label control.
+	char				*text;						// The text to be shown in the label.
+	int					text_flags;					// Flags for how the text in the label is formatted.
+	int					wordwraps[LABEL_MAX_WRAPS];	// Indexes for where the text has been wordwrapped.
+	clrinfo_t			color;						// The text color of the label.
+	float				scale;						// The scale of the text in the label.
+	int					select_start;				// At what index the currently selected text starts at (from the beginning of the string).
+	int					select_end;					// The end index of the selected text.
+	int					caret_pos;					// The position of the caret.
+	int					row_clicked;				// The row that was clicked.
+	int					col_clicked;				// The column that was clicked.
 } ez_label_t;
 
 ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent, 
@@ -672,6 +683,11 @@ void EZ_label_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha)
 void EZ_label_SetText(ez_label_t *self, const char *text);
 
 //
+// Label - Appends text at the given position in the text.
+//
+void EZ_label_AppendText(ez_label_t *label, int position, const char *append_text);
+
+//
 // Label - Set the caret position.
 //
 void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos);
@@ -685,6 +701,11 @@ int EZ_label_OnResize(ez_control_t *self);
 // Label - On Draw.
 //
 int EZ_label_OnDraw(ez_control_t *label);
+
+//
+// Label - The text changed in the label.
+//
+int EZ_label_OnTextChanged(ez_control_t *self);
 
 //
 // Label - Key down event.
