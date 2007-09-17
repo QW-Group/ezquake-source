@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.15 2007-09-16 03:07:33 qqshka Exp $
+	$Id: qtv.c,v 1.16 2007-09-17 01:55:39 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -133,7 +133,7 @@ void QTV_Say_f (void)
 	if (s[0] == '\"' && s[(len = strlen(s))-1] == '\"' && len > 2)
 	{
 		snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s + 1);
-		if (len = strlen(text))
+		if ((len = strlen(text)))
 			text[len - 1] = 0;
 		Cmd_TokenizeString(text);
 	}

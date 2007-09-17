@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.38 2007-09-17 01:10:15 qqshka Exp $
+$Id: gl_texture.c,v 1.39 2007-09-17 01:55:39 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -808,7 +808,8 @@ int GL_LoadCharsetImage (char *filename, char *identifier) {
 void GL_Texture_Init(void) {
 	cvar_t *cv;
 	int i;
-	extern int	translate_texture, scrap_texnum, solidskytexture, alphaskytexture, lightmap_textures;
+	extern int translate_texture, scrap_texnum, lightmap_textures;
+	// extern int solidskytexture, alphaskytexture; // D-Kure: unused
 
 	// reset some global vars, probably we need here even more...
 

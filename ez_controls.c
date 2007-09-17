@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.35 2007-09-16 00:41:00 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.36 2007-09-17 01:55:39 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -2150,7 +2150,7 @@ int EZ_label_OnKeyEvent(ez_control_t *self, int key, int unichar)
 	ez_label_t *label	= (ez_label_t *)self;
 	int key_handled		= false;
 	int text_len		= strlen(label->text);
-	int caret_delta		= 0;
+	//int caret_delta		= 0; // D-Kure, never used
 
 	key_handled = EZ_control_OnKeyEvent(self, key, unichar);
 
