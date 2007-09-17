@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.57 2007-09-17 01:10:13 qqshka Exp $
+	$Id: cl_ents.c,v 1.58 2007-09-17 19:37:55 qqshka Exp $
 
 */
 
@@ -202,13 +202,21 @@ void CL_AddEntity (entity_t *ent) {
 	visentlist_t *vislist;
 
 #ifdef GLQUAKE
-	if (ent->model->type == mod_sprite) {
+	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1))
+	{
+		vislist = &cl_visents;
+	}
+	else if (ent->model->type == mod_sprite)
+	{
 		vislist = &cl_alphaents;
-	} else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES
-		|| ent->renderfx & RF_PLAYERMODEL) {
+	}
+	else if (ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_EYES || ent->renderfx & RF_PLAYERMODEL)
+	{
 		vislist = &cl_firstpassents;
 		ent->renderfx |= RF_NOSHADOW;
-	} else {
+	}
+	else
+	{
 		vislist = &cl_visents;
 	}
 #else

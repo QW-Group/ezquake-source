@@ -163,6 +163,7 @@ cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"}; // 1
 cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
 
 cvar_t gl_powerupshells = {"gl_powerupshells", "0"};
+cvar_t gl_powerupshells_style = {"gl_powerupshells_style", "0"};
 
 cvar_t  gl_fogenable		= {"gl_fog", "0"};
 
@@ -392,7 +393,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 
     order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
-	if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && gl_powerupshells.integer */ )
+	if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && bound(0, gl_powerupshells.value, 1) */ )
 	{
 		float scroll[2];
 		float v[3];
@@ -402,8 +403,13 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 			shelltexture = GL_GenerateShellTexture();
 		GL_Bind (shelltexture);
 		glEnable (GL_BLEND);
-		glBlendFunc (GL_ONE, GL_ONE);
-		glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], 0.4f); // alpha so we can see colour underneath still
+
+		if (gl_powerupshells_style.integer)
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		else
+			glBlendFunc(GL_ONE, GL_ONE);
+
+		glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1)); // alpha so we can see colour underneath still
 
 		scroll[0] = cos(cl.time * 1.5); // FIXME: cl.time ????
 		scroll[1] = sin(cl.time * 1.1);
@@ -1017,21 +1023,16 @@ void R_DrawAliasModel (entity_t *ent) {
 	}
 
 	// FIXME: think need put it after caustics
-	if (gl_powerupshells.integer)
+	if (bound(0, gl_powerupshells.value, 1))
 	{
 		memset(r_shellcolor, 0, sizeof(r_shellcolor));
 
-		if (ent->renderfx & RF_WEAPONMODEL)
-		{
-			if (cl.stats[STAT_ITEMS] & IT_QUAD)
-				r_shellcolor[2] = 1;
-			if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
-				r_shellcolor[0] = 1;
-		}
-		if (ent->effects & EF_BLUE)
-			r_shellcolor[2] = 1;
 		if (ent->effects & EF_RED)
 			r_shellcolor[0] = 1;
+		if (ent->effects & EF_GREEN)
+			r_shellcolor[1] = 1;
+		if (ent->effects & EF_BLUE)
+			r_shellcolor[2] = 1;
 
 		if ( r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2] )
 		{
@@ -1254,6 +1255,9 @@ void R_DrawViewModel (void) {
 		}
 	}
 
+	gun.effects |= (cl.stats[STAT_ITEMS] & IT_QUAD) ? EF_BLUE : 0;
+	gun.effects |= (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) ? EF_RED : 0;
+	gun.effects |= (cl.stats[STAT_ITEMS] & IT_SUIT) ? EF_GREEN : 0;
 
 	gun.frame = cent->current.frame;
 	if (cent->frametime >= 0 && cent->frametime <= r_refdef2.time) {
@@ -1615,6 +1619,7 @@ void R_Init (void) {
 	Cvar_Register (&r_drawflame);
 	Cvar_Register (&gl_detail);
 	Cvar_Register (&gl_powerupshells);
+	Cvar_Register (&gl_powerupshells_style);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);
