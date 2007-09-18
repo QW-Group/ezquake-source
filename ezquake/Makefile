@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.62.2.6 2007-09-14 13:11:56 disconn3ct Exp $
+#	$Id: Makefile,v 1.62.2.7 2007-09-18 14:27:00 vvd0 Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -24,7 +24,13 @@ ifeq ($(ARCH),x86_64)
 	ARCH_CFLAGS = -mtune=nocona -mmmx -msse -msse2 -m64
 endif
 ifeq ($(ARCH),x86)
-	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
+	ARCH_CFLAGS = -march=i686 -mmmx -Did386
+ifeq ($(OS),freebsd)
+	ARCH_CFLAGS += -mtune=i686
+	OS_GL_CFLAGS = -D__LITTLE_ENDIAN__
+else
+	ARCH_CFLAGS += -mtune=generic
+endif
 endif
 ifeq ($(ARCH),ppc)
 	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
@@ -40,7 +46,7 @@ ifeq ($(OS),darwin)
 endif
 ifeq ($(OS),freebsd)
 	DEFAULT_TARGET = glx
-	OS_GL_CFLAGS = -DWITH_DGA -DWITH_VMODE
+	OS_GL_CFLAGS += -DWITH_DGA -DWITH_VMODE
 endif
 
 LIB_PREFIX=$(OS)-$(ARCH)

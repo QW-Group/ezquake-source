@@ -16,9 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.41 2007-07-20 01:18:59 himan Exp $
+    $Id: teamplay.c,v 1.67.2.42 2007-09-18 14:27:00 vvd0 Exp $
 */
 
+#ifdef __FreeBSD__
+/* UINT_MAX defined here: */
+#include <sys/limits.h>
+#endif
 #include <time.h>
 #include <string.h>
 #include "quakedef.h"
