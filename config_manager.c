@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.46 2007-09-14 13:29:28 disconn3ct Exp $
+    $Id: config_manager.c,v 1.47 2007-09-19 20:41:25 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -919,7 +919,7 @@ void LoadHomeCfg(const char *filename)
     FILE *f;
 
 	snprintf(fullname, sizeof(fullname) - 4, "%s/%s", com_homedir, filename);
-	COM_ForceExtensionEx (fullname, ".cfg", sizeof (filename));
+	COM_ForceExtensionEx (fullname, ".cfg", sizeof (fullname));
 
 	if (!(f = fopen(fullname, "r"))) {
 	    Com_DPrintf("LoadHomeCfg: %s not found\n", filename); // hrm
