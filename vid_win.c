@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.26 2007-07-28 23:57:38 cokeman1982 Exp $
+	$Id: vid_win.c,v 1.27 2007-09-20 16:09:21 qqshka Exp $
 
 */
 
@@ -1951,6 +1951,15 @@ void VID_Update (vrect_t *rects) {
 				IN_DeactivateMouse ();
 				IN_ShowMouse ();
 			}
+		}
+	}
+	else
+	{
+		// well, activate mouse in fullscreen mode too
+		if (!mouseactive && ActiveApp)
+		{
+			IN_ActivateMouse ();
+			IN_HideMouse ();
 		}
 	}
 }
