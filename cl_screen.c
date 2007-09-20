@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.141 2007-09-19 18:44:00 himan Exp $
+$Id: cl_screen.c,v 1.142 2007-09-20 19:00:19 qqshka Exp $
 */
 
 /// declarations may be found in screen.h
@@ -1231,6 +1231,7 @@ void SCR_SetupCI (void) {
 	player_state_t *state;
 	player_info_t *info;
 	ci_player_t *id;
+	centity_t *cent;
 	char *s;
 
 	ci_count = 0;
@@ -1246,8 +1247,9 @@ void SCR_SetupCI (void) {
 
 	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
 	info = cl.players;
+	cent = &cl_entities[1];
 
-	for (j = 0; j < MAX_CLIENTS; j++, info++, state++) {
+	for (j = 0; j < MAX_CLIENTS; j++, info++, state++, cent++) {
 		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator)
 			continue;
 
@@ -1257,9 +1259,11 @@ void SCR_SetupCI (void) {
 		id = &ci_clients[ci_count];
 		id->texindex = 0;
 		id->player = info;
-		id->org[0] = state->origin[0];
-		id->org[1] = state->origin[1];
-		id->org[2] = state->origin[2] + 33; // move baloon up a bit
+
+		id->org[0] = cent->lerp_origin[0];
+		id->org[1] = cent->lerp_origin[1];
+		id->org[2] = cent->lerp_origin[2] + 33; // move baloon up a bit
+
 		id->size = 8; // scale baloon
 		id->rotangle = 5 * sin(2*r_refdef2.time); // may be set to 0, if u dislike rolling
 		id->color[0] = 255; // r
@@ -2882,9 +2886,9 @@ void SCR_UpdateScreen (void) {
 
 	SCR_SetUpToDrawConsole ();
 
-	V_RenderView ();
-
 	SCR_SetupCI ();
+
+	V_RenderView ();
 
 	GL_Set2D ();
 
