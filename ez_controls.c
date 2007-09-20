@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.40 2007-09-20 00:46:21 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.41 2007-09-20 12:22:40 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -998,8 +998,7 @@ void EZ_control_SetVirtualSize(ez_control_t *self, int virtual_width, int virtua
 	self->virtual_height = max(self->virtual_height, self->height + self->virtual_y);
 
 	// Raise the event that we have changed the virtual size of the control.
-	// TODO : Raise a changed virtual size event.
-	//CONTROL_RAISE_EVENT(NULL, self, OnMove);
+	CONTROL_RAISE_EVENT(NULL, self, OnVirtualResize);
 }
 
 //
@@ -1834,6 +1833,7 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	// Label specific events.
 	label->events.OnTextChanged			= EZ_label_OnTextChanged;
 	label->events.OnCaretMoved			= EZ_label_OnCaretMoved;
+	label->events.OnTextScaleChanged	= EZ_label_OnTextScaleChanged;
 
 	label->super.flags	|= CONTROL_CONTAINED;
 	label->scale		= 1.0;
@@ -1871,8 +1871,7 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	int current_index		= -1;
 	int last_index			= -1;
 	int current_col			= 0;
-	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
-	int scaled_char_size	= Q_rint(char_size * label->scale); // TODO : Save the scaled_char_size in the ez_label_t struct.
+	int scaled_char_size	= label->scaled_char_size;
 
 	label->num_rows			= 1;
 	label->num_cols			= 0;
@@ -1928,6 +1927,10 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	{
 		EZ_control_SetMinVirtualSize((ez_control_t *)label, label->super.virtual_width_min, scaled_char_size * (label->num_rows + 1));
 	}
+	else
+	{
+		EZ_control_SetMinVirtualSize((ez_control_t *)label, scaled_char_size * (label->num_cols + 1), scaled_char_size * (label->num_rows + 1));
+	}
 }
 
 //
@@ -1937,8 +1940,7 @@ void EZ_label_SetTextScale(ez_label_t *label, float scale)
 {
 	label->scale = scale;
 
-	// We need to recalculate the wordwrap stuff since the size changed.
-	EZ_label_CalculateWordwraps(label);
+	CONTROL_RAISE_EVENT(NULL, label, OnTextScaleChanged);
 }
 
 //
@@ -2061,6 +2063,24 @@ void EZ_label_SetText(ez_label_t *label, const char *text)
 }
 
 //
+// Label - The scale of the text changed.
+//
+int EZ_label_OnTextScaleChanged(ez_control_t *self)
+{
+	ez_label_t *label		= (ez_label_t *)self;
+	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
+
+	label->scaled_char_size	= Q_rint(char_size * label->scale);
+	
+	// We need to recalculate the wordwrap stuff since the size changed.
+	EZ_label_CalculateWordwraps(label);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, label, OnTextScaleChanged);
+
+	return 0;
+}
+
+//
 // Label - Happens when the control has resized.
 //
 int EZ_label_OnResize(ez_control_t *self)
@@ -2086,8 +2106,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 	int x, y, i = 0;
 	char line[LABEL_LINE_SIZE];
 	ez_label_t *label		= (ez_label_t *)self;
-	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
-	int scaled_char_size	= char_size * label->scale;
+	int scaled_char_size	= label->scaled_char_size;
 	int last_index			= -1;
 	int curr_row			= 0;
 	int curr_col			= 0;
@@ -2101,7 +2120,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
 	// Find any newlines and draw line by line.
-	for (i = 0; i <= strlen(label->text); i++)
+	for (i = 0; i <= label->text_length; i++)
 	{
 		// Draw selection markers.
 		{
@@ -2158,8 +2177,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 		}
 	}
 
-	Draw_String(x + (self->width / 2), y + (self->height / 2), va("%i %i (%i %i) %i", label->row_clicked, label->col_clicked, label->select_start, label->select_end, label->caret_pos));
-
+	// TODO : Remove this test stuff.
 	{
 		char tmp[1024];
 
@@ -2244,19 +2262,13 @@ static int EZ_label_FindMouseTextIndex(ez_label_t *label, mouse_state_t *ms)
 	// TODO : Support big font gaps?
 	int x, y;
 	int row, col;
-	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
-	int scaled_char_size	= Q_rint(char_size * label->scale);
 
 	// Get the position we're drawing at.
 	EZ_control_GetDrawingPosition((ez_control_t *)label, &x, &y);
 
 	// Find the row and column where the mouse is.
-	row = ((ms->y - y) / scaled_char_size);
-	col = ((ms->x - x) / scaled_char_size);
-
-	// TODO : Remove these.
-	label->row_clicked = row;
-	label->col_clicked = col;
+	row = ((ms->y - y) / label->scaled_char_size);
+	col = ((ms->x - x) / label->scaled_char_size);
 
 	// Give the last index if the mouse is past the last row.
 	if (row > (label->num_rows - 1))
@@ -2288,7 +2300,7 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, int amount)
 	// exactly above that point, jump to the end of the line
 	// of the previous/next row instead.
 
-	int new_caret_index = EZ_label_FindIndexByRowColumn(label, label->caret_pos.row + amount, label->caret_pos.col);
+	int new_caret_index = EZ_label_FindIndexByRowColumn(label, max(0, label->caret_pos.row + amount), label->caret_pos.col);
 	
 	if (new_caret_index >= 0)
 	{
@@ -2302,14 +2314,17 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, int amount)
 int EZ_label_OnCaretMoved(ez_control_t *self)
 {
 	ez_label_t *label		= (ez_label_t *)self;
-	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
-	int scaled_char_size	= Q_rint(char_size * label->scale);
+	int scaled_char_size	= label->scaled_char_size;
 	int row_visible_start	= 0;
 	int row_visible_end		= 0;
+	int	col_visible_start	= 0;
+	int col_visible_end		= 0;
 	int prev_caret_row		= label->caret_pos.row;
+	int prev_caret_col		= label->caret_pos.col;
 	int new_scroll_x		= self->virtual_x;
 	int new_scroll_y		= self->virtual_y;
 	int num_visible_rows	= Q_rint((float)self->height / scaled_char_size - 1);	// The number of currently visible rows.
+	int num_visible_cols	= Q_rint((float)self->width / scaled_char_size - 1);
 
 	// Find the new row and column of the caret.
 	EZ_label_FindRowColumnByIndex(label, label->caret_pos.index, &label->caret_pos.row, &label->caret_pos.col);
@@ -2317,6 +2332,7 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 	row_visible_start	= (self->virtual_y / scaled_char_size);
 	row_visible_end		= (row_visible_start + num_visible_rows);
 
+	// Vertical scrolling.
 	if (label->caret_pos.row <= row_visible_start)
 	{
 		// Caret at the top of the visible part of the text.
@@ -2324,7 +2340,7 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 	}
 	else if (prev_caret_row >= label->caret_pos.row)
 	{
-		// Caret inn the middle.
+		// Caret in the middle.
 	}
 	else if (label->caret_pos.row >= (row_visible_end - 1))
 	{
@@ -2336,6 +2352,28 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 		if ((label->caret_pos.row == (label->num_rows - 1)) && (new_scroll_y < label->super.virtual_height_min))
 		{
 			new_scroll_y += Q_rint(0.2 * scaled_char_size);
+		}
+	}
+
+	// Only scroll horizontally if the text is not wrapped.
+	if (!(label->text_flags & LABEL_WRAPTEXT))
+	{
+		col_visible_start	= (self->virtual_x / scaled_char_size);
+		col_visible_end		= (col_visible_start + num_visible_cols);
+
+		if (label->caret_pos.col <= (col_visible_start + 1))
+		{
+			// At the start of the visible text (columns).
+			new_scroll_x = (label->caret_pos.col - 1) * scaled_char_size;
+		}
+		else if (prev_caret_col >= label->caret_pos.col)
+		{
+			// In the middle of the visible text.
+		}
+		else if (label->caret_pos.col >= (col_visible_end - 1))
+		{
+			// At the end of the visible text.
+			new_scroll_x = (label->caret_pos.col - num_visible_cols) * scaled_char_size;
 		}
 	}
 
@@ -2369,17 +2407,42 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 int EZ_label_OnTextChanged(ez_control_t *self)
 {
 	ez_label_t *label		= (ez_label_t *)self;
-	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
-	int scaled_char_size	= Q_rint(char_size * label->scale);
 
 	// Make sure we have the correct text length saved.
 	label->text_length = strlen(label->text);
 
+	// Find the new places to wrap on.
 	EZ_label_CalculateWordwraps(label);
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, label, OnTextChanged);
 
 	return 0;
+}
+
+//
+// Label - Handle a page up/dn key press.
+//
+static void EZ_label_PageUpDnKeyDown(ez_label_t *label, int key)
+{
+	int num_visible_rows = Q_rint((float)label->super.height / label->scaled_char_size);
+
+	switch (key)
+	{
+		case K_PGUP :
+		{
+			EZ_label_MoveCaretVertically(label, -num_visible_rows);
+			break;
+		}
+		case K_PGDN :
+		{
+			EZ_label_MoveCaretVertically(label, num_visible_rows);
+			break;
+		}
+		default :
+		{
+			break;
+		}
+	}
 }
 
 //
@@ -2407,17 +2470,6 @@ static void EZ_label_ArrowKeyDown(ez_label_t *label, int key)
 		case K_DOWNARROW :
 		{
 			EZ_label_MoveCaretVertically(label, 1);
-			break;
-		}
-		case K_PGUP :
-		{
-			// TODO : Fix page up.
-			EZ_label_MoveCaretVertically(label, 0);
-			break;
-		}
-		case K_PGDN :
-		{
-			// TODO : Fix page down.
 			break;
 		}
 		default :
@@ -2632,10 +2684,14 @@ int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 		case K_RIGHTARROW :
 		case K_UPARROW :
 		case K_DOWNARROW :
+		{
+			EZ_label_ArrowKeyDown(label, key);
+			break;
+		}
 		case K_PGDN :
 		case K_PGUP :
 		{
-			EZ_label_ArrowKeyDown(label, key);
+			EZ_label_PageUpDnKeyDown(label, key);
 			break;
 		}
 		case K_HOME :

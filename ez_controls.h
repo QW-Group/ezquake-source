@@ -629,6 +629,7 @@ typedef struct ez_label_events_s
 {
 	ez_control_handler_fp	OnTextChanged;			// Event raised when the text in the label is changed.
 	ez_control_handler_fp	OnCaretMoved;			// The caret was moved.
+	ez_control_handler_fp	OnTextScaleChanged;		// The scale of the text changed.
 } ez_label_events_t;
 
 typedef struct ez_label_textpos_s
@@ -650,11 +651,10 @@ typedef struct ez_label_s
 	ez_label_textpos_t	wordwraps[LABEL_MAX_WRAPS];	// Positions in the text where line breaks are located.
 	clrinfo_t			color;						// The text color of the label.
 	float				scale;						// The scale of the text in the label.
+	int					scaled_char_size;			// The actual size of the characters in the text.
 	int					select_start;				// At what index the currently selected text starts at (this can be greater than select_end).
 	int					select_end;					// The end index of the selected text.
 	ez_label_textpos_t	caret_pos;					// The position of the caret (index / row / column).
-	int					row_clicked;				// The row that was clicked.
-	int					col_clicked;				// The column that was clicked.
 	int					num_rows;					// The current number of rows in the label.
 	int					num_cols;					// The current number of cols (for the longest row).
 } ez_label_t;
@@ -712,6 +712,11 @@ void EZ_label_AppendText(ez_label_t *label, int position, const char *append_tex
 // Label - Set the caret position.
 //
 void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos);
+
+//
+// Label - The scale of the text changed.
+//
+int EZ_label_OnTextScaleChanged(ez_control_t *self);
 
 //
 // Label - Happens when the control has resized.
