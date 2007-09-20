@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.41 2007-09-20 12:22:40 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.42 2007-09-20 12:32:29 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2545,16 +2545,16 @@ static void EZ_label_BackspaceDeleteKeyDown(ez_label_t *label, int key)
 
 		// Remove a selected chunk of text.				
 		EZ_label_RemoveText(label, start, end);
-
-		// Deselect what we just deleted.
-		EZ_label_DeselectText(label);
 		
 		// When deleting we need to move the cursor so that
 		// it's at the "same point" in the text afterwards.
-		if (key == K_DEL)
+		if (label->select_start < label->select_end)
 		{
 			EZ_label_SetCaretPosition(label, label->select_start);
 		}
+
+		// Deselect what we just deleted.
+		EZ_label_DeselectText(label);
 	}
 	else if (key == K_BACKSPACE)
 	{
