@@ -366,6 +366,21 @@ void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove);
 void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize);
 
 //
+// Control - Sets the OnParentResize event handler.
+//
+void EZ_control_SetOnParentResize(ez_control_t *self, ez_control_handler_fp OnParentResize);
+
+//
+// Control - Sets the OnVirtualResize event handler.
+//
+void EZ_control_SetOnVirtualResize(ez_control_t *self, ez_control_handler_fp OnVirtualResize);
+
+//
+// Control - Sets the OnMinVirtualResize event handler.
+//
+void EZ_control_SetOnMinVirtualResize(ez_control_t *self, ez_control_handler_fp OnMinVirtualResize);
+
+//
 // Control - Sets the OnKeyEvent event handler.
 //
 void EZ_control_SetOnKeyEvent(ez_control_t *self, ez_control_key_handler_fp OnKeyEvent);
@@ -677,6 +692,21 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 // Label - Destroys a label control.
 //
 int EZ_label_Destroy(ez_control_t *self, qbool destroy_children);
+
+//
+// Label - Sets the event handler for the OnTextChanged event.
+//
+void EZ_label_SetOnTextChanged(ez_label_t *label, ez_control_handler_fp OnTextChanged);
+
+//
+// Label - Sets the event handler for the OnTextScaleChanged event.
+//
+void EZ_label_SetOnTextScaleChanged(ez_label_t *label, ez_control_handler_fp OnTextScaleChanged);
+
+//
+// Label - Sets the event handler for the OnCaretMoved event.
+//
+void EZ_label_SetOnTextOnCaretMoved(ez_label_t *label, ez_control_handler_fp OnCaretMoved);
 
 //
 // Label - Gets the size of the selected text.

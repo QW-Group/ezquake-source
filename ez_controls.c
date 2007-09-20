@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.43 2007-09-20 17:15:40 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.44 2007-09-20 17:44:44 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -684,6 +684,30 @@ void EZ_control_SetOnScroll(ez_control_t *self, ez_control_handler_fp OnScroll)
 void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize)
 {
 	self->event_handlers.OnResize = OnResize;
+}
+
+//
+// Control - Sets the OnParentResize event handler.
+//
+void EZ_control_SetOnParentResize(ez_control_t *self, ez_control_handler_fp OnParentResize)
+{
+	self->event_handlers.OnParentResize = OnParentResize;
+}
+
+//
+// Control - Sets the OnMinVirtualResize event handler.
+//
+void EZ_control_SetOnMinVirtualResize(ez_control_t *self, ez_control_handler_fp OnMinVirtualResize)
+{
+	self->event_handlers.OnMinVirtualResize = OnMinVirtualResize;
+}
+
+//
+// Control - Sets the OnVirtualResize event handler.
+//
+void EZ_control_SetOnVirtualResize(ez_control_t *self, ez_control_handler_fp OnVirtualResize)
+{
+	self->event_handlers.OnVirtualResize = OnVirtualResize;
 }
 
 //
@@ -1828,7 +1852,6 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->super.events.OnMouseHover	= EZ_label_OnMouseHover;
 	label->super.events.OnResize		= EZ_label_OnResize;
 	label->super.events.OnDestroy		= EZ_label_Destroy;
-	// TODO : Add set functions for all label event handlers.
 
 	// Label specific events.
 	label->events.OnTextChanged			= EZ_label_OnTextChanged;
@@ -1860,6 +1883,30 @@ int EZ_label_Destroy(ez_control_t *self, qbool destroy_children)
 
 	// FIXME: Can we just free a part like this here? How about children, will they be properly destroyed?
 	return EZ_control_Destroy(&label->super, destroy_children);
+}
+
+//
+// Label - Sets the event handler for the OnTextChanged event.
+//
+void EZ_label_SetOnTextChanged(ez_label_t *label, ez_control_handler_fp OnTextChanged)
+{
+	label->event_handlers.OnTextChanged = OnTextChanged;
+}
+
+//
+// Label - Sets the event handler for the OnTextScaleChanged event.
+//
+void EZ_label_SetOnTextScaleChanged(ez_label_t *label, ez_control_handler_fp OnTextScaleChanged)
+{
+	label->event_handlers.OnTextScaleChanged = OnTextScaleChanged;
+}
+
+//
+// Label - Sets the event handler for the OnCaretMoved event.
+//
+void EZ_label_SetOnTextOnCaretMoved(ez_label_t *label, ez_control_handler_fp OnCaretMoved)
+{
+	label->event_handlers.OnCaretMoved = OnCaretMoved;
 }
 
 //
