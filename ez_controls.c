@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.42 2007-09-20 12:32:29 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.43 2007-09-20 17:15:40 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2564,7 +2564,6 @@ static void EZ_label_BackspaceDeleteKeyDown(ez_label_t *label, int key)
 	}
 	else if (key == K_DEL)
 	{
-		// TODO : The caret isn't positione properly after delete.
 		EZ_label_RemoveText(label, label->caret_pos.index, label->caret_pos.index + 1);
 		EZ_label_SetCaretPosition(label, label->caret_pos.index + 1);
 	}
@@ -2607,8 +2606,10 @@ static void EZ_label_CtrlComboKeyDown(ez_label_t *label, int key)
 		{
 			// CTRL + A (Select all).
 			label->select_start = 0;
-			label->select_end = label->text_length;
+			label->select_end	= label->text_length;
+			label->text_flags	|= LABEL_SELECTING;
 			EZ_label_SetCaretPosition(label, label->select_end);
+			label->text_flags	&= ~LABEL_SELECTING;
 			break;
 		}
 		default :
