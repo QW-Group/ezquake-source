@@ -230,6 +230,8 @@ typedef struct ez_control_events_s
 	ez_control_handler_fp				OnParentResize;
 	ez_control_handler_fp				OnGotFocus;
 	ez_control_handler_fp				OnLostFocus;
+	ez_control_handler_fp				OnVirtualResize;
+	ez_control_handler_fp				OnMinVirtualResize;
 } ez_control_events_t;
 
 typedef enum ez_anchor_e
@@ -528,6 +530,16 @@ int EZ_control_OnResize(ez_control_t *self);
 int EZ_control_OnParentResize(ez_control_t *self);
 
 //
+// Control - The minimum virtual size has changed for the control.
+//
+int EZ_control_OnMinVirtualResize(ez_control_t *self);
+
+//
+// Label - The virtual size of the control has changed.
+//
+int EZ_control_OnVirtualResize(ez_control_t *self);
+
+//
 // Control - Layouts children.
 //
 int EZ_control_OnLayoutChildren(ez_control_t *self);
@@ -606,8 +618,6 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 #define LABEL_AUTOELLIPSIS	(1 << 2)	// Show ... at the end of the text if it doesn't fit within the label.
 #define LABEL_WRAPTEXT		(1 << 3)	// Wrap the text to fit inside the label.
 #define LABEL_SELECTING		(1 << 4)	// Are we selecting text?
-#define LABEL_SELECTED		(1 << 5)	// Is any text selected?
-#define LABEL_APPENDABLE	(1 << 6)	// Are we allowed to append text to the label?
 
 #define LABEL_MAX_WRAPS		512
 #define LABEL_LINE_SIZE		1024
@@ -618,7 +628,15 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 typedef struct ez_label_events_s
 {
 	ez_control_handler_fp	OnTextChanged;			// Event raised when the text in the label is changed.
+	ez_control_handler_fp	OnCaretMoved;			// The caret was moved.
 } ez_label_events_t;
+
+typedef struct ez_label_textpos_s
+{
+	int index;
+	int row;
+	int col;
+} ez_label_textpos_t;
 
 typedef struct ez_label_s
 {
@@ -627,15 +645,18 @@ typedef struct ez_label_s
 	ez_label_events_t	events;						// Specific events for the label control.
 	ez_label_events_t	event_handlers;				// Specific event handlers for the label control.
 	char				*text;						// The text to be shown in the label.
+	int					text_length;				// The length of the label text (excluding \0).
 	int					text_flags;					// Flags for how the text in the label is formatted.
-	int					wordwraps[LABEL_MAX_WRAPS];	// Indexes for where the text has been wordwrapped.
+	ez_label_textpos_t	wordwraps[LABEL_MAX_WRAPS];	// Positions in the text where line breaks are located.
 	clrinfo_t			color;						// The text color of the label.
 	float				scale;						// The scale of the text in the label.
-	int					select_start;				// At what index the currently selected text starts at (from the beginning of the string).
+	int					select_start;				// At what index the currently selected text starts at (this can be greater than select_end).
 	int					select_end;					// The end index of the selected text.
-	int					caret_pos;					// The position of the caret.
+	ez_label_textpos_t	caret_pos;					// The position of the caret (index / row / column).
 	int					row_clicked;				// The row that was clicked.
 	int					col_clicked;				// The column that was clicked.
+	int					num_rows;					// The current number of rows in the label.
+	int					num_cols;					// The current number of cols (for the longest row).
 } ez_label_t;
 
 ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent, 
@@ -701,6 +722,11 @@ int EZ_label_OnResize(ez_control_t *self);
 // Label - On Draw.
 //
 int EZ_label_OnDraw(ez_control_t *label);
+
+//
+// Label - The caret was moved.
+//
+int EZ_label_OnCaretMoved(ez_control_t *self);
 
 //
 // Label - The text changed in the label.

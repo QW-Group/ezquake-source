@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.39 2007-09-17 22:13:40 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.40 2007-09-20 00:46:21 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -223,6 +223,13 @@ void EZ_tree_Draw(ez_tree_t *tree)
 			payload->virtual_width, 
 			payload->virtual_height, 
 			1, false, RGBA_TO_COLOR(255, 0, 0, 125));
+
+		if (!strcmp(payload->name, "label"))
+		{
+			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
+				va("avx: %i avy: %i vx: %i vy %i", 
+				payload->absolute_virtual_x, payload->absolute_virtual_y, payload->virtual_x, payload->virtual_y));
+		}
 
 		// Make sure that the control draws only within it's bounds.
 		Draw_EnableScissor(payload->bound_left, payload->bound_right, payload->bound_top, payload->bound_bottom);
@@ -538,6 +545,9 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->events.OnScroll			= EZ_control_OnScroll;
 	control->events.OnResize			= EZ_control_OnResize;
 	control->events.OnParentResize		= EZ_control_OnParentResize;
+	control->events.OnMinVirtualResize	= EZ_control_OnMinVirtualResize;
+	control->events.OnVirtualResize		= EZ_control_OnVirtualResize;
+	// TODO : Add set functions for all control event handlers.
 
 	// Load the background image.
 	if(background_name)
@@ -999,6 +1009,8 @@ void EZ_control_SetMinVirtualSize(ez_control_t *self, int min_virtual_width, int
 {
 	self->virtual_width_min = max(0, min_virtual_width);
 	self->virtual_height_min = max(0, min_virtual_height);
+
+	CONTROL_RAISE_EVENT(NULL, self, OnMinVirtualResize);
 }
 
 //
@@ -1142,6 +1154,29 @@ int EZ_control_OnParentResize(ez_control_t *self)
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnParentResize);
+
+	return 0;
+}
+
+//
+// Control - The minimum virtual size has changed for the control.
+//
+int EZ_control_OnMinVirtualResize(ez_control_t *self)
+{
+	self->virtual_width		= max(self->virtual_width_min, self->virtual_width);
+	self->virtual_height	= max(self->virtual_height_min, self->virtual_height);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMinVirtualResize);
+
+	return 0;
+}
+
+//
+// Label - The virtual size of the control has changed.
+//
+int EZ_control_OnVirtualResize(ez_control_t *self)
+{
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnVirtualResize);
 
 	return 0;
 }
@@ -1785,6 +1820,7 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->super.CLASS_ID				= EZ_LABEL_ID;
 	label->super.inheritance_level		= EZ_LABEL_INHERITANCE_LEVEL;
 
+	// Overriden events.
 	label->super.events.OnDraw			= EZ_label_OnDraw;
 	label->super.events.OnKeyDown		= EZ_label_OnKeyDown;
 	label->super.events.OnKeyUp			= EZ_label_OnKeyUp;
@@ -1793,8 +1829,11 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->super.events.OnMouseHover	= EZ_label_OnMouseHover;
 	label->super.events.OnResize		= EZ_label_OnResize;
 	label->super.events.OnDestroy		= EZ_label_Destroy;
+	// TODO : Add set functions for all label event handlers.
 
+	// Label specific events.
 	label->events.OnTextChanged			= EZ_label_OnTextChanged;
+	label->events.OnCaretMoved			= EZ_label_OnCaretMoved;
 
 	label->super.flags	|= CONTROL_CONTAINED;
 	label->scale		= 1.0;
@@ -1830,8 +1869,13 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 {
 	int i					= 0;
 	int current_index		= -1;
+	int last_index			= -1;
+	int current_col			= 0;
 	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
-	int scaled_char_size	= Q_rint(char_size * label->scale);
+	int scaled_char_size	= Q_rint(char_size * label->scale); // TODO : Save the scaled_char_size in the ez_label_t struct.
+
+	label->num_rows			= 1;
+	label->num_cols			= 0;
 
 	if (label->text_flags & LABEL_WRAPTEXT)
 	{	
@@ -1839,25 +1883,51 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 		// indexes where each row ends in an array.
 		while ((i < LABEL_MAX_WRAPS) && Util_GetNextWordwrapString(label->text, NULL, current_index + 1, &current_index, LABEL_LINE_SIZE, label->super.virtual_width, scaled_char_size))
 		{
-			label->wordwraps[i] = current_index;
+			label->wordwraps[i].index = current_index;
+			label->wordwraps[i].col = current_index - last_index;
+			label->wordwraps[i].row = label->num_rows - 1;
 			i++;
+
+			// Find the number of rows and columns.
+			label->num_cols = max(label->num_cols, label->wordwraps[i].col);
+			label->num_rows++;
+
+			last_index = current_index;
 		}
 	}
 	else
 	{
-		while (label->text[current_index])
+		// Normal non-wrapped text, still save new line locations.
+
+		while ((i < LABEL_MAX_WRAPS) && label->text[current_index])
 		{
 			if (label->text[current_index] == '\n')
 			{
-				label->wordwraps[i] = current_index;
+				label->wordwraps[i].index = current_index;
+				label->wordwraps[i].col = current_index - last_index;
+				label->wordwraps[i].row = label->num_rows - 1;
 				i++;
+
+				// Find the number of rows and columns.
+				label->num_cols = max(label->num_cols, label->wordwraps[i].col);
+				label->num_rows++;
 			}
 			
 			current_index++;
 		}
 	}
 
-	label->wordwraps[i] = -1;
+	// Save the row/col information for the last row also.
+	label->wordwraps[i].index	= -1;
+	label->wordwraps[i].row		= label->num_rows - 1;
+	label->wordwraps[i].col		= label->text_length - label->wordwraps[max(0, i - 1)].index;
+	label->num_cols				= max(label->num_cols, label->wordwraps[i].col);
+
+	// Change the virtual height of the control to fit the text when wrapping.
+	if (label->text_flags & LABEL_WRAPTEXT)
+	{
+		EZ_control_SetMinVirtualSize((ez_control_t *)label, label->super.virtual_width_min, scaled_char_size * (label->num_rows + 1));
+	}
 }
 
 //
@@ -1877,6 +1947,16 @@ void EZ_label_SetTextScale(ez_label_t *label, float scale)
 void EZ_label_SetTextColor(ez_label_t *label, byte r, byte g, byte b, byte alpha)
 {
 	label->color.c = RGBA_TO_COLOR(r, g, b, alpha);
+}
+
+//
+// Label - Deselects the text in the label.
+//
+void EZ_label_DeselectText(ez_label_t *label)
+{
+	label->text_flags	&= ~LABEL_SELECTING;
+	label->select_start = -1;
+	label->select_end	= -1;
 }
 
 //
@@ -1913,7 +1993,7 @@ void EZ_label_GetSelectedText(ez_label_t *label, char *target, int target_size)
 //
 void EZ_label_AppendText(ez_label_t *label, int position, const char *append_text)
 {
-	int text_len		= strlen(label->text);
+	int text_len		= label->text_length;
 	int append_text_len	= strlen(append_text);
 
 	clamp(position, 0, text_len);
@@ -1943,7 +2023,7 @@ void EZ_label_AppendText(ez_label_t *label, int position, const char *append_tex
 //
 void EZ_label_RemoveText(ez_label_t *label, int start_index, int end_index)
 {
-	int text_len = strlen(label->text);
+	int text_len = label->text_length;
 	clamp(start_index, 0, text_len);
 	clamp(end_index, start_index, text_len);
 
@@ -2043,7 +2123,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 					selection_color);
 			}
 
-			if (i == label->caret_pos)
+			if (i == label->caret_pos.index)
 			{
 				// Draw the caret.
 				Draw_AlphaFillRGB(
@@ -2054,7 +2134,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 			}
 		}
 
-		if (i == label->wordwraps[curr_row] || label->text[i] == '\0')
+		if (i == label->wordwraps[curr_row].index || label->text[i] == '\0')
 		{
 			// We found the end of a line, copy the contents of the line to the line buffer.
 			snprintf(line, min(LABEL_LINE_SIZE, (i - last_index) + 1), "%s", (label->text + last_index + 1));
@@ -2097,18 +2177,75 @@ int EZ_label_OnDraw(ez_control_t *self)
 }
 
 //
-// Label - PRIVATE - Finds at what text index the mouse was clicked.
+// Label - Finds the row and column for a specified index. The proper wordwrap indexes must've been calculated first.
+//
+static void EZ_label_FindRowColumnByIndex(ez_label_t *label, int index, int *row, int *column)
+{
+	int i = 0;
+
+	// Find the row the index is on.
+	if (row)
+	{
+		// Find the wordwrap that's closest to the index but still larger
+		// that will be the end of the row that the index is on.
+		while ((label->wordwraps[i].index != -1) && (label->wordwraps[i].index < index))
+		{
+			i++;
+		}
+
+		// Save the row. (The last row as -1 as index, but still has the correct row saved).
+		(*row) = label->wordwraps[i].row;
+	}
+
+	if (column)
+	{
+		// We don't have the last rows end index saved explicitly, so get it here.
+		int row_end_index = (label->wordwraps[i].index < 0) ? strlen(label->text) : label->wordwraps[i].index;
+
+		// The column at the end of the row minus the difference between
+		// the given index and the index at the end of the row gives us
+		// what column the index is in.
+		(*column) = label->wordwraps[i].col - (row_end_index - index);
+	}
+}
+
+//
+// Label - Finds the index in the label text at the specified row and column.
+//
+static int EZ_label_FindIndexByRowColumn(ez_label_t *label, int row, int column)
+{
+	int row_end_index = 0;
+
+	// Make sure we don't do anythin stupid.
+	if ((row < 0) || (row > (label->num_rows - 1)) || (column < 0)) // || (label->wordwraps[row].index < 0))
+	{
+		return -1;
+	}
+
+	// We don't have the last rows end index saved explicitly, so get it here.
+	row_end_index = (label->wordwraps[row].index < 0) ? strlen(label->text) : label->wordwraps[row].index;
+
+	if (column > label->wordwraps[row].col)
+	{
+		// There is no such column on the specified row
+		// return the index of the last character on that row instead.
+		return row_end_index;
+	}
+
+	// Return the index of the specified column.
+	return  row_end_index - (label->wordwraps[row].col - column);
+}
+
+//
+// Label - Finds at what text index the mouse was clicked.
 //
 static int EZ_label_FindMouseTextIndex(ez_label_t *label, mouse_state_t *ms)
 {
-	// TODO : Support big font gaps.
-	int x, y, i;
-	int row, col;						// The row and column that the mouse is over.
-	int cur_row				= 0;		// Current row index.
-	int cur_col				= 0;		// Current column index.
+	// TODO : Support big font gaps?
+	int x, y;
+	int row, col;
 	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
 	int scaled_char_size	= Q_rint(char_size * label->scale);
-	int text_len			= strlen(label->text);
 
 	// Get the position we're drawing at.
 	EZ_control_GetDrawingPosition((ez_control_t *)label, &x, &y);
@@ -2117,49 +2254,17 @@ static int EZ_label_FindMouseTextIndex(ez_label_t *label, mouse_state_t *ms)
 	row = ((ms->y - y) / scaled_char_size);
 	col = ((ms->x - x) / scaled_char_size);
 
+	// TODO : Remove these.
 	label->row_clicked = row;
 	label->col_clicked = col;
 
-	// Find which index in the string the row an column corresponds to.
-	for (i = 0; i <= text_len; i++)
+	// Give the last index if the mouse is past the last row.
+	if (row > (label->num_rows - 1))
 	{
-		if ((cur_row < LABEL_MAX_WRAPS) && (i == label->wordwraps[cur_row]))
-		{
-			// A newline was found, go to the next row.
-			cur_row++;
-
-			// Skip the new line.
-			i++;
-
-			// Don't continue if the current row is past the
-			// row the mouse is on. Then we'll use the last index
-			// on the previous row.
-			if (cur_row > row)
-			{
-				return i - 1;
-			}
-			
-			// We're on a new line so restart the column count.
-			cur_col = 0;
-		}
-
-		// If both the current row and column match with the row and column
-		// the mouse is in, it means we've found the text index.
-		if ((cur_row == row) && (cur_col == col))
-		{
-			// We found the index, stop looking.
-			return i;
-		}
-
-		cur_col++;
+		return label->text_length;
 	}
 
-	if (row > cur_row)
-	{
-		return text_len;
-	}
-
-	return -1;
+	return EZ_label_FindIndexByRowColumn(label, row, col) + 1;
 }
 
 //
@@ -2167,92 +2272,95 @@ static int EZ_label_FindMouseTextIndex(ez_label_t *label, mouse_state_t *ms)
 //
 void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos)
 {
-	label->caret_pos = caret_pos;
+	label->caret_pos.index = caret_pos;
+	clamp(label->caret_pos.index, -1, label->text_length);
+
+	CONTROL_RAISE_EVENT(NULL, label, OnCaretMoved);
 }
 
 //
 // Label - Moves the caret up or down.
 //
-static void EZ_label_MoveCaretVertically(ez_label_t *label, qbool up)
+static void EZ_label_MoveCaretVertically(ez_label_t *label, int amount)
 {
-	int i			= 0;
-	int curr_row	= 0;
-	int curr_col	= 0;
-	int caret_row	= 0;					// The row the caret is at.
-	int caret_col	= 0;					// The column the caret is in.
-	qbool found		= false;				// Did we find the current position caret row/col yet?
-	int text_len	= strlen(label->text);
+	// Find the index of the character above/below that position,
+	// and set the caret to that position, if there is no char
+	// exactly above that point, jump to the end of the line
+	// of the previous/next row instead.
 
-	// 1. Find the current row and column of the caret.
-	// 2. Find the index of the character above/below that position,
-	//    and set the caret to that position, if there is no char
-	//    exactly above that point, jump to the end of the line
-	//    of the previous/next row instead.
-	for (i = 0; i <= text_len; i++)
+	int new_caret_index = EZ_label_FindIndexByRowColumn(label, label->caret_pos.row + amount, label->caret_pos.col);
+	
+	if (new_caret_index >= 0)
 	{
-		// We found the caret row and column, now move the caret up or down.
-		if (found)
+		EZ_label_SetCaretPosition(label, new_caret_index);
+	}
+}
+
+//
+// Label - The caret was moved.
+//
+int EZ_label_OnCaretMoved(ez_control_t *self)
+{
+	ez_label_t *label		= (ez_label_t *)self;
+	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
+	int scaled_char_size	= Q_rint(char_size * label->scale);
+	int row_visible_start	= 0;
+	int row_visible_end		= 0;
+	int prev_caret_row		= label->caret_pos.row;
+	int new_scroll_x		= self->virtual_x;
+	int new_scroll_y		= self->virtual_y;
+	int num_visible_rows	= Q_rint((float)self->height / scaled_char_size - 1);	// The number of currently visible rows.
+
+	// Find the new row and column of the caret.
+	EZ_label_FindRowColumnByIndex(label, label->caret_pos.index, &label->caret_pos.row, &label->caret_pos.col);
+
+	row_visible_start	= (self->virtual_y / scaled_char_size);
+	row_visible_end		= (row_visible_start + num_visible_rows);
+
+	if (label->caret_pos.row <= row_visible_start)
+	{
+		// Caret at the top of the visible part of the text.
+		new_scroll_y = label->caret_pos.row * scaled_char_size;
+	}
+	else if (prev_caret_row >= label->caret_pos.row)
+	{
+		// Caret inn the middle.
+	}
+	else if (label->caret_pos.row >= (row_visible_end - 1))
+	{
+		// Caret at the bottom of the visible part.
+		new_scroll_y = (label->caret_pos.row - num_visible_rows) * scaled_char_size;
+
+		// Special case if it's the last line. Make sure we're allowed to
+		// see the entire row, by scrolling a bit extra at the end.
+		if ((label->caret_pos.row == (label->num_rows - 1)) && (new_scroll_y < label->super.virtual_height_min))
 		{
-			int target_row = caret_row + (up ? -1 : 1);
-
-			if ((curr_row == target_row) && (curr_col == caret_col))
-			{
-				label->caret_pos = i;
-				break;
-			}	
-		}
-
-		if (label->caret_pos == i)
-		{
-			// We found the current row and column.
-			caret_row = curr_row;
-			caret_col = curr_col;
-			
-			// Restart from the beginning of the string so that
-			// we can find the target row if we're moving UP.
-			if (up && !found)
-			{
-				i = -1;
-				curr_row = 0;
-				curr_col = 0;
-			}
-
-			found = true;
-
-			// We're moving the caret up so restart from the beginning.
-			if (up)
-			{
-				continue;
-			}
-		}
-
-		// Found a new line.
-		if ((i == label->wordwraps[curr_row])	// New line.
-			|| (i == text_len))					// End of string.
-		{
-			// Check for the special case where there is no character
-			// above/below the caret to jump to. In that case we need to jump to
-			// the last character of the previous/next line instead.
-			if (found)
-			{
-				int target_row = caret_row + (up ? -1 : 1);
-
-				if ((curr_row == target_row) && (caret_col > curr_col))
-				{
-					label->caret_pos = i;
-					break;
-				}
-			}
-
-			// New line.
-			curr_row++;
-			curr_col = 0;
-		}
-		else
-		{
-			curr_col++;
+			new_scroll_y += Q_rint(0.2 * scaled_char_size);
 		}
 	}
+
+	// Only set a new scroll if it changed.
+	if ((new_scroll_x != self->virtual_x) || (new_scroll_y != self->virtual_y))
+	{
+		EZ_control_SetScrollPosition(self, new_scroll_x, new_scroll_y);
+	}
+
+	// Select while holding down shift.
+	if (isShiftDown() && (label->select_start > -1))
+	{
+		label->text_flags |= LABEL_SELECTING;
+		label->select_end = label->caret_pos.index;
+	}
+
+	// Deselect any selected text if we're not in selection mode.
+	if (!(label->text_flags & LABEL_SELECTING))
+	{
+		EZ_label_DeselectText(label);
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, label, OnCaretMoved);
+
+	return 0;
 }
 
 //
@@ -2260,13 +2368,244 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, qbool up)
 //
 int EZ_label_OnTextChanged(ez_control_t *self)
 {
-	ez_label_t *label = (ez_label_t *)self;
-	
+	ez_label_t *label		= (ez_label_t *)self;
+	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
+	int scaled_char_size	= Q_rint(char_size * label->scale);
+
+	// Make sure we have the correct text length saved.
+	label->text_length = strlen(label->text);
+
 	EZ_label_CalculateWordwraps(label);
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, label, OnTextChanged);
 
 	return 0;
+}
+
+//
+// Label - Handle a arrow key press.
+//
+static void EZ_label_ArrowKeyDown(ez_label_t *label, int key)
+{
+	switch(key)
+	{
+		case K_LEFTARROW :
+		{
+			EZ_label_SetCaretPosition(label, max(0, label->caret_pos.index - 1));
+			break;
+		}
+		case K_RIGHTARROW :
+		{
+			EZ_label_SetCaretPosition(label, label->caret_pos.index + 1);
+			break;
+		}
+		case K_UPARROW :
+		{
+			EZ_label_MoveCaretVertically(label, -1);
+			break;
+		}
+		case K_DOWNARROW :
+		{
+			EZ_label_MoveCaretVertically(label, 1);
+			break;
+		}
+		case K_PGUP :
+		{
+			// TODO : Fix page up.
+			EZ_label_MoveCaretVertically(label, 0);
+			break;
+		}
+		case K_PGDN :
+		{
+			// TODO : Fix page down.
+			break;
+		}
+		default :
+		{
+			break;
+		}
+	}
+}
+
+//
+// Label - Handle a HOME/END key press.
+//
+static void EZ_label_EndHomeKeyDown(ez_label_t *label, int key)
+{
+	switch(key)
+	{
+		case K_HOME :
+		{
+			if (isCtrlDown())
+			{
+				// Move the caret to the start of the text.
+				EZ_label_SetCaretPosition(label, 0);
+			}
+			else
+			{
+				// Move the caret to the start of the current line.
+				EZ_label_SetCaretPosition(label, label->caret_pos.index - label->caret_pos.col + 1);
+			}
+			break;
+		}
+		case K_END :
+		{
+			if (isCtrlDown())
+			{
+				// Move the caret to the end of the text.
+				EZ_label_SetCaretPosition(label, label->text_length);
+			}
+			else
+			{
+				// Move the caret to the end of the line.
+				int i = 0;
+				int line_end_index = 0;
+
+				// Find the last index of the current row.
+				while ((label->wordwraps[i].index > 0) && (label->wordwraps[i].index < label->caret_pos.index))
+				{
+					i++;
+				}
+
+				// Special case for last line.
+				line_end_index = (label->wordwraps[i].index < 0) ? label->text_length : label->wordwraps[i].index;
+				EZ_label_SetCaretPosition(label, line_end_index);
+			}
+			break;
+		}
+		default :
+		{
+			break;
+		}
+	}
+}
+
+//
+// Label - Handle backspace/delete key presses.
+//
+static void EZ_label_BackspaceDeleteKeyDown(ez_label_t *label, int key)
+{
+	if (LABEL_TEXT_SELECTED(label))
+	{
+		// Find the start and end of the selected text.
+		int start = (label->select_start < label->select_end) ? label->select_start : label->select_end;
+		int end	  = (label->select_start < label->select_end) ? label->select_end : label->select_start;
+
+		// Remove a selected chunk of text.				
+		EZ_label_RemoveText(label, start, end);
+
+		// Deselect what we just deleted.
+		EZ_label_DeselectText(label);
+		
+		// When deleting we need to move the cursor so that
+		// it's at the "same point" in the text afterwards.
+		if (key == K_DEL)
+		{
+			EZ_label_SetCaretPosition(label, label->select_start);
+		}
+	}
+	else if (key == K_BACKSPACE)
+	{
+		// Remove a single character.
+		EZ_label_RemoveText(label, label->caret_pos.index - 1, label->caret_pos.index);
+		EZ_label_SetCaretPosition(label, label->caret_pos.index - 1);
+	}
+	else if (key == K_DEL)
+	{
+		// TODO : The caret isn't positione properly after delete.
+		EZ_label_RemoveText(label, label->caret_pos.index, label->caret_pos.index + 1);
+		EZ_label_SetCaretPosition(label, label->caret_pos.index + 1);
+	}
+}
+
+//
+// Label - Handles Ctrl combination key presses.
+//
+static void EZ_label_CtrlComboKeyDown(ez_label_t *label, int key)
+{
+	char c = (char)key;
+
+	switch (c)
+	{
+		case 'c' :
+		case 'C' :
+		{
+			if (LABEL_TEXT_SELECTED(label))
+			{
+				// CTRL + C (Copy to clipboard).
+				int selected_len = EZ_label_GetSelectedTextSize(label) + 1;
+				char *selected_text = (char *)Q_malloc(selected_len * sizeof(char));
+
+				EZ_label_GetSelectedText(label, selected_text, selected_len);
+
+				CopyToClipboard(selected_text);
+				break;
+			}
+		}
+		case 'v' :
+		case 'V' :
+		{
+			// CTRL + V (Paste from clipboard).
+			char *pasted_text = ReadFromClipboard();
+			EZ_label_AppendText(label, label->caret_pos.index, pasted_text);
+			break;
+		}
+		case 'a' :
+		case 'A' :
+		{
+			// CTRL + A (Select all).
+			label->select_start = 0;
+			label->select_end = label->text_length;
+			EZ_label_SetCaretPosition(label, label->select_end);
+			break;
+		}
+		default :
+		{
+			break;
+		}
+	}
+}
+
+//
+// Label - Handles input key was presses.
+//
+static void EZ_label_InputKeyDown(ez_label_t *label, int key)
+{
+	char c = (char)key;
+
+	// User typing text into the label.
+	// TODO : Add support for input of all quake chars
+	if ((label->caret_pos.index >= 0) 
+		&& (	
+				((c >= 'a') && (c <= 'z'))
+				||	
+				((c >= 'A') && (c <= 'Z'))
+			)
+		)
+	{
+		char char_str[2];				
+
+		// First remove any selected text.
+		if (LABEL_TEXT_SELECTED(label))
+		{
+			int start = (label->select_start < label->select_end) ? label->select_start : label->select_end;
+			int end	  = (label->select_start < label->select_end) ? label->select_end : label->select_start;
+
+			EZ_label_RemoveText(label, start, end);
+
+			// Make sure the caret stays in the same place.
+			EZ_label_SetCaretPosition(label, (label->select_start < label->select_end) ? label->select_start : label->select_end);
+		}
+
+		// Turn off selecting mode, since we don't want to be selecting
+		// when typing capital letters for instance.
+		EZ_label_DeselectText(label);
+
+		// Add the text.
+		snprintf(char_str, 2, "%c", (char)key);
+		EZ_label_AppendText(label, label->caret_pos.index, char_str);
+		EZ_label_SetCaretPosition(label, label->caret_pos.index + 1);
+	}
 }
 
 //
@@ -2276,10 +2615,6 @@ int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 {
 	ez_label_t *label	= (ez_label_t *)self;
 	int key_handled		= false;
-	qbool caret_moved	= false;
-	int text_len		= strlen(label->text);
-	int start			= 0;
-	int end				= 0;
 
 	key_handled = EZ_control_OnKeyDown(self, key, unichar);
 
@@ -2290,38 +2625,27 @@ int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 
 	key_handled = true;
 
-	// If text is selected, find out which is the start and end index.
-	if (LABEL_TEXT_SELECTED(label))
-	{
-		start = (label->select_start < label->select_end) ? label->select_start : label->select_end;
-		end	  = (label->select_start < label->select_end) ? label->select_end : label->select_start;
-	}
-
 	// Key down.
 	switch (key)
 	{
 		case K_LEFTARROW :
-		{
-			label->caret_pos--;
-			caret_moved = true;
-			break;
-		}
 		case K_RIGHTARROW :
-		{
-			label->caret_pos++;
-			caret_moved = true;
-			break;
-		}
 		case K_UPARROW :
+		case K_DOWNARROW :
+		case K_PGDN :
+		case K_PGUP :
 		{
-			EZ_label_MoveCaretVertically(label, true);
-			caret_moved = true;
+			EZ_label_ArrowKeyDown(label, key);
 			break;
 		}
-		case K_DOWNARROW :
+		case K_HOME :
+		case K_END :
 		{
-			EZ_label_MoveCaretVertically(label, false);
-			caret_moved = true;
+			EZ_label_EndHomeKeyDown(label, key);
+			break;
+		}
+		case K_TAB :
+		{
 			break;
 		}
 		case K_LSHIFT :
@@ -2329,7 +2653,7 @@ int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 		case K_SHIFT :
 		{
 			// Start selecting.
-			label->select_start = label->caret_pos;
+			label->select_start = label->caret_pos.index;
 			label->text_flags |= LABEL_SELECTING;
 			break;
 		}
@@ -2342,110 +2666,22 @@ int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 		case K_DEL :
 		case K_BACKSPACE :
 		{
-			if (LABEL_TEXT_SELECTED(label))
-			{
-				// Remove a selected chunk of text.				
-				EZ_label_RemoveText(label, start, end);
-				
-				// When deleting we need to move the cursor so that
-				// it's at the "same point" in the text afterwards.
-				if (key == K_DEL)
-				{
-					label->caret_pos = label->select_start;
-				}
-			}
-			else if (key == K_BACKSPACE)
-			{
-				// Remove a single character.
-				EZ_label_RemoveText(label, label->caret_pos - 1, label->caret_pos);
-				label->caret_pos--;
-			}
-			else if (key == K_DEL)
-			{
-				EZ_label_RemoveText(label, label->caret_pos, label->caret_pos + 1);
-				label->caret_pos++;
-			}
+			EZ_label_BackspaceDeleteKeyDown(label, key);
 			break;
 		}
 		default :
 		{
-			// User typing text into the label.
-
-			char c = (char)key;
-
-			if (LABEL_TEXT_SELECTED(label))
+			if (isCtrlDown())
 			{
-				if (isCtrlDown() && ((c == 'c') || (c == 'C')))
-				{
-					// Ctrl + c (Copy to clipboard).
-					int selected_len = EZ_label_GetSelectedTextSize(label) + 1;
-					char *selected_text = (char *)Q_malloc(selected_len * sizeof(char));
-
-					EZ_label_GetSelectedText(label, selected_text, selected_len);
-
-					CopyToClipboard(selected_text);
-					break;
-				}
+				EZ_label_CtrlComboKeyDown(label, key);
 			}
-			else if (isCtrlDown() && ((c == 'v') || (c == 'V')))
+			else
 			{
-				// Ctrl + v (Paste from clipboard).
-				char *pasted_text = ReadFromClipboard();
-				EZ_label_AppendText(label, label->caret_pos, pasted_text);
-				break;
-			}
-
-			if ((label->caret_pos >= 0) 
-				&& (	
-						((c >= 'a') && (c <= 'z'))
-						||	
-						((c >= 'A') && (c <= 'Z'))
-					)
-				)
-			{
-				char char_str[2];				
-
-				// First remove any selected text.
-				if (LABEL_TEXT_SELECTED(label))
-				{					
-					EZ_label_RemoveText(label, start, end);
-
-					// Make sure the caret stays in the same place.
-					label->caret_pos = (label->select_start < label->select_end) ? label->select_start : label->select_end;
-				}
-
-				// Turn off selecting mode, since we don't want to be selecting
-				// when typing capital letters for instance.
-				label->select_start = -1;
-				label->select_end = -1;
-				label->text_flags &= ~LABEL_SELECTING;
-
-				// Add the text.
-				snprintf(char_str, 2, "%c", (char)key);
-				EZ_label_AppendText(label, label->caret_pos, char_str);
-				label->caret_pos++;
+				EZ_label_InputKeyDown(label, key);
 			}
 			break;
 		}
 	}
-
-	if (caret_moved)
-	{
-		// Select while holding down shift.
-		if (isShiftDown() && (label->select_start > -1))
-		{
-			label->text_flags |= LABEL_SELECTING;
-			label->select_end = label->caret_pos;
-		}
-		else
-		{
-			label->text_flags &= ~LABEL_SELECTING;
-			label->select_start = -1;
-			label->select_end = -1;
-		}
-	}
-
-	clamp(label->caret_pos, 0, text_len);
 
 	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyDown, key, unichar);
 	return key_handled;
@@ -2496,6 +2732,7 @@ int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *ms)
 	if (label->text_flags & LABEL_SELECTING)
 	{
 		label->select_end = EZ_label_FindMouseTextIndex(label, ms);
+		EZ_label_SetCaretPosition(label, label->select_end);
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMouseHover, ms);
@@ -2519,7 +2756,7 @@ int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 
 	// Reset the caret and selection end since we just started a new select / caret positioning.
 	label->select_end = -1;
-	label->caret_pos = -1;
+	label->caret_pos.index = -1;
 
 	// We just started to select some text.
 	label->text_flags |= LABEL_SELECTING;
@@ -2544,13 +2781,14 @@ int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
 	if ((self->flags & CONTROL_FOCUSED) && (label->text_flags & LABEL_SELECTING))
 	{
 		label->select_end = EZ_label_FindMouseTextIndex(label, ms);
-		label->caret_pos = label->select_end;
+		
+		EZ_label_SetCaretPosition(label, label->select_end);
 	}
 	else
 	{
-		label->select_start	= -1;
-		label->select_end	= -1;
-		label->caret_pos	= -1;
+		label->select_start		= -1;
+		label->select_end		= -1;
+		EZ_label_SetCaretPosition(label, -1);
 	}
 
 	// We've stopped selecting.
