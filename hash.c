@@ -69,9 +69,9 @@ void *Hash_GetInsensative(hashtable_t *table, char *name)
 	}
 	return NULL;
 }
-void *Hash_GetKey(hashtable_t *table, int key)
+void *Hash_GetKey(hashtable_t *table, char *key)
 {
-	int bucknum = key%table->numbuckets;
+	int bucknum = ((int64_t) key) % table->numbuckets;
 	bucket_t *buck;
 
 	buck = table->bucket[bucknum];
@@ -80,7 +80,7 @@ void *Hash_GetKey(hashtable_t *table, int key)
 	{
 		/* FIXME: keystring and key differnent, one is pointer, one is int...
 		 * This is not so good for 64bit versions */
-		if ((int)buck->keystring == key)
+		if (buck->keystring == key)
 			return buck->data;
 
 		buck = buck->next;
@@ -171,14 +171,14 @@ void *Hash_AddInsensative(hashtable_t *table, char *name, void *data, bucket_t *
 
 	return buck;
 }
-void *Hash_AddKey(hashtable_t *table, int key, void *data, bucket_t *buck)
+void *Hash_AddKey(hashtable_t *table, char *key, void *data, bucket_t *buck)
 {
-	int bucknum = key%table->numbuckets;
+	int bucknum = ((int64_t) key) % table->numbuckets;
 
 	buck->data = data;
 	/* FIXME: keystring and key differnent, one is pointer, one is int...
 	 * This is not so good for 64bit versions */
-	buck->keystring = (char *)key;
+	buck->keystring = key;
 	buck->next = table->bucket[bucknum];
 	table->bucket[bucknum] = buck;
 
@@ -242,16 +242,16 @@ void Hash_RemoveData(hashtable_t *table, char *name, void *data)
 }
 
 
-void Hash_RemoveKey(hashtable_t *table, int key)
+void Hash_RemoveKey(hashtable_t *table, char *key)
 {
-	int bucknum = key%table->numbuckets;
+	int bucknum = ((int64_t) key) % table->numbuckets;
 	bucket_t *buck;	
 
 	buck = table->bucket[bucknum];
 
 	/* FIXME: keystring and key differnent, one is pointer, one is int...
 	 * This is not so good for 64bit versions */
-	if ((int)buck->keystring == key)
+	if (buck->keystring == key)
 	{
 		table->bucket[bucknum] = buck->next;
 		return;
@@ -262,7 +262,7 @@ void Hash_RemoveKey(hashtable_t *table, int key)
 	{
 		/* FIXME: keystring and key differnent, one is pointer, one is int...
 		 * This is not so good for 64bit versions */
-		if ((int)buck->next->keystring == key)
+		if (buck->next->keystring == key)
 		{
 			buck->next = buck->next->next;
 			return;
