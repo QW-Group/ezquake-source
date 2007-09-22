@@ -145,10 +145,11 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	int temp = 0;																							\
 	int *p = (int *)retval;																					\
 	((eventroot *)ctrl)->override_count = ((eventroot *)ctrl)->inheritance_level;							\
-	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))													\
-		temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), __VA_ARGS__);	\
+	if(!CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))													\
+		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);	\
+	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), __VA_ARGS__);		\
 	if(p) (*p) = temp;																						\
-}																											\
+}																																																						
 
 #else
 
@@ -157,10 +158,11 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	int temp = 0;																							\
 	int *p = (int *)retval;																					\
 	((eventroot *)ctrl)->override_count = ((eventroot *)ctrl)->inheritance_level;							\
-	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))													\
-		temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), ##__VA_ARGS__);	\
+	if(!CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))													\
+		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);	\
+	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), ##__VA_ARGS__);		\
 	if(p) (*p) = temp;																						\
-}																											\
+}																											
 
 #endif // __INTEL_COMPILER
 
