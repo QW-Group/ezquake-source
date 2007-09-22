@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.45 2007-09-22 16:51:22 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.46 2007-09-22 23:01:14 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3246,7 +3246,9 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 //
 static void EZ_slider_CalculateRealSliderPos(ez_slider_t *slider)
 {
-	slider->real_slider_pos = slider->scaled_char_size + (slider->slider_pos * slider->gap_size);
+	// Calculate the real position of the slider by multiplying by the gap size between each value.
+	// (Don't start drawing at the exact start cause that would overwrite the edge marker)
+	slider->real_slider_pos = Q_rint((slider->scaled_char_size / 2.0) + (slider->slider_pos * slider->gap_size));
 }
 
 //
@@ -3254,7 +3256,9 @@ static void EZ_slider_CalculateRealSliderPos(ez_slider_t *slider)
 //
 static void EZ_slider_CalculateGapSize(ez_slider_t *slider)
 {
-	slider->gap_size = Q_rint((float)(slider->super.width - (3 * slider->scaled_char_size)) / slider->max_value);
+	// Calculate the gap between each value in pixels (floating point so that we don't get rounding errors).
+	// Don't include the first and last characters in the calculation, the slider is not allowed to move over those.
+	slider->gap_size = ((float)(((ez_control_t *)slider)->width - (2 * slider->scaled_char_size)) / (float)slider->max_value);
 }
 
 //
@@ -3457,7 +3461,7 @@ int EZ_slider_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 
 	if (slider->slider_flags & SLIDER_DRAGGING)
 	{
-		int new_slider_pos = (ms->x - self->absolute_x) / slider->gap_size;
+		int new_slider_pos = Q_rint((ms->x - self->absolute_x) / slider->gap_size);
 		EZ_slider_SetPosition(slider, new_slider_pos);
 		mouse_handled = true;
 	}

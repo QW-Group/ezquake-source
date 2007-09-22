@@ -988,7 +988,7 @@ typedef struct ez_slider_s
 	int						real_slider_pos;	// The actual slider position in pixels.
 	int						max_value;			// The max value allowed for the slider.
 	int						min_value;			// The min value allowed for the slider.
-	int						gap_size;			// The pixel gap between each value.
+	float					gap_size;			// The pixel gap between each value.
 	float					scale;				// The scale of the characters used for drawing the slider.
 	int						scaled_char_size;	// The scaled character size in pixels after applying scale to the slider chars.
 
