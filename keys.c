@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.78 2007-09-17 11:12:29 cokeman1982 Exp $
+    $Id: keys.c,v 1.79 2007-09-22 06:36:07 dkure Exp $
 
 */
 
@@ -1956,11 +1956,8 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	if (!down)
 	{
 		// Key up event.
-		switch (key_dest)
-		{
-			case key_hudeditor :
-				HUD_Editor_Key(key, unichar, down);
-				break;
+		if (key_dest == key_hudeditor) {
+			HUD_Editor_Key(key, unichar, down);
 		}
 
 		// Key up events only generate commands if the game key binding is a button command (leading + sign).
