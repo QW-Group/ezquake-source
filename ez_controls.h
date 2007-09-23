@@ -1,5 +1,156 @@
 #ifndef __EZ_CONTROLS_H__
 #define __EZ_CONTROLS_H__
+/*
+Copyright (C) 2007 ezQuake team
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+$Id: ez_controls.h,v 1.29 2007-09-23 00:37:42 cokeman1982 Exp $
+*/
+
+//
+// Description
+//
+// Basic design princilples
+// ------------------------
+// The base design principle for the framework is a "light" version of Object Orientated Programming (OOP).
+// That is, all controls are regarded as objects that has methods associated with them that are used
+// to manipulate them and change their inner state.
+//
+// Implementation
+// --------------
+// Each "class" in the framework consists of a struct and a set of methods, with the following name schemes:
+// Struct: ez_nameofobject_t
+// Method: EZ_name_of_object_NameOfMethod(...)
+// 
+// All methods that are associated with a particular object ALWAYS has a pointer to the object's struct type as the first
+// argument of the function, that is:
+// EZ_nameofobject_NameOfMethod(ez_nameofobject_t *self, ...);
+//
+// This means that "self" in this case can be regarded as the keyword "this" usually used in OOP languages.
+// This way only objects that are of the type ez_nameofobject_t are allowed to run the method. A NULL pointer
+// must never be passed to a method.
+//
+// Each object has the following types of methods:
+//
+// - Create method:
+//   The create method allocates the memory of the object and then passes it on to the Init method.
+//
+// - Init method:
+//   The init method initializes all the variables of the object and sets all the function pointers
+//   for the different methods.
+//
+// - Set methods: 
+//   Used to set properties of the object, such as changing the inner state of the object struct.
+//
+// - Get methods: 
+//   Gets inner state from the object.
+//
+// - Event implementations: 
+//   This is a core implementation for the object, such as OnDraw, that draws the control which will be 
+//   called on all objects by the framework. An object must have an implementation for all of the events
+//   that are associated with it. An event is raised using CONTROL_RAISE_EVENT when something happens
+//   inside of the object, such as the width changes or a key is pressed.
+//   (See the comment for the CONTROL_RAISE_EVENT macro for more detail on how this works).
+//
+// - Event handlers: 
+//   These are optional functions that are set by the user of the framework, these can be set for each of 
+//   the events described above. For instance, this can be used for running some specified function when 
+//   a button is pressed. These are only run after all event implementations for that particular event
+//   has been run in the class tree (see inheritance).
+//   (See the comment for CONTROL_EVENT_HANDLER_CALL for more detail on how this works).
+//
+// The events and event handlers associated with an object are specified in a separate struct named
+// "ez_nameofobject_events_t", which contains a set of function pointers to the different events associated
+// with the object type. Each object then has two variables of this struct type in it named "events"
+// and "event_handlers". All the function pointers in the events variable has to be set in the objects
+// init function, but the function pointers in the "event_handlers" variable doesn't need to be set at all,
+// they're set by the user of the object when needed.
+//
+// NOTICE! It is important that the contents of the object structs are NEVER changed directly, but always
+// to the methods specified for the object. This is an important principle in OOP programming, hiding
+// internal information from the outside world. Changing struct information directly might lead to crucial
+// events not being raised which in turn puts the object in an undefined state.
+//
+// Inheritance
+// -----------
+// An object in the framework can inherit functionality from other objects, and override / reimplement their
+// event methods (actually, more like extending than overriding to be precise). This is achieved by creating
+// a new object, and at the beginning of the objects struct we place the object of the type we want to inherit from.
+// That is:
+//
+// typedef struct ez_object2_s
+// {
+//		ez_object1_t super;
+//		...
+// } ez_object2_t;
+//
+// It is now possible to cast ez_object2_t to ez_object1_t, and use it with any object1 methods:
+// ez_object2_t obj2 = EZ_object2_Create(...);
+// EZ_object1_SomeObject1Method((ez_object1_t *)obj2);
+//
+// To be able to call all the methods of a particular event implementation involving inheritance, and the only
+// run the event handler associated with that event ONCE at the end. That is, first let the control change it's
+// internal state, and then finally signaling the outside world. The macros CONTROL_RAISE_EVENT and 
+// CONTROL_EVENT_HANDLER_CALL are used, see the comment for them below for more detailed information on how they work.
+//
+// Each object struct contains a CLASS_ID used to identify what type of object it is, this should be unique for
+// each object type. This is set at init of the control, and should never be changed after that.
+//
+// Control objects (ez_control_t / EZ_control_*)
+// ---------------------------------------------
+// Building on the principles described above the base object for all controls in the UI framework is defined
+// with the ez_control_t struct and EZ_control_* methods. This object implements all the base functionality that
+// are needed for a control, such as:
+// - Mouse handling
+//   * Each control gets an initial event whenever the mouse state changes in some way, 
+//     mouse moved, or a button was pressed.
+//   * The event is processed and if the mouse was inside the control and a button was pressed for instance
+//     a more detailed event is raised, targeted only to that control. Examples of this:
+//     OnMouseDown, OnMouseUp, OnMouseHover, OnMouseEnter, OnMouseLeave...
+// - Key events
+// - Moving
+// - Resizing
+// - Scrolling
+//   * Each control has a visible area, and a "virtual" area, which can be scrolled within.
+//
+// The ez_control_t object also contains a list of children, sub-controls that are placed inside of that control
+//
+// All controls then inherits from this object, and extends the events it has defined, or adds new events.
+//
+// Control tree
+// ------------
+// To tie all these controls together, a root object exists called ez_tree_t. This tree has a pointer to
+// the root control of the tree, which all of the other controls are contained within (this control usually
+// has the same size as the screen). It also contains two lists, one is the draw list which holds the
+// order in which the controls should be drawn in. The other is the tab list, which holds the order that
+// the controls can be "tabbed" between (if the control is focusable).
+//
+// All instances of a control MUST be associated with a control tree that is passed to the creation function
+// of the control.
+//
+// All input is sent to the control tree, which in turn propagates them to the controls that should have it.
+// The control tree is also responsible for raising the OnDraw event for all the controls (in the order
+// specified in it's draw list).
+//
+// There can be any number of control trees running at the same time, but the intended practice is to
+// only use one at any given time.
+//
+// -- Cokeman 2007
+//
 
 #define POINT_IN_RECTANGLE(p_x, p_y, r_x, r_y, r_width, r_height) ((p_x >= r_x) && (p_y >= r_y) && (p_x <= (r_x + r_width)) && (p_y <= (r_y + r_height)))
 
@@ -170,9 +321,10 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 // Calls the event handler associated with an event after all controls have run their implementation of the event.
 //
 // Example: OnMouseUp defined in ez_control_t
-// 1. Run ez_control_t's OnMouseUp
-// 2. Run ez_label_t's OnMouseUp
-// 3. Run any specified event handler associated with the OnMouseUp event.
+// 1. Run EZ_control_OnMouseUp
+// 2. Run EZ_label_OnMouseUp (Set in ctrl->events.OnMouseUp, which in turn MUST call EZ_control_OnMouseUp
+//    the first thing it does).
+// 3. Run any specified event handler associated with the OnMouseUp event. ctrl->event_handlers.OnMouseUp
 //
 // This works by having a "inheritance level" and "override count" in each control struct:
 // Inheritance level:
@@ -196,6 +348,10 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 // ez_crazylabel_t *crazylabel = CREATE(...);
 // ((ez_control_t *)crazylabel)->inheritance_level = 2; // Relative to ez_control_t
 // ((ez_label_t *)  crazylabel)->inheritance_level = 1;	// Relative to ez_label_t
+//
+// So if I now want to override OnTextChanged specified in ez_label_t for ez_crazylabel_t, the 
+// ez_label_t inheritance level is used by the macro. And if I override OnMouseUp, the ez_control_t
+// inheritance level is used instead.
 //
 // retval		= An integer pointer to the var that should receive the return value of the event handler.
 // ctrl			= The control struct to call the event handler on.
