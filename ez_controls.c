@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.46 2007-09-22 23:01:14 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.47 2007-09-23 20:23:16 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -159,7 +159,7 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 	ez_dllist_node_t *iter = NULL;
 	ez_control_t *child = NULL;
 	ez_control_t *p = control->parent;
-	qbool contained = control->flags & CONTROL_CONTAINED;
+	qbool contained = control->ext_flags & control_contained;
 
 	// Calculate the controls bounds.
 	int top		= control->absolute_y;
@@ -359,7 +359,7 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 		payload = (ez_control_t *)iter->payload;
 
 		// Notify the control of the key event.
-		if (payload->flags & CONTROL_FOCUSED)
+		if (payload->int_flags & control_focused)
 		{
 			CONTROL_RAISE_EVENT(&key_handled, payload, ez_control_t, OnKeyEvent, key, unichar, down);
 			break;
@@ -477,7 +477,7 @@ ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 //
 void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y)
 {
-	if (self->flags & CONTROL_SCROLLABLE)
+	if (self->ext_flags & control_scrollable)
 	{
 		(*x) = self->absolute_virtual_x;
 		(*y) = self->absolute_virtual_y;
@@ -495,23 +495,23 @@ void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y)
 void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name, int flags)
+							  char *background_name, ez_control_flags_t flags)
 {
 	static int order = 0;
 
 	control->CLASS_ID = EZ_CLASS_ID;
 
-	control->control_tree = tree;
-	control->name = name;
-	control->description = description;
-	control->flags = flags | CONTROL_ENABLED | CONTROL_VISIBLE;
-	control->anchor_flags = anchor_none;
+	control->control_tree	= tree;
+	control->name			= name;
+	control->description	= description;
+	control->ext_flags		= flags | control_enabled | control_visible;
+	control->anchor_flags	= anchor_none;
 
 	// Default to containing a child within it's parent
 	// if the parent is being contained by it's parent.
-	if (parent && parent->flags & CONTROL_CONTAINED)
+	if (parent && parent->ext_flags & control_contained)
 	{
-		control->flags |= CONTROL_CONTAINED;
+		control->ext_flags |= control_contained;
 	}
 
 	control->draw_order = order++;
@@ -834,7 +834,7 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 	}
 
 	// We can't focus on this control.
-	if(!(self->flags & CONTROL_FOCUSABLE) || !(self->flags & CONTROL_ENABLED))
+	if(!(self->ext_flags & control_focusable) || !(self->ext_flags & control_enabled))
 	{
 		return false;
 	}
@@ -860,18 +860,18 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 		}
 
 		// Remove the focus flag and set the focus node to NULL.
-		payload->flags &= ~CONTROL_FOCUSED;
+		payload->int_flags &= ~control_focused;
 		tree->focused_node = NULL;
 
 		// Reset all manipulation flags.
-		payload->flags &= ~(CONTROL_CLICKED | CONTROL_MOVING | CONTROL_RESIZING_LEFT | CONTROL_RESIZING_RIGHT | CONTROL_RESIZING_BOTTOM | CONTROL_RESIZING_TOP);
+		payload->int_flags &= ~(control_clicked | control_moving | control_resizing_left | control_resizing_right | control_resizing_bottom | control_resizing_top);
 
 		// Raise event for losing the focus.
 		CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnLostFocus);
 	}
 
 	// Set the new focus.
-	self->flags |= CONTROL_FOCUSED;
+	self->int_flags |= control_focused;
 	tree->focused_node = node;
 
 	// Raise event for getting focus.
@@ -987,7 +987,7 @@ void EZ_control_SetPosition(ez_control_t *self, int x, int y)
 void EZ_control_SetScrollPosition(ez_control_t *self, int scroll_x, int scroll_y)
 {
 	// Only scroll scrollable controls.
-	if (!(self->flags & CONTROL_SCROLLABLE))
+	if (!(self->ext_flags & control_scrollable))
 	{
 		return;
 	}
@@ -1084,7 +1084,7 @@ ez_control_t *EZ_control_RemoveChild(ez_control_t *self, ez_control_t *child)
 //
 int EZ_control_OnGotFocus(ez_control_t *self)
 {
-	if(!(self->flags & CONTROL_FOCUSED))
+	if(!(self->int_flags & control_focused))
 	{
 		return 0;
 	}
@@ -1099,7 +1099,7 @@ int EZ_control_OnGotFocus(ez_control_t *self)
 //
 int EZ_control_OnLostFocus(ez_control_t *self)
 {
-	if (self->flags & CONTROL_FOCUSED)
+	if (self->int_flags & control_focused)
 	{
 		return 0;
 	}
@@ -1157,7 +1157,7 @@ int EZ_control_OnResize(ez_control_t *self)
 //
 int EZ_control_OnParentResize(ez_control_t *self)
 {
-	if (self->parent && (self->flags & CONTROL_RESIZEABLE))
+	if (self->parent && (self->ext_flags & control_resizeable))
 	{
 		int width = self->width;
 		int height = self->height;
@@ -1321,10 +1321,10 @@ int EZ_control_OnDraw(ez_control_t *self)
 	}
 
 	Draw_String(x, y, va("%s%s%s%s",
-			((self->flags & CONTROL_MOVING) ? "M" : " "),
-			((self->flags & CONTROL_FOCUSED) ? "F" : " "),
-			((self->flags & CONTROL_CLICKED) ? "C" : " "),
-			((self->flags & CONTROL_RESIZING_LEFT) ? "R" : " ")
+			((self->int_flags & control_moving) ? "M" : " "),
+			((self->int_flags & control_focused) ? "F" : " "),
+			((self->int_flags & control_clicked) ? "C" : " "),
+			((self->int_flags & control_resizing_left) ? "R" : " ")
 			));
 
 	// Draw control specifics.
@@ -1552,44 +1552,44 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	// not just when we're hovering above the control.
 	if (ms->button_up && (ms->button_up != old_ms->button_up))
 	{
-		self->flags &= ~CONTROL_CLICKED;
+		self->int_flags &= ~control_clicked;
 	}
 
 	// TODO : Move these to new methods.
 
 	// Check for moving and resizing.
-	if ((self->flags & CONTROL_RESIZING_LEFT)
-	 || (self->flags & CONTROL_RESIZING_RIGHT)
-	 || (self->flags & CONTROL_RESIZING_TOP)
-	 || (self->flags & CONTROL_RESIZING_BOTTOM))
+	if ((self->int_flags & control_resizing_left)
+	 || (self->int_flags & control_resizing_right)
+	 || (self->int_flags & control_resizing_top)
+	 || (self->int_flags & control_resizing_bottom))
 	{
 		// These can be combined to grab the corners for resizing.
 
 		// Resize by width.
-		if (self->flags & CONTROL_RESIZING_LEFT)
+		if (self->int_flags & control_resizing_left)
 		{
 			EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_LEFT);
 			mouse_handled = true;
 		}
-		else if (self->flags & CONTROL_RESIZING_RIGHT)
+		else if (self->int_flags & control_resizing_right)
 		{
 			EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_RIGHT);
 			mouse_handled = true;
 		}
 
 		// Resize by height.
-		if (self->flags & CONTROL_RESIZING_TOP)
+		if (self->int_flags & control_resizing_top)
 		{
 			EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_UP);
 			mouse_handled = true;
 		}
-		else if (self->flags & CONTROL_RESIZING_BOTTOM)
+		else if (self->int_flags & control_resizing_bottom)
 		{
 			EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_DOWN);
 			mouse_handled = true;
 		}
 	}
-	else if (self->flags & CONTROL_MOVING)
+	else if (self->int_flags & control_moving)
 	{
 		// Root control will be moved relative to the screen,
 		// others relative to their parent.
@@ -1645,7 +1645,7 @@ int EZ_control_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state)
 int EZ_control_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state)
 {
 	int mouse_handled = false;
-	self->flags |= CONTROL_MOUSE_OVER;
+	self->int_flags |= control_mouse_over;
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, ez_control_t, OnMouseEnter, mouse_state);
 	return mouse_handled;
 }
@@ -1658,7 +1658,7 @@ int EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
 	int mouse_handled = false;
 
 	// Stop moving since the mouse is outside the control.
-	self->flags &= ~(CONTROL_MOVING | CONTROL_MOUSE_OVER);
+	self->int_flags &= ~(control_moving | control_mouse_over);
 
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, ez_control_t, OnMouseLeave, mouse_state);
 	return mouse_handled;
@@ -1673,7 +1673,7 @@ int EZ_control_OnMouseUpOutside(ez_control_t *self, mouse_state_t *ms)
 	int mouse_handled		= false;
 
 	// Stop moving / resizing.
-	self->flags &= ~(CONTROL_MOVING | CONTROL_RESIZING_BOTTOM | CONTROL_RESIZING_LEFT | CONTROL_RESIZING_RIGHT | CONTROL_RESIZING_TOP);
+	self->int_flags &= ~(control_moving | control_resizing_left | control_resizing_right | control_resizing_top | control_resizing_bottom);
 
 	// Call event handler.
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled_tmp, self, ez_control_t, OnMouseUpOutside, ms);
@@ -1691,12 +1691,12 @@ int EZ_control_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state)
 	int mouse_handled		= false;
 
 	// Stop moving / resizing.
-	self->flags &= ~(CONTROL_MOVING | CONTROL_RESIZING_BOTTOM | CONTROL_RESIZING_LEFT | CONTROL_RESIZING_RIGHT | CONTROL_RESIZING_TOP);
+	self->int_flags &= ~(control_moving | control_resizing_left | control_resizing_right | control_resizing_top | control_resizing_bottom);
 
 	// Raise a click event.
-	if (self->flags & CONTROL_CLICKED)
+	if (self->int_flags & control_clicked)
 	{
-		self->flags &= ~CONTROL_CLICKED;
+		self->int_flags &= ~control_clicked;
 		CONTROL_RAISE_EVENT(&mouse_handled_tmp, self, ez_control_t, OnMouseClick, mouse_state);
 		mouse_handled = (mouse_handled || mouse_handled_tmp);
 	}
@@ -1716,7 +1716,7 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 	int mouse_handled_tmp	= false;
 	int mouse_handled		= false;
 
-	if (!(self->flags & CONTROL_ENABLED))
+	if (!(self->ext_flags & control_enabled))
 	{
 		return false;
 	}
@@ -1736,19 +1736,19 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 		mouse_handled = EZ_control_SetFocus(self);
 	}
 
-	if (self->flags & CONTROL_FOCUSED)
+	if (self->int_flags & control_focused)
 	{
 		// Check if the mouse is at the edges of the control, and turn on the correct reszie mode if it is.
-		if (((self->flags & CONTROL_RESIZE_H) || (self->flags & CONTROL_RESIZE_V)) && (ms->button_down == 1))
+		if (((self->ext_flags & control_resize_h) || (self->ext_flags & control_resize_v)) && (ms->button_down == 1))
 		{
-			if (self->flags & CONTROL_RESIZE_H)
+			if (self->ext_flags & control_resize_h)
 			{
 				// Left side of the control.
 				if (POINT_IN_RECTANGLE(ms->x, ms->y,
 					self->absolute_x, self->absolute_y,
 					self->resize_handle_thickness, self->height))
 				{
-					self->flags |= CONTROL_RESIZING_LEFT;
+					self->int_flags |= control_resizing_left;
 					mouse_handled = true;
 				}
 
@@ -1757,19 +1757,19 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 					self->absolute_x + self->width - self->resize_handle_thickness, self->absolute_y,
 					self->resize_handle_thickness, self->height))
 				{
-					self->flags |= CONTROL_RESIZING_RIGHT;
+					self->int_flags |= control_resizing_right;
 					mouse_handled = true;
 				}
 			}
 
-			if (self->flags & CONTROL_RESIZE_V)
+			if (self->ext_flags & control_resize_v)
 			{
 				// Top of the control.
 				if (POINT_IN_RECTANGLE(ms->x, ms->y,
 					self->absolute_x, self->absolute_y,
 					self->width, self->resize_handle_thickness))
 				{
-					self->flags |= CONTROL_RESIZING_TOP;
+					self->int_flags |= control_resizing_top;
 					mouse_handled = true;
 				}
 
@@ -1778,22 +1778,22 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 					self->absolute_x, self->absolute_y + self->height - self->resize_handle_thickness,
 					self->width, self->resize_handle_thickness))
 				{
-					self->flags |= CONTROL_RESIZING_BOTTOM;
+					self->int_flags |= control_resizing_bottom;
 					mouse_handled = true;
 				}
 			}
 		}
 
 		// The control is being moved.
-		if ((self->flags & CONTROL_MOVABLE) && (ms->button_down == 1))
+		if ((self->ext_flags & control_movable) && (ms->button_down == 1))
 		{
-			self->flags |= CONTROL_MOVING;
+			self->int_flags |= control_moving;
 			mouse_handled = true;
 		}
 
 		if (ms->button_down)
 		{
-			self->flags |= CONTROL_CLICKED;
+			self->int_flags |= control_clicked;
 			mouse_handled = true;
 		}
 	}
@@ -1844,6 +1844,8 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 // Label
 // =========================================================================================
 
+// TODO : Enable making a label read only / non-selectable text.
+
 //
 // Label - Creates a label control and initializes it.
 //
@@ -1852,7 +1854,7 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 							  int x, int y, int width, int height,
 							  char *background_name,
 							  int flags, int text_flags,
-							  char *text, clrinfo_t text_color)
+							  char *text)
 {
 	ez_label_t *label = NULL;
 
@@ -1865,7 +1867,7 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 	label = (ez_label_t *)Q_malloc(sizeof(ez_label_t));
 	memset(label, 0, sizeof(ez_label_t));
 
-	EZ_label_Init(label, tree, parent, name, description, x, y, width, height, background_name, flags, text_flags, text, text_color);
+	EZ_label_Init(label, tree, parent, name, description, x, y, width, height, background_name, flags, text_flags, text);
 	
 	return label;
 }
@@ -1878,7 +1880,7 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 				  int x, int y, int width, int height,
 				  char *background_name,
 				  int flags, int text_flags,
-				  char *text, clrinfo_t text_color)
+				  char *text)
 {
 	// Initialize the inherited class first.
 	EZ_control_Init(&label->super, tree, parent, name, description, x, y, width, height, background_name, flags);
@@ -1901,11 +1903,11 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->events.OnTextChanged						= EZ_label_OnTextChanged;
 	label->events.OnCaretMoved						= EZ_label_OnCaretMoved;
 	label->events.OnTextScaleChanged				= EZ_label_OnTextScaleChanged;
+	label->events.OnTextFlagsChanged				= EZ_label_OnTextFlagsChanged;
 
-	label->super.flags	|= CONTROL_CONTAINED;
-	label->text_flags	|= text_flags;
-	label->color		= text_color;
+	((ez_control_t *)label)->ext_flags				|= control_contained;
 
+	EZ_label_SetTextFlags(label, text_flags | label_selectable);
 	EZ_label_SetTextScale(label, 1.0);
 	EZ_label_DeselectText(label);
 
@@ -1966,7 +1968,7 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	label->num_rows			= 1;
 	label->num_cols			= 0;
 
-	if (label->text && (label->text_flags & LABEL_WRAPTEXT))
+	if (label->text && (label->ext_flags & label_wraptext))
 	{	
 		// Wordwrap the string to the virtual size of the control and save the
 		// indexes where each row ends in an array.
@@ -2025,7 +2027,7 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	}
 
 	// Change the virtual height of the control to fit the text when wrapping.
-	if (label->text_flags & LABEL_WRAPTEXT)
+	if (label->ext_flags & label_wraptext)
 	{
 		EZ_control_SetMinVirtualSize((ez_control_t *)label, label->super.virtual_width_min, scaled_char_size * (label->num_rows + 1));
 	}
@@ -2033,6 +2035,24 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	{
 		EZ_control_SetMinVirtualSize((ez_control_t *)label, scaled_char_size * (label->num_cols + 1), scaled_char_size * (label->num_rows + 1));
 	}
+}
+
+//
+// Label - Sets the text flags for the label.
+//
+void EZ_label_SetTextFlags(ez_label_t *label, ez_label_flags_t flags)
+{
+	label->ext_flags = flags;
+
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+}
+
+//
+// Label - Gets the text flags for the label.
+//
+ez_label_flags_t EZ_label_GetTextFlags(ez_label_t *label)
+{
+	return label->ext_flags;
 }
 
 //
@@ -2058,7 +2078,7 @@ void EZ_label_SetTextColor(ez_label_t *label, byte r, byte g, byte b, byte alpha
 //
 void EZ_label_DeselectText(ez_label_t *label)
 {
-	label->text_flags	&= ~LABEL_SELECTING;
+	label->int_flags	&= ~label_selecting;
 	label->select_start = -1;
 	label->select_end	= -1;
 }
@@ -2165,12 +2185,30 @@ void EZ_label_SetText(ez_label_t *label, const char *text)
 }
 
 //
+// Label - The text flags for the label changed.
+//
+int EZ_label_OnTextFlagsChanged(ez_control_t *self)
+{
+	ez_label_t *label = (ez_label_t *)self;
+
+	if (!(label->ext_flags & label_selectable))
+	{
+		EZ_label_SetCaretPosition(label, -1);
+		EZ_label_DeselectText(label);
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextFlagsChanged);
+
+	return 0;
+}
+
+//
 // Label - The scale of the text changed.
 //
 int EZ_label_OnTextScaleChanged(ez_control_t *self)
 {
 	ez_label_t *label		= (ez_label_t *)self;
-	int char_size			= (label->text_flags & LABEL_LARGEFONT) ? 64 : 8;
+	int char_size			= (label->ext_flags & label_largefont) ? 64 : 8;
 
 	label->scaled_char_size	= Q_rint(char_size * label->scale);
 	
@@ -2187,7 +2225,7 @@ int EZ_label_OnTextScaleChanged(ez_control_t *self)
 //
 int EZ_label_OnResize(ez_control_t *self)
 {
-	ez_label_t *label	= (ez_label_t *)self;
+	ez_label_t *label = (ez_label_t *)self;
 	
 	// Let the super class try first.
 	EZ_control_OnResize(self);
@@ -2212,6 +2250,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 	int last_index			= -1;
 	int curr_row			= 0;
 	int curr_col			= 0;
+	clrinfo_t text_color	= {RGBA_TO_COLOR(255, 255, 255, 255), 0}; // TODO : Set this in the struct instead.
 	color_t selection_color	= RGBA_TO_COLOR(178, 0, 255, 125);
 	color_t caret_color		= RGBA_TO_COLOR(255, 0, 0, 125);
 
@@ -2261,13 +2300,13 @@ int EZ_label_OnDraw(ez_control_t *self)
 			snprintf(line, min(LABEL_LINE_SIZE, (i - last_index) + 1), "%s", (label->text + last_index + 1));
 			last_index = i;	// Skip the newline character
 
-			if (label->text_flags & LABEL_LARGEFONT)
+			if (label->ext_flags & label_largefont)
 			{
-				Draw_BigString(x, y + (curr_row * scaled_char_size), line, &label->color, 1, label->scale, 1, 0);
+				Draw_BigString(x, y + (curr_row * scaled_char_size), line, &text_color, 1, label->scale, 1, 0);
 			}
 			else
 			{
-				Draw_SColoredString(x, y + (curr_row * scaled_char_size), str2wcs(line), &label->color, 1, false, label->scale);
+				Draw_SColoredString(x, y + (curr_row * scaled_char_size), str2wcs(line), &text_color, 1, false, label->scale);
 			}
 
 			curr_row++;
@@ -2386,8 +2425,16 @@ static int EZ_label_FindMouseTextIndex(ez_label_t *label, mouse_state_t *ms)
 //
 void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos)
 {
-	label->caret_pos.index = caret_pos;
-	clamp(label->caret_pos.index, -1, label->text_length);
+	if (label->ext_flags & label_selectable)
+	{
+		label->caret_pos.index = caret_pos;
+		clamp(label->caret_pos.index, -1, label->text_length);
+	}
+	else
+	{
+		label->caret_pos.index = -1;
+		EZ_label_DeselectText(label);
+	}
 
 	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnCaretMoved);
 }
@@ -2458,7 +2505,7 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 	}
 
 	// Only scroll horizontally if the text is not wrapped.
-	if (!(label->text_flags & LABEL_WRAPTEXT))
+	if (!(label->ext_flags & label_wraptext))
 	{
 		col_visible_start	= (self->virtual_x / scaled_char_size);
 		col_visible_end		= (col_visible_start + num_visible_cols);
@@ -2488,12 +2535,12 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 	// Select while holding down shift.
 	if (isShiftDown() && (label->select_start > -1))
 	{
-		label->text_flags |= LABEL_SELECTING;
+		label->int_flags |= label_selecting;
 		label->select_end = label->caret_pos.index;
 	}
 
 	// Deselect any selected text if we're not in selection mode.
-	if (!(label->text_flags & LABEL_SELECTING))
+	if (!(label->int_flags & label_selecting))
 	{
 		EZ_label_DeselectText(label);
 	}
@@ -2508,7 +2555,7 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 //
 int EZ_label_OnTextChanged(ez_control_t *self)
 {
-	ez_label_t *label		= (ez_label_t *)self;
+	ez_label_t *label = (ez_label_t *)self;
 
 	// Make sure we have the correct text length saved.
 	label->text_length = strlen(label->text);
@@ -2639,6 +2686,12 @@ static void EZ_label_EndHomeKeyDown(ez_label_t *label, int key)
 //
 static void EZ_label_BackspaceDeleteKeyDown(ez_label_t *label, int key)
 {
+	// Don't allow deleting if read only.
+	if (label->ext_flags & label_readonly)
+	{
+		return;
+	}
+
 	if (LABEL_TEXT_SELECTED(label))
 	{
 		// Find the start and end of the selected text.
@@ -2708,9 +2761,9 @@ static void EZ_label_CtrlComboKeyDown(ez_label_t *label, int key)
 			// CTRL + A (Select all).
 			label->select_start = 0;
 			label->select_end	= label->text_length;
-			label->text_flags	|= LABEL_SELECTING;
+			label->int_flags	|= label_selecting;
 			EZ_label_SetCaretPosition(label, label->select_end);
-			label->text_flags	&= ~LABEL_SELECTING;
+			label->int_flags	&= ~label_selecting;
 			break;
 		}
 		default :
@@ -2726,6 +2779,12 @@ static void EZ_label_CtrlComboKeyDown(ez_label_t *label, int key)
 static void EZ_label_InputKeyDown(ez_label_t *label, int key)
 {
 	char c = (char)key;
+
+	// Don't allow input if read only.
+	if (label->ext_flags & label_readonly)
+	{
+		return;
+	}
 
 	// User typing text into the label.
 	// TODO : Add support for input of all quake chars
@@ -2779,65 +2838,69 @@ int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 
 	key_handled = true;
 
-	// Key down.
-	switch (key)
+	// Only handle keys if text is selectable.
+	if (label->ext_flags & label_selectable)
 	{
-		case K_LEFTARROW :
-		case K_RIGHTARROW :
-		case K_UPARROW :
-		case K_DOWNARROW :
+		// Key down.
+		switch (key)
 		{
-			EZ_label_ArrowKeyDown(label, key);
-			break;
-		}
-		case K_PGDN :
-		case K_PGUP :
-		{
-			EZ_label_PageUpDnKeyDown(label, key);
-			break;
-		}
-		case K_HOME :
-		case K_END :
-		{
-			EZ_label_EndHomeKeyDown(label, key);
-			break;
-		}
-		case K_TAB :
-		{
-			break;
-		}
-		case K_LSHIFT :
-		case K_RSHIFT :
-		case K_SHIFT :
-		{
-			// Start selecting.
-			label->select_start = label->caret_pos.index;
-			label->text_flags |= LABEL_SELECTING;
-			break;
-		}
-		case K_RCTRL :
-		case K_LCTRL :
-		case K_CTRL :
-		{
-			break;
-		}
-		case K_DEL :
-		case K_BACKSPACE :
-		{
-			EZ_label_BackspaceDeleteKeyDown(label, key);
-			break;
-		}
-		default :
-		{
-			if (isCtrlDown())
+			case K_LEFTARROW :
+			case K_RIGHTARROW :
+			case K_UPARROW :
+			case K_DOWNARROW :
 			{
-				EZ_label_CtrlComboKeyDown(label, key);
+				EZ_label_ArrowKeyDown(label, key);
+				break;
 			}
-			else
+			case K_PGDN :
+			case K_PGUP :
 			{
-				EZ_label_InputKeyDown(label, key);
+				EZ_label_PageUpDnKeyDown(label, key);
+				break;
 			}
-			break;
+			case K_HOME :
+			case K_END :
+			{
+				EZ_label_EndHomeKeyDown(label, key);
+				break;
+			}
+			case K_TAB :
+			{
+				break;
+			}
+			case K_LSHIFT :
+			case K_RSHIFT :
+			case K_SHIFT :
+			{
+				// Start selecting.
+				label->select_start = label->caret_pos.index;
+				label->int_flags |= label_selecting;
+				break;
+			}
+			case K_RCTRL :
+			case K_LCTRL :
+			case K_CTRL :
+			{
+				break;
+			}
+			case K_DEL :
+			case K_BACKSPACE :
+			{
+				EZ_label_BackspaceDeleteKeyDown(label, key);
+				break;
+			}
+			default :
+			{
+				if (isCtrlDown())
+				{
+					EZ_label_CtrlComboKeyDown(label, key);
+				}
+				else
+				{
+					EZ_label_InputKeyDown(label, key);
+				}
+				break;
+			}
 		}
 	}
 
@@ -2867,7 +2930,7 @@ int EZ_label_OnKeyUp(ez_control_t *self, int key, int unichar)
 	{
 		case K_SHIFT :
 		{
-			label->text_flags &= ~LABEL_SELECTING;
+			label->int_flags &= ~label_selecting;
 			break;
 		}
 	}
@@ -2887,7 +2950,7 @@ int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *ms)
 	mouse_handled = EZ_control_OnMouseHover(self, ms);
 
 	// Find at what index in the text where the mouse is currently over.
-	if (label->text_flags & LABEL_SELECTING)
+	if (label->int_flags & label_selecting)
 	{
 		label->select_end = EZ_label_FindMouseTextIndex(label, ms);
 		EZ_label_SetCaretPosition(label, label->select_end);
@@ -2917,7 +2980,7 @@ int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 	label->caret_pos.index = -1;
 
 	// We just started to select some text.
-	label->text_flags |= LABEL_SELECTING;
+	label->int_flags |= label_selecting;
 
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, ez_control_t, OnMouseDown, ms);
 
@@ -2936,7 +2999,7 @@ int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
 	mouse_handled = EZ_control_OnMouseUp(self, ms);
 
 	// Find at what index in the text where the mouse was released.
-	if ((self->flags & CONTROL_FOCUSED) && (label->text_flags & LABEL_SELECTING))
+	if ((self->int_flags & control_focused) && (label->int_flags & label_selecting))
 	{
 		label->select_end = EZ_label_FindMouseTextIndex(label, ms);
 		
@@ -2950,7 +3013,7 @@ int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
 	}
 
 	// We've stopped selecting.
-	label->text_flags &= ~LABEL_SELECTING;
+	label->int_flags &= ~label_selecting;
 
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, ez_control_t, OnMouseUp, ms);
 
@@ -2960,6 +3023,8 @@ int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
 // =========================================================================================
 // Button
 // =========================================================================================
+
+// TODO : Add a label as text on the button.
 
 //
 // Button - Creates a new button and initializes it.
@@ -3001,15 +3066,18 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	// Initilize the button specific stuff.
 	((ez_control_t *)button)->CLASS_ID			= EZ_BUTTON_ID;
 
-	((ez_control_t *)button)->flags |= (flags | CONTROL_FOCUSABLE | CONTROL_CONTAINED);
+	((ez_control_t *)button)->ext_flags			|= (flags | control_focusable | control_contained);
 
 	// Override the draw function.
 	((ez_control_t *)button)->inheritance_level = EZ_BUTTON_INHERITANCE_LEVEL;
 	((ez_control_t *)button)->events.OnDraw		= EZ_button_OnDraw;
 
 	// Button specific events.
-	button->inheritance_level		= 0;
-	button->events.OnAction			= EZ_button_OnAction;
+	button->inheritance_level					= 0;
+	button->events.OnAction						= EZ_button_OnAction;
+
+	// TODO : Set proper flags / size for the label. Associate a function with the label text changing (and center it or whatever on that).
+	button->text_label = EZ_label_Create(tree, parent, "Button text label", "", 0, 0, 1, 1, NULL, 0, 0, "");
 
 	// TODO : Load button images.
 }
@@ -3098,13 +3166,12 @@ int EZ_button_OnDraw(ez_control_t *self)
 	int text_x = 0;
 	int text_y = 0;
 	int text_len = 0;
-	// qbool mouse_inside = 0;
 	ez_button_t *button = (ez_button_t *)self;
 
 	int x, y;
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
-	// Run the parents implementation first.
+	// Run the super class's implementation first.
 	EZ_control_OnDraw(self);
 
 	if (button->text)
@@ -3141,14 +3208,14 @@ int EZ_button_OnDraw(ez_control_t *self)
 			break;
 	}
 
-	if (self->flags & CONTROL_CLICKED)
+	if (self->int_flags & control_clicked)
 	{
 		Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_pressed));
 	}
 
-	if (self->flags & CONTROL_MOUSE_OVER)
+	if (self->int_flags & control_mouse_over)
 	{
-		if (self->flags & CONTROL_CLICKED)
+		if (self->int_flags & control_clicked)
 		{
 			Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_pressed));
 		}
@@ -3162,7 +3229,7 @@ int EZ_button_OnDraw(ez_control_t *self)
 		Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_normal));
 	}
 
-	if (self->flags & CONTROL_FOCUSED)
+	if (self->int_flags & control_focused)
 	{
 		Draw_AlphaRectangleRGB(x, y, self->width, self->height, 1, false, RGBAVECT_TO_COLOR(button->color_focused));
 		//Draw_ColoredString3(self->absolute_x, self->absolute_y, button->text, button->focused_text_color, 1, 0);
@@ -3177,6 +3244,8 @@ int EZ_button_OnDraw(ez_control_t *self)
 // =========================================================================================
 // Slider
 // =========================================================================================
+
+// TODO : Slider - Add key support. Show somehow that it's focused?
 
 //
 // Slider - Creates a new button and initializes it.
@@ -3219,7 +3288,7 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 
 	// Initilize the button specific stuff.
 	((ez_control_t *)slider)->CLASS_ID					= EZ_SLIDER_ID;
-	((ez_control_t *)slider)->flags |= (flags | CONTROL_FOCUSABLE | CONTROL_CONTAINED | CONTROL_RESIZEABLE);
+	((ez_control_t *)slider)->ext_flags					|= (flags | control_focusable | control_contained | control_resizeable);
 
 	// Override the draw function.
 	((ez_control_t *)slider)->inheritance_level			= EZ_SLIDER_INHERITANCE_LEVEL;
@@ -3422,7 +3491,7 @@ int EZ_slider_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 
 	if ((ms->x >= (x + slider->real_slider_pos)) && (ms->x <= (x + slider->real_slider_pos + slider->scaled_char_size)))
 	{
-		slider->slider_flags |= SLIDER_DRAGGING;
+		slider->int_flags |= slider_dragging;
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMouseDown, ms);
@@ -3441,7 +3510,7 @@ int EZ_slider_OnMouseUpOutside(ez_control_t *self, mouse_state_t *ms)
 	EZ_control_OnMouseUpOutside(self, ms);
 
 	// Not dragging anymore.
-	slider->slider_flags &= ~SLIDER_DRAGGING;
+	slider->int_flags &= ~slider_dragging;
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMouseUp, ms);
 
@@ -3459,7 +3528,7 @@ int EZ_slider_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	// Call the super class first.
 	EZ_control_OnMouseEvent(self, ms);
 
-	if (slider->slider_flags & SLIDER_DRAGGING)
+	if (slider->int_flags & slider_dragging)
 	{
 		int new_slider_pos = Q_rint((ms->x - self->absolute_x) / slider->gap_size);
 		EZ_slider_SetPosition(slider, new_slider_pos);

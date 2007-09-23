@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.30 2007-09-23 18:00:42 dkure Exp $
+$Id: ez_controls.h,v 1.31 2007-09-23 20:23:16 cokeman1982 Exp $
 */
 
 //
@@ -248,24 +248,6 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 // Control
 // =========================================================================================
 
-#define CONTROL_ENABLED				(1 << 0)	// Is the control usable?
-#define CONTROL_MOVABLE				(1 << 1)	// Can the control be moved?
-#define CONTROL_MOVING				(1 << 2)	// Is the control in the process of being moved?
-#define CONTROL_FOCUSABLE			(1 << 3)	// Can the control be given focus?
-#define CONTROL_FOCUSED				(1 << 4)	// Is the control currently in focus?
-#define CONTROL_RESIZE_H			(1 << 5)	// Is the control resizeable horizontally?
-#define CONTROL_RESIZE_V			(1 << 6)	// Is the control resizeable vertically?
-#define CONTROL_RESIZING_RIGHT		(1 << 7)	// Are we resizing the control to the right?
-#define CONTROL_RESIZING_LEFT		(1 << 8)	// Are we resizing the control to the left?
-#define CONTROL_RESIZING_TOP		(1 << 9)	// Resizing upwards.
-#define CONTROL_RESIZING_BOTTOM		(1 << 10)	// Resizing downards.
-#define CONTROL_CONTAINED			(1 << 11)	// Is the control contained within it's parent or can it go outside its edges?
-#define CONTROL_CLICKED				(1 << 12)	// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
-#define CONTROL_VISIBLE				(1 << 13)	// Is the control visible?
-#define CONTROL_MOUSE_OVER			(1 << 14)	// Is the mouse over the control?
-#define CONTROL_SCROLLABLE			(1 << 15)	// Is the control scrollable?
-#define CONTROL_RESIZEABLE			(1 << 16)	// Is the control resizeable?
-
 //
 // Control - Function pointer types.
 //
@@ -275,7 +257,7 @@ typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, in
 typedef int (*ez_control_keyspecific_handler_fp) (struct ez_control_s *self, int key, int unichar);
 typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
 
-#define CONTROL_IS_CONTAINED(self) (self->parent && (self->flags & CONTROL_CONTAINED))
+#define CONTROL_IS_CONTAINED(self) (self->parent && (self->ext_flags & control_contained))
 #define MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, axis, h)									\
 	(ctrl->parent																					\
 	&& (((int) mouse_state->axis <= ctrl->parent->absolute_##axis)									\
@@ -428,6 +410,37 @@ typedef enum ez_anchor_e
 	anchor_bottom	= (1 << 4)
 } ez_anchor_t;
 
+//
+// Control - External flags.
+//
+typedef enum ez_control_flags_e
+{
+	control_enabled			= (1 << 0),		// Is the control usable?
+	control_movable			= (1 << 1),		// Can the control be moved?
+	control_focusable		= (1 << 2),		// Can the control be given focus?
+	control_resize_h		= (1 << 3),		// Is the control resizeable horizontally?
+	control_resize_v		= (1 << 4),		// Is the control resizeable vertically?
+	control_resizeable		= (1 << 5),		// Is the control resizeable? // TODO : Should this be external?
+	control_contained		= (1 << 6),		// Is the control contained within it's parent or can it go outside its edges?
+	control_visible			= (1 << 7),		// Is the control visible?
+	control_scrollable		= (1 << 8)		// Is the control scrollable?
+} ez_control_flags_t;
+
+//
+// Control - Internal flags.
+//
+typedef enum ez_control_iflags_e
+{
+	control_focused			= (1 << 0),		// Is the control currently in focus?
+	control_moving			= (1 << 1),		// Is the control in the process of being moved?
+	control_resizing_left	= (1 << 2),		// Are we resizing the control to the left?
+	control_resizing_right	= (1 << 3),		// Are we resizing the control to the right?
+	control_resizing_top	= (1 << 4),		// Resizing upwards.
+	control_resizing_bottom	= (1 << 5),		// Resizing downards.
+	control_clicked			= (1 << 6),		// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
+	control_mouse_over		= (1 << 7)		// Is the mouse over the control?
+} ez_control_iflags_t;
+
 typedef struct ez_control_s
 {
 	int						CLASS_ID;				// An ID unique for this class, this is set at initilization
@@ -482,8 +495,8 @@ typedef struct ez_control_s
 	int						draw_order;				// The order the control is drawn in.
 	int						tab_order;				// The tab number of the control.
 	
-	int						flags;					// Flags defining such as visibility, focusability, and manipulation
-													// being performed on the control.
+	ez_control_flags_t		ext_flags;				// External flags that decide how the control should behave. Movable, resizeable and such.
+	ez_control_iflags_t		int_flags;				// Internal flags that holds the current state of the control, moving, resizing and so on.
 
 	byte					background_color[4];	// The background color of the control RGBA.
 	mpic_t					*background;			// The background picture.
@@ -825,11 +838,20 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 #define EZ_LABEL_INHERITANCE_LEVEL		1
 #define EZ_LABEL_ID						2
 
-#define LABEL_LARGEFONT		(1 << 0)	// Use the large font.
-#define LABEL_AUTOSIZE		(1 << 1)	// Autosize the label to fit the text (if it's not wrapped).
-#define LABEL_AUTOELLIPSIS	(1 << 2)	// Show ... at the end of the text if it doesn't fit within the label.
-#define LABEL_WRAPTEXT		(1 << 3)	// Wrap the text to fit inside the label.
-#define LABEL_SELECTING		(1 << 4)	// Are we selecting text?
+typedef enum ez_label_flags_e
+{
+	label_largefont		= (1 << 0),		// Use the large font.
+	label_autosize		= (1 << 1),		// Autosize the label to fit the text (if it's not wrapped).
+	label_autoellipsis	= (1 << 2),		// Show ... at the end of the text if it doesn't fit within the label.
+	label_wraptext		= (1 << 3),		// Wrap the text to fit inside the label.
+	label_selectable	= (1 << 4),		// Is text selectable?
+	label_readonly		= (1 << 5)		// Is input allowed?
+} ez_label_flags_t;
+
+typedef enum ez_label_iflags_e
+{
+	label_selecting		= (1 << 0)		// Are we selecting text?
+} ez_label_iflags_t;
 
 #define LABEL_MAX_WRAPS		512
 #define LABEL_LINE_SIZE		1024
@@ -842,6 +864,7 @@ typedef struct ez_label_events_s
 	ez_control_handler_fp	OnTextChanged;			// Event raised when the text in the label is changed.
 	ez_control_handler_fp	OnCaretMoved;			// The caret was moved.
 	ez_control_handler_fp	OnTextScaleChanged;		// The scale of the text changed.
+	ez_control_handler_fp	OnTextFlagsChanged;		// The text flags changed.
 } ez_label_events_t;
 
 typedef struct ez_label_textpos_s
@@ -857,11 +880,15 @@ typedef struct ez_label_s
 
 	ez_label_events_t	events;						// Specific events for the label control.
 	ez_label_events_t	event_handlers;				// Specific event handlers for the label control.
+
 	char				*text;						// The text to be shown in the label.
 	int					text_length;				// The length of the label text (excluding \0).
-	int					text_flags;					// Flags for how the text in the label is formatted.
+	
+	ez_label_flags_t	ext_flags;					// External flags for how the text in the label is formatted.
+	ez_label_iflags_t	int_flags;					// Internal flags for the current state of the label.
+
 	ez_label_textpos_t	wordwraps[LABEL_MAX_WRAPS];	// Positions in the text where line breaks are located.
-	clrinfo_t			color;						// The text color of the label.
+	clrinfo_t			color;						// The text color of the label. // TODO : Make this a pointer?
 	float				scale;						// The scale of the text in the label.
 	int					scaled_char_size;			// The actual size of the characters in the text.
 	int					select_start;				// At what index the currently selected text starts at (this can be greater than select_end).
@@ -878,15 +905,15 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
 							  char *background_name, 
-							  int flags, int text_flags,
-							  char *text, clrinfo_t text_color);
+							  ez_control_flags_t flags, ez_label_flags_t text_flags,
+							  char *text);
 
 void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent, 
 				  char *name, char *description, 
 				  int x, int y, int width, int height, 
 				  char *background_name, 
-				  int flags, int text_flags,
-				  char *text, clrinfo_t text_color);
+				  ez_control_flags_t flags, ez_label_flags_t text_flags,
+				  char *text);
 
 //
 // Label - Destroys a label control.
@@ -939,6 +966,16 @@ void EZ_label_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha)
 void EZ_label_SetText(ez_label_t *self, const char *text);
 
 //
+// Label - Gets the text flags for the label.
+//
+ez_label_flags_t EZ_label_GetTextFlags(ez_label_t *label);
+
+//
+// Label - Sets the text flags for the label.
+//
+void EZ_label_SetTextFlags(ez_label_t *label, ez_label_flags_t flags);
+
+//
 // Label - Appends text at the given position in the text.
 //
 void EZ_label_AppendText(ez_label_t *label, int position, const char *append_text);
@@ -947,6 +984,11 @@ void EZ_label_AppendText(ez_label_t *label, int position, const char *append_tex
 // Label - Set the caret position.
 //
 void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos);
+
+//
+// Label - The text flags for the label changed.
+//
+int EZ_label_OnTextFlagsChanged(ez_control_t *self);
 
 //
 // Label - The scale of the text changed.
@@ -1035,6 +1077,8 @@ typedef struct ez_button_s
 	ez_button_events_t		events;				// Specific events for the button control.
 	ez_button_events_t		event_handlers;		// Specific event handlers for the button control.
 
+	ez_label_t				*text_label;		// The buttons text label.
+
 	mpic_t					*focused_image;		// The image for the button when it is focused.
 	mpic_t					*normal_image;		// The normal image used for the button.
 	mpic_t					*hover_image;		// The image that is shown for the button when the mouse is over it.
@@ -1067,7 +1111,7 @@ ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
 							  char *background_name, char *hover_image, char *pressed_image,
-							  int flags);
+							  ez_control_flags_t flags);
 
 //
 // Button - Initializes a button.
@@ -1076,7 +1120,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
 							  char *background_name, char *hover_image, char *pressed_image,
-							  int flags);
+							  ez_control_flags_t flags);
 
 //
 // Button - Destroys the button.
@@ -1125,7 +1169,10 @@ int EZ_button_OnDraw(ez_control_t *self);
 #define EZ_SLIDER_INHERITANCE_LEVEL		1
 #define EZ_SLIDER_ID					2
 
-#define SLIDER_DRAGGING					(1 << 0)
+typedef enum ez_slider_iflags_e
+{
+	slider_dragging	= (1 << 0)
+} ez_slider_iflags_t;
 
 typedef struct ez_slider_events_s
 {
@@ -1138,10 +1185,10 @@ typedef struct ez_slider_s
 {
 	ez_control_t			super;				// The super class.
 
-	ez_slider_events_t		events;
-	ez_slider_events_t		event_handlers;
+	ez_slider_events_t		events;				// Slider specific events.
+	ez_slider_events_t		event_handlers;		// Slider specific event handlers.
 
-	int						slider_flags;		// Slider specific flags.
+	ez_control_flags_t		int_flags;			// Slider specific flags.
 	int						slider_pos;			// The position of the slider.
 	int						real_slider_pos;	// The actual slider position in pixels.
 	int						max_value;			// The max value allowed for the slider.
@@ -1161,7 +1208,7 @@ ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  char *background_name,
-							  int flags);
+							  ez_control_flags_t flags);
 
 //
 // Slider - Initializes a button.
@@ -1170,7 +1217,7 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  char *background_name,
-							  int flags);
+							  ez_control_flags_t flags);
 
 //
 // Slider - Event handler for OnSliderPositionChanged.
