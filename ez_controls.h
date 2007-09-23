@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.29 2007-09-23 00:37:42 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.30 2007-09-23 18:00:42 dkure Exp $
 */
 
 //
@@ -215,7 +215,7 @@ typedef struct ez_tree_s
 } ez_tree_t;
 
 //
-// Control Tree - Orders the draw list based on the draw order property.
+// Control Tree - Orders the tab list based on the tab order property.
 //
 void EZ_tree_OrderTabList(ez_tree_t *tree);
 
@@ -326,7 +326,7 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 //    the first thing it does).
 // 3. Run any specified event handler associated with the OnMouseUp event. ctrl->event_handlers.OnMouseUp
 //
-// This works by having a "inheritance level" and "override count" in each control struct:
+// This works by having an "inheritance level" and "override count" in each control struct:
 // Inheritance level:
 // ------------------
 // ez_control_t = 0
