@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.25 2007-09-13 15:42:27 dkure Exp $
+$Id: fs.c,v 1.26 2007-09-23 17:44:40 dkure Exp $
 */
 
 
@@ -83,16 +83,6 @@ typedef enum {
 	FSLFRT_DEPTH_ANYPATH
 } FSLF_ReturnType_e;
 
-vfsfile_t *FS_OpenVFSLoc(flocation_t *loc, char *mode);
-void FS_CreatePath(char *pname, int relativeto);
-void FS_ForceToPure(char *str, char *crcs, int seed);
-int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
-void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
-int COM_FileOpenRead (char *path, FILE **hndl);
-void FS_ReloadPackFiles_f(void);
-qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
-void FS_FlushFSHash(void);
-
 typedef struct
 {
 	int		filepos, filelen;
@@ -114,6 +104,17 @@ typedef enum {
 	FS_LOAD_FILE_ALL = FS_LOAD_FILE_PAK | FS_LOAD_FILE_PK3 
 		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD,
 } FS_Load_File_Types;
+
+vfsfile_t *FS_OpenVFSLoc(flocation_t *loc, char *mode);
+void FS_CreatePath(char *pname, int relativeto);
+void FS_ForceToPure(char *str, char *crcs, int seed);
+int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
+void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
+int COM_FileOpenRead (char *path, FILE **hndl);
+void FS_ReloadPackFiles_f(void);
+qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
+void FS_FlushFSHash(void);
+void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
 //FTE-FIXME: This seems like com_homedir
 //char	com_configdir[MAX_OSPATH];	//homedir/fte/configs
@@ -947,8 +948,9 @@ void FS_SetGamedir (char *dir)
 	}
 #else
 	FS_AddGameDirectory(va("%s/%s", com_basedir, dir), FS_LOAD_FILE_ALL);
-	if (*com_homedir)
-		FS_AddGameDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
+	if (*com_homedir) {
+		FS_AddHomeDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
+	}
 #endif
 
 #ifdef GLQUAKE
@@ -1099,11 +1101,11 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	FS_AddGameDirectory(com_basedir, "ezquake");
 	FS_AddGameDirectory(com_basedir, "qw");
 #else
-	FS_AddGameDirectory(va("%s/%s", com_basedir, "id1"), (unsigned int)-1);
-	FS_AddGameDirectory(va("%s/%s", com_basedir, "ezquake"), (unsigned int)-1);
-	FS_AddGameDirectory(va("%s/%s", com_basedir, "qw"), (unsigned int)-1);
+	FS_AddGameDirectory(va("%s/%s", com_basedir, "id1"),     FS_LOAD_FILE_ALL);
+	FS_AddGameDirectory(va("%s/%s", com_basedir, "ezquake"), FS_LOAD_FILE_ALL);
+	FS_AddGameDirectory(va("%s/%s", com_basedir, "qw"),      FS_LOAD_FILE_ALL);
 	if (*com_homedir)
-	        FS_AddGameDirectory(com_homedir, (unsigned int)-1);
+	        FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
 #endif
 
 	//
@@ -1119,7 +1121,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #ifndef WITH_FTE_VFS
 			FS_AddGameDirectory(com_basedir,com_argv[i+1]);
 #else
-			FS_AddGameDirectory(va("%s%s", com_basedir, com_argv[i+1]), (unsigned int)-1);
+			FS_AddGameDirectory(va("%s%s", com_basedir, com_argv[i+1]), FS_LOAD_FILE_ALL);
 #endif
 		}
 		i++;
@@ -2723,7 +2725,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.25 2007-09-13 15:42:27 dkure Exp $
+ * $Id: fs.c,v 1.26 2007-09-23 17:44:40 dkure Exp $
  *             
  */
 
@@ -2747,10 +2749,6 @@ void FS_InitModuleFS (void)
 /******************************************************************************
  *     TODO:
  ****************************
- * 1) Need to add some functions FTE-FIXME's
- * 		D-Kure: Mostly finished, some functions aren't needed as we have other
- * 		        ways of doing it.
- *
  * 2) Need to check all the FTE-FIXME's
  * 		D-Kure: I have made comment on the ones I unsure of,
  * 		        others just need the time to do what the comment says.
@@ -2769,23 +2767,13 @@ void FS_InitModuleFS (void)
  * 6) pak3 support does not work yet, firstly we need to disable it to avoid
  *    seg faults in ezQuake, then we need to get it working
  *
- * 7) Fix the rendering bug...
- *    D-Kure: I think this is only to do with png/24bit files as lmp's seem to work
- *    Fixed: This was a fs_filesize not being set correctly on FS_OpenVFS
- *
- * 8) EX_browser*.c need to be updated to use VFS_GETS parsing rather then 
- *    fscanf() & feof()
- *
  * 9) Renaming of lots of the COM_* functions to FS_*
  *
  ****************************
  *     No particular order
  ****************************
- *  - Add Ezquake TCP VFS to the supported files (copy & paste from fs.c)
- *  - Replace standard open/close/read/write pak io with this VFS stuff
  *  - Add tar.gz support
  *  - Replace zipped/tar/tar.gz demo opening with VFS calls
- *  - Replace current fs.c with this file (fte_fs.c)
  *
  *****************************************************************************/
 
@@ -4658,7 +4646,7 @@ void FS_RebuildFSHash(void)
 	if (!filesystemhash.numbuckets)
 	{
 		filesystemhash.numbuckets = 1024;
-		filesystemhash.bucket = (bucket_t**)Q_malloc(Hash_BytesForBuckets(filesystemhash.numbuckets));
+		filesystemhash.bucket = (bucket_t**)Q_calloc(1, Hash_BytesForBuckets(filesystemhash.numbuckets));
 	}
 	else
 	{
@@ -5439,12 +5427,9 @@ Sets com_gamedir, adds the directory to the head of the path,
 then loads and adds pak1.pak pak2.pak ...
 ================
 */
-// XXX: This seems very similar to FS_AddUserDirectory, but AddUserDirectory 
-// has some modifications
 void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 {
 	searchpath_t	*search;
-
 	char			*p;
 
 	if ((p = strrchr(dir, '/')) != NULL)
@@ -5461,10 +5446,33 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 			return; //already loaded (base paths?)
 	}
 
-//
-// add the directory to the search path
-//
+	// add the directory to the search path
+	p = Q_malloc(strlen(dir)+1);
+	strcpy(p, dir);
+	COM_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
+}
 
+/*
+================
+FS_AddHomeDirectory
+
+Adds the home directory to the head of the path,
+then loads and adds pak1.pak pak2.pak ...
+================
+*/
+void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff) {
+	searchpath_t	*search;
+	char			*p;
+
+	for (search = com_searchpaths; search; search = search->next)
+	{
+		if (search->funcs != &osfilefuncs)
+			continue;
+		if (!strcasecmp(search->handle, com_homedir))
+			return; //already loaded (base paths?)
+	}
+
+	// add the directory to the search path
 	p = Q_malloc(strlen(dir)+1);
 	strcpy(p, dir);
 	COM_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
