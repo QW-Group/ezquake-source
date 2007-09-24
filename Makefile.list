@@ -50,6 +50,7 @@ CLIENT_C_FILES := \
 	modules \
 	movie \
 	mp3_player \
+	mvd_autotrack \
 	mvd_utils \
 	parser \
 	qtv \

@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.50 2007-09-24 18:59:47 johnnycz Exp $
+$Id: mvd_utils.c,v 1.51 2007-09-24 21:15:37 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -14,24 +14,8 @@ $Id: mvd_utils.c,v 1.50 2007-09-24 18:59:47 johnnycz Exp $
 #endif
 #include "teamplay.h"
 #include "utils.h"
+#include "mvd_utils_common.h"
 
-
-#define MH_INFO		14
-#define RA_INFO		13
-#define YA_INFO		12
-#define GA_INFO		11
-#define PENT_INFO	10
-#define QUAD_INFO	9
-#define RING_INFO	8
-#define LG_INFO		7
-#define RL_INFO		6
-#define GL_INFO		5
-#define SNG_INFO	4
-#define NG_INFO		3
-#define SSG_INFO	2
-#define SG_INFO		1
-#define AXE_INFO	0
-#define mvd_info_types 15
 
 #define gt_unknown	3
 #define gt_4on4	3
@@ -40,68 +24,6 @@ $Id: mvd_utils.c,v 1.50 2007-09-24 18:59:47 johnnycz Exp $
 #define gt_1on1	0
 #define mvd_gt_types 5
 
-
-// killstats structures
-typedef struct mvd_ks_w_s {
-	int kills;
-	int teamkills;
-	int lastkills;
-} mvd_ks_w_t;
-
-typedef struct mvd_ks_s {
-	mvd_ks_w_t normal[8];	// weapon kills axe - lg
-	mvd_ks_w_t q[7];
-	mvd_ks_w_t p[7];
-	mvd_ks_w_t r[7];
-	mvd_ks_w_t qp[7];
-	mvd_ks_w_t qr[7];
-	mvd_ks_w_t pr[7];
-	mvd_ks_w_t qpr[7];
-} mvd_ks_t;
-
-typedef struct  mvd_ds_s {
-	int isdead;
-	int deathcount;
-	double alivetimestart;
-	double alivetime;
-
-} mvd_ds_t ;
-
-// keeps runstats from spawn to death
-typedef struct mvd_runs_s {
-	double time;
-	int frags;
-	int teamfrags;
-	double starttime;
-
-} mvd_runs_t ;
-
-// item stuff
-typedef struct mvd_pw_s {
-	int has;
-	double starttime;
-	double ctime;
-	int count ;
-	int lost ;
-	int mention;
-	mvd_runs_t runs[512];
-	int run;
-} mvd_pw_t;
-
-typedef struct mvd_info_s {
-    float value;
-    int lfw;				//last fired weapon
-	mvd_ds_t das;			//dead alive stats
-	mvd_pw_t info[15];		//iteam stats
-	mvd_runs_t runs[512];	//
-	mvd_ks_t killstats;		// killstats
-	int spawntelefrags;
-	int teamspawntelefrags;
-	int lastfrags;
-	int run;
-	int firstrun;
-
-} mvd_info_t;
 
 typedef struct mvd_gt_info_s {
 	int id;
@@ -115,17 +37,6 @@ static mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 	{gt_4on4,"4on4"},
 	{gt_unknown,"unknown"},
 };
-
-typedef struct mvd_cg_info_s {
-	char mapname[1024];
-	char team1[1024];
-	char team2[1024];
-	char hostname[1024];
-	int gametype;
-	int timelimit;
-	int pcount;
-	int deathmatch;
-} mvd_cg_info_s;
 
 mvd_cg_info_s mvd_cg_info;
 
@@ -196,35 +107,7 @@ typedef struct spawn_s {
 	vec3_t location;
 } spawn_t;
 
-typedef struct items_s {
-	int took;
-	int lost;
-} items_t;
 
-typedef struct mvd_event_s {
-	int			type;			// what happened ?	0-spawn,1-death,2-kill,3-teamkill,4-took,5-powerup_end
-	double		time;		// when did it happen ?
-	vec3_t		loc;		// where did it happen ?
-	int			info;		// for item on tooks
-							// lfw on deaths
-							// lfw on kills 0-7 axe-lg,-1 spawn
-							//
-	int			k_id;		// userid of the guy we killed
-} mvd_event_t;
-
-typedef struct mvd_new_info_s {
-	int id;							//id cl.players[id]
-	float value;						//mvd_info/mvd_autotrack value
-
-	mvd_event_t		*event;
-	items_t			item_info[mvd_info_types];
-	player_state_t	*p_state ;
-	player_info_t	*p_info;
-	//p_state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i];
-	//p_info_players = cl.players[i];
-	int lwf;						// last weapon fired
-	mvd_info_t info;
-} mvd_new_info_t;// mvd_new_info;
 
 typedef struct mvd_new_info_cg_s {
 	double game_starttime;
@@ -297,27 +180,8 @@ extern char *Weapon_NumToString(int num);
 mvd_new_info_t mvd_new_info[MAX_CLIENTS];
 
 int FindBestNick(char *s, int use);
-int MVD_AutoTrackBW_f(int i);
-
-#define PL_VALUES_COUNT 14
-static float pl_values[PL_VALUES_COUNT];
-#define axe_val     (pl_values[0])
-#define sg_val      (pl_values[1])
-#define ssg_val     (pl_values[2])
-#define ng_val      (pl_values[3])
-#define sng_val     (pl_values[4])
-#define gl_val      (pl_values[5])
-#define rl_val      (pl_values[6])
-#define lg_val      (pl_values[7])
-#define ga_val      (pl_values[8])
-#define ya_val      (pl_values[9])
-#define ra_val      (pl_values[10])
-#define ring_val    (pl_values[11])
-#define quad_val    (pl_values[12])
-#define pent_val    (pl_values[13])
 
 int mvd_demo_track_run = 0;
-int last_track = 0;
 
 
 //event_handler_t *events=NULL;
@@ -333,27 +197,6 @@ cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 cvar_t			mvd_status		= {"mvd_status","0"};
 cvar_t			mvd_status_x		= {"mvd_status_x","0"};
 cvar_t			mvd_status_y		= {"mvd_status_y","0"};
-
-// mvd_autotrack cvars
-cvar_t mvd_autotrack = {"mvd_autotrack", "0"};
-cvar_t mvd_autotrack_1on1 = {"mvd_autotrack_1on1", "%a * %A + 50 * %W + %p + %f"};
-cvar_t mvd_autotrack_1on1_values = {"mvd_autotrack_1on1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
-cvar_t mvd_autotrack_2on2 = {"mvd_autotrack_2on2", "%a * %A + 50 * %W + %p + %f"};
-cvar_t mvd_autotrack_2on2_values = {"mvd_autotrack_2on2_values", "1 2 3 2 3 5 8 8 1 2 3 500 900 1000"};
-cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
-cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10 10 1 2 3 500 900 1000"};
-cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
-cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"};
-cvar_t mvd_autotrack_lockteam = {"mvd_autotrack_lockteam", "0"};
-
-cvar_t mvd_multitrack_1 = {"mvd_multitrack_1", "%f"};
-cvar_t mvd_multitrack_1_values = {"mvd_multitrack_1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
-cvar_t mvd_multitrack_2 = {"mvd_multitrack_2", "%W"};
-cvar_t mvd_multitrack_2_values = {"mvd_multitrack_2_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
-cvar_t mvd_multitrack_3 = {"mvd_multitrack_3", "%h"};
-cvar_t mvd_multitrack_3_values = {"mvd_multitrack_3_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
-cvar_t mvd_multitrack_4 = {"mvd_multitrack_4", "%A"};
-cvar_t mvd_multitrack_4_values = {"mvd_multitrack_4_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
 
 cvar_t mvd_write_xml = {"mvd_write_xml","0"};
 
@@ -376,14 +219,6 @@ cvar_t mvd_pc_view_4 = {"mvd_pc_view_4",""};
 cvar_t mvd_moreinfo = {"mvd_moreinfo","0"};
 
 
-
-int multitrack_id_1 = 0;
-int multitrack_id_2 = 0;
-int multitrack_id_3 = 0;
-int multitrack_id_4 = 0;
-
-char *multitrack_val ;
-char *multitrack_str ;
 
 //quad_cams_t quad_cams[3];
 //quad_cams_t pent_cams[3];
@@ -602,8 +437,6 @@ void MVD_Info (void){
 		loc_loaded = 1;
 	}
 
-
-
 	if (!mvd_info.value)
 		return;
 
@@ -633,7 +466,6 @@ void MVD_Info (void){
 
 	for ( i=0 ; i<mvd_cg_info.pcount ; i++ ){
 
-
 	mvd_info_powerups[0]=0;
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_QUAD)
 		//strncpyz(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
@@ -649,7 +481,6 @@ void MVD_Info (void){
 		//	strncatz(mvd_info_powerups, tp_name_separator.string);
 		//strncatz(mvd_info_powerups, tp_name_ring.string);
 	}
-
 
 	strncpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));
     Replace_In_String(mvd_info_final_string,sizeof(mvd_info_final_string),'%',\
@@ -671,293 +502,6 @@ void MVD_Info (void){
 	printf("MVD_Info Stopped\n");
 	#endif
 	}
-}
-
-int currentplayer_num;
-
-expr_val MVD_Var_Vals(const char *n)
-{
-#define VN(x) (*n == (x))
-	int i = currentplayer_num;
-    int stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
-	double bp_at, bp_pw;
-
-	// get armortype
-	if      (stats & IT_ARMOR1) bp_at = ga_val;
-	else if (stats & IT_ARMOR2) bp_at = ya_val;
-	else if (stats & IT_ARMOR3)	bp_at = ra_val;
-	else                        bp_at = 0;
-
-	// get powerup type
-	bp_pw=0;
-	if (stats & IT_QUAD)            bp_pw += quad_val;
-	if (stats & IT_INVULNERABILITY)	bp_pw += pent_val;
-	if (stats & IT_INVISIBILITY)    bp_pw += ring_val;
-
-	// a - armor value
-    // A - armor type
-    // b - average run time
-    // B - average run frags
-    // c - current run time
-    // C - current run frags
-    // d - average quad run time
-    // D - average quad runt frags
-    // e -
-    // E - average pent run frags
-    // f - frags
-    // F -
-    // h - health
-    // i - took ssg
-    // I -
-    // j - took ng
-    // J - took sng
-    // k - took gl
-    // K - lost gl
-    // l - took rl
-    // L - lost rl
-    // m - took lg
-    // M - lost lg
-    // n - took mh
-    // N - took ga
-    // o - took ya
-    // O - took ra
-    // p - powerups
-    // P -
-    // q -
-    // Q -
-    // r -
-    // R -
-    // s -
-    // S -
-    // t -
-    // T -
-    // u -
-    // U -
-    // v -
-    // V -
-    // w -
-    // W - best weapon
-    // x - took ring
-    // X - lost ring
-    // y - took quad
-    // Y - lost quad
-    // z - took pent
-
-	switch (*n) {
-    case 'a': return Get_Expr_Double(mvd_new_info[i].p_info->stats[STAT_ARMOR]);
-    case 'A': return Get_Expr_Double(bp_at);
-    case 'c': return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time);
-    case 'C': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags);
-    case 'f': return Get_Expr_Integer(mvd_new_info[i].p_info->frags);
-    case 'h': return Get_Expr_Integer(mvd_new_info[i].p_info->stats[STAT_HEALTH]);
-    case 'j': return Get_Expr_Integer(mvd_new_info[i].info.info[NG_INFO].count);
-    case 'J': return Get_Expr_Integer(mvd_new_info[i].info.info[SNG_INFO].count);
-    case 'k': return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].count);
-    case 'K': return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].lost);
-    case 'l': return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].count);
-    case 'L': return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].lost);
-    case 'm': return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].count);
-    case 'M': return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].lost);
-    case 'n': return Get_Expr_Integer(mvd_new_info[i].info.info[MH_INFO].count);
-    case 'N': return Get_Expr_Integer(mvd_new_info[i].info.info[GA_INFO].count);
-    case 'o': return Get_Expr_Integer(mvd_new_info[i].info.info[YA_INFO].count);
-    case 'O': return Get_Expr_Integer(mvd_new_info[i].info.info[RA_INFO].count);
-    case 'p': return Get_Expr_Double(bp_pw);
-    case 'W': return Get_Expr_Integer(MVD_AutoTrackBW_f(i));
-    case 'x': return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].count);
-    case 'X': return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].lost);
-    case 'y': return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].count);
-    case 'Y': return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].lost);
-    case 'z': return Get_Expr_Double(mvd_new_info[i].info.info[PENT_INFO].count);
-	}
-	return Get_Expr_Integer(0);
-}
-
-static parser_extra mvd_pars_extra = { MVD_Var_Vals, NULL };
-
-#define NO_BEST_PLAYER -1
-
-void MVD_UpdatePlayerValues(void)
-{
-	int eval_error, i;
-	const char* vals_str;
-    const char* eq;
-	float lastval = 0;
-    double value;
-
-    // FIXME!
-    // if you run a demo and then anther demo, mvd_cg_info will not change!
-    // so most probably if you run 4on4 demo and then 1on1 or vice versa, during the second
-    // demo the autotrack will not work
-	if      (mvd_cg_info.gametype == 0) vals_str = mvd_autotrack_1on1_values.string;
-	else if (mvd_cg_info.gametype == 1) vals_str = mvd_autotrack_2on2_values.string;
-	else if (mvd_cg_info.gametype == 3) vals_str = mvd_autotrack_4on4_values.string;
-	else if (mvd_autotrack.integer == 2)  vals_str = mvd_autotrack_custom_values.string;
-	else if (mvd_autotrack.integer == 3 && cl_multiview.value)
-        vals_str = multitrack_val;
-    else                                vals_str = mvd_autotrack_1on1_values.string;
-
-    // will extract user string "1 5 8 100.4 ..." into pl_values array which is
-    // later accessed via macros like ra_val, quad_val, rl_val, ...
-    if (COM_GetFloatTokens(vals_str, pl_values, PL_VALUES_COUNT) != PL_VALUES_COUNT)
-    {
-	    Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
-		Cvar_SetValue(&mvd_autotrack,0);
-		return;
-    }
-
-	for ( i=0; i<mvd_cg_info.pcount ; i++ )
-    {
-        // choose equation
-	    if      (mvd_cg_info.pcount == 2)   eq = mvd_autotrack_1on1.string;
-	    else if (mvd_cg_info.pcount == 4)   eq = mvd_autotrack_2on2.string;
-	    else if (mvd_cg_info.pcount == 8)   eq = mvd_autotrack_4on4.string;
-	    else                                eq = mvd_autotrack_1on1.string;
-
-	    if (mvd_autotrack.integer == 2)
-		    eq = mvd_autotrack_custom.string;
-	    else if (mvd_autotrack.integer == 3 && cl_multiview.value)
-		    eq = multitrack_str;
-
-		// store global variable which is used in MVD_Var_Vals
-		currentplayer_num = i;
-		eval_error = Expr_Eval_Double(eq, &mvd_pars_extra, &value);
-
-		if (eval_error != EXPR_EVAL_SUCCESS) {
-			Com_Printf("Expression evaluation error: %s\n", Parser_Error_Description(eval_error));
-			Cvar_SetValue(&mvd_autotrack,0);
-			return;
-		}
-
-		mvd_new_info[i].value = value;
-	}
-}
-
-int MVD_GetBestPlayer(void)
-{
-	int initial, h, bp_id, bp_val;
-
-	if (last_track < 0 || last_track > mvd_cg_info.pcount)
-		initial = 0;
-	else initial = last_track;
-
-	bp_val = mvd_new_info[initial].value;
-	bp_id = mvd_new_info[initial].id;
-	for ( h=0 ; h<mvd_cg_info.pcount ; h++ ) {
-		if (bp_val < mvd_new_info[h].value) {
-			if (mvd_autotrack_lockteam.integer && strcmp(cl.players[h].team, cl.players[cl.viewplayernum].team))
-				continue;
-
-			bp_val = mvd_new_info[h].value;
-			bp_id 	= mvd_new_info[h].id;
-		}
-	}
-	return bp_id ;
-}
-
-int MVD_FindBestPlayer_f(void) {
-	MVD_UpdatePlayerValues();
-	return MVD_GetBestPlayer();
-}
-
-int MVD_AutoTrackBW_f(int i){
-	extern cvar_t tp_weapon_order;
-	int j;
-	player_info_t *bp_info;
-
-	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;
-
-	bp_info = cl.players;
-
-		for (s = t; *s; s++) {
-			for (j = 0 ; j < strlen(*s) ; j++) {
-				switch ((*s)[j]) {
-					case '1': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_AXE) return axe_val; break;
-					case '2': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SHOTGUN) return sg_val; break;
-					case '3': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) return ssg_val; break;
-					case '4': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_NAILGUN) return ng_val; break;
-					case '5': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPER_NAILGUN) return sng_val; break;
-					case '6': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) return gl_val; break;
-					case '7': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) return rl_val; break;
-					case '8': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_LIGHTNING) return lg_val; break;
-				}
-			}
-		}
-	return 0;
-}
-
-void MVD_AutoTrack_f(void) {
-	char arg[64];
-	int id;
-	static double lastupdate = 0;
-
-	#ifdef DEBUG
-	printf("MVD_AutoTrack_f Started\n");
-	#endif
-
-	if (!mvd_autotrack.value)
-		return;
-
-	// no need to recalculate the values in every frame
-	if (cls.realtime - lastupdate < 0.5)
-		return;
-
-	lastupdate = cls.realtime;
-
-	if (mvd_autotrack.value == 3 && cl_multiview.value > 0){
-		if (cl_multiview.value >= 1 ){
-			multitrack_str = mvd_multitrack_1.string;
-			multitrack_val = mvd_multitrack_1_values.string;
-			id = MVD_FindBestPlayer_f();
-			if (id != multitrack_id_1 && id != NO_BEST_PLAYER){
-				snprintf(arg, sizeof (arg), "track1 %i \n",id);
-				Cbuf_AddText(arg);
-				multitrack_id_1 = id;
-			}
-		}
-		if (cl_multiview.value >= 2 ){
-			multitrack_str = mvd_multitrack_2.string;
-			multitrack_val = mvd_multitrack_2_values.string;
-			id = MVD_FindBestPlayer_f();
-			if (id != multitrack_id_2 && id != NO_BEST_PLAYER){
-				snprintf(arg, sizeof (arg), "track2 %i \n",id);
-				Cbuf_AddText(arg);
-				multitrack_id_2 = id;
-			}
-		}
-		if (cl_multiview.value >= 3 ){
-			multitrack_str = mvd_multitrack_3.string;
-			multitrack_val = mvd_multitrack_3_values.string;
-			id = MVD_FindBestPlayer_f();
-			if (id != multitrack_id_3 && id != NO_BEST_PLAYER){
-				snprintf(arg, sizeof (arg), "track3 %i \n",id);
-				Cbuf_AddText(arg);
-				multitrack_id_3 = id;
-			}
-		}
-		if (cl_multiview.value >= 4 ){
-			multitrack_str = mvd_multitrack_4.string;
-	 		multitrack_val = mvd_multitrack_4_values.string;
-			id = MVD_FindBestPlayer_f();
-			if (id != multitrack_id_4 && id != NO_BEST_PLAYER){
-				snprintf(arg, sizeof (arg), "track4 %i \n",id);
-				Cbuf_AddText(arg);
-				multitrack_id_4 = id;
-			}
-		}
-	}
-	else // mvd_autotrack is 1 or 2
-	{
-		id = MVD_FindBestPlayer_f();
-		if (id != last_track && id != NO_BEST_PLAYER) {
-			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
-			Cbuf_AddText(arg);
-			last_track = id;
-		}
-	}
-	#ifdef DEBUG
-	printf("MVD_AutoTrack_f Stopped\n");
-	#endif
 }
 
 void MVD_Status_Announcer_f (int i, int z){
@@ -1930,31 +1474,14 @@ void MVD_Powerup_Cams_f (void){
 }
 
 void MVD_Utils_Init (void) {
+	MVD_AutoTrack_Init();
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_MVD);
 	Cvar_Register (&mvd_info);
 	Cvar_Register (&mvd_info_show_header);
 	Cvar_Register (&mvd_info_setup);
 	Cvar_Register (&mvd_info_x);
 	Cvar_Register (&mvd_info_y);
-	Cvar_Register (&mvd_autotrack);
-	Cvar_Register (&mvd_autotrack_1on1);
-	Cvar_Register (&mvd_autotrack_1on1_values);
-	Cvar_Register (&mvd_autotrack_2on2);
-	Cvar_Register (&mvd_autotrack_2on2_values);
-	Cvar_Register (&mvd_autotrack_4on4);
-	Cvar_Register (&mvd_autotrack_4on4_values);
-	Cvar_Register (&mvd_autotrack_custom);
-	Cvar_Register (&mvd_autotrack_custom_values);
-	Cvar_Register (&mvd_autotrack_lockteam);
-
-	Cvar_Register (&mvd_multitrack_1);
-	Cvar_Register (&mvd_multitrack_1_values);
-	Cvar_Register (&mvd_multitrack_2);
-	Cvar_Register (&mvd_multitrack_2_values);
-	Cvar_Register (&mvd_multitrack_3);
-	Cvar_Register (&mvd_multitrack_3_values);
-	Cvar_Register (&mvd_multitrack_4);
-	Cvar_Register (&mvd_multitrack_4_values);
 
 	Cvar_Register (&mvd_status);
 	Cvar_Register (&mvd_status_x);

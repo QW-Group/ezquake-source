@@ -1892,6 +1892,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\mvd_autotrack.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\mvd_utils.c"
 					>
 				</File>
@@ -2304,6 +2308,10 @@
 				</File>
 				<File
 					RelativePath="..\..\mvd_utils.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\mvd_utils_common.h"
 					>
 				</File>
 				<File

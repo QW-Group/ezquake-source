@@ -1378,6 +1378,9 @@
 					RelativePath="..\..\mp3_player.c">
 				</File>
 				<File
+					RelativePath="..\..\mvd_autotrack.c">
+				</File>
+				<File
 					RelativePath="..\..\mvd_utils.c">
 				</File>
 				<File
@@ -1713,6 +1716,9 @@
 				</File>
 				<File
 					RelativePath="..\..\mp3_player.h">
+				</File>
+				<File
+					RelativePath="..\..\mvd_utils_common.h">
 				</File>
 				<File
 					RelativePath="..\..\mvd_utils.h">
