@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.49 2007-09-12 22:29:53 disconn3ct Exp $
+$Id: mvd_utils.c,v 1.50 2007-09-24 18:59:47 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -317,7 +317,7 @@ static float pl_values[PL_VALUES_COUNT];
 #define pent_val    (pl_values[13])
 
 int mvd_demo_track_run = 0;
-int last_track;
+int last_track = 0;
 
 
 //event_handler_t *events=NULL;
@@ -325,7 +325,7 @@ int last_track;
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
 cvar_t			mvd_info_show_header	= {"mvd_info_show_header", "0"};
-cvar_t			mvd_info_setup		= {"mvd_info_setup", "%p%n �%l� %h/%a %w"}; // FIXME: non-ascii chars
+cvar_t			mvd_info_setup		= {"mvd_info_setup", "%p%n \x10%l\x11 %h/%a %w"}; // FIXME: non-ascii chars
 cvar_t			mvd_info_x		= {"mvd_info_x", "0"};
 cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 
@@ -468,7 +468,9 @@ void MVD_Init_Info_f (void) {
 
 }
 
-
+// this steps in action if the user has created a demo playlist and has specified
+// which player should be prefered in the demos (so that he doesn't have to switch
+// to that player at the start of each demo manually)
 void MVD_Demo_Track (void){
 	extern char track_name[16];
     extern cvar_t demo_playlist_track_name;
@@ -773,9 +775,11 @@ expr_val MVD_Var_Vals(const char *n)
 
 static parser_extra mvd_pars_extra = { MVD_Var_Vals, NULL };
 
-int MVD_FindBestPlayer_f(void)
+#define NO_BEST_PLAYER -1
+
+void MVD_UpdatePlayerValues(void)
 {
-	int bp_id, eval_error, i, h;
+	int eval_error, i;
 	const char* vals_str;
     const char* eq;
 	float lastval = 0;
@@ -799,7 +803,7 @@ int MVD_FindBestPlayer_f(void)
     {
 	    Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
 		Cvar_SetValue(&mvd_autotrack,0);
-		return 0;
+		return;
     }
 
 	for ( i=0; i<mvd_cg_info.pcount ; i++ )
@@ -822,27 +826,38 @@ int MVD_FindBestPlayer_f(void)
 		if (eval_error != EXPR_EVAL_SUCCESS) {
 			Com_Printf("Expression evaluation error: %s\n", Parser_Error_Description(eval_error));
 			Cvar_SetValue(&mvd_autotrack,0);
-			return 0;
+			return;
 		}
 
 		mvd_new_info[i].value = value;
 	}
+}
 
-	if (cl.viewplayernum >= mvd_cg_info.pcount) {
-		return mvd_new_info[0].id;
-	}
-	lastval = mvd_new_info[cl.viewplayernum].value;
-	bp_id = mvd_new_info[cl.viewplayernum].id;
+int MVD_GetBestPlayer(void)
+{
+	int initial, h, bp_id, bp_val;
+
+	if (last_track < 0 || last_track > mvd_cg_info.pcount)
+		initial = 0;
+	else initial = last_track;
+
+	bp_val = mvd_new_info[initial].value;
+	bp_id = mvd_new_info[initial].id;
 	for ( h=0 ; h<mvd_cg_info.pcount ; h++ ) {
-		if (lastval < mvd_new_info[h].value) {
+		if (bp_val < mvd_new_info[h].value) {
 			if (mvd_autotrack_lockteam.integer && strcmp(cl.players[h].team, cl.players[cl.viewplayernum].team))
 				continue;
 
-			lastval = mvd_new_info[h].value;
+			bp_val = mvd_new_info[h].value;
 			bp_id 	= mvd_new_info[h].id;
 		}
 	}
 	return bp_id ;
+}
+
+int MVD_FindBestPlayer_f(void) {
+	MVD_UpdatePlayerValues();
+	return MVD_GetBestPlayer();
 }
 
 int MVD_AutoTrackBW_f(int i){
@@ -874,6 +889,7 @@ int MVD_AutoTrackBW_f(int i){
 void MVD_AutoTrack_f(void) {
 	char arg[64];
 	int id;
+	static double lastupdate = 0;
 
 	#ifdef DEBUG
 	printf("MVD_AutoTrack_f Started\n");
@@ -882,12 +898,18 @@ void MVD_AutoTrack_f(void) {
 	if (!mvd_autotrack.value)
 		return;
 
+	// no need to recalculate the values in every frame
+	if (cls.realtime - lastupdate < 0.5)
+		return;
+
+	lastupdate = cls.realtime;
+
 	if (mvd_autotrack.value == 3 && cl_multiview.value > 0){
 		if (cl_multiview.value >= 1 ){
 			multitrack_str = mvd_multitrack_1.string;
 			multitrack_val = mvd_multitrack_1_values.string;
 			id = MVD_FindBestPlayer_f();
-			if ( id != multitrack_id_1){
+			if (id != multitrack_id_1 && id != NO_BEST_PLAYER){
 				snprintf(arg, sizeof (arg), "track1 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_1 = id;
@@ -897,7 +919,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_str = mvd_multitrack_2.string;
 			multitrack_val = mvd_multitrack_2_values.string;
 			id = MVD_FindBestPlayer_f();
-			if ( id != multitrack_id_2){
+			if (id != multitrack_id_2 && id != NO_BEST_PLAYER){
 				snprintf(arg, sizeof (arg), "track2 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_2 = id;
@@ -907,7 +929,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_str = mvd_multitrack_3.string;
 			multitrack_val = mvd_multitrack_3_values.string;
 			id = MVD_FindBestPlayer_f();
-			if ( id != multitrack_id_3){
+			if (id != multitrack_id_3 && id != NO_BEST_PLAYER){
 				snprintf(arg, sizeof (arg), "track3 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_3 = id;
@@ -917,17 +939,17 @@ void MVD_AutoTrack_f(void) {
 			multitrack_str = mvd_multitrack_4.string;
 	 		multitrack_val = mvd_multitrack_4_values.string;
 			id = MVD_FindBestPlayer_f();
-			if ( id != multitrack_id_4){
+			if (id != multitrack_id_4 && id != NO_BEST_PLAYER){
 				snprintf(arg, sizeof (arg), "track4 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_4 = id;
 			}
 		}
-
-	}else{
-
+	}
+	else // mvd_autotrack is 1 or 2
+	{
 		id = MVD_FindBestPlayer_f();
-		if ( id != last_track){
+		if (id != last_track && id != NO_BEST_PLAYER) {
 			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
 			Cbuf_AddText(arg);
 			last_track = id;
