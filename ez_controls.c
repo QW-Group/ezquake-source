@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.50 2007-09-24 18:11:43 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.51 2007-09-24 23:25:00 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -336,7 +336,7 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 		Sys_Error("EZ_tree_KeyEvent(): NULL control tree specified.\n");
 	}
 
-	if (tree->root)
+	if (tree->root && down)
 	{
 		switch (key)
 		{
@@ -1590,6 +1590,12 @@ static void EZ_control_ResizeByDirection(ez_control_t *self, mouse_state_t *ms, 
 // Control -
 // The initial mouse event is handled by this, and then raises more specialized event handlers
 // based on the new mouse state.
+// 
+// NOTICE! When extending this event you need to make sure that you need to tell the framework
+// that you've handled all mouse events that happened within the controls bounds in your own
+// implementation by returning true whenever the mouse is inside the control.
+// This can easily be done with the following macro: MOUSE_INSIDE_CONTROL(self, ms); 
+// If this is not done, all mouse events will "fall through" to controls below.
 //
 int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 {
@@ -1612,7 +1618,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	mouse_delta_x = Q_rint(ms->x_old - ms->x);
 	mouse_delta_y = Q_rint(ms->y_old - ms->y);
 
-	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
+	mouse_inside = MOUSE_INSIDE_CONTROL(self, ms);
 	prev_mouse_inside = POINT_IN_RECTANGLE(ms->x_old, ms->y_old, self->absolute_x, self->absolute_y, self->width, self->height);
 
 	// If the control is contained within it's parent,
@@ -1685,66 +1691,69 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 
 	// TODO : Move these to new methods.
 
-	// Check for moving and resizing.
-	if ((self->int_flags & control_resizing_left)
-	 || (self->int_flags & control_resizing_right)
-	 || (self->int_flags & control_resizing_top)
-	 || (self->int_flags & control_resizing_bottom))
+	if (!mouse_handled)
 	{
-		// These can be combined to grab the corners for resizing.
+		// Check for moving and resizing.
+		if ((self->int_flags & control_resizing_left)
+		 || (self->int_flags & control_resizing_right)
+		 || (self->int_flags & control_resizing_top)
+		 || (self->int_flags & control_resizing_bottom))
+		{
+			// These can be combined to grab the corners for resizing.
 
-		// Resize by width.
-		if (self->int_flags & control_resizing_left)
-		{
-			EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_LEFT);
-			mouse_handled = true;
-		}
-		else if (self->int_flags & control_resizing_right)
-		{
-			EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_RIGHT);
-			mouse_handled = true;
-		}
-
-		// Resize by height.
-		if (self->int_flags & control_resizing_top)
-		{
-			EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_UP);
-			mouse_handled = true;
-		}
-		else if (self->int_flags & control_resizing_bottom)
-		{
-			EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_DOWN);
-			mouse_handled = true;
-		}
-	}
-	else if (self->int_flags & control_moving)
-	{
-		// Root control will be moved relative to the screen,
-		// others relative to their parent.
-		int x = self->x + Q_rint(ms->x - ms->x_old);
-		int y = self->y + Q_rint(ms->y - ms->y_old);
-
-		// Should the control be contained within it's parent?
-		// Then don't allow the mouse to move outside the parent
-		// while moving the control.
-		if (CONTROL_IS_CONTAINED(self))
-		{
-			if (MOUSE_OUTSIDE_PARENT_X(self, ms))
+			// Resize by width.
+			if (self->int_flags & control_resizing_left)
 			{
-				ms->x = ms->x_old;
-				x = self->x;
+				EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_LEFT);
+				mouse_handled = true;
+			}
+			else if (self->int_flags & control_resizing_right)
+			{
+				EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_RIGHT);
 				mouse_handled = true;
 			}
 
-			if (MOUSE_OUTSIDE_PARENT_Y(self, ms))
+			// Resize by height.
+			if (self->int_flags & control_resizing_top)
 			{
-				ms->y = ms->y_old;
-				y = self->y;
+				EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_UP);
+				mouse_handled = true;
+			}
+			else if (self->int_flags & control_resizing_bottom)
+			{
+				EZ_control_ResizeByDirection(self, ms, mouse_delta_x, mouse_delta_y, RESIZE_DOWN);
 				mouse_handled = true;
 			}
 		}
+		else if (self->int_flags & control_moving)
+		{
+			// Root control will be moved relative to the screen,
+			// others relative to their parent.
+			int x = self->x + Q_rint(ms->x - ms->x_old);
+			int y = self->y + Q_rint(ms->y - ms->y_old);
 
-		EZ_control_SetPosition(self, x, y);
+			// Should the control be contained within it's parent?
+			// Then don't allow the mouse to move outside the parent
+			// while moving the control.
+			if (CONTROL_IS_CONTAINED(self))
+			{
+				if (MOUSE_OUTSIDE_PARENT_X(self, ms))
+				{
+					ms->x = ms->x_old;
+					x = self->x;
+					mouse_handled = true;
+				}
+
+				if (MOUSE_OUTSIDE_PARENT_Y(self, ms))
+				{
+					ms->y = ms->y_old;
+					y = self->y;
+					mouse_handled = true;
+				}
+			}
+
+			EZ_control_SetPosition(self, x, y);
+		}
 	}
 
 	// Let any event handler run if the mouse event wasn't handled.
@@ -2259,7 +2268,7 @@ void EZ_label_SetTextColor(ez_label_t *label, byte r, byte g, byte b, byte alpha
 //
 void EZ_label_HideCaret(ez_label_t *label)
 {
-	EZ_label_SetCaretPosition(label, -1);
+	label->caret_pos.index = -1;
 }
 
 //
@@ -3519,11 +3528,13 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 	((ez_control_t *)slider)->events.OnMouseUpOutside	= EZ_slider_OnMouseUpOutside;
 	((ez_control_t *)slider)->events.OnMouseEvent		= EZ_slider_OnMouseEvent;
 	((ez_control_t *)slider)->events.OnResize			= EZ_slider_OnResize;
+	((ez_control_t *)slider)->events.OnKeyDown			= EZ_slider_OnKeyDown;
 
 	// Button specific events.
 	slider->inheritance_level							= 0;
 	slider->events.OnSliderPositionChanged				= EZ_slider_OnSliderPositionChanged;
 	slider->events.OnMaxValueChanged					= EZ_slider_OnMaxValueChanged;
+	slider->events.OnMinValueChanged					= EZ_slider_OnMinValueChanged;
 	slider->events.OnScaleChanged						= EZ_slider_OnScaleChanged;
 
 	// Set default values.
@@ -3535,21 +3546,25 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 //
 // Slider - Calculates the actual slider position.
 //
-static void EZ_slider_CalculateRealSliderPos(ez_slider_t *slider)
+__inline void EZ_slider_CalculateRealSliderPos(ez_slider_t *slider)
 {
+	int pos = slider->slider_pos - slider->min_value;
+
 	// Calculate the real position of the slider by multiplying by the gap size between each value.
 	// (Don't start drawing at the exact start cause that would overwrite the edge marker)
-	slider->real_slider_pos = Q_rint((slider->scaled_char_size / 2.0) + (slider->slider_pos * slider->gap_size));
+	slider->real_slider_pos = Q_rint((slider->scaled_char_size / 2.0) + (pos * slider->gap_size));
 }
 
 //
 // Slider - Calculates the gap size between values.
 //
-static void EZ_slider_CalculateGapSize(ez_slider_t *slider)
+__inline void EZ_slider_CalculateGapSize(ez_slider_t *slider)
 {
+	slider->range = abs(slider->max_value - slider->min_value);
+
 	// Calculate the gap between each value in pixels (floating point so that we don't get rounding errors).
 	// Don't include the first and last characters in the calculation, the slider is not allowed to move over those.
-	slider->gap_size = ((float)(((ez_control_t *)slider)->width - (2 * slider->scaled_char_size)) / (float)slider->max_value);
+	slider->gap_size = ((float)(((ez_control_t *)slider)->width - (2 * slider->scaled_char_size)) / (float)slider->range);
 }
 
 //
@@ -3566,6 +3581,14 @@ void EZ_slider_SetOnSliderPositionChanged(ez_slider_t *slider, ez_control_handle
 void EZ_slider_SetOnMaxValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMaxValueChanged)
 {
 	slider->event_handlers.OnMaxValueChanged = OnMaxValueChanged;
+}
+
+//
+// Slider - Event handler for OnMinValueChanged.
+//
+void EZ_slider_SetOnMinValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMinValueChanged)
+{
+	slider->event_handlers.OnMinValueChanged = OnMinValueChanged;
 }
 
 //
@@ -3589,7 +3612,7 @@ int EZ_slider_GetPosition(ez_slider_t *slider)
 //
 void EZ_slider_SetPosition(ez_slider_t *slider, int slider_pos)
 {
-	clamp(slider_pos, 0, slider->max_value);
+	clamp(slider_pos, slider->min_value, slider->max_value);
 
 	slider->slider_pos = slider_pos;
 
@@ -3603,7 +3626,17 @@ void EZ_slider_SetMax(ez_slider_t *slider, int max_value)
 {
 	slider->max_value = max_value;
 
-	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnMaxValueChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnMaxValueChanged);
+}
+
+//
+// Slider - Set the max slider value.
+//
+void EZ_slider_SetMin(ez_slider_t *slider, int min_value)
+{
+	slider->min_value = min_value;
+
+	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnMinValueChanged);
 }
 
 //
@@ -3613,7 +3646,7 @@ void EZ_slider_SetScale(ez_slider_t *slider, float scale)
 {
 	slider->scale = max(0.1, scale);
 
-	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnScaleChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnScaleChanged);
 }
 
 //
@@ -3671,10 +3704,31 @@ int EZ_slider_OnMaxValueChanged(ez_control_t *self)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
 
+	// Only allow positive values greater than the min value.
+	slider->max_value = max(0, max(slider->max_value, slider->min_value));
+
 	// Calculate the gap between each slider value.
 	EZ_slider_CalculateGapSize(slider);
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnMaxValueChanged);
+
+	return 0;
+}
+
+//
+// Slider - The min value changed.
+//
+int EZ_slider_OnMinValueChanged(ez_control_t *self)
+{
+	ez_slider_t *slider = (ez_slider_t *)self;
+
+	// Only allow positive values less than the max value.
+	slider->min_value = max(0, min(slider->max_value, slider->min_value));
+
+	// Calculate the gap between each slider value.
+	EZ_slider_CalculateGapSize(slider);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnMinValueChanged);
 
 	return 0;
 }
@@ -3685,9 +3739,6 @@ int EZ_slider_OnMaxValueChanged(ez_control_t *self)
 int EZ_slider_OnSliderPositionChanged(ez_control_t *self)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
-	int x, y;
-
-	EZ_control_GetDrawingPosition(self, &x, &y);
 
 	// Recalculate the drawing position.
 	EZ_slider_CalculateRealSliderPos(slider);
@@ -3702,18 +3753,31 @@ int EZ_slider_OnSliderPositionChanged(ez_control_t *self)
 //
 int EZ_slider_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 {
-	ez_slider_t *slider = (ez_slider_t *)self;
-	int real_slider_pos	= 0;
+	ez_slider_t *slider		= (ez_slider_t *)self;
+	int big_step			= max(1, slider->range / 10);
+	int slider_left_edge; 
+	int slider_right_edge;
 	int x, y;
 	
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
+	slider_left_edge	= (x + slider->real_slider_pos);
+	slider_right_edge	= (x + slider->real_slider_pos + slider->scaled_char_size);
+
 	// Super class.
 	EZ_control_OnMouseDown(self, ms);
 
-	if ((ms->x >= (x + slider->real_slider_pos)) && (ms->x <= (x + slider->real_slider_pos + slider->scaled_char_size)))
+	if ((ms->x >= slider_left_edge) && (ms->x <= slider_right_edge))
 	{
 		slider->int_flags |= slider_dragging;
+	}
+	else if (ms->x < slider_left_edge)
+	{
+		EZ_slider_SetPosition(slider, slider->slider_pos - big_step);
+	}
+	else if (ms->x > slider_right_edge)
+	{
+		EZ_slider_SetPosition(slider, slider->slider_pos + big_step);
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMouseDown, ms);
@@ -3744,18 +3808,21 @@ int EZ_slider_OnMouseUpOutside(ez_control_t *self, mouse_state_t *ms)
 //
 int EZ_slider_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 {
-	int mouse_handled = false;
+	// Make sure we handle all mouse events when we're over the control
+	// otherwise they will fall through to controls below.
+	int mouse_handled	= MOUSE_INSIDE_CONTROL(self, ms); 
 	ez_slider_t *slider = (ez_slider_t *)self;
-	
+
 	// Call the super class first.
 	EZ_control_OnMouseEvent(self, ms);
-
+	
 	if (slider->int_flags & slider_dragging)
 	{
-		int new_slider_pos = Q_rint((ms->x - self->absolute_x) / slider->gap_size);
+		int new_slider_pos = slider->min_value + Q_rint((ms->x - self->absolute_x) / slider->gap_size);
 		EZ_slider_SetPosition(slider, new_slider_pos);
 		mouse_handled = true;
 	}
+	
 
 	// Event handler call.
 	{
@@ -3783,6 +3850,39 @@ int EZ_slider_OnResize(ez_control_t *self)
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
 
 	return 0;
+}
+
+//
+// Slider - Key event.
+//
+int EZ_slider_OnKeyDown(ez_control_t *self, int key, int unichar)
+{
+	qbool key_handled	= false;
+	ez_slider_t *slider = (ez_slider_t *)self;
+	int big_step		= max(1, slider->max_value / 10);
+	int step			= isCtrlDown() ? big_step : 1;
+
+	switch(key)
+	{
+		case K_RIGHTARROW :
+		{
+			EZ_slider_SetPosition(slider, slider->slider_pos + step);
+			key_handled = true;
+			break;
+		}
+		case K_LEFTARROW :
+		{
+			EZ_slider_SetPosition(slider, slider->slider_pos - step);
+			key_handled = true;
+			break;
+		}
+		default :
+		{
+			break;
+		}
+	}
+
+	return key_handled;
 }
 
 

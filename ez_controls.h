@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.33 2007-09-24 14:53:45 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.34 2007-09-24 23:25:01 cokeman1982 Exp $
 */
 
 //
@@ -258,6 +258,8 @@ typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, in
 typedef int (*ez_control_keyspecific_handler_fp) (struct ez_control_s *self, int key, int unichar);
 typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
 
+#define MOUSE_INSIDE_CONTROL(ctrl, mouse_state) POINT_IN_RECTANGLE(mouse_state->x, mouse_state->y, (ctrl)->absolute_x, (ctrl)->absolute_y, (ctrl)->width, (ctrl)->height)
+
 #define CONTROL_IS_CONTAINED(self) (self->parent && (self->ext_flags & control_contained))
 #define MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, axis, h)									\
 	(ctrl->parent																					\
@@ -427,6 +429,8 @@ typedef enum ez_control_flags_e
 	control_visible			= (1 << 7),		// Is the control visible?
 	control_scrollable		= (1 << 8)		// Is the control scrollable?
 } ez_control_flags_t;
+
+#define DEFAULT_CONTROL_FLAGS	(control_enabled | control_focusable | control_contained | control_scrollable | control_visible)
 
 //
 // Control - Internal flags.
@@ -863,6 +867,12 @@ int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar, qbool down);
 // Control -
 // The initial mouse event is handled by this, and then raises more specialized event handlers
 // based on the new mouse state.
+// 
+// NOTICE! When extending this event you need to make sure that you need to tell the framework
+// that you've handled all mouse events that happened within the controls bounds in your own
+// implementation by returning true whenever the mouse is inside the control.
+// This can easily be done with the following macro: MOUSE_INSIDE_CONTROL(self, ms); 
+// If this is not done, all mouse events will "fall through" to controls below.
 //
 int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms);
 
@@ -1295,6 +1305,7 @@ typedef struct ez_slider_events_s
 {
 	ez_control_handler_fp	OnSliderPositionChanged;
 	ez_control_handler_fp	OnMaxValueChanged;
+	ez_control_handler_fp	OnMinValueChanged;
 	ez_control_handler_fp	OnScaleChanged;
 } ez_slider_events_t;
 
@@ -1305,11 +1316,12 @@ typedef struct ez_slider_s
 	ez_slider_events_t		events;				// Slider specific events.
 	ez_slider_events_t		event_handlers;		// Slider specific event handlers.
 
-	ez_control_flags_t		int_flags;			// Slider specific flags.
+	ez_slider_iflags_t		int_flags;			// Slider specific flags.
 	int						slider_pos;			// The position of the slider.
 	int						real_slider_pos;	// The actual slider position in pixels.
 	int						max_value;			// The max value allowed for the slider.
 	int						min_value;			// The min value allowed for the slider.
+	int						range;				// The number of values between the min and max values.
 	float					gap_size;			// The pixel gap between each value.
 	float					scale;				// The scale of the characters used for drawing the slider.
 	int						scaled_char_size;	// The scaled character size in pixels after applying scale to the slider chars.
@@ -1352,6 +1364,11 @@ void EZ_slider_SetOnScaleChanged(ez_slider_t *slider, ez_control_handler_fp OnSc
 void EZ_slider_SetOnMaxValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMaxValueChanged);
 
 //
+// Slider - Event handler for OnMinValueChanged.
+//
+void EZ_slider_SetOnMinValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMinValueChanged);
+
+//
 // Slider - Get the current slider position.
 //
 int EZ_slider_GetPosition(ez_slider_t *slider);
@@ -1367,6 +1384,11 @@ void EZ_slider_SetPosition(ez_slider_t *slider, int slider_pos);
 void EZ_slider_SetMax(ez_slider_t *slider, int max_value);
 
 //
+// Slider - Set the max slider value.
+//
+void EZ_slider_SetMin(ez_slider_t *slider, int min_value);
+
+//
 // Slider - Set the scale of the slider characters.
 //
 void EZ_slider_SetScale(ez_slider_t *slider, float scale);
@@ -1380,6 +1402,11 @@ int EZ_slider_OnDraw(ez_control_t *self);
 // Slider - The max value changed.
 //
 int EZ_slider_OnMaxValueChanged(ez_control_t *self);
+
+//
+// Slider - The min value changed.
+//
+int EZ_slider_OnMinValueChanged(ez_control_t *self);
 
 //
 // Slider - Scale changed.
@@ -1410,6 +1437,11 @@ int EZ_slider_OnMouseEvent(ez_control_t *self, mouse_state_t *ms);
 // Slider - The slider was resized.
 //
 int EZ_slider_OnResize(ez_control_t *self);
+
+//
+// Slider - Key event.
+//
+int EZ_slider_OnKeyDown(ez_control_t *self, int key, int unichar);
 
 #endif // __EZ_CONTROLS_H__
 
