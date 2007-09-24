@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.83 2007-09-15 10:13:44 zwoch Exp $
+		$Id: menu_options.c,v 1.84 2007-09-24 19:43:22 himan Exp $
 
 */
 
@@ -47,7 +47,7 @@ typedef enum {
 	OPTPG_PLAYER,
 	OPTPG_FPS,
 	OPTPG_HUD,
-	OPTPG_DEMO_PLAYBACK,
+	OPTPG_DEMO_SPEC,
 	OPTPG_BINDS,
 	OPTPG_VIDEO,
 	OPTPG_CONFIG,
@@ -181,13 +181,13 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
-	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode
+	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption;
 #endif
 #ifdef GLQUAKE
-extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback;
+extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size;
 #endif
 
 const char* bandwidth_enum[] = { 
@@ -1052,15 +1052,17 @@ setting settfps_arr[] = {
 	ADDSET_BASIC_SECTION(),
 #endif	
 	
-	ADDSET_SEPARATOR("Weapon Model"),
+	ADDSET_SEPARATOR("Player & Weapon Model"),
 #ifdef GLQUAKE
-	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
+	ADDSET_BOOL		("Powerup Luma", gl_powerupshells),
+	ADDSET_NUMBER	("Powerup Luma Size", gl_powerupshells_size, 1, 10, 1),
+	ADDSET_NUMBER	("Weapon Opacity", cl_drawgun, 0, 1, 0.05),
 #else
-	ADDSET_BOOL		("Show", cl_drawgun),
+	ADDSET_BOOL		("Weapon Show", cl_drawgun),
 #endif
-	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
-	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
-	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
+	ADDSET_NUMBER	("Weapon Size", r_viewmodelsize, 0.1, 1, 0.05),
+	ADDSET_NUMBER	("Weapon Shift", r_viewmodeloffset, -10, 10, 1),
+	ADDSET_NAMED	("Weapon Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
 	
 	ADDSET_SEPARATOR("Environment"),
 	ADDSET_ADVANCED_SECTION(),
@@ -1166,6 +1168,10 @@ setting settdemo_spec_arr[] = {
 	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
 	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
 	ADDSET_BASIC_SECTION(),
+
+	ADDSET_SEPARATOR("Demo & Observing"),
+	ADDSET_BOOL		("Point of View", cl_chasecam),
+	
 	ADDSET_SEPARATOR("Multiview Demos"),
 	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
 	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
@@ -1280,6 +1286,7 @@ setting settvideo_arr[] = {
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
+	ADDSET_BOOL		("Clear Video Buffer", gl_clear),
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 
@@ -1430,7 +1437,7 @@ void Menu_Options_Init(void) {
 	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, &options_player_handlers);
 	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, &options_graphics_handlers);
 	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, &options_hud_handlers);
-	CTab_AddPage(&options_tab, "demo/spec", OPTPG_DEMO_PLAYBACK, &options_demo_spec_handlers);
+	CTab_AddPage(&options_tab, "demo/spec", OPTPG_DEMO_SPEC, &options_demo_spec_handlers);
 	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, &options_controls_handlers);
 	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, &options_video_handlers);
 	CTab_AddPage(&options_tab, "config", OPTPG_CONFIG, &options_config_handlers);
