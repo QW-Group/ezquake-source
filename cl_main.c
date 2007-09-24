@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.184 2007-09-16 13:31:21 disconn3ct Exp $
+$Id: cl_main.c,v 1.185 2007-09-24 20:31:56 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -30,7 +30,6 @@ $Id: cl_main.c,v 1.184 2007-09-16 13:31:21 disconn3ct Exp $
 #include "fchecks.h"
 #include "config_manager.h"
 #include "mp3_player.h"
-#include "cl_cam.h"
 #include "mvd_utils.h"
 #include "EX_browser.h"
 #include "qtv.h"
