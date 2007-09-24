@@ -61,6 +61,7 @@ void CL_TrackMV4_f(void);
 void CL_TrackTeam_f(void); 
 
 void CL_Track_f(void);
+void CL_Autotrack_f(void);
 
 int		ideal_track = 0;		// The currently tracked player.
 float	last_lock = 0;			// Last tracked player.
@@ -726,7 +727,8 @@ void CL_InitCam(void)
 	Cvar_Register (&cl_chasecam);
 
 	Cvar_ResetCurrentGroup();
-	Cmd_AddCommand ("track", CL_Track_f);	
+	Cmd_AddCommand ("track", CL_Track_f);
+	Cmd_AddCommand ("autotrack", CL_Autotrack_f);
 
 	// Multivew tracking.
 	Cmd_AddCommand ("track1", CL_TrackMV1_f);	
@@ -863,6 +865,59 @@ void CL_Track (int trackview)
 void CL_Track_f(void) 
 {
 	CL_Track(-1);	
+}
+
+// auto-tracking is a feature implemented in three different places in QW
+// - server side, client side (for a demo), recorded in a demo
+// this command will choose which feature is available
+// at the moment and will toggle it (on/off)
+void CL_Autotrack_f(void)
+{
+	cmd_alias_t* at;
+	extern cvar_t mvd_autotrack;
+	extern cvar_t demo_autotrack;
+	qbool mvda = mvd_autotrack.integer ? true : false;
+	qbool demoa = demo_autotrack.integer ? true : false;
+
+	if (cls.demoplayback) {
+		if (cls.mvdplayback) {
+			if (!mvda && !demoa) {
+				// we will turn on both features but if demo_autotrack info is found
+				// it will turn off mvd_autotrack
+				Cvar_SetValue(&mvd_autotrack, 1);
+				Cvar_SetValue(&demo_autotrack, 1);
+				Com_Printf("MVD Autotracking on\n");
+			} else if (mvda && !demoa) {
+				Com_Printf("MVD Autotracking off\n");
+				Cvar_SetValue(&mvd_autotrack, 0);
+			} else if (!mvda && demoa) {
+				Com_Printf("Demo Autotracking off\n");
+				Cvar_SetValue(&demo_autotrack, 0);
+			} else { // mvda && demoa
+				Com_Printf("Autotracking off\n");
+				Cvar_SetValue(&mvd_autotrack, 0);
+				Cvar_SetValue(&demo_autotrack, 0);
+			}
+		} else {
+			Com_Printf("Only one point of view is recorded in this demo\n");
+		}
+	}
+	else { // not playing a demo
+		if (cl.spectator) {
+			if (at = Cmd_FindAlias("autotrack")) {
+				// not very "clean" way to execute an alias, but sufficient for this purpose
+				Cbuf_AddText(va("%s\n", at->value));
+			} else {
+				if (!cl_hightrack.integer) {
+					Com_Printf("Autotrack not supported here, tracking top fragger (Hightrack on)\n");
+					Cvar_SetValue(&cl_hightrack, 1);
+				} else {
+					Com_Printf("Hightrack off\n");
+					Cvar_SetValue(&cl_hightrack, 0);
+				}
+			}
+		}
+	}
 }
 
 //

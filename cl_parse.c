@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.125 2007-09-16 10:36:03 tonik Exp $
+$Id: cl_parse.c,v 1.126 2007-09-24 15:36:29 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2720,10 +2720,16 @@ void CL_ParseStufftext (void) {
 	{	// this is autotrack info from mvd demo/qtv stream, they are almost same
 
 		extern cvar_t demo_autotrack;
+		extern cvar_t mvd_autotrack;
 
 		if (demo_autotrack.integer)
 		{
 			Cbuf_AddTextEx (&cbuf_svc, va("track %s\n", s + sizeof("//at ")-1));
+			if (mvd_autotrack.integer) {
+				// do not let mvd_autotrack and demo_autotrack fight
+				Com_Printf("Server autotrack found, client autotrack turned off\n");
+				Cvar_SetValue(&mvd_autotrack, 0);
+			}
 		}
 	}
 	else if (!strncmp(s, "//vwep ", 7) && s[strlen(s)-1] == '\n') {
