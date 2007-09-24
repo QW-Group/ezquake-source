@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.48 2007-09-24 09:22:59 dkure Exp $
+$Id: ez_controls.c,v 1.49 2007-09-24 14:53:45 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -224,6 +224,7 @@ void EZ_tree_Draw(ez_tree_t *tree)
 			payload->virtual_height, 
 			1, false, RGBA_TO_COLOR(255, 0, 0, 125));
 
+		// TODO : Remove this test stuff.
 		if (!strcmp(payload->name, "label"))
 		{
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
@@ -548,7 +549,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->events.OnParentResize		= EZ_control_OnParentResize;
 	control->events.OnMinVirtualResize	= EZ_control_OnMinVirtualResize;
 	control->events.OnVirtualResize		= EZ_control_OnVirtualResize;
-	// TODO : Add set functions for all control event handlers.
+	control->events.OnFlagsChanged		= EZ_control_OnFlagsChanged;
 
 	// Load the background image.
 	if(background_name)
@@ -653,6 +654,14 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp OnDestroy)
 {
 	self->event_handlers.OnDestroy = OnDestroy;
+}
+
+//
+// Control - Sets the OnFlagsChanged event handler.
+//
+void EZ_control_SetOnFlagsChanged(ez_control_t *self, ez_control_handler_fp OnFlagsChanged)
+{
+	self->event_handlers.OnFlagsChanged = OnFlagsChanged;
 }
 
 //
@@ -878,6 +887,115 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnGotFocus);
 
 	return true;
+}
+
+//
+// Control - Sets whetever the control is contained within the bounds of it's parent or not, or is allowed to draw outside it.
+//
+void EZ_control_SetContained(ez_control_t *self, qbool contained)
+{
+	SET_FLAG(self->ext_flag, control_contained, contained);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is enabled or not.
+//
+void EZ_control_SetEnabled(ez_control_t *self, qbool enabled)
+{
+	// TODO : Make sure input isn't allowed if a control isn't enabled.
+	SET_FLAG(self->ext_flag, control_enabled, enabled);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is movable.
+//
+void EZ_control_SetMovable(ez_control_t *self, qbool movable)
+{
+	SET_FLAG(self->ext_flag, control_movable, movable);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is focusable.
+//
+void EZ_control_SetFocusable(ez_control_t *self, qbool focusable)
+{
+	SET_FLAG(self->ext_flag, control_focusable, focusable);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is resizeable horizontally by the user.
+//
+void EZ_control_SetResizeableHorizontally(ez_control_t *self, qbool resize_horizontally)
+{
+	SET_FLAG(self->ext_flag, control_resize_h, resize_horizontally);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is resizeable both horizontally and vertically by the user.
+//
+void EZ_control_SetResizeableBoth(ez_control_t *self, qbool resize)
+{
+	SET_FLAG(self->ext_flag, (control_resize_h | control_resize_v), resize);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is resizeable at all, not just by the user.
+//
+void EZ_control_SetResizeable(ez_control_t *self, qbool resize_vertically)
+{
+	// TODO : Is it confusing having this resizeable?
+	SET_FLAG(self->ext_flag, control_resize_v, resize_vertically);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is resizeable vertically by the user.
+//
+void EZ_control_SetResizeableVertically(ez_control_t *self, qbool resize_vertically)
+{
+	SET_FLAG(self->ext_flag, control_resize_v, resize_vertically);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is visible or not.
+//
+void EZ_control_SetVisible(ez_control_t *self, qbool visible)
+{
+	SET_FLAG(self->ext_flag, control_visible, visible);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets whetever the control is scrollable or not.
+//
+void EZ_control_SetVisible(ez_control_t *self, qbool scrollable)
+{
+	SET_FLAG(self->ext_flag, control_scrollable, scrollable);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets the external flags of the control.
+//
+void EZ_control_SetFlags(ez_control_t *self, ez_control_flags_t flags)
+{
+	self->ext_flags = flags;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets the external flags of the control.
+//
+ez_control_flags_t EZ_control_GetFlags(ez_control_t *self)
+{
+	return self->ext_flags;
 }
 
 //
@@ -1199,6 +1317,16 @@ int EZ_control_OnMinVirtualResize(ez_control_t *self)
 	self->virtual_height	= max(self->virtual_height_min, self->virtual_height);
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMinVirtualResize);
+
+	return 0;
+}
+
+//
+// Label - The flags for the control changed.
+//
+int EZ_control_OnFlagsChanged(ez_control_t *self)
+{
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnFlagsChanged);
 
 	return 0;
 }
@@ -2038,12 +2166,65 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 }
 
 //
+// Label - Sets if the label should use the large charset or the normal one.
+//
+void EZ_label_SetLargeFont(ez_label_t *label, qbool large_font)
+{
+	SET_FLAG(label->ext_flags, label_largefont, large_font);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+}
+
+//
+// Label - Sets if the label should autosize itself to fit the text in the label.
+//
+void EZ_label_SetAutoSize(ez_label_t *label, qbool auto_size)
+{
+	SET_FLAG(label->ext_flags, label_autosize, auto_size);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+}
+
+//
+// Label - Sets if the label should automatically add "..." at the end of the string when it doesn't fit in the label.
+//
+void EZ_label_SetAutoEllipsis(ez_label_t *label, qbool auto_ellipsis)
+{
+	SET_FLAG(label->ext_flags, label_autoellipsis, auto_ellipsis);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+}
+
+//
+// Label - Sets if the text in the label should wrap to fit the width of the label.
+//
+void EZ_label_SetWrapText(ez_label_t *label, qbool wrap_text)
+{
+	SET_FLAG(label->ext_flags, label_wraptext, wrap_text);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+}
+
+//
+// Label - Sets if the text in the label should be selectable.
+//
+void EZ_label_SetTextSelectable(ez_label_t *label, qbool selectable)
+{
+	SET_FLAG(label->ext_flags, label_selectable, selectable);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+}
+
+//
+// Label - Sets if the label should be read only.
+//
+void EZ_label_SetReadOnly(ez_label_t *label, qbool read_only)
+{
+	SET_FLAG(label->ext_flags, label_readonly, read_only);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+}
+
+//
 // Label - Sets the text flags for the label.
 //
 void EZ_label_SetTextFlags(ez_label_t *label, ez_label_flags_t flags)
 {
 	label->ext_flags = flags;
-
 	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
 }
 
@@ -2071,6 +2252,14 @@ void EZ_label_SetTextScale(ez_label_t *label, float scale)
 void EZ_label_SetTextColor(ez_label_t *label, byte r, byte g, byte b, byte alpha)
 {
 	label->color.c = RGBA_TO_COLOR(r, g, b, alpha);
+}
+
+//
+// Label - Hides the caret.
+//
+void EZ_label_HideCaret(ez_label_t *label)
+{
+	EZ_label_SetCaretPosition(label, -1);
 }
 
 //
@@ -2191,10 +2380,29 @@ int EZ_label_OnTextFlagsChanged(ez_control_t *self)
 {
 	ez_label_t *label = (ez_label_t *)self;
 
+	// Deselect anything selected and hide the caret.
 	if (!(label->ext_flags & label_selectable))
 	{
-		EZ_label_SetCaretPosition(label, -1);
+		EZ_label_HideCaret(label);
 		EZ_label_DeselectText(label);
+	}
+	
+	// Make sure we recalculate the char size if we changed to large font.
+	if (label->ext_flags & label_largefont)
+	{
+		CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextScaleChanged);
+	}
+
+	// The label will autosize on a text change, so trigger an event for that.
+	if (label->ext_flags & label_autosize)
+	{
+		CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged);
+	}
+
+	// Recalculate the line ends.
+	if (label->ext_flags & label_wraptext)
+	{
+		CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnResize);
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextFlagsChanged);
@@ -2558,10 +2766,23 @@ int EZ_label_OnTextChanged(ez_control_t *self)
 	ez_label_t *label = (ez_label_t *)self;
 
 	// Make sure we have the correct text length saved.
-	label->text_length = strlen(label->text);
+	label->text_length = label->text ? strlen(label->text) : 0;
 
 	// Find the new places to wrap on.
 	EZ_label_CalculateWordwraps(label);
+
+	if (label->ext_flags & label_autosize)
+	{
+		// Only resize after the number of rows if we're wrapping the text.
+		if (label->ext_flags & label_wraptext)
+		{
+			EZ_control_SetSize(self, self->width, (label->scaled_char_size * label->num_rows));
+		}
+		else
+		{
+			EZ_control_SetSize(self, (label->scaled_char_size * label->num_cols), (label->scaled_char_size * label->num_rows));
+		}
+	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextChanged);
 
@@ -2977,7 +3198,7 @@ int EZ_label_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 
 	// Reset the caret and selection end since we just started a new select / caret positioning.
 	label->select_end = -1;
-	label->caret_pos.index = -1;
+	EZ_label_HideCaret(label);
 
 	// We just started to select some text.
 	label->int_flags |= label_selecting;
@@ -3066,6 +3287,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	// Initilize the button specific stuff.
 	((ez_control_t *)button)->CLASS_ID			= EZ_BUTTON_ID;
 
+	// TODO : Make a default macro for button flags.
 	((ez_control_t *)button)->ext_flags			|= (flags | control_focusable | control_contained);
 
 	// Override the draw function.

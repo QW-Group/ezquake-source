@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.32 2007-09-24 09:22:59 dkure Exp $
+$Id: ez_controls.h,v 1.33 2007-09-24 14:53:45 cokeman1982 Exp $
 */
 
 //
@@ -153,6 +153,7 @@ $Id: ez_controls.h,v 1.32 2007-09-24 09:22:59 dkure Exp $
 //
 
 #define POINT_IN_RECTANGLE(p_x, p_y, r_x, r_y, r_width, r_height) ((p_x >= r_x) && (p_y >= r_y) && (p_x <= (r_x + r_width)) && (p_y <= (r_y + r_height)))
+#define SET_FLAG(flag_var, flag, on) (flag_var) |= (on ? (flag) : ((flag_var) & ~(flag)))
 
 // =========================================================================================
 // Double Linked List
@@ -399,6 +400,7 @@ typedef struct ez_control_events_s
 	ez_control_handler_fp				OnLostFocus;
 	ez_control_handler_fp				OnVirtualResize;
 	ez_control_handler_fp				OnMinVirtualResize;
+	ez_control_handler_fp				OnFlagsChanged;
 } ez_control_events_t;
 
 typedef enum ez_anchor_e
@@ -420,7 +422,7 @@ typedef enum ez_control_flags_e
 	control_focusable		= (1 << 2),		// Can the control be given focus?
 	control_resize_h		= (1 << 3),		// Is the control resizeable horizontally?
 	control_resize_v		= (1 << 4),		// Is the control resizeable vertically?
-	control_resizeable		= (1 << 5),		// Is the control resizeable? // TODO : Should this be external?
+	control_resizeable		= (1 << 5),		// Is the control resizeable at all, not just by the user? // TODO : Should this be external?
 	control_contained		= (1 << 6),		// Is the control contained within it's parent or can it go outside its edges?
 	control_visible			= (1 << 7),		// Is the control visible?
 	control_scrollable		= (1 << 8)		// Is the control scrollable?
@@ -551,6 +553,69 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children);
 void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y);
 
 //
+// Control - Sets the external flags of the control.
+//
+ez_control_flags_t EZ_control_GetFlags(ez_control_t *self);
+
+//
+// Control - Sets the external flags of the control.
+//
+void EZ_control_SetFlags(ez_control_t *self, ez_control_flags_t flags);
+
+//
+// Control - Sets whetever the control is scrollable or not.
+//
+void EZ_control_SetVisible(ez_control_t *self, qbool scrollable);
+
+//
+// Control - Sets whetever the control is visible or not.
+//
+void EZ_control_SetVisible(ez_control_t *self, qbool visible);
+
+//
+// Control - Sets whetever the control is resizeable vertically by the user.
+//
+void EZ_control_SetResizeableVertically(ez_control_t *self, qbool resize_vertically);
+
+//
+// Control - Sets whetever the control is resizeable at all, not just by the user.
+//
+void EZ_control_SetResizeable(ez_control_t *self, qbool resize_vertically);
+
+//
+// Control - Sets whetever the control is resizeable both horizontally and vertically by the user.
+//
+void EZ_control_SetResizeableBoth(ez_control_t *self, qbool resize);
+
+
+//
+// Control - Sets whetever the control is resizeable horizontally by the user.
+//
+void EZ_control_SetResizeableHorizontally(ez_control_t *self, qbool resize_horizontally);
+
+//
+// Control - Sets whetever the control is focusable.
+//
+void EZ_control_SetFocusable(ez_control_t *self, qbool focusable);
+
+//
+// Control - Sets whetever the control is movable.
+//
+void EZ_control_SetMovable(ez_control_t *self, qbool movable);
+
+//
+// Control - Sets whetever the control is enabled or not.
+//
+void EZ_control_SetEnabled(ez_control_t *self, qbool enabled);
+
+//
+// Control - Sets whetever the control is contained within the bounds of it's parent or not, or is allowed to draw outside it.
+//
+void EZ_control_SetContained(ez_control_t *self, qbool contained);
+
+
+
+//
 // Control - Sets the OnDestroy event handler.
 //
 void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp OnDestroy);
@@ -584,6 +649,11 @@ void EZ_control_SetOnVirtualResize(ez_control_t *self, ez_control_handler_fp OnV
 // Control - Sets the OnMinVirtualResize event handler.
 //
 void EZ_control_SetOnMinVirtualResize(ez_control_t *self, ez_control_handler_fp OnMinVirtualResize);
+
+//
+// Control - Sets the OnFlagsChanged event handler.
+//
+void EZ_control_SetOnFlagsChanged(ez_control_t *self, ez_control_handler_fp OnFlagsChanged);
 
 //
 // Control - Sets the OnKeyEvent event handler.
@@ -765,6 +835,11 @@ int EZ_control_OnVirtualResize(ez_control_t *self);
 int EZ_control_OnLayoutChildren(ez_control_t *self);
 
 //
+// Label - The flags for the control changed.
+//
+int EZ_control_OnFlagsChanged(ez_control_t *self);
+
+//
 // Control - Draws the control.
 //
 int EZ_control_OnDraw(ez_control_t *self);
@@ -848,6 +923,8 @@ typedef enum ez_label_flags_e
 	label_readonly		= (1 << 5)		// Is input allowed?
 } ez_label_flags_t;
 
+#define LABEL_DEFAULT_FLAGS	(label_wraptext | label_selectable)
+
 typedef enum ez_label_iflags_e
 {
 	label_selecting		= (1 << 0)		// Are we selecting text?
@@ -921,6 +998,41 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 int EZ_label_Destroy(ez_control_t *self, qbool destroy_children);
 
 //
+// Label - Sets if the label should use the large charset or the normal one.
+//
+void EZ_label_SetLargeFont(ez_label_t *label, qbool large_font);
+
+//
+// Label - Sets if the label should autosize itself to fit the text in the label.
+//
+void EZ_label_SetAutoSize(ez_label_t *label, qbool auto_size);
+
+//
+// Label - Sets if the label should automatically add "..." at the end of the string when it doesn't fit in the label.
+//
+void EZ_label_SetAutoEllipsis(ez_label_t *label, qbool auto_ellipsis);
+
+//
+// Label - Sets if the text in the label should wrap to fit the width of the label.
+//
+void EZ_label_SetWrapText(ez_label_t *label, qbool wrap_text);
+
+//
+// Label - Sets the text flags for the label.
+//
+void EZ_label_SetTextFlags(ez_label_t *label, ez_label_flags_t flags);
+
+//
+// Label - Sets if the label should be read only.
+//
+void EZ_label_SetReadOnly(ez_label_t *label, qbool read_only);
+
+//
+// Label - Sets if the text in the label should be selectable.
+//
+void EZ_label_SetTextSelectable(ez_label_t *label, qbool selectable);
+
+//
 // Label - Sets the event handler for the OnTextChanged event.
 //
 void EZ_label_SetOnTextChanged(ez_label_t *label, ez_control_handler_fp OnTextChanged);
@@ -934,6 +1046,11 @@ void EZ_label_SetOnTextScaleChanged(ez_label_t *label, ez_control_handler_fp OnT
 // Label - Sets the event handler for the OnCaretMoved event.
 //
 void EZ_label_SetOnTextOnCaretMoved(ez_label_t *label, ez_control_handler_fp OnCaretMoved);
+
+//
+// Label - Hides the caret.
+//
+void EZ_label_HideCaret(ez_label_t *label);
 
 //
 // Label - Gets the size of the selected text.
