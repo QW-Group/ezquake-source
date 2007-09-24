@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_autotrack.c,v 1.1 2007-09-24 21:15:37 johnnycz Exp $
+$Id: mvd_autotrack.c,v 1.2 2007-09-24 21:34:50 johnnycz Exp $
 */
 
 // MultiView Demo Autotrack system
@@ -49,12 +49,6 @@ cvar_t mvd_multitrack_3_values = {"mvd_multitrack_3_values", "1 2 3 2 3 5 8 8 1 
 cvar_t mvd_multitrack_4 = {"mvd_multitrack_4", "%A"};
 cvar_t mvd_multitrack_4_values = {"mvd_multitrack_4_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
 
-//
-// <mvd_autotrack>
-//
-
-int MVD_AutoTrackBW_f(int i);
-
 #define PL_VALUES_COUNT 14
 static float pl_values[PL_VALUES_COUNT];
 #define axe_val     (pl_values[0])
@@ -82,6 +76,32 @@ char *multitrack_str ;
 int last_track = 0;
 
 int currentplayer_num;
+
+int MVD_AutoTrackBW_f(int i){
+	extern cvar_t tp_weapon_order;
+	int j;
+	player_info_t *bp_info;
+
+	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;
+
+	bp_info = cl.players;
+
+		for (s = t; *s; s++) {
+			for (j = 0 ; j < strlen(*s) ; j++) {
+				switch ((*s)[j]) {
+					case '1': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_AXE) return axe_val; break;
+					case '2': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SHOTGUN) return sg_val; break;
+					case '3': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) return ssg_val; break;
+					case '4': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_NAILGUN) return ng_val; break;
+					case '5': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPER_NAILGUN) return sng_val; break;
+					case '6': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) return gl_val; break;
+					case '7': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) return rl_val; break;
+					case '8': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_LIGHTNING) return lg_val; break;
+				}
+			}
+		}
+	return 0;
+}
 
 expr_val MVD_Var_Vals(const char *n)
 {
@@ -268,32 +288,6 @@ int MVD_GetBestPlayer(void)
 int MVD_FindBestPlayer_f(void) {
 	MVD_UpdatePlayerValues();
 	return MVD_GetBestPlayer();
-}
-
-int MVD_AutoTrackBW_f(int i){
-	extern cvar_t tp_weapon_order;
-	int j;
-	player_info_t *bp_info;
-
-	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;
-
-	bp_info = cl.players;
-
-		for (s = t; *s; s++) {
-			for (j = 0 ; j < strlen(*s) ; j++) {
-				switch ((*s)[j]) {
-					case '1': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_AXE) return axe_val; break;
-					case '2': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SHOTGUN) return sg_val; break;
-					case '3': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) return ssg_val; break;
-					case '4': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_NAILGUN) return ng_val; break;
-					case '5': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPER_NAILGUN) return sng_val; break;
-					case '6': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) return gl_val; break;
-					case '7': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) return rl_val; break;
-					case '8': if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_LIGHTNING) return lg_val; break;
-				}
-			}
-		}
-	return 0;
 }
 
 void MVD_AutoTrack_f(void) {

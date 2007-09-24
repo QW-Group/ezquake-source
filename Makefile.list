@@ -52,6 +52,7 @@ CLIENT_C_FILES := \
 	mp3_player \
 	mvd_autotrack \
 	mvd_utils \
+	mvd_xmlstats \
 	parser \
 	qtv \
 	r_part \

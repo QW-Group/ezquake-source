@@ -1384,6 +1384,9 @@
 					RelativePath="..\..\mvd_utils.c">
 				</File>
 				<File
+					RelativePath="..\..\mvd_xmlstats.c">
+				</File>
+				<File
 					RelativePath="..\..\parser.c">
 				</File>
 				<File

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_utils_common.h,v 1.1 2007-09-24 21:15:37 johnnycz Exp $
+$Id: mvd_utils_common.h,v 1.2 2007-09-24 21:34:51 johnnycz Exp $
 */
 
 // Shared declarations for the whole mvd group of tools
@@ -146,6 +146,31 @@ typedef struct mvd_cg_info_s {
 
 extern mvd_cg_info_s mvd_cg_info;
 
+typedef struct mvd_gt_info_s {
+	int id;
+	char *name;
+} mvd_gt_info_t;
+
+#define gt_unknown	3
+#define gt_4on4	3
+#define gt_3on3	2
+#define gt_2on2	1
+#define gt_1on1	0
+#define mvd_gt_types 5
+
+extern mvd_gt_info_t mvd_gt_info[mvd_gt_types];
+
+typedef struct mvd_wp_info_s {
+	int		id;
+	char	*name;
+	int		it;
+} mvd_wp_info_t;
+
+extern mvd_wp_info_t mvd_wp_info[mvd_info_types];
+
 // mvd_autotrack:
 void MVD_AutoTrack_f(void);
-extern void MVD_AutoTrack_Init(void);
+void MVD_AutoTrack_Init(void);
+
+// mvd_xmlstats:
+void MVD_XMLStats_Init(void);

@@ -1892,14 +1892,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\mvd_autotrack.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\mvd_utils.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\qtv.c"
 					>
 				</File>
@@ -1948,6 +1940,22 @@
 					</File>
 					<File
 						RelativePath="..\..\EX_browser_sources.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="MVD Utils"
+					>
+					<File
+						RelativePath="..\..\mvd_autotrack.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mvd_utils.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mvd_xmlstats.c"
 						>
 					</File>
 				</Filter>
