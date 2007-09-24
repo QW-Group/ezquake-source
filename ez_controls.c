@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.49 2007-09-24 14:53:45 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.50 2007-09-24 18:11:43 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -894,7 +894,7 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 //
 void EZ_control_SetContained(ez_control_t *self, qbool contained)
 {
-	SET_FLAG(self->ext_flag, control_contained, contained);
+	SET_FLAG(self->ext_flags, control_contained, contained);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -904,7 +904,7 @@ void EZ_control_SetContained(ez_control_t *self, qbool contained)
 void EZ_control_SetEnabled(ez_control_t *self, qbool enabled)
 {
 	// TODO : Make sure input isn't allowed if a control isn't enabled.
-	SET_FLAG(self->ext_flag, control_enabled, enabled);
+	SET_FLAG(self->ext_flags, control_enabled, enabled);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -913,7 +913,7 @@ void EZ_control_SetEnabled(ez_control_t *self, qbool enabled)
 //
 void EZ_control_SetMovable(ez_control_t *self, qbool movable)
 {
-	SET_FLAG(self->ext_flag, control_movable, movable);
+	SET_FLAG(self->ext_flags, control_movable, movable);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -922,7 +922,7 @@ void EZ_control_SetMovable(ez_control_t *self, qbool movable)
 //
 void EZ_control_SetFocusable(ez_control_t *self, qbool focusable)
 {
-	SET_FLAG(self->ext_flag, control_focusable, focusable);
+	SET_FLAG(self->ext_flags, control_focusable, focusable);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -931,7 +931,7 @@ void EZ_control_SetFocusable(ez_control_t *self, qbool focusable)
 //
 void EZ_control_SetResizeableHorizontally(ez_control_t *self, qbool resize_horizontally)
 {
-	SET_FLAG(self->ext_flag, control_resize_h, resize_horizontally);
+	SET_FLAG(self->ext_flags, control_resize_h, resize_horizontally);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -940,7 +940,7 @@ void EZ_control_SetResizeableHorizontally(ez_control_t *self, qbool resize_horiz
 //
 void EZ_control_SetResizeableBoth(ez_control_t *self, qbool resize)
 {
-	SET_FLAG(self->ext_flag, (control_resize_h | control_resize_v), resize);
+	SET_FLAG(self->ext_flags, (control_resize_h | control_resize_v), resize);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -950,7 +950,7 @@ void EZ_control_SetResizeableBoth(ez_control_t *self, qbool resize)
 void EZ_control_SetResizeable(ez_control_t *self, qbool resize_vertically)
 {
 	// TODO : Is it confusing having this resizeable?
-	SET_FLAG(self->ext_flag, control_resize_v, resize_vertically);
+	SET_FLAG(self->ext_flags, control_resize_v, resize_vertically);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -959,7 +959,7 @@ void EZ_control_SetResizeable(ez_control_t *self, qbool resize_vertically)
 //
 void EZ_control_SetResizeableVertically(ez_control_t *self, qbool resize_vertically)
 {
-	SET_FLAG(self->ext_flag, control_resize_v, resize_vertically);
+	SET_FLAG(self->ext_flags, control_resize_v, resize_vertically);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -968,16 +968,16 @@ void EZ_control_SetResizeableVertically(ez_control_t *self, qbool resize_vertica
 //
 void EZ_control_SetVisible(ez_control_t *self, qbool visible)
 {
-	SET_FLAG(self->ext_flag, control_visible, visible);
+	SET_FLAG(self->ext_flags, control_visible, visible);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
 //
 // Control - Sets whetever the control is scrollable or not.
 //
-void EZ_control_SetVisible(ez_control_t *self, qbool scrollable)
+void EZ_control_SetScrollable(ez_control_t *self, qbool scrollable)
 {
-	SET_FLAG(self->ext_flag, control_scrollable, scrollable);
+	SET_FLAG(self->ext_flags, control_scrollable, scrollable);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
