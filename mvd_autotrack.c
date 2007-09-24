@@ -16,14 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_autotrack.c,v 1.2 2007-09-24 21:34:50 johnnycz Exp $
+$Id: mvd_autotrack.c,v 1.3 2007-09-24 21:41:17 johnnycz Exp $
 */
 
 // MultiView Demo Autotrack system
 // when observing a demo or QTV playback, will switch to best players automatically
 
 #include "quakedef.h"
-#include "mvd_utils.h"
 #include "parser.h"
 #include "localtime.h"
 #include "mvd_utils_common.h"

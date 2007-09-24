@@ -1,6 +1,25 @@
 /*
-$Id: mvd_utils.c,v 1.52 2007-09-24 21:34:50 johnnycz Exp $
+Copyright (C) 2001-2002 jogihoogi
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the included (GNU.txt) GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+$Id: mvd_utils.c,v 1.53 2007-09-24 21:44:48 johnnycz Exp $
 */
+
+// core module of the group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
 
 #include "quakedef.h"
 #include "parser.h"
@@ -47,19 +66,17 @@ mvd_wp_info_t mvd_wp_info[mvd_info_types] = {
 typedef struct quad_cams_s {
 	vec3_t	org;
 	vec3_t	angles;
-}quad_cams_t;
+} quad_cams_t;
 
 typedef struct cam_id_s {
 		quad_cams_t cam;
 		char *tag;
-}cam_id_t;
+} cam_id_t;
 
 quad_cams_t quad_cams[3];
 quad_cams_t pent_cams[3];
 
 cam_id_t cam_id[7];
-
-
 
 // NEW VERSION
 
@@ -86,13 +103,9 @@ typedef struct spawn_s {
 	vec3_t location;
 } spawn_t;
 
-
-
 typedef struct mvd_new_info_cg_s {
 	double game_starttime;
-}mvd_new_info_cg_t; // mvd_new_info_cg;
-
-
+} mvd_new_info_cg_t; // mvd_new_info_cg;
 
 typedef struct mvd_player_s {
 	player_state_t	*p_state;
@@ -118,8 +131,6 @@ typedef struct mvd_info_s {
 } mvd_info_t;
 */
 
-
-
 //extern mt_matchstate_t matchstate;
 //extern matchinfo_t matchinfo;
 extern	centity_t		cl_entities[CL_MAX_EDICTS];
@@ -137,7 +148,6 @@ int quad_mentioned = 0;
 int got_game_infos = 0;
 int powerup_cam_active = 0;
 int cam_1,cam_2,cam_3,cam_4;
-
 
 extern cvar_t tp_name_quad, tp_name_pent, tp_name_ring, tp_name_separator, tp_name_backpack, tp_name_suit;
 extern cvar_t tp_name_axe, tp_name_sg, tp_name_ssg, tp_name_ng, tp_name_sng, tp_name_gl, tp_name_rl, tp_name_lg,tp_name_ga,tp_name_ya,tp_name_ra,tp_name_mh;
@@ -158,9 +168,6 @@ mvd_new_info_t mvd_new_info[MAX_CLIENTS];
 int FindBestNick(char *s, int use);
 
 int mvd_demo_track_run = 0;
-
-
-//event_handler_t *events=NULL;
 
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
@@ -189,28 +196,14 @@ cvar_t mvd_pc_view_2 = {"mvd_pc_view_2",""};
 cvar_t mvd_pc_view_3 = {"mvd_pc_view_3",""};
 cvar_t mvd_pc_view_4 = {"mvd_pc_view_4",""};
 
-
 cvar_t mvd_moreinfo = {"mvd_moreinfo","0"};
 
-
-
-//quad_cams_t quad_cams[3];
-//quad_cams_t pent_cams[3];
-/*= {
-	{{595,100,100},{6,46,0}},
-	{{1010,116,116},{13,122,0}},
-	{{595,130,130},{17,340,0}},
-};
-*/
-
-
-	typedef struct bp_var_s{
-		int id;
-		int val;
-	} bp_var_t;
+typedef struct bp_var_s{
+	int id;
+	int val;
+} bp_var_t;
 
 bp_var_t bp_var[MAX_CLIENTS];
-
 
 char *Make_Red (char *s,int i){
 	static char buf[1024];
@@ -283,9 +276,7 @@ void MVD_Init_Info_f (void) {
 void MVD_Demo_Track (void){
 	extern char track_name[16];
     extern cvar_t demo_playlist_track_name;
-
 	int track_player ;
-
 
 	#ifdef DEBUG
 	printf("MVD_Demo_Track Started\n");
@@ -602,10 +593,6 @@ void MVD_Stats_Cleanup_f (void){
 
 }
 
-void MVD_Get_Game_Infos_f (void){
-
-}
-
 void MVD_Set_Armor_Stats_f (int z,int i){
 	switch(z){
 		case GA_INFO:
@@ -622,9 +609,8 @@ void MVD_Set_Armor_Stats_f (int z,int i){
 			break;
 
 	}
-
-
 }
+
 int MVD_Stats_Gather_f (void){
 	int death_stats = 0;
 	int x,i,z,killdiff;
@@ -1000,11 +986,6 @@ void MVD_Status (void){
 		strncpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.info[QUAD_INFO].runs[p].time,mvd_new_info[id].info.info[QUAD_INFO].runs[p].frags,mvd_new_info[id].info.info[QUAD_INFO].runs[p].teamfrags),sizeof(str));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
 	}
-
-
-
-
-
 }
 
 #ifdef _DEBUG
@@ -1075,7 +1056,6 @@ void MVD_PC_Get_Coords (void){
 	cam_id[5].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[5].tag="p3";
 }
-
 
 
 void MVD_Powerup_Cams_f (void){
@@ -1174,9 +1154,6 @@ void MVD_Powerup_Cams_f (void){
 				Com_Printf("wrong tag for mvd_pc_view_4\n");
 		}
 	}
-
-
-
 }
 
 void MVD_Utils_Init (void) {
@@ -1217,8 +1194,6 @@ void MVD_Utils_Init (void) {
 
 	Cvar_ResetCurrentGroup();
 }
-
-
 
 void MVD_Screen (void){
 	MVD_Info ();
