@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.31 2007-09-23 20:23:16 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.32 2007-09-24 09:22:59 dkure Exp $
 */
 
 //
@@ -536,7 +536,7 @@ ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent, 
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
-							  char *background_name, int flags);
+							  char *background_name, ez_control_flags_t flags);
 
 //
 // Control - Destroys a specified control.

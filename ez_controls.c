@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.47 2007-09-23 20:23:16 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.48 2007-09-24 09:22:59 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -1853,7 +1853,7 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  char *background_name,
-							  int flags, int text_flags,
+							  ez_control_flags_t flags, ez_label_flags_t text_flags,
 							  char *text)
 {
 	ez_label_t *label = NULL;
@@ -1879,7 +1879,7 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 				  char *name, char *description,
 				  int x, int y, int width, int height,
 				  char *background_name,
-				  int flags, int text_flags,
+				  ez_control_flags_t flags, ez_label_flags_t text_flags,
 				  char *text)
 {
 	// Initialize the inherited class first.
@@ -3033,7 +3033,7 @@ ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  char *background_name, char *hover_image, char *pressed_image,
-							  int flags)
+							  ez_control_flags_t flags)
 {
 	ez_button_t *button = NULL;
 
@@ -3058,7 +3058,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  char *background_name, char *hover_image, char *pressed_image,
-							  int flags)
+							  ez_control_flags_t flags)
 {
 	// Initialize the inherited class first.
 	EZ_control_Init(&button->super, tree, parent, name, description, x, y, width, height, background_name, flags);
@@ -3254,7 +3254,7 @@ ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  char *background_name,
-							  int flags)
+							  ez_control_flags_t flags)
 {
 	ez_slider_t *slider = NULL;
 
@@ -3279,7 +3279,7 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  char *background_name,
-							  int flags)
+							  ez_control_flags_t flags)
 {
 	height = max(height, 8);
 
