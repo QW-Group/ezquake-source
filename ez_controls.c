@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.53 2007-09-25 13:29:48 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.54 2007-09-25 13:33:20 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3537,12 +3537,12 @@ int EZ_button_OnDraw(ez_control_t *self)
 	// Run the super class's implementation first.
 	EZ_control_OnDraw(self);
 
+	/*
 	if (button->text)
 	{
 		text_len = strlen(button->text);
 	}
 
-	/*
 	switch (button->text_alignment)
 	{
 		case top_left :
