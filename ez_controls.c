@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.56 2007-09-25 16:46:50 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.57 2007-09-25 21:51:28 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -177,10 +177,10 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 
 	// Make sure that the left bounds isn't greater than the right bounds and so on.
 	// This would lead to controls being visible in a few incorrect cases.
-	clamp(control->bound_top, 0, control->bound_bottom);
-	clamp(control->bound_bottom, control->bound_top, vid.height);
-	clamp(control->bound_left, 0, control->bound_right);
-	clamp(control->bound_right, control->bound_left, vid.width);
+	clamp(control->bound_top, 0, max(0, control->bound_bottom));
+	clamp(control->bound_bottom, control->bound_top, vid.conheight);
+	clamp(control->bound_left, 0, max(0, control->bound_right));
+	clamp(control->bound_right, control->bound_left, vid.conwidth);
 
 	// Calculate the bounds for the children.
 	for (iter = control->children.head; iter; iter = iter->next)
@@ -224,12 +224,27 @@ void EZ_tree_Draw(ez_tree_t *tree)
 			payload->virtual_height, 
 			1, false, RGBA_TO_COLOR(255, 0, 0, 125));
 
+		// Don't draw the invisible controls.
+		if (!(payload->ext_flags & control_visible))
+		{
+			iter = iter->next;
+			continue;
+		}
+
 		// TODO : Remove this test stuff.
 		if (!strcmp(payload->name, "label"))
 		{
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
 				va("avx: %i avy: %i vx: %i vy %i", 
 				payload->absolute_virtual_x, payload->absolute_virtual_y, payload->virtual_x, payload->virtual_y));
+		}
+
+		// Bugfix: Make sure we don't even bother trying to draw something that is completly offscreen
+		// it will cause a weird flickering bug.
+		if ((payload->bound_left == payload->bound_right) || (payload->bound_top == payload->bound_bottom))
+		{
+			iter = iter->next;
+			continue;
 		}
 
 		// Make sure that the control draws only within it's bounds.

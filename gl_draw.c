@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.94 2007-09-12 12:59:29 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.95 2007-09-25 21:51:28 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -301,8 +301,15 @@ void Draw_SetOverallAlpha(float alpha)
 
 void Draw_EnableScissorRectangle(int x, int y, int width, int height)
 {
+	float resdif_w = (glwidth / (float)vid.conwidth);
+	float resdif_h = (glheight / (float)vid.conheight);
+
 	glEnable(GL_SCISSOR_TEST);
-	glScissor(x, glheight - (y + height), width, height);
+	glScissor(
+		Q_rint(x * resdif_w), 
+		Q_rint((vid.conheight - (y + height)) * resdif_h), 
+		Q_rint(width * resdif_w), 
+		Q_rint(height * resdif_h));
 }
 
 void Draw_EnableScissor(int left, int right, int top, int bottom)
@@ -807,7 +814,7 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	apply_overall_alpha = (apply_overall_alpha && (overall_alpha < 1.0));
 
 	// Turn on alpha transparency.
-	if (gl_alphafont.value || apply_overall_alpha)
+	if ((gl_alphafont.value || apply_overall_alpha))
 	{
 		glDisable(GL_ALPHA_TEST);
 	}
@@ -820,7 +827,7 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	}
 	else
 	{
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	}
 
 	// Set the overall alpha.
