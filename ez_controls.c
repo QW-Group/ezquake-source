@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.54 2007-09-25 13:33:20 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.55 2007-09-25 13:44:37 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2847,36 +2847,25 @@ static void EZ_label_PageUpDnKeyDown(ez_label_t *label, int key)
 //
 static int EZ_label_GetNextWordBoundary(ez_label_t *label, int cur_pos, qbool forward)
 {
-	char *txt	= NULL;
-	int i		= 0;
+	char *txt	= label->text;
 	int dir		= forward ? 1 : -1;		
 
 	// Make sure we're not out of bounds.
-	if (cur_pos > label->text_length)
-	{
-		return label->text_length;
-	}
-
-	if (cur_pos < 0)
-	{
-		return 0;
-	}
-
-	txt = label->text + cur_pos;
+	clamp(cur_pos, 0, label->text_length);
 
 	// Eat all the whitespaces.
-	while ((i > 0) && (i <= label->text_length) && ((txt[i] == ' ') || (txt[i] == '\n')))
+	while ((cur_pos >= 0) && (cur_pos <= label->text_length) && ((txt[cur_pos] == ' ') || (txt[cur_pos] == '\n')))
 	{
-		i += dir;
+		cur_pos += dir;
 	}
 	
 	// Find the next word boundary.
-	while ((i >= 0) && (i <= label->text_length) && (txt[i] != ' ') && (txt[i] != '\n') && (txt[i] != '\0'))
+	while ((cur_pos >= 0) && (cur_pos <= label->text_length) && (txt[cur_pos] != ' ') && (txt[cur_pos] != '\n'))
 	{
-		i += dir;
+		cur_pos += dir;
 	}
 
-	return cur_pos + i;
+	return clamp(cur_pos, 0, label->text_length);
 }
 
 //
