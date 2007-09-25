@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_utils.c,v 1.53 2007-09-24 21:44:48 johnnycz Exp $
+$Id: mvd_utils.c,v 1.54 2007-09-25 21:51:39 johnnycz Exp $
 */
 
 // core module of the group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
@@ -145,9 +145,10 @@ int quad_is_active= 0;
 int pent_is_active= 0;
 int pent_mentioned = 0;
 int quad_mentioned = 0;
-int got_game_infos = 0;
 int powerup_cam_active = 0;
 int cam_1,cam_2,cam_3,cam_4;
+static qbool was_standby = true;
+
 
 extern cvar_t tp_name_quad, tp_name_pent, tp_name_ring, tp_name_separator, tp_name_backpack, tp_name_suit;
 extern cvar_t tp_name_axe, tp_name_sg, tp_name_ssg, tp_name_ng, tp_name_sng, tp_name_gl, tp_name_rl, tp_name_lg,tp_name_ga,tp_name_ya,tp_name_ra,tp_name_mh;
@@ -224,8 +225,6 @@ void MVD_Init_Info_f (void) {
 	int i;
 	int z;
 
-	if (!got_game_infos){
-
 	for (z=0,i=0;i<MAX_CLIENTS;i++){
 		if (!cl.players[i].name[0] || cl.players[i].spectator == 1)
 				continue;
@@ -236,7 +235,6 @@ void MVD_Init_Info_f (void) {
 	strncpy(mvd_cg_info.mapname,TP_MapName(),sizeof(mvd_cg_info.mapname));
 	mvd_cg_info.timelimit=cl.timelimit;
 
-
 	strncpy(mvd_cg_info.team1, (z ? mvd_new_info[0].p_info->team : ""),sizeof(mvd_cg_info.team1));
 	for (i = 0; i < z; i++) {
 		if(strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1)){
@@ -244,7 +242,6 @@ void MVD_Init_Info_f (void) {
 			break;
 		}
 	}
-
 
 	if (z==2)
 		mvd_cg_info.gametype=0;
@@ -261,13 +258,9 @@ void MVD_Init_Info_f (void) {
 	mvd_cg_info.deathmatch=atoi(Info_ValueForKey(cl.serverinfo,"deathmatch"));
 
 	mvd_cg_info.pcount = z;
-	}
-	got_game_infos=1;
-	if (got_game_infos){
-		for (i = 0; i < mvd_cg_info.pcount; i++)
-			mvd_new_info[i].p_state = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[mvd_new_info[i].id];
-	}
 
+	for (i = 0; i < mvd_cg_info.pcount; i++)
+		mvd_new_info[i].p_state = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[mvd_new_info[i].id];
 }
 
 // this steps in action if the user has created a demo playlist and has specified
@@ -538,59 +531,14 @@ void MVD_Status_WP_f (int i){
 }
 
 void MVD_Stats_Cleanup_f (void){
-	int i;
-	int x,y;
-	got_game_infos=0;
 	quad_is_active=0;
 	pent_is_active=0;
-	for (i=0;i<MAX_CLIENTS;i++){
-		mvd_new_info[i].id=0;
-		mvd_new_info[i].lwf=0;
-		for(x=0;x<=mvd_info_types;x++){
-			mvd_new_info[i].item_info[x].lost=0;
-			mvd_new_info[i].item_info[x].took=0;
-		}
-		mvd_new_info[i].p_info=NULL;
-		mvd_new_info[i].p_state=NULL;
-		mvd_new_info[i].info.das.alivetime=0;
-		mvd_new_info[i].info.das.alivetimestart=0;
-		mvd_new_info[i].info.das.deathcount=0;
-		mvd_new_info[i].info.das.isdead=0;
-		mvd_new_info[i].info.firstrun=0;
-		for(x=0;x<=15;x++){
-			mvd_new_info[i].info.info[x].count=0;
-			mvd_new_info[i].info.info[x].ctime=0;
-			mvd_new_info[i].info.info[x].has=0;
-			mvd_new_info[i].info.info[x].lost=0;
-			mvd_new_info[i].info.info[x].mention=0;
-			mvd_new_info[i].info.info[x].run=0;
-			for(y=0;y<=512;y++){
-				mvd_new_info[i].info.info[x].runs[y].frags=0;
-				mvd_new_info[i].info.info[x].runs[y].teamfrags=0;
-				mvd_new_info[i].info.info[x].runs[y].time=0;
-			}
-			mvd_new_info[i].info.spawntelefrags=0;
-			mvd_new_info[i].info.teamspawntelefrags=0;
-		}
-		mvd_new_info[i].info.run=0;
-		for(y=0;y<=512;y++){
-			mvd_new_info[i].info.runs[y].frags=0;
-			mvd_new_info[i].info.runs[y].teamfrags=0;
-			mvd_new_info[i].info.runs[y].time=0;
-		}
-		mvd_new_info[i].value=0;
-		mvd_cg_info.gametype=0;
-		mvd_cg_info.hostname[0]='\0';
-		mvd_cg_info.mapname[0]='\0';
-		mvd_cg_info.pcount=0;
-		mvd_cg_info.team1[0]='\0';
-		mvd_cg_info.team2[0]='\0';
-		mvd_cg_info.timelimit=0;
-		mvd_cg_info.deathmatch=0;
-		powerup_cam_active=0;
-		cam_1=cam_2=cam_3=cam_4=0;
-	}
+	powerup_cam_active=0;
+	cam_1=cam_2=cam_3=cam_4=0;
+	was_standby = true;
 
+	memset(&mvd_new_info, 0, sizeof(mvd_new_info_t));
+	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info_s));
 }
 
 void MVD_Set_Armor_Stats_f (int z,int i){
@@ -614,8 +562,6 @@ void MVD_Set_Armor_Stats_f (int z,int i){
 int MVD_Stats_Gather_f (void){
 	int death_stats = 0;
 	int x,i,z,killdiff;
-
-	MVD_Init_Info_f();
 
 	if(cl.countdown == true){
 		return 0;
@@ -996,9 +942,20 @@ void MVD_Testor_f (void) {
 }
 #endif
 
+qbool MVD_MatchStarted(void) {
+	if (was_standby && !cl.standby) {
+		was_standby = false;
+		return true;
+	}
+	was_standby = cl.standby;
+	return false;
+}
+
 void MVD_Mainhook_f (void){
+	if (MVD_MatchStarted())
+		MVD_Init_Info_f();
+
 	MVD_Stats_Gather_f();
-//	MVD_Notice_f();
 	MVD_AutoTrack_f ();
 	if (cls.mvdplayback && mvd_demo_track_run == 0)
 	MVD_Demo_Track ();
