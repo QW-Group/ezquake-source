@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_autotrack.c,v 1.4 2007-09-25 21:53:11 johnnycz Exp $
+$Id: mvd_autotrack.c,v 1.5 2007-09-25 22:35:58 johnnycz Exp $
 */
 
 // MultiView Demo Autotrack system
@@ -29,6 +29,7 @@ $Id: mvd_autotrack.c,v 1.4 2007-09-25 21:53:11 johnnycz Exp $
 
 // mvd_autotrack cvars
 cvar_t mvd_autotrack = {"mvd_autotrack", "0"};
+cvar_t mvd_autotrack_instant = {"mvd_autotrack_instant", "0"};
 cvar_t mvd_autotrack_1on1 = {"mvd_autotrack_1on1", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_1on1_values = {"mvd_autotrack_1on1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
 cvar_t mvd_autotrack_2on2 = {"mvd_autotrack_2on2", "%a * %A + 50 * %W + %p + %f"};
@@ -245,7 +246,7 @@ static int MVD_GetBestPlayer(void)
 	bp_id = mvd_new_info[initial].id;
 	for ( i=0 ; i<mvd_cg_info.pcount ; i++ ) {
 		if (bp_val < mvd_new_info[i].value) {
-			if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, mvd_new_info[last_track].p_info->team))
+			if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[cl.viewplayernum].team))
 				continue;
 
 			bp_val = mvd_new_info[i].value;
@@ -258,6 +259,52 @@ static int MVD_GetBestPlayer(void)
 static int MVD_FindBestPlayer_f(void) {
 	MVD_UpdatePlayerValues();
 	return MVD_GetBestPlayer();
+}
+
+static qbool MVD_TrackedHasNoWeapon() {
+	int stat = cl.players[cl.viewplayernum].stats[STAT_ITEMS];
+	if ((stat & IT_ROCKET_LAUNCHER) || (stat & IT_LIGHTNING)) return false;
+	else return true;
+}
+
+static qbool MVD_SomeoneHasWeapon() {
+	int i, stats;
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
+		if ((stats & IT_ROCKET_LAUNCHER) || (stats & IT_LIGHTNING)) return true;
+	}
+	return false;
+}
+
+static qbool MVD_TrackedHasNoPowerup() {
+	int stats = cl.players[cl.viewplayernum].stats[STAT_ITEMS];
+	if ((stats & IT_QUAD) || (stats & IT_INVULNERABILITY)) return false;
+	else return true;
+}
+
+static qbool MVD_SomeoneHasPowerup() {
+	int i, stats;
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
+		if ((stats & IT_QUAD) || (stats & IT_INVULNERABILITY)) return true;
+	}
+	return false;
+}
+
+static qbool MVD_SomeoneHasPentWithRL(void) {
+	int i, stats;
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
+		if ((stats & IT_ROCKET_LAUNCHER) && (stats & IT_INVULNERABILITY)) return true;
+	}
+	return false;
+}
+
+static qbool MVD_SwitchMoment(void) {
+	if (MVD_TrackedHasNoWeapon() && MVD_SomeoneHasWeapon()) return true;
+	else if (MVD_TrackedHasNoPowerup() && MVD_SomeoneHasPowerup()) return true;
+	else if (MVD_SomeoneHasPentWithRL()) return true;
+	else return false;
 }
 
 void MVD_AutoTrack_f(void) {
@@ -323,7 +370,7 @@ void MVD_AutoTrack_f(void) {
 			}
 		}
 	}
-	else // mvd_autotrack is 1 or 2
+	else if (mvd_autotrack_instant.integer || MVD_SwitchMoment())// mvd_autotrack is 1 or 2
 	{
 		id = MVD_FindBestPlayer_f();
 		if (id != last_track) {
@@ -341,6 +388,7 @@ void MVD_AutoTrack_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_MVD);
 	Cvar_Register (&mvd_autotrack);
+	Cvar_Register (&mvd_autotrack_instant);
 	Cvar_Register (&mvd_autotrack_1on1);
 	Cvar_Register (&mvd_autotrack_1on1_values);
 	Cvar_Register (&mvd_autotrack_2on2);
