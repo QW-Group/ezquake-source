@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.37 2007-09-17 11:12:29 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.38 2007-09-25 16:13:35 cokeman1982 Exp $
 
 */
 
@@ -2227,7 +2227,14 @@ int Test_OnLostFocus(ez_control_t *self)
 	return 0;
 }
 
-void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y);
+ez_control_t *root = NULL;
+ez_control_t *child1 = NULL;
+ez_control_t *child2 = NULL;
+ez_button_t *button = NULL;
+ez_label_t *label = NULL;
+ez_label_t *label2 = NULL;
+ez_slider_t *slider = NULL;
+
 int Test_OnButtonDraw(ez_control_t *self)
 {
 	int x, y;
@@ -2236,9 +2243,20 @@ int Test_OnButtonDraw(ez_control_t *self)
 	return 0;
 }
 
+int Test_OnSliderPositionChanged(ez_control_t *self)
+{
+	ez_slider_t *slider = (ez_slider_t *)self;
+
+	int slider_pos = EZ_slider_GetPosition(slider);
+
+	EZ_label_SetText(label2, va("%i", slider_pos));
+
+	return 0;
+}
+
 int Test_OnControlDraw(ez_control_t *self)
 {
-	int x, y, i;
+	int x, y; //, i;
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
 	/*for (i = 0; i < 30; i++)
@@ -2452,12 +2470,6 @@ qbool HUD_Editor_MouseEvent(mouse_state_t *ms)
 	return false;
 }
 
-ez_control_t *root = NULL;
-ez_control_t *child1 = NULL;
-ez_control_t *child2 = NULL;
-ez_button_t *button = NULL;
-ez_label_t *label = NULL;
-
 //
 // Handles key events sent to the HUD editor.
 //
@@ -2513,15 +2525,19 @@ void HUD_Editor_Key(int key, int unichar, qbool down)
 				break;
 			case K_UPARROW :
 				EZ_control_SetScrollChange(child1, 0, 1);
+				//EZ_control_SetScrollChange((ez_control_t *)label, 0, 1);
 				break;
 			case K_DOWNARROW :
 				EZ_control_SetScrollChange(child1, 0, -1);
+				//EZ_control_SetScrollChange((ez_control_t *)label, 0, 1);
 				break;
 			case K_LEFTARROW :
 				EZ_control_SetScrollChange(child1, 1, 0);
+				//EZ_control_SetScrollChange((ez_control_t *)label, 0, 1);
 				break;
 			case K_RIGHTARROW :
 				EZ_control_SetScrollChange(child1, -1, 0);
+				//EZ_control_SetScrollChange((ez_control_t *)label, 0, 1);
 				break;
 		}
 	}
@@ -2540,15 +2556,16 @@ void HUD_Editor_Init(void)
 	color.c = RGBA_TO_COLOR(255, 255, 255, 255);
 	color.i = 0;
 
+
 	// Root
 	{
-		root = EZ_control_Create(&help_control_tree, NULL, "Test window", "Test", 50, 50, 400, 400, NULL, CONTROL_FOCUSABLE | CONTROL_MOVABLE | CONTROL_RESIZE_H | CONTROL_RESIZE_V );
+		root = EZ_control_Create(&help_control_tree, NULL, "Test window", "Test", 50, 50, 400, 400, NULL, control_focusable | control_movable | control_resize_h | control_resize_v);
 		EZ_control_SetBackgroundColor(root, 0, 0, 0, 100);
 	}
 
 	// Child 1
 	{
-		child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, NULL, CONTROL_FOCUSABLE | CONTROL_RESIZE_H | CONTROL_RESIZE_V | CONTROL_MOVABLE | CONTROL_CONTAINED | CONTROL_SCROLLABLE);
+		child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, NULL, control_focusable | control_resize_h | control_resize_v | control_movable | control_contained | control_scrollable);
 
 		EZ_control_SetOnGotFocus(child1, Test_OnGotFocus);
 		EZ_control_SetOnLostFocus(child1, Test_OnLostFocus);
@@ -2562,7 +2579,7 @@ void HUD_Editor_Init(void)
 
 	// Child 2
 	{
-		child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, NULL, CONTROL_FOCUSABLE | CONTROL_CONTAINED);
+		child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, NULL, control_focusable | control_contained);
 
 		EZ_control_SetOnGotFocus(child2, Test_OnGotFocus);
 		EZ_control_SetOnLostFocus(child2, Test_OnLostFocus);
@@ -2572,29 +2589,58 @@ void HUD_Editor_Init(void)
 
 	// Button.
 	{
-		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", -15, -15, 15, 15, NULL, NULL, NULL, CONTROL_CONTAINED | CONTROL_RESIZEABLE);
+		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", 15, -15, 60, 15, NULL, NULL, NULL, control_contained | control_resizeable);
 		EZ_control_SetOnDraw((ez_control_t *)button, Test_OnButtonDraw);
 
 		EZ_button_SetFocusedColor(button, 255, 0, 0, 255);
 		EZ_button_SetNormalColor(button, 255, 255, 0, 100);
 		EZ_button_SetPressedColor(button, 255, 255, 0, 255);
 		EZ_button_SetHoverColor(button, 255, 0, 0, 150);
-		EZ_control_SetAnchor((ez_control_t *)button, (anchor_right | anchor_bottom));
+
+		EZ_button_SetText(button, "Button");
+		EZ_button_SetTextAlignment(button, bottom_center);
+
+		EZ_control_SetAnchor((ez_control_t *)button, (anchor_left | anchor_right | anchor_bottom));
 	}
 	
 	// Label.
 	{
 		label = EZ_label_Create(&help_control_tree, root, 
-			"My label", "A crazy label!", 200, 200, 200, 80, NULL, 
-			CONTROL_FOCUSABLE | CONTROL_CONTAINED | CONTROL_RESIZEABLE /*| CONTROL_MOVABLE*/ | CONTROL_RESIZE_V | CONTROL_RESIZE_H, 
-			LABEL_WRAPTEXT /*| LABEL_LARGEFONT*/, 
-			"Hello\nthis is a test are you fine because I am", color);
+			"label", "A crazy label!", 200, 200, 200, 80, NULL, 
+			control_focusable | control_contained | control_resizeable | control_scrollable /*| control_movable */ | control_resize_h | control_resize_v, 
+			label_wraptext | label_autosize/*| LABEL_LARGEFONT*/, 
+			"Hello\nthis is a test are you fine because I am bla bla bla this is a very long string and it's plenty of fun haha!");
 
 		EZ_label_SetTextScale(label, 2.0);
+		//EZ_label_SetTextFlags(label, LABEL_READONLY);
 
+		EZ_control_SetBackgroundColor((ez_control_t *)label, 150, 150, 0, 50);
 		EZ_control_SetAnchor((ez_control_t *)label, anchor_top | anchor_left | anchor_right | anchor_bottom); 
-		EZ_control_SetMinVirtualSize((ez_control_t *)label, 5, 5);
 	}
+
+	// Label 2.
+	{
+		label2 = EZ_label_Create(&help_control_tree, root, 
+			"label2", "A crazy label!", 100, 50, 32, 16, NULL, 
+			control_focusable | control_contained | control_resizeable, 
+			0, "");
+	}
+
+	// Slider.
+	{
+		slider = EZ_slider_Create(&help_control_tree, root,
+			"slider", "Slider omg", 50, 100, 150, 8, NULL, control_focusable | control_contained | control_resizeable);
+
+		EZ_control_SetAnchor((ez_control_t *)slider, anchor_left | anchor_right); 
+
+		EZ_slider_SetMax(slider, 100);
+		EZ_slider_SetMin(slider, 50);
+		EZ_slider_SetPosition(slider, 5);
+		EZ_slider_SetScale(slider, 1.0);
+
+		EZ_slider_SetOnSliderPositionChanged(slider, Test_OnSliderPositionChanged);
+	}
+
 #endif 
 	
 	// Register commands.
