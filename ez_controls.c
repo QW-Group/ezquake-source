@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.52 2007-09-25 10:47:33 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.53 2007-09-25 13:29:48 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -982,6 +982,15 @@ void EZ_control_SetScrollable(ez_control_t *self, qbool scrollable)
 }
 
 //
+// Control - Sets whetever the control should care about mouse input or not.
+//
+void EZ_control_SetIgnoreMouse(ez_control_t *self, qbool ignore_mouse)
+{
+	SET_FLAG(self->ext_flags, control_ignore_mouse, ignore_mouse);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
 // Control - Sets the external flags of the control.
 //
 void EZ_control_SetFlags(ez_control_t *self, ez_control_flags_t flags)
@@ -1448,12 +1457,15 @@ int EZ_control_OnDraw(ez_control_t *self)
 		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, true, RGBAVECT_TO_COLOR(self->background_color));
 	}
 
+	// TODO : Remove this test stuff.
+	/*
 	Draw_String(x, y, va("%s%s%s%s",
 			((self->int_flags & control_moving) ? "M" : " "),
 			((self->int_flags & control_focused) ? "F" : " "),
 			((self->int_flags & control_clicked) ? "C" : " "),
 			((self->int_flags & control_resizing_left) ? "R" : " ")
 			));
+	*/
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDraw);
@@ -1613,6 +1625,12 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	if (!ms)
 	{
 		Sys_Error("EZ_control_OnMouseEvent(): mouse_state_t NULL\n");
+	}
+
+	// Ignore the mouse?
+	if (self->ext_flags & control_ignore_mouse)
+	{
+		return false;
 	}
 
 	mouse_delta_x = Q_rint(ms->x_old - ms->x);
@@ -3308,6 +3326,33 @@ int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
 // TODO : Add a label as text on the button.
 
 //
+// Button - Recalculates and sets the position of the buttons label.
+//
+static EZ_button_RecalculateLabelPosition(ez_button_t *button)
+{
+	ez_control_t *self			= ((ez_control_t *)button);
+	ez_control_t *text_label	= ((ez_control_t *)button->text_label);
+
+	int new_x = Q_rint((self->width  - text_label->width) / 2.0);
+	int new_y = Q_rint((self->height - text_label->height) / 2.0);
+
+	EZ_control_SetPosition(text_label, new_x, new_y);
+}
+
+//
+// Button - Event handler for the buttons OnTextChanged event.
+// 
+static int EZ_button_OnLabelTextChanged(ez_control_t *self)
+{
+	// TODO : Is this safe to do? :s
+	ez_button_t *button = (ez_button_t *)self->parent;
+
+	EZ_button_RecalculateLabelPosition(button);
+
+	return 0;
+}
+
+//
 // Button - Creates a new button and initializes it.
 //
 ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
@@ -3353,14 +3398,25 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	// Override the draw function.
 	((ez_control_t *)button)->inheritance_level = EZ_BUTTON_INHERITANCE_LEVEL;
 	((ez_control_t *)button)->events.OnDraw		= EZ_button_OnDraw;
+	((ez_control_t *)button)->events.OnResize	= EZ_button_OnResize;
 
 	// Button specific events.
 	button->inheritance_level					= 0;
 	button->events.OnAction						= EZ_button_OnAction;
 
 	// TODO : Set proper flags / size for the label. Associate a function with the label text changing (and center it or whatever on that).
-	button->text_label = EZ_label_Create(tree, parent, "Button text label", "", 0, 0, 1, 1, NULL, 0, 0, "");
+	button->text_label = EZ_label_Create(tree, (ez_control_t *)button, "Button text label", "", button->padding_left, button->padding_top, 1, 1, NULL, 0, 0, "");
 
+	EZ_label_SetOnTextChanged(button->text_label, EZ_button_OnLabelTextChanged);
+
+	EZ_label_SetReadOnly(button->text_label, true);
+	EZ_label_SetTextSelectable(button->text_label, false);
+	EZ_label_SetAutoSize(button->text_label, true);
+	EZ_control_SetIgnoreMouse((ez_control_t *)button->text_label, true);
+	EZ_control_SetFocusable((ez_control_t *)button->text_label, false);
+	EZ_control_SetMovable((ez_control_t *)button->text_label, false);
+
+	CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)button), ez_control_t, OnResize);
 	// TODO : Load button images.
 }
 
@@ -3386,6 +3442,31 @@ int EZ_button_OnAction(ez_control_t *self)
 	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnAction);
 
 	return 0;
+}
+
+//
+// Button - OnResize event handler.
+//
+int EZ_button_OnResize(ez_control_t *self)
+{
+	ez_button_t *button = (ez_button_t *)self;
+
+	// Run the super class implementation.
+	EZ_control_OnResize(self);
+
+	EZ_button_RecalculateLabelPosition(button);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
+
+	return 0;
+}
+
+//
+// Button - Set the text of the button. 
+//
+void EZ_button_SetText(ez_button_t *button, const char *text)
+{
+	EZ_label_SetText(button->text_label, text);
 }
 
 //
@@ -3461,6 +3542,7 @@ int EZ_button_OnDraw(ez_control_t *self)
 		text_len = strlen(button->text);
 	}
 
+	/*
 	switch (button->text_alignment)
 	{
 		case top_left :
@@ -3489,6 +3571,7 @@ int EZ_button_OnDraw(ez_control_t *self)
 		case bottom_right:
 			break;
 	}
+	*/
 
 	if (self->int_flags & control_clicked)
 	{

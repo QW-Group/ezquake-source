@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.34 2007-09-24 23:25:01 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.35 2007-09-25 13:29:48 cokeman1982 Exp $
 */
 
 //
@@ -293,8 +293,8 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 {																											\
 	int temp = 0;																							\
 	int *p = (int *)retval;																					\
-	((eventroot *)ctrl)->override_count = ((eventroot *)ctrl)->inheritance_level;							\
-	if(!CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))													\
+	((eventroot *)(ctrl))->override_count = ((eventroot *)(ctrl))->inheritance_level;							\
+	if(!CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler))													\
 		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);	\
 	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), ##__VA_ARGS__);		\
 	if(p) (*p) = temp;																						\
@@ -427,7 +427,8 @@ typedef enum ez_control_flags_e
 	control_resizeable		= (1 << 5),		// Is the control resizeable at all, not just by the user? // TODO : Should this be external?
 	control_contained		= (1 << 6),		// Is the control contained within it's parent or can it go outside its edges?
 	control_visible			= (1 << 7),		// Is the control visible?
-	control_scrollable		= (1 << 8)		// Is the control scrollable?
+	control_scrollable		= (1 << 8),		// Is the control scrollable
+	control_ignore_mouse	= (1 << 9)		// Should the control ignore mouse input?
 } ez_control_flags_t;
 
 #define DEFAULT_CONTROL_FLAGS	(control_enabled | control_focusable | control_contained | control_scrollable | control_visible)
@@ -569,7 +570,7 @@ void EZ_control_SetFlags(ez_control_t *self, ez_control_flags_t flags);
 //
 // Control - Sets whetever the control is scrollable or not.
 //
-void EZ_control_SetVisible(ez_control_t *self, qbool scrollable);
+void EZ_control_SetScrollable(ez_control_t *self, qbool scrollable);
 
 //
 // Control - Sets whetever the control is visible or not.
@@ -590,7 +591,6 @@ void EZ_control_SetResizeable(ez_control_t *self, qbool resize_vertically);
 // Control - Sets whetever the control is resizeable both horizontally and vertically by the user.
 //
 void EZ_control_SetResizeableBoth(ez_control_t *self, qbool resize);
-
 
 //
 // Control - Sets whetever the control is resizeable horizontally by the user.
@@ -617,7 +617,10 @@ void EZ_control_SetEnabled(ez_control_t *self, qbool enabled);
 //
 void EZ_control_SetContained(ez_control_t *self, qbool contained);
 
-
+//
+// Control - Sets whetever the control should care about mouse input or not.
+//
+void EZ_control_SetIgnoreMouse(ez_control_t *self, qbool ignore_mouse);
 
 //
 // Control - Sets the OnDestroy event handler.
@@ -1220,7 +1223,6 @@ typedef struct ez_button_s
 	int						padding_left;
 	int						padding_right;
 	int						padding_bottom;
-	char					*text;				// The text for the button.
 	ez_textalign_t			text_alignment;		// Text alignment.
 	clrinfo_t				focused_text_color;	// Text color when the button is focused.
 	clrinfo_t				normal_text_color;	// Text color when the button is in it's normal state.
@@ -1258,6 +1260,16 @@ void EZ_button_Destroy(ez_control_t *self, qbool destroy_children);
 // Button - OnAction event handler.
 //
 int EZ_button_OnAction(ez_control_t *self);
+
+//
+// Button - OnResize event handler.
+//
+int EZ_button_OnResize(ez_control_t *self);
+
+//
+// Button - Set the text of the button. 
+//
+void EZ_button_SetText(ez_button_t *button, const char *text);
 
 // 
 // Button - Sets the normal color of the button.
