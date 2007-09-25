@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_autotrack.c,v 1.3 2007-09-24 21:41:17 johnnycz Exp $
+$Id: mvd_autotrack.c,v 1.4 2007-09-25 21:53:11 johnnycz Exp $
 */
 
 // MultiView Demo Autotrack system
@@ -74,9 +74,9 @@ char *multitrack_val ;
 char *multitrack_str ;
 int last_track = 0;
 
-int currentplayer_num;
+static int currentplayer_num;
 
-int MVD_AutoTrackBW_f(int i){
+static int MVD_AutoTrackBW_f(int i){
 	extern cvar_t tp_weapon_order;
 	int j;
 	player_info_t *bp_info;
@@ -102,9 +102,8 @@ int MVD_AutoTrackBW_f(int i){
 	return 0;
 }
 
-expr_val MVD_Var_Vals(const char *n)
+static expr_val MVD_Var_Vals(const char *n)
 {
-#define VN(x) (*n == (x))
 	int i = currentplayer_num;
     int stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
 	double bp_at, bp_pw;
@@ -129,13 +128,10 @@ expr_val MVD_Var_Vals(const char *n)
     // C - current run frags
     // d - average quad run time
     // D - average quad runt frags
-    // e -
     // E - average pent run frags
     // f - frags
-    // F -
     // h - health
     // i - took ssg
-    // I -
     // j - took ng
     // J - took sng
     // k - took gl
@@ -149,20 +145,6 @@ expr_val MVD_Var_Vals(const char *n)
     // o - took ya
     // O - took ra
     // p - powerups
-    // P -
-    // q -
-    // Q -
-    // r -
-    // R -
-    // s -
-    // S -
-    // t -
-    // T -
-    // u -
-    // U -
-    // v -
-    // V -
-    // w -
     // W - best weapon
     // x - took ring
     // X - lost ring
@@ -202,50 +184,39 @@ expr_val MVD_Var_Vals(const char *n)
 
 static const parser_extra mvd_pars_extra = { MVD_Var_Vals, NULL };
 
-// todo: unify the logic in these two functions
-const char* MVD_GetItemsValuesString() {
-    // FIXME!
-    // if you run a demo and then anther demo, mvd_cg_info will not change!
-    // so most probably if you run 4on4 demo and then 1on1 or vice versa, during the second
-    // demo the autotrack will not work
-	if      (mvd_cg_info.gametype == 0) return mvd_autotrack_1on1_values.string;
-	else if (mvd_cg_info.gametype == 1) return mvd_autotrack_2on2_values.string;
-	else if (mvd_cg_info.gametype == 3) return mvd_autotrack_4on4_values.string;
-	else if (mvd_autotrack.integer == 2)  return mvd_autotrack_custom_values.string;
-	else if (mvd_autotrack.integer == 3 && cl_multiview.value)
-        return multitrack_val;
-    else                                return mvd_autotrack_1on1_values.string;
-}
-
-const char* MVD_GetValueEquation() {
+static void MVD_GetValuesAndEquation(const char** v, const char** e) {
+#define RET(x) { *v = mvd_autotrack_##x##_values.string; *e = mvd_autotrack_##x.string; }
 	if (mvd_autotrack.integer == 1) {
-		if      (mvd_cg_info.pcount == 2)   return mvd_autotrack_1on1.string;
-	    else if (mvd_cg_info.pcount == 4)   return mvd_autotrack_2on2.string;
-	    else if (mvd_cg_info.pcount == 8)   return mvd_autotrack_4on4.string;
-	    else                                return mvd_autotrack_1on1.string;
-	} else if (mvd_autotrack.integer == 2) {
-		return mvd_autotrack_custom.string;
-	} else if (mvd_autotrack.integer == 3 && cl_multiview.value) {
-		return multitrack_str;
-	} else return mvd_autotrack_1on1.string;
+		if      (mvd_cg_info.gametype == 0) RET(1on1)
+		else if (mvd_cg_info.gametype == 1) RET(2on2)
+		else if (mvd_cg_info.gametype == 3) RET(4on4)
+		else								RET(4on4)
+	}
+	else if (mvd_autotrack.integer == 2)	RET(custom)
+	else if (mvd_autotrack.integer == 3 && cl_multiview.value) {
+		*v = multitrack_val; *e = multitrack_str; 
+	} else									RET(4on4)
+#undef RET
 }
 
-void MVD_UpdatePlayerValues(void)
+static void MVD_UpdatePlayerValues(void)
 {
 	int eval_error, i;
     const char* eq;
+	const char* vals;
     double value;
+
+	MVD_GetValuesAndEquation(&vals, &eq);
 
     // will extract user string "1 5 8 100.4 ..." into pl_values array which is
     // later accessed via macros like ra_val, quad_val, rl_val, ...
-    if (COM_GetFloatTokens(MVD_GetItemsValuesString(), pl_values, PL_VALUES_COUNT) != PL_VALUES_COUNT)
+    if (COM_GetFloatTokens(vals, pl_values, PL_VALUES_COUNT) != PL_VALUES_COUNT)
     {
 	    Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
 		Cvar_SetValue(&mvd_autotrack,0);
 		return;
     }
 
-	eq = MVD_GetValueEquation();
 	for ( i=0; i<mvd_cg_info.pcount ; i++ )
     {
 		// store global variable which is used in MVD_Var_Vals
@@ -262,9 +233,9 @@ void MVD_UpdatePlayerValues(void)
 	}
 }
 
-int MVD_GetBestPlayer(void)
+static int MVD_GetBestPlayer(void)
 {
-	int initial, h, bp_id, bp_val;
+	int initial, i, bp_id, bp_val;
 
 	if (last_track < 0 || last_track > mvd_cg_info.pcount)
 		initial = 0;
@@ -272,19 +243,19 @@ int MVD_GetBestPlayer(void)
 
 	bp_val = mvd_new_info[initial].value;
 	bp_id = mvd_new_info[initial].id;
-	for ( h=0 ; h<mvd_cg_info.pcount ; h++ ) {
-		if (bp_val < mvd_new_info[h].value) {
-			if (mvd_autotrack_lockteam.integer && strcmp(cl.players[h].team, cl.players[cl.viewplayernum].team))
+	for ( i=0 ; i<mvd_cg_info.pcount ; i++ ) {
+		if (bp_val < mvd_new_info[i].value) {
+			if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, mvd_new_info[last_track].p_info->team))
 				continue;
 
-			bp_val = mvd_new_info[h].value;
-			bp_id 	= mvd_new_info[h].id;
+			bp_val = mvd_new_info[i].value;
+			bp_id 	= mvd_new_info[i].id;
 		}
 	}
 	return bp_id ;
 }
 
-int MVD_FindBestPlayer_f(void) {
+static int MVD_FindBestPlayer_f(void) {
 	MVD_UpdatePlayerValues();
 	return MVD_GetBestPlayer();
 }
@@ -299,6 +270,9 @@ void MVD_AutoTrack_f(void) {
 	#endif
 
 	if (!mvd_autotrack.value)
+		return;
+
+	if (cl.standby || cl.countdown)
 		return;
 
 	// no need to recalculate the values in every frame
@@ -362,7 +336,6 @@ void MVD_AutoTrack_f(void) {
 	printf("MVD_AutoTrack_f Stopped\n");
 	#endif
 }
-
 
 void MVD_AutoTrack_Init(void)
 {
