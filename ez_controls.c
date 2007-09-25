@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.55 2007-09-25 13:44:37 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.56 2007-09-25 16:46:50 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1008,6 +1008,14 @@ ez_control_flags_t EZ_control_GetFlags(ez_control_t *self)
 }
 
 //
+// Control - Gets the anchor flags.
+//
+ez_anchor_t EZ_control_GetAnchor(ez_control_t *self)
+{
+	return self->anchor_flags;
+}
+
+//
 // Control - Sets the tab order of a control.
 //
 void EZ_control_SetTabOrder(ez_control_t *self, int tab_order)
@@ -1286,14 +1294,17 @@ int EZ_control_OnParentResize(ez_control_t *self)
 {
 	if (self->parent && (self->ext_flags & control_resizeable))
 	{
+		int x = self->x;
+		int y = self->y;
 		int width = self->width;
 		int height = self->height;
+		
+		// The position of the right side of the control relative to the parents right side.
+		int x_from_right = self->parent->prev_virtual_width - (self->x + self->width);
+		int y_from_bottom = self->parent->prev_virtual_height - (self->y + self->height);
 
 		if ((self->anchor_flags & (anchor_left | anchor_right)) == (anchor_left | anchor_right))
-		{
-			// The position of the right side of the control relative to the parents right side.
-			int x_from_right = self->parent->prev_virtual_width - (self->x + self->width);
-			
+		{			
 			// Set the new width so that the right side of the control is
 			// still the same distance from the right side of the parent.
 			width = self->parent->virtual_width - (self->x + x_from_right);
@@ -1301,12 +1312,25 @@ int EZ_control_OnParentResize(ez_control_t *self)
 
 		if ((self->anchor_flags & (anchor_top | anchor_bottom)) == (anchor_top | anchor_bottom))
 		{
-			int x_from_bottom = self->parent->prev_virtual_height - (self->x + self->height);
-			height = self->parent->virtual_height - (self->x + x_from_bottom);
+			height = self->parent->virtual_height - (self->y + y_from_bottom);
+		}
+		/*
+		else if ((self->anchor_flags & anchor_bottom) == anchor_bottom)
+		{
+			float prev_left_percentage = (self->x / (float)self->prev_virtual_width);
+			//float prev_right_percentage = (x_from_right / (float)self->prev_virtual_height);
+
+			x = Q_rint(prev_left_percentage * self->virtual_width);
+		}
+		*/
+
+		if ((self->x != x) || (self->y != y))
+		{
+			EZ_control_SetPosition(self, x, y);
 		}
 
 		// Set the new size if it changed.
-		if (self->width != width || self->height != height)
+		if ((self->width != width) || (self->height != height))
 		{
 			EZ_control_SetSize(self, width, height);
 		}
@@ -3312,20 +3336,98 @@ int EZ_label_OnMouseUp(ez_control_t *self, mouse_state_t *ms)
 // Button
 // =========================================================================================
 
-// TODO : Add a label as text on the button.
-
 //
 // Button - Recalculates and sets the position of the buttons label.
 //
-static EZ_button_RecalculateLabelPosition(ez_button_t *button)
+static void EZ_button_RecalculateLabelPosition(ez_button_t *button)
 {
-	ez_control_t *self			= ((ez_control_t *)button);
-	ez_control_t *text_label	= ((ez_control_t *)button->text_label);
+	ez_control_t *self				= ((ez_control_t *)button);
+	ez_label_t *label				= button->text_label;
+	ez_control_t *text_label_ctrl	= ((ez_control_t *)label);
+	ez_textalign_t alignment		= button->text_alignment;
+	int new_x						= text_label_ctrl->x;
+	int new_y						= text_label_ctrl->y;
+	int new_anchor					= EZ_control_GetAnchor(text_label_ctrl);
 
-	int new_x = Q_rint((self->width  - text_label->width) / 2.0);
-	int new_y = Q_rint((self->height - text_label->height) / 2.0);
+	// TODO : Hmm, should we even bothered with a special case for text alignment? Why not juse use ez_anchor_t stuff? Also remember to add support for middle_top and such.
+	switch (button->text_alignment)
+	{
+		case top_left :
+		{
+			new_anchor = (anchor_left | anchor_top);
+			new_x = 0;
+			new_y = 0;
+			break;
+		}
+		case top_right :
+		{
+			new_anchor = (anchor_right | anchor_top);
+			new_x = 0;
+			new_y = 0;
+			break;
+		}
+		case top_center :
+		{
+			new_anchor = anchor_top;
+			new_x = Q_rint((self->width  - text_label_ctrl->width) / 2.0);
+			new_y = 0;
+			break;
+		}
+		case bottom_left :
+		{
+			new_anchor = (anchor_left | anchor_bottom);
+			new_x = 0;
+			new_y = 0;
+			break;
+		}
+		case bottom_right :
+		{
+			new_anchor = (anchor_right | anchor_bottom);
+			new_x = 0;
+			new_y = 0;
+			break;
+		}
+		case bottom_center :
+		{
+			new_anchor = anchor_bottom;
+			new_x = Q_rint((self->width  - text_label_ctrl->width) / 2.0);
+			new_y = 0;
+			break;
+		}
+		case middle_right :
+		{
+			new_anchor = anchor_right;
+			new_x = 0;
+			new_y = Q_rint((self->height - text_label_ctrl->height) / 2.0);
+			break;
+		}
+		case middle_left :
+		{
+			new_anchor = anchor_left;
+			new_x = 0;
+			new_y = Q_rint((self->height - text_label_ctrl->height) / 2.0);
+			break;
+		}
+		case middle_center :
+		{
+			new_anchor = (anchor_left | anchor_top);
+			new_x = Q_rint((self->width  - text_label_ctrl->width) / 2.0);
+			new_y = Q_rint((self->height - text_label_ctrl->height) / 2.0);
+			break;
+		}
+		default :
+			break;
+	}
 
-	EZ_control_SetPosition(text_label, new_x, new_y);
+	if (new_anchor != EZ_control_GetAnchor(text_label_ctrl))
+	{
+		EZ_control_SetAnchor(text_label_ctrl, new_anchor);
+	}
+
+	if ((new_x != text_label_ctrl->x) || (new_y != text_label_ctrl->y))
+	{
+		EZ_control_SetPosition(text_label_ctrl, new_x, new_y);
+	}
 }
 
 //
@@ -3333,8 +3435,14 @@ static EZ_button_RecalculateLabelPosition(ez_button_t *button)
 // 
 static int EZ_button_OnLabelTextChanged(ez_control_t *self)
 {
-	// TODO : Is this safe to do? :s
-	ez_button_t *button = (ez_button_t *)self->parent;
+	ez_button_t *button = NULL;
+	
+	if ((self->parent == NULL) || (self->parent->CLASS_ID != EZ_BUTTON_ID))
+	{
+		Sys_Error("EZ_button_OnLabelTextChanged: The buttons text labels parent isn't a button!");
+	}
+	
+	button = (ez_button_t *)self->parent;
 
 	EZ_button_RecalculateLabelPosition(button);
 
@@ -3392,20 +3500,24 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	// Button specific events.
 	button->inheritance_level					= 0;
 	button->events.OnAction						= EZ_button_OnAction;
+	button->events.OnTextAlignmentChanged		= EZ_button_OnTextAlignmentChanged;
 
-	// TODO : Set proper flags / size for the label. Associate a function with the label text changing (and center it or whatever on that).
-	button->text_label = EZ_label_Create(tree, (ez_control_t *)button, "Button text label", "", button->padding_left, button->padding_top, 1, 1, NULL, 0, 0, "");
+	// Create the buttons text label.
+	{
+		button->text_label = EZ_label_Create(tree, (ez_control_t *)button, "Button text label", "", button->padding_left, button->padding_top, 1, 1, NULL, 0, 0, "");
 
-	EZ_label_SetOnTextChanged(button->text_label, EZ_button_OnLabelTextChanged);
+		EZ_label_SetOnTextChanged(button->text_label, EZ_button_OnLabelTextChanged);
 
-	EZ_label_SetReadOnly(button->text_label, true);
-	EZ_label_SetTextSelectable(button->text_label, false);
-	EZ_label_SetAutoSize(button->text_label, true);
-	EZ_control_SetIgnoreMouse((ez_control_t *)button->text_label, true);
-	EZ_control_SetFocusable((ez_control_t *)button->text_label, false);
-	EZ_control_SetMovable((ez_control_t *)button->text_label, false);
+		// Don't allow any interaction with the label, it's just there to show text.
+		EZ_label_SetReadOnly(button->text_label, true);
+		EZ_label_SetTextSelectable(button->text_label, false);
+		EZ_label_SetAutoSize(button->text_label, true);
+		EZ_control_SetIgnoreMouse((ez_control_t *)button->text_label, true);
+		EZ_control_SetFocusable((ez_control_t *)button->text_label, false);
+		EZ_control_SetMovable((ez_control_t *)button->text_label, false);
 
-	CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)button), ez_control_t, OnResize);
+		CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)button), ez_control_t, OnResize);
+	}
 	// TODO : Load button images.
 }
 
@@ -3456,6 +3568,24 @@ int EZ_button_OnResize(ez_control_t *self)
 void EZ_button_SetText(ez_button_t *button, const char *text)
 {
 	EZ_label_SetText(button->text_label, text);
+}
+
+//
+// Button - Set the text of the button. 
+//
+void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignment)
+{
+	button->text_alignment = text_alignment;
+
+	CONTROL_RAISE_EVENT(NULL, button, ez_button_t, OnTextAlignmentChanged);
+}
+
+//
+// Button - Set the event handler for the OnTextAlignmentChanged event.
+//
+void EZ_button_SetOnTextAlignmentChanged(ez_button_t *button, ez_control_handler_fp OnTextAlignmentChanged)
+{
+	button->event_handlers.OnTextAlignmentChanged = OnTextAlignmentChanged;
 }
 
 //
@@ -3591,7 +3721,19 @@ int EZ_button_OnDraw(ez_control_t *self)
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDraw);
+	return 0;
+}
 
+//
+// Button - OnTextAlignmentChanged event.
+//
+int EZ_button_OnTextAlignmentChanged(ez_control_t *self)
+{
+	ez_button_t *button = (ez_button_t *)self;
+
+	EZ_button_RecalculateLabelPosition(button);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnTextAlignmentChanged);
 	return 0;
 }
 

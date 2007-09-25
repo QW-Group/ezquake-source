@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.35 2007-09-25 13:29:48 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.36 2007-09-25 16:46:50 cokeman1982 Exp $
 */
 
 //
@@ -556,6 +556,11 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children);
 // since it's drawing position differs from the windows actual position on screen.
 //
 void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y);
+
+//
+// Control - Gets the anchor flags.
+//
+ez_anchor_t EZ_control_GetAnchor(ez_control_t *self);
 
 //
 // Control - Sets the external flags of the control.
@@ -1184,7 +1189,8 @@ int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 
 typedef struct ez_button_events_s
 {
-	ez_control_handler_fp	OnAction;			// The event that's raised when the button is clicked / activated via a button.
+	ez_control_handler_fp	OnAction;				// The event that's raised when the button is clicked / activated via a button.
+	ez_control_handler_fp	OnTextAlignmentChanged;	// Text alignment changed.
 } ez_button_events_t;
 
 typedef enum ez_textalign_e
@@ -1257,6 +1263,11 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 void EZ_button_Destroy(ez_control_t *self, qbool destroy_children);
 
 //
+// Button - OnTextAlignmentChanged event.
+//
+int EZ_button_OnTextAlignmentChanged(ez_control_t *self);
+
+//
 // Button - OnAction event handler.
 //
 int EZ_button_OnAction(ez_control_t *self);
@@ -1270,6 +1281,16 @@ int EZ_button_OnResize(ez_control_t *self);
 // Button - Set the text of the button. 
 //
 void EZ_button_SetText(ez_button_t *button, const char *text);
+
+//
+// Button - Set the text of the button. 
+//
+void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignment);
+
+//
+// Button - Set the event handler for the OnTextAlignmentChanged event.
+//
+void EZ_button_SetOnTextAlignmentChanged(ez_button_t *button, ez_control_handler_fp OnTextAlignmentChanged);
 
 // 
 // Button - Sets the normal color of the button.
