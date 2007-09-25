@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.49 2007-09-13 14:49:29 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.50 2007-09-25 19:13:24 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -653,7 +653,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         if (d_gamedir)
         {
             memset(buf, 0, 10);
-            strcpy(buf, ValueForKey(s, "*gamedir"));
+            strlcpy(buf, ValueForKey(s, "*gamedir"), sizeof(buf));
             buf[8] = 0;
             strcat(line, buf);
             strcat(line, "\xa0 ");
@@ -662,7 +662,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         if (d_map)
         {
             memset(buf, 0, 10);
-            strcpy(buf, ValueForKey(s, "map"));
+            strlcpy(buf, ValueForKey(s, "map"), sizeof(buf));
             buf[8] = 0;
             strcat(line, buf);
             strcat(line, "\xa0 ");
@@ -1009,14 +1009,14 @@ void Serverinfo_Draw ()
     while (server_during_update)
         Sys_MSleep(5);
 
-    strcpy(buf, show_serverinfo->display.name);
+    strlcpy(buf, show_serverinfo->display.name, sizeof(buf));
     buf[w/8] = 0;
     UI_Print_Center(x, y, w, buf, false);
-    strcpy(buf, show_serverinfo->display.ip);
+    strlcpy(buf, show_serverinfo->display.ip, sizeof(buf));
     buf[w/8] = 0;
     UI_Print_Center(x, y+10, w, buf, false);
 
-    strcpy(buf, " players serverinfo sources ");
+    strlcpy(buf, " players serverinfo sources ", sizeof(buf));
     if (serverinfo_pos == 0)
         strncpy(buf, "\x10рмбщету\x11", 9); // FIXME: non-ascii chars
     if (serverinfo_pos == 1)
