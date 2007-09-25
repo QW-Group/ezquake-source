@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.51 2007-09-24 23:25:00 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.52 2007-09-25 10:47:33 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2825,6 +2825,43 @@ static void EZ_label_PageUpDnKeyDown(ez_label_t *label, int key)
 }
 
 //
+// Label - Gets the next word boundary.
+//
+static int EZ_label_GetNextWordBoundary(ez_label_t *label, int cur_pos, qbool forward)
+{
+	char *txt	= NULL;
+	int i		= 0;
+	int dir		= forward ? 1 : -1;		
+
+	// Make sure we're not out of bounds.
+	if (cur_pos > label->text_length)
+	{
+		return label->text_length;
+	}
+
+	if (cur_pos < 0)
+	{
+		return 0;
+	}
+
+	txt = label->text + cur_pos;
+
+	// Eat all the whitespaces.
+	while ((i > 0) && (i <= label->text_length) && ((txt[i] == ' ') || (txt[i] == '\n')))
+	{
+		i += dir;
+	}
+	
+	// Find the next word boundary.
+	while ((i >= 0) && (i <= label->text_length) && (txt[i] != ' ') && (txt[i] != '\n') && (txt[i] != '\0'))
+	{
+		i += dir;
+	}
+
+	return cur_pos + i;
+}
+
+//
 // Label - Handle a arrow key press.
 //
 static void EZ_label_ArrowKeyDown(ez_label_t *label, int key)
@@ -2833,12 +2870,26 @@ static void EZ_label_ArrowKeyDown(ez_label_t *label, int key)
 	{
 		case K_LEFTARROW :
 		{
-			EZ_label_SetCaretPosition(label, max(0, label->caret_pos.index - 1));
+			if (isCtrlDown())
+			{
+				EZ_label_SetCaretPosition(label, EZ_label_GetNextWordBoundary(label, label->caret_pos.index, false));
+			}
+			else
+			{
+				EZ_label_SetCaretPosition(label, max(0, label->caret_pos.index - 1));
+			}
 			break;
 		}
 		case K_RIGHTARROW :
 		{
-			EZ_label_SetCaretPosition(label, label->caret_pos.index + 1);
+			if (isCtrlDown())
+			{
+				EZ_label_SetCaretPosition(label, EZ_label_GetNextWordBoundary(label, label->caret_pos.index, true));
+			}
+			else
+			{
+				EZ_label_SetCaretPosition(label, label->caret_pos.index + 1);
+			}
 			break;
 		}
 		case K_UPARROW :
