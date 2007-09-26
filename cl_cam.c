@@ -903,7 +903,7 @@ void CL_Autotrack_f(void)
 	}
 	else { // not playing a demo
 		if (cl.spectator) {
-			if (at = Cmd_FindAlias("autotrack")) {
+			if ((at = Cmd_FindAlias("autotrack")) != NULL) {
 				// not very "clean" way to execute an alias, but sufficient for this purpose
 				Cbuf_AddText(va("%s\n", at->value));
 			} else {
