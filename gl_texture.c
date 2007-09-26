@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.40 2007-09-26 13:53:42 tonik Exp $
+$Id: gl_texture.c,v 1.41 2007-09-26 21:51:34 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -27,10 +27,10 @@ $Id: gl_texture.c,v 1.40 2007-09-26 13:53:42 tonik Exp $
 #include "gl_local.h"
 
 
-qbool OnChange_gl_max_size (cvar_t *var, char *string);
-qbool OnChange_gl_texturemode (cvar_t *var, char *string);
-qbool OnChange_gl_miptexLevel (cvar_t *var, char *string);
-qbool OnChange_gl_anisotropy (cvar_t *var, char *string);
+void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel);
+void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel);
+void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel);
+void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel);
 
 
 static qbool no24bit, forceTextureReload;
@@ -74,23 +74,23 @@ static gltexture_t	gltextures[MAX_GLTEXTURES];
 static int			numgltextures = 0;
 	   int			texture_extension_number = 1; // non static, sad but used in gl_framebufer.c too
 
-qbool OnChange_gl_max_size (cvar_t *var, char *string) {
+void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) {
 	int i;
 	float newvalue = Q_atof(string);
 
 	if (newvalue > gl_max_size_default) {
 		Com_Printf("Your hardware doesn't support texture sizes bigger than %dx%d\n", gl_max_size_default, gl_max_size_default);
-		return true;
+		*cancel = true;
+		return;
 	}
 
 	Q_ROUND_POWER2(newvalue, i);
 
 	if (i != newvalue) {
 		Com_Printf("Valid values for %s are powers of 2 only\n", var->name);
-		return true;
+		*cancel = true;
+		return;
 	}
-
-	return false;
 }
 
 typedef struct {
@@ -112,7 +112,7 @@ glmode_t modes[] = {
 static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 static int gl_filter_max = GL_LINEAR;
 
-qbool OnChange_gl_texturemode (cvar_t *var, char *string) {
+void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel) {
 	int i;
 	gltexture_t	*glt;
 
@@ -122,7 +122,8 @@ qbool OnChange_gl_texturemode (cvar_t *var, char *string) {
 	}
 	if (i == GLMODE_NUMODES) {
 		Com_Printf ("bad filter name: %s\n", string);
-		return true;
+		*cancel = true;
+		return;
 	}
 
 	gl_filter_min = modes[i].minimize;
@@ -136,10 +137,9 @@ qbool OnChange_gl_texturemode (cvar_t *var, char *string) {
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 		}
 	}
-	return false;
 }
 
-qbool OnChange_gl_anisotropy (cvar_t *var, char *string) {
+void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel) {
 	int i;
 	gltexture_t *glt;
 
@@ -158,17 +158,15 @@ qbool OnChange_gl_anisotropy (cvar_t *var, char *string) {
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,newvalue);
 		}
 	}
-	return false;
 }
 
-qbool OnChange_gl_miptexLevel (cvar_t *var, char *string) {
+void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel) {
 	float newval = Q_atof(string);
 
 	if (newval != 0 && newval != 1 && newval != 2 && newval != 3) {
 		Com_Printf("Valid values for %s are 0,1,2,3 only\n", var->name);
-		return true;
+		*cancel = true;
 	}
-	return false;
 }
 
 int currenttexture = -1;

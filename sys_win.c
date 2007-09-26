@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.41 2007-08-25 14:18:50 cokeman1982 Exp $
+	$Id: sys_win.c,v 1.42 2007-09-26 21:51:34 tonik Exp $
 
 */
 // sys_win.c
@@ -42,7 +42,7 @@ qbool		ActiveApp, Minimized;
 qbool		WinNT, Win2K, WinXP, Win2K3, WinVISTA;
 
 
-qbool OnChange_sys_highpriority (cvar_t *, char *);
+void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 cvar_t	sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
 
 
@@ -64,7 +64,7 @@ static qbool WinKeyHook_isActive;
 static qbool ScreenSaver_isDisabled;
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
-qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string);
+void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel);
 cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableWinKeys};
 
 #ifndef id386
@@ -74,7 +74,7 @@ void Sys_SetFPCW(void) {}
 void MaskExceptions(void) {}
 #endif
 
-qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string) {
+void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) {
 	if (Q_atof(string)) {
 		if (!WinKeyHook_isActive) {
 			if ((WinKeyHook = SetWindowsHookEx(13, LLWinKeyHook, global_hInstance, 0))) {
@@ -82,7 +82,8 @@ qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string) {
 			} else {
 				Com_Printf("Failed to install winkey hook.\n");
 				Com_Printf("Microsoft Windows NT 4.0, 2000 or XP is required.\n");
-				return true;
+				*cancel = true;
+				return;
 			}
 		}
 	} else {
@@ -91,7 +92,6 @@ qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string) {
 			WinKeyHook_isActive = false;
 		}
 	}
-	return false;
 }
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam) {
@@ -128,7 +128,7 @@ int Sys_SetPriority(int priority) {
 	return SetPriorityClass(GetCurrentProcess(), p);
 }
 
-qbool OnChange_sys_highpriority (cvar_t *var, char *s) {
+void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel) {
 	int ok, q_priority;
 	char *desc;
 	float priority;
@@ -147,11 +147,11 @@ qbool OnChange_sys_highpriority (cvar_t *var, char *s) {
 
 	if (!(ok = Sys_SetPriority(q_priority))) {
 		Com_Printf("Changing process priority failed\n");
-		return true;
+		*cancel = true;
+		return;
 	}
 
 	Com_Printf("Process priority set to %s\n", desc);
-	return false;
 }
 
 

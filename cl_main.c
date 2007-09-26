@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.186 2007-09-26 13:53:41 tonik Exp $
+$Id: cl_main.c,v 1.187 2007-09-26 21:51:33 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -71,7 +71,7 @@ $Id: cl_main.c,v 1.186 2007-09-26 13:53:41 tonik Exp $
 #include "help.h"
 
 
-qbool OnChange_allow_scripts (cvar_t *var, char *value);
+void OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel);
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
@@ -92,7 +92,7 @@ cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0", CVAR_ARCHIVE};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
-qbool OnChange_indphys (cvar_t *var, char *value);
+void OnChange_indphys (cvar_t *var, char *value, qbool *cancel);
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, OnChange_indphys};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
@@ -112,7 +112,7 @@ cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
 cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_demospeed = {"cl_demospeed", "1"};
 cvar_t	cl_staticsounds = {"cl_staticSounds", "1"};
-qbool OnChange_cl_fakeshaft (cvar_t *var, char *value);
+void OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel);
 cvar_t	cl_fakeshaft = {"cl_fakeshaft", "0", 0, OnChange_cl_fakeshaft};
 cvar_t	cl_parseWhiteText = {"cl_parseWhiteText", "1"};
 cvar_t	cl_filterdrawviewmodel = {"cl_filterdrawviewmodel", "0"};

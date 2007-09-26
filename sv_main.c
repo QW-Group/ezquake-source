@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.31 2007-09-15 13:55:30 tonik Exp $
+	$Id: sv_main.c,v 1.32 2007-09-26 21:51:34 tonik Exp $
 */
 
 #include "qwsvdef.h"
@@ -66,7 +66,7 @@ cvar_t	fraglimit = {"fraglimit", "0", CVAR_SERVERINFO};
 cvar_t	timelimit = {"timelimit", "0", CVAR_SERVERINFO};
 cvar_t	teamplay = {"teamplay", "0", CVAR_SERVERINFO};
 cvar_t	samelevel = {"samelevel", "0", CVAR_SERVERINFO};
-qbool OnChange_maxclients (cvar_t *var, char *str);
+void OnChange_maxclients (cvar_t *var, char *str, qbool *cancel);
 cvar_t	maxclients = {"maxclients","8",CVAR_SERVERINFO, OnChange_maxclients};
 cvar_t	maxspectators = {"maxspectators","8",CVAR_SERVERINFO, OnChange_maxclients};
 cvar_t	deathmatch = {"deathmatch", "1", CVAR_SERVERINFO};			// 0, 1, or 2
@@ -86,11 +86,10 @@ void SV_AcceptClient (netadr_t adr, int userid, char *userinfo);
 //============================================================================
 
 // handles both maxclients and maxspectators
-qbool OnChange_maxclients (cvar_t *var, char *str) {
+void OnChange_maxclients (cvar_t *var, char *str, qbool *cancel) {
 	int num = Q_atoi(str);
 	num = bound(0, num, MAX_CLIENTS);
 	Cvar_SetValue (var, num);
-	return false;
 }
 
 /*

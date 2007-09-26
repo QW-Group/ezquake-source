@@ -40,12 +40,12 @@ static double last_search_enter_time = 0.0;
 //
 // When changing RGBA color-value for the text in the file list (dirs/zips).
 //
-static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
+static void FL_OnChangeTextColor (cvar_t *var, char *newval, qbool *cancel)
 {
 	byte *color = StringToRGB(newval);
 	var->value = RGBA_TO_COLOR(color[0], color[1], color[2], color[3]);
 
-	return true;
+	*cancel = true;
 }
 
 static void FL_RegisterColor (cvar_t *var)

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.57 2007-09-16 13:31:21 disconn3ct Exp $
+	$Id: rulesets.c,v 1.58 2007-09-26 21:51:34 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -59,7 +59,7 @@ typedef struct rulesetDef_s
 } rulesetDef_t;
 
 static rulesetDef_t rulesetDef = {rs_default, 72.0, false, false, false};
-qbool OnChange_ruleset (cvar_t *var, char *value);
+void OnChange_ruleset (cvar_t *var, char *value, qbool *cancel);
 cvar_t ruleset = {"ruleset", "default", 0, OnChange_ruleset};
 
 extern void Cmd_ReInitAllMacro (void);
@@ -304,7 +304,7 @@ qbool OnChange_indphys (cvar_t *var, char *value)
 	return false;
 }
 
-qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value)
+void OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel)
 {
 	float fbskins = bound (0.0, Q_atof (value), cl.fbskins);
 
@@ -314,8 +314,6 @@ qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value)
 		else
 			Cbuf_AddText (va("say not using fullbright skins\n"));
 	}
-
-	return false;
 }
 
 qbool OnChange_allow_scripts (cvar_t *var, char *value)
@@ -362,16 +360,18 @@ qbool OnChange_cl_fakeshaft (cvar_t *var, char *value)
 	return false;
 }
 
-qbool OnChange_ruleset (cvar_t *var, char *value)
+void OnChange_ruleset (cvar_t *var, char *value, qbool *cancel)
 {
 	if (cls.state != ca_disconnected) {
 		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
-		return true;
+		*cancel = true;
+		return;
 	}
 
 	if (strncasecmp (value, "smackdown", 9) && strncasecmp (value, "mtfl", 4) && strncasecmp (value, "default", 7)) {
 		Com_Printf_State (PRINT_INFO, "Unknown ruleset \"%s\"\n", value);
-		return true;
+		*cancel = true;
+		return;
 	}
 
 	// All checks passed  so we can remove old ruleset and set a new one
@@ -402,10 +402,10 @@ qbool OnChange_ruleset (cvar_t *var, char *value)
 		Com_Printf_State (PRINT_OK, "Ruleset default initialized\n");
 	} else {
 		Sys_Error ("OnChange_ruleset: WTF?\n");
-		return true; // this will never happen
+		// this will never happen
+		*cancel = true;
+		return;
 	}
 
 	Cmd_ReInitAllMacro ();
-
-	return false;
 }

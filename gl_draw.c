@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.95 2007-09-25 21:51:28 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.96 2007-09-26 21:51:33 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -39,17 +39,17 @@ cvar_t	scr_conback			= {"scr_conback", "1"};
 cvar_t	scr_menualpha		= {"scr_menualpha", "0.7"};
 
 
-qbool OnChange_gl_crosshairimage(cvar_t *, char *);
+void OnChange_gl_crosshairimage(cvar_t *, char *, qbool *);
 cvar_t	gl_crosshairimage   = {"crosshairimage", "", 0, OnChange_gl_crosshairimage};
 
-qbool OnChange_gl_consolefont (cvar_t *, char *);
+void OnChange_gl_consolefont (cvar_t *, char *, qbool *);
 cvar_t	gl_consolefont		= {"gl_consolefont", "povo5", 0, OnChange_gl_consolefont};
 cvar_t	gl_alphafont		= {"gl_alphafont", "1"};
 
 cvar_t	gl_crosshairalpha	= {"crosshairalpha", "1"};
 
 
-qbool OnChange_gl_smoothfont (cvar_t *var, char *string);
+void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel);
 cvar_t gl_smoothfont = {"gl_smoothfont", "1", 0, OnChange_gl_smoothfont};
 
 byte			*draw_chars;						// 8*8 graphic characters
@@ -151,7 +151,7 @@ int HexToInt(char c)
 		return -1;
 }
 
-qbool OnChange_gl_smoothfont (cvar_t *var, char *string)
+void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 {
 	float newval;
 	int i;
@@ -159,7 +159,7 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string)
 	newval = Q_atof (string);
 
 	if (!newval == !gl_smoothfont.value || !char_textures[0])
-			return false;
+			return;
 
 	for (i = 0; i < MAX_CHARSETS; i++)
 	{
@@ -177,30 +177,28 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string)
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		}
 	}
-	return false;
 }
 
 
-qbool OnChange_gl_crosshairimage(cvar_t *v, char *s)
+void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 {
 	mpic_t *pic;
 
 	customcrosshair_loaded &= ~CROSSHAIR_IMAGE;
 
 	if (!s[0])
-		return false;
+		return;
 
 	if (!(pic = Draw_CachePicSafe(va("crosshairs/%s", s), false, true)))
 	{
 		Com_Printf("Couldn't load image %s\n", s);
-		return false;
+		return;
 	}
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	crosshairpic = *pic;
 	customcrosshair_loaded |= CROSSHAIR_IMAGE;
-	return false;
 }
 
 void customCrosshair_Init(void)
@@ -614,9 +612,9 @@ static int Draw_LoadCharset(const char *name)
 	return 0;
 }
 
-qbool OnChange_gl_consolefont(cvar_t *var, char *string)
+void OnChange_gl_consolefont(cvar_t *var, char *string, qbool *cancel)
 {
-	return Draw_LoadCharset(string);
+	*cancel = Draw_LoadCharset(string);
 }
 
 void Draw_LoadCharset_f (void)

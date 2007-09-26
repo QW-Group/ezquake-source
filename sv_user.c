@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.34 2007-09-26 04:57:12 dkure Exp $
+	$Id: sv_user.c,v 1.35 2007-09-26 21:51:34 tonik Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -34,8 +34,8 @@ cvar_t	sv_mapcheck	= {"sv_mapcheck", "1"};
 cvar_t  sv_downloadchunksperframe = {"sv_downloadchunksperframe", "2"};
 #endif
 
-qbool OnChange_sv_maxpitch (cvar_t *var, char *value);
-qbool OnChange_sv_minpitch (cvar_t *var, char *value);
+void OnChange_sv_maxpitch (cvar_t *var, char *value, qbool *cancel);
+void OnChange_sv_minpitch (cvar_t *var, char *value, qbool *cancel);
 cvar_t	sv_maxpitch = {"sv_maxpitch", "80", 0, OnChange_sv_maxpitch};
 cvar_t	sv_minpitch = {"sv_minpitch", "-70", 0, OnChange_sv_minpitch};
 
@@ -59,34 +59,36 @@ extern double	sv_frametime;
 // but don't want them in serverinfo (save a couple of bytes of space)
 // Value sanity checks are also done here
 //
-qbool OnChange_sv_maxpitch (cvar_t *var, char *value) {
+void OnChange_sv_maxpitch (cvar_t *var, char *value, qbool *cancel) {
 	float	newval;
 	char	*newstr;
 
 	newval = bound (0, Q_atof(value), 89.0f);
-	if (newval == var->value)
-		return true;
+	if (newval == var->value) {
+		*cancel = true;
+		return;
+	}
 
 	Cvar_SetValue (var, newval);
 	newstr = (newval == 80.0f) ? "" : Q_ftos(newval);	// don't show default values in serverinfo
 	Info_SetValueForKey (svs.info, "maxpitch", newstr, MAX_SERVERINFO_STRING);
 	SV_SendServerInfoChange("maxpitch", newstr);
-	return false;
 }
 
-qbool OnChange_sv_minpitch (cvar_t *var, char *value) {
+void OnChange_sv_minpitch (cvar_t *var, char *value, qbool *cancel) {
 	float	newval;
 	char	*newstr;
 
 	newval = bound (-89.0f, Q_atof(value), 0.0f);
-	if (newval == var->value)
-		return true;
+	if (newval == var->value) {
+		*cancel = true;
+		return;
+	}
 
 	Cvar_SetValue (var, newval);
 	newstr = (newval == -70.0f) ? "" : Q_ftos(newval);	// don't show default values in serverinfo
 	Info_SetValueForKey (svs.info, "minpitch", newstr, MAX_SERVERINFO_STRING);
 	SV_SendServerInfoChange("minpitch", newstr);
-	return false;
 }
 
 

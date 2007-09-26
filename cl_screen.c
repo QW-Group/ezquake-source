@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.143 2007-09-26 13:53:41 tonik Exp $
+$Id: cl_screen.c,v 1.144 2007-09-26 21:51:33 tonik Exp $
 */
 
 /// declarations may be found in screen.h
@@ -105,9 +105,9 @@ qbool	zoomedin;
 float	unzoomedfov;
 float	unzoomedsensitivity;
 
-qbool	OnFovChange (cvar_t *var, char *value);
-qbool	OnDefaultFovChange (cvar_t *var, char *value);
-qbool	OnChange_scr_clock_format (cvar_t *var, char *value);
+void OnFovChange (cvar_t *var, char *value, qbool *cancel);
+void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel);
+void OnChange_scr_clock_format (cvar_t *var, char *value, qbool *cancel);
 cvar_t	scr_fov					= {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
 cvar_t	default_fov				= {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
 cvar_t	scr_viewsize			= {"viewsize", "100", CVAR_ARCHIVE};
@@ -119,7 +119,7 @@ cvar_t	scr_showram				= {"showram", "1"};
 cvar_t	scr_showturtle			= {"showturtle", "0"};
 cvar_t	scr_showpause			= {"showpause", "1"};
 cvar_t	scr_printspeed			= {"scr_printspeed", "8"};
-qbool	OnChange_scr_allowsnap(cvar_t *, char *);
+void	OnChange_scr_allowsnap(cvar_t *, char *, qbool *);
 cvar_t	scr_allowsnap			= {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
 
 cvar_t	scr_newHud = {"scr_newhud", "0"};
@@ -225,8 +225,8 @@ void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 void Draw_AlphaString (int x, int y, char *str, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
-qbool OnChange_scr_allowsnap(cvar_t *var, char *s) {
-	return (cls.state >= ca_connected && cbuf_current == &cbuf_svc);
+void OnChange_scr_allowsnap(cvar_t *var, char *s, qbool *cancel) {
+	*cancel = (cls.state >= ca_connected && cbuf_current == &cbuf_svc);
 }
 
 
@@ -331,7 +331,7 @@ void SCR_EraseCenterString (void) {
 extern	cvar_t		v_idlescale;
 qbool	concussioned = false;
 
-qbool OnFovChange (cvar_t *var, char *value)
+void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 {
 
 	float newfov = Q_atof(value);
@@ -341,12 +341,16 @@ qbool OnFovChange (cvar_t *var, char *value)
 	else if (newfov < 10)
 		newfov = 10;
 
-	if (newfov == scr_fov.value)
-		return true;
+	if (newfov == scr_fov.value) {
+		*cancel = true;
+		return;
+	}
 
 	if ( cbuf_current != &cbuf_svc) {
-		if (concussioned && !cls.demoplayback)
-			return true;
+		if (concussioned && !cls.demoplayback) {
+			*cancel = true;
+			return;
+		}
 	} else {
 		if (newfov != 90 && cl.teamfortress && v_idlescale.value >= 20) {
 			concussioned = true;
@@ -355,29 +359,31 @@ qbool OnFovChange (cvar_t *var, char *value)
 		} else if (newfov == 90 && cl.teamfortress) {
 			concussioned = false;
 		}
-		if (cls.demoplayback) // && !cl_fovfromdemo.value)
-			return true;
+		if (cls.demoplayback) { // && !cl_fovfromdemo.value)
+			*cancel = true;
+			return;
+		}
 	}
 
 	vid.recalc_refdef = true;
 	if (newfov == 90) {
 		Cvar_Set (&scr_fov,default_fov.string);
-		return true;
+		*cancel = true;
+		return;
 	}
 
 	Cvar_SetValue (&scr_fov, newfov);
-	return true;
+	*cancel = true;
 }
 
-qbool OnDefaultFovChange (cvar_t *var, char *value)
+void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel)
 {
 	float newfov = Q_atof(value);
 
 	if (newfov < 10.0 || newfov > 140.0){
 		Com_Printf("Invalid default_fov\n");
-		return true;
+		*cancel = true;
 	}
-	return false;
 }
 
 static float CalcFov (float fov_x, float width, float height) {
@@ -634,16 +640,15 @@ void SCR_DrawSpeed (void) {
 	}
 }
 
-qbool OnChange_scr_clock_format (cvar_t *var, char *value) {
+void OnChange_scr_clock_format (cvar_t *var, char *value, qbool *cancel) {
 	if (!host_initialized)
-		return false; // we in progress of initialization, allow
+		return; // we in progress of initialization, allow
 
 	if (cls.state == ca_active) {
 		Com_Printf("Can't change %s while connected\n", var->name);
-		return true; // prevent stick notes
+		*cancel = true; // prevent stick notes
+		return;
 	}
-
-	return false;
 }
 
 void SCR_DrawClock (void) {
@@ -3880,7 +3885,7 @@ void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qb
 
 int mv_hudpos = MV_HUD_POS_BOTTOM_CENTER;
 
-qbool SCR_OnChangeMVHudPos(cvar_t *var, char *newval)
+void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel)
 {
 	qbool found = false;
 
@@ -3897,7 +3902,7 @@ qbool SCR_OnChangeMVHudPos(cvar_t *var, char *newval)
 		Cvar_Set (var, newval);
 	}
 
-	return found;
+	*cancel = found;
 }
 
 // SCR_SetMVStatusPosition calls SCR_SetMVStatusGatheredPosition and vice versa.

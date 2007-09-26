@@ -60,7 +60,7 @@ cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};
 cvar_t	r_viewmodeloffset = {"r_viewmodeloffset", ""};
 cvar_t  r_viewpreselgun = {"r_viewpreselgun", "0"};
 
-qbool Change_v_idle (cvar_t *var, char *value);
+void Change_v_idle (cvar_t *var, char *value, qbool *cancel);
 cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", 0, Change_v_idle};
 cvar_t	v_iroll_cycle = {"v_iroll_cycle", "0.5", 0, Change_v_idle};
 cvar_t	v_ipitch_cycle = {"v_ipitch_cycle", "1", 0, Change_v_idle};
@@ -97,9 +97,9 @@ float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 frame_t			*view_frame;
 player_state_t	view_message;
 
-qbool Change_v_idle (cvar_t *var, char *value) {
+void Change_v_idle (cvar_t *var, char *value, qbool *cancel) {
 	// Don't allow cheating in TF
-	return (cl.teamfortress && cls.state >= ca_connected &&	cbuf_current != &cbuf_svc);
+	*cancel = (cl.teamfortress && cls.state >= ca_connected && cbuf_current != &cbuf_svc);
 }
 
 float V_CalcRoll (vec3_t angles, vec3_t velocity) {

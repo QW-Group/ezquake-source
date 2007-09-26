@@ -28,7 +28,7 @@ cvar_t	d_subdiv16 = {"d_subdiv16", "1"};
 cvar_t	d_mipcap = {"d_mipcap", "0"};
 cvar_t	d_mipscale = {"d_mipscale", "1"};
 
-qbool OnChange_r_drawflat (cvar_t *, char *);
+void OnChange_r_drawflat (cvar_t *, char *, qbool *);
 
 // hetman /r_drawflat for software builds {
 cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
@@ -48,12 +48,11 @@ extern int		d_aflatcolor;
 void (*d_drawspans) (espan_t *pspan);
 
 // hetman /r_drawflat for software builds {
-qbool OnChange_r_drawflat (cvar_t *var, char *val) {
+void OnChange_r_drawflat (cvar_t *var, char *val, qbool *cancel) {
 	if (cls.state != ca_disconnected) {
 		Com_Printf("You must be disconnected before toggling Simple Textures.\n");
-		return true;
+		*cancel = true;
 	}
-	return false;
 }
 // } hetman
 

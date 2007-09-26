@@ -1061,7 +1061,7 @@ void R_DrawFlat (model_t *model) {
  // } END shaman FIX /r_drawflat + /gl_caustics
 }
 
-qbool OnChange_r_drawflat (cvar_t *var, char *value) {
+void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 	char *p;
 	qbool progress = false;
 
@@ -1071,10 +1071,9 @@ qbool OnChange_r_drawflat (cvar_t *var, char *value) {
 
 	if (cls.state >= ca_connected && progress && !r_refdef2.allow_cheats && !cl.spectator) {
 		Com_Printf ("%s changes are not allowed during the match.\n", var->name);
-		return true;
+		*cancel = true;
+		return;
 	}
-
-	return false;
 }
 
 void R_DrawBrushModel (entity_t *e) {

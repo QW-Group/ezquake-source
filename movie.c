@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.24 2007-09-14 13:29:29 disconn3ct Exp $
+	$Id: movie.c,v 1.25 2007-09-26 21:51:34 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	#include <time.h>
 #endif
 
-static qbool OnChange_movie_dir(cvar_t *var, char *string);
+static void OnChange_movie_dir(cvar_t *var, char *string, qbool *cancel);
 //int SCR_Screenshot(char *);
 void SCR_Movieshot (char *);	//joe: capturing to avi
 
@@ -360,18 +360,20 @@ qbool Movie_GetSoundtime(void) {
 }
 #endif
 
-static qbool OnChange_movie_dir(cvar_t *var, char *string) {
+static void OnChange_movie_dir(cvar_t *var, char *string, qbool *cancel) {
 	if (Movie_IsCapturing()) {
 		Com_Printf("Cannot change demo_capture_dir whilst capturing.  Use 'demo_capture stop' to cease capturing first.\n");
-		return true;
+		*cancel = true;
+		return;
 	} else if (strlen(string) > 31) {
 		Com_Printf("demo_capture_dir can only contain a maximum of 31 characters\n");
-		return true;
+		*cancel = true;
+		return;
 	}
 	Util_Process_Filename(string);
 	if (!(Util_Is_Valid_Filename(string))) {
 		Com_Printf(Util_Invalid_Filename_Msg("demo_capture_dir"));
-		return true;
+		*cancel = true;
+		return;
 	}
-	return false;
 }

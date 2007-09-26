@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 /**
-  $Id: screen.h,v 1.9 2007-09-03 17:05:45 johnnycz Exp $
+  $Id: screen.h,v 1.10 2007-09-26 21:51:33 tonik Exp $
   
   Common declarations for modules associated with drawing on screen
   cl_screen.c, sbar.c
@@ -66,7 +66,7 @@ extern qbool flashed;
 #define	ELEMENT_X_COORD(var)	((var##_x.value < 0) ? vid.width - strlen(str) * 8 + 8 * var##_x.value: 8 * var##_x.value)
 #define	ELEMENT_Y_COORD(var)	((var##_y.value < 0) ? vid.height - sb_lines + 8 * var##_y.value : 8 * var##_y.value)
 
-qbool SCR_OnChangeMVHudPos(cvar_t *var, char *newval);
+void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 void SCR_SetupAutoID (void);
 
 // the current position of the mouse pointer

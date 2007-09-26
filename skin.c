@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.22 2007-09-12 16:44:08 johnnycz Exp $
+	$Id: skin.c,v 1.23 2007-09-26 21:51:34 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 
-qbool OnChangeSkinForcing(cvar_t *var, char *string);
+void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
 
 cvar_t	baseskin = {"baseskin", "base"};
 cvar_t	noskins = {"noskins", "0"};

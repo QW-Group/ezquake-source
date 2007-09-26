@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.26 2007-09-15 17:00:29 tonik Exp $
+	$Id: r_main.c,v 1.27 2007-09-26 21:51:34 tonik Exp $
 
 */
 
@@ -129,7 +129,7 @@ cvar_t	r_maxedges = {"r_maxedges", "0"};
 cvar_t	r_numedges = {"r_numedges", "0"};
 cvar_t	r_aliastransbase = {"r_aliastransbase", "200"};
 cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
-qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value);
+void OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel);
 cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0", 0, OnChange_r_fullbrightSkins};
 cvar_t  r_max_size_1 = {"r_max_size_1", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
@@ -150,7 +150,7 @@ cvar_t cl_mvhudvertical = {"cl_mvhudvertical", "0"};
 cvar_t cl_mvhudflip = {"cl_mvhudflip", "0"};
 
 cvar_t cl_mvhudpos = {"cl_mvhudpos", "bottom center"};
-qbool SCR_OnChangeMVHudPos(cvar_t *var, char *newval);
+void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 
 cvar_t cl_mvinset = {"cl_mvinset", "0"};
 cvar_t cl_mvinsetcrosshair = {"cl_mvinsetcrosshair", "1"};

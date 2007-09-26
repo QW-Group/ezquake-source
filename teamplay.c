@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.89 2007-09-26 13:53:43 tonik Exp $
+    $Id: teamplay.c,v 1.90 2007-09-26 21:51:34 tonik Exp $
 */
 
 #include <time.h>
@@ -39,8 +39,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tp_msgs.h"
 
 
-qbool OnChangeSkinForcing(cvar_t *var, char *string);
-qbool OnChangeColorForcing(cvar_t *var, char *string);
+void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
+void OnChangeColorForcing(cvar_t *var, char *string, qbool *cancel);
 
 cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
@@ -1569,21 +1569,21 @@ void TP_RefreshSkins(void)
 		TP_RefreshSkin(i);
 }
 
-qbool OnChangeColorForcing(cvar_t *var, char *string)
+void OnChangeColorForcing(cvar_t *var, char *string, qbool *cancel)
 {
 	TP_RefreshSkins();
-	return false;
+	return;
 }
 
-qbool OnChangeSkinForcing(cvar_t *var, char *string)
+void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel)
 {
 	extern cvar_t noskins, cl_name_as_skin, enemyforceskins;
 
 	if (cl.teamfortress || (cl.fpd & FPD_NO_FORCE_SKIN))
-		return false;
+		return;
 
 	if (var == &cl_name_as_skin && (!cls.demoplayback && !cl.spectator))
-		return false; // allow in demos or for specs
+		return; // allow in demos or for specs
 
 	if (var == &enemyforceskins && (!cl.spectator && cls.state != ca_disconnected)) {
 		if (Q_atoi(string))
@@ -1602,9 +1602,9 @@ qbool OnChangeSkinForcing(cvar_t *var, char *string)
 		Skin_Skins_f();
 		con_suppress = false;
 		noskins.value = oldskins;
-		return true;
+		*cancel = true;
+		return;
 	}
-	return false;
 }
 
 void TP_ColorForcing (cvar_t *topcolor, cvar_t *bottomcolor)

@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.154 2007-09-13 14:49:30 disconn3ct Exp $
+	$Id: hud_common.c,v 1.155 2007-09-26 21:51:34 tonik Exp $
 */
 //
 // common HUD elements
@@ -48,7 +48,7 @@ struct {
 	qbool active;
 } autohud;
 
-qbool OnAutoHudChange(cvar_t *var, char *value);
+void OnAutoHudChange(cvar_t *var, char *value, qbool *cancel);
 qbool autohud_loaded = false;
 cvar_t hud_planmode = {"hud_planmode",   "0"};
 cvar_t mvd_autohud = {"mvd_autohud", "0", 0, OnAutoHudChange};
@@ -2144,49 +2144,49 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t **hud_pic, char *newpic)
 	return false;
 }
 
-qbool SCR_HUD_OnChangePic_Group1(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group1(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group1, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group1, newpic);
 }
 
-qbool SCR_HUD_OnChangePic_Group2(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group2(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group2, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group2, newpic);
 }
 
-qbool SCR_HUD_OnChangePic_Group3(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group3(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group3, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group3, newpic);
 }
 
-qbool SCR_HUD_OnChangePic_Group4(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group4(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group4, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group4, newpic);
 }
 
-qbool SCR_HUD_OnChangePic_Group5(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group5(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group5, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group5, newpic);
 }
 
-qbool SCR_HUD_OnChangePic_Group6(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group6(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group6, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group6, newpic);
 }
 
-qbool SCR_HUD_OnChangePic_Group7(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group7(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group7, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group7, newpic);
 }
 
-qbool SCR_HUD_OnChangePic_Group8(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group8(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group8, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group8, newpic);
 }
 
-qbool SCR_HUD_OnChangePic_Group9(cvar_t *var, char *newpic)
+void SCR_HUD_OnChangePic_Group9(cvar_t *var, char *newpic, qbool *cancel)
 {
-	return SCR_HUD_LoadGroupPic(var, &hud_pic_group9, newpic);
+	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group9, newpic);
 }
 
 void SCR_HUD_Group1(hud_t *hud)
@@ -2863,7 +2863,7 @@ static qbool hud_frags_show_health		= true;
 static qbool hud_frags_show_powerup		= true;
 static qbool hud_frags_textonly			= false;
 
-qbool Frags_OnChangeExtraSpecInfo(cvar_t *var, char *s)
+void Frags_OnChangeExtraSpecInfo(cvar_t *var, char *s, qbool *cancel)
 {
 	// Parse the extra spec info.
 	hud_frags_show_rl		= Utils_RegExpMatch("RL|ALL",		s);
@@ -2873,8 +2873,6 @@ qbool Frags_OnChangeExtraSpecInfo(cvar_t *var, char *s)
 	hud_frags_textonly		= Utils_RegExpMatch("TEXT",			s);
 
 	hud_frags_extra_spec_info = (hud_frags_show_rl || hud_frags_show_armor || hud_frags_show_health || hud_frags_show_powerup);
-
-	return false;
 }
 
 int Frags_DrawExtraSpecInfo(player_info_t *info,
@@ -4269,9 +4267,8 @@ void HUD_AutoLoad_MVD(int autoload) {
 	}
 }
 
-qbool OnAutoHudChange(cvar_t *var, char *value) {
+void OnAutoHudChange(cvar_t *var, char *value, qbool *cancel) {
 	HUD_AutoLoad_MVD(Q_atoi(value));
-	return false;
 }
 
 // Is run when a new map is loaded.
@@ -4583,7 +4580,7 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 	}
 }
 
-qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
+void TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s, qbool *cancel)
 {
 	char *start = s;
 	char *end = start;
@@ -4650,8 +4647,6 @@ qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 
 	// Order the hold items.
 	StatsGrid_SortHoldItems();
-
-	return false;
 }
 
 #define HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES		0
@@ -5049,7 +5044,7 @@ static qbool radar_show_explosions	= false;
 static qbool radar_show_teleport	= false;
 static qbool radar_show_shotgun		= false;
 
-qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval)
+qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the weapon filter.
 	radar_show_ssg		= Utils_RegExpMatch("SSG|SUPERSHOTGUN|ALL",			newval);
@@ -5062,7 +5057,7 @@ qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval)
 	return false;
 }
 
-qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval)
+qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the item filter.
 	radar_show_backpacks		= Utils_RegExpMatch("BP|BACKPACK|ALL",					newval);
@@ -5083,7 +5078,7 @@ qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval)
 	return false;
 }
 
-qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval)
+qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the "other" filter.
 	radar_show_nails_p			= Utils_RegExpMatch("NAILS|PROJECTILES|ALL",	newval);
@@ -5102,7 +5097,7 @@ qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval)
 
 byte hud_radar_highlight_color[4] = {255, 255, 0, HUD_COLOR_DEFAULT_TRANSPARENCY};
 
-qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
+qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 {
 	char *new_color;
 

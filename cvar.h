@@ -43,7 +43,7 @@ typedef struct cvar_s {
 	char	*name;
 	char	*string;
 	int		flags;
-	qbool	(*OnChange)(struct cvar_s *var, char *value);
+	void	(*OnChange)(struct cvar_s *var, char *value, qbool *cancel);
 	float	value;    			// may be set in Cvar_Set(), Cvar_Register(), Cvar_Create()
 	float	maxrulesetvalue;
 	float	minrulesetvalue;

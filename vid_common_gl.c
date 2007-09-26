@@ -84,7 +84,7 @@ unsigned d_8to24table2[256];
 byte color_white[4] = {255, 255, 255, 255};
 byte color_black[4] = {0, 0, 0, 255};
 
-qbool OnChange_gl_ext_texture_compression(cvar_t *, char *);
+void OnChange_gl_ext_texture_compression(cvar_t *, char *, qbool *);
 
 cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
 cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
@@ -164,17 +164,14 @@ void GL_CheckExtensions (void) {
 	}
 }
 
-qbool OnChange_gl_ext_texture_compression(cvar_t *var, char *string) {
+void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
 	float newval = Q_atof(string);
 
 	if (!newval == !var->value)
-		return false;
-
+		return;
 
 	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA;
 	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB;
-
-	return false;
 }
 
 /************************************** GL INIT **************************************/

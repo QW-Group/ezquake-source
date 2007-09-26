@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.86 2007-09-15 19:43:28 tonik Exp $
+	$Id: cl_demo.c,v 1.87 2007-09-26 21:51:33 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -53,7 +53,7 @@ static qbool	qwz_unpacking = false;
 static qbool	qwz_playback = false;
 static qbool	qwz_packing = false;
 
-static qbool	OnChange_demo_format(cvar_t*, char*);
+static void		OnChange_demo_format(cvar_t*, char*, qbool*);
 cvar_t			demo_format = {"demo_format", "qwz", 0, OnChange_demo_format};
 
 static HANDLE hQizmoProcess = NULL;
@@ -61,7 +61,7 @@ static char tempqwd_name[256] = {0}; // This file must be deleted after playback
 int CL_Demo_Compress(char*);
 #endif
 
-static qbool OnChange_demo_dir(cvar_t *var, char *string);
+static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 
 char Demos_Get_Trackname(void);
@@ -1283,10 +1283,10 @@ static qbool easyrecording = false;
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);
 
-static qbool OnChange_demo_dir(cvar_t *var, char *string)
+static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel)
 {
 	if (!string[0])
-		return false;
+		return;
 
 	// Replace \ with /.
 	Util_Process_FilenameEx(string, cl_mediaroot.integer == 2);
@@ -1295,24 +1295,24 @@ static qbool OnChange_demo_dir(cvar_t *var, char *string)
 	if (!Util_Is_Valid_FilenameEx(string, cl_mediaroot.integer == 2))
 	{
 		Com_Printf(Util_Invalid_Filename_Msg(var->name));
-		return true;
+		*cancel = true;
+		return;
 	}
 
 	// Change to the new folder in the demo browser.
 	// FIXME: this did't work
 	Menu_Demo_NewHome(string);
-	return false;
 }
 
 #ifdef _WIN32
-static qbool OnChange_demo_format(cvar_t *var, char *string)
+static void OnChange_demo_format(cvar_t *var, char *string, qbool *cancel)
 {
 	char* allowed_formats[5] = { "qwd", "qwz", "mvd", "mvd.gz", "qwd.gz" };
 	int i;
 
 	for (i = 0; i < 5; i++)
 		if (!strcmp(allowed_formats[i], string))
-			return false;
+			return;
 
 	Com_Printf("Not valid demo format. Allowed values are: ");
 	for (i = 0; i < 5; i++)
@@ -1323,7 +1323,7 @@ static qbool OnChange_demo_format(cvar_t *var, char *string)
 	}
 	Com_Printf(".\n");
 
-	return true;
+	*cancel = true;
 }
 #endif
 

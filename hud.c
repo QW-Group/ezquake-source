@@ -812,7 +812,7 @@ void HUD_CalcFrameExtents(hud_t *hud, int width, int height,									// In.
     }
 }
 
-qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
+void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Converts "red" into "255 0 0", etc. or returns input as it was.
 	char *new_color = ColorNameToRGBString(newval);
@@ -829,8 +829,6 @@ qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
 	b_colors = StringToRGB(new_color);
 
 	memcpy(hud_elem->frame_color_cache, b_colors, sizeof(byte) * 3);
-
-	return false;
 }
 
 //
@@ -1100,15 +1098,13 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
 //
 // Onchange for when z-order changes for a hud element. Resorts the elements.
 //
-qbool HUD_OnChangeOrder(cvar_t *var, char *val)
+void HUD_OnChangeOrder(cvar_t *var, char *val, qbool *cancel)
 {
 	Cvar_SetValue (var, atoi(val));
 
 	HUD_ReorderChildren();
 
 	HUD_Sort();
-
-	return true;
 }
 
 //

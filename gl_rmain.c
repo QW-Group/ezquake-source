@@ -77,7 +77,7 @@ cvar_t cl_mvhudvertical = {"cl_mvhudvertical", "0"};
 cvar_t cl_mvhudflip = {"cl_mvhudflip", "0"};
 
 cvar_t cl_mvhudpos = {"cl_mvhudpos", "bottom center"};
-qbool SCR_OnChangeMVHudPos(cvar_t *var, char *newval);
+void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 
 cvar_t cl_mvinset = {"cl_mvinset", "0"};
 cvar_t cl_mvinsetcrosshair = {"cl_mvinsetcrosshair", "1"};
@@ -97,7 +97,7 @@ cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0"};
 cvar_t	r_netgraph = {"r_netgraph", "0"};
 cvar_t	r_netstats = {"r_netstats", "0"};
-qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value);
+void OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel);
 cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, OnChange_r_fullbrightSkins};
 cvar_t	r_enemyskincolor	= {"r_enemyskincolor", ""};
 cvar_t	r_teamskincolor		= {"r_teamskincolor",  ""};
@@ -111,14 +111,14 @@ cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0"};
 cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10"};
 cvar_t  r_watercolor = {"r_watercolor", "50 80 120"};
 
-qbool OnChange_r_drawflat(cvar_t *v, char *skyname);
+void OnChange_r_drawflat(cvar_t *v, char *skyname, qbool *cancel);
 cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
 cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", 0, OnChange_r_drawflat};
 cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150", 0, OnChange_r_drawflat};
 cvar_t	gl_textureless = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
 
 cvar_t	r_farclip			= {"r_farclip", "4096"};
-qbool OnChange_r_skyname(cvar_t *v, char *s);
+void OnChange_r_skyname(cvar_t *v, char *s, qbool *cancel);
 cvar_t	r_skyname			= {"r_skyname", "bloody-marvelous512", 0, OnChange_r_skyname};
 cvar_t	gl_detail			= {"gl_detail","0"};			
 
@@ -129,7 +129,7 @@ cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};
 cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64", CVAR_ARCHIVE};
 cvar_t	gl_clear = {"gl_clear", "0"};
-qbool OnChange_gl_clearColor(cvar_t *v, char *s);
+void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
 cvar_t	gl_clearColor = {"gl_clearColor", "0 0 0", 0, OnChange_gl_clearColor};
 cvar_t	gl_cull = {"gl_cull", "1"};
 
@@ -1812,7 +1812,7 @@ void R_RenderScene (void) {
 int gl_ztrickframe = 0;
 float clearColor[3] = {0, 0, 0};
 
-qbool OnChange_gl_clearColor(cvar_t *v, char *s) {
+void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	byte *color;
 
 	color = StringToRGB(s);
@@ -1822,8 +1822,6 @@ qbool OnChange_gl_clearColor(cvar_t *v, char *s) {
 	clearColor[2] = color[2] / 255.0;
 
 	glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
-
-	return false;
 }
 
 void R_Clear (void) {

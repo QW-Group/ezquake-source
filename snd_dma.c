@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.47 2007-09-14 13:29:29 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.48 2007-09-26 21:51:34 tonik Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "movie.h" //joe: capturing audio
 #endif
 
-static qbool OnChange_s_khz (cvar_t *var, char *string);
+static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
 static void S_Play_f (void);
 static void S_PlayVol_f (void);
 static void S_SoundList_f (void);
@@ -174,9 +174,8 @@ static void S_Restart_f (void)
 		S_SoundInfo_f();
 }
 
-static qbool OnChange_s_khz (cvar_t *var, char *string) {
+static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel) {
 	Cbuf_AddText("snd_restart\n");
-	return false;
 }
 
 void S_Init (void)

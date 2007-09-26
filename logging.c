@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: logging.c,v 1.11 2007-09-14 13:29:29 disconn3ct Exp $
+	$Id: logging.c,v 1.12 2007-09-26 21:51:34 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 
-static qbool OnChange_log_dir(cvar_t *var, char *string);
+static void OnChange_log_dir(cvar_t *var, char *string, qbool *cancel);
 
 cvar_t		log_dir			= {"log_dir", "", 0, OnChange_log_dir};
 cvar_t		log_readable	= {"log_readable", "0"};
@@ -56,17 +56,17 @@ static void Log_Stop(void) {
 	logfile = NULL;
 }
 
-static qbool OnChange_log_dir(cvar_t *var, char *string) {
+static void OnChange_log_dir(cvar_t *var, char *string, qbool *cancel) {
 	if (!string[0])
-		return false;
+		return;
 
 	Util_Process_FilenameEx(string, cl_mediaroot.integer == 2);
 
 	if (!Util_Is_Valid_FilenameEx(string, cl_mediaroot.integer == 2)) {
 		Com_Printf(Util_Invalid_Filename_Msg(var->name));
-		return true;
+		*cancel = true;
+		return;
 	}
-	return false;
 }
 
 static void Log_log_f(void) {

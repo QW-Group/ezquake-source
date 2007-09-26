@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.21 2007-09-14 13:29:30 disconn3ct Exp $
+	$Id: tr_init.c,v 1.22 2007-09-26 21:51:35 tonik Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -79,7 +79,7 @@ cvar_t	vid_xpos			= { "vid_xpos",				"3",	CVAR_ARCHIVE | CVAR_SILENT };
 cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_ARCHIVE | CVAR_SILENT };
 
 
-qbool OnChange_r_con_xxx (cvar_t *var, char *string);
+void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel);
 cvar_t	r_conwidth			= { "vid_conwidth",			"640",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx };
 cvar_t	r_conheight			= { "vid_conheight",		"0",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something
 
@@ -307,7 +307,7 @@ static void R_ModeList_f( void )
 
 //============================================================================
 
-qbool OnChange_r_con_xxx (cvar_t *var, char *string) {
+void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 	if (var == &r_conwidth) {
 		int width = Q_atoi(string);
 
@@ -334,12 +334,14 @@ qbool OnChange_r_con_xxx (cvar_t *var, char *string) {
 
 		Cvar_SetValue(var, (float)height);
 	}
-	else
-		return true; // hrm?
+	else {
+		*cancel = true; // hrm?
+		return;
+	}
 
 	Draw_AdjustConback ();
 	vid.recalc_refdef = 1;
-	return true;
+	*cancel = true;
 }
 
 //============================================================================
