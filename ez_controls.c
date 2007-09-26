@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.57 2007-09-25 21:51:28 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.58 2007-09-26 23:48:00 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -369,17 +369,10 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 		}
 	}
 
-	// Find the focused control and send the key events to it.
-	for (iter = tree->drawlist.head; iter; iter = iter->next)
+	// Send key events to the focused control.
+	if (tree->focused_node && tree->focused_node->payload)
 	{
-		payload = (ez_control_t *)iter->payload;
-
-		// Notify the control of the key event.
-		if (payload->int_flags & control_focused)
-		{
-			CONTROL_RAISE_EVENT(&key_handled, payload, ez_control_t, OnKeyEvent, key, unichar, down);
-			break;
-		}
+		CONTROL_RAISE_EVENT(&key_handled, (ez_control_t *)tree->focused_node->payload, ez_control_t, OnKeyEvent, key, unichar, down);
 	}
 
 	return key_handled;
@@ -2038,8 +2031,6 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 // Label
 // =========================================================================================
 
-// TODO : Enable making a label read only / non-selectable text.
-
 //
 // Label - Creates a label control and initializes it.
 //
@@ -3508,7 +3499,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	((ez_control_t *)button)->ext_flags			|= (flags | control_focusable | control_contained);
 
 	// Override the draw function.
-	((ez_control_t *)button)->inheritance_level = EZ_BUTTON_INHERITANCE_LEVEL;
+	((ez_control_t *)button)->inheritance_level = 1;
 	((ez_control_t *)button)->events.OnDraw		= EZ_button_OnDraw;
 	((ez_control_t *)button)->events.OnResize	= EZ_button_OnResize;
 
@@ -3756,7 +3747,7 @@ int EZ_button_OnTextAlignmentChanged(ez_control_t *self)
 // Slider
 // =========================================================================================
 
-// TODO : Slider - Add key support. Show somehow that it's focused?
+// TODO : Slider - Show somehow that it's focused?
 
 //
 // Slider - Creates a new button and initializes it.
@@ -3801,8 +3792,8 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 	((ez_control_t *)slider)->CLASS_ID					= EZ_SLIDER_ID;
 	((ez_control_t *)slider)->ext_flags					|= (flags | control_focusable | control_contained | control_resizeable);
 
-	// Override the draw function.
-	((ez_control_t *)slider)->inheritance_level			= EZ_SLIDER_INHERITANCE_LEVEL;
+	// Overrided control events.
+	((ez_control_t *)slider)->inheritance_level			= 1;
 	((ez_control_t *)slider)->events.OnDraw				= EZ_slider_OnDraw;
 	((ez_control_t *)slider)->events.OnMouseDown		= EZ_slider_OnMouseDown;
 	((ez_control_t *)slider)->events.OnMouseUpOutside	= EZ_slider_OnMouseUpOutside;
@@ -4165,4 +4156,164 @@ int EZ_slider_OnKeyDown(ez_control_t *self, int key, int unichar)
 	return key_handled;
 }
 
+// =========================================================================================
+// Scrollbar
+// =========================================================================================
+
+// TODO : Hmm, it looks retarded if you anchor a scrollbar to it's parents edge, since anchoring works on the virtual surface of the control. Add an anchor mode that anchors to the normal size also?
+
+//
+// Scrollbar - Creates a new scrollbar and initializes it.
+//
+ez_scrollbar_t *EZ_scrollbar_Create(ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
+							  char *background_name,
+							  ez_control_flags_t flags)
+{
+	ez_scrollbar_t *scrollbar = NULL;
+
+	// We have to have a tree to add the control to.
+	if (!tree)
+	{
+		return NULL;
+	}
+
+	scrollbar = (ez_scrollbar_t *)Q_malloc(sizeof(ez_scrollbar_t));
+	memset(scrollbar, 0, sizeof(ez_scrollbar_t));
+
+	EZ_scrollbar_Init(scrollbar, tree, parent, name, description, x, y, width, height, background_name, flags);
+	
+	return scrollbar;
+}
+
+//
+// Scrollbar - Initializes a scrollbar.
+//
+void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
+							  char *background_name,
+							  ez_control_flags_t flags)
+{
+	// Initialize the inherited class first.
+	EZ_control_Init(&scrollbar->super, tree, parent, name, description, x, y, width, height, background_name, flags);
+
+	// Initilize the button specific stuff.
+	((ez_control_t *)scrollbar)->CLASS_ID				= EZ_SCROLLBAR_ID;
+	((ez_control_t *)scrollbar)->ext_flags				|= (flags | control_movable | control_focusable | control_contained | control_resizeable);
+
+	// Override the draw function.
+	((ez_control_t *)scrollbar)->inheritance_level		= 1;
+	((ez_control_t *)scrollbar)->events.OnResize		= EZ_scrollbar_OnResize;
+	((ez_control_t *)scrollbar)->events.OnParentResize	= EZ_scrollbar_OnParentResize;
+
+	scrollbar->back		= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar back button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
+	scrollbar->forward	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar forward button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
+	scrollbar->slider	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar slider button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
+
+	// TODO : Remove this test stuff.
+	{
+		EZ_button_SetNormalColor(scrollbar->back, 255, 125, 125, 125);
+		EZ_button_SetNormalColor(scrollbar->forward, 255, 125, 125, 125);
+		EZ_button_SetNormalColor(scrollbar->slider, 255, 125, 125, 125);
+	}
+
+	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollbar, ez_control_t, OnResize);
+}
+
+//
+// Scrollbar - Calculates the size of the slider button.
+//
+static void EZ_scrollbar_CalculateSliderSize(ez_scrollbar_t *scrollbar)
+{
+	ez_control_t *self = (ez_control_t *)scrollbar;
+
+	if (self->parent)
+	{
+		// Get the percentage of the parent that is shown and calculate the new slider button size from that. 
+		float target_height_ratio = (self->parent->height / (float)self->parent->virtual_height);
+		int new_slider_height = Q_rint(target_height_ratio * scrollbar->scroll_area);
+
+		EZ_control_SetSize((ez_control_t *)scrollbar->slider, self->width, new_slider_height);
+	}
+}
+
+//
+// Scrollbar - Repositions the back / forward buttons according to orientation.
+//
+static void EZ_scrollbar_RepositionScrollButtons(ez_scrollbar_t *scrollbar)
+{
+	ez_control_t *self			= (ez_control_t *)scrollbar;
+	ez_control_t *back_ctrl		= (ez_control_t *)scrollbar->back;
+	ez_control_t *slider_ctrl	= (ez_control_t *)scrollbar->slider;
+	ez_control_t *forward_ctrl	= (ez_control_t *)scrollbar->forward;
+
+	// Let the super class do it's thing first.
+	EZ_control_OnResize(self);
+
+	if (scrollbar->orientation == vertical)
+	{
+		// Up button.
+		EZ_control_SetAnchor(back_ctrl, anchor_left | anchor_top | anchor_right);
+		EZ_control_SetSize(back_ctrl, self->width, self->width);
+
+		// Slider.
+		EZ_control_SetAnchor(slider_ctrl, anchor_left | anchor_right);
+
+		// Down button.
+		EZ_control_SetAnchor(forward_ctrl, anchor_left | anchor_bottom | anchor_right);
+		EZ_control_SetSize(forward_ctrl, self->width, self->width);
+
+		scrollbar->scroll_area = self->height - (forward_ctrl->width + back_ctrl->width);
+	}
+	else
+	{
+		// Left button.
+		EZ_control_SetAnchor(back_ctrl, anchor_left | anchor_top | anchor_bottom);
+		EZ_control_SetSize(back_ctrl, self->height, self->height);
+
+		// Slider.
+		EZ_control_SetAnchor(slider_ctrl, anchor_top | anchor_bottom);
+
+		// Right button.
+		EZ_control_SetAnchor(forward_ctrl, anchor_top | anchor_bottom | anchor_right);
+		EZ_control_SetSize(forward_ctrl, self->height, self->height);
+
+		scrollbar->scroll_area = self->width - (forward_ctrl->height + back_ctrl->height);
+	}
+}
+
+//
+// Scrollbar - OnResize event.
+//
+int EZ_scrollbar_OnResize(ez_control_t *self)
+{
+	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self;
+
+	// Let the super class do it's thing first.
+	EZ_control_OnResize(self);
+
+	EZ_scrollbar_RepositionScrollButtons(scrollbar);
+	EZ_scrollbar_CalculateSliderSize(scrollbar);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
+	return 0;
+}
+
+//
+// Scrollbar - OnParentResize event.
+//
+int EZ_scrollbar_OnParentResize(ez_control_t *self)
+{
+	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self;
+
+	// Let the super class do it's thing first.
+	EZ_control_OnParentResize(self);
+
+	EZ_scrollbar_CalculateSliderSize(scrollbar);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnParentResize);
+	return 0;
+}
 

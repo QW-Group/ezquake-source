@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.36 2007-09-25 16:46:50 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.37 2007-09-26 23:48:00 cokeman1982 Exp $
 */
 
 //
@@ -1184,7 +1184,6 @@ int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 // Button
 // =========================================================================================
 
-#define EZ_BUTTON_INHERITANCE_LEVEL		1
 #define EZ_BUTTON_ID					1
 
 typedef struct ez_button_events_s
@@ -1326,7 +1325,6 @@ int EZ_button_OnDraw(ez_control_t *self);
 // Slider
 // =========================================================================================
 
-#define EZ_SLIDER_INHERITANCE_LEVEL		1
 #define EZ_SLIDER_ID					2
 
 typedef enum ez_slider_iflags_e
@@ -1364,7 +1362,7 @@ typedef struct ez_slider_s
 } ez_slider_t;
 
 //
-// Slider - Creates a new button and initializes it.
+// Slider - Creates a new slider and initializes it.
 //
 ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
@@ -1373,7 +1371,7 @@ ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 							  ez_control_flags_t flags);
 
 //
-// Slider - Initializes a button.
+// Slider - Initializes a slider.
 //
 void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
@@ -1476,5 +1474,66 @@ int EZ_slider_OnResize(ez_control_t *self);
 //
 int EZ_slider_OnKeyDown(ez_control_t *self, int key, int unichar);
 
-#endif // __EZ_CONTROLS_H__
+// =========================================================================================
+// Scrollbar
+// =========================================================================================
+
+#define EZ_SCROLLBAR_ID					3
+
+typedef enum ez_orientation_s
+{
+	vertical	= 0,
+	horizontal	= 1
+} ez_orientation_t;
+
+typedef struct ez_scrollbar_s
+{
+	ez_control_t			super;				// The super class.
+
+	//ez_slider_events_t	events;				// Slider specific events.
+	//ez_slider_events_t	event_handlers;		// Slider specific event handlers.
+
+	ez_button_t				*back;				// Up / left button depending on the scrollbars orientation.
+	ez_button_t				*slider;			// The slider button.
+	ez_button_t				*forward;			// Down / right button.
+	
+	ez_orientation_t		orientation;		// The orientation of the scrollbar, vertical / horizontal.
+	int						scroll_area;		// The width or height (depending on orientation) of the area between
+												// the forward/back buttons. That is, the area you can move the slider in.
+
+	int						slider_minsize;		// The minimum size of the slider button.
+
+	int						override_count;		// These are needed so that subclasses can override slider specific events.
+	int						inheritance_level;
+} ez_scrollbar_t;
+
+//
+// Scrollbar - Creates a new scrollbar and initializes it.
+//
+ez_scrollbar_t *EZ_scrollbar_Create(ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
+							  char *background_name,
+							  ez_control_flags_t flags);
+
+//
+// Scrollbar - Initializes a scrollbar.
+//
+void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
+							  char *background_name,
+							  ez_control_flags_t flags);
+
+//
+// Scrollbar - OnResize event.
+//
+int EZ_scrollbar_OnResize(ez_control_t *self);
+
+//
+// Scrollbar - OnParentResize event.
+//
+int EZ_scrollbar_OnParentResize(ez_control_t *self);
+
+#endif // __EZ_CONTROLS_H__	
 
