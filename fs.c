@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.26 2007-09-23 17:44:40 dkure Exp $
+$Id: fs.c,v 1.27 2007-09-26 04:57:12 dkure Exp $
 */
 
 
@@ -41,11 +41,11 @@ $Id: fs.c,v 1.26 2007-09-23 17:44:40 dkure Exp $
 static hashtable_t filesystemhash;
 static qbool com_fschanged = true;
 
-// FTE-FIXME: Give this a better name
-// FTE-FIXME: D-Kure: This causes segfault for me
-cvar_t com_fs_cache = {"com_fs_cache", "0"};
+// VFS-FIXME: Give this a better name
+// VFS-FIXME: D-Kure: This causes segfault for me
+cvar_t com_fs_cache = {"com_fs_cache", "1"};
 
-// FTE-FIXME: Move this somewhere better
+// VFS-FIXME: Move this somewhere better
 void COM_Path_f (void);
 
 typedef struct {
@@ -116,7 +116,7 @@ qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
 void FS_FlushFSHash(void);
 void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
-//FTE-FIXME: This seems like com_homedir
+//VFS-FIXME: This seems like com_homedir
 //char	com_configdir[MAX_OSPATH];	//homedir/fte/configs
 
 int fs_hash_dups;
@@ -294,7 +294,7 @@ void COM_Path_f (void)
 }
 #endif// WITH_FTE_VFS
 
-// FTE-FIXME: D-Kure This removes a sanity check
+// VFS-FIXME: D-Kure This removes a sanity check
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 {
 #ifndef WITH_FTE_VFS
@@ -436,7 +436,7 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 qbool	file_from_pak;		// global indicating file came from a packfile
 qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
 
-// FTE-FIXME: D-Kure: This function will be removed once we have the VFS layer
+// VFS-FIXME: D-Kure: This function will be removed once we have the VFS layer
 #ifndef WITH_FTE_VFS
 int FS_FOpenFile (char *filename, FILE **file) {
 	searchpath_t *search;
@@ -526,7 +526,7 @@ byte *FS_LoadFile (char *path, int usehunk)
 	if (!h)
 		return NULL;
 #else
-	// FTE-FIXME: This only checks the pak files, not the base dir's
+	// VFS-FIXME: This only checks the pak files, not the base dir's
     FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
 	if (!loc.search)
 		        return NULL;    //wasn't found
@@ -722,7 +722,7 @@ qbool FS_AddPak (char *pakfile) {
 
 	//search = Hunk_Alloc (sizeof(searchpath_t));
 	search = (searchpath_t *) Q_malloc(sizeof(searchpath_t));
-#ifndef WITH_FTE_VFS // FTE-FIXME: D-Kure: This should do something.....
+#ifndef WITH_FTE_VFS // VFS-FIXME: D-Kure: This should do something.....
 	search->pack = pak;
 #endif
 	search->next = com_searchpaths;
@@ -869,7 +869,7 @@ void FS_AddUserDirectory ( char *dir ) {
 	// add the directory to the search path
 	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
 #ifndef WITH_FTE_VFS
-	// FTE-FIXME: D-Kure: What is this search->filename & pack used for??
+	// VFS-FIXME: D-Kure: What is this search->filename & pack used for??
 	strcpy (search->filename, com_userdir);
 	search->pack = NULL;
 #endif
@@ -970,7 +970,7 @@ void FS_ShutDown( void ) {
 		searchpath_t  *next;
 
 #ifndef WITH_FTE_VFS
-		// FTE-FIXME: D-Kure: Need to add some VFS Cleanup here
+		// VFS-FIXME: D-Kure: Need to add some VFS Cleanup here
 		if (com_searchpaths->pack) {
 			fclose (com_searchpaths->pack->handle); // close pack file handler
 			Q_free (com_searchpaths->pack->files);
@@ -2725,7 +2725,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.26 2007-09-23 17:44:40 dkure Exp $
+ * $Id: fs.c,v 1.27 2007-09-26 04:57:12 dkure Exp $
  *             
  */
 
@@ -2749,14 +2749,14 @@ void FS_InitModuleFS (void)
 /******************************************************************************
  *     TODO:
  ****************************
- * 2) Need to check all the FTE-FIXME's
+ * 2) Need to check all the VFS-FIXME's
  * 		D-Kure: I have made comment on the ones I unsure of,
  * 		        others just need the time to do what the comment says.
  *
  * 3) Need to add Sys_EnumerateFiles for sys_mac.c
  * 		D-Kure: I have noooo idea what the mac eqivalent functions are.
  *
- * 4) Replace some of the functions (marked with XXX) with the ezquake equivlant
+ * 4) Replace some of the functions (marked with VFS-XXX) with the ezquake equivlant
  * 		D-Kure: This functions seem to be in common.c and are marked 
  * 		        FS_* instead of COM_*.
  *
@@ -2787,7 +2787,7 @@ void FS_InitModuleFS (void)
 // VFSOS_GetSize    is above
 // VFSOS_Close      is above
 
-// XXX: This is slightly different to fs.c version in that we don't take in a FILE *f
+// VFS-XXX: This is slightly different to fs.c version in that we don't take in a FILE *f
 vfsfile_t *VFSOS_Open(char *osname, char *mode)
 {
 	FILE *f;
@@ -3115,7 +3115,7 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 			CRC_ProcessByte(&crc, ((qbyte *)&info)[j]);
 */
 		strcpy (newfiles[i].name, info.name);
-		// FTE-FIXME: I think this safe to remove as its for a q2 tank skin...
+		// VFS-FIXME: I think this safe to remove as its for a q2 tank skin...
 		//COM_CleanUpPath(newfiles[i].name);	//blooming tanks.
 		//
 		newfiles[i].filepos = LittleLong(info.filepos);
@@ -3134,12 +3134,12 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 
 	pack->references++;
 
-	// FTE-FIXME: Replace this with a Com_Printf
+	// VFS-FIXME: Replace this with a Com_Printf
 	//Con_TPrintf (TL_ADDEDPACKFILE, desc, numpackfiles);
 	return pack;
 }
 
-// XXX: This differs with the fs.c version above
+// VFS-XXX: This differs with the fs.c version above
 int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
@@ -3163,7 +3163,7 @@ int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfse
 
 // VFSPAK_WriteBytes is above
 
-// XXX: This function doesn't actually do the fseek... however the above version does
+// VFS-XXX: This function doesn't actually do the fseek... however the above version does
 qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
@@ -3177,7 +3177,7 @@ qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos)
 // VFSPAK_Tell      is above
 // VFSPAK_GetLen    is above
 
-// XXX: This function is different as we close a reference to our parent file
+// VFS-XXX: This function is different as we close a reference to our parent file
 void VFSPAK_Close(vfsfile_t *vfs)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
@@ -3186,7 +3186,7 @@ void VFSPAK_Close(vfsfile_t *vfs)
 	Q_free(vfsp);
 }
 
-// XXX: This is different from the above version that we pass a pack handle in, rather then a 
+// VFS-XXX: This is different from the above version that we pass a pack handle in, rather then a 
 //      file handle. The parent pak then is updated etc
 vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
@@ -3458,13 +3458,13 @@ typedef struct zipfile_s
 } zipfile_t;
 
 //=================================================================================================
-// XXX: Grabbed from unzip.c from fte
+// VFS-XXX: Grabbed from unzip.c from fte
 /* unz_file_info_interntal contain internal info about a file in zipfile*/
 typedef struct unz_file_info_internal_s {
 	unsigned long offset_curfile;/* relative offset of local header 4 bytes */
 } unz_file_info_internal;
 
-// XXX: Grabbed from unzip.c from fte
+// VFS-XXX: Grabbed from unzip.c from fte
 /* file_in_zip_read_info_s contain internal information about a file in zipfile,
     when reading and decompress it */
 typedef struct {
@@ -3488,7 +3488,7 @@ typedef struct {
 } file_in_zip_read_info_s;
 
 
-// XXX: Grabbed from unzip.c from fte
+// VFS-XXX: Grabbed from unzip.c from fte
 /* unz_s contain internal information about the zipfile
 */
 typedef struct {
@@ -3546,7 +3546,7 @@ int unzlocal_getShortSane(vfsfile_t *fin, unsigned short *pi)
 }
 
 
-// XXX: Grabbed from unzip.c from fte
+// VFS-XXX: Grabbed from unzip.c from fte
 int unzlocal_getShort(vfsfile_t *fin,unsigned long *pi) {
     unsigned short c;
 	vfserrno_t err;
@@ -3562,7 +3562,7 @@ int unzlocal_getShort(vfsfile_t *fin,unsigned long *pi) {
     }
 }
 
-// XXX: Grabbed from unzip.c from fte
+// VFS-XXX: Grabbed from unzip.c from fte
 int unzlocal_getLong(vfsfile_t *fin,unsigned long *pi) {
 	unsigned int c;
 	vfserrno_t err;
@@ -3579,7 +3579,7 @@ int unzlocal_getLong(vfsfile_t *fin,unsigned long *pi) {
 }
 
 
-// XXX: Grabbed from unzip.c from fte
+// VFS-XXX: Grabbed from unzip.c from fte
 int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                                               unz_file_info *pfile_info,
                                               unz_file_info_internal *pfile_info_internal,
@@ -3712,7 +3712,7 @@ int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 	return err;
 }
 
-// XXX: Grabbed from unzip.c from fte
+// VFS-XXX: Grabbed from unzip.c from fte
 int unzLocateFileMy (unzFile file, unsigned long num, unsigned long pos) {
 	unz_s* s;	
 	s = (unz_s *)file;
@@ -3870,7 +3870,7 @@ unsigned long unzlocal_SearchCentralDir(vfsfile_t *fin) {
 	return uPosFound;
 }
 /*
- * FTE-FIXME: Fix this comment
+ * VFS-FIXME: Fix this comment
   Open a Zip file. path contain the full pathname (by example,
      on a Windows NT computer "c:\\test\\zlib109.zip" or on an Unix computer
 	 "zlib/zlib109.zip".
@@ -3946,7 +3946,7 @@ unzFile unzOpenVFS(vfsfile_t *fin) {
 
 	s=(unz_s*)Q_malloc(sizeof(unz_s));
 	*s=us;
-	// FTE-FIXME: I should never know what a unz_s is!
+	// VFS-FIXME: I should never know what a unz_s is!
 	unzGoToFirstFile((unzFile)s);	
 	return (unzFile)s;	
 }
@@ -4103,7 +4103,7 @@ static void *FSZIP_LoadZipFile (vfsfile_t *packhandle, char *desc)
 	if (!zip->handle)
 	{
 		Q_free(zip);
-		// FTE-FIXME: Implement this
+		// VFS-FIXME: Implement this
 		// Con_TPrintf (TL_COULDNTOPENZIP, desc);
 		return NULL;
 	}
@@ -4127,7 +4127,7 @@ static void *FSZIP_LoadZipFile (vfsfile_t *packhandle, char *desc)
 	zip->references = 1;
 	zip->currentfile = NULL;
 
-	// FTE-FIXME: Implement Con_TPrintf
+	// VFS-FIXME: Implement Con_TPrintf
 	// Con_TPrintf (TL_ADDEDZIPFILE, desc, zip->numfiles);
 	return zip;
 }
@@ -4475,7 +4475,7 @@ void COM_Path_f (void)
 {
 	searchpath_t	*s;
 
-	// FTE-FIXME: Need to implement this in Com_Printf
+	// VFS-FIXME: Need to implement this in Com_Printf
 	// Con_TPrintf (TL_CURRENTSEARCHPATH);
 
 	if (com_purepaths)
@@ -5011,8 +5011,8 @@ or NULL. We first check the home directory for the file first, if not found
 we try the basedir.
 ================
 */
-// XXX: This is very similar to FS_OpenVFS in fs.c
-// FTE-FIXME: Clean up this function to reduce the relativeto options 
+// VFS-XXX: This is very similar to FS_OpenVFS in fs.c
+// VFS-FIXME: Clean up this function to reduce the relativeto options 
 vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 {
 	char fullname[MAX_OSPATH];
@@ -5020,7 +5020,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 	vfsfile_t *vfs;
 
 
-	// FTE-FIXME: Need to find the extension of the file so we know what function to use to open it
+	// VFS-FIXME: Need to find the extension of the file so we know what function to use to open it
 
 	//blanket-bans
 	//if (Sys_PathProtection(filename) )
@@ -5059,7 +5059,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
 		return VFSOS_Open(fullname, mode);
 
-/* XXX: Removed as we don't really use this
+/* VFS-XXX: Removed as we don't really use this
  *	case FS_SKINS:
 		if (*com_homedir)
 			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, filename);
@@ -5079,7 +5079,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 		snprintf(fullname, sizeof(fullname), "%s%s", com_basedir, filename);
 		return VFSOS_Open(fullname, mode);
 
-/* XXX: Removed as we don't really use this
+/* VFS-XXX: Removed as we don't really use this
  * case FS_CONFIGONLY:
 		if (*com_homedir)
 		{
@@ -5400,6 +5400,7 @@ static void COM_AddDataFiles(char *pathto, searchpath_t *search, char *extension
 		COM_AddPathHandle(pakfile, funcs, handle, true, false, FS_LOAD_FILE_ALL);
 	}
 
+	/* VFS-FIXME: Use pak.lst instead of COM_AddWildDataFiles */
 	snprintf (pakfile, sizeof (pakfile), "*.%s", extension);
 	wp.funcs = funcs;
 	wp.parentdesc = pathto;

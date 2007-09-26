@@ -529,7 +529,6 @@ void Reload_Sources(void)
 
     s = Create_Source();
 #ifndef WITH_FTE_VFS
-	// FTE-FIXME: D-Kure this needs to be re worked with VFS layer using VFS_GETS
     while (!feof(f))
     {
         char c = 'A';

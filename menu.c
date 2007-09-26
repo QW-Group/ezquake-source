@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.81 2007-09-13 14:49:30 disconn3ct Exp $
+	$Id: menu.c,v 1.82 2007-09-26 04:57:12 dkure Exp $
 
 */
 
@@ -932,7 +932,7 @@ void M_Menu_Load_f (void) {
 #endif
 
 	M_EnterMenu (m_load);
-	// FTE-FIXME: file_from_gamedir is not set in FS_OpenVFS
+	// VFS-FIXME: file_from_gamedir is not set in FS_OpenVFS
 	M_ScanSaves (!file_from_gamedir ? "qw" : com_gamedir);
 }
 

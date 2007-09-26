@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.33 2007-09-14 13:29:30 disconn3ct Exp $
+	$Id: sv_user.c,v 1.34 2007-09-26 04:57:12 dkure Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -814,7 +814,7 @@ void Cmd_Download_f (void) {
 	for (p = name; *p; p++)
 		*p = (char)tolower(*p);
 
-	// FIXME D-Kure WITH_FTE_VFS replacement
+	// VFS-FIXME D-Kure WITH_FTE_VFS replacement
 #ifndef WITH_FTE_VFS
 	sv_client->downloadsize = FS_FOpenFile (name, &sv_client->download);
 #else

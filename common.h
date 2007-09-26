@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.62 2007-09-14 13:29:28 disconn3ct Exp $
+    $Id: common.h,v 1.63 2007-09-26 04:57:12 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -215,7 +215,7 @@ byte *FS_LoadHeapFile (char *path);
 #ifndef WITH_FTE_VFS
 void FS_AddGameDirectory (char *path_to_dir, char *dir);
 #else
-// FTE-FIXME: D-Kure This needs to take FS_Load_File_Types for loadstuff
+// VFS-FIXME: D-Kure This needs to take FS_Load_File_Types for loadstuff
 // but where do i put the declaration for FS_Load_File_Types??
 void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
 #endif
