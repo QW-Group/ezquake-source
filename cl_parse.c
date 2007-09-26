@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.126 2007-09-24 15:36:29 johnnycz Exp $
+$Id: cl_parse.c,v 1.127 2007-09-26 13:53:41 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -3143,7 +3143,7 @@ void CL_ParseServerMessage (void) {
 			} else {
 #ifdef I_WANT_HAX
 				// TODO: detect respawns
-				if (!Cvar_VariableValue("cl_teleports_keep_pitch"))
+				if (!Cvar_Value("cl_teleports_keep_pitch"))
 					cl.viewangles[0] = newangles[0];
 				cl.viewangles[1] = newangles[1];
 				cl.viewangles[2] = newangles[2];

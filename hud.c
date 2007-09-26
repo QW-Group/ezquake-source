@@ -135,7 +135,7 @@ void HUD_Func_f(void)
         char buf[512];
 
         snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, Cmd_Argv(1));
-        if (Cvar_FindVar(buf) != NULL)
+        if (Cvar_Find(buf) != NULL)
         {
             Cbuf_AddText(buf);
             if (Cmd_Argc() > 2)
@@ -463,7 +463,7 @@ void HUD_Toggle_f (void)
     if (!hud)
     {
         // look for cvar
-        cvar_t *var = Cvar_FindVar(Cmd_Argv(1));
+        cvar_t *var = Cvar_Find(Cmd_Argv(1));
         if (!var)
         {
             Com_Printf("No such element or variable: %s\n", Cmd_Argv(1));

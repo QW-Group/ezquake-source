@@ -487,7 +487,7 @@ void CL_BaseMove (usercmd_t *cmd) {
 {
 	static float zoomspeed = 0;
 
-	if ((cls.demoplayback || cl.spectator) && Cvar_VariableValue("cam_thirdperson") && !Cvar_VariableValue("cam_lockpos"))
+	if ((cls.demoplayback || cl.spectator) && Cvar_Value("cam_thirdperson") && !Cvar_Value("cam_lockpos"))
 	{
 		zoomspeed -= CL_KeyState(&in_forward, false) * cls.trueframetime * cam_zoomaccel.value;
 		zoomspeed += CL_KeyState(&in_back, false) * cls.trueframetime * cam_zoomaccel.value;
@@ -506,12 +506,12 @@ void CL_BaseMove (usercmd_t *cmd) {
 		zoomspeed = bound (-cam_zoomspeed.value, zoomspeed, cam_zoomspeed.value);
 
 		if (zoomspeed) {
-			float dist = Cvar_VariableValue("cam_dist");
+			float dist = Cvar_Value("cam_dist");
 
 			dist += cls.trueframetime * zoomspeed;
 			if (dist < 0)
 				dist = 0;
-			Cvar_SetValue (Cvar_FindVar("cam_dist"),  dist);
+			Cvar_SetValue (Cvar_Find("cam_dist"),  dist);
 		}
 	}
 }

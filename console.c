@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.61 2007-09-15 18:58:55 qqshka Exp $
+	$Id: console.c,v 1.62 2007-09-26 13:53:42 tonik Exp $
 */
 // console.c
 
@@ -324,7 +324,7 @@ void Con_CheckResize (void) {
 
 	if (width < 1) { // video hasn't been initialized yet
 #if (defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)) && defined(GLQUAKE)
-		cvar_t *cv = Cvar_FindVar (r_conwidth.name); // r_conwidth not yet registered, but let user specifie it via
+		cvar_t *cv = Cvar_Find(r_conwidth.name); // r_conwidth not yet registered, but let user specifie it via
 													 // config.cfg or somehow else
 		if ( cv ) {
 			width = max(320, cv->integer);

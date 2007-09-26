@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.54 2007-09-14 13:29:28 disconn3ct Exp $
+$Id: cvar.c,v 1.55 2007-09-26 13:53:42 tonik Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -55,7 +55,7 @@ cvar_t *Cvar_Next (cvar_t *var)
 		return cvar_vars;
 }
 
-cvar_t *Cvar_FindVar (const char *var_name)
+cvar_t *Cvar_Find (const char *var_name)
 {
 	cvar_t *var;
 	int key = Com_HashKey (var_name) % VAR_HASHPOOL_SIZE;
@@ -102,7 +102,7 @@ void Cvar_Reset (qbool use_regex)
 				}
 			}
 		} else {
-			if ((var = Cvar_FindVar(name)))
+			if ((var = Cvar_Find(name)))
 				Cvar_ResetVar(var);
 			else
 				Com_Printf("%s : No variable with name %s\n", Cmd_Argv(0), name);
@@ -137,18 +137,18 @@ void Cvar_SetDefault(cvar_t *var, float value)
 	Cvar_Set(var, val);
 }
 
-float Cvar_VariableValue (char *var_name)
+float Cvar_Value (char *var_name)
 {
-	cvar_t *var = Cvar_FindVar (var_name);
+	cvar_t *var = Cvar_Find (var_name);
 
 	if (!var)
 		return 0;
 	return Q_atof (var->string);
 }
 
-char *Cvar_VariableString (char *var_name)
+char *Cvar_String (char *var_name)
 {
-	cvar_t *var = Cvar_FindVar (var_name);
+	cvar_t *var = Cvar_Find (var_name);
 
 	if (!var)
 		return "";
@@ -227,7 +227,7 @@ void Cvar_Set (cvar_t *var, char *value)
 	// C code may wrongly use Cvar_Set on non registered variable, some 99.99% accurate check
 	// variables for internal triggers are not registered intentionally
 	if (var < re_subi || var > re_subi + 9 ) 
-		if (!var->next /* this is fast, but a bit flawed logic */ && !Cvar_FindVar(var->name)) {
+		if (!var->next /* this is fast, but a bit flawed logic */ && !Cvar_Find(var->name)) {
 			Com_Printf("Cvar_Set: on non linked var %s\n", var->name);
 			return;
 		}
@@ -458,7 +458,7 @@ void Cvar_Register (cvar_t *var)
 	cvar_t *old;
 
 	// first check to see if it has already been defined
-	old = Cvar_FindVar (var->name);
+	old = Cvar_Find (var->name);
 
 	// we alredy register cvar, warn about it
 	if (old && !(old->flags & CVAR_USER_CREATED)) {
@@ -537,7 +537,7 @@ qbool Cvar_Command (void)
 	char *spaces;
 
 	// check variables
-	if (!(v = Cvar_FindVar (Cmd_Argv(0))))
+	if (!(v = Cvar_Find (Cmd_Argv(0))))
 		return false;
 
 	if (Cmd_Argc() == 1) {
@@ -615,7 +615,7 @@ void Cvar_Toggle (qbool use_regex)
 				}
 			}
 		} else {
-			var = Cvar_FindVar (name);
+			var = Cvar_Find (name);
 
 			if (!(var)) {
 				Com_Printf ("Unknown variable \"%s\"\n", Cmd_Argv(1));
@@ -704,7 +704,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	cvar_t *v;
 	int key;
 
-	if ((v = Cvar_FindVar(name))) {
+	if ((v = Cvar_Find(name))) {
 		v->flags &= ~CVAR_TEMP;
 		v->flags |= cvarflags;
 		return v;
@@ -793,7 +793,7 @@ void Cvar_Set_f (void)
 	}
 
 	var_name = Cmd_Argv (1);
-	var = Cvar_FindVar (var_name);
+	var = Cvar_Find (var_name);
 
 	if (var) {
 		Cvar_Set (var, Cmd_Argv(2));
@@ -820,7 +820,7 @@ void Cvar_Set_tp_f (void)
 	}
 
 	var_name = Cmd_Argv (1);
-	var = Cvar_FindVar (var_name);
+	var = Cvar_Find (var_name);
 
 	if (var) {
         if (!var->teamplay) {
@@ -855,7 +855,7 @@ void Cvar_Set_ex_f (void)
 	}
 
 	var_name = Cmd_Argv (1);
-	var = Cvar_FindVar (var_name);
+	var = Cvar_Find (var_name);
 
 
 	if ( !var ) {
@@ -890,7 +890,7 @@ void Cvar_Set_Alias_Str_f (void)
 
 	var_name = Cmd_Argv (1);
 	alias_name = Cmd_Argv (2);
-	var = Cvar_FindVar (var_name);
+	var = Cvar_Find (var_name);
 	v = Cmd_AliasString( alias_name );
 
 	if ( !var) {
@@ -938,7 +938,7 @@ void Cvar_Set_Bind_Str_f (void)
 
 	var_name = Cmd_Argv (1);
 	key_name = Cmd_Argv (2);
-	var = Cvar_FindVar (var_name);
+	var = Cvar_Find (var_name);
 	keynum = Key_StringToKeynum( key_name );
 
 	if ( !var) {
@@ -1005,7 +1005,7 @@ void Cvar_UnSet (qbool use_regex)
 				}
 			}
 		} else {
-			if (!(var = Cvar_FindVar(name))) {
+			if (!(var = Cvar_Find(name))) {
 				Com_Printf("Can't delete \"%s\": no such cvar\n", name);
 				continue;
 			}
@@ -1053,7 +1053,7 @@ void Cvar_Set_Calc_f(void)
 	char buf[1024];
 
 	var_name = Cmd_Argv (1);
-	var = Cvar_FindVar (var_name);
+	var = Cvar_Find (var_name);
 
 	if (!var)
 		var = Cvar_Create (var_name, Cmd_Argv (2), 0);
@@ -1069,7 +1069,7 @@ void Cvar_Set_Calc_f(void)
 		return;
 	} else if (!strcmp (a2, "substr")) {
 		int var2len;
-		var2 = Cvar_FindVar (a3);
+		var2 = Cvar_Find (a3);
 
 		if (!var2) {
 			Com_Printf ("Unknown variable \"%s\"\n", a3);
@@ -1103,7 +1103,7 @@ void Cvar_Set_Calc_f(void)
 
 	} else if (!strcmp (a2, "set_substr")) {
 		int	var1len,var2len;
-		var2 = Cvar_FindVar (a3);
+		var2 = Cvar_Find (a3);
 
 		if (!var2) {
 			Com_Printf ("Unknown variable \"%s\"\n", a3);
@@ -1128,7 +1128,7 @@ void Cvar_Set_Calc_f(void)
 
 		return;
 	} else if (!strcmp (a2, "pos")) {
-		var2 = Cvar_FindVar (a3);
+		var2 = Cvar_Find (a3);
 
 		if (!var2) {
 			Com_Printf ("Unknown variable \"%s\"\n", a3);
@@ -1210,7 +1210,7 @@ void Cvar_Inc_f (void)
 		return;
 	}
 
-	var = Cvar_FindVar (Cmd_Argv(1));
+	var = Cvar_Find (Cmd_Argv(1));
 	if (!var) {
 		Com_Printf ("Unknown variable \"%s\"\n", Cmd_Argv(1));
 		return;

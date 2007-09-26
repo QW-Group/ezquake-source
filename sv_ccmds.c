@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_ccmds.c,v 1.13 2007-09-14 13:29:29 disconn3ct Exp $
+	$Id: sv_ccmds.c,v 1.14 2007-09-26 13:53:43 tonik Exp $
 */
 
 #include "qwsvdef.h"
@@ -368,14 +368,14 @@ void SV_Serverinfo_f (void) {
 	}
 
 	if (!strcmp(key, "maxpitch") || !strcmp(Cmd_Argv(1), "minpitch")) {
-		Cvar_Set (Cvar_FindVar(va("sv_%s", Cmd_Argv(1))), Cmd_Argv(2));
+		Cvar_Set (Cvar_Find(va("sv_%s", Cmd_Argv(1))), Cmd_Argv(2));
 		return; // cvar callbacks will take care of updating serverinfo
 	}
 
 	Info_SetValueForKey (svs.info, key, value, MAX_SERVERINFO_STRING);
 
 	// if this is a cvar, change it too	
-	var = Cvar_FindVar (key);
+	var = Cvar_Find (key);
 	if (var && (var->flags & CVAR_SERVERINFO)) {
 		// a hack - strip the serverinfo flag so that the Cvar_Set
 		// doesn't trigger SV_ServerinfoChanged

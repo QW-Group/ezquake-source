@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.185 2007-09-24 20:31:56 johnnycz Exp $
+$Id: cl_main.c,v 1.186 2007-09-26 13:53:41 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -378,7 +378,7 @@ static void CL_SendConnectPacket(
 #endif
 
 	connect_time = cls.realtime;	// for retransmit requests
-	cls.qport = Cvar_VariableValue("qport");
+	cls.qport = Cvar_Value("qport");
 
 	// let the server know what extensions we support
 	strcpy (biguserinfo, cls.userinfo);

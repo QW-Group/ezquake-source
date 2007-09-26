@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.88 2007-09-14 13:29:30 disconn3ct Exp $
+    $Id: teamplay.c,v 1.89 2007-09-26 13:53:43 tonik Exp $
 */
 
 #include <time.h>
@@ -2097,7 +2097,7 @@ char *TP_LocationName(vec3_t location)
 			in += 10;
 			for (i = 0; i < NUM_LOCMACROS; i++) {
 				if (!strncasecmp(in, locmacros[i].macro, strlen(locmacros[i].macro))) {
-					if ((cvar = Cvar_FindVar(va("loc_name_%s", locmacros[i].macro))))
+					if ((cvar = Cvar_Find(va("loc_name_%s", locmacros[i].macro))))
 						value = cvar->string;
 					else
 						value = locmacros[i].val;

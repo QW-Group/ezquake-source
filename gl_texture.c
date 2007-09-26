@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.39 2007-09-17 01:55:39 dkure Exp $
+$Id: gl_texture.c,v 1.40 2007-09-26 13:53:42 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -859,7 +859,7 @@ void GL_Texture_Init(void) {
 	// powerup shells
 	shelltexture = 0; // force reload
 
-	i = (cv = Cvar_FindVar(gl_max_size.name)) ? cv->integer : 0;
+	i = (cv = Cvar_Find(gl_max_size.name)) ? cv->integer : 0;
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 	Cvar_Register(&gl_max_size);

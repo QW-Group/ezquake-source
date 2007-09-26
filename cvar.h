@@ -102,10 +102,10 @@ void Cvar_SetDefault(cvar_t *var, float value);
 
 
 // returns 0 if not defined or non numeric
-float Cvar_VariableValue (char *name);
+float Cvar_Value (char *name);
 
 // returns an empty string if not defined
-char *Cvar_VariableString (char *name);
+char *Cvar_String (char *name);
 
 // attempts to match a partial variable name for command line completion
 // returns NULL if nothing fits
@@ -120,7 +120,7 @@ qbool Cvar_Command (void);
 // with the archive flag set to true.
 void Cvar_WriteVariables (FILE *f);
 
-cvar_t *Cvar_FindVar (const char *name);
+cvar_t *Cvar_Find (const char *name);
 qbool Cvar_Delete (const char *name);
 
 void Cvar_Init (void);

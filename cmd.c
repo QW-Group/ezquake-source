@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.77 2007-09-14 13:29:28 disconn3ct Exp $
+    $Id: cmd.c,v 1.78 2007-09-26 13:53:42 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -1007,7 +1007,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	*/
 
 /*	// fail if the command is a variable name
-	if (Cvar_FindVar(cmd_name)) {
+	if (Cvar_Find(cmd_name)) {
 		Com_Printf ("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
 		return;
 	} */
@@ -1310,7 +1310,7 @@ void Cmd_ExpandString (const char *data, char *dest)
 				buf[i++] = c;
 				buf[i] = 0;
 
-				if ((var = Cvar_FindVar (buf)))
+				if ((var = Cvar_Find(buf)))
 					bestvar = var;
 
 				if (i >= (int) sizeof (buf) - 1)
@@ -1509,7 +1509,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		goto checkaliases;
 
 	// check cvars
-	if ((v = Cvar_FindVar (Cmd_Argv(0)))) {
+	if ((v = Cvar_Find(Cmd_Argv(0)))) {
 #ifndef SERVERONLY
 		if ((cbuf_current == &cbuf_formatted_comms)) {
 			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
@@ -1596,7 +1596,7 @@ checkaliases:
 			// if the alias value is a command or cvar and
 			// the alias is called with parameters, add them
 			if (Cmd_Argc() > 1 && !strchr(p, ' ') && !strchr(p, '\t') &&
-			        (Cvar_FindVar(p) || (Cmd_FindCommand(p) && p[0] != '+' && p[0] != '-'))
+			        (Cvar_Find(p) || (Cmd_FindCommand(p) && p[0] != '+' && p[0] != '-'))
 			   ) {
 				Cbuf_InsertTextEx (inserttarget, Cmd_Args());
 				Cbuf_InsertTextEx (inserttarget, " ");
@@ -1859,7 +1859,7 @@ void Cmd_If_Exists_f(void)
 
 	type = Cmd_Argv(1);
 	name = Cmd_Argv(2);
-	if ( ( (iscvar = !strcmp(type, "cvar")) && Cvar_FindVar (name) )			||
+	if ( ( (iscvar = !strcmp(type, "cvar")) && Cvar_Find(name) )			||
 	        ( (isalias = !strcmp(type, "alias")) && Cmd_FindAlias (name) )			||
 #ifndef SERVERONLY
 	        ( (istrigger = !strcmp(type, "trigger")) && CL_FindReTrigger (name) )	||

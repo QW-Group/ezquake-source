@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.142 2007-09-20 19:00:19 qqshka Exp $
+$Id: cl_screen.c,v 1.143 2007-09-26 13:53:41 tonik Exp $
 */
 
 /// declarations may be found in screen.h
@@ -1869,7 +1869,7 @@ void Hud_Add_f(void)
 		a3 = Cmd_Argv(3);
 
 		if (!strcasecmp(a2, "cvar")) {
-			if( (var = Cvar_FindVar(a3)) ) {
+			if( (var = Cvar_Find(a3)) ) {
 				elem = Hud_NewElement();
 				elem->contents = var;
 				elem->flags = HUD_CVAR | HUD_ENABLED;

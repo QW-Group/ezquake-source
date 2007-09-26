@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.44 2007-08-17 19:35:32 johnnycz Exp $
+		$Id: settings_page.c,v 1.45 2007-09-26 13:53:42 tonik Exp $
 
 */
 
@@ -901,7 +901,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 			page->marked = i;
 		}
 		if (arr[i].varname && !arr[i].cvar && arr[i].type == stt_bool) {
-			arr[i].cvar = Cvar_FindVar(arr[i].varname);
+			arr[i].cvar = Cvar_Find(arr[i].varname);
 			arr[i].varname = NULL;
 			if (!arr[i].cvar)
 				Cbuf_AddText(va("Warning: variable %s not found\n", arr[i].varname));

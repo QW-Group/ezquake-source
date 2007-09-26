@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.79 2007-09-22 06:36:07 dkure Exp $
+    $Id: keys.c,v 1.80 2007-09-26 13:53:42 tonik Exp $
 
 */
 
@@ -309,7 +309,7 @@ qbool CheckForCommand (void) {
 		;
 	*s = 0;
 
-	return (Cvar_FindVar(command) || Cmd_FindCommand(command) || Cmd_FindAlias(command) || Cmd_IsLegacyCommand(command));
+	return (Cvar_Find(command) || Cmd_FindCommand(command) || Cmd_FindAlias(command) || Cmd_IsLegacyCommand(command));
 }
 
 //===================================================================

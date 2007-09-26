@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.21 2007-04-15 14:54:50 johnnycz Exp $
+ *  $Id: cl_tcl.c,v 1.22 2007-09-26 13:53:42 tonik Exp $
  */
 
 #ifdef WITH_TCL
@@ -80,7 +80,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 		return (TCL_ERROR);
 	}
 
-	if (Cvar_FindVar (name)) {
+	if (Cvar_Find (name)) {
 		Tcl_SetResult (interp, "alias: unable to realias cvar", TCL_STATIC);
 		return (TCL_ERROR);
 	}
@@ -439,7 +439,7 @@ static char* TCL_TraceVariable (ClientData data, Tcl_Interp* interp,
 	if (name1[0] == ':' && name1[1] == ':')
 		name1 += 2; // skip root namespace specification
 
-	var = Cvar_FindVar (name1);
+	var = Cvar_Find (name1);
 
 	if (flags & TCL_TRACE_READS) {
 		value = var ? var->string : Cmd_MacroString((char *) name1, &len);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: pr_cmds.c,v 1.24 2007-09-13 14:49:30 disconn3ct Exp $
+$Id: pr_cmds.c,v 1.25 2007-09-26 13:53:42 tonik Exp $
 */
 
 #include "qwsvdef.h"
@@ -713,7 +713,7 @@ void PF_cvar (void) {
 		return;
 	}
 
-	G_FLOAT(OFS_RETURN) = Cvar_VariableValue (str);
+	G_FLOAT(OFS_RETURN) = Cvar_Value (str);
 }
 
 //float cvar (string) = #72
@@ -724,7 +724,7 @@ void PF_cvar_set (void) {
 	var_name = G_STRING(OFS_PARM0);
 	val = G_STRING(OFS_PARM1);
 
-	if (!(var = Cvar_FindVar(var_name))) {
+	if (!(var = Cvar_Find(var_name))) {
 		Com_DPrintf ("PF_cvar_set: variable %s not found\n", var_name);
 		return;
 	}

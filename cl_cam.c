@@ -108,7 +108,7 @@ qbool Cam_DrawViewModel(void) {
 qbool Cam_DrawPlayer(int playernum) {
 	if (cl.spectator && autocam && locked && cl_chasecam.value && 
 #ifdef JSS_CAM
-		!Cvar_VariableValue("cam_thirdperson") &&
+		!Cvar_Value("cam_thirdperson") &&
 #endif
 		spec_track == playernum)
 		return false;
@@ -436,7 +436,7 @@ void Cam_Track(usercmd_t *cmd)
 		cmd->forwardmove = cmd->sidemove = cmd->upmove = 0;
 
 #ifdef JSS_CAM
-	if (!Cvar_VariableValue ("cam_thirdperson"))
+	if (!Cvar_Value ("cam_thirdperson"))
 #endif
 		VectorCopy(player->viewangles, cl.viewangles);
 		VectorCopy(player->origin, desired_position);

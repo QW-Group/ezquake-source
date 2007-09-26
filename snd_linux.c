@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_linux.c,v 1.12 2007-05-13 15:35:37 hexum Exp $
+    $Id: snd_linux.c,v 1.13 2007-09-26 13:53:42 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -49,7 +49,7 @@ qbool SNDDMA_Init(void)
 	retval = SNDDMA_Init_OSS();
 #else
 	// Give user the option to force OSS...
-	if (Cvar_VariableValue("s_noalsa")) {
+	if (Cvar_Value("s_noalsa")) {
 		// User wants us to use OSS...
 		SNDDMA_ALSA = false;
 		Com_Printf("sound: Using OSS at user's request...\n");
