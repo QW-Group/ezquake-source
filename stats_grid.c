@@ -592,7 +592,8 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	// and since all I have to differentiate them is the userid,
 	// I have to have enough room to fit the players. Most of this
 	// space is unused. Too lazy to do something more fancy atm :S
-	static qbool isdead[1024];
+	#define DEAD_SIZE 1024
+	static qbool isdead[DEAD_SIZE];
 
 	// Don't calculate any weights before a match has started.
 	// Don't allow setting the weight at the exact time the countdown
@@ -692,12 +693,12 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	weight_t = &grid->cells[row][col].teams[team_id];
 
 	// Raise the death weight for this cell if the player is dead.
-	if(player_info->stats[STAT_HEALTH] > 0 && isdead[player_info->userid])
+	if((player_info->stats[STAT_HEALTH] > 0) && (player_info->userid < DEAD_SIZE) && isdead[player_info->userid])
 	{
 		isdead[player_info->userid] = false;
 	}
 
-	if(player_info->stats[STAT_HEALTH] <= 0 && !isdead[player_info->userid])
+	if(player_info->stats[STAT_HEALTH] <= 0 && (player_info->userid < DEAD_SIZE) && !isdead[player_info->userid])
 	{
 		#define DEATH_WEIGHT		0.2
 		#define DEATH_WEIGHT_CLOSE	DEATH_WEIGHT * 0.8
