@@ -57,6 +57,7 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 
 	// Allocate the grid.
 	(*grid) = (stats_weight_grid_t *)Q_malloc(sizeof(stats_weight_grid_t));
+	memset((*grid), 0, sizeof(stats_weight_grid_t));
 
 	if((*grid) == NULL)
 	{
@@ -347,7 +348,7 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 		// Get the first player's team and set that as team1.
 		if(!grid->teams[STATS_TEAM1].name[0])
 		{
-			strncpy(grid->teams[STATS_TEAM1].name, cl.players[i].team, MAX_INFO_STRING);
+			strlcpy(grid->teams[STATS_TEAM1].name, cl.players[i].team, MAX_INFO_STRING);
 			grid->teams[STATS_TEAM1].color = Sbar_BottomColor(&cl.players[i]);
 		}
 
@@ -355,7 +356,7 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 		// set this players team as team 2.
 		if(strcmp(grid->teams[STATS_TEAM1].name, cl.players[i].team))
 		{
-			strncpy(grid->teams[STATS_TEAM2].name, cl.players[i].team, MAX_INFO_STRING);
+			strlcpy(grid->teams[STATS_TEAM2].name, cl.players[i].team, MAX_INFO_STRING);
 			grid->teams[STATS_TEAM2].color = Sbar_BottomColor(&cl.players[i]);
 			break;
 		}
@@ -586,11 +587,12 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 
 	cell_weight_t *weight_t = NULL;
 
+	// FIXME : Bad hack!
 	// HACK: This is so that I can keep death status of the players
 	// and since all I have to differentiate them is the userid,
 	// I have to have enough room to fit the players. Most of this
 	// space is unused. Too lazy to do something more fancy atm :S
-	static qbool isdead[200];
+	static qbool isdead[1024];
 
 	// Don't calculate any weights before a match has started.
 	// Don't allow setting the weight at the exact time the countdown
