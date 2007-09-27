@@ -538,6 +538,7 @@
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" TOOK the ENEMY key"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got blue's flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got red's flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got your control key!"				//nmtrees
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy Key."
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy key."
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the азуре flag!"			//Excel
@@ -566,6 +567,7 @@
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the блуе═смурф flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" тоок ыоур flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" тоок the енемы flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" цаптуред the енемы flag!"
 
 
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped red's flag"
@@ -625,4 +627,3 @@
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" цаптуред the блуе flag!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" цаптуред the ред flag!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" цаптуред ыоур flag!"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" цаптуред the енемы flag!"
