@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_autotrack.c,v 1.5 2007-09-25 22:35:58 johnnycz Exp $
+$Id: mvd_autotrack.c,v 1.6 2007-09-27 23:18:03 johnnycz Exp $
 */
 
 // MultiView Demo Autotrack system
@@ -261,6 +261,42 @@ static int MVD_FindBestPlayer_f(void) {
 	return MVD_GetBestPlayer();
 }
 
+#define HASRL(x) (x & IT_ROCKET_LAUNCHER)
+#define HASPENT(x) (x & IT_INVULNERABILITY)
+#define HASQUAD(x) (x & IT_QUAD)
+#define HASWEAPON(x) ((x & IT_ROCKET_LAUNCHER ) || (x & IT_LIGHTNING))
+int MVD_GetBetterPlayerSimple(int a, int b)
+{
+	int sa = cl.players[a].stats[STAT_ITEMS];
+	int sb = cl.players[b].stats[STAT_ITEMS];
+
+	if (HASPENT(sa) && HASRL(sa)) return a;
+	if (HASPENT(sb) && HASRL(sb)) return b;
+	if (HASQUAD(sa) && HASWEAPON(sa)) return a;
+	if (HASQUAD(sb) && HASWEAPON(sb)) return b;
+	if (HASPENT(sa)) return a;
+	if (HASPENT(sb)) return b;
+	if (HASQUAD(sa)) return a;
+	if (HASQUAD(sb)) return b;
+	if (HASWEAPON(sa)) return a;
+	if (HASWEAPON(sb)) return b;
+
+	return a;
+}
+
+static int MVD_FindBestPlayerSimple(void) {
+	int i, b;
+
+	b = cl.viewplayernum;
+	for (i = 1; i < mvd_cg_info.pcount; i++) {
+		if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[cl.viewplayernum].team))
+			continue;
+		b = MVD_GetBetterPlayerSimple(b, mvd_new_info[i].id);
+	}
+
+	return b;
+}
+
 static qbool MVD_TrackedHasNoWeapon() {
 	int stat = cl.players[cl.viewplayernum].stats[STAT_ITEMS];
 	if ((stat & IT_ROCKET_LAUNCHER) || (stat & IT_LIGHTNING)) return false;
@@ -306,6 +342,8 @@ static qbool MVD_SwitchMoment(void) {
 	else if (MVD_SomeoneHasPentWithRL()) return true;
 	else return false;
 }
+
+
 
 void MVD_AutoTrack_f(void) {
 	char arg[64];
@@ -370,9 +408,13 @@ void MVD_AutoTrack_f(void) {
 			}
 		}
 	}
-	else if (mvd_autotrack_instant.integer || MVD_SwitchMoment())// mvd_autotrack is 1 or 2
+	else if (mvd_autotrack_instant.integer || MVD_SwitchMoment())// mvd_autotrack is 1 or 2 or 3
 	{
-		id = MVD_FindBestPlayer_f();
+		if (mvd_autotrack.integer == 4) 
+			id = MVD_FindBestPlayerSimple();
+		else
+			id = MVD_FindBestPlayer_f();
+
 		if (id != last_track) {
 			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
 			Cbuf_AddText(arg);
