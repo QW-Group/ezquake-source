@@ -16,20 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.27 2007-09-26 04:57:12 dkure Exp $
+$Id: fs.c,v 1.28 2007-09-28 04:47:55 dkure Exp $
 */
 
-
-
 #include "quakedef.h"
-#include "fs.h"
 #include "common.h"
+#include "hash.h"
+#include "fs.h"
+#include "vfs.h"
 
 //==================================================================================================
 #ifdef WITH_FTE_VFS
 
 #include "q_shared.h"
-#include "hash.h"
 
 #ifndef CLIENTONLY
 #include "server.h"
@@ -38,43 +37,14 @@ $Id: fs.c,v 1.27 2007-09-26 04:57:12 dkure Exp $
 // To include pak3 support add this define
 //#define WITH_PK3
 
-static hashtable_t filesystemhash;
+hashtable_t filesystemhash;
 static qbool com_fschanged = true;
 
 // VFS-FIXME: Give this a better name
-// VFS-FIXME: D-Kure: This causes segfault for me
 cvar_t com_fs_cache = {"com_fs_cache", "1"};
 
 // VFS-FIXME: Move this somewhere better
 void COM_Path_f (void);
-
-typedef struct {
-	struct searchpath_s *search;
-	int             index;
-	char            rawname[MAX_OSPATH];
-	int             offset;
-	int             len;
-} flocation_t;
-
-typedef struct {
-	void	(*PrintPath)(void *handle);
-	void	(*ClosePath)(void *handle);
-	void	(*BuildHash)(void *handle);
-	qbool   (*FindFile)(void *handle, flocation_t *loc, char *name, void *hashedresult);	
-		// true if found (hashedresult can be NULL)
-		// note that if rawfile and offset are set, many Com_FileOpens will 
-		// read the raw file otherwise ReadFile will be called instead.
-	void	(*ReadFile)(void *handle, flocation_t *loc, char *buffer);	
-		// reads the entire file
-	int		(*EnumerateFiles)(void *handle, char *match, int (*func)(char *, int, void *), void *parm);
-
-	void	*(*OpenNew)(vfsfile_t *file, char *desc);	
-		// returns a handle to a new pak/path
-
-	int		(*GeneratePureCRC) (void *handle, int seed, int usepure);
-
-	vfsfile_t *(*OpenVFS)(void *handle, flocation_t *loc, char *mode);
-} searchpathfuncs_t;
 
 typedef enum {
 	FSLFRT_IFFOUND,
@@ -82,19 +52,6 @@ typedef enum {
 	FSLFRT_DEPTH_OSONLY,
 	FSLFRT_DEPTH_ANYPATH
 } FSLF_ReturnType_e;
-
-typedef struct
-{
-	int		filepos, filelen;
-	char	name[8];
-} dwadfile_t;
-
-typedef struct
-{
-	char	id[4];
-	int		dirlen;
-	int		dirofs;
-} dwadheader_t;
 
 typedef enum {
 	FS_LOAD_FILE_PAK = 2,
@@ -115,6 +72,11 @@ void FS_ReloadPackFiles_f(void);
 qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
 void FS_FlushFSHash(void);
 void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
+
+static vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle);
+
+// VFS-FIXME: Debug file for trying to open files
+static void FS_OpenFile_f(void);
 
 //VFS-FIXME: This seems like com_homedir
 //char	com_configdir[MAX_OSPATH];	//homedir/fte/configs
@@ -156,52 +118,6 @@ char	fs_netpath[MAX_OSPATH];
 #ifdef WITH_FTE_VFS
 qbool com_file_copyprotected;
 #endif
-
-
-// in memory
-typedef struct
-{
-	char	name[MAX_QPATH];
-	int		filepos, filelen;
-
-#ifdef WITH_FTE_VFS
-	bucket_t bucket;
-#endif
-} packfile_t;
-
-typedef struct pack_s
-{
-	char	filename[MAX_OSPATH];
-#ifndef WITH_FTE_VFS
-	FILE	*handle;
-#else
-	vfsfile_t	 *handle;
-	unsigned int filepos;	// the pos the subfiles left it at 
-							// (to optimize calls to vfs_seek)
-#endif
-	int		numfiles;
-	packfile_t	*files;
-#ifdef WITH_FTE_VFS
-	int references;			// seeing as all vfiles from a pak file use the 
-							// parent's vfsfile, we need to keep the parent 
-							// open until all subfiles are closed.
-#endif
-} pack_t;
-
-
-// on disk
-typedef struct
-{
-	char	name[56];
-	int		filepos, filelen;
-} dpackfile_t;
-
-typedef struct
-{
-	char	id[4];
-	int		dirofs;
-	int		dirlen;
-} dpackheader_t;
 
 #define	MAX_FILES_IN_PACK	2048
 
@@ -673,7 +589,7 @@ pack_t *FS_LoadPackFile (char *packfile) {
 	fseek (packhandle, header.dirofs, SEEK_SET);
 	fread (info, 1, header.dirlen, packhandle);
 #else
-	VFS_SEEK(packhandle, header.dirofs);
+	VFS_SEEK(packhandle, header.dirofs, SEEK_SET);
 	VFS_READ(packhandle, info, header.dirlen, &err);
 #endif
 
@@ -1230,10 +1146,10 @@ unsigned long VFS_GETLEN (struct vfsfile_s *vf) {
 	return vf->GetLen(vf);
 }
 
-qbool VFS_SEEK (struct vfsfile_s *vf, unsigned long pos) {
+qbool VFS_SEEK (struct vfsfile_s *vf, unsigned long pos, int whence) {
 	assert(vf);
 	VFS_CHECKCALL(vf, vf->Seek, "VFS_SEEK");
-	return vf->Seek(vf, pos);
+	return vf->Seek(vf, pos, whence);
 }
 
 int VFS_READ (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno_t *err) {
@@ -1242,7 +1158,7 @@ int VFS_READ (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno_t *e
 	return vf->ReadBytes(vf, buffer, bytestoread, err);
 }
 
-int VFS_WRITE (struct vfsfile_s *vf, void *buffer, int bytestowrite) {
+int VFS_WRITE (struct vfsfile_s *vf, const void *buffer, int bytestowrite) {
 	assert(vf);
 	VFS_CHECKCALL(vf, vf->WriteBytes, "VFS_WRITE");
 	return vf->WriteBytes(vf, buffer, bytestowrite);
@@ -1289,259 +1205,6 @@ char *VFS_GETS(struct vfsfile_s *vf, char *buffer, int buflen)
 
 	return buffer;
 }
-
-//******************************************************************************************************
-//STDIO files (OS)
-
-typedef struct {
-	vfsfile_t funcs; // <= must be at top/begining of struct
-
-	FILE *handle;
-
-} vfsosfile_t;
-
-int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
-{
-	int r;
-	vfsosfile_t *intfile = (vfsosfile_t*)file;
-
-	if (bytestoread < 0)
-		Sys_Error("VFSOS_ReadBytes: bytestoread < 0"); // ffs
-
-	r = fread(buffer, 1, bytestoread, intfile->handle);
-
-	if (err) // if bytestoread <= 0 it will be treated as non error even we read zero bytes
-		*err = ((r || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
-
-	return r;
-}
-
-int VFSOS_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestowrite)
-{
-	vfsosfile_t *intfile = (vfsosfile_t*)file;
-	return fwrite(buffer, 1, bytestowrite, intfile->handle);
-}
-
-qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos)
-{
-	vfsosfile_t *intfile = (vfsosfile_t*)file;
-	return fseek(intfile->handle, pos, SEEK_SET) == 0;
-}
-
-unsigned long VFSOS_Tell (struct vfsfile_s *file)
-{
-	vfsosfile_t *intfile = (vfsosfile_t*)file;
-	return ftell(intfile->handle);
-}
-
-unsigned long VFSOS_GetSize (struct vfsfile_s *file)
-{
-	vfsosfile_t *intfile = (vfsosfile_t*)file;
-
-	unsigned long curpos, maxlen;
-
-	// FIXME: add error checks here?
-
-	curpos = ftell(intfile->handle);
-	fseek(intfile->handle, 0, SEEK_END);
-	maxlen = ftell(intfile->handle);
-	fseek(intfile->handle, curpos, SEEK_SET);
-
-	return maxlen;
-}
-
-void VFSOS_Close(vfsfile_t *file)
-{
-	vfsosfile_t *intfile = (vfsosfile_t*)file;
-	fclose(intfile->handle);
-	Q_free(file);
-}
-
-vfsfile_t *FS_OpenTemp(void)
-{
-	FILE *f;
-	vfsosfile_t *file;
-
-	f = tmpfile();
-	if (!f)
-		return NULL;
-
-	file = Q_calloc(1, sizeof(vfsosfile_t));
-
-	file->funcs.ReadBytes	= VFSOS_ReadBytes;
-	file->funcs.WriteBytes	= VFSOS_WriteBytes;
-	file->funcs.Seek		= VFSOS_Seek;
-	file->funcs.Tell		= VFSOS_Tell;
-	file->funcs.GetLen		= VFSOS_GetSize;
-	file->funcs.Close		= VFSOS_Close;
-
-	file->handle = f;
-
-	return (vfsfile_t*)file;
-}
-
-// if f == NULL then use fopen(name, ...);
-#ifndef WITH_FTE_VFS
-// Slightly different version below were we don't take in a FILE *
-vfsfile_t *VFSOS_Open(char *name, FILE *f, char *mode)
-{
-	vfsosfile_t *file;
-
-	if (!strchr(mode, 'r') && !strchr(mode, 'w'))
-		return NULL; // hm, no read and no write mode?
-
-	if (!f) {
-		qbool read  = !!strchr(mode, 'r');
-		qbool write = !!strchr(mode, 'w');
-		qbool text  = !!strchr(mode, 't');
-		char newmode[10];
-		int modec = 0;
-
-		if (read)
-			newmode[modec++] = 'r';
-		if (write)
-			newmode[modec++] = 'w';
-		if (text)
-			newmode[modec++] = 't';
-		else
-			newmode[modec++] = 'b';
-		newmode[modec++] = '\0';
-    
-		f = fopen(name, newmode);
-	}
-
-	if (!f)
-		return NULL;
-
-	file = Q_calloc(1, sizeof(vfsosfile_t));
-
-	file->funcs.ReadBytes	= (strchr(mode, 'r') ? VFSOS_ReadBytes  : NULL);
-	file->funcs.WriteBytes	= (strchr(mode, 'w') ? VFSOS_WriteBytes : NULL);
-	file->funcs.Seek		= VFSOS_Seek;
-	file->funcs.Tell		= VFSOS_Tell;
-	file->funcs.GetLen		= VFSOS_GetSize;
-	file->funcs.Close		= VFSOS_Close;
-
-	file->handle = f;
-
-	return (vfsfile_t*)file;
-}
-#endif // WTIH_FTE_VFS
-
-//STDIO files (OS)
-//******************************************************************************************************
-// PAK files
-
-typedef struct {
-	vfsfile_t funcs; // <= must be at top/begining of struct
-
-#ifdef WITH_FTE_VFS
-	pack_t *parentpak;
-#else
-	FILE *handle;
-#endif
-
-	unsigned long startpos;
-	unsigned long length;
-	unsigned long currentpos;
-} vfspack_t;
-
-#ifndef WITH_FTE_VFS
-int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-	unsigned long have = vfsp->length - (vfsp->currentpos - vfsp->startpos);
-	unsigned long r;
-
-	if (bytestoread < 0)
-		Sys_Error("VFSPAK_ReadBytes: bytestoread < 0"); // ffs
-
-	have = min((unsigned long)bytestoread, have); // mixing sign and unsign types is STUPID and dangerous
-
-// all must work without this, if not then somewhere bug
-//	if (ftell(vfsp->handle) != vfsp->currentpos)
-//		fseek(vfsp->handle, vfsp->currentpos);
-
-	r = fread(buffer, 1, have, vfsp->handle);
-	vfsp->currentpos += r;
-
-	if (err) // if bytestoread <= 0 it will be treated as non error even we read zero bytes
-		*err = ((r || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
-
-	return r;
-}
-#endif
-
-int VFSPAK_WriteBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread)
-{	//not supported.
-	Sys_Error("Cannot write to pak files");
-	return 0;
-}
-
-#ifndef WITH_FTE_VFS
-qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-
-	if (pos > vfsp->length)
-		return false;
-
-	vfsp->currentpos = pos + vfsp->startpos;
-	return fseek(vfsp->handle, vfsp->currentpos, SEEK_SET) == 0;
-}
-#endif /* FS_FTE */
-
-unsigned long VFSPAK_Tell (struct vfsfile_s *vfs)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-	return vfsp->currentpos - vfsp->startpos;
-}
-
-unsigned long VFSPAK_GetLen (struct vfsfile_s *vfs)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-	return vfsp->length;
-}
-
-#ifndef WITH_FTE_VFS
-void VFSPAK_Close(vfsfile_t *vfs)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-
-	fclose(vfsp->handle);
-	Q_free(vfsp);	//free ourselves.
-}
-#endif /* WITH_FTE_VFS */
-
-#ifndef WITH_FTE_VFS
-vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
-{
-	vfspack_t *vfs;
-
-	if (strcmp(mode, "rb") || !handle || fsize < 0 || fpos < 0)
-		return NULL; // support only "rb" mode
-
-	vfs = Q_calloc(1, sizeof(vfspack_t));
-
-	vfs->handle = handle;
-
-	vfs->startpos   = fpos;
-	vfs->length     = fsize;
-	vfs->currentpos = vfs->startpos;
-
-	vfs->funcs.Close	  = VFSPAK_Close;
-	vfs->funcs.GetLen	  = VFSPAK_GetLen;
-	vfs->funcs.ReadBytes  = VFSPAK_ReadBytes;
-	vfs->funcs.Seek		  = VFSPAK_Seek;
-	vfs->funcs.Tell		  = VFSPAK_Tell;
-	vfs->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
-
-	return (vfsfile_t *)vfs;
-}
-#endif /* FS_FTE */
-
-// PAK files
-//******************************************************************************************************
 
 //
 // some general function to open VFS file, except VFSTCP
@@ -1596,7 +1259,139 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 
 	return NULL;
 }
-#endif /* FS_FTE */
+#else 
+
+/*
+================
+FS_OpenVFS
+
+This should be how all files are opened, will either give a valid vfsfile_t
+or NULL. We first check the home directory for the file first, if not found 
+we try the basedir.
+================
+*/
+// VFS-XXX: This is very similar to FS_OpenVFS in fs.c
+// VFS-FIXME: Clean up this function to reduce the relativeto options 
+vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
+{
+	char fullname[MAX_OSPATH];
+	flocation_t loc;
+	vfsfile_t *vfs;
+
+
+	// VFS-FIXME: Need to find the extension of the file so we know what function to use to open it
+
+	//blanket-bans
+	//if (Sys_PathProtection(filename) )
+	//	return NULL;
+
+	if (strcmp(mode, "rb"))
+		if (strcmp(mode, "wb"))
+			if (strcmp(mode, "ab"))
+				return NULL; //urm, unable to write/append
+
+	switch (relativeto)
+	{
+	case FS_NONE_OS: 	//OS access only, no paks, open file as is
+		if (*com_homedir)
+		{
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
+			vfs = VFSOS_Open(fullname, mode);
+			if (vfs)
+				return vfs;
+		}
+
+		snprintf(fullname, sizeof(fullname), "%s", filename);
+		return VFSOS_Open(fullname, mode);
+
+	case FS_GAME_OS:	//OS access only, no paks
+		if (*com_homedir)
+		{
+			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
+			vfs = VFSOS_Open(fullname, mode);
+			if (vfs) {
+				fs_filesize = VFS_GETLEN(vfs);
+				return vfs;
+			}
+		}
+
+		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
+		return VFSOS_Open(fullname, mode);
+
+/* VFS-XXX: Removed as we don't really use this
+ *	case FS_SKINS:
+		if (*com_homedir)
+			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, filename);
+		else
+			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_basedir, filename);
+		break;
+ */
+
+	case FS_BASE:
+//		if (*com_homedir)
+//		{
+//			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
+//			vfs = VFSOS_Open(fullname, mode);
+//			if (vfs)
+//				return vfs;
+//		}
+		snprintf(fullname, sizeof(fullname), "%s/%s", com_basedir, filename);
+		return VFSOS_Open(fullname, mode);
+
+/* VFS-XXX: Removed as we don't really use this
+ * case FS_CONFIGONLY:
+		if (*com_homedir)
+		{
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
+			vfs = VFSOS_Open(fullname, mode);
+			if (vfs)
+				return vfs;
+		}
+		snprintf(fullname, sizeof(fullname), "%s/ezquake/%s", com_basedir, filename);
+		return VFSOS_Open(fullname, mode);
+ */
+	case FS_HOME:
+		if (*com_homedir)
+			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
+		else
+			return NULL;
+		return VFSOS_Open(fullname, mode);
+
+	case FS_PAK:
+		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
+		break;
+
+	case FS_ANY:
+		vfs = FS_OpenVFS(filename, mode, FS_HOME);
+		if (vfs)
+			return vfs;
+
+		vfs = FS_OpenVFS(filename, mode, FS_GAME_OS);
+		if (vfs)
+			return vfs;
+
+		return FS_OpenVFS(filename, mode, FS_PAK);
+
+	default:
+		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
+		break;
+	}
+
+	FS_FLocateFile(filename, FSLFRT_IFFOUND, &loc);
+
+	if (loc.search)
+	{
+		com_file_copyprotected = loc.search->copyprotected;
+		return VFS_Filter(filename, loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode));
+	}
+
+	//if we're meant to be writing, best write to it.
+	if (strchr(mode , 'w') || strchr(mode , 'a'))
+		return VFSOS_Open(fullname, mode);
+	return NULL;
+}
+#endif /* WITH_FTE_VFS */
+
 
 
 //******************************************************************************************************
@@ -1703,7 +1498,7 @@ int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfs
 	}
 }
 
-int VFSTCP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestowrite)
+int VFSTCP_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite)
 {
 	tcpfile_t *tf = (tcpfile_t*)file;
 	int len;
@@ -1751,11 +1546,11 @@ int VFSTCP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestowrite)
 	return bytestowrite; // well at least we put something in buffer, sure if bytestowrite not zero
 }
 
-qbool VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos)
+qbool VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	Com_Printf("VFSTCP: seek is illegal, closing link\n");
 	VFSTCP_Error((tcpfile_t*)file);
-	return false;
+	return true;
 }
 
 unsigned long VFSTCP_Tell (struct vfsfile_s *file)
@@ -2698,6 +2493,7 @@ void FS_InitModuleFS (void)
 	Com_Printf("Initialising standard quake filesystem\n");
 #else
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
+	Cmd_AddCommand("fs_openfile", FS_OpenFile_f); // VFS-FIXME <-- Only a debug function
 	Cvar_Register(&com_fs_cache);
 	Com_Printf("Initialising quake VFS filesystem\n");
 #endif
@@ -2725,7 +2521,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.27 2007-09-26 04:57:12 dkure Exp $
+ * $Id: fs.c,v 1.28 2007-09-28 04:47:55 dkure Exp $
  *             
  */
 
@@ -2764,9 +2560,6 @@ void FS_InitModuleFS (void)
  *      <Cokeman> allthough strncpy isn't safe
  *      <Cokeman> strlcpy is
  *
- * 6) pak3 support does not work yet, firstly we need to disable it to avoid
- *    seg faults in ezQuake, then we need to get it working
- *
  * 9) Renaming of lots of the COM_* functions to FS_*
  *
  ****************************
@@ -2776,1611 +2569,6 @@ void FS_InitModuleFS (void)
  *  - Replace zipped/tar/tar.gz demo opening with VFS calls
  *
  *****************************************************************************/
-
-//======================
-//   STDIO files (OS)
-//======================
-// VFSOS_ReadBytes  is above
-// VFSOS_WriteBytes is above
-// VFSOS_Seek       is above
-// VFSOS_Tell       is above
-// VFSOS_GetSize    is above
-// VFSOS_Close      is above
-
-// VFS-XXX: This is slightly different to fs.c version in that we don't take in a FILE *f
-vfsfile_t *VFSOS_Open(char *osname, char *mode)
-{
-	FILE *f;
-	vfsosfile_t *file;
-	qbool read   = !!strchr(mode, 'r');
-	qbool write  = !!strchr(mode, 'w');
-	qbool append = !!strchr(mode, 'a');
-	qbool text   = !!strchr(mode, 't');
-	char newmode[3];
-	int modec = 0;
-	fs_filesize = -1;
-
-	if (read)
-		newmode[modec++] = 'r';
-	if (write)
-		newmode[modec++] = 'w';
-	if (append)
-		newmode[modec++] = 'a';
-	if (text)
-		newmode[modec++] = 't';
-	else
-		newmode[modec++] = 'b';
-	newmode[modec++] = '\0';
-
-	f = fopen(osname, newmode);
-	if (!f)
-		return NULL;
-
-	file = Q_calloc(1, sizeof(vfsosfile_t));
-
-	file->funcs.ReadBytes  = ( strchr(mode, 'r')                      ? VFSOS_ReadBytes  : NULL);
-	file->funcs.WriteBytes = ((strchr(mode, 'w') || strchr(mode, 'a'))? VFSOS_WriteBytes : NULL);
-	file->funcs.Seek       = VFSOS_Seek;
-	file->funcs.Tell       = VFSOS_Tell;
-	file->funcs.GetLen     = VFSOS_GetSize;
-	file->funcs.Close      = VFSOS_Close;
-
-	file->handle = f;
-
-	fs_filesize = VFS_GETLEN((vfsfile_t *)file);
-
-	return (vfsfile_t*)file;
-}
-
-vfsfile_t *FSOS_OpenVFS(void *handle, flocation_t *loc, char *mode)
-{
-	char diskname[MAX_OSPATH];
-
-	snprintf(diskname, sizeof(diskname), "%s/%s", (char*)handle, loc->rawname);
-
-	return VFSOS_Open(diskname, mode);
-}
-
-void FSOS_PrintPath(void *handle)
-{
-	Com_Printf("%s\n", handle);
-}
-
-void FSOS_ClosePath(void *handle)
-{
-	Q_free(handle);
-}
-
-int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
-{
-	if (filename[strlen(filename)-1] == '/')
-	{	//this is actually a directory
-
-		char childpath[256];
-		snprintf(childpath, sizeof (childpath), "%s*", filename);
-		Sys_EnumerateFiles((char*)data, childpath, FSOS_RebuildFSHash, data);
-		return true;
-	}
-	if (!Hash_GetInsensative(&filesystemhash, filename))
-	{
-		bucket_t *bucket = (bucket_t*)Q_malloc(sizeof(bucket_t) + (size_t)strlen(filename)+1);
-		strcpy((char *)(bucket+1), filename);
-#ifdef _WIN32
-		Q_strlwr((char *)(bucket+1));
-#endif
-		Hash_AddInsensative(&filesystemhash, (char *)(bucket+1), data, bucket);
-
-		fs_hash_files++;
-	}
-	else
-		fs_hash_dups++;
-	return true;
-}
-
-void FSOS_BuildHash(void *handle)
-{
-	Sys_EnumerateFiles(handle, "*", FSOS_RebuildFSHash, handle);
-}
-
-qbool FSOS_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult)
-{
-	FILE *f;
-	int len;
-	char netpath[MAX_OSPATH];
-
-
-	if (hashedresult && (void *)hashedresult != handle)
-		return false;
-
-/*
-	if (!static_registered)
-	{	// if not a registered version, don't ever go beyond base
-		if ( strchr (filename, '/') || strchr (filename,'\\'))
-			continue;
-	}
-*/
-
-// check a file in the directory tree
-	snprintf (netpath, sizeof(netpath)-1, "%s/%s",(char*)handle, filename);
-
-	f = fopen(netpath, "rb");
-	if (!f)
-		return false;
-
-	fseek(f, 0, SEEK_END);
-	len = ftell(f);
-	fclose(f);
-	if (loc)
-	{
-		loc->len = len;
-		loc->offset = 0;
-		loc->index = 0;
-		strncpy(loc->rawname, filename, sizeof(loc->rawname));
-	}
-
-	return true;
-}
-
-void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer)
-{
-	FILE *f;
-	f = fopen(loc->rawname, "rb");
-	if (!f)	//err...
-		return;
-	fseek(f, loc->offset, SEEK_SET);
-	fread(buffer, 1, loc->len, f);
-	fclose(f);
-}
-
-int FSOS_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
-{
-	return Sys_EnumerateFiles(handle, match, func, parm);
-}
-
-searchpathfuncs_t osfilefuncs = {
-	FSOS_PrintPath,
-	FSOS_ClosePath,
-	FSOS_BuildHash,
-	FSOS_FLocate,
-	FSOS_ReadFile,
-	FSOS_EnumerateFiles,
-	NULL,
-	NULL,
-	FSOS_OpenVFS
-};
-
-
-//=====================
-//PACK files (*.pak)
-//=====================
-void FSPAK_PrintPath(void *handle)
-{
-	pack_t *pak = handle;
-
-	if (pak->references != 1)
-		Com_Printf("%s (%i)\n", pak->filename, pak->references-1);
-	else
-		Com_Printf("%s\n", pak->filename);
-}
-void FSPAK_ClosePath(void *handle)
-{
-	pack_t *pak = handle;
-
-	pak->references--;
-	if (pak->references > 0)
-		return;	//not free yet
-
-
-	VFS_CLOSE (pak->handle);
-	if (pak->files)
-		Q_free(pak->files);
-	Q_free(pak);
-}
-void FSPAK_BuildHash(void *handle)
-{
-	pack_t *pak = handle;
-	int i;
-
-	for (i = 0; i < pak->numfiles; i++)
-	{
-		if (!Hash_GetInsensative(&filesystemhash, pak->files[i].name))
-		{
-			fs_hash_files++;
-			Hash_AddInsensative(&filesystemhash, pak->files[i].name, &pak->files[i], &pak->files[i].bucket);
-		}
-		else
-			fs_hash_dups++;
-	}
-}
-qbool FSPAK_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult)
-{
-	packfile_t *pf = hashedresult;
-	int i, len;
-	pack_t		*pak = handle;
-
-// look through all the pak file elements
-
-	if (pf)
-	{	//is this a pointer to a file in this pak?
-		if (pf < pak->files || pf > pak->files + pak->numfiles)
-			return false;	//was found in a different path
-	}
-	else
-	{
-		for (i=0 ; i<pak->numfiles ; i++)	//look for the file
-		{
-			if (!strcmp (pak->files[i].name, filename))
-			{
-				pf = &pak->files[i];
-				break;
-			}
-		}
-	}
-
-	if (pf)
-	{
-		len = pf->filelen;
-		if (loc)
-		{
-			loc->index = pf - pak->files;
-			snprintf(loc->rawname, sizeof(loc->rawname), "%s/%s", pak->filename, filename);
-			loc->offset = pf->filepos;
-			loc->len = pf->filelen;
-		}
-		return true;
-	}
-	return false;
-}
-int FSPAK_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
-{
-	pack_t	*pak = handle;
-	int		num;
-
-	for (num = 0; num<(int)pak->numfiles; num++)
-	{
-		if (wildcmp(match, pak->files[num].name))
-		{
-			if (!func(pak->files[num].name, pak->files[num].filelen, parm))
-				return false;
-		}
-	}
-
-	return true;
-}
-/*
-=================
-COM_LoadPackFile
-
-Takes an explicit (not game tree related) path to a pak file.
-
-Loads the header and directory, adding the files at the beginning
-of the list so they override previous pack files.
-=================
-*/
-void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
-{
-	dpackheader_t	header;
-	int				i;
-//	int				j;
-	packfile_t		*newfiles;
-	int				numpackfiles;
-	pack_t			*pack;
-	vfsfile_t		*packhandle;
-	dpackfile_t		info;
-	int read;
-	vfserrno_t err;
-//	unsigned short		crc;
-
-	packhandle = file;
-	if (packhandle == NULL)
-		return NULL;
-
-	VFS_READ(packhandle, &header, sizeof(header), &err);
-	if (header.id[0] != 'P' || header.id[1] != 'A'
-	|| header.id[2] != 'C' || header.id[3] != 'K')
-	{
-		return NULL;
-//		Sys_Error ("%s is not a packfile", packfile);
-	}
-	header.dirofs = LittleLong (header.dirofs);
-	header.dirlen = LittleLong (header.dirlen);
-
-	numpackfiles = header.dirlen / sizeof(dpackfile_t);
-
-//	if (numpackfiles > MAX_FILES_IN_PACK)
-//		Sys_Error ("%s has %i files", packfile, numpackfiles);
-
-//	if (numpackfiles != PAK0_COUNT)
-//		com_modified = true;	// not the original file
-
-	newfiles = (packfile_t*)Q_malloc (numpackfiles * sizeof(packfile_t));
-
-	VFS_SEEK(packhandle, header.dirofs);
-//	fread (&info, 1, header.dirlen, packhandle);
-
-// crc the directory to check for modifications
-//	crc = QCRC_Block((qbyte *)info, header.dirlen);
-
-
-//	QCRC_Init (&crc);
-
-	pack = (pack_t*)Q_malloc (sizeof (pack_t));
-// parse the directory
-	for (i=0 ; i<numpackfiles ; i++)
-	{
-		*info.name = '\0';
-		read = VFS_READ(packhandle, &info, sizeof(info), &err);
-/*
-		for (j=0 ; j<sizeof(info) ; j++)
-			CRC_ProcessByte(&crc, ((qbyte *)&info)[j]);
-*/
-		strcpy (newfiles[i].name, info.name);
-		// VFS-FIXME: I think this safe to remove as its for a q2 tank skin...
-		//COM_CleanUpPath(newfiles[i].name);	//blooming tanks.
-		//
-		newfiles[i].filepos = LittleLong(info.filepos);
-		newfiles[i].filelen = LittleLong(info.filelen);
-	}
-/*
-	if (crc != PAK0_CRC)
-		com_modified = true;
-*/
-	strcpy (pack->filename, desc);
-	pack->handle = packhandle;
-	pack->numfiles = numpackfiles;
-	pack->files = newfiles;
-	pack->filepos = 0;
-	VFS_SEEK(packhandle, pack->filepos);
-
-	pack->references++;
-
-	// VFS-FIXME: Replace this with a Com_Printf
-	//Con_TPrintf (TL_ADDEDPACKFILE, desc, numpackfiles);
-	return pack;
-}
-
-// VFS-XXX: This differs with the fs.c version above
-int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-	int read;
-
-	if (vfsp->currentpos - vfsp->startpos + bytestoread > vfsp->length)
-		bytestoread = vfsp->length - (vfsp->currentpos - vfsp->startpos);
-	if (bytestoread <= 0)
-		return -1;
-
-	if (vfsp->parentpak->filepos != vfsp->currentpos) {
-		VFS_SEEK(vfsp->parentpak->handle, vfsp->currentpos);
-	}
-
-	read = VFS_READ(vfsp->parentpak->handle, buffer, bytestoread, err);
-	vfsp->currentpos += read;
-	vfsp->parentpak->filepos = vfsp->currentpos;
-
-	return read;
-}
-
-// VFSPAK_WriteBytes is above
-
-// VFS-XXX: This function doesn't actually do the fseek... however the above version does
-qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-	if (pos < 0 || pos > vfsp->length)
-		return false;
-	vfsp->currentpos = pos + vfsp->startpos;
-
-	return true;
-}
-
-// VFSPAK_Tell      is above
-// VFSPAK_GetLen    is above
-
-// VFS-XXX: This function is different as we close a reference to our parent file
-void VFSPAK_Close(vfsfile_t *vfs)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-	FSPAK_ClosePath(vfsp->parentpak);	// tell the parent that we don't need it open any 
-										// more (reference counts)
-	Q_free(vfsp);
-}
-
-// VFS-XXX: This is different from the above version that we pass a pack handle in, rather then a 
-//      file handle. The parent pak then is updated etc
-vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
-{
-	pack_t *pack = (pack_t*)handle;
-	vfspack_t *vfs;
-	fs_filesize = -1;
-
-	if (strcmp(mode, "rb"))
-		return NULL; //urm, unable to write/append
-
-	vfs = Q_calloc(1, sizeof(vfspack_t));
-
-	vfs->parentpak = pack;
-	vfs->parentpak->references++;
-
-	vfs->startpos = loc->offset;
-	vfs->length = loc->len;
-	vfs->currentpos = vfs->startpos;
-
-	vfs->funcs.Close      = VFSPAK_Close;
-	vfs->funcs.GetLen     = VFSPAK_GetLen;
-	vfs->funcs.ReadBytes  = VFSPAK_ReadBytes;
-	vfs->funcs.Seek       = VFSPAK_Seek;
-	vfs->funcs.Tell       = VFSPAK_Tell;
-	vfs->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
-
-	fs_filesize = VFS_GETLEN((vfsfile_t *)vfs);
-
-	return (vfsfile_t *)vfs;
-}
-
-searchpathfuncs_t packfilefuncs = {
-	FSPAK_PrintPath,
-	FSPAK_ClosePath,
-	FSPAK_BuildHash,
-	FSPAK_FLocate,
-	FSOS_ReadFile,
-	FSPAK_EnumerateFiles,
-	FSPAK_LoadPackFile,
-	NULL,
-	FSPAK_OpenVFS
-};
-
-
-
-#ifdef DOOMWADS
-void *FSPAK_LoadDoomWadFile (vfsfile_t *packhandle, char *desc)
-{
-	dwadheader_t	header;
-	int				i;
-	packfile_t		*newfiles;
-	int				numpackfiles;
-	pack_t			*pack;
-	dwadfile_t		info;
-
-	int section=0;
-	char sectionname[MAX_QPATH];
-	char filename[52];
-	char neatwadname[52];
-
-	if (packhandle == NULL)
-		return NULL;
-
-	VFS_READ(packhandle, &header, sizeof(header));
-	if (header.id[1] != 'W'	|| header.id[2] != 'A' || header.id[3] != 'D')
-		return NULL;	//not a doom wad
-
-	//doom wads come in two sorts. iwads and pwads.
-	//iwads are the master wads, pwads are meant to replace parts of the master wad.
-	//this is awkward, of course.
-	//we ignore the i/p bit for the most part, but with maps, pwads are given a prefixed name.
-	if (header.id[0] == 'I')
-		*neatwadname = '\0';
-	else if (header.id[0] == 'P')
-	{
-		COM_FileBase(desc, neatwadname, sizeof(neatwadname));
-		strcat(neatwadname, "#");
-	}
-	else
-		return NULL;
-
-	header.dirofs = LittleLong (header.dirofs);
-	header.dirlen = LittleLong (header.dirlen);
-
-	numpackfiles = header.dirlen;
-	newfiles = (packfile_t*)Q_malloc (numpackfiles * sizeof(packfile_t));
-	VFS_SEEK(packhandle, header.dirofs);
-
-	//doom wads are awkward.
-	//they have no directory structure, except for start/end 'files'.
-	//they follow along the lines of lumps after the parent name.
-	//a map is the name of that map, and then a squence of the lumps that form that map (found by next-with-that-name).
-	//this is a problem for a real virtual filesystem, so we add a hack to recognise special names and expand them specially.
-	for (i=0 ; i<numpackfiles ; i++)
-	{
-		VFS_READ (packhandle, &info, sizeof(info));
-
-		strcpy (filename, info.name);
-		filename[8] = '\0';
-		Q_strlwr(filename);
-
-		newfiles[i].filepos = LittleLong(info.filepos);
-		newfiles[i].filelen = LittleLong(info.filelen);
-
-		switch(section)	//be prepared to remap filenames.
-		{
-newsection:
-		case 0:
-			if (info.filelen == 0)
-			{	//marker for something...
-
-				if (!strcmp(filename, "s_start"))
-				{
-					section = 2;
-					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);	//the model loader has a hack to recognise .dsp
-					break;
-				}
-				if (!strcmp(filename, "p_start"))
-				{
-					section = 3;
-					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename); //the map loader will find these.
-					break;
-				}
-				if (!strcmp(filename, "f_start"))
-				{
-					section = 4;
-					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);	//the map loader will find these
-					break;
-				}
-				if ((filename[0] == 'e' && filename[2] == 'm') || !strncmp(filename, "map", 3))
-				{	//this is the start of a beutiful new map
-					section = 1;
-					strcpy(sectionname, filename);
-					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
-					newfiles[i].filepos = 0;
-					newfiles[i].filelen = 4;
-					break;
-				}
-				if (!strncmp(filename, "gl_", 3) && ((filename[4] == 'e' && filename[5] == 'm') || !strncmp(filename+3, "map", 3)))
-				{	//this is the start of a beutiful new map
-					section = 5;
-					strcpy(sectionname, filename+3);
-					break;
-				}
-			}
-
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "wad/%s", filename);	//but there are many files that we don't recognise/know about. archive them off to keep the vfs moderatly clean.
-			break;
-		case 1:	//map section
-			if (strcmp(filename, "things") &&
-				strcmp(filename, "linedefs") &&
-				strcmp(filename, "sidedefs") &&
-				strcmp(filename, "vertexes") &&
-				strcmp(filename, "segs") &&
-				strcmp(filename, "ssectors") &&
-				strcmp(filename, "nodes") &&
-				strcmp(filename, "sectors") &&
-				strcmp(filename, "reject") &&
-				strcmp(filename, "blockmap"))
-			{
-				section = 0;
-				goto newsection;
-			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
-			break;
-		case 5:	//glbsp output section
-			if (strcmp(filename, "gl_vert") &&
-				strcmp(filename, "gl_segs") &&
-				strcmp(filename, "gl_ssect") &&
-				strcmp(filename, "gl_pvs") &&
-				strcmp(filename, "gl_nodes"))
-			{
-				section = 0;
-				goto newsection;
-			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
-			break;
-		case 2:	//sprite section
-			if (!strcmp(filename, "s_end"))
-			{
-				section = 0;
-				goto newsection;
-			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);
-			break;
-		case 3:	//patches section
-			if (!strcmp(filename, "p_end"))
-			{
-				section = 0;
-				goto newsection;
-			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename);
-			break;
-		case 4:	//flats section
-			if (!strcmp(filename, "f_end"))
-			{
-				section = 0;
-				goto newsection;
-			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);
-			break;
-		}
-	}
-
-	pack = (pack_t*)Q_malloc (sizeof (pack_t));
-	strcpy (pack->filename, desc);
-	pack->handle = packhandle;
-	pack->numfiles = numpackfiles;
-	pack->files = newfiles;
-	pack->filepos = 0;
-	VFS_SEEK(packhandle, pack->filepos);
-
-	pack->references++;
-
-	Con_TPrintf (TL_ADDEDPACKFILE, desc, numpackfiles);
-	return pack;
-}
-searchpathfuncs_t doomwadfilefuncs = {
-	FSPAK_PrintPath,
-	FSPAK_ClosePath,
-	FSPAK_BuildHash,
-	FSPAK_FLocate,
-	FSOS_ReadFile,
-	FSPAK_EnumerateFiles,
-	FSPAK_LoadDoomWadFile,
-	NULL,
-	FSPAK_OpenVFS
-};
-#endif
-
-#ifdef WITH_PK3
-//========================
-//ZIP files (*.zip *.pk3)
-//========================
-
-void *com_pathforfile;	//fread and stuff is preferable if null
-
-#ifndef ZEXPORT
-#define ZEXPORT VARGS
-#endif
-
-#ifdef WITH_ZIP
-#ifdef _WIN32
-#pragma comment( lib, "../libs/zlib.lib" )
-#endif
-
-//#define uShort ZLIBuShort
-//#define uLong ZLIBuLong
-
-#include <zlib.h>
-//#include "unzip.c"	// Modified version of the unzip library
-
-typedef struct zipfile_s
-{
-	char filename[MAX_QPATH];
-	unzFile handle;
-	int		numfiles;
-	packfile_t	*files;
-
-#ifdef HASH_FILESYSTEM
-	hashtable_t hash;
-#endif
-
-	vfsfile_t *raw;
-	vfsfile_t *currentfile;	//our unzip.c can only handle one active file at any one time
-							//so we have to keep closing and switching.
-							//slow, but it works. most of the time we'll only have a single file open anyway.
-	int references;	//and a reference count
-} zipfile_t;
-
-//=================================================================================================
-// VFS-XXX: Grabbed from unzip.c from fte
-/* unz_file_info_interntal contain internal info about a file in zipfile*/
-typedef struct unz_file_info_internal_s {
-	unsigned long offset_curfile;/* relative offset of local header 4 bytes */
-} unz_file_info_internal;
-
-// VFS-XXX: Grabbed from unzip.c from fte
-/* file_in_zip_read_info_s contain internal information about a file in zipfile,
-    when reading and decompress it */
-typedef struct {
-	char  *read_buffer;         /* internal buffer for compressed data */
-	z_stream stream;            /* zLib stream structure for inflate */
-
-	unsigned long pos_in_zipfile;       /* position in byte on the zipfile, for fseek*/
-	unsigned long stream_initialised;   /* flag set if stream structure is initialised*/
-
-	unsigned long offset_local_extrafield;/* offset of the local extra field */
-	unsigned int  size_local_extrafield;  /* size of the local extra field */
-	unsigned long pos_local_extrafield;   /* position in the local extra field in read*/
-
-	unsigned long crc32;                  /* crc32 of all data uncompressed            */
-	unsigned long crc32_wait;             /* crc32 we must obtain after decompress all */
-	unsigned long rest_read_compressed;   /* number of byte to be decompressed         */
-	unsigned long rest_read_uncompressed; /*number of byte to be obtained after decomp */
-	vfsfile_t* file;                      /* io structore of the zipfile               */
-	unsigned long compression_method;     /* compression method (0==store)             */
-	unsigned long byte_before_the_zipfile;/* byte before the zipfile, (>0 for sfx)     */
-} file_in_zip_read_info_s;
-
-
-// VFS-XXX: Grabbed from unzip.c from fte
-/* unz_s contain internal information about the zipfile
-*/
-typedef struct {
-	vfsfile_t* file;                 	  /* io structore of the zipfile */
-	unz_global_info gi;       			  /* public global information */
-	unsigned long byte_before_the_zipfile;/* byte before the zipfile, (>0 for sfx)*/
-	unsigned long num_file;               /* number of the current file in the zipfile*/
-	unsigned long pos_in_central_dir;     /* pos of the current file in the central dir*/
-	unsigned long current_file_ok;        /* flag about the usability of the current file*/
-	unsigned long central_pos;            /* position of the beginning of the central dir*/
-
-	unsigned long size_central_dir;       /* size of the central directory  */
-	unsigned long offset_central_dir;     /* offset of start of central directory with
-								   		     respect to the starting disk number */
-
-	unz_file_info cur_file_info; 					 /* public info about the current file in zip*/
-	unz_file_info_internal   cur_file_info_internal; /* private info about it*/
-    file_in_zip_read_info_s *pfile_in_zip_read; 	 /* structure about the current
-	                                    				file if we are decompressing it */
-} unz_s;
-
-/*int unzLocateFileMy (unzFile file, unsigned long num, unsigned long pos);
-int unzlocal_GetCurrentFileInfoInternal(unzFile file,
-                                                  unz_file_info *pfile_info,
-                                                  unz_file_info_internal 
-                                                  *pfile_info_internal,
-                                                  char *szFileName,
-						  unsigned long fileNameBufferSize,
-                                                  void *extraField,
-						  unsigned long extraFieldBufferSize,
-                                                  char *szComment,
-						  unsigned long commentBufferSize);
-*/
-
-int unzlocal_getShortSane(vfsfile_t *fin, unsigned short *pi)
-{
-	unsigned short c;
-	vfserrno_t err;
-	int bytesRead;
-
-	bytesRead = VFS_READ(fin, &c, 2, &err);
-	if (bytesRead == 2)
-	{
-		*pi = LittleShort(c);
-		return UNZ_OK;
-	}
-	else
-	{
-		*pi = 0;
-		if (VFS_TELL(fin) != VFS_GETLEN(fin))
-			return UNZ_ERRNO;
-		else
-			return UNZ_EOF;
-	}
-}
-
-
-// VFS-XXX: Grabbed from unzip.c from fte
-int unzlocal_getShort(vfsfile_t *fin,unsigned long *pi) {
-    unsigned short c;
-	vfserrno_t err;
-	int bytesRead;
-
-	bytesRead = VFS_READ(fin, &c, 2, &err);
-    if (bytesRead == 2) {
-	    *pi = LittleShort(c);
-        return UNZ_OK;
-    } else {
-        if (VFS_TELL(fin) != VFS_GETLEN(fin)) return UNZ_ERRNO;
-        else return UNZ_EOF;
-    }
-}
-
-// VFS-XXX: Grabbed from unzip.c from fte
-int unzlocal_getLong(vfsfile_t *fin,unsigned long *pi) {
-	unsigned int c;
-	vfserrno_t err;
-	int bytesRead;
-
-	bytesRead = VFS_READ(fin, &c, 4, &err);
-    if (bytesRead == 4) {
-	    *pi = LittleLong(c);
-        return UNZ_OK;
-    } else {
-        if (VFS_TELL(fin) != VFS_GETLEN(fin)) return UNZ_ERRNO;
-        else return UNZ_EOF;
-    }
-}
-
-
-// VFS-XXX: Grabbed from unzip.c from fte
-int unzlocal_GetCurrentFileInfoInternal (unzFile file,
-                                              unz_file_info *pfile_info,
-                                              unz_file_info_internal *pfile_info_internal,
-					      char *szFileName, unsigned long fileNameBufferSize,
-					      void *extraField, unsigned long extraFieldBufferSize,
-					      char *szComment,  unsigned long commentBufferSize) {
-	unz_s *s;
-	unz_file_info file_info;
-	unz_file_info_internal file_info_internal = {0};
-	vfserrno_t vfserr;
-	int err=UNZ_OK;
-	unsigned short pi;
-	unsigned long uMagic = 0;
-	long lSeek=0;
-
-	if (!file) return UNZ_PARAMERROR;
-	s = (unz_s *)file;
-	if (!VFS_SEEK(s->file,s->pos_in_central_dir+s->byte_before_the_zipfile)) err=UNZ_ERRNO;
-
-
-	/* we check the magic */
-	if (err==UNZ_OK) 
-	{
-		if (unzlocal_getLong(s->file,&uMagic) != UNZ_OK) err=UNZ_ERRNO;
-		else if (uMagic!=0x02014b50) err=UNZ_BADZIPFILE;
-	}
-
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.version = pi;
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.version_needed = pi;
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.flag = pi;
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.compression_method = pi;
-	unzlocal_getLong(s->file, &file_info.dosDate);
-	unzlocal_getLong(s->file, &file_info.crc);
-	unzlocal_getLong(s->file, &file_info.compressed_size);
-	unzlocal_getLong(s->file, &file_info.uncompressed_size);
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.size_filename = pi;
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.size_file_extra = pi;
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.size_file_comment = pi;
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.disk_num_start = pi;
-	unzlocal_getShortSane(s->file, &pi);
-	file_info.internal_fa = pi;
-	unzlocal_getLong(s->file, &file_info.external_fa);
-/*
-	VFS_READ(s->file, &file_info, sizeof(file_info)-2*4); // 2*4 is the size of 2 my vars
-	file_info.version = LittleShort(file_info.version);
-	file_info.version_needed = LittleShort(file_info.version_needed);
-	file_info.flag = LittleShort(file_info.flag);
-	file_info.compression_method = LittleShort(file_info.compression_method);
-	file_info.dosDate = LittleLong(file_info.dosDate);
-	file_info.crc = LittleLong(file_info.crc);
-	file_info.compressed_size = LittleLong(file_info.compressed_size);
-	file_info.uncompressed_size = LittleLong(file_info.uncompressed_size);
-	file_info.size_filename = LittleShort(file_info.size_filename);
-	file_info.size_file_extra = LittleShort(file_info.size_file_extra);
-	file_info.size_file_comment = LittleShort(file_info.size_file_comment);
-	file_info.disk_num_start = LittleShort(file_info.disk_num_start);
-	file_info.internal_fa = LittleShort(file_info.internal_fa);
-	file_info.external_fa = LittleLong(file_info.external_fa);
-*/
-	if (unzlocal_getLong(s->file,&file_info_internal.offset_curfile) != UNZ_OK) err=UNZ_ERRNO;
-
-	lSeek+=file_info.size_filename;
-	if ((err==UNZ_OK) && (szFileName))
-	{
-		unsigned long uSizeRead ;
-		if (file_info.size_filename<fileNameBufferSize)
-		{
-			*(szFileName+file_info.size_filename)='\0';
-			uSizeRead = file_info.size_filename;
-		}
-		else uSizeRead = fileNameBufferSize;
-
-		if ((file_info.size_filename>0) && (fileNameBufferSize>0))
-			if (VFS_READ(s->file, szFileName,(unsigned int)uSizeRead, &vfserr) != uSizeRead) 
-				err=UNZ_ERRNO;
-		lSeek -= uSizeRead;
-	}
-
-	
-	if ((err==UNZ_OK) && (extraField))
-	{
-		unsigned long uSizeRead ;
-		if (file_info.size_file_extra<extraFieldBufferSize) uSizeRead = file_info.size_file_extra;
-		else uSizeRead = extraFieldBufferSize;
-
-		if (lSeek!=0) 
-		{
-			if (VFS_SEEK(s->file, VFS_TELL(s->file)+lSeek)) lSeek=0;
-			else err=UNZ_ERRNO;
-		}
-		if ((file_info.size_file_extra>0) && (extraFieldBufferSize>0))
-			if (VFS_READ(s->file, extraField,(unsigned int)uSizeRead, &vfserr)!=uSizeRead) 
-				err=UNZ_ERRNO;
-		lSeek += file_info.size_file_extra - uSizeRead;
-	}
-	else lSeek+=file_info.size_file_extra; 
-
-	
-	if ((err==UNZ_OK) && (szComment))
-	{
-		unsigned long uSizeRead ;
-		if (file_info.size_file_comment<commentBufferSize) {
-			*(szComment+file_info.size_file_comment)='\0';
-			uSizeRead = file_info.size_file_comment;
-		} else uSizeRead = commentBufferSize;
-
-		if (lSeek!=0)
-		{
-			if (VFS_SEEK(s->file, VFS_TELL(s->file)+lSeek)) lSeek=0;
-			else err=UNZ_ERRNO;
-		}
-		if ((file_info.size_file_comment>0) && (commentBufferSize>0))
-			if (VFS_READ(s->file, szComment,(unsigned int)uSizeRead, &vfserr)!=uSizeRead) 
-				err=UNZ_ERRNO;
-		lSeek+=file_info.size_file_comment - uSizeRead;
-	} else lSeek+=file_info.size_file_comment;
-
-	if ((err==UNZ_OK) && (pfile_info)) *pfile_info=file_info;
-
-	if ((err==UNZ_OK) && (pfile_info_internal)) *pfile_info_internal=file_info_internal;
-
-	return err;
-}
-
-// VFS-XXX: Grabbed from unzip.c from fte
-int unzLocateFileMy (unzFile file, unsigned long num, unsigned long pos) {
-	unz_s* s;	
-	s = (unz_s *)file;
-	s->pos_in_central_dir = pos;
-	s->num_file = num;
-	unzlocal_GetCurrentFileInfoInternal(file,&s->cur_file_info,&s->cur_file_info_internal,NULL,0,NULL,0,NULL,0);
-	return 1;
-}
-
-/*
-  Read the local header of the current zipfile
-  Check the coherency of the local header and info in the end of central
-        directory about this file
-  store in *piSizeVar the size of extra info in local header
-        (filename and size of extra field data)
-*/
-#define SIZEZIPLOCALHEADER (0x1e)
-int unzlocal_CheckCurrentFileCoherencyHeader (unz_s *s, unsigned int *piSizeVar,
-		unsigned long *poffset_local_extrafield,
-		unsigned int *psize_local_extrafield) {
-										unsigned long uMagic = 0,uData = 0,uFlags = 0;
-										unsigned long size_filename = 0;
-										unsigned long size_extra_field = 0;
-	int err=UNZ_OK;
-
-	*piSizeVar = 0;
-	*poffset_local_extrafield = 0;
-	*psize_local_extrafield = 0;
-
-	if (!VFS_SEEK(s->file,s->cur_file_info_internal.offset_curfile + s->byte_before_the_zipfile)) return UNZ_ERRNO;
-
-
-	if (err==UNZ_OK)
-	{
-		if (unzlocal_getLong(s->file,&uMagic) != UNZ_OK) err=UNZ_ERRNO;
-		else if (uMagic!=0x04034b50) err=UNZ_BADZIPFILE;
-	}
-
-	if (unzlocal_getShort(s->file,&uData) != UNZ_OK) err=UNZ_ERRNO;
-
-	if (unzlocal_getShort(s->file,&uFlags) != UNZ_OK)
-		err=UNZ_ERRNO;
-
-	if (unzlocal_getShort(s->file,&uData) != UNZ_OK) err=UNZ_ERRNO;
-	else if ((err==UNZ_OK) && (uData!=s->cur_file_info.compression_method)) err=UNZ_BADZIPFILE;
-
-    if ((err==UNZ_OK) && (s->cur_file_info.compression_method!=0) && (s->cur_file_info.compression_method!=Z_DEFLATED)) err=UNZ_BADZIPFILE;
-
-	/* date/time */
-	if (unzlocal_getLong(s->file,&uData) != UNZ_OK) err=UNZ_ERRNO;
-
-	/* crc */
-	if (unzlocal_getLong(s->file,&uData) != UNZ_OK) err=UNZ_ERRNO;
-	else if ((err==UNZ_OK) && (uData!=s->cur_file_info.crc) && ((uFlags & 8)==0)) err=UNZ_BADZIPFILE;
-
-	/* size compr */
-	if (unzlocal_getLong(s->file,&uData) != UNZ_OK) err=UNZ_ERRNO;
-	else if ((err==UNZ_OK) && (uData!=s->cur_file_info.compressed_size) && ((uFlags & 8)==0)) err=UNZ_BADZIPFILE;
-
-	 /* size uncompr */
-	if (unzlocal_getLong(s->file,&uData) != UNZ_OK) err=UNZ_ERRNO;
-	else if ((err==UNZ_OK) && (uData!=s->cur_file_info.uncompressed_size) && ((uFlags & 8)==0)) err=UNZ_BADZIPFILE;
-
-
-	if (unzlocal_getShort(s->file,&size_filename) != UNZ_OK) err=UNZ_ERRNO;
-	else if ((err==UNZ_OK) && (size_filename!=s->cur_file_info.size_filename)) err=UNZ_BADZIPFILE;
-
-	*piSizeVar += (unsigned int)size_filename;
-
-	if (unzlocal_getShort(s->file,&size_extra_field) != UNZ_OK)	err=UNZ_ERRNO;
-	*poffset_local_extrafield= s->cur_file_info_internal.offset_curfile + SIZEZIPLOCALHEADER + size_filename;
-	*psize_local_extrafield = (unsigned int)size_extra_field;
-
-	*piSizeVar += (unsigned int)size_extra_field;
-
-	return err;
-}
-
-
-int unzGetCurrentFileUncompressedPos (unzFile file) {
-//	int err=UNZ_OK;
-//	int Store;
-	unsigned int iSizeVar;
-	unsigned int pos;
-	unz_s* s;
-//	file_in_zip_read_info_s* pfile_in_zip_read_info;
-	unsigned long offset_local_extrafield;  /* offset of the local extra field */
-	unsigned int  size_local_extrafield;    /* size of the local extra field */
-
-	if (!file) return -1;
-	s=(unz_s*)file;
-	if (!s->current_file_ok) return -1;
-
-    if (s->pfile_in_zip_read) unzCloseCurrentFile(file);
-
-	if (unzlocal_CheckCurrentFileCoherencyHeader(s,&iSizeVar, &offset_local_extrafield,&size_local_extrafield)!=UNZ_OK) return -1;
-
-
-
-	if (s->cur_file_info.compression_method!=0) return -1;	
-
-	//opens a file into the uncompressed steam.
-	pos = s->cur_file_info_internal.offset_curfile + SIZEZIPLOCALHEADER + iSizeVar;
-
-	return pos;
-}
-
-#define BUFREADCOMMENT (0x400)
-
-/*
-  Locate the Central directory of a zipfile (at the end, just before
-    the global comment)
-*/
-unsigned long unzlocal_SearchCentralDir(vfsfile_t *fin) {
-	unsigned char* buf;
-	unsigned long uSizeFile;
-	unsigned long uBackRead;
-	unsigned long uMaxBack=0xffff; /* maximum size of global comment */
-	unsigned long uPosFound=0;
-	vfserrno_t err;
-	
-	uSizeFile = VFS_GETLEN(fin);
-	
-	if (uMaxBack>uSizeFile) uMaxBack = uSizeFile;
-
-	buf = (unsigned char*)Q_malloc(BUFREADCOMMENT+4);
-	if (!buf) return 0;
-
-	uBackRead = 4;
-	while (uBackRead<uMaxBack) {
-		unsigned long uReadSize,uReadPos ;
-		int i;
-		if (uBackRead+BUFREADCOMMENT>uMaxBack) uBackRead = uMaxBack;
-		else uBackRead+=BUFREADCOMMENT;
-		uReadPos = uSizeFile-uBackRead ;
-		
-		uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ? 
-                     (BUFREADCOMMENT+4) : (uSizeFile-uReadPos);
-
-		if (!VFS_SEEK(fin, uReadPos))
-			break;
-
-		if (VFS_READ(fin,buf,(unsigned int)uReadSize, &err) != uReadSize) break;
-
-		for (i=(int)uReadSize-3; (i--)>0;)
-			if (((*(buf+i))==0x50) && ((*(buf+i+1))==0x4b) && 
-				((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06)) {
-				uPosFound = uReadPos+i;
-				break;
-			}
-
-		if (uPosFound!=0) break;
-	}
-	Q_free(buf);
-	return uPosFound;
-}
-/*
- * VFS-FIXME: Fix this comment
-  Open a Zip file. path contain the full pathname (by example,
-     on a Windows NT computer "c:\\test\\zlib109.zip" or on an Unix computer
-	 "zlib/zlib109.zip".
-	 If the zipfile cannot be opened (file don't exist or in not valid), the
-	   return value is NULL.
-     Else, the return value is a unzFile Handle, usable with other function
-	   of this unzip package.
-*/
-
-
-unzFile unzOpenVFS(vfsfile_t *fin) {
-	unz_s us = {0};
-	unz_s *s;
-	unsigned long central_pos,uL;
-
-	unsigned long number_disk = 0;          /* number of the current dist, used for 
-								   spaning ZIP, unsupported, always 0*/
-	unsigned long number_disk_with_CD = 0;  /* number the the disk with central dir, used
-								   for spaning ZIP, unsupported, always 0*/
-	unsigned long number_entry_CD = 0;      /* total number of entries in
-	                               the central dir 
-	                               (same than number_entry on nospan) */
-
-	int err=UNZ_OK;
-
-
-	if (!fin) return NULL;
-
-	central_pos = unzlocal_SearchCentralDir(fin);
-	if (!central_pos) err=UNZ_ERRNO;
-
-	if (!VFS_SEEK(fin,central_pos)) err=UNZ_ERRNO;
-
-	/* the signature, already checked */
-	if (unzlocal_getLong(fin,&uL)!=UNZ_OK) err=UNZ_ERRNO;
-
-	/* number of this disk */
-	if (unzlocal_getShort(fin,&number_disk)!=UNZ_OK) err=UNZ_ERRNO;
-
-	/* number of the disk with the start of the central directory */
-	if (unzlocal_getShort(fin,&number_disk_with_CD)!=UNZ_OK) err=UNZ_ERRNO;
-
-	/* total number of entries in the central dir on this disk */
-	if (unzlocal_getShort(fin,&us.gi.number_entry)!=UNZ_OK) err=UNZ_ERRNO;
-
-	/* total number of entries in the central dir */
-	if (unzlocal_getShort(fin,&number_entry_CD)!=UNZ_OK) err=UNZ_ERRNO;
-
-	if ((number_entry_CD!=us.gi.number_entry) || (number_disk_with_CD!=0) || (number_disk!=0)) err=UNZ_BADZIPFILE;
-
-	/* size of the central directory */
-	if (unzlocal_getLong(fin,&us.size_central_dir)!=UNZ_OK) err=UNZ_ERRNO;
-
-	/* offset of start of central directory with respect to the 
-	      starting disk number */
-	if (unzlocal_getLong(fin,&us.offset_central_dir)!=UNZ_OK) err=UNZ_ERRNO;
-
-	/* zipfile comment length */
-	if (unzlocal_getShort(fin,&us.gi.size_comment)!=UNZ_OK) err=UNZ_ERRNO;
-
-	if ((central_pos<us.offset_central_dir+us.size_central_dir) && (err==UNZ_OK)) err=UNZ_BADZIPFILE;
-
-	if (err!=UNZ_OK) {
-		VFS_CLOSE(fin);
-		return NULL;
-	}
-
-	us.file=fin;
-	us.byte_before_the_zipfile = central_pos - (us.offset_central_dir+us.size_central_dir);
-	us.central_pos = central_pos;
-    us.pfile_in_zip_read = NULL;
-	
-
-	s=(unz_s*)Q_malloc(sizeof(unz_s));
-	*s=us;
-	// VFS-FIXME: I should never know what a unz_s is!
-	unzGoToFirstFile((unzFile)s);	
-	return (unzFile)s;	
-}
-
-
-
-//=================================================================================================
-
-
-static void FSZIP_PrintPath(void *handle)
-{
-	zipfile_t *zip = handle;
-
-	if (zip->references != 1)
-		Com_Printf("%s (%i)\n", zip->filename, zip->references-1);
-	else
-		Com_Printf("%s\n", zip->filename);
-}
-static void FSZIP_ClosePath(void *handle)
-{
-	zipfile_t *zip = handle;
-
-	if (--zip->references > 0)
-		return;	//not yet time
-
-	unzClose(zip->handle);
-	if (zip->files)
-		Q_free(zip->files);
-	Q_free(zip);
-}
-static void FSZIP_BuildHash(void *handle)
-{
-	zipfile_t *zip = handle;
-	int i;
-
-	for (i = 0; i < zip->numfiles; i++)
-	{
-		if (!Hash_GetInsensative(&filesystemhash, zip->files[i].name))
-		{
-			fs_hash_files++;
-			Hash_AddInsensative(&filesystemhash, zip->files[i].name, &zip->files[i], &zip->files[i].bucket);
-		}
-		else
-			fs_hash_dups++;
-	}
-}
-static qbool FSZIP_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult)
-{
-	packfile_t *pf = hashedresult;
-	int i, len;
-	zipfile_t	*zip = handle;
-
-// look through all the pak file elements
-
-	if (pf)
-	{	//is this a pointer to a file in this pak?
-		if (pf < zip->files || pf >= zip->files + zip->numfiles)
-			return false;	//was found in a different path
-	}
-	else
-	{
-		for (i=0 ; i<zip->numfiles ; i++)	//look for the file
-		{
-			if (!strcasecmp (zip->files[i].name, filename))
-			{
-				pf = &zip->files[i];
-				break;
-			}
-		}
-	}
-
-	if (pf)
-	{
-		len = pf->filelen;
-		if (loc)
-		{
-			loc->index = pf - zip->files;
-			strcpy(loc->rawname, zip->filename);
-			loc->offset = pf->filepos;
-			loc->len = pf->filelen;
-
-			unzLocateFileMy (zip->handle, loc->index, zip->files[loc->index].filepos);
-			loc->offset = unzGetCurrentFileUncompressedPos(zip->handle);
-//			if (loc->offset<0)
-//			{	//file not found, or is compressed.
-//				*loc->rawname = '\0';
-//				loc->offset=0;
-//			}
-		}
-		return true;
-	}
-	return false;
-}
-
-static void FSZIP_ReadFile(void *handle, flocation_t *loc, char *buffer)
-{
-	zipfile_t *zip = handle;
-	int err;
-
-	unzLocateFileMy (zip->handle, loc->index, zip->files[loc->index].filepos);
-
-	unzOpenCurrentFile (zip->handle);
-	err = unzReadCurrentFile (zip->handle, buffer, zip->files[loc->index].filelen);
-	unzCloseCurrentFile (zip->handle);
-
-	if (err!=zip->files[loc->index].filelen)
-	{
-		Com_Printf ("Can't extract file \"%s:%s\" (corrupt)\n", zip->filename, zip->files[loc->index].name);
-		return;
-	}
-	return;
-}
-
-static int FSZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
-{
-	zipfile_t *zip = handle;
-	int		num;
-
-	for (num = 0; num<(int)zip->numfiles; num++)
-	{
-		if (wildcmp(match, zip->files[num].name))
-		{
-			if (!func(zip->files[num].name, zip->files[num].filelen, parm))
-				return false;
-		}
-	}
-
-	return true;
-}
-
-/*
-=================
-COM_LoadZipFile
-
-Takes an explicit (not game tree related) path to a pak file.
-
-Loads the header and directory, adding the files at the beginning
-of the list so they override previous pack files.
-=================
-*/
-static void *FSZIP_LoadZipFile (vfsfile_t *packhandle, char *desc)
-{
-	int i;
-
-	zipfile_t *zip;
-	packfile_t		*newfiles;
-
-	unz_global_info	globalinf = {0};
-	unz_file_info	file_info;
-
-	zip = Q_malloc(sizeof(zipfile_t));
-	strncpy(zip->filename, desc, sizeof(zip->filename));
-	zip->handle = unzOpenVFS ((zip->raw = packhandle));
-	if (!zip->handle)
-	{
-		Q_free(zip);
-		// VFS-FIXME: Implement this
-		// Con_TPrintf (TL_COULDNTOPENZIP, desc);
-		return NULL;
-	}
-
-	unzGetGlobalInfo (zip->handle, &globalinf);
-
-	zip->numfiles = globalinf.number_entry;
-
-	zip->files = newfiles = Q_malloc (zip->numfiles * sizeof(packfile_t));
-	for (i = 0; i < zip->numfiles; i++)
-	{
-		if (unzGetCurrentFileInfo (zip->handle, &file_info, newfiles[i].name, sizeof(newfiles[i].name), NULL, 0, NULL, 0) != UNZ_OK)
-			Com_Printf("Zip Error\n");
-		Q_strlwr(newfiles[i].name);
-		newfiles[i].filelen = file_info.uncompressed_size;
-		//newfiles[i].filepos = file_info.c_offset;
-		if (unzGoToNextFile (zip->handle) != UNZ_OK)
-			Com_Printf("Zip Error\n");
-	}
-
-	zip->references = 1;
-	zip->currentfile = NULL;
-
-	// VFS-FIXME: Implement Con_TPrintf
-	// Con_TPrintf (TL_ADDEDZIPFILE, desc, zip->numfiles);
-	return zip;
-}
-
-int FSZIP_GeneratePureCRC(void *handle, int seed, int crctype)
-{
-	zipfile_t *zip = handle;
-	unz_file_info	file_info;
-
-	int *filecrcs;
-	int numcrcs=0;
-	int i;
-
-	filecrcs = Q_malloc((zip->numfiles+1)*sizeof(int));
-	filecrcs[numcrcs++] = seed;
-
-	unzGoToFirstFile(zip->handle);
-	for (i = 0; i < zip->numfiles; i++)
-	{
-		if (zip->files[i].filelen>0)
-		{
-			unzGetCurrentFileInfo (zip->handle, &file_info, NULL, 0, NULL, 0, NULL, 0);
-			filecrcs[numcrcs++] = file_info.crc;
-		}
-		unzGoToNextFile (zip->handle);
-	}
-
-	if (crctype)
-		return Com_BlockChecksum(filecrcs, numcrcs*sizeof(int));
-	else
-		return Com_BlockChecksum(filecrcs+1, (numcrcs-1)*sizeof(int));
-}
-
-typedef struct {
-	vfsfile_t funcs;
-
-	vfsfile_t *defer;
-
-	//in case we're forced away.
-	zipfile_t *parent;
-	qbool iscompressed;
-	int pos;
-	int length;	//try and optimise some things
-	int index;
-	int startpos;
-} vfszip_t;
-
-void VFSZIP_MakeActive(vfszip_t *vfsz)
-{
-	int i;
-	char buffer[8192];	//must be power of two
-
-	if ((vfszip_t*)vfsz->parent->currentfile == vfsz)
-		return;	//already us
-	if (vfsz->parent->currentfile)
-		unzCloseCurrentFile(vfsz->parent->handle);
-
-	unzLocateFileMy(vfsz->parent->handle, vfsz->index, vfsz->startpos);
-	unzOpenCurrentFile(vfsz->parent->handle);
-
-
-	if (vfsz->pos > 0)
-	{
-		Com_DPrintf("VFSZIP_MakeActive: Shockingly inefficient\n");
-
-		//now we need to seek up to where we had previously gotten to.
-		for (i = 0; i < vfsz->pos-sizeof(buffer); i++)
-			unzReadCurrentFile(vfsz->parent->handle, buffer, sizeof(buffer));
-		unzReadCurrentFile(vfsz->parent->handle, buffer, vfsz->pos - i);
-	}
-
-	vfsz->parent->currentfile = (vfsfile_t*)vfsz;
-}
-
-int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
-{
-	int read;
-	vfszip_t *vfsz = (vfszip_t*)file;
-
-	if (vfsz->defer)
-		return VFS_READ(vfsz->defer, buffer, bytestoread, err);
-
-	if (vfsz->iscompressed)
-	{
-		VFSZIP_MakeActive(vfsz);
-		read = unzReadCurrentFile(vfsz->parent->handle, buffer, bytestoread);
-	}
-	else
-	{
-		if (vfsz->parent->currentfile != file)
-		{
-			unzCloseCurrentFile(vfsz->parent->handle);
-			VFS_SEEK(vfsz->parent->raw, vfsz->pos+vfsz->startpos);
-			vfsz->parent->currentfile = file;
-		}
-		read = VFS_READ(vfsz->parent->raw, buffer, bytestoread, err);
-	}
-
-	vfsz->pos += read;
-	return read;
-}
-int VFSZIP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestoread)
-{
-	Sys_Error("VFSZIP_WriteBytes: Not supported\n");
-	return 0;
-}
-
-qbool VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos)
-{
-	vfszip_t *vfsz = (vfszip_t*)file;
-
-	if (vfsz->defer)
-		return VFS_SEEK(vfsz->defer, pos);
-
-	//This is *really* inefficient
-	if (vfsz->parent->currentfile == file)
-	{
-		if (vfsz->iscompressed)
-		{	//if they're going to seek on a file in a zip, let's just copy it out
-			char buffer[8192];
-			unsigned int chunk;
-			unsigned int i;
-			unsigned int length;
-
-			vfsz->defer = FS_OpenTemp();
-			if (vfsz->defer)
-			{
-				unzCloseCurrentFile(vfsz->parent->handle);
-				vfsz->parent->currentfile = NULL;	//make it not us
-
-				length = vfsz->length;
-				i = 0;
-				vfsz->pos = 0;
-				VFSZIP_MakeActive(vfsz);
-				while (1)
-				{
-					chunk = length - i;
-					if (chunk > sizeof(buffer))
-						chunk = sizeof(buffer);
-					if (chunk == 0)
-						break;
-					unzReadCurrentFile(vfsz->parent->handle, buffer, chunk);
-					VFS_WRITE(vfsz->defer, buffer, chunk);
-
-					i += chunk;
-				}
-			}
-		}
-
-		unzCloseCurrentFile(vfsz->parent->handle);
-		vfsz->parent->currentfile = NULL;	//make it not us
-
-		if (vfsz->defer)
-			return VFS_SEEK(vfsz->defer, pos);
-	}
-
-
-
-	if (pos < 0 || pos > vfsz->length)
-		return false;
-	vfsz->pos = pos;
-
-	return true;
-}
-
-unsigned long VFSZIP_Tell (struct vfsfile_s *file)
-{
-	vfszip_t *vfsz = (vfszip_t*)file;
-
-	if (vfsz->defer)
-		return VFS_TELL(vfsz->defer);
-
-	return vfsz->pos;
-}
-
-unsigned long VFSZIP_GetLen (struct vfsfile_s *file)
-{
-	vfszip_t *vfsz = (vfszip_t*)file;
-	return vfsz->length;
-}
-
-void VFSZIP_Close (struct vfsfile_s *file)
-{
-	vfszip_t *vfsz = (vfszip_t*)file;
-
-	if (vfsz->parent->currentfile == file)
-		vfsz->parent->currentfile = NULL;	//make it not us
-
-	if (vfsz->defer)
-		VFS_CLOSE(vfsz->defer);
-
-	FSZIP_ClosePath(vfsz->parent);
-	Q_free(vfsz);
-}
-
-vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
-{
-	int rawofs;
-	zipfile_t *zip = handle;
-	vfszip_t *vfsz;
-	fs_filesize = -1;
-
-	if (strcmp(mode, "rb"))
-		return NULL; //urm, unable to write/append
-
-	vfsz = Q_calloc(1, sizeof(vfszip_t));
-
-	vfsz->parent = zip;
-	vfsz->index = loc->index;
-	vfsz->startpos = zip->files[loc->index].filepos;
-	vfsz->length = loc->len;
-
-	vfsz->funcs.Close = VFSZIP_Close;
-	vfsz->funcs.GetLen = VFSZIP_GetLen;
-	vfsz->funcs.ReadBytes = VFSZIP_ReadBytes;
-	vfsz->funcs.Seek = VFSZIP_Seek;
-	vfsz->funcs.Tell = VFSZIP_Tell;
-	vfsz->funcs.WriteBytes = NULL;
-	vfsz->funcs.seekingisabadplan = true;
-
-	unzLocateFileMy(vfsz->parent->handle, vfsz->index, vfsz->startpos);
-	rawofs = unzGetCurrentFileUncompressedPos(zip->handle);
-	vfsz->iscompressed = rawofs<0;
-	if (!vfsz->iscompressed)
-	{
-		vfsz->startpos = rawofs;
-		VFS_SEEK(zip->raw, vfsz->startpos);
-		vfsz->parent->currentfile = (vfsfile_t*)vfsz;
-	}
-
-	zip->references++;
-
-	fs_filesize = VFS_GETLEN((vfsfile_t *)vfsz);
-
-	return (vfsfile_t*)vfsz;
-}
-
-searchpathfuncs_t zipfilefuncs = {
-	FSZIP_PrintPath,
-	FSZIP_ClosePath,
-	FSZIP_BuildHash,
-	FSZIP_FLocate,
-	FSZIP_ReadFile,
-	FSZIP_EnumerateFiles,
-	FSZIP_LoadZipFile,
-	FSZIP_GeneratePureCRC,
-	FSZIP_OpenVFS
-};
-
-#endif
-#endif // WITH_PK3
-
-
 //=============================================================================
 
 searchpath_t	*com_searchpaths;
@@ -4409,13 +2597,11 @@ searchpath_t *COM_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, vo
 		COM_AddDataFiles(probablepath, search, "pak", &packfilefuncs);//q1/hl/h2/q2
 	//pk2s never existed.
 #ifdef WITH_ZIP
-#ifdef WITH_PK3
 	if (loadstuff & FS_LOAD_FILE_PK3)
 		COM_AddDataFiles(probablepath, search, "pk3", &zipfilefuncs);	//q3 + offspring
 	if (loadstuff & FS_LOAD_FILE_PK4)
 		COM_AddDataFiles(probablepath, search, "pk4", &zipfilefuncs);	//q4
 	//we could easily add zip, but it's friendlier not to
-#endif
 #endif
 
 #ifdef DOOMWADS
@@ -4855,7 +3041,7 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 	if (header->flags & GZ_RESERVED)
 	{	//reserved bits should be 0
 		//this is probably static, so it's not a gz. doh.
-		VFS_SEEK(infile, 0);
+		VFS_SEEK(infile, 0, SEEK_SET);
 		return infile;
 	}
 
@@ -4863,7 +3049,7 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 	{
 		VFS_READ(infile, &inshort, sizeof(inshort), &err);
 		inshort = LittleShort(inshort);
-		VFS_SEEK(infile, VFS_TELL(infile) + inshort);
+		VFS_SEEK(infile, VFS_TELL(infile) + inshort, SEEK_SET);
 	}
 
 	if (header->flags & GZ_FNAME)
@@ -4898,7 +3084,7 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 	temp = FS_OpenTemp();
 	if (!temp)
 	{
-		VFS_SEEK(infile, 0);	//doh
+		VFS_SEEK(infile, 0, SEEK_SET);	//doh
 		return infile;
 	}
 
@@ -4969,7 +3155,7 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 
 		inflateEnd(&strm);
 
-		VFS_SEEK(temp, 0);
+		VFS_SEEK(temp, 0, SEEK_SET);
 	}
 	VFS_CLOSE(infile);
 
@@ -4977,7 +3163,7 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 }
 #endif
 
-vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle)
+static vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle)
 {
 	vfserrno_t err;
 //	char *ext;
@@ -4996,140 +3182,10 @@ vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle)
 				return FS_DecompressGZip(handle, &gzh);
 			}
 		}
-		VFS_SEEK(handle, 0);
+		VFS_SEEK(handle, 0, SEEK_SET);
 	}
 #endif
 	return handle;
-}
-
-/*
-================
-FS_OpenVFS
-
-This should be how all files are opened, will either give a valid vfsfile_t
-or NULL. We first check the home directory for the file first, if not found 
-we try the basedir.
-================
-*/
-// VFS-XXX: This is very similar to FS_OpenVFS in fs.c
-// VFS-FIXME: Clean up this function to reduce the relativeto options 
-vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
-{
-	char fullname[MAX_OSPATH];
-	flocation_t loc;
-	vfsfile_t *vfs;
-
-
-	// VFS-FIXME: Need to find the extension of the file so we know what function to use to open it
-
-	//blanket-bans
-	//if (Sys_PathProtection(filename) )
-	//	return NULL;
-
-	if (strcmp(mode, "rb"))
-		if (strcmp(mode, "wb"))
-			if (strcmp(mode, "ab"))
-				return NULL; //urm, unable to write/append
-
-	switch (relativeto)
-	{
-	case FS_NONE_OS: 	//OS access only, no paks, open file as is
-		if (*com_homedir)
-		{
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-			vfs = VFSOS_Open(fullname, mode);
-			if (vfs)
-				return vfs;
-		}
-
-		snprintf(fullname, sizeof(fullname), "%s", filename);
-		return VFSOS_Open(fullname, mode);
-
-	case FS_GAME_OS:	//OS access only, no paks
-		if (*com_homedir)
-		{
-			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
-			vfs = VFSOS_Open(fullname, mode);
-			if (vfs) {
-				fs_filesize = VFS_GETLEN(vfs);
-				return vfs;
-			}
-		}
-
-		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
-		return VFSOS_Open(fullname, mode);
-
-/* VFS-XXX: Removed as we don't really use this
- *	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, filename);
-		else
-			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_basedir, filename);
-		break;
- */
-
-	case FS_BASE:
-//		if (*com_homedir)
-//		{
-//			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-//			vfs = VFSOS_Open(fullname, mode);
-//			if (vfs)
-//				return vfs;
-//		}
-		snprintf(fullname, sizeof(fullname), "%s%s", com_basedir, filename);
-		return VFSOS_Open(fullname, mode);
-
-/* VFS-XXX: Removed as we don't really use this
- * case FS_CONFIGONLY:
-		if (*com_homedir)
-		{
-			snprintf(fullname, sizeof(fullname), "%s/.ezquake/%s", com_homedir, filename);
-			vfs = VFSOS_Open(fullname, mode);
-			if (vfs)
-				return vfs;
-		}
-		snprintf(fullname, sizeof(fullname), "%sezquake/%s", com_basedir, filename);
-		return VFSOS_Open(fullname, mode);
- */
-	case FS_HOME:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
-		else
-			return NULL;
-		return VFSOS_Open(fullname, mode);
-
-	case FS_PAK:
-		snprintf(fullname, sizeof(fullname), "%s%s/%s", com_basedir, com_gamedirfile, filename);
-		break;
-
-	case FS_ANY:
-		vfs = FS_OpenVFS(filename, mode, FS_HOME);
-		if (vfs)
-			return vfs;
-
-		vfs = FS_OpenVFS(filename, mode, FS_GAME_OS);
-		if (vfs)
-			return vfs;
-
-		return FS_OpenVFS(filename, mode, FS_PAK);
-
-	default:
-		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
-		break;
-	}
-
-	FS_FLocateFile(filename, FSLFRT_IFFOUND, &loc);
-
-	if (loc.search)
-	{
-		com_file_copyprotected = loc.search->copyprotected;
-		return VFS_Filter(filename, loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode));
-	}
-
-	//if we're meant to be writing, best write to it.
-	if (strchr(mode , 'w') || strchr(mode , 'a'))
-		return VFSOS_Open(fullname, mode);
-	return NULL;
 }
 
 int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t newrelativeto)
@@ -5675,5 +3731,55 @@ void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *pa
             break;
     }
 }
+
+// DEBUG FUNCTION
+#ifdef WITH_FTE_VFS
+static void FS_OpenFile_f(void) {
+	int i;
+	int c = Cmd_Argc();
+
+	if (c < 2) {
+		Com_Printf("Usage: %s filename [<filename> [<filename> ...]\n", Cmd_Argv(0));
+	}
+
+	for (i = 1; i < c; i++) {
+		char *filename = Cmd_Argv(i);
+		vfsfile_t *f;
+		f = FS_OpenVFS(filename, "rb", FS_ANY);
+		if (f) {
+			Com_Printf("Successfully opened file %s\n", filename);
+			char *ext = COM_FileExtension (filename);
+#ifdef WITH_VFS_GZIP
+			if (strcasecmp(ext, "gz") == 0) {
+				gzFile f_gz = Gzip_Open(f);
+				if (f_gz) {
+					Com_Printf("Successfully opened gzipped file %s\n", filename);
+					Gzip_Close(f_gz);
+				} else {
+					Com_Printf("Was unable to open %s as a gzipped file\n", filename);
+				}
+			} else {
+#endif // WITH_VFS_GZIP
+#ifdef WITH_ZIP
+				if (strcasecmp(ext, "zip") == 0) {
+					if (FSZIP_LoadZipFile(f, filename) != NULL) {
+						Com_Printf("Successfully opened zipped file %s\n", filename);
+					} else {
+						Com_Printf("Was unable to open %s as a zip file\n", filename);
+					}
+				}
+#endif // WITH_ZIP
+#ifdef WITH_VFS_GZIP
+			}
+#endif // WITH_VFS_GZIP
+
+			VFS_CLOSE(f);
+		} else {
+			Com_Printf("Unable to open %s\n", Cmd_Argv(i));
+		}
+	}
+}
+#endif // WITH_FTE_VFS DEBUG_FUNCTION
+
 
 #endif /* WITH_FTE_VFS */

@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.6 2007-09-03 15:23:54 dkure Exp $
+    $Id: fs.h,v 1.7 2007-09-28 04:47:55 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -40,8 +40,8 @@ typedef enum {
 
 typedef struct vfsfile_s {
 	int (*ReadBytes) (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
-	int (*WriteBytes) (struct vfsfile_s *file, void *buffer, int bytestowrite);
-	qbool (*Seek) (struct vfsfile_s *file, unsigned long pos);	//returns false for error
+	int (*WriteBytes) (struct vfsfile_s *file, const void *buffer, int bytestowrite);
+	qbool (*Seek) (struct vfsfile_s *file, unsigned long pos, int whence);	//returns false for error
 	unsigned long (*Tell) (struct vfsfile_s *file);
 	unsigned long (*GetLen) (struct vfsfile_s *file);	//could give some lag
 	void (*Close) (struct vfsfile_s *file);
@@ -49,7 +49,7 @@ typedef struct vfsfile_s {
 	qbool seekingisabadplan;
 } vfsfile_t;
 
-// FIXME: D-Kure Clean up this structure
+// VFS-FIXME: D-Kure Clean up this structure
 typedef enum {
 	FS_NONE_OS, // file name used as is, opened with OS functions (no paks)
 	FS_GAME_OS, // file used as com_basedir/filename, opened with OS functions 
@@ -65,9 +65,9 @@ typedef enum {
 void 			VFS_CLOSE  (struct vfsfile_s *vf);
 unsigned long	VFS_TELL   (struct vfsfile_s *vf);
 unsigned long	VFS_GETLEN (struct vfsfile_s *vf);
-qbool			VFS_SEEK   (struct vfsfile_s *vf, unsigned long pos);
+qbool			VFS_SEEK   (struct vfsfile_s *vf, unsigned long pos, int whence);
 int				VFS_READ   (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno_t *err);
-int				VFS_WRITE  (struct vfsfile_s *vf, void *buffer, int bytestowrite);
+int				VFS_WRITE  (struct vfsfile_s *vf, const void *buffer, int bytestowrite);
 void			VFS_FLUSH  (struct vfsfile_s *vf);
 char		   *VFS_GETS   (struct vfsfile_s *vf, char *buffer, int buflen); 
 				// return null terminated string
@@ -85,7 +85,6 @@ vfsfile_t *FS_OpenTCP(char *name);
 
 #ifdef WITH_FTE_VFS
 extern cvar_t com_fs_cache;
-
 #endif /* WITH_FTE_VFS */
 
 // ====================================================================
