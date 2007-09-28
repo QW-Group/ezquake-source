@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: wad.c,v 1.18 2007-09-03 15:38:19 dkure Exp $
+	$Id: wad.c,v 1.19 2007-09-28 04:52:49 dkure Exp $
 */
 // wad.c
 
@@ -312,7 +312,7 @@ void WAD3_LoadWadFile (char *filename)
 #ifndef WITH_FTE_VFS
 	if (fseek(file, infotableofs, SEEK_SET)) {
 #else
-	if (VFS_SEEK(file, infotableofs)) {
+	if (VFS_SEEK(file, infotableofs, SEEK_SET)) {
 #endif
 		Com_Printf ("WAD3_LoadWadFile: unable to seek to lump table\n");
 		return;
@@ -404,7 +404,7 @@ byte *WAD3_LoadTexture (texture_t *tx)
 #ifndef WITH_FTE_VFS
 		if (fseek(file, texwadlump[i].position, SEEK_SET)) {
 #else
-		if (VFS_SEEK(file, texwadlump[i].position)) {
+		if (VFS_SEEK(file, texwadlump[i].position, SEEK_SET)) {
 #endif
 			Com_Printf("WAD3_LoadTexture: corrupt WAD3 file\n");
 			return NULL;

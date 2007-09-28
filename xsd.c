@@ -1,4 +1,4 @@
-// $Id: xsd.c,v 1.9 2007-09-13 14:49:30 disconn3ct Exp $
+// $Id: xsd.c,v 1.10 2007-09-28 04:52:49 dkure Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -235,7 +235,7 @@ xml_t * XSD_LoadDocument(char *filename)
 #ifndef WITH_FTE_VFS
     fseek(f, 0, SEEK_SET);
 #else
-	VFS_SEEK(v, 0);
+	VFS_SEEK(v, 0, SEEK_SET);
 #endif
 
     // execute loading parser

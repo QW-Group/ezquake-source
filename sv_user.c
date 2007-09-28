@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.35 2007-09-26 21:51:34 tonik Exp $
+	$Id: sv_user.c,v 1.36 2007-09-28 04:52:49 dkure Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -566,10 +566,6 @@ void SV_NextChunkedDownload(int chunknum, int percent, int chunked_download_numb
 #define CHUNKSIZE 1024
 	char buffer[CHUNKSIZE];
 	int i;
-#ifndef WITH_FTE_VFS
-#else
-	vfserrno_t err;
-#endif
 
 // mvdsv specific
 //	sv_client->file_percent = bound(0, percent, 100); //bliP: file percent
@@ -598,9 +594,9 @@ void SV_NextChunkedDownload(int chunknum, int percent, int chunked_download_numb
 
 	i = fread(buffer, 1, CHUNKSIZE, sv_client->download);
 #else
-	if (VFS_SEEK(sv_client->download, chunknum*CHUNKSIZE))
+	if (VFS_SEEK(sv_client->download, chunknum*CHUNKSIZE, SEEK_SET))
 		return; // FIXME: ERROR of some kind
-	i = VFS_READ(sv_client->download, buffer, CHUNKSIZE, &err);
+	i = VFS_READ(sv_client->download, buffer, CHUNKSIZE, NULL);
 #endif
 
 
@@ -644,10 +640,6 @@ void SV_NextChunkedDownload(int chunknum, int percent, int chunked_download_numb
 void Cmd_NextDL_f (void) {
 	byte buffer[FILE_TRANSFER_BUF_SIZE];
 	int r, percent, size;
-#ifndef WITH_FTE_VFS
-#else
-	vfserrno_t err;
-#endif
 
 	if (!sv_client->download)
 		return;
@@ -665,7 +657,7 @@ void Cmd_NextDL_f (void) {
 #ifndef WITH_FTE_VFS
 	r = fread (buffer, 1, r, sv_client->download);
 #else
-	r = VFS_READ(sv_client->download, buffer, r, &err);
+	r = VFS_READ(sv_client->download, buffer, r, NULL);
 #endif
 	ClientReliableWrite_Begin (sv_client, svc_download, 6+r);
 	ClientReliableWrite_Short (sv_client, r);
@@ -839,6 +831,7 @@ void Cmd_Download_f (void) {
 		sv_client->download = NULL;
 		goto deny_download;
 	}
+	// D-Kure: VFS version does not need this as it handles the seeks for us
 #endif
 #endif
 
