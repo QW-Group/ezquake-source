@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.37 2007-09-26 23:48:00 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.38 2007-09-28 01:44:20 cokeman1982 Exp $
 */
 
 //
@@ -276,29 +276,29 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 //
 #ifdef __INTEL_COMPILER
 
-#define CONTROL_RAISE_EVENT(retval, ctrl, eventroot, eventhandler, ...)										\
-{																											\
-	int temp = 0;																							\
-	int *p = (int *)retval;																					\
-	((eventroot *)ctrl)->override_count = ((eventroot *)ctrl)->inheritance_level;							\
-	if(!CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))													\
-		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);	\
-	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), __VA_ARGS__);		\
-	if(p) (*p) = temp;																						\
-}																																																						
+#define CONTROL_RAISE_EVENT(retval, ctrl, eventroot, eventhandler, ...)											\
+{																												\
+	int temp = 0;																								\
+	int *p = (int *)retval;																						\
+	((eventroot *)(ctrl))->override_counts.eventhandler = ((eventroot *)(ctrl))->inherit_levels.eventhandler;	\
+	if(!CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler))													\
+		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);		\
+	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), __VA_ARGS__);			\
+	if(p) (*p) = temp;																							\
+}																																																		
 
 #else
 
-#define CONTROL_RAISE_EVENT(retval, ctrl, eventroot, eventhandler, ...)										\
-{																											\
-	int temp = 0;																							\
-	int *p = (int *)retval;																					\
-	((eventroot *)(ctrl))->override_count = ((eventroot *)(ctrl))->inheritance_level;							\
+#define CONTROL_RAISE_EVENT(retval, ctrl, eventroot, eventhandler, ...)											\
+{																												\
+	int temp = 0;																								\
+	int *p = (int *)retval;																						\
+	((eventroot *)(ctrl))->override_counts.eventhandler = ((eventroot *)(ctrl))->inherit_levels.eventhandler;	\
 	if(!CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler))													\
-		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);	\
-	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), ##__VA_ARGS__);		\
-	if(p) (*p) = temp;																						\
-}																											
+		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);		\
+	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), ##__VA_ARGS__);			\
+	if(p) (*p) = temp;																							\
+}
 
 #endif // __INTEL_COMPILER
 
@@ -350,13 +350,13 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	int *p = (int *)retval, temp = 0;																					\
 	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))														\
 	{																													\
-		if(((eventroot *)ctrl)->override_count == 0)																	\
+		if(((eventroot *)ctrl)->override_counts.eventhandler == 1)														\
 			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)((ez_control_t *)ctrl, __VA_ARGS__);		\
 		else																											\
-			((eventroot *)ctrl)->override_count--;																		\
+			((eventroot *)ctrl)->override_counts.eventhandler--;														\
 	}																													\
 	if(p) (*p) = temp;																									\
-}																														\
+}
 
 #else
 
@@ -365,18 +365,57 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	int *p = (int *)retval, temp = 0;																					\
 	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))														\
 	{																													\
-		if(((eventroot *)ctrl)->override_count == 0)																	\
+		if(((eventroot *)ctrl)->override_counts.eventhandler == 1)														\
 			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)((ez_control_t *)ctrl, ##__VA_ARGS__);	\
 		else																											\
-			((eventroot *)ctrl)->override_count--;																		\
+			((eventroot *)ctrl)->override_counts.eventhandler--;														\
 	}																													\
 	if(p) (*p) = temp;																									\
 }
 
 #endif // __INTEL_COMPILER
 
-#define EZ_CONTROL_INHERITANCE_LEVEL	0
+//
+// Registers a event function an event and sets it's inheritance level.
+// ctrl			= The control that the event function should be registered to.
+// eventfunc	= The function implementing the event. (Ex. EZ_control_OnMouseDown)
+// eventname	= The name of the event. (Ex. OnMouseDown)
+// eventroot	= The control that initially defined this event. (Ex. ez_control_t)
+//
+#define CONTROL_REGISTER_EVENT(ctrl, eventfunc, eventname, eventroot)	\
+{																		\
+	((eventroot *)ctrl)->events.eventname = eventfunc;					\
+	((eventroot *)ctrl)->inherit_levels.eventname++;					\
+}
+
 #define EZ_CLASS_ID						0
+
+typedef struct ez_control_eventcount_s
+{
+	int	OnMouseEvent;
+	int	OnMouseClick;
+	int	OnMouseUp;
+	int	OnMouseUpOutside;
+	int	OnMouseDown;
+	int	OnMouseHover;
+	int	OnMouseEnter;
+	int	OnMouseLeave;
+	int	OnKeyEvent;
+	int	OnKeyDown;
+	int	OnKeyUp;
+	int	OnLayoutChildren;
+	int	OnDraw;
+	int	OnDestroy;
+	int	OnMove;
+	int	OnScroll;
+	int	OnResize;
+	int	OnParentResize;
+	int	OnGotFocus;
+	int	OnLostFocus;
+	int	OnVirtualResize;
+	int	OnMinVirtualResize;
+	int	OnFlagsChanged;
+} ez_control_eventcount_t;
 
 typedef struct ez_control_events_s
 {
@@ -419,16 +458,17 @@ typedef enum ez_anchor_e
 //
 typedef enum ez_control_flags_e
 {
-	control_enabled			= (1 << 0),		// Is the control usable?
-	control_movable			= (1 << 1),		// Can the control be moved?
-	control_focusable		= (1 << 2),		// Can the control be given focus?
-	control_resize_h		= (1 << 3),		// Is the control resizeable horizontally?
-	control_resize_v		= (1 << 4),		// Is the control resizeable vertically?
-	control_resizeable		= (1 << 5),		// Is the control resizeable at all, not just by the user? // TODO : Should this be external?
-	control_contained		= (1 << 6),		// Is the control contained within it's parent or can it go outside its edges?
-	control_visible			= (1 << 7),		// Is the control visible?
-	control_scrollable		= (1 << 8),		// Is the control scrollable
-	control_ignore_mouse	= (1 << 9)		// Should the control ignore mouse input?
+	control_enabled				= (1 << 0),		// Is the control usable?
+	control_movable				= (1 << 1),		// Can the control be moved?
+	control_focusable			= (1 << 2),		// Can the control be given focus?
+	control_resize_h			= (1 << 3),		// Is the control resizeable horizontally?
+	control_resize_v			= (1 << 4),		// Is the control resizeable vertically?
+	control_resizeable			= (1 << 5),		// Is the control resizeable at all, not just by the user? // TODO : Should this be external?
+	control_contained			= (1 << 6),		// Is the control contained within it's parent or can it go outside its edges?
+	control_visible				= (1 << 7),		// Is the control visible?
+	control_scrollable			= (1 << 8),		// Is the control scrollable
+	control_ignore_mouse		= (1 << 9),		// Should the control ignore mouse input?
+	control_anchor_nonvirtual	= (1 << 10)		// Anchor to the visible edges of the controls instead of the virtual edges.
 } ez_control_flags_t;
 
 #define DEFAULT_CONTROL_FLAGS	(control_enabled | control_focusable | control_contained | control_scrollable | control_visible)
@@ -509,20 +549,20 @@ typedef struct ez_control_s
 	mpic_t					*background;			// The background picture.
 	float					opacity;				// The opacity of the control.
 
-	mouse_state_t			prev_mouse_state;		// The last mouse event that was passed on to this control.
-
 	ez_control_events_t		events;					// The base reaction for events. Is only set at initialization.
 	ez_control_events_t		event_handlers;			// Can be set by the user of the class to react to events.
+	ez_control_eventcount_t	inherit_levels;			// The number of times each event has been overriden. 
+													// (Countdown before executing the event handler for the event, after all
+													// event implementations in the inheritance chain have been run).
+	ez_control_eventcount_t override_counts;		// This gets resetted each time a event is raised by CONTROL_RAISE_EVENT to the
+													// inheritance level for the event in question.
 
 	struct ez_control_s		*parent;				// The parent of the control. Only the root node has no parent.
 	ez_double_linked_list_t	children;				// List of children belonging to the control.
 
 	struct ez_tree_s		*control_tree;			// The control tree the control belongs to.
 
-	int						override_count;			// The current number of times the event handler needs to be called before it's executed.
-	int						inheritance_level;		// The class's level of inheritance. Control -> SubControl -> SubSubControl
-													// SubSubControl would have a value of 2.
-													// !!! This is class specific, should never be changed except in init function !!!
+	mouse_state_t			prev_mouse_state;		// The last mouse event that was passed on to this control.
 } ez_control_t;
 
 //
@@ -928,8 +968,7 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 // Label
 // =========================================================================================
 
-#define EZ_LABEL_INHERITANCE_LEVEL		1
-#define EZ_LABEL_ID						2
+#define EZ_LABEL_ID 2
 
 typedef enum ez_label_flags_e
 {
@@ -954,6 +993,14 @@ typedef enum ez_label_iflags_e
 // Is any text selected in the label?
 #define LABEL_TEXT_SELECTED(label) ((label->select_start > -1) && (label->select_end > - 1) && abs(label->select_end - label->select_start) > 0)
 
+typedef struct ez_label_eventcount_s
+{
+	int	OnTextChanged;
+	int	OnCaretMoved;
+	int	OnTextScaleChanged;
+	int	OnTextFlagsChanged;
+} ez_label_eventcount_t;
+
 typedef struct ez_label_events_s
 {
 	ez_control_handler_fp	OnTextChanged;			// Event raised when the text in the label is changed.
@@ -971,29 +1018,29 @@ typedef struct ez_label_textpos_s
 
 typedef struct ez_label_s
 {
-	ez_control_t		super;
+	ez_control_t			super;						// Super class.
 
-	ez_label_events_t	events;						// Specific events for the label control.
-	ez_label_events_t	event_handlers;				// Specific event handlers for the label control.
+	ez_label_events_t		events;						// Specific events for the label control.
+	ez_label_events_t		event_handlers;				// Specific event handlers for the label control.
+	ez_label_eventcount_t	inherit_levels;
+	ez_label_eventcount_t	override_counts;
 
-	char				*text;						// The text to be shown in the label.
-	int					text_length;				// The length of the label text (excluding \0).
+	char					*text;						// The text to be shown in the label.
+	int						text_length;				// The length of the label text (excluding \0).
 	
-	ez_label_flags_t	ext_flags;					// External flags for how the text in the label is formatted.
-	ez_label_iflags_t	int_flags;					// Internal flags for the current state of the label.
+	ez_label_flags_t		ext_flags;					// External flags for how the text in the label is formatted.
+	ez_label_iflags_t		int_flags;					// Internal flags for the current state of the label.
 
-	ez_label_textpos_t	wordwraps[LABEL_MAX_WRAPS];	// Positions in the text where line breaks are located.
-	clrinfo_t			color;						// The text color of the label. // TODO : Make this a pointer?
-	float				scale;						// The scale of the text in the label.
-	int					scaled_char_size;			// The actual size of the characters in the text.
-	int					select_start;				// At what index the currently selected text starts at (this can be greater than select_end).
-	int					select_end;					// The end index of the selected text.
-	ez_label_textpos_t	caret_pos;					// The position of the caret (index / row / column).
-	int					num_rows;					// The current number of rows in the label.
-	int					num_cols;					// The current number of cols (for the longest row).
-
-	int					override_count;				// These are needed so that subclasses can override label specific events.
-	int					inheritance_level;
+	ez_label_textpos_t		wordwraps[LABEL_MAX_WRAPS];	// Positions in the text where line breaks are located.
+	clrinfo_t				color;						// The text color of the label. // TODO : Make this a pointer?
+	float					scale;						// The scale of the text in the label.
+	int						scaled_char_size;			// The actual size of the characters in the text.
+	int						select_start;				// At what index the currently selected text starts at 
+														// (this can be greater than select_end).
+	int						select_end;					// The end index of the selected text.
+	ez_label_textpos_t		caret_pos;					// The position of the caret (index / row / column).
+	int						num_rows;					// The current number of rows in the label.
+	int						num_cols;					// The current number of cols (for the longest row).
 } ez_label_t;
 
 ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent, 
@@ -1184,7 +1231,13 @@ int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 // Button
 // =========================================================================================
 
-#define EZ_BUTTON_ID					1
+#define EZ_BUTTON_ID	1
+
+typedef struct ez_button_eventcount_s
+{
+	int	OnAction;
+	int	OnTextAlignmentChanged;
+} ez_button_eventcount_t;
 
 typedef struct ez_button_events_s
 {
@@ -1211,6 +1264,8 @@ typedef struct ez_button_s
 
 	ez_button_events_t		events;				// Specific events for the button control.
 	ez_button_events_t		event_handlers;		// Specific event handlers for the button control.
+	ez_button_eventcount_t	inherit_levels;
+	ez_button_eventcount_t	override_counts;
 
 	ez_label_t				*text_label;		// The buttons text label.
 
@@ -1332,6 +1387,14 @@ typedef enum ez_slider_iflags_e
 	slider_dragging	= (1 << 0)
 } ez_slider_iflags_t;
 
+typedef struct ez_slider_eventcount_s
+{
+	int	OnSliderPositionChanged;
+	int	OnMaxValueChanged;
+	int	OnMinValueChanged;
+	int	OnScaleChanged;
+} ez_slider_eventcount_t;
+
 typedef struct ez_slider_events_s
 {
 	ez_control_handler_fp	OnSliderPositionChanged;
@@ -1346,6 +1409,8 @@ typedef struct ez_slider_s
 
 	ez_slider_events_t		events;				// Slider specific events.
 	ez_slider_events_t		event_handlers;		// Slider specific event handlers.
+	ez_slider_eventcount_t	inherit_levels;
+	ez_slider_eventcount_t	override_counts;
 
 	ez_slider_iflags_t		int_flags;			// Slider specific flags.
 	int						slider_pos;			// The position of the slider.
@@ -1486,12 +1551,14 @@ typedef enum ez_orientation_s
 	horizontal	= 1
 } ez_orientation_t;
 
+typedef enum ez_scrollbar_iflags_e
+{
+	sliding = (1 << 0)
+} ez_scrollbar_iflags_t;
+
 typedef struct ez_scrollbar_s
 {
 	ez_control_t			super;				// The super class.
-
-	//ez_slider_events_t	events;				// Slider specific events.
-	//ez_slider_events_t	event_handlers;		// Slider specific event handlers.
 
 	ez_button_t				*back;				// Up / left button depending on the scrollbars orientation.
 	ez_button_t				*slider;			// The slider button.
@@ -1502,6 +1569,8 @@ typedef struct ez_scrollbar_s
 												// the forward/back buttons. That is, the area you can move the slider in.
 
 	int						slider_minsize;		// The minimum size of the slider button.
+
+	ez_scrollbar_iflags_t	int_flags;			// The internal flags for the scrollbar.
 
 	int						override_count;		// These are needed so that subclasses can override slider specific events.
 	int						inheritance_level;
@@ -1534,6 +1603,21 @@ int EZ_scrollbar_OnResize(ez_control_t *self);
 // Scrollbar - OnParentResize event.
 //
 int EZ_scrollbar_OnParentResize(ez_control_t *self);
+
+//
+// Scrollbar - OnMouseDown event.
+//
+int EZ_scrollbar_OnMouseDown(ez_control_t *self, mouse_state_t *ms);
+
+//
+// Scrollbar - OnMouseUpOutside event.
+//
+int EZ_scrollbar_OnMouseUpOutside(ez_control_t *self, mouse_state_t *ms);
+
+//
+// Scrollbar - Mouse event.
+//
+int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms);
 
 #endif // __EZ_CONTROLS_H__	
 
