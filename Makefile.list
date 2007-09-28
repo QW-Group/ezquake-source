@@ -105,6 +105,11 @@ COMMON_C_FILES := \
 	crc \
 	cvar \
 	fs \
+	vfs_os \
+	vfs_pak \
+	vfs_zip \
+	vfs_gzip \
+	vfs_doomwad \
 	hash \
 	host \
 	mathlib \
