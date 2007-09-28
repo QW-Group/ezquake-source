@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_glx.c,v 1.40 2007-02-12 05:45:10 qqshka Exp $
+	$Id: vid_glx.c,v 1.41 2007-09-28 04:26:45 dkure Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -423,10 +423,10 @@ static void GetEvent(void) {
 			Key_Event(K_MWHEELUP, event.type == ButtonPress); break;
 		case 5:
 			Key_Event(K_MWHEELDOWN, event.type == ButtonPress); break;			
-                case 6:
-                        Key_Event(K_MOUSE4, event.type == ButtonPress); break;
-                case 7:
-                        Key_Event(K_MOUSE5, event.type == ButtonPress); break;
+		case 6:
+			Key_Event(K_MOUSE4, event.type == ButtonPress); break;
+		case 7:
+			Key_Event(K_MOUSE5, event.type == ButtonPress); break;
 		}
 		break;
 	}
