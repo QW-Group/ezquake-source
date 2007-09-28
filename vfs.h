@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.1 2007-09-28 04:41:37 dkure Exp $
+ * $Id: vfs.h,v 1.2 2007-09-28 05:17:30 dkure Exp $
  *             
  */
 
@@ -190,11 +190,33 @@ void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc);
 int FSZIP_GeneratePureCRC(void *handle, int seed, int crctype);
 #endif // WITH_ZIP
 
-// Gzip
+//=============================
+// TCP Support - VFS Functions
+//=============================
+int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
+int VFSTCP_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite)
+qbool VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos, int whence);
+unsigned long VFSTCP_Tell (struct vfsfile_s *file);
+unsigned long VFSTCP_GetLen (struct vfsfile_s *file);
+void VFSTCP_Close (struct vfsfile_s *file);
+void VFSTCP_Tick(void);
+vfsfile_t *FS_OpenTCP(char *name);
+
+//=====================================
+// GZIP (*.gz) Support - VFS Functions
+//=====================================
+#ifdef WITH_ZLIB
 #ifdef WITH_VFS_GZIP
 gzFile Gzip_Open(vfsfile_t *file);
+int Gzip_Read(gzFile f_gz, void *buffer, int bytestoread);
+int Gzip_Write(gzFile f_gz, void *buffer, int bytestowrite);
+static int Gzip_Seek(gzFile f_gz, int offset);
+int Gzip_Tell(gzFile f_gz);
+int Gzip_GetLen(gzFile f_gz);
 int Gzip_Close(gzFile f_gz);
+int Gzip_Flush(gzFile f_gz);
 #endif // WITH_VFS_GZIP
+#endif // WITH_ZLIB
 
 // Doomwad
 extern searchpathfuncs_t doomwadfilefuncs;

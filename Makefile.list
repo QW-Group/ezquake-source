@@ -108,6 +108,7 @@ COMMON_C_FILES := \
 	vfs_os \
 	vfs_pak \
 	vfs_zip \
+	vfs_tcp \
 	vfs_gzip \
 	vfs_doomwad \
 	hash \

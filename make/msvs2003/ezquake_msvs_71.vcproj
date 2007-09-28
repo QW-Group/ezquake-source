@@ -713,6 +713,8 @@
 					RelativePath="..\..\vfs_doomwad.c">
 				</File>
 				<File
+					RelativePath="..\..\vfs_tcp.c">
+				<File
 					RelativePath="..\..\vfs_gzip.c">
 				</File>
 				<File
