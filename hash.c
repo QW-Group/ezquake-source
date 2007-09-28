@@ -1,14 +1,12 @@
-#include "hash.h"
+
 #include <stdio.h> // <-- only needed for Hash_BucketStats
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-#ifndef _WIN32
-#ifndef stricmp 
-#define stricmp strcasecmp
-#endif
-#endif
+#include "quakedef.h"
+#include "q_shared.h"
+#include "hash.h"
 
 #ifdef WITH_FTE_VFS
 
@@ -92,7 +90,7 @@ void *Hash_GetInsensative(hashtable_t *table, char *name)
 
 	while(buck)
 	{
-		if (!stricmp(name, buck->keystring))
+		if (!strcasecmp(name, buck->keystring))
 			return buck->data;
 
 		buck = buck->next;
