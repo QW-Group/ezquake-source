@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.59 2007-09-28 01:44:20 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.60 2007-09-28 04:25:56 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -239,7 +239,7 @@ void EZ_tree_Draw(ez_tree_t *tree)
 				payload->absolute_virtual_x, payload->absolute_virtual_y, payload->virtual_x, payload->virtual_y));
 		}
 
-		if (!stricmp(payload->name, "Child 1"))
+		if (!strcasecmp(payload->name, "Child 1"))
 		{
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
 				va("vw: %i vh: %i w: %i h %i", 
