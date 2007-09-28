@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.38 2007-09-28 01:44:20 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.39 2007-09-28 01:49:25 cokeman1982 Exp $
 */
 
 //
@@ -388,7 +388,7 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	((eventroot *)ctrl)->inherit_levels.eventname++;					\
 }
 
-#define EZ_CLASS_ID						0
+#define EZ_CONTROL_ID 0
 
 typedef struct ez_control_eventcount_s
 {
