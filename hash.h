@@ -2,6 +2,9 @@
 //David's hash tables
 //string based.
 
+#ifndef __HASH_H__
+#define __HASH_H__
+
 #define Hash_BytesForBuckets(b) (sizeof(bucket_t)*b)
 
 #define STRCMP(s1,s2) (((*s1)!=(*s2)) || strcmp(s1+1,s2+1))	//saves about 2-6 out of 120 - expansion of idea from fastqcc
@@ -28,3 +31,10 @@ void Hash_Remove(hashtable_t *table, char *name);
 void Hash_RemoveData(hashtable_t *table, char *name, void *data);
 void Hash_RemoveKey(hashtable_t *table, char *key);
 void *Hash_AddKey(hashtable_t *table, char *key, void *data, bucket_t *buck);
+
+#if 0
+/* Print some stats on the bucket distrubution */
+void Hash_BucketStats(hashtable_t *table);
+#endif
+
+#endif // __HASH_H__

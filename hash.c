@@ -1,6 +1,8 @@
 #include "hash.h"
+#include <stdio.h> // <-- only needed for Hash_BucketStats
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #ifndef _WIN32
 #ifndef stricmp 
@@ -9,12 +11,39 @@
 #endif
 
 #ifdef WITH_FTE_VFS
+
 void Hash_InitTable(hashtable_t *table, int numbucks, void *mem)
 {
 	table->numbuckets = numbucks;
 	table->bucket = (bucket_t **)mem;
 }
 
+/* http://www.cse.yorku.ca/~oz/hash.html
+ * djb2
+ * This algorithm (k=33) was first reported by dan bernstein many years ago
+ * in comp.lang.c. another version of this algorithm (now favored by bernstein)
+ * uses xor: hash(i) = hash(i - 1) * 33 ^ str[i]; the magic of number 33 (why
+ * it works better than many other constants, prime or not) has never been 
+ * adequately explained.
+ */
+int Hash_Key(char *name, int modulus) {
+	unsigned int key = 5381;
+
+	for (key = 5381; *name; name++)
+		key = ((key << 5) + key) + *name; /* key * 33 + c */
+
+	return (int) (key % modulus);
+}
+int Hash_KeyInsensative(char *name, int modulus) {
+	unsigned int key = 5381;
+
+	for (key = 5381; *name; name++)
+		key = ((key << 5) + key) + tolower(*name); /* key * 33 + c */
+
+	return (int) (key % modulus);
+}
+
+#if 0
 int Hash_Key(char *name, int modulus)
 {	//fixme: optimize.
 	unsigned int key;
@@ -36,6 +65,7 @@ int Hash_KeyInsensative(char *name, int modulus)
 		
 	return (int)(key%modulus);
 }
+#endif
 
 void *Hash_Get(hashtable_t *table, char *name)
 {
@@ -78,8 +108,6 @@ void *Hash_GetKey(hashtable_t *table, char *key)
 
 	while(buck)
 	{
-		/* FIXME: keystring and key differnent, one is pointer, one is int...
-		 * This is not so good for 64bit versions */
 		if (buck->keystring == key)
 			return buck->data;
 
@@ -176,8 +204,6 @@ void *Hash_AddKey(hashtable_t *table, char *key, void *data, bucket_t *buck)
 	int bucknum = ((int64_t) key) % table->numbuckets;
 
 	buck->data = data;
-	/* FIXME: keystring and key differnent, one is pointer, one is int...
-	 * This is not so good for 64bit versions */
 	buck->keystring = key;
 	buck->next = table->bucket[bucknum];
 	table->bucket[bucknum] = buck;
@@ -249,8 +275,6 @@ void Hash_RemoveKey(hashtable_t *table, char *key)
 
 	buck = table->bucket[bucknum];
 
-	/* FIXME: keystring and key differnent, one is pointer, one is int...
-	 * This is not so good for 64bit versions */
 	if (buck->keystring == key)
 	{
 		table->bucket[bucknum] = buck->next;
@@ -260,8 +284,6 @@ void Hash_RemoveKey(hashtable_t *table, char *key)
 
 	while(buck->next)
 	{
-		/* FIXME: keystring and key differnent, one is pointer, one is int...
-		 * This is not so good for 64bit versions */
 		if (buck->next->keystring == key)
 		{
 			buck->next = buck->next->next;
@@ -272,5 +294,22 @@ void Hash_RemoveKey(hashtable_t *table, char *key)
 	}
 	return;
 }
+
+#if 0
+void Hash_BucketStats(hashtable_t *table)
+{
+	int i;
+	bucket_t *buck;	
+	int bucket_count;
+
+	for (i = 0; i < table->numbuckets; i++) {
+		bucket_count = 0;
+		for (buck = table->bucket[i]; buck; buck = buck->next) {
+			bucket_count++;
+		}
+		printf("table[%d] = %d\n", i, bucket_count);
+	}
+}
+#endif
 
 #endif // WITH_FTE_VFS
