@@ -99,7 +99,7 @@ void *Hash_GetInsensative(hashtable_t *table, char *name)
 }
 void *Hash_GetKey(hashtable_t *table, char *key)
 {
-	int bucknum = ((int64_t) key) % table->numbuckets;
+	int bucknum = ((long) key) % table->numbuckets;
 	bucket_t *buck;
 
 	buck = table->bucket[bucknum];
@@ -199,7 +199,7 @@ void *Hash_AddInsensative(hashtable_t *table, char *name, void *data, bucket_t *
 }
 void *Hash_AddKey(hashtable_t *table, char *key, void *data, bucket_t *buck)
 {
-	int bucknum = ((int64_t) key) % table->numbuckets;
+	int bucknum = ((long) key) % table->numbuckets;
 
 	buck->data = data;
 	buck->keystring = key;
@@ -268,7 +268,7 @@ void Hash_RemoveData(hashtable_t *table, char *name, void *data)
 
 void Hash_RemoveKey(hashtable_t *table, char *key)
 {
-	int bucknum = ((int64_t) key) % table->numbuckets;
+	int bucknum = ((long) key) % table->numbuckets;
 	bucket_t *buck;	
 
 	buck = table->bucket[bucknum];
