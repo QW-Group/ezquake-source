@@ -16,8 +16,14 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
- $Id: vfs_tcp.c,v 1.1 2007-09-28 05:17:30 dkure Exp $
+ $Id: vfs_tcp.c,v 1.2 2007-09-28 05:21:45 dkure Exp $
 */
+
+#include "quakedef.h"
+#include "hash.h"
+#include "common.h"
+#include "fs.h"
+#include "vfs.h"
 
 //==========
 // TCP file

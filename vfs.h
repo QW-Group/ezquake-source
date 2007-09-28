@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.2 2007-09-28 05:17:30 dkure Exp $
+ * $Id: vfs.h,v 1.3 2007-09-28 05:21:45 dkure Exp $
  *             
  */
 
@@ -193,8 +193,8 @@ int FSZIP_GeneratePureCRC(void *handle, int seed, int crctype);
 //=============================
 // TCP Support - VFS Functions
 //=============================
-int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
-int VFSTCP_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite)
+int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
+int VFSTCP_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite);
 qbool VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos, int whence);
 unsigned long VFSTCP_Tell (struct vfsfile_s *file);
 unsigned long VFSTCP_GetLen (struct vfsfile_s *file);

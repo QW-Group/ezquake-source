@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.1 2007-09-28 04:41:37 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.2 2007-09-28 05:21:46 dkure Exp $
  *             
  */
 
@@ -36,7 +36,8 @@
 // FIXME:
 // Everything below assumes that the input file was an OS file
 // This may not be the case if we are opening a gz file in a gz file...
-gzFile Gzip_Open(vfsfile_t *file) {
+gzFile Gzip_Open(vfsfile_t *file) 
+{
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	gzFile f_gz;
 
@@ -49,7 +50,8 @@ gzFile Gzip_Open(vfsfile_t *file) {
 	return f_gz;
 }
 
-static int Gzip_Read(gzFile f_gz, void *buffer, int bytestoread) {
+int Gzip_Read(gzFile f_gz, void *buffer, int bytestoread) 
+{
 	int r;
 	
 	r = gzread(f_gz, buffer, bytestoread);
@@ -59,7 +61,8 @@ static int Gzip_Read(gzFile f_gz, void *buffer, int bytestoread) {
 	return r;
 }
 
-static int Gzip_Write(gzFile f_gz, void *buffer, int bytestowrite) {
+int Gzip_Write(gzFile f_gz, void *buffer, int bytestowrite) 
+{
 	int r;
 
 	r = gzwrite(f_gz, buffer, bytestowrite);
@@ -69,19 +72,22 @@ static int Gzip_Write(gzFile f_gz, void *buffer, int bytestowrite) {
 	return r;
 }
 
-static int Gzip_Seek(gzFile f_gz, int offset) {
+int Gzip_Seek(gzFile f_gz, int offset, int whence) 
+{
 	int r;
-	r = gzseek(f_gz, offset, SEEK_SET);
+	r = gzseek(f_gz, offset, whence);
 	return r;
 }
 
-static int Gzip_Tell(gzFile f_gz) {
+int Gzip_Tell(gzFile f_gz) 
+{
 	int r;
 	r = gztell(f_gz);
 	return r;
 }
 
-static int Gzip_GetLen(gzFile f_gz) {
+int Gzip_GetLen(gzFile f_gz) 
+{
 	int r, currentpos;
 	
 	// VFS-FIXME: Error handling
@@ -92,7 +98,8 @@ static int Gzip_GetLen(gzFile f_gz) {
 	return r;
 }
 
-int Gzip_Close(gzFile f_gz) {
+int Gzip_Close(gzFile f_gz) 
+{
 	int r;
 
 	r = gzclose(f_gz);
@@ -100,7 +107,8 @@ int Gzip_Close(gzFile f_gz) {
 	return r;
 }
 
-static int Gzip_Flush(gzFile f_gz) {
+int Gzip_Flush(gzFile f_gz) 
+{
 	int r;
 
 	//r = gzflush(f_gz, Z_NO_FLUSH); 	// <-- Allows better compression
