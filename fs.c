@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.29 2007-09-28 05:17:30 dkure Exp $
+$Id: fs.c,v 1.30 2007-09-28 05:25:10 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -2261,7 +2261,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.29 2007-09-28 05:17:30 dkure Exp $
+ * $Id: fs.c,v 1.30 2007-09-28 05:25:10 dkure Exp $
  *             
  */
 
@@ -3487,8 +3487,8 @@ static void FS_OpenFile_f(void) {
 		vfsfile_t *f;
 		f = FS_OpenVFS(filename, "rb", FS_ANY);
 		if (f) {
-			Com_Printf("Successfully opened file %s\n", filename);
 			char *ext = COM_FileExtension (filename);
+			Com_Printf("Successfully opened file %s\n", filename);
 #ifdef WITH_VFS_GZIP
 			if (strcasecmp(ext, "gz") == 0) {
 				gzFile f_gz = Gzip_Open(f);
