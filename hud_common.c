@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.155 2007-09-26 21:51:34 tonik Exp $
+	$Id: hud_common.c,v 1.156 2007-09-28 05:35:28 dkure Exp $
 */
 //
 // common HUD elements
@@ -5044,7 +5044,7 @@ static qbool radar_show_explosions	= false;
 static qbool radar_show_teleport	= false;
 static qbool radar_show_shotgun		= false;
 
-qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval, qbool *cancel)
+void Radar_OnChangeWeaponFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the weapon filter.
 	radar_show_ssg		= Utils_RegExpMatch("SSG|SUPERSHOTGUN|ALL",			newval);
@@ -5053,11 +5053,9 @@ qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval, qbool *cancel)
 	radar_show_rl		= Utils_RegExpMatch("RL|ROCKETLAUNCHER|ALL",		newval);
 	radar_show_gl		= Utils_RegExpMatch("GL|GRENADELAUNCHER|ALL",		newval);
 	radar_show_lg		= Utils_RegExpMatch("LG|SHAFT|LIGHTNING|ALL",		newval);
-
-	return false;
 }
 
-qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval, qbool *cancel)
+void Radar_OnChangeItemFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the item filter.
 	radar_show_backpacks		= Utils_RegExpMatch("BP|BACKPACK|ALL",					newval);
@@ -5074,11 +5072,9 @@ qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval, qbool *cancel)
 	radar_show_ring				= Utils_RegExpMatch("RING|INVISIBLE|EYES|POWERUPS|ALL",	newval);
 	radar_show_suit				= Utils_RegExpMatch("SUIT|POWERUPS|ALL",				newval);
 	radar_show_mega				= Utils_RegExpMatch("MH|MEGA|MEGAHEALTH|100\\+|ALL",	newval);
-
-	return false;
 }
 
-qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
+void Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Parse the "other" filter.
 	radar_show_nails_p			= Utils_RegExpMatch("NAILS|PROJECTILES|ALL",	newval);
@@ -5088,8 +5084,6 @@ qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
 	radar_show_explosions		= Utils_RegExpMatch("EXPLOSIONS|ALL",			newval);
 	radar_show_teleport			= Utils_RegExpMatch("TELE|ALL",					newval);
 	radar_show_shotgun			= Utils_RegExpMatch("SHOTGUN|SG|BUCK|ALL",		newval);
-
-	return false;
 }
 
 
@@ -5097,7 +5091,7 @@ qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval, qbool *cancel)
 
 byte hud_radar_highlight_color[4] = {255, 255, 0, HUD_COLOR_DEFAULT_TRANSPARENCY};
 
-qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
+void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 {
 	char *new_color;
 
@@ -5111,8 +5105,6 @@ qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 	// Set the cvar to contain the new color string
 	// (if the user entered "red" it will be "255 0 0").
 	Cvar_Set(var, new_color);
-
-	return true;
 }
 
 void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_hold_areas)
