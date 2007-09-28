@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.1 2007-09-28 04:41:37 dkure Exp $
+ * $Id: vfs_zip.c,v 1.2 2007-09-28 05:30:05 dkure Exp $
  *             
  */
 
@@ -33,15 +33,18 @@
 // These functions provide IO support for the unzip library using our VFS layer
 
 static void *FSZIP_ZOpenFile(void *fin, const char *filename, int mode) {
+	vfsfile_t *vfs_fin = (vfsfile_t *)fin;
+
 	// VFS-TODO Maybe need to increase reference count
 	if ((mode & ZLIB_FILEFUNC_MODE_READWRITEFILTER)==ZLIB_FILEFUNC_MODE_READ) {
 	} else if (mode & ZLIB_FILEFUNC_MODE_EXISTING) {
 		Sys_Error("FSZIP_ZOpenFile: Unsupported file mode: MODE_EXISTING");
+		return NULL;
 	} else if (mode & ZLIB_FILEFUNC_MODE_CREATE) {
 		Sys_Error("FSZIP_ZOpenFile: Unsupported file mode: write");
+		return NULL;
 	}
 
-	vfsfile_t *vfs_fin = (vfsfile_t *)fin;
 	return vfs_fin;
 }
 
