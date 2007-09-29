@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.31 2007-09-29 15:05:45 dkure Exp $
+$Id: fs.c,v 1.32 2007-09-29 18:47:54 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -25,7 +25,7 @@ $Id: fs.c,v 1.31 2007-09-29 15:05:45 dkure Exp $
 #include "fs.h"
 #include "vfs.h"
 
-//==================================================================================================
+//============================================================================
 #ifdef WITH_FTE_VFS
 
 #include "q_shared.h"
@@ -42,9 +42,6 @@ static qbool com_fschanged = true;
 
 // VFS-FIXME: Give this a better name
 cvar_t com_fs_cache = {"com_fs_cache", "1"};
-
-// VFS-FIXME: Move this somewhere better
-void COM_Path_f (void);
 
 typedef enum {
 	FSLFRT_IFFOUND,
@@ -75,6 +72,9 @@ void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
 static vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle);
 
+void COM_Dir_f (void);
+void COM_Locate_f (void);
+
 // VFS-FIXME: Debug file for trying to open files
 static void FS_OpenFile_f(void);
 
@@ -84,7 +84,7 @@ static void FS_OpenFile_f(void);
 int fs_hash_dups;
 int fs_hash_files;
 #endif /* WITH_FTE_VFS */
-//==================================================================================================
+//============================================================================
 
 /**
   File System related code
@@ -157,8 +157,11 @@ typedef struct searchpath_s
 	struct searchpath_s *next;
 } searchpath_t;
 
-searchpath_t	*com_searchpaths = NULL;
-searchpath_t	*com_base_searchpaths = NULL;	// without gamedirs
+searchpath_t	*fs_searchpaths = NULL;
+searchpath_t	*fs_base_searchpaths = NULL;	// without gamedirs
+#ifdef WITH_FTE_VFS
+searchpath_t	*fs_purepaths;
+#endif
 
 /*
 ================
@@ -178,7 +181,11 @@ int COM_FileLength (FILE *f)
 	return end;
 }
 
-#ifndef WITH_FTE_VFS
+/*
+================
+COM_FileOpenRead
+================
+*/
 int COM_FileOpenRead (char *path, FILE **hndl)
 {
 	FILE *f;
@@ -191,16 +198,20 @@ int COM_FileOpenRead (char *path, FILE **hndl)
 
 	return COM_FileLength(f);
 }
-#endif // WITH_FTE_VFS
 
+/*
+============
+COM_Path_f
+============
+*/
 #ifndef WITH_FTE_VFS
 void COM_Path_f (void)
 {
 	searchpath_t *search;
 
 	Com_Printf ("Current search path:\n");
-	for (search = com_searchpaths; search; search = search->next) {
-		if (search == com_base_searchpaths)
+	for (search = fs_searchpaths; search; search = search->next) {
+		if (search == fs_base_searchpaths)
 			Com_Printf ("----------\n");
 		if (search->pack)
 			Com_Printf ("%s (%i files)\n", search->pack->filename, search->pack->numfiles);
@@ -208,7 +219,35 @@ void COM_Path_f (void)
 			Com_Printf ("%s\n", search->filename);
 	}
 }
+#else
+
+void COM_Path_f (void)
+{
+	searchpath_t	*search;
+
+	Com_Printf ("Current search path:\n");
+	if (fs_purepaths)
+	{
+		for (search=fs_purepaths ; search ; search=search->nextpure)
+		{
+			search->funcs->PrintPath(search->handle);
+		}
+		Com_Printf ("----------\n");
+	}
+
+
+	for (search=fs_searchpaths ; search ; search=search->next)
+	{
+		if (search == fs_base_searchpaths)
+			Com_Printf ("----------\n");
+
+		search->funcs->PrintPath(search->handle);
+	}
+}
 #endif// WITH_FTE_VFS
+
+
+
 
 // VFS-FIXME: D-Kure This removes a sanity check
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
@@ -224,7 +263,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 	else {
 		// check if given path is in one of mounted filesystem
 		// we do not allow others
-		for (search = com_searchpaths ; search ; search = search->next) {
+		for (search = fs_searchpaths ; search ; search = search->next) {
 			if (search->pack != NULL)
 				continue;   // no writes to pak files
 
@@ -369,8 +408,8 @@ int FS_FOpenFile (char *filename, FILE **file) {
 	fs_netpath[0] = 0;
 
 	// search through the path, one element at a time
-	for (search = com_searchpaths; search; search = search->next) {
-		if (search == com_base_searchpaths && com_searchpaths != com_base_searchpaths)
+	for (search = fs_searchpaths; search; search = search->next) {
+		if (search == fs_base_searchpaths && fs_searchpaths != fs_base_searchpaths)
 			file_from_gamedir = false;
 
 		// is the element a pak file?
@@ -641,14 +680,14 @@ qbool FS_AddPak (char *pakfile) {
 #ifndef WITH_FTE_VFS // VFS-FIXME: D-Kure: This should do something.....
 	search->pack = pak;
 #endif
-	search->next = com_searchpaths;
-	com_searchpaths = search;
+	search->next = fs_searchpaths;
+	fs_searchpaths = search;
 	return true;
 }
 
 qbool FS_RemovePak (const char *pakfile) {
 	searchpath_t *prev = NULL;
-	searchpath_t *cur = com_searchpaths;
+	searchpath_t *cur = fs_searchpaths;
 #ifndef WITH_FTE_VFS // unused with the VFS stuff
 	searchpath_t *temp;
 #endif
@@ -662,7 +701,7 @@ qbool FS_RemovePak (const char *pakfile) {
 					if (prev)
 						prev->next = cur->next;
 					else
-						com_searchpaths = cur->next;
+						fs_searchpaths = cur->next;
 
 					temp = cur;
 					cur = cur->next;
@@ -742,8 +781,8 @@ void FS_AddGameDirectory (char *path_to_dir, char *dir) {
 	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
 	strcpy (search->filename, com_gamedir);
 	search->pack = NULL;
-	search->next = com_searchpaths;
-	com_searchpaths = search;
+	search->next = fs_searchpaths;
+	fs_searchpaths = search;
 
 	// add any pak files in the format pak0.pak pak1.pak, ...
 	for (i = 0; ; i++) {
@@ -789,8 +828,8 @@ void FS_AddUserDirectory ( char *dir ) {
 	strcpy (search->filename, com_userdir);
 	search->pack = NULL;
 #endif
-	search->next = com_searchpaths;
-	com_searchpaths = search;
+	search->next = fs_searchpaths;
+	fs_searchpaths = search;
 
 	// add any pak files in the format pak0.pak pak1.pak, ...
 	for (i = 0; ; i++) {
@@ -824,29 +863,29 @@ void FS_SetGamedir (char *dir)
 
 	// Free up any current game dir info.
 #ifndef WITH_FTE_VFS
-	while (com_searchpaths != com_base_searchpaths)	
+	while (fs_searchpaths != fs_base_searchpaths)	
 	{
-		if (com_searchpaths->pack) 
+		if (fs_searchpaths->pack) 
 		{
-			fclose (com_searchpaths->pack->handle);
-			Q_free (com_searchpaths->pack->files);
-			Q_free (com_searchpaths->pack);
+			fclose (fs_searchpaths->pack->handle);
+			Q_free (fs_searchpaths->pack->files);
+			Q_free (fs_searchpaths->pack);
 		}
 
-		next = com_searchpaths->next;
-		Q_free (com_searchpaths);
-		com_searchpaths = next;
+		next = fs_searchpaths->next;
+		Q_free (fs_searchpaths);
+		fs_searchpaths = next;
 	}
 #else
 	FS_FlushFSHash();
 
 	// free up any current game dir info
-	while (com_searchpaths != com_base_searchpaths)
+	while (fs_searchpaths != fs_base_searchpaths)
 	{
-		com_searchpaths->funcs->ClosePath(com_searchpaths->handle);
-		next = com_searchpaths->next;
-		Q_free (com_searchpaths);
-		com_searchpaths = next;
+		fs_searchpaths->funcs->ClosePath(fs_searchpaths->handle);
+		next = fs_searchpaths->next;
+		Q_free (fs_searchpaths);
+		fs_searchpaths = next;
 	}
 
 	com_fschanged=true;
@@ -882,20 +921,20 @@ void FS_SetGamedir (char *dir)
 void FS_ShutDown( void ) {
 
 	// free data
-	while (com_searchpaths)	{
+	while (fs_searchpaths)	{
 		searchpath_t  *next;
 
 #ifndef WITH_FTE_VFS
 		// VFS-FIXME: D-Kure: Need to add some VFS Cleanup here
-		if (com_searchpaths->pack) {
-			fclose (com_searchpaths->pack->handle); // close pack file handler
-			Q_free (com_searchpaths->pack->files);
-			Q_free (com_searchpaths->pack);
+		if (fs_searchpaths->pack) {
+			fclose (fs_searchpaths->pack->handle); // close pack file handler
+			Q_free (fs_searchpaths->pack->files);
+			Q_free (fs_searchpaths->pack);
 		}
 #endif
-		next = com_searchpaths->next;
-		Q_free (com_searchpaths);
-		com_searchpaths = next;
+		next = fs_searchpaths->next;
+		Q_free (fs_searchpaths);
+		fs_searchpaths = next;
 	}
 
 	// flush all data, so it will be forced to reload
@@ -903,7 +942,7 @@ void FS_ShutDown( void ) {
 
 	// reset globals
 
-	com_base_searchpaths = com_searchpaths = NULL;
+	fs_base_searchpaths = fs_searchpaths = NULL;
 
 	com_gamedirfile[0]	= 0;
 	com_gamedir[0]		= 0;
@@ -1045,7 +1084,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 
 	// any set gamedirs will be freed up to here
-	com_base_searchpaths = com_searchpaths;
+	fs_base_searchpaths = fs_searchpaths;
 
 #ifndef SERVERONLY
 	if ((i = COM_CheckParm("-userdir")) && i < com_argc - 2)
@@ -1120,7 +1159,7 @@ char *COM_LegacyDir(char *media_dir)
 }
 
 
-//======================================================================================================
+//=============================================================================
 // VFS
 
 void VFS_CHECKCALL (struct vfsfile_s *vf, void *fld, char *emsg) {
@@ -2242,53 +2281,14 @@ void FS_InitModuleFS (void)
 #else
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
 	Cmd_AddCommand("fs_openfile", FS_OpenFile_f); // VFS-FIXME <-- Only a debug function
+	Cmd_AddCommand("dir", COM_Dir_f);
+	Cmd_AddCommand("locate", COM_Locate_f);
 	Cvar_Register(&com_fs_cache);
 	Com_Printf("Initialising quake VFS filesystem\n");
 #endif
 }
 
-//================================================================================================
-//                                START OF FTE VFS LAYER
-// Some of the below code uses the functions above
-//================================================================================================
 #ifdef WITH_FTE_VFS
-
-/*
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *     
- * $Id: fs.c,v 1.31 2007-09-29 15:05:45 dkure Exp $
- *             
- */
-
-/* 
- * Author:      
- * (I think) Spike from FTE, ported across by D-Kure
- * 
- * Description: 
- * This provides a virtual file system (VFS). This allows a standard way of 
- * accessing different types of files. These include pak, pak3, pak4, zip, 
- * and q4 wad files using a standard interface, FS_OpenVFS, VFSCLOSE, 
- * VFSREAD & VFSWRITE (along with other standard file IO functions). The 
- * standard interface is achieved by using opening files and then using
- * providing different function pointers for the different file types
- *              
- * Most of this file is providing functions for different types of files 
- * supported. The rest is the initalisation, shutdown, reloading & helper
- * functions for the VFS
- */
 
 /******************************************************************************
  *     TODO:
@@ -2317,15 +2317,10 @@ void FS_InitModuleFS (void)
  *  - Replace zipped/tar/tar.gz demo opening with VFS calls
  *
  *****************************************************************************/
-//=============================================================================
 
-searchpath_t	*com_searchpaths;
-searchpath_t	*com_purepaths;
-searchpath_t	*com_base_searchpaths;	// without gamedirs
+static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
 
-static void COM_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
-
-searchpath_t *COM_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff)
+searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff)
 {
 	searchpath_t *search;
 
@@ -2335,102 +2330,30 @@ searchpath_t *COM_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, vo
 	search->handle = handle;
 	search->funcs = funcs;
 
-	search->next = com_searchpaths;
-	com_searchpaths = search;
+	search->next = fs_searchpaths;
+	fs_searchpaths = search;
 
 	com_fschanged = true;
 
 	//add any data files too
 	if (loadstuff & FS_LOAD_FILE_PAK)
-		COM_AddDataFiles(probablepath, search, "pak", &packfilefuncs);//q1/hl/h2/q2
+		FS_AddDataFiles(probablepath, search, "pak", &packfilefuncs);//q1/hl/h2/q2
 	//pk2s never existed.
 #ifdef WITH_ZIP
 	if (loadstuff & FS_LOAD_FILE_PK3)
-		COM_AddDataFiles(probablepath, search, "pk3", &zipfilefuncs);	//q3 + offspring
+		FS_AddDataFiles(probablepath, search, "pk3", &zipfilefuncs);	//q3 + offspring
 	if (loadstuff & FS_LOAD_FILE_PK4)
-		COM_AddDataFiles(probablepath, search, "pk4", &zipfilefuncs);	//q4
+		FS_AddDataFiles(probablepath, search, "pk4", &zipfilefuncs);	//q4
 	//we could easily add zip, but it's friendlier not to
 #endif
 
 #ifdef DOOMWADS
 	if (loadstuff & FS_LOAD_FILE_DOOMWAD)
-		COM_AddDataFiles(probablepath, search, "wad", &doomwadfilefuncs);	//q4
+		FS_AddDataFiles(probablepath, search, "wad", &doomwadfilefuncs);	//q4
 #endif
 
 	return search;
 }
-
-/*
-================
-COM_filelength
-================
-*/
-int COM_filelength (FILE *f)
-{
-	int		pos;
-	int		end;
-
-	pos = ftell (f);
-	fseek (f, 0, SEEK_END);
-	end = ftell (f);
-	fseek (f, pos, SEEK_SET);
-
-	return end;
-}
-int COM_FileOpenRead (char *path, FILE **hndl)
-{
-	FILE	*f;
-
-	f = fopen(path, "rb");
-	if (!f)
-	{
-		*hndl = NULL;
-		return -1;
-	}
-	*hndl = f;
-
-	return COM_filelength(f);
-}
-
-int COM_FileSize(char *path)
-{
-	int len;
-	flocation_t loc;
-	len = FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
-	return len;
-}
-
-/*
-============
-COM_Path_f
-============
-*/
-void COM_Path_f (void)
-{
-	searchpath_t	*s;
-
-	// VFS-FIXME: Need to implement this in Com_Printf
-	// Con_TPrintf (TL_CURRENTSEARCHPATH);
-
-	if (com_purepaths)
-	{
-		for (s=com_purepaths ; s ; s=s->nextpure)
-		{
-			s->funcs->PrintPath(s->handle);
-		}
-		Com_Printf ("----------\n");
-	}
-
-
-	for (s=com_searchpaths ; s ; s=s->next)
-	{
-		if (s == com_base_searchpaths)
-			Com_Printf ("----------\n");
-
-		s->funcs->PrintPath(s->handle);
-	}
-}
-
 
 /*
 ============
@@ -2469,6 +2392,11 @@ COM_Locate_f
 void COM_Locate_f (void)
 {
 	flocation_t loc;
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s filename\n", Cmd_Argv(0));
+		return;
+	}
+
 	if (FS_FLocateFile(Cmd_Argv(1), FSLFRT_LENGTH, &loc)>=0)
 	{
 		if (!*loc.rawname)
@@ -2591,14 +2519,14 @@ void FS_RebuildFSHash(void)
 	fs_hash_dups = 0;
 	fs_hash_files = 0;
 
-	if (com_purepaths)
+	if (fs_purepaths)
 	{	//go for the pure paths first.
-		for (search = com_purepaths; search; search = search->nextpure)
+		for (search = fs_purepaths; search; search = search->nextpure)
 		{
 			search->funcs->BuildHash(search->handle);
 		}
 	}
-	for (search = com_searchpaths ; search ; search = search->next)
+	for (search = fs_searchpaths ; search ; search = search->next)
 	{
 		search->funcs->BuildHash(search->handle);
 	}
@@ -2637,9 +2565,9 @@ int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *lo
 	else
 		pf = NULL;
 
-	if (com_purepaths)
+	if (fs_purepaths)
 	{
-		for (search = com_purepaths ; search ; search = search->nextpure)
+		for (search = fs_purepaths ; search ; search = search->nextpure)
 		{
 			if (search->funcs->FindFile(search->handle, loc, filename, pf))
 			{
@@ -2659,7 +2587,7 @@ int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *lo
 //
 // search through the path, one element at a time
 //
-	for (search = com_searchpaths ; search ; search = search->next)
+	for (search = fs_searchpaths ; search ; search = search->next)
 	{
 		if (search->funcs->FindFile(search->handle, loc, filename, pf))
 		{
@@ -2708,9 +2636,9 @@ char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 	buffersize--;
 	*buffer = 0;
 
-	if (com_purepaths)
+	if (fs_purepaths)
 	{
-		for (search = com_purepaths ; search ; search = search->nextpure)
+		for (search = fs_purepaths ; search ; search = search->nextpure)
 		{
 			strncat(buffer, va("%i ", search->crc_check), buffersize);
 		}
@@ -2718,7 +2646,7 @@ char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 	}
 	else
 	{
-		for (search = com_searchpaths ; search ; search = search->next)
+		for (search = fs_searchpaths ; search ; search = search->next)
 		{
 			if (!search->crc_check && search->funcs->GeneratePureCRC)
 				search->crc_check = search->funcs->GeneratePureCRC(search->handle, 0, 0);
@@ -3154,7 +3082,7 @@ static int COM_AddWildDataFiles (char *descriptor, int size, void *vparam)
 
 	snprintf (pakfile, sizeof (pakfile), "%s%s", param->parentdesc, descriptor);
 
-	for (search = com_searchpaths; search; search = search->next)
+	for (search = fs_searchpaths; search; search = search->next)
 	{
 		if (search->funcs != funcs)
 			continue;
@@ -3172,12 +3100,12 @@ static int COM_AddWildDataFiles (char *descriptor, int size, void *vparam)
 		return true;
 
 	snprintf (pakfile, sizeof (pakfile), "%s%s/", param->parentdesc, descriptor);
-	COM_AddPathHandle(pakfile, funcs, pak, true, false, FS_LOAD_FILE_ALL);
+	FS_AddPathHandle(pakfile, funcs, pak, true, false, FS_LOAD_FILE_ALL);
 
 	return true;
 }
 
-static void COM_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs)
+static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs)
 {
 	//search is the parent
 	int				i;
@@ -3201,7 +3129,7 @@ static void COM_AddDataFiles(char *pathto, searchpath_t *search, char *extension
 		if (!handle)
 			break;
 		snprintf (pakfile, sizeof(pakfile), "%spak%i.%s/", pathto, i, extension);
-		COM_AddPathHandle(pakfile, funcs, handle, true, false, FS_LOAD_FILE_ALL);
+		FS_AddPathHandle(pakfile, funcs, handle, true, false, FS_LOAD_FILE_ALL);
 	}
 
 	/* VFS-FIXME: Use pak.lst instead of COM_AddWildDataFiles */
@@ -3243,7 +3171,7 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 		strcpy(com_gamedirfile, dir);
 	strcpy (com_gamedir, dir);
 
-	for (search = com_searchpaths; search; search = search->next)
+	for (search = fs_searchpaths; search; search = search->next)
 	{
 		if (search->funcs != &osfilefuncs)
 			continue;
@@ -3254,7 +3182,7 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 	// add the directory to the search path
 	p = Q_malloc(strlen(dir)+1);
 	strcpy(p, dir);
-	COM_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
+	FS_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
 }
 
 /*
@@ -3269,7 +3197,7 @@ void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff) {
 	searchpath_t	*search;
 	char			*p;
 
-	for (search = com_searchpaths; search; search = search->next)
+	for (search = fs_searchpaths; search; search = search->next)
 	{
 		if (search->funcs != &osfilefuncs)
 			continue;
@@ -3280,7 +3208,7 @@ void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff) {
 	// add the directory to the search path
 	p = Q_malloc(strlen(dir)+1);
 	strcpy(p, dir);
-	COM_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
+	FS_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
 }
 
 //space-seperate pk3 names followed by space-seperated crcs
@@ -3295,12 +3223,12 @@ void FS_ForceToPure(char *str, char *crcs, int seed)
 
 	if (!str)
 	{	//pure isn't in use.
-		com_purepaths = NULL;
+		fs_purepaths = NULL;
 		FS_FlushFSHash();
 		return;
 	}
 
-	for (sp = com_searchpaths; sp; sp = sp->next)
+	for (sp = fs_searchpaths; sp; sp = sp->next)
 	{
 		if (sp->funcs->GeneratePureCRC)
 		{
@@ -3323,7 +3251,7 @@ void FS_ForceToPure(char *str, char *crcs, int seed)
 		if (!crc)
 			continue;
 
-		for (sp = com_searchpaths; sp; sp = sp->next)
+		for (sp = fs_searchpaths; sp; sp = sp->next)
 		{
 			if (sp->nextpure == (void*)0x1)	//don't add twice.
 				if (sp->crc_check == crc)
@@ -3331,7 +3259,7 @@ void FS_ForceToPure(char *str, char *crcs, int seed)
 					if (lastpure)
 						lastpure->nextpure = sp;
 					else
-						com_purepaths = sp;
+						fs_purepaths = sp;
 					sp->nextpure = NULL;
 					lastpure = sp;
 					break;
@@ -3342,7 +3270,7 @@ void FS_ForceToPure(char *str, char *crcs, int seed)
 	}
 
 /* don't add any extras.
-	for (sp = com_searchpaths; sp; sp = sp->next)
+	for (sp = fs_searchpaths; sp; sp = sp->next)
 	{
 		if (sp->nextpure == (void*)0x1)
 		{
@@ -3373,7 +3301,7 @@ char *FS_GenerateClientPacksList(char *buffer, int maxlen, int basechecksum)
 
 	strncat(buffer, "@ ", maxlen);
 
-	for (sp = com_purepaths; sp; sp = sp->nextpure)
+	for (sp = fs_purepaths; sp; sp = sp->nextpure)
 	{
 		if (sp->crc_reply)
 		{
@@ -3414,11 +3342,11 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 
 	FS_FlushFSHash();
 
-	oldpaths = com_searchpaths;
-	com_searchpaths = NULL;
-	com_purepaths = NULL;
-	oldbase = com_base_searchpaths;
-	com_base_searchpaths = NULL;
+	oldpaths = fs_searchpaths;
+	fs_searchpaths = NULL;
+	fs_purepaths = NULL;
+	oldbase = fs_base_searchpaths;
+	fs_base_searchpaths = NULL;
 
 	//invert the order
 	next = NULL;
@@ -3430,14 +3358,14 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	}
 	oldpaths = next;
 
-	com_base_searchpaths = NULL;
+	fs_base_searchpaths = NULL;
 
 	while(oldpaths)
 	{
 		next = oldpaths->nextpure;
 
 		if (oldbase == oldpaths)
-			com_base_searchpaths = com_searchpaths;
+			fs_base_searchpaths = fs_searchpaths;
 
 		if (oldpaths->funcs == &osfilefuncs)
 			FS_AddGameDirectory(oldpaths->handle, reloadflags);
@@ -3447,8 +3375,8 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 		oldpaths = next;
 	}
 
-	if (!com_base_searchpaths)
-		com_base_searchpaths = com_searchpaths;
+	if (!fs_base_searchpaths)
+		fs_base_searchpaths = fs_searchpaths;
 }
 
 void FS_UnloadPackFiles(void)
@@ -3472,7 +3400,7 @@ void FS_ReloadPackFiles_f(void)
 void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm)
 {
     searchpath_t    *search;
-    for (search = com_searchpaths; search ; search = search->next)
+    for (search = fs_searchpaths; search ; search = search->next)
     {
     // is the element a pak file?
         if (!search->funcs->EnumerateFiles(search->handle, match, func, parm))
@@ -3499,7 +3427,7 @@ static void FS_OpenFile_f(void) {
 			Com_Printf("Successfully opened file %s\n", filename);
 #ifdef WITH_VFS_GZIP
 			if (strcasecmp(ext, "gz") == 0) {
-				vfsfile_t *gzFile = VFSGZIP_Open(f);
+				vfsfile_t *gzFile = VFSGZIP_Open(f, filename);
 				if (gzFile) {
 					Com_Printf("Successfully opened gzipped file %s\n", filename);
 					VFS_CLOSE(gzFile);
@@ -3523,7 +3451,7 @@ static void FS_OpenFile_f(void) {
 
 			VFS_CLOSE(f);
 		} else {
-			Com_Printf("Unable to open %s\n", Cmd_Argv(i));
+			Com_Printf("Unable to open %s\n", filename);
 		}
 	}
 }
