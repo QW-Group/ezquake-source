@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.3 2007-09-29 15:04:43 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.4 2007-09-29 18:48:48 dkure Exp $
  *             
  */
 
@@ -121,7 +121,7 @@ void VFSGZIP_Flush(vfsfile_t *file)
 }
 
 // TODO: Should add a IO mode (read/write) for the function
-vfsfile_t *VFSGZIP_Open(vfsfile_t *file) 
+vfsfile_t *VFSGZIP_Open(vfsfile_t *file, char *desc) 
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file; // FIXME: <-- ASSUMTPTION!
 	vfsgzipfile_t *gzipfile = Q_calloc(1, sizeof(*gzipfile));
