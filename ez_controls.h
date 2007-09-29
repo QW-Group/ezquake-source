@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.39 2007-09-28 01:49:25 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.40 2007-09-29 14:50:12 cokeman1982 Exp $
 */
 
 //
@@ -153,6 +153,15 @@ $Id: ez_controls.h,v 1.39 2007-09-28 01:49:25 cokeman1982 Exp $
 //
 
 #define POINT_IN_RECTANGLE(p_x, p_y, r_x, r_y, r_width, r_height) ((p_x >= r_x) && (p_y >= r_y) && (p_x <= (r_x + r_width)) && (p_y <= (r_y + r_height)))
+#define POINT_X_IN_BOUNDS(p_x, left, right)	((p_x >= left) && (p_x <= right))
+#define POINT_Y_IN_BOUNDS(p_y, top, bottom)	((p_y >= top)  && (p_y <= bottom))
+#define POINT_IN_BOUNDS(p_x, p_y, left, right, top, bottom)	(POINT_X_IN_BOUNDS(p_x, left, right) && POINT_Y_IN_BOUNDS(p_y, top, bottom))
+
+#define POINT_X_IN_CONTROL_DRAWBOUNDS(ctrl, p_x) (POINT_X_IN_BOUNDS(p_x, (ctrl)->bound_left, (ctrl)->bound_right))
+#define POINT_Y_IN_CONTROL_DRAWBOUNDS(ctrl, p_y) (POINT_Y_IN_BOUNDS(p_y, (ctrl)->bound_top, (ctrl)->bound_bottom))
+#define POINT_IN_CONTROL_DRAWBOUNDS(ctrl, p_x, p_y) (POINT_X_IN_CONTROL_DRAWBOUNDS(ctrl, p_x) && POINT_Y_IN_CONTROL_DRAWBOUNDS(ctrl, p_y))
+#define POINT_IN_CONTROL_RECT(ctrl, p_x, p_y) POINT_IN_RECTANGLE(p_x, p_y, (ctrl)->absolute_x, (ctrl)->absolute_y, (ctrl)->width, (ctrl)->height)
+
 #define SET_FLAG(flag_var, flag, on) (flag_var) |= (on ? (flag) : ((flag_var) & ~(flag)))
 
 // =========================================================================================
@@ -258,18 +267,7 @@ typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, in
 typedef int (*ez_control_keyspecific_handler_fp) (struct ez_control_s *self, int key, int unichar);
 typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
 
-#define MOUSE_INSIDE_CONTROL(ctrl, mouse_state) POINT_IN_RECTANGLE(mouse_state->x, mouse_state->y, (ctrl)->absolute_x, (ctrl)->absolute_y, (ctrl)->width, (ctrl)->height)
-
 #define CONTROL_IS_CONTAINED(self) (self->parent && (self->ext_flags & control_contained))
-#define MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, axis, h)									\
-	(ctrl->parent																					\
-	&& (((int) mouse_state->axis <= ctrl->parent->absolute_##axis)									\
-	|| ((int) mouse_state->axis >= (ctrl->parent->absolute_##axis + ctrl->parent->h))))				\
-
-#define MOUSE_OUTSIDE_PARENT_X(ctrl, mouse_state) MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, x, width)
-#define MOUSE_OUTSIDE_PARENT_Y(ctrl, mouse_state) MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, y, height)
-
-#define CONTROL_EVENT_HANDLER(name, ctrl, eventhandler) (ctrl->name.eventhandler)
 
 //
 // Raises an event. (See the CONTROL_EVENT_HANDLER_CALL for a more detailed explination of how this works).
@@ -281,9 +279,9 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	int temp = 0;																								\
 	int *p = (int *)retval;																						\
 	((eventroot *)(ctrl))->override_counts.eventhandler = ((eventroot *)(ctrl))->inherit_levels.eventhandler;	\
-	if(!CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler))													\
+	if(!(ctrl)->events.eventhandler)																			\
 		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);		\
-	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), __VA_ARGS__);			\
+	temp = (ctrl)->events.eventhandler((ez_control_t *)(ctrl), __VA_ARGS__);									\
 	if(p) (*p) = temp;																							\
 }																																																		
 
@@ -294,9 +292,9 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	int temp = 0;																								\
 	int *p = (int *)retval;																						\
 	((eventroot *)(ctrl))->override_counts.eventhandler = ((eventroot *)(ctrl))->inherit_levels.eventhandler;	\
-	if(!CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler))													\
+	if(!(ctrl)->events.eventhandler)																			\
 		Sys_Error("CONTROL_RAISE_EVENT : "#ctrl" ("#eventroot") has no event function for "#eventhandler);		\
-	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ez_control_t *)(ctrl), ##__VA_ARGS__);			\
+	temp = (ctrl)->events.eventhandler((ez_control_t *)(ctrl), ##__VA_ARGS__);									\
 	if(p) (*p) = temp;																							\
 }
 
@@ -345,32 +343,32 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 //
 #ifdef __INTEL_COMPILER
 
-#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, eventhandler, ...)											\
-{																														\
-	int *p = (int *)retval, temp = 0;																					\
-	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))														\
-	{																													\
-		if(((eventroot *)ctrl)->override_counts.eventhandler == 1)														\
-			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)((ez_control_t *)ctrl, __VA_ARGS__);		\
-		else																											\
-			((eventroot *)ctrl)->override_counts.eventhandler--;														\
-	}																													\
-	if(p) (*p) = temp;																									\
+#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, eventhandler, ...)					\
+{																								\
+	int *p = (int *)retval, temp = 0;															\
+	if((ctrl)->event_handlers.eventhandler)														\
+	{																							\
+		if(((eventroot *)ctrl)->override_counts.eventhandler == 1)								\
+			temp = (ctrl)->event_handlers.eventhandler((ez_control_t *)ctrl, __VA_ARGS__);		\
+		else																					\
+			((eventroot *)ctrl)->override_counts.eventhandler--;								\
+	}																							\
+	if(p) (*p) = temp;																			\
 }
 
 #else
 
-#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, eventhandler, ...)											\
-{																														\
-	int *p = (int *)retval, temp = 0;																					\
-	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))														\
-	{																													\
-		if(((eventroot *)ctrl)->override_counts.eventhandler == 1)														\
-			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)((ez_control_t *)ctrl, ##__VA_ARGS__);	\
-		else																											\
-			((eventroot *)ctrl)->override_counts.eventhandler--;														\
-	}																													\
-	if(p) (*p) = temp;																									\
+#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, eventhandler, ...)					\
+{																								\
+	int *p = (int *)retval, temp = 0;															\
+	if((ctrl)->event_handlers.eventhandler)														\
+	{																							\
+		if(((eventroot *)ctrl)->override_counts.eventhandler == 1)								\
+			temp = (ctrl)->event_handlers.eventhandler((ez_control_t *)ctrl, ##__VA_ARGS__);	\
+		else																					\
+			((eventroot *)ctrl)->override_counts.eventhandler--;								\
+	}																							\
+	if(p) (*p) = temp;																			\
 }
 
 #endif // __INTEL_COMPILER

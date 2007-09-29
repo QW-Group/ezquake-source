@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.60 2007-09-28 04:25:56 dkure Exp $
+$Id: ez_controls.c,v 1.61 2007-09-29 14:50:08 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1386,43 +1386,50 @@ int EZ_control_OnVirtualResize(ez_control_t *self)
 //
 int EZ_control_OnMove(ez_control_t *self)
 {
-	ez_control_t *payload = NULL;
-	ez_dllist_node_t *iter = self->children.head;
-
-	// Update the absolute screen position based on the parents position.
-	self->absolute_x = (self->parent ? self->parent->absolute_virtual_x : 0) + self->x;
-	self->absolute_y = (self->parent ? self->parent->absolute_virtual_y : 0) + self->y;
+	ez_control_t *payload	= NULL;
+	ez_dllist_node_t *iter	= self->children.head;
+	qbool non_virtual		= (self->ext_flags & control_anchor_nonvirtual);
+	int parent_x			= 0;
+	int parent_y			= 0;
 
 	if (self->parent)
 	{
-		qbool non_virtual		= (self->ext_flags & control_anchor_nonvirtual);
-		int parent_prev_width	= non_virtual ? self->parent->prev_width  : self->parent->prev_virtual_width;
-		int parent_prev_height	= non_virtual ? self->parent->prev_height : self->parent->prev_virtual_height;
-		int parent_width		= non_virtual ? self->parent->width  : self->parent->virtual_width; 
-		int parent_height		= non_virtual ? self->parent->height : self->parent->virtual_height;
+		parent_x = non_virtual ? self->parent->absolute_x : self->parent->absolute_virtual_x;
+		parent_y = non_virtual ? self->parent->absolute_y : self->parent->absolute_virtual_y;
+	}
 
+	// Update the absolute screen position based on the parents position.
+	self->absolute_x = (self->parent ? parent_x : 0) + self->x;
+	self->absolute_y = (self->parent ? parent_y : 0) + self->y;
+
+	if (self->parent)
+	{
 		// If the control has a parent, position it in relation to it
 		// and the way it's anchored to it.
+		int parent_prev_width	= non_virtual ? self->parent->prev_width	: self->parent->prev_virtual_width;
+		int parent_prev_height	= non_virtual ? self->parent->prev_height	: self->parent->prev_virtual_height;
+		int parent_width		= non_virtual ? self->parent->width			: self->parent->virtual_width; 
+		int parent_height		= non_virtual ? self->parent->height		: self->parent->virtual_height;
 
 		// If we're anchored to both the left and right part of the parent we position
 		// based on the parents left pos 
 		// (We will stretch to the right if the control is resizable and if the parent is resized).
 		if ((self->anchor_flags & anchor_left) && !(self->anchor_flags & anchor_right))
 		{
-			self->absolute_x = self->parent->absolute_virtual_x + self->x;
+			self->absolute_x = parent_x + self->x;
 		}
 		else if ((self->anchor_flags & anchor_right) && !(self->anchor_flags & anchor_left))
 		{
-			self->absolute_x = self->parent->absolute_virtual_x + parent_width + (self->x - self->width);
+			self->absolute_x = parent_x + parent_width + (self->x - self->width);
 		}
 
 		if ((self->anchor_flags & anchor_top) && !(self->anchor_flags & anchor_bottom))
 		{
-			self->absolute_y = self->parent->absolute_virtual_y + self->y;
+			self->absolute_y = parent_y + self->y;
 		}
 		else if ((self->anchor_flags & anchor_bottom) && !(self->anchor_flags & anchor_top))
 		{
-			self->absolute_y = self->parent->absolute_virtual_y + parent_height + (self->y - self->height);
+			self->absolute_y = parent_y + parent_height + (self->y - self->height);
 		}
 	}
 	else
@@ -1587,12 +1594,12 @@ typedef enum
 //
 static void EZ_control_ResizeByDirection(ez_control_t *self, mouse_state_t *ms, int delta_x, int delta_y, resize_direction_t direction)
 {
-	int width = self->width;
-	int height = self->height;
-	int x = self->x;
-	int y = self->y;
-	qbool resizing_width = (direction & RESIZE_LEFT) || (direction & RESIZE_RIGHT);
-	qbool resizing_height = (direction & RESIZE_UP) || (direction & RESIZE_DOWN);
+	int width				= self->width;
+	int height				= self->height;
+	int x					= self->x;
+	int y					= self->y;
+	qbool resizing_width	= (direction & RESIZE_LEFT) || (direction & RESIZE_RIGHT);
+	qbool resizing_height	= (direction & RESIZE_UP) || (direction & RESIZE_DOWN);
 
 	if (resizing_width)
 	{
@@ -1616,14 +1623,14 @@ static void EZ_control_ResizeByDirection(ez_control_t *self, mouse_state_t *ms, 
 	// mouse should stay within the parent also when resizing the control.
 	if (ms && CONTROL_IS_CONTAINED(self))
 	{
-		if (resizing_width && MOUSE_OUTSIDE_PARENT_X(self, ms))
+		if (resizing_width && !POINT_X_IN_CONTROL_DRAWBOUNDS(self->parent, ms->x))
 		{
 			ms->x = ms->x_old;
 			x = self->x;
 			width = self->width;
 		}
 
-		if (resizing_height && MOUSE_OUTSIDE_PARENT_Y(self, ms))
+		if (resizing_height && !POINT_Y_IN_CONTROL_DRAWBOUNDS(self->parent, ms->y))
 		{
 			ms->y = ms->y_old;
 			y = self->y;
@@ -1673,27 +1680,11 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	mouse_delta_x = Q_rint(ms->x_old - ms->x);
 	mouse_delta_y = Q_rint(ms->y_old - ms->y);
 
-	mouse_inside = MOUSE_INSIDE_CONTROL(self, ms);
-	prev_mouse_inside = POINT_IN_RECTANGLE(ms->x_old, ms->y_old, self->absolute_x, self->absolute_y, self->width, self->height);
-
-	// If the control is contained within it's parent,
-	// the mouse must be within the parents bounds also for
-	// the control to generate any mouse events.
-	if (is_contained)
-	{
-		int p_x = self->parent->absolute_x;
-		int p_y = self->parent->absolute_y;
-		int p_w = self->parent->width;
-		int p_h = self->parent->height;
-		mouse_inside_parent = POINT_IN_RECTANGLE(ms->x, ms->y, p_x, p_y, p_w, p_h);
-		prev_mouse_inside_parent = POINT_IN_RECTANGLE(old_ms->x, old_ms->y, p_x, p_y, p_w, p_h);
-	}
+	mouse_inside		= POINT_IN_CONTROL_DRAWBOUNDS(self, ms->x, ms->y);
+	prev_mouse_inside	= POINT_IN_CONTROL_DRAWBOUNDS(self, ms->x_old, ms->y_old);
 
 	// Raise more specific events.
-	//
-	// For contained controls (parts of the control outside of the parent are not drawn)
-	// we only want to trigger mouse events when the mouse click is both inside the control and the parent.
-	if ((!is_contained && mouse_inside) || (is_contained && mouse_inside && mouse_inside_parent))
+	if (mouse_inside)
 	{
 		if (!prev_mouse_inside)
 		{
@@ -1722,7 +1713,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			mouse_handled = (mouse_handled || mouse_handled_tmp);
 		}
 	}
-	else if((!is_contained && prev_mouse_inside) || (is_contained && !prev_mouse_inside_parent))
+	else if (prev_mouse_inside)
 	{
 		// Mouse leave.
 		CONTROL_RAISE_EVENT(&mouse_handled_tmp, self, ez_control_t, OnMouseLeave, ms);
@@ -1792,14 +1783,14 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			// while moving the control.
 			if (CONTROL_IS_CONTAINED(self))
 			{
-				if (MOUSE_OUTSIDE_PARENT_X(self, ms))
+				if (!POINT_X_IN_CONTROL_DRAWBOUNDS(self->parent, ms->x))
 				{
 					ms->x = ms->x_old;
 					x = self->x;
 					mouse_handled = true;
 				}
 
-				if (MOUSE_OUTSIDE_PARENT_Y(self, ms))
+				if (!POINT_Y_IN_CONTROL_DRAWBOUNDS(self->parent, ms->y))
 				{
 					ms->y = ms->y_old;
 					y = self->y;
@@ -1808,6 +1799,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			}
 
 			EZ_control_SetPosition(self, x, y);
+			mouse_handled = true;
 		}
 	}
 
@@ -1850,7 +1842,7 @@ int EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
 	int mouse_handled = false;
 
 	// Stop moving since the mouse is outside the control.
-	self->int_flags &= ~(control_moving | control_mouse_over);
+	self->int_flags &= ~(/*control_moving |*/ control_mouse_over);
 
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, ez_control_t, OnMouseLeave, mouse_state);
 	return mouse_handled;
@@ -4044,7 +4036,7 @@ int EZ_slider_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 {
 	// Make sure we handle all mouse events when we're over the control
 	// otherwise they will fall through to controls below.
-	int mouse_handled	= MOUSE_INSIDE_CONTROL(self, ms); 
+	int mouse_handled	= POINT_IN_CONTROL_RECT(self, ms->x, ms->y); 
 	ez_slider_t *slider = (ez_slider_t *)self;
 
 	// Call the super class first.
@@ -4197,6 +4189,8 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 
 	EZ_control_SetOnMouseDown((ez_control_t *)scrollbar->slider, EZ_scrollbar_OnSliderMouseDown);
 
+	scrollbar->slider_minsize = 5;
+
 	// TODO : Remove this test stuff.
 	{
 		EZ_button_SetNormalColor(scrollbar->back, 255, 125, 125, 125);
@@ -4218,7 +4212,7 @@ static void EZ_scrollbar_CalculateSliderSize(ez_scrollbar_t *scrollbar)
 	{
 		// Get the percentage of the parent that is shown and calculate the new slider button size from that. 
 		float target_height_ratio = (self->parent->height / (float)self->parent->virtual_height);
-		int new_slider_height = Q_rint(target_height_ratio * scrollbar->scroll_area);
+		int new_slider_height = max(scrollbar->slider_minsize, Q_rint(target_height_ratio * scrollbar->scroll_area));
 
 		EZ_control_SetSize((ez_control_t *)scrollbar->slider, self->width, new_slider_height);
 	}
@@ -4309,13 +4303,14 @@ int EZ_scrollbar_OnParentResize(ez_control_t *self)
 //
 int EZ_scrollbar_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 {
+	qbool  mouse_handled = false;
 	ez_scrollbar_t *scrollbar	= (ez_scrollbar_t *)self;
 
 	EZ_control_OnMouseDown(self, ms);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMouseDown, ms);
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, ez_control_t, OnMouseDown, ms);
 
-	return true;
+	return mouse_handled;
 }
 
 //
@@ -4347,15 +4342,23 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	qbool mouse_handled				= false;
 	qbool mouse_handled_tmp			= false;
 
-	EZ_control_OnMouseEvent(self, ms);
+	mouse_handled = EZ_control_OnMouseEvent(self, ms);
 
-	if (scrollbar->int_flags & sliding)
+	if (!mouse_handled && (scrollbar->int_flags & sliding))
 	{
 		if (scrollbar->orientation == vertical)
 		{
+			float scroll_ratio = 0;
+
+			// Reposition the slider within the scrollbar control based on where the mouse moves.
 			int new_y = (ms->y - self->absolute_y);
 			clamp(new_y, back_ctrl->height, (self->height - forward_ctrl->height - slider_ctrl->height));
 			EZ_control_SetPosition(slider_ctrl, 0, new_y);
+
+			scroll_ratio = scrollbar->scroll_area / (float)(slider_ctrl->y - back_ctrl->height);
+
+			EZ_control_SetScrollPosition(self->parent, 0, Q_rint(scroll_ratio * new_y));
+
 			mouse_handled = true;
 		}
 		else
