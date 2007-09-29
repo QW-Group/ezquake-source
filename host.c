@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.48 2007-09-14 13:29:28 disconn3ct Exp $
+	$Id: host.c,v 1.49 2007-09-29 18:43:02 dkure Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -595,15 +595,14 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 		Cbuf_AddText("exec default.cfg\n");
 
-		snprintf(cfg, sizeof(cfg), "%s/config.cfg", com_homedir);
-
 #ifndef WITH_FTE_VFS
+		snprintf(cfg, sizeof(cfg), "%s/config.cfg", com_homedir);
 		if ((f = fopen(cfg, "r"))) { // found cfg in home dir, use it
 		    extern void LoadHomeCfg(const char *filename);
 
 			fclose(f);
 #else
-		if ((vf = FS_OpenVFS(cfg, "rb", FS_ANY))) {
+		if ((vf = FS_OpenVFS(cfg, "rb", FS_HOME))) {
 		    extern void LoadHomeCfg(const char *filename);
 			VFS_CLOSE(vf);
 #endif
@@ -618,8 +617,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			if ((f = fopen(cfg, "r"))) { // found cfg in ezquake dir, use it, if not found in home dir
 				fclose(f);
 #else
-			// D-Kure: FIXME: These cases seem to be covered by FS_ANY
-			if ((vf = FS_OpenVFS(cfg, "rb", FS_ANY))) {
+			if ((vf = FS_OpenVFS(cfg, "rb", FS_NONE_OS))) {
 				VFS_CLOSE(vf);
 #endif
 
