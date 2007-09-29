@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.2 2007-09-28 05:21:46 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.3 2007-09-29 15:04:43 dkure Exp $
  *             
  */
 
@@ -32,89 +32,118 @@
 //=============================================================================
 //                       G Z I P   V F S
 //=============================================================================
+typedef struct {
+	vfsfile_t funcs; // <= must be at top/begining of struct
+
+	gzFile handle;
+} vfsgzipfile_t;
 
 // FIXME:
 // Everything below assumes that the input file was an OS file
 // This may not be the case if we are opening a gz file in a gz file...
-gzFile Gzip_Open(vfsfile_t *file) 
-{
-	vfsosfile_t *intfile = (vfsosfile_t*)file;
-	gzFile f_gz;
 
-	int fd = fileno(intfile->handle);
-
-	f_gz = gzdopen(dup(fd), "r");
-	if (f_gz == NULL) {
-		return NULL;
-	}
-	return f_gz;
-}
-
-int Gzip_Read(gzFile f_gz, void *buffer, int bytestoread) 
+int VFSGZIP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err) 
 {
 	int r;
-	
-	r = gzread(f_gz, buffer, bytestoread);
+	vfsgzipfile_t *intfile = (vfsgzipfile_t *)file;
 
+	if (bytestoread < 0)
+		        Sys_Error("VFSOS_ReadBytes: bytestoread < 0");
+	
+	r = gzread(intfile->handle, buffer, bytestoread);
 	// r == -1 on error
+
+	if (err) // if bytestoread <= 0 it will be treated as non error even we read zero bytes
+		*err = ((r || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
+
 
 	return r;
 }
 
-int Gzip_Write(gzFile f_gz, void *buffer, int bytestowrite) 
+int VFSGZIP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite) 
 {
 	int r;
+	vfsgzipfile_t *intfile = (vfsgzipfile_t *)file;
 
-	r = gzwrite(f_gz, buffer, bytestowrite);
+	r = gzwrite(intfile->handle, buffer, bytestowrite);
 
 	// r == 0 on error
 	
 	return r;
 }
 
-int Gzip_Seek(gzFile f_gz, int offset, int whence) 
+qbool VFSGZIP_Seek(vfsfile_t *file, unsigned long offset, int whence) 
 {
 	int r;
-	r = gzseek(f_gz, offset, whence);
+	vfsgzipfile_t *intfile = (vfsgzipfile_t *)file;
+
+	r = gzseek(intfile->handle, offset, whence);
 	return r;
 }
 
-int Gzip_Tell(gzFile f_gz) 
+unsigned long VFSGZIP_Tell(vfsfile_t *file) 
 {
 	int r;
-	r = gztell(f_gz);
+	vfsgzipfile_t *intfile = (vfsgzipfile_t *)file;
+
+	r = gztell(intfile->handle);
 	return r;
 }
 
-int Gzip_GetLen(gzFile f_gz) 
+unsigned long VFSGZIP_GetLen(vfsfile_t *file) 
 {
 	int r, currentpos;
+	vfsgzipfile_t *intfile = (vfsgzipfile_t *)file;
 	
 	// VFS-FIXME: Error handling
-	currentpos = gztell(f_gz);
-	r = gzseek(f_gz, 0, SEEK_END);
-	gzseek(f_gz, currentpos, SEEK_SET);
+	currentpos = gztell(intfile->handle);
+	r = gzseek(intfile->handle, 0, SEEK_END);
+	gzseek(intfile->handle, currentpos, SEEK_SET);
 
 	return r;
 }
 
-int Gzip_Close(gzFile f_gz) 
+void VFSGZIP_Close(vfsfile_t *file) 
 {
 	int r;
+	vfsgzipfile_t *intfile = (vfsgzipfile_t *)file;
 
-	r = gzclose(f_gz);
-
-	return r;
+	r = gzclose(intfile->handle);
 }
 
-int Gzip_Flush(gzFile f_gz) 
+void VFSGZIP_Flush(vfsfile_t *file) 
 {
 	int r;
+	vfsgzipfile_t *intfile = (vfsgzipfile_t *)file;
 
-	//r = gzflush(f_gz, Z_NO_FLUSH); 	// <-- Allows better compression
-	r = gzflush(f_gz, Z_SYNC_FLUSH); 	// <-- All pending output is flushed
+	//r = gzflush(intfile->handle, Z_NO_FLUSH); 	// <-- Allows better compression
+	r = gzflush(intfile->handle, Z_SYNC_FLUSH); 	// <-- All pending output is flushed
+}
 
-	return r;
+// TODO: Should add a IO mode (read/write) for the function
+vfsfile_t *VFSGZIP_Open(vfsfile_t *file) 
+{
+	vfsosfile_t *intfile = (vfsosfile_t*)file; // FIXME: <-- ASSUMTPTION!
+	vfsgzipfile_t *gzipfile = Q_calloc(1, sizeof(*gzipfile));
+
+	int fd = fileno(intfile->handle);
+
+	gzipfile->handle = gzdopen(dup(fd), "r");
+	if (gzipfile->handle == NULL) {
+		free(gzipfile);
+		return NULL;
+	}
+
+	// TODO: Use mode to determine NULL read/write VFS calls
+	gzipfile->funcs.ReadBytes  = VFSGZIP_ReadBytes;
+	gzipfile->funcs.WriteBytes = VFSGZIP_WriteBytes;
+	gzipfile->funcs.Seek       = VFSGZIP_Seek;
+	gzipfile->funcs.Tell       = VFSGZIP_Tell;
+	gzipfile->funcs.GetLen     = VFSGZIP_GetLen;
+	gzipfile->funcs.Close      = VFSGZIP_Close;
+	gzipfile->funcs.Flush      = VFSGZIP_Flush;
+
+	return (vfsfile_t *)gzipfile;
 }
 
 #endif // WITH_VFS_GZIP

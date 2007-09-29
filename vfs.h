@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.3 2007-09-28 05:21:45 dkure Exp $
+ * $Id: vfs.h,v 1.4 2007-09-29 15:04:43 dkure Exp $
  *             
  */
 
@@ -207,14 +207,14 @@ vfsfile_t *FS_OpenTCP(char *name);
 //=====================================
 #ifdef WITH_ZLIB
 #ifdef WITH_VFS_GZIP
-gzFile Gzip_Open(vfsfile_t *file);
-int Gzip_Read(gzFile f_gz, void *buffer, int bytestoread);
-int Gzip_Write(gzFile f_gz, void *buffer, int bytestowrite);
-static int Gzip_Seek(gzFile f_gz, int offset);
-int Gzip_Tell(gzFile f_gz);
-int Gzip_GetLen(gzFile f_gz);
-int Gzip_Close(gzFile f_gz);
-int Gzip_Flush(gzFile f_gz);
+int VFSGZIP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err);
+int VFSGZIP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite);
+qbool VFSGZIP_Seek(vfsfile_t *file, unsigned long offset, int whence);
+unsigned long VFSGZIP_Tell(vfsfile_t *file);
+unsigned long VFSGZIP_GetLen(vfsfile_t *file);
+void VFSGZIP_Close(vfsfile_t *file);
+void VFSGZIP_Flush(vfsfile_t *file);
+vfsfile_t *VFSGZIP_Open(vfsfile_t *file);
 #endif // WITH_VFS_GZIP
 #endif // WITH_ZLIB
 
