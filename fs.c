@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.30 2007-09-28 05:25:10 dkure Exp $
+$Id: fs.c,v 1.31 2007-09-29 15:05:45 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -1548,6 +1548,8 @@ int COM_GZipUnpack (char *source_path,		// The path to the compressed source fil
 	{
 		unsigned char out[CHUNK];
 		gzFile gzip_file = gzopen (source_path, "rb");
+		if (gzip_file == NULL)
+			return 0;
 
 		while ((retval = gzread (gzip_file, out, CHUNK)) > 0)
 		{
@@ -1569,6 +1571,7 @@ int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 						  int unpack_path_size,		// The size of the buffer.
 						  char *append_extension)	// The extension if any that should be appended to the filename.
 {
+	int retval;
 	// Get a unique temp filename.
 	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
 	{
@@ -1576,8 +1579,10 @@ int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 	}
 
 	// Delete the existing temp file (it is created when the filename is received above).
-	if (unlink (unpack_path))
+	retval = unlink (unpack_path);
+	if (retval == -1 && qerrno != ENOENT)
 	{
+		unpack_path[0] = 0;
 		return 0;
 	}
 
@@ -1731,6 +1736,7 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 						  int unpack_path_size,		// The size of the buffer.
 						  char *append_extension)	// The extension if any that should be appended to the filename.
 {
+	int retval;
 	// Get a unique temp filename.
 	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
 	{
@@ -1738,8 +1744,10 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 	}
 
 	// Delete the existing temp file (it is created when the filename is received above).
-	if (unlink (unpack_path))
+	retval = unlink (unpack_path);
+	if (retval == -1 && qerrno != ENOENT)
 	{
+		unpack_path[0] = 0;
 		return 0;
 	}
 
@@ -2261,7 +2269,7 @@ void FS_InitModuleFS (void)
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: fs.c,v 1.30 2007-09-28 05:25:10 dkure Exp $
+ * $Id: fs.c,v 1.31 2007-09-29 15:05:45 dkure Exp $
  *             
  */
 
@@ -3491,10 +3499,10 @@ static void FS_OpenFile_f(void) {
 			Com_Printf("Successfully opened file %s\n", filename);
 #ifdef WITH_VFS_GZIP
 			if (strcasecmp(ext, "gz") == 0) {
-				gzFile f_gz = Gzip_Open(f);
-				if (f_gz) {
+				vfsfile_t *gzFile = VFSGZIP_Open(f);
+				if (gzFile) {
 					Com_Printf("Successfully opened gzipped file %s\n", filename);
-					Gzip_Close(f_gz);
+					VFS_CLOSE(gzFile);
 				} else {
 					Com_Printf("Was unable to open %s as a gzipped file\n", filename);
 				}
