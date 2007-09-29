@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_os.c,v 1.1 2007-09-28 04:41:37 dkure Exp $
+ * $Id: vfs_os.c,v 1.2 2007-09-29 15:36:04 dkure Exp $
  *             
  */
 
@@ -238,12 +238,13 @@ int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
 	}
 	if (!Hash_GetInsensative(&filesystemhash, filename))
 	{
-		bucket_t *bucket = (bucket_t*)Q_malloc(sizeof(bucket_t) + (size_t)strlen(filename)+1);
-		strcpy((char *)(bucket+1), filename);
+		bucket_t *bucket = (bucket_t*) Q_malloc(sizeof(bucket_t));
+		char *name = (char *) Q_malloc(sizeof(char)*(strlen(filename)+1));
+		strcpy(name, filename);
 #ifdef _WIN32
-		Q_strlwr((char *)(bucket+1));
+		Q_strlwr(name);
 #endif
-		Hash_AddInsensative(&filesystemhash, (char *)(bucket+1), data, bucket);
+		Hash_AddInsensative(&filesystemhash, name, data, bucket);
 
 		fs_hash_files++;
 	}
