@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.4 2007-09-29 15:04:43 dkure Exp $
+ * $Id: vfs.h,v 1.5 2007-09-29 18:50:15 dkure Exp $
  *             
  */
 
@@ -214,7 +214,7 @@ unsigned long VFSGZIP_Tell(vfsfile_t *file);
 unsigned long VFSGZIP_GetLen(vfsfile_t *file);
 void VFSGZIP_Close(vfsfile_t *file);
 void VFSGZIP_Flush(vfsfile_t *file);
-vfsfile_t *VFSGZIP_Open(vfsfile_t *file);
+vfsfile_t *VFSGZIP_Open(vfsfile_t *file, char *desc);
 #endif // WITH_VFS_GZIP
 #endif // WITH_ZLIB
 
