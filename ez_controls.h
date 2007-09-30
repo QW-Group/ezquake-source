@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.40 2007-09-29 14:50:12 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.41 2007-09-30 23:17:29 cokeman1982 Exp $
 */
 
 //
@@ -406,6 +406,7 @@ typedef struct ez_control_eventcount_s
 	int	OnDestroy;
 	int	OnMove;
 	int	OnScroll;
+	int	OnParentScroll;
 	int	OnResize;
 	int	OnParentResize;
 	int	OnGotFocus;
@@ -433,6 +434,7 @@ typedef struct ez_control_events_s
 	ez_control_destroy_handler_fp		OnDestroy;
 	ez_control_handler_fp				OnMove;
 	ez_control_handler_fp				OnScroll;
+	ez_control_handler_fp				OnParentScroll;
 	ez_control_handler_fp				OnResize;
 	ez_control_handler_fp				OnParentResize;
 	ez_control_handler_fp				OnGotFocus;
@@ -853,6 +855,11 @@ int EZ_control_OnMove(ez_control_t *self);
 // Control - On scroll event.
 //
 int EZ_control_OnScroll(ez_control_t *self);
+
+//
+// Control - On parent scroll event.
+//
+int EZ_control_OnParentScroll(ez_control_t *self);
 
 //
 // Control - Convenient function for changing the scroll position by a specified amount.
@@ -1551,7 +1558,8 @@ typedef enum ez_orientation_s
 
 typedef enum ez_scrollbar_iflags_e
 {
-	sliding = (1 << 0)
+	sliding		= (1 << 0),
+	scrolling	= (1 << 1)
 } ez_scrollbar_iflags_t;
 
 typedef struct ez_scrollbar_s
@@ -1616,6 +1624,11 @@ int EZ_scrollbar_OnMouseUpOutside(ez_control_t *self, mouse_state_t *ms);
 // Scrollbar - Mouse event.
 //
 int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms);
+
+//
+// Scrollbar - OnParentScroll event.
+//
+int EZ_scrollbar_OnParentScroll(ez_control_t *self);
 
 #endif // __EZ_CONTROLS_H__	
 
