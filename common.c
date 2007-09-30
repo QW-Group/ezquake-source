@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.97 2007-09-30 14:45:00 disconn3ct Exp $
+    $Id: common.c,v 1.98 2007-09-30 18:20:32 dkure Exp $
 
 */
 
@@ -79,7 +79,6 @@ void COM_StoreOriginalCmdline (int argc, char **argv)
 {
 	char buf[4096]; // enough?
 	int i;
-	qbool first = true;
 
 	buf[0] = 0;
 	strlcat (buf, " ", sizeof (buf));
