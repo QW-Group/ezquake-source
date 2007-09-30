@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.49 2007-09-29 18:43:02 dkure Exp $
+	$Id: host.c,v 1.50 2007-09-30 02:08:36 qqshka Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -602,6 +602,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 			fclose(f);
 #else
+		snprintf(cfg, sizeof(cfg), "config.cfg");
 		if ((vf = FS_OpenVFS(cfg, "rb", FS_HOME))) {
 		    extern void LoadHomeCfg(const char *filename);
 			VFS_CLOSE(vf);
