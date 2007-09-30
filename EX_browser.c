@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.51 2007-09-30 14:45:00 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.52 2007-09-30 22:59:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -626,7 +626,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         UI_Print(x+w-8*(3+strlen(buf))+4, y+h-24, buf, true);
 
     // line 1
-    strcpy(line, s->display.name[1] ? s->display.name : s->display.ip);
+    strlcpy (line, s->display.name[1] ? s->display.name : s->display.ip, sizeof (line));
     line[w/8] = 0;
     UI_Print_Center(x, y+h-16, w, line, false);
 
@@ -902,8 +902,11 @@ void Servers_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
             line[w/8] = 0;
             UI_Print_Center(x, y+8*(i+1), w, line, servnum==Servers_pos);
 */
-            strncpy(line, name, pos);
+			// WTF -->
+            strlcpy (line, name, min (sizeof (line), pos + 1));
             line[pos] = 0;
+			// <-- WTF
+
             UI_Print(x, y+8*(i+1), line, servnum==Servers_pos);
         }
 
@@ -1018,11 +1021,11 @@ void Serverinfo_Draw ()
 
     strlcpy(buf, " players serverinfo sources ", sizeof(buf));
     if (serverinfo_pos == 0)
-        strncpy(buf, "\x10ðìáùåòó\x11", 9); // FIXME: non-ascii chars
+        memcpy (buf, "\x10ðìáùåòó\x11", 9); // FIXME: non-ascii chars
     if (serverinfo_pos == 1)
-        strncpy(buf+8, "\x10óåòöåòéîæï\x11", 12); // FIXME: non-ascii chars
+        memcpy (buf + 8, "\x10óåòöåòéîæï\x11", 12); // FIXME: non-ascii chars
     if (serverinfo_pos == 2)
-        strncpy(buf+19, "\x10óïõòãåó\x11", 9); // FIXME: non-ascii chars
+        memcpy (buf + 19, "\x10óïõòãåó\x11", 9); // FIXME: non-ascii chars
 
     UI_Print_Center(x, y+24, w, buf, false);
 
@@ -1274,11 +1277,11 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
             break;
 
         if (sources[serverinfo_sources_disp+i]->type == type_file)
-            strcpy(buf2, " file ");
+            strlcpy (buf2, " file ", sizeof (buf2));
         else if (sources[serverinfo_sources_disp+i]->type == type_master)
-            strcpy(buf2, "master");
+            strlcpy(buf2, "master", sizeof (buf2));
         else if (sources[serverinfo_sources_disp+i]->type == type_dummy)
-            strcpy(buf2, "dummy ");
+            strlcpy(buf2, "dummy ", sizeof (buf2));
 
         snprintf(buf, sizeof (buf), "%s   %s", buf2, sources[serverinfo_sources_disp+i]->name);
         buf[w/8] = 0;
@@ -1376,16 +1379,16 @@ void Sources_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
             break;
 
         if (s->type == type_master)
-            strcpy(type, "master");
+            strlcpy(type, "master", sizeof (type));
         else if (s->type == type_file)
-            strcpy(type, " file ");
+            strlcpy(type, " file ", sizeof (type));
         else if (s->type == type_dummy)
-            strcpy(type, "dummy ");
+            strlcpy(type, "dummy ", sizeof (type));
         else
-            strcpy(type, " ???? ");
+			strlcpy(type, " ???? ", sizeof (type));
 
         if (s->type == type_dummy)
-            strcpy(time, " n/a ");
+            strlcpy (time, " n/a ", sizeof (time));
         else
             if (s->last_update.wYear)
             {
@@ -1400,7 +1403,7 @@ void Sources_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
                         s->last_update.wMinute);
             }
             else
-                strcpy(time, "never");
+                strlcpy (time, "never", sizeof (time));
 
         snprintf(line, sizeof (line), "%s %c%-17.17s %4d  %s ", type,
             sourcenum==Sources_pos ? 141 : ' ',
@@ -1602,11 +1605,11 @@ void Add_Source_Key(int key)
                 // create new source
                 s = Create_Source();
                 s->type = newsource_master ? type_master : type_file;
-                strcpy(s->name, edit1.text);
-                strcpy(addr, edit2.text);
+				strlcpy (s->name, edit1.text, sizeof (s->name));
+                strlcpy (addr, edit2.text, sizeof (addr));
 
                 if (s->type == type_file)
-                    strcpy(s->address.filename, edit2.text);
+                    strlcpy (s->address.filename, edit2.text, sizeof (s->address.filename));
                 else
                 {
                     if (!strchr(addr, ':'))
@@ -1724,21 +1727,22 @@ void Add_Server_Key(int key)
     newserver_pos = min(newserver_pos, 2);
 }
 
-qbool SearchNextServer(int pos)
+qbool SearchNextServer (int pos)
 {
-    int i;
-    char tmp[1024];
-    for (i=pos; i < serversn_passed; i++)
-    {
-        strcpy(tmp, servers[i]->display.name);
-        FunToSort(tmp);
-        if (strstr(tmp, searchstring))
-        {
-            Servers_pos = i;
-            return true;
-        }
-    }
-    return false;
+	int i;
+	char tmp[1024];
+
+	for (i = pos; i < serversn_passed; i++) {
+		strlcpy (tmp, servers[i]->display.name, sizeof (tmp));
+		FunToSort (tmp);
+
+		if (strstr (tmp, searchstring)) {
+			Servers_pos = i;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
@@ -1771,8 +1775,8 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
 
             if (!SearchNextServer(Servers_pos))
                 if (!SearchNextServer(0))
-		    // FIXME: non-ascii chars
-                    strcpy(searchstring, "îïô æïõîä");  // not found
+					// FIXME: non-ascii chars
+					strlcpy (searchstring, "îïô æïõîä", sizeof (searchstring));  // not found
         }
 		return true;
     }
@@ -1781,9 +1785,9 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
         searchtype = search_none;
         switch (key)
         {
-            case K_INS:
-            case 'n':       // new server
-                newserver_pos = 0;
+			case K_INS:
+			case 'n':	// new server
+				newserver_pos = 0;
                 CEditBox_Init(&edit1, 14, 64);
                 adding_server = 1;
                 break;
@@ -1827,54 +1831,56 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
             case '7':
             case '8':   // sorting mode
 				if (isAltDown()) // fixme
-                {
-                    char buf[32];
-                    if ((sb_sortservers.string[0] == '-' && sb_sortservers.string[1] == key)
-                        || sb_sortservers.string[0] == key)
+				{
+					char buf[32];
+					if ((sb_sortservers.string[0] == '-' && sb_sortservers.string[1] == key)
+						|| sb_sortservers.string[0] == key)
                     {
-                        if (sb_sortservers.string[0] == '-')
-                            strncpy(buf, sb_sortservers.string+1, 20);
-                        else
-                        {
-                            strncpy(buf+1, sb_sortservers.string, 20);
-                            buf[0] = '-';
-                        }
+						if (sb_sortservers.string[0] == '-')
+						{
+							strlcpy (buf, sb_sortservers.string + 1, sizeof (buf));
+						}
+						else
+						{
+							buf[0] = '-';
+							strlcpy (buf + 1, sb_sortservers.string, sizeof (buf));
+						}
                     }
-                    else
-                    {
-                        strncpy(buf+1, sb_sortservers.string, 20);
-                        buf[0] = key;
+					else
+					{
+						buf[0] = key;
+						strlcpy (buf + 1, sb_sortservers.string, sizeof (buf));
                     }
-                    buf[20] = 0;
-                    Cvar_Set(&sb_sortservers, buf);
-                    resort_servers = 1;
-                }
-                else if (isCtrlDown())
-                {
-                    switch (key)
-                    {
-                    case '2': cvar_toggle(&sb_showaddress);    break;
-                    case '3': cvar_toggle(&sb_showping);       break;
-                    case '4': cvar_toggle(&sb_showgamedir);    break;
-                    case '5': cvar_toggle(&sb_showmap);        break;
-                    case '6': cvar_toggle(&sb_showplayers);    break;
-                    case '7': cvar_toggle(&sb_showfraglimit);  break;
-                    case '8': cvar_toggle(&sb_showtimelimit);  break;
-                    }
-                }
-                break;
-            case 'c':   // copy server to clipboard
-                    CopyServerToClipboard(servers[Servers_pos]);
-                    break;
-            case 'v':   // past server into console
-                    PasteServerToConsole(servers[Servers_pos]);
-                    break;
-            default: return false;
-        }
-    }
 
-    Servers_pos = max(Servers_pos, 0);
-    Servers_pos = min(Servers_pos, serversn-1);
+					Cvar_Set(&sb_sortservers, buf);
+					resort_servers = 1;
+				}
+				else if (isCtrlDown())
+				{
+					switch (key)
+					{
+					case '2': cvar_toggle(&sb_showaddress);    break;
+					case '3': cvar_toggle(&sb_showping);       break;
+					case '4': cvar_toggle(&sb_showgamedir);    break;
+					case '5': cvar_toggle(&sb_showmap);        break;
+					case '6': cvar_toggle(&sb_showplayers);    break;
+					case '7': cvar_toggle(&sb_showfraglimit);  break;
+					case '8': cvar_toggle(&sb_showtimelimit);  break;
+					}
+				}
+				break;
+			case 'c':	// copy server to clipboard
+					CopyServerToClipboard(servers[Servers_pos]);
+					break;
+			case 'v':	// past server into console
+					PasteServerToConsole(servers[Servers_pos]);
+					break;
+			default: return false;
+		}
+	}
+
+	Servers_pos = max(Servers_pos, 0);
+	Servers_pos = min(Servers_pos, serversn-1);
 	return true;
 }
 
@@ -2277,21 +2283,19 @@ int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)
             {
                 char buf[32];
                 if (sb_sortsources.string[0] == '-')
-                    strncpy(buf, sb_sortsources.string+1, 20);
+                    strlcpy(buf, sb_sortsources.string+1, sizeof (buf));
                 else
                 {
-                    strncpy(buf+1, sb_sortsources.string, 20);
-                    buf[0] = '-';
+					buf[0] = '-';
+                    strlcpy(buf+1, sb_sortsources.string, sizeof (buf));
                 }
-                buf[20] = 0;
                 Cvar_Set(&sb_sortsources, buf);
             }
             else
             {
                 char buf[32];
-                strncpy(buf+1, sb_sortsources.string, 20);
-                buf[0] = key;
-                buf[20] = 0;
+				buf[0] = key;
+                strlcpy(buf+1, sb_sortsources.string, sizeof (buf));
                 Cvar_Set(&sb_sortsources, buf);
             }
             resort_sources = 1;
@@ -2306,19 +2310,20 @@ int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)
 
 qbool SearchNextPlayer(int pos)
 {
-    int i;
-    char tmp[1024];
-    for (i=pos; i < all_players_n; i++)
-    {
-        strcpy(tmp, all_players[i]->name);
-        FunToSort(tmp);
-        if (strstr(tmp, searchstring))
-        {
-            Players_pos = i;
-            return true;
-        }
-    }
-    return false;
+	int i;
+	char tmp[1024];
+
+	for (i = pos; i < all_players_n; i++) {
+		strlcpy (tmp, all_players[i]->name, sizeof (tmp));
+		FunToSort (tmp);
+
+		if (strstr (tmp, searchstring)) {
+			Players_pos = i;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
@@ -2348,7 +2353,7 @@ int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
 
             if (!SearchNextPlayer(Players_pos))
                 if (!SearchNextPlayer(0))
-                    strcpy(searchstring, "not found");  // not found
+                    strlcpy (searchstring, "not found", sizeof (searchstring));  // not found
         }
 		return true;
     }
@@ -2413,21 +2418,19 @@ int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
                 {
                     char buf[32];
                     if (sb_sortplayers.string[0] == '-')
-                        strncpy(buf, sb_sortplayers.string+1, 20);
+                        strlcpy(buf, sb_sortplayers.string+1, sizeof (buf));
                     else
                     {
-                        strncpy(buf+1, sb_sortplayers.string, 20);
-                        buf[0] = '-';
+						buf[0] = '-';
+                        strlcpy(buf+1, sb_sortplayers.string, sizeof (buf));
                     }
-                    buf[20] = 0;
                     Cvar_Set(&sb_sortplayers, buf);
                 }
                 else
                 {
                     char buf[32];
-                    strncpy(buf+1, sb_sortplayers.string, 20);
-                    buf[0] = key;
-                    buf[20] = 0;
+					buf[0] = key;
+                    strlcpy(buf+1, sb_sortplayers.string, sizeof (buf));
                     Cvar_Set(&sb_sortplayers, buf);
                 }
                 resort_all_players = 1;

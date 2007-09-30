@@ -1,4 +1,23 @@
 /*
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: help.c,v 1.16 2007-09-30 22:59:23 disconn3ct Exp $
+*/
+
+/*
  * Variables and commands help system
  */
 
@@ -161,82 +180,83 @@ void Help_DescribeCvar (cvar_t *v)
 	Help_DescribeVar(var);
 }
 
-void Help_VarDescription(const char *varname, char* buf, size_t bufleft)
+void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 {
 	xml_variable_t *var;
 	variable_enum_value_t *cv;
 
-	var = XSD_Variable_Load(va("help/variables/%s.xml", varname));
-	if (!var) return;
+	var = XSD_Variable_Load (va ("help/variables/%s.xml", varname));
+	if (!var)
+		return;
 
-	if (var->description && strlen(var->description) > 1) {
-		strncat(buf, var->description, bufleft);
-		bufleft -= strlen(var->description);
-		strncat(buf, "\n", bufleft--);
+	if (var->description && strlen (var->description) > 1) {
+		strlcat (buf, var->description, bufsize);
+		strlcat (buf, "\n", bufsize);
 	}
+
 	if (var->remarks) {
-		strncat(buf, "remarks: ", bufleft);
-		bufleft -= 9;
-		strncat(buf, var->remarks, bufleft);
-		bufleft -= strlen(var->remarks);
-		strncat(buf, "\n", bufleft--);
+		strlcat (buf, "remarks: ", bufsize);
+		strlcat (buf, var->remarks, bufsize);
+		strlcat (buf, "\n", bufsize);
 	}
+
 	switch (var->value_type) {
 	case t_boolean:
 		if (var->value.boolean_value.false_description) {
-			strncat(buf, "0: ", bufleft); bufleft -= 3;
-			strncat(buf, var->value.boolean_value.false_description, bufleft);
-			bufleft -= strlen(var->value.boolean_value.false_description);
-			strncat(buf, "\n", bufleft--);
+			strlcat (buf, "0: ", bufsize);
+			strlcat (buf, var->value.boolean_value.false_description, bufsize);
+			strlcat (buf, "\n", bufsize);
 		}
+
 		if (var->value.boolean_value.true_description) {
-			strncat(buf, "1: ", bufleft); bufleft -= 3;
-			strncat(buf, var->value.boolean_value.true_description, bufleft);
-			bufleft -= strlen(var->value.boolean_value.true_description);
-			strncat(buf, "\n", bufleft--);
+			strlcat (buf, "1: ", bufsize);
+			strlcat (buf, var->value.boolean_value.true_description, bufsize);
+			strlcat (buf, "\n", bufsize);
 		}
+
 		break;
-	
+
 	case t_float:
 		if (var->value.float_description) {
-			strncat(buf, var->value.float_description, bufleft);
-			bufleft -= strlen(var->value.float_description);
-			strncat(buf, "\n", bufleft--);
+			strlcat (buf, var->value.float_description, bufsize);
+			strlcat (buf, "\n", bufsize);
 		}
+
 		break;
 
 	case t_integer:
 		if (var->value.integer_description) {
-			strncat(buf, var->value.integer_description, bufleft);
-			bufleft -= strlen(var->value.integer_description);
-			strncat(buf, "\n", bufleft--);
+			strlcat (buf, var->value.integer_description, bufsize);
+			strlcat (buf, "\n", bufsize);
 		}
+
 		break;
 
 	case t_string:
 		if (var->value.string_description) {
-			strncat(buf, var->value.string_description, bufleft);
-			bufleft -= strlen(var->value.string_description);
-			strncat(buf, "\n", bufleft--);
+			strlcat (buf, var->value.string_description, bufsize);
+			strlcat (buf, "\n", bufsize);
 		}
+
 		break;
 
 	case t_enum:
 		cv = var->value.enum_value;
 		while(cv) {
 			if (cv->name && cv->description) {
-				strncat(buf, cv->name, bufleft); bufleft -= strlen(cv->name);
-				strncat(buf, ":", bufleft--);
-				strncat(buf, cv->description, bufleft); bufleft -= strlen(cv->description);
-				strncat(buf, "\n", bufleft--);
+				strlcat (buf, cv->name, bufsize);
+				strlcat (buf, ":", bufsize);
+				strlcat (buf, cv->description, bufsize);
+				strlcat (buf, "\n", bufsize);
 			}
 
 			cv = cv->next;
 		}
+
 		break;
 	}
 
-	XSD_Variable_Free( (xml_t *)var );
+	XSD_Variable_Free ((xml_t *) var);
 }
 
 void Help_Describe_f(void)

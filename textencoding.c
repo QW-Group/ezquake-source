@@ -37,7 +37,7 @@ char *encode_say (wchar *in)
 	strlcpy (buf, wcs2str(in), sizeof(buf));
 	return buf;
 encode:
-	strcpy (buf, "=`k8:");
+	strlcpy (buf, "=`k8:", sizeof (buf));
 	out = buf + strlen(buf);
 	while (*in && (out - buf < sizeof(buf)/sizeof(buf[0])))
 	{

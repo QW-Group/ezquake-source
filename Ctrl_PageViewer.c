@@ -245,10 +245,9 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
     {
         if (viewer->navigation_mode)
         {
-            if (strlen(link->tag->href) > w)
+            if (strlen (link->tag->href) > w)
             {
-                strncpy(buf, link->tag->href, w-3);
-                buf[w-3] = 0;
+                strlcpy (buf, link->tag->href, min (sizeof (buf), w-3));
                 strlcat (buf, "...", sizeof (buf));
             }
             else
@@ -285,8 +284,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
                 }
                 else
                 {
-                    strncpy(buf, viewer->page->doc->title, l-3);
-                    buf[l-3] = 0;
+                    strlcpy(buf, viewer->page->doc->title, min (sizeof (buf), l-3));
                     strlcat(buf, "...", sizeof (buf));
                     UI_Print(x+8, y + (h-1)*8, buf, false);
                 }

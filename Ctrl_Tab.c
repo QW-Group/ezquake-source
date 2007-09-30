@@ -65,8 +65,7 @@ void CTab_AddPage(CTab_t *tab, const char *name, int id, const CTabPage_Handlers
     page = &tab->pages[tab->nPages++];
 
     // set name
-    strncpy(page->name, name, TAB_MAX_NAME_LENGTH+1);
-    page->name[TAB_MAX_NAME_LENGTH] = 0;
+    strlcpy (page->name, name, sizeof (page->name));
 
     // set id
     page->id = id;

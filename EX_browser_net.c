@@ -109,12 +109,10 @@ void Parse_Serverinfo(server_data *s, char *info)
             i3 = info + strlen(info);
 
         s->keys[s->keysn] = (char *) Q_malloc(i2-info);
-        strncpy(s->keys[s->keysn], info+1, i2-info-1);
-        s->keys[s->keysn][i2-info-1] = 0;
+        strlcpy(s->keys[s->keysn], info+1, i2-info);
 
         s->values[s->keysn] = (char *) Q_malloc(i3-i2);
-        strncpy(s->values[s->keysn], i2+1, i3-i2-1);
-        s->values[s->keysn][i3-i2-1] = 0;
+        strlcpy(s->values[s->keysn], i2+1, i3-i2);
 
         s->keysn++;
 

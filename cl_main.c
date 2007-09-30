@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.187 2007-09-26 21:51:33 tonik Exp $
+$Id: cl_main.c,v 1.188 2007-09-30 22:59:23 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -381,7 +381,7 @@ static void CL_SendConnectPacket(
 	cls.qport = Cvar_Value("qport");
 
 	// let the server know what extensions we support
-	strcpy (biguserinfo, cls.userinfo);
+	strlcpy (biguserinfo, cls.userinfo, sizeof (biguserinfo));
 	extensions = CLIENT_EXTENSIONS &~ (cl_novweps.value ? Z_EXT_VWEP : 0);
 	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", extensions), sizeof(biguserinfo));
 
@@ -780,7 +780,7 @@ void CL_Disconnect (void) {
 		CL_StopPlayback();
 	} else if (cls.state != ca_disconnected) {
 		final[0] = clc_stringcmd;
-		strcpy ((char *)(final + 1), "drop");
+		strlcpy ((char *)(final + 1), "drop", sizeof (final) - 1);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
@@ -1278,8 +1278,8 @@ void CL_Init (void) {
 	SZ_Init(&cls.cmdmsg, cls.cmdmsg_data, sizeof(cls.cmdmsg_data));
 	cls.cmdmsg.allowoverflow = true;
 
-	strcpy (cls.gamedirfile, com_gamedirfile);
-	strcpy (cls.gamedir, com_gamedir);
+	strlcpy (cls.gamedirfile, com_gamedirfile, sizeof (cls.gamedirfile));
+	strlcpy (cls.gamedir, com_gamedir, sizeof (cls.gamedir));
 
 	Modules_Init();
 	FChecks_Init();

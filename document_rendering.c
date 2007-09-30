@@ -715,30 +715,33 @@ char *Add_Inline_String (char *text, char *string)
 }
 
 // adds text element
-char * Add_Inline_Text(document_rendering_context_t *cx, char *text, document_tag_text_t *tag)
+char *Add_Inline_Text (document_rendering_context_t *cx, char *text, document_tag_text_t *tag)
 {
-    char *s, *d;
-    char *buf;
+	char *s, *d;
+	char *buf;
+	size_t size;
 
-    buf = (char *) Q_malloc(strlen(text) + strlen(tag->text) + 1);
-    strcpy(buf, text);
-    Q_free(text);
+	size = strlen (text) + strlen (tag->text) + 1;
+	buf = (char *) Q_malloc (size);
+	strlcpy (buf, text, size);
+	Q_free (text);
 
-    d = buf + strlen(buf);
-    s = tag->text;
+	d = buf + strlen(buf);
+	s = tag->text;
 
-    while (*s)
-    {
-        char c = *s++;
+	while (*s)
+	{
+		char c = *s++;
 
-        if (cx->do_color)
-            c = ChangeColor(c);
+		if (cx->do_color)
+			c = ChangeColor(c);
 
-        *d++ = c;
-    }
-    *d = 0;
+		*d++ = c;
+	}
 
-    return buf;
+	*d = 0;
+
+	return buf;
 }
 
 // adds EM element

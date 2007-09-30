@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.2 2007-09-28 05:30:05 dkure Exp $
+ * $Id: vfs_zip.c,v 1.3 2007-09-30 22:59:25 disconn3ct Exp $
  *             
  */
 
@@ -419,7 +419,7 @@ qbool FSZIP_FLocate(void *handle, flocation_t *loc, char *filename, void *hashed
 		if (loc)
 		{
 			loc->index = pf - zip->files;
-			strcpy(loc->rawname, zip->filename);
+			strlcpy (loc->rawname, zip->filename, sizeof (loc->rawname));
 			loc->offset = pf->filepos;
 			loc->len = pf->filelen;
 	
@@ -495,8 +495,8 @@ void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc)
 	unz_global_info info;
 	
 	zip = Q_malloc(sizeof(zipfile_t));
-	memset(zip, 0, sizeof(*zip));
-	strncpy(zip->filename, desc, sizeof(zip->filename));
+	memset (zip, 0, sizeof(*zip));
+	strlcpy (zip->filename, desc, sizeof (zip->filename));
 
 	funcs = FSZIP_CreteFileFuncs(packhandle);
 	zip->handle = unzOpen2(desc, funcs);

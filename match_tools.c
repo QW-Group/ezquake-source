@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.30 2007-09-30 14:45:00 disconn3ct Exp $
+	$Id: match_tools.c,v 1.31 2007-09-30 22:59:23 disconn3ct Exp $
 */
 
 
@@ -220,7 +220,7 @@ static int MT_GetTeamNames(char teams[][MAX_INFO_STRING], int max) {
 				break;
 		}
 		if (j == i) {
-			strcpy(teams[count], cl.players[i].team);
+			strlcpy (teams[count], cl.players[i].team, MAX_INFO_STRING);
 			count++;
 		}
 		if (count == max)

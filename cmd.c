@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.79 2007-09-30 14:45:00 disconn3ct Exp $
+    $Id: cmd.c,v 1.80 2007-09-30 22:59:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1694,14 +1694,19 @@ void Cmd_If_New(void)
 		expr_len += clen ? clen + 1 : 3; // we will take '' as a representation of an empty string
 	}
 
-	expr = (char *) Q_malloc(expr_len+1);
+	expr = (char *) Q_malloc(expr_len + 1);
 	expr[0] = '\0';
 
 	for (i = 1; i < then_pos; i++) {
-		if (i > 1) strcat(expr, " ");
+		if (i > 1)
+			strlcat(expr, " ", expr_len + 1);
+
 		curarg = Cmd_Argv(i);
-		if (*curarg) strlcat(expr, curarg, expr_len);
-		else		 strlcat(expr, "''", expr_len);
+
+		if (*curarg)
+			strlcat(expr, curarg, expr_len + 1);
+		else
+			strlcat(expr, "''", expr_len + 1);
 	}
 
 	error = Expr_Eval_Bool(expr, &pars_ex, &result);
@@ -1710,6 +1715,7 @@ void Cmd_If_New(void)
 		Q_free(expr);
 		return;
 	}
+
 	Q_free(expr);
 
 	then_pos++;	// skip "then"
@@ -1718,9 +1724,12 @@ void Cmd_If_New(void)
 	if (result)	// true case
 	{
 		for (i = then_pos; i < c; i++) {
-			if (!else_found && !strcmp(Cmd_Argv(i), "else")) break;
+			if (!else_found && !strcmp(Cmd_Argv(i), "else"))
+				break;
+
 			if (buf[0])
 				strlcat (buf, " ", sizeof(buf));
+
 			strlcat (buf, Cmd_Argv(i), sizeof(buf));
 		}
 	}

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.46 2007-09-15 15:26:17 cokeman1982 Exp $
+	$Id: utils.c,v 1.47 2007-09-30 22:59:24 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -469,8 +469,7 @@ void CopyToClipboard(const char *text)
         CloseClipboard();
     }
 #else
-    strncpy(clipboard, text, CLIPBOARDSIZE);
-    clipboard[CLIPBOARDSIZE-1] = 0;
+    strlcpy (clipboard, text, CLIPBOARDSIZE);
 #endif
 }
 
@@ -493,8 +492,7 @@ char *ReadFromClipboard(void)
             clipText = GlobalLock(th);
             if (clipText)
             {
-                strncpy(clipbuf, clipText, 1023);
-                clipbuf[1023] = 0;
+                strlcpy(clipbuf, clipText, sizeof (clipbuf));
                 for (i=0; i < strlen(clipbuf); i++)
                     if (clipbuf[i]=='\n' || clipbuf[i]=='\t' || clipbuf[i]=='\b')
                         clipbuf[i] = ' ';

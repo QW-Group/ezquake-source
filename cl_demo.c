@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.87 2007-09-26 21:51:33 tonik Exp $
+	$Id: cl_demo.c,v 1.88 2007-09-30 22:59:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1880,17 +1880,16 @@ void CL_Demo_RemoveQWD(void)
 }
 
 //
+// cdemo_name is assumed to be 255 chars long
 //
-//
-void CL_Demo_GetCompressedName(char* cdemo_name)
+void CL_Demo_GetCompressedName (char* cdemo_name)
 {
-	int namelen;
+	size_t namelen = strlen (tempqwd_name);
 
-	namelen = strlen(tempqwd_name);
-	if (strlen(demo_format.string) && strlen(tempqwd_name))
+	if (strlen (demo_format.string) && namelen)
 	{
-		strncpy(cdemo_name, tempqwd_name, namelen - 3);
-		strlcpy(cdemo_name + namelen - 3, demo_format.string, 255 - (namelen - 3) - strlen(demo_format.string));
+		strlcpy (cdemo_name, tempqwd_name, 255);
+		strlcpy (cdemo_name + namelen - 3, demo_format.string, 255 - namelen + 3);
 	}
 }
 
@@ -1900,7 +1899,7 @@ void CL_Demo_GetCompressedName(char* cdemo_name)
 void CL_Demo_RemoveCompressed(void)
 {
 	char cdemo_name[255];
-	CL_Demo_GetCompressedName(cdemo_name);
+	CL_Demo_GetCompressedName (cdemo_name);
 	unlink(cdemo_name);
 }
 
@@ -1978,7 +1977,7 @@ void CL_CheckQizmoCompletion (void)
 	{
 		FILE* tempfile;
 		char newname[255];
-		CL_Demo_GetCompressedName(newname);
+		CL_Demo_GetCompressedName (newname);
 		qwz_packing = false;
 
 		if ((tempfile = fopen(newname, "rb")) && (COM_FileLength(tempfile) > 0) && fclose(tempfile) != EOF)

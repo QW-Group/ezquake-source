@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.83 2007-09-30 14:45:00 disconn3ct Exp $
+	$Id: menu.c,v 1.84 2007-09-30 22:59:23 disconn3ct Exp $
 
 */
 
@@ -902,7 +902,7 @@ void M_ScanSaves (char *sp_gamedir) {
 		VFS_GETS(f, name, sizeof(name));
 		version = atoi(name);
 		VFS_GETS(f, name, sizeof(name));
-		strncpy(m_filenames[i], name, sizeof(m_filenames[i]));
+		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
 #endif
 
 		// change _ back to space

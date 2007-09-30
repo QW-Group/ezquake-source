@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_misc.c,v 1.16 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: r_misc.c,v 1.17 2007-09-30 22:59:23 disconn3ct Exp $
 
 */
 
@@ -376,7 +376,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
             strlcpy(st, "\x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1F", sizeof (st));
             //snprintf(st, sizeof (st), "%3i%% packet loss, %3i ms ping", lost, avgping);
             snprintf(buf, sizeof (buf), " %i \xf %i%% ", avgping, lost);
-            strncpy(st + strlen(st) - strlen(buf) - 3, buf, strlen(buf));
+            strlcpy (st + strlen(st) - strlen(buf) - 3, buf, sizeof (st) - strlen (st) + strlen (buf));
             Draw_String(x+4, y2, st);
         }
     }

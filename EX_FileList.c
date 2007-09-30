@@ -1145,7 +1145,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 		{
 			char buf[128];
 
-			strncpy(buf, fl->sort_mode->string, 32);
+			strlcpy(buf, fl->sort_mode->string, 32); // WTF?
 			if (key  ==  buf[0])
 			{
 				// reverse order

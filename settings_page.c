@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.45 2007-09-26 13:53:42 tonik Exp $
+		$Id: settings_page.c,v 1.46 2007-09-30 22:59:23 disconn3ct Exp $
 
 */
 
@@ -423,7 +423,7 @@ static void StringEntryLeave(setting* set) {
 
 static void StringEntryEnter(setting* set) {
 	CEditBox_Init(&editbox, EDITBOXWIDTH, EDITBOXMAXLENGTH);
-	strncpy(editbox.text, set->cvar->string, EDITBOXMAXLENGTH);
+	strlcpy(editbox.text, set->cvar->string, EDITBOXMAXLENGTH);
 }
 
 static void EditBoxCheck(settings_page* tab, int oldm, int newm)
@@ -469,7 +469,7 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 	case stt_enum:
 		buf[0] = 0;
 		helptext = "Further info not available...";
-		Help_VarDescription(s->cvar->name, buf, sizeof(buf) - 1);
+		Help_VarDescription (s->cvar->name, buf, sizeof(buf));
 		helptext = buf;
 		break;
 

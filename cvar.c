@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.56 2007-09-26 21:51:33 tonik Exp $
+$Id: cvar.c,v 1.57 2007-09-30 22:59:23 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -1123,7 +1123,7 @@ void Cvar_Set_Calc_f(void)
 			buf[pos+var2len] = 0;
 		}
 
-		strncpy (buf + pos, var2->string, var2len);
+		strlcpy (buf + pos, var2->string, sizeof (buf) - pos);
 		Cvar_Set (var, buf);
 
 		return;

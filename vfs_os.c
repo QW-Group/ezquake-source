@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_os.c,v 1.4 2007-09-30 22:55:21 johnnycz Exp $
+ * $Id: vfs_os.c,v 1.5 2007-09-30 22:59:24 disconn3ct Exp $
  *             
  */
 
@@ -238,8 +238,8 @@ int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
 	}
 	if (!Hash_GetInsensative(&filesystemhash, filename))
 	{
-		bucket_t *bucket = (bucket_t*) Q_calloc(1, sizeof(bucket_t) + strlen(filename)+1);
-		strcpy((char *)(bucket+1), filename);
+		bucket_t *bucket = (bucket_t*) Q_calloc(1, sizeof(bucket_t) + strlen(filename) + 1);
+		strlcpy ((char *)(bucket+1), filename, sizeof(bucket_t) + strlen(filename) + 1);
 #ifdef _WIN32
 		Q_strlwr(filename);
 #endif
@@ -290,7 +290,7 @@ qbool FSOS_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedr
 		loc->len = len;
 		loc->offset = 0;
 		loc->index = 0;
-		strncpy(loc->rawname, filename, sizeof(loc->rawname));
+		strlcpy (loc->rawname, filename, sizeof (loc->rawname));
 	}
 
 	return true;

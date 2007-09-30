@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.43 2007-09-30 14:45:00 disconn3ct Exp $
+	$Id: sys_win.c,v 1.44 2007-09-30 22:59:24 disconn3ct Exp $
 
 */
 // sys_win.c
@@ -187,7 +187,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	int go;
 	if (!gpath)
 		return 0;
-	//  strcpy(apath, match);
+	//  strlcpy(apath, match, sizeof (apath));
 	snprintf(apath, sizeof(apath), "%s/%s", gpath, match);
 	for (s = apath+strlen(apath)-1; s> apath; s--)
 	{
@@ -784,26 +784,15 @@ void MakeDirent(sys_dirent *ent, WIN32_FIND_DATA *data)
 {
     FILETIME ft1;
 
-    strncpy(ent->fname, data->cFileName, min(strlen(data->cFileName)+1, MAX_PATH_LENGTH));
-    ent->fname[MAX_PATH_LENGTH-1] = 0;
+    strlcpy (ent->fname, data->cFileName, min(strlen(data->cFileName)+1, MAX_PATH_LENGTH));
 
-    if (data->nFileSizeHigh > 0)
-        ent->size = 0xffffffff;
-    else
-        ent->size = data->nFileSizeLow;
+	ent->size = (data->nFileSizeHigh > 0) ? 0xffffffff : data->nFileSizeLow;
 
     FileTimeToLocalFileTime(&data->ftLastWriteTime, &ft1);
     FileTimeToSystemTime(&ft1, &ent->time);
 
-    if (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        ent->directory = 1;
-    else
-        ent->directory = 0;
-
-    if (data->dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))
-        ent->hidden = 1;
-    else
-        ent->hidden = 0;
+	ent->directory = (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
+	ent->hidden = (data->dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) ? 1 : 0;
 }
 
 unsigned long Sys_ReadDirFirst(sys_dirent *ent)

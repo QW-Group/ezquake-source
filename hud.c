@@ -815,20 +815,19 @@ void HUD_CalcFrameExtents(hud_t *hud, int width, int height,									// In.
 void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Converts "red" into "255 0 0", etc. or returns input as it was.
-	char *new_color = ColorNameToRGBString(newval);
+	char *new_color = ColorNameToRGBString (newval);
 	char buf[256];
-	int hudname_len;
+	size_t hudname_len;
 	hud_t* hud_elem;
 	byte* b_colors;
 
-	hudname_len = min(sizeof(buf), strlen(var->name) - strlen("_frame_color") - strlen("hud_"));
-	strncpy(buf, var->name + 4, hudname_len);
-	buf[hudname_len] = 0;
-	hud_elem = HUD_Find(buf);
+	hudname_len = min (sizeof (buf), strlen (var->name) - strlen ("_frame_color") - strlen ("hud_") + 1);
+	strlcpy (buf, var->name + 4, hudname_len);
+	hud_elem = HUD_Find (buf);
 
-	b_colors = StringToRGB(new_color);
+	b_colors = StringToRGB (new_color);
 
-	memcpy(hud_elem->frame_color_cache, b_colors, sizeof(byte) * 3);
+	memcpy (hud_elem->frame_color_cache, b_colors, sizeof (byte) * 3);
 }
 
 //

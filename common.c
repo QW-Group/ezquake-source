@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.98 2007-09-30 18:20:32 dkure Exp $
+    $Id: common.c,v 1.99 2007-09-30 22:59:23 disconn3ct Exp $
 
 */
 
@@ -93,18 +93,16 @@ void COM_StoreOriginalCmdline (int argc, char **argv)
 
 char *COM_SkipPath (char *pathname)
 {
-	char *last = NULL;
-	char *p = NULL;
+	char *last;
+	char *p;
 
-	last = pathname;
-	p = pathname;
+	last = p = pathname;
 
 	while (*p)
 	{
 		if (*p == '/' || *p == '\\')
-		{
 			last = p + 1;
-		}
+
 		p++;
 	}
 

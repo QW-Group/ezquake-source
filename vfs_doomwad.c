@@ -16,7 +16,7 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
- $Id: vfs_doomwad.c,v 1.2 2007-09-30 14:45:01 disconn3ct Exp $
+ $Id: vfs_doomwad.c,v 1.3 2007-09-30 22:59:24 disconn3ct Exp $
 */
 
 
@@ -92,7 +92,7 @@ void *FSPAK_LoadDoomWadFile (vfsfile_t *packhandle, char *desc)
 	{
 		VFS_READ (packhandle, &info, sizeof(info), NULL);
 
-		strcpy (filename, info.name);
+		strlcpy (filename, info.name, sizeof (filename));
 		filename[8] = '\0';
 		Q_strlwr(filename);
 
@@ -127,7 +127,7 @@ newsection:
 				if ((filename[0] == 'e' && filename[2] == 'm') || !strncmp(filename, "map", 3))
 				{	//this is the start of a beutiful new map
 					section = 1;
-					strcpy(sectionname, filename);
+					strlcpy (sectionname, filename, sizeof (sectionname));
 					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
 					newfiles[i].filepos = 0;
 					newfiles[i].filelen = 4;
@@ -136,7 +136,7 @@ newsection:
 				if (!strncmp(filename, "gl_", 3) && ((filename[4] == 'e' && filename[5] == 'm') || !strncmp(filename+3, "map", 3)))
 				{	//this is the start of a beutiful new map
 					section = 5;
-					strcpy(sectionname, filename+3);
+					strlcpy (sectionname, filename+3, sizeof (sectionname));
 					break;
 				}
 			}
@@ -200,7 +200,7 @@ newsection:
 	}
 
 	pack = (pack_t*)Q_malloc (sizeof (pack_t));
-	strcpy (pack->filename, desc);
+	strlcpy (pack->filename, desc, sizeof (pack->filename));
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;

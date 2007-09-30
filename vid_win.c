@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.27 2007-09-20 16:09:21 qqshka Exp $
+	$Id: vid_win.c,v 1.28 2007-09-30 22:59:25 disconn3ct Exp $
 
 */
 
@@ -545,7 +545,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance) {
 	modelist[0].type = MS_WINDOWED;
 	modelist[0].width = 320;
 	modelist[0].height = 240;
-	strcpy (modelist[0].modedesc, "320x240");
+	strlcpy (modelist[0].modedesc, "320x240", sizeof (modelist[0].modedesc));
 	modelist[0].mode13 = 0;
 	modelist[0].modenum = MODE_WINDOWED;
 	modelist[0].stretched = 0;
@@ -557,7 +557,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance) {
 	modelist[1].type = MS_WINDOWED;
 	modelist[1].width = 640;
 	modelist[1].height = 480;
-	strcpy (modelist[1].modedesc, "640x480");
+	strlcpy (modelist[1].modedesc, "640x480", sizeof (modelist[1].modedesc));
 	modelist[1].mode13 = 0;
 	modelist[1].modenum = MODE_WINDOWED + 1;
 	modelist[1].stretched = 1;
@@ -569,7 +569,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance) {
 	modelist[2].type = MS_WINDOWED;
 	modelist[2].width = 800;
 	modelist[2].height = 600;
-	strcpy (modelist[2].modedesc, "800x600");
+	strlcpy (modelist[2].modedesc, "800x600", sizeof (modelist[2].modedesc));
 	modelist[2].mode13 = 0;
 	modelist[2].modenum = MODE_WINDOWED + 2;
 	modelist[2].stretched = 1;
@@ -1716,8 +1716,7 @@ void VID_Init (unsigned char *palette) {
 	vid_menudrawfn = VID_MenuDraw;
 	vid_menukeyfn = VID_MenuKey;
 
-	strcpy (badmode.modedesc, "Bad mode");
-
+	strlcpy (badmode.modedesc, "Bad mode", sizeof (badmode.modedesc));
 }
 
 void VID_NotifyActivity(void) {

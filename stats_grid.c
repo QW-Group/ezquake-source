@@ -528,7 +528,7 @@ void StatsGrid_CalculateHoldItem(stats_weight_grid_t *grid, int row, int col, fl
 			// If this is the first time, set the name of the team in the entity struct.
 			if(!stats_important_ents->teams[team_id].name[0])
 			{
-				strncpy(stats_important_ents->teams[team_id].name, grid->teams[team_id].name, MAX_INFO_STRING);
+				strlcpy(stats_important_ents->teams[team_id].name, grid->teams[team_id].name, MAX_INFO_STRING);
 				stats_important_ents->teams[team_id].color = grid->teams[team_id].color;
 			}
 		}

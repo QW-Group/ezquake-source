@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_utils.c,v 1.55 2007-09-30 14:45:00 disconn3ct Exp $
+$Id: mvd_utils.c,v 1.56 2007-09-30 22:59:23 disconn3ct Exp $
 */
 
 // core module of the group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
@@ -232,13 +232,13 @@ void MVD_Init_Info_f (void) {
 		mvd_new_info[z++].p_info = &cl.players[i];
 	}
 
-	strncpy(mvd_cg_info.mapname,TP_MapName(),sizeof(mvd_cg_info.mapname));
+	strlcpy(mvd_cg_info.mapname,TP_MapName(),sizeof(mvd_cg_info.mapname));
 	mvd_cg_info.timelimit=cl.timelimit;
 
-	strncpy(mvd_cg_info.team1, (z ? mvd_new_info[0].p_info->team : ""),sizeof(mvd_cg_info.team1));
+	strlcpy(mvd_cg_info.team1, (z ? mvd_new_info[0].p_info->team : ""),sizeof(mvd_cg_info.team1));
 	for (i = 0; i < z; i++) {
 		if(strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1)){
-			strncpy(mvd_cg_info.team2,mvd_new_info[i].p_info->team,sizeof(mvd_cg_info.team2));
+			strlcpy(mvd_cg_info.team2,mvd_new_info[i].p_info->team,sizeof(mvd_cg_info.team2));
 			break;
 		}
 	}
@@ -254,7 +254,7 @@ void MVD_Init_Info_f (void) {
 	else
 		mvd_cg_info.gametype=4;
 
-	strncpy(mvd_cg_info.hostname,Info_ValueForKey(cl.serverinfo,"hostname"),sizeof(mvd_cg_info.hostname));
+	strlcpy(mvd_cg_info.hostname,Info_ValueForKey(cl.serverinfo,"hostname"),sizeof(mvd_cg_info.hostname));
 	mvd_cg_info.deathmatch=atoi(Info_ValueForKey(cl.serverinfo,"deathmatch"));
 
 	mvd_cg_info.pcount = z;
@@ -405,7 +405,7 @@ void MVD_Info (void){
 	y = ELEMENT_Y_COORD(mvd_info);
 
 	if (mvd_info_show_header.value){
-		strncpy(mvd_info_header_string,mvd_info_setup.string,sizeof(mvd_info_header_string));
+		strlcpy(mvd_info_header_string,mvd_info_setup.string,sizeof(mvd_info_header_string));
 		Replace_In_String(mvd_info_header_string,sizeof(mvd_info_header_string),'%',\
 			10,\
 			"a","Armor",\
@@ -418,7 +418,7 @@ void MVD_Info (void){
 			"v","Value",\
 			"w","Cur.Weap.",\
 			"W","Best Weap.");
-		strncpy(mvd_info_header_string,Make_Red(mvd_info_header_string,0),sizeof(mvd_info_header_string));
+		strlcpy(mvd_info_header_string,Make_Red(mvd_info_header_string,0),sizeof(mvd_info_header_string));
 		Draw_String (x, y+((z++)*8), mvd_info_header_string);
 	}
 
@@ -426,21 +426,21 @@ void MVD_Info (void){
 
 	mvd_info_powerups[0]=0;
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_QUAD)
-		//strncpyz(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
+		//strlcpy(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
 
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVULNERABILITY) {
 		//if (mvd_info_powerups[0])
-		//	strncatz(mvd_info_powerups, tp_name_separator.string);
-		//strncatz(mvd_info_powerups, tp_name_pent.string);
+		//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+		//strlcat(mvd_info_powerups, tp_name_pent.string, sizeof(mvd_info_powerups));
 	}
 
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVISIBILITY) {
 		//if (mvd_info_powerups[0])
-		//	strncatz(mvd_info_powerups, tp_name_separator.string);
-		//strncatz(mvd_info_powerups, tp_name_ring.string);
+		//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+		//strlcat(mvd_info_powerups, tp_name_ring.string, sizeof(mvd_info_powerups));
 	}
 
-	strncpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));
+	strlcpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));
     Replace_In_String(mvd_info_final_string,sizeof(mvd_info_final_string),'%',\
 			10,\
 			"w",va("%s:%i",Weapon_NumToString(mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON]),mvd_new_info[i].p_info->stats[STAT_AMMO]),\
@@ -453,7 +453,7 @@ void MVD_Info (void){
 			"P",va("%i",mvd_new_info[i].p_info->ping),\
 			"p",mvd_info_powerups,\
 			"v",va("%f",mvd_new_info[i].value));
-	strncpy(str, mvd_info_final_string,sizeof(str));
+	strlcpy(str, mvd_info_final_string,sizeof(str));
 	Draw_String (x, y+((z++)*8), str);
 
 	#ifdef DEBUG
@@ -792,29 +792,29 @@ void MVD_Status (void){
 	x = ELEMENT_X_COORD(mvd_status);
 	y = ELEMENT_Y_COORD(mvd_status);
 	if (mvd_new_info[id].p_info)
-		strncpy(str,mvd_new_info[id].p_info->name,sizeof(str));
+		strlcpy(str,mvd_new_info[id].p_info->name,sizeof(str));
 	else
 		str[0] = '\0';
 	Draw_ColoredString (x, y+((z++)*8), str,1);
-	strncpy(str,"&cf40Took",sizeof(str));
+	strlcpy(str,"&cf40Took",sizeof(str));
 
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
-	strncpy(str,va("RL: %i LG: %i GL: %i RA: %i YA: %i GA:%i",\
+	strlcpy(str,va("RL: %i LG: %i GL: %i RA: %i YA: %i GA:%i",\
 		mvd_new_info[id].info.info[RL_INFO].count,\
 		mvd_new_info[id].info.info[LG_INFO].count,\
 		mvd_new_info[id].info.info[GL_INFO].count,\
 		mvd_new_info[id].info.info[RA_INFO].count,\
 		mvd_new_info[id].info.info[YA_INFO].count,\
 		mvd_new_info[id].info.info[RA_INFO].count),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
-    strncpy(str,va("Ring: %i Quad: %i Pent: %i MH: %i",\
+    strlcpy(str,va("Ring: %i Quad: %i Pent: %i MH: %i",\
 		mvd_new_info[id].info.info[RING_INFO].count,\
 		mvd_new_info[id].info.info[QUAD_INFO].count,\
 		mvd_new_info[id].info.info[PENT_INFO].count,\
 		mvd_new_info[id].info.info[MH_INFO].count),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 //	Com_Printf("%f %f %f \n",lasttime,mvd_new_info[id].info.das.alivetimestart, mvd_new_info[id].info.das.alivetime);
@@ -823,15 +823,15 @@ void MVD_Status (void){
 		lasttime1=mvd_new_info[id].info.das.alivetime;
 	}
 
-	strncpy(str,va("Deaths: %i",mvd_new_info[id].info.das.deathcount),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,va("Deaths: %i",mvd_new_info[id].info.das.deathcount),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,"Average Run:",sizeof(str));
+	strlcpy(str,"Average Run:",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,"Time      Frags TKS",sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,"Time      Frags TKS",sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 	for (p=0;p<=mvd_new_info[id].info.run;p++){
@@ -845,15 +845,15 @@ void MVD_Status (void){
 	av_tk = av_tk / (mvd_new_info[id].info.run +1);
 	}
 
-	strncpy(str,va("%9.3f %3.3f %3.3f",av_t,av_f,av_tk),sizeof(str));
+	strlcpy(str,va("%9.3f %3.3f %3.3f",av_t,av_f,av_tk),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 
-	strncpy(str,"Last 3 Runs:",sizeof(str));
+	strlcpy(str,"Last 3 Runs:",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,"No. Time      Frags TKS",sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,"No. Time      Frags TKS",sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 	p=mvd_new_info[id].info.run-3;
@@ -861,28 +861,28 @@ void MVD_Status (void){
 		p=0;
 	//&& mvd_new_info[id].info.runs[p].time
 	for(;p<=mvd_new_info[id].info.run ;p++){
-		strncpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.runs[p].time,mvd_new_info[id].info.runs[p].frags,mvd_new_info[id].info.runs[p].teamfrags),sizeof(str));
+		strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.runs[p].time,mvd_new_info[id].info.runs[p].frags,mvd_new_info[id].info.runs[p].teamfrags),sizeof(str));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
 	}
-	strncpy(str,va("Last Fired Weapon: %s",MVD_Weapon_strings(mvd_new_info[id].info.lfw)),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,va("Last Fired Weapon: %s",MVD_Weapon_strings(mvd_new_info[id].info.lfw)),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,"&cf40Lost",sizeof(str));
+	strlcpy(str,"&cf40Lost",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
-	strncpy(str,va("RL: %i LG: %i GL: %i QUAD: %i",\
+	strlcpy(str,va("RL: %i LG: %i GL: %i QUAD: %i",\
 		mvd_new_info[id].info.info[RL_INFO].lost,\
 		mvd_new_info[id].info.info[LG_INFO].lost,\
 		mvd_new_info[id].info.info[GL_INFO].lost,\
 		mvd_new_info[id].info.info[QUAD_INFO].lost),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,"&cf40Kills",sizeof(str));
+	strlcpy(str,"&cf40Kills",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
-	strncpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
+	strlcpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
 		mvd_new_info[id].info.killstats.normal[RL_INFO].kills,\
 		mvd_new_info[id].info.killstats.normal[LG_INFO].kills,\
 		mvd_new_info[id].info.killstats.normal[GL_INFO].kills,\
@@ -891,18 +891,18 @@ void MVD_Status (void){
 		mvd_new_info[id].info.killstats.normal[SSG_INFO].kills,\
 		mvd_new_info[id].info.killstats.normal[SG_INFO].kills,\
 		mvd_new_info[id].info.killstats.normal[AXE_INFO].kills),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,va("SPAWN: %i",\
+	strlcpy(str,va("SPAWN: %i",\
 		mvd_new_info[id].info.spawntelefrags),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,"&cf40Teamkills",sizeof(str));
+	strlcpy(str,"&cf40Teamkills",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
-	strncpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
+	strlcpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
 		mvd_new_info[id].info.killstats.normal[RL_INFO].teamkills,\
 		mvd_new_info[id].info.killstats.normal[LG_INFO].teamkills,\
 		mvd_new_info[id].info.killstats.normal[GL_INFO].teamkills,\
@@ -911,25 +911,25 @@ void MVD_Status (void){
 		mvd_new_info[id].info.killstats.normal[SSG_INFO].teamkills,\
 		mvd_new_info[id].info.killstats.normal[SG_INFO].teamkills,\
 		mvd_new_info[id].info.killstats.normal[AXE_INFO].teamkills),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
-	strncpy(str,va("SPAWN: %i",\
+	strlcpy(str,va("SPAWN: %i",\
 		mvd_new_info[id].info.teamspawntelefrags),sizeof(str));
-	strncpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,"Last 3 Quad Runs:",sizeof(str));
+	strlcpy(str,"Last 3 Quad Runs:",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	strncpy(str,"No. Time      Frags TKS",sizeof(str));
-	strncpy(str,Make_Red(str,0),sizeof(str));
+	strlcpy(str,"No. Time      Frags TKS",sizeof(str));
+	strlcpy(str,Make_Red(str,0),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 	p=mvd_new_info[id].info.info[QUAD_INFO].run-3;
 	if (p<0)
 		p=0;
 	for(;p<=mvd_new_info[id].info.info[QUAD_INFO].run && mvd_new_info[id].info.info[QUAD_INFO].runs[p].time ;p++){
-		strncpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.info[QUAD_INFO].runs[p].time,mvd_new_info[id].info.info[QUAD_INFO].runs[p].frags,mvd_new_info[id].info.info[QUAD_INFO].runs[p].teamfrags),sizeof(str));
+		strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.info[QUAD_INFO].runs[p].time,mvd_new_info[id].info.info[QUAD_INFO].runs[p].frags,mvd_new_info[id].info.info[QUAD_INFO].runs[p].teamfrags),sizeof(str));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
 	}
 }

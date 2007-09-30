@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.25 2007-09-30 14:45:00 disconn3ct Exp $
+	$Id: common_draw.c,v 1.26 2007-09-30 22:59:23 disconn3ct Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -71,7 +71,7 @@ int SCR_DrawDemoStatus(void)
     Draw_Character((int)(x + 8*((cls.demopos / cls.demolength)*(w-3)+1)), y-24, '\x83');
 
     // demo name
-    strcpy(st, cls.demoname);
+    strlcpy (st, cls.demoname, sizeof (st));
     st[vid.width/8] = 0;
     Draw_Alt_String(vid.width/2 - 4*strlen(st), y-4, st);
 
@@ -352,85 +352,91 @@ draws clients list with selected values from userinfo
 */
 void SCR_DrawClients(void)
 {
-    extern sb_showclients;
-    int uid_w, clients;
-    int i, y, x;
-    char line[128], buf[64];
+	extern sb_showclients;
+	int uid_w, clients;
+	int i, y, x;
+	char line[128], buf[64];
 
-    if (!sb_showclients  ||  cls.state == ca_disconnected)
-        return;
+	if (!sb_showclients || cls.state == ca_disconnected)
+		return;
 
-    // prepare
-    clients = 0;
-    uid_w = 3;
-    for (i=0; i < MAX_CLIENTS; i++)
-    {
-        int w;
-        if (!cl.players[i].name[0])
-            continue;
-        clients++;
-        w = strlen(va("%d", cl.players[i].userid));
-        if (w > uid_w)
-            uid_w = w;
-    }
+	// prepare
+	clients = 0;
+	uid_w = 3;
+	for (i=0; i < MAX_CLIENTS; i++)
+	{
+		int w;
 
-    y = (vid.height - sb_lines - 8*(clients+6));
-    y = max(y, 0);
-    x = (vid.width-320)/2 + 4;
+		if (!cl.players[i].name[0])
+			continue;
 
-    strcpy(line, " # ");
-    snprintf(buf, sizeof (buf), "%*.*s ", uid_w, uid_w, "uid");
-    strcat(line, buf);
-    snprintf(buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, "name");
-    strcat(line, buf);
-    strcat(line, "team skin     rate");
-    Draw_String(x, y, line);
-    y+=8;
+		clients++;
+		w = strlen(va("%d", cl.players[i].userid));
 
-    strcpy(line, "\x1D\x1F \x1D");
-    snprintf(buf, sizeof (buf), "%*.*s", uid_w-2, uid_w-2, "\x1E\x1E\x1E\x1E");
-    strcat(line, buf);
-    strcat(line, "\x1F \x1D");
-    snprintf(buf, sizeof (buf), "%*.*s", 16-uid_w-2, 16-uid_w-2, "\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E");
-    strcat(line, buf);
-    strcat(line, "\x1F \x1D\x1E\x1E\x1F \x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1F \x1D\x1E\x1E\x1F");
-    Draw_String(x, y, line);
-    y+=8;
+		if (w > uid_w)
+			uid_w = w;
+	}
 
-    for (i=0; i < MAX_CLIENTS; i++)
-    {
-        if (!cl.players[i].name[0])
-            continue;
+	y = (vid.height - sb_lines - 8 * (clients + 6));
+	y = max (y, 0);
+	x = (vid.width - 320) / 2 + 4;
 
-        if (y > vid.height-8)
-            break;
+	strlcpy (line, " # ", sizeof (line));
+	snprintf (buf, sizeof (buf), "%*.*s ", uid_w, uid_w, "uid");
+	strlcat (line, buf, sizeof (line));
+	snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, "name");
+	strlcat (line, buf, sizeof (line));
+	strlcat (line, "team skin     rate", sizeof (line));
 
-        line[0] = 0;
+	Draw_String (x, y, line);
+	y += 8;
 
-        snprintf(buf, sizeof (buf), "%2d ", i);
-        strcat(line, buf);
+	strlcpy (line, "\x1D\x1F \x1D", sizeof (line));
+	snprintf (buf, sizeof (buf), "%*.*s", uid_w-2, uid_w-2, "\x1E\x1E\x1E\x1E");
+	strlcat (line, buf, sizeof (line));
+	strlcat (line, "\x1F \x1D", sizeof (line));
+	snprintf (buf, sizeof (buf), "%*.*s", 16-uid_w-2, 16-uid_w-2, "\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E");
+	strlcat (line, buf, sizeof (line));
+    strlcat (line, "\x1F \x1D\x1E\x1E\x1F \x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1F \x1D\x1E\x1E\x1F", sizeof (line));
 
-        snprintf(buf, sizeof (buf), "%*d ", uid_w, cl.players[i].userid);
-        strcat(line, buf);
+	Draw_String(x, y, line);
+    y += 8;
 
-        snprintf(buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, cl.players[i].name);
-        strcat(line, buf);
+	for (i=0; i < MAX_CLIENTS; i++)
+	{
+		if (!cl.players[i].name[0])
+			continue;
 
-        snprintf(buf, sizeof (buf), "%-4.4s ", Info_ValueForKey(cl.players[i].userinfo, "team"));
-        strcat(line, buf);
+		if (y > vid.height - 8)
+			break;
 
-        if (cl.players[i].spectator)
-            strcpy(buf, "<spec>   ");
-        else
-            snprintf(buf, sizeof (buf), "%-8.8s ", Info_ValueForKey(cl.players[i].userinfo, "skin"));
-        strcat(line, buf);
+		line[0] = 0;
 
-        snprintf(buf, sizeof (buf), "%4d", min(9999, atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
-        strcat(line, buf);
+		snprintf (buf, sizeof (buf), "%2d ", i);
+		strlcat (line, buf, sizeof (line));
 
-        Draw_String(x, y, line);
-        y+=8;
-    }
+		snprintf (buf, sizeof (buf), "%*d ", uid_w, cl.players[i].userid);
+        strlcat(line, buf, sizeof (line));
+
+		snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, cl.players[i].name);
+		strlcat (line, buf, sizeof (line));
+
+		snprintf(buf, sizeof (buf), "%-4.4s ", Info_ValueForKey(cl.players[i].userinfo, "team"));
+		strlcat (line, buf, sizeof (line));
+
+		if (cl.players[i].spectator)
+			strlcpy (buf, "<spec>   ", sizeof (buf));
+		else
+			snprintf (buf, sizeof (buf), "%-8.8s ", Info_ValueForKey(cl.players[i].userinfo, "skin"));
+
+		strlcat (line, buf, sizeof (line));
+
+		snprintf (buf, sizeof (buf), "%4d", min(9999, atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
+		strlcat (line, buf, sizeof (line));
+
+		Draw_String (x, y, line);
+		y += 8;
+	}
 }
 #endif
 
@@ -469,7 +475,7 @@ mpic_t* CachePic_Add(const char *path, mpic_t *pic)
 	
 	searchpos->data.pic = pic;
 
-	strncpy(searchpos->data.name, path, sizeof(searchpos->data.name));
+	strlcpy(searchpos->data.name, path, sizeof(searchpos->data.name));
 	searchpos->next = NULL; // Terminate the list.
 	*nextp = searchpos;		// Connect to the list.
 

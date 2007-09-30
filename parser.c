@@ -2,7 +2,7 @@
 	Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.22 2007-08-24 16:55:04 dkure Exp $
+$Id: parser.c,v 1.23 2007-09-30 22:59:23 disconn3ct Exp $
 
 */
 
@@ -204,11 +204,10 @@ LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 		SetError(p, ERR_OUT_OF_MEM);
 		return Get_Expr_Dummy();
 	}
-	strcpy(ret.s_val, e1.s_val);
-	strcat(ret.s_val, e2.s_val);
+	strlcpy(ret.s_val, e1.s_val, len);
+	strlcat(ret.s_val, e2.s_val, len);
 	free(e1.s_val);
 	free(e2.s_val);
-	ret.s_val[len-1] = '\0';
 
 	return ret;
 }
@@ -706,8 +705,7 @@ LOCAL expr_val Match_String(EParser p)
 		SetError(p, ERR_OUT_OF_MEM);
 		return Get_Expr_Dummy();
 	}
-	strncpy(ret.s_val, p->string + startpos, len);
-	ret.s_val[len] = '\0';
+	strlcpy(ret.s_val, p->string + startpos, len);
 
 	Next_Token(p);
 

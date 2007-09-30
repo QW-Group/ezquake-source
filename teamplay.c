@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.91 2007-09-30 14:45:00 disconn3ct Exp $
+    $Id: teamplay.c,v 1.92 2007-09-30 22:59:24 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -2136,7 +2136,7 @@ char *TP_PlayerName (void)
 {
 	static char myname[MAX_INFO_STRING];
 
-	strcpy (myname, Info_ValueForKey(cl.players[cl.playernum].userinfo, "name"));
+	strlcpy (myname, Info_ValueForKey(cl.players[cl.playernum].userinfo, "name"), MAX_INFO_STRING);
 	return myname;
 }
 
@@ -2144,7 +2144,7 @@ char *TP_PlayerTeam (void)
 {
 	static char myteam[MAX_INFO_STRING];
 
-	strcpy (myteam, cl.players[cl.playernum].team);
+	strlcpy (myteam, cl.players[cl.playernum].team, MAX_INFO_STRING);
 	return myteam;
 }
 
@@ -2418,7 +2418,7 @@ static void FlagCommand (int *flags, int defaultflags)
 	c = Cmd_Argc ();
 	if (c == 1)	{
 		if (!*flags)
-			strcpy (str, "none");
+			strlcpy (str, "none", sizeof (str));
 		for (i = 0 ; i < NUM_ITEMFLAGS ; i++)
 			if (*flags & (1 << i)) {
 				if (*str)
@@ -2754,8 +2754,8 @@ static void ExecTookTrigger (char *s, int flag, vec3_t org)
 
 	vars.tooktime = cls.realtime;
     vars.tookflag = flag;
-	strncpy (vars.tookname, s, sizeof(vars.tookname)-1);
-	strncpy (vars.tookloc, TP_LocationName (org), sizeof(vars.tookloc)-1);
+	strlcpy (vars.tookname, s, sizeof (vars.tookname));
+	strlcpy (vars.tookloc, TP_LocationName (org), sizeof (vars.tookloc));
 
 	if ((tookflags_dmm & flag) && CheckTrigger())
 		TP_ExecTrigger ("f_took");
@@ -2790,7 +2790,7 @@ void TP_ParsePlayerInfo(player_state_t *oldstate, player_state_t *state, player_
 			ExecTookTrigger (tp_name_flag.string, it_flag, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
 		} else if (!(state->effects & (EF_FLAG1|EF_FLAG2)) && (oldstate->effects & (EF_FLAG1|EF_FLAG2))) {
 			vars.lastdrop_time = cls.realtime;
-			strcpy (vars.lastdroploc, Macro_Location());
+			strlcpy (vars.lastdroploc, Macro_Location(), sizeof (vars.lastdroploc));
 		}
 	}
 }
@@ -3188,7 +3188,7 @@ void TP_StatChanged (int stat, int value)
 			}
 			if (vars.health > 0) {		// We have just died
 				vars.deathtrigger_time = cls.realtime;
-				strcpy (vars.lastdeathloc, Macro_Location());
+				strlcpy (vars.lastdeathloc, Macro_Location(), sizeof (vars.lastdeathloc));
 
 				CountNearbyPlayers(true);
 				vars.last_numenemies = vars.numenemies;
@@ -3212,7 +3212,7 @@ void TP_StatChanged (int stat, int value)
 			}
 			if (!cl.spectator && cl.teamfortress && ~value & vars.items & (IT_KEY1|IT_KEY2)) {
 				vars.lastdrop_time = cls.realtime;
-				strcpy (vars.lastdroploc, Macro_Location());
+				strlcpy (vars.lastdroploc, Macro_Location(), sizeof (vars.lastdroploc));
 			}
 			vars.olditems = vars.items;
 			vars.items = value;

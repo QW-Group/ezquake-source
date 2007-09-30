@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.2 2007-09-30 16:49:53 dkure Exp $
+ * $Id: vfs_pak.c,v 1.3 2007-09-30 22:59:25 disconn3ct Exp $
  *             
  */
 
@@ -373,7 +373,7 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 		for (j=0 ; j<sizeof(info) ; j++)
 			CRC_ProcessByte(&crc, ((qbyte *)&info)[j]);
 */
-		strcpy (newfiles[i].name, info.name);
+		strlcpy (newfiles[i].name, info.name, MAX_QPATH);
 		// VFS-FIXME: I think this safe to remove as its for a q2 tank skin...
 		//COM_CleanUpPath(newfiles[i].name);	//blooming tanks.
 		//
@@ -384,7 +384,7 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 	if (crc != PAK0_CRC)
 		com_modified = true;
 */
-	strcpy (pack->filename, desc);
+	strlcpy (pack->filename, desc, sizeof (pack->filename));
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;

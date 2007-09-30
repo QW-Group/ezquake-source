@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.127 2007-09-26 13:53:41 tonik Exp $
+$Id: cl_parse.c,v 1.128 2007-09-30 22:59:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1872,11 +1872,11 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
 	strlcpy (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
 	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) {
 		// somebody's trying to hide himself by overloading userinfo
-		strcpy (player->name, " ");
+		strlcpy (player->name, " ", sizeof (player->name));
 	}
 	player->real_topcolor = atoi(Info_ValueForKey (player->userinfo, "topcolor"));
 	player->real_bottomcolor = atoi(Info_ValueForKey (player->userinfo, "bottomcolor"));
-	strcpy (player->team, Info_ValueForKey (player->userinfo, "team"));
+	strlcpy (player->team, Info_ValueForKey (player->userinfo, "team"), sizeof (player->team));
 
 	player->spectator = (Info_ValueForKey (player->userinfo, "*spectator")[0]) ? true : false;
 
@@ -1898,7 +1898,7 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
 	else if (update_skin)
 		TP_RefreshSkin(slot);
 
-	strcpy (player->_team, player->team);
+	strlcpy (player->_team, player->team, sizeof (player->_team));
 }
 
 void CL_PlayerEnterSlot(player_info_t *player) {
@@ -2069,7 +2069,7 @@ void CL_ParseVWepPrecache (char *str)
 
 		if (!strcmp(p, "-")) {
 			// empty model
-			strcpy (cl.vw_model_name[i], "-");
+			strlcpy (cl.vw_model_name[i], "-", MAX_QPATH);
 		}
 		else {
 			if (strstr(p, "..") || p[0] == '/' || p[0] == '\\')
@@ -2362,7 +2362,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
 
         if (i == MAX_CLIENTS)
         {
-            strcpy(buf, "console: ");
+            strlcpy (buf, "console: ", sizeof (buf));
             //Tmp_MakeRed(buf);
             if (!strncmp(chat, buf, strlen(buf)))
             {

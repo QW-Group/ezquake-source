@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: fs.c,v 1.33 2007-09-30 18:11:16 dkure Exp $
+	$Id: fs.c,v 1.34 2007-09-30 22:59:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -617,7 +617,7 @@ pack_t *FS_LoadPackFile (char *packfile) {
 	header.dirlen = LittleLong (header.dirlen);
 
 	pack = (pack_t *) Q_malloc (sizeof (pack_t));
-	strcpy (pack->filename, packfile);
+	strlcpy (pack->filename, packfile, sizeof (pack->filename));
 	pack->handle = packhandle;
 	pack->numfiles = header.dirlen / sizeof(dpackfile_t);
 
@@ -634,7 +634,7 @@ pack_t *FS_LoadPackFile (char *packfile) {
 
 	// parse the directory
 	for (i = 0; i < pack->numfiles; i++) {
-		strcpy (newfiles[i].name, info[i].name);
+		strlcpy (newfiles[i].name, info[i].name, MAX_QPATH);
 		newfiles[i].filepos = LittleLong(info[i].filepos);
 		newfiles[i].filelen = LittleLong(info[i].filelen);
 	}
@@ -779,7 +779,7 @@ void FS_AddGameDirectory (char *path_to_dir, char *dir) {
 
 	// add the directory to the search path
 	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
-	strcpy (search->filename, com_gamedir);
+	strlcpy (search->filename, com_gamedir, sizeof (search->filename));
 	search->pack = NULL;
 	search->next = fs_searchpaths;
 	fs_searchpaths = search;
@@ -825,7 +825,7 @@ void FS_AddUserDirectory ( char *dir ) {
 	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
 #ifndef WITH_FTE_VFS
 	// VFS-FIXME: D-Kure: What is this search->filename & pack used for??
-	strcpy (search->filename, com_userdir);
+	strlcpy (search->filename, com_userdir, sizeof (search->filename));
 	search->pack = NULL;
 #endif
 	search->next = fs_searchpaths;
@@ -2304,10 +2304,6 @@ void FS_InitModuleFS (void)
  * 		D-Kure: This functions seem to be in common.c and are marked 
  * 		        FS_* instead of COM_*.
  *
- * 5) Replace all strncpy calls with strlcpy
- *      <Cokeman> allthough strncpy isn't safe
- *      <Cokeman> strlcpy is
- *
  * 9) Renaming of lots of the COM_* functions to FS_*
  *
  ****************************
@@ -2370,18 +2366,16 @@ void COM_Dir_f (void)
 {
 	char match[MAX_QPATH];
 
-	strncpy(match, Cmd_Argv(1), sizeof(match));
-	if (Cmd_Argc()>2)
-	{
-		strncat(match, "/*.", sizeof(match)-1);
-		match[sizeof(match)-1] = '\0';
-		strncat(match, Cmd_Argv(2), sizeof(match)-1);
-		match[sizeof(match)-1] = '\0';
-	}
-	else
-		strncat(match, "/*", sizeof(match)-1);
+	strlcpy (match, Cmd_Argv(1), sizeof (match));
 
-	COM_EnumerateFiles(match, COM_Dir_List, NULL);
+	if (Cmd_Argc() > 2) {
+		strlcat (match, "/*.", sizeof (match));
+		strlcat (match, Cmd_Argv(2), sizeof (match));
+	} else {
+		strlcat (match, "/*", sizeof (match));
+	}
+
+	COM_EnumerateFiles (match, COM_Dir_List, NULL);
 }
 
 /*
@@ -2640,7 +2634,7 @@ char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 	{
 		for (search = fs_purepaths ; search ; search = search->nextpure)
 		{
-			strncat(buffer, va("%i ", search->crc_check), buffersize);
+			strlcat (buffer, va("%i ", search->crc_check), buffersize);
 		}
 		return buffer;
 	}
@@ -2652,7 +2646,7 @@ char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 				search->crc_check = search->funcs->GeneratePureCRC(search->handle, 0, 0);
 			if (search->crc_check)
 			{
-				strncat(buffer, va("%i ", search->crc_check), buffersize);
+				strlcat (buffer, va("%i ", search->crc_check), buffersize);
 			}
 		}
 		return buffer;
@@ -2921,8 +2915,8 @@ int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t 
 		Sys_Error("FS_Rename case not handled\n");
 	}
 
-	strncat(oldfullname, oldf, sizeof(oldfullname));
-	strncat(newfullname, newf, sizeof(newfullname));
+	strlcat(oldfullname, oldf, sizeof(oldfullname));
+	strlcat(newfullname, newf, sizeof(newfullname));
 
 	FS_CreatePath(newf, newrelativeto);
 	return rename(oldfullname, newfullname);
@@ -2960,9 +2954,9 @@ int FS_Rename(char *oldf, char *newf, relativeto_t relativeto)
 		Sys_Error("FS_Rename case not handled\n");
 	}
 
-	strncpy(newfullname, oldfullname, sizeof(newfullname));
-	strncat(oldfullname, oldf, sizeof(oldfullname));
-	strncat(newfullname, newf, sizeof(newfullname));
+	strlcpy(newfullname, oldfullname, sizeof(newfullname));
+	strlcat(oldfullname, oldf, sizeof(oldfullname));
+	strlcat(newfullname, newf, sizeof(newfullname));
 
 	return rename(oldfullname, newfullname);
 }
@@ -3162,27 +3156,31 @@ then loads and adds pak1.pak pak2.pak ...
 */
 void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 {
-	searchpath_t	*search;
-	char			*p;
+	size_t size;
+	searchpath_t *search;
+	char *p;
 
 	if ((p = strrchr(dir, '/')) != NULL)
-		strcpy(com_gamedirfile, ++p);
+		strlcpy (com_gamedirfile, ++p, sizeof (com_gamedirfile));
 	else
-		strcpy(com_gamedirfile, dir);
-	strcpy (com_gamedir, dir);
+		strlcpy (com_gamedirfile, dir, sizeof (com_gamedirfile));
+
+	strlcpy (com_gamedir, dir, sizeof (com_gamedir));
 
 	for (search = fs_searchpaths; search; search = search->next)
 	{
 		if (search->funcs != &osfilefuncs)
 			continue;
+
 		if (!strcasecmp(search->handle, com_gamedir))
 			return; //already loaded (base paths?)
 	}
 
 	// add the directory to the search path
-	p = Q_malloc(strlen(dir)+1);
-	strcpy(p, dir);
-	FS_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
+	size = strlen (dir) + 1;
+	p = Q_malloc (size);
+	strlcpy (p, dir, size);
+	FS_AddPathHandle (va ("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
 }
 
 /*
@@ -3193,22 +3191,27 @@ Adds the home directory to the head of the path,
 then loads and adds pak1.pak pak2.pak ...
 ================
 */
-void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff) {
-	searchpath_t	*search;
-	char			*p;
+void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
+{
+	size_t size;
+	searchpath_t *search;
+	char *p;
 
 	for (search = fs_searchpaths; search; search = search->next)
 	{
 		if (search->funcs != &osfilefuncs)
 			continue;
+
 		if (!strcasecmp(search->handle, com_homedir))
 			return; //already loaded (base paths?)
 	}
 
 	// add the directory to the search path
-	p = Q_malloc(strlen(dir)+1);
-	strcpy(p, dir);
-	FS_AddPathHandle(va("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
+	size = strlen (dir) + 1;
+	p = Q_malloc (size);
+	strlcpy (p, dir, size);
+
+	FS_AddPathHandle (va ("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
 }
 
 //space-seperate pk3 names followed by space-seperated crcs
@@ -3292,27 +3295,27 @@ char *FS_GenerateClientPacksList(char *buffer, int maxlen, int basechecksum)
 	searchpath_t *sp;
 
 	FS_FLocateFile("vm/cgame.qvm", FSLFRT_LENGTH, &loc);
-	strncat(buffer, va("%i ", loc.search->crc_reply), maxlen);
+	strlcat(buffer, va("%i ", loc.search->crc_reply), maxlen);
 	basechecksum ^= loc.search->crc_reply;
 
 	FS_FLocateFile("vm/ui.qvm", FSLFRT_LENGTH, &loc);
-	strncat(buffer, va("%i ", loc.search->crc_reply), maxlen);
+	strlcat(buffer, va("%i ", loc.search->crc_reply), maxlen);
 	basechecksum ^= loc.search->crc_reply;
 
-	strncat(buffer, "@ ", maxlen);
+	strlcat(buffer, "@ ", maxlen);
 
 	for (sp = fs_purepaths; sp; sp = sp->nextpure)
 	{
 		if (sp->crc_reply)
 		{
-			strncat(buffer, va("%i ", sp->crc_reply), maxlen);
+			strlcat(buffer, va("%i ", sp->crc_reply), maxlen);
 			basechecksum ^= sp->crc_reply;
 			numpaks++;
 		}
 	}
 
 	basechecksum ^= numpaks;
-	strncat(buffer, va("%i ", basechecksum), maxlen);
+	strlcat (buffer, va("%i ", basechecksum), maxlen);
 
 	return buffer;
 }
@@ -3399,13 +3402,10 @@ void FS_ReloadPackFiles_f(void)
 
 void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm)
 {
-    searchpath_t    *search;
-    for (search = fs_searchpaths; search ; search = search->next)
-    {
-    // is the element a pak file?
-        if (!search->funcs->EnumerateFiles(search->handle, match, func, parm))
-            break;
-    }
+	searchpath_t *search;
+	for (search = fs_searchpaths; search ; search = search->next)
+		if (!search->funcs->EnumerateFiles (search->handle, match, func, parm)) // is the element a pak file?
+			break;
 }
 
 // DEBUG FUNCTION
