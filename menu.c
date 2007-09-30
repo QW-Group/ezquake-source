@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.82 2007-09-26 04:57:12 dkure Exp $
+	$Id: menu.c,v 1.83 2007-09-30 14:45:00 disconn3ct Exp $
 
 */
 
@@ -886,7 +886,7 @@ void M_ScanSaves (char *sp_gamedir) {
 #endif
 
 	for (i = 0; i < MAX_SAVEGAMES; i++) {
-		strcpy (m_filenames[i], "--- UNUSED SLOT ---");
+		strlcpy (m_filenames[i], "--- UNUSED SLOT ---", SAVEGAME_COMMENT_LENGTH + 1);
 		loadable[i] = false;
 
 		snprintf (name, sizeof(name), "%s/save/s%i.sav", sp_gamedir, i);

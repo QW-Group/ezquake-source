@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.24 2007-09-13 14:49:29 disconn3ct Exp $
+	$Id: common_draw.c,v 1.25 2007-09-30 14:45:00 disconn3ct Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -637,7 +637,7 @@ void SCR_NetStats(int x, int y, float period)
     if (with_delta)
         snprintf(line, sizeof (line), "bad delta  %3d %%", lost_delta);
     else
-        strcpy(line, "no delta compr");
+        strlcpy (line, "no delta compr", sizeof (line));
     Draw_String(x, y, line);
     y+=8;
 

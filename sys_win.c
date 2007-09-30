@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.42 2007-09-26 21:51:34 tonik Exp $
+	$Id: sys_win.c,v 1.43 2007-09-30 14:45:00 disconn3ct Exp $
 
 */
 // sys_win.c
@@ -209,7 +209,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	}
 	*s = '\0';
 	if (s != apath2)
-		strcat(apath2, "/");
+		strlcat (apath2, "/", sizeof (apath2));
 
 	r = FindFirstFile(file, &fd);
 	if (r==(HANDLE)-1)
@@ -418,7 +418,7 @@ char *Sys_ConsoleInput (void) {
 									if (i > 0) {
 										textCopied[i] = 0;
 										text[len] = 0;
-										strcat(text, textCopied);
+										strlcat (text, textCopied, sizeof (text));
 										WriteFile(houtput, textCopied, i, &dummy, NULL);
 										len += dummy;
 									}

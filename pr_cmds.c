@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: pr_cmds.c,v 1.25 2007-09-26 13:53:42 tonik Exp $
+$Id: pr_cmds.c,v 1.26 2007-09-30 14:45:00 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -284,7 +284,7 @@ void PF_sprint (void) {
 		return;
 	}
 
-	strcat (buf, str);
+	strlcat (buf, str, sizeof (cl->sprint_buf));
 	cl->sprint_level = level;
 	buflen += len;
 
@@ -294,7 +294,7 @@ void PF_sprint (void) {
 			buf[i] = 0;
 			SV_ClientPrintf (cl, cl->sprint_level, "%s\n", buf);
 			// move the remainder to buffer beginning
-			strcpy (buf, buf + i + 1);
+			strlcpy (buf, buf + i + 1, sizeof (cl->sprint_buf));
 			return;
 		}
 	}
@@ -668,7 +668,7 @@ static void PF_stuffcmd (void)
 		}
 	}
 
-	strcat (buf, str);
+	strlcat (buf, str, MAX_STUFFTEXT);
 	buflen += newlen;
 
 	// flush complete (\n terminated) strings
@@ -678,7 +678,7 @@ static void PF_stuffcmd (void)
 			ClientReliableWrite_SZ (cl, buf, i+1);
 			ClientReliableWrite_Byte (cl, 0);
 			// move the remainder to buffer beginning
-			strcpy (buf, buf + i + 1);
+			strlcpy (buf, buf + i + 1, MAX_STUFFTEXT);
 			return;
 		}
 	}

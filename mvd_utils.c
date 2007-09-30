@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_utils.c,v 1.54 2007-09-25 21:51:39 johnnycz Exp $
+$Id: mvd_utils.c,v 1.55 2007-09-30 14:45:00 disconn3ct Exp $
 */
 
 // core module of the group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
@@ -965,7 +965,7 @@ void MVD_PC_Get_Coords (void){
 	char val[1024];
 	//cvar_t *p;
 
-	strcpy(val,mvd_pc_quad_1.string);
+	strlcpy (val, mvd_pc_quad_1.string, sizeof (val));
 	cam_id[0].cam.org[0]=(float)atof(strtok(val, " "));
 	cam_id[0].cam.org[1]=(float)atof(strtok(NULL, " "));
 	cam_id[0].cam.org[2]=(float)atof(strtok(NULL, " "));
@@ -973,7 +973,7 @@ void MVD_PC_Get_Coords (void){
 	cam_id[0].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[0].tag="q1";
 
-	strcpy(val,mvd_pc_quad_2.string);
+	strlcpy (val,mvd_pc_quad_2.string, sizeof (val));
 	cam_id[1].cam.org[0]=(float)atof(strtok(val, " "));
 	cam_id[1].cam.org[1]=(float)atof(strtok(NULL, " "));
 	cam_id[1].cam.org[2]=(float)atof(strtok(NULL, " "));
@@ -981,7 +981,7 @@ void MVD_PC_Get_Coords (void){
 	cam_id[1].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[1].tag="q2";
 
-	strcpy(val,mvd_pc_quad_3.string);
+	strlcpy (val,mvd_pc_quad_3.string, sizeof (val));
 	cam_id[2].cam.org[0]	=(float)atof(strtok(val, " "));
 	cam_id[2].cam.org[1]=(float)atof(strtok(NULL, " "));
 	cam_id[2].cam.org[2]=(float)atof(strtok(NULL, " "));
@@ -989,7 +989,7 @@ void MVD_PC_Get_Coords (void){
 	cam_id[2].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[2].tag="q3";
 
-	strcpy(val,mvd_pc_pent_1.string);
+	strlcpy (val,mvd_pc_pent_1.string, sizeof (val));
 	cam_id[3].cam.org[0]=(float)atof(strtok(val, " "));
 	cam_id[3].cam.org[1]=(float)atof(strtok(NULL, " "));
 	cam_id[3].cam.org[2]=(float)atof(strtok(NULL, " "));
@@ -997,7 +997,7 @@ void MVD_PC_Get_Coords (void){
 	cam_id[3].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[3].tag="p1";
 
-	strcpy(val,mvd_pc_pent_2.string);
+	strlcpy (val,mvd_pc_pent_2.string, sizeof (val));
 	cam_id[4].cam.org[0]=(float)atof(strtok(val, " "));
 	cam_id[4].cam.org[1]=(float)atof(strtok(NULL, " "));
 	cam_id[4].cam.org[2]=(float)atof(strtok(NULL, " "));
@@ -1005,7 +1005,7 @@ void MVD_PC_Get_Coords (void){
 	cam_id[4].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[4].tag="p2";
 
-	strcpy(val,mvd_pc_pent_3.string);
+	strlcpy (val,mvd_pc_pent_3.string, sizeof (val));
 	cam_id[5].cam.org[0]=(float)atof(strtok(val, " "));
 	cam_id[5].cam.org[1]=(float)atof(strtok(NULL, " "));
 	cam_id[5].cam.org[2]=(float)atof(strtok(NULL, " "));

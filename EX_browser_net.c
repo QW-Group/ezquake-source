@@ -70,7 +70,7 @@ char *ValueForKey(server_data *s, char *k)
 void SetPing(server_data *s, int ping)
 {
     if (ping < 0)
-        strcpy(s->display.ping, "n/a");
+        strlcpy (s->display.ping, "n/a", sizeof (s->display.ping));
     else
         snprintf (s->display.ping, sizeof (s->display.ping), "%3d", ping > 999 ? 999 : ping);
         

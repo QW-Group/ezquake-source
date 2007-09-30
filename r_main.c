@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.27 2007-09-26 21:51:34 tonik Exp $
+	$Id: r_main.c,v 1.28 2007-09-30 14:45:00 disconn3ct Exp $
 
 */
 
@@ -172,7 +172,7 @@ void R_InitTextures (void) {
 	// create a simple checkerboard texture for the default
 	r_notexture_mip = (texture_t *) Hunk_AllocName (sizeof(texture_t) + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2, "notexture");
 
-	strcpy(r_notexture_mip->name, "notexture");
+	strlcpy (r_notexture_mip->name, "notexture", sizeof (r_notexture_mip->name));
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);
 	r_notexture_mip->offsets[1] = r_notexture_mip->offsets[0] + 16 * 16;

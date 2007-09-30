@@ -1,4 +1,4 @@
-// $Id: xsd.c,v 1.10 2007-09-28 04:52:49 dkure Exp $
+// $Id: xsd.c,v 1.11 2007-09-30 14:45:01 disconn3ct Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -46,6 +46,7 @@ const char *XSD_GetAttribute(const char **atts, const char *name)
 char *XSD_AddText(char *dst, const char *src, int src_len)
 {
     char *buf;
+	size_t len;
 
     if (dst == NULL)
     {
@@ -55,8 +56,9 @@ char *XSD_AddText(char *dst, const char *src, int src_len)
     }
     else
     {
-        buf = (char *) Q_malloc(src_len + 1 + strlen(dst));
-        strcpy(buf, dst);
+		len = 1 + src_len + strlen(dst);
+        buf = (char *) Q_malloc(len);
+        strlcpy (buf, dst, len);
         memcpy(buf+strlen(buf), src, src_len);
         buf[src_len+strlen(dst)] = 0;
         Q_free(dst);
@@ -145,8 +147,8 @@ void XSD_RestoreStack(xml_parser_stack_t *stack)
 // call when element starts
 void XSD_OnStartElement(xml_parser_stack_t *stack, const XML_Char *name, const XML_Char **atts)
 {
-    strcat(stack->path, "/");
-    strcat(stack->path, name);
+    strlcat(stack->path, "/", sizeof (stack->path));
+    strlcat(stack->path, name, sizeof (stack->path));
 }
 
 // call when element ends

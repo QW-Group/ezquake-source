@@ -91,13 +91,13 @@ static int CTab_Draw_PageLinks(CTab_t *tab, int x, int y, int w, int h)
         hp = tab->hoveredPage == i;
         
         // add leading space/brace
-        strcat(buf, ap ? "\x10" : " ");
+        strlcat (buf, ap ? "\x10" : " ", sizeof (buf));
         
         // adds white or red variant of the page name to the buf string
-        strcat(buf, tab->pages[i].name);
+        strlcat (buf, tab->pages[i].name, sizeof (buf));
 
         // add closing space/brace
-        strcat(buf, ap ? "\x11" : " ");
+        strlcat (buf, ap ? "\x11" : " ", sizeof (buf));
         
         ww = strlen(buf) * LETTERWIDTH;
         wh = LETTERHEIGHT;

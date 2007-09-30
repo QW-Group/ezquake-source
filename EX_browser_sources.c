@@ -105,7 +105,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
             netadr_t addr;
 #endif
             if (!strchr(line, ':'))
-                strcat(line, ":27000");
+                strlcat (line, ":27000", sizeof (line));
             if (!NET_StringToAdr(line, &addr))
                 continue;
 
@@ -523,7 +523,7 @@ void Reload_Sources(void)
     // create dummy unbound source
     sources[0] = Create_Source();
     sources[0]->type = type_dummy;
-    strcpy(sources[0]->name, "Unbound");
+    strlcpy (sources[0]->name, "Unbound", sizeof (sources[0]->name));
     sources[0]->servers = (server_data **) Q_malloc(MAX_UNBOUND*sizeof(server_data *));
     sourcesn = 1;
 
@@ -584,7 +584,7 @@ void Reload_Sources(void)
             continue;
 
         if (s->type == type_file)
-            strcpy(s->address.filename, p);
+            strlcpy (s->address.filename, p, sizeof (s->address.filename));
         else
             if (!NET_StringToAdr(p, &(s->address.address)))
                 continue;

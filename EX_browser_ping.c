@@ -393,7 +393,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
         int j;
         unsigned int addr;
 
-        strcpy(buf, servs[i]->display.ip);
+        strlcpy (buf, servs[i]->display.ip, sizeof (buf));
         tmp = strchr(buf, ':');
         if (tmp != NULL)
             *tmp = 0;
@@ -667,7 +667,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 	        unsigned int addr;
 		short port;
 
-	        strcpy(buf, servs[i]->display.ip);
+	        strlcpy (buf, servs[i]->display.ip, sizeof (buf));
 	        tmp = strchr(buf, ':');
 	        if (tmp != NULL)
 	            *tmp = 0;
@@ -749,7 +749,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 				ping = -1;
 
 			for (j=0; j < servsn; j++) {
-				strcpy(buf, servs[j]->display.ip);
+				strlcpy (buf, servs[j]->display.ip, sizeof (buf));
 				tmp = strchr(buf, ':');
 				if (tmp != NULL)
 					*tmp = 0;

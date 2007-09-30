@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.29 2007-09-14 13:29:29 disconn3ct Exp $
+	$Id: match_tools.c,v 1.30 2007-09-30 14:45:00 disconn3ct Exp $
 */
 
 
@@ -112,7 +112,7 @@ static char *MT_EnemyName(void) {
 		if (cl.players[i].name[0] && !cl.players[i].spectator) {
 			name = Info_ValueForKey(cl.players[i].userinfo, "name");
 			if (strcmp(name, myname)) {
-				strcpy(enemyname, name);
+				strlcpy(enemyname, name, sizeof (enemyname));
 				return enemyname;
 			}
 		}
@@ -132,7 +132,7 @@ static char *MT_EnemyTeam(void) {
 		if (cl.players[i].name[0] && !cl.players[i].spectator) {
 			team = cl.players[i].team;
 			if (team[0] && strcmp(team, myteam)) {
-				strcpy(enemyteam, team);
+				strlcpy (enemyteam, team, sizeof (enemyteam));
 				return enemyteam;
 			}
 		}
@@ -1022,12 +1022,12 @@ void MT_AddMapGroups(void) {
 	int i, j;
 	mapgroup_t *tempnode;
 
-	strcat(exmy_group, "mapgroup exmy start ");
+	strlcat (exmy_group, "mapgroup exmy start ", sizeof (exmy_group));
 	for (i = 1; i <= 4; i++) {
 		for (j = 1; j <= 8; j++) {		
 			exmy_map[1] = i + '0';
 			exmy_map[3] = j + '0';
-			strcat(exmy_group, exmy_map);
+			strlcat(exmy_group, exmy_map, sizeof (exmy_group));
 		}
 	}
 	Cmd_TokenizeString(exmy_group);
@@ -1294,7 +1294,7 @@ void MT_SkyGroup_f(void) {
 void MT_AddSkyGroups (void) {
 	char clear[256] = {0};
 
-	strcat(clear, "skygroup exmy clear");
+	strlcat (clear, "skygroup exmy clear", sizeof (clear));
 	Cmd_TokenizeString(clear);
 	MT_SkyGroup_f();
 	skygroups_init = true;

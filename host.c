@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.50 2007-09-30 02:08:36 qqshka Exp $
+	$Id: host.c,v 1.51 2007-09-30 14:45:00 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -455,20 +455,24 @@ char *Host_PrintBars(char *s, int len)
 
 	temp[0] = 0;
 
-	count = (len - 2 - 2 - strlen(s)) / 2;
-	if (count > sizeof(temp) / 2 - 8)
+	count = (len - 2 - 2 - strlen (s)) / 2;
+	if (count > sizeof (temp) / 2 - 8)
 		return temp;
 
-	strcat(temp, "\x1d");
+	strlcat (temp, "\x1d", sizeof (temp));
+
 	for (i = 0; i < count; i++)
-		strcat(temp, "\x1e");
-	strcat(temp, " ");
-	strcat(temp, s);
-	strcat(temp, " ");
+		strlcat(temp, "\x1e", sizeof (temp));
+
+	strlcat (temp, " ", sizeof (temp));
+	strlcat (temp, s, sizeof (temp));
+	strlcat (temp, " ", sizeof (temp));
+
 	for (i = 0; i < count; i++)
-		strcat(temp, "\x1e");
-	strcat(temp, "\x1f");
-	strcat(temp, "\n\n");
+		strlcat(temp, "\x1e", sizeof (temp));
+
+	strlcat(temp, "\x1f", sizeof (temp));
+	strlcat(temp, "\n\n", sizeof (temp));
 
 	return temp;
 }

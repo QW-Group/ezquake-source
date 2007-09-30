@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.156 2007-09-28 05:35:28 dkure Exp $
+	$Id: hud_common.c,v 1.157 2007-09-30 14:45:00 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -248,7 +248,7 @@ void SCR_HUD_DrawFPS(hud_t *hud)
         snprintf (st, sizeof (st), "%3.*f", (int) hud_fps_decimals->value, cls.fps + 0.05);
 
     if (hud_fps_title->value)
-        strcat(st, " fps");
+        strlcat (st, " fps", sizeof (st));
 
     width = 8*strlen(st);
     height = 8;
@@ -300,7 +300,7 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
 		snprintf(st, sizeof(st), "n/a");
 
     if (hud_mouserate_title->value)
-        strcat(st, " Hz");
+        strlcat(st, " Hz", sizeof (st));
 
     width = 8*strlen(st);
     height = 8;
@@ -501,29 +501,29 @@ void SCR_HUD_DrawPing(hud_t *hud)
 
     // blink
     if (hud_ping_blink->value)   // add dot
-        strcat(buf, (last_calculated + hud_ping_period->value/2 > cls.realtime) ? "\x8f" : " ");
+        strlcat (buf, (last_calculated + hud_ping_period->value/2 > cls.realtime) ? "\x8f" : " ", sizeof (buf));
 
     // min ping
     if (hud_ping_show_min->value)
-        strcat(buf, va("%d\xf", ping_min));
+        strlcat (buf, va("%d\xf", ping_min), sizeof (buf));
 
     // ping
-    strcat(buf, va("%d", ping_avg));
+    strlcat (buf, va("%d", ping_avg), sizeof (buf));
 
     // max ping
     if (hud_ping_show_max->value)
-        strcat(buf, va("\xf%d", ping_max));
+        strlcat (buf, va("\xf%d", ping_max), sizeof (buf));
 
     // unit
-    strcat(buf, " ms");
+    strlcat (buf, " ms", sizeof (buf));
 
     // standard deviation
     if (hud_ping_show_dev->value)
-        strcat(buf, va(" (%.1f)", ping_dev));
+        strlcat (buf, va(" (%.1f)", ping_dev), sizeof (buf));
 
     // pl
     if (hud_ping_show_pl->value)
-        strcat(buf, va(" \x8f %d%%", pl));
+        strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
 
     // display that on screen
     width = strlen(buf) * 8;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.90 2007-09-26 21:51:34 tonik Exp $
+    $Id: teamplay.c,v 1.91 2007-09-30 14:45:00 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -1885,7 +1885,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 		char row[2*MAX_LOC_NAME];
 
 		snprintf(row, sizeof (row),"%4d %4d %4d %s\n", Q_rint(8*node->coord[0]), Q_rint(8*node->coord[1]), Q_rint(8*node->coord[2]), node->name);
-		strcat(buf, row);
+		strlcat (buf, row, (loc_count * (MAX_LOC_NAME + 24)));
 	}
 
 	// Try writing the buffer containing the locs to file.

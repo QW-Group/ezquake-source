@@ -16,7 +16,7 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
- $Id: vfs_doomwad.c,v 1.1 2007-09-28 04:41:37 dkure Exp $
+ $Id: vfs_doomwad.c,v 1.2 2007-09-30 14:45:01 disconn3ct Exp $
 */
 
 
@@ -71,7 +71,7 @@ void *FSPAK_LoadDoomWadFile (vfsfile_t *packhandle, char *desc)
 	else if (header.id[0] == 'P')
 	{
 		COM_FileBase(desc, neatwadname);
-		strcat(neatwadname, "#");
+		strlcat (neatwadname, "#", sizeof (neatwadname));
 	}
 	else
 		return NULL;

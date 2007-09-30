@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_edict.c,v 1.18 2007-09-13 14:49:30 disconn3ct Exp $
+	$Id: pr_edict.c,v 1.19 2007-09-30 14:45:00 disconn3ct Exp $
 */
 // sv_edict.c -- entity dictionary
 
@@ -287,8 +287,9 @@ char *PR_GlobalString (int ofs) {
 	
 	i = strlen(line);
 	for ( ; i < 20; i++)
-		strcat (line, " ");
-	strcat (line, " ");
+		strlcat (line, " ", sizeof (line));
+
+	strlcat (line, " ", sizeof (line));
 
 	return line;
 }
@@ -306,8 +307,9 @@ char *PR_GlobalStringNoContents (int ofs) {
 	
 	i = strlen(line);
 	for ( ; i < 20; i++)
-		strcat (line," ");
-	strcat (line," ");
+		strlcat (line, " ", sizeof (line));
+
+	strlcat (line, " ", sizeof (line));
 		
 	return line;
 }
@@ -497,7 +499,7 @@ void ED_ParseGlobals (char *data) {
 		if (!data)
 			Host_Error ("ED_ParseEntity: EOF without closing brace");
 
-		strcpy (keyname, com_token);
+		strlcpy (keyname, com_token, sizeof (keyname));
 
 		// parse value	
 		data = COM_Parse (data);
@@ -564,7 +566,7 @@ qbool ED_ParseEpair (void *base, ddef_t *key, char *s) {
 		break;
 
 	case ev_vector:
-		strcpy (string, s);
+		strlcpy (string, s, sizeof (string));
 		v = string;
 		w = string;
 		for (i = 0; i < 3; i++) {
@@ -646,10 +648,10 @@ char *ED_ParseEdict (char *data, edict_t *ent) {
 
 		// anglehack is to allow QuakeEd to write single scalar angles and allow them to be turned into vectors. (FIXME...)
 		if (!strcmp(keyname, "angle")) {
-			strcpy (keyname, "angles");
+			strlcpy (keyname, "angles", sizeof (keyname));
 			anglehack = true;
 		} else if (!strcmp(keyname, "light")) {	// hack for single light def
-			strcpy (keyname, "light_lev");
+			strlcpy (keyname, "light_lev", sizeof (keyname));
 		} else if (!strcmp(keyname, "sky") || !strcmp(keyname, "skyname")) {
 			if (ent == sv.edicts && !strstr(value, "..")) {
 				skyhack = true;

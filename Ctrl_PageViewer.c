@@ -249,13 +249,13 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
             {
                 strncpy(buf, link->tag->href, w-3);
                 buf[w-3] = 0;
-                strcat(buf, "...");
+                strlcat (buf, "...", sizeof (buf));
             }
             else
             {
                 int offset = (w - strlen(link->tag->href)) / 2;
                 memset(buf, ' ', offset);
-                strcpy(buf + offset, link->tag->href);
+                strlcpy (buf + offset, link->tag->href, sizeof (buf) - offset);
             }
             UI_Print(x, y + (h-1)*8, buf, false);
         }
@@ -263,15 +263,15 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
         {
             snprintf(buf, sizeof (buf), "%d lines  ", viewer->page->rendered.text_lines);
             if (sh >= viewer->page->rendered.text_lines)
-                strcat(buf, "[full]");
+                strlcat(buf, "[full]", sizeof (buf));
             else if (viewer->page->current_line == 0)
-                strcat(buf, "[top]");
+                strlcat(buf, "[top]", sizeof (buf));
             else if (viewer->page->current_line + sh == viewer->page->rendered.text_lines)
-                strcat(buf, "[bottom]");
+                strlcat(buf, "[bottom]", sizeof (buf));
             else
             {
                 int percent = (100*(viewer->page->current_line + sh)) / viewer->page->rendered.text_lines;
-                strcat(buf, va("[%d%%]", percent));
+                strlcat(buf, va("[%d%%]", percent), sizeof (buf));
             }
 
             UI_Print(x+8*(w-strlen(buf)-1), y + (h-1)*8, buf, false);
@@ -287,7 +287,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
                 {
                     strncpy(buf, viewer->page->doc->title, l-3);
                     buf[l-3] = 0;
-                    strcat(buf, "...");
+                    strlcat(buf, "...", sizeof (buf));
                     UI_Print(x+8, y + (h-1)*8, buf, false);
                 }
             }

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.96 2007-09-14 13:29:28 disconn3ct Exp $
+    $Id: common.c,v 1.97 2007-09-30 14:45:00 disconn3ct Exp $
 
 */
 
@@ -75,22 +75,19 @@ The "game directory" is the first tree on the search path and directory that all
 
 //============================================================================
 
-void COM_StoreOriginalCmdline(int argc, char **argv)
+void COM_StoreOriginalCmdline (int argc, char **argv)
 {
 	char buf[4096]; // enough?
 	int i;
 	qbool first = true;
 
 	buf[0] = 0;
-	for (i=0; i < argc; i++) {
-		if (!first)
-			strcat(buf, " ");
-		first = false;
+	strlcat (buf, " ", sizeof (buf));
 
-		strcat(buf, argv[i]);
-	}
+	for (i=0; i < argc; i++)
+		strlcat (buf, argv[i], sizeof (buf));
 
-	com_args_original = Q_strdup(buf);
+	com_args_original = Q_strdup (buf);
 }
 
 //============================================================================

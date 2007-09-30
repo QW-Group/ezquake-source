@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.78 2007-09-26 13:53:42 tonik Exp $
+    $Id: cmd.c,v 1.79 2007-09-30 14:45:00 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -334,9 +334,9 @@ void Cmd_StuffCmds_f (void)
 	text = (char *) Q_malloc (len + 1);
 	text[0] = '\0';
 	for (k = 1; k < com_argc; k++) {
-		strcat (text, com_argv[k]);
+		strlcat (text, com_argv[k], len + 1);
 		if (k != com_argc - 1)
-			strcat (text, " ");
+			strlcat (text, " ", len + 1);
 	}
 
 	// pull out the commands
@@ -381,7 +381,7 @@ void Cmd_Exec_f (void)
 		p = COM_SkipPath (name);
 		if (!strchr (p, '.')) {
 			// no extension, so try the default (.cfg)
-			strcat (name, ".cfg");
+			strlcat (name, ".cfg", sizeof (name));
 			f = (char *) FS_LoadHunkFile (name);
 		}
 		if (!f) {

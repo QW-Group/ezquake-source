@@ -57,7 +57,7 @@ void SV_FlushRedirect (void) {
 void SV_RedirectedPrint (char *msg) {
 	if (strlen (msg) + strlen(sv_outputbuf) >= sizeof(sv_outputbuf))
 		SV_FlushRedirect ();
-	strcat (sv_outputbuf, msg);
+	strlcat (sv_outputbuf, msg, sizeof (sv_outputbuf));
 }
 
 //Send Com_Printf data to the remote client instead of the console

@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.50 2007-09-25 19:13:24 johnnycz Exp $
+	$Id: EX_browser.c,v 1.51 2007-09-30 14:45:00 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -655,8 +655,8 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
             memset(buf, 0, 10);
             strlcpy(buf, ValueForKey(s, "*gamedir"), sizeof(buf));
             buf[8] = 0;
-            strcat(line, buf);
-            strcat(line, "\xa0 ");
+            strlcat (line, buf, sizeof (line));
+            strlcat (line, "\xa0 ", sizeof (line));
         }
 
         if (d_map)
@@ -664,8 +664,8 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
             memset(buf, 0, 10);
             strlcpy(buf, ValueForKey(s, "map"), sizeof(buf));
             buf[8] = 0;
-            strcat(line, buf);
-            strcat(line, "\xa0 ");
+            strlcat (line, buf, sizeof (line));
+            strlcat (line, "\xa0 ", sizeof (line));
         }
 
         //if (d_players)
@@ -673,10 +673,10 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
             char buf[10], *max;
             max =  ValueForKey(s, "maxclients");
             snprintf(buf, sizeof(buf), "%d/%s", s->playersn, max==NULL ? "??" : max);
-            strcat(line, buf);
+            strlcat (line, buf, sizeof (line));
             max =  ValueForKey(s, "maxspectators");
             snprintf(buf, sizeof(buf), "-%d/%s", s->spectatorsn, max==NULL ? "??" : max);
-            strlcat(line, buf, sizeof(line));
+            strlcat (line, buf, sizeof(line));
         }
 
         if (ValueForKey(s, "status") == NULL)
@@ -1610,7 +1610,7 @@ void Add_Source_Key(int key)
                 else
                 {
                     if (!strchr(addr, ':'))
-                        strcat(addr, ":27000");
+                        strlcat (addr, ":27000", sizeof (addr));
                     if (!NET_StringToAdr(addr, &(s->address.address)))
                         break;
                 }
@@ -2144,13 +2144,13 @@ void RemoveSourceProc(void)
 
         if (removed)
         {
-            strcat(filebuf, line);
+            strlcat (filebuf, line, sizeof (filebuf));
             continue;
         }
         p = next_nonspace(line);
         if (*p == '/')
         {
-            strcat(filebuf, line);
+            strlcat (filebuf, line, sizeof (filebuf));
             continue;   // comment
         }
 
@@ -2158,12 +2158,12 @@ void RemoveSourceProc(void)
 
         if (s->type == type_master && strncmp(p, "master", q-p))
         {
-            strcat(filebuf, line);
+            strlcat (filebuf, line, sizeof (filebuf));
             continue;
         }
         if (s->type == type_file && strncmp(p, "file", q-p))
         {
-            strcat(filebuf, line);
+            strlcat (filebuf, line, sizeof (filebuf));
             continue;
         }
 
@@ -2172,13 +2172,13 @@ void RemoveSourceProc(void)
 
         if (q-p <= 0)
         {
-            strcat(filebuf, line);
+            strlcat (filebuf, line, sizeof (filebuf));
             continue;
         }
 
         if (strlen(s->name) != q-p  ||  strncmp(s->name, p, q-p))
         {
-            strcat(filebuf, line);
+            strlcat (filebuf, line, sizeof (filebuf));
             continue;
         }
 

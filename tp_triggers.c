@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: tp_triggers.c,v 1.7 2007-09-03 17:05:45 johnnycz Exp $
+	$Id: tp_triggers.c,v 1.8 2007-09-30 14:45:01 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -308,7 +308,7 @@ void TP_MsgTrigger_f (void)
 			trig = (msg_trigger_t *) Q_malloc (sizeof(msg_trigger_t));
 			trig->next = msg_triggers;
 			msg_triggers = trig;
-			strcpy (trig->name, name);
+			strlcpy (trig->name, name, sizeof (trig->name));
 			trig->level = PRINT_HIGH;
 		}
  

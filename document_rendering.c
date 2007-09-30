@@ -553,22 +553,22 @@ static void Render_List(document_rendering_context_t *cx, document_tag_list_t *l
     while (item)
     {
         // make separator
-        strcpy(separator, " ");
+        strlcpy (separator, " ", sizeof (separator));
         switch (list->bullet)
         {
         case list_bullet_none:
             break;
         case list_bullet_dot:
-            strcat(separator, va("%c", (cx->list_count%2) ? 143 : 15));
+            strlcat (separator, va("%c", (cx->list_count%2) ? 143 : 15), sizeof (separator));
             break;
         case list_bullet_letter:
-            strcat(separator, va("%c", (item_num % ('z'-'a'+1)) + 'a'));
+            strlcat(separator, va("%c", (item_num % ('z'-'a'+1)) + 'a'), sizeof (separator));
             break;
         case list_bullet_bigletter:
-            strcat(separator, va("%c", (item_num % ('Z'-'A'+1)) + 'A'));
+            strlcat(separator, va("%c", (item_num % ('Z'-'A'+1)) + 'A'), sizeof (separator));
             break;
         case list_bullet_number:
-            strcat(separator, va("%*d", num_width, item_num));
+            strlcat(separator, va("%*d", num_width, item_num), sizeof (separator));
             break;
         }
         switch (list->separator)
@@ -576,13 +576,13 @@ static void Render_List(document_rendering_context_t *cx, document_tag_list_t *l
         case list_separator_none:
             break;
         case list_separator_dot:
-            strcat(separator, ".");
+            strlcat(separator, ".", sizeof (separator));
             break;
         case list_separator_par:
-            strcat(separator, ")");
+            strlcat(separator, ")", sizeof (separator));
             break;
         }
-        strcat(separator, " ");
+        strlcat(separator, " ", sizeof (separator));
 
         memcpy(cx->line_buf + (cx->l_margin - indent), separator, strlen(separator));
         RenderBlockChain(cx, item->tags);
@@ -649,22 +649,22 @@ static void Render_Dict(document_rendering_context_t *cx, document_tag_dict_t *d
         int old_do_color;
 
         // make separator
-        strcpy(separator, " ");
+        strlcpy(separator, " ", sizeof (separator));
         switch (dict->bullet)
         {
         case list_bullet_none:
             break;
         case list_bullet_dot:
-            strcat(separator, va("%c", (cx->list_count%2) ? 143 : 15));
+            strlcat(separator, va("%c", (cx->list_count%2) ? 143 : 15), sizeof (separator));
             break;
         case list_bullet_letter:
-            strcat(separator, va("%c", (item_num % ('z'-'a'+1)) + 'a'));
+            strlcat(separator, va("%c", (item_num % ('z'-'a'+1)) + 'a'), sizeof (separator));
             break;
         case list_bullet_bigletter:
-            strcat(separator, va("%c", (item_num % ('Z'-'A'+1)) + 'A'));
+            strlcat(separator, va("%c", (item_num % ('Z'-'A'+1)) + 'A'), sizeof (separator));
             break;
         case list_bullet_number:
-            strcat(separator, va("%*d", num_width, item_num));
+            strlcat(separator, va("%*d", num_width, item_num), sizeof (separator));
             break;
         }
         switch (dict->separator)
@@ -672,13 +672,13 @@ static void Render_Dict(document_rendering_context_t *cx, document_tag_dict_t *d
         case list_separator_none:
             break;
         case list_separator_dot:
-            strcat(separator, ".");
+            strlcat(separator, ".", sizeof (separator));
             break;
         case list_separator_par:
-            strcat(separator, ")");
+            strlcat(separator, ")", sizeof (separator));
             break;
         }
-        strcat(separator, " ");
+        strlcat(separator, " ", sizeof (separator));
 
         memcpy(cx->line_buf + (cx->l_margin - indent), separator, strlen(separator));
         old_do_color = cx->do_color;
@@ -704,12 +704,13 @@ static void Render_Dict(document_rendering_context_t *cx, document_tag_dict_t *d
 
 
 // adds string
-char *Add_Inline_String(char *text, char *string)
+char *Add_Inline_String (char *text, char *string)
 {
-    char *buf = (char *) Q_malloc(strlen(text) + strlen(string) + 1);
-    strcpy(buf, text);
+	size_t size = strlen (text) + strlen (string) + 1;
+    char *buf = (char *) Q_malloc (size);
+    strlcpy (buf, text, size);
     Q_free(text);
-    strcat(buf, string);
+    strlcat (buf, string, size);
     return buf;
 }
 
