@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.1 2007-09-28 04:41:37 dkure Exp $
+ * $Id: vfs_pak.c,v 1.2 2007-09-30 16:49:53 dkure Exp $
  *             
  */
 
@@ -351,7 +351,8 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 //	if (numpackfiles != PAK0_COUNT)
 //		com_modified = true;	// not the original file
 
-	newfiles = (packfile_t*)Q_malloc (numpackfiles * sizeof(packfile_t));
+	// VFS-FIXME: This probably can be malloc, just being extra safe here
+	newfiles = (packfile_t*)Q_calloc (numpackfiles, sizeof(packfile_t));
 
 	VFS_SEEK(packhandle, header.dirofs, SEEK_SET);
 //	fread (&info, 1, header.dirlen, packhandle);
