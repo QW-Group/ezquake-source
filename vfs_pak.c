@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.3 2007-09-30 22:59:25 disconn3ct Exp $
+ * $Id: vfs_pak.c,v 1.4 2007-10-01 02:57:08 dkure Exp $
  *             
  */
 
@@ -240,10 +240,10 @@ void FSPAK_BuildHash(void *handle)
 
 	for (i = 0; i < pak->numfiles; i++)
 	{
-		if (!Hash_GetInsensative(&filesystemhash, pak->files[i].name))
+		if (!Hash_GetInsensitive(&filesystemhash, pak->files[i].name))
 		{
 			fs_hash_files++;
-			Hash_AddInsensative(&filesystemhash, pak->files[i].name, &pak->files[i], &pak->files[i].bucket);
+			Hash_AddInsensitive(&filesystemhash, pak->files[i].name, &pak->files[i], &pak->files[i].bucket);
 		}
 		else
 			fs_hash_dups++;

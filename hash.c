@@ -32,7 +32,7 @@ int Hash_Key(char *name, int modulus) {
 
 	return (int) (key % modulus);
 }
-int Hash_KeyInsensative(char *name, int modulus) {
+int Hash_KeyInsensitive(char *name, int modulus) {
 	unsigned int key = 5381;
 
 	for (key = 5381; *name; name++)
@@ -50,7 +50,7 @@ int Hash_Key(char *name, int modulus)
 		
 	return (int)(key%modulus);
 }
-int Hash_KeyInsensative(char *name, int modulus)
+int Hash_KeyInsensitive(char *name, int modulus)
 {	//fixme: optimize.
 	unsigned int key;
 	for (key=0;*name; name++)
@@ -81,9 +81,9 @@ void *Hash_Get(hashtable_t *table, char *name)
 	}
 	return NULL;
 }
-void *Hash_GetInsensative(hashtable_t *table, char *name)
+void *Hash_GetInsensitive(hashtable_t *table, char *name)
 {
-	int bucknum = Hash_KeyInsensative(name, table->numbuckets);
+	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
 	bucket_t *buck;
 
 	buck = table->bucket[bucknum];
@@ -143,9 +143,9 @@ void *Hash_GetNext(hashtable_t *table, char *name, void *old)
 	}
 	return NULL;
 }
-void *Hash_GetNextInsensative(hashtable_t *table, char *name, void *old)
+void *Hash_GetNextInsensitive(hashtable_t *table, char *name, void *old)
 {
-	int bucknum = Hash_KeyInsensative(name, table->numbuckets);
+	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
 	bucket_t *buck;
 
 	buck = table->bucket[bucknum];
@@ -186,9 +186,9 @@ void *Hash_Add(hashtable_t *table, char *name, void *data, bucket_t *buck)
 
 	return buck;
 }
-void *Hash_AddInsensative(hashtable_t *table, char *name, void *data, bucket_t *buck)
+void *Hash_AddInsensitive(hashtable_t *table, char *name, void *data, bucket_t *buck)
 {
-	int bucknum = Hash_KeyInsensative(name, table->numbuckets);
+	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
 
 	buck->data = data;
 	buck->keystring = name;

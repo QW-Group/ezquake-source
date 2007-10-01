@@ -21,12 +21,12 @@ typedef struct hashtable_s {
 void Hash_InitTable(hashtable_t *table, int numbucks, void *mem);	//mem must be 0 filled. (memset(mem, 0, size))
 int Hash_Key(char *name, int modulus);
 void *Hash_Get(hashtable_t *table, char *name);
-void *Hash_GetInsensative(hashtable_t *table, char *name);
+void *Hash_GetInsensitive(hashtable_t *table, char *name);
 void *Hash_GetKey(hashtable_t *table, char *key);
 void *Hash_GetNext(hashtable_t *table, char *name, void *old);
-void *Hash_GetNextInsensative(hashtable_t *table, char *name, void *old);
+void *Hash_GetNextInsensitive(hashtable_t *table, char *name, void *old);
 void *Hash_Add(hashtable_t *table, char *name, void *data, bucket_t *buck);
-void *Hash_AddInsensative(hashtable_t *table, char *name, void *data, bucket_t *buck);
+void *Hash_AddInsensitive(hashtable_t *table, char *name, void *data, bucket_t *buck);
 void Hash_Remove(hashtable_t *table, char *name);
 void Hash_RemoveData(hashtable_t *table, char *name, void *data);
 void Hash_RemoveKey(hashtable_t *table, char *key);
