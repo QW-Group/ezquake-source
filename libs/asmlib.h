@@ -16,10 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: asmlib.h,v 1.2 2007-06-16 22:40:19 disconn3ct Exp $
+	$Id: asmlib.h,v 1.3 2007-10-01 18:31:06 disconn3ct Exp $
 */
 
-#ifdef id386
+#ifdef WITH_ASMLIB
+
+#ifndef __ASMLIB_H__
+#define __ASMLIB_H__
 
 /* Downloaded from www.agner.org/optimize */
 extern int InstructionSet (void);         // tell which instruction set is supported
@@ -144,4 +147,5 @@ clock cycles on a Pentium 4, and approximately 225 clock cycles on Pentium II
 and Pentium III. Does not work on 80386 and 80486.
 */
 
-#endif /* !id386 */
+#endif /* !__ASMLIB_H__ */
+#endif /* !WITH_ASMLIB */

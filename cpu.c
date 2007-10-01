@@ -16,40 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: cpu.c,v 1.2 2007-08-13 06:24:04 disconn3ct Exp $
+	$Id: cpu.c,v 1.3 2007-10-01 18:31:06 disconn3ct Exp $
 */
 
-#include "common.h"
+#include "quakedef.h"
+// #include "common.h"
+#include "asmlib.h"
 #include "cpu.h"
 
-#ifdef id386
+#ifdef WITH_ASMLIB
 
-static unsigned int cpu_features = 0;
-static unsigned int cpu_vendor = 0; // 0 = unknown, 1 = intel, 2 = amd
-static unsigned int cpu_mmx = 0;
-static unsigned int cpu_mmxext = 0;
-static unsigned int cpu_3dnow = 0;
-static unsigned int cpu_3dnowext = 0;
-static unsigned int cpu_sse = 0;
-static unsigned int cpu_sse2 = 0;
-static unsigned int cpu_sse3 = 0;
-static unsigned int cpu_ht = 0;
-static unsigned int os_sse = 0;
+unsigned int cpu_features = 0;
 
 void CPU_Init (void)
 {
 	cpu_features = DetectProcessor ();
-
-	cpu_vendor = (cpu_features & (1<<8)) ? 1 : (cpu_features & (1<<9)) ? 2 : 0;
-	cpu_mmx = (cpu_features & (1<<23));
-	cpu_mmxext = (cpu_features & (1<<29));
-	cpu_3dnow = (cpu_features & (1<<31));
-	cpu_3dnowext = (cpu_features & (1<<30));
-	cpu_sse = (cpu_features & (1<<25));
-	cpu_sse2 = (cpu_features & (1<<26));
-	cpu_sse3 = (cpu_features & (1<<27));
-	cpu_ht = (cpu_features & (1<<28));
-	os_sse = (cpu_features & (1<<11));
 }
 
 void CPU_Info (void)
@@ -57,23 +38,23 @@ void CPU_Info (void)
 	char features[1024];
 
 	memset (features, 0, sizeof (features));
-	Com_Printf ("CPU Vendor: %s\n", (cpu_vendor == 1) ? "Intel" : (cpu_vendor == 2) ? "Amd" : "unknown");
+	Com_Printf ("CPU Vendor: %s\n", CPU_IS_INTEL ? "Intel" : CPU_IS_AMD ? "Amd" : "unknown");
 
-	if (cpu_mmx)
+	if (CPY_HAVE_MMX)
 		strlcat (features, "MMX,", sizeof (features));
-	if (cpu_mmxext)
+	if (CPU_HAVE_MMXEXT)
 		strlcat (features, "MMXEXT,", sizeof (features));
-	if (cpu_3dnow)
+	if (CPU_HAVE_3DNOW)
 		strlcat (features, "3DNOW,", sizeof (features));
-	if (cpu_3dnowext)
+	if (CPU_HAVE_3DNOWEXT)
 		strlcat (features, "3DNOWEXT,", sizeof (features));
-	if (cpu_sse)
+	if (CPU_HAVE_SSE)
 		strlcat (features, "SSE,", sizeof (features));
-	if (cpu_sse2)
+	if (CPU_HAVE_SSE2)
 		strlcat (features, "SSE2,", sizeof (features));
-	if (cpu_sse3)
+	if (CPU_HAVE_SSE3)
 		strlcat (features, "SSE3,", sizeof (features));
-	if (cpu_ht)
+	if (CPU_HAVE_HT)
 		strlcat (features, "HYPERTHREADING,", sizeof (features));
 
 	if (features[strlen (features) - 1] == ',')
@@ -81,4 +62,5 @@ void CPU_Info (void)
 
 	Com_Printf ("CPU features: %s\n", features);
 }
-#endif
+
+#endif /* !WITH_ASMLIB */

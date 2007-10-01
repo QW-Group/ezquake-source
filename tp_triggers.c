@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: tp_triggers.c,v 1.8 2007-09-30 14:45:01 disconn3ct Exp $
+	$Id: tp_triggers.c,v 1.9 2007-10-01 18:31:06 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -232,7 +232,7 @@ void TP_ResetAllTriggers (void)
  
 	while (msg_triggers) {
 		temp = msg_triggers->next;
-		Q_free(msg_triggers);
+		Z_Free(msg_triggers);
 		msg_triggers = temp;
 	}
 }
@@ -305,7 +305,7 @@ void TP_MsgTrigger_f (void)
  
 		if (!(trig = TP_FindTrigger (name))) {
 			// allocate new trigger
-			trig = (msg_trigger_t *) Q_malloc (sizeof(msg_trigger_t));
+			trig = (msg_trigger_t *) Z_Malloc (sizeof(msg_trigger_t));
 			trig->next = msg_triggers;
 			msg_triggers = trig;
 			strlcpy (trig->name, name, sizeof (trig->name));
@@ -411,11 +411,17 @@ pcre_trigger_t *CL_FindReTrigger (char *name)
  
 static void DeleteReTrigger (pcre_trigger_t *t)
 {
-	if (t->regexp) (pcre_free)(t->regexp);
-	if (t->regexp_extra) (pcre_free)(t->regexp_extra);
-	if (t->regexpstr) Q_free(t->regexpstr);
-	Q_free(t->name);
-	Q_free(t);
+	if (t->regexp)
+		(pcre_free)(t->regexp);
+
+	if (t->regexp_extra)
+		(pcre_free)(t->regexp_extra);
+
+	if (t->regexpstr)
+		Z_Free(t->regexpstr);
+
+	Z_Free(t->name);
+	Z_Free(t);
 }
  
 static void RemoveReTrigger (pcre_trigger_t *t)
@@ -501,10 +507,10 @@ static void CL_RE_Trigger_f (void)
 		if (!trig) {
 			// allocate new trigger
 			newtrigger = true;
-			trig = (pcre_trigger_t *) Q_malloc (sizeof(pcre_trigger_t));
+			trig = (pcre_trigger_t *) Z_Malloc (sizeof(pcre_trigger_t));
 			trig->next = re_triggers;
 			re_triggers = trig;
-			trig->name = Q_strdup (name);
+			trig->name = Z_Strdup (name);
 			trig->flags = RE_PRINT_ALL | RE_ENABLED; // catch all printed messages by default
 		}
  
@@ -519,9 +525,9 @@ static void CL_RE_Trigger_f (void)
 					(pcre_free)(trig->regexp);
 					if (trig->regexp_extra)
 						(pcre_free)(trig->regexp_extra);
-					Q_free(trig->regexpstr);
+					Z_Free(trig->regexpstr);
 				}
-				trig->regexpstr = Q_strdup (regexpstr);
+				trig->regexpstr = Z_Strdup (regexpstr);
 				trig->regexp = re;
 				trig->regexp_extra = re_extra;
 				return;
@@ -687,10 +693,10 @@ void Re_Trigger_Copy_Subpatterns (const char *s, int* offsets, int num, cvar_t *
 
 	for (i = 0; i < 2 * num; i += 2) {
 		len = offsets[i + 1] - offsets[i] + 1;
-		tmp = (char *) Q_malloc (len);
+		tmp = (char *) Z_Malloc (len);
 		snprintf (tmp, len, "%s", s + offsets[i]);
 		Cvar_ForceSet(&re_sub[i / 2], tmp);
-		Q_free (tmp);
+		Z_Free (tmp);
 	}
 }
  
@@ -830,7 +836,7 @@ static void AddInternalTrigger (char* regexpstr, unsigned mask, internal_trigger
 	const char *error;
 	int error_offset;
  
-	trig = (pcre_internal_trigger_t *) Q_malloc (sizeof(pcre_internal_trigger_t));
+	trig = (pcre_internal_trigger_t *) Z_Malloc (sizeof(pcre_internal_trigger_t));
 	trig->next = internal_triggers;
 	internal_triggers = trig;
  

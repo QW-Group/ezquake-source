@@ -88,6 +88,7 @@ typedef struct cmd_function_s {
 } cmd_function_t;
 
 void Cmd_Init (void);
+void Cmd_Shutdown (void);
 
 void Cmd_AddCommand (char *cmd_name, xcommand_t function);
 // called by the init functions of other parts of the program to

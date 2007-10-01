@@ -119,7 +119,8 @@ COMMON_C_FILES := \
 	net_chan \
 	q_shared \
 	version \
-	zone
+	zone \
+	zone2
 
 GL_C_FILES := \
 	collision \

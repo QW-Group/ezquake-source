@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: embed_tcl.h,v 1.3 2007-04-15 14:54:50 johnnycz Exp $
+ *  $Id: embed_tcl.h,v 1.4 2007-10-01 18:31:06 disconn3ct Exp $
  */
 
 #ifndef EMBED_TCL_H
@@ -37,6 +37,7 @@ extern int in_tcl;
 
 
 void TCL_InterpInit (void);
+void TCL_InterpInitCommands (void);
 void TCL_Shutdown (void);
 qbool TCL_InterpLoaded (void);
 

@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.22 2007-09-26 13:53:42 tonik Exp $
+ *  $Id: cl_tcl.c,v 1.23 2007-10-01 18:31:06 disconn3ct Exp $
  */
 
 #ifdef WITH_TCL
@@ -675,10 +675,6 @@ void TCL_InterpInit (void)
 	Tcl_CreateObjCommand (interp, "cmd", TCL_Cmd, NULL, NULL);
 	Tcl_CreateObjCommand (interp, "alias", TCL_Alias, NULL, NULL);
 
-	Cmd_AddCommand ("tcl_exec", TCL_Exec_f);
-	Cmd_AddCommand ("tcl_eval", TCL_Eval_f);
-	Cmd_AddCommand ("tcl_proc", TCL_Proc_f);
-
 	if (strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
 		TCL_ReplaceProc ("after", TCL_DenyProc); // if this may changes or invoke error sometimes, this should be disabled 
 		TCL_ReplaceProc ("cd", TCL_DenyProc); // external interconnection (and qw may crash?)
@@ -719,6 +715,13 @@ void TCL_InterpInit (void)
 		TCL_ReplaceProc ("open", TCL_OpenProc);
 		TCL_ReplaceProc ("clock", TCL_ClockProc);
 	}
+}
+
+void TCL_InterpInitCommands (void)
+{
+	Cmd_AddCommand ("tcl_exec", TCL_Exec_f);
+	Cmd_AddCommand ("tcl_eval", TCL_Eval_f);
+	Cmd_AddCommand ("tcl_proc", TCL_Proc_f);
 }
 
 qbool TCL_InterpLoaded (void)

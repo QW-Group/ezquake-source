@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: mathlib.h,v 1.11 2007-10-01 18:31:06 disconn3ct Exp $
 */
 
-#ifndef __MATHLIB_H_
+#ifndef __MATHLIB_H__
+#define __MATHLIB_H__
 
-#define __MATHLIB_H_
-
-#ifdef id386
+#ifdef WITH_ASMLIB
 #include "asmlib.h"
 #endif
 
@@ -197,19 +197,21 @@ extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 }
 
 
-#ifndef id386
+#define clamp(a,b,c) (a = min(max(a, b), c))
+#define sgn(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))
+
+#ifdef WITH_ASMLIB
+#define Q_rint(x) (Round(x))
+#define INT(x) (Truncate(x))
+#else
 #define Q_rint(x) ((x) > 0 ? (int) ((x) + 0.5) : (int) ((x) - 0.5))
 #define INT(x) (int(x))
+
 #define MinI(a,b) min(a,b)
 #define MinD(a,b) min(a,b)
 #define MaxI(a,b) max(a,b)
 #define MaxD(a,b) max(a,b)
-#else /* !id386 */
-#define Q_rint(x) (Round(x))
-#define INT(x) (Truncate(x))
+
 #endif
 
-#define clamp(a,b,c) (a = min(max(a, b), c))
-#define sgn(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))
-
-#endif	//__MATHLIB_H_
+#endif	/* __MATHLIB_H__ */

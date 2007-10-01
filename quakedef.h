@@ -39,6 +39,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #endif
 
+//#define WITH_ASMLIB
+//#define WITH_DP_MEM
+
 #include "common.h"
 
 #include "vid.h"
@@ -49,6 +52,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cl_view.h"
 #ifdef WITH_FTE_VFS
 #include "fs.h"
+#endif
+#ifdef WITH_DP_MEM
+#include "zone2.h"
 #endif
 
 #include "client.h"

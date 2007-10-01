@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.57 2007-09-30 22:59:23 disconn3ct Exp $
+$Id: cvar.c,v 1.58 2007-10-01 18:31:06 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -132,8 +132,8 @@ void Cvar_SetDefault(cvar_t *var, float value)
 		val[i] = 0;
 	if (val[i] == '.')
 		val[i] = 0;
-	Q_free (var->defaultvalue);
-	var->defaultvalue = Q_strdup (val);
+	Z_Free (var->defaultvalue);
+	var->defaultvalue = Z_Strdup (val);
 	Cvar_Set(var, val);
 }
 
@@ -268,7 +268,7 @@ void Cvar_Set (cvar_t *var, char *value)
 		{
 			if (strcmp(value, var->latchedString) == 0)
 				return; // latched string alredy has this value
-			Q_free (var->latchedString); // switching latching string to other, so free it
+			Z_Free (var->latchedString); // switching latching string to other, so free it
 		}
 		else
 		{
@@ -282,7 +282,7 @@ void Cvar_Set (cvar_t *var, char *value)
 		//       So, do not mix CVAR_LATCHED | CVAR_SILENT in cvar definition.
 		if ( !(var->flags & CVAR_SILENT) )
 			Com_Printf ("%s will be changed upon restarting.\n", var->name);
-		var->latchedString = Q_strdup(value);
+		var->latchedString = Z_Strdup (value);
 		var->modified = true; // set to true even car->string is not changed yet, that how q3 does
 		return;
 	}
@@ -296,9 +296,9 @@ void Cvar_Set (cvar_t *var, char *value)
 			return;
 	}
 
-	Q_free (var->string); // free the old value string
+	Z_Free (var->string); // free the old value string
 
-	var->string = Q_strdup (value);
+	var->string = Z_Strdup (value);
 	var->value = Q_atof (var->string);
 	var->integer = Q_atoi (var->string);
 	var->modified = true;
@@ -467,7 +467,7 @@ void Cvar_Register (cvar_t *var)
 			// if we have a latched string, take that value now
 			if ( old->latchedString ) {
 				// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
-				Q_free(old->string);
+				Z_Free (old->string);
 				old->string  = old->latchedString;
 				old->latchedString = NULL;
 				old->value   = Q_atof (old->string);
@@ -490,18 +490,18 @@ void Cvar_Register (cvar_t *var)
 		return;
 	} */
 
-	var->defaultvalue = Q_strdup (var->string);
+	var->defaultvalue = Z_Strdup (var->string);
 	if (old) {
 		var->flags |= old->flags & ~(CVAR_USER_CREATED|CVAR_TEMP);
 		strlcpy (string, old->string, sizeof(string));
 		Cvar_Delete (old->name);
 		if (!(var->flags & CVAR_ROM))
-			var->string = Q_strdup (string);
+			var->string = Z_Strdup (string);
 		else
-			var->string = Q_strdup (var->string);
+			var->string = Z_Strdup (var->string);
 	} else {
-		// allocate the string on zone because future sets will Q_free it
-		var->string = Q_strdup (var->string);
+		// allocate the string on zone because future sets will Z_Free it
+		var->string = Z_Strdup (var->string);
 	}
 	var->value = Q_atof (var->string);
 	var->integer = Q_atoi (var->string);
@@ -709,7 +709,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 		v->flags |= cvarflags;
 		return v;
 	}
-	v = (cvar_t *) Q_malloc(sizeof(cvar_t));
+	v = (cvar_t *) Z_Malloc(sizeof(cvar_t));
 	memset(v, 0, sizeof(cvar_t));
 	// Cvar doesn't exist, so we create it
 	v->next = cvar_vars;
@@ -719,9 +719,9 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->hash_next = cvar_hash[key];
 	cvar_hash[key] = v;
 
-	v->name = Q_strdup (name);
-	v->string = Q_strdup (string);
-	v->defaultvalue = Q_strdup (string);
+	v->name = Z_Strdup (name);
+	v->string = Z_Strdup (string);
+	v->defaultvalue = Z_Strdup (string);
 	v->flags = cvarflags | CVAR_USER_CREATED;
 	v->value = Q_atof (v->string);
 	v->integer = Q_atoi (v->string);
@@ -766,10 +766,10 @@ qbool Cvar_Delete (const char *name)
 			TCL_UnregisterVariable (name);
 #endif
 			// free
-			Q_free (var->defaultvalue);
-			Q_free (var->string);
-			Q_free (var->name);
-			Q_free (var);
+			Z_Free (var->defaultvalue);
+			Z_Free (var->string);
+			Z_Free (var->name);
+			Z_Free (var);
 			return true;
 		}
 		prev = var;

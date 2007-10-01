@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.80 2007-09-30 22:59:23 disconn3ct Exp $
+    $Id: cmd.c,v 1.81 2007-10-01 18:31:06 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -54,6 +54,10 @@ cbuf_t cbuf_safe, cbuf_formatted_comms;
 #endif
 
 cbuf_t *cbuf_current = NULL;
+
+#ifdef WITH_DP_MEM
+static mempool_t *cmd_mempool;
+#endif
 
 //=============================================================================
 
@@ -331,7 +335,7 @@ void Cmd_StuffCmds_f (void)
 	if (!len)
 		return;
 
-	text = (char *) Q_malloc (len + 1);
+	text = (char *) Z_Malloc (len + 1);
 	text[0] = '\0';
 	for (k = 1; k < com_argc; k++) {
 		strlcat (text, com_argv[k], len + 1);
@@ -340,7 +344,7 @@ void Cmd_StuffCmds_f (void)
 	}
 
 	// pull out the commands
-	token = (char *) Q_malloc (len + 1);
+	token = (char *) Z_Malloc (len + 1);
 
 	s = text;
 	while (*s) {
@@ -360,8 +364,8 @@ void Cmd_StuffCmds_f (void)
 		}
 	}
 
-	Q_free (text);
-	Q_free (token);
+	Z_Free (text);
+	Z_Free (token);
 }
 
 void Cmd_Exec_f (void)
@@ -618,15 +622,15 @@ void Cmd_EditAlias_f (void)
 
 	a = Cmd_FindAlias(Cmd_Argv(1));
 	if ( a == NULL ) {
-		s = Q_strdup ("");
+		s = Z_Strdup ("");
 	} else {
-		s = Q_strdup(a->value);
+		s = Z_Strdup(a->value);
 	}
 
 	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, str2wcs(final_string), strlen(final_string)*sizeof(wchar));
-	Q_free(s);
+	Z_Free(s);
 }
 
 
@@ -656,13 +660,13 @@ void Cmd_Alias_f (void)
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
 		if (!strcasecmp(a->name, s)) {
-			Q_free (a->value);
+			Z_Free (a->value);
 			break;
 		}
 	}
 
 	if (!a)	{
-		a = (cmd_alias_t *) Q_malloc (sizeof(cmd_alias_t));
+		a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 		a->hash_next = cmd_alias_hash[key];
@@ -693,7 +697,7 @@ void Cmd_Alias_f (void)
 #endif
 
 	// copy the rest of the command line
-	a->value = Q_strdup (Cmd_MakeArgs(2));
+	a->value = Z_Strdup (Cmd_MakeArgs(2));
 }
 
 qbool Cmd_DeleteAlias (char *name)
@@ -729,8 +733,8 @@ qbool Cmd_DeleteAlias (char *name)
 				cmd_alias = a->next;
 
 			// free
-			Q_free (a->value);
-			Q_free (a);
+			Z_Free (a->value);
+			Z_Free (a);
 			return true;
 		}
 		prev = a;
@@ -799,8 +803,8 @@ void Cmd_UnAliasAll_f (void)
 
 	for (a = cmd_alias; a ; a = next) {
 		next = a->next;
-		Q_free (a->value);
-		Q_free (a);
+		Z_Free (a->value);
+		Z_Free (a);
 	}
 	cmd_alias = NULL;
 
@@ -851,7 +855,7 @@ static legacycmd_t *legacycmds = NULL;
 void Cmd_AddLegacyCommand (char *oldname, char *newname)
 {
 	legacycmd_t *cmd;
-	cmd = (legacycmd_t *) Q_malloc (sizeof(legacycmd_t));
+	cmd = (legacycmd_t *) Z_Malloc (sizeof(legacycmd_t));
 	cmd->next = legacycmds;
 	legacycmds = cmd;
 
@@ -915,6 +919,18 @@ static	char	*cmd_args = NULL;
 #define CMD_HASHPOOL_SIZE 512
 cmd_function_t	*cmd_hash_array[CMD_HASHPOOL_SIZE];
 /*static*/ cmd_function_t	*cmd_functions;		// possible commands to execute
+
+/*
+============
+Cmd_Shutdown
+============
+*/
+void Cmd_Shutdown(void)
+{
+#ifdef WITH_DP_MEM
+	Mem_FreePool (&cmd_mempool);
+#endif
+}
 
 int Cmd_Argc (void)
 {
@@ -1022,7 +1038,11 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 		}
 	}
 
+#ifdef WITH_DP_MEM
+	cmd = (cmd_function_t *) Mem_Alloc (cmd_mempool, sizeof (cmd_function_t));
+#else
 	cmd = (cmd_function_t *) Hunk_Alloc (sizeof(cmd_function_t));
+#endif
 	cmd->name = cmd_name;
 	cmd->function = function;
 	cmd->next = cmd_functions;
@@ -1694,7 +1714,7 @@ void Cmd_If_New(void)
 		expr_len += clen ? clen + 1 : 3; // we will take '' as a representation of an empty string
 	}
 
-	expr = (char *) Q_malloc(expr_len + 1);
+	expr = (char *) Z_Malloc (expr_len + 1);
 	expr[0] = '\0';
 
 	for (i = 1; i < then_pos; i++) {
@@ -1712,11 +1732,11 @@ void Cmd_If_New(void)
 	error = Expr_Eval_Bool(expr, &pars_ex, &result);
 	if (error != EXPR_EVAL_SUCCESS) {
 		Com_Printf("Error in condition: %s (\"%s\")\n", Parser_Error_Description(error), expr);
-		Q_free(expr);
+		Z_Free(expr);
 		return;
 	}
 
-	Q_free(expr);
+	Z_Free(expr);
 
 	then_pos++;	// skip "then"
 
@@ -1917,7 +1937,7 @@ void Cmd_Eval_f(void)
 		case ET_INT:  Com_Printf("Result: %i (integer)\n", value.i_val); break;
 		case ET_DBL:  Com_Printf("Result: %f (double)\n",  value.d_val); break;
 		case ET_BOOL: Com_Printf("Result: %s (bool)\n", value.b_val ? "true" : "false"); break;
-		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); Q_free(value.s_val); break;
+		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); Z_Free(value.s_val); break;
 		default:      Com_Printf("Error: Unknown value type\n"); break;
 		}
 	}
@@ -1927,6 +1947,10 @@ void Cmd_Eval_f(void)
 
 void Cmd_Init (void)
 {
+#ifdef WITH_DP_MEM
+	cmd_mempool = Mem_AllocPool ("commands", 0, NULL);
+#endif
+
 	// register our commands
 	Cmd_AddCommand ("exec", Cmd_Exec_f);
 	Cmd_AddCommand ("echo", Cmd_Echo_f);

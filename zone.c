@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: zone.c,v 1.14 2007-09-30 22:59:25 disconn3ct Exp $
+	$Id: zone.c,v 1.15 2007-10-01 18:31:06 disconn3ct Exp $
 */
 // zone.c - memory management
 
@@ -420,7 +420,9 @@ void Cache_Report (void) {
 void Cache_Init (void) {
 	cache_head.next = cache_head.prev = &cache_head;
 	cache_head.lru_next = cache_head.lru_prev = &cache_head;
+}
 
+void Cache_Init_Commands (void) {
 	Cmd_AddCommand ("flush", Cache_Flush);
 	Cmd_AddCommand ("cache_print", Cache_Print);
 	Cmd_AddCommand ("cache_report", Cache_Report);

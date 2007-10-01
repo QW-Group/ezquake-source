@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="ezquake"
 	ProjectGUID="{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
 	RootNamespace="ezquake"
@@ -96,7 +96,7 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="asmlibm.lib libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
 				ShowProgress="0"
 				OutputFile="..\ezquake-gl-debug.exe"
 				Version=""
@@ -218,7 +218,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="asmlibm.lib libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
 				OutputFile="..\ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -342,7 +342,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="asmlibm.lib libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
 				OutputFile="..\ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -465,7 +465,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="asmlibm.lib libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
 				OutputFile="..\ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
@@ -1123,30 +1123,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\vfs_doomwad.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_tcp.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_gzip.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_os.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_pak.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_zip.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\hash.c"
 					>
 				</File>
@@ -1187,11 +1163,39 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\vfs_doomwad.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\vfs_gzip.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\vfs_os.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\vfs_pak.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\vfs_tcp.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\vfs_zip.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\wad.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\zone.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\zone2.c"
 					>
 				</File>
 			</Filter>
@@ -2285,6 +2289,10 @@
 					RelativePath="..\..\zone.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\zone2.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Addons_h"
@@ -2584,6 +2592,10 @@
 				>
 				<File
 					RelativePath="..\..\cdaudio.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\qsound.h"
 					>
 				</File>
 			</Filter>

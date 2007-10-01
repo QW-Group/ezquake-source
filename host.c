@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.51 2007-09-30 14:45:00 disconn3ct Exp $
+	$Id: host.c,v 1.52 2007-10-01 18:31:06 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -55,7 +55,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "keys.h"
 
+#ifdef WITH_ASMLIB
 #include "cpu.h"
+#endif
 
 #if !defined(CLIENTONLY) && !defined(SERVERONLY)
 qbool	dedicated = false;
@@ -87,7 +89,7 @@ char *  SYSINFO_3D_description        = NULL;
 #ifdef _WIN32
 void SYSINFO_Init(void)
 {
-#ifdef id386
+#ifdef WITH_ASMLIB
 	char temp[1024];
 #endif
 	MEMORYSTATUS    memstat;
@@ -118,7 +120,8 @@ void SYSINFO_Init(void)
 
 		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_DWORD)
 			SYSINFO_MHz = *((DWORD *)data);
-/*
+
+#ifndef WITH_ASMLIB
 		datasize = 1024;
 		ret = RegQueryValueEx(
 		          hKey,
@@ -130,7 +133,8 @@ void SYSINFO_Init(void)
 
 		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_SZ)
 			SYSINFO_processor_description = Q_strdup((char *) data);
-*/
+#endif
+
 		RegCloseKey(hKey);
 	}
 
@@ -145,15 +149,15 @@ void SYSINFO_Init(void)
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
-#ifndef id386
+#ifdef WITH_ASMLIB
+	ProcessorName (temp);
+	strlcat(f_system_string, ", ", sizeof(f_system_string));
+	strlcat(f_system_string, temp, sizeof(f_system_string));
+#else
 	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
-#else
-	ProcessorName (temp);
-	strlcat(f_system_string, ", ", sizeof(f_system_string));
-	strlcat(f_system_string, temp, sizeof(f_system_string));
 #endif
 
 	if (SYSINFO_MHz) {
@@ -567,7 +571,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 #endif // WITH_FTE_VFS
 	cvar_t *v;
 
-#ifdef id386
+#ifdef WITH_ASMLIB
 	CPU_Init ();
 #endif
 	COM_InitArgv (argc, argv);
@@ -658,7 +662,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cvar_CleanUpTempVars ();
 
 	SYSINFO_Init();
-#ifdef id386
+#ifdef WITH_ASMLIB
 	Cmd_AddCommand ("cpuinfo", CPU_Info);
 #endif
 
