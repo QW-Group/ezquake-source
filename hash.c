@@ -10,10 +10,16 @@
 
 #ifdef WITH_FTE_VFS
 
-void Hash_InitTable(hashtable_t *table, int numbucks, void *mem)
+hashtable_t *Hash_InitTable(int numbucks)
 {
+	hashtable_t *table;
+
+	table = Q_malloc(sizeof(*table));
+
+	table->bucket = (bucket_t**)Q_calloc(numbucks, sizeof(bucket_t *));
 	table->numbuckets = numbucks;
-	table->bucket = (bucket_t **)mem;
+
+	return table;
 }
 
 /* http://www.cse.yorku.ca/~oz/hash.html
@@ -175,23 +181,31 @@ void *Hash_GetNextInsensitive(hashtable_t *table, char *name, void *old)
 }
 
 
-void *Hash_Add(hashtable_t *table, char *name, void *data, bucket_t *buck)
+void *Hash_Add(hashtable_t *table, char *name, void *data) 
 {
 	int bucknum = Hash_Key(name, table->numbuckets);
 
+	bucket_t *buck = (bucket_t *) Q_malloc(sizeof(bucket_t));
+	char *keystring = (char *) Q_malloc(sizeof(char)*(strlen(name)+1)); // Allow room for \0
+	strlcpy(keystring, name, strlen(name) + 1);
+
 	buck->data = data;
-	buck->keystring = name;
+	buck->keystring = keystring;
 	buck->next = table->bucket[bucknum];
 	table->bucket[bucknum] = buck;
 
 	return buck;
 }
-void *Hash_AddInsensitive(hashtable_t *table, char *name, void *data, bucket_t *buck)
+void *Hash_AddInsensitive(hashtable_t *table, char *name, void *data) 
 {
 	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
 
+	bucket_t *buck = (bucket_t *) Q_malloc(sizeof(bucket_t));
+	char *keystring = (char *) Q_malloc(sizeof(char)*(strlen(name)+1)); // Allow room for \0
+	strlcpy(keystring, name, strlen(name) + 1);
+
 	buck->data = data;
-	buck->keystring = name;
+	buck->keystring = keystring;
 	buck->next = table->bucket[bucknum];
 	table->bucket[bucknum] = buck;
 
@@ -219,6 +233,8 @@ void Hash_Remove(hashtable_t *table, char *name)
 	if (!STRCMP(name, buck->keystring))
 	{
 		table->bucket[bucknum] = buck->next;
+		Q_free(buck->keystring);
+		Q_free(buck);
 		return;
 	}
 
@@ -228,6 +244,8 @@ void Hash_Remove(hashtable_t *table, char *name)
 		if (!STRCMP(name, buck->next->keystring))
 		{
 			buck->next = buck->next->next;
+			Q_free(buck->next->keystring);
+			Q_free(buck->next);
 			return;
 		}
 
@@ -247,6 +265,8 @@ void Hash_RemoveData(hashtable_t *table, char *name, void *data)
 		if (!STRCMP(name, buck->keystring))
 		{
 			table->bucket[bucknum] = buck->next;
+			Q_free(buck->keystring);
+			Q_free(buck);
 			return;
 		}
 
@@ -257,6 +277,8 @@ void Hash_RemoveData(hashtable_t *table, char *name, void *data)
 			if (!STRCMP(name, buck->next->keystring))
 			{
 				buck->next = buck->next->next;
+				Q_free(buck->next->keystring);
+				Q_free(buck->next);
 				return;
 			}
 
@@ -276,6 +298,8 @@ void Hash_RemoveKey(hashtable_t *table, char *key)
 	if (buck->keystring == key)
 	{
 		table->bucket[bucknum] = buck->next;
+		Q_free(buck->keystring);
+		Q_free(buck);
 		return;
 	}
 
@@ -285,10 +309,32 @@ void Hash_RemoveKey(hashtable_t *table, char *key)
 		if (buck->next->keystring == key)
 		{
 			buck->next = buck->next->next;
+			Q_free(buck->next->keystring);
+			Q_free(buck->next);
 			return;
 		}
 
 		buck = buck->next;
+	}
+	return;
+}
+
+void Hash_Flush(hashtable_t *table) 
+{
+	int i;
+	for (i = 0; i < table->numbuckets; i++)
+	{
+		bucket_t *bucket, *next;
+		bucket = table->bucket[i];
+		table->bucket[i] = NULL;
+		
+		while (bucket)
+		{
+			next = bucket->next;
+			Q_free(bucket->keystring);
+			Q_free(bucket);
+			bucket = next;
+		}
 	}
 	return;
 }
