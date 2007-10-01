@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.5 2007-09-29 18:50:15 dkure Exp $
+ * $Id: vfs.h,v 1.6 2007-10-01 08:46:52 dkure Exp $
  *             
  */
 
@@ -22,7 +22,7 @@
 #define __VFS_H__
 
 // Quake filesystem
-extern hashtable_t filesystemhash;  // VFS-FIXME: Should probably go in fs.h
+extern hashtable_t *filesystemhash; // VFS-FIXME: Should probably go in fs.h
 extern int fs_hash_dups;			// VFS-FIXME: Should probably go in fs.h
 extern int fs_hash_files;			// VFS-FIXME: Should probably go in fs.h
 
@@ -102,7 +102,7 @@ typedef struct
 	int		filepos, filelen;
 
 #ifdef WITH_FTE_VFS
-	bucket_t bucket;
+//	bucket_t bucket;
 #endif
 } packfile_t;
 

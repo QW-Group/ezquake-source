@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_os.c,v 1.6 2007-10-01 02:57:08 dkure Exp $
+ * $Id: vfs_os.c,v 1.7 2007-10-01 08:46:52 dkure Exp $
  *             
  */
 
@@ -236,16 +236,9 @@ int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
 		Sys_EnumerateFiles((char*)data, childpath, FSOS_RebuildFSHash, data);
 		return true;
 	}
-	if (!Hash_GetInsensitive(&filesystemhash, filename))
+	if (!Hash_GetInsensitive(filesystemhash, filename))
 	{
-		bucket_t *bucket = (bucket_t*) Q_calloc(1, sizeof(bucket_t) + strlen(filename) + 1);
-		char *name = Q_malloc(sizeof(char)*(strlen(filename) + 1));
-		strlcpy (name, filename, strlen(filename) + 1);
-#ifdef _WIN32
-		Q_strlwr(filename);
-#endif
-		Hash_AddInsensitive(&filesystemhash, name, data, bucket);
-
+		Hash_AddInsensitive(filesystemhash, filename, data);
 		fs_hash_files++;
 	}
 	else
@@ -279,6 +272,7 @@ qbool FSOS_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedr
 // check a file in the directory tree
 	snprintf (netpath, sizeof(netpath)-1, "%s/%s",(char*)handle, filename);
 
+	// VFS-FIXME: This could be optimised to only do this once and save the result!
 	f = fopen(netpath, "rb");
 	if (!f)
 		return false;
