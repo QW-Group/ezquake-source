@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.35 2007-10-01 00:48:49 cokeman1982 Exp $
+	$Id: fs.c,v 1.36 2007-10-01 08:45:07 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // To include pak3 support add this define
 //#define WITH_PK3
 
-hashtable_t filesystemhash;
+hashtable_t *filesystemhash;
 static qbool com_fschanged = true;
 
 // VFS-FIXME: Give this a better name
@@ -51,6 +51,7 @@ typedef enum {
 } FSLF_ReturnType_e;
 
 typedef enum {
+	FS_LOAD_NONE     = 1,
 	FS_LOAD_FILE_PAK = 2,
 	FS_LOAD_FILE_PK3 = 4,
 	FS_LOAD_FILE_PK4 = 8,
@@ -72,6 +73,7 @@ void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
 static vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle);
 
+qbool Sys_PathProtection(char *pattern);
 void COM_Dir_f (void);
 void COM_Locate_f (void);
 
@@ -1320,9 +1322,9 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 
 	// VFS-FIXME: Need to find the extension of the file so we know what function to use to open it
 
-	//blanket-bans
-	//if (Sys_PathProtection(filename) )
-	//	return NULL;
+	//blanket-bans - Avoid combination of / & \ for directories
+	if (Sys_PathProtection(filename)) 
+		return NULL;
 
 	if (strcmp(mode, "rb"))
 		if (strcmp(mode, "wb"))
@@ -2366,6 +2368,11 @@ void COM_Dir_f (void)
 {
 	char match[MAX_QPATH];
 
+	if (Cmd_Argc() > 3)  {
+		Com_Printf("Usage: %s [directory [file_suffix]]\n", Cmd_Argv(0));
+		return;
+	}
+
 	strlcpy (match, Cmd_Argv(1), sizeof (match));
 
 	if (Cmd_Argc() > 2) {
@@ -2474,35 +2481,9 @@ int fs_hash_files;
 
 void FS_FlushFSHash(void)
 {
-	if (filesystemhash.numbuckets)
+	if (!filesystemhash)
 	{
-		int i;
-		bucket_t *bucket, *next;
-
-		for (i = 0; i < filesystemhash.numbuckets; i++)
-		{
-			bucket = filesystemhash.bucket[i];
-			filesystemhash.bucket[i] = NULL;
-			while(bucket)
-			{
-				next = bucket->next;
-
-				// HACK : Only free buckets that we allocated 
-				// (zip and pak files have buckets stored in their respective structs)
-				// TODO : Make the zip/pak structs have dynamically allocated buckets also? So we could just free everything here?
-				if (bucket->keystring == (char *)(bucket+1))
-				{
-					Q_free(bucket->keystring);
-					Q_free(bucket);
-				}
-				else
-				{
-					memset(bucket, 0, sizeof(bucket_t));
-				}
-
-				bucket = next;
-			}
-		}
+		Hash_Flush(filesystemhash);
 	}
 
 	com_fschanged = true;
@@ -2511,17 +2492,14 @@ void FS_FlushFSHash(void)
 void FS_RebuildFSHash(void)
 {
 	searchpath_t	*search;
-	if (!filesystemhash.numbuckets)
+	if (!filesystemhash)
 	{
-		filesystemhash.numbuckets = 1024;
-		filesystemhash.bucket = (bucket_t**)Q_calloc(filesystemhash.numbuckets, sizeof(bucket_t *));
+		filesystemhash = Hash_InitTable(1024);
 	}
 	else
 	{
 		FS_FlushFSHash();
 	}
-
-	Hash_InitTable(&filesystemhash, filesystemhash.numbuckets, filesystemhash.bucket);
 
 	fs_hash_dups = 0;
 	fs_hash_files = 0;
@@ -2566,7 +2544,7 @@ int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *lo
 	{
 		if (com_fschanged)
 			FS_RebuildFSHash();
-		pf = Hash_GetInsensitive(&filesystemhash, filename);
+		pf = Hash_GetInsensitive(filesystemhash, filename);
 		if (!pf)
 			goto fail;
 	}
@@ -2683,7 +2661,9 @@ qbool Sys_PathProtection(char *pattern)
 			*s = '/';
 	}
 
-	if (strstr(pattern, ".."))
+	return false; // Ignore the stuff below so we always succed
+
+/*	if (strstr(pattern, ".."))
 		Com_Printf("Error: '..' charactures in filename %s\n", pattern);
 	else if (pattern[0] == '/')
 		Com_Printf("Error: absolute path in filename %s\n", pattern);
@@ -2691,7 +2671,7 @@ qbool Sys_PathProtection(char *pattern)
 		Com_Printf("Error: absolute path in filename %s\n", pattern);
 	else
 		return false;
-	return true;
+	return true;*/
 }
 
 #ifdef WITH_ZIP
@@ -3398,7 +3378,7 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 
 void FS_UnloadPackFiles(void)
 {
-	FS_ReloadPackFilesFlags(1);
+	FS_ReloadPackFilesFlags(FS_LOAD_NONE);
 }
 
 void FS_ReloadPackFiles(void)
@@ -3408,6 +3388,10 @@ void FS_ReloadPackFiles(void)
 
 void FS_ReloadPackFiles_f(void)
 {
+	if (Cmd_Argc() > 2) {
+		Com_Printf("Usage: %s [reload flags]\n", Cmd_Argv(0));
+		return;
+	}
 	if (atoi(Cmd_Argv(1)))
 		FS_ReloadPackFilesFlags(atoi(Cmd_Argv(1)));
 	else
