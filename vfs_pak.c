@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.5 2007-10-01 08:46:52 dkure Exp $
+ * $Id: vfs_pak.c,v 1.6 2007-10-01 13:09:33 cokeman1982 Exp $
  *             
  */
 
@@ -363,7 +363,8 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 
 //	QCRC_Init (&crc);
 
-	pack = (pack_t*)Q_malloc (sizeof (pack_t));
+	pack = (pack_t *)Q_calloc(1, sizeof (pack_t));
+
 // parse the directory
 	for (i=0 ; i<numpackfiles ; i++)
 	{
