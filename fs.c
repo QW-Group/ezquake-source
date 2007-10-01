@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.34 2007-09-30 22:59:23 disconn3ct Exp $
+	$Id: fs.c,v 1.35 2007-10-01 00:48:49 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2486,8 +2486,20 @@ void FS_FlushFSHash(void)
 			while(bucket)
 			{
 				next = bucket->next;
-				if (bucket->keystring == (char*)(bucket+1))
+
+				// HACK : Only free buckets that we allocated 
+				// (zip and pak files have buckets stored in their respective structs)
+				// TODO : Make the zip/pak structs have dynamically allocated buckets also? So we could just free everything here?
+				if (bucket->keystring == (char *)(bucket+1))
+				{
+					Q_free(bucket->keystring);
 					Q_free(bucket);
+				}
+				else
+				{
+					memset(bucket, 0, sizeof(bucket_t));
+				}
+
 				bucket = next;
 			}
 		}
@@ -2508,13 +2520,15 @@ void FS_RebuildFSHash(void)
 	{
 		FS_FlushFSHash();
 	}
+
 	Hash_InitTable(&filesystemhash, filesystemhash.numbuckets, filesystemhash.bucket);
 
 	fs_hash_dups = 0;
 	fs_hash_files = 0;
 
 	if (fs_purepaths)
-	{	//go for the pure paths first.
+	{	
+		// Go for the pure paths first.
 		for (search = fs_purepaths; search; search = search->nextpure)
 		{
 			search->funcs->BuildHash(search->handle);
@@ -2552,7 +2566,7 @@ int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *lo
 	{
 		if (com_fschanged)
 			FS_RebuildFSHash();
-		pf = Hash_GetInsensative(&filesystemhash, filename);
+		pf = Hash_GetInsensitive(&filesystemhash, filename);
 		if (!pf)
 			goto fail;
 	}
