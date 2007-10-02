@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.96 2007-09-26 21:51:33 tonik Exp $
+$Id: gl_draw.c,v 1.97 2007-10-02 01:05:03 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -405,7 +405,13 @@ mpic_t *Draw_CacheWadPic (char *name)
 	if ((pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
 		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA)))
 	{
-		memcpy(&pic->texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
+		// Only keep the size info from the lump. The other stuff is copied from the 24 bit image.
+		pic->sh		= pic_24bit->sh;
+		pic->sl		= pic_24bit->sl;
+		pic->texnum = pic_24bit->texnum;
+		pic->th		= pic_24bit->th;
+		pic->tl		= pic_24bit->tl;
+
 		return pic;
 	}
 
@@ -414,7 +420,7 @@ mpic_t *Draw_CacheWadPic (char *name)
 	{
 		int x = 0, y = 0, i, j, k, texnum;
 
-		texnum = memchr(p->data, 255, p->width*p->height) != NULL;
+		texnum = memchr(p->data, 255, p->width * p->height) != NULL;
 
 		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y))
 		{
@@ -504,12 +510,12 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 	{
 		fclose (f);
 #else
-	if ((v = FS_OpenVFS(lmp_path, "rb", FS_ANY))) {
+	if ((v = FS_OpenVFS(lmp_path, "rb", FS_ANY)))
+	{
 		VFS_CLOSE(v);
 #endif // WITH_FTE_VFS
-	
 
-		if (!(dat = (qpic_t *)FS_LoadTempFile (lmp_path)))
+		if (!(dat = (qpic_t *)FS_LoadTempFile(lmp_path)))
 		{
 			if(crash)
 				Sys_Error ("Draw_CachePicSafe: failed to load %s", lmp_path);
