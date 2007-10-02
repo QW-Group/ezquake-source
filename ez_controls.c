@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.62 2007-09-30 23:17:29 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.63 2007-10-02 13:23:17 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -4148,6 +4148,59 @@ int EZ_scrollbar_OnSliderMouseDown(ez_control_t *self, mouse_state_t *ms)
 }
 
 //
+// Scrollbar - Generic scroll button action event handler.
+//
+static void EZ_scrollbar_OnScrollButtonMouseDown(ez_scrollbar_t *scrollbar, qbool back)
+{
+	ez_control_t *scrollbar_ctrl = (ez_control_t *)scrollbar;
+
+	if (scrollbar->orientation == vertical)
+	{
+		EZ_control_SetScrollChange(scrollbar_ctrl->parent, 0, (back ? -scrollbar->scroll_delta_y : scrollbar->scroll_delta_y));
+	}
+	else
+	{
+		EZ_control_SetScrollChange(scrollbar_ctrl->parent, (back ? -scrollbar->scroll_delta_x : scrollbar->scroll_delta_x), 0);
+	}
+}
+
+//
+// Scrollbar - Event handler for pressing the back button (left or up).
+//
+static int EZ_scrollbar_OnBackButtonMouseDown(ez_control_t *self, mouse_state_t *ms)
+{
+	if (!self->parent || self->parent->CLASS_ID != EZ_SCROLLBAR_ID)
+	{
+		Sys_Error("EZ_scrollbar_OnBackButtonMouseDown(): Parent of back button is not a scrollbar!");
+	}
+	else 
+	{
+		ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self->parent;
+		EZ_scrollbar_OnScrollButtonMouseDown(scrollbar, true);
+	}
+
+	return true;
+}
+
+//
+// Scrollbar - Event handler for pressing the back button (left or up).
+//
+static int EZ_scrollbar_OnForwardButtonMouseDown(ez_control_t *self, mouse_state_t *ms)
+{
+	if (!self->parent || self->parent->CLASS_ID != EZ_SCROLLBAR_ID)
+	{
+		Sys_Error("EZ_scr	ollbar_OnForwardButtonMouseDown(): Parent of forward button is not a scrollbar!");
+	}
+	else
+	{
+		ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self->parent;
+		EZ_scrollbar_OnScrollButtonMouseDown(scrollbar, false);
+	}
+
+	return true;
+}
+
+//
 // Scrollbar - Creates a new scrollbar and initializes it.
 //
 ez_scrollbar_t *EZ_scrollbar_Create(ez_tree_t *tree, ez_control_t *parent,
@@ -4185,8 +4238,8 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 	EZ_control_Init(&scrollbar->super, tree, parent, name, description, x, y, width, height, background_name, flags);
 
 	// Initilize the button specific stuff.
-	((ez_control_t *)scrollbar)->CLASS_ID				= EZ_SCROLLBAR_ID;
-	((ez_control_t *)scrollbar)->ext_flags				|= (flags | control_focusable | control_contained | control_resizeable);
+	((ez_control_t *)scrollbar)->CLASS_ID	= EZ_SCROLLBAR_ID;
+	((ez_control_t *)scrollbar)->ext_flags	|= (flags | control_focusable | control_contained | control_resizeable);
 
 	// Override the draw function.
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnResize, OnResize, ez_control_t);
@@ -4199,10 +4252,14 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 	scrollbar->back		= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar back button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
 	scrollbar->forward	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar forward button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
 	scrollbar->slider	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar slider button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
-
+	
 	EZ_control_SetOnMouseDown((ez_control_t *)scrollbar->slider, EZ_scrollbar_OnSliderMouseDown);
+	EZ_control_SetOnMouseDown((ez_control_t *)scrollbar->back, EZ_scrollbar_OnBackButtonMouseDown);
+	EZ_control_SetOnMouseDown((ez_control_t *)scrollbar->forward, EZ_scrollbar_OnForwardButtonMouseDown);
 
 	scrollbar->slider_minsize = 5;
+	scrollbar->scroll_delta_x = 1;
+	scrollbar->scroll_delta_y = 1;
 
 	// TODO : Remove this test stuff.
 	{
@@ -4212,6 +4269,23 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 	}
 
 	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollbar, ez_control_t, OnResize);
+}
+
+//
+// Scrollbar - Set the minimum slider size.
+//
+void EZ_scrollbar_SetSliderMinSize(ez_scrollbar_t *scrollbar, int minsize)
+{
+	scrollbar->slider_minsize = max(1, minsize);
+}
+
+//
+// Scrollbar - Sets the amount to scroll the parent control when pressing the scrollbars scroll buttons.
+//
+void EZ_scrollbar_SetScrollDelta(ez_scrollbar_t *scrollbar, int scroll_delta_x, int scroll_delta_y)
+{
+	scrollbar->scroll_delta_x = max(1, scroll_delta_x);
+	scrollbar->scroll_delta_y = max(1, scroll_delta_y);
 }
 
 //
@@ -4396,8 +4470,12 @@ static void EZ_scrollbar_UpdateSliderBasedOnParent(ez_scrollbar_t *scrollbar)
 	if (scrollbar->orientation == vertical)
 	{
 		int new_y;
+
+		// Find how far down on the parent control we're scrolled (percentage).
 		scroll_ratio = fabs(self->parent->virtual_y / (float)self->parent->virtual_height);
 		
+		// Calculate the position of the slider by multiplying the scroll areas
+		// height with the scroll ratio.
 		new_y = back_ctrl->height + Q_rint(scroll_ratio * scrollbar->scroll_area);
 		clamp(new_y, back_ctrl->height, (self->height - forward_ctrl->height - slider_ctrl->height));
 
@@ -4429,38 +4507,41 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 
 	mouse_handled = EZ_control_OnMouseEvent(self, ms);
 
-	if (!mouse_handled && (scrollbar->int_flags & sliding))
+	if (!mouse_handled)
 	{
-		if (scrollbar->orientation == vertical)
+		if (scrollbar->int_flags & sliding)
 		{
-			float scroll_ratio = 0;
+			if (scrollbar->orientation == vertical)
+			{
+				float scroll_ratio = 0;
 
-			// Reposition the slider within the scrollbar control based on where the mouse moves.
-			int new_y = (ms->y - self->absolute_y);
+				// Reposition the slider within the scrollbar control based on where the mouse moves.
+				int new_y = (ms->y - self->absolute_y);
 
-			// Only allow moving the scroll slider in the area between the two buttons (the scroll area).
-			clamp(new_y, back_ctrl->height, (self->height - forward_ctrl->height - slider_ctrl->height));
-			EZ_control_SetPosition(slider_ctrl, 0, new_y);
+				// Only allow moving the scroll slider in the area between the two buttons (the scroll area).
+				clamp(new_y, back_ctrl->height, (self->height - forward_ctrl->height - slider_ctrl->height));
+				EZ_control_SetPosition(slider_ctrl, 0, new_y);
 
-			mouse_handled = true;
+				mouse_handled = true;
+			}
+			else
+			{
+				int new_x = (ms->x - self->absolute_x);
+				clamp(new_x, back_ctrl->width, (self->width - forward_ctrl->width - slider_ctrl->width));
+				EZ_control_SetPosition(slider_ctrl, 0, new_x);
+				mouse_handled = true;
+			}
+
+			// Make sure we don't try to set the position of the slider
+			// as the parents scroll position changes, like normal.
+			scrollbar->int_flags |= scrolling;
+
+			EZ_scrollbar_CalculateParentScrollPosition(scrollbar);
+			
+			scrollbar->int_flags &= ~scrolling;
 		}
-		else
-		{
-			int new_x = (ms->x - self->absolute_x);
-			clamp(new_x, back_ctrl->width, (self->width - forward_ctrl->width - slider_ctrl->width));
-			EZ_control_SetPosition(slider_ctrl, 0, new_x);
-			mouse_handled = true;
-		}
-
-		// Make sure we don't try to set the position of the slider
-		// as the parents scroll position changes, like normal.
-		scrollbar->int_flags |= scrolling;
-
-		EZ_scrollbar_CalculateParentScrollPosition(scrollbar);
-		
-		scrollbar->int_flags &= ~scrolling;
 	}
-	
+
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled_tmp, self, ez_control_t, OnMouseEvent, ms);
 	mouse_handled = (mouse_handled | mouse_handled_tmp);
 

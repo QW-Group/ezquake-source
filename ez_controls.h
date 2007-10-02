@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.41 2007-09-30 23:17:29 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.42 2007-10-02 13:23:17 cokeman1982 Exp $
 */
 
 //
@@ -1558,8 +1558,8 @@ typedef enum ez_orientation_s
 
 typedef enum ez_scrollbar_iflags_e
 {
-	sliding		= (1 << 0),
-	scrolling	= (1 << 1)
+	sliding			= (1 << 0),
+	scrolling		= (1 << 1)
 } ez_scrollbar_iflags_t;
 
 typedef struct ez_scrollbar_s
@@ -1575,6 +1575,8 @@ typedef struct ez_scrollbar_s
 												// the forward/back buttons. That is, the area you can move the slider in.
 
 	int						slider_minsize;		// The minimum size of the slider button.
+	int						scroll_delta_x;		// How much should the scrollbar scroll it's parent when the scroll buttons are pressed?
+	int						scroll_delta_y;
 
 	ez_scrollbar_iflags_t	int_flags;			// The internal flags for the scrollbar.
 
