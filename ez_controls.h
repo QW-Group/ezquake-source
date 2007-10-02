@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.42 2007-10-02 13:23:17 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.43 2007-10-02 17:00:33 cokeman1982 Exp $
 */
 
 //
@@ -571,7 +571,7 @@ typedef struct ez_control_s
 ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent, 
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
-							  char *background_name, int flags);
+							  int flags);
 
 //
 // Control - Initializes a control and adds it to the specified control tree.
@@ -583,7 +583,7 @@ ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent, 
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
-							  char *background_name, ez_control_flags_t flags);
+							  ez_control_flags_t flags);
 
 //
 // Control - Destroys a specified control.
@@ -1050,15 +1050,13 @@ typedef struct ez_label_s
 
 ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent, 
 							  char *name, char *description, 
-							  int x, int y, int width, int height, 
-							  char *background_name, 
+							  int x, int y, int width, int height,
 							  ez_control_flags_t flags, ez_label_flags_t text_flags,
 							  char *text);
 
 void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent, 
 				  char *name, char *description, 
-				  int x, int y, int width, int height, 
-				  char *background_name, 
+				  int x, int y, int width, int height,
 				  ez_control_flags_t flags, ez_label_flags_t text_flags,
 				  char *text);
 
@@ -1304,16 +1302,14 @@ typedef struct ez_button_s
 ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent, 
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
-							  char *background_name, char *hover_image, char *pressed_image,
 							  ez_control_flags_t flags);
 
 //
 // Button - Initializes a button.
 //
-void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent, 
-							  char *name, char *description, 
-							  int x, int y, int width, int height, 
-							  char *background_name, char *hover_image, char *pressed_image,
+void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
 							  ez_control_flags_t flags);
 
 //
@@ -1437,7 +1433,6 @@ typedef struct ez_slider_s
 ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags);
 
 //
@@ -1446,7 +1441,6 @@ ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags);
 
 //
@@ -1590,7 +1584,6 @@ typedef struct ez_scrollbar_s
 ez_scrollbar_t *EZ_scrollbar_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags);
 
 //
@@ -1599,7 +1592,6 @@ ez_scrollbar_t *EZ_scrollbar_Create(ez_tree_t *tree, ez_control_t *parent,
 void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags);
 
 //

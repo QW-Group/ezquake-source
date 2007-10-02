@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.63 2007-10-02 13:23:17 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.64 2007-10-02 17:00:33 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -468,7 +468,7 @@ void EZ_tree_OrderTabList(ez_tree_t *tree)
 ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name, int flags)
+							  int flags)
 {
 	ez_control_t *control = NULL;
 
@@ -481,7 +481,7 @@ ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 	control = (ez_control_t *)Q_malloc(sizeof(ez_control_t));
 	memset(control, 0, sizeof(ez_control_t));
 
-	EZ_control_Init(control, tree, parent, name, description, x, y, width, height, background_name, flags);
+	EZ_control_Init(control, tree, parent, name, description, x, y, width, height, flags);
 
 	return control;
 }
@@ -510,8 +510,8 @@ void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y)
 //
 void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
-							  int x, int y, int width, int height,
-							  char *background_name, ez_control_flags_t flags)
+							  int x, int y, int width, int height, 
+							  ez_control_flags_t flags)
 {
 	static int order		= 0;
 
@@ -565,10 +565,11 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnFlagsChanged, OnFlagsChanged, ez_control_t);
 
 	// Load the background image.
-	if(background_name)
+/*	if(background_name)
 	{
 		control->background = Draw_CachePicSafe(background_name, false, true);
 	}
+	*/
 
 	// Add the control to the control tree.
 	if(!tree->root)
@@ -2046,7 +2047,6 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags, ez_label_flags_t text_flags,
 							  char *text)
 {
@@ -2061,7 +2061,7 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 	label = (ez_label_t *)Q_malloc(sizeof(ez_label_t));
 	memset(label, 0, sizeof(ez_label_t));
 
-	EZ_label_Init(label, tree, parent, name, description, x, y, width, height, background_name, flags, text_flags, text);
+	EZ_label_Init(label, tree, parent, name, description, x, y, width, height, flags, text_flags, text);
 	
 	return label;
 }
@@ -2072,12 +2072,11 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 				  char *name, char *description,
 				  int x, int y, int width, int height,
-				  char *background_name,
 				  ez_control_flags_t flags, ez_label_flags_t text_flags,
 				  char *text)
 {
 	// Initialize the inherited class first.
-	EZ_control_Init(&label->super, tree, parent, name, description, x, y, width, height, background_name, flags);
+	EZ_control_Init(&label->super, tree, parent, name, description, x, y, width, height, flags);
 
 	label->super.CLASS_ID				= EZ_LABEL_ID;
 
@@ -3468,7 +3467,6 @@ static int EZ_button_OnLabelTextChanged(ez_control_t *self)
 ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name, char *hover_image, char *pressed_image,
 							  ez_control_flags_t flags)
 {
 	ez_button_t *button = NULL;
@@ -3482,7 +3480,7 @@ ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
 	button = (ez_button_t *)Q_malloc(sizeof(ez_button_t));
 	memset(button, 0, sizeof(ez_button_t));
 
-	EZ_button_Init(button, tree, parent, name, description, x, y, width, height, background_name, hover_image, pressed_image, flags);
+	EZ_button_Init(button, tree, parent, name, description, x, y, width, height, flags);
 	
 	return button;
 }
@@ -3493,11 +3491,10 @@ ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
 void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name, char *hover_image, char *pressed_image,
 							  ez_control_flags_t flags)
 {
 	// Initialize the inherited class first.
-	EZ_control_Init(&button->super, tree, parent, name, description, x, y, width, height, background_name, flags);
+	EZ_control_Init(&button->super, tree, parent, name, description, x, y, width, height, flags);
 
 	// Initilize the button specific stuff.
 	((ez_control_t *)button)->CLASS_ID			= EZ_BUTTON_ID;
@@ -3515,7 +3512,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 
 	// Create the buttons text label.
 	{
-		button->text_label = EZ_label_Create(tree, (ez_control_t *)button, "Button text label", "", button->padding_left, button->padding_top, 1, 1, NULL, 0, 0, "");
+		button->text_label = EZ_label_Create(tree, (ez_control_t *)button, "Button text label", "", button->padding_left, button->padding_top, 1, 1, 0, 0, "");
 
 		EZ_label_SetOnTextChanged(button->text_label, EZ_button_OnLabelTextChanged);
 
@@ -3724,7 +3721,6 @@ int EZ_button_OnTextAlignmentChanged(ez_control_t *self)
 ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags)
 {
 	ez_slider_t *slider = NULL;
@@ -3738,7 +3734,7 @@ ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 	slider = (ez_slider_t *)Q_malloc(sizeof(ez_slider_t));
 	memset(slider, 0, sizeof(ez_slider_t));
 
-	EZ_slider_Init(slider, tree, parent, name, description, x, y, width, height, background_name, flags);
+	EZ_slider_Init(slider, tree, parent, name, description, x, y, width, height, flags);
 	
 	return slider;
 }
@@ -3749,13 +3745,12 @@ ez_slider_t *EZ_slider_Create(ez_tree_t *tree, ez_control_t *parent,
 void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags)
 {
 	height = max(height, 8);
 
 	// Initialize the inherited class first.
-	EZ_control_Init(&slider->super, tree, parent, name, description, x, y, width, height, background_name, flags);
+	EZ_control_Init(&slider->super, tree, parent, name, description, x, y, width, height, flags);
 
 	// Initilize the button specific stuff.
 	((ez_control_t *)slider)->CLASS_ID					= EZ_SLIDER_ID;
@@ -4206,7 +4201,6 @@ static int EZ_scrollbar_OnForwardButtonMouseDown(ez_control_t *self, mouse_state
 ez_scrollbar_t *EZ_scrollbar_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags)
 {
 	ez_scrollbar_t *scrollbar = NULL;
@@ -4220,7 +4214,7 @@ ez_scrollbar_t *EZ_scrollbar_Create(ez_tree_t *tree, ez_control_t *parent,
 	scrollbar = (ez_scrollbar_t *)Q_malloc(sizeof(ez_scrollbar_t));
 	memset(scrollbar, 0, sizeof(ez_scrollbar_t));
 
-	EZ_scrollbar_Init(scrollbar, tree, parent, name, description, x, y, width, height, background_name, flags);
+	EZ_scrollbar_Init(scrollbar, tree, parent, name, description, x, y, width, height, flags);
 	
 	return scrollbar;
 }
@@ -4231,11 +4225,10 @@ ez_scrollbar_t *EZ_scrollbar_Create(ez_tree_t *tree, ez_control_t *parent,
 void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
-							  char *background_name,
 							  ez_control_flags_t flags)
 {
 	// Initialize the inherited class first.
-	EZ_control_Init(&scrollbar->super, tree, parent, name, description, x, y, width, height, background_name, flags);
+	EZ_control_Init(&scrollbar->super, tree, parent, name, description, x, y, width, height, flags);
 
 	// Initilize the button specific stuff.
 	((ez_control_t *)scrollbar)->CLASS_ID	= EZ_SCROLLBAR_ID;
@@ -4249,9 +4242,9 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnMouseUpOutside, OnMouseUpOutside, ez_control_t);
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnParentScroll, OnParentScroll, ez_control_t);
 
-	scrollbar->back		= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar back button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
-	scrollbar->forward	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar forward button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
-	scrollbar->slider	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar slider button", "", 0, 0, 10, 10, NULL, NULL, NULL, control_contained | control_enabled);
+	scrollbar->back		= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar back button", "", 0, 0, 0, 0, control_contained | control_enabled);
+	scrollbar->forward	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar forward button", "", 0, 0, 0, 0, control_contained | control_enabled);
+	scrollbar->slider	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar slider button", "", 0, 0, 0, 0, control_contained | control_enabled);
 	
 	EZ_control_SetOnMouseDown((ez_control_t *)scrollbar->slider, EZ_scrollbar_OnSliderMouseDown);
 	EZ_control_SetOnMouseDown((ez_control_t *)scrollbar->back, EZ_scrollbar_OnBackButtonMouseDown);
@@ -4362,8 +4355,13 @@ int EZ_scrollbar_OnResize(ez_control_t *self)
 	// Let the super class do it's thing first.
 	EZ_control_OnResize(self);
 
+	// Make sure the buttons are in the correct place.
 	EZ_scrollbar_RepositionScrollButtons(scrollbar);
 	EZ_scrollbar_CalculateSliderSize(scrollbar);
+
+	// Reset the min virtual size to 1x1 so that the 
+	// scrollbar won't stop resizing when it's parent is resized.
+	EZ_control_SetMinVirtualSize(self, 1, 1);
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
 	return 0;
