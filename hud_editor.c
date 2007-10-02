@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.38 2007-09-25 16:13:35 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.39 2007-10-02 17:04:25 cokeman1982 Exp $
 
 */
 
@@ -2234,6 +2234,7 @@ ez_button_t *button = NULL;
 ez_label_t *label = NULL;
 ez_label_t *label2 = NULL;
 ez_slider_t *slider = NULL;
+ez_scrollbar_t *scrollbar = NULL;
 
 int Test_OnButtonDraw(ez_control_t *self)
 {
@@ -2559,13 +2560,14 @@ void HUD_Editor_Init(void)
 
 	// Root
 	{
-		root = EZ_control_Create(&help_control_tree, NULL, "Test window", "Test", 50, 50, 400, 400, NULL, control_focusable | control_movable | control_resize_h | control_resize_v);
+		root = EZ_control_Create(&help_control_tree, NULL, "Test window", "Test", 50, 50, 400, 400, control_focusable | control_movable | control_resize_h | control_resize_v);
 		EZ_control_SetBackgroundColor(root, 0, 0, 0, 100);
+		EZ_control_SetSize(root, 400, 400);
 	}
 
 	// Child 1
 	{
-		child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, NULL, control_focusable | control_resize_h | control_resize_v | control_movable | control_contained | control_scrollable);
+		child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, control_focusable | control_resize_h | control_resize_v | control_movable | control_contained | control_scrollable);
 
 		EZ_control_SetOnGotFocus(child1, Test_OnGotFocus);
 		EZ_control_SetOnLostFocus(child1, Test_OnLostFocus);
@@ -2579,7 +2581,7 @@ void HUD_Editor_Init(void)
 
 	// Child 2
 	{
-		child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, NULL, control_focusable | control_contained);
+		child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, control_focusable | control_contained);
 
 		EZ_control_SetOnGotFocus(child2, Test_OnGotFocus);
 		EZ_control_SetOnLostFocus(child2, Test_OnLostFocus);
@@ -2589,7 +2591,7 @@ void HUD_Editor_Init(void)
 
 	// Button.
 	{
-		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", 15, -15, 60, 15, NULL, NULL, NULL, control_contained | control_resizeable);
+		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", 15, -15, 60, 15, control_contained | control_resizeable);
 		EZ_control_SetOnDraw((ez_control_t *)button, Test_OnButtonDraw);
 
 		EZ_button_SetFocusedColor(button, 255, 0, 0, 255);
@@ -2598,7 +2600,7 @@ void HUD_Editor_Init(void)
 		EZ_button_SetHoverColor(button, 255, 0, 0, 150);
 
 		EZ_button_SetText(button, "Button");
-		EZ_button_SetTextAlignment(button, bottom_center);
+		EZ_button_SetTextAlignment(button, middle_center);
 
 		EZ_control_SetAnchor((ez_control_t *)button, (anchor_left | anchor_right | anchor_bottom));
 	}
@@ -2606,7 +2608,7 @@ void HUD_Editor_Init(void)
 	// Label.
 	{
 		label = EZ_label_Create(&help_control_tree, root, 
-			"label", "A crazy label!", 200, 200, 200, 80, NULL, 
+			"label", "A crazy label!", 200, 200, 200, 80, 
 			control_focusable | control_contained | control_resizeable | control_scrollable /*| control_movable */ | control_resize_h | control_resize_v, 
 			label_wraptext | label_autosize/*| LABEL_LARGEFONT*/, 
 			"Hello\nthis is a test are you fine because I am bla bla bla this is a very long string and it's plenty of fun haha!");
@@ -2621,7 +2623,7 @@ void HUD_Editor_Init(void)
 	// Label 2.
 	{
 		label2 = EZ_label_Create(&help_control_tree, root, 
-			"label2", "A crazy label!", 100, 50, 32, 16, NULL, 
+			"label2", "A crazy label!", 100, 50, 32, 16,  
 			control_focusable | control_contained | control_resizeable, 
 			0, "");
 	}
@@ -2629,7 +2631,7 @@ void HUD_Editor_Init(void)
 	// Slider.
 	{
 		slider = EZ_slider_Create(&help_control_tree, root,
-			"slider", "Slider omg", 50, 100, 150, 8, NULL, control_focusable | control_contained | control_resizeable);
+			"slider", "Slider omg", 50, 100, 150, 8, control_focusable | control_contained | control_resizeable);
 
 		EZ_control_SetAnchor((ez_control_t *)slider, anchor_left | anchor_right); 
 
@@ -2639,6 +2641,14 @@ void HUD_Editor_Init(void)
 		EZ_slider_SetScale(slider, 1.0);
 
 		EZ_slider_SetOnSliderPositionChanged(slider, Test_OnSliderPositionChanged);
+	}
+
+	// Scrollbar.
+	{
+		scrollbar = EZ_scrollbar_Create(&help_control_tree, child1, "Scrollbar", "", -5, 0, 10, child1->height, control_anchor_nonvirtual);
+
+		EZ_control_SetAnchor((ez_control_t *)scrollbar, anchor_right | anchor_top | anchor_bottom);
+		EZ_control_SetMovable((ez_control_t *)scrollbar, false);
 	}
 
 #endif 
