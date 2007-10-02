@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.41 2007-09-26 21:51:34 tonik Exp $
+$Id: gl_texture.c,v 1.42 2007-10-02 01:02:46 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -74,11 +74,13 @@ static gltexture_t	gltextures[MAX_GLTEXTURES];
 static int			numgltextures = 0;
 	   int			texture_extension_number = 1; // non static, sad but used in gl_framebufer.c too
 
-void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) {
+void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) 
+{
 	int i;
 	float newvalue = Q_atof(string);
 
-	if (newvalue > gl_max_size_default) {
+	if (newvalue > gl_max_size_default) 
+	{
 		Com_Printf("Your hardware doesn't support texture sizes bigger than %dx%d\n", gl_max_size_default, gl_max_size_default);
 		*cancel = true;
 		return;
@@ -86,14 +88,16 @@ void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) {
 
 	Q_ROUND_POWER2(newvalue, i);
 
-	if (i != newvalue) {
+	if (i != newvalue) 
+	{
 		Com_Printf("Valid values for %s are powers of 2 only\n", var->name);
 		*cancel = true;
 		return;
 	}
 }
 
-typedef struct {
+typedef struct 
+{
 	char *name;
 	int	minimize, maximize;
 } glmode_t;
@@ -112,15 +116,19 @@ glmode_t modes[] = {
 static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 static int gl_filter_max = GL_LINEAR;
 
-void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel) {
+void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel) 
+{
 	int i;
 	gltexture_t	*glt;
 
-	for (i = 0; i < GLMODE_NUMODES; i++) {
-		if (!strcasecmp (modes[i].name, string ) )
+	for (i = 0; i < GLMODE_NUMODES; i++) 
+	{
+		if (!strcasecmp (modes[i].name, string))
 			break;
 	}
-	if (i == GLMODE_NUMODES) {
+
+	if (i == GLMODE_NUMODES) 
+	{
 		Com_Printf ("bad filter name: %s\n", string);
 		*cancel = true;
 		return;
@@ -129,9 +137,11 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel) {
 	gl_filter_min = modes[i].minimize;
 	gl_filter_max = modes[i].maximize;
 
-
-	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) {
-		if (glt->texmode & TEX_MIPMAP) {
+	// Make sure we set the proper texture filters for mipmaped textures.
+	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
+	{
+		if (glt->texmode & TEX_MIPMAP)
+		{
 			GL_Bind (glt->texnum);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
@@ -139,7 +149,8 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel) {
 	}
 }
 
-void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel) {
+void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel) 
+{
 	int i;
 	gltexture_t *glt;
 
@@ -155,15 +166,17 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel) {
 		if (glt->texmode & TEX_MIPMAP)
 		{
 			GL_Bind (glt->texnum);
-			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,newvalue);
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, newvalue);
 		}
 	}
 }
 
-void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel) {
+void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel)
+{
 	float newval = Q_atof(string);
 
-	if (newval != 0 && newval != 1 && newval != 2 && newval != 3) {
+	if (newval != 0 && newval != 1 && newval != 2 && newval != 3) 
+	{
 		Com_Printf("Valid values for %s are 0,1,2,3 only\n", var->name);
 		*cancel = true;
 	}
@@ -171,7 +184,8 @@ void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel) {
 
 int currenttexture = -1;
 
-void GL_Bind (int texnum) {
+void GL_Bind (int texnum)
+{
 	if (currenttexture == texnum)
 		return;
 
@@ -183,8 +197,8 @@ static GLenum oldtarget = GL_TEXTURE0_ARB;
 static int cnttextures[4] = {-1, -1, -1, -1};
 static qbool mtexenabled = false;
 
-
-void GL_SelectTexture (GLenum target) {
+void GL_SelectTexture (GLenum target) 
+{
 	if (target == oldtarget)
 		return;
 
@@ -195,42 +209,48 @@ void GL_SelectTexture (GLenum target) {
 	oldtarget = target;
 }
 
-void GL_DisableMultitexture (void) {
-	if (mtexenabled) {
+void GL_DisableMultitexture (void) 
+{
+	if (mtexenabled) 
+	{
 		glDisable (GL_TEXTURE_2D);
 		GL_SelectTexture (GL_TEXTURE0_ARB);
 		mtexenabled = false;
 	}
 }
 
-void GL_EnableMultitexture (void) {
-	if (gl_mtexable) {
+void GL_EnableMultitexture (void) 
+{
+	if (gl_mtexable) 
+	{
 		GL_SelectTexture (GL_TEXTURE1_ARB);
 		glEnable (GL_TEXTURE_2D);
 		mtexenabled = true;
 	}
 }
 
-void GL_EnableTMU (GLenum target) {
+void GL_EnableTMU (GLenum target) 
+{
 	GL_SelectTexture(target);
 	glEnable(GL_TEXTURE_2D);
 }
 
-void GL_DisableTMU(GLenum target) {
+void GL_DisableTMU(GLenum target) 
+{
 	GL_SelectTexture(target);
 	glDisable(GL_TEXTURE_2D);
 }
 
-static void ScaleDimensions(int width, int height, int *scaled_width, int *scaled_height, int mode) {
+static void ScaleDimensions(int width, int height, int *scaled_width, int *scaled_height, int mode) 
+{
 	int maxsize, picmip;
-	qbool scale;
-
-	scale = (mode & TEX_MIPMAP) && !(mode & TEX_NOSCALE);
+	qbool scale = (mode & TEX_MIPMAP) && !(mode & TEX_NOSCALE);
 
 	Q_ROUND_POWER2(width, *scaled_width);
 	Q_ROUND_POWER2(height, *scaled_height);
 
-	if (scale) {
+	if (scale) 
+	{
 		picmip = (int) bound(0, gl_picmip.value, 16);
 		*scaled_width >>= picmip;
 		*scaled_height >>= picmip;
@@ -257,7 +277,11 @@ static void brighten32 (byte *data, int size)
 	}
 }
 
-void GL_Upload32 (unsigned *data, int width, int height, int mode) {
+//
+// Uploads a 32-bit texture to OpenGL. Makes sure it's the correct size and creates mipmaps if requested.
+//
+void GL_Upload32 (unsigned *data, int width, int height, int mode) 
+{
 	int	internal_format, tempwidth, tempheight, miplevel;
 	unsigned int *newdata;
 
@@ -265,16 +289,26 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode) {
 	Q_ROUND_POWER2(height, tempheight);
 
 	newdata = (unsigned int *) Q_malloc(tempwidth * tempheight * 4);
-	if (width < tempwidth || height < tempheight) {
+
+	// Resample the image if it's not scaled to the power of 2,
+	// we take care of this when drawing using the texture coordinates.
+	if (width < tempwidth || height < tempheight) 
+	{
 		Image_Resample (data, width, height, newdata, tempwidth, tempheight, 4, !!gl_lerpimages.value);
 		width = tempwidth;
 		height = tempheight;
-	} else {
+	} 
+	else 
+	{
+		// Scale is a power of 2, just copy the data.
 		memcpy (newdata, data, width * height * 4);
 	}
 
+	// Get the scaled dimension (scales according to gl_picmip and max allowed texture size).
 	ScaleDimensions(width, height, &tempwidth, &tempheight, mode);
 
+	// If the image size is bigger than the max allowed size or 
+	// set picmip value we calculate it's next closest mip map.
 	while (width > tempwidth || height > tempheight)
 		Image_MipReduce ((byte *) newdata, (byte *) newdata, &width, &height, 4);
 
@@ -286,28 +320,37 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode) {
 	else
 		internal_format = (mode & TEX_ALPHA) ? gl_alpha_format : gl_solid_format;
 
+	// Upload the main texture to OpenGL.
 	miplevel = 0;
 	glTexImage2D (GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
-	if (mode & TEX_MIPMAP) {
-		while (width > 1 || height > 1) {
+
+	if (mode & TEX_MIPMAP)
+	{
+		// Calculate the mip maps for the images.
+		while (width > 1 || height > 1)
+		{
 			Image_MipReduce ((byte *) newdata, (byte *) newdata, &width, &height, 4);
 			miplevel++;
 			glTexImage2D (GL_TEXTURE_2D, miplevel, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, newdata);
 		}
+
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-	} else {
+	} 
+	else
+	{
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	}
 
 	if (anisotropy_ext == 1)
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,anisotropy_tap);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 
 	Q_free(newdata);
 }
 
-void GL_Upload8 (byte *data, int width, int height, int mode) {
+void GL_Upload8 (byte *data, int width, int height, int mode) 
+{
 	static unsigned trans[640 * 480];
 	int	i, image_size, p;
 	unsigned *table;
@@ -318,106 +361,142 @@ void GL_Upload8 (byte *data, int width, int height, int mode) {
 	if (image_size * 4 > sizeof(trans))
 		Sys_Error ("GL_Upload8: image too big");
 
-	if (mode & TEX_FULLBRIGHT) {
-		// this is a fullbright mask, so make all non-fullbright colors transparent
+	if (mode & TEX_FULLBRIGHT) 
+	{
+		// This is a fullbright mask, so make all non-fullbright colors transparent.
 		mode |= TEX_ALPHA;
-		for (i = 0; i < image_size; i++) {
+	
+		for (i = 0; i < image_size; i++)
+		{
 			p = data[i];
 			if (p < 224)
-				trans[i] = table[p] & LittleLong(0x00FFFFFF); // transparent
+				trans[i] = table[p] & LittleLong(0x00FFFFFF); // Transparent.
 			else
-				trans[i] = table[p]; // fullbright
+				trans[i] = table[p]; // Fullbright.
 		}
-	} else if (mode & TEX_ALPHA) {
-		// if there are no transparent pixels, make it a 3 component
+	} 
+	else if (mode & TEX_ALPHA) 
+	{
+		// If there are no transparent pixels, make it a 3 component
 		// texture even if it was specified as otherwise
 		mode &= ~TEX_ALPHA;
-		for (i = 0; i < image_size; i++) {
+	
+		for (i = 0; i < image_size; i++) 
+		{
 			if ((p = data[i]) == 255)
 				mode |= TEX_ALPHA;
 			trans[i] = table[p];
 		}
-	} else {
+	} 
+	else
+	{
 		if (image_size & 3)
 			Sys_Error ("GL_Upload8: image_size & 3");
-		for (i = 0; i < image_size; i += 4) {
+
+		// Convert the 8-bit colors to 24-bit.
+		for (i = 0; i < image_size; i += 4)
+		{
 			trans[i] = table[data[i]];
 			trans[i + 1] = table[data[i + 1]];
 			trans[i + 2] = table[data[i + 2]];
 			trans[i + 3] = table[data[i + 3]];
 		}
 	}
+
 	GL_Upload32 (trans, width, height, mode & ~TEX_BRIGHTEN);
 }
 
-int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) {
+int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) 
+{
 	int	i, scaled_width, scaled_height, crc = 0;
+	qbool load_over_existing = false;
 	gltexture_t *glt;
 
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
 	if (developer.integer >= 3)
-		Com_DPrintf("???: %s\n", identifier);
+		Com_DPrintf("GL_LoadTexture: %s\n", identifier);
 
-	if (identifier[0]) {
+	// If we were given an identifier for the texture, search through
+	// the list of loaded texture and see if we find a match, if so
+	// return the texnum for the already loaded texture.
+	if (identifier[0]) 
+	{
 		crc = CRC_Block (data, width * height * bpp);
-		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) {
-			if (!strncmp (identifier, glt->identifier, sizeof(glt->identifier) - 1)) {
-				if (
-					width == glt->width && height == glt->height &&
+
+		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) 
+		{
+			if (!strncmp (identifier, glt->identifier, sizeof(glt->identifier) - 1)) 
+			{
+				// Identifier matches, make sure everything else is the same
+				// so that we can be really sure this is the correct texture.
+				if (width == glt->width && height == glt->height &&
 					scaled_width == glt->scaled_width && scaled_height == glt->scaled_height &&
 					crc == glt->crc && glt->bpp == bpp &&
-					(mode & ~(TEX_COMPLAIN|TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN|TEX_NOSCALE))
-				) {
+					(mode & ~(TEX_COMPLAIN | TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN | TEX_NOSCALE)))
+				{
 					GL_Bind(gltextures[i].texnum);
 					return gltextures[i].texnum;
-				} else {
-					goto setup_gltexture;
+				} 
+				else 
+				{
+					// Same identifier but different texture, so overwrite
+					// the already loaded texture.
+					load_over_existing = true;
+					break;
 				}
 			}
 		}
 	}
 
-	if (numgltextures == MAX_GLTEXTURES)
+	if (numgltextures >= MAX_GLTEXTURES)
 		Sys_Error ("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
 
-	glt = &gltextures[numgltextures];
-	numgltextures++;
+	// If the identifier was the same as another textures, we won't bother
+	// with taking up a new texture slot, just load the new texture
+	// over the old one.
+	if (!load_over_existing)
+	{
+		glt = &gltextures[numgltextures];
+		numgltextures++;
 
-	strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
-	glt->texnum = texture_extension_number;
-	texture_extension_number++;
-
-setup_gltexture:
-	glt->width = width;
-	glt->height = height;
-	glt->scaled_width = scaled_width;
-	glt->scaled_height = scaled_height;
-	glt->texmode = mode;
-	glt->crc = crc;
-	glt->bpp = bpp;
-	if (glt->pathname) {
-		Q_free(glt->pathname);
-		glt->pathname = NULL;
+		strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
+		glt->texnum = texture_extension_number;
+		texture_extension_number++;
 	}
+
+	glt->width			= width;
+	glt->height			= height;
+	glt->scaled_width	= scaled_width;
+	glt->scaled_height	= scaled_height;
+	glt->texmode		= mode;
+	glt->crc			= crc;
+	glt->bpp			= bpp;
+	
+	Q_free(glt->pathname);
+	
 	if (bpp == 4 && fs_netpath[0])
 		glt->pathname = Q_strdup(fs_netpath);
 
+	// Tell OpenGL the texnum of the texture before uploading it.
 	GL_Bind(glt->texnum);
 
-	switch (bpp) {
-	case 1:
-		GL_Upload8 (data, width, height, mode); break;
-	case 4:
-		GL_Upload32 ((void *) data, width, height, mode); break;
-	default:
-		Sys_Error("GL_LoadTexture: unknown bpp\n"); break;
+	// Upload the texture to OpenGL based on the bytes per pixel.
+	switch (bpp) 
+	{
+		case 1:
+			GL_Upload8 (data, width, height, mode); break;
+		case 4:
+			GL_Upload32 ((void *) data, width, height, mode); break;
+		default:
+			Sys_Error("GL_LoadTexture: unknown bpp\n"); break;
 	}
 
 	return glt->texnum;
 }
 
-int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) {
+int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) 
+{
 	int glwidth, glheight, i;
 	char fullname[MAX_QPATH] = "pic:";
 	byte *src, *dest, *buf;
@@ -426,18 +505,22 @@ int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) {
 	Q_ROUND_POWER2(pic->height, glheight);
 
 	strlcpy (fullname + 4, name, sizeof(fullname) - 4);
-	if (glwidth == pic->width && glheight == pic->height) {
+	if (glwidth == pic->width && glheight == pic->height)
+	{
 		pic->texnum = GL_LoadTexture (fullname, glwidth, glheight, data, TEX_ALPHA, 1);
 		pic->sl = 0;
 		pic->sh = 1;
 		pic->tl = 0;
 		pic->th = 1;
-	} else {
+	} 
+	else 
+	{
 		buf = (byte *) Q_calloc (glwidth * glheight, 1);
 
 		src = data;
 		dest = buf;
-		for (i = 0; i < pic->height; i++) {
+		for (i = 0; i < pic->height; i++) 
+		{
 			memcpy (dest, src, pic->width);
 			src += pic->width;
 			dest += glwidth;
@@ -453,10 +536,12 @@ int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) {
 	return pic->texnum;
 }
 
-gltexture_t *GL_FindTexture (char *identifier) {
+gltexture_t *GL_FindTexture (char *identifier) 
+{
 	int i;
 
-	for (i = 0; i < numgltextures; i++) {
+	for (i = 0; i < numgltextures; i++) 
+	{
 		if (!strcmp (identifier, gltextures[i].identifier))
 			return &gltextures[i];
 	}
@@ -484,12 +569,14 @@ static gltexture_t *current_texture = NULL;
 #endif
 
 
-static qbool CheckTextureLoaded(int mode) {
+static qbool CheckTextureLoaded(int mode) 
+{
 	int scaled_width, scaled_height;
 
-	if (!forceTextureReload) {
-		if (current_texture && current_texture->pathname && !strcmp(fs_netpath, current_texture->pathname)) {
-
+	if (!forceTextureReload) 
+	{
+		if (current_texture && current_texture->pathname && !strcmp(fs_netpath, current_texture->pathname)) 
+		{
 			ScaleDimensions(current_texture->width, current_texture->height, &scaled_width, &scaled_height, mode);
 			if (current_texture->scaled_width == scaled_width && current_texture->scaled_height == scaled_height)
 				return true;
@@ -655,20 +742,28 @@ int GL_LoadTexturePixels (byte *data, char *identifier, int width, int height, i
 	image_size = width * height;
 	gamma = (vid_gamma != 1);
 
-	if (mode & TEX_LUMA) {
+	if (mode & TEX_LUMA)
+	{
 		gamma = false;
-	} else if (mode & TEX_ALPHA) {
+	}
+	else if (mode & TEX_ALPHA)
+	{
 		mode &= ~TEX_ALPHA;
-		for (j = 0; j < image_size; j++) {
-			if ( ( (((unsigned *) data)[j] >> 24 ) & 0xFF ) < 255 ) {
+
+		for (j = 0; j < image_size; j++) 
+		{
+			if ( ( (((unsigned *) data)[j] >> 24 ) & 0xFF ) < 255 )
+			{
 				mode |= TEX_ALPHA;
 				break;
 			}
 		}
 	}
 
-	if (gamma) {
-		for (i = 0; i < image_size; i++){
+	if (gamma) 
+	{
+		for (i = 0; i < image_size; i++)
+		{
 			data[4 * i] = vid_gamma_table[data[4 * i]];
 			data[4 * i + 1] = vid_gamma_table[data[4 * i + 1]];
 			data[4 * i + 2] = vid_gamma_table[data[4 * i + 2]];
@@ -717,12 +812,14 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 	if (no24bit)
 		return NULL;
 
+	// Load the image data from file.
 	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, 0, &real_width, &real_height)))
 		return NULL;
 
 	pic.width = real_width; 
 	pic.height = real_height;
 
+	// Check if there's any actual alpha transparency in the image.
 	if (mode & TEX_ALPHA) 
 	{
 		mode &= ~TEX_ALPHA;
@@ -740,8 +837,12 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 	Q_ROUND_POWER2(pic.height, height);
 
 	strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
+
+	// Upload the texture to OpenGL.
 	if (width == pic.width && height == pic.height) 
 	{
+		// Size of the image is scaled by the power of 2 so we can just
+		// load the texture as it is.
 		pic.texnum = GL_LoadTexture (identifier, pic.width, pic.height, data, mode, 4);
 		pic.sl = 0;
 		pic.sh = 1;
@@ -750,16 +851,22 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 	} 
 	else 
 	{
+		// The size of the image data is not a power of 2, so we
+		// need to load it into a bigger texture and then set the
+		// texture coordinates so that only the relevant part of it is used.
+
 		buf = (byte *) Q_calloc (width * height, 4);
 
 		src = data;
 		dest = buf;
+
 		for (i = 0; i < pic.height; i++) 
 		{
 			memcpy (dest, src, pic.width * 4);
-			src += pic.width * 4;
-			dest += width * 4;
+			src += pic.width * 4;	// Next line in the source.
+			dest += width * 4;		// Next line in the target.
 		}
+
 		pic.texnum = GL_LoadTexture (identifier, width, height, buf, mode & ~TEX_MIPMAP, 4);
 		pic.sl = 0;
 		pic.sh = (float) pic.width / width;
@@ -768,11 +875,12 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 		Q_free (buf);
 	}
 
-	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
+	Q_free(data);	// Data was Q_malloc'ed by GL_LoadImagePixels
 	return &pic;
 }
 
-int GL_LoadCharsetImage (char *filename, char *identifier) {
+int GL_LoadCharsetImage (char *filename, char *identifier) 
+{
 	int i, texnum, image_size, real_width, real_height;
 	byte *data, *buf, *dest, *src;
 
@@ -803,15 +911,15 @@ int GL_LoadCharsetImage (char *filename, char *identifier) {
 	return texnum;
 }
 
-void GL_Texture_Init(void) {
+void GL_Texture_Init(void) 
+{
 	cvar_t *cv;
 	int i;
 	extern int translate_texture, scrap_texnum, lightmap_textures;
-	// extern int solidskytexture, alphaskytexture; // D-Kure: unused
 
-	// reset some global vars, probably we need here even more...
+	// Reset some global vars, probably we need here even more...
 
-	// reset textures array and linked globals
+	// Reset textures array and linked globals
 	for (i = 0; i < numgltextures; i++)
 		Q_free(gltextures[i].pathname);
 
@@ -822,40 +930,40 @@ void GL_Texture_Init(void) {
 	currenttexture = -1;
 	current_texture = NULL; // nice names
 
-	// multi texture
+	// Multi texture.
 	oldtarget = GL_TEXTURE0_ARB;
 	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++)
 		cnttextures[i] = -1;
 	mtexenabled = false;
 
-	// save a texture slot for translated picture
+	// Save a texture slot for translated picture.
 	translate_texture = texture_extension_number++;
 
-	// save slots for scraps
+	// Save slots for scraps.
 	scrap_texnum = texture_extension_number;
 	texture_extension_number += MAX_SCRAPS;
 
-	// particles
+	// Particles.
 	particletexture = texture_extension_number++;
 
-	// netgraph
-	netgraphtexture = texture_extension_number++; // actually i dunno what is this
+	// Netgraph.
+	netgraphtexture = texture_extension_number++;
 
-	// player skins
+	// Player skins.
 	playertextures = texture_extension_number;
-	texture_extension_number += MAX_CLIENTS; // normal skins
-	texture_extension_number += MAX_CLIENTS; // fullbright skins
+	texture_extension_number += MAX_CLIENTS; // Normal skins.
+	texture_extension_number += MAX_CLIENTS; // Fullbright skins.
 
-	// sky too
+	// Sky.
 	skyboxtextures = texture_extension_number;
 	texture_extension_number += 6;
 
-	// lightmap
+	// Lightmap.
 	lightmap_textures = texture_extension_number;
 	texture_extension_number += MAX_LIGHTMAPS;
 
-	// powerup shells
-	shelltexture = 0; // force reload
+	// Powerup shells.
+	shelltexture = 0; // Force reload.
 
 	i = (cv = Cvar_Find(gl_max_size.name)) ? cv->integer : 0;
 
@@ -875,7 +983,8 @@ void GL_Texture_Init(void) {
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&gl_max_size_default);
 	Cvar_SetDefault(&gl_max_size, gl_max_size_default);
 
-	if (i) // this way user can specifie gl_max_size in his cfg
+	// This way user can specifie gl_max_size in his cfg.
+	if (i) 
 		Cvar_SetValue(&gl_max_size, i);
 
 	no24bit = (COM_CheckParm("-no24bit") || gl_no24bit.integer) ? true : false;

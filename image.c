@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.50 2007-09-04 07:55:12 dkure Exp $
+    $Id: image.c,v 1.51 2007-10-02 01:04:04 cokeman1982 Exp $
 */
 
 #ifdef __FreeBSD__
@@ -118,7 +118,8 @@ static void Image_Resample24LerpLine (byte *in, byte *out, int inwidth, int outw
 static void Image_Resample32 (void *indata, int inwidth, int inheight,
 								void *outdata, int outwidth, int outheight, int quality) 
 {
-	if (quality) {
+	if (quality) 
+	{
 		int i, j, r, yi, oldy, f, fstep, endy = (inheight - 1), lerp;
 		int inwidth4 = inwidth * 4, outwidth4 = outwidth * 4;
 		byte *inrow, *out, *row1, *row2, *memalloc;
@@ -133,11 +134,17 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 		oldy = 0;
 		Image_Resample32LerpLine (inrow, row1, inwidth, outwidth);
 		Image_Resample32LerpLine (inrow + inwidth4, row2, inwidth, outwidth);
-		for (i = 0, f = 0; i < outheight; i++, f += fstep)	{
+		
+		for (i = 0, f = 0; i < outheight; i++, f += fstep)	
+		{
 			yi = f >> 16;
-			if (yi < endy) {
+
+			if (yi < endy) 
+			{
 				lerp = f & 0xFFFF;
-				if (yi != oldy) {
+
+				if (yi != oldy)
+				{
 					inrow = (byte *) indata + inwidth4 * yi;
 					if (yi == oldy + 1)
 						memcpy(row1, row2, outwidth4);
@@ -146,8 +153,11 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 					Image_Resample32LerpLine (inrow + inwidth4, row2, inwidth, outwidth);
 					oldy = yi;
 				}
+
 				j = outwidth - 4;
-				while(j >= 0) {
+
+				while(j >= 0)
+				{
 					LERPBYTE(0); LERPBYTE(1); LERPBYTE(2); LERPBYTE(3);
 					LERPBYTE(4); LERPBYTE(5); LERPBYTE(6); LERPBYTE(7);
 					LERPBYTE(8); LERPBYTE(9); LERPBYTE(10); LERPBYTE(11);
@@ -157,14 +167,18 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 					row2 += 16;
 					j -= 4;
 				}
-				if (j & 2) {
+
+				if (j & 2) 
+				{
 					LERPBYTE(0); LERPBYTE(1); LERPBYTE(2); LERPBYTE(3);
 					LERPBYTE(4); LERPBYTE(5); LERPBYTE(6); LERPBYTE(7);
 					out += 8;
 					row1 += 8;
 					row2 += 8;
 				}
-				if (j & 1) {
+
+				if (j & 1)
+				{
 					LERPBYTE(0); LERPBYTE(1); LERPBYTE(2); LERPBYTE(3);
 					out += 4;
 					row1 += 4;
@@ -172,8 +186,11 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 				}
 				row1 -= outwidth4;
 				row2 -= outwidth4;
-			} else {
-				if (yi != oldy) {
+			} 
+			else 
+			{
+				if (yi != oldy) 
+				{
 					inrow = (byte *) indata + inwidth4 * yi;
 					if (yi == oldy+1)
 						memcpy(row1, row2, outwidth4);
@@ -184,19 +201,25 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 				memcpy(out, row1, outwidth4);
 			}
 		}
+
 		Q_free(memalloc);
-	} else {
+	}
+	else 
+	{
 		int i, j;
 		unsigned int frac, fracstep, *inrow, *out;
 
 		out = outdata;
 
 		fracstep = inwidth * 0x10000 / outwidth;
-		for (i = 0; i < outheight; i++) {
+		for (i = 0; i < outheight; i++)
+		{
 			inrow = (unsigned int *) indata + inwidth * (i * inheight / outheight);
 			frac = fracstep >> 1;
 			j = outwidth - 4;
-			while (j >= 0) {
+		
+			while (j >= 0)
+			{
 				out[0] = inrow[frac >> 16]; frac += fracstep;
 				out[1] = inrow[frac >> 16]; frac += fracstep;
 				out[2] = inrow[frac >> 16]; frac += fracstep;
@@ -204,12 +227,16 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 				out += 4;
 				j -= 4;
 			}
-			if (j & 2) {
+
+			if (j & 2)
+			{
 				out[0] = inrow[frac >> 16]; frac += fracstep;
 				out[1] = inrow[frac >> 16]; frac += fracstep;
 				out += 2;
 			}
-			if (j & 1) {
+
+			if (j & 1) 
+			{
 				out[0] = inrow[frac >> 16]; frac += fracstep;
 				out += 1;
 			}
@@ -220,7 +247,8 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 static void Image_Resample24 (void *indata, int inwidth, int inheight,
 					 void *outdata, int outwidth, int outheight, int quality)
 {
-	if (quality) {
+	if (quality)
+	{
 		int i, j, r, yi, oldy, f, fstep, endy = (inheight - 1), lerp;
 		int inwidth3 = inwidth * 3, outwidth3 = outwidth * 3;
 		byte *inrow, *out, *row1, *row2, *memalloc;
@@ -235,11 +263,14 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 		oldy = 0;
 		Image_Resample24LerpLine (inrow, row1, inwidth, outwidth);
 		Image_Resample24LerpLine (inrow + inwidth3, row2, inwidth, outwidth);
-		for (i = 0, f = 0; i < outheight; i++, f += fstep)	{
+		
+		for (i = 0, f = 0; i < outheight; i++, f += fstep)	
+		{
 			yi = f >> 16;
 			if (yi < endy) {
 				lerp = f & 0xFFFF;
-				if (yi != oldy) {
+				if (yi != oldy)
+				{
 					inrow = (byte *) indata + inwidth3 * yi;
 					if (yi == oldy + 1)
 						memcpy(row1, row2, outwidth3);
@@ -248,8 +279,11 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 					Image_Resample24LerpLine (inrow + inwidth3, row2, inwidth, outwidth);
 					oldy = yi;
 				}
+
 				j = outwidth - 4;
-				while(j >= 0) {
+
+				while(j >= 0)
+				{
 					LERPBYTE(0); LERPBYTE(1); LERPBYTE(2);
 					LERPBYTE(3); LERPBYTE(4); LERPBYTE(5);
 					LERPBYTE(6); LERPBYTE(7); LERPBYTE(8);
@@ -259,14 +293,18 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 					row2 += 12;
 					j -= 4;
 				}
-				if (j & 2) {
+
+				if (j & 2) 
+				{
 					LERPBYTE(0); LERPBYTE(1); LERPBYTE(2);
 					LERPBYTE(3); LERPBYTE(4); LERPBYTE(5);
 					out += 6;
 					row1 += 6;
 					row2 += 6;
 				}
-				if (j & 1) {
+
+				if (j & 1) 
+				{
 					LERPBYTE(0); LERPBYTE(1); LERPBYTE(2);
 					out += 3;
 					row1 += 3;
@@ -274,8 +312,11 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 				}
 				row1 -= outwidth3;
 				row2 -= outwidth3;
-			} else {
-				if (yi != oldy) {
+			} 
+			else
+			{
+				if (yi != oldy) 
+				{
 					inrow = (byte *) indata + inwidth3 * yi;
 					if (yi == oldy+1)
 						memcpy(row1, row2, outwidth3);
@@ -283,11 +324,15 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 						Image_Resample24LerpLine (inrow, row1, inwidth, outwidth);
 					oldy = yi;
 				}
+
 				memcpy(out, row1, outwidth3);
 			}
 		}
+
 		Q_free(memalloc);
-	} else {
+	} 
+	else 
+	{
 		int i, j, f;
 		unsigned int frac, fracstep, inwidth3 = inwidth * 3;
 		byte *inrow, *out;
@@ -295,26 +340,32 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 		out = outdata;
 
 		fracstep = inwidth * 0x10000 / outwidth;
-		for (i = 0; i < outheight; i++) {
+		for (i = 0; i < outheight; i++) 
+		{
 			inrow = (byte *) indata + inwidth3 * (i * inheight / outheight);
 			frac = fracstep >> 1;
 			j = outwidth - 4;
-			while (j >= 0) {
+
+			while (j >= 0) 
+			{
 				f = (frac >> 16) * 3; NOLERPBYTE(0); NOLERPBYTE(1); NOLERPBYTE(2); frac += fracstep;
 				f = (frac >> 16) * 3; NOLERPBYTE(0); NOLERPBYTE(1); NOLERPBYTE(2); frac += fracstep;
 				f = (frac >> 16) * 3; NOLERPBYTE(0); NOLERPBYTE(1); NOLERPBYTE(2); frac += fracstep;
 				f = (frac >> 16) * 3; NOLERPBYTE(0); NOLERPBYTE(1); NOLERPBYTE(2); frac += fracstep;
 				j -= 4;
 			}
-			if (j & 2) {
+
+			if (j & 2) 
+			{
 				f = (frac >> 16) * 3; NOLERPBYTE(0); NOLERPBYTE(1); NOLERPBYTE(2); frac += fracstep;
 				f = (frac >> 16) * 3; NOLERPBYTE(0); NOLERPBYTE(1); NOLERPBYTE(2); frac += fracstep;
 				out += 2;
 			}
-			if (j & 1) {
+
+			if (j & 1)
+			{
 				f = (frac >> 16) * 3; NOLERPBYTE(0); NOLERPBYTE(1); NOLERPBYTE(2); frac += fracstep;
 				out += 1;
-
 			}
 		}
 	}
@@ -337,14 +388,20 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 
 	nextrow = *width * bpp;
 
-	if (*width > 1) {
+	if (*width > 1) 
+	{
 		*width >>= 1;
-		if (*height > 1) {
 
+		if (*height > 1) 
+		{
 			*height >>= 1;
-			if (bpp == 4) {
-				for (y = 0; y < *height; y++) {
-					for (x = 0; x < *width; x++) {
+		
+			if (bpp == 4)
+			{
+				for (y = 0; y < *height; y++) 
+				{
+					for (x = 0; x < *width; x++) 
+					{
 						out[0] = (byte) ((in[0] + in[4] + in[nextrow] + in[nextrow + 4]) >> 2);
 						out[1] = (byte) ((in[1] + in[5] + in[nextrow + 1] + in[nextrow + 5]) >> 2);
 						out[2] = (byte) ((in[2] + in[6] + in[nextrow + 2] + in[nextrow + 6]) >> 2);
@@ -354,9 +411,13 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 					}
 					in += nextrow;
 				}
-			} else if (bpp == 3) {
-				for (y = 0; y < *height; y++) {
-					for (x = 0; x < *width; x++) {
+			} 
+			else if (bpp == 3) 
+			{
+				for (y = 0; y < *height; y++)
+				{
+					for (x = 0; x < *width; x++)
+					{
 						out[0] = (byte) ((in[0] + in[3] + in[nextrow] + in[nextrow + 3]) >> 2);
 						out[1] = (byte) ((in[1] + in[4] + in[nextrow + 1] + in[nextrow + 4]) >> 2);
 						out[2] = (byte) ((in[2] + in[5] + in[nextrow + 2] + in[nextrow + 5]) >> 2);
@@ -365,14 +426,20 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 					}
 					in += nextrow;
 				}
-			} else {
+			} 
+			else 
+			{
 				Sys_Error("Image_MipReduce: unsupported bpp (%d)", bpp);
 			}
-		} else {
-
-			if (bpp == 4) {
-				for (y = 0; y < *height; y++) {
-					for (x = 0; x < *width; x++) {
+		} 
+		else 
+		{
+			if (bpp == 4)
+			{
+				for (y = 0; y < *height; y++) 
+				{
+					for (x = 0; x < *width; x++) 
+					{
 						out[0] = (byte) ((in[0] + in[4]) >> 1);
 						out[1] = (byte) ((in[1] + in[5]) >> 1);
 						out[2] = (byte) ((in[2] + in[6]) >> 1);
@@ -381,9 +448,13 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 						in += 8;
 					}
 				}
-			} else if (bpp == 3) {
-				for (y = 0; y < *height; y++) {
-					for (x = 0; x < *width; x++) {
+			} 
+			else if (bpp == 3) 
+			{
+				for (y = 0; y < *height; y++) 
+				{
+					for (x = 0; x < *width; x++)
+					{
 						out[0] = (byte) ((in[0] + in[3]) >> 1);
 						out[1] = (byte) ((in[1] + in[4]) >> 1);
 						out[2] = (byte) ((in[2] + in[5]) >> 1);
@@ -391,16 +462,23 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 						in += 6;
 					}
 				}
-			} else {
+			} 
+			else 
+			{
 				Sys_Error("Image_MipReduce: unsupported bpp (%d)", bpp);
 			}
 		}
-	} else if (*height > 1) {
-
+	}
+	else if (*height > 1)
+	{
 		*height >>= 1;
-		if (bpp == 4) {
-			for (y = 0; y < *height; y++) {
-				for (x = 0; x < *width; x++) {
+
+		if (bpp == 4) 
+		{
+			for (y = 0; y < *height; y++) 
+			{
+				for (x = 0; x < *width; x++) 
+				{
 					out[0] = (byte) ((in[0] + in[nextrow]) >> 1);
 					out[1] = (byte) ((in[1] + in[nextrow + 1]) >> 1);
 					out[2] = (byte) ((in[2] + in[nextrow + 2]) >> 1);
@@ -410,9 +488,13 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 				}
 				in += nextrow;
 			}
-		} else if (bpp == 3) {
-			for (y = 0; y < *height; y++) {
-				for (x = 0; x < *width; x++) {
+		}
+		else if (bpp == 3) 
+		{
+			for (y = 0; y < *height; y++) 
+			{
+				for (x = 0; x < *width; x++) 
+				{
 					out[0] = (byte) ((in[0] + in[nextrow]) >> 1);
 					out[1] = (byte) ((in[1] + in[nextrow + 1]) >> 1);
 					out[2] = (byte) ((in[2] + in[nextrow + 2]) >> 1);
@@ -421,10 +503,14 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 				}
 				in += nextrow;
 			}
-		} else {
+		} 
+		else 
+		{
 			Sys_Error("Image_MipReduce: unsupported bpp (%d)", bpp);
 		}
-	} else {
+	} 
+	else
+	{
 		Sys_Error("Image_MipReduce: Input texture has dimensions %dx%d", width, height);
 	}
 }
