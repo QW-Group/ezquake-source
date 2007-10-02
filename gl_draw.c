@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.97 2007-10-02 01:05:03 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.98 2007-10-02 01:37:34 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1714,15 +1714,12 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 
 	alpha *= overall_alpha;
 
-	if(alpha < 1.0)
-	{
-		glDisable (GL_ALPHA_TEST);
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glCullFace (GL_FRONT);
-		glColor4f (1, 1, 1, alpha);
-	}
+	glDisable (GL_ALPHA_TEST);
+	glEnable (GL_BLEND);
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glCullFace (GL_FRONT);
+	glColor4f (1, 1, 1, alpha);
 
     GL_Bind (gl->texnum);
     glBegin (GL_QUADS);
@@ -1786,7 +1783,7 @@ void Draw_SAlphaPic (int x, int y, mpic_t *gl, float alpha, float scale)
 
 void Draw_SPic (int x, int y, mpic_t *gl, float scale)
 {
-	Draw_SAlphaSubPic (x, y, gl, 0, 0, gl->width, gl->height, scale, 1);
+	Draw_SAlphaSubPic (x, y, gl, 0, 0, gl->width, gl->height, scale, 1.0);
 }
 
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl)
