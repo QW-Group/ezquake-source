@@ -16,8 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.81 2007-10-01 18:31:06 disconn3ct Exp $
+    $Id: cmd.c,v 1.82 2007-10-03 14:04:54 dkure Exp $
 */
+
+#include <strings.h>
 
 #include "quakedef.h"
 #ifdef WITH_TCL
