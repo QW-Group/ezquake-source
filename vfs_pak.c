@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.6 2007-10-01 13:09:33 cokeman1982 Exp $
+ * $Id: vfs_pak.c,v 1.7 2007-10-03 14:03:47 dkure Exp $
  *             
  */
 
@@ -38,6 +38,7 @@ typedef struct {
     unsigned long currentpos;
 } vfspack_t;
 
+#define	MAX_FILES_IN_PACK	2048
 
 //=====================================
 //PACK files (*.pak) - VFS functions
@@ -375,9 +376,6 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 			CRC_ProcessByte(&crc, ((qbyte *)&info)[j]);
 */
 		strlcpy (newfiles[i].name, info.name, MAX_QPATH);
-		// VFS-FIXME: I think this safe to remove as its for a q2 tank skin...
-		//COM_CleanUpPath(newfiles[i].name);	//blooming tanks.
-		//
 		newfiles[i].filepos = LittleLong(info.filepos);
 		newfiles[i].filelen = LittleLong(info.filelen);
 	}
