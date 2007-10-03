@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.7 2007-09-28 04:47:55 dkure Exp $
+    $Id: fs.h,v 1.8 2007-10-03 14:02:19 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -26,9 +26,6 @@ extern	char com_userdir[MAX_OSPATH];
 void COM_SetUserDirectory (char *dir, char *type);
 #endif
 // <-- QW262
-
-qbool FS_AddPak (char *pakfile);
-qbool FS_RemovePak (const char *pakfile);
 
 // ====================================================================
 // Virtual File System
