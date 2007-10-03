@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.129 2007-10-03 14:27:57 dkure Exp $
+$Id: cl_parse.c,v 1.130 2007-10-03 19:03:48 borisu Exp $
 */
 
 #include "quakedef.h"
@@ -1006,9 +1006,11 @@ void CL_FinishDownload(qbool rename_files)
 	cls.download = NULL;
 	cls.downloadpercent = 0;
 	cls.downloadmethod = DL_NONE;
-	
+
+#ifdef WITH_FTE_VFS
 	// VFS-FIXME: D-Kure: Surely there is somewhere better for this in fs.c
 	com_fschanged = true;	
+#endif
 
 	// get another file if needed
 
