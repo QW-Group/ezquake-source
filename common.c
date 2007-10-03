@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.99 2007-09-30 22:59:23 disconn3ct Exp $
+    $Id: common.c,v 1.100 2007-10-03 14:00:04 dkure Exp $
 
 */
 
@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <Shfolder.h>
 #include <errno.h>
 #else
+#include <stdio.h>
 #include <unistd.h>
 #endif
 
@@ -391,6 +392,7 @@ qbool COM_FileExists (char *path)
 char	com_token[MAX_COM_TOKEN];
 int		com_argc;
 char	**com_argv;
+char 	*com_args_original;
 
 //Parse a token out of a string
 char *COM_Parse (char *data)

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.35 2007-10-01 18:31:06 disconn3ct Exp $
+    $Id: q_shared.h,v 1.36 2007-10-03 14:00:04 dkure Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -107,7 +107,7 @@ typedef struct sizebuf_s {
 	int		cursize;
 } sizebuf_t;
 
-char *com_args_original;
+extern char *com_args_original;
 
 void SZ_Init (sizebuf_t *buf, byte *data, int length);
 void SZ_Clear (sizebuf_t *buf);
