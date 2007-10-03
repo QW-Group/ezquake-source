@@ -171,8 +171,8 @@
 
 #DEFINE OBITUARY	PLAYER_DEATH	DROWN				" sleeps with the fishes"
 #DEFINE OBITUARY	PLAYER_DEATH	DROWN				" sucks it down"
-#DEFINE OBITUARY	PLAYER_DEATH	LAVA				" gulped a load of slime"
-#DEFINE OBITUARY	PLAYER_DEATH	LAVA				" can't exist on slime alone"
+#DEFINE OBITUARY	PLAYER_DEATH	SLIME				" gulped a load of slime"
+#DEFINE OBITUARY	PLAYER_DEATH	SLIME				" can't exist on slime alone"
 #DEFINE OBITUARY	PLAYER_DEATH	LAVA				" burst into flames"
 #DEFINE OBITUARY	PLAYER_DEATH	LAVA				" turned into hot slag"
 #DEFINE OBITUARY	PLAYER_DEATH	LAVA				" visits the Volcano God"
