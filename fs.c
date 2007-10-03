@@ -16,7 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.36 2007-10-01 08:45:07 dkure Exp $
+	$Id: fs.c,v 1.37 2007-10-03 14:09:31 dkure Exp $
+*/
+
+/**
+  File System related code
+  - old Quake FS - declarations in common.h
+  - Virtual Quake System - vfs.h
+  - GZIP/ZIP support - fs.h
 */
 
 #include "quakedef.h"
@@ -24,79 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hash.h"
 #include "fs.h"
 #include "vfs.h"
-
-//============================================================================
-#ifdef WITH_FTE_VFS
-
-#include "q_shared.h"
-
-#ifndef CLIENTONLY
-#include "server.h"
-#endif // CLIENTONLY
-
-// To include pak3 support add this define
-//#define WITH_PK3
-
-hashtable_t *filesystemhash;
-static qbool com_fschanged = true;
-
-// VFS-FIXME: Give this a better name
-cvar_t com_fs_cache = {"com_fs_cache", "1"};
-
-typedef enum {
-	FSLFRT_IFFOUND,
-	FSLFRT_LENGTH,
-	FSLFRT_DEPTH_OSONLY,
-	FSLFRT_DEPTH_ANYPATH
-} FSLF_ReturnType_e;
-
-typedef enum {
-	FS_LOAD_NONE     = 1,
-	FS_LOAD_FILE_PAK = 2,
-	FS_LOAD_FILE_PK3 = 4,
-	FS_LOAD_FILE_PK4 = 8,
-	FS_LOAD_FILE_DOOMWAD = 16,
-	FS_LOAD_FILE_ALL = FS_LOAD_FILE_PAK | FS_LOAD_FILE_PK3 
-		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD,
-} FS_Load_File_Types;
-
-vfsfile_t *FS_OpenVFSLoc(flocation_t *loc, char *mode);
-void FS_CreatePath(char *pname, int relativeto);
-void FS_ForceToPure(char *str, char *crcs, int seed);
-int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
-void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
-int COM_FileOpenRead (char *path, FILE **hndl);
-void FS_ReloadPackFiles_f(void);
-qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
-void FS_FlushFSHash(void);
-void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
-
-static vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle);
-
-qbool Sys_PathProtection(char *pattern);
-void COM_Dir_f (void);
-void COM_Locate_f (void);
-
-// VFS-FIXME: Debug file for trying to open files
-static void FS_OpenFile_f(void);
-
-//VFS-FIXME: This seems like com_homedir
-//char	com_configdir[MAX_OSPATH];	//homedir/fte/configs
-
-int fs_hash_dups;
-int fs_hash_files;
-#endif /* WITH_FTE_VFS */
-//============================================================================
-
-/**
-  File System related code
-  - old Quake FS - declarations in common.h
-  - Virtual Quake System - fs.h
-  - GZIP/ZIP support - fs.h
-*/
-
-#include "quakedef.h"
-#include "fs.h"
 #include "utils.h"
 #ifdef _WIN32
 #include <errno.h>
@@ -104,10 +38,11 @@ int fs_hash_files;
 #include <Shfolder.h>
 #else
 #include <unistd.h>
+#include <strings.h>
 #endif
 
+
 char *com_filesearchpath;
-char *com_args_original;
 
 /*
 =============================================================================
@@ -120,8 +55,6 @@ char	fs_netpath[MAX_OSPATH];
 #ifdef WITH_FTE_VFS
 qbool com_file_copyprotected;
 #endif
-
-#define	MAX_FILES_IN_PACK	2048
 
 //
 // WARNING: if u add some FS related global variable then made appropriate change to FS_ShutDown() too, if required.
@@ -164,6 +97,79 @@ searchpath_t	*fs_base_searchpaths = NULL;	// without gamedirs
 #ifdef WITH_FTE_VFS
 searchpath_t	*fs_purepaths;
 #endif
+
+#ifndef WITH_FTE_VFS
+static qbool FS_AddPak (char *pakfile);
+#else
+static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpathfuncs_t *funcs);
+#endif // WITH_FTE_VFS
+static qbool FS_RemovePak (const char *pakfile);
+
+//============================================================================
+#ifdef WITH_FTE_VFS
+
+#include "q_shared.h"
+
+#ifndef CLIENTONLY
+#include "server.h"
+#endif // CLIENTONLY
+
+// To include pak3 support add this define
+//#define WITH_PK3
+
+hashtable_t *filesystemhash;
+int fs_hash_dups;
+int fs_hash_files;
+static qbool com_fschanged = true;
+
+// VFS-FIXME: Give this a better name
+cvar_t com_fs_cache = {"com_fs_cache", "1"};
+
+typedef enum {
+	FSLFRT_IFFOUND,
+	FSLFRT_LENGTH,
+	FSLFRT_DEPTH_OSONLY,
+	FSLFRT_DEPTH_ANYPATH
+} FSLF_ReturnType_e;
+
+typedef enum {
+	FS_LOAD_NONE     = 1,
+	FS_LOAD_FILE_PAK = 2,
+	FS_LOAD_FILE_PK3 = 4,
+	FS_LOAD_FILE_PK4 = 8,
+	FS_LOAD_FILE_DOOMWAD = 16,
+	FS_LOAD_FROM_PAKLST = 32,
+	FS_LOAD_FILE_ALL = FS_LOAD_FILE_PAK | FS_LOAD_FILE_PK3 
+		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD | FS_LOAD_FROM_PAKLST,
+} FS_Load_File_Types;
+
+void FS_CreatePath(char *pname, int relativeto);
+void FS_ForceToPure(char *str, char *crcs, int seed);
+int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
+void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
+int COM_FileOpenRead (char *path, FILE **hndl);
+void FS_ReloadPackFiles_f(void);
+qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
+void FS_FlushFSHash(void);
+void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
+
+static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
+searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);
+
+/* VFS-FIXME: VFS_Filter into header */
+static vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle);
+
+qbool Sys_PathProtection(char *pattern);
+void COM_Dir_f (void);
+void COM_Locate_f (void);
+
+// VFS-FIXME: Debug file for trying to open files
+static void FS_OpenFile_f(void);
+
+#endif /* WITH_FTE_VFS */
+//============================================================================
+
+
 
 /*
 ================
@@ -669,7 +675,8 @@ void COM_SetUserDirectory (char *dir, char *type) {
 }
 #endif
 
-qbool FS_AddPak (char *pakfile) {
+#ifndef WITH_FTE_VFS
+static qbool FS_AddPak (char *pakfile) {
 	searchpath_t *search;
 	pack_t *pak;
 
@@ -687,7 +694,69 @@ qbool FS_AddPak (char *pakfile) {
 	return true;
 }
 
-qbool FS_RemovePak (const char *pakfile) {
+#else
+
+// ==========
+// FS_AddPak
+// ==========
+// Return Value:
+// 0  - Pak added succesfully
+// 1  - File does not exsist
+// -1 - Error loading file
+
+static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpathfuncs_t *funcs) 
+{	
+	vfsfile_t 		*vfs;
+	flocation_t 	loc;
+	char 			pakfile[MAX_OSPATH];
+	void			*handle;
+	char 			*ext;
+
+	ext = COM_FileExtension(pakname);
+	if (!funcs) {
+		if (strcasecmp(ext, "pak") == 0) 
+			funcs = &packfilefuncs;
+#ifdef WITH_ZIP
+		else if (strcasecmp(ext, "pk3") == 0) 
+			funcs = &zipfilefuncs;
+		else if (strcasecmp(ext, "pk4") == 0) 
+			funcs = &zipfilefuncs;
+#endif	// WITH_ZIP
+#ifdef DOOMWADS
+		else if (strcasecmp(ext, "wad") == 0)
+			funcs = &doomwadfilefuncs;
+#endif
+		else 
+		{
+			Com_Printf("Unknown pak file type");
+			return -1;
+		}
+	}
+
+
+	/* Check the pak exists */
+	if (!search->funcs->FindFile(search->handle, &loc, pakname, NULL))
+		return 1;	//not found..
+
+	/* Load the pak file */
+	snprintf (pakfile, sizeof(pakfile), "%s%s", pathto, pakname);
+	vfs = search->funcs->OpenVFS(search->handle, &loc, "r");
+	if (!vfs)
+		return -1;
+	Com_Printf("Opened %s\n", pakfile);
+	handle = funcs->OpenNew (vfs, pakfile);
+	if (!handle) {
+		VFS_CLOSE(vfs);
+		return -1;
+	}
+	snprintf (pakfile, sizeof(pakfile), "%s%s/", pathto, pakname);
+	FS_AddPathHandle(pakfile, funcs, handle, true, false, FS_LOAD_FILE_ALL);
+
+	return 0;
+}
+#endif
+
+static qbool FS_RemovePak (const char *pakfile) {
 	searchpath_t *prev = NULL;
 	searchpath_t *cur = fs_searchpaths;
 #ifndef WITH_FTE_VFS // unused with the VFS stuff
@@ -722,10 +791,21 @@ qbool FS_RemovePak (const char *pakfile) {
 
 #ifndef SERVERONLY
 
-void FS_AddUserPaks (char *dir) {
+// ==============
+// FS_AddUserPaks
+// ==============
+// Reads the pak.lst from the give directory 
+// and adds the given paks 
+
+#ifndef WITH_FTE_VFS
+static void FS_AddUserPaks (char *dir)
+#else
+static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types loadstuff) 
+#endif
+{
 	FILE	*f;
 	char	pakfile[MAX_OSPATH];
-	char	userpak[32];
+	char	userpak[MAX_OSPATH];
 
 	// add paks listed in paks.lst
 	snprintf (pakfile, sizeof (pakfile), "%s/pak.lst", dir);
@@ -733,7 +813,7 @@ void FS_AddUserPaks (char *dir) {
 	if (f) {
 		int len;
 		while (1) {
-			if (!fgets(userpak, 32, f))
+			if (!fgets(userpak, MAX_OSPATH, f))
 				break;
 			len = strlen(userpak);
 			// strip endline
@@ -754,18 +834,31 @@ void FS_AddUserPaks (char *dir) {
 			if (!strncasecmp(userpak,"gl", 2))
 				continue;
 #endif
+
+#ifndef WITH_FTE_VFS
 			snprintf (pakfile, sizeof (pakfile), "%s/%s", dir, userpak);
 			FS_AddPak(pakfile);
+#else
+			FS_AddPak(dir, userpak, parent, NULL);
+#endif // WITH_FTE_VFS
+
 		}
 		fclose(f);
 	}
 	// add userdir.pak
 	if (UserdirSet) {
+#ifndef WITH_FTE_VFS
 		snprintf (pakfile, sizeof (pakfile), "%s/%s.pak", dir, userdirfile);
 		FS_AddPak(pakfile);
+#else
+		snprintf (pakfile, sizeof (pakfile), "%s.pak", userdirfile);
+		FS_AddPak(dir, pakfile, parent, NULL);
+#endif
 	}
 }
-#endif
+
+#endif // SERVERONLY
+
 
 // <-- QW262
 
@@ -801,9 +894,14 @@ void FS_AddGameDirectory (char *path_to_dir, char *dir) {
 
 #ifndef SERVERONLY
 void FS_AddUserDirectory ( char *dir ) {
+#ifndef WITH_FTE_VFS
 	int i;
 	searchpath_t *search;
 	char pakfile[MAX_OSPATH];
+#else
+	size_t dir_len;
+	char *malloc_dir;
+#endif // WITH_FTE_VFS
 
 	if ( !UserdirSet )
 		return;
@@ -823,13 +921,12 @@ void FS_AddUserDirectory ( char *dir ) {
 			return;
 	}
 
+#ifndef WITH_FTE_VFS
 	// add the directory to the search path
 	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
-#ifndef WITH_FTE_VFS
 	// VFS-FIXME: D-Kure: What is this search->filename & pack used for??
 	strlcpy (search->filename, com_userdir, sizeof (search->filename));
 	search->pack = NULL;
-#endif
 	search->next = fs_searchpaths;
 	fs_searchpaths = search;
 
@@ -842,6 +939,13 @@ void FS_AddUserDirectory ( char *dir ) {
 
 	// other paks
 	FS_AddUserPaks (com_userdir);
+#else
+	dir_len = strlen(dir) + 1;
+	malloc_dir = Q_malloc(sizeof(char)*dir_len);
+	strlcpy(malloc_dir, dir, dir_len);
+	FS_AddPathHandle(com_userdir, &osfilefuncs, malloc_dir, false, false, FS_LOAD_FILE_ALL);
+
+#endif // WITH_FTE_VFS
 }
 #endif /* SERVERONLY */
 
@@ -1444,7 +1548,7 @@ static qbool FS_PakOperation(char* pakfile, pak_operation_t op)
 {
 	switch (op) {
 	case PAKOP_REM: return FS_RemovePak(pakfile);
-	case PAKOP_ADD: return FS_AddPak(pakfile);
+	case PAKOP_ADD: return false; // VFS-FIXME: return FS_AddPak(pakfile);
 	}
 
 	return false;
@@ -2316,8 +2420,6 @@ void FS_InitModuleFS (void)
  *
  *****************************************************************************/
 
-static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
-
 searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff)
 {
 	searchpath_t *search;
@@ -2349,6 +2451,8 @@ searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, voi
 	if (loadstuff & FS_LOAD_FILE_DOOMWAD)
 		FS_AddDataFiles(probablepath, search, "wad", &doomwadfilefuncs);	//q4
 #endif
+	if (loadstuff & FS_LOAD_FROM_PAKLST)
+		FS_AddUserPaks(probablepath, search, loadstuff);
 
 	return search;
 }
@@ -2481,7 +2585,7 @@ int fs_hash_files;
 
 void FS_FlushFSHash(void)
 {
-	if (!filesystemhash)
+	if (filesystemhash)
 	{
 		Hash_Flush(filesystemhash);
 	}
@@ -3052,6 +3156,10 @@ qbool FS_WriteFile (char *filename, void *data, int len, int relativeto)
 	return true;
 }
 
+#ifdef WITH_VFS_WILD
+// Compile this part of code for all wildcard searching 
+// for pak files to be opened
+
 typedef struct {
 	searchpathfuncs_t *funcs;
 	searchpath_t *parentpath;
@@ -3092,40 +3200,30 @@ static int COM_AddWildDataFiles (char *descriptor, int size, void *vparam)
 
 	return true;
 }
+#endif // WITH_VFS_WILD
 
-static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs)
+static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension, searchpathfuncs_t *funcs)
 {
-	//search is the parent
 	int				i;
-	void			*handle;
 	char			pakfile[MAX_OSPATH];
-	vfsfile_t *vfs;
-	flocation_t loc;
+#ifdef WITH_VFS_WILD
 	wildpaks_t wp;
+#endif // WITH_VFS_WILD
 
 	for (i=0 ; ; i++)
 	{
 		snprintf (pakfile, sizeof(pakfile), "pak%i.%s", i, extension);
-		if (!search->funcs->FindFile(search->handle, &loc, pakfile, NULL))
-			break;	//not found..
-		snprintf (pakfile, sizeof(pakfile), "%spak%i.%s", pathto, i, extension);
-		vfs = search->funcs->OpenVFS(search->handle, &loc, "r");
-		if (!vfs)
+		if (FS_AddPak(pathto, pakfile, parent, funcs))
 			break;
-		Com_Printf("Opened %s\n", pakfile);
-		handle = funcs->OpenNew (vfs, pakfile);
-		if (!handle)
-			break;
-		snprintf (pakfile, sizeof(pakfile), "%spak%i.%s/", pathto, i, extension);
-		FS_AddPathHandle(pakfile, funcs, handle, true, false, FS_LOAD_FILE_ALL);
 	}
 
-	/* VFS-FIXME: Use pak.lst instead of COM_AddWildDataFiles */
+#ifdef WITH_VFS_WILD 
 	snprintf (pakfile, sizeof (pakfile), "*.%s", extension);
 	wp.funcs = funcs;
 	wp.parentdesc = pathto;
 	wp.parentpath = search;
 	search->funcs->EnumerateFiles(search->handle, pakfile, COM_AddWildDataFiles, &wp);
+#endif // WITH_VFS_WILD
 }
 
 void COM_RefreshFSCache_f(void)
