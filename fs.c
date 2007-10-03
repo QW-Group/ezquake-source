@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.37 2007-10-03 14:09:31 dkure Exp $
+	$Id: fs.c,v 1.38 2007-10-03 14:27:57 dkure Exp $
 */
 
 /**
@@ -118,9 +118,9 @@ static qbool FS_RemovePak (const char *pakfile);
 //#define WITH_PK3
 
 hashtable_t *filesystemhash;
+qbool com_fschanged = true;
 int fs_hash_dups;
 int fs_hash_files;
-static qbool com_fschanged = true;
 
 // VFS-FIXME: Give this a better name
 cvar_t com_fs_cache = {"com_fs_cache", "1"};
