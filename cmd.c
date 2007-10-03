@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.83 2007-10-03 15:23:29 borisu Exp $
+    $Id: cmd.c,v 1.84 2007-10-03 17:08:47 borisu Exp $
 */
 
 #ifndef _WIN32
@@ -50,6 +50,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
 
 cvar_t cl_warncmd = {"cl_warncmd", "0"};
+cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 
 cbuf_t cbuf_main;
 #ifndef SERVERONLY
@@ -194,7 +195,8 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 {
 	int i, j, cursize, nextsize;
 	char *text, line[1024], *src, *dest;
-	qbool comment, quotes;
+	qbool comment;
+	int quotes;
 
 #ifndef SERVERONLY
 	if (cbuf == &cbuf_safe)
@@ -208,15 +210,23 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		text = (char *) cbuf->text_buf + cbuf->text_start;
 
 		cursize = cbuf->text_end - cbuf->text_start;
-		comment = quotes = false;
+		comment = false;
+		quotes = 0;
 
 		for (i = 0; i < cursize; i++) {
 			if (text[i] == '\n')
 				break;
 
-			if (text[i] == '"') {
-				quotes = !quotes;
-				continue;
+			if (text[i] == '"' && quotes <= 0) {
+				if (!quotes)
+					quotes = -1;
+				else
+					quotes = 0;
+			} else if (quotes >= 0) {
+				if (text[i] == '{' && cl_curlybraces.integer)
+					quotes++;
+				else if (text[i] == '}' && cl_curlybraces.integer)
+					quotes--;
 			}
 
 			if (comment || quotes)
@@ -224,7 +234,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 
 			if (text[i] == '/' && i + 1 < cursize && text[i + 1] == '/')
 				comment = true;
-			else if (text[i] == ';')
+			else if (text[i] == ';' && !quotes)
 				break;
 		}
 
@@ -1975,6 +1985,8 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
 	Cmd_AddCommand ("eval", Cmd_Eval_f);
 #endif
+
+	Cvar_Register(&cl_curlybraces);
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
 	qsort(msgtrigger_commands,

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.100 2007-10-03 14:00:04 dkure Exp $
+    $Id: common.c,v 1.101 2007-10-03 17:08:47 borisu Exp $
 
 */
 
@@ -395,10 +395,12 @@ char	**com_argv;
 char 	*com_args_original;
 
 //Parse a token out of a string
+extern cvar_t cl_curlybraces;
 char *COM_Parse (char *data)
 {
 	unsigned char c;
 	int len;
+	int quotes;
 
 	len = 0;
 	com_token[0] = 0;
@@ -423,15 +425,28 @@ char *COM_Parse (char *data)
 	}
 
 	// handle quoted strings specially
-	if (c == '\"') {
+	if (c == '\"' || (c == '{' && cl_curlybraces.integer) ) {
+		if (c == '{')
+			quotes = 1;
+		else
+			quotes = -1;
 		data++;
 		while (1) {
-			c = *data++;
-			if (c == '\"' || !c) {
+			c = *data;
+			data++;
+			if (quotes < 0) {
+				if (c == '\"')
+					quotes++;
+			} else {
+				if (c == '}' && cl_curlybraces.integer)
+					quotes--;
+				else if (c == '{' && cl_curlybraces.integer)
+					quotes++;
+			}
+
+			if (!quotes || !c) {
 				com_token[len] = 0;
-				if (!c)
-					data--;
-				return data;
+				return c ? data:data-1;
 			}
 			com_token[len] = c;
 			len++;
