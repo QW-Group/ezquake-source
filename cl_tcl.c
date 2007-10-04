@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.23 2007-10-01 18:31:06 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.24 2007-10-04 15:11:35 borisu Exp $
  */
 
 #ifdef WITH_TCL
@@ -337,7 +337,7 @@ static void TCL_Exec_f (void)
 	COM_DefaultExtension (filename, ".tcl");
 
 	mark = Hunk_LowMark();
-	eval_buf = (char *) FS_LoadHunkFile (filename);
+	eval_buf = (char *) FS_LoadHunkFile (filename, NULL);
 	if (!eval_buf) {
 		Com_Printf ("%s: unable to load %s\n", Cmd_Argv(0), filename);
 		return;

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.15 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: keymap.c,v 1.16 2007-10-04 15:11:35 borisu Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -320,11 +320,11 @@ void IN_Keymap_Load_f (void)
 	COM_DefaultExtension (filename, ".kmap");
 
 	// first check in subdirectory "keymaps":
-	data = FS_LoadTempFile (va("keymaps/%s",filename));
+	data = FS_LoadTempFile (va("keymaps/%s",filename), NULL);
 
 	// if not found check in main directory:
 	if ( data == NULL )
-		data = FS_LoadTempFile (filename);
+		data = FS_LoadTempFile (filename, NULL);
 	if (data != NULL) {
 		// Initialize the arrays with the default values:
 		IN_Keymap_Init_f();
