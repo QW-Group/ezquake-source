@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_glx.c,v 1.41 2007-09-28 04:26:45 dkure Exp $
+	$Id: vid_glx.c,v 1.42 2007-10-04 13:48:09 dkure Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -720,15 +720,15 @@ void VID_Init(unsigned char *palette) {
 		width = DisplayWidth(vid_dpy, scrnum);
 		height = DisplayHeight(vid_dpy, scrnum);
 	} else {
-		if ((i = COM_CheckParm("-width")) && i + 1 < com_argc)
-			width = atoi(com_argv[i + 1]);
+		if ((i = COM_CheckParm("-width")) && i + 1 < COM_Argc())
+			width = atoi(COM_Argv(i + 1));
 
-		if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
-			height = atoi(com_argv[i + 1]);
+		if ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc())
+			height = atoi(COM_Argv(i + 1));
 	}
 
-	if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
-		vid.conwidth = Q_atoi(com_argv[i + 1]);
+	if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
+		vid.conwidth = Q_atoi(COM_Argv(i + 1));
 	else
 		vid.conwidth = 640;
 
@@ -740,8 +740,8 @@ void VID_Init(unsigned char *palette) {
 	// pick a conheight that matches with correct aspect
 	vid.conheight = vid.conwidth * 3 / 4;
 
-	if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
-		vid.conheight = Q_atoi(com_argv[i + 1]);
+	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc())
+		vid.conheight = Q_atoi(COM_Argv(i + 1));
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 	
@@ -780,7 +780,7 @@ void VID_Init(unsigned char *palette) {
 			}
 
 			if (best_fit != -1) {
-				if (( i = COM_CheckParm("-freq")) && i + 1 < com_argc) { // FIXME: wow... this is horrible
+				if (( i = COM_CheckParm("-freq")) && i + 1 < COM_Argc()) { // FIXME: wow... this is horrible
 					newvmode.hdisplay = vidmodes[best_fit]->hdisplay;
 					newvmode.hsyncstart = vidmodes[best_fit]->hsyncstart;
 					newvmode.hsyncend = vidmodes[best_fit]->hsyncend;
@@ -791,11 +791,11 @@ void VID_Init(unsigned char *palette) {
 					newvmode.vsyncend = vidmodes[best_fit]->vsyncend;
 					newvmode.vtotal = vidmodes[best_fit]->vtotal;
 					newvmode.flags = vidmodes[best_fit]->flags;
-					newvmode.dotclock = (unsigned int)rint((double)(Q_atoi(com_argv[i + 1]) * newvmode.htotal * newvmode.vtotal) / 1000.0);
+					newvmode.dotclock = (unsigned int)rint((double)(Q_atoi(COM_Argv(i + 1)) * newvmode.htotal * newvmode.vtotal) / 1000.0);
 					newvmode.privsize = 0;
 					newvmode.private = NULL;
 					if (XF86VidModeValidateModeLine(vid_dpy, scrnum, &newvmode) != 1)
-						Com_Printf("VID_Init: Refresh rate %d out of range\n", Q_atoi(com_argv[i + 1]));
+						Com_Printf("VID_Init: Refresh rate %d out of range\n", Q_atoi(COM_Argv(i + 1)));
 					else {
 						XF86VidModeAddModeLine(vid_dpy, scrnum, &newvmode, NULL);
 						new_vidmode = 1;
@@ -900,9 +900,9 @@ void VID_Init(unsigned char *palette) {
 	vid.recalc_refdef = 1; // force a surface cache flush
 
 #ifdef WITH_EVDEV
-	if ((i = COM_CheckParm("-mevdev")) && i + 1 < com_argc)
+	if ((i = COM_CheckParm("-mevdev")) && i + 1 < COM_Argc())
 		{
-		strncpy(evdev_device, com_argv[i + 1], sizeof(evdev_device));
+		strncpy(evdev_device, COM_Argv(i + 1), sizeof(evdev_device));
 
 		if (COM_CheckParm("-mmt")) {
 			evdev_fd = open(evdev_device, O_RDONLY);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.84 2007-10-03 17:08:47 borisu Exp $
+    $Id: cmd.c,v 1.85 2007-10-04 13:48:11 dkure Exp $
 */
 
 #ifndef _WIN32
@@ -343,17 +343,17 @@ void Cmd_StuffCmds_f (void)
 	char *s, *text, *token;
 
 	// build the combined string to parse from
-	for (k = 1; k < com_argc; k++)
-		len += strlen (com_argv[k]) + 1;
+	for (k = 1; k < COM_Argc(); k++)
+		len += strlen (COM_Argv(k)) + 1;
 
 	if (!len)
 		return;
 
 	text = (char *) Z_Malloc (len + 1);
 	text[0] = '\0';
-	for (k = 1; k < com_argc; k++) {
-		strlcat (text, com_argv[k], len + 1);
-		if (k != com_argc - 1)
+	for (k = 1; k < COM_Argc(); k++) {
+		strlcat (text, COM_Argv(k), len + 1);
+		if (k != COM_Argc() - 1)
 			strlcat (text, " ", len + 1);
 	}
 

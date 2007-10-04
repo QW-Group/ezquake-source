@@ -238,8 +238,8 @@ void Check_Gamma (unsigned char *pal) {
 	if (!host_initialized)
 	{
 		float old = v_gamma.value;
-		if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < com_argc)
-			vid_gamma = bound (0.3, Q_atof(com_argv[i + 1]), 1);
+		if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < COM_Argc())
+			vid_gamma = bound (0.3, Q_atof(COM_Argv(i + 1)), 1);
 		else
 			vid_gamma = 1;
 

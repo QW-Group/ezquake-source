@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.52 2007-10-01 18:31:06 disconn3ct Exp $
+	$Id: host.c,v 1.53 2007-10-04 13:48:11 dkure Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -405,11 +405,11 @@ void Host_InitMemory (int memsize)
 	if (COM_CheckParm ("-minmemory"))
 		memsize = MINIMUM_MEMORY;
 
-	if ((t = COM_CheckParm ("-heapsize")) != 0 && t + 1 < com_argc)
-		memsize = Q_atoi (com_argv[t + 1]) * 1024;
+	if ((t = COM_CheckParm ("-heapsize")) != 0 && t + 1 < COM_Argc())
+		memsize = Q_atoi (COM_Argv(t + 1)) * 1024;
 
-	if ((t = COM_CheckParm ("-mem")) != 0 && t + 1 < com_argc)
-		memsize = Q_atoi (com_argv[t + 1]) * 1024 * 1024;
+	if ((t = COM_CheckParm ("-mem")) != 0 && t + 1 < COM_Argc())
+		memsize = Q_atoi (COM_Argv(t + 1)) * 1024 * 1024;
 
 	if (memsize < MINIMUM_MEMORY)
 		Sys_Error ("Only %4.1f megs of memory reported, can't execute game", memsize / (float)0x100000);

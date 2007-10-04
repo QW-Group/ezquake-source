@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.101 2007-10-03 17:08:47 borisu Exp $
+    $Id: common.c,v 1.102 2007-10-04 13:48:08 dkure Exp $
 
 */
 
@@ -389,10 +389,10 @@ qbool COM_FileExists (char *path)
 }
 
 
-char	com_token[MAX_COM_TOKEN];
-int		com_argc;
-char	**com_argv;
-char 	*com_args_original;
+char		com_token[MAX_COM_TOKEN];
+static int	com_argc;
+static char	**com_argv;
+char 		*com_args_original;
 
 //Parse a token out of a string
 extern cvar_t cl_curlybraces;

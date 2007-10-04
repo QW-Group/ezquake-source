@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.18 2007-09-14 13:29:29 disconn3ct Exp $
+    $Id: net.c,v 1.19 2007-10-04 13:48:11 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -647,8 +647,8 @@ int TCP_OpenListenSocket (int port)
 	address.sin_family = AF_INET;
 
 	// check for interface binding option
-	if ((i = COM_CheckParm("-ip")) != 0 && i < com_argc) {
-		address.sin_addr.s_addr = inet_addr(com_argv[i+1]);
+	if ((i = COM_CheckParm("-ip")) != 0 && i < COM_Argc()) {
+		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
 		Com_Printf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	} else {
 		address.sin_addr.s_addr = INADDR_ANY;
@@ -705,8 +705,8 @@ int UDP_OpenSocket (int port)
 	address.sin_family = AF_INET;
 
 	// check for interface binding option
-	if ((i = COM_CheckParm("-ip")) != 0 && i < com_argc) {
-		address.sin_addr.s_addr = inet_addr(com_argv[i+1]);
+	if ((i = COM_CheckParm("-ip")) != 0 && i < COM_Argc()) {
+		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
 		Com_Printf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	} else {
 		address.sin_addr.s_addr = INADDR_ANY;
@@ -830,8 +830,8 @@ void NET_InitClient(void)
 		return;
 
 	p = COM_CheckParm ("-clientport");
-	if (p && p < com_argc) {
-		port = atoi(com_argv[p+1]);
+	if (p && p < COM_Argc()) {
+		port = atoi(COM_Argv(p+1));
 	}
 
 	if (cls.socketip == INVALID_SOCKET)
@@ -878,8 +878,8 @@ void NET_InitServer (void)
 	int p;
 
 	p = COM_CheckParm ("-port");
-	if (p && p < com_argc) {
-		port = atoi(com_argv[p+1]);
+	if (p && p < COM_Argc()) {
+		port = atoi(COM_Argv(p+1));
 	}
 
 	if (svs.socketip == INVALID_SOCKET) {
@@ -890,8 +890,8 @@ void NET_InitServer (void)
 
 // TCPCONNECT -->
 	p = COM_CheckParm ("-tcpport");
-	if (p && p < com_argc) {
-		tcpport = atoi(com_argv[p+1]);
+	if (p && p < COM_Argc()) {
+		tcpport = atoi(COM_Argv(p+1));
 	}
 
 	if (svs.sockettcp == INVALID_SOCKET && tcpport) {

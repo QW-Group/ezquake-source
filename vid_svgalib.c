@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_svgalib.c,v 1.28 2007-03-27 15:48:51 vvd0 Exp $
+	$Id: vid_svgalib.c,v 1.29 2007-10-04 13:48:09 dkure Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -493,13 +493,13 @@ void VID_Init (unsigned char *palette)
 	// interpret command-line params
 
 	if (COM_CheckParm("-mode"))
-		current_mode = get_mode(com_argv[COM_CheckParm("-mode") + 1], w, h, 8);
+		current_mode = get_mode(COM_Argv(COM_CheckParm("-mode") + 1), w, h, 8);
 
 	if (COM_CheckParm("-width"))
-		w = Q_atoi(com_argv[COM_CheckParm("-width") + 1]);
+		w = Q_atoi(COM_Argv(COM_CheckParm("-width") + 1));
 
 	if (COM_CheckParm("-height"))
-		h = Q_atoi(com_argv[COM_CheckParm("-height") + 1]);
+		h = Q_atoi(COM_Argv(COM_CheckParm("-height") + 1));
 
 	if (w || h)
 		current_mode = get_mode(0, w, h, 8);
@@ -624,10 +624,10 @@ void IN_StartupMouse (void)
 	int mtype = vga_getmousetype();
 
 	if (COM_CheckParm("-mdev"))
-		mousedev = com_argv[COM_CheckParm("-mdev") + 1];
+		mousedev = COM_Argv(COM_CheckParm("-mdev") + 1);
 
 	if (COM_CheckParm("-mrate"))
-		mouserate = atoi(com_argv[COM_CheckParm("-mrate") + 1]);
+		mouserate = atoi(COM_Argv(COM_CheckParm("-mrate") + 1));
 
 	if (mouse_init (mousedev, mtype, mouserate)) {
 		Com_Printf ("No mouse found\n");

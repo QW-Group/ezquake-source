@@ -1396,7 +1396,7 @@ void VID_SetConWidth ()
 	int i;
 
 	if ((i = COM_CheckParm("-conwidth")) != 0)
-		vid.conwidth = Q_atoi(com_argv[i+1]);
+		vid.conwidth = Q_atoi(COM_Argv(i+1));
 	else
 		vid.conwidth = vid.width;
 
@@ -1411,7 +1411,7 @@ void VID_SetConWidth ()
 	vid.conheight = vid.conwidth*3 / 4;
 
 	if ((i = COM_CheckParm("-conheight")) != 0)
-		vid.conheight = Q_atoi(com_argv[i+1]);
+		vid.conheight = Q_atoi(COM_Argv(i+1));
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 	else if (vid.conheight > vid.height)

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.17 2007-09-03 15:38:19 dkure Exp $
+	$Id: r_part.c,v 1.18 2007-10-04 13:48:10 dkure Exp $
 
 */
 
@@ -755,8 +755,8 @@ void R_InitParticles(void) {
 		Cvar_Register (&r_particles_count);
 		Cvar_ResetCurrentGroup();
 
-		if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)
-			Cvar_SetValue(&r_particles_count, Q_atoi(com_argv[i + 1]));
+		if ((i = COM_CheckParm ("-particles")) && i + 1 < COM_Argc())
+			Cvar_SetValue(&r_particles_count, Q_atoi(COM_Argv(i + 1)));
 	}
 
 	Classic_InitParticles();

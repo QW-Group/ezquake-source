@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.22 2007-09-26 21:51:35 tonik Exp $
+	$Id: tr_init.c,v 1.23 2007-10-04 13:48:10 dkure Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -490,14 +490,14 @@ void R_Register( void )
 		if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
 			Cvar_LatchedSetValue(&r_fullscreen, 0);
 
-		if ((i = COM_CheckParm("-freq")) && i + 1 < com_argc)
-			Cvar_LatchedSetValue(&r_displayRefresh, Q_atoi(com_argv[i + 1]));
+		if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc())
+			Cvar_LatchedSetValue(&r_displayRefresh, Q_atoi(COM_Argv(i + 1)));
 
-		if ((i = COM_CheckParm("-bpp")) && i + 1 < com_argc)
-			Cvar_LatchedSetValue(&r_colorbits, Q_atoi(com_argv[i + 1]));
+		if ((i = COM_CheckParm("-bpp")) && i + 1 < COM_Argc())
+			Cvar_LatchedSetValue(&r_colorbits, Q_atoi(COM_Argv(i + 1)));
 
-		w = ((i = COM_CheckParm("-width"))  && i + 1 < com_argc) ? Q_atoi(com_argv[i + 1]) : 0;
-		h = ((i = COM_CheckParm("-height")) && i + 1 < com_argc) ? Q_atoi(com_argv[i + 1]) : 0;
+		w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+		h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 
 #ifdef _WIN32
 		if (!( // no!
@@ -534,13 +534,13 @@ void R_Register( void )
 			Cvar_LatchedSetValue(&r_mode, m);
 		}
 
-		if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
-			Cvar_SetValue(&r_conwidth, (float)Q_atoi(com_argv[i + 1]));
+		if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
+			Cvar_SetValue(&r_conwidth, (float)Q_atoi(COM_Argv(i + 1)));
 		else // this is ether +set vid_con... or just default value which we select in cvar initialization
 			Cvar_SetValue(&r_conwidth, r_conwidth.value); // must trigger callback which validate value
     
-		if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
-			Cvar_SetValue(&r_conheight, (float)Q_atoi(com_argv[i + 1]));
+		if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc())
+			Cvar_SetValue(&r_conheight, (float)Q_atoi(COM_Argv(i + 1)));
 		else // this is ether +set vid_con... or just default value which we select in cvar initialization
 			 // also select r_conheight with proper aspect ratio if user omit it
 			Cvar_SetValue(&r_conheight, r_conheight.value ? r_conheight.value : r_conwidth.value * 3 / 4); // must trigger callback which validate value

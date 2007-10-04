@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.88 2007-09-30 22:59:23 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.89 2007-10-04 13:48:11 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -2370,6 +2370,18 @@ void CL_Play_f (void)
 	else
 	#endif // WIN32
 	{
+		if (!playbackfile) {
+			playbackfile = FS_OpenVFS (va("%s/%s", com_basedir, Cmd_Argv(1)), "rb", FS_NONE_OS);
+		} 
+		if (!playbackfile) {
+			playbackfile = FS_OpenVFS (Cmd_Argv(1), "rb", FS_ANY);
+		} 
+		if (!playbackfile) {
+			playbackfile = FS_OpenVFS (va("%s/%s", CL_DemoDirectory(), Cmd_Argv(1)), "rb", FS_NONE_OS);
+		} 
+		if (!playbackfile) {
+			playbackfile = FS_OpenVFS (Cmd_Argv(1), "rb", FS_NONE_OS);
+		}
 		//
 		// Find the demo path, trying different extensions if needed.
 		//
@@ -2419,13 +2431,16 @@ void CL_Play_f (void)
 		nTrack1duel = nTrack2duel = 0;
 		mv_skinsforced = false;
 
-		Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
+		Com_Printf ("Playing demo from %s\n", COM_SkipPath(Cmd_Argv(1)));
 	}
 
 	// Set demoplayback vars depending on the demo type.
 	cls.demoplayback	= true;
-	cls.mvdplayback		= !strcasecmp(COM_FileExtension(name), "mvd");
-	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
+	//cls.mvdplayback		= !strcasecmp(COM_FileExtension(name), "mvd");
+	//cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
+
+	cls.mvdplayback		= !strcasecmp(COM_FileExtension(Cmd_Argv(1)), "mvd");
+	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(Cmd_Argv(1)), "dem");
 
 	 // Init some buffers for reading.
 	CL_Demo_PB_Init(NULL, 0);
@@ -3230,9 +3245,9 @@ void CL_Demo_Init (void)
 	// Init the demo cache if the user specified to use one.
 	//
 	democache_available = false;
-	if ((parm = COM_CheckParm("-democache")) && parm + 1 < com_argc)
+	if ((parm = COM_CheckParm("-democache")) && parm + 1 < COM_Argc())
 	{
-		democache_size = Q_atoi(com_argv[parm + 1]) * 1024;
+		democache_size = Q_atoi(COM_Argv(parm + 1)) * 1024;
 		democache_size = max(democache_size, DEMOCACHE_MINSIZE);
 		if ((democache_buffer = (byte *) malloc (democache_size)))
 		{

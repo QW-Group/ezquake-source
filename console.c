@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.62 2007-09-26 13:53:42 tonik Exp $
+	$Id: console.c,v 1.63 2007-10-04 13:48:11 dkure Exp $
 */
 // console.c
 
@@ -428,8 +428,8 @@ void Con_Init (void) {
 //		qconsole_log = fopen(va("%s/qw/qconsole.log",com_basedir), "a");
 	
 
-	if ((i = COM_CheckParm("-conbufsize")) && i + 1 < com_argc) {
-		conbufsize = Q_atoi(com_argv[i + 1]) << 10;
+	if ((i = COM_CheckParm("-conbufsize")) && i + 1 < COM_Argc()) {
+		conbufsize = Q_atoi(COM_Argv(i + 1)) << 10;
 		conbufsize = bound (MINIMUM_CONBUFSIZE , conbufsize, MAXIMUM_CONBUFSIZE);
 	} else {
 		conbufsize = DEFAULT_CONBUFSIZE;

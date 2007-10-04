@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_win.c,v 1.14 2007-07-20 19:02:05 tonik Exp $
+    $Id: snd_win.c,v 1.15 2007-10-04 13:48:10 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -190,8 +190,8 @@ static sndinitstat SNDDMA_InitDirect (void)
 	format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
 
 	dsdevice = NULL;
-	if ((temp = COM_CheckParm("-snddev")) && temp + 1 < com_argc) {
-		devicenum = Q_atoi(com_argv[temp + 1]);
+	if ((temp = COM_CheckParm("-snddev")) && temp + 1 < COM_Argc()) {
+		devicenum = Q_atoi(COM_Argv(temp + 1));
 		currentenum = 0;
 		if ((hresult = DirectSoundEnumerate(DS_EnumDevices, &devicenum)) != DS_OK) {
 			Com_Printf_State (PRINT_INFO, "Couldn't open preferred sound device. Falling back to primary sound device.\n");
@@ -383,8 +383,8 @@ static qbool SNDDMA_InitWav (void)
 	format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
 
 	devicenum = WAVE_MAPPER;
-	if ((temp = COM_CheckParm("-snddev")) && temp + 1 < com_argc)
-		devicenum = Q_atoi(com_argv[temp + 1]);
+	if ((temp = COM_CheckParm("-snddev")) && temp + 1 < COM_Argc())
+		devicenum = Q_atoi(COM_Argv(temp + 1));
 
 	hr = waveOutOpen((LPHWAVEOUT) &hWaveOut, devicenum, &format, 0, 0L, CALLBACK_NULL);
 	if (hr != MMSYSERR_NOERROR && devicenum != WAVE_MAPPER) {

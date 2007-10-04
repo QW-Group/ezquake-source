@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.40 2007-01-24 01:32:51 qqshka Exp $
+	$Id: vid_wgl.c,v 1.41 2007-10-04 13:48:10 dkure Exp $
 
 */
 
@@ -1530,16 +1530,16 @@ void VID_InitDIB (HINSTANCE hInstance) {
 
 	modelist[0].type = MS_WINDOWED;
 
-	if ((temp = COM_CheckParm("-width")) && temp + 1 < com_argc)
-		modelist[0].width = Q_atoi(com_argv[temp + 1]);
+	if ((temp = COM_CheckParm("-width")) && temp + 1 < COM_Argc())
+		modelist[0].width = Q_atoi(COM_Argv(temp + 1));
 	else
 		modelist[0].width = 640;
 
 	if (modelist[0].width < 320)
 		modelist[0].width = 320;
 
-	if ((temp = COM_CheckParm("-height")) && temp + 1 < com_argc)
-		modelist[0].height= Q_atoi(com_argv[temp + 1]);
+	if ((temp = COM_CheckParm("-height")) && temp + 1 < COM_Argc())
+		modelist[0].height= Q_atoi(COM_Argv(temp + 1));
 	else
 		modelist[0].height = modelist[0].width * 240 / 320;
 
@@ -1716,8 +1716,8 @@ void VID_Init (unsigned char *palette) {
 
 		ReleaseDC (NULL, hdc);
 
-		if ((temp = COM_CheckParm("-mode")) && temp + 1 < com_argc)
-			vid_default = Q_atoi(com_argv[temp + 1]);
+		if ((temp = COM_CheckParm("-mode")) && temp + 1 < COM_Argc())
+			vid_default = Q_atoi(COM_Argv(temp + 1));
 		else if (vid_mode.value != NO_MODE) // serve +set vid_mode
 			vid_default = vid_mode.value;
 		else {
@@ -1743,8 +1743,8 @@ void VID_Init (unsigned char *palette) {
 
 		windowed = false;
 
-		if ((temp = COM_CheckParm("-mode")) && temp + 1 < com_argc) {
-			vid_default = Q_atoi(com_argv[temp + 1]);
+		if ((temp = COM_CheckParm("-mode")) && temp + 1 < COM_Argc()) {
+			vid_default = Q_atoi(COM_Argv(temp + 1));
 		}
 		else if (vid_mode.value != NO_MODE) { // serve +set vid_mode
 			vid_default = vid_mode.value;
@@ -1755,21 +1755,21 @@ void VID_Init (unsigned char *palette) {
 			vid_default = MODE_FULLSCREEN_DEFAULT;
 			leavecurrentmode = 1;
 		} else {
-			if ((temp = COM_CheckParm("-width")) && temp + 1 < com_argc)
-				width = Q_atoi(com_argv[temp + 1]);
+			if ((temp = COM_CheckParm("-width")) && temp + 1 < COM_Argc())
+				width = Q_atoi(COM_Argv(temp + 1));
 			else
 				width = 640;
 
-			if ((temp = COM_CheckParm("-bpp")) && temp + 1 < com_argc) {
-				bpp = Q_atoi(com_argv[temp + 1]);
+			if ((temp = COM_CheckParm("-bpp")) && temp + 1 < COM_Argc()) {
+				bpp = Q_atoi(COM_Argv(temp + 1));
 				findbpp = 0;
 			} else {
 				bpp = 32;
 				findbpp = 1;
 			}
 
-			if ((temp = COM_CheckParm("-height")) && temp + 1 < com_argc)
-				height = Q_atoi(com_argv[temp + 1]);
+			if ((temp = COM_CheckParm("-height")) && temp + 1 < COM_Argc())
+				height = Q_atoi(COM_Argv(temp + 1));
 
 			// if they want to force it, add the specified mode to the list
 			if (COM_CheckParm("-force") && nummodes < MAX_MODE_LIST) {
@@ -1800,8 +1800,8 @@ void VID_Init (unsigned char *palette) {
 
 			do {
 				height = 0;
-				if ((temp = COM_CheckParm("-height")) && temp + 1 < com_argc)
-					height = Q_atoi(com_argv[temp + 1]);
+				if ((temp = COM_CheckParm("-height")) && temp + 1 < COM_Argc())
+					height = Q_atoi(COM_Argv(temp + 1));
 				else
 					height = 0;
 
@@ -1834,18 +1834,18 @@ void VID_Init (unsigned char *palette) {
 		}
 	}
 
-	if ((i = COM_CheckParm("-freq")) && i + 1 < com_argc)
-		Cvar_Set(&vid_displayfrequency, com_argv[i + 1]);
+	if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc())
+		Cvar_Set(&vid_displayfrequency, COM_Argv(i + 1));
 
 	vid_initialized = true;
 
-	if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
-		Cvar_SetValue(&vid_conwidth, (float)Q_atoi(com_argv[i + 1]));
+	if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
+		Cvar_SetValue(&vid_conwidth, (float)Q_atoi(COM_Argv(i + 1)));
 	else // this is ether +set vid_con... or just default value which we select in cvar initialization
 		Cvar_SetValue(&vid_conwidth, vid_conwidth.value); // must trigger callback which validate value
 
-	if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
-		Cvar_SetValue(&vid_conheight, (float)Q_atoi(com_argv[i + 1]));
+	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc())
+		Cvar_SetValue(&vid_conheight, (float)Q_atoi(COM_Argv(i + 1)));
 	else // this is ether +set vid_con... or just default value which we select in cvar initialization
 		 // also select vid_conheight with proper aspect ratio if user omit it
 		Cvar_SetValue(&vid_conheight, vid_conheight.value ? vid_conheight.value : vid_conwidth.value * 3 / 4); // must trigger callback which validate value

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.63 2007-09-26 04:57:12 dkure Exp $
+    $Id: common.h,v 1.64 2007-10-04 13:48:08 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -143,8 +143,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern	char	com_token[MAX_COM_TOKEN];
 extern	qbool	com_eof;
-extern	int		com_argc;
-extern	char	**com_argv;
 
 char *COM_Parse (char *data);
 char *COM_Argv (int arg); // range and null checked

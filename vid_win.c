@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.28 2007-09-30 22:59:25 disconn3ct Exp $
+	$Id: vid_win.c,v 1.29 2007-10-04 13:48:10 dkure Exp $
 
 */
 
@@ -1686,8 +1686,8 @@ void VID_Init (unsigned char *palette) {
 		vid_default = windowed_default;
 	}
 
-	if ((i = COM_CheckParm("-freq")) && i + 1 < com_argc)
-		Cvar_Set(&vid_displayfrequency, com_argv[i + 1]);
+	if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc())
+		Cvar_Set(&vid_displayfrequency, COM_Argv(i + 1));
 
 
 	// sound initialization has to go here, preceded by a windowed mode set,

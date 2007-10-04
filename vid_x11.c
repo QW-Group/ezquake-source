@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_x11.c,v 1.21 2007-03-12 03:20:04 disconn3ct Exp $
+	$Id: vid_x11.c,v 1.22 2007-10-04 13:48:10 dkure Exp $
 */
 // vid_x11.c -- general x video driver
 
@@ -429,20 +429,20 @@ void VID_Init (unsigned char *palette)
 
 	// check for command-line window size
 	if ((pnum = COM_CheckParm("-winsize"))) {
-		if (pnum >= com_argc-2)
+		if (pnum >= COM_Argc()-2)
 			Sys_Error("VID: -winsize <width> <height>\n");
 
-		vid.width = Q_atoi(com_argv[pnum+1]);
-		vid.height = Q_atoi(com_argv[pnum+2]);
+		vid.width = Q_atoi(COM_Argv(pnum+1));
+		vid.height = Q_atoi(COM_Argv(pnum+2));
 		if (!vid.width || !vid.height)
 			Sys_Error("VID: Bad window width/height\n");
 	}
 
 	if ((pnum = COM_CheckParm("-width"))) {
-		if (pnum >= com_argc - 1)
+		if (pnum >= COM_Argc() - 1)
 			Sys_Error("VID: -width <width>\n");
 
-		vid.width = Q_atoi(com_argv[pnum + 1]);
+		vid.width = Q_atoi(COM_Argv(pnum + 1));
 
 		if (!vid.width)
 			Sys_Error("VID: Bad window width\n");
@@ -452,10 +452,10 @@ void VID_Init (unsigned char *palette)
 	}
 
 	if ((pnum = COM_CheckParm("-height"))) {
-		if (pnum >= com_argc - 1)
+		if (pnum >= COM_Argc() - 1)
 			Sys_Error("VID: -height <height>\n");
 
-		vid.height = Q_atoi(com_argv[pnum + 1]);
+		vid.height = Q_atoi(COM_Argv(pnum + 1));
 
 		if (!vid.height)
 			Sys_Error("VID: Bad window height\n");
@@ -466,10 +466,10 @@ void VID_Init (unsigned char *palette)
 
 	// specify a visual id
 	if ((pnum = COM_CheckParm("-visualid"))) {
-		if (pnum >= com_argc - 1)
+		if (pnum >= COM_Argc() - 1)
 			Sys_Error("VID: -visualid <id#>\n");
 
-		template.visualid = Q_atoi(com_argv[pnum + 1]);
+		template.visualid = Q_atoi(COM_Argv(pnum + 1));
 		template_mask = VisualIDMask;
 	} else { // If not specified, use default visual
 		int screen;

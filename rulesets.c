@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.58 2007-09-26 21:51:34 tonik Exp $
+	$Id: rulesets.c,v 1.59 2007-10-04 13:48:10 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -271,14 +271,14 @@ void Rulesets_Init (void)
 
 	Cvar_Register (&ruleset);
 
-	if ((temp = COM_CheckParm ("-ruleset")) && temp + 1 < com_argc) {
-		if (!strcasecmp (com_argv[temp + 1], "smackdown")) {
+	if ((temp = COM_CheckParm ("-ruleset")) && temp + 1 < COM_Argc()) {
+		if (!strcasecmp (COM_Argv(temp + 1), "smackdown")) {
 			Cvar_Set (&ruleset, "smackdown");
 			return;
-		} else if (!strcasecmp (com_argv[temp + 1], "mtfl")) {
+		} else if (!strcasecmp (COM_Argv(temp + 1), "mtfl")) {
 			Cvar_Set (&ruleset, "mtfl");
 			return;
-		} else if (strcasecmp (com_argv[temp + 1], "default")){
+		} else if (strcasecmp (COM_Argv(temp + 1), "default")){
 			Cvar_Set (&ruleset, "default");
 			return;
 		} else {
