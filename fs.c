@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.38 2007-10-03 14:27:57 dkure Exp $
+	$Id: fs.c,v 1.39 2007-10-04 13:11:34 dkure Exp $
 */
 
 /**
@@ -118,12 +118,12 @@ static qbool FS_RemovePak (const char *pakfile);
 //#define WITH_PK3
 
 hashtable_t *filesystemhash;
-qbool com_fschanged = true;
+qbool filesystemchanged = true;
 int fs_hash_dups;
 int fs_hash_files;
 
 // VFS-FIXME: Give this a better name
-cvar_t com_fs_cache = {"com_fs_cache", "1"};
+cvar_t fs_cache = {"fs_cache", "1"};
 
 typedef enum {
 	FSLFRT_IFFOUND,
@@ -994,7 +994,7 @@ void FS_SetGamedir (char *dir)
 		fs_searchpaths = next;
 	}
 
-	com_fschanged=true;
+	filesystemchanged=true;
 #endif
 
 	// Flush all data, so it will be forced to reload.
@@ -1092,10 +1092,10 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 				break;
 			}
 	}
-	else if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1) {
+	else if ((i = COM_CheckParm ("-basedir")) && i < COM_Argc() - 1) {
 		// -basedir <path>
 		// Overrides the system supplied base directory (under id1)
-		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
+		strlcpy (com_basedir, COM_Argv(i + 1), sizeof(com_basedir));
 	}
  	else { // made com_basedir equa to cwd
 //#ifdef __FreeBSD__
@@ -1177,12 +1177,12 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	i = 1;
 	while((i = COM_CheckParmOffset ("-data", i)))
 	{
-		if (i && i < com_argc-1)
+		if (i && i < COM_Argc()-1)
 		{
 #ifndef WITH_FTE_VFS
-			FS_AddGameDirectory(com_basedir,com_argv[i+1]);
+			FS_AddGameDirectory(com_basedir,COM_Argv(i+1));
 #else
-			FS_AddGameDirectory(va("%s%s", com_basedir, com_argv[i+1]), FS_LOAD_FILE_ALL);
+			FS_AddGameDirectory(va("%s%s", com_basedir, COM_Argv(i+1)), FS_LOAD_FILE_ALL);
 #endif
 		}
 		i++;
@@ -1193,15 +1193,15 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	fs_base_searchpaths = fs_searchpaths;
 
 #ifndef SERVERONLY
-	if ((i = COM_CheckParm("-userdir")) && i < com_argc - 2)
-		COM_SetUserDirectory(com_argv[i+1], com_argv[i+2]);
+	if ((i = COM_CheckParm("-userdir")) && i < COM_Argc() - 2)
+		COM_SetUserDirectory(COM_Argv(i+1), COM_Argv(i+2));
 #endif
 
 	// the user might want to override default game directory
 	if (!(i = COM_CheckParm ("-game")))
 		i = COM_CheckParm ("+gamedir");
-	if (i && i < com_argc - 1)
-		FS_SetGamedir (com_argv[i + 1]);
+	if (i && i < COM_Argc() - 1)
+		FS_SetGamedir (COM_Argv(i + 1));
 }
 
 void FS_InitFilesystem( void ) {
@@ -2389,7 +2389,7 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("fs_openfile", FS_OpenFile_f); // VFS-FIXME <-- Only a debug function
 	Cmd_AddCommand("dir", COM_Dir_f);
 	Cmd_AddCommand("locate", COM_Locate_f);
-	Cvar_Register(&com_fs_cache);
+	Cvar_Register(&fs_cache);
 	Com_Printf("Initialising quake VFS filesystem\n");
 #endif
 }
@@ -2433,7 +2433,7 @@ searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, voi
 	search->next = fs_searchpaths;
 	fs_searchpaths = search;
 
-	com_fschanged = true;
+	filesystemchanged = true;
 
 	//add any data files too
 	if (loadstuff & FS_LOAD_FILE_PAK)
@@ -2590,7 +2590,7 @@ void FS_FlushFSHash(void)
 		Hash_Flush(filesystemhash);
 	}
 
-	com_fschanged = true;
+	filesystemchanged = true;
 }
 
 void FS_RebuildFSHash(void)
@@ -2621,7 +2621,7 @@ void FS_RebuildFSHash(void)
 		search->funcs->BuildHash(search->handle);
 	}
 
-	com_fschanged = false;
+	filesystemchanged = false;
 
 	Com_Printf("%i unique files, %i duplicates\n", fs_hash_files, fs_hash_dups);
 }
@@ -2644,9 +2644,9 @@ int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *lo
 	void *pf;
 //Com_Printf("Finding %s: ", filename);
 
- 	if (com_fs_cache.value)
+ 	if (fs_cache.value)
 	{
-		if (com_fschanged)
+		if (filesystemchanged)
 			FS_RebuildFSHash();
 		pf = Hash_GetInsensitive(filesystemhash, filename);
 		if (!pf)
@@ -3151,7 +3151,7 @@ qbool FS_WriteFile (char *filename, void *data, int len, int relativeto)
 		return false;
 	}
 
-	com_fschanged=true;
+	filesystemchanged=true;
 
 	return true;
 }
@@ -3228,13 +3228,13 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 
 void COM_RefreshFSCache_f(void)
 {
-	com_fschanged=true;
+	filesystemchanged=true;
 }
 
 void COM_FlushFSCache(void)
 {
-	if (com_fs_cache.value != 2)
-		com_fschanged=true;
+	if (fs_cache.value != 2)
+		filesystemchanged=true;
 }
 
 

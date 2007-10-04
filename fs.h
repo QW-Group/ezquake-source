@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.9 2007-10-03 14:27:57 dkure Exp $
+    $Id: fs.h,v 1.10 2007-10-04 13:11:34 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -82,7 +82,7 @@ vfsfile_t *FS_OpenTCP(char *name);
 
 #ifdef WITH_FTE_VFS
 extern cvar_t com_fs_cache;
-extern qbool com_fschanged;
+extern qbool filesystemchanged;
 #endif /* WITH_FTE_VFS */
 
 // ====================================================================
