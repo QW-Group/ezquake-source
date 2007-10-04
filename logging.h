@@ -34,5 +34,6 @@ qbool Log_AutoLogging_Status(void);
 void Log_AutoLogging_SaveMatch(void);
 
 extern cvar_t log_readable;
+extern cvar_t log_dir;
 
 #endif

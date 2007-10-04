@@ -16,9 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.90 2007-10-04 15:01:10 dkure Exp $
+	$Id: cl_demo.c,v 1.91 2007-10-04 15:18:20 johnnycz Exp $
 */
 
+#include <time.h>
 #include "quakedef.h"
 #include "winquake.h"
 #include "movie.h"
@@ -27,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 #else
 #include "r_model.h"
 #include "r_local.h"
@@ -36,6 +38,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fs.h"
 #include "utils.h"
 #include "crc.h"
+#include "logging.h"
+#include "version.h"
 
 
 float olddemotime, nextdemotime;
@@ -55,6 +59,7 @@ static qbool	qwz_packing = false;
 
 static void		OnChange_demo_format(cvar_t*, char*, qbool*);
 cvar_t			demo_format = {"demo_format", "qwz", 0, OnChange_demo_format};
+cvar_t			demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 
 static HANDLE hQizmoProcess = NULL;
 static char tempqwd_name[256] = {0}; // This file must be deleted after playback is finished.
@@ -2248,6 +2253,55 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 }
 #endif // WITH_ZIP
 
+void CL_Demo_DumpBenchmarkResult(int frames, float timet)
+{
+	char logfile[MAX_PATH];
+	char datebuf[32];
+	FILE* f;
+	time_t t = time(&t);
+	struct tm *ptm = localtime(&t);
+	int width = 0, height = 0; float asp = 0;
+#ifdef GLQUAKE
+#ifndef __APPLE__
+	extern cvar_t r_mode;
+
+	R_GetModeInfo(&width, &height, &asp, r_mode.integer);
+#endif
+#endif
+
+
+	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", COM_LegacyDir(log_dir.string));
+	f = fopen(logfile, "a");
+	if (!f) {
+		Com_Printf("Can't open %s to dump timedemo result\n", logfile);
+		return;
+	}
+
+	fputs("<timedemo date=\"", f);
+	if (ptm)
+		strftime (datebuf, sizeof(datebuf) - 1, "%Y-%m-%dT%H:%M:%S", ptm);
+	else
+		*datebuf = '\0';
+	fputs(datebuf, f); fputs("\">\n", f);
+
+	fputs(va("\t<system>\n\t\t<os>%s</os>\n\t\t<hardware>%s</hardware>\n\t</system>\n", QW_PLATFORM, SYSINFO_GetString()), f);
+
+	fputs(va("\t<client>\n\t\t<name>ezQuake</name><version>%s</version>\n"
+		"\t\t<configuration>%s</configuration><rendering>%s</rendering>\n\t</client>\n",
+		VersionString(), QW_CONFIGURATION, QW_RENDERER), f);
+
+	if (width)
+		fputs(va("\t<screen width=\"%d\" height=\"%d\"/>\n", width, height), f);
+
+	fputs(va("\t<demo><name>%s</name></demo>\n", cls.demoname), f);
+
+	fputs(va("\t<result frames=\"%i\" time=\"PT%fS\" fps=\"%f\"/>\n", frames, timet, frames/timet), f);
+	
+	fputs("</timedemo>\n", f);
+
+	fclose(f);
+}
+
 //
 // Stops demo playback.
 //
@@ -2300,6 +2354,8 @@ void CL_StopPlayback (void)
 		if (time <= 0)
 			time = 1;
 		Com_Printf ("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
+		if (demo_benchmarkdumps.integer)
+			CL_Demo_DumpBenchmarkResult(frames, time);
 	}
 
 	// Go to the next demo in the demo playlist.
@@ -2323,7 +2379,7 @@ void CL_Play_f (void)
 
 	int i;
 	char *real_name;
-	char name[2 * MAX_OSPATH], **s;
+	static char name[2 * MAX_OSPATH], **s;
 	static char *ext[] = {".qwd", ".mvd", ".dem", NULL};
 
 	// Show usage.
@@ -2424,6 +2480,7 @@ void CL_Play_f (void)
 
 	// Set demoplayback vars depending on the demo type.
 	cls.demoplayback	= true;
+	strlcpy(cls.demoname, name, sizeof(cls.demoname));
 	cls.mvdplayback		= !strcasecmp(COM_FileExtension(name), "mvd");
 	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
 
@@ -3269,6 +3326,7 @@ void CL_Demo_Init (void)
 	Cvar_Register(&demo_format);
 #endif
 	Cvar_Register(&demo_dir);
+	Cvar_Register(&demo_benchmarkdumps);
 
 	Cvar_ResetCurrentGroup();
 }

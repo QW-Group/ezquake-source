@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: client.h,v 1.72 2007-09-15 19:43:28 tonik Exp $
+$Id: client.h,v 1.73 2007-10-04 15:18:20 johnnycz Exp $
 
 */
 // client.h
@@ -335,6 +335,7 @@ typedef struct
 	//
 	qbool		demorecording;
 	qbool		demoplayback;
+	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
 	qbool		timedemo;
 	float		td_lastframe;       // To meter out one message a frame.
