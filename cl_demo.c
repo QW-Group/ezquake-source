@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.89 2007-10-04 13:48:11 dkure Exp $
+	$Id: cl_demo.c,v 1.90 2007-10-04 15:01:10 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -2370,18 +2370,6 @@ void CL_Play_f (void)
 	else
 	#endif // WIN32
 	{
-		if (!playbackfile) {
-			playbackfile = FS_OpenVFS (va("%s/%s", com_basedir, Cmd_Argv(1)), "rb", FS_NONE_OS);
-		} 
-		if (!playbackfile) {
-			playbackfile = FS_OpenVFS (Cmd_Argv(1), "rb", FS_ANY);
-		} 
-		if (!playbackfile) {
-			playbackfile = FS_OpenVFS (va("%s/%s", CL_DemoDirectory(), Cmd_Argv(1)), "rb", FS_NONE_OS);
-		} 
-		if (!playbackfile) {
-			playbackfile = FS_OpenVFS (Cmd_Argv(1), "rb", FS_NONE_OS);
-		}
 		//
 		// Find the demo path, trying different extensions if needed.
 		//
@@ -2431,16 +2419,13 @@ void CL_Play_f (void)
 		nTrack1duel = nTrack2duel = 0;
 		mv_skinsforced = false;
 
-		Com_Printf ("Playing demo from %s\n", COM_SkipPath(Cmd_Argv(1)));
+		Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 	}
 
 	// Set demoplayback vars depending on the demo type.
 	cls.demoplayback	= true;
-	//cls.mvdplayback		= !strcasecmp(COM_FileExtension(name), "mvd");
-	//cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
-
-	cls.mvdplayback		= !strcasecmp(COM_FileExtension(Cmd_Argv(1)), "mvd");
-	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(Cmd_Argv(1)), "dem");
+	cls.mvdplayback		= !strcasecmp(COM_FileExtension(name), "mvd");
+	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
 
 	 // Init some buffers for reading.
 	CL_Demo_PB_Init(NULL, 0);
