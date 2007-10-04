@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.91 2007-10-04 15:18:20 johnnycz Exp $
+	$Id: cl_demo.c,v 1.92 2007-10-04 15:48:56 dkure Exp $
 */
 
 #include <time.h>
@@ -59,7 +59,6 @@ static qbool	qwz_packing = false;
 
 static void		OnChange_demo_format(cvar_t*, char*, qbool*);
 cvar_t			demo_format = {"demo_format", "qwz", 0, OnChange_demo_format};
-cvar_t			demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 
 static HANDLE hQizmoProcess = NULL;
 static char tempqwd_name[256] = {0}; // This file must be deleted after playback is finished.
@@ -68,6 +67,7 @@ int CL_Demo_Compress(char*);
 
 static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
+cvar_t			demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 
 char Demos_Get_Trackname(void);
 int FindBestNick(char *s,int use);
