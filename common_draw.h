@@ -43,6 +43,12 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 					 byte color_insane,
 					 int style);
 
+void Draw_SubPicTiled(int x, int y, 
+					int target_width, int target_height, 
+					mpic_t *pic, int src_x, int src_y, 
+					int src_width, int src_height,
+					float alpha);
+
 void SCR_DrawWordWrapString(int x, int y, 
 							int y_spacing, 
 							int width, int height, 

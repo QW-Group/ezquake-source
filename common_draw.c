@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.26 2007-09-30 22:59:23 disconn3ct Exp $
+	$Id: common_draw.c,v 1.27 2007-10-04 16:34:20 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -520,6 +520,44 @@ byte* COLOR_TO_RGBA(color_t i, byte rgba[4])
 	rgba[3] = (i >> 24 & 0xFF);
 
 	return rgba;
+}
+
+//
+// Draws a subpic tiled inside of a specified target area.
+//
+void Draw_SubPicTiled(int x, int y, 
+					int target_width, int target_height, 
+					mpic_t *pic, int src_x, int src_y, 
+					int src_width, int src_height,
+					float alpha)
+{
+    int cx					= 0;
+	int cy					= 0;
+	int scaled_src_width	= src_width; //(src_width * scale);
+	int scaled_src_height	= src_height; //(src_height * scale); 
+	int draw_width;
+	int draw_height;
+
+	while (cy < target_height)
+    {
+		while (cx < target_width)
+        {
+			draw_width = min(src_width, (target_width - cx));
+			draw_height = min(src_height, (target_height - cy));
+
+			// TODO : Make this work properly in GL so that scale can be used (causes huge rounding issues).
+			Draw_SAlphaSubPic((x + cx), (y + cy), 
+							pic, 
+							src_x, src_y, 
+							draw_width, draw_height, 
+							1.0, alpha);
+
+            cx += scaled_src_width;
+        }
+
+        cx = 0;
+        cy += scaled_src_height;
+    }
 }
 
 // ---------------------------
