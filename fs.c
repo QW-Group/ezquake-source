@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.40 2007-10-04 14:56:55 dkure Exp $
+	$Id: fs.c,v 1.41 2007-10-04 15:52:04 dkure Exp $
 */
 
 /**
@@ -401,10 +401,8 @@ qbool	file_from_gamedir;	// global indicating file came from a gamedir (and game
 #ifndef WITH_FTE_VFS
 int FS_FOpenFile (char *filename, FILE **file) {
 	searchpath_t *search;
-#ifndef WITH_FTE_VFS 
 	pack_t *pak;
 	int i;
-#endif
 
 	*file = NULL;
 	file_from_pak = false;
@@ -418,7 +416,6 @@ int FS_FOpenFile (char *filename, FILE **file) {
 			file_from_gamedir = false;
 
 		// is the element a pak file?
-#ifndef WITH_FTE_VFS
 		if (search->pack) {
 			// look through all the pak file elements
 			pak = search->pack;
@@ -435,7 +432,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 
 					file_from_pak = true;
 					snprintf (fs_netpath, sizeof(fs_netpath), "%s#%i", pak->filename, i);
-					return pak->files[i].filelen;;
+					return pak->files[i].filelen;
 				}
 			}
 		} else {
@@ -450,7 +447,6 @@ int FS_FOpenFile (char *filename, FILE **file) {
 			fs_filepos = 0;
 			return COM_FileLength (*file);
 		}
-#endif // WITH_FTE_VFS
 	}
 
 	if (developer.value)
@@ -458,7 +454,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 
 	return -1;
 }
-#endif
+#endif // WITH_FTE_VFS
 
 // Filename are relative to the quake directory.
 // Always appends a 0 byte to the loaded data.

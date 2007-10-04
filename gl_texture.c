@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.42 2007-10-02 01:02:46 cokeman1982 Exp $
+$Id: gl_texture.c,v 1.43 2007-10-04 15:52:04 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -591,6 +591,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	byte *c, *data = NULL;
 #ifndef WITH_FTE_VFS
 	FILE *f;
+	int filesize;
 #else
 	vfsfile_t *f;
 #endif // WITH_FTE_VFS
@@ -635,7 +636,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 
 		snprintf (name, sizeof(name), "textures/%s", link);
 #ifndef WITH_FTE_VFS
-       	if (FS_FOpenFile (name, &f) != -1) 
+       	if ((filesize = FS_FOpenFile (name, &f)) != -1) 
 #else
 		if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 #endif // WITH_FTE_VFS
@@ -643,7 +644,11 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
        		CHECK_TEXTURE_ALREADY_LOADED;
        		if( !data && !strcasecmp(link + len - 3, "tga") )
 			{
+#ifndef WITH_FTE_VFS
+				data = Image_LoadTGA (f, filesize, name, matchwidth, matchheight, real_width, real_height);
+#else
 				data = Image_LoadTGA (f, name, matchwidth, matchheight, real_width, real_height);
+#endif
 			}
 
 			#ifdef WITH_PNG
@@ -656,14 +661,22 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 			#ifdef WITH_JPEG
        		if( !data && !strcasecmp(link + len - 3, "jpg") )
 			{
+#ifndef WITH_FTE_VFS
+				data = Image_LoadJPEG (f, filesize, name, matchwidth, matchheight, real_width, real_height);
+#else
 				data = Image_LoadJPEG (f, name, matchwidth, matchheight, real_width, real_height);
+#endif
 			}
 			#endif // WITH_JPEG
 
 			// TEX_NO_PCX - preventing loading skins here
        		if( !(mode & TEX_NO_PCX) && !data && !strcasecmp(link + len - 3, "pcx") )
 			{
+#ifndef WITH_FTE_VFS
+				data = Image_LoadPCX_As32Bit (f, filesize, name, matchwidth, matchheight, real_width, real_height);
+#else
 				data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight, real_width, real_height);
+#endif
 			}
 
        		if ( data )
@@ -673,13 +686,18 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 
 	snprintf (name, sizeof(name), "%s.tga", basename);
 #ifndef WITH_FTE_VFS
-	if (FS_FOpenFile (name, &f) != -1) 
+	if ((filesize = FS_FOpenFile (name, &f)) != -1) 
 #else
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 #endif // WITH_FTE_VFS
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
+#ifndef WITH_FTE_VFS
+		if ((data = Image_LoadTGA (f, filesize, name, matchwidth, matchheight, real_width, real_height)))
+#else
 		if ((data = Image_LoadTGA (f, name, matchwidth, matchheight, real_width, real_height)))
+#endif
+
 			return data;
 	}
 
@@ -700,13 +718,17 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	#ifdef WITH_JPEG
 	snprintf (name, sizeof(name), "%s.jpg", basename);
 #ifndef WITH_FTE_VFS
-	if (FS_FOpenFile (name, &f) != -1) 
+	if ((filesize = FS_FOpenFile (name, &f)) != -1) 
 #else
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 #endif // WITH_FTE_VFS
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
+#ifndef WITH_FTE_VFS
+		if ((data = Image_LoadJPEG (f, filesize, name, matchwidth, matchheight, real_width, real_height)))
+#else
 		if ((data = Image_LoadJPEG (f, name, matchwidth, matchheight, real_width, real_height)))
+#endif
 			return data;
 	}
 	#endif // WITH_JPEG
@@ -715,13 +737,17 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	
 	// TEX_NO_PCX - preventing loading skins here.
 #ifndef WITH_FTE_VFS
-	if (!(mode & TEX_NO_PCX) && FS_FOpenFile (name, &f) != -1)
+	if (!(mode & TEX_NO_PCX) && (filesize = FS_FOpenFile (name, &f)) != -1)
 #else
 	if (!(mode & TEX_NO_PCX) && (f = FS_OpenVFS(name, "rb", FS_ANY))) 
 #endif // WITH_FTE_VFS
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
+#ifndef WITH_FTE_VFS
+		if ((data = Image_LoadPCX_As32Bit (f, filesize, name, matchwidth, matchheight, real_width, real_height)))
+#else
 		if ((data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight, real_width, real_height)))
+#endif
 			return data;
 	}
 

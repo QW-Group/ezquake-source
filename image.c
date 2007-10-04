@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.52 2007-10-04 14:56:54 dkure Exp $
+    $Id: image.c,v 1.53 2007-10-04 15:52:03 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -1691,7 +1691,7 @@ static void TGA_upsample32(byte *dest, byte *src)
 #define TGA_ERROR(msg)	{if (msg) {Com_DPrintf((msg), COM_SkipPath(filename));} Q_free(fileBuffer); return NULL;}
 
 #ifndef WITH_FTE_VFS
-byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+byte *Image_LoadTGA(FILE *fin, int filesize, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #else
 byte *Image_LoadTGA(vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #endif // WITH_FTE_VFS
@@ -1700,8 +1700,9 @@ byte *Image_LoadTGA(vfsfile_t *fin, char *filename, int matchwidth, int matchhei
 	int i, x, y, bpp, alphabits, compressed, mytype, row_inc, runlen, readpixelcount;
 	int image_width = -1, image_height = -1;
 	byte *fileBuffer, *in, *out, *data, *enddata, rgba[4], palette[256 * 4];
+#ifdef WITH_FTE_VFS
 	int filesize;
-
+#endif
 
 #ifndef WITH_FTE_VFS
 	if (!fin && (filesize = FS_FOpenFile (filename, &fin)) == -1)
@@ -2388,7 +2389,7 @@ jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 }
 
 #ifndef WITH_FTE_VFS
-byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+byte *Image_LoadJPEG(FILE *fin, int filesize, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 #else
 byte *Image_LoadJPEG(vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 #endif // WITH_FTE_VFS
@@ -2398,7 +2399,9 @@ byte *Image_LoadJPEG(vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 
 	byte *infile = NULL;
 	int length;
+#ifdef WITH_FTE_VFS
 	int filesize;
+#endif // WITH_FTE_VFS
 
 	// This struct contains the JPEG decompression parameters and pointers to
 	// working space (which is allocated as needed by the JPEG library).
@@ -2556,7 +2559,7 @@ typedef struct pcx_s
 } pcx_t;
 
 #ifndef WITH_FTE_VFS
-byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+byte *Image_LoadPCX (FILE *fin, int filesize, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #else
 byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #endif // WITH_FTE_VFS
@@ -2564,7 +2567,9 @@ byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 	pcx_t *pcx;
 	byte *pcxbuf, *data, *out, *pix;
 	int x, y, dataByte, runLength, width, height;
+#ifdef WITH_FTE_VFS
 	int filesize;
+#endif
 
 #ifndef WITH_FTE_VFS
 	if (!fin && (filesize = FS_FOpenFile (filename, &fin)) == -1)
@@ -2700,7 +2705,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 
 // This does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture.
 #ifndef WITH_FTE_VFS
-byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+byte *Image_LoadPCX_As32Bit (FILE *fin, int filesize, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 #else
 byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 #endif // WITH_FTE_VFS
@@ -2709,7 +2714,11 @@ byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, char *filename, int matchwidth, int
 	unsigned *out;
 	int size, i;
 
+#ifndef WITH_FTE_VFS
+	byte *pix = Image_LoadPCX (fin, filesize, filename, matchwidth, matchheight, &image_width, &image_height);
+#else
 	byte *pix = Image_LoadPCX (fin, filename, matchwidth, matchheight, &image_width, &image_height);
+#endif // WITH_FTE_VFS
 	if (!pix)
 		return NULL;
 

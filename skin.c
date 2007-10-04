@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.23 2007-09-26 21:51:34 tonik Exp $
+	$Id: skin.c,v 1.24 2007-10-04 15:52:04 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -213,7 +213,11 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_wi
 	}
 #endif // GLQUAKE
 
+#ifndef WITH_FTE_VFS
+	if ((pic = Image_LoadPCX (NULL, 0, name, 0, 0, real_width, real_height))) 
+#else
 	if ((pic = Image_LoadPCX (NULL, name, 0, 0, real_width, real_height))) 
+#endif
 	{
 		// PCX is limited.
 		*max_w = 320;

@@ -43,13 +43,13 @@ typedef struct
 png_textp Image_LoadPNG_Comments (char *filename, int *text_count);
 #ifndef WITH_FTE_VFS
 byte *Image_LoadPNG (FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
-byte *Image_LoadTGA (FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
-byte *Image_LoadPCX (FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
-byte *Image_LoadJPEG(FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadTGA (FILE *f, int filesize, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadPCX (FILE *f, int filesize, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadJPEG(FILE *f, int filesize, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height);
 #ifdef GLQUAKE
 // this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
-byte *Image_LoadPCX_As32Bit (FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadPCX_As32Bit (FILE *f, int filesize, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 #endif
 
 
