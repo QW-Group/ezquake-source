@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmodel.c,v 1.7 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: cmodel.c,v 1.8 2007-10-04 14:56:55 dkure Exp $
 */
 // cmodel.c
 
@@ -930,7 +930,7 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 	}
 
 	// load the file
-	buf = (unsigned int *) FS_LoadTempFile (name);
+	buf = (unsigned int *) FS_LoadTempFile (name, NULL);
 	if (!buf)
 		Host_Error ("CM_LoadMap: %s not found", name);
 

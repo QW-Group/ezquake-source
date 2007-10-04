@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.15 2007-06-22 23:15:02 qqshka Exp $
+	$Id: sv_init.c,v 1.16 2007-10-04 14:56:54 dkure Exp $
 */
 
 #include "qwsvdef.h"
@@ -172,8 +172,9 @@ unsigned SV_CheckModel (char *mdl)
 	byte stackbuf[1024]; // avoid dirtying the cache heap
 	byte *buf;
 	unsigned short crc;
+	int filesize;
 
-	buf = (byte *) FS_LoadStackFile (mdl, stackbuf, sizeof(stackbuf));
+	buf = (byte *) FS_LoadStackFile (mdl, stackbuf, sizeof(stackbuf), &filesize);
 	if (!buf) {
 		if (!strcmp(mdl, "progs/player.mdl"))
 			return 33168;
@@ -183,7 +184,7 @@ unsigned SV_CheckModel (char *mdl)
 			Host_Error ("SV_CheckModel: could not load %s\n", mdl);
 	}
 
-	crc = CRC_Block(buf, fs_filesize);
+	crc = CRC_Block(buf, filesize);
 
 	return crc;
 }
@@ -320,11 +321,12 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// load and spawn all other entities
 	entitystring = NULL;
 	if ((int) sv_loadentfiles.value) {
-		entitystring = (char *)FS_LoadHunkFile (va("maps/%s.ent", sv.mapname));
+		int filesize;
+		entitystring = (char *)FS_LoadHunkFile (va("maps/%s.ent", sv.mapname), &filesize);
 		if (entitystring) {
 			Com_DPrintf ("Using entfile maps/%s.ent\n", sv.mapname);
 			Info_SetValueForStarKey (svs.info, "*entfile", va("%i",
-				CRC_Block((byte *)entitystring, fs_filesize)), MAX_SERVERINFO_STRING);
+				CRC_Block((byte *)entitystring, filesize)), MAX_SERVERINFO_STRING);
 		}
 	}
 

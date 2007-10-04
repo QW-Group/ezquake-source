@@ -1,4 +1,4 @@
-// $Id: xsd_variable.c,v 1.6 2007-09-13 14:49:30 disconn3ct Exp $
+// $Id: xsd_variable.c,v 1.7 2007-10-04 14:56:54 dkure Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -245,13 +245,13 @@ xml_variable_t * XSD_Variable_Load(char *filename)
     document = (xml_variable_t *) XSD_Variable_LoadFromHandle(f, len);
     fclose(f);
 #else
-	vfsfile_t *v;
+	vfsfile_t *f;
 
-	if (!(v = FS_OpenVFS(filename, "rb", FS_ANY))) {
+	if (!(f = FS_OpenVFS(filename, "rb", FS_ANY))) {
 		return NULL;
 	}
-    document = (xml_variable_t *) XSD_Variable_LoadFromHandle(v, fs_filesize);
-	VFS_CLOSE(v);
+    document = (xml_variable_t *) XSD_Variable_LoadFromHandle(f, VFS_GETLEN(f));
+	VFS_CLOSE(f);
 #endif
     return document;
 }

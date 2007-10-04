@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.21 2007-08-13 06:23:41 disconn3ct Exp $
+    $Id: fragstats.c,v 1.22 2007-10-04 14:56:55 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -194,10 +194,10 @@ static void LoadFragFile(char *filename, qbool quiet) {
 
 	// if it fragfile.dat then try to load from ezquake dir first,
 	// because we have a bit different fragfile format comparing to fuhquake
-	if (!strcasecmp(fragfilename, "fragfile.dat") && (buffer = (char *) FS_LoadHunkFile("../ezquake/fragfile.dat")))
+	if (!strcasecmp(fragfilename, "fragfile.dat") && (buffer = (char *) FS_LoadHunkFile("../ezquake/fragfile.dat", NULL)))
 		strlcpy(fragfilename, "ezquake/fragfile.dat", sizeof(fragfilename));
 
-	if (!buffer && !(buffer = (char *) FS_LoadHunkFile(fragfilename))) {
+	if (!buffer && !(buffer = (char *) FS_LoadHunkFile(fragfilename, NULL))) {
 		if (!quiet)
 			Com_Printf("Couldn't load fragfile \"%s\"\n", fragfilename);
 		return;

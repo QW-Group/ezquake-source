@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.51 2007-10-02 01:04:04 cokeman1982 Exp $
+    $Id: image.c,v 1.52 2007-10-04 14:56:54 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -1700,28 +1700,27 @@ byte *Image_LoadTGA(vfsfile_t *fin, char *filename, int matchwidth, int matchhei
 	int i, x, y, bpp, alphabits, compressed, mytype, row_inc, runlen, readpixelcount;
 	int image_width = -1, image_height = -1;
 	byte *fileBuffer, *in, *out, *data, *enddata, rgba[4], palette[256 * 4];
-#ifdef WITH_FTE_VFS
-	vfserrno_t err;
-#endif
+	int filesize;
 
 
 #ifndef WITH_FTE_VFS
-	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+	if (!fin && (filesize = FS_FOpenFile (filename, &fin)) == -1)
 		return NULL;
-	fileBuffer = (byte *) Q_malloc(fs_filesize);
-	fread(fileBuffer, 1, fs_filesize, fin);
+	fileBuffer = (byte *) Q_malloc(filesize);
+	fread(fileBuffer, 1, filesize, fin);
 	fclose(fin);
 
 #else
 	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
 		return NULL;
-	fileBuffer = (byte *) Q_malloc(fs_filesize);
+	filesize = VFS_GETLEN(fin);
+	fileBuffer = (byte *) Q_malloc(filesize);
 
-	VFS_READ(fin, fileBuffer, fs_filesize, &err);
+	VFS_READ(fin, fileBuffer, filesize, NULL);
 	VFS_CLOSE(fin);
 #endif // WITH_FTE_VFS
 
-	if (fs_filesize < 19)
+	if (filesize < 19)
 		TGA_ERROR(NULL);
 
 	header.idLength = fileBuffer[0];
@@ -1755,7 +1754,7 @@ byte *Image_LoadTGA(vfsfile_t *fin, char *filename, int matchwidth, int matchhei
 	compressed = (header.imageType & 0x08);
 
 	in = fileBuffer + 18 + header.idLength;
-	enddata = fileBuffer + fs_filesize;
+	enddata = fileBuffer + filesize;
 
 	// error check the image type's pixel size
 	if (header.imageType == TGA_RGB || header.imageType == TGA_RGB_RLE) {
@@ -2399,9 +2398,7 @@ byte *Image_LoadJPEG(vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 
 	byte *infile = NULL;
 	int length;
-#ifdef WITH_FTE_VFS
-	vfserrno_t err;
-#endif
+	int filesize;
 
 	// This struct contains the JPEG decompression parameters and pointers to
 	// working space (which is allocated as needed by the JPEG library).
@@ -2417,15 +2414,17 @@ byte *Image_LoadJPEG(vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 	int size_stride;		// physical row width in output buffer.
 
 #ifndef WITH_FTE_VFS
-	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+	if (!fin && (filesize = FS_FOpenFile (filename, &fin)) == -1)
+		return NULL;
 #else
 	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
-#endif
 		return NULL;
+	filesize = VFS_GETLEN(fin);
+#endif
 
-	infile = (byte *) Q_malloc(length = fs_filesize);
+	infile = (byte *) Q_malloc(length = filesize);
 #ifndef WITH_FTE_VFS
-	if (fread (infile, 1, fs_filesize, fin) != fs_filesize) 
+	if (fread (infile, 1, filesize, fin) != filesize) 
 	{
 		Com_DPrintf ("Image_LoadJPEG: fread() failed on %s\n", COM_SkipPath(filename));
 		fclose(fin);
@@ -2435,7 +2434,7 @@ byte *Image_LoadJPEG(vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 
 	fclose(fin);
 #else
-	if (VFS_READ(fin, infile, fs_filesize, &err) != fs_filesize) 
+	if (VFS_READ(fin, infile, filesize, NULL) != filesize) 
 	{
 		Com_DPrintf ("Image_LoadJPEG: fread() failed on %s\n", COM_SkipPath(filename));
 		VFS_CLOSE(fin);
@@ -2565,20 +2564,20 @@ byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 	pcx_t *pcx;
 	byte *pcxbuf, *data, *out, *pix;
 	int x, y, dataByte, runLength, width, height;
-#ifdef WITH_FTE_VFS
-	vfserrno_t err;
-#endif
+	int filesize;
 
 #ifndef WITH_FTE_VFS
-	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+	if (!fin && (filesize = FS_FOpenFile (filename, &fin)) == -1)
+		return NULL;
 #else
 	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
-#endif // WITH_FTE_VFS
 		return NULL;
+	filesize = VFS_GETLEN(fin);
+#endif // WITH_FTE_VFS
 
-	pcxbuf = (byte *) Q_malloc(fs_filesize);
+	pcxbuf = (byte *) Q_malloc(filesize);
 #ifndef WITH_FTE_VFS
-	if (fread (pcxbuf, 1, fs_filesize, fin) != fs_filesize) 
+	if (fread (pcxbuf, 1, filesize, fin) != filesize) 
 	{
 		Com_DPrintf ("Image_LoadPCX: fread() failed on %s\n", COM_SkipPath(filename));
 		fclose(fin);
@@ -2587,7 +2586,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 	}
 	fclose(fin);
 #else
-	if (VFS_READ(fin, pcxbuf, fs_filesize, &err) != fs_filesize) 
+	if (VFS_READ(fin, pcxbuf, filesize, NULL) != filesize) 
 	{
 		Com_DPrintf ("Image_LoadPCX: fread() failed on %s\n", COM_SkipPath(filename));
 		VFS_CLOSE(fin);
@@ -2645,7 +2644,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 	{
 		for (x = 0; x < width; ) 
 		{
-			if (pix - (byte *) pcx > fs_filesize) 
+			if (pix - (byte *) pcx > filesize) 
 			{
 				Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 				Q_free(pcxbuf);
@@ -2658,7 +2657,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 			if ((dataByte & 0xC0) == 0xC0)
 			{
 				runLength = dataByte & 0x3F;
-				if (pix - (byte *) pcx > fs_filesize)
+				if (pix - (byte *) pcx > filesize)
 				{
 					Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 					Q_free(pcxbuf);
@@ -2685,7 +2684,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchhe
 		}
 	}
 
-	if (pix - (byte *) pcx > fs_filesize) 
+	if (pix - (byte *) pcx > filesize) 
 	{
 		Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 		Q_free(pcxbuf);

@@ -254,7 +254,7 @@ int Mod_ReadFlagsFromMD1(char *name, int md3version)
 		COM_DefaultExtension(fname, ".mdl");
 	}
 
-	pinmodel = (mdl_t *)FS_LoadTempFile(fname);
+	pinmodel = (mdl_t *)FS_LoadTempFile(fname, NULL);
 
 	if (!pinmodel)	//not found
 		return 0;
@@ -268,7 +268,7 @@ int Mod_ReadFlagsFromMD1(char *name, int md3version)
 
 byte *FS_LoadFile (char *path, int usehunk); //for mem allocation
 
-void Mod_LoadAlias3Model (model_t *mod, void *buffer)
+void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 {
 #define ll(x) x=LittleLong(x)	//easier to type byte swap
 #define lf(x) x=LittleFloat(x)
@@ -301,9 +301,9 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 	pheader = (md3model_t *) Hunk_Alloc(sizeof(md3model_t) +(numsurfs*numskins)*sizeof(surfinf_t));
 
 	pheader->surfinf = sizeof(md3model_t);
-	mem = (md3Header_t *) Hunk_Alloc(fs_filesize);
+	mem = (md3Header_t *) Hunk_Alloc(filesize);
 	pheader->md3model = (char *)mem - (char *)pheader;
-	memcpy(mem, buffer, fs_filesize);	//casually load the entire thing. As you do.
+	memcpy(mem, buffer, filesize);	//casually load the entire thing. As you do.
 
 	ll(mem->ident);
 	ll(mem->version);
@@ -411,7 +411,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 				COM_StripExtension(sinf->name, sinf->name);
 				strlcat (sinf->name, "_default.skin", sizeof (sinf->name));
 
-				sfile = sfilestart = (char *) FS_LoadHunkFile(sinf->name);
+				sfile = sfilestart = (char *) FS_LoadHunkFile(sinf->name, NULL);
 
 				strlcpy (sinf->name, mod->name, sizeof (sinf->name)); //backup
 				COM_StripExtension(sinf->name, sinf->name);

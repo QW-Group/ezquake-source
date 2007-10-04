@@ -1,4 +1,4 @@
-// $Id: xsd_command.c,v 1.7 2007-09-13 14:49:30 disconn3ct Exp $
+// $Id: xsd_command.c,v 1.8 2007-10-04 14:56:54 dkure Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -196,13 +196,13 @@ xml_command_t * XSD_Command_Load(char *filename)
     document = (xml_command_t *) XSD_Command_LoadFromHandle(f, len);
     fclose(f);
 #else
-	vfsfile_t *v;
+	vfsfile_t *f;
 
-	if (!(v = FS_OpenVFS(filename, "rb", FS_ANY))) {
+	if (!(f = FS_OpenVFS(filename, "rb", FS_ANY))) {
 		return NULL;
 	}
-    document = (xml_command_t *) XSD_Command_LoadFromHandle(v, fs_filesize);
-	VFS_CLOSE(v);
+    document = (xml_command_t *) XSD_Command_LoadFromHandle(f, VFS_GETLEN(f));
+	VFS_CLOSE(f);
 #endif
 
     return document;

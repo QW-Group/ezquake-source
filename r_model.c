@@ -37,7 +37,7 @@ char	loadname[32];	// for hunk tags
 
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
 void Mod_LoadBrushModel (model_t *mod, void *buffer);
-void Mod_LoadAliasModel (model_t *mod, void *buffer);
+void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize);
 model_t *Mod_LoadModel (model_t *mod, qbool crash);
 
 byte	mod_novis[MAX_MAP_LEAFS/8];
@@ -173,6 +173,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	void *d;
 	unsigned *buf;
 	byte stackbuf[1024];		// avoid dirtying the cache heap
+	int filesize;
 
 	if (!mod->needload) {
 		if (mod->type == mod_alias) {
@@ -187,7 +188,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	// because the world is so huge, load it one piece at a time
 
 	// load the file
-	buf = (unsigned *) FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf));
+	buf = (unsigned *) FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf), &filesize);
 	if (!buf) {
 		if (crash)
 			Host_Error ("Mod_LoadModel: %s not found", mod->name);
@@ -199,7 +200,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 
 	loadmodel = mod;
 
-	FMod_CheckModel(mod->name, buf, fs_filesize);
+	FMod_CheckModel(mod->name, buf, filesize);
 
 	// fill it in
 
@@ -209,7 +210,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 
 	switch (LittleLong(*(unsigned *)buf)) {
 	case IDPOLYHEADER:
-		Mod_LoadAliasModel (mod, buf);
+		Mod_LoadAliasModel (mod, buf, filesize);
 		break;
 	case IDSPRITEHEADER:
 		Mod_LoadSpriteModel (mod, buf);
@@ -1073,7 +1074,7 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize, aliash
 	return ptemp;
 }
 
-void Mod_LoadAliasModel (model_t *mod, void *buffer) {
+void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize) {
 	int i, j, version, numframes, numskins, size, skinsize, start, end, total;
 	mdl_t *pmodel, *pinmodel;
 	stvert_t *pstverts, *pinstverts;
@@ -1096,7 +1097,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 		mod->modhint = MOD_BACKPACK;
 
 	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES)
-		mod->crc = CRC_Block (buffer, fs_filesize);
+		mod->crc = CRC_Block (buffer, filesize);
 
 	start = Hunk_LowMark ();
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.64 2007-10-04 13:48:08 dkure Exp $
+    $Id: common.h,v 1.65 2007-10-04 14:56:55 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -188,7 +188,7 @@ char *va(char *format, ...); // does a varargs printf into a temp buffer
 // Quake File System
 // for more File System control, include fs.h in your sources
 
-extern int fs_filesize, fs_filepos;
+extern int fs_filepos;
 extern char *com_filesearchpath;
 extern char	fs_netpath[MAX_OSPATH];
 struct cache_user_s;
@@ -205,11 +205,11 @@ void FS_InitFilesystem (void);
 void FS_SetGamedir (char *dir);
 int FS_FOpenFile (char *filename, FILE **file);
 int FS_FOpenPathFile (char *filename, FILE **file);
-byte *FS_LoadStackFile (char *path, void *buffer, int bufsize);
-byte *FS_LoadTempFile (char *path);
-byte *FS_LoadHunkFile (char *path);
-void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
-byte *FS_LoadHeapFile (char *path);
+byte *FS_LoadStackFile (char *path, void *buffer, int bufsize, int *len);
+byte *FS_LoadTempFile (char *path, int *len);
+byte *FS_LoadHunkFile (char *path, int *len);
+void FS_LoadCacheFile (char *path, struct cache_user_s *cu, int *len);
+byte *FS_LoadHeapFile (char *path, int *len);
 #ifndef WITH_FTE_VFS
 void FS_AddGameDirectory (char *path_to_dir, char *dir);
 #else

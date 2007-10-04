@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.52 2007-09-30 22:59:23 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.53 2007-10-04 14:56:55 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -2108,7 +2108,7 @@ void RemoveSourceProc(void)
 
 #else
 	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
-	length = fs_filesize;
+	length = VFS_GETLEN(f);
 	if (!f) {
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
 		return;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.37 2007-09-26 13:53:42 tonik Exp $
+	$Id: gl_model.c,v 1.38 2007-10-04 14:56:54 dkure Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -44,8 +44,8 @@ model_t	*loadmodel;
 char	loadname[32];	// for hunk tags
 
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
-void Mod_LoadBrushModel (model_t *mod, void *buffer);
-void Mod_LoadAliasModel (model_t *mod, void *buffer);
+void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize);
+void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize);
 model_t *Mod_LoadModel (model_t *mod, qbool crash);
 
 byte	mod_novis[MAX_MAP_LEAFS/8];
@@ -201,6 +201,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	unsigned *buf;
 	int namelen;
 	byte stackbuf[1024];		// avoid dirtying the cache heap
+	int filesize;
 
 	if (!mod->needload)	{
 		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
@@ -225,12 +226,12 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 		char newname[MAX_QPATH];
 		COM_StripExtension(mod->name, newname);
 		COM_DefaultExtension(newname, ".md3");
-		buf = (unsigned *)FS_LoadStackFile (newname, stackbuf, sizeof(stackbuf));
+		buf = (unsigned *)FS_LoadStackFile (newname, stackbuf, sizeof(stackbuf), &filesize);
 	}
 
 	// load the file
 	if (!buf)
-		buf = (unsigned *)FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf));
+		buf = (unsigned *)FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf), &filesize);
 	if (!buf) {
 		if (crash)
 			Host_Error ("Mod_LoadModel: %s not found", mod->name);
@@ -240,18 +241,18 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	// allocate a new model
 	COM_FileBase (mod->name, loadname);
 	loadmodel = mod;
-	FMod_CheckModel(mod->name, buf, fs_filesize);
+	FMod_CheckModel(mod->name, buf, filesize);
 
 	// call the apropriate loader
 	mod->needload = false;
 
 	switch (LittleLong(*((unsigned *) buf))) {
 	case IDPOLYHEADER:
-		Mod_LoadAliasModel (mod, buf);
+		Mod_LoadAliasModel (mod, buf, filesize);
 		break;
 
 	case MD3_IDENT:
-		Mod_LoadAlias3Model (mod, buf);
+		Mod_LoadAlias3Model (mod, buf, filesize);
  		break;
 
 	case IDSPRITEHEADER:
@@ -259,7 +260,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 		break;
 
 	default:
-		Mod_LoadBrushModel (mod, buf);
+		Mod_LoadBrushModel (mod, buf, filesize);
 		break;
 	}
 
@@ -766,32 +767,32 @@ static byte *LoadColoredLighting(char *name, char **litfilename) {
 		return NULL;
 
 	*litfilename = va("maps/lits/%s.lit", mapname);
-	data = FS_LoadHunkFile (*litfilename);
+	data = FS_LoadHunkFile (*litfilename, NULL);
 
 	if (!data) {
 		*litfilename = va("maps/%s.lit", mapname);
-		data = FS_LoadHunkFile (*litfilename);
+		data = FS_LoadHunkFile (*litfilename, NULL);
 	}
 
 	if (!data) {
 		*litfilename = va("lits/%s.lit", mapname);
-		data = FS_LoadHunkFile (*litfilename);
+		data = FS_LoadHunkFile (*litfilename, NULL);
 	}
 
 	if (!data && groupname && !system) {
 		*litfilename = va("maps/%s.lit", groupname);
-		data = FS_LoadHunkFile (*litfilename);
+		data = FS_LoadHunkFile (*litfilename, NULL);
 	}
 
 	if (!data && groupname && !system) {
 		*litfilename = va("lits/%s.lit", groupname);
-		data = FS_LoadHunkFile (*litfilename);
+		data = FS_LoadHunkFile (*litfilename, NULL);
 	}
 
 	return data;
 }
 
-void Mod_LoadLighting (lump_t *l) {
+void Mod_LoadLighting (lump_t *l, int filesize) {
 	int i, lit_ver, b, mark;
 	byte *in, *out, *data, d;
 	char *litfilename;
@@ -810,9 +811,9 @@ void Mod_LoadLighting (lump_t *l) {
 	mark = Hunk_LowMark();
 	data = LoadColoredLighting(loadmodel->name, &litfilename);
 	if (data) {
-		if (fs_filesize < 8 || strncmp((char *)data, "QLIT", 4)) {
+		if (filesize < 8 || strncmp((char *)data, "QLIT", 4)) {
 			Com_Printf("Corrupt .lit file (%s)...ignoring\n", COM_SkipPath(litfilename));
-		} else if (l->filelen * 3 + 8 != fs_filesize) {
+		} else if (l->filelen * 3 + 8 != filesize) {
 			Com_Printf("Warning: .lit file (%s) has incorrect size\n", COM_SkipPath(litfilename));
 		} else if ((lit_ver = LittleLong(((int *)data)[1])) != 1) {
 			Com_Printf("Unknown .lit file version (v%d)\n", lit_ver);
@@ -1295,7 +1296,7 @@ float RadiusFromBounds (vec3_t mins, vec3_t maxs) {
 	return VectorLength (corner);
 }
 
-void Mod_LoadBrushModel (model_t *mod, void *buffer) {
+void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 	int i;
 	dheader_t *header;
 	dmodel_t *bm;
@@ -1325,7 +1326,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 	if (loadmodel->bspversion == HL_BSPVERSION && !dedicated)
 		Mod_ParseWadsFromEntityLump (&header->lumps[LUMP_ENTITIES]);
 	Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
-	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
+	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING], filesize);
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
 	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
 	Mod_LoadFaces (&header->lumps[LUMP_FACES]);
@@ -1631,7 +1632,7 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
 
 //=========================================================================
 
-void Mod_LoadAliasModel (model_t *mod, void *buffer) {
+void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize) {
 	int i, j, version, numframes, size, start, end, total;
 	mdl_t *pinmodel;
 	stvert_t *pinstverts;
@@ -1661,7 +1662,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 	Mod_AddModelFlags(mod);
 
 	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES)
-		mod->crc = CRC_Block (buffer, fs_filesize);
+		mod->crc = CRC_Block (buffer, filesize);
 
 	start = Hunk_LowMark ();
 

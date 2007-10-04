@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.99 2007-10-02 01:39:05 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.100 2007-10-04 14:56:54 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -515,7 +515,7 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 		VFS_CLOSE(v);
 #endif // WITH_FTE_VFS
 
-		if (!(dat = (qpic_t *)FS_LoadTempFile(lmp_path)))
+		if (!(dat = (qpic_t *)FS_LoadTempFile(lmp_path, NULL)))
 		{
 			if(crash)
 				Sys_Error ("Draw_CachePicSafe: failed to load %s", lmp_path);
@@ -645,18 +645,19 @@ static int LoadAlternateCharset (char *name)
 	byte	*data;
 	byte	*src, *dest;
 	int texnum;
+	int filesize;
 
 	// We expect an .lmp to be in QPIC format, but it's ok if it's just raw data.
-	data = FS_LoadTempFile (va("gfx/%s.lmp", name));
+	data = FS_LoadTempFile (va("gfx/%s.lmp", name), &filesize);
 
 	if (!data)
 		return 0;
 
-	if (fs_filesize == 128*128)
+	if (filesize == 128*128)
 	{
 		// Raw data.
 	}
-	else if (fs_filesize == 128*128 + 8)
+	else if (filesize == 128*128 + 8)
 	{
 		qpic_t *p = (qpic_t *)data;
 		SwapPic (p);
@@ -1846,7 +1847,7 @@ void Draw_InitConback (void)
 
 	start = Hunk_LowMark ();
 
-	if (!(cb = (qpic_t *) FS_LoadHunkFile ("gfx/conback.lmp")))
+	if (!(cb = (qpic_t *) FS_LoadHunkFile ("gfx/conback.lmp", NULL)))
 		Sys_Error ("Couldn't load gfx/conback.lmp");
 	SwapPic (cb);
 

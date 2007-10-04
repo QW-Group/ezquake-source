@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.84 2007-09-30 22:59:23 disconn3ct Exp $
+	$Id: menu.c,v 1.85 2007-10-04 14:56:54 dkure Exp $
 
 */
 
@@ -719,7 +719,7 @@ static void StartNewGame (void) {
 	if (com_serveractive)
 		Cbuf_AddText ("disconnect\n");
 
-	progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat");
+	progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat", NULL);
 	if (progs && !file_from_gamedir)
 		Cbuf_AddText ("gamedir qw\n");
 	Cbuf_AddText ("map start\n");
@@ -1016,7 +1016,7 @@ void M_Load_Key (int key) {
 			key_dest = key_game;
 
 			// issue the load command
-			if (FS_LoadHunkFile ("spprogs.dat") && !file_from_gamedir)
+			if (FS_LoadHunkFile ("spprogs.dat", NULL) && !file_from_gamedir)
 				Cbuf_AddText("disconnect; gamedir qw\n");
 			Cbuf_AddText (va ("load s%i\n", load_cursor) );
 			return;

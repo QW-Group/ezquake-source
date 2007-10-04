@@ -1,4 +1,4 @@
-// $Id: xsd.c,v 1.11 2007-09-30 14:45:01 disconn3ct Exp $
+// $Id: xsd.c,v 1.12 2007-10-04 14:56:54 dkure Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -174,8 +174,7 @@ xml_t * XSD_LoadDocument(char *filename)
 #ifndef WITH_FTE_VFS
     FILE *f = NULL;
 #else
-	vfsfile_t *v;
-	vfserrno_t err;
+	vfsfile_t *f;
 #endif // WITH_FTE_VFS
     XML_Parser parser = NULL;
     int len;
@@ -194,10 +193,10 @@ xml_t * XSD_LoadDocument(char *filename)
 	}
 #else
 	// FIXME: D-Kure, does FS_ANY handle both the above cases
-	if ((v = FS_OpenVFS(filename, "rb", FS_ANY))) {
+	if ((f = FS_OpenVFS(filename, "rb", FS_ANY))) {
 		return NULL;
 	}
-	filelen = fs_filesize;
+	filelen = VFS_GETLEN(f);
 #endif
 
     // initialize XML parser
@@ -214,7 +213,7 @@ xml_t * XSD_LoadDocument(char *filename)
 #ifndef WITH_FTE_VFS
     while (document_type[0] == 0  &&  (len = fread(buf, 1, XML_READ_BUFSIZE, f)) > 0)
 #else
-    while (document_type[0] == 0  &&  (len = VFS_READ(v, buf, XML_READ_BUFSIZE, &err)) > 0)
+    while (document_type[0] == 0  &&  (len = VFS_READ(f, buf, XML_READ_BUFSIZE, NULL)) > 0)
 #endif
     {
 		if (XML_Parse(parser, buf, len, 0) != XML_STATUS_OK) {
@@ -237,7 +236,7 @@ xml_t * XSD_LoadDocument(char *filename)
 #ifndef WITH_FTE_VFS
     fseek(f, 0, SEEK_SET);
 #else
-	VFS_SEEK(v, 0, SEEK_SET);
+	VFS_SEEK(f, 0, SEEK_SET);
 #endif
 
     // execute loading parser
@@ -249,7 +248,7 @@ xml_t * XSD_LoadDocument(char *filename)
 #ifndef WITH_FTE_VFS
             ret = xsd_mappings[i].load_function(f, filelen);
 #else
-            ret = xsd_mappings[i].load_function(v, filelen);
+            ret = xsd_mappings[i].load_function(f, filelen);
 #endif
             break;
         }
@@ -261,18 +260,17 @@ xml_t * XSD_LoadDocument(char *filename)
 #ifndef WITH_FTE_VFS
         fclose(f);
 #else
-		VFS_CLOSE(v);
+		VFS_CLOSE(f);
 #endif
         return ret;
     }
 
 error:
-#ifndef WITH_FTE_VFS
     if (f)
+#ifndef WITH_FTE_VFS
         fclose(f);
 #else
-	if (v)
-		VFS_CLOSE(v);
+		VFS_CLOSE(f);
 #endif
 
     if (parser)

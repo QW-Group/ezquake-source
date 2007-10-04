@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.36 2007-09-28 04:52:49 dkure Exp $
+	$Id: sv_user.c,v 1.37 2007-10-04 14:56:54 dkure Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -813,7 +813,7 @@ void Cmd_Download_f (void) {
 	sv_client->downloadsize = FS_FOpenFile (name, &sv_client->download);
 #else
 	sv_client->download = FS_OpenVFS(name, "rb", FS_ANY);
-	sv_client->downloadsize = fs_filesize;
+	sv_client->downloadsize = VFS_GETLEN(sv_client->download);
 #endif
 	sv_client->downloadcount = 0;
 

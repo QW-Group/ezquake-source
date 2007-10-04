@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.7 2007-10-03 14:03:47 dkure Exp $
+ * $Id: vfs_pak.c,v 1.8 2007-10-04 14:56:54 dkure Exp $
  *             
  */
 
@@ -180,7 +180,6 @@ vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
 	pack_t *pack = (pack_t*)handle;
 	vfspack_t *vfs;
-	fs_filesize = -1;
 
 	if (strcmp(mode, "rb"))
 		return NULL; //urm, unable to write/append
@@ -200,8 +199,6 @@ vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	vfs->funcs.Seek       = VFSPAK_Seek;
 	vfs->funcs.Tell       = VFSPAK_Tell;
 	vfs->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
-
-	fs_filesize = VFS_GETLEN((vfsfile_t *)vfs);
 
 	return (vfsfile_t *)vfs;
 }

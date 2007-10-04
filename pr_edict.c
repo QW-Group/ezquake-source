@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_edict.c,v 1.19 2007-09-30 14:45:00 disconn3ct Exp $
+	$Id: pr_edict.c,v 1.20 2007-10-04 14:56:54 dkure Exp $
 */
 // sv_edict.c -- entity dictionary
 
@@ -796,7 +796,7 @@ void CL_PR_LoadProgs (void) {
 
 	// flush the non-C variable lookup cache
 
-	progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat");
+	progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat", NULL);
 
 
 	if (!progs)
@@ -858,32 +858,33 @@ void CL_PR_LoadProgs (void) {
 void PR_LoadProgs (void) {
 	int i, lowmark;
 	char num[32];
+	int filesize;
 
 	if (!deathmatch.value) {
 
 		lowmark = Hunk_LowMark();
 		
-		if ((progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat"))) {
+		if ((progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat", &filesize))) {
 			if (file_from_gamedir)
 				goto progs_loaded;	
 			else
 				Hunk_FreeToLowMark(lowmark);
 		}
 		
-		if ((progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat"))) {
+		if ((progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat", &filesize))) {
 			if (file_from_gamedir)
 				goto progs_loaded;	
 			else
 				Hunk_FreeToLowMark(lowmark);
 		}
 		
-		if ((progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat")))
+		if ((progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat", &filesize)))
 			goto progs_loaded;
 
 		
-		progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat");
+		progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat", &filesize);
 	} else {
-		progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat");
+		progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat", &filesize);
 	}
 
 progs_loaded:
@@ -891,10 +892,10 @@ progs_loaded:
 	if (!progs)
 		Host_Error ("PR_LoadProgs: couldn't load qwprogs.dat");
 
-	Com_DPrintf ("Programs occupy %iK.\n", fs_filesize / 1024);
+	Com_DPrintf ("Programs occupy %iK.\n", filesize / 1024);
 
 	// add prog crc to the serverinfo
-	snprintf (num, sizeof (num), "%i", CRC_Block ((byte *)progs, fs_filesize));
+	snprintf (num, sizeof (num), "%i", CRC_Block ((byte *)progs, filesize));
 	Info_SetValueForStarKey (svs.info, "*progs", num, MAX_SERVERINFO_STRING);
 
 	// byte swap the header

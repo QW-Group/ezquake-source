@@ -67,58 +67,53 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 	vfsfile_t *f;
 	char line[2048];
 #endif
-    int length;
     qbool should_dump = false;
 
     //length = COM_FileOpenRead (fname, &f);
 #ifndef WITH_FTE_VFS
-    length = FS_FOpenFile(fname, &f);
+    FS_FOpenFile(fname, &f);
+
 #else
 	f = FS_OpenVFS(fname, "rb", FS_ANY);
-	length = fs_filesize;
 #endif
-
-    if (length <= 0)
-    {
-        //Com_Printf ("Updating %15.15s failed: file not found\n", s->name);
-        // ?????? should_dump = true;
-    }
-    else
-    {
+    if (f) {
 #ifndef WITH_FTE_VFS
-        while (!feof(f))
-        {
-            char c = 'A';
-            char line[2048];
-            netadr_t addr;
-            int ret;
+		while (!feof(f))
+		{
+			char c = 'A';
+			char line[2048];
+			netadr_t addr;
+			int ret;
 
-            ret = fscanf(f, "%s", line);
-            while (!feof(f)  &&  c != '\n')
-                fscanf(f, "%c", &c);
+			ret = fscanf(f, "%s", line);
+			while (!feof(f)  &&  c != '\n')
+				fscanf(f, "%c", &c);
 
-            if (ret != 1)
-                continue;
+			if (ret != 1)
+				continue;
 #else
 		while (VFS_GETS(f, line, sizeof(line)))
 		{
-            netadr_t addr;
+			netadr_t addr;
 #endif
-            if (!strchr(line, ':'))
-                strlcat (line, ":27000", sizeof (line));
-            if (!NET_StringToAdr(line, &addr))
-                continue;
+			if (!strchr(line, ':'))
+				strlcat (line, ":27000", sizeof (line));
+			if (!NET_StringToAdr(line, &addr))
+				continue;
 
-            servers[(*pserversn)++] = Create_Server2(addr);
-            if (line[0] <= '0'  ||  line[0] >= '9')
-                should_dump = true;
-        }
+			servers[(*pserversn)++] = Create_Server2(addr);
+			if (line[0] <= '0'  ||  line[0] >= '9')
+				should_dump = true;
+		}
 #ifndef WITH_FTE_VFS
-        fclose(f);
+		fclose(f);
 #else
 		VFS_CLOSE(f);
 #endif
-    }
+    } else {
+        //Com_Printf ("Updating %15.15s failed: file not found\n", s->name);
+        // ?????? should_dump = true;
+	}
 
     return should_dump;
 }
@@ -511,7 +506,7 @@ void Reload_Sources(void)
     length = FS_FOpenFile("sb/sources.txt", &f);
 #else
 	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
-	length = fs_filesize;
+	length = VFS_GETLEN(f);
 #endif
 
     if (length < 0)

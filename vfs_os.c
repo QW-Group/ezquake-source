@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_os.c,v 1.7 2007-10-01 08:46:52 dkure Exp $
+ * $Id: vfs_os.c,v 1.8 2007-10-04 14:56:54 dkure Exp $
  *             
  */
 
@@ -167,7 +167,6 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	qbool text   = !!strchr(mode, 't');
 	char newmode[3];
 	int modec = 0;
-	fs_filesize = -1;
 
 	if (read)
 		newmode[modec++] = 'r';
@@ -195,8 +194,6 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	file->funcs.Close      = VFSOS_Close;
 
 	file->handle = f;
-
-	fs_filesize = VFS_GETLEN((vfsfile_t *)file);
 
 	return (vfsfile_t*)file;
 }

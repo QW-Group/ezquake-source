@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.188 2007-09-30 22:59:23 disconn3ct Exp $
+$Id: cl_main.c,v 1.189 2007-10-04 14:56:55 dkure Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1269,6 +1269,7 @@ void GFX_Init (void) {
 }
 
 void CL_Init (void) {
+	int filesize;
 	if (dedicated)
 		return;
 
@@ -1284,15 +1285,15 @@ void CL_Init (void) {
 	Modules_Init();
 	FChecks_Init();
 
-	host_basepal = (byte *) FS_LoadHunkFile ("gfx/palette.lmp");
+	host_basepal = (byte *) FS_LoadHunkFile ("gfx/palette.lmp", &filesize);
 	if (!host_basepal)
 		Sys_Error ("Couldn't load gfx/palette.lmp");
-	FMod_CheckModel("gfx/palette.lmp", host_basepal, fs_filesize);
+	FMod_CheckModel("gfx/palette.lmp", host_basepal, filesize);
 
-	host_colormap = (byte *) FS_LoadHunkFile ("gfx/colormap.lmp");
+	host_colormap = (byte *) FS_LoadHunkFile ("gfx/colormap.lmp", &filesize);
 	if (!host_colormap)
 		Sys_Error ("Couldn't load gfx/colormap.lmp");
-	FMod_CheckModel("gfx/colormap.lmp", host_colormap, fs_filesize);
+	FMod_CheckModel("gfx/colormap.lmp", host_colormap, filesize);
 
 	Sys_mkdir(va("%s/qw", com_basedir));
 	Sys_mkdir(va("%s/ezquake", com_basedir));

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: wad.c,v 1.19 2007-09-28 04:52:49 dkure Exp $
+	$Id: wad.c,v 1.20 2007-10-04 14:56:54 dkure Exp $
 */
 // wad.c
 
@@ -85,7 +85,7 @@ void W_LoadWadFile (char *filename) {
 	// only one .wad can be loaded at a time
 	W_FreeWadFile ();
 
-	wad_base = FS_LoadHeapFile (filename);
+	wad_base = FS_LoadHeapFile (filename, &wad_filesize);
 
 	if (!wad_base) {
 		if (!strcmp(filename, "gfx.wad"))
@@ -95,7 +95,6 @@ void W_LoadWadFile (char *filename) {
 		else
 			Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
 	}
-	wad_filesize = fs_filesize;
 	header = (wadinfo_t *)wad_base;
 
 	if (memcmp(header->identification, "WAD2", 4))

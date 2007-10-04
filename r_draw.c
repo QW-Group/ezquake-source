@@ -210,7 +210,7 @@ mpic_t *Draw_CachePicSafe(char *path, qbool syserror, qbool only24bit)
 	#endif // WITH_PNG
 	{
 		// Load the LMP pic from disk.
-		dat = (qpic_t *)FS_LoadHeapFile(path);
+		dat = (qpic_t *)FS_LoadHeapFile(path, NULL);
 	}
 
 	if (!dat)
@@ -245,9 +245,10 @@ static byte *LoadAlternateCharset (const char *name)
 {
 	qpic_t *p;
 	byte *data;
+	int filesize;
 
-	p = (qpic_t *)FS_LoadTempFile (va("gfx/%s.lmp", name));
-	if (!p || fs_filesize != 128*128+8)
+	p = (qpic_t *)FS_LoadTempFile (va("gfx/%s.lmp", name), &filesize);
+	if (!p || filesize != 128*128+8)
 		return NULL;
 	SwapPic (p);
 	if (p->width != 128 || p->height != 128)

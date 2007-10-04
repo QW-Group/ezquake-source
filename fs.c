@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.39 2007-10-04 13:11:34 dkure Exp $
+	$Id: fs.c,v 1.40 2007-10-04 14:56:55 dkure Exp $
 */
 
 /**
@@ -50,7 +50,7 @@ char *com_filesearchpath;
 =============================================================================
 */
 
-int		fs_filesize, fs_filepos;
+int		fs_filepos;
 char	fs_netpath[MAX_OSPATH];
 #ifdef WITH_FTE_VFS
 qbool com_file_copyprotected;
@@ -374,7 +374,6 @@ void COM_CreatePath(char *path)
 int FS_FOpenPathFile (char *filename, FILE **file) {
 
 	*file = NULL;
-	fs_filesize = -1;
 	fs_filepos = 0;
 	fs_netpath[0] = 0;
 
@@ -383,8 +382,7 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 		if (developer.value)
 			Sys_Printf ("FindFile: %s\n", fs_netpath);
 
-		fs_filesize = COM_FileLength (*file);
-		return fs_filesize;
+		return COM_FileLength (*file);
 	}
 
 	if (developer.value)
@@ -394,7 +392,7 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 }
 
 //Finds the file in the search path.
-//Sets fs_filesize, fs_netpath and one of handle or file
+//Sets fs_netpath and one of handle or file
 //Sets fs_filepos to 0 for non paks, and to beging of file in pak file
 qbool	file_from_pak;		// global indicating file came from a packfile
 qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
@@ -411,7 +409,6 @@ int FS_FOpenFile (char *filename, FILE **file) {
 	*file = NULL;
 	file_from_pak = false;
 	file_from_gamedir = true;
-	fs_filesize = -1;
 	fs_filepos = 0;
 	fs_netpath[0] = 0;
 
@@ -434,12 +431,11 @@ int FS_FOpenFile (char *filename, FILE **file) {
 						Sys_Error ("Couldn't reopen %s\n", pak->filename);
 					fseek (*file, pak->files[i].filepos, SEEK_SET);
 					fs_filepos = pak->files[i].filepos;
-					fs_filesize = pak->files[i].filelen;
 					com_filesearchpath = search->filename;
 
 					file_from_pak = true;
 					snprintf (fs_netpath, sizeof(fs_netpath), "%s#%i", pak->filename, i);
-					return fs_filesize;
+					return pak->files[i].filelen;;
 				}
 			}
 		} else {
@@ -452,8 +448,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 				Sys_Printf ("FindFile: %s\n", fs_netpath);
 
 			fs_filepos = 0;
-			fs_filesize = COM_FileLength (*file);
-			return fs_filesize;
+			return COM_FileLength (*file);
 		}
 #endif // WITH_FTE_VFS
 	}
@@ -470,7 +465,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 static cache_user_t *loadcache;
 static byte			*loadbuf;
 static int			loadsize;
-byte *FS_LoadFile (char *path, int usehunk)
+static byte *FS_LoadFile (char *path, int usehunk, int *file_length)
 {
 #ifndef WITH_FTE_VFS
 	FILE *h;
@@ -485,7 +480,7 @@ byte *FS_LoadFile (char *path, int usehunk)
 
 	// Look for it in the filesystem or pack files.
 #ifndef WITH_FTE_VFS
-	len = fs_filesize = FS_FOpenFile (path, &h);
+	len = FS_FOpenFile (path, &h);
 	if (!h)
 		return NULL;
 #else
@@ -497,8 +492,10 @@ byte *FS_LoadFile (char *path, int usehunk)
 	f = loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
 	if (!f)
 		return NULL;
-	fs_filesize = len = VFS_GETLEN(f);
+	len = VFS_GETLEN(f);
 #endif
+	if (file_length)
+		*file_length = len;
 
 	// Extract the filename base name for hunk tag.
 	COM_FileBase (path, base);
@@ -556,34 +553,35 @@ byte *FS_LoadFile (char *path, int usehunk)
 	return buf;
 }
 
-byte *FS_LoadHunkFile (char *path) {
-	return FS_LoadFile (path, 1);
+byte *FS_LoadHunkFile (char *path, int *len) {
+	return FS_LoadFile (path, 1, len);
 }
 
-byte *FS_LoadTempFile (char *path) {
-	return FS_LoadFile (path, 2);
+byte *FS_LoadTempFile (char *path, int *len) {
+	return FS_LoadFile (path, 2, len);
 }
 
-void FS_LoadCacheFile (char *path, struct cache_user_s *cu) {
+void FS_LoadCacheFile (char *path, struct cache_user_s *cu, int *len) {
 	loadcache = cu;
-	FS_LoadFile (path, 3);
+	FS_LoadFile (path, 3, len);
 }
 
 // uses temp hunk if larger than bufsize
-byte *FS_LoadStackFile (char *path, void *buffer, int bufsize) {
+byte *FS_LoadStackFile (char *path, void *buffer, int bufsize, int *len) {
 	byte *buf;
 
+	// FIXME: What the ?? using globals again, bad quake filesystem!
 	loadbuf = (byte *)buffer;
 	loadsize = bufsize;
-	buf = FS_LoadFile (path, 4);
+	buf = FS_LoadFile (path, 4, len);
 
 	return buf;
 }
 
 // use Q_malloc, do not forget Q_free when no needed more
-byte *FS_LoadHeapFile (char *path)
+byte *FS_LoadHeapFile (char *path, int *len)
 {
-	return FS_LoadFile (path, 5);
+	return FS_LoadFile (path, 5, len);
 }
 
 
@@ -1361,6 +1359,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 	vfsfile_t *vf;
 	FILE *file;
 	char fullname[MAX_PATH];
+	int filesize;
 
 	switch (relativeto)
 	{
@@ -1380,12 +1379,12 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 
 		snprintf(fullname, sizeof(fullname), "%s", filename);
 
-		FS_FOpenFile(filename, &file); // search file in paks gamedir etc..
+		filesize = FS_FOpenFile(filename, &file); // search file in paks gamedir etc..
 
 		if (file) { // we open stdio FILE, probably that point in pak file as well
 
 			if (file_from_pak) // yea, that a pak
-				vf = FSPAK_OpenVFS(file, fs_filesize, fs_filepos, mode);
+				vf = FSPAK_OpenVFS(file, filesize, fs_filepos, mode);
 			else // no, just ordinar file
 				vf = VFSOS_Open(fullname, file, mode);
 
@@ -1455,7 +1454,6 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
 			vfs = VFSOS_Open(fullname, mode);
 			if (vfs) {
-				fs_filesize = VFS_GETLEN(vfs);
 				return vfs;
 			}
 		}

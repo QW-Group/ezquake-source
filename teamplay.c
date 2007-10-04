@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.92 2007-09-30 22:59:24 disconn3ct Exp $
+    $Id: teamplay.c,v 1.93 2007-10-04 14:56:54 dkure Exp $
 */
 
 #include <time.h>
@@ -1731,7 +1731,7 @@ qbool TP_LoadLocFile (char *path, qbool quiet)
 	COM_DefaultExtension(locname, ".loc");
 
 	mark = Hunk_LowMark ();
-	if (!(buf = (char *) FS_LoadHunkFile (locname))) {
+	if (!(buf = (char *) FS_LoadHunkFile (locname, NULL))) {
 		if (!quiet)
 			Com_Printf ("Could not load %s\n", locname);
 		return false;

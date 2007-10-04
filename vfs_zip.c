@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.5 2007-10-01 08:46:52 dkure Exp $
+ * $Id: vfs_zip.c,v 1.6 2007-10-04 14:56:54 dkure Exp $
  *             
  */
 
@@ -306,7 +306,6 @@ vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	//int rawofs;
 	zipfile_t *zip = handle;
 	vfszip_t *vfsz;
-	fs_filesize = -1;
 
 	if (strcmp(mode, "rb"))
 		return NULL; //urm, unable to write/append
@@ -340,8 +339,6 @@ vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	}*/
 
 	zip->references++;
-
-	fs_filesize = VFS_GETLEN((vfsfile_t *)vfsz);
 
 	return (vfsfile_t*)vfsz;
 }
