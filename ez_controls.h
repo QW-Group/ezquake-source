@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.43 2007-10-02 17:00:33 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.44 2007-10-04 16:40:37 cokeman1982 Exp $
 */
 
 //
@@ -162,7 +162,7 @@ $Id: ez_controls.h,v 1.43 2007-10-02 17:00:33 cokeman1982 Exp $
 #define POINT_IN_CONTROL_DRAWBOUNDS(ctrl, p_x, p_y) (POINT_X_IN_CONTROL_DRAWBOUNDS(ctrl, p_x) && POINT_Y_IN_CONTROL_DRAWBOUNDS(ctrl, p_y))
 #define POINT_IN_CONTROL_RECT(ctrl, p_x, p_y) POINT_IN_RECTANGLE(p_x, p_y, (ctrl)->absolute_x, (ctrl)->absolute_y, (ctrl)->width, (ctrl)->height)
 
-#define SET_FLAG(flag_var, flag, on) (flag_var) |= (on ? (flag) : ((flag_var) & ~(flag)))
+#define SET_FLAG(flag_var, flag, on) ((flag_var) = ((on) ? ((flag_var) | (flag)) : ((flag_var) & ~(flag))))
 
 // =========================================================================================
 // Double Linked List
@@ -656,6 +656,11 @@ void EZ_control_SetMovable(ez_control_t *self, qbool movable);
 // Control - Sets whetever the control is enabled or not.
 //
 void EZ_control_SetEnabled(ez_control_t *self, qbool enabled);
+
+//
+// Control - Set the background image for the control.
+//
+void EZ_control_SetBackgroundImage(ez_control_t *self, const char *background_path);
 
 //
 // Control - Sets whetever the control is contained within the bounds of it's parent or not, or is allowed to draw outside it.
@@ -1236,6 +1241,10 @@ int EZ_label_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 
 #define EZ_BUTTON_ID	1
 
+#define EZ_BUTTON_DEFAULT_NORMAL_IMAGE	"gfx/ui/button_normal"
+#define EZ_BUTTON_DEFAULT_HOVER_IMAGE	"gfx/ui/button_hover"
+#define EZ_BUTTON_DEFAULT_PRESSED_IMAGE	"gfx/ui/button_pressed"
+
 typedef struct ez_button_eventcount_s
 {
 	int	OnAction;
@@ -1247,6 +1256,11 @@ typedef struct ez_button_events_s
 	ez_control_handler_fp	OnAction;				// The event that's raised when the button is clicked / activated via a button.
 	ez_control_handler_fp	OnTextAlignmentChanged;	// Text alignment changed.
 } ez_button_events_t;
+
+typedef enum ez_button_flags_e
+{
+	use_images	= (1 << 0)
+} ez_button_flags_t;
 
 typedef enum ez_textalign_e
 {
@@ -1281,6 +1295,8 @@ typedef struct ez_button_s
 	byte					color_normal[4];	// The normal color of the button.
 	byte					color_hover[4];		// Color when the button is hovered.
 	byte					color_pressed[4];	// Color when the button is pressed.
+
+	ez_button_flags_t		ext_flags;
 
 	int						padding_top;
 	int						padding_left;
@@ -1333,6 +1349,11 @@ int EZ_button_OnAction(ez_control_t *self);
 int EZ_button_OnResize(ez_control_t *self);
 
 //
+// Button - Use images for the button?
+//
+void EZ_button_SetUseImages(ez_button_t *button, qbool useimages);
+
+//
 // Button - Set the text of the button. 
 //
 void EZ_button_SetText(ez_button_t *button, const char *text);
@@ -1346,6 +1367,21 @@ void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignme
 // Button - Set the event handler for the OnTextAlignmentChanged event.
 //
 void EZ_button_SetOnTextAlignmentChanged(ez_button_t *button, ez_control_handler_fp OnTextAlignmentChanged);
+
+//
+// Button - Set the normal image for the button.
+//
+void EZ_button_SetNormalImage(ez_button_t *button, const char *normal_image);
+
+//
+// Button - Set the hover image for the button.
+//
+void EZ_button_SetHoverImage(ez_button_t *button, const char *hover_image);
+
+//
+// Button - Set the hover image for the button.
+//
+void EZ_button_SetPressedImage(ez_button_t *button, const char *pressed_image);
 
 // 
 // Button - Sets the normal color of the button.

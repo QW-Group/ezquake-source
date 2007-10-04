@@ -17,12 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.64 2007-10-02 17:00:33 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.65 2007-10-04 16:40:37 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
 #include "keys.h"
 #include "utils.h"
+#include "common_draw.h"
 #include "ez_controls.h"
 
 // =========================================================================================
@@ -217,12 +218,14 @@ void EZ_tree_Draw(ez_tree_t *tree)
 	{
 		payload = (ez_control_t *)iter->payload;
 
+		/*
 		Draw_AlphaRectangleRGB(
 			payload->absolute_virtual_x, 
 			payload->absolute_virtual_y, 
 			payload->virtual_width, 
 			payload->virtual_height, 
 			1, false, RGBA_TO_COLOR(255, 0, 0, 125));
+			*/
 
 		// Don't draw the invisible controls.
 		if (!(payload->ext_flags & control_visible))
@@ -232,6 +235,7 @@ void EZ_tree_Draw(ez_tree_t *tree)
 		}
 
 		// TODO : Remove this test stuff.
+		/*
 		if (!strcmp(payload->name, "label"))
 		{
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
@@ -245,6 +249,7 @@ void EZ_tree_Draw(ez_tree_t *tree)
 				va("vw: %i vh: %i w: %i h %i", 
 				payload->virtual_width, payload->virtual_height, payload->width, payload->height));
 		}
+		*/
 
 		// Bugfix: Make sure we don't even bother trying to draw something that is completly offscreen
 		// it will cause a weird flickering bug because of glScissor.
@@ -905,6 +910,14 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnGotFocus);
 
 	return true;
+}
+
+//
+// Control - Set the background image for the control.
+//
+void EZ_control_SetBackgroundImage(ez_control_t *self, const char *background_path)
+{
+	self->background = background_path ? Draw_CachePicSafe(background_path, false, true) : NULL;
 }
 
 //
@@ -2535,14 +2548,12 @@ int EZ_label_OnDraw(ez_control_t *self)
 	for (i = 0; i <= label->text_length; i++)
 	{
 		// Draw selection markers.
+		if (label->ext_flags & label_selectable)
 		{
-			if (((label->select_start > -1) && (label->select_end > -1)	// Is something selected at all?
-				&& (label->select_end != label->select_start))			// Only highlight if we have at least 1 char selected.
-				&&
-					(
-					((i >= label->select_start) && (i < label->select_end))
-					|| ((i >= label->select_end) && (i < label->select_start))
-					)
+			if (((label->select_start > -1) && (label->select_end > -1)			// Is something selected at all?
+				&& (label->select_end != label->select_start))					// Only highlight if we have at least 1 char selected.
+				&& (((i >= label->select_start) && (i < label->select_end))		// Is this index selected?
+					|| ((i >= label->select_end) && (i < label->select_start)))
 				)
 			{
 				// If this is one of the selected letters, draw a selection thingie behind it.
@@ -3497,10 +3508,10 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	EZ_control_Init(&button->super, tree, parent, name, description, x, y, width, height, flags);
 
 	// Initilize the button specific stuff.
-	((ez_control_t *)button)->CLASS_ID			= EZ_BUTTON_ID;
+	((ez_control_t *)button)->CLASS_ID	= EZ_BUTTON_ID;
 
 	// TODO : Make a default macro for button flags.
-	((ez_control_t *)button)->ext_flags			|= (flags | control_focusable | control_contained);
+	((ez_control_t *)button)->ext_flags	|= (flags | control_focusable | control_contained);
 
 	// Override the draw function.
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnDraw, OnDraw, ez_control_t);
@@ -3526,7 +3537,12 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 
 		CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)button), ez_control_t, OnResize);
 	}
-	// TODO : Load button images.
+
+	EZ_button_SetNormalImage(button, EZ_BUTTON_DEFAULT_NORMAL_IMAGE);
+	EZ_button_SetHoverImage(button, EZ_BUTTON_DEFAULT_HOVER_IMAGE);
+	EZ_button_SetPressedImage(button, EZ_BUTTON_DEFAULT_PRESSED_IMAGE);
+
+	button->ext_flags |= use_images;
 }
 
 //
@@ -3536,9 +3552,7 @@ void EZ_button_Destroy(ez_control_t *self, qbool destroy_children)
 {
 	ez_button_t *button = (ez_button_t *)self;
 
-	// TODO: Cleanup button images?
-
-	// FIXME: Can we just free a part like this here? How about children, will they be properly destroyed?
+	// TODO : Can we just free a part like this here? How about children, will they be properly destroyed?
 	EZ_control_Destroy(&button->super, destroy_children);
 }
 
@@ -3571,6 +3585,14 @@ int EZ_button_OnResize(ez_control_t *self)
 }
 
 //
+// Button - Use images for the button?
+//
+void EZ_button_SetUseImages(ez_button_t *button, qbool useimages)
+{
+	SET_FLAG(button->ext_flags, use_images, useimages);
+}
+
+//
 // Button - Set the text of the button. 
 //
 void EZ_button_SetText(ez_button_t *button, const char *text)
@@ -3594,6 +3616,30 @@ void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignme
 void EZ_button_SetOnTextAlignmentChanged(ez_button_t *button, ez_control_handler_fp OnTextAlignmentChanged)
 {
 	button->event_handlers.OnTextAlignmentChanged = OnTextAlignmentChanged;
+}
+
+//
+// Button - Set the normal image for the button.
+//
+void EZ_button_SetNormalImage(ez_button_t *button, const char *normal_image)
+{
+	button->normal_image = normal_image ? Draw_CachePicSafe(normal_image, false, true) : NULL;
+}
+
+//
+// Button - Set the hover image for the button.
+//
+void EZ_button_SetHoverImage(ez_button_t *button, const char *hover_image)
+{
+	button->hover_image = hover_image ? Draw_CachePicSafe(hover_image, false, true) : NULL;
+}
+
+//
+// Button - Set the hover image for the button.
+//
+void EZ_button_SetPressedImage(ez_button_t *button, const char *pressed_image)
+{
+	button->pressed_image = pressed_image ? Draw_CachePicSafe(pressed_image, false, true) : NULL;
 }
 
 //
@@ -3649,6 +3695,70 @@ void EZ_button_SetOnAction(ez_button_t *self, ez_control_handler_fp OnAction)
 }
 
 //
+// Button - Draw a button image.
+//
+static void EZ_button_DrawButtonImage(ez_button_t *button, mpic_t *pic)
+{
+	ez_control_t *self	= (ez_control_t *)button;
+
+	int edge_size;		// The number of pixel from the edge of the texture 
+						// to use when drawing the buttons edges.
+	int edge_size2;
+	int sub_size;		// Either the width or height of the sub-part of the texture that is being tiled.
+	int sub_end;
+	int x, y, i;
+
+	if (!pic)
+	{
+		return;
+	}
+
+	edge_size = Q_rint(0.1 * pic->width);
+	edge_size2 = 2 * edge_size;
+
+	EZ_control_GetDrawingPosition(self, &x, &y);
+
+	// Center background.
+	Draw_SubPicTiled((x + edge_size), (y + edge_size), 
+		(self->width - edge_size2), (self->height - edge_size2),
+		pic, 
+		edge_size, edge_size, 
+		(pic->width - edge_size2), (pic->height - edge_size2),
+		1.0);
+
+	// Top center.
+	Draw_SubPicTiled((x + edge_size), y, (self->width - edge_size2), edge_size, 
+					pic, edge_size, 0, (pic->width - edge_size2), edge_size, 1.0);
+
+	// Bottom center.
+	Draw_SubPicTiled((x + edge_size), (y + self->height - edge_size), (self->width - edge_size2), edge_size, 
+					pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, 1.0);
+	
+	// Left center.
+	Draw_SubPicTiled(x, (y + edge_size), edge_size, (self->height - edge_size2), 
+					pic, 0, edge_size, edge_size, (pic->height - edge_size2), 1.0);
+
+	// Right center.
+	Draw_SubPicTiled((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
+					pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), 1.0);
+
+	// Top left corner.
+	Draw_SSubPic(x, y, pic, 0, 0, edge_size, edge_size, 1.0);
+
+	// Top right corner.
+	Draw_SSubPic((x + self->width - edge_size), y, pic, (pic->width - edge_size), 0, edge_size, edge_size, 1.0);
+
+	// Bottom left corner.
+	Draw_SSubPic(x, (y + self->height - edge_size), pic, 0, (pic->height - edge_size), edge_size, edge_size, 1.0);
+
+	// Bottom right corner.
+	Draw_SSubPic((x + self->width - edge_size), (y + self->height - edge_size), 
+				pic, 
+				(pic->width - edge_size), (pic->height - edge_size), 
+				edge_size, edge_size, 1.0);
+}
+
+//
 // Button - OnDraw event.
 //
 int EZ_button_OnDraw(ez_control_t *self)
@@ -3659,36 +3769,58 @@ int EZ_button_OnDraw(ez_control_t *self)
 	ez_button_t *button = (ez_button_t *)self;
 
 	int x, y;
+	qbool useimages = (button->ext_flags & use_images);
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
 	// Run the super class's implementation first.
 	EZ_control_OnDraw(self);
 
-	if (self->int_flags & control_clicked)
-	{
-		Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_pressed));
-	}
-
 	if (self->int_flags & control_mouse_over)
 	{
 		if (self->int_flags & control_clicked)
 		{
-			Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_pressed));
+			if (useimages)
+			{
+				EZ_button_DrawButtonImage(button, button->pressed_image);
+			}
+			else
+			{
+				Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_pressed));
+			}
 		}
 		else
 		{
-			Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_hover));
+			if (useimages)
+			{
+				EZ_button_DrawButtonImage(button, button->hover_image);
+			}
+			else
+			{
+				Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_hover));
+			}
 		}
 	}
 	else
 	{
-		Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_normal));
+		if (useimages)
+		{
+			EZ_button_DrawButtonImage(button, button->normal_image);
+		}
+		else
+		{
+			Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_normal));
+		}
 	}
 
 	if (self->int_flags & control_focused)
 	{
-		Draw_AlphaRectangleRGB(x, y, self->width, self->height, 1, false, RGBAVECT_TO_COLOR(button->color_focused));
-		//Draw_ColoredString3(self->absolute_x, self->absolute_y, button->text, button->focused_text_color, 1, 0);
+		if (useimages)
+		{
+		}
+		else
+		{
+			Draw_AlphaRectangleRGB(x, y, self->width, self->height, 1, false, RGBAVECT_TO_COLOR(button->color_focused));
+		}
 	}
 
 	// Draw control specifics.
