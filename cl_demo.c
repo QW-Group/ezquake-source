@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.92 2007-10-04 15:48:56 dkure Exp $
+	$Id: cl_demo.c,v 1.93 2007-10-04 15:54:34 dkure Exp $
 */
 
 #include <time.h>
@@ -2260,9 +2260,10 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	FILE* f;
 	time_t t = time(&t);
 	struct tm *ptm = localtime(&t);
-	int width = 0, height = 0; float asp = 0;
+	int width = 0, height = 0; 
 #ifdef GLQUAKE
 #ifndef __APPLE__
+	float asp = 0;
 	extern cvar_t r_mode;
 
 	R_GetModeInfo(&width, &height, &asp, r_mode.integer);
