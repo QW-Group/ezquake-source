@@ -1884,7 +1884,7 @@ void Draw_SCharacter (int x, int y, int num, float scale)
 void Draw_SString (int x, int y, const char *str, float scale)
 {
 	Draw_SColoredString(x, y, str2wcs(str), NULL, 0, 0, scale);
-}
+}	
 
 void Draw_SAlt_String (int x, int y, const char *str, float scale)
 {
@@ -1916,14 +1916,14 @@ void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 	Draw_SubPic(x, y, pic, srcx, srcy, width, height);
 }
 
-void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale, float alpha)
+void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
 {
-	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, srcx, srcy, width, height, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
+	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, src_x, src_y, src_width, src_height, Q_rint(scale * src_width), Q_rint(scale * src_height));
 }
 
-void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale_x, float scale_y, float alpha)
+void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha)
 {
-	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, srcx, srcy, width, height, Q_rint(scale_x * pic->width), Q_rint(scale_y * pic->height));
+	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, src_x, src_y, src_width, src_height, Q_rint(scale_x * src_width), Q_rint(scale_y * src_height));
 }
 
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)

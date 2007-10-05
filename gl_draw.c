@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.102 2007-10-05 19:06:24 johnnycz Exp $
+$Id: gl_draw.c,v 1.103 2007-10-05 21:03:24 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1695,7 +1695,7 @@ void Draw_AlphaCircleFill (int x, int y, float radius, byte color, float alpha)
 //=============================================================================
 // Draw picture functions
 //=============================================================================
-void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale_x, float scale_y, float alpha)
+void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha)
 {
 	float newsl, newtl, newsh, newth;
     float oldglwidth, oldglheight;
@@ -1705,14 +1705,14 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
         Scrap_Upload ();
 	}
 
-    oldglwidth = gl->sh - gl->sl;
-    oldglheight = gl->th - gl->tl;
+    oldglwidth = pic->sh - pic->sl;
+    oldglheight = pic->th - pic->tl;
 
-    newsl = gl->sl + (srcx * oldglwidth) / gl->width;
-    newsh = newsl + (width * oldglwidth) / gl->width;
+    newsl = pic->sl + (src_x * oldglwidth) / (float)pic->width;
+    newsh = newsl + (src_width * oldglwidth) / (float)pic->width;
 
-    newtl = gl->tl + (srcy * oldglheight) / gl->height;
-    newth = newtl + (height * oldglheight) / gl->height;
+    newtl = pic->tl + (src_y * oldglheight) / (float)pic->height;
+    newth = newtl + (src_height * oldglheight) / (float)pic->height;
 
 	alpha *= overall_alpha;
 
@@ -1723,25 +1723,26 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 	glCullFace (GL_FRONT);
 	glColor4f (1, 1, 1, alpha);
 
-    GL_Bind (gl->texnum);
+    GL_Bind (pic->texnum);
+
     glBegin (GL_QUADS);
+	{
+		// Upper left corner.
+		glTexCoord2f (newsl, newtl);
+		glVertex2f (x, y);
 
-	// Upper left corner.
-	glTexCoord2f (newsl, newtl);
-    glVertex2f (x, y);
+		// Upper right corner.
+		glTexCoord2f (newsh, newtl);
+		glVertex2f (x + (scale_x * src_width), y);
 
-	// Upper right corner.
-	glTexCoord2f (newsh, newtl);
-    glVertex2f (x + scale_x * width, y);
+		// Bottom right corner.
+		glTexCoord2f (newsh, newth);
+		glVertex2f (x + (scale_x * src_width), y + (scale_y * src_height));
 
-	// Bottom right corner.
-	glTexCoord2f (newsh, newth);
-    glVertex2f (x + scale_x * width, y + scale_y * height);
-
-	// Bottom left corner.
-	glTexCoord2f (newsl, newth);
-    glVertex2f (x, y + scale_y * height);
-
+		// Bottom left corner.
+		glTexCoord2f (newsl, newth);
+		glVertex2f (x, y + (scale_y * src_height));
+	}
 	glEnd ();
 
 	glEnable (GL_ALPHA_TEST);
@@ -1750,9 +1751,9 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 	glColor4f (1, 1, 1, 1);
 }
 
-void Draw_SAlphaSubPic (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale, float alpha)
+void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
 {
-	Draw_SAlphaSubPic2 (x, y, gl, srcx, srcy, width, height, scale, scale, alpha);
+	Draw_SAlphaSubPic2 (x, y, pic, src_x, src_y, src_width, src_height, scale, scale, alpha);
 }
 
 void Draw_SSubPic(int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale)
