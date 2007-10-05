@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.100 2007-10-04 14:56:54 dkure Exp $
+$Id: gl_draw.c,v 1.101 2007-10-05 18:06:35 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -206,6 +206,7 @@ void customCrosshair_Init(void)
 #ifndef WITH_FTE_VFS
 	FILE *f;
 #else
+	char ch;
 	vfsfile_t *f;
 	vfserrno_t err;
 #endif
@@ -233,14 +234,14 @@ void customCrosshair_Init(void)
 			return;
 		}
 #else
-		// FIXME: D-Kure: This reads a char into an int...
-		VFS_READ(f, &c, 1, &err);
+		VFS_READ(f, &ch, sizeof(char), &err);
 		if (err == VFSERR_EOF) 
 		{
 			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
 			VFS_CLOSE(f);
 			return;
 		}
+		c = ch;
 #endif
 
 		if (isspace(c))

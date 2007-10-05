@@ -785,6 +785,7 @@ void customCrosshair_Init(void)
 #ifndef WITH_FTE_VFS
 	FILE *f;
 #else
+	char ch;
 	vfsfile_t *f;
 	vfserrno_t err;
 #endif
@@ -810,13 +811,14 @@ void customCrosshair_Init(void)
 		}
 
 #else
-		VFS_READ(f, &c, sizeof(char), &err);
+		VFS_READ(f, &ch, sizeof(char), &err);
 		if (err == VFSERR_EOF)
 		{
 			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
 			VFS_CLOSE(f);
 			return;
 		}
+		c = ch;
 #endif
 
 		if (isspace(c))
