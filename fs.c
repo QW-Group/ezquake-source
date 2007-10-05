@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.42 2007-10-05 03:13:11 dkure Exp $
+	$Id: fs.c,v 1.43 2007-10-05 03:31:59 dkure Exp $
 */
 
 /**
@@ -3217,8 +3217,8 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 	snprintf (pakfile, sizeof (pakfile), "*.%s", extension);
 	wp.funcs = funcs;
 	wp.parentdesc = pathto;
-	wp.parentpath = search;
-	search->funcs->EnumerateFiles(search->handle, pakfile, COM_AddWildDataFiles, &wp);
+	wp.parentpath = parent;
+	parent->funcs->EnumerateFiles(parent->handle, pakfile, COM_AddWildDataFiles, &wp);
 #endif // WITH_VFS_WILD
 }
 
