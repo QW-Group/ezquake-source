@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.41 2007-10-04 15:52:04 dkure Exp $
+	$Id: fs.c,v 1.42 2007-10-05 03:13:11 dkure Exp $
 */
 
 /**
@@ -107,6 +107,8 @@ static qbool FS_RemovePak (const char *pakfile);
 
 //============================================================================
 #ifdef WITH_FTE_VFS
+
+#define WITH_VFS_WILD
 
 #include "q_shared.h"
 
