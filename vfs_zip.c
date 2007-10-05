@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.6 2007-10-04 14:56:54 dkure Exp $
+ * $Id: vfs_zip.c,v 1.7 2007-10-05 19:06:26 johnnycz Exp $
  *             
  */
 
@@ -385,7 +385,7 @@ void FSZIP_BuildHash(void *handle)
 	}
 }
 
-qbool FSZIP_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult)
+qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
 	packfile_t *pf = hashedresult;
 	int i, len;

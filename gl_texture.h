@@ -48,13 +48,13 @@ void GL_DisableTMU(GLenum target);
 void GL_Upload8 (byte *data, int width, int height, int mode);
 void GL_Upload32 (unsigned *data, int width, int height, int mode);
 int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp);
-int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data);
+int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data);
 
 
-byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
+byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
 int GL_LoadTexturePixels (byte *, char *, int, int, int);
 int GL_LoadTextureImage (char * , char *, int, int, int);
-mpic_t *GL_LoadPicImage (char *, char *, int, int, int);
+mpic_t *GL_LoadPicImage (const char *, char *, int, int, int);
 int GL_LoadCharsetImage (char *, char *);
 
 

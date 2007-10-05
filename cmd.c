@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.86 2007-10-04 14:56:55 dkure Exp $
+    $Id: cmd.c,v 1.87 2007-10-05 19:06:23 johnnycz Exp $
 */
 
 #ifndef _WIN32
@@ -395,7 +395,7 @@ void Cmd_Exec_f (void)
 	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	mark = Hunk_LowMark();
 	if (!(f = (char *) FS_LoadHunkFile (name, NULL)))	{
-		char *p;
+		const char *p;
 		p = COM_SkipPath (name);
 		if (!strchr (p, '.')) {
 			// no extension, so try the default (.cfg)

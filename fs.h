@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.10 2007-10-04 13:11:34 dkure Exp $
+    $Id: fs.h,v 1.11 2007-10-05 19:06:24 johnnycz Exp $
 */
 
 #ifndef __FS_H__
@@ -76,7 +76,7 @@ void			VFS_TICK   (void);  // fill in/out our internall buffers
 // when i commenting this
 vfsfile_t *FS_OpenTemp(void);
 // some general function to open VFS file, except TCP
-vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto);
+vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto);
 // TCP VFS file
 vfsfile_t *FS_OpenTCP(char *name);
 

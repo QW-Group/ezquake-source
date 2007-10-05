@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.53 2007-10-04 15:52:03 dkure Exp $
+    $Id: image.c,v 1.54 2007-10-05 19:06:25 johnnycz Exp $
 */
 
 #ifdef __FreeBSD__
@@ -1099,7 +1099,7 @@ static qbool PNG_HasHeader (vfsfile_t *fin)
 #ifndef WITH_FTE_VFS
 png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
 #else
-png_data *Image_LoadPNG_All (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
+png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
 #endif // WITH_FTE_VFS
 {
 	byte **rowpointers = NULL;
@@ -1438,7 +1438,7 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 #ifndef WITH_FTE_VFS
 byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #else
-byte *Image_LoadPNG (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+byte *Image_LoadPNG (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #endif // WITH_FTE_VFS
 {
 	byte *data = NULL;

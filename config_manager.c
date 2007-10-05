@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.47 2007-09-19 20:41:25 johnnycz Exp $
+    $Id: config_manager.c,v 1.48 2007-10-05 19:06:24 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -811,7 +811,7 @@ void DumpConfig(char *name)
 	fclose(f);
 }
 
-void DumpHUD(char *name)
+void DumpHUD(const char *name)
 {
 	// Dumps all variables from CFG_GROUP_HUD into a file
 	extern cvar_t scr_newHud;
@@ -860,7 +860,8 @@ void DumpHUD(char *name)
 
 void SaveConfig_f(void)
 {
-	char filename[MAX_PATH] = {0}, *arg1, *filename_ext, *backupname_ext;
+	char filename[MAX_PATH] = {0}, *filename_ext, *backupname_ext;
+	const char* arg1;
 	size_t len;
 	FILE *f;
 
@@ -950,7 +951,7 @@ void LoadConfig_f(void)
 	}
 */
 
-	arg1 = COM_SkipPath(Cmd_Argv(1));
+	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
 	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
 
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
@@ -1011,7 +1012,7 @@ void DumpHUD_f(void)
 		Com_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
 		return;
 	}
-	filename = COM_SkipPath(Cmd_Argv(1));
+	filename = COM_SkipPathWritable(Cmd_Argv(1));
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 	DumpHUD(filename);
 	Com_Printf("HUD variables exported.\n");

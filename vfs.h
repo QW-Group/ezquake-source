@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.6 2007-10-01 08:46:52 dkure Exp $
+ * $Id: vfs.h,v 1.7 2007-10-05 19:06:25 johnnycz Exp $
  *             
  */
 
@@ -38,7 +38,7 @@ typedef struct {
 	void	(*PrintPath)(void *handle);
 	void	(*ClosePath)(void *handle);
 	void	(*BuildHash)(void *handle);
-	qbool   (*FindFile)(void *handle, flocation_t *loc, char *name, void *hashedresult);	
+	qbool   (*FindFile)(void *handle, flocation_t *loc, const char *name, void *hashedresult);	
 		// true if found (hashedresult can be NULL)
 		// note that if rawfile and offset are set, many Com_FileOpens will 
 		// read the raw file otherwise ReadFile will be called instead.
@@ -84,7 +84,7 @@ void FSOS_PrintPath(void *handle);
 void FSOS_ClosePath(void *handle);
 int FSOS_RebuildFSHash(char *filename, int filesize, void *data);
 void FSOS_BuildHash(void *handle);
-qbool FSOS_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult);
+qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult);
 void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer);
 int FSOS_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm);
 
@@ -157,7 +157,7 @@ vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode);
 void FSPAK_PrintPath(void *handle);
 void FSPAK_ClosePath(void *handle);
 void FSPAK_BuildHash(void *handle);
-qbool FSPAK_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult);
+qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult);
 int FSPAK_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm);
 void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc);
 
@@ -179,7 +179,7 @@ vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode);
 void FSZIP_PrintPath(void *handle);
 void FSZIP_ClosePath(void *handle);
 void FSZIP_BuildHash(void *handle);
-qbool FSZIP_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult);
+qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult);
 void FSZIP_ReadFile(void *handle, flocation_t *loc, char *buffer);
 int FSZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm);
 

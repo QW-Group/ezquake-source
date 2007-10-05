@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.43 2007-10-04 15:52:04 dkure Exp $
+$Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -495,7 +495,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 	return glt->texnum;
 }
 
-int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) 
+int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data) 
 {
 	int glwidth, glheight, i;
 	char fullname[MAX_QPATH] = "pic:";
@@ -585,7 +585,7 @@ static qbool CheckTextureLoaded(int mode)
 	return false;
 }
 
-byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height) 
+byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height) 
 {
 	char basename[MAX_QPATH], name[MAX_QPATH];
 	byte *c, *data = NULL;
@@ -828,7 +828,7 @@ int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int m
 	return texnum;
 }
 
-mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheight, int mode) 
+mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int matchheight, int mode) 
 {
 	int width, height, i, real_width, real_height;
 	char identifier[MAX_QPATH] = "pic:";

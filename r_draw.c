@@ -130,7 +130,7 @@ mpic_t *Draw_CacheWadPic (char *name)
 //
 // Load an optional picture (if not present, returns null). If syserror is set it crashes instead.
 //
-mpic_t *Draw_CachePicSafe(char *path, qbool syserror, qbool only24bit)
+mpic_t *Draw_CachePicSafe(const char *path, qbool syserror, qbool only24bit)
 {
 	//
 	// Get the filename without extension.

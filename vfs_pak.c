@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.8 2007-10-04 14:56:54 dkure Exp $
+ * $Id: vfs_pak.c,v 1.9 2007-10-05 19:06:26 johnnycz Exp $
  *             
  */
 
@@ -247,7 +247,7 @@ void FSPAK_BuildHash(void *handle)
 			fs_hash_dups++;
 	}
 }
-qbool FSPAK_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult)
+qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
 	packfile_t *pf = hashedresult;
 	int i, len;

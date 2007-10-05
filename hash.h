@@ -20,7 +20,7 @@ typedef struct hashtable_s {
 hashtable_t *Hash_InitTable(int numbucks);
 int Hash_Key(char *name, int modulus);
 void *Hash_Get(hashtable_t *table, char *name);
-void *Hash_GetInsensitive(hashtable_t *table, char *name);
+void *Hash_GetInsensitive(hashtable_t *table, const char *name);
 void *Hash_GetKey(hashtable_t *table, char *key);
 void *Hash_GetNext(hashtable_t *table, char *name, void *old);
 void *Hash_GetNextInsensitive(hashtable_t *table, char *name, void *old);

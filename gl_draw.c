@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.101 2007-10-05 18:06:35 dkure Exp $
+$Id: gl_draw.c,v 1.102 2007-10-05 19:06:24 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -461,7 +461,7 @@ mpic_t *Draw_CacheWadPic (char *name)
 //		only24bit - Don't fall back to loading the normal 8-bit texture if
 //					loading the 24-bit version fails.
 //
-mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
+mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
 {
 	char stripped_path[MAX_PATH];
 	char lmp_path[MAX_PATH];

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.43 2007-10-05 03:31:59 dkure Exp $
+	$Id: fs.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 */
 
 /**
@@ -147,7 +147,7 @@ typedef enum {
 
 void FS_CreatePath(char *pname, int relativeto);
 void FS_ForceToPure(char *str, char *crcs, int seed);
-int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
+int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
 void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int COM_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);
@@ -159,9 +159,9 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension,
 searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);
 
 /* VFS-FIXME: VFS_Filter into header */
-static vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle);
+static vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle);
 
-qbool Sys_PathProtection(char *pattern);
+qbool Sys_PathProtection(const char *pattern);
 void COM_Dir_f (void);
 void COM_Locate_f (void);
 
@@ -1414,7 +1414,7 @@ we try the basedir.
 */
 // VFS-XXX: This is very similar to FS_OpenVFS in fs.c
 // VFS-FIXME: Clean up this function to reduce the relativeto options 
-vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
+vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 {
 	char fullname[MAX_OSPATH];
 	flocation_t loc;
@@ -1628,7 +1628,7 @@ int COM_GZipPack (char *source_path,
 	}
 
 	// Create the path for the destination.
-	COM_CreatePath (COM_SkipPath (destination_path));
+	COM_CreatePath (COM_SkipPathWritable (destination_path));
 
 	// Open destination file.
 	gzip_destination = gzopen (destination_path, "wb");
@@ -1674,7 +1674,7 @@ int COM_GZipUnpack (char *source_path,		// The path to the compressed source fil
 	}
 
 	// Create the path for the destination.
-	COM_CreatePath (COM_SkipPath (destination_path));
+	COM_CreatePath (COM_SkipPathWritable (destination_path));
 
 	// Open destination.
 	dest = fopen (destination_path, "wb");
@@ -1849,7 +1849,7 @@ int COM_ZlibUnpack (char *source_path,		// The path to the compressed source fil
 	}
 
 	// Create the path for the destination.
-	COM_CreatePath (COM_SkipPath (destination_path));
+	COM_CreatePath (COM_SkipPathWritable (destination_path));
 
 	// Open destination.
 	dest = fopen (destination_path, "wb");
@@ -2632,7 +2632,7 @@ Sets com_filesize and one of handle or file
 */
 //if loc is valid, loc->search is always filled in, the others are filled on success.
 //returns -1 if couldn't find.
-int FS_FLocateFile(char *filename, FSLF_ReturnType_e returntype, flocation_t *loc)
+int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc)
 {
 	int depth=0, len;
 	searchpath_t	*search;
@@ -2751,7 +2751,7 @@ char *FS_GetPackNames(char *buffer, int buffersize, qbool referencedonly)
 
 
 //true if protection kicks in
-qbool Sys_PathProtection(char *pattern)
+qbool Sys_PathProtection(const char *pattern)
 {
 	if (strchr(pattern, '\\'))
 	{
@@ -2927,7 +2927,7 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 }
 #endif
 
-static vfsfile_t *VFS_Filter(char *filename, vfsfile_t *handle)
+static vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
 {
 	vfserrno_t err;
 //	char *ext;

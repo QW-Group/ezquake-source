@@ -94,7 +94,7 @@ void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int cl
 void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red);
 void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
 
-mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit);
+mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit);
 mpic_t *Draw_CachePic (char *path);
 mpic_t *Draw_CacheWadPic (char *name);
 void Draw_Crosshair(void);

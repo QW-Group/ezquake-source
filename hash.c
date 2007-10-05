@@ -38,7 +38,7 @@ int Hash_Key(char *name, int modulus) {
 
 	return (int) (key % modulus);
 }
-int Hash_KeyInsensitive(char *name, int modulus) {
+int Hash_KeyInsensitive(const char *name, int modulus) {
 	unsigned int key = 5381;
 
 	for (key = 5381; *name; name++)
@@ -87,7 +87,7 @@ void *Hash_Get(hashtable_t *table, char *name)
 	}
 	return NULL;
 }
-void *Hash_GetInsensitive(hashtable_t *table, char *name)
+void *Hash_GetInsensitive(hashtable_t *table, const char *name)
 {
 	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
 	bucket_t *buck;

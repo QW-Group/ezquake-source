@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.65 2007-10-04 14:56:55 dkure Exp $
+    $Id: common.h,v 1.66 2007-10-05 19:06:24 johnnycz Exp $
 */
 // common.h  -- general definitions
 
@@ -160,10 +160,11 @@ int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size);
 
 void COM_Init (void);
 
-char *COM_SkipPath (char *pathname);
+const char *COM_SkipPath (const char *pathname);
+char *COM_SkipPathWritable (char *pathname);
 char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);
 char *COM_FileExtension (char *in);
-void COM_StripExtension (char *in, char *out);
+void COM_StripExtension (const char *in, char *out);
 void COM_FileBase (char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
 // If path doesn't have an extension or has a different extension, append(!) specified extension.
@@ -171,7 +172,7 @@ void COM_DefaultExtension (char *path, char *extension);
 void COM_ForceExtension (char *path, char *extension);
 // If path doesn't have an extension or has a different extension, append(!) specified extension.
 // a bit extended version of COM_ForceExtension(), we suply size of path, so append safe, sure if u provide right path size
-void COM_ForceExtensionEx (char *path, const char *extension, size_t path_size);
+void COM_ForceExtensionEx (char *path, char *extension, size_t path_size);
 int COM_FileLength (FILE *f);
 int COM_FileOpenRead (char *path, FILE **hndl);
 int COM_GetTempDir(char *buf, int bufsize);

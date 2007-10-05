@@ -399,7 +399,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 			if (*sshad->name)
 			{		
 				strlcpy (tenebraeskinname, mod->name, sizeof (tenebraeskinname)); //backup
-				strcpy (COM_SkipPath(tenebraeskinname), sshad->name);
+				strcpy (COM_SkipPathWritable(tenebraeskinname), sshad->name);
 			}
 			else
 			{

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.102 2007-10-04 13:48:08 dkure Exp $
+    $Id: common.c,v 1.103 2007-10-05 19:06:23 johnnycz Exp $
 
 */
 
@@ -92,7 +92,27 @@ void COM_StoreOriginalCmdline (int argc, char **argv)
 
 //============================================================================
 
-char *COM_SkipPath (char *pathname)
+const char *COM_SkipPath (const char *pathname)
+{
+	const char *last;
+	const char *p;
+
+	last = p = pathname;
+
+	while (*p)
+	{
+		if (*p == '/' || *p == '\\')
+			last = p + 1;
+
+		p++;
+	}
+
+	return last;
+}
+
+//============================================================================
+
+char *COM_SkipPathWritable (char *pathname)
 {
 	char *last;
 	char *p;
@@ -137,7 +157,7 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 		int right_size = 0;
 		int left_size = 0;
 		int temp = 0;
-		char *right_dir = COM_SkipPath(src);
+		char *right_dir = COM_SkipPathWritable(src);
 
 		// Get the size of the right-most part of the path (filename/directory).
 		right_size = strlen (right_dir);
@@ -176,7 +196,7 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 }
 
 // TODO: This is not safe.
-void COM_StripExtension (char *in, char *out)
+void COM_StripExtension (const char *in, char *out)
 {
 	char *dot;
 
@@ -267,7 +287,7 @@ void COM_ForceExtension (char *path, char *extension)
 
 // If path doesn't have an extension or has a different extension, append(!) specified extension
 // a bit extended version of COM_ForceExtension(), we suply size of path, so append safe, sure if u provide right path size
-void COM_ForceExtensionEx (char *path, const char *extension, size_t path_size)
+void COM_ForceExtensionEx (char *path, char *extension, size_t path_size)
 {
 	char *src;
 

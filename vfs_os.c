@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_os.c,v 1.8 2007-10-04 14:56:54 dkure Exp $
+ * $Id: vfs_os.c,v 1.9 2007-10-05 19:06:26 johnnycz Exp $
  *             
  */
 
@@ -248,7 +248,7 @@ void FSOS_BuildHash(void *handle)
 	Sys_EnumerateFiles(handle, "*", FSOS_RebuildFSHash, handle);
 }
 
-qbool FSOS_FLocate(void *handle, flocation_t *loc, char *filename, void *hashedresult)
+qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
 	FILE *f;
 	int len;
