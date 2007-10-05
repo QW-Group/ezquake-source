@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.66 2007-10-05 19:06:24 johnnycz Exp $
+    $Id: common.h,v 1.67 2007-10-05 19:38:12 johnnycz Exp $
 */
 // common.h  -- general definitions
 
@@ -165,7 +165,7 @@ char *COM_SkipPathWritable (char *pathname);
 char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);
 char *COM_FileExtension (char *in);
 void COM_StripExtension (const char *in, char *out);
-void COM_FileBase (char *in, char *out);
+void COM_FileBase (const char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
 // If path doesn't have an extension or has a different extension, append(!) specified extension.
 // path buffer supposed to be MAX_OSPATH size
@@ -210,7 +210,7 @@ byte *FS_LoadStackFile (char *path, void *buffer, int bufsize, int *len);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);
 void FS_LoadCacheFile (char *path, struct cache_user_s *cu, int *len);
-byte *FS_LoadHeapFile (char *path, int *len);
+byte *FS_LoadHeapFile (const char *path, int *len);
 #ifndef WITH_FTE_VFS
 void FS_AddGameDirectory (char *path_to_dir, char *dir);
 #else

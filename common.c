@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.103 2007-10-05 19:06:23 johnnycz Exp $
+    $Id: common.c,v 1.104 2007-10-05 19:38:12 johnnycz Exp $
 
 */
 
@@ -227,9 +227,9 @@ char *COM_FileExtension (char *in)
 //
 // Extract file name without extension, to be used for hunk tags (up to 32 characters, including trailing zero)
 //
-void COM_FileBase (char *in, char *out)
+void COM_FileBase (const char *in, char *out)
 {
-	char *start, *end;
+	const char *start, *end;
 	int	length;
 
 	if (!(end = strrchr(in, '.')))

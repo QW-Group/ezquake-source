@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
+	$Id: fs.c,v 1.45 2007-10-05 19:38:12 johnnycz Exp $
 */
 
 /**
@@ -463,7 +463,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 static cache_user_t *loadcache;
 static byte			*loadbuf;
 static int			loadsize;
-static byte *FS_LoadFile (char *path, int usehunk, int *file_length)
+static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 {
 #ifndef WITH_FTE_VFS
 	FILE *h;
@@ -577,7 +577,7 @@ byte *FS_LoadStackFile (char *path, void *buffer, int bufsize, int *len) {
 }
 
 // use Q_malloc, do not forget Q_free when no needed more
-byte *FS_LoadHeapFile (char *path, int *len)
+byte *FS_LoadHeapFile (const char *path, int *len)
 {
 	return FS_LoadFile (path, 5, len);
 }
