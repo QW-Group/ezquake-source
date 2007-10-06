@@ -43,6 +43,9 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 					 byte color_insane,
 					 int style);
 
+void Draw_FitAlphaSubPic (int x, int y, int target_width, int target_height, 
+						  mpic_t *gl, int srcx, int srcy, int src_width, int src_height, float alpha);
+
 void Draw_SubPicTiled(int x, int y, 
 					int target_width, int target_height, 
 					mpic_t *pic, int src_x, int src_y, 
