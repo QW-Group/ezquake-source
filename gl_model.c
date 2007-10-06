@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.38 2007-10-04 14:56:54 dkure Exp $
+	$Id: gl_model.c,v 1.39 2007-10-06 04:28:40 dkure Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -44,7 +44,7 @@ model_t	*loadmodel;
 char	loadname[32];	// for hunk tags
 
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
-void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize);
+void Mod_LoadBrushModel (model_t *mod, void *buffer);
 void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize);
 model_t *Mod_LoadModel (model_t *mod, qbool crash);
 
@@ -260,7 +260,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 		break;
 
 	default:
-		Mod_LoadBrushModel (mod, buf, filesize);
+		Mod_LoadBrushModel (mod, buf);
 		break;
 	}
 
@@ -751,7 +751,7 @@ void Mod_ReloadModelsTextures (void)
 }
 
 
-static byte *LoadColoredLighting(char *name, char **litfilename) {
+static byte *LoadColoredLighting(char *name, char **litfilename, int *filesize) {
 	qbool system;
 	byte *data;
 	char *groupname, *mapname;
@@ -767,35 +767,36 @@ static byte *LoadColoredLighting(char *name, char **litfilename) {
 		return NULL;
 
 	*litfilename = va("maps/lits/%s.lit", mapname);
-	data = FS_LoadHunkFile (*litfilename, NULL);
+	data = FS_LoadHunkFile (*litfilename, filesize);
 
 	if (!data) {
 		*litfilename = va("maps/%s.lit", mapname);
-		data = FS_LoadHunkFile (*litfilename, NULL);
+		data = FS_LoadHunkFile (*litfilename, filesize);
 	}
 
 	if (!data) {
 		*litfilename = va("lits/%s.lit", mapname);
-		data = FS_LoadHunkFile (*litfilename, NULL);
+		data = FS_LoadHunkFile (*litfilename, filesize);
 	}
 
 	if (!data && groupname && !system) {
 		*litfilename = va("maps/%s.lit", groupname);
-		data = FS_LoadHunkFile (*litfilename, NULL);
+		data = FS_LoadHunkFile (*litfilename, filesize);
 	}
 
 	if (!data && groupname && !system) {
 		*litfilename = va("lits/%s.lit", groupname);
-		data = FS_LoadHunkFile (*litfilename, NULL);
+		data = FS_LoadHunkFile (*litfilename, filesize);
 	}
 
 	return data;
 }
 
-void Mod_LoadLighting (lump_t *l, int filesize) {
+void Mod_LoadLighting (lump_t *l) {
 	int i, lit_ver, b, mark;
 	byte *in, *out, *data, d;
 	char *litfilename;
+	int filesize;
 
 	loadmodel->lightdata = NULL;
 	if (!l->filelen)
@@ -809,7 +810,7 @@ void Mod_LoadLighting (lump_t *l, int filesize) {
 
 	//check for a .lit file
 	mark = Hunk_LowMark();
-	data = LoadColoredLighting(loadmodel->name, &litfilename);
+	data = LoadColoredLighting(loadmodel->name, &litfilename, &filesize);
 	if (data) {
 		if (filesize < 8 || strncmp((char *)data, "QLIT", 4)) {
 			Com_Printf("Corrupt .lit file (%s)...ignoring\n", COM_SkipPath(litfilename));
@@ -1296,7 +1297,7 @@ float RadiusFromBounds (vec3_t mins, vec3_t maxs) {
 	return VectorLength (corner);
 }
 
-void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
+void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 	int i;
 	dheader_t *header;
 	dmodel_t *bm;
@@ -1326,7 +1327,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 	if (loadmodel->bspversion == HL_BSPVERSION && !dedicated)
 		Mod_ParseWadsFromEntityLump (&header->lumps[LUMP_ENTITIES]);
 	Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
-	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING], filesize);
+	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
 	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
 	Mod_LoadFaces (&header->lumps[LUMP_FACES]);
