@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.45 2007-10-05 19:38:12 johnnycz Exp $
+	$Id: fs.c,v 1.46 2007-10-06 07:53:58 dkure Exp $
 */
 
 /**
@@ -482,6 +482,10 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	if (!h)
 		return NULL;
 #else
+	//blanket-bans - Avoid combination of / & \ for directories
+    if (Sys_PathProtection(path)) 
+		return NULL;
+
 	// VFS-FIXME: This only checks the pak files, not the base dir's
     FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
 	if (!loc.search)
