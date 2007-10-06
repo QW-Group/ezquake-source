@@ -1103,38 +1103,28 @@ void Draw_TransPic (int x, int y, mpic_t *pic)
 	Draw_TransSubPic(x, y, pic, 0, 0, pic->width, pic->height);
 }
 
-void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
+void Draw_TransSubPic (int x, int y, mpic_t *pic, int sub_x, int sub_y, int sub_width, int sub_height)
 {
 	byte *source, tbyte;
 	int v, u;
 
 	// Completely outside of scissor bounds.
-	if (CLIP_LEFT(x + width) || CLIP_RIGHT(x - width) || CLIP_TOP(x + height) || CLIP_BOTTOM(y - height))
+	if (CLIP_LEFT(x + sub_width) || CLIP_RIGHT(x) || CLIP_TOP(y + sub_height) || CLIP_BOTTOM(y))
 		return;
 
-	// Move the position in the source so that we only draw the part that is
-	// within the scissor bounds.
-	{
-		srcx += CLIP_LEFT(x) ? (scissor_left - x) : 0;
-		width -= CLIP_RIGHT(x + width) ? ((x + width) - scissor_right) : 0;
-
-		srcy += CLIP_TOP(y) ? (scissor_top - y) : 0;
-		height -= CLIP_BOTTOM(y + height) ? ((y + height) - scissor_bottom) : 0;
-	}
-
-	if ((width < 0) || (height < 0) || (srcx > pic->width) || (srcy > pic->height))
+	if ((sub_width < 0) || (sub_height < 0) || (sub_x > pic->width) || (sub_y > pic->height))
 	{
 		return;
-	}
+	}	
 
-	source = pic->data + (srcy * pic->width) + srcx;
+	source = pic->data + (sub_y * pic->width) + sub_x;
 
-	for (v = 0; v < height; v++)
+	for (v = 0; v < sub_height; v++)
 	{
 		if (CLIP_TOP(y + v) || CLIP_BOTTOM(y + v))
 			continue;
 
-		for (u = 0; u < width; u++)
+		for (u = 0; u < sub_width; u++)
 		{
 			if (CLIP_LEFT(x + u) || CLIP_RIGHT(x + u))
 				continue;
