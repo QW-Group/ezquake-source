@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.67 2007-10-06 16:37:12 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.68 2007-10-06 16:50:28 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3542,7 +3542,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	EZ_button_SetHoverImage(button, EZ_BUTTON_DEFAULT_HOVER_IMAGE);
 	EZ_button_SetPressedImage(button, EZ_BUTTON_DEFAULT_PRESSED_IMAGE);
 
-	button->ext_flags |= use_images; // | tile_edges; // | tile_center;
+	button->ext_flags |= use_images | tile_edges | tile_center;
 }
 
 //
