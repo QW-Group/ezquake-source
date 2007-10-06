@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.66 2007-10-06 16:13:36 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.67 2007-10-06 16:37:12 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3664,7 +3664,7 @@ void EZ_button_SetTileCenter(ez_button_t *button, qbool tilecenter)
 //
 // Button - Set if the edges of the button should be tiled or stretched.
 //
-void EZ_button_SetTileCenter(ez_button_t *button, qbool tileedges)
+void EZ_button_SetTileEdges(ez_button_t *button, qbool tileedges)
 {
 	SET_FLAG(button->ext_flags, tile_edges, tileedges);
 }
