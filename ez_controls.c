@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.65 2007-10-04 16:40:37 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.66 2007-10-06 16:13:36 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3542,7 +3542,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	EZ_button_SetHoverImage(button, EZ_BUTTON_DEFAULT_HOVER_IMAGE);
 	EZ_button_SetPressedImage(button, EZ_BUTTON_DEFAULT_PRESSED_IMAGE);
 
-	button->ext_flags |= use_images;
+	button->ext_flags |= use_images; // | tile_edges; // | tile_center;
 }
 
 //
@@ -3654,6 +3654,22 @@ void EZ_button_SetNormalColor(ez_button_t *self, byte r, byte g, byte b, byte al
 }
 
 //
+// Button - Set if the center of the button should be tiled or stretched.
+//
+void EZ_button_SetTileCenter(ez_button_t *button, qbool tilecenter)
+{
+	SET_FLAG(button->ext_flags, tile_center, tilecenter);
+}
+
+//
+// Button - Set if the edges of the button should be tiled or stretched.
+//
+void EZ_button_SetTileCenter(ez_button_t *button, qbool tileedges)
+{
+	SET_FLAG(button->ext_flags, tile_edges, tileedges);
+}
+
+//
 // Button - Sets the pressed color of the button.
 //
 void EZ_button_SetPressedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
@@ -3704,9 +3720,7 @@ static void EZ_button_DrawButtonImage(ez_button_t *button, mpic_t *pic)
 	int edge_size;		// The number of pixel from the edge of the texture 
 						// to use when drawing the buttons edges.
 	int edge_size2;
-	int sub_size;		// Either the width or height of the sub-part of the texture that is being tiled.
-	int sub_end;
-	int x, y, i;
+	int x, y;
 
 	if (!pic)
 	{
@@ -3714,33 +3728,68 @@ static void EZ_button_DrawButtonImage(ez_button_t *button, mpic_t *pic)
 	}
 
 	edge_size = Q_rint(0.1 * pic->width);
-	edge_size2 = 2 * edge_size;
+	edge_size2 = (2 * edge_size);
 
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
 	// Center background.
-	Draw_SubPicTiled((x + edge_size), (y + edge_size), 
-		(self->width - edge_size2), (self->height - edge_size2),
-		pic, 
-		edge_size, edge_size, 
-		(pic->width - edge_size2), (pic->height - edge_size2),
-		1.0);
+	if (button->ext_flags & tile_center)
+	{
+		// Tiled.
+		Draw_SubPicTiled((x + edge_size), (y + edge_size), 
+			(self->width - edge_size2), (self->height - edge_size2),
+			pic, 
+			edge_size, edge_size, 
+			(pic->width - edge_size2), (pic->height - edge_size2),
+			1.0);
+	}
+	else
+	{
+		// Stretch the image.
+		Draw_FitAlphaSubPic((x + edge_size), (y + edge_size), (self->width - edge_size2), (self->height - edge_size2), 
+			pic, edge_size, edge_size, (pic->width - edge_size2), (pic->height - edge_size2), 1.0);
+	}
 
-	// Top center.
-	Draw_SubPicTiled((x + edge_size), y, (self->width - edge_size2), edge_size, 
-					pic, edge_size, 0, (pic->width - edge_size2), edge_size, 1.0);
+	if (button->ext_flags & tile_edges)
+	{
+		// Tiled.
 
-	// Bottom center.
-	Draw_SubPicTiled((x + edge_size), (y + self->height - edge_size), (self->width - edge_size2), edge_size, 
-					pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, 1.0);
-	
-	// Left center.
-	Draw_SubPicTiled(x, (y + edge_size), edge_size, (self->height - edge_size2), 
-					pic, 0, edge_size, edge_size, (pic->height - edge_size2), 1.0);
+		// Top center.
+		Draw_SubPicTiled((x + edge_size), y, (self->width - edge_size2), edge_size, 
+						pic, edge_size, 0, (pic->width - edge_size2), edge_size, 1.0);
 
-	// Right center.
-	Draw_SubPicTiled((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
-					pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), 1.0);
+		// Bottom center.
+		Draw_SubPicTiled((x + edge_size), (y + self->height - edge_size), (self->width - edge_size2), edge_size, 
+						pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, 1.0);
+		
+		// Left center.
+		Draw_SubPicTiled(x, (y + edge_size), edge_size, (self->height - edge_size2), 
+						pic, 0, edge_size, edge_size, (pic->height - edge_size2), 1.0);
+
+		// Right center.
+		Draw_SubPicTiled((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
+						pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), 1.0);
+	}
+	else
+	{
+		// Stretched.
+
+		// Top center.
+		Draw_FitAlphaSubPic((x + edge_size), y, (self->width - edge_size), edge_size, 
+							pic, edge_size, 0, (pic->width - edge_size2), edge_size, 1.0);
+
+		// Bottom center.
+		Draw_FitAlphaSubPic((x + edge_size), (y + self->height - edge_size), (self->width - edge_size), edge_size, 
+							pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, 1.0);
+
+		// Left center.
+		Draw_FitAlphaSubPic(x, (y + edge_size), edge_size, (self->height - edge_size2), 
+							pic, 0, edge_size, edge_size, (pic->height - edge_size2), 1.0);
+
+		// Right center.
+		Draw_FitAlphaSubPic((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
+							pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), 1.0);
+	}
 
 	// Top left corner.
 	Draw_SSubPic(x, y, pic, 0, 0, edge_size, edge_size, 1.0);

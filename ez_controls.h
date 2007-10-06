@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.44 2007-10-04 16:40:37 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.45 2007-10-06 16:13:36 cokeman1982 Exp $
 */
 
 //
@@ -1259,7 +1259,9 @@ typedef struct ez_button_events_s
 
 typedef enum ez_button_flags_e
 {
-	use_images	= (1 << 0)
+	use_images	= (1 << 0),
+	tile_center	= (1 << 1),
+	tile_edges	= (1 << 2)
 } ez_button_flags_t;
 
 typedef enum ez_textalign_e
@@ -1362,6 +1364,16 @@ void EZ_button_SetText(ez_button_t *button, const char *text);
 // Button - Set the text of the button. 
 //
 void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignment);
+
+//
+// Button - Set if the edges of the button should be tiled or stretched.
+//
+void EZ_button_SetTileCenter(ez_button_t *button, qbool tileedges);
+
+//
+// Button - Set if the center of the button should be tiled or stretched.
+//
+void EZ_button_SetTileCenter(ez_button_t *button, qbool tilecenter);
 
 //
 // Button - Set the event handler for the OnTextAlignmentChanged event.
