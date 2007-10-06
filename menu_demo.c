@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.31 2007-09-02 21:59:29 johnnycz Exp $
+		$Id: menu_demo.c,v 1.32 2007-10-06 08:15:28 dkure Exp $
 
 */
 
@@ -535,9 +535,9 @@ void Demo_AddZipToPlaylist (const char *zip_path)
 	char temp_path[MAX_PATH] = {0};
 
 	// Unpack the files to a temp path.
-	unzFile zip_file = COM_ZipUnpackOpenFile (zip_path);
-	COM_ZipUnpackToTemp (zip_file, false, false, NULL, temp_path, sizeof(temp_path));
-	COM_ZipUnpackCloseFile (zip_file);
+	unzFile zip_file = FS_ZipUnpackOpenFile (zip_path);
+	FS_ZipUnpackToTemp (zip_file, false, false, NULL, temp_path, sizeof(temp_path));
+	FS_ZipUnpackCloseFile (zip_file);
 
 	if (temp_path)
 	{
@@ -559,7 +559,7 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 	if (key == K_INS || (key == K_ENTER && keydown[K_CTRL]))
 	{
 		#ifdef WITH_ZIP
-		if (COM_ZipIsArchive (FL_GetCurrentPath(&demo_filelist)))
+		if (FS_ZipIsArchive (FL_GetCurrentPath(&demo_filelist)))
 		{
 			// Zip.
 			Demo_AddZipToPlaylist (FL_GetCurrentPath(&demo_filelist));

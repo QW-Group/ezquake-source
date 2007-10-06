@@ -548,7 +548,7 @@ void FL_ReadZip (filelist_t *fl)
 	// Open the zip file.
 	if (fl->current_zip != NULL)
 	{
-		zip_file = COM_ZipUnpackOpenFile (fl->current_zip);
+		zip_file = FS_ZipUnpackOpenFile (fl->current_zip);
 	}
 	else
 	{
@@ -561,7 +561,7 @@ void FL_ReadZip (filelist_t *fl)
 	}
 
 	// Get the first file from the zip file.
-	if (!COM_ZipGetFirst (zip_file, &ent))
+	if (!FS_ZipGetFirst (zip_file, &ent))
 	{
 		goto finish;
 	}
@@ -616,7 +616,7 @@ void FL_ReadZip (filelist_t *fl)
 		}
 skip:
         // Get next filesystem entry
-		temp = COM_ZipGetNextFile (zip_file, &ent);
+		temp = FS_ZipGetNextFile (zip_file, &ent);
     }
     while (temp > 0);
 
@@ -624,7 +624,7 @@ skip:
 
 finish:
 	// Close the zip file.
-	COM_ZipUnpackCloseFile (zip_file);
+	FS_ZipUnpackCloseFile (zip_file);
 
 	// Re-sort the file list if needed.
     if (fl->need_resort)
@@ -708,7 +708,7 @@ void FL_ReadDir(filelist_t *fl)
 		f->type_index = FL_FindRegisteredType (fl, &ent);
 
 		#ifdef WITH_ZIP
-		if (COM_ZipIsArchive (ent.fname))
+		if (FS_ZipIsArchive (ent.fname))
 		{
 			f->is_zip = true;
 		}
@@ -969,7 +969,7 @@ void FL_CompressFile (filelist_t *fl)
 	int ce = fl->current_entry;	 
 
 	// Compress the file
-	int ret = COM_GZipPack(file_path, va("%s.gz", file_path), false); 
+	int ret = FS_GZipPack(file_path, va("%s.gz", file_path), false); 
 
 	if (ret)
 	{
@@ -996,7 +996,7 @@ void FL_DecompressFile (filelist_t *fl)
 
 	COM_StripExtension(gzip_path, file_path);
 
-	ret = COM_GZipUnpack(gzip_path, file_path, false); 
+	ret = FS_GZipUnpack(gzip_path, file_path, false); 
 
 	if (ret)
 	{

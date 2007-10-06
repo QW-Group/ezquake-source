@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.93 2007-10-04 15:54:34 dkure Exp $
+	$Id: cl_demo.c,v 1.94 2007-10-06 08:15:28 dkure Exp $
 */
 
 #include <time.h>
@@ -2205,7 +2205,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 		}
 
 		// Unpack the file.
-		if (!COM_GZipUnpackToTemp (play_path, unpacked_path, unpacked_path_size, ext))
+		if (!FS_GZipUnpackToTemp (play_path, unpacked_path, unpacked_path_size, ext))
 		{
 			return 0;
 		}
@@ -2216,7 +2216,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 	//
 	// Check if the path is in the format "c:\quake\bla\demo.zip\some_demo.mvd" and split it up.
 	//
-	if (COM_ZipBreakupArchivePath ("zip", play_path, archive_path, MAX_PATH, inzip_path, MAX_PATH) < 0)
+	if (FS_ZipBreakupArchivePath ("zip", play_path, archive_path, MAX_PATH, inzip_path, MAX_PATH) < 0)
 	{
 		return retval;
 	}
@@ -2228,10 +2228,10 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 		char temp_path[MAX_PATH];
 
 		// Open the zip file.
-		unzFile zip_file = COM_ZipUnpackOpenFile (archive_path);
+		unzFile zip_file = FS_ZipUnpackOpenFile (archive_path);
 
 		// Try extracting the zip file.
-		if(COM_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, MAX_PATH) != UNZ_OK)
+		if(FS_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, MAX_PATH) != UNZ_OK)
 		{
 			Com_Printf ("Failed to unpack the demo file \"%s\" to the temp path \"%s\"\n", inzip_path, temp_path);
 			unpacked_path[0] = 0;
@@ -2246,7 +2246,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 		}
 
 		// Close the zip file.
-		COM_ZipUnpackCloseFile (zip_file);
+		FS_ZipUnpackCloseFile (zip_file);
 	}
 
 	return retval;

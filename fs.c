@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.46 2007-10-06 07:53:58 dkure Exp $
+	$Id: fs.c,v 1.47 2007-10-06 08:15:28 dkure Exp $
 */
 
 /**
@@ -124,7 +124,6 @@ qbool filesystemchanged = true;
 int fs_hash_dups;
 int fs_hash_files;
 
-// VFS-FIXME: Give this a better name
 cvar_t fs_cache = {"fs_cache", "1"};
 
 typedef enum {
@@ -158,12 +157,9 @@ void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
 searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);
 
-/* VFS-FIXME: VFS_Filter into header */
-static vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle);
-
 qbool Sys_PathProtection(const char *pattern);
-void COM_Dir_f (void);
-void COM_Locate_f (void);
+void FS_Dir_f (void);
+void FS_Locate_f (void);
 
 // VFS-FIXME: Debug file for trying to open files
 static void FS_OpenFile_f(void);
@@ -1608,7 +1604,7 @@ void FS_PakRem_f(void) { FS_PakOper_Process(PAKOP_REM); }
 
 #define CHUNK 16384
 
-int COM_GZipPack (char *source_path,
+int FS_GZipPack (char *source_path,
 				  char *destination_path,
 				  qbool overwrite)
 {
@@ -1663,7 +1659,7 @@ int COM_GZipPack (char *source_path,
 //
 // Unpack a .gz file.
 //
-int COM_GZipUnpack (char *source_path,		// The path to the compressed source file.
+int FS_GZipUnpack (char *source_path,		// The path to the compressed source file.
 					char *destination_path, // The destination file path.
 					qbool overwrite)		// Overwrite the destination file if it exists?
 {
@@ -1711,7 +1707,7 @@ int COM_GZipUnpack (char *source_path,		// The path to the compressed source fil
 //
 // Unpack a .gz file to a temp file.
 //
-int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
+int FS_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
 						  int unpack_path_size,		// The size of the buffer.
 						  char *append_extension)	// The extension if any that should be appended to the filename.
@@ -1738,7 +1734,7 @@ int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 	}
 
 	// Unpack the file.
-	if (!COM_GZipUnpack (source_path, unpack_path, true))
+	if (!FS_GZipUnpack (source_path, unpack_path, true))
 	{
 		unpack_path[0] = 0;
 		return 0;
@@ -1750,7 +1746,7 @@ int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 //
 // Inflates source file into the dest file. (Stolen from a zlib example :D) ... NOT the same as gzip!
 //
-int COM_ZlibInflate(FILE *source, FILE *dest)
+int FS_ZlibInflate(FILE *source, FILE *dest)
 {
 	int ret = 0;
 	unsigned have = 0;
@@ -1830,7 +1826,7 @@ int COM_ZlibInflate(FILE *source, FILE *dest)
 //
 // Unpack a zlib file. ... NOT the same as gzip!
 //
-int COM_ZlibUnpack (char *source_path,		// The path to the compressed source file.
+int FS_ZlibUnpack (char *source_path,		// The path to the compressed source file.
 					char *destination_path, // The destination file path.
 					qbool overwrite)		// Overwrite the destination file if it exists?
 {
@@ -1865,7 +1861,7 @@ int COM_ZlibUnpack (char *source_path,		// The path to the compressed source fil
 	}
 
 	// Unpack.
-	retval = COM_ZlibInflate (source, dest);
+	retval = FS_ZlibInflate (source, dest);
 
 	fclose (source);
 	fclose (dest);
@@ -1876,7 +1872,7 @@ int COM_ZlibUnpack (char *source_path,		// The path to the compressed source fil
 //
 // Unpack a zlib file to a temp file... NOT the same as gzip!
 //
-int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
+int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
 						  int unpack_path_size,		// The size of the buffer.
 						  char *append_extension)	// The extension if any that should be appended to the filename.
@@ -1903,7 +1899,7 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 	}
 
 	// Unpack the file.
-	if (!COM_ZlibUnpack (source_path, unpack_path, true))
+	if (!FS_ZlibUnpack (source_path, unpack_path, true))
 	{
 		unpack_path[0] = 0;
 		return 0;
@@ -1925,7 +1921,7 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 [19:23:55] <@disconnect|bla> zomfg :E
 [19:24:04] <@disconnect|bla> OK. Linux have same behavior now.
 */
-int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
+int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  const char *filename_inzip,
 						  qbool case_sensitive,
 						  qbool keep_path,
@@ -1957,7 +1953,7 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 	#endif
 
 	// Unpack the file
-	retval = COM_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, true, password);
+	retval = FS_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, true, password);
 
 	if (retval == UNZ_OK)
 	{
@@ -1971,7 +1967,7 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 	return retval;
 }
 
-int COM_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
+int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
 							   char *path,						// The path that should be broken up into parts.
 							   char *archive_path,				// The buffer that should contain the archive path after the breakup.
 							   int archive_path_size,			// The size of the archive path buffer.
@@ -2009,17 +2005,17 @@ int COM_ZipBreakupArchivePath (char *archive_extension,			// The extension of th
 //
 // Does the given path point to a zip file?
 //
-qbool COM_ZipIsArchive (char *zip_path)
+qbool FS_ZipIsArchive (char *zip_path)
 {
 	return (!strcmp (COM_FileExtension (zip_path), "zip"));
 }
 
-unzFile COM_ZipUnpackOpenFile (const char *zip_path)
+unzFile FS_ZipUnpackOpenFile (const char *zip_path)
 {
 	return unzOpen (zip_path);
 }
 
-int COM_ZipUnpackCloseFile (unzFile zip_file)
+int FS_ZipUnpackCloseFile (unzFile zip_file)
 {
 	if (zip_file == NULL)
 	{
@@ -2032,7 +2028,7 @@ int COM_ZipUnpackCloseFile (unzFile zip_file)
 //
 // Creates a directory entry from a unzip fileinfo struct.
 //
-static void COM_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_info *unzip_fileinfo)
+static void FS_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_info *unzip_fileinfo)
 {
 	// Save the name.
     strlcpy(ent->fname, filename_inzip, sizeof(ent->fname));
@@ -2063,7 +2059,7 @@ static void COM_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_i
 	ent->hidden = 0;
 }
 
-int COM_ZipUnpack (unzFile zip_file,
+int FS_ZipUnpack (unzFile zip_file,
 				   char *destination_path,
 				   qbool case_sensitive,
 				   qbool keep_path,
@@ -2084,7 +2080,7 @@ int COM_ZipUnpack (unzFile zip_file,
 
 	for (file_num = 0; file_num < global_info.number_entry; file_num++)
 	{
-		if (COM_ZipUnpackCurrentFile (zip_file, destination_path, case_sensitive, keep_path, overwrite, password) != UNZ_OK)
+		if (FS_ZipUnpackCurrentFile (zip_file, destination_path, case_sensitive, keep_path, overwrite, password) != UNZ_OK)
 		{
 			// We failed to extract a file, so there must be something wrong.
 			break;
@@ -2105,7 +2101,7 @@ int COM_ZipUnpack (unzFile zip_file,
 	return error;
 }
 
-int COM_ZipUnpackToTemp (unzFile zip_file,
+int FS_ZipUnpackToTemp (unzFile zip_file,
 				   qbool case_sensitive,
 				   qbool keep_path,
 				   const char *password,
@@ -2134,7 +2130,7 @@ int COM_ZipUnpackToTemp (unzFile zip_file,
 	#endif
 
 	// Unpack the file.
-	retval = COM_ZipUnpack (zip_file, unpack_path, case_sensitive, keep_path, true, password);
+	retval = FS_ZipUnpack (zip_file, unpack_path, case_sensitive, keep_path, true, password);
 
 	if (retval != UNZ_OK)
 	{
@@ -2144,7 +2140,7 @@ int COM_ZipUnpackToTemp (unzFile zip_file,
 	return retval;
 }
 
-int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_ZipUnpackOpenFile(..)
+int FS_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with FS_ZipUnpackOpenFile(..)
 						  const char *filename_inzip,	// The name of the file to unpack inside the zip.
 						  const char *destination_path, // The destination path where to extract the file to.
 						  qbool case_sensitive,			// Should we look for the filename case sensitivly?
@@ -2168,12 +2164,12 @@ int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_Z
 	}
 
 	// Unpack the file.
-	COM_ZipUnpackCurrentFile (zip_file, destination_path, case_sensitive, keep_path, overwrite, password);
+	FS_ZipUnpackCurrentFile (zip_file, destination_path, case_sensitive, keep_path, overwrite, password);
 
 	return retval;
 }
 
-int COM_ZipUnpackCurrentFile (unzFile zip_file,
+int FS_ZipUnpackCurrentFile (unzFile zip_file,
 							  const char *destination_path,
 							  qbool case_sensitive,
 							  qbool keep_path,
@@ -2311,7 +2307,7 @@ finish:
 }
 
 // Gets the details about the file and save them in the sys_dirent struct.
-static int COM_ZipGetDetails (unzFile zip_file, sys_dirent *ent)
+static int FS_ZipGetDetails (unzFile zip_file, sys_dirent *ent)
 {
 	int error = UNZ_OK;
 	char filename_inzip[MAX_PATH_LENGTH];
@@ -2328,12 +2324,12 @@ static int COM_ZipGetDetails (unzFile zip_file, sys_dirent *ent)
 	}
 
 	// Populate the directory entry object.
-	COM_ZipMakeDirent (ent, filename_inzip, &unzip_fileinfo);
+	FS_ZipMakeDirent (ent, filename_inzip, &unzip_fileinfo);
 
 	return error;
 }
 
-int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent)
+int FS_ZipGetFirst (unzFile zip_file, sys_dirent *ent)
 {
 	int error = UNZ_OK;
 
@@ -2344,7 +2340,7 @@ int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent)
 	}
 
 	// Get details.
-	if ((error = COM_ZipGetDetails(zip_file, ent)) != UNZ_OK)
+	if ((error = FS_ZipGetDetails(zip_file, ent)) != UNZ_OK)
 	{
 		return error;
 	}
@@ -2352,7 +2348,7 @@ int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent)
 	return 1;
 }
 
-int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent)
+int FS_ZipGetNextFile (unzFile zip_file, sys_dirent *ent)
 {
 	int error = UNZ_OK;
 
@@ -2365,7 +2361,7 @@ int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent)
 	}
 
 	// Get details.
-	if ((error = COM_ZipGetDetails(zip_file, ent)) != UNZ_OK)
+	if ((error = FS_ZipGetDetails(zip_file, ent)) != UNZ_OK)
 	{
 		return error;
 	}
@@ -2387,8 +2383,8 @@ void FS_InitModuleFS (void)
 #else
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
 	Cmd_AddCommand("fs_openfile", FS_OpenFile_f); // VFS-FIXME <-- Only a debug function
-	Cmd_AddCommand("dir", COM_Dir_f);
-	Cmd_AddCommand("locate", COM_Locate_f);
+	Cmd_AddCommand("dir", FS_Dir_f);
+	Cmd_AddCommand("locate", FS_Locate_f);
 	Cvar_Register(&fs_cache);
 	Com_Printf("Initialising quake VFS filesystem\n");
 #endif
@@ -2459,7 +2455,7 @@ searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, voi
 
 /*
 ============
-COM_Dir_f
+FS_Dir_f
 ============
 */
 static int COM_Dir_List(char *name, int size, void *parm)
@@ -2468,7 +2464,7 @@ static int COM_Dir_List(char *name, int size, void *parm)
 	return 1;
 }
 
-void COM_Dir_f (void)
+void FS_Dir_f (void)
 {
 	char match[MAX_QPATH];
 
@@ -2494,7 +2490,7 @@ void COM_Dir_f (void)
 COM_Locate_f
 ============
 */
-void COM_Locate_f (void)
+void FS_Locate_f (void)
 {
 	flocation_t loc;
 	if (Cmd_Argc() != 2) {
@@ -2931,7 +2927,7 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 }
 #endif
 
-static vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
+vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
 {
 	vfserrno_t err;
 //	char *ext;
