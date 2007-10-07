@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.37 2007-10-04 14:56:54 dkure Exp $
+	$Id: sv_user.c,v 1.38 2007-10-07 07:25:19 dkure Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -811,16 +811,19 @@ void Cmd_Download_f (void) {
 	// VFS-FIXME D-Kure WITH_FTE_VFS replacement
 #ifndef WITH_FTE_VFS
 	sv_client->downloadsize = FS_FOpenFile (name, &sv_client->download);
-#else
-	sv_client->download = FS_OpenVFS(name, "rb", FS_ANY);
-	sv_client->downloadsize = VFS_GETLEN(sv_client->download);
-#endif
-	sv_client->downloadcount = 0;
-
 	if (!sv_client->download) {
 		Sys_Printf ("Couldn't download %s to %s\n", name, sv_client->name);
 		goto deny_download;
 	}
+#else
+	sv_client->download = FS_OpenVFS(name, "rb", FS_ANY);
+	if (!sv_client->download) {
+		Sys_Printf ("Couldn't download %s to %s\n", name, sv_client->name);
+		goto deny_download;
+	}
+	sv_client->downloadsize = VFS_GETLEN(sv_client->download);
+#endif
+	sv_client->downloadcount = 0;
 
 #ifdef PROTOCOL_VERSION_FTE
 #ifndef WITH_FTE_VFS

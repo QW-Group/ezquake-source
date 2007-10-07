@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.53 2007-10-04 14:56:55 dkure Exp $
+	$Id: EX_browser.c,v 1.54 2007-10-07 07:25:19 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -2076,11 +2076,11 @@ void RemoveSourceProc(void)
     int removed = 0;
 #ifndef WITH_FTE_VFS
     FILE *f;
+    int length;
 #else
 	vfsfile_t *f;
 	char ln[2048];
 #endif
-    int length;
     char *filebuf; // *p, *q;
     s = sources[Sources_pos];
     if (s->type == type_dummy)
@@ -2108,7 +2108,6 @@ void RemoveSourceProc(void)
 
 #else
 	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
-	length = VFS_GETLEN(f);
 	if (!f) {
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
 		return;

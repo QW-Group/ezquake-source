@@ -73,11 +73,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 #ifndef WITH_FTE_VFS
     FS_FOpenFile(fname, &f);
 
-#else
-	f = FS_OpenVFS(fname, "rb", FS_ANY);
-#endif
     if (f) {
-#ifndef WITH_FTE_VFS
 		while (!feof(f))
 		{
 			char c = 'A';
@@ -92,6 +88,9 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 			if (ret != 1)
 				continue;
 #else
+	f = FS_OpenVFS(fname, "rb", FS_ANY);
+
+    if (f) {
 		while (VFS_GETS(f, line, sizeof(line)))
 		{
 			netadr_t addr;
@@ -490,30 +489,34 @@ void Reload_Sources(void)
     int i;
 #ifndef WITH_FTE_VFS
     FILE *f;
+    int length;
 #else
 	vfsfile_t *f;
 	char ln[2048];
 #endif
-    int length;
     source_data *s;
 
     for (i=0; i < sourcesn; i++)
         Delete_Source(sources[i]);
     sourcesn = 0;
 
-    //length = COM_FileOpenRead (SOURCES_PATH, &f);
 #ifndef WITH_FTE_VFS
+    //length = COM_FileOpenRead (SOURCES_PATH, &f);
     length = FS_FOpenFile("sb/sources.txt", &f);
-#else
-	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
-	length = VFS_GETLEN(f);
-#endif
-
     if (length < 0)
     {
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
         return;
     }
+
+#else
+	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
+	if (!f) 
+	{
+        //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
+		return;
+	}
+#endif
 
     // create dummy unbound source
     sources[0] = Create_Source();
