@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.53 2007-10-04 13:48:11 dkure Exp $
+	$Id: host.c,v 1.54 2007-10-07 14:34:42 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -577,6 +577,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
+#ifdef WITH_DP_MEM
+	Memory2_Init ();
+#endif
 	Host_InitMemory (default_memsize);
 
 #ifdef WITH_TCL
@@ -589,6 +592,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cvar_Init ();
 	COM_Init ();
 	Key_Init ();
+
+#ifdef WITH_DP_MEM
+	Memory2_Init_Commands ();
+#endif
+	Cache_Init_Commands ();
 
 //#ifdef WITH_FTE_VFS
 //	COM_InitFilesystem();

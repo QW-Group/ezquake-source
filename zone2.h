@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: zone2.h,v 1.1 2007-10-01 18:31:06 disconn3ct Exp $
+	$Id: zone2.h,v 1.2 2007-10-07 14:34:42 disconn3ct Exp $
 */
 
 #ifdef WITH_DP_MEM
@@ -161,6 +161,8 @@ void *Mem_ExpandableArray_RecordAtIndex(memexpandablearray_t *l, size_t index);
 
 // used for temporary allocations
 extern mempool_t *tempmempool;
+// cache
+extern mempool_t *cachemempool;
 
 void Memory2_Init (void);
 void Memory2_Shutdown (void);

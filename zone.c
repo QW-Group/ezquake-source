@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: zone.c,v 1.15 2007-10-01 18:31:06 disconn3ct Exp $
+	$Id: zone.c,v 1.16 2007-10-07 14:34:42 disconn3ct Exp $
 */
 // zone.c - memory management
 
@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void Cache_FreeLow (int new_low_hunk);
 void Cache_FreeHigh (int new_high_hunk);
-
 
 //============================================================================
 
@@ -429,6 +428,7 @@ void Cache_Init_Commands (void) {
 }
 
 //Frees the memory and removes it from the LRU list
+#ifndef WITH_DP_MEM
 void Cache_Free (cache_user_t *c) {
 	cache_system_t *cs;
 
@@ -490,7 +490,7 @@ void *Cache_Alloc (cache_user_t *c, int size, char *name) {
 
 	return Cache_Check (c);
 }
-
+#endif
 //============================================================================
 
 void Memory_Init (void *buf, int size) {
@@ -499,5 +499,5 @@ void Memory_Init (void *buf, int size) {
 	hunk_low_used = 0;
 	hunk_high_used = 0;
 
-	Cache_Init();
+	Cache_Init ();
 }

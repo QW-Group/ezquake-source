@@ -16,10 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: zone2.c,v 1.1 2007-10-01 18:31:06 disconn3ct Exp $
+	$Id: zone2.c,v 1.2 2007-10-07 14:34:42 disconn3ct Exp $
 */
 
-#include "quakedef.h"
+#include "common.h"
 
 #ifdef WITH_DP_MEM
 
@@ -489,6 +489,8 @@ void *Mem_ExpandableArray_RecordAtIndex(memexpandablearray_t *l, size_t index)
 mempool_t *tempmempool;
 // only for zone
 mempool_t *zonemempool;
+// cache
+mempool_t *cachemempool;
 
 void Mem_PrintStats(void)
 {
@@ -566,6 +568,7 @@ void Memory2_Init (void)
 	poolchain = NULL;
 	tempmempool = Mem_AllocPool("Temporary Memory", POOLFLAG_TEMP, NULL);
 	zonemempool = Mem_AllocPool("Zone", 0, NULL);
+	cachemempool = Mem_AllocPool("Cache", 0, NULL);
 }
 
 void Memory2_Shutdown (void)
@@ -597,5 +600,18 @@ char *Z_Strdup (const char *src)
 	return (char *) data;
 }
 
+void *Cache_Check (cache_user_t *c)
+{
+	return Mem_IsAllocated (cachemempool, c->data) ? c->data : NULL;
+}
 
+void Cache_Free (cache_user_t *c)
+{
+	Mem_Free (c->data);
+}
+
+void *Cache_Alloc (cache_user_t *c, int size, char *name)
+{
+	return c->data = Mem_Alloc (cachemempool, size);
+}
 #endif /* ! WITH_DP_MEM */

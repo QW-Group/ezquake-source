@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.68 2007-10-07 04:59:47 disconn3ct Exp $
+    $Id: common.h,v 1.69 2007-10-07 14:34:42 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -26,9 +26,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //============================================================================
 
 // include frequently used headers
+//#define WITH_DP_MEM
 
 #include "q_shared.h"
 #include "zone.h"
+#ifdef WITH_DP_MEM
+#include "zone2.h"
+#endif
 #include "cvar.h"
 #include "cmd.h"
 #include "net.h"
