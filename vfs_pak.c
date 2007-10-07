@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.9 2007-10-05 19:06:26 johnnycz Exp $
+ * $Id: vfs_pak.c,v 1.10 2007-10-07 11:16:16 borisu Exp $
  *             
  */
 
@@ -111,7 +111,7 @@ qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
 qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
-	if (pos < 0 || pos > vfsp->length)
+	if (pos > vfsp->length)
 		return true;
 	vfsp->currentpos = pos + vfsp->startpos;
 
