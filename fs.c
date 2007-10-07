@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.48 2007-10-07 04:59:47 disconn3ct Exp $
+	$Id: fs.c,v 1.49 2007-10-07 05:11:20 disconn3ct Exp $
 */
 
 /**
@@ -504,12 +504,6 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	{
 		buf = (byte *) Hunk_TempAlloc (len + 1);
 	}
-/*
-	else if (usehunk == 3)
-	{
-		buf = (byte *) Cache_Alloc (loadcache, len + 1, base);
-	}
-*/
 	else if (usehunk == 5)
 	{
 		buf = Q_malloc (len + 1);
