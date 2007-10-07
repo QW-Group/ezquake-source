@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.40 2007-10-07 04:59:47 disconn3ct Exp $
+	$Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -303,7 +303,7 @@ static struct {
 	int md4;
 	char *origname, *newname;
 } translate_names[] = {
-	{ 0x8a010dc0, "sky4", "sky4_blue" },
+//	{ 0x8a010dc0, "sky4", "sky4" },
 	{ 0xde688b77, "sky4", "sky1" },
 	{ 0x45d110ec, "metal5_2", "metal5_2_arc" },
 	{ 0x0d275f87, "metal5_2", "metal5_2_x" },
