@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.144 2007-09-26 21:51:33 tonik Exp $
+$Id: cl_screen.c,v 1.145 2007-10-07 10:51:01 johnnycz Exp $
 */
 
 /// declarations may be found in screen.h
@@ -1662,6 +1662,8 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 	return (x - x_in) / FONTWIDTH; // return width
 }
 
+void Update_TeamInfo(void);
+
 static void SCR_Draw_TeamInfo(void)
 {
 	int x, y, w, h;
@@ -1672,6 +1674,9 @@ static void SCR_Draw_TeamInfo(void)
 
 	if ( !cl.teamplay || !scr_teaminfo.integer )  // non teamplay mode
 		return;
+
+	if (cls.mvdplayback)
+		Update_TeamInfo();
 
 	// fill data we require to draw teaminfo
 	for ( maxloc = maxname = slots_num = i = 0; i < MAX_CLIENTS; i++ ) {
@@ -1768,6 +1773,40 @@ void Parse_TeamInfo(char *s)
 	strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), sizeof(ti_clients[ 0 ].nick) ); // nick is optional
 }
 
+qbool Update_TeamInfoClient(int cli, vec3_t org, int health, int armor, int items, const char* nick)
+{
+	if (cli < 0 || cli > MAX_CLIENTS) {
+		Com_Printf("Update_TeamInfo: Wrong client number\n");
+		return false;
+	}
+
+	ti_clients[cli].org[0] = org[0];
+	ti_clients[cli].org[1] = org[1];
+	ti_clients[cli].org[2] = org[2];
+	ti_clients[cli].health = health;
+	ti_clients[cli].armor = armor;
+	ti_clients[cli].items = items;
+	strlcpy(ti_clients[cli].nick, nick, sizeof(ti_clients[0].nick));
+
+	return true;
+}
+
+void Update_TeamInfo()
+{
+	int i;
+	int* st;
+
+	if (!cls.mvdplayback)
+		return;
+
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (cl.players[i].spectator || !cl.players[i].name[0]) continue;
+		st = cl.players[i].stats;	
+		Update_TeamInfoClient(i, cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i].origin,
+			st[STAT_HEALTH], st[STAT_ARMOR], st[STAT_ITEMS], cl.players[i].name);
+	}
+}
 
 #endif
 
