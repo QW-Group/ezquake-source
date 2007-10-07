@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.47 2007-10-06 08:15:28 dkure Exp $
+	$Id: fs.c,v 1.48 2007-10-07 04:59:47 disconn3ct Exp $
 */
 
 /**
@@ -456,9 +456,6 @@ int FS_FOpenFile (char *filename, FILE **file) {
 
 // Filename are relative to the quake directory.
 // Always appends a 0 byte to the loaded data.
-static cache_user_t *loadcache;
-static byte			*loadbuf;
-static int			loadsize;
 static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 {
 #ifndef WITH_FTE_VFS
@@ -507,14 +504,12 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	{
 		buf = (byte *) Hunk_TempAlloc (len + 1);
 	}
+/*
 	else if (usehunk == 3)
 	{
 		buf = (byte *) Cache_Alloc (loadcache, len + 1, base);
 	}
-	else if (usehunk == 4)
-	{
-		buf = ((len+1 > loadsize) ? (byte *) Hunk_TempAlloc (len + 1) : loadbuf);
-	}
+*/
 	else if (usehunk == 5)
 	{
 		buf = Q_malloc (len + 1);
@@ -557,23 +552,6 @@ byte *FS_LoadHunkFile (char *path, int *len) {
 
 byte *FS_LoadTempFile (char *path, int *len) {
 	return FS_LoadFile (path, 2, len);
-}
-
-void FS_LoadCacheFile (char *path, struct cache_user_s *cu, int *len) {
-	loadcache = cu;
-	FS_LoadFile (path, 3, len);
-}
-
-// uses temp hunk if larger than bufsize
-byte *FS_LoadStackFile (char *path, void *buffer, int bufsize, int *len) {
-	byte *buf;
-
-	// FIXME: What the ?? using globals again, bad quake filesystem!
-	loadbuf = (byte *)buffer;
-	loadsize = bufsize;
-	buf = FS_LoadFile (path, 4, len);
-
-	return buf;
 }
 
 // use Q_malloc, do not forget Q_free when no needed more

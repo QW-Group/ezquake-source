@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.16 2007-10-04 14:56:54 dkure Exp $
+	$Id: sv_init.c,v 1.17 2007-10-07 04:59:47 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -169,12 +169,13 @@ void SV_SaveSpawnparms (void)
 
 unsigned SV_CheckModel (char *mdl)
 {
-	byte stackbuf[1024]; // avoid dirtying the cache heap
 	byte *buf;
 	unsigned short crc;
 	int filesize;
+	int mark;
 
-	buf = (byte *) FS_LoadStackFile (mdl, stackbuf, sizeof(stackbuf), &filesize);
+	mark = Hunk_LowMark ();
+	buf = (byte *) FS_LoadHunkFile (mdl, &filesize);
 	if (!buf) {
 		if (!strcmp(mdl, "progs/player.mdl"))
 			return 33168;
@@ -185,6 +186,7 @@ unsigned SV_CheckModel (char *mdl)
 	}
 
 	crc = CRC_Block(buf, filesize);
+	Hunk_FreeToLowMark (mark);
 
 	return crc;
 }

@@ -172,8 +172,8 @@ void Mod_TouchModel (char *name) {
 model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	void *d;
 	unsigned *buf;
-	byte stackbuf[1024];		// avoid dirtying the cache heap
 	int filesize;
+
 
 	if (!mod->needload) {
 		if (mod->type == mod_alias) {
@@ -181,14 +181,14 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 			if (d)
 				return mod;
 		} else {
-			return mod;		// not cached at all
+			return mod; // not cached at all
 		}
 	}
 
 	// because the world is so huge, load it one piece at a time
 
 	// load the file
-	buf = (unsigned *) FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf), &filesize);
+	buf = (unsigned *) FS_LoadTempFile (mod->name, &filesize);
 	if (!buf) {
 		if (crash)
 			Host_Error ("Mod_LoadModel: %s not found", mod->name);
@@ -197,12 +197,8 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 
 	// allocate a new model
 	COM_FileBase (mod->name, loadname);
-
 	loadmodel = mod;
-
 	FMod_CheckModel(mod->name, buf, filesize);
-
-	// fill it in
 
 	// call the apropriate loader
 	mod->needload = false;

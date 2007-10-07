@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.39 2007-10-06 04:28:40 dkure Exp $
+	$Id: gl_model.c,v 1.40 2007-10-07 04:59:47 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -200,8 +200,8 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	void *d;
 	unsigned *buf;
 	int namelen;
-	byte stackbuf[1024];		// avoid dirtying the cache heap
 	int filesize;
+
 
 	if (!mod->needload)	{
 		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
@@ -209,29 +209,24 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 			if (d)
 				return mod;
 		} else {
-			return mod;		// not cached at all
+			return mod; // not cached at all
 		}
 	}
-/*
-	// because the world is so huge, load it one piece at a time
-	if (!crash)	{}
 
-	// load the file
-	buf = (unsigned *) FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf));
-*/
-	namelen = strlen(mod->name);
+	namelen = strlen (mod->name);
 	buf = NULL;
-	if (namelen>=4 && (!strcmp(mod->name+namelen-4, ".mdl") || (namelen>=9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp(mod->name+namelen-4, ".bsp"))))
+	if (namelen >= 4 && (!strcmp (mod->name + namelen - 4, ".mdl") ||
+		(namelen >= 9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp (mod->name + namelen - 4, ".bsp"))))
 	{
 		char newname[MAX_QPATH];
-		COM_StripExtension(mod->name, newname);
-		COM_DefaultExtension(newname, ".md3");
-		buf = (unsigned *)FS_LoadStackFile (newname, stackbuf, sizeof(stackbuf), &filesize);
+		COM_StripExtension (mod->name, newname);
+		COM_DefaultExtension (newname, ".md3");
+		buf = (unsigned *) FS_LoadTempFile (newname, &filesize);
 	}
 
 	// load the file
 	if (!buf)
-		buf = (unsigned *)FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf), &filesize);
+		buf = (unsigned *) FS_LoadTempFile (mod->name, &filesize);
 	if (!buf) {
 		if (crash)
 			Host_Error ("Mod_LoadModel: %s not found", mod->name);

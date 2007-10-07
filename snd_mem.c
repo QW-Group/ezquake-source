@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.13 2007-10-04 14:56:54 dkure Exp $
+    $Id: snd_mem.c,v 1.14 2007-10-07 04:59:47 disconn3ct Exp $
 */
 // snd_mem.c -- sound caching
 
@@ -217,7 +217,6 @@ static wavinfo_t GetWavinfo (char *name, unsigned char *wav, int wavlength)
 //=============================================================================
 sfxcache_t *S_LoadSound (sfx_t *s)
 {
-	unsigned char stackbuf[1*1024]; // avoid dirtying the cache heap
 	char namebuffer[256];
 	unsigned char *data;
 	sfxcache_t *sc;
@@ -232,7 +231,8 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	// load it in
 	snprintf (namebuffer, sizeof (namebuffer), "sound/%s", s->name);
 
-	if (!(data = FS_LoadStackFile (namebuffer, stackbuf, sizeof(stackbuf), &filesize))) {
+	mark = Hunk_LowMark ();
+	if (!(data = FS_LoadTempFile (namebuffer, &filesize))) {
 		Com_Printf ("Couldn't load %s\n", namebuffer);
 		return NULL;
 	}

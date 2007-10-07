@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.67 2007-10-05 19:38:12 johnnycz Exp $
+    $Id: common.h,v 1.68 2007-10-07 04:59:47 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -206,10 +206,8 @@ void FS_InitFilesystem (void);
 void FS_SetGamedir (char *dir);
 int FS_FOpenFile (char *filename, FILE **file);
 int FS_FOpenPathFile (char *filename, FILE **file);
-byte *FS_LoadStackFile (char *path, void *buffer, int bufsize, int *len);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);
-void FS_LoadCacheFile (char *path, struct cache_user_s *cu, int *len);
 byte *FS_LoadHeapFile (const char *path, int *len);
 #ifndef WITH_FTE_VFS
 void FS_AddGameDirectory (char *path_to_dir, char *dir);
