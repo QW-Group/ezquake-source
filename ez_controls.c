@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.68 2007-10-06 16:50:28 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.69 2007-10-07 16:21:44 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -168,13 +168,32 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 	int left	= control->absolute_x;
 	int right	= control->absolute_x + control->width;
 
+	int p_bound_top		= p ? p->bound_top		: 0;
+	int p_bound_bottom	= p ? p->bound_bottom	: 0;
+	int p_bound_left	= p ? p->bound_left		: 0;
+	int p_bound_right	= p ? p->bound_right	: 0;
+
+	// Change the bounds so that we don't draw over our parents resize handles.
+	if (p)
+	{
+		if (p->ext_flags & control_resize_h)
+		{
+			p_bound_right -= p->resize_handle_thickness;
+		}
+
+		if (p->ext_flags & control_resize_v)
+		{
+			p_bound_bottom -= p->resize_handle_thickness;
+		}
+	}
+
 	// If the control has a parent (and should be contained within it's parent), 
 	// set the corresponding bound to the parents bound (ex. button), 
 	// otherwise use the drawing area of the control as bounds (ex. windows).
-	control->bound_top		= (p && contained && (top	 < p->bound_top))		? (p->bound_top)	: top;
-	control->bound_bottom	= (p && contained && (bottom > p->bound_bottom))	? (p->bound_bottom)	: bottom;
-	control->bound_left		= (p && contained && (left	 < p->bound_left))		? (p->bound_left)	: left;
-	control->bound_right	= (p && contained && (right	 > p->bound_right))		? (p->bound_right)	: right;
+	control->bound_top		= (p && contained && (top	 < p_bound_top))		? (p_bound_top)		: top;
+	control->bound_bottom	= (p && contained && (bottom > p_bound_bottom))		? (p_bound_bottom)	: bottom;
+	control->bound_left		= (p && contained && (left	 < p_bound_left))		? (p_bound_left)	: left;
+	control->bound_right	= (p && contained && (right	 > p_bound_right))		? (p_bound_right)	: right;
 
 	// Make sure that the left bounds isn't greater than the right bounds and so on.
 	// This would lead to controls being visible in a few incorrect cases.
@@ -248,6 +267,14 @@ void EZ_tree_Draw(ez_tree_t *tree)
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
 				va("vw: %i vh: %i w: %i h %i", 
 				payload->virtual_width, payload->virtual_height, payload->width, payload->height));
+		}
+		*/
+
+		/*
+		if (!strcasecmp(payload->name, "button"))
+		{
+			Draw_AlphaLineRGB(payload->bound_left, 0, payload->bound_left, vid.conheight, 1, RGBA_TO_COLOR(255, 0, 0, 255));
+			Draw_AlphaLineRGB(payload->bound_right, 0, payload->bound_right, vid.conheight, 1, RGBA_TO_COLOR(255, 0, 0, 255));
 		}
 		*/
 
@@ -569,13 +596,6 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnVirtualResize, OnVirtualResize, ez_control_t);
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnFlagsChanged, OnFlagsChanged, ez_control_t);
 
-	// Load the background image.
-/*	if(background_name)
-	{
-		control->background = Draw_CachePicSafe(background_name, false, true);
-	}
-	*/
-
 	// Add the control to the control tree.
 	if(!tree->root)
 	{
@@ -840,6 +860,14 @@ void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw)
 }
 
 //
+// Control - Sets the OnResizeHandleThicknessChanged event handler.
+//
+void EZ_control_SetOnResizeHandleThicknessChanged(ez_control_t *self, ez_control_handler_fp OnResizeHandleThicknessChanged)
+{
+	self->event_handlers.OnResizeHandleThicknessChanged = OnResizeHandleThicknessChanged;
+}
+
+//
 // Control - Focuses on a control.
 //
 qbool EZ_control_SetFocus(ez_control_t *self)
@@ -1094,6 +1122,14 @@ void EZ_control_SetSize(ez_control_t *self, int width, int height)
 }
 
 //
+// Control - Set the thickness of the resize handles (if any).
+//
+void EZ_control_SetResizeHandleThickness(ez_control_t *self, int thickness)
+{
+	self->resize_handle_thickness = thickness;
+}
+
+//
 // Control - Set the max size for the control.
 //
 void EZ_control_SetMaxSize(ez_control_t *self, int max_width, int max_height)
@@ -1325,16 +1361,17 @@ int EZ_control_OnParentResize(ez_control_t *self)
 {
 	if (self->parent && (self->ext_flags & control_resizeable))
 	{
+		ez_control_t *p			= self->parent;
 		int x					= self->x;
 		int y					= self->y;
 		int width				= self->width;
 		int height				= self->height;
 		qbool non_virtual		= (self->ext_flags & control_anchor_nonvirtual);
-		int parent_prev_width	= non_virtual ? self->parent->prev_width  : self->parent->prev_virtual_width;
-		int parent_prev_height	= non_virtual ? self->parent->prev_height : self->parent->prev_virtual_height;
-		int parent_width		= non_virtual ? self->parent->width  : self->parent->virtual_width; 
-		int parent_height		= non_virtual ? self->parent->height : self->parent->virtual_height;
-		
+		int parent_prev_width	= non_virtual ? self->parent->prev_width	: self->parent->prev_virtual_width;
+		int parent_prev_height	= non_virtual ? self->parent->prev_height	: self->parent->prev_virtual_height;
+		int parent_width		= non_virtual ? self->parent->width			: self->parent->virtual_width; 
+		int parent_height		= non_virtual ? self->parent->height		: self->parent->virtual_height;
+
 		// The position of the right side of the control relative to the parents right side.
 		int x_from_right		= parent_prev_width  - (self->x + self->width);
 		int y_from_bottom		= parent_prev_height - (self->y + self->height);
@@ -1383,6 +1420,15 @@ int EZ_control_OnFlagsChanged(ez_control_t *self)
 {
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnFlagsChanged);
 
+	return 0;
+}
+
+//
+// Control - OnResizeHandleThicknessChanged event.
+//
+int EZ_control_OnResizeHandleThicknessChanged(ez_control_t *self)
+{
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResizeHandleThicknessChanged);
 	return 0;
 }
 

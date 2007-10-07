@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.45 2007-10-06 16:13:36 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.46 2007-10-07 16:21:44 cokeman1982 Exp $
 */
 
 //
@@ -414,6 +414,7 @@ typedef struct ez_control_eventcount_s
 	int	OnVirtualResize;
 	int	OnMinVirtualResize;
 	int	OnFlagsChanged;
+	int OnResizeHandleThicknessChanged;
 } ez_control_eventcount_t;
 
 typedef struct ez_control_events_s
@@ -442,6 +443,7 @@ typedef struct ez_control_events_s
 	ez_control_handler_fp				OnVirtualResize;
 	ez_control_handler_fp				OnMinVirtualResize;
 	ez_control_handler_fp				OnFlagsChanged;
+	ez_control_handler_fp				OnResizeHandleThicknessChanged;
 } ez_control_events_t;
 
 typedef enum ez_anchor_e
@@ -613,6 +615,11 @@ ez_control_flags_t EZ_control_GetFlags(ez_control_t *self);
 void EZ_control_SetFlags(ez_control_t *self, ez_control_flags_t flags);
 
 //
+// Control - Set the thickness of the resize handles (if any).
+//
+void EZ_control_SetResizeHandleThickness(ez_control_t *self, int thickness);
+
+//
 // Control - Sets whetever the control is scrollable or not.
 //
 void EZ_control_SetScrollable(ez_control_t *self, qbool scrollable);
@@ -773,6 +780,11 @@ void EZ_control_SetOnMouseEvent(ez_control_t *self, ez_control_mouse_handler_fp 
 void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw);
 
 //
+// Control - Sets the OnResizeHandleThicknessChanged event handler.
+//
+void EZ_control_SetOnResizeHandleThicknessChanged(ez_control_t *self, ez_control_handler_fp OnResizeHandleThicknessChanged);
+
+//
 // Control - Set color of a control.
 //
 void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
@@ -900,6 +912,11 @@ int EZ_control_OnLayoutChildren(ez_control_t *self);
 // Label - The flags for the control changed.
 //
 int EZ_control_OnFlagsChanged(ez_control_t *self);
+
+//
+// Control - OnResizeHandleThicknessChanged event.
+//
+int EZ_control_OnResizeHandleThicknessChanged(ez_control_t *self);
 
 //
 // Control - Draws the control.
