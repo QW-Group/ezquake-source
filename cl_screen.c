@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.145 2007-10-07 10:51:01 johnnycz Exp $
+$Id: cl_screen.c,v 1.146 2007-10-07 11:14:14 johnnycz Exp $
 */
 
 /// declarations may be found in screen.h
@@ -1773,38 +1773,31 @@ void Parse_TeamInfo(char *s)
 	strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), sizeof(ti_clients[ 0 ].nick) ); // nick is optional
 }
 
-qbool Update_TeamInfoClient(int cli, vec3_t org, int health, int armor, int items, const char* nick)
-{
-	if (cli < 0 || cli > MAX_CLIENTS) {
-		Com_Printf("Update_TeamInfo: Wrong client number\n");
-		return false;
-	}
-
-	ti_clients[cli].org[0] = org[0];
-	ti_clients[cli].org[1] = org[1];
-	ti_clients[cli].org[2] = org[2];
-	ti_clients[cli].health = health;
-	ti_clients[cli].armor = armor;
-	ti_clients[cli].items = items;
-	strlcpy(ti_clients[cli].nick, nick, sizeof(ti_clients[0].nick));
-
-	return true;
-}
-
 void Update_TeamInfo()
 {
 	int i;
 	int* st;
+	static double lastupdate = 0;
 
 	if (!cls.mvdplayback)
 		return;
+
+	// don't update each frame - it's less disturbing
+	if (cls.realtime - lastupdate < 1)
+		return;
+
+	lastupdate = cls.realtime;
 
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (cl.players[i].spectator || !cl.players[i].name[0]) continue;
 		st = cl.players[i].stats;	
-		Update_TeamInfoClient(i, cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i].origin,
-			st[STAT_HEALTH], st[STAT_ARMOR], st[STAT_ITEMS], cl.players[i].name);
+		ti_clients[i].time = r_refdef2.time;
+		memcpy(ti_clients[i].org, cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i].origin, sizeof(vec3_t));
+		ti_clients[i].health = st[STAT_HEALTH];
+		ti_clients[i].armor = st[STAT_ARMOR];
+		ti_clients[i].items = st[STAT_ITEMS];
+		strlcpy(ti_clients[i].nick, cl.players[i].name, sizeof(ti_clients[0].nick));
 	}
 }
 
