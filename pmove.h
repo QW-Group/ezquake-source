@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmove.h,v 1.9 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: pmove.h,v 1.10 2007-10-07 16:21:10 tonik Exp $
 */
 
 #ifndef __PMOVE_H__
@@ -97,6 +97,7 @@ void PM_PlayerMove (void);
 void PM_Init (void);
 
 int PM_PointContents (vec3_t point);
+int PM_PointContents_AllBSPs (vec3_t p);
 void PM_CategorizePosition (void);
 qbool PM_TestPlayerPosition (vec3_t point);
 trace_t PM_PlayerTrace (vec3_t start, vec3_t end);

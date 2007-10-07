@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmovetst.c,v 1.12 2007-03-11 06:01:41 disconn3ct Exp $
+	$Id: pmovetst.c,v 1.13 2007-10-07 16:21:10 tonik Exp $
 */
 #include "quakedef.h"
 #include "pmove.h"
@@ -57,6 +57,40 @@ int PM_PointContents (vec3_t p)
 {
 	hull_t *hull = &pmove.physents[0].model->hulls[0];
 	return CM_HullPointContents (hull, hull->firstclipnode, p);
+}
+
+/*
+==================
+PM_PointContents_AllBSPs
+
+Checks world and bsp entities, but not bboxes (like traceline with nomonsters set)
+For waterjump test
+==================
+*/
+int PM_PointContents_AllBSPs (vec3_t p)
+{
+	int i;
+	physent_t	*pe;
+	hull_t		*hull;
+	vec3_t		test;
+	int	result, final;
+
+	final = CONTENTS_EMPTY;
+	for (i = 0; i < pmove.numphysent; i++)
+	{
+		pe = &pmove.physents[i];
+		if (!pe->model)
+			continue;	// ignore non-bsp
+		hull = &pmove.physents[i].model->hulls[0];
+		VectorSubtract (p, pe->origin, test);
+		result = CM_HullPointContents (hull, hull->firstclipnode, test);
+		if (result == CONTENTS_SOLID)
+			return CONTENTS_SOLID;
+		if (final == CONTENTS_EMPTY)
+			final = result;
+	}
+
+	return final;
 }
 
 /*

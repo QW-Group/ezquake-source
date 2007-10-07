@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmove.c,v 1.19 2007-03-11 06:01:41 disconn3ct Exp $
+	$Id: pmove.c,v 1.20 2007-10-07 16:21:10 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -649,11 +649,11 @@ void PM_CheckWaterJump (void) {
 
 	VectorMA (pmove.origin, 24, flatforward, spot);
 	spot[2] += 8;
-	cont = PM_PointContents (spot);
+	cont = PM_PointContents_AllBSPs (spot);
 	if (cont != CONTENTS_SOLID)
 		return;
 	spot[2] += 24;
-	cont = PM_PointContents (spot);
+	cont = PM_PointContents_AllBSPs (spot);
 	if (cont != CONTENTS_EMPTY)
 		return;
 	// jump out of water
