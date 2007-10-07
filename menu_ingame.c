@@ -4,7 +4,7 @@
 
 	made by johnnycz, June 2007
 	last edit:
-	$Id: menu_ingame.c,v 1.3 2007-08-18 17:19:45 johnnycz Exp $
+	$Id: menu_ingame.c,v 1.4 2007-10-07 14:30:31 johnnycz Exp $
 
 */
 
@@ -28,6 +28,8 @@ void MIng_Observe(void)			{ Cbuf_AddText("observe\n"); }
 void MDemoCtrl_DemoBrowser(void){ Cbuf_AddText("menu_demos\n"); }
 void MIng_Back(void)			{ M_LeaveMenus(); }
 void MDemoCtrl_SkipMinute(void)	{ Cbuf_AddText("demo_jump +1:00\n"); }
+void MIng_Disconnect(void)		{ Cbuf_AddText("disconnect\n"); }
+void MIng_Quit(void)			{ Cbuf_AddText("quit\n"); }
 
 setting ingame_menu_entries[] = {
 	ADDSET_SEPARATOR("In-game Menu"),
@@ -36,7 +38,9 @@ setting ingame_menu_entries[] = {
 	ADDSET_ACTION("Server Browser", MIng_ServerBrowser, ""),
 	ADDSET_ACTION("Options", MIng_Options, ""),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
-	ADDSET_ACTION("Return to game", MIng_Back, "")
+	ADDSET_ACTION("Return to game", MIng_Back, ""),
+	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
+	ADDSET_ACTION("Quit", MIng_Quit, "")
 };
 
 setting democtrl_menu_entries[] = {
@@ -44,7 +48,9 @@ setting democtrl_menu_entries[] = {
 	ADDSET_ACTION("Demo Browser", MDemoCtrl_DemoBrowser, ""),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
 	ADDSET_ACTION("Skip 1 minute", MDemoCtrl_SkipMinute, ""),
-	ADDSET_ACTION("Return to game", MIng_Back, "")
+	ADDSET_ACTION("Return to game", MIng_Back, ""),
+	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
+	ADDSET_ACTION("Quit", MIng_Quit, "")
 };
 
 void M_Ingame_Draw(void) {
