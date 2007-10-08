@@ -5,7 +5,7 @@
 #include "Ctrl.h"
 #include "Ctrl_Tab.h"
 #include "keys.h"
-
+#include "qsound.h"
 
 // initialize control
 void CTab_Init(CTab_t *tab)
@@ -184,27 +184,32 @@ int CTab_Key(CTab_t *tab, int key)
             {
 			case K_PGUP:
 			case K_MOUSE4:
+				S_LocalSound ("misc/menu1.wav");
                 tab->activePage--;
                 handled = true;
                 break;
 
 			case K_PGDN:
 			case K_MOUSE5:
+				S_LocalSound ("misc/menu1.wav");
                 tab->activePage++;
                 handled = true;
                 break;
 
 			case K_LEFTARROW:
+				S_LocalSound ("misc/menu1.wav");
 				tab->activePage--;
 				handled = true;
 				break;
 
 			case K_RIGHTARROW:
+				S_LocalSound ("misc/menu1.wav");
 				tab->activePage++;
 				handled = true;
 				break;
 
 			case K_TAB:
+				S_LocalSound ("misc/menu1.wav");
 				if (isShiftDown()) tab->activePage--; else tab->activePage++;
 				handled = true;
 				break;

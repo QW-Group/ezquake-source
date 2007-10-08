@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.84 2007-09-24 19:43:22 himan Exp $
+		$Id: menu_options.c,v 1.85 2007-10-08 21:40:01 johnnycz Exp $
 
 */
 
@@ -689,6 +689,7 @@ void MOpt_LoadScript(void) {
 }
 
 void MOpt_CfgSaveAllOn(void) {
+	S_LocalSound("misc/basekey.wav");
 	Cvar_SetValue(&cfg_backup, 1);
 	Cvar_SetValue(&cfg_legacy_exec, 1);
 	Cvar_SetValue(&cfg_legacy_write, 0);
@@ -704,8 +705,14 @@ void MOpt_CfgSaveAllOn(void) {
 const char* MOpt_legacywrite_enum[] = { "off", "non-qw dir frontend.cfg", "also config.cfg", "non-qw config.cfg" };
 const char* MOpt_userinfo_enum[] = { "off", "all but player", "all" };
 
-void MOpt_LoadCfg(void) { Cbuf_AddText("cfg_load\n"); }
-void MOpt_SaveCfg(void) { Cbuf_AddText("cfg_save\n"); }
+void MOpt_LoadCfg(void) {
+	S_LocalSound("misc/basekey.wav");
+	Cbuf_AddText("cfg_load\n");
+}
+void MOpt_SaveCfg(void) { 
+	S_LocalSound("doors/runeuse.wav");
+	Cbuf_AddText("cfg_save\n");
+}
 
 settings_page settconfig;
 
