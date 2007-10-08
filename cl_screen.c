@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.147 2007-10-08 22:03:16 johnnycz Exp $
+$Id: cl_screen.c,v 1.148 2007-10-08 23:02:41 johnnycz Exp $
 */
 
 /// declarations may be found in screen.h
@@ -167,6 +167,8 @@ cvar_t  scr_teaminfo_name_width	 = {"scr_teaminfo_name_width",  "6",  CVAR_ARCHI
 cvar_t	scr_teaminfo_low_health	 = {"scr_teaminfo_low_health",  "10", CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_armor_style = {"scr_teaminfo_armor_style", "3",  CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","0",  CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_show_enemies= {"scr_teaminfo_show_enemies","0",  CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "0",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1",  CVAR_ARCHIVE};
 
 #endif
@@ -1683,9 +1685,15 @@ static void SCR_Draw_TeamInfo(void)
 	for ( maxloc = maxname = slots_num = i = 0; i < MAX_CLIENTS; i++ ) {
 		if ( !cl.players[i].name[0] || cl.players[i].spectator
 				|| !ti_clients[i].time || ti_clients[i].time + TI_TIMEOUT < r_refdef2.time
-		 		|| VX_TrackerIsEnemy( i ) // not on our team
-				|| (cl.spectator && Cam_TrackNum() == i) // do not show to spec tracked player
 		 	)
+			continue;
+
+		// do not show enemy players unless it's MVD and user wishes to show them
+		if (VX_TrackerIsEnemy( i ) && (!cls.mvdplayback || !scr_teaminfo_show_enemies.integer))
+				continue;
+
+		// do not show tracked player to spectator
+		if ((cl.spectator && Cam_TrackNum() == i) && !(scr_teaminfo_show_self.integer))
 			continue;
 
 		// dynamically guess max length of name/location
@@ -3762,6 +3770,8 @@ void SCR_Init (void)
 	Cvar_Register (&scr_teaminfo_low_health);
 	Cvar_Register (&scr_teaminfo_armor_style);
 	Cvar_Register (&scr_teaminfo_weapon_style);
+	Cvar_Register (&scr_teaminfo_show_enemies);
+	Cvar_Register (&scr_teaminfo_show_self);
 	Cvar_Register (&scr_teaminfo);
 #endif
 	Cvar_Register (&scr_coloredText);
