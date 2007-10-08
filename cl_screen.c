@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.146 2007-10-07 11:14:14 johnnycz Exp $
+$Id: cl_screen.c,v 1.147 2007-10-08 22:03:16 johnnycz Exp $
 */
 
 /// declarations may be found in screen.h
@@ -1391,12 +1391,13 @@ void DrawCI (void) {
 /********************************* q3 like team info *****************************/
 
 // team info
+#define TEAMINFO_NICKLEN 5
 typedef struct ti_player_s {
 	vec3_t		org;
 	int			items;
 	int			health;
 	int			armor;
-	char		nick[4 + 1]; // yeah, nick is nick, must be short
+	char		nick[TEAMINFO_NICKLEN]; // yeah, nick is nick, must be short
 	double		time; // when we recive last update about this player, so we can guess disconnects and etc
 
 } ti_player_t;
@@ -1770,7 +1771,7 @@ void Parse_TeamInfo(char *s)
 	ti_clients[ client ].health = atoi( Cmd_Argv( 5 ) );
 	ti_clients[ client ].armor  = atoi( Cmd_Argv( 6 ) );
 	ti_clients[ client ].items  = atoi( Cmd_Argv( 7 ) );
-	strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), sizeof(ti_clients[ 0 ].nick) ); // nick is optional
+	strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), TEAMINFO_NICKLEN); // nick is optional
 }
 
 void Update_TeamInfo()
@@ -1797,7 +1798,7 @@ void Update_TeamInfo()
 		ti_clients[i].health = st[STAT_HEALTH];
 		ti_clients[i].armor = st[STAT_ARMOR];
 		ti_clients[i].items = st[STAT_ITEMS];
-		strlcpy(ti_clients[i].nick, cl.players[i].name, sizeof(ti_clients[0].nick));
+		strlcpy(ti_clients[i].nick, cl.players[i].name, TEAMINFO_NICKLEN);
 	}
 }
 
