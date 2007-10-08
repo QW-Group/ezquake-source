@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_os.c,v 1.9 2007-10-05 19:06:26 johnnycz Exp $
+ * $Id: vfs_os.c,v 1.10 2007-10-08 14:49:33 dkure Exp $
  *             
  */
 
@@ -53,7 +53,6 @@ qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return fseek(intfile->handle, pos, whence);
-	//return fseek(intfile->handle, pos, SEEK_SET) == 0;
 }
 
 unsigned long VFSOS_Tell (struct vfsfile_s *file)
