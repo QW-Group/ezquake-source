@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.7 2007-10-05 19:06:26 johnnycz Exp $
+ * $Id: vfs_zip.c,v 1.8 2007-10-08 14:46:51 dkure Exp $
  *             
  */
 
@@ -201,6 +201,8 @@ int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfs
 //		}
 //		read = VFS_READ(vfsz->parent->raw, buffer, bytestoread, err);
 //	}
+	if (err)
+		*err = ((read || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
 
 	vfsz->pos += read;
 	return read;
@@ -530,10 +532,6 @@ void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc)
 	return zip;
 
 fail:
-	if (zip->handle) {
-		VFS_CLOSE(zip->handle);
-	}
-
 	// Q_free is safe to call on NULL pointers
 	Q_free(zip->files);
 	Q_free(zip);
