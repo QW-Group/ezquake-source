@@ -111,6 +111,8 @@ COMMON_C_FILES := \
 	vfs_tcp \
 	vfs_gzip \
 	vfs_doomwad \
+	vfs_mmap \
+	vfs_tar \
 	hash \
 	host \
 	mathlib \
