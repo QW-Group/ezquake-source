@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.11 2007-10-08 14:48:28 dkure Exp $
+ * $Id: vfs_pak.c,v 1.12 2007-10-08 15:26:19 dkure Exp $
  *             
  */
 
@@ -110,30 +110,29 @@ qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
 	return fseek(vfsp->handle, vfsp->currentpos, whence);
 }
 #else
-qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
+qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 
 	// VFS-FIXME Support other whence types
 	switch(whence) {
 	case SEEK_SET: 
-		vfst->currentpos = vfst->startpos + offset; 
+		vfsp->currentpos = vfsp->startpos + offset; 
 		break;
 	case SEEK_CUR: 
-		vfst->currentpos += offset; 
+		vfsp->currentpos += offset; 
 		break;
 	case SEEK_END: 
-		vfst->currentpos = vfst->startpos + vfst->length + offset;
+		vfsp->currentpos = vfsp->startpos + vfsp->length + offset;
 		break;
 	default:
 		Sys_Error("VFSTAR_Seek: Unknown whence value(%d)\n", whence);
 		return -1;
 	}
 
-	if (pos > vfsp->length) {
+	if (vfsp->currentpos > vfsp->length) {
 		Com_Printf("VFSPAK_Seek: Warning seeking past the file's size");
 	}
-	vfsp->currentpos = pos + vfsp->startpos;
 
 	return false;
 }
