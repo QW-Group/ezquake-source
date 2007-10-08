@@ -1185,9 +1185,11 @@
 				<File
 					RelativePath="..\..\vfs_zip.c"
 					>
+				</File>
 				<File
 					RelativePath="..\..\vfs_mmap.c"
 					>
+				</File>
 				<File
 					RelativePath="..\..\vfs_tar.c"
 					>
