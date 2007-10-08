@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.10 2007-10-07 11:16:16 borisu Exp $
+ * $Id: vfs_pak.c,v 1.11 2007-10-08 14:48:28 dkure Exp $
  *             
  */
 
@@ -86,13 +86,15 @@ int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfse
 	vfsp->currentpos += read;
 	vfsp->parentpak->filepos = vfsp->currentpos;
 
+	// VFS-FIXME: Need to handle errors
+
 	return read;
 }
 #endif // WITH_FTE_VFS
 
 int VFSPAK_WriteBytes (struct vfsfile_s *vfs, const void *buffer, int bytestoread)
 {	//not supported.
-	Sys_Error("Cannot write to pak files");
+	Sys_Error("VFSPAK_WriteBytes: Cannot write to pak files");
 	return 0;
 }
 
@@ -111,8 +113,26 @@ qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
 qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
-	if (pos > vfsp->length)
-		return true;
+
+	// VFS-FIXME Support other whence types
+	switch(whence) {
+	case SEEK_SET: 
+		vfst->currentpos = vfst->startpos + offset; 
+		break;
+	case SEEK_CUR: 
+		vfst->currentpos += offset; 
+		break;
+	case SEEK_END: 
+		vfst->currentpos = vfst->startpos + vfst->length + offset;
+		break;
+	default:
+		Sys_Error("VFSTAR_Seek: Unknown whence value(%d)\n", whence);
+		return -1;
+	}
+
+	if (pos > vfsp->length) {
+		Com_Printf("VFSPAK_Seek: Warning seeking past the file's size");
+	}
 	vfsp->currentpos = pos + vfsp->startpos;
 
 	return false;
@@ -305,7 +325,7 @@ int FSPAK_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, vo
 
 /*
 =================
-COM_LoadPackFile
+FSPAK_LoadPackFile
 
 Takes an explicit (not game tree related) path to a pak file.
 
@@ -350,7 +370,7 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 //		com_modified = true;	// not the original file
 
 	// VFS-FIXME: This probably can be malloc, just being extra safe here
-	newfiles = (packfile_t*)Q_calloc (numpackfiles, sizeof(packfile_t));
+	newfiles = (packfile_t*)Q_malloc (numpackfiles * sizeof(packfile_t));
 
 	VFS_SEEK(packhandle, header.dirofs, SEEK_SET);
 //	fread (&info, 1, header.dirlen, packhandle);
