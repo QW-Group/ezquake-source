@@ -571,8 +571,7 @@ void Reload_Sources(void)
         if (q-p <= 0)
             continue;
 
-        strlcpy (s->name, p, min(q-p, sizeof (s->name)));
-        s->name[min(q-p, MAX_SOURCE_NAME)] = 0;
+        strlcpy (s->name, p, min(q-p+1, MAX_SOURCE_NAME+1));
 
         p = next_nonspace(q+1);
         q = next_space(p);
