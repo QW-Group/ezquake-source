@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.49 2007-10-07 05:11:20 disconn3ct Exp $
+	$Id: fs.c,v 1.50 2007-10-08 15:11:27 dkure Exp $
 */
 
 /**
@@ -163,6 +163,7 @@ void FS_Locate_f (void);
 
 // VFS-FIXME: Debug file for trying to open files
 static void FS_OpenFile_f(void);
+static void FS_DiffFile_f(void);
 
 #endif /* WITH_FTE_VFS */
 //============================================================================
@@ -1375,15 +1376,51 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 }
 #else 
 
-/*
-================
-FS_OpenVFS
+#ifdef WITH_VFS_ARCHIVE_LOADING
+/* ===================
+ * FS_BreakUpArchivePath
+ * ===================
+ * Given the following path /opt/zip1.zip/zip2.zip/file
+ * ext     = "zip"
+ * archive = "/opt/zip1.zip/zip2.zip"
+ * inside  = "file"
+ *
+ * Return = true if the files contain a 
+ * file inside an archive otherwise false
+ */
+int FS_BreakUpArchivePath(const char *filename, char *ext, size_t ext_len,
+		char *archive, size_t archive_len,
+		char *inside, size_t inside_len) {
+	int i;
+	int first_slash = 0;
+	int first_dot   = 0;
 
-This should be how all files are opened, will either give a valid vfsfile_t
-or NULL. We first check the home directory for the file first, if not found 
-we try the basedir.
-================
-*/
+	for (i = strlen(filename); i >= 0; i--) {
+		if (filename[i] == '/') {
+			first_slash = i;
+		} else if (first_slash && filename[i] == '.') {
+			first_dot = i;
+			break;
+		}
+	}
+	if (i == -1)
+		return 0;
+
+	strlcpy(inside, filename+first_slash+1, inside_len);
+	strlcpy(archive, filename, min(first_slash+1, archive_len)); // +1 room for \0
+	strlcpy(ext, filename+first_dot+1, min((first_slash-1 - first_dot+1), ext_len));
+
+	return 1;
+}
+#endif // WITH_VFS_ARCHIVE_LOADING
+
+/* ================
+ * FS_OpenVFS
+ * ================
+ * This should be how all files are opened, will either give a valid vfsfile_t
+ * or NULL. We first check the home directory for the file first, if not found 
+ * we try the basedir.
+ */
 // VFS-XXX: This is very similar to FS_OpenVFS in fs.c
 // VFS-FIXME: Clean up this function to reduce the relativeto options 
 vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
@@ -1391,9 +1428,6 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 	char fullname[MAX_OSPATH];
 	flocation_t loc;
 	vfsfile_t *vfs;
-
-
-	// VFS-FIXME: Need to find the extension of the file so we know what function to use to open it
 
 	//blanket-bans - Avoid combination of / & \ for directories
 	if (Sys_PathProtection(filename)) 
@@ -1404,6 +1438,47 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 			if (strcmp(mode, "ab"))
 				return NULL; //urm, unable to write/append
 
+#if WITH_VFS_ARCHIVE_LOADING
+	/* This allows opening of files with paths like
+     * file.zip/file_inside_zip.qwd */
+	{
+		int r;
+		char ext[MAX_OSPATH], archive[MAX_OSPATH], inside[MAX_OSPATH];
+		r = FS_BreakUpArchivePath(filename, ext, sizeof(ext),
+				archive, sizeof(archive),
+				inside,  sizeof(inside));
+		if (r) { 
+			searchpathfuncs_t *funcs;
+			void *file_handle;
+
+			vfs = FS_OpenVFS(archive, mode, relativeto);
+			if (!vfs)
+				return NULL;
+
+			/* TODO: Place this in a function */
+			if (strcmp(ext, "zip") == 0 || strcmp(ext, "pak") == 0) {
+				funcs = &zipfilefuncs;
+			} else if (strcmp(ext, "pak") == 0) {
+				funcs = &packfilefuncs;
+			} else if (strcmp(ext, "tar") == 0) {
+				funcs = &tarfilefuncs;
+			} else {
+				funcs = NULL;
+			}
+
+			if (funcs != NULL) {
+				file_handle = funcs->OpenNew(vfs, archive);
+				if (!file_handle)
+					return NULL;
+				if (!funcs->FindFile(file_handle, &loc, inside, NULL)) 
+					return NULL;
+				return funcs->OpenVFS(file_handle, &loc, mode);
+			}
+		}
+	}
+#endif // WITH_VFS_ARCHIVE_LOADING
+
+	/* General opening of files */
 	switch (relativeto)
 	{
 	case FS_NONE_OS: 	//OS access only, no paks, open file as is
@@ -2354,7 +2429,8 @@ void FS_InitModuleFS (void)
 	Com_Printf("Initialising standard quake filesystem\n");
 #else
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
-	Cmd_AddCommand("fs_openfile", FS_OpenFile_f); // VFS-FIXME <-- Only a debug function
+	Cmd_AddCommand("fs_openfile", FS_OpenFile_f); 	// VFS-FIXME <-- Only a debug function
+	Cmd_AddCommand("fs_diff", FS_DiffFile_f); 		// VFS-FIXME <-- Only a debug function
 	Cmd_AddCommand("dir", FS_Dir_f);
 	Cmd_AddCommand("locate", FS_Locate_f);
 	Cvar_Register(&fs_cache);
@@ -3519,6 +3595,77 @@ static void FS_OpenFile_f(void) {
 		}
 	}
 }
+
+// ===============
+// FS_DiffFile_f
+// ===============
+// Premitive compare of two files
+// This allows verifing of the VFS
+// just use at a quake conosle fs_diff <file1> <file2>
+// where file1 is a OS based file & file2 is a file
+// placed in a zip, gzip, pak, pk3 etc
+static void FS_DiffFile_f(void) 
+{
+	char buf1[CHUNK], buf2[CHUNK];
+	char *filename1, *filename2;
+	vfsfile_t *file1, *file2;
+	vfserrno_t err1, err2;
+	int differences = 0;
+	int bytes_read1, bytes_read2, bytes_total = 0;
+
+	if (Cmd_Argc() != 3) {
+		Com_Printf("Usage: %s filename1 filename2\n", Cmd_Argv(0));
+		return;
+	}
+	
+	filename1 = Cmd_Argv(1);
+	filename2 = Cmd_Argv(2);
+
+	file1 = FS_OpenVFS(filename1, "rb", FS_NONE_OS);
+	if (file1 == NULL) {
+		Com_Printf("Unable to open %s\n", filename1);
+		return;
+	}
+	file2 = FS_OpenVFS(filename2, "rb", FS_NONE_OS);
+	if (file2 == NULL) {
+		Com_Printf("Unable to open %s\n", filename2);
+		return;
+	}
+
+	do {
+		int i;
+		bytes_read1 = VFS_READ(file1, buf1, sizeof(buf1), &err1);
+		bytes_read2 = VFS_READ(file2, buf2, sizeof(buf2), &err2);
+
+		if (bytes_read1 != bytes_read2) {
+			Com_Printf("%s: Filesizes seem different, assuming files differ\n", Cmd_Argv(0));
+			differences = 1;
+			goto end;
+		}
+
+		/* Check the bytes read */
+		for (i = 0; i < bytes_read1; i++, bytes_total) {
+			if (buf1[i] != buf2[i]) {
+				differences = 1;
+				goto end;
+			}
+		}
+	} while (err1 != VFSERR_EOF && err2 != VFSERR_EOF);
+
+	if (err1 != err2) {
+		differences = 1;
+	} 
+
+end:
+	if (!differences) {
+		Com_Printf("%s & %s match\n", filename1, filename2);
+	} else {
+		Com_Printf("%s & %s differ on byte %d\n", filename1, filename2, bytes_total);
+	}
+	VFS_CLOSE(file1);
+	VFS_CLOSE(file2);
+}
+
 #endif // WITH_FTE_VFS DEBUG_FUNCTION
 
 
