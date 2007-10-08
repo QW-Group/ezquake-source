@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.7 2007-10-05 19:06:25 johnnycz Exp $
+ * $Id: vfs.h,v 1.8 2007-10-08 14:58:55 dkure Exp $
  *             
  */
 
@@ -139,7 +139,9 @@ typedef struct
 	int     dirlen;
 } dpackheader_t;
 
-// Pack (*.pak) - VFS Functions
+//=====================================
+// PACK (*.pak) - VFS Functions
+//=====================================
 int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err);
 int VFSPAK_WriteBytes (struct vfsfile_s *vfs, const void *buffer, int bytestoread);
 qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence);
@@ -152,7 +154,9 @@ vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode);
 vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode);
 #endif // WITH_FTE_VFS
 
-// Pack (*.pak) - Search Functions
+//=====================================
+// PACK (*.pak) - Search Functions
+//=====================================
 #ifdef WITH_FTE_VFS
 void FSPAK_PrintPath(void *handle);
 void FSPAK_ClosePath(void *handle);
@@ -164,9 +168,10 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc);
 extern searchpathfuncs_t packfilefuncs;
 #endif // WITH_FTE_VFS
 
-// Zip files (*.zip, *.pk3)
 #ifdef WITH_ZIP
-// Zip (*.zip, *.pk3) - VFS Functions
+//=====================================
+// ZIP (*.zip, *.pk3) - VFS Functions
+//=====================================
 int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
 int VFSZIP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestoread);
 qbool VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence);
@@ -175,7 +180,9 @@ unsigned long VFSZIP_GetLen (struct vfsfile_s *file);
 void VFSZIP_Close (struct vfsfile_s *file);
 vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode);
 	
-// Zip (*.zip, *.pk3) - Search Functions
+//=====================================
+// ZIP (*.zip, *.pk3) - Search Functions
+//=====================================
 void FSZIP_PrintPath(void *handle);
 void FSZIP_ClosePath(void *handle);
 void FSZIP_BuildHash(void *handle);
@@ -185,7 +192,9 @@ int FSZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, vo
 
 extern searchpathfuncs_t zipfilefuncs;
 
-// Zip (*.zip, *.pk3) - Misc
+//=============================
+// ZIP (*.zip, *.pk3) - Misc
+//=============================
 void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc);
 int FSZIP_GeneratePureCRC(void *handle, int seed, int crctype);
 #endif // WITH_ZIP
@@ -218,7 +227,15 @@ vfsfile_t *VFSGZIP_Open(vfsfile_t *file, char *desc);
 #endif // WITH_VFS_GZIP
 #endif // WITH_ZLIB
 
-// Doomwad
+
+//=====================================
+// TAR (*.tar) Support - VFS Functions
+//=====================================
+extern searchpathfuncs_t tarfilefuncs;
+
+//=====================================
+// Doomwad Support - Search Functions
+//=====================================
 extern searchpathfuncs_t doomwadfilefuncs;
 
 #endif /* __VFS_H__ */
