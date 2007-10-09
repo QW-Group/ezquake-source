@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.85 2007-10-04 14:56:54 dkure Exp $
+	$Id: menu.c,v 1.86 2007-10-09 10:50:02 dkure Exp $
 
 */
 
@@ -889,15 +889,16 @@ void M_ScanSaves (char *sp_gamedir) {
 		strlcpy (m_filenames[i], "--- UNUSED SLOT ---", SAVEGAME_COMMENT_LENGTH + 1);
 		loadable[i] = false;
 
-		snprintf (name, sizeof(name), "%s/save/s%i.sav", sp_gamedir, i);
 #ifndef WITH_FTE_VFS
+		snprintf (name, sizeof(name), "%s/save/s%i.sav", sp_gamedir, i);
 		if (!(f = fopen (name, "r")))
 			continue;
 		fscanf (f, "%i\n", &version);
 		fscanf (f, "%79s\n", name);
 		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
 #else
-		if (!(f = FS_OpenVFS(name, "rb", FS_ANY)))
+		snprintf (name, sizeof(name), "save/s%i.sav", i);
+		if (!(f = FS_OpenVFS(name, "rb", FS_GAME_OS)))
 			continue;
 		VFS_GETS(f, name, sizeof(name));
 		version = atoi(name);
