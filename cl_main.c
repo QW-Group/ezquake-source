@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.189 2007-10-04 14:56:55 dkure Exp $
+$Id: cl_main.c,v 1.190 2007-10-10 13:01:09 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -443,21 +443,40 @@ void CL_BeginServerConnect(void) {
 	CL_CheckForResend();
 }
 
-void CL_Connect_f (void) {
+void CL_Connect_f (void) 
+{
 	qbool proxy;
+	char *server_name = NULL;
 
-	if (Cmd_Argc() != 2) {
+	if (Cmd_Argc() != 2) 
+	{
 		Com_Printf ("Usage: %s <server>\n", Cmd_Argv(0));
 		return;
 	}
 
+	// If the string starts with qws:// we strip that first.
+	{
+		char qws_str[] = "qws://";
+		int qws_len	= sizeof(qws_str) - 1;
+
+		server_name = Cmd_Argv(1);
+
+		if (!strncasecmp(qws_str, server_name, qws_len))
+		{
+			server_name += qws_len;
+		}
+	}
+
 	proxy = cl_useproxy.value && CL_ConnectedToProxy();
 
-	if (proxy) {
-		Cbuf_AddText(va("say ,connect %s", Cmd_Argv(1)));
-	} else {
+	if (proxy)
+	{
+		Cbuf_AddText(va("say ,connect %s", server_name));
+	} 
+	else
+	{
 		Host_EndGame();
-		strlcpy(cls.servername, Cmd_Argv (1), sizeof(cls.servername));
+		strlcpy(cls.servername, server_name, sizeof(cls.servername));
 		CL_BeginServerConnect();
 	}
 }
@@ -1587,7 +1606,11 @@ void CL_Frame (double time) {
 		{
 			MVD_Interpolate();
 			MVD_Mainhook_f();
-			StatsGrid_Gather();
+			
+			if (!cl.standby)
+			{
+				StatsGrid_Gather();
+			}
 		}
 
 		// process stuffed commands
@@ -1634,7 +1657,11 @@ void CL_Frame (double time) {
 			{
 				MVD_Interpolate();
 				MVD_Mainhook_f();
-				StatsGrid_Gather();
+			
+				if (!cl.standby)
+				{
+					StatsGrid_Gather();
+				}
 			}
 
 			// process stuffed commands
