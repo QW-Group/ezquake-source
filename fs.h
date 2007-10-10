@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.12 2007-10-06 08:15:28 dkure Exp $
+    $Id: fs.h,v 1.13 2007-10-10 17:34:29 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -73,9 +73,6 @@ void			VFS_TICK   (void);  // fill in/out our internall buffers
 									// (do read/write on socket)
 vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle);
 
-// open some temp VFS file, which actually result from tmpfile() at least 
-// when i commenting this
-vfsfile_t *FS_OpenTemp(void);
 // some general function to open VFS file, except TCP
 vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto);
 // TCP VFS file
