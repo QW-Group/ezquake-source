@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.12 2007-10-08 15:26:19 dkure Exp $
+ * $Id: vfs_pak.c,v 1.13 2007-10-10 17:30:42 dkure Exp $
  *             
  */
 
@@ -23,6 +23,34 @@
 #include "common.h"
 #include "fs.h"
 #include "vfs.h"
+
+// on disk
+typedef struct pack_s
+{
+	char    filename[MAX_OSPATH];
+	vfsfile_t    *handle;
+	unsigned int filepos;   // the pos the subfiles left it at 
+							// (to optimize calls to vfs_seek)
+	int references;         // seeing as all vfiles from a pak file use the 
+							// parent's vfsfile, we need to keep the parent 
+							// open until all subfiles are closed.
+
+	int     numfiles;
+	packfile_t  *files;
+} pack_t;
+
+typedef struct
+{
+	char    name[56];
+	int     filepos, filelen;
+} dpackfile_t;
+
+typedef struct
+{
+	char    id[4];
+	int     dirofs;
+	int     dirlen;
+} dpackheader_t;
 
 typedef struct {
     vfsfile_t funcs; // <= must be at top/begining of struct
@@ -44,7 +72,7 @@ typedef struct {
 //PACK files (*.pak) - VFS functions
 //=====================================
 #ifndef WITH_FTE_VFS
-int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
+static int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 	unsigned long have = vfsp->length - (vfsp->currentpos - vfsp->startpos);
@@ -68,7 +96,7 @@ int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfse
 	return r;
 }
 #else
-int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
+static int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 	int read;
@@ -92,14 +120,14 @@ int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfse
 }
 #endif // WITH_FTE_VFS
 
-int VFSPAK_WriteBytes (struct vfsfile_s *vfs, const void *buffer, int bytestoread)
+static int VFSPAK_WriteBytes (struct vfsfile_s *vfs, const void *buffer, int bytestoread)
 {	//not supported.
 	Sys_Error("VFSPAK_WriteBytes: Cannot write to pak files");
 	return 0;
 }
 
 #ifndef WITH_FTE_VFS
-qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
+static qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 
@@ -110,7 +138,7 @@ qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
 	return fseek(vfsp->handle, vfsp->currentpos, whence);
 }
 #else
-qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
+static qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 
@@ -138,19 +166,19 @@ qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 }
 #endif /* FS_FTE */
 
-unsigned long VFSPAK_Tell (struct vfsfile_s *vfs)
+static unsigned long VFSPAK_Tell (struct vfsfile_s *vfs)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 	return vfsp->currentpos - vfsp->startpos;
 }
 
-unsigned long VFSPAK_GetLen (struct vfsfile_s *vfs)
+static unsigned long VFSPAK_GetLen (struct vfsfile_s *vfs)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 	return vfsp->length;
 }
 #ifndef WITH_FTE_VFS
-void VFSPAK_Close(vfsfile_t *vfs)
+static void VFSPAK_Close(vfsfile_t *vfs)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 
@@ -158,7 +186,8 @@ void VFSPAK_Close(vfsfile_t *vfs)
 	Q_free(vfsp);	//free ourselves.
 }
 #else
-void VFSPAK_Close(vfsfile_t *vfs)
+static void FSPAK_ClosePath(void *handle);
+static void VFSPAK_Close(vfsfile_t *vfs)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 	FSPAK_ClosePath(vfsp->parentpak);	// tell the parent that we don't need it open any 
@@ -168,7 +197,7 @@ void VFSPAK_Close(vfsfile_t *vfs)
 #endif /* WITH_FTE_VFS */
 
 #ifndef WITH_FTE_VFS
-vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
+static vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 {
 	vfspack_t *vfs;
 
@@ -195,7 +224,7 @@ vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 
 #else
 
-vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
+static vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
 	pack_t *pack = (pack_t*)handle;
 	vfspack_t *vfs;
@@ -227,7 +256,7 @@ vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 // PACK files (*.pak) - Search functions
 //======================================
 #ifdef WITH_FTE_VFS
-void FSPAK_PrintPath(void *handle)
+static void FSPAK_PrintPath(void *handle)
 {
 	pack_t *pak = handle;
 
@@ -237,7 +266,7 @@ void FSPAK_PrintPath(void *handle)
 		Com_Printf("%s\n", pak->filename);
 }
 
-void FSPAK_ClosePath(void *handle)
+static void FSPAK_ClosePath(void *handle)
 {
 	pack_t *pak = handle;
 
@@ -250,7 +279,8 @@ void FSPAK_ClosePath(void *handle)
 		Q_free(pak->files);
 	Q_free(pak);
 }
-void FSPAK_BuildHash(void *handle)
+
+static void FSPAK_BuildHash(void *handle)
 {
 	pack_t *pak = handle;
 	int i;
@@ -266,7 +296,8 @@ void FSPAK_BuildHash(void *handle)
 			fs_hash_dups++;
 	}
 }
-qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
+
+static qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
 	packfile_t *pf = hashedresult;
 	int i, len;
@@ -305,7 +336,8 @@ qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename, void *
 	}
 	return false;
 }
-int FSPAK_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
+
+static int FSPAK_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
 {
 	pack_t	*pak = handle;
 	int		num;
@@ -332,11 +364,10 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
+static void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 {
 	dpackheader_t	header;
 	int				i;
-//	int				j;
 	packfile_t		*newfiles;
 	int				numpackfiles;
 	pack_t			*pack;
@@ -344,7 +375,6 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 	dpackfile_t		info;
 	int read;
 	vfserrno_t err;
-//	unsigned short		crc;
 
 	packhandle = file;
 	if (packhandle == NULL)
@@ -355,20 +385,15 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 	|| header.id[2] != 'C' || header.id[3] != 'K')
 	{
 		return NULL;
-//		Sys_Error ("%s is not a packfile", packfile);
 	}
 	header.dirofs = LittleLong (header.dirofs);
 	header.dirlen = LittleLong (header.dirlen);
 
 	numpackfiles = header.dirlen / sizeof(dpackfile_t);
 
-//	if (numpackfiles > MAX_FILES_IN_PACK)
-//		Sys_Error ("%s has %i files", packfile, numpackfiles);
-
 //	if (numpackfiles != PAK0_COUNT)
 //		com_modified = true;	// not the original file
 
-	// VFS-FIXME: This probably can be malloc, just being extra safe here
 	newfiles = (packfile_t*)Q_malloc (numpackfiles * sizeof(packfile_t));
 
 	VFS_SEEK(packhandle, header.dirofs, SEEK_SET);
@@ -411,6 +436,8 @@ void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 	Com_Printf("Added packfile %s (%i files)\n", desc, numpackfiles);
 	return pack;
 }
+
+void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer);
 
 searchpathfuncs_t packfilefuncs = {
 	FSPAK_PrintPath,

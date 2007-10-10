@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_mmap.c,v 1.1 2007-10-08 15:02:27 dkure Exp $
+ * $Id: vfs_mmap.c,v 1.2 2007-10-10 17:30:43 dkure Exp $
  *             
  */
 
@@ -41,7 +41,7 @@ typedef struct {
 	size_t size;
 } vfsmmapfile_t;
 
-int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err) 
+static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
@@ -61,7 +61,7 @@ int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t
 	return bytestoread;
 }
 
-int VFSMMAP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite) 
+static int VFSMMAP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
@@ -81,7 +81,7 @@ int VFSMMAP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite)
 	return bytestowrite;
 }
 
-qbool VFSMMAP_Seek(vfsfile_t *file, unsigned long offset, int whence) 
+static qbool VFSMMAP_Seek(vfsfile_t *file, unsigned long offset, int whence) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
@@ -98,21 +98,21 @@ qbool VFSMMAP_Seek(vfsfile_t *file, unsigned long offset, int whence)
 	return 0;
 }
 
-unsigned long VFSMMAP_Tell(vfsfile_t *file) 
+static unsigned long VFSMMAP_Tell(vfsfile_t *file) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
 	return intfile->position;
 }
 
-unsigned long VFSMMAP_GetLen(vfsfile_t *file) 
+static unsigned long VFSMMAP_GetLen(vfsfile_t *file) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 	
 	return intfile->size;
 }
 
-void VFSMMAP_Close(vfsfile_t *file) 
+static void VFSMMAP_Close(vfsfile_t *file) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
@@ -120,7 +120,7 @@ void VFSMMAP_Close(vfsfile_t *file)
 	free(intfile);
 }
 
-void VFSMMAP_Flush(vfsfile_t *file) 
+static void VFSMMAP_Flush(vfsfile_t *file) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
@@ -128,7 +128,7 @@ void VFSMMAP_Flush(vfsfile_t *file)
 	Sys_Error("VFSMMAP_Flush: Invalid operation\n");
 }
 
-vfsfile_t *VFSMMAP_Open(vfsfile_t *file, char *desc) 
+static vfsfile_t *FSMMAP_OpenVFS(vfsfile_t *file, char *desc) 
 {
 	vfsmmapfile_t *mmapfile = Q_calloc(1, sizeof(*mmapfile));
 

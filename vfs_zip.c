@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.8 2007-10-08 14:46:51 dkure Exp $
+ * $Id: vfs_zip.c,v 1.9 2007-10-10 17:30:43 dkure Exp $
  *             
  */
 
@@ -96,7 +96,7 @@ static int FSZIP_ZErrorFileFile(void *fin, void *stream) {
 	return 0;
 }
 
-zlib_filefunc_def *FSZIP_CreteFileFuncs(vfsfile_t *packhandle) {
+static zlib_filefunc_def *FSZIP_CreteFileFuncs(vfsfile_t *packhandle) {
 	zlib_filefunc_def *funcs;
 	funcs = Q_malloc(sizeof(*funcs));
 	if (funcs == NULL)
@@ -176,7 +176,7 @@ static void VFSZIP_MakeActive(vfszip_t *vfsz)
 	vfsz->parent->currentfile = (vfsfile_t*)vfsz;
 }
 
-int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
+static int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	int read;
 	vfszip_t *vfsz = (vfszip_t*)file;
@@ -208,14 +208,14 @@ int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfs
 	return read;
 }
 
-int VFSZIP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestoread)
+static int VFSZIP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestoread)
 {
 	Sys_Error("VFSZIP_WriteBytes: Not supported\n");
 	return 0;
 }
 
 // VFS-FIXME: What is going on here... why not just unzSetOffset
-qbool VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
+static qbool VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	vfszip_t *vfsz = (vfszip_t*)file;
 
@@ -273,7 +273,7 @@ qbool VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 	return false;
 }
 
-unsigned long VFSZIP_Tell (struct vfsfile_s *file)
+static unsigned long VFSZIP_Tell (struct vfsfile_s *file)
 {
 	vfszip_t *vfsz = (vfszip_t*)file;
 
@@ -283,13 +283,14 @@ unsigned long VFSZIP_Tell (struct vfsfile_s *file)
 	return vfsz->pos;
 }
 
-unsigned long VFSZIP_GetLen (struct vfsfile_s *file)
+static unsigned long VFSZIP_GetLen (struct vfsfile_s *file)
 {
 	vfszip_t *vfsz = (vfszip_t*)file;
 	return vfsz->length;
 }
 
-void VFSZIP_Close (struct vfsfile_s *file)
+static void FSZIP_ClosePath(void *handle);
+static void VFSZIP_Close (struct vfsfile_s *file)
 {
 	vfszip_t *vfsz = (vfszip_t*)file;
 
@@ -303,7 +304,7 @@ void VFSZIP_Close (struct vfsfile_s *file)
 	Q_free(vfsz);
 }
 
-vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
+static vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
 	//int rawofs;
 	zipfile_t *zip = handle;
@@ -348,7 +349,7 @@ vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 //=============================================
 // ZIP file  (*.zip, *.pk3) - Search Functions
 //=============================================
-void FSZIP_PrintPath(void *handle)
+static void FSZIP_PrintPath(void *handle)
 {
 	zipfile_t *zip = handle;
 
@@ -358,7 +359,7 @@ void FSZIP_PrintPath(void *handle)
 		Com_Printf("%s\n", zip->filename);
 }
 
-void FSZIP_ClosePath(void *handle)
+static void FSZIP_ClosePath(void *handle)
 {
 	zipfile_t *zip = handle;
 
@@ -370,7 +371,7 @@ void FSZIP_ClosePath(void *handle)
 		Q_free(zip->files);
 	Q_free(zip);
 }
-void FSZIP_BuildHash(void *handle)
+static void FSZIP_BuildHash(void *handle)
 {
 	zipfile_t *zip = handle;
 	int i;
@@ -387,7 +388,7 @@ void FSZIP_BuildHash(void *handle)
 	}
 }
 
-qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
+static qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
 	packfile_t *pf = hashedresult;
 	int i, len;
@@ -437,7 +438,7 @@ qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename, void *
 }
 
 
-void FSZIP_ReadFile(void *handle, flocation_t *loc, char *buffer)
+static void FSZIP_ReadFile(void *handle, flocation_t *loc, char *buffer)
 {
 	zipfile_t *zip = handle;
 	int err;
@@ -457,7 +458,7 @@ void FSZIP_ReadFile(void *handle, flocation_t *loc, char *buffer)
 }
 
 
-int FSZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
+static int FSZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
 {
 	zipfile_t *zip = handle;
 	int		num;
@@ -484,7 +485,7 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc)
+static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc)
 {
 	int i, r;
 
@@ -541,7 +542,7 @@ fail:
 }
 
 // VFS-FIXME: Don't really seem to know what this does
-int FSZIP_GeneratePureCRC(void *handle, int seed, int crctype)
+static int FSZIP_GeneratePureCRC(void *handle, int seed, int crctype)
 {
 	zipfile_t *zip = handle;
 	unz_file_info   file_info;

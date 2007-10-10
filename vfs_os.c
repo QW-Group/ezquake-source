@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_os.c,v 1.10 2007-10-08 14:49:33 dkure Exp $
+ * $Id: vfs_os.c,v 1.11 2007-10-10 17:30:43 dkure Exp $
  *             
  */
 
@@ -27,7 +27,7 @@
 //==================================
 // STDIO files (OS) - VFS Functions
 //==================================
-int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
+static int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	int r;
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
@@ -43,25 +43,25 @@ int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfse
 	return r;
 }
 
-int VFSOS_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite)
+static int VFSOS_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return fwrite(buffer, 1, bytestowrite, intfile->handle);
 }
 
-qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
+static qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return fseek(intfile->handle, pos, whence);
 }
 
-unsigned long VFSOS_Tell (struct vfsfile_s *file)
+static unsigned long VFSOS_Tell (struct vfsfile_s *file)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return ftell(intfile->handle);
 }
 
-unsigned long VFSOS_GetSize (struct vfsfile_s *file)
+static unsigned long VFSOS_GetSize (struct vfsfile_s *file)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 
@@ -77,7 +77,7 @@ unsigned long VFSOS_GetSize (struct vfsfile_s *file)
 	return maxlen;
 }
 
-void VFSOS_Close(vfsfile_t *file)
+static void VFSOS_Close(vfsfile_t *file)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	fclose(intfile->handle);
@@ -212,17 +212,17 @@ vfsfile_t *FSOS_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	return VFSOS_Open(diskname, mode);
 }
 
-void FSOS_PrintPath(void *handle)
+static void FSOS_PrintPath(void *handle)
 {
 	Com_Printf("%s\n", handle);
 }
 
-void FSOS_ClosePath(void *handle)
+static void FSOS_ClosePath(void *handle)
 {
 	Q_free(handle);
 }
 
-int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
+static int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
 {
 	if (filename[strlen(filename)-1] == '/')
 	{	//this is actually a directory
@@ -242,12 +242,12 @@ int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
 	return true;
 }
 
-void FSOS_BuildHash(void *handle)
+static void FSOS_BuildHash(void *handle)
 {
 	Sys_EnumerateFiles(handle, "*", FSOS_RebuildFSHash, handle);
 }
 
-qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
+static qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
 	FILE *f;
 	int len;
@@ -298,7 +298,7 @@ void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer)
 	fclose(f);
 }
 
-int FSOS_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
+static int FSOS_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
 {
 	return Sys_EnumerateFiles(handle, match, func, parm);
 }
@@ -314,5 +314,6 @@ searchpathfuncs_t osfilefuncs = {
 	NULL,
 	FSOS_OpenVFS
 };
+
 #endif // WITH_FTE_VFS
 

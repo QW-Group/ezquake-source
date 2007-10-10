@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_tar.c,v 1.2 2007-10-08 15:26:19 dkure Exp $
+ * $Id: vfs_tar.c,v 1.3 2007-10-10 17:30:43 dkure Exp $
  *             
  */
 
@@ -56,12 +56,9 @@ typedef struct
 	unsigned long currentpos;
 } vfstarfile_t;
 
-void FSTAR_ClosePath(void *handle);
-
-/* convert octal digits to int */
-/* on error return -1 */
-
-int getoct (char *p,int width)
+// convert octal digits to int
+// on error return -1
+static int getoct (char *p,int width)
 {
 	int result = 0;
 	char c;
@@ -88,7 +85,7 @@ int getoct (char *p,int width)
 //
 // -1 is returned on error
 
-int tarOperationIndexFiles(vfsfile_t *in, packfile_t *files) {
+static int tarOperationIndexFiles(vfsfile_t *in, packfile_t *files) {
 	// Tar vars
 	union  tar_buffer buffer;
 	int    len;
@@ -202,7 +199,7 @@ int tarOperationIndexFiles(vfsfile_t *in, packfile_t *files) {
 
 //=============================================================================
 
-int VFSTAR_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err) 
+static int VFSTAR_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err) 
 {
 	vfstarfile_t *vfst = (vfstarfile_t *)file;
 	int read;
@@ -230,13 +227,13 @@ int VFSTAR_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t 
 	return read;
 }
 
-int VFSTAR_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite) 
+static int VFSTAR_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite) 
 {
 	Sys_Error("VFSTAR_WriteBytes: Invalid operatioin\n");
 	return 0;
 }
 
-qbool VFSTAR_Seek(vfsfile_t *file, unsigned long offset, int whence) 
+static qbool VFSTAR_Seek(vfsfile_t *file, unsigned long offset, int whence) 
 {
 	vfstarfile_t *vfst = (vfstarfile_t *)file;
 
@@ -262,21 +259,22 @@ qbool VFSTAR_Seek(vfsfile_t *file, unsigned long offset, int whence)
 	return 0;
 }
 
-unsigned long VFSTAR_Tell(vfsfile_t *file) 
+static unsigned long VFSTAR_Tell(vfsfile_t *file) 
 {
 	vfstarfile_t *vfst = (vfstarfile_t *)file;
 
 	return vfst->currentpos - vfst->startpos;;
 }
 
-unsigned long VFSTAR_GetLen(vfsfile_t *file) 
+static unsigned long VFSTAR_GetLen(vfsfile_t *file) 
 {
 	vfstarfile_t *vfst = (vfstarfile_t *)file;
 	
 	return vfst->length;
 }
 
-void VFSTAR_Close(vfsfile_t *file) 
+static void FSTAR_ClosePath(void *handle);
+static void VFSTAR_Close(vfsfile_t *file) 
 {
 	vfstarfile_t *vfst = (vfstarfile_t *)file;
 
@@ -284,12 +282,12 @@ void VFSTAR_Close(vfsfile_t *file)
 	Q_free(vfst);
 }
 
-void VFSTAR_Flush(vfsfile_t *file) 
+static void VFSTAR_Flush(vfsfile_t *file) 
 {
 	Sys_Error("VFSTAR_Flush: Invalid operation\n");
 }
 
-vfsfile_t *VFSTAR_Open(void *handle, flocation_t *loc, char *mode) 
+static vfsfile_t *FSTAR_OpenVFS(void *handle, flocation_t *loc, char *mode) 
 {
 	tarfile_t *tar = (tarfile_t *) handle;
 	vfstarfile_t *vfst;
@@ -306,9 +304,8 @@ vfsfile_t *VFSTAR_Open(void *handle, flocation_t *loc, char *mode)
 	vfst->currentpos = vfst->startpos;
 
 	vfst->funcs.ReadBytes  = VFSTAR_ReadBytes;
-	vfst->funcs.WriteBytes = NULL; // VFSTAR_WriteBytes;
+	vfst->funcs.WriteBytes = VFSTAR_WriteBytes;
 	vfst->funcs.Seek       = VFSTAR_Seek;
-	vfst->funcs.seekingisabadplan = true;
 	vfst->funcs.Tell       = VFSTAR_Tell;
 	vfst->funcs.GetLen     = VFSTAR_GetLen;
 	vfst->funcs.Close      = VFSTAR_Close;
@@ -320,7 +317,7 @@ vfsfile_t *VFSTAR_Open(void *handle, flocation_t *loc, char *mode)
 //=============================================
 // TAR file  (*.tar) - Search Functions
 //=============================================
-void FSTAR_PrintPath(void *handle)
+static void FSTAR_PrintPath(void *handle)
 {
 	tarfile_t *tar = (tarfile_t *)handle;
 
@@ -329,7 +326,8 @@ void FSTAR_PrintPath(void *handle)
 	else
 		Com_Printf("%s\n", tar->filename);
 }
-void FSTAR_ClosePath(void *handle)
+
+static void FSTAR_ClosePath(void *handle)
 {
 	tarfile_t *tar = (tarfile_t *)handle;
 
@@ -342,7 +340,7 @@ void FSTAR_ClosePath(void *handle)
 	Q_free(tar);
 }
 
-void FSTAR_BuildHash(void *handle)
+static void FSTAR_BuildHash(void *handle)
 {
 	tarfile_t *tar = (tarfile_t *)handle;
 	int i;
@@ -359,7 +357,7 @@ void FSTAR_BuildHash(void *handle)
 	}
 }
 
-qbool FSTAR_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
+static qbool FSTAR_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
 	packfile_t *pf = hashedresult;
 	int i, len;
@@ -400,7 +398,7 @@ qbool FSTAR_FLocate(void *handle, flocation_t *loc, const char *filename, void *
 
 }
 
-void FSTAR_ReadFile(void *handle, flocation_t *loc, char *buffer)
+static void FSTAR_ReadFile(void *handle, flocation_t *loc, char *buffer)
 {
 	tarfile_t *tar = handle;
 	int err;
@@ -417,7 +415,7 @@ void FSTAR_ReadFile(void *handle, flocation_t *loc, char *buffer)
 	return;
 }
 
-int FSTAR_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
+static int FSTAR_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm)
 {
 	tarfile_t *tar = handle;
 	int     num;
@@ -442,7 +440,7 @@ int FSTAR_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, vo
 // Loads the header and directory, adding the files at the beginning
 // of the list so they override previous pack files.
 
-void *FSTAR_LoadTarFile(vfsfile_t *tarhandle, char *desc)
+static void *FSTAR_LoadTarFile(vfsfile_t *tarhandle, char *desc)
 {
 	tarfile_t *tar;
 
@@ -482,5 +480,5 @@ searchpathfuncs_t tarfilefuncs = {
 	FSTAR_EnumerateFiles,
 	FSTAR_LoadTarFile,
 	NULL, // VFS-FIXME: Might be used for f_modification
-	VFSTAR_Open 
+	FSTAR_OpenVFS 
 };

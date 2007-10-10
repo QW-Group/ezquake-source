@@ -14,17 +14,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.8 2007-10-08 14:58:55 dkure Exp $
+ * $Id: vfs.h,v 1.9 2007-10-10 17:30:43 dkure Exp $
  *             
  */
 
 #ifndef __VFS_H__
 #define __VFS_H__
 
+//=================================
 // Quake filesystem
-extern hashtable_t *filesystemhash; // VFS-FIXME: Should probably go in fs.h
-extern int fs_hash_dups;			// VFS-FIXME: Should probably go in fs.h
-extern int fs_hash_files;			// VFS-FIXME: Should probably go in fs.h
+//=================================
+extern hashtable_t *filesystemhash;
+extern int fs_hash_dups;		
+extern int fs_hash_files;		
 
 typedef struct {
 	struct searchpath_s *search;
@@ -54,9 +56,9 @@ typedef struct {
 	vfsfile_t *(*OpenVFS)(void *handle, flocation_t *loc, char *mode);
 } searchpathfuncs_t;
 
-//=================
+//=================================
 // STDIO Files (OS)
-//=================
+//=================================
 typedef struct {
 	vfsfile_t funcs; // <= must be at top/begining of struct
 
@@ -64,139 +66,37 @@ typedef struct {
 
 } vfsosfile_t;
 
-// Stdio (OS) Files - VFS functions
-int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
-int VFSOS_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite);
-qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence);
-unsigned long VFSOS_Tell (struct vfsfile_s *file);
-unsigned long VFSOS_GetSize (struct vfsfile_s *file);
-void VFSOS_Close(vfsfile_t *file);
-vfsfile_t *FS_OpenTemp(void);
 #ifndef WITH_FTE_VFS
 vfsfile_t *VFSOS_Open(char *name, FILE *f, char *mode);
-#else
-vfsfile_t *VFSOS_Open(char *osname, char *mode);
-#endif // WITH_FTE_VFS
 
-// Stdio (OS) Files - Search functions
-#ifdef WITH_FTE_VFS
-void FSOS_PrintPath(void *handle);
-void FSOS_ClosePath(void *handle);
-int FSOS_RebuildFSHash(char *filename, int filesize, void *data);
-void FSOS_BuildHash(void *handle);
-qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult);
-void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer);
-int FSOS_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm);
+#else
+vfsfile_t *FS_OpenTemp(void);
+vfsfile_t *VFSOS_Open(char *osname, char *mode);
 
 extern searchpathfuncs_t osfilefuncs;
 #endif
 
-//==================
-// PACK files (*pak)
-//==================
+//====================
+// PACK (*pak) Support
+//====================
 
 // in memory
+// VFS-FIXME: This is a bad name, it really is just a filename + offset....
 typedef struct
 {
 	char	name[MAX_QPATH];
 	int		filepos, filelen;
-
-#ifdef WITH_FTE_VFS
-//	bucket_t bucket;
-#endif
 } packfile_t;
 
-// on disk
-typedef struct pack_s
-{
-	char    filename[MAX_OSPATH];
-#ifndef WITH_FTE_VFS
-	FILE    *handle;
-#else
-	vfsfile_t    *handle;
-	unsigned int filepos;   // the pos the subfiles left it at 
-							// (to optimize calls to vfs_seek)
-	int references;         // seeing as all vfiles from a pak file use the 
-							// parent's vfsfile, we need to keep the parent 
-							// open until all subfiles are closed.
-
-#endif // WITH_FTE_VFS
-	int     numfiles;
-	packfile_t  *files;
-} pack_t;
-
-// on disk
-typedef struct
-{
-	char    name[56];
-	int     filepos, filelen;
-} dpackfile_t;
-
-typedef struct
-{
-	char    id[4];
-	int     dirofs;
-	int     dirlen;
-} dpackheader_t;
-
-//=====================================
-// PACK (*.pak) - VFS Functions
-//=====================================
-int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err);
-int VFSPAK_WriteBytes (struct vfsfile_s *vfs, const void *buffer, int bytestoread);
-qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence);
-unsigned long VFSPAK_Tell (struct vfsfile_s *vfs);
-unsigned long VFSPAK_GetLen (struct vfsfile_s *vfs);
-void VFSPAK_Close(vfsfile_t *vfs);
-#ifndef WITH_FTE_VFS
-vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode);
-#else
-vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode);
-#endif // WITH_FTE_VFS
-
-//=====================================
-// PACK (*.pak) - Search Functions
-//=====================================
 #ifdef WITH_FTE_VFS
-void FSPAK_PrintPath(void *handle);
-void FSPAK_ClosePath(void *handle);
-void FSPAK_BuildHash(void *handle);
-qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult);
-int FSPAK_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm);
-void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc);
-
 extern searchpathfuncs_t packfilefuncs;
 #endif // WITH_FTE_VFS
 
+//===========================
+// ZIP (*.zip, *.pk3) Support
+//===========================
 #ifdef WITH_ZIP
-//=====================================
-// ZIP (*.zip, *.pk3) - VFS Functions
-//=====================================
-int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
-int VFSZIP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestoread);
-qbool VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence);
-unsigned long VFSZIP_Tell (struct vfsfile_s *file);
-unsigned long VFSZIP_GetLen (struct vfsfile_s *file);
-void VFSZIP_Close (struct vfsfile_s *file);
-vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode);
-	
-//=====================================
-// ZIP (*.zip, *.pk3) - Search Functions
-//=====================================
-void FSZIP_PrintPath(void *handle);
-void FSZIP_ClosePath(void *handle);
-void FSZIP_BuildHash(void *handle);
-qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult);
-void FSZIP_ReadFile(void *handle, flocation_t *loc, char *buffer);
-int FSZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *, int, void *), void *parm);
-
 extern searchpathfuncs_t zipfilefuncs;
-
-//=============================
-// ZIP (*.zip, *.pk3) - Misc
-//=============================
-void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc);
-int FSZIP_GeneratePureCRC(void *handle, int seed, int crctype);
 #endif // WITH_ZIP
 
 //=============================
@@ -211,31 +111,25 @@ void VFSTCP_Close (struct vfsfile_s *file);
 void VFSTCP_Tick(void);
 vfsfile_t *FS_OpenTCP(char *name);
 
-//=====================================
-// GZIP (*.gz) Support - VFS Functions
-//=====================================
+//=====================
+// GZIP (*.gz) Support
+//=====================
 #ifdef WITH_ZLIB
 #ifdef WITH_VFS_GZIP
-int VFSGZIP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err);
-int VFSGZIP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowrite);
-qbool VFSGZIP_Seek(vfsfile_t *file, unsigned long offset, int whence);
-unsigned long VFSGZIP_Tell(vfsfile_t *file);
-unsigned long VFSGZIP_GetLen(vfsfile_t *file);
-void VFSGZIP_Close(vfsfile_t *file);
-void VFSGZIP_Flush(vfsfile_t *file);
-vfsfile_t *VFSGZIP_Open(vfsfile_t *file, char *desc);
+searchpathfuncs_t gzipfilefuncs;
 #endif // WITH_VFS_GZIP
 #endif // WITH_ZLIB
 
-
-//=====================================
-// TAR (*.tar) Support - VFS Functions
-//=====================================
+//=====================
+// TAR (*.tar) Support
+//=====================
 extern searchpathfuncs_t tarfilefuncs;
 
-//=====================================
-// Doomwad Support - Search Functions
-//=====================================
+//=====================
+// Doomwad Support
+//=====================
+#ifdef DOOMWADS
 extern searchpathfuncs_t doomwadfilefuncs;
+#endif //DOOMWADS
 
 #endif /* __VFS_H__ */
