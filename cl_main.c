@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.190 2007-10-10 13:01:09 cokeman1982 Exp $
+$Id: cl_main.c,v 1.191 2007-10-10 16:36:56 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -438,15 +438,94 @@ void CL_CheckForResend (void) {
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
-void CL_BeginServerConnect(void) {
+void CL_BeginServerConnect(void) 
+{
 	connect_time = -999;	// CL_CheckForResend() will fire immediately
 	CL_CheckForResend();
+}
+
+//
+// Parses a QW-URL of the following format 
+// (this can be associated with ezquake in windows by setting some reg info):
+// qw://server:port/command
+//
+// Supported commands:
+// - join/connect
+// - spectate/observe
+// - qtv
+//
+void CL_ParseQWURL_f (void)
+{
+	char *connection_str = NULL;
+	char *command = NULL;
+
+	if (Cmd_Argc() != 2) 
+	{
+		Com_Printf ("Usage: %s <qw-url>\n", Cmd_Argv(0));
+		return;
+	}
+
+	// Strip the leading qw:// first.
+	{
+		char qws_str[] = "qw://";
+		int qws_len	= sizeof(qws_str) - 1;
+
+		connection_str = Cmd_Argv(1);
+
+		if (!strncasecmp(qws_str, connection_str, qws_len))
+		{
+			connection_str += qws_len;
+		}
+		else
+		{
+			Com_Printf("%s: The QW-URL must start with qw://\n", Cmd_Argv(0));
+			return;
+		}
+	}
+
+	command = connection_str;
+
+	// Find the first "/" and treat what's after it as the command.	
+	{
+		while ((*command) && (*command) != '/')
+		{
+			command++;
+		}
+
+		// Get rid of the leading "/".
+		if ((*command) && (*command) == '/')
+		{
+			command++;
+		}
+	}
+
+	// Null terminate the server name string.
+	connection_str[command - connection_str - 1] = 0;
+
+	// Default to connecting.
+	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
+	{
+		Cbuf_AddText(va("connect %s", connection_str));
+	}
+	else if (!strncasecmp(command, "spectate", 8) || !strncasecmp(command, "observe", 7))
+	{
+		Cbuf_AddText(va("observe %s", connection_str));
+	}
+	else if (!strncasecmp(command, "qtv", 3))
+	{
+		char *password = command + 4;
+
+		Cbuf_AddText(va("qtvplay %s%s", connection_str, ((*password) ? va(" %s", password) : "")));
+	}
+	else
+	{
+		Com_Printf("%s: Illegal command %s\n", Cmd_Argv(0), command);
+	}
 }
 
 void CL_Connect_f (void) 
 {
 	qbool proxy;
-	char *server_name = NULL;
 
 	if (Cmd_Argc() != 2) 
 	{
@@ -454,29 +533,16 @@ void CL_Connect_f (void)
 		return;
 	}
 
-	// If the string starts with qws:// we strip that first.
-	{
-		char qws_str[] = "qws://";
-		int qws_len	= sizeof(qws_str) - 1;
-
-		server_name = Cmd_Argv(1);
-
-		if (!strncasecmp(qws_str, server_name, qws_len))
-		{
-			server_name += qws_len;
-		}
-	}
-
 	proxy = cl_useproxy.value && CL_ConnectedToProxy();
 
 	if (proxy)
 	{
-		Cbuf_AddText(va("say ,connect %s", server_name));
+		Cbuf_AddText(va("say ,connect %s", Cmd_Argv(1)));
 	} 
 	else
 	{
 		Host_EndGame();
-		strlcpy(cls.servername, server_name, sizeof(cls.servername));
+		strlcpy(cls.servername, Cmd_Argv(1), sizeof(cls.servername));
 		CL_BeginServerConnect();
 	}
 }
@@ -1256,9 +1322,10 @@ void CL_InitLocal (void) {
 
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
-// TCPCONNECT -->
+
+	Cmd_AddCommand ("parseqwurl", CL_ParseQWURL_f);
+
 	Cmd_AddCommand ("tcpconnect", CL_TCPConnect_f);
-// <--TCPCONNECT
 
 	Cmd_AddCommand ("join", CL_Join_f);
 	Cmd_AddCommand ("observe", CL_Observe_f);
