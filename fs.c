@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.50 2007-10-08 15:11:27 dkure Exp $
+	$Id: fs.c,v 1.51 2007-10-10 17:33:07 dkure Exp $
 */
 
 /**
@@ -69,6 +69,32 @@ char	com_homedir[MAX_PATH];		// something really long C:/Documents and Settings/
 char	userdirfile[MAX_OSPATH] = {0};
 char	com_userdir[MAX_OSPATH] = {0};
 int		userdir_type = -1;
+#endif
+
+#ifndef WITH_FTE_VFS
+// on disk
+typedef struct pack_s
+{
+	char    filename[MAX_OSPATH];
+	FILE    *handle;
+
+	int     numfiles;
+	packfile_t  *files;
+} pack_t;
+
+// on disk
+typedef struct
+{
+    char    name[56];
+    int     filepos, filelen;
+} dpackfile_t;
+
+typedef struct
+{
+    char    id[4];
+    int     dirofs;
+    int     dirlen;
+} dpackheader_t;
 #endif
 
 typedef struct searchpath_s
@@ -162,7 +188,6 @@ void FS_Dir_f (void);
 void FS_Locate_f (void);
 
 // VFS-FIXME: Debug file for trying to open files
-static void FS_OpenFile_f(void);
 static void FS_DiffFile_f(void);
 
 #endif /* WITH_FTE_VFS */
@@ -562,32 +587,19 @@ Takes an explicit (not game tree related) path to a pak file.
 Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 */
+#ifndef WITH_FTE_VFS
 pack_t *FS_LoadPackFile (char *packfile) {
 	dpackheader_t header;
 	int i;
 	packfile_t *newfiles;
 	pack_t *pack;
-#ifndef WITH_FTE_VFS
 	FILE *packhandle;
-#else
-	vfsfile_t *packhandle;
-	vfserrno_t err;
-#endif
 	dpackfile_t *info;
 
-#ifndef WITH_FTE_VFS
 	if (COM_FileOpenRead (packfile, &packhandle) == -1)
 		return NULL;
-#else
-	if (!(packhandle = FS_OpenVFS(packfile, "rb", FS_ANY))) 
-		return NULL;
-#endif
 
-#ifndef WITH_FTE_VFS
 	fread (&header, 1, sizeof(header), packhandle);
-#else
-	VFS_READ(packhandle, &header, sizeof(header), &err);
-#endif
 	if (header.id[0] != 'P' || header.id[1] != 'A' || header.id[2] != 'C' || header.id[3] != 'K')
 		Sys_Error ("%s is not a packfile\n", packfile);
 	header.dirofs = LittleLong (header.dirofs);
@@ -601,13 +613,8 @@ pack_t *FS_LoadPackFile (char *packfile) {
 	pack->files = newfiles = (packfile_t *) Q_malloc (pack->numfiles * sizeof(packfile_t));
 	info = (dpackfile_t *) Q_malloc (header.dirlen);
 
-#ifndef WITH_FTE_VFS
 	fseek (packhandle, header.dirofs, SEEK_SET);
 	fread (info, 1, header.dirlen, packhandle);
-#else
-	VFS_SEEK(packhandle, header.dirofs, SEEK_SET);
-	VFS_READ(packhandle, info, header.dirlen, &err);
-#endif
 
 	// parse the directory
 	for (i = 0; i < pack->numfiles; i++) {
@@ -619,6 +626,7 @@ pack_t *FS_LoadPackFile (char *packfile) {
 	Q_free(info);
 	return pack;
 }
+#endif // WITH_FTE_VFS
 
 // QW262 -->
 #ifndef SERVERONLY
@@ -655,9 +663,7 @@ static qbool FS_AddPak (char *pakfile) {
 
 	//search = Hunk_Alloc (sizeof(searchpath_t));
 	search = (searchpath_t *) Q_malloc(sizeof(searchpath_t));
-#ifndef WITH_FTE_VFS // VFS-FIXME: D-Kure: This should do something.....
 	search->pack = pak;
-#endif
 	search->next = fs_searchpaths;
 	fs_searchpaths = search;
 	return true;
@@ -1462,6 +1468,8 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 				funcs = &packfilefuncs;
 			} else if (strcmp(ext, "tar") == 0) {
 				funcs = &tarfilefuncs;
+			} else if (strcmp(ext, "gz") == 0) {
+				funcs = &gzipfilefuncs;
 			} else {
 				funcs = NULL;
 			}
@@ -2429,7 +2437,6 @@ void FS_InitModuleFS (void)
 	Com_Printf("Initialising standard quake filesystem\n");
 #else
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
-	Cmd_AddCommand("fs_openfile", FS_OpenFile_f); 	// VFS-FIXME <-- Only a debug function
 	Cmd_AddCommand("fs_diff", FS_DiffFile_f); 		// VFS-FIXME <-- Only a debug function
 	Cmd_AddCommand("dir", FS_Dir_f);
 	Cmd_AddCommand("locate", FS_Locate_f);
@@ -3216,7 +3223,7 @@ static int COM_AddWildDataFiles (char *descriptor, int size, void *vparam)
 	vfsfile_t *vfs;
 	searchpathfuncs_t *funcs = param->funcs;
 	searchpath_t	*search;
-	pack_t			*pak;
+	void 			*pak;
 	char			pakfile[MAX_OSPATH];
 	flocation_t loc;
 
@@ -3550,52 +3557,6 @@ void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *pa
 
 // DEBUG FUNCTION
 #ifdef WITH_FTE_VFS
-static void FS_OpenFile_f(void) {
-	int i;
-	int c = Cmd_Argc();
-
-	if (c < 2) {
-		Com_Printf("Usage: %s filename [<filename> [<filename> ...]\n", Cmd_Argv(0));
-	}
-
-	for (i = 1; i < c; i++) {
-		char *filename = Cmd_Argv(i);
-		vfsfile_t *f;
-		f = FS_OpenVFS(filename, "rb", FS_ANY);
-		if (f) {
-			char *ext = COM_FileExtension (filename);
-			Com_Printf("Successfully opened file %s\n", filename);
-#ifdef WITH_VFS_GZIP
-			if (strcasecmp(ext, "gz") == 0) {
-				vfsfile_t *gzFile = VFSGZIP_Open(f, filename);
-				if (gzFile) {
-					Com_Printf("Successfully opened gzipped file %s\n", filename);
-					VFS_CLOSE(gzFile);
-				} else {
-					Com_Printf("Was unable to open %s as a gzipped file\n", filename);
-				}
-			} else {
-#endif // WITH_VFS_GZIP
-#ifdef WITH_ZIP
-				if (strcasecmp(ext, "zip") == 0) {
-					if (FSZIP_LoadZipFile(f, filename) != NULL) {
-						Com_Printf("Successfully opened zipped file %s\n", filename);
-					} else {
-						Com_Printf("Was unable to open %s as a zip file\n", filename);
-					}
-				}
-#endif // WITH_ZIP
-#ifdef WITH_VFS_GZIP
-			}
-#endif // WITH_VFS_GZIP
-
-			VFS_CLOSE(f);
-		} else {
-			Com_Printf("Unable to open %s\n", filename);
-		}
-	}
-}
-
 // ===============
 // FS_DiffFile_f
 // ===============
