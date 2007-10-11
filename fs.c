@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.55 2007-10-11 07:13:31 dkure Exp $
+	$Id: fs.c,v 1.56 2007-10-11 13:52:50 dkure Exp $
 */
 
 /**
@@ -1640,7 +1640,8 @@ archive_fail:
 
 	if (loc.search)
 	{
-		return VFS_Filter(filename, loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode));
+		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
+		//return VFS_Filter(filename, loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode));
 	}
 
 	//if we're meant to be writing, best write to it.
@@ -2986,13 +2987,13 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
 {
 	vfserrno_t err;
-//	char *ext;
+	char *ext;
 
 	if (!handle || handle->WriteBytes || handle->seekingisabadplan)	//only on readonly files
 		return handle;
-//	ext = COM_FileExtension (filename);
+	ext = COM_FileExtension(filename);
 #ifdef WITH_ZIP
-//	if (!stricmp(ext, ".gz"))
+	if (!strcasecmp(ext, "gz"))
 	{
 		gzheader_t gzh;
 		if (VFS_READ(handle, &gzh, sizeofgzheader_t, &err) == sizeofgzheader_t)
