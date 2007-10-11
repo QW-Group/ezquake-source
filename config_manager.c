@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.48 2007-10-05 19:06:24 johnnycz Exp $
+    $Id: config_manager.c,v 1.49 2007-10-11 05:55:47 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -756,7 +756,7 @@ void DumpConfig(char *name)
 		outfile = va("%s/ezquake/configs/%s", com_basedir, name);
 
 	if (!(f	= fopen	(outfile, "w"))) {
-		COM_CreatePath(outfile);
+		FS_CreatePath(outfile);
 		if (!(f	= fopen	(outfile, "w"))) {
 			Com_Printf ("Couldn't write	%s.\n",	name);
 			return;
@@ -824,7 +824,7 @@ void DumpHUD(const char *name)
 
 	outfile = va("%s/ezquake/configs/%s", com_basedir, name);
 	if (!(f	= fopen	(outfile, "w"))) {
-		COM_CreatePath(outfile);
+		FS_CreatePath(outfile);
 		if (!(f	= fopen	(outfile, "w"))) {
 			Com_Printf ("Couldn't write	%s.\n",	name);
 			return;
@@ -927,7 +927,7 @@ void LoadHomeCfg(const char *filename)
 		return;
 	}
 
-	size = COM_FileLength(f);
+	size = FS_FileLength(f);
 	fileBuffer = Q_malloc(size + 1); // +1 for null terminator
 	fread(fileBuffer, 1, size, f);
 	fileBuffer[size] = 0;

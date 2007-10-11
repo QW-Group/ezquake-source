@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.94 2007-10-06 08:15:28 dkure Exp $
+	$Id: cl_demo.c,v 1.95 2007-10-11 05:55:47 dkure Exp $
 */
 
 #include <time.h>
@@ -1425,7 +1425,7 @@ char *CL_DemoDirectory(void)
 {
 	static char dir[MAX_PATH];
 
-	strlcpy(dir, COM_LegacyDir(demo_dir.string), sizeof(dir));
+	strlcpy(dir, FS_LegacyDir(demo_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -1607,7 +1607,7 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 	if (!CL_Demo_Open(fullname))
 	{
 		// Failed to open the file, make sure it exists and try again.
-		COM_CreatePath(fullname);
+		FS_CreatePath(fullname);
 		if (!CL_Demo_Open(fullname))
 		{
 			Com_Printf("Error: Couldn't open %s\n", fullname);
@@ -1842,7 +1842,7 @@ void CL_AutoRecord_SaveMatch(void)
 	if ((error = rename(tempname, fullsavedname)))
 	{
 		// Failed to move, make sure the path exists and try again.
-		COM_CreatePath(fullsavedname);
+		FS_CreatePath(fullsavedname);
 		error = rename(tempname, fullsavedname);
 	}
 
@@ -2271,7 +2271,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 #endif
 
 
-	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", COM_LegacyDir(log_dir.string));
+	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
 	f = fopen(logfile, "a");
 	if (!f) {
 		Com_Printf("Can't open %s to dump timedemo result\n", logfile);

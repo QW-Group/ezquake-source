@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: logging.c,v 1.12 2007-09-26 21:51:34 tonik Exp $
+	$Id: logging.c,v 1.13 2007-10-11 05:55:47 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -44,7 +44,7 @@ qbool Log_IsLogging(void) {
 static char *Log_LogDirectory(void) {
 	static char dir[LOG_FILENAME_MAXSIZE];
 
-	strlcpy(dir, COM_LegacyDir(log_dir.string), sizeof(dir));
+	strlcpy(dir, FS_LegacyDir(log_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -116,7 +116,7 @@ static void Log_log_f(void) {
 		COM_ForceExtensionEx (logfilename, ".log", sizeof (logfilename));
 		fulllogname = va("%s/%s", Log_LogDirectory(), logfilename);
 		if (!(templog = fopen (fulllogname, log_readable.value ? "w" : "wb"))) {
-			COM_CreatePath(fulllogname);
+			FS_CreatePath(fulllogname);
 			if (!(templog = fopen (fulllogname, log_readable.value ? "w" : "wb"))) {
 				Com_Printf("Error: Couldn't open %s\n", logfilename);
 				return;
@@ -233,7 +233,7 @@ void Log_AutoLogging_StartMatch(char *logname) {
 
 
 	if (!(templog = fopen (fullname, log_readable.value ? "w" : "wb"))) {
-		COM_CreatePath(fullname);
+		FS_CreatePath(fullname);
 		if (!(templog = fopen (fullname, log_readable.value ? "w" : "wb"))) {
 			Com_Printf("Error: Couldn't open %s\n", fullname);
 			return;
@@ -279,7 +279,7 @@ void Log_AutoLogging_SaveMatch(void) {
 	fclose(f);
 
 	if ((error = rename(tempname, fullsavedname))) {
-		COM_CreatePath(fullsavedname);
+		FS_CreatePath(fullsavedname);
 		error = rename(tempname, fullsavedname);
 	}
 

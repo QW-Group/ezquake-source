@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.93 2007-10-04 14:56:54 dkure Exp $
+    $Id: teamplay.c,v 1.94 2007-10-11 05:55:47 dkure Exp $
 */
 
 #include <time.h>
@@ -1889,7 +1889,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	}
 
 	// Try writing the buffer containing the locs to file.
-	if(!COM_WriteFile(locname, buf, strlen(buf))) {
+	if(!FS_WriteFile(locname, buf, strlen(buf))) {
 		if(!quiet) {
 			Com_Printf(va("TP_SaveLocFile: Could not open %s for writing\n", locname));
 		}

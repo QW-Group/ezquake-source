@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_save.c,v 1.12 2007-09-14 13:29:30 disconn3ct Exp $
+	$Id: sv_save.c,v 1.13 2007-10-11 05:55:47 dkure Exp $
 */
 
 #ifndef SERVERONLY
@@ -92,7 +92,7 @@ void SV_SaveGame_f (void) {
 	
 	Com_Printf ("Saving game to %s...\n", fname);
 	if (!(f = fopen (fname, "w"))) {		
-		COM_CreatePath (fname);
+		FS_CreatePath (fname);
 		if (!(f = fopen (fname, "w"))) {
 			Com_Printf ("ERROR: couldn't open.\n");
 			return;

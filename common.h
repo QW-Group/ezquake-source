@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.69 2007-10-07 14:34:42 disconn3ct Exp $
+    $Id: common.h,v 1.70 2007-10-11 05:55:47 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -177,12 +177,9 @@ void COM_ForceExtension (char *path, char *extension);
 // If path doesn't have an extension or has a different extension, append(!) specified extension.
 // a bit extended version of COM_ForceExtension(), we suply size of path, so append safe, sure if u provide right path size
 void COM_ForceExtensionEx (char *path, char *extension, size_t path_size);
-int COM_FileLength (FILE *f);
-int COM_FileOpenRead (char *path, FILE **hndl);
 int COM_GetTempDir(char *buf, int bufsize);
 int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists);
 qbool COM_FileExists (char *path);
-
 void COM_StoreOriginalCmdline(int argc, char **argv);
 
 extern char *SYSINFO_GetString(void);
@@ -221,12 +218,14 @@ void FS_AddGameDirectory (char *path_to_dir, char *dir);
 void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
 #endif
 
-qbool COM_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
-qbool COM_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
-void COM_CreatePath (char *path);
-int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode);
-char *COM_LegacyDir (char *media_dir);
+qbool FS_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
+qbool FS_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
+void FS_CreatePath (char *path);
+int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode);
+char *FS_LegacyDir (char *media_dir);
 
+int FS_FileLength (FILE *f);
+int FS_FileOpenRead (char *path, FILE **hndl);
 
 //============================================================================
 

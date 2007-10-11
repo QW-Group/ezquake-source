@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_ccmds.c,v 1.14 2007-09-26 13:53:43 tonik Exp $
+	$Id: sv_ccmds.c,v 1.15 2007-10-11 05:55:47 dkure Exp $
 */
 
 #include "qwsvdef.h"
@@ -533,7 +533,7 @@ void SV_Snap (int uid) {
 		return;
 	}
 
-	COM_CreatePath (va("%s/snap/", com_gamedir));
+	FS_CreatePath (va("%s/snap/", com_gamedir));
 	snprintf (pcxname, sizeof (pcxname), "%d-00.pcx", uid);
 		
 	for (i = 0; i <= 99; i++) { 

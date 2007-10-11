@@ -162,7 +162,7 @@ void VLight_ChangeLightAngle_f(void)
 
 void VLight_DumpLightTable_f(void)
 {
-	COM_WriteFile ("lighttable.raw", vlighttable, 256*256);
+	FS_WriteFile ("lighttable.raw", vlighttable, 256*256);
 }
 
 void Init_VLights(void)

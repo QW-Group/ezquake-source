@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.55 2007-10-07 07:26:43 dkure Exp $
+	$Id: EX_browser.c,v 1.56 2007-10-11 05:55:47 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -1627,7 +1627,7 @@ void Add_Source_Key(int key)
                 //f = fopen(SOURCES_PATH, "at");
                 //if (f == NULL)
                     //break;
-                if (!COM_FCreateFile("sb/sources.txt", &f, "ezquake", "at"))
+                if (!FS_FCreateFile("sb/sources.txt", &f, "ezquake", "at"))
                     break;
 
                 fprintf(f, "%s \"%s\" %s\n",

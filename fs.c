@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.51 2007-10-10 17:33:07 dkure Exp $
+	$Id: fs.c,v 1.52 2007-10-11 05:55:47 dkure Exp $
 */
 
 /**
@@ -170,13 +170,12 @@ typedef enum {
 		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD | FS_LOAD_FROM_PAKLST,
 } FS_Load_File_Types;
 
-void FS_CreatePath(char *pname, int relativeto);
+void FS_CreatePathRelative(char *pname, int relativeto);
 void FS_ForceToPure(char *str, char *crcs, int seed);
 int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
-void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
-int COM_FileOpenRead (char *path, FILE **hndl);
+void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
+int FS_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);
-qbool FS_WriteFile (char *filename, void *data, int len, int relativeto);
 void FS_FlushFSHash(void);
 void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
@@ -197,10 +196,10 @@ static void FS_DiffFile_f(void);
 
 /*
 ================
-COM_FileLength
+FS_FileLength
 ================
 */
-int COM_FileLength (FILE *f)
+int FS_FileLength (FILE *f)
 {
 	int		pos;
 	int		end;
@@ -215,10 +214,10 @@ int COM_FileLength (FILE *f)
 
 /*
 ================
-COM_FileOpenRead
+FS_FileOpenRead
 ================
 */
-int COM_FileOpenRead (char *path, FILE **hndl)
+int FS_FileOpenRead (char *path, FILE **hndl)
 {
 	FILE *f;
 
@@ -228,16 +227,16 @@ int COM_FileOpenRead (char *path, FILE **hndl)
 	}
 	*hndl = f;
 
-	return COM_FileLength(f);
+	return FS_FileLength(f);
 }
 
 /*
 ============
-COM_Path_f
+FS_Path_f
 ============
 */
 #ifndef WITH_FTE_VFS
-void COM_Path_f (void)
+void FS_Path_f (void)
 {
 	searchpath_t *search;
 
@@ -253,7 +252,7 @@ void COM_Path_f (void)
 }
 #else
 
-void COM_Path_f (void)
+void FS_Path_f (void)
 {
 	searchpath_t	*search;
 
@@ -282,7 +281,7 @@ void COM_Path_f (void)
 
 
 // VFS-FIXME: D-Kure This removes a sanity check
-int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
+int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 {
 #ifndef WITH_FTE_VFS
 	searchpath_t *search;
@@ -306,7 +305,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 			}
 		}
 		if (search == NULL)
-			Sys_Error("COM_FCreateFile: out of Quake filesystem\n");
+			Sys_Error("FS_FCreateFile: out of Quake filesystem\n");
 	}
 #endif
 
@@ -315,7 +314,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 
 	// try to create
 	snprintf(fullpath, sizeof(fullpath), "%s/%s/%s", com_basedir, path, filename);
-	COM_CreatePath(fullpath);
+	FS_CreatePath(fullpath);
 	*file = fopen(fullpath, mode);
 
 	if (*file == NULL) {
@@ -330,7 +329,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 
 //The filename will be prefixed by com_basedir
 #ifndef WITH_FTE_VFS
-qbool COM_WriteFile (char *filename, void *data, int len)
+qbool FS_WriteFile (char *filename, void *data, int len)
 {
 	FILE *f;
 	char name[MAX_OSPATH];
@@ -338,18 +337,58 @@ qbool COM_WriteFile (char *filename, void *data, int len)
 	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
 
 	if (!(f = fopen (name, "wb"))) {
-		COM_CreatePath (name);
+		FS_CreatePath (name);
 		if (!(f = fopen (name, "wb")))
 			return false;
 	}
-	Sys_Printf ("COM_WriteFile: %s\n", name);
+	Sys_Printf ("FS_WriteFile: %s\n", name);
 	fwrite (data, 1, len, f);
 	fclose (f);
 	return true;
 }
 
+#else
+qbool FS_WriteFileRelative(char *filename, void *data, int len, int relativeto)
+{
+	char name[MAX_PATH];
+	vfsfile_t *f;
+
+	snprintf (name, sizeof(name), "%s", filename);
+
+	FS_CreatePathRelative(filename, relativeto);
+	f = FS_OpenVFS(filename, "wb", relativeto);
+	if (f) 
+	{
+		VFS_WRITE(f, data, len);
+		VFS_CLOSE(f);
+	} else {
+		return false;
+	}
+
+	filesystemchanged=true;
+
+	return true;
+}
+
+
+/*
+============
+FS_WriteFile
+
+The filename will be prefixed by the current game directory
+============
+*/
+qbool FS_WriteFile (char *filename, void *data, int len)
+{
+	Sys_Printf ("FS_WriteFile: %s\n", filename);
+	return FS_WriteFileRelative(filename, data, len, FS_GAME_OS);
+}
+
+#endif // WITH_FTE_VFS
+
+#ifndef WITH_FTE_VFS
 //The filename used as is
-qbool COM_WriteFile_2 (char *filename, void *data, int len)
+qbool FS_WriteFile_2 (char *filename, void *data, int len)
 {
 	FILE *f;
 	char name[MAX_PATH];
@@ -357,23 +396,54 @@ qbool COM_WriteFile_2 (char *filename, void *data, int len)
 	snprintf (name, sizeof(name), "%s", filename);
 
 	if (!(f = fopen (name, "wb"))) {
-		COM_CreatePath (name);
+		FS_CreatePath (name);
 		if (!(f = fopen (name, "wb")))
 			return false;
 	}
-	Sys_Printf ("COM_WriteFile_2: %s\n", name);
+	Sys_Printf ("FS_WriteFile_2: %s\n", name);
 	fwrite (data, 1, len, f);
 	fclose (f);
 	return true;
 }
+
+#else
+//The filename used as is
+qbool FS_WriteFile_2 (char *filename, void *data, int len)
+{
+	Sys_Printf ("FS_WriteFile_2: %s\n", filename);
+	return FS_WriteFileRelative(filename, data, len, FS_NONE_OS);
+}
+
+#if 0
+FILE *FS_WriteFileOpen (char *filename)	//like fopen, but based around quake's paths.
+{
+	FILE	*f;
+	char	name[MAX_OSPATH];
+
+	snprintf (name, sizeof (name), "%s/%s", com_gamedir, filename);
+
+	FS_CreatePath(name);
+
+	f = fopen (name, "wb");
+
+	return f;
+}
+#endif
+
 #endif // WITH_FTE_VFS
 
 
 //Only used for CopyFile and download
 
 
-#ifndef WITH_FTE_VFS
-void COM_CreatePath(char *path)
+/*
+============
+FS_CreatePath
+
+Only used for CopyFile and download
+============
+*/
+void FS_CreatePath(char *path)
 {
 	char *s, save;
 
@@ -393,7 +463,6 @@ void COM_CreatePath(char *path)
 		}
 	}
 }
-#endif /* FS_FTE */
 
 int FS_FOpenPathFile (char *filename, FILE **file) {
 
@@ -406,7 +475,7 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 		if (developer.value)
 			Sys_Printf ("FindFile: %s\n", fs_netpath);
 
-		return COM_FileLength (*file);
+		return FS_FileLength (*file);
 	}
 
 	if (developer.value)
@@ -469,7 +538,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 				Sys_Printf ("FindFile: %s\n", fs_netpath);
 
 			fs_filepos = 0;
-			return COM_FileLength (*file);
+			return FS_FileLength (*file);
 		}
 	}
 
@@ -596,7 +665,7 @@ pack_t *FS_LoadPackFile (char *packfile) {
 	FILE *packhandle;
 	dpackfile_t *info;
 
-	if (COM_FileOpenRead (packfile, &packhandle) == -1)
+	if (FS_FileOpenRead (packfile, &packhandle) == -1)
 		return NULL;
 
 	fread (&header, 1, sizeof(header), packhandle);
@@ -632,10 +701,10 @@ pack_t *FS_LoadPackFile (char *packfile) {
 #ifndef SERVERONLY
 /*
 ================
-COM_SetUserDirectory
+FS_SetUserDirectory
 ================
 */
-void COM_SetUserDirectory (char *dir, char *type) {
+void FS_SetUserDirectory (char *dir, char *type) {
 	char tmp[sizeof(com_gamedirfile)];
 
 	if (strstr(dir, "..") || strstr(dir, "/")
@@ -1169,7 +1238,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 #ifndef SERVERONLY
 	if ((i = COM_CheckParm("-userdir")) && i < COM_Argc() - 2)
-		COM_SetUserDirectory(COM_Argv(i+1), COM_Argv(i+2));
+		FS_SetUserDirectory(COM_Argv(i+1), COM_Argv(i+2));
 #endif
 
 	// the user might want to override default game directory
@@ -1209,7 +1278,7 @@ void FS_InitFilesystem( void ) {
 // allow user select differet "style" how/where open/save different media files.
 // so user select media_dir is relative to quake base dir or some system HOME dir or may be full path
 // NOTE: using static buffer, use with care
-char *COM_LegacyDir(char *media_dir)
+char *FS_LegacyDir(char *media_dir)
 {
 	static char dir[MAX_PATH];
 
@@ -1383,6 +1452,29 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 #else 
 
 #ifdef WITH_VFS_ARCHIVE_LOADING
+/* 
+ * ====================
+ * FS_ExtensionToSearchFunctions
+ * ====================
+ * Given a file extension the search 
+ * functions for operating on that file type
+ * is returned.
+ * If the file type is unknown, NULL is returned.
+ */
+searchpathfuncs_t *FS_ExtensionToSearchFunctions(char *ext) {
+	if (strcmp(ext, "zip") == 0 || strcmp(ext, "pk3") == 0) {
+		return &zipfilefuncs;
+	} else if (strcmp(ext, "pak") == 0) {
+		return &packfilefuncs;
+	} else if (strcmp(ext, "tar") == 0) {
+		return &tarfilefuncs;
+	} else if (strcmp(ext, "gz") == 0) {
+		return &gzipfilefuncs;
+	} else {
+		return NULL;
+	}
+}
+
 /* ===================
  * FS_BreakUpArchivePath
  * ===================
@@ -1418,6 +1510,7 @@ int FS_BreakUpArchivePath(const char *filename, char *ext, size_t ext_len,
 
 	return 1;
 }
+
 #endif // WITH_VFS_ARCHIVE_LOADING
 
 /* ================
@@ -1433,7 +1526,7 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 {
 	char fullname[MAX_OSPATH];
 	flocation_t loc;
-	vfsfile_t *vfs;
+	vfsfile_t *vfs = NULL;
 
 	//blanket-bans - Avoid combination of / & \ for directories
 	if (Sys_PathProtection(filename)) 
@@ -1453,35 +1546,32 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		r = FS_BreakUpArchivePath(filename, ext, sizeof(ext),
 				archive, sizeof(archive),
 				inside,  sizeof(inside));
-		if (r) { 
+		if (r) {
 			searchpathfuncs_t *funcs;
-			void *file_handle;
+			void *file_handle = NULL;
+			vfsfile_t *vfs_archive = NULL;
 
 			vfs = FS_OpenVFS(archive, mode, relativeto);
-			if (!vfs)
-				return NULL;
+			if (!vfs) goto archive_fail;
 
-			/* TODO: Place this in a function */
-			if (strcmp(ext, "zip") == 0 || strcmp(ext, "pak") == 0) {
-				funcs = &zipfilefuncs;
-			} else if (strcmp(ext, "pak") == 0) {
-				funcs = &packfilefuncs;
-			} else if (strcmp(ext, "tar") == 0) {
-				funcs = &tarfilefuncs;
-			} else if (strcmp(ext, "gz") == 0) {
-				funcs = &gzipfilefuncs;
-			} else {
-				funcs = NULL;
-			}
+			funcs = FS_ExtensionToSearchFunctions(ext);
+			if (!funcs) goto archive_fail;
 
-			if (funcs != NULL) {
-				file_handle = funcs->OpenNew(vfs, archive);
-				if (!file_handle)
-					return NULL;
-				if (!funcs->FindFile(file_handle, &loc, inside, NULL)) 
-					return NULL;
-				return funcs->OpenVFS(file_handle, &loc, mode);
-			}
+			file_handle = funcs->OpenNew(vfs, archive);
+			if (!file_handle) goto archive_fail;
+			if (!funcs->FindFile(file_handle, &loc, inside, NULL))  goto archive_fail;
+				
+			vfs_archive = funcs->OpenVFS(file_handle, &loc, mode);
+			if (!vfs_archive) goto archive_fail;
+
+archive_fail:
+			if (vfs)
+				VFS_CLOSE(vfs);
+			if (file_handle)
+				funcs->ClosePath(file_handle);
+			if (vfs_archive)
+				VFS_CLOSE(vfs_archive);
+			return NULL;
 		}
 	}
 #endif // WITH_VFS_ARCHIVE_LOADING
@@ -1683,7 +1773,7 @@ int FS_GZipPack (char *source_path,
 	}
 
 	// Create the path for the destination.
-	COM_CreatePath (COM_SkipPathWritable (destination_path));
+	FS_CreatePath (COM_SkipPathWritable (destination_path));
 
 	// Open destination file.
 	gzip_destination = gzopen (destination_path, "wb");
@@ -1729,7 +1819,7 @@ int FS_GZipUnpack (char *source_path,		// The path to the compressed source file
 	}
 
 	// Create the path for the destination.
-	COM_CreatePath (COM_SkipPathWritable (destination_path));
+	FS_CreatePath (COM_SkipPathWritable (destination_path));
 
 	// Open destination.
 	dest = fopen (destination_path, "wb");
@@ -1904,7 +1994,7 @@ int FS_ZlibUnpack (char *source_path,		// The path to the compressed source file
 	}
 
 	// Create the path for the destination.
-	COM_CreatePath (COM_SkipPathWritable (destination_path));
+	FS_CreatePath (COM_SkipPathWritable (destination_path));
 
 	// Open destination.
 	dest = fopen (destination_path, "wb");
@@ -2270,12 +2360,12 @@ int FS_ZipUnpackCurrentFile (unzFile zip_file,
 		}
 
 		// Create the destination dir if it doesn't already exist.
-		COM_CreatePath (va("%s%c", destination_path, PATH_SEPARATOR));
+		FS_CreatePath (va("%s%c", destination_path, PATH_SEPARATOR));
 
 		// Create the relative path before extracting.
 		if (keep_path)
 		{
-			COM_CreatePath (va("%s%c%s", destination_path, PATH_SEPARATOR, filename));
+			FS_CreatePath (va("%s%c%s", destination_path, PATH_SEPARATOR, filename));
 		}
 	}
 
@@ -2432,7 +2522,7 @@ void FS_InitModuleFS (void)
 {
 	Cmd_AddCommand("loadpak", FS_PakAdd_f);
 	Cmd_AddCommand("removepak", FS_PakRem_f);
-	Cmd_AddCommand("path", COM_Path_f);
+	Cmd_AddCommand("path", FS_Path_f);
 #ifndef WITH_FTE_VFS
 	Com_Printf("Initialising standard quake filesystem\n");
 #else
@@ -2513,7 +2603,7 @@ searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, voi
 FS_Dir_f
 ============
 */
-static int COM_Dir_List(char *name, int size, void *parm)
+static int FS_Dir_List(char *name, int size, void *parm)
 {
 	Com_Printf("%s  (%i)\n", name, size);
 	return 1;
@@ -2537,12 +2627,12 @@ void FS_Dir_f (void)
 		strlcat (match, "/*", sizeof (match));
 	}
 
-	COM_EnumerateFiles (match, COM_Dir_List, NULL);
+	FS_EnumerateFiles (match, FS_Dir_List, NULL);
 }
 
 /*
 ============
-COM_Locate_f
+FS_Locate_f
 ============
 */
 void FS_Locate_f (void)
@@ -2570,65 +2660,6 @@ void FS_Locate_f (void)
 		Com_Printf("Not found\n");
 }
 
-/*
-============
-COM_WriteFile
-
-The filename will be prefixed by the current game directory
-============
-*/
-qbool COM_WriteFile (char *filename, void *data, int len)
-{
-	Sys_Printf ("COM_WriteFile: %s\n", filename);
-	return FS_WriteFile(filename, data, len, FS_GAME_OS);
-}
-
-//The filename used as is
-qbool COM_WriteFile_2 (char *filename, void *data, int len)
-{
-	Sys_Printf ("COM_WriteFile_2: %s\n", filename);
-	return FS_WriteFile(filename, data, len, FS_NONE_OS);
-}
-
-
-#if 0
-FILE *COM_WriteFileOpen (char *filename)	//like fopen, but based around quake's paths.
-{
-	FILE	*f;
-	char	name[MAX_OSPATH];
-
-	snprintf (name, sizeof (name), "%s/%s", com_gamedir, filename);
-
-	COM_CreatePath(name);
-
-	f = fopen (name, "wb");
-
-	return f;
-}
-#endif
-
-
-/*
-============
-COM_CreatePath
-
-Only used for CopyFile and download
-============
-*/
-void	COM_CreatePath (char *path)
-{
-	char	*ofs;
-
-	for (ofs = path+1 ; *ofs ; ofs++)
-	{
-		if (*ofs == '/')
-		{	// create the directory
-			*ofs = 0;
-			Sys_mkdir (path);
-			*ofs = '/';
-		}
-	}
-}
 
 
 int fs_hash_dups;
@@ -2679,7 +2710,7 @@ void FS_RebuildFSHash(void)
 
 /*
 ===========
-COM_FindFile
+FS_FindFile
 
 Finds the file in the search path.
 Sets com_filesize and one of handle or file
@@ -3067,7 +3098,7 @@ int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t 
 	strlcat(oldfullname, oldf, sizeof(oldfullname));
 	strlcat(newfullname, newf, sizeof(newfullname));
 
-	FS_CreatePath(newf, newrelativeto);
+	FS_CreatePathRelative(newf, newrelativeto);
 	return rename(oldfullname, newfullname);
 }
 int FS_Rename(char *oldf, char *newf, relativeto_t relativeto)
@@ -3143,7 +3174,7 @@ int FS_Remove(char *fname, int relativeto)
 	return unlink (fullname);
 }
 
-void FS_CreatePath(char *pname, int relativeto)
+void FS_CreatePathRelative(char *pname, int relativeto)
 {
 	char fullname[MAX_OSPATH];
 	switch (relativeto)
@@ -3179,32 +3210,10 @@ void FS_CreatePath(char *pname, int relativeto)
 			snprintf(fullname, sizeof(fullname), "%sfte/%s", com_basedir, pname);
 		break;*/
 	default:
-		Sys_Error("FS_CreatePath: Bad relative path (%i)", relativeto);
+		Sys_Error("FS_CreatePathRelative: Bad relative path (%i)", relativeto);
 		break;
 	}
-	COM_CreatePath(fullname);
-}
-
-qbool FS_WriteFile (char *filename, void *data, int len, int relativeto)
-{
-	char name[MAX_PATH];
-	vfsfile_t *f;
-
-	snprintf (name, sizeof(name), "%s", filename);
-
-	FS_CreatePath(filename, relativeto);
-	f = FS_OpenVFS(filename, "wb", relativeto);
-	if (f) 
-	{
-		VFS_WRITE(f, data, len);
-		VFS_CLOSE(f);
-	} else {
-		return false;
-	}
-
-	filesystemchanged=true;
-
-	return true;
+	FS_CreatePath(fullname);
 }
 
 #ifdef WITH_VFS_WILD
@@ -3217,7 +3226,7 @@ typedef struct {
 	char *parentdesc;
 } wildpaks_t;
 
-static int COM_AddWildDataFiles (char *descriptor, int size, void *vparam)
+static int FS_AddWildDataFiles (char *descriptor, int size, void *vparam)
 {
 	wildpaks_t *param = vparam;
 	vfsfile_t *vfs;
@@ -3273,16 +3282,16 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 	wp.funcs = funcs;
 	wp.parentdesc = pathto;
 	wp.parentpath = parent;
-	parent->funcs->EnumerateFiles(parent->handle, pakfile, COM_AddWildDataFiles, &wp);
+	parent->funcs->EnumerateFiles(parent->handle, pakfile, FS_AddWildDataFiles, &wp);
 #endif // WITH_VFS_WILD
 }
 
-void COM_RefreshFSCache_f(void)
+void FS_RefreshFSCache_f(void)
 {
 	filesystemchanged=true;
 }
 
-void COM_FlushFSCache(void)
+void FS_FlushFSCache(void)
 {
 	if (fs_cache.value != 2)
 		filesystemchanged=true;
@@ -3547,7 +3556,7 @@ void FS_ReloadPackFiles_f(void)
 		FS_ReloadPackFilesFlags(FS_LOAD_FILE_ALL);
 }
 
-void COM_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm)
+void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm)
 {
 	searchpath_t *search;
 	for (search = fs_searchpaths; search ; search = search->next)

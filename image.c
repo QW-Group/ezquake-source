@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.54 2007-10-05 19:06:25 johnnycz Exp $
+    $Id: image.c,v 1.55 2007-10-11 05:55:47 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -1482,7 +1482,7 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 	}
 #else
 	if (!(fp = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
-		COM_CreatePath (name);
+		FS_CreatePath (name);
 		if (!(fp = FS_OpenVFS(name, "wb", FS_NONE_OS)))
 			return false;
 	}
@@ -1573,7 +1573,7 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	}
 #else
 	if (!(fp = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
-		COM_CreatePath (name);
+		FS_CreatePath (name);
 		if (!(fp = FS_OpenVFS(name, "wb", FS_NONE_OS)))
 			return false;
 	}
@@ -1882,7 +1882,7 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height)
 
 	memcpy (buffer + 18, pixels, size);
 
-	if (!(COM_WriteFile_2 (filename, buffer, size + 18)))
+	if (!(FS_WriteFile_2 (filename, buffer, size + 18)))
 		retval = false;
 	Q_free (buffer);
 	return retval;
@@ -2205,7 +2205,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	}
 #else
 	if (!(outfile = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
-		COM_CreatePath (name);
+		FS_CreatePath (name);
 		if (!(outfile = FS_OpenVFS(name, "wb", FS_NONE_OS)))
 			return false;
 	}
@@ -2795,7 +2795,7 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 		*pack++ = *palette++;
 
 	length = pack - (byte *) pcx;
-	if (!(COM_WriteFile_2 (filename, pcx, length)))
+	if (!(FS_WriteFile_2 (filename, pcx, length)))
 	{
 		Q_free(pcx);
 		return false;

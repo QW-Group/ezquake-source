@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.13 2007-10-10 17:34:29 dkure Exp $
+    $Id: fs.h,v 1.14 2007-10-11 05:55:47 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -23,7 +23,7 @@ void FS_InitModuleFS (void);
 #define UserdirSet (userdirfile[0] != '\0')
 extern	char userdirfile[MAX_OSPATH];
 extern	char com_userdir[MAX_OSPATH];
-void COM_SetUserDirectory (char *dir, char *type);
+void FS_SetUserDirectory (char *dir, char *type);
 #endif
 // <-- QW262
 

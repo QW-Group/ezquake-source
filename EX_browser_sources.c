@@ -664,7 +664,7 @@ void DumpSource(source_data *s)
 //    f = fopen(buf, "wt");
 //    if (f == NULL)
 //        return;
-    if (!COM_FCreateFile(buf, &f, "ezquake", "wt"))
+    if (!FS_FCreateFile(buf, &f, "ezquake", "wt"))
         return;
 
     for (i=0; i < s->serversn; i++)

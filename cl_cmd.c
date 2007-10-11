@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.57 2007-09-15 13:28:10 qqshka Exp $
+	$Id: cl_cmd.c,v 1.58 2007-10-11 05:55:47 dkure Exp $
 */
 
 #include <time.h>
@@ -728,7 +728,7 @@ void CL_Userdir_f (void)
 		if (u < 0 || u > 5)
 			Com_Printf("Invalid userdir type\n");
 		else
-			COM_SetUserDirectory (Cmd_Argv(1), Cmd_Argv(2));
+			FS_SetUserDirectory (Cmd_Argv(1), Cmd_Argv(2));
 	}
 }
 // <-- QW262

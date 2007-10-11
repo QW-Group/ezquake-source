@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.132 2007-10-08 22:03:16 johnnycz Exp $
+$Id: cl_parse.c,v 1.133 2007-10-11 05:55:47 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -881,7 +881,7 @@ void CL_ParseChunkedDownload(void)
 //			Host_Error("Server sent the wrong download - \"%s\" instead of \"%s\"\n", svname, cls.downloadname);
 
 		//start the new download
-		COM_CreatePath (cls.downloadtempname);
+		FS_CreatePath (cls.downloadtempname);
 
 		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) {
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
@@ -1071,7 +1071,7 @@ void CL_ParseDownload (void) {
 	// open the file if not opened yet
 	if (!cls.download) {
 
-		COM_CreatePath (cls.downloadtempname);
+		FS_CreatePath (cls.downloadtempname);
 
 		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) {
 			msg_readcount += size;
@@ -1238,7 +1238,7 @@ void CL_StartFileUpload (void)
 		return;
 	}
 
-	cls.upload_size = COM_FileLength(cls.upload);
+	cls.upload_size = FS_FileLength(cls.upload);
 	cls.upload_pos = 0;
 
 	Com_Printf ("Upload starting: %s (%d bytes)...\n", cls.uploadname, cls.upload_size);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.148 2007-10-08 23:02:41 johnnycz Exp $
+$Id: cl_screen.c,v 1.149 2007-10-11 05:55:47 dkure Exp $
 */
 
 /// declarations may be found in screen.h
@@ -3191,7 +3191,7 @@ static image_format_t SShot_FormatForName(char *name) {
 static char *Sshot_SshotDirectory(void) {
 	static char dir[MAX_PATH];
 
-	strlcpy(dir, COM_LegacyDir(scr_sshot_dir.string), sizeof(dir));
+	strlcpy(dir, FS_LegacyDir(scr_sshot_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -3520,7 +3520,7 @@ void SCR_RSShot_f (void) {
 		FILE	*f;
 		byte	*screen_shot;
 		int	size;
-		if ((size = COM_FileOpenRead (filename, &f)) == -1)
+		if ((size = FS_FileOpenRead (filename, &f)) == -1)
 		{
 			Com_Printf ("Can't send screenshot to server: can't open file %s\n", filename);
 		}
