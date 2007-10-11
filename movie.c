@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.25 2007-09-26 21:51:34 tonik Exp $
+	$Id: movie.c,v 1.26 2007-10-11 06:46:12 borisu Exp $
 */
 
 #include "quakedef.h"
@@ -197,7 +197,7 @@ void Movie_Demo_Capture_f(void) {
 		COM_ForceExtensionEx (aviname, ".avi", sizeof (aviname));
 		snprintf (avipath, sizeof(avipath), "%s/%s/%s", com_basedir, movie_dir.string, aviname);
 		if (!(avifile = fopen(avipath, "wb"))) {
-			COM_CreatePath (avipath);
+			FS_CreatePath (avipath);
 			if (!(avifile = fopen(avipath, "wb"))) {
 				Com_Printf("Error: Couldn't open %s\n", aviname);
 				return;

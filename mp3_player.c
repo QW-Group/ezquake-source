@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.23 2007-09-14 13:29:29 disconn3ct Exp $
+	$Id: mp3_player.c,v 1.24 2007-10-11 06:46:12 borisu Exp $
 */
 
 #ifdef __FreeBSD__
@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #if defined(_WIN32) || defined(__XMMS__)
 
-int COM_FileOpenRead (char *path, FILE **hndl);
+int FS_FileOpenRead (char *path, FILE **hndl);
 
 cvar_t mp3_scrolltitle = {"mp3_scrolltitle", "1"};
 cvar_t mp3_showtime = {"mp3_showtime", "1"};
@@ -630,7 +630,7 @@ long MP3_GetPlaylist(char **buf) {
 	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
 		path[pathlength - 1] = 0;
 	strlcat (path, "/winamp.m3u", sizeof (path));
-	filelength = COM_FileOpenRead(path, &f);
+	filelength = FS_FileOpenRead(path, &f);
 	if (!f)
 		return -1;
 	*buf = Q_malloc(filelength);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.95 2007-10-11 05:55:47 dkure Exp $
+	$Id: cl_demo.c,v 1.96 2007-10-11 06:46:11 borisu Exp $
 */
 
 #include <time.h>
@@ -1985,7 +1985,7 @@ void CL_CheckQizmoCompletion (void)
 		CL_Demo_GetCompressedName (newname);
 		qwz_packing = false;
 
-		if ((tempfile = fopen(newname, "rb")) && (COM_FileLength(tempfile) > 0) && fclose(tempfile) != EOF)
+		if ((tempfile = fopen(newname, "rb")) && (FS_FileLength(tempfile) > 0) && fclose(tempfile) != EOF)
 		{
 			Com_Printf("Demo saved to %s\n", newname + strlen(com_basedir));
 			CL_Demo_RemoveQWD();

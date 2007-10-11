@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.16 2007-10-04 15:11:35 borisu Exp $
+	$Id: keymap.c,v 1.17 2007-10-11 06:46:11 borisu Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -427,7 +427,7 @@ void IN_Keymap_Save_f (void)
 		snprintf(filename, sizeof (filename), "qw/%s", dummy);
 	}
 
-	COM_CreatePath (filename);
+	FS_CreatePath (filename);
 
 	if ( (f = fopen( filename, "w" )) != NULL ) {
 		// write the header information:
