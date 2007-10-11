@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.104 2007-10-05 19:38:12 johnnycz Exp $
+    $Id: common.c,v 1.105 2007-10-11 13:51:22 dkure Exp $
 
 */
 
@@ -210,7 +210,7 @@ void COM_StripExtension (const char *in, char *out)
 }
 
 
-char *COM_FileExtension (char *in)
+char *COM_FileExtension (const char *in)
 {
 	static char exten[8];
 	int i;

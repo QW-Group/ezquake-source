@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.72 2007-10-11 07:02:37 dkure Exp $
+    $Id: common.h,v 1.73 2007-10-11 13:51:22 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -166,7 +166,7 @@ void COM_Init (void);
 const char *COM_SkipPath (const char *pathname);
 char *COM_SkipPathWritable (char *pathname);
 char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);
-char *COM_FileExtension (char *in);
+char *COM_FileExtension (const char *in);
 void COM_StripExtension (const char *in, char *out);
 void COM_FileBase (const char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
