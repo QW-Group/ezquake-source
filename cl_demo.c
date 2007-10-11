@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.96 2007-10-11 06:46:11 borisu Exp $
+	$Id: cl_demo.c,v 1.97 2007-10-11 14:59:29 cokeman1982 Exp $
 */
 
 #include <time.h>
@@ -785,7 +785,7 @@ int CL_Demo_Read(void *buf, int size, qbool peek)
 
 	// Size can't be negative.
 	if (size < 0)
-		Sys_Error("pb_read: size < 0");
+		Host_Error("pb_read: size < 0");
 
 	need = max(0, min(pb_cnt, size));
 	memcpy(buf, pb_buf, need);
