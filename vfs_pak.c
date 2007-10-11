@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.15 2007-10-11 07:02:38 dkure Exp $
+ * $Id: vfs_pak.c,v 1.16 2007-10-11 13:50:56 dkure Exp $
  *             
  */
 
@@ -159,7 +159,7 @@ static qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whenc
 	}
 
 	if (vfsp->currentpos > vfsp->length) {
-		Com_Printf("VFSPAK_Seek: Warning seeking past the file's size");
+		Com_Printf("VFSPAK_Seek: Warning seeking past the file's size\n");
 	}
 
 	return false;
@@ -436,7 +436,6 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 
 	pack->references++;
 
-	Com_Printf("Added packfile %s (%i files)\n", desc, numpackfiles);
 	return pack;
 }
 

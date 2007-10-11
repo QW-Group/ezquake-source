@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_tar.c,v 1.6 2007-10-11 07:02:38 dkure Exp $
+ * $Id: vfs_tar.c,v 1.7 2007-10-11 13:50:56 dkure Exp $
  *             
  */
 
@@ -255,7 +255,7 @@ static qbool VFSTAR_Seek(vfsfile_t *file, unsigned long offset, int whence)
 	}
 
 	if (vfst->currentpos > vfst->length) {
-		Com_Printf("VFSTAR_Seek: Warning seeking past the file's size");
+		Com_Printf("VFSTAR_Seek: Warning seeking past the file's size\n");
 	}
 
 	return 0;
