@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.191 2007-10-10 16:36:56 cokeman1982 Exp $
+$Id: cl_main.c,v 1.192 2007-10-11 14:34:05 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -454,7 +454,7 @@ void CL_BeginServerConnect(void)
 // - spectate/observe
 // - qtv
 //
-void CL_ParseQWURL_f (void)
+void CL_QWURL_f (void)
 {
 	char *connection_str = NULL;
 	char *command = NULL;
@@ -1323,7 +1323,7 @@ void CL_InitLocal (void) {
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
 
-	Cmd_AddCommand ("parseqwurl", CL_ParseQWURL_f);
+	Cmd_AddCommand ("qwurl", CL_QWURL_f);
 
 	Cmd_AddCommand ("tcpconnect", CL_TCPConnect_f);
 
