@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.105 2007-10-11 13:51:22 dkure Exp $
+    $Id: common.c,v 1.106 2007-10-11 18:29:32 cokeman1982 Exp $
 
 */
 
@@ -1009,3 +1009,16 @@ void Com_Printf_State(int state, char *fmt, ...) {
 	if (state == PRINT_ERR_FATAL)
 		Sys_Error(msg);
 }
+
+void COM_ParseIPCData(const char *buf, unsigned int bufsize)
+{
+	if (bufsize > 0)
+	{
+		// TODO : Expect some more fancy commands and stuff here instead.. if we want to use it for more than qw:// urls...
+		if (!strncasecmp(buf, "qw://", 5))
+		{
+			Cbuf_AddText(va("qwurl %s", buf));
+		}
+	}
+}
+

@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.27 2007-09-03 15:07:29 dkure Exp $
+	$Id: sys_linux.c,v 1.28 2007-10-11 18:29:32 cokeman1982 Exp $
 
 */
 #include <unistd.h>
@@ -67,7 +67,7 @@ int do_stdin = 1;
 
 
 cvar_t sys_yieldcpu = {"sys_yieldcpu", "0"};
-cvar_t sys_nostdout = {"sys_nostdout", "0"};	
+cvar_t sys_nostdout = {"sys_nostdout", "0"};
 cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
 
 
@@ -97,10 +97,10 @@ void Sys_Printf (char *fmt, ...) {
 
 void Sys_Quit (void) {
 	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
-	
+
 	if (rtc_fd)
 	    close(rtc_fd);
-	
+
 	exit(0);
 }
 
@@ -110,13 +110,13 @@ void Sys_Init(void) {
 		Cvar_Register (&sys_extrasleep);
 	}
 	else {
-    Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS); 	
+    Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
     Cvar_Register (&sys_yieldcpu);
-    Cvar_ResetCurrentGroup();		
+    Cvar_ResetCurrentGroup();
 	}
 }
 
-void Sys_Error (char *error, ...) { 
+void Sys_Error (char *error, ...) {
         extern FILE *qconsole_log;
 	va_list argptr;
 	char string[1024];
@@ -171,8 +171,8 @@ double Sys_DoubleTime (void) {
 
     /* old timer vars */
     struct timeval tp;
-    struct timezone tzp; 
-    static int secbase; 
+    struct timezone tzp;
+    static int secbase;
 
     if (rtc_fd) {  /* rtc timer is enabled */
 	pfd.fd = rtc_fd;
@@ -190,7 +190,7 @@ again:
 	totalticks += curticks;
 	return totalticks / RTC_RATE;
     } else { /* old timer */
-	gettimeofday(&tp, &tzp);  
+	gettimeofday(&tp, &tzp);
 
 	if (!secbase) {
 	    secbase = tp.tv_sec;
@@ -224,7 +224,7 @@ char *Sys_ConsoleInput (void) {
 	if (len < 1)
 		return NULL;
 	text[len - 1] = 0; // rip off the /n and terminate
-	
+
 	return text;
 }
 
@@ -263,7 +263,7 @@ int main (int argc, char **argv) {
 		if (*s != '-' && *s != '+')
 			qconsole_log = fopen(s, "a");
 	}
-	
+
 #if !defined(CLIENTONLY)
 	dedicated = COM_CheckParm ("-dedicated");
 #endif
@@ -384,7 +384,7 @@ int CopyDirent(sys_dirent *ent, struct dirent *tmpent)
     ent->size = statbuf.st_size;
 
     ent->directory = (statbuf.st_mode & S_IFDIR);
-    
+
     return 1;
 }
 
@@ -476,7 +476,7 @@ void _splitpath(const char *path, char *drive, char *dir, char *file, char *ext)
 // full path
 char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 {
-    // too small buffer, copy in tmp[] and then look is enough space in output buffer aka absPath 
+    // too small buffer, copy in tmp[] and then look is enough space in output buffer aka absPath
     if (maxLength-1 < PATH_MAX)	{
 			 char tmp[PATH_MAX+1];
 			 if (realpath(relPath, tmp) && absPath && strlen(tmp) < maxLength+1) {
@@ -588,3 +588,29 @@ char *Sys_GetClipboardData(void) {
 void Sys_CopyToClipboard(char *text) {
 	strlcpy(clipboard_buffer, text, SYS_CLIPBOARD_SIZE);
 }
+
+/*************************** INTER PROCESS CALLS *****************************/
+
+void Sys_InitIPC()
+{
+	// TODO : Implement Sys_InitIPC() me on linux.
+}
+
+void Sys_ReadIPC()
+{
+	// TODO : Implement Sys_ReadIPC() me on linux.
+	// TODO : Pass the read char buffer to COM_ParseIPCData()
+}
+
+void Sys_CloseIPC()
+{
+	// TODO : Implement Sys_CloseIPC() me on linux.
+}
+
+unsigned int Sys_SendIPC(const char *buf)
+{
+	// TODO : Implement Sys_SendIPC() me on linux.
+}
+
+
+

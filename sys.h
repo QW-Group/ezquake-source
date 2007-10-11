@@ -97,3 +97,10 @@ void Sys_Init (void);
 
 wchar *Sys_GetClipboardTextW(void);
 void Sys_CopyToClipboard(char *);
+
+// Inter Process Call functions.
+void Sys_InitIPC();
+void Sys_ReadIPC();
+void Sys_CloseIPC();
+unsigned int Sys_SendIPC(const char *buf);
+

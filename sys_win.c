@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.44 2007-09-30 22:59:24 disconn3ct Exp $
+	$Id: sys_win.c,v 1.45 2007-10-11 18:29:33 cokeman1982 Exp $
 
 */
 // sys_win.c
@@ -479,30 +479,47 @@ void Sys_Init (void) {
 
 }
 
-void Sys_Init_ (void) {
+void Sys_Init_ (void) 
+{
 	OSVERSIONINFO vinfo;
 
-	// allocate a named semaphore on the client so the front end can tell if it is alive
+	// Allocate a named semaphore on the client so the front end can tell if it is alive.
 	if (!dedicated
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		&& !COM_CheckParm("-allowmultiple")
-#endif// enabled for development purposes, but disabled for official builds
-	)
+		#endif // Enabled for development purposes, but disabled for official builds.
+		)
 	{
-		// mutex will fail if semaphore already exists
+		// Mutex will fail if semaphore already exists.
 		qwclsemaphore = CreateMutex(
-			NULL,		//Security attributes
-			0,			//owner
-			"qwcl");	//Semaphore name/
+			NULL,		// Security attributes
+			0,			// Owner
+			"qwcl");	// Semaphore name
+
 		if (!qwclsemaphore)
-			Sys_Error ("QWCL is already running on this system");
+		{
+			int qwurl_parm = COM_CheckParm("+qwurl");
+		
+			// If the user specified a QW URL on the commandline
+			// we forward it to the already running client.
+			if (qwurl_parm)
+			{
+				Sys_SendIPC(COM_Argv(qwurl_parm + 1));
+				Sys_Quit();
+			}
+			else
+			{
+				Sys_Error ("QWCL is already running on this system");
+			}
+		}
+		
 		CloseHandle (qwclsemaphore);
 
 		qwclsemaphore = CreateSemaphore(
-			NULL,		//Security attributes
-			0,			//Initial count
-			1,			//Maximum count
-			"qwcl");	//Semaphore name
+			NULL,		// Security attributes
+			0,			// Initial count
+			1,			// Maximum count
+			"qwcl");	// Semaphore name
 	}
 
 	MaskExceptions ();
@@ -529,7 +546,8 @@ void Sys_Init_ (void) {
 
 #define SYS_CLIPBOARD_SIZE		256
 
-wchar *Sys_GetClipboardTextW(void) {
+wchar *Sys_GetClipboardTextW(void) 
+{
 	HANDLE th;
 	wchar *clipText, *s, *t;
 	static wchar clipboard[SYS_CLIPBOARD_SIZE];
@@ -845,3 +863,70 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 {
     return _fullpath(absPath, relPath, maxLength);
 } 
+
+#define EZQUAKE_MAILSLOT	"\\\\.\\mailslot\\ezquake"
+#define MAILSLOT_BUFFERSIZE 1024
+
+HANDLE ezquake_server_mailslot;
+
+void Sys_InitIPC()
+{	
+	ezquake_server_mailslot = CreateMailslot( 
+							  EZQUAKE_MAILSLOT,					// Mailslot name
+							  MAILSLOT_BUFFERSIZE,              // Input buffer size 
+							  0,								// Timeout
+							  NULL);							// Default security attribute 
+}
+
+void Sys_CloseIPC()
+{
+	CloseHandle(ezquake_server_mailslot);
+}
+
+void Sys_ReadIPC()
+{
+	char buf[MAILSLOT_BUFFERSIZE] = {0};
+	DWORD num_bytes_read = 0;
+
+	if (INVALID_HANDLE_VALUE == ezquake_server_mailslot)
+	{
+		return;
+	}
+
+	// Read client message
+	ReadFile( ezquake_server_mailslot,	// Handle to mailslot 
+				buf,						// Buffer to receive data 
+				sizeof(buf),				// Size of buffer 
+				&num_bytes_read,			// Number of bytes read 
+				NULL);						// Not overlapped I/O 
+
+	COM_ParseIPCData(buf, num_bytes_read);
+}
+
+unsigned int Sys_SendIPC(const char *buf)
+{
+	HANDLE hMailslot;
+	unsigned int num_bytes_written;
+	qbool result = false;
+
+	// Connect to the server mailslot using CreateFile()
+	hMailslot = CreateFile( EZQUAKE_MAILSLOT,		// Mailslot name 
+							GENERIC_WRITE,			// Mailslot write only 
+							FILE_SHARE_READ,		// Required for mailslots
+							NULL,					// Default security attributes
+							OPEN_EXISTING,			// Opens existing mailslot 
+							FILE_ATTRIBUTE_NORMAL,	// Normal attributes 
+							NULL);					// No template file 
+
+	// Send the message to server.
+	result = WriteFile( hMailslot,			// Handle to mailslot 
+						buf,				// Buffer to write from 
+						strlen(buf) + 1,	// Number of bytes to write, include the NULL
+						&num_bytes_written,	// Number of bytes written 
+						NULL);				// Not overlapped I/O
+
+	 CloseHandle(hMailslot);
+	 return result;
+}
+
+	

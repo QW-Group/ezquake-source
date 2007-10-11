@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.27 2007-09-03 15:07:29 dkure Exp $
+	$Id: sys_mac.c,v 1.28 2007-10-11 18:29:33 cokeman1982 Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -56,19 +56,19 @@ static enum { QUIT, START, FAILED } action = START;
 enum {
 	// Dialog resources
 	rAlertDialog = 128,
-	
+
 	// GetKeys character codes
 	kCommandKey = 0x37,
 	kOptionKey = 0x3a,
 	kLShiftKey = 0x38,
-	kRShiftKey = 0x3C 
+	kRShiftKey = 0x3C
 };
 
 // Macintosh keymap
 byte scantokey[128] =
 {
 //	 0		 1		 2		 3			 4		 5			 6		 	7
-//	 8		 9		 A		 B			 C		 D			 E			F 
+//	 8		 9		 A		 B			 C		 D			 E			F
 	'=',	'9',	'7',	'-',		'8',	'0',		']',		'o',
 	'y',	't',	'1',	'2',		'3',	'4',		'6',		'5',		// 0
 	'c',	'v',	K_PARA,	'b',		'q',	'w',		'e',		'r',
@@ -103,7 +103,7 @@ int noconinput = 0;
 qbool stdin_ready;
 int do_stdin = 1;
 
-cvar_t sys_nostdout = {"sys_nostdout", "0"};	
+cvar_t sys_nostdout = {"sys_nostdout", "0"};
 cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
 /*
 ===============================================================================
@@ -127,13 +127,13 @@ int filelength (int h)
 int Sys_FileOpenRead (char *path, int *hndl)
 {
 	int h;
-	
+
 	h = open (path, O_RDONLY, 0666);
 
 	*hndl = h;
 	if (h == -1)
 		return -1;
-	
+
 	return filelength(h);
 }
 
@@ -142,7 +142,7 @@ int Sys_FileOpenWrite (char *path)
 	int     handle;
 
 	umask (0);
-	
+
 	handle = open(path,O_RDWR | O_CREAT | O_TRUNC
 	, 0666);
 
@@ -176,10 +176,10 @@ int Sys_FileWrite (int handle, void *src, int count)
 qbool Sys_FileExists (char *path)
 {
 	struct	stat	buf;
-	
+
 	if (stat (path,&buf) == -1)
 		return false;
-	
+
 	return true;
 }
 
@@ -215,7 +215,7 @@ void Sys_Error (char *error, ...)
 {
 	va_list argptr;
 	char outTxt[2048];
-	
+
 	va_start (argptr, error);
 	outTxt[0] = vsprintf (outTxt+1, error, argptr);
 	va_end (argptr);
@@ -226,7 +226,7 @@ void Sys_Error (char *error, ...)
 		AlertStdAlertParamRec param;
 		short itemHit;
 		Str255 briefMsg;
-		
+
 		param.movable 		= 0;
 		param.filterProc 	= nil;
 		param.defaultText	= nil;
@@ -236,10 +236,10 @@ void Sys_Error (char *error, ...)
 		param.defaultButton	= kAlertStdAlertOKButton;
 		param.cancelButton	= 0;
 		param.position		= kWindowDefaultPosition;
-		
+
 		sprintf ((char *)briefMsg, "%s has encountered an error.", kAppName);
 		c2pstrcpy (briefMsg, (char *)briefMsg);
-		
+
 		StandardAlert (kAlertStopAlert, briefMsg, (StringPtr) outTxt, &param, &itemHit);
 	}
 	else
@@ -255,7 +255,7 @@ void Sys_Message (Str255 briefMsg, char *error, ...)
 {
 	va_list argptr;
 	char outTxt[2048];
-	
+
 	va_start (argptr, error);
 	outTxt[0] = vsprintf (outTxt+1, error, argptr);
 	va_end (argptr);
@@ -263,7 +263,7 @@ void Sys_Message (Str255 briefMsg, char *error, ...)
 	{
 		AlertStdAlertParamRec param;
 		short itemHit;
-		
+
 		param.movable 		= 0;
 		param.filterProc 	= NULL;
 		param.defaultText	= kAlertDefaultOKText;
@@ -273,8 +273,8 @@ void Sys_Message (Str255 briefMsg, char *error, ...)
 		param.defaultButton	= kAlertStdAlertOKButton;
 		param.cancelButton	= 0;
 		param.position		= kWindowDefaultPosition;
-		
-		c2pstrcpy (briefMsg, (char *)briefMsg);	
+
+		c2pstrcpy (briefMsg, (char *)briefMsg);
 		StandardAlert (kAlertNoteAlert, briefMsg, (StringPtr) outTxt, &param, &itemHit);
 	}
 }
@@ -308,11 +308,11 @@ double Sys_DoubleTime (void)
 	static union {
 		long long big;
 		UnsignedWide system;
-	} then,now; 
+	} then,now;
 	Microseconds(&now.system);
-	
+
 	then.big=now.big;
-	
+
 	return now.big / 1000000.0;
 }
 
@@ -324,7 +324,7 @@ void Sys_LowFPPrecision (void){}
 
 void Sys_DebugLog(char *file, char *fmt, ...)
 {
-    va_list argptr; 
+    va_list argptr;
     static char data[1024];
     int fd;
 
@@ -356,7 +356,7 @@ char *Sys_ConsoleInput (void) {
 	if (len < 1)
 		return NULL;
 	text[len - 1] = 0; // rip off the /n and terminate
-	
+
 	return text;
 }
 
@@ -388,11 +388,11 @@ void Sys_SendKeyEvents (void)
 #else
 		if (oldKeyMap[i].bigEndianValue != newKeyMap[i].bigEndianValue)
 #endif
-		{	
+		{
 			// if a bit is different, the key state has changed
-					
+
 			for (n=0;n<32;n++)
-			{			
+			{
 #ifdef __BIG_ENDIAN__
 				newBit = ((newKeyMap[i] >> n) & 1);
 				oldBit = ((oldKeyMap[i] >> n) & 1);
@@ -439,20 +439,20 @@ extern Point glWindowPos;
 #define notKeyEvents (everyEvent & ~keyEvents)
 
 void OnMouseButton (EventRecord *myEvent, qbool down)
-{	
+{
 	short	    		part;
 	WindowRef		window;
 	Rect 			r;
 	GrafPtr			origPort;
 	extern WindowRef 	glWindow;
 	extern qbool 	suspend_mouse;
-	
+
 	part = FindWindow(myEvent->where, &window);
-	
+
 	switch(part)
 	{
 		case inDrag:
-	        if(!window) return; 
+	        if(!window) return;
 
 	        if (suspend_mouse)
 			{
@@ -496,7 +496,7 @@ void OnMouseButton (EventRecord *myEvent, qbool down)
 				else
 					mousebutton = K_MOUSE1;
 				Key_Event(mousebutton, down);
-				SetPort(origPort);				
+				SetPort(origPort);
 			}*/
 			break;
 	}
@@ -506,7 +506,7 @@ void OnMouseButton (EventRecord *myEvent, qbool down)
 {
 	EventRecord		myEvent;
 	Boolean			gotEvent;
-	
+
 	if (video_restart) return;
 
 	// FIXME! - just calling GetNextEvent in carbon seems to enable apple-tab to switch processes
@@ -517,46 +517,46 @@ void OnMouseButton (EventRecord *myEvent, qbool down)
 	//
 	// Anyway, when in fullscreen classic, flush all events and be happy.
 	// (NOTE: We CAN'T just flush in OSX, because we rely on this for CarbonEvents to fire)
-	
+
 	if (background)
 		gotEvent = WaitNextEvent(notKeyEvents, &myEvent, 1L, NULL);
 	else
 		gotEvent = GetNextEvent (everyEvent, &myEvent);
-	
+
 	while (gotEvent)
-	{		
+	{
 		if (myEvent.what == nullEvent)
 			break;
 		switch(myEvent.what)
 		{
 			case nullEvent:
 				break;
-				
+
 			case mouseDown:
 				if (inwindow)
 					OnMouseButton(&myEvent, true);
 				break;
-				
+
 			case mouseUp:
 				break;
-			
+
 			// We DON'T want cmd-q to quit unless the mouse is loose and we can see the menubar
 			case keyDown:
 			case autoKey:
 				break;
-				
+
 			case updateEvt:
 				break;
-				
+
 			case diskEvt:
 				break;
-				
+
 			case activateEvt:
 				break;
-				
+
 			case osEvt:
 				if (((myEvent.message >> 24) & 0x0FF) == suspendResumeMessage)
-				{	
+				{
 					if ((myEvent.message & resumeFlag) == 0)
 						Sys_Deactivate();
 					else
@@ -592,9 +592,9 @@ char  *commandLine;
 OSErr HandleQuitApplicationEvent(const AppleEvent *theAppleEvent, AppleEvent *reply, UInt32 handlerRefcon)
 {
 	extern qbool suspend_mouse;
-	
+
 	Sys_Printf("Got quit event.\n");
-	
+
 	if (inwindow && suspend_mouse)
 		M_Menu_Quit_f();// Treat as if the in-game Quit was selected
 	return noErr;
@@ -653,10 +653,10 @@ void ErrorAlert (Str255 inAlertString, int inError, Boolean inQuit)
 	// point to the port
 	GetGWorld(&savedPort, &savedDevice);
 	SetPortDialogPort(alertDialog);
-	
+
 	// set the OK item
 	SetDialogDefaultItem(alertDialog, ok);
-	
+
 	// produce the string and make it paramtext
 	if (inError)
 	{
@@ -665,18 +665,18 @@ void ErrorAlert (Str255 inAlertString, int inError, Boolean inQuit)
 	}
 	else
 		ParamText(inAlertString, 0, 0, 0);
-	
+
 	// display the alert and make sure the cursor is an arrow
 	ShowWindow(GetDialogWindow(alertDialog));
 	{
 		Cursor arrow;
 		SetCursor((Cursor *)GetQDGlobalsArrow(&arrow));
 	}
-	
+
 	// loop on ModalDialog until we're done
 	while (itemHit != ok)
 		ModalDialog(NULL, &itemHit);
-		
+
 	// tear it down
 	DisposeDialog(alertDialog);
 	SetGWorld(savedPort, savedDevice);
@@ -725,20 +725,20 @@ void VerifySystemSpecs (void)
 		*/
 		Sys_Error ("%s requires MacOSX 10.1 or later.", kAppName);
 	}
-	
+
 	Sys_Printf("MacOS Version: %x\n", result);
-	
+
 	// Sanity check for OpenGL
 	if ((void *)aglGetVersion == (void *)kUnresolvedCFragSymbolAddress)
 		Sys_Error ("%s requires OpenGL.", kAppName);
 
 	// We cheat - DSpGetVersion is a new call in DSp 1.7, so we merely need to check
 	// for its presence to determine if the user has DSp 1.7 and higher.
-	if ((void *) kUnresolvedCFragSymbolAddress == (void *) DSpGetVersion) 
+	if ((void *) kUnresolvedCFragSymbolAddress == (void *) DSpGetVersion)
 		Sys_Error ("%s requires DrawSprocket 1.7 or later.", kAppName);
 	else
 		versDSp = DSpGetVersion ();
-	
+
 	// This version of DrawSprocket is not completely functional on Mac OS X
 	if ((versDSp.majorRev == 0x01) && (versDSp.minorAndBugRev < 0x99))
 	{
@@ -755,7 +755,7 @@ void VerifySystemSpecs (void)
 void SetVideoCvarsForPrefs (void)
 {
 	video_restart = true;
-	
+
 	Cvar_SetValue (&vid_mode, gScreen.profile->mode);
 	Cvar_SetValue (&gl_vid_screen, gScreen.profile->screen);
 	Cvar_SetValue (&gl_vid_colorbits, gScreen.profile->colorbits);
@@ -765,7 +765,7 @@ void SetVideoCvarsForPrefs (void)
   		Cvar_Set (&gl_vid_windowed, "1");
 	else
 		Cvar_Set (&gl_vid_windowed, "0");
-	
+
 	video_restart = false;
 }
 
@@ -802,20 +802,20 @@ static void SetGlobalsFromPrefs (void)
 		gl_solid_format = GL_RGB8;
 		gl_alpha_format = GL_RGBA8;
 	}
-	
+
 	glWindowPos.v = macPrefs.glwindowpos.v ? macPrefs.glwindowpos.v : 52;
 	glWindowPos.h = macPrefs.glwindowpos.h ? macPrefs.glwindowpos.h : 52;
 	inwindow = macPrefs.window;
-	
+
 	// Can't use fullscreen if forcewindowed (DEBUG, or pre 1.99 DSp on OSX)
 	if (forcewindowed)
 		inwindow = true;
-	
+
 	// This is our startup video profile
 	vid_currentprofile.screen = macPrefs.device;
 	vid_currentprofile.mode = macPrefs.vid_mode;
 	vid_currentprofile.window = inwindow;
-	
+
 	// Set up our global video setting pointers
 	gScreen.profile = &vid_currentprofile;
 	gScreen.device = &vid_devices[vid_currentprofile.screen];
@@ -831,38 +831,38 @@ static void SetGlobalsFromPrefs (void)
 static void Sys_Deactivate (void)
 {
 	Com_DPrintf ("Sys_Deactivate...\n");
-	
+
 	// This will (sometimes) happen with Sys_SwitchToFinder_f
 	if (background) {
 		Com_DPrintf ("Already deactivated!\n");
 		return;
 	}
-	
+
 	// To avoid problems, we basically shut down the screen
 	if (!inwindow)
 	{
 		video_restart = true;// hack
-		
+
 		S_ClearBuffer();
 
 		VID_FadeOut ();
 		aglSetDrawable (gContext, NULL);
 		MacShutdownScreen();
 		VID_FadeIn ();
-		
+
 		video_restart = false;// hack
 	}
-	
+
 	// For some reason, on OS9, the app gets an activate event the first time it deactivates (?)
 	// Grabbing events here seems to stop this...
 	{
 		EventRecord		myEvent;
 		GetNextEvent (everyEvent, &myEvent);
 	}
-		
+
 	Release_Cursor_f();
 	background = true;
-	
+
 	VID_ShiftPalette (NULL);// Reset Desktop Gamma
 }
 
@@ -874,17 +874,17 @@ static void Sys_Deactivate (void)
 static void Sys_Activate (void)
 {
 	Com_DPrintf ("Sys_Activate...\n");
-	
+
 	if (!background) {
 		Com_DPrintf ("Already active!\n");
 		return;
 	}
-		
+
 	// Do a mini vid_restart for fullscreen...
 	if (!inwindow)
 	{
 		video_restart = true;// hack
-				
+
 		S_ClearBuffer();
 		VID_FadeOut ();
 		aglSetDrawable (gContext, NULL);
@@ -901,13 +901,13 @@ static void Sys_Activate (void)
 		video_restart = false;// hack
 		VID_FadeIn ();
 	}
-	
+
 	background = false;
-	
+
 	// Try again (seems to stick for some people)
 	if (!inwindow || (inwindow && key_dest != key_menu))
 		Capture_Cursor_f();
-	
+
 	VID_ShiftPalette (NULL);// Reset in-Game Gamma
 }
 
@@ -961,17 +961,17 @@ void Sys_SwitchToFinder_f (void)
 	const OSType		kFinderSignature = 'MACS';
 	const OSType		kFinderType = 'FNDR';
 	ProcessSerialNumber	finderProcess;
-	
+
 	// Get out of fullscreen before switching
 	// We *have* to do this on 9 since fullscreen flushes events, and we'll never get a deactivate.
 	// We *have* to do this on X to allow menu 'extensions' to re-align themselves.
 	Sys_Deactivate ();
-	
+
 	if( Sys_FindProcess( kFinderSignature, kFinderType, &finderProcess ) == noErr)
 		SetFrontProcess( &finderProcess );
 	else
 		Com_Printf ("Couldn't activate finder process.\n");
-		
+
 }
 
 //
@@ -982,18 +982,18 @@ void Sys_SwitchToFinder_f (void)
 static void Initialize (void)
 {
 	long randSeed;
-	
+
 	// pOx - had to do this first for some reason (startup events went unhandled otherwise) ??
 	InitializeAppleEvents ();
-	
+
 	// Can we run?
 	VerifySystemSpecs ();
 
 	// Tell OSX to set the local directory to the one the app lives in
 	SetDefaultDirectory ();
-	
+
 	MoreMasterPointers (64UL * 3);
-	
+
 	InitCursor ();
 	RegisterAppearanceClient ();
 
@@ -1009,7 +1009,7 @@ static void Initialize (void)
 
 	// Get our display hardware specs.
 	VID_GetVideoModesForActiveDisplays();
-	
+
 	// Get our last settings
 	LoadPrefs ();
 }
@@ -1034,13 +1034,13 @@ DoOptions()
 	MenuRef				mode_menu;
 	Size				cmdline_size;
 	int					i;
-	
+
 	// Open our nib, create the window, and close the nib.
 	status = CreateNibReference( CFSTR( "Options" ), &nibRef );
 	require_noerr( status, CantOpenNib );
 
 	DrawMenuBar();
-	
+
 	status = CreateWindowFromNib( nibRef, CFSTR( "ezQuake" ), &window );
 	require_noerr( status, CantCreateWindow );
 
@@ -1056,7 +1056,7 @@ DoOptions()
 	GetControlByID (window, &kColorsPopup, &bpp_ctl);
 	if (macPrefs.color_depth)
 		SetControlValue (bpp_ctl, 2);
-	
+
 	GetControlByID (window, &kModePopup, &mode_ctl);
 	status = CreateNewMenu (0x700, 0, &mode_menu);
 	require_noerr( status, OptionsFailed );
@@ -1082,14 +1082,14 @@ DoOptions()
 
 	// Now create our UPP and install the handler.
 	handler = NewEventHandlerUPP( OptionsHandler );
-	
+
 	InstallApplicationEventHandler( handler, 1, &cmdEvent, 0, NULL );
-	
+
 	// Position and show the window
-	
+
 	RepositionWindow( window, NULL, kWindowAlertPositionOnMainScreen );
 	ShowWindow( window );
-	
+
 	// Now we run modally. We will remain here until the PrefHandler
 	// calls QuitAppModalLoopForWindow if the user clicks OK or
 	// Cancel.
@@ -1160,17 +1160,17 @@ int main (int argc, char *argv[])
 	if (!dedicated) {
 		Str255 cleanCommandLine;
 		char *ptr;
-	
+
 		Initialize();
-	
+
 		InitCursor();
-	
+
 		DoOptions();
-	
+
 		// If the user wanted to quit from the options dialog, we oblige
 		if (action == QUIT)
 			return (0);
-	
+
 		// Copy the ini pref to the command line if there's no drag'n drop overide, but only if 'use' is checked.
 		if (macPrefs.command_line[0])
 		{
@@ -1179,28 +1179,28 @@ int main (int argc, char *argv[])
 			commandLine[1] = 0;
 			strcat(commandLine, macPrefs.command_line);
 		}
-	
+
 		cleanCommandLine[0] = ' ';
 		cleanCommandLine[1] = '\0';
-	
+
 		// OSX is touchy...
 		// Clear white space from the command line (but leave a single space between each arg)
 		if (commandLine && action != FAILED)
 		{
 			int		count = 1;// leave an initial leading space in cleanCommandLine
 			qbool 	white = false;
-	
+
 			// First char is a space (this was a leftover from the old code - FIXME I guess)
 			ptr = &commandLine[1];
-	
+
 			while (ptr[0])
 			{
 				// convert tabs to spaces
 				if (ptr[0] == '\t') ptr[0] = ' ';
-	
+
 				// skip any extra leading spaces
 				if (count == 1 && ptr[0] == ' ') ptr++;
-	
+
 				// clean up white space
 				else if (ptr[0] == ' ')
 				{
@@ -1222,18 +1222,18 @@ int main (int argc, char *argv[])
 					ptr++;
 				}
 			}
-	
+
 			cleanCommandLine[count] = '\0';
 		}
-	
+
 		if (cleanCommandLine[1])
 		{
 			char maxArgs = 2; // this gets sized up quickly
-	
+
 			argv = malloc(sizeof(char*) * maxArgs);
 			argv[0] = cleanCommandLine;
 			Sys_Printf("Active Command Line: \"%s\"\n",argv[0]);
-	
+
 			argc = 1;
 			argv[1]=strtok(argv[0]," ");
 			argv[0] = kAppName; // program name is always argv[0].
@@ -1247,7 +1247,7 @@ int main (int argc, char *argv[])
 
 		if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
 			forcewindowed = true;
-		
+
 		// Set up the system state based on what the preferences say
 		SetGlobalsFromPrefs ();
 
@@ -1401,7 +1401,7 @@ void _splitpath(const char *path, char *drive, char *dir, char *file, char *ext)
 // full path
 char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 {
-    // too small buffer, copy in tmp[] and then look is enough space in output buffer aka absPath 
+    // too small buffer, copy in tmp[] and then look is enough space in output buffer aka absPath
     if (maxLength-1 < PATH_MAX)	{
 			 char tmp[PATH_MAX+1];
 			 if (realpath(relPath, tmp) && absPath && strlen(tmp) < maxLength+1) {
@@ -1470,3 +1470,28 @@ void *Sys_GetProcAddress (const char *ExtName)
 wchar *Sys_GetClipboardTextW(void) {
 	return NULL;
 }
+
+/*************************** INTER PROCESS CALLS *****************************/
+
+void Sys_InitIPC()
+{
+	// TODO : Implement Sys_InitIPC() me on mac.
+}
+
+void Sys_ReadIPC()
+{
+	// TODO : Implement Sys_ReadIPC() me on mac.
+	// TODO : Pass the read char buffer to COM_ParseIPCData()
+}
+
+void Sys_CloseIPC()
+{
+	// TODO : Implement Sys_CloseIPC() me on mac.
+}
+
+unsigned int Sys_SendIPC(const char *buf)
+{
+	// TODO : Implement Sys_SendIPC() me on mac.
+}
+
+
