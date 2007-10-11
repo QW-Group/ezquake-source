@@ -55,9 +55,9 @@ byte *Image_LoadPCX_As32Bit (FILE *f, int filesize, char *path, int matchwidth, 
 
 #else
 byte *Image_LoadPNG (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
-byte *Image_LoadTGA (vfsfile_t *v, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
-byte *Image_LoadPCX (vfsfile_t *v, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
-byte *Image_LoadJPEG(vfsfile_t *v, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadTGA (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadPCX (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadJPEG(vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 png_data *Image_LoadPNG_All (vfsfile_t *vin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height);
 #ifdef GLQUAKE
 // this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
