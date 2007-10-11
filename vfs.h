@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.10 2007-10-11 06:38:09 dkure Exp $
+ * $Id: vfs.h,v 1.11 2007-10-11 07:02:37 dkure Exp $
  *             
  */
 
@@ -58,6 +58,10 @@ typedef struct {
 
 typedef struct searchpath_s
 {
+#ifndef WITH_FTE_VFS 	 
+	char    filename[MAX_OSPATH]; 	 
+	struct pack_s *pack; // only one of filename / pack will be used 	 
+#else
 	searchpathfuncs_t *funcs;
 	qbool copyprotected;	// don't allow downloads from here.
 	qbool istemporary;
@@ -68,6 +72,7 @@ typedef struct searchpath_s
 	                // for the paks it's actually loaded.
 
 	struct searchpath_s *nextpure;
+#endif // WITH_FTE_VFS
 	struct searchpath_s *next;
 } searchpath_t;
 
@@ -103,7 +108,9 @@ typedef struct
 	int		filepos, filelen;
 } packfile_t;
 
-#ifdef WITH_FTE_VFS
+#ifndef WITH_FTE_VFS
+vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode);
+#else
 extern searchpathfuncs_t packfilefuncs;
 #endif // WITH_FTE_VFS
 

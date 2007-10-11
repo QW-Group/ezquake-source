@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.55 2007-10-11 05:55:47 dkure Exp $
+    $Id: image.c,v 1.56 2007-10-11 07:02:37 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -681,9 +681,9 @@ static void PNG_IO_user_flush_data(png_structp png_ptr) {
 
 
 #ifndef WITH_FTE_VFS
-byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, *real_height) 
+byte *Image_LoadPNG (FILE *fin, const char *filename, int matchwidth, int matchheight, int *real_width, *real_height) 
 #else
-byte *Image_LoadPNG (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, *real_height) 
+byte *Image_LoadPNG (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, *real_height) 
 #endif // WITH_FTE_VFS
 {
 	byte header[8], **rowpointers, *data;
@@ -1097,7 +1097,7 @@ static qbool PNG_HasHeader (vfsfile_t *fin)
 
 
 #ifndef WITH_FTE_VFS
-png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
+png_data *Image_LoadPNG_All (FILE *fin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
 #else
 png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
 #endif // WITH_FTE_VFS
@@ -1436,7 +1436,7 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 }
 
 #ifndef WITH_FTE_VFS
-byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+byte *Image_LoadPNG (FILE *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #else
 byte *Image_LoadPNG (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #endif // WITH_FTE_VFS
@@ -1476,7 +1476,7 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 
 #ifndef WITH_FTE_VFS
 	if (!(fp = fopen (name, "wb"))) {
-		COM_CreatePath (name);
+		FS_CreatePath (name);
 		if (!(fp = fopen (name, "wb")))
 			return false;
 	}
@@ -1567,7 +1567,7 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	
 #ifndef WITH_FTE_VFS
 	if (!(fp = fopen (name, "wb"))) {
-		COM_CreatePath (name);
+		FS_CreatePath (name);
 		if (!(fp = fopen (name, "wb")))
 			return false;
 	}
@@ -1691,9 +1691,9 @@ static void TGA_upsample32(byte *dest, byte *src)
 #define TGA_ERROR(msg)	{if (msg) {Com_DPrintf((msg), COM_SkipPath(filename));} Q_free(fileBuffer); return NULL;}
 
 #ifndef WITH_FTE_VFS
-byte *Image_LoadTGA(FILE *fin, int filesize, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+byte *Image_LoadTGA(FILE *fin, int filesize, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #else
-byte *Image_LoadTGA(vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #endif // WITH_FTE_VFS
 {
 	TGAHeader_t header;
@@ -2199,7 +2199,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	snprintf (name, sizeof(name), "%s", filename);	
 #ifndef WITH_FTE_VFS
 	if (!(outfile = fopen (name, "wb"))) {
-		COM_CreatePath (name);
+		FS_CreatePath (name);
 		if (!(outfile = fopen (name, "wb")))
 			return false;
 	}
@@ -2389,9 +2389,9 @@ jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 }
 
 #ifndef WITH_FTE_VFS
-byte *Image_LoadJPEG(FILE *fin, int filesize, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+byte *Image_LoadJPEG(FILE *fin, int filesize, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 #else
-byte *Image_LoadJPEG(vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+byte *Image_LoadJPEG(vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 #endif // WITH_FTE_VFS
 {
 	byte *mem = NULL, *in, *out;
@@ -2559,9 +2559,9 @@ typedef struct pcx_s
 } pcx_t;
 
 #ifndef WITH_FTE_VFS
-byte *Image_LoadPCX (FILE *fin, int filesize, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+byte *Image_LoadPCX (FILE *fin, int filesize, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #else
-byte *Image_LoadPCX (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
+byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 #endif // WITH_FTE_VFS
 {
 	pcx_t *pcx;

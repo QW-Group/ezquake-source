@@ -1,4 +1,4 @@
-// $Id: xsd.c,v 1.12 2007-10-04 14:56:54 dkure Exp $
+// $Id: xsd.c,v 1.13 2007-10-11 07:02:38 dkure Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -183,7 +183,7 @@ xml_t * XSD_LoadDocument(char *filename)
     char document_type[1024];
 	
 #ifndef WITH_FTE_VFS
-	extern int FS_FOpenPathFile (char *filename, FILE **file);
+	extern int FS_FOpenPathFile (const char *filename, FILE **file);
 
     // try to open the file
 	if ((filelen = FS_FOpenFile(filename, &f)) < 0) {

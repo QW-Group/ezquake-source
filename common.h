@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.71 2007-10-11 06:38:10 dkure Exp $
+    $Id: common.h,v 1.72 2007-10-11 07:02:37 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -206,8 +206,8 @@ extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir 
 
 void FS_InitFilesystem (void);
 void FS_SetGamedir (char *dir);
-int FS_FOpenFile (char *filename, FILE **file);
-int FS_FOpenPathFile (char *filename, FILE **file);
+int FS_FOpenFile (const char *filename, FILE **file);
+int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);
 byte *FS_LoadHeapFile (const char *path, int *len);

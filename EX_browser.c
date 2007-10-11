@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.56 2007-10-11 05:55:47 dkure Exp $
+	$Id: EX_browser.c,v 1.57 2007-10-11 07:02:37 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -2200,7 +2200,7 @@ void RemoveSourceProc(void)
     //f = fopen(SOURCES_PATH, "wb");
     //if (f != NULL)
 #ifndef WITH_FTE_VFS
-    if (COM_FCreateFile("sb/sources.txt", &f, "ezquake", "wb"))
+    if (FS_FCreateFile("sb/sources.txt", &f, "ezquake", "wb"))
     {
         fwrite(filebuf, 1, strlen(filebuf), f);
         fclose(f);

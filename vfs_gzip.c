@@ -14,10 +14,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.7 2007-10-11 06:38:09 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.8 2007-10-11 07:02:38 dkure Exp $
  *             
  */
 
+#ifdef WITH_FTE_VFS
 #ifdef WITH_ZLIB
 #ifdef WITH_VFS_GZIP
 
@@ -322,3 +323,4 @@ searchpathfuncs_t gzipfilefuncs = {
 
 #endif // WITH_VFS_GZIP
 #endif // WITH_ZLIB
+#endif // WITH_FTE_VFS

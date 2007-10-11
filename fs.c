@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.53 2007-10-11 06:38:10 dkure Exp $
+	$Id: fs.c,v 1.54 2007-10-11 07:02:37 dkure Exp $
 */
 
 /**
@@ -90,6 +90,7 @@ typedef struct
     int     dirofs;
     int     dirlen;
 } dpackheader_t;
+
 #endif
 
 searchpath_t	*fs_searchpaths = NULL;
@@ -427,7 +428,7 @@ void FS_CreatePath(char *path)
 	}
 }
 
-int FS_FOpenPathFile (char *filename, FILE **file) {
+int FS_FOpenPathFile (const char *filename, FILE **file) {
 
 	*file = NULL;
 	fs_filepos = 0;
@@ -455,7 +456,7 @@ qbool	file_from_gamedir;	// global indicating file came from a gamedir (and game
 
 // VFS-FIXME: D-Kure: This function will be removed once we have the VFS layer
 #ifndef WITH_FTE_VFS
-int FS_FOpenFile (char *filename, FILE **file) {
+int FS_FOpenFile (const char *filename, FILE **file) {
 	searchpath_t *search;
 	pack_t *pak;
 	int i;
@@ -1368,7 +1369,7 @@ qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
 //
 
 #ifndef WITH_FTE_VFS
-vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
+vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 {
 	vfsfile_t *vf;
 	FILE *file;

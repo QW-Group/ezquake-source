@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.15 2007-10-11 06:38:10 dkure Exp $
+    $Id: fs.h,v 1.16 2007-10-11 07:02:37 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -76,7 +76,8 @@ vfsfile_t      *VFS_Filter(const char *filename, vfsfile_t *handle);
 qbool			VFS_COPYPROTECTED(struct vfsfile_s *vf);
 
 // some general function to open VFS file, except TCP
-vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto);
+vfsfile_t *FS_OpenVFS(const char *filename, char *mode,relativeto_t relativeto);
+
 // TCP VFS file
 vfsfile_t *FS_OpenTCP(char *name);
 

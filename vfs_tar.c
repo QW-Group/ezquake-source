@@ -14,9 +14,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_tar.c,v 1.5 2007-10-11 06:38:09 dkure Exp $
+ * $Id: vfs_tar.c,v 1.6 2007-10-11 07:02:38 dkure Exp $
  *             
  */
+
+#ifdef WITH_FTE_VFS
 
 #include "quakedef.h"
 #include "hash.h"
@@ -481,3 +483,5 @@ searchpathfuncs_t tarfilefuncs = {
 	NULL, // VFS-FIXME: Might be used for f_modification
 	FSTAR_OpenVFS 
 };
+
+#endif // WITH_FTE_VFS

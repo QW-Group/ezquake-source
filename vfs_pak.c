@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.14 2007-10-11 06:38:09 dkure Exp $
+ * $Id: vfs_pak.c,v 1.15 2007-10-11 07:02:38 dkure Exp $
  *             
  */
 
@@ -197,7 +197,7 @@ static void VFSPAK_Close(vfsfile_t *vfs)
 #endif /* WITH_FTE_VFS */
 
 #ifndef WITH_FTE_VFS
-static vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
+vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 {
 	vfspack_t *vfsp;
 
@@ -440,7 +440,7 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
 	return pack;
 }
 
-void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer);
+extern void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer);
 
 searchpathfuncs_t packfilefuncs = {
 	FSPAK_PrintPath,
