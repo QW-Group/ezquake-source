@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.54 2007-10-11 07:02:37 dkure Exp $
+	$Id: fs.c,v 1.55 2007-10-11 07:13:31 dkure Exp $
 */
 
 /**
@@ -1431,14 +1431,18 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
  * If the file type is unknown, NULL is returned.
  */
 searchpathfuncs_t *FS_ExtensionToSearchFunctions(char *ext) {
-	if (strcmp(ext, "zip") == 0 || strcmp(ext, "pk3") == 0) {
-		return &zipfilefuncs;
-	} else if (strcmp(ext, "pak") == 0) {
+	if (strcmp(ext, "pak") == 0) {
 		return &packfilefuncs;
+#ifdef WITH_ZLIB
+	} else if (strcmp(ext, "zip") == 0 || strcmp(ext, "pk3") == 0) {
+		return &zipfilefuncs;
 	} else if (strcmp(ext, "tar") == 0) {
 		return &tarfilefuncs;
+#ifdef WITH_VFS_GZIP
 	} else if (strcmp(ext, "gz") == 0) {
 		return &gzipfilefuncs;
+#endif // WITH_VFS_GZIP
+#endif // WITH_ZLIB
 	} else {
 		return NULL;
 	}
