@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.5 2007-10-10 17:38:19 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.6 2007-10-11 04:34:58 dkure Exp $
  *             
  */
 
@@ -299,14 +299,11 @@ static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, char *desc)
 		strlcpy(gzip->file.name, base, sizeof(gzip->file.name));
 	}
 
-
-	Com_Printf("Successfully opened %s, 1 file added\n", desc);
 	return gzip;
 
 fail:
 	// Q_free is safe to call on NULL pointers
 	Q_free(gzip);
-	Com_Printf("Unable to open %s\n", desc);
 	return NULL;
 }
 

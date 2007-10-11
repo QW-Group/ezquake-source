@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.9 2007-10-10 17:30:43 dkure Exp $
+ * $Id: vfs_zip.c,v 1.10 2007-10-11 04:34:58 dkure Exp $
  *             
  */
 
@@ -529,7 +529,6 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc)
 	zip->references = 1;
 	zip->currentfile = NULL;
 
-	Com_Printf("Successfully opened %s, %d files added\n", desc, zip->numfiles);
 	return zip;
 
 fail:
@@ -537,7 +536,6 @@ fail:
 	Q_free(zip->files);
 	Q_free(zip);
 	Q_free(funcs);
-	Com_Printf("Unable to open %s\n", desc);
 	return NULL;
 }
 
