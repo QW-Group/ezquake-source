@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.52 2007-10-11 05:55:47 dkure Exp $
+	$Id: fs.c,v 1.53 2007-10-11 06:38:10 dkure Exp $
 */
 
 /**
@@ -52,13 +52,8 @@ char *com_filesearchpath;
 
 int		fs_filepos;
 char	fs_netpath[MAX_OSPATH];
-#ifdef WITH_FTE_VFS
-qbool com_file_copyprotected;
-#endif
 
-//
 // WARNING: if u add some FS related global variable then made appropriate change to FS_ShutDown() too, if required.
-//
 
 char	com_gamedirfile[MAX_QPATH]; // qw tf ctf and etc. In other words single dir name without path
 char	com_gamedir[MAX_OSPATH];    // c:/quake/qw
@@ -96,27 +91,6 @@ typedef struct
     int     dirlen;
 } dpackheader_t;
 #endif
-
-typedef struct searchpath_s
-{
-#ifndef WITH_FTE_VFS
-	char	filename[MAX_OSPATH];
-	pack_t	*pack; // only one of filename / pack will be used
-#else
-
-	searchpathfuncs_t *funcs;
-	qbool copyprotected;	// don't allow downloads from here.
-	qbool istemporary;
-	void *handle;
-
-	int crc_check;	// client sorts packs according to this checksum
-	int crc_reply;	// client sends a different crc back to the server, 
-	                // for the paks it's actually loaded.
-
-	struct searchpath_s *nextpure;
-#endif
-	struct searchpath_s *next;
-} searchpath_t;
 
 searchpath_t	*fs_searchpaths = NULL;
 searchpath_t	*fs_base_searchpaths = NULL;	// without gamedirs
@@ -158,17 +132,6 @@ typedef enum {
 	FSLFRT_DEPTH_OSONLY,
 	FSLFRT_DEPTH_ANYPATH
 } FSLF_ReturnType_e;
-
-typedef enum {
-	FS_LOAD_NONE     = 1,
-	FS_LOAD_FILE_PAK = 2,
-	FS_LOAD_FILE_PK3 = 4,
-	FS_LOAD_FILE_PK4 = 8,
-	FS_LOAD_FILE_DOOMWAD = 16,
-	FS_LOAD_FROM_PAKLST = 32,
-	FS_LOAD_FILE_ALL = FS_LOAD_FILE_PAK | FS_LOAD_FILE_PK3 
-		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD | FS_LOAD_FROM_PAKLST,
-} FS_Load_File_Types;
 
 void FS_CreatePathRelative(char *pname, int relativeto);
 void FS_ForceToPure(char *str, char *crcs, int seed);
@@ -1395,6 +1358,11 @@ char *VFS_GETS(struct vfsfile_s *vf, char *buffer, int buflen)
 	return buffer;
 }
 
+qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
+	assert(vf);
+	return vf->copyprotected;
+}
+
 //
 // some general function to open VFS file, except VFSTCP
 //
@@ -1667,7 +1635,6 @@ archive_fail:
 
 	if (loc.search)
 	{
-		com_file_copyprotected = loc.search->copyprotected;
 		return VFS_Filter(filename, loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode));
 	}
 
@@ -2708,14 +2675,12 @@ void FS_RebuildFSHash(void)
 	Com_Printf("%i unique files, %i duplicates\n", fs_hash_files, fs_hash_dups);
 }
 
-/*
-===========
-FS_FindFile
-
-Finds the file in the search path.
-Sets com_filesize and one of handle or file
-===========
-*/
+/* ===========
+ * FS_FLocateFile
+ * ===========
+ * Finds the file in the search path.
+ * Sets com_filesize and one of handle or file
+ */
 //if loc is valid, loc->search is always filled in, the others are filled on success.
 //returns -1 if couldn't find.
 int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc)

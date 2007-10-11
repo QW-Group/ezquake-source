@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.10 2007-10-11 04:34:58 dkure Exp $
+ * $Id: vfs_zip.c,v 1.11 2007-10-11 06:38:09 dkure Exp $
  *             
  */
 
@@ -208,7 +208,7 @@ static int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestore
 	return read;
 }
 
-static int VFSZIP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestoread)
+static int VFSZIP_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestoread)
 {
 	Sys_Error("VFSZIP_WriteBytes: Not supported\n");
 	return 0;
@@ -320,13 +320,15 @@ static vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	vfsz->startpos = zip->files[loc->index].filepos;
 	vfsz->length = loc->len;
 
-	vfsz->funcs.ReadBytes  = VFSZIP_ReadBytes;
-	vfsz->funcs.WriteBytes = NULL;
+	vfsz->funcs.ReadBytes  = strcmp(mode, "rb") ? NULL : VFSZIP_ReadBytes;
+	vfsz->funcs.WriteBytes = strcmp(mode, "wb") ? NULL : VFSZIP_WriteBytes;
 	vfsz->funcs.Seek       = VFSZIP_Seek;
 	vfsz->funcs.seekingisabadplan = true;
 	vfsz->funcs.Tell       = VFSZIP_Tell;
 	vfsz->funcs.GetLen     = VFSZIP_GetLen;
 	vfsz->funcs.Close      = VFSZIP_Close;
+	if (loc->search)
+		vfsz->funcs.copyprotected = loc->search->copyprotected;
 
 	// VFS-FIXME: 
 	// What is the point of is compressed etc
@@ -390,9 +392,9 @@ static void FSZIP_BuildHash(void *handle)
 
 static qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
-	packfile_t *pf = hashedresult;
-	int i, len;
-	zipfile_t	*zip = handle;
+	packfile_t *pf  = (packfile_t *) hashedresult;
+	zipfile_t  *zip = (zipfile_t  *) handle;
+	int i;
 
 // look through all the pak file elements
 
@@ -415,7 +417,6 @@ static qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename,
 
 	if (pf)
 	{
-		len = pf->filelen;
 		if (loc)
 		{
 			loc->index = pf - zip->files;
@@ -577,7 +578,7 @@ searchpathfuncs_t zipfilefuncs = {
 	FSZIP_ReadFile,
 	FSZIP_EnumerateFiles,
 	FSZIP_LoadZipFile,
-	NULL, // VFS-FIXME: Not really used -- FSZIP_GeneratePureCRC,
+	FSZIP_GeneratePureCRC,
 	FSZIP_OpenVFS
 };
 

@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_tar.c,v 1.4 2007-10-11 04:34:58 dkure Exp $
+ * $Id: vfs_tar.c,v 1.5 2007-10-11 06:38:09 dkure Exp $
  *             
  */
 
@@ -310,6 +310,8 @@ static vfsfile_t *FSTAR_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	vfst->funcs.GetLen     = VFSTAR_GetLen;
 	vfst->funcs.Close      = VFSTAR_Close;
 	vfst->funcs.Flush      = VFSTAR_Flush;
+	if (loc->search)
+		vfst->funcs.copyprotected = loc->search->copyprotected;
 
 	return (vfsfile_t *)vfst;
 }
@@ -359,9 +361,9 @@ static void FSTAR_BuildHash(void *handle)
 
 static qbool FSTAR_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
-	packfile_t *pf = hashedresult;
-	int i, len;
-	tarfile_t *tar = (tarfile_t *)handle;
+	packfile_t *pf = (packfile_t *) hashedresult;
+	tarfile_t *tar = (tarfile_t  *) handle;
+	int i;
 
 	// look through all the pak file elements
 
@@ -384,7 +386,6 @@ static qbool FSTAR_FLocate(void *handle, flocation_t *loc, const char *filename,
 
 	if (pf)
 	{
-		len = pf->filelen;
 		if (loc)
 		{
 			loc->index = pf - tar->files;

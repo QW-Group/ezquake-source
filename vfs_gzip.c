@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.6 2007-10-11 04:34:58 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.7 2007-10-11 06:38:09 dkure Exp $
  *             
  */
 
@@ -158,14 +158,15 @@ static vfsfile_t *FSGZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	vfsgz->length     = loc->len;
 	vfsgz->currentpos = vfsgz->startpos;
 
-	// TODO: Use mode to determine NULL read/write VFS calls
-	vfsgz->funcs.ReadBytes  = VFSGZIP_ReadBytes;
-	vfsgz->funcs.WriteBytes = NULL; // VFSGZIP_WriteBytes;
+	vfsgz->funcs.ReadBytes  = strcmp(mode, "rb") ? NULL : VFSGZIP_ReadBytes;
+	vfsgz->funcs.WriteBytes = strcmp(mode, "wb") ? NULL : VFSGZIP_WriteBytes;
 	vfsgz->funcs.Seek       = VFSGZIP_Seek;
 	vfsgz->funcs.Tell       = VFSGZIP_Tell;
 	vfsgz->funcs.GetLen     = VFSGZIP_GetLen;
 	vfsgz->funcs.Close      = VFSGZIP_Close;
 	vfsgz->funcs.Flush      = VFSGZIP_Flush;
+	if (loc->search)
+		vfsgz->funcs.copyprotected = loc->search->copyprotected;
 
 	return (vfsfile_t *)vfsgz;
 }

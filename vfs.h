@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.9 2007-10-10 17:30:43 dkure Exp $
+ * $Id: vfs.h,v 1.10 2007-10-11 06:38:09 dkure Exp $
  *             
  */
 
@@ -55,6 +55,21 @@ typedef struct {
 
 	vfsfile_t *(*OpenVFS)(void *handle, flocation_t *loc, char *mode);
 } searchpathfuncs_t;
+
+typedef struct searchpath_s
+{
+	searchpathfuncs_t *funcs;
+	qbool copyprotected;	// don't allow downloads from here.
+	qbool istemporary;
+	void *handle;
+
+	int crc_check;	// client sorts packs according to this checksum
+	int crc_reply;	// client sends a different crc back to the server, 
+	                // for the paks it's actually loaded.
+
+	struct searchpath_s *nextpure;
+	struct searchpath_s *next;
+} searchpath_t;
 
 //=================================
 // STDIO Files (OS)

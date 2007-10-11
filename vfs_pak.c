@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.13 2007-10-10 17:30:42 dkure Exp $
+ * $Id: vfs_pak.c,v 1.14 2007-10-11 06:38:09 dkure Exp $
  *             
  */
 
@@ -199,27 +199,27 @@ static void VFSPAK_Close(vfsfile_t *vfs)
 #ifndef WITH_FTE_VFS
 static vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 {
-	vfspack_t *vfs;
+	vfspack_t *vfsp;
 
 	if (strcmp(mode, "rb") || !handle || fsize < 0 || fpos < 0)
 		return NULL; // support only "rb" mode
 
-	vfs = Q_calloc(1, sizeof(vfspack_t));
+	vfsp = Q_calloc(1, sizeof(vfspack_t));
 
-	vfs->handle = handle;
+	vfsp->handle = handle;
 
-	vfs->startpos   = fpos;
-	vfs->length     = fsize;
-	vfs->currentpos = vfs->startpos;
+	vfsp->startpos   = fpos;
+	vfsp->length     = fsize;
+	vfsp->currentpos = vfsp->startpos;
 
-	vfs->funcs.Close	  = VFSPAK_Close;
-	vfs->funcs.GetLen	  = VFSPAK_GetLen;
-	vfs->funcs.ReadBytes  = VFSPAK_ReadBytes;
-	vfs->funcs.Seek		  = VFSPAK_Seek;
-	vfs->funcs.Tell		  = VFSPAK_Tell;
-	vfs->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
+	vfsp->funcs.ReadBytes  = VFSPAK_ReadBytes;
+	vfsp->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
+	vfsp->funcs.Seek       = VFSPAK_Seek;
+	vfsp->funcs.Tell       = VFSPAK_Tell;
+	vfsp->funcs.GetLen	   = VFSPAK_GetLen;
+	vfsp->funcs.Close	   = VFSPAK_Close;
 
-	return (vfsfile_t *)vfs;
+	return (vfsfile_t *)vfsp;
 }
 
 #else
@@ -227,28 +227,31 @@ static vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 static vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
 	pack_t *pack = (pack_t*)handle;
-	vfspack_t *vfs;
+	vfspack_t *vfsp;
 
 	if (strcmp(mode, "rb"))
 		return NULL; //urm, unable to write/append
 
-	vfs = Q_calloc(1, sizeof(vfspack_t));
+	vfsp = Q_calloc(1, sizeof(*vfsp));
 
-	vfs->parentpak = pack;
-	vfs->parentpak->references++;
+	vfsp->parentpak = pack;
+	vfsp->parentpak->references++;
 
-	vfs->startpos = loc->offset;
-	vfs->length = loc->len;
-	vfs->currentpos = vfs->startpos;
+	vfsp->startpos   = loc->offset;
+	vfsp->length     = loc->len;
+	vfsp->currentpos = vfsp->startpos;
 
-	vfs->funcs.Close      = VFSPAK_Close;
-	vfs->funcs.GetLen     = VFSPAK_GetLen;
-	vfs->funcs.ReadBytes  = VFSPAK_ReadBytes;
-	vfs->funcs.Seek       = VFSPAK_Seek;
-	vfs->funcs.Tell       = VFSPAK_Tell;
-	vfs->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
+	vfsp->funcs.ReadBytes     = strcmp(mode, "rb") ? NULL : VFSPAK_ReadBytes;
+	vfsp->funcs.WriteBytes    = strcmp(mode, "wb") ? NULL : VFSPAK_WriteBytes;
+	vfsp->funcs.Seek		  = VFSPAK_Seek;
+	vfsp->funcs.Tell		  = VFSPAK_Tell;
+	vfsp->funcs.GetLen	      = VFSPAK_GetLen;
+	vfsp->funcs.Close	      = VFSPAK_Close;
+	vfsp->funcs.Flush         = NULL;
+	if (loc->search)
+		vfsp->funcs.copyprotected = loc->search->copyprotected;
 
-	return (vfsfile_t *)vfs;
+	return (vfsfile_t *)vfsp;
 }
 #endif /* WITH_FTE_VFS */
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.38 2007-10-07 07:25:19 dkure Exp $
+	$Id: sv_user.c,v 1.39 2007-10-11 06:38:09 dkure Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -839,10 +839,11 @@ void Cmd_Download_f (void) {
 #endif
 
 	// special check for maps that came from a pak file
-	if (!strcasecmp(dirname, "maps") && file_from_pak && !allow_download_pakmaps.value) {
 #ifndef WITH_FTE_VFS
+	if (!strcasecmp(dirname, "maps") && file_from_pak && !allow_download_pakmaps.value) {
 		fclose (sv_client->download);
 #else
+	if (!strcasecmp(dirname, "maps") && !allow_download_pakmaps.value && VFS_COPYPROTECTED(sv_client->download)) {
 		VFS_CLOSE(sv_client->download);
 #endif
 		sv_client->download = NULL;

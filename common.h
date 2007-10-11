@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.70 2007-10-11 05:55:47 dkure Exp $
+    $Id: common.h,v 1.71 2007-10-11 06:38:10 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -161,7 +161,6 @@ int COM_CheckParmOffset (char *parm, int offset);
 // "1 3.5 6 7" will lead to fl_array[0] = 1.0; fl_array[1] = 3.5; ...
 int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size);
 
-
 void COM_Init (void);
 
 const char *COM_SkipPath (const char *pathname);
@@ -200,7 +199,9 @@ extern char	com_basedir[MAX_OSPATH];
 extern char	com_gamedirfile[MAX_QPATH];
 extern char com_homedir[MAX_PATH];
 
+#ifndef WITH_FTE_VFS
 extern qbool file_from_pak;		// set if file came from a pak file
+#endif // WITH_FTE_VFS
 extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
 
 void FS_InitFilesystem (void);
@@ -210,14 +211,6 @@ int FS_FOpenPathFile (char *filename, FILE **file);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);
 byte *FS_LoadHeapFile (const char *path, int *len);
-#ifndef WITH_FTE_VFS
-void FS_AddGameDirectory (char *path_to_dir, char *dir);
-#else
-// VFS-FIXME: D-Kure This needs to take FS_Load_File_Types for loadstuff
-// but where do i put the declaration for FS_Load_File_Types??
-void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
-#endif
-
 qbool FS_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
 qbool FS_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
 void FS_CreatePath (char *path);

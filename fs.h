@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.14 2007-10-11 05:55:47 dkure Exp $
+    $Id: fs.h,v 1.15 2007-10-11 06:38:10 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -44,6 +44,7 @@ typedef struct vfsfile_s {
 	void (*Close) (struct vfsfile_s *file);
 	void (*Flush) (struct vfsfile_s *file);
 	qbool seekingisabadplan;
+	qbool copyprotected;							// File found was in a pak
 } vfsfile_t;
 
 // VFS-FIXME: D-Kure Clean up this structure
@@ -71,15 +72,34 @@ char		   *VFS_GETS   (struct vfsfile_s *vf, char *buffer, int buflen);
 
 void			VFS_TICK   (void);  // fill in/out our internall buffers 
 									// (do read/write on socket)
-vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle);
+vfsfile_t      *VFS_Filter(const char *filename, vfsfile_t *handle);
+qbool			VFS_COPYPROTECTED(struct vfsfile_s *vf);
 
 // some general function to open VFS file, except TCP
 vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto);
 // TCP VFS file
 vfsfile_t *FS_OpenTCP(char *name);
 
+#ifndef WITH_FTE_VFS
+void FS_AddGameDirectory (char *path_to_dir, char *dir);
+#else
+
+typedef enum {
+	FS_LOAD_NONE     = 1,
+	FS_LOAD_FILE_PAK = 2,
+	FS_LOAD_FILE_PK3 = 4,
+	FS_LOAD_FILE_PK4 = 8,
+	FS_LOAD_FILE_DOOMWAD = 16,
+	FS_LOAD_FROM_PAKLST = 32,
+	FS_LOAD_FILE_ALL = FS_LOAD_FILE_PAK | FS_LOAD_FILE_PK3 
+		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD | FS_LOAD_FROM_PAKLST,
+} FS_Load_File_Types;
+
+void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
+#endif
+
 #ifdef WITH_FTE_VFS
-extern cvar_t com_fs_cache;
+extern cvar_t fs_cache;
 extern qbool filesystemchanged;
 #endif /* WITH_FTE_VFS */
 
