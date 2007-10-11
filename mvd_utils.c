@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: mvd_utils.c,v 1.56 2007-09-30 22:59:23 disconn3ct Exp $
+$Id: mvd_utils.c,v 1.57 2007-10-11 17:56:47 johnnycz Exp $
 */
 
 // core module of the group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
@@ -1148,6 +1148,8 @@ void MVD_Utils_Init (void) {
 #ifdef _DEBUG
 	Cmd_AddCommand ("mvd_test",MVD_Testor_f);
 #endif
+
+	Cmd_AddCommand ("mvd_utils_reinit", MVD_Init_Info_f);
 
 	Cvar_ResetCurrentGroup();
 }

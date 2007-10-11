@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.149 2007-10-11 05:55:47 dkure Exp $
+$Id: cl_screen.c,v 1.150 2007-10-11 17:56:47 johnnycz Exp $
 */
 
 /// declarations may be found in screen.h
@@ -168,7 +168,7 @@ cvar_t	scr_teaminfo_low_health	 = {"scr_teaminfo_low_health",  "10", CVAR_ARCHIV
 cvar_t	scr_teaminfo_armor_style = {"scr_teaminfo_armor_style", "3",  CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","0",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo_show_enemies= {"scr_teaminfo_show_enemies","0",  CVAR_ARCHIVE};
-cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "0",  CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1",  CVAR_ARCHIVE};
 
 #endif
@@ -1667,6 +1667,8 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 
 void Update_TeamInfo(void);
 
+#define TEAMINFO_SHOWSELF() ((scr_teaminfo.integer == 1) || (scr_teaminfo_show_self.integer == 2 && cls.mvdplayback))
+
 static void SCR_Draw_TeamInfo(void)
 {
 	int x, y, w, h;
@@ -1693,7 +1695,7 @@ static void SCR_Draw_TeamInfo(void)
 				continue;
 
 		// do not show tracked player to spectator
-		if ((cl.spectator && Cam_TrackNum() == i) && !(scr_teaminfo_show_self.integer))
+		if ((cl.spectator && Cam_TrackNum() == i) && !TEAMINFO_SHOWSELF())
 			continue;
 
 		// dynamically guess max length of name/location
