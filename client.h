@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: client.h,v 1.73 2007-10-04 15:18:20 johnnycz Exp $
+$Id: client.h,v 1.74 2007-10-12 00:08:42 cokeman1982 Exp $
 
 */
 // client.h
@@ -635,6 +635,7 @@ void CL_StopPlayback (void);
 void CL_Stop_f (void);
 void CL_CheckQizmoCompletion(void);
 void CL_Demo_Init(void);
+qbool CL_IsDemoExtension(const char *filename);
 
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);

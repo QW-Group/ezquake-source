@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.97 2007-10-11 14:59:29 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.98 2007-10-12 00:08:42 cokeman1982 Exp $
 */
 
 #include <time.h>
@@ -2367,6 +2367,19 @@ void CL_StopPlayback (void)
 	}
 
 	TP_ExecTrigger("f_demoend");
+}
+
+//
+// Returns true if
+//
+qbool CL_IsDemoExtension(const char *filename)
+{
+	char *ext = COM_FileExtension(filename);
+
+	return (!strncasecmp(ext, "mvd", sizeof("mvd"))
+		 || !strncasecmp(ext, "qwd", sizeof("qwd"))
+		 || !strncasecmp(ext, "dem", sizeof("dem"))
+		 || !strncasecmp(ext, "qwz", sizeof("qwz")));
 }
 
 //

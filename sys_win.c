@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.45 2007-10-11 18:29:33 cokeman1982 Exp $
+	$Id: sys_win.c,v 1.46 2007-10-12 00:08:43 cokeman1982 Exp $
 
 */
 // sys_win.c
@@ -499,11 +499,18 @@ void Sys_Init_ (void)
 		if (!qwclsemaphore)
 		{
 			int qwurl_parm = COM_CheckParm("+qwurl");
-		
-			// If the user specified a QW URL on the commandline
-			// we forward it to the already running client.
-			if (qwurl_parm)
+			char cmd[1024];
+
+			if (COM_CheckArgsForPlayableFiles(cmd, sizeof(cmd)))
 			{
+				// Play a demo/.qtv file if it was specified as the first argument.
+				Sys_SendIPC(cmd);
+				Sys_Quit();
+			}
+			else if (qwurl_parm)
+			{
+				// If the user specified a QW URL on the commandline
+				// we forward it to the already running client.
 				Sys_SendIPC(COM_Argv(qwurl_parm + 1));
 				Sys_Quit();
 			}

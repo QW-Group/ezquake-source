@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.74 2007-10-11 18:29:32 cokeman1982 Exp $
+    $Id: common.h,v 1.75 2007-10-12 00:08:43 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -341,5 +341,7 @@ void SV_Shutdown (char *finalmsg);
 void SV_Frame (double time);
 
 void COM_ParseIPCData(const char *buf, unsigned int bufsize);
+
+qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbuf_size);
 
 #endif /* !__COMMON_H__ */

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.54 2007-10-07 14:34:42 disconn3ct Exp $
+	$Id: host.c,v 1.55 2007-10-12 00:08:43 cokeman1982 Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -524,32 +524,6 @@ extern void Browser_Init2(void);
 	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
 }
 
-qbool CmdLine_Play_Args(void)
-{
-	if (COM_Argc() >= 2) { // check .qtv files
-		char *infile = COM_Argv(1);
-
-		if (infile[0] && infile[0] != '-' && infile[0] != '+') {
-			char tmp[1024] = {0}, *ext = COM_FileExtension(infile);
-
-			if (!strncasecmp(ext, "qtv", sizeof("qtv")))
-				snprintf(tmp, sizeof(tmp), "qtvplay \"#%s\"\n", infile);
-			else if (   !strncasecmp(ext, "mvd", sizeof("mvd"))
-					 || !strncasecmp(ext, "qwd", sizeof("qwd"))
-					 || !strncasecmp(ext, "dem", sizeof("dem"))
-					 || !strncasecmp(ext, "qwz", sizeof("qwz"))
-					)
-				snprintf(tmp, sizeof(tmp), "playdemo \"%s\"\n", infile);
-
-            if (tmp[0]) {
-				Cbuf_AddText(tmp);
-                return true;
-            }
-		}
-	}
-    return false;
-}
-
 void Startup_Place(void)
 {
     extern cvar_t cl_onload;
@@ -747,8 +721,20 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		Cbuf_AddText ("cl_warncmd 1\n");
 	}
 
-    if (!CmdLine_Play_Args())
-        Startup_Place();
+	// Check if a qtv/demo file is specified as the first argument, in that case play that
+	// otherwise, do some more checks of what to show at startup.
+	{
+		char cmd[1024] = {0};
+
+		if (COM_CheckArgsForPlayableFiles(cmd, sizeof(cmd)))
+		{
+			Cbuf_AddText(cmd);
+		}
+		else
+		{
+			Startup_Place();
+		}
+	}
 }
 
 //FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better

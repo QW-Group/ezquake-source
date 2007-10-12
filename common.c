@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.106 2007-10-11 18:29:32 cokeman1982 Exp $
+    $Id: common.c,v 1.107 2007-10-12 00:08:42 cokeman1982 Exp $
 
 */
 
@@ -1019,6 +1019,40 @@ void COM_ParseIPCData(const char *buf, unsigned int bufsize)
 		{
 			Cbuf_AddText(va("qwurl %s", buf));
 		}
+		else
+		{
+			Cbuf_AddText(buf);
+		}
 	}
+}
+
+//
+// Check if the first command line argument is a .qtv or a demo to be played.
+//
+qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbuf_size)
+{
+	// Check for .qtv or demo files to play.
+	if (COM_Argc() >= 2) 
+	{
+		char *infile = COM_Argv(1);
+
+		if (infile[0] && infile[0] != '-' && infile[0] != '+') 
+		{
+			char *ext = COM_FileExtension(infile);
+
+			if (!strncasecmp(ext, "qtv", sizeof("qtv")))
+			{
+				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
+			}
+			else if (CL_IsDemoExtension(infile))
+			{
+				snprintf(commandbuf_out, commandbuf_size, "playdemo \"%s\"\n", infile);
+			}
+
+			return true;
+		}
+	}
+
+    return false;
 }
 
