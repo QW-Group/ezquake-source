@@ -16,16 +16,11 @@ Instructions:
  - http://msdn.microsoft.com/vstudio/express/downloads/default.aspx
  - just follow instructions
 
-3) Get directx SDK and place it where compiler can see it
- - http://www.microsoft.com/downloads/details.aspx?FamilyID=529f03be-1339-48c4-bd5a-8506e5acf571&DisplayLang=en
- - it usually works right after install
- - if not, project file looks in DXSDK_DIR (Environment variable), you can set this in your System -> Advanced -> Environment Variables settings
-
-4) Get platfrom SDK and set it up
+3) Get platfrom SDK and set it up
  - http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/default.aspx
  - just follow instructions
 
-5) Download all required libraries, there are two ways to do it:
+4) Download all required libraries, there are two ways to do it:
  A) Go to http://ezquake.cvs.sourceforge.net/ezquake/libs/windows-x86/
     and manually download all *.lib files from there, save them into libs\windows-x86 directory
  B) Go to libs/windows-x86 dir and launch download.bat
@@ -33,7 +28,7 @@ Instructions:
     http://www.christopherlewis.com/WGet/wget-1.10.2b.zip
     and place wget.exe either in the same dir as download.bat or in your system dir
 
-6) Download x86 assembler tools, there are two ways to do it:
+5) Download x86 assembler tools, there are two ways to do it:
  A) Go to http://ezquake.cvs.sourceforge.net/ezquake/libs/windows-x86/
     and manually download gas2masm.exe and ML.EXE files from there, save them into masm32 directory
  B) Go to masm32 dir and launch download.bat
@@ -41,9 +36,9 @@ Instructions:
     http://www.christopherlewis.com/WGet/wget-1.10.2b.zip
     and place wget.exe either in the same dir as download.bat or in your system dir
 
-7) Open open ezquake_msvs_80.sln located in ezquake/make/msvs2005
+6) Open open ezquake_msvs_80.sln located in ezquake/make/msvs2005
 
-8) Select GLDebug configuration and press "Build".
+7) Select GLDebug configuration and press "Build".
 
 
 
