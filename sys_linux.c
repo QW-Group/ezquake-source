@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.29 2007-10-12 15:48:35 dkure Exp $
+	$Id: sys_linux.c,v 1.30 2007-10-12 17:40:42 dkure Exp $
 
 */
 #include <unistd.h>
@@ -590,27 +590,82 @@ void Sys_CopyToClipboard(char *text) {
 }
 
 /*************************** INTER PROCESS CALLS *****************************/
+#define PIPE_BUFFERSIZE		1024
+
+FILE *fifo_pipe;
+
+static char *Sys_PipeFile(void) {
+	static char pipe[MAX_PATH] = {0};
+
+	if (*pipe)
+		return pipe;
+
+	snprintf(pipe, sizeof(pipe), "/tmp/ezquake_fifo_%s", getlogin());
+	return pipe;
+}
 
 void Sys_InitIPC()
 {
-	// TODO : Implement Sys_InitIPC() me on linux.
-}
+	int fd;
+	mode_t old;
 
-void Sys_ReadIPC()
-{
-	// TODO : Implement Sys_ReadIPC() me on linux.
-	// TODO : Pass the read char buffer to COM_ParseIPCData()
+	/* Don't use the user's umask, make sure we set the proper access */
+	old = umask(0);
+	if (mkfifo(Sys_PipeFile(), 0600)) {
+		umask(old);
+		// We failed ... 
+		return;
+	}
+	umask(old); // Reset old mask
+
+	/* Open in non blocking mode */
+	if ((fd = open(Sys_PipeFile(), O_RDONLY | O_NONBLOCK)) == -1) {
+		// We failed ...
+		return;
+	}
+	if (!(fifo_pipe = fdopen(fd, "r"))) {
+		// We failed ...
+		return;
+	}
 }
 
 void Sys_CloseIPC()
 {
-	// TODO : Implement Sys_CloseIPC() me on linux.
+	if (fifo_pipe) {
+		fclose(fifo_pipe);
+		unlink(Sys_PipeFile());
+	}
+}
+
+void Sys_ReadIPC()
+{
+	char buf[PIPE_BUFFERSIZE] = {0};
+	int num_bytes_read = 0;
+
+	if (!fifo_pipe)
+		return;
+
+	num_bytes_read = fread(buf, sizeof(buf), 1, fifo_pipe);
+
+	COM_ParseIPCData(buf, num_bytes_read);
 }
 
 unsigned int Sys_SendIPC(const char *buf)
 {
-	// TODO : Implement Sys_SendIPC() me on linux.
-	return 0;
+	FILE *fifo_out;
+	int nelms_written;
+	
+	if (!(fifo_out = fopen(Sys_PipeFile(), "w")))
+		return true;
+
+	nelms_written = fwrite(buf, strlen(buf) + 1, 1, fifo_out);
+
+	fclose(fifo_out);
+
+	if (nelms_written != 1)
+		return false;
+	
+	return true;
 }
 
 
