@@ -7,3 +7,6 @@ wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/libz
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/mgllt.lib
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/minizip.lib
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/asmlibm.lib
+wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/dinput.lib
+wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/dsound.lib
+wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/dxguid.lib
