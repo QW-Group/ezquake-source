@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.11 2007-10-13 17:07:28 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.12 2007-10-13 17:30:09 borisu Exp $
  *             
  */
 
@@ -288,13 +288,14 @@ static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, const char *desc)
 	gzipfile_t *gzip;
 	const char *base;
 	char *ext;
+	int fd;
 
 	gzip = Q_calloc(1, sizeof(*gzip));
 	strlcpy(gzip->filename, desc, sizeof(gzip->filename));
 	if (gziphandle == NULL) goto fail;
 	gzip->raw = gziphandle;
 
-	int fd = fileno(((vfsosfile_t *)gziphandle)->handle); // <-- ASSUMPTION! that file is OS
+	fd = fileno(((vfsosfile_t *)gziphandle)->handle); // <-- ASSUMPTION! that file is OS
 	gzip->handle = gzdopen(dup(fd), "r");
 	gzip->references = 1;
 
