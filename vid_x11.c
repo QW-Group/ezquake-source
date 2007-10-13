@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_x11.c,v 1.22 2007-10-04 13:48:10 dkure Exp $
+	$Id: vid_x11.c,v 1.23 2007-10-13 15:53:17 dkure Exp $
 */
 // vid_x11.c -- general x video driver
 
@@ -214,7 +214,7 @@ static void st2_fixup (XImage *framebuf, int x, int y, int width, int height)
 		return;
 
 	for (yi = y; yi < y + height; yi++) {
-		src = &framebuf->data [yi * framebuf->bytes_per_line];
+		src = (unsigned char *) &framebuf->data [yi * framebuf->bytes_per_line];
 		dest = (PIXEL16 *) src;
 
 		for (xi = (x + width - 1); xi >= x; xi--)
@@ -233,7 +233,7 @@ static void st3_fixup( XImage *framebuf, int x, int y, int width, int height)
 		return;
 
 	for (yi = y; yi < y + height; yi++) {
-		src = &framebuf->data [yi * framebuf->bytes_per_line];
+		src = (unsigned char *) &framebuf->data [yi * framebuf->bytes_per_line];
 		dest = (PIXEL24 *) src;
 		for (xi = (x + width - 1); xi >= x; xi--)
 			dest[xi] = st2d_8to24table[src[xi]];
@@ -581,7 +581,7 @@ void VID_Init (unsigned char *palette)
 
 	current_framebuffer = 0;
 	vid.rowbytes = x_framebuffer[0]->bytes_per_line;
-	vid.buffer = x_framebuffer[0]->data;
+	vid.buffer = (unsigned char *) x_framebuffer[0]->data;
 	vid.direct = 0;
 	vid.conwidth = vid.width;
 	vid.conheight = vid.height;
@@ -886,7 +886,7 @@ void VID_Update (vrect_t *rects)
 			ResetFrameBuffer();
 
 		vid.rowbytes = x_framebuffer[0]->bytes_per_line;
-		vid.buffer = x_framebuffer[current_framebuffer]->data;
+		vid.buffer = (unsigned char *) x_framebuffer[current_framebuffer]->data;
 		vid.conwidth = vid.width;
 		vid.conheight = vid.height;
 		vid.recalc_refdef = 1;				// force a surface cache flush
@@ -918,7 +918,7 @@ void VID_Update (vrect_t *rects)
 			}
 
 			current_framebuffer = !current_framebuffer;
-			vid.buffer = x_framebuffer[current_framebuffer]->data;
+			vid.buffer = (unsigned char *) x_framebuffer[current_framebuffer]->data;
 			XSync(x_disp, False);
 		}
 	} else {
