@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.58 2007-10-13 15:58:34 dkure Exp $
+	$Id: fs.c,v 1.59 2007-10-13 16:24:50 dkure Exp $
 */
 
 /**
@@ -1438,15 +1438,13 @@ searchpathfuncs_t *FS_FileNameToSearchFunctions(const char *filename) {
 	char *ext = COM_FileExtension(filename);
 	if (strcmp(ext, "pak") == 0) {
 		return &packfilefuncs;
+	} else if (strcmp(ext, "tar") == 0) {
+		return &tarfilefuncs;
 #ifdef WITH_ZLIB
 	} else if (strcmp(ext, "zip") == 0 || strcmp(ext, "pk3") == 0) {
 		return &zipfilefuncs;
-	} else if (strcmp(ext, "tar") == 0) {
-		return &tarfilefuncs;
-#ifdef WITH_VFS_GZIP
 	} else if (strcmp(ext, "gz") == 0) {
 		return &gzipfilefuncs;
-#endif // WITH_VFS_GZIP
 #endif // WITH_ZLIB
 	} else {
 		return NULL;

@@ -14,13 +14,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.9 2007-10-13 16:02:51 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.10 2007-10-13 16:24:50 dkure Exp $
  *             
  */
 
 #ifdef WITH_FTE_VFS
 #ifdef WITH_ZLIB
-#ifdef WITH_VFS_GZIP
 
 #include <zlib.h>
 #include "quakedef.h"
@@ -325,6 +324,5 @@ searchpathfuncs_t gzipfilefuncs = {
 	FSGZIP_OpenVFS 
 };
 
-#endif // WITH_VFS_GZIP
 #endif // WITH_ZLIB
 #endif // WITH_FTE_VFS

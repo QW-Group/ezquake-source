@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.12 2007-10-13 16:02:51 dkure Exp $
+ * $Id: vfs.h,v 1.13 2007-10-13 16:24:50 dkure Exp $
  *             
  */
 
@@ -145,9 +145,7 @@ vfsfile_t *FS_OpenTCP(char *name);
 // GZIP (*.gz) Support
 //=====================
 #ifdef WITH_ZLIB
-#ifdef WITH_VFS_GZIP
 searchpathfuncs_t gzipfilefuncs;
-#endif // WITH_VFS_GZIP
 #endif // WITH_ZLIB
 
 //=====================
