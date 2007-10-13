@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.56 2007-10-13 00:17:19 cokeman1982 Exp $
+	$Id: host.c,v 1.57 2007-10-13 14:51:50 cokeman1982 Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -726,6 +726,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	// Verify that ezQuake is associated with the QW:// protocl handler.
 	//
 	{
+		extern qbool CL_CheckIfQWProtocolHandler();
 		extern cvar_t cl_verify_qwprotocol;
 
 		if (cl_verify_qwprotocol.integer >= 2)
