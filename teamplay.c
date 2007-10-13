@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.94 2007-10-11 05:55:47 dkure Exp $
+    $Id: teamplay.c,v 1.95 2007-10-13 01:59:55 himan Exp $
 */
 
 #include <time.h>
@@ -2218,7 +2218,6 @@ char *TP_MapName(void)
 	return host_mapname.string;
 }
 
-// START shaman RFE 1020608
 #ifdef GLQUAKE
 char *MT_GetSkyGroupName(char *mapname, qbool *system);
 
@@ -2227,7 +2226,6 @@ char *TP_GetSkyGroupName(char *mapname, qbool *system)
 	return MT_GetSkyGroupName(mapname, system);
 }
 #endif
-// END shaman RFE 1020608
 
 char *MT_GetMapGroupName(char *mapname, qbool *system);
 

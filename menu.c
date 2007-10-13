@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.86 2007-10-09 10:50:02 dkure Exp $
+	$Id: menu.c,v 1.87 2007-10-13 01:59:54 himan Exp $
 
 */
 
@@ -480,14 +480,12 @@ void M_Main_Key (int key) {
 	#endif
 
 		case 4:
-			// START shaman [Quake 1.09 quit screen]
 			if (cl_confirmquit.value) {
 				M_Menu_Quit_f ();
 			}
 			else {
 				Host_Quit ();
 			}
-			// END shaman [Quake 1.09 quit screen]
 			break;
 		}
 	}
@@ -2119,7 +2117,6 @@ void M_ServerList_Key (key) {
 
 // <-- SLIST
 
-// START shaman [Quake 1.09 quit screen]
 void M_Quit_Draw (void) {
 	M_DrawTextBox (0, 0, 38, 26);
 	M_PrintWhite (16, 12,  "  Quake version 1.09 by id Software\n\n");
@@ -2145,7 +2142,6 @@ void M_Quit_Draw (void) {
 	M_PrintWhite (16, 188, "reserved.\n\n");
 	M_Print (16, 204, "          Press y to exit\n");
 }
-// END shaman [Quake 1.09 quit screen]
 
 //=============================================================================
 /* Menu Subsystem */

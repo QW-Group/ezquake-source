@@ -811,9 +811,7 @@ void DrawTextureChains (model_t *model, int contents)
 		draw_fbs = t->isLumaTexture || gl_fb_bmodels.value;
 		draw_mtex_fbs = draw_fbs && can_mtex_fbs;
 		if (gl_mtexable) {
-			// START shaman FIX 1025184
 			if (t->isLumaTexture && !drawLumasGlowing && gl_lumaTextures.value) {
-			// END shaman FIX 1025184
 				if (gl_add_ext) {
 					doMtex1 = true;
 					GL_EnableTMU(GL_TEXTURE1_ARB);
@@ -965,14 +963,10 @@ void DrawTextureChains (model_t *model, int contents)
 			R_BlendLightmaps();
 		if (drawfullbrights)
 			R_RenderFullbrights();
-		// START shaman FIX 1025184
 		if (drawlumas && !gl_fogenable.value && gl_lumaTextures.value)
-		// END shaman FIX 1025184
 			R_RenderLumas();
 	} else {
-		// START shaman FIX 1025184
 		if (drawlumas && gl_lumaTextures.value)
-		// END shaman FIX 1025184
 			R_RenderLumas();
 		if (render_lightmaps)
 			R_BlendLightmaps();

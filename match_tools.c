@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.31 2007-09-30 22:59:23 disconn3ct Exp $
+	$Id: match_tools.c,v 1.32 2007-10-13 01:59:54 himan Exp $
 */
 
 
@@ -1067,7 +1067,6 @@ void DumpMapGroups(FILE *f) {
 	}
 }
 
-// START shaman RFE 1020608
 
 #ifdef GLQUAKE
 
@@ -1330,7 +1329,6 @@ void DumpSkyGroups(FILE *f) {
 
 #endif
 
-// END shaman RFE 1020608
 
 char *Macro_MatchType(void) {
 	matchinfo_t *matchinfo;

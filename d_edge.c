@@ -185,15 +185,12 @@ void D_DrawSurfaces (void) {
 			D_DrawZSpans (s->spans);
 		} else if (s->flags & SURF_DRAWTURB) {
 			extern cvar_t r_fastturb;
-			// START shaman RFE 1022504
 			extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
-			// END shaman RFE 1022504
 			if (r_fastturb.value) {
 				texture_t *tx;
 
 				pface = s->data;
 				tx = pface->texinfo->texture;
-				// START shaman RFE 1022504
 				if (strstr (tx->name, "water") || strstr (tx->name, "mwat")) {
 					D_DrawSolidSurface (s, (int) r_watercolor.value & 0xFF);
 				}
@@ -209,7 +206,6 @@ void D_DrawSurfaces (void) {
 				else {
 					D_DrawSolidSurface (s, *((byte*) tx + tx->offsets[0] + ((tx->width * tx->height) >> 1)));
 				}
-				// END shaman RFE 1022504
 				D_DrawZSpans(s->spans);
 				continue;
 			}

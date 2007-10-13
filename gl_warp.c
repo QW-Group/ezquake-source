@@ -263,10 +263,8 @@ void EmitWaterPolys (msurface_t *fa) {
 	glpoly_t *p;
 	float *v, s, t, os, ot;
 	int i;
-	// START shaman RFE 1022504
 	byte *col;
 	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
-	// END shaman RFE 1022504
 	float wateralpha = bound((1 - cl.watervis), r_wateralpha.value, 1);
 
 	vec3_t nv;
@@ -280,7 +278,6 @@ void EmitWaterPolys (msurface_t *fa) {
 	{
 		glDisable (GL_TEXTURE_2D);
 
-		// START shaman RFE 1022504
 		if (strstr (fa->texinfo->texture->name, "water") || strstr (fa->texinfo->texture->name, "mwat")) {
 			col = StringToRGB(r_watercolor.string);
 		}

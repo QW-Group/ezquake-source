@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.28 2007-09-30 14:45:00 disconn3ct Exp $
+	$Id: r_main.c,v 1.29 2007-10-13 01:59:54 himan Exp $
 
 */
 
@@ -134,14 +134,12 @@ cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0", 0, OnChange_r_fullbrightSk
 cvar_t  r_max_size_1 = {"r_max_size_1", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_fastturb = {"r_fastturb", "0"};
-// START shaman RFE 1022504
 // cvar_t r_skycolor = {"r_skycolor", "4"};
 cvar_t	r_skycolor   = {"r_skycolor", "172"};
 cvar_t  r_telecolor  = {"r_telecolor", "26"};
 cvar_t  r_lavacolor  = {"r_lavacolor", "73"};
 cvar_t  r_slimecolor = {"r_slimecolor", "53"};
 cvar_t  r_watercolor = {"r_watercolor", "36"};
-// END shaman RFE 1022504
 
 // oppymv 310804
 cvar_t cl_multiview = {"cl_multiview", "0" };
@@ -211,12 +209,10 @@ void R_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TURB);
 	Cvar_Register (&r_skycolor);
-	// START shaman RFE 1022504
 	Cvar_Register (&r_telecolor);
 	Cvar_Register (&r_lavacolor);
 	Cvar_Register (&r_slimecolor);
 	Cvar_Register (&r_watercolor);
-	// END shaman RFE 1022504
 	Cvar_Register (&r_fastsky);
 	Cvar_Register (&r_fastturb);
 	Cvar_Register (&r_waterwarp);

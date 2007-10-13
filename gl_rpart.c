@@ -32,7 +32,6 @@ static float alphatrail_s;
 static float alphatrail_l;
 static float varray_vertex[16];
 
-// START shaman :: balancing variables
 //#define DEFAULT_NUM_PARTICLES				2048 // 4096
 #define ABSOLUTE_MIN_PARTICLES				256
 #define ABSOLUTE_MAX_PARTICLES				32768
@@ -42,7 +41,6 @@ static float varray_vertex[16];
 #define ABSOLUTE_MIN_PARTICLES				256
 #define ABSOLUTE_MAX_PARTICLES				65536
 */
-// END shaman :: balancing variables
 
 
 
@@ -171,10 +169,8 @@ static vec3_t trail_stop;
 
 qbool qmb_initialized = false;
 
-// START shaman :: balancing variables
 cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
 cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
-// END shaman :: balancing variables
 cvar_t amf_part_fulldetail = {"gl_particle_fulldetail", "0", CVAR_LATCH};
 
 static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
@@ -1159,13 +1155,9 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 	case p_bubble2:
 		count = length / 5;
 		break;
-	// START shaman FIX 1022476
-	// START shaman FIX 1025583
 	case p_trailpart:
 		count = length / 1.1;
 		break; 
-	// END shaman FIX 1025583
-	// END shaman FIX 1022476
 	case p_blood3:
 		count = length / 8;
 		break;

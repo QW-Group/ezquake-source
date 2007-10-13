@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.59 2007-10-04 13:48:10 dkure Exp $
+	$Id: rulesets.c,v 1.60 2007-10-13 01:59:54 himan Exp $
 */
 
 #include "quakedef.h"
@@ -80,10 +80,8 @@ qbool Rulesets_AllowTimerefresh (void)
 {
 	switch(rulesetDef.ruleset) {
 	case rs_smackdown:
-		// START shaman BUG 1020663
 		//return cl.standby;
 		return (cl.standby || cl.spectator || cls.demoplayback);
-		// END shaman BUG 1020663
 	default:
 		return true;
 	}

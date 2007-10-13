@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.133 2007-10-11 05:55:47 dkure Exp $
+$Id: cl_parse.c,v 1.134 2007-10-13 01:59:53 himan Exp $
 */
 
 #include "quakedef.h"
@@ -2576,7 +2576,6 @@ void CL_ParsePrint (void)
 
         if (client >= 0 && !suppress_talksound)
         {
-			// START shaman RFE 1022306
 			if (
 			    (
 			         (type == CHAT_MM1 || type == CHAT_SPEC)
@@ -2589,7 +2588,6 @@ void CL_ParsePrint (void)
 			) {
 				return;
 			}
-			// END shaman RFE 1022306
 
             if (cl.players[client].spectator)
             {
@@ -2635,7 +2633,6 @@ void CL_ParsePrint (void)
 		if (s[0])  // KT sometimes sends empty strings
 		{
 
-			// START shaman BUG 1020636
 /*
 			if (con_addtimestamp)
 			{
@@ -2643,7 +2640,6 @@ void CL_ParsePrint (void)
 				if (con_timestamps.value)
 				{
 */
-			// END shaman BUG 1020636
 
 					if (con_timestamps.value != 0) // @CHECKME@
 					{
@@ -2655,7 +2651,6 @@ void CL_ParsePrint (void)
 						Com_Printf(tmpbuf);
 					}
 
-			// START shaman BUG 1020636
 /*
 				}
 			}
@@ -2663,7 +2658,6 @@ void CL_ParsePrint (void)
 			if (strchr(s, '\n'))
 				con_addtimestamp = true;
 */
-			// END shaman BUG 1020636
 
 		}
 

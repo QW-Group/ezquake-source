@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.29 2007-08-14 15:18:38 dkure Exp $
+	$Id: cl_tent.c,v 1.30 2007-10-13 01:59:53 himan Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -352,12 +352,10 @@ void CL_ParseTEnt (void) {
 		{
 			FuelRodExplosion (pos);
 		}
-// START shaman FIX 1026019
 //		else if (r_explosiontype.value == 9)
 //		{
 //			BurningExplosion (pos); 
 //		}
-// END shaman FIX 1026019
 #endif
 		else
 		{	//sprite and particles
@@ -653,11 +651,9 @@ void CL_UpdateBeams (void) {
 
 						VectorAdd (org, dist, beamend[k]);
 						for (j=0;j<3;j++)
-						// START shaman RFE 1022310
 //						beamend[k][j]+=(rand()%40)-20;
 //						beamend[k][j]+=(rand()%((int)lg_size*2))-(int)lg_size; // can be rendered this way too, seems more or less equal
 						beamend[k][j]+=f_rnd(-lg_size, lg_size);
-						// END shaman RFE 1022310
 						VX_LightningBeam (beamstart[k], beamend[k]);
 						VectorCopy (beamend[k], beamstart[k]);
 					}
