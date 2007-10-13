@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.57 2007-10-13 14:51:50 cokeman1982 Exp $
+	$Id: host.c,v 1.58 2007-10-13 15:36:56 cokeman1982 Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -738,14 +738,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		{
 			// Check if the running exe is the one associated with the qw:// protocol.
 
-			// TODO : Make a function to draw these bars.
-			char txt[60];
-			txt[0] = '\x80';
-			memset(txt + 1, '\x81', sizeof(char) * (sizeof(txt) - 1));
-			txt[sizeof(txt) - 2] = '\x82';
-			txt[sizeof(txt) - 1] = 0;
-
-			Com_Printf(txt);
+			Com_PrintVerticalBar(0.8 * vid.conwidth / 8);
 			Com_Printf("\n");
 			Com_Printf("This ezQuake is not associated with the "); 
 			Com_Printf("\x02QW:// protocol.\n");
@@ -754,7 +747,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			Com_Printf("(set ");
 			Com_Printf("\x02 cl_verify_qwprotocol ");
 			Com_Printf("to 0 to hide this warning)\n");
-			Com_Printf(txt);
+			Com_PrintVerticalBar(0.8 * vid.conwidth / 8);
 			Com_Printf("\n");
 		}
 	}

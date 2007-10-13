@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.107 2007-10-12 00:08:42 cokeman1982 Exp $
+    $Id: common.c,v 1.108 2007-10-13 15:36:55 cokeman1982 Exp $
 
 */
 
@@ -921,11 +921,12 @@ void Com_EndRedirect (void) {
 	rd_print = NULL;
 }
 
-//All console printing must go through this in order to be logged to disk
+// All console printing must go through this in order to be logged to disk
 unsigned Print_flags[16];
 int Print_current = 0;
 
-void Com_Printf (char *fmt, ...) {
+void Com_Printf (char *fmt, ...) 
+{
 	va_list argptr;
 	char msg[MAXPRINTMSG];
 
@@ -953,7 +954,8 @@ void Com_Printf (char *fmt, ...) {
 	Con_PrintW (str2wcs(msg));
 }
 
-void Com_DPrintf (char *fmt, ...) {
+void Com_DPrintf (char *fmt, ...) 
+{
 	va_list argptr;
 	char msg[MAXPRINTMSG];
 
@@ -968,7 +970,8 @@ void Com_DPrintf (char *fmt, ...) {
 	Com_Printf ("%s", msg);
 }
 
-void Com_Printf_State(int state, char *fmt, ...) {
+void Com_Printf_State(int state, char *fmt, ...)
+{
 /* Com_Printf equivalent with importance level as a first parm for each msg,
    it should be one of PRINT_OK, PRINT_INFO, PRINT_FAIL defines
    PRINT_OK won't be displayed unless we're in developer mode
@@ -1008,6 +1011,19 @@ void Com_Printf_State(int state, char *fmt, ...) {
 
 	if (state == PRINT_ERR_FATAL)
 		Sys_Error(msg);
+}
+
+void Com_PrintVerticalBar(int width)
+{
+	int i;
+	Com_Printf("\x80");
+
+	for (i = 0; i < width; i++)
+	{
+		Com_Printf("\x81");
+	}
+
+	Com_Printf("\x82");
 }
 
 void COM_ParseIPCData(const char *buf, unsigned int bufsize)

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.75 2007-10-12 00:08:43 cokeman1982 Exp $
+    $Id: common.h,v 1.76 2007-10-13 15:36:56 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -239,6 +239,8 @@ void Com_BeginRedirect (void (*RedirectedPrint) (char *));
 void Com_EndRedirect (void);
 void Com_Printf (char *fmt, ...);
 void Com_DPrintf (char *fmt, ...);
+void Com_PrintVerticalBar(int width);
+
 // why not just 1 2 3 4 ... ?
 #define PRINT_OK		(1<<0)
 #define PRINT_INFO		(1<<1)
