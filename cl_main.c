@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.194 2007-10-12 00:08:42 cokeman1982 Exp $
+$Id: cl_main.c,v 1.195 2007-10-13 00:17:19 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -69,7 +69,6 @@ $Id: cl_main.c,v 1.194 2007-10-12 00:08:42 cokeman1982 Exp $
 #endif
 #include "fs.h"
 #include "help.h"
-
 
 void OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel);
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, OnChange_allow_scripts};
@@ -134,9 +133,7 @@ cvar_t cl_useproxy			= {"cl_useproxy", "0"};
 cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
-// START shaman :: balancing variables
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
-// END shaman :: balancing variables
 cvar_t cl_newlerp				= {"cl_newlerp", "0.1"};
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
 cvar_t cl_fix_mvd				= {"cl_fix_mvd", "0", CVAR_ARCHIVE};
@@ -150,11 +147,9 @@ cvar_t r_lightflicker			= {"r_lightflicker", "1"};
 cvar_t r_powerupglow			= {"r_powerupGlow", "1"};
 cvar_t cl_novweps				= {"cl_novweps", "0"};
 cvar_t r_drawvweps				= {"r_drawvweps", "1"};
-// START shaman :: balancing variables
 cvar_t r_rockettrail			= {"r_rocketTrail", "1"}; // 9
 cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"}; // 3
 cvar_t r_explosiontype			= {"r_explosionType", "1"}; // 7
-// END shaman :: balancing variables
 cvar_t r_telesplash				= {"r_telesplash", "1"}; // disconnect
 cvar_t r_shaftalpha				= {"r_shaftalpha", "1"};
 
@@ -174,11 +169,13 @@ cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 
 cvar_t  cl_mediaroot = {"cl_mediaroot", "0", CVAR_ARCHIVE};
 
-// START shaman RFE 1022306
 cvar_t  msg_filter = {"msg_filter", "0"};
-// END shaman RFE 1022306
 
 cvar_t cl_onload = {"cl_onload", "menu", CVAR_ARCHIVE};
+
+#ifdef WIN32
+cvar_t cl_verify_qwprotocol = {"cl_verify_qwprotocol", "1", CVAR_ARCHIVE};
+#endif // WIN32
 
 cvar_t demo_autotrack = {"demo_autotrack", "0", CVAR_ARCHIVE}; // use or not autotrack info from mvd demos
 
@@ -224,6 +221,158 @@ static void CL_FixupModelNames (void) {
 	simple_crypt (emodel_name, sizeof(emodel_name) - 1);
 	simple_crypt (pmodel_name, sizeof(pmodel_name) - 1);
 }
+
+#ifdef WIN32
+
+#define QW_URL_OPEN_CMD_REGKEY		"qw\\shell\\Open\\Command"
+#define QW_URL_DEFAULTICON_REGKEY	"qw\\DefaultIcon"
+
+//
+// Checks if this client is the default qw protocol handler.
+//
+qbool CL_CheckIfQWProtocolHandler()
+{
+	DWORD type;
+	char buf[1024];
+	int len = sizeof(buf);
+	HKEY hk;
+
+	if (RegOpenKey(HKEY_CLASSES_ROOT, QW_URL_OPEN_CMD_REGKEY, &hk) != 0)
+	{
+		return false;
+	}
+
+	// Get the size we need to read.
+	//if (RegQueryValueEx(HKEY_CLASSES_ROOT, QW_URL_OPEN_CMD_REGKEY, "@", (REG_SZ | REG_MULTI_SZ | REG_EXPAND_SZ), &type, buf, &len) == ERROR_SUCCESS)
+	//if (RegQueryValue(HKEY_CLASSES_ROOT, QW_URL_OPEN_CMD_REGKEY"@", buf, &len) == ERROR_SUCCESS)
+	if (RegQueryValueEx(hk, NULL, 0, &type, buf, &len) == ERROR_SUCCESS)
+	{
+		char exe_path[MAX_PATH];
+
+		// Get the long path of the current process.
+		Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
+
+		if (strstr(exe_path, buf))
+		{
+			CloseHandle(hk);
+			return true;
+		}
+
+		// Get the short path and try if that matches instead.
+		Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
+
+		if (strstr(buf, exe_path))
+		{
+			CloseHandle(hk);
+			return true;
+		}
+	}
+
+	CloseHandle(hk);
+	return false;
+}
+
+void CL_RegisterQWURLProtocol_f(void)
+{
+	HKEY keyhandle;
+	char exe_path[MAX_PATH];
+
+	Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
+
+	//
+	// HKCR\qw\shell\Open\Command
+	//
+	{
+		char open_cmd[1024];
+		snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CLASSES_ROOT,		// A handle to an open subkey.
+						QW_URL_OPEN_CMD_REGKEY,		// Subkey.
+						0,							// Reserved, must be 0.
+						NULL,						// Class, ignored.
+						REG_OPTION_NON_VOLATILE,	// Save the change to disk.
+						KEY_WRITE,					// Access rights.
+						NULL,						// Security attributes (NULL means default, inherited from direct parent).
+						&keyhandle,					// Handle to the created key.
+						NULL))						// Don't care if the key existed or not.
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCR\\"QW_URL_OPEN_CMD_REGKEY"\n");
+			return;
+		}
+
+		// Set the key value.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, open_cmd,  strlen(open_cmd) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCR\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+
+	//
+	// HKCR\qw\DefaultIcon
+	//
+	{
+		char default_icon[1024];
+		snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, QW_URL_DEFAULTICON_REGKEY, 
+			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCR\\"QW_URL_OPEN_CMD_REGKEY"\n");
+			return;
+		}
+
+		// Set the key value.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, default_icon, strlen(default_icon) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCR\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+
+	//
+	// HKCR\qw
+	//
+	{
+		char protocol_name[] = "URL:QW Protocol";
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "qw", 
+			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCR\\qw\n");
+			return;
+		}
+
+		// Set the protocol name.
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, protocol_name, strlen(protocol_name) * sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCR\\qw\\@\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		if (RegSetValueEx(keyhandle, "URL Protocol", 0, REG_SZ, "", sizeof(char)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCR\\qw\\URL Protocol\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+}
+
+#endif // WIN32
+
 
 //============================================================================
 
@@ -1192,10 +1341,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_fp_messages);
 	Cvar_Register (&cl_fp_persecond);
 
-	// START shaman RFE 1022306
 	Cvar_Register (&msg_filter);
-	// END shaman RFE 1022306
-
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&cl_shownet);
@@ -1204,6 +1350,10 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_confirmquit);
 	Cvar_Register (&cl_window_caption);
 	Cvar_Register (&cl_onload);
+
+	#ifdef WIN32
+	Cvar_Register (&cl_verify_qwprotocol);
+	#endif // WIN32
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&cl_sbar);
@@ -1331,6 +1481,10 @@ void CL_InitLocal (void) {
 	Cmd_AddCommand ("observe", CL_Observe_f);
 	Cmd_AddCommand ("togglespec", Cl_ToggleSpec_f);
 
+	#ifdef WIN32
+	Cmd_AddCommand ("register_qwurl_protocol", CL_RegisterQWURLProtocol_f);
+	#endif // WIN32
+
 	Cmd_AddCommand ("dns", CL_DNS_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
 
@@ -1343,7 +1497,7 @@ void CL_InitLocal (void) {
 	Cmd_AddMacro("conwidth", CL_Macro_Conwidth);
 	Cmd_AddMacro("conheight", CL_Macro_Conheight);
 
-	Cmd_AddCommand ("cl_messages", CL_Messages_f);//Tei, cl_messages
+	Cmd_AddCommand ("cl_messages", CL_Messages_f);
 }
 
 void GFX_Init (void) {
@@ -1446,7 +1600,8 @@ void CL_Init (void) {
 
 //============================================================================
 
-void CL_BeginLocalConnection (void) {
+void CL_BeginLocalConnection (void) 
+{
 	S_StopAllSounds (true);
 
 	// make sure we're not connected to an external server,

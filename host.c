@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.55 2007-10-12 00:08:43 cokeman1982 Exp $
+	$Id: host.c,v 1.56 2007-10-13 00:17:19 cokeman1982 Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -720,6 +720,44 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		Cmd_StuffCmds_f ();		// process command line arguments
 		Cbuf_AddText ("cl_warncmd 1\n");
 	}
+
+	#ifdef WIN32
+	//
+	// Verify that ezQuake is associated with the QW:// protocl handler.
+	//
+	{
+		extern cvar_t cl_verify_qwprotocol;
+
+		if (cl_verify_qwprotocol.integer >= 2)
+		{
+			// Always register the qw:// protocol.
+			Cbuf_AddText("register_qwurl_protocol");
+		}
+		else if (cl_verify_qwprotocol.integer == 1 && !CL_CheckIfQWProtocolHandler())
+		{
+			// Check if the running exe is the one associated with the qw:// protocol.
+
+			// TODO : Make a function to draw these bars.
+			char txt[60];
+			txt[0] = '\x80';
+			memset(txt + 1, '\x81', sizeof(char) * (sizeof(txt) - 1));
+			txt[sizeof(txt) - 2] = '\x82';
+			txt[sizeof(txt) - 1] = 0;
+
+			Com_Printf(txt);
+			Com_Printf("\n");
+			Com_Printf("This ezQuake is not associated with the "); 
+			Com_Printf("\x02QW:// protocol.\n");
+			Com_Printf("Register it using "); 
+			Com_Printf("\x02/register_qwurl_protocol\n");
+			Com_Printf("(set ");
+			Com_Printf("\x02 cl_verify_qwprotocol ");
+			Com_Printf("to 0 to hide this warning)\n");
+			Com_Printf(txt);
+			Com_Printf("\n");
+		}
+	}
+	#endif // WIN32
 
 	// Check if a qtv/demo file is specified as the first argument, in that case play that
 	// otherwise, do some more checks of what to show at startup.
