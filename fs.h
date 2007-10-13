@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.16 2007-10-11 07:02:37 dkure Exp $
+    $Id: fs.h,v 1.17 2007-10-13 15:59:46 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -134,7 +134,7 @@ int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 #endif // WITH_ZLIB
 
 #ifdef WITH_ZIP
-qbool FS_ZipIsArchive (char *zip_path);
+qbool FS_IsArchive (char *path);
 
 int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
 							   char *path,						// The path that should be broken up into parts.
