@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.98 2007-10-12 00:08:42 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.99 2007-10-13 16:16:20 dkure Exp $
 */
 
 #include <time.h>
@@ -2157,6 +2157,7 @@ int CL_Demo_Compress(char* qwdname)
 double		demostarttime;
 
 #ifdef WITH_ZIP
+#ifndef WITH_VFS_ARCHIVE_LOADING
 //
 // [IN]		play_path = The compressed demo file that needs to be extracted to play it.
 // [OUT]	unpacked_path = The path to the decompressed file.
@@ -2216,7 +2217,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 	//
 	// Check if the path is in the format "c:\quake\bla\demo.zip\some_demo.mvd" and split it up.
 	//
-	if (FS_ZipBreakupArchivePath ("zip", play_path, archive_path, MAX_PATH, inzip_path, MAX_PATH) < 0)
+	if (FS_ZipBreakupArchivePath ("zip", play_path, archive_path, sizeof(archive_path), inzip_path, sizeof(inzip_path)) < 0)
 	{
 		return retval;
 	}
@@ -2231,7 +2232,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 		unzFile zip_file = FS_ZipUnpackOpenFile (archive_path);
 
 		// Try extracting the zip file.
-		if(FS_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, MAX_PATH) != UNZ_OK)
+		if(FS_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, sizeof(temp_path)) != UNZ_OK)
 		{
 			Com_Printf ("Failed to unpack the demo file \"%s\" to the temp path \"%s\"\n", inzip_path, temp_path);
 			unpacked_path[0] = 0;
@@ -2251,6 +2252,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 
 	return retval;
 }
+#endif // WITH_VFS_ARCHIVE_LOADING
 #endif // WITH_ZIP
 
 void CL_Demo_DumpBenchmarkResult(int frames, float timet)
@@ -2387,14 +2389,16 @@ qbool CL_IsDemoExtension(const char *filename)
 //
 void CL_Play_f (void)
 {
+#ifndef WITH_VFS_ARCHIVE_LOADING
 	#ifdef WITH_ZIP
 	char unpacked_path[MAX_OSPATH];
 	#endif // WITH_ZIP
+#endif // WITH_VFS_ARCHIVE_LOADING
 
 	int i;
 	char *real_name;
-	static char name[2 * MAX_OSPATH], **s;
-	static char *ext[] = {".qwd", ".mvd", ".dem", NULL};
+	char name[MAX_OSPATH], **s;
+	static char *ext[] = {"qwd", "mvd", "dem", NULL};
 
 	// Show usage.
 	if (Cmd_Argc() != 2)
@@ -2410,16 +2414,19 @@ void CL_Play_f (void)
 	Host_EndGame();
 
 	TP_ExecTrigger("f_demostart");
-
+	
+// VFS-FIXME: This will effect playing qwz inside a zip
+#ifndef WITH_VFS_ARCHIVE_LOADING 
 	#ifdef WITH_ZIP
 	//
 	// Unpack the demo if it's zipped or gzipped. And get the path to the unpacked demo file.
 	//
-	if (CL_GetUnpackedDemoPath (Cmd_Argv(1), unpacked_path, MAX_OSPATH))
+	if (CL_GetUnpackedDemoPath (Cmd_Argv(1), unpacked_path, sizeof(unpacked_path)))
 	{
 		real_name = unpacked_path;
 	}
 	#endif // WITH_ZIP
+#endif
 
 	#ifdef WIN32
 	//
@@ -2439,58 +2446,99 @@ void CL_Play_f (void)
 	}
 	else
 	#endif // WIN32
+
+#ifndef WITH_VFS_ARCHIVE_LOADING
+	//
+	// Find the demo path, trying different extensions if needed.
+	//
+	for (s = ext; *s && !playbackfile; s++)
 	{
-		//
-		// Find the demo path, trying different extensions if needed.
-		//
-		for (s = ext; *s && !playbackfile; s++)
+		// Strip the extension from the specified filename and append
+		// the one we're currently checking for.
+		COM_StripExtension (real_name, name);
+		strlcpy (name, va("%s.%s", name, *s), sizeof(name));
+
+		// Look for the file in the above directory if it has ../ prepended to the filename.
+		if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 		{
-			// Strip the extension from the specified filename and append
-			// the one we're currently checking for.
-			COM_StripExtension (real_name, name);
-			strlcpy (name, va("%s%s", name, *s), sizeof(name));
-
-			// Look for the file in the above directory if it has ../ prepended to the filename.
-			if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
-			{
-				playbackfile = FS_OpenVFS (va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
-			}
-			else
-			{
-				// Search demo on quake file system, even in paks.
-				playbackfile = FS_OpenVFS (name, "rb", FS_ANY);
-			}
-
-			// Look in the demo dir (user specified).
-			if (!playbackfile)
-			{
-				playbackfile = FS_OpenVFS (va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
-			}
-
-			// Check the full system path (Run a demo anywhere on the file system).
-			if (!playbackfile)
-			{
-				playbackfile = FS_OpenVFS (name, "rb", FS_NONE_OS);
-			}
+			playbackfile = FS_OpenVFS (va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
+		}
+		else
+		{
+			// Search demo on quake file system, even in paks.
+			playbackfile = FS_OpenVFS (name, "rb", FS_ANY);
 		}
 
-		// Failed to open the demo from any path :(
+		// Look in the demo dir (user specified).
 		if (!playbackfile)
 		{
-			Com_Printf ("Error: Couldn't open %s\n", Cmd_Argv(1));
-			return;
+			playbackfile = FS_OpenVFS (va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
 		}
 
-		// Reset multiview track slots.
-		for(i = 0; i < 4; i++)
+		// Check the full system path (Run a demo anywhere on the file system).
+		if (!playbackfile)
 		{
-			mv_trackslots[i] = -1;
+			playbackfile = FS_OpenVFS (name, "rb", FS_NONE_OS);
 		}
-		nTrack1duel = nTrack2duel = 0;
-		mv_skinsforced = false;
-
-		Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 	}
+
+#else
+	{
+		char *file_ext = COM_FileExtension(Cmd_Argv(1));
+		if (!playbackfile) {
+			/* Check the file extension is valid */
+			for (s = ext; *s; s++) {
+				if (strcmp(*s, file_ext) == 0)
+					break;
+			}
+			if (*s != NULL) {
+				strlcpy (name, real_name, sizeof(name));
+				if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
+				{
+					playbackfile = FS_OpenVFS (va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
+				}
+				else
+				{
+					// Search demo on quake file system, even in paks.
+					playbackfile = FS_OpenVFS (name, "rb", FS_ANY);
+				}
+
+				// Look in the demo dir (user specified).
+				if (!playbackfile)
+				{
+					playbackfile = FS_OpenVFS (va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
+				}
+
+				// Check the full system path (Run a demo anywhere on the file system).
+				if (!playbackfile)
+				{
+					playbackfile = FS_OpenVFS (name, "rb", FS_NONE_OS);
+				}
+
+				if (playbackfile)
+					strlcpy(name, Cmd_Argv(1), sizeof(name));
+			}
+		}
+	}
+#endif // WITH_VFS_ARCHIVE_LOADING
+
+
+	// Failed to open the demo from any path :(
+	if (!playbackfile)
+	{
+		Com_Printf ("Error: Couldn't open %s\n", Cmd_Argv(1));
+		return;
+	}
+
+	// Reset multiview track slots.
+	for(i = 0; i < 4; i++)
+	{
+		mv_trackslots[i] = -1;
+	}
+	nTrack1duel = nTrack2duel = 0;
+	mv_skinsforced = false;
+
+	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 
 	// Set demoplayback vars depending on the demo type.
 	cls.demoplayback	= true;
