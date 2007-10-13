@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.32 2007-10-06 08:15:28 dkure Exp $
+		$Id: menu_demo.c,v 1.33 2007-10-13 16:14:59 dkure Exp $
 
 */
 
@@ -32,7 +32,10 @@
 #include "Ctrl_Tab.h"
 #include "menu.h"
 #include "keys.h"
+
+#include "hash.h"
 #include "fs.h"
+#include "vfs.h"
 
 
 #ifdef _WIN32
@@ -517,7 +520,7 @@ void Demo_AddDirToPlaylist (char *dir_path)
 		// Don't bother with zips and directories.
 		if (f->is_directory
 #ifdef WITH_ZIP
-			|| f->is_zip
+			|| f->is_archive
 #endif
 			)
 		{
@@ -544,7 +547,34 @@ void Demo_AddZipToPlaylist (const char *zip_path)
 		Demo_AddDirToPlaylist (temp_path);
 	}
 }
-#endif
+
+#ifdef WITH_VFS_ARCHIVE_LOADING
+// VFS-FIXME: This is probably the wrong thing to do
+// AddDir to playlist adds the whole directory, not just the current
+// file
+void Demo_AddArchiveToPlayList(const char *archive_path) {
+	searchpathfuncs_t *funcs;
+	vfsfile_t *vfs = NULL;
+	void  *archive_handle = NULL;
+
+	vfs = FS_OpenVFS(archive_path, "rb", FS_NONE_OS);
+	funcs = FS_FileNameToSearchFunctions(archive_path);
+	if (!funcs) goto fail;
+
+	archive_handle = funcs->OpenNew(vfs, archive_path);
+	if (!archive_handle) goto fail;
+
+	return;
+
+fail:
+	if (archive_handle)
+		funcs->ClosePath(archive_handle); // This closes vfs aswell
+	else if (vfs)
+		VFS_CLOSE(vfs);
+	return;
+}
+#endif // WITH_VFS_ARCHIVE_LOADING
+#endif // WITH_ZIP
 
 // ==============================
 // <key processing for each page>
@@ -559,7 +589,7 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 	if (key == K_INS || (key == K_ENTER && keydown[K_CTRL]))
 	{
 		#ifdef WITH_ZIP
-		if (FS_ZipIsArchive (FL_GetCurrentPath(&demo_filelist)))
+		if (FS_IsArchive (FL_GetCurrentPath(&demo_filelist)))
 		{
 			// Zip.
 			Demo_AddZipToPlaylist (FL_GetCurrentPath(&demo_filelist));
@@ -910,20 +940,25 @@ void Menu_Demo_Init(void)
 		&demo_browser_democolor,
 		&demo_browser_selectedcolor,
 		&demo_browser_dircolor,
-#ifdef WITH_ZIP
+	#ifdef WITH_ZIP
 		&demo_browser_zipcolor,
-#endif
+	#endif
 		"./qw");
     FL_AddFileType(&demo_filelist, 0, ".qwd");
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
 	FL_AddFileType(&demo_filelist, 2, ".mvd");
 	FL_AddFileType(&demo_filelist, 3, ".dem");
+	#ifdef WITH_VFS_ARCHIVE_LOADING
+	FL_AddFileType(&demo_filelist, 4, ".tar");
+	FL_AddFileType(&demo_filelist, 4, ".pak");
+	#endif // WITH_VFS_ARCHIVE_LOADING
 	#ifdef WITH_ZLIB
 	FL_AddFileType(&demo_filelist, 4, ".gz");
 	#endif // WITH_ZLIB
 	#ifdef WITH_ZIP
 	FL_AddFileType(&demo_filelist, 4, ".zip");
-	#endif
+	FL_AddFileType(&demo_filelist, 4, ".pk3");
+	#endif // WITH_ZIP
 
 	Settings_Page_Init(demoplsett, demoplsett_arr);
 
