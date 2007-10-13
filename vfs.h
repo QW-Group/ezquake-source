@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs.h,v 1.11 2007-10-11 07:02:37 dkure Exp $
+ * $Id: vfs.h,v 1.12 2007-10-13 16:02:51 dkure Exp $
  *             
  */
 
@@ -48,7 +48,7 @@ typedef struct {
 		// reads the entire file
 	int		(*EnumerateFiles)(void *handle, char *match, int (*func)(char *, int, void *), void *parm);
 
-	void	*(*OpenNew)(vfsfile_t *file, char *desc);	
+	void	*(*OpenNew)(vfsfile_t *file, const char *desc);	
 		// returns a handle to a new pak/path
 
 	int		(*GeneratePureCRC) (void *handle, int seed, int usepure);
@@ -75,6 +75,14 @@ typedef struct searchpath_s
 #endif // WITH_FTE_VFS
 	struct searchpath_s *next;
 } searchpath_t;
+
+
+#ifdef WITH_VFS_ARCHIVE_LOADING
+int FS_BreakUpArchivePath(const char *filename, 
+		char *archive, size_t archive_len,
+		char *inside, size_t inside_len);
+searchpathfuncs_t *FS_FileNameToSearchFunctions(const char *filename);
+#endif
 
 //=================================
 // STDIO Files (OS)

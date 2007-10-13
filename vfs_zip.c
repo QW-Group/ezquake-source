@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_zip.c,v 1.11 2007-10-11 06:38:09 dkure Exp $
+ * $Id: vfs_zip.c,v 1.12 2007-10-13 16:02:51 dkure Exp $
  *             
  */
 
@@ -96,11 +96,9 @@ static int FSZIP_ZErrorFileFile(void *fin, void *stream) {
 	return 0;
 }
 
-static zlib_filefunc_def *FSZIP_CreteFileFuncs(vfsfile_t *packhandle) {
-	zlib_filefunc_def *funcs;
-	funcs = Q_malloc(sizeof(*funcs));
+static void FSZIP_CreteFileFuncs(zlib_filefunc_def *funcs) {
 	if (funcs == NULL)
-		return NULL;
+		return;
 
 	funcs->zopen_file  = FSZIP_ZOpenFile;
 	funcs->zread_file  = FSZIP_ZReadFile;
@@ -109,10 +107,8 @@ static zlib_filefunc_def *FSZIP_CreteFileFuncs(vfsfile_t *packhandle) {
 	funcs->zseek_file  = FSZIP_ZSeekFile;
 	funcs->zclose_file = FSZIP_ZCloseFile;
 	funcs->zerror_file = FSZIP_ZErrorFileFile;
-	funcs->opaque = packhandle;
-
-	return funcs;
 }
+
 //==========================================
 // ZIP file  (*.zip, *.pk3) - VFS Functions
 //==========================================
@@ -126,6 +122,8 @@ typedef struct zipfile_s
 #ifdef HASH_FILESYSTEM
 	hashtable_t hash;
 #endif
+
+	zlib_filefunc_def zlib_funcs;
 
 	vfsfile_t *raw;
 	vfsfile_t *currentfile;	//our unzip.c can only handle one active file at any one time
@@ -369,6 +367,7 @@ static void FSZIP_ClosePath(void *handle)
 		return;	//not yet time
 
 	unzClose(zip->handle);
+	VFS_CLOSE(zip->raw);
 	if (zip->files)
 		Q_free(zip->files);
 	Q_free(zip);
@@ -486,7 +485,7 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc)
+static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 {
 	int i, r;
 
@@ -495,11 +494,10 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc)
 	zlib_filefunc_def *funcs = NULL;
 	unz_global_info info;
 	
-	zip = Q_malloc(sizeof(zipfile_t));
-	memset (zip, 0, sizeof(*zip));
+	zip   = (zipfile_t *) Q_calloc(1, sizeof(*zip));
 	strlcpy (zip->filename, desc, sizeof (zip->filename));
-
-	funcs = FSZIP_CreteFileFuncs(packhandle);
+	FSZIP_CreteFileFuncs(&(zip->zlib_funcs));
+	zip->raw = packhandle;
 	zip->handle = unzOpen2(desc, funcs);
 	if (!zip->handle) goto fail;
 
@@ -534,9 +532,9 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, char *desc)
 
 fail:
 	// Q_free is safe to call on NULL pointers
+	Q_free(funcs);
 	Q_free(zip->files);
 	Q_free(zip);
-	Q_free(funcs);
 	return NULL;
 }
 

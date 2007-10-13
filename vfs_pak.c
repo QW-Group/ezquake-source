@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_pak.c,v 1.16 2007-10-11 13:50:56 dkure Exp $
+ * $Id: vfs_pak.c,v 1.17 2007-10-13 16:02:51 dkure Exp $
  *             
  */
 
@@ -367,7 +367,7 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-static void *FSPAK_LoadPackFile (vfsfile_t *file, char *desc)
+static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 {
 	dpackheader_t	header;
 	int				i;

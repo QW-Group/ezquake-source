@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.8 2007-10-11 07:02:38 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.9 2007-10-13 16:02:51 dkure Exp $
  *             
  */
 
@@ -41,6 +41,7 @@ typedef struct gzipfile_s
 	packfile_t file; // Only one file can be stored in a gzip file
 
 	unsigned long filepos;
+	vfsfile_t *raw;
 
 	int references;
 } gzipfile_t;
@@ -126,12 +127,12 @@ static unsigned long VFSGZIP_GetLen(vfsfile_t *file)
 	return r;
 }
 
+static void FSGZIP_ClosePath(void *handle);
 static void VFSGZIP_Close(vfsfile_t *file) 
 {
-	int r;
 	vfsgzipfile_t *vfsgz = (vfsgzipfile_t *)file;
 
-	r = gzclose(vfsgz->parent->handle);
+	FSGZIP_ClosePath(vfsgz->parent);
 }
 
 static void VFSGZIP_Flush(vfsfile_t *file) 
@@ -193,7 +194,9 @@ static void FSGZIP_ClosePath(void *handle)
 	if (--gzip->references > 0)
 		return; //not yet time
 
-	VFS_CLOSE(gzip->handle);
+
+	gzclose(gzip->handle);
+	VFS_CLOSE(gzip->raw);
 	Q_free(gzip);
 }
 
@@ -278,7 +281,7 @@ static int FSGZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *,
 // Loads the header and directory, adding the files at the beginning
 // of the list so they override previous pack files.
 
-static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, char *desc)
+static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, const char *desc)
 {
 	gzipfile_t *gzip;
 	const char *base;
@@ -287,6 +290,7 @@ static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, char *desc)
 	gzip = Q_calloc(1, sizeof(*gzip));
 	strlcpy(gzip->filename, desc, sizeof(gzip->filename));
 	if (gziphandle == NULL) goto fail;
+	gzip->raw = gziphandle;
 
 	int fd = fileno(((vfsosfile_t *)gziphandle)->handle); // <-- ASSUMPTION! that file is OS
 	gzip->handle = gzdopen(dup(fd), "r");

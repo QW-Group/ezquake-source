@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_tar.c,v 1.7 2007-10-11 13:50:56 dkure Exp $
+ * $Id: vfs_tar.c,v 1.8 2007-10-13 16:02:51 dkure Exp $
  *             
  */
 
@@ -37,7 +37,7 @@ typedef struct tarfile_s
 {
 	char filename[MAX_QPATH];
 	hashtable_t hash;
-	vfsfile_t *handle;
+	vfsfile_t *raw;
 
 	int numfiles;
 	packfile_t  *files;
@@ -215,10 +215,10 @@ static int VFSTAR_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfse
 		Sys_Error("VFSTAR_ReadBytes: bytestoread < 0");
 
 	if (vfst->parent->filepos != vfst->currentpos) {
-		VFS_SEEK(vfst->parent->handle, vfst->currentpos, SEEK_SET);
+		VFS_SEEK(vfst->parent->raw, vfst->currentpos, SEEK_SET);
 	}
 
-	read = VFS_READ(vfst->parent->handle, buffer, bytestoread, NULL);
+	read = VFS_READ(vfst->parent->raw, buffer, bytestoread, NULL);
 	vfst->currentpos += read;
 	vfst->parent->filepos = vfst->currentpos;
 
@@ -338,7 +338,7 @@ static void FSTAR_ClosePath(void *handle)
 	if (--tar->references > 0)
 		return; //not yet time
 
-	VFS_CLOSE(tar->handle);
+	VFS_CLOSE(tar->raw);
 	if (tar->files)
 		Q_free(tar->files);
 	Q_free(tar);
@@ -406,9 +406,9 @@ static void FSTAR_ReadFile(void *handle, flocation_t *loc, char *buffer)
 	tarfile_t *tar = handle;
 	int err;
 
-	VFS_SEEK(tar->handle, tar->files[loc->index].filepos, SEEK_SET);
+	VFS_SEEK(tar->raw, tar->files[loc->index].filepos, SEEK_SET);
 
-	err = VFS_READ(tar->handle, buffer, tar->files[loc->index].filelen, NULL);
+	err = VFS_READ(tar->raw, buffer, tar->files[loc->index].filelen, NULL);
 
 	if (err!=tar->files[loc->index].filelen)
 	{
@@ -443,23 +443,22 @@ static int FSTAR_EnumerateFiles (void *handle, char *match, int (*func)(char *, 
 // Loads the header and directory, adding the files at the beginning
 // of the list so they override previous pack files.
 
-static void *FSTAR_LoadTarFile(vfsfile_t *tarhandle, char *desc)
+static void *FSTAR_LoadTarFile(vfsfile_t *tarhandle, const char *desc)
 {
 	tarfile_t *tar;
 
 	tar = Q_calloc(1, sizeof(*tar));
 	strlcpy (tar->filename, desc, sizeof (tar->filename));
-
-	tar->handle = tarhandle;
-	if (!tar->handle) goto fail;
+	tar->raw = tarhandle;
+	if (!tar->raw) goto fail;
 
 	// Get the number of files inside the tar
-	tar->numfiles = tarOperationIndexFiles(tar->handle, NULL);
+	tar->numfiles = tarOperationIndexFiles(tar->raw, NULL);
 	if (tar->numfiles < 0) goto fail;
 
 	// Create a list of the number of files
 	tar->files = (packfile_t *)Q_malloc(tar->numfiles * sizeof(packfile_t));
-	tarOperationIndexFiles(tar->handle, tar->files);
+	tarOperationIndexFiles(tar->raw, tar->files);
 
 	tar->references = 1;
 
