@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.30 2007-10-12 17:40:42 dkure Exp $
+	$Id: sys_linux.c,v 1.31 2007-10-13 15:54:27 dkure Exp $
 
 */
 #include <unistd.h>
@@ -494,7 +494,6 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 #ifdef WITH_FTE_VFS
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm)
 {
-#include <dirent.h>
 	DIR *dir, *dir2;
 	char apath[MAX_OSPATH];
 	char file[MAX_OSPATH];
