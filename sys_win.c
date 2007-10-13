@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.46 2007-10-12 00:08:43 cokeman1982 Exp $
+	$Id: sys_win.c,v 1.47 2007-10-13 00:07:00 cokeman1982 Exp $
 
 */
 // sys_win.c
@@ -870,6 +870,16 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 {
     return _fullpath(absPath, relPath, maxLength);
 } 
+
+void Sys_GetFullExePath(char *path, unsigned int path_length, qbool long_name)
+{
+	GetModuleFileName(GetModuleHandle(NULL), path, path_length);
+
+	if (!long_name)
+	{
+		GetShortPathName(path, path, path_length);
+	}
+}
 
 #define EZQUAKE_MAILSLOT	"\\\\.\\mailslot\\ezquake"
 #define MAILSLOT_BUFFERSIZE 1024

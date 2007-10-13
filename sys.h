@@ -98,6 +98,8 @@ void Sys_Init (void);
 wchar *Sys_GetClipboardTextW(void);
 void Sys_CopyToClipboard(char *);
 
+void Sys_GetFullExePath(char *path, unsigned int path_length, int long_name);
+
 // Inter Process Call functions.
 void Sys_InitIPC();
 void Sys_ReadIPC();
