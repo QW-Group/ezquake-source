@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.56 2007-10-11 13:52:50 dkure Exp $
+	$Id: fs.c,v 1.57 2007-10-13 05:59:07 dkure Exp $
 */
 
 /**
@@ -841,7 +841,7 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 #else
 			if (!strncasecmp(userpak,"gl", 2))
 				continue;
-#endif
+#endif // GLQUAKE
 
 #ifndef WITH_FTE_VFS
 			snprintf (pakfile, sizeof (pakfile), "%s/%s", dir, userpak);
@@ -861,7 +861,11 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 #else
 		snprintf (pakfile, sizeof (pakfile), "%s.pak", userdirfile);
 		FS_AddPak(dir, pakfile, parent, NULL);
-#endif
+#ifdef WITH_ZIP
+		snprintf (pakfile, sizeof (pakfile), "%s.pk3", userdirfile);
+		FS_AddPak(dir, pakfile, parent, NULL);
+#endif // WITH_ZIP
+#endif // WITH_FTE_VFS
 	}
 }
 
@@ -948,9 +952,9 @@ void FS_AddUserDirectory ( char *dir ) {
 	// other paks
 	FS_AddUserPaks (com_userdir);
 #else
-	dir_len = strlen(dir) + 1;
+	dir_len = strlen(com_userdir) + 2;
 	malloc_dir = Q_malloc(sizeof(char)*dir_len);
-	strlcpy(malloc_dir, dir, dir_len);
+	snprintf(malloc_dir, dir_len, "%s/", com_userdir);
 	FS_AddPathHandle(com_userdir, &osfilefuncs, malloc_dir, false, false, FS_LOAD_FILE_ALL);
 
 #endif // WITH_FTE_VFS
@@ -1536,6 +1540,8 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 				
 			vfs_archive = funcs->OpenVFS(file_handle, &loc, mode);
 			if (!vfs_archive) goto archive_fail;
+
+			return vfs_archive;
 
 archive_fail:
 			if (vfs)
@@ -3239,6 +3245,7 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 	char			pakfile[MAX_OSPATH];
 #ifdef WITH_VFS_WILD
 	wildpaks_t wp;
+	FILE *pak_lst;
 #endif // WITH_VFS_WILD
 
 	for (i=0 ; ; i++)
@@ -3249,11 +3256,18 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 	}
 
 #ifdef WITH_VFS_WILD 
-	snprintf (pakfile, sizeof (pakfile), "*.%s", extension);
-	wp.funcs = funcs;
-	wp.parentdesc = pathto;
-	wp.parentpath = parent;
-	parent->funcs->EnumerateFiles(parent->handle, pakfile, FS_AddWildDataFiles, &wp);
+	/* VFS-FIXME: Sure there is a better way to do this.... */
+	snprintf (pakfile, sizeof (pakfile), "%s/pak.lst", pathto);
+	pak_lst = fopen(pakfile, "r");
+	if (!pak_lst) {
+		snprintf (pakfile, sizeof (pakfile), "*.%s", extension);
+		wp.funcs = funcs;
+		wp.parentdesc = pathto;
+		wp.parentpath = parent;
+		parent->funcs->EnumerateFiles(parent->handle, pakfile, FS_AddWildDataFiles, &wp);
+	} else {
+		fclose(pak_lst);
+	}
 #endif // WITH_VFS_WILD
 }
 
