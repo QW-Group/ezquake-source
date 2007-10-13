@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_gzip.c,v 1.10 2007-10-13 16:24:50 dkure Exp $
+ * $Id: vfs_gzip.c,v 1.11 2007-10-13 17:07:28 dkure Exp $
  *             
  */
 
@@ -22,6 +22,9 @@
 #ifdef WITH_ZLIB
 
 #include <zlib.h>
+#ifdef _WIN32
+#include <io.h>
+#endif // _WIN32
 #include "quakedef.h"
 #include "hash.h"
 #include "common.h"
