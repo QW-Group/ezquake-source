@@ -51,7 +51,7 @@ typedef struct filedesc_s
     qbool			is_directory;
 	
 	#ifdef WITH_ZIP
-	qbool			is_zip;
+	qbool			is_archive;
 	#endif
     
 	char            name[MAX_PATH+1];
@@ -73,8 +73,8 @@ filedesc_t;
 typedef struct filelist_s
 {
     char			current_dir[MAX_PATH+1];
-	char			current_zip[MAX_PATH+1];
-	qbool			in_zip;
+	char			current_archive[MAX_PATH+1];
+	qbool			in_archive;
     qbool			error;          // Error reading dir
     qbool			need_refresh;   // Dir is reread in draw func
     qbool			need_resort;    // Dir is sorted in draw func
@@ -101,7 +101,7 @@ typedef struct filelist_s
 	cvar_t *		selected_color;
 	cvar_t *		dir_color;
 	#ifdef WITH_ZIP
-	cvar_t *		zip_color;
+	cvar_t *		archive_color;
 	#endif
 	qbool			show_dirup;
 	qbool			show_dirs;
@@ -166,7 +166,7 @@ void FL_Init(filelist_t	*	fl,
 			 cvar_t *		selected_color,
 			 cvar_t *		dir_color,
 #ifdef WITH_ZIP
-			 cvar_t *		zip_color,
+			 cvar_t *		archive_color,
 #endif
 			 char *			 initdir);
 

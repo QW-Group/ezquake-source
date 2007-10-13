@@ -23,7 +23,9 @@
 #include "EX_FileList.h"
 #include "utils.h"
 #include "keys.h"
+#include "hash.h"
 #include "fs.h"
+#include "vfs.h"
 
 
 // column width
@@ -76,7 +78,7 @@ void FL_Init(filelist_t	*	fl,
 			 cvar_t *		selected_color,
 			 cvar_t *		dir_color,
 #ifdef WITH_ZIP
-			 cvar_t *		zip_color,
+			 cvar_t *		archive_color,
 #endif
 			 char *			 initdir)
 {
@@ -115,11 +117,11 @@ void FL_Init(filelist_t	*	fl,
 	FL_RegisterColor (fl->dir_color);
 
 	#ifdef WITH_ZIP
-	fl->zip_color = zip_color;
-	FL_RegisterColor (fl->zip_color);
+	fl->archive_color = archive_color;
+	FL_RegisterColor (fl->archive_color);
 
-	fl->current_zip[0] = 0;
-	fl->in_zip = false;
+	fl->current_archive[0] = 0;
+	fl->in_archive = false;
 	#endif // WITH_ZIP
 }
 
@@ -244,14 +246,14 @@ qbool FL_IsCurrentDir(filelist_t *fl)
 //
 // Is current entry a zip file?
 //
-qbool FL_IsCurrentZip(filelist_t *fl)
+qbool FL_IsCurrentArchive(filelist_t *fl)
 {
 	if (fl->num_entries <= 0)
 	{
 		return true;
 	}
 
-	return fl->entries[fl->current_entry].is_zip;
+	return fl->entries[fl->current_entry].is_archive;
 }
 #endif // WITH_ZIP
 
@@ -398,11 +400,11 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 
 #ifdef WITH_ZIP
 	// Zips after directories.
-	if (d1->is_zip && !d2->is_zip)
+	if (d1->is_archive && !d2->is_archive)
 		return -1;
-	if (d2->is_zip && !d1->is_zip)
+	if (d2->is_archive  && !d1->is_archive)
 		return 1;
-	if (d1->is_zip && d2->is_zip)
+	if (d1->is_archive && d2->is_archive)
 		return strcasecmp(d1->name, d2->name);
 #endif // WITH_ZIP
 
@@ -533,7 +535,8 @@ static void FL_FindHighlightEntry (filelist_t *fl)
 //
 // Read the ZIP file.
 //
-void FL_ReadZip (filelist_t *fl)
+#ifndef WITH_VFS_ARCHIVE_LOADING
+void FL_ReadArchive (filelist_t *fl)
 {
 	int temp = 0;
 	unzFile zip_file;
@@ -546,9 +549,9 @@ void FL_ReadZip (filelist_t *fl)
 	fl->current_entry = 0;
 
 	// Open the zip file.
-	if (fl->current_zip != NULL)
+	if (fl->current_archive != NULL)
 	{
-		zip_file = FS_ZipUnpackOpenFile (fl->current_zip);
+		zip_file = FS_ZipUnpackOpenFile (fl->current_archive);
 	}
 	else
 	{
@@ -600,7 +603,7 @@ void FL_ReadZip (filelist_t *fl)
 		f->is_directory = ent.directory;
 
 		// Get the full path for the file.
-		snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_zip, PATH_SEPARATOR, ent.fname);
+		snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, ent.fname);
 
 		f->size = ent.size;
 		memcpy(&f->time, &ent.time, sizeof(f->time));
@@ -638,6 +641,126 @@ finish:
 	// Find which item to highlight in the list.
 	FL_FindHighlightEntry(fl);
 }
+#else
+
+int FL_EnumerateArchive(char *desc, int size, void *param)
+{
+	// sys_dirent ent; // create an ent some how
+	filelist_t *fl = (filelist_t *) param;
+	if (fl->num_entries >= MAX_FILELIST_ENTRIES)
+	{
+		return 0;
+	}
+
+	// Pointer to the current file entry.
+	filedesc_t *f = &fl->entries[fl->num_entries];
+	f->type_index = -1;
+
+	// Skip current/above dir and hidden files.
+	if (!strcmp(desc, ".") || !strcmp(desc, ".."))
+	{
+		return 1;
+	}
+
+	// Find registered type if it's not a directory.
+	// TODO: Do stuff with this....
+	//f->type_index = FL_FindRegisteredType (fl, &ent);
+
+	#ifdef WITH_ZIP
+	if (FS_IsArchive (desc))
+	{
+		f->is_archive = true;
+	}
+	#endif
+
+
+	// We're not interested in this file type since it wasn't registered.
+	// VFS-FIXME: We could do stuff with directories
+	//if (!ent.directory && f->type_index < 0)
+	//{
+	//	return 1;
+	//}
+	// Find registered type if it's not a directory.
+
+
+
+	// We found a file that we're interested in so save the info about it
+	// in the file description structure.
+	f->is_directory = 0; //ent.directory;
+
+	// Get the full path for the file.
+	snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, desc);
+
+	f->size = size;
+	//memcpy(&f->time, &ent.time, sizeof(f->time));
+	memset(&f->time, 0, sizeof(f->time));
+
+	// Find friendly name.
+	FL_StripFileName(fl, f);
+
+	// Increase counter of how many files have been found.
+	fl->num_entries++;
+
+	return 1;
+}
+
+void FL_ReadArchive (filelist_t *fl) 
+{
+	searchpathfuncs_t *funcs;
+	vfsfile_t *vfs = NULL;
+	void  *archive_handle = NULL;
+
+	/* Set up for error case */
+	fl->error         = true;
+	fl->need_refresh  = false;
+	fl->display_entry = 0;
+	fl->num_entries   = 0;
+	fl->current_entry = 0;
+
+	if (fl->current_archive == NULL)
+	{
+		return;
+	}
+
+	vfs = FS_OpenVFS(fl->current_archive, "rb", FS_NONE_OS);
+	if (!vfs) goto fail;
+	// Open the archive file.
+	funcs = FS_FileNameToSearchFunctions(fl->current_archive);
+	if (!funcs) goto fail;
+
+	archive_handle = funcs->OpenNew(vfs, fl->current_archive);
+	if (!archive_handle) goto fail;
+
+	fl->error = false;
+
+	// Make sure we don't have some garbage left from the previous dir.
+	// This caused a bug where some files inside of a zip would be
+	// regarded as zip files, since the files with the same index
+	// in the parent directory were zip files.
+	memset(fl->entries, 0, sizeof(fl->entries));
+
+	funcs->EnumerateFiles(archive_handle, "*", FL_EnumerateArchive, fl);
+	fl->need_resort = true;
+
+	// Re-sort the file list if needed.
+	if (fl->need_resort)
+	{
+		FL_SortDir (fl);
+	}
+
+	// Resort might have changed this.
+	fl->current_entry = 0;
+
+	// Find which item to highlight in the list.
+	FL_FindHighlightEntry(fl);
+
+fail:
+	if (archive_handle)
+		funcs->ClosePath(archive_handle); // Closes vfs as well
+	else if (vfs)
+		VFS_CLOSE(vfs);
+}
+#endif // WITH_VFS_ARCHIVE_LOADING
 #endif // WITH_ZIP
 
 //
@@ -708,9 +831,9 @@ void FL_ReadDir(filelist_t *fl)
 		f->type_index = FL_FindRegisteredType (fl, &ent);
 
 		#ifdef WITH_ZIP
-		if (FS_ZipIsArchive (ent.fname))
+		if (FS_IsArchive (ent.fname))
 		{
-			f->is_zip = true;
+			f->is_archive = true;
 		}
 		#endif
 
@@ -718,7 +841,7 @@ void FL_ReadDir(filelist_t *fl)
         if (!ent.directory && f->type_index < 0
 		#ifdef WITH_ZIP
 			// Or isn't a zip.
-			&& !f->is_zip
+			&& !f->is_archive
 		#endif
 			)
 		{
@@ -850,10 +973,10 @@ search :
 //
 // FL_ChangeZip - enter a zip file
 //
-void FL_ChangeZip(filelist_t *fl, char *newzip)
+void FL_ChangeArchive(filelist_t *fl, char *archive)
 {
-	strlcpy (fl->current_zip, newzip, sizeof(fl->current_zip));
-	fl->in_zip = true;
+	strlcpy (fl->current_archive, archive, sizeof(fl->current_archive));
+	fl->in_archive = true;
 
 	fl->need_refresh = true;
 }
@@ -893,8 +1016,8 @@ void FL_ChangeDir(filelist_t *fl, char *newdir)
 
 	#ifdef WITH_ZIP
 	// Since we just changed to a new directory we can't be in a zip file.
-	fl->current_zip[0] = 0;
-	fl->in_zip = false;
+	fl->current_archive[0] = 0;
+	fl->in_archive = false;
 	#endif // WITH_ZIP
 }
 
@@ -920,9 +1043,9 @@ void FL_ChangeDirUp(filelist_t *fl)
 		fl->cdup_find = true;
 
 		#ifdef WITH_ZIP
-		if (fl->in_zip)
+		if (fl->in_archive)
 		{
-			strlcpy (fl->cdup_name, COM_SkipPath(fl->current_zip), sizeof(fl->cdup_name));
+			strlcpy (fl->cdup_name, COM_SkipPath(fl->current_archive), sizeof(fl->cdup_name));
 		}
 		else
 		#endif // WITH_ZIP
@@ -938,7 +1061,7 @@ void FL_ChangeDirUp(filelist_t *fl)
 
 	// Change the dir to "c:\quake\qw" (from above example).
 	#ifdef WITH_ZIP
-	if (fl->in_zip)
+	if (fl->in_archive)
 	{
 		FL_ChangeDir(fl, fl->current_dir);
 	}
@@ -1204,9 +1327,9 @@ void FL_CheckDisplayPosition(filelist_t *fl)
             return true;
         }
 		#ifdef WITH_ZIP
-		else if (FL_IsCurrentZip(fl))
+		else if (FL_IsCurrentArchive(fl))
 		{
-			FL_ChangeZip(fl, FL_GetCurrentPath(fl));
+			FL_ChangeArchive(fl, FL_GetCurrentPath(fl));
 			return true;
 		}
 		#endif //WITH_ZIP
@@ -1446,9 +1569,9 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     if (fl->need_refresh)
 	{
 		#ifdef WITH_ZIP
-		if (fl->in_zip)
+		if (fl->in_archive)
 		{
-			FL_ReadZip (fl);
+			FL_ReadArchive (fl);
 		}
 		else
 		#endif // WITH_ZIP
@@ -1472,9 +1595,9 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		char *curr_path = NULL;
 
 		#ifdef WITH_ZIP
-		if (fl->in_zip)
+		if (fl->in_archive)
 		{
-			curr_path = fl->current_zip;
+			curr_path = fl->current_archive;
 		}
 		else
 		#endif // WITH_ZIP
@@ -1697,10 +1820,10 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 					clr[0].c = (fl->dir_color == NULL) ? COLOR_WHITE : (int)fl->dir_color->value;
 				}
 				#ifdef WITH_ZIP
-				else if (entry->is_zip)
+				else if (entry->is_archive)
 				{
 					// Set zip color.
-					clr[0].c = (fl->zip_color == NULL) ? COLOR_WHITE : (int)fl->zip_color->value;
+					clr[0].c = (fl->archive_color == NULL) ? COLOR_WHITE : (int)fl->archive_color->value;
 				}
 				#endif // WITH_ZIP
 				else
