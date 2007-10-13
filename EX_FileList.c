@@ -647,13 +647,15 @@ int FL_EnumerateArchive(char *desc, int size, void *param)
 {
 	// sys_dirent ent; // create an ent some how
 	filelist_t *fl = (filelist_t *) param;
+	filedesc_t *f;
+
 	if (fl->num_entries >= MAX_FILELIST_ENTRIES)
 	{
 		return 0;
 	}
 
 	// Pointer to the current file entry.
-	filedesc_t *f = &fl->entries[fl->num_entries];
+	f = &fl->entries[fl->num_entries];
 	f->type_index = -1;
 
 	// Skip current/above dir and hidden files.
