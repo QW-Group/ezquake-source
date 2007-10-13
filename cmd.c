@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.87 2007-10-05 19:06:23 johnnycz Exp $
+    $Id: cmd.c,v 1.88 2007-10-13 12:01:06 borisu Exp $
 */
 
 #ifndef _WIN32
@@ -214,6 +214,17 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		quotes = 0;
 
 		for (i = 0; i < cursize; i++) {
+			if (text[i] == '\\') {
+				if (text[i+1] == '\n') { // escaped endline
+					text[i] = text[i+1] = '\r'; // '\r' removed later during copying
+					i++;
+					continue;
+				} else if (text[i+1] == '\r' && text[i+2] == '\n') { // escaped dos endline
+					text[i] = text[i+2] = '\r';
+					i+=2;
+					continue;
+				}
+			}
 			if (text[i] == '\n')
 				break;
 
