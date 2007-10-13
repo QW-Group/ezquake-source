@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="ezquake"
 	ProjectGUID="{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
 	RootNamespace="ezquake"
@@ -54,7 +54,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_DEPRECATE&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\libs;"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
 				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS"
 				StringPooling="false"
 				MinimalRebuild="true"
@@ -102,7 +102,7 @@
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
 				ModuleDefinitionFile=""
 				GenerateDebugInformation="true"
@@ -182,7 +182,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\libs;"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
 				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -223,7 +223,7 @@
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
 				GenerateManifest="true"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
 				ModuleDefinitionFile=""
@@ -306,7 +306,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\libs"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
 				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;GLQUAKE;id386;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -347,7 +347,7 @@
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
 				ModuleDefinitionFile=""
@@ -426,7 +426,7 @@
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_DEPRECATE&quot;"
 				Optimization="0"
 				FavorSizeOrSpeed="0"
-				AdditionalIncludeDirectories="..\..\libs;"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
 				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS"
 				MinimalRebuild="true"
 				ExceptionHandling="0"
@@ -470,7 +470,7 @@
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
 				ModuleDefinitionFile=""
 				GenerateDebugInformation="true"
@@ -1171,10 +1171,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\vfs_mmap.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\vfs_os.c"
 					>
 				</File>
@@ -1183,15 +1179,19 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\vfs_tar.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\vfs_tcp.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\vfs_zip.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\vfs_mmap.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\vfs_tar.c"
 					>
 				</File>
 				<File
