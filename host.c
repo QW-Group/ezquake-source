@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.58 2007-10-13 15:36:56 cokeman1982 Exp $
+	$Id: host.c,v 1.59 2007-10-13 17:22:23 cokeman1982 Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -732,7 +732,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		if (cl_verify_qwprotocol.integer >= 2)
 		{
 			// Always register the qw:// protocol.
-			Cbuf_AddText("register_qwurl_protocol");
+			Cbuf_AddText("register_qwurl_protocol\n");
 		}
 		else if (cl_verify_qwprotocol.integer == 1 && !CL_CheckIfQWProtocolHandler())
 		{
