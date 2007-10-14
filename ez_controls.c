@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.69 2007-10-07 16:21:44 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.70 2007-10-14 21:40:59 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -178,12 +178,14 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 	{
 		if (p->ext_flags & control_resize_h)
 		{
-			p_bound_right -= p->resize_handle_thickness;
+			p_bound_right	-= p->resize_handle_thickness;
+			p_bound_left	+= p->resize_handle_thickness;
 		}
 
 		if (p->ext_flags & control_resize_v)
 		{
-			p_bound_bottom -= p->resize_handle_thickness;
+			p_bound_bottom	-= p->resize_handle_thickness;
+			p_bound_top		+= p->resize_handle_thickness;
 		}
 	}
 
@@ -538,6 +540,46 @@ void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y)
 }
 
 //
+// Eventhandler - Creates a eventhandler.
+//
+ez_eventhandler_t *EZ_eventhandler_Create(ez_eventfunction_t *event_func, int func_type)
+{
+	ez_eventhandler_t *e	= Q_malloc(sizeof(ez_eventhandler_t));
+	e->function_type		= func_type;
+	e->function				= event_func;
+	e->next					= NULL;
+
+	return e;
+}	
+
+//
+// Eventhandler - Goes through the list of events and removes the one with the specified function.
+//
+void EZ_eventhandler_Remove(ez_eventhandler_t *eventhandler, ez_eventfunction_t *event_func)
+{
+	ez_eventhandler_t *it = eventhandler;
+	ez_eventhandler_t *prev = NULL;
+
+	while (it)
+	{
+		if ((void *)it->function == (void *)event_func)
+		{
+			if (prev)
+			{
+				prev->next = it->next;
+			}
+
+			Q_free(it);
+
+			return;
+		}
+
+		prev = it;
+		it = it->next;
+	}
+}
+
+//
 // Control - Initializes a control and adds it to the specified control tree.
 //
 void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent,
@@ -595,6 +637,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnMinVirtualResize, OnMinVirtualResize, ez_control_t);
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnVirtualResize, OnVirtualResize, ez_control_t);
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnFlagsChanged, OnFlagsChanged, ez_control_t);
+	CONTROL_REGISTER_EVENT(control, EZ_control_OnEventHandlerChanged, OnEventHandlerChanged, ez_control_t);
 
 	// Add the control to the control tree.
 	if(!tree->root)
@@ -697,6 +740,7 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp OnDestroy)
 {
 	self->event_handlers.OnDestroy = OnDestroy;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -705,6 +749,7 @@ void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp O
 void EZ_control_SetOnFlagsChanged(ez_control_t *self, ez_control_handler_fp OnFlagsChanged)
 {
 	self->event_handlers.OnFlagsChanged = OnFlagsChanged;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -713,6 +758,7 @@ void EZ_control_SetOnFlagsChanged(ez_control_t *self, ez_control_handler_fp OnFl
 void EZ_control_SetOnLayoutChildren(ez_control_t *self, ez_control_handler_fp OnLayoutChildren)
 {
 	self->event_handlers.OnLayoutChildren = OnLayoutChildren;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -721,6 +767,7 @@ void EZ_control_SetOnLayoutChildren(ez_control_t *self, ez_control_handler_fp On
 void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove)
 {
 	self->event_handlers.OnMove = OnMove;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -729,6 +776,7 @@ void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove)
 void EZ_control_SetOnScroll(ez_control_t *self, ez_control_handler_fp OnScroll)
 {
 	self->event_handlers.OnScroll = OnScroll;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -737,6 +785,7 @@ void EZ_control_SetOnScroll(ez_control_t *self, ez_control_handler_fp OnScroll)
 void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize)
 {
 	self->event_handlers.OnResize = OnResize;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -745,6 +794,7 @@ void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize)
 void EZ_control_SetOnParentResize(ez_control_t *self, ez_control_handler_fp OnParentResize)
 {
 	self->event_handlers.OnParentResize = OnParentResize;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -753,6 +803,7 @@ void EZ_control_SetOnParentResize(ez_control_t *self, ez_control_handler_fp OnPa
 void EZ_control_SetOnMinVirtualResize(ez_control_t *self, ez_control_handler_fp OnMinVirtualResize)
 {
 	self->event_handlers.OnMinVirtualResize = OnMinVirtualResize;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -761,6 +812,7 @@ void EZ_control_SetOnMinVirtualResize(ez_control_t *self, ez_control_handler_fp 
 void EZ_control_SetOnVirtualResize(ez_control_t *self, ez_control_handler_fp OnVirtualResize)
 {
 	self->event_handlers.OnVirtualResize = OnVirtualResize;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -769,6 +821,7 @@ void EZ_control_SetOnVirtualResize(ez_control_t *self, ez_control_handler_fp OnV
 void EZ_control_SetOnKeyEvent(ez_control_t *self, ez_control_key_handler_fp OnKeyEvent)
 {
 	self->event_handlers.OnKeyEvent = OnKeyEvent;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -777,6 +830,7 @@ void EZ_control_SetOnKeyEvent(ez_control_t *self, ez_control_key_handler_fp OnKe
 void EZ_control_SetOnLostFocus(ez_control_t *self, ez_control_handler_fp OnLostFocus)
 {
 	self->event_handlers.OnLostFocus = OnLostFocus;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -785,6 +839,7 @@ void EZ_control_SetOnLostFocus(ez_control_t *self, ez_control_handler_fp OnLostF
 void EZ_control_SetOnGotFocus(ez_control_t *self, ez_control_handler_fp OnGotFocus)
 {
 	self->event_handlers.OnGotFocus = OnGotFocus;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -793,6 +848,7 @@ void EZ_control_SetOnGotFocus(ez_control_t *self, ez_control_handler_fp OnGotFoc
 void EZ_control_SetOnMouseHover(ez_control_t *self, ez_control_mouse_handler_fp OnMouseHover)
 {
 	self->event_handlers.OnMouseHover = OnMouseHover;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -801,6 +857,7 @@ void EZ_control_SetOnMouseHover(ez_control_t *self, ez_control_mouse_handler_fp 
 void EZ_control_SetOnMouseLeave(ez_control_t *self, ez_control_mouse_handler_fp OnMouseLeave)
 {
 	self->event_handlers.OnMouseLeave = OnMouseLeave;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -809,6 +866,7 @@ void EZ_control_SetOnMouseLeave(ez_control_t *self, ez_control_mouse_handler_fp 
 void EZ_control_SetOnMouseEnter(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEnter)
 {
 	self->event_handlers.OnMouseEnter = OnMouseEnter;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -817,6 +875,7 @@ void EZ_control_SetOnMouseEnter(ez_control_t *self, ez_control_mouse_handler_fp 
 void EZ_control_SetOnMouseClick(ez_control_t *self, ez_control_mouse_handler_fp OnMouseClick)
 {
 	self->event_handlers.OnMouseClick = OnMouseClick;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -825,6 +884,7 @@ void EZ_control_SetOnMouseClick(ez_control_t *self, ez_control_mouse_handler_fp 
 void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUp)
 {
 	self->event_handlers.OnMouseUp = OnMouseUp;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -833,6 +893,7 @@ void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnM
 void EZ_control_SetOnMouseUpOutside(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUpOutside)
 {
 	self->event_handlers.OnMouseUpOutside = OnMouseUpOutside;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -841,6 +902,7 @@ void EZ_control_SetOnMouseUpOutside(ez_control_t *self, ez_control_mouse_handler
 void EZ_control_SetOnMouseDown(ez_control_t *self, ez_control_mouse_handler_fp OnMouseDown)
 {
 	self->event_handlers.OnMouseDown = OnMouseDown;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -849,6 +911,7 @@ void EZ_control_SetOnMouseDown(ez_control_t *self, ez_control_mouse_handler_fp O
 void EZ_control_SetOnMouseEvent(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEvent)
 {
 	self->event_handlers.OnMouseEvent = OnMouseEvent;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -857,6 +920,16 @@ void EZ_control_SetOnMouseEvent(ez_control_t *self, ez_control_mouse_handler_fp 
 void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw)
 {
 	self->event_handlers.OnDraw = OnDraw;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
+}
+
+//
+// Control - Set the event handler for the OnEventHandlerChanged event.
+//
+void EZ_control_SetOnEventHandlerChanged(ez_control_t *self, ez_control_handler_fp OnEventHandlerChanged)
+{
+	self->event_handlers.OnEventHandlerChanged = OnEventHandlerChanged;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -865,6 +938,7 @@ void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw)
 void EZ_control_SetOnResizeHandleThicknessChanged(ez_control_t *self, ez_control_handler_fp OnResizeHandleThicknessChanged)
 {
 	self->event_handlers.OnResizeHandleThicknessChanged = OnResizeHandleThicknessChanged;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -1561,6 +1635,15 @@ int EZ_control_OnLayoutChildren(ez_control_t *self)
 }
 
 //
+// Control - Event for when a new event handler is set for an event.
+//
+int EZ_control_OnEventHandlerChanged(ez_control_t *self)
+{
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnEventHandlerChanged);
+	return 0;
+}
+
+//
 // Control - Draws the control.
 //
 int EZ_control_OnDraw(ez_control_t *self)
@@ -2186,6 +2269,7 @@ int EZ_label_Destroy(ez_control_t *self, qbool destroy_children)
 void EZ_label_SetOnTextChanged(ez_label_t *label, ez_control_handler_fp OnTextChanged)
 {
 	label->event_handlers.OnTextChanged = OnTextChanged;
+	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -2194,6 +2278,7 @@ void EZ_label_SetOnTextChanged(ez_label_t *label, ez_control_handler_fp OnTextCh
 void EZ_label_SetOnTextScaleChanged(ez_label_t *label, ez_control_handler_fp OnTextScaleChanged)
 {
 	label->event_handlers.OnTextScaleChanged = OnTextScaleChanged;
+	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -2202,6 +2287,7 @@ void EZ_label_SetOnTextScaleChanged(ez_label_t *label, ez_control_handler_fp OnT
 void EZ_label_SetOnTextOnCaretMoved(ez_label_t *label, ez_control_handler_fp OnCaretMoved)
 {
 	label->event_handlers.OnCaretMoved = OnCaretMoved;
+	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -3662,6 +3748,7 @@ void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignme
 void EZ_button_SetOnTextAlignmentChanged(ez_button_t *button, ez_control_handler_fp OnTextAlignmentChanged)
 {
 	button->event_handlers.OnTextAlignmentChanged = OnTextAlignmentChanged;
+	CONTROL_RAISE_EVENT(NULL, button, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -3754,6 +3841,7 @@ void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte a
 void EZ_button_SetOnAction(ez_button_t *self, ez_control_handler_fp OnAction)
 {
 	self->event_handlers.OnAction = OnAction;
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -4033,6 +4121,7 @@ __inline void EZ_slider_CalculateGapSize(ez_slider_t *slider)
 void EZ_slider_SetOnSliderPositionChanged(ez_slider_t *slider, ez_control_handler_fp OnSliderPositionChanged)
 {
 	slider->event_handlers.OnSliderPositionChanged = OnSliderPositionChanged;
+	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -4041,6 +4130,7 @@ void EZ_slider_SetOnSliderPositionChanged(ez_slider_t *slider, ez_control_handle
 void EZ_slider_SetOnMaxValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMaxValueChanged)
 {
 	slider->event_handlers.OnMaxValueChanged = OnMaxValueChanged;
+	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -4049,6 +4139,7 @@ void EZ_slider_SetOnMaxValueChanged(ez_slider_t *slider, ez_control_handler_fp O
 void EZ_slider_SetOnMinValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMinValueChanged)
 {
 	slider->event_handlers.OnMinValueChanged = OnMinValueChanged;
+	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -4057,6 +4148,7 @@ void EZ_slider_SetOnMinValueChanged(ez_slider_t *slider, ez_control_handler_fp O
 void EZ_slider_SetOnScaleChanged(ez_slider_t *slider, ez_control_handler_fp OnScaleChanged)
 {
 	slider->event_handlers.OnScaleChanged = OnScaleChanged;
+	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
 }
 
 //
@@ -4461,13 +4553,16 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 	((ez_control_t *)scrollbar)->CLASS_ID	= EZ_SCROLLBAR_ID;
 	((ez_control_t *)scrollbar)->ext_flags	|= (flags | control_focusable | control_contained | control_resizeable);
 
-	// Override the draw function.
+	// Override control events.
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnResize, OnResize, ez_control_t);
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnParentResize, OnParentResize, ez_control_t);
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnMouseEvent, OnMouseEvent, ez_control_t);
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnMouseDown, OnMouseDown, ez_control_t);
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnMouseUpOutside, OnMouseUpOutside, ez_control_t);
 	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnParentScroll, OnParentScroll, ez_control_t);
+
+	// Scrollbar specific events.
+	CONTROL_REGISTER_EVENT(scrollbar, EZ_scrollbar_OnTargetChanged, OnTargetChanged, ez_scrollbar_t);
 
 	scrollbar->back		= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar back button", "", 0, 0, 0, 0, control_contained | control_enabled);
 	scrollbar->forward	= EZ_button_Create(tree, (ez_control_t *)scrollbar, "Scrollbar forward button", "", 0, 0, 0, 0, control_contained | control_enabled);
@@ -4492,6 +4587,100 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 }
 
 //
+// Scrollbar - Calculates and sets the parents scroll position based on where the slider button is.
+//
+static void EZ_scrollbar_CalculateParentScrollPosition(ez_scrollbar_t *scrollbar, ez_control_t *target)
+{
+	ez_control_t *self			= (ez_control_t *)scrollbar;
+	ez_control_t *back_ctrl		= (ez_control_t *)scrollbar->back;
+	ez_control_t *forward_ctrl	= (ez_control_t *)scrollbar->forward;
+	ez_control_t *slider_ctrl	= (ez_control_t *)scrollbar->slider;
+	float scroll_ratio;
+
+	if (!target)
+	{
+		return;
+	}
+
+	if (scrollbar->orientation == vertical)
+	{
+		scroll_ratio = (slider_ctrl->y - back_ctrl->height) / (float)scrollbar->scroll_area;
+		EZ_control_SetScrollPosition(target, target->virtual_x, Q_rint(scroll_ratio * target->virtual_height));
+	}
+	else
+	{
+		scroll_ratio = (slider_ctrl->x - back_ctrl->width) / (float)scrollbar->scroll_area;
+		EZ_control_SetScrollPosition(target, Q_rint(scroll_ratio * target->virtual_width), target->virtual_y);
+	}
+}
+
+//
+// Scrollbar - Updates the slider position of the scrollbar based on the parents scroll position.
+//
+static void EZ_scrollbar_UpdateSliderBasedOnTarget(ez_scrollbar_t *scrollbar, ez_control_t *target)
+{
+	ez_control_t *self			= (ez_control_t *)scrollbar;
+	ez_control_t *back_ctrl		= (ez_control_t *)scrollbar->back;
+	ez_control_t *forward_ctrl	= (ez_control_t *)scrollbar->forward;
+	ez_control_t *slider_ctrl	= (ez_control_t *)scrollbar->slider;
+	float scroll_ratio;
+
+	if (!target)
+	{
+		return;
+	}
+
+	// Don't do anything if this is the user moving the slider using the mouse.
+	if (scrollbar->int_flags & scrolling)
+	{
+		return;
+	}
+
+	if (scrollbar->orientation == vertical)
+	{
+		int new_y;
+
+		// Find how far down on the parent control we're scrolled (percentage).
+		scroll_ratio = fabs(target->virtual_y / (float)target->virtual_height);
+		
+		// Calculate the position of the slider by multiplying the scroll areas
+		// height with the scroll ratio.
+		new_y = back_ctrl->height + Q_rint(scroll_ratio * scrollbar->scroll_area);
+		clamp(new_y, back_ctrl->height, (self->height - forward_ctrl->height - slider_ctrl->height));
+
+		EZ_control_SetPosition(slider_ctrl, 0, new_y);
+	}
+	else
+	{
+		int new_x;
+		scroll_ratio = fabs(target->virtual_x / (float)target->virtual_width);
+		
+		new_x = back_ctrl->width + Q_rint(scroll_ratio * scrollbar->scroll_area);
+		clamp(new_x, back_ctrl->width, (self->width - forward_ctrl->width - slider_ctrl->width));
+		
+		EZ_control_SetPosition(slider_ctrl, new_x, 0);
+	}
+}
+
+//
+// Scrollbar - Set the target control that the scrollbar should scroll.
+//
+void EZ_scrollbar_SetTarget(ez_scrollbar_t *scrollbar, ez_control_t *target)
+{
+	scrollbar->target = target;
+	CONTROL_RAISE_EVENT(NULL, scrollbar, ez_scrollbar_t, OnTargetChanged);
+}
+
+//
+// Scrollbar - Sets if the target for the scrollbar should be it's parent, or a specified target control.
+//				(The target controls OnScroll event handler will be used if it's not the parent)
+//
+void EZ_scrollbar_SetTargetParent(ez_scrollbar_t *scrollbar, qbool targetparent)
+{
+	SET_FLAG(scrollbar->ext_flags, target_parent, targetparent);
+}
+
+//
 // Scrollbar - Set the minimum slider size.
 //
 void EZ_scrollbar_SetSliderMinSize(ez_scrollbar_t *scrollbar, int minsize)
@@ -4511,15 +4700,15 @@ void EZ_scrollbar_SetScrollDelta(ez_scrollbar_t *scrollbar, int scroll_delta_x, 
 //
 // Scrollbar - Calculates the size of the slider button.
 //
-static void EZ_scrollbar_CalculateSliderSize(ez_scrollbar_t *scrollbar)
+static void EZ_scrollbar_CalculateSliderSize(ez_scrollbar_t *scrollbar, ez_control_t *target)
 {
 	ez_control_t *self = (ez_control_t *)scrollbar;
 
-	if (self->parent)
+	if (target)
 	{
 		// Get the percentage of the parent that is shown and calculate the new slider button size from that. 
-		float target_height_ratio = (self->parent->height / (float)self->parent->virtual_height);
-		int new_slider_height = max(scrollbar->slider_minsize, Q_rint(target_height_ratio * scrollbar->scroll_area));
+		float target_height_ratio	= (target->height / (float)target->virtual_height);
+		int new_slider_height		= max(scrollbar->slider_minsize, Q_rint(target_height_ratio * scrollbar->scroll_area));
 
 		EZ_control_SetSize((ez_control_t *)scrollbar->slider, self->width, new_slider_height);
 	}
@@ -4573,6 +4762,57 @@ static void EZ_scrollbar_RepositionScrollButtons(ez_scrollbar_t *scrollbar)
 }
 
 //
+// Control - Event handler for when the target control gets scrolled.
+//
+static int EZ_scrollbar_OnTargetScroll(ez_control_t *self)
+{
+	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self->parent;
+
+	if (!(scrollbar->ext_flags & target_parent))
+	{
+		EZ_scrollbar_UpdateSliderBasedOnTarget(scrollbar, scrollbar->target);
+	}
+
+	return 0;
+}
+
+static int EZ_scrollbar_OnTargetResize(ez_control_t *self)
+{
+	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self->parent;
+
+	if (!(scrollbar->ext_flags & target_parent))
+	{
+		EZ_scrollbar_CalculateSliderSize(scrollbar, scrollbar->target);
+	}
+
+	return 0;
+}
+
+//
+// Scrollbar - The target of the scrollbar changed.
+//
+int EZ_scrollbar_OnTargetChanged(ez_control_t *self)
+{
+	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self;
+
+	if (scrollbar->target)
+	{
+		// Override the new target controls event handlers for OnScroll and OnResize
+		// so that we can update the state of the scrollbar when the target changes
+		// size or scrolls by some other means than the scrollbars.
+		// (This is a bit of a hack since it removes any already existing 
+		// event handler for those events that the user might've set :/
+		// but the only other solution for this problem would be to add the 
+		// possibility to add more than 1 event handler for each event).
+		EZ_control_SetOnScroll(scrollbar->target, EZ_scrollbar_OnTargetScroll);
+		EZ_control_SetOnResize(scrollbar->target, EZ_scrollbar_OnTargetResize);
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, scrollbar, ez_scrollbar_t, OnTargetChanged);
+	return 0;
+}
+
+//
 // Scrollbar - OnResize event.
 //
 int EZ_scrollbar_OnResize(ez_control_t *self)
@@ -4584,7 +4824,7 @@ int EZ_scrollbar_OnResize(ez_control_t *self)
 
 	// Make sure the buttons are in the correct place.
 	EZ_scrollbar_RepositionScrollButtons(scrollbar);
-	EZ_scrollbar_CalculateSliderSize(scrollbar);
+	EZ_scrollbar_CalculateSliderSize(scrollbar, ((scrollbar->ext_flags & target_parent) ? self->parent : scrollbar->target));
 
 	// Reset the min virtual size to 1x1 so that the 
 	// scrollbar won't stop resizing when it's parent is resized.
@@ -4604,7 +4844,10 @@ int EZ_scrollbar_OnParentResize(ez_control_t *self)
 	// Let the super class do it's thing first.
 	EZ_control_OnParentResize(self);
 
-	EZ_scrollbar_CalculateSliderSize(scrollbar);
+	if (scrollbar->ext_flags & target_parent)
+	{
+		EZ_scrollbar_CalculateSliderSize(scrollbar, self->parent);
+	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnParentResize);
 	return 0;
@@ -4640,82 +4883,6 @@ int EZ_scrollbar_OnMouseUpOutside(ez_control_t *self, mouse_state_t *ms)
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, ez_control_t, OnMouseUpOutside, ms);
 
 	return false;
-}
-
-//
-// Scrollbar - Calculates and sets the parents scroll position based on where the slider button is.
-//
-static void EZ_scrollbar_CalculateParentScrollPosition(ez_scrollbar_t *scrollbar)
-{
-	ez_control_t *self				= (ez_control_t *)scrollbar;
-	ez_control_t *back_ctrl			= (ez_control_t *)scrollbar->back;
-	ez_control_t *forward_ctrl		= (ez_control_t *)scrollbar->forward;
-	ez_control_t *slider_ctrl		= (ez_control_t *)scrollbar->slider;
-	float scroll_ratio;
-
-	if (!self->parent)
-	{
-		return;
-	}
-
-	if (scrollbar->orientation == vertical)
-	{
-		scroll_ratio = (slider_ctrl->y - back_ctrl->height) / (float)scrollbar->scroll_area;
-		EZ_control_SetScrollPosition(self->parent, self->parent->virtual_x, Q_rint(scroll_ratio * self->parent->virtual_height));
-	}
-	else
-	{
-		scroll_ratio = (slider_ctrl->x - back_ctrl->width) / (float)scrollbar->scroll_area;
-		EZ_control_SetScrollPosition(self->parent, self->parent->virtual_y, Q_rint(scroll_ratio * self->parent->virtual_width));
-	}
-}
-
-//
-// Scrollbar - Updates the slider position of the scrollbar based on the parents scroll position.
-//
-static void EZ_scrollbar_UpdateSliderBasedOnParent(ez_scrollbar_t *scrollbar)
-{
-	ez_control_t *self			= (ez_control_t *)scrollbar;
-	ez_control_t *back_ctrl		= (ez_control_t *)scrollbar->back;
-	ez_control_t *forward_ctrl	= (ez_control_t *)scrollbar->forward;
-	ez_control_t *slider_ctrl	= (ez_control_t *)scrollbar->slider;
-	float scroll_ratio;
-
-	if (!self->parent)
-	{
-		return;
-	}
-
-	// Don't do anything if this is the user moving the slider using the mouse.
-	if (scrollbar->int_flags & scrolling)
-	{
-		return;
-	}
-
-	if (scrollbar->orientation == vertical)
-	{
-		int new_y;
-
-		// Find how far down on the parent control we're scrolled (percentage).
-		scroll_ratio = fabs(self->parent->virtual_y / (float)self->parent->virtual_height);
-		
-		// Calculate the position of the slider by multiplying the scroll areas
-		// height with the scroll ratio.
-		new_y = back_ctrl->height + Q_rint(scroll_ratio * scrollbar->scroll_area);
-		clamp(new_y, back_ctrl->height, (self->height - forward_ctrl->height - slider_ctrl->height));
-
-		EZ_control_SetPosition(slider_ctrl, 0, new_y);
-	}
-	else
-	{
-		int new_x;
-		scroll_ratio = fabs(self->parent->virtual_x / (float)self->parent->virtual_width);
-		
-		new_x = back_ctrl->width + Q_rint(scroll_ratio * scrollbar->scroll_area);
-		clamp(new_x, back_ctrl->width, (self->width - forward_ctrl->width - slider_ctrl->width));
-		
-		EZ_control_SetPosition(slider_ctrl, new_x, 0);
-	}
 }
 
 //
@@ -4761,7 +4928,14 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			// as the parents scroll position changes, like normal.
 			scrollbar->int_flags |= scrolling;
 
-			EZ_scrollbar_CalculateParentScrollPosition(scrollbar);
+			if (scrollbar->ext_flags & target_parent)
+			{
+				EZ_scrollbar_CalculateParentScrollPosition(scrollbar, self->parent);
+			}
+			else
+			{
+				EZ_scrollbar_CalculateParentScrollPosition(scrollbar, scrollbar->target);
+			}
 			
 			scrollbar->int_flags &= ~scrolling;
 		}
@@ -4784,11 +4958,182 @@ int EZ_scrollbar_OnParentScroll(ez_control_t *self)
 	EZ_control_OnParentScroll(self);
 
 	// Update the slider button to match the new scroll position.
-	EZ_scrollbar_UpdateSliderBasedOnParent(scrollbar);
+	if (scrollbar->ext_flags & target_parent)
+	{
+		EZ_scrollbar_UpdateSliderBasedOnTarget(scrollbar, self->parent);
+	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnParentScroll);
 	return 0;
 }
 
+// =========================================================================================
+// Scrollpane
+// =========================================================================================
 
+//
+// Scrollpane - Creates a new Scrollpane and initializes it.
+//
+ez_scrollpane_t *EZ_scrollpane_Create(ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
+							  ez_control_flags_t flags)
+{
+	ez_scrollpane_t *scrollpane = NULL;
+
+	// We have to have a tree to add the control to.
+	if (!tree)
+	{
+		return NULL;
+	}
+
+	scrollpane = (ez_scrollpane_t *)Q_malloc(sizeof(ez_scrollpane_t));
+	memset(scrollpane, 0, sizeof(ez_scrollpane_t));
+
+	EZ_scrollpane_Init(scrollpane, tree, parent, name, description, x, y, width, height, flags);
+	
+	return scrollpane;
+}
+
+//
+// Scrollpane - Initializes a Scrollpane.
+//
+void EZ_scrollpane_Init(ez_scrollpane_t *scrollpane, ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
+							  ez_control_flags_t flags)
+{
+	ez_control_t *scrollpane_ctrl = (ez_control_t *)scrollpane;
+
+	// Initialize the inherited class first.
+	EZ_control_Init(&scrollpane->super, tree, parent, name, description, x, y, width, height, flags);
+
+	// Initilize the button specific stuff.
+	((ez_control_t *)scrollpane)->CLASS_ID	= EZ_SCROLLPANE_ID;
+	((ez_control_t *)scrollpane)->ext_flags	|= (flags | control_focusable | control_contained | control_resizeable);
+
+	// Override control events.
+	CONTROL_REGISTER_EVENT(scrollpane, EZ_scrollpane_OnResize, OnResize, ez_control_t);
+
+	// Scrollbar specific events.
+	CONTROL_REGISTER_EVENT(scrollpane, EZ_scrollpane_OnTargetChanged, OnTargetChanged, ez_scrollpane_t);
+	CONTROL_REGISTER_EVENT(scrollpane, EZ_scrollpane_OnScrollbarThicknessChanged, OnScrollbarThicknessChanged, ez_scrollpane_t);
+
+	scrollpane->scrollbar_thickness = 10;
+
+	// Create vertical scrollbar.
+	{
+		scrollpane->v_scrollbar = EZ_scrollbar_Create(tree, (ez_control_t *)scrollpane, "Vertical scrollbar", "", 0, 0, 10, 10, 0);
+		EZ_control_SetVisible((ez_control_t *)scrollpane->v_scrollbar, false);
+		EZ_control_SetPosition((ez_control_t *)scrollpane->v_scrollbar, scrollpane_ctrl->width - 10, 0);
+		EZ_control_SetAnchor((ez_control_t *)scrollpane->v_scrollbar, (anchor_top | anchor_bottom | anchor_right));
+		//EZ_control_SetSize((ez_control_t *)scrollpane->v_scrollbar, 10, scrollpane_ctrl->height - 10);
+
+		EZ_scrollbar_SetTargetParent(scrollpane->v_scrollbar, false);
+	}
+
+	// Create horizontal scrollbar.
+	{
+		scrollpane->h_scrollbar = EZ_scrollbar_Create(tree, (ez_control_t *)scrollpane, "Horizontal scrollbar", "", 0, 0, 10, 10, 0);
+		EZ_control_SetVisible((ez_control_t *)scrollpane->h_scrollbar, false);
+		EZ_control_SetPosition((ez_control_t *)scrollpane->h_scrollbar, 0, scrollpane_ctrl->height - 10);
+		EZ_control_SetAnchor((ez_control_t *)scrollpane->h_scrollbar, (anchor_left | anchor_bottom | anchor_right));
+		//EZ_control_SetSize((ez_control_t *)scrollpane->h_scrollbar, scrollpane_ctrl->width - 10, scrollpane_ctrl->height - 10);
+
+		EZ_scrollbar_SetTargetParent(scrollpane->h_scrollbar, false);
+	}
+}
+
+//
+// Scrollpane - Set the target control of the scrollpane (the one to be scrolled).
+//
+void EZ_scrollpane_SetTarget(ez_scrollpane_t *scrollpane, ez_control_t *target)
+{
+	scrollpane->target = target;
+	CONTROL_RAISE_EVENT(NULL, scrollpane, ez_scrollpane_t, OnTargetChanged);
+}
+
+//
+// Scrollpane - Set the thickness of the scrollbar controls.
+//
+void EZ_scrollpane_SetScrollbarThickness(ez_scrollpane_t *scrollpane, int scrollbar_thickness)
+{
+	scrollpane->scrollbar_thickness = scrollbar_thickness;
+	CONTROL_RAISE_EVENT(NULL, scrollpane, ez_scrollpane_t, OnScrollbarThicknessChanged);
+}
+
+//
+// Scrollpane - Resize the scrollbars based on the targets state.
+//
+static void EZ_scrollpane_ResizeScrollbars(ez_scrollpane_t *scrollpane)
+{
+	ez_control_t *scrollpane_ctrl	= (ez_control_t *)scrollpane;
+	ez_control_t *v_scroll_ctrl		= (ez_control_t *)scrollpane->v_scrollbar;
+	ez_control_t *h_scroll_ctrl		= (ez_control_t *)scrollpane->h_scrollbar;
+
+	qbool show_v = (scrollpane->ext_flags & always_h_scrollbar) || (scrollpane->int_flags & show_v_scrollbar);
+	qbool show_h = (scrollpane->ext_flags & always_v_scrollbar) || (scrollpane->int_flags & show_h_scrollbar);
+
+	// Resize the scrollbars depending on if both are shown or not.
+	EZ_control_SetSize(v_scroll_ctrl,
+		scrollpane->scrollbar_thickness, 
+		scrollpane_ctrl->height - (show_h ? scrollpane->scrollbar_thickness : 0));
+
+	EZ_control_SetSize(h_scroll_ctrl,
+		h_scroll_ctrl->width - (show_v ? scrollpane->scrollbar_thickness : 0), 
+		scrollpane->scrollbar_thickness);
+
+	// Resize the target control so that it doesn't overlap with the scrollbars.
+	if (scrollpane->target)
+	{
+		EZ_control_SetSize(scrollpane->target, 
+			scrollpane->target->width  - (show_h ? scrollpane->scrollbar_thickness : 0),
+			scrollpane->target->height - (show_v ? scrollpane->scrollbar_thickness : 0));
+	}
+}
+
+//
+// Scrollpane - OnResize event.
+//
+int EZ_scrollpane_OnResize(ez_control_t *self)
+{
+	ez_scrollpane_t *scrollpane = (ez_scrollpane_t *)self;
+
+	EZ_control_OnResize(self);
+
+	// Resize the scrollbars and target based on the state of the target.
+	EZ_scrollpane_ResizeScrollbars(scrollpane);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
+	return 0;
+}
+
+//
+// Scrollpane - The target control changed.
+//
+int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
+{
+	ez_scrollpane_t *scrollpane = (ez_scrollpane_t *)self;
+
+	// Set the new target for the scrollbars also, so they know what to scroll.
+	EZ_scrollbar_SetTarget(scrollpane->v_scrollbar, scrollpane->target);
+	EZ_scrollbar_SetTarget(scrollpane->h_scrollbar, scrollpane->target);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, scrollpane, ez_scrollpane_t, OnTargetChanged);
+	return 0;
+}
+
+//
+// Scrollpane - The scrollbar thickness changed.
+//
+int EZ_scrollpane_OnScrollbarThicknessChanged(ez_control_t *self)
+{
+	ez_scrollpane_t *scrollpane = (ez_scrollpane_t *)self;
+
+	// Resize the scrollbars and target with the new scrollbar thickness.
+	EZ_scrollpane_ResizeScrollbars(scrollpane);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, scrollpane, ez_scrollpane_t, OnScrollbarThicknessChanged);
+	return 0;
+}
 
