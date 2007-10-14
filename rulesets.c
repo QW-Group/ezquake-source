@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.60 2007-10-13 01:59:54 himan Exp $
+	$Id: rulesets.c,v 1.61 2007-10-14 17:54:12 himan Exp $
 */
 
 #include "quakedef.h"
@@ -207,7 +207,7 @@ block all other ways to made textures flat(simple)
 #ifdef GLQUAKE
 		{&r_drawflat, "0"},
 		{&amf_detpacklights, "0"},
-		{&vid_hwgammacontrol, "1"},
+		{&vid_hwgammacontrol, "2"},
 		{&gl_textureless, "0"},
 #endif
 		{&r_fullbrightSkins, "0"},

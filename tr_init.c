@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.23 2007-10-04 13:48:10 dkure Exp $
+	$Id: tr_init.c,v 1.24 2007-10-14 17:54:12 himan Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -84,7 +84,7 @@ cvar_t	r_conwidth			= { "vid_conwidth",			"640",	CVAR_NO_RESET | CVAR_SILENT, On
 cvar_t	r_conheight			= { "vid_conheight",		"0",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something
 
 cvar_t	vid_ref				= { "vid_ref",				"gl",	CVAR_ROM | CVAR_SILENT };
-cvar_t  vid_hwgammacontrol	= { "vid_hwgammacontrol", 	"1",    CVAR_ARCHIVE | CVAR_SILENT };
+cvar_t  vid_hwgammacontrol	= { "vid_hwgammacontrol", 	"2",    CVAR_ARCHIVE | CVAR_SILENT };
 #ifdef _WIN32
 cvar_t  vid_flashonactivity = { "vid_flashonactivity",	"1", CVAR_ARCHIVE | CVAR_SILENT };
 cvar_t	_windowed_mouse		= { "_windowed_mouse",		"1",	CVAR_ARCHIVE | CVAR_SILENT }; // actually that more like input, but input registered after video in windows
