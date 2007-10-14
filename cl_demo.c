@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.99 2007-10-13 16:16:20 dkure Exp $
+	$Id: cl_demo.c,v 1.100 2007-10-14 18:52:39 qqshka Exp $
 */
 
 #include <time.h>
@@ -45,8 +45,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 float olddemotime, nextdemotime;
 
 double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
-
-#define QTVBUFFERTIME bound(0.1, qtv_buffertime.value, 10)
 
 //
 // Vars related to QIZMO compressed demos.
@@ -833,7 +831,10 @@ qbool pb_ensure(void)
 		Com_Printf(" %d", pb_cnt);
 
 	// Try to decrease the playback buffer.
-	if (cls.mvdplayback && pb_cnt > 0 )
+
+#if 0 // qqshka: turned it off atm
+
+	if (cls.mvdplayback && pb_cnt > 0)
 	{
 		// Seems theoretical size of one MVD packet is 1400, so 2000 must be safe to parse something.
 		if (pb_cnt > 2000)
@@ -846,6 +847,8 @@ qbool pb_ensure(void)
 		if (ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt))
 			return true;
 	}
+
+#endif
 
 	pb_cnt += pb_raw_read(pb_buf + pb_cnt, max(0, (int)sizeof(pb_buf) - pb_cnt));
 

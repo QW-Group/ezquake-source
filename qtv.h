@@ -6,6 +6,8 @@
 
 //======================================
 
+#define QTVBUFFERTIME bound(0.1, qtv_buffertime.value, 10)
+
 #define QTV_PLAYBACK		2			// cls.mvdplayback == QTV_PLAYBACK if QTV playback
 #define QTV_VERSION			"1.3"		// we are support up to this QTV version
 #define QTV_VER_1_2			1.2			// download/chat was added at this point in QTV
@@ -15,6 +17,7 @@
 
 extern		cvar_t	qtv_buffertime;
 extern		cvar_t	qtv_chatprefix;
+extern		cvar_t  qtv_adjustbuffer;
 
 void		QTV_Init(void);
 
@@ -22,6 +25,7 @@ void		QTV_Init(void);
 
 #define		dem_mask	(7)
 
+int			ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms);
 int			ConsistantMVDData(unsigned char *buffer, int remaining);
 
 //======================================

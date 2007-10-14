@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.17 2007-09-24 08:56:28 qqshka Exp $
+	$Id: qtv.c,v 1.18 2007-10-14 18:52:39 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -10,8 +10,9 @@
 #include "teamplay.h"
 #include "fs.h"
 
-cvar_t	qtv_buffertime = {"qtv_buffertime", "0.5"};
-cvar_t	qtv_chatprefix = {"qtv_chatprefix", "$[{QTV}$] "};
+cvar_t	qtv_buffertime		= {"qtv_buffertime", "0.5"};
+cvar_t	qtv_chatprefix		= {"qtv_chatprefix", "$[{QTV}$] "};
+cvar_t  qtv_adjustbuffer	= {"qtv_adjustbuffer", "0"};
 
 
 void QTV_Init(void)
@@ -20,6 +21,7 @@ void QTV_Init(void)
 	
 	Cvar_Register(&qtv_buffertime);
 	Cvar_Register(&qtv_chatprefix);
+	Cvar_Register(&qtv_adjustbuffer);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -28,16 +30,23 @@ void QTV_Init(void)
 
 // ripped from FTEQTV, original name is SV_ConsistantMVDData
 // return non zero if we have at least one message
-int ConsistantMVDData(unsigned char *buffer, int remaining)
+// ms - will contain ms
+int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
 {
 	qbool warn = true;
 	int lengthofs;
 	int length;
 	int available = 0;
-	while(1)
+
+	if (ms)
+		ms[0] = 0;
+
+	while( 1 )
 	{
 		if (remaining < 2)
+		{
 			return available;
+		}
 
 		//buffer[0] is time
 
@@ -55,24 +64,38 @@ int ConsistantMVDData(unsigned char *buffer, int remaining)
 		}
 
 		if (lengthofs+4 > remaining)
+		{
 			return available;
+		}
 
 		length = (buffer[lengthofs]<<0) + (buffer[lengthofs+1]<<8) + (buffer[lengthofs+2]<<16) + (buffer[lengthofs+3]<<24);
 
 		length += lengthofs+4;
-		if (length > 1450 && warn) {
+
+		if (length > 1450 && warn)
+		{
 			Com_Printf("Corrupt mvd, length: %d\n", length);
 			warn = false;
 		}
 
 gottotallength:
 		if (remaining < length)
+		{
 			return available;
-		
+		}
+
+		if (ms)
+			ms[0] += buffer[0];
+			
 		remaining -= length;
 		available += length;
-		buffer += length;
+		buffer    += length;
 	}
+}
+
+int ConsistantMVDData(unsigned char *buffer, int remaining)
+{
+	return ConsistantMVDDataEx(buffer, remaining, NULL);
 }
 
 //=================================================

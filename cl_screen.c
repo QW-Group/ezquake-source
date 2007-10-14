@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.150 2007-10-11 17:56:47 johnnycz Exp $
+$Id: cl_screen.c,v 1.151 2007-10-14 18:52:39 qqshka Exp $
 */
 
 /// declarations may be found in screen.h
@@ -56,6 +56,7 @@ $Id: cl_screen.c,v 1.150 2007-10-11 17:56:47 johnnycz Exp $
 #include "movie_avi.h"	//
 #endif
 #include "Ctrl.h"
+#include "qtv.h"
 
 #ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
@@ -136,6 +137,10 @@ cvar_t	scr_gameclock_y			= {"cl_gameclock_y", "-3"};
 cvar_t	scr_democlock			= {"cl_democlock", "0"};
 cvar_t	scr_democlock_x			= {"cl_democlock_x", "0"};
 cvar_t	scr_democlock_y			= {"cl_democlock_y", "-2"};
+
+cvar_t	scr_qtvbuffer			= {"scr_qtvbuffer", "0"};
+cvar_t	scr_qtvbuffer_x			= {"scr_qtvbuffer_x", "0"};
+cvar_t	scr_qtvbuffer_y			= {"scr_qtvbuffer_y", "-10"};
 
 cvar_t	show_speed				= {"show_speed", "0"};
 cvar_t	show_speed_x			= {"show_speed_x", "-1"};
@@ -721,6 +726,44 @@ void SCR_DrawDemoClock (void) {
 
 	x = ELEMENT_X_COORD(scr_democlock);
 	y = ELEMENT_Y_COORD(scr_democlock);
+	Draw_String (x, y, str);
+}
+
+
+void SCR_DrawQTVBuffer (void)
+{
+	extern double Cl_DemoSpeed(void);
+	extern char	pb_buf[];
+	extern int	pb_cnt;
+
+	int x, y;
+	int ms, len;
+	char str[64];
+
+	switch(scr_qtvbuffer.integer)
+	{
+		case 0:
+			return;
+
+		case 1:
+			if (cls.mvdplayback != QTV_PLAYBACK)
+				return; // not qtv, ignore
+
+			break;
+
+		default:
+			if (!cls.mvdplayback)
+				return; // not mvd(that include qtv), ignore
+
+			break;
+	}
+
+	len = ConsistantMVDDataEx((unsigned char*)pb_buf, pb_cnt, &ms);
+
+	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Cl_DemoSpeed());
+
+	x = ELEMENT_X_COORD(scr_qtvbuffer);
+	y = ELEMENT_Y_COORD(scr_qtvbuffer);
 	Draw_String (x, y, str);
 }
 
@@ -2806,6 +2849,7 @@ void SCR_DrawElements(void) {
 					SCR_DrawClock ();
 					SCR_DrawGameClock ();
 					SCR_DrawDemoClock ();
+					SCR_DrawQTVBuffer ();
 					SCR_DrawFPS ();
 				}
 
@@ -3748,6 +3792,10 @@ void SCR_Init (void)
 	Cvar_Register (&scr_democlock_x);
 	Cvar_Register (&scr_democlock_y);
 	Cvar_Register (&scr_democlock);
+
+	Cvar_Register (&scr_qtvbuffer_x);
+	Cvar_Register (&scr_qtvbuffer_y);
+	Cvar_Register (&scr_qtvbuffer);
 
 	Cvar_Register (&show_speed);
 	Cvar_Register (&show_speed_x);

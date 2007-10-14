@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.195 2007-10-13 00:17:19 cokeman1982 Exp $
+$Id: cl_main.c,v 1.196 2007-10-14 18:52:39 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1702,7 +1702,37 @@ void CL_CalcFPS(void)
 	}
 
 	cls.fps = lastfps;
-	if (lastfps > 10.0 && lastfps < cls.min_fps) cls.min_fps = lastfps;
+
+	if (lastfps > 10.0 && lastfps < cls.min_fps)
+		cls.min_fps = lastfps;
+}
+
+double Cl_DemoSpeed(void)
+{
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
+		if (qtv_adjustbuffer.integer)
+		{
+			extern	char	pb_buf[];
+			extern	int		pb_cnt;
+			extern	qbool	physframe;
+
+			int				ms;
+			double			demospeed, desired, current;
+
+			ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
+
+			desired = max(0.5, QTVBUFFERTIME); // well, we need some reserve for adjusting
+			current = 0.001 * ms;
+
+			// qqshka: this is linear version
+			demospeed = current / desired;
+
+			return demospeed;
+		}
+	}
+
+	return bound(0, cl_demospeed.value, 20);
 }
 
 void CL_QTVPoll (void);
@@ -1779,7 +1809,7 @@ void CL_Frame (double time) {
 		if (cl.paused & PAUSED_DEMO)
 			cls.frametime = 0;
 		else if (!cls.timedemo)
-			cls.frametime *= bound(0, cl_demospeed.value, 20);
+			cls.frametime *= Cl_DemoSpeed();
 
 		if (!host_skipframe)
 			cls.demotime += cls.frametime;
