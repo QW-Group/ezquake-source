@@ -76,7 +76,7 @@ cvar_t  cl_crossx = {"cl_crossx", "0", CVAR_ARCHIVE};
 cvar_t  cl_crossy = {"cl_crossy", "0", CVAR_ARCHIVE};
 
 // QW262: less flash grenade effect in demos
-cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", "1", CVAR_ARCHIVE};
+cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", ".33", CVAR_ARCHIVE};
 
 cvar_t  v_contentblend = {"v_contentblend", "0.33"};
 cvar_t	v_damagecshift = {"v_damagecshift", "0.33"};
