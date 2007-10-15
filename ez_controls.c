@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.70 2007-10-14 21:40:59 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.71 2007-10-15 14:04:44 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -542,12 +542,34 @@ void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y)
 //
 // Eventhandler - Creates a eventhandler.
 //
-ez_eventhandler_t *EZ_eventhandler_Create(ez_eventfunction_t *event_func, int func_type)
+ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type)
 {
-	ez_eventhandler_t *e	= Q_malloc(sizeof(ez_eventhandler_t));
+	ez_eventhandler_t *e	= Q_calloc(1, sizeof(ez_eventhandler_t));
 	e->function_type		= func_type;
-	e->function				= event_func;
-	e->next					= NULL;
+
+	switch(func_type)
+	{
+		case EZ_CONTROL_HANDLER :
+			e->function.normal = (ez_control_handler_fp)event_func;
+			break;
+		case EZ_CONTROL_MOUSE_HANDLER :
+			e->function.mouse = (ez_control_mouse_handler_fp)event_func;
+			break;
+		case EZ_CONTROL_KEY_HANDLER :
+			e->function.key = (ez_control_key_handler_fp)event_func;
+			break;
+		case EZ_CONTROL_KEYSP_HANDLER :
+			e->function.key_sp = (ez_control_keyspecific_handler_fp)event_func;
+			break;
+		case EZ_CONTROL_DESTROY_HANDLER :
+			e->function.destroy = (ez_control_destroy_handler_fp)event_func;
+			break;
+		default :
+			e->function.normal = NULL;
+			break;
+	}
+
+	e->next	= NULL;
 
 	return e;
 }	
@@ -562,7 +584,7 @@ void EZ_eventhandler_Remove(ez_eventhandler_t *eventhandler, ez_eventfunction_t 
 
 	while (it)
 	{
-		if ((void *)it->function == (void *)event_func)
+		if ((void *)it->function.normal == (void *)event_func)
 		{
 			if (prev)
 			{
@@ -577,6 +599,42 @@ void EZ_eventhandler_Remove(ez_eventhandler_t *eventhandler, ez_eventfunction_t 
 		prev = it;
 		it = it->next;
 	}
+}
+
+//
+// Eventhandler - Execute an event handler.
+//
+void EZ_eventhandler_Exec(ez_eventhandler_t *event_handler, ez_control_t *ctrl, ...)
+{
+	va_list argptr;
+	int ft = event_handler->function_type;
+	ez_eventfunction_t *et = &event_handler->function;
+
+	va_start(argptr, ctrl);
+
+	// Pass on the proper amount of arguments, depending on the type of function.
+	if (ft == EZ_CONTROL_HANDLER)
+	{
+		et->normal(ctrl);
+	}
+	else if (ft == EZ_CONTROL_MOUSE_HANDLER)
+	{
+		et->mouse(ctrl, va_arg(argptr, mouse_state_t *));	
+	}
+	else if (ft == EZ_CONTROL_KEY_HANDLER)
+	{
+		et->key(ctrl, va_arg(argptr, int), va_arg(argptr, int), va_arg(argptr, qbool));
+	}
+	else if (ft == EZ_CONTROL_KEYSP_HANDLER)
+	{
+		et->key_sp(ctrl, va_arg(argptr, int), va_arg(argptr, int));
+	}
+	else if (ft == EZ_CONTROL_DESTROY_HANDLER)	
+	{
+		et->destroy(ctrl, va_arg(argptr, qbool));
+	}
+
+	va_end(argptr);
 }
 
 //
@@ -734,12 +792,24 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 	return 0;
 }
 
+/*
+#define CONTROL_ADD_EVENTHANDLER(ctrl, func_type, eventfunc, eventroot, eventname)				\
+{																								\
+	ez_eventhandler_t *e = EZ_eventhandler_Create((ez_eventfunction_t *)eventfunc, func_type);	\
+	eventroot *c = (eventroot *)ctrl;															\
+	if (c->event_handlers.eventname)															\
+		e->next = c->event_handlers.eventname;													\
+	c->event_handlers.eventname = e;															\
+}
+*/
+
 //
 // Control - Sets the OnDestroy event handler.
 //
 void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp OnDestroy)
 {
-	self->event_handlers.OnDestroy = OnDestroy;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_DESTROY_HANDLER, OnDestroy, ez_control_t, OnDestroy);
+	//self->event_handlers.OnDestroy = OnDestroy;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -748,7 +818,8 @@ void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp O
 //
 void EZ_control_SetOnFlagsChanged(ez_control_t *self, ez_control_handler_fp OnFlagsChanged)
 {
-	self->event_handlers.OnFlagsChanged = OnFlagsChanged;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnFlagsChanged, ez_control_t, OnFlagsChanged);
+	//self->event_handlers.OnFlagsChanged = OnFlagsChanged;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -757,7 +828,8 @@ void EZ_control_SetOnFlagsChanged(ez_control_t *self, ez_control_handler_fp OnFl
 //
 void EZ_control_SetOnLayoutChildren(ez_control_t *self, ez_control_handler_fp OnLayoutChildren)
 {
-	self->event_handlers.OnLayoutChildren = OnLayoutChildren;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnLayoutChildren, ez_control_t, OnLayoutChildren);
+	//self->event_handlers.OnLayoutChildren = OnLayoutChildren;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -766,7 +838,8 @@ void EZ_control_SetOnLayoutChildren(ez_control_t *self, ez_control_handler_fp On
 //
 void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove)
 {
-	self->event_handlers.OnMove = OnMove;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnMove, ez_control_t, OnMove);
+	//self->event_handlers.OnMove = OnMove;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -775,7 +848,8 @@ void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove)
 //
 void EZ_control_SetOnScroll(ez_control_t *self, ez_control_handler_fp OnScroll)
 {
-	self->event_handlers.OnScroll = OnScroll;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnScroll, ez_control_t, OnScroll);
+	//self->event_handlers.OnScroll = OnScroll;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -784,7 +858,8 @@ void EZ_control_SetOnScroll(ez_control_t *self, ez_control_handler_fp OnScroll)
 //
 void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize)
 {
-	self->event_handlers.OnResize = OnResize;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnResize, ez_control_t, OnResize);
+	//self->event_handlers.OnResize = OnResize;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -793,7 +868,8 @@ void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize)
 //
 void EZ_control_SetOnParentResize(ez_control_t *self, ez_control_handler_fp OnParentResize)
 {
-	self->event_handlers.OnParentResize = OnParentResize;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnParentResize, ez_control_t, OnParentResize);
+	//self->event_handlers.OnParentResize = OnParentResize;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -802,7 +878,8 @@ void EZ_control_SetOnParentResize(ez_control_t *self, ez_control_handler_fp OnPa
 //
 void EZ_control_SetOnMinVirtualResize(ez_control_t *self, ez_control_handler_fp OnMinVirtualResize)
 {
-	self->event_handlers.OnMinVirtualResize = OnMinVirtualResize;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnMinVirtualResize, ez_control_t, OnMinVirtualResize);
+	//self->event_handlers.OnMinVirtualResize = OnMinVirtualResize;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -811,7 +888,8 @@ void EZ_control_SetOnMinVirtualResize(ez_control_t *self, ez_control_handler_fp 
 //
 void EZ_control_SetOnVirtualResize(ez_control_t *self, ez_control_handler_fp OnVirtualResize)
 {
-	self->event_handlers.OnVirtualResize = OnVirtualResize;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnVirtualResize, ez_control_t, OnVirtualResize);
+	//self->event_handlers.OnVirtualResize = OnVirtualResize;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -820,7 +898,8 @@ void EZ_control_SetOnVirtualResize(ez_control_t *self, ez_control_handler_fp OnV
 //
 void EZ_control_SetOnKeyEvent(ez_control_t *self, ez_control_key_handler_fp OnKeyEvent)
 {
-	self->event_handlers.OnKeyEvent = OnKeyEvent;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_KEY_HANDLER, OnKeyEvent, ez_control_t, OnKeyEvent);
+	//self->event_handlers.OnKeyEvent = OnKeyEvent;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -829,7 +908,8 @@ void EZ_control_SetOnKeyEvent(ez_control_t *self, ez_control_key_handler_fp OnKe
 //
 void EZ_control_SetOnLostFocus(ez_control_t *self, ez_control_handler_fp OnLostFocus)
 {
-	self->event_handlers.OnLostFocus = OnLostFocus;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnLostFocus, ez_control_t, OnLostFocus);
+	//self->event_handlers.OnLostFocus = OnLostFocus;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -838,7 +918,8 @@ void EZ_control_SetOnLostFocus(ez_control_t *self, ez_control_handler_fp OnLostF
 //
 void EZ_control_SetOnGotFocus(ez_control_t *self, ez_control_handler_fp OnGotFocus)
 {
-	self->event_handlers.OnGotFocus = OnGotFocus;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnGotFocus, ez_control_t, OnGotFocus);
+	//self->event_handlers.OnGotFocus = OnGotFocus;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -847,7 +928,8 @@ void EZ_control_SetOnGotFocus(ez_control_t *self, ez_control_handler_fp OnGotFoc
 //
 void EZ_control_SetOnMouseHover(ez_control_t *self, ez_control_mouse_handler_fp OnMouseHover)
 {
-	self->event_handlers.OnMouseHover = OnMouseHover;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_MOUSE_HANDLER, OnMouseHover, ez_control_t, OnMouseHover);
+	//self->event_handlers.OnMouseHover = OnMouseHover;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -856,7 +938,8 @@ void EZ_control_SetOnMouseHover(ez_control_t *self, ez_control_mouse_handler_fp 
 //
 void EZ_control_SetOnMouseLeave(ez_control_t *self, ez_control_mouse_handler_fp OnMouseLeave)
 {
-	self->event_handlers.OnMouseLeave = OnMouseLeave;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_MOUSE_HANDLER, OnMouseLeave, ez_control_t, OnMouseLeave);
+	//self->event_handlers.OnMouseLeave = OnMouseLeave;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -865,7 +948,8 @@ void EZ_control_SetOnMouseLeave(ez_control_t *self, ez_control_mouse_handler_fp 
 //
 void EZ_control_SetOnMouseEnter(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEnter)
 {
-	self->event_handlers.OnMouseEnter = OnMouseEnter;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_MOUSE_HANDLER, OnMouseEnter, ez_control_t, OnMouseEnter);
+	//self->event_handlers.OnMouseEnter = OnMouseEnter;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -874,7 +958,8 @@ void EZ_control_SetOnMouseEnter(ez_control_t *self, ez_control_mouse_handler_fp 
 //
 void EZ_control_SetOnMouseClick(ez_control_t *self, ez_control_mouse_handler_fp OnMouseClick)
 {
-	self->event_handlers.OnMouseClick = OnMouseClick;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_MOUSE_HANDLER, OnMouseClick, ez_control_t, OnMouseClick);
+	//self->event_handlers.OnMouseClick = OnMouseClick;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -883,7 +968,8 @@ void EZ_control_SetOnMouseClick(ez_control_t *self, ez_control_mouse_handler_fp 
 //
 void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUp)
 {
-	self->event_handlers.OnMouseUp = OnMouseUp;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_MOUSE_HANDLER, OnMouseUp, ez_control_t, OnMouseUp);
+	//self->event_handlers.OnMouseUp = OnMouseUp;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -892,7 +978,8 @@ void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnM
 //
 void EZ_control_SetOnMouseUpOutside(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUpOutside)
 {
-	self->event_handlers.OnMouseUpOutside = OnMouseUpOutside;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_MOUSE_HANDLER, OnMouseUpOutside, ez_control_t, OnMouseUpOutside);
+	//self->event_handlers.OnMouseUpOutside = OnMouseUpOutside;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -901,7 +988,8 @@ void EZ_control_SetOnMouseUpOutside(ez_control_t *self, ez_control_mouse_handler
 //
 void EZ_control_SetOnMouseDown(ez_control_t *self, ez_control_mouse_handler_fp OnMouseDown)
 {
-	self->event_handlers.OnMouseDown = OnMouseDown;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_MOUSE_HANDLER, OnMouseDown, ez_control_t, OnMouseDown);
+	//self->event_handlers.OnMouseDown = OnMouseDown;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -910,7 +998,8 @@ void EZ_control_SetOnMouseDown(ez_control_t *self, ez_control_mouse_handler_fp O
 //
 void EZ_control_SetOnMouseEvent(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEvent)
 {
-	self->event_handlers.OnMouseEvent = OnMouseEvent;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_MOUSE_HANDLER, OnMouseEvent, ez_control_t, OnMouseEvent);
+	//self->event_handlers.OnMouseEvent = OnMouseEvent;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -919,7 +1008,8 @@ void EZ_control_SetOnMouseEvent(ez_control_t *self, ez_control_mouse_handler_fp 
 //
 void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw)
 {
-	self->event_handlers.OnDraw = OnDraw;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnDraw, ez_control_t, OnDraw);
+	//self->event_handlers.OnDraw = OnDraw;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -928,7 +1018,8 @@ void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw)
 //
 void EZ_control_SetOnEventHandlerChanged(ez_control_t *self, ez_control_handler_fp OnEventHandlerChanged)
 {
-	self->event_handlers.OnEventHandlerChanged = OnEventHandlerChanged;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnEventHandlerChanged, ez_control_t, OnEventHandlerChanged);
+	//self->event_handlers.OnEventHandlerChanged = OnEventHandlerChanged;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -937,7 +1028,8 @@ void EZ_control_SetOnEventHandlerChanged(ez_control_t *self, ez_control_handler_
 //
 void EZ_control_SetOnResizeHandleThicknessChanged(ez_control_t *self, ez_control_handler_fp OnResizeHandleThicknessChanged)
 {
-	self->event_handlers.OnResizeHandleThicknessChanged = OnResizeHandleThicknessChanged;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnResizeHandleThicknessChanged, ez_control_t, OnResizeHandleThicknessChanged);
+	//self->event_handlers.OnResizeHandleThicknessChanged = OnResizeHandleThicknessChanged;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -2268,7 +2360,8 @@ int EZ_label_Destroy(ez_control_t *self, qbool destroy_children)
 //
 void EZ_label_SetOnTextChanged(ez_label_t *label, ez_control_handler_fp OnTextChanged)
 {
-	label->event_handlers.OnTextChanged = OnTextChanged;
+	CONTROL_ADD_EVENTHANDLER(label, EZ_CONTROL_HANDLER, OnTextChanged, ez_label_t, OnTextChanged);
+	//label->event_handlers.OnTextChanged = OnTextChanged;
 	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -2277,7 +2370,8 @@ void EZ_label_SetOnTextChanged(ez_label_t *label, ez_control_handler_fp OnTextCh
 //
 void EZ_label_SetOnTextScaleChanged(ez_label_t *label, ez_control_handler_fp OnTextScaleChanged)
 {
-	label->event_handlers.OnTextScaleChanged = OnTextScaleChanged;
+	CONTROL_ADD_EVENTHANDLER(label, EZ_CONTROL_HANDLER, OnTextScaleChanged, ez_label_t, OnTextScaleChanged);
+	//label->event_handlers.OnTextScaleChanged = OnTextScaleChanged;
 	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -2286,7 +2380,8 @@ void EZ_label_SetOnTextScaleChanged(ez_label_t *label, ez_control_handler_fp OnT
 //
 void EZ_label_SetOnTextOnCaretMoved(ez_label_t *label, ez_control_handler_fp OnCaretMoved)
 {
-	label->event_handlers.OnCaretMoved = OnCaretMoved;
+	CONTROL_ADD_EVENTHANDLER(label, EZ_CONTROL_HANDLER, OnCaretMoved, ez_label_t, OnCaretMoved);
+	//label->event_handlers.OnCaretMoved = OnCaretMoved;
 	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -3747,7 +3842,8 @@ void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignme
 //
 void EZ_button_SetOnTextAlignmentChanged(ez_button_t *button, ez_control_handler_fp OnTextAlignmentChanged)
 {
-	button->event_handlers.OnTextAlignmentChanged = OnTextAlignmentChanged;
+	CONTROL_ADD_EVENTHANDLER(button, EZ_CONTROL_HANDLER, OnTextAlignmentChanged, ez_button_t, OnTextAlignmentChanged);
+	//button->event_handlers.OnTextAlignmentChanged = OnTextAlignmentChanged;
 	CONTROL_RAISE_EVENT(NULL, button, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -3840,7 +3936,8 @@ void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte a
 //
 void EZ_button_SetOnAction(ez_button_t *self, ez_control_handler_fp OnAction)
 {
-	self->event_handlers.OnAction = OnAction;
+	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnAction, ez_button_t, OnAction);
+	//self->event_handlers.OnAction = OnAction;
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -4120,7 +4217,8 @@ __inline void EZ_slider_CalculateGapSize(ez_slider_t *slider)
 //
 void EZ_slider_SetOnSliderPositionChanged(ez_slider_t *slider, ez_control_handler_fp OnSliderPositionChanged)
 {
-	slider->event_handlers.OnSliderPositionChanged = OnSliderPositionChanged;
+	CONTROL_ADD_EVENTHANDLER(slider, EZ_CONTROL_HANDLER, OnSliderPositionChanged, ez_slider_t, OnSliderPositionChanged);
+	//slider->event_handlers.OnSliderPositionChanged = OnSliderPositionChanged;
 	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -4129,7 +4227,8 @@ void EZ_slider_SetOnSliderPositionChanged(ez_slider_t *slider, ez_control_handle
 //
 void EZ_slider_SetOnMaxValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMaxValueChanged)
 {
-	slider->event_handlers.OnMaxValueChanged = OnMaxValueChanged;
+	CONTROL_ADD_EVENTHANDLER(slider, EZ_CONTROL_HANDLER, OnMaxValueChanged, ez_slider_t, OnMaxValueChanged);
+	//slider->event_handlers.OnMaxValueChanged = OnMaxValueChanged;
 	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -4138,7 +4237,8 @@ void EZ_slider_SetOnMaxValueChanged(ez_slider_t *slider, ez_control_handler_fp O
 //
 void EZ_slider_SetOnMinValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMinValueChanged)
 {
-	slider->event_handlers.OnMinValueChanged = OnMinValueChanged;
+	CONTROL_ADD_EVENTHANDLER(slider, EZ_CONTROL_HANDLER, OnMinValueChanged, ez_slider_t, OnMinValueChanged);
+	//slider->event_handlers.OnMinValueChanged = OnMinValueChanged;
 	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
 }
 
@@ -4147,7 +4247,8 @@ void EZ_slider_SetOnMinValueChanged(ez_slider_t *slider, ez_control_handler_fp O
 //
 void EZ_slider_SetOnScaleChanged(ez_slider_t *slider, ez_control_handler_fp OnScaleChanged)
 {
-	slider->event_handlers.OnScaleChanged = OnScaleChanged;
+	CONTROL_ADD_EVENTHANDLER(slider, EZ_CONTROL_HANDLER, OnScaleChanged, ez_slider_t, OnScaleChanged);
+	//slider->event_handlers.OnScaleChanged = OnScaleChanged;
 	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
 }
 

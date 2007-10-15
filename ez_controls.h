@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.47 2007-10-14 21:40:59 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.48 2007-10-15 14:04:44 cokeman1982 Exp $
 */
 
 //
@@ -285,30 +285,50 @@ typedef union ez_eventfunction_u
 typedef struct ez_eventhandler_s
 {
 	int							function_type;
-	ez_eventfunction_t			*function;
+	ez_eventfunction_t			function;
 	struct ez_eventhandler_s	*next;
 } ez_eventhandler_t;
 
+/*
 #define EVENTHANDLER_GETFUNC(event_handler)																	\
 	((event_handler->function_type == EZ_CONTROL_HANDLER)		? event_handler->function->normal			\
 	:(event_handler->function_type == EZ_CONTROL_MOUSE_HANDLER) ? event_handler->function->mouse			\
 	:(event_handler->function_type == EZ_CONTROL_KEY_HANDLER)	? event_handler->function->key				\
 	:(event_handler->function_type == EZ_CONTROL_KEYSP_HANDLER) ? event_handler->function->key_sp			\
-	:(event_handler->function_type == EZ_CONTROL_KEYSP_HANDLER) ? event_handler->function->destroy : NULL)
+	:(event_handler->function_type == EZ_CONTROL_DESTROY_HANDLER) ? event_handler->function->destroy : NULL)
+	*/
 
-#define CONTROL_ADD_EVENTHANDLER(ctrl, func_type, func, eventroot, eventname)	\
-{																				\
-	ez_eventhandler_t *e = EZ_eventhandler_Create(func, func_type);				\
-	eventroot *c = (eventroot *)ctrl;											\
-	if (c->event_handlers2.eventname)											\
-		e->next = c->event_handlers2.eventname;									\
-	c->event_handlers2.eventname = e;											\
+/*
+#define EVENTHANDLER_CREATE(e, eventfunc, func_type)										\
+{																							\
+	e = Q_calloc(1, sizeof(ez_eventhandler_t));												\
+	e->function_type = func_type;															\
+	switch(func_type)																		\
+	{																						\
+		case EZ_CONTROL_HANDLER :			(e->function.normal = eventfunc); break;		\
+		case EZ_CONTROL_MOUSE_HANDLER :		(e->function.mouse = eventfunc); break;			\
+		case EZ_CONTROL_KEY_HANDLER :		(e->function.key = eventfunc); break;			\
+		case EZ_CONTROL_KEYSP_HANDLER :		(e->function.key_sp = eventfunc); break;		\
+		case EZ_CONTROL_DESTROY_HANDLER :	(e->function.destroy = eventfunc); break;		\
+		default : break;																	\
+	}																						\
+}
+*/
+
+// TODO : Get rid of void casting somehow? :)
+#define CONTROL_ADD_EVENTHANDLER(ctrl, func_type, eventfunc, eventroot, eventname)			\
+{																							\
+	ez_eventhandler_t *e = EZ_eventhandler_Create((void *)eventfunc, func_type);			\
+	eventroot *c = (eventroot *)ctrl;														\
+	if (c->event_handlers.eventname)														\
+		e->next = c->event_handlers.eventname;												\
+	c->event_handlers.eventname = e;														\
 }
 
 #define CONTROL_REMOVE_EVENTHANDLER(ctrl, func, eventroot, eventname)			\
 {																				\
 	eventroot *c = (eventroot *)ctrl;											\
-	EZ_eventhandler_Remove(c->event_handlers2.eventname, func);					\
+	EZ_eventhandler_Remove(c->event_handlers.eventname, func);					\
 }
 
 //
@@ -319,7 +339,7 @@ void EZ_eventhandler_Remove(ez_eventhandler_t *eventhandler, ez_eventfunction_t 
 //
 // Eventhandler - Creates a eventhandler.
 //
-ez_eventhandler_t *EZ_eventhandler_Create(ez_eventfunction_t *event_func, int func_type);
+ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type);
 
 // =========================================================================================
 // Control
@@ -418,6 +438,7 @@ ez_eventhandler_t *EZ_eventhandler_Create(ez_eventfunction_t *event_func, int fu
 
 #else
 
+/*
 #define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, eventhandler, ...)					\
 {																								\
 	int *p = (int *)retval, temp = 0;															\
@@ -429,6 +450,30 @@ ez_eventhandler_t *EZ_eventhandler_Create(ez_eventfunction_t *event_func, int fu
 			((eventroot *)ctrl)->override_counts.eventhandler--;								\
 	}																							\
 	if(p) (*p) = temp;																			\
+}
+*/
+
+//#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, ev_handlr, ...)
+
+#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, evnthndler, ...)	\
+{																				\
+	int *p = (int *)retval, temp = 0;											\
+	eventroot *c = (eventroot *)ctrl;											\
+	if (c->event_handlers.evnthndler)											\
+	{																			\
+		if (c->override_counts.evnthndler == 1)									\
+		{																		\
+			ez_eventhandler_t *e = c->event_handlers.evnthndler;				\
+			while (e)															\
+			{																	\
+				EZ_eventhandler_Exec(e, (ez_control_t *)ctrl, ##__VA_ARGS__);	\
+				e = e->next;													\
+			}																	\
+		}																		\
+		else																	\
+			c->override_counts.evnthndler--;									\
+	}																			\
+	if(p) (*p) = temp;															\
 }
 
 #endif // __INTEL_COMPILER
@@ -644,8 +689,8 @@ typedef struct ez_control_s
 	float					opacity;				// The opacity of the control.
 
 	ez_control_events_t		events;					// The base reaction for events. Is only set at initialization.
-	ez_control_events_t		event_handlers;			// Can be set by the user of the class to react to events.
-	ez_control_eventhandlers_t event_handlers2;
+	//ez_control_events_t		event_handlers;			// Can be set by the user of the class to react to events.
+	ez_control_eventhandlers_t event_handlers;
 	ez_control_eventcount_t	inherit_levels;			// The number of times each event has been overriden. 
 													// (Countdown before executing the event handler for the event, after all
 													// event implementations in the inheritance chain have been run).
@@ -1139,6 +1184,14 @@ typedef struct ez_label_events_s
 	ez_control_handler_fp	OnTextFlagsChanged;		// The text flags changed.
 } ez_label_events_t;
 
+typedef struct ez_label_eventhandlers_s
+{
+	ez_eventhandler_t		*OnTextChanged;
+	ez_eventhandler_t		*OnCaretMoved;
+	ez_eventhandler_t		*OnTextScaleChanged;
+	ez_eventhandler_t		*OnTextFlagsChanged;
+} ez_label_eventhandlers_t;
+
 typedef struct ez_label_textpos_s
 {
 	int index;
@@ -1151,7 +1204,8 @@ typedef struct ez_label_s
 	ez_control_t			super;						// Super class.
 
 	ez_label_events_t		events;						// Specific events for the label control.
-	ez_label_events_t		event_handlers;				// Specific event handlers for the label control.
+	//ez_label_events_t		event_handlers;				// Specific event handlers for the label control.
+	ez_label_eventhandlers_t event_handlers;
 	ez_label_eventcount_t	inherit_levels;
 	ez_label_eventcount_t	override_counts;
 
@@ -1377,6 +1431,12 @@ typedef struct ez_button_events_s
 	ez_control_handler_fp	OnTextAlignmentChanged;	// Text alignment changed.
 } ez_button_events_t;
 
+typedef struct ez_button_eventhandlers_s
+{
+	ez_eventhandler_t		*OnAction;
+	ez_eventhandler_t		*OnTextAlignmentChanged;
+} ez_button_eventhandlers_t;
+
 typedef enum ez_button_flags_e
 {
 	use_images	= (1 << 0),
@@ -1402,7 +1462,8 @@ typedef struct ez_button_s
 	ez_control_t			super;				// The super class.
 
 	ez_button_events_t		events;				// Specific events for the button control.
-	ez_button_events_t		event_handlers;		// Specific event handlers for the button control.
+	//ez_button_events_t		event_handlers;		// Specific event handlers for the button control.
+	ez_button_eventhandlers_t event_handlers;
 	ez_button_eventcount_t	inherit_levels;
 	ez_button_eventcount_t	override_counts;
 
@@ -1572,12 +1633,21 @@ typedef struct ez_slider_events_s
 	ez_control_handler_fp	OnScaleChanged;
 } ez_slider_events_t;
 
+typedef struct ez_slider_eventhandlers_s
+{
+	ez_eventhandler_t		*OnSliderPositionChanged;
+	ez_eventhandler_t		*OnMaxValueChanged;
+	ez_eventhandler_t		*OnMinValueChanged;
+	ez_eventhandler_t		*OnScaleChanged;
+} ez_slider_eventhandlers_t;
+
 typedef struct ez_slider_s
 {
 	ez_control_t			super;				// The super class.
 
 	ez_slider_events_t		events;				// Slider specific events.
-	ez_slider_events_t		event_handlers;		// Slider specific event handlers.
+	//ez_slider_events_t		event_handlers;		// Slider specific event handlers.
+	ez_slider_eventhandlers_t event_handlers;
 	ez_slider_eventcount_t	inherit_levels;
 	ez_slider_eventcount_t	override_counts;
 
@@ -1739,12 +1809,18 @@ typedef struct ez_scrollbar_events_s
 	ez_control_handler_fp	OnTargetChanged;
 } ez_scrollbar_events_t;
 
+typedef struct ez_scrollbar_eventhandlers_s
+{
+	ez_eventhandler_t		*OnTargetChanged;
+} ez_scrollbar_eventhandlers_t;
+
 typedef struct ez_scrollbar_s
 {
 	ez_control_t				super;				// The super class.
 
 	ez_scrollbar_events_t		events;
-	ez_scrollbar_events_t		event_handlers;
+	//ez_scrollbar_events_t		event_handlers;
+	ez_scrollbar_eventhandlers_t event_handlers;
 	ez_scrollbar_eventcount_t	inherit_levels;
 	ez_scrollbar_eventcount_t	override_counts;
 
@@ -1861,12 +1937,19 @@ typedef struct ez_scrollpane_events_s
 	ez_control_handler_fp	OnScrollbarThicknessChanged;
 } ez_scrollpane_events_t;
 
+typedef struct ez_scrollpane_eventhandlers_s
+{
+	ez_eventhandler_t		*OnTargetChanged;
+	ez_eventhandler_t		*OnScrollbarThicknessChanged;
+} ez_scrollpane_eventhandlers_t;
+
 typedef struct ez_scrollpane_s
 {
 	ez_control_t				super;				// The super class.
 
 	ez_scrollpane_events_t		events;
-	ez_scrollpane_events_t		event_handlers;
+	//ez_scrollpane_events_t		event_handlers;
+	ez_scrollpane_eventhandlers_t event_handlers;
 	ez_scrollpane_eventcount_t	inherit_levels;
 	ez_scrollpane_eventcount_t	override_counts;
 
