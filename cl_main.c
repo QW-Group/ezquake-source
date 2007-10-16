@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.196 2007-10-14 18:52:39 qqshka Exp $
+$Id: cl_main.c,v 1.197 2007-10-16 15:53:34 dkure Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1713,9 +1713,9 @@ double Cl_DemoSpeed(void)
 	{
 		if (qtv_adjustbuffer.integer)
 		{
-			extern	char	pb_buf[];
+			extern	unsigned char pb_buf[];
 			extern	int		pb_cnt;
-			extern	qbool	physframe;
+			//extern	qbool	physframe;
 
 			int				ms;
 			double			demospeed, desired, current;

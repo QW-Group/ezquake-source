@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.151 2007-10-14 18:52:39 qqshka Exp $
+$Id: cl_screen.c,v 1.152 2007-10-16 15:53:34 dkure Exp $
 */
 
 /// declarations may be found in screen.h
@@ -733,7 +733,7 @@ void SCR_DrawDemoClock (void) {
 void SCR_DrawQTVBuffer (void)
 {
 	extern double Cl_DemoSpeed(void);
-	extern char	pb_buf[];
+	extern unsigned char pb_buf[];
 	extern int	pb_cnt;
 
 	int x, y;
@@ -758,7 +758,7 @@ void SCR_DrawQTVBuffer (void)
 			break;
 	}
 
-	len = ConsistantMVDDataEx((unsigned char*)pb_buf, pb_cnt, &ms);
+	len = ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
 
 	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Cl_DemoSpeed());
 

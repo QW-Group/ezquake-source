@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.100 2007-10-14 18:52:39 qqshka Exp $
+	$Id: cl_demo.c,v 1.101 2007-10-16 15:53:34 dkure Exp $
 */
 
 #include <time.h>
@@ -748,11 +748,11 @@ static void CL_WriteStartupData (void)
 
 vfsfile_t *playbackfile = NULL;			// The demo file used for playback.
 
-char	pb_buf[1024*10];				// Playback buffer.
+unsigned char pb_buf[1024*10];			// Playback buffer.
 int		pb_cnt = 0;						// How many bytes we've have in playback buffer.
 qbool	pb_eof = false;					// Have we reached the end of the playback buffer?
 
-char	pb_tmp_buf[sizeof(pb_buf)];		// Temp playback buffer used for validating MVD data.
+unsigned char pb_tmp_buf[sizeof(pb_buf)];// Temp playback buffer used for validating MVD data.
 
 //
 // Inits the demo playback buffer.
