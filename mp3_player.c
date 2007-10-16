@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.24 2007-10-11 06:46:12 borisu Exp $
+	$Id: mp3_player.c,v 1.25 2007-10-16 16:02:39 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -653,7 +653,7 @@ void MP3_GetPlaylistInfo(int *current, int *length) {
 }
 
 void MP3_PrintPlaylist_f(void) {
-	char *playlist_buf, *entries[256];
+	char *playlist_buf, *entries[1024];
 	unsigned int length;
 	int i, playlist_size, current;
 
