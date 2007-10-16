@@ -315,7 +315,7 @@ DWORD WINAPI PingRecvProc(void *lpParameter)
 	int k, ret;
 	struct timeval timeout;
 
-	while (!ping_finished) {
+	while (!ping_finished && !abort_ping) {
 		FD_ZERO(&fd);
 		FD_SET(ping_sock, &fd);
 		timeout.tv_sec = 0;
