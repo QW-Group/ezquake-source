@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <unistd.h>
+#include <semaphore.h>
 
 #define SO_DONTLINGER 0 	 
 #define USHORT unsigned short 	 
@@ -297,8 +298,14 @@ typedef struct pinghost_s
     double stime[6];
 } pinghost;
 
-static int ping_sock, hostsn;
+static int ping_sock, hostsn, ping_finished;
 static pinghost *hosts;
+
+#ifdef _WIN32
+HANDLE ping_semaphore;
+#else
+sem_t ping_semaphore;
+#endif
 
 DWORD WINAPI PingRecvProc(void *lpParameter)
 {
@@ -308,7 +315,7 @@ DWORD WINAPI PingRecvProc(void *lpParameter)
 	int k, ret;
 	struct timeval timeout;
 
-	while (ping_sock != -1) {
+	while (!ping_finished) {
 		FD_ZERO(&fd);
 		FD_SET(ping_sock, &fd);
 		timeout.tv_sec = 0;
@@ -338,6 +345,13 @@ DWORD WINAPI PingRecvProc(void *lpParameter)
 			}
 		}
 	}
+
+	/* TODO: Need reduce semaphore count here */
+#ifdef _WIN32
+	ReleaseSemaphore(ping_semaphore, 1, NULL);
+#else
+	sem_post(&ping_semaphore);
+#endif
 
 	return 0;
 }
@@ -709,6 +723,13 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 		Com_Printf ("PingHosts: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
 		//closesocket(newsocket);
 	}
+
+#ifdef _WIN32
+	ping_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+#else
+	sem_init(&ping_semaphore, 0, 0); // Intial value of 0
+#endif
+
 	Sys_CreateThread(PingRecvProc, NULL);
 
 	interval = 1000.0 / sb_pingspersec.value;
@@ -734,9 +755,17 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 		}
 	}
 
-	closesocket(ping_sock);
 	Sys_MSleep(500); // catch slow packets
-	ping_sock = -1; // let thread know we are done
+
+	ping_finished = 1; // let thread know we are done
+	/* TODO: Need raise the semaphore count here */
+#ifdef _WIN32
+	WaitForSingleObject(ping_semaphore, INFINITE);
+#else
+	sem_wait(&ping_semaphore);
+	sem_destroy(&ping_semaphore);
+#endif
+	closesocket(ping_sock);
 
 	if (!abort_ping) {
 		for (i=0; i < hostsn; i++) {
