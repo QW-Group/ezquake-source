@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.4 2007-06-15 12:26:07 johnnycz Exp $
+  $Id: tp_msgs.c,v 1.5 2007-10-16 07:16:30 himan Exp $
 
 */
 
@@ -405,7 +405,7 @@ GLOBAL void TP_Msg_QuadDead_f (void)
 
 GLOBAL void TP_Msg_Took_f (void)
 {
-    MSGPART msg1 = "";
+    MSGPART led = "";
 	MSGPART msg2 = "";
 	MSGPART msg3 = "";
 	MSGPART msg4 = "";
@@ -414,20 +414,19 @@ GLOBAL void TP_Msg_Took_f (void)
 	if (TOOK_EMPTY())
 		return;
 	else if (TOOK(quad) || TOOK(pent) || TOOK(ring))
-		{
+	{
 		TP_GetNeed();
 		if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells))
-			{
-			msg1 = tp_sep_green;
+		{
+			led = tp_sep_green;
 			msg2 = " " tp_ib_name_team " $colored_powerups need %u";
-			}
-		else
-			{ // notice we can't send this check to tp_msgenemypwr, that's because if enemy with powerup is in your view, tp_enemypwr reports enemypwr first, but in this function you want to report TEAM quad.
-			msg1 = tp_sep_green;
-			msg2 = " " tp_ib_name_team " $colored_powerups";
-			msg3 = "";
-			}
 		}
+		else
+		{ // notice we can't send this check to tp_msgenemypwr, that's because if enemy with powerup is in your view, tp_enemypwr reports enemypwr first, but in this function you want to report TEAM quad.
+			led = tp_sep_green;
+			msg2 = " " tp_ib_name_team " $colored_powerups";
+		}
+	}
 	else
 	{
 		if	(TOOK(rl))									msg2 = tp_ib_name_rl;
@@ -444,15 +443,19 @@ GLOBAL void TP_Msg_Took_f (void)
 		else 											msg2 = "{$took}"; // This should never happen
 		
 		if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
+		{
 			msg4 = " $colored_short_powerups";
+		}
 		else
+		{
 			msg4 = "";
+		}
 		
-		msg1 = tp_sep_white;
-		msg3 = "at $[{%l}$]";
+		led = tp_sep_white;
+		msg3 = "at $[{%Y}$]"; // %Y is "forgotten" macro - location of item you took
 		msg5 = " took ";
 	}
-	TP_Send_TeamSay("%s%s%s%s %s", msg1, msg4, msg5, msg2, msg3);
+	TP_Send_TeamSay("%s%s%s%s %s", led, msg4, msg5, msg2, msg3);
 }
 
 extern cvar_t tp_name_teammate;
