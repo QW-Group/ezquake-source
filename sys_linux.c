@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.31 2007-10-13 15:54:27 dkure Exp $
+	$Id: sys_linux.c,v 1.32 2007-10-16 15:52:17 dkure Exp $
 
 */
 #include <unistd.h>
@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <ctype.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <semaphore.h>
 #ifndef __FreeBSD__
 #include <linux/rtc.h>
 #endif
@@ -668,4 +669,25 @@ unsigned int Sys_SendIPC(const char *buf)
 }
 
 
+/********************************** SEMAPHORES *******************************/
+/* Sys_Sem*() returns 0 on success; on error, -1 is returned */
+int Sys_SemInit(sem_t *sem, int value, int max_value) 
+{
+	return sem_init(sem, 0, value); // Don't share between processes
+}
+
+int Sys_SemWait(sem_t *sem) 
+{
+	return sem_wait(sem);
+}
+
+int Sys_SemPost(sem_t *sem)
+{
+	return sem_post(sem);
+}
+
+int Sys_SemDestroy(sem_t *sem)
+{
+	return sem_destroy(sem);
+}
 

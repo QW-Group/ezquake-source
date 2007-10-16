@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.28 2007-10-11 18:29:33 cokeman1982 Exp $
+	$Id: sys_mac.c,v 1.29 2007-10-16 15:52:17 dkure Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -11,6 +11,7 @@
 #include "keys.h"
 
 #include <pthread.h>
+#include <semaphore.h>
 
 #include <unistd.h>
 #include <ctype.h>
@@ -1494,4 +1495,25 @@ unsigned int Sys_SendIPC(const char *buf)
 	// TODO : Implement Sys_SendIPC() me on mac.
 }
 
+/********************************** SEMAPHORES *******************************/
+/* Sys_Sem*() returns 0 on success; on error, -1 is returned */
+int Sys_SemInit(sem_t *sem, int value, int max_value) 
+{
+	return sem_init(sem, 0, value); // Don't share between processes
+}
+
+int Sys_SemWait(sem_t *sem) 
+{
+	return sem_wait(sem);
+}
+
+int Sys_SemPost(sem_t *sem)
+{
+	return sem_post(sem);
+}
+
+int Sys_SemDestroy(sem_t *sem)
+{
+	return sem_destroy(sem);
+}
 

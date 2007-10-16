@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.47 2007-10-13 00:07:00 cokeman1982 Exp $
+	$Id: sys_win.c,v 1.48 2007-10-16 15:52:17 dkure Exp $
 
 */
 // sys_win.c
@@ -946,4 +946,33 @@ unsigned int Sys_SendIPC(const char *buf)
 	 return result;
 }
 
-	
+/********************************** SEMAPHORES *******************************/
+/* Sys_Sem*() returns 0 on success; on error, -1 is returned */
+int Sys_SemInit(sem_t *sem, int value, int max_value) 
+{
+	*sem = CreateSemaphore(NULL, value, max_value, NULL);// None named Semaphore
+	if (*sem == NULL)
+		return -1;
+	return 0;
+}
+
+int Sys_SemWait(sem_t *sem) 
+{
+	if (WaitForSingleObject(*sem, INFINITE) == WAIT_FAILED)
+		return -1;
+	return 0;
+}
+
+int Sys_SemPost(sem_t *sem)
+{
+	if (ReleaseSemaphore(ping_semaphore, 1, NULL))
+		return 0;
+	return -1;
+}
+
+int Sys_SemDestroy(sem_t *sem)
+{
+	if (CloseHandle(*sem))
+		return 0;
+	return -1;
+}

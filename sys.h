@@ -106,3 +106,13 @@ void Sys_ReadIPC();
 void Sys_CloseIPC();
 unsigned int Sys_SendIPC(const char *buf);
 
+// Semaphore functions
+#ifdef _WIN32
+typedef sem_t HANDLE;
+#else
+#include <semaphore.h>
+#endif
+int Sys_SemInit(sem_t *sem, int value, int max_value);
+int Sys_SemWait(sem_t *sem);
+int Sys_SemPost(sem_t *sem);
+int Sys_SemDestroy(sem_t *sem);

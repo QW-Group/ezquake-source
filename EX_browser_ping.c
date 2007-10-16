@@ -347,11 +347,7 @@ DWORD WINAPI PingRecvProc(void *lpParameter)
 	}
 
 	/* TODO: Need reduce semaphore count here */
-#ifdef _WIN32
-	ReleaseSemaphore(ping_semaphore, 1, NULL);
-#else
-	sem_post(&ping_semaphore);
-#endif
+	Sys_SemPost(&ping_semaphore);
 
 	return 0;
 }
@@ -724,11 +720,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 		//closesocket(newsocket);
 	}
 
-#ifdef _WIN32
-	ping_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
-#else
-	sem_init(&ping_semaphore, 0, 0); // Intial value of 0
-#endif
+	Sys_SemInit(&ping_semaphore, 0, 1);
 
 	Sys_CreateThread(PingRecvProc, NULL);
 
@@ -758,13 +750,8 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 	Sys_MSleep(500); // catch slow packets
 
 	ping_finished = 1; // let thread know we are done
-	/* TODO: Need raise the semaphore count here */
-#ifdef _WIN32
-	WaitForSingleObject(ping_semaphore, INFINITE);
-#else
-	sem_wait(&ping_semaphore);
-	sem_destroy(&ping_semaphore);
-#endif
+	Sys_SemWait(&ping_semaphore);
+	Sys_SemDestroy(&ping_semaphore);
 	closesocket(ping_sock);
 
 	if (!abort_ping) {
