@@ -24,7 +24,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="../../libs"
-				PreprocessorDefinitions="_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_PNG;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__;WITH_JPEG_STATIC;WITH_PNG_STATIC;WITH_TCL;WITH_FTE_VFS"
+				PreprocessorDefinitions="_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_PNG;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__;WITH_JPEG_STATIC;WITH_PNG_STATIC;WITH_TCL;WITH_FTE_VFS;WITH_WINAMP"
 				StringPooling="FALSE"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"

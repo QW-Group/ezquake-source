@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.77 2007-10-01 18:31:06 disconn3ct Exp $
+#	$Id: Makefile,v 1.78 2007-10-17 17:12:39 dkure Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -80,6 +80,8 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 	$(MKDIR)
 
 # compiler flags
+# -D WITH_XMMS      for xmms      MP3 player support
+# -D WITH_AUDACIOUS for audacious MP3 player support
 PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP -DWITH_FTE_VFS
 BASE_CFLAGS = -pipe -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I ./libs
 
