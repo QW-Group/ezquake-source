@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: modules.h,v 1.8 2007-09-14 13:29:29 disconn3ct Exp $
+	$Id: modules.h,v 1.9 2007-10-17 17:05:07 dkure Exp $
 */
 
 #ifndef __MODULES_H__
@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <dlfcn.h>
 #endif
 
-#if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC && !defined __XMMS__)
+#if (!defined WITH_PNG_STATIC || !defined WITH_JPEG_STATIC || defined WITH_MP3_PLAYER)
 extern char _temp_modulename[MAX_OSPATH];
 
 

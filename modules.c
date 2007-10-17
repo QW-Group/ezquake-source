@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: modules.c,v 1.13 2007-09-15 21:00:32 disconn3ct Exp $
+	$Id: modules.c,v 1.14 2007-10-17 17:05:07 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "modules.h"
 #include "version.h"
 
-#if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC && !defined __XMMS__)
+#if (!defined WITH_PNG_STATIC || !defined WITH_JPEG_STATIC || defined WITH_MP3_PLAYER)
 typedef struct registeredModule_s {
 	qlib_id_t id;
 	qbool loaded;
@@ -180,7 +180,7 @@ void Modules_Shutdown(void)
 	}
 }
 
-#if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC && !defined __XMMS__)
+#if (!defined WITH_PNG_STATIC || !defined WITH_JPEG_STATIC || defined WITH_MP3_PLAYER)
 void QLib_Init(void)
 {
 	int i;
