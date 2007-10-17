@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.59 2007-10-13 17:22:23 cokeman1982 Exp $
+	$Id: host.c,v 1.60 2007-10-17 17:07:08 dkure Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -629,7 +629,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	NET_InitClient ();
 	Netchan_Init ();
 
-#if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC && !defined __XMMS__)
+#if (!defined WITH_PNG_STATIC || !defined WITH_JPEG_STATIC || defined WITH_MP3_PLAYER)
 	QLib_Init();
 #endif
 
