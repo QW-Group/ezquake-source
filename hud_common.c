@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.158 2007-10-02 01:46:42 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.159 2007-10-17 17:06:08 dkure Exp $
 */
 //
 // common HUD elements
@@ -3883,7 +3883,7 @@ char *Get_MP3_HUD_style(float style, char *st)
 // Draws MP3 Title.
 void SCR_HUD_DrawMP3_Title(hud_t *hud)
 {
-#if defined(_WIN32) || defined(__XMMS__)
+#ifdef WITH_MP3_PLAYER
 	int x=0, y=0/*, n=1*/;
     int width = 64;
 	int height = 8;
@@ -3946,7 +3946,7 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 			case MP3_NOTRUNNING	:
 			default :
 				status = MP3_NOTRUNNING;
-				title_length = snprintf (title, sizeof (title), "%s is not running.", MP3_PLAYERNAME_ALLCAPS);
+				title_length = snprintf (title, sizeof (title), "%s is not running.", mp3_player->PlayerName_AllCaps);
 				break;
 		}
 
@@ -3966,7 +3966,7 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 // Draws MP3 Time as a HUD-element.
 void SCR_HUD_DrawMP3_Time(hud_t *hud)
 {
-#if defined(_WIN32) || defined(__XMMS__)
+#ifdef WITH_MP3_PLAYER
 	int x = 0, y = 0, width = 0, height = 0;
 	int elapsed = 0;
 	int remain = 0;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.87 2007-10-13 01:59:54 himan Exp $
+	$Id: menu.c,v 1.88 2007-10-17 17:06:08 dkure Exp $
 
 */
 
@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu_proxy.h"
 #include "menu_options.h"
 #include "menu_ingame.h"
+#include "mediaplugins.h"
 #include "EX_FileList.h"
 #include "help.h"
 #include "utils.h"
@@ -473,7 +474,7 @@ void M_Main_Key (int key) {
 			M_Menu_Options_f ();
 			break;
 
-	#if defined(_WIN32) || defined(__XMMS__)
+	#ifdef WITH_MP3_PLAYER
 		case 3:
 			M_Menu_MP3_Control_f ();
 			break;
@@ -1231,7 +1232,7 @@ void M_Demo_Key (int key) {
 // MP3 PLAYER MENU
 //=============================================================================
 
-#if _WIN32 || defined(__XMMS__)
+#ifdef WITH_MP3_PLAYER
 
 #define M_MP3_CONTROL_HEADINGROW    8
 #define M_MP3_CONTROL_MENUROW        (M_MP3_CONTROL_HEADINGROW + 56)
@@ -1254,14 +1255,14 @@ void M_MP3_Control_Draw (void) {
 	static float initial_time;
 	static int last_length, last_elapsed, last_total, last_shuffle, last_repeat;
 
-
-	M_Print ((320 - 8 * strlen(MP3_PLAYERNAME_ALLCAPS " CONTROL")) >> 1, M_MP3_CONTROL_HEADINGROW, MP3_PLAYERNAME_ALLCAPS " CONTROL");
+	s = va("%s CONTROL", mp3_player->PlayerName_AllCaps);
+	M_Print ((320 - 8 * strlen(s)) >> 1, M_MP3_CONTROL_HEADINGROW, s);
 
 	M_Print (8, M_MP3_CONTROL_HEADINGROW + 16, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
 
 
 	if (!MP3_IsActive()) {
-		M_PrintWhite((320 - 24 * 8) >> 1, M_MP3_CONTROL_HEADINGROW + 40, "XMMS LIBRARIES NOT FOUND");
+		M_PrintWhite((320 - 24 * 8) >> 1, M_MP3_CONTROL_HEADINGROW + 40, "MP3 LIBRARIES NOT FOUND");
 		return;
 	}
 
@@ -1279,17 +1280,20 @@ void M_MP3_Control_Draw (void) {
 		M_PrintWhite(312 - 11 * 8, M_MP3_CONTROL_HEADINGROW + 8, "Not Running");
 
 	if (last_status == MP3_NOTRUNNING) {
-		M_Print ((320 - 8 * strlen(MP3_PLAYERNAME_ALLCAPS " is not running")) >> 1, 40, MP3_PLAYERNAME_LEADINGCAP " is not running");
+		s = va("%s is not running", mp3_player->PlayerName_LeadingCaps);
+		M_Print ((320 - 8 * strlen(s)) >> 1, 40, s);
 		M_PrintWhite (56, 72, "Press");
 		M_Print (56 + 48, 72, "ENTER");
-		M_PrintWhite (56 + 48 + 48, 72, "to start " MP3_PLAYERNAME_NOCAPS);
+		s = va("to start %s", mp3_player->PlayerName_NoCaps);
+		M_PrintWhite (56 + 48 + 48, 72, s);
 		M_PrintWhite (56, 84, "Press");
 		M_Print (56 + 48, 84, "ESC");
 		M_PrintWhite (56 + 48 + 32, 84, "to exit this menu");
 		M_Print (16, 116, "The variable");
 		M_PrintWhite (16 + 104, 116, mp3_dir.name);
 		M_Print (16 + 104 + 8 * (strlen(mp3_dir.name) + 1), 116, "needs to");
-		M_Print (20, 124, "be set to the path for " MP3_PLAYERNAME_NOCAPS " first");
+		s = va("be set to the path for %s first", mp3_player->PlayerName_NoCaps);
+		M_Print (20, 124, s);
 		return;
 	}
 
@@ -1503,7 +1507,8 @@ static void Center_Playlist(void) {
 
 static char *playlist_entries[PLAYLIST_MAXENTRIES];
 
-#ifdef _WIN32
+#ifdef WITH_MP3_PLAYER
+#ifdef WITH_WINAMP
 
 void M_Menu_MP3_Playlist_Read(void) {
 	int i, count = 0, skip = 0;
@@ -1526,8 +1531,9 @@ void M_Menu_MP3_Playlist_Read(void) {
 	Q_free(playlist_buf);
 }
 
-#else
+#endif // WITH_WINAMP
 
+#if defined(WITH_XMMS) || defined(WITH_AUDACIOUS)
 void M_Menu_MP3_Playlist_Read(void) {
 	int i;
 	char *title;
@@ -1551,15 +1557,17 @@ void M_Menu_MP3_Playlist_Read(void) {
 		if (strlen(title) > PLAYLIST_MAXTITLE)
 			title[PLAYLIST_MAXTITLE] = 0;
 		playlist_entries[i] = Q_strdup(title);
-		g_free(title);
+		//g_free(title);
+		qg_free(title);
 	}
 }
 
-#endif
+#endif // defined(WITH_XMMS) || defined(WITH_AUDACIOUS)
+#endif // WITH_MP3_PLAYER
 
 void M_Menu_MP3_Playlist_Draw(void) {
 	int    index, print_time, i;
-	char name[PLAYLIST_MAXTITLE];
+	char name[PLAYLIST_MAXTITLE], *s;
 	float realtime;
 
 	static int last_status,last_elapsed, last_total, last_current;
@@ -1573,7 +1581,8 @@ void M_Menu_MP3_Playlist_Draw(void) {
 		return;
 	}
 
-	M_Print ((320 - 8 * strlen(MP3_PLAYERNAME_ALLCAPS " PLAYLIST")) >> 1, PLAYLIST_HEADING_ROW, MP3_PLAYERNAME_ALLCAPS " PLAYLIST");
+	s = va("%s PLAYLIST", mp3_player->PlayerName_AllCaps);
+	M_Print ((320 - 8 * strlen(s)) >> 1, PLAYLIST_HEADING_ROW, s);
 	M_Print (8, PLAYLIST_HEADING_ROW + 16, "\x1d\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
 
 	if (last_status == MP3_PLAYING)
@@ -1727,7 +1736,7 @@ void M_Menu_MP3_Playlist_f (void){
 	Center_Playlist();
 }
 
-#endif
+#endif // WITH_MP3_PLAYER
 
 
 
@@ -2179,7 +2188,7 @@ void M_Init (void) {
 #endif
 	Cmd_AddCommand ("menu_multiplayer", M_Menu_MultiPlayer_f);
 	Cmd_AddCommand ("menu_slist", M_Menu_ServerList_f);
-#if defined(_WIN32) || defined(__XMMS__)
+#ifdef WITH_MP3_PLAYER
 	Cmd_AddCommand ("menu_mp3_control", M_Menu_MP3_Control_f);
 	Cmd_AddCommand ("menu_mp3_playlist", M_Menu_MP3_Playlist_f);
 #endif
@@ -2298,7 +2307,7 @@ void M_Draw (void) {
 			M_Demo_Draw ();
 			break;
 
-#if defined(_WIN32) || defined(__XMMS__)
+#ifdef WITH_MP3_PLAYER
 		case m_mp3_control:
 			M_MP3_Control_Draw ();
 			break;
@@ -2394,7 +2403,7 @@ void M_Keydown (int key, int unichar) {
 			M_Demo_Key (key);
 			break;
 
-#if defined(_WIN32) || defined(__XMMS__)
+#ifdef WITH_MP3_PLAYER
 		case m_mp3_control:
 			M_Menu_MP3_Control_Key (key);
 			break;
@@ -2408,7 +2417,7 @@ void M_Keydown (int key, int unichar) {
 
 qbool Menu_Mouse_Event(const mouse_state_t* ms)
 {
-#if defined(_WIN32) || defined(__XMMS__)
+#ifdef WITH_MP3_PLAYER
     // an exception: mp3 player handles only mouse2 as a "go back"
     if (ms->button_up == 2 && (m_state == m_mp3_control || m_state == m_mp3_playlist)) {
         if (m_state == m_mp3_control)       M_Menu_MP3_Control_Key(K_MOUSE2);
