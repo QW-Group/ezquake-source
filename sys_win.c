@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.48 2007-10-16 15:52:17 dkure Exp $
+	$Id: sys_win.c,v 1.49 2007-10-17 07:29:54 borisu Exp $
 
 */
 // sys_win.c
@@ -965,7 +965,7 @@ int Sys_SemWait(sem_t *sem)
 
 int Sys_SemPost(sem_t *sem)
 {
-	if (ReleaseSemaphore(ping_semaphore, 1, NULL))
+	if (ReleaseSemaphore(*sem, 1, NULL))
 		return 0;
 	return -1;
 }

@@ -108,7 +108,7 @@ unsigned int Sys_SendIPC(const char *buf);
 
 // Semaphore functions
 #ifdef _WIN32
-typedef sem_t HANDLE;
+typedef HANDLE sem_t;
 #else
 #include <semaphore.h>
 #endif
