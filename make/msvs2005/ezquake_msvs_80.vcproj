@@ -1928,6 +1928,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\mp3_winamp.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\mp3_xmms.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\qtv.c"
 					>
 				</File>

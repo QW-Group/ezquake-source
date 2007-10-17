@@ -1,0 +1,552 @@
+
+#include <sys/wait.h>
+#include <sys/types.h> // fork, execv, usleep
+#include <signal.h>
+#include <unistd.h> // fork, execv, usleep
+
+#include "quakedef.h"
+#include "mp3_player.h"
+#include "modules.h"
+#include "utils.h"
+
+#if defined(WITH_XMMS) || defined (WITH_AUDACIOUS)
+// TODO: This is currently ignored and we just use the path to find the program
+cvar_t mp3_dir = {"mp3_xmms_dir", "%%X11BASE%%/bin"}; // disconnect: todo: check if %%X11BASE%% is OK for Linux
+cvar_t mp3_xmms_session = {"mp3_xmms_session", "0"};
+
+static QLIB_HANDLETYPE_T libxmms_handle = NULL;
+
+static void (*qxmms_remote_play)(gint session);
+static void (*qxmms_remote_pause)(gint session);
+static void (*qxmms_remote_stop)(gint session);
+static void (*qxmms_remote_jump_to_time)(gint session, gint pos);
+static gboolean (*qxmms_remote_is_running)(gint session);
+static gboolean (*qxmms_remote_is_playing)(gint session);
+static gboolean (*qxmms_remote_is_paused)(gint session);
+static gboolean (*qxmms_remote_is_repeat)(gint session);
+static gboolean (*qxmms_remote_is_shuffle)(gint session);
+static gint (*qxmms_remote_get_playlist_pos)(gint session);
+static void (*qxmms_remote_set_playlist_pos)(gint session, gint pos);
+gint (*qxmms_remote_get_playlist_length)(gint session);
+gchar *(*qxmms_remote_get_playlist_title)(gint session, gint pos);
+static void (*qxmms_remote_playlist_prev)(gint session);
+static void (*qxmms_remote_playlist_next)(gint session);
+static gint (*qxmms_remote_get_output_time)(gint session);
+static gint (*qxmms_remote_get_playlist_time)(gint session, gint pos);
+static gint (*qxmms_remote_get_main_volume)(gint session);
+static void (*qxmms_remote_set_main_volume)(gint session, gint v);
+static void (*qxmms_remote_toggle_repeat)(gint session);
+static void (*qxmms_remote_toggle_shuffle)(gint session);
+void (*qg_free)(gpointer);
+
+#define NUM_XMMSPROCS	(sizeof(xmmsProcs)/sizeof(xmmsProcs[0]))
+
+static qlib_dllfunction_t xmmsProcs[] = {
+	{"xmms_remote_play", (void **) &qxmms_remote_play},
+	{"xmms_remote_pause", (void **) &qxmms_remote_pause},
+	{"xmms_remote_stop", (void **) &qxmms_remote_stop},
+
+	{"xmms_remote_jump_to_time", (void **) &qxmms_remote_jump_to_time},
+
+	{"xmms_remote_is_running", (void **) &qxmms_remote_is_running},
+	{"xmms_remote_is_playing", (void **) &qxmms_remote_is_playing},
+	{"xmms_remote_is_paused", (void **) &qxmms_remote_is_paused},
+	{"xmms_remote_is_repeat", (void **) &qxmms_remote_is_repeat},
+	{"xmms_remote_is_shuffle", (void **) &qxmms_remote_is_shuffle},
+
+	{"xmms_remote_get_playlist_pos", (void **) &qxmms_remote_get_playlist_pos},
+	{"xmms_remote_set_playlist_pos", (void **) &qxmms_remote_set_playlist_pos},
+	{"xmms_remote_get_playlist_length", (void **) &qxmms_remote_get_playlist_length},
+	{"xmms_remote_get_playlist_title", (void **) &qxmms_remote_get_playlist_title},
+
+	{"xmms_remote_playlist_prev", (void **) &qxmms_remote_playlist_prev},
+	{"xmms_remote_playlist_next", (void **) &qxmms_remote_playlist_next},
+
+	{"xmms_remote_get_output_time", (void **) &qxmms_remote_get_output_time},
+	{"xmms_remote_get_playlist_time", (void **) &qxmms_remote_get_playlist_time},
+	{"xmms_remote_get_main_volume", (void **) &qxmms_remote_get_main_volume},
+	{"xmms_remote_set_main_volume", (void **) &qxmms_remote_set_main_volume},
+
+	{"xmms_remote_toggle_repeat", (void **) &qxmms_remote_toggle_repeat},
+	{"xmms_remote_toggle_shuffle", (void **) &qxmms_remote_toggle_shuffle},
+
+	{"g_free", (void **) &qg_free},
+};
+
+static void XMMS_FreeLibrary(void) {
+	if (libxmms_handle) {
+		QLIB_FREELIBRARY(libxmms_handle);
+	}
+}
+
+#ifdef WITH_XMMS
+static void XMMS_LoadLibrary(void) {
+	if (!(libxmms_handle = dlopen("libxmms.so", RTLD_NOW)))
+		return;
+
+	if (!QLib_ProcessProcdef(libxmms_handle, xmmsProcs, NUM_XMMSPROCS)) {
+		XMMS_FreeLibrary();
+		return;
+	}
+}
+#endif //WITH_XMMS
+
+#ifdef WITH_AUDACIOUS
+static void Audacious_LoadLibrary(void) {
+	if (!(libxmms_handle = dlopen("libaudacious.so", RTLD_NOW)))
+		return;
+
+	if (!QLib_ProcessProcdef(libxmms_handle, xmmsProcs, NUM_XMMSPROCS)) {
+		XMMS_FreeLibrary();
+		return;
+	}
+}
+#endif // WITH_AUDACIOUS
+
+qbool MP3_XMMS_IsActive(void) {
+	return !!libxmms_handle;
+}
+
+qbool MP3_XMMS_IsPlayerRunning(void) {
+	return (qxmms_remote_is_running((gint) XMMS_SESSION));
+}
+
+static int XMMS_pid = 0;
+#ifdef WITH_XMMS
+void MP3_XMMS_Execute_f(void) {
+	char exec_name[MAX_OSPATH], *argv[2] = {"xmms", NULL}/*, **s*/;
+	int i; 
+
+	if (MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("XMMS is already running\n");
+		return;
+	}
+	strlcpy(exec_name, argv[0], sizeof(exec_name));
+
+	if (!(XMMS_pid = fork())) { // Child
+		execvp(exec_name, argv);
+		exit(-1);
+	}
+	if (XMMS_pid == -1) {
+		Com_Printf ("Couldn't execute XMMS\n");
+		return;
+	}
+	for (i = 0; i < 6; i++) {
+		Sys_MSleep(50);
+		if (MP3_XMMS_IsPlayerRunning()) {
+			Com_Printf("XMMS is now running\n");
+			return;
+		}
+	}
+	Com_Printf("XMMS (probably) failed to run\n");
+}
+#endif // WITH_XMMS
+
+#ifdef WITH_AUDACIOUS
+void MP3_AUDACIOUS_Execute_f(void) {
+	char exec_name[MAX_OSPATH], *argv[2] = {"audacious", NULL}/*, **s*/;
+	int i; 
+
+	if (MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("Audacious is already running\n");
+		return;
+	}
+	strlcpy(exec_name, argv[0], sizeof(exec_name));
+
+	if (!(XMMS_pid = fork())) { // Child
+		execvp(exec_name, argv);
+		exit(-1);
+	}
+	if (XMMS_pid == -1) {
+		Com_Printf ("Couldn't execute Audacious\n");
+		return;
+	}
+	for (i = 0; i < 6; i++) {
+		Sys_MSleep(50);
+		if (MP3_XMMS_IsPlayerRunning()) {
+			Com_Printf("Audacious is now running\n");
+			return;
+		}
+	}
+	Com_Printf("Audacious (probably) failed to run\n");
+}
+#endif // WITH_AUDACIOUS
+
+
+#define XMMS_COMMAND(Name, Param)										\
+    void MP3_XMMS_##Name##_f(void) {									\
+	   if (MP3_XMMS_IsPlayerRunning()) {								\
+		   qxmms_remote_##Param(XMMS_SESSION);							\
+	   } else {															\
+		   Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps); 	\
+	   }																\
+	   return;															\
+    }
+
+XMMS_COMMAND(Prev, playlist_prev);
+XMMS_COMMAND(Play, play);
+XMMS_COMMAND(Pause, pause);
+XMMS_COMMAND(Stop, stop);
+XMMS_COMMAND(Next, playlist_next);
+XMMS_COMMAND(FadeOut, stop);
+
+void MP3_XMMS_FastForward_f(void) {
+	int current;
+
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		return;
+	}
+	current = qxmms_remote_get_output_time(XMMS_SESSION) + 5 * 1000;
+	qxmms_remote_jump_to_time(XMMS_SESSION, current);
+}
+
+void MP3_XMMS_Rewind_f(void) {
+	int current;
+
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		return;
+	}
+	current = qxmms_remote_get_output_time(XMMS_SESSION) - 5 * 1000;
+	current = max(0, current);
+	qxmms_remote_jump_to_time(XMMS_SESSION, current);
+}
+
+int MP3_XMMS_GetStatus(void) {
+	if (!MP3_XMMS_IsPlayerRunning())
+		return MP3_NOTRUNNING;
+	if (qxmms_remote_is_paused(XMMS_SESSION))
+		return MP3_PAUSED;
+	if (qxmms_remote_is_playing(XMMS_SESSION))
+		return MP3_PLAYING;	
+	return MP3_STOPPED;
+}
+
+static void XMMS_Set_ToggleFn(char *name, void *togglefunc, void *getfunc) {
+	int ret, set;
+	gboolean (*xmms_togglefunc)(gint) = togglefunc;
+	gboolean (*xmms_getfunc)(gint) = getfunc;
+
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		return;
+	}
+	if (Cmd_Argc() >= 3) {
+		Com_Printf("Usage: %s [on|off|toggle]\n", Cmd_Argv(0));
+		return;
+	}
+	ret = xmms_getfunc(XMMS_SESSION);
+	if (Cmd_Argc() == 1) {
+		Com_Printf("%s is %s\n", name, (ret == 1) ? "on" : "off");
+		return;
+	}
+	if (!strcasecmp(Cmd_Argv(1), "on")) {
+		set = 1;
+	} else if (!strcasecmp(Cmd_Argv(1), "off")) {
+		set = 0;
+	} else if (!strcasecmp(Cmd_Argv(1), "toggle")) {
+		set = ret ? 0 : 1;
+	} else {
+		Com_Printf("Usage: %s [on|off|toggle]\n", Cmd_Argv(0));
+		return;
+	}
+	if (set && !ret)
+		xmms_togglefunc(XMMS_SESSION);
+	else if (!set && ret)
+		xmms_togglefunc(XMMS_SESSION);
+	Com_Printf("%s set to %s\n", name, set ? "on" : "off");
+}
+
+void MP3_XMMS_Repeat_f(void) {
+	XMMS_Set_ToggleFn("Repeat", qxmms_remote_toggle_repeat, qxmms_remote_is_repeat);
+}
+
+void MP3_XMMS_Shuffle_f(void) {
+	XMMS_Set_ToggleFn("Shuffle", qxmms_remote_toggle_shuffle, qxmms_remote_is_shuffle);
+}
+
+void MP3_XMMS_ToggleRepeat_f(void) {
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		return;
+	}
+	qxmms_remote_toggle_repeat(XMMS_SESSION);
+}
+
+void MP3_XMMS_ToggleShuffle_f(void) {
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		return;
+	}
+	qxmms_remote_toggle_shuffle(XMMS_SESSION);
+}
+
+char *MP3_XMMS_Macro_MP3Info(void) {
+	int playlist_pos;
+	char *s;
+	static char title[MP3_MAXSONGTITLE];
+
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("XMMS not running\n");
+		return NULL;
+	}
+	playlist_pos = qxmms_remote_get_playlist_pos(XMMS_SESSION);
+	s = qxmms_remote_get_playlist_title(XMMS_SESSION, playlist_pos);
+	strlcpy(title, s ? s : "", sizeof(title));
+	//g_free(s);
+	qg_free(s);
+	return title;
+}
+
+qbool MP3_XMMS_GetOutputtime(int *elapsed, int *total) {
+	int pos;
+
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		return false;
+	}
+	pos = qxmms_remote_get_playlist_pos(XMMS_SESSION);
+	*elapsed = qxmms_remote_get_output_time(XMMS_SESSION) / 1000.0;
+	*total = qxmms_remote_get_playlist_time(XMMS_SESSION, pos) / 1000.0;
+	return true;
+}
+
+qbool MP3_XMMS_GetToggleState(int *shuffle, int *repeat) {
+	if (!MP3_XMMS_IsPlayerRunning()) 
+		return false;
+	*shuffle = qxmms_remote_is_shuffle(XMMS_SESSION);
+	*repeat = qxmms_remote_is_repeat(XMMS_SESSION);
+	return true;
+}
+
+
+void MP3_XMMS_LoadPlaylist_f(void) {
+	Com_Printf("The %s command is not (yet) supported.\n", Cmd_Argv(0));
+}
+
+void MP3_XMMS_GetPlaylistInfo(int *current, int *length) {
+	if (!MP3_XMMS_IsPlayerRunning()) 
+		return;
+	if (length)
+		*length = qxmms_remote_get_playlist_length(XMMS_SESSION);
+	if (current)
+		*current = qxmms_remote_get_playlist_pos(XMMS_SESSION);
+}
+
+void MP3_XMMS_PrintPlaylist_f(void) {
+	int current = 0, length = 0, i;
+	char *title, *s;
+
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		return;
+	}
+	MP3_XMMS_GetPlaylistInfo(&current, &length);
+	for (i = 0 ; i < length; i ++) {
+		title = qxmms_remote_get_playlist_title(XMMS_SESSION, i);
+
+		if (i == current)
+			for (s = title; *s; s++)
+				*s |= 128;
+
+		Com_Printf("%3d %s\n", i + 1, title);
+	}
+	return;
+}
+
+void MP3_XMMS_PlayTrackNum_f(void) {
+	int pos, length = 0;
+
+	if (!MP3_XMMS_IsPlayerRunning()) {
+		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		return;
+	}
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <track #>\n", Cmd_Argv(0));
+		return;
+	}
+	MP3_XMMS_GetPlaylistInfo(NULL, &length);
+	pos = Q_atoi(Cmd_Argv(1)) - 1;
+	if (pos < 0 || pos >= length)
+		return;
+	qxmms_remote_set_playlist_pos(XMMS_SESSION, pos);
+	MP3_XMMS_Play_f();
+}
+
+void Media_SetVolume_f(void);
+char* Media_GetVolume_f(void);
+
+void MP3_XMMS_Shutdown(void) {
+	if (XMMS_pid) {
+		if (!kill(XMMS_pid, SIGTERM))
+			waitpid(XMMS_pid, NULL, 0);
+	}
+}
+
+#ifdef WITH_XMMS
+void MP3_XMMS_Init(void) {
+	XMMS_LoadLibrary();
+
+	if (!MP3_XMMS_IsActive())
+		return;
+
+	Cmd_AddCommand("mp3_startxmms", MP3_Execute_f);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
+	Cvar_Register(&mp3_xmms_session);
+	Cvar_ResetCurrentGroup(); 
+}
+#endif // WITH_XMMS
+
+#ifdef WITH_AUDACIOUS
+void MP3_AUDACIOUS_Init(void) {
+	Audacious_LoadLibrary();
+
+	if (!MP3_XMMS_IsActive())
+		return;
+
+	Cmd_AddCommand("mp3_startaudacious", MP3_Execute_f);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
+	Cvar_Register(&mp3_xmms_session);
+	Cvar_ResetCurrentGroup(); 
+}
+#endif // WITH_AUDACIOUS
+
+double Media_XMMS_GetVolume(void) {
+	static double vol = 0;
+
+	vol = qxmms_remote_get_main_volume(XMMS_SESSION) / 100.0;
+
+	return vol;
+}
+
+#ifdef WITH_AUDACIOUS
+double Media_AUDACIOUS_GetVolume(void) {
+	static double vol = 0.5;
+
+	//vol = qxmms_remote_get_main_volume(XMMS_SESSION) / 100.0;
+
+	return vol;
+}
+#endif // WITH_AUDACIOUS
+
+
+void Media_XMMS_SetVolume(double vol) {
+	if (!MP3_XMMS_IsPlayerRunning())
+		return;
+
+	vol = vol * 100 + 0.5;
+ 	vol = bound(0, vol, 100);
+	qxmms_remote_set_main_volume(XMMS_SESSION, vol);
+	return;
+}
+
+#endif // defined(WITH_XMMS) || defined (WITH_AUDACIOUS)
+
+#ifdef WITH_XMMS
+const mp3_player_t mp3_player_xmms = {
+	/* Messages */
+	.PlayerName_AllCaps      = "XMMS",
+	.PlayerName_LeadingCaps  = "Xmms",
+	.PlayerName_NoCaps       = "xmms",
+	.Type                    = MP3_XMMS,
+
+	/* Functions */
+	.Init            = MP3_XMMS_Init, 
+	.Shutdown        = MP3_XMMS_Shutdown, 
+
+	.IsActive        = MP3_XMMS_IsActive, 
+	.IsPlayerRunning = MP3_XMMS_IsPlayerRunning, 
+	.GetStatus       = MP3_XMMS_GetStatus, 
+	.GetPlaylistInfo = MP3_XMMS_GetPlaylistInfo, 
+	.GetPlaylist     = NULL, 
+	.GetOutputtime   = MP3_XMMS_GetOutputtime, 
+	.GetToggleState  = MP3_XMMS_GetToggleState, 
+
+	.PrintPlaylist_f = MP3_XMMS_PrintPlaylist_f, 
+	.PlayTrackNum_f  = MP3_XMMS_PlayTrackNum_f, 
+	.LoadPlaylist_f  = MP3_XMMS_LoadPlaylist_f, 
+	.Next_f          = MP3_XMMS_Next_f, 
+	.FastForward_f   = MP3_XMMS_FastForward_f, 
+	.Rewind_f        = MP3_XMMS_Rewind_f, 
+	.Prev_f          = MP3_XMMS_Prev_f, 
+	.Play_f          = MP3_XMMS_Play_f, 
+	.Pause_f         = MP3_XMMS_Pause_f, 
+	.Stop_f          = MP3_XMMS_Stop_f, 
+	.Execute_f       = MP3_XMMS_Execute_f, 
+	.ToggleRepeat_f  = MP3_XMMS_ToggleRepeat_f, 
+	.Repeat_f        = MP3_XMMS_Repeat_f, 
+	.ToggleShuffle_f = MP3_XMMS_ToggleShuffle_f, 
+	.Shuffle_f       = MP3_XMMS_Shuffle_f, 
+	.FadeOut_f       = MP3_XMMS_FadeOut_f, 
+
+	.GetVolume       = Media_XMMS_GetVolume,
+	.SetVolume       = Media_XMMS_SetVolume,
+
+	/* Macro's */
+	.Macro_MP3Info   = MP3_XMMS_Macro_MP3Info, 
+};
+
+#else
+const mp3_player_t mp3_player_xmms = {
+	.PlayerName_AllCaps      = "NONE",
+	.PlayerName_LeadingCaps  = "None",
+	.PlayerName_NoCaps       = "none",
+	.Type          = MP3_NONE,
+};
+#endif // WITH_XMMS
+
+#ifdef WITH_AUDACIOUS
+const mp3_player_t mp3_player_audacious = {
+	/* Messages */
+	.PlayerName_AllCaps      = "AUDACIOUS",
+	.PlayerName_LeadingCaps  = "Audacious",
+	.PlayerName_NoCaps       = "audacious",
+	.Type                    = MP3_AUDACIOUS,
+
+	/* Functions */
+	.Init            = MP3_AUDACIOUS_Init, 
+	.Shutdown        = MP3_XMMS_Shutdown, 
+
+	.IsActive        = MP3_XMMS_IsActive, 
+	.IsPlayerRunning = MP3_XMMS_IsPlayerRunning, 
+	.GetStatus       = MP3_XMMS_GetStatus, 
+	.GetPlaylistInfo = MP3_XMMS_GetPlaylistInfo, 
+	.GetPlaylist     = NULL, 
+	.GetOutputtime   = MP3_XMMS_GetOutputtime, 
+	.GetToggleState  = MP3_XMMS_GetToggleState, 
+
+	.PrintPlaylist_f = MP3_XMMS_PrintPlaylist_f, 
+	.PlayTrackNum_f  = MP3_XMMS_PlayTrackNum_f, 
+	.LoadPlaylist_f  = MP3_XMMS_LoadPlaylist_f, 
+	.Next_f          = MP3_XMMS_Next_f, 
+	.FastForward_f   = MP3_XMMS_FastForward_f, 
+	.Rewind_f        = MP3_XMMS_Rewind_f, 
+	.Prev_f          = MP3_XMMS_Prev_f, 
+	.Play_f          = MP3_XMMS_Play_f, 
+	.Pause_f         = MP3_XMMS_Pause_f, 
+	.Stop_f          = MP3_XMMS_Stop_f, 
+	.Execute_f       = MP3_AUDACIOUS_Execute_f, 
+	.ToggleRepeat_f  = MP3_XMMS_ToggleRepeat_f, 
+	.Repeat_f        = MP3_XMMS_Repeat_f, 
+	.ToggleShuffle_f = MP3_XMMS_ToggleShuffle_f, 
+	.Shuffle_f       = MP3_XMMS_Shuffle_f, 
+	.FadeOut_f       = MP3_XMMS_FadeOut_f, 
+
+	.GetVolume       = Media_AUDACIOUS_GetVolume,
+	.SetVolume       = Media_XMMS_SetVolume,
+
+	/* Macro's */
+	.Macro_MP3Info   = MP3_XMMS_Macro_MP3Info, 
+};
+
+#else
+const mp3_player_t mp3_player_audacious = {
+	.PlayerName_AllCaps      = "NONE",
+	.PlayerName_LeadingCaps  = "None",
+	.PlayerName_NoCaps       = "none",
+	.Type                    = MP3_NONE,
+};
+#endif // WITH_AUDACIOUS
