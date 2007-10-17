@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.197 2007-10-16 15:53:34 dkure Exp $
+$Id: cl_main.c,v 1.198 2007-10-17 14:41:58 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -243,8 +243,6 @@ qbool CL_CheckIfQWProtocolHandler()
 	}
 
 	// Get the size we need to read.
-	//if (RegQueryValueEx(HKEY_CLASSES_ROOT, QW_URL_OPEN_CMD_REGKEY, "@", (REG_SZ | REG_MULTI_SZ | REG_EXPAND_SZ), &type, buf, &len) == ERROR_SUCCESS)
-	//if (RegQueryValue(HKEY_CLASSES_ROOT, QW_URL_OPEN_CMD_REGKEY"@", buf, &len) == ERROR_SUCCESS)
 	if (RegQueryValueEx(hk, NULL, 0, &type, buf, &len) == ERROR_SUCCESS)
 	{
 		char exe_path[MAX_PATH];
