@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.21 2007-09-12 22:29:53 disconn3ct Exp $
+	$Id: menu.h,v 1.22 2007-10-17 17:08:26 dkure Exp $
 
 */
 
@@ -65,7 +65,7 @@ typedef enum {
     m_options,
 	m_help,
 	m_quit, m_democtrl, m_ingame, 
-#if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(WITH_XMMS))
+#ifdef WITH_MP3_PLAYER
     m_mp3_control, m_mp3_playlist
 #endif
 } m_state_t;
