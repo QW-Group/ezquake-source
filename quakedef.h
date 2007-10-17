@@ -39,6 +39,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #endif
 
+#if defined(WITH_WINAMP) || defined(WITH_AUDACIOUS) || defined(WITH_XMMS)
+#define WITH_MP3_PLAYER
+#endif
+
 //#define WITH_ASMLIB
 
 #include "common.h"
