@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.39 2007-10-02 17:04:25 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.40 2007-10-18 20:10:37 cokeman1982 Exp $
 
 */
 
@@ -2215,13 +2215,13 @@ static void HUD_Editor_DrawHelp()
 		0);
 }
 
-int Test_OnGotFocus(ez_control_t *self)
+int Test_OnGotFocus(ez_control_t *self, void *payload)
 {
 	EZ_control_SetBackgroundColor(self, self->background_color[0], self->background_color[1], self->background_color[2], 200);
 	return 0;
 }
 
-int Test_OnLostFocus(ez_control_t *self)
+int Test_OnLostFocus(ez_control_t *self, void *payload)
 {
 	EZ_control_SetBackgroundColor(self, self->background_color[0], self->background_color[1], self->background_color[2], 100);
 	return 0;
@@ -2235,8 +2235,9 @@ ez_label_t *label = NULL;
 ez_label_t *label2 = NULL;
 ez_slider_t *slider = NULL;
 ez_scrollbar_t *scrollbar = NULL;
+ez_scrollpane_t *scrollpane = NULL;
 
-int Test_OnButtonDraw(ez_control_t *self)
+int Test_OnButtonDraw(ez_control_t *self, void *payload)
 {
 	int x, y;
 	EZ_control_GetDrawingPosition(self, &x, &y);
@@ -2244,7 +2245,7 @@ int Test_OnButtonDraw(ez_control_t *self)
 	return 0;
 }
 
-int Test_OnSliderPositionChanged(ez_control_t *self)
+int Test_OnSliderPositionChanged(ez_control_t *self, void *payload)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
 
@@ -2255,7 +2256,7 @@ int Test_OnSliderPositionChanged(ez_control_t *self)
 	return 0;
 }
 
-int Test_OnControlDraw(ez_control_t *self)
+int Test_OnControlDraw(ez_control_t *self, void *payload)
 {
 	int x, y; //, i;
 	EZ_control_GetDrawingPosition(self, &x, &y);
@@ -2569,10 +2570,10 @@ void HUD_Editor_Init(void)
 	{
 		child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, control_focusable | control_resize_h | control_resize_v | control_movable | control_contained | control_scrollable);
 
-		EZ_control_SetOnGotFocus(child1, Test_OnGotFocus);
-		EZ_control_SetOnLostFocus(child1, Test_OnLostFocus);
+		EZ_control_AddOnGotFocus(child1, Test_OnGotFocus, NULL);
+		EZ_control_AddOnLostFocus(child1, Test_OnLostFocus, NULL);
+		EZ_control_AddOnDraw(child1, Test_OnControlDraw, NULL);
 
-		EZ_control_SetOnDraw(child1, Test_OnControlDraw);
 		EZ_control_SetMinVirtualSize(child1, child1->width * 2, child1->height * 2);
 		EZ_control_SetVirtualSize(child1, child1->width, child1->height * 2);
 
@@ -2583,16 +2584,16 @@ void HUD_Editor_Init(void)
 	{
 		child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, control_focusable | control_contained);
 
-		EZ_control_SetOnGotFocus(child2, Test_OnGotFocus);
-		EZ_control_SetOnLostFocus(child2, Test_OnLostFocus);
+		EZ_control_AddOnGotFocus(child2, Test_OnGotFocus, NULL);
+		EZ_control_AddOnLostFocus(child2, Test_OnLostFocus, NULL);
 
 		EZ_control_SetBackgroundColor(child2, 150, 150, 200, 100);
 	}
 
 	// Button.
 	{
-		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", 15, -15, 60, 15, control_contained | control_resizeable);
-		EZ_control_SetOnDraw((ez_control_t *)button, Test_OnButtonDraw);
+		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", 15, -15, 60, 60, control_contained | control_resizeable);
+		EZ_control_AddOnDraw((ez_control_t *)button, Test_OnButtonDraw, NULL);
 
 		EZ_button_SetFocusedColor(button, 255, 0, 0, 255);
 		EZ_button_SetNormalColor(button, 255, 255, 0, 100);
@@ -2610,7 +2611,7 @@ void HUD_Editor_Init(void)
 		label = EZ_label_Create(&help_control_tree, root, 
 			"label", "A crazy label!", 200, 200, 200, 80, 
 			control_focusable | control_contained | control_resizeable | control_scrollable /*| control_movable */ | control_resize_h | control_resize_v, 
-			label_wraptext | label_autosize/*| LABEL_LARGEFONT*/, 
+			label_wraptext | label_autosize, 
 			"Hello\nthis is a test are you fine because I am bla bla bla this is a very long string and it's plenty of fun haha!");
 
 		EZ_label_SetTextScale(label, 2.0);
@@ -2640,15 +2641,31 @@ void HUD_Editor_Init(void)
 		EZ_slider_SetPosition(slider, 5);
 		EZ_slider_SetScale(slider, 1.0);
 
-		EZ_slider_SetOnSliderPositionChanged(slider, Test_OnSliderPositionChanged);
+		EZ_slider_AddOnSliderPositionChanged(slider, Test_OnSliderPositionChanged, NULL);
 	}
 
+	/*
 	// Scrollbar.
 	{
-		scrollbar = EZ_scrollbar_Create(&help_control_tree, child1, "Scrollbar", "", -5, 0, 10, child1->height, control_anchor_nonvirtual);
+		ez_control_t *label_ctrl = (ez_control_t *)label;
 
+		scrollbar = EZ_scrollbar_Create(&help_control_tree, root, "Scrollbar", "", 
+			30, 150, 10, 150, control_anchor_viewport);
+
+		EZ_scrollbar_SetTargetParent(scrollbar, false);
+		//EZ_control_SetContained((ez_control_t *)scrollbar, false);
 		EZ_control_SetAnchor((ez_control_t *)scrollbar, anchor_right | anchor_top | anchor_bottom);
 		EZ_control_SetMovable((ez_control_t *)scrollbar, false);
+	}
+	*/
+
+	// Scrollpane
+	{
+		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", 50, 150, 150, 150, control_movable | control_resize_h | control_resize_v | control_resizeable);
+		
+		EZ_control_SetBackgroundColor((ez_control_t *)scrollpane, 255, 0, 0, 100);
+
+		//EZ_scrollpane_SetTarget(scrollpane, child1);
 	}
 
 #endif 
