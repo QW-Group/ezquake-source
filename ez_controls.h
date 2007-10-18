@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.48 2007-10-15 14:04:44 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.49 2007-10-18 20:06:21 cokeman1982 Exp $
 */
 
 //
@@ -258,14 +258,25 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 // Event handler 
 // =========================================================================================
 
+// TODO : Rename these function pointers to show that they are meant for event implementations (_event_ instead of _handler).
+// TODO : Add new similar function pointers, with an extra argument that's a void pointer, that's an optional payload for event handlers.
 //
-// Control - Function pointer types.
+// Event function pointer types.
 //
-typedef int (*ez_control_handler_fp) (struct ez_control_s *self);
-typedef int (*ez_control_mouse_handler_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
-typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, int unichar, qbool down);
-typedef int (*ez_control_keyspecific_handler_fp) (struct ez_control_s *self, int key, int unichar);
-typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
+typedef int (*ez_event_fp) (struct ez_control_s *self);
+typedef int (*ez_mouse_event_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
+typedef int (*ez_key_event_fp) (struct ez_control_s *self, int key, int unichar, qbool down);
+typedef int (*ez_keyspecific_event_fp) (struct ez_control_s *self, int key, int unichar);
+typedef int (*ez_destroy_event_fp) (struct ez_control_s *self, qbool destroy_children);
+
+//
+// Event handlers function pointer types (same as event function types, except they have a payload also).
+//
+typedef int (*ez_eventhandler_fp) (struct ez_control_s *self, void *payload);
+typedef int (*ez_mouse_eventhandler_fp) (struct ez_control_s *self, void *payload, mouse_state_t *mouse_state);
+typedef int (*ez_key_eventhandler_fp) (struct ez_control_s *self, void *payload, int key, int unichar, qbool down);
+typedef int (*ez_keyspecific_eventhandler_fp) (struct ez_control_s *self, void *payload, int key, int unichar);
+typedef int (*ez_destroy_eventhandler_fp) (struct ez_control_s *self, void *payload, qbool destroy_children);
 
 #define EZ_CONTROL_HANDLER			0
 #define EZ_CONTROL_MOUSE_HANDLER	1
@@ -273,52 +284,26 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 #define EZ_CONTROL_KEYSP_HANDLER	3
 #define EZ_CONTROL_DESTROY_HANDLER	4
 
-typedef union ez_eventfunction_u
+typedef union ez_eventhandlerfunction_u
 {
-	ez_control_handler_fp				normal;
-	ez_control_mouse_handler_fp			mouse;
-	ez_control_key_handler_fp			key;
-	ez_control_keyspecific_handler_fp	key_sp;
-	ez_control_destroy_handler_fp		destroy;
-} ez_eventfunction_t;
+	ez_eventhandler_fp				normal;
+	ez_mouse_eventhandler_fp		mouse;
+	ez_key_eventhandler_fp			key;
+	ez_keyspecific_eventhandler_fp	key_sp;
+	ez_destroy_eventhandler_fp		destroy;
+} ez_eventhandlerfunction_t;
 
 typedef struct ez_eventhandler_s
 {
 	int							function_type;
-	ez_eventfunction_t			function;
+	ez_eventhandlerfunction_t	function;
+	void						*payload;
 	struct ez_eventhandler_s	*next;
 } ez_eventhandler_t;
 
-/*
-#define EVENTHANDLER_GETFUNC(event_handler)																	\
-	((event_handler->function_type == EZ_CONTROL_HANDLER)		? event_handler->function->normal			\
-	:(event_handler->function_type == EZ_CONTROL_MOUSE_HANDLER) ? event_handler->function->mouse			\
-	:(event_handler->function_type == EZ_CONTROL_KEY_HANDLER)	? event_handler->function->key				\
-	:(event_handler->function_type == EZ_CONTROL_KEYSP_HANDLER) ? event_handler->function->key_sp			\
-	:(event_handler->function_type == EZ_CONTROL_DESTROY_HANDLER) ? event_handler->function->destroy : NULL)
-	*/
-
-/*
-#define EVENTHANDLER_CREATE(e, eventfunc, func_type)										\
+#define CONTROL_ADD_EVENTHANDLER(ctrl, func_type, eventfunc, eventroot, eventname, payload)	\
 {																							\
-	e = Q_calloc(1, sizeof(ez_eventhandler_t));												\
-	e->function_type = func_type;															\
-	switch(func_type)																		\
-	{																						\
-		case EZ_CONTROL_HANDLER :			(e->function.normal = eventfunc); break;		\
-		case EZ_CONTROL_MOUSE_HANDLER :		(e->function.mouse = eventfunc); break;			\
-		case EZ_CONTROL_KEY_HANDLER :		(e->function.key = eventfunc); break;			\
-		case EZ_CONTROL_KEYSP_HANDLER :		(e->function.key_sp = eventfunc); break;		\
-		case EZ_CONTROL_DESTROY_HANDLER :	(e->function.destroy = eventfunc); break;		\
-		default : break;																	\
-	}																						\
-}
-*/
-
-// TODO : Get rid of void casting somehow? :)
-#define CONTROL_ADD_EVENTHANDLER(ctrl, func_type, eventfunc, eventroot, eventname)			\
-{																							\
-	ez_eventhandler_t *e = EZ_eventhandler_Create((void *)eventfunc, func_type);			\
+	ez_eventhandler_t *e = EZ_eventhandler_Create((void *)eventfunc, func_type, payload);	\
 	eventroot *c = (eventroot *)ctrl;														\
 	if (c->event_handlers.eventname)														\
 		e->next = c->event_handlers.eventname;												\
@@ -328,18 +313,18 @@ typedef struct ez_eventhandler_s
 #define CONTROL_REMOVE_EVENTHANDLER(ctrl, func, eventroot, eventname)			\
 {																				\
 	eventroot *c = (eventroot *)ctrl;											\
-	EZ_eventhandler_Remove(c->event_handlers.eventname, func);					\
+	EZ_eventhandler_Remove(c->event_handlers.eventname, func, false);			\
 }
 
 //
 // Eventhandler - Goes through the list of events and removes the one with the specified function.
 //
-void EZ_eventhandler_Remove(ez_eventhandler_t *eventhandler, ez_eventfunction_t *event_func);
+void EZ_eventhandler_Remove(ez_eventhandler_t *eventhandler, void *event_func, qbool all);
 
 //
 // Eventhandler - Creates a eventhandler.
 //
-ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type);
+ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type, void *payload);
 
 // =========================================================================================
 // Control
@@ -453,27 +438,25 @@ ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type);
 }
 */
 
-//#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, ev_handlr, ...)
-
-#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, evnthndler, ...)	\
-{																				\
-	int *p = (int *)retval, temp = 0;											\
-	eventroot *c = (eventroot *)ctrl;											\
-	if (c->event_handlers.evnthndler)											\
-	{																			\
-		if (c->override_counts.evnthndler == 1)									\
-		{																		\
-			ez_eventhandler_t *e = c->event_handlers.evnthndler;				\
-			while (e)															\
-			{																	\
-				EZ_eventhandler_Exec(e, (ez_control_t *)ctrl, ##__VA_ARGS__);	\
-				e = e->next;													\
-			}																	\
-		}																		\
-		else																	\
-			c->override_counts.evnthndler--;									\
-	}																			\
-	if(p) (*p) = temp;															\
+#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, evnthndler, ...)				\
+{																							\
+	int *p = (int *)retval, temp = 0;														\
+	eventroot *c = (eventroot *)ctrl;														\
+	if (c->event_handlers.evnthndler)														\
+	{																						\
+		if (c->override_counts.evnthndler == 1)												\
+		{																					\
+			ez_eventhandler_t *e = c->event_handlers.evnthndler;							\
+			while (e)																		\
+			{																				\
+				EZ_eventhandler_Exec(e, (ez_control_t *)ctrl, ##__VA_ARGS__);				\
+				e = e->next;																\
+			}																				\
+		}																					\
+		else																				\
+			c->override_counts.evnthndler--;												\
+	}																						\
+	if(p) (*p) = temp;																		\
 }
 
 #endif // __INTEL_COMPILER
@@ -521,36 +504,38 @@ typedef struct ez_control_eventcount_s
 	int	OnFlagsChanged;
 	int OnResizeHandleThicknessChanged;
 	int OnEventHandlerChanged;
+	int OnAnchorChanged;
 } ez_control_eventcount_t;
 
 typedef struct ez_control_events_s
 {
-	ez_control_mouse_handler_fp			OnMouseEvent;
-	ez_control_mouse_handler_fp			OnMouseClick;
-	ez_control_mouse_handler_fp			OnMouseUp;
-	ez_control_mouse_handler_fp			OnMouseUpOutside;
-	ez_control_mouse_handler_fp			OnMouseDown;
-	ez_control_mouse_handler_fp			OnMouseHover;
-	ez_control_mouse_handler_fp			OnMouseEnter;
-	ez_control_mouse_handler_fp			OnMouseLeave;
-	ez_control_key_handler_fp			OnKeyEvent;
-	ez_control_keyspecific_handler_fp	OnKeyDown;
-	ez_control_keyspecific_handler_fp	OnKeyUp;
-	ez_control_handler_fp				OnLayoutChildren;
-	ez_control_handler_fp				OnDraw;
-	ez_control_destroy_handler_fp		OnDestroy;
-	ez_control_handler_fp				OnMove;
-	ez_control_handler_fp				OnScroll;
-	ez_control_handler_fp				OnParentScroll;
-	ez_control_handler_fp				OnResize;
-	ez_control_handler_fp				OnParentResize;
-	ez_control_handler_fp				OnGotFocus;
-	ez_control_handler_fp				OnLostFocus;
-	ez_control_handler_fp				OnVirtualResize;
-	ez_control_handler_fp				OnMinVirtualResize;
-	ez_control_handler_fp				OnFlagsChanged;
-	ez_control_handler_fp				OnResizeHandleThicknessChanged;
-	ez_control_handler_fp				OnEventHandlerChanged;
+	ez_mouse_event_fp			OnMouseEvent;
+	ez_mouse_event_fp			OnMouseClick;
+	ez_mouse_event_fp			OnMouseUp;
+	ez_mouse_event_fp			OnMouseUpOutside;
+	ez_mouse_event_fp			OnMouseDown;
+	ez_mouse_event_fp			OnMouseHover;
+	ez_mouse_event_fp			OnMouseEnter;
+	ez_mouse_event_fp			OnMouseLeave;
+	ez_key_event_fp				OnKeyEvent;
+	ez_keyspecific_event_fp		OnKeyDown;
+	ez_keyspecific_event_fp		OnKeyUp;
+	ez_event_fp					OnLayoutChildren;
+	ez_event_fp					OnDraw;
+	ez_destroy_event_fp			OnDestroy;
+	ez_event_fp					OnMove;
+	ez_event_fp					OnScroll;
+	ez_event_fp					OnParentScroll;
+	ez_event_fp					OnResize;
+	ez_event_fp					OnParentResize;
+	ez_event_fp					OnGotFocus;
+	ez_event_fp					OnLostFocus;
+	ez_event_fp					OnVirtualResize;
+	ez_event_fp					OnMinVirtualResize;
+	ez_event_fp					OnFlagsChanged;
+	ez_event_fp					OnResizeHandleThicknessChanged;
+	ez_event_fp					OnEventHandlerChanged;
+	ez_event_fp					OnAnchorChanged;
 } ez_control_events_t;
 
 typedef struct ez_control_eventhandlers_s
@@ -581,6 +566,7 @@ typedef struct ez_control_eventhandlers_s
 	ez_eventhandler_t	*OnFlagsChanged;
 	ez_eventhandler_t	*OnResizeHandleThicknessChanged;
 	ez_eventhandler_t	*OnEventHandlerChanged;
+	ez_eventhandler_t	*OnAnchorChanged;
 } ez_control_eventhandlers_t;
 
 typedef enum ez_anchor_e
@@ -607,7 +593,7 @@ typedef enum ez_control_flags_e
 	control_visible				= (1 << 7),		// Is the control visible?
 	control_scrollable			= (1 << 8),		// Is the control scrollable
 	control_ignore_mouse		= (1 << 9),		// Should the control ignore mouse input?
-	control_anchor_nonvirtual	= (1 << 10)		// Anchor to the visible edges of the controls instead of the virtual edges.
+	control_anchor_viewport		= (1 << 10)		// Anchor to the visible edges of the controls instead of the virtual edges.
 } ez_control_flags_t;
 
 #define DEFAULT_CONTROL_FLAGS	(control_enabled | control_focusable | control_contained | control_scrollable | control_visible)
@@ -617,14 +603,15 @@ typedef enum ez_control_flags_e
 //
 typedef enum ez_control_iflags_e
 {
-	control_focused			= (1 << 0),		// Is the control currently in focus?
-	control_moving			= (1 << 1),		// Is the control in the process of being moved?
-	control_resizing_left	= (1 << 2),		// Are we resizing the control to the left?
-	control_resizing_right	= (1 << 3),		// Are we resizing the control to the right?
-	control_resizing_top	= (1 << 4),		// Resizing upwards.
-	control_resizing_bottom	= (1 << 5),		// Resizing downards.
-	control_clicked			= (1 << 6),		// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
-	control_mouse_over		= (1 << 7)		// Is the mouse over the control?
+	control_focused				= (1 << 0),		// Is the control currently in focus?
+	control_moving				= (1 << 1),		// Is the control in the process of being moved?
+	control_resizing_left		= (1 << 2),		// Are we resizing the control to the left?
+	control_resizing_right		= (1 << 3),		// Are we resizing the control to the right?
+	control_resizing_top		= (1 << 4),		// Resizing upwards.
+	control_resizing_bottom		= (1 << 5),		// Resizing downards.
+	control_clicked				= (1 << 6),		// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
+	control_mouse_over			= (1 << 7),		// Is the mouse over the control?
+	control_update_anchorgap	= (1 << 8)		// Update the anchor gap when resizing the control?
 } ez_control_iflags_t;
 
 typedef struct ez_control_s
@@ -674,6 +661,11 @@ typedef struct ez_control_s
 	int						bound_right;
 	int						bound_bottom;
 
+	int						left_edge_gap;			// The gap to the different edges, used for anchoring
+	int						right_edge_gap;			// if the parent controls size becomes less than the
+	int						top_edge_gap;			// childs min size, we need to keep track of how far
+	int						bottom_edge_gap;		// from the edge we were.
+
 	ez_anchor_t				anchor_flags;			// Which parts of it's parent the control is anchored to.
 
 	int						resize_handle_thickness;// The thickness of the resize handles on the sides of the control.
@@ -688,10 +680,9 @@ typedef struct ez_control_s
 	mpic_t					*background;			// The background picture.
 	float					opacity;				// The opacity of the control.
 
-	ez_control_events_t		events;					// The base reaction for events. Is only set at initialization.
-	//ez_control_events_t		event_handlers;			// Can be set by the user of the class to react to events.
-	ez_control_eventhandlers_t event_handlers;
-	ez_control_eventcount_t	inherit_levels;			// The number of times each event has been overriden. 
+	ez_control_events_t			events;				// The base reaction for events. Is only set at initialization.
+	ez_control_eventhandlers_t	event_handlers;
+	ez_control_eventcount_t		inherit_levels;		// The number of times each event has been overriden. 
 													// (Countdown before executing the event handler for the event, after all
 													// event implementations in the inheritance chain have been run).
 	ez_control_eventcount_t override_counts;		// This gets resetted each time a event is raised by CONTROL_RAISE_EVENT to the
@@ -820,112 +811,112 @@ void EZ_control_SetIgnoreMouse(ez_control_t *self, qbool ignore_mouse);
 //
 // Control - Sets the OnDestroy event handler.
 //
-void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp OnDestroy);
+void EZ_control_AddOnDestroy(ez_control_t *self, ez_destroy_eventhandler_fp OnDestroy, void *payload);
 
 //
 // Control - Sets the OnLayoutChildren event handler.
 //
-void EZ_control_SetOnLayoutChildren(ez_control_t *self, ez_control_handler_fp OnLayoutChildren);
+void EZ_control_AddOnLayoutChildren(ez_control_t *self, ez_eventhandler_fp OnLayoutChildren, void *payload);
 
 //
 // Control - Sets the OnMove event handler.
 //
-void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove);
+void EZ_control_AddOnMove(ez_control_t *self, ez_eventhandler_fp OnMove, void *payload);
 
 //
 // Control - Sets the OnResize event handler.
 //
-void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize);
+void EZ_control_AddOnResize(ez_control_t *self, ez_eventhandler_fp OnResize, void *payload);
 
 //
 // Control - Sets the OnParentResize event handler.
 //
-void EZ_control_SetOnParentResize(ez_control_t *self, ez_control_handler_fp OnParentResize);
+void EZ_control_AddOnParentResize(ez_control_t *self, ez_eventhandler_fp OnParentResize, void *payload);
 
 //
 // Control - Sets the OnVirtualResize event handler.
 //
-void EZ_control_SetOnVirtualResize(ez_control_t *self, ez_control_handler_fp OnVirtualResize);
+void EZ_control_AddOnVirtualResize(ez_control_t *self, ez_eventhandler_fp OnVirtualResize, void *payload);
 
 //
 // Control - Sets the OnMinVirtualResize event handler.
 //
-void EZ_control_SetOnMinVirtualResize(ez_control_t *self, ez_control_handler_fp OnMinVirtualResize);
+void EZ_control_AddOnMinVirtualResize(ez_control_t *self, ez_eventhandler_fp OnMinVirtualResize, void *payload);
 
 //
 // Control - Sets the OnFlagsChanged event handler.
 //
-void EZ_control_SetOnFlagsChanged(ez_control_t *self, ez_control_handler_fp OnFlagsChanged);
+void EZ_control_AddOnFlagsChanged(ez_control_t *self, ez_eventhandler_fp OnFlagsChanged, void *payload);
 
 //
 // Control - Sets the OnKeyEvent event handler.
 //
-void EZ_control_SetOnKeyEvent(ez_control_t *self, ez_control_key_handler_fp OnKeyEvent);
+void EZ_control_AddOnKeyEvent(ez_control_t *self, ez_key_eventhandler_fp OnKeyEvent, void *payload);
 
 //
 // Control - Sets the OnLostFocus event handler.
 //
-void EZ_control_SetOnLostFocus(ez_control_t *self, ez_control_handler_fp OnLostFocus);
+void EZ_control_AddOnLostFocus(ez_control_t *self, ez_eventhandler_fp OnLostFocus, void *payload);
 
 //
 // Control - Sets the OnGotFocus event handler.
 //
-void EZ_control_SetOnGotFocus(ez_control_t *self, ez_control_handler_fp OnGotFocus);
+void EZ_control_AddOnGotFocus(ez_control_t *self, ez_eventhandler_fp OnGotFocus, void *payload);
 
 //
 // Control - Sets the OnMouseHover event handler.
 //
-void EZ_control_SetOnMouseHover(ez_control_t *self, ez_control_mouse_handler_fp OnMouseHover);
+void EZ_control_AddOnMouseHover(ez_control_t *self, ez_mouse_eventhandler_fp OnMouseHover, void *payload);
 
 //
 // Control - Sets the OnMouseLeave event handler.
 //
-void EZ_control_SetOnMouseLeave(ez_control_t *self, ez_control_mouse_handler_fp OnMouseLeave);
+void EZ_control_AddOnMouseLeave(ez_control_t *self, ez_mouse_eventhandler_fp OnMouseLeave, void *payload);
 
 //
 // Control - Sets the OnMouseEnter event handler.
 //
-void EZ_control_SetOnMouseEnter(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEnter);
+void EZ_control_AddOnMouseEnter(ez_control_t *self, ez_mouse_eventhandler_fp OnMouseEnter, void *payload);
 
 //
 // Control - Sets the OnMouseClick event handler.
 //
-void EZ_control_SetOnMouseClick(ez_control_t *self, ez_control_mouse_handler_fp OnMouseClick);
+void EZ_control_AddOnMouseClick(ez_control_t *self, ez_mouse_eventhandler_fp OnMouseClick, void *payload);
 
 //
 // Control - Sets the OnMouseEvent event handler.
 //
-void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUp);
+void EZ_control_AddOnMouseUp(ez_control_t *self, ez_mouse_eventhandler_fp OnMouseUp, void *payload);
 
 //
 // Control - Sets the OnMouseUp event handler.
 //
-void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUp);
+void EZ_control_AddOnMouseUp(ez_control_t *self, ez_mouse_eventhandler_fp OnMouseUp, void *payload);
 
 //
 // Control - Sets the OnMouseDown event handler.
 //
-void EZ_control_SetOnMouseDown(ez_control_t *self, ez_control_mouse_handler_fp OnMouseDown);
+void EZ_control_AddOnMouseDown(ez_control_t *self, ez_mouse_eventhandler_fp OnMouseDown, void *payload);
 
 //
 // Control - Sets the OnMouseEvent event handler.
 //
-void EZ_control_SetOnMouseEvent(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEvent);
+void EZ_control_AddOnMouseEvent(ez_control_t *self, ez_mouse_eventhandler_fp OnMouseEvent, void *payload);
 
 //
 // Control - Sets the OnDraw event handler.
 //
-void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw);
+void EZ_control_AddOnDraw(ez_control_t *self, ez_eventhandler_fp OnDraw, void *payload);
 
 //
 // Control - Set the event handler for the OnEventHandlerChanged event.
 //
-void EZ_control_SetOnEventHandlerChanged(ez_control_t *self, ez_control_handler_fp OnEventHandlerChanged);
+void EZ_control_AddOnEventHandlerChanged(ez_control_t *self, ez_eventhandler_fp OnEventHandlerChanged, void *payload);
 
 //
 // Control - Sets the OnResizeHandleThicknessChanged event handler.
 //
-void EZ_control_SetOnResizeHandleThicknessChanged(ez_control_t *self, ez_control_handler_fp OnResizeHandleThicknessChanged);
+void EZ_control_AddOnResizeHandleThicknessChanged(ez_control_t *self, ez_eventhandler_fp OnResizeHandleThicknessChanged, void *payload);
 
 //
 // Control - Set color of a control.
@@ -1035,6 +1026,11 @@ void EZ_control_SetScrollChange(ez_control_t *self, int delta_scroll_x, int delt
 // Control - The control was resized.
 //
 int EZ_control_OnResize(ez_control_t *self);
+
+//
+// Control - The anchoring for the control changed.
+//
+int EZ_control_OnAnchorChanged(ez_control_t *self);
 
 //
 // Control - The controls parent was resized.
@@ -1178,10 +1174,10 @@ typedef struct ez_label_eventcount_s
 
 typedef struct ez_label_events_s
 {
-	ez_control_handler_fp	OnTextChanged;			// Event raised when the text in the label is changed.
-	ez_control_handler_fp	OnCaretMoved;			// The caret was moved.
-	ez_control_handler_fp	OnTextScaleChanged;		// The scale of the text changed.
-	ez_control_handler_fp	OnTextFlagsChanged;		// The text flags changed.
+	ez_event_fp	OnTextChanged;			// Event raised when the text in the label is changed.
+	ez_event_fp	OnCaretMoved;			// The caret was moved.
+	ez_event_fp	OnTextScaleChanged;		// The scale of the text changed.
+	ez_event_fp	OnTextFlagsChanged;		// The text flags changed.
 } ez_label_events_t;
 
 typedef struct ez_label_eventhandlers_s
@@ -1204,8 +1200,7 @@ typedef struct ez_label_s
 	ez_control_t			super;						// Super class.
 
 	ez_label_events_t		events;						// Specific events for the label control.
-	//ez_label_events_t		event_handlers;				// Specific event handlers for the label control.
-	ez_label_eventhandlers_t event_handlers;
+	ez_label_eventhandlers_t event_handlers;			// Specific event handlers for the label control.
 	ez_label_eventcount_t	inherit_levels;
 	ez_label_eventcount_t	override_counts;
 
@@ -1282,17 +1277,17 @@ void EZ_label_SetTextSelectable(ez_label_t *label, qbool selectable);
 //
 // Label - Sets the event handler for the OnTextChanged event.
 //
-void EZ_label_SetOnTextChanged(ez_label_t *label, ez_control_handler_fp OnTextChanged);
+void EZ_label_AddOnTextChanged(ez_label_t *label, ez_eventhandler_fp OnTextChanged, void *payload);
 
 //
 // Label - Sets the event handler for the OnTextScaleChanged event.
 //
-void EZ_label_SetOnTextScaleChanged(ez_label_t *label, ez_control_handler_fp OnTextScaleChanged);
+void EZ_label_AddOnTextScaleChanged(ez_label_t *label, ez_eventhandler_fp OnTextScaleChanged, void *payload);
 
 //
 // Label - Sets the event handler for the OnCaretMoved event.
 //
-void EZ_label_SetOnTextOnCaretMoved(ez_label_t *label, ez_control_handler_fp OnCaretMoved);
+void EZ_label_AddOnTextOnCaretMoved(ez_label_t *label, ez_eventhandler_fp OnCaretMoved, void *payload);
 
 //
 // Label - Hides the caret.
@@ -1427,8 +1422,8 @@ typedef struct ez_button_eventcount_s
 
 typedef struct ez_button_events_s
 {
-	ez_control_handler_fp	OnAction;				// The event that's raised when the button is clicked / activated via a button.
-	ez_control_handler_fp	OnTextAlignmentChanged;	// Text alignment changed.
+	ez_event_fp	OnAction;				// The event that's raised when the button is clicked / activated via a button.
+	ez_event_fp	OnTextAlignmentChanged;	// Text alignment changed.
 } ez_button_events_t;
 
 typedef struct ez_button_eventhandlers_s
@@ -1462,8 +1457,7 @@ typedef struct ez_button_s
 	ez_control_t			super;				// The super class.
 
 	ez_button_events_t		events;				// Specific events for the button control.
-	//ez_button_events_t		event_handlers;		// Specific event handlers for the button control.
-	ez_button_eventhandlers_t event_handlers;
+	ez_button_eventhandlers_t event_handlers;	// Specific event handlers for the button control.
 	ez_button_eventcount_t	inherit_levels;
 	ez_button_eventcount_t	override_counts;
 
@@ -1559,7 +1553,7 @@ void EZ_button_SetTileCenter(ez_button_t *button, qbool tilecenter);
 //
 // Button - Set the event handler for the OnTextAlignmentChanged event.
 //
-void EZ_button_SetOnTextAlignmentChanged(ez_button_t *button, ez_control_handler_fp OnTextAlignmentChanged);
+void EZ_button_AddOnTextAlignmentChanged(ez_button_t *button, ez_eventhandler_fp OnTextAlignmentChanged, void *payload);
 
 //
 // Button - Set the normal image for the button.
@@ -1599,7 +1593,7 @@ void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte a
 // 
 // Button - Sets the OnAction event handler.
 //
-void EZ_button_SetOnAction(ez_button_t *self, ez_control_handler_fp OnAction);
+void EZ_button_AddOnAction(ez_button_t *self, ez_eventhandler_fp OnAction, void *payload);
 
 //
 // Button - OnDraw event.
@@ -1627,10 +1621,10 @@ typedef struct ez_slider_eventcount_s
 
 typedef struct ez_slider_events_s
 {
-	ez_control_handler_fp	OnSliderPositionChanged;
-	ez_control_handler_fp	OnMaxValueChanged;
-	ez_control_handler_fp	OnMinValueChanged;
-	ez_control_handler_fp	OnScaleChanged;
+	ez_event_fp	OnSliderPositionChanged;
+	ez_event_fp	OnMaxValueChanged;
+	ez_event_fp	OnMinValueChanged;
+	ez_event_fp	OnScaleChanged;
 } ez_slider_events_t;
 
 typedef struct ez_slider_eventhandlers_s
@@ -1646,8 +1640,7 @@ typedef struct ez_slider_s
 	ez_control_t			super;				// The super class.
 
 	ez_slider_events_t		events;				// Slider specific events.
-	//ez_slider_events_t		event_handlers;		// Slider specific event handlers.
-	ez_slider_eventhandlers_t event_handlers;
+	ez_slider_eventhandlers_t event_handlers;	// Slider specific event handlers.
 	ez_slider_eventcount_t	inherit_levels;
 	ez_slider_eventcount_t	override_counts;
 
@@ -1684,22 +1677,22 @@ void EZ_slider_Init(ez_slider_t *slider, ez_tree_t *tree, ez_control_t *parent,
 //
 // Slider - Event handler for OnSliderPositionChanged.
 //
-void EZ_slider_SetOnSliderPositionChanged(ez_slider_t *slider, ez_control_handler_fp OnSliderPositionChanged);
+void EZ_slider_AddOnSliderPositionChanged(ez_slider_t *slider, ez_eventhandler_fp OnSliderPositionChanged, void *payload);
 
 //
 // Slider - Event handler for OnSliderPositionChanged.
 //
-void EZ_slider_SetOnScaleChanged(ez_slider_t *slider, ez_control_handler_fp OnScaleChanged);
+void EZ_slider_AddOnScaleChanged(ez_slider_t *slider, ez_eventhandler_fp OnScaleChanged, void *payload);
 
 //
 // Slider - Event handler for OnMaxValueChanged.
 //
-void EZ_slider_SetOnMaxValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMaxValueChanged);
+void EZ_slider_AddOnMaxValueChanged(ez_slider_t *slider, ez_eventhandler_fp OnMaxValueChanged, void *payload);
 
 //
 // Slider - Event handler for OnMinValueChanged.
 //
-void EZ_slider_SetOnMinValueChanged(ez_slider_t *slider, ez_control_handler_fp OnMinValueChanged);
+void EZ_slider_AddOnMinValueChanged(ez_slider_t *slider, ez_eventhandler_fp OnMinValueChanged, void *payload);
 
 //
 // Slider - Get the current slider position.
@@ -1806,7 +1799,7 @@ typedef struct ez_scrollbar_eventcount_s
 
 typedef struct ez_scrollbar_events_s
 {
-	ez_control_handler_fp	OnTargetChanged;
+	ez_event_fp	OnTargetChanged;
 } ez_scrollbar_events_t;
 
 typedef struct ez_scrollbar_eventhandlers_s
@@ -1819,7 +1812,6 @@ typedef struct ez_scrollbar_s
 	ez_control_t				super;				// The super class.
 
 	ez_scrollbar_events_t		events;
-	//ez_scrollbar_events_t		event_handlers;
 	ez_scrollbar_eventhandlers_t event_handlers;
 	ez_scrollbar_eventcount_t	inherit_levels;
 	ez_scrollbar_eventcount_t	override_counts;
@@ -1862,15 +1854,25 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 							  ez_control_flags_t flags);
 
 //
+// Scrollbar - Destroys the scrollbar.
+//
+int EZ_scrollbar_Destroy(ez_control_t *self, qbool destroy_children);
+
+//
 // Scrollbar - Set the target control that the scrollbar should scroll.
 //
 void EZ_scrollbar_SetTarget(ez_scrollbar_t *scrollbar, ez_control_t *target);
 
 //
+// Scrollbar - Set if the scrollbar should be vertical or horizontal.
+//
+void EZ_scrollbar_SetIsVertical(ez_scrollbar_t *scrollbar, qbool is_vertical);
+
+//
 // Scrollbar - Sets if the target for the scrollbar should be it's parent, or a specified target control.
 //				(The target controls OnScroll event handler will be used if it's not the parent)
 //
-void EZ_scrollbar_SetTargetParent(ez_scrollbar_t *scrollbar, qbool targetparent);
+void EZ_scrollbar_SetTargetIsParent(ez_scrollbar_t *scrollbar, qbool targetparent);
 
 //
 // Scrollbar - The target of the scrollbar changed.
@@ -1933,13 +1935,17 @@ typedef struct ez_scrollpane_eventcount_s
 
 typedef struct ez_scrollpane_events_s
 {
-	ez_control_handler_fp	OnTargetChanged;
-	ez_control_handler_fp	OnScrollbarThicknessChanged;
+	ez_event_fp	OnTargetChanged;
+	ez_event_fp	OnTargetResize;
+	ez_event_fp	OnTargetScroll;
+	ez_event_fp	OnScrollbarThicknessChanged;
 } ez_scrollpane_events_t;
 
 typedef struct ez_scrollpane_eventhandlers_s
 {
 	ez_eventhandler_t		*OnTargetChanged;
+	ez_eventhandler_t		*OnTargetResize;
+	ez_eventhandler_t		*OnTargetScroll;
 	ez_eventhandler_t		*OnScrollbarThicknessChanged;
 } ez_scrollpane_eventhandlers_t;
 
@@ -1948,12 +1954,12 @@ typedef struct ez_scrollpane_s
 	ez_control_t				super;				// The super class.
 
 	ez_scrollpane_events_t		events;
-	//ez_scrollpane_events_t		event_handlers;
 	ez_scrollpane_eventhandlers_t event_handlers;
 	ez_scrollpane_eventcount_t	inherit_levels;
 	ez_scrollpane_eventcount_t	override_counts;
 
 	ez_control_t				*target;			// The target of the scrollbar if the parent isn't targeted (ext_flag & target_parent).
+	ez_control_t				*prev_target;		// The previous target control. We keep this to clean up when we change target.
 
 	ez_scrollbar_t				*v_scrollbar;		// The vertical scrollbar.
 	ez_scrollbar_t				*h_scrollbar;		// The horizontal scrollbar.
@@ -1982,6 +1988,11 @@ void EZ_scrollpane_Init(ez_scrollpane_t *scrollpane, ez_tree_t *tree, ez_control
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  ez_control_flags_t flags);
+
+//
+// Scrollpane - Destroys the scrollpane.
+//
+int EZ_scrollpane_Destroy(ez_control_t *self, qbool destroy_children);
 
 //
 // Scrollpane - Set the target control of the scrollpane (the one to be scrolled).
