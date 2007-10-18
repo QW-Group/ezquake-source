@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_xmms.c,v 1.2 2007-10-18 12:50:00 dkure Exp $
+	$Id: mp3_xmms.c,v 1.3 2007-10-18 14:06:01 dkure Exp $
 */
 
 #include <sys/wait.h>
@@ -99,6 +99,7 @@ static void XMMS_FreeLibrary(void) {
 	if (libxmms_handle) {
 		QLIB_FREELIBRARY(libxmms_handle);
 	}
+	// Maybe need to clear all the function pointers too
 }
 
 #ifdef WITH_XMMS
@@ -400,6 +401,8 @@ void Media_SetVolume_f(void);
 char* Media_GetVolume_f(void);
 
 void MP3_XMMS_Shutdown(void) {
+	XMMS_FreeLibrary();
+
 	if (XMMS_pid) {
 		if (!kill(XMMS_pid, SIGTERM))
 			waitpid(XMMS_pid, NULL, 0);

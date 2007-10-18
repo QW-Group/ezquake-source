@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.27 2007-10-18 12:50:00 dkure Exp $
+	$Id: mp3_player.c,v 1.28 2007-10-18 14:06:01 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "mp3_player.h"
 #include "utils.h"
+
+#ifdef WITH_MP3_PLAYER
 
 cvar_t mp3_scrolltitle = {"mp3_scrolltitle", "1"};
 cvar_t mp3_showtime = {"mp3_showtime", "1"};
@@ -38,24 +40,51 @@ const mp3_player_t mp3_player_none = {
 	MP3_NONE, // Type
 };
 
-/* TODO: These could be set via a cvar_t */
+void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel);
 #ifdef WITH_WINAMP
+cvar_t mp3_playertype = {"mp3_playertype", "winamp", 0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_winamp;
 #else
 #ifdef WITH_AUDACIOUS
 // AUDACIOUS is backwards compatible, but libraries are still needed
+cvar_t mp3_playertype = {"mp3_playertype","audacious",0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_audacious;
 #else
 #ifdef WITH_XMMS
+cvar_t mp3_playertype = {"mp3_playertype", "xmms", 0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_xmms;
 #else
+cvar_t mp3_playertype = {"mp3_playertype", "none", 0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_none;
 #endif // WITH_XMMS
 #endif // WITH_AUDACIOUS
 #endif // WITH_WINAMP
 
+void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel) {
+	if (strcmp(value, "winamp") && strcmp(value, "audacious") && strcmp(value, "xmms") && strcmp(value, "none")) {
+		Com_Printf_State (PRINT_INFO, "Unknown mp3 player \"%s\"\n", value);
+		*cancel = true;
+		return;
+	}
 
-#ifdef WITH_MP3_PLAYER
+	if (MP3_IsActive()) {
+		MP3_Shutdown();
+	}
+
+	if (strcmp(value, "winamp") == 0) {
+		mp3_player = &mp3_player_winamp;
+	} else if (strcmp(value, "audacious") == 0) {
+		mp3_player = &mp3_player_audacious;
+	} else if (strcmp(value, "xmms") == 0) {
+		mp3_player = &mp3_player_xmms;
+	} else if (strcmp(value, "none") == 0) {
+		mp3_player = &mp3_player_none;
+	} 
+
+	if (!MP3_IsActive()) {
+		mp3_player->Init();
+	}
+}
 
 void MP3_SongInfo_f(void) {
 	char *status_string, *title, *s;
@@ -156,9 +185,6 @@ char* Media_GetVolume_f(void);
 void MP3_Init(void) {
 	mp3_player->Init();
 
-	if (!MP3_IsActive())
-		return;
-
 	Cmd_AddMacro("mp3info", MP3_Macro_MP3Info);
 	Cmd_AddMacro("mp3_volume", Media_GetVolume_f);
 
@@ -183,6 +209,7 @@ void MP3_Init(void) {
 	Cvar_Register(&mp3_dir);
 	Cvar_Register(&mp3_scrolltitle);
 	Cvar_Register(&mp3_showtime);
+	Cvar_Register(&mp3_playertype);
 	Cvar_ResetCurrentGroup();
 }
 
@@ -232,7 +259,7 @@ char *MP3_Macro_MP3Info(void) {
 
 int MP3_CheckFunction(qbool PrintWarning) {
 	if (!mp3_player) {
-		Sys_Error("MP3 Player has been corrupted\n");
+		Sys_Error("MP3 player control has been corrupted\n");
 	} else if (mp3_player->Type == MP3_NONE) {
 		if (PrintWarning) {
 			Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
