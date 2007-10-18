@@ -18,13 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_xmms.c,v 1.3 2007-10-18 14:06:01 dkure Exp $
+	$Id: mp3_xmms.c,v 1.4 2007-10-18 20:29:56 cokeman1982 Exp $
 */
 
+#ifndef _WIN32
 #include <sys/wait.h>
 #include <sys/types.h> // fork, execv, usleep
 #include <signal.h>
 #include <unistd.h> // fork, execv, usleep
+#endif // !WIN32
 
 #include "quakedef.h"
 #include "mp3_player.h"
