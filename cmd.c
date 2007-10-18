@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.88 2007-10-13 12:01:06 borisu Exp $
+    $Id: cmd.c,v 1.89 2007-10-18 05:28:23 dkure Exp $
 */
 
 #ifndef _WIN32
@@ -1187,7 +1187,7 @@ void Cmd_CmdList (qbool use_regex)
 
 	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
-	if (use_regex && ((c = Cmd_Argc()) > 1))
+	if (((c = Cmd_Argc()) > 1) && use_regex)
 		if (!ReSearchInit(Cmd_Argv(1)))
 			return;
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.103 2007-10-05 21:03:24 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -878,32 +878,31 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 		// TODO : Force players to have mcharset.png or fallback to overscaling normal font? :s
 	}
 	
-	if (!bigchar) // || (bigchar && !bigcharset_found))
+	//else if (!bigchar) // || (bigchar && !bigcharset_found))
+	// Is this is a wchar, find a charset that has the char in it.
+	if ((num & 0xFF00) != 0)
 	{
-		// Is this is a wchar, find a charset that has the char in it.
-		if ((num & 0xFF00) != 0)
+		for (i = 1; i < MAX_CHARSETS; i++)
 		{
-			for (i = 1; i < MAX_CHARSETS; i++)
+			if (char_range[i] == (num & 0xFF00))
 			{
-				if (char_range[i] == (num & 0xFF00))
-				{
-					slot = i;
-					break;
-				}
+				slot = i;
+				break;
 			}
-
-			if (i == MAX_CHARSETS)
-				num = '?';
 		}
 
-		num &= 0xFF;	// Only use the first byte.
-
-		// Find the texture coordinates for the character.
-		frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num * (16 chars per row)
-		fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
-
-		GL_Bind(char_textures[slot]);
+		if (i == MAX_CHARSETS)
+			num = '?';
 	}
+
+	num &= 0xFF;	// Only use the first byte.
+
+	// Find the texture coordinates for the character.
+	frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num * (16 chars per row)
+	fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
+
+	GL_Bind(char_textures[slot]);
+	//}
 
 	// Draw the character polygon.
 	glBegin(GL_QUADS);

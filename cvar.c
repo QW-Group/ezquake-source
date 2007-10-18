@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.58 2007-10-01 18:31:06 disconn3ct Exp $
+$Id: cvar.c,v 1.59 2007-10-18 05:28:23 dkure Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -660,7 +660,7 @@ void Cvar_CvarList (qbool use_regex)
 
 	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
-	if (use_regex && ((c = Cmd_Argc()) > 1))
+	if (((c = Cmd_Argc()) > 1) && use_regex)
 		if (!ReSearchInit(Cmd_Argv(1)))
 			return;
 
