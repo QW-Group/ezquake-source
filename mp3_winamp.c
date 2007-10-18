@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_winamp.c,v 1.3 2007-10-18 20:29:56 cokeman1982 Exp $
+	$Id: mp3_winamp.c,v 1.4 2007-10-18 20:35:30 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -33,25 +33,29 @@ static HWND mp3_hwnd = 0;
 
 cvar_t mp3_dir = {"mp3_winamp_dir", "c:/program files/winamp"};
 
-qbool MP3_WINAMP_IsActive(void) {
+qbool MP3_WINAMP_IsActive(void) 
+{
 	return true;
 }
 
-static qbool MP3_WINAMP_IsPlayerRunning(void) {
+static qbool MP3_WINAMP_IsPlayerRunning(void) 
+{
 	return ((mp3_hwnd = FindWindow("ezQuake Winamp", NULL)) || (mp3_hwnd = FindWindow("Winamp v1.x", NULL)));
 }
 
-void MP3_WINAMP_Execute_f(void) {
+void MP3_WINAMP_Execute_f(void) 
+{
 	STARTUPINFO si;
 	PROCESS_INFORMATION	pi;
 	char path[256];
 	int length;
 
-
-	if (MP3_WINAMP_IsPlayerRunning()) {
+	if (MP3_WINAMP_IsPlayerRunning()) 
+	{
 		Com_Printf("Winamp is already running\n");
 		return;
 	}
+
 	memset (&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 	si.wShowWindow = SW_SHOWMINNOACTIVE;
@@ -59,15 +63,19 @@ void MP3_WINAMP_Execute_f(void) {
 
 	strlcpy(path, mp3_dir.string, sizeof(path) - strlen("/winamp.exe"));
 	length = strlen(path);
+
 	if (length && (path[length - 1] == '\\' || path[length - 1] == '/'))
 		path[length - 1] = 0;
+
 	strlcat (path, "/winamp.exe", sizeof (path));
+
 	if (!CreateProcess (NULL, va("%s /CLASS=\"ezQuake Winamp\"", path), 
 		NULL, NULL, FALSE, GetPriorityClass(GetCurrentProcess()), NULL, NULL, &si, &pi))
 	{
 		Com_Printf ("Couldn't execute winamp\n");
 		return;
 	}
+
 	Com_Printf("Winamp is now running\n");
 	return;
 }
@@ -91,13 +99,17 @@ WINAMP_COMMAND(Rewind, WINAMP_BUTTON1_SHIFT);
 WINAMP_COMMAND(FastForward, WINAMP_BUTTON5_SHIFT);
 WINAMP_COMMAND(FadeOut, WINAMP_BUTTON4_SHIFT);
 
-int MP3_WINAMP_GetStatus(void) {
+int MP3_WINAMP_GetStatus(void) 
+{
 	int ret;
 
 	if (!MP3_WINAMP_IsPlayerRunning())
 		return MP3_NOTRUNNING;
+	
 	ret = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_ISPLAYING);
-	switch (ret) {
+	
+	switch (ret) 
+	{
 		case 3 : return MP3_PAUSED; break;
 		case 1 : return MP3_PLAYING; break;
 		case 0 : 
@@ -105,129 +117,171 @@ int MP3_WINAMP_GetStatus(void) {
 	}
 }
 
-static void WINAMP_Set_ToggleFn(char *name, int setparam, int getparam) {
+static void WINAMP_Set_ToggleFn(char *name, int setparam, int getparam) 
+{
 	int ret, set;
 
-	if (!MP3_WINAMP_IsPlayerRunning()) {
+	if (!MP3_WINAMP_IsPlayerRunning()) 
+	{
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 		return;
 	}
-	if (Cmd_Argc() >= 3) {
+	
+	if (Cmd_Argc() >= 3) 
+	{
 		Com_Printf("Usage: %s [on|off|toggle]\n", Cmd_Argv(0));
 		return;
 	}
+	
 	ret = SendMessage(mp3_hwnd, WM_WA_IPC, 0, getparam);
-	if (Cmd_Argc() == 1) {
+	
+	if (Cmd_Argc() == 1) 
+	{
 		Com_Printf("%s is %s\n", name, (ret == 1) ? "on" : "off");
 		return;
 	}
-	if (!strcasecmp(Cmd_Argv(1), "on")) {
+	
+	if (!strcasecmp(Cmd_Argv(1), "on")) 
+	{
 		set = 1;
-	} else if (!strcasecmp(Cmd_Argv(1), "off")) {
+	} 
+	else if (!strcasecmp(Cmd_Argv(1), "off")) 
+	{
 		set = 0;
-	} else if (!strcasecmp(Cmd_Argv(1), "toggle")) {
+	} 
+	else if (!strcasecmp(Cmd_Argv(1), "toggle")) 
+	{
 		set = ret ? 0 : 1;
-	} else {
+	} 
+	else 
+	{
 		Com_Printf("Usage: %s [on|off|toggle]\n", Cmd_Argv(0));
 		return;
 	}
+
 	SendMessage(mp3_hwnd, WM_WA_IPC, set, setparam);
 	Com_Printf("%s set to %s\n", name, set ? "on" : "off");
 }
 
-void MP3_WINAMP_Repeat_f(void) {
+void MP3_WINAMP_Repeat_f(void) 
+{
 	WINAMP_Set_ToggleFn("Repeat", IPC_SET_REPEAT, IPC_GET_REPEAT);
 }
 
-void MP3_WINAMP_Shuffle_f(void) {
+void MP3_WINAMP_Shuffle_f(void) 
+{
 	WINAMP_Set_ToggleFn("Shuffle", IPC_SET_SHUFFLE, IPC_GET_SHUFFLE);
 }
 
-static void WINAMP_Toggle_ToggleFn(char *name, int setparam, int getparam) {
+static void WINAMP_Toggle_ToggleFn(char *name, int setparam, int getparam) 
+{
 	int ret;
 
-	if (!MP3_WINAMP_IsPlayerRunning()) {
+	if (!MP3_WINAMP_IsPlayerRunning()) 
+	{
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 		return;
 	}
+
 	ret = SendMessage(mp3_hwnd, WM_WA_IPC, 0, getparam);
 	SendMessage(mp3_hwnd, WM_WA_IPC, ret ? 0 : 1, setparam);
 }
 
-void MP3_WINAMP_ToggleRepeat_f(void) {
+void MP3_WINAMP_ToggleRepeat_f(void)
+{
 	WINAMP_Toggle_ToggleFn("Repeat", IPC_SET_REPEAT, IPC_GET_REPEAT);
 }
 
-void MP3_WINAMP_ToggleShuffle_f(void) {
+void MP3_WINAMP_ToggleShuffle_f(void) 
+{
 	WINAMP_Toggle_ToggleFn("Shuffle", IPC_SET_SHUFFLE, IPC_GET_SHUFFLE);
 }
 
-char *MP3_WINAMP_Macro_MP3Info(void) {
+char *MP3_WINAMP_Macro_MP3Info(void) 
+{
 	char *s;
 	static char title[MP3_MAXSONGTITLE];
 
-	if (!MP3_WINAMP_IsPlayerRunning()) {
-	
+	if (!MP3_WINAMP_IsPlayerRunning()) 
+	{
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 		snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 		return title;
 	}
+	
 	GetWindowText(mp3_hwnd, title, sizeof(title));
+	
 	if ((s = strrchr(title, '-')) && s > title)
 		*(s - 1) = 0;
+	
 	for (s = title; *s && isdigit(*s); s++)
 		;
+	
 	if (*s == '.' && s[1] == ' ' && s[2])
 		memmove(title, s + 2, strlen(s + 2) + 1);
+
 	return title;
 }
 
-qbool MP3_WINAMP_GetOutputtime(int *elapsed, int *total) {
+qbool MP3_WINAMP_GetOutputtime(int *elapsed, int *total) 
+{
 	int ret1, ret2;
 
 	if (!MP3_WINAMP_IsPlayerRunning())
 		return false;
+	
 	if (!(ret1 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GETOUTPUTTIME)) == -1)
 		return false;
+	
 	if (!(ret2 = SendMessage(mp3_hwnd, WM_WA_IPC, 1, IPC_GETOUTPUTTIME)) == -1)
 		return false;
+
 	*elapsed = ret1 / 1000;
 	*total = ret2;
 
 	return true;
 }
 
-qbool MP3_WINAMP_GetToggleState(int *shuffle, int *repeat) {
+qbool MP3_WINAMP_GetToggleState(int *shuffle, int *repeat) 
+{
 	int ret1, ret2;
 
 	if (!MP3_WINAMP_IsPlayerRunning())
 		return false;
+
 	if (!(ret1 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GET_SHUFFLE)) == -1)
 		return false;
+
 	if (!(ret2 = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GET_REPEAT)) == -1)
 		return false;
+
 	*shuffle = ret1;
 	*repeat = ret2;
 
 	return true;
 }
 
-void MP3_WINAMP_LoadPlaylist_f(void) {
+void MP3_WINAMP_LoadPlaylist_f(void)
+{
 	COPYDATASTRUCT cds;
 	char playlist[64];
 
-	if (Cmd_Argc() == 1) {
+	if (Cmd_Argc() == 1) 
+	{
 		Com_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
 		return;
 	}
-	if (!MP3_WINAMP_IsPlayerRunning()) {
+	
+	if (!MP3_WINAMP_IsPlayerRunning()) 
+	{
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 		return;
 	}
 
 	strlcpy(playlist, Cmd_Args(), sizeof(playlist));
 
-	if (!strcmp(COM_FileExtension(playlist), "pls")) {
+	if (!strcmp(COM_FileExtension(playlist), "pls"))
+	{
 		Com_Printf("Error: .pls playlists are not supported.  Try loading a .m3u playlist\n");
 		return;
 	}
@@ -241,7 +295,8 @@ void MP3_WINAMP_LoadPlaylist_f(void) {
 	SendMessage(mp3_hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 }
 
-long MP3_WINAMP_GetPlaylist(char **buf) {
+long MP3_WINAMP_GetPlaylist(char **buf) 
+{
 	FILE *f;
 	char path[512];
 	int pathlength;
@@ -259,23 +314,31 @@ long MP3_WINAMP_GetPlaylist(char **buf) {
 	SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_WRITEPLAYLIST);
 	strlcpy(path, mp3_dir.string, sizeof(path));
 	pathlength = strlen(path);
+	
 	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
 		path[pathlength - 1] = 0;
+	
 	strlcat (path, "/winamp.m3u", sizeof (path));
 	filelength = FS_FileOpenRead(path, &f);
+	
 	if (!f)
 		return -1;
+
 	*buf = Q_malloc(filelength);
-	if (filelength != fread(*buf, 1,  filelength, f)) {
+	
+	if (filelength != fread(*buf, 1,  filelength, f)) 
+	{
 		Q_free(*buf);
 		fclose(f);
 		return -1;
 	}
+
 	fclose(f);
 	return filelength;
 }
 
-void MP3_WINAMP_GetPlaylistInfo(int *current, int *length) {
+void MP3_WINAMP_GetPlaylistInfo(int *current, int *length) 
+{
 	if (!MP3_WINAMP_IsPlayerRunning())
 		return;
 	if (length)
@@ -284,19 +347,23 @@ void MP3_WINAMP_GetPlaylistInfo(int *current, int *length) {
 		*current = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GETLISTPOS);
 }
 
-void MP3_WINAMP_PrintPlaylist_f(void) {
+void MP3_WINAMP_PrintPlaylist_f(void) 
+{
 	char *playlist_buf, *entries[1024];
 	unsigned int length;
 	int i, playlist_size, current;
 
-	if ((length = MP3_WINAMP_GetPlaylist(&playlist_buf)) == -1) {
+	if ((length = MP3_WINAMP_GetPlaylist(&playlist_buf)) == -1) 
+	{
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 		return;
 	}
+
 	MP3_WINAMP_GetPlaylistInfo(&current, NULL);
 	playlist_size = MP3_ParsePlaylist_EXTM3U(playlist_buf, length, entries, sizeof(entries) / sizeof(entries[0]), 128);
 
-	for (i = 0; i < playlist_size; i++) {
+	for (i = 0; i < playlist_size; i++) 
+	{
 		Com_Printf("%s%3d %s\n", i == current ? "\x02" : "", i + 1, entries[i]);
 		Q_free(entries[i]);
 	}
@@ -304,7 +371,8 @@ void MP3_WINAMP_PrintPlaylist_f(void) {
 	Q_free(playlist_buf);
 }
 
-void MP3_WINAMP_PlayTrackNum_f(void) {
+void MP3_WINAMP_PlayTrackNum_f(void) 
+{
 	int pos, length;
 
 	if (!MP3_WINAMP_IsPlayerRunning()) {
@@ -323,7 +391,8 @@ void MP3_WINAMP_PlayTrackNum_f(void) {
 	MP3_WINAMP_Play_f();
 }
 
-double Media_WINAMP_GetVolume(void) {
+double Media_WINAMP_GetVolume(void) 
+{
 	static double vol = 0;
 
 	vol = SendMessage(mp3_hwnd, WM_WA_IPC, -666, IPC_SETVOLUME) / 255.0;
@@ -332,7 +401,8 @@ double Media_WINAMP_GetVolume(void) {
 	return vol;
 }
 
-void Media_WINAMP_SetVolume(double vol) {
+void Media_WINAMP_SetVolume(double vol) 
+{
 	if (!MP3_WINAMP_IsPlayerRunning())
 		return;
 
@@ -350,14 +420,15 @@ void MP3_WINAMP_Shutdown(void)
 {
 }
 
-const mp3_player_t mp3_player_winamp = {
-	/* Messages */
-	"WINAMP", // PlayerName_AllCaps
-	"Winamp", // PlayerName_LeadingCaps
-	"winamp", // PlayerName_NoCaps
+const mp3_player_t mp3_player_winamp = 
+{
+	// Messages
+	"WINAMP",	// PlayerName_AllCaps
+	"Winamp",	// PlayerName_LeadingCaps
+	"winamp",	// PlayerName_NoCaps
 	MP3_WINAMP, // Type
 
-	/* Functions */
+	// Functions 
 	MP3_WINAMP_Init, 
 	MP3_WINAMP_Shutdown, 
 
@@ -389,13 +460,14 @@ const mp3_player_t mp3_player_winamp = {
 	Media_WINAMP_GetVolume,
 	Media_WINAMP_SetVolume,
 
-	/* Macro's */
+	// Macros 
 	MP3_WINAMP_Macro_MP3Info, 
 };
 
 #else
 
-const mp3_player_t mp3_player_winamp = {
+const mp3_player_t mp3_player_winamp = 
+{
 	"NONE",   // PlayerName_AllCaps  
 	"None",   // PlayerName_LeadingCaps
 	"none",   // PlayerName_NoCaps 
