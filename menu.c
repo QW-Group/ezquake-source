@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.89 2007-10-18 05:25:29 dkure Exp $
+	$Id: menu.c,v 1.90 2007-10-18 14:02:53 dkure Exp $
 
 */
 
@@ -1261,7 +1261,8 @@ void M_MP3_Control_Draw (void) {
 
 
 	if (!MP3_IsActive()) {
-		M_PrintWhite((320 - 24 * 8) >> 1, M_MP3_CONTROL_HEADINGROW + 40, "MP3 LIBRARIES NOT FOUND");
+		s = va("%s LIBRARIES NOT FOUND", mp3_player->PlayerName_AllCaps);
+		M_PrintWhite((320 - 24 * 8) >> 1, M_MP3_CONTROL_HEADINGROW + 40, s);
 		return;
 	}
 
