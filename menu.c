@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.88 2007-10-17 17:06:08 dkure Exp $
+	$Id: menu.c,v 1.89 2007-10-18 05:25:29 dkure Exp $
 
 */
 
@@ -39,7 +39,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu_proxy.h"
 #include "menu_options.h"
 #include "menu_ingame.h"
-#include "mediaplugins.h"
 #include "EX_FileList.h"
 #include "help.h"
 #include "utils.h"
