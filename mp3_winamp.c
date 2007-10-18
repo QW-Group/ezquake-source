@@ -1,3 +1,25 @@
+/*
+
+Copyright (C) 2001-2002       A Nourai
+Plugable Support (2007)       P Archer
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the included (GNU.txt) GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: mp3_winamp.c,v 1.2 2007-10-18 12:50:00 dkure Exp $
+*/
 
 #include "quakedef.h"
 #include "mp3_player.h"
@@ -325,54 +347,54 @@ void MP3_WINAMP_Shutdown(void) {
 
 const mp3_player_t mp3_player_audacious = {
 	/* Messages */
-	.PlayerName_AllCaps      = "WINAMP",
-	.PlayerName_LeadingCaps  = "Winamp",
-	.PlayerName_NoCaps       = "winamp",
-	.Type                    = MP3_WINAMP,
+	"WINAMP", // PlayerName_AllCaps
+	"Winamp", // PlayerName_LeadingCaps
+	"winamp", // PlayerName_NoCaps
+	MP3_WINAMP, // Type
 
 	/* Functions */
-	.Init            = MP3_WINAMP_Init, 
-	.Shutdown        = MP3_WINAMP_Shutdown, 
+	MP3_WINAMP_Init, 
+	MP3_WINAMP_Shutdown, 
 
-	.IsActive        = MP3_WINAMP_IsActive, 
-	.IsPlayerRunning = MP3_WINAMP_IsPlayerRunning, 
-	.GetStatus       = MP3_WINAMP_GetStatus, 
-	.GetPlaylistInfo = MP3_WINAMP_GetPlaylistInfo, 
-	.GetPlaylist     = MP3_WINAMP_GetPlaylist, 
-	.GetOutputtime   = MP3_WINAMP_GetOutputtime, 
-	.GetToggleState  = MP3_WINAMP_GetToggleState, 
+	MP3_WINAMP_IsActive, 
+	MP3_WINAMP_IsPlayerRunning, 
+	MP3_WINAMP_GetStatus, 
+	MP3_WINAMP_GetPlaylistInfo, 
+	MP3_WINAMP_GetPlaylist, 
+	MP3_WINAMP_GetOutputtime, 
+	MP3_WINAMP_GetToggleState, 
 
-	.PrintPlaylist_f = MP3_WINAMP_PrintPlaylist_f, 
-	.PlayTrackNum_f  = MP3_WINAMP_PlayTrackNum_f, 
-	.LoadPlaylist_f  = MP3_WINAMP_LoadPlaylist_f, 
-	.Next_f          = MP3_WINAMP_Next_f, 
-	.FastForward_f   = MP3_WINAMP_FastForward_f, 
-	.Rewind_f        = MP3_WINAMP_Rewind_f, 
-	.Prev_f          = MP3_WINAMP_Prev_f, 
-	.Play_f          = MP3_WINAMP_Play_f, 
-	.Pause_f         = MP3_WINAMP_Pause_f, 
-	.Stop_f          = MP3_WINAMP_Stop_f, 
-	.Execute_f       = MP3_WINAMP_Execute_f, 
-	.ToggleRepeat_f  = MP3_WINAMP_ToggleRepeat_f, 
-	.Repeat_f        = MP3_WINAMP_Repeat_f, 
-	.ToggleShuffle_f = MP3_WINAMP_ToggleShuffle_f, 
-	.Shuffle_f       = MP3_WINAMP_Shuffle_f, 
-	.FadeOut_f       = MP3_WINAMP_FadeOut_f, 
+	MP3_WINAMP_PrintPlaylist_f, 
+	MP3_WINAMP_PlayTrackNum_f, 
+	MP3_WINAMP_LoadPlaylist_f, 
+	MP3_WINAMP_Next_f, 
+	MP3_WINAMP_FastForward_f, 
+	MP3_WINAMP_Rewind_f, 
+	MP3_WINAMP_Prev_f, 
+	MP3_WINAMP_Play_f, 
+	MP3_WINAMP_Pause_f, 
+	MP3_WINAMP_Stop_f, 
+	MP3_WINAMP_Execute_f, 
+	MP3_WINAMP_ToggleRepeat_f, 
+	MP3_WINAMP_Repeat_f, 
+	MP3_WINAMP_ToggleShuffle_f, 
+	MP3_WINAMP_Shuffle_f, 
+	MP3_WINAMP_FadeOut_f, 
 
-	.GetVolume       = Media_WINAMP_GetVolume,
-	.SetVolume       = Media_WINAMP_SetVolume,
+	Media_WINAMP_GetVolume,
+	Media_WINAMP_SetVolume,
 
 	/* Macro's */
-	.Macro_MP3Info   = MP3_WINAMP_Macro_MP3Info, 
+	MP3_WINAMP_Macro_MP3Info, 
 };
 
 #else
 
 const mp3_player_t mp3_player_winamp = {
-	.PlayerName_AllCaps      = "NONE",
-	.PlayerName_LeadingCaps  = "None",
-	.PlayerName_NoCaps       = "none",
-	.Type                    = MP3_NONE,
+	"NONE",   // PlayerName_AllCaps  
+	"None",   // PlayerName_LeadingCaps
+	"none",   // PlayerName_NoCaps 
+	MP3_NONE, // Type
 };
 
 #endif // WITH_WINAMP

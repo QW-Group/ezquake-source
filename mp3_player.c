@@ -1,6 +1,7 @@
 /*
 
 Copyright (C) 2001-2002       A Nourai
+Plugable MP3 support (2007)   P Archer
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.26 2007-10-17 17:08:26 dkure Exp $
+	$Id: mp3_player.c,v 1.27 2007-10-18 12:50:00 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -31,25 +32,26 @@ cvar_t mp3_scrolltitle = {"mp3_scrolltitle", "1"};
 cvar_t mp3_showtime = {"mp3_showtime", "1"};
 
 const mp3_player_t mp3_player_none = {
-	.PlayerName_AllCaps      = "NONE",
-	.PlayerName_LeadingCaps  = "None",
-	.PlayerName_NoCaps       = "none",
-	.Type                    = MP3_NONE,
+	"NONE",   // PlayerName_AllCaps  
+	"None",   // PlayerName_LeadingCaps
+	"none",   // PlayerName_NoCaps 
+	MP3_NONE, // Type
 };
 
 /* TODO: These could be set via a cvar_t */
 #ifdef WITH_WINAMP
 const mp3_player_t *mp3_player = &mp3_player_winamp;
 #else
+#ifdef WITH_AUDACIOUS
+// AUDACIOUS is backwards compatible, but libraries are still needed
+const mp3_player_t *mp3_player = &mp3_player_audacious;
+#else
 #ifdef WITH_XMMS
 const mp3_player_t *mp3_player = &mp3_player_xmms;
 #else
-#ifdef WITH_AUDACIOUS
-const mp3_player_t *mp3_player = &mp3_player_audacious;
-#else
 const mp3_player_t *mp3_player = &mp3_player_none;
-#endif // WITH_AUDACIOUS
 #endif // WITH_XMMS
+#endif // WITH_AUDACIOUS
 #endif // WITH_WINAMP
 
 

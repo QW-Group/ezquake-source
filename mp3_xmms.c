@@ -1,3 +1,25 @@
+/*
+
+Copyright (C) 2001-2002       A Nourai
+Audacious Control (2007)      P Archer
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the included (GNU.txt) GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: mp3_xmms.c,v 1.2 2007-10-18 12:50:00 dkure Exp $
+*/
 
 #include <sys/wait.h>
 #include <sys/types.h> // fork, execv, usleep
@@ -448,105 +470,105 @@ void Media_XMMS_SetVolume(double vol) {
 #ifdef WITH_XMMS
 const mp3_player_t mp3_player_xmms = {
 	/* Messages */
-	.PlayerName_AllCaps      = "XMMS",
-	.PlayerName_LeadingCaps  = "Xmms",
-	.PlayerName_NoCaps       = "xmms",
-	.Type                    = MP3_XMMS,
+	"XMMS",   // PlayerName_AllCaps
+	"Xmms",   // PlayerName_LeadingCaps  
+	"xmms",   // PlayerName_NoCaps 
+	MP3_XMMS,
 
 	/* Functions */
-	.Init            = MP3_XMMS_Init, 
-	.Shutdown        = MP3_XMMS_Shutdown, 
+	MP3_XMMS_Init,
+	MP3_XMMS_Shutdown,
 
-	.IsActive        = MP3_XMMS_IsActive, 
-	.IsPlayerRunning = MP3_XMMS_IsPlayerRunning, 
-	.GetStatus       = MP3_XMMS_GetStatus, 
-	.GetPlaylistInfo = MP3_XMMS_GetPlaylistInfo, 
-	.GetPlaylist     = NULL, 
-	.GetOutputtime   = MP3_XMMS_GetOutputtime, 
-	.GetToggleState  = MP3_XMMS_GetToggleState, 
+	MP3_XMMS_IsActive,
+	MP3_XMMS_IsPlayerRunning,
+	MP3_XMMS_GetStatus,
+	MP3_XMMS_GetPlaylistInfo,
+	NULL, 						// GetPlaylist
+	MP3_XMMS_GetOutputtime,
+	MP3_XMMS_GetToggleState,
 
-	.PrintPlaylist_f = MP3_XMMS_PrintPlaylist_f, 
-	.PlayTrackNum_f  = MP3_XMMS_PlayTrackNum_f, 
-	.LoadPlaylist_f  = MP3_XMMS_LoadPlaylist_f, 
-	.Next_f          = MP3_XMMS_Next_f, 
-	.FastForward_f   = MP3_XMMS_FastForward_f, 
-	.Rewind_f        = MP3_XMMS_Rewind_f, 
-	.Prev_f          = MP3_XMMS_Prev_f, 
-	.Play_f          = MP3_XMMS_Play_f, 
-	.Pause_f         = MP3_XMMS_Pause_f, 
-	.Stop_f          = MP3_XMMS_Stop_f, 
-	.Execute_f       = MP3_XMMS_Execute_f, 
-	.ToggleRepeat_f  = MP3_XMMS_ToggleRepeat_f, 
-	.Repeat_f        = MP3_XMMS_Repeat_f, 
-	.ToggleShuffle_f = MP3_XMMS_ToggleShuffle_f, 
-	.Shuffle_f       = MP3_XMMS_Shuffle_f, 
-	.FadeOut_f       = MP3_XMMS_FadeOut_f, 
+	MP3_XMMS_PrintPlaylist_f,
+	MP3_XMMS_PlayTrackNum_f,
+	MP3_XMMS_LoadPlaylist_f,
+	MP3_XMMS_Next_f,
+	MP3_XMMS_FastForward_f,
+	MP3_XMMS_Rewind_f,
+	MP3_XMMS_Prev_f,
+	MP3_XMMS_Play_f,
+	MP3_XMMS_Pause_f,
+	MP3_XMMS_Stop_f,
+	MP3_XMMS_Execute_f,
+	MP3_XMMS_ToggleRepeat_f, 
+	MP3_XMMS_Repeat_f, 
+	MP3_XMMS_ToggleShuffle_f, 
+	MP3_XMMS_Shuffle_f, 
+	MP3_XMMS_FadeOut_f, 
 
-	.GetVolume       = Media_XMMS_GetVolume,
-	.SetVolume       = Media_XMMS_SetVolume,
+	Media_XMMS_GetVolume,
+	Media_XMMS_SetVolume,
 
 	/* Macro's */
-	.Macro_MP3Info   = MP3_XMMS_Macro_MP3Info, 
+	MP3_XMMS_Macro_MP3Info, 
 };
 
 #else
 const mp3_player_t mp3_player_xmms = {
-	.PlayerName_AllCaps      = "NONE",
-	.PlayerName_LeadingCaps  = "None",
-	.PlayerName_NoCaps       = "none",
-	.Type          = MP3_NONE,
+	"NONE",   // PlayerName_AllCaps  
+	"None",   // PlayerName_LeadingCaps
+	"none",   // PlayerName_NoCaps 
+	MP3_NONE, // Type
 };
 #endif // WITH_XMMS
 
 #ifdef WITH_AUDACIOUS
 const mp3_player_t mp3_player_audacious = {
 	/* Messages */
-	.PlayerName_AllCaps      = "AUDACIOUS",
-	.PlayerName_LeadingCaps  = "Audacious",
-	.PlayerName_NoCaps       = "audacious",
-	.Type                    = MP3_AUDACIOUS,
+	"AUDACIOUS", // PlayerName_AllCaps
+	"Audacious", // PlayerName_LeadingCaps  
+	"audacious", // PlayerName_NoCaps       
+	MP3_AUDACIOUS, // Type                    
 
 	/* Functions */
-	.Init            = MP3_AUDACIOUS_Init, 
-	.Shutdown        = MP3_XMMS_Shutdown, 
+	MP3_AUDACIOUS_Init, 
+	MP3_XMMS_Shutdown, 
 
-	.IsActive        = MP3_XMMS_IsActive, 
-	.IsPlayerRunning = MP3_XMMS_IsPlayerRunning, 
-	.GetStatus       = MP3_XMMS_GetStatus, 
-	.GetPlaylistInfo = MP3_XMMS_GetPlaylistInfo, 
-	.GetPlaylist     = NULL, 
-	.GetOutputtime   = MP3_XMMS_GetOutputtime, 
-	.GetToggleState  = MP3_XMMS_GetToggleState, 
+	MP3_XMMS_IsActive, 
+	MP3_XMMS_IsPlayerRunning, 
+	MP3_XMMS_GetStatus, 
+	MP3_XMMS_GetPlaylistInfo, 
+	NULL, 						// GetPlaylist
+	MP3_XMMS_GetOutputtime, 
+	MP3_XMMS_GetToggleState, 
 
-	.PrintPlaylist_f = MP3_XMMS_PrintPlaylist_f, 
-	.PlayTrackNum_f  = MP3_XMMS_PlayTrackNum_f, 
-	.LoadPlaylist_f  = MP3_XMMS_LoadPlaylist_f, 
-	.Next_f          = MP3_XMMS_Next_f, 
-	.FastForward_f   = MP3_XMMS_FastForward_f, 
-	.Rewind_f        = MP3_XMMS_Rewind_f, 
-	.Prev_f          = MP3_XMMS_Prev_f, 
-	.Play_f          = MP3_XMMS_Play_f, 
-	.Pause_f         = MP3_XMMS_Pause_f, 
-	.Stop_f          = MP3_XMMS_Stop_f, 
-	.Execute_f       = MP3_AUDACIOUS_Execute_f, 
-	.ToggleRepeat_f  = MP3_XMMS_ToggleRepeat_f, 
-	.Repeat_f        = MP3_XMMS_Repeat_f, 
-	.ToggleShuffle_f = MP3_XMMS_ToggleShuffle_f, 
-	.Shuffle_f       = MP3_XMMS_Shuffle_f, 
-	.FadeOut_f       = MP3_XMMS_FadeOut_f, 
+	MP3_XMMS_PrintPlaylist_f, 
+	MP3_XMMS_PlayTrackNum_f, 
+	MP3_XMMS_LoadPlaylist_f, 
+	MP3_XMMS_Next_f, 
+	MP3_XMMS_FastForward_f, 
+	MP3_XMMS_Rewind_f, 
+	MP3_XMMS_Prev_f, 
+	MP3_XMMS_Play_f, 
+	MP3_XMMS_Pause_f, 
+	MP3_XMMS_Stop_f, 
+	MP3_AUDACIOUS_Execute_f, 
+	MP3_XMMS_ToggleRepeat_f, 
+	MP3_XMMS_Repeat_f, 
+	MP3_XMMS_ToggleShuffle_f, 
+	MP3_XMMS_Shuffle_f, 
+	MP3_XMMS_FadeOut_f, 
 
-	.GetVolume       = Media_AUDACIOUS_GetVolume,
-	.SetVolume       = Media_XMMS_SetVolume,
+	Media_AUDACIOUS_GetVolume,
+	Media_XMMS_SetVolume,
 
 	/* Macro's */
-	.Macro_MP3Info   = MP3_XMMS_Macro_MP3Info, 
+	MP3_XMMS_Macro_MP3Info, 
 };
 
 #else
 const mp3_player_t mp3_player_audacious = {
-	.PlayerName_AllCaps      = "NONE",
-	.PlayerName_LeadingCaps  = "None",
-	.PlayerName_NoCaps       = "none",
-	.Type                    = MP3_NONE,
+	"NONE",   // PlayerName_AllCaps  
+	"None",   // PlayerName_LeadingCaps
+	"none",   // PlayerName_NoCaps 
+	MP3_NONE, // Type
 };
 #endif // WITH_AUDACIOUS
