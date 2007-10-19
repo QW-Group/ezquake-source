@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.28 2007-10-18 14:06:01 dkure Exp $
+	$Id: mp3_player.c,v 1.29 2007-10-19 04:26:59 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -236,27 +236,6 @@ void Media_SetVolume_f(void) {
 	}
 }
 
-#else
-
-void MP3_Init(void) {}
-
-#endif
-
-
-#ifdef __APPLE__
-qbool MP3_GetOutputtime (int *elapsed, int *total)  {
-	return false;
-}
-
-int MP3_GetStatus(void) {
-	return -1;
-}
-
-char *MP3_Macro_MP3Info(void) {
-	return "";
-}
-#endif
-
 int MP3_CheckFunction(qbool PrintWarning) {
 	if (!mp3_player) {
 		Sys_Error("MP3 player control has been corrupted\n");
@@ -429,3 +408,24 @@ void Media_SetVolume(double vol) {
 		return;
 	mp3_player->SetVolume(vol);
 }
+
+#else 
+
+void MP3_Init(void) {}
+void MP3_Shutdown(void) {}
+
+#ifdef __APPLE__
+qbool MP3_GetOutputtime (int *elapsed, int *total)  {
+	return false;
+}
+
+int MP3_GetStatus(void) {
+	return -1;
+}
+
+char *MP3_Macro_MP3Info(void) {
+	return "";
+}
+#endif // __APPLE__
+
+#endif // WITH_MP3_PLAYER
