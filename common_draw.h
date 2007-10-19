@@ -26,8 +26,11 @@ mpic_t *CachePic_Find(const char *path);
 mpic_t* CachePic_Add(const char *path, mpic_t *pic);
 void CachePics_DeInit(void);
 
-void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int gametime);
-void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int gametime);
+int SCR_GetClockStringWidth(const char *s, qbool big, float scale);
+int SCR_GetClockStringHeight(qbool big, float scale);
+const char* SCR_GetTimeString(int timetype, const char *format);
+void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, const char *t);
+void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, const char *t);
 void SCR_NetStats(int x, int y, float period);
 void SCR_DrawHUDSpeed (int x, int y, int width, int height, 
 					 int type, 

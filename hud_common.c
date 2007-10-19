@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.159 2007-10-17 17:06:08 dkure Exp $
+	$Id: hud_common.c,v 1.160 2007-10-19 23:43:24 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -533,6 +533,15 @@ void SCR_HUD_DrawPing(hud_t *hud)
         Draw_String(x, y, buf);
 }
 
+static const char *SCR_HUD_ClockFormat(int format)
+{
+	switch (format) {
+		case 1: return "%I:%M %p";
+		case 2: return "%I:%M:%S %p";
+		default: case 0: return "%H:%M:%S";
+	}
+}
+
 //---------------------
 //
 // draw HUD clock
@@ -541,12 +550,14 @@ void SCR_HUD_DrawClock(hud_t *hud)
 {
     int width, height;
     int x, y;
+	const char *t;
 
     static cvar_t
         *hud_clock_big = NULL,
         *hud_clock_style,
         *hud_clock_blink,
-		*hud_clock_scale;
+		*hud_clock_scale,
+		*hud_clock_format;
 
     if (hud_clock_big == NULL)    // first time
     {
@@ -554,25 +565,19 @@ void SCR_HUD_DrawClock(hud_t *hud)
         hud_clock_style = HUD_FindVar(hud, "style");
         hud_clock_blink = HUD_FindVar(hud, "blink");
 		hud_clock_scale = HUD_FindVar(hud, "scale");
+		hud_clock_format= HUD_FindVar(hud, "format");
     }
 
-    if (hud_clock_big->value)
-    {
-        width = (24+24+16+24+24+16+24+24)*hud_clock_scale->value;
-        height = 24*hud_clock_scale->value;
-    }
-    else
-    {
-        width = (8*8)*hud_clock_scale->value;
-        height = 8*hud_clock_scale->value;
-    }
+	t = SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
+	width = SCR_GetClockStringWidth(t, hud_clock_big->integer, hud_clock_scale->value);
+	height = SCR_GetClockStringHeight(hud_clock_big->integer, hud_clock_scale->value);
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         if (hud_clock_big->value)
-            SCR_DrawBigClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, TIMETYPE_CLOCK);
+            SCR_DrawBigClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, t);
         else
-            SCR_DrawSmallClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, TIMETYPE_CLOCK);
+            SCR_DrawSmallClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, t);
     }
 }
 
@@ -619,6 +624,7 @@ void SCR_HUD_DrawGameClock(hud_t *hud)
     int width, height;
     int x, y;
 	int timetype;
+	const char *t;
 
     static cvar_t
         *hud_gameclock_big = NULL,
@@ -636,25 +642,17 @@ void SCR_HUD_DrawGameClock(hud_t *hud)
 		hud_gameclock_scale = HUD_FindVar(hud, "scale");
     }
 
-    if (hud_gameclock_big->value)
-    {
-        width = (24+24+16+24+24)*hud_gameclock_scale->value;
-        height = 24*hud_gameclock_scale->value;
-    }
-    else
-    {
-        width = (5*8)*hud_gameclock_scale->value;
-        height = 8*hud_gameclock_scale->value;
-    }
-
 	timetype = (hud_gameclock_countdown->value) ? TIMETYPE_GAMECLOCKINV : TIMETYPE_GAMECLOCK;
+	t = SCR_GetTimeString(timetype, NULL);
+	width = SCR_GetClockStringWidth(t, hud_gameclock_big->integer, hud_gameclock_scale->value);
+	height = SCR_GetClockStringHeight(hud_gameclock_big->integer, hud_gameclock_scale->value);
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         if (hud_gameclock_big->value)
-            SCR_DrawBigClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, timetype);
+            SCR_DrawBigClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, t);
         else
-            SCR_DrawSmallClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, timetype);
+            SCR_DrawSmallClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, t);
     }
 }
 
@@ -668,6 +666,7 @@ void SCR_HUD_DrawDemoClock(hud_t *hud)
 	int height = 0;
     int x = 0;
 	int y = 0;
+	const char *t;
     static cvar_t
         *hud_democlock_big = NULL,
         *hud_democlock_style,
@@ -688,23 +687,16 @@ void SCR_HUD_DrawDemoClock(hud_t *hud)
 		hud_democlock_scale = HUD_FindVar(hud, "scale");
     }
 
-    if (hud_democlock_big->value)
-    {
-        width = (24+24+16+24+24)*hud_democlock_scale->value;
-        height = 24*hud_democlock_scale->value;
-    }
-    else
-    {
-        width = (5*8)*hud_democlock_scale->value;
-        height = 8*hud_democlock_scale->value;
-    }
+	t = SCR_GetTimeString(TIMETYPE_DEMOCLOCK, NULL);
+	width = SCR_GetClockStringWidth(t, hud_democlock_big->integer, hud_democlock_scale->value);
+	height = SCR_GetClockStringHeight(hud_democlock_big->integer, hud_democlock_scale->value);
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         if (hud_democlock_big->value)
-            SCR_DrawBigClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, TIMETYPE_DEMOCLOCK);
+            SCR_DrawBigClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, t);
         else
-            SCR_DrawSmallClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, TIMETYPE_DEMOCLOCK);
+            SCR_DrawSmallClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, t);
     }
 }
 
@@ -6101,6 +6093,7 @@ void CommonDraw_Init(void)
         "style",    "0",
 		"scale",    "1",
         "blink",    "1",
+		"format",   "0",
         NULL);
 
     // init democlock

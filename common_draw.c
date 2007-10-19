@@ -1,15 +1,16 @@
 /*
-	$Id: common_draw.c,v 1.28 2007-10-06 16:04:30 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.29 2007-10-19 23:43:24 johnnycz Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
 
+#include <time.h>
 #include "quakedef.h"
 #include "localtime.h"
 #include "common_draw.h"
 #include "stats_grid.h"
 #include "utils.h"
-
+#include "Ctrl.h"
 
 #if 0
 void Draw_CenterString (int y, char *str)
@@ -720,10 +721,17 @@ void SCR_NetStats(int x, int y, float period)
     y+=8;
 }
 
-char* SCR_GetTime (SYSTEMTIME *tm)
+const char* SCR_GetTime (const char *format)
 {
-	static char buf[32];
-	snprintf(buf, sizeof (buf), "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
+	static char buf[128];
+	time_t t;
+	struct tm *ptm;
+
+	time (&t);
+	ptm = localtime (&t);
+	if (!ptm) return "-:-";
+	if (!strftime(buf, sizeof(buf)-1, format, ptm)) return "-:-";
+	//snprintf(buf, sizeof (buf), "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
 	return buf;
 }
 
@@ -749,30 +757,58 @@ char* SCR_GetDemoTime()
 	return str;
 }
 
+int SCR_GetClockStringWidth(const char *s, qbool big, float scale)
+{
+	int w = 0;
+	if (big) {
+		while (*s) {
+			w += (*s++ == ':') ? (16 * scale) : (24 * scale);
+		}
+	} else {
+		w = strlen(s) * LETTERWIDTH * scale;
+	}
+	return w;
+}
+
+int SCR_GetClockStringHeight(qbool big, float scale)
+{
+	if (big) return (24 * scale);
+	else return (LETTERWIDTH * scale);
+}
+
+const char* SCR_GetTimeString(int timetype, const char *format)
+{
+	switch (timetype) {
+		case TIMETYPE_GAMECLOCK:
+		case TIMETYPE_GAMECLOCKINV:
+			return SCR_GetGameTime(timetype);
+
+		case TIMETYPE_DEMOCLOCK:
+			return SCR_GetDemoTime();
+
+		case TIMETYPE_CLOCK: default:
+			return SCR_GetTime(format);
+	}
+}
+
+static qbool SCR_BlinkNow(void)
+{
+	SYSTEMTIME tm;
+
+	GetLocalTime(&tm);
+	return tm.wMilliseconds < 500;
+}
+
 // ------------------
 // draw BIG clock
 // style:
 //  0 - normal
 //  1 - red
-void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int timetype)
+void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, const char *t)
 {
     extern  mpic_t  *sb_nums[2][11];
     extern  mpic_t  *sb_colon/*, *sb_slash*/;
-	SYSTEMTIME tm;
-    char *t;
-
-	GetLocalTime(&tm); // needed here for colon blinking
-
-	switch (timetype) {
-		case TIMETYPE_GAMECLOCK:
-		case TIMETYPE_GAMECLOCKINV:
-			t = SCR_GetGameTime(timetype); break;
-		case TIMETYPE_DEMOCLOCK:
-			t = SCR_GetDemoTime(); break;
-		case TIMETYPE_CLOCK:
-		default:
-			t = SCR_GetTime(&tm); break;
-	}
+	qbool lblink = SCR_BlinkNow();
 
     if (style > 1)  style = 1;
     if (style < 0)  style = 0;
@@ -786,7 +822,7 @@ void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int timet
         }
         else if (*t == ':')
         {
-            if (tm.wMilliseconds < 500  ||  !blink)
+            if (lblink || !blink)
 				Draw_STransPic (x, y, sb_colon, scale);
 
 			x += 16*scale;
@@ -804,46 +840,34 @@ void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int timet
 //  1 - small red
 //  2 - small yellow/white
 //  3 - small yellow/red
-void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int timetype)
+void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, const char *t)
 {
-    char *t;
-	SYSTEMTIME tm;
-
-	GetLocalTime(&tm); // needed here for colon blinking
-
-	switch (timetype) {
-		case TIMETYPE_GAMECLOCK:
-		case TIMETYPE_GAMECLOCKINV:
-			t = SCR_GetGameTime(timetype); break;
-		case TIMETYPE_DEMOCLOCK:
-			t = SCR_GetDemoTime(); break;
-		case TIMETYPE_CLOCK:
-		default:
-			t = SCR_GetTime(&tm); break;
-	}
+	qbool lblink = SCR_BlinkNow();
+	int c;
 
     if (style > 3)  style = 3;
     if (style < 0)  style = 0;
 
     while (*t)
     {
-        if (*t >= '0'  &&  *t <= '9')
+		c = (int) *t;
+        if (c >= '0'  &&  c <= '9')
         {
             if (style == 1)
-                *t += 128;
+                c += 128;
             else if (style == 2  ||  style == 3)
-                *t -= 30;
+                c -= 30;
         }
-        else if (*t == ':')
+        else if (c == ':')
         {
             if (style == 1  ||  style == 3)
-                *t += 128;
-            if (tm.wMilliseconds < 500  ||  !blink)
+                c += 128;
+            if (lblink ||  !blink)
                 ;
             else
-                *t = ' ';
+                c = ' ';
         }
-        Draw_SCharacter(x, y, *t, scale);
+        Draw_SCharacter(x, y, c, scale);
         x+= 8*scale;
         t++;
     }
