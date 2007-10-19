@@ -298,14 +298,11 @@ typedef struct pinghost_s
     double stime[6];
 } pinghost;
 
-static int ping_sock, hostsn, ping_finished;
+qbool ping_finished = false;
+static int ping_sock, hostsn;
 static pinghost *hosts;
 
-#ifdef _WIN32
-HANDLE ping_semaphore;
-#else
 sem_t ping_semaphore;
-#endif
 
 DWORD WINAPI PingRecvProc(void *lpParameter)
 {
@@ -670,6 +667,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 	struct sockaddr_in to;
 
 	hosts = (pinghost *)Q_malloc(sizeof(pinghost) * servsn);
+	ping_finished = false;
 
 	hostsn = 0;
 	for (i=0; i < servsn; i++) {
@@ -749,7 +747,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 
 	Sys_MSleep(500); // catch slow packets
 
-	ping_finished = 1; // let thread know we are done
+	ping_finished = true; // let thread know we are done
 	Sys_SemWait(&ping_semaphore);
 	Sys_SemDestroy(&ping_semaphore);
 	closesocket(ping_sock);
