@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.72 2007-10-18 20:06:21 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.73 2007-10-19 21:47:25 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -5214,21 +5214,23 @@ static void EZ_scrollpane_ResizeScrollbars(ez_scrollpane_t *scrollpane)
 	ez_control_t *v_scroll_ctrl		= (ez_control_t *)scrollpane->v_scrollbar;
 	ez_control_t *h_scroll_ctrl		= (ez_control_t *)scrollpane->h_scrollbar;
 
-	qbool size_changed = false;
-	qbool show_v = (scrollpane->ext_flags & always_h_scrollbar) || (scrollpane->int_flags & show_v_scrollbar);
-	qbool show_h = (scrollpane->ext_flags & always_v_scrollbar) || (scrollpane->int_flags & show_h_scrollbar);
+	qbool size_changed	= false;
+	qbool show_v		= (scrollpane->ext_flags & always_h_scrollbar) || (scrollpane->int_flags & show_v_scrollbar);
+	qbool show_h		= (scrollpane->ext_flags & always_v_scrollbar) || (scrollpane->int_flags & show_h_scrollbar);
+	int rh_size_v		= (scrollpane_ctrl->ext_flags & control_resize_v ? scrollpane_ctrl->resize_handle_thickness : 0); 
+	int rh_size_h		= (scrollpane_ctrl->ext_flags & control_resize_h ? scrollpane_ctrl->resize_handle_thickness : 0); 
 
 	EZ_control_SetVisible((ez_control_t *)scrollpane->v_scrollbar, show_v);
 	EZ_control_SetVisible((ez_control_t *)scrollpane->h_scrollbar, show_h);
 
 	// Resize the scrollbars depending on if both are shown or not.
 	EZ_control_SetSize(v_scroll_ctrl,
-		scrollpane->scrollbar_thickness, 
-		scrollpane_ctrl->height - (show_h ? scrollpane->scrollbar_thickness : 0));
+						scrollpane->scrollbar_thickness, 
+						scrollpane_ctrl->height - (show_h ? scrollpane->scrollbar_thickness : 0) - (2 * rh_size_v));
 
 	EZ_control_SetSize(h_scroll_ctrl,
-		h_scroll_ctrl->width - (show_v ? scrollpane->scrollbar_thickness : 0), 
-		scrollpane->scrollbar_thickness);
+						scrollpane_ctrl->width - (show_v ? scrollpane->scrollbar_thickness : 0) - (2 * rh_size_h), 
+						scrollpane->scrollbar_thickness);
 
 	size_changed = (h_scroll_ctrl->prev_width != h_scroll_ctrl->width) || (h_scroll_ctrl->prev_height < h_scroll_ctrl->height) 
 				|| (v_scroll_ctrl->prev_width != v_scroll_ctrl->width) || (v_scroll_ctrl->prev_height < v_scroll_ctrl->height);
@@ -5240,8 +5242,8 @@ static void EZ_scrollpane_ResizeScrollbars(ez_scrollpane_t *scrollpane)
 		// which in turn calls this function again we only change the size of the target to fit
 		// within the scrollbars when the scrollbars actually changed size. Otherwise we'd get a stack overflow.
 		EZ_control_SetSize(scrollpane->target, 
-			scrollpane->target->width  - (show_h ? scrollpane->scrollbar_thickness : 0),
-			scrollpane->target->height - (show_v ? scrollpane->scrollbar_thickness : 0));
+							scrollpane->target->width  - (show_h ? scrollpane->scrollbar_thickness : 0),
+							scrollpane->target->height - (show_v ? scrollpane->scrollbar_thickness : 0));
 	}
 }
 
@@ -5366,13 +5368,14 @@ void EZ_scrollpane_Init(ez_scrollpane_t *scrollpane, ez_tree_t *tree, ez_control
 
 	EZ_control_SetMinVirtualSize(scrollpane_ctrl, 1, 1);
 
+	scrollpane->int_flags |= (show_h_scrollbar | show_v_scrollbar);
+
 	// Create vertical scrollbar.
 	{
 		scrollpane->v_scrollbar = EZ_scrollbar_Create(tree, scrollpane_ctrl, "Vertical scrollbar", "", 0, 0, 10, 10, control_anchor_viewport);
 		EZ_control_SetVisible((ez_control_t *)scrollpane->v_scrollbar, true);
 		EZ_control_SetPosition((ez_control_t *)scrollpane->v_scrollbar, -rh_size_h, rh_size_v);
 		EZ_control_SetAnchor((ez_control_t *)scrollpane->v_scrollbar, (anchor_top | anchor_bottom | anchor_right));
-		EZ_control_SetSize((ez_control_t *)scrollpane->v_scrollbar, 10, scrollpane_ctrl->height - 10 - (2 * rh_size_v));
 
 		EZ_scrollbar_SetTargetIsParent(scrollpane->v_scrollbar, false);
  
@@ -5386,13 +5389,14 @@ void EZ_scrollpane_Init(ez_scrollpane_t *scrollpane, ez_tree_t *tree, ez_control
 		EZ_control_SetVisible((ez_control_t *)scrollpane->h_scrollbar, true);
 		EZ_control_SetPosition((ez_control_t *)scrollpane->h_scrollbar, rh_size_h, -rh_size_v);
 		EZ_control_SetAnchor((ez_control_t *)scrollpane->h_scrollbar, (anchor_left | anchor_bottom | anchor_right));
-		EZ_control_SetSize((ez_control_t *)scrollpane->h_scrollbar, scrollpane_ctrl->width - 10 - (2 * rh_size_h), 10);
-
+		
 		EZ_scrollbar_SetTargetIsParent(scrollpane->h_scrollbar, false);
 		EZ_scrollbar_SetIsVertical(scrollpane->h_scrollbar, false);
 
 		EZ_control_AddChild(scrollpane_ctrl, (ez_control_t *)scrollpane->h_scrollbar);
 	}
+
+	EZ_scrollpane_ResizeScrollbars(scrollpane);
 }
 
 //
@@ -5456,7 +5460,7 @@ int EZ_scrollpane_OnResize(ez_control_t *self)
 	EZ_control_OnResize(self);
 
 	// Resize the scrollbars and target based on the state of the target.
-	//EZ_scrollpane_ResizeScrollbars(scrollpane);
+	EZ_scrollpane_ResizeScrollbars(scrollpane);
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
 	return 0;

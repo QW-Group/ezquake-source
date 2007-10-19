@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.49 2007-10-18 20:06:21 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.50 2007-10-19 21:47:25 cokeman1982 Exp $
 */
 
 //
@@ -408,35 +408,29 @@ ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type, void 
 //
 #ifdef __INTEL_COMPILER
 
-#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, eventhandler, ...)					\
-{																								\
-	int *p = (int *)retval, temp = 0;															\
-	if((ctrl)->event_handlers.eventhandler)														\
-	{																							\
-		if(((eventroot *)ctrl)->override_counts.eventhandler == 1)								\
-			temp = (ctrl)->event_handlers.eventhandler((ez_control_t *)ctrl, __VA_ARGS__);		\
-		else																					\
-			((eventroot *)ctrl)->override_counts.eventhandler--;								\
-	}																							\
-	if(p) (*p) = temp;																			\
+#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, evnthndler, ...)				\
+{																							\
+	int *p = (int *)retval, temp = 0;														\
+	eventroot *c = (eventroot *)ctrl;														\
+	if (c->event_handlers.evnthndler)														\
+	{																						\
+		if (c->override_counts.evnthndler == 1)												\
+		{																					\
+			ez_eventhandler_t *e = c->event_handlers.evnthndler;							\
+			while (e)																		\
+			{																				\
+				EZ_eventhandler_Exec(e, (ez_control_t *)ctrl, __VA_ARGS__);					\
+				e = e->next;																\
+			}																				\
+		}																					\
+		else																				\
+			c->override_counts.evnthndler--;												\
+	}																						\
+	if(p) (*p) = temp;																		\
 }
+
 
 #else
-
-/*
-#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, eventhandler, ...)					\
-{																								\
-	int *p = (int *)retval, temp = 0;															\
-	if((ctrl)->event_handlers.eventhandler)														\
-	{																							\
-		if(((eventroot *)ctrl)->override_counts.eventhandler == 1)								\
-			temp = (ctrl)->event_handlers.eventhandler((ez_control_t *)ctrl, ##__VA_ARGS__);	\
-		else																					\
-			((eventroot *)ctrl)->override_counts.eventhandler--;								\
-	}																							\
-	if(p) (*p) = temp;																			\
-}
-*/
 
 #define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventroot, evnthndler, ...)				\
 {																							\
