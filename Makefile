@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.79 2007-10-18 14:01:22 dkure Exp $
+#	$Id: Makefile,v 1.80 2007-10-19 18:14:16 zwoch Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -28,6 +28,7 @@ ifeq ($(ARCH),x86)
 endif
 ifeq ($(ARCH),ppc)
 	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
+	STRIPFLAGS =
 endif
 
 ifeq ($(OS),linux)
