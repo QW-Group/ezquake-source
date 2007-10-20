@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.89 2007-10-18 05:28:23 dkure Exp $
+    $Id: cmd.c,v 1.90 2007-10-20 17:47:16 borisu Exp $
 */
 
 #ifndef _WIN32
@@ -658,7 +658,22 @@ void Cmd_EditAlias_f (void)
 	Z_Free(s);
 }
 
+static cmd_alias_t* Cmd_AliasCreate (char* name)
+{
+	cmd_alias_t	*a;
+	int key;
 
+	key = Com_HashKey(name) % ALIAS_HASHPOOL_SIZE;
+
+	a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
+	a->next = cmd_alias;
+	cmd_alias = a;
+	a->hash_next = cmd_alias_hash[key];
+	cmd_alias_hash[key] = a;
+
+	strlcpy (a->name, name, sizeof (a->name));
+	return a;
+}
 
 //Creates a new command that executes a command string (possibly ; separated)
 void Cmd_Alias_f (void)
@@ -1968,6 +1983,188 @@ void Cmd_Eval_f(void)
 	}
 }
 
+// QW262 -->
+static qbool do_in(char *buf, char *orig, char *str, int options)
+{
+	if ((options & 2) && strstr(orig, str))
+		return false;
+
+	if (options & 1) {
+		strcat(strcpy(buf, orig),str);
+	} else {
+		strcat(strcpy(buf, str), orig);
+	}
+	return true;
+}
+
+static qbool do_out(char *orig, char *str, int options)
+{
+	char	*p;
+	int		len = strlen(str);
+
+	if (!(p=strstr(orig, str)))
+		return false;
+
+	if (!(options & 1))
+		memmove(p, p+len, strlen(p)+1);
+	return true;
+}
+
+void Cmd_Alias_In_f (void)
+{
+	cmd_alias_t	*alias;
+	cvar_t		*var;
+	char		buf[1024];
+	char		*alias_name;
+	int			options;
+
+	if (Cmd_Argc() < 3 || Cmd_Argc() > 4) {
+		Com_Printf ("alias_in <alias> <cvar> [<options>]\n");
+		return;
+	}
+
+	alias_name = Cmd_Argv(1);
+	alias = Cmd_FindAlias(alias_name);
+	options = atoi(Cmd_Argv(3));
+
+	if (!alias) {
+		if ((options & 8)) {
+			alias = Cmd_AliasCreate(alias_name);
+			if (!alias)
+				return;
+			alias->value = Z_Strdup("");
+		} else {
+			Com_Printf ("alias_in: unknown alias \"%s\"\n", alias_name);
+			return;
+		}
+	}
+
+	var = Cvar_Find(Cmd_Argv(2));
+	if (!var) {
+		Com_Printf ("alias_in: unknown cvar \"%s\"\n", Cmd_Argv(2));
+		return;
+	}
+
+	if (!do_in (buf, alias->value, var->string, options)) {
+		if (options & 4)
+			Com_Printf ("alias_in: already inserted\n");
+		return;
+	}
+
+	Z_Free (alias->value);
+	alias->value = Z_Strdup(buf);
+	if (strchr(buf, '%'))
+		alias->flags |= ALIAS_HAS_PARAMETERS; 
+}
+
+void Cmd_Alias_Out_f (void)
+{
+	cmd_alias_t	*alias;
+	cvar_t		*var;
+	int			options;
+
+	if (Cmd_Argc() < 3 || Cmd_Argc() > 4) {
+		Com_Printf ("alias_out <alias> <cvar> [options]\n");
+		return;
+	}
+
+	options = atoi(Cmd_Argv(3));
+
+	alias = Cmd_FindAlias(Cmd_Argv(1));
+	if (!alias) {
+		Com_Printf ("alias_out: unknown alias \"%s\"\n", Cmd_Argv(1));
+		return;
+	}
+
+	var = Cvar_Find(Cmd_Argv(2));
+	if (!var) {
+		Com_Printf ("alias_out: unknown cvar \"%s\"\n", Cmd_Argv(2));
+		return;
+	}
+
+	if (!do_out (alias->value, var->string, options)) {
+		if (!(options & 2))
+			Com_Printf ("alias_out: not found\n");
+		return;
+	}
+}
+
+void Cmd_Cvar_In_f (void)
+{
+	cvar_t		*var1;
+	cvar_t		*var2;
+	char		buf[1024];
+	char		*var_name;
+	int			options;
+
+	if (Cmd_Argc() < 3 || Cmd_Argc() > 4) {
+		Com_Printf ("cvar_in <cvar1> <cvar2> [<options>]\n");
+		return;
+	}
+
+	var_name = Cmd_Argv(1);
+	options = atoi(Cmd_Argv(3));
+
+	var1 = Cvar_Find(var_name);
+	if (!var1) {
+		if ((options & 8)) {
+			var1 = Cvar_Create (var_name, "", 0);
+		} else {
+			Com_Printf ("cvar_in: unknown cvar \"%s\"\n", var_name);
+			return;
+		}
+	}
+
+	var2 = Cvar_Find(Cmd_Argv(2));
+	if (!var2) {
+		Com_Printf ("cvar_in: unknown cvar \"%s\"\n", Cmd_Argv(2));
+		return;
+	}
+
+	if (!do_in (buf, var1->string, var2->string, options)) {
+		if (options & 4)
+			Com_Printf ("cvar_in: already inserted\n");
+		return;
+	}
+
+	Cvar_Set (var1, buf);
+}
+
+void Cmd_Cvar_Out_f (void)
+{
+	cvar_t		*var1;
+	cvar_t		*var2;
+	char		buf[1024];
+	int			options;
+
+	if (Cmd_Argc()<3 || Cmd_Argc()>4){
+		Com_Printf ("cvar_out <cvar1> <cvar2> [<options>]\n");
+		return;
+	}
+
+	options = atoi(Cmd_Argv(3));
+	var1 = Cvar_Find(Cmd_Argv(1));
+	if (!var1) {
+		Com_Printf ("cvar_out: unknown cvar \"%s\"\n", Cmd_Argv(1));
+		return;
+	}
+
+	var2 = Cvar_Find(Cmd_Argv(2));
+	if (!var2) {
+		Com_Printf ("cvar_out: unknown cvar \"%s\"\n", Cmd_Argv(2));
+		return;
+	}
+
+	strcpy (buf, var1->string);
+	if (!do_out (buf, var2->string, options)) {
+		if (!(options & 2))
+			Com_Printf ("cvar_out: not found\n");
+		return;
+	}
+
+	Cvar_Set (var1, buf);
+}
+// <-- QW262
 #endif /* SERVERONLY */
 
 void Cmd_Init (void)
@@ -1995,6 +2192,12 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("if", Cmd_If_f);
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
 	Cmd_AddCommand ("eval", Cmd_Eval_f);
+// QW262 -->
+	Cmd_AddCommand ("alias_in", Cmd_Alias_In_f);
+	Cmd_AddCommand ("alias_out", Cmd_Alias_Out_f);
+	Cmd_AddCommand ("cvar_in", Cmd_Cvar_In_f);
+	Cmd_AddCommand ("cvar_out", Cmd_Cvar_Out_f);
+// <-- QW262
 #endif
 
 	Cvar_Register(&cl_curlybraces);
