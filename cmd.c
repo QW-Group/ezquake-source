@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.90 2007-10-20 17:47:16 borisu Exp $
+    $Id: cmd.c,v 1.91 2007-10-20 18:33:22 borisu Exp $
 */
 
 #ifndef _WIN32
@@ -1450,7 +1450,8 @@ char *msgtrigger_commands[] = {
                                   "hud262_add","hud262_remove","hud262_position","hud262_bg",
                                   "hud262_move","hud262_width","hud262_alpha","hud262_blink",
                                   "hud262_disable","hud262_enable","hud262_list","hud262_bringtofront",
-                                  "hud_262font","hud262_hover","hud262_button"
+                                  "hud_262font","hud262_hover","hud262_button",
+								  "alias_in", "alias_out", "cvar_in", "cvar_out"
                                   //               ,NULL
                               };
 
@@ -1989,10 +1990,12 @@ static qbool do_in(char *buf, char *orig, char *str, int options)
 	if ((options & 2) && strstr(orig, str))
 		return false;
 
-	if (options & 1) {
-		strcat(strcpy(buf, orig),str);
+	if (options & 1) { // buf size is 1024 both in Cmd_Alias_In_f and Cmd_Cvar_In_f
+		strlcpy(buf, orig, 1024);
+		strlcat(buf, str, 1024);
 	} else {
-		strcat(strcpy(buf, str), orig);
+		strlcpy(buf, str, 1024);
+		strlcat(buf, orig, 1024);
 	}
 	return true;
 }
