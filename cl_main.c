@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.199 2007-10-21 13:56:00 cokeman1982 Exp $
+$Id: cl_main.c,v 1.200 2007-10-21 14:10:19 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -246,11 +246,13 @@ qbool CL_CheckIfQWProtocolHandler()
 	if (RegQueryValueEx(hk, NULL, 0, &type, buf, &len) == ERROR_SUCCESS)
 	{
 		char exe_path[MAX_PATH];
+		char expanded_exe_path[MAX_PATH];
 
 		// Get the long path of the current process.
 		Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
+		ExpandEnvironmentStrings(exe_path, expanded_exe_path, sizeof(expanded_exe_path));
 
-		if (strstr(buf, exe_path))
+		if (strstr(buf, exe_path) || strstr(buf, expanded_exe_path))
 		{
 			CloseHandle(hk);
 			return true;
@@ -258,8 +260,9 @@ qbool CL_CheckIfQWProtocolHandler()
 
 		// Get the short path and try if that matches instead.
 		Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
+		ExpandEnvironmentStrings(exe_path, expanded_exe_path, sizeof(expanded_exe_path));
 
-		if (strstr(buf, exe_path))
+		if (strstr(buf, exe_path) || strstr(buf, expanded_exe_path))
 		{
 			CloseHandle(hk);
 			return true;
