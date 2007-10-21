@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.201 2007-10-21 22:25:28 cokeman1982 Exp $
+$Id: cl_main.c,v 1.202 2007-10-21 22:27:04 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -249,7 +249,7 @@ qbool CL_CheckIfQWProtocolHandler()
 		char expanded_reg_path[MAX_PATH];
 
 		// Expand any environment variables in the reg value so that we get a real path to compare with.
-		ExpandEnvironmentStrings(reg_path, expanded_reg_path, sizeof(expanded_exe_path));
+		ExpandEnvironmentStrings(reg_path, expanded_reg_path, sizeof(expanded_reg_path));
 
 		// Get the long path of the current process.
 		// C:\Program Files\Quake\ezquake-gl.exe
