@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.200 2007-10-21 14:10:19 cokeman1982 Exp $
+$Id: cl_main.c,v 1.201 2007-10-21 22:25:28 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -233,8 +233,8 @@ static void CL_FixupModelNames (void) {
 qbool CL_CheckIfQWProtocolHandler()
 {
 	DWORD type;
-	char buf[1024];
-	int len = sizeof(buf);
+	char reg_path[1024];
+	int len = sizeof(reg_path);
 	HKEY hk;
 
 	if (RegOpenKey(HKEY_CLASSES_ROOT, QW_URL_OPEN_CMD_REGKEY, &hk) != 0)
@@ -243,26 +243,29 @@ qbool CL_CheckIfQWProtocolHandler()
 	}
 
 	// Get the size we need to read.
-	if (RegQueryValueEx(hk, NULL, 0, &type, buf, &len) == ERROR_SUCCESS)
+	if (RegQueryValueEx(hk, NULL, 0, &type, reg_path, &len) == ERROR_SUCCESS)
 	{
 		char exe_path[MAX_PATH];
-		char expanded_exe_path[MAX_PATH];
+		char expanded_reg_path[MAX_PATH];
+
+		// Expand any environment variables in the reg value so that we get a real path to compare with.
+		ExpandEnvironmentStrings(reg_path, expanded_reg_path, sizeof(expanded_exe_path));
 
 		// Get the long path of the current process.
+		// C:\Program Files\Quake\ezquake-gl.exe
 		Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
-		ExpandEnvironmentStrings(exe_path, expanded_exe_path, sizeof(expanded_exe_path));
 
-		if (strstr(buf, exe_path) || strstr(buf, expanded_exe_path))
+		if (strstr(reg_path, exe_path) || strstr(expanded_reg_path, exe_path))
 		{
 			CloseHandle(hk);
 			return true;
 		}
 
 		// Get the short path and try if that matches instead.
+		// C:\Program~1\Quake\ezquake-gl.exe
 		Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
-		ExpandEnvironmentStrings(exe_path, expanded_exe_path, sizeof(expanded_exe_path));
 
-		if (strstr(buf, exe_path) || strstr(buf, expanded_exe_path))
+		if (strstr(reg_path, exe_path) || strstr(expanded_reg_path, exe_path))
 		{
 			CloseHandle(hk);
 			return true;
