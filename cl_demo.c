@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.101 2007-10-16 15:53:34 dkure Exp $
+	$Id: cl_demo.c,v 1.102 2007-10-22 18:52:49 qqshka Exp $
 */
 
 #include <time.h>
@@ -748,11 +748,9 @@ static void CL_WriteStartupData (void)
 
 vfsfile_t *playbackfile = NULL;			// The demo file used for playback.
 
-unsigned char pb_buf[1024*10];			// Playback buffer.
+unsigned char pb_buf[1024*32];			// Playback buffer.
 int		pb_cnt = 0;						// How many bytes we've have in playback buffer.
 qbool	pb_eof = false;					// Have we reached the end of the playback buffer?
-
-unsigned char pb_tmp_buf[sizeof(pb_buf)];// Temp playback buffer used for validating MVD data.
 
 //
 // Inits the demo playback buffer.
@@ -830,26 +828,6 @@ qbool pb_ensure(void)
 	if (cl_shownet.value == 3)
 		Com_Printf(" %d", pb_cnt);
 
-	// Try to decrease the playback buffer.
-
-#if 0 // qqshka: turned it off atm
-
-	if (cls.mvdplayback && pb_cnt > 0)
-	{
-		// Seems theoretical size of one MVD packet is 1400, so 2000 must be safe to parse something.
-		if (pb_cnt > 2000)
-			return true;
-
-		// Peek into the playback buffer.
-		CL_Demo_Read(pb_tmp_buf, pb_cnt, true);
-
-		// Make sure the MVD data is valid.
-		if (ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt))
-			return true;
-	}
-
-#endif
-
 	pb_cnt += pb_raw_read(pb_buf + pb_cnt, max(0, (int)sizeof(pb_buf) - pb_cnt));
 
 	if (pb_cnt == (int)sizeof(pb_buf) || pb_eof)
@@ -858,9 +836,7 @@ qbool pb_ensure(void)
 	// Probably not enough data in buffer, check do we have at least one message in buffer.
 	if (cls.mvdplayback && pb_cnt)
 	{
-		CL_Demo_Read(pb_tmp_buf, pb_cnt, true);
-
-		if(ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt))
+		if(ConsistantMVDData((unsigned char*)pb_buf, pb_cnt))
 			return true;
 	}
 

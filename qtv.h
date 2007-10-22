@@ -13,6 +13,14 @@
 #define QTV_VER_1_2			1.2			// download/chat was added at this point in QTV
 #define QTV_VER_1_3			1.3			// setinfo was added at this point in QTV
 
+// qqshka: Its all messy.
+// For example ezquake (and FTE?) expect maximum message is MSG_BUF_SIZE == 8192 with mvd header which have not fixed size,
+// however fuhquake uses less msg size as I recall.
+// mvd header max size is 10 bytes.
+// 
+// MAX_MVD_SIZE - max size of single mvd message _WITHOUT_ header
+#define	MAX_MVD_SIZE			(MSG_BUF_SIZE - 100)
+
 //======================================
 
 extern		cvar_t	qtv_buffertime;

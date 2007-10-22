@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.18 2007-10-14 18:52:39 qqshka Exp $
+	$Id: qtv.c,v 1.19 2007-10-22 18:52:49 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -72,7 +72,7 @@ int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
 
 		length += lengthofs+4;
 
-		if (length > 1450 && warn)
+		if (length > MAX_MVD_SIZE && warn)
 		{
 			Com_Printf("Corrupt mvd, length: %d\n", length);
 			warn = false;
