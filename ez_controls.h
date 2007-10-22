@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.50 2007-10-19 21:47:25 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.51 2007-10-22 01:17:03 cokeman1982 Exp $
 */
 
 //
@@ -587,7 +587,8 @@ typedef enum ez_control_flags_e
 	control_visible				= (1 << 7),		// Is the control visible?
 	control_scrollable			= (1 << 8),		// Is the control scrollable
 	control_ignore_mouse		= (1 << 9),		// Should the control ignore mouse input?
-	control_anchor_viewport		= (1 << 10)		// Anchor to the visible edges of the controls instead of the virtual edges.
+	control_anchor_viewport		= (1 << 10),	// Anchor to the visible edges of the controls instead of the virtual edges.
+	control_move_parent			= (1 << 11)		// When moving this control, should we also move it's parent?
 } ez_control_flags_t;
 
 #define DEFAULT_CONTROL_FLAGS	(control_enabled | control_focusable | control_contained | control_scrollable | control_visible)
@@ -623,6 +624,9 @@ typedef struct ez_control_s
 
 	int						absolute_x;				// The absolute screen coordinates for the control.
 	int						absolute_y;	
+
+	int						prev_absolute_x;		// Previous absolute position.
+	int						prev_absolute_y;
 	
 	int 					width;					// Size.
 	int						height;
@@ -916,6 +920,11 @@ void EZ_control_AddOnResizeHandleThicknessChanged(ez_control_t *self, ez_eventha
 // Control - Set color of a control.
 //
 void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
+
+//
+// Control - Sets the tab order of a control.
+//
+void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order, qbool update_children);
 
 //
 // Control - Sets the size of a control.

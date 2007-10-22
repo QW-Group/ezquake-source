@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.73 2007-10-19 21:47:25 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.74 2007-10-22 01:17:02 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1237,6 +1237,15 @@ void EZ_control_SetScrollable(ez_control_t *self, qbool scrollable)
 }
 
 //
+// Control - Sets if the control should move it's parent when it moves itself.
+//
+void EZ_control_SetMovesParent(ez_control_t *self, qbool moves_parent)
+{
+	SET_FLAG(self->ext_flags, control_move_parent, moves_parent);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
 // Control - Sets whetever the control should care about mouse input or not.
 //
 void EZ_control_SetIgnoreMouse(ez_control_t *self, qbool ignore_mouse)
@@ -1322,10 +1331,26 @@ void EZ_control_SetAnchor(ez_control_t *self, ez_anchor_t anchor_flags)
 //
 // Control - Sets the tab order of a control.
 //
-void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order)
+void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order, qbool update_children)
 {
+	// TODO : Is this the best way to change the draw order for the children?
+	if (update_children && self->children.count > 0)
+	{
+		ez_dllist_node_t *it	= self->children.head;
+		ez_control_t *child		= (ez_control_t *)it->payload;
+		int draw_order_delta	= draw_order - self->draw_order;
+
+		while (it)
+		{
+			EZ_control_SetDrawOrder(child, draw_order + draw_order_delta, update_children);
+			it = it->next;
+		}
+	}
+
 	self->draw_order = draw_order;
-	EZ_tree_OrderTabList(self->control_tree);
+
+	// TODO : Force teh user to do this explicitly? Because it will be run a lot of times if there's many children. 
+	EZ_tree_OrderDrawList(self->control_tree);
 }
 
 //
@@ -1712,13 +1737,17 @@ int EZ_control_OnVirtualResize(ez_control_t *self)
 // Control - The control was moved.
 //
 int EZ_control_OnMove(ez_control_t *self)
-{
-	ez_control_t *payload	= NULL;
+{	
+	ez_control_t *child		= NULL;
 	ez_dllist_node_t *iter	= self->children.head;
 	qbool anchor_viewport	= (self->ext_flags & control_anchor_viewport);
 	int parent_x			= 0;
 	int parent_y			= 0;
 
+	self->prev_absolute_x = self->absolute_x;
+	self->prev_absolute_y = self->absolute_y;
+
+	// Get the position of the area we're anchoring to. Normal behaviour is to anchor to the virtual area.
 	if (self->parent)
 	{
 		parent_x = anchor_viewport ? self->parent->absolute_x : self->parent->absolute_virtual_x;
@@ -1772,8 +1801,8 @@ int EZ_control_OnMove(ez_control_t *self)
 	// Tell the children we've moved.
 	while(iter)
 	{
-		payload = (ez_control_t *)iter->payload;
-		CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnMove);
+		child = (ez_control_t *)iter->payload;
+		CONTROL_RAISE_EVENT(NULL, child, ez_control_t, OnMove);
 		iter = iter->next;
 	}
 
@@ -1787,7 +1816,7 @@ int EZ_control_OnMove(ez_control_t *self)
 //
 int EZ_control_OnScroll(ez_control_t *self)
 {
-	ez_control_t *payload = NULL;
+	ez_control_t *child = NULL;
 	ez_dllist_node_t *iter = self->children.head;
 
 	self->absolute_virtual_x = self->absolute_x - self->virtual_x;
@@ -1797,9 +1826,9 @@ int EZ_control_OnScroll(ez_control_t *self)
 	// absolute position by telling them they've moved.
 	while(iter)
 	{
-		payload = (ez_control_t *)iter->payload;
-		CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnMove);
-		CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnParentScroll);
+		child = (ez_control_t *)iter->payload;
+		CONTROL_RAISE_EVENT(NULL, child, ez_control_t, OnMove);
+		CONTROL_RAISE_EVENT(NULL, child, ez_control_t, OnParentScroll);
 		iter = iter->next;
 	}
 
@@ -2110,8 +2139,10 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		{
 			// Root control will be moved relative to the screen,
 			// others relative to their parent.
-			int x = self->x + Q_rint(ms->x - ms->x_old);
-			int y = self->y + Q_rint(ms->y - ms->y_old);
+			int m_delta_x = Q_rint(ms->x - ms->x_old);
+			int m_delta_y = Q_rint(ms->y - ms->y_old);
+			int x = self->x + m_delta_x;
+			int y = self->y + m_delta_y;
 
 			// Should the control be contained within it's parent?
 			// Then don't allow the mouse to move outside the parent
@@ -2133,7 +2164,17 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 				}
 			}
 
-			EZ_control_SetPosition(self, x, y);
+			if (self->parent && (self->ext_flags & control_move_parent))
+			{
+				// Move the parent instead of just the control, the parent will in turn move the control.
+				// TODO : Do we need to keep the mouse inside the parents parent here also?
+				EZ_control_SetPosition(self->parent, (self->parent->x + m_delta_x), (self->parent->y + m_delta_y));
+			}
+			else
+			{
+				EZ_control_SetPosition(self, x, y);
+			}
+
 			mouse_handled = true;
 		}
 	}
@@ -4914,11 +4955,21 @@ static void EZ_scrollbar_CalculateSliderSize(ez_scrollbar_t *scrollbar, ez_contr
 
 	if (target)
 	{
-		// Get the percentage of the parent that is shown and calculate the new slider button size from that. 
-		float target_height_ratio	= (target->height / (float)target->virtual_height);
-		int new_slider_height		= max(scrollbar->slider_minsize, Q_rint(target_height_ratio * scrollbar->scroll_area));
+		if (scrollbar->orientation == vertical)
+		{
+			// Get the percentage of the parent that is shown and calculate the new slider button size from that. 
+			float target_height_ratio	= (target->height / (float)target->virtual_height);
+			int new_slider_height		= max(scrollbar->slider_minsize, Q_rint(target_height_ratio * scrollbar->scroll_area));
 
-		EZ_control_SetSize((ez_control_t *)scrollbar->slider, self->width, new_slider_height);
+			EZ_control_SetSize((ez_control_t *)scrollbar->slider, self->width, new_slider_height);
+		}
+		else
+		{
+			float target_width_ratio	= (target->width / (float)target->virtual_width);
+			int new_slider_width		= max(scrollbar->slider_minsize, Q_rint(target_width_ratio * scrollbar->scroll_area));
+
+			EZ_control_SetSize((ez_control_t *)scrollbar->slider, new_slider_width, self->height);
+		}
 	}
 }
 
@@ -4949,7 +5000,7 @@ static void EZ_scrollbar_RepositionScrollButtons(ez_scrollbar_t *scrollbar)
 		EZ_control_SetSize(forward_ctrl, self->width, self->width);
 		EZ_control_SetAnchor(forward_ctrl, anchor_left | anchor_bottom | anchor_right);
 
-		scrollbar->scroll_area = self->height - (forward_ctrl->width + back_ctrl->width);
+		scrollbar->scroll_area = self->height - (forward_ctrl->height + back_ctrl->height);
 	}
 	else
 	{
@@ -4965,7 +5016,7 @@ static void EZ_scrollbar_RepositionScrollButtons(ez_scrollbar_t *scrollbar)
 		EZ_control_SetSize(forward_ctrl, self->height, self->height);
 		EZ_control_SetAnchor(forward_ctrl, anchor_top | anchor_bottom | anchor_right);
 
-		scrollbar->scroll_area = self->width - (forward_ctrl->height + back_ctrl->height);
+		scrollbar->scroll_area = self->width - (forward_ctrl->width + back_ctrl->width);
 	}
 }
 
@@ -5128,6 +5179,8 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	ez_control_t *back_ctrl			= (ez_control_t *)scrollbar->back;
 	ez_control_t *forward_ctrl		= (ez_control_t *)scrollbar->forward;
 	ez_control_t *slider_ctrl		= (ez_control_t *)scrollbar->slider;
+	int m_delta_x					= Q_rint(ms->x - ms->x_old);
+	int m_delta_y					= Q_rint(ms->y - ms->y_old);
 	qbool mouse_handled				= false;
 	qbool mouse_handled_tmp			= false;
 
@@ -5142,7 +5195,7 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 				float scroll_ratio = 0;
 
 				// Reposition the slider within the scrollbar control based on where the mouse moves.
-				int new_y = (ms->y - self->absolute_y);
+				int new_y = slider_ctrl->y + m_delta_y;
 
 				// Only allow moving the scroll slider in the area between the two buttons (the scroll area).
 				clamp(new_y, back_ctrl->height, (self->height - forward_ctrl->height - slider_ctrl->height));
@@ -5152,9 +5205,9 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			}
 			else
 			{
-				int new_x = (ms->x - self->absolute_x);
+				int new_x = slider_ctrl->x + m_delta_x;
 				clamp(new_x, back_ctrl->width, (self->width - forward_ctrl->width - slider_ctrl->width));
-				EZ_control_SetPosition(slider_ctrl, 0, new_x);
+				EZ_control_SetPosition(slider_ctrl, new_x, 0);
 				mouse_handled = true;
 			}
 
@@ -5236,14 +5289,14 @@ static void EZ_scrollpane_ResizeScrollbars(ez_scrollpane_t *scrollpane)
 				|| (v_scroll_ctrl->prev_width != v_scroll_ctrl->width) || (v_scroll_ctrl->prev_height < v_scroll_ctrl->height);
 
 	// Resize the target control so that it doesn't overlap with the scrollbars.
-	if (scrollpane->target && size_changed)
+	if ((scrollpane->target && size_changed) || (scrollpane->target != scrollpane->prev_target))
 	{
 		// Since this resize operation is going to raise a new OnResize event on the target control
 		// which in turn calls this function again we only change the size of the target to fit
-		// within the scrollbars when the scrollbars actually changed size. Otherwise we'd get a stack overflow.
+		// within the scrollbars when the scrollbars actually changed size. Otherwise we'd get an infinite recursion.
 		EZ_control_SetSize(scrollpane->target, 
-							scrollpane->target->width  - (show_h ? scrollpane->scrollbar_thickness : 0),
-							scrollpane->target->height - (show_v ? scrollpane->scrollbar_thickness : 0));
+							(scrollpane_ctrl->width  - (show_h ? scrollpane->scrollbar_thickness : 0) - rh_size_h),
+							(scrollpane_ctrl->height - (show_v ? scrollpane->scrollbar_thickness : 0) - rh_size_v));
 	}
 }
 
@@ -5389,7 +5442,7 @@ void EZ_scrollpane_Init(ez_scrollpane_t *scrollpane, ez_tree_t *tree, ez_control
 		EZ_control_SetVisible((ez_control_t *)scrollpane->h_scrollbar, true);
 		EZ_control_SetPosition((ez_control_t *)scrollpane->h_scrollbar, rh_size_h, -rh_size_v);
 		EZ_control_SetAnchor((ez_control_t *)scrollpane->h_scrollbar, (anchor_left | anchor_bottom | anchor_right));
-		
+
 		EZ_scrollbar_SetTargetIsParent(scrollpane->h_scrollbar, false);
 		EZ_scrollbar_SetIsVertical(scrollpane->h_scrollbar, false);
 
@@ -5479,6 +5532,7 @@ int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
 		EZ_eventhandler_Remove(scrollpane->prev_target->event_handlers.OnResize, EZ_scrollpane_OnTargetResize, false);
 		EZ_eventhandler_Remove(scrollpane->prev_target->event_handlers.OnScroll, EZ_scrollpane_OnTargetScroll, false);
 		EZ_control_RemoveChild(self, scrollpane->target);
+		EZ_control_SetMovesParent(scrollpane->prev_target, false);
 	}
 
 	// Set the new target for the scrollbars so they know what to scroll.
@@ -5497,7 +5551,15 @@ int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
 		EZ_control_SetSize(scrollpane->target, self->width - scrollpane->scrollbar_thickness, self->height - scrollpane->scrollbar_thickness);
 		EZ_control_SetAnchor(scrollpane->target, (anchor_left | anchor_right | anchor_top | anchor_bottom));
 
-		EZ_control_SetDrawOrder(scrollpane->target, ((ez_control_t *)scrollpane)->draw_order + 1);
+		// Make sure the target is drawn infront of the scrollpane.
+		EZ_control_SetDrawOrder(scrollpane->target, ((ez_control_t *)scrollpane)->draw_order + 1, true);
+
+		// When moving the target move the scrollpane with it
+		// and don't allow moving the target inside of the scrollpane.
+		EZ_control_SetMovesParent(scrollpane->target, true);
+
+		// Resize the scrollbars / target to fit properly.
+		EZ_scrollpane_ResizeScrollbars(scrollpane);
 
 		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnResize);
 		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnScroll);
