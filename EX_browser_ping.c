@@ -365,7 +365,6 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     char *icmp_data;
     char *recvbuf;
 
-//    u_long arg;
     int arg2, success;
     struct timeval timeout;
     fd_set fd_set_struct;
@@ -377,7 +376,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
         return 0;
 
     datasize = DEF_PACKET_SIZE;
-    datasize += sizeof(IcmpHeader);  
+    datasize += sizeof(IcmpHeader);
 
     icmp_data = (char *) Q_malloc(MAX_PACKET);
     recvbuf = (char *)Q_malloc(MAX_PACKET);
@@ -387,6 +386,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
         return 0;
     }
   
+	// FIXME: The datasize only sizeof(IcmpHeader) here so fill_icmp_data won't set any of the data "to junk", it will all be 0.
     memset(icmp_data, 0, MAX_PACKET);
     fill_icmp_data(icmp_data, datasize);
 
@@ -394,24 +394,35 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 
     hosts = (pinghost *) Q_malloc(servsn * sizeof(pinghost));
     hostsn = 0;
+
+	// Get the IP address in integer form for all servers.
     for (i=0; i < servsn; i++)
     {
         char buf[50], *tmp;
         int j;
         unsigned int addr;
 
+		// Get the string representation of the ip and strip any port from it.
         strlcpy (buf, servs[i]->display.ip, sizeof (buf));
         tmp = strchr(buf, ':');
-        if (tmp != NULL)
+      
+		if (tmp != NULL)
             *tmp = 0;
+
+		// Get the actual IP address.
         addr = inet_addr(buf);
+
         if (addr == INADDR_NONE)
             continue;
 
-        for (j=0; j < hostsn; j++)
+		// Check if this ip already is in our list.
+        for (j = 0; j < hostsn; j++)
+		{
             if (hosts[j].ip == addr)
                 break;
+		}
 
+		// Add this ip to the list of hosts if it's unique.
         if (j == hostsn)
         {
             hosts[hostsn].phase = 0;
@@ -428,19 +439,23 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     ping_number = 0;
     randomizer = (int)(Sys_DoubleTime() * 10);
 
-    while (1  &&  !abort_ping)
+	// Ping all adresses in the host list we just created.
+    while (1 && !abort_ping)
     {
         int bwrote;
 
         double time = Sys_DoubleTime();
 
-        if (time > lastsenttime + 1.2 * (sb_pingtimeout.value / 1000))
-            // no answers, no pings - finish
+        if (time > (lastsenttime + 1.2 * (sb_pingtimeout.value / 1000)))
+		{
+            // No answers, no pings - finish.
             break;
+		}
 
-        if (time > lastsenttime + interval  &&  ping_number < hostsn * sb_pings.value)
+		// Send a ping request to the current host.
+        if ((time > (lastsenttime + interval)) && (ping_number < (hostsn * sb_pings.value)))
         {
-            // send next ping
+            // Send next ping.
             pinghost * host = &hosts[ping_number % hostsn];
 
             if (host->ping >= 0)
@@ -454,16 +469,14 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
                 ((IcmpHeader*)icmp_data)->randomizer = randomizer;
 
                 ((IcmpHeader*)icmp_data)->i_seq = seq_no++;
-                ((IcmpHeader*)icmp_data)->i_cksum = checksum((USHORT*)icmp_data, 
-                                                             datasize);
+                ((IcmpHeader*)icmp_data)->i_cksum = checksum((USHORT*)icmp_data, datasize);
 
                 memset(&dest, 0, sizeof(dest));
                 dest.sin_addr.s_addr = host->ip;
                 dest.sin_family = AF_INET;
                 dest_ip = inet_ntoa(dest.sin_addr);
 
-                bwrote = sendto(sock,icmp_data,datasize,0,(struct sockaddr*)&dest,
-                                sizeof(dest));
+                bwrote = sendto(sock, icmp_data, datasize, 0, (struct sockaddr*)&dest, sizeof(dest));
 
                 if (bwrote <= 0)
                     host->ping = -1;
@@ -473,11 +486,13 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 
                 lastsenttime = time;
             }
+
             ping_number++;
             ping_pos = min(1, ping_number / (double)(hostsn * sb_pings.value));
         }
 
-        while (1  &&  !abort_ping)
+		// Wait for an answer.
+        while (1 && !abort_ping)
         {
 			int myvar;
             IcmpHeader *icmpanswer;
@@ -491,13 +506,15 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
                 break;
 
             // there's an answer - get it!
-            bread = recvfrom(sock, recvbuf, MAX_PACKET, 0, (struct sockaddr*)&from,
-			     (socklen_t *)&fromlen);
-            if (bread <= 0)
+            bread = recvfrom(sock, recvbuf, MAX_PACKET, 0, (struct sockaddr *)&from, (socklen_t *)&fromlen);
+           
+			if (bread <= 0)
                 continue;
 
             icmpanswer = get_icmp(recvbuf, bread, &from, addr);
-            if (icmpanswer  &&  randomizer == icmpanswer->randomizer)
+
+			// Make sure the reply is ok.
+            if (icmpanswer && (randomizer == icmpanswer->randomizer))
             {
                 int index, phase;
                 unsigned int fromhost;
