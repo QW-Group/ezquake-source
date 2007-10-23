@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.95 2007-10-13 01:59:55 himan Exp $
+    $Id: teamplay.c,v 1.96 2007-10-23 08:51:02 himan Exp $
 */
 
 #include <time.h>
@@ -93,10 +93,10 @@ cvar_t	tp_name_backpack = {"tp_name_backpack", "pack"};
 cvar_t	tp_name_flag = {"tp_name_flag", "flag"};
 cvar_t	tp_name_sentry = {"tp_name_sentry", "sentry gun"};
 cvar_t	tp_name_disp = {"tp_name_disp", "dispenser"};
-cvar_t	tp_name_rune1 = {"tp_name_rune1", "resistance rune"};
-cvar_t	tp_name_rune2 = {"tp_name_rune2", "strength rune"};
-cvar_t	tp_name_rune3 = {"tp_name_rune3", "haste rune"};
-cvar_t	tp_name_rune4 = {"tp_name_rune4", "regeneration rune"};
+cvar_t	tp_name_rune1 = {"tp_name_rune1", "resistance"};
+cvar_t	tp_name_rune2 = {"tp_name_rune2", "strength"};
+cvar_t	tp_name_rune3 = {"tp_name_rune3", "haste"};
+cvar_t	tp_name_rune4 = {"tp_name_rune4", "regeneration"};
 cvar_t	tp_name_teammate = {"tp_name_teammate", ""};
 cvar_t	tp_name_enemy = {"tp_name_enemy", "enemy"};
 cvar_t	tp_name_eyes = {"tp_name_eyes", "eyes"};
@@ -2338,7 +2338,8 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
 				it_rockets|it_cells||it_pack|it_flag)
 
  // tp_took
-#define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack|it_rockets|it_cells|it_mh|it_flag)
+#define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack| \
+				it_rockets|it_cells|it_mh|it_flag|it_runes)//it_rune1|it_rune2|it_rune3|it_rune4
 
 /*
 powerups flag runes players suit armor sentry  mh disp rl lg pack gl sng rockets cells nails
@@ -2347,7 +2348,7 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
  below are defaults for tp_point (what comes up in point. also see tp_pointpriorities to prioritize this list) First items have highest priority (powerups in this case)
 */
 // tp_point
-#define default_pointflags (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
+#define default_pointflags (it_powerups|it_flag|it_rune1|it_rune2|it_rune3|it_rune4|it_players|it_suit|it_armor|it_sentry|it_mh| \
 				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_nails)
 
 int pkflags = default_pkflags;
