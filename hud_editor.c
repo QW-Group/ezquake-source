@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.40 2007-10-18 20:10:37 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.41 2007-10-24 21:21:18 cokeman1982 Exp $
 
 */
 
@@ -1661,7 +1661,7 @@ static hud_grephandle_t *HUD_Editor_CreateGrep(hud_t *hud_element)
 		hud_greps->previous = grep;
 	}
 
-	hud_greps		= grep;
+	hud_greps = grep;
 
 	HUD_Editor_PositionGrep(hud_element, grep);
 
@@ -2574,8 +2574,8 @@ void HUD_Editor_Init(void)
 		EZ_control_AddOnLostFocus(child1, Test_OnLostFocus, NULL);
 		EZ_control_AddOnDraw(child1, Test_OnControlDraw, NULL);
 
-		EZ_control_SetMinVirtualSize(child1, child1->width * 2, child1->height * 2);
-		EZ_control_SetVirtualSize(child1, child1->width, child1->height * 2);
+		EZ_control_SetMinVirtualSize(child1, child1->width * 3, child1->height * 3);
+		//EZ_control_SetVirtualSize(child1, child1->width * 4, child1->height * 2);
 
 		EZ_control_SetBackgroundColor(child1, 150, 150, 0, 100);
 	}
@@ -2661,11 +2661,11 @@ void HUD_Editor_Init(void)
 
 	// Scrollpane
 	{
-		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", 50, 150, 150, 150, control_movable | control_resize_h | control_resize_v | control_resizeable);
+		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", 50, 150, 150, 150, /*control_movable |*/ control_resize_h | control_resize_v | control_resizeable);
 		
 		EZ_control_SetBackgroundColor((ez_control_t *)scrollpane, 255, 0, 0, 100);
 
-		//EZ_scrollpane_SetTarget(scrollpane, child1);
+		EZ_scrollpane_SetTarget(scrollpane, child1);
 	}
 
 #endif 
