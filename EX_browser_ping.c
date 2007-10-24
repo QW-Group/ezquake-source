@@ -359,7 +359,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     pinghost *hosts;
     int i, hostsn;
     struct sockaddr_in dest,from;
-    int bread, datasize;
+    int bread,datasize;
     int fromlen = sizeof(from);
     char *dest_ip;
     char *icmp_data;
@@ -374,20 +374,23 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 
     if (sock < 0)
         return 0;
-	
-    icmp_data = (char *)Q_malloc(MAX_PACKET);
+
+    datasize = DEF_PACKET_SIZE;
+    datasize += sizeof(IcmpHeader);
+
+    icmp_data = (char *) Q_malloc(MAX_PACKET);
     recvbuf = (char *)Q_malloc(MAX_PACKET);
 
     if (!icmp_data)
     {
         return 0;
     }
-
+  
 	// FIXME: The datasize only sizeof(IcmpHeader) here so fill_icmp_data won't set any of the data "to junk", it will all be 0.
     memset(icmp_data, 0, MAX_PACKET);
     fill_icmp_data(icmp_data, datasize);
 
-    success = 0;
+    arg2 = success = 0;
 
     hosts = (pinghost *) Q_malloc(servsn * sizeof(pinghost));
     hostsn = 0;
@@ -667,11 +670,10 @@ void fill_icmp_data(char * icmp_data, int datasize)
   icmp_hdr->i_seq = 0;
   
   datapart = icmp_data + sizeof(IcmpHeader);
-
   //
   // Place some junk in the buffer.
   //
-  memset(datapart, 'E', datasize);
+  memset(datapart,'E', datasize - sizeof(IcmpHeader));
 
 }
  
