@@ -365,7 +365,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     char *icmp_data;
     char *recvbuf;
 
-    int success;
+    int arg2, success;
     struct timeval timeout;
     fd_set fd_set_struct;
 
@@ -383,9 +383,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
         return 0;
     }
 
-	// TODO : This seems to have broken something.
-	datasize = MAX_PACKET - sizeof(IcmpHeader);
-
+	// FIXME: The datasize only sizeof(IcmpHeader) here so fill_icmp_data won't set any of the data "to junk", it will all be 0.
     memset(icmp_data, 0, MAX_PACKET);
     fill_icmp_data(icmp_data, datasize);
 
