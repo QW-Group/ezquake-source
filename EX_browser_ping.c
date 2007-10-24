@@ -383,6 +383,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
         return 0;
     }
 
+	// TODO : This seems to have broken something.
 	datasize = MAX_PACKET - sizeof(IcmpHeader);
 
     memset(icmp_data, 0, MAX_PACKET);
