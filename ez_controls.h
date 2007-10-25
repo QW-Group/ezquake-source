@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.51 2007-10-22 01:17:03 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.52 2007-10-25 03:07:47 cokeman1982 Exp $
 */
 
 //
@@ -218,10 +218,13 @@ void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare co
 
 typedef struct ez_tree_s
 {
-	struct ez_control_s		*root;				// The control tree.
-	ez_dllist_node_t		*focused_node;		// The node of focused control (from the tablist). 
-	ez_double_linked_list_t	drawlist;			// A list with the controls ordered in their drawing order.
-	ez_double_linked_list_t	tablist;			// A list with the controls ordered in their tabbing order.
+	struct ez_control_s		*root;					// The control tree.
+	ez_dllist_node_t		*focused_node;			// The node of focused control (from the tablist). 
+	ez_double_linked_list_t	drawlist;				// A list with the controls ordered in their drawing order.
+	ez_double_linked_list_t	tablist;				// A list with the controls ordered in their tabbing order.
+
+	mouse_state_t			prev_mouse_state;		// The last mouse state we received.
+	double					mouse_pressed_time[9];	// How long the mouse buttons have been pressed. (Used for repeating mouse click events).
 } ez_tree_t;
 
 //
@@ -235,9 +238,9 @@ void EZ_tree_OrderTabList(ez_tree_t *tree);
 void EZ_tree_OrderDrawList(ez_tree_t *tree);
 
 //
-// Control Tree - Draws a control tree.
-// 
-void EZ_tree_Draw(ez_tree_t *tree);
+// Control Tree - Needs to be called every frame to keep the tree alive.
+//
+void EZ_tree_EventLoop(ez_tree_t *tree);
 
 //
 // Control Tree - Dispatches a mouse event to a control tree.
@@ -588,7 +591,8 @@ typedef enum ez_control_flags_e
 	control_scrollable			= (1 << 8),		// Is the control scrollable
 	control_ignore_mouse		= (1 << 9),		// Should the control ignore mouse input?
 	control_anchor_viewport		= (1 << 10),	// Anchor to the visible edges of the controls instead of the virtual edges.
-	control_move_parent			= (1 << 11)		// When moving this control, should we also move it's parent?
+	control_move_parent			= (1 << 11),	// When moving this control, should we also move it's parent?
+	control_listen_repeat_mouse	= (1 << 12)		// Should the control listen to repeated mouse button events?
 } ez_control_flags_t;
 
 #define DEFAULT_CONTROL_FLAGS	(control_enabled | control_focusable | control_contained | control_scrollable | control_visible)
@@ -692,6 +696,7 @@ typedef struct ez_control_s
 	struct ez_tree_s		*control_tree;			// The control tree the control belongs to.
 
 	mouse_state_t			prev_mouse_state;		// The last mouse event that was passed on to this control.
+	double					mouse_repeat_delay;		// The time to wait before raising a new mouse click event for this control (if control_listen_repeat_mouse is set).
 } ez_control_t;
 
 //
@@ -764,7 +769,7 @@ void EZ_control_SetResizeableVertically(ez_control_t *self, qbool resize_vertica
 //
 // Control - Sets whetever the control is resizeable at all, not just by the user.
 //
-void EZ_control_SetResizeable(ez_control_t *self, qbool resize_vertically);
+void EZ_control_SetResizeable(ez_control_t *self, qbool resizeable);
 
 //
 // Control - Sets whetever the control is resizeable both horizontally and vertically by the user.
@@ -805,6 +810,18 @@ void EZ_control_SetContained(ez_control_t *self, qbool contained);
 // Control - Sets whetever the control should care about mouse input or not.
 //
 void EZ_control_SetIgnoreMouse(ez_control_t *self, qbool ignore_mouse);
+
+//
+// Control - Listen to repeated mouse click events when holding down a mouse button. 
+//           The delay between events is set using EZ_control_SetRepeatMouseClickDelay(...)
+//
+void EZ_control_SetListenToRepeatedMouseClicks(ez_control_t *self, qbool listen_repeat);
+
+//
+// Control - Sets the amount of time to wait between each new mouse click event
+//           when holding down the mouse over a control.
+//
+void EZ_control_SetRepeatMouseClickDelay(ez_control_t *self, double delay);
 
 //
 // Control - Sets the OnDestroy event handler.

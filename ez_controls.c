@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.74 2007-10-22 01:17:02 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.75 2007-10-25 03:07:47 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -239,18 +239,10 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 //
 // Control Tree - Draws a control tree.
 //
-void EZ_tree_Draw(ez_tree_t *tree)
+static void EZ_tree_Draw(ez_tree_t *tree)
 {
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = tree->drawlist.head;
-
-	if (!tree->root)
-	{
-		return;
-	}
-
-	// Calculate the drawing bounds for all the controls in the control tree.
-	EZ_tree_SetDrawBounds(tree->root);
 
 	while (iter)
 	{
@@ -325,12 +317,67 @@ void EZ_tree_Draw(ez_tree_t *tree)
 }
 
 //
+// Control Tree - Checks how long mouse buttons have been pressed.
+//
+static void EZ_tree_RaiseRepeatedMouseButtonEvents(ez_tree_t *tree)
+{
+	if (tree->focused_node && tree->focused_node->payload)
+	{
+		control = (ez_control_t *)tree->focused_node->payload;
+
+		// Notify controls that are listening to repeat mouse events 
+		// if the control's set delay has been reached.
+		if (control->ext_flags & control_listen_repeat_mouse)
+		{
+			int i;
+			double now			= Sys_DoubleTime();
+			mouse_state_t ms	= tree->prev_mouse_state;
+			ms.button_up		= 0;
+			
+			// Go through all the mouse buttons and compare the time since
+			// the mouse buttons where pressed with the controls delay time.
+			for (i = 1; i <= 8; i++)
+			{
+				// Only repeat the mouse click if the button is already down
+				// and the repeat isn't set to be all the time.
+				if (ms.buttons[i]
+				 &&	(control->mouse_repeat_delay > 0.0) && (tree->mouse_pressed_time[i] > 0.0)
+				 && ((now - tree->mouse_pressed_time[i]) >= control->mouse_repeat_delay))
+				{
+					ms.button_down = i;
+					CONTROL_RAISE_EVENT(NULL, control, ez_control_t, OnMouseEvent, &ms);
+				}
+			}
+		}
+	}
+}
+
+//
+// Control Tree - Needs to be called every frame to keep the tree alive.
+//
+void EZ_tree_EventLoop(ez_tree_t *tree)
+{
+	if (!tree->root)
+	{
+		return;
+	}
+
+	// Check if it's time to raise any repeat mouse events for controls listening to those.
+	EZ_tree_RaiseRepeatedMouseButtonEvents(tree);
+
+	// Calculate the drawing bounds for all the controls in the control tree.
+	EZ_tree_SetDrawBounds(tree->root);
+
+	EZ_tree_Draw(tree);
+}
+
+//
 // Control Tree - Dispatches a mouse event to a control tree.
 //
 qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 {
 	int mouse_handled = false;
-	ez_control_t *payload = NULL;
+	ez_control_t *control = NULL;
 	ez_dllist_node_t *iter = NULL;
 
 	if (!tree)
@@ -338,15 +385,33 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 		Sys_Error("EZ_tree_MouseEvent: NULL tree reference.\n");
 	}
 
+	// Save the time that the specified button was last pressed.
+	if (ms->button_down || ms->button_up)
+	{
+		// Set the time for the pressed button.
+		if (ms->button_down)
+		{
+			tree->mouse_pressed_time[ms->button_down] = Sys_DoubleTime();
+		}
+		else if (ms->button_up)
+		{
+			tree->mouse_pressed_time[ms->button_up] = 0.0;
+		}
+	}
+
+	// Save the mouse state so that it can be used when raising
+	// repeated mouse click events for controls that wants them.
+	tree->prev_mouse_state = *ms;
+
 	// Propagate the mouse event in the opposite order that we drew
 	// the controls (Since they are drawn from back to front), so
 	// that the foremost control gets it first.
 	for (iter = tree->drawlist.tail; iter; iter = iter->previous)
 	{
-		payload = (ez_control_t *)iter->payload;
+		control = (ez_control_t *)iter->payload;
 
 		// Notify the control of the mouse event.
-		CONTROL_RAISE_EVENT(&mouse_handled, payload, ez_control_t, OnMouseEvent, ms);
+		CONTROL_RAISE_EVENT(&mouse_handled, control, ez_control_t, OnMouseEvent, ms);
 
 		if (mouse_handled)
 		{
@@ -773,6 +838,9 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	EZ_control_SetMinVirtualSize(control, width, height);
 	EZ_control_SetPosition(control, x, y);
 	EZ_control_SetSize(control, width, height);
+
+	// Set a default delay for raising new mouse click events.
+	EZ_control_SetRepeatMouseClickDelay(control, 0.2);
 }
 
 //
@@ -1202,10 +1270,10 @@ void EZ_control_SetResizeableBoth(ez_control_t *self, qbool resize)
 //
 // Control - Sets whetever the control is resizeable at all, not just by the user.
 //
-void EZ_control_SetResizeable(ez_control_t *self, qbool resize_vertically)
+void EZ_control_SetResizeable(ez_control_t *self, qbool resizeable)
 {
 	// TODO : Is it confusing having this resizeable?
-	SET_FLAG(self->ext_flags, control_resize_v, resize_vertically);
+	SET_FLAG(self->ext_flags, control_resizeable, resizeable);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
 }
 
@@ -1252,6 +1320,25 @@ void EZ_control_SetIgnoreMouse(ez_control_t *self, qbool ignore_mouse)
 {
 	SET_FLAG(self->ext_flags, control_ignore_mouse, ignore_mouse);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Listen to repeated mouse click events when holding down a mouse button. 
+//           The delay between events is set using EZ_control_SetRepeatMouseClickDelay(...)
+//
+void EZ_control_SetListenToRepeatedMouseClicks(ez_control_t *self, qbool listen_repeat)
+{
+	SET_FLAG(self->ext_flags, control_listen_repeat_mouse, listen_repeat);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnFlagsChanged);
+}
+
+//
+// Control - Sets the amount of time to wait between each new mouse click event
+//           when holding down the mouse over a control.
+//
+void EZ_control_SetRepeatMouseClickDelay(ez_control_t *self, double delay)
+{
+	self->mouse_repeat_delay = delay;
 }
 
 //
@@ -2063,14 +2150,14 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 
 		mouse_handled = (mouse_handled || mouse_handled_tmp);
 
-		if (ms->button_down && (ms->button_down != old_ms->button_down))
+		if (ms->button_down)
 		{
 			// Mouse down.
 			CONTROL_RAISE_EVENT(&mouse_handled_tmp, self, ez_control_t, OnMouseDown, ms);
 			mouse_handled = (mouse_handled || mouse_handled_tmp);
 		}
 
-		if (ms->button_up && (ms->button_up != old_ms->button_up))
+		if (ms->button_up)
 		{
 			// Mouse up.
 			CONTROL_RAISE_EVENT(&mouse_handled_tmp, self, ez_control_t, OnMouseUp, ms);
@@ -4699,14 +4786,20 @@ int EZ_scrollbar_OnSliderMouseDown(ez_control_t *self, void *payload, mouse_stat
 static void EZ_scrollbar_OnScrollButtonMouseDown(ez_scrollbar_t *scrollbar, qbool back)
 {
 	ez_control_t *scrollbar_ctrl = (ez_control_t *)scrollbar;
+	ez_control_t *scroll_target = (scrollbar->ext_flags & target_parent) ? scrollbar_ctrl->parent : scrollbar->target;
+
+	if (!scroll_target)
+	{
+		return; // We have nothing to scroll.
+	}
 
 	if (scrollbar->orientation == vertical)
 	{
-		EZ_control_SetScrollChange(scrollbar_ctrl->parent, 0, (back ? -scrollbar->scroll_delta_y : scrollbar->scroll_delta_y));
+		EZ_control_SetScrollChange(scroll_target, 0, (back ? -scrollbar->scroll_delta_y : scrollbar->scroll_delta_y));
 	}
 	else
 	{
-		EZ_control_SetScrollChange(scrollbar_ctrl->parent, (back ? -scrollbar->scroll_delta_x : scrollbar->scroll_delta_x), 0);
+		EZ_control_SetScrollChange(scroll_target, (back ? -scrollbar->scroll_delta_x : scrollbar->scroll_delta_x), 0);
 	}
 }
 
@@ -4809,6 +4902,11 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 	scrollbar->scroll_delta_x = 1;
 	scrollbar->scroll_delta_y = 1;
 
+	// Listen to repeated mouse events so that we continue scrolling when
+	// holding down the mouse button over the scroll arrows.
+	EZ_control_SetListenToRepeatedMouseClicks((ez_control_t *)scrollbar->back, true);
+	EZ_control_SetListenToRepeatedMouseClicks((ez_control_t *)scrollbar->forward, true);
+	
 	// TODO : Remove this test stuff.
 	/*
 	{
