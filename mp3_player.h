@@ -17,61 +17,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.h,v 1.6 2007-10-17 17:08:26 dkure Exp $
+	$Id: mp3_player.h,v 1.7 2007-10-25 15:02:07 dkure Exp $
 
 */
-
-
-#ifdef WITH_MP3_PLAYER
-#ifdef WITH_XMMS
-#include <xmms/xmmsctrl.h>
-#else
-#ifdef WITH_AUDACIOUS
-#include <audacious/beepctrl.h>
-#endif
-#endif
-
-#define XMMS_SESSION	((int) mp3_xmms_session.value)
-#endif
 
 #ifdef _WIN32
 #include "winamp.h"
 #endif
 
-#define MP3_NOTRUNNING		-1
-#define MP3_PLAYING			1
-#define MP3_PAUSED			2
-#define MP3_STOPPED			3
-
+typedef enum {
+	MP3_NOTRUNNING	= -1,
+	MP3_PLAYING		= 1,
+	MP3_PAUSED		= 2,
+	MP3_STOPPED		= 3,
+} MP3_status_t;
 #define MP3_MAXSONGTITLE	128
-
-#if defined(WITH_XMMS) || defined(WITH_AUDACIOUS)
-/*extern void (*qxmms_remote_play)(gint session);
-extern void (*qxmms_remote_pause)(gint session);
-extern void (*qxmms_remote_stop)(gint session);
-extern void (*qxmms_remote_jump_to_time)(gint session, gint pos);
-extern gboolean (*qxmms_remote_is_running)(gint session);
-extern gboolean (*qxmms_remote_is_playing)(gint session);
-extern gboolean (*qxmms_remote_is_paused)(gint session);
-extern gboolean (*qxmms_remote_is_repeat)(gint session);
-extern gboolean (*qxmms_remote_is_shuffle)(gint session);
-extern gint (*qxmms_remote_get_playlist_pos)(gint session);
-extern void (*qxmms_remote_set_playlist_pos)(gint session, gint pos);
-*/
-extern gint (*qxmms_remote_get_playlist_length)(gint session);
-extern gchar *(*qxmms_remote_get_playlist_title)(gint session, gint pos);
-/*
-extern void (*qxmms_remote_playlist_prev)(gint session);
-extern void (*qxmms_remote_playlist_next)(gint session);
-extern gint (*qxmms_remote_get_output_time)(gint session);
-extern gint (*qxmms_remote_get_playlist_time)(gint session, gint pos);
-extern gint (*qxmms_remote_get_main_volume)(gint session);
-extern void (*qxmms_remote_set_main_volume)(gint session, gint v);
-extern void (*qxmms_remote_toggle_repeat)(gint session);
-extern void (*qxmms_remote_toggle_shuffle)(gint session);
-*/
-extern void (*qg_free)(gpointer);
-#endif
 
 void  MP3_Init(void);
 void  MP3_Shutdown(void);
@@ -80,13 +40,14 @@ qbool MP3_IsActive(void);
 qbool MP3_IsPlayerRunning(void);
 int   MP3_GetStatus(void);
 void  MP3_GetPlaylistInfo(int *current, int *length);
-long  MP3_GetPlaylist(char **buf);
+void  MP3_GetSongTitle(int track_num, char *song, size_t song_len);
 qbool MP3_GetOutputtime(int *elapsed, int *total);
 qbool MP3_GetToggleState(int *shuffle, int *repeat);
 
 void  MP3_PrintPlaylist_f(void);
 void  MP3_PlayTrackNum_f(void);
 void  MP3_LoadPlaylist_f(void);
+int   MP3_CachePlaylist(void);
 void  MP3_Next_f(void);
 void  MP3_FastForward_f(void);
 void  MP3_Rewind_f(void);
@@ -114,6 +75,7 @@ void Media_SetVolume(double vol);
 typedef enum {
 	MP3_NONE,
 	MP3_XMMS,
+	MP3_XMMS2,
 	MP3_AUDACIOUS,
 	MP3_WINAMP,
 } mp3_players_t;
@@ -133,13 +95,14 @@ typedef struct {
 	qbool (*IsPlayerRunning) (void);
 	int   (*GetStatus)       (void);
 	void  (*GetPlaylistInfo) (int *current, int *length);
-	long  (*GetPlaylist)     (char **buf);
+	void  (*GetSongTitle)    (int track_num, char *song, size_t song_len);
 	qbool (*GetOutputtime)   (int *elapsed, int *total);
 	qbool (*GetToggleState)  (int *shuffle, int *repeat);
 
 	void  (*PrintPlaylist_f) (void);
 	void  (*PlayTrackNum_f)  (void);
 	void  (*LoadPlaylist_f)  (void);
+	int   (*CachePlaylist)      (void);
 	void  (*Next_f)          (void);
 	void  (*FastForward_f)   (void);
 	void  (*Rewind_f)        (void);
@@ -164,5 +127,6 @@ typedef struct {
 extern const mp3_player_t *mp3_player;
 extern const mp3_player_t mp3_player_none;
 extern const mp3_player_t mp3_player_xmms;
+extern const mp3_player_t mp3_player_xmms2;
 extern const mp3_player_t mp3_player_audacious;
 extern const mp3_player_t mp3_player_winamp;

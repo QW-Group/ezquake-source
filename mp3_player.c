@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.29 2007-10-19 04:26:59 dkure Exp $
+	$Id: mp3_player.c,v 1.30 2007-10-25 15:02:07 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -50,6 +50,10 @@ const mp3_player_t *mp3_player = &mp3_player_winamp;
 cvar_t mp3_playertype = {"mp3_playertype","audacious",0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_audacious;
 #else
+#ifdef WITH_XMMS2
+cvar_t mp3_playertype = {"mp3_playertype", "xmms2", 0, OnChange_MP3_playertype};
+const mp3_player_t *mp3_player = &mp3_player_xmms2;
+#else
 #ifdef WITH_XMMS
 cvar_t mp3_playertype = {"mp3_playertype", "xmms", 0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_xmms;
@@ -57,11 +61,13 @@ const mp3_player_t *mp3_player = &mp3_player_xmms;
 cvar_t mp3_playertype = {"mp3_playertype", "none", 0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_none;
 #endif // WITH_XMMS
+#endif // WITH_XMMS2
 #endif // WITH_AUDACIOUS
 #endif // WITH_WINAMP
 
+static int MP3_CheckFunction(qbool PrintWarning);
 void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel) {
-	if (strcmp(value, "winamp") && strcmp(value, "audacious") && strcmp(value, "xmms") && strcmp(value, "none")) {
+	if (strcmp(value, "winamp") && strcmp(value, "audacious") && strcmp(value, "xmms2") && strcmp(value, "xmms") && strcmp(value, "none")) {
 		Com_Printf_State (PRINT_INFO, "Unknown mp3 player \"%s\"\n", value);
 		*cancel = true;
 		return;
@@ -75,14 +81,18 @@ void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel) {
 		mp3_player = &mp3_player_winamp;
 	} else if (strcmp(value, "audacious") == 0) {
 		mp3_player = &mp3_player_audacious;
+	} else if (strcmp(value, "xmms2") == 0) {
+		mp3_player = &mp3_player_xmms2;
 	} else if (strcmp(value, "xmms") == 0) {
 		mp3_player = &mp3_player_xmms;
 	} else if (strcmp(value, "none") == 0) {
 		mp3_player = &mp3_player_none;
 	} 
 
-	if (!MP3_IsActive()) {
-		mp3_player->Init();
+	if (!MP3_CheckFunction(false)) {
+//		if (!MP3_IsActive()) {
+			mp3_player->Init();
+//		}
 	}
 }
 
@@ -136,48 +146,7 @@ char *MP3_Menu_SongtTitle(void) {
 	return title;
 }
 
-int MP3_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length, char *entries[], unsigned int maxsize, unsigned int maxsonglen) {
-	int skip = 0, playlist_size = 0;
-	char *s, *t, *buf, *line;
 
-	buf = playlist_buf;
-	while (playlist_size < maxsize) {
-		for (s = line = buf; s - playlist_buf < length && *s && *s != '\n' && *s != '\r'; s++)
-			;
-		if (s - playlist_buf >= length)
-			break;
-		*s = 0;
-		buf = s + 2;
-		if (skip || !strncmp(line, "#EXTM3U", 7)) {
-			skip = 0;
-			continue;
-		}
-		if (!strncmp(line, "#EXTINF:", 8)) {
-			if (!(s = strstr(line, ",")) || ++s - playlist_buf >= length) 
-				break;
-			if (strlen(s) > maxsonglen)
-				s[maxsonglen] = 0;
-			entries[playlist_size++] = Q_strdup(s);
-			skip = 1;
-			continue;
-		}
-	
-		for (s = line + strlen(line); s > line && *s != '\\' && *s != '/'; s--)
-			;
-		if (s != line)
-			s++;
-	
-		if ((t = strrchr(s, '.')) && t - playlist_buf < length)
-			*t = 0;		
-	
-		for (t = s + strlen(s) - 1; t > s && *t == ' '; t--)
-			*t = 0;
-		if (strlen(s) > maxsonglen)
-			s[maxsonglen] = 0;
-		entries[playlist_size++] = Q_strdup(s);
-	}
-	return playlist_size;
-}
 
 void Media_SetVolume_f(void);
 char* Media_GetVolume_f(void);
@@ -236,7 +205,7 @@ void Media_SetVolume_f(void) {
 	}
 }
 
-int MP3_CheckFunction(qbool PrintWarning) {
+static int MP3_CheckFunction(qbool PrintWarning) {
 	if (!mp3_player) {
 		Sys_Error("MP3 player control has been corrupted\n");
 	} else if (mp3_player->Type == MP3_NONE) {
@@ -277,10 +246,10 @@ void MP3_GetPlaylistInfo(int *current, int *length) {
 	mp3_player->GetPlaylistInfo(current, length);
 }
 
-long MP3_GetPlaylist(char **buf) {
+void MP3_GetSongTitle(int track_num, char *song, size_t song_len) {
 	if (MP3_CheckFunction(true))
-		return -1;
-	return mp3_player->GetPlaylist(buf);
+		return;
+	mp3_player->GetSongTitle(track_num, song, song_len);
 }
 
 qbool MP3_GetOutputtime(int *elapsed, int *total) {
@@ -311,6 +280,15 @@ void MP3_LoadPlaylist_f(void) {
 	if (MP3_CheckFunction(true))
 		return;
 	mp3_player->LoadPlaylist_f();
+}
+
+/**
+ * Flushes the old playlist cache and re-caches the current playlist
+ */
+int   MP3_CachePlaylist(void) {
+	if (MP3_CheckFunction(true))
+		return -1;
+	return mp3_player->CachePlaylist();
 }
 
 void MP3_Next_f(void) {

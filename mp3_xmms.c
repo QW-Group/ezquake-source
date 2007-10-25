@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_xmms.c,v 1.4 2007-10-18 20:29:56 cokeman1982 Exp $
+	$Id: mp3_xmms.c,v 1.5 2007-10-25 15:02:07 dkure Exp $
 */
 
 #ifndef _WIN32
@@ -34,6 +34,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 #if defined(WITH_XMMS) || defined (WITH_AUDACIOUS)
+#ifdef WITH_XMMS
+#include <xmms/xmmsctrl.h>
+#else
+#ifdef WITH_AUDACIOUS
+#include <audacious/beepctrl.h>
+#endif // WITH_XMMS
+#endif // WITH_AUDACIOUS
+
+#define XMMS_SESSION	((int) mp3_xmms_session.value)
+
+
 // TODO: This is currently ignored and we just use the path to find the program
 cvar_t mp3_dir = {"mp3_xmms_dir", "%%X11BASE%%/bin"}; // disconnect: todo: check if %%X11BASE%% is OK for Linux
 cvar_t mp3_xmms_session = {"mp3_xmms_session", "0"};
@@ -346,6 +357,7 @@ qbool MP3_XMMS_GetToggleState(int *shuffle, int *repeat) {
 }
 
 
+// Playlist functions
 void MP3_XMMS_LoadPlaylist_f(void) {
 	Com_Printf("The %s command is not (yet) supported.\n", Cmd_Argv(0));
 }
@@ -357,6 +369,33 @@ void MP3_XMMS_GetPlaylistInfo(int *current, int *length) {
 		*length = qxmms_remote_get_playlist_length(XMMS_SESSION);
 	if (current)
 		*current = qxmms_remote_get_playlist_pos(XMMS_SESSION);
+}
+
+void MP3_XMMS_CachePlaylistFlush(void) {
+	return; // No need for cache with XMMS, we can request song titles directly
+}
+
+int MP3_XMMS_CachePlaylist(void) {
+	return 0; //No need for cache with XMMS, we can request song titles directly
+}
+
+
+void MP3_XMMS_GetSongTitle(int track_num, char *song, size_t song_len) {
+	int playlist_len;
+	char *playlist_title;
+
+	strlcpy(song, "", song_len);
+
+	if (!MP3_XMMS_IsPlayerRunning()) 
+		return;
+
+	MP3_XMMS_GetPlaylistInfo(NULL, &playlist_len);
+	track_num--; // Count from 0 to N
+	if (track_num < 0 || track_num > playlist_len)
+		return;
+
+	playlist_title = qxmms_remote_get_playlist_title(XMMS_SESSION, track_num);
+	strlcpy(song, playlist_title, song_len);
 }
 
 void MP3_XMMS_PrintPlaylist_f(void) {
@@ -403,12 +442,17 @@ void Media_SetVolume_f(void);
 char* Media_GetVolume_f(void);
 
 void MP3_XMMS_Shutdown(void) {
+	if (!MP3_XMMS_IsActive())
+		return;
+
 	XMMS_FreeLibrary();
 
 	if (XMMS_pid) {
 		if (!kill(XMMS_pid, SIGTERM))
 			waitpid(XMMS_pid, NULL, 0);
 	}
+
+	// Cvar_Delete(mp3_xmms_session.name); <-- impossible to delete static cvars
 }
 
 #ifdef WITH_XMMS
@@ -418,8 +462,10 @@ void MP3_XMMS_Init(void) {
 	if (!MP3_XMMS_IsActive())
 		return;
 
-	Cmd_AddCommand("mp3_startxmms", MP3_Execute_f);
+	if (!Cmd_Exists("mp3_startxmms"))
+			Cmd_AddCommand("mp3_startxmms", MP3_Execute_f);
 
+	/* FIXME: This doesnt play nice with multiple initialisations */
 	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
 	Cvar_Register(&mp3_xmms_session);
 	Cvar_ResetCurrentGroup(); 
@@ -433,7 +479,8 @@ void MP3_AUDACIOUS_Init(void) {
 	if (!MP3_XMMS_IsActive())
 		return;
 
-	Cmd_AddCommand("mp3_startaudacious", MP3_Execute_f);
+	if (!Cmd_Exists("mp3_startaudacious"))
+		Cmd_AddCommand("mp3_startaudacious", MP3_Execute_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
 	Cvar_Register(&mp3_xmms_session);
@@ -489,12 +536,15 @@ const mp3_player_t mp3_player_xmms = {
 	MP3_XMMS_GetStatus,
 	MP3_XMMS_GetPlaylistInfo,
 	NULL, 						// GetPlaylist
+	MP3_XMMS_GetSongTitle,
 	MP3_XMMS_GetOutputtime,
 	MP3_XMMS_GetToggleState,
 
 	MP3_XMMS_PrintPlaylist_f,
 	MP3_XMMS_PlayTrackNum_f,
 	MP3_XMMS_LoadPlaylist_f,
+	MP3_XMMS_CachePlaylist,
+	MP3_XMMS_CachePlaylistFlush,
 	MP3_XMMS_Next_f,
 	MP3_XMMS_FastForward_f,
 	MP3_XMMS_Rewind_f,
@@ -541,13 +591,14 @@ const mp3_player_t mp3_player_audacious = {
 	MP3_XMMS_IsPlayerRunning, 
 	MP3_XMMS_GetStatus, 
 	MP3_XMMS_GetPlaylistInfo, 
-	NULL, 						// GetPlaylist
+	MP3_XMMS_GetSongTitle,
 	MP3_XMMS_GetOutputtime, 
 	MP3_XMMS_GetToggleState, 
 
 	MP3_XMMS_PrintPlaylist_f, 
 	MP3_XMMS_PlayTrackNum_f, 
-	MP3_XMMS_LoadPlaylist_f, 
+	MP3_XMMS_LoadPlaylist_f,
+	MP3_XMMS_CachePlaylist,
 	MP3_XMMS_Next_f, 
 	MP3_XMMS_FastForward_f, 
 	MP3_XMMS_Rewind_f, 

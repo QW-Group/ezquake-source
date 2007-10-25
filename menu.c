@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.90 2007-10-18 14:02:53 dkure Exp $
+	$Id: menu.c,v 1.91 2007-10-25 15:02:07 dkure Exp $
 
 */
 
@@ -1489,86 +1489,129 @@ void M_Menu_MP3_Control_f (void){
 
 static int playlist_size = 0;
 static int playlist_cursor = 0, playlist_base = 0;
+static char playlist_entries[PLAYLIST_MAXLINES][MP3_MAXSONGTITLE];
 
+
+void M_Menu_MP3_Playlist_MoveBase(int absolute);
+void M_Menu_MP3_Playlist_MoveCursor(int absolute);
+void M_Menu_MP3_Playlist_MoveBaseRel(int offset);
+void M_Menu_MP3_Playlist_MoveCursorRel(int offset);
+
+/**
+ * Center the playlist cursor on the current song
+ */
 static void Center_Playlist(void) {
 	int current;
+	int curosor_position;
 
 	MP3_GetPlaylistInfo(&current, NULL);
-	if (current >= 0 && current < playlist_size) {
-		if (playlist_size - current - 1 < (PLAYLIST_MAXLINES >> 1)) {
-			playlist_base = max(0, playlist_size - PLAYLIST_MAXLINES);
-			playlist_cursor = current - playlist_base;
-		} else {
-			playlist_base = max(0, current - (PLAYLIST_MAXLINES >> 1));
-			playlist_cursor = current - playlist_base;
-		}
-	}
+	M_Menu_MP3_Playlist_MoveBase(current);
+
+	/* Calculate the corect cursor position */
+	/* We can display all songs so its just the current index */
+	if (current < PLAYLIST_MAXLINES)
+		curosor_position = current;
+	/* We are at the end of the playlist */
+	else if (playlist_size - (current) < PLAYLIST_MAXLINES)
+		curosor_position = PLAYLIST_MAXLINES - (playlist_size - (current));
+	/* We are in the middle of the playlist & the bottom is the current song*/
+	else 
+		curosor_position = 0;
+	M_Menu_MP3_Playlist_MoveCursor(curosor_position);
 }
 
-static char *playlist_entries[PLAYLIST_MAXENTRIES];
 
-#ifdef WITH_MP3_PLAYER
-#ifdef WITH_WINAMP
 
-void M_Menu_MP3_Playlist_Read(void) {
-	int i, count = 0, skip = 0;
-	long length;
-	char *playlist_buf = NULL;
-
-	for (i = 0; i < playlist_size; i++) {
-		if (playlist_entries[i]) {
-			Q_free(playlist_entries[i]);
-			playlist_entries[i] = NULL;
-		}
-	}
-
-	playlist_base = playlist_cursor = playlist_size = 0;
-
-	if ((length = MP3_GetPlaylist(&playlist_buf)) == -1)
-		return;
-
-	playlist_size = MP3_ParsePlaylist_EXTM3U(playlist_buf, length, playlist_entries, PLAYLIST_MAXENTRIES, PLAYLIST_MAXTITLE);
-	Q_free(playlist_buf);
+/**
+ * Move the cursor to an absolute position
+ */
+void M_Menu_MP3_Playlist_MoveCursor(int absolute) {
+	playlist_cursor = bound(0, absolute, 
+								min((PLAYLIST_MAXLINES - 1), playlist_size));
 }
 
-#endif // WITH_WINAMP
-
-#if defined(WITH_XMMS) || defined(WITH_AUDACIOUS)
-void M_Menu_MP3_Playlist_Read(void) {
+/**
+ * Move the base of the playlist to an absolute position in the playlist
+ */
+void M_Menu_MP3_Playlist_MoveBase(int absolute) {
 	int i;
-	char *title;
 
-	for (i = 0; i < playlist_size; i++) {
-		if (playlist_entries[i]) {
-			Q_free(playlist_entries[i]);
-			playlist_entries[i] = NULL;
-		}
+	MP3_GetPlaylistInfo(NULL, &playlist_size);
+	playlist_base = bound(0, absolute, playlist_size-PLAYLIST_MAXLINES);
+
+	for (i = playlist_base; i < min(playlist_size, PLAYLIST_MAXLINES+playlist_base); i++) {
+		MP3_GetSongTitle(i+1, playlist_entries[i%PLAYLIST_MAXLINES], sizeof(*playlist_entries));
 	}
 
-	playlist_base = playlist_cursor = playlist_size = 0;
+}
 
-	if (MP3_GetStatus() == MP3_NOTRUNNING)
-		return;
 
-	playlist_size = qxmms_remote_get_playlist_length(XMMS_SESSION);
-
-	for (i = 0; i < PLAYLIST_MAXENTRIES && i < playlist_size; i++) {
-		title = qxmms_remote_get_playlist_title(XMMS_SESSION, i);
-		if (strlen(title) > PLAYLIST_MAXTITLE)
-			title[PLAYLIST_MAXTITLE] = 0;
-		playlist_entries[i] = Q_strdup(title);
-		//g_free(title);
-		qg_free(title);
+/**
+ * Move the cursor by an offset relative to the current position
+ */
+void M_Menu_MP3_Playlist_MoveCursorRel(int offset) {
+	/* Already at the bottom */
+	if (playlist_base + playlist_cursor + offset > playlist_size - 1) {
+		// Already at the top
+	} else if (playlist_cursor + offset > PLAYLIST_MAXLINES - 1) {
+		/* Need to scroll down */
+		M_Menu_MP3_Playlist_MoveBaseRel(offset);
+		playlist_cursor = PLAYLIST_MAXLINES - 1;
+	} else if (playlist_cursor + offset < 0) {
+		/* Need to scroll up*/
+		M_Menu_MP3_Playlist_MoveBaseRel(offset);
+		playlist_cursor = 0;
+	} else {
+		playlist_cursor += offset;
 	}
 }
 
-#endif // defined(WITH_XMMS) || defined(WITH_AUDACIOUS)
-#endif // WITH_MP3_PLAYER
+/**
+ * Move the base of the playlist relative to the current position
+ */
+void M_Menu_MP3_Playlist_MoveBaseRel(int offset) {
+	int i;
 
+	/* Make sure we don't exced the bounds */
+	if (playlist_base + offset < 0) {
+		offset = 0 - playlist_base;
+	} else if (playlist_base + PLAYLIST_MAXLINES + offset > playlist_size) {
+		offset = playlist_size - (playlist_base + PLAYLIST_MAXLINES);
+	}
+
+	if (offset < 0) {
+		for (i = playlist_base - 1; i >= playlist_base + offset; i--) {
+			MP3_GetSongTitle(i+1, playlist_entries[i % PLAYLIST_MAXLINES], 
+							sizeof(*playlist_entries));
+		}
+	} else { // (offset > 0)
+		int track_num = playlist_base + 1 + PLAYLIST_MAXLINES;
+		for (i = playlist_base; i < playlist_base + offset; i++, track_num++) {
+			MP3_GetSongTitle(track_num, playlist_entries[i%PLAYLIST_MAXLINES], 
+							sizeof(*playlist_entries));
+		}
+	}
+
+	playlist_base += offset;
+}
+
+/**
+ * Reset the playlist, and read from the begining
+ */
+void M_Menu_MP3_Playlist_Read(void) {
+	MP3_CachePlaylist();
+
+	M_Menu_MP3_Playlist_MoveBase(0);
+	M_Menu_MP3_Playlist_MoveCursor(0);
+}
+
+/**
+ * Draw the playlist menu, with the current playing song in white
+ */
 void M_Menu_MP3_Playlist_Draw(void) {
-	int    index, print_time, i;
-	char name[PLAYLIST_MAXTITLE], *s;
-	float realtime;
+	int		index, print_time, i;
+	char 	name[PLAYLIST_MAXTITLE], *s;
+	float 	realtime;
 
 	static int last_status,last_elapsed, last_total, last_current;
 
@@ -1611,28 +1654,44 @@ menu_items:
 
 	MP3_GetPlaylistInfo(&last_current, NULL);
 
-	for (index = playlist_base; index < playlist_size && index < playlist_base + PLAYLIST_MAXLINES; index++) {
+	int count;
+	for (index = playlist_base, count = 0;
+			index < playlist_size && count < PLAYLIST_MAXLINES;
+			index++, count++) {
 		char *spaces;
 
+		/* Pad the index count */
 		if (index + 1 < 10)
-			spaces = "  ";
+			spaces = "   ";
 		else if (index + 1 < 100)
+			spaces = "  ";
+		else if (index + 1 < 1000)
 			spaces = " ";
 		else
 			spaces = "";
-		strlcpy(name, playlist_entries[index], sizeof(name));
-		if (last_current != index)
-			M_Print (16, PLAYLIST_HEADING_ROW + 24 + (index - playlist_base) * 8, va("%s%d %s", spaces, index + 1, name));
-		else
-			M_PrintWhite (16, PLAYLIST_HEADING_ROW + 24 + (index - playlist_base) * 8, va("%s%d %s", spaces, index + 1, name));
-	}
-	M_DrawCharacter (8, PLAYLIST_HEADING_ROW + 24 + playlist_cursor * 8, FLASHINGARROW());
 
-	M_DrawCharacter (16, M_MP3_CONTROL_BARHEIGHT, 128);
+		/* Limit the title to PLAYLIST_MAXTITLE */
+		strlcpy(name, playlist_entries[index % PLAYLIST_MAXLINES],sizeof(name));
+
+		/* Print the current playing song in white */
+		if (last_current == index)
+			M_PrintWhite(16, PLAYLIST_HEADING_ROW + 24 
+					+ (index - playlist_base) * 8, 
+				va("%s%d %s", spaces, index + 1, name));
+		else
+			M_Print(16, PLAYLIST_HEADING_ROW + 24 
+					+ (index - playlist_base) * 8, 
+				va("%s%d %s", spaces, index + 1, name));
+	}
+	M_DrawCharacter(8, PLAYLIST_HEADING_ROW + 24 + playlist_cursor * 8, 
+			FLASHINGARROW());
+
+	M_DrawCharacter(16, M_MP3_CONTROL_BARHEIGHT, 128);
 	for (i = 0; i < 35; i++)
-		M_DrawCharacter (24 + i * 8, M_MP3_CONTROL_BARHEIGHT, 129);
-	M_DrawCharacter (320 - 16, M_MP3_CONTROL_BARHEIGHT, 130);
-	M_DrawCharacter (17 + 286 * ((float) last_elapsed / last_total), M_MP3_CONTROL_BARHEIGHT, 131);
+		M_DrawCharacter(24 + i * 8, M_MP3_CONTROL_BARHEIGHT, 129);
+	M_DrawCharacter(320 - 16, M_MP3_CONTROL_BARHEIGHT, 130);
+	M_DrawCharacter(17 + 286 * ((float) last_elapsed / last_total), 
+			M_MP3_CONTROL_BARHEIGHT, 131);
 }
 
 void M_Menu_MP3_Playlist_Key (int k) {
@@ -1652,57 +1711,30 @@ void M_Menu_MP3_Playlist_Key (int k) {
 
 		case K_UPARROW:
 		case K_MWHEELUP:
-			if (playlist_cursor > 0)
-				playlist_cursor--;
-			else if (playlist_base > 0)
-				playlist_base--;
+			M_Menu_MP3_Playlist_MoveCursorRel(-1);
 			break;
 
 		case K_DOWNARROW:
 		case K_MWHEELDOWN:
-			if (playlist_cursor + playlist_base < playlist_size - 1) {
-				if (playlist_cursor < PLAYLIST_MAXLINES - 1)
-					playlist_cursor++;
-				else
-					playlist_base++;
-			}
+			M_Menu_MP3_Playlist_MoveCursorRel(1);
 			break;
 
 		case K_HOME:
-			playlist_cursor = 0;
-			playlist_base = 0;
+			M_Menu_MP3_Playlist_MoveCursor(0);
+			M_Menu_MP3_Playlist_MoveBase(0);
 			break;
 
 		case K_END:
-			if (playlist_size > PLAYLIST_MAXLINES) {
-				playlist_cursor = PLAYLIST_MAXLINES - 1;
-				playlist_base = playlist_size - playlist_cursor - 1;
-			} else {
-				playlist_base = 0;
-				playlist_cursor = playlist_size - 1;
-			}
+			M_Menu_MP3_Playlist_MoveCursor(playlist_size-1);
+			M_Menu_MP3_Playlist_MoveBase(playlist_size-1);
 			break;
 
 		case K_PGUP:
-			playlist_cursor -= PLAYLIST_MAXLINES - 1;
-			if (playlist_cursor < 0) {
-				playlist_base += playlist_cursor;
-				if (playlist_base < 0)
-					playlist_base = 0;
-				playlist_cursor = 0;
-			}
+			M_Menu_MP3_Playlist_MoveBaseRel(-(PLAYLIST_MAXLINES));
 			break;
 
 		case K_PGDN:
-			playlist_cursor += PLAYLIST_MAXLINES - 1;
-			if (playlist_base + playlist_cursor >= playlist_size)
-				playlist_cursor = playlist_size - playlist_base - 1;
-			if (playlist_cursor >= PLAYLIST_MAXLINES) {
-				playlist_base += playlist_cursor - (PLAYLIST_MAXLINES - 1);
-				playlist_cursor = PLAYLIST_MAXLINES - 1;
-				if (playlist_base + playlist_cursor >= playlist_size)
-					playlist_base = playlist_size - playlist_cursor - 1;
-			}
+			M_Menu_MP3_Playlist_MoveBaseRel(PLAYLIST_MAXLINES);
 			break;
 
 		case K_ENTER:

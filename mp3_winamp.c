@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_winamp.c,v 1.4 2007-10-18 20:35:30 cokeman1982 Exp $
+	$Id: mp3_winamp.c,v 1.5 2007-10-25 15:02:07 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -32,6 +32,139 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static HWND mp3_hwnd = 0;
 
 cvar_t mp3_dir = {"mp3_winamp_dir", "c:/program files/winamp"};
+
+//===========================================================================
+//                     WINAMP   SPECIFIC   FUNCTIONS 
+// ==========================================================================
+static char **WINAMP_Playlist;
+static int WINAMP_Playlist_nelms;
+
+// ================
+// WINAMP_ParsePlaylist_EXTM3U
+// ================
+// An M3U playlist format is below
+//
+// #EXTM3U
+// 
+// #EXTINF:123,Sample title
+// C:\Documents and Settings\I\My Music\Sample.mp3
+// 
+// #EXTINF:321,Example title
+// C:\Documents and Settings\I\My Music\Greatest Hits\Example.ogg
+//
+int WINAMP_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length,
+								char **playlist, int playlist_nelms) { 
+	int skip = 0; 
+	char *s, *t, *buf, *line;
+	winamp_playlist_t *pl_entry
+
+	buf = playlist_buf;
+	while (playlist_size < playlist_nelms) {
+		// Find the first newline
+		for (s = line = buf; s - playlist_buf < length && *s && *s != '\n' && *s != '\r'; s++)
+			;
+		// We have parsed the whole buffer
+		if (s - playlist_buf >= length)
+			break;
+
+		// Change the line break to the end of the string
+		*s = 0;
+
+		// Buf now points to the next line
+		// D-Kure: FIXME: 2 seems a little random, 1 for over the NULL
+		//                the 2nd may be because windows gives "\r\n"
+		buf = s + 2;
+
+		// Ignore the intial #EXTM3U
+		if (skip || !strncmp(line, "#EXTM3U", 7)) 
+		{
+			skip = 0;
+			continue;
+		}
+		// Parse the line starting with #EXTINF
+		else if (!strncmp(line, "#EXTINF:", 8)) 
+		{
+			if (!(s = strstr(line, ",")) || ++s - playlist_buf >= length) 
+				break;
+
+			skip = 1; // Skip the next line that contains the path to this song
+		} 
+		// No #EXTINF was given, instead parse the filename
+		else
+		{
+			// Search from the end of string for the first directory marker
+			for (s = line + strlen(line); s > line && *s != '\\' && *s != '/'; s--)
+				;
+			if (s != line) // If a directory marker was found skip it
+				s++;
+
+			// Ignore extensions
+			if ((t = strrchr(s, '.')) && t - playlist_buf < length)
+				*t = 0;		
+
+			// Ignore trailing spaces
+			for (t = s + strlen(s) - 1; t > s && *t == ' '; t--)
+				*t = 0;
+		}
+		
+		// D-Kure: There was a check here to limit the length of s, it seemed 
+		//         unnessacary
+		playlist[playlist_size++] = Q_strdup(s);
+	}
+
+	return playlist_size;
+}
+
+/**
+ * Get winamp to write its current playlist to an m3u list, read this file into
+ * a temporary file
+ */
+long WINAMP_GetPlaylist(char **buf) 
+{
+	FILE *f;
+	char path[512];
+	int pathlength;
+	long filelength;
+	COPYDATASTRUCT cds;
+
+	if (!MP3_WINAMP_IsPlayerRunning())
+		return -1;
+
+	cds.dwData = IPC_CHDIR;
+	cds.lpData = mp3_dir.string;
+	cds.cbData = strlen(mp3_dir.string) + 1;
+	SendMessage(mp3_hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
+
+	SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_WRITEPLAYLIST);
+	strlcpy(path, mp3_dir.string, sizeof(path));
+	pathlength = strlen(path);
+	
+	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
+		path[pathlength - 1] = 0;
+	
+	strlcat (path, "/winamp.m3u", sizeof (path));
+	filelength = FS_FileOpenRead(path, &f);
+	
+	if (!f)
+		return -1;
+
+	*buf = Q_malloc(filelength);
+	
+	if (filelength != fread(*buf, 1,  filelength, f)) 
+	{
+		Q_free(*buf);
+		fclose(f);
+		return -1;
+	}
+
+	fclose(f);
+	return filelength;
+}
+
+
+//===========================================================================
+//                        GLOBAL   WINAMP   FUNCTIONS
+//===========================================================================
 
 qbool MP3_WINAMP_IsActive(void) 
 {
@@ -261,6 +394,7 @@ qbool MP3_WINAMP_GetToggleState(int *shuffle, int *repeat)
 	return true;
 }
 
+// Playlist functions
 void MP3_WINAMP_LoadPlaylist_f(void)
 {
 	COPYDATASTRUCT cds;
@@ -295,48 +429,6 @@ void MP3_WINAMP_LoadPlaylist_f(void)
 	SendMessage(mp3_hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 }
 
-long MP3_WINAMP_GetPlaylist(char **buf) 
-{
-	FILE *f;
-	char path[512];
-	int pathlength;
-	long filelength;
-	COPYDATASTRUCT cds;
-
-	if (!MP3_WINAMP_IsPlayerRunning())
-		return -1;
-
-	cds.dwData = IPC_CHDIR;
-	cds.lpData = mp3_dir.string;
-	cds.cbData = strlen(mp3_dir.string) + 1;
-	SendMessage(mp3_hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
-
-	SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_WRITEPLAYLIST);
-	strlcpy(path, mp3_dir.string, sizeof(path));
-	pathlength = strlen(path);
-	
-	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
-		path[pathlength - 1] = 0;
-	
-	strlcat (path, "/winamp.m3u", sizeof (path));
-	filelength = FS_FileOpenRead(path, &f);
-	
-	if (!f)
-		return -1;
-
-	*buf = Q_malloc(filelength);
-	
-	if (filelength != fread(*buf, 1,  filelength, f)) 
-	{
-		Q_free(*buf);
-		fclose(f);
-		return -1;
-	}
-
-	fclose(f);
-	return filelength;
-}
-
 void MP3_WINAMP_GetPlaylistInfo(int *current, int *length) 
 {
 	if (!MP3_WINAMP_IsPlayerRunning())
@@ -347,28 +439,73 @@ void MP3_WINAMP_GetPlaylistInfo(int *current, int *length)
 		*current = SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_GETLISTPOS);
 }
 
-void MP3_WINAMP_PrintPlaylist_f(void) 
-{
-	char *playlist_buf, *entries[1024];
-	unsigned int length;
-	int i, playlist_size, current;
+static void MP3_WINAMP_CachePlaylistFlush(void) {
+	int i;
+	for (i = 0; i < WINAMP_Playlist_nelms; i++)
+		Q_free(WINAMP_Playlist[i]);
 
-	if ((length = MP3_WINAMP_GetPlaylist(&playlist_buf)) == -1) 
+	Q_free(WINAMP_Playlist);
+}
+
+int MP3_WINAMP_CachePlaylist(void) {
+	char *playlist_buf;
+	unsigned int length;
+
+	if ((length = WINAMP_GetPlaylist(&playlist_buf)) == -1) 
 	{
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
-		return;
+		return -1;
 	}
 
-	MP3_WINAMP_GetPlaylistInfo(&current, NULL);
-	playlist_size = MP3_ParsePlaylist_EXTM3U(playlist_buf, length, entries, sizeof(entries) / sizeof(entries[0]), 128);
+	MP3_WINAMP_GetPlaylistInfo(&current, &WINAMP_Playlist_nelms);
 
-	for (i = 0; i < playlist_size; i++) 
-	{
-		Com_Printf("%s%3d %s\n", i == current ? "\x02" : "", i + 1, entries[i]);
-		Q_free(entries[i]);
+	/* Free the list before we cache a new one */
+	if (WINAMP_Playlist) {
+		WINAMP_CachePlaylistFlush();
 	}
+
+	WINAMP_Playlist = (char **) Q_malloc(sizeof(*WINAMP_Playlist)*WINAMP_Playlist_nelms);
+
+	WINAMP_Playlist_nelms = WINAMP_ParsePlaylist_EXTM3U(playlist_buf, length);
 
 	Q_free(playlist_buf);
+
+	return 0;
+}
+
+
+
+void MP3_WINAMP_GetSongTitle(int track_num, char *song, size_t song_len) {
+	strlcpy(song, "", song_len);
+
+	if (!MP3_WINAMP_IsPlayerRunning()) 
+		return;
+
+	if (WINAMP_Playlist == NULL) {
+		WINAMP_CachePlaylist();
+	}
+
+	track_num--; // Count from 0 to N
+	if (track_num < 0 || track_num >= WINAMP_Playlist_nelms)
+		return;
+	
+	strlcpy(song, WINAMP_Playlist[track_num], song_len);
+}
+
+void MP3_WINAMP_PrintPlaylist_f(void) 
+{
+	int i, current;
+
+	/* Force a cache refill */
+	if (WINAMP_CachePlaylist())
+		return;
+
+	MP3_WINAMP_GetPlaylistInfo(&current, NULL);
+
+	for (i = 0; i < WINAMP_Playlist_nelms; i++) 
+	{
+		Com_Printf("%s%3d %s\n", i == current ? "\x02" : "", i + 1, WINAMP_Playlist[i]);
+	}
 }
 
 void MP3_WINAMP_PlayTrackNum_f(void) 
@@ -436,13 +573,15 @@ const mp3_player_t mp3_player_winamp =
 	MP3_WINAMP_IsPlayerRunning, 
 	MP3_WINAMP_GetStatus, 
 	MP3_WINAMP_GetPlaylistInfo, 
-	MP3_WINAMP_GetPlaylist, 
+	MP3_WINAMP_GetSongTitle,
 	MP3_WINAMP_GetOutputtime, 
 	MP3_WINAMP_GetToggleState, 
 
 	MP3_WINAMP_PrintPlaylist_f, 
 	MP3_WINAMP_PlayTrackNum_f, 
 	MP3_WINAMP_LoadPlaylist_f, 
+	MP3_WINAMP_CachePlaylist,
+	MP3_WINAMP_CachePlaylistFlush,
 	MP3_WINAMP_Next_f, 
 	MP3_WINAMP_FastForward_f, 
 	MP3_WINAMP_Rewind_f, 
