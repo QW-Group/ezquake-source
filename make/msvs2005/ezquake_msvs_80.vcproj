@@ -1940,6 +1940,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\mp3_xmms2.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\qtv.c"
 					>
 				</File>

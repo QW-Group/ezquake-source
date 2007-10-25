@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.81 2007-10-25 14:46:13 dkure Exp $
+#	$Id: Makefile,v 1.82 2007-10-25 15:04:56 dkure Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -83,6 +83,7 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 # compiler flags
 # -DWITH_XMMS      for xmms      MP3 player support
 # -DWITH_AUDACIOUS for audacious MP3 player support
+# -DWITH_XMMS2     for xmms2     MP3 player support
 # -DWITH_WINAMP    for winamp    MP3 player support
 PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP -DWITH_FTE_VFS 
 BASE_CFLAGS = -pipe -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I./libs
@@ -98,6 +99,9 @@ endif # WITH_XMMS
 ifneq ($(shell echo $(PRJ_CFLAGS) |grep WITH_AUDACIOUS),)
 BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags glib-2.0`
 endif # WITH_AUDACIOUS
+ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_XMMS2),)
+BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags xmms2-client`
+endif # WITH_XMMS2
 
 ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_OGG_VORBIS),)
 BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags vorbisfile`
