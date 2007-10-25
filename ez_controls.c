@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.75 2007-10-25 03:07:47 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.76 2007-10-25 14:15:52 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -239,7 +239,7 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 //
 // Control Tree - Draws a control tree.
 //
-static void EZ_tree_Draw(ez_tree_t *tree)
+void EZ_tree_Draw(ez_tree_t *tree)
 {
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = tree->drawlist.head;
@@ -323,7 +323,7 @@ static void EZ_tree_RaiseRepeatedMouseButtonEvents(ez_tree_t *tree)
 {
 	if (tree->focused_node && tree->focused_node->payload)
 	{
-		control = (ez_control_t *)tree->focused_node->payload;
+		ez_control_t *control = (ez_control_t *)tree->focused_node->payload;
 
 		// Notify controls that are listening to repeat mouse events 
 		// if the control's set delay has been reached.
