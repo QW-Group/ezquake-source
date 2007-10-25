@@ -104,7 +104,7 @@ typedef struct iphdr
 
     unsigned int sourceIP;
     unsigned int destIP;
-} IpHeader;
+} IP_header_t;
  
 typedef struct _ihdr
 {
@@ -119,17 +119,29 @@ typedef struct _ihdr
     int index;  // server num
     int phase;  // ping phase
     int randomizer;
-} IcmpHeader; 
+} ICMP_header_t; 
+
 
 #define STATUS_FAILED    0xFFFF
 #define DEF_PACKET_SIZE  0
 #define MAX_PACKET       1024
 
-void    fill_icmp_data (char *, int);
-USHORT  checksum (USHORT *, int);
-int     decode_resp (char *, int, struct sockaddr_in *, u_long ip);
-IcmpHeader * get_icmp (char *, int, struct sockaddr_in *, u_long ip); 
+typedef union IP_Packet_u {
+	IP_header_t hdr;
+	byte data[MAX_PACKET];
+} IP_packet_t;
 
+typedef union ICMP_Packet_u {
+	ICMP_header_t hdr;
+	byte data[MAX_PACKET];
+} ICMP_packet_t;
+
+void fill_icmp_data(ICMP_packet_t *packet, int datasize);
+USHORT checksum(ICMP_packet_t *packet, int size);
+int decode_resp(IP_packet_t *ip_packet, int bytes, 
+				struct sockaddr_in *from, u_long ip);
+ICMP_header_t *get_icmp(IP_packet_t *ip_packet, int bytes,
+				struct sockaddr_in *from, u_long ip);
 int PingHost(char *host_to_ping, short port, int count, int time_out)
 {
 	int sock, i, ret, pings;
@@ -187,8 +199,8 @@ int oldPingHost(char *host_to_ping, int count)
     int bread,datasize;
     int fromlen = sizeof(from);
     char *dest_ip;
-    char *icmp_data;
-    char *recvbuf;
+    ICMP_packet_t icmp_packet;
+	IP_packet_t   ip_packet;
 
 //    u_long arg;
     int arg2, success;
@@ -212,32 +224,25 @@ int oldPingHost(char *host_to_ping, int count)
     dest.sin_family = AF_INET;
     dest_ip = inet_ntoa(dest.sin_addr);
     datasize = DEF_PACKET_SIZE;
-    datasize += sizeof(IcmpHeader);  
+    datasize += sizeof(icmp_packet.hdr);  
 
-    icmp_data = (char *) Q_malloc(MAX_PACKET);
-    recvbuf = (char *) Q_malloc(MAX_PACKET);
-
-    if (!icmp_data)
-        return 0;
-  
-    memset(icmp_data, 0, MAX_PACKET);
-    fill_icmp_data(icmp_data, datasize);
+    memset(icmp_packet.data, 0, sizeof(icmp_packet.data));
+    fill_icmp_data(&icmp_packet, datasize);
 
     arg2 = success = 0;
     while (arg2 < count)
     {
         int bwrote;
-    int ret;
+		int ret;
 
         arg2++;
     
-        ((IcmpHeader*)icmp_data)->i_cksum = 0;
-        ((IcmpHeader*)icmp_data)->timestamp = Sys_DoubleTime();
-        ((IcmpHeader*)icmp_data)->id = addr;
+        icmp_packet.hdr.i_cksum = 0;
+        icmp_packet.hdr.timestamp = Sys_DoubleTime();
+        icmp_packet.hdr.id = addr;
 
-        ((IcmpHeader*)icmp_data)->i_seq = seq_no++;
-        ((IcmpHeader*)icmp_data)->i_cksum = checksum((USHORT*)icmp_data, 
-                                                     datasize);
+        icmp_packet.hdr.i_seq = seq_no++;
+        icmp_packet.hdr.i_cksum = checksum(&icmp_packet, datasize);
 
         FD_ZERO(&fd_set_struct);
         FD_SET(sock, &fd_set_struct);
@@ -249,7 +254,7 @@ int oldPingHost(char *host_to_ping, int count)
         if (ret <= 0)
             continue;
 
-        bwrote = sendto(sock,icmp_data,datasize,0,(struct sockaddr*)&dest,
+        bwrote = sendto(sock,icmp_packet.data,datasize,0,(struct sockaddr*)&dest,
                         sizeof(dest));
 
         if (bwrote <= 0)
@@ -266,20 +271,17 @@ int oldPingHost(char *host_to_ping, int count)
         if (ret <= 0)
             continue;
 
-        bread = recvfrom(sock, recvbuf, MAX_PACKET, 0, (struct sockaddr*)&from,
-			 (socklen_t *)&fromlen);
+        bread = recvfrom(sock, ip_packet.data, MAX_PACKET, 0, 
+				(struct sockaddr*)&from, (socklen_t *)&fromlen);
         if (bread <= 0)
             continue;
 
-        success = decode_resp(recvbuf, bread, &from, addr);
+        success = decode_resp(&ip_packet, bread, &from, addr);
         if (!success)
             continue;
 
         break;
     }
-
-    Q_free(icmp_data);
-    Q_free(recvbuf);
 
     return success;
 } 
@@ -361,9 +363,9 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     struct sockaddr_in dest,from;
     int bread,datasize;
     int fromlen = sizeof(from);
-    char *dest_ip;
-    char *icmp_data;
-    char *recvbuf;
+	char *dest_ip;
+    ICMP_packet_t icmp_packet;
+	IP_packet_t   ip_packet;
 
     int arg2, success;
     struct timeval timeout;
@@ -374,21 +376,13 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 
     if (sock < 0)
         return 0;
-
+	
     datasize = DEF_PACKET_SIZE;
-    datasize += sizeof(IcmpHeader);
+    datasize += sizeof(icmp_packet.hdr);
 
-    icmp_data = (char *) Q_malloc(MAX_PACKET);
-    recvbuf = (char *)Q_malloc(MAX_PACKET);
-
-    if (!icmp_data)
-    {
-        return 0;
-    }
-  
 	// FIXME: The datasize only sizeof(IcmpHeader) here so fill_icmp_data won't set any of the data "to junk", it will all be 0.
-    memset(icmp_data, 0, MAX_PACKET);
-    fill_icmp_data(icmp_data, datasize);
+    memset(icmp_packet.data, 0, MAX_PACKET);
+    fill_icmp_data(&icmp_packet, datasize);
 
     arg2 = success = 0;
 
@@ -440,7 +434,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     randomizer = (int)(Sys_DoubleTime() * 10);
 
 	// Ping all adresses in the host list we just created.
-    while (1 && !abort_ping)
+    while (!abort_ping)
     {
         int bwrote;
 
@@ -460,23 +454,23 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 
             if (host->ping >= 0)
             {
-                ((IcmpHeader*)icmp_data)->i_cksum = 0;
-                ((IcmpHeader*)icmp_data)->timestamp = time;
+                icmp_packet.hdr.i_cksum = 0;
+                icmp_packet.hdr.timestamp = time;
 
-                ((IcmpHeader*)icmp_data)->id = host->ip;
-                ((IcmpHeader*)icmp_data)->index = ping_number % hostsn;
-                ((IcmpHeader*)icmp_data)->phase = ping_number;
-                ((IcmpHeader*)icmp_data)->randomizer = randomizer;
+                icmp_packet.hdr.id = host->ip;
+                icmp_packet.hdr.index = ping_number % hostsn;
+                icmp_packet.hdr.phase = ping_number;
+                icmp_packet.hdr.randomizer = randomizer;
 
-                ((IcmpHeader*)icmp_data)->i_seq = seq_no++;
-                ((IcmpHeader*)icmp_data)->i_cksum = checksum((USHORT*)icmp_data, datasize);
+                icmp_packet.hdr.i_seq = seq_no++;
+                icmp_packet.hdr.i_cksum = checksum(&icmp_packet, datasize);
 
                 memset(&dest, 0, sizeof(dest));
                 dest.sin_addr.s_addr = host->ip;
                 dest.sin_family = AF_INET;
                 dest_ip = inet_ntoa(dest.sin_addr);
 
-                bwrote = sendto(sock, icmp_data, datasize, 0, (struct sockaddr*)&dest, sizeof(dest));
+                bwrote = sendto(sock, icmp_packet.data, datasize, 0, (struct sockaddr*)&dest, sizeof(dest));
 
                 if (bwrote <= 0)
                     host->ping = -1;
@@ -495,7 +489,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
         while (1 && !abort_ping)
         {
 			int myvar;
-            IcmpHeader *icmpanswer;
+            ICMP_header_t *icmpanswer;
 
             FD_ZERO(&fd_set_struct);
             FD_SET(sock, &fd_set_struct);
@@ -506,12 +500,13 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
                 break;
 
             // there's an answer - get it!
-            bread = recvfrom(sock, recvbuf, MAX_PACKET, 0, (struct sockaddr *)&from, (socklen_t *)&fromlen);
+            bread = recvfrom(sock, ip_packet.data, sizeof(ip_packet.data), 0, 
+							(struct sockaddr *)&from, (socklen_t *)&fromlen);
            
 			if (bread <= 0)
                 continue;
 
-            icmpanswer = get_icmp(recvbuf, bread, &from, addr);
+            icmpanswer = get_icmp(&ip_packet, bread, &from, addr);
 
 			// Make sure the reply is ok.
             if (icmpanswer && (randomizer == icmpanswer->randomizer))
@@ -557,8 +552,6 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
         }
     }
 
-    Q_free(icmp_data);
-    Q_free(recvbuf);
     Q_free(hosts);
 
     return success;
@@ -571,68 +564,66 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 // the ICMP data 
 //
 
-int decode_resp(char *buf, int bytes,struct sockaddr_in *from, u_long ip)
+int decode_resp(IP_packet_t *ip_packet, int bytes, 
+				struct sockaddr_in *from, u_long ip)
 {
-    IpHeader *iphdr;
-    IcmpHeader *icmphdr;
+    ICMP_packet_t *icmp_packet;
     unsigned short iphdrlen;
 
-    iphdr = (IpHeader *)buf;
-
-    iphdrlen = iphdr->h_len * 4 ; // number of 32-bit words *4 = bytes
+    iphdrlen = ip_packet->hdr.h_len * 4 ; // number of 32-bit words *4 = bytes
 
     if (bytes  < iphdrlen + ICMP_MIN)
     {
         return 0;
     }
 
-    icmphdr = (IcmpHeader*)(buf + iphdrlen);
+    icmp_packet = (ICMP_packet_t *)(ip_packet->data + iphdrlen);
 
-    if (icmphdr->i_type != ICMP_ECHOREPLY) {
+    if (icmp_packet->hdr.i_type != ICMP_ECHOREPLY) {
         return 0;
     }
-    if (icmphdr->i_id != (USHORT)GetCurrentProcessId()) {
+    if (icmp_packet->hdr.i_id != (USHORT)GetCurrentProcessId()) {
         return 0;
     }
 
-    if (icmphdr->id != ip)
+    if (icmp_packet->hdr.id != ip)
         return 0;
 
-    return 1 + (int)((Sys_DoubleTime()-icmphdr->timestamp)*1000);
+    return 1 + (int)((Sys_DoubleTime()-icmp_packet->hdr.timestamp)*1000);
 }
 
-IcmpHeader * get_icmp(char *buf, int bytes,struct sockaddr_in *from, u_long ip)
+ICMP_header_t *get_icmp(IP_packet_t *ip_packet, int bytes,
+				struct sockaddr_in *from, u_long ip)
 {
-    IpHeader *iphdr;
-    IcmpHeader *icmphdr;
+    ICMP_packet_t *icmp_packet;
     unsigned short iphdrlen;
 
-    iphdr = (IpHeader *)buf;
-
-    iphdrlen = iphdr->h_len * 4 ; // number of 32-bit words *4 = bytes
+    iphdrlen = ip_packet->hdr.h_len * 4 ; // number of 32-bit words *4 = bytes
 
     if (bytes  < iphdrlen + ICMP_MIN)
     {
         return NULL;
     }
 
-    icmphdr = (IcmpHeader*)(buf + iphdrlen);
+    icmp_packet = (ICMP_packet_t *)(ip_packet->data + iphdrlen);
 
-    if (icmphdr->i_type != ICMP_ECHOREPLY)
+    if (icmp_packet->hdr.i_type != ICMP_ECHOREPLY)
 	{
         return NULL;
     }
-    if (icmphdr->i_id != (USHORT)GetCurrentProcessId())
+    if (icmp_packet->hdr.i_id != (USHORT)GetCurrentProcessId())
 	{
         return NULL;
     }
 
-    return icmphdr;
+    return &icmp_packet->hdr;
 } 
 
-USHORT checksum(USHORT *buffer, int size)
+/* FIXME: USHORT is a bad bad type name to use... */
+USHORT checksum(ICMP_packet_t *packet, int size)
 {
   unsigned long cksum=0;
+  USHORT *buffer = (USHORT *)packet->data;
 
 	while(size >1)
 	{
@@ -655,26 +646,18 @@ USHORT checksum(USHORT *buffer, int size)
 // Helper function to fill in various stuff in our ICMP request.
 //
 
-void fill_icmp_data(char * icmp_data, int datasize)
+void fill_icmp_data(ICMP_packet_t *packet, int datasize)
 {
-
-  IcmpHeader *icmp_hdr;
-  char *datapart;
-
-  icmp_hdr = (IcmpHeader*)icmp_data;
-
-  icmp_hdr->i_type = ICMP_ECHO;
-  icmp_hdr->i_code = 0;
-  icmp_hdr->i_id = (USHORT)GetCurrentProcessId();
-  icmp_hdr->i_cksum = 0;
-  icmp_hdr->i_seq = 0;
+  packet->hdr.i_type = ICMP_ECHO;
+  packet->hdr.i_code = 0;
+  packet->hdr.i_id = (USHORT)GetCurrentProcessId();
+  packet->hdr.i_cksum = 0;
+  packet->hdr.i_seq = 0;
   
-  datapart = icmp_data + sizeof(IcmpHeader);
   //
   // Place some junk in the buffer.
   //
-  memset(datapart,'E', datasize - sizeof(IcmpHeader));
-
+  memset(packet->data + sizeof(packet->hdr), 'E', datasize);
 }
  
 int PingHosts(server_data *servs[], int servsn, int count, int time_out)
@@ -806,12 +789,9 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 }
 
 //
-//
-//
 // ----------------------------------------------
 //  connection test
 //  netgraph + ping stats
-//
 //
 //
 
@@ -835,7 +815,7 @@ void SB_Test_SendPacket(void)
     int datasize;
 //   int fromlen = sizeof(from);
     char *dest_ip;
-    char *icmp_data;
+	ICMP_packet_t icmp_packet;
     int bwrote;
 //    int ret;
 
@@ -864,39 +844,31 @@ void SB_Test_SendPacket(void)
     dest.sin_family = AF_INET;
     dest_ip = inet_ntoa(dest.sin_addr);
     datasize = DEF_PACKET_SIZE;
-    datasize += sizeof(IcmpHeader);  
+    datasize += sizeof(icmp_packet.hdr);  
 
-    icmp_data = (char *) Q_malloc(MAX_PACKET);
+    memset(icmp_packet.data, 0, MAX_PACKET);
+    fill_icmp_data(&icmp_packet, datasize);
 
-    if (!icmp_data)
-        return ;
-  
-    memset(icmp_data, 0, MAX_PACKET);
-    fill_icmp_data(icmp_data, datasize);
+    icmp_packet.hdr.phase = sb_test_starttime;
 
-    ((IcmpHeader*)icmp_data)->phase = sb_test_starttime;
+    icmp_packet.hdr.i_cksum = 0;
+    icmp_packet.hdr.timestamp = cls.realtime;
+    icmp_packet.hdr.id = addr;
 
-    ((IcmpHeader*)icmp_data)->i_cksum = 0;
-    ((IcmpHeader*)icmp_data)->timestamp = cls.realtime;
-    ((IcmpHeader*)icmp_data)->id = addr;
+    icmp_packet.hdr.i_seq = sb_test_outgoing_sequence++;
+    icmp_packet.hdr.i_cksum = checksum(&icmp_packet, datasize);
 
-    ((IcmpHeader*)icmp_data)->i_seq = sb_test_outgoing_sequence++;
-    ((IcmpHeader*)icmp_data)->i_cksum = checksum((USHORT*)icmp_data, 
-                                                 datasize);
-
-    bwrote = sendto(sock,icmp_data,datasize,0,(struct sockaddr*)&dest,
+    bwrote = sendto(sock,icmp_packet.data,datasize,0,(struct sockaddr*)&dest,
                     sizeof(dest));
-
-    Q_free(icmp_data); 
 }
 
 void SB_Test_GetPackets(void)
 {
     struct sockaddr_in dest,from;
-    int bread,datasize;
+    int bread;
     int fromlen = sizeof(from);
     char *dest_ip;
-    char *recvbuf;
+    IP_packet_t ip_packet;
 //    int bwrote;
 
 //    u_long arg;
@@ -920,24 +892,19 @@ void SB_Test_GetPackets(void)
     dest.sin_addr.s_addr = addr;
     dest.sin_family = AF_INET;
     dest_ip = inet_ntoa(dest.sin_addr);
-    datasize = DEF_PACKET_SIZE;
-    datasize += sizeof(IcmpHeader);  
-
-    recvbuf = (char *) Q_malloc(MAX_PACKET);
-
 
     while (1)
     {
 //        int success;
-        IcmpHeader *icmpanswer;
+        ICMP_header_t *icmpanswer;
         int seq;
 
-        bread = recvfrom(sock, recvbuf, MAX_PACKET, 0, (struct sockaddr*)&from,
-			 (socklen_t *) &fromlen);
+        bread = recvfrom(sock, ip_packet.data, sizeof(ip_packet.data), 0, 
+						(struct sockaddr*)&from, (socklen_t *) &fromlen);
         if (bread <= 0)
             break;
 
-        icmpanswer = get_icmp(recvbuf, bread, &from, addr);
+        icmpanswer = get_icmp(&ip_packet, bread, &from, addr);
 
         if (!icmpanswer)
             continue;
@@ -954,7 +921,6 @@ void SB_Test_GetPackets(void)
         }
     }
 
-    Q_free(recvbuf); 
 }
 
 void SB_Test_Draw(void)
