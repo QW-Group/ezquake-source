@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_winamp.c,v 1.5 2007-10-25 15:02:07 dkure Exp $
+	$Id: mp3_winamp.c,v 1.6 2007-10-25 15:41:42 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -56,7 +56,6 @@ int WINAMP_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length,
 								char **playlist, int playlist_nelms) { 
 	int skip = 0; 
 	char *s, *t, *buf, *line;
-	winamp_playlist_t *pl_entry
 
 	buf = playlist_buf;
 	while (playlist_size < playlist_nelms) {
@@ -461,7 +460,7 @@ int MP3_WINAMP_CachePlaylist(void) {
 
 	/* Free the list before we cache a new one */
 	if (WINAMP_Playlist) {
-		WINAMP_CachePlaylistFlush();
+		MP3_WINAMP_CachePlaylistFlush();
 	}
 
 	WINAMP_Playlist = (char **) Q_malloc(sizeof(*WINAMP_Playlist)*WINAMP_Playlist_nelms);

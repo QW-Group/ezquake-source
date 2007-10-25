@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.91 2007-10-25 15:02:07 dkure Exp $
+	$Id: menu.c,v 1.92 2007-10-25 15:41:42 dkure Exp $
 
 */
 
@@ -1609,7 +1609,7 @@ void M_Menu_MP3_Playlist_Read(void) {
  * Draw the playlist menu, with the current playing song in white
  */
 void M_Menu_MP3_Playlist_Draw(void) {
-	int		index, print_time, i;
+	int		index, print_time, i, count;
 	char 	name[PLAYLIST_MAXTITLE], *s;
 	float 	realtime;
 
@@ -1654,7 +1654,6 @@ menu_items:
 
 	MP3_GetPlaylistInfo(&last_current, NULL);
 
-	int count;
 	for (index = playlist_base, count = 0;
 			index < playlist_size && count < PLAYLIST_MAXLINES;
 			index++, count++) {
