@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.80 2007-10-19 18:14:16 zwoch Exp $
+#	$Id: Makefile,v 1.81 2007-10-25 14:46:13 dkure Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -81,10 +81,29 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 	$(MKDIR)
 
 # compiler flags
-# -D WITH_XMMS      for xmms      MP3 player support
-# -D WITH_AUDACIOUS for audacious MP3 player support
-PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP -DWITH_FTE_VFS
-BASE_CFLAGS = -pipe -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I ./libs `pkg-config --libs-only-L --libs --cflags glib-2.0`
+# -DWITH_XMMS      for xmms      MP3 player support
+# -DWITH_AUDACIOUS for audacious MP3 player support
+# -DWITH_WINAMP    for winamp    MP3 player support
+PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP -DWITH_FTE_VFS 
+BASE_CFLAGS = -pipe -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I./libs
+
+
+########################
+# pkg-config includes  #
+########################
+# Add support for MP3 Libraries
+ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_XMMS),)
+BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags glib-2.0`
+endif # WITH_XMMS
+ifneq ($(shell echo $(PRJ_CFLAGS) |grep WITH_AUDACIOUS),)
+BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags glib-2.0`
+endif # WITH_AUDACIOUS
+
+ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_OGG_VORBIS),)
+BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags vorbisfile`
+endif # WITH_OGG_VORBIS
+
+########################
 
 RELEASE_CFLAGS = -O2 -fno-strict-aliasing -ffast-math -funroll-loops
 DEBUG_CFLAGS = -ggdb
@@ -99,9 +118,9 @@ CFLAGS = $(BASE_CFLAGS) $(DEBUG_CFLAGS) -D_DEBUG
 endif
 
 ifeq ($(TYPE),release)
-LDFLAGS = -lm -lpthread `pkg-config --cflags --libs glib-2.0`
+LDFLAGS = -lm -lpthread
 else
-LDFLAGS = -ggdb -lm -lpthread `pkg-config --cflags --libs glib-2.0`
+LDFLAGS = -ggdb -lm -lpthread
 endif
 
 COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a
