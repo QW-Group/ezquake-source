@@ -597,6 +597,9 @@
 					RelativePath="..\..\snd_mem.c">
 				</File>
 				<File
+					RelativePath="..\..\snd_ov.c">
+				</File>
+				<File
 					RelativePath="..\..\snd_mix.c">
 				</File>
 				<File

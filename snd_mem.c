@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.15 2007-10-07 05:11:20 disconn3ct Exp $
+    $Id: snd_mem.c,v 1.16 2007-10-25 14:54:30 dkure Exp $
 */
 // snd_mem.c -- sound caching
 
@@ -215,6 +215,7 @@ static wavinfo_t GetWavinfo (char *name, unsigned char *wav, int wavlength)
 
 
 //=============================================================================
+#ifndef WITH_OGG_VORBIS
 sfxcache_t *S_LoadSound (sfx_t *s)
 {
 	char namebuffer[256];
@@ -265,6 +266,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	return sc;
 }
+#endif // WITH_OGG_VORBIS
 
 int SND_Rate(int rate)
 {
