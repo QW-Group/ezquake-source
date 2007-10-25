@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fs.c,v 1.59 2007-10-13 16:24:50 dkure Exp $
+	$Id: fs.c,v 1.60 2007-10-25 14:06:20 dkure Exp $
 */
 
 /**
@@ -520,7 +520,7 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 #ifndef WITH_FTE_VFS
 	FILE *h;
 #else
-	vfsfile_t *f;
+	vfsfile_t *f = NULL;
 	vfserrno_t err;
 	flocation_t loc;
 #endif
@@ -540,10 +540,12 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 
 	// VFS-FIXME: This only checks the pak files, not the base dir's
     FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
-	if (!loc.search)
-		        return NULL;    //wasn't found
+	if (loc.search) {
+		f = loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
+	} else {
+		f = FS_OpenVFS(path, "rb", FS_ANY);
+	} 
 
-	f = loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
 	if (!f)
 		return NULL;
 	len = VFS_GETLEN(f);
@@ -1612,7 +1614,7 @@ archive_fail:
  */
 	case FS_HOME:
 		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
 		else
 			return NULL;
 		return VFSOS_Open(fullname, mode);
