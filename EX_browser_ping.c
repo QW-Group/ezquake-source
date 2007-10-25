@@ -345,7 +345,6 @@ DWORD WINAPI PingRecvProc(void *lpParameter)
 		}
 	}
 
-	/* TODO: Need reduce semaphore count here */
 	Sys_SemPost(&ping_semaphore);
 
 	return 0;
