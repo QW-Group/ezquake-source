@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_winamp.c,v 1.7 2007-10-25 15:49:38 dkure Exp $
+	$Id: mp3_winamp.c,v 1.8 2007-10-25 15:52:10 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -452,6 +452,7 @@ static void MP3_WINAMP_CachePlaylistFlush(void) {
 int MP3_WINAMP_CachePlaylist(void) {
 	char *playlist_buf;
 	unsigned int length;
+	int current;
 
 	if ((length = WINAMP_GetPlaylist(&playlist_buf)) == -1) 
 	{
