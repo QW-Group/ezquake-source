@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.102 2007-10-22 18:52:49 qqshka Exp $
+	$Id: cl_demo.c,v 1.103 2007-10-25 12:09:18 dkure Exp $
 */
 
 #include <time.h>
@@ -847,7 +847,7 @@ qbool pb_ensure(void)
 		bufferingtime = Sys_DoubleTime() + prebufferseconds;
 
 		if (developer.integer >= 2)
-			Com_DPrintf("&cF00" "qtv: no enough buffered, buffering for %.1fs\n" "&r", prebufferseconds); // print some annoying message
+			Com_DPrintf("&cF00" "qtv: not enough buffered, buffering for %.1fs\n" "&r", prebufferseconds); // print some annoying message
 	}
 
 	return false;
