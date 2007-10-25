@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.41 2007-10-24 21:21:18 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.42 2007-10-25 17:22:45 cokeman1982 Exp $
 
 */
 
@@ -2399,7 +2399,7 @@ static void HUD_Editor(void)
 		HUD_Editor_DrawHelp();
 	}
 
-	EZ_tree_Draw(&help_control_tree);
+	EZ_tree_EventLoop(&help_control_tree);
 }
 
 //

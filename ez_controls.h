@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.53 2007-10-25 14:15:52 dkure Exp $
+$Id: ez_controls.h,v 1.54 2007-10-25 17:22:45 cokeman1982 Exp $
 */
 
 //
@@ -226,11 +226,6 @@ typedef struct ez_tree_s
 	mouse_state_t			prev_mouse_state;		// The last mouse state we received.
 	double					mouse_pressed_time[9];	// How long the mouse buttons have been pressed. (Used for repeating mouse click events).
 } ez_tree_t;
-
-//  
-// Control Tree - Draws a control tree.
-//
-void EZ_tree_Draw(ez_tree_t *tree);
 
 //
 // Control Tree - Orders the tab list based on the tab order property.
