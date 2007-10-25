@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_winamp.c,v 1.6 2007-10-25 15:41:42 dkure Exp $
+	$Id: mp3_winamp.c,v 1.7 2007-10-25 15:49:38 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -39,6 +39,7 @@ cvar_t mp3_dir = {"mp3_winamp_dir", "c:/program files/winamp"};
 static char **WINAMP_Playlist;
 static int WINAMP_Playlist_nelms;
 
+
 // ================
 // WINAMP_ParsePlaylist_EXTM3U
 // ================
@@ -56,6 +57,7 @@ int WINAMP_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length,
 								char **playlist, int playlist_nelms) { 
 	int skip = 0; 
 	char *s, *t, *buf, *line;
+	int playlist_size = 0;
 
 	buf = playlist_buf;
 	while (playlist_size < playlist_nelms) {
@@ -114,6 +116,7 @@ int WINAMP_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length,
 	return playlist_size;
 }
 
+static qbool MP3_WINAMP_IsPlayerRunning(void);
 /**
  * Get winamp to write its current playlist to an m3u list, read this file into
  * a temporary file
@@ -465,7 +468,8 @@ int MP3_WINAMP_CachePlaylist(void) {
 
 	WINAMP_Playlist = (char **) Q_malloc(sizeof(*WINAMP_Playlist)*WINAMP_Playlist_nelms);
 
-	WINAMP_Playlist_nelms = WINAMP_ParsePlaylist_EXTM3U(playlist_buf, length);
+	WINAMP_Playlist_nelms = WINAMP_ParsePlaylist_EXTM3U(playlist_buf, length, 
+									WINAMP_Playlist, WINAMP_Playlist_nelms);
 
 	Q_free(playlist_buf);
 
@@ -481,7 +485,7 @@ void MP3_WINAMP_GetSongTitle(int track_num, char *song, size_t song_len) {
 		return;
 
 	if (WINAMP_Playlist == NULL) {
-		WINAMP_CachePlaylist();
+		MP3_WINAMP_CachePlaylist();
 	}
 
 	track_num--; // Count from 0 to N
@@ -496,7 +500,7 @@ void MP3_WINAMP_PrintPlaylist_f(void)
 	int i, current;
 
 	/* Force a cache refill */
-	if (WINAMP_CachePlaylist())
+	if (MP3_WINAMP_CachePlaylist())
 		return;
 
 	MP3_WINAMP_GetPlaylistInfo(&current, NULL);
@@ -580,7 +584,6 @@ const mp3_player_t mp3_player_winamp =
 	MP3_WINAMP_PlayTrackNum_f, 
 	MP3_WINAMP_LoadPlaylist_f, 
 	MP3_WINAMP_CachePlaylist,
-	MP3_WINAMP_CachePlaylistFlush,
 	MP3_WINAMP_Next_f, 
 	MP3_WINAMP_FastForward_f, 
 	MP3_WINAMP_Rewind_f, 
