@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.30 2007-10-25 15:02:07 dkure Exp $
+	$Id: mp3_player.c,v 1.31 2007-10-26 07:55:45 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -58,8 +58,13 @@ const mp3_player_t *mp3_player = &mp3_player_xmms2;
 cvar_t mp3_playertype = {"mp3_playertype", "xmms", 0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_xmms;
 #else
+#ifdef WITH_MPD
+cvar_t mp3_playertype = {"mp3_playertype", "mpd", 0, OnChange_MP3_playertype};
+const mp3_player_t *mp3_player = &mp3_player_mpd;
+#else
 cvar_t mp3_playertype = {"mp3_playertype", "none", 0, OnChange_MP3_playertype};
 const mp3_player_t *mp3_player = &mp3_player_none;
+#endif // WITH_MPD
 #endif // WITH_XMMS
 #endif // WITH_XMMS2
 #endif // WITH_AUDACIOUS
@@ -67,7 +72,9 @@ const mp3_player_t *mp3_player = &mp3_player_none;
 
 static int MP3_CheckFunction(qbool PrintWarning);
 void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel) {
-	if (strcmp(value, "winamp") && strcmp(value, "audacious") && strcmp(value, "xmms2") && strcmp(value, "xmms") && strcmp(value, "none")) {
+	if (       strcmp(value, "winamp") && strcmp(value, "audacious") 
+			&& strcmp(value, "xmms2")  && strcmp(value, "xmms") 
+			&& strcmp(value, "mpd")    && strcmp(value, "none")) {
 		Com_Printf_State (PRINT_INFO, "Unknown mp3 player \"%s\"\n", value);
 		*cancel = true;
 		return;
@@ -77,15 +84,17 @@ void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel) {
 		MP3_Shutdown();
 	}
 
-	if (strcmp(value, "winamp") == 0) {
+	if (!strcmp(value, "winamp")) {
 		mp3_player = &mp3_player_winamp;
-	} else if (strcmp(value, "audacious") == 0) {
+	} else if (!strcmp(value, "audacious")) {
 		mp3_player = &mp3_player_audacious;
-	} else if (strcmp(value, "xmms2") == 0) {
+	} else if (!strcmp(value, "xmms2")) {
 		mp3_player = &mp3_player_xmms2;
-	} else if (strcmp(value, "xmms") == 0) {
+	} else if (!strcmp(value, "xmms")) {
 		mp3_player = &mp3_player_xmms;
-	} else if (strcmp(value, "none") == 0) {
+	} else if (!strcmp(value, "mpd")) {
+		mp3_player = &mp3_player_mpd;
+	} else if (!strcmp(value, "none") == 0) {
 		mp3_player = &mp3_player_none;
 	} 
 
@@ -175,7 +184,6 @@ void MP3_Init(void) {
 	//Cmd_AddCommand("mp3_start" MP3_PLAYERNAME_NOCAPS, MP3_Execute_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
-	Cvar_Register(&mp3_dir);
 	Cvar_Register(&mp3_scrolltitle);
 	Cvar_Register(&mp3_showtime);
 	Cvar_Register(&mp3_playertype);

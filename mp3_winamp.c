@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_winamp.c,v 1.8 2007-10-25 15:52:10 dkure Exp $
+	$Id: mp3_winamp.c,v 1.9 2007-10-26 07:55:45 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -555,6 +555,9 @@ void Media_WINAMP_SetVolume(double vol)
 
 void MP3_WINAMP_Init(void)
 {
+	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
+	Cvar_Register(&mp3_dir);
+	Cvar_ResetCurrentGroup();
 }
 
 void MP3_WINAMP_Shutdown(void) 

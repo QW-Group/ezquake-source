@@ -1944,6 +1944,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\mp3_mpd.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\qtv.c"
 					>
 				</File>

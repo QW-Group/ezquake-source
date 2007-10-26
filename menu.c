@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.92 2007-10-25 15:41:42 dkure Exp $
+	$Id: menu.c,v 1.93 2007-10-26 07:55:45 dkure Exp $
 
 */
 
@@ -1289,11 +1289,12 @@ void M_MP3_Control_Draw (void) {
 		M_PrintWhite (56, 84, "Press");
 		M_Print (56 + 48, 84, "ESC");
 		M_PrintWhite (56 + 48 + 32, 84, "to exit this menu");
-		M_Print (16, 116, "The variable");
-		M_PrintWhite (16 + 104, 116, mp3_dir.name);
-		M_Print (16 + 104 + 8 * (strlen(mp3_dir.name) + 1), 116, "needs to");
-		s = va("be set to the path for %s first", mp3_player->PlayerName_NoCaps);
-		M_Print (20, 124, s);
+		// FIXME: This warning is pointless on linux... but is useful on windows
+		//M_Print (16, 116, "The variable");
+		//M_PrintWhite (16 + 104, 116, mp3_dir.name);
+		//M_Print (16 + 104 + 8 * (strlen(mp3_dir.name) + 1), 116, "needs to");
+		//s = va("be set to the path for %s first", mp3_player->PlayerName_NoCaps);
+		//M_Print (20, 124, s);
 		return;
 	}
 

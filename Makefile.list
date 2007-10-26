@@ -52,6 +52,7 @@ CLIENT_C_FILES := \
 	mp3_player \
 	mp3_xmms \
 	mp3_xmms2 \
+	mp3_mpd \
 	mp3_winamp \
 	mvd_autotrack \
 	mvd_utils \

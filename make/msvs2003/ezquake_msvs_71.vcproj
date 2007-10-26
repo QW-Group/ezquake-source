@@ -1410,6 +1410,9 @@
 					RelativePath="..\..\mp3_xmms2.c">
 				</File>
 				<File
+					RelativePath="..\..\mp3_mpd.c">
+				</File>
+				<File
 					RelativePath="..\..\mp3_winamp.c">
 				</File>
 				<File

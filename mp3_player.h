@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.h,v 1.7 2007-10-25 15:02:07 dkure Exp $
+	$Id: mp3_player.h,v 1.8 2007-10-26 07:55:45 dkure Exp $
 
 */
 
@@ -67,7 +67,7 @@ int   MP3_ParsePlaylist_EXTM3U(char *, unsigned int, char *entries[], unsigned i
 char *MP3_Menu_SongtTitle(void);
 char *MP3_Macro_MP3Info(void);
 
-extern cvar_t mp3_dir, mp3_scrolltitle, mp3_showtime, mp3_xmms_session;
+extern cvar_t mp3_scrolltitle, mp3_showtime, mp3_xmms_session;
 
 double Media_GetVolume(void);
 void Media_SetVolume(double vol);
@@ -77,6 +77,7 @@ typedef enum {
 	MP3_XMMS,
 	MP3_XMMS2,
 	MP3_AUDACIOUS,
+	MP3_MPD,
 	MP3_WINAMP,
 } mp3_players_t;
 
@@ -128,5 +129,6 @@ extern const mp3_player_t *mp3_player;
 extern const mp3_player_t mp3_player_none;
 extern const mp3_player_t mp3_player_xmms;
 extern const mp3_player_t mp3_player_xmms2;
+extern const mp3_player_t mp3_player_mpd;
 extern const mp3_player_t mp3_player_audacious;
 extern const mp3_player_t mp3_player_winamp;
