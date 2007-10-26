@@ -16,17 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.49 2007-10-17 07:29:54 borisu Exp $
+	$Id: sys_win.c,v 1.50 2007-10-26 22:15:44 cokeman1982 Exp $
 
 */
 // sys_win.c
 
+#include <windows.h>
+#include <commctrl.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <io.h>			// _open, etc
 #include <direct.h>		// _mkdir
 #include <conio.h>		// _putch
+#include <tchar.h>
 #include "quakedef.h"
 #include "winquake.h"
 #include "resource.h"
@@ -154,22 +157,15 @@ void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel) {
 	Com_Printf("Process priority set to %s\n", desc);
 }
 
+//===============================================================================
+// FILE IO
+//===============================================================================
 
-/*
-===============================================================================
-FILE IO
-===============================================================================
-*/
-
-void Sys_mkdir (const char *path) {
+void Sys_mkdir (const char *path) 
+{
 	_mkdir (path);
 }
 
-/*
-================
-Sys_remove
-================
-*/
 int Sys_remove (char *path)
 {
 	return remove(path);
@@ -187,7 +183,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	int go;
 	if (!gpath)
 		return 0;
-	//  strlcpy(apath, match, sizeof (apath));
+
 	snprintf(apath, sizeof(apath), "%s/%s", gpath, match);
 	for (s = apath+strlen(apath)-1; s> apath; s--)
 	{
@@ -196,10 +192,10 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	}
 	*s = '\0';
 
-	//this is what we ask windows for.
+	// This is what we ask windows for.
 	snprintf(file, sizeof(file), "%s/*.*", apath);
 
-	//we need to make apath contain the path in match but not gpath
+	// We need to make apath contain the path in match but not gpath
 	strlcpy(apath2, match, sizeof(apath));
 	match = s+1;
 	for (s = apath2+strlen(apath2)-1; s> apath2; s--)
@@ -217,7 +213,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	go = true;
 	do
 	{
-		if (*fd.cFileName == '.');  //don't ever find files with a name starting with '.'
+		if (*fd.cFileName == '.');  // Don't ever find files with a name starting with '.'
 		else if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)    //is a directory
 		{
 			if (wildcmp(match, fd.cFileName))
@@ -241,13 +237,12 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	return go;
 }
 
-/*
-===============================================================================
-SYSTEM IO
-===============================================================================
-*/
+// ===============================================================================
+// SYSTEM IO
+// ===============================================================================
 
-void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
+void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) 
+{
 	DWORD  flOldProtect;
 
 	//@@@ copy on write or just read-write?
@@ -255,21 +250,22 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
    		Sys_Error("Protection change failed");
 }
 
-void Sys_Error (char *error, ...) {
+void Sys_Error (char *error, ...) 
+{
 	va_list argptr;
 	char text[1024];
 
 	Host_Shutdown ();
 
 	va_start (argptr, error);
-//TODO: this sizeof is correct?
+
 	vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
 	if (dedicated)
 		Sys_Printf("ERROR: %s\n", text);
 	else
-		MessageBox(NULL, text, "Error", 0 /* MB_OK */ );
+		MessageBox(NULL, text, "Error", 0);
 
 	if (qwclsemaphore)
 		CloseHandle (qwclsemaphore);
@@ -280,7 +276,8 @@ void Sys_Error (char *error, ...) {
 	exit (1);
 }
 
-void Sys_Printf (char *fmt, ...) {
+void Sys_Printf (char *fmt, ...) 
+{
 	va_list argptr;
 	char text[1024];
 	DWORD dummy;
@@ -297,7 +294,8 @@ void Sys_Printf (char *fmt, ...) {
 	WriteFile (houtput, text, strlen(text), &dummy, NULL);
 }
 
-void Sys_Quit (void) {
+void Sys_Quit (void) 
+{
 	if (tevent)
 		CloseHandle (tevent);
 
@@ -320,29 +318,36 @@ void Sys_Quit (void) {
 static double pfreq;
 static qbool hwtimer = false;
 
-void Sys_InitDoubleTime (void) {
+void Sys_InitDoubleTime (void) 
+{
 	__int64 freq;
 
-	if (!COM_CheckParm("-nohwtimer") && QueryPerformanceFrequency((LARGE_INTEGER *)&freq) && freq > 0) {
-		// hardware timer available
+	if (!COM_CheckParm("-nohwtimer") && QueryPerformanceFrequency((LARGE_INTEGER *)&freq) && freq > 0) 
+	{
+		// Hardware timer available
 		pfreq = (double)freq;
 		hwtimer = true;
-	} else {
-		// make sure the timer is high precision, otherwise NT gets 18ms resolution
+	} 
+	else 
+	{
+		// Make sure the timer is high precision, otherwise NT gets 18ms resolution
 		timeBeginPeriod (1);
 	}
 }
 
-double Sys_DoubleTime (void) {
+double Sys_DoubleTime (void) 
+{
 	__int64 pcount;
 	static __int64 startcount;
 	static DWORD starttime;
 	static qbool first = true;
 	DWORD now;
 
-	if (hwtimer) {
+	if (hwtimer) 
+	{
 		QueryPerformanceCounter ((LARGE_INTEGER *)&pcount);
-		if (first) {
+		if (first) 
+		{
 			first = false;
 			startcount = pcount;
 			return 0.0;
@@ -359,7 +364,7 @@ double Sys_DoubleTime (void) {
 		return 0.0;
 	}
 
-	if (now < starttime) // wrapped?
+	if (now < starttime) // Wrapped?
 		return (now / 1000.0) + (LONG_MAX - starttime / 1000.0);
 
 	if (now - starttime == 0)
@@ -368,14 +373,16 @@ double Sys_DoubleTime (void) {
 	return (now - starttime) / 1000.0;
 }
 
-char *Sys_ConsoleInput (void) {
+char *Sys_ConsoleInput (void)
+{
 	static char	text[256];
 	static int len;
 	INPUT_RECORD rec;
 	int i, dummy, ch, numread, numevents;
 	char *textCopied;
 
-	while (1) {
+	while (1) 
+	{
 		if (!GetNumberOfConsoleInputEvents (hinput, &numevents))
 			Sys_Error ("Error getting # of console events");
 
@@ -388,10 +395,13 @@ char *Sys_ConsoleInput (void) {
 		if (numread != 1)
 			Sys_Error ("Couldn't read console input");
 
-		if (rec.EventType == KEY_EVENT) {
-			if (rec.Event.KeyEvent.bKeyDown) {
+		if (rec.EventType == KEY_EVENT) 
+		{
+			if (rec.Event.KeyEvent.bKeyDown) 
+			{
 				ch = rec.Event.KeyEvent.uChar.AsciiChar;
-				switch (ch) {
+				switch (ch) 
+				{
 					case '\r':
 						WriteFile(houtput, "\r\n", 2, &dummy, NULL);
 						if (len) {
@@ -408,27 +418,32 @@ char *Sys_ConsoleInput (void) {
 						break;
 
 					default:
-						if ((ch == ('V' & 31)) /* ctrl-v */ ||
-							((rec.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) && (rec.Event.KeyEvent.wVirtualKeyCode == VK_INSERT))) {
-
-								if ((textCopied = wcs2str(Sys_GetClipboardTextW()))) {
-									i = strlen(textCopied);
-									if (i + len >= sizeof(text))
-										i = sizeof(text) - len - 1;
-									if (i > 0) {
-										textCopied[i] = 0;
-										text[len] = 0;
-										strlcat (text, textCopied, sizeof (text));
-										WriteFile(houtput, textCopied, i, &dummy, NULL);
-										len += dummy;
-									}
+						if ((ch == ('V' & 31)) || // Ctrl + v
+							((rec.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) && (rec.Event.KeyEvent.wVirtualKeyCode == VK_INSERT))) 
+						{
+							if ((textCopied = wcs2str(Sys_GetClipboardTextW()))) 
+							{
+								i = strlen(textCopied);
+								if (i + len >= sizeof(text))
+									i = sizeof(text) - len - 1;
+								
+								if (i > 0) 
+								{
+									textCopied[i] = 0;
+									text[len] = 0;
+									strlcat (text, textCopied, sizeof (text));
+									WriteFile(houtput, textCopied, i, &dummy, NULL);
+									len += dummy;
 								}
-							} else if (ch >= ' ') {
-								WriteFile(houtput, &ch, 1, &dummy, NULL);	
-								text[len] = ch;
-								len = (len + 1) & 0xff;
 							}
-							break;
+						} 
+						else if (ch >= ' ') 
+						{
+							WriteFile(houtput, &ch, 1, &dummy, NULL);	
+							text[len] = ch;
+							len = (len + 1) & 0xff;
+						}
+						break;
 				}
 			}
 		}
@@ -437,11 +452,13 @@ char *Sys_ConsoleInput (void) {
 	return NULL;
 }
 
-void Sys_SendKeyEvents (void) {
+void Sys_SendKeyEvents (void) 
+{
     MSG msg;
 
-	while (PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE)) {
-		// we always update if there are any event, even if we're paused
+	while (PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE)) 
+	{
+		// We always update if there are any event, even if we're paused
 		scr_skipupdate = 0;
 
 		if (!GetMessage (&msg, NULL, 0, 0))
@@ -451,7 +468,8 @@ void Sys_SendKeyEvents (void) {
 	}
 }
 
-BOOL WINAPI HandlerRoutine (DWORD dwCtrlType) {
+BOOL WINAPI HandlerRoutine (DWORD dwCtrlType) 
+{
 	switch (dwCtrlType) {
 		case CTRL_C_EVENT:		
 		case CTRL_BREAK_EVENT:
@@ -464,9 +482,9 @@ BOOL WINAPI HandlerRoutine (DWORD dwCtrlType) {
 	return false;
 }
 
-//Quake calls this so the system can register variables before host_hunklevel is marked
-void Sys_Init (void) {
-
+// Quake calls this so the system can register variables before host_hunklevel is marked
+void Sys_Init (void) 
+{
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
 	Cvar_Register(&sys_highpriority);
 	Cvar_Register(&sys_yieldcpu);
@@ -562,25 +580,32 @@ wchar *Sys_GetClipboardTextW(void)
 	if (!OpenClipboard(NULL))
 		return NULL;
 
-	if (WinNT) {
-		if (!(th = GetClipboardData(CF_UNICODETEXT))) {
+	if (WinNT) 
+	{
+		if (!(th = GetClipboardData(CF_UNICODETEXT))) 
+		{
 			CloseClipboard();
 			return NULL;
 		}
 
-		if (!(clipText = GlobalLock(th))) {
+		if (!(clipText = GlobalLock(th))) 
+		{
 			CloseClipboard();
 			return NULL;
 		}
-	} else {
+	} 
+	else 
+	{
 		char *txt;
 
-		if (!(th = GetClipboardData(CF_TEXT))) {
+		if (!(th = GetClipboardData(CF_TEXT))) 
+		{
 			CloseClipboard();
 			return NULL;
 		}
 
-		if (!(txt = GlobalLock(th))) {
+		if (!(txt = GlobalLock(th))) 
+		{
 			CloseClipboard();
 			return NULL;
 		}
@@ -599,41 +624,43 @@ wchar *Sys_GetClipboardTextW(void)
 	return clipboard;
 }
 
-// copies given text to clipboard
-void Sys_CopyToClipboard(char *text) {
+// Copies given text to clipboard
+void Sys_CopyToClipboard(char *text) 
+{
 	char *clipText;
 	HGLOBAL hglbCopy;
 
 	if (!OpenClipboard(NULL))
 		return;
 
-	if (!EmptyClipboard()) {
+	if (!EmptyClipboard()) 
+	{
 		CloseClipboard();
 		return;
 	}
 
-	if (!(hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text) + 1))) {
+	if (!(hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text) + 1))) 
+	{
 		CloseClipboard();
 		return;
 	}
 
-	if (!(clipText = GlobalLock(hglbCopy))) {
+	if (!(clipText = (char *)GlobalLock(hglbCopy))) 
+	{
 		CloseClipboard();
 		return;
 	}
 
-	strcpy((char *) clipText, text);
+	strcpy(clipText, text);
 	GlobalUnlock(hglbCopy);
 	SetClipboardData(CF_TEXT, hglbCopy);
 
 	CloseClipboard();
 }
 
-/*
-==============================================================================
- WINDOWS CRAP
-==============================================================================
-*/
+//==============================================================================
+// WINDOWS CRAP
+//==============================================================================
 
 #define MAX_NUM_ARGVS	50
 
@@ -641,14 +668,16 @@ int		argc;
 char	*argv[MAX_NUM_ARGVS];
 static char exename[1024] = {0};
 
-void ParseCommandLine (char *lpCmdLine) {
+void ParseCommandLine (char *lpCmdLine) 
+{
     int i;
 	argc = 1;
 	argv[0] = exename;
 
 	if(!(i = GetModuleFileName(NULL, exename, sizeof(exename)-1))) // here we get loong string, with full path
 		exename[0] = 0; // oh, something bad
-	else {
+	else 
+	{
 		exename[i] = 0; // ensure null terminator
 		strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
 	}
@@ -688,12 +717,129 @@ void ParseCommandLine (char *lpCmdLine) {
 	}
 }
 
-void SleepUntilInput (int time) {
+void SleepUntilInput (int time) 
+{
 	MsgWaitForMultipleObjects (1, &tevent, FALSE, time, QS_ALLINPUT);
 }
 
+HHOOK hMsgBoxHook;
+
+LRESULT CALLBACK QWURLProtocolButtonsHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	RECT rect;
+	HWND hwnd;
+	HWND hwndYESButton;
+	HWND hwndNOButton;
+	HWND hwndCANCELButton;
+
+	if(nCode < 0)
+		return CallNextHookEx(hMsgBoxHook, nCode, wParam, lParam);
+
+	switch(nCode)
+	{
+		case HCBT_ACTIVATE:
+		{
+			// Get handle to the message box.
+			hwnd = (HWND)wParam;
+			
+			// Modify the Yes button.
+			hwndYESButton = GetDlgItem(hwnd, IDYES);
+			SetWindowText(hwndYESButton, _T("Set as default"));
+
+			// No button.
+			hwndNOButton = GetDlgItem(hwnd, IDNO);
+			SetWindowText(hwndNOButton, _T("Ask me later"));
+
+			// Cancel button.
+			hwndCANCELButton = GetDlgItem(hwnd, IDCANCEL);
+			SetWindowText(hwndCANCELButton, _T("Don't show me this again"));
+			GetClientRect(hwndCANCELButton, &rect);
+			SetWindowPos(hwndCANCELButton, HWND_TOP, 0, 0, 140, rect.bottom, SWP_NOMOVE);
+
+			return 0;
+		}
+	}
+
+	return CallNextHookEx(hMsgBoxHook, nCode, wParam, lParam);
+}
+
+int MsgBoxEx(HWND hwnd, TCHAR *szText, TCHAR *szCaption, HOOKPROC hookproc, UINT uType)
+{
+	int retval;
+
+	// Install a window hook, so we can intercept the message-box
+	// creation, and customize it
+	if (hookproc != NULL)
+	{
+		hMsgBoxHook = SetWindowsHookEx(
+			WH_CBT, 
+			hookproc, 
+			NULL, 
+			GetCurrentThreadId()		// Only install for THIS thread!!!
+			);
+	}
+
+	// Display a standard message box.
+	retval = MessageBox(hwnd, szText, szCaption, uType);
+
+	// Remove the window hook
+	if (hookproc != NULL)
+	{
+		UnhookWindowsHookEx(hMsgBoxHook);
+	}
+
+	return retval;
+}
+
 HINSTANCE	global_hInstance;
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+
+//
+// Check if we're the registered QW:// protocol handler, if not show a messagebox
+// asking the user what to do. Returns false if the user wants to turn this check off.
+//
+qbool WinCheckQWURL(void)
+{
+	extern qbool CL_CheckIfQWProtocolHandler();
+	extern void CL_RegisterQWURLProtocol_f();
+
+	int retval;
+
+	if (CL_CheckIfQWProtocolHandler())
+	{
+		return true;
+	}
+	
+	// Instead of creating a completly custom messagebox (which is a major pain)
+	// just show a normal one, but replace the text on the buttons using event hooking.
+	retval = MsgBoxEx(mainwindow, 
+					"The current ezQuake client is not registered as the default QW:// protocol handler!\n"
+					"This lets you launch ezQuake by clicking qw://server:port URLs like a normal URL.\n\n"
+					"Do you want to set ezQuake as the default QW:// protocol handler?", 
+					"QW URL Protocol", QWURLProtocolButtonsHookProc, MB_YESNOCANCEL | MB_ICONWARNING);
+
+	switch (retval)
+	{
+		case IDYES :
+			CL_RegisterQWURLProtocol_f();
+			return true;
+
+		case IDNO :
+			// Do nothing!
+			return true;
+
+		case IDCANCEL :
+			// User doesn't want to be bugged anymore.
+			return false;
+	}
+
+	return true;
+}
+
+//
+// Application entry point.
+//
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
+{
 	int memsize, i;
 	double time, oldtime, newtime;
 	MEMORYSTATUS lpBuffer;
@@ -702,14 +848,26 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	global_hInstance = hInstance;
 
     ScreenSaver_isDisabled = false;
- 
-	ParseCommandLine (lpCmdLine);
 
-	// we need to check some parms before Host_Init is called
+	// Make sure we link with comctl32.lib to get XP themed buttons if they're available.
+	InitCommonControls();
+
+	ParseCommandLine(lpCmdLine);
+
+	// Check if we're the registered QW url protocol handler.
+	if (!WinCheckQWURL() && ((argc + 2) < MAX_NUM_ARGVS))
+	{
+		// User doesn't want to be bothered again.
+		argv[argc++] = "+cl_verify_qwprotocol";
+		argv[argc++] = "0";
+	}
+
+	// We need to check some parms before Host_Init is called
 	COM_InitArgv (argc, argv);
 
-	// let me use -condebug C:\condebug.log before Quake FS init, so I get ALL messages before quake fully init
-	if ((i = COM_CheckParm("-condebug")) && i < COM_Argc() - 1) {
+	// Let me use -condebug C:\condebug.log before Quake FS init, so I get ALL messages before quake fully init
+	if ((i = COM_CheckParm("-condebug")) && i < COM_Argc() - 1) 
+	{
 		extern FILE *qconsole_log;
 		char *s = COM_Argv(i + 1);
 		if (*s != '-' && *s != '+')
@@ -720,7 +878,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	dedicated = COM_CheckParm ("-dedicated");
 #endif
 
-	if (dedicated) {
+	if (dedicated) 
+	{
 		if (!AllocConsole())
 			Sys_Error ("Couldn't allocate dedicated server console");
 		SetConsoleCtrlHandler (HandlerRoutine, TRUE);
@@ -728,15 +887,18 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		hinput = GetStdHandle (STD_INPUT_HANDLE);
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
 	}
-	else {
-		if ( SystemParametersInfo(SPI_GETSCREENSAVEACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled ) {
-            if ( SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) ) {
+	else 
+	{
+		if ( SystemParametersInfo(SPI_GETSCREENSAVEACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled ) 
+		{
+            if ( SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) ) 
+			{
 				ScreenSaver_isDisabled = true;
 			}
 		}
 	}
 
-	// take the greater of all the available memory or half the total memory,
+	// Take the greater of all the available memory or half the total memory,
 	// but at least 8 Mb and no more than 32 Mb, unless they explicitly request otherwise
 	lpBuffer.dwLength = sizeof(MEMORYSTATUS);
 	GlobalMemoryStatus (&lpBuffer);
@@ -763,16 +925,23 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	oldtime = Sys_DoubleTime ();
 
-    /* main window message loop */
-	while (1) {
-		if (dedicated) {
+    // Main window message loop.
+	while (1) 
+	{
+		if (dedicated) 
+		{
 			NET_Sleep(1);
-		} else if (sys_inactivesleep.value) {
-			// yield the CPU for a little while when paused, minimized, or not the focus
-			if ((ISPAUSED && (!ActiveApp && !DDActive)) || Minimized || block_drawing) {
+		} 
+		else if (sys_inactivesleep.value) 
+		{
+			// Yield the CPU for a little while when paused, minimized, or not the focus
+			if ((ISPAUSED && (!ActiveApp && !DDActive)) || Minimized || block_drawing)
+			{
 				SleepUntilInput (PAUSE_SLEEP);
 				scr_skipupdate = 1;		// no point in bothering to draw
-			} else if (!ActiveApp && !DDActive) {
+			} 
+			else if (!ActiveApp && !DDActive)
+			{
 				SleepUntilInput (NOT_FOCUS_SLEEP);
 			}
 		}
@@ -786,7 +955,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     return TRUE;	/* return success of application */
 }
 
-int  Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param)
+int Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param)
 {
     DWORD threadid;
     HANDLE thread;
