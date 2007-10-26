@@ -650,7 +650,11 @@ void PingSendParrallelMultiHosts(pinghost_t *phost, int nelms, int count) {
 /**
  * Thread entry point for parrallel recving of ping responses
  */
-unsigned int PingRecvProc(void *lpParameter)
+#ifdef _WIN32
+DWORD WINAPI PingRecvProc(void *lpParameter)
+#else
+unsigned long PingRecvProc(void *lpParameter)
+#endif
 {
 	socklen_t inaddrlen;
 	struct sockaddr_in from;
