@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1250"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
@@ -96,13 +96,15 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
 				ShowProgress="0"
 				OutputFile="..\ezquake-gl-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
+				GenerateManifest="false"
+				ManifestFile=""
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
 				ModuleDefinitionFile=""
 				GenerateDebugInformation="true"
@@ -218,7 +220,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
 				OutputFile="..\ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -342,7 +344,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
 				OutputFile="..\ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -465,7 +467,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
 				OutputFile="..\ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
@@ -1007,11 +1009,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\snd_ov.c"
+					RelativePath="..\..\snd_mix.c"
 					>
 				</File>
 				<File
-					RelativePath="..\..\snd_mix.c"
+					RelativePath="..\..\snd_ov.c"
 					>
 				</File>
 				<File
@@ -1175,6 +1177,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\vfs_mmap.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\vfs_os.c"
 					>
 				</File>
@@ -1183,19 +1189,15 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\vfs_tar.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\vfs_tcp.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\vfs_zip.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_mmap.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_tar.c"
 					>
 				</File>
 				<File
@@ -1928,6 +1930,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\mp3_mpd.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\mp3_player.c"
 					>
 				</File>
@@ -1941,10 +1947,6 @@
 				</File>
 				<File
 					RelativePath="..\..\mp3_xmms2.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\mp3_mpd.c"
 					>
 				</File>
 				<File
@@ -2792,6 +2794,10 @@
 				RelativePath="..\..\ezquake.ico"
 				>
 			</File>
+			<File
+				RelativePath="..\..\rt_manif.bin"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Asm Files"
@@ -3381,6 +3387,10 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\ezquake.exe.manifest"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
