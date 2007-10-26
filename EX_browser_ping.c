@@ -22,9 +22,6 @@
 #include <semaphore.h>
 
 #define SO_DONTLINGER 0 	 
-#define USHORT unsigned short 	 
-#define BYTE   byte 	 
-#define UCHAR  unsigned char 	 
 #define GetCurrentProcessId getpid
 
 #define ioctlsocket ioctl
@@ -34,15 +31,294 @@
 #include "hud_common.h"
 #include "EX_browser.h"
 
+// =============================================================================
+//  Constants
+// =============================================================================
+
 #define ICMP_ECHO       8
 #define ICMP_ECHOREPLY  0 	 
   	 
 #define ICMP_MIN 8 // minimum 8 byte icmp packet (just header) 	 
 
+#define STATUS_FAILED    0xFFFF
+#define DEF_PACKET_SIZE  0
+#define MAX_PACKET       1024
+
+// =============================================================================
+//  Local Types
+// =============================================================================
+
+/* The IP header */
+typedef struct iphdr
+{
+    unsigned int   h_len:4;        // length of the header
+    unsigned int   version:4;      // Version of IP
+    unsigned char  tos;            // Type of service
+    unsigned short total_len;      // total length of the packet
+    unsigned short ident;          // unique identifier
+    unsigned short frag_and_flags; // flags
+    unsigned char  ttl; 
+    unsigned char  proto;          // protocol (TCP, UDP etc)
+    unsigned short checksum;       // IP checksum
+
+    unsigned int sourceIP;
+    unsigned int destIP;
+} IP_header_t;
+ 
+typedef struct _ihdr
+{
+    byte i_type;
+    byte i_code; /* type sub code */
+    unsigned short i_cksum;
+    unsigned short i_id;
+    unsigned short i_seq;
+    /* This is not the std header, but we reserve space for our needs */
+    double timestamp;
+    u_long id;   // ip
+    int index;  // server num
+    int phase;  // ping phase
+    int randomizer;
+} ICMP_header_t; 
+
+/* Packets */
+typedef union IP_Packet_u {
+	IP_header_t hdr;
+	byte data[MAX_PACKET];
+} IP_packet_t;
+
+typedef union ICMP_Packet_u {
+	ICMP_header_t hdr;
+	byte data[MAX_PACKET];
+} ICMP_packet_t;
+
+/* Struct for storing ping reponses */
+typedef struct pinghost_s
+{
+    u_long ip;
+    short port;
+    int recv, send;
+    int phase;
+	double ping;
+    double stime[6];
+} pinghost_t;
+
+// =============================================================================
+//  Function Prototypes
+// =============================================================================
+
+// =============================================================================
+//  Global variables
+// =============================================================================
 qbool useNewPing = false;
 
-int sock;
+static int sock;
+static int ping_sock;
 
+/* Shared by the threads to send and recv ping data */
+static int hostsn;
+static pinghost_t *hosts;
+
+/* Used for thread syncronisation */
+static qbool ping_finished = false;
+static sem_t ping_semaphore;
+
+
+
+// =============================================================================
+//  Local Functions
+// =============================================================================
+/**
+ * Given a string of the form "ip:port", gets the addr, port in integer format
+ */
+static int ParseServerIp(char *server_port, int *addr, int *port) 
+{
+	char server_ip[50];
+	char *port_divide;
+
+	strlcpy (server_ip, server_port, sizeof(server_port));
+
+	/* Break the ip at the port */
+	if ((port_divide = strchr(server_ip, ':')))
+		*port_divide = 0;
+
+	if (addr) {
+		*addr = inet_addr(server_ip);
+		if (*addr == INADDR_NONE)
+			return 1;
+	}
+
+	if (port) 
+	{
+		if (port_divide != NULL)
+			*port = Q_atoi(port_divide+1);
+		else
+			*port = 27500;
+	}
+
+	return 0;
+}
+
+/**
+ * Given a servs list, parse and create a pinghost_t list from it
+ */
+static pinghost_t *ParseServerList(server_data *servs[], int servsn, int *host_nelms) 
+{
+	pinghost_t *phosts;
+	int nelms;
+	int i, j;
+
+	phosts = (pinghost_t *)Q_malloc(sizeof(pinghost_t) * servsn);
+	nelms = 0;
+	for (i=0; i < servsn; i++) 
+	{
+		int addr, port;
+
+		if (ParseServerIp(servs[i]->display.ip, &addr, &port)) 
+		{
+			continue;
+		}
+
+		/* Make sure it is unique */
+		for (j = 0; j < nelms; j++) 
+		{
+			if (phosts[j].ip == addr && phosts[j].port == port) 
+			{
+				break;
+			}
+		}
+
+		if (j == nelms) 
+		{
+			phosts[nelms].recv = 0;
+			phosts[nelms].send = 0;
+			phosts[nelms].ping = 0;
+			phosts[nelms].ip = addr;
+			phosts[nelms].port = port;
+			nelms++;
+		}
+	}
+
+	*host_nelms = nelms;
+	return phosts;
+}
+
+/**
+ * Given a ping host array takes the average ping and fills the display for
+ * the servs array
+ */
+static void FillServerListPings(server_data *servs[], int servsn, 
+							pinghost_t *phosts, int host_nelms) {
+	int i, j;
+
+	for (i = 0; i < host_nelms; i++) {
+		unsigned int ping;
+		int addr, port;
+
+		/* Take the average of the recieved pings */
+		if (phosts[i].recv > 0)
+			ping = (int)((phosts[i].ping / phosts[i].recv) * 1000);
+		else
+			ping = -1;
+
+		/* Find the server from the host */
+		for (j = 0; j < servsn; j++) 
+		{
+			if (ParseServerIp(servs[j]->display.ip, &addr, &port)) 
+			{
+				continue;
+			}
+
+			if (addr == phosts[i].ip && port == phosts[i].port) 
+			{
+				SetPing(servs[j], ping); // 10
+			}
+		}
+	}
+}
+
+/**
+ * Decode an IP packet and return the underlying ICMP header
+ */
+static ICMP_header_t *IP_DecodePacket(IP_packet_t *ip_packet, int bytes,
+								struct sockaddr_in *from, u_long ip)
+{
+    ICMP_packet_t *icmp_packet;
+    unsigned short iphdrlen;
+
+    iphdrlen = ip_packet->hdr.h_len * 4 ; // number of 32-bit words *4 = bytes
+
+    if (bytes  < iphdrlen + ICMP_MIN)
+    {
+        return NULL;
+    }
+
+    icmp_packet = (ICMP_packet_t *)(ip_packet->data + iphdrlen);
+
+    if (icmp_packet->hdr.i_type != ICMP_ECHOREPLY)
+	{
+        return NULL;
+    }
+    if (icmp_packet->hdr.i_id != (unsigned short)GetCurrentProcessId())
+	{
+        return NULL;
+    }
+
+    return &icmp_packet->hdr;
+} 
+
+/** 
+ * Decode an ICMP packet and calculate the total return trip time (RTT) is ms
+ */
+static int ICMP_GetEchoResponseTime(ICMP_header_t *icmp_hdr)
+{
+    return 1 + (int)((Sys_DoubleTime() - icmp_hdr->timestamp)*1000);
+}
+
+/**
+ * Calculate the ICMP checksum which includes the header and data
+ */
+static unsigned short ICMP_Checksum(ICMP_packet_t *packet, int size)
+{
+  unsigned long cksum=0;
+  unsigned short *buffer = (unsigned short *)packet->data;
+
+	while(size >1)
+	{
+    cksum+=*buffer++;
+    size -=sizeof(unsigned short);
+  }
+  
+	if (size)
+	{
+    cksum += *(byte *)buffer;
+  }
+
+  cksum = (cksum >> 16) + (cksum & 0xffff);
+  cksum += (cksum >>16);
+  return (unsigned short)(~cksum);
+}
+
+
+/**
+ * Helper function to fill in various stuff in our ICMP request.
+ */
+static void ICMP_FillData(ICMP_packet_t *packet, int datasize)
+{
+  packet->hdr.i_type = ICMP_ECHO;
+  packet->hdr.i_code = 0;
+  packet->hdr.i_id = (unsigned short)GetCurrentProcessId();
+  packet->hdr.i_cksum = 0;
+  packet->hdr.i_seq = 0;
+  
+  //
+  // Place some junk in the buffer.
+  //
+  memset(packet->data + sizeof(packet->hdr), 'E', datasize);
+}
+
+// =============================================================================
+//  Global Functions
+// =============================================================================
 void SB_RootInit(void)
 {
     int arg;
@@ -89,59 +365,338 @@ void SB_RootInit(void)
 
 } 
 
-/* The IP header */
-typedef struct iphdr
+/**
+ * Pings a single host up to count attempts, each attemp we send the request
+ * and wait for the reply. The total return trip time (RTT) in ms is returned.
+ */
+int oldPingHost(char *host_to_ping, int count)
 {
-    unsigned int   h_len:4;        // length of the header
-    unsigned int   version:4;      // Version of IP
-    unsigned char  tos;            // Type of service
-    unsigned short total_len;      // total length of the packet
-    unsigned short ident;          // unique identifier
-    unsigned short frag_and_flags; // flags
-    unsigned char  ttl; 
-    unsigned char  proto;          // protocol (TCP, UDP etc)
-    unsigned short checksum;       // IP checksum
+    struct sockaddr_in dest, from;
+    int fromlen = sizeof(from);
+    int bread, datasize;
+    ICMP_packet_t icmp_packet;
 
-    unsigned int sourceIP;
-    unsigned int destIP;
-} IP_header_t;
- 
-typedef struct _ihdr
+	IP_packet_t   ip_recv_packet;
+	ICMP_header_t *icmp_recv_header;
+
+    int attempts, rtt;
+    struct timeval timeout;
+    fd_set fd_set_struct;
+
+    unsigned int addr=0;
+    unsigned short seq_no = 0;
+
+    if (sock < 0)
+        return 0;
+
+    addr = inet_addr(host_to_ping);
+    if (addr == INADDR_NONE)
+        return 0;
+
+    memset(&dest, 0, sizeof(dest));
+    dest.sin_addr.s_addr = addr;
+    dest.sin_family = AF_INET;
+
+    memset(icmp_packet.data, 0, sizeof(icmp_packet.data));
+    datasize = DEF_PACKET_SIZE;
+    datasize += sizeof(icmp_packet.hdr);  
+    ICMP_FillData(&icmp_packet, datasize);
+
+    attempts = 0;
+	rtt = 0;
+    while (attempts < count)
+    {
+        int bwrote;
+		int ret;
+
+        attempts++;
+    
+		/* Prepare the packet */
+        icmp_packet.hdr.i_cksum = 0;
+        icmp_packet.hdr.timestamp = Sys_DoubleTime();
+        icmp_packet.hdr.id = addr;
+
+        icmp_packet.hdr.i_seq = seq_no++;
+        icmp_packet.hdr.i_cksum = ICMP_Checksum(&icmp_packet, datasize);
+
+		/* Prepare for response */
+        FD_ZERO(&fd_set_struct);
+        FD_SET(sock, &fd_set_struct);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = sb_pingtimeout.value * 1000;
+
+        ret = select(sock+1, NULL, (fd_set *) &fd_set_struct, NULL, &timeout);
+        if (ret <= 0)
+            continue;
+
+		/* Send ping request */
+        bwrote = sendto(sock,icmp_packet.data,datasize,0,
+				(struct sockaddr*)&dest, sizeof(dest));
+        if (bwrote <= 0 || bwrote < datasize)
+            continue;
+
+		/* Wait for response */
+        FD_ZERO(&fd_set_struct);
+        FD_SET(sock, &fd_set_struct);
+
+        ret = select(sock+1, (fd_set *) &fd_set_struct, NULL, NULL, &timeout);
+
+        if (ret <= 0)
+            continue;
+
+        bread = recvfrom(sock, ip_recv_packet.data, MAX_PACKET, 0, 
+				(struct sockaddr*)&from, (socklen_t *)&fromlen);
+        if (bread <= 0)
+            continue;
+
+		/* Look for the RTT */
+		icmp_recv_header = IP_DecodePacket(&ip_recv_packet, bread, &from, addr);
+        if (!(rtt = ICMP_GetEchoResponseTime(icmp_recv_header)))
+            continue;
+
+        break;
+    }
+
+    return rtt;
+} 
+
+/**
+ * Ping multiple hosts listed by servs, ping each host count times
+ */
+int oldPingHosts(server_data *servs[], int servsn, int count)
 {
-    BYTE i_type;
-    BYTE i_code; /* type sub code */
-    USHORT i_cksum;
-    USHORT i_id;
-    USHORT i_seq;
-    /* This is not the std header, but we reserve space for our needs */
-    double timestamp;
-    u_long id;   // ip
-    int index;  // server num
-    int phase;  // ping phase
+    double interval;
+    double lastsenttime;
+    int ping_number;
     int randomizer;
-} ICMP_header_t; 
 
+	
+    pinghost_t *hosts; 	/* XXX: This takes higher prcedence over the global */
+    int hostsn;			/* XXX: This takes higher prcedence over the global */
+    struct sockaddr_in dest,from;
+    int bread,datasize;
+    int fromlen = sizeof(from);
+	char *dest_ip;
+    ICMP_packet_t icmp_packet;
+	IP_packet_t   ip_packet;
 
-#define STATUS_FAILED    0xFFFF
-#define DEF_PACKET_SIZE  0
-#define MAX_PACKET       1024
+    int success;
+    struct timeval timeout;
+    fd_set fd_set_struct;
 
-typedef union IP_Packet_u {
-	IP_header_t hdr;
-	byte data[MAX_PACKET];
-} IP_packet_t;
+    unsigned int addr=0;
+    unsigned short seq_no = 0;
 
-typedef union ICMP_Packet_u {
-	ICMP_header_t hdr;
-	byte data[MAX_PACKET];
-} ICMP_packet_t;
+    if (sock < 0)
+        return 0;
+	
+    datasize = DEF_PACKET_SIZE;
+    datasize += sizeof(icmp_packet.hdr);
 
-void fill_icmp_data(ICMP_packet_t *packet, int datasize);
-USHORT checksum(ICMP_packet_t *packet, int size);
-int decode_resp(IP_packet_t *ip_packet, int bytes, 
-				struct sockaddr_in *from, u_long ip);
-ICMP_header_t *get_icmp(IP_packet_t *ip_packet, int bytes,
-				struct sockaddr_in *from, u_long ip);
+	// FIXME: The datasize only sizeof(IcmpHeader) here so fill_icmp_data won't set any of the data "to junk", it will all be 0.
+    memset(icmp_packet.data, 0, MAX_PACKET);
+    ICMP_FillData(&icmp_packet, datasize);
+
+    success = 0;
+	hosts = ParseServerList(servs, servsn, &hostsn);
+
+    interval = (1000.0 / sb_pingspersec.value) / 1000;
+    lastsenttime = Sys_DoubleTime() - interval;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = (long)(interval * 1000.0 * 1000.0);
+    ping_number = 0;
+    randomizer = (int)(Sys_DoubleTime() * 10);
+
+	// Ping all adresses in the host list we just created.
+    while (!abort_ping)
+    {
+        int bwrote;
+        double time = Sys_DoubleTime();
+
+        if (time > (lastsenttime + 1.2 * (sb_pingtimeout.value / 1000)))
+		{
+            // No answers, no pings - finish.
+            break;
+		}
+
+		// Send a ping request to the current host.
+        if ((time > (lastsenttime + interval)) && (ping_number < (hostsn * sb_pings.value)))
+        {
+            // Send next ping.
+            pinghost_t * host = &hosts[ping_number % hostsn];
+
+            if (host->ping >= 0)
+            {
+                icmp_packet.hdr.i_cksum = 0;
+                icmp_packet.hdr.timestamp = time;
+
+                icmp_packet.hdr.id = host->ip;
+                icmp_packet.hdr.index = ping_number % hostsn;
+                icmp_packet.hdr.phase = ping_number;
+                icmp_packet.hdr.randomizer = randomizer;
+
+                icmp_packet.hdr.i_seq = seq_no++;
+                icmp_packet.hdr.i_cksum = ICMP_Checksum(&icmp_packet, datasize);
+
+                memset(&dest, 0, sizeof(dest));
+                dest.sin_addr.s_addr = host->ip;
+                dest.sin_family = AF_INET;
+                dest_ip = inet_ntoa(dest.sin_addr);
+
+                bwrote = sendto(sock, icmp_packet.data, datasize, 0, 
+								(struct sockaddr*)&dest, sizeof(dest));
+
+                if (bwrote <= 0 || bwrote < datasize)
+                    host->ping = -1;
+
+                lastsenttime = time;
+            }
+
+            ping_number++;
+            ping_pos = min(1, ping_number / (double)(hostsn * sb_pings.value));
+        }
+
+		// Wait for an answer.
+        while (!abort_ping)
+        {
+			int myvar;
+            ICMP_header_t *icmp_answer;
+
+            FD_ZERO(&fd_set_struct);
+            FD_SET(sock, &fd_set_struct);
+
+			myvar = select(sock+1, (fd_set *) &fd_set_struct, NULL, 
+							NULL, &timeout);
+
+			if (myvar <= 0)
+                break;
+
+            // there's an answer - get it!
+            bread = recvfrom(sock, ip_packet.data, sizeof(ip_packet.data), 0, 
+							(struct sockaddr *)&from, (socklen_t *)&fromlen);
+           
+			if (bread <= 0)
+                continue;
+
+            icmp_answer = IP_DecodePacket(&ip_packet, bread, &from, addr);
+
+			// Make sure the reply is ok.
+            if (icmp_answer && (randomizer == icmp_answer->randomizer))
+            {
+                int index, phase;
+                unsigned int fromhost;
+
+                fromhost = icmp_answer->id;
+                index    = icmp_answer->index;
+                phase    = icmp_answer->phase;
+                if (hosts[index].ip == fromhost  &&  hosts[index].ping >= 0)
+                {
+                    hosts[index].ping = (hosts[index].ping * hosts[index].phase
+                                      + (Sys_DoubleTime()-icmp_answer->timestamp))
+                                      / (hosts[index].phase + 1);
+                    hosts[index].phase++;
+
+					// Remove averaging that would occur in FillServerListPings
+					hosts[index].recv = 1;
+                }
+            }
+        }
+    }
+
+    // update pings in our servz
+	if (!abort_ping) {
+		FillServerListPings(servs, servsn, hosts, hostsn);
+	}
+
+    Q_free(hosts);
+
+    return success;
+}
+
+/**
+ * Pings multiple hosts in parrallel, each host is pingged count times
+ */
+void PingSendParrallelMultiHosts(pinghost_t *phost, int nelms, int count) {
+	struct sockaddr_in to;
+	int interval; 
+	int i, j;
+	int ret;
+
+	count = bound(1, count, 6);
+	interval = 1000.0 / sb_pingspersec.value;
+
+	for (i = 0; i < count && !abort_ping; i++) {
+		for (j = 0; j < nelms && !abort_ping; j++) {
+			// FIXME: What is this string doing????
+			char *packet = "\xff\xff\xff\xffk\n";
+
+			ping_pos = min(1, (j / (double)(nelms * count))) + (i / (double)count);
+
+			to.sin_family = AF_INET;
+			to.sin_port = htons(hosts[j].port);
+			to.sin_addr.s_addr = hosts[j].ip;
+
+			ret = sendto(ping_sock, packet, strlen(packet), 0, (struct sockaddr *)&to, sizeof(struct sockaddr));
+			Sys_MSleep(interval);
+			if (ret == -1) // error
+				continue;
+
+			hosts[j].stime[hosts[j].send] = Sys_DoubleTime();
+			hosts[j].send++;
+		}
+	}
+}
+
+/**
+ * Thread entry point for parrallel recving of ping responses
+ */
+unsigned int PingRecvProc(void *lpParameter)
+{
+	socklen_t inaddrlen;
+	struct sockaddr_in from;
+	fd_set fd;
+	int k, ret;
+	struct timeval timeout;
+
+	while (!ping_finished && !abort_ping) {
+		FD_ZERO(&fd);
+		FD_SET(ping_sock, &fd);
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100 * 1000;
+
+		ret = select(ping_sock+1, &fd, NULL, NULL, &timeout);
+		if (ret <= 0) // error or timeout
+			continue;
+
+		while (1) {
+			char buf[16];
+
+			inaddrlen = sizeof(struct sockaddr_in);
+			ret = recvfrom(ping_sock, buf, sizeof(buf), 0, (struct sockaddr *)&from, &inaddrlen);
+			if (ret <= 0) // socket is asynch, so most likely this means there is no data to read
+				break;
+			if (buf[0] != 'l') // not A2A_ACK
+				continue;
+	
+			for (k = 0; k < hostsn; k++) {
+				if (hosts[k].ip == from.sin_addr.s_addr &&
+				    hosts[k].port == ntohs(from.sin_port)) {
+					hosts[k].ping += Sys_DoubleTime() - hosts[k].stime[hosts[k].recv];
+					hosts[k].recv++;
+					break;
+				}
+			}
+		}
+	}
+
+	Sys_SemPost(&ping_semaphore);
+
+	return 0;
+}
+
+/**
+ * Ping a single host count times, returns the average of the responses
+ */
 int PingHost(char *host_to_ping, short port, int count, int time_out)
 {
 	int sock, i, ret, pings;
@@ -192,515 +747,16 @@ _select:
 	return pings ? (int)((ping * 1000) / pings) : 0;
 }
 
-int oldPingHost(char *host_to_ping, int count)
-{
-//    int sock;
-    struct sockaddr_in dest,from;
-    int bread,datasize;
-    int fromlen = sizeof(from);
-    char *dest_ip;
-    ICMP_packet_t icmp_packet;
-	IP_packet_t   ip_packet;
-
-//    u_long arg;
-    int arg2, success;
-    struct timeval timeout;
-    fd_set fd_set_struct;
-
-    unsigned int addr=0;
-    USHORT seq_no = 0;
-
-    if (sock < 0)
-        return 0;
-
-    memset(&dest, 0, sizeof(dest));
-
-    addr = inet_addr(host_to_ping);
-
-    if (addr == INADDR_NONE)
-        return 0;
-
-    dest.sin_addr.s_addr = addr;
-    dest.sin_family = AF_INET;
-    dest_ip = inet_ntoa(dest.sin_addr);
-    datasize = DEF_PACKET_SIZE;
-    datasize += sizeof(icmp_packet.hdr);  
-
-    memset(icmp_packet.data, 0, sizeof(icmp_packet.data));
-    fill_icmp_data(&icmp_packet, datasize);
-
-    arg2 = success = 0;
-    while (arg2 < count)
-    {
-        int bwrote;
-		int ret;
-
-        arg2++;
-    
-        icmp_packet.hdr.i_cksum = 0;
-        icmp_packet.hdr.timestamp = Sys_DoubleTime();
-        icmp_packet.hdr.id = addr;
-
-        icmp_packet.hdr.i_seq = seq_no++;
-        icmp_packet.hdr.i_cksum = checksum(&icmp_packet, datasize);
-
-        FD_ZERO(&fd_set_struct);
-        FD_SET(sock, &fd_set_struct);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = sb_pingtimeout.value * 1000;
-
-        ret = select(sock+1, NULL, (fd_set *) &fd_set_struct, NULL, &timeout);
-
-        if (ret <= 0)
-            continue;
-
-        bwrote = sendto(sock,icmp_packet.data,datasize,0,(struct sockaddr*)&dest,
-                        sizeof(dest));
-
-        if (bwrote <= 0)
-            continue;
-
-        if (bwrote < datasize )
-            continue;
-    
-        FD_ZERO(&fd_set_struct);
-        FD_SET(sock, &fd_set_struct);
-
-        ret = select(sock+1, (fd_set *) &fd_set_struct, NULL, NULL, &timeout);
-
-        if (ret <= 0)
-            continue;
-
-        bread = recvfrom(sock, ip_packet.data, MAX_PACKET, 0, 
-				(struct sockaddr*)&from, (socklen_t *)&fromlen);
-        if (bread <= 0)
-            continue;
-
-        success = decode_resp(&ip_packet, bread, &from, addr);
-        if (!success)
-            continue;
-
-        break;
-    }
-
-    return success;
-} 
-
-//
-// pings multiple hosts simulnateously
-//
-
-typedef struct pinghost_s
-{
-    u_long ip;
-    short port;
-    int recv, send;
-    int phase;
-	double ping;
-    double stime[6];
-} pinghost;
-
-qbool ping_finished = false;
-static int ping_sock, hostsn;
-static pinghost *hosts;
-
-sem_t ping_semaphore;
-
-DWORD WINAPI PingRecvProc(void *lpParameter)
-{
-	socklen_t inaddrlen;
-	struct sockaddr_in from;
-	fd_set fd;
-	int k, ret;
-	struct timeval timeout;
-
-	while (!ping_finished && !abort_ping) {
-		FD_ZERO(&fd);
-		FD_SET(ping_sock, &fd);
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 100 * 1000;
-
-		ret = select(ping_sock+1, &fd, NULL, NULL, &timeout);
-		if (ret <= 0) // error or timeout
-			continue;
-
-		while (1) {
-			char buf[16];
-
-			inaddrlen = sizeof(struct sockaddr_in);
-			ret = recvfrom(ping_sock, buf, sizeof(buf), 0, (struct sockaddr *)&from, &inaddrlen);
-			if (ret <= 0) // socket is asynch, so most likely this means there is no data to read
-				break;
-			if (buf[0] != 'l') // not A2A_ACK
-				continue;
-	
-			for (k = 0; k < hostsn; k++) {
-				if (hosts[k].ip == from.sin_addr.s_addr &&
-				    hosts[k].port == ntohs(from.sin_port)) {
-					hosts[k].ping += Sys_DoubleTime() - hosts[k].stime[hosts[k].recv];
-					hosts[k].recv++;
-					break;
-				}
-			}
-		}
-	}
-
-	Sys_SemPost(&ping_semaphore);
-
-	return 0;
-}
-
-int oldPingHosts(server_data *servs[], int servsn, int count)
-{
-    double interval;
-    double lastsenttime;
-    int ping_number;
-    int randomizer;
-
-    pinghost *hosts;
-    int i, hostsn;
-    struct sockaddr_in dest,from;
-    int bread,datasize;
-    int fromlen = sizeof(from);
-	char *dest_ip;
-    ICMP_packet_t icmp_packet;
-	IP_packet_t   ip_packet;
-
-    int arg2, success;
-    struct timeval timeout;
-    fd_set fd_set_struct;
-
-    unsigned int addr=0;
-    USHORT seq_no = 0;
-
-    if (sock < 0)
-        return 0;
-	
-    datasize = DEF_PACKET_SIZE;
-    datasize += sizeof(icmp_packet.hdr);
-
-	// FIXME: The datasize only sizeof(IcmpHeader) here so fill_icmp_data won't set any of the data "to junk", it will all be 0.
-    memset(icmp_packet.data, 0, MAX_PACKET);
-    fill_icmp_data(&icmp_packet, datasize);
-
-    arg2 = success = 0;
-
-    hosts = (pinghost *) Q_malloc(servsn * sizeof(pinghost));
-    hostsn = 0;
-
-	// Get the IP address in integer form for all servers.
-    for (i=0; i < servsn; i++)
-    {
-        char buf[50], *tmp;
-        int j;
-        unsigned int addr;
-
-		// Get the string representation of the ip and strip any port from it.
-        strlcpy (buf, servs[i]->display.ip, sizeof (buf));
-        tmp = strchr(buf, ':');
-      
-		if (tmp != NULL)
-            *tmp = 0;
-
-		// Get the actual IP address.
-        addr = inet_addr(buf);
-
-        if (addr == INADDR_NONE)
-            continue;
-
-		// Check if this ip already is in our list.
-        for (j = 0; j < hostsn; j++)
-		{
-            if (hosts[j].ip == addr)
-                break;
-		}
-
-		// Add this ip to the list of hosts if it's unique.
-        if (j == hostsn)
-        {
-            hosts[hostsn].phase = 0;
-            hosts[hostsn].ping = 0;
-            hosts[hostsn].ip = addr;
-            hostsn++;
-        }
-    }
-
-    interval = (1000.0 / sb_pingspersec.value) / 1000;
-    lastsenttime = Sys_DoubleTime() - interval;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = (long)(interval * 1000.0 * 1000.0);
-    ping_number = 0;
-    randomizer = (int)(Sys_DoubleTime() * 10);
-
-	// Ping all adresses in the host list we just created.
-    while (!abort_ping)
-    {
-        int bwrote;
-
-        double time = Sys_DoubleTime();
-
-        if (time > (lastsenttime + 1.2 * (sb_pingtimeout.value / 1000)))
-		{
-            // No answers, no pings - finish.
-            break;
-		}
-
-		// Send a ping request to the current host.
-        if ((time > (lastsenttime + interval)) && (ping_number < (hostsn * sb_pings.value)))
-        {
-            // Send next ping.
-            pinghost * host = &hosts[ping_number % hostsn];
-
-            if (host->ping >= 0)
-            {
-                icmp_packet.hdr.i_cksum = 0;
-                icmp_packet.hdr.timestamp = time;
-
-                icmp_packet.hdr.id = host->ip;
-                icmp_packet.hdr.index = ping_number % hostsn;
-                icmp_packet.hdr.phase = ping_number;
-                icmp_packet.hdr.randomizer = randomizer;
-
-                icmp_packet.hdr.i_seq = seq_no++;
-                icmp_packet.hdr.i_cksum = checksum(&icmp_packet, datasize);
-
-                memset(&dest, 0, sizeof(dest));
-                dest.sin_addr.s_addr = host->ip;
-                dest.sin_family = AF_INET;
-                dest_ip = inet_ntoa(dest.sin_addr);
-
-                bwrote = sendto(sock, icmp_packet.data, datasize, 0, (struct sockaddr*)&dest, sizeof(dest));
-
-                if (bwrote <= 0)
-                    host->ping = -1;
-
-                if (bwrote < datasize )
-                    host->ping = -1;
-
-                lastsenttime = time;
-            }
-
-            ping_number++;
-            ping_pos = min(1, ping_number / (double)(hostsn * sb_pings.value));
-        }
-
-		// Wait for an answer.
-        while (1 && !abort_ping)
-        {
-			int myvar;
-            ICMP_header_t *icmpanswer;
-
-            FD_ZERO(&fd_set_struct);
-            FD_SET(sock, &fd_set_struct);
-
-			myvar = select(sock+1, (fd_set *) &fd_set_struct, NULL, NULL, &timeout);
-
-			if (myvar <= 0)
-                break;
-
-            // there's an answer - get it!
-            bread = recvfrom(sock, ip_packet.data, sizeof(ip_packet.data), 0, 
-							(struct sockaddr *)&from, (socklen_t *)&fromlen);
-           
-			if (bread <= 0)
-                continue;
-
-            icmpanswer = get_icmp(&ip_packet, bread, &from, addr);
-
-			// Make sure the reply is ok.
-            if (icmpanswer && (randomizer == icmpanswer->randomizer))
-            {
-                int index, phase;
-                unsigned int fromhost;
-                fromhost = icmpanswer->id;
-                index = icmpanswer->index;
-                phase = icmpanswer->phase;
-                if (hosts[index].ip == fromhost  &&  hosts[index].ping >= 0)
-                {
-                    hosts[index].ping = (hosts[index].ping * hosts[index].phase
-                                      + (Sys_DoubleTime()-icmpanswer->timestamp))
-                                      / (hosts[index].phase + 1);
-                    hosts[index].phase ++;
-                }
-            }
-        }
-    }
-
-    // update pings in our servz
-
-    if (!abort_ping)
-    {
-        for (i=0; i < hostsn; i++)
-        {
-            char *ip;
-            struct in_addr addr;
-            int ping, j;
-
-            addr.s_addr = hosts[i].ip;
-            ip = inet_ntoa(addr);
-        
-            if (hosts[i].phase > 0)
-                ping = (int)(hosts[i].ping * 1000);
-            else
-                ping = -1;
-
-            for (j=0; j < servsn; j++)
-				if (!strncmp(ip, servs[j]->display.ip, strlen(ip))) {
-                        SetPing(servs[j], ping); // 10
-				}
-        }
-    }
-
-    Q_free(hosts);
-
-    return success;
-    
-}
-
-
-// 
-// The response is an IP packet. We must decode the IP header to locate 
-// the ICMP data 
-//
-
-int decode_resp(IP_packet_t *ip_packet, int bytes, 
-				struct sockaddr_in *from, u_long ip)
-{
-    ICMP_packet_t *icmp_packet;
-    unsigned short iphdrlen;
-
-    iphdrlen = ip_packet->hdr.h_len * 4 ; // number of 32-bit words *4 = bytes
-
-    if (bytes  < iphdrlen + ICMP_MIN)
-    {
-        return 0;
-    }
-
-    icmp_packet = (ICMP_packet_t *)(ip_packet->data + iphdrlen);
-
-    if (icmp_packet->hdr.i_type != ICMP_ECHOREPLY) {
-        return 0;
-    }
-    if (icmp_packet->hdr.i_id != (USHORT)GetCurrentProcessId()) {
-        return 0;
-    }
-
-    if (icmp_packet->hdr.id != ip)
-        return 0;
-
-    return 1 + (int)((Sys_DoubleTime()-icmp_packet->hdr.timestamp)*1000);
-}
-
-ICMP_header_t *get_icmp(IP_packet_t *ip_packet, int bytes,
-				struct sockaddr_in *from, u_long ip)
-{
-    ICMP_packet_t *icmp_packet;
-    unsigned short iphdrlen;
-
-    iphdrlen = ip_packet->hdr.h_len * 4 ; // number of 32-bit words *4 = bytes
-
-    if (bytes  < iphdrlen + ICMP_MIN)
-    {
-        return NULL;
-    }
-
-    icmp_packet = (ICMP_packet_t *)(ip_packet->data + iphdrlen);
-
-    if (icmp_packet->hdr.i_type != ICMP_ECHOREPLY)
-	{
-        return NULL;
-    }
-    if (icmp_packet->hdr.i_id != (USHORT)GetCurrentProcessId())
-	{
-        return NULL;
-    }
-
-    return &icmp_packet->hdr;
-} 
-
-/* FIXME: USHORT is a bad bad type name to use... */
-USHORT checksum(ICMP_packet_t *packet, int size)
-{
-  unsigned long cksum=0;
-  USHORT *buffer = (USHORT *)packet->data;
-
-	while(size >1)
-	{
-    cksum+=*buffer++;
-    size -=sizeof(USHORT);
-  }
-  
-	if (size)
-	{
-    cksum += *(UCHAR*)buffer;
-  }
-
-  cksum = (cksum >> 16) + (cksum & 0xffff);
-  cksum += (cksum >>16);
-  return (USHORT)(~cksum);
-}
-
-
-// 
-// Helper function to fill in various stuff in our ICMP request.
-//
-
-void fill_icmp_data(ICMP_packet_t *packet, int datasize)
-{
-  packet->hdr.i_type = ICMP_ECHO;
-  packet->hdr.i_code = 0;
-  packet->hdr.i_id = (USHORT)GetCurrentProcessId();
-  packet->hdr.i_cksum = 0;
-  packet->hdr.i_seq = 0;
-  
-  //
-  // Place some junk in the buffer.
-  //
-  memset(packet->data + sizeof(packet->hdr), 'E', datasize);
-}
- 
+/**
+ * Send several ping requests at once, start another thread to recieve
+ * the responses. 
+ */
 int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 {
-	int i, j, ret, arg;
-	double interval;
-	struct sockaddr_in to;
+	int arg;
 
-	hosts = (pinghost *)Q_malloc(sizeof(pinghost) * servsn);
+	hosts = ParseServerList(servs, servsn, &hostsn);
 	ping_finished = false;
-
-	hostsn = 0;
-	for (i=0; i < servsn; i++) {
-	        char buf[50], *tmp;
-	        unsigned int addr;
-		short port;
-
-	        strlcpy (buf, servs[i]->display.ip, sizeof (buf));
-	        tmp = strchr(buf, ':');
-	        if (tmp != NULL)
-	            *tmp = 0;
-	        addr = inet_addr(buf);
-	        if (addr == INADDR_NONE)
-        	    continue;
-
-		if (tmp != NULL) {
-			port = Q_atoi(tmp+1);
-			*tmp = ':';
-		} else
-			port = 27500;
-
-	        for (j=0; j < hostsn; j++)
-	            if (hosts[j].ip == addr && hosts[j].port == port)
-			break;
-
-		if (j == hostsn) {
-			hosts[hostsn].recv = 0;
-			hosts[hostsn].send = 0;
-			hosts[hostsn].ping = 0;
-			hosts[hostsn].ip = addr;
-			hosts[hostsn].port = port;
-			hostsn++;
-		}
-	}
 
 	ping_sock = UDP_OpenSocket(PORT_ANY);
 
@@ -721,30 +777,9 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 
 	Sys_CreateThread(PingRecvProc, NULL);
 
-	interval = 1000.0 / sb_pingspersec.value;
-	count = (int)bound(1, count, 6);
+	PingSendParrallelMultiHosts(hosts, hostsn, count);
 
-	for (i = 0; i < count && !abort_ping; i++) {
-		for (j = 0; j < hostsn && !abort_ping; j++) {
-			char *packet = "\xff\xff\xff\xffk\n";
-
-			ping_pos = min(1, (j / (double)(hostsn * count))) + (i / (double)count);
-
-			to.sin_family = AF_INET;
-			to.sin_port = htons(hosts[j].port);
-			to.sin_addr.s_addr = hosts[j].ip;
-
-			ret = sendto(ping_sock, packet, strlen(packet), 0, (struct sockaddr *)&to, sizeof(struct sockaddr));
-			Sys_MSleep(interval);
-			if (ret == -1) // error
-				continue;
-
-			hosts[j].stime[hosts[j].send] = Sys_DoubleTime();
-			hosts[j].send++;
-		}
-	}
-
-	Sys_MSleep(500); // catch slow packets
+	Sys_MSleep(500); // Wait for slow pings
 
 	ping_finished = true; // let thread know we are done
 	Sys_SemWait(&ping_semaphore);
@@ -752,34 +787,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 	closesocket(ping_sock);
 
 	if (!abort_ping) {
-		for (i=0; i < hostsn; i++) {
-			char buf[50], *tmp;
-			unsigned int ping, addr, port;
-
-			if (hosts[i].recv > 0)
-				ping = (int)((hosts[i].ping / hosts[i].recv) * 1000);
-			else
-				ping = -1;
-
-			for (j=0; j < servsn; j++) {
-				strlcpy (buf, servs[j]->display.ip, sizeof (buf));
-				tmp = strchr(buf, ':');
-				if (tmp != NULL)
-					*tmp = 0;
-				addr = inet_addr(buf);
-				if (addr == INADDR_NONE)
-					continue;
-
-				if (tmp != NULL) {
-					port = Q_atoi(tmp+1);
-					*tmp = ':';
-				} else
-					port = 27500;
-
-				if (addr == hosts[i].ip && port == hosts[i].port)
-					SetPing(servs[j], ping); // 10
-			}
-		}
+		FillServerListPings(servs, servsn, hosts, hostsn);
 	}
 
 	Q_free(hosts);
@@ -807,6 +815,64 @@ double last_stats_time;
 
 server_data *sb_test_server = NULL;
 
+void SB_Test_GetPackets(void)
+{
+    struct sockaddr_in dest,from;
+    int bread;
+    int fromlen = sizeof(from);
+    char *dest_ip;
+    IP_packet_t ip_packet;
+//    int bwrote;
+
+//    u_long arg;
+//    int arg2, success;
+//    struct timeval timeout;
+//    fd_set fd_set_struct;
+
+    unsigned int addr=0;
+//    unsigned short seq_no = 0;
+
+    if (sock < 0)
+        return;
+
+    memset(&dest, 0, sizeof(dest));
+
+    addr = sb_test_addr;
+
+    if (addr == INADDR_NONE)
+        return;
+
+    dest.sin_addr.s_addr = addr;
+    dest.sin_family = AF_INET;
+    dest_ip = inet_ntoa(dest.sin_addr);
+
+    while (1)
+    {
+//        int success;
+        ICMP_header_t *icmp_answer;
+        int seq;
+
+        bread = recvfrom(sock, ip_packet.data, sizeof(ip_packet.data), 0, 
+						(struct sockaddr*)&from, (socklen_t *) &fromlen);
+        if (bread <= 0)
+            break;
+
+        icmp_answer = IP_DecodePacket(&ip_packet, bread, &from, addr);
+
+        if (!icmp_answer || icmp_answer->phase != sb_test_starttime)
+            continue;
+
+        seq = icmp_answer->i_seq;
+        if (seq > sb_test_incoming_sequence)
+        {
+            received_time[seq%NET_TIMINGS] = cls.realtime;
+            sequence_latency[seq%NET_TIMINGS] = sb_test_outgoing_sequence - seq;
+            sb_test_incoming_sequence = seq;
+        }
+    }
+
+}
+
 void SB_Test_SendPacket(void)
 {
     struct sockaddr_in dest/*,from*/;
@@ -824,7 +890,7 @@ void SB_Test_SendPacket(void)
     //fd_set fd_set_struct;
 
     unsigned int addr=0;
-//    USHORT seq_no = 0;
+//    unsigned short seq_no = 0;
 
     sent_time[sb_test_outgoing_sequence%NET_TIMINGS] = cls.realtime;
     received_time[sb_test_outgoing_sequence%NET_TIMINGS] = -1;  // no answer yet
@@ -846,7 +912,7 @@ void SB_Test_SendPacket(void)
     datasize += sizeof(icmp_packet.hdr);  
 
     memset(icmp_packet.data, 0, MAX_PACKET);
-    fill_icmp_data(&icmp_packet, datasize);
+    ICMP_FillData(&icmp_packet, datasize);
 
     icmp_packet.hdr.phase = sb_test_starttime;
 
@@ -855,129 +921,10 @@ void SB_Test_SendPacket(void)
     icmp_packet.hdr.id = addr;
 
     icmp_packet.hdr.i_seq = sb_test_outgoing_sequence++;
-    icmp_packet.hdr.i_cksum = checksum(&icmp_packet, datasize);
+    icmp_packet.hdr.i_cksum = ICMP_Checksum(&icmp_packet, datasize);
 
     bwrote = sendto(sock,icmp_packet.data,datasize,0,(struct sockaddr*)&dest,
                     sizeof(dest));
-}
-
-void SB_Test_GetPackets(void)
-{
-    struct sockaddr_in dest,from;
-    int bread;
-    int fromlen = sizeof(from);
-    char *dest_ip;
-    IP_packet_t ip_packet;
-//    int bwrote;
-
-//    u_long arg;
-//    int arg2, success;
-//    struct timeval timeout;
-//    fd_set fd_set_struct;
-
-    unsigned int addr=0;
-//    USHORT seq_no = 0;
-
-    if (sock < 0)
-        return;
-
-    memset(&dest, 0, sizeof(dest));
-
-    addr = sb_test_addr;
-
-    if (addr == INADDR_NONE)
-        return;
-
-    dest.sin_addr.s_addr = addr;
-    dest.sin_family = AF_INET;
-    dest_ip = inet_ntoa(dest.sin_addr);
-
-    while (1)
-    {
-//        int success;
-        ICMP_header_t *icmpanswer;
-        int seq;
-
-        bread = recvfrom(sock, ip_packet.data, sizeof(ip_packet.data), 0, 
-						(struct sockaddr*)&from, (socklen_t *) &fromlen);
-        if (bread <= 0)
-            break;
-
-        icmpanswer = get_icmp(&ip_packet, bread, &from, addr);
-
-        if (!icmpanswer)
-            continue;
-
-        if (icmpanswer->phase != sb_test_starttime)
-            continue;
-
-        seq = icmpanswer->i_seq;
-        if (seq > sb_test_incoming_sequence)
-        {
-            received_time[seq%NET_TIMINGS] = cls.realtime;
-            sequence_latency[seq%NET_TIMINGS] = sb_test_outgoing_sequence - seq;
-            sb_test_incoming_sequence = seq;
-        }
-    }
-
-}
-
-void SB_Test_Draw(void)
-{
-    int x, y, w, h;
-
-	extern void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency, int lost, int minping, int avgping, int maxping, int devping, int posx, int posy, int width, int height, int revx, int revy);
-
-    w = 240;
-    h = 112;
-
-    x = (vid.width - w)/2;
-    y = (vid.height - h)/2;
-    x -= 8;
-    y += 76;
-
-    if (vid.height >= 240)
-        y += 20;
-
-    R_MQW_NetGraph(sb_test_outgoing_sequence, sb_test_incoming_sequence,
-               sb_test_packet_latency, sb_test_pl,
-               sb_test_min, sb_test_avg, sb_test_max, sb_test_dev,
-               x, y, -1, -1, 0, 0);
-}
-
-void SB_Test_Init(char *address)
-{
-    int i;
-
-    sb_test_incoming_sequence = 0;
-    sb_test_outgoing_sequence = 0;
-
-    sb_test_addr = inet_addr(address);
-
-    for (i=0; i < NET_TIMINGS; i++)
-    {
-        sb_test_packet_latency[i] = 0;
-        received_time[i] = 0;
-        sent_time[i] = 0;
-        sequence_latency[i] = 0;
-    }
-
-    last_stats_time = -999;
-    sb_test_starttime = cls.realtime*1000;
-}
-
-void SB_Test_Change(char *address)
-{
-    unsigned int addr = inet_addr(address);
-
-    if (addr != sb_test_addr)
-    {
-        sb_test_incoming_sequence = sb_test_outgoing_sequence;
-        sb_test_addr = inet_addr(address);
-
-        last_stats_time = -999;
-        sb_test_starttime = cls.realtime*1000;
-    }
 }
 
 void SB_Test_CalcNet(void)
@@ -1083,6 +1030,64 @@ void SB_Test_CalcNet(void)
     sb_test_max = min(sb_test_max, 999);
     sb_test_avg = min(sb_test_avg, 999);
     sb_test_dev = min(sb_test_dev, 99);
+}
+
+void SB_Test_Draw(void)
+{
+    int x, y, w, h;
+
+	extern void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency, int lost, int minping, int avgping, int maxping, int devping, int posx, int posy, int width, int height, int revx, int revy);
+
+    w = 240;
+    h = 112;
+
+    x = (vid.width - w)/2;
+    y = (vid.height - h)/2;
+    x -= 8;
+    y += 76;
+
+    if (vid.height >= 240)
+        y += 20;
+
+    R_MQW_NetGraph(sb_test_outgoing_sequence, sb_test_incoming_sequence,
+               sb_test_packet_latency, sb_test_pl,
+               sb_test_min, sb_test_avg, sb_test_max, sb_test_dev,
+               x, y, -1, -1, 0, 0);
+}
+
+void SB_Test_Init(char *address)
+{
+    int i;
+
+    sb_test_incoming_sequence = 0;
+    sb_test_outgoing_sequence = 0;
+
+    sb_test_addr = inet_addr(address);
+
+    for (i=0; i < NET_TIMINGS; i++)
+    {
+        sb_test_packet_latency[i] = 0;
+        received_time[i] = 0;
+        sent_time[i] = 0;
+        sequence_latency[i] = 0;
+    }
+
+    last_stats_time = -999;
+    sb_test_starttime = cls.realtime*1000;
+}
+
+void SB_Test_Change(char *address)
+{
+    unsigned int addr = inet_addr(address);
+
+    if (addr != sb_test_addr)
+    {
+        sb_test_incoming_sequence = sb_test_outgoing_sequence;
+        sb_test_addr = inet_addr(address);
+
+        last_stats_time = -999;
+        sb_test_starttime = cls.realtime*1000;
+    }
 }
 
 void SB_Test_Frame(void)
