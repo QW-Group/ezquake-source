@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.203 2007-10-24 00:10:55 johnnycz Exp $
+$Id: cl_main.c,v 1.204 2007-10-27 11:34:05 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1719,7 +1719,6 @@ double Cl_DemoSpeed(void)
 		{
 			extern	unsigned char pb_buf[];
 			extern	int		pb_cnt;
-			//extern	qbool	physframe;
 
 			int				ms;
 			double			demospeed, desired, current;
