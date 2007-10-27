@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.204 2007-10-27 11:34:05 qqshka Exp $
+$Id: cl_main.c,v 1.205 2007-10-27 21:17:08 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -42,6 +42,7 @@ $Id: cl_main.c,v 1.204 2007-10-27 11:34:05 qqshka Exp $
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 #else
 #include "r_model.h"
 #include "r_local.h"
@@ -93,6 +94,8 @@ cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
 void OnChange_indphys (cvar_t *var, char *value, qbool *cancel);
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, OnChange_indphys};
+cvar_t	cl_vsync_lag_fix = {"cl_vsync_lag_fix", "0"};
+cvar_t	cl_vsync_lag_tweak = {"cl_vsync_lag_tweak", "5"};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
@@ -1374,6 +1377,8 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_physfps);	//#fps
 	Cvar_Register (&cl_independentPhysics);	//#fps
+	Cvar_Register (&cl_vsync_lag_fix);
+	Cvar_Register (&cl_vsync_lag_tweak);
 	Cvar_Register (&cl_deadbodyfilter);
 	Cvar_Register (&cl_gibfilter);
 	Cvar_Register (&cl_backpackfilter);
@@ -1754,6 +1759,8 @@ void CL_Frame (double time) {
 #ifdef GLQUAKE
 	extern cvar_t gl_clear;
 	extern cvar_t gl_polyblend;
+	extern qbool vid_vsync_on;
+	extern double vid_last_swap_time;
 #else
 	extern cvar_t r_waterwarp;
 	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
@@ -1775,6 +1782,20 @@ void CL_Frame (double time) {
 #endif
 		return;
 	}
+
+#if defined(GLQUAKE) && defined(_WIN32)
+	if (cl_vsync_lag_fix.value && vid_vsync_on && glConfig.displayFrequency) {
+		double time_left = vid_last_swap_time + 1.0/glConfig.displayFrequency - Sys_DoubleTime();
+		//TODO time_left -= (average time it takes to prepare and render a frame);
+		time_left -= cl_vsync_lag_tweak.value * 0.001;
+		if (time_left > 0) {
+			extern cvar_t sys_yieldcpu;
+			if (time_left > 0.001 && sys_yieldcpu.integer)
+				Sys_MSleep(time_left * 1000);
+			return;
+		}
+	}
+#endif
 
 	cls.trueframetime = extratime - 0.001;
 	cls.trueframetime = max(cls.trueframetime, minframetime);
