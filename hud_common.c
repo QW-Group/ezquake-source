@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.161 2007-10-27 20:23:36 tonik Exp $
+	$Id: hud_common.c,v 1.162 2007-10-27 20:35:40 tonik Exp $
 */
 //
 // common HUD elements
@@ -16,6 +16,7 @@
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
+#include "tr_types.h"
 #else
 #include "r_model.h"
 #include "r_local.h"
@@ -266,12 +267,17 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 	static double old_lag;
 
 #if defined(GLQUAKE) && defined(_WIN32)
-	if (vid_vsync_on) {
+	if (vid_vsync_on || glConfig.displayFrequency) {
 		// take the average of last two values, otherwise it
 		// changes very fast and is hard to read
-		double lag = (vid_vsync_lag + old_lag) * 0.5;
-		old_lag = vid_vsync_lag;
-		snprintf (st, sizeof (st), "%2.1f", lag * 1000);
+		double current, avg;
+		if (vid_vsync_on)
+			current = vid_vsync_lag;
+		else
+			current = min(cls.trueframetime, 1.0/glConfig.displayFrequency) * 0.5;
+		avg = (current + old_lag) * 0.5;
+		old_lag = current;
+		snprintf (st, sizeof (st), "%2.1f", avg * 1000);
 	}
 	else
 #endif
