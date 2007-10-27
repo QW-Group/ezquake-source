@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.50 2007-10-26 22:15:44 cokeman1982 Exp $
+	$Id: sys_win.c,v 1.51 2007-10-27 01:40:14 cokeman1982 Exp $
 
 */
 // sys_win.c
@@ -77,37 +77,57 @@ void Sys_SetFPCW(void) {}
 void MaskExceptions(void) {}
 #endif
 
-void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) {
-	if (Q_atof(string)) {
-		if (!WinKeyHook_isActive) {
-			if ((WinKeyHook = SetWindowsHookEx(13, LLWinKeyHook, global_hInstance, 0))) {
+void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
+{
+	if (Q_atof(string)) 
+	{
+		if (!WinKeyHook_isActive) 
+		{
+			if ((WinKeyHook = SetWindowsHookEx(13, LLWinKeyHook, global_hInstance, 0))) 
+			{
 				WinKeyHook_isActive = true;
-			} else {
+			} 
+			else 
+			{
 				Com_Printf("Failed to install winkey hook.\n");
 				Com_Printf("Microsoft Windows NT 4.0, 2000 or XP is required.\n");
 				*cancel = true;
 				return;
 			}
 		}
-	} else {
-		if (WinKeyHook_isActive) {
+	} 
+	else 
+	{
+		if (WinKeyHook_isActive)
+		{
 			UnhookWindowsHookEx(WinKeyHook);
 			WinKeyHook_isActive = false;
 		}
 	}
 }
 
-LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam) 
+{
 	PKBDLLHOOKSTRUCT p;
 
 	p = (PKBDLLHOOKSTRUCT) lParam;
 
-	if (ActiveApp) {
-		switch(p->vkCode) {
-			case VK_LWIN: Key_Event (K_LWIN, !(p->flags & LLKHF_UP)); return 1;
-			case VK_RWIN: Key_Event (K_RWIN, !(p->flags & LLKHF_UP)); return 1;
-			case VK_APPS: Key_Event (K_MENU, !(p->flags & LLKHF_UP)); return 1;
-			case VK_SNAPSHOT: Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP)); return 1;
+	if (ActiveApp) 
+	{
+		switch(p->vkCode) 
+		{
+			case VK_LWIN: 
+				Key_Event (K_LWIN, !(p->flags & LLKHF_UP)); 
+				return 1;
+			case VK_RWIN: 
+				Key_Event (K_RWIN, !(p->flags & LLKHF_UP)); 
+				return 1;
+			case VK_APPS: 
+				Key_Event (K_MENU, !(p->flags & LLKHF_UP)); 
+				return 1;
+			case VK_SNAPSHOT: 
+				Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP)); 
+				return 1;
 		}
 	}
 
@@ -117,10 +137,12 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam) {
 #endif
 
 
-int Sys_SetPriority(int priority) {
+int Sys_SetPriority(int priority) 
+{
     DWORD p;
 
-	switch (priority) {
+	switch (priority) 
+	{
 		case 0:	p = IDLE_PRIORITY_CLASS; break;
 		case 1:	p = NORMAL_PRIORITY_CLASS; break;
 		case 2:	p = HIGH_PRIORITY_CLASS; break;
@@ -131,24 +153,31 @@ int Sys_SetPriority(int priority) {
 	return SetPriorityClass(GetCurrentProcess(), p);
 }
 
-void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel) {
+void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel) 
+{
 	int ok, q_priority;
 	char *desc;
 	float priority;
 
 	priority = Q_atof(s);
-	if (priority == 1) {
+	if (priority == 1) 
+	{
 		q_priority = 2;
 		desc = "high";
-	} else if (priority == -1) {
+	} 
+	else if (priority == -1) 
+	{
 		q_priority = 0;
 		desc = "low";
-	} else {
+	} 
+	else 
+	{
 		q_priority = 1;
 		desc = "normal";
 	}
 
-	if (!(ok = Sys_SetPriority(q_priority))) {
+	if (!(ok = Sys_SetPriority(q_priority))) 
+	{
 		Com_Printf("Changing process priority failed\n");
 		*cancel = true;
 		return;
@@ -739,22 +768,56 @@ LRESULT CALLBACK QWURLProtocolButtonsHookProc(int nCode, WPARAM wParam, LPARAM l
 	{
 		case HCBT_ACTIVATE:
 		{
+			#define BUTTON_HEIGHT		23
+			#define YES_BUTTON_WIDTH	110
+			#define NO_BUTTON_WIDTH		110
+			#define CANCEL_BUTTON_WIDTH	140
+			#define BUTTON_GAP			5
+			#define BOTTOM_OFFSET		10
+			#define ALL_BUTTON_WIDTH	(YES_BUTTON_WIDTH + BUTTON_GAP + NO_BUTTON_WIDTH + BUTTON_GAP + CANCEL_BUTTON_WIDTH)
+
+			RECT rectWindow;
+			RECT rectClient;
+			int y_pos = 0;
+			int x_pos = 0;
+
 			// Get handle to the message box.
 			hwnd = (HWND)wParam;
+			GetClientRect(hwnd, &rectClient);
+			GetWindowRect(hwnd, &rectWindow);
+			
+			// Place the buttons at the bottom of the window.
+			y_pos = rectClient.bottom - BOTTOM_OFFSET - BUTTON_HEIGHT;
+
+			// Resize the messagebox to at least fit the buttons.
+			if (rectClient.right < ALL_BUTTON_WIDTH)
+			{
+				// TODO: Hmm does this work properly? Got some weird behaviour where the control wouldn't draw if the cy argument wasn't a constant.
+				SetWindowPos(hwnd, HWND_TOP, 20, 20, 
+					(ALL_BUTTON_WIDTH + (BUTTON_GAP * 2)), 
+					(int)(rectWindow.bottom - rectWindow.top), 
+					0);
+			}
+
+			// Center the buttons.
+			x_pos = Q_rint((rectClient.right - ALL_BUTTON_WIDTH) / 2.0);
 			
 			// Modify the Yes button.
 			hwndYESButton = GetDlgItem(hwnd, IDYES);
 			SetWindowText(hwndYESButton, _T("Set as default"));
+			SetWindowPos(hwndYESButton, HWND_TOP, x_pos, y_pos, YES_BUTTON_WIDTH, BUTTON_HEIGHT, 0);
+			x_pos += YES_BUTTON_WIDTH + BUTTON_GAP;
 
 			// No button.
 			hwndNOButton = GetDlgItem(hwnd, IDNO);
 			SetWindowText(hwndNOButton, _T("Ask me later"));
+			SetWindowPos(hwndNOButton, HWND_TOP, x_pos, y_pos, NO_BUTTON_WIDTH, BUTTON_HEIGHT, 0);
+			x_pos += NO_BUTTON_WIDTH + BUTTON_GAP;
 
 			// Cancel button.
 			hwndCANCELButton = GetDlgItem(hwnd, IDCANCEL);
 			SetWindowText(hwndCANCELButton, _T("Don't show me this again"));
-			GetClientRect(hwndCANCELButton, &rect);
-			SetWindowPos(hwndCANCELButton, HWND_TOP, 0, 0, 140, rect.bottom, SWP_NOMOVE);
+			SetWindowPos(hwndCANCELButton, HWND_TOP, x_pos, y_pos, CANCEL_BUTTON_WIDTH, BUTTON_HEIGHT, 0);
 
 			return 0;
 		}
