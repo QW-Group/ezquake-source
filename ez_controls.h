@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.h,v 1.54 2007-10-25 17:22:45 cokeman1982 Exp $
+$Id: ez_controls.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 */
 
 //
@@ -261,8 +261,6 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 // Event handler 
 // =========================================================================================
 
-// TODO : Rename these function pointers to show that they are meant for event implementations (_event_ instead of _handler).
-// TODO : Add new similar function pointers, with an extra argument that's a void pointer, that's an optional payload for event handlers.
 //
 // Event function pointer types.
 //
@@ -473,6 +471,7 @@ ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type, void 
 
 #define EZ_CONTROL_ID 0
 
+// TODO : Redo these structs so that we have one struct containing {eventcount, event, evethandler} and then a struct with all the different events based on that struct, so that we don't need 592898 places for the OnEvent names.
 typedef struct ez_control_eventcount_s
 {
 	int	OnMouseEvent;
@@ -502,6 +501,7 @@ typedef struct ez_control_eventcount_s
 	int OnResizeHandleThicknessChanged;
 	int OnEventHandlerChanged;
 	int OnAnchorChanged;
+	int OnVisibilityChanged;
 } ez_control_eventcount_t;
 
 typedef struct ez_control_events_s
@@ -533,6 +533,7 @@ typedef struct ez_control_events_s
 	ez_event_fp					OnResizeHandleThicknessChanged;
 	ez_event_fp					OnEventHandlerChanged;
 	ez_event_fp					OnAnchorChanged;
+	ez_event_fp					OnVisibilityChanged;
 } ez_control_events_t;
 
 typedef struct ez_control_eventhandlers_s
@@ -564,6 +565,7 @@ typedef struct ez_control_eventhandlers_s
 	ez_eventhandler_t	*OnResizeHandleThicknessChanged;
 	ez_eventhandler_t	*OnEventHandlerChanged;
 	ez_eventhandler_t	*OnAnchorChanged;
+	ez_eventhandler_t	*OnVisibilityChanged;
 } ez_control_eventhandlers_t;
 
 typedef enum ez_anchor_e
@@ -610,7 +612,8 @@ typedef enum ez_control_iflags_e
 	control_resizing_bottom		= (1 << 5),		// Resizing downards.
 	control_clicked				= (1 << 6),		// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
 	control_mouse_over			= (1 << 7),		// Is the mouse over the control?
-	control_update_anchorgap	= (1 << 8)		// Update the anchor gap when resizing the control?
+	control_update_anchorgap	= (1 << 8),		// Update the anchor gap when resizing the control?
+	control_hidden_by_parent	= (1 << 9)		// Is the control hidden cause it's parent is not visible?
 } ez_control_iflags_t;
 
 typedef struct ez_control_s
@@ -1071,6 +1074,11 @@ int EZ_control_OnVirtualResize(ez_control_t *self);
 // Control - Layouts children.
 //
 int EZ_control_OnLayoutChildren(ez_control_t *self);
+
+//
+// Control - Visibility changed.
+//
+int EZ_control_OnVisibilityChanged(ez_control_t *self);
 
 //
 // Label - The flags for the control changed.
