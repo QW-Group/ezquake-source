@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.160 2007-10-19 23:43:24 johnnycz Exp $
+	$Id: hud_common.c,v 1.161 2007-10-27 20:23:36 tonik Exp $
 */
 //
 // common HUD elements
@@ -249,6 +249,35 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
     if (hud_fps_title->value)
         strlcat (st, " fps", sizeof (st));
+
+    width = 8*strlen(st);
+    height = 8;
+
+    if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
+        Draw_String(x, y, st);
+}
+
+void SCR_HUD_DrawVidLag(hud_t *hud)
+{
+    int x, y, width, height;
+    char st[128];
+	extern qbool vid_vsync_on;
+	extern double vid_vsync_lag;
+	static double old_lag;
+
+#if defined(GLQUAKE) && defined(_WIN32)
+	if (vid_vsync_on) {
+		// take the average of last two values, otherwise it
+		// changes very fast and is hard to read
+		double lag = (vid_vsync_lag + old_lag) * 0.5;
+		old_lag = vid_vsync_lag;
+		snprintf (st, sizeof (st), "%2.1f", lag * 1000);
+	}
+	else
+#endif
+		strcpy(st, "?");
+
+	strlcat (st, " ms", sizeof (st));
 
     width = 8*strlen(st);
     height = 8;
@@ -6076,6 +6105,12 @@ void CommonDraw_Init(void)
         "show_min", "0",
         "title",    "1",
 		"decimals", "1",
+        NULL);
+
+	HUD_Register("vidlag", NULL, 
+        "Shows the delay between the time a frame is rendered and the time it's displayed.",
+        HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawVidLag,
+        "0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
         NULL);
 
 	HUD_Register("mouserate", NULL, "Show your current mouse input rate", HUD_PLUSMINUS, ca_active, 9,

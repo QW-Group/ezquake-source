@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-$Id: win_glimp.c,v 1.25 2007-09-05 17:59:10 cokeman1982 Exp $
+$Id: win_glimp.c,v 1.26 2007-10-27 20:23:36 tonik Exp $
 
 */
 /*
@@ -60,6 +60,11 @@ $Id: win_glimp.c,v 1.25 2007-09-05 17:59:10 cokeman1982 Exp $
 
 extern	HWND	mainwindow;
 extern  LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+// exported to the client
+qbool	vid_vsync_on;
+double	vid_vsync_lag;
+double	vid_last_swap_time;
 
 void WG_CheckHardwareGamma( void );
 void WG_RestoreGamma( void );
@@ -1305,6 +1310,7 @@ void GL_EndRendering (void) {
 		if ( !glConfig.stereoEnabled ) {	// why?
 			if ( qwglSwapIntervalEXT ) {
 				qwglSwapIntervalEXT( r_swapInterval.integer );
+				vid_vsync_on = (r_swapInterval.integer != 0);
 			}
 		}
 	}
@@ -1336,6 +1342,7 @@ void GL_EndRendering (void) {
 */
 void GLimp_EndFrame (void)
 {
+	double time_before_swap;
 /* move it to GL_EndRendering() temporaly
 	//
 	// swapinterval stuff
@@ -1351,6 +1358,7 @@ void GLimp_EndFrame (void)
 	}
 */
 
+	time_before_swap = Sys_DoubleTime();
 	if ( glConfig.driverType > GLDRV_ICD )
 	{
 		if ( !qwglSwapBuffers( glw_state.hDC ) )
@@ -1362,6 +1370,8 @@ void GLimp_EndFrame (void)
 	{
 		SwapBuffers( glw_state.hDC );
 	}
+	vid_last_swap_time = Sys_DoubleTime();
+	vid_vsync_lag = vid_last_swap_time - time_before_swap;
 
 	// check logging
 //	QGL_EnableLogging( r_logFile.integer );
