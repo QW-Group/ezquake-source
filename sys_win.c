@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.51 2007-10-27 01:40:14 cokeman1982 Exp $
+	$Id: sys_win.c,v 1.52 2007-10-27 14:37:07 cokeman1982 Exp $
 
 */
 // sys_win.c
@@ -755,7 +755,6 @@ HHOOK hMsgBoxHook;
 
 LRESULT CALLBACK QWURLProtocolButtonsHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	RECT rect;
 	HWND hwnd;
 	HWND hwndYESButton;
 	HWND hwndNOButton;
