@@ -614,6 +614,8 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 	}
 }
 
+int cmdtime_msec = 0;
+
 void CL_SendCmd (void) {
 	sizebuf_t buf;
 	byte data[128];
@@ -660,6 +662,7 @@ void CL_SendCmd (void) {
 		Cam_Track(cmd);
 
 	CL_FinishMove(cmd);
+	cmdtime_msec += cmd->msec;
 
 	Cam_FinishMove(cmd);
 

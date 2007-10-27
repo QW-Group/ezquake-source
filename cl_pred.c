@@ -156,7 +156,7 @@ void CL_CalcCrouch (void) {
 
 extern qbool physframe; // for fps-independent physics
 
-static void CL_LerpMove (double msgtime, float f)
+static void CL_LerpMove (double msgtime)
 {	
 	static int		lastsequence = 0;
 	static vec3_t	lerp_angles[3]; // FIXME: These are not being used, why? :)
@@ -169,6 +169,7 @@ static void CL_LerpMove (double msgtime, float f)
 	int		i;
 	int		from, to;
 	extern cvar_t cl_nolerp;
+	extern int cmdtime_msec;
 
 	if (cl_nolerp.value) 
 	{
@@ -192,7 +193,7 @@ static void CL_LerpMove (double msgtime, float f)
 		// move along
 		lerp_times[2] = lerp_times[1];
 		lerp_times[1] = lerp_times[0];
-		lerp_times[0] = msgtime;
+		lerp_times[0] = cmdtime_msec * 0.001;
 
 		VectorCopy (lerp_origin[1], lerp_origin[2]);
 		VectorCopy (lerp_origin[0], lerp_origin[1]);
@@ -385,7 +386,7 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 }
 
 	if (!cls.demoplayback && cl_independentPhysics.value != 0)
-		CL_LerpMove (lerp_time, f);
+		CL_LerpMove (lerp_time);
     CL_CalcCrouch ();
 
 #ifdef JSS_CAM
