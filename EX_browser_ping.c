@@ -1,3 +1,24 @@
+/*
+Copyright (C) 2007 ezQuake team
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+$Id: EX_browser_ping.c,v 1.40 2007-10-27 08:51:12 dkure Exp $
+*/
+
 #ifdef _WIN32
 
 #include <winsock2.h>
@@ -102,6 +123,11 @@ typedef struct pinghost_s
     double stime[6];
 } pinghost_t;
 
+typedef struct {
+	pinghost_t *hosts;
+	int nelms;
+} pinghost_list_t;
+
 // =============================================================================
 //  Function Prototypes
 // =============================================================================
@@ -114,15 +140,16 @@ qbool useNewPing = false;
 static int sock;
 static int ping_sock;
 
-/* Shared by the threads to send and recv ping data */
-static int hostsn;
-static pinghost_t *hosts;
+/* TODO: This to place in struct to pass to recvier thread
+ * ping_sock
+ * ping_finished
+ * ping_semaphore
+ * host_list
+ */
 
 /* Used for thread syncronisation */
 static qbool ping_finished = false;
 static sem_t ping_semaphore;
-
-
 
 // =============================================================================
 //  Local Functions
@@ -135,7 +162,7 @@ static int ParseServerIp(char *server_port, int *addr, int *port)
 	char server_ip[50];
 	char *port_divide;
 
-	strlcpy (server_ip, server_port, sizeof(server_port));
+	strlcpy (server_ip, server_port, sizeof(server_ip));
 
 	/* Break the ip at the port */
 	if ((port_divide = strchr(server_ip, ':')))
@@ -470,9 +497,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     int ping_number;
     int randomizer;
 
-	
-    pinghost_t *hosts; 	/* XXX: This takes higher prcedence over the global */
-    int hostsn;			/* XXX: This takes higher prcedence over the global */
+	pinghost_list_t host_list;
     struct sockaddr_in dest,from;
     int bread,datasize;
     int fromlen = sizeof(from);
@@ -498,7 +523,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     ICMP_FillData(&icmp_packet, datasize);
 
     success = 0;
-	hosts = ParseServerList(servs, servsn, &hostsn);
+	host_list.hosts = ParseServerList(servs, servsn, &host_list.nelms);
 
     interval = (1000.0 / sb_pingspersec.value) / 1000;
     lastsenttime = Sys_DoubleTime() - interval;
@@ -520,10 +545,11 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 		}
 
 		// Send a ping request to the current host.
-        if ((time > (lastsenttime + interval)) && (ping_number < (hostsn * sb_pings.value)))
+        if ((time > (lastsenttime + interval)) 
+				&& (ping_number < (host_list.nelms * sb_pings.value)))
         {
             // Send next ping.
-            pinghost_t * host = &hosts[ping_number % hostsn];
+            pinghost_t * host = &host_list.hosts[ping_number % host_list.nelms];
 
             if (host->ping >= 0)
             {
@@ -531,7 +557,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
                 icmp_packet.hdr.timestamp = time;
 
                 icmp_packet.hdr.id = host->ip;
-                icmp_packet.hdr.index = ping_number % hostsn;
+                icmp_packet.hdr.index = ping_number % host_list.nelms;
                 icmp_packet.hdr.phase = ping_number;
                 icmp_packet.hdr.randomizer = randomizer;
 
@@ -553,7 +579,8 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
             }
 
             ping_number++;
-            ping_pos = min(1, ping_number / (double)(hostsn * sb_pings.value));
+            ping_pos = min(1, ping_number 
+					/ (double)(host_list.nelms * sb_pings.value));
         }
 
 		// Wait for an answer.
@@ -589,15 +616,18 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
                 fromhost = icmp_answer->id;
                 index    = icmp_answer->index;
                 phase    = icmp_answer->phase;
-                if (hosts[index].ip == fromhost  &&  hosts[index].ping >= 0)
+                if ((host_list.hosts[index].ip == fromhost)
+						&& (host_list.hosts[index].ping >= 0))
                 {
-                    hosts[index].ping = (hosts[index].ping * hosts[index].phase
-                                      + (Sys_DoubleTime()-icmp_answer->timestamp))
-                                      / (hosts[index].phase + 1);
-                    hosts[index].phase++;
+                    host_list.hosts[index].ping 
+								= (host_list.hosts[index].ping 
+									* host_list.hosts[index].phase
+                                    + (Sys_DoubleTime()-icmp_answer->timestamp))
+                                    / (host_list.hosts[index].phase + 1);
+                    host_list.hosts[index].phase++;
 
 					// Remove averaging that would occur in FillServerListPings
-					hosts[index].recv = 1;
+					host_list.hosts[index].recv = 1;
                 }
             }
         }
@@ -605,10 +635,10 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 
     // update pings in our servz
 	if (!abort_ping) {
-		FillServerListPings(servs, servsn, hosts, hostsn);
+		FillServerListPings(servs, servsn, host_list.hosts, host_list.nelms);
 	}
 
-    Q_free(hosts);
+    Q_free(host_list.hosts);
 
     return success;
 }
@@ -616,7 +646,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 /**
  * Pings multiple hosts in parrallel, each host is pingged count times
  */
-void PingSendParrallelMultiHosts(pinghost_t *phost, int nelms, int count) {
+void PingSendParrallelMultiHosts(pinghost_t *phosts, int nelms, int count) {
 	struct sockaddr_in to;
 	int interval; 
 	int i, j;
@@ -633,16 +663,16 @@ void PingSendParrallelMultiHosts(pinghost_t *phost, int nelms, int count) {
 			ping_pos = min(1, (j / (double)(nelms * count))) + (i / (double)count);
 
 			to.sin_family = AF_INET;
-			to.sin_port = htons(hosts[j].port);
-			to.sin_addr.s_addr = hosts[j].ip;
+			to.sin_port = htons(phosts[j].port);
+			to.sin_addr.s_addr = phosts[j].ip;
 
 			ret = sendto(ping_sock, packet, strlen(packet), 0, (struct sockaddr *)&to, sizeof(struct sockaddr));
 			Sys_MSleep(interval);
 			if (ret == -1) // error
 				continue;
 
-			hosts[j].stime[hosts[j].send] = Sys_DoubleTime();
-			hosts[j].send++;
+			phosts[j].stime[phosts[j].send] = Sys_DoubleTime();
+			phosts[j].send++;
 		}
 	}
 }
@@ -653,7 +683,7 @@ void PingSendParrallelMultiHosts(pinghost_t *phost, int nelms, int count) {
 #ifdef _WIN32
 DWORD WINAPI PingRecvProc(void *lpParameter)
 #else
-unsigned long PingRecvProc(void *lpParameter)
+unsigned int PingRecvProc(void *lpParameter)
 #endif
 {
 	socklen_t inaddrlen;
@@ -661,6 +691,7 @@ unsigned long PingRecvProc(void *lpParameter)
 	fd_set fd;
 	int k, ret;
 	struct timeval timeout;
+	pinghost_list_t *host_list = (pinghost_list_t *)lpParameter;
 
 	while (!ping_finished && !abort_ping) {
 		FD_ZERO(&fd);
@@ -682,11 +713,13 @@ unsigned long PingRecvProc(void *lpParameter)
 			if (buf[0] != 'l') // not A2A_ACK
 				continue;
 	
-			for (k = 0; k < hostsn; k++) {
-				if (hosts[k].ip == from.sin_addr.s_addr &&
-				    hosts[k].port == ntohs(from.sin_port)) {
-					hosts[k].ping += Sys_DoubleTime() - hosts[k].stime[hosts[k].recv];
-					hosts[k].recv++;
+			for (k = 0; k < host_list->nelms; k++) {
+				if (host_list->hosts[k].ip == from.sin_addr.s_addr &&
+				    host_list->hosts[k].port == ntohs(from.sin_port)) {
+					host_list->hosts[k].ping += Sys_DoubleTime() 
+									- host_list->hosts[k]
+											.stime[host_list->hosts[k].recv];
+					host_list->hosts[k].recv++;
 					break;
 				}
 			}
@@ -758,8 +791,9 @@ _select:
 int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 {
 	int arg;
+	pinghost_list_t host_list;
 
-	hosts = ParseServerList(servs, servsn, &hostsn);
+	host_list.hosts = ParseServerList(servs, servsn, &host_list.nelms);
 	ping_finished = false;
 
 	ping_sock = UDP_OpenSocket(PORT_ANY);
@@ -779,9 +813,9 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 
 	Sys_SemInit(&ping_semaphore, 0, 1);
 
-	Sys_CreateThread(PingRecvProc, NULL);
+	Sys_CreateThread(PingRecvProc, (void *)&host_list);
 
-	PingSendParrallelMultiHosts(hosts, hostsn, count);
+	PingSendParrallelMultiHosts(host_list.hosts, host_list.nelms, count);
 
 	Sys_MSleep(500); // Wait for slow pings
 
@@ -791,10 +825,10 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 	closesocket(ping_sock);
 
 	if (!abort_ping) {
-		FillServerListPings(servs, servsn, hosts, hostsn);
+		FillServerListPings(servs, servsn, host_list.hosts, host_list.nelms);
 	}
 
-	Q_free(hosts);
+	Q_free(host_list.hosts);
 
 	return 1;
 }
