@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.134 2007-10-13 01:59:53 himan Exp $
+$Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2710,10 +2710,11 @@ void CL_ParseStufftext (void) {
 	{
 #ifdef GLQUAKE
 		extern void Parse_TeamInfo(char *s);
+
 		if (!cls.mvdplayback)
 			Parse_TeamInfo( s + 2 );
 #else
-		// do nothing in soft, but do not abuse with unknown command tinfo
+		// do nothing in soft
 #endif
 	}
 	else if (!strncmp(s, "//at ", sizeof("//at ")-1))
@@ -2735,6 +2736,16 @@ void CL_ParseStufftext (void) {
 	else if (!strncmp(s, "//vwep ", 7) && s[strlen(s)-1] == '\n') {
 		CL_ParseVWepPrecache(s);
 		return;
+	}
+	else if (!strncmp(s, "//sn ", sizeof("//sn ")-1))
+	{
+#ifdef GLQUAKE
+		extern void Parse_Shownick(char *s)	;
+
+		Parse_Shownick( s + 2 );	
+#else
+		// do nothing in soft
+#endif
 	}
 	else
 		Cbuf_AddTextEx (&cbuf_svc, s);

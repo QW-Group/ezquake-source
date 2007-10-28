@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.206 2007-10-28 09:11:49 tonik Exp $
+$Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -903,6 +903,7 @@ void CL_DNS_f (void) {
 
 #ifdef GLQUAKE
 void SCR_ClearTeamInfo(void);
+void SCR_ClearShownick(void);
 #endif
 
 void CL_ClearState (void) {
@@ -950,6 +951,8 @@ void CL_ClearState (void) {
 #ifdef GLQUAKE
 	// clear teaminfo structs
 	SCR_ClearTeamInfo();
+	// clear shownick structs
+	SCR_ClearShownick();
 #endif
 
 	if (!com_serveractive)
@@ -1120,7 +1123,12 @@ void CL_ConnectionlessPacket (void) {
 	switch(c) {
 	case S2C_CHALLENGE:
 		if (!NET_CompareAdr(net_from, cls.server_adr))
+		{
+			Com_DPrintf("S2C_CHALLENGE rejected\n");
+			Com_DPrintf("net_from       %s\n", NET_AdrToString(net_from));
+			Com_DPrintf("cls.server_adr %s\n", NET_AdrToString(cls.server_adr));
 			return;
+		}
 		Com_Printf("%s: challenge\n", NET_AdrToString(net_from));
 		cls.challenge = atoi(MSG_ReadString());
 

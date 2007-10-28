@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.154 2007-10-28 18:43:32 qqshka Exp $
+$Id: cl_screen.c,v 1.155 2007-10-28 19:56:44 qqshka Exp $
 */
 
 /// declarations may be found in screen.h
@@ -1811,7 +1811,8 @@ void Parse_TeamInfo(char *s)
 
 	client = atoi( Cmd_Argv( 1 ) );
 
-	if (client < 0 || client >= MAX_CLIENTS) {
+	if (client < 0 || client >= MAX_CLIENTS)
+	{
 		Com_DPrintf("Parse_TeamInfo: wrong client %d\n", client);
 		return;
 	}
@@ -1858,6 +1859,72 @@ void Update_TeamInfo()
 		ti_clients[i].armor   = bound(0, st[STAT_ARMOR],  999);
 		ti_clients[i].items   = st[STAT_ITEMS];
 		ti_clients[i].nick[0] = 0; // sad, we does't have nick, will use name
+	}
+}
+
+/***************************** customizeable shownick *************************/
+
+typedef struct shownick_s {
+
+	int 		client;
+
+	vec3_t		org;
+	int			items;
+	int			health;
+	int			armor;
+	char		nick[TEAMINFO_NICKLEN]; // yeah, nick is nick, must be short
+	double		time; // when we recive update
+
+} shownick_t;
+
+static shownick_t shownick;
+
+void SCR_ClearShownick(void)
+{
+	memset(&shownick, 0, sizeof(shownick));
+}
+
+void Parse_Shownick(char *s)
+{
+	int		client, version, arg;
+
+	Cmd_TokenizeString( s );
+
+	arg = 1;
+
+	version  = atoi( Cmd_Argv( arg++ ) );
+
+	switch ( version )
+	{
+		case 1:
+		{
+			client = atoi( Cmd_Argv( arg++ ) );
+        
+			if (client < 0 || client >= MAX_CLIENTS)
+			{
+				Com_DPrintf("Parse_Shownick: wrong client %d\n", client);
+				return;
+			}
+
+			shownick.client = client;
+	        
+			shownick.time   = r_refdef2.time;
+        
+			shownick.org[0] = atoi( Cmd_Argv( arg++ ) );
+			shownick.org[1] = atoi( Cmd_Argv( arg++ ) );
+			shownick.org[2] = atoi( Cmd_Argv( arg++ ) );
+			shownick.health = atoi( Cmd_Argv( arg++ ) );
+			shownick.armor  = atoi( Cmd_Argv( arg++ ) );
+			shownick.items  = atoi( Cmd_Argv( arg++ ) );
+			strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
+
+			return;
+		}
+
+		default:
+
+		Com_DPrintf("Parse_Shownick: unsupported version %d\n", version);
+		return;
 	}
 }
 
