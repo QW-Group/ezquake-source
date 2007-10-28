@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.91 2007-10-20 18:33:22 borisu Exp $
+    $Id: cmd.c,v 1.92 2007-10-28 02:45:19 qqshka Exp $
 */
 
 #ifndef _WIN32
@@ -949,107 +949,138 @@ static qbool Cmd_LegacyCommand (void)
 =============================================================================
 */
 
-#define	MAX_ARGS		80
-
-static	int		cmd_argc;
-static	char	*cmd_argv[MAX_ARGS];
-static	char	*cmd_null_string = "";
-static	char	*cmd_args = NULL;
-
 #define CMD_HASHPOOL_SIZE 512
 cmd_function_t	*cmd_hash_array[CMD_HASHPOOL_SIZE];
 /*static*/ cmd_function_t	*cmd_functions;		// possible commands to execute
 
-/*
-============
-Cmd_Shutdown
-============
-*/
-void Cmd_Shutdown(void)
+static  tokenizecontext_t cmd_tokenizecontext;
+
+static	char	*cmd_null_string = "";
+
+int Cmd_ArgcEx (tokenizecontext_t *ctx)
 {
-#ifdef WITH_DP_MEM
-	Mem_FreePool (&cmd_mempool);
-#endif
+	return ctx->cmd_argc;
 }
+
+char *Cmd_ArgvEx (tokenizecontext_t *ctx, int arg)
+{
+	if (arg >= ctx->cmd_argc || arg < 0)
+		return cmd_null_string;
+
+	return ctx->cmd_argv[arg];
+}
+
+//Returns a single string containing argv(1) to argv(argc() - 1)
+char *Cmd_ArgsEx (tokenizecontext_t *ctx)
+{
+	return ctx->cmd_args;
+}
+
+//Returns a single string containing argv(start) to argv(argc() - 1)
+//Unlike Cmd_Args, shrinks spaces between argvs
+char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start)
+{
+	int i, c;
+
+	ctx->text[0] = 0;
+	c = Cmd_ArgcEx(ctx);
+
+	for (i = start; i < c; i++)
+	{
+		if (i > start)
+			strlcat (ctx->text, " ", sizeof (ctx->text) - strlen (ctx->text));
+
+		strlcat (ctx->text, Cmd_ArgvEx(ctx, i), sizeof (ctx->text) - strlen (ctx->text));
+	}
+
+	return ctx->text;
+}
+
+//Parses the given string into command line tokens.
+void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text)
+{
+	int idx = 0, token_len;
+
+	memset(ctx, 0, sizeof(*ctx));
+
+	while (1)
+	{
+		// skip whitespace
+		while (*text == ' ' || *text == '\t' || *text == '\r')
+			text++;
+
+		// a newline separates commands in the buffer
+		if (*text == '\n')
+			return;
+
+		if (!*text)
+			return;
+
+		if (ctx->cmd_argc == 1)
+			strlcpy(ctx->cmd_args, text, sizeof(ctx->cmd_args));
+
+		text = COM_Parse (text);
+		if (!text)
+			return;
+
+		if (ctx->cmd_argc >= MAX_ARGS)
+			return;
+
+		token_len = strlen(com_token);
+
+		// ouch ouch, no more space
+		if (idx + token_len + 1 > sizeof(ctx->argv_buf))
+			return;
+
+		ctx->cmd_argv[ctx->cmd_argc] = ctx->argv_buf + idx;
+		strcpy (ctx->cmd_argv[ctx->cmd_argc], com_token);
+		ctx->cmd_argc++;
+
+		idx += token_len + 1;
+	}
+}
+
+// and wrappers for backward compatibility
 
 int Cmd_Argc (void)
 {
-	return cmd_argc;
+	return Cmd_ArgcEx(&cmd_tokenizecontext);
 }
 
 char *Cmd_Argv (int arg)
 {
-	if (arg >= cmd_argc)
-		return cmd_null_string;
-	return cmd_argv[arg];
+	return Cmd_ArgvEx(&cmd_tokenizecontext, arg);
 }
 
 //Returns a single string containing argv(1) to argv(argc() - 1)
 char *Cmd_Args (void)
 {
-	if (!cmd_args)
-		return "";
-	return cmd_args;
+	return Cmd_ArgsEx(&cmd_tokenizecontext);
 }
 
 //Returns a single string containing argv(start) to argv(argc() - 1)
 //Unlike Cmd_Args, shrinks spaces between argvs
 char *Cmd_MakeArgs (int start)
 {
-	int i, c;
-
-	static char	text[1024];
-
-	text[0] = 0;
-	c = Cmd_Argc();
-	for (i = start; i < c; i++) {
-		if (i > start)
-			strlcat (text, " ", sizeof (text) - strlen (text));
-
-		strlcat (text, Cmd_Argv(i), sizeof (text) - strlen (text));
-	}
-
-	return text;
+	return Cmd_MakeArgsEx(&cmd_tokenizecontext, start);
 }
 
 //Parses the given string into command line tokens.
 void Cmd_TokenizeString (char *text)
 {
-	int idx;
-	static char argv_buf[1024];
+	Cmd_TokenizeStringEx(&cmd_tokenizecontext, text);
+}
 
-	idx = 0;
+// save cmd_tokenizecontext struct to ctx
+void Cmd_SaveContext(tokenizecontext_t *ctx)
+{
+	ctx[0] = cmd_tokenizecontext;
+}
 
-	cmd_argc = 0;
-	cmd_args = NULL;
-
-	while (1) {
-		// skip whitespace
-		while (*text == ' ' || *text == '\t' || *text == '\r')
-			text++;
-
-		if (*text == '\n') {	// a newline separates commands in the buffer
-			text++;
-			break;
-		}
-
-		if (!*text)
-			return;
-
-		if (cmd_argc == 1)
-			cmd_args = text;
-
-		text = COM_Parse (text);
-		if (!text)
-			return;
-
-		if (cmd_argc < MAX_ARGS) {
-			cmd_argv[cmd_argc] = argv_buf + idx;
-			strcpy (cmd_argv[cmd_argc], com_token);
-			idx += strlen(com_token) + 1;
-			cmd_argc++;
-		}
-	}
+// restore cmd_tokenizecontext struct from ctx
+void Cmd_RestoreContext(tokenizecontext_t *ctx)
+{
+	cmd_tokenizecontext = ctx[0];
 }
 
 void Cmd_AddCommand (char *cmd_name, xcommand_t function)
@@ -1543,16 +1574,16 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 #endif
 
 	// check functions
-	if ((cmd = Cmd_FindCommand(cmd_argv[0]))) {
+	if ((cmd = Cmd_FindCommand(Cmd_Argv(0)))) {
 #ifndef SERVERONLY
 		if (gtf || cbuf_current == &cbuf_safe) {
-			if (!Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
-				Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
+			if (!Cmd_IsCommandAllowedInMessageTrigger(Cmd_Argv(0))) {
+				Com_Printf ("\"%s\" cannot be used in message triggers\n", Cmd_Argv(0));
 				goto done;
 			}
 		} else if ((cbuf_current == &cbuf_formatted_comms)) {
-			if (!Cmd_IsCommandAllowedInTeamPlayMacros(cmd_argv[0])) {
-				Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
+			if (!Cmd_IsCommandAllowedInTeamPlayMacros(Cmd_Argv(0))) {
+				Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
 				goto done;
 			}
 		}
@@ -1566,14 +1597,14 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	}
 
 	// some bright guy decided to use "skill" as a mod command in Custom TF, sigh
-	if (!strcmp(Cmd_Argv(0), "skill") && cmd_argc == 1 && Cmd_FindAlias("skill"))
+	if (!strcmp(Cmd_Argv(0), "skill") && Cmd_Argc() == 1 && Cmd_FindAlias("skill"))
 		goto checkaliases;
 
 	// check cvars
 	if ((v = Cvar_Find(Cmd_Argv(0)))) {
 #ifndef SERVERONLY
 		if ((cbuf_current == &cbuf_formatted_comms)) {
-			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
+			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
 			goto done;
 		}
 #endif
@@ -1583,7 +1614,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check aliases
 checkaliases:
-	if ((a = Cmd_FindAlias(cmd_argv[0]))) {
+	if ((a = Cmd_FindAlias(Cmd_Argv(0)))) {
 
 		// QW262 -->
 #ifdef WITH_TCL
@@ -2169,6 +2200,19 @@ void Cmd_Cvar_Out_f (void)
 }
 // <-- QW262
 #endif /* SERVERONLY */
+
+
+/*
+============
+Cmd_Shutdown
+============
+*/
+void Cmd_Shutdown(void)
+{
+#ifdef WITH_DP_MEM
+	Mem_FreePool (&cmd_mempool);
+#endif
+}
 
 void Cmd_Init (void)
 {

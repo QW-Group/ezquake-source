@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.19 2007-10-22 18:52:49 qqshka Exp $
+	$Id: qtv.c,v 1.20 2007-10-28 02:45:19 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -151,6 +151,10 @@ void QTV_Say_f (void)
 	char *s = Cmd_Args();
 	char text[1024] = {0};
 	int len;
+	tokenizecontext_t tmpcontext;
+
+	// save context, so we can later restore it
+	Cmd_SaveContext(&tmpcontext);
 
 	// get rid of quotes, if any
 	if (s[0] == '\"' && s[(len = strlen(s))-1] == '\"' && len > 2)
@@ -162,6 +166,9 @@ void QTV_Say_f (void)
 	}
 
 	QTV_ForwardToServerEx (true, true);
+
+	// restore
+	Cmd_RestoreContext(&tmpcontext);
 }
 
 void QTV_Cmd_ForwardToServer (void)
@@ -179,6 +186,7 @@ void QTV_Cmd_Printf(float min_version, char *fmt, ...)
 {
 	va_list argptr;
 	char msg[1024] = {0};
+	tokenizecontext_t tmpcontext;
 
 	if (cls.mvdplayback != QTV_PLAYBACK || min_version > cls.qtv_svversion)
 		return; // no point for this, since it not qtv playback or qtv server do not support it
@@ -187,6 +195,12 @@ void QTV_Cmd_Printf(float min_version, char *fmt, ...)
 	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
+	// save context, so we can later restore it
+	Cmd_SaveContext(&tmpcontext);
+
 	Cmd_TokenizeString(msg);
 	QTV_Cmd_ForwardToServer ();
+
+	// restore
+	Cmd_RestoreContext(&tmpcontext);
 }

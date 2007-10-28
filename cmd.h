@@ -106,10 +106,47 @@ char *Cmd_CompleteCommand (char *partial);
 // attempts to match a partial command for automatic command line completion
 // returns NULL if nothing fits
 
+#define	MAX_ARGS		80
+
+typedef struct tokenizecontext_s
+{
+	int		cmd_argc; // arguments count
+	char	*cmd_argv[MAX_ARGS]; // links to argv_buf[]
+
+	// FIXME: MAX_COM_TOKEN not defined here, need redesign headers or something
+
+	char	argv_buf[/*MAX_COM_TOKEN*/ 1024]; // here we store data for *cmd_argv[]
+
+	char	cmd_args[/*MAX_COM_TOKEN*/ 1024 * 2]; // here we store original of what we parse, from argv(1) to argv(argc() - 1)
+
+	char	text[/*MAX_COM_TOKEN*/ 1024]; // this is used/overwrite each time we using Cmd_MakeArgs()
+
+} tokenizecontext_t;
+
+int Cmd_ArgcEx (tokenizecontext_t *ctx);
+char *Cmd_ArgvEx (tokenizecontext_t *ctx, int arg);
+
+//Returns a single string containing argv(1) to argv(argc() - 1)
+char *Cmd_ArgsEx (tokenizecontext_t *ctx);
+
+//Returns a single string containing argv(start) to argv(argc() - 1)
+//Unlike Cmd_Args, shrinks spaces between argvs
+char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start);
+
+//Parses the given string into command line tokens.
+void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text);
+
 int	Cmd_Argc (void);
 char *Cmd_Argv (int arg);
 char *Cmd_Args (void);
 char *Cmd_MakeArgs (int start);
+
+// save cmd_tokenizecontext struct to ctx
+void Cmd_SaveContext(tokenizecontext_t *ctx);
+
+// restore cmd_tokenizecontext struct from ctx
+void Cmd_RestoreContext(tokenizecontext_t *ctx);
+
 // The functions that execute commands get their parameters with these
 // functions. Cmd_Argv () will return an empty string, not a NULL
 // if arg > argc, so string operations are always safe.
