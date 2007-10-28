@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.205 2007-10-27 21:17:08 tonik Exp $
+$Id: cl_main.c,v 1.206 2007-10-28 09:11:49 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -95,7 +95,7 @@ cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
 void OnChange_indphys (cvar_t *var, char *value, qbool *cancel);
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, OnChange_indphys};
 cvar_t	cl_vsync_lag_fix = {"cl_vsync_lag_fix", "0"};
-cvar_t	cl_vsync_lag_tweak = {"cl_vsync_lag_tweak", "5"};
+cvar_t	cl_vsync_lag_tweak = {"cl_vsync_lag_tweak", "1.0"};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
@@ -1743,6 +1743,55 @@ double Cl_DemoSpeed(void)
 	return bound(0, cl_demospeed.value, 20);
 }
 
+// returns true if it's not time yet to run a frame
+#define NUMTIMINGS 5
+double timings[NUMTIMINGS];
+double render_frame_start, render_frame_end;
+int timings_idx;
+qbool VSyncLagFix (void)
+{
+#if defined(GLQUAKE) && defined(_WIN32)
+	extern qbool vid_vsync_on;
+	extern double vid_last_swap_time;
+	double avg_rendertime, tmin, tmax;
+	int i;
+
+	// collect statistics so that
+	timings[timings_idx] = render_frame_end - render_frame_start;
+	timings_idx = (timings_idx + 1) % NUMTIMINGS;
+	avg_rendertime = tmin = tmax = 0;
+	for (i = 0; i < NUMTIMINGS; i++) {
+		if (timings[i] == 0)
+			return false;	// not enough statistics yet
+		avg_rendertime += timings[i];
+		if (timings[i] < tmin || !tmin)
+			tmax = timings[i];
+		if (timings[i] > tmax)
+			tmax = timings[i];
+	}
+	avg_rendertime /= NUMTIMINGS;
+	// if (tmax and tmin differ too much) do_something(); ?
+	avg_rendertime = tmax;	// better be on the safe side
+
+	Com_DPrintf ("%f\n", avg_rendertime);
+
+	if (cl_vsync_lag_fix.value && vid_vsync_on && glConfig.displayFrequency) {
+		double time_left = vid_last_swap_time + 1.0/glConfig.displayFrequency - Sys_DoubleTime();
+		time_left -= avg_rendertime;
+		time_left -= cl_vsync_lag_tweak.value * 0.001;
+		if (time_left > 0) {
+			extern cvar_t sys_yieldcpu;
+			if (time_left > 0.001 && sys_yieldcpu.integer)
+				Sys_MSleep(Cvar_Value("zerosleep") ? 0 : time_left * 1000);
+			return true;	// don't run a frame yet
+		}
+	}
+	return false;
+#else
+	return false;
+#endif
+}
+
 void CL_QTVPoll (void);
 
 //#fps:
@@ -1759,8 +1808,6 @@ void CL_Frame (double time) {
 #ifdef GLQUAKE
 	extern cvar_t gl_clear;
 	extern cvar_t gl_polyblend;
-	extern qbool vid_vsync_on;
-	extern double vid_last_swap_time;
 #else
 	extern cvar_t r_waterwarp;
 	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
@@ -1783,19 +1830,10 @@ void CL_Frame (double time) {
 		return;
 	}
 
-#if defined(GLQUAKE) && defined(_WIN32)
-	if (cl_vsync_lag_fix.value && vid_vsync_on && glConfig.displayFrequency) {
-		double time_left = vid_last_swap_time + 1.0/glConfig.displayFrequency - Sys_DoubleTime();
-		//TODO time_left -= (average time it takes to prepare and render a frame);
-		time_left -= cl_vsync_lag_tweak.value * 0.001;
-		if (time_left > 0) {
-			extern cvar_t sys_yieldcpu;
-			if (time_left > 0.001 && sys_yieldcpu.integer)
-				Sys_MSleep(time_left * 1000);
-			return;
-		}
-	}
-#endif
+	if (VSyncLagFix())
+		return;
+
+	render_frame_start = Sys_DoubleTime();
 
 	cls.trueframetime = extratime - 0.001;
 	cls.trueframetime = max(cls.trueframetime, minframetime);

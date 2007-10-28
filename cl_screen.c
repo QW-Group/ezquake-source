@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.152 2007-10-16 15:53:34 dkure Exp $
+$Id: cl_screen.c,v 1.153 2007-10-28 09:11:55 tonik Exp $
 */
 
 /// declarations may be found in screen.h
@@ -3036,6 +3036,9 @@ void SCR_UpdateScreen (void) {
 	{
 		SCR_CheckMVScreenshot();
 	}
+
+	{extern double render_frame_end;
+	render_frame_end = Sys_DoubleTime();}
 
 	GL_EndRendering ();
 }
