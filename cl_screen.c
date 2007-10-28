@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.153 2007-10-28 09:11:55 tonik Exp $
+$Id: cl_screen.c,v 1.154 2007-10-28 18:43:32 qqshka Exp $
 */
 
 /// declarations may be found in screen.h
@@ -1829,8 +1829,9 @@ void Parse_TeamInfo(char *s)
 
 void Update_TeamInfo()
 {
-	int i;
-	int* st;
+	int		i;
+	int		*st;
+
 	static double lastupdate = 0;
 
 	if (!cls.mvdplayback)
@@ -1844,14 +1845,19 @@ void Update_TeamInfo()
 
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (cl.players[i].spectator || !cl.players[i].name[0]) continue;
+		if (cl.players[i].spectator || !cl.players[i].name[0])
+			continue;
+
 		st = cl.players[i].stats;	
+
 		ti_clients[i].time = r_refdef2.time;
-		memcpy(ti_clients[i].org, cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i].origin, sizeof(vec3_t));
-		ti_clients[i].health = st[STAT_HEALTH];
-		ti_clients[i].armor = st[STAT_ARMOR];
-		ti_clients[i].items = st[STAT_ITEMS];
-		strlcpy(ti_clients[i].nick, cl.players[i].name, TEAMINFO_NICKLEN);
+
+		VectorCopy(cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i].origin, ti_clients[i].org);
+
+		ti_clients[i].health  = bound(0, st[STAT_HEALTH], 999);
+		ti_clients[i].armor   = bound(0, st[STAT_ARMOR],  999);
+		ti_clients[i].items   = st[STAT_ITEMS];
+		ti_clients[i].nick[0] = 0; // sad, we does't have nick, will use name
 	}
 }
 
