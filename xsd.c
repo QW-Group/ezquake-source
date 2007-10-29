@@ -1,4 +1,4 @@
-// $Id: xsd.c,v 1.13 2007-10-11 07:02:38 dkure Exp $
+// $Id: xsd.c,v 1.14 2007-10-29 12:48:12 cokeman1982 Exp $
 
 #include "quakedef.h"
 #include "expat.h"
@@ -193,7 +193,7 @@ xml_t * XSD_LoadDocument(char *filename)
 	}
 #else
 	// FIXME: D-Kure, does FS_ANY handle both the above cases
-	if ((f = FS_OpenVFS(filename, "rb", FS_ANY))) {
+	if (!(f = FS_OpenVFS(filename, "rb", FS_ANY))) {
 		return NULL;
 	}
 	filelen = VFS_GETLEN(f);
