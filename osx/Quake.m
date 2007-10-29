@@ -18,6 +18,7 @@
 #import "FDModifierCheck.h"
 
 #import "quakedef.h"
+#import "keys.h"
 #import "Quake.h"
 #import "cd_osx.h"
 #import "in_osx.h"

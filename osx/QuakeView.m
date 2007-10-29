@@ -10,6 +10,7 @@
 
 #import "QuakeView.h"
 #import "quakedef.h"
+#import "gl_local.h"
 #import "vid_osx.h"
 
 //_________________________________________________________________________________________________________fUNCTION_pROTOTYPES

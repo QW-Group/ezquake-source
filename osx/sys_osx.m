@@ -38,7 +38,7 @@
 //	       FIX: The "id1" folder had to be lower case. Can now be upper or lower case.
 // v1.0:   Initial release.
 //____________________________________________________________________________________________________________________iNCLUDES
-//	$Id: sys_osx.m,v 1.3 2007-01-12 11:37:51 oldmanuk Exp $
+//	$Id: sys_osx.m,v 1.4 2007-10-29 13:06:16 oldmanuk Exp $
 
 #pragma mark =Includes=
 
@@ -87,6 +87,7 @@
 #else
 
 #import "quakedef.h"
+#import "keys.h"
 #import "QuakeApplication.h"
 #import "Quake.h"
 #import "in_osx.h"
@@ -125,6 +126,8 @@ static BOOL			gSysDoStdIn = YES;
 #else
 int do_stdin = 1;
 #endif
+
+cvar_t  sys_yieldcpu = {"sys_yieldcpu", "0"};
 
 #pragma mark -
 
@@ -1302,3 +1305,49 @@ char * Sys_getcwd (char *buf, int bufsize)
 // kazik <--
 
 //_________________________________________________________________________________________________________________________eOF
+
+/*************************** INTER PROCESS CALLS *****************************/
+
+void Sys_InitIPC()
+{
+    // TODO : Implement Sys_InitIPC() me on mac.
+}
+
+void Sys_ReadIPC()
+{
+    // TODO : Implement Sys_ReadIPC() me on mac.
+    // TODO : Pass the read char buffer to COM_ParseIPCData()
+}
+
+void Sys_CloseIPC()
+{
+    // TODO : Implement Sys_CloseIPC() me on mac.
+}
+
+unsigned int Sys_SendIPC(const char *buf)
+{
+    // TODO : Implement Sys_SendIPC() me on mac.
+}
+
+/********************************** SEMAPHORES *******************************/
+/* Sys_Sem*() returns 0 on success; on error, -1 is returned */
+int Sys_SemInit(sem_t *sem, int value, int max_value) 
+{
+    return sem_init(sem, 0, value); // Don't share between processes
+}
+
+int Sys_SemWait(sem_t *sem) 
+{
+    return sem_wait(sem);
+}
+
+int Sys_SemPost(sem_t *sem)
+{
+    return sem_post(sem);
+}
+
+int Sys_SemDestroy(sem_t *sem)
+{
+    return sem_destroy(sem);
+}
+

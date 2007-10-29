@@ -27,6 +27,8 @@
 #endif // __i386__
 
 #import "quakedef.h"
+#import "keys.h"
+#import "input.h"
 #import "in_osx.h"
 #import "vid_osx.h"
 
@@ -92,6 +94,7 @@ static BOOL					gInMouseMoved;
 static in_mousepos_t		gInMousePosition,
 							gInMouseNewPosition,
 							gInMouseOldPosition;
+float mouse_x, mouse_y;
 
 #pragma mark -
 
@@ -467,55 +470,64 @@ void	IN_MouseMove (usercmd_t *cmd)
     gInMouseOldPosition.X = myMouseX;
     gInMouseOldPosition.Y = myMouseY;
 
-    gInMousePosition.X *= sensitivity.value;
-    gInMousePosition.Y *= sensitivity.value;
 
-    // lookstrafe or view?
-    if ((in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1)))
+    if(key_dest == key_hudeditor || key_dest == key_menu)
     {
-        cmd->sidemove += m_side.value * gInMousePosition.X;
+        mouse_x = myMouseX;
+        mouse_y = myMouseY;
     }
-    else
-    {
-        cl.viewangles[YAW] -= m_yaw.value * gInMousePosition.X;
-    }
-                
-    if (in_mlook.state & 1)
-    {
-        V_StopPitchDrift ();
-    }
-            
-    if ((in_mlook.state & 1) && !(in_strafe.state & 1))
-    {
-        cl.viewangles[PITCH] += m_pitch.value * gInMousePosition.Y;
-        
-        if (cl.viewangles[PITCH] > 80)
-        {
-            cl.viewangles[PITCH] = 80;
-        }
-        
-        if (cl.viewangles[PITCH] < -70)
-        {
-            cl.viewangles[PITCH] = -70;
-        }
-    }
-    else
-    {
-        if (in_strafe.state & 1)
-        {
-            cmd->upmove -= m_forward.value * gInMousePosition.Y;
-        }
-        else
-        {
-            cmd->forwardmove -= m_forward.value * gInMousePosition.Y;
-        }
-    }
+	else
+	{
+		gInMousePosition.X *= sensitivity.value;
+		gInMousePosition.Y *= sensitivity.value;
 
-    // force the mouse to the center, so there's room to move:
-    if (myMouseX != 0 || myMouseY != 0)
-    {
-        IN_CenterCursor ();
-    }
+		// lookstrafe or view?
+		if ((in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1)))
+		{
+			cmd->sidemove += m_side.value * gInMousePosition.X;
+		}
+		else
+		{
+			cl.viewangles[YAW] -= m_yaw.value * gInMousePosition.X;
+		}
+					
+		if (in_mlook.state & 1)
+		{
+			V_StopPitchDrift ();
+		}
+				
+		if ((in_mlook.state & 1) && !(in_strafe.state & 1))
+		{
+			cl.viewangles[PITCH] += m_pitch.value * gInMousePosition.Y;
+			
+			if (cl.viewangles[PITCH] > 80)
+			{
+				cl.viewangles[PITCH] = 80;
+			}
+			
+			if (cl.viewangles[PITCH] < -70)
+			{
+				cl.viewangles[PITCH] = -70;
+			}
+		}
+		else
+		{
+			if (in_strafe.state & 1)
+			{
+				cmd->upmove -= m_forward.value * gInMousePosition.Y;
+			}
+			else
+			{
+				cmd->forwardmove -= m_forward.value * gInMousePosition.Y;
+			}
+		}
+
+		// force the mouse to the center, so there's room to move:
+		if (myMouseX != 0 || myMouseY != 0)
+		{
+			IN_CenterCursor ();
+		}
+	}
 }
 
 //___________________________________________________________________________________________________________________IN_Move()

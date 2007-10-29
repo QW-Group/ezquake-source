@@ -45,6 +45,7 @@
 #import <OpenGL/glext.h>
 
 #import	"quakedef.h"
+#import "keys.h"
 #import "in_osx.h"
 #import "vid_osx.h"
 #import	"sys_osx.h"
@@ -187,6 +188,7 @@ static vid_glpntrianglesfatix_t	gGLPNTrianglesfATIX = NULL;
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol","1", 0};
 qbool	vid_hwgamma_enabled = FALSE;
 
+extern qbool    gl_mtexable;
 extern cvar_t	gl_strings;
 
 #pragma mark -
@@ -262,7 +264,7 @@ void	VID_CheckGamma (unsigned char *thePalette)
     }
     else
     {
-		myGamma = Q_atof (com_argv[i+1]);
+		myGamma = Q_atof (COM_Argv(i+1));
     }
     
     for (i = 0 ; i < 768 ; i++)
@@ -721,19 +723,19 @@ void	VID_Init (unsigned char *thePalette)
 
     // get width from command line parameters [only for windowed mode]:
     if ((i = COM_CheckParm("-width")))
-        gGLDisplayWidth = atoi (com_argv[i+1]);
+        gGLDisplayWidth = atoi (COM_Argv(i+1));
 
     // get height from command line parameters [only for windowed mode]:
     if ((i = COM_CheckParm("-height")))
-        gGLDisplayHeight = atoi (com_argv[i+1]);
+        gGLDisplayHeight = atoi (COM_Argv(i+1));
     
     // switch the video mode:
     if (VID_SetDisplayMode() == NO)
         Sys_Error ("Can\'t initialize video!");
 
     // setup console width according to display width:
-    if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
-        vid.conwidth = Q_atoi (com_argv[i+1]);
+    if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
+        vid.conwidth = Q_atoi (COM_Argv(i+1));
     else
         vid.conwidth = 640;
 
@@ -746,8 +748,8 @@ void	VID_Init (unsigned char *thePalette)
     vid.conheight = vid.conwidth * 3 / 4;
 
     // setup console height according to display height:
-    if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
-        vid.conheight = Q_atoi (com_argv[i+1]);
+    if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc())
+        vid.conheight = Q_atoi (COM_Argv(i+1));
     else
         vid.conheight = 200;
 

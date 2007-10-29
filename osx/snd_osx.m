@@ -17,6 +17,7 @@
 #include <Foundation/Foundation.h>
 #include <CoreAudio/AudioHardware.h>
 #include "quakedef.h"
+#include "qsound.h"
 
 #pragma mark -
 
