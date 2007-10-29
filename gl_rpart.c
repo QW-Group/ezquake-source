@@ -1528,25 +1528,25 @@ void QMB_ParticleRailTrail (vec3_t start, vec3_t end, int color_num) {
 	col_t		color;
 
 	color[0] = 255; color[1] = 255; color[2] = 255;
-	AddParticleTrail (p_alphatrail, start, end, .5, 0.5, color);
+	AddParticleTrail (p_alphatrail, start, end, 0.5, 0.5, color);
 	switch (color_num) {
 	case 180:
-		color[0] = 63; color[1] = 86; color[2] = 71;
+        color[0] = 91; color[1] = 74; color[2] = 56;
 		break;
 	case 35:
-		color[0] = 26; color[1] = 28; color[2] = 40;
+        color[0] = 121; color[1] = 118; color[2] = 185;
 		break;
 	case 224:
-		color[0] = 33; color[1] = 0; color[2] = 0;
+        color[0] = 206; color[1] = 0; color[2] = 0;
 		break;
 	case 133:
-		color[0] = 107; color[1] = 70; color[2] = 88;
+        color[0] = 107; color[1] = 70; color[2] = 88;
 		break;
 	case 192:
-		color[0] = 255; color[1] = 242; color[2] = 32;
+        color[0] = 255; color[1] = 242; color[2] = 32;
 		break;
 	case 6:
-		color[0] = 255; color[1] = 255; color[2] = 255;
+        color[0] = 200; color[1] = 200; color[2] = 200;
 		break;
 	default:
 		color[0] = 0; color[1] = 0; color[2] = 255;
