@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mathlib.c,v 1.6 2007-03-04 19:14:05 disconn3ct Exp $
+	$Id: mathlib.c,v 1.7 2007-10-29 00:13:26 d3urk Exp $
 
 */
 
@@ -57,6 +57,22 @@ void PerpendicularVector(vec3_t dst, const vec3_t src) {
 void VectorVectors(vec3_t forward, vec3_t right, vec3_t up) {
 	PerpendicularVector(right, forward);
 	CrossProduct(right, forward, up);
+}
+
+void MakeNormalVectors (/* in */ vec3_t forward, /* out */ vec3_t right, vec3_t up)
+{
+        float           d;
+
+        // this rotate and negate guarantees a vector
+        // not colinear with the original
+        right[1] = -forward[0];
+        right[2] = forward[1];
+        right[0] = forward[2];
+
+        d = DotProduct (right, forward);
+        VectorMA (right, -d, forward, right);
+        VectorNormalize (right);
+        CrossProduct (right, forward, up);
 }
 
 void RotatePointAroundVector(vec3_t dst, const vec3_t dir, const vec3_t point, float degrees) {

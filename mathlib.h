@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mathlib.h,v 1.11 2007-10-01 18:31:06 disconn3ct Exp $
+	$Id: mathlib.h,v 1.12 2007-10-29 00:13:26 d3urk Exp $
 */
 
 #ifndef __MATHLIB_H__
@@ -162,6 +162,7 @@ do {																		\
 )
 
 void VectorVectors(vec3_t forward, vec3_t right, vec3_t up);
+void MakeNormalVectors (vec3_t forward, vec3_t right, vec3_t up);
 vec_t VectorLength (vec3_t v);
 float VectorNormalize (vec3_t v);		// returns vector length
 

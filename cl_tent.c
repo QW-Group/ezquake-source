@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.30 2007-10-13 01:59:53 himan Exp $
+	$Id: cl_tent.c,v 1.31 2007-10-29 00:13:26 d3urk Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -146,6 +146,37 @@ static void CL_ParseBeam (int type) {
 	end[0] = MSG_ReadCoord ();
 	end[1] = MSG_ReadCoord ();
 	end[2] = MSG_ReadCoord ();
+
+        // an experimental protocol extension:
+        // TE_LIGHTNING1 with entity num in -512..-1 range is a rail trail
+	        if (type == 1 && (ent >= -512 && ent <= -1)) {
+                int colors[8] = { 6 /* white (change to something else?) */,
+                        208 /* blue */,
+                        180 /* green */, 35 /* light blue */, 224 /* red */,
+                        133 /* magenta... kinda */, 192 /* yellow */, 6 /* white */};
+                int color;
+                int pnum, cnum;
+
+                // -512..-257 are colored trails assigned to a specific
+                // player, so overrides can be applied; encoded as follows:
+                // 7654321076543210
+                // 1111111nnnnnnccc  (n = player num, c = color code)
+                cnum = ent & 7;
+                pnum = (ent >> 3) & 63;
+                if (pnum < MAX_CLIENTS)
+                {
+                        // TODO: apply team/enemy overrides
+                }
+                color = colors[cnum];
+
+#ifdef GLQUAKE
+				QMB_ParticleRailTrail (start, end, color);
+#else
+				Classic_ParticleRailTrail (start, end, color);
+#endif
+
+                return;
+        }
 
 	switch (type) {
 		case 1:

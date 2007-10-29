@@ -169,6 +169,7 @@ void Classic_ClearParticles(void);
 void Classic_DrawParticles(void);
 void Classic_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count);
 void Classic_ParticleTrail (vec3_t start, vec3_t end, vec3_t *, trail_type_t type);
+void Classic_ParticleRailTrail (vec3_t start, vec3_t end, int color);
 void Classic_BlobExplosion (vec3_t org);
 void Classic_ParticleExplosion (vec3_t org);
 void Classic_LavaSplash (vec3_t org);

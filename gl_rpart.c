@@ -1522,6 +1522,39 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 	VectorCopy(trail_stop, *trail_origin);
 }
 
+
+// deurk: QMB version of ported zquake rail trail
+void QMB_ParticleRailTrail (vec3_t start, vec3_t end, int color_num) {
+	col_t		color;
+
+	color[0] = 255; color[1] = 255; color[2] = 255;
+	AddParticleTrail (p_alphatrail, start, end, .5, 0.5, color);
+	switch (color_num) {
+	case 180:
+		color[0] = 63; color[1] = 86; color[2] = 71;
+		break;
+	case 35:
+		color[0] = 26; color[1] = 28; color[2] = 40;
+		break;
+	case 224:
+		color[0] = 33; color[1] = 0; color[2] = 0;
+		break;
+	case 133:
+		color[0] = 107; color[1] = 70; color[2] = 88;
+		break;
+	case 192:
+		color[0] = 255; color[1] = 242; color[2] = 32;
+		break;
+	case 6:
+		color[0] = 255; color[1] = 255; color[2] = 255;
+		break;
+	default:
+		color[0] = 0; color[1] = 0; color[2] = 255;
+		break;
+	}
+	AddParticleTrail (p_alphatrail, start, end, 2, 1, color);
+}
+
 void QMB_BlobExplosion (vec3_t org) {
 	float theta;
 	col_t color;

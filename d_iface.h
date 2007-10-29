@@ -31,7 +31,7 @@ typedef struct {
 } emitpoint_t;
 
 typedef enum {
-	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2
+	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2, pt_rail
 } ptype_t;
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!

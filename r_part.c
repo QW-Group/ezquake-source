@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.18 2007-10-04 13:48:10 dkure Exp $
+	$Id: r_part.c,v 1.19 2007-10-29 00:13:26 d3urk Exp $
 
 */
 
@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef GLQUAKE
 
 typedef enum {
-	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2
+	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2, pt_rail
 } ptype_t;
 
 typedef struct particle_s {
@@ -183,6 +183,11 @@ void D_DrawParticle (particle_t *pparticle) {
 
 #endif	// !id386
 #endif	// !GLQUAKE
+
+float crand(void)
+{
+        return (rand()&32767)* (2.0/32767) - 1;
+}
 
 #ifdef GLQUAKE
 void Classic_LoadParticleTexures (void) {
@@ -601,6 +606,92 @@ void Classic_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trai
 done:
 	VectorCopy(point, *trail_origin);
 }
+
+
+
+
+// deurk: ported from zquake, thx Tonik
+void Classic_ParticleRailTrail (vec3_t start, vec3_t end, int color) {
+        vec3_t          move, vec, right, up, dir;
+        float           len, dec, d, c, s;
+        int             i, j;
+        particle_t      *p;
+
+        VectorCopy (start, move);
+        VectorSubtract (end, start, vec);
+        len = VectorNormalize (vec);
+
+        MakeNormalVectors (vec, right, up);
+
+        // color spiral
+        for (i=0 ; i<len ; i++)
+        {
+                if (!free_particles)
+                        return;
+
+                p = free_particles;
+                free_particles = p->next;
+                p->next = active_particles;
+                active_particles = p;
+
+                p->type = pt_rail;
+
+                p->die = r_refdef2.time + 2;
+                
+				d = i * 0.1;
+                c = cos(d);
+                s = sin(d);
+
+                VectorScale (right, c, dir);
+                VectorMA (dir, s, up, dir);
+
+                //p->alpha = 1.0;
+                //p->alphavel = -1.0 / (1+frand()*0.2);
+                p->color = color + (rand()&7);
+                for (j=0 ; j<3 ; j++)
+                {
+                        p->org[j] = move[j] + dir[j]*3;
+                        p->vel[j] = dir[j]*2; //p->vel[j] = dir[j]*6;
+                }
+
+                VectorAdd (move, vec, move);
+        }
+
+        dec = 1.5;
+        VectorScale (vec, dec, vec);
+        VectorCopy (start, move);
+
+        // white core
+        while (len > 0)
+        {
+                len -= dec;
+
+                if (!free_particles)
+                        return;
+                p = free_particles;
+                free_particles = p->next;
+                p->next = active_particles;
+                active_particles = p;
+
+                p->type = pt_rail;
+
+                p->die = r_refdef2.time + 2;
+
+                //p->alpha = 1.0;
+                //p->alphavel = -1.0 / (0.6+frand()*0.2);
+                p->color = 0x0 + (rand()&15);
+
+                for (j=0 ; j<3 ; j++)
+                {
+                        p->org[j] = move[j] + crand()* 2;
+                        p->vel[j] = crand()*0.5; //p->vel[j] = crand()*3;
+                }
+
+                VectorAdd (move, vec, move);
+        }
+
+}
+
 
 void Classic_DrawParticles (void) {
 	particle_t *p, *kill;
