@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.155 2007-10-28 19:56:44 qqshka Exp $
+$Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 */
 
 /// declarations may be found in screen.h
@@ -175,6 +175,14 @@ cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","0",  CVAR_ARCHIV
 cvar_t  scr_teaminfo_show_enemies= {"scr_teaminfo_show_enemies","0",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1",  CVAR_ARCHIVE};
+
+cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
+cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_ARCHIVE};
+cvar_t	scr_shownick_scale		 = {"scr_shownick_scale",		"1",   CVAR_ARCHIVE};
+cvar_t	scr_shownick_y			 = {"scr_shownick_y",			"0",   CVAR_ARCHIVE};
+cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0",   CVAR_ARCHIVE};
+cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6",   CVAR_ARCHIVE};
+cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8", CVAR_ARCHIVE};
 
 #endif
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
@@ -1438,6 +1446,9 @@ void DrawCI (void) {
 // team info
 #define TEAMINFO_NICKLEN 5
 typedef struct ti_player_s {
+
+	int 		client;
+
 	vec3_t		org;
 	int			items;
 	int			health;
@@ -1497,22 +1508,29 @@ char *SCR_GetWeaponShortNameByFlag (int flag)
 	return "";
 }
 
-static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc, qbool width_only)
+static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, qbool its_shownick)
 {
 	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr;
 	int x_in = x; // save x
+	int i;
 	mpic_t *pic;
 
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t  *sb_armor[3];
 
-	if (i < 0 || i >= MAX_CLIENTS) {
+	if (!ti_cl)
+		return 0;
+
+	i = ti_cl->client;
+
+	if (i < 0 || i >= MAX_CLIENTS)
+	{
 		Com_DPrintf("SCR_Draw_TeamInfoPlayer: wrong client %d\n", i);
 		return 0;
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	strlcpy(tmp2, scr_teaminfo_order.string, sizeof(tmp2));
+	strlcpy(tmp2, its_shownick ? scr_shownick_order.string : scr_teaminfo_order.string , sizeof(tmp2));
 	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
@@ -1530,7 +1548,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 			case 'n': // draw name
 
 				if(!width_only) {
-					char *nick = TP_ParseFunChars(ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name, false);
+					char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
 					snprintf(tmp, sizeof(tmp), "%*.*s", maxname, maxname, nick);
 					Draw_ColoredString (x, y, tmp, false);
 				}
@@ -1542,13 +1560,13 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 				switch (scr_teaminfo_weapon_style.integer) {
 				case 1:
 					if(!width_only)
-						Draw_ColoredString (x, y, SCR_GetWeaponShortNameByFlag(BestWeaponFromStatItems( ti_clients[i].items )), false);
+						Draw_ColoredString (x, y, SCR_GetWeaponShortNameByFlag(BestWeaponFromStatItems( ti_cl->items )), false);
 					x += 3 * FONTWIDTH;
 
 					break;
 				default: // draw image by default
 					if(!width_only)
-						if ( (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems( ti_clients[i].items ))) )
+						if ( (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems( ti_cl->items ))) )
 							Draw_SPic (x, y, pic, 0.5);
 					x += 2 * FONTWIDTH;
 
@@ -1560,7 +1578,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 			case 'H': // draw health, padding with space on right side
 
 				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_clients[i].health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_clients[i].health);
+					snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_cl->health);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += 3 * FONTWIDTH;
@@ -1577,11 +1595,11 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 				switch (scr_teaminfo_armor_style.integer) {
 				case 1: // image prefixed armor value
 					if(!width_only) {
-						if (ti_clients[i].items & IT_ARMOR3)
+						if (ti_cl->items & IT_ARMOR3)
 							Draw_SPic (x, y, sb_armor[2], 1.0/3);
-						else if (ti_clients[i].items & IT_ARMOR2)
+						else if (ti_cl->items & IT_ARMOR2)
 							Draw_SPic (x, y, sb_armor[1], 1.0/3);
-						else if (ti_clients[i].items & IT_ARMOR1)
+						else if (ti_cl->items & IT_ARMOR1)
 							Draw_SPic (x, y, sb_armor[0], 1.0/3);
 					}
 					x += FONTWIDTH;
@@ -1591,13 +1609,13 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 					if(!width_only) {
 						byte col[4] = {255, 255, 255, 0};
 
-						if (ti_clients[i].items & IT_ARMOR3) {
+						if (ti_cl->items & IT_ARMOR3) {
 							col[0] = 255; col[1] =   0; col[2] =   0; col[3] = 255;
 						}
-						else if (ti_clients[i].items & IT_ARMOR2) {
+						else if (ti_cl->items & IT_ARMOR2) {
 							col[0] = 255; col[1] = 255; col[2] =   0; col[3] = 255;
 						}
-						else if (ti_clients[i].items & IT_ARMOR1) {
+						else if (ti_cl->items & IT_ARMOR1) {
 							col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
 						}
 
@@ -1611,22 +1629,22 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 					break;
 				case 3: // colored armor value
 					if(!width_only) {
-						if (ti_clients[i].items & IT_ARMOR3)
+						if (ti_cl->items & IT_ARMOR3)
 							aclr = "&cf00";
-						else if (ti_clients[i].items & IT_ARMOR2)
+						else if (ti_cl->items & IT_ARMOR2)
 							aclr = "&cff0";
-						else if (ti_clients[i].items & IT_ARMOR1)
+						else if (ti_cl->items & IT_ARMOR1)
 							aclr = "&c0f0";
 					}
 
 					break;
 				case 4: // armor value prefixed with letter
 					if(!width_only) {
-						if (ti_clients[i].items & IT_ARMOR3)
+						if (ti_cl->items & IT_ARMOR3)
 							Draw_ColoredString (x, y, "r", false);
-						else if (ti_clients[i].items & IT_ARMOR2)
+						else if (ti_cl->items & IT_ARMOR2)
 							Draw_ColoredString (x, y, "y", false);
-						else if (ti_clients[i].items & IT_ARMOR1)
+						else if (ti_cl->items & IT_ARMOR1)
 							Draw_ColoredString (x, y, "g", false);
 					}
 					x += FONTWIDTH;
@@ -1635,7 +1653,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 				}
 
 				if(!width_only) { // value drawed no matter which style
-					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_clients[i].armor);
+					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += 3 * FONTWIDTH;
@@ -1644,7 +1662,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 			case 'l': // draw location
 
 				if(!width_only) {
-					loc = TP_LocationName(ti_clients[i].org);
+					loc = TP_LocationName(ti_cl->org);
 					if (!loc[0])
 						loc = "unknown";
 
@@ -1657,17 +1675,17 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 			case 'p': // draw powerups
 
 				if(!width_only)
-					if ( sb_face_quad && (ti_clients[i].items & IT_QUAD))
+					if ( sb_face_quad && (ti_cl->items & IT_QUAD))
 						Draw_SPic (x, y, sb_face_quad, 1.0/3);
 				x += FONTWIDTH;
 
 				if(!width_only)
-					if ( sb_face_invuln && (ti_clients[i].items & IT_INVULNERABILITY))
+					if ( sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
 						Draw_SPic (x, y, sb_face_invuln, 1.0/3);
 				x += FONTWIDTH;
 
 				if(!width_only)
-					if ( sb_face_invis && (ti_clients[i].items & IT_INVISIBILITY))
+					if ( sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
 						Draw_SPic (x, y, sb_face_invis, 1.0/3);
 				x += FONTWIDTH;
 
@@ -1771,7 +1789,8 @@ static void SCR_Draw_TeamInfo(void)
 
 	y = vid.height*0.6/scale + scr_teaminfo_y.value;
 
-	w = SCR_Draw_TeamInfoPlayer(0, 0, 0, maxname, maxloc, true); // this does't draw anything, just calculate width
+	// this does't draw anything, just calculate width
+	w = SCR_Draw_TeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, false);
 	h = slots_num;
 
 	for ( j = 0; j < slots_num; j++ ) {
@@ -1789,7 +1808,7 @@ static void SCR_Draw_TeamInfo(void)
 			glColor4f(1, 1, 1, 1);
 		}
 
-		SCR_Draw_TeamInfoPlayer(i, x, y, maxname, maxloc, false);
+		SCR_Draw_TeamInfoPlayer(&ti_clients[i], x, y, maxname, maxloc, false, false);
 
 		y += FONTWIDTH;
 	}
@@ -1816,6 +1835,8 @@ void Parse_TeamInfo(char *s)
 		Com_DPrintf("Parse_TeamInfo: wrong client %d\n", client);
 		return;
 	}
+
+	ti_clients[ client ].client = client; // no, its not stupid
 
 	ti_clients[ client ].time   = r_refdef2.time;
 
@@ -1851,7 +1872,9 @@ void Update_TeamInfo()
 
 		st = cl.players[i].stats;	
 
-		ti_clients[i].time = r_refdef2.time;
+		ti_clients[i].client  = i; // no, its not stupid
+
+		ti_clients[i].time    = r_refdef2.time;
 
 		VectorCopy(cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i].origin, ti_clients[i].org);
 
@@ -1864,20 +1887,7 @@ void Update_TeamInfo()
 
 /***************************** customizeable shownick *************************/
 
-typedef struct shownick_s {
-
-	int 		client;
-
-	vec3_t		org;
-	int			items;
-	int			health;
-	int			armor;
-	char		nick[TEAMINFO_NICKLEN]; // yeah, nick is nick, must be short
-	double		time; // when we recive update
-
-} shownick_t;
-
-static shownick_t shownick;
+static ti_player_t shownick;
 
 void SCR_ClearShownick(void)
 {
@@ -1926,6 +1936,65 @@ void Parse_Shownick(char *s)
 		Com_DPrintf("Parse_Shownick: unsupported version %d\n", version);
 		return;
 	}
+}
+
+static void SCR_Draw_ShowNick(void)
+{
+	qbool	scr_shownick_align_right = false;
+	int		x, y, w, h;
+	int		maxname, maxloc;
+	byte	*col;
+	float	scale = bound(0.1, scr_shownick_scale.value, 10);
+
+	// check do we have something do draw
+	if (!shownick.time || shownick.time + bound(0.1, scr_shownick_time.value, 3) < r_refdef2.time)
+		return;
+
+	// loc is unused
+	maxloc = 0;
+
+	// limit name length
+	maxname = 999;
+	maxname = bound(0, maxname, scr_shownick_name_width.integer);
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glColor4f(1, 1, 1, 1);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+
+	if (scale != 1)
+	{
+		glPushMatrix ();
+		glScalef(scale, scale, 1);
+	}
+
+	y = vid.height*0.6/scale + scr_shownick_y.value;
+
+	// this does't draw anything, just calculate width
+	w = SCR_Draw_TeamInfoPlayer(&shownick, 0, 0, maxname, maxloc, true, true);
+	h = 1;
+
+	x = (scr_shownick_align_right ? (vid.width/scale - w * FONTWIDTH) - FONTWIDTH : FONTWIDTH);
+	x += scr_shownick_x.value;
+
+	// draw frame
+	col = StringToRGB(scr_shownick_frame_color.string);
+	glDisable (GL_TEXTURE_2D);
+	glColor4ub(col[0], col[1], col[2], col[3]);
+	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
+	glEnable (GL_TEXTURE_2D);
+	glColor4f(1, 1, 1, 1);
+
+	// draw shownick
+	SCR_Draw_TeamInfoPlayer(&shownick, x, y, maxname, maxloc, false, true);
+
+	if (scale != 1)
+		glPopMatrix();
+
+	glEnable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glColor4f(1, 1, 1, 1);
 }
 
 #endif
@@ -2916,6 +2985,7 @@ void SCR_DrawElements(void) {
      			if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
 #ifdef GLQUAKE
 					SCR_Draw_TeamInfo();
+					SCR_Draw_ShowNick();
 #endif
 					SCR_CheckDrawCenterString ();
 					SCR_DrawSpeed ();
@@ -3899,6 +3969,14 @@ void SCR_Init (void)
 	Cvar_Register (&scr_teaminfo_show_enemies);
 	Cvar_Register (&scr_teaminfo_show_self);
 	Cvar_Register (&scr_teaminfo);
+
+	Cvar_Register (&scr_shownick_order);
+	Cvar_Register (&scr_shownick_frame_color);
+	Cvar_Register (&scr_shownick_scale);
+	Cvar_Register (&scr_shownick_y);
+	Cvar_Register (&scr_shownick_x);
+	Cvar_Register (&scr_shownick_name_width);
+	Cvar_Register (&scr_shownick_time);
 #endif
 	Cvar_Register (&scr_coloredText);
 
