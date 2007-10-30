@@ -1,5 +1,5 @@
 Things I had to do when migrating from MS VS 2003 project file to MS VS 2005 project file:
- 
+  
 added '/D "_CRT_SECURE_NO_DEPRECATE"' to compiler switches
 added #ifndef around some macro definitions that caused 'already defined' precompiler errors
 added #ifndef and fixed newlines around some #define in image.c (newlines were broken and it messed with the rest of the code in that file)
