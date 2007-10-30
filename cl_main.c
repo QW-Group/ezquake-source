@@ -1781,8 +1781,6 @@ qbool VSyncLagFix (void)
 	// if (tmax and tmin differ too much) do_something(); ?
 	avg_rendertime = tmax;	// better be on the safe side
 
-	Com_DPrintf ("%f\n", avg_rendertime);
-
 	if (cl_vsync_lag_fix.value && vid_vsync_on && glConfig.displayFrequency) {
 		double time_left = vid_last_swap_time + 1.0/glConfig.displayFrequency - Sys_DoubleTime();
 		time_left -= avg_rendertime;
