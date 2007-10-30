@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.103 2007-10-25 12:09:18 dkure Exp $
+	$Id: cl_demo.c,v 1.103 2007/10/25 12:09:18 dkure Exp $
 */
 
 #include <time.h>
@@ -747,6 +747,7 @@ static void CL_WriteStartupData (void)
 //=============================================================================
 
 vfsfile_t *playbackfile = NULL;			// The demo file used for playback.
+float demo_time_length = 0;				// The length of the demo.
 
 unsigned char pb_buf[1024*32];			// Playback buffer.
 int		pb_cnt = 0;						// How many bytes we've have in playback buffer.
@@ -1162,7 +1163,7 @@ qbool CL_GetDemoMessage (void)
 				}
 				default:
 				{
-					Host_Error("This can't happen\n");
+					Host_Error("This can't happen (unknown command type).\n");
 					return false;
 				}
 			}
@@ -2350,6 +2351,202 @@ void CL_StopPlayback (void)
 	TP_ExecTrigger("f_demoend");
 }
 
+typedef enum demoprobe_parse_type_e
+{
+	READ_MVD_TIME	= 1,
+	READ_QWD_TIME	= 2,
+	TRY_READ_MVD	= 3
+} demoprobe_parse_type_t;
+
+//
+// Validates a demo probe read.
+//
+#define DEMOPROBE_VALIDATE_READ(bytes_expected, bytes_read, message)		\
+	if (bytes_expected != bytes_read)										\
+	{																		\
+		Com_DPrintf("CL_ProbeDemo: Unexpected end of demo. "message"\n");	\
+		abort = true;														\
+		break;																\
+	}
+
+//
+// Seek the specified length and fail/abort if it fails.
+//
+#define DEMOPROBE_SEEK(file, length, message)								\
+	if (VFS_SEEK(file, length, SEEK_CUR))									\
+	{																		\
+		Com_DPrintf("CL_ProbeDemo: Unexpected end of demo. "message"\n");	\
+		abort = true;														\
+		break;																\
+	}
+
+//
+// Probe a demo in different ways.
+//
+qbool CL_ProbeDemo(vfsfile_t *demfile, demoprobe_parse_type_t probetype, float *demotime)
+{
+	#define PARSE_AS_MVD()			((probetype == READ_MVD_TIME) || (probetype == TRY_READ_MVD))
+	#define REGARD_AS_MVD_COUNT		10		// Regard this to be an MVD when this count has been reached.
+
+	vfserrno_t err;
+	
+	float qwd_time				= 0.0;		// QWD Time = Time since start of demo in seconds.
+	byte mvd_time				= 0;		// MVD Time = Time in miliseconds since last time stamp.
+	unsigned int total_mvd_time = 0;		// Total MVD time in miliseconds.
+	
+	byte command				= 0;		// Holds the command code.
+	unsigned int multiple		= 0;		// Read dem_multiple data into this.
+	unsigned int size			= 0;		// The size of the demo packet (follows dem_multiple, _single, _stats, _all and _read).
+
+	int len						= 0;		// Length of what's been read
+	qbool is_mvd				= false;	// Is this an MVD. (Used when guessing if this is an MVD).
+	int mvd_only_count			= 0;		// Try to figure out if this is a MVD by looking for commands only present in MVDs.
+	qbool abort					= false;	// Something bad happened when reading the demo.
+
+	while (!abort)
+	{
+		// Read the time.
+		if (PARSE_AS_MVD())
+		{
+			len = VFS_READ(demfile, &mvd_time, 1, &err);
+		}
+		else
+		{
+			len = VFS_READ(demfile, &qwd_time, 4, &err);
+			qwd_time = LittleFloat(qwd_time);
+		}
+		
+		// Any well formed demo should only end at an expected time stamp.
+		if ((len == 0) || (err == VFSERR_EOF))
+		{
+			Com_DPrintf("CL_ProbeDemo: End of file. All good!\n");
+			break;
+		}
+
+		// Read the command.
+		len = VFS_READ(demfile, &command, 1, &err);
+		DEMOPROBE_VALIDATE_READ(1, len, "when reading command");
+
+		size = 0;
+
+		// The first 3 bits contains the command code.
+		// The 5 other bits are:
+		// dem_stats, 
+		// dem_single	= Player number for the player affected.
+		// dem_all		= Nothing, directed to all players.
+		// dem_multiple = Nothing.
+		switch (command & 0x7)
+		{
+			case dem_multiple :
+			{
+				// Only MVD.
+
+				// Read a 32-bit number containing a bitmask for which the affected players are.
+				// 32-bits, 32 players.
+				len = VFS_READ(demfile, &multiple, 4, &err);
+
+				if (err == VFSERR_EOF)
+				{
+					Com_Printf("Unexpected end of demo when reading multiple.\n");
+					abort = true;
+					break;
+				}
+			}
+			case dem_single :		// Only MVD.
+			case dem_all :			// Only MVD.
+				mvd_only_count++;	// Count the number of MVD-only commands we find to determine if this is an MVD or not.
+			case dem_stats : 
+			case dem_read :
+			{
+				// Read the size of the packet, we'll need it to seek past it.
+				len = VFS_READ(demfile, &size, 4, &err);
+				DEMOPROBE_VALIDATE_READ(4, len, "when reading size");
+				size = LittleLong(size);
+				break;
+			}
+			case dem_set :
+			{
+				DEMOPROBE_SEEK(demfile, 4, "when reading incoming sequence number"); // 32-bit int.
+				DEMOPROBE_SEEK(demfile, 4, "when reading outgoing sequence number"); // 32-bit int.
+				break;
+			}
+			case dem_cmd :
+			{
+				// Only QWD.
+				DEMOPROBE_SEEK(demfile, sizeof(usercmd_t), "when reading user movement cmd.");
+				DEMOPROBE_SEEK(demfile, 12, "when reading user viewangles cmd."); // 3 * 32-bit floats.
+				break;
+			}
+			default :
+			{
+				Com_DPrintf("CL_ProbeDemo: Unsupported command type %d!\n", (command & 0x7));
+				abort = true;
+				break;
+			}
+		}
+
+		// We're just trying to find out if this is an MVD so break if it is.
+		if ((probetype == TRY_READ_MVD) && (mvd_only_count >= REGARD_AS_MVD_COUNT))
+		{
+			is_mvd = true;
+			break;
+		}
+
+		if (abort)
+			break;
+
+		// Read any specified data if needed.
+		DEMOPROBE_SEEK(demfile, size, "when reading size bytes of message");
+
+		// MVD time is saved as the time since last frame,
+		// so we need to keep track of the total seperatly.
+		if (probetype == READ_MVD_TIME)
+		{
+			total_mvd_time += mvd_time;
+		}
+	}
+
+	// Return to the start of the file.
+	VFS_SEEK(demfile, 0, SEEK_SET);
+
+	if (demotime)
+	{
+		if (probetype == READ_MVD_TIME)
+		{
+			// Convert mvd time to seconds.
+			*demotime = total_mvd_time * 0.001;
+		}
+		else if (probetype == READ_QWD_TIME)
+		{
+			*demotime = qwd_time;
+		}
+
+		Com_DPrintf("CL_DemoProbe: Time: %f\n", *demotime);
+	}
+
+	return is_mvd;
+}
+
+//
+// Try to guess if this is an MVD by trying to parse it as one.
+//
+qbool CL_GetIsMVD(vfsfile_t *demfile)
+{
+	return CL_ProbeDemo(demfile, TRY_READ_MVD, NULL);
+}
+
+//
+// Try to calculate the time of a demo.
+//
+float CL_CalculateDemoTime(vfsfile_t *demfile)
+{
+	float demotime = 0.0;
+
+	CL_ProbeDemo(demfile, (cls.mvdplayback ? READ_MVD_TIME : READ_QWD_TIME), &demotime);
+
+	return demotime;
+}
+
 //
 // Returns true if
 //
@@ -2522,7 +2719,7 @@ void CL_Play_f (void)
 	// Set demoplayback vars depending on the demo type.
 	cls.demoplayback	= true;
 	strlcpy(cls.demoname, name, sizeof(cls.demoname));
-	cls.mvdplayback		= !strcasecmp(COM_FileExtension(name), "mvd");
+	cls.mvdplayback		= CL_GetIsMVD(playbackfile);  // TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also.
 	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
 
 	 // Init some buffers for reading.
@@ -2532,6 +2729,14 @@ void CL_Play_f (void)
 	if (cls.nqdemoplayback)
 	{
 		NQD_StartPlayback ();
+		demo_time_length = -1.0;
+	}
+	else
+	{
+		// Calculate the demo time.
+		double start = Sys_DoubleTime();
+		demo_time_length = CL_CalculateDemoTime(playbackfile);
+		Com_DPrintf("Demo probe took %f seconds.\n", Sys_DoubleTime() - start);
 	}
 
 	// Setup the netchan and state.
