@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *     
- * $Id: vfs_os.c,v 1.11 2007-10-10 17:30:43 dkure Exp $
+ * $Id: vfs_os.c,v 1.11 2007/10/10 17:30:43 dkure Exp $
  *             
  */
 
@@ -51,6 +51,7 @@ static int VFSOS_WriteBytes (struct vfsfile_s *file, const void *buffer, int byt
 
 static qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
+	// TODO : fseek returns an int, -1 when it's error... The function pointer for this expects a qbool which == false when error. -1 == true... 
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return fseek(intfile->handle, pos, whence);
 }

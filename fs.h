@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.17 2007-10-13 15:59:46 dkure Exp $
+    $Id: fs.h,v 1.17 2007/10/13 15:59:46 dkure Exp $
 */
 
 #ifndef __FS_H__
@@ -38,9 +38,9 @@ typedef enum {
 typedef struct vfsfile_s {
 	int (*ReadBytes) (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
 	int (*WriteBytes) (struct vfsfile_s *file, const void *buffer, int bytestowrite);
-	qbool (*Seek) (struct vfsfile_s *file, unsigned long pos, int whence);	//returns false for error
+	qbool (*Seek) (struct vfsfile_s *file, unsigned long pos, int whence);	// Returns false for error. TODO: Hmm this seems to return true when error for files at least.
 	unsigned long (*Tell) (struct vfsfile_s *file);
-	unsigned long (*GetLen) (struct vfsfile_s *file);	//could give some lag
+	unsigned long (*GetLen) (struct vfsfile_s *file);	// Could give some lag
 	void (*Close) (struct vfsfile_s *file);
 	void (*Flush) (struct vfsfile_s *file);
 	qbool seekingisabadplan;
