@@ -2082,6 +2082,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\demo_controls.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\document_rendering.c"
 					>
 				</File>
@@ -2686,6 +2690,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Ctrl_Tab.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\demo_controls.h"
 					>
 				</File>
 				<File
