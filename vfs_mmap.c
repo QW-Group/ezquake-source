@@ -81,7 +81,7 @@ static int VFSMMAP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowr
 	return bytestowrite;
 }
 
-static qbool VFSMMAP_Seek(vfsfile_t *file, unsigned long offset, int whence) 
+static int VFSMMAP_Seek(vfsfile_t *file, unsigned long offset, int whence) 
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 

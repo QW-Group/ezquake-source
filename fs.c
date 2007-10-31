@@ -1305,7 +1305,16 @@ unsigned long VFS_GETLEN (struct vfsfile_s *vf) {
 	return vf->GetLen(vf);
 }
 
-qbool VFS_SEEK (struct vfsfile_s *vf, unsigned long pos, int whence) {
+/**
+ * VFS_SEEK() reposition a stream
+ * If whence is set to SEEK_SET, SEEK_CUR, or SEEK_END, the offset  is
+ * relative to the  start of the file, the current position indicator, or
+ * end-of-file, respectively.
+ * Return Value
+ * Upon successful completion, VFS_SEEK(), returns 0. 
+ * Otherwise, -1 is returned
+ */
+int VFS_SEEK (struct vfsfile_s *vf, unsigned long pos, int whence) {
 	assert(vf);
 	VFS_CHECKCALL(vf, vf->Seek, "VFS_SEEK");
 	return vf->Seek(vf, pos, whence);

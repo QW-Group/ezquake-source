@@ -235,7 +235,7 @@ static int VFSTAR_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowri
 	return 0;
 }
 
-static qbool VFSTAR_Seek(vfsfile_t *file, unsigned long offset, int whence) 
+static int VFSTAR_Seek(vfsfile_t *file, unsigned long offset, int whence) 
 {
 	vfstarfile_t *vfst = (vfstarfile_t *)file;
 

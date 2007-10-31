@@ -127,18 +127,18 @@ static int VFSPAK_WriteBytes (struct vfsfile_s *vfs, const void *buffer, int byt
 }
 
 #ifndef WITH_FTE_VFS
-static qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
+static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 
 	if (pos > vfsp->length)
-		return false;
+		return -1;
 
 	vfsp->currentpos = pos + vfsp->startpos;
 	return fseek(vfsp->handle, vfsp->currentpos, whence);
 }
 #else
-static qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
+static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 
@@ -162,7 +162,7 @@ static qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whenc
 		Com_Printf("VFSPAK_Seek: Warning seeking past the file's size\n");
 	}
 
-	return false;
+	return 0;
 }
 #endif /* FS_FTE */
 

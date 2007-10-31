@@ -178,11 +178,11 @@ int VFSTCP_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowr
 	return bytestowrite; // well at least we put something in buffer, sure if bytestowrite not zero
 }
 
-qbool VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
+int VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	Com_Printf("VFSTCP: seek is illegal, closing link\n");
 	VFSTCP_Error((tcpfile_t*)file);
-	return true;
+	return -1;
 }
 
 unsigned long VFSTCP_Tell (struct vfsfile_s *file)

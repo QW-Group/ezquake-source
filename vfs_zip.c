@@ -213,7 +213,7 @@ static int VFSZIP_WriteBytes (struct vfsfile_s *file, const void *buffer, int by
 }
 
 // VFS-FIXME: What is going on here... why not just unzSetOffset
-static qbool VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
+static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	vfszip_t *vfsz = (vfszip_t*)file;
 
@@ -265,10 +265,10 @@ static qbool VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 
 
 	if (pos < 0 || pos > vfsz->length)
-		return true;
+		return -1;
 	vfsz->pos = pos;
 
-	return false;
+	return 0;
 }
 
 static unsigned long VFSZIP_Tell (struct vfsfile_s *file)

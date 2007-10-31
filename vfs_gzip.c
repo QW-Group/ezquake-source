@@ -98,13 +98,17 @@ static int VFSGZIP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowr
 	return r;
 }
 
-static qbool VFSGZIP_Seek(vfsfile_t *file, unsigned long offset, int whence) 
+static int VFSGZIP_Seek(vfsfile_t *file, unsigned long offset, int whence) 
 {
 	int r;
 	vfsgzipfile_t *vfsgz = (vfsgzipfile_t *)file;
 
 	r = gzseek(vfsgz->parent->handle, offset, whence);
-	return r;
+
+	if (r == -1)
+		return -1;
+	else
+		return 0;
 }
 
 static unsigned long VFSGZIP_Tell(vfsfile_t *file) 

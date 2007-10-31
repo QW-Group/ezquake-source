@@ -51,7 +51,6 @@ static int VFSOS_WriteBytes (struct vfsfile_s *file, const void *buffer, int byt
 
 static qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
-	// TODO : fseek returns an int, -1 when it's error... The function pointer for this expects a qbool which == false when error. -1 == true... 
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return fseek(intfile->handle, pos, whence);
 }
