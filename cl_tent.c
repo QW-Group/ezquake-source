@@ -334,6 +334,9 @@ void CL_ParseTEnt (void) {
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
 
+		if (cls.state != ca_active)
+			break;
+
 		if (r_explosiontype.value == 2) 
 		{
 #ifdef GLQUAKE
