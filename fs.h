@@ -38,7 +38,7 @@ typedef enum {
 typedef struct vfsfile_s {
 	int (*ReadBytes) (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
 	int (*WriteBytes) (struct vfsfile_s *file, const void *buffer, int bytestowrite);
-	qbool (*Seek) (struct vfsfile_s *file, unsigned long pos, int whence);	// Returns 0 on sucess, -1 otherwise
+	int (*Seek) (struct vfsfile_s *file, unsigned long pos, int whence);	// Returns 0 on sucess, -1 otherwise
 	unsigned long (*Tell) (struct vfsfile_s *file);
 	unsigned long (*GetLen) (struct vfsfile_s *file);	// Could give some lag
 	void (*Close) (struct vfsfile_s *file);
