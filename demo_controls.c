@@ -35,7 +35,7 @@ void DemoControls_Draw(void)
 		extern float CL_GetDemoLength(void);
 		float demo_length = CL_GetDemoLength();
 		
-		int pos = Q_rint(1000 * (float)cls.demotime / demo_length);
+		int pos = Q_rint(1000 * (float)(cls.demotime - demostarttime) / max(1, demo_length));
 
 		EZ_slider_SetPosition(slider, pos);
 		EZ_tree_EventLoop(&democontrol_tree);
