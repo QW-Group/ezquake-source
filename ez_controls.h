@@ -257,6 +257,11 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down);
 //
 void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 
+//
+// Control Tree - Destroys a tree. Will not free the memory for the tree.
+//
+void EZ_tree_Destroy(ez_tree_t *tree);
+
 // =========================================================================================
 // Event handler 
 // =========================================================================================
@@ -2048,4 +2053,6 @@ int EZ_scrollpane_OnScrollbarThicknessChanged(ez_control_t *self);
 int EZ_scrollpane_OnResize(ez_control_t *self);
 
 #endif // __EZ_CONTROLS_H__	
+
+
 

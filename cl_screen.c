@@ -57,6 +57,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #endif
 #include "Ctrl.h"
 #include "qtv.h"
+#include "demo_controls.h"
 
 #ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
@@ -2900,7 +2901,7 @@ static void SCR_DrawCursor(void) {
 	cursor_y = scr_pointer_state.y;
 
 	// Disable the cursor in all but following client parts.
-	if (key_dest != key_hudeditor && key_dest != key_menu)
+	if (key_dest != key_hudeditor && key_dest != key_menu && key_dest != key_demo_controls)
 	{
 		return;
 	}
@@ -3032,8 +3033,9 @@ void SCR_DrawElements(void) {
 				}
 
 				Sbar_Draw();
-				HUD_Draw();		// HUD -> hexum
+				HUD_Draw();
 				HUD_Editor_Draw();
+				DemoControls_Draw();
 			}
 		}
 

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.78 2007-10-27 14:51:15 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -543,6 +543,23 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree)
 }
 
 //
+// Control Tree - Destroys a tree. Will not free the memory for the tree.
+//
+void EZ_tree_Destroy(ez_tree_t *tree)
+{
+	ez_dllist_node_t *iter = NULL;
+
+	if (!tree)
+	{
+		return;
+	}
+
+	EZ_control_Destroy(tree->root, true);
+
+	memset(tree, 0, sizeof(ez_tree_t));
+}
+
+//
 // Control Tree - Order function for the draw list based on the draw_order property.
 //
 static int EZ_tree_DrawOrderFunc(const void *val1, const void *val2)
@@ -853,17 +870,15 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 	ez_dllist_node_t *temp = NULL;
 
 	// Nothing to destroy :(
-	if(!self)
+	if (!self)
 	{
 		return 0;
 	}
 
-	if(!self->control_tree)
+	if (!self->control_tree)
 	{
 		// Very bad!
-		char *msg = "EZ_control_Destroy(): tried to destroy control without a tree.\n";
-		assert(!msg);
-		Sys_Error(msg);
+		Sys_Error("EZ_control_Destroy(): tried to destroy control without a tree.\n");
 		return 0;
 	}
 
@@ -873,9 +888,9 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 	iter = self->children.head;
 
 	// Destroy the children!
-	while(iter)
+	while (iter)
 	{
-		if(destroy_children)
+		if (destroy_children)
 		{
 			// Destroy the child!
 			CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)iter->payload), ez_control_t, OnDestroy, destroy_children);
@@ -919,6 +934,8 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 	EZ_eventhandler_Remove(self->event_handlers.OnResizeHandleThicknessChanged, NULL, true);
 	EZ_eventhandler_Remove(self->event_handlers.OnScroll, NULL, true);
 	EZ_eventhandler_Remove(self->event_handlers.OnVirtualResize, NULL, true);
+	EZ_eventhandler_Remove(self->event_handlers.OnAnchorChanged, NULL, true);
+	EZ_eventhandler_Remove(self->event_handlers.OnVisibilityChanged, NULL, true);
 
 	Q_free(self);
 
@@ -5699,4 +5716,5 @@ int EZ_scrollpane_OnScrollbarThicknessChanged(ez_control_t *self)
 // TODO : Add a checkbox control.
 // TODO : Add a radiobox control.
 // TODO : Add a window control.
+
 

@@ -42,6 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
+#include "demo_controls.h"
 
 //key up events are sent even if in console mode
 
@@ -84,6 +85,7 @@ keydest_t	key_dest, key_dest_beforemm, key_dest_beforecon;
 char	*keybindings[UNKNOWN + 256];
 qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
 qbool	hudeditorkeys[UNKNOWN + 256];	// if true, can't be rebound while in hud editor
+qbool	democontrolskey[UNKNOWN + 256];
 qbool	menubound[UNKNOWN + 256];		// if true, can't be rebound while in menu
 #ifndef WITH_KEYMAP
 int		keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
@@ -1798,6 +1800,9 @@ static qbool Mouse_EventDispatch(void)
 		case key_hudeditor: 
 			mouse_handled = HUD_Editor_MouseEvent(&scr_pointer_state);
 			break;
+		case key_demo_controls:
+			mouse_handled = DemoControls_MouseEvent(&scr_pointer_state);
+			break;
 		default:
 			break;
 		// unhandled
@@ -1851,6 +1856,7 @@ static qbool Key_ConsoleKey(int key)
     // this makes it possible to type chars under tilde key into the console
     qbool con_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : consolekeys[key];
     qbool hud_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : hudeditorkeys[key];
+	qbool demo_controls_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : democontrolskey[key];
 
     if (key_dest == key_menu && menubound[key])
         return false;
@@ -1863,6 +1869,9 @@ static qbool Key_ConsoleKey(int key)
 
     if (key_dest == key_hudeditor && !hud_key)
         return false;
+
+	if (key_dest == key_demo_controls && !demo_controls_key)
+		return false;
 
     return true;
 }
@@ -1940,6 +1949,9 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			case key_hudeditor:
 				HUD_Editor_Key(key, unichar, down);
 				break;
+			case key_demo_controls:
+				DemoControls_KeyEvent(key, unichar, down);
+				break;
 			default:
 				assert(!"Bad key_dest");
 		}
@@ -1956,8 +1968,13 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	if (!down)
 	{
 		// Key up event.
-		if (key_dest == key_hudeditor) {
+		if (key_dest == key_hudeditor) 
+		{
 			HUD_Editor_Key(key, unichar, down);
+		}
+		else if (key_dest == key_demo_controls)
+		{
+			DemoControls_KeyEvent(key, unichar, down);
 		}
 
 		// Key up events only generate commands if the game key binding is a button command (leading + sign).
@@ -2054,6 +2071,10 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 
 		case key_hudeditor:
 			HUD_Editor_Key(key, unichar, down);
+			break;
+
+		case key_demo_controls:
+			DemoControls_KeyEvent(key, unichar, down);
 			break;
 
 		default:

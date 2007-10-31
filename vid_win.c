@@ -1333,7 +1333,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 
 	// Set either the fullscreen or windowed mode
 	if (modelist[modenum].type == MS_WINDOWED) {
-		if (_windowed_mouse.value && (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu)) {
+		if (_windowed_mouse.value && (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_demo_controls || key_dest == key_menu)) {
 			stat = VID_SetWindowedMode(modenum);
 			IN_ActivateMouse ();
 			IN_HideMouse ();
@@ -1943,10 +1943,10 @@ void VID_Update (vrect_t *rects) {
 			windowed_mouse = false;
 		} else {
 			windowed_mouse = true;
-			if ((key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu) && !mouseactive && ActiveApp) {
+			if ((key_dest == key_game || key_dest == key_hudeditor || key_dest == key_demo_controls || key_dest == key_menu) && !mouseactive && ActiveApp) {
 				IN_ActivateMouse ();
 				IN_HideMouse ();
-			} else if (mouseactive && (key_dest != key_game && key_dest != key_hudeditor && key_dest != key_menu)) {
+			} else if (mouseactive && (key_dest != key_game && key_dest != key_hudeditor && key_dest == key_demo_controls && key_dest != key_menu)) {
 				IN_DeactivateMouse ();
 				IN_ShowMouse ();
 			}
@@ -2176,7 +2176,7 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 				}
 				IN_ActivateMouse ();
 				IN_HideMouse ();
-			} else if ((modestate == MS_WINDOWED) && _windowed_mouse.value && (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu)) {
+			} else if ((modestate == MS_WINDOWED) && _windowed_mouse.value && (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)) {
 				IN_ActivateMouse ();
 				IN_HideMouse ();
 			}

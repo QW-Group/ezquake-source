@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "crc.h"
 #include "logging.h"
 #include "version.h"
+#include "demo_controls.h"
 
 
 float olddemotime, nextdemotime;
@@ -2351,6 +2352,14 @@ void CL_StopPlayback (void)
 	TP_ExecTrigger("f_demoend");
 }
 
+//
+// Returns the demo length.
+//
+float CL_GetDemoLength(void)
+{
+	return demo_time_length;
+}
+
 typedef enum demoprobe_parse_type_e
 {
 	READ_MVD_TIME	= 1,
@@ -2373,7 +2382,7 @@ typedef enum demoprobe_parse_type_e
 // Seek the specified length and fail/abort if it fails.
 //
 #define DEMOPROBE_SEEK(file, length, message)								\
-	if (VFS_SEEK(file, length, SEEK_CUR))									\
+	if (VFS_SEEK(file, length, SEEK_CUR) == -1)								\
 	{																		\
 		Com_DPrintf("CL_ProbeDemo: Unexpected end of demo. "message"\n");	\
 		abort = true;														\
@@ -3560,6 +3569,7 @@ void CL_Demo_Init (void)
 
 	Cmd_AddCommand("demo_setspeed", CL_Demo_SetSpeed_f);
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
+	Cmd_AddCommand("demo_controls", DemoControls_f);
 
 	//
 	// QTV commands.

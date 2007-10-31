@@ -1175,7 +1175,7 @@ void IN_MouseMove (usercmd_t *cmd) {
 	// Do not move the player if we're in HUD editor or menu mode. 
 	// And don't apply ingame sensitivity, since that will make movements jerky.
 	//
-	if(key_dest == key_hudeditor || key_dest == key_menu)
+	if(key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)
 	{
 		old_mouse_x = mouse_x = mx * cursor_sensitivity.value;
 		old_mouse_y = mouse_y = my * cursor_sensitivity.value;
@@ -1249,8 +1249,8 @@ void IN_Accumulate (void) {
 	if (mouseactive) {
 		GetCursorPos (&current_pos);
 
-		//Tei, cursor free while not ingame
-		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu)
+		// Cursor free while not ingame
+		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)
 		{
 			mx_accum += current_pos.x - window_center_x;
 			my_accum += current_pos.y - window_center_y;
@@ -1262,9 +1262,9 @@ void IN_Accumulate (void) {
 		}
 
 		// force the mouse to the center, so there's room to move
-		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu)
+		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)
 			SetCursorPos (window_center_x, window_center_y);
-		//Tei, avoid center with no-game mode
+		// Avoid center with no-game mode
 	}
 }
 
