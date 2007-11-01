@@ -2716,6 +2716,7 @@ void CL_Play_f (void)
 	}
 
 	// Reset multiview track slots.
+	extern int mv_trackslots[];
 	for(i = 0; i < 4; i++)
 	{
 		mv_trackslots[i] = -1;
@@ -3156,8 +3157,9 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	if (playbackfile)
 		VFS_CLOSE(playbackfile);
 	playbackfile = newf;
-
+	
 	// Reset multiview track slots.
+	extern int mv_trackslots[];
 	for(i = 0; i < 4; i++)
 	{
 		mv_trackslots[i] = -1;

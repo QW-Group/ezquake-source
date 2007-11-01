@@ -880,7 +880,6 @@ int		nPlayernum;
 #define	MV_VIEW3 2
 #define	MV_VIEW4 3
 
-int		mv_trackslots[4];			// The different track slots for each view.
 char	currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
 int		mvlatch;
 qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.

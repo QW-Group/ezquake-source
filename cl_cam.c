@@ -62,6 +62,8 @@ void CL_TrackTeam_f(void);
 void CL_Track_f(void);
 void CL_Autotrack_f(void);
 
+int		mv_trackslots[MV_VIEWS] = { -1 };	// The different track slots for each view.
+
 int		ideal_track = 0;		// The currently tracked player.
 float	last_lock = 0;			// Last tracked player.
 
