@@ -100,7 +100,7 @@ extern viddef_t				vid;
 
 cvar_t						vid_mode				= { "vid_mode", "0", 0 };
 cvar_t						vid_redrawfull			= { "vid_redrawfull", "0", 0 };
-cvar_t						vid_wait				= { "vid_wait", "1", 1 };
+cvar_t						vid_wait				= { "vid_wait", "0", 0 };
 cvar_t						vid_overbright			= { "gamma_overbright", "1", 1 };
 cvar_t						_vid_default_mode		= { "_vid_default_mode", "0", 1 };
 cvar_t						_vid_default_blit_mode	= { "_vid_default_blit_mode", "0", 1 };

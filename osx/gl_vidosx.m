@@ -118,7 +118,7 @@ const char						*gl_renderer,
 
 cvar_t							vid_mode = { "vid_mode", "0", 0 },
 								vid_redrawfull = { "vid_redrawfull", "0", 0 },
-								vid_wait = { "vid_wait", "1", 1 },
+								vid_wait = { "vid_wait", "0", 0 },
 								vid_overbright = { "gamma_overbright", "1", 1 },
 								_vid_default_mode = { "_vid_default_mode", "0", 1 },
 								_vid_default_blit_mode = { "_vid_default_blit_mode", "0", 1 },
