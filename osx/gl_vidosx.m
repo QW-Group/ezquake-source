@@ -737,7 +737,7 @@ void	VID_Init (unsigned char *thePalette)
     if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
         vid.conwidth = Q_atoi (COM_Argv(i+1));
     else
-        vid.conwidth = 640;
+        vid.conwidth = gGLDisplayWidth / 2;
 
     vid.conwidth &= 0xfff8; // make it a multiple of eight
 
@@ -745,13 +745,14 @@ void	VID_Init (unsigned char *thePalette)
         vid.conwidth = VID_CONSOLE_MIN_WIDTH;
 
     // pick a conheight that matches with correct aspect
-    vid.conheight = vid.conwidth * 3 / 4;
+//    vid.conheight = vid.conwidth * 3 / 4;
+	vid.conheight = gGLDisplayHeight / 2;
 
     // setup console height according to display height:
     if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc())
         vid.conheight = Q_atoi (COM_Argv(i+1));
-    else
-        vid.conheight = 200;
+//    else
+//        vid.conheight = 200;
 
     if (vid.conheight < VID_CONSOLE_MIN_HEIGHT)
         vid.conheight = VID_CONSOLE_MIN_HEIGHT;
@@ -767,6 +768,8 @@ void	VID_Init (unsigned char *thePalette)
 
     vid.aspect = ((float) vid.height / (float) vid.width) * (320.0f / 240.0f);
     vid.numpages = 2;
+	
+	//Com_Printf("conwidth: %d conheight %d\n", vid.conwidth, vid.conheight);
 
     // setup OpenGL:
     GL_InitMac ();
