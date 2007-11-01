@@ -134,7 +134,7 @@ extern searchpathfuncs_t zipfilefuncs;
 //=============================
 int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
 int VFSTCP_WriteBytes (struct vfsfile_s *file, const void *buffer, int bytestowrite);
-qbool VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos, int whence);
+int VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos, int whence);
 unsigned long VFSTCP_Tell (struct vfsfile_s *file);
 unsigned long VFSTCP_GetLen (struct vfsfile_s *file);
 void VFSTCP_Close (struct vfsfile_s *file);

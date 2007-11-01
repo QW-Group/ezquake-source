@@ -63,7 +63,7 @@ typedef enum {
 void 			VFS_CLOSE  (struct vfsfile_s *vf);
 unsigned long	VFS_TELL   (struct vfsfile_s *vf);
 unsigned long	VFS_GETLEN (struct vfsfile_s *vf);
-qbool			VFS_SEEK   (struct vfsfile_s *vf, unsigned long pos, int whence);
+int				VFS_SEEK   (struct vfsfile_s *vf, unsigned long pos, int whence);
 int				VFS_READ   (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno_t *err);
 int				VFS_WRITE  (struct vfsfile_s *vf, const void *buffer, int bytestowrite);
 void			VFS_FLUSH  (struct vfsfile_s *vf);
