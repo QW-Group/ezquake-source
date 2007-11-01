@@ -128,38 +128,6 @@ void	Force_CenterView_f (void)
     cl.viewangles[PITCH] = 0;
 }
 
-//_______________________________________________________________________________________________IN_SetKeyboardRepeatEnabled()
-
-void	IN_SetKeyboardRepeatEnabled (BOOL theState)
-{
-    static BOOL		myKeyboardRepeatEnabled = YES;
-    static double	myOriginalKeyboardRepeatInterval;
-    static double	myOriginalKeyboardRepeatThreshold;
-    NXEventHandle	myEventStatus;
-    
-    if (theState == myKeyboardRepeatEnabled)
-        return;
-    if (!(myEventStatus = NXOpenEventStatus ()))
-        return;
-        
-    if (theState)
-    {
-        NXSetKeyRepeatInterval (myEventStatus, myOriginalKeyboardRepeatInterval);
-        NXSetKeyRepeatThreshold (myEventStatus, myOriginalKeyboardRepeatThreshold);
-        NXResetKeyboard (myEventStatus);
-    }
-    else
-    {
-        myOriginalKeyboardRepeatInterval = NXKeyRepeatInterval (myEventStatus);
-        myOriginalKeyboardRepeatThreshold = NXKeyRepeatThreshold (myEventStatus);
-        NXSetKeyRepeatInterval (myEventStatus, 3456000.0f);
-        NXSetKeyRepeatThreshold (myEventStatus, 3456000.0f);
-    }
-    
-    NXCloseEventStatus (myEventStatus);
-    myKeyboardRepeatEnabled = theState;
-}
-
 //____________________________________________________________________________________________________________IN_GetIOHandle()
 
 io_connect_t IN_GetIOHandle (void)

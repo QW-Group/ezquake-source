@@ -46,7 +46,6 @@ void	IN_ShowCursor (BOOL);
 void 	IN_InitMouse (void);
 void 	IN_ReceiveMouseMove (CGMouseDelta, CGMouseDelta);
 void 	IN_MouseMove (usercmd_t *);
-void	IN_SetKeyboardRepeatEnabled (BOOL theState);
 void	IN_SetF12EjectEnabled (qbool theState);
 
 //_________________________________________________________________________________________________________________________eOF

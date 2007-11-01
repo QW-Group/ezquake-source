@@ -385,7 +385,6 @@ void	Sys_Error (char *theError, ...)
     [[NSApp delegate] setHostInitialized: NO];
     
     IN_ShowCursor (YES);
-    IN_SetKeyboardRepeatEnabled (YES);
     IN_SetF12EjectEnabled (YES);
     
     NSRunCriticalAlertPanel (@"An error has occured:", [NSString stringWithCString: myString],
@@ -490,7 +489,6 @@ void	Sys_Quit (void)
     // shutdown host:
     Host_Shutdown ();
     [[NSApp delegate] setHostInitialized: NO];
-    IN_SetKeyboardRepeatEnabled (YES);
     IN_SetF12EjectEnabled (YES);
     fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~FNDELAY);
     fflush (stdout);

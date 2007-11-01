@@ -517,7 +517,6 @@ extern void 			M_Menu_Quit_f (void);
     }
     
     IN_ShowCursor (YES);
-    IN_SetKeyboardRepeatEnabled (YES);
     IN_SetF12EjectEnabled (YES);
 }
 
@@ -535,7 +534,6 @@ extern void 			M_Menu_Quit_f (void);
         IN_ShowCursor (NO);
     }
     
-    IN_SetKeyboardRepeatEnabled (NO);
     IN_SetF12EjectEnabled (NO);
 }
 
@@ -555,7 +553,6 @@ extern void 			M_Menu_Quit_f (void);
     VID_HideFullscreen (YES);
 #endif /* !GLQUAKE */
     IN_ShowCursor (YES);
-    IN_SetKeyboardRepeatEnabled (YES);
     IN_SetF12EjectEnabled (YES);
 
     if (mFrameTimer != NULL)
@@ -579,7 +576,6 @@ extern void 			M_Menu_Quit_f (void);
         IN_ShowCursor (NO);
     }
     
-    IN_SetKeyboardRepeatEnabled (NO);
     IN_SetF12EjectEnabled (NO);
 #if !defined (GLQUAKE)
     VID_HideFullscreen (NO);
@@ -1633,7 +1629,6 @@ NSLog (@"C!");
     [NSApp setServicesProvider: self];
 
     // disable keyboard repeat:
-    IN_SetKeyboardRepeatEnabled (NO);
     IN_SetF12EjectEnabled (NO);
 
     // some nice console output for credits:
