@@ -1309,8 +1309,8 @@ void GL_EndRendering (void) {
 
 		if ( !glConfig.stereoEnabled ) {	// why?
 			if ( qwglSwapIntervalEXT ) {
-				qwglSwapIntervalEXT( r_swapInterval.integer );
-				vid_vsync_on = (r_swapInterval.integer != 0);
+				qwglSwapIntervalEXT( r_swapInterval.value != 0);
+				vid_vsync_on = (r_swapInterval.value != 0);
 			}
 		}
 	}
