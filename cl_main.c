@@ -2213,7 +2213,6 @@ void CL_Multiview(void)
 		v_damagecshift, v_suitcshift, v_bonusflash;
 	#endif
 	extern cvar_t r_lerpframes;
-	extern int mv_trackslots[];
 
 	if (!cls.mvdplayback)
 	{

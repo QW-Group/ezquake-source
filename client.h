@@ -235,7 +235,8 @@ ca_onserver,		// processing data lists, donwloading, etc
 ca_active			// everything is in, so frames can be rendered
 } cactive_t;
 
-typedef enum {
+typedef enum 
+{
 	dl_none,
 	dl_model,
 	dl_vwep_model,
@@ -243,6 +244,14 @@ typedef enum {
 	dl_skin,
 	dl_single
 } dltype_t;		// download type
+
+typedef enum demotype_e
+{
+	DT_NONE,
+	DT_MVD,
+	DT_QWD,
+	DT_NQDEMO
+} demotype_t;
 
 //
 // The clientPersistent_t structure is persistent through an arbitrary number of server connections.
@@ -334,7 +343,7 @@ typedef struct
 	// is started before entering a map (and clearing clientState_t)
 	//
 	qbool		demorecording;
-	qbool		demoplayback;
+	demotype_t	demoplayback;
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
 	qbool		timedemo;
@@ -859,6 +868,7 @@ void Stats_GetFlagStats(int num, int *stats);
 
 void CL_CalcPlayerFPS(player_info_t *info, int msec);
 
+// TODO : These should not be defined here, they should be extern!
 //
 // Multiview vars
 // ===================================================================================
@@ -880,6 +890,7 @@ int		nPlayernum;
 #define	MV_VIEW3 2
 #define	MV_VIEW4 3
 
+int		mv_trackslots[4];			// The different track slots for each view.
 char	currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
 int		mvlatch;
 qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.

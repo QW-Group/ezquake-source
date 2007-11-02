@@ -1402,7 +1402,6 @@ void MV_UpdateSkins()
 	//
 	// Multiview
 	//
-	extern int mv_trackslots[];
 	char friendlyteam[MAX_INFO_STRING] = {'\0'};
 	char tracked_team[MAX_INFO_STRING] = {'\0'};
 	char *skinforcing_team = NULL;
