@@ -49,7 +49,7 @@ static int VFSOS_WriteBytes (struct vfsfile_s *file, const void *buffer, int byt
 	return fwrite(buffer, 1, bytestowrite, intfile->handle);
 }
 
-static qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
+static int VFSOS_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return fseek(intfile->handle, pos, whence);
