@@ -817,9 +817,10 @@ int pb_raw_read(void *buf, int size)
 
 //
 // Ensure we have enough data to parse, it not then return false.
-// Function was introduced with QTV, since if u read demo from file and not enough data that cricial,
-// but if u read demo (mvd stream) from network and not enough data that ok, we just freeze client for some time
-// and filling buffer.
+// Function was introduced with QTV. If you read a demo from file and you run out of data
+// that's critical, but when streaming an MVD using QTV and don't receive enough data from 
+// the network it isn't critical, we just freeze the client for some time while filling
+// the playback buffer.
 //
 qbool pb_ensure(void)
 {
@@ -830,10 +831,11 @@ qbool pb_ensure(void)
 	if (cl_shownet.value == 3)
 		Com_Printf(" %d", pb_cnt);
 
+	// Try to fill the entire buffer with demo data.
 	pb_cnt += pb_raw_read(pb_buf + pb_cnt, max(0, (int)sizeof(pb_buf) - pb_cnt));
 
 	if (pb_cnt == (int)sizeof(pb_buf) || pb_eof)
-		return true; // return true if we have full buffer or get EOF
+		return true; // Return true if we have full buffer or get EOF.
 
 	// Probably not enough data in buffer, check do we have at least one message in buffer.
 	if (cls.mvdplayback && pb_cnt)
@@ -842,6 +844,7 @@ qbool pb_ensure(void)
 			return true;
 	}
 
+	// Set the buffering time if it hasn't been set already.
 	if (cls.mvdplayback == QTV_PLAYBACK && !bufferingtime && !cls.qtv_donotbuffer)
 	{
 		double prebufferseconds = QTVBUFFERTIME;
@@ -898,26 +901,24 @@ qbool CL_GetDemoMessage (void)
 	// Demo paused, don't read anything.
 	if (cl.paused & PAUSED_DEMO)
 	{
-		pb_ensure(); // perform our operations on socket, in case of QTV
+		pb_ensure();	// Make sure we keep the QTV connection alive by reading from the socket.
 		return false;
 	}
 
-	// mean we are buffering for QTV, so not ready parse
+	// We're not ready to parse since we're buffering for QTV.
 	if (bufferingtime && bufferingtime > Sys_DoubleTime())
 	{
 		extern qbool	host_skipframe;
 
-		pb_ensure(); // perform our operations on socket, in case of QTV
-		host_skipframe = true; // this will force not update cls.demotime
+		pb_ensure();			// Fill the buffer for QTV.
+		host_skipframe = true;	// This will force not update cls.demotime.
 
 		return false;
 	}
 
 	bufferingtime = 0;
 
-	//
 	// Adjust the time for MVD playback.
-	//
 	if (cls.mvdplayback)
 	{
 		// Reset the previous time.
@@ -929,22 +930,18 @@ qbool CL_GetDemoMessage (void)
 			cls.demotime = nextdemotime - 1.0;
 	}
 
-	//
 	// Check if we need to get more messages for now and if so read it
 	// from the demo file and pass it on to the net channel.
-	//
 	while (true)
 	{
+		// Make sure we have enough data in the buffer.
 		if (!pb_ensure())
 			return false;
 
-		//
 		// Read the time of the next message in the demo.
-		//
 		if (cls.mvdplayback)
 		{
-			// Number of miliseconds since last frame can be between 0-255.
-			byte mvd_time;
+			byte mvd_time; // Number of miliseconds since last frame can be between 0-255.
 
 			// Peek inside, but don't read.
 			// (Since it might not be time to continue reading in the demo
@@ -977,15 +974,11 @@ qbool CL_GetDemoMessage (void)
 
 		playback_recordtime = demotime;
 
-		//
 		// Decide if it is time to grab the next message from the demo yet.
-		//
 		if (cls.timedemo)
 		{
-			//
 			// Timedemo playback, grab the next message as quickly as possible.
-			//
-
+		
 			if (cls.td_lastframe < 0)
 			{
 				// This is the first frame of the timedemo.
@@ -1012,16 +1005,13 @@ qbool CL_GetDemoMessage (void)
 		}
 		else if (!(cl.paused & PAUSED_SERVER) && cls.state == ca_active) // always grab until fully connected
 		{
-			//
 			// Not paused and active.
-			//
 
 			if (cls.mvdplayback)
 			{
 				if (nextdemotime < demotime)
 				{
-					// Don't need another message yet.
-					return false;
+					return false; // Don't need another message yet.
 				}
 			}
 			else
@@ -1066,11 +1056,10 @@ qbool CL_GetDemoMessage (void)
 		CL_Demo_Read(&c, sizeof(c), false);
 		message_type = (c & 7);
 
+		// QWD Only.
 		if (message_type == dem_cmd)
 		{
-			//
 			// User cmd read.
-			//
 
 			// Get which frame we should read the cmd into from the demo.
 			i = cls.netchan.outgoing_sequence & UPDATE_MASK;
@@ -1079,9 +1068,7 @@ qbool CL_GetDemoMessage (void)
 			pcmd = &cl.frames[i].cmd;
 			CL_Demo_Read(pcmd, sizeof(*pcmd), false);
 
-			//
 			// Convert the angles/movement vectors into the correct byte order.
-			//
 			for (j = 0; j < 3; j++)
 				pcmd->angles[j] = LittleFloat(pcmd->angles[j]);
 			pcmd->forwardmove = LittleShort(pcmd->forwardmove);
@@ -1110,13 +1097,10 @@ qbool CL_GetDemoMessage (void)
 			if (cls.demorecording)
 				CL_WriteDemoCmd(pcmd);
 
-			// Get next message.
-			continue;
+			continue; // Get next message.
 		}
 
-		//
 		// MVD Only. These message types tells to which players the message is directed to.
-		//
 		if (message_type >= dem_multiple && message_type <= dem_all)
 		{
 			switch (message_type)
@@ -1133,6 +1117,10 @@ qbool CL_GetDemoMessage (void)
 					cls.lasttype = dem_multiple;
 					break;
 				}
+				case dem_stats:
+				//
+				// The stats for a player has changed. Get the player number of that player.
+				//
 				case dem_single:
 				//
 				// Only a single player should receive this message. Get the player number of that player.
@@ -1140,17 +1128,8 @@ qbool CL_GetDemoMessage (void)
 				{
 					// The first 3 bits contain the message type (so remove that part), the rest contains
 					// a 5-bit number which contains the player number of the affected player.
-					cls.lastto = c >> 3;
-					cls.lasttype = dem_single;
-					break;
-				}
-				case dem_stats:
-				//
-				// The stats for a player has changed. Get the player number of that player.
-				//
-				{
-					cls.lastto = c >> 3;
-					cls.lasttype = dem_stats;
+					cls.lastto = (c >> 3);
+					cls.lasttype = message_type;
 					break;
 				}
 				case dem_all:
@@ -1169,21 +1148,17 @@ qbool CL_GetDemoMessage (void)
 				}
 			}
 
-			//
 			// Fall through to dem_read after we've gotten the affected players.
-			//
 			message_type = dem_read;
 		}
 
-		//
 		// Get the next net message from the demo file.
-		//
 		if (message_type == dem_read)
 		{
 			// Read the size of next net message in the demo file
 			// and convert it into the correct byte order.
 			CL_Demo_Read(&net_message.cursize, 4, false);
-			net_message.cursize = LittleLong (net_message.cursize);
+			net_message.cursize = LittleLong(net_message.cursize);
 
 			// The message was too big, stop playback.
 			if (net_message.cursize > net_message.maxsize)
@@ -1196,9 +1171,7 @@ qbool CL_GetDemoMessage (void)
 			// Read the net message from the demo.
 			CL_Demo_Read(net_message.data, net_message.cursize, false);
 
-			//
 			// Check what the last message type was for MVDs.
-			//
 			if (cls.mvdplayback)
 			{
 				switch(cls.lasttype)
@@ -1208,9 +1181,8 @@ qbool CL_GetDemoMessage (void)
 						// Get the number of the player being tracked.
 						tracknum = Cam_TrackNum();
 
-						// If no player is tracked (free flying), or the demo message
-						// didn't contain information regarding the player being tracked
-						// we read the next message.
+						// If no player is tracked (free flying), or the player we're tracking
+						// is not affected by this message. If that's the case just read the next message.
 						if (tracknum == -1 || !(cls.lastto & (1 << tracknum)))
 						{
 							continue;
@@ -1222,7 +1194,7 @@ qbool CL_GetDemoMessage (void)
 						// If we're not tracking the player referred to in the demo
 						// message it's time to read the next message.
 						tracknum = Cam_TrackNum();
-						if (tracknum == -1 || cls.lastto != spec_track)
+						if ((tracknum == -1) || (cls.lastto != spec_track))
 						{
 							continue;
 						}
@@ -1231,12 +1203,10 @@ qbool CL_GetDemoMessage (void)
 				}
 			}
 
-			return true;
+			return true; // We just read something.
 		}
 
-		//
 		// Gets the sequence numbers for the netchan at the start of the demo.
-		//
 		if (message_type == dem_set)
 		{
 			CL_Demo_Read(&i, sizeof(i), false);

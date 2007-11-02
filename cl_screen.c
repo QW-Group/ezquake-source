@@ -255,22 +255,25 @@ int			scr_center_lines;
 int			scr_erase_lines;
 int			scr_erase_center;
 
-//Called for important messages that should stay in the center of the screen for a few moments
-void SCR_CenterPrint (char *str) {
+// Called for important messages that should stay in the center of the screen for a few moments
+void SCR_CenterPrint (char *str)
+{
 	strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
 	scr_centertime_off = scr_centertime.value;
 	scr_centertime_start = cl.time;
 
 	// count the number of lines for centering
 	scr_center_lines = 1;
-	while (*str) {
+	while (*str) 
+	{
 		if (*str == '\n')
 			scr_center_lines++;
 		str++;
 	}
 }
 
-void SCR_DrawCenterString (void) {
+void SCR_DrawCenterString (void)
+{
 	char *start;
 	int l, j, x, y, remaining;
 

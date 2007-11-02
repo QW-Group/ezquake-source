@@ -2974,12 +2974,13 @@ void CL_MuzzleFlash (void) {
 }
 #endif
 
-void CL_ParseQizmoVoice (void) {
+void CL_ParseQizmoVoice (void) 
+{
 	int i, seq, bits, num, unknown;
 
 	// read the two-byte header
-	seq = MSG_ReadByte ();
-	bits = MSG_ReadByte ();
+	seq = MSG_ReadByte();
+	bits = MSG_ReadByte();
 
 	seq |= (bits & 0x30) << 4;	// 10-bit block sequence number, strictly increasing
 	num = bits >> 6;			// 2-bit sample number, bumped at the start of a new sample
@@ -2987,15 +2988,14 @@ void CL_ParseQizmoVoice (void) {
 
 	// 32 bytes of voice data follow
 	for (i = 0; i < 32; i++)
-		MSG_ReadByte ();
+		MSG_ReadByte();
 }
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
 
-//Tei: cl_messages
 void CL_Messages_f(void)
 {
-	int t;//,i;
+	int t;
 	int MAX = 64;
 
 	int big = 0;
@@ -3007,13 +3007,13 @@ void CL_Messages_f(void)
 
 	Com_Printf("Received msgs:\n");
 
-    while(doit)
+    while (doit)
 	{
-		//get max
+		// Get max
 
 		doit = false;
 		tope = 0;
-		for (t=0;t<MAX;t++)
+		for (t = 0; t < MAX; t++)
 		{
 			if (!net.printed[t] && net.size[t] > tope )
 			{
@@ -3032,7 +3032,8 @@ void CL_Messages_f(void)
 	}
 }
 
-void CL_ParseServerMessage (void) {
+void CL_ParseServerMessage (void) 
+{
 	int cmd, i, j = 0;
 	char *s;
 	extern int mvd_fixangle;
@@ -3040,11 +3041,13 @@ void CL_ParseServerMessage (void) {
 	int msg_svc_start;
 	int oldread = 0;
 
-
-	if (cl_shownet.value == 1) {
+	if (cl_shownet.value == 1) 
+	{
 		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("%i ", net_message.cursize);
-	} else if (cl_shownet.value == 2) {
+	}
+	else if (cl_shownet.value == 2) 
+	{
 		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("------------------\n");
 	}
@@ -3054,9 +3057,11 @@ void CL_ParseServerMessage (void) {
 	CL_ParseClientdata ();
 	CL_ClearProjectiles ();
 
-	// parse the message
-	while (1) {
-		if (msg_badread) {
+	// Parse the message.
+	while (1) 
+	{
+		if (msg_badread) 
+		{
 			Host_Error ("CL_ParseServerMessage: Bad server message");
 			break;
 		}
@@ -3064,7 +3069,8 @@ void CL_ParseServerMessage (void) {
 		msg_svc_start = msg_readcount;
 		cmd = MSG_ReadByte ();
 
-		if (cmd == -1) {
+		if (cmd == -1) 
+		{
 			msg_readcount++;	// so the EOM showner has the right value
 			SHOWNET("END OF MESSAGE");
 			break;
@@ -3075,327 +3081,390 @@ void CL_ParseServerMessage (void) {
 		else if (cmd < num_svc_strings)
 			SHOWNET(svc_strings[cmd]);
 
-     	//Update msg no:
-    	net.msgs[cmd] ++;
+     	// Update msg no:
+    	net.msgs[cmd]++;
 	    oldread = msg_readcount;
 
-		// other commands
-		switch (cmd) {
-		default:
-			Host_Error ("CL_ParseServerMessage: Illegible server message\n");
-			break;
+		// Other commands
+		switch (cmd) 
+		{
+			default:
+			{	
+				Host_Error ("CL_ParseServerMessage: Illegible server message\n");
+				break;
+			}
+			case svc_nop:
+			{
+				break;
+			}
+			case svc_disconnect:
+			{
+				#ifdef _WIN32
+				VID_NotifyActivity();
+				#endif // WIN32
 
-		case svc_nop:
-			break;
+				if (cls.mvdplayback == QTV_PLAYBACK)
+				{ 
+					// Workaround, do not disconnect in case of QTV playback
+					if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
+						Com_Printf("WARNING: Non-standard disconnect message from QTV '%s'\n", s);
+					break;
+				}
 
-		case svc_disconnect:
-#ifdef _WIN32
-			VID_NotifyActivity();
-#endif
+				if (cls.state == ca_connected) 
+				{
+					Host_Error( "Server disconnected\n"
+								"Server version may not be compatible");
+				} 
+				else 
+				{
+					Com_DPrintf("Server disconnected\n");
+					Host_EndGame();	// The server will be killed if it tries to kick the local player
+					Host_Abort();
+				}
+				break;
+			}
+			case nq_svc_time:
+			{
+				MSG_ReadFloat();
+				break;
+			}
+			case svc_print:
+			{
+				CL_ParsePrint();
+				break;
+			}
+			case svc_centerprint:
+			{
+				// SCR_CenterPrint (MSG_ReadString ());
+				// Centerprint re-triggers
+				s = MSG_ReadString();
 
-			if (cls.mvdplayback == QTV_PLAYBACK) { // workaround, do not disconnect in case of QTV playback
-
-				if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
-					Com_Printf("WARNING: non standart disconnect message from QTV '%s'\n", s);
+				if(!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
+					SCR_CenterPrint(s);
+				Print_flags[Print_current] = 0;
+				break;
+			}
+			case svc_stufftext:
+			{
+				CL_ParseStufftext();
+				break;
+			}
+			case svc_damage:
+			{
+				V_ParseDamage();
+				break;
+			}
+			case svc_serverdata:
+			{
+				Cbuf_ExecuteEx(&cbuf_svc);		// make sure any stuffed commands are done
+				CL_ParseServerData();
+				vid.recalc_refdef = true;		// leave full screen intermission
+				break;
+			}
+			case svc_setangle:
+			{
+				if (cls.mvdplayback)
+					j = MSG_ReadByte();
+				for (i = 0; i < 3; i++)
+					newangles[i] = MSG_ReadAngle();
+				if (cls.mvdplayback) 
+				{
+					mvd_fixangle |= 1 << j;
+					if (j == Cam_TrackNum())
+						VectorCopy(newangles, cl.viewangles);
+				} 
+				else 
+				{
+					#ifdef I_WANT_HAX
+					// TODO: detect respawns
+					if (!Cvar_Value("cl_teleports_keep_pitch"))
+						cl.viewangles[0] = newangles[0];
+					cl.viewangles[1] = newangles[1];
+					cl.viewangles[2] = newangles[2];
+					#else
+					VectorCopy (newangles, cl.viewangles);
+					#endif // I_WANT_HAX
+				}
+				break;
+			}
+			case svc_lightstyle:
+			{
+				i = MSG_ReadByte ();
+				if (i >= MAX_LIGHTSTYLES)
+					Host_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
+				strlcpy (cl_lightstyle[i].map,  MSG_ReadString(), sizeof(cl_lightstyle[i].map));
+				cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
+				break;
+			}
+			case svc_sound:
+			{
+				CL_ParseStartSoundPacket();
+				break;
+			}
+			case svc_stopsound:
+			{
+				i = MSG_ReadShort();
+				S_StopSound(i >> 3, i & 7);
+				break;
+			}
+			case svc_updatefrags:
+			{
+				Sbar_Changed ();
+				i = MSG_ReadByte ();
+				if (i >= MAX_CLIENTS)
+					Host_Error ("CL_ParseServerMessage: svc_updatefrags > MAX_CLIENTS");
+				cl.players[i].frags = MSG_ReadShort ();
+				break;
+			}
+			case svc_updateping:
+			{
+				i = MSG_ReadByte ();
+				if (i >= MAX_CLIENTS)
+					Host_Error ("CL_ParseServerMessage: svc_updateping > MAX_CLIENTS");
+				cl.players[i].ping = MSG_ReadShort();
+				break;
+			}
+			case svc_updatepl:
+			{
+				i = MSG_ReadByte();
+				if (i >= MAX_CLIENTS)
+					Host_Error ("CL_ParseServerMessage: svc_updatepl > MAX_CLIENTS");
+				cl.players[i].pl = MSG_ReadByte();
+				break;
+			}
+			case svc_updateentertime:
+			{
+				// Time is sent over as seconds ago.
+				i = MSG_ReadByte();
+				if (i >= MAX_CLIENTS)
+					Host_Error ("CL_ParseServerMessage: svc_updateentertime > MAX_CLIENTS");
+				cl.players[i].entertime = (cls.demoplayback ? cls.demotime : cls.realtime) - MSG_ReadFloat();
+				break;
+			}
+			case svc_spawnbaseline:
+			{
+				i = MSG_ReadShort();
+				CL_ParseBaseline(&cl_entities[i].baseline);
+				break;
+			}
+			#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
+			case svc_fte_spawnbaseline2:
+			{
+				CL_ParseSpawnBaseline2();
+				break;
+			}
+			#endif // PROTOCOL_VERSION_FTE
+			case svc_spawnstatic:
+			{
+				CL_ParseStatic(false);
+				break;
+			}
+			#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
+			case svc_fte_spawnstatic2:
+			{
+				if (cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
+					CL_ParseStatic(true);
+				else
+					Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_SPAWNSTATIC2");
+				break;
+			}
+			#endif // PROTOCOL_VERSION_FTE
+			case svc_temp_entity:
+			{
+				CL_ParseTEnt();
+				break;
+			}
+			case svc_killedmonster:
+			{
+				cl.stats[STAT_MONSTERS]++;
+				break;
+			}
+			case svc_foundsecret:
+			{
+				cl.stats[STAT_SECRETS]++;
+				break;
+			}
+			case svc_updatestat:
+			{
+				i = MSG_ReadByte();
+				j = MSG_ReadByte();
+				CL_SetStat(i, j);
+				break;
+			}
+			case svc_updatestatlong:
+			{
+				i = MSG_ReadByte();
+				j = MSG_ReadLong();
+				CL_SetStat(i, j);
+				break;
+			}
+			case svc_spawnstaticsound:
+			{
+				CL_ParseStaticSound();
+				break;
+			}
+			case svc_cdtrack:
+			{
+				cl.cdtrack = MSG_ReadByte ();
+				CDAudio_Play((byte)cl.cdtrack, true);
+				break;
+			}
+			case svc_intermission:
+			{
+				cl.intermission = 1;
+				cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
+				cl.solo_completed_time = cl.servertime;
+				vid.recalc_refdef = true;	// go to full screen
+				for (i = 0; i < 3; i++)
+					cl.simorg[i] = MSG_ReadCoord();
+				for (i = 0; i < 3; i++)
+					cl.simangles[i] = MSG_ReadAngle();
+				VectorClear(cl.simvel);
+				TP_ExecTrigger ("f_mapend");
+				break;
+			}
+			case svc_finale:
+			{
+				cl.intermission = 2;
+				cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
+				cl.solo_completed_time = cl.servertime;
+				vid.recalc_refdef = true;	// go to full screen
+				SCR_CenterPrint(MSG_ReadString ());
+				break;
+			}
+			case svc_sellscreen:
+			{
+				Cmd_ExecuteString("help");
+				break;
+			}
+			case svc_smallkick:
+			{
+				cl.ideal_punchangle = -2;
+				break;
+			}
+			case svc_bigkick:
+			{
+				cl.ideal_punchangle = -4;
+				break;
+			}
+			case svc_muzzleflash:
+			{
+				CL_MuzzleFlash();
+				break;
+			}
+			case svc_updateuserinfo:
+			{
+				CL_UpdateUserinfo();
+				break;
+			}
+			case svc_setinfo:
+			{
+				CL_SetInfo();
+				break;
+			}
+			case svc_serverinfo:
+			{
+				CL_ParseServerInfoChange();
+				break;
+			}
+			case svc_download:
+			{
+				CL_ParseDownload();
+				break;
+			}
+			case svc_playerinfo:
+			{
+				CL_ParsePlayerinfo();
+				break;
+			}
+			case svc_nails:
+			{
+				CL_ParseProjectiles(false);
+				break;
+			}
+			case svc_nails2:
+			{
+				if (!cls.mvdplayback)
+					Host_Error("CL_ParseServerMessage: svc_nails2 without cls.mvdplayback");
+				CL_ParseProjectiles(true);
+				break;
+			}
+			case svc_chokecount: // Some preceding packets were choked
+			{
+				i = MSG_ReadByte();
+				for (j = cls.netchan.incoming_acknowledged - 1; i > 0 && j > cls.netchan.outgoing_sequence - UPDATE_BACKUP; j--) 
+				{
+					if (cl.frames[j & UPDATE_MASK].receivedtime != -3) 
+					{
+						cl.frames[j & UPDATE_MASK].receivedtime = -2;
+						i--;
+					}
+				}
+				break;
+			}
+			case svc_modellist:
+			{
+				CL_ParseModellist(false);
+				break;
+			}
+			#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
+			case svc_fte_modellistshort:
+			{
+				if (cls.fteprotocolextensions & FTE_PEXT_MODELDBL)
+					CL_ParseModellist(true);
+				else
+					Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_MODELDBL");
 
 				break;
 			}
-
-			if (cls.state == ca_connected) {
-				Host_Error(	"Server disconnected\n"
-							"Server version may not be compatible");
-			} else {
-				Com_DPrintf("Server disconnected\n");
-				Host_EndGame();		// the server will be killed if it tries to kick the local player
-				Host_Abort();
+			#endif  // PROTOCOL_VERSION_FTE
+			case svc_soundlist:
+			{
+				CL_ParseSoundlist();
+				break;
 			}
-			break;
-
-		case nq_svc_time:
-			MSG_ReadFloat ();
-			break;
-
-		case svc_print:
-			CL_ParsePrint ();
-			break;
-
-		case svc_centerprint:
-			// SCR_CenterPrint (MSG_ReadString ());
-			// Centerprint re-triggers
-			s = MSG_ReadString();
-			if(!CL_SearchForReTriggers (s, RE_PRINT_CENTER))
-				SCR_CenterPrint (s);
-			Print_flags[Print_current] = 0;
-			break;
-
-		case svc_stufftext:
-			CL_ParseStufftext ();
-			break;
-
-		case svc_damage:
-			V_ParseDamage ();
-			break;
-
-		case svc_serverdata:
-			Cbuf_ExecuteEx (&cbuf_svc);		// make sure any stuffed commands are done
-			CL_ParseServerData ();
-			vid.recalc_refdef = true;		// leave full screen intermission
-			break;
-
-		case svc_setangle:
-			if (cls.mvdplayback)
-				j = MSG_ReadByte ();
-			for (i = 0; i < 3; i++)
-				newangles[i] = MSG_ReadAngle();
-			if (cls.mvdplayback) {
-				mvd_fixangle |= 1 << j;
-				if (j == Cam_TrackNum())
-					VectorCopy (newangles, cl.viewangles);
-			} else {
-#ifdef I_WANT_HAX
-				// TODO: detect respawns
-				if (!Cvar_Value("cl_teleports_keep_pitch"))
-					cl.viewangles[0] = newangles[0];
-				cl.viewangles[1] = newangles[1];
-				cl.viewangles[2] = newangles[2];
-#else
-				VectorCopy (newangles, cl.viewangles);
-#endif
+			case svc_packetentities:
+			{
+				CL_ParsePacketEntities(false);
+				break;
 			}
-			break;
-
-		case svc_lightstyle:
-			i = MSG_ReadByte ();
-			if (i >= MAX_LIGHTSTYLES)
-				Host_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
-			strlcpy (cl_lightstyle[i].map,  MSG_ReadString(), sizeof(cl_lightstyle[i].map));
-			cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
-			break;
-
-		case svc_sound:
-				CL_ParseStartSoundPacket();
-			break;
-
-		case svc_stopsound:
-			i = MSG_ReadShort();
-			S_StopSound(i >> 3, i & 7);
-			break;
-
-		case svc_updatefrags:
-			Sbar_Changed ();
-			i = MSG_ReadByte ();
-			if (i >= MAX_CLIENTS)
-				Host_Error ("CL_ParseServerMessage: svc_updatefrags > MAX_CLIENTS");
-			cl.players[i].frags = MSG_ReadShort ();
-			break;
-
-		case svc_updateping:
-			i = MSG_ReadByte ();
-			if (i >= MAX_CLIENTS)
-				Host_Error ("CL_ParseServerMessage: svc_updateping > MAX_CLIENTS");
-			cl.players[i].ping = MSG_ReadShort ();
-			break;
-
-		case svc_updatepl:
-			i = MSG_ReadByte ();
-			if (i >= MAX_CLIENTS)
-				Host_Error ("CL_ParseServerMessage: svc_updatepl > MAX_CLIENTS");
-			cl.players[i].pl = MSG_ReadByte ();
-			break;
-
-		case svc_updateentertime:
-			// time is sent over as seconds ago
-			i = MSG_ReadByte ();
-			if (i >= MAX_CLIENTS)
-				Host_Error ("CL_ParseServerMessage: svc_updateentertime > MAX_CLIENTS");
-			cl.players[i].entertime = (cls.demoplayback ? cls.demotime : cls.realtime) - MSG_ReadFloat ();
-			break;
-
-		case svc_spawnbaseline:
-			i = MSG_ReadShort ();
-			CL_ParseBaseline (&cl_entities[i].baseline);
-			break;
-
-#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
-		case svc_fte_spawnbaseline2:
-			CL_ParseSpawnBaseline2 ();
-			break;
-#endif
-
-		case svc_spawnstatic:
-			CL_ParseStatic (false);
-			break;
-
-#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
-		case svc_fte_spawnstatic2:
-			if (cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
-				CL_ParseStatic (true);
-			else
-				Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_SPAWNSTATIC2");
-			break;
-#endif
-
-		case svc_temp_entity:
-			CL_ParseTEnt ();
-			break;
-
-		case svc_killedmonster:
-			cl.stats[STAT_MONSTERS]++;
-			break;
-
-		case svc_foundsecret:
-			cl.stats[STAT_SECRETS]++;
-			break;
-
-		case svc_updatestat:
-			i = MSG_ReadByte ();
-			j = MSG_ReadByte ();
-			CL_SetStat (i, j);
-			break;
-
-		case svc_updatestatlong:
-			i = MSG_ReadByte ();
-			j = MSG_ReadLong ();
-			CL_SetStat (i, j);
-			break;
-
-		case svc_spawnstaticsound:
-			CL_ParseStaticSound ();
-			break;
-
-		case svc_cdtrack:
-			cl.cdtrack = MSG_ReadByte ();
-			CDAudio_Play ((byte)cl.cdtrack, true);
-			break;
-
-		case svc_intermission:
-			cl.intermission = 1;
-			cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
-			cl.solo_completed_time = cl.servertime;
-			vid.recalc_refdef = true;	// go to full screen
-			for (i = 0; i < 3; i++)
-				cl.simorg[i] = MSG_ReadCoord ();
-			for (i = 0; i < 3; i++)
-				cl.simangles[i] = MSG_ReadAngle ();
-			VectorClear (cl.simvel);
-			TP_ExecTrigger ("f_mapend");
-			break;
-
-		case svc_finale:
-			cl.intermission = 2;
-			cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
-			cl.solo_completed_time = cl.servertime;
-			vid.recalc_refdef = true;	// go to full screen
-			SCR_CenterPrint (MSG_ReadString ());
-			break;
-
-		case svc_sellscreen:
-			Cmd_ExecuteString ("help");
-			break;
-
-		case svc_smallkick:
-			cl.ideal_punchangle = -2;
-			break;
-
-		case svc_bigkick:
-			cl.ideal_punchangle = -4;
-			break;
-
-		case svc_muzzleflash:
-			CL_MuzzleFlash ();
-			break;
-
-		case svc_updateuserinfo:
-			CL_UpdateUserinfo ();
-			break;
-
-		case svc_setinfo:
-			CL_SetInfo ();
-			break;
-
-		case svc_serverinfo:
-			CL_ParseServerInfoChange ();
-			break;
-
-		case svc_download:
-			CL_ParseDownload ();
-			break;
-
-		case svc_playerinfo:
-			CL_ParsePlayerinfo ();
-			break;
-
-
-		case svc_nails:
-			CL_ParseProjectiles(false);
-			break;
-		case svc_nails2:
-			if (!cls.mvdplayback)
-				Host_Error("CL_ParseServerMessage: svc_nails2 without cls.mvdplayback");
-			CL_ParseProjectiles(true);
-			break;
-
-		case svc_chokecount:		// some preceding packets were choked
-			i = MSG_ReadByte ();
-			for (j = cls.netchan.incoming_acknowledged - 1; i > 0 && j > cls.netchan.outgoing_sequence - UPDATE_BACKUP; j--) {
-				if (cl.frames[j & UPDATE_MASK].receivedtime != -3) {
-					cl.frames[j & UPDATE_MASK].receivedtime = -2;
-					i--;
-				}
+			case svc_deltapacketentities:
+			{
+				CL_ParsePacketEntities(true);
+				break;
 			}
-			break;
+			case svc_maxspeed:
+			{
+				cl.maxspeed = MSG_ReadFloat();
+				break;
+			}
+			case svc_entgravity :
+			{
+				cl.entgravity = MSG_ReadFloat();
+				break;
+			}
+			case svc_setpause:
+			{
+				if (MSG_ReadByte())
+					cl.paused |= PAUSED_SERVER;
+				else
+					cl.paused &= ~PAUSED_SERVER;
 
-		case svc_modellist:
-			CL_ParseModellist (false);
-			break;
-
-#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
-		case svc_fte_modellistshort:
-			if (cls.fteprotocolextensions & FTE_PEXT_MODELDBL)
-				CL_ParseModellist (true);
-			else
-				Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_MODELDBL");
-
-			break;
-#endif
-		case svc_soundlist:
-			CL_ParseSoundlist ();
-			break;
-
-		case svc_packetentities:
-			CL_ParsePacketEntities (false);
-			break;
-
-		case svc_deltapacketentities:
-			CL_ParsePacketEntities (true);
-			break;
-
-		case svc_maxspeed :
-			cl.maxspeed = MSG_ReadFloat();
-			break;
-
-		case svc_entgravity :
-			cl.entgravity = MSG_ReadFloat();
-			break;
-
-		case svc_setpause:
-			if (MSG_ReadByte())
-				cl.paused |= PAUSED_SERVER;
-			else
-				cl.paused &= ~PAUSED_SERVER;
-
-			if (ISPAUSED)
-				CDAudio_Pause ();
-			else
-				CDAudio_Resume ();
-			break;
-
-		case svc_qizmovoice:
-			CL_ParseQizmoVoice ();
-			break;
+				if (ISPAUSED)
+					CDAudio_Pause();
+				else
+					CDAudio_Resume();
+				break;
+			}
+			case svc_qizmovoice:
+			{
+				CL_ParseQizmoVoice();
+				break;
+			}
 		}
 
-		//Tei: cl_messages, update size
+		// cl_messages, update size
 		net.size[cmd] += msg_readcount - oldread ;
 
 		if (cls.demorecording)
