@@ -28,6 +28,7 @@ CLIENT_C_FILES := \
 	common_draw \
 	console \
 	config_manager \
+	demo_controls \
 	document_rendering \
 	fchecks \
 	fmod \
