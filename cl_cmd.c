@@ -49,6 +49,9 @@ void Key_WriteBindings (FILE *f);
 void S_StopAllSounds (qbool clear);
 
 
+cvar_t cl_filter_coloredtext = {"cl_filter_coloredtext", "0"};
+
+
 //adds the current command line as a clc_stringcmd to the client message.
 //things like kill, say, etc, are commands directed to the server,
 //so when they are typed in at the console, they will need to be forwarded.
@@ -165,6 +168,27 @@ void CL_ForwardToServer_f (void) {
 	}
 }
 
+/// filters '&cfa5'-like colored markup from the string
+static void CL_Cmd_SayString_FilterColoredText(char *s)
+{
+	char *rp = s;	// read pointer
+	char *wp = s;	// write pointer
+	char c;			// current char
+
+	while (c = *rp++) {
+		if (c == '&' && *rp == 'c') {
+			rp++;	// skip 'c'
+			if (*rp) rp++; else break;	// skip red value
+			if (*rp) rp++; else break;	// skip green value
+			if (*rp) rp++; else break;	// skip blue value
+			continue;
+		}
+		*wp++ = c;
+	}
+
+	*wp = '\0';
+}
+
 //Handles both say and say_team
 void CL_Say_f (void) {
 	char *s, msg[1024], qmsg[1024];
@@ -247,6 +271,10 @@ void CL_Say_f (void) {
 
 		snprintf (msg, sizeof(msg), "\x0d%s: %s", TP_ParseFunChars(tmp, true), tmp2);
 		s = msg;
+	}
+
+	if (cl_filter_coloredtext.integer) {
+		CL_Cmd_SayString_FilterColoredText(s);
 	}
 
 	if (*s && *s < 32) {
@@ -910,6 +938,10 @@ void CL_InitCommands (void) {
 #endif
 
 	Cmd_AddCommand ("z_ext_list", CL_Z_Ext_List_f);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
+	Cvar_Register(&cl_filter_coloredtext);
+	Cvar_ResetCurrentGroup();
 }
 
 /*
