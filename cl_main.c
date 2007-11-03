@@ -1368,7 +1368,7 @@ void CL_ReadPackets (void)
 		}
 
 		{
-#ifdef 0 // TEST STUFF
+#if 0 // TEST STUFF
 			static qbool prevseeking = false;
 			static qbool prevtest = false;
 			static double seektime = 0.0;
@@ -1377,7 +1377,7 @@ void CL_ReadPackets (void)
 
 			CL_ParseServerMessage();
 			
-#ifdef 0 // TEST STUFF
+#if 0 // TEST STUFF
 			if (cls.demoseeking)
 			{
 				seektime += Sys_DoubleTime() - start;
