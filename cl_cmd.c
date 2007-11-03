@@ -49,8 +49,17 @@ void Key_WriteBindings (FILE *f);
 void S_StopAllSounds (qbool clear);
 
 
-cvar_t cl_filter_coloredtext = {"cl_filter_coloredtext", "0"};
+cvar_t cl_sayfilter_coloredtext = {"cl_sayfilter_coloredtext", "0"};
+typedef enum coloredtextfilterlevel_e
+{
+	coltextfilter_none = 0,
+	coltextfilter_color = 1,
+	coltextfilter_colorwhite = 2
+} coloredtextfilterlevel_e;
+#define SAYSTRING_UNCOLORED_FILTERMARK	"#u"
+#define SAYSTRING_COLORED_FILTERMARK	"#c"
 
+cvar_t cl_sayfilter_sendboth = {"cl_sayfilter_sendboth", "0"};
 
 //adds the current command line as a clc_stringcmd to the client message.
 //things like kill, say, etc, are commands directed to the server,
@@ -168,6 +177,21 @@ void CL_ForwardToServer_f (void) {
 	}
 }
 
+/// filters white markup chars from the string
+static void CL_Cmd_SayString_FilterWhite(char *s)
+{
+	char *rp = s;	// read pointer
+	char *wp = s;	// write pointer
+	char c;			// current char
+
+	while (c = *rp++) {
+		if (c == '{' || c == '}') continue;
+		*wp++ = c;
+	}
+
+	*wp = '\0';
+}
+
 /// filters '&cfa5'-like colored markup from the string
 static void CL_Cmd_SayString_FilterColoredText(char *s)
 {
@@ -187,6 +211,84 @@ static void CL_Cmd_SayString_FilterColoredText(char *s)
 	}
 
 	*wp = '\0';
+}
+
+// applies colored text filters on the string
+static void CL_Cmd_SayString_ApplyFilters(char *s)
+{
+	if (cl_sayfilter_coloredtext.integer != coltextfilter_none) {
+		CL_Cmd_SayString_FilterColoredText(s);
+	}
+	if (cl_sayfilter_coloredtext.integer == coltextfilter_colorwhite) {
+		CL_Cmd_SayString_FilterWhite(s);
+	}
+}
+
+// inserts an appendix to the string
+// if there already is an appendix (starting with #), it will be overwritten
+// if the string is enclosed in quotes ("), they will be kept
+static void CL_Cmd_SayString_InsertAppendix(char *s, char *appendix)
+{
+	char *p = strchr(s, '#');
+	size_t l = strlen(s);
+	qbool endquote = s[l-1] == '\"';
+
+	if (!p) p = s + l - 1;
+
+	while (*p++ = *appendix++) {}
+	p--;
+	if (endquote)
+		*p++ = '\"';
+	*p = '\0';
+}
+
+// sends saystring with optional appendix
+static void CL_Cmd_SayString_SendBase(char *s, char *appendix)
+{
+	if (*s && *s < 32) {
+		SZ_Print (&cls.netchan.message, "\"");
+		if (appendix) {
+			CL_Cmd_SayString_InsertAppendix(s, appendix);
+		}
+		SZ_Print (&cls.netchan.message, s);
+		SZ_Print (&cls.netchan.message, "\"");
+	} else {
+		if (appendix) {
+			CL_Cmd_SayString_InsertAppendix(s, appendix);
+		}
+		SZ_Print (&cls.netchan.message, s);
+	}
+}
+
+/// returns true if there is a color markup in the string
+static qbool CL_Cmd_SayString_IsColored(char *s)
+{
+	while(*s) {
+		if (*s == '&' && s[1] == 'c') return true;
+		s++;
+	}
+	return false;
+}
+
+// this function presumes there's at least two more bytes available memory
+// after the end of the string
+static void CL_Cmd_SayString_Send(char *s)
+{
+	if (cl_sayfilter_sendboth.integer && cl_sayfilter_coloredtext.integer
+		&& !strcmp("say_team", Cmd_Argv(0)) && CL_Cmd_SayString_IsColored(s)) {
+		CL_Cmd_SayString_SendBase(s, SAYSTRING_COLORED_FILTERMARK);
+		CL_Cmd_SayString_ApplyFilters(s);
+		
+		// send header again
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		SZ_Print (&cls.netchan.message, Cmd_Argv(0));
+		SZ_Print (&cls.netchan.message, " ");
+		
+		CL_Cmd_SayString_SendBase(s, SAYSTRING_UNCOLORED_FILTERMARK);
+	} else {
+		CL_Cmd_SayString_ApplyFilters(s);
+		CL_Cmd_SayString_SendBase(s, NULL);
+	}
 }
 
 //Handles both say and say_team
@@ -273,18 +375,7 @@ void CL_Say_f (void) {
 		s = msg;
 	}
 
-	if (cl_filter_coloredtext.integer) {
-		CL_Cmd_SayString_FilterColoredText(s);
-	}
-
-	if (*s && *s < 32) {
-		SZ_Print (&cls.netchan.message, "\"");
-		SZ_Print (&cls.netchan.message, s);
-		SZ_Print (&cls.netchan.message, "\"");
-	} else {
-		SZ_Print (&cls.netchan.message, s);
-	}
-
+	CL_Cmd_SayString_Send(s);
 	
 	if (!qizmo) {
 		cl.whensaidhead++;
@@ -940,7 +1031,8 @@ void CL_InitCommands (void) {
 	Cmd_AddCommand ("z_ext_list", CL_Z_Ext_List_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
-	Cvar_Register(&cl_filter_coloredtext);
+	Cvar_Register(&cl_sayfilter_coloredtext);
+	Cvar_Register(&cl_sayfilter_sendboth);
 	Cvar_ResetCurrentGroup();
 }
 
