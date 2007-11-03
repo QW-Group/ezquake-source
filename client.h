@@ -155,6 +155,17 @@ typedef struct
 	int					seq_when_received;
 } frame_t;
 
+// Holds the fileposition for a given time in a demo
+// these are saved as a demo is being read, and can
+// then be used for rewinding.
+typedef struct demo_keyframe_s
+{
+	unsigned long			filepos;	// The position in the demo file where the keyframe can be found.
+	double					timestamp;	// The time stamp in question.
+	struct demo_keyframe_s	*prev;
+	// TODO : Add any state information needed to reproduce this frame.
+} demo_keyframe_t;
+
 typedef struct 
 {
 	entity_state_t	baseline;

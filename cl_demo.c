@@ -71,6 +71,67 @@ cvar_t			demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 char Demos_Get_Trackname(void);
 int FindBestNick(char *s,int use);
 
+#ifdef WITH_DEMO_REWIND
+//=============================================================================
+//								DEMO KEYFRAMES
+//=============================================================================
+
+static demo_keyframe_t *demo_keyframes;
+
+// 
+// Adds a new keyframe to the list of demo keyframes.
+//
+static void CL_DemoKeyframeAdd(unsigned long filepos, float timestamp)
+{
+	demo_keyframe_t *keyframe = (demo_keyframe_t *)Q_malloc(sizeof(demo_keyframe_t));
+
+	keyframe->filepos	= filepos;
+	keyframe->timestamp = timestamp;
+	keyframe->prev		= demo_keyframes;
+	demo_keyframes		= keyframe;
+}
+
+//
+// Clears the demo keyframes.
+//
+static void CL_DemoKeyframeClearAll(void)
+{
+	demo_keyframe_t *iter = demo_keyframes;
+	demo_keyframe_t *temp = NULL;
+
+	while (iter)
+	{
+		temp = iter;
+		iter = iter->prev;
+		Q_free(temp);
+	}
+}
+
+//
+// Find the closest timestamp for a specified time.
+//
+static demo_keyframe_t *CL_DemoKeyframeFindClosest(double time)
+{
+	demo_keyframe_t *iter = demo_keyframes;
+	demo_keyframe_t *prev = iter;
+
+	while (iter)
+	{
+		if (iter->timestamp <= time)
+			break;
+
+		prev = iter;
+		iter = iter->prev;
+	}
+	
+	// Return the first timestamp if none was found.
+	if (!iter)
+		return prev;
+
+	return iter;
+}
+#endif // WITH_DEMO_REWIND
+
 //=============================================================================
 //								DEMO WRITING
 //=============================================================================
@@ -890,7 +951,12 @@ qbool CL_GetDemoMessage (void)
 	byte c;
 	byte message_type;
 	usercmd_t *pcmd;
+	byte mvd_time = 0; // Number of miliseconds since last frame. Can be between 0-255. MVD Only.
 	static float prevtime = 0;
+
+	#ifdef WITH_DEMO_REWIND
+	unsigned long current_filepos;
+	#endif // WITH_DEMO_REWIND
 
 	// Don't try to play while QWZ is being unpacked.
 	#ifdef _WIN32
@@ -918,6 +984,24 @@ qbool CL_GetDemoMessage (void)
 
 	bufferingtime = 0;
 
+	#ifdef WITH_DEMO_REWIND
+	// DEMO REWIND
+	// If we're seeking, check if we're supposed to rewind.
+	if (cls.demoseeking && (cls.demotime < nextdemotime))
+	{
+		// Find the keyframe closest to the new cls.demotime.
+		demo_keyframe_t *keyframe = CL_DemoKeyframeFindClosest(cls.demotime);
+		
+		// Seek to the rewind location.
+		VFS_SEEK(playbackfile, keyframe->filepos, SEEK_SET);
+
+		// Set nextdemotime to the read keyframe timestamp so
+		// that we won't just seek back to our old position.
+		cls.demotime = prevtime = nextdemotime = keyframe->timestamp;
+		cls.demoseeking = false;
+	}
+	#endif // WITH_DEMO_REWIND
+
 	// Adjust the time for MVD playback.
 	if (cls.mvdplayback)
 	{
@@ -938,11 +1022,18 @@ qbool CL_GetDemoMessage (void)
 		if (!pb_ensure())
 			return false;
 
+		#ifdef WITH_DEMO_REWIND
+		// DEMO REWIND
+		// Get the fileposition of the next time stamp so that it can be saved in a keyframe if needed.
+		if (cls.mvdplayback != QTV_PLAYBACK)
+		{
+			current_filepos = VFS_TELL(playbackfile);
+		}
+		#endif // WITH_DEMO_REWIND
+
 		// Read the time of the next message in the demo.
 		if (cls.mvdplayback)
 		{
-			byte mvd_time; // Number of miliseconds since last frame can be between 0-255.
-
 			// Peek inside, but don't read.
 			// (Since it might not be time to continue reading in the demo
 			// we want to be able to check this again later if that's the case).
@@ -971,6 +1062,20 @@ qbool CL_GetDemoMessage (void)
 			CL_Demo_Read(&demotime, sizeof(demotime), true);
 			demotime = LittleFloat(demotime);
 		}
+		
+		#ifdef WITH_DEMO_REWIND
+		// DEMO REWIND
+		// Every 5 seconds, save the file location and timestamp in a demo keyframe
+		if (!demo_keyframes || (demotime >= (demo_keyframes->timestamp + 5.0)))
+		{
+			// Since mvd time stamps can be 0 (several packets using the same time stamp)
+			// we only save a keyframe for the first packet in such a set.
+			if (!cls.mvdplayback || (cls.mvdplayback && mvd_time > 0))
+			{
+				CL_DemoKeyframeAdd(current_filepos, demotime);
+			}
+		}
+		#endif // WITH_DEMO_REWIND
 
 		// If we've reached our seek goal, stop seeking.
 		if ((cls.demoseeking || cls.demotest) && cls.demotime <= demotime)
@@ -2281,12 +2386,17 @@ void CL_StopPlayback (void)
 
 	// Close the playback file.
 	if (playbackfile)
-		VFS_CLOSE (playbackfile);
+		VFS_CLOSE(playbackfile);
 
 	// Reset demo playback vars.
 	playbackfile = NULL;
 	cls.mvdplayback = cls.demoplayback = cls.nqdemoplayback = false;
 	cl.paused &= ~PAUSED_DEMO;
+
+	#ifdef WITH_DEMO_REWIND
+	// Clear the demo keyframes used for rewinding.
+	CL_DemoKeyframeClearAll();
+	#endif // WITH_DEMO_REWIND
 
 	cls.qtv_svversion = 0;
 	cls.qtv_donotbuffer = false;
@@ -2557,7 +2667,6 @@ void CL_Play_f (void)
 	#endif // WITH_ZIP
 #endif // WITH_VFS_ARCHIVE_LOADING
 
-	int i;
 	char *real_name;
 	char name[MAX_OSPATH], **s;
 	static char *ext[] = {"qwd", "mvd", "dem", NULL};
@@ -2684,7 +2793,6 @@ void CL_Play_f (void)
 	}
 #endif // WITH_VFS_ARCHIVE_LOADING
 
-
 	// Failed to open the demo from any path :(
 	if (!playbackfile)
 	{
@@ -2693,12 +2801,14 @@ void CL_Play_f (void)
 	}
 
 	// Reset multiview track slots.
-	for(i = 0; i < 4; i++)
-	{
-		mv_trackslots[i] = -1;
-	}
+	memset(mv_trackslots, -1, sizeof(mv_trackslots));
 	nTrack1duel = nTrack2duel = 0;
 	mv_skinsforced = false;
+
+	#ifdef WITH_DEMO_REWIND
+	// Clear the demo keyframes used for rewinding.
+	CL_DemoKeyframeClearAll();
+	#endif WITH_DEMO_REWIND
 
 	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 
@@ -3497,11 +3607,13 @@ void CL_Demo_Jump_f (void)
 	newdemotime = relative ? (cls.demotime + relative * seconds) : (demostarttime + seconds);
 
 	// Can't travel back in time :(
+	#ifndef WITH_DEMO_REWIND
 	if (newdemotime < cls.demotime)
 	{
 		Com_Printf("Error: cannot demo_jump backwards\n");
 		return;
 	}
+	#endif // WITH_DEMO_REWIND
 
 	// Set the new demotime.
 	cls.demotime = newdemotime;
