@@ -972,6 +972,13 @@ qbool CL_GetDemoMessage (void)
 			demotime = LittleFloat(demotime);
 		}
 
+		// If we've reached our seek goal, stop seeking.
+		if ((cls.demoseeking || cls.demotest) && cls.demotime <= demotime)
+		{
+			cls.demoseeking = false;
+			cls.demotest = false;
+		}
+
 		playback_recordtime = demotime;
 
 		// Decide if it is time to grab the next message from the demo yet.
@@ -3492,12 +3499,15 @@ void CL_Demo_Jump_f (void)
 	// Can't travel back in time :(
 	if (newdemotime < cls.demotime)
 	{
-		Com_Printf ("Error: cannot demo_jump backwards\n");
+		Com_Printf("Error: cannot demo_jump backwards\n");
 		return;
 	}
 
 	// Set the new demotime.
 	cls.demotime = newdemotime;
+
+	cls.demoseeking = true;
+	cls.demotest = false;
 }
 
 //

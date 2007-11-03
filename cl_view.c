@@ -303,7 +303,8 @@ qbool V_CheckGamma (void) {
 }
 #endif	// !GLQUAKE
 
-void V_ParseDamage (void) {
+void V_ParseDamage (void)
+{
 	int armor, blood, i;
 	vec3_t from, forward, right;
 	float side, count, fraction;
@@ -312,6 +313,9 @@ void V_ParseDamage (void) {
 	blood = MSG_ReadByte ();
 	for (i = 0; i < 3; i++)
 		from[i] = MSG_ReadCoord ();
+
+	if (cls.demoseeking)
+		return;
 
 	count = blood * 0.5 + armor * 0.5;
 	if (count < 10)

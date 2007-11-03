@@ -60,7 +60,6 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 void R_TranslatePlayerSkin (int playernum);
 void R_PreMapLoad(char *mapname);
 
-
 char *svc_strings[] = {
 	"svc_bad",
 	"svc_nop",
@@ -146,11 +145,10 @@ int	oldparsecountmod;
 int	parsecountmod;
 double	parsecounttime;
 
-//Tei: cl_messages
-
-//Cl_Messages data
+// Cl_Messages data
 #define NUMMSG 70
-typedef struct messages_s {
+typedef struct messages_s 
+{
 	int msgs[NUMMSG];
 	int size[NUMMSG];
 	int printed[NUMMSG];
@@ -160,19 +158,15 @@ messages_t net;
 
 //=============================================================================
 
-// HUD -> hexum
-// kazik -->
 packet_info_t network_stats[NETWORK_STATS_SIZE];
-// kazik <--
 
 int packet_latency[NET_TIMINGS];
 
-int CL_CalcNet (void) {
+int CL_CalcNet (void) 
+{
 	int a, i, j, lost, packetcount;
 	frame_t	*frame;
 
-	// HUD -> hexum
-	// kazik -->
 	static cvar_t * netgraph_inframes = NULL;
 	extern hud_t * hud_netgraph;
 
@@ -189,31 +183,33 @@ int CL_CalcNet (void) {
 
 	if (netgraph_inframes == NULL)
 	    netgraph_inframes = HUD_FindVar(hud_netgraph, "inframes");
-	// kazik <--
 
-	for (i = cls.netchan.outgoing_sequence-UPDATE_BACKUP + 1; i <= cls.netchan.outgoing_sequence; i++) {
+	for (i = cls.netchan.outgoing_sequence-UPDATE_BACKUP + 1; i <= cls.netchan.outgoing_sequence; i++) 
+	{
 		frame = &cl.frames[i & UPDATE_MASK];
 	        j = i & NETWORK_STATS_MASK;
-		if (frame->receivedtime == -1) {
+		if (frame->receivedtime == -1)
+		{
 			packet_latency[i & NET_TIMINGSMASK] = 9999;	// dropped
 			network_stats[j].status = packet_dropped;
 		}
-		else if (frame->receivedtime == -2) {
+		else if (frame->receivedtime == -2) 
+		{
 			packet_latency[i & NET_TIMINGSMASK] = 10000;	// choked
 			network_stats[j].status = packet_choked;
 		}
-		else if (frame->receivedtime == -3) {
+		else if (frame->receivedtime == -3)
+		{
 			packet_latency[i & NET_TIMINGSMASK] = -1;	// choked by c2spps
 			network_stats[j].status = packet_netlimit;
 		}
-		else if (frame->invalid) {
+		else if (frame->invalid) 
+		{
 			packet_latency[i & NET_TIMINGSMASK] = 9998;	// invalid delta
 			network_stats[j].status = packet_delta;
 		}
-		else {
-			//packet_latency[i & NET_TIMINGSMASK] = (frame->receivedtime - frame->senttime) * 20;
-
-			// modified by kazik
+		else 
+		{
 			double l;
 			if (netgraph_inframes->value)      // [frames]
 				l = 2*(frame->seq_when_received-i);
@@ -226,7 +222,8 @@ int CL_CalcNet (void) {
 	}
 
 	lost = packetcount = 0;
-	for (a = 0; a < NET_TIMINGS; a++)	{
+	for (a = 0; a < NET_TIMINGS; a++)	
+	{
 		// fix for packetloss on high ping
 		if (a < UPDATE_BACKUP && (cls.realtime -
 			cl.frames[(cls.netchan.outgoing_sequence-a)&UPDATE_MASK].senttime) < cls.latency)
@@ -242,9 +239,7 @@ int CL_CalcNet (void) {
 	return last_lost;
 }
 
-// HUD -> hexum
-// kazik -->
-// more network statistics
+// More network statistics
 int CL_CalcNetStatistics(
             /* in */
             float period,           // period of time
@@ -269,7 +264,9 @@ int CL_CalcNetStatistics(
     p = q - 1;
     while (p > cls.netchan.outgoing_sequence - NETWORK_STATS_SIZE + 1  &&
            samples[q&NETWORK_STATS_MASK].senttime - samples[p&NETWORK_STATS_MASK].senttime < period)
+	{
         p--;
+	}
 
     // init values
     samples_sent = 0;
@@ -312,41 +309,41 @@ int CL_CalcNetStatistics(
 
         switch (samples[a].status)
         {
-        case packet_delta:
-            lost_delta ++;
-            samples_delta ++;
-            break;
-        case packet_choked:
-            lost_rate ++;
-            break;
-        case packet_dropped:
-            lost_lost ++;
-            break;
-        case packet_ok:
-            // packet received
-            {
-                float ping;
-                int frames;
+			case packet_delta:
+				lost_delta ++;
+				samples_delta ++;
+				break;
+			case packet_choked:
+				lost_rate ++;
+				break;
+			case packet_dropped:
+				lost_lost ++;
+				break;
+			case packet_ok:
+				// packet received
+				{
+					float ping;
+					int frames;
 
-                samples_received ++;
-                frames = samples[a].seq_diff;
-                ping = 1000*(samples[a].receivedtime - samples[a].senttime);
+					samples_received ++;
+					frames = samples[a].seq_diff;
+					ping = 1000*(samples[a].receivedtime - samples[a].senttime);
 
-                if (ping < ping_min)    ping_min = ping;
-                if (ping > ping_max)    ping_max = ping;
-                if (frames < f_min)     f_min = frames;
-                if (frames > f_max)     f_max = frames;
+					if (ping < ping_min)    ping_min = ping;
+					if (ping > ping_max)    ping_max = ping;
+					if (frames < f_min)     f_min = frames;
+					if (frames > f_max)     f_max = frames;
 
-                ping_sum += ping;
-                f_sum += frames;
+					ping_sum += ping;
+					f_sum += frames;
 
-                size_received += samples[a].receivedsize;
+					size_received += samples[a].receivedsize;
 
-                if (samples[a].delta)
-                    samples_delta ++;
-            }
-        default:
-            break;
+					if (samples[a].delta)
+						samples_delta ++;
+				}
+			default:
+				break;
         }
 
         // end of loop
@@ -405,12 +402,12 @@ int CL_CalcNetStatistics(
     res->samples = q-p;
     return res->samples;
 }
-// kazik <--
 
 //=============================================================================
 
-//Returns true if the file exists, otherwise it attempts to start a download from the server.
-qbool CL_CheckOrDownloadFile (char *filename) {
+// Returns true if the file exists, otherwise it attempts to start a download from the server.
+qbool CL_CheckOrDownloadFile (char *filename) 
+{
 #ifndef WITH_FTE_VFS
 	FILE *f;
 #else
@@ -418,35 +415,42 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 #endif
 
 
-	if (strstr (filename, "..")) {
+	if (strstr (filename, ".."))
+	{
 		Com_Printf ("Refusing to download a path with ..\n");
 		return true;
 	}
 
 #ifndef WITH_FTE_VFS
 	FS_FOpenFile (filename, &f);
-	if (f) {	// it exists, no need to download
+	if (f) 
+	{	
+		// It exists, no need to download
 		fclose (f);
 		return true;
 	}
 #else
 	f = FS_OpenVFS(filename, "rb", FS_ANY);
-	if (f) {
+	if (f) 
+	{
 		VFS_CLOSE(f);
 		return true;
 	}
 #endif // WITH_FTE_VFS
 
-	//ZOID - can't download when recording
-	if (cls.demorecording) {
+	// ZOID - can't download when recording
+	if (cls.demorecording) 
+	{
 		Com_Printf ("Unable to download %s in record mode.\n", filename);
 		return true;
 	}
-	//ZOID - can't download when playback, except qtv which support download
+	// ZOID - can't download when playback, except qtv which support download
 	if (cls.demoplayback)
 	{
-		if (cls.mvdplayback == QTV_PLAYBACK) {
-			if (cls.qtv_svversion < QTV_VER_1_2) {
+		if (cls.mvdplayback == QTV_PLAYBACK)
+		{
+			if (cls.qtv_svversion < QTV_VER_1_2) 
+			{
 				Com_Printf ("Unable to download %s, this QTV outdated\n", filename);
 				return true;
 			}
@@ -455,7 +459,8 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 			return true;
 	}
 
-	if (cls.state < ca_connected) {
+	if (cls.state < ca_connected) 
+	{
 		Com_DPrintf ("Unable to download %s, not connected\n", filename);
 		return true;
 	}
@@ -473,10 +478,12 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
 	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
-	if (cls.mvdplayback == QTV_PLAYBACK) {
+	if (cls.mvdplayback == QTV_PLAYBACK) 
+	{
 		QTV_Cmd_Printf(QTV_VER_1_2, "download %s\n", filename);
 	}
-	else {
+	else 
+	{
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("download %s", filename));
 	}
@@ -486,15 +493,19 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	return false;
 }
 
-void CL_FindModelNumbers (void) {
+void CL_FindModelNumbers (void) 
+{
 	int i, j;
 
 	for (i = 0; i < cl_num_modelindices; i++)
 		cl_modelindices[i] = -1;
 
-	for (i = 0; i < MAX_MODELS; i++) {
-		for (j = 0; j < cl_num_modelindices; j++) {
-			if (!strcmp(cl_modelnames[j], cl.model_name[i])) {
+	for (i = 0; i < MAX_MODELS; i++) 
+	{
+		for (j = 0; j < cl_num_modelindices; j++) 
+		{
+			if (!strcmp(cl_modelnames[j], cl.model_name[i]))
+			{
 				cl_modelindices[j] = i;
 				break;
 			}
@@ -502,29 +513,32 @@ void CL_FindModelNumbers (void) {
 	}
 }
 
-void CL_ProxyEnter (void) {
+void CL_ProxyEnter (void) 
+{
 	if (!strcmp(cl.levelname, "Qizmo menu") ||	// qizmo detection
-		strstr(cl.serverinfo, "*QTV")) {		// fteqtv detection
-
-		// if we are connected only to the proxy frontend
-		// we presume that the menu is on
+		strstr(cl.serverinfo, "*QTV")) 			// fteqtv detection
+	{
+		// If we are connected only to the proxy frontend
+		// we presume that the menu is on.
 		M_EnterProxyMenu();
 
-	} else if (key_dest == key_menu && m_state == m_proxy) {
-
-		// this happens when we connect to a server using a proxy
+	} 
+else if (key_dest == key_menu && m_state == m_proxy) 
+	{
+		// This happens when we connect to a server using a proxy.
 		M_LeaveMenus();
 	}
 
-	// if we used console to connect to a server via proxy,
-	// cancel return to the proxy menu, because it's not there
+	// If we used console to connect to a server via proxy,
+	// cancel return to the proxy menu, because it's not there.
 	if (key_dest_beforecon == key_menu)
 		key_dest_beforecon = key_game;
 }
 
 static void CL_TransmitModelCrc (int index, char *info_key)
 {
-	if (index != -1) {
+	if (index != -1) 
+	{
 		struct model_s *model = cl.model_precache[index];
 		unsigned short crc = model->crc;
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
@@ -576,7 +590,8 @@ void CL_Prespawn (void)
 	if (cls.mvdplayback == QTV_PLAYBACK) {
 		QTV_Cmd_Printf(QTV_VER_1_2, "qtvspawn %i", cl.servercount);
 	}
-	else {
+	else 
+	{
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("prespawn %i 0 %i", cl.servercount, cl.map_checksum2));
 	}
@@ -594,17 +609,20 @@ void VWepModel_NextDownload (void)
 	extern cvar_t cl_novweps;
 
 	if (((!cl.z_ext & Z_EXT_VWEP || !cl.vw_model_name[0][0]) && !cls.mvdplayback)
-	|| cl_novweps.value) {
+	|| cl_novweps.value) 
+	{
 		// no vwep support, go straight to prespawn
 		CL_Prespawn ();
 		return;
 	}
 
-	if (cls.mvdplayback && cls.downloadnumber == 0) {
+	if (cls.mvdplayback && cls.downloadnumber == 0)
+	{
 		CL_ParseVWepPrecache ("//vwep vwplayer w_axe w_shot w_shot2 w_nail w_nail2 w_rock w_rock2 w_light");
 	}
 
-	if (cls.downloadnumber == 0) {
+	if (cls.downloadnumber == 0)
+	{
 		if (!com_serveractive || developer.value)
 			Com_Printf ("Checking vwep models...\n");
 		//cls.downloadnumber = 0;
@@ -628,7 +646,8 @@ void VWepModel_NextDownload (void)
 		if (strcmp(cl.vw_model_name[i], "-"))
 			cl.vw_model_precache[i] = Mod_ForName (cl.vw_model_name[i], false);
 
-		if (!cl.vw_model_precache[i]) {
+		if (!cl.vw_model_precache[i])
+		{
 			// never mind
 			// Com_Printf ("Warning: model %s could not be found\n", cl.vw_model_name[i]);
 		}
@@ -636,7 +655,8 @@ void VWepModel_NextDownload (void)
 
 	if (!strcmp(cl.vw_model_name[0], "-") || cl.vw_model_precache[0])
 		cl.vwep_enabled = true;
-	else {
+	else 
+	{
 		// if the vwep player model is required but not present,
 		// don't enable vwep support
 	}
@@ -645,17 +665,20 @@ void VWepModel_NextDownload (void)
 	CL_Prespawn ();
 }
 
-void Model_NextDownload (void) {
+void Model_NextDownload (void) 
+{
 	int	i;
 	char *s;
 
-	if (cls.downloadnumber == 0) {
+	if (cls.downloadnumber == 0) 
+	{
 		Com_Printf ("Checking models...\n");
 		cls.downloadnumber = 1;
 	}
 
 	cls.downloadtype = dl_model;
-	for ( ; cl.model_name[cls.downloadnumber][0]; cls.downloadnumber++)	{
+	for ( ; cl.model_name[cls.downloadnumber][0]; cls.downloadnumber++)	
+	{
 		s = cl.model_name[cls.downloadnumber];
 		if (s[0] == '*')
 			continue; // inline brush model
@@ -666,13 +689,15 @@ void Model_NextDownload (void) {
 
 	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
 
-	for (i = 1; i < MAX_MODELS; i++) {
+	for (i = 1; i < MAX_MODELS; i++) 
+	{
 		if (!cl.model_name[i][0])
 			break;
 
 		cl.model_precache[i] = Mod_ForName (cl.model_name[i], false);
 
-		if (!cl.model_precache[i]) {
+		if (!cl.model_precache[i]) 
+		{
 			Com_Printf("\nThe required model file '%s' could not be found or downloaded.\n\n", cl.model_name[i]);
 			Host_EndGame();
 			return;
@@ -681,29 +706,34 @@ void Model_NextDownload (void) {
 		if (cl.model_name[i][0] == '*')
 			cl.clipmodels[i] = CM_InlineModel(cl.model_name[i]);
 	}
-	// done with normal models, request vwep models if necessary
+
+	// Done with normal models, request vwep models if necessary
 	cls.downloadtype = dl_vwep_model;
 	cls.downloadnumber = 0;
 	VWepModel_NextDownload ();
 }
 
-void Sound_NextDownload (void) {
+void Sound_NextDownload (void) 
+{
 	char *s;
 	int i;
 
-	if (cls.downloadnumber == 0) {
+	if (cls.downloadnumber == 0)
+	{
 		Com_Printf ("Checking sounds...\n");
 		cls.downloadnumber = 1;
 	}
 
 	cls.downloadtype = dl_sound;
-	for ( ; cl.sound_name[cls.downloadnumber][0]; cls.downloadnumber++)	{
+	for ( ; cl.sound_name[cls.downloadnumber][0]; cls.downloadnumber++)	
+	{
 		s = cl.sound_name[cls.downloadnumber];
 		if (!CL_CheckOrDownloadFile(va("sound/%s",s)))
 			return;		// started a download
 	}
 
-	for (i = 1; i < MAX_SOUNDS; i++) {
+	for (i = 1; i < MAX_SOUNDS; i++) 
+	{
 		if (!cl.sound_name[i][0])
 			break;
 		cl.sound_precache[i] = S_PrecacheSound (cl.sound_name[i]);
@@ -712,10 +742,12 @@ void Sound_NextDownload (void) {
 	// done with sounds, request models now
 	memset (cl.model_precache, 0, sizeof(cl.model_precache));
 
-	if (cls.mvdplayback == QTV_PLAYBACK) {
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
 		QTV_Cmd_Printf(QTV_VER_1_2, "qtvmodellist %i %i", cl.servercount, 0);
 	}
-	else {
+	else 
+	{
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, 0));
 	}
@@ -727,15 +759,12 @@ void Sound_NextDownload (void) {
 // FTE's chunked download
 //
 
-
 extern void CL_RequestNextDownload (void);
 
-
-#define MAXBLOCKS 64	//must be power of 2
+#define MAXBLOCKS 64	// Must be power of 2
 #define DLBLOCKSIZE 1024
 
-
-int chunked_download_number = 0; // never reset, bumped up
+int chunked_download_number = 0; // Never reset, bumped up.
 
 int downloadsize;
 int receivedbytes;
@@ -743,13 +772,12 @@ int recievedblock[MAXBLOCKS];
 int firstblock;
 int blockcycle;
 
-
 int CL_RequestADownloadChunk(void)
 {
 	int i;
 	int b;
 
-	if (cls.downloadmethod != DL_QWCHUNKS) // paranoia
+	if (cls.downloadmethod != DL_QWCHUNKS) // Paranoia!
 		Host_Error("download not initiated\n");
 
 	for (i = 0; i < MAXBLOCKS; i++)
@@ -758,16 +786,13 @@ int CL_RequestADownloadChunk(void)
 
 		b = ((blockcycle) & (MAXBLOCKS-1)) + firstblock;
 
-		if (!recievedblock[b&(MAXBLOCKS-1)])	//don't ask for ones we've already got.
+		if (!recievedblock[b&(MAXBLOCKS-1)]) // Don't ask for ones we've already got.
 		{
-			if (b >= (downloadsize+DLBLOCKSIZE-1)/DLBLOCKSIZE)	//don't ask for blocks that are over the size of the file.
+			if (b >= (downloadsize+DLBLOCKSIZE-1)/DLBLOCKSIZE)	// Don't ask for blocks that are over the size of the file.
 				continue;
-//			Com_Printf("Requesting block %d | i:%d b:%d f:%d\n", b, i, blockcycle, firstblock);
 			return b;
 		}
 	}
-
-//	Com_Printf("^1 EOF?\n");
 
 	return -1;
 }
@@ -798,8 +823,6 @@ void CL_Parse_OOB_ChunkedDownload(void)
 {
 	int j;
 
-//	Com_Printf("%6.6s\n", net_message.data + 5);
-
 	for ( j = 0; j < sizeof("\\chunk")-1; j++ )
 		MSG_ReadByte ();
 
@@ -826,12 +849,11 @@ void CL_Parse_OOB_ChunkedDownload(void)
 	CL_ParseDownload ();
 }
 
-
 static void MSG_ReadData (void *data, int len)
 {
-	int		i;
+	int	i;
 
-	for (i=0 ; i<len ; i++)
+	for (i = 0 ; i < len ; i++)
 		((byte *)data)[i] = MSG_ReadByte ();
 }
 
@@ -849,7 +871,9 @@ void CL_ParseChunkedDownload(void)
 		totalsize = MSG_ReadLong();
 		svname    = MSG_ReadString();
 
-		if (cls.download) { // ensure FILE is closed
+		if (cls.download) 
+		{ 
+			// Ensure FILE is closed
 			if (totalsize != -3) // -3 = dl stopped, so this known issue, do not warn
 				Com_Printf ("cls.download shouldn't have been set\n");
 
@@ -880,12 +904,13 @@ void CL_ParseChunkedDownload(void)
 //		if (strcasecmp(cls.downloadname, svname))
 //			Host_Error("Server sent the wrong download - \"%s\" instead of \"%s\"\n", svname, cls.downloadname);
 
-		//start the new download
+		// Start the new download
 		FS_CreatePath (cls.downloadtempname);
 
-		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) {
+		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) 
+		{
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
-			CL_FinishDownload(false); // this also request next dl
+			CL_FinishDownload(false); // This also requests next dl.
 			return;
 		}
 
@@ -903,12 +928,10 @@ void CL_ParseChunkedDownload(void)
 		return;
 	}
 
-//	Com_Printf("Received dl block %i:\n", chunknum);
-
 	MSG_ReadData(data, DLBLOCKSIZE);
 
-	if (!cls.download) { // hrm ?
-//		Com_Printf ("cls.download not set\n");
+	if (!cls.download) 
+	{ 
 		return;
 	}
 
@@ -916,29 +939,25 @@ void CL_ParseChunkedDownload(void)
 		Host_Error("cls.downloadmethod != DL_QWCHUNKS\n");
 
 	if (cls.demoplayback)
-	{	//err, yeah, when playing demos we don't actually pay any attention to this.
+	{	
+		// Err, yeah, when playing demos we don't actually pay any attention to this.
 		return;
 	}
 
 	if (chunknum < firstblock)
 	{
-//		Com_Printf("too old %d\n", chunknum);
 		return;
 	}
 
-	if (chunknum-firstblock >= MAXBLOCKS)
+	if (chunknum - firstblock >= MAXBLOCKS)
 	{
-//		Com_Printf("too new %d!\n", chunknum);
 		return;
 	}
 
 	if (recievedblock[chunknum&(MAXBLOCKS-1)])
 	{
-//		Com_Printf("duplicated %d\n", chunknum);
 		return;
 	}
-
-//	Com_Printf("usable %d\n", chunknum);
 
 	receivedbytes += DLBLOCKSIZE;
 	recievedblock[chunknum&(MAXBLOCKS-1)] = true;
@@ -963,25 +982,27 @@ void CL_ParseChunkedDownload(void)
 
 #endif // FTE_PEXT_CHUNKEDDOWNLOADS
 
-void CL_RequestNextDownload (void) {
-	switch (cls.downloadtype) {
-	case dl_single:
-		break;
-	case dl_skin:
-		Skin_NextDownload ();
-		break;
-	case dl_model:
-		Model_NextDownload ();
-		break;
-	case dl_vwep_model:
-		VWepModel_NextDownload ();
-		break;
-	case dl_sound:
-		Sound_NextDownload ();
-		break;
-	case dl_none:
-	default:
-		Com_DPrintf ("Unknown download type.\n");
+void CL_RequestNextDownload (void) 
+{
+	switch (cls.downloadtype)
+	{
+		case dl_single:
+			break;
+		case dl_skin:
+			Skin_NextDownload ();
+			break;
+		case dl_model:
+			Model_NextDownload ();
+			break;
+		case dl_vwep_model:
+			VWepModel_NextDownload ();
+			break;
+		case dl_sound:
+			Sound_NextDownload ();
+			break;
+		case dl_none:
+		default:
+			Com_DPrintf ("Unknown download type.\n");
 	}
 }
 
@@ -1018,38 +1039,41 @@ void CL_FinishDownload(qbool rename_files)
 		CL_RequestNextDownload ();
 }
 
-//A download message has been received from the server
-void CL_ParseDownload (void) {
+// A download message has been received from the server
+void CL_ParseDownload (void)
+{
 	int size, percent;
 
 	static float time = 0;
 	static int s = 0;
 
-#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (cls.fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
 		CL_ParseChunkedDownload();
 		return;
 	}
-#endif
+	#endif // PFTE_PEXT_CHUNKEDDOWNLOADS
 
 	if (cls.downloadmethod != DL_QW)
 		Host_Error("cls.downloadmethod != DL_QW\n");
 
-	// read the data
+	// Read the data
 	size = MSG_ReadShort ();
 	percent = MSG_ReadByte ();
 
 	s += size;
-	if (cls.realtime - time > 1) {
-		cls.downloadrate = s/(1024*(cls.realtime - time));
+	if (cls.realtime - time > 1) 
+	{
+		cls.downloadrate = s / (1024 * (cls.realtime - time));
 		time = cls.realtime;
 		s = 0;
 	}
 
-	if (cls.demoplayback) {
-		// not in demo playback, except qtv which support download
-		if (cls.mvdplayback != QTV_PLAYBACK || cls.qtv_svversion < QTV_VER_1_2)
+	if (cls.demoplayback) 
+	{
+		// Not in demo playback, except qtv which support download
+		if (cls.mvdplayback != QTV_PLAYBACK || cls.qtv_svversion < QTV_VER_1_2 || cls.demoseeking)
 		{
 			if (size > 0)
 				msg_readcount += size;
@@ -1057,7 +1081,8 @@ void CL_ParseDownload (void) {
 		}
 	}
 
-	if (size == -1)	{
+	if (size == -1)	
+	{
 		Com_Printf ("File not found.\n");
 		if (cls.download) {
 			Com_Printf ("cls.download shouldn't have been set\n");
@@ -1068,12 +1093,13 @@ void CL_ParseDownload (void) {
 		return;
 	}
 
-	// open the file if not opened yet
-	if (!cls.download) {
-
+	// Open the file if not opened yet
+	if (!cls.download) 
+	{
 		FS_CreatePath (cls.downloadtempname);
 
-		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) {
+		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) )
+		{
 			msg_readcount += size;
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
 			CL_FinishDownload(false); // this also request next dl
@@ -1084,19 +1110,24 @@ void CL_ParseDownload (void) {
 	fwrite (net_message.data + msg_readcount, 1, size, cls.download);
 	msg_readcount += size;
 
-	if (percent != 100) {
-		// change display routines by zoid
-		// request next block
+	if (percent != 100) 
+	{
+		// Change display routines by zoid.
+		// Request next block.
 		cls.downloadpercent = percent;
 
-		if (cls.mvdplayback == QTV_PLAYBACK) {
+		if (cls.mvdplayback == QTV_PLAYBACK) 
+		{
 			// nothing
 		}
-		else {
+		else 
+		{
 			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 			SZ_Print (&cls.netchan.message, "nextdl");
 		}
-	} else {
+	} 
+	else
+	{
 		CL_FinishDownload(true); // this also request next dl
 	}
 }
@@ -1124,10 +1155,12 @@ void CL_NextUpload(void)
 	MSG_WriteByte (&cls.netchan.message, clc_upload);
 	MSG_WriteShort (&cls.netchan.message, r);
 
-	if (cls.is_file) {
-		//fseek(upload, upload_pos, SEEK_CUR); // er don't seek
+	if (cls.is_file)
+	{
 		fread(buffer, 1, r, cls.upload);
-	} else {
+	} 
+	else 
+	{
 		memcpy(buffer, cls.mem_upload + cls.upload_pos, r);
 	}
 	cls.upload_pos += r;
@@ -1140,20 +1173,25 @@ void CL_NextUpload(void)
 	Com_DPrintf ("UPLOAD: %6d: %d written\n", cls.upload_pos - r, r);
 
 	s += r;
-	if (cls.realtime - time > 1) {
+	if (cls.realtime - time > 1) 
+	{
 		cls.uploadrate = s/(1024*(cls.realtime - time));
 		time = cls.realtime;
 		s = 0;
 	}
+	
 	if (cls.upload_pos != cls.upload_size)
 		return;
 
 	Com_Printf ("Upload completed\n");
 
-	if (cls.is_file) {
+	if (cls.is_file) 
+	{
 		fclose (cls.upload);
 		cls.upload = NULL;
-	} else {
+	} 
+	else 
+	{
 		Q_free(cls.mem_upload);
 		cls.mem_upload = 0;
 	}
@@ -1183,9 +1221,13 @@ void CL_StartUpload (byte *data, int size)
 static void ReplaceChar(char *s, char from, char to)
 {
 	if (s)
+	{
 		for ( ;*s ; ++s)
+		{
 			if (*s == from)
 				*s = to;
+		}
+	}
 }
 
 void CL_StartFileUpload (void)
@@ -1194,9 +1236,10 @@ void CL_StartFileUpload (void)
 	int i;
 
 
-	if (cls.state < ca_onserver) {
+	if (cls.state < ca_onserver) 
+	{
 		Com_Printf("must be connected\n");
-		return; // gotta be connected
+		return;
 	}
 
 	name = Cmd_Argv (2);
@@ -1217,7 +1260,8 @@ void CL_StartFileUpload (void)
 		|| ( name[1] == ':' && (*name >= 'a' && *name <= 'z' ||
 			*name >= 'A' && *name <= 'Z') )
 #endif //_WIN32
-	) {
+	) 
+	{
 		Com_Printf ("File upload: bad path/name \"%s\"", name);
 		return;
 	}
@@ -1225,7 +1269,8 @@ void CL_StartFileUpload (void)
 	cls.is_file = true;
 
 	// override
-	if (cls.upload) {
+	if (cls.upload) 
+	{
 		fclose(cls.upload);
 		cls.upload = NULL;
 	}
@@ -1233,7 +1278,8 @@ void CL_StartFileUpload (void)
 	strlcpy(cls.uploadname, Cmd_Argv(2), sizeof(cls.uploadname));
 	cls.upload = fopen(cls.uploadname, "rb"); // BINARY
 
-	if (!cls.upload) {
+	if (!cls.upload)
+	{
 		Com_Printf ("Bad file \"%s\"\n", cls.uploadname);
 		return;
 	}
@@ -1255,114 +1301,45 @@ qbool CL_IsUploading(void)
 
 void CL_StopUpload(void)
 {
-	if (cls.is_file) {
-		if (cls.upload) {
+	if (cls.is_file) 
+	{
+		if (cls.upload) 
+		{
 			fclose(cls.upload);
 			cls.upload = NULL;
 		}
-	} else {
-		if (cls.mem_upload) {
+	} 
+	else 
+	{
+		if (cls.mem_upload) 
+		{
 			Q_free(cls.mem_upload);
 			cls.mem_upload = NULL;
 		}
 	}
 }
-/*
-static byte *upload_data;
-static int upload_pos;
-static int upload_size;
-void CL_NextUpload(void) {
-	static byte buffer[768];
-	int r, percent, size;
 
-	if (!upload_data)
-		return;
-
-	r = min(upload_size - upload_pos, sizeof(buffer));
-	memcpy(buffer, upload_data + upload_pos, r);
-	MSG_WriteByte (&cls.netchan.message, clc_upload);
-	MSG_WriteShort (&cls.netchan.message, r);
-
-	upload_pos += r;
-	size = upload_size ? upload_size : 1;
-	percent = upload_pos * 100 / size;
-	MSG_WriteByte (&cls.netchan.message, percent);
-	SZ_Write (&cls.netchan.message, buffer, r);
-
-	Com_DPrintf ("UPLOAD: %6d: %d written\n", upload_pos - r, r);
-
-	if (upload_pos != upload_size)
-		return;
-
-	Com_Printf ("Upload completed\n");
-
-	Q_free(upload_data);
-	upload_data = 0;
-	upload_pos = upload_size = 0;
-}
-
-qbool CL_IsUploading(void) {
-	return !!upload_data;
-}
-
-void CL_StopUpload(void) {
-	if (upload_data) {
-		Q_free(upload_data);
-		upload_data = NULL;
-	}
-}
-
-int COM_FileOpenRead (char *path, FILE **hndl);
-
-void CL_StartUpload (char *filename) {
-	FILE *f;
-	int size;
-
-	if (cls.state < ca_onserver)
-		return; // gotta be connected
-
-	if (CL_IsUploading())
-		CL_StopUpload();
-
-	if ((size = COM_FileOpenRead (va("%s/%s", com_basedir, filename), &f)) == -1)
-		return;
-
-	Com_DPrintf ("Upload starting of %d...\n", size);
-
-	upload_data = Q_malloc (size);
-	if (fread(upload_data, 1, size, f) != size) {
-		fclose(f);
-		CL_StopUpload();
-		return;
-	}
-
-	fclose(f);
-	upload_size = size;
-	upload_pos = 0;
-
-	CL_NextUpload();
-}
-*/
 /*
 =====================================================================
   SERVER CONNECTING MESSAGES
 =====================================================================
 */
 
-void CL_ParseServerData (void) {
+void CL_ParseServerData (void) 
+{
 	char *str, fn[MAX_OSPATH];
 	FILE *f;
 	qbool cflag = false;
 	int i, protover;
 
-	Com_DPrintf ("Serverdata packet received.\n");
+	Com_DPrintf("Serverdata packet received.\n");
 
 	// wipe the clientState_t struct
-	CL_ClearState ();
+	CL_ClearState();
 
 	// parse protocol version number
 	// allow 2.2 and 2.29 demos to play
-#ifdef PROTOCOL_VERSION_FTE
+	#ifdef PROTOCOL_VERSION_FTE
 	cls.fteprotocolextensions = 0;
 
 	for(;;)
@@ -1380,11 +1357,11 @@ void CL_ParseServerData (void) {
 			break;
 		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.quakeworld.net/", protover, PROTOCOL_VERSION);
 	}
-#else
+	#else
 	protover = MSG_ReadLong ();
 	if (protover != PROTOCOL_VERSION &&	!(cls.demoplayback && (protover == 26 || protover == 27 || protover == 28)))
 		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.quakeworld.net,\nhttp://ezquake.sourceforge.net,\nhttp://mvdsv.sourceforge.net", protover, PROTOCOL_VERSION);
-#endif
+	#endif // PROTOCOL_VERSION_FTE
 
 	cl.protoversion = protover;
 	cl.servercount = MSG_ReadLong ();
@@ -1393,7 +1370,8 @@ void CL_ParseServerData (void) {
 	str = MSG_ReadString ();
 
 	cl.teamfortress = !strcasecmp(str, "fortress");
-	if (cl.teamfortress) {
+	if (cl.teamfortress) 
+	{
 		extern cvar_t	v_iyaw_cycle, v_iroll_cycle, v_ipitch_cycle,
 			v_iyaw_level, v_iroll_level, v_ipitch_level, v_idlescale;
 		cbuf_current = &cbuf_svc;	// hack
@@ -1406,9 +1384,10 @@ void CL_ParseServerData (void) {
 		Cvar_SetValue (&v_idlescale, 0);
 	}
 
-	if (strcasecmp(cls.gamedirfile, str)) {
+	if (strcasecmp(cls.gamedirfile, str)) 
+	{
 		// save current config
-		CL_WriteConfiguration ();
+		CL_WriteConfiguration();
 		strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
 		snprintf (cls.gamedir, sizeof(cls.gamedir),
 			"%s/%s", com_basedir, cls.gamedirfile);
@@ -1420,37 +1399,41 @@ void CL_ParseServerData (void) {
 
 	// run config.cfg and frontend.cfg in the gamedir if they exist
 
-
-
-
-	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) {
+	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
+	{
 		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");
 		Cbuf_AddText ("cl_warncmd 0\n");
-		if ((f = fopen(fn, "r")) != NULL) {
+		if ((f = fopen(fn, "r")) != NULL) 
+		{
 			fclose(f);
 			if (!strcmp(cls.gamedirfile, com_gamedirfile))
 				Cbuf_AddText ("exec config.cfg\n");
 			else
 				Cbuf_AddText (va("exec ../%s/config.cfg\n", cls.gamedirfile));
-		} else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw")){
-
+		} 
+		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
+		{
 			snprintf (fn, sizeof(fn), "qw/%s", "config.cfg");
-			if ((f = fopen(fn, "r")) != NULL) {
+			if ((f = fopen(fn, "r")) != NULL) 
+			{
 				fclose(f);
 				Cbuf_AddText ("exec config.cfg\n");
 			}
 		}
 		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
-		if ((f = fopen(fn, "r")) != NULL) {
+		if ((f = fopen(fn, "r")) != NULL) 
+		{
 			fclose(f);
 			if (!strcmp(cls.gamedirfile, com_gamedirfile))
 				Cbuf_AddText ("exec frontend.cfg\n");
 			else
 				Cbuf_AddText (va("exec ../%s/frontend.cfg\n", cls.gamedirfile));
-		} else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw")){
-
+		} 
+		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
+		{
 			snprintf (fn, sizeof(fn), "qw/%s", "frontend.cfg");
-			if ((f = fopen(fn, "r")) != NULL) {
+			if ((f = fopen(fn, "r")) != NULL) 
+			{
 				fclose(f);
 				Cbuf_AddText ("exec frontend.cfg\n");
 			}
@@ -1459,15 +1442,19 @@ void CL_ParseServerData (void) {
 	}
 
 	// parse player slot, high bit means spectator
-	if (cls.mvdplayback) {
+	if (cls.mvdplayback)
+	{
 		cls.netchan.last_received = nextdemotime = olddemotime = MSG_ReadFloat();
 		cl.playernum = MAX_CLIENTS - 1;
 		cl.spectator = true;
 		for (i = 0; i < UPDATE_BACKUP; i++)
 			cl.frames[i].playerstate[cl.playernum].pm_type = PM_SPECTATOR;
-	} else {
+	}
+	else 
+	{
 		cl.playernum = MSG_ReadByte ();
-		if (cl.playernum & 128) {
+		if (cl.playernum & 128) 
+		{
 			cl.spectator = true;
 			cl.playernum &= ~128;
 		}
@@ -1496,11 +1483,13 @@ void CL_ParseServerData (void) {
 	// ask for the sound list next
 	memset(cl.sound_name, 0, sizeof(cl.sound_name));
 
-	if (cls.mvdplayback == QTV_PLAYBACK) {
+	if (cls.mvdplayback == QTV_PLAYBACK) 
+	{
 		cls.qtv_donotbuffer = true; // do not try buffering before "skins" not received
 		QTV_Cmd_Printf(QTV_VER_1_2, "qtvsoundlist %i %i", cl.servercount, 0);
 	}
-	else {
+	else 
+	{
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("soundlist %i %i", cl.servercount, 0));
 	}
@@ -1509,16 +1498,18 @@ void CL_ParseServerData (void) {
 	cls.state = ca_onserver;
 }
 
-void CL_ParseSoundlist (void) {
+void CL_ParseSoundlist (void)
+{
 	int	numsounds, n;
 	char *str;
 
 	// precache sounds
-	//	memset (cl.sound_precache, 0, sizeof(cl.sound_precache));
+	// memset (cl.sound_precache, 0, sizeof(cl.sound_precache));
 
 	numsounds = MSG_ReadByte();
 
-	while (1) {
+	while (1) 
+	{
 		str = MSG_ReadString ();
 		if (!str[0])
 			break;
@@ -1532,13 +1523,16 @@ void CL_ParseSoundlist (void) {
 
 	n = MSG_ReadByte();
 
-	if (n) {
-		if (cls.mvdplayback == QTV_PLAYBACK) {
+	if (n) 
+	{
+		if (cls.mvdplayback == QTV_PLAYBACK) 
+		{
 			// none
 		}
-		else {
-			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-			MSG_WriteString (&cls.netchan.message, va("soundlist %i %i", cl.servercount, n));
+		else 
+		{
+			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+			MSG_WriteString(&cls.netchan.message, va("soundlist %i %i", cl.servercount, n));
 		}
 
 		return;
@@ -1546,7 +1540,7 @@ void CL_ParseSoundlist (void) {
 
 	cls.downloadnumber = 0;
 	cls.downloadtype = dl_sound;
-	Sound_NextDownload ();
+	Sound_NextDownload();
 }
 
 void CL_ParseModellist (qbool extended)
@@ -1554,29 +1548,35 @@ void CL_ParseModellist (qbool extended)
 	int	nummodels, n;
 	char *str;
 
-	// precache models and note certain default indexes
+	// Precache models and note certain default indexes
 	nummodels = (extended) ? (unsigned) MSG_ReadShort () : MSG_ReadByte ();
 
-	while (1) {
+	while (1) 
+	{
 		str = MSG_ReadString ();
 		if (!str[0])
 			break;
-#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
+
+		#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
 		nummodels++;
 		if (nummodels >= MAX_MODELS) //Spike: tweeked this, we still complain if the server exceeds the standard limit without using extensions.
 			Host_Error ("Server sent too many model_precache");
+		
 		if (nummodels >= 256 && !(cls.fteprotocolextensions & FTE_PEXT_MODELDBL))
-#else
+		#else
 		if (++nummodels == MAX_MODELS)
-#endif
+		#endif // PROTOCOL_VERSION_FTE
+		{
 			Host_Error ("Server sent too many model_precache");
+		}
 
 		if (str[0] == '/')
 			str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
 		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
 
 		if (nummodels == 1)
-			if (!com_serveractive) {
+			if (!com_serveractive) 
+			{
 				char mapname[MAX_QPATH];
 				COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
 				Cvar_ForceSet (&host_mapname, mapname);
@@ -1584,17 +1584,21 @@ void CL_ParseModellist (qbool extended)
 			}
 	}
 
-	if ((n = MSG_ReadByte())) {
-		if (cls.mvdplayback == QTV_PLAYBACK) {
+	if ((n = MSG_ReadByte())) 
+	{
+		if (cls.mvdplayback == QTV_PLAYBACK) 
+		{
 			// none
 		}
-		else {
+		else 
+		{
 			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
+			
+			#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
 			MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, (nummodels&0xff00)+n));
-#else
+			#else
 			MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, n));
-#endif
+			#endif // PROTOCOL_VERSION_FTE
 		}
 
 		return;
@@ -1605,7 +1609,8 @@ void CL_ParseModellist (qbool extended)
 	Model_NextDownload ();
 }
 
-void CL_ParseBaseline (entity_state_t *es) {
+void CL_ParseBaseline (entity_state_t *es)
+{
 	int	i;
 
 	es->modelindex = MSG_ReadByte ();
@@ -1613,19 +1618,23 @@ void CL_ParseBaseline (entity_state_t *es) {
 	es->colormap = MSG_ReadByte();
 	es->skinnum = MSG_ReadByte();
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 3; i++) 
+	{
 		es->origin[i] = MSG_ReadCoord ();
 		es->angles[i] = MSG_ReadAngle ();
 	}
 }
 
-//Spike: an easy way to keep compatability with other entity extensions
+// An easy way to keep compatability with other entity extensions
 #if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
 extern void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits);
-static void CL_ParseSpawnBaseline2 (void) {
+
+static void CL_ParseSpawnBaseline2 (void)
+{
 	entity_state_t nullst, es;
 
-	if (!(cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)) {
+	if (!(cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)) 
+	{
 		Com_Printf ("illegible server message\nsvc_fte_spawnbaseline2 (%i) without FTE_PEXT_SPAWNSTATIC2\n", svc_fte_spawnbaseline2);
 		Host_EndGame();
 	}
@@ -1644,22 +1653,24 @@ void CL_ParseStatic (qbool extended)
 	entity_t *ent;
 	entity_state_t es;
 
-	if (extended) {
+	if (extended)
+	{
 		entity_state_t nullst;
 		memset (&nullst, 0, sizeof(entity_state_t));
 
 		CL_ParseDelta (&nullst, &es, MSG_ReadShort());
-	} else
+	} 
+	else
+	{
 		CL_ParseBaseline (&es);
-
+	}
 
 	if (cl.num_statics >= MAX_STATIC_ENTITIES)
 		Host_Error ("Too many static entities");
 	ent = &cl_static_entities[cl.num_statics];
 	cl.num_statics++;
 
-	// copy it to the current state
-
+	// Copy it to the current state
 	ent->model = cl.model_precache[es.modelindex];
 	ent->frame = es.frame;
 	ent->colormap = vid.colormap;
@@ -1671,11 +1682,12 @@ void CL_ParseStatic (qbool extended)
 	R_AddEfrags (ent);
 }
 
-//TEI: clientside autogen of entitys,
+// Clientside autogen of entitys,
 // usefull for eyecandy and other stuff
 // somewhat evile
-//unfinished
-void CL_GenStatic (vec3_t origin) {
+// unfinished
+void CL_GenStatic (vec3_t origin) 
+{
 	entity_t *ent;
 
 	if (cl.num_statics >= MAX_STATIC_ENTITIES)
@@ -1683,17 +1695,14 @@ void CL_GenStatic (vec3_t origin) {
 	ent = &cl_static_entities[cl.num_statics];
 	cl.num_statics++;
 
-
 	//TODO: load the correct model
 	//ent->model = cl.model_precache[copy->v.modelindex];
 	ent->model = Mod_ForName("progs/flame2.mdl",false);//cl.model_precache[1];
 
 	VectorCopy (origin, ent->origin);
 
-
 	R_AddEfrags (ent);
 }
-
 
 void CL_ParseStaticSound (void)
 {
@@ -1702,19 +1711,20 @@ void CL_ParseStaticSound (void)
 	int i;
 
 	for (i = 0; i < 3; i++)
-		ss.org[i] = MSG_ReadCoord ();
+		ss.org[i] = MSG_ReadCoord();
 
-	ss.sound_num = MSG_ReadByte ();
-	ss.vol = MSG_ReadByte ();
-	ss.atten = MSG_ReadByte ();
+	ss.sound_num = MSG_ReadByte();
+	ss.vol = MSG_ReadByte();
+	ss.atten = MSG_ReadByte();
 
-	if (cl.num_static_sounds < MAX_STATIC_SOUNDS) {
+	if (cl.num_static_sounds < MAX_STATIC_SOUNDS) 
+	{
 		cl.static_sounds[cl.num_static_sounds] = ss;
 		cl.num_static_sounds++;
 	}
 
 	if ((int) cl_staticsounds.value)
-		S_StaticSound (cl.sound_precache[ss.sound_num], ss.org, ss.vol, ss.atten);
+		S_StaticSound(cl.sound_precache[ss.sound_num], ss.org, ss.vol, ss.atten);
 }
 
 /*
@@ -1723,7 +1733,8 @@ ACTION MESSAGES
 =====================================================================
 */
 
-void CL_ParseStartSoundPacket(void) {
+void CL_ParseStartSoundPacket(void)
+{
     vec3_t pos;
     int channel, ent, sound_num, volume, i;
 	int tracknum;
@@ -1731,14 +1742,14 @@ void CL_ParseStartSoundPacket(void) {
 
     channel = MSG_ReadShort();
 
-	volume = (channel & SND_VOLUME) ? MSG_ReadByte () : DEFAULT_SOUND_PACKET_VOLUME;
+	volume = (channel & SND_VOLUME) ? MSG_ReadByte() : DEFAULT_SOUND_PACKET_VOLUME;
 
-	attenuation = (channel & SND_ATTENUATION) ? MSG_ReadByte () / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
+	attenuation = (channel & SND_ATTENUATION) ? MSG_ReadByte() / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
 
-	sound_num = MSG_ReadByte ();
+	sound_num = MSG_ReadByte();
 
 	for (i = 0; i < 3; i++)
-		pos[i] = MSG_ReadCoord ();
+		pos[i] = MSG_ReadCoord();
 
 	ent = (channel >> 3) & 1023;
 	channel &= 7;
@@ -1757,14 +1768,18 @@ void CL_ParseStartSoundPacket(void) {
 		}
     }
 
+	if (cls.demoseeking)
+		return;
+
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 
 	if (ent == cl.playernum+1)
 		TP_CheckPickupSound (cl.sound_name[sound_num], pos);
 }
 
-//Server information pertaining to this client only, sent every frame
-void CL_ParseClientdata (void) {
+// Server information pertaining to this client only, sent every frame
+void CL_ParseClientdata (void) 
+{
 	int newparsecount, i;
 	float latency;
 	frame_t *frame;
@@ -1786,25 +1801,21 @@ void CL_ParseClientdata (void) {
 
 	frame->receivedtime = cls.realtime;
 
-	// HUD -> hexum
 	frame->seq_when_received = cls.netchan.outgoing_sequence;
 
-	// kazik -->
 	frame->receivedsize = net_message.cursize;
-	// kazik <--
 
-	// kazik -->
 	// update network stats table
 	i = cls.netchan.incoming_sequence & NETWORK_STATS_MASK;
 	network_stats[i].receivedtime = cls.realtime;
 	network_stats[i].receivedsize = net_message.cursize;
 	network_stats[i].seq_diff = cls.netchan.outgoing_sequence - cls.netchan.incoming_sequence;
-	// kazik <--
 
 	// calculate latency
 	latency = frame->receivedtime - frame->senttime;
 
-	if (latency >= 0 && latency <= 1) {
+	if (latency >= 0 && latency <= 1) 
+	{
 		// drift the average latency towards the observed latency
 		if (latency < cls.latency)
 			cls.latency = latency;
@@ -1869,14 +1880,16 @@ void CL_NewTranslation (int slot)
 	R_TranslatePlayerSkin(slot);
 }
 
-void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
+void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) 
+{
 	extern cvar_t cl_name_as_skin;
 	qbool update_skin;
 	int mynum;
 
 	strlcpy (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
-	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) {
-		// somebody's trying to hide himself by overloading userinfo
+	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) 
+	{
+		// Somebody's trying to hide himself by overloading userinfo.
 		strlcpy (player->name, " ", sizeof (player->name));
 	}
 	player->real_topcolor = atoi(Info_ValueForKey (player->userinfo, "topcolor"));
@@ -1888,7 +1901,7 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
 	if (slot == cl.playernum && player->name[0])
 		cl.spectator = player->spectator;
 
-	Sbar_Changed ();
+	Sbar_Changed();
 
 	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1)
 		mynum = cl.playernum;
@@ -1903,10 +1916,11 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
 	else if (update_skin)
 		TP_RefreshSkin(slot);
 
-	strlcpy (player->_team, player->team, sizeof (player->_team));
+	strlcpy(player->_team, player->team, sizeof (player->_team));
 }
 
-void CL_PlayerEnterSlot(player_info_t *player) {
+void CL_PlayerEnterSlot(player_info_t *player) 
+{
 	extern player_state_t oldplayerstates[MAX_CLIENTS];
 
 	player->ignored = player->validated = false;
@@ -1915,16 +1929,18 @@ void CL_PlayerEnterSlot(player_info_t *player) {
 	Stats_EnterSlot(player - cl.players);
 }
 
-void CL_PlayerLeaveSlot(player_info_t *player) {
+void CL_PlayerLeaveSlot(player_info_t *player) 
+{
 	return;
 }
 
-void CL_UpdateUserinfo (void) {
+void CL_UpdateUserinfo (void) 
+{
 	qbool was_empty_slot;
 	int slot;
 	player_info_t *player;
 
-	slot = MSG_ReadByte ();
+	slot = MSG_ReadByte();
 	if (slot >= MAX_CLIENTS)
 		Host_Error ("CL_ParseServerMessage: svc_updateuserinfo > MAX_CLIENTS");
 
@@ -1932,10 +1948,10 @@ void CL_UpdateUserinfo (void) {
 
 	was_empty_slot = player->name[0] ? false : true;
 
-	player->userid = MSG_ReadLong ();
+	player->userid = MSG_ReadLong();
 	strlcpy (player->userinfo, MSG_ReadString(), sizeof(player->userinfo));
 
-	CL_ProcessUserInfo (slot, player, NULL);
+	CL_ProcessUserInfo(slot, player, NULL);
 
 	if (player->name[0] && was_empty_slot)
 		CL_PlayerEnterSlot(player);
@@ -1943,7 +1959,8 @@ void CL_UpdateUserinfo (void) {
 		CL_PlayerLeaveSlot(player);
 }
 
-void CL_SetInfo (void) {
+void CL_SetInfo (void) 
+{
 	int	slot;
 	player_info_t *player;
 	char key[MAX_INFO_STRING], value[MAX_INFO_STRING];
@@ -1954,8 +1971,8 @@ void CL_SetInfo (void) {
 
 	player = &cl.players[slot];
 
-	strlcpy (key, MSG_ReadString(), sizeof(key));
-	strlcpy (value, MSG_ReadString(), sizeof(value));
+	strlcpy(key, MSG_ReadString(), sizeof(key));
+	strlcpy(value, MSG_ReadString(), sizeof(value));
 
 	if (!cl.teamfortress)	// don't allow cheating in TF
 		Com_DPrintf ("SETINFO %s: %s=%s\n", player->name, key, value);
@@ -1965,8 +1982,9 @@ void CL_SetInfo (void) {
 	CL_ProcessUserInfo (slot, player, key);
 }
 
-//Called by CL_FullServerinfo_f and CL_ParseServerInfoChange
-void CL_ProcessServerInfo (void) {
+// Called by CL_FullServerinfo_f and CL_ParseServerInfoChange
+void CL_ProcessServerInfo (void) 
+{
 	char *p, *fbskins, *minlight, *watervis;
 	int teamplay, fpd;
 	qbool skin_refresh, standby, countdown;
@@ -1977,18 +1995,21 @@ void CL_ProcessServerInfo (void) {
 	// server side fps restriction
 	cl.maxfps = Q_atof(Info_ValueForKey(cl.serverinfo, "maxfps"));
 
-
-	if (cls.demoplayback) {
+	if (cls.demoplayback) 
+	{
 		cl.allow_lumas = true;
 		cl.watervis = cl.fbskins = cl.fakeshaft = 1;
 		fpd = 0;
-	} else if (cl.spectator) {
-		// START shaman - allow spectators to have transparent turbulence {
+	}
+	else if (cl.spectator) 
+	{
+		// Allow spectators to have transparent turbulence
 		cl.allow_lumas = true;
 		cl.watervis = cl.fbskins = cl.fakeshaft = 1;
-		// } END shaman - allow spectators to have transparent turbulence
 		fpd = atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
-	} else {
+	}
+	else 
+	{
 		cl.watervis = *(watervis = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(watervis), 1) : 0;
 		cl.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "1") ? true : false;
 		cl.fbskins = *(fbskins = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbskins), 1) :
@@ -2004,7 +2025,8 @@ void CL_ProcessServerInfo (void) {
 	standby = !strcasecmp(p, "standby");
 	countdown = !strcasecmp(p, "countdown");
 
-	if ((cl.standby || cl.countdown) && !(standby || countdown)) {
+	if ((cl.standby || cl.countdown) && !(standby || countdown)) 
+	{
 		cl.gametime = 0;
 		cl.gamestarttime = Sys_DoubleTime();
 	}
@@ -2032,15 +2054,15 @@ void CL_ProcessServerInfo (void) {
 	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ?
 		Q_atof(p) : cl.teamfortress ? 0 : 1;
 
-	// deathmatch and teamplay
+	// Deathmatch and teamplay.
 	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
 	teamplay = atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
 
-	// timelimit and fraglimit
+	// Timelimit and fraglimit.
 	cl.timelimit = atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
 	cl.fraglimit = atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 
-	// update skins if needed
+	// Update skins if needed.
 	skin_refresh = ( !teamplay != !cl.teamplay || ( (fpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
 	cl.teamplay = teamplay;
 	cl.fpd = fpd;
@@ -2048,7 +2070,7 @@ void CL_ProcessServerInfo (void) {
 		TP_RefreshSkins();
 }
 
-// parse a string looking like this: //vwep vwplayer w_axe w_shot w_shot2
+// Parse a string looking like this: //vwep vwplayer w_axe w_shot w_shot2
 void CL_ParseVWepPrecache (char *str)
 {
 	int i, num;
@@ -2056,12 +2078,14 @@ void CL_ParseVWepPrecache (char *str)
 
 	Cmd_TokenizeString (str + 2 /* skip the // */);
 
-	if (Cmd_Argc() < 2) {
+	if (Cmd_Argc() < 2)
+	{
 		cl.vwep_enabled = 0;
 		return;
 	}
 
-	if (cls.state == ca_active) {
+	if (cls.state == ca_active)
+	{
 		// vweps can be turned off on the fly, but not back on
 		Com_DPrintf ("CL_ParseVWepPrecache: ca_active, ignoring\n");
 		return;
@@ -2069,27 +2093,33 @@ void CL_ParseVWepPrecache (char *str)
 
 	num = min(Cmd_Argc()-1, MAX_VWEP_MODELS);
 
-	for (i = 0; i < num; i++) {
+	for (i = 0; i < num; i++)
+	{
 		p = Cmd_Argv(i+1);
 
-		if (!strcmp(p, "-")) {
+		if (!strcmp(p, "-")) 
+		{
 			// empty model
 			strlcpy (cl.vw_model_name[i], "-", MAX_QPATH);
 		}
-		else {
+		else 
+		{
 			if (strstr(p, "..") || p[0] == '/' || p[0] == '\\')
 				Host_Error("CL_ParseVWepPrecache: illegal model name '%s'", p);
 
 			if (strstr(p, "/"))
-				// a full path was specified
+			{
+				// A full path was specified.
 				strlcpy(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
-			else {
-				// use default path
+			}
+			else 
+			{
+				// Use default path.
 				strlcpy(cl.vw_model_name[i], "progs/", sizeof(cl.vw_model_name[0]));
 				strlcat(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
 			}
 
-			// use default extension if not specified
+			// Use default extension if not specified.
 			if (!strstr(p, "."))
 				strlcat(cl.vw_model_name[i], ".mdl", sizeof(cl.vw_model_name[0]));
 		}
@@ -2098,19 +2128,25 @@ void CL_ParseVWepPrecache (char *str)
 	Com_DPrintf ("VWEP precache: %i models\n", num);
 }
 
-void CL_ParseServerInfoChange (void) {
+void CL_ParseServerInfoChange (void) 
+{
 	char key[MAX_INFO_STRING], value[MAX_INFO_STRING];
 
 	strlcpy (key, MSG_ReadString(), sizeof(key));
 	strlcpy (value, MSG_ReadString(), sizeof(value));
 
 	Com_DPrintf ("SERVERINFO: %s=%s\n", key, value);
-	if (!cl.standby && !cl.countdown && !strncmp(key, "status", 6)) {
+	if (!cl.standby && !cl.countdown && !strncmp(key, "status", 6)) 
+	{
 		int timeleft = atoi(value) * 60;
-		if (timeleft) {
-			if (cls.demoplayback) {
-				cl.gametime = (cl.timelimit * 60) - timeleft; // this one causes demo_jump de-sync. however it must be here to maintain overtime
-			} else {
+		if (timeleft) 
+		{
+			if (cls.demoplayback) 
+			{
+				cl.gametime = (cl.timelimit * 60) - timeleft; // This one causes demo_jump de-sync. however it must be here to maintain overtime.
+			}
+			else 
+			{
 				cl.gamestarttime = Sys_DoubleTime() - (cl.timelimit * 60) + timeleft - cl.gamepausetime;
 				Com_DPrintf("Clock sync, match started %i seconds ago\n", (cl.timelimit*60) + atoi(value)*60);
 			}
@@ -2122,13 +2158,13 @@ void CL_ParseServerInfoChange (void) {
 	CL_ProcessServerInfo ();
 }
 
-char *CL_Color2ConColor(int color)
-// converts quake color 4 to "&cf00", 13 to "&c00f", 12 to "&cff0" and so on
+// Converts quake color 4 to "&cf00", 13 to "&c00f", 12 to "&cff0" and so on
 // those are marks used to make colored text in console
+char *CL_Color2ConColor(int color)
 {
 	static char buf[6] = "&c000";
 	const char hexc[] = "0123456789abcdefffffffffffffffff";
-	// for some reason my palette doesn't give higher number then 127, those Fs are there for palettes that give higher than that
+	// For some reason my palette doesn't give higher number then 127, those Fs are there for palettes that give higher than that
 	int x = Sbar_ColorForMap(color);
 	buf[2] = hexc[host_basepal[x * 3 + 0] / 8];
 	buf[3] = hexc[host_basepal[x * 3 + 1] / 8];
@@ -2136,24 +2172,11 @@ char *CL_Color2ConColor(int color)
 	return buf;
 }
 
-/* the most evil thing Tonik ever done
-wchar *qwcsncat (wchar *dst, wchar *src, size_t len)
-{
-	while (*dst)
-		dst++;
-	while (*src && len) {
-		*dst++ = *src++;
-		len--;
-	}
-	return dst;
-}
-*/
-
 #ifdef GLQUAKE
+// Will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
+// source - source frag message, dest - destination buffer, destlen - length of buffer
+// cff - see the cfrags_format definition 
 static wchar* CL_ColorizeFragMessage (const wchar *source, cfrags_format *cff)
-/* will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
-   source - source frag message, dest - destination buffer, destlen - length of buffer
-   cff - see the cfrags_format definition */
 {
 	static wchar dest_buf[2048] = {0};
 	wchar col1[6+1] = {0}, col2[6+1] = {0}, *dest = dest_buf, *col_off;
@@ -2168,6 +2191,7 @@ static wchar* CL_ColorizeFragMessage (const wchar *source, cfrags_format *cff)
 	qwcslcpy(dest, source, bound(0, cff->p1pos + 1, destlen));
 	destlen -= (len = qwcslen(dest));
 	dest += len;
+	
 	// color1
 	len = qwcslen(col1) + 1;
 	qwcslcpy(dest, col1, bound(0, len, destlen));
@@ -2205,7 +2229,9 @@ static wchar* CL_ColorizeFragMessage (const wchar *source, cfrags_format *cff)
 		dest += len;
 		// the rest
 		qwcslcpy(dest, source + cff->p2pos + cff->p2len, destlen);
-	} else {
+	}
+	else 
+	{
 		// the rest
 		qwcslcpy(dest, source + cff->p1pos + cff->p1len, destlen);
 	}
@@ -2219,41 +2245,46 @@ extern cvar_t cl_showFragsMessages;
 #ifdef GLQUAKE
 extern cvar_t scr_coloredfrags;
 #endif
-//for CL_ParsePrint
-static void FlushString (const wchar *s, int level, qbool team, int offset) {
+
+// For CL_ParsePrint
+static void FlushString (const wchar *s, int level, qbool team, int offset) 
+{
 	char *s0; // C-char copy of s
 
-	char *mark; // -->
+	char *mark;
 	const wchar *text; // needed for con_highlight work
-	char *f; // <--
+	char *f; 
 
 	wchar zomfg[4096]; // FIXME
 
 	cfrags_format cff = {0, 0, 0, 0, 0, 0, false}; // Stats_ParsePrint stuff
 
-
 	s0 = wcs2str (s);
 	f = strstr (s0, name.string);
 	CL_SearchForReTriggers (s0, 1<<level); // re_triggers, s0 not modified
 
-	// highlighting on && nickname found && it's not our own text (nickname not close to the beginning)
-	if (con_highlight.value && f && ((f - s0) > 1)) {
-		switch ((int)(con_highlight.value)) {
-		case 1:
-			mark = "";
-			text = s;
-			break;
-		case 2:
-			mark = con_highlight_mark.string;
-			text = (level == PRINT_CHAT) ? (const wchar *) TP_ParseWhiteText (s, team, offset) : s;
-			break;
-		default:
-		case 3:
-			mark = con_highlight_mark.string;
-			text = s;
-			break;
+	// Highlighting on && nickname found && it's not our own text (nickname not close to the beginning)
+	if (con_highlight.value && f && ((f - s0) > 1)) 
+	{
+		switch ((int)(con_highlight.value)) 
+		{
+			case 1:
+				mark = "";
+				text = s;
+				break;
+			case 2:
+				mark = con_highlight_mark.string;
+				text = (level == PRINT_CHAT) ? (const wchar *) TP_ParseWhiteText (s, team, offset) : s;
+				break;
+			default:
+			case 3:
+				mark = con_highlight_mark.string;
+				text = s;
+				break;
 		}
-	} else {
+	}
+	else 
+	{
 		mark = "";
 		text = (level == PRINT_CHAT) ? (const wchar *) TP_ParseWhiteText(s, team, offset) : s;
 	}
@@ -2289,66 +2320,6 @@ static void FlushString (const wchar *s, int level, qbool team, int offset) {
 	TP_SearchForMsgTriggers ((const char *)wcs2str(s + offset), level);
 }
 
-
-/*
-void MakeChatRed(char *t, int mm2)
-{
-    if (mm2)
-    {
-        int white = 0;
-        char *d, *s;
-        char *buf = (char *) Q_malloc (strlen (t) + 2);
-
-        d = buf;
-        s = t;
-        while (*s)
-        {
-            if (s-t > mm2)
-            {
-                switch (*s)
-                {
-                case '{':
-                    if (*(s+1) == '{')
-                    {
-                        *d++ = '{'|128;
-                        s++;
-                    }
-                    else
-                        white ++;
-                    break;
-                case '}':
-                    if (*(s+1) == '}')
-                    {
-                        *d++ = '}'|128;
-                        s++;
-                    }
-                    else
-                        white --;
-                    break;
-                default:
-                    *d++ = (white > 0  ||  *s <= ' ') ? *s : (*s|128);
-                }
-                white = max(0, white);
-            }
-            else
-                *d++ = *s | (isspace2(*s) ? 0 : 128);
-
-            s++;
-        }
-        *d = 0;
-        strcpy(t, buf);
-        Q_free(buf);
-    }
-    else
-    {
-        int i;
-        for (i=0; i < strlen(t); i++)
-            if (t[i] > ' ')
-                t[i] |= 128;
-    }
-}
-*/
-
 #define  CHAT_MM1   1
 #define  CHAT_MM2   2
 #define  CHAT_SPEC  3
@@ -2360,7 +2331,8 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
     int classified = -1;
     int type = 0;
     char *msg=NULL;
-    for (i=0; i <= MAX_CLIENTS; i++)
+
+	for (i=0; i <= MAX_CLIENTS; i++)
     {
         int client = -1;
         char buf[512];
@@ -2368,8 +2340,8 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
         if (i == MAX_CLIENTS)
         {
             strlcpy (buf, "console: ", sizeof (buf));
-            //Tmp_MakeRed(buf);
-            if (!strncmp(chat, buf, strlen(buf)))
+
+			if (!strncmp(chat, buf, strlen(buf)))
             {
                 client = i;
                 type = CHAT_MM1;
@@ -2382,8 +2354,8 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
                 continue;
 
             snprintf(buf,  sizeof (buf), "%.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
-            //Tmp_MakeRed(buf);
-            if (!strncmp(chat, buf, strlen(buf)))
+
+			if (!strncmp(chat, buf, strlen(buf)))
             {
                 client = i;
                 type = CHAT_MM1;
@@ -2391,8 +2363,8 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
             }
 
             snprintf(buf,  sizeof (buf), "(%.*s): ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
-            //Tmp_MakeRed(buf);
-            if (!strncmp(chat, buf, strlen(buf)))
+
+			if (!strncmp(chat, buf, strlen(buf)))
             {
                 client = i;
                 type = CHAT_MM2;
@@ -2400,8 +2372,8 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
             }
 
             snprintf(buf,  sizeof (buf), "[SPEC] %.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
-            //Tmp_MakeRed(buf);
-            if (!strncmp(chat, buf, strlen(buf)))
+
+			if (!strncmp(chat, buf, strlen(buf)))
             {
                 client = i;
                 type = CHAT_SPEC;
@@ -2432,11 +2404,11 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
 extern qbool TP_SuppressMessage (wchar *);
 extern cvar_t cl_chatsound, msg_filter;
 extern cvar_t ignore_qizmo_spec;
+
 void CL_ParsePrint (void)
 {
 	qbool suppress_talksound;
-	/*qbool cut_message = false;*/
-	wchar *s, str[2048], *p, check_flood/*, dest[2048], *c, *d, *f, e, b*/;
+	wchar *s, str[2048], *p, check_flood;
 	char *s0, qtvstr[2048];
 	int level, flags = 0, offset = 0;
 	size_t len;
@@ -2476,65 +2448,10 @@ void CL_ParsePrint (void)
 	qwcslcpy (str, s, sizeof(str)/sizeof(str[0]));
 	s = str; // so no memmory overwrite, because decode_string() uses static buffers
 
-	if (level == PRINT_CHAT) {
+	if (level == PRINT_CHAT) 
+	{
 		if (TP_SuppressMessage (s))
 			return;
-
-		/*
-        while (*s  &&  *s != 0x7f)
-            s++;
-        if (*s == 0x7f)
-        {
-            int isListed = 0;
-            int hide = 0;
-            *s = '\n';  // little dangerous but i'm senny
-            s++;
-            if (*s == '!')
-            {
-                *s = 0; // so is here
-                s++;
-                hide = 1;
-            }
-            while (*s)
-            {
-                if (*s - '@' == cl.playernum+1)
-                {   isListed = 1; *s = 0; break; }
-                *s = 0;
-                s++;
-            }
-            if (hide == isListed)   // hide && isListed || !hide && !isListed
-                if (!cls.demoplayback)
-                    return;  // don't print
-        }
-
-		*/
-
-		/*
-		// disconnect: this code do same as TP_SuppressMessage function
-		f = s;
-	    while ((e = *f++)) {
-			if (e == '\x7f') {
-				cut_message = true;
-				break;
-			}
-		}
-
-		if (cut_message == true) {
-
-			c = s;
-			d = dest;
-
-			while ((b = *c++) && (b != '\x7f')) {
-				*d++ = b;
-			}
-
-			*d++ = '\n';
-			*d++ = 0;
-
-			s = dest;
-
-		}
-		*/
 
 		s0 = wcs2str (s); // TP_SuppressMessage may modify the source string, so s0 should be updated
 
@@ -2561,7 +2478,8 @@ void CL_ParsePrint (void)
 
 		suppress_talksound = false;
 
-		if (flags == 2) {
+		if (flags == 2) 
+		{
 			suppress_talksound = TP_CheckSoundTrigger (s + offset);
 			s0 = wcs2str (s); // TP_CheckSoundTrigger may modify the source string, so s0 should be updated
 		}
@@ -2621,7 +2539,9 @@ void CL_ParsePrint (void)
             chat_sound_file = con_sound_other_file.string;
             chat_sound_vol = con_sound_other_volume.value;
         }
-		if (chat_sound_vol > 0) {
+		
+		if (chat_sound_vol > 0) 
+		{
             S_LocalSoundWithVol(chat_sound_file, chat_sound_vol);
 		}
 
@@ -2632,57 +2552,44 @@ void CL_ParsePrint (void)
 
 		if (s[0])  // KT sometimes sends empty strings
 		{
-
-/*
-			if (con_addtimestamp)
+			if (con_timestamps.value != 0) // @CHECKME@
 			{
-				con_addtimestamp = false;
-				if (con_timestamps.value)
-				{
-*/
-
-					if (con_timestamps.value != 0) // @CHECKME@
-					{
-						SYSTEMTIME lt;
-						char tmpbuf[16];
-						GetLocalTime (&lt);
-						snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
-						//MakeChatRed(tmpbuf, false);
-						Com_Printf(tmpbuf);
-					}
-
-/*
-				}
+				SYSTEMTIME lt;
+				char tmpbuf[16];
+				GetLocalTime (&lt);
+				snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
+				Com_Printf(tmpbuf);
 			}
-
-			if (strchr(s, '\n'))
-				con_addtimestamp = true;
-*/
-
 		}
 
-		if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) {
+		if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) 
+		{
 			for (p = s; *p; p++)
+			{
 				if (*p == 0x0D || (*p == 0x0A && p[1]))
 					*p = ' ';
+			}
 		}
 	}
 
-	if (cl.sprint_buf[0] && (level != cl.sprint_level || s[0] == 1 || s[0] == 2)) {
+	if (cl.sprint_buf[0] && (level != cl.sprint_level || s[0] == 1 || s[0] == 2)) 
+	{
 		FlushString (cl.sprint_buf, cl.sprint_level, false, 0);
 		cl.sprint_buf[0] = 0;
 	}
 
-	if (s[0] == 1 || s[0] == 2) {
+	if (s[0] == 1 || s[0] == 2) 
+	{
 		FlushString (s, level, (flags == 2), offset);
 		return;
 	}
 
-	// emulate qwcslcat (which is not implemented)
+	// Emulate qwcslcat (which is not implemented)
 	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), s, sizeof(cl.sprint_buf)/sizeof(wchar) - qwcslen(cl.sprint_buf));
 	cl.sprint_level = level;
 
-	if ((p = qwcsrchr(cl.sprint_buf, '\n'))) {
+	if ((p = qwcsrchr(cl.sprint_buf, '\n'))) 
+	{
 		len = p - cl.sprint_buf + 1;
 		memcpy(str, cl.sprint_buf, len * sizeof(wchar));
 		str[len] = '\0';
@@ -2691,64 +2598,62 @@ void CL_ParsePrint (void)
 	}
 }
 
-void CL_ParseStufftext (void) {
-	char *s;
-
-	s = MSG_ReadString ();
+void CL_ParseStufftext (void) 
+{
+	char *s = MSG_ReadString();
 
 	Com_DPrintf ("stufftext: %s\n", s);
 
-
 	if (!strncmp(s, "alias _cs", 9))
-		Cbuf_AddTextEx (&cbuf_svc, "alias _cs \"wait;+attack;wait;wait;-attack;wait\"\n");
+		Cbuf_AddTextEx(&cbuf_svc, "alias _cs \"wait;+attack;wait;wait;-attack;wait\"\n");
 	else if (!strncmp(s, "alias _y", 8))
-		Cbuf_AddTextEx (&cbuf_svc, "alias _y \"wait;-attack;wait;wait;+attack;wait;wait;-attack;wait\"\n");
-
-	else if (!strcmp (s, "cmd snap") || (!strncmp (s, "r_skyname ", 10) && !strchr (s, '\n')))
-		Cbuf_AddTextEx (&cbuf_svc, va("%s\n", s));
-	else if (!strncmp(s, "//tinfo ", sizeof("//tinfo ")-1))
+		Cbuf_AddTextEx(&cbuf_svc, "alias _y \"wait;-attack;wait;wait;+attack;wait;wait;-attack;wait\"\n");
+	else if (!strcmp(s, "cmd snap") || (!strncmp (s, "r_skyname ", 10) && !strchr (s, '\n')))
+		Cbuf_AddTextEx(&cbuf_svc, va("%s\n", s));
+	else if (!strncmp(s, "//tinfo ", sizeof("//tinfo ") - 1))
 	{
-#ifdef GLQUAKE
+		// TODO : Don't require GL for this.
+		#ifdef GLQUAKE
 		extern void Parse_TeamInfo(char *s);
 
 		if (!cls.mvdplayback)
 			Parse_TeamInfo( s + 2 );
-#else
-		// do nothing in soft
-#endif
+		#endif // GLQUAKE
 	}
-	else if (!strncmp(s, "//at ", sizeof("//at ")-1))
-	{	// this is autotrack info from mvd demo/qtv stream, they are almost same
-
+	else if (!strncmp(s, "//at ", sizeof("//at ") - 1))
+	{
+		// This is autotrack info from MVD demo/QTV stream, they are almost same.
 		extern cvar_t demo_autotrack;
 		extern cvar_t mvd_autotrack;
 
 		if (demo_autotrack.integer)
 		{
 			Cbuf_AddTextEx (&cbuf_svc, va("track %s\n", s + sizeof("//at ")-1));
-			if (mvd_autotrack.integer) {
-				// do not let mvd_autotrack and demo_autotrack fight
+			if (mvd_autotrack.integer) 
+			{
+				// Do not let mvd_autotrack and demo_autotrack fight.
 				Com_Printf("Server autotrack found, client autotrack turned off\n");
 				Cvar_SetValue(&mvd_autotrack, 0);
 			}
 		}
 	}
-	else if (!strncmp(s, "//vwep ", 7) && s[strlen(s)-1] == '\n') {
+	else if (!strncmp(s, "//vwep ", 7) && s[strlen(s) - 1] == '\n') 
+	{
 		CL_ParseVWepPrecache(s);
 		return;
 	}
-	else if (!strncmp(s, "//sn ", sizeof("//sn ")-1))
+	else if (!strncmp(s, "//sn ", sizeof("//sn ") - 1))
 	{
-#ifdef GLQUAKE
+		// TODO : Don't require GL for this.
+		#ifdef GLQUAKE
 		extern void Parse_Shownick(char *s)	;
-
-		Parse_Shownick( s + 2 );	
-#else
-		// do nothing in soft
-#endif
+		Parse_Shownick( s + 2 );
+		#endif // GLQUAKE
 	}
 	else
-		Cbuf_AddTextEx (&cbuf_svc, s);
+	{
+		Cbuf_AddTextEx(&cbuf_svc, s);
+	}
 
 	// Execute stuffed commands immediately when starting a demo
 	if (cls.demoplayback && cls.state != ca_active)
@@ -2773,12 +2678,11 @@ void CL_SetStat (int stat, int value)
 			return;
 	}
 
-	Sbar_Changed ();
+	Sbar_Changed();
 
 	if (stat == STAT_ITEMS)
 	{
 		// Set flash times.
-		Sbar_Changed ();
 		for (j = 0; j < 32; j++)
 			if ( (value & (1 << j)) && !(cl.stats[stat] & (1 << j)) )
 				cl.item_gettime[j] = cl.time;
@@ -2799,8 +2703,8 @@ void CL_SetStat (int stat, int value)
 }
 
 #ifdef GLQUAKE
-void CL_MuzzleFlash (void) {
-	//VULT MUZZLEFLASH
+void CL_MuzzleFlash (void) 
+{
 	vec3_t forward, right, up, org, angles;
 	model_t *mod;
 
@@ -2808,9 +2712,12 @@ void CL_MuzzleFlash (void) {
 	int i, j, num_ent;
 	entity_state_t *ent;
 	player_state_t *state;
-	vec3_t none={0,0,0};
+	vec3_t none = {0,0,0};
 
-	i = MSG_ReadShort ();
+	i = MSG_ReadShort();
+
+	if (cls.demoseeking)
+		return;
 
 	if (!cl_muzzleflash.value)
 		return;
@@ -2818,63 +2725,72 @@ void CL_MuzzleFlash (void) {
 	if (!cl.validsequence)
 		return;
 
-	if ((unsigned) (i - 1) >= MAX_CLIENTS) {
-		// a monster firing
+	if ((unsigned) (i - 1) >= MAX_CLIENTS) 
+	{
+		// A monster firing
 		num_ent = cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.num_entities;
-		for (j = 0; j < num_ent; j++) {
+		
+		for (j = 0; j < num_ent; j++) 
+		{
 			ent = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.entities[j];
-			if (ent->number == i) {
+			
+			if (ent->number == i) 
+			{
 				mod = cl.model_precache[ent->modelindex];
-				//VULT MUZZLEFLASH - Special muzzleflashes for some enemies
-				if (mod->modhint == MOD_SOLDIER) //gruntor
+				
+				// Special muzzleflashes for some enemies.
+				if (mod->modhint == MOD_SOLDIER)
 				{
-					AngleVectors (ent->angles, forward, right, up);
-					VectorMA (ent->origin, 22, forward, org);
-					VectorMA (org, 10, right, org);
-					VectorMA (org, 12, up, org);
+					AngleVectors(ent->angles, forward, right, up);
+					VectorMA(ent->origin, 22, forward, org);
+					VectorMA(org, 10, right, org);
+					VectorMA(org, 12, up, org);
+					
 					if (amf_part_muzzleflash.value)
 					{
 						if (!ISPAUSED && amf_coronas.value)
-							NewCorona (C_SMALLFLASH, org);
+							NewCorona(C_SMALLFLASH, org);
 						DrawMuzzleflash(org, ent->angles, none);
 					}
 				}
 				else if (mod->modhint == MOD_ENFORCER)
 				{
 					AngleVectors (ent->angles, forward, right, up);
-					VectorMA (ent->origin, 22, forward, org);
-					VectorMA (org, 10, right, org);
-					VectorMA (org, 12, up, org);
+					VectorMA(ent->origin, 22, forward, org);
+					VectorMA(org, 10, right, org);
+					VectorMA(org, 12, up, org);
 					if (amf_part_muzzleflash.value)
 					{
 						if (amf_coronas.value)
-							NewCorona (C_SMALLFLASH, org);
+							NewCorona(C_SMALLFLASH, org);
 						DrawMuzzleflash(org, ent->angles, none);
 					}
 				}
 				else if (mod->modhint == MOD_OGRE)
 				{
-					AngleVectors (ent->angles, forward, right, up);
-					VectorMA (ent->origin, 22, forward, org);
-					VectorMA (org, -8, right, org);
-					VectorMA (org, 14, up, org);
+					AngleVectors(ent->angles, forward, right, up);
+					VectorMA(ent->origin, 22, forward, org);
+					VectorMA(org, -8, right, org);
+					VectorMA(org, 14, up, org);
 					if (amf_part_muzzleflash.value)
 					{
 						if (amf_coronas.value)
-							NewCorona (C_SMALLFLASH, org);
+							NewCorona(C_SMALLFLASH, org);
 						DrawMuzzleflash(org, ent->angles, none);
 					}
 				}
 				else
 				{
-					AngleVectors (ent->angles, forward, NULL, NULL);
-					VectorMA (ent->origin, 18, forward, org);
+					AngleVectors(ent->angles, forward, NULL, NULL);
+					VectorMA(ent->origin, 18, forward, org);
 				}
-				dl = CL_AllocDlight (-i);
+
+				dl = CL_AllocDlight(-i);
 				dl->radius = 200 + (rand() & 31);
 				dl->minlight = 32;
 				dl->die = cl.time + 0.1;
-				//VULT MUZZLEFLASH - Blue muzzleflashes for shamblers/teslas
+				
+				// Blue muzzleflashes for shamblers/teslas
 				if (mod->modhint == MOD_SHAMBLER || mod->modhint == MOD_TESLA)
 					dl->type = lt_blue;
 				else
@@ -2886,16 +2802,15 @@ void CL_MuzzleFlash (void) {
 		}
 		return;
 	}
+
 	if (cl_muzzleflash.value == 2 && i - 1 == cl.viewplayernum)
 		return;
 
-	dl = CL_AllocDlight (-i);
+	dl = CL_AllocDlight(-i);
 	state = &cl.frames[cls.mvdplayback ? oldparsecountmod : parsecountmod].playerstate[i - 1];
 
-	//VULT MUZZLEFLASH
-	if (i-1==cl.viewplayernum)
+	if ((i - 1) == cl.viewplayernum)
 	{
-
 		VectorCopy(cl.simangles, angles);
 		VectorCopy(cl.simorg, org);
 	}
@@ -2904,30 +2819,31 @@ void CL_MuzzleFlash (void) {
 		VectorCopy(state->viewangles, angles);
 		VectorCopy(state->origin, org);
 	}
-	AngleVectors (angles, forward, right, up);
-	VectorMA (org, 22, forward, org);
-	VectorMA (org, 10, right, org);
-	VectorMA (org, 12, up, org);
+
+	AngleVectors(angles, forward, right, up);
+	VectorMA(org, 22, forward, org);
+	VectorMA(org, 10, right, org);
+	VectorMA(org, 12, up, org);
 	VectorCopy(org, dl->origin);
 
 	dl->radius = 200 + (rand()&31);
 	dl->minlight = 32;
 	dl->die = cl.time + 0.1;
 	dl->type = lt_muzzleflash;
-	//VULT MUZZLEFLASH
+
 	if (amf_part_muzzleflash.value)
 	{
-		if ((i-1 != cl.viewplayernum) || cameratype != C_NORMAL)
+		if (((i - 1) != cl.viewplayernum) || (cameratype != C_NORMAL))
 		{
 			if (amf_coronas.value)
-				NewCorona (C_SMALLFLASH, dl->origin);
+				NewCorona(C_SMALLFLASH, dl->origin);
 			DrawMuzzleflash(org, angles, state->velocity);
 		}
 	}
-
 }
 #else
-void CL_MuzzleFlash (void) {
+void CL_MuzzleFlash (void) 
+{
 	vec3_t forward;
 	dlight_t *dl;
 	int i, j, num_ent;
@@ -2936,18 +2852,26 @@ void CL_MuzzleFlash (void) {
 
 	i = MSG_ReadShort ();
 
+	if (cls.demoseeking)
+		return;
+
 	if (!cl_muzzleflash.value)
 		return;
 
 	if (!cl.validsequence)
 		return;
 
-	if ((unsigned) (i - 1) >= MAX_CLIENTS) {
+	if ((unsigned) (i - 1) >= MAX_CLIENTS) 
+	{
 		// a monster firing
 		num_ent = cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.num_entities;
-		for (j = 0; j < num_ent; j++) {
+	
+		for (j = 0; j < num_ent; j++) 
+		{
 			ent = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.entities[j];
-			if (ent->number == i) {
+		
+			if (ent->number == i) 
+			{
 				dl = CL_AllocDlight (-i);
 				AngleVectors (ent->angles, forward, NULL, NULL);
 				VectorMA (ent->origin, 18, forward, dl->origin);
@@ -2978,7 +2902,7 @@ void CL_ParseQizmoVoice (void)
 {
 	int i, seq, bits, num, unknown;
 
-	// read the two-byte header
+	// Read the two-byte header.
 	seq = MSG_ReadByte();
 	bits = MSG_ReadByte();
 
@@ -3002,7 +2926,7 @@ void CL_Messages_f(void)
 	int tope = 0;
 	int doit = true;
 
-	for (t=0;t<MAX;t++)
+	for (t = 0; t < MAX; t++)
 		net.printed[t] = false;
 
 	Com_Printf("Received msgs:\n");
@@ -3054,8 +2978,8 @@ void CL_ParseServerMessage (void)
 
 	cls.demomessage.cursize = 0;
 
-	CL_ParseClientdata ();
-	CL_ClearProjectiles ();
+	CL_ParseClientdata();
+	CL_ClearProjectiles();
 
 	// Parse the message.
 	while (1) 
@@ -3140,9 +3064,12 @@ void CL_ParseServerMessage (void)
 				// Centerprint re-triggers
 				s = MSG_ReadString();
 
-				if(!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
-					SCR_CenterPrint(s);
-				Print_flags[Print_current] = 0;
+				if (!cls.demoseeking)
+				{
+					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
+						SCR_CenterPrint(s);
+					Print_flags[Print_current] = 0;
+				}
 				break;
 			}
 			case svc_stufftext:
@@ -3166,8 +3093,13 @@ void CL_ParseServerMessage (void)
 			{
 				if (cls.mvdplayback)
 					j = MSG_ReadByte();
+
 				for (i = 0; i < 3; i++)
 					newangles[i] = MSG_ReadAngle();
+
+				if (cls.demoseeking)
+					break;
+
 				if (cls.mvdplayback) 
 				{
 					mvd_fixangle |= 1 << j;
@@ -3193,7 +3125,7 @@ void CL_ParseServerMessage (void)
 				i = MSG_ReadByte ();
 				if (i >= MAX_LIGHTSTYLES)
 					Host_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
-				strlcpy (cl_lightstyle[i].map,  MSG_ReadString(), sizeof(cl_lightstyle[i].map));
+				strlcpy(cl_lightstyle[i].map, MSG_ReadString(), sizeof(cl_lightstyle[i].map));
 				cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
 				break;
 			}
@@ -3210,18 +3142,18 @@ void CL_ParseServerMessage (void)
 			}
 			case svc_updatefrags:
 			{
-				Sbar_Changed ();
-				i = MSG_ReadByte ();
+				Sbar_Changed();
+				i = MSG_ReadByte();
 				if (i >= MAX_CLIENTS)
-					Host_Error ("CL_ParseServerMessage: svc_updatefrags > MAX_CLIENTS");
-				cl.players[i].frags = MSG_ReadShort ();
+					Host_Error("CL_ParseServerMessage: svc_updatefrags > MAX_CLIENTS");
+				cl.players[i].frags = MSG_ReadShort();
 				break;
 			}
 			case svc_updateping:
 			{
-				i = MSG_ReadByte ();
+				i = MSG_ReadByte();
 				if (i >= MAX_CLIENTS)
-					Host_Error ("CL_ParseServerMessage: svc_updateping > MAX_CLIENTS");
+					Host_Error("CL_ParseServerMessage: svc_updateping > MAX_CLIENTS");
 				cl.players[i].ping = MSG_ReadShort();
 				break;
 			}
@@ -3229,7 +3161,7 @@ void CL_ParseServerMessage (void)
 			{
 				i = MSG_ReadByte();
 				if (i >= MAX_CLIENTS)
-					Host_Error ("CL_ParseServerMessage: svc_updatepl > MAX_CLIENTS");
+					Host_Error("CL_ParseServerMessage: svc_updatepl > MAX_CLIENTS");
 				cl.players[i].pl = MSG_ReadByte();
 				break;
 			}
@@ -3473,7 +3405,7 @@ void CL_ParseServerMessage (void)
 			if (!cls.demomessage.cursize)
 			{
 				SZ_Init(&cls.demomessage, cls.demomessage_data, sizeof(cls.demomessage_data));
-				SZ_Write (&cls.demomessage, net_message.data, 8);
+				SZ_Write(&cls.demomessage, net_message.data, 8);
 			}
 
 			// Write the changei n entities to the demo being recorded

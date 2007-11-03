@@ -1367,7 +1367,41 @@ void CL_ReadPackets (void)
 				continue; // Wasn't accepted for some reason.
 		}
 
-		CL_ParseServerMessage();
+		{
+#ifdef 0 // TEST STUFF
+			static qbool prevseeking = false;
+			static qbool prevtest = false;
+			static double seektime = 0.0;
+			double start = Sys_DoubleTime();
+#endif // TEST STUFF
+
+			CL_ParseServerMessage();
+			
+#ifdef 0 // TEST STUFF
+			if (cls.demoseeking)
+			{
+				seektime += Sys_DoubleTime() - start;
+			}
+			else if (prevseeking)
+			{
+				Com_Printf("Demoseek in: %f\n", seektime);
+				seektime = 0.0;
+			}
+
+			if (cls.demotest)
+			{
+				seektime += Sys_DoubleTime() - start;
+			}
+			else if (prevtest)
+			{
+				Com_Printf("Demoseek in: %f\n", seektime);
+				seektime = 0.0;
+			}
+
+			prevtest = cls.demotest;
+			prevseeking = cls.demoseeking;
+#endif // TEST STUFF
+		}
 	}
 
 	// Check timeout.
@@ -1917,7 +1951,6 @@ void CL_Frame (double time)
 
 	if (extratime < minframetime) 
 	{
-
 		extern cvar_t sys_yieldcpu;
 		if (sys_yieldcpu.integer)
 		{
@@ -2012,7 +2045,7 @@ void CL_Frame (double time)
 
 		// process console commands
 		Cbuf_Execute();
-		CL_CheckAutoPause ();
+		CL_CheckAutoPause();
 
 		if (com_serveractive)
 			SV_Frame(cls.frametime);
@@ -2022,7 +2055,7 @@ void CL_Frame (double time)
 
 		TP_UpdateSkins();
 
-		if (cls.mvdplayback)
+		if (cls.mvdplayback && !cls.demoseeking)
 		{
 			MVD_Interpolate();
 			MVD_Mainhook_f();
@@ -2043,7 +2076,7 @@ void CL_Frame (double time)
 		if(cls.state == ca_disconnected)
 		{
 			usercmd_t dummy;
-			IN_Move (&dummy);
+			IN_Move(&dummy);
 		}
 	}
 	else 
@@ -2072,7 +2105,7 @@ void CL_Frame (double time)
 			TP_UpdateSkins();
 
 			// Gather MVD stats and interpolate.
-			if (cls.mvdplayback)
+			if (cls.mvdplayback && !cls.demoseeking)
 			{
 				MVD_Interpolate();
 				MVD_Mainhook_f();
@@ -2129,7 +2162,7 @@ void CL_Frame (double time)
 		CL_UserinfoChanged ("chat", char_flags);
 	}
 
-	if (cls.state >= ca_onserver)
+	if (cls.state >= ca_onserver && !cls.demoseeking)
 	{
 		Cam_SetViewPlayer();
 
@@ -2209,32 +2242,35 @@ void CL_Frame (double time)
 		CL_Multiview();
 	}
 
-	// update video
-	SCR_UpdateScreen();
-
-	CL_DecayLights();
-
-	// update audio
-	if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
+	if (!cls.demoseeking)
 	{
-		if (cls.state == ca_active)
+		// update video
+		SCR_UpdateScreen();
+
+		CL_DecayLights();
+
+		// update audio
+		if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
 		{
-			S_Update (r_origin, vpn, vright, vup);
-			CL_DecayLights ();
+			if (cls.state == ca_active)
+			{
+				S_Update (r_origin, vpn, vright, vup);
+				CL_DecayLights ();
+			}
+			else
+			{
+				S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+			}
+
+			CDAudio_Update();
 		}
-		else
+
+		MT_Frame();
+
+		if (Movie_IsCapturing())
 		{
-			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+			Movie_FinishFrame();
 		}
-
-		CDAudio_Update();
-	}
-
-	MT_Frame();
-
-	if (Movie_IsCapturing())
-	{
-		Movie_FinishFrame();
 	}
 
 	cls.framecount++;

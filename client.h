@@ -31,12 +31,12 @@ typedef struct
 	int			atten;
 } static_sound_t;
 
-
 extern cvar_t cl_demospeed;
 #define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback))
 #define	MAX_PROJECTILES	32
 
-typedef struct {
+typedef struct 
+{
 	char			name[16];
 	qbool			failedload;		// the name isn't a valid skin
 	qbool			warned;			// warning about falied to load was alredy printed
@@ -44,21 +44,22 @@ typedef struct {
 	int				width, height;	// this is valid for pcx too, but used for 32bit skins only
 	int				bpp;			// used in gl,  bpp = 1 for pcx and 4 for 32bit skins
 	int				texnum;			// texture num, used for 32bit skins, speed up
-#endif
+#endif // GLQUAKE
 	cache_user_t	cache;
 } skin_t;
 
 // player_state_t is the information needed by a player entity
 // to do move prediction and to generate a drawable entity
-typedef struct {
-	int			messagenum;		// all players won't be updated each frame
+typedef struct 
+{
+	int			messagenum;		// All players won't be updated each frame.
 
-	double		state_time;		// not the same as the packet time,
-								// because player commands come asyncronously
-	usercmd_t	command;		// last command for prediction
+	double		state_time;		// Not the same as the packet time,
+								// Because player commands come asyncronously.
+	usercmd_t	command;		// Last command for prediction.
 
 	vec3_t		origin;
-	vec3_t		viewangles;		// only for demos, not from server
+	vec3_t		viewangles;		// Only for demos, not from server.
 	vec3_t		velocity;
 	int			weaponframe;
 
@@ -67,29 +68,30 @@ typedef struct {
 	int			skinnum;
 	int			effects;
 
-	int			flags;			// dead, gib, etc
+	int			flags;			// Dead, gib, etc.
 
 	byte		vw_index;
 	byte		pm_type;
 	float		waterjumptime;
 	qbool		onground;
 	qbool		jump_held;
-	int			jump_msec;		// fix bunny-hop flickering
+	int			jump_msec;		// Fix bunny-hop flickering.
 } player_state_t;
 
 #define	MAX_SCOREBOARDNAME	16
-typedef struct player_info_s {
+typedef struct player_info_s 
+{
 	int		userid;
 	char	userinfo[MAX_INFO_STRING];
 
-	// scoreboard information
+	// Scoreboard information.
 	char	name[MAX_SCOREBOARDNAME];
 	float	entertime;
 	int		frags;
 	int		ping;
 	byte	pl;
 
-	// skin information
+	// Skin information.
 	int		topcolor;
 	int		bottomcolor;
 
@@ -103,7 +105,7 @@ typedef struct player_info_s {
 
     int    fps_msec;
     int    last_fps;
-    int    fps;         // > 0 - fps, < 0 - invalid, 0 - collecting
+    int    fps;						// > 0 - fps, < 0 - invalid, 0 - collecting
     int    fps_frames;
     double fps_measure_time;
     qbool isnear;
@@ -116,43 +118,45 @@ typedef struct player_info_s {
 
 
 	qbool	skin_refresh;
-	qbool	ignored;		//for ignore
-	qbool	validated;		//for authentication
-	char		f_server[16];	//for f_server responses
+	qbool	ignored;				// for ignore
+	qbool	validated;				// for authentication
+	char	f_server[16];			// for f_server responses
 
-	//VULT DEATH EFFECT
-	//Better putting the dead flag here instead of on the entity so whats dead stays dead
+	// VULT DEATH EFFECT
+	// Better putting the dead flag here instead of on the entity so whats dead stays dead
 	qbool dead;
 
 } player_info_t;
 
 
-typedef struct {
-	qbool	interpolate;
+typedef struct 
+{
+	qbool		interpolate;
 	vec3_t		origin;
 	vec3_t		angles;
 	int			oldindex;
 } interpolate_t;
 
 
-typedef struct {
-	// generated on client side
-	usercmd_t		cmd;		// cmd that generated the frame
-	double			senttime;	// time cmd was sent off
-	int			delta_sequence;		// sequence number to delta from, -1 = full update
-	int			sentsize;   // kazik
+typedef struct 
+{
+	// Generated on client side.
+	usercmd_t			cmd;				// Cmd that generated the frame.
+	double				senttime;			// Time cmd was sent off.
+	int					delta_sequence;		// Sequence number to delta from, -1 = full update.
+	int					sentsize;
 
-	// received from server
-	double			receivedtime;	// time message was received, or -1
-	player_state_t		playerstate[MAX_CLIENTS];	// message received that reflects performing
-								// the usercmd
+	// Received from server.
+	double				receivedtime;		// Time message was received, or -1.
+	player_state_t		playerstate[MAX_CLIENTS];	// Message received that reflects performing the usercmd.
 	packet_entities_t	packet_entities;
-	qbool		invalid;		// true if the packet_entities delta was invalid
-	int			receivedsize;   // kazik
-	int			seq_when_received;  // kazik
+	qbool				invalid;			// True if the packet_entities delta was invalid
+	int					receivedsize;
+	int					seq_when_received;
 } frame_t;
 
-typedef struct {
+typedef struct 
+{
 	entity_state_t	baseline;
 	entity_state_t	current;
 
@@ -177,7 +181,8 @@ typedef struct {
 
 #define CENT_TRAILDRAWN		1
 
-typedef struct {
+typedef struct 
+{
 	int		destcolor[3];
 	int		percent;		// 0-256
 } cshift_t;
@@ -344,6 +349,8 @@ typedef struct
 	//
 	qbool		demorecording;
 	demotype_t	demoplayback;
+	qbool		demoseeking;
+	qbool		demotest;
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
 	qbool		timedemo;
