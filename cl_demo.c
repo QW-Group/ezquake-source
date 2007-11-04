@@ -66,10 +66,11 @@ int CL_Demo_Compress(char*);
 
 static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
-cvar_t			demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
+cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 
 char Demos_Get_Trackname(void);
 int FindBestNick(char *s,int use);
+static void CL_DemoPlaybackInit(void);
 
 #ifdef WITH_DEMO_REWIND
 //=============================================================================
@@ -954,10 +955,6 @@ qbool CL_GetDemoMessage (void)
 	byte mvd_time = 0; // Number of miliseconds since last frame. Can be between 0-255. MVD Only.
 	static float prevtime = 0;
 
-	#ifdef WITH_DEMO_REWIND
-	unsigned long current_filepos;
-	#endif // WITH_DEMO_REWIND
-
 	// Don't try to play while QWZ is being unpacked.
 	#ifdef _WIN32
 	if (qwz_unpacking)
@@ -984,23 +981,30 @@ qbool CL_GetDemoMessage (void)
 
 	bufferingtime = 0;
 
-	#ifdef WITH_DEMO_REWIND
-	// DEMO REWIND
-	// If we're seeking, check if we're supposed to rewind.
-	if (cls.demoseeking && (cls.demotime < nextdemotime))
-	{
-		// Find the keyframe closest to the new cls.demotime.
-		demo_keyframe_t *keyframe = CL_DemoKeyframeFindClosest(cls.demotime);
+	// DEMO REWIND.
+	// If we're seeking and our seek destination is in the past we need to rewind.
+	if (cls.demoseeking && !cls.demorewinding && (cls.demotime < nextdemotime))
+	{	
+		// Restart playback from the start of the file and then seek to the rewind spot.
+		VFS_SEEK(playbackfile, 0, SEEK_SET);
+		CL_DemoPlaybackInit();
 		
-		// Seek to the rewind location.
-		VFS_SEEK(playbackfile, keyframe->filepos, SEEK_SET);
-
-		// Set nextdemotime to the read keyframe timestamp so
-		// that we won't just seek back to our old position.
-		cls.demotime = prevtime = nextdemotime = keyframe->timestamp;
-		cls.demoseeking = false;
+		prevtime			= 0.0;
+		cls.demoseeking		= true;
+		cls.demorewinding	= true;
 	}
-	#endif // WITH_DEMO_REWIND
+
+	if (cls.demorewinding)
+	{
+		// If we've reached active state, we can set the new demotime
+		// to trigger the demo seek to the desired location.
+		// Before we're active, cl.demotime will just get overwritten.
+		if (cls.state >= ca_active)
+		{
+			cls.demotime = cls.demo_rewindtime;
+			cls.demorewinding = false;
+		}
+	}
 
 	// Adjust the time for MVD playback.
 	if (cls.mvdplayback)
@@ -1021,15 +1025,6 @@ qbool CL_GetDemoMessage (void)
 		// Make sure we have enough data in the buffer.
 		if (!pb_ensure())
 			return false;
-
-		#ifdef WITH_DEMO_REWIND
-		// DEMO REWIND
-		// Get the fileposition of the next time stamp so that it can be saved in a keyframe if needed.
-		if (cls.mvdplayback != QTV_PLAYBACK)
-		{
-			current_filepos = VFS_TELL(playbackfile);
-		}
-		#endif // WITH_DEMO_REWIND
 
 		// Read the time of the next message in the demo.
 		if (cls.mvdplayback)
@@ -1063,22 +1058,8 @@ qbool CL_GetDemoMessage (void)
 			demotime = LittleFloat(demotime);
 		}
 		
-		#ifdef WITH_DEMO_REWIND
-		// DEMO REWIND
-		// Every 5 seconds, save the file location and timestamp in a demo keyframe
-		if (!demo_keyframes || (demotime >= (demo_keyframes->timestamp + 5.0)))
-		{
-			// Since mvd time stamps can be 0 (several packets using the same time stamp)
-			// we only save a keyframe for the first packet in such a set.
-			if (!cls.mvdplayback || (cls.mvdplayback && mvd_time > 0))
-			{
-				CL_DemoKeyframeAdd(current_filepos, demotime);
-			}
-		}
-		#endif // WITH_DEMO_REWIND
-
 		// If we've reached our seek goal, stop seeking.
-		if ((cls.demoseeking || cls.demotest) && cls.demotime <= demotime)
+		if ((cls.demoseeking || cls.demotest) && (cls.demotime <= demotime))
 		{
 			cls.demoseeking = false;
 			cls.demotest = false;
@@ -2657,6 +2638,67 @@ qbool CL_IsDemoExtension(const char *filename)
 }
 
 //
+// Resets various states for beginning playback.
+//
+static void CL_DemoPlaybackInit(void)
+{
+	// Reset multiview track slots.
+	memset(mv_trackslots, -1, sizeof(mv_trackslots));
+	nTrack1duel = nTrack2duel = 0;
+	mv_skinsforced = false;
+
+	#ifdef WITH_DEMO_REWIND
+	// Clear the demo keyframes used for rewinding.
+	CL_DemoKeyframeClearAll();
+	#endif WITH_DEMO_REWIND
+
+	cls.demoseeking		= false;
+	cls.demoplayback	= true;
+
+	// Set demoplayback vars depending on the demo type.
+	cls.mvdplayback		= CL_GetIsMVD(playbackfile);  // TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also.
+	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(cls.demoname), "dem");
+
+	 // Init some buffers for reading.
+	CL_Demo_PB_Init(NULL, 0);
+
+	// NetQuake demo support.
+	if (cls.nqdemoplayback)
+	{
+		NQD_StartPlayback();
+		demo_time_length = -1.0;
+	}
+	else
+	{
+		// Calculate the demo time.
+		double start = Sys_DoubleTime();
+		demo_time_length = CL_CalculateDemoTime(playbackfile);
+		Com_DPrintf("Demo probe took %f seconds.\n", Sys_DoubleTime() - start);
+	}
+
+	// Setup the netchan and state.
+	cls.state = ca_demostart;
+	Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, 0);
+	cls.demotime = 0;
+	demostarttime = -1.0;
+	olddemotime = nextdemotime = 0;
+	cls.findtrack = true;
+
+	bufferingtime = 0;
+
+	// Used for knowing who messages is directed to in MVD's.
+	cls.lastto = cls.lasttype = 0;
+
+	CL_ClearPredict();
+
+	// Recording not allowed during mvdplayback.
+	if (cls.mvdplayback && cls.demorecording)
+	{
+		CL_Stop_f();
+	}
+}
+
+//
 // Starts playback of a demo.
 //
 void CL_Play_f (void)
@@ -2800,61 +2842,11 @@ void CL_Play_f (void)
 		return;
 	}
 
-	// Reset multiview track slots.
-	memset(mv_trackslots, -1, sizeof(mv_trackslots));
-	nTrack1duel = nTrack2duel = 0;
-	mv_skinsforced = false;
+	strlcpy(cls.demoname, name, sizeof(cls.demoname));
 
-	#ifdef WITH_DEMO_REWIND
-	// Clear the demo keyframes used for rewinding.
-	CL_DemoKeyframeClearAll();
-	#endif WITH_DEMO_REWIND
+	CL_DemoPlaybackInit();
 
 	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
-
-	// Set demoplayback vars depending on the demo type.
-	cls.demoplayback	= true;
-	strlcpy(cls.demoname, name, sizeof(cls.demoname));
-	cls.mvdplayback		= CL_GetIsMVD(playbackfile);  // TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also.
-	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
-
-	 // Init some buffers for reading.
-	CL_Demo_PB_Init(NULL, 0);
-
-	// NetQuake demo support.
-	if (cls.nqdemoplayback)
-	{
-		NQD_StartPlayback ();
-		demo_time_length = -1.0;
-	}
-	else
-	{
-		// Calculate the demo time.
-		double start = Sys_DoubleTime();
-		demo_time_length = CL_CalculateDemoTime(playbackfile);
-		Com_DPrintf("Demo probe took %f seconds.\n", Sys_DoubleTime() - start);
-	}
-
-	// Setup the netchan and state.
-	cls.state = ca_demostart;
-	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
-	cls.demotime = 0;
-	demostarttime = -1.0;
-	olddemotime = nextdemotime = 0;
-	cls.findtrack = true;
-
-	bufferingtime = 0;
-
-	// Used for knowing who messages is directed to in MVD's.
-	cls.lastto = cls.lasttype = 0;
-
-	CL_ClearPredict();
-
-	// Recording not allowed during mvdplayback.
-	if (cls.mvdplayback && cls.demorecording)
-	{
-		CL_Stop_f();
-	}
 }
 
 //
@@ -3615,6 +3607,11 @@ void CL_Demo_Jump_f (void)
 	}
 	#endif // WITH_DEMO_REWIND
 
+	if (newdemotime < cls.demotime)
+	{
+		cls.demo_rewindtime = newdemotime;
+	}
+
 	// Set the new demotime.
 	cls.demotime = newdemotime;
 
@@ -3625,7 +3622,7 @@ void CL_Demo_Jump_f (void)
 //
 // Inits the demo cache and adds demo commands.
 //
-void CL_Demo_Init (void)
+void CL_Demo_Init(void)
 {
 	int parm, democache_size;
 	byte *democache_buffer;

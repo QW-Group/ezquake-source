@@ -285,6 +285,7 @@ typedef struct
 	int			framecount;		// Incremented every frame, never reset.
 	double		realtime;		// Scaled by cl_demospeed.
 	double		demotime;		// Scaled by cl_demospeed, reset when starting a demo.
+	double		demo_rewindtime;// The time that we should jump to when rewinding.
 	double		trueframetime;	// Time since last frame.
 	double		frametime;		// Time since last frame, scaled by cl_demospeed.
 
@@ -361,6 +362,7 @@ typedef struct
 	qbool		demorecording;
 	demotype_t	demoplayback;
 	qbool		demoseeking;
+	qbool		demorewinding;
 	qbool		demotest;
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
