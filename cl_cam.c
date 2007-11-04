@@ -750,10 +750,7 @@ void CL_InitCam(void)
  #endif
  
 	// Multiview tracking.	
-	for(i = 0; i < 4; i++)
-	{
-		mv_trackslots[i] = -1;
-	}
+	memset(mv_trackslots, -1, sizeof(mv_trackslots));
 	mv_skinsforced = false;
 }
 
@@ -784,9 +781,7 @@ void CL_Track (int trackview)
 	// Don't go outside of the mv_trackslots array bounds.
 	trackview = min(trackview, 3);
 
-	//
 	// Allow resetting to default tracking for multiview.
-	//
 	if (trackview >= 0 && !strcmp(Cmd_Args(), "off")) 
 	{
 		Com_Printf("Track %d resetting to default\n", trackview);

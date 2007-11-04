@@ -638,8 +638,6 @@ void CL_SendCmd (void) {
 	cl.frames[i].senttime = cls.realtime;
 	cl.frames[i].receivedtime = -1;		// we haven't gotten a reply yet
 
-	// HUD -> hexum
-	// kazik -->
 	// update network stats table
 	i = cls.netchan.outgoing_sequence&NETWORK_STATS_MASK;
 	network_stats[i].delta = 0;     // filled-in later
@@ -655,7 +653,6 @@ void CL_SendCmd (void) {
 	if (cl_independentPhysics.value == 0 || (physframe && cl_independentPhysics.value != 0)) {
 		IN_Move(cmd);
 	}
-
 
 	// if we are spectator, try autocam
 	if (cl.spectator)
@@ -729,11 +726,8 @@ void CL_SendCmd (void) {
 		MSG_WriteByte (&buf, clc_delta);
 		MSG_WriteByte (&buf, cl.delta_sequence & 255);
 
-		// HUD -> hexum
-		// kazik -->
 		// network stats table
 		network_stats[cls.netchan.outgoing_sequence&NETWORK_STATS_MASK].delta = 1;
-		// kazik <--
 	} else {
 		cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].delta_sequence = -1;
 	}
@@ -768,12 +762,9 @@ void CL_SendCmd (void) {
 		dropcount = 0;
 	}
 
-	// HUD -> hexum
-        // kazik -->
-        cl.frames[cls.netchan.outgoing_sequence&UPDATE_MASK].sentsize = buf.cursize + 8;    // 8 = PACKET_HEADER
-        // network stats table
-        network_stats[cls.netchan.outgoing_sequence&NETWORK_STATS_MASK].sentsize = buf.cursize + 8;
-        // kazik <--
+	cl.frames[cls.netchan.outgoing_sequence&UPDATE_MASK].sentsize = buf.cursize + 8;    // 8 = PACKET_HEADER
+	// network stats table
+	network_stats[cls.netchan.outgoing_sequence&NETWORK_STATS_MASK].sentsize = buf.cursize + 8;
 
 	// deliver the message
 	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);	
