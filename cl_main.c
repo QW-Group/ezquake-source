@@ -2242,35 +2242,32 @@ void CL_Frame (double time)
 		CL_Multiview();
 	}
 
-	if (!cls.demoseeking)
+	// update video
+	SCR_UpdateScreen();
+
+	CL_DecayLights();
+
+	// update audio
+	if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
 	{
-		// update video
-		SCR_UpdateScreen();
-
-		CL_DecayLights();
-
-		// update audio
-		if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
+		if (cls.state == ca_active)
 		{
-			if (cls.state == ca_active)
-			{
-				S_Update (r_origin, vpn, vright, vup);
-				CL_DecayLights ();
-			}
-			else
-			{
-				S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-			}
-
-			CDAudio_Update();
+			S_Update (r_origin, vpn, vright, vup);
+			CL_DecayLights ();
+		}
+		else
+		{
+			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 		}
 
-		MT_Frame();
+		CDAudio_Update();
+	}
 
-		if (Movie_IsCapturing())
-		{
-			Movie_FinishFrame();
-		}
+	MT_Frame();
+
+	if (Movie_IsCapturing())
+	{
+		Movie_FinishFrame();
 	}
 
 	cls.framecount++;
