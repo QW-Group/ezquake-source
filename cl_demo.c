@@ -982,27 +982,30 @@ qbool CL_GetDemoMessage (void)
 	bufferingtime = 0;
 
 	// DEMO REWIND.
-	// If we're seeking and our seek destination is in the past we need to rewind.
-	if (cls.demoseeking && !cls.demorewinding && (cls.demotime < nextdemotime))
-	{	
-		// Restart playback from the start of the file and then seek to the rewind spot.
-		VFS_SEEK(playbackfile, 0, SEEK_SET);
-		CL_DemoPlaybackInit();
-		
-		prevtime			= 0.0;
-		cls.demoseeking		= true;
-		cls.demorewinding	= true;
-	}
-
-	if (cls.demorewinding)
+	if (!cls.mvdplayback || cls.mvdplayback != QTV_PLAYBACK) 
 	{
-		// If we've reached active state, we can set the new demotime
-		// to trigger the demo seek to the desired location.
-		// Before we're active, cl.demotime will just get overwritten.
-		if (cls.state >= ca_active)
+		// If we're seeking and our seek destination is in the past we need to rewind.
+		if (cls.demoseeking && !cls.demorewinding && (cls.demotime < nextdemotime))
+		{	
+			// Restart playback from the start of the file and then seek to the rewind spot.
+			VFS_SEEK(playbackfile, 0, SEEK_SET);
+			CL_DemoPlaybackInit();
+			
+			prevtime			= 0.0;
+			cls.demoseeking		= true;
+			cls.demorewinding	= true;
+		}
+
+		if (cls.demorewinding)
 		{
-			cls.demotime = cls.demo_rewindtime;
-			cls.demorewinding = false;
+			// If we've reached active state, we can set the new demotime
+			// to trigger the demo seek to the desired location.
+			// Before we're active, cl.demotime will just get overwritten.
+			if (cls.state >= ca_active)
+			{
+				cls.demotime = cls.demo_rewindtime;
+				cls.demorewinding = false;
+			}
 		}
 	}
 
@@ -3237,10 +3240,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	playbackfile = newf;
 
 	// Reset multiview track slots.
-	for(i = 0; i < 4; i++)
-	{
-		mv_trackslots[i] = -1;
-	}
+	memset(mv_trackslots, -1, sizeof(mv_trackslots));
 	nTrack1duel = nTrack2duel = 0;
 	mv_skinsforced = false;
 
