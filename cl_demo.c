@@ -3598,15 +3598,7 @@ void CL_Demo_Jump_f (void)
 	// Calculate the new demo time we want to jump to.
 	newdemotime = relative ? (cls.demotime + relative * seconds) : (demostarttime + seconds);
 
-	// Can't travel back in time :(
-	#ifndef WITH_DEMO_REWIND
-	if (newdemotime < cls.demotime)
-	{
-		Com_Printf("Error: cannot demo_jump backwards\n");
-		return;
-	}
-	#endif // WITH_DEMO_REWIND
-
+	// We need to rewind.
 	if (newdemotime < cls.demotime)
 	{
 		cls.demo_rewindtime = newdemotime;
