@@ -2136,7 +2136,8 @@ void CL_Frame (double time)
 				|| (!cls.demoplayback &&  cl.spectator && Cam_TrackNum() == -1) // not demo, spec free fly
 				|| ( cls.demoplayback && cls.mvdplayback && Cam_TrackNum() == -1) // mvd demo and free fly
 				|| cls.state == ca_disconnected // We need to move the mouse also when disconnected
-				) {
+				) 
+			{
 				usercmd_t dummy;
 				Sys_SendKeyEvents();
 				IN_Move (&dummy);
@@ -2316,14 +2317,11 @@ int CL_IncrLoop(int cview, int max)
 
 int CL_NextPlayer(int plr)
 {
-	if (plr < -1)
-	{
-		plr = -1;
-	}
+	max(plr, -1);
 
 	plr++;
 
-	while (cl.players[plr].spectator || !strcmp(cl.players[plr].name, ""))
+	while (cl.players[plr].spectator || !cl.players[plr].name[0])
 	{
 		plr++;
 		if (plr >= MAX_CLIENTS)
@@ -2333,6 +2331,45 @@ int CL_NextPlayer(int plr)
 	}
 	return plr;
 }
+
+// Multiview vars
+// ===================================================================================
+int		CURRVIEW;					// The current view being drawn in multiview mode.
+int		nNumViews;					// The number of views in multiview mode.
+qbool	bExitmultiview;				// Used when saving effect values on each frame.
+
+qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume
+									// that the "teammates" should all be colored in the same color as the
+									// person we're tracking (or opposite for enemies), because we're tracking
+									// more than one person. Therefore the teamcolor/enemycolor is set only once,
+									// or when the player chooses to track an entire team.
+int		nPlayernum;
+
+int		mv_trackslots[4];			// The different track slots for each view.
+char	currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
+int		mvlatch;
+qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.
+int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
+int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
+
+//
+// Original values saved between frames for effects that are
+// turned off during multiview mode.
+//
+float	nContrastExit;				// v_contrast
+float	nCrosshairExit;
+float	nfakeshaft;					// cl_fakeshaft
+int		nPolyblendExit;				// gl_polyblend
+float	nGlClearExit;				// gl_clear
+int		nLerpframesExit;
+int		nWaterwarp;					// r_waterwarp
+int		nContentblend;				// v_contentblend
+float	nQuadshift;					// v_quadcshift
+float	nPentshift;					// v_pentcshift
+float	nRingshift;					// v_ringcshift
+float	nDamageshift;				// v_damagecshift
+float	nSuitshift;					// v_suitcshift
+int		nBonusflash;				// v_bonusflash
 
 void CL_Multiview(void)
 {
@@ -2472,11 +2509,8 @@ void CL_Multiview(void)
 			int last_mv_trackslots[4];
 
 			// Save the old track values and reset them.
-			for(j = 0; j < 4; j++)
-			{
-				last_mv_trackslots[j] = mv_trackslots[j];
-				mv_trackslots[j] = -1;
-			}
+			memcpy(last_mv_trackslots, mv_trackslots, sizeof(last_mv_trackslots));
+			memset(mv_trackslots, -1, sizeof(mv_trackslots));
 
 			// Find the new team.
 			for(j = 0; j < MAX_CLIENTS; j++)
@@ -2484,7 +2518,7 @@ void CL_Multiview(void)
 				if(!cl.players[j].spectator && cl.players[j].name[0])
 				{
 					// Find the opposite team from the one we are tracking now.
-					if(!currteam[0] || (strcmp(currteam, cl.players[j].team) && strcmp(cl.players[j].name, "")))
+					if(!currteam[0] || strcmp(currteam, cl.players[j].team))
 					{
 						strlcpy(currteam, cl.players[j].team, sizeof(currteam));
 						break;
@@ -2496,13 +2530,15 @@ void CL_Multiview(void)
 			for(j = 0; j < MAX_CLIENTS; j++)
 			{
 				if(!cl.players[j].spectator
-					&& strcmp(cl.players[j].name, "")
+					&& cl.players[j].name[0]
 					&& !strcmp(currteam, cl.players[j].team))
 				{
 					// Find the player slot to track.
-					mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[j].name);
+					mv_trackslots[team_slot_count] = Player_StringtoSlot(cl.players[j].name);
 					team_slot_count++;
 				}
+
+				Com_DPrintf("New trackslots: %i %i %i %i\n", mv_trackslots[0], mv_trackslots[1], mv_trackslots[2], mv_trackslots[3]);
 
 				// Don't go out of bounds in the mv_trackslots array.
 				if(team_slot_count == 4)
@@ -2527,9 +2563,10 @@ void CL_Multiview(void)
 				cl_multiview.value = 4;
 				mv_trackslots[MV_VIEW3] = last_mv_trackslots[MV_VIEW1];
 				mv_trackslots[MV_VIEW4] = last_mv_trackslots[MV_VIEW2];
+				
+				Com_DPrintf("Team on top/bottom trackslots: %i %i %i %i\n", 
+					mv_trackslots[0], mv_trackslots[1], mv_trackslots[2], mv_trackslots[3]);
 			}
-
-			nSwapPov = false;
 		}
 		else
 		{
@@ -2548,13 +2585,24 @@ void CL_Multiview(void)
 	// BUGFIX - Make sure the player we're tracking is still left, might have disconnected since
 	// we picked him for tracking (This would result in being thrown into freefly mode and not being able
 	// to go back into tracking mode when a player disconnected).
-	if (cl.players[playernum].spectator || !strcmp (cl.players[playernum].name, ""))
+	if (!nSwapPov && (cl.players[playernum].spectator || !cl.players[playernum].name[0]))
 	{
 		mv_trackslots[CURRVIEW - 1] = -1;
 	}
 
+	if (nSwapPov)
+	{
+		Com_DPrintf("Final trackslots: %i %i %i %i\n", mv_trackslots[0], mv_trackslots[1], mv_trackslots[2], mv_trackslots[3]);
+	}
+
+	nSwapPov = false;
+
 	// Set the current player we're tracking for the next view to be drawn.
-	spec_track = playernum;
+	// BUGFIX: Only change the spec_track if the new track target is a player.
+	if (!cl.players[playernum].spectator && cl.players[playernum].name[0])
+	{
+		spec_track = playernum;
+	}
 
 	// Make sure we reset variables we suppressed during multiview drawing.
 	bExitmultiview = true;

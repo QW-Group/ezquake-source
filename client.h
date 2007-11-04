@@ -680,8 +680,6 @@ extern float nextdemotime, olddemotime;
 #define NET_TIMINGSMASK 255
 extern int	packet_latency[NET_TIMINGS];
 
-// HUD -> hexum
-// kazik -->
 // advanced network stats
 
 #define  NETWORK_STATS_SIZE  512    // must be power of 2
@@ -744,14 +742,10 @@ typedef struct net_stat_result_s
 } net_stat_result_t;
 
 int CL_CalcNetStatistics(
-            /* in */
-            float period,           // period of time
-            packet_info_t *samples, // statistics table
-            int num_samples,        // table size
-            /* out */
-            net_stat_result_t *res);
-
-// kazik <--
+            float period,           // [IN] period of time
+            packet_info_t *samples, // [IN] statistics table
+            int num_samples,        // [IN] table size
+            net_stat_result_t *res); // [OUT]
 
 int CL_CalcNet (void);
 void CL_ParseServerMessage (void);
@@ -761,7 +755,7 @@ qbool CL_IsUploading(void);
 void CL_NextUpload(void);
 void CL_StartUpload (byte *data, int size);
 void CL_StopUpload(void);
-void CL_StartFileUpload(void); //bliP
+void CL_StartFileUpload(void);
 
 void CL_ParseClientdata (void);
 
@@ -774,7 +768,7 @@ void	CL_Parse_OOB_ChunkedDownload(void);
 int		CL_RequestADownloadChunk(void);
 void	CL_SendChunkDownloadReq(void);
 
-#endif
+#endif // FTE_PEXT_CHUNKEDDOWNLOADS
 
 // cl_tent.c
 void CL_InitTEnts (void);
@@ -849,7 +843,6 @@ void Cam_SetViewPlayer (void);
 void CL_InitCam (void);
 void Cam_TryLock (void);
 
-
 int Cam_TrackNum(void);
 void Cam_Lock(int playernum);
 
@@ -892,17 +885,6 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec);
 //
 // Multiview vars
 // ===================================================================================
-int		CURRVIEW;					// The current view being drawn in multiview mode.
-int		nNumViews;					// The number of views in multiview mode.
-qbool	bExitmultiview;				// Used when saving effect values on each frame.
-
-qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume
-									// that the "teammates" should all be colored in the same color as the
-									// person we're tracking (or opposite for enemies), because we're tracking
-									// more than one person. Therefore the teamcolor/enemycolor is set only once,
-									// or when the player chooses to track an entire team.
-int		nPlayernum;
-
 #define MV_VIEWS 4
 
 #define	MV_VIEW1 0
@@ -910,31 +892,42 @@ int		nPlayernum;
 #define	MV_VIEW3 2
 #define	MV_VIEW4 3
 
-int		mv_trackslots[4];			// The different track slots for each view.
-char	currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
-int		mvlatch;
-qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.
-int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
-int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
+extern int		CURRVIEW;					// The current view being drawn in multiview mode.
+extern int		nNumViews;					// The number of views in multiview mode.
+extern qbool	bExitmultiview;				// Used when saving effect values on each frame.
+
+extern qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume
+											// that the "teammates" should all be colored in the same color as the
+											// person we're tracking (or opposite for enemies), because we're tracking
+											// more than one person. Therefore the teamcolor/enemycolor is set only once,
+											// or when the player chooses to track an entire team.
+extern int		nPlayernum;
+
+extern int		mv_trackslots[4];			// The different track slots for each view.
+extern char		currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
+extern int		mvlatch;
+extern qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.
+extern int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
+extern int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
 
 //
 // Original values saved between frames for effects that are
 // turned off during multiview mode.
 //
-float	nContrastExit;				// v_contrast
-float	nCrosshairExit;
-float	nfakeshaft;					// cl_fakeshaft
-int		nPolyblendExit;				// gl_polyblend
-float	nGlClearExit;				// gl_clear
-int		nLerpframesExit;
-int		nWaterwarp;					// r_waterwarp
-int		nContentblend;				// v_contentblend
-float	nQuadshift;					// v_quadcshift
-float	nPentshift;					// v_pentcshift
-float	nRingshift;					// v_ringcshift
-float	nDamageshift;				// v_damagecshift
-float	nSuitshift;					// v_suitcshift
-int		nBonusflash;				// v_bonusflash
+extern float	nContrastExit;				// v_contrast
+extern float	nCrosshairExit;
+extern float	nfakeshaft;					// cl_fakeshaft
+extern int		nPolyblendExit;				// gl_polyblend
+extern float	nGlClearExit;				// gl_clear
+extern int		nLerpframesExit;
+extern int		nWaterwarp;					// r_waterwarp
+extern int		nContentblend;				// v_contentblend
+extern float	nQuadshift;					// v_quadcshift
+extern float	nPentshift;					// v_pentcshift
+extern float	nRingshift;					// v_ringcshift
+extern float	nDamageshift;				// v_damagecshift
+extern float	nSuitshift;					// v_suitcshift
+extern int		nBonusflash;				// v_bonusflash
 
 
 // ===================================================================================
