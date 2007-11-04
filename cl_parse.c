@@ -2693,6 +2693,14 @@ void CL_SetStat (int stat, int value)
 	if (stat == STAT_VIEWHEIGHT && cl.z_ext & Z_EXT_VIEWHEIGHT)
 		cl.viewheight = cl.stats[STAT_VIEWHEIGHT];
 
+#ifdef FTE_PEXT_ACCURATETIMINGS
+	if (stat == STAT_TIME && (cls.fteprotocolextensions & FTE_PEXT_ACCURATETIMINGS))
+	{
+		cl.servertime_works = true;
+		cl.servertime = cl.stats[STAT_TIME] * 0.001;
+	}
+	else
+#endif
 	if (stat == STAT_TIME && cl.z_ext & Z_EXT_SERVERTIME)
 	{
 		cl.servertime_works = true;

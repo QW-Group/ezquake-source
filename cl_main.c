@@ -498,6 +498,9 @@ unsigned int CL_SupportedFTEExtensions (void)
 {
 	unsigned int fteprotextsupported = 0;
 
+#ifdef FTE_PEXT_ACCURATETIMINGS
+	fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
+#endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif

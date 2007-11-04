@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef PROTOCOL_VERSION_FTE 
 
+#define FTE_PEXT_ACCURATETIMINGS	0x00000040
 #define FTE_PEXT_HLBSP				0x00000200	//stops fte servers from complaining
 #define FTE_PEXT_MODELDBL			0x00001000
 #define FTE_PEXT_ENTITYDBL			0x00002000	//max of 1024 ents instead of 512
