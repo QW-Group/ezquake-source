@@ -18,7 +18,7 @@
  *             
  */
 
-#ifdef WITH_VFS_MMAP
+//#ifdef WITH_VFS_MMAP
 
 #include "quakedef.h"
 #include "hash.h"
@@ -38,7 +38,7 @@ typedef struct {
 
 	void *handle;
 	unsigned long position;
-	size_t size;
+	size_t len;
 } vfsmmapfile_t;
 
 static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfserrno_t *err) 
@@ -49,8 +49,8 @@ static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfs
 		        Sys_Error("VFSMMAP_ReadBytes: bytestoread < 0");
 
 	/* Make sure we don't read past the valid memory */
-	if (bytestoread + intfile->position > intfile->size) {
-		bytestoread = intfile->size - intfile->position;
+	if (bytestoread + intfile->position > intfile->len) {
+		bytestoread = intfile->len - intfile->position;
 	}
 
 	memcpy(buffer, intfile->handle + intfile->position, bytestoread);
@@ -66,9 +66,9 @@ static int VFSMMAP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowr
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
 	/* Allocate more memory if we would overflow */
-	if (bytestowrite + intfile->position > intfile->size) {
-		size_t newsize  = bytestowrite + intfile->position;
-		void *p = realloc(intfile->handle, newsize);
+	if (bytestowrite + intfile->position > intfile->len) {
+		size_t newlen  = bytestowrite + intfile->position;
+		void *p = realloc(intfile->handle, newlen);
 		if (!p) {
 			Com_Printf("VFSMMAP_WriteBytes: Unable to write to file, memory full\n");
 			return 0;
@@ -89,7 +89,7 @@ static int VFSMMAP_Seek(vfsfile_t *file, unsigned long offset, int whence)
 	switch(whence) {
 		case SEEK_SET: intfile->position = offset; break;
 		case SEEK_CUR: intfile->position += offset; break;
-		case SEEK_END: intfile->position = intfile->size + offset; break;
+		case SEEK_END: intfile->position = intfile->len + offset; break;
 		default:
 			   Sys_Error("VFSMMAP_Seek: Unknown whence value(%d)\n", whence);
 			   return -1;
@@ -109,7 +109,7 @@ static unsigned long VFSMMAP_GetLen(vfsfile_t *file)
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 	
-	return intfile->size;
+	return intfile->len;
 }
 
 static void VFSMMAP_Close(vfsfile_t *file) 
@@ -128,10 +128,12 @@ static void VFSMMAP_Flush(vfsfile_t *file)
 	Sys_Error("VFSMMAP_Flush: Invalid operation\n");
 }
 
-static vfsfile_t *FSMMAP_OpenVFS(vfsfile_t *file, char *desc) 
+vfsfile_t *FSMMAP_OpenVFS(void *buf, size_t buf_len) 
 {
 	vfsmmapfile_t *mmapfile = Q_calloc(1, sizeof(*mmapfile));
 
+	mmapfile->handle           = buf;
+	mmapfile->len              = buf_len;
 	mmapfile->funcs.ReadBytes  = VFSMMAP_ReadBytes;
 	mmapfile->funcs.WriteBytes = VFSMMAP_WriteBytes;
 	mmapfile->funcs.Seek       = VFSMMAP_Seek;
@@ -143,4 +145,4 @@ static vfsfile_t *FSMMAP_OpenVFS(vfsfile_t *file, char *desc)
 	return (vfsfile_t *)mmapfile;
 }
 
-#endif // WITH_VFS_MMAP
+//#endif // WITH_VFS_MMAP

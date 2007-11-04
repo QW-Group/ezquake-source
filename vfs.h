@@ -154,6 +154,11 @@ searchpathfuncs_t gzipfilefuncs;
 extern searchpathfuncs_t tarfilefuncs;
 
 //=====================
+// Memory Mapped files
+//=====================
+vfsfile_t *FSMMAP_OpenVFS(void *buf, size_t buf_len);
+
+//=====================
 // Doomwad Support
 //=====================
 #ifdef DOOMWADS
