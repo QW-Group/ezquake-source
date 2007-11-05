@@ -117,7 +117,8 @@ keyname_t keynames[] = {
 	{"CAPSLOCK",K_CAPSLOCK},
 	{"PRINTSCR", K_PRINTSCR},
 	{"SCRLCK", K_SCRLCK},
-	{"SCROLLOCK", K_SCRLCK}, // FIXME
+	{"SCROLLLOCK", K_SCRLCK},
+	{"SCROLLOCK", K_SCRLCK},	// misspelled; kept for compatibility
 
 #ifdef __APPLE__
 	{"COMMAND", K_CMD},
