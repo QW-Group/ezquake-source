@@ -585,7 +585,7 @@ void R_DrawWaterSurfaces (void) {
 	if (!waterchain)
 		return;
 
-	wateralpha = bound((1 - cl.watervis), r_wateralpha.value, 1);
+	wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 
 	if (wateralpha < 1.0) {
 		glEnable (GL_BLEND);
@@ -772,7 +772,7 @@ void DrawTextureChains (model_t *model, int contents)
 	qbool isInternalModel;//Internal models are compiled inside the bsp file
 		// used for moving things, like platforms
 
-	drawLumasGlowing = (com_serveractive || cl.allow_lumas) && (gl_fb_bmodels.value || gl_fogenable.value);
+	drawLumasGlowing = (com_serveractive || r_refdef2.allow_lumas) && (gl_fb_bmodels.value || gl_fogenable.value);
 
 	draw_caustics = underwatertexture && gl_caustics.value;
 	draw_details = detailtexture && gl_detail.value;

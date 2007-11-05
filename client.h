@@ -540,12 +540,9 @@ typedef struct {
 
 	qbool		standby;
 	qbool		countdown;
-	float		fbskins;
 	float		fakeshaft;
 	qbool		userfb;
 	int			minlight;
-	float		watervis;
-	qbool		allow_lumas;
 
 	interpolate_t	int_projectiles[MAX_PROJECTILES];
 } clientState_t;

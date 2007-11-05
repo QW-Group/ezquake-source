@@ -265,7 +265,7 @@ void EmitWaterPolys (msurface_t *fa) {
 	int i;
 	byte *col;
 	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
-	float wateralpha = bound((1 - cl.watervis), r_wateralpha.value, 1);
+	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 
 	vec3_t nv;
 

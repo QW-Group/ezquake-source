@@ -103,9 +103,10 @@ typedef struct {
 typedef struct {
 	double			time;
 	qbool			allow_cheats;
-	qbool			allow_fbskins;
+	qbool			allow_lumas;
+	float			max_watervis;	// how much water transparency we allow: 0..1 (reverse of alpha)
+	float			max_fbskins;	// max player skin brightness 0..1
 //	int				viewplayernum;  // don't draw own glow when gl_flashblend 1
-//	qbool			watervis;
 
 //	lightstyle_t    *lightstyles;
 } refdef2_t;

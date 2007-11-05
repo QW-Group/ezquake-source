@@ -760,7 +760,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 
 
 	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
-		fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);
+		fbskins = bound(0, r_fullbrightSkins.value, r_refdef2.max_fbskins);
 		if (fbskins == 1 && gl_fb_models.value == 1) {
 			ambientlight = shadelight = 4096;
 			full_light = true;

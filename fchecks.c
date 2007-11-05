@@ -148,7 +148,11 @@ static qbool FChecks_VersionRequest (const char *s)
 
 static qbool FChecks_SkinRequest (const char *s)
 {
-	float fbskins = bound (0, r_fullbrightSkins.value, cl.fbskins);
+	char *fbs;
+	qbool fbskins_policy = (cls.demoplayback || cl.spectator) ? 1 :
+		*(fbs = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbs), 1) :
+		cl.teamfortress ? 0 : 1;
+	float fbskins = bound (0, r_fullbrightSkins.value, fbskins_policy);
 	if (cl.spectator || (f_skins_reply_time && cls.realtime - f_skins_reply_time < 20))
 		return false;
 

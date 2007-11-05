@@ -304,7 +304,11 @@ qbool OnChange_indphys (cvar_t *var, char *value)
 
 void OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel)
 {
-	float fbskins = bound (0.0, Q_atof (value), cl.fbskins);
+	char *fbs;
+	qbool fbskins_policy = (cls.demoplayback || cl.spectator) ? 1 :
+		*(fbs = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbs), 1) :
+		cl.teamfortress ? 0 : 1;
+	float fbskins = bound (0.0, Q_atof (value), fbskins_policy);
 
 	if (!cl.spectator && cls.state != ca_disconnected) {
 		if (fbskins > 0.0)

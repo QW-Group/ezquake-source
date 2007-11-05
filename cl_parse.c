@@ -1985,8 +1985,8 @@ void CL_SetInfo (void)
 // Called by CL_FullServerinfo_f and CL_ParseServerInfoChange
 void CL_ProcessServerInfo (void) 
 {
-	char *p, *fbskins, *minlight, *watervis;
-	int teamplay, fpd;
+	char *p, *minlight;
+	int new_teamplay, newfpd;
 	qbool skin_refresh, standby, countdown;
 
 	// game type (sbar code checks it) (GAME_DEATHMATCH default)
@@ -1995,31 +1995,14 @@ void CL_ProcessServerInfo (void)
 	// server side fps restriction
 	cl.maxfps = Q_atof(Info_ValueForKey(cl.serverinfo, "maxfps"));
 
-	if (cls.demoplayback) 
-	{
-		cl.allow_lumas = true;
-		cl.watervis = cl.fbskins = cl.fakeshaft = 1;
-		fpd = 0;
-	}
-	else if (cl.spectator) 
-	{
-		// Allow spectators to have transparent turbulence
-		cl.allow_lumas = true;
-		cl.watervis = cl.fbskins = cl.fakeshaft = 1;
-		fpd = atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
-	}
-	else 
-	{
-		cl.watervis = *(watervis = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(watervis), 1) : 0;
-		cl.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "1") ? true : false;
-		cl.fbskins = *(fbskins = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbskins), 1) :
-		cl.teamfortress ? 0 : 1;
+	newfpd = cls.demoplayback ? 0 : atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
+	if (cls.demoplayback || cl.spectator)
+		cl.fakeshaft = 1;
+	else
 		cl.fakeshaft = *(p = Info_ValueForKey(cl.serverinfo, "fakeshaft")) ?
 			bound(0, Q_atof(p), 1) :
 			*(p = Info_ValueForKey(cl.serverinfo, "truelightning")) ?
 			bound(0, Q_atof(p), 1) : 1;
-		fpd = atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
-	}
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
 	standby = !strcasecmp(p, "standby");
@@ -2056,16 +2039,16 @@ void CL_ProcessServerInfo (void)
 
 	// Deathmatch and teamplay.
 	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
-	teamplay = atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
+	new_teamplay = atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
 
 	// Timelimit and fraglimit.
 	cl.timelimit = atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
 	cl.fraglimit = atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 
 	// Update skins if needed.
-	skin_refresh = ( !teamplay != !cl.teamplay || ( (fpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
-	cl.teamplay = teamplay;
-	cl.fpd = fpd;
+	skin_refresh = ( !new_teamplay != !cl.teamplay || ( (newfpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
+	cl.teamplay = new_teamplay;
+	cl.fpd = newfpd;
 	if (skin_refresh)
 		TP_RefreshSkins();
 }
