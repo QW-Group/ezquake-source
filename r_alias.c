@@ -571,7 +571,7 @@ void R_AliasSetupLighting (entity_t *ent) {
 
 	if (currententity->model->modhint == MOD_PLAYER || currententity->renderfx & RF_PLAYERMODEL) {
 		extern cvar_t r_fullbrightSkins;
-		fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);
+		fbskins = bound(0, r_fullbrightSkins.value, r_refdef2.max_fbskins);
 		if (fbskins) {
 			ambientlight = max (ambientlight, 8 + fbskins * 120);
 			shadelight = max (shadelight, 8 + fbskins * 120);
