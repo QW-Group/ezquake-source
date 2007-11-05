@@ -717,7 +717,6 @@ static char *Macro_Cam_Angles (void) { return va("\"%s %s %s\"", myftos(cl.viewa
 
 void CL_InitCam(void) 
 {
-	int i;
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
 
 	// cl_hightrack 
