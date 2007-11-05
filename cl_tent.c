@@ -707,6 +707,18 @@ void vectoangles(vec3_t vec, vec3_t ang);
 
 #define MAX_LIGHTNINGBEAMS 10
 
+static float fakeshaft_policy (void)
+{
+	char *p;
+	if (cls.demoplayback || cl.spectator)
+		return 1;
+	else
+		return *(p = Info_ValueForKey(cl.serverinfo, "fakeshaft")) ?
+			bound(0, Q_atof(p), 1) :
+			*(p = Info_ValueForKey(cl.serverinfo, "truelightning")) ?
+			bound(0, Q_atof(p), 1) : 1;
+}
+
 void CL_UpdateBeams(void) 
 {
 	int i;
@@ -727,7 +739,7 @@ void CL_UpdateBeams(void)
 	memset (&ent, 0, sizeof(entity_t));
 	ent.colormap = vid.colormap;
 
-	fakeshaft = bound(0, cl_fakeshaft.value, cl.fakeshaft);
+	fakeshaft = bound(0, cl_fakeshaft.value, fakeshaft_policy());
 
 	// Update lightning.
 	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++)	

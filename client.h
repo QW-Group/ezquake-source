@@ -540,7 +540,6 @@ typedef struct {
 
 	qbool		standby;
 	qbool		countdown;
-	float		fakeshaft;
 	qbool		userfb;
 	int			minlight;
 

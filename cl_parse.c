@@ -1996,13 +1996,6 @@ void CL_ProcessServerInfo (void)
 	cl.maxfps = Q_atof(Info_ValueForKey(cl.serverinfo, "maxfps"));
 
 	newfpd = cls.demoplayback ? 0 : atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
-	if (cls.demoplayback || cl.spectator)
-		cl.fakeshaft = 1;
-	else
-		cl.fakeshaft = *(p = Info_ValueForKey(cl.serverinfo, "fakeshaft")) ?
-			bound(0, Q_atof(p), 1) :
-			*(p = Info_ValueForKey(cl.serverinfo, "truelightning")) ?
-			bound(0, Q_atof(p), 1) : 1;
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
 	standby = !strcasecmp(p, "standby");
