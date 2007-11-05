@@ -1633,6 +1633,10 @@ archive_fail:
 		break;
 
 	case FS_ANY:
+		vfs = FS_OpenVFS(filename, mode, FS_NONE_OS);
+		if (vfs)
+			return vfs;
+
 		vfs = FS_OpenVFS(filename, mode, FS_HOME);
 		if (vfs)
 			return vfs;
