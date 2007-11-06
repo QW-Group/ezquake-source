@@ -44,7 +44,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "demo_controls.h"
 
-
 float olddemotime, nextdemotime;
 
 double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
@@ -957,6 +956,12 @@ qbool CL_GetDemoMessage (void)
 	byte mvd_time = 0; // Number of miliseconds since last frame. Can be between 0-255. MVD Only.
 	static float prevtime = 0;
 
+	// Used to save track status when rewinding.
+	static int rewind_trackslots[4];
+	static int rewind_duel_track1 = 0;
+	static int rewind_duel_track2 = 0;
+	static int rewind_spec_track = 0;
+
 	// Don't try to play while QWZ is being unpacked.
 	#ifdef _WIN32
 	if (qwz_unpacking)
@@ -988,13 +993,24 @@ qbool CL_GetDemoMessage (void)
 	{
 		// If we're seeking and our seek destination is in the past we need to rewind.
 		if (cls.demoseeking && !cls.demorewinding && (cls.demotime < nextdemotime))
-		{	
+		{
 			// Restart playback from the start of the file and then seek to the rewind spot.
+			#ifdef WITH_FTE_VFS
 			VFS_SEEK(playbackfile, 0, SEEK_SET);
+			#else
+			fseek(playbackfile, 0, SEEK_SET);
+			#endif // WITH_FTE_VFS
+
+			memcpy(rewind_trackslots, mv_trackslots, sizeof(rewind_trackslots));
+			rewind_duel_track1 = nTrack1duel;
+			rewind_duel_track2 = nTrack2duel;
+			rewind_spec_track = spec_track;
+			cls.findtrack = false;
+
+			// Restart the demo from scratch.
 			CL_DemoPlaybackInit();
 			
 			prevtime			= 0.0;
-			cls.demoseeking		= true;
 			cls.demorewinding	= true;
 		}
 
@@ -1068,6 +1084,16 @@ qbool CL_GetDemoMessage (void)
 		{
 			cls.demoseeking = false;
 			cls.demotest = false;
+
+			if (cls.demorewinding)
+			{
+				// Make sure we keep our tracked players after rewinding.
+				memcpy(mv_trackslots, rewind_trackslots, sizeof(mv_trackslots));
+				nTrack1duel			= rewind_duel_track1;
+				nTrack2duel			= rewind_duel_track2;
+				Cam_Lock(rewind_spec_track);
+				cls.findtrack		= false;
+			}
 		}
 
 		playback_recordtime = demotime;
@@ -2647,18 +2673,12 @@ qbool CL_IsDemoExtension(const char *filename)
 //
 static void CL_DemoPlaybackInit(void)
 {
-	// Reset multiview track slots.
-	memset(mv_trackslots, -1, sizeof(mv_trackslots));
-	nTrack1duel = nTrack2duel = 0;
-	mv_skinsforced = false;
+	cls.demoplayback	= true;
 
 	#ifdef WITH_DEMO_REWIND
 	// Clear the demo keyframes used for rewinding.
 	CL_DemoKeyframeClearAll();
 	#endif // WITH_DEMO_REWIND
-
-	cls.demoseeking		= false;
-	cls.demoplayback	= true;
 
 	// Set demoplayback vars depending on the demo type.
 	cls.mvdplayback		=  CL_GetIsMVD(playbackfile);  // TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also.
@@ -2682,17 +2702,18 @@ static void CL_DemoPlaybackInit(void)
 	}
 
 	// Setup the netchan and state.
-	cls.state = ca_demostart;
 	Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, 0);
-	cls.demotime = 0;
-	demostarttime = -1.0;
-	olddemotime = nextdemotime = 0;
-	cls.findtrack = true;
-
-	bufferingtime = 0;
+	cls.state		= ca_demostart;
+	cls.demotime	= 0;
+	demostarttime	= -1.0;
+	olddemotime		= 0;
+	nextdemotime	= 0;
+	cls.findtrack	= true;
+	bufferingtime	= 0;
 
 	// Used for knowing who messages is directed to in MVD's.
-	cls.lastto = cls.lasttype = 0;
+	cls.lastto		= 0;
+	cls.lasttype	= 0;
 
 	CL_ClearPredict();
 
@@ -2873,6 +2894,14 @@ void CL_Play_f (void)
 	}
 
 	strlcpy(cls.demoname, name, sizeof(cls.demoname));
+
+	// Reset multiview track slots.
+	memset(mv_trackslots, -1, sizeof(mv_trackslots));
+	nTrack1duel			= 0;
+	nTrack2duel			= 0;
+	mv_skinsforced		= false;
+
+	cls.demoseeking		= false;
 
 	CL_DemoPlaybackInit();
 
