@@ -689,6 +689,86 @@ char *	Sys_GetClipboardData (void)
     return (NULL);
 }
 
+//___________________________________________________________________________________________________Sys_EnumerateFiles()
+
+#ifdef WITH_FTE_VFS
+int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm) {
+	DIR *dir, *dir2;
+	char apath[MAX_OSPATH];
+	char file[MAX_OSPATH];
+	char truepath[MAX_OSPATH];
+	char *s;
+	struct dirent *ent;
+
+	//printf("path = %s\n", gpath);
+	//printf("match = %s\n", match);
+
+	if (!gpath)
+		gpath = "";
+	*apath = '\0';
+
+	strncpy(apath, match, sizeof(apath));
+	for (s = apath+strlen(apath)-1; s >= apath; s--)
+	{
+		if (*s == '/')
+		{
+			s[1] = '\0';
+			match += s - apath+1;
+			break;
+		}
+	}
+	if (s < apath)  //didn't find a '/'
+		*apath = '\0';
+
+	snprintf(truepath, sizeof(truepath), "%s/%s", gpath, apath);
+
+
+	//printf("truepath = %s\n", truepath);
+	//printf("gamepath = %s\n", gpath);
+	//printf("apppath = %s\n", apath);
+	//printf("match = %s\n", match);
+	dir = opendir(truepath);
+	if (!dir)
+	{
+		Com_DPrintf("Failed to open dir %s\n", truepath);
+		return true;
+	}
+	do
+	{
+		ent = readdir(dir);
+		if (!ent)
+			break;
+		if (*ent->d_name != '.')
+			if (wildcmp(match, ent->d_name))
+			{
+				snprintf(file, sizeof(file), "%s/%s", gpath, ent->d_name);
+				//would use stat, but it breaks on fat32.
+
+				if ((dir2 = opendir(file)))
+				{
+					closedir(dir2);
+					snprintf(file, sizeof(file), "%s%s/", apath, ent->d_name);
+					//printf("is directory = %s\n", file);
+				}
+				else
+				{
+					snprintf(file, sizeof(file), "%s%s", apath, ent->d_name);
+					//printf("file = %s\n", file);
+				}
+
+				if (!func(file, -2, parm))
+				{
+					closedir(dir);
+					return false;
+				}
+			}
+	} while(1);
+	closedir(dir);
+
+	return true;
+}
+#endif
+
 //___________________________________________________________________________________________________Sys_CheckForIDDirectory()
 
 void	Sys_CheckForIDDirectory (void)
