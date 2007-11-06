@@ -23,6 +23,7 @@ $Id: demo_controls.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 #include "quakedef.h"
 #include "keys.h"
 #include "ez_controls.h"
+#include "ez_slider.h"
 #include "demo_controls.h"
 
 static ez_tree_t democontrol_tree;

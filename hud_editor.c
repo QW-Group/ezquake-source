@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.42 2007-10-25 17:22:45 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.42 2007/10/25 17:22:45 cokeman1982 Exp $
 
 */
 
@@ -15,6 +15,11 @@
 #include "keys.h"
 #include "Ctrl.h"
 #include "ez_controls.h"
+#include "ez_button.h"
+#include "ez_label.h"
+#include "ez_scrollbar.h"
+#include "ez_scrollpane.h"
+#include "ez_slider.h"
 #include "hud.h"
 #include "hud_editor.h"
 
@@ -2526,20 +2531,16 @@ void HUD_Editor_Key(int key, int unichar, qbool down)
 				Cvar_SetValue(&hud_editor_allowplace, !hud_editor_allowplace.value);
 				break;
 			case K_UPARROW :
-				EZ_control_SetScrollChange(child1, 0, 1);
-				//EZ_control_SetScrollChange((ez_control_t *)label, 0, 1);
+				// TODO : Add "nudging" in hud editor.
 				break;
 			case K_DOWNARROW :
-				EZ_control_SetScrollChange(child1, 0, -1);
-				//EZ_control_SetScrollChange((ez_control_t *)label, 0, 1);
+				// TODO : Add "nudging" in hud editor.
 				break;
 			case K_LEFTARROW :
-				EZ_control_SetScrollChange(child1, 1, 0);
-				//EZ_control_SetScrollChange((ez_control_t *)label, 0, 1);
+				// TODO : Add "nudging" in hud editor.
 				break;
 			case K_RIGHTARROW :
-				EZ_control_SetScrollChange(child1, -1, 0);
-				//EZ_control_SetScrollChange((ez_control_t *)label, 0, 1);
+				// TODO : Add "nudging" in hud editor.
 				break;
 		}
 	}
@@ -2609,7 +2610,7 @@ void HUD_Editor_Init(void)
 	// Label.
 	{
 		label = EZ_label_Create(&help_control_tree, root, 
-			"label", "A crazy label!", 200, 200, 200, 80, 
+			"label", "A crazy label!", 200, 200, 250, 80, 
 			control_focusable | control_contained | control_resizeable | control_scrollable /*| control_movable */ | control_resize_h | control_resize_v, 
 			label_wraptext | label_autosize, 
 			"Hello\nthis is a test are you fine because I am bla bla bla this is a very long string and it's plenty of fun haha!");
@@ -2618,7 +2619,7 @@ void HUD_Editor_Init(void)
 		//EZ_label_SetTextFlags(label, LABEL_READONLY);
 
 		EZ_control_SetBackgroundColor((ez_control_t *)label, 150, 150, 0, 50);
-		EZ_control_SetAnchor((ez_control_t *)label, anchor_top | anchor_left | anchor_right | anchor_bottom); 
+		//EZ_control_SetAnchor((ez_control_t *)label, anchor_top | anchor_right | anchor_bottom); 
 	}
 
 	// Label 2.
@@ -2661,7 +2662,7 @@ void HUD_Editor_Init(void)
 
 	// Scrollpane
 	{
-		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", 50, 150, 150, 150, /*control_movable |*/ control_resize_h | control_resize_v | control_resizeable);
+		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", 50, 150, 150, 150, control_resize_h | control_resize_v | control_resizeable);
 		
 		EZ_control_SetBackgroundColor((ez_control_t *)scrollpane, 255, 0, 0, 100);
 
