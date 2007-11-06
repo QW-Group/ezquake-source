@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.85 2007-10-08 21:40:01 johnnycz Exp $
+		$Id: menu_options.c,v 1.85 2007/10/08 21:40:01 johnnycz Exp $
 
 */
 
@@ -937,22 +937,6 @@ setting settgeneral_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
 	
-	ADDSET_SEPARATOR("Console"),
-	ADDSET_BOOL		("Timestamps", con_timestamps),
-	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
-	ADDSET_NUMBER	("Size", scr_consize, 0, 1, 0.1),
-	ADDSET_NUMBER	("Speed", scr_conspeed, 1000, 9999, 1000),
-#ifdef GLQUAKE
-	ADDSET_NUMBER	("Alpha", scr_conalpha, 0, 1, 0.1),
-	ADDSET_NAMED	("Map Preview", scr_conback, scr_conback_enum),
-#endif
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NAMED	("Fun Chars Mode", con_funchars_mode, funcharsmode_enum),
-	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
-	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
-	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
-	ADDSET_BASIC_SECTION(),
-
 	//Match Tools
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
@@ -1162,43 +1146,11 @@ setting setthud_arr[] = {
 
 };
 
-// DEMO PLAYBACK TAB
-setting settdemo_spec_arr[] = {
+// Console Tab
+/*
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	ADDSET_SEPARATOR("Multiview"),
-	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
-	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("HUD Flip", cl_mvhudflip),
-	ADDSET_BOOL		("HUD Vertical", cl_mvhudvertical),
-	ADDSET_BOOL		("Inset View", cl_mvinset),
-	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
-	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
-	ADDSET_BASIC_SECTION(),
-
-	ADDSET_SEPARATOR("Demo & Observing"),
-	ADDSET_BOOL		("Point of View", cl_chasecam),
 	
-	ADDSET_SEPARATOR("Multiview Demos"),
-	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
-	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
-	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
-	ADDSET_BOOL     ("Status", mvd_status),
-
-	ADDSET_SEPARATOR("Demo Binds"),
-	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
-	ADDSET_BIND("Stop", "disconnect"),
-	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused."),
-	ADDSET_BIND("Fast Forward", "cl_demospeed 5;echo Demo paused."),
-};
-
-// CONTROLS TAB
-// please try to put mostly binds in here
-setting settbinds_arr[] = {
-	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	ADDSET_SEPARATOR("Chat settings"),
-	ADDSET_BIND		("Chat", "messagemode"),
-	ADDSET_BIND		("Teamchat", "messagemode2"),
+	ADDSET_SEPERATOR ("Ignore Options"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
 	ADDSET_ADVANCED_SECTION(),
@@ -1208,21 +1160,80 @@ setting settbinds_arr[] = {
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
 	ADDSET_BASIC_SECTION(),
 	
+	ADDSET_SEPERATOR("Console Options"),
+	ADDSET_BOOL		("Timestamps", con_timestamps),
+	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
+	ADDSET_NUMBER	("Size", scr_consize, 0, 1, 0.1),
+	ADDSET_NUMBER	("Speed", scr_conspeed, 1000, 9999, 1000),
+#ifdef GLQUAKE
+	ADDSET_NUMBER	("Alpha", scr_conalpha, 0, 1, 0.1),
+	ADDSET_NAMED	("Map Preview", scr_conback, scr_conback_enum),
+#endif
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NAMED	("Fun Chars Mode", con_funchars_mode, funcharsmode_enum),
+	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
+	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
+	
+
+*/
+// DEMO/SPETATOR TAB
+setting settdemo_spec_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
+	ADDSET_SEPARATOR("Demo & Observing"),
+	ADDSET_BOOL		("Point of View", cl_chasecam),
+	ADDSET_BIND		("Autotrack", "autotrack"),
+
+	ADDSET_SEPARATOR("Demo Playback"),
+	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
+	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("HUD Flip", cl_mvhudflip),
+	ADDSET_BOOL		("HUD Vertical", cl_mvhudvertical),
+	ADDSET_BOOL		("Inset View", cl_mvinset),
+	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
+	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
+	ADDSET_BASIC_SECTION(),
+	
+	ADDSET_SEPARATOR("Multiview Demos"),
+	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
+	ADDSET_NAMED	("Autotrack Type", mvd_autotrack, mvdautotrack_enum),
+	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
+	ADDSET_BOOL     ("Status", mvd_status),
+
+	ADDSET_SEPARATOR("Demo Binds"),
+	ADDSET_BIND		("Play", "cl_demospeed 1;echo Playing demo."),
+	ADDSET_BIND		("Stop", "disconnect"),
+	ADDSET_BIND		("Pause", "cl_demospeed 0;echo Demo paused."),
+	ADDSET_BIND		("Fast Forward", "cl_demospeed 5;echo Demo paused."),
+};
+
+// CONTROLS TAB
+// please try to put mostly binds in here
+setting settbinds_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
+	ADDSET_SEPARATOR("Chat settings"),
+	ADDSET_BIND		("Chat", "messagemode"),
+	ADDSET_BIND		("Teamchat", "messagemode2"),
+	
 	ADDSET_SEPARATOR("Mouse Settings"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Freelook", freelook),
 	ADDSET_BASIC_SECTION(),
-	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 15, 0.25),
+	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
 	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Invert mouse will make you look down when the mouse is moved up."),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
 #ifdef _WIN32
     ADDSET_ADVANCED_SECTION(),
     ADDSET_STRING   ("X-axis sensitivity", m_yaw),
     ADDSET_STRING   ("Y-axis sensitivity", m_pitch),
-    ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
+	ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
+	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
-    ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
-    ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
+	ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
     ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
     ADDSET_BASIC_SECTION(),
 #endif
@@ -1237,8 +1248,8 @@ setting settbinds_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Swim Up", "+moveup"),
 	ADDSET_BIND("Swim Down", "+movedown"),
-	ADDSET_BASIC_SECTION(),
 	ADDSET_BIND("Zoom In/Out", "+zoom"),
+	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Weapons"),
 	ADDSET_BIND("Previous Weapon", "impulse 12"),
@@ -1254,9 +1265,7 @@ setting settbinds_arr[] = {
 
 	ADDSET_SEPARATOR("Teamplay"),
 	ADDSET_BIND("Report Status", "tp_msgreport"),
-	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Lost location", "tp_msglost"),
-	ADDSET_BASIC_SECTION(),
 	ADDSET_BIND("Location safe", "tp_msgsafe"),
 	ADDSET_BIND("Point at item", "tp_msgpoint"),
 	ADDSET_BIND("Took item", "tp_msgtook"),
