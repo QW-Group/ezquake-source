@@ -2090,7 +2090,27 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\ez_button.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\ez_controls.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_label.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_scrollbar.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_scrollpane.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_slider.c"
 					>
 				</File>
 				<File
@@ -2701,7 +2721,27 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\ez_button.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\ez_controls.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_label.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_scrollbar.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_scrollpane.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_slider.h"
 					>
 				</File>
 				<File
