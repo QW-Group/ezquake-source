@@ -10,6 +10,11 @@ CLIENT_C_FILES := \
 	EX_browser_ping \
 	EX_browser_sources \
 	ez_controls \
+	ez_scrollbar \
+	ez_scrollpane \
+	ez_label \
+	ez_slider \
+	ez_button \
 	auth \
 	cl_cam \
 	cl_cmd \
