@@ -81,6 +81,7 @@ static int VFSMMAP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowr
 	}
 
 	memcpy(intfile->handle + intfile->position, buffer, bytestowrite);
+	intfile->position += bytestowrite;
 
 	return bytestowrite;
 }
