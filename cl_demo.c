@@ -36,6 +36,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "pmove.h"
 #include "fs.h"
+#include "hash.h"
+#include "vfs.h"
 #include "utils.h"
 #include "crc.h"
 #include "logging.h"
@@ -2653,13 +2655,13 @@ static void CL_DemoPlaybackInit(void)
 	#ifdef WITH_DEMO_REWIND
 	// Clear the demo keyframes used for rewinding.
 	CL_DemoKeyframeClearAll();
-	#endif WITH_DEMO_REWIND
+	#endif // WITH_DEMO_REWIND
 
 	cls.demoseeking		= false;
 	cls.demoplayback	= true;
 
 	// Set demoplayback vars depending on the demo type.
-	cls.mvdplayback		= CL_GetIsMVD(playbackfile);  // TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also.
+	cls.mvdplayback		=  CL_GetIsMVD(playbackfile);  // TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also.
 	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(cls.demoname), "dem");
 
 	 // Init some buffers for reading.
@@ -2802,7 +2804,7 @@ void CL_Play_f (void)
 	{
 		char *file_ext = COM_FileExtension(Cmd_Argv(1));
 		if (!playbackfile) {
-			/* Check the file extension is valid */
+			// Check the file extension is valid
 			for (s = ext; *s; s++) {
 				if (strcmp(*s, file_ext) == 0)
 					break;
@@ -2836,7 +2838,32 @@ void CL_Play_f (void)
 			}
 		}
 	}
+
 #endif // WITH_VFS_ARCHIVE_LOADING
+
+	// Read the file completely into memory
+	if (playbackfile) 
+	{
+		size_t len;
+		void *buf;
+		vfsfile_t *mmap_file;
+
+		len = VFS_GETLEN(playbackfile);
+		buf = Q_malloc(len);
+
+		VFS_READ(playbackfile, buf, len, NULL);
+		if (!(mmap_file = FSMMAP_OpenVFS(buf, len))) 
+		{
+			// Couldn't create the memory file, just remove the buffer
+			Q_free(buf);
+		}
+		else 
+		{
+			// Close the file on disk now that we have read the file into memory
+			VFS_CLOSE(playbackfile);
+			playbackfile = mmap_file;
+		}
+	}
 
 	// Failed to open the demo from any path :(
 	if (!playbackfile)
@@ -3228,8 +3255,6 @@ void CL_QTVList_f (void)
 //
 void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 {
-	int i;
-
 	// End any current game.
 	Host_EndGame();
 
