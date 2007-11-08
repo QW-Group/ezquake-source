@@ -248,6 +248,7 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 	{
 		payload = (ez_control_t *)iter->payload;
 
+		// TODO : Remove this test stuff.
 		/*
 		Draw_AlphaRectangleRGB(
 			payload->absolute_virtual_x, 
@@ -265,6 +266,13 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 		}
 
 		// TODO : Remove this test stuff.
+		/*
+		if (!strcmp(payload->name, "Close button"))
+		{
+			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
+				va("x: %i y: %i", payload->x, payload->y));
+		}
+
 		/*
 		if (!strcmp(payload->name, "label"))
 		{
@@ -289,11 +297,13 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 		}
 		*/
 
+		/*
 		if (!strcasecmp(payload->name, "Vertical scrollbar"))
 		{
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
 				va("b: %i r: %i", payload->bottom_edge_gap, payload->right_edge_gap));
 		}
+		*/
 
 		// Bugfix: Make sure we don't even bother trying to draw something that is completly offscreen
 		// it will cause a weird flickering bug because of glScissor.
@@ -1411,16 +1421,18 @@ static void EZ_control_UpdateAnchorGap(ez_control_t *self)
 		int p_height			= anchor_viewport ? self->parent->height : self->parent->virtual_height;
 		int p_width				= anchor_viewport ? self->parent->width  : self->parent->virtual_width;
 		
+		// Anchored to both top and bottom edges.
 		if ((self->anchor_flags & (anchor_bottom | anchor_top)) == (anchor_bottom | anchor_top))
 		{
 			self->top_edge_gap		= self->y;
 			self->bottom_edge_gap	= p_height - (self->y + self->height);
 		}
 
+		// Anchored to both left and right edges.
 		if ((self->anchor_flags & (anchor_left | anchor_right)) == (anchor_left | anchor_right))
 		{
 			self->left_edge_gap		= self->x;
-			self->right_edge_gap	= p_width - (self->y + self->height);
+			self->right_edge_gap	= p_width - (self->x + self->height);
 		}
 	}
 }
