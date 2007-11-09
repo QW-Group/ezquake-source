@@ -79,7 +79,7 @@ static void EZ_scrollpane_ResizeScrollbars(ez_scrollpane_t *scrollpane)
 				|| (v_scroll_ctrl->prev_width != v_scroll_ctrl->width) || (v_scroll_ctrl->prev_height < v_scroll_ctrl->height);
 
 	// Resize the target control so that it doesn't overlap with the scrollbars.
-	if ((scrollpane->target && size_changed))
+	if (scrollpane->target && size_changed)
 	{
 		// Since this resize operation is going to raise a new OnResize event on the target control
 		// which in turn calls this function again we only change the size of the target to fit
@@ -95,8 +95,6 @@ static void EZ_scrollpane_DetermineScrollbarVisibility(ez_scrollpane_t *scrollpa
 {
 	SET_FLAG(scrollpane->int_flags, show_v_scrollbar, (scrollpane->target->height <= scrollpane->target->virtual_height_min));
 	SET_FLAG(scrollpane->int_flags, show_h_scrollbar, (scrollpane->target->width <= scrollpane->target->virtual_width_min));
-
-	EZ_scrollpane_ResizeScrollbars(scrollpane);
 }
 
 //
@@ -299,7 +297,7 @@ int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
 
 		// Reposition the target inside the scrollpane.
 		EZ_control_SetPosition(scrollpane->target, 0, 0);
-		EZ_control_SetSize(scrollpane->target, self->width - scrollpane->scrollbar_thickness, self->height - scrollpane->scrollbar_thickness);
+		EZ_control_SetSize(scrollpane->target, (self->width - scrollpane->scrollbar_thickness), (self->height - scrollpane->scrollbar_thickness));
 		EZ_control_SetAnchor(scrollpane->target, (anchor_left | anchor_right | anchor_top | anchor_bottom));
 
 		// Make sure the target is drawn infront of the scrollpane.
