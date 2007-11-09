@@ -305,6 +305,18 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 		}
 		*/
 
+		/*
+		if (!strcmp(payload->name, "Close button") || !strcmp(payload->name, "Window titlebar"))
+		{
+			Draw_AlphaRectangleRGB(
+				payload->absolute_virtual_x, 
+				payload->absolute_virtual_y, 
+				payload->virtual_width, 
+				payload->virtual_height, 
+				1, false, RGBA_TO_COLOR(0, 0, 255, 125));
+		}
+		*/
+		
 		// Bugfix: Make sure we don't even bother trying to draw something that is completly offscreen
 		// it will cause a weird flickering bug because of glScissor.
 		if ((payload->bound_left == payload->bound_right) || (payload->bound_top == payload->bound_bottom))
@@ -863,7 +875,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->int_flags |= control_update_anchorgap;
 
 	EZ_control_SetVirtualSize(control, width, height);
-	EZ_control_SetMinVirtualSize(control, width, height);
+	EZ_control_SetMinVirtualSize(control, 1, 1);
 	EZ_control_SetPosition(control, x, y);
 	EZ_control_SetSize(control, width, height);
 
@@ -1432,7 +1444,7 @@ static void EZ_control_UpdateAnchorGap(ez_control_t *self)
 		if ((self->anchor_flags & (anchor_left | anchor_right)) == (anchor_left | anchor_right))
 		{
 			self->left_edge_gap		= self->x;
-			self->right_edge_gap	= p_width - (self->x + self->height);
+			self->right_edge_gap	= p_width - (self->x + self->width);
 		}
 	}
 }
