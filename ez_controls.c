@@ -1473,7 +1473,8 @@ void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order, qbool update_ch
 
 		while (it)
 		{
-			EZ_control_SetDrawOrder(child, draw_order + draw_order_delta, update_children);
+			child = (ez_control_t *)it->payload;
+			EZ_control_SetDrawOrder(child, (draw_order + draw_order_delta), update_children);
 			it = it->next;
 		}
 	}
