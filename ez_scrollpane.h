@@ -29,8 +29,6 @@ $Id: ez_scrollpane.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // Scrollpane
 // =========================================================================================
 
-#define EZ_SCROLLPANE_ID 4
-
 typedef enum ez_scrollpane_flags_e
 {
 	always_v_scrollbar	= (1 << 0),
@@ -39,8 +37,9 @@ typedef enum ez_scrollpane_flags_e
 
 typedef enum ez_scrollpane_iflags_e
 {
-	show_v_scrollbar		= (1 << 0),
-	show_h_scrollbar		= (1 << 1)
+	show_v_scrollbar		= (1 << 0),	// Should the vertical scrollbar be shown?
+	show_h_scrollbar		= (1 << 1),	// Should the horizontal scrollbar be shown?
+	resizing_target			= (1 << 2)	// Are we resizing the target (if we are, don't care about OnResize events, it'll cause an infinite loop).
 } ez_scrollpane_iflags_t;
 
 typedef struct ez_scrollpane_eventcount_s
@@ -84,9 +83,6 @@ typedef struct ez_scrollpane_s
 
 	ez_scrollpane_flags_t		ext_flags;			// External flags for the scrollbar.
 	ez_scrollpane_iflags_t		int_flags;			// The internal flags for the scrollbar.
-
-	int							override_count;		// These are needed so that subclasses can override slider specific events.
-	int							inheritance_level;
 } ez_scrollpane_t;
 
 //

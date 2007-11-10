@@ -43,9 +43,15 @@ static void EZ_scrollpane_AdjustTargetSize(ez_scrollpane_t *scrollpane)
 	int rh_size_v	= (scrollpane_ctrl->ext_flags & control_resize_v ? scrollpane_ctrl->resize_handle_thickness : 0); 
 	int rh_size_h	= (scrollpane_ctrl->ext_flags & control_resize_h ? scrollpane_ctrl->resize_handle_thickness : 0); 
 
+	// Make sure we don't listen to the targets OnResize event when resizing it ourselves
+	// or we'll get a stack overflow due to an infinite loop :S
+	scrollpane->int_flags |= resizing_target;
+	
 	EZ_control_SetSize(scrollpane->target, 
 						(scrollpane_ctrl->width  - (show_v ? scrollpane->scrollbar_thickness : 0) - rh_size_h),
 						(scrollpane_ctrl->height - (show_h ? scrollpane->scrollbar_thickness : 0) - rh_size_v));
+
+	scrollpane->int_flags &= ~resizing_target;
 }
 
 //
@@ -75,11 +81,8 @@ static void EZ_scrollpane_ResizeScrollbars(ez_scrollpane_t *scrollpane)
 						scrollpane_ctrl->width - (show_v ? scrollpane->scrollbar_thickness : 0) - (2 * rh_size_h), 
 						scrollpane->scrollbar_thickness);
 
-	size_changed = (h_scroll_ctrl->prev_width != h_scroll_ctrl->width) || (h_scroll_ctrl->prev_height < h_scroll_ctrl->height) 
-				|| (v_scroll_ctrl->prev_width != v_scroll_ctrl->width) || (v_scroll_ctrl->prev_height < v_scroll_ctrl->height);
-
 	// Resize the target control so that it doesn't overlap with the scrollbars.
-	if (scrollpane->target && size_changed)
+	if (scrollpane->target)
 	{
 		// Since this resize operation is going to raise a new OnResize event on the target control
 		// which in turn calls this function again we only change the size of the target to fit
@@ -97,6 +100,8 @@ static void EZ_scrollpane_DetermineScrollbarVisibility(ez_scrollpane_t *scrollpa
 	SET_FLAG(scrollpane->int_flags, show_h_scrollbar, (scrollpane->target->width <= scrollpane->target->virtual_width_min));
 }
 
+// TODO : Add an event handler for handling when the target control changes it's min virtual size, we might need to show/hide the scrollbars if that happens.
+
 //
 // Scrollpane - Target changed it's virtual size.
 //
@@ -110,6 +115,8 @@ static int EZ_scrollpane_OnTargetVirtualResize(ez_control_t *self, void *payload
 	}
 
 	scrollpane = (ez_scrollpane_t *)self->parent;
+
+	// Check if we should show/hide the scrollbars.
 	EZ_scrollpane_DetermineScrollbarVisibility(scrollpane);
 
 	return 0;
@@ -263,9 +270,14 @@ int EZ_scrollpane_OnResize(ez_control_t *self)
 
 	EZ_control_OnResize(self);
 
-	// Resize the scrollbars and target based on the state of the target.
-	EZ_scrollpane_ResizeScrollbars(scrollpane);
-
+	// Make sure we don't listen to resizing events of the target that we raised
+	// ourselves, it causes an infinite loop.
+	if (!(scrollpane->int_flags & resizing_target))
+	{
+		// Resize the scrollbars and target based on the state of the target.
+		EZ_scrollpane_ResizeScrollbars(scrollpane);
+	}
+	
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
 	return 0;
 }
@@ -300,6 +312,8 @@ int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
 		EZ_control_SetSize(scrollpane->target, (self->width - scrollpane->scrollbar_thickness), (self->height - scrollpane->scrollbar_thickness));
 		EZ_control_SetAnchor(scrollpane->target, (anchor_left | anchor_right | anchor_top | anchor_bottom));
 
+		EZ_control_SetScrollable(scrollpane->target, true);
+
 		// Make sure the target is drawn infront of the scrollpane.
 		EZ_control_SetDrawOrder(scrollpane->target, ((ez_control_t *)scrollpane)->draw_order + 1, true);
 
@@ -308,6 +322,7 @@ int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
 		EZ_control_SetMovesParent(scrollpane->target, true);
 
 		// Resize the scrollbars / target to fit properly.
+		EZ_scrollpane_DetermineScrollbarVisibility(scrollpane);
 		EZ_scrollpane_ResizeScrollbars(scrollpane);
 		EZ_scrollpane_AdjustTargetSize(scrollpane);
 
