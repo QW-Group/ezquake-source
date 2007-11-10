@@ -15,6 +15,7 @@ CLIENT_C_FILES := \
 	ez_label \
 	ez_slider \
 	ez_button \
+	ez_window \
 	auth \
 	cl_cam \
 	cl_cmd \
