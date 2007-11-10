@@ -2114,6 +2114,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\ez_window.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\hud.c"
 					>
 				</File>
@@ -2742,6 +2746,10 @@
 				</File>
 				<File
 					RelativePath="..\..\ez_slider.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_window.h"
 					>
 				</File>
 				<File
