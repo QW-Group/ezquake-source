@@ -2332,14 +2332,15 @@ int TP_CategorizeMessage (const char *s, int *offset)
 char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
                    "mh", "health", "lg", "rl", "gl", "sng", "ng", "ssg", "pack",
                    "cells", "rockets", "nails", "shells", "flag",
-                   "teammate", "enemy", "eyes", "sentry", "disp", "quaded", "pented", "rune1", "rune2", "rune3", "rune4"};
+                   "teammate", "enemy", "eyes", "sentry", "disp", "quaded", "pented", \
+				   "rune1", "rune2", "rune3", "rune4", "resistance", "strength", "haste", "regeneration"};
 
 #define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
-				it_rockets|it_cells||it_pack|it_flag)
+				it_rockets|it_cells||it_pack|it_flag|it_rune1|it_rune2|it_rune3|it_rune4|it_runes)
 
  // tp_took
 #define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack| \
-				it_rockets|it_cells|it_mh|it_flag|it_runes)//it_rune1|it_rune2|it_rune3|it_rune4
+				it_rockets|it_cells|it_mh|it_flag|it_rune1|it_rune2|it_rune3|it_rune4|it_runes)
 
 /*
 powerups flag runes players suit armor sentry  mh disp rl lg pack gl sng rockets cells nails
@@ -2348,8 +2349,8 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
  below are defaults for tp_point (what comes up in point. also see tp_pointpriorities to prioritize this list) First items have highest priority (powerups in this case)
 */
 // tp_point
-#define default_pointflags (it_powerups|it_flag|it_rune1|it_rune2|it_rune3|it_rune4|it_players|it_suit|it_armor|it_sentry|it_mh| \
-				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_nails)
+#define default_pointflags (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
+				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_rune1|it_rune2|it_rune3|it_rune4|it_nails)
 
 int pkflags = default_pkflags;
 int tookflags = default_tookflags;
@@ -3459,4 +3460,9 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_msgreplace", TP_Msg_Replace_f);
 	Cmd_AddCommand ("tp_msgneed", TP_Msg_Need_f);
 
+	Cmd_AddCommand ("tp_msgyesok", TP_Msg_YesOk_f);
+	Cmd_AddCommand ("tp_msgutake", TP_Msg_YouTake_f);
+	Cmd_AddCommand ("tp_msgwaiting", TP_Msg_Waiting_f);
+	Cmd_AddCommand ("tp_msgslipped", TP_Msg_Slipped_f);
+	
 }

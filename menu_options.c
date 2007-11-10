@@ -1270,6 +1270,7 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Point at item", "tp_msgpoint"),
 	ADDSET_BIND("Took item", "tp_msgtook"),
 	ADDSET_BIND("Need items", "tp_msgneed"),
+	ADDSET_BIND("Yes/Ok", "tp_msgyesok"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Coming from location", "tp_msgcoming"),
 	ADDSET_BASIC_SECTION(),
@@ -1281,6 +1282,9 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
 	ADDSET_BIND("Trick at location", "tp_msgtrick"),
 	ADDSET_BIND("Replace at location", "tp_msgreplace"),
+	ADDSET_BIND("You Take Item", "tp_msgutake"),
+	ADDSET_BIND("Waiting", "tp_msgwaiting"),
+	ADDSET_BIND("Enemy Slipped", "tp_msgslipped"),
 	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Miscellaneous"),

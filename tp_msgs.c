@@ -23,6 +23,7 @@
 #define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
 #define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
  
+#define HAVE_POWERUP() (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
 #define HAVE_QUAD() (cl.stats[STAT_ITEMS] & IT_QUAD) //quad
 #define HAVE_PENT() (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) //pent
 #define HAVE_RING() (cl.stats[STAT_ITEMS] & IT_INVISIBILITY) //ring
@@ -555,28 +556,21 @@ GLOBAL void TP_Msg_Need_f (void)
 	TP_Send_TeamSay("%s", need);
 }
 
-LOCAL void TP_Msg_TrickReplace(qbool trick)
-{
-    MSGPART trick_replace = "";
-	MSGPART location = "";
-	MSGPART powerup = "";
-	
-	if (trick)
-		trick_replace = "trick";
-	else
-		trick_replace = "replace";
-		
-	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
-		powerup = "$colored_short_powerups";
-	else
-		powerup = "";
-		
-	location = "$[{%l}$]";
-	
-	TP_Send_TeamSay("%s %s %s", powerup, trick_replace, location);
-}
-GLOBAL void TP_Msg_Trick_f (void) { TP_Msg_TrickReplace(true); }
-GLOBAL void TP_Msg_Replace_f (void) { TP_Msg_TrickReplace(false); }
+// The following define allows us to make as many functions as we want and get the message "powerup message location"
+#define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s"type" $[{%%l}$]", (HAVE_POWERUP() ? "$colored_short_powerups " : ""))
+
+GLOBAL void TP_Msg_YesOk_f (void) { TP_MSG_GENERIC("yes/ok"); }
+GLOBAL void TP_Msg_YouTake_f (void) { TP_MSG_GENERIC("you take"); }
+GLOBAL void TP_Msg_Waiting_f (void) { TP_MSG_GENERIC("waiting"); }
+GLOBAL void TP_Msg_Slipped_f (void) { TP_MSG_GENERIC("enemy slipped"); }
+GLOBAL void TP_Msg_Replace_f (void) { TP_MSG_GENERIC("replace"); }
+GLOBAL void TP_Msg_Trick_f (void) { TP_MSG_GENERIC("trick"); }
+
+
+
+
+
+
 ///////////////////////////////////
 //////// End teamplay scripts ////////
 ///////////////////////////////////
