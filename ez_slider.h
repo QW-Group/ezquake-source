@@ -28,8 +28,6 @@ $Id: ez_slider.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // Slider
 // =========================================================================================
 
-#define EZ_SLIDER_ID					2
-
 typedef enum ez_slider_iflags_e
 {
 	slider_dragging	= (1 << 0)

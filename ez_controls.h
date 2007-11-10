@@ -164,6 +164,17 @@ $Id: ez_controls.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 
 #define SET_FLAG(flag_var, flag, on) ((flag_var) = ((on) ? ((flag_var) | (flag)) : ((flag_var) & ~(flag))))
 
+typedef enum ez_control_id_e
+{
+	EZ_CONTROL_ID,
+	EZ_BUTTON_ID,
+	EZ_LABEL_ID,
+	EZ_SLIDER_ID,
+	EZ_SCROLLBAR_ID,
+	EZ_SCROLLPANE_ID,
+	EZ_WINDOW_ID
+} ez_control_id_t;
+
 // =========================================================================================
 // Double Linked List
 // =========================================================================================
@@ -474,9 +485,6 @@ ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type, void 
 	((eventroot *)ctrl)->inherit_levels.eventname++;					\
 }
 
-#define EZ_CONTROL_ID 0
-
-// TODO : Redo these structs so that we have one struct containing {eventcount, event, evethandler} and then a struct with all the different events based on that struct, so that we don't need 592898 places for the OnEvent names.
 typedef struct ez_control_eventcount_s
 {
 	int	OnMouseEvent;
@@ -623,7 +631,7 @@ typedef enum ez_control_iflags_e
 
 typedef struct ez_control_s
 {
-	int						CLASS_ID;				// An ID unique for this class, this is set at initilization
+	ez_control_id_t			CLASS_ID;				// An ID unique for this class, this is set at initilization
 													// and should never be changed after that.
 	char					*name;					// The name of the control.
 	char					*description;			// A short description of the control.

@@ -68,7 +68,7 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	// Initialize the inherited class first.
 	EZ_control_Init(&label->super, tree, parent, name, description, x, y, width, height, flags);
 
-	label->super.CLASS_ID				= EZ_LABEL_ID;
+	label->super.CLASS_ID = EZ_LABEL_ID;
 
 	// Overriden events.
 	CONTROL_REGISTER_EVENT(label, EZ_label_OnDraw, OnDraw, ez_control_t);

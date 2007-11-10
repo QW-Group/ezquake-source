@@ -29,8 +29,6 @@ $Id: ez_scrollbar.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // Scrollbar
 // =========================================================================================
 
-#define EZ_SCROLLBAR_ID 3
-
 typedef enum ez_orientation_s
 {
 	vertical	= 0,
@@ -88,9 +86,6 @@ typedef struct ez_scrollbar_s
 
 	ez_scrollbar_flags_t		ext_flags;			// External flags for the scrollbar.
 	ez_scrollbar_iflags_t		int_flags;			// The internal flags for the scrollbar.
-
-	int							override_count;		// These are needed so that subclasses can override slider specific events.
-	int							inheritance_level;
 } ez_scrollbar_t;
 
 //

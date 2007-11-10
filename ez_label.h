@@ -28,8 +28,6 @@ $Id: ez_label.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // Label
 // =========================================================================================
 
-#define EZ_LABEL_ID 2
-
 typedef enum ez_label_flags_e
 {
 	label_largefont		= (1 << 0),		// Use the large font.

@@ -24,7 +24,6 @@ $Id: ez_scrollpane.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 #include "keys.h"
 #include "utils.h"
 #include "common_draw.h"
-#include "ez_controls.h"
 #include "ez_slider.h"
 
 // =========================================================================================
