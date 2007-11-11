@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		92B5D0620CE7028A0023B45F /* ez_button.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0560CE7028A0023B45F /* ez_button.c */; };
+		92B5D0630CE7028A0023B45F /* ez_label.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0580CE7028A0023B45F /* ez_label.c */; };
+		92B5D0640CE7028A0023B45F /* ez_scrollbar.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05A0CE7028A0023B45F /* ez_scrollbar.c */; };
+		92B5D0650CE7028A0023B45F /* ez_scrollpane.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05C0CE7028A0023B45F /* ez_scrollpane.c */; };
+		92B5D0660CE7028A0023B45F /* ez_slider.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05E0CE7028A0023B45F /* ez_slider.c */; };
+		92B5D0670CE7028A0023B45F /* ez_window.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0600CE7028A0023B45F /* ez_window.c */; };
+		92B5D0680CE7028A0023B45F /* ez_button.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0560CE7028A0023B45F /* ez_button.c */; };
+		92B5D0690CE7028A0023B45F /* ez_label.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0580CE7028A0023B45F /* ez_label.c */; };
+		92B5D06A0CE7028A0023B45F /* ez_scrollbar.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05A0CE7028A0023B45F /* ez_scrollbar.c */; };
+		92B5D06B0CE7028A0023B45F /* ez_scrollpane.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05C0CE7028A0023B45F /* ez_scrollpane.c */; };
+		92B5D06C0CE7028A0023B45F /* ez_slider.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05E0CE7028A0023B45F /* ez_slider.c */; };
+		92B5D06D0CE7028A0023B45F /* ez_window.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0600CE7028A0023B45F /* ez_window.c */; };
 		D21146F309C78AB800FD70CB /* QuakeWorld.scriptSuite in Resources */ = {isa = PBXBuildFile; fileRef = D21146F109C78AB800FD70CB /* QuakeWorld.scriptSuite */; };
 		D21146FA09C78AC700FD70CB /* QuakeWorld.nib in Resources */ = {isa = PBXBuildFile; fileRef = D21146F809C78AC700FD70CB /* QuakeWorld.nib */; };
 		D211470109C78AE000FD70CB /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D21146FB09C78AE000FD70CB /* InfoPlist.strings */; };
@@ -1060,6 +1072,18 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		92B5D0560CE7028A0023B45F /* ez_button.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_button.c; sourceTree = "<group>"; };
+		92B5D0570CE7028A0023B45F /* ez_button.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_button.h; sourceTree = "<group>"; };
+		92B5D0580CE7028A0023B45F /* ez_label.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_label.c; sourceTree = "<group>"; };
+		92B5D0590CE7028A0023B45F /* ez_label.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_label.h; sourceTree = "<group>"; };
+		92B5D05A0CE7028A0023B45F /* ez_scrollbar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_scrollbar.c; sourceTree = "<group>"; };
+		92B5D05B0CE7028A0023B45F /* ez_scrollbar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_scrollbar.h; sourceTree = "<group>"; };
+		92B5D05C0CE7028A0023B45F /* ez_scrollpane.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_scrollpane.c; sourceTree = "<group>"; };
+		92B5D05D0CE7028A0023B45F /* ez_scrollpane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_scrollpane.h; sourceTree = "<group>"; };
+		92B5D05E0CE7028A0023B45F /* ez_slider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_slider.c; sourceTree = "<group>"; };
+		92B5D05F0CE7028A0023B45F /* ez_slider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_slider.h; sourceTree = "<group>"; };
+		92B5D0600CE7028A0023B45F /* ez_window.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_window.c; sourceTree = "<group>"; };
+		92B5D0610CE7028A0023B45F /* ez_window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_window.h; sourceTree = "<group>"; };
 		D21140FF09C76DF800FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = Quake/Info.plist; sourceTree = "<group>"; };
 		D211410009C76E2100FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = GLQuake/Info.plist; sourceTree = "<group>"; };
 		D21146F009C78AB800FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = QuakeWorld/Info.plist; sourceTree = "<group>"; };
@@ -1816,6 +1840,18 @@
 		F82769EA09DFE12C00AE5EF8 /* General */ = {
 			isa = PBXGroup;
 			children = (
+				92B5D0560CE7028A0023B45F /* ez_button.c */,
+				92B5D0570CE7028A0023B45F /* ez_button.h */,
+				92B5D0580CE7028A0023B45F /* ez_label.c */,
+				92B5D0590CE7028A0023B45F /* ez_label.h */,
+				92B5D05A0CE7028A0023B45F /* ez_scrollbar.c */,
+				92B5D05B0CE7028A0023B45F /* ez_scrollbar.h */,
+				92B5D05C0CE7028A0023B45F /* ez_scrollpane.c */,
+				92B5D05D0CE7028A0023B45F /* ez_scrollpane.h */,
+				92B5D05E0CE7028A0023B45F /* ez_slider.c */,
+				92B5D05F0CE7028A0023B45F /* ez_slider.h */,
+				92B5D0600CE7028A0023B45F /* ez_window.c */,
+				92B5D0610CE7028A0023B45F /* ez_window.h */,
 				F82769ED09DFE12C00AE5EF8 /* adivtab.h */,
 				F82769EE09DFE12C00AE5EF8 /* anorm_dots.h */,
 				F82769EF09DFE12C00AE5EF8 /* anorms.h */,
@@ -2444,6 +2480,12 @@
 				F8ED4D550CD610E200570117 /* mvd_xmlstats.c in Sources */,
 				F82661890CD9C6E8007F0EE2 /* demo_controls.c in Sources */,
 				F8ACA0350CDA3E1900A2ABC7 /* hash.c in Sources */,
+				92B5D0680CE7028A0023B45F /* ez_button.c in Sources */,
+				92B5D0690CE7028A0023B45F /* ez_label.c in Sources */,
+				92B5D06A0CE7028A0023B45F /* ez_scrollbar.c in Sources */,
+				92B5D06B0CE7028A0023B45F /* ez_scrollpane.c in Sources */,
+				92B5D06C0CE7028A0023B45F /* ez_slider.c in Sources */,
+				92B5D06D0CE7028A0023B45F /* ez_window.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2607,6 +2649,12 @@
 				F8ED4D540CD610E200570117 /* mvd_xmlstats.c in Sources */,
 				F82661880CD9C6E8007F0EE2 /* demo_controls.c in Sources */,
 				F8ACA0340CDA3E1900A2ABC7 /* hash.c in Sources */,
+				92B5D0620CE7028A0023B45F /* ez_button.c in Sources */,
+				92B5D0630CE7028A0023B45F /* ez_label.c in Sources */,
+				92B5D0640CE7028A0023B45F /* ez_scrollbar.c in Sources */,
+				92B5D0650CE7028A0023B45F /* ez_scrollpane.c in Sources */,
+				92B5D0660CE7028A0023B45F /* ez_slider.c in Sources */,
+				92B5D0670CE7028A0023B45F /* ez_window.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
