@@ -570,75 +570,6 @@ mpic_t *Draw_CachePic (char *path)
 	return Draw_CachePicSafe (path, true, false);
 }
 
-static int Draw_LoadCharset(const char *name)
-{
-	int texnum;
-	qbool loaded = false;
-
-	if (!strcasecmp(name, "original"))
-	{
-		// Convert the 128*128 conchars texture to 128*256 leaving
-		// empty space between rows so that chars don't stumble on
-		// each other because of texture smoothing.
-		// This hack costs us 64K of GL texture memory
-		int i;
-		char buf[128 * 256], *src, *dest;
-
-		memset (buf, 255, sizeof(buf));
-		src = (char *) draw_chars;
-		dest = buf;
-
-		for (i = 0; i < 16; i++)
-		{
-			memcpy (dest, src, 128 * 8);
-			src += 128 * 8;
-			dest += 128 * 8 * 2;
-		}
-
-		char_textures[0] = GL_LoadTexture ("pic:charset", 128, 256, (byte *)buf, TEX_ALPHA, 1);
-		loaded = true;
-	}
-	else if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s", name), "pic:charset")))
-	{
-		char_textures[0] = texnum;
-		loaded = true;
-	}
-
-	if (!loaded)
-	{
-		Com_Printf ("Couldn't load charset \"%s\"\n", name);
-		return 1;
-	}
-
-	if (!gl_smoothfont.value)
-	{
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
-
-	return 0;
-}
-
-void OnChange_gl_consolefont(cvar_t *var, char *string, qbool *cancel)
-{
-	*cancel = Draw_LoadCharset(string);
-}
-
-void Draw_LoadCharset_f (void)
-{
-	switch (Cmd_Argc())
-	{
-		case 1:
-			Com_Printf("Current charset is \"%s\"\n", gl_consolefont.string);
-			break;
-		case 2:
-			Cvar_Set(&gl_consolefont, Cmd_Argv(1));
-			break;
-		default:
-			Com_Printf("Usage: %s <charset>\n", Cmd_Argv(0));
-	}
-}
-
 static int LoadAlternateCharset (char *name)
 {
 	int i;
@@ -701,6 +632,94 @@ static int LoadAlternateCharset (char *name)
 	return texnum;
 }
 
+static int Draw_LoadCharset(const char *name)
+{
+	int texnum;
+	qbool loaded = false;
+	qbool cyr_loaded = false;
+
+	if (!strcasecmp(name, "original"))
+	{
+		// Convert the 128*128 conchars texture to 128*256 leaving
+		// empty space between rows so that chars don't stumble on
+		// each other because of texture smoothing.
+		// This hack costs us 64K of GL texture memory
+		int i;
+		char buf[128 * 256], *src, *dest;
+
+		memset (buf, 255, sizeof(buf));
+		src = (char *) draw_chars;
+		dest = buf;
+
+		for (i = 0; i < 16; i++)
+		{
+			memcpy (dest, src, 128 * 8);
+			src += 128 * 8;
+			dest += 128 * 8 * 2;
+		}
+
+		char_textures[0] = GL_LoadTexture ("pic:charset", 128, 256, (byte *)buf, TEX_ALPHA, 1);
+		loaded = true;
+	}
+	else if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s", name), "pic:charset")))
+	{
+		char_textures[0] = texnum;
+		loaded = true;
+	}
+
+	// Load cyrillic charset if available -->
+	char_textures[1] = 0;
+	if (loaded && strcasecmp(name, "original")) {
+		if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s-cyr", name), "pic:charset-cyr")))
+		{
+			char_textures[1] = texnum;
+		}
+	}
+
+	if (!char_textures[1])
+		char_textures[1] = LoadAlternateCharset ("conchars-cyr");
+
+	if (char_textures[1])
+		char_range[1] = 0x0400;
+	else
+		char_range[1] = 0;
+	// <---
+
+	if (!loaded)
+	{
+		Com_Printf ("Couldn't load charset \"%s\"\n", name);
+		return 1;
+	}
+
+	if (!gl_smoothfont.value)
+	{
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+
+	return 0;
+}
+
+void OnChange_gl_consolefont(cvar_t *var, char *string, qbool *cancel)
+{
+	*cancel = Draw_LoadCharset(string);
+}
+
+void Draw_LoadCharset_f (void)
+{
+	switch (Cmd_Argc())
+	{
+		case 1:
+			Com_Printf("Current charset is \"%s\"\n", gl_consolefont.string);
+			break;
+		case 2:
+			Cvar_Set(&gl_consolefont, Cmd_Argv(1));
+			break;
+		default:
+			Com_Printf("Usage: %s <charset>\n", Cmd_Argv(0));
+	}
+}
+
 void Draw_InitCharset(void)
 {
 	int i;
@@ -722,12 +741,6 @@ void Draw_InitCharset(void)
 
 	if (!char_textures[0])
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
-
-	char_textures[1] = LoadAlternateCharset ("conchars-cyr");
-	if (char_textures[1])
-		char_range[1] = 0x0400;
-	else
-		char_range[1] = 0;
 }
 
 void CP_Init (void);
