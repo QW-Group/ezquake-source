@@ -2506,6 +2506,7 @@ qbool CL_ProbeDemo(vfsfile_t *demfile, demoprobe_parse_type_t probetype, float *
 	unsigned int multiple		= 0;		// Read dem_multiple data into this.
 	unsigned int size			= 0;		// The size of the demo packet (follows dem_multiple, _single, _stats, _all and _read).
 
+	int message_count			= 0;		// The total amount of demo messages.
 	int len						= 0;		// Length of what's been read
 	qbool is_mvd				= false;	// Is this an MVD. (Used when guessing if this is an MVD).
 	int mvd_only_count			= 0;		// Try to figure out if this is a MVD by looking for commands only present in MVDs.
@@ -2614,6 +2615,8 @@ qbool CL_ProbeDemo(vfsfile_t *demfile, demoprobe_parse_type_t probetype, float *
 		{
 			total_mvd_time += mvd_time;
 		}
+
+		message_count++;
 	}
 
 	// Return to the start of the file.
@@ -2632,6 +2635,16 @@ qbool CL_ProbeDemo(vfsfile_t *demfile, demoprobe_parse_type_t probetype, float *
 		}
 
 		Com_DPrintf("CL_DemoProbe: Time: %f\n", *demotime);
+	}
+
+	// Is this a really short MVD, that doesn't contain our threshold of MVD only messages
+	// but still enough for it to likely be one.
+	if (!is_mvd 
+		&& (probetype == TRY_READ_MVD)
+		&& (message_count > 0) 
+		&& (((float)mvd_only_count / message_count) >= 0.1))
+	{
+		is_mvd = true;
 	}
 
 	return is_mvd;
