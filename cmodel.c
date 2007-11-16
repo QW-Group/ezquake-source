@@ -165,126 +165,161 @@ LINE TESTING IN HULLS
 */
 
 // 1/32 epsilon to keep floating point happy
-#define DIST_EPSILON (0.03125)
+#define	DIST_EPSILON	0.03125
 
-static hull_t trace_hull;
-static trace_t trace_trace;
+enum { TR_EMPTY, TR_SOLID, TR_BLOCKED };
 
-static qbool RecursiveHullTrace (int num, float p1f, float p2f, vec3_t p1, vec3_t p2)
+typedef struct {
+	hull_t *hull;
+	trace_t	trace;
+	int leafcount;
+} hulltrace_local_t;
+
+
+//====================
+int RecursiveHullTrace (hulltrace_local_t *htl, int num, float p1f, float p2f, const vec3_t p1, const vec3_t p2)
 {
-	float t1, t2, frac, midf;
+	mplane_t	*plane;
+	float		t1, t2;
 	dclipnode_t *node;
-	mplane_t *plane;
-	int side, i;
-	vec3_t mid;
+	int			i;
+	int			nearside;
+	float		frac, midf;
+	vec3_t		mid;
+	int			check, oldcheck;
+	hull_t *hull = htl->hull;
+	trace_t *trace = &htl->trace;
 
-	// check for empty
+start:
 	if (num < 0) {
-		if (num != CONTENTS_SOLID) {
-			trace_trace.allsolid = false;
-
-			if (num == CONTENTS_EMPTY)
-				trace_trace.inopen = true;
-			else
-				trace_trace.inwater = true;
-		} else {
-			trace_trace.startsolid = true;
+		// this is a leaf node
+		htl->leafcount++;
+		if (num == CONTENTS_SOLID) {
+			if (htl->leafcount == 1)
+				trace->startsolid = true;
+			return TR_SOLID;
 		}
-
-		return true; // empty
+		else {
+			if (num == CONTENTS_EMPTY)
+				trace->inopen = true;
+			else
+				trace->inwater = true;
+			return TR_EMPTY;
+		}
 	}
 
 	// FIXME, check at load time
-	if (num < trace_hull.firstclipnode || num > trace_hull.lastclipnode)
+	if (num < hull->firstclipnode || num > hull->lastclipnode)
 		Sys_Error ("RecursiveHullTrace: bad node number");
 
+	node = hull->clipnodes + num;
+
+	//
 	// find the point distances
-	node = trace_hull.clipnodes + num;
-	plane = trace_hull.planes + node->planenum;
+	//
+	plane = hull->planes + node->planenum;
 
 	if (plane->type < 3) {
 		t1 = p1[plane->type] - plane->dist;
 		t2 = p2[plane->type] - plane->dist;
-	} else {
+	}
+	else {
 		t1 = DotProduct (plane->normal, p1) - plane->dist;
 		t2 = DotProduct (plane->normal, p2) - plane->dist;
 	}
 	
-	if (t1 >= 0 && t2 >= 0)
-		return RecursiveHullTrace (node->children[0], p1f, p2f, p1, p2);
-	if (t1 < 0 && t2 < 0)
-		return RecursiveHullTrace (node->children[1], p1f, p2f, p1, p2);
+	// see which sides we need to consider
+	if (t1 >= 0 && t2 >= 0) {
+		num = node->children[0];	// go down the front side
+		goto start;
+	}
+	if (t1 < 0 && t2 < 0) {
+		num = node->children[1];	// go down the back side
+		goto start;
+	}
 
-	// put the crosspoint DIST_EPSILON pixels on the near side
-	frac = (t1<0) ? (t1 + DIST_EPSILON)/(t1-t2) : (t1 - DIST_EPSILON)/(t1-t2);
+	// find the intersection point
+	frac = t1 / (t1 - t2);
 	frac = bound (0, frac, 1);
-
-	midf = p1f + (p2f - p1f) * frac;
+	midf = p1f + (p2f - p1f)*frac;
 	for (i = 0; i < 3; i++)
-		mid[i] = p1[i] + frac * (p2[i] - p1[i]);
-
-	side = (t1 < 0);
+		mid[i] = p1[i] + frac*(p2[i] - p1[i]);
 
 	// move up to the node
-	if (!RecursiveHullTrace (node->children[side], p1f, midf, p1, mid))
-		return false;
+	nearside = (t1 < t2) ? 1 : 0;
+	check = RecursiveHullTrace (htl, node->children[nearside], p1f, midf, p1, mid);
+	if (check == TR_BLOCKED)
+		return check;
+
+	// if we started in solid, allow us to move out to an empty area
+	if (check == TR_SOLID && (trace->inopen || trace->inwater))
+		return check;
+	oldcheck = check;
 
 	// go past the node
-	if (CM_HullPointContents (&trace_hull, node->children[side^1], mid) != CONTENTS_SOLID)
-		return RecursiveHullTrace (node->children[side^1], midf, p2f, mid, p2);
-	
-	// never got out of the solid area
-	if (trace_trace.allsolid)
-		return false;
-		
-	// the other side of the node is solid, this is the impact point
-	if (!side) {
-		VectorCopy (plane->normal, trace_trace.plane.normal);
-		trace_trace.plane.dist = plane->dist;
-	} else {
-		VectorNegate (plane->normal, trace_trace.plane.normal);
-		trace_trace.plane.dist = -plane->dist;
+	check = RecursiveHullTrace (htl, node->children[1 - nearside], midf, p2f, mid, p2);
+	if (check == TR_EMPTY || check == TR_BLOCKED)
+		return check;
+
+	if (oldcheck != TR_EMPTY)
+		return check;	// still in solid
+
+	// near side is empty, far side is solid
+	// this is the impact point
+	if (!nearside) {
+		VectorCopy (plane->normal, trace->plane.normal);
+		trace->plane.dist = plane->dist;
+	}
+	else {
+		VectorNegate (plane->normal, trace->plane.normal);
+		trace->plane.dist = -plane->dist;
 	}
 
-	while (CM_HullPointContents (&trace_hull, trace_hull.firstclipnode, mid) == CONTENTS_SOLID) {
-		// shouldn't really happen, but does occasionally
-		frac -= 0.1;
+// put the final point DIST_EPSILON pixels on the near side
+	if (t1 < t2)
+		frac = (t1 + DIST_EPSILON) / (t1 - t2);
+	else
+		frac = (t1 - DIST_EPSILON) / (t1 - t2);
+	frac = bound (0, frac, 1);
+	midf = p1f + (p2f - p1f)*frac;
+	for (i = 0; i < 3; i++)
+		mid[i] = p1[i] + frac*(p2[i] - p1[i]);
 
-		if (frac < 0) {
-			trace_trace.fraction = midf;
-			VectorCopy (mid, trace_trace.endpos);
-//			Com_DPrintf ("backup past 0\n");
-			return false;
-		}
+	trace->fraction = midf;
+	VectorCopy (mid, trace->endpos);
 
-		midf = p1f + (p2f - p1f) * frac;
-		for (i=0 ; i<3 ; i++)
-			mid[i] = p1[i] + frac * (p2[i] - p1[i]);
-	}
-
-	trace_trace.fraction = midf;
-	VectorCopy (mid, trace_trace.endpos);
-
-	return false;
+	return TR_BLOCKED;
 }
 
-// trace a line through the supplied clipping hull
-// does not fill trace.e.ent
 trace_t CM_HullTrace (hull_t *hull, vec3_t start, vec3_t end)
 {
+	int check;
+
+	// this structure is passed as a pointer to RecursiveHullTrace
+	// so as not to use much stack but still be thread safe
+	hulltrace_local_t htl;
+	htl.hull = hull;
+	htl.leafcount = 0;
 	// fill in a default trace
-	memset (&trace_trace, 0, sizeof(trace_trace));
-	trace_trace.fraction = 1;
-	trace_trace.allsolid = true;
-//	trace_trace.startsolid = true; // this was (commented out) in pmovetst.c, why? -- Tonik
-	VectorCopy (end, trace_trace.endpos);
+	memset (&htl.trace, 0, sizeof(htl.trace));
+	htl.trace.fraction = 1;
+	htl.trace.startsolid = false;
+	VectorCopy (end, htl.trace.endpos);
 
-	trace_hull = *hull;
+	check = RecursiveHullTrace (&htl, hull->firstclipnode, 0, 1, start, end);
 
-	RecursiveHullTrace (trace_hull.firstclipnode, 0, 1, start, end);
+	if (check == TR_SOLID) {
+		htl.trace.startsolid = htl.trace.allsolid = true;
+		// it would be logical to set fraction to 0, but original id code
+		// would leave it at 1.   We emulate that just in case.
+		// (FIXME: is it just QW, or NQ as well?)
+		//htl.trace.fraction = 0;
+		VectorCopy (start, htl.trace.endpos);
+	}
 
-	return trace_trace;
+	return htl.trace;
 }
+
 
 //===========================================================================
 
