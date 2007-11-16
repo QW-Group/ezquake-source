@@ -224,6 +224,8 @@ int snprintf(char *str, size_t n, char const *fmt, ...);
 int vsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
 #endif
 
+char *strstri(const char *s, const char *find); // Case insensitive strstr.
+
 #if defined(__linux__) || defined(_WIN32)
 size_t strlcpy (char *dst, const char *src, size_t siz);
 size_t strlcat (char *dst, const char *src, size_t siz);

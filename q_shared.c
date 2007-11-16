@@ -256,20 +256,52 @@ size_t strlcat(char *dst, const char *src, size_t siz)
 	return(dlen + (s - src));       /* count does not include NUL */
 }
 
+// A Case-insensitive strstr.
+char *strstri(const char *s, const char *find)
+{
+	int findlen = strlen(find);
+
+	// Empty substring, return input (like strstr).
+	if (findlen == 0)
+	{
+		return s;
+	}
+
+	while (*s)
+	{
+		// Check if we can find the substring.
+		if (!strncasecmp(s, find, findlen))
+		{
+			return s;
+		}
+
+		s++;
+	}
+
+	return NULL;
+}
+
 char *strnstr(const char *s, const char *find, size_t slen)
 {
 	char c, sc;
 	size_t len;
 
-	if ((c = *find++) != '\0') {
+	if ((c = *find++) != '\0') 
+	{
 		len = strlen(find);
-		do {
-			do {
+
+		do 
+		{
+			do 
+			{
 				if ((sc = *s++) == '\0' || slen-- < 1)
 					return (NULL);
-			} while (sc != c);
+			} 
+			while (sc != c);
+			
 			if (len > slen)
 				return (NULL);
+
 		} while (strncmp(s, find, len) != 0);
 		s--;
 	}
