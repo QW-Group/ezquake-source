@@ -2516,10 +2516,12 @@ qbool CL_ProbeDemo(vfsfile_t *demfile, demoprobe_parse_type_t probetype, float *
 		// Read the time.
 		if (PARSE_AS_MVD())
 		{
+			// MVD time.
 			len = VFS_READ(demfile, &mvd_time, 1, &err);
 		}
 		else
 		{
+			// QWD time.
 			len = VFS_READ(demfile, &qwd_time, 4, &err);
 			qwd_time = LittleFloat(qwd_time);
 		}

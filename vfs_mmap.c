@@ -49,8 +49,8 @@ static int VFSMMAP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfs
 		Sys_Error("VFSMMAP_ReadBytes: bytestoread < 0");
 
 	/* Make sure we don't read past the valid memory */
-	if (bytestoread + intfile->position > intfile->len) {
-		bytestoread = intfile->len - intfile->position;
+	if ((bytestoread + intfile->position) > intfile->len) {
+		bytestoread = max(0, intfile->len - intfile->position);
 	}
 
 	// Read.
@@ -90,14 +90,28 @@ static int VFSMMAP_Seek(vfsfile_t *file, unsigned long offset, int whence)
 {
 	vfsmmapfile_t *intfile = (vfsmmapfile_t *)file;
 
-	/* FIXME: No check for overflow */
-	switch(whence) {
-		case SEEK_SET: intfile->position = offset; break;
-		case SEEK_CUR: intfile->position += offset; break;
-		case SEEK_END: intfile->position = intfile->len + offset; break;
+	switch(whence) 
+	{
+		case SEEK_SET: 
+			intfile->position = offset;
+			break;
+		case SEEK_CUR: 
+			intfile->position += offset;
+			break;
+		case SEEK_END: 
+			intfile->position = intfile->len + offset; 
+			break;
 		default:
-			   Sys_Error("VFSMMAP_Seek: Unknown whence value(%d)\n", whence);
-			   return -1;
+			Sys_Error("VFSMMAP_Seek: Unknown whence value(%d)\n", whence);
+			return -1;
+	}
+
+	// We seeked outside the bounds.
+	if ((intfile->position < 0) || (intfile->position > intfile->len))
+	{
+		// Be sure we don't have an invalid file position. (Should we do this?)
+		clamp(intfile->position, 0, intfile->len);
+		return -1;
 	}
 
 	return 0;
