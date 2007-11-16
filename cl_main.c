@@ -258,17 +258,18 @@ qbool CL_CheckIfQWProtocolHandler()
 		// C:\Program Files\Quake\ezquake-gl.exe
 		Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
 
-		if (strstr(reg_path, exe_path) || strstr(expanded_reg_path, exe_path))
+		// TODO : Make a case insensitive strstr.
+		if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
 		{
 			CloseHandle(hk);
 			return true;
 		}
 
-		// Get the short path and try if that matches instead.
+		// Get the short path and check if that matches instead.
 		// C:\Program~1\Quake\ezquake-gl.exe
 		Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
 
-		if (strstr(reg_path, exe_path) || strstr(expanded_reg_path, exe_path))
+		if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
 		{
 			CloseHandle(hk);
 			return true;
@@ -1344,10 +1345,11 @@ void CL_ReadPackets (void)
 		if (*(int *)net_message.data == -1)	
 		{
 			CL_ConnectionlessPacket();
+			Com_DPrintf("Connectionless packet\n");
 			continue;
 		}
 
-		if ((net_message.cursize < 8) && !cls.mvdplayback) 
+		if (!cls.mvdplayback && (net_message.cursize < 8)) 
 		{
 			Com_DPrintf("%s: Runt packet\n", NET_AdrToString(net_from));
 			continue;
@@ -1371,7 +1373,7 @@ void CL_ReadPackets (void)
 		}
 
 		{
-#if 0 // TEST STUFF
+#if 1 // TEST STUFF
 			static qbool prevseeking = false;
 			static qbool prevtest = false;
 			static double seektime = 0.0;
@@ -1380,7 +1382,7 @@ void CL_ReadPackets (void)
 
 			CL_ParseServerMessage();
 			
-#if 0 // TEST STUFF
+#if 1 // TEST STUFF
 			if (cls.demoseeking)
 			{
 				seektime += Sys_DoubleTime() - start;
@@ -2063,7 +2065,7 @@ void CL_Frame (double time)
 			MVD_Interpolate();
 			MVD_Mainhook_f();
 			
-			if (!cl.standby)
+			if (!cl.standby && physframe)
 			{
 				StatsGrid_Gather();
 			}
@@ -2102,8 +2104,11 @@ void CL_Frame (double time)
 
 		if (physframe)
 		{
+			double start = Sys_DoubleTime();
 			// fetch results from server
 			CL_ReadPackets();
+
+			Com_DPrintf("Stuff done: %f\n", Sys_DoubleTime() - start);
 
 			TP_UpdateSkins();
 
@@ -2113,7 +2118,7 @@ void CL_Frame (double time)
 				MVD_Interpolate();
 				MVD_Mainhook_f();
 			
-				if (!cl.standby)
+				if (!cl.standby && physframe)
 				{
 					StatsGrid_Gather();
 				}
@@ -2166,7 +2171,7 @@ void CL_Frame (double time)
 		CL_UserinfoChanged ("chat", char_flags);
 	}
 
-	if (cls.state >= ca_onserver && !cls.demoseeking)
+	if (cls.state >= ca_onserver)
 	{
 		Cam_SetViewPlayer();
 
@@ -2278,7 +2283,7 @@ void CL_Frame (double time)
 
 	fps_count++;
 
-	CL_CalcFPS(); // HUD -> hexum
+	CL_CalcFPS();
 
 	VFS_TICK(); // VFS hook for updating some systems
 
