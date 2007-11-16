@@ -1373,7 +1373,7 @@ void CL_ReadPackets (void)
 		}
 
 		{
-#if 1 // TEST STUFF
+#if 0 // TEST STUFF
 			static qbool prevseeking = false;
 			static qbool prevtest = false;
 			static double seektime = 0.0;
@@ -1382,7 +1382,7 @@ void CL_ReadPackets (void)
 
 			CL_ParseServerMessage();
 			
-#if 1 // TEST STUFF
+#if 0 // TEST STUFF
 			if (cls.demoseeking)
 			{
 				seektime += Sys_DoubleTime() - start;
@@ -2104,11 +2104,8 @@ void CL_Frame (double time)
 
 		if (physframe)
 		{
-			double start = Sys_DoubleTime();
 			// fetch results from server
 			CL_ReadPackets();
-
-			Com_DPrintf("Stuff done: %f\n", Sys_DoubleTime() - start);
 
 			TP_UpdateSkins();
 
