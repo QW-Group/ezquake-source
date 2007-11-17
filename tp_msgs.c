@@ -36,7 +36,6 @@
 #define INPOINTWEAPON() (INPOINT(rl) || INPOINT(lg) || INPOINT(gl) || INPOINT(sng))
 #define INPOINTPOWERUP() (INPOINT(quad) || INPOINT(pent) || INPOINT(ring))
 #define INPOINTAMMO() (INPOINT(rockets) || INPOINT(cells) || INPOINT(nails))
-#define HAVEPOWERUP() (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
  
 #define TOOK(x) (!TOOK_EMPTY() && vars.tookflag == it_##x)
 #define COLORED(c,str) "{&c" #c #str "&cfff}"
@@ -74,19 +73,13 @@ use the %-macros nor the $-macros.
 #define tp_ib_name_p	    COLORED(e00,p)		// red p for pent
 #define tp_ib_name_r	    COLORED(ff0,r)		// yellow r for ring
 #define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
-#define tp_ib_name_flag	    COLORED(f60,flag)	// orange flag
+#define tp_ib_name_flag	    COLORED(f50,flag)	// orange flag
 #define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
 #define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
 #define tp_ib_name_teammate	COLORED(0b0,teammate)// green "teamate"
 #define tp_ib_name_quaded	COLORED(03F,quaded)	// blue "quaded"
 #define tp_ib_name_pented	COLORED(e00,pented)	// red "pented"
 #define tp_ib_name_rlg      COLORED(f0f,rlg)    // purple rlg
-
-#define tp_sep_red		"$R$R"      // enemy, lost
-#define tp_sep_green	"$G$G"      // killed quad/ring/pent enemy, safe
-#define tp_sep_yellow	"$Y$Y"      // help
-#define tp_sep_white	"$W$W"  // Two white bubbles, location of item
-#define tp_sep_blue		"$B$B"      // 
  
 typedef const char * MSGPART;
  
@@ -146,19 +139,18 @@ GLOBAL void TP_Msg_Lost_f (void)
 			msg2 = "lost $[{%d}$] e:%E";
 		}
 	}
-	else // if alive and reporting last death location
+	else // if currently alive, then report last death location
 		msg1 = "lost $[{%d}$]";
 		
-	//$R$R quad over(1) lost loc weapon(2)
     TP_Send_TeamSay("%s%s", msg1, msg2);
 }
 
 
-GLOBAL void TP_Msg_ReportComing(qbool report)
-{ // tp_report and tp_coming are similar, differences are led color, where %l is, and the word "coming"
+GLOBAL void TP_Msg_Report_f (void)
+{
 	MSGPART powerup = "";
 	MSGPART armor_health = "";
-	MSGPART report_come = "";
+	MSGPART location = "";
 	MSGPART weap_ammo = "";
  
 	if (DEAD()) // no matter what, if dead report lost (how could you be coming if you're dead?)
@@ -166,20 +158,9 @@ GLOBAL void TP_Msg_ReportComing(qbool report)
 		TP_Msg_Lost_f();
 		return;
 		}
-	else
-		{
-			if (report)
-			{
-				report_come = "$[{%l}$]";
-			}
-			else
-			{
-				report_come = "coming $[{%l}$]";
-			}
-		}
-
-	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
-		powerup = " $colored_short_powerups";
+	
+	if (HAVE_POWERUP())
+		powerup = "$colored_short_powerups";
 	else
 		powerup = "";
  
@@ -190,17 +171,13 @@ GLOBAL void TP_Msg_ReportComing(qbool report)
     else								weap_ammo = "";
  
 	armor_health = "$colored_armor/%h";
+	location = "$[{%l}$]";
 	 
-	if (report)
-		TP_Send_TeamSay("%s %s %s %s", powerup, armor_health, report_come, weap_ammo);
-	else
-		TP_Send_TeamSay("%s %s %s %s", powerup, report_come, armor_health, weap_ammo); // notice that in tp_coming, we report our location before anything else!
+	TP_Send_TeamSay("%s %s %s %s", powerup, armor_health, location, weap_ammo);
 }
-GLOBAL void TP_Msg_Report_f (void) { TP_Msg_ReportComing(true); }
-GLOBAL void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); } 
 
 
-GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monster. // need $point and $took to see red/blue flag!
+GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monster. need $point and $took to see red/blue flag!
 {
 	/*
 	This is the "go-to" function!". It contains all possible scenarios for any player, teammate or enemy, with any combination of powerup.
@@ -251,7 +228,7 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 			message = tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
 			}
 	}
-	else if (HAVEPOWERUP())
+	else if (HAVE_POWERUP())
 	{
 		TP_GetNeed();
 		if (DEAD()) // if you are dead with powerup, then you dont technically have it.
@@ -290,40 +267,6 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 
 	TP_Send_TeamSay("%s", message);
 }
-
-
-LOCAL void TP_Msg_SafeHelp(qbool safe)
-{
-	MSGPART powerup = "";
-	MSGPART location = "";
-	MSGPART weap_ammo = "";
-	MSGPART safe_help = "";
-
-	if (safe)
-		{
-		safe_help = "safe";
-		}
-	else // now help
-		{
-		safe_help = "help";
-		}
-	
-	location = "$[{%l}$]";
- 
-	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
-		powerup = " $colored_short_powerups";
-	else
-		powerup = "";
- 
-    if		(HAVE_RL() && HAVE_LG())	weap_ammo = " " tp_ib_name_rlg ":$rockets/$cells";
-    else if (HAVE_RL())					weap_ammo = " " tp_ib_name_rl ":$rockets";
-    else if (HAVE_LG())					weap_ammo = " " tp_ib_name_lg ":$cells";
-    else								weap_ammo = "";
-	
-	TP_Send_TeamSay("%s %s %s%s", powerup, safe_help, location, weap_ammo);
-}
-GLOBAL void TP_Msg_Safe_f (void) { TP_Msg_SafeHelp(true); }
-GLOBAL void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
 
 
 LOCAL void TP_Msg_GetPentQuad(qbool quad)
@@ -395,7 +338,6 @@ GLOBAL void TP_Msg_QuadDead_f (void)
 }
 
 
-
 GLOBAL void TP_Msg_Took_f (void)
 {
 	MSGPART took = "";
@@ -436,7 +378,7 @@ GLOBAL void TP_Msg_Took_f (void)
 		else if (TOOK(rune4))							took = "$tp_name_rune4";
 		else 											took = "{$took}"; // This should never happen
 		
-		if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
+		if (HAVE_POWERUP())
 		{
 			powerup = "$colored_short_powerups";
 		}
@@ -510,7 +452,7 @@ GLOBAL void TP_Msg_Point_f (void)
 					//TF
 					else if (INPOINT(flag))		point = tp_ib_name_flag; // note we cannot tell if it's enemy or team flag
 					else if (INPOINT(disp))		point = "{$point}";	// note we cannot tell if it's enemy or team disp
-					else if (INPOINT(sentry))	point = "{$point}"; // note we cannot tell if it's enemy or team sent// note we can'te tell if it's enemy or team sent
+					else if (INPOINT(sentry))	point = "{$point}"; // note we cannot tell if it's enemy or team sent
 					
 					//ctf, other
 					else if (INPOINT(rune1))	point = "$tp_name_rune1";
@@ -521,7 +463,7 @@ GLOBAL void TP_Msg_Point_f (void)
 		else point = "{$point}"; // this should never happen
 	}
 	
-		if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
+		if (HAVE_POWERUP())
 			powerup = "$colored_short_powerups";
 		else
 			powerup = "";
@@ -546,7 +488,7 @@ GLOBAL void TP_Msg_Need_f (void)
 	
 	if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells) || NEED(shells) || NEED(nails))
 	{
-		need = "need %u";
+		need = "{need} %u";
 	}
 	else
 	{
@@ -559,16 +501,15 @@ GLOBAL void TP_Msg_Need_f (void)
 // The following define allows us to make as many functions as we want and get the message "powerup message location"
 #define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s"type" $[{%%l}$]", (HAVE_POWERUP() ? "$colored_short_powerups " : ""))
 
-GLOBAL void TP_Msg_YesOk_f (void) { TP_MSG_GENERIC("yes/ok"); }
+GLOBAL void TP_Msg_YesOk_f (void) { TP_MSG_GENERIC("{&c9ffyes/ok&cfff}"); } //cyan yes/ok
 GLOBAL void TP_Msg_YouTake_f (void) { TP_MSG_GENERIC("you take"); }
 GLOBAL void TP_Msg_Waiting_f (void) { TP_MSG_GENERIC("waiting"); }
 GLOBAL void TP_Msg_Slipped_f (void) { TP_MSG_GENERIC("enemy slipped"); }
 GLOBAL void TP_Msg_Replace_f (void) { TP_MSG_GENERIC("replace"); }
 GLOBAL void TP_Msg_Trick_f (void) { TP_MSG_GENERIC("trick"); }
-
-
-
-
+GLOBAL void TP_Msg_Safe_f (void) { TP_MSG_GENERIC("{&c0b0safe&cfff}"); } // green safe
+GLOBAL void TP_Msg_Help_f (void) { TP_MSG_GENERIC("{&cff0help&cfff}"); } // yellow help
+GLOBAL void TP_Msg_Coming_f (void) { TP_MSG_GENERIC("{&cf50coming&cfff}"); } // orange coming
 
 
 ///////////////////////////////////
