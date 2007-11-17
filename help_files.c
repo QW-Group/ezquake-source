@@ -47,6 +47,11 @@ void Help_Browser_Focus(void)
     CTab_SetCurrentId(&help_tab, HELPM_BROWSER);
 }
 
+static qbool Help_Browser_Mouse_Event(const mouse_state_t *ms)
+{
+	return true;
+}
+
 filelist_t help_index_fl;
 filelist_t help_tutorials_fl;
 
@@ -230,7 +235,7 @@ CTabPage_Handlers_t help_browser_handlers = {
 	Help_Browser_Draw,
 	Help_Browser_Key,
 	NULL,
-	NULL
+	Help_Browser_Mouse_Event
 };
 
 CTabPage_Handlers_t help_index_handlers = {
