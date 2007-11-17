@@ -37,6 +37,9 @@ typedef struct
 	int			texnum;
 	float		sl, tl, sh, th;
 } mpic_t;
+
+void Draw_AdjustConback (void);
+
 #else
 typedef struct
 {
@@ -46,13 +49,11 @@ typedef struct
 	byte		pad;
 	byte		data[4];	// variable sized
 } mpic_t;
-#endif
+#endif // GLQUAKE
 
 extern	mpic_t		*draw_disc;	// also used on sbar
 
-#ifdef GLQUAKE
-void Draw_AdjustConback (void);
-#endif
+#define MCHARSET_PATH "gfx/mcharset.png"
 
 typedef int color_t;
 

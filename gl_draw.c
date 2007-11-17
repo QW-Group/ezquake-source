@@ -853,7 +853,7 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 
 	if (bigchar)
 	{
-		mpic_t *p = Draw_CachePicSafe("gfx/mcharset.png", false, true);
+		mpic_t *p = Draw_CachePicSafe(MCHARSET_PATH, false, true);
 
 		if (p)
 		{

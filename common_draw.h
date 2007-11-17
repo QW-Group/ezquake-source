@@ -6,8 +6,6 @@
 #define TIMETYPE_GAMECLOCKINV 2
 #define TIMETYPE_DEMOCLOCK 3
 
-#define MCHARSET_PATH "gfx/mcharset.png"
-
 void CommonDraw_Init(void);
 
 typedef struct cachepic_s 

@@ -580,7 +580,7 @@ void Draw_Character (int x, int y, int num)
 void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha)
 {
 	int char_size = 64;
-	mpic_t *p = Draw_CachePicSafe("gfx/mcharset.png", false, true);
+	mpic_t *p = Draw_CachePicSafe(MCHARSET_PATH, false, true);
 
 	if (p)
 	{
