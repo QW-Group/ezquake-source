@@ -2157,6 +2157,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\menu_mp3player.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\menu_multiplayer.c"
 						>
 					</File>
@@ -2774,6 +2778,10 @@
 				</File>
 				<File
 					RelativePath="..\..\menu_ingame.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\menu_mp3player.h"
 					>
 				</File>
 				<File

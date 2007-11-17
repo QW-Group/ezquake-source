@@ -52,6 +52,7 @@ CLIENT_C_FILES := \
 	menu \
 	menu_demo \
 	menu_ingame \
+	menu_mp3player \
 	menu_multiplayer \
 	menu_options \
 	menu_proxy \

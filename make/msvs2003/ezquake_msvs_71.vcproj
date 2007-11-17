@@ -760,6 +760,12 @@
 					RelativePath="..\..\menu_ingame.c">
 				</File>
 				<File
+					RelativePath="..\..\menu_mp3player.c">
+				</File>
+				<File
+					RelativePath="..\..\menu_multiplayer.c">
+				</File>
+				<File
 					RelativePath="..\..\menu_options.c">
 				</File>
 				<File
@@ -1608,6 +1614,12 @@
 				</File>
 				<File
 					RelativePath="..\..\menu_ingame.h">
+				</File>
+				<File
+					RelativePath="..\..\menu_mp3player.h">
+				</File>
+				<File
+					RelativePath="..\..\menu_multiplayer.h">
 				</File>
 				<File
 					RelativePath="..\..\menu_options.h">

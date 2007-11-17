@@ -35,6 +35,8 @@ void M_Keydown (int key, int unichar);
 void M_Draw (void);
 void M_ToggleMenu_f (void);
 void M_LeaveMenus (void);
+void M_LeaveMenu (int parent);
+void M_EnterMenu (int state);
 void M_Menu_Main_f (void);
 void M_EnterProxyMenu (void);
 void M_DrawTextBox (int x, int y, int width, int lines);
