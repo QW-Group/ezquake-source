@@ -611,8 +611,7 @@ void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float a
 
 		if (sx >= 0)
 		{
-			// FIXME: Hmmm, scale needs * 0.1 here to behave like in GL, something wrong with Draw_SAlphaSubPic?
-			Draw_SAlphaSubPic(x, y, p, sx, sy, char_width, char_height, ((0.1 * (float)char_size / char_width) * scale), 1);
+			Draw_SAlphaSubPic(x, y, p, sx, sy, char_width, char_height, (((float)char_size / char_width) * scale), 1);
 		}
 
 		return;
@@ -628,7 +627,7 @@ void Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color
 	{
 		Draw_BigCharacter (x, y, *text, c, scale, alpha);
 		text++;
-		x += 64 + char_gap;
+		x += (64 * scale) + char_gap;
 	}
 }
 
