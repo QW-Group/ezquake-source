@@ -1319,7 +1319,7 @@ void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *s
 		(*sx) = ((c - 'a' + 26) % 8) * char_width;
 		(*sy) = ((c - 'a' + 26) / 8) * char_height;
 	}
-	else if (c >= '0' && c <= '1')
+	else if (c >= '0' && c <= '9')
 	{
 		// Skip A-Z and a-z.
 		(*sx) = ((c - '0' + 26 * 2) % 8 ) * char_width;
