@@ -1346,5 +1346,5 @@ void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *s
 
 qbool Draw_BigFontAvailable(void)
 {
-	return Draw_CachePicSafe("gfx/mcharset.png", false, true) != NULL;
+	return Draw_CachePicSafe(MCHARSET_PATH, false, true) != NULL;
 }
