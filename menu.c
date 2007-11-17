@@ -96,6 +96,7 @@ void M_Main_Key (int key);
 	void M_Help_Key (int key);
 	void M_Quit_Key (int key);
 
+void M_Menu_Help_f (void);
 
 int FindBestNick (char *s,int use);
 
@@ -386,7 +387,7 @@ void M_ToggleProxyMenu_f (void) {
 /* MAIN MENU */
 
 int    m_main_cursor;
-#define    MAIN_ITEMS    5
+static qbool	newmainmenu = false;
 menu_window_t m_main_window;
 
 void M_Menu_Main_f (void) {
@@ -400,27 +401,28 @@ void M_Menu_Main_f (void) {
 #define MAINMENU_ITEMS_SCALE		0.33
 #define	MAINMEN_ITEMS_LGAP			-2
 
-typedef const char *mainmenu_items_t;
-mainmenu_items_t mainmenu_items[] = {
-	"Singleplayer", "Multiplayer", "Options", "Demos", "Quit"
+typedef const char *bigmenu_items_t;
+bigmenu_items_t mainmenu_items[] = {
+	"Singleplayer", "Multiplayer", "Options", "Demos", "Help", "Quit"
 };
-#define MAINMENU_ITEMS_COUNT (sizeof(mainmenu_items) / sizeof(mainmenu_items_t))
+#define BIGMENU_ITEMS_COUNT(x) (sizeof(x) / sizeof(bigmenu_items_t))
+
+#define    MAIN_ITEMS    (newmainmenu ? BIGMENU_ITEMS_COUNT(mainmenu_items) : 5)
 
 // mcharset must be supported in this point
-static void M_Main_DrawItems(int left_corner, int top_corner, int *width, int *height)
+static void M_Main_DrawItems(bigmenu_items_t *menuitems, const unsigned int items, int left_corner, int top_corner, int *width, int *height)
 {
 	int i;
 	int mheight = 0;
 	int mwidth = 0;
 	int x = left_corner;
 	int y = top_corner;
-	const int items = MAINMENU_ITEMS_COUNT;
 
 	for (i = 0; i < items; i++) {
-		int thiswidth = strlen(mainmenu_items[i])*MAINMENU_ITEMS_SCALE*BIGLETTERWIDTH;
+		int thiswidth = strlen(menuitems[i])*MAINMENU_ITEMS_SCALE*BIGLETTERWIDTH;
 		mheight += MAINMENU_ITEMS_SCALE*BIGLETTERHEIGHT;
 		mwidth = max(mwidth, thiswidth);
-		Draw_BigString(x, y, mainmenu_items[i], NULL, 0, 
+		Draw_BigString(x, y, menuitems[i], NULL, 0, 
 			MAINMENU_ITEMS_SCALE, 1, MAINMEN_ITEMS_LGAP);
 		y += MAINMENU_ITEMS_SCALE*BIGLETTERHEIGHT;
 	}
@@ -442,13 +444,15 @@ void M_Main_Draw (void) {
 
 	// Main Menu items
 	if (Draw_BigFontAvailable()) {
+		newmainmenu = true;
 		m_main_window.x = MAINMENU_ITEMS_CORNER_LEFT + ((menuwidth - 320)>>1);;
 		m_main_window.y = MAINMENU_ITEMS_CORNER_TOP + m_yofs;
-		M_Main_DrawItems(m_main_window.x, m_main_window.y,
+		M_Main_DrawItems(mainmenu_items, BIGMENU_ITEMS_COUNT(mainmenu_items), m_main_window.x, m_main_window.y,
 						 &m_main_window.w, &m_main_window.h);
-		itemheight = m_main_window.h / MAINMENU_ITEMS_COUNT;
+		itemheight = m_main_window.h / BIGMENU_ITEMS_COUNT(mainmenu_items);
 	}
 	else {
+		newmainmenu = false;
 		p = Draw_CachePic ("gfx/mainmenu.lmp");
 		m_main_window.w = p->width;
 		m_main_window.h = p->height;
@@ -524,17 +528,39 @@ void M_Main_Key (int key) {
 			break;
 
 		case 3:
-			M_Menu_Demos_f ();
-			break;
-
-		case 4:
-			if (cl_confirmquit.value) {
-				M_Menu_Quit_f ();
+			if (newmainmenu) {
+				M_Menu_Demos_f ();
 			}
 			else {
-				Host_Quit ();
+				M_Menu_MP3_Control_f();
 			}
 			break;
+
+		// newmainmenu has 6 menu entries, old menu just five of them
+		case 4:
+			if (newmainmenu) {
+				M_Menu_Help_f();
+			}
+			else {
+				if (cl_confirmquit.value) {
+					M_Menu_Quit_f ();
+				}
+				else {
+					Host_Quit ();
+				}
+				break;
+			}
+			break;
+
+		case 5:
+			if (newmainmenu) {
+				if (cl_confirmquit.value) {
+					M_Menu_Quit_f ();
+				}
+				else {
+					Host_Quit ();
+				}
+			}
 		}
 	}
 }
@@ -653,6 +679,7 @@ void M_Menu_Quit_f (void) {
 
 void M_Quit_Key (int key) {
 	switch (key) {
+		case K_MOUSE2:
 		case K_ESCAPE:
 		case 'n':
 		case 'N':
@@ -671,6 +698,7 @@ void M_Quit_Key (int key) {
 			m_state = m_none;
 			break;
 
+		case K_MOUSE1:
 		case K_ENTER:
 		case 'Y':
 		case 'y':
@@ -693,6 +721,10 @@ int    m_singleplayer_cursor;
 qbool m_singleplayer_confirm;
 qbool m_singleplayer_notavail;
 menu_window_t m_singleplayer_window;
+static qbool m_singleplayer_big = false;
+static bigmenu_items_t m_singleplayer_items[] = {
+	"New Game", "Load", "Save"
+};
 
 extern    cvar_t    maxclients;
 
@@ -703,8 +735,9 @@ void M_Menu_SinglePlayer_f (void) {
 }
 
 void M_SinglePlayer_Draw (void) {
-	int f;
+	int f = (int)(curtime * 10)%6;
 	mpic_t *p;
+	int itemheight;
 
 	if (m_singleplayer_notavail) {
 		p = Draw_CachePic ("gfx/ttl_sgl.lmp");
@@ -724,13 +757,28 @@ void M_SinglePlayer_Draw (void) {
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	p = Draw_CachePic ("gfx/sp_menu.lmp");
-	m_singleplayer_window.w = p->width;
-	m_singleplayer_window.h = p->height;
-	M_DrawTransPic_GetPoint(72, 32, &m_singleplayer_window.x, &m_singleplayer_window.y, p);
 
-	f = (int)(curtime * 10)%6;
-	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	if (Draw_BigFontAvailable()) {
+		m_singleplayer_big = true;
+		m_singleplayer_window.x = MAINMENU_ITEMS_CORNER_LEFT + ((menuwidth - 320)>>1);
+		m_singleplayer_window.y = MAINMENU_ITEMS_CORNER_TOP + m_yofs;
+		M_Main_DrawItems(m_singleplayer_items, BIGMENU_ITEMS_COUNT(m_singleplayer_items),
+			m_singleplayer_window.x, m_singleplayer_window.y, &m_singleplayer_window.w,
+			&m_singleplayer_window.h);
+		itemheight = m_singleplayer_window.h / BIGMENU_ITEMS_COUNT(m_singleplayer_items);
+	}
+	else {
+		m_singleplayer_big = false;
+		p = Draw_CachePic ("gfx/sp_menu.lmp");
+		m_singleplayer_window.w = p->width;
+		m_singleplayer_window.h = p->height;
+		M_DrawTransPic_GetPoint(72, 32, &m_singleplayer_window.x, &m_singleplayer_window.y, p);
+		itemheight = 20;
+	}
+
+	M_DrawTransPic (54, MAINMENU_ITEMS_CORNER_TOP + m_singleplayer_cursor * itemheight,
+		Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+
 }
 
 static void CheckSPGame (void) {
