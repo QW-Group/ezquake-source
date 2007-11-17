@@ -50,7 +50,6 @@ Security_Supported_Binaries_t Security_Supported_Binaries;
 
 Security_Verify_Response_t Security_Verify_Response;
 Security_Generate_Crc_t Security_Generate_Crc;
-Security_IsModelModified_t Security_IsModelModified;
 
 static qbool security_loaded;
 
@@ -94,13 +93,11 @@ void Modules_Init (void)
 	SECURITY_GETFUNC (Init);
 	SECURITY_GETFUNC (Verify_Response);
 	SECURITY_GETFUNC (Generate_Crc);
-	SECURITY_GETFUNC (IsModelModified);
 	SECURITY_GETFUNC (Supported_Binaries);
 	SECURITY_GETFUNC (Shutdown);
 
 	security_loaded	=	Security_Verify_Response && 
 		Security_Generate_Crc && 
-		Security_IsModelModified &&
 		Security_Supported_Binaries &&
 		Security_Init &&
 		Security_Shutdown;

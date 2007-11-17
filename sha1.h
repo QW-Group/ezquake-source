@@ -14,7 +14,7 @@ A million repetitions of "a"
 	$Id: sha1.h,v 1.9 2007-08-08 00:53:29 disconn3ct Exp $
 */
 
-/* #define SHA1HANDSOFF * Copies data before messing with it. */
+#define SHA1HANDSOFF /* Copies data before messing with it. */
 #ifndef _SHA1
 #define _SHA1
 typedef struct {
