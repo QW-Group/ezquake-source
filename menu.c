@@ -1649,6 +1649,7 @@ void M_Init (void) {
 	Cmd_AddCommand ("menu_save", M_Menu_Save_f);
 #endif
 	Cmd_AddCommand ("menu_multiplayer", M_Menu_MultiPlayer_f);
+	Cmd_AddCommand ("menu_slist", M_Menu_MultiPlayer_f);
 #ifdef WITH_MP3_PLAYER
 	Cmd_AddCommand ("menu_mp3_control", M_Menu_MP3_Control_f);
 	Cmd_AddCommand ("menu_mp3_playlist", M_Menu_MP3_Playlist_f);
