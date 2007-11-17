@@ -259,8 +259,8 @@ size_t strlcat(char *dst, const char *src, size_t siz)
 // A Case-insensitive strstr.
 char *strstri(const char *text, const char *find)
 {
-	char *s = text;
-	int findlen = strlen(find);
+	char *s = (char *)text;
+	size_t findlen = strlen(find);
 
 	// Empty substring, return input (like strstr).
 	if (findlen == 0)
