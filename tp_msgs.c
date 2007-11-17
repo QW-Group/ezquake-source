@@ -197,68 +197,68 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 	if (INPOINT(eyes)) // we assume enemy, because this is tp_msgENEMYpowerup
 	{
 		if (INPOINT(quaded) && INPOINT(pented))
-			{
+		{
 			message = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
-			}
+		}
 		else if (INPOINT(quaded))
-			{
+		{
 			message = tp_ib_name_quaded " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
-			}
+		}
 		else if (INPOINT(pented))
-			{
+		{
 			message = tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
-			}
+		}
 		else
-			{
+		{
 			message = tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
-			}
+		}
 	}
 	else if (INPOINT(enemy))
 	{
 		if (INPOINT(quaded) && INPOINT(pented))
-			{
+		{
 			message = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
-			}
+		}
 		else if (INPOINT(quaded))
-			{
+		{
 			message = tp_ib_name_quaded " " tp_ib_name_enemy " at $[{%y}$]";
-			}
+		}
 		else if (INPOINT(pented))
-			{
+		{
 			message = tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
-			}
+		}
 	}
 	else if (HAVE_POWERUP())
 	{
 		TP_GetNeed();
 		if (DEAD()) // if you are dead with powerup, then you dont technically have it.
-			{
+		{
 			TP_Msg_Lost_f(); // this function will take care of it
 			return;
-			}		
+		}		
 		else if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells)) // all things we care for
-			{
+		{
 			message = tp_ib_name_team " $colored_powerups need %u";
-			}
+		}
 		else
-			{
+		{
 			message = tp_ib_name_team " $colored_powerups";
-			}
+		}
 	}
 	else if (INPOINT(teammate))
 	{
 		if (INPOINT(quaded) && INPOINT(pented))
-			{
+		{
 			message = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
-			}
+		}
 		else if (INPOINT(quaded))
-			{
+		{
 			message = tp_ib_name_team " " tp_ib_name_quad;
-			}
+		}
 		else if (INPOINT(pented))
-			{
+		{
 			message = tp_ib_name_team " " tp_ib_name_pent;	
-			}
+		}
 	}
 	else
 	{
