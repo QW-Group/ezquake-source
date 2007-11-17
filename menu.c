@@ -48,6 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common_draw.h"
 #include "menu_mp3player.h"
 
+
 qbool vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
@@ -101,6 +102,8 @@ void M_Main_Key (int key);
 void M_Menu_Help_f (void);
 
 int FindBestNick (char *s,int use);
+
+#define QUAKE_ID_PLAQUE_PATH	"gfx/qplaque.lmp"
 
 m_state_t m_state;
 
@@ -396,23 +399,37 @@ void M_Menu_Main_f (void) {
 	M_EnterMenu (m_main);
 }
 
-#define BIGLETTERWIDTH 64
-#define BIGLETTERHEIGHT 64
-#define MAINMENU_ITEMS_CORNER_LEFT	72
-#define MAINMENU_ITEMS_CORNER_TOP	32
-#define MAINMENU_ITEMS_SCALE		0.33
-#define	MAINMEN_ITEMS_LGAP			-2
+#define BIGLETTER_WIDTH	64
+#define BIGLETTER_HEIGHT	64
+#define BIGMENU_LEFT				72
+#define BIGMENU_TOP					32
+#define BIGMENU_ITEMS_SCALE			0.3
+#define	BIGMENU_LETTER_SPACING		-2
+#define BIGMENU_VERTICAL_PADDING	2
 
-typedef const char *bigmenu_items_t;
-bigmenu_items_t mainmenu_items[] = {
-	"Singleplayer", "Multiplayer", "Options", "Demos", "Help", "MP3 Player", "Quit"
-};
+typedef struct bigmenu_items_s {
+	const char *label;
+	void (* enter_handler) (void);
+} bigmenu_items_t;
+
 #define BIGMENU_ITEMS_COUNT(x) (sizeof(x) / sizeof(bigmenu_items_t))
+
+bigmenu_items_t mainmenu_items[] = {
+	{"Single Player", M_Menu_SinglePlayer_f},
+	{"Multiplayer", M_Menu_MultiPlayer_f},
+	{"Options", M_Menu_Options_f},
+	{"Demos", M_Menu_Demos_f},
+#ifdef WITH_MP3_PLAYER
+	{"MP3 Player", M_Menu_MP3_Control_f},
+#endif
+	{"Help", M_Menu_Help_f},
+	{"Quit", M_Menu_Quit_f}
+};
 
 #define    MAIN_ITEMS    (newmainmenu ? BIGMENU_ITEMS_COUNT(mainmenu_items) : 5)
 
 // mcharset must be supported in this point
-static void M_Main_DrawItems(bigmenu_items_t *menuitems, const unsigned int items, int left_corner, int top_corner, int *width, int *height)
+static void M_BigMenu_DrawItems(bigmenu_items_t *menuitems, const unsigned int items, int left_corner, int top_corner, int *width, int *height)
 {
 	int i;
 	int mheight = 0;
@@ -421,12 +438,12 @@ static void M_Main_DrawItems(bigmenu_items_t *menuitems, const unsigned int item
 	int y = top_corner;
 
 	for (i = 0; i < items; i++) {
-		int thiswidth = strlen(menuitems[i])*MAINMENU_ITEMS_SCALE*BIGLETTERWIDTH;
-		mheight += MAINMENU_ITEMS_SCALE*BIGLETTERHEIGHT;
+		int thiswidth = strlen(menuitems[i].label)*BIGMENU_ITEMS_SCALE*BIGLETTER_WIDTH;
+		mheight += BIGMENU_ITEMS_SCALE*BIGLETTER_HEIGHT + BIGMENU_VERTICAL_PADDING;
 		mwidth = max(mwidth, thiswidth);
-		Draw_BigString(x, y, menuitems[i], NULL, 0, 
-			MAINMENU_ITEMS_SCALE, 1, MAINMEN_ITEMS_LGAP);
-		y += MAINMENU_ITEMS_SCALE*BIGLETTERHEIGHT;
+		Draw_BigString(x, y, menuitems[i].label, NULL, 0, 
+			BIGMENU_ITEMS_SCALE, 1, BIGMENU_LETTER_SPACING);
+		y += BIGMENU_ITEMS_SCALE*BIGLETTER_HEIGHT + BIGMENU_VERTICAL_PADDING;
 	}
 
 	*width = mwidth;
@@ -438,7 +455,7 @@ void M_Main_Draw (void) {
 	mpic_t *p;
 	int itemheight;
 
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	M_DrawTransPic (16, BIGMENU_TOP, Draw_CachePic (QUAKE_ID_PLAQUE_PATH) );
 
 	// the Main Manu heading
 	p = Draw_CachePic ("gfx/ttl_main.lmp");
@@ -447,9 +464,9 @@ void M_Main_Draw (void) {
 	// Main Menu items
 	if (Draw_BigFontAvailable()) {
 		newmainmenu = true;
-		m_main_window.x = MAINMENU_ITEMS_CORNER_LEFT + ((menuwidth - 320)>>1);;
-		m_main_window.y = MAINMENU_ITEMS_CORNER_TOP + m_yofs;
-		M_Main_DrawItems(mainmenu_items, BIGMENU_ITEMS_COUNT(mainmenu_items), m_main_window.x, m_main_window.y,
+		m_main_window.x = BIGMENU_LEFT + (menuwidth - 320)/2;
+		m_main_window.y = BIGMENU_TOP + m_yofs;
+		M_BigMenu_DrawItems(mainmenu_items, BIGMENU_ITEMS_COUNT(mainmenu_items), m_main_window.x, m_main_window.y,
 						 &m_main_window.w, &m_main_window.h);
 		itemheight = m_main_window.h / BIGMENU_ITEMS_COUNT(mainmenu_items);
 	}
@@ -467,12 +484,29 @@ void M_Main_Draw (void) {
 		itemheight = 20;
 	}	
 
-	M_DrawTransPic (54, MAINMENU_ITEMS_CORNER_TOP + m_main_cursor * itemheight,
+	M_DrawTransPic (54, BIGMENU_TOP + m_main_cursor * itemheight,
 		Draw_CachePic(va("gfx/menudot%i.lmp", f+1)) );
 }
 
+static void M_Main_Enter(const unsigned int entry)
+{
+	if (newmainmenu) {
+		mainmenu_items[entry].enter_handler();
+	}
+	else {
+		switch (entry) {
+		case 0: M_Menu_SinglePlayer_f (); break;
+		case 1:	M_Menu_MultiPlayer_f (); break;
+		case 2: M_Menu_Options_f (); break;
+#ifdef WITH_MP3_PLAYER
+		case 3: M_Menu_MP3_Control_f(); break;
+#endif // WITH_MP3_PLAYER
+		case 4: M_Menu_Quit_f (); break;
+		}
+	}
+}
+
 void M_Main_Key (int key) {
-	extern cvar_t cl_confirmquit;
 	switch (key) {
 	case K_ESCAPE:
 	case K_MOUSE2:
@@ -515,70 +549,7 @@ void M_Main_Key (int key) {
 	case K_ENTER:
 	case K_MOUSE1:
 		m_entersound = true;
-
-		switch (m_main_cursor) {
-		case 0:
-			M_Menu_SinglePlayer_f ();
-			break;
-
-		case 1:
-			M_Menu_MultiPlayer_f ();
-			break;
-
-		case 2:
-			M_Menu_Options_f ();
-			break;
-
-		case 3:
-			if (newmainmenu) {
-				M_Menu_Demos_f ();
-			}
-#ifdef WITH_MP3_PLAYER
-			else {
-				M_Menu_MP3_Control_f();
-			}
-#endif // WITH_MP3_PLAYER
-			break;
-
-		// newmainmenu has 6 menu entries, old menu just five of them
-		case 4:
-			if (newmainmenu) {
-				M_Menu_Help_f();
-			}
-			else {
-				if (cl_confirmquit.value) {
-					M_Menu_Quit_f ();
-				}
-				else {
-					Host_Quit ();
-				}
-				break;
-			}
-			break;
-
-		case 5:
-#ifdef WITH_MP3_PLAYER
-			if (newmainmenu) {
-				M_Menu_MP3_Control_f();
-			}
-			else 
-#endif // WITH_MP3_PLAYER
-			{
-				assert(!newmainmenu && m_main_cursor == 5);
-			}
-			break;
-
-		case 6:
-			if (newmainmenu) {
-				if (cl_confirmquit.value) {
-					M_Menu_Quit_f ();
-				}
-				else {
-					Host_Quit ();
-				}
-			}
-			else assert(!newmainmenu && m_main_cursor == 6);
-		}
+		M_Main_Enter((unsigned) m_main_cursor);
 	}
 }
 
@@ -686,6 +657,10 @@ int        m_quit_prevstate;
 qbool    wasInMenus;
 
 void M_Menu_Quit_f (void) {
+	extern cvar_t cl_confirmquit;
+
+	if (!cl_confirmquit.integer) Host_Quit();
+
 	if (m_state == m_quit)
 		return;
 	wasInMenus = (key_dest == key_menu);
@@ -740,7 +715,9 @@ qbool m_singleplayer_notavail;
 menu_window_t m_singleplayer_window;
 static qbool m_singleplayer_big = false;
 static bigmenu_items_t m_singleplayer_items[] = {
-	"New Game", "Load", "Save"
+	{"New Game", NULL},
+	{"Load", NULL}, 
+	{"Save", NULL}
 };
 
 extern    cvar_t    maxclients;
@@ -771,15 +748,15 @@ void M_SinglePlayer_Draw (void) {
 		return;
 	}
 
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	M_DrawTransPic (16, BIGMENU_TOP, Draw_CachePic (QUAKE_ID_PLAQUE_PATH) );
 	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
 	if (Draw_BigFontAvailable()) {
 		m_singleplayer_big = true;
-		m_singleplayer_window.x = MAINMENU_ITEMS_CORNER_LEFT + ((menuwidth - 320)>>1);
-		m_singleplayer_window.y = MAINMENU_ITEMS_CORNER_TOP + m_yofs;
-		M_Main_DrawItems(m_singleplayer_items, BIGMENU_ITEMS_COUNT(m_singleplayer_items),
+		m_singleplayer_window.x = BIGMENU_LEFT + ((menuwidth - 320)>>1);
+		m_singleplayer_window.y = BIGMENU_TOP + m_yofs;
+		M_BigMenu_DrawItems(m_singleplayer_items, BIGMENU_ITEMS_COUNT(m_singleplayer_items),
 			m_singleplayer_window.x, m_singleplayer_window.y, &m_singleplayer_window.w,
 			&m_singleplayer_window.h);
 		itemheight = m_singleplayer_window.h / BIGMENU_ITEMS_COUNT(m_singleplayer_items);
@@ -793,7 +770,7 @@ void M_SinglePlayer_Draw (void) {
 		itemheight = 20;
 	}
 
-	M_DrawTransPic (54, MAINMENU_ITEMS_CORNER_TOP + m_singleplayer_cursor * itemheight,
+	M_DrawTransPic (54, BIGMENU_TOP + m_singleplayer_cursor * itemheight,
 		Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
 
 }
@@ -946,7 +923,7 @@ void M_Menu_SinglePlayer_f (void) {
 void M_SinglePlayer_Draw (void) {
 	mpic_t *p;
 
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	M_DrawTransPic (16, 4, Draw_CachePic (QUAKE_ID_PLAQUE_PATH) );
 	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 	//    M_DrawTransPic (72, 32, Draw_CachePic ("gfx/sp_menu.lmp") );
@@ -1342,7 +1319,7 @@ void M_GameOptions_Draw(void) {
 	char *msg;
 	int lx, ly; // lower bounds
 
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	M_DrawTransPic (16, 4, Draw_CachePic (QUAKE_ID_PLAQUE_PATH) );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
