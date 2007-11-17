@@ -583,7 +583,11 @@ void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float a
 	int char_size = 64;
 	mpic_t *p = NULL;
 
-	if ((p = Draw_CachePicSafe("textures/bigcharsets/mcharset.png", false, true)))
+	if ((p = Draw_CachePicSafe("gfx/mcharset.png", false, true)))
+	{
+		bigcharset_found = true;
+	}
+	else if ((p = Draw_CachePicSafe("textures/bigcharsets/mcharset.png", false, true)))
 	{
 		bigcharset_found = true;
 	}
