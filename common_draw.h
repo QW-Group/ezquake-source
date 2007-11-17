@@ -66,4 +66,6 @@ void SCR_DrawWordWrapString(int x, int y,
 void HUD_BeforeDraw();
 void HUD_AfterDraw();
 
+qbool Draw_BigFontAvailable(void);
+
 #endif  // __COMMON_DRAW__H__
