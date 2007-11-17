@@ -35,15 +35,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu.h"
 #include "mp3_player.h"
 #include "EX_browser.h"
+#include "Ctrl_Tab.h"
 #include "menu_demo.h"
 #include "menu_proxy.h"
 #include "menu_options.h"
 #include "menu_ingame.h"
+#include "menu_multiplayer.h"
 #include "EX_FileList.h"
 #include "help.h"
 #include "utils.h"
 #include "qsound.h"
 #include "keys.h"
+#include "common_draw.h"
 
 qbool vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
@@ -87,7 +90,7 @@ void M_Main_Key (int key);
 		void M_ServerList_Key (int key);
 			void M_SEdit_Key (int key);
 		void M_Demo_Key (int key);
-		void M_GameOptions_Key (int key);
+		qbool M_GameOptions_Key (int key);
 		void M_Proxy_Key (int key);
 	void M_Options_Key (int key, int unichar);
 	void M_Help_Key (int key);
@@ -390,9 +393,46 @@ void M_Menu_Main_f (void) {
 	M_EnterMenu (m_main);
 }
 
+#define BIGLETTERWIDTH 64
+#define BIGLETTERHEIGHT 64
+#define MAINMENU_ITEMS_CORNER_LEFT	72
+#define MAINMENU_ITEMS_CORNER_TOP	32
+#define MAINMENU_ITEMS_SCALE		0.33
+#define	MAINMEN_ITEMS_LGAP			-2
+
+typedef const char *mainmenu_items_t;
+mainmenu_items_t mainmenu_items[] = {
+	"Singleplayer", "Multiplayer", "Options", "Demos", "Quit"
+};
+#define MAINMENU_ITEMS_COUNT (sizeof(mainmenu_items) / sizeof(mainmenu_items_t))
+
+// mcharset must be supported in this point
+static void M_Main_DrawItems(int left_corner, int top_corner, int *width, int *height)
+{
+	int i;
+	int mheight = 0;
+	int mwidth = 0;
+	int x = left_corner;
+	int y = top_corner;
+	const int items = MAINMENU_ITEMS_COUNT;
+
+	for (i = 0; i < items; i++) {
+		int thiswidth = strlen(mainmenu_items[i])*MAINMENU_ITEMS_SCALE*BIGLETTERWIDTH;
+		mheight += MAINMENU_ITEMS_SCALE*BIGLETTERHEIGHT;
+		mwidth = max(mwidth, thiswidth);
+		Draw_BigString(x, y, mainmenu_items[i], NULL, 0, 
+			MAINMENU_ITEMS_SCALE, 1, MAINMEN_ITEMS_LGAP);
+		y += MAINMENU_ITEMS_SCALE*BIGLETTERHEIGHT;
+	}
+
+	*width = mwidth;
+	*height = mheight;
+}
+
 void M_Main_Draw (void) {
-	int f;
+	int f = (int) (curtime * 10) % 6;
 	mpic_t *p;
+	int itemheight;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 
@@ -401,18 +441,28 @@ void M_Main_Draw (void) {
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
 	// Main Menu items
-	p = Draw_CachePic ("gfx/mainmenu.lmp");
-	m_main_window.w = p->width;
-	m_main_window.h = p->height;
-	M_DrawTransPic_GetPoint (72, 32, &m_main_window.x, &m_main_window.y, p);
-	
-	// main menu specific correction, mainmenu.lmp|png have some useless extra space at the bottom
-	// that makes the mouse pointer position calculation imperfect
-	m_main_window.h *= 0.9;
+	if (Draw_BigFontAvailable()) {
+		m_main_window.x = MAINMENU_ITEMS_CORNER_LEFT + ((menuwidth - 320)>>1);;
+		m_main_window.y = MAINMENU_ITEMS_CORNER_TOP + m_yofs;
+		M_Main_DrawItems(m_main_window.x, m_main_window.y,
+						 &m_main_window.w, &m_main_window.h);
+		itemheight = m_main_window.h / MAINMENU_ITEMS_COUNT;
+	}
+	else {
+		p = Draw_CachePic ("gfx/mainmenu.lmp");
+		m_main_window.w = p->width;
+		m_main_window.h = p->height;
+		M_DrawTransPic_GetPoint (72, 32, &m_main_window.x, &m_main_window.y, p);
+		
+		// main menu specific correction, mainmenu.lmp|png have some useless extra space at the bottom
+		// that makes the mouse pointer position calculation imperfect
+		m_main_window.h *= 0.9;
 
-	f = (int)(curtime * 10)%6;
+		itemheight = 20;
+	}	
 
-	M_DrawTransPic (54, 32 + m_main_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, MAINMENU_ITEMS_CORNER_TOP + m_main_cursor * itemheight,
+		Draw_CachePic(va("gfx/menudot%i.lmp", f+1)) );
 }
 
 void M_Main_Key (int key) {
@@ -473,11 +523,9 @@ void M_Main_Key (int key) {
 			M_Menu_Options_f ();
 			break;
 
-	#ifdef WITH_MP3_PLAYER
 		case 3:
-			M_Menu_MP3_Control_f ();
+			M_Menu_Demos_f ();
 			break;
-	#endif
 
 		case 4:
 			if (cl_confirmquit.value) {
@@ -1099,112 +1147,9 @@ qbool M_Load_Mouse_Event(const mouse_state_t *ms)
 
 #endif
 
-//=============================================================================
-/* MULTIPLAYER MENU */
-
-int    m_multiplayer_cursor;
-#ifdef CLIENTONLY
-#define    MULTIPLAYER_ITEMS    2
-#else
-#define    MULTIPLAYER_ITEMS    3
-#endif
-menu_window_t m_multiplayer_window;
-
 void M_Menu_MultiPlayer_f (void) {
 	M_EnterMenu (m_multiplayer);
 }
-
-void M_MultiPlayer_Draw (void) {
-	mpic_t    *p;
-	int lx, ly;
-
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
-	p = Draw_CachePic ("gfx/p_multi.lmp");
-	M_DrawPic ( (320-p->width)/2, 4, p);
-	M_Print_GetPoint (80, 40, &m_multiplayer_window.x, &m_multiplayer_window.y, "Join Game", m_multiplayer_cursor == 0);
-	m_multiplayer_window.h = 8;
-#ifndef CLIENTONLY
-	M_Print_GetPoint (80, 48, &lx, &ly, "Create Game", m_multiplayer_cursor == 1);
-	m_multiplayer_window.h += 8;
-#endif
-	M_Print_GetPoint (80, 56, &lx, &ly, "Demos", m_multiplayer_cursor == MULTIPLAYER_ITEMS - 1);
-	m_multiplayer_window.h += 8;
-	m_multiplayer_window.w = 20 * 8; // presume 20 letters long word and 8 pixels for a letter
-	
-	// cursor
-	M_DrawCharacter (64, 40 + m_multiplayer_cursor * 8, FLASHINGARROW());
-}
-
-void M_MultiPlayer_Key (int key) {
-	switch (key) {
-		case K_BACKSPACE:
-			m_topmenu = m_none;    // intentional fallthrough
-		case K_MOUSE2:
-		case K_ESCAPE:
-			M_LeaveMenu (m_main);
-			break;
-
-		case '`':
-		case '~':
-			key_dest = key_console;
-			m_state = m_none;
-			break;
-
-		case K_DOWNARROW:
-		case K_MWHEELDOWN:
-			S_LocalSound ("misc/menu1.wav");
-			if (++m_multiplayer_cursor >= MULTIPLAYER_ITEMS)
-				m_multiplayer_cursor = 0;
-			break;
-
-		case K_UPARROW:
-		case K_MWHEELUP:
-			S_LocalSound ("misc/menu1.wav");
-			if (--m_multiplayer_cursor < 0)
-				m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
-			break;
-
-		case K_HOME:
-		case K_PGUP:
-			S_LocalSound ("misc/menu1.wav");
-			m_multiplayer_cursor = 0;
-			break;
-
-		case K_END:
-		case K_PGDN:
-			S_LocalSound ("misc/menu1.wav");
-			m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
-			break;
-
-		case K_ENTER:
-		case K_MOUSE1:
-			m_entersound = true;
-			switch (m_multiplayer_cursor) {
-				case 0:
-					M_Menu_ServerList_f ();
-					break;
-#ifndef CLIENTONLY
-				case 1:
-					M_Menu_GameOptions_f ();
-					break;
-#endif
-				case 2:
-					M_Menu_Demos_f ();
-					break;
-			}
-	}
-}
-
-qbool M_MultiPlayer_Mouse_Event(const mouse_state_t *ms)
-{
-	M_Mouse_Select(&m_multiplayer_window, ms, MULTIPLAYER_ITEMS, &m_multiplayer_cursor);
-
-    if (ms->button_up == 1) M_MultiPlayer_Key(K_MOUSE1);
-    if (ms->button_up == 2) M_MultiPlayer_Key(K_MOUSE2);
-    
-    return true;
-}
-
 
 //=============================================================================
 // MULTIPLAYER MENU
@@ -1854,8 +1799,6 @@ int _deathmatch, _teamplay, _skill, _coop;
 int _fraglimit, _timelimit;
 
 void M_Menu_GameOptions_f (void) {
-	M_EnterMenu (m_gameoptions);
-
 	// 16 and 8 are not really limits --- just sane values
 	// for these variables...
 	_maxclients = min(16, (int)maxclients.value);
@@ -1874,7 +1817,7 @@ int gameoptions_cursor_table[] = {48, 56, 64, 72, 80, 88, 96, 104, 112};
 int        gameoptions_cursor;
 menu_window_t gameoptions_window;
 
-void M_GameOptions_Draw (void) {
+void M_GameOptions_Draw(void) {
 	mpic_t *p;
 	char *msg;
 	int lx, ly; // lower bounds
@@ -2018,11 +1961,11 @@ void M_NetStart_Change (int dir) {
 	}
 }
 
-void M_GameOptions_Key (int key) {
+qbool M_GameOptions_Key (int key) {
 
 	if (key == K_MOUSE1 && gameoptions_cursor != 0) {
 		M_NetStart_Change (1);
-		return;
+		return true;
 	}
 
 	switch (key) {
@@ -2069,14 +2012,14 @@ void M_GameOptions_Key (int key) {
 			gameoptions_cursor = NUM_GAMEOPTIONS-1;
 			break;
 
-		case K_LEFTARROW:
+		case KP_MINUS:
 			if (gameoptions_cursor == 0)
 				break;
 			S_LocalSound ("misc/menu3.wav");
 			M_NetStart_Change (-1);
 			break;
 
-		case K_RIGHTARROW:
+		case KP_PLUS:
 			if (gameoptions_cursor == 0)
 				break;
 			S_LocalSound ("misc/menu3.wav");
@@ -2115,12 +2058,14 @@ void M_GameOptions_Key (int key) {
 
 				// Cbuf_AddText ("gamedir qw\n");
 				Cbuf_AddText ( va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
-				return;
+				return true;
 			}
 
 			//        M_NetStart_Change (1);
 			break;
+		default: return false;
 	}
+	return true;
 }
 
 qbool M_GameOptions_Mouse_Event(const mouse_state_t *ms)
@@ -2143,18 +2088,6 @@ qbool M_GameOptions_Mouse_Event(const mouse_state_t *ms)
 #define STAT_Y 166
 
 //int m_multip_cursor = 0, m_multip_mins = 0, m_multip_maxs = 16, m_multip_state;
-
-void M_Menu_ServerList_f (void) {
-	M_EnterMenu (m_slist);
-}
-
-void M_ServerList_Draw (void) {
-	Browser_Draw();
-}
-
-void M_ServerList_Key (key) {
-	Browser_Key(key);
-}
 
 // <-- SLIST
 
@@ -2201,13 +2134,13 @@ void M_Init (void) {
 #endif
 
 	Cvar_Register (&menu_marked_bgcolor);
-
-	Cvar_ResetCurrentGroup();
 	Browser_Init();
+	Cvar_ResetCurrentGroup();
 	Menu_Help_Init();	// help_files module
 	Menu_Demo_Init();	// menu_demo module
 	Menu_Options_Init(); // menu_options module
 	Menu_Ingame_Init();
+	Menu_MultiPlayer_Init(); // menu_multiplayer.h
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 	Cmd_AddCommand ("toggleproxymenu", M_ToggleProxyMenu_f);
@@ -2219,7 +2152,6 @@ void M_Init (void) {
 	Cmd_AddCommand ("menu_save", M_Menu_Save_f);
 #endif
 	Cmd_AddCommand ("menu_multiplayer", M_Menu_MultiPlayer_f);
-	Cmd_AddCommand ("menu_slist", M_Menu_ServerList_f);
 #ifdef WITH_MP3_PLAYER
 	Cmd_AddCommand ("menu_mp3_control", M_Menu_MP3_Control_f);
 	Cmd_AddCommand ("menu_mp3_playlist", M_Menu_MP3_Playlist_f);
@@ -2299,7 +2231,7 @@ void M_Draw (void) {
 #endif
 
 		case m_multiplayer:
-			M_MultiPlayer_Draw ();
+			Menu_MultiPlayer_Draw ();
 			break;
 
 		case m_options:
@@ -2321,20 +2253,6 @@ void M_Draw (void) {
 			M_Quit_Draw ();
 			break;
 
-#ifndef CLIENTONLY
-		case m_gameoptions:
-			M_GameOptions_Draw ();
-			break;
-#endif
-
-		case m_slist:
-			M_ServerList_Draw ();
-			break;
-			/*
-			   case m_sedit:
-			   M_SEdit_Draw ();
-			   break;
-			 */
 		case m_demos:
 			M_Demo_Draw ();
 			break;
@@ -2395,7 +2313,7 @@ void M_Keydown (int key, int unichar) {
 #endif
 
 		case m_multiplayer:
-			M_MultiPlayer_Key (key);
+			Menu_MultiPlayer_Key (key);
 			return;
 
 		case m_options:
@@ -2417,20 +2335,6 @@ void M_Keydown (int key, int unichar) {
 			M_Quit_Key (key);
 			return;
 
-#ifndef CLIENTONLY
-		case m_gameoptions:
-			M_GameOptions_Key (key);
-			return;
-#endif
-
-		case m_slist:
-			M_ServerList_Key (key);
-			return;
-			/*
-			   case m_sedit:
-			   M_SEdit_Key (key);
-			   break;
-			 */
 		case m_demos:
 			M_Demo_Key (key);
 			break;
@@ -2470,14 +2374,12 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
     switch (m_state) {
 	case m_main:			return M_Main_Mouse_Event(ms);
 	case m_singleplayer:	return M_SinglePlayer_Mouse_Event(ms);
-	case m_multiplayer:		return M_MultiPlayer_Mouse_Event(ms);
+	case m_multiplayer:		return Menu_MultiPlayer_Mouse_Event(ms);
 #ifndef CLIENTONLY
 	case m_load:			return M_Load_Mouse_Event(ms);
 	case m_save:			return M_Load_Mouse_Event(ms);
-	case m_gameoptions:		return M_GameOptions_Mouse_Event(ms);
 #endif
 	case m_options:			return Menu_Options_Mouse_Event(ms);
-	case m_slist:			return Browser_Mouse_Event(ms);
 	case m_demos:			return Menu_Demo_Mouse_Event(ms);
 	case m_ingame:			return Menu_Ingame_Mouse_Event(ms);
 	case m_democtrl:		return Menu_Democtrl_Mouse_Event(ms);

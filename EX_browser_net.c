@@ -525,8 +525,7 @@ DWORD WINAPI AutoupdateProc(void * lpParameter)
 
         if (((int)sb_liveupdate.value > 0)  &&
             time >= lastupdatetime + (int)sb_liveupdate.value  &&
-            key_dest == key_menu  &&
-            m_state == m_slist/*m_singleplayer*/)
+            key_dest == key_menu /* todo: add "on server list tab" condition here */)
         {
             server_data *serv = autoupdate_server;
             if (serv != NULL)

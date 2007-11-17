@@ -54,6 +54,11 @@ extern cvar_t  sb_autohide;         // hide browser after connect
 extern cvar_t  sb_sourcevalidity;   // source validity in minutes
 extern cvar_t  sb_mastercache;      // if cache master query results
 
+extern cvar_t  sb_hideempty;
+extern cvar_t  sb_hidenotempty;
+extern cvar_t  sb_hidefull;
+extern cvar_t  sb_hidedead;
+
 typedef struct column_s
 {
     char ping [COL_PING + 1];
@@ -129,6 +134,11 @@ typedef struct player_host_s
     char name[21];
     server_data *serv;
 } player_host;
+
+typedef struct serverbrowser_window_s {
+	int x, y, w, h;
+} serverbrowser_window_t;
+extern serverbrowser_window_t Browser_window;
 
 extern server_data * show_serverinfo;
 
@@ -207,10 +217,22 @@ void SB_Test_Init(char *address);
 void SB_Test_Change(char *address);
 void SB_Test_Frame(void);
 
-// browser menu module
-void Browser_Init(void);
-void Browser_Draw(void);
-void Browser_Key(int);
-qbool Browser_Mouse_Event(const mouse_state_t *ms);
+void Browser_Init (void);
+
+void SB_Servers_Draw (int x, int y, int w, int h);
+int SB_Servers_Key(int key);
+qbool SB_Servers_Mouse_Event(const mouse_state_t *ms);
+void SB_Servers_OnShow (void);
+
+void SB_Sources_Draw (int x, int y, int w, int h);
+int SB_Sources_Key(int key);
+qbool SB_Sources_Mouse_Event(const mouse_state_t *ms);
+
+void SB_Players_Draw (int x, int y, int w, int h);
+int SB_Players_Key(int key);
+qbool SB_Players_Mouse_Event(const mouse_state_t *ms);
+
+void SB_Specials_Draw(void);
+qbool SB_Specials_Key(int key);
 
 #endif  // __EX_BROWSER__H__
