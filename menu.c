@@ -65,7 +65,9 @@ void M_Menu_Main_f (void);
 		void M_Menu_Demos_f (void);
 		void M_Menu_GameOptions_f (void);
 	void M_Menu_Options_f (void);
+#ifdef WITH_MP3_PLAYER
 	void M_Menu_MP3_Control_f (void);
+#endif // WITH_MP3_PLAYER
 	void M_Menu_Quit_f (void);
 
 void M_Main_Draw (void);
@@ -531,9 +533,11 @@ void M_Main_Key (int key) {
 			if (newmainmenu) {
 				M_Menu_Demos_f ();
 			}
+#ifdef WITH_MP3_PLAYER
 			else {
 				M_Menu_MP3_Control_f();
 			}
+#endif // WITH_MP3_PLAYER
 			break;
 
 		// newmainmenu has 6 menu entries, old menu just five of them
@@ -553,10 +557,13 @@ void M_Main_Key (int key) {
 			break;
 
 		case 5:
+#ifdef WITH_MP3_PLAYER
 			if (newmainmenu) {
 				M_Menu_MP3_Control_f();
 			}
-			else {
+			else 
+#endif // WITH_MP3_PLAYER
+			{
 				assert(!newmainmenu && m_main_cursor == 5);
 			}
 			break;
