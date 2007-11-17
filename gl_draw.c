@@ -855,24 +855,8 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	{
 		mpic_t *p = Draw_CachePicSafe("gfx/mcharset.png", false, true);
 
-<<<<<<< .mine
 		if (p)
-=======
-		if ((p = Draw_CachePicSafe(MCHARSET_PATH, false, true)))
->>>>>>> .r3312
 		{
-<<<<<<< .mine
-=======
-			bigcharset_found = true;
-		}
-		else
-		{
-			bigcharset_found = false;
-		}
-
-		if (bigcharset_found)
-		{
->>>>>>> .r3312
 			int sx = 0;
 			int sy = 0;
 			int char_width = (p->width / 8);
