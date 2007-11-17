@@ -403,7 +403,7 @@ void M_Menu_Main_f (void) {
 
 typedef const char *bigmenu_items_t;
 bigmenu_items_t mainmenu_items[] = {
-	"Singleplayer", "Multiplayer", "Options", "Demos", "Help", "Quit"
+	"Singleplayer", "Multiplayer", "Options", "Demos", "Help", "MP3 Player", "Quit"
 };
 #define BIGMENU_ITEMS_COUNT(x) (sizeof(x) / sizeof(bigmenu_items_t))
 
@@ -554,6 +554,15 @@ void M_Main_Key (int key) {
 
 		case 5:
 			if (newmainmenu) {
+				M_Menu_MP3_Control_f();
+			}
+			else {
+				assert(!newmainmenu && m_main_cursor == 5);
+			}
+			break;
+
+		case 6:
+			if (newmainmenu) {
 				if (cl_confirmquit.value) {
 					M_Menu_Quit_f ();
 				}
@@ -561,6 +570,7 @@ void M_Main_Key (int key) {
 					Host_Quit ();
 				}
 			}
+			else assert(!newmainmenu && m_main_cursor == 6);
 		}
 	}
 }
