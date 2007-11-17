@@ -819,7 +819,6 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	int i = 0;
 	int slot = 0;
 	int char_size = (bigchar ? 64 : 8);
-	qbool bigcharset_found = false;
 
 	// Totally off screen.
 	if (y <= (-char_size * scale))
@@ -854,10 +853,16 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 
 	if (bigchar)
 	{
-		mpic_t *p = NULL;
+		mpic_t *p = Draw_CachePicSafe("gfx/mcharset.png", false, true);
 
+<<<<<<< .mine
+		if (p)
+=======
 		if ((p = Draw_CachePicSafe(MCHARSET_PATH, false, true)))
+>>>>>>> .r3312
 		{
+<<<<<<< .mine
+=======
 			bigcharset_found = true;
 		}
 		else
@@ -867,6 +872,7 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 
 		if (bigcharset_found)
 		{
+>>>>>>> .r3312
 			int sx = 0;
 			int sy = 0;
 			int char_width = (p->width / 8);
@@ -887,7 +893,6 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 		// TODO : Force players to have mcharset.png or fallback to overscaling normal font? :s
 	}
 	
-	//else if (!bigchar) // || (bigchar && !bigcharset_found))
 	// Is this is a wchar, find a charset that has the char in it.
 	if ((num & 0xFF00) != 0)
 	{
@@ -911,7 +916,6 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
 
 	GL_Bind(char_textures[slot]);
-	//}
 
 	// Draw the character polygon.
 	glBegin(GL_QUADS);

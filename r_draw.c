@@ -579,20 +579,10 @@ void Draw_Character (int x, int y, int num)
 
 void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha)
 {
-	qbool bigcharset_found = false;
 	int char_size = 64;
-	mpic_t *p = NULL;
+	mpic_t *p = Draw_CachePicSafe("gfx/mcharset.png", false, true);
 
-	if ((p = Draw_CachePicSafe(MCHARSET_PATH, false, true)))
-	{
-		bigcharset_found = true;
-	}
-	else
-	{
-		bigcharset_found = false;
-	}
-
-	if (bigcharset_found)
+	if (p)
 	{
 		int sx = 0;
 		int sy = 0;
