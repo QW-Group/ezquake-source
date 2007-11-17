@@ -24,7 +24,7 @@ void MP3_Menu_DrawInfo(void);
 void M_Menu_MP3_Playlist_f(void);
 
 
-void M_MP3_Control_Draw (void) {
+void M_Menu_MP3_Control_Draw (void) {
 	char songinfo_scroll[38 + 1], *s = NULL;
 	int i, scroll_index, print_time;
 	float frac, elapsed, realtime;
@@ -140,6 +140,16 @@ menu_items:
 		M_DrawCharacter (24 + i * 8, M_MP3_CONTROL_BARHEIGHT, 129);
 	M_DrawCharacter (320 - 16, M_MP3_CONTROL_BARHEIGHT, 130);
 	M_DrawCharacter (17 + 286 * ((float) last_elapsed / last_total), M_MP3_CONTROL_BARHEIGHT, 131);
+}
+
+qbool M_Menu_MP3_Control_Mouse_Event(const mouse_state_t *ms)
+{
+	return true;
+}
+
+qbool M_Menu_MP3_Playlist_Mouse_Event(const mouse_state_t *ms)
+{
+	return true;
 }
 
 void M_Menu_MP3_Control_Key(int key) {

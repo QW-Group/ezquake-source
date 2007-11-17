@@ -1756,7 +1756,7 @@ void M_Draw (void) {
 
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control:
-			M_MP3_Control_Draw ();
+			M_Menu_MP3_Control_Draw ();
 			break;
 
 		case m_mp3_playlist:
@@ -1850,15 +1850,6 @@ void M_Keydown (int key, int unichar) {
 
 qbool Menu_Mouse_Event(const mouse_state_t* ms)
 {
-#ifdef WITH_MP3_PLAYER
-    // an exception: mp3 player handles only mouse2 as a "go back"
-    if (ms->button_up == 2 && (m_state == m_mp3_control || m_state == m_mp3_playlist)) {
-        if (m_state == m_mp3_control)       M_Menu_MP3_Control_Key(K_MOUSE2);
-        else if (m_state == m_mp3_playlist) M_Menu_MP3_Playlist_Key(K_MOUSE2);
-        return true;
-    }
-#endif
-
 	if (ms->button_down == K_MWHEELDOWN || ms->button_up == K_MWHEELDOWN ||
 		ms->button_down == K_MWHEELUP   || ms->button_up == K_MWHEELUP)
 	{
@@ -1880,6 +1871,10 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_demos:			return Menu_Demo_Mouse_Event(ms);
 	case m_ingame:			return Menu_Ingame_Mouse_Event(ms);
 	case m_democtrl:		return Menu_Democtrl_Mouse_Event(ms);
+#ifdef WITH_MP3_PLAYER
+	case m_mp3_control:		return M_Menu_MP3_Control_Mouse_Event(ms);
+	case m_mp3_playlist:	return M_Menu_MP3_Playlist_Mouse_Event(ms);
+#endif
 	case m_help:			return Menu_Help_Mouse_Event(ms);
 	case m_none: default:	return false;
 	}
