@@ -144,11 +144,17 @@ menu_items:
 
 qbool M_Menu_MP3_Control_Mouse_Event(const mouse_state_t *ms)
 {
+	if (ms->button_up == 2)
+		M_LeaveMenu(m_main);
+
 	return true;
 }
 
 qbool M_Menu_MP3_Playlist_Mouse_Event(const mouse_state_t *ms)
 {
+	if (ms->button_up == 2)
+		M_LeaveMenu(m_main);
+
 	return true;
 }
 
