@@ -264,7 +264,7 @@ static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 
 
 
-	if (pos < 0 || pos > vfsz->length)
+	if (pos > vfsz->length)
 		return -1;
 	vfsz->pos = pos;
 
