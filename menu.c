@@ -335,10 +335,7 @@ static void M_ToggleHeadMenus(int type)
 
 void M_ToggleMenu_f (void) {
 	if (cls.state == ca_active) {
-		if (cls.demoplayback || cls.mvdplayback)
-			M_ToggleHeadMenus(m_democtrl);
-		else
-			M_ToggleHeadMenus(m_ingame);
+		M_ToggleHeadMenus(m_ingame);
 	}
 	else M_ToggleHeadMenus(m_main);
 }
@@ -1311,10 +1308,8 @@ void M_Draw (void) {
 		case m_options:			M_Options_Draw(); break;
 		case m_proxy:			Menu_Proxy_Draw(); break;
 		case m_ingame:			M_Ingame_Draw(); break;
-		case m_democtrl:		M_Democtrl_Draw(); break;
 		case m_help:			M_Help_Draw(); break;
 		case m_quit:			M_Quit_Draw(); break;
-		case m_demos:			Menu_Demo_Draw(); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control:		M_Menu_MP3_Control_Draw(); break;
 		case m_mp3_playlist:	M_Menu_MP3_Playlist_Draw(); break;
@@ -1355,7 +1350,6 @@ void M_Keydown (int key, int unichar) {
 		case m_options: 		M_Options_Key(key, unichar); return;
 		case m_proxy:			M_Proxy_Key(key); return;
 		case m_ingame:			M_Ingame_Key(key); return;
-		case m_democtrl:		M_Democtrl_Key(key); return;
 		case m_help:			Menu_Help_Key(key); return;
 		case m_quit:			M_Quit_Key(key); return;
 		case m_demos:			Menu_Demo_Key(key); break;
@@ -1388,7 +1382,6 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_options:			return Menu_Options_Mouse_Event(ms);
 	case m_demos:			return Menu_Demo_Mouse_Event(ms);
 	case m_ingame:			return Menu_Ingame_Mouse_Event(ms);
-	case m_democtrl:		return Menu_Democtrl_Mouse_Event(ms);
 #ifdef WITH_MP3_PLAYER
 	case m_mp3_control:		return M_Menu_MP3_Control_Mouse_Event(ms);
 	case m_mp3_playlist:	return M_Menu_MP3_Playlist_Mouse_Event(ms);

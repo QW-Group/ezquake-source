@@ -19,60 +19,97 @@
 
 settings_page ingame_menu;
 settings_page democtrl_menu;
+settings_page botmatch_menu;
+
+#define MENU_ALIAS(func,command,leavem) static void func(void) { Cbuf_AddText(command "\n"); if (leavem) M_LeaveMenus(); }
 
 void MIng_MainMenu(void)		{ M_Menu_Main_f(); }
-void MIng_ServerBrowser(void)	{ Cbuf_AddText("menu_slist\n"); }
-void MIng_Options(void)			{ Cbuf_AddText("menu_options\n"); }
-void MIng_Join(void)			{ Cbuf_AddText("join\n"); }
-void MIng_Observe(void)			{ Cbuf_AddText("observe\n"); }
-void MDemoCtrl_DemoBrowser(void){ Cbuf_AddText("menu_demos\n"); }
 void MIng_Back(void)			{ M_LeaveMenus(); }
-void MDemoCtrl_SkipMinute(void)	{ Cbuf_AddText("demo_jump +1:00\n"); }
-void MIng_Disconnect(void)		{ Cbuf_AddText("disconnect\n"); }
-void MIng_Quit(void)			{ Cbuf_AddText("quit\n"); }
+
+MENU_ALIAS(MIng_ServerBrowser,"menu_slist",false);
+MENU_ALIAS(MIng_Options,"menu_options",false);
+MENU_ALIAS(MIng_Join,"join",true);
+MENU_ALIAS(MIng_Observe,"observe",true);
+MENU_ALIAS(MDemoCtrl_DemoBrowser,"menu_demos",false);
+MENU_ALIAS(MDemoCtrl_SkipMinute,"demo_jump +1:00",false);
+MENU_ALIAS(MIng_Disconnect,"disconnect",true);
+MENU_ALIAS(MIng_Quit,"quit",false);
+MENU_ALIAS(MIng_Ready, "ready",true);
+MENU_ALIAS(MIng_Break, "break",true);
+MENU_ALIAS(MIng_SkillUp, "skillup",false);
+MENU_ALIAS(MIng_SkillDown, "skilldown",false);
+MENU_ALIAS(MIng_AddBot, "addbot",false);
+MENU_ALIAS(MIng_RemoveBot, "removebot",false);
+MENU_ALIAS(MIng_TeamBlue, "team blue;color 13",true);
+MENU_ALIAS(MIng_TeamRed, "team red;color 4",true);
+MENU_ALIAS(MDemoCtrl_Skip10Sec, "demo_jump +0:10",false);
+MENU_ALIAS(MDemoCtrl_Back1Min, "demo_jump -1:00",false);
+MENU_ALIAS(MDemoCtrl_Back10Sec, "demo_jump -0:10", false);
 
 setting ingame_menu_entries[] = {
 	ADDSET_SEPARATOR("In-game Menu"),
+	ADDSET_ACTION("Ready", MIng_Ready, ""),
+	ADDSET_ACTION("Break", MIng_Break, ""),
 	ADDSET_ACTION("Join", MIng_Join, ""),
 	ADDSET_ACTION("Observe", MIng_Observe, ""),
+	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
 	ADDSET_ACTION("Server Browser", MIng_ServerBrowser, ""),
 	ADDSET_ACTION("Options", MIng_Options, ""),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
 	ADDSET_ACTION("Return to game", MIng_Back, ""),
-	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
-	ADDSET_ACTION("Quit", MIng_Quit, "")
 };
 
 setting democtrl_menu_entries[] = {
 	ADDSET_SEPARATOR("Demo Control Menu"),
-	ADDSET_ACTION("Demo Browser", MDemoCtrl_DemoBrowser, ""),
-	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
-	ADDSET_ACTION("Skip 1 minute", MDemoCtrl_SkipMinute, ""),
-	ADDSET_ACTION("Return to game", MIng_Back, ""),
+	ADDSET_ACTION("Rewind 1 min", MDemoCtrl_Back10Sec, ""),
+	ADDSET_ACTION("Rewind 10 sec", MDemoCtrl_Skip10Sec, ""),
+	ADDSET_ACTION("Skip 1 min", MDemoCtrl_SkipMinute, ""),
+	ADDSET_ACTION("Skip 10 sec", MDemoCtrl_Skip10Sec, ""),
 	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
-	ADDSET_ACTION("Quit", MIng_Quit, "")
+	ADDSET_ACTION("Demo Browser", MDemoCtrl_DemoBrowser, ""),
+	ADDSET_ACTION("Options", MIng_Options, ""),
+	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
+	ADDSET_ACTION("Return to game", MIng_Back, ""),
 };
 
-void M_Ingame_Draw(void) {
-	M_Unscale_Menu();
-	Settings_Draw(0, TOPMARGIN, vid.width, vid.height - TOPMARGIN, &ingame_menu);
-}
-void M_Democtrl_Draw(void) {
-	M_Unscale_Menu();
-	Settings_Draw(0, TOPMARGIN, vid.width, vid.height - TOPMARGIN, &democtrl_menu);
-}
+setting botmatch_menu_entries[] = {
+	ADDSET_SEPARATOR("Demo Control Menu"),
+	ADDSET_ACTION("Ready", MIng_Ready, ""),
+	ADDSET_ACTION("Break", MIng_Break, ""),
+	ADDSET_ACTION("Team Blue", MIng_TeamBlue, ""),
+	ADDSET_ACTION("Team Red", MIng_TeamRed, ""),
+	ADDSET_ACTION("Add Bot", MIng_AddBot, ""),
+	ADDSET_ACTION("Remove Bot", MIng_RemoveBot, ""),
+	ADDSET_ACTION("Increase Bot Skill", MIng_SkillUp, ""),
+	ADDSET_ACTION("Decrease Bot Skill", MIng_SkillDown, ""),
+	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
+	ADDSET_ACTION("Options", MIng_Options, ""),
+	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
+	ADDSET_ACTION("Return to game", MIng_Back, ""),
+};
 
-void M_Ingame_Key(int key) {
-	if (Settings_Key(&ingame_menu, key)) return;
+#define DEMOPLAYBACK() (cls.demoplayback || cls.mvdplayback)
+#define BOTMATCH() (!strcmp(cls.gamedirfile, "fbca"))
 
-	switch (key) {
-	case K_MOUSE2:
-	case K_ESCAPE: M_LeaveMenus(); break;
+static settings_page *M_Ingame_Current(void) {
+	if (DEMOPLAYBACK()) {
+		return &democtrl_menu;
+	}
+	else if (BOTMATCH()) {
+		return &botmatch_menu;
+	}
+	else {
+		return &ingame_menu;
 	}
 }
 
-void M_Democtrl_Key(int key) {
-	if (Settings_Key(&democtrl_menu, key)) return;
+void M_Ingame_Draw(void) {
+	M_Unscale_Menu();
+	Settings_Draw(0, TOPMARGIN, vid.width, vid.height - TOPMARGIN, M_Ingame_Current());
+}
+
+void M_Ingame_Key(int key) {
+	if (Settings_Key(M_Ingame_Current(), key)) return;
 
 	switch (key) {
 	case K_MOUSE2:
@@ -83,16 +120,12 @@ void M_Democtrl_Key(int key) {
 qbool Menu_Ingame_Mouse_Event(const mouse_state_t *ms) {
 	mouse_state_t m = *ms;
 	m.y -= TOPMARGIN;
-	return Settings_Mouse_Event(&ingame_menu, &m);
-}
-qbool Menu_Democtrl_Mouse_Event(const mouse_state_t *ms) {
-	mouse_state_t m = *ms;
-	m.y -= TOPMARGIN;
-	return Settings_Mouse_Event(&democtrl_menu, &m);
+	return Settings_Mouse_Event(M_Ingame_Current(), &m);
 }
 
 void Menu_Ingame_Init(void)
 {
 	Settings_Page_Init(ingame_menu, ingame_menu_entries);
 	Settings_Page_Init(democtrl_menu, democtrl_menu_entries);
+	Settings_Page_Init(botmatch_menu, botmatch_menu_entries);
 }
