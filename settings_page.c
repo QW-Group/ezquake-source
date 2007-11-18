@@ -602,7 +602,7 @@ static void Setting_Slider_Click(const settings_page *page, const mouse_state_t 
     vnew = vmin + (vmax-vmin) * p;
     for (vsteps = vmin; vsteps < vmax && vsteps < vnew; vsteps += s->step) ; // empty body
 	
-	if (s->type = stt_intnum) {
+	if (s->type == stt_intnum) {
 		*((int *) s->cvar) = vsteps;
 	}
 	else {
