@@ -1310,6 +1310,7 @@ void M_Draw (void) {
 		case m_ingame:			M_Ingame_Draw(); break;
 		case m_help:			M_Help_Draw(); break;
 		case m_quit:			M_Quit_Draw(); break;
+		case m_demos:			Menu_Demo_Draw(); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control:		M_Menu_MP3_Control_Draw(); break;
 		case m_mp3_playlist:	M_Menu_MP3_Playlist_Draw(); break;
