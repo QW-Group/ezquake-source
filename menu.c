@@ -192,13 +192,6 @@ void M_DrawSlider (int x, int y, float range) {
 	M_DrawCharacter (x + (SLIDER_RANGE-1)*8 * range, y, 131);
 }
 
-void M_DrawCheckbox (int x, int y, int on) {
-	if (on)
-		M_Print (x, y, "on");
-	else
-		M_Print (x, y, "off");
-}
-
 qbool Key_IsLeftRightSameBind(int b);
 
 void M_FindKeysForCommand (const char *command, int *twokeys) {
@@ -582,11 +575,6 @@ void M_Options_Draw (void) {
 /* PROXY MENU */
 
 // key press in demos menu
-void M_Proxy_Draw(void){
-	Menu_Proxy_Draw(); // menu_proxy module
-}
-
-// demos menu draw request
 void M_Proxy_Key (int key) {
 	int togglekeys[2];
 
@@ -642,12 +630,6 @@ void M_Help_Draw (void) {
 
 	Menu_Help_Draw (x, y, w, h);
 }
-
-void M_Help_Key (int key) {
-	extern void Help_Key(int key);
-	Menu_Help_Key(key);
-}
-
 
 //=============================================================================
 /* QUIT MENU */
@@ -1215,28 +1197,14 @@ qbool M_Load_Mouse_Event(const mouse_state_t *ms)
 
 #endif
 
-void M_Menu_MultiPlayer_f (void) {
+void M_Menu_MultiPlayer_f (void)
+{
 	M_EnterMenu (m_multiplayer);
 }
 
-//=============================================================================
-// MULTIPLAYER MENU
-// interface for menu_demo module
-//=============================================================================
-
-// entering demos menu
-void M_Menu_Demos_f (void) {
+void M_Menu_Demos_f (void)
+{
 	M_EnterMenu(m_demos); // switches client state
-}
-
-// key press in demos menu
-void M_Demo_Draw(void){
-	Menu_Demo_Draw(); // menu_demo module
-}
-
-// demos menu draw request
-void M_Demo_Key (int key) {
-	Menu_Demo_Key(key); // menu_demo module
 }
 
 //=============================================================================
@@ -1332,62 +1300,24 @@ void M_Draw (void) {
 		m_yofs = 0;
 
 	switch (m_state) {
-		case m_none:
-			break;
-
-		case m_main:
-			M_Main_Draw ();
-			break;
-
-		case m_singleplayer:
-			M_SinglePlayer_Draw ();
-			break;
-
+		case m_none: break;
+		case m_main:			M_Main_Draw (); break;
+		case m_singleplayer:	M_SinglePlayer_Draw (); break;
 #ifndef CLIENTONLY
-		case m_load:
-			M_Load_Draw ();
-			break;
-
-		case m_save:
-			M_Save_Draw ();
-			break;
+		case m_load:			M_Load_Draw (); break;
+		case m_save:			M_Save_Draw (); break;
 #endif
-
-		case m_multiplayer:
-			Menu_MultiPlayer_Draw ();
-			break;
-
-		case m_options:
-			M_Options_Draw ();
-			break;
-
-		case m_proxy:
-			M_Proxy_Draw ();
-			break;
-
-		case m_ingame: M_Ingame_Draw(); break;
-		case m_democtrl: M_Democtrl_Draw(); break;
-
-		case m_help:
-			M_Help_Draw ();
-			break;
-
-		case m_quit:
-			M_Quit_Draw ();
-			break;
-
-		case m_demos:
-			M_Demo_Draw ();
-			break;
-
+		case m_multiplayer:		Menu_MultiPlayer_Draw (); break;
+		case m_options:			M_Options_Draw(); break;
+		case m_proxy:			Menu_Proxy_Draw(); break;
+		case m_ingame:			M_Ingame_Draw(); break;
+		case m_democtrl:		M_Democtrl_Draw(); break;
+		case m_help:			M_Help_Draw(); break;
+		case m_quit:			M_Quit_Draw(); break;
+		case m_demos:			Menu_Demo_Draw(); break;
 #ifdef WITH_MP3_PLAYER
-		case m_mp3_control:
-			M_Menu_MP3_Control_Draw ();
-			break;
-
-		case m_mp3_playlist:
-			M_Menu_MP3_Playlist_Draw();
-			break;
+		case m_mp3_control:		M_Menu_MP3_Control_Draw(); break;
+		case m_mp3_playlist:	M_Menu_MP3_Playlist_Draw(); break;
 #endif
 	}
 
@@ -1414,62 +1344,24 @@ void M_Draw (void) {
 
 void M_Keydown (int key, int unichar) {
 	switch (m_state) {
-		case m_none:
-			return;
-
-		case m_main:
-			M_Main_Key (key);
-			return;
-
-		case m_singleplayer:
-			M_SinglePlayer_Key (key);
-			return;
-
+		case m_none: return;
+		case m_main:			M_Main_Key(key); return;
+		case m_singleplayer:	M_SinglePlayer_Key(key); return;
 #ifndef CLIENTONLY
-		case m_load:
-			M_Load_Key (key);
-			return;
-
-		case m_save:
-			M_Save_Key (key);
-			return;
+		case m_load:			M_Load_Key(key); return;
+		case m_save:			M_Save_Key(key); return;
 #endif
-
-		case m_multiplayer:
-			Menu_MultiPlayer_Key (key);
-			return;
-
-		case m_options:
-			M_Options_Key (key, unichar);
-			return;
-
-		case m_proxy:
-			M_Proxy_Key (key);
-			return;
-
-		case m_ingame: M_Ingame_Key(key); return;
-		case m_democtrl: M_Democtrl_Key(key); return;
-
-		case m_help:
-			M_Help_Key (key);
-			return;
-
-		case m_quit:
-			M_Quit_Key (key);
-			return;
-
-		case m_demos:
-			M_Demo_Key (key);
-			break;
-
+		case m_multiplayer:		Menu_MultiPlayer_Key(key); return;
+		case m_options: 		M_Options_Key(key, unichar); return;
+		case m_proxy:			M_Proxy_Key(key); return;
+		case m_ingame:			M_Ingame_Key(key); return;
+		case m_democtrl:		M_Democtrl_Key(key); return;
+		case m_help:			Menu_Help_Key(key); return;
+		case m_quit:			M_Quit_Key(key); return;
+		case m_demos:			Menu_Demo_Key(key); break;
 #ifdef WITH_MP3_PLAYER
-		case m_mp3_control:
-			M_Menu_MP3_Control_Key (key);
-			break;
-
-		case m_mp3_playlist:
-			M_Menu_MP3_Playlist_Key (key);
-			break;
+		case m_mp3_control: 	M_Menu_MP3_Control_Key(key); break;
+		case m_mp3_playlist: 	M_Menu_MP3_Playlist_Key(key); break;
 #endif
 	}
 }
