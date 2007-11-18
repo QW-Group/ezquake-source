@@ -449,9 +449,9 @@ qbool CL_CheckOrDownloadFile (char *filename)
 	{
 		if (cls.mvdplayback == QTV_PLAYBACK)
 		{
-			if (cls.qtv_svversion < QTV_VER_1_2) 
+			if (!(cls.qtv_ezquake_ext & QTV_EZQUAKE_EXT_DOWNLOAD)) 
 			{
-				Com_Printf ("Unable to download %s, this QTV outdated\n", filename);
+				Com_Printf ("Unable to download %s, this QTV does't support download\n", filename);
 				return true;
 			}
 		}
@@ -480,7 +480,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 
 	if (cls.mvdplayback == QTV_PLAYBACK) 
 	{
-		QTV_Cmd_Printf(QTV_VER_1_2, "download %s\n", filename);
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "download %s", filename);
 	}
 	else 
 	{
@@ -587,8 +587,9 @@ void CL_Prespawn (void)
 #endif
 
 	// done with modellist, request first of static signon messages, in case of qtv it different
-	if (cls.mvdplayback == QTV_PLAYBACK) {
-		QTV_Cmd_Printf(QTV_VER_1_2, "qtvspawn %i", cl.servercount);
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "qtvspawn %i", cl.servercount);
 	}
 	else 
 	{
@@ -744,7 +745,7 @@ void Sound_NextDownload (void)
 
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
-		QTV_Cmd_Printf(QTV_VER_1_2, "qtvmodellist %i %i", cl.servercount, 0);
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "qtvmodellist %i %i", cl.servercount, 0);
 	}
 	else 
 	{
@@ -1072,8 +1073,17 @@ void CL_ParseDownload (void)
 
 	if (cls.demoplayback) 
 	{
-		// Not in demo playback, except qtv which support download
-		if (cls.mvdplayback != QTV_PLAYBACK || cls.qtv_svversion < QTV_VER_1_2 || cls.demoseeking)
+		qbool skip_download = true;
+
+		// Skip download data in demo playback, except during qtving which support download.
+
+		if (cls.mvdplayback == QTV_PLAYBACK)
+		{
+			if (cls.qtv_ezquake_ext & QTV_EZQUAKE_EXT_DOWNLOAD)
+				skip_download = false;
+		}
+
+		if (skip_download)
 		{
 			if (size > 0)
 				msg_readcount += size;
@@ -1486,7 +1496,7 @@ void CL_ParseServerData (void)
 	if (cls.mvdplayback == QTV_PLAYBACK) 
 	{
 		cls.qtv_donotbuffer = true; // do not try buffering before "skins" not received
-		QTV_Cmd_Printf(QTV_VER_1_2, "qtvsoundlist %i %i", cl.servercount, 0);
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "qtvsoundlist %i %i", cl.servercount, 0);
 	}
 	else 
 	{

@@ -671,12 +671,14 @@ void CL_Download_f (void){
 	COM_StripExtension(cls.downloadname, cls.downloadtempname);
 	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
-	if (cls.mvdplayback == QTV_PLAYBACK) {
-		QTV_Cmd_Printf(QTV_VER_1_2, "download %s\n", filename);
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "download %s", filename);
 	}
-	else {
+	else
+	{
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		SZ_Print (&cls.netchan.message, va("download %s\n", filename));
+		SZ_Print (&cls.netchan.message, va("download %s", filename));
 	}
 }
 

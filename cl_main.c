@@ -483,12 +483,12 @@ void CL_UserinfoChanged (char *key, char *string)
 		{
 			if (cls.mvdplayback == QTV_PLAYBACK)
 			{
-				QTV_Cmd_Printf(QTV_VER_1_3, "setinfo \"%s\" \"%s\"", key, s);
+				QTV_Cmd_Printf(QTV_EZQUAKE_EXT_SETINFO, "setinfo \"%s\" \"%s\"", key, s);
 			}
 			else
 			{
 				MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-				SZ_Print (&cls.netchan.message, va("setinfo \"%s\" \"%s\"\n", key, s));
+				SZ_Print (&cls.netchan.message, va("setinfo \"%s\" \"%s\"", key, s));
 			}
 		}
 	}

@@ -383,6 +383,7 @@ typedef struct
 
 	qbool		mvdplayback;	// Playing MVD.
 	float		qtv_svversion;	// version of qtvsv/proxy, note it float
+	int			qtv_ezquake_ext; // qtv ezquake extensions supported by qtvsv/proxy
 	qbool		qtv_donotbuffer;// do not try buffering even if not enough data
 	int			lastto;			// Contains which players are affected by a demo message.
 								// * If multiple players are affected (dem_multiple) this will be a

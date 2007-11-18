@@ -28,6 +28,17 @@ void QTV_Init(void)
 
 //=================================================
 
+char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext)
+{
+	static char header[1024];
+
+	snprintf(header, sizeof(header), "QTV\n" "VERSION: %g\n" QTV_EZQUAKE_EXT ": %d\n", qtv_ver, qtv_ezquake_ext);
+
+	return header;
+}
+
+//=================================================
+
 // ripped from FTEQTV, original name is SV_ConsistantMVDData
 // return non zero if we have at least one message
 // ms - will contain ms
@@ -107,7 +118,9 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 	char data[1024 + 100] = {0}, text[1024], *s;
 	sizebuf_t buf;
 
-	if (cls.mvdplayback != QTV_PLAYBACK || !playbackfile || cls.qtv_svversion < QTV_VER_1_2)
+	if (    cls.mvdplayback != QTV_PLAYBACK
+		|| !playbackfile /* || cls.qtv_ezquake_ext & QTV_EZQUAKE_EXT_CLC_STRINGCMD ???*/
+	   )
 		return;
 
 	if (skip_if_no_params)
@@ -182,13 +195,13 @@ void QTV_Cl_ForwardToServer_f (void)
 	QTV_ForwardToServerEx (false, false);
 }
 
-void QTV_Cmd_Printf(float min_version, char *fmt, ...)
+void QTV_Cmd_Printf(int qtv_ext, char *fmt, ...)
 {
 	va_list argptr;
 	char msg[1024] = {0};
 	tokenizecontext_t tmpcontext;
 
-	if (cls.mvdplayback != QTV_PLAYBACK || min_version > cls.qtv_svversion)
+	if (cls.mvdplayback != QTV_PLAYBACK || (qtv_ext & cls.qtv_ezquake_ext) != qtv_ext)
 		return; // no point for this, since it not qtv playback or qtv server do not support it
 
 	va_start (argptr, fmt);

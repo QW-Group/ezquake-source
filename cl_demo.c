@@ -2411,6 +2411,7 @@ void CL_StopPlayback (void)
 	#endif // WITH_DEMO_REWIND
 
 	cls.qtv_svversion = 0;
+	cls.qtv_ezquake_ext = 0;
 	cls.qtv_donotbuffer = false;
 
 	// Stop Qizmo demo playback.
@@ -2992,6 +2993,7 @@ void CL_QTVPoll (void)
 	qbool streamavailable = false;
 	qbool saidheader = false;
 	float svversion = 0;
+	int qtv_ezquake_ext = 0;
 
 	// We're not playing any QTV stream.
 	if (!qtvrequest)
@@ -3043,9 +3045,9 @@ void CL_QTVPoll (void)
 	svversion = atof(qtvrequestbuffer + QTVSVLEN);
 
 	// server sent float version, but we compare only major version number here
-	if ((int)svversion != atoi(QTV_VERSION))
+	if ((int)svversion != (int)QTV_VERSION)
 	{
-		Com_Printf("QTV server doesn't support a compatable protocol version, returned %.2f, need %s\n", svversion, QTV_VERSION);
+		Com_Printf("QTV server doesn't support a compatable protocol version, returned %.2f, need %.2f\n", svversion, QTV_VERSION);
 		QTV_CloseRequest(true);
 		return;
 	}
@@ -3120,6 +3122,10 @@ void CL_QTVPoll (void)
 				{
 					streamavailable = true;
 				}
+				else if (!strcmp(start, QTV_EZQUAKE_EXT))
+				{
+					qtv_ezquake_ext = atoi(colon);
+				}
 			}
 			else
 			{
@@ -3155,7 +3161,7 @@ void CL_QTVPoll (void)
 	qtvrequestsize = chunk_size;
 	memmove(qtvrequestbuffer, end, qtvrequestsize);
 
-//	Com_Printf("memove: %d\n", qtvrequestsize);
+//	Com_Printf("memmove: %d\n", qtvrequestsize);
 
 	// We found a stream.
 	if (streamavailable)
@@ -3163,6 +3169,7 @@ void CL_QTVPoll (void)
 		// Start playing the QTV stream.
 		CL_QTVPlay(qtvrequest, qtvrequestbuffer, qtvrequestsize);
 		cls.qtv_svversion = svversion;
+		cls.qtv_ezquake_ext = qtv_ezquake_ext;
 		qtvrequest = NULL;
 
 		return;
@@ -3175,7 +3182,9 @@ void CL_QTVPoll (void)
 
 		if (!strcmp(authmethod, "PLAIN"))
 		{
-			snprintf(connrequest, sizeof(connrequest), "QTV\nVERSION: " QTV_VERSION "\nAUTH: PLAIN\nPASSWORD: \"%s\"\n\n", qtvpassword);
+			snprintf(connrequest, sizeof(connrequest), 
+					"%s" "AUTH: PLAIN\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), qtvpassword);
+
 			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
 
 			return;
@@ -3189,7 +3198,9 @@ void CL_QTVPoll (void)
 				snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
 				crcvalue = CRC_Block((byte *)hash, strlen(hash));
 				snprintf(hash, sizeof(hash), "0x%X", (unsigned int)CRC_Value(crcvalue));
-				snprintf(connrequest, sizeof(connrequest), "QTV\nVERSION: " QTV_VERSION "\nAUTH: CCITT\nPASSWORD: \"%s\"\n\n", hash);
+				snprintf(connrequest, sizeof(connrequest), 
+					"%s" "AUTH: CCITT\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), hash);
+
 				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
 
 				return;
@@ -3206,7 +3217,9 @@ void CL_QTVPoll (void)
 				snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
 				Com_BlockFullChecksum (hash, strlen(hash), (unsigned char*)md4sum);
 				snprintf(hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
-				snprintf(connrequest, sizeof(connrequest), "QTV\nVERSION: " QTV_VERSION "\nAUTH: MD4\nPASSWORD: \"%s\"\n\n", hash);
+				snprintf(connrequest, sizeof(connrequest), 
+					"%s" "AUTH: MD4\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), hash);
+
 				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
 
 				return;
@@ -3216,7 +3229,9 @@ void CL_QTVPoll (void)
 		}
 		else if (!strcmp(authmethod, "NONE"))
 		{
-			snprintf(connrequest, sizeof(connrequest), "QTV\nVERSION: " QTV_VERSION "\nAUTH: NONE\nPASSWORD: \n\n");
+			snprintf(connrequest, sizeof(connrequest),
+					"%s" "AUTH: NONE\nPASSWORD: \n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM));
+
 			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
 
 			return;
@@ -3255,8 +3270,7 @@ void CL_QTVList_f (void)
 	strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
 
 	// Send the version of QTV the client supports.
-	connrequest =	"QTV\n"
-					"VERSION: " QTV_VERSION "\n";
+	connrequest = QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM);
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
 	// Get a source list from the server.
@@ -3505,8 +3519,7 @@ void CL_QTVPlay_f (void)
 	}
 
 	// Send a QTV request to the proxy.
-	connrequest =	"QTV\n"
-					"VERSION: " QTV_VERSION "\n";
+	connrequest = QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM);
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
 	// If the user specified a specific stream such as "5@hostname:port"

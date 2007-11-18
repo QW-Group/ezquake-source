@@ -9,9 +9,24 @@
 #define QTVBUFFERTIME bound(0.1, qtv_buffertime.value, 10)
 
 #define QTV_PLAYBACK		2			// cls.mvdplayback == QTV_PLAYBACK if QTV playback
-#define QTV_VERSION			"1.3"		// we are support up to this QTV version
-#define QTV_VER_1_2			1.2			// download/chat was added at this point in QTV
-#define QTV_VER_1_3			1.3			// setinfo was added at this point in QTV
+
+//======================================
+
+#define QTV_VERSION			1.0f		// we are support up to this QTV version
+
+// { QTV_EZQUAKE_EXT
+
+#define QTV_EZQUAKE_EXT		"QTV_EZQUAKE_EXT"
+
+#define QTV_EZQUAKE_EXT_DOWNLOAD (1<<0)		// well, this is not just download, but also different connection process
+#define QTV_EZQUAKE_EXT_SETINFO  (1<<1)		// does't qtv server/client support setinfo
+
+#define QTV_EZQUAKE_EXT_NUM ( QTV_EZQUAKE_EXT_DOWNLOAD | QTV_EZQUAKE_EXT_SETINFO )
+
+// }
+
+// this just can't be done as macro, so I wrote function
+char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext);
 
 // qqshka: Its all messy.
 // For example ezquake (and FTE?) expect maximum message is MSG_BUF_SIZE == 8192 with mvd header which have not fixed size,
@@ -47,7 +62,7 @@ int			ConsistantMVDData(unsigned char *buffer, int remaining);
 void		QTV_Say_f (void);
 void		QTV_Cmd_ForwardToServer (void);
 void		QTV_Cl_ForwardToServer_f (void);
-void		QTV_Cmd_Printf(float min_version, char *fmt, ...);
+void		QTV_Cmd_Printf(int qtv_ext, char *fmt, ...);
 
 #endif // __QTV_H__
 
