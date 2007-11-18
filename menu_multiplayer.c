@@ -57,65 +57,9 @@ static setting sbsettings_arr[] = {
 	ADDSET_NUMBER	("Infos Per Second", sb_infospersec, 10, 1000, 10)
 };
 
-typedef enum gametype_basic_e {
-	GT_COOPERATIVE = 0,
-	GT_DEATHMATCH,
-	GT_BOTMATCH,
-	GT_UBOUND
-} gametype_basic_t;
-static const char* gametype_basic_desc[GT_UBOUND] = {
-	"Cooperative", "Deathmatch", "Bot Match"
-};
-
-typedef enum game_weaponsmode_e {
-	GWM_WEAPONSRESPAWN = 0,
-	GWM_WEAPONSSTAY,
-	GWM_INSTANTWEAPONS,
-	GWM_UBOUND
-} game_weaponsmode_t;
-static const char* game_weaponsmode_desc[GWM_UBOUND] = {
-	"Weapons Respawn", "Weapons Stay", "Instant Weapons"
-};
-
-typedef enum game_skill_e {
-	GSKILL_EASY = 0,
-	GSKILL_NORMAL,
-	GSKILL_HARD,
-	GSKILL_NIGHTMARE,
-	GSKILL_UBOUND
-} game_skill_t;
-static const char* game_skill_desc[GSKILL_UBOUND] = {
-	"Easy", "Normal", "Hard", "Nightmare"
-};
-
-typedef enum game_map_group_e {
-	GMG_EPISODE1,	
-	GMG_EPISODE2,
-	GMG_EPISODE3,
-	GMG_EPISODE4,
-	GMG_CUSTOM,
-	GMG_UBOUND
-} game_map_group_t;
-static const char* game_map_group_desc[GMG_UBOUND] = {
-	"Doomed Dimension", "Realm of Black Magic", "Netherworld", "The Elder World", "Custom"
-};
-typedef struct gamesettings_basic_s {
-	gametype_basic_t	gametype;
-	game_weaponsmode_t	weaponsmode;
-	game_skill_t		skill;
-	unsigned int		teamplay;
-	unsigned int		maxclients;
-	unsigned int		maxspectators;
-	game_map_group_t	mapgroup;
-	unsigned int		mapnum;
-	unsigned int		timelimit;
-	unsigned int		fraglimit;
-} gamesettings_basic_t;
-
-gamesettings_basic_t menu_creategame_settings;
-
+/* generates a toggle function for custom enum in ADDSET_CUSTOM setting type */
 #define GENERATE_ENUM_TOGGLE_PROC(basename,var,upperbound)	\
-	static void Menu_CG_##basename##_t(qbool back) {		\
+	static void M_CG_##basename##_t(qbool back) {		\
 		(var) += back ? -1 : 1;			\
 		if ((var) >= upperbound) {		\
 			(var) = 0;					\
@@ -124,8 +68,9 @@ gamesettings_basic_t menu_creategame_settings;
 		}								\
 	}
 
+/* generates a reading function for custom enum in ADDSET_CUSTOM setting type */
 #define GENERATE_ENUM_READ_PROC(basename,var,ubound,descarray)	\
-	static const char* Menu_CG_##basename##_r(void) {	\
+	static const char* M_CG_##basename##_r(void) {	\
 		if (((var) > 0) && ((var) < ubound)) {			\
 			return descarray[var];						\
 		} else {										\
@@ -133,64 +78,164 @@ gamesettings_basic_t menu_creategame_settings;
 		}												\
 	}
 
-#define GENERATE_ENUM_MENU_FUNC(type,ubound,desc) \
-	GENERATE_ENUM_READ_PROC(type,menu_creategame_settings.type,ubound,desc) \
-	GENERATE_ENUM_TOGGLE_PROC(type,menu_creategame_settings.type,ubound)
+// spawns a variable of given enum type and it's reading and writing menu function
+#define GENERATE_ENUM_MENU_FUNC(menu_enum) \
+	static menu_enum ## _t menu_enum ## _var; \
+	GENERATE_ENUM_READ_PROC(menu_enum, menu_enum ## _var, menu_enum ## _max, menu_enum ## _desc) \
+	GENERATE_ENUM_TOGGLE_PROC(menu_enum, menu_enum ## _var, menu_enum ## _max)
 
-GENERATE_ENUM_MENU_FUNC(gametype,GT_UBOUND,gametype_basic_desc)
-GENERATE_ENUM_MENU_FUNC(weaponsmode,GWM_UBOUND,game_weaponsmode_desc)
-GENERATE_ENUM_MENU_FUNC(skill,GSKILL_UBOUND,game_skill_desc)
-GENERATE_ENUM_MENU_FUNC(mapgroup,GMG_UBOUND,game_map_group_desc)
 
-static const char *Menu_CG_teamplay_r(void) { return ""; }
-static void Menu_CG_teamplay_t(qbool back) {}
+/* bot match type */
+	typedef enum bm_type_e {
+		bmt_arena, bmt_clarena, bmt_duel, bmt_ffa, bmt_team, bm_type_max
+	} bm_type_t;
+	static const char *bm_type_desc[bm_type_max] = {
+		"Arena", "Clan Arena", "Duel", "Free For All", "Teamplay"
+	};
+	GENERATE_ENUM_MENU_FUNC(bm_type);
 
-static const char *Menu_CG_maxclients_r(void) { return ""; }
-static void Menu_CG_maxclients_t(qbool back) {}
+/* bot match map */
+	typedef enum bm_map_e {
+		bmm_dm3, bmm_dm4, bmm_dm6, bmm_ztndm3, bmm_e1m2, bmm_aerowalk, bmm_spinev2,
+		bmm_pkeg1, bmm_ultrav, bmm_frobodm2, bmm_amphi2, bmm_povdmm4, bmm_dranzdm8,
+		bm_map_max
+	} bm_map_t;
+	static const char *bm_map_desc[bm_map_max] = {
+		"dm3", "dm4", "dm6", "ztndm3", "e1m2", "aerowalk", "spinev2", "pkeg1",
+		"ultrav", "frobodm2", "amphi2", "povdmm4", "dranzdm8"
+	};
+	GENERATE_ENUM_MENU_FUNC(bm_map);
 
-static const char *Menu_CG_maxspectators_r(void) { return ""; }
-static void Menu_CG_maxspectators_t(qbool back) {}
+/* bot match starter */
+	static void M_CG_BotMatch_Start(void) {
+		const char *cfg;
+		const char *map = bm_map_desc[bm_map_var];
 
-static const char *Menu_CG_timelimit_r(void) { return ""; }
-static void Menu_CG_timelimit_t(qbool back) {}
+		switch (bm_type_var) {
+			case bmt_arena:		cfg = "arena"; break;
+			case bmt_clarena:	cfg = "clarena"; break;
+			case bmt_duel:		cfg = "duel"; break;
+			case bmt_ffa:		cfg = "ffa"; break;
+			case bmt_team:		cfg = "team"; break;
+			default:			cfg = "ffa"; break;
+		}
 
-static const char *Menu_CG_fraglimit_r(void) { return ""; }
-static void Menu_CG_fraglimit_t(qbool back) {}
-
-static const char *Menu_CG_map_r(void) { return ""; }
-static void Menu_CG_map_t(qbool back) {}
-
-void Menu_CG_StartGame(void) {
-	switch (menu_creategame_settings.gametype) {
-		case GT_BOTMATCH:
-			Cbuf_AddText("disconnect;gamedir fbca;exec configs/duel;");
-			break;
-		case GT_DEATHMATCH:
-			Cbuf_AddText("disconnect;deathmatch 3;gamedir qw;map dm4");
-			break;
-		case GT_COOPERATIVE:
-			Cbuf_AddText("disconnect;deathmatch 0;coop 1;map start");
-			break;
+		Cbuf_AddText(va("disconnect;gamedir fbca;exec configs/%s.cfg;map %s\n",cfg,map));
+		M_LeaveMenus();
 	}
+
+
+/* coop game difficulty */
+	typedef enum game_skill_e {
+		GSKILL_EASY = 0,
+		GSKILL_NORMAL,
+		GSKILL_HARD,
+		GSKILL_NIGHTMARE,
+		game_skill_max
+	} game_skill_t;
+	static const char* game_skill_desc[game_skill_max] = {
+		"Easy", "Normal", "Hard", "Nightmare"
+	};
+	GENERATE_ENUM_MENU_FUNC(game_skill);
+
+/* coop game team damage */
+	typedef enum cg_teamdamage_e {
+		TD_OFF, TD_ON, cg_teamdamage_max
+	} cg_teamdamage_t;
+	static const char* cg_teamdamage_desc[cg_teamdamage_max] = {
+		"off", "on"
+	};
+	GENERATE_ENUM_MENU_FUNC(cg_teamdamage);
+
+/* deathmatch map */
+	typedef enum game_map_group_e {
+		GMG_EPISODE1,	
+		GMG_EPISODE2,
+		GMG_EPISODE3,
+		GMG_EPISODE4,
+		GMG_CUSTOM,
+		game_map_group_max
+	} game_map_group_t;
+	static const char* game_map_group_desc[game_map_group_max] = {
+		"Doomed Dimension", "Realm of Black Magic", "Netherworld", "The Elder World", "Custom"
+	};
+	GENERATE_ENUM_MENU_FUNC(game_map_group);
+
+/* deathmatch game mode */
+	typedef enum DM_game_mode_e {
+		DMGM_ffa, DMGM_duel, DMGM_tp, DMGM_arena, DM_game_mode_max
+	} DM_game_mode_t;
+	static const char* DM_game_mode_desc[DM_game_mode_max] = {
+		"Free For All", "Duel", "Teamplay", "Arena"
+	};
+	GENERATE_ENUM_MENU_FUNC(DM_game_mode);
+
+static int coopmaxplayers = 2;
+
+static int dm_maxplayers = 2;
+static int dm_maxspectators = 8;
+static int dm_timelimit = 10;
+static int dm_fraglimit = 0;
+
+void Menu_CG_DM_StartGame(void)
+{
+	int dm;
+	int tp;
+
+	Cbuf_AddText("disconnect; gamedir qw; coop 0;\n");
+	switch (DM_game_mode_var) {
+		case DMGM_ffa: tp = 0; dm = 3; break;
+		case DMGM_duel: tp = 0; dm = 3; break;
+		case DMGM_tp: tp = 2; dm = 1; break;
+		case DMGM_arena: tp = 0; dm = 4; break;
+		default: tp = 0; dm = 3; break;
+	}
+	Cbuf_AddText(va("deathmatch %d;teamplay %d\n",dm,tp));
+	Cbuf_AddText(va("maxclients %d;maxspectators %d\n",dm_maxplayers,dm_maxspectators));
+	Cbuf_AddText(va("timelimit %d;fraglimit %d\n",dm_timelimit,dm_fraglimit));
+	// todo: finish map choosing
+	Cbuf_AddText("map dm4\n");
+	M_LeaveMenus();
+}
+
+void Menu_CG_Coop_StartGame(void)
+{
+	int tp = (cg_teamdamage_var == TD_OFF) ? 1 : 2;
+	int skill = game_skill_var;
+
+	Cbuf_AddText("disconnect; gamedir qw; coop 1; deathmatch 0\n");
+	Cbuf_AddText(va("teamplay %d; skill %d;maxclients %d;map start",
+					tp,skill,coopmaxplayers));
+	M_LeaveMenus();
 }
 
 static settings_page create_game_options;
 static setting create_game_options_arr[] = {
-	ADDSET_SEPARATOR("Create game"),
-	ADDSET_CUSTOM("Game type", Menu_CG_gametype_r, Menu_CG_gametype_t,
-				  "Choose one of the three available game types"),
-	ADDSET_CUSTOM("Weapons mode", Menu_CG_weaponsmode_r, Menu_CG_weaponsmode_t,
-				  ""),
-	ADDSET_CUSTOM("Teamplay", Menu_CG_teamplay_r, Menu_CG_teamplay_t, ""),
-	ADDSET_CUSTOM("Skill", Menu_CG_skill_r, Menu_CG_skill_t, ""),
-	ADDSET_CUSTOM("Player slots", Menu_CG_maxclients_r, Menu_CG_maxclients_t, ""),
-	ADDSET_CUSTOM("Spectator slots", Menu_CG_maxspectators_r, Menu_CG_maxspectators_t,
-				  ""),
-	ADDSET_CUSTOM("Timelimit", Menu_CG_timelimit_r, Menu_CG_timelimit_t, ""),
-	ADDSET_CUSTOM("Fraglimit", Menu_CG_fraglimit_r, Menu_CG_fraglimit_t, ""),
-	ADDSET_CUSTOM("Map Group", Menu_CG_mapgroup_r, Menu_CG_mapgroup_t, ""),
-	ADDSET_CUSTOM("Map", Menu_CG_map_r, Menu_CG_map_t, ""),
-	ADDSET_ACTION("Start Game", Menu_CG_StartGame, "Start game with given parameters")
+	ADDSET_SEPARATOR("Bot Match"),
+	ADDSET_CUSTOM	("Game Mode", M_CG_bm_type_r, M_CG_bm_type_t,
+					 "Choose one of the three available game types"),
+	ADDSET_CUSTOM	("Map", M_CG_bm_map_r, M_CG_bm_map_t, "Bots support only limit set of maps"),
+	ADDSET_ACTION	("Start Bot Match", M_CG_BotMatch_Start, "Start the bot match"),
+
+	ADDSET_SEPARATOR("Deathmatch"),
+	ADDSET_INTNUMBER("Player slots", dm_maxplayers, 1, 32, 1),
+	ADDSET_INTNUMBER("Spectator slots", dm_maxspectators, 0, 16, 1),
+	ADDSET_CUSTOM	("Game Mode", M_CG_DM_game_mode_r, M_CG_DM_game_mode_t, "Game Mode"),
+	ADDSET_INTNUMBER("Timelimit", dm_timelimit, 0, 60, 5),
+	ADDSET_INTNUMBER("Fraglimit", dm_fraglimit, 0, 100, 10),
+	ADDSET_CUSTOM	("Map Group", M_CG_game_map_group_r, M_CG_game_map_group_t, ""),
+	/* ADDSET_CUSTOM	("Map", Menu_CG_map_r, Menu_CG_map_t, ""), */
+	ADDSET_ACTION	("Start Deathmatch", Menu_CG_DM_StartGame,
+					 "Start game with given parameters"),
+
+	ADDSET_SEPARATOR("Cooperative"),
+	ADDSET_CUSTOM	("Difficulty", M_CG_game_skill_r, M_CG_game_skill_t, 
+					 "Monsters skill level"),
+	ADDSET_CUSTOM	("Teamplay Damage", M_CG_cg_teamdamage_r, M_CG_cg_teamdamage_t,
+					 "Whether Give damage to teammates if you shoot them"),
+	ADDSET_INTNUMBER("Player Slots", coopmaxplayers, 1, 32, 1),
+	ADDSET_ACTION	("Start Coop Game", Menu_CG_Coop_StartGame,
+					 "Start game with given parameters"),
 };
 
 static void Servers_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)

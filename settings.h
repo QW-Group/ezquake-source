@@ -26,6 +26,9 @@
 // number: will show a slider allowing you to choose setting from range min..max 
 #define ADDSET_NUMBER(label, var, min, max, step) { stt_num, label, false, &var, min, max, step, NULL, NULL, NULL, NULL }
 
+// intnumber: same like number, but we change a "int", not a "cvar_t"
+#define ADDSET_INTNUMBER(label, var, min, max, step) { stt_intnum, label, false, (cvar_t *) &var, min, max, step, NULL, NULL, NULL, NULL }
+
 // enum: custom name for each custom value .. works like "named", but you specify the range of values too
 #define ADDSET_ENUM(label, var, strs) { stt_enum, label, false, &var, 0, (sizeof(strs)/sizeof(char*))/2-1, 1, NULL, NULL, NULL, strs }
 
@@ -71,6 +74,7 @@ typedef void (*action_fnc) (void);
 typedef enum  {
 	stt_separator,	// decorating purpose only, needs only type+label then
 	stt_num,		// integer or float variable, needs cvar, min, max and step are required
+	stt_intnum,		// integer non-quake-variable
 	stt_bool,		// simple boolean setting, needs cvar
 	stt_custom,		// fully customizable setting, needs readfnc and togglefnc
 	stt_named,		// named integer 0..max, max is number of elements in array of strings assigned to readfnc

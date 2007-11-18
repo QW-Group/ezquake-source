@@ -94,6 +94,16 @@ static int Slider_Startpos(int w)
     return w/2 + LETW*2;
 }
 
+static void Setting_DrawIntNum(int x, int y, int w, setting* setting, qbool active)
+{
+	char buf[16];
+	x = Setting_PrintLabel(x,y,w, setting->label, active);
+	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, *((int *) setting->cvar)));
+	snprintf(buf, sizeof(buf), "%3d", *((int *) setting->cvar));
+
+	UI_Print(x + LETW, y, buf, active);
+}
+
 static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)
 {
 	char buf[16];
@@ -264,6 +274,12 @@ static void Setting_Increase(setting* set) {
 			break;
 		case stt_action: if (set->actionfnc) set->actionfnc(); break;
 		case stt_enum: Setting_IncreaseEnum(set, set->step); break;
+		case stt_intnum:
+			*((int *)set->cvar) += set->step;
+			if (*((int *) set->cvar) > set->max) {
+				*((int *)set->cvar) = set->max;
+			}
+			break;
 
 		// unhandled
 		case stt_separator:
@@ -293,6 +309,13 @@ static void Setting_Decrease(setting* set) {
 			break;
 
 		case stt_enum: Setting_IncreaseEnum(set, -set->step); break;
+		case stt_intnum:
+			*((int *)set->cvar) -= set->step;
+			if (*((int *) set->cvar) < set->min) {
+				*((int *)set->cvar) = set->min;
+			}
+			break;
+
 		//unhandled
 		case stt_separator:
 		case stt_action:
@@ -578,7 +601,13 @@ static void Setting_Slider_Click(const settings_page *page, const mouse_state_t 
     vmax = s->max;
     vnew = vmin + (vmax-vmin) * p;
     for (vsteps = vmin; vsteps < vmax && vsteps < vnew; vsteps += s->step) ; // empty body
-    Cvar_SetValue(s->cvar, vsteps);
+	
+	if (s->type = stt_intnum) {
+		*((int *) s->cvar) = vsteps;
+	}
+	else {
+		Cvar_SetValue(s->cvar, vsteps);
+	}
 }
 
 qbool Settings_Key(settings_page* tab, int key)
@@ -787,6 +816,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_bool: if (set->cvar) Setting_DrawBool(x, y, w, set, active); break;
 			case stt_custom: Setting_DrawBoolAdv(x, y, w, set, active); break;
 			case stt_num: Setting_DrawNum(x, y, w, set, active); break;
+			case stt_intnum: Setting_DrawIntNum(x, y, w, set, active); break;
 			case stt_separator: Setting_DrawSeparator(x, y, w, set); break;
 			case stt_action: Setting_DrawAction(x, y, w, set, active); break;
 			case stt_named: Setting_DrawNamed(x, y, w, set, active); break;
