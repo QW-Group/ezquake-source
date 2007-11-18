@@ -595,7 +595,7 @@ static void Setting_Slider_Click(const settings_page *page, const mouse_state_t 
     p = (ms->x - Slider_Startpos(page->width)) / UI_SliderWidth();
     p = bound(0, p, 1);
 
-    if (s->type != stt_num) return;
+    if (s->type != stt_num && s->type != stt_intnum) return;
 
     vmin = s->min;
     vmax = s->max;
@@ -889,7 +889,8 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
 	case SPM_NORMAL:
 		nmark = FindSetting_AtPos(page, page->settings[page->viewpoint].top + ms->y);
 		nmark = bound(0, nmark, page->count - 1);
-        if (page->settings[nmark].type == stt_num && ms->buttons[1] == true)
+		if ((page->settings[nmark].type == stt_num || page->settings[nmark].type == stt_intnum)
+			&& ms->buttons[1] == true)
         {
             Setting_Slider_Click(page, ms);
         }
