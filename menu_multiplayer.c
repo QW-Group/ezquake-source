@@ -84,6 +84,73 @@ static setting sbsettings_arr[] = {
 	GENERATE_ENUM_READ_PROC(menu_enum, menu_enum ## _var, menu_enum ## _max, menu_enum ## _desc) \
 	GENERATE_ENUM_TOGGLE_PROC(menu_enum, menu_enum ## _var, menu_enum ## _max)
 
+typedef struct {
+	char    *name;
+	char    *description;
+} level_t;
+
+level_t        levels[] = {
+	{"start", "Entrance"},    // 0
+
+	{"e1m1", "Slipgate Complex"},                // 1
+	{"e1m2", "Castle of the Damned"},
+	{"e1m3", "The Necropolis"},
+	{"e1m4", "The Grisly Grotto"},
+	{"e1m5", "Gloom Keep"},
+	{"e1m6", "The Door To Chthon"},
+	{"e1m7", "The House of Chthon"},
+	{"e1m8", "Ziggurat Vertigo"},
+
+	{"e2m1", "The Installation"},                // 9
+	{"e2m2", "Ogre Citadel"},
+	{"e2m3", "Crypt of Decay"},
+	{"e2m4", "The Ebon Fortress"},
+	{"e2m5", "The Wizard's Manse"},
+	{"e2m6", "The Dismal Oubliette"},
+	{"e2m7", "Underearth"},
+
+	{"e3m1", "Termination Central"},            // 16
+	{"e3m2", "The Vaults of Zin"},
+	{"e3m3", "The Tomb of Terror"},
+	{"e3m4", "Satan's Dark Delight"},
+	{"e3m5", "Wind Tunnels"},
+	{"e3m6", "Chambers of Torment"},
+	{"e3m7", "The Haunted Halls"},
+
+	{"e4m1", "The Sewage System"},                // 23
+	{"e4m2", "The Tower of Despair"},
+	{"e4m3", "The Elder God Shrine"},
+	{"e4m4", "The Palace of Hate"},
+	{"e4m5", "Hell's Atrium"},
+	{"e4m6", "The Pain Maze"},
+	{"e4m7", "Azure Agony"},
+	{"e4m8", "The Nameless City"},
+
+	{"end", "Shub-Niggurath's Pit"},            // 31
+
+	{"dm1", "Place of Two Deaths"},                // 32
+	{"dm2", "Claustrophobopolis"},
+	{"dm3", "The Abandoned Base"},
+	{"dm4", "The Bad Place"},
+	{"dm5", "The Cistern"},
+	{"dm6", "The Dark Zone"}
+};
+
+typedef struct {
+	char    *description;
+	int        firstLevel;
+	int        levels;
+} episode_t;
+
+episode_t    episodes[] = {
+	{"Welcome to Quake", 0, 1},
+	{"Doomed Dimension", 1, 8},
+	{"Realm of Black Magic", 9, 7},
+	{"Netherworld", 16, 7},
+	{"The Elder World", 23, 8},
+	{"Final Level", 31, 1},
+	{"Deathmatch Arena", 32, 6}
+};
 
 /* bot match type */
 	typedef enum bm_type_e {
