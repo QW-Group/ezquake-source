@@ -19,6 +19,8 @@
 		92B5D06B0CE7028A0023B45F /* ez_scrollpane.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05C0CE7028A0023B45F /* ez_scrollpane.c */; };
 		92B5D06C0CE7028A0023B45F /* ez_slider.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05E0CE7028A0023B45F /* ez_slider.c */; };
 		92B5D06D0CE7028A0023B45F /* ez_window.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0600CE7028A0023B45F /* ez_window.c */; };
+		92CAD75A0CF082CE00A0767A /* menu_multiplayer.c in Sources */ = {isa = PBXBuildFile; fileRef = 92CAD7580CF082CE00A0767A /* menu_multiplayer.c */; };
+		92CAD75B0CF082CE00A0767A /* menu_multiplayer.c in Sources */ = {isa = PBXBuildFile; fileRef = 92CAD7580CF082CE00A0767A /* menu_multiplayer.c */; };
 		D21146F309C78AB800FD70CB /* QuakeWorld.scriptSuite in Resources */ = {isa = PBXBuildFile; fileRef = D21146F109C78AB800FD70CB /* QuakeWorld.scriptSuite */; };
 		D21146FA09C78AC700FD70CB /* QuakeWorld.nib in Resources */ = {isa = PBXBuildFile; fileRef = D21146F809C78AC700FD70CB /* QuakeWorld.nib */; };
 		D211470109C78AE000FD70CB /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D21146FB09C78AE000FD70CB /* InfoPlist.strings */; };
@@ -1084,6 +1086,8 @@
 		92B5D05F0CE7028A0023B45F /* ez_slider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_slider.h; sourceTree = "<group>"; };
 		92B5D0600CE7028A0023B45F /* ez_window.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_window.c; sourceTree = "<group>"; };
 		92B5D0610CE7028A0023B45F /* ez_window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_window.h; sourceTree = "<group>"; };
+		92CAD7580CF082CE00A0767A /* menu_multiplayer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = menu_multiplayer.c; sourceTree = "<group>"; };
+		92CAD7590CF082CE00A0767A /* menu_multiplayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = menu_multiplayer.h; sourceTree = "<group>"; };
 		D21140FF09C76DF800FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = Quake/Info.plist; sourceTree = "<group>"; };
 		D211410009C76E2100FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = GLQuake/Info.plist; sourceTree = "<group>"; };
 		D21146F009C78AB800FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = QuakeWorld/Info.plist; sourceTree = "<group>"; };
@@ -1840,6 +1844,8 @@
 		F82769EA09DFE12C00AE5EF8 /* General */ = {
 			isa = PBXGroup;
 			children = (
+				92CAD7580CF082CE00A0767A /* menu_multiplayer.c */,
+				92CAD7590CF082CE00A0767A /* menu_multiplayer.h */,
 				92B5D0560CE7028A0023B45F /* ez_button.c */,
 				92B5D0570CE7028A0023B45F /* ez_button.h */,
 				92B5D0580CE7028A0023B45F /* ez_label.c */,
@@ -2229,7 +2235,7 @@
 			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* Quake */;
 			projectDirPath = "";
-			projectRoot = "";
+			projectRoot = ..;
 			targets = (
 				D29BE27A09C61F4200EBE023 /* EZQuake */,
 				D29BE28409C61F5200EBE023 /* EZQuake-GL */,
@@ -2486,6 +2492,7 @@
 				92B5D06B0CE7028A0023B45F /* ez_scrollpane.c in Sources */,
 				92B5D06C0CE7028A0023B45F /* ez_slider.c in Sources */,
 				92B5D06D0CE7028A0023B45F /* ez_window.c in Sources */,
+				92CAD75B0CF082CE00A0767A /* menu_multiplayer.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2655,6 +2662,7 @@
 				92B5D0650CE7028A0023B45F /* ez_scrollpane.c in Sources */,
 				92B5D0660CE7028A0023B45F /* ez_slider.c in Sources */,
 				92B5D0670CE7028A0023B45F /* ez_window.c in Sources */,
+				92CAD75A0CF082CE00A0767A /* menu_multiplayer.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
