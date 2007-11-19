@@ -275,6 +275,8 @@ static void CL_Parse_TE_WIZSPIKE(vec3_t pos)
 	S_StartSound(-1, 0, cl_sfx_wizhit, pos, 1, 1);
 }
 
+// FIXME: D-Kure: This seems to be unused
+#if 0
 static void CL_Parse_TE_KNIGHTSPIKE(vec3_t pos)
 {
 	#ifdef GLQUAKE
@@ -291,6 +293,7 @@ static void CL_Parse_TE_KNIGHTSPIKE(vec3_t pos)
 
 	S_StartSound(-1, 0, cl_sfx_knighthit, pos, 1, 1);
 }
+#endif
 
 static void CL_Parse_TE_SPIKE(vec3_t pos)
 {

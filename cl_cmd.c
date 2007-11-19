@@ -184,7 +184,7 @@ static void CL_Cmd_SayString_FilterWhite(char *s)
 	char *wp = s;	// write pointer
 	char c;			// current char
 
-	while (c = *rp++) {
+	while ((c = *rp++)) {
 		if (c == '{' || c == '}') continue;
 		*wp++ = c;
 	}
@@ -199,7 +199,7 @@ static void CL_Cmd_SayString_FilterColoredText(char *s)
 	char *wp = s;	// write pointer
 	char c;			// current char
 
-	while (c = *rp++) {
+	while ((c = *rp++)) {
 		if (c == '&' && *rp == 'c') {
 			rp++;	// skip 'c'
 			if (*rp) rp++; else break;	// skip red value
@@ -235,7 +235,7 @@ static void CL_Cmd_SayString_InsertAppendix(char *s, char *appendix)
 
 	if (!p) p = s + l - 1;
 
-	while (*p++ = *appendix++) {}
+	while ((*p++ = *appendix++)) {}
 	p--;
 	if (endquote)
 		*p++ = '\"';

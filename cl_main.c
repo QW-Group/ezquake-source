@@ -2319,8 +2319,6 @@ int CL_IncrLoop(int cview, int max)
 
 int CL_NextPlayer(int plr)
 {
-	max(plr, -1);
-
 	plr++;
 
 	while (cl.players[plr].spectator || !cl.players[plr].name[0])

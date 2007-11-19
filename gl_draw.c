@@ -636,7 +636,6 @@ static int Draw_LoadCharset(const char *name)
 {
 	int texnum;
 	qbool loaded = false;
-	qbool cyr_loaded = false;
 
 	if (!strcasecmp(name, "original"))
 	{

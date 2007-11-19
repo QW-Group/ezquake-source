@@ -287,9 +287,7 @@ double lerp_time;
 void CL_PredictMove (void) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
-
 	double playertime;
-    float f = 0;
 
 	playertime = cls.realtime - cls.latency;
 	if (playertime > cls.realtime)
