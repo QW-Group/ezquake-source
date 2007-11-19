@@ -447,11 +447,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 				}
 			}
 		}
-	} else 
-	{
-		Sys_Error ("GL_LoadTexture: no identifier provided");
-		return -1;
-	}
+	} 
 
 	if (numgltextures >= MAX_GLTEXTURES)
 		Sys_Error ("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
