@@ -1348,3 +1348,4 @@ qbool Draw_BigFontAvailable(void)
 {
 	return Draw_CachePicSafe(MCHARSET_PATH, false, true) != NULL;
 }
+
