@@ -40,29 +40,29 @@ const mp3_player_t mp3_player_none = {
 	MP3_NONE, // Type
 };
 
-void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel);
+void OnChange_MP3_player(cvar_t *var, char *value, qbool *cancel);
 #ifdef WITH_WINAMP
-cvar_t mp3_playertype = {"mp3_playertype", "winamp", 0, OnChange_MP3_playertype};
+cvar_t cvar_mp3_player = {"mp3_playertype", "winamp",  0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_winamp;
 #else
 #ifdef WITH_AUDACIOUS
 // AUDACIOUS is backwards compatible, but libraries are still needed
-cvar_t mp3_playertype = {"mp3_playertype","audacious",0, OnChange_MP3_playertype};
+cvar_t cvar_mp3_player = {"mp3_playertype","audacious",0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_audacious;
 #else
 #ifdef WITH_XMMS2
-cvar_t mp3_playertype = {"mp3_playertype", "xmms2", 0, OnChange_MP3_playertype};
+cvar_t cvar_mp3_player = {"mp3_playertype", "xmms2",   0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_xmms2;
 #else
 #ifdef WITH_XMMS
-cvar_t mp3_playertype = {"mp3_playertype", "xmms", 0, OnChange_MP3_playertype};
+cvar_t cvar_mp3_player = {"mp3_playertype", "xmms",    0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_xmms;
 #else
 #ifdef WITH_MPD
-cvar_t mp3_playertype = {"mp3_playertype", "mpd", 0, OnChange_MP3_playertype};
+cvar_t cvar_mp3_player = {"mp3_playertype", "mpd",     0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_mpd;
 #else
-cvar_t mp3_playertype = {"mp3_playertype", "none", 0, OnChange_MP3_playertype};
+cvar_t cvar_mp3_player = {"mp3_playertype", "",        0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_none;
 #endif // WITH_MPD
 #endif // WITH_XMMS
@@ -71,15 +71,7 @@ const mp3_player_t *mp3_player = &mp3_player_none;
 #endif // WITH_WINAMP
 
 static int MP3_CheckFunction(qbool PrintWarning);
-void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel) {
-	if (       strcmp(value, "winamp") && strcmp(value, "audacious") 
-			&& strcmp(value, "xmms2")  && strcmp(value, "xmms") 
-			&& strcmp(value, "mpd")    && strcmp(value, "none")) {
-		Com_Printf_State (PRINT_INFO, "Unknown mp3 player \"%s\"\n", value);
-		*cancel = true;
-		return;
-	}
-
+void OnChange_MP3_player(cvar_t *var, char *value, qbool *cancel) {
 	if (MP3_IsActive()) {
 		MP3_Shutdown();
 	}
@@ -94,7 +86,7 @@ void OnChange_MP3_playertype(cvar_t *var, char *value, qbool *cancel) {
 		mp3_player = &mp3_player_xmms;
 	} else if (!strcmp(value, "mpd")) {
 		mp3_player = &mp3_player_mpd;
-	} else if (!strcmp(value, "none") == 0) {
+	} else {
 		mp3_player = &mp3_player_none;
 	} 
 
@@ -186,7 +178,7 @@ void MP3_Init(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
 	Cvar_Register(&mp3_scrolltitle);
 	Cvar_Register(&mp3_showtime);
-	Cvar_Register(&mp3_playertype);
+	Cvar_Register(&cvar_mp3_player);
 	Cvar_ResetCurrentGroup();
 }
 
