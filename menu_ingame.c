@@ -61,8 +61,8 @@ setting ingame_menu_entries[] = {
 
 setting democtrl_menu_entries[] = {
 	ADDSET_SEPARATOR("Demo Control Menu"),
-	ADDSET_ACTION("Rewind 1 min", MDemoCtrl_Back10Sec, ""),
-	ADDSET_ACTION("Rewind 10 sec", MDemoCtrl_Skip10Sec, ""),
+	ADDSET_ACTION("Rewind 1 min", MDemoCtrl_Back1Min, ""),
+	ADDSET_ACTION("Rewind 10 sec", MDemoCtrl_Back10Sec, ""),
 	ADDSET_ACTION("Skip 1 min", MDemoCtrl_SkipMinute, ""),
 	ADDSET_ACTION("Skip 10 sec", MDemoCtrl_Skip10Sec, ""),
 	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
