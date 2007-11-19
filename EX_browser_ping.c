@@ -25,7 +25,6 @@ $Id: EX_browser_ping.c,v 1.40 2007-10-27 08:51:12 dkure Exp $
 #include "quakedef.h"
 #include "winquake.h"
 
-
 #else
 
 #include "quakedef.h"
@@ -47,7 +46,8 @@ $Id: EX_browser_ping.c,v 1.40 2007-10-27 08:51:12 dkure Exp $
 
 #define ioctlsocket ioctl
 
-#endif
+#endif // _WIN32
+
 #include "hud.h"
 #include "hud_common.h"
 #include "EX_browser.h"
@@ -70,7 +70,7 @@ $Id: EX_browser_ping.c,v 1.40 2007-10-27 08:51:12 dkure Exp $
 // =============================================================================
 
 /* The IP header */
-typedef struct iphdr
+typedef struct IP_header_s
 {
     unsigned int   h_len:4;        // length of the header
     unsigned int   version:4;      // Version of IP
@@ -86,7 +86,7 @@ typedef struct iphdr
     unsigned int destIP;
 } IP_header_t;
  
-typedef struct _ihdr
+typedef struct ICMP_header_s
 {
     byte i_type;
     byte i_code; /* type sub code */
@@ -139,13 +139,6 @@ qbool useNewPing = false;
 
 static int sock;
 static int ping_sock;
-
-/* TODO: This to place in struct to pass to recvier thread
- * ping_sock
- * ping_finished
- * ping_semaphore
- * host_list
- */
 
 /* Used for thread syncronisation */
 static qbool ping_finished = false;
