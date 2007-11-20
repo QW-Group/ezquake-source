@@ -2848,7 +2848,7 @@ qbool Sys_PathProtection(const char *pattern)
 	if (strchr(pattern, '\\'))
 	{
 		char *s;
-		Com_Printf("Warning: \\ charactures in filename %s\n", pattern);
+		//Com_Printf("Warning: \\ charactures in filename %s\n", pattern);
 		while((s = strchr(pattern, '\\')))
 			*s = '/';
 	}
