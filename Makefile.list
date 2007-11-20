@@ -59,6 +59,7 @@ CLIENT_C_FILES := \
 	modules \
 	movie \
 	mp3_player \
+	mp3_audacious \
 	mp3_xmms \
 	mp3_xmms2 \
 	mp3_mpd \

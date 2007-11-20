@@ -33,17 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "modules.h"
 #include "utils.h"
 
-#if defined(WITH_XMMS) || defined (WITH_AUDACIOUS)
 #ifdef WITH_XMMS
 #include <xmms/xmmsctrl.h>
-#else
-#ifdef WITH_AUDACIOUS
-#include <audacious/beepctrl.h>
-#endif // WITH_XMMS
-#endif // WITH_AUDACIOUS
 
 #define XMMS_SESSION	((int) mp3_xmms_session.value)
-
 
 // TODO: This is currently ignored and we just use the path to find the program
 cvar_t mp3_dir = {"mp3_xmms_dir", "%%X11BASE%%/bin"}; // disconnect: todo: check if %%X11BASE%% is OK for Linux
@@ -115,7 +108,6 @@ static void XMMS_FreeLibrary(void) {
 	// Maybe need to clear all the function pointers too
 }
 
-#ifdef WITH_XMMS
 static void XMMS_LoadLibrary(void) {
 	if (!(libxmms_handle = dlopen("libxmms.so", RTLD_NOW)))
 		return;
@@ -125,19 +117,6 @@ static void XMMS_LoadLibrary(void) {
 		return;
 	}
 }
-#endif //WITH_XMMS
-
-#ifdef WITH_AUDACIOUS
-static void Audacious_LoadLibrary(void) {
-	if (!(libxmms_handle = dlopen("libaudacious.so", RTLD_NOW)))
-		return;
-
-	if (!QLib_ProcessProcdef(libxmms_handle, xmmsProcs, NUM_XMMSPROCS)) {
-		XMMS_FreeLibrary();
-		return;
-	}
-}
-#endif // WITH_AUDACIOUS
 
 qbool MP3_XMMS_IsActive(void) {
 	return !!libxmms_handle;
@@ -148,7 +127,6 @@ qbool MP3_XMMS_IsPlayerRunning(void) {
 }
 
 static int XMMS_pid = 0;
-#ifdef WITH_XMMS
 void MP3_XMMS_Execute_f(void) {
 	char exec_name[MAX_OSPATH], *argv[2] = {"xmms", NULL}/*, **s*/;
 	int i; 
@@ -176,38 +154,6 @@ void MP3_XMMS_Execute_f(void) {
 	}
 	Com_Printf("XMMS (probably) failed to run\n");
 }
-#endif // WITH_XMMS
-
-#ifdef WITH_AUDACIOUS
-void MP3_AUDACIOUS_Execute_f(void) {
-	char exec_name[MAX_OSPATH], *argv[2] = {"audacious", NULL}/*, **s*/;
-	int i; 
-
-	if (MP3_XMMS_IsPlayerRunning()) {
-		Com_Printf("Audacious is already running\n");
-		return;
-	}
-	strlcpy(exec_name, argv[0], sizeof(exec_name));
-
-	if (!(XMMS_pid = fork())) { // Child
-		execvp(exec_name, argv);
-		exit(-1);
-	}
-	if (XMMS_pid == -1) {
-		Com_Printf ("Couldn't execute Audacious\n");
-		return;
-	}
-	for (i = 0; i < 6; i++) {
-		Sys_MSleep(50);
-		if (MP3_XMMS_IsPlayerRunning()) {
-			Com_Printf("Audacious is now running\n");
-			return;
-		}
-	}
-	Com_Printf("Audacious (probably) failed to run\n");
-}
-#endif // WITH_AUDACIOUS
-
 
 #define XMMS_COMMAND(Name, Param)										\
     void MP3_XMMS_##Name##_f(void) {									\
@@ -455,7 +401,6 @@ void MP3_XMMS_Shutdown(void) {
 	// Cvar_Delete(mp3_xmms_session.name); <-- impossible to delete static cvars
 }
 
-#ifdef WITH_XMMS
 void MP3_XMMS_Init(void) {
 	XMMS_LoadLibrary();
 
@@ -470,23 +415,6 @@ void MP3_XMMS_Init(void) {
 	Cvar_Register(&mp3_xmms_session);
 	Cvar_ResetCurrentGroup(); 
 }
-#endif // WITH_XMMS
-
-#ifdef WITH_AUDACIOUS
-void MP3_AUDACIOUS_Init(void) {
-	Audacious_LoadLibrary();
-
-	if (!MP3_XMMS_IsActive())
-		return;
-
-	if (!Cmd_Exists("mp3_startaudacious"))
-		Cmd_AddCommand("mp3_startaudacious", MP3_Execute_f);
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
-	Cvar_Register(&mp3_xmms_session);
-	Cvar_ResetCurrentGroup(); 
-}
-#endif // WITH_AUDACIOUS
 
 double Media_XMMS_GetVolume(void) {
 	static double vol = 0;
@@ -495,17 +423,6 @@ double Media_XMMS_GetVolume(void) {
 
 	return vol;
 }
-
-#ifdef WITH_AUDACIOUS
-double Media_AUDACIOUS_GetVolume(void) {
-	static double vol = 0.5;
-
-	//vol = qxmms_remote_get_main_volume(XMMS_SESSION) / 100.0;
-
-	return vol;
-}
-#endif // WITH_AUDACIOUS
-
 
 void Media_XMMS_SetVolume(double vol) {
 	if (!MP3_XMMS_IsPlayerRunning())
@@ -517,9 +434,6 @@ void Media_XMMS_SetVolume(double vol) {
 	return;
 }
 
-#endif // defined(WITH_XMMS) || defined (WITH_AUDACIOUS)
-
-#ifdef WITH_XMMS
 const mp3_player_t mp3_player_xmms = {
 	/* Messages */
 	"XMMS",   // PlayerName_AllCaps
@@ -535,7 +449,6 @@ const mp3_player_t mp3_player_xmms = {
 	MP3_XMMS_IsPlayerRunning,
 	MP3_XMMS_GetStatus,
 	MP3_XMMS_GetPlaylistInfo,
-	NULL, 						// GetPlaylist
 	MP3_XMMS_GetSongTitle,
 	MP3_XMMS_GetOutputtime,
 	MP3_XMMS_GetToggleState,
@@ -544,7 +457,7 @@ const mp3_player_t mp3_player_xmms = {
 	MP3_XMMS_PlayTrackNum_f,
 	MP3_XMMS_LoadPlaylist_f,
 	MP3_XMMS_CachePlaylist,
-	MP3_XMMS_CachePlaylistFlush,
+
 	MP3_XMMS_Next_f,
 	MP3_XMMS_FastForward_f,
 	MP3_XMMS_Rewind_f,
@@ -574,57 +487,3 @@ const mp3_player_t mp3_player_xmms = {
 	MP3_NONE, // Type
 };
 #endif // WITH_XMMS
-
-#ifdef WITH_AUDACIOUS
-const mp3_player_t mp3_player_audacious = {
-	/* Messages */
-	"AUDACIOUS", // PlayerName_AllCaps
-	"Audacious", // PlayerName_LeadingCaps  
-	"audacious", // PlayerName_NoCaps       
-	MP3_AUDACIOUS, // Type                    
-
-	/* Functions */
-	MP3_AUDACIOUS_Init, 
-	MP3_XMMS_Shutdown, 
-
-	MP3_XMMS_IsActive, 
-	MP3_XMMS_IsPlayerRunning, 
-	MP3_XMMS_GetStatus, 
-	MP3_XMMS_GetPlaylistInfo, 
-	MP3_XMMS_GetSongTitle,
-	MP3_XMMS_GetOutputtime, 
-	MP3_XMMS_GetToggleState, 
-
-	MP3_XMMS_PrintPlaylist_f, 
-	MP3_XMMS_PlayTrackNum_f, 
-	MP3_XMMS_LoadPlaylist_f,
-	MP3_XMMS_CachePlaylist,
-	MP3_XMMS_Next_f, 
-	MP3_XMMS_FastForward_f, 
-	MP3_XMMS_Rewind_f, 
-	MP3_XMMS_Prev_f, 
-	MP3_XMMS_Play_f, 
-	MP3_XMMS_Pause_f, 
-	MP3_XMMS_Stop_f, 
-	MP3_AUDACIOUS_Execute_f, 
-	MP3_XMMS_ToggleRepeat_f, 
-	MP3_XMMS_Repeat_f, 
-	MP3_XMMS_ToggleShuffle_f, 
-	MP3_XMMS_Shuffle_f, 
-	MP3_XMMS_FadeOut_f, 
-
-	Media_AUDACIOUS_GetVolume,
-	Media_XMMS_SetVolume,
-
-	/* Macro's */
-	MP3_XMMS_Macro_MP3Info, 
-};
-
-#else
-const mp3_player_t mp3_player_audacious = {
-	"NONE",   // PlayerName_AllCaps  
-	"None",   // PlayerName_LeadingCaps
-	"none",   // PlayerName_NoCaps 
-	MP3_NONE, // Type
-};
-#endif // WITH_AUDACIOUS

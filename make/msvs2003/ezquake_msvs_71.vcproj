@@ -1410,6 +1410,9 @@
 					RelativePath="..\..\mp3_player.c">
 				</File>
 				<File
+					RelativePath="..\..\mp3_audaciouos.c">
+				</File>
+				<File
 					RelativePath="..\..\mp3_xmms.c">
 				</File>
 				<File

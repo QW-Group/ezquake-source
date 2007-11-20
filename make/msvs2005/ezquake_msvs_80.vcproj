@@ -1930,15 +1930,19 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\mp3_mpd.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\mp3_player.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\mp3_winamp.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\mp3_mpd.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\mp3_audacious.c"
 					>
 				</File>
 				<File

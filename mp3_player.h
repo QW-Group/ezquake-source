@@ -104,6 +104,7 @@ typedef struct {
 	void  (*PlayTrackNum_f)  (void);
 	void  (*LoadPlaylist_f)  (void);
 	int   (*CachePlaylist)      (void);
+
 	void  (*Next_f)          (void);
 	void  (*FastForward_f)   (void);
 	void  (*Rewind_f)        (void);
