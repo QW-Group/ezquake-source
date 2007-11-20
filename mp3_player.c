@@ -42,27 +42,27 @@ const mp3_player_t mp3_player_none = {
 
 void OnChange_MP3_player(cvar_t *var, char *value, qbool *cancel);
 #ifdef WITH_WINAMP
-cvar_t cvar_mp3_player = {"mp3_playertype", "winamp",  0, OnChange_MP3_player};
+cvar_t cvar_mp3_player = {"mp3_player", "winamp",  0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_winamp;
 #else
 #ifdef WITH_AUDACIOUS
 // AUDACIOUS is backwards compatible, but libraries are still needed
-cvar_t cvar_mp3_player = {"mp3_playertype","audacious",0, OnChange_MP3_player};
+cvar_t cvar_mp3_player = {"mp3_player","audacious",0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_audacious;
 #else
 #ifdef WITH_XMMS2
-cvar_t cvar_mp3_player = {"mp3_playertype", "xmms2",   0, OnChange_MP3_player};
+cvar_t cvar_mp3_player = {"mp3_player", "xmms2",   0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_xmms2;
 #else
 #ifdef WITH_XMMS
-cvar_t cvar_mp3_player = {"mp3_playertype", "xmms",    0, OnChange_MP3_player};
+cvar_t cvar_mp3_player = {"mp3_player", "xmms",    0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_xmms;
 #else
 #ifdef WITH_MPD
-cvar_t cvar_mp3_player = {"mp3_playertype", "mpd",     0, OnChange_MP3_player};
+cvar_t cvar_mp3_player = {"mp3_player", "mpd",     0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_mpd;
 #else
-cvar_t cvar_mp3_player = {"mp3_playertype", "",        0, OnChange_MP3_player};
+cvar_t cvar_mp3_player = {"mp3_player", "",        0, OnChange_MP3_player};
 const mp3_player_t *mp3_player = &mp3_player_none;
 #endif // WITH_MPD
 #endif // WITH_XMMS
