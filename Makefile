@@ -98,7 +98,7 @@ ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_XMMS),)
 BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags glib-2.0`
 endif # WITH_XMMS
 ifneq ($(shell echo $(PRJ_CFLAGS) |grep WITH_AUDACIOUS),)
-BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags glib-2.0`
+BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags glib-2.0 dbus-glib-1`
 endif # WITH_AUDACIOUS
 ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_XMMS2),)
 BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags xmms2-client`
