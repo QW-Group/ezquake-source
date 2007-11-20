@@ -270,3 +270,24 @@ $(MAC_C_OBJS): $(MAC_DIR)/%.o: %.c
 clean:
 	@echo [CLEAN]
 	@-rm -rf $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR)
+
+help:
+	@echo "all     - make all the targets possible"
+	@echo "install - Installs all made clients to /opt/quake"
+	@echo "clean   - removes all output"
+	@echo "glx     - GLX GL client"
+	@echo "x11     - X11 software client"
+	@echo "svga    - SVGA software client"
+	@echo "mac     - Mac client"
+
+
+install:
+	QUAKE_DIR="/opt/quake/"
+	@echo [CP] $(GLX_TARGET) 	$(QUAKE_DIR)
+	@cp $(GLX_TARGET) 			$(QUAKE_DIR)
+#	@echo [CP] $(X11_TARGET) 	$(QUAKE_DIR)
+#	@cp $(X11_TARGET)			$(QUAKE_DIR)
+#	@echo [CP] $(SVGA_TARGET) 	$(QUAKE_DIR)
+#	@cp $(SVGA_TARGET)			$(QUAKE_DIR)
+#	@echo [CP] $(MAC_TARGET) 	$(QUAKE_DIR)
+#	@cp $(MAC_TARGET)			$(QUAKE_DIR)
