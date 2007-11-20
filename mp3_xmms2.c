@@ -154,7 +154,7 @@ static void XMMS2_Connect(void) {
 	}
 
 	if (!qxmmsc_connect(connection, getenv("XMMS_PATH"))) {
-		fprintf(stderr, "Connection failed: %s\n",
+		Com_Printf("Connection failed: %s\n", 
 				qxmmsc_get_last_error (connection));
 		qxmmsc_unref (connection);
 		connection = NULL;
