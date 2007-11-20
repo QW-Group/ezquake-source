@@ -67,6 +67,7 @@ GLX_TARGET = $(TYPE)-$(ARCH)/ezquake-gl.glx
 X11_TARGET = $(TYPE)-$(ARCH)/ezquake.x11
 SVGA_TARGET = $(TYPE)-$(ARCH)/ezquake.svga
 MAC_TARGET = $(TYPE)-$(ARCH)/ezquake-gl.mac
+QUAKE_DIR="/opt/quake/"
 
 ################
 
@@ -282,7 +283,6 @@ help:
 
 
 install:
-	QUAKE_DIR="/opt/quake/"
 	@echo [CP] $(GLX_TARGET) 	$(QUAKE_DIR)
 	@cp $(GLX_TARGET) 			$(QUAKE_DIR)
 #	@echo [CP] $(X11_TARGET) 	$(QUAKE_DIR)
