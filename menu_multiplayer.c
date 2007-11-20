@@ -490,5 +490,6 @@ void Menu_MultiPlayer_Init()
 
 void Menu_MultiPlayer_SwitchToServersTab(void)
 {
+	M_EnterMenu(m_multiplayer);
 	CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
 }
