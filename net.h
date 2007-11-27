@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __NET_H__
 
 #ifdef _WIN32
-#include <winsock.h>
+#include <winsock2.h>
 typedef unsigned int socklen_t;
 
 #define EWOULDBLOCK	WSAEWOULDBLOCK
@@ -74,19 +74,6 @@ typedef struct {
 
 	unsigned short port;
 } netadr_t;
-
-#ifdef _WIN32
-struct sockaddr_storage {
-	short dontusesa_family;
-	unsigned char dontusesa_pad[6];
-#if defined(_MSC_VER) || defined(MINGW)
-	__int64 sa_align;
-#else
-	int sa_align[2];
-#endif
-	unsigned char sa_pad2[112];
-};
-#endif
 
 extern	netadr_t	net_local_sv_ipadr;
 extern	netadr_t	net_local_sv_tcpipadr;
