@@ -39,7 +39,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sbar.h"
 #include "keys.h"
 
-int sb_updates;		// if >= vid.numpages, no update needed
 extern cvar_t show_fps2;
 
 // --> mqwcl 0.96 oldhud customisation
@@ -63,6 +62,13 @@ cvar_t  hud_faderankings    = {"scr_scoreboard_fadescreen", "0"};
 //cvar_t  hud_ranks_separate  = {"scr_ranks_separate",   "1"};
 // <-- mqwcl 0.96 oldhud customisation
 
+int			sb_updates;         // if >= vid.numpages, no update needed
+int			sb_lines;           // scan lines to draw
+qbool		sb_drawinventory;
+qbool		sb_drawmain;
+qbool		sb_oldmanssbar;     // cl_sbar 2: solid sbar, but viewrect is y-centered
+qbool		sb_oldmanssbar2;    // cl_sbar 3: same as above but with ibar on side
+
 #define STAT_MINUS		10	// num frame for '-' stats digit
 mpic_t		*sb_nums[2][11];
 mpic_t		*sb_colon, *sb_slash;
@@ -85,8 +91,6 @@ mpic_t	*sb_face_invis_invuln;
 
 qbool	sb_showscores;
 qbool	sb_showteamscores;
-
-int			sb_lines;			// scan lines to draw
 
 void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 
@@ -647,11 +651,12 @@ static void Sbar_DrawInventory (void) {
 	float time;
 	qbool headsup, hudswap;
 
-	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
-	hudswap = cl_hudswap.value; // Get that nasty float out :)
+	headsup = !cl_sbar.value || sb_oldmanssbar2;
+	hudswap = cl_hudswap.value ? true : false; // Get that nasty float out :)
 
 	if (!headsup)
 		Sbar_DrawPic (0, -24, sb_ibar);
+
 	// weapons
 	if (sbar_drawguns.value)    // kazik
     {
@@ -1560,6 +1565,8 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 		return; // no one there?
 
 	// draw the text
+	sb_lines = (cl_sbar.value == 1) ? sb_lines :
+		(sb_drawinventory ? 24 + 16 + 8 : sb_drawmain ? 24 : 0);
 	y = vid.height - sb_lines - 1;
 	numlines = sb_lines / 8;
 	if (numlines < 3)
@@ -1752,12 +1759,15 @@ void Sbar_Draw(void) {
 
 	extern cvar_t scr_tracking, scr_spectatorMessage, scr_newHud;
 
-	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
-	if (sb_updates >= vid.numpages && !headsup)
+	headsup = !cl_sbar.value || sb_oldmanssbar2;
+
+	if ((sb_updates >= vid.numpages) && !headsup && !sb_oldmanssbar)
 		return;
 
-	scr_copyeverything = 1;
+	if (!sb_drawmain && !sb_drawinventory)
+		return;		// nothing to do
 
+	scr_copyeverything = 1;
 	sb_updates++;
 
 	if (scr_centerSbar.value)
@@ -1765,9 +1775,17 @@ void Sbar_Draw(void) {
 	else
 		sbar_xofs = 0;
 
+#ifndef GLQUAKE
+	// clear the background if necessary
+	if (headsup) {
+		int height = sb_drawinventory ? (24 + 16 + 8) : 24;
+		SCR_TileClear (vid.height - height, height);
+	}
+#endif
+
 	// Top line. Do not show with +showscores
-	if (sb_lines > 24 && scr_newHud.value != 1 && !sb_showscores && !sb_showteamscores) 
-	{ 
+	if (sb_drawinventory && scr_newHud.value != 1 && !sb_showscores && !sb_showteamscores) // XXX: move scr_newHud check into cl_screen.c sb_drawinv boolean setter
+	{
 		if (!cl.spectator || autocam == CAM_TRACK)
 			Sbar_DrawInventory();
 
@@ -1776,7 +1794,7 @@ void Sbar_Draw(void) {
 	}
 
 	// main area
-	if (sb_lines > 0 && scr_newHud.value != 1) {  // HUD -> hexum
+	if (sb_drawmain && scr_newHud.value != 1) {  // HUD -> hexum
 		if (cl.spectator) {
 			if (autocam != CAM_TRACK) {
 				if (scr_spectatorMessage.value != 0) {
@@ -1873,7 +1891,7 @@ void Sbar_Draw(void) {
 		return;
 #endif
 
-	if (vid.width >= 512 && sb_lines > 0 
+	if (vid.width >= 512 && sb_drawmain
 		&& cl.gametype == GAME_DEATHMATCH && !scr_centerSbar.value 
 		&& (cl_multiview.value && cl_mvinset.value && CURRVIEW == 1)) // BUGFIX: Only draw the frags for the first player when using mvinset.
 	{
