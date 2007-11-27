@@ -27,8 +27,7 @@ ifeq ($(ARCH),x86)
 	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
 endif
 ifeq ($(ARCH),ppc)
-	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
-	STRIPFLAGS =
+	ARCH_CFLAGS = -arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt
 endif
 
 ifeq ($(OS),linux)
@@ -36,6 +35,8 @@ ifeq ($(OS),linux)
 	OS_GL_CFLAGS = -DWITH_DGA -DWITH_EVDEV -DWITH_VMODE
 endif
 ifeq ($(OS),darwin)
+	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
+	STRIPFLAGS =
 	DEFAULT_TARGET = mac
 	OS_GL_CFLAGS = -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -FOpenGL -FAGL
 endif
@@ -247,7 +248,7 @@ $(SVGA_S_OBJS): $(SVGA_DIR)/%.o: %.s
 
 MAC_C_OBJS = $(addprefix $(MAC_DIR)/, $(addsuffix .o, $(MAC_C_FILES)))
 MAC_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-MAC_LDFLAGS = $(LDFLAGS) -arch i686 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
+MAC_LDFLAGS = $(LDFLAGS) -arch i686 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 
 mac: _DIR = $(MAC_DIR)
 mac: _OBJS = $(MAC_C_OBJS) $(COMMON_LIBS) $(GL_LIBS)
