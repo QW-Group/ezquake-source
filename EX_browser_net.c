@@ -33,7 +33,7 @@ int ReadInt (char *playerinfo, int *i)
         s++;
     while (playerinfo[s] != ' '  &&  playerinfo[s] != '\n'  &&  s < 99)
         buf[d++] = playerinfo[s++];
-    
+
     buf[d] = 0;
     *i = atoi(buf);
     return s;
@@ -45,13 +45,13 @@ int ReadString (char *playerinfo, char *str)
     int s = 0, d = 0;
     while (playerinfo[s] == ' ')
         s++;
-	if (playerinfo[s] == '\"') {
-    	s++;
-    	while (playerinfo[s] != '\"'  &&  playerinfo[s] != '\n'  &&   s < 99)
-        	str[d++] = playerinfo[s++];
-		if (playerinfo[s] == '\"')
-    		s++;
-	}
+    if (playerinfo[s] == '\"') {
+        s++;
+        while (playerinfo[s] != '\"'  &&  playerinfo[s] != '\n'  &&   s < 99)
+            str[d++] = playerinfo[s++];
+        if (playerinfo[s] == '\"')
+            s++;
+    }
 
     str[d] = 0;
     return s;
@@ -73,7 +73,7 @@ void SetPing(server_data *s, int ping)
         strlcpy (s->display.ping, "n/a", sizeof (s->display.ping));
     else
         snprintf (s->display.ping, sizeof (s->display.ping), "%3d", ping > 999 ? 999 : ping);
-        
+
     s->ping = ping;
 }
 
@@ -84,7 +84,7 @@ void Parse_Serverinfo(server_data *s, char *info)
     char *tmp;
 
     s->passed_filters = 1;
-	s->support_teams = false; // by default server does't support team info per player
+    s->support_teams = false; // by default server does't support team info per player
 
     if (strncmp(info, "\xFF\xFF\xFF\xFFn", 5))
     {
@@ -120,10 +120,10 @@ void Parse_Serverinfo(server_data *s, char *info)
     }
 
     // read players
-     
+
     for (i = s->spectatorsn = s->playersn = 0; pinfo  &&  strchr(pinfo, '\n'); i++)
     {
-		qbool spec;
+        qbool spec;
         int id, frags, time, ping, slen;
         char name[100], skin[100], team[100];
         int top, bottom;
@@ -141,26 +141,26 @@ void Parse_Serverinfo(server_data *s, char *info)
         pos += ReadString(pinfo+pos, skin);
         pos += ReadInt(pinfo+pos, &top);
         pos += ReadInt(pinfo+pos, &bottom);
-		pos += ReadString(pinfo+pos, team);
+        pos += ReadString(pinfo+pos, team);
 
-		if (team[0])
-			s->support_teams = true; // seems server support team info per player
+        if (team[0])
+            s->support_teams = true; // seems server support team info per player
 
         if (ping > 0) { // seems player if relay on ping
-			spec = false;
+            spec = false;
             s->playersn++;
-		}
+        }
         else // spec
         {
-			spec = true;
-			slen = strlen(name);
+            spec = true;
+            slen = strlen(name);
             s->spectatorsn++;
             ping = -ping;
 
-			if (name[0] == '\\' && name[1] == 's' && name[2] == '\\')
-				strlcpy(name, name+3, sizeof(name)); // strip \s\<name>
-			if (slen > 3 && name[slen-3] == '(' && name[slen-2] == 's' && name[slen-1] == ')')
-            	name[slen-3] = 0; // strip <name>(s) for old servers
+            if (name[0] == '\\' && name[1] == 's' && name[2] == '\\')
+                strlcpy(name, name+3, sizeof(name)); // strip \s\<name>
+            if (slen > 3 && name[slen-3] == '(' && name[slen-2] == 's' && name[slen-1] == ')')
+                name[slen-3] = 0; // strip <name>(s) for old servers
         }
 
         s->players[i] = (playerinfo *)Q_malloc(sizeof(playerinfo));
@@ -225,16 +225,16 @@ void Parse_Serverinfo(server_data *s, char *info)
 
     tmp = ValueForKey(s, "*gamedir");
     s->qizmo = false;
-	if (tmp != NULL)
+    if (tmp != NULL)
         snprintf(s->display.gamedir, sizeof (s->display.gamedir) ,"%.*s", COL_GAMEDIR, tmp==NULL ? "" : tmp);
     else
     {
         tmp = ValueForKey(s, "*progs");
         if (tmp != NULL  &&  !strcmp(tmp, "666"))
-		{
+        {
             snprintf(s->display.gamedir, sizeof (s->display.gamedir), "qizmo");
-			s->qizmo = true;
-		}
+            s->qizmo = true;
+        }
     }
 
     tmp = ValueForKey(s, "map");
@@ -245,9 +245,9 @@ void Parse_Serverinfo(server_data *s, char *info)
     if (tmp != NULL  &&  strlen(tmp) > 2)
         tmp = "99";
     i = s->playersn > 99 ? 99 : s->playersn;
-	if (i < 1) { s->occupancy = SERVER_EMPTY; }
-	else if (i > 0 && i < atoi(tmp)) { s->occupancy = SERVER_NONEMPTY; }
-	else { s->occupancy = SERVER_FULL; }
+    if (i < 1) { s->occupancy = SERVER_EMPTY; }
+    else if (i > 0 && i < atoi(tmp)) { s->occupancy = SERVER_NONEMPTY; }
+    else { s->occupancy = SERVER_FULL; }
     if (tmp != NULL)
         snprintf(s->display.players, sizeof (s->display.players), "%2d/%-2s", i, tmp==NULL ? "" : tmp);
 }
@@ -257,20 +257,20 @@ int server_during_update = 0;
 void GetServerInfo(server_data *serv)
 {
     int newsocket;
-	struct sockaddr_qstorage server;
+    struct sockaddr_storage server;
     int ret;
     char answer[5000];
     fd_set fd;
     struct timeval tv;
 
-    newsocket = UDP_OpenSocket(PORT_ANY);
     // so we have a socket
+    newsocket = UDP_OpenSocket(PORT_ANY);
+    NetadrToSockadr (&(serv->address), &server);
 
     // send status request
-
-    NetadrToSockadr (&(serv->address), &server);
     ret = sendto (newsocket, senddata, sizeof(senddata), 0,
                   (struct sockaddr *)&server, sizeof(server) );
+
     if (ret == -1)
         return;
 
@@ -290,8 +290,8 @@ void GetServerInfo(server_data *serv)
     {
         answer[ret] = 0;
         server_during_update = 1;
-            Reset_Server(serv);
-            Parse_Serverinfo(serv, answer);
+        Reset_Server(serv);
+        Parse_Serverinfo(serv, answer);
         server_during_update = 0;
     }
 
@@ -315,7 +315,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
     double interval, lastsenttime;
 
     int newsocket;
-	struct sockaddr_qstorage dest;
+    struct sockaddr_storage dest;
     int ret, i;
     fd_set fd;
     struct timeval timeout;
@@ -323,10 +323,8 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
     if (abort_ping)
         return 0;
 
-    newsocket = UDP_OpenSocket(PORT_ANY);
     // so we have a socket
-
-    // send status request
+    newsocket = UDP_OpenSocket(PORT_ANY);
 
     hosts = (infohost *) Q_malloc (serversn * sizeof(infohost));
     for (i=0; i < serversn; i++)
@@ -344,8 +342,9 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
     lastsenttime = Sys_DoubleTime() - interval;
     timeout.tv_sec = 0;
     timeout.tv_usec = (long)(interval * 1000.0 * 1000.0 / 2);
+
     ping_pos = 0;
-    
+
     while (1  &&  !abort_ping)
     {
         int index = -1;
@@ -376,7 +375,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
             }
             //ping_pos = finished / (double)serversn;
             ping_pos = (finished+to_ask <= 0) ? 0 :
-                        finished / (double)(finished+to_ask);
+            finished / (double)(finished+to_ask);
         }
 
         // check if we should finish
@@ -392,13 +391,18 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
             lastsenttime = time;
 
             NetadrToSockadr (&(servers[index]->address), &dest);
+
             ret = sendto (newsocket, senddata, sizeof(senddata), 0,
-                         (struct sockaddr *)&dest, sizeof(dest) );
+                          (struct sockaddr *)&dest, sizeof(*(struct sockaddr *)&dest));
+            if(ret < 0)
+            {
+                Com_DPrintf("sendto() gave errno = %d : %s\n", errno, strerror(errno));
+            }
             if (ret == -1)
                 ;//return;
 
-//            requests_sent++;
-//            ping_pos = requests_total <= 0 ? 0 : requests_sent / (double)requests_total;
+            // requests_sent++;
+            // ping_pos = requests_total <= 0 ? 0 : requests_sent / (double)requests_total;
         }
 
         // check if answer arrived and decode it
@@ -406,16 +410,23 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
         //fd.fd_array[0] = newsocket;
         FD_ZERO(&fd);
         FD_SET(newsocket, &fd);
-        if (select(newsocket+1, &fd, NULL, NULL, &timeout))
+
+        ret = select(newsocket+1, &fd, NULL, NULL, &timeout);
+        if (ret < 1)
         {
-			struct sockaddr_qstorage hostaddr;
+            Com_DPrintf("select() gave errno = %d : %s\n", errno, strerror(errno));
+        }
+
+        if (FD_ISSET(newsocket, &fd))
+        {
+            struct sockaddr_storage hostaddr;
             netadr_t from;
             int i;
             char answer[5000];
             answer[0] = 0;
 
             i = sizeof(hostaddr);
-	    ret = recvfrom (newsocket, answer, 5000, 0, (struct sockaddr *)&hostaddr, (socklen_t *)&i);
+            ret = recvfrom (newsocket, answer, 5000, 0, (struct sockaddr *)&hostaddr, (socklen_t *)&i);
             answer[max(0, min(ret, 4999))] = 0;
 
             if (ret > 0)
@@ -436,14 +447,14 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
             }
         }
     }
-    
+
     // reset pings to 999 if server didn't answer
     for (i=0; i < serversn; i++)
         if (servers[i]->keysn <= 0)
             SetPing(servers[i], -1);
 
     closesocket(newsocket);
-	Q_free(hosts);
+    Q_free(hosts);
 
     return 0;
 }
@@ -461,7 +472,7 @@ void GetServerPing(server_data *serv)
         serv->address.ip[2],
         serv->address.ip[3]);
 
-	p = useNewPing ? PingHost(buf, serv->address.port, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value) : oldPingHost(buf, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value);
+    p = useNewPing ? PingHost(buf, serv->address.port, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value) : oldPingHost(buf, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value);
     if (p)
         SetPing(serv, p-1);
     else
@@ -474,7 +485,7 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
     abort_ping = 0;
 
-	useNewPing ? PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value) : oldPingHosts(servers, serversn, sb_pings.value);
+    useNewPing ? PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value) : oldPingHosts(servers, serversn, sb_pings.value);
 
     if (!abort_ping)
     {

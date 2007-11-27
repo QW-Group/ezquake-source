@@ -75,7 +75,8 @@ typedef struct {
 	unsigned short port;
 } netadr_t;
 
-struct sockaddr_qstorage {
+#ifdef _WIN32
+struct sockaddr_storage {
 	short dontusesa_family;
 	unsigned char dontusesa_pad[6];
 #if defined(_MSC_VER) || defined(MINGW)
@@ -85,6 +86,7 @@ struct sockaddr_qstorage {
 #endif
 	unsigned char sa_pad2[112];
 };
+#endif
 
 extern	netadr_t	net_local_sv_ipadr;
 extern	netadr_t	net_local_sv_tcpipadr;
@@ -181,7 +183,7 @@ qbool Netchan_CanPacket (netchan_t *chan);
 qbool Netchan_CanReliable (netchan_t *chan);
 
 int  UDP_OpenSocket (int port);
-void NetadrToSockadr (netadr_t *a, struct sockaddr_qstorage *s);
-void SockadrToNetadr (struct sockaddr_qstorage *s, netadr_t *a);
+void NetadrToSockadr (netadr_t *a, struct sockaddr_storage *s);
+void SockadrToNetadr (struct sockaddr_storage *s, netadr_t *a);
 
 #endif /* __NET_H__ */

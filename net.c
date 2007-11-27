@@ -52,16 +52,16 @@ loopback_t	loopbacks[2];
 
 //=============================================================================
 
-void NetadrToSockadr (netadr_t *a, struct sockaddr_qstorage *s)
+void NetadrToSockadr (netadr_t *a, struct sockaddr_storage *s)
 {
 	memset (s, 0, sizeof(struct sockaddr_in));
 	((struct sockaddr_in*)s)->sin_family = AF_INET;
 
-	*(int *)&((struct sockaddr_in*)s)->sin_addr = *(int *)&a->ip;
+	((struct sockaddr_in*)s)->sin_addr.s_addr = *(int *)&a->ip;
 	((struct sockaddr_in*)s)->sin_port = a->port;
 }
 
-void SockadrToNetadr (struct sockaddr_qstorage *s, netadr_t *a)
+void SockadrToNetadr (struct sockaddr_storage *s, netadr_t *a)
 {
 	a->type = NA_IP;
 	*(int *)&a->ip = ((struct sockaddr_in *)s)->sin_addr.s_addr;
@@ -112,7 +112,7 @@ idnewt:28000
 192.246.40.70
 192.246.40.70:28000
 */
-qbool NET_StringToSockaddr (char *s, struct sockaddr_qstorage *sadr)
+qbool NET_StringToSockaddr (char *s, struct sockaddr_storage *sadr)
 {
 	struct hostent	*h;
 	char	*colon;
@@ -158,7 +158,7 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_qstorage *sadr)
 
 qbool NET_StringToAdr (char *s, netadr_t *a)
 {
-	struct sockaddr_qstorage sadr;
+	struct sockaddr_storage sadr;
 
 	if (!strcmp(s, "local")) {
 		memset(a, 0, sizeof(*a));
@@ -234,7 +234,7 @@ void NET_ClearLoopback (void)
 qbool NET_GetPacket (netsrc_t netsrc)
 {
 	int ret, socket, err, i;
-	struct sockaddr_qstorage from;
+	struct sockaddr_storage from;
 	socklen_t fromlen;
 
 	if (NET_GetLoopPacket(netsrc, &net_from, &net_message))
@@ -493,7 +493,7 @@ closesvstream:
 
 void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 {
-	struct sockaddr_qstorage addr;
+	struct sockaddr_storage addr;
 	int socket;
 	int size;
 	int ret;
@@ -585,7 +585,7 @@ int TCP_OpenStream (netadr_t remoteaddr)
 	unsigned long _true = true;
 	int newsocket;
 	int temp;
-	struct sockaddr_qstorage qs;
+	struct sockaddr_storage qs;
 
 	NetadrToSockadr(&remoteaddr, &qs);
 	temp = sizeof(struct sockaddr_in);
@@ -763,7 +763,7 @@ qbool NET_Sleep (int msec)
 void NET_GetLocalAddress (int socket, netadr_t *out)
 {
 	char buff[512];
-	struct sockaddr_qstorage address;
+	struct sockaddr_storage address;
 	size_t namelen;
 	netadr_t adr = {0};
 	qbool notvalid = false;
@@ -777,7 +777,7 @@ void NET_GetLocalAddress (int socket, netadr_t *out)
 	namelen = sizeof(address);
 	if (getsockname (socket, (struct sockaddr *)&address, (socklen_t *)&namelen) == -1) {
 		notvalid = true;
-		NET_StringToSockaddr("0.0.0.0", (struct sockaddr_qstorage *)&address);
+		NET_StringToSockaddr("0.0.0.0", (struct sockaddr_storage *)&address);
 		//		Sys_Error ("NET_Init: getsockname:", strerror(qerrno));
 	}
 
