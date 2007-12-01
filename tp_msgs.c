@@ -194,23 +194,23 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		Therefore, we are assuming enemy because this function is ENEMY powerup. So if user hits this by accident (when teammate has quad/pent with ring, then it's their fault.
 		*/
 		
-	if (INPOINT(eyes)) // we assume enemy, because this is tp_msgENEMYpowerup
+	if (INPOINT(eyes)) // we don't assume enemy when we see eyes anymore because this confuses people into thinking it's ALWAYS enemy, so we just say "eyes at location"
 	{
 		if (INPOINT(quaded) && INPOINT(pented))
 		{
-			message = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+			message = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_eyes " at $[{%y}$]";
 		}
 		else if (INPOINT(quaded))
 		{
-			message = tp_ib_name_quaded " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+			message = tp_ib_name_quaded " " tp_ib_name_eyes " at $[{%y}$]";
 		}
 		else if (INPOINT(pented))
 		{
-			message = tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+			message = tp_ib_name_pented " " tp_ib_name_eyes " at $[{%y}$]";
 		}
 		else
 		{
-			message = tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+			message = tp_ib_name_eyes " at $[{%y}$]";
 		}
 	}
 	else if (INPOINT(enemy))
