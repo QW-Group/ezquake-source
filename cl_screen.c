@@ -3016,12 +3016,12 @@ void SCR_DrawElements(void) {
 					VX_TrackerThink();
 
 				// Multiview
-				if (cl_multiview.value && cls.mvdplayback)
+				if (cl_multiview.integer && cls.mvdplayback)
 				{
 					// Draw multiview mini-HUD's.
-					if (cl_mvdisplayhud.value)
+					if (cl_mvdisplayhud.integer)
 					{
-						if(cl_mvdisplayhud.value >= 2)
+						if(cl_mvdisplayhud.integer >= 2)
 						{
 							// Graphical with icons.
 							SCR_DrawMVStatus();
@@ -4808,7 +4808,7 @@ void SCR_DrawMVStatus(void)
 			// Only draw the mini hud for the inset, 
 			// since we probably want the full size hud 
 			// for the main view.
-			if (CURRVIEW == 1)
+			if (CURRVIEW == 2)
 			{
 				return;
 			}
@@ -4833,7 +4833,7 @@ void SCR_DrawMVStatus(void)
 	if (view.x != -1)
 	{
 		SCR_DrawMVStatusView (&view,
-			(int)cl_mvdisplayhud.value,
+			cl_mvdisplayhud.integer,
 			mv_hudpos,
 			(qbool)cl_mvhudflip.value,
 			(qbool)cl_mvhudvertical.value);
@@ -4993,7 +4993,7 @@ void SCR_DrawMVStatusStrings(void)
 
 	if (strcmp(cl.players[nPlayernum].name, "") && !cl.players[nPlayernum].spectator)
 	{
-		if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && cl_multiview.value == 2 && cl_mvinset.value)
+		if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (cl_multiview.value == 2) && cl_mvinset.integer)
 		{
 			// mvinset and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
@@ -5002,7 +5002,7 @@ void SCR_DrawMVStatusStrings(void)
 										weapon,
 										sAmmo);
 		}
-		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && vid.width <= 512)
+		else if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (vid.width <= 512))
 		{
 			// Resolution width <= 512 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
@@ -5021,7 +5021,7 @@ void SCR_DrawMVStatusStrings(void)
 										sAmmo);
 		}
 
-		else if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
+		else if ((cl_multiview.integer == 2) && cl_mvinset.integer && (CURRVIEW == 1))
 		{
 			// mvinset
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
