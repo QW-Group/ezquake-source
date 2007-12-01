@@ -1457,7 +1457,23 @@ void HUD_Draw(void)
 	extern cvar_t scr_newHud;
     hud_t *hud;
 
-	if (mvd_autohud.value && !autohud_loaded)
+	// Only draw the hud once in multiview.
+	if (cl_multiview.integer)
+	{
+		if (cl_mvinset.integer)
+		{
+			if (CURRVIEW != 2)
+			{
+				return;
+			}
+		}
+		else if (CURRVIEW != 1)
+		{
+			return;
+		}
+	}
+
+	if (mvd_autohud.integer && !autohud_loaded)
 	{
 		HUD_AutoLoad_MVD((int) mvd_autohud.value);
 		Com_DPrintf("Loading AUTOHUD...\n");
