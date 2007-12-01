@@ -41,6 +41,10 @@ char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext);
 extern		cvar_t	qtv_buffertime;
 extern		cvar_t	qtv_chatprefix;
 extern		cvar_t  qtv_adjustbuffer;
+extern		cvar_t  qtv_adjustminspeed;
+extern		cvar_t  qtv_adjustmaxspeed;
+extern		cvar_t  qtv_adjustlowstart;
+extern		cvar_t  qtv_adjusthighstart;
 
 void		QTV_Init(void);
 

@@ -1874,6 +1874,13 @@ double Cl_DemoSpeed(void)
 			// qqshka: this is linear version
 			demospeed = current / desired;
 
+			// if you unwilling constant speed change, then you can set range with qtv_adjustlowstart and qtv_adjusthighstart
+			if (demospeed > bound(0, qtv_adjustlowstart.value, 1) && demospeed < max(1, qtv_adjusthighstart.value))
+				demospeed = 1;
+
+			// bound demospeed
+			demospeed = bound(qtv_adjustminspeed.value, demospeed, qtv_adjustmaxspeed.value);
+
 			return demospeed;
 		}
 	}

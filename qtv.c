@@ -13,6 +13,10 @@
 cvar_t	qtv_buffertime		= {"qtv_buffertime", "0.5"};
 cvar_t	qtv_chatprefix		= {"qtv_chatprefix", "$[{QTV}$] "};
 cvar_t  qtv_adjustbuffer	= {"qtv_adjustbuffer", "0"};
+cvar_t  qtv_adjustminspeed	= {"qtv_adjustminspeed", "0"};
+cvar_t  qtv_adjustmaxspeed	= {"qtv_adjustmaxspeed", "999"};
+cvar_t  qtv_adjustlowstart  = {"qtv_adjustlowstart", "1"};
+cvar_t  qtv_adjusthighstart = {"qtv_adjusthighstart", "1"};
 
 
 void QTV_Init(void)
@@ -22,9 +26,13 @@ void QTV_Init(void)
 	Cvar_Register(&qtv_buffertime);
 	Cvar_Register(&qtv_chatprefix);
 	Cvar_Register(&qtv_adjustbuffer);
-
+	Cvar_Register(&qtv_adjustminspeed);
+	Cvar_Register(&qtv_adjustmaxspeed);
+	Cvar_Register(&qtv_adjustlowstart);
+	Cvar_Register(&qtv_adjusthighstart);
+	
 	Cvar_ResetCurrentGroup();
-}
+}   
 
 //=================================================
 
