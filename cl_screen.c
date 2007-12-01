@@ -4534,7 +4534,7 @@ void SCR_MV_DrawWeapons (int x, int y, int *width, int *height, int hud_width, i
 	}
 }
 
-void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool flip, qbool vertical)
+void SCR_DrawMVStatusView(mv_viewrect_t *view, int style, int position, qbool flip, qbool vertical)
 {
 	int hud_x = 0;
 	int hud_y = 0;
@@ -4596,18 +4596,18 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 		//
 		// Get the position we should draw the hud at.
 		//
-		SCR_SetMVStatusPosition (position, view, hud_width, hud_height, &hud_x, &hud_y);
+		SCR_SetMVStatusPosition(position, view, hud_width, hud_height, &hud_x, &hud_y);
 
 		//
 		// Draw a fill background.
 		//
 		if(style >= MV_HUD_STYLE_ALL_FILL)
 		{
-			Draw_AlphaFill (view->x + hud_x, view->y + hud_y, hud_width, hud_height, 0, 0.5);
+			Draw_AlphaFill(view->x + hud_x, view->y + hud_y, hud_width, hud_height, 0, 0.5);
 		}
 
 		// Draw powerups in the middle background of the hud.
-		SCR_MV_DrawPowerups (view->x + hud_x + (hud_width / 2), view->y + hud_y + (hud_height / 2));
+		SCR_MV_DrawPowerups(view->x + hud_x + (hud_width / 2), view->y + hud_y + (hud_height / 2));
 
 		// Draw the elements vertically? (Add a small gap between the items when
 		// drawing them vertically, otherwise they're too close together).
@@ -4805,11 +4805,19 @@ void SCR_DrawMVStatus(void)
 	{
 		if (cl_mvinset.value)
 		{
-			SCR_SetMVStatusTwoInsetViewRect (&view);
+			// Only draw the mini hud for the inset, 
+			// since we probably want the full size hud 
+			// for the main view.
+			if (CURRVIEW == 1)
+			{
+				return;
+			}
+
+			SCR_SetMVStatusTwoInsetViewRect(&view);
 		}
 		else
 		{
-			SCR_SetMVStatusTwoViewRect (&view);
+			SCR_SetMVStatusTwoViewRect(&view);
 		}
 	}
 	else if (cl_multiview.value == 3)
