@@ -191,10 +191,10 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		/*
 		Note we don't have && INPOINT(enemy) in the below if.
 		This is because $point DOES NOT TELL YOU TEAMMATE/ENEMY if they have ring (because there is no way to know).
-		Therefore, we are assuming enemy because this function is ENEMY powerup. So if user hits this by accident (when teammate has quad/pent with ring, then it's their fault.
+		Therefore, we don't assume enemy when we see eyes anymore because this confuses people into thinking it's ALWAYS enemy, so we just say "eyes at location"
 		*/
 		
-	if (INPOINT(eyes)) // we don't assume enemy when we see eyes anymore because this confuses people into thinking it's ALWAYS enemy, so we just say "eyes at location"
+	if (INPOINT(eyes))
 	{
 		if (INPOINT(quaded) && INPOINT(pented))
 		{
