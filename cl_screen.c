@@ -421,7 +421,6 @@ static float CalcFov (float fov_x, float width, float height) {
 static void SCR_CalcRefdef (void) {
 	float  size;
 #ifdef GLQUAKE
-	int h;
 	qbool full = false;
 #else
 	vrect_t vrect;
