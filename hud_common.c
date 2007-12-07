@@ -4843,6 +4843,8 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
         *hud_ownfrags_scale = NULL;
 //        *hud_ownfrags_color = NULL;
 
+    if (!width) return;
+    
     if (hud_ownfrags_timeout == NULL)    // first time
     {
 		hud_ownfrags_scale				= HUD_FindVar(hud, "scale");
