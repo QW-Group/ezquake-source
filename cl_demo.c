@@ -450,7 +450,7 @@ static void CL_WriteStartupData (void)
 	//
 	MSG_WriteByte (&buf, svc_serverdata);
 #ifdef PROTOCOL_VERSION_FTE
-	if (cls.fteprotocolextensions)	//maintain demo compatability
+	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS)	//maintain demo compatibility
 	{
 		MSG_WriteLong (&buf, PROTOCOL_VERSION_FTE);
 		MSG_WriteLong (&buf, cls.fteprotocolextensions);
@@ -1517,9 +1517,9 @@ void CL_Record_f (void)
 		return;
 	}
 
-	if (cls.fteprotocolextensions) {
-		Com_Printf ("recording with protocol extensions is not yet implemented\n");
-		return;
+	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS) {
+		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo may not be playable in older clients. "
+			"Use cl_pext_other 0 for 100% compatible demos\n");
 	}
 
 	switch(Cmd_Argc())

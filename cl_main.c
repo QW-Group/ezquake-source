@@ -81,10 +81,11 @@ cvar_t	cl_timeout = {"cl_timeout", "60"};
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #ifdef PROTOCOL_VERSION_FTE
-cvar_t  cl_nopext  = {"cl_nopext", "0"};
+cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// will break demos!
 #endif
 
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
 cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "2"};
 #endif
 
@@ -503,7 +504,8 @@ unsigned int CL_SupportedFTEExtensions (void)
 	fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
 #endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-	fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
+	if (cl_pext_chunkeddownloads.value)
+		fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif
 #ifdef FTE_PEXT_HLBSP
 	fteprotextsupported |= FTE_PEXT_HLBSP;
@@ -523,6 +525,9 @@ unsigned int CL_SupportedFTEExtensions (void)
 //#ifdef FTE_PEXT_256PACKETENTITIES
 //	fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
 //#endif
+
+	if (!cl_pext_other.value)
+		fteprotextsupported &= FTE_PEXT_CHUNKEDDOWNLOADS;
 
 	return fteprotextsupported;
 }
@@ -544,9 +549,6 @@ static void CL_SendConnectPacket(
 		return;
 
 	#ifdef PROTOCOL_VERSION_FTE
-	if (cl_nopext.integer)	//imagine it's an unenhanced server
-		ftepext        		   = 0;
-
 	cls.fteprotocolextensions  = (ftepext & CL_SupportedFTEExtensions());
 	#endif // PROTOCOL_VERSION_FTE
 
@@ -1574,9 +1576,10 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_fix_mvd);
 
 #ifdef PROTOCOL_VERSION_FTE
-	Cvar_Register (&cl_nopext);
+	Cvar_Register (&cl_pext_other);
 #endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	Cvar_Register (&cl_pext_chunkeddownloads);
 	Cvar_Register (&cl_chunksperframe);
 #endif
 
