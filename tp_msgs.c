@@ -332,7 +332,7 @@ GLOBAL void TP_Msg_QuadDead_f (void)
 		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this & all cases regarding players/powerups
 		return;
 	}
-	else quad_dead = tp_ib_name_quad " dead";
+	else quad_dead = tp_ib_name_quad " dead/over";
 
 	TP_Send_TeamSay("%s",quad_dead);
 }
