@@ -162,7 +162,7 @@ cvar_t gl_part_blobs = {"gl_part_blobs", "0"}; // 1
 cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"}; // 1
 cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
 
-cvar_t gl_powerupshells = {"gl_powerupshells", "0"};
+cvar_t gl_powerupshells = {"gl_powerupshells", "1"};
 cvar_t gl_powerupshells_style = {"gl_powerupshells_style", "0"};
 cvar_t gl_powerupshells_size = {"gl_powerupshells_size", "5"};
 
