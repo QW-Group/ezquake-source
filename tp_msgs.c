@@ -64,7 +64,7 @@ use the %-macros nor the $-macros.
 #define tp_ib_name_ga	    COLORED(0b0,ga)	    // green ga
 #define tp_ib_name_ya	    COLORED(ff0,ya)	    // yellow ya
 #define tp_ib_name_ra	    COLORED(e00,ra)	    // red ra
-#define tp_ib_name_mh	    COLORED(03F,mega)	// blue mega
+#define tp_ib_name_mh	    COLORED(0b0,mega)	// green mega
 #define tp_ib_name_backpack	COLORED(F0F,pack)	// purple backpack
 #define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
 #define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
@@ -387,7 +387,7 @@ GLOBAL void TP_Msg_Took_f (void)
 			powerup = "";
 		}
 		
-		at_location = "at $[{%Y}$]"; // %Y is "forgotten" macro - location of item you took
+		at_location = "$[{%Y}$]"; // %Y is "forgotten" macro - location of item you took
 		took_msg = " took ";
 	}
 	TP_Send_TeamSay("%s%s%s %s", powerup, took_msg, took, at_location);
@@ -505,7 +505,7 @@ GLOBAL void TP_Msg_YesOk_f (void) { TP_MSG_GENERIC("{&c9ffyes/ok&cfff}"); } //cy
 GLOBAL void TP_Msg_YouTake_f (void) { TP_MSG_GENERIC("you take"); }
 GLOBAL void TP_Msg_Waiting_f (void) { TP_MSG_GENERIC("waiting"); }
 GLOBAL void TP_Msg_Slipped_f (void) { TP_MSG_GENERIC("enemy slipped"); }
-GLOBAL void TP_Msg_Replace_f (void) { TP_MSG_GENERIC("replace"); }
+GLOBAL void TP_Msg_Replace_f (void) { TP_MSG_GENERIC("{&c9ffreplace&cfff}"); } //cyan replace
 GLOBAL void TP_Msg_Trick_f (void) { TP_MSG_GENERIC("trick"); }
 GLOBAL void TP_Msg_Safe_f (void) { TP_MSG_GENERIC("{&c0b0safe&cfff}"); } // green safe
 GLOBAL void TP_Msg_Help_f (void) { TP_MSG_GENERIC("{&cff0help&cfff}"); } // yellow help
