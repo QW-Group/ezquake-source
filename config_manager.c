@@ -1018,13 +1018,26 @@ void DumpHUD_f(void)
 	Com_Printf("HUD variables exported.\n");
 }
 
+void Config_LegacyQuake_f(void)
+{
+	Cbuf_AddText(
+	"r_tracker_messages 0;echo turning off tracker messages;"
+	"hide ownfrags;echo hiding the ownfrags hud element;"
+	"frags extra_spec_info 0;echo disabling extra spec info for frags hud element;"
+	"teamfrags extra_spec_info 0;echo disabling extra spec info for teamfrags hud element;"
+	"hide radar;echo hiding the radar hud element;"
+	// "r_chaticons_alpha 0;echo chaticon drawing disabled;"
+	);
+}
+
 void ConfigManager_Init(void)
 {
 	Cmd_AddCommand("cfg_save", SaveConfig_f);
 	Cmd_AddCommand("cfg_load", LoadConfig_f);
 	Cmd_AddCommand("cfg_reset",	ResetConfigs_f);
 	Cmd_AddCommand("hud_export", DumpHUD_f);
-    Cmd_AddCommand("dump_defaults", DumpVariablesDefaults_f);
+	Cmd_AddCommand("dump_defaults", DumpVariablesDefaults_f);
+	Cmd_AddCommand("legacyquake", Config_LegacyQuake_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
 	Cvar_Register(&cfg_save_unchanged);
