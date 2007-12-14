@@ -1169,38 +1169,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\vfs_doomwad.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_gzip.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_mmap.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_os.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_pak.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_tar.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_tcp.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\vfs_zip.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\wad.c"
 					>
 				</File>
@@ -1930,30 +1898,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\mp3_player.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\mp3_winamp.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\mp3_mpd.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\mp3_audacious.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\mp3_xmms.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\mp3_xmms2.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\qtv.c"
 					>
 				</File>
@@ -2018,6 +1962,70 @@
 					</File>
 					<File
 						RelativePath="..\..\mvd_xmlstats.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="MP3 Control"
+					>
+					<File
+						RelativePath="..\..\mp3_audacious.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mp3_mpd.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mp3_player.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mp3_winamp.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mp3_xmms.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mp3_xmms2.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="VFS"
+					>
+					<File
+						RelativePath="..\..\vfs_doomwad.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vfs_gzip.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vfs_mmap.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vfs_os.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vfs_pak.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vfs_tar.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vfs_tcp.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\vfs_zip.c"
 						>
 					</File>
 				</Filter>
