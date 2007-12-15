@@ -1867,6 +1867,8 @@ void VX_ParticleTrail (vec3_t start, vec3_t end, float size, float time, col_t c
 	vec3_t		vec;
 	float		len;
 	time *= amf_part_traillen.value;
+
+	if (!time) return;
 	
 	if (amf_part_fulldetail.integer)
 	{
