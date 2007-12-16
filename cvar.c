@@ -281,7 +281,7 @@ void Cvar_Set (cvar_t *var, char *value)
 		//       However keep this flag always on latched variable is stupid imo.
 		//       So, do not mix CVAR_LATCHED | CVAR_SILENT in cvar definition.
 		if ( !(var->flags & CVAR_SILENT) )
-			Com_Printf ("%s needs vid_restart (video/graphics) or in_restart (sound) to take effect.\n", var->name);
+			Com_Printf ("%s needs vid_restart (video/graphics) or snd_restart (sound) to take effect.\n", var->name);
 		var->latchedString = Z_Strdup (value);
 		var->modified = true; // set to true even car->string is not changed yet, that how q3 does
 		return;
