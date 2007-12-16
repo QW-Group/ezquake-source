@@ -300,7 +300,7 @@ static void CL_Parse_TE_SPIKE(vec3_t pos)
 	int rnd;
 
 	#ifdef GLQUAKE
-	if (amf_part_spikes.value && !Rulesets_RestrictParticles())
+	if (amf_part_spikes.value && !Rulesets_RestrictParticles() && !gl_no24bit.integer)
 		VXNailhit(pos, 10 * amf_part_spikes.value);
 	else
 	#endif // GLQUAKE
@@ -329,7 +329,7 @@ static void CL_Parse_TE_SUPERSPIKE(vec3_t pos)
 	int rnd;
 
 	#ifdef GLQUAKE
-	if (amf_part_spikes.value && !Rulesets_RestrictParticles())
+	if (amf_part_spikes.value && !Rulesets_RestrictParticles() && !gl_no24bit.integer)
 		VXNailhit(pos, 20 * amf_part_spikes.value);
 	else
 	#endif // GLQUAKE

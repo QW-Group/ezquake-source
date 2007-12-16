@@ -1186,7 +1186,7 @@ void CL_LinkPacketEntities (void)
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
 			}
 			// VULT NAILTRAIL
-			else if (model->modhint == MOD_SPIKE && amf_nailtrail.value)
+			else if (model->modhint == MOD_SPIKE && amf_nailtrail.value && !gl_no24bit.integer)
 			{
 				if (amf_nailtrail_plasma.value)
 				{
