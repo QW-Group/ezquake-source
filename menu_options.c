@@ -75,7 +75,7 @@ cvar_t menu_advanced = {"menu_advanced", "0"};
 // <SETTINGS>
 
 #ifdef GLQUAKE
-enum {mode_fastest, mode_faithful, mode_eyecandy, mode_movies, mode_undef} fps_mode = mode_undef;
+enum {mode_fastest, mode_faithful, mode_higheyecandy, mode_eyecandy, mode_undef} fps_mode = mode_undef;
 #else
 enum {mode_fastest, mode_default, mode_undef} fps_mode = mode_default;
 #endif
@@ -119,7 +119,7 @@ static int GFXPreset(void) {
 		switch ((int) cl_deadbodyfilter.value) {
 #ifdef GLQUAKE
 		case 0: fps_mode = mode_eyecandy; break;
-		case 1: fps_mode = cl_muzzleflash.value ? mode_faithful : mode_movies; break;
+		case 1: fps_mode = cl_muzzleflash.value ? mode_faithful : mode_eyecandy; break;
 		default: fps_mode = mode_fastest; break;
 #else
 		case 0: fps_mode = mode_default; break;
@@ -133,9 +133,9 @@ const char* GFXPresetRead(void) {
 	switch (GFXPreset()) {
 	case mode_fastest: return "fastest";
 #ifdef GLQUAKE
-	case mode_eyecandy: return "eyecandy";
+	case mode_higheyecandy: return "high eyecandy";
 	case mode_faithful: return "faithful";
-	default: return "movies";
+	default: return "eyecandy";
 #else
 	default: return "default";
 #endif
@@ -149,9 +149,9 @@ void GFXPresetToggle(qbool back) {
 	switch (GFXPreset()) {
 #ifdef GLQUAKE
 	case mode_fastest: Cbuf_AddText ("exec cfg/gfx_gl_fast.cfg\n"); return;
-	case mode_eyecandy: Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n"); return;
+	case mode_higheyecandy: Cbuf_AddText ("exec cfg/gfx_gl_higheyecandy.cfg\n"); return;
 	case mode_faithful: Cbuf_AddText ("exec cfg/gfx_gl_faithful.cfg\n"); return;
-	case mode_movies: Cbuf_AddText ("exec cfg/gfx_gl_movies.cfg\n"); return;
+	case mode_eyecandy: Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n"); return;
 #else
 	case mode_fastest: Cbuf_AddText ("exec cfg/gfx_sw_fast.cfg\n"); return;
 	case mode_default: Cbuf_AddText ("exec cfg/gfx_sw_default.cfg\n"); return;
