@@ -871,7 +871,7 @@ void CL_UpdateBeams(void)
 			VectorAdd (org, dist, org);
 #ifdef GLQUAKE
 			// LIGHTNING SPARKS
-			if (amf_lightning_sparks.value && (cls.demoplayback || cl.spectator) && !sparks && !ISPAUSED)
+			if (amf_lightning_sparks.value && (cls.demoplayback || cl.spectator) && !sparks && !ISPAUSED && !gl_no24bit.integer)
 			{
 				trace_t	trace;
 				trace = PM_TraceLine (org, b->end);
