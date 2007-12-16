@@ -132,11 +132,11 @@ GLOBAL void TP_Msg_Lost_f (void)
  
 		if (HOLD_RL() || HOLD_LG() || HOLD_GL()) // gl could be useful too
 		{
-			msg2 = "lost "  COLORED(f0f,$weapon) " $[{%d}$] e:%E";
+			msg2 = "lost "  COLORED(f0f,$weapon) " $[{%d}$] %E";
 		}
 		else
 		{
-			msg2 = "lost $[{%d}$] e:%E";
+			msg2 = "lost $[{%d}$] %E";
 		}
 	}
 	else // if currently alive, then report last death location
@@ -412,53 +412,53 @@ GLOBAL void TP_Msg_Point_f (void)
 	}
 	else
 	{
-		at_location = "at $[{%y}$] e:%E"; // this has to be established at the beginning because it's the same for all cases except when you see enemy.
+		at_location = "at $[{%y}$] %E"; // this has to be established at the beginning because it's the same for all cases except when you see enemy.
 	
 		if (INPOINT(enemy))
 		{
-				point = "%E " tp_ib_name_enemy;
-				at_location = "at $[{%y}$]"; // here we change at_location because our point says how many enemies we have.
+			point = "%E " tp_ib_name_enemy;
+			at_location = "at $[{%y}$]"; // here we change at_location because our point says how many enemies we have.
 		}
 		else if (INPOINT(teammate))
 		{
-				if (tp_name_teammate.string[0])
-					point = tp_ib_name_teammate;
-				else
-					point = va ("{&c0b0%s&cfff}", Macro_PointName());
+			if (tp_name_teammate.string[0])
+				point = tp_ib_name_teammate;
+			else
+				point = va ("{&c0b0%s&cfff}", Macro_PointName());
 		}
 		else if (INPOINTPOWERUP() || INPOINTWEAPON() || INPOINTARMOR() || INPOINTAMMO() || INPOINT(pack) || INPOINT(mh) || INPOINT(flag) || INPOINT (disp) || INPOINT(sentry) || INPOINT(runes)) // How can I do if INPONIT(anything) or if INPOINT() not empty?
 		//  flag, disp, sent, rune
 		{
-					if (INPOINT(quad))			point = tp_ib_name_quad;
-					else if (INPOINT(pent))		point = tp_ib_name_pent;
-					else if (INPOINT(ring))		point = tp_ib_name_ring;
-					
-					else if (INPOINT(rl))		point = tp_ib_name_rl;
-					else if (INPOINT(lg))		point = tp_ib_name_lg;
-					else if (INPOINT(gl))		point = tp_ib_name_gl;
-					else if (INPOINT(sng))		point = tp_ib_name_sng;
-					else if (INPOINT(pack))		point = tp_ib_name_backpack;
-					
-					else if (INPOINT(ra))		point = tp_ib_name_ra;
-					else if (INPOINT(ya))		point = tp_ib_name_ya;
-					else if (INPOINT(ga))		point = tp_ib_name_ga;
-					
-					else if (INPOINT(rockets)) 	point = "{$point}";
-					else if (INPOINT(cells)) 	point = "{$point}";
-					else if (INPOINT(nails)) 	point = "{$point}";
-					
-					else if (INPOINT(mh))		point = tp_ib_name_mh;
-					
-					//TF
-					else if (INPOINT(flag))		point = tp_ib_name_flag; // note we cannot tell if it's enemy or team flag
-					else if (INPOINT(disp))		point = "{$point}";	// note we cannot tell if it's enemy or team disp
-					else if (INPOINT(sentry))	point = "{$point}"; // note we cannot tell if it's enemy or team sent
-					
-					//ctf, other
-					else if (INPOINT(rune1))	point = "$tp_name_rune1";
-					else if (INPOINT(rune2))	point = "$tp_name_rune2";
-					else if (INPOINT(rune3))	point = "$tp_name_rune3";
-					else if (INPOINT(rune4))	point = "$tp_name_rune4";
+			if (INPOINT(quad))			point = tp_ib_name_quad;
+			else if (INPOINT(pent))		point = tp_ib_name_pent;
+			else if (INPOINT(ring))		point = tp_ib_name_ring;
+			
+			else if (INPOINT(rl))		point = tp_ib_name_rl;
+			else if (INPOINT(lg))		point = tp_ib_name_lg;
+			else if (INPOINT(gl))		point = tp_ib_name_gl;
+			else if (INPOINT(sng))		point = tp_ib_name_sng;
+			else if (INPOINT(pack))		point = tp_ib_name_backpack;
+			
+			else if (INPOINT(ra))		point = tp_ib_name_ra;
+			else if (INPOINT(ya))		point = tp_ib_name_ya;
+			else if (INPOINT(ga))		point = tp_ib_name_ga;
+			
+			else if (INPOINT(rockets)) 	point = "{$point}";
+			else if (INPOINT(cells)) 	point = "{$point}";
+			else if (INPOINT(nails)) 	point = "{$point}";
+			
+			else if (INPOINT(mh))		point = tp_ib_name_mh;
+			
+			//TF
+			else if (INPOINT(flag))		point = tp_ib_name_flag; // note we cannot tell if it's enemy or team flag
+			else if (INPOINT(disp))		point = "{$point}";	// note we cannot tell if it's enemy or team disp
+			else if (INPOINT(sentry))	point = "{$point}"; // note we cannot tell if it's enemy or team sent
+			
+			//ctf, other
+			else if (INPOINT(rune1))	point = "$tp_name_rune1";
+			else if (INPOINT(rune2))	point = "$tp_name_rune2";
+			else if (INPOINT(rune3))	point = "$tp_name_rune3";
+			else if (INPOINT(rune4))	point = "$tp_name_rune4";
 		}
 		else point = "{$point}"; // this should never happen
 	}

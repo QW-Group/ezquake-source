@@ -357,60 +357,6 @@ const char* rockettrail_enum[] =
 const char* powerupglow_enum[] =
 { "off", "on", "own off" };
 
-void LoadFastPreset(void) {
-	Cvar_SetValue (&r_explosiontype, 1);
-	Cvar_SetValue (&r_explosionlight, 0);
-	Cvar_SetValue (&cl_muzzleflash, 0);
-	Cvar_SetValue (&cl_gibfilter, 1);
-	Cvar_SetValue (&cl_deadbodyfilter, 1);
-	Cvar_SetValue (&r_rocketlight, 0);
-	Cvar_SetValue (&r_powerupglow, 0);
-	Cvar_SetValue (&r_drawflame, 0);
-	Cvar_SetValue (&r_fastsky, 1);
-	Cvar_SetValue (&r_rockettrail, 1);
-	Cvar_SetValue (&v_damagecshift, 0);
-#ifdef GLQUAKE
-	Cvar_SetValue (&gl_flashblend, 1);
-	Cvar_SetValue (&r_dynamic, 0);
-	Cvar_SetValue (&gl_part_explosions, 0);
-	Cvar_SetValue (&gl_part_trails, 0);
-	Cvar_SetValue (&gl_part_spikes, 0);
-	Cvar_SetValue (&gl_part_gunshots, 0);
-	Cvar_SetValue (&gl_part_blood, 0);
-	Cvar_SetValue (&gl_part_telesplash, 0);
-	Cvar_SetValue (&gl_part_blobs, 0);
-	Cvar_SetValue (&gl_part_lavasplash, 0);
-	Cvar_SetValue (&gl_part_inferno, 0);
-#endif
-}
-
-void LoadHQPreset(void) {
-	Cvar_SetValue (&r_explosiontype, 0);
-	Cvar_SetValue (&r_explosionlight, 1);
-	Cvar_SetValue (&cl_muzzleflash, 1);
-	Cvar_SetValue (&cl_gibfilter, 0);
-	Cvar_SetValue (&cl_deadbodyfilter, 0);
-	Cvar_SetValue (&r_rocketlight, 1);
-	Cvar_SetValue (&r_powerupglow, 2);
-	Cvar_SetValue (&r_drawflame, 1);
-	Cvar_SetValue (&r_fastsky, 0);
-	Cvar_SetValue (&r_rockettrail, 1);
-	Cvar_SetValue (&v_damagecshift, 1);
-#ifdef GLQUAKE
-	Cvar_SetValue (&gl_flashblend, 0);
-	Cvar_SetValue (&r_dynamic, 1);
-	Cvar_SetValue (&gl_part_explosions, 1);
-	Cvar_SetValue (&gl_part_trails, 1);
-	Cvar_SetValue (&gl_part_spikes, 1);
-	Cvar_SetValue (&gl_part_gunshots, 1);
-	Cvar_SetValue (&gl_part_blood, 1);
-	Cvar_SetValue (&gl_part_telesplash, 1);
-	Cvar_SetValue (&gl_part_blobs, 1);
-	Cvar_SetValue (&gl_part_lavasplash, 1);
-	Cvar_SetValue (&gl_part_inferno, 1);
-#endif
-}
-
 const char* grenadetrail_enum[] = { "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma rocket" };
 
 extern cvar_t cl_maxfps;
@@ -1011,8 +957,6 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	
 	ADDSET_SEPARATOR("Presets"),
-	ADDSET_ACTION	("Load High-Performance Preset", LoadFastPreset, "Adjust graphic settings for high performance. May increase FPS."),
-	ADDSET_ACTION	("Load High-Quality preset", LoadHQPreset, "Adjust graphic settings for high image-quality. May decrease FPS."),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphic presets."),
 
 	ADDSET_SEPARATOR("Field of View"),
@@ -1178,6 +1122,7 @@ setting setthud_arr[] = {
 	
 
 */
+
 // DEMO/SPETATOR TAB
 setting settdemo_spec_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
