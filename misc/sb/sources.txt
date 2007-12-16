@@ -1,4 +1,4 @@
-master "Asgaard" 85.10.201.75:27000:27000
+master "Asgaard" 85.10.201.75:27000
 file "Global" global.txt
 master "Poland" 217.153.59.106:27000
 file "European Servers" eu-sv.txt
