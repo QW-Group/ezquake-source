@@ -649,6 +649,11 @@ qbool Settings_Key(settings_page* tab, int key)
 		return FL_Key(&skins_filelist, key);
 	}
 
+  if (tab->mode == SPM_VIEWHELP) {
+    tab->mode = SPM_NORMAL;
+    return true;
+  }
+
 	switch (key) {
 	case K_DOWNARROW:   tab->marked++; break;
 	case K_UPARROW:     tab->marked--; up = true; break;
