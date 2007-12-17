@@ -393,6 +393,7 @@ void GfxInfo_f( void )
 	{
 		ST_Printf( PRINT_ALL, "N/A\n" );
 	}
+	ST_Printf( PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 
 #if 0
 	if ( glConfig.deviceSupportsGamma )
