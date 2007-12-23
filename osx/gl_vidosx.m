@@ -1412,15 +1412,22 @@ void	GL_InitMac (void)
 #endif
 
 	// Enable multi-threading OpenGL
-	err =  CGLEnable(ctx, kCGLCEMPEngine);
-	        
-	if (err == kCGLNoError )
+	if (!COM_CheckParm ("-nomultithreadedgl"))
 	{
-		Com_Printf("Enabled multi-threaded OpenGL\n");
-	} 
+		err =  CGLEnable(ctx, kCGLCEMPEngine);
+	        
+		if (err == kCGLNoError )
+		{
+			Com_Printf("Enabled multi-threaded OpenGL\n");
+		} 
+		else 
+		{
+			Com_Printf("Failed to enable multi-threaded OpenGL\n");
+		}
+	}
 	else 
 	{
-		Com_Printf("Failed to enable multi-threaded OpenGL\n");
+		Com_Printf("Disabled multi-threaded OpenGL\n");
 	}
 
     // setup OpenGL:    
