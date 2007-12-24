@@ -89,13 +89,13 @@ int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
 
 		length = (buffer[lengthofs]<<0) + (buffer[lengthofs+1]<<8) + (buffer[lengthofs+2]<<16) + (buffer[lengthofs+3]<<24);
 
-		length += lengthofs+4;
-
 		if (length > MAX_MVD_SIZE && warn)
 		{
 			Com_Printf("Corrupt mvd, length: %d\n", length);
 			warn = false;
 		}
+
+		length += lengthofs+4;
 
 gottotallength:
 		if (remaining < length)
