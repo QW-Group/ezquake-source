@@ -18,10 +18,11 @@
 
 #define QTV_EZQUAKE_EXT		"QTV_EZQUAKE_EXT"
 
-#define QTV_EZQUAKE_EXT_DOWNLOAD (1<<0)		// well, this is not just download, but also different connection process
-#define QTV_EZQUAKE_EXT_SETINFO  (1<<1)		// does't qtv server/client support setinfo
+#define QTV_EZQUAKE_EXT_DOWNLOAD	(1<<0)		// well, this is not just download, but also different connection process
+#define QTV_EZQUAKE_EXT_SETINFO		(1<<1)		// does't qtv server/client support setinfo
+#define QTV_EZQUAKE_EXT_QTVUSERLIST	(1<<2)		// does't qtv server/client support qtvuserlist command
 
-#define QTV_EZQUAKE_EXT_NUM ( QTV_EZQUAKE_EXT_DOWNLOAD | QTV_EZQUAKE_EXT_SETINFO )
+#define QTV_EZQUAKE_EXT_NUM ( QTV_EZQUAKE_EXT_DOWNLOAD | QTV_EZQUAKE_EXT_SETINFO | QTV_EZQUAKE_EXT_QTVUSERLIST )
 
 // }
 
@@ -35,6 +36,28 @@ char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext);
 // 
 // MAX_MVD_SIZE - max size of single mvd message _WITHOUT_ header
 #define	MAX_MVD_SIZE			(MSG_BUF_SIZE - 100)
+//======================================
+
+typedef enum {
+
+	QUL_NONE = 0,	//
+	QUL_ADD,		// user joined
+	QUL_CHANGE,		// user changed something like name or something
+	QUL_DEL			// user dropped
+
+} qtvuserlist_t;
+
+typedef struct qtvuser_s {
+
+	int					id;								// unique user id
+	char				name[MAX_INFO_KEY];				// client name, well must be unique too
+
+	struct qtvuser_s	*next;							// next qtvuser_s struct in our list
+
+} qtvuser_t;
+
+void		QTV_FreeUserList(void);
+void		Parse_QtvUserList(char *s);
 
 //======================================
 
@@ -45,6 +68,10 @@ extern		cvar_t  qtv_adjustminspeed;
 extern		cvar_t  qtv_adjustmaxspeed;
 extern		cvar_t  qtv_adjustlowstart;
 extern		cvar_t  qtv_adjusthighstart;
+
+extern		cvar_t  qtv_event_join;
+extern		cvar_t  qtv_event_leave;
+extern		cvar_t  qtv_event_changename;
 
 void		QTV_Init(void);
 

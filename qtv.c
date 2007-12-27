@@ -10,14 +10,19 @@
 #include "teamplay.h"
 #include "fs.h"
 
-cvar_t	qtv_buffertime		= {"qtv_buffertime", "0.5"};
-cvar_t	qtv_chatprefix		= {"qtv_chatprefix", "$[{QTV}$] "};
-cvar_t  qtv_adjustbuffer	= {"qtv_adjustbuffer", "0"};
-cvar_t  qtv_adjustminspeed	= {"qtv_adjustminspeed", "0"};
-cvar_t  qtv_adjustmaxspeed	= {"qtv_adjustmaxspeed", "999"};
-cvar_t  qtv_adjustlowstart  = {"qtv_adjustlowstart", "1"};
-cvar_t  qtv_adjusthighstart = {"qtv_adjusthighstart", "1"};
+cvar_t	qtv_buffertime		 = {"qtv_buffertime", "0.5"};
+cvar_t	qtv_chatprefix		 = {"qtv_chatprefix", "$[{QTV}$] "};
+cvar_t  qtv_adjustbuffer	 = {"qtv_adjustbuffer", "0"};
+cvar_t  qtv_adjustminspeed	 = {"qtv_adjustminspeed", "0"};
+cvar_t  qtv_adjustmaxspeed	 = {"qtv_adjustmaxspeed", "999"};
+cvar_t  qtv_adjustlowstart   = {"qtv_adjustlowstart", "1"};
+cvar_t  qtv_adjusthighstart  = {"qtv_adjusthighstart", "1"};
 
+cvar_t  qtv_event_join       = {"qtv_event_join", 		" &c2F2joined&r"};
+cvar_t  qtv_event_leave      = {"qtv_event_leave", 		" &cF22left&r"};
+cvar_t  qtv_event_changename = {"qtv_event_changename", " &cFF0changed&r name to "};
+
+void Qtvusers_f (void);
 
 void QTV_Init(void)
 {
@@ -30,8 +35,14 @@ void QTV_Init(void)
 	Cvar_Register(&qtv_adjustmaxspeed);
 	Cvar_Register(&qtv_adjustlowstart);
 	Cvar_Register(&qtv_adjusthighstart);
+
+	Cvar_Register(&qtv_event_join);
+	Cvar_Register(&qtv_event_leave);
+	Cvar_Register(&qtv_event_changename);
 	
 	Cvar_ResetCurrentGroup();
+
+	Cmd_AddCommand ("qtvusers", Qtvusers_f);
 }   
 
 //=================================================
@@ -224,4 +235,230 @@ void QTV_Cmd_Printf(int qtv_ext, char *fmt, ...)
 
 	// restore
 	Cmd_RestoreContext(&tmpcontext);
+}
+
+//=================================================
+
+static qtvuser_t *qtvuserlist = NULL;
+
+static qtvuser_t *QTV_UserById(int id)
+{
+	qtvuser_t *current;
+
+	for (current = qtvuserlist; current; current = current->next)
+		if (current->id == id)
+			return current;
+
+	return NULL;
+}
+
+static void QTV_SetUser(qtvuser_t *to, qtvuser_t *from)
+{
+	*to = *from;
+}
+
+// allocate data and set fields, perform linkage to qtvuserlist
+// Well, instead of QTV_NewUser(int id, char *name, ...) I pass params with single qtvuser_t *user struct, well its OK for current struct.
+static qtvuser_t *QTV_NewUser(qtvuser_t *user)
+{
+	// check, may be user alredy exist, so reuse it
+	qtvuser_t *newuser = QTV_UserById(user->id);
+
+	if (!newuser)
+	{
+		// user does't exist, alloc data
+		newuser = Q_malloc(sizeof(*newuser));
+
+		QTV_SetUser(newuser, user);
+
+		// perform linkage
+		newuser->next = qtvuserlist;
+		qtvuserlist = newuser;
+	}
+	else
+	{
+		// we do not need linkage, just save current
+		qtvuser_t *oldnext = newuser->next; // we need save this before assign all fields
+
+		QTV_SetUser(newuser, user);
+
+		newuser->next = oldnext;
+	}
+
+	return newuser;
+}
+
+// free data, perform unlink if requested
+static void QTV_FreeUser(qtvuser_t *user, qbool unlink)
+{
+	if (!user)
+		return;
+
+	if (unlink)
+	{
+		qtvuser_t *next, *prev, *current;
+
+		prev = NULL;
+		current = qtvuserlist;
+
+		for ( ; current; )
+		{
+			next = current->next;
+
+			if (user == current)
+			{
+				if (prev)
+					prev->next = next;
+				else
+					qtvuserlist = next;
+
+				break;
+			}
+
+			prev = current;
+			current = next;
+		}
+	}
+
+	Q_free(user);
+}
+
+// free whole qtvuserlist
+void QTV_FreeUserList(void)
+{
+	qtvuser_t *next, *current;
+
+	current = qtvuserlist;
+
+	for ( ; current; current = next)
+	{
+		next = current->next;
+		QTV_FreeUser(current, false);
+	}
+
+	qtvuserlist = NULL;
+}
+
+#define QTV_EVENT_PREFIX "QTV: "
+
+// user join qtv
+void QTV_JoinEvent(qtvuser_t *user)
+{
+	// make it optional message
+	if (!qtv_event_join.string[0])
+		return;
+
+	// do not show "user joined" at moment of connection to QTV, it mostly QTV just spammed userlist to us.
+	if (cls.state <= ca_demostart)
+		return;
+
+	if (QTV_UserById(user->id))
+	{
+		// we alredy have this user, do not double trigger
+		return;
+	}
+
+	Com_Printf("%s%s%s\n", QTV_EVENT_PREFIX, user->name, qtv_event_join.string);
+}
+
+// user leaved/left qtv
+void QTV_LeaveEvent(qtvuser_t *user)
+{
+	qtvuser_t *olduser;
+
+	// make it optional message
+	if (!qtv_event_leave.string[0])
+		return;
+
+	if (!(olduser = QTV_UserById(user->id)))
+	{
+		// we do not have this user
+		return;
+	}
+
+	Com_Printf("%s%s%s\n", QTV_EVENT_PREFIX, olduser->name, qtv_event_leave.string);
+}
+
+// user changed name on qtv
+void QTV_ChangeEvent(qtvuser_t *user)
+{
+	qtvuser_t *olduser;
+
+	// well, too spammy, make it as option
+	if (!qtv_event_changename.string[0])
+		return;
+
+	if (!(olduser = QTV_UserById(user->id)))
+	{
+		// we do not have this user yet
+		Com_DPrintf("qtv: change event without olduser\n");
+		return;
+	}
+
+	Com_Printf("%s%s%s%s\n", QTV_EVENT_PREFIX, olduser->name, qtv_event_changename.string, user->name);
+}
+
+void Parse_QtvUserList(char *s)
+{
+	qtvuser_t		tmpuser;
+	qtvuserlist_t	action;
+	int				cnt = 1;
+	
+	memset(&tmpuser, 0, sizeof(tmpuser));
+
+	// action id [\"name\"]
+
+	Cmd_TokenizeString( s );
+
+	action 		= atoi( Cmd_Argv( cnt++ ) );
+	tmpuser.id	= atoi( Cmd_Argv( cnt++ ) );
+	strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
+
+	switch ( action )
+	{
+		case QUL_ADD:
+			QTV_JoinEvent(&tmpuser);
+			QTV_NewUser(&tmpuser);
+
+		break;
+		
+		case QUL_CHANGE:
+			QTV_ChangeEvent(&tmpuser);
+			QTV_NewUser(&tmpuser);
+
+		break;
+
+		case QUL_DEL:
+			QTV_LeaveEvent(&tmpuser);
+			QTV_FreeUser(QTV_UserById(tmpuser.id), true);
+
+		break;
+
+		default:
+			Com_Printf("Parse_QtvUserList: unknown action %d\n", action);
+
+		return;
+	}
+}
+
+// FIXME: make sexy GUI instead!
+void Qtvusers_f (void)
+{
+	qtvuser_t *current;
+	int c;
+
+	if (cls.mvdplayback != QTV_PLAYBACK)
+		return;
+
+	c = 0;
+	Com_Printf ("userid name\n");
+	Com_Printf ("------ ----\n");
+
+	for (current = qtvuserlist; current; current = current->next)
+	{
+		Com_Printf ("%6i %s\n", current->id, current->name);
+		c++;
+	}
+
+	Com_Printf ("%i total users\n", c);
 }

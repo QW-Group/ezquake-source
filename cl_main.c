@@ -1103,6 +1103,9 @@ void CL_Disconnect (void)
 	Info_SetValueForStarKey (cl.serverinfo, "*z_ext", "", sizeof(cl.serverinfo));
 	cl.z_ext = 0;
 
+	// well, we need free qtv users before new connection
+	QTV_FreeUserList();
+
 	Cvar_ForceSet (&host_mapname, ""); // Notice mapname not valid yet
 }
 

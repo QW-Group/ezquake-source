@@ -2630,6 +2630,11 @@ void CL_ParseStufftext (void)
 		Parse_Shownick( s + 2 );
 		#endif // GLQUAKE
 	}
+	else if (!strncmp(s, "//qul ", sizeof("//qul ") - 1))
+	{
+		// qtv user list
+		Parse_QtvUserList( s + 2);
+	}
 	else
 	{
 		Cbuf_AddTextEx(&cbuf_svc, s);
