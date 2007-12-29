@@ -204,8 +204,8 @@ float nViewsizeExit=100;
 
 qbool	host_skipframe;			// used in demo playback
 
-byte		*host_basepal;
-byte		*host_colormap;
+byte		*host_basepal = NULL;
+byte		*host_colormap = NULL;
 
 int		fps_count;
 double		lastfps;
@@ -1658,9 +1658,31 @@ void GFX_Init (void)
 	HUD_Editor_Init();	// Need to reload some textures.
 }
 
-void CL_Init (void) 
+void ReloadPaletteAndColormap(void)
 {
 	int filesize;
+
+	// free
+
+	Q_free(host_basepal);
+	Q_free(host_colormap);
+
+	// load
+
+	host_basepal = (byte *) FS_LoadHeapFile ("gfx/palette.lmp", &filesize);
+	if (!host_basepal)
+		Sys_Error ("Couldn't load gfx/palette.lmp");
+	FMod_CheckModel("gfx/palette.lmp", host_basepal, filesize);
+
+	host_colormap = (byte *) FS_LoadHeapFile ("gfx/colormap.lmp", &filesize);
+	if (!host_colormap)
+		Sys_Error ("Couldn't load gfx/colormap.lmp");
+	FMod_CheckModel("gfx/colormap.lmp", host_colormap, filesize);
+}
+
+
+void CL_Init (void) 
+{
 	if (dedicated)
 		return;
 
@@ -1676,15 +1698,7 @@ void CL_Init (void)
 	Modules_Init();
 	FChecks_Init();
 
-	host_basepal = (byte *) FS_LoadHunkFile ("gfx/palette.lmp", &filesize);
-	if (!host_basepal)
-		Sys_Error ("Couldn't load gfx/palette.lmp");
-	FMod_CheckModel("gfx/palette.lmp", host_basepal, filesize);
-
-	host_colormap = (byte *) FS_LoadHunkFile ("gfx/colormap.lmp", &filesize);
-	if (!host_colormap)
-		Sys_Error ("Couldn't load gfx/colormap.lmp");
-	FMod_CheckModel("gfx/colormap.lmp", host_colormap, filesize);
+	ReloadPaletteAndColormap();
 
 	Sys_mkdir(va("%s/qw", com_basedir));
 	Sys_mkdir(va("%s/ezquake", com_basedir));

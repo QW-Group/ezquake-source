@@ -669,6 +669,7 @@ void VID_Init (unsigned char *palette) {
 void VID_Restart_f (void)
 {
 	extern void GFX_Init(void);
+	extern void ReloadPaletteAndColormap(void);
 	qbool old_con_suppress;
 
 	if (!host_initialized) { // sanity
@@ -677,6 +678,9 @@ void VID_Restart_f (void)
 	}
 
 	VID_Shutdown ();
+
+	ReloadPaletteAndColormap();
+
 	VID_Init (host_basepal);
 
 	// force models to reload (just flush, no actual loading code here)
