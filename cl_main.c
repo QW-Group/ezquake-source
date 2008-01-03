@@ -907,7 +907,18 @@ void Cl_ToggleSpec_f (void)
 		CL_Observe_f();
 }
 
-void CL_DNS_f (void) 
+void CL_Hash_f(void)
+{
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: %s <string to hash>\n", Cmd_Argv(0));
+		return;
+	}
+
+	Com_Printf("%u\n", Com_HashKey(Cmd_Argv(1)));
+}
+
+void CL_DNS_f(void) 
 {
 	char address[128], *s;
 	struct hostent *h;
@@ -1635,6 +1646,7 @@ void CL_InitLocal (void)
 	#endif // WIN32
 
 	Cmd_AddCommand ("dns", CL_DNS_f);
+	Cmd_AddCommand ("hash", CL_Hash_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
 
 	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
@@ -2346,16 +2358,21 @@ int CL_IncrLoop(int cview, int max)
 
 int CL_NextPlayer(int plr)
 {
-	plr++;
-
-	while (cl.players[plr].spectator || !cl.players[plr].name[0])
+	do
 	{
 		plr++;
-		if (plr >= MAX_CLIENTS)
+	} while ((cl.players[plr].spectator || !cl.players[plr].name[0]) && (plr < MAX_CLIENTS));
+
+	if (plr >= MAX_CLIENTS)
+	{
+		plr = 0;
+
+		do
 		{
-			plr = 0;
-		}
+			plr++;
+		} while ((cl.players[plr].spectator || !cl.players[plr].name[0]) && (plr < MAX_CLIENTS));
 	}
+
 	return plr;
 }
 
