@@ -504,6 +504,7 @@ void R_Register( void )
 		if (!( // no!
 			strcmp (r_displayRefresh.defaultvalue, r_displayRefresh.string) || // refresh rate wasnt changed
 			strcmp (r_colorbits.defaultvalue, r_colorbits.string ) || // bpp wasnt changed
+			strcmp (r_mode.defaultvalue, r_mode.string ) || // bpp wasnt changed
 			w || h) // width and height wasnt changed
 		) {
 			// ok, pseudo current
