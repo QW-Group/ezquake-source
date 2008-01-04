@@ -2361,16 +2361,21 @@ int CL_NextPlayer(int plr)
 	do
 	{
 		plr++;
-	} while ((cl.players[plr].spectator || !cl.players[plr].name[0]) && (plr < MAX_CLIENTS));
+	} while ((plr < MAX_CLIENTS) && (cl.players[plr].spectator || !cl.players[plr].name[0]));
 
 	if (plr >= MAX_CLIENTS)
 	{
-		plr = 0;
+		plr = -1;
 
 		do
 		{
 			plr++;
-		} while ((cl.players[plr].spectator || !cl.players[plr].name[0]) && (plr < MAX_CLIENTS));
+		} while ((plr < MAX_CLIENTS) && (cl.players[plr].spectator || !cl.players[plr].name[0]));
+	}
+
+	if (plr >= MAX_CLIENTS)
+	{
+		plr = 0;
 	}
 
 	return plr;
