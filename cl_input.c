@@ -50,6 +50,9 @@ cvar_t cam_zoomspeed = {"cam_zoomspeed", "300"};
 cvar_t cam_zoomaccel = {"cam_zoomaccel", "2000"};
 #endif
 
+#define CL_INPUT_WEAPONHIDE() ((cl_weaponhide.integer == 1) \
+	|| ((cl_weaponhide.integer == 2) && (cl.deathmatch == 1)))
+
 /*
 ===============================================================================
 KEY BUTTONS
@@ -184,7 +187,7 @@ void IN_AttackDown(void) {
 }
 
 void IN_AttackUp(void) {
-	if (cl_weaponhide.value) {
+	if (CL_INPUT_WEAPONHIDE()) {
 		// performs "weapon 2 1"
 		// that means: if player has shotgun and shells, select shotgun, otherwise select axe
 		in_impulse = (cl.stats[STAT_ITEMS] & IT_SHOTGUN && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1; 
@@ -301,7 +304,7 @@ void IN_Impulse (void) {
 
 // this is the same command as impulse but cl_weaponpreselect can be used in here, while for impulses cannot be used
 void IN_Weapon(void) {
-	int c, best;
+	int c, best, mode;
 	if ((c = Cmd_Argc() - 1) < 1) {
 		Com_Printf("Usage: %s w1 [w2 [w3..]]\nWill pre-select best available weapon from given sequence.\n", Cmd_Argv(0));
 		return;
@@ -311,11 +314,23 @@ void IN_Weapon(void) {
 	IN_RememberWpOrder();
 
 	best = IN_BestWeapon();
+
+	mode = (int) cl_weaponpreselect.value;
+
 	// cl_weaponpreselect behaviour:
 	// 0: select best weapon right now
 	// 1: always only pre-select; switch to it on +attack
 	// 2: user is holding +attack -> select, otherwise just pre-select
-	switch ((int) cl_weaponpreselect.value) {
+	// 3: same like 1, but only in deathmatch 1
+	// 4: same like 2, but only in deathmatch 1
+	if (mode == 3) {
+		mode = (cl.deathmatch == 1) ? 1 : 0;
+	}
+	else if (mode == 4) {
+		mode = (cl.deathmatch == 1) ? 2 : 0;
+	}
+
+	switch (mode) {
 		case 2:
 			if ((in_attack.state & 3) && best) // user is holding +attack and there is some weapon available
 				in_impulse = best;
