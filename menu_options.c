@@ -865,6 +865,10 @@ setting settgeneral_arr[] = {
 	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
 #endif
 
+#ifndef GLQUAKE
+	// FIXME! better menu structure definitely needed, this is horrible
+	ADDSET_NUMBER	("Gamma", v_gamma, 0, 3, 0.05),
+#endif
 	//Connection
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
@@ -882,7 +886,7 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
-	
+
 	//Match Tools
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
