@@ -39,6 +39,66 @@ $Id: in_win.c,v 1.39 2007-09-16 17:48:37 qqshka Exp $
 #include "input.h"
 #include "keys.h"
 
+#include "in_raw.h"
+
+// raw input specific defines
+#ifdef USINGRAWINPUT
+// defines
+#define MAX_RI_DEVICE_SIZE 128
+#define INIT_RIBUFFER_SIZE (sizeof(RAWINPUTHEADER)+sizeof(RAWMOUSE))
+
+#define RI_RAWBUTTON_MASK 0x000003E0
+#define RI_INVALID_POS    0x80000000
+
+// raw input dynamic functions
+typedef int 	(WINAPI *pGetRawInputDeviceList)	(OUT PRAWINPUTDEVICELIST pRawInputDeviceList, IN OUT PINT puiNumDevices, IN UINT cbSize);
+typedef int 	(WINAPI *pGetRawInputData)			(IN HRAWINPUT hRawInput, IN UINT uiCommand, OUT LPVOID pData, IN OUT PINT pcbSize, IN UINT cbSizeHeader);
+typedef int 	(WINAPI *pGetRawInputDeviceInfoA)	(IN HANDLE hDevice, IN UINT uiCommand, OUT LPVOID pData, IN OUT PINT pcbSize);
+typedef BOOL	(WINAPI *pRegisterRawInputDevices)	(IN PCRAWINPUTDEVICE pRawInputDevices, IN UINT uiNumDevices, IN UINT cbSize);
+
+pGetRawInputDeviceList		_GRIDL;
+pGetRawInputData			_GRID;
+pGetRawInputDeviceInfoA		_GRIDIA;
+pRegisterRawInputDevices	_RRID;
+
+typedef struct {
+	union {
+
+/*
+		struct { // serial mouse
+			HANDLE comhandle;
+			HANDLE threadhandle;
+			DWORD threadid;
+		};
+*/
+
+		HANDLE rawinputhandle; // raw input
+	} handles;
+
+	int numbuttons;
+
+	volatile int buttons;
+	volatile int oldbuttons;
+	volatile int wheeldelta;
+
+	volatile int delta[2];
+	int old_delta[2];
+	int accum[2];
+
+	int pos[2];
+} mouse_t;
+
+mouse_t		*rawmice;
+int			rawmicecount;
+RAWINPUT	*raw;
+int			ribuffersize;
+
+void		IN_RawInput_DeRegister(void);
+int			IN_RawInput_Register(void);
+void		IN_RawInput_DeInit(void);
+
+#endif
+
 
 //#define iDirectInputCreate(a,b,c,d)	pDirectInputCreate(a,b,c,d)
 
@@ -185,7 +245,7 @@ static DIDATAFORMAT	df = {
 #define dinput false
 #endif
 
-typedef enum { mt_none = 0, mt_normal, mt_dinput } mousetype_t;
+typedef enum { mt_none = 0, mt_normal, mt_dinput, mt_raw } mousetype_t;
 
 // forward-referenced functions
 void IN_StartupJoystick (void);
@@ -674,6 +734,16 @@ void IN_ActivateMouse (void) {
 		} else
 #endif
 		{
+#ifdef USINGRAWINPUT
+			if (rawmicecount > 0)
+			{
+				if (IN_RawInput_Register()) {
+					Com_Printf("Raw input: unable to register raw input, deinitializing\n");
+					IN_RawInput_DeInit();
+				}
+			}
+#endif
+
 			if (mouseparmsvalid)
 				restore_spi = SystemParametersInfo (SPI_SETMOUSE, 0, newmouseparms, 0);
 
@@ -705,6 +775,11 @@ void IN_DeactivateMouse (void) {
 		} else
 #endif
 		{
+#ifdef USINGRAWINPUT
+			if (rawmicecount > 0)
+				IN_RawInput_DeRegister();
+#endif
+
 			if (restore_spi)
 				SystemParametersInfo (SPI_SETMOUSE, 0, originalmouseparms, 0);
 
@@ -726,6 +801,326 @@ void IN_RestoreOriginalMouseState (void) {
 	ShowCursor (TRUE);
 	ShowCursor (FALSE);
 }
+
+#ifdef USINGRAWINPUT
+
+//================================
+// raw input de-init functions
+//================================
+
+void IN_RawInput_DeRegister(void)
+{
+	RAWINPUTDEVICE Rid;
+
+	// deregister raw input
+	Rid.usUsagePage = 0x01; 
+	Rid.usUsage = 0x02; 
+	Rid.dwFlags = RIDEV_REMOVE;
+	Rid.hwndTarget = NULL;
+
+	(*_RRID)(&Rid, 1, sizeof(Rid));
+}
+
+void IN_RawInput_DeInit(void)
+{
+	if (rawmicecount < 1)
+		return;
+
+	IN_RawInput_DeRegister();
+
+	Q_free(rawmice);
+	Q_free(raw);
+
+	// dealloc mouse structure
+	rawmicecount = 0;
+}
+
+//================================
+// raw input registration functions
+//================================
+
+int IN_RawInput_Register(void)
+{
+	// This function registers to receive the WM_INPUT messages
+	RAWINPUTDEVICE Rid; // Register only for mouse messages from wm_input.  
+
+	//register to get wm_input messages
+	Rid.usUsagePage = 0x01; 
+	Rid.usUsage = 0x02; 
+	Rid.dwFlags = RIDEV_NOLEGACY; // adds HID mouse and also ignores legacy mouse messages
+	Rid.hwndTarget = NULL;
+
+	// Register to receive the WM_INPUT message for any change in mouse (buttons, wheel, and movement will all generate the same message)
+	if (!(*_RRID)(&Rid, 1, sizeof(Rid)))
+		return 1;
+
+	return 0;
+}
+
+int IN_RawInput_IsRDPMouse(char *cDeviceString)
+{
+	char cRDPString[] = "\\??\\Root#RDP_MOU#";
+	int i;
+
+	if (strlen(cDeviceString) < strlen(cRDPString)) {
+		return 0;
+	}
+
+	for (i = strlen(cRDPString) - 1; i >= 0; i--)
+	{
+		if (cDeviceString[i] != cRDPString[i])
+			return 0;
+	}
+
+	return 1; // is RDP mouse
+}
+
+void IN_RawInput_Init(void)
+{
+	  // "0" to exclude, "1" to include
+	PRAWINPUTDEVICELIST pRawInputDeviceList;
+	int inputdevices, i, j, mtemp;
+	char dname[MAX_RI_DEVICE_SIZE];
+
+	// Return 0 if rawinput is not available
+	HMODULE user32 = LoadLibrary("user32.dll");
+	if (!user32)
+	{
+		Com_Printf("Raw input: unable to load user32.dll\n");
+		return;
+	}
+	_RRID = (pRegisterRawInputDevices)GetProcAddress(user32,"RegisterRawInputDevices");
+	if (!_RRID)
+	{
+		Com_Printf("Raw input: function RegisterRawInputDevices could not be registered\n");
+		return;
+	}
+	_GRIDL = (pGetRawInputDeviceList)GetProcAddress(user32,"GetRawInputDeviceList");
+	if (!_GRIDL)
+	{
+		Com_Printf("Raw input: function GetRawInputDeviceList could not be registered\n");
+		return;
+	}
+	_GRIDIA = (pGetRawInputDeviceInfoA)GetProcAddress(user32,"GetRawInputDeviceInfoA");
+	if (!_GRIDIA)
+	{
+		Com_Printf("Raw input: function GetRawInputDeviceInfoA could not be registered\n");
+		return;
+	}
+	_GRID = (pGetRawInputData)GetProcAddress(user32,"GetRawInputData");
+	if (!_GRID)
+	{
+		Com_Printf("Raw input: function GetRawInputData could not be registered\n");
+		return;
+	}
+
+	// 1st call to GetRawInputDeviceList: Pass NULL to get the number of devices.
+	if ((*_GRIDL)(NULL, &inputdevices, sizeof(RAWINPUTDEVICELIST)) != 0)
+	{
+		Com_Printf("Raw input: unable to count raw input devices\n");
+		return;
+	}
+
+	// Allocate the array to hold the DeviceList
+	pRawInputDeviceList = Q_malloc(sizeof(RAWINPUTDEVICELIST) * inputdevices);
+
+	// 2nd call to GetRawInputDeviceList: Pass the pointer to our DeviceList and GetRawInputDeviceList() will fill the array
+	if ((*_GRIDL)(pRawInputDeviceList, &inputdevices, sizeof(RAWINPUTDEVICELIST)) == -1)
+	{
+		Com_Printf("Raw input: unable to get raw input device list\n");
+		return;
+	}
+
+	// Loop through all devices and count the mice
+	for (i = 0, mtemp = 0; i < inputdevices; i++)
+	{
+		if (pRawInputDeviceList[i].dwType == RIM_TYPEMOUSE) 
+		{
+			j = MAX_RI_DEVICE_SIZE;
+
+			// Get the device name and use it to determine if it's the RDP Terminal Services virtual device.
+			if ((*_GRIDIA)(pRawInputDeviceList[i].hDevice, RIDI_DEVICENAME, dname, &j) < 0)
+				dname[0] = 0;
+
+			if (/*!(in_rawinput_rdp.value) &&*/ IN_RawInput_IsRDPMouse(dname)) // use rdp mouse (cvar)
+				continue;
+
+			// advance temp device count
+			mtemp++;
+		}
+	}
+
+	// exit out if no devices found
+	if (!mtemp)
+	{
+		Com_Printf("Raw input: no usable device found\n");
+		return;
+	}
+
+	// Loop again and bind devices
+	rawmice = Q_malloc(sizeof(mouse_t) * mtemp);
+	for (i = 0; i < inputdevices; i++)
+	{
+		if (pRawInputDeviceList[i].dwType == RIM_TYPEMOUSE)
+		{
+			j = MAX_RI_DEVICE_SIZE;
+
+			// Get the device name and use it to determine if it's the RDP Terminal Services virtual device.
+			if ((*_GRIDIA)(pRawInputDeviceList[i].hDevice, RIDI_DEVICENAME, dname, &j) < 0)
+				dname[0] = 0;
+
+			if (/*!(in_rawinput_rdp.value) &&*/ IN_RawInput_IsRDPMouse(dname)) // use rdp mouse (cvar)
+				continue;
+
+			// print pretty message about the mouse
+			dname[MAX_RI_DEVICE_SIZE - 1] = 0;
+			for (mtemp = strlen(dname); mtemp >= 0; mtemp--)
+			{
+				if (dname[mtemp] == '#')
+				{
+					dname[mtemp + 1] = 0;
+					break;
+				}
+			}
+			Com_Printf("Raw input: [%i] %s\n", i, dname);
+
+			// set handle
+			rawmice[rawmicecount].handles.rawinputhandle = pRawInputDeviceList[i].hDevice;
+			rawmice[rawmicecount].numbuttons = 10;
+			rawmice[rawmicecount].pos[0] = RI_INVALID_POS;
+			rawmicecount++;
+		}
+	}
+
+   
+	// free the RAWINPUTDEVICELIST
+	Q_free(pRawInputDeviceList);
+
+	// alloc raw input buffer
+	raw = Q_malloc(INIT_RIBUFFER_SIZE);
+	ribuffersize = INIT_RIBUFFER_SIZE;
+
+	Com_Printf("Raw input: initialized with %i mice\n", rawmicecount);
+
+	return; // success
+}
+
+//================================
+// raw input read functions
+//================================
+
+void IN_RawInput_MouseRead(HANDLE in_device_handle)
+{
+	int i = 0, tbuttons, j;
+	int dwSize;
+
+	if ( !raw || !rawmice || rawmicecount < 1 )
+		return; // no thx
+
+	// get raw input
+	if ((*_GRID)((HRAWINPUT)in_device_handle, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER)) == -1) 
+	{
+		Com_Printf("Raw input: unable to add to get size of raw input header.\n");
+		return;
+	}
+
+	if (dwSize > ribuffersize)
+	{
+		ribuffersize = dwSize;
+		raw = Q_realloc(raw, dwSize);
+	}
+		
+	if ((*_GRID)((HRAWINPUT)in_device_handle, RID_INPUT, raw, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize ) {
+		Com_Printf("Raw input: unable to add to get raw input header.\n");
+		return;
+	} 
+
+	// find mouse in our mouse list
+	for (; i < rawmicecount; i++)
+	{
+		if (rawmice[i].handles.rawinputhandle == raw->header.hDevice)
+			break;
+	}
+
+	if (i == rawmicecount) // we're not tracking this mouse
+		return;
+
+	// movement
+	if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
+	{
+		if (rawmice[i].pos[0] != RI_INVALID_POS)
+		{
+			rawmice[i].delta[0] += raw->data.mouse.lLastX - rawmice[i].pos[0];
+			rawmice[i].delta[1] += raw->data.mouse.lLastY - rawmice[i].pos[1];
+		}
+		rawmice[i].pos[0] = raw->data.mouse.lLastX;
+		rawmice[i].pos[1] = raw->data.mouse.lLastY;
+	}
+	else // RELATIVE
+	{
+		rawmice[i].delta[0] += raw->data.mouse.lLastX;
+		rawmice[i].delta[1] += raw->data.mouse.lLastY;
+		rawmice[i].pos[0] = RI_INVALID_POS;
+	}
+
+	// buttons
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) 
+		Key_Event(K_MOUSE1, true);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_1_UP)   
+		Key_Event(K_MOUSE1, false);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) 
+		Key_Event(K_MOUSE2, true);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_2_UP)   
+		Key_Event(K_MOUSE2, false);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) 
+		Key_Event(K_MOUSE3, true);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_3_UP)   
+		Key_Event(K_MOUSE3, false);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) 
+		Key_Event(K_MOUSE4, true);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_4_UP)   
+		Key_Event(K_MOUSE4, false);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) 
+		Key_Event(K_MOUSE5, true);
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_5_UP)   
+		Key_Event(K_MOUSE5, false);
+
+	// mouse wheel
+	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_WHEEL)
+	{      // If the current message has a mouse_wheel message
+		if ((SHORT)raw->data.mouse.buttondata.usButtonData > 0) 
+		{
+			Key_Event(K_MWHEELUP, true);
+			Key_Event(K_MWHEELUP, false);
+		}
+		if ((SHORT)raw->data.mouse.buttondata.usButtonData < 0)
+		{
+			Key_Event(K_MWHEELDOWN, true);
+			Key_Event(K_MWHEELDOWN, false);
+		}
+	}
+
+	// extra buttons
+	tbuttons = raw->data.mouse.ulRawButtons & RI_RAWBUTTON_MASK;
+	for (j=6 ; j<rawmice[i].numbuttons ; j++)
+	{
+		if ( (tbuttons & (1<<j)) && !(rawmice[i].buttons & (1<<j)) )
+		{
+			Key_Event (K_MOUSE1 + j, true);
+		}
+
+		if ( !(tbuttons & (1<<j)) && (rawmice[i].buttons & (1<<j)) )
+		{
+			Key_Event (K_MOUSE1 + j, false);
+		}
+
+	}
+
+	rawmice[i].buttons &= ~RI_RAWBUTTON_MASK;
+	rawmice[i].buttons |= tbuttons;
+}
+
+#endif
 
 qbool IN_InitDInput (void) {
 #if DIRECTINPUT_VERSION	>= 0x0700
@@ -856,6 +1251,13 @@ void IN_StartupMouse (void) {
 			}
 		}
 		mouse_buttons = 8;
+
+#ifdef USINGRAWINPUT
+		if (in_mouse.integer == mt_raw)
+		{
+			IN_RawInput_Init();
+		}
+#endif
 	}
 
 	if (in_m_mwhook.integer)
@@ -912,6 +1314,18 @@ void IN_SetGlobals(void) {
 	last_wseq_printed=  0;
 
 	dinput = false;
+#endif
+
+#ifdef USINGRAWINPUT
+	_GRIDL			= NULL;
+	_GRID			= NULL;
+	_GRIDIA			= NULL;
+	_RRID			= NULL;
+
+	rawmice			= NULL;
+	rawmicecount	= 0;
+	raw				= NULL;
+	ribuffersize	= 0;;
 #endif
 }
 
@@ -983,13 +1397,25 @@ void IN_Init (void) {
 		case mt_dinput:
 #if DIRECTINPUT_VERSION	>= 0x0700
 			if (in_m_os_parameters.integer)
-				Com_Printf ("%s will be ignored with dinput mouse\n", in_m_os_parameters.name);
+				Com_Printf ("%s will be ignored with DirectInput mouse\n", in_m_os_parameters.name);
 			break;
 #else
-			Com_Printf ("DirectInput not supported in this build\n");
+			Com_Printf ("DirectInput mouse not supported in this build\n");
 			Cvar_LatchedSetValue (&in_mouse, mt_normal);
 			break;
 #endif
+
+		case mt_raw:
+#ifdef USINGRAWINPUT
+			if (in_m_os_parameters.integer)
+				Com_Printf ("%s will be ignored with RawInput mouse\n", in_m_os_parameters.name);
+			break;
+#else
+			Com_Printf ("RawInput mouse not supported in this build\n");
+			Cvar_LatchedSetValue (&in_mouse, mt_normal);
+			break;
+#endif
+
 		default:
 			Com_Printf("Unknow value %d of %s, using normal mouse\n", in_mouse.integer, in_mouse.name);
 			Cvar_LatchedSetValue (&in_mouse, mt_normal);
@@ -1038,6 +1464,10 @@ void IN_Shutdown (void) {
 
 	MW_Shutdown(); // mouseware hook
 
+#endif
+
+#ifdef USINGRAWINPUT
+	IN_RawInput_DeInit();
 #endif
 
 	//
@@ -1164,6 +1594,24 @@ void IN_MouseMove (usercmd_t *cmd) {
 	} 
 	else
 #endif
+#ifdef USINGRAWINPUT
+	if (rawmicecount > 0)
+	{
+		// probably not the right way...
+		int x;
+
+		mx = my = 0;
+
+		for (x = 0; x < rawmicecount; x++)
+		{
+			mx += rawmice[x].delta[0];
+			my += rawmice[x].delta[1];
+
+			rawmice[x].delta[0] = rawmice[x].delta[1] = 0;
+		}
+	}
+	else
+#endif
 	{
 		GetCursorPos (&current_pos);
 		mx = current_pos.x - window_center_x + mx_accum;
@@ -1247,6 +1695,13 @@ void IN_Move (usercmd_t *cmd) {
 }
 void IN_Accumulate (void) {
 	if (mouseactive) {
+#ifdef USINGRAWINPUT
+		if (rawmicecount > 0)
+		{
+			return;
+		}
+#endif
+
 		GetCursorPos (&current_pos);
 
 		// Cursor free while not ingame

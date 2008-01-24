@@ -2316,6 +2316,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\in_raw.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\input.h"
 					>
 				</File>

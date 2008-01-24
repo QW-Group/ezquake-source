@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "qsound.h"
 
+#include "in_raw.h"
 
 #ifdef WITH_KEYMAP
 #include "keymap.h"
@@ -2237,6 +2238,13 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	}
 
 	switch (uMsg) {
+#ifdef USINGRAWINPUT
+		case WM_INPUT:
+			// raw input handling
+			IN_RawInput_MouseRead((HANDLE)lParam);
+			break;
+#endif
+
 		case WM_CREATE:
 			break;
 

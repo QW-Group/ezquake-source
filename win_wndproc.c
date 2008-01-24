@@ -37,6 +37,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "resource.h"
 #include "winquake.h"
 
+#include "in_raw.h"
+
 
 qbool DDActive; // dummy, unused
 
@@ -146,6 +148,13 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 	}
 
     switch (uMsg) {
+#ifdef USINGRAWINPUT
+		case WM_INPUT:
+			// raw input handling
+			IN_RawInput_MouseRead((HANDLE)lParam);
+			break;
+#endif
+
 		case WM_KILLFOCUS:
             break;
 
