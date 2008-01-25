@@ -61,34 +61,20 @@ pGetRawInputData			_GRID;
 pGetRawInputDeviceInfoA		_GRIDIA;
 pRegisterRawInputDevices	_RRID;
 
-typedef struct {
-	union {
+typedef struct
+{
 
-/*
-		struct { // serial mouse
-			HANDLE comhandle;
-			HANDLE threadhandle;
-			DWORD threadid;
-		};
-*/
+	HANDLE			rawinputhandle; // raw input, identify particular mice
 
-		HANDLE rawinputhandle; // raw input
-	} handles;
+	int				numbuttons;
+	volatile int	buttons;
 
-	int numbuttons;
+	volatile int	delta[2];
+	int				pos[2];
 
-	volatile int buttons;
-	volatile int oldbuttons;
-	volatile int wheeldelta;
+} rawmouse_t;
 
-	volatile int delta[2];
-	int old_delta[2];
-	int accum[2];
-
-	int pos[2];
-} mouse_t;
-
-mouse_t		*rawmice;
+rawmouse_t	*rawmice;
 int			rawmicecount;
 RAWINPUT	*raw;
 int			ribuffersize;
@@ -942,7 +928,7 @@ void IN_RawInput_Init(void)
 			if ((*_GRIDIA)(pRawInputDeviceList[i].hDevice, RIDI_DEVICENAME, dname, &j) < 0)
 				dname[0] = 0;
 
-			if (/*!(in_rawinput_rdp.value) &&*/ IN_RawInput_IsRDPMouse(dname)) // use rdp mouse (cvar)
+			if (IN_RawInput_IsRDPMouse(dname)) // ignore rdp mouse
 				continue;
 
 			// advance temp device count
@@ -958,7 +944,7 @@ void IN_RawInput_Init(void)
 	}
 
 	// Loop again and bind devices
-	rawmice = Q_malloc(sizeof(mouse_t) * mtemp);
+	rawmice = Q_malloc(sizeof(rawmouse_t) * mtemp);
 	for (i = 0; i < inputdevices; i++)
 	{
 		if (pRawInputDeviceList[i].dwType == RIM_TYPEMOUSE)
@@ -969,7 +955,7 @@ void IN_RawInput_Init(void)
 			if ((*_GRIDIA)(pRawInputDeviceList[i].hDevice, RIDI_DEVICENAME, dname, &j) < 0)
 				dname[0] = 0;
 
-			if (/*!(in_rawinput_rdp.value) &&*/ IN_RawInput_IsRDPMouse(dname)) // use rdp mouse (cvar)
+			if (IN_RawInput_IsRDPMouse(dname)) // ignore rdp mouse
 				continue;
 
 			// print pretty message about the mouse
@@ -985,7 +971,7 @@ void IN_RawInput_Init(void)
 			Com_Printf("Raw input: [%i] %s\n", i, dname);
 
 			// set handle
-			rawmice[rawmicecount].handles.rawinputhandle = pRawInputDeviceList[i].hDevice;
+			rawmice[rawmicecount].rawinputhandle = pRawInputDeviceList[i].hDevice;
 			rawmice[rawmicecount].numbuttons = 10;
 			rawmice[rawmicecount].pos[0] = RI_INVALID_POS;
 			rawmicecount++;
@@ -1038,7 +1024,7 @@ void IN_RawInput_MouseRead(HANDLE in_device_handle)
 	// find mouse in our mouse list
 	for (; i < rawmicecount; i++)
 	{
-		if (rawmice[i].handles.rawinputhandle == raw->header.hDevice)
+		if (rawmice[i].rawinputhandle == raw->header.hDevice)
 			break;
 	}
 
