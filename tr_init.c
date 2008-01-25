@@ -174,7 +174,8 @@ static void InitOpenGL( void )
 	}
 
 	// print info
-	GfxInfo_f();
+	if ( !host_initialized || r_verbose.integer )
+		GfxInfo_f();
 
 	// set default state
 	GL_SetDefaultState();
@@ -578,7 +579,7 @@ RE_Init
 void RE_Init( void ) {	
 	int	err;
 
-	ST_Printf( PRINT_ALL, "----- R_Init -----\n" );
+	ST_Printf( PRINT_R_VERBOSE, "----- R_Init -----\n" );
 
 	R_Register();
 
@@ -586,9 +587,9 @@ void RE_Init( void ) {
 
 	err = qglGetError();
 	if ( err != GL_NO_ERROR )
-		ST_Printf (PRINT_ALL, "glGetError() = 0x%x\n", err);
+		ST_Printf ( PRINT_R_VERBOSE, "glGetError() = 0x%x\n", err );
 
-	ST_Printf( PRINT_ALL, "----- finished R_Init -----\n" );
+	ST_Printf( PRINT_R_VERBOSE, "----- finished R_Init -----\n" );
 }
 
 /*
@@ -598,7 +599,7 @@ RE_Shutdown
 */
 void RE_Shutdown( qbool destroyWindow ) {
 
-	ST_Printf( PRINT_ALL, "R_Shutdown( %i )\n", destroyWindow );
+	ST_Printf( PRINT_R_VERBOSE, "R_Shutdown( %i )\n", destroyWindow );
 
 	// shut down platform specific OpenGL stuff
 	if ( destroyWindow ) {

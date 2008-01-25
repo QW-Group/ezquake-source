@@ -242,12 +242,14 @@ void Com_DPrintf (char *fmt, ...);
 void Com_PrintVerticalBar(int width);
 
 // why not just 1 2 3 4 ... ?
-#define PRINT_OK		(1<<0)
-#define PRINT_INFO		(1<<1)
-#define PRINT_FAIL		(1<<2)
-#define PRINT_WARNING	(1<<3)
-#define PRINT_ALL		(1<<4)
-#define PRINT_ERR_FATAL	(1<<5)
+#define PRINT_OK		(1<<0) // have prefix, printed only if developer != 0
+#define PRINT_INFO		(1<<1) // have prefix
+#define PRINT_FAIL		(1<<2) // have prefix
+#define PRINT_WARNING	(1<<3) // do not have prefix
+#define PRINT_ALL		(1<<4) // do not have prefix
+#define PRINT_ERR_FATAL	(1<<5) // do Sys_Error()
+#define PRINT_DBG		(1<<6) // do not have prefix, printed only if developer != 0
+
 void Com_Printf_State(int state, char *fmt, ...);
 // Com_Printf_State is too long name, so use define
 #define ST_Printf Com_Printf_State

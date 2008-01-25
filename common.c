@@ -982,13 +982,25 @@ void Com_Printf_State(int state, char *fmt, ...)
 
 	msg[0] = 0;
 
-	switch (state) {
+	switch (state)
+	{
 		case PRINT_FAIL:
 			prefix = "\x02" "\x10" "fail" "\x11 ";
 			break;
 		case PRINT_OK:
+
+			if (!developer.integer)
+				return;  // NOTE: print msgs only in developer mode
+
 			prefix = " " " ok " "  ";
 			break;
+		case PRINT_DBG:
+			if (!developer.integer)
+				return;  // NOTE: print msgs only in developer mode
+
+			prefix = "";
+			break;
+
 		case PRINT_WARNING:
 		case PRINT_ALL:
 			prefix = ""; // FIXME: put here some color
@@ -1002,12 +1014,10 @@ void Com_Printf_State(int state, char *fmt, ...)
 			break;
 	}
 
-	if (state != PRINT_OK || developer.value) { // print ok msgs only in developer mode
-		va_start (argptr, fmt);
-		vsnprintf (msg, sizeof(msg), fmt, argptr);
-		va_end(argptr);
-		Com_Printf ("%s%s", prefix, msg);
-	}
+	va_start (argptr, fmt);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	va_end(argptr);
+	Com_Printf ("%s%s", prefix, msg);
 
 	if (state == PRINT_ERR_FATAL)
 		Sys_Error(msg);

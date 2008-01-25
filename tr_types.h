@@ -26,6 +26,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef __TR_TYPES_H
 #define __TR_TYPES_H
 
+
+#define PRINT_R_VERBOSE ( r_verbose.integer ? PRINT_ALL : PRINT_DBG )
+
+
 /*
 ** glconfig_t
 **
@@ -33,6 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ** being run right now.  These are constant once the OpenGL
 ** subsystem is initialized.
 */
+
 
 #define	MAX_STRING_CHARS	1024
 #define	BIG_INFO_STRING		8192

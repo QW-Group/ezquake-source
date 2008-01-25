@@ -150,7 +150,7 @@ BOOL  ( WINAPI * qwglSetDeviceGammaRamp3DFX)( HDC, LPVOID );
 
 qbool QGL_Init( const char *dllname ) {
 	// bombastic function
-	ST_Printf( PRINT_ALL, "...initializing QGL\n" );
+	ST_Printf( PRINT_R_VERBOSE, "...initializing QGL\n" );
 
 	qglGetIntegerv				 = glGetIntegerv;
 	qglGetError					 = glGetError;
@@ -191,7 +191,7 @@ qbool QGL_Init( const char *dllname ) {
 }
 
 void QGL_Shutdown( void ) {
-	ST_Printf( PRINT_ALL, "...shutting down QGL\n" );
+	ST_Printf( PRINT_R_VERBOSE, "...shutting down QGL\n" );
 
 	qglGetIntegerv				 = NULL;
 	qglGetError					 = NULL;
@@ -237,10 +237,10 @@ static qbool GLW_StartDriverAndSetMode( const char *drivername,
 	switch ( err )
 	{
 	case RSERR_INVALID_FULLSCREEN:
-		ST_Printf( PRINT_ALL, "...WARNING: fullscreen unavailable in this mode\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...WARNING: fullscreen unavailable in this mode\n" );
 		return false;
 	case RSERR_INVALID_MODE:
-		ST_Printf( PRINT_ALL, "...WARNING: could not set the given mode (%d)\n", mode );
+		ST_Printf( PRINT_R_VERBOSE, "...WARNING: could not set the given mode (%d)\n", mode );
 		return false;
 	default:
 		break;
@@ -262,7 +262,7 @@ static int GLW_ChoosePFD( HDC hDC, PIXELFORMATDESCRIPTOR *pPFD )
 	int i;
 	int bestMatch = 0;
 
-	ST_Printf( PRINT_ALL, "...GLW_ChoosePFD( %d, %d, %d )\n", ( int ) pPFD->cColorBits, ( int ) pPFD->cDepthBits, ( int ) pPFD->cStencilBits );
+	ST_Printf( PRINT_R_VERBOSE, "...GLW_ChoosePFD( %d, %d, %d )\n", ( int ) pPFD->cColorBits, ( int ) pPFD->cDepthBits, ( int ) pPFD->cStencilBits );
 
 	// count number of PFDs
 	if ( glConfig.driverType > GLDRV_ICD )
@@ -279,7 +279,7 @@ static int GLW_ChoosePFD( HDC hDC, PIXELFORMATDESCRIPTOR *pPFD )
 		maxPFD = MAX_PFDS;
 	}
 
-	ST_Printf( PRINT_ALL, "...%d PFDs found\n", maxPFD - 1 );
+	ST_Printf( PRINT_R_VERBOSE, "...%d PFDs found\n", maxPFD - 1 );
 
 	// grab information
 	for ( i = 1; i <= maxPFD; i++ )
@@ -430,21 +430,21 @@ static int GLW_ChoosePFD( HDC hDC, PIXELFORMATDESCRIPTOR *pPFD )
 	{
 		if ( !r_allowSoftwareGL.integer )
 		{
-			ST_Printf( PRINT_ALL, "...no hardware acceleration found\n" );
+			ST_Printf( PRINT_R_VERBOSE, "...no hardware acceleration found\n" );
 			return 0;
 		}
 		else
 		{
-			ST_Printf( PRINT_ALL, "...using software emulation\n" );
+			ST_Printf( PRINT_R_VERBOSE, "...using software emulation\n" );
 		}
 	}
 	else if ( pfds[bestMatch].dwFlags & PFD_GENERIC_ACCELERATED )
 	{
-		ST_Printf( PRINT_ALL, "...MCD acceleration found\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...MCD acceleration found\n" );
 	}
 	else
 	{
-		ST_Printf( PRINT_ALL, "...hardware acceleration found\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...hardware acceleration found\n" );
 	}
 
 	*pPFD = pfds[bestMatch];
@@ -487,7 +487,7 @@ static void GLW_CreatePFD( PIXELFORMATDESCRIPTOR *pPFD, int colorbits, int depth
 
 	if ( stereo )
 	{
-		ST_Printf( PRINT_ALL, "...attempting to use stereo\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...attempting to use stereo\n" );
 		src.dwFlags |= PFD_STEREO;
 		glConfig.stereoEnabled = true;
 	}
@@ -519,17 +519,17 @@ static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
 		//
 		if ( ( pixelformat = GLW_ChoosePFD( glw_state.hDC, pPFD ) ) == 0 )
 		{
-			ST_Printf( PRINT_ALL, "...GLW_ChoosePFD failed\n");
+			ST_Printf( PRINT_R_VERBOSE, "...GLW_ChoosePFD failed\n");
 			return TRY_PFD_FAIL_SOFT;
 		}
-		ST_Printf( PRINT_ALL, "...PIXELFORMAT %d selected\n", pixelformat );
+		ST_Printf( PRINT_R_VERBOSE, "...PIXELFORMAT %d selected\n", pixelformat );
 
 		if ( glConfig.driverType > GLDRV_ICD )
 		{
 			qwglDescribePixelFormat( glw_state.hDC, pixelformat, sizeof( *pPFD ), pPFD );
 			if ( qwglSetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
 			{
-				ST_Printf ( PRINT_ALL, "...qwglSetPixelFormat failed\n");
+				ST_Printf ( PRINT_R_VERBOSE, "...qwglSetPixelFormat failed\n");
 				return TRY_PFD_FAIL_SOFT;
 			}
 		}
@@ -539,7 +539,7 @@ static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
 
 			if ( SetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
 			{
-				ST_Printf (PRINT_ALL, "...SetPixelFormat failed\n" );
+				ST_Printf (PRINT_R_VERBOSE, "...SetPixelFormat failed\n" );
 				return TRY_PFD_FAIL_SOFT;
 			}
 		}
@@ -552,24 +552,24 @@ static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
 	//
 	if ( !glw_state.hGLRC )
 	{
-		ST_Printf( PRINT_ALL, "...creating GL context: " );
+		ST_Printf( PRINT_R_VERBOSE, "...creating GL context: " );
 		if ( ( glw_state.hGLRC = qwglCreateContext( glw_state.hDC ) ) == 0 )
 		{
-			ST_Printf (PRINT_ALL, "failed\n");
+			ST_Printf (PRINT_R_VERBOSE, "failed\n");
 
 			return TRY_PFD_FAIL_HARD;
 		}
-		ST_Printf( PRINT_ALL, "succeeded\n" );
+		ST_Printf( PRINT_R_VERBOSE, "succeeded\n" );
 
-		ST_Printf( PRINT_ALL, "...making context current: " );
+		ST_Printf( PRINT_R_VERBOSE, "...making context current: " );
 		if ( !qwglMakeCurrent( glw_state.hDC, glw_state.hGLRC ) )
 		{
 			qwglDeleteContext( glw_state.hGLRC );
 			glw_state.hGLRC = NULL;
-			ST_Printf (PRINT_ALL, "failed\n");
+			ST_Printf (PRINT_R_VERBOSE, "failed\n");
 			return TRY_PFD_FAIL_HARD;
 		}
-		ST_Printf( PRINT_ALL, "succeeded\n" );
+		ST_Printf( PRINT_R_VERBOSE, "succeeded\n" );
 	}
 
 	return TRY_PFD_SUCCESS;
@@ -588,21 +588,21 @@ static qbool GLW_InitDriver( const char *drivername, int colorbits )
 	int		depthbits, stencilbits;
 	static PIXELFORMATDESCRIPTOR pfd;		// save between frames since 'tr' gets cleared
 
-	ST_Printf( PRINT_ALL, "Initializing OpenGL driver\n" );
+	ST_Printf( PRINT_R_VERBOSE, "Initializing OpenGL driver\n" );
 
 	//
 	// get a DC for our window if we don't already have one allocated
 	//
 	if ( glw_state.hDC == NULL )
 	{
-		ST_Printf( PRINT_ALL, "...getting DC: " );
+		ST_Printf( PRINT_R_VERBOSE, "...getting DC: " );
 
 		if ( ( glw_state.hDC = GetDC( mainwindow ) ) == NULL )
 		{
-			ST_Printf( PRINT_ALL, "failed\n" );
+			ST_Printf( PRINT_R_VERBOSE, "failed\n" );
 			return false;
 		}
-		ST_Printf( PRINT_ALL, "succeeded\n" );
+		ST_Printf( PRINT_R_VERBOSE, "succeeded\n" );
 	}
 
 	if ( colorbits == 0 )
@@ -659,7 +659,7 @@ static qbool GLW_InitDriver( const char *drivername, int colorbits )
 				ReleaseDC( mainwindow, glw_state.hDC );
 				glw_state.hDC = NULL;
 
-				ST_Printf( PRINT_ALL, "...failed to find an appropriate PIXELFORMAT\n" );
+				ST_Printf( PRINT_R_VERBOSE, "...failed to find an appropriate PIXELFORMAT\n" );
 
 				return false;
 			}
@@ -680,7 +680,7 @@ static qbool GLW_InitDriver( const char *drivername, int colorbits )
 					glw_state.hDC = NULL;
 				}
 
-				ST_Printf( PRINT_ALL, "...failed to find an appropriate PIXELFORMAT\n" );
+				ST_Printf( PRINT_R_VERBOSE, "...failed to find an appropriate PIXELFORMAT\n" );
 
 				return false;
 			}
@@ -691,7 +691,7 @@ static qbool GLW_InitDriver( const char *drivername, int colorbits )
 		*/
 		if ( !( pfd.dwFlags & PFD_STEREO ) && ( r_stereo.integer != 0 ) ) 
 		{
-			ST_Printf( PRINT_ALL, "...failed to select stereo pixel format\n" );
+			ST_Printf( PRINT_R_VERBOSE, "...failed to select stereo pixel format\n" );
 			glConfig.stereoEnabled = false;
 		}
 	}
@@ -743,7 +743,7 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 			ST_Printf( PRINT_ERR_FATAL, "GLW_CreateWindow: could not register window class" );
 		}
 		s_classRegistered = true;
-		ST_Printf( PRINT_ALL, "...registered window class\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...registered window class\n" );
 	}
 
 	//
@@ -828,11 +828,11 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 	
 		ShowWindow( mainwindow, SW_SHOW );
 		UpdateWindow( mainwindow );
-		ST_Printf( PRINT_ALL, "...created window@%d,%d (%dx%d)\n", x, y, w, h );
+		ST_Printf( PRINT_R_VERBOSE, "...created window@%d,%d (%dx%d)\n", x, y, w, h );
 	}
 	else
 	{
-		ST_Printf( PRINT_ALL, "...window already present, CreateWindowEx skipped\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...window already present, CreateWindowEx skipped\n" );
 	}
 
 	if ( !GLW_InitDriver( drivername, colorbits ) )
@@ -855,25 +855,25 @@ static void PrintCDSError( int value )
 	switch ( value )
 	{
 	case DISP_CHANGE_RESTART:
-		ST_Printf( PRINT_ALL, "restart required\n" );
+		ST_Printf( PRINT_R_VERBOSE, "restart required\n" );
 		break;
 	case DISP_CHANGE_BADPARAM:
-		ST_Printf( PRINT_ALL, "bad param\n" );
+		ST_Printf( PRINT_R_VERBOSE, "bad param\n" );
 		break;
 	case DISP_CHANGE_BADFLAGS:
-		ST_Printf( PRINT_ALL, "bad flags\n" );
+		ST_Printf( PRINT_R_VERBOSE, "bad flags\n" );
 		break;
 	case DISP_CHANGE_FAILED:
-		ST_Printf( PRINT_ALL, "DISP_CHANGE_FAILED\n" );
+		ST_Printf( PRINT_R_VERBOSE, "DISP_CHANGE_FAILED\n" );
 		break;
 	case DISP_CHANGE_BADMODE:
-		ST_Printf( PRINT_ALL, "bad mode\n" );
+		ST_Printf( PRINT_R_VERBOSE, "bad mode\n" );
 		break;
 	case DISP_CHANGE_NOTUPDATED:
-		ST_Printf( PRINT_ALL, "not updated\n" );
+		ST_Printf( PRINT_R_VERBOSE, "not updated\n" );
 		break;
 	default:
-		ST_Printf( PRINT_ALL, "unknown error %d\n", value );
+		ST_Printf( PRINT_R_VERBOSE, "unknown error %d\n", value );
 		break;
 	}
 }
@@ -894,13 +894,13 @@ static rserr_t GLW_SetMode( const char *drivername,
 	//
 	// print out informational messages
 	//
-	ST_Printf( PRINT_ALL, "...setting mode %d:", mode );
+	ST_Printf( PRINT_R_VERBOSE, "...setting mode %d:", mode );
 	if ( !R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, &glConfig.windowAspect, mode ) )
 	{
-		ST_Printf( PRINT_ALL, " invalid mode\n" );
+		ST_Printf( PRINT_R_VERBOSE, " invalid mode\n" );
 		return RSERR_INVALID_MODE;
 	}
-	ST_Printf( PRINT_ALL, " %d %d %s\n", glConfig.vidWidth, glConfig.vidHeight, win_fs[cdsFullscreen] );
+	ST_Printf( PRINT_R_VERBOSE, " %d %d %s\n", glConfig.vidWidth, glConfig.vidHeight, win_fs[cdsFullscreen] );
 
 	//
 	// check our desktop attributes
@@ -961,16 +961,16 @@ static rserr_t GLW_SetMode( const char *drivername,
 			{
 				dm.dmBitsPerPel = colorbits;
 				dm.dmFields |= DM_BITSPERPEL;
-				ST_Printf( PRINT_ALL, "...using colorsbits of %d\n", colorbits );
+				ST_Printf( PRINT_R_VERBOSE, "...using colorsbits of %d\n", colorbits );
 			}
 			else
 			{
-				ST_Printf( PRINT_ALL, "WARNING:...changing depth not supported on Win95 < pre-OSR 2.x\n" );
+				ST_Printf( PRINT_R_VERBOSE, "WARNING:...changing depth not supported on Win95 < pre-OSR 2.x\n" );
 			}
 		}
 		else
 		{
-			ST_Printf( PRINT_ALL, "...using desktop display depth of %d\n", glw_state.desktopBitsPixel );
+			ST_Printf( PRINT_R_VERBOSE, "...using desktop display depth of %d\n", glw_state.desktopBitsPixel );
 		}
 
 		//
@@ -978,11 +978,11 @@ static rserr_t GLW_SetMode( const char *drivername,
 		//
 		if ( glw_state.cdsFullscreen )
 		{
-			ST_Printf( PRINT_ALL, "...already fullscreen, avoiding redundant CDS\n" );
+			ST_Printf( PRINT_R_VERBOSE, "...already fullscreen, avoiding redundant CDS\n" );
 
 			if ( !GLW_CreateWindow ( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true ) )
 			{
-				ST_Printf( PRINT_ALL, "...restoring display settings\n" );
+				ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
 				ChangeDisplaySettings( 0, 0 );
 				return RSERR_INVALID_MODE;
 			}
@@ -992,17 +992,17 @@ static rserr_t GLW_SetMode( const char *drivername,
 		//
 		else
 		{
-			ST_Printf( PRINT_ALL, "...calling CDS: " );
+			ST_Printf( PRINT_R_VERBOSE, "...calling CDS: " );
 			
 			// try setting the exact mode requested, because some drivers don't report
 			// the low res modes in EnumDisplaySettings, but still work
 			if ( ( cdsRet = ChangeDisplaySettings( &dm, CDS_FULLSCREEN ) ) == DISP_CHANGE_SUCCESSFUL )
 			{
-				ST_Printf( PRINT_ALL, "ok\n" );
+				ST_Printf( PRINT_R_VERBOSE, "ok\n" );
 
 				if ( !GLW_CreateWindow ( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
 				{
-					ST_Printf( PRINT_ALL, "...restoring display settings\n" );
+					ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
 					ChangeDisplaySettings( 0, 0 );
 					return RSERR_INVALID_MODE;
 				}
@@ -1017,11 +1017,11 @@ static rserr_t GLW_SetMode( const char *drivername,
 				DEVMODE		devmode;
 				int			modeNum;
 
-				ST_Printf( PRINT_ALL, "failed, " );
+				ST_Printf( PRINT_R_VERBOSE, "failed, " );
 				
 				PrintCDSError( cdsRet );
 			
-				ST_Printf( PRINT_ALL, "...trying next higher resolution:" );
+				ST_Printf( PRINT_R_VERBOSE, "...trying next higher resolution:" );
 				
 				// we could do a better matching job here...
 				for ( modeNum = 0 ; ; modeNum++ ) {
@@ -1038,10 +1038,10 @@ static rserr_t GLW_SetMode( const char *drivername,
 
 				if ( modeNum != -1 && ( cdsRet = ChangeDisplaySettings( &devmode, CDS_FULLSCREEN ) ) == DISP_CHANGE_SUCCESSFUL )
 				{
-					ST_Printf( PRINT_ALL, " ok\n" );
+					ST_Printf( PRINT_R_VERBOSE, " ok\n" );
 					if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
 					{
-						ST_Printf( PRINT_ALL, "...restoring display settings\n" );
+						ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
 						ChangeDisplaySettings( 0, 0 );
 						return RSERR_INVALID_MODE;
 					}
@@ -1050,11 +1050,11 @@ static rserr_t GLW_SetMode( const char *drivername,
 				}
 				else
 				{
-					ST_Printf( PRINT_ALL, " failed, " );
+					ST_Printf( PRINT_R_VERBOSE, " failed, " );
 					
 					PrintCDSError( cdsRet );
 					
-					ST_Printf( PRINT_ALL, "...restoring display settings\n" );
+					ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
 					ChangeDisplaySettings( 0, 0 );
 					
 					glw_state.cdsFullscreen = false;
@@ -1118,18 +1118,18 @@ static void GLW_InitExtensions( void )
 		return;
 	}
 
-	ST_Printf( PRINT_ALL, "Initializing OpenGL extensions\n" );
+	ST_Printf( PRINT_R_VERBOSE, "Initializing OpenGL extensions\n" );
 
 	// WGL_EXT_swap_control
 	qwglSwapIntervalEXT = ( BOOL (WINAPI *)(int)) qwglGetProcAddress( "wglSwapIntervalEXT" );
 	if ( qwglSwapIntervalEXT )
 	{
-		ST_Printf( PRINT_ALL, "...using WGL_EXT_swap_control\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...using WGL_EXT_swap_control\n" );
 		r_swapInterval.modified = true;	// force a set next frame
 	}
 	else
 	{
-		ST_Printf( PRINT_ALL, "...WGL_EXT_swap_control not found\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...WGL_EXT_swap_control not found\n" );
 	}
 
 	// WGL_3DFX_gamma_control
@@ -1145,7 +1145,7 @@ static void GLW_InitExtensions( void )
 
 			if ( qwglGetDeviceGammaRamp3DFX && qwglSetDeviceGammaRamp3DFX )
 			{
-				ST_Printf( PRINT_ALL, "...using WGL_3DFX_gamma_control\n" );
+				ST_Printf( PRINT_R_VERBOSE, "...using WGL_3DFX_gamma_control\n" );
 			}
 			else
 			{
@@ -1155,12 +1155,12 @@ static void GLW_InitExtensions( void )
 //		}
 //		else
 //		{
-//			ST_Printf( PRINT_ALL, "...ignoring WGL_3DFX_gamma_control\n" );
+//			ST_Printf( PRINT_R_VERBOSE, "...ignoring WGL_3DFX_gamma_control\n" );
 //		}
 	}
 	else
 	{
-		ST_Printf( PRINT_ALL, "...WGL_3DFX_gamma_control not found\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...WGL_3DFX_gamma_control not found\n" );
 	}
 }
 
@@ -1201,7 +1201,7 @@ static qbool GLW_CheckOSVersion( void )
 	}
 	else
 	{
-		ST_Printf( PRINT_ALL, "GLW_CheckOSVersion() - GetVersionEx failed\n" );
+		ST_Printf( PRINT_R_VERBOSE, "GLW_CheckOSVersion() - GetVersionEx failed\n" );
 		return false;
 	}
 
@@ -1233,7 +1233,7 @@ static qbool GLW_LoadOpenGL( const char *drivername )
 	{
 		glConfig.driverType = GLDRV_STANDALONE;
 
-		ST_Printf( PRINT_ALL, "...assuming '%s' is a standalone driver\n", drivername );
+		ST_Printf( PRINT_R_VERBOSE, "...assuming '%s' is a standalone driver\n", drivername );
 
 		if ( strstr( buffer, _3DFX_DRIVER_NAME ) )
 		{
@@ -1458,7 +1458,7 @@ void GLimp_Init( void )
 	char	buf[1024];
 //	cvar_t *lastValidRenderer = Cvar_Get( "vid_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
 
-	ST_Printf( PRINT_ALL, "Initializing OpenGL subsystem\n" );
+	ST_Printf( PRINT_R_VERBOSE, "Initializing OpenGL subsystem\n" );
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 
@@ -1599,7 +1599,7 @@ void GLimp_Shutdown( void )
 		return;
 	}
 
-	ST_Printf( PRINT_ALL, "Shutting down OpenGL subsystem\n" );
+	ST_Printf( PRINT_R_VERBOSE, "Shutting down OpenGL subsystem\n" );
 
 	// restore gamma.  We do this first because 3Dfx's extension needs a valid OGL subsystem
 	WG_RestoreGamma();
@@ -1609,14 +1609,14 @@ void GLimp_Shutdown( void )
 	{
 		retVal = qwglMakeCurrent( NULL, NULL ) != 0;
 
-		ST_Printf( PRINT_ALL, "...wglMakeCurrent( NULL, NULL ): %s\n", success[retVal] );
+		ST_Printf( PRINT_R_VERBOSE, "...wglMakeCurrent( NULL, NULL ): %s\n", success[retVal] );
 	}
 
 	// delete HGLRC
 	if ( glw_state.hGLRC )
 	{
 		retVal = qwglDeleteContext( glw_state.hGLRC ) != 0;
-		ST_Printf( PRINT_ALL, "...deleting GL context: %s\n", success[retVal] );
+		ST_Printf( PRINT_R_VERBOSE, "...deleting GL context: %s\n", success[retVal] );
 		glw_state.hGLRC = NULL;
 	}
 
@@ -1624,14 +1624,14 @@ void GLimp_Shutdown( void )
 	if ( glw_state.hDC )
 	{
 		retVal = ReleaseDC( mainwindow, glw_state.hDC ) != 0;
-		ST_Printf( PRINT_ALL, "...releasing DC: %s\n", success[retVal] );
+		ST_Printf( PRINT_R_VERBOSE, "...releasing DC: %s\n", success[retVal] );
 		glw_state.hDC   = NULL;
 	}
 
 	// destroy window
 	if ( mainwindow )
 	{
-		ST_Printf( PRINT_ALL, "...destroying window\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...destroying window\n" );
 		ShowWindow( mainwindow, SW_HIDE );
 		DestroyWindow( mainwindow );
 		mainwindow = NULL;
@@ -1648,7 +1648,7 @@ void GLimp_Shutdown( void )
 	// reset display settings
 	if ( glw_state.cdsFullscreen )
 	{
-		ST_Printf( PRINT_ALL, "...resetting display\n" );
+		ST_Printf( PRINT_R_VERBOSE, "...resetting display\n" );
 		ChangeDisplaySettings( 0, 0 );
 		glw_state.cdsFullscreen = false;
 	}

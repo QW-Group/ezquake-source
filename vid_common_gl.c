@@ -135,7 +135,7 @@ void CheckMultiTextureExtensions (void) {
 	if (!gl_mtexable)
 		gl_textureunits = 1;
 	else
-		Com_Printf_State(PRINT_INFO, "Enabled %i texture units on hardware\n", gl_textureunits);
+		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
 }
 
 void GL_CheckExtensions (void) {

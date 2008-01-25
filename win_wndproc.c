@@ -235,7 +235,7 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 			{
 				if ( glw_state.vid_canalttab )
 				{
-					Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );
+					Cvar_LatchedSetValue( &r_fullscreen, !r_fullscreen.integer );
 					Cbuf_AddText( "vid_restart\n" );
 				}
 				return 0;
