@@ -1,12 +1,12 @@
 /**
+  \file
 
+  \brief
   Inbuilt teamplay messages module
 
-  made by johnnycz, Up2nOgOoD[ROCK]
-  last edit:
-  $Id: tp_msgs.h,v 1.3 2007-05-28 10:47:36 johnnycz Exp $
-
-*/
+  \author johnnycz
+  \author Up2nOgOoD[ROCK]
+**/
 
 #ifndef __TP_MSGS_H__
 #define __TP_MSGS_H__

@@ -1,3 +1,21 @@
+/**
+	\file
+	
+	\brief
+	Main client module - connection-related and other mixed-purpose functions
+**/
+
+/**
+	\mainpage
+	Welcome to the doxygen documentation of the ezQuake QuakeWorld client
+	Majority of the code is not documented with Doxygen markup, therefore
+	you will not find much things in here in the early stages.
+
+	For start this documentation serves as an example how to document the code.
+	See how \link parser.c parser.c \endlink file is documented.
+
+	You may wish to proceed to the <a href="files.html">list of modules</a>
+**/
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -180,7 +198,10 @@ cvar_t cl_verify_qwprotocol = {"cl_verify_qwprotocol", "1", CVAR_ARCHIVE};
 
 cvar_t demo_autotrack = {"demo_autotrack", "0", CVAR_ARCHIVE}; // use or not autotrack info from mvd demos
 
+/// persistent client state
 clientPersistent_t	cls;
+
+/// client state
 clientState_t		cl;
 
 centity_t       cl_entities[CL_MAX_EDICTS];

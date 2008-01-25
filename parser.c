@@ -1,10 +1,11 @@
 /**
-	Arithmetic expression evaluator
-    @author johnnycz
-    last edit:
-$Id: parser.c,v 1.23 2007-09-30 22:59:23 disconn3ct Exp $
+	\file
 
-*/
+	\brief
+	Arithmetic expression evaluator
+    
+	\author johnnycz
+**/
 
 // todo set_calc: strlen(x), int(x), substr(x,pos,len), set_substr, pos, tobrown, towhite, xor, div, mod
 
@@ -1005,6 +1006,12 @@ LOCAL void Init_Parser(EParser p, const parser_extra* f, const char *str)
     Next_Token(p);
 }
 
+/// Evaluates an expression represented by a string
+///
+/// \param[in]	str		expression to be evaluated
+/// \param[in]	f		extra parser options
+/// \param[out]	error	error level
+/// \return Returns the result of the evaluation of the expression, it's type and value
 GLOBAL expr_val Expr_Eval(const char *str, const parser_extra* f, int *error)
 {
     expr_parser_t p;

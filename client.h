@@ -1,3 +1,10 @@
+/**
+	\file
+
+	\brief
+	Main client structures
+**/
+
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -269,31 +276,27 @@ typedef enum demotype_e
 	DT_NQDEMO
 } demotype_t;
 
-//
-// The clientPersistent_t structure is persistent through an arbitrary number of server connections.
-//
+/// A structure that is persistent through an arbitrary number of server connections.
 typedef struct
 {
-	//
-	// Connection information.
-	//
+	/// Connection information.
 	cactive_t	state;
 
 	//
 	// Time vars.
 	//
-	int			framecount;		// Incremented every frame, never reset.
-	double		realtime;		// Scaled by cl_demospeed.
-	double		demotime;		// Scaled by cl_demospeed, reset when starting a demo.
-	double		demo_rewindtime;// The time that we should jump to when rewinding.
-	double		trueframetime;	// Time since last frame.
-	double		frametime;		// Time since last frame, scaled by cl_demospeed.
+	int			framecount;		///< Incremented every frame, never reset.
+	double		realtime;		///< Scaled by cl_demospeed.
+	double		demotime;		///< Scaled by cl_demospeed, reset when starting a demo.
+	double		demo_rewindtime;///< The time that we should jump to when rewinding.
+	double		trueframetime;	///< Time since last frame.
+	double		frametime;		///< Time since last frame, scaled by cl_demospeed.
 
 	//
 	// Network stuff.
 	//
 	netchan_t	netchan;
-	char		servername[MAX_OSPATH];	// name of server from original connect
+	char		servername[MAX_OSPATH];	///< name of server from original connect
 	int			qport;
 	netadr_t	server_adr;
 	int socketip;
@@ -302,7 +305,7 @@ typedef struct
 	// Variables related to client cmds aka clc_stringcmd, unreliable part, reliable part goes to cls.netchan.message
 	//
 
-	byte		cmdmsg_data[512]; // have no idea which size here must be
+	byte		cmdmsg_data[512]; ///< have no idea which size here must be
 	sizebuf_t	cmdmsg;
 
 	// TCPCONNECT
@@ -325,7 +328,7 @@ typedef struct
 	//
 	// Download vars.
 	//
-	FILE		*download;			// file transfer from server
+	FILE		*download;			///< file transfer from server
 	char		downloadtempname[MAX_PATH];
 	char		downloadname[MAX_PATH];
 	int			downloadnumber;
@@ -340,7 +343,7 @@ typedef struct
 #endif
 
 #ifdef PROTOCOL_VERSION_FTE
-	unsigned int fteprotocolextensions; // the extensions we told the server that we support.
+	unsigned int fteprotocolextensions; ///< the extensions we told the server that we support.
 #endif
 
 	//
@@ -367,9 +370,9 @@ typedef struct
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
 	qbool		timedemo;
-	float		td_lastframe;       // To meter out one message a frame.
-	int			td_startframe;      // cls.framecount at start
-	float		td_starttime;       // Realtime at second frame of timedemo.
+	float		td_lastframe;       ///< To meter out one message a frame.
+	int			td_startframe;      ///< cls.framecount at start
+	float		td_starttime;       ///< Realtime at second frame of timedemo.
 
 	byte		demomessage_data[MAX_MSGLEN * 2];
 	sizebuf_t	demomessage;
@@ -379,19 +382,22 @@ typedef struct
 
 	int			challenge;
 
-	float		latency;		// Rolling average
+	float		latency;		///< Rolling average
 
-	qbool		mvdplayback;	// Playing MVD.
-	float		qtv_svversion;	// version of qtvsv/proxy, note it float
-	int			qtv_ezquake_ext; // qtv ezquake extensions supported by qtvsv/proxy
-	qbool		qtv_donotbuffer;// do not try buffering even if not enough data
-	int			lastto;			// Contains which players are affected by a demo message.
-								// * If multiple players are affected (dem_multiple) this will be a
-								//   bit mask containing which players the last demo message relates to. (32-bits, 32 players)
-								// * If only a single player should receive the message (dem_single),
-								//   this is a a 5-bit number containing the player number. (2^5 = 32 unique player numbers)
+	qbool		mvdplayback;	///< Playing MVD.
+	float		qtv_svversion;	///< version of qtvsv/proxy, note it float
+	int			qtv_ezquake_ext; ///< qtv ezquake extensions supported by qtvsv/proxy
+	qbool		qtv_donotbuffer;///< do not try buffering even if not enough data
 
-	int			lasttype;		// The type of the last demo message.
+	/** \brief Tells which players are affected by a demo message.
+		- If multiple players are affected (dem_multiple) this will be a
+		  bit mask containing which players the last demo message relates to. (32-bits, 32 players)
+		- If only a single player should receive the message (dem_single),
+		  this is a a 5-bit number containing the player number. (2^5 = 32 unique player numbers)
+	**/
+	int			lastto;			
+
+	int			lasttype;		///< The type of the last demo message.
 	qbool		findtrack;
 
 } clientPersistent_t;
@@ -405,9 +411,9 @@ extern clientPersistent_t	cls;
 #define PAUSED_DEMO			2
 
 
-// the clientState_t structure is wiped completely at every server signon
+/// a structure that is wiped completely at every server signon
 typedef struct {
-	int			servercount;		// server identification for prespawns
+	int			servercount;		///< server identification for prespawns
 
 	char		serverinfo[MAX_SERVERINFO_STRING];
 
@@ -415,10 +421,10 @@ typedef struct {
 	// some important serverinfo keys are mirrored here:
 	int			deathmatch;
 	int			teamplay;
-	int			gametype;			// GAME_COOP or GAME_DEATHMATCH
-	qbool		teamfortress;		// true if gamedir is "fortress"
-	int			fpd;				// FAQ proxy flags
-	int			z_ext;				// ZQuake protocol extensions flags
+	int			gametype;			///< GAME_COOP or GAME_DEATHMATCH
+	qbool		teamfortress;		///< true if gamedir is "fortress"
+	int			fpd;				///< FAQ proxy flags
+	int			z_ext;				///< ZQuake protocol extensions flags
 	qbool		vwep_enabled;
 	int			timelimit;
 	int			fraglimit;
@@ -428,29 +434,29 @@ typedef struct {
 
 	int			last_fps;
 
-	int			parsecount;			// server message counter
+	int			parsecount;			///< server message counter
 	int			oldparsecount;
 
-	int			validsequence;		// this is the sequence number of the last good
-									// packetentity_t we got.  If this is 0, we can't
-									// render a frame yet
+	int			validsequence;		///< this is the sequence number of the last good
+									///< packetentity_t we got.  If this is 0, we can't
+									///< render a frame yet
 	int			oldvalidsequence;
-	int			delta_sequence;		// sequence number of the packet we can request
-									// delta from
+	int			delta_sequence;		///< sequence number of the packet we can request
+									///< delta from
 
 	int			spectator;
 
-	double		last_ping_request;	// while showing scoreboard
+	double		last_ping_request;	///< while showing scoreboard
 
 	// sentcmds[cl.netchan.outgoing_sequence & UPDATE_MASK] = cmd
 	frame_t		frames[UPDATE_BACKUP];
 
 	// information for local display
-	int			stats[MAX_CL_STATS];// health, etc
-	float		item_gettime[32];	// cl.time of acquiring item, for blinking
-	float		faceanimtime;		// use anim frame if cl.time < this
+	int			stats[MAX_CL_STATS];///< health, etc
+	float		item_gettime[32];	///< cl.time of acquiring item, for blinking
+	float		faceanimtime;		///< use anim frame if cl.time < this
 
-	cshift_t	cshifts[NUM_CSHIFTS];	// color shifts for damage, powerups and content types
+	cshift_t	cshifts[NUM_CSHIFTS];	///< color shifts for damage, powerups and content types
 
 	// the client maintains its own idea of view angles, which are
 	// sent to the server each frame.  And only reset at level change
@@ -462,10 +468,10 @@ typedef struct {
 									// is rendering at.  always <= realtime
 
 	double		servertime;
-	qbool		servertime_works;	// Does the server actually send STAT_TIME/svc_time?
-	double		gametime;			// match duration
-	double		gamestarttime;		// this gets saved on match start
-	double		gamepausetime;		// this gets increased during the pause
+	qbool		servertime_works;	///< Does the server actually send STAT_TIME/svc_time?
+	double		gametime;			///< match duration
+	double		gamestarttime;		///< this gets saved on match start
+	double		gamepausetime;		///< this gets increased during the pause
 
 
 	vec3_t		simorg;
@@ -479,26 +485,26 @@ typedef struct {
 	double		laststop;
 
 	qbool		onground;
-	float		crouch;				// local amount for smoothing stepups
+	float		crouch;				///< local amount for smoothing stepups
 	float		viewheight;
 
-	qbool		paused;				// a combination of PAUSED_SERVER and PAUSED_DEMO flags
+	qbool		paused;				///< a combination of PAUSED_SERVER and PAUSED_DEMO flags
 
-	float		ideal_punchangle;	// temporary view kick from weapon firing
-	float		punchangle;			// drifts towards ideal_punchangle
-	float		rollangle;			// smooth out rollangle changes when strafing
+	float		ideal_punchangle;	///< temporary view kick from weapon firing
+	float		punchangle;			///< drifts towards ideal_punchangle
+	float		rollangle;			///< smooth out rollangle changes when strafing
 
-	int			intermission;		// don't change view angle, full screen, etc
-	int			completed_time;		// latched from time at intermission start
-	int			solo_completed_time;// to draw on intermission screen
+	int			intermission;		///< don't change view angle, full screen, etc
+	int			completed_time;		///< latched from time at intermission start
+	int			solo_completed_time;///< to draw on intermission screen
 
 	// information that is static for the entire time connected to a server
 	char		model_name[MAX_MODELS][MAX_QPATH];
-	char		vw_model_name[MAX_VWEP_MODELS][MAX_QPATH];	// VWep support
+	char		vw_model_name[MAX_VWEP_MODELS][MAX_QPATH];	///< VWep support
 	char		sound_name[MAX_SOUNDS][MAX_QPATH];
 
 	struct model_s	*model_precache[MAX_MODELS];
-	struct model_s	*vw_model_precache[MAX_VWEP_MODELS];	// VWep support
+	struct model_s	*vw_model_precache[MAX_VWEP_MODELS];	///< VWep support
 	struct sfx_s	*sound_precache[MAX_SOUNDS];
 
 	cmodel_t	*clipmodels[MAX_MODELS];
@@ -507,18 +513,18 @@ typedef struct {
 	static_sound_t	static_sounds[MAX_STATIC_SOUNDS];
 	int			num_static_sounds;
 
-	char		levelname[40];		// for display on solo scoreboard
+	char		levelname[40];		///< for display on solo scoreboard
 	int			playernum;
-	int			viewplayernum;		// either playernum or spec_track (in chase camera mode)
+	int			viewplayernum;		///< either playernum or spec_track (in chase camera mode)
 
 	// refresh related state
-	struct model_s	*worldmodel;	// cl_entitites[0].model
+	struct model_s	*worldmodel;	///< cl_entitites[0].model
 	struct efrag_s	*free_efrags;
-	int			num_statics;		// stored top down in cl_entities
+	int			num_statics;		///< stored top down in cl_entities
 
-	int			cdtrack;			// cd audio
+	int			cdtrack;			///< cd audio
 
-	centity_t	viewent;			// weapon model
+	centity_t	viewent;			///< weapon model
 
 	// all player information
 	player_info_t	players[MAX_CLIENTS];
@@ -535,8 +541,8 @@ typedef struct {
 	int			waterlevel;
 
 
-	double		whensaid[10];       // For floodprots
- 	int			whensaidhead;       // Head value for floodprots
+	double		whensaid[10];       ///< For floodprots
+ 	int			whensaidhead;       ///< Head value for floodprots
 
 
 	qbool		standby;
