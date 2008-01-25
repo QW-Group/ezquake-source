@@ -59,7 +59,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QW_RENDERER			"Soft"
 #endif
 
-#define VERSION_NUMBER "1.8.2 stable"
+#define VERSION_NUMBER "1.8.3 beta"
 
 int build_number (void);
 void CL_Version_f (void);
