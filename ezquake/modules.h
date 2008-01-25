@@ -89,6 +89,5 @@ void Modules_Shutdown(void);
 
 extern Security_Verify_Response_t Security_Verify_Response;
 extern Security_Generate_Crc_t Security_Generate_Crc;
-extern Security_IsModelModified_t Security_IsModelModified;
 
 #endif

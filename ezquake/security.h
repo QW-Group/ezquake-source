@@ -31,7 +31,6 @@ typedef struct signed_buffer_s {
 typedef signed_buffer_t *(*Security_Verify_Response_t) (int, char *, char *, char *);
 typedef int (*Security_Init_t) (char *);
 typedef signed_buffer_t *(*Security_Generate_Crc_t) (int, char *, char *);
-typedef signed_buffer_t *(*Security_IsModelModified_t) (char *, int, byte *, int);
 typedef void (*Security_Supported_Binaries_t) (void *);
 typedef void (*Security_Shutdown_t) (void);
 
