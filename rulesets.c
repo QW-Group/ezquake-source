@@ -29,6 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 
+void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel);
+
+
 typedef struct locked_cvar_s
 {
 	cvar_t *var;
@@ -59,10 +62,7 @@ typedef struct rulesetDef_s
 } rulesetDef_t;
 
 static rulesetDef_t rulesetDef = {rs_default, 72.0, false, false, false};
-void OnChange_ruleset (cvar_t *var, char *value, qbool *cancel);
-cvar_t ruleset = {"ruleset", "default", 0, OnChange_ruleset};
-
-extern void Cmd_ReInitAllMacro (void);
+cvar_t ruleset = {"ruleset", "default", 0, Rulesets_OnChange_ruleset};
 
 qbool RuleSets_DisallowExternalTexture (model_t *mod)
 {
@@ -286,23 +286,16 @@ void Rulesets_Init (void)
 	}
 }
 
-
-/*
- *false = OK to change
- * false = block cvar change
- */
-
-qbool OnChange_indphys (cvar_t *var, char *value)
+void Rulesets_OnChange_indphys (cvar_t *var, char *value, qbool *cancel)
 {
 	if (cls.state != ca_disconnected) {
 		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
-		return true;
+		*cancel = true;
 	}
-
-	return false;
+	else *cancel = false;
 }
 
-void OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel)
+void Rulesets_OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel)
 {
 	char *fbs;
 	qbool fbskins_policy = (cls.demoplayback || cl.spectator) ? 1 :
@@ -318,7 +311,7 @@ void OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel)
 	}
 }
 
-qbool OnChange_allow_scripts (cvar_t *var, char *value)
+void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 {
 	char *p;
 	qbool progress;
@@ -330,7 +323,8 @@ qbool OnChange_allow_scripts (cvar_t *var, char *value)
 
 	if (cls.state >= ca_connected && progress && !cl.spectator) {
 		Com_Printf ("%s changes are not allowed during the match.\n", var->name);
-		return true;
+		*cancel = true;
+		return;
 	}
 
 	if (!cl.spectator && cls.state != ca_disconnected) {
@@ -341,14 +335,11 @@ qbool OnChange_allow_scripts (cvar_t *var, char *value)
 		else
 			Cbuf_AddText ("say using advanced scripts\n");
 	}
-
-	return false;
 }
 
-qbool OnChange_cl_fakeshaft (cvar_t *var, char *value)
+void Rulesets_OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel)
 {
 	float fakeshaft = Q_atof (value);
-
 
 	if (!cl.spectator && cls.state != ca_disconnected) {
 		if (fakeshaft > 0.999)
@@ -358,12 +349,12 @@ qbool OnChange_cl_fakeshaft (cvar_t *var, char *value)
 		else
 			Cbuf_AddText (va("say fakeshaft %.1f%%\n", fakeshaft * 100.0));
 	}
-
-	return false;
 }
 
-void OnChange_ruleset (cvar_t *var, char *value, qbool *cancel)
+static void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel)
 {
+	extern void Cmd_ReInitAllMacro (void);
+
 	if (cls.state != ca_disconnected) {
 		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
 		*cancel = true;

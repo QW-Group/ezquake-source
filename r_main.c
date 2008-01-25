@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 #include "qsound.h"
+#include "rulesets.h"
 
 
 void		*colormap;
@@ -129,8 +130,7 @@ cvar_t	r_maxedges = {"r_maxedges", "0"};
 cvar_t	r_numedges = {"r_numedges", "0"};
 cvar_t	r_aliastransbase = {"r_aliastransbase", "200"};
 cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
-void OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel);
-cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0", 0, OnChange_r_fullbrightSkins};
+cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0", 0, Rulesets_OnChange_r_fullbrightSkins};
 cvar_t  r_max_size_1 = {"r_max_size_1", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_fastturb = {"r_fastturb", "0"};

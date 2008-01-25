@@ -1779,7 +1779,7 @@ void Sbar_Draw(void) {
 	// clear the background if necessary
 	if (headsup) {
 		int height = sb_drawinventory ? (24 + 16 + 8) : 24;
-		SCR_TileClear (vid.height - height, height);
+		SCR_TileClear ();
 	}
 #endif
 

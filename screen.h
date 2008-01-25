@@ -68,6 +68,7 @@ extern qbool flashed;
 
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 void SCR_SetupAutoID (void);
+void SCR_TileClear(void);
 
 // the current position of the mouse pointer
 extern double cursor_x, cursor_y;

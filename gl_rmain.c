@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 #include "gl_bloom.h"
+#include "rulesets.h"
+
 
 entity_t	r_worldentity;
 
@@ -97,8 +99,7 @@ cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0"};
 cvar_t	r_netgraph = {"r_netgraph", "0"};
 cvar_t	r_netstats = {"r_netstats", "0"};
-void OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel);
-cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, OnChange_r_fullbrightSkins};
+cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins};
 cvar_t	r_enemyskincolor	= {"r_enemyskincolor", ""};
 cvar_t	r_teamskincolor		= {"r_teamskincolor",  ""};
 cvar_t	r_skincolormode		= {"r_skincolormode",  "0"};

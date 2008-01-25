@@ -71,8 +71,7 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include "fs.h"
 #include "help.h"
 
-void OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel);
-cvar_t	allow_scripts = {"allow_scripts", "2", 0, OnChange_allow_scripts};
+cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
 cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
@@ -93,8 +92,7 @@ cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0", CVAR_ARCHIVE};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
-void OnChange_indphys (cvar_t *var, char *value, qbool *cancel);
-cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, OnChange_indphys};
+cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnChange_indphys};
 cvar_t	cl_vsync_lag_fix = {"cl_vsync_lag_fix", "0"};
 cvar_t	cl_vsync_lag_tweak = {"cl_vsync_lag_tweak", "1.0"};
 
@@ -115,8 +113,7 @@ cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
 cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_demospeed = {"cl_demospeed", "1"};
 cvar_t	cl_staticsounds = {"cl_staticSounds", "1"};
-void OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel);
-cvar_t	cl_fakeshaft = {"cl_fakeshaft", "0", 0, OnChange_cl_fakeshaft};
+cvar_t	cl_fakeshaft = {"cl_fakeshaft", "0", 0, Rulesets_OnChange_cl_fakeshaft};
 cvar_t	cl_parseWhiteText = {"cl_parseWhiteText", "1"};
 cvar_t	cl_filterdrawviewmodel = {"cl_filterdrawviewmodel", "0"};
 cvar_t	cl_demoPingInterval = {"cl_demoPingInterval", "5"};
