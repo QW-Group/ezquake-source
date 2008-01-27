@@ -35,4 +35,3 @@ void Rulesets_OnChange_indphys (cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel);
-void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel);

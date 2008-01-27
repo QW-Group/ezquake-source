@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 
-void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel);
+static void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel);
 
 
 typedef struct locked_cvar_s
