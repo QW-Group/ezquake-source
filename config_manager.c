@@ -1007,15 +1007,17 @@ void LoadConfig_f(void)
 void DumpHUD_f(void)
 {
 	char *filename;
+	char buf[MAX_PATH];
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
 		return;
 	}
 	filename = COM_SkipPathWritable(Cmd_Argv(1));
-	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
-	DumpHUD(filename);
-	Com_Printf("HUD variables exported.\n");
+	strlcpy(buf, filename, sizeof(buf));
+	COM_ForceExtensionEx (buf, ".cfg", sizeof(buf));
+	DumpHUD(buf);
+	Com_Printf("HUD variables exported to %s\n",buf);
 }
 
 void Config_LegacyQuake_f(void)
