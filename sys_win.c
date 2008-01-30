@@ -64,8 +64,8 @@ void Sys_PushFPCW_SetHigh (void);
 
 static HHOOK WinKeyHook;
 static qbool WinKeyHook_isActive;
-static qbool ScreenSaver_isDisabled;
-static qbool PowerOff_isDisabled;
+static qbool ScreenSaver_isDisabled = false;
+static qbool PowerOff_isDisabled = false;
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel);
@@ -952,8 +952,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	MEMORYSTATUS lpBuffer;
 
 	global_hInstance = hInstance;
-
-    ScreenSaver_isDisabled = false;
 
 	// Make sure we link with comctl32.lib to get XP themed buttons if they're available.
 	InitCommonControls();
