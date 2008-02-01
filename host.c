@@ -81,10 +81,10 @@ char * SYSINFO_GetString(void)
 {
 	return f_system_string;
 }
-int     SYSINFO_memory = 0;
-int     SYSINFO_MHz = 0;
-char *  SYSINFO_processor_description = NULL;
-char *  SYSINFO_3D_description        = NULL;
+unsigned long long	SYSINFO_memory = 0;
+int					SYSINFO_MHz = 0;
+char				*SYSINFO_processor_description = NULL;
+char				*SYSINFO_3D_description        = NULL;
 
 #ifdef _WIN32
 void SYSINFO_Init(void)
@@ -92,12 +92,13 @@ void SYSINFO_Init(void)
 #ifdef WITH_ASMLIB
 	char temp[1024];
 #endif
-	MEMORYSTATUS    memstat;
+	MEMORYSTATUSEX	memstat;
 	LONG            ret;
 	HKEY            hKey;
 
-	GlobalMemoryStatus(&memstat);
-	SYSINFO_memory = memstat.dwTotalPhys;
+	memstat.dwLength = sizeof(memstat);
+	GlobalMemoryStatusEx(&memstat);
+	SYSINFO_memory = memstat.ullTotalPhys;
 
 	ret = RegOpenKey(
 	          HKEY_LOCAL_MACHINE,
@@ -147,7 +148,7 @@ void SYSINFO_Init(void)
 	}
 #endif
 
-	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
+	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)(SYSINFO_memory / 1048576u));
 
 #ifdef WITH_ASMLIB
 	ProcessorName (temp);
