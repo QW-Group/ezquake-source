@@ -1,0 +1,2834 @@
+<?xml version="1.0"?>
+<!DOCTYPE RATS [
+<!ENTITY randdesc "Standard random number generators should not be used to 
+generate randomness used for security reasons.  For security sensitive 
+randomness a crytographic randomness generator that provides sufficient
+entropy should be used.">
+<!ENTITY bufbig "Double check that your buffer is as big as you specify.
+When using functions that accept a number n of bytes to copy, such as 
+strncpy, be aware that if the dest buffer size = n it may not NULL-terminate 
+the string.">
+<!ENTITY bufloop "Check buffer boundaries if calling this function in a loop 
+and make sure you are not in danger of writing past the allocated space.">
+<!ENTITY bufreasonable "Truncate all input strings to a reasonable length 
+before passing them to this function">
+<!ENTITY tmpfile "Many calls for generating temporary file names are 
+insecure (susceptible to race conditions).  Use a securely generated file
+name, for example, by pulling 64 bits of randomness from /dev/random, base 
+64 encoding it and using that as a file suffix.">
+<!ENTITY dns "DNS results can easily be forged by an attacker (or 
+arbitrarily set to large values, etc), and should not be trusted."> 
+
+<!-- Windows specific entries - mae -->
+
+<!ENTITY pathbuf "Buffer size must be _MAX_PATH+1 or larger for this
+function to be safe.">
+<!ENTITY dllload "LoadLibrary will search several places for a library if
+no path is specified, allowing trojan DLL's to be inserted elsewhere even
+if the intended DLL is correctly protected from overwriting. Make sure to specify the full path.">
+<!ENTITY iis_extension "GetExtensionVersion() is called by IIS in the 
+system's security context.  Be very careful what you do here, as you are
+basically suid root for the machine. If you are calling the function rather
+than implementing it, howabout *not* calling it in the system's security
+context if possible?">
+<!ENTITY w32tmppath "GetTempPath() may return the current directory or the
+windows directory. Be careful what you place in these locations.  Important 
+files may be overwritten, and trojan DLL's may be dropped in these 
+locations. Never use a user-input filename when writing to a location given
+by GetTempPath().">
+<!ENTITY w32exec "Many program execution commands under Windows will search
+the path for a program if you do not explicitly specify a full path to the 
+file. This can allow trojans to be executed instead.  Also, be sure to
+specify a file extension, since otherwise multiple extensions will be tried
+by the operating system, providing another opportunity for trojans.">
+<!ENTITY w32execnop "While this _exec variant does not search the path for
+a program (good!), it will run .com files before .exe files and the like.  
+Make sure to specify a file extension.">
+
+<!-- End Windows specific entries - mae -->
+
+<!-- More Windows specific entries - Bob Fleck -->
+<!ENTITY accessv "This function does not properly handle non-NULL terminated
+strings.  This does not result in exploitable code, but can lead to access 
+violations.">
+<!ENTITY w32impers "Impersonation functions return error codes when they 
+fail.  These error codes must be checked otherwise code could be run with 
+extra privileges when an impersonation has failed.">
+<!ENTITY w32crit "This function can throw exceptions in low memory 
+conditions.  Use InitialCriticalSectionAndSpinCount instead.">
+<!-- End of more Windows specific entries -->
+]>
+<VulnDB lang="c">
+
+
+
+<!-- TOCTOU race conditions functions obtained from man pages  
+     using the BSS chapter on race conditions as a starting
+     point
+-->
+
+
+  <Vulnerability>
+    <Name>access</Name>
+    <RaceCheck>1</RaceCheck>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>creat</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>mknod</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>mkfifo</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>pathconf</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>opendir</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>dirname</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>basename</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>scandir</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>fopen</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lstat</Name>
+    <RaceCheck>1</RaceCheck>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>stat</Name>
+    <RaceCheck>1</RaceCheck>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>open</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+ 
+  <Vulnerability>
+    <Name>chmod</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>chown</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>chgrp</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>rename</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>mkdir</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>mkdirp</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>rmdirp</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>rmdir</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>remove</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>unlink</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>link</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lchown</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>execve</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>execl</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>execlp</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>execle</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>execv</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>execvp</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>freopen</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>mktemp</Name>
+    <RaceUse>1</RaceUse>
+  </Vulnerability>
+
+
+<!-- End TOCTOU block -->
+
+
+<!-- Random functions obtained from man -k rand -->
+  <Vulnerability>
+    <Name>drand48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>erand48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>initstate</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>jrand48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lcong48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lrand48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>mrand48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>nrand48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>random</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>seed48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>setstate</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>srand</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>srand48</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+<!-- Umm.....no -->
+  <Vulnerability>
+    <Name>strfry</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>memfrob</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+<!--- Should there be extra description for crypt because of it's weakness -->
+  <Vulnerability>
+    <Name>crypt</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>srandom</Name>
+    <Info>
+      <Severity>Medium</Severity>
+      <Description>&randdesc;</Description>
+    </Info>
+  </Vulnerability>
+
+<!-- End Random man -k rand block -->
+
+
+<!-- Begin block of vulnerabilities obtained from "Building Secure Software"
+     Most of these are from the table in the 'Buffer Overflows' chapter
+-->
+
+  <Vulnerability>
+    <Name>chroot</Name>
+    <Info>
+      <Severity>Low</Severity>
+      <Description>Reminder: Do not forget to chdir() to an appropriate directory before calling chroot()!</Description>
+    </Info>
+  </Vulnerability> 
+
+  <Vulnerability>
+    <Name>gets</Name>
+    <Info>
+      <Description>Gets is unsafe!! No bounds checking is performed, buffer
+      is easily overflowable by user. Use fgets(buf, size, stdin) instead.
+      </Description>
+      <Severity>High</Severity>
+    </Info>  
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>system</Name>
+    <InputProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </InputProblem>
+
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>popen</Name>
+    <InputProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </InputProblem>
+  </Vulnerability>
+
+
+  <Vulnerability>
+    <Name>getenv</Name>
+    <Info>
+      <Description>Environment variables are highly untrustable input. They may be of any length, and contain any data. Do not make any assumptions regarding content or length. If at all possible avoid using them, and if it is necessary, sanitize them and truncate them to a reasonable length.</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>strcpy</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>strcat</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>printf</Name>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>sprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+	
+
+  <!-- Windows specific entries - mae -->
+
+  <Vulnerability>
+    <Name>wsprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wsprintfA</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wsprintfW</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_snprintf</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_snwprintf</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lstrcpy</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lstrcpyA</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lstrcpyW</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wcscpy</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_mbscpy</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tcscpy</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCpy</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCpyA</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCpyW</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lstrcat</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>  
+
+  <Vulnerability>
+    <Name>wcscat</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>  
+
+  <Vulnerability>
+    <Name>_mbscat</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>  
+
+  <Vulnerability>
+    <Name>_tcscat</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>  
+
+  <Vulnerability>
+    <Name>StrCat</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>  
+
+  <Vulnerability>
+    <Name>StrCatA</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>  
+
+  <Vulnerability>
+    <Name>StrCatW</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>  
+
+  <Vulnerability>
+    <Name>strxfrm</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wcsxfrm</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tcsxfrm</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lstrcpyn</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCpyN</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCpyNA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCpyNW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>lstrcpynW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wcsncpy</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_mbsncpy</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tcsncpy</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_mbsnbcat</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wcsncat</Name>  <!-- Prefix _ removed by Bob Fleck 4/13/02 -->
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tcsncat</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>  <!-- Desc changed by Bob Fleck. 4/13/02 -->
+    <Name>MultiByteToWideChar</Name>
+    <Info>
+      <Description>The last argument is the number of wide chars, not the number of bytes.  Getting this wrong can cause a buffer overflow since you will indicate that the buffer is twice the size it actually is.  Don't forget about NULL termination.</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>WideCharToMultiByte</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrNCat</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCatBuff</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCatBuffA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCatBuffW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCatN</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrCatNA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+	
+  <Vulnerability>
+    <Name>StrCatNW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatByteSize</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatByteSizeA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatByteSizeW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatByteSize64</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatByteSize64A</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatByteSize64W</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatKBSize</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatKBSizeA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFormatKBSizeW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFromTimeInterval</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFromTimeIntervalA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>StrFromTimeIntervalW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wvnsprintf</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wvnsprintfA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wvnsprintfW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wnsprintf</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wnsprintfA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wnsprintfW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAddExtension</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAddExtensionA</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAddExtensionW</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAddBackslash</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAddBackslashA</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAddBackslashW</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAppend</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAppendA</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathAppendW</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathCanonicalize</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathCanonicalizeA</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathCanonicalizeW</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathCombine</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathCombineA</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>PathCombineW</Name>
+    <Info>
+	   <Severity>Medium</Severity>
+		<Description>&pathbuf;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>LoadLibrary</Name>
+    <Info>
+	   <Severity>High</Severity>
+		<Description>&dllload;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>LoadLibraryA</Name>
+    <Info>
+	   <Severity>High</Severity>
+		<Description>&dllload;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>LoadLibraryW</Name>
+    <Info>
+	   <Severity>High</Severity>
+		<Description>&dllload;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>GetExtensionVersion</Name>
+	<Info>
+	   <Severity>High</Severity>
+	   <Description>&iis_extension;</Description>
+	</Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToChar</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToCharA</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToCharW</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToCharBuff</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToCharBuffA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToCharBuffW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToAnsi</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToAnsiA</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToAnsiW</Name>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToAnsiBuff</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToAnsiBuffA</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>OemToAnsiBuffW</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>GetTempPath</Name>
+    <Info>
+      <Description>&w32tmppath;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>GetTempPathA</Name>
+    <Info>
+      <Description>&w32tmppath;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>GetTempPathW</Name>
+    <Info>
+      <Description>&w32tmppath;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>GetTempFileName</Name>
+    <Info>
+      <Description>&tmpfile;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>GetTempFileNameA</Name>
+    <Info>
+      <Description>&tmpfile;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>GetTempFileNameW</Name>
+    <Info>
+      <Description>&tmpfile;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ShellExecute</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>3</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ShellExecuteA</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>3</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ShellExecuteW</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>3</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ShellExecuteEx</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ShellExecuteExA</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ShellExecuteExW</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wsystem</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_texecl</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+     <Vulnerability>
+    <Name>_execl </Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_wexecl</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+    
+  <Vulnerability>
+    <Name>_texecle</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_execle</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_wexecle</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+	     
+  <Vulnerability>
+    <Name>_texeclp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_execlp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_wexeclp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_texeclpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_execlpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wexeclpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_texecv</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_execv</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wexecv</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_texecve</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_execve</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wexecve</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_texecvp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_execvp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wexecvp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_texecvpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_execvpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wexecvpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>1</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tspawnl</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+     <Vulnerability>
+    <Name>_spawnl </Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_wspawnl</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+    
+  <Vulnerability>
+    <Name>_tspawnle</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_spawnle</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_wspawnle</Name>
+	<Info>
+	  <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+	     
+  <Vulnerability>
+    <Name>_tspawnlp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_spawnlp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_wspawnlp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tspawnlpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_spawnlpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wspawnlpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tspawnv</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_spawnv</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wspawnv</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tspawnve</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_spawnve</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wspawnve</Name>
+    <Info>
+      <Description>&w32execnop;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tspawnvp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_spawnvp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wspawnvp</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tspawnvpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_spawnvpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_wspawnvpe</Name>
+    <Info>
+      <Description>&w32exec;</Description>
+	  <Severity>High</Severity>
+	</Info>
+	<InputProblem>
+	  <Arg>2</Arg>
+	  <Severity>High</Severity>
+	</InputProblem>
+  </Vulnerability>
+
+  <!-- End Windows specific entries - mae -->
+
+
+  <Vulnerability>
+    <Name>scanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>sscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>fscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>vfscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>vsprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>vscanf</Name>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>1</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+   <Name>vsscanf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <Name>streadd</Name>
+  </Vulnerability>
+
+  <Vulnerability>
+    <BOProblem>
+      <SrcBufArg>2</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <Name>strecpy</Name>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>strtrns</Name>
+    <BOProblem>
+      <SrcBufArg>1</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Info>
+      <Description>Be sure the destination buffer is at least MAXPATHLEN
+                   big. This function may still internally overflow a static
+                   buffer, try to avoid using it. If you must, check the size 
+                   the path your pass in is no longer than MAXPATHLEN
+      </Description>
+      <Severity>High</Severity>
+    </Info>
+    <Name>realpath</Name>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>syslog</Name>
+    <Info>
+      <Description>&bufreasonable;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>getopt</Name>
+    <Info>
+      <Description>&bufreasonable;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>getopt_long</Name>
+    <Info>
+      <Description>&bufreasonable;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>getpass</Name>
+    <Info>
+      <Description>&bufreasonable;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>getchar</Name>
+    <Info>
+      <Description>&bufloop;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>fgetc</Name>
+    <Info>
+      <Description>&bufloop;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>getc</Name>
+    <Info>
+      <Description>&bufloop;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>read</Name>
+    <Info>
+      <Description>&bufloop;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>bcopy</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Info>
+      <Description>&bufbig;</Description>                                     
+      <Severity>Low</Severity>
+    </Info>
+
+    <Name>fgets</Name>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Info>
+      <Description>
+        cin is unsafe.  No bounds checking is performed.  Buffer is easily 
+        overflowable by user.
+      </Description>                                     
+      <Severity>High</Severity>
+    </Info>
+    <Name>cin</Name>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>memcpy</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>fprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>snprintf</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>strccpy</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>strcadd</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>strncpy</Name>
+    <Info>
+      <Description>&bufbig; Also, consider using strlcpy() instead, if it is avaialable to you.</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_vsnprintf</Name> <!-- prefix _ added by Bob Fleck 4/13/02. -->
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+<!-- Temporary file problems -->
+  <Vulnerability>
+    <Name>tmpfile</Name>
+    <Info>
+      <Description>&tmpfile;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>tmpnam</Name>
+    <Info>
+      <Description>&tmpfile;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>tempnam</Name>
+    <Info>
+      <Description>&tmpfile;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+<!-- End block of vulnerabilities obtained from BSS -->
+
+  <Vulnerability>
+    <Name>getlogin</Name>
+    <Info>
+      <Description> The results of this call are easy to forge.  </Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>cuserid</Name>
+    <Info>
+      <Description> 
+      This may be forgable.  Whether it is or not, even the man page recommends against using this.
+      </Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ttyname</Name>
+    <Info>
+      <Description>
+      The results are easy for an attacker to forge, and not reliable.
+      </Description>
+    </Info>  
+  </Vulnerability>
+
+<!-- Functions that are known input sources, but not otherwise problems -->
+
+  <Vulnerability>
+    <Name>fread</Name>
+    <Input/>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>recv</Name>
+    <Input/>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>readv</Name>
+    <Input/>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>recvfrom</Name>
+    <Input/>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>recvmsg</Name>
+    <Input/>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>readdir</Name>
+    <Input/>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>readlink</Name>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>signal</Name>
+    <Info>
+      <Description>
+      When setting signal handlers, do not use the same function to handle multiple signals. There exists the possibility a race condition will result if 2 or more different signals are sent to the process at nearly the same time. Also, when writing signal handlers, it is best to do as little as possible in them. The best strategy is to use the signal handler to set a flag, that another part of the program tests and performs the appropriate action(s) when it is set.
+      </Description>
+      <URL>http://razor.bindview.com/publish/papers/signals.txt</URL>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+<!-- Added by Viega: obvious from the book.  Also show up on
+     Shostack's page. -->
+  <Vulnerability>
+    <Name>gethostbyname</Name>
+    <Info>
+      <Description>&dns;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>gethostbyaddr</Name>
+    <Info>
+      <Description>&dns;</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>realloc</Name>
+    <Info>
+      <Description>Don't use on memory intended to be secure, because the old structure will not be zeroed out.</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+<!-- Added by Viega.  From Peter Guttman's thesis. -->
+  <Vulnerability>
+    <Name>fork</Name>
+    <Info>
+      <Description>
+      Remember that sensitive data get copied on fork.  For example, a random
+      number generator's internal state will get duplicated, and the child
+      may start outputting identical number streams.
+      </Description>
+      <Severity>Low</Severity>
+   </Info> 
+  </Vulnerability>
+  <Vulnerability>
+    <Name>vfork</Name>
+    <Info>
+      <Description>
+      Some implementations may be broken.  Additionally, 
+      Remember that sensitive data get copied on fork.  For example, a random
+      number generator's internal state will get duplicated, and the child
+      may start outputting identical number streams.  Use fork() instead.
+      </Description>
+      <Severity>Medium</Severity>
+   </Info> 
+  </Vulnerability>
+
+<!-- Added by Bob Fleck.
+     Additional win32 dangerous functions from Writing Secure Code, by Howard and Leblanc.
+     These are only the rules from that text that are not already outlined above.
+-->
+  <Vulnerability>
+    <Name>_mbsnbcpy</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>CopyMemory</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>strlen</Name>
+    <Info>
+      <Description>&accessv;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tcslen</Name>
+    <Info>
+      <Description>&accessv;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_mbslen</Name>
+    <Info>
+      <Description>&accessv;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wcslen</Name>
+    <Info>
+      <Description>&accessv;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>CreateProcess</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>3</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>CreateProcessAsUser</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>3</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>CreateProcessWithLogon</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>3</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>WinExec</Name>
+	<Info>
+      <Description>&w32exec;</Description>
+      <Severity>High</Severity>
+    </Info>
+    <InputProblem>
+      <Arg>3</Arg>
+      <Severity>High</Severity>
+    </InputProblem>    
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>RpcImpersonateClient</Name>
+    <Info>
+      <Description>&w32impers;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ImpersonateLoggedOnUser</Name>
+    <Info>
+      <Description>&w32impers;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>CoImpersonateClient</Name>
+    <Info>
+      <Description>&w32impers;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ImpersonateNamedPipeClient</Name>
+    <Info>
+      <Description>&w32impers;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ImpersonateDdeClientWindow</Name>
+    <Info>
+      <Description>&w32impers;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>ImpersonateSecurityContext</Name>
+    <Info>
+      <Description>&w32impers;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>QuerySecurityContextToken</Name>
+    <Info>
+      <Description>&w32impers;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>SetThreadToken</Name>
+    <Info>
+      <Description>&w32impers;</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+  
+  <!--  There are probably more impersonation functions, but these are the ones I could find. -->
+
+  <Vulnerability>
+    <Name>SetSecurityDescriptorDacl</Name>
+    <Info>
+      <Description>If the third argument, pDacl, is NULL there is no protection from attack.  As an example, an attacker could set a Deny All to Everyone ACE on such an object.</Description>
+      <Severity>Medium</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>AfxLoadLibrary</Name>
+    <Info>
+	   <Severity>High</Severity>
+		<Description>&dllload;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>LoadLibraryEx</Name>
+    <Info>
+	   <Severity>High</Severity>
+		<Description>&dllload;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>InitializeCriticalSection</Name>
+    <Info>
+	   <Severity>Low</Severity>
+		<Description>&w32crit;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>EnterCriticalSection</Name>
+    <Info>
+	   <Severity>High</Severity>
+		<Description>&w32crit;</Description>
+	 </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tprintf</Name>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>wprintf</Name>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_cprintf</Name>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+ <Vulnerability>
+    <Name>swprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_stprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_ftprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>fwprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>swscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_stscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>_cscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_ftscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>fwscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_tscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+  
+  <Vulnerability>
+    <Name>wscanf</Name>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <Input/>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>vprintf</Name>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>vwprintf</Name>
+    <FSProblem>
+      <Arg>1</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>vfprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>vfwprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>vswprintf</Name>
+    <FSProblem>
+      <Arg>2</Arg>
+      <Severity>High</Severity>
+    </FSProblem>
+    <BOProblem>
+      <FormatArg>2</FormatArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>_vsnwprintf</Name>
+    <Info>
+      <Description>&bufbig;</Description>
+      <Severity>Low</Severity>
+    </Info>
+  </Vulnerability>
+<!-- End of Writing Secure Code functions. -->
+
+<!-- Additional functions from David Wheeler's Secure Programming for 
+     Linux and Unix HOWTO -->
+  <Vulnerability>
+    <Name>catgets</Name>
+   <Info>
+      <Description>Environment variables are highly untrustable input. They may be of any length, and contain any data. Do not make any assumptions regarding content or length. If at all possible avoid using them, and if it is necessary, sanitize them and truncate them to a reasonable length.  catgets() can utilize the NLSPATH environment variable.</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>gettext</Name>
+   <Info>
+      <Description>Environment variables are highly untrustable input. They may be of any length, and contain any data. Do not make any assumptions regarding content or length. If at all possible avoid using them, and if it is necessary, sanitize them and truncate them to a reasonable length.  gettext() can utilize the LC_ALL or LC_MESSAGES environment variables.</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>strncat</Name>
+    <BOProblem>
+      <SrcBufArg>1</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+    <Info>
+      <Description>Consider using strlcat() instead.</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability> 
+    <Name>getwd</Name>
+    <BOProblem>
+      <SrcBufArg>1</SrcBufArg>
+      <Severity>High</Severity>
+    </BOProblem>
+  </Vulnerability>
+  <Vulnerability>
+    <Name>umask</Name>
+   <Info>
+      <Description>umask() can easily be used to create files with unsafe priviledges.  It should be set to restrictive values.</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+
+  <Vulnerability>
+    <Name>AddAccessAllowedAce</Name>
+   <Info>
+      <Description>This function does not set the inheritance bits in the Access Controle Entry, making it vulnerable.</Description>
+      <Severity>High</Severity>
+    </Info>
+  </Vulnerability>
+</VulnDB>
+
