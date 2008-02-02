@@ -153,13 +153,13 @@ int HexToInt(char c)
 
 void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 {
-	float newval;
+	int newval;
 	int i;
 
-	newval = Q_atof (string);
+	newval = Q_atoi (string);
 
-	if (!newval == !gl_smoothfont.value || !char_textures[0])
-			return;
+	if ((newval == gl_smoothfont.integer) || !char_textures[0])
+		return;
 
 	for (i = 0; i < MAX_CHARSETS; i++)
 	{
@@ -624,7 +624,7 @@ static int LoadAlternateCharset (char *name)
 	}
 
 	texnum = GL_LoadTexture (va("pic:%s", name), 128, 256, buf, TEX_ALPHA, 1);
-	if (!gl_smoothfont.value)
+	if (!gl_smoothfont.integer)
 	{
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -690,7 +690,7 @@ static int Draw_LoadCharset(const char *name)
 		return 1;
 	}
 
-	if (!gl_smoothfont.value)
+	if (!gl_smoothfont.integer)
 	{
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
