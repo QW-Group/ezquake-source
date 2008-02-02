@@ -223,7 +223,7 @@ const char *priority_enum[] = { "low", "-1", "normal", "0", "high", "1" };
 #endif
 
 
-void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
+void DefaultConfig(void) { Cbuf_AddText("cfg_reset full\n"); }
 
 settings_page settgeneral;
 
@@ -856,23 +856,17 @@ void Menu_Options_Draw(void) {
 // MAIN TAB
 setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	ADDSET_SEPARATOR("Setup & Options"),
-	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the \"QuakeWorld for Freshies\" guide by Apollyon."),
 	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
-	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
-	ADDSET_BOOL		("Confirm Quit", cl_confirmquit),
-#ifdef _WIN32
-	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
-#endif
 
-#ifndef GLQUAKE
-	// FIXME! better menu structure definitely needed, this is horrible
+	ADDSET_SEPARATOR("Basic Setup"),
+
+	ADDSET_STRING	("Name", name),
+	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
+	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
+	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0, 3, 0.05),
-#endif
-	//Connection
-	ADDSET_SEPARATOR("Connection"),
-	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
-	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
+	ADDSET_NUMBER	("Mouse Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
 
 	//Sound & Volume
 	ADDSET_SEPARATOR("Sound & Volume"),
@@ -887,6 +881,11 @@ setting settgeneral_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
 
+	//Connection
+	ADDSET_SEPARATOR("Connection"),
+	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
+	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
+
 	//Match Tools
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
@@ -900,7 +899,7 @@ setting settgeneral_arr[] = {
 #endif
 	ADDSET_BASIC_SECTION(),
 	
-	ADDSET_ADVANCED_SECTION(), // I think all of paths should be advanced? -Up2	
+	ADDSET_ADVANCED_SECTION(),
 	//Paths
 	ADDSET_SEPARATOR("Paths"),
 	ADDSET_NAMED    ("Media Paths Type", cl_mediaroot, mediaroot_enum),
@@ -943,17 +942,21 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
 	ADDSET_SKIN		("Skin", cl_teamskin),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SKIN		("Quad Skin", cl_teamquadskin),
 	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
 	ADDSET_SKIN		("Quad+Pent Skin", cl_teambothskin),
+	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Enemy Skin & Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
 	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
 	ADDSET_SKIN		("Skin", cl_enemyskin),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SKIN		("Quad Skin", cl_enemyquadskin),
 	ADDSET_SKIN		("Pent Skin", cl_enemypentskin),
 	ADDSET_SKIN		("Quad+Pent Skin", cl_enemybothskin),
+	ADDSET_BASIC_SECTION(),
 };
 
 // GRAPHICS TAB
@@ -1006,17 +1009,19 @@ setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Environment"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Fullbright World", r_fullbright),
-	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
 	ADDSET_BOOL		("Simple walls", r_drawflat),
 	ADDSET_BOOL		("Simple turbs", r_fastturb),
 	ADDSET_BOOL		("Draw flame", r_drawflame),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
 	
 	ADDSET_SEPARATOR("Projectiles"),
 	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
 	ADDSET_BOOL		("Rocket Light", r_rocketlight),
 	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
@@ -1086,9 +1091,11 @@ setting setthud_arr[] = {
 	ADDSET_BOOL		("Frags", amf_tracker_frags),
 	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
 	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
 	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
 	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
+	ADDSET_BASIC_SECTION(),
 
 #endif
 
@@ -1123,7 +1130,8 @@ setting setthud_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
 	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
-	
+	ADDSET_BOOL		("Confirm Quit", cl_confirmquit),
+
 
 */
 
@@ -1162,31 +1170,7 @@ setting settdemo_spec_arr[] = {
 // please try to put mostly binds in here
 setting settbinds_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	ADDSET_SEPARATOR("Chat settings"),
-	ADDSET_BIND		("Chat", "messagemode"),
-	ADDSET_BIND		("Teamchat", "messagemode2"),
 	
-	ADDSET_SEPARATOR("Mouse Settings"),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Freelook", freelook),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
-	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
-#ifdef _WIN32
-    ADDSET_ADVANCED_SECTION(),
-    ADDSET_STRING   ("X-axis sensitivity", m_yaw),
-    ADDSET_STRING   ("Y-axis sensitivity", m_pitch),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
-	ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
-	ADDSET_ADVANCED_SECTION(),
-    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
-	ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
-    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
-    ADDSET_BASIC_SECTION(),
-#endif
-
 	ADDSET_SEPARATOR("Movement"),
 	ADDSET_BIND("Attack", "+attack"),
 	ADDSET_BIND("Jump/Swim up", "+jump"),
@@ -1211,6 +1195,37 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Grenade Launcher", "weapon 6"),
 	ADDSET_BIND("Rocket Launcher", "weapon 7"),
 	ADDSET_BIND("Thunderbolt", "weapon 8"),
+	ADDSET_SEPARATOR("Chat settings"),
+	ADDSET_BIND		("Chat", "messagemode"),
+	ADDSET_BIND		("Teamchat", "messagemode2"),
+
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_BIND("Show Scores", "+showscores"),
+	ADDSET_BIND("Screenshot", "screenshot"),
+	ADDSET_BIND("Pause", "pause"),
+	ADDSET_BIND("Quit", "quit"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
+	ADDSET_BASIC_SECTION(),
+
+	ADDSET_SEPARATOR("Mouse Settings"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Freelook", freelook),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
+	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
+#ifdef _WIN32
+    ADDSET_ADVANCED_SECTION(),
+    ADDSET_STRING   ("X-axis sensitivity", m_yaw),
+    ADDSET_STRING   ("Y-axis sensitivity", m_pitch),
+	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
+	ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
+    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
+	ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
+    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
+    ADDSET_BASIC_SECTION(),
+#endif
 
 	ADDSET_SEPARATOR("Teamplay"),
 	ADDSET_BIND("Report Status", "tp_msgreport"),
@@ -1235,16 +1250,6 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Waiting", "tp_msgwaiting"),
 	ADDSET_BIND("Enemy Slipped", "tp_msgslipped"),
 	ADDSET_BASIC_SECTION(),
-
-	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_BIND("Show Scores", "+showscores"),
-	ADDSET_BIND("Screenshot", "screenshot"),
-	ADDSET_BIND("Pause", "pause"),
-	ADDSET_BIND("Quit", "quit"),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
-	ADDSET_BASIC_SECTION(),
-
 };
 
 // VIDEO TAB
@@ -1255,9 +1260,11 @@ setting settvideo_arr[] = {
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Clear Video Buffer", gl_clear),
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
+	ADDSET_BASIC_SECTION(),
 
 #ifndef __APPLE__
 	ADDSET_SEPARATOR("Screen settings"),
@@ -1277,11 +1284,16 @@ setting settvideo_arr[] = {
 	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
 
 	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
 #ifdef _WIN32
+	ADDSET_BASIC_SECTION(),
+	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Taskbar Flash", vid_flashonactivity),
 	ADDSET_BOOL("Taskbar Name", cl_window_caption),
 #endif
+	ADDSET_BASIC_SECTION(),
 };
 #endif // GLQUAKE
 
@@ -1295,6 +1307,8 @@ setting settconfig_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL("Save to profile dir", cfg_use_home),
     ADDSET_BASIC_SECTION(),
+	ADDSET_ACTION("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
+
     
 	ADDSET_SEPARATOR("Export & Import"),
 	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Find and load scripts here."),
