@@ -1992,9 +1992,21 @@ void CL_LinkPlayers (void)
 			org = (j == cl.playernum) ? cl.simorg : state->origin;
 			flicker = r_lightflicker.value ? (rand() & 31) : 0;
 
-			if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) 
+			if ((state->effects & (EF_BLUE | EF_RED | EF_GREEN)) == (EF_BLUE | EF_RED | EF_GREEN)) 
+			{
+				CL_NewDlight (j + 1, org, 200 + flicker, 0.1, lt_white, 0);
+			} 
+			else if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) 
 			{
 				CL_NewDlight (j + 1, org, 200 + flicker, 0.1, lt_redblue, 0);
+			}
+			else if ((state->effects & (EF_BLUE | EF_GREEN)) == (EF_BLUE | EF_GREEN)) 
+			{
+				CL_NewDlight (j + 1, org, 200 + flicker, 0.1, lt_bluegreen, 0);
+			} 
+			else if ((state->effects & (EF_RED | EF_GREEN)) == (EF_RED | EF_GREEN)) 
+			{
+				CL_NewDlight (j + 1, org, 200 + flicker, 0.1, lt_redgreen, 0);
 			} 
 			else if (state->effects & EF_BLUE) 
 			{
@@ -2003,6 +2015,10 @@ void CL_LinkPlayers (void)
 			else if (state->effects & EF_RED) 
 			{
 				CL_NewDlight (j + 1, org, 200 + flicker, 0.1, lt_red, 0);
+			}
+			else if (state->effects & EF_GREEN) 
+			{
+				CL_NewDlight (j + 1, org, 200 + flicker, 0.1, lt_green, 0);
 			} 
 			else if (state->effects & EF_BRIGHTLIGHT) 
 			{
