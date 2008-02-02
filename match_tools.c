@@ -601,7 +601,7 @@ char *MT_ShortStatus(void)
 void MT_TakeScreenshot(void);
 
 cvar_t match_auto_record = {"match_auto_record", "0"};
-cvar_t match_auto_logconsole = {"match_auto_logconsole", "0"};
+cvar_t match_auto_logconsole = {"match_auto_logconsole", "1"};
 cvar_t match_auto_sshot = {"match_auto_sshot", "0"};
 cvar_t match_auto_minlength = {"match_auto_minlength", "30"};
 cvar_t match_auto_spectating = {"match_auto_spectating", "0"};
