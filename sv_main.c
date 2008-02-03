@@ -87,9 +87,12 @@ void SV_AcceptClient (netadr_t adr, int userid, char *userinfo);
 
 // handles both maxclients and maxspectators
 void OnChange_maxclients (cvar_t *var, char *str, qbool *cancel) {
-	int num = Q_atoi(str);
-	num = bound(0, num, MAX_CLIENTS);
-	Cvar_SetValue (var, num);
+	int user = Q_atoi(str);
+	int valid = bound(0, user, MAX_CLIENTS);
+	if (user != valid) {
+		Com_Printf("Only values in range %d - %d are allowed\n", 0, MAX_CLIENTS);
+		*cancel = true;
+	}
 }
 
 /*
