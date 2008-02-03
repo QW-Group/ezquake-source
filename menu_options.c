@@ -602,11 +602,11 @@ cvar_t  cfg_browser_showstatus		= {"cfg_browser_showstatus",	"1"};
 cvar_t  cfg_browser_stripnames		= {"cfg_browser_stripnames",	"1"};
 cvar_t  cfg_browser_interline		= {"cfg_browser_interline",	"0"};
 cvar_t  cfg_browser_scrollnames	= {"cfg_browser_scrollnames",	"1"};
-cvar_t	cfg_browser_democolor		= {"cfg_browser_democolor",	"255 255 255 255"};	// White.
-cvar_t	cfg_browser_selectedcolor	= {"cfg_browser_selectedcolor","0 150 235 255"};	// Light blue.
-cvar_t	cfg_browser_dircolor		= {"cfg_browser_dircolor",		"170 80 0 255"};	// Redish.
+cvar_t	cfg_browser_democolor		= {"cfg_browser_democolor",	"255 255 255 255", CVAR_COLOR};	// White.
+cvar_t	cfg_browser_selectedcolor	= {"cfg_browser_selectedcolor","0 150 235 255", CVAR_COLOR};	// Light blue.
+cvar_t	cfg_browser_dircolor		= {"cfg_browser_dircolor",		"170 80 0 255", CVAR_COLOR};	// Redish.
 #ifdef WITH_ZIP
-cvar_t	cfg_browser_zipcolor		= {"cfg_browser_zipcolor",		"255 170 0 255"};	// Orange.
+cvar_t	cfg_browser_zipcolor		= {"cfg_browser_zipcolor",		"255 170 0 255", CVAR_COLOR};	// Orange.
 #endif
 
 CEditBox filenameeb;

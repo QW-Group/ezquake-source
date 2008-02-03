@@ -98,11 +98,11 @@ cvar_t  demo_browser_stripnames		= {"demo_browser_stripnames",	"1"};
 cvar_t  demo_browser_interline		= {"demo_browser_interline",	"0"};
 cvar_t  demo_browser_scrollnames	= {"demo_browser_scrollnames",	"1"};
 
-cvar_t	demo_browser_democolor		= {"demo_browser_democolor",	"255 255 255 255"};	// White.
-cvar_t	demo_browser_selectedcolor	= {"demo_browser_selectedcolor","0 150 235 255"};	// Light blue.
-cvar_t	demo_browser_dircolor		= {"demo_browser_dircolor",		"170 80 0 255"};	// Redish.
+cvar_t	demo_browser_democolor		= {"demo_browser_democolor",	"255 255 255 255", CVAR_COLOR};	// White.
+cvar_t	demo_browser_selectedcolor	= {"demo_browser_selectedcolor","0 150 235 255", CVAR_COLOR};	// Light blue.
+cvar_t	demo_browser_dircolor		= {"demo_browser_dircolor",		"170 80 0 255", CVAR_COLOR};	// Redish.
 #ifdef WITH_ZIP
-cvar_t	demo_browser_zipcolor		= {"demo_browser_zipcolor",		"255 170 0 255"};	// Orange.
+cvar_t	demo_browser_zipcolor		= {"demo_browser_zipcolor",		"255 170 0 255", CVAR_COLOR};	// Orange.
 #endif
 
 // Demo menu container

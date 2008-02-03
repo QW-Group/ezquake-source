@@ -45,6 +45,15 @@ cvar_t	cvar_viewdefault = {"cvar_viewdefault", "1"};
 cvar_t	cvar_viewhelp    = {"cvar_viewhelp",    "1"};
 cvar_t  cvar_viewlatched = {"cvar_viewlatched", "1"};
 
+#define CVAR_SET_COLOR(var) {							\
+	if (var->flags && CVAR_COLOR) {						\
+		byte *c = StringToRGB(var->string);				\
+		var->color[0] = c[0];							\
+		var->color[1] = c[1];							\
+		var->color[2] = c[2];							\
+		var->color[3] = c[3];							\
+	}													\
+}
 
 // Use this to walk through all vars
 cvar_t *Cvar_Next (cvar_t *var)
@@ -301,6 +310,7 @@ void Cvar_Set (cvar_t *var, char *value)
 	var->string = Z_Strdup (value);
 	var->value = Q_atof (var->string);
 	var->integer = Q_atoi (var->string);
+	CVAR_SET_COLOR(var);
 	var->modified = true;
 
 #ifndef CLIENTONLY
@@ -472,6 +482,7 @@ void Cvar_Register (cvar_t *var)
 				old->latchedString = NULL;
 				old->value   = Q_atof (old->string);
 				old->integer = Q_atoi (old->string);
+				CVAR_SET_COLOR(old);
 				old->modified = true;
 			}
 
@@ -505,6 +516,7 @@ void Cvar_Register (cvar_t *var)
 	}
 	var->value = Q_atof (var->string);
 	var->integer = Q_atoi (var->string);
+	CVAR_SET_COLOR(var);
 	var->modified = true;
 
 	// link the variable in
@@ -725,6 +737,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->flags = cvarflags | CVAR_USER_CREATED;
 	v->value = Q_atof (v->string);
 	v->integer = Q_atoi (v->string);
+	CVAR_SET_COLOR(v);
 	v->modified = true;
 #ifdef WITH_TCL
 	TCL_RegisterVariable (v);

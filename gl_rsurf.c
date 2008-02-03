@@ -986,10 +986,8 @@ void R_DrawFlat (model_t *model) {
 	byte *col, w[3], f[3];
 	qbool draw_caustics = underwatertexture && gl_caustics.value;
 	
-	col = StringToRGB(r_wallcolor.string);
-	memcpy(w, col, 3);
-	col = StringToRGB(r_floorcolor.string);
-	memcpy(f, col, 3);
+	memcpy(w, r_wallcolor.color, 3);
+	memcpy(f, r_floorcolor.color, 3);
 	
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	

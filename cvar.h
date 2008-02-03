@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_LATCH			(1<<11) // will only change when C code next does a Cvar_Register(), so it can't be changed
 									// without proper initialization.  modified will be set, even though the value hasn't changed yet
 #define CVAR_SILENT			(1<<12) // skip warning when trying Cvar_Register() second time
+#define CVAR_COLOR			(1<<13)	// on change convert the string to internal RGBA type
 
 typedef struct cvar_s {
 	char	*name;
@@ -50,6 +51,7 @@ typedef struct cvar_s {
 	char	*defaultvalue;
 	char	*latchedString;
 	int		integer;			// may be set in Cvar_Set(), Cvar_Register(), Cvar_Create()
+	byte	color[4];			// gets set in Cvar_Set, Cvar_Register, Cvar_Create
 	qbool	modified;			// set to true in Cvar_Set(), Cvar_Register(), Cvar_Create(), reset to false manually in C code
 	qbool   teamplay;			// is this variable protected so that it can be only used within messaging?
 	struct cvar_group_s *group;		

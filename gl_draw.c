@@ -1249,7 +1249,7 @@ void Draw_Crosshair (void)
 
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-		col = StringToRGB(crosshaircolor.string);
+		col = crosshaircolor.color;
 
 		if (gl_crosshairalpha.value)
 		{

@@ -279,16 +279,16 @@ void EmitWaterPolys (msurface_t *fa) {
 		glDisable (GL_TEXTURE_2D);
 
 		if (strstr (fa->texinfo->texture->name, "water") || strstr (fa->texinfo->texture->name, "mwat")) {
-			col = StringToRGB(r_watercolor.string);
+			col = r_watercolor.color;
 		}
 		else if (strstr (fa->texinfo->texture->name, "slime")) {
-			col = StringToRGB(r_slimecolor.string);
+			col = r_slimecolor.color;
 		}
 		else if (strstr (fa->texinfo->texture->name, "lava")) {
-			col = StringToRGB(r_lavacolor.string);
+			col = r_lavacolor.color;
 		}
 		else if (strstr (fa->texinfo->texture->name, "tele")) {
-			col = StringToRGB(r_telecolor.string);
+			col = r_telecolor.color;
 		}
 		else {
 			col = (byte *) &fa->texinfo->texture->flatcolor3ub;
@@ -447,8 +447,7 @@ void R_DrawSkyChain (void) {
 	if (r_fastsky.value || cl.worldmodel->bspversion == HL_BSPVERSION) {
 		glDisable (GL_TEXTURE_2D);
 
-		col = StringToRGB(r_skycolor.string);
-		glColor3ubv (col);
+		glColor3ubv (r_skycolor.color);
 
 		for (fa = skychain; fa; fa = fa->texturechain)
 			EmitFlatPoly (fa);
@@ -998,7 +997,7 @@ void R_DrawSky (void)
 
 	if (r_fastsky.value) {
 		glDisable (GL_TEXTURE_2D);
-		glColor3ubv (StringToRGB(r_skycolor.string));
+		glColor3ubv (r_skycolor.color);
 
 		for (fa = skychain; fa; fa = fa->texturechain)
 			EmitFlatPoly (fa);

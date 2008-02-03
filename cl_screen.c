@@ -164,7 +164,7 @@ cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 
 cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n $x10%l$x11 %a/%H %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
 cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1", CVAR_ARCHIVE};
-cvar_t	scr_teaminfo_frame_color = {"scr_teaminfo_frame_color", "10 0 0 120"};
+cvar_t	scr_teaminfo_frame_color = {"scr_teaminfo_frame_color", "10 0 0 120", CVAR_COLOR};
 cvar_t	scr_teaminfo_scale		 = {"scr_teaminfo_scale",       "1",  CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_y			 = {"scr_teaminfo_y",           "0",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo_x			 = {"scr_teaminfo_x",           "0",  CVAR_ARCHIVE};
@@ -178,7 +178,7 @@ cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2",  CVAR_ARCHI
 cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1",  CVAR_ARCHIVE};
 
 cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
-cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_ARCHIVE};
+cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_ARCHIVE | CVAR_COLOR};
 cvar_t	scr_shownick_scale		 = {"scr_shownick_scale",		"1",   CVAR_ARCHIVE};
 cvar_t	scr_shownick_y			 = {"scr_shownick_y",			"0",   CVAR_ARCHIVE};
 cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0",   CVAR_ARCHIVE};
@@ -1805,7 +1805,7 @@ static void SCR_Draw_TeamInfo(void)
 		x += scr_teaminfo_x.value;
 
 		if ( !j ) { // draw frame
-			byte	*col = StringToRGB(scr_teaminfo_frame_color.string);
+			byte	*col = scr_teaminfo_frame_color.color;
 			glDisable (GL_TEXTURE_2D);
 			glColor4ub(col[0], col[1], col[2], col[3]);
 			glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
@@ -1983,7 +1983,7 @@ static void SCR_Draw_ShowNick(void)
 	x += scr_shownick_x.value;
 
 	// draw frame
-	col = StringToRGB(scr_shownick_frame_color.string);
+	col = scr_shownick_frame_color.color;
 	glDisable (GL_TEXTURE_2D);
 	glColor4ub(col[0], col[1], col[2], col[3]);
 	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);

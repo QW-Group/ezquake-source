@@ -816,7 +816,7 @@ void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 {
 	// Converts "red" into "255 0 0", etc. or returns input as it was.
 	char *new_color = ColorNameToRGBString (newval);
-	char buf[256];
+	char buf[256], buf2[MAX_COM_TOKEN];
 	size_t hudname_len;
 	hud_t* hud_elem;
 	byte* b_colors;
@@ -825,7 +825,8 @@ void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 	strlcpy (buf, var->name + 4, hudname_len);
 	hud_elem = HUD_Find (buf);
 
-	b_colors = StringToRGB (new_color);
+	strlcpy(buf2,new_color,sizeof(buf2));
+	b_colors = StringToRGB (buf2);
 
 	memcpy (hud_elem->frame_color_cache, b_colors, sizeof (byte) * 3);
 }

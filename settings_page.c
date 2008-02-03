@@ -32,11 +32,11 @@ cvar_t  skin_browser_showstatus		= {"skin_browser_showstatus",	"1"};
 cvar_t  skin_browser_stripnames		= {"skin_browser_stripnames",	"1"};
 cvar_t  skin_browser_interline		= {"skin_browser_interline",	"0"};
 cvar_t  skin_browser_scrollnames	= {"skin_browser_scrollnames",	"1"};
-cvar_t	skin_browser_democolor		= {"skin_browser_democolor",	"255 255 255 255"};	// White.
-cvar_t	skin_browser_selectedcolor	= {"skin_browser_selectedcolor","0 150 235 255"};	// Light blue.
-cvar_t	skin_browser_dircolor		= {"skin_browser_dircolor",		"170 80 0 255"};	// Redish.
+cvar_t	skin_browser_democolor		= {"skin_browser_democolor",	"255 255 255 255", CVAR_COLOR};	// White.
+cvar_t	skin_browser_selectedcolor	= {"skin_browser_selectedcolor","0 150 235 255", CVAR_COLOR};	// Light blue.
+cvar_t	skin_browser_dircolor		= {"skin_browser_dircolor",		"170 80 0 255", CVAR_COLOR};	// Redish.
 #ifdef WITH_ZIP
-cvar_t	skin_browser_zipcolor		= {"skin_browser_zipcolor",		"255 170 0 255"};	// Orange.
+cvar_t	skin_browser_zipcolor		= {"skin_browser_zipcolor",		"255 170 0 255", CVAR_COLOR};	// Orange.
 #endif
 
 filelist_t skins_filelist;

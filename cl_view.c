@@ -70,7 +70,7 @@ cvar_t	v_ipitch_level = {"v_ipitch_level", "0.3", 0, Change_v_idle};
 cvar_t	v_idlescale = {"v_idlescale", "0", 0, Change_v_idle};
 
 cvar_t	crosshair = {"crosshair", "3", CVAR_ARCHIVE};
-cvar_t	crosshaircolor = {"crosshaircolor", "255 255 255", CVAR_ARCHIVE};
+cvar_t	crosshaircolor = {"crosshaircolor", "255 255 255", CVAR_ARCHIVE | CVAR_COLOR};
 cvar_t	crosshairsize	= {"crosshairsize", "1"};
 cvar_t  cl_crossx = {"cl_crossx", "0", CVAR_ARCHIVE};
 cvar_t  cl_crossy = {"cl_crossy", "0", CVAR_ARCHIVE};

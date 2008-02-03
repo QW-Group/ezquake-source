@@ -100,22 +100,22 @@ cvar_t	r_novis = {"r_novis", "0"};
 cvar_t	r_netgraph = {"r_netgraph", "0"};
 cvar_t	r_netstats = {"r_netstats", "0"};
 cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins};
-cvar_t	r_enemyskincolor	= {"r_enemyskincolor", ""};
-cvar_t	r_teamskincolor		= {"r_teamskincolor",  ""};
+cvar_t	r_enemyskincolor	= {"r_enemyskincolor", "", CVAR_COLOR};
+cvar_t	r_teamskincolor		= {"r_teamskincolor",  "", CVAR_COLOR};
 cvar_t	r_skincolormode		= {"r_skincolormode",  "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t  r_fastturb = {"r_fastturb", "0"};
 
-cvar_t	r_skycolor   = {"r_skycolor", "40 80 150"};
-cvar_t  r_telecolor  = {"r_telecolor", "255 60 60"};
-cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0"};
-cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10"};
-cvar_t  r_watercolor = {"r_watercolor", "50 80 120"};
+cvar_t	r_skycolor   = {"r_skycolor", "40 80 150", CVAR_COLOR};
+cvar_t  r_telecolor  = {"r_telecolor", "255 60 60", CVAR_COLOR};
+cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0", CVAR_COLOR};
+cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10", CVAR_COLOR};
+cvar_t  r_watercolor = {"r_watercolor", "50 80 120", CVAR_COLOR};
 
 void OnChange_r_drawflat(cvar_t *v, char *skyname, qbool *cancel);
 cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
-cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", 0, OnChange_r_drawflat};
-cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150", 0, OnChange_r_drawflat};
+cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", CVAR_COLOR, OnChange_r_drawflat};
+cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t	gl_textureless = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
 
 cvar_t	r_farclip			= {"r_farclip", "4096"};
@@ -131,7 +131,7 @@ cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64", CVAR_ARCHIVE};
 cvar_t	gl_clear = {"gl_clear", "0"};
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
-cvar_t	gl_clearColor = {"gl_clearColor", "0 0 0", 0, OnChange_gl_clearColor};
+cvar_t	gl_clearColor = {"gl_clearColor", "0 0 0", CVAR_COLOR, OnChange_gl_clearColor};
 cvar_t	gl_cull = {"gl_cull", "1"};
 
 cvar_t	gl_ztrick = {"gl_ztrick", "0"};
@@ -155,8 +155,8 @@ cvar_t	gl_colorlights = {"gl_colorlights", "1"};
 cvar_t gl_solidparticles = {"gl_solidparticles", "0"}; // 1
 cvar_t gl_part_explosions = {"gl_part_explosions", "0"}; // 1
 cvar_t gl_part_trails = {"gl_part_trails", "0"}; // 1
-cvar_t gl_part_tracer1_color = {"gl_part_tracer1_color", "0 124 0"};
-cvar_t gl_part_tracer2_color = {"gl_part_tracer2_color", "255 77 0"};
+cvar_t gl_part_tracer1_color = {"gl_part_tracer1_color", "0 124 0", CVAR_COLOR};
+cvar_t gl_part_tracer2_color = {"gl_part_tracer2_color", "255 77 0", CVAR_COLOR};
 cvar_t gl_part_spikes = {"gl_part_spikes", "0"}; // 1
 cvar_t gl_part_gunshots = {"gl_part_gunshots", "0"}; // 1
 cvar_t gl_part_blood = {"gl_part_blood", "0"}; // 1
@@ -956,7 +956,7 @@ void R_DrawAliasModel (entity_t *ent) {
 	}
 
 	if (cv && cv->string[0])
-	    color32bit = StringToRGB(cv->string);
+	    color32bit = cv->color;
 
 	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 
@@ -1819,8 +1819,10 @@ float clearColor[3] = {0, 0, 0};
 
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	byte *color;
-
-	color = StringToRGB(s);
+	char buf[MAX_COM_TOKEN];
+	
+	strlcpy(buf,s,sizeof(buf));
+	color = StringToRGB(buf);
 
 	clearColor[0] = color[0] / 255.0;
 	clearColor[1] = color[1] / 255.0;

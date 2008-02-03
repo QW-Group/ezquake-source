@@ -5119,13 +5119,15 @@ byte hud_radar_highlight_color[4] = {255, 255, 0, HUD_COLOR_DEFAULT_TRANSPARENCY
 void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 {
 	char *new_color;
+	char buf[MAX_COM_TOKEN];
 
 	// Translate a colors name to RGB values.
 	new_color = ColorNameToRGBString(newval);
 
 	// Parse the colors.
 	//color = StringToRGB(new_color);
-	memcpy(hud_radar_highlight_color, StringToRGB(new_color), sizeof(byte) * 4);
+	strlcpy(buf,new_color,sizeof(buf));
+	memcpy(hud_radar_highlight_color, StringToRGB(buf), sizeof(byte) * 4);
 
 	// Set the cvar to contain the new color string
 	// (if the user entered "red" it will be "255 0 0").

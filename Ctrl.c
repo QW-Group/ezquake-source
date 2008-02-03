@@ -6,7 +6,7 @@
 
 
 #ifdef GLQUAKE
-cvar_t     menu_marked_bgcolor = {"menu_marked_bgcolor", "20 20 20 128"};
+cvar_t     menu_marked_bgcolor = {"menu_marked_bgcolor", "20 20 20 128", CVAR_COLOR};
 cvar_t     menu_marked_fade = {"menu_marked_fade", "4"};
 #else
 cvar_t     menu_marked_bgcolor = {"menu_marked_bgcolor", "0"};
@@ -113,7 +113,7 @@ void UI_DrawGrayBox(int x, int y, int w, int h)
 	byte c[4];
 	float fade = 1;
 
-	memcpy(c, StringToRGB(menu_marked_bgcolor.string), sizeof(byte) * 4);
+	memcpy(c, menu_marked_bgcolor.color, sizeof(byte) * 4);
 #ifdef GLQUAKE
 	if (menu_marked_fade.value) 
 	{

@@ -39,32 +39,6 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
 #define FL_SEARCH_TIMEOUT	2.0
 static double last_search_enter_time = 0.0;
 
-//
-// When changing RGBA color-value for the text in the file list (dirs/zips).
-//
-static void FL_OnChangeTextColor (cvar_t *var, char *newval, qbool *cancel)
-{
-	char buf[MAX_COM_TOKEN];
-	byte *color;
-
-	strlcpy(buf, newval, sizeof(buf));
-	color = StringToRGB(buf);
-	var->value = RGBA_TO_COLOR(color[0], color[1], color[2], color[3]);
-
-	*cancel = true;
-}
-
-static void FL_RegisterColor (cvar_t *var)
-{
-	if (var)
-	{
-		char tempval[256];
-
-		var->OnChange = FL_OnChangeTextColor;
-		strlcpy (tempval, var->string, sizeof(tempval));
-		Cvar_Set (var, tempval);
-	}
-}
 
 //
 // Create list
@@ -116,13 +90,8 @@ void FL_Init(filelist_t	*	fl,
 
     fl->scrollbar = ScrollBar_Create(NULL);
 
-	FL_RegisterColor (fl->file_color);
-	FL_RegisterColor (fl->selected_color);
-	FL_RegisterColor (fl->dir_color);
-
 	#ifdef WITH_ZIP
 	fl->archive_color = archive_color;
-	FL_RegisterColor (fl->archive_color);
 
 	fl->current_archive[0] = 0;
 	fl->in_archive = false;
@@ -1823,18 +1792,18 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 				if (entry->is_directory)
 				{
 					// Set directory color.
-					clr[0].c = (fl->dir_color == NULL) ? COLOR_WHITE : (int)fl->dir_color->value;
+					clr[0].c = (fl->dir_color == NULL) ? COLOR_WHITE : RGBAVECT_TO_COLOR(fl->dir_color->color);
 				}
 				#ifdef WITH_ZIP
 				else if (entry->is_archive)
 				{
 					// Set zip color.
-					clr[0].c = (fl->archive_color == NULL) ? COLOR_WHITE : (int)fl->archive_color->value;
+					clr[0].c = (fl->archive_color == NULL) ? COLOR_WHITE : RGBAVECT_TO_COLOR(fl->archive_color->color);
 				}
 				#endif // WITH_ZIP
 				else
 				{
-					clr[0].c = (fl->file_color == NULL) ? COLOR_WHITE : (int)fl->file_color->value;
+					clr[0].c = (fl->file_color == NULL) ? COLOR_WHITE : RGBAVECT_TO_COLOR(fl->file_color->color);
 				}
 			}
 
@@ -1854,7 +1823,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		// Color the selected entry.
 		if (filenum == fl->current_entry)
 		{
-			clr[0].c = (fl->selected_color == NULL) ? COLOR_WHITE : (int)fl->selected_color->value;
+			clr[0].c = (fl->selected_color == NULL) ? COLOR_WHITE : RGBAVECT_TO_COLOR(fl->selected_color->color);
 			clr[0].i = 1; // Don't color the cursor (index 0).
 		}
 
