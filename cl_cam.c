@@ -876,10 +876,14 @@ void CL_Autotrack_f(void)
 
 	if (cls.demoplayback) {
 		if (cls.mvdplayback) {
+			if (cl_hightrack.integer) {
+				Cvar_SetValue(&cl_hightrack, 0);
+			}
+
 			if (!mvda && !demoa) {
 				// we will turn on both features but if demo_autotrack info is found
 				// it will turn off mvd_autotrack
-				Cvar_SetValue(&mvd_autotrack, 1);
+				Cvar_SetValue(&mvd_autotrack, 4);
 				Cvar_SetValue(&demo_autotrack, 1);
 				Com_Printf("MVD Autotracking on\n");
 			} else if (mvda && !demoa) {
