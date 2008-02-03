@@ -288,7 +288,7 @@ static int MVD_FindBestPlayerSimple(void) {
 	int i, b;
 
 	b = cl.viewplayernum;
-	for (i = 1; i < mvd_cg_info.pcount; i++) {
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
 		if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[cl.viewplayernum].team))
 			continue;
 		b = MVD_GetBetterPlayerSimple(b, mvd_new_info[i].id);
@@ -415,7 +415,7 @@ void MVD_AutoTrack_f(void) {
 		else
 			id = MVD_FindBestPlayer_f();
 
-		if (id != last_track) {
+		if (id != last_track || cl.viewplayernum != id) {
 			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
 			Cbuf_AddText(arg);
 			last_track = id;
