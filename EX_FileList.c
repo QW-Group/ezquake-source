@@ -44,7 +44,11 @@ static double last_search_enter_time = 0.0;
 //
 static void FL_OnChangeTextColor (cvar_t *var, char *newval, qbool *cancel)
 {
-	byte *color = StringToRGB(newval);
+	char buf[MAX_COM_TOKEN];
+	byte *color;
+
+	strlcpy(buf, newval, sizeof(buf));
+	color = StringToRGB(buf);
 	var->value = RGBA_TO_COLOR(color[0], color[1], color[2], color[3]);
 
 	*cancel = true;

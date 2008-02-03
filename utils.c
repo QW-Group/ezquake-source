@@ -97,6 +97,8 @@ byte *StringToRGB(char *s) {
 
 	rgb[0] = rgb[1] = rgb[2] = rgb[3] = 255;
 
+	/// FIXME this can cause serious problems, Cmd_TokenizeStringEx will reset
+	/// some memory to zero and therefore sometimes wipes out the text we are analyzing
 	Cmd_TokenizeString(s);
 
 	#ifdef GLQUAKE
