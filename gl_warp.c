@@ -435,7 +435,6 @@ void EmitSkyPolys (msurface_t *fa, qbool mtex) {
 
 void R_DrawSkyChain (void) {
 	msurface_t *fa;
-	byte *col;
 	extern cvar_t gl_fogsky;
 	if (!skychain)
 		return;

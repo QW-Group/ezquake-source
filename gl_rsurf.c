@@ -983,7 +983,7 @@ void R_DrawFlat (model_t *model) {
 	int waterline, i, k;
 	float *v;
 	vec3_t n;
-	byte *col, w[3], f[3];
+	byte w[3], f[3];
 	qbool draw_caustics = underwatertexture && gl_caustics.value;
 	
 	memcpy(w, r_wallcolor.color, 3);
