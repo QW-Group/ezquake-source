@@ -555,6 +555,7 @@ void Media_WINAMP_SetVolume(double vol)
 
 void MP3_WINAMP_Init(void)
 {
+	if (host_initialized && Cvar_Find(mp3_dir.name)) return;
 	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
 	Cvar_Register(&mp3_dir);
 	Cvar_ResetCurrentGroup();
