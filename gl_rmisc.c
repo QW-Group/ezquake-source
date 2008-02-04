@@ -45,7 +45,9 @@ void R_InitOtherTextures (void) {
 
 	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags | (gl_waterfog.value ? TEX_COMPLAIN : 0));	
 	detailtexture = GL_LoadTextureImage ("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
-	shelltexture = GL_LoadTextureImage ("textures/quadmap2", NULL, 0, 0,  flags | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
+	
+	// until we have this file (with ok license), this stays disabled
+	// shelltexture = GL_LoadTextureImage ("textures/quadmap2", NULL, 0, 0,  flags | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
 }
 
 void R_InitTextures (void) {
