@@ -922,7 +922,7 @@ void LoadHomeCfg(const char *filename)
 	snprintf(fullname, sizeof(fullname) - 4, "%s/%s", com_homedir, filename);
 	COM_ForceExtensionEx (fullname, ".cfg", sizeof (fullname));
 
-	if (!(f = fopen(fullname, "r"))) {
+	if (!(f = fopen(fullname, "rb"))) {
 	    Com_DPrintf("LoadHomeCfg: %s not found\n", filename); // hrm
 		return;
 	}
