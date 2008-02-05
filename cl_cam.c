@@ -60,10 +60,20 @@ void CL_TrackMV4_f(void);
 void CL_TrackTeam_f(void); 
 
 void CL_Track_f(void);
+void CL_Trackkiller_f(void);
 void CL_Autotrack_f(void);
 
 int		ideal_track = 0;		// The currently tracked player.
 float	last_lock = 0;			// Last tracked player.
+
+static int	killer = -1;		// id of the player who killed the player we are now tracking
+
+void CL_Cam_SetKiller(int killernum, int victimnum) {
+	if (victimnum != cl.viewplayernum) return;
+	if (killernum < 0 || killernum >= MAX_CLIENTS) return;
+
+	killer = killernum;
+}
 
 void vectoangles(vec3_t vec, vec3_t ang) {
 	float forward, yaw, pitch;
@@ -729,6 +739,7 @@ void CL_InitCam(void)
 	Cvar_ResetCurrentGroup();
 	Cmd_AddCommand ("track", CL_Track_f);
 	Cmd_AddCommand ("autotrack", CL_Autotrack_f);
+	Cmd_AddCommand ("trackkiller", CL_Trackkiller_f);
 
 	// Multivew tracking.
 	Cmd_AddCommand ("track1", CL_TrackMV1_f);	
@@ -860,6 +871,15 @@ void CL_Track (int trackview)
 void CL_Track_f(void) 
 {
 	CL_Track(-1);	
+}
+
+void CL_Trackkiller_f(void)
+{
+	if (killer >= 0 && killer < MAX_CLIENTS) {
+		char buf[16];
+		snprintf(buf, sizeof(buf), "track %d\n", cl.players[killer].userid);
+		Cbuf_AddText(buf);
+	}
 }
 
 // auto-tracking is a feature implemented in three different places in QW

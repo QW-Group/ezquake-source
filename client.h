@@ -836,6 +836,7 @@ extern int	autocam;
 extern int	spec_track; // player# of who we are tracking
 
 int WhoIsSpectated (void);
+void CL_Cam_SetKiller(int killernum, int victimnum);
 
 qbool Cam_DrawViewModel (void);
 qbool Cam_DrawPlayer (int playernum);

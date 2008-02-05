@@ -661,6 +661,7 @@ foundmatch:
 		cff->isFragMsg = true;
 		killer = (fragmsg->type == mt_fragged) ? j : i;
 		victim = (fragmsg->type == mt_fragged) ? i : j;
+		CL_Cam_SetKiller(killer,victim);
 		fragstats[killer].kills[victim]++;
 		fragstats[killer].totalfrags++;
 		fragstats[killer].wkills[fragmsg->wclass_index]++;
@@ -693,6 +694,7 @@ foundmatch:
 		cff->isFragMsg = true;
 		killer = (fragmsg->type == mt_tkilled) ? j : i;
 		victim = (fragmsg->type == mt_tkilled) ? i : j;
+		CL_Cam_SetKiller(killer,victim);
 
 		fragstats[killer].teamkills[victim]++;
 		fragstats[killer].totalteamkills++;
