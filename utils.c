@@ -661,7 +661,7 @@ void FunToSort(char *text)
 		if (c >= 18  &&  c <= 27)
 			c += 30;
 		else if (c >= 146  &&  c <= 155)
-			c -= 98;
+			c -= 98; // Yellow numbers.
 		else if (c >= 32  &&  c <= 126)
 			c = tolower(c);
 		else if (c >= 160  &&  c <= 254)
