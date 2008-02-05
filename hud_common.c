@@ -2046,6 +2046,10 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 
 	clamp(width, 1, 99999);
     clamp(height, 1, 99999);
+	
+	// Set it to this, because 1.0 will make the colors
+	// completly saturated, and no semi-transparency will show.
+	pic_alpha = (pic_alpha) >= 1.0 ? 0.99 : pic_alpha;
 
 	// Grow the group if necessary.
 	if (pic_scalemode == HUD_GROUP_SCALEMODE_GROW

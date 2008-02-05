@@ -1710,13 +1710,14 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
     newth = newtl + (src_height * oldglheight) / (float)pic->height;
 
 	alpha *= overall_alpha;
-
-	glDisable (GL_ALPHA_TEST);
-	glEnable (GL_BLEND);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glCullFace (GL_FRONT);
-	glColor4f (1, 1, 1, alpha);
+	if(alpha < 1.0) {
+		glDisable (GL_ALPHA_TEST);
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glCullFace (GL_FRONT);
+		glColor4f (1, 1, 1, alpha);
+	}
 
     GL_Bind (pic->texnum);
 
@@ -1739,11 +1740,13 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 		glVertex2f (x, y + (scale_y * src_height));
 	}
 	glEnd ();
-
-	glEnable (GL_ALPHA_TEST);
-	glDisable (GL_BLEND);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glColor4f (1, 1, 1, 1);
+	
+	if(alpha < 1.0) {
+		glEnable (GL_ALPHA_TEST);
+		glDisable (GL_BLEND);
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glColor4f (1, 1, 1, 1);
+	}
 }
 
 void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
