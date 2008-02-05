@@ -958,7 +958,7 @@ void MVD_Mainhook_f (void){
 	MVD_Stats_Gather_f();
 	MVD_AutoTrack_f ();
 	if (cls.mvdplayback && mvd_demo_track_run == 0)
-	MVD_Demo_Track ();
+		MVD_Demo_Track ();
 }
 
 void MVD_PC_Get_Coords (void){
