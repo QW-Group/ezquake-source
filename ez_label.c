@@ -165,7 +165,7 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	{	
 		// Wordwrap the string to the virtual size of the control and save the
 		// indexes where each row ends in an array.
-		while ((i < LABEL_MAX_WRAPS) && Util_GetNextWordwrapString(label->text, NULL, current_index + 1, &current_index, LABEL_LINE_SIZE, label->super.virtual_width, scaled_char_size))
+		while ((i < LABEL_MAX_WRAPS) && Util_GetNextWordwrapString(label->text, NULL, (current_index + 1), &current_index, LABEL_LINE_SIZE, label->super.virtual_width, scaled_char_size))
 		{
 			label->wordwraps[i].index = current_index;
 			label->wordwraps[i].col = current_index - last_index;
@@ -182,6 +182,7 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	else if (label->text)
 	{
 		// Normal non-wrapped text, still save new line locations.
+		current_index = 0; // TODO : Will this be ok? Otherwise it will be -1, which definantly is bad :p
 
 		while ((i < LABEL_MAX_WRAPS) && label->text[current_index])
 		{
