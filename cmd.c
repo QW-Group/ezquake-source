@@ -970,14 +970,14 @@ char *Cmd_ArgvEx (tokenizecontext_t *ctx, int arg)
 	return ctx->cmd_argv[arg];
 }
 
-//Returns a single string containing argv(1) to argv(argc() - 1)
+// Returns a single string containing argv(1) to argv(argc() - 1)
 char *Cmd_ArgsEx (tokenizecontext_t *ctx)
 {
 	return ctx->cmd_args;
 }
 
-//Returns a single string containing argv(start) to argv(argc() - 1)
-//Unlike Cmd_Args, shrinks spaces between argvs
+// Returns a single string containing argv(start) to argv(argc() - 1)
+// Unlike Cmd_Args, shrinks spaces between argvs
 char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start)
 {
 	int i, c;
@@ -996,7 +996,7 @@ char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start)
 	return ctx->text;
 }
 
-//Parses the given string into command line tokens.
+// Parses the given string into command line tokens.
 void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text)
 {
 	int idx = 0, token_len;
