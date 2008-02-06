@@ -163,37 +163,53 @@ char *Skin_FindName (player_info_t *sc) {
 }
 
 //Determines the best skin for the given scoreboard slot, and sets scoreboard->skin
-void Skin_Find (player_info_t *sc) {
+void Skin_Find_Ex (player_info_t *sc, char *skin_name) {
 	skin_t *skin;
 	int i;
 	char name[MAX_OSPATH];
 
-	strlcpy(name, Skin_FindName(sc), sizeof(name));
+	if (!skin_name || !skin_name[0])
+	{
+		skin_name = baseskin.string;
+
+		if (!skin_name[0])
+			skin_name = "base";
+	}
+
+	strlcpy(name, skin_name, sizeof(name));
 	COM_StripExtension(name, name);
 
-	for (i = 0; i < numskins; i++) {
-		if (!strcmp(name, skins[i].name)) {
-			sc->skin = &skins[i];
-// no mess plz, we call this later
-//			Skin_Cache(sc->skin, false);
+	for (i = 0; i < numskins; i++)
+	{
+		if (!strcmp(name, skins[i].name))
+		{
+			if (sc)
+				sc->skin = &skins[i];
+
 			return;
 		}
 	}
 
-	if (numskins == MAX_CACHED_SKINS) {	// ran out of spots, so flush everything
+	if (numskins == MAX_CACHED_SKINS)
+	{	// ran out of spots, so flush everything
 		Com_Printf ("MAX_CACHED_SKINS reached, flushing skins\n");
 		Skin_Skins_f(); // this must set numskins to 0
-// quake expect we set sc->skin to something not NULL, so no return
-//		return;
 	}
 
 	skin = &skins[numskins];
-	sc->skin = skin;
+	if (sc)
+		sc->skin = skin;
 	numskins++;
 
 	memset (skin, 0, sizeof(*skin));
 	strlcpy(skin->name, name, sizeof(skin->name));
 }
+
+void Skin_Find (player_info_t *sc)
+{
+	Skin_Find_Ex(sc, Skin_FindName(sc));
+}
+
 
 byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_width, int *real_height)
 {
@@ -229,6 +245,55 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_wi
 
 	return NULL;
 }
+
+#ifdef GLQUAKE
+
+qbool skins_need_preache = true;
+
+// HACK
+void Skins_PreCache(void)
+{
+	int i;
+	byte *tex;
+
+	if (!skins_need_preache) // no need, we alredy done this
+		return;
+
+	skins_need_preache = false;
+
+	// this must register skins with such names in skins[] array
+
+	Skin_Find_Ex(NULL, cl_teamskin.string);
+	Skin_Find_Ex(NULL, cl_enemyskin.string);
+	Skin_Find_Ex(NULL, cl_teamquadskin.string);
+	Skin_Find_Ex(NULL, cl_enemyquadskin.string);
+	Skin_Find_Ex(NULL, cl_teampentskin.string);
+	Skin_Find_Ex(NULL, cl_enemypentskin.string);
+	Skin_Find_Ex(NULL, cl_teambothskin.string);
+	Skin_Find_Ex(NULL, cl_enemybothskin.string);
+
+	// now load all 24 bit skins in skins[] array
+
+	for (i = 0; i < numskins; i++)
+	{
+		tex = Skin_Cache (&skins[i], false); // this precache skin file in mem
+
+		if (!tex)
+			continue; // nothing more we can do
+
+		if (skins[i].bpp != 4) // we interesting in 24 bit skins only
+			continue; 
+
+		if (skins[i].texnum) // seems skin alredy loaded, at least we have some texture
+			continue; 
+
+		skins[i].texnum = GL_LoadTexture (skins[i].name, skins[i].width, skins[i].height, tex, TEX_MIPMAP | TEX_NOSCALE, 4);
+
+		Com_DPrintf("skin precache: %s, texnum %d\n", skins[i].name, skins[i].texnum);
+	}
+}
+
+#endif
 
 // Returns a pointer to the skin bitmap, or NULL to use the default
 byte *Skin_Cache (skin_t *skin, qbool no_baseskin) 
@@ -362,6 +427,10 @@ void Skin_Skins_f (void) {
 			Cache_Free (&skins[i].cache);
 	}
 	numskins = 0;
+
+#ifdef GLQUAKE
+	skins_need_preache = true; // we need precache it ASAP
+#endif
 
 	cls.downloadnumber = 0;
 	cls.downloadtype = dl_skin;

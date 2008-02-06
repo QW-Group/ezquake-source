@@ -1775,6 +1775,7 @@ void R_Init (void) {
 
 extern msurface_t	*alphachain;
 void R_RenderScene (void) {
+	extern void Skins_PreCache(void);
 
 	vec3_t		colors;
 
@@ -1785,6 +1786,8 @@ void R_RenderScene (void) {
 	R_SetupGL ();
 
 	R_MarkLeaves ();	// done here so we know if we're in water
+
+	Skins_PreCache ();  // preache skins if needed
 
 	R_DrawWorld ();		// adds static entities to the list
 
