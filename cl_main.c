@@ -267,32 +267,50 @@ qbool CL_CheckIfQWProtocolHandler()
 	// Get the size we need to read.
 	if (RegQueryValueEx(hk, NULL, 0, &type, reg_path, &len) == ERROR_SUCCESS)
 	{
-		char exe_path[MAX_PATH];
 		char expanded_reg_path[MAX_PATH];
 
 		// Expand any environment variables in the reg value so that we get a real path to compare with.
 		ExpandEnvironmentStrings(reg_path, expanded_reg_path, sizeof(expanded_reg_path));
 
-		// Get the long path of the current process.
-		// C:\Program Files\Quake\ezquake-gl.exe
-		Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
-
-		if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
+		#if 0
+		// This checks if the current exe is associated with, otherwise it will prompt the user
+		// a bit more "in the face" if the user has more than one ezquake version.
 		{
-			// This exe is associated with the qw:// protocol, return true.
+			char exe_path[MAX_PATH];
+		
+			// Get the long path of the current process.
+			// C:\Program Files\Quake\ezquake-gl.exe
+			Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
+
+			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
+			{
+				// This exe is associated with the qw:// protocol, return true.
+				CloseHandle(hk);
+				return true;
+			}
+
+			// Get the short path and check if that matches instead.
+			// C:\Program~1\Quake\ezquake-gl.exe
+			Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
+
+			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
+			{
+				CloseHandle(hk);
+				return true;
+			}
+		}
+		#else
+		// Only check if ezquake is in the string that associates with the qw:// protocol
+		// so if you have several ezquake exes it won't bug you if you just switch between those
+		// (Only one will be registered as the protocol handler though ofcourse).
+
+		if (strstri(reg_path, "ezquake"))
+		{
 			CloseHandle(hk);
 			return true;
 		}
 
-		// Get the short path and check if that matches instead.
-		// C:\Program~1\Quake\ezquake-gl.exe
-		Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
-
-		if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
-		{
-			CloseHandle(hk);
-			return true;
-		}
+		#endif
 	}
 
 	CloseHandle(hk);

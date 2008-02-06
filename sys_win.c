@@ -961,11 +961,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	ParseCommandLine(lpCmdLine);
 
 	// Check if we're the registered QW url protocol handler.
-	if (!WinCheckQWURL() && ((argc + 2) < MAX_NUM_ARGVS))
+	if (!WinCheckQWURL() && ((argc + 3) < MAX_NUM_ARGVS))
 	{
 		// User doesn't want to be bothered again.
 		argv[argc++] = "+cl_verify_qwprotocol";
 		argv[argc++] = "0";
+		argv[argc++] = "+cfg_save";
 	}
 
 	// We need to check some parms before Host_Init is called
