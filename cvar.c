@@ -46,7 +46,7 @@ cvar_t	cvar_viewhelp    = {"cvar_viewhelp",    "1"};
 cvar_t  cvar_viewlatched = {"cvar_viewlatched", "1"};
 
 #define CVAR_SET_COLOR(var) {							\
-	if (var->flags && CVAR_COLOR) {						\
+	if (var->flags & CVAR_COLOR) {						\
 		byte *c = StringToRGB(var->string);				\
 		var->color[0] = c[0];							\
 		var->color[1] = c[1];							\
