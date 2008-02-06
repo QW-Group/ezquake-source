@@ -91,35 +91,41 @@ char *ColorNameToRGBString(char *color_name)
 	return color_name;
 }
 
-byte *StringToRGB(char *s) {
-	int i, argc;
-	static byte rgb[4];
-
+/// \brief converts "255 255 0 128" to (255, 255, 0, 128) array and saves it to rgb output argument
+/// \param[in] s string in "R G B A" format
+/// \param[out] rgb array of 4 bytes
+void StringToRGB_W(char *s, byte *rgb)
+{
+	int i;
+	char buf[20]; // "255 255 255 255" - the longest possible string
+	char *result;
 	rgb[0] = rgb[1] = rgb[2] = rgb[3] = 255;
 
-	/// FIXME this can cause serious problems, Cmd_TokenizeStringEx will reset
-	/// some memory to zero and therefore sometimes wipes out the text we are analyzing
-	Cmd_TokenizeString(s);
+	strlcpy(buf, s, sizeof(buf));
+	result = strtok(buf, " ");
 
+	for (i = 0; i < 4 && result; i++, result = strtok(NULL, " "))
+	{
+		rgb[i] = (byte) Q_atoi(result);
+	}
+	
 	#ifdef GLQUAKE
 	// TODO: Ok to do this in software also?
 	// Use normal quake pallete if not all arguments where given.
-	if(Cmd_Argc() < 3)
+	if (i < 3)
 	{
-		byte *col = (byte *) &d_8to24table[(byte) Q_atof(s)];
+		byte *col = (byte *) &d_8to24table[rgb[0]];
 		rgb[0] = col[0];
 		rgb[1] = col[1];
 		rgb[2] = col[2];
 	}
-	else
 	#endif
-	{
-		argc = min(Cmd_Argc(), 4);
-		for(i = 0; i < argc; i++)
-		{
-			rgb[i] = (byte) Q_atof(Cmd_Argv(i));
-		}
-	}
+}
+
+byte* StringToRGB(char *s)
+{
+	static byte rgb[4];
+	StringToRGB_W(s, rgb);
 	return rgb;
 }
 
