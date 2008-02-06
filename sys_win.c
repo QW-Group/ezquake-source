@@ -1004,6 +1004,13 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	lpBuffer.dwLength = sizeof(MEMORYSTATUS);
 	GlobalMemoryStatus (&lpBuffer);
 
+	// Maximum of 2GiB to work around signed int.
+	if(lpBuffer.dwAvailPhys > 0x7FFFFFFF)
+		lpBuffer.dwAvailPhys = 0x7FFFFFFF;
+
+	if(lpBuffer.dwTotalPhys > 0x7FFFFFFF)
+		lpBuffer.dwTotalPhys = 0x7FFFFFFF;
+
 	memsize = lpBuffer.dwAvailPhys;
 
 	if (memsize < MINIMUM_WIN_MEMORY)
