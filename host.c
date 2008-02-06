@@ -148,7 +148,7 @@ void SYSINFO_Init(void)
 	}
 #endif
 
-	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)(SYSINFO_memory / 1048576u));
+	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
 
 #ifdef WITH_ASMLIB
 	ProcessorName (temp);
