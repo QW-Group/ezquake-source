@@ -277,9 +277,9 @@ qbool CL_CheckIfQWProtocolHandler()
 		// C:\Program Files\Quake\ezquake-gl.exe
 		Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
 
-		// TODO : Make a case insensitive strstr.
 		if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
 		{
+			// This exe is associated with the qw:// protocol, return true.
 			CloseHandle(hk);
 			return true;
 		}
