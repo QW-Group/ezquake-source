@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void OnChange_log_dir(cvar_t *var, char *string, qbool *cancel);
 
 cvar_t		log_dir			= {"log_dir", "", 0, OnChange_log_dir};
-cvar_t		log_readable	= {"log_readable", "0"};
+cvar_t		log_readable	= {"log_readable", "1"};
 
 #define			LOG_FILENAME_MAXSIZE	(MAX_PATH)
 
