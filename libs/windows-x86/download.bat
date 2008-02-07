@@ -2,7 +2,7 @@ wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/win
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libjpeg.lib
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libpcre.lib
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libpng.lib
-wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libtcl8.4.lib
+wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libtcl.lib
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libz.lib
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/mgllt.lib
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/minizip.lib

@@ -20,21 +20,18 @@
  *  $Id: embed_tcl.h,v 1.4 2007-10-01 18:31:06 disconn3ct Exp $
  */
 
-#ifndef EMBED_TCL_H
-#define EMBED_TCL_H
+#ifndef __EMBED_TCL_H__
+#define __EMBED_TCL_H__
 
-#define		TCL_VERSION		"8.4"
-
-#if defined(_WIN32)
-#	define	TCL_LIB_NAME	"tcl84.dll"
-#elif defined(__APPLE__)
-#	define	TCL_LIB_NAME	"libtcl.dylib"
+#if defined (_WIN32)
+#	define TCL_LIB_NAME "tcl.dll"
+#elif defined (__APPLE__)
+#	define TCL_LIB_NAME "libtcl.dylib"
 #else
-#	define	TCL_LIB_NAME	"libtcl.so"
+#	define TCL_LIB_NAME "libtcl.so"
 #endif
 
 extern int in_tcl;
-
 
 void TCL_InterpInit (void);
 void TCL_InterpInitCommands (void);
@@ -49,4 +46,4 @@ void TCL_RegisterMacro (macro_command_t *macro);
 void TCL_ExecuteAlias (cmd_alias_t *alias);
 int TCL_MessageHook (const char *msg, unsigned trigger_type);
 
-#endif /* EMBED_TCL_H */
+#endif /* !__EMBED_TCL_H__ */
