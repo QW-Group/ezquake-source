@@ -271,6 +271,8 @@ void Skins_PreCache(void)
 	Skin_Find_Ex(NULL, cl_enemypentskin.string);
 	Skin_Find_Ex(NULL, cl_teambothskin.string);
 	Skin_Find_Ex(NULL, cl_enemybothskin.string);
+	Skin_Find_Ex(NULL, baseskin.string);
+	Skin_Find_Ex(NULL, "base");
 
 	// now load all 24 bit skins in skins[] array
 
