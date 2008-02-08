@@ -154,18 +154,36 @@ static expr_val MVD_Var_Vals(const char *n)
     // z - took pent
 
 	switch (*n) {
-    case 'a': return Get_Expr_Double(mvd_new_info[i].p_info->stats[STAT_ARMOR]);
+    /// armor ammount
+	case 'a': return Get_Expr_Double(mvd_new_info[i].p_info->stats[STAT_ARMOR]);
+	/// armor type
     case 'A': return Get_Expr_Double(bp_at);
+	/// current run time
     case 'c': return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time);
+	/// current run frags
     case 'C': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags);
+
+	/// frags
     case 'f': return Get_Expr_Integer(mvd_new_info[i].p_info->frags);
+	/// deaths
+	case 'g': return Get_Expr_Integer(mvd_new_info[i].info.das.deathcount)
+	/// health
     case 'h': return Get_Expr_Integer(mvd_new_info[i].p_info->stats[STAT_HEALTH]);
+
+	/// taken super-shotguns
+	case 'I': return Get_Expr_Integer(mvd_new_info[i].info.info[SSG_INFO].count);
+	/// taken nailguns
     case 'j': return Get_Expr_Integer(mvd_new_info[i].info.info[NG_INFO].count);
+	/// taken super-nailguns
     case 'J': return Get_Expr_Integer(mvd_new_info[i].info.info[SNG_INFO].count);
+	/// taken grenade launchers
     case 'k': return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].count);
+	/// # of lost grenade launchers
     case 'K': return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].lost);
+	/// # of taken rocket launchers
     case 'l': return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].count);
-    case 'L': return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].lost);
+    /// # of lost rocket launchers
+	case 'L': return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].lost);
     case 'm': return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].count);
     case 'M': return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].lost);
     case 'n': return Get_Expr_Integer(mvd_new_info[i].info.info[MH_INFO].count);
