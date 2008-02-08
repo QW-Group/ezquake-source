@@ -559,6 +559,37 @@ void MVD_Set_Armor_Stats_f (int z,int i){
 	}
 }
 
+// calculates the average values of run statistics
+void MVD_Stats_CalcAvgRuns(void)
+{
+	int i;
+	static double lastupdate = 0;
+
+	// no need to recalculate the values in every frame
+	if (cls.realtime - lastupdate < 0.5) return;
+	else lastupdate = cls.realtime;
+
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		mvd_info_t *pi = &mvd_new_info[i].info;
+		int r = mvd_new_info[i].info.run;
+		int tf, ttf, tt;
+		int j;
+		tf = ttf = tt = 0;
+
+		for (j = 0; j < pi->run; j++) {
+			tf += pi->runs[j].frags;
+			ttf += pi->runs[j].teamfrags;
+			tt += pi->runs[j].time;
+		}
+
+		if (pi->run) {
+			pi->run_stats.all.avg_frags = tf / (double) pi->run;
+			pi->run_stats.all.avg_teamfrags = ttf / (double) pi->run;
+			pi->run_stats.all.avg_time = tt / (double) pi->run;
+		}
+	}
+}
+
 int MVD_Stats_Gather_f (void){
 	int death_stats = 0;
 	int x,i,z,killdiff;
@@ -956,6 +987,7 @@ void MVD_Mainhook_f (void){
 		MVD_Init_Info_f();
 
 	MVD_Stats_Gather_f();
+	MVD_Stats_CalcAvgRuns();
 	MVD_AutoTrack_f ();
 	if (cls.mvdplayback && mvd_demo_track_run == 0)
 		MVD_Demo_Track ();

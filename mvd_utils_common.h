@@ -74,6 +74,22 @@ typedef struct mvd_runs_s {
 
 } mvd_runs_t ;
 
+// average run statistics
+typedef struct mvd_avgruns_s {
+	double avg_time;
+	double avg_frags;
+	double avg_teamfrags;
+} mvd_avgruns_t;
+
+// average run statistics
+typedef struct mvd_avgruns_all_s {
+	mvd_avgruns_t all;
+	// following 3 are not implemented yet
+	mvd_avgruns_t quad;
+	mvd_avgruns_t pent;
+	mvd_avgruns_t ring;
+} mvd_avgruns_all_t;
+
 // item stuff
 typedef struct mvd_pw_s {
 	int has;
@@ -92,6 +108,7 @@ typedef struct mvd_info_s {
 	mvd_ds_t das;			//dead alive stats
 	mvd_pw_t info[15];		//iteam stats
 	mvd_runs_t runs[512];	//
+	mvd_avgruns_all_t run_stats;	// calculated from other items
 	mvd_ks_t killstats;		// killstats
 	int spawntelefrags;
 	int teamspawntelefrags;

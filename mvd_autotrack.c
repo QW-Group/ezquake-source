@@ -121,37 +121,12 @@ static expr_val MVD_Var_Vals(const char *n)
 	if (stats & IT_INVULNERABILITY)	bp_pw += pent_val;
 	if (stats & IT_INVISIBILITY)    bp_pw += ring_val;
 
-	// a - armor value
-    // A - armor type
-    // b - average run time
-    // B - average run frags
-    // c - current run time
-    // C - current run frags
-    // d - average quad run time
-    // D - average quad runt frags
-    // E - average pent run frags
-    // f - frags
-    // h - health
-    // i - took ssg
-    // j - took ng
-    // J - took sng
-    // k - took gl
-    // K - lost gl
-    // l - took rl
-    // L - lost rl
-    // m - took lg
-    // M - lost lg
-    // n - took mh
-    // N - took ga
-    // o - took ya
-    // O - took ra
-    // p - powerups
-    // W - best weapon
-    // x - took ring
-    // X - lost ring
-    // y - took quad
-    // Y - lost quad
-    // z - took pent
+	// not implemented yet:
+    // D - average quad run time
+    // e - average quad run frags
+    // E - average quad run teamfrags
+	// u - average pent run frags
+	// U - average pent run teamfrags
 
 	switch (*n) {
     /// armor ammount
@@ -162,6 +137,7 @@ static expr_val MVD_Var_Vals(const char *n)
     case 'c': return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time);
 	/// current run frags
     case 'C': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags);
+	/// current run teamfrags
 	case 'd': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].teamfrags);
 
 	/// frags
@@ -171,7 +147,7 @@ static expr_val MVD_Var_Vals(const char *n)
     case 'F': return Get_Expr_Integer(mvd_new_info[i].info.teamfrags);
 		
 	/// deaths
-	case 'g': return Get_Expr_Integer(mvd_new_info[i].info.das.deathcount)
+	case 'g': return Get_Expr_Integer(mvd_new_info[i].info.das.deathcount);
 	/// health
     case 'h': return Get_Expr_Integer(mvd_new_info[i].p_info->stats[STAT_HEALTH]);
 
@@ -196,6 +172,14 @@ static expr_val MVD_Var_Vals(const char *n)
     case 'o': return Get_Expr_Integer(mvd_new_info[i].info.info[YA_INFO].count);
     case 'O': return Get_Expr_Integer(mvd_new_info[i].info.info[RA_INFO].count);
     case 'p': return Get_Expr_Double(bp_pw);
+
+	// v - average run time
+	case 'v': return Get_Expr_Double(mvd_new_info[i].info.run_stats.all.avg_time);
+	// V - average run frags
+	case 'V': return Get_Expr_Double(mvd_new_info[i].info.run_stats.all.avg_frags);
+	// w - average run teamfrags
+	case 'w': return Get_Expr_Double(mvd_new_info[i].info.run_stats.all.avg_teamfrags);
+
     case 'W': return Get_Expr_Integer(MVD_AutoTrackBW_f(i));
     case 'x': return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].count);
     case 'X': return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].lost);
