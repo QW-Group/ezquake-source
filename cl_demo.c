@@ -2495,7 +2495,7 @@ typedef enum demoprobe_parse_type_e
 qbool CL_ProbeDemo(vfsfile_t *demfile, demoprobe_parse_type_t probetype, float *demotime)
 {
 	#define PARSE_AS_MVD()			((probetype == READ_MVD_TIME) || (probetype == TRY_READ_MVD))
-	#define REGARD_AS_MVD_COUNT		10		// Regard this to be an MVD when this count has been reached.
+	#define REGARD_AS_MVD_COUNT		4		// Regard this to be an MVD when this count has been reached.
 
 	vfserrno_t err;
 	
@@ -2697,7 +2697,10 @@ static void CL_DemoPlaybackInit(void)
 	#endif // WITH_DEMO_REWIND
 
 	// Set demoplayback vars depending on the demo type.
-	cls.mvdplayback		=  CL_GetIsMVD(playbackfile);  // TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also.
+	// CL_GetIsMVD(playbackfile); 
+	// TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also
+	// TODO : Make a working check if a demo really is an mvd by its contents that also works on short demos.
+	cls.mvdplayback		= !strcasecmp(COM_FileExtension(cls.demoname), "mvd"); 
 	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(cls.demoname), "dem");
 
 	 // Init some buffers for reading.
