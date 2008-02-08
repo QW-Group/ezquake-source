@@ -127,6 +127,14 @@ static expr_val MVD_Var_Vals(const char *n)
     // E - average quad run teamfrags
 	// u - average pent run frags
 	// U - average pent run teamfrags
+	// q - Axe kills
+	// Q - Shotgun kills
+	// r - Supershotgun kills
+	// R - Nailgun kills
+	// s - Supernailgun kills
+	// S - Grenadelauncher kills
+	// t - Rocketlauncher kills
+	// T - Lightninggun kills
 
 	switch (*n) {
     /// armor ammount
