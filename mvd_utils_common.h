@@ -95,6 +95,7 @@ typedef struct mvd_info_s {
 	mvd_ks_t killstats;		// killstats
 	int spawntelefrags;
 	int teamspawntelefrags;
+	int teamfrags;			// frags are in cl.players structure
 	int lastfrags;
 	int run;
 	int firstrun;

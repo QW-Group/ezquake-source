@@ -162,9 +162,14 @@ static expr_val MVD_Var_Vals(const char *n)
     case 'c': return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time);
 	/// current run frags
     case 'C': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags);
+	case 'd': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].teamfrags);
 
 	/// frags
     case 'f': return Get_Expr_Integer(mvd_new_info[i].p_info->frags);
+
+	/// teamfrags
+    case 'F': return Get_Expr_Integer(mvd_new_info[i].info.teamfrags);
+		
 	/// deaths
 	case 'g': return Get_Expr_Integer(mvd_new_info[i].info.das.deathcount)
 	/// health
