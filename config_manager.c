@@ -1022,14 +1022,29 @@ void DumpHUD_f(void)
 
 void Config_LegacyQuake_f(void)
 {
-	Cbuf_AddText(
-	"r_tracker_messages 0;echo turning off tracker messages;"
-	"hide ownfrags;echo hiding the ownfrags hud element;"
-	"frags extra_spec_info 0;echo disabling extra spec info for frags hud element;"
-	"teamfrags extra_spec_info 0;echo disabling extra spec info for teamfrags hud element;"
-	"hide radar;echo hiding the radar hud element;"
-	// "r_chaticons_alpha 0;echo chaticon drawing disabled;"
-	);
+	qbool specific = Cmd_Argc() > 1;
+	const char *ver;
+	
+	if (specific) {
+		ver = Cmd_Argv(1);
+	}
+	
+	if (!specific || (strcmp("1.9", ver) == 0)) {
+		Cbuf_AddText(
+			"hide ownfrags;echo hiding the ownfrags hud element (undo: show ownfrags);"
+			"menu_ingame 0;echo turning off ingame menu (undo: menu_ingame 1);"
+			);
+	}
+
+	if (!specific || (strcmp("1.8", ver) == 0)) {
+		Cbuf_AddText(
+			"r_tracker_messages 0;echo turning off tracker messages (undo: r_tracker_messages);"
+			"frags extra_spec_info 0;echo disabling extra spec info for frags hud element (undo: frags extra_spec_info 1);"
+			"teamfrags extra_spec_info 0;echo disabling extra spec info for teamfrags hud element (undo: teamfrags extra_spec_info 1);"
+			"hide radar;echo hiding the radar hud element (undo: show rader);"
+		// "r_chaticons_alpha 0;echo chaticon drawing disabled;"
+		);
+	}
 }
 
 void ConfigManager_Init(void)
