@@ -1,16 +1,21 @@
-//VULTUREIIC
+/**
+	\file
+
+	\brief
+	Frags Tracker Screen Element
+
+	\author
+	VULTUREIIC
+**/
+
 #include "quakedef.h"
-//#include "gl_model.h"
-//#include "gl_local.h"
-#include "vx_stuff.h"
 #include "utils.h"
 #include "vx_tracker.h"
 
-// seems noone uses next variables outside file, so make static
-// {
+
 static int active_track = 0;
 static int max_active_tracks = 0;
-// }
+
 
 cvar_t		amf_tracker_flags			= {"r_tracker_flags", "0", CVAR_ARCHIVE};
 cvar_t		amf_tracker_frags			= {"r_tracker_frags", "1", CVAR_ARCHIVE};
@@ -640,6 +645,3 @@ void VXSCR_DrawTrackerString (void)
 		}
 	}
 }
-
-
-

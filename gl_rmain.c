@@ -1762,10 +1762,11 @@ void R_Init (void) {
 	if (qmb_initialized)
 	{
 		InitVXStuff(); // safe re-init imo
-		InitTracker();
 	}
 	else
 		; // FIXME: hm, in case of vid_restart, what we must do if before vid_restart qmb_initialized was true?
+
+	InitTracker();
 
 	R_InitOtherTextures (); // safe re-init
 
