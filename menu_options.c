@@ -160,7 +160,7 @@ void GFXPresetToggle(qbool back) {
 }
 
 const char* mvdautohud_enum[] = { "off", "simple", "customizable" };
-const char* mvdautotrack_enum[] = { "off", "auto", "custom", "multitrack" };
+const char* mvdautotrack_enum[] = { "off", "auto", "custom", "multitrack", "simple" };
 const char* funcharsmode_enum[] = { "ctrl+key", "ctrl+y" };
 const char* ignoreopponents_enum[] = { "off", "always", "on match" };
 const char* msgfilter_enum[] = { "off", "say+spec", "team", "say+team+spec" };
@@ -181,14 +181,21 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
-	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam
+	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
+	enemyforceskins, teamforceskins, cl_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
+	mvd_autotrack_lockteam, qtv_adjustbuffer
 ;
 #ifdef _WIN32
-extern cvar_t demo_format, sys_highpriority, cl_window_caption;
+extern cvar_t demo_format, sys_highpriority, cl_window_caption, sys_inactivesound;
+void CL_RegisterQWURLProtocol_f(void);
 #endif
 #ifdef GLQUAKE
-extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size;
+extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
+	scr_teaminfo
+;
 #endif
+
+void CL_Autotrack_f(void);
 
 const char* bandwidth_enum[] = { 
 	"Modem (33k)", "3800", "Modem (56k)", "5670", 
@@ -217,6 +224,8 @@ const char* s_khz_enum[] = {
 	"11 kHz", "11", "22 kHz", "22", "44 kHz", "44" };
 const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smackdown", "Moscow TF League", "mtfl" };
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
+const char *teamforceskins_enum[] = { "off", "use player's name", "use player's userid", "set t1, t2, t3, ..." };
+const char *enemyforceskins_enum[] = { "off", "use player's name", "use player's userid", "set e1, e2, e3, ..." };
 
 #ifdef _WIN32
 const char *priority_enum[] = { "low", "-1", "normal", "0", "high", "1" };
@@ -878,6 +887,9 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
 	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
+#ifdef _WIN32
+	ADDSET_BOOL		("Sounds when minimized", sys_inactivesound),
+#endif
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
 
@@ -885,6 +897,9 @@ setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
 	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("QTV buffer adjusting", qtv_adjustbuffer),
+	ADDSET_BASIC_SECTION(),
 
 	//Match Tools
 	ADDSET_SEPARATOR("Match Tools"),
@@ -908,6 +923,10 @@ setting settgeneral_arr[] = {
 	ADDSET_STRING   ("Logs Path", log_dir),
 	ADDSET_STRING	("Qizmo Path", qizmo_dir),
 	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
+#ifdef _WIN32
+	ADDSET_ACTION	("Set qw:// assoc.", CL_RegisterQWURLProtocol_f,
+		"Sets this application as the handler of qw:// URLs, so by double-clicking such links in your operating system, this client will open and connect to given address"),
+#endif
 	ADDSET_BASIC_SECTION(),
 };
 
@@ -943,6 +962,7 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
 	ADDSET_SKIN		("Skin", cl_teamskin),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM		("Force Skins", teamforceskins, teamforceskins_enum),
 	ADDSET_SKIN		("Quad Skin", cl_teamquadskin),
 	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
 	ADDSET_SKIN		("Quad+Pent Skin", cl_teambothskin),
@@ -953,6 +973,7 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
 	ADDSET_SKIN		("Skin", cl_enemyskin),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM		("Force Skins", enemyforceskins, enemyforceskins_enum),
 	ADDSET_SKIN		("Quad Skin", cl_enemyquadskin),
 	ADDSET_SKIN		("Pent Skin", cl_enemypentskin),
 	ADDSET_SKIN		("Quad+Pent Skin", cl_enemybothskin),
@@ -1013,6 +1034,7 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Simple walls", r_drawflat),
 	ADDSET_BOOL		("Simple turbs", r_fastturb),
 	ADDSET_BOOL		("Draw flame", r_drawflame),
+	ADDSET_BOOL		("Backpack filter", cl_backpackfilter),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
@@ -1034,6 +1056,10 @@ setting settfps_arr[] = {
 #endif
 
 	ADDSET_SEPARATOR("Lighting"),
+#ifdef GLQUAKE
+	ADDSET_BOOL		("GL Bloom", r_bloom),
+	ADDSET_BOOL		("Powerup Shells", gl_powerupshells),
+#endif
 	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
@@ -1068,7 +1094,11 @@ setting setthud_arr[] = {
 	ADDSET_SEPARATOR("New HUD"),
 	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
 	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
+#ifdef GLQUAKE
+	ADDSET_BOOL		("Teaminfo table", scr_teaminfo),
+#endif
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOLLATE ("Own Frags Announcer", hud_ownfrags_show),
 	ADDSET_BOOLLATE ("Teamholdbar", hud_teamholdbar_show),
 	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
 	ADDSET_BASIC_SECTION(),
@@ -1100,13 +1130,16 @@ setting setthud_arr[] = {
 #endif
 
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_SEPARATOR ("Ignore Options"),
+	ADDSET_SEPARATOR("Message Filtering"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
 	ADDSET_BOOL		("Ignore Qizmo Observers", ignore_qizmo_spec),
 	ADDSET_ENUM 	("Ignore Flood", ignore_flood, ignore_flood_enum),
 	ADDSET_NUMBER 	("Ignore Flood Duration", ignore_flood_duration, 0, 10, 1),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
+	ADDSET_SEPARATOR("Outgoing filtering"),
+	ADDSET_BOOL		("Filter colored text", cl_sayfilter_coloredtext),
+	ADDSET_BOOL		("Send #u/#c versions", cl_sayfilter_sendboth),
 	ADDSET_SEPARATOR("Console Options"),
 	ADDSET_BOOL		("Timestamps", con_timestamps),
 	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
@@ -1144,8 +1177,12 @@ setting settdemo_spec_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Multiview Demos"),
+	ADDSET_ACTION	("Toggle autotrack", CL_Autotrack_f, "Toggle auto-tracking of the best player"),
 	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
 	ADDSET_NAMED	("Autotrack Type", mvd_autotrack, mvdautotrack_enum),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Autotrack lock team", mvd_autotrack_lockteam),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
 	ADDSET_BOOL     ("Status", mvd_status),
 
@@ -1260,6 +1297,9 @@ setting settvideo_arr[] = {
 	ADDSET_SEPARATOR("Screen settings"),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
 	ADDSET_BOOL("Vertical sync", r_swapInterval),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL("Vsync lag fix", cl_vsync_lag_fix),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
