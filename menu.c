@@ -134,6 +134,7 @@ int        menuheight = 240;
 #endif
 
 cvar_t     scr_centerMenu = {"scr_centerMenu","1"};
+cvar_t     menu_ingame = {"menu_ingame", "1"};
 int        m_yofs = 0;
 
 void M_DrawCharacter (int cx, int line, int num) {
@@ -320,6 +321,11 @@ void M_EnterMenu (int state) {
 static void M_ToggleHeadMenus(int type)
 {
 	m_entersound = true;
+
+	// do not ever use ingame menu, if user doesn't wish so
+	if (!menu_ingame.integer) {
+		type = m_main;
+	}
 
 	if (key_dest == key_menu) {
 		if (m_state != type) {
@@ -1215,6 +1221,7 @@ void M_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_centerMenu);
+	Cvar_Register (&menu_ingame);
 #ifdef GLQUAKE
 	Cvar_Register (&scr_scaleMenu);
 	Cvar_Register (&menu_marked_fade);
