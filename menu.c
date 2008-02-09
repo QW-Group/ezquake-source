@@ -61,7 +61,6 @@ void M_Menu_Main_f (void);
 		void M_Menu_Load_f (void);
 		void M_Menu_Save_f (void);
 	void M_Menu_MultiPlayer_f (void);
-		void M_Menu_ServerList_f (void);
 			void M_Menu_SEdit_f (void);
 		void M_Menu_Demos_f (void);
 		void M_Menu_GameOptions_f (void);
@@ -89,7 +88,7 @@ void M_Main_Key (int key);
 	void M_SinglePlayer_Key (int key);
 		void M_Load_Key (int key);
 		void M_Save_Key (int key);
-	void M_MultiPlayer_Key (int key);
+	void M_MultiPlayerSub_Key (int key);
 		void M_ServerList_Key (int key);
 			void M_SEdit_Key (int key);
 		void M_Demo_Key (int key);
@@ -1200,9 +1199,107 @@ qbool M_Load_Mouse_Event(const mouse_state_t *ms)
 
 #endif
 
+
+// ================================
+// Multiplayer submenu
+// used only if mcharset is not available making demo player menu inaccesible from mainmenu
+
+int    m_multiplayer_cursor;
+#define    MULTIPLAYER_ITEMS    2
+menu_window_t m_multiplayer_window;
+
+void M_MultiPlayerSub_Draw (void) {
+	mpic_t    *p;
+	int lx, ly;
+
+	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	p = Draw_CachePic ("gfx/p_multi.lmp");
+	M_DrawPic ( (320-p->width)/2, 4, p);
+	M_Print_GetPoint (80, 40, &m_multiplayer_window.x, &m_multiplayer_window.y, "Join Game", m_multiplayer_cursor == 0);
+	m_multiplayer_window.h = 8;
+	M_Print_GetPoint (80, 48, &lx, &ly, "Demos", m_multiplayer_cursor == MULTIPLAYER_ITEMS - 1);
+	m_multiplayer_window.h += 8;
+	m_multiplayer_window.w = 20 * 8; // presume 20 letters long word and 8 pixels for a letter
+	
+	// cursor
+	M_DrawCharacter (64, 40 + m_multiplayer_cursor * 8, FLASHINGARROW());
+}
+
+void M_MultiPlayerSub_Key (int key) {
+	switch (key) {
+		case K_BACKSPACE:
+			m_topmenu = m_none;    // intentional fallthrough
+		case K_MOUSE2:
+		case K_ESCAPE:
+			M_LeaveMenu (m_main);
+			break;
+
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
+			break;
+
+		case K_DOWNARROW:
+		case K_MWHEELDOWN:
+			S_LocalSound ("misc/menu1.wav");
+			if (++m_multiplayer_cursor >= MULTIPLAYER_ITEMS)
+				m_multiplayer_cursor = 0;
+			break;
+
+		case K_UPARROW:
+		case K_MWHEELUP:
+			S_LocalSound ("misc/menu1.wav");
+			if (--m_multiplayer_cursor < 0)
+				m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
+			break;
+
+		case K_HOME:
+		case K_PGUP:
+			S_LocalSound ("misc/menu1.wav");
+			m_multiplayer_cursor = 0;
+			break;
+
+		case K_END:
+		case K_PGDN:
+			S_LocalSound ("misc/menu1.wav");
+			m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
+			break;
+
+		case K_ENTER:
+		case K_MOUSE1:
+			m_entersound = true;
+			switch (m_multiplayer_cursor) {
+				case 0:
+					M_EnterMenu(m_multiplayer);
+					break;
+				case 1:
+					M_Menu_Demos_f ();
+					break;
+			}
+	}
+}
+
+qbool M_MultiPlayerSub_Mouse_Event(const mouse_state_t *ms)
+{
+	M_Mouse_Select(&m_multiplayer_window, ms, MULTIPLAYER_ITEMS, &m_multiplayer_cursor);
+
+    if (ms->button_up == 1) M_MultiPlayerSub_Key(K_MOUSE1);
+    if (ms->button_up == 2) M_MultiPlayerSub_Key(K_MOUSE2);
+    
+    return true;
+}
+
 void M_Menu_MultiPlayer_f (void)
 {
-	M_EnterMenu (m_multiplayer);
+	if (Draw_BigFontAvailable()) {
+		M_EnterMenu(m_multiplayer);
+	}
+	else {
+		// demos entry is not accessible with old main menu
+		// so we need to create a submenu in the multiplayer menu
+		M_EnterMenu(m_multiplayer_submenu);
+	}
 }
 
 void M_Menu_Demos_f (void)
@@ -1312,6 +1409,7 @@ void M_Draw (void) {
 		case m_save:			M_Save_Draw (); break;
 #endif
 		case m_multiplayer:		Menu_MultiPlayer_Draw (); break;
+		case m_multiplayer_submenu: M_MultiPlayerSub_Draw(); break;
 		case m_options:			M_Options_Draw(); break;
 		case m_proxy:			Menu_Proxy_Draw(); break;
 		case m_ingame:			M_Ingame_Draw(); break;
@@ -1355,6 +1453,7 @@ void M_Keydown (int key, int unichar) {
 		case m_save:			M_Save_Key(key); return;
 #endif
 		case m_multiplayer:		Menu_MultiPlayer_Key(key); return;
+		case m_multiplayer_submenu: M_MultiPlayerSub_Key(key); return;
 		case m_options: 		M_Options_Key(key, unichar); return;
 		case m_proxy:			M_Proxy_Key(key); return;
 		case m_ingame:			M_Ingame_Key(key); return;
@@ -1383,6 +1482,7 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_main:			return M_Main_Mouse_Event(ms);
 	case m_singleplayer:	return M_SinglePlayer_Mouse_Event(ms);
 	case m_multiplayer:		return Menu_MultiPlayer_Mouse_Event(ms);
+	case m_multiplayer_submenu: return M_MultiPlayerSub_Mouse_Event(ms);
 #ifndef CLIENTONLY
 	case m_load:			return M_Load_Mouse_Event(ms);
 	case m_save:			return M_Load_Mouse_Event(ms);
