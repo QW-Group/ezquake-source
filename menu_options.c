@@ -1099,23 +1099,15 @@ setting setthud_arr[] = {
 
 #endif
 
-};
-
-// Console Tab
-/*
-	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	
-	ADDSET_SEPERATOR ("Ignore Options"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SEPARATOR ("Ignore Options"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
-	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Ignore Qizmo Observers", ignore_qizmo_spec),
 	ADDSET_ENUM 	("Ignore Flood", ignore_flood, ignore_flood_enum),
 	ADDSET_NUMBER 	("Ignore Flood Duration", ignore_flood_duration, 0, 10, 1),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
-	ADDSET_BASIC_SECTION(),
-	
-	ADDSET_SEPERATOR("Console Options"),
+	ADDSET_SEPARATOR("Console Options"),
 	ADDSET_BOOL		("Timestamps", con_timestamps),
 	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
 	ADDSET_NUMBER	("Size", scr_consize, 0, 1, 0.1),
@@ -1124,16 +1116,14 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Alpha", scr_conalpha, 0, 1, 0.1),
 	ADDSET_NAMED	("Map Preview", scr_conback, scr_conback_enum),
 #endif
-	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Fun Chars Mode", con_funchars_mode, funcharsmode_enum),
 	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
 	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
+	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
 	ADDSET_BOOL		("Confirm Quit", cl_confirmquit),
+	ADDSET_BASIC_SECTION(),
+};
 
-
-*/
 
 // DEMO/SPETATOR TAB
 setting settdemo_spec_arr[] = {
