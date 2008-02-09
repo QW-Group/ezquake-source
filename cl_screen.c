@@ -161,6 +161,8 @@ cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_autoid				= {"scr_autoid", "0"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
+#endif
+
 
 cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n $x10%l$x11 %a/%H %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
 cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1", CVAR_ARCHIVE};
@@ -178,14 +180,15 @@ cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2",  CVAR_ARCHI
 cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1",  CVAR_ARCHIVE};
 
 cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
+#ifdef GLQUAKE
 cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_ARCHIVE | CVAR_COLOR};
 cvar_t	scr_shownick_scale		 = {"scr_shownick_scale",		"1",   CVAR_ARCHIVE};
 cvar_t	scr_shownick_y			 = {"scr_shownick_y",			"0",   CVAR_ARCHIVE};
 cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0",   CVAR_ARCHIVE};
 cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6",   CVAR_ARCHIVE};
 cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8", CVAR_ARCHIVE};
-
 #endif
+
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 
 // Tracking text.
@@ -1446,6 +1449,9 @@ void DrawCI (void) {
 	}
 }
 
+#endif
+
+
 /********************************* q3 like team info *****************************/
 
 // team info
@@ -1624,11 +1630,13 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 							col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
 						}
 
+#ifdef GLQUAKE
 						glDisable (GL_TEXTURE_2D);
 						glColor4ub(col[0], col[1], col[2], col[3]);
 						glRectf(x, y, x + 3 * FONTWIDTH, y + 1 * FONTWIDTH);
 						glEnable (GL_TEXTURE_2D);
 						glColor4f(1, 1, 1, 1);
+#endif
 					}
 
 					break;
@@ -1782,6 +1790,7 @@ static void SCR_Draw_TeamInfo(void)
 	if ( !slots_num )
 		return;
 
+#ifdef GLQUAKE
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glColor4f(1, 1, 1, 1);
 	glDisable(GL_ALPHA_TEST);
@@ -1791,6 +1800,7 @@ static void SCR_Draw_TeamInfo(void)
 		glPushMatrix ();
 		glScalef(scale, scale, 1);
 	}
+#endif
 
 	y = vid.height*0.6/scale + scr_teaminfo_y.value;
 
@@ -1806,11 +1816,13 @@ static void SCR_Draw_TeamInfo(void)
 
 		if ( !j ) { // draw frame
 			byte	*col = scr_teaminfo_frame_color.color;
+#ifdef GLQUAKE
 			glDisable (GL_TEXTURE_2D);
 			glColor4ub(col[0], col[1], col[2], col[3]);
 			glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
 			glEnable (GL_TEXTURE_2D);
 			glColor4f(1, 1, 1, 1);
+#endif
 		}
 
 		SCR_Draw_TeamInfoPlayer(&ti_clients[i], x, y, maxname, maxloc, false, false);
@@ -1818,6 +1830,7 @@ static void SCR_Draw_TeamInfo(void)
 		y += FONTWIDTH;
 	}
 
+#ifdef GLQUAKE
 	if (scale != 1)
 		glPopMatrix();
 
@@ -1825,6 +1838,7 @@ static void SCR_Draw_TeamInfo(void)
 	glDisable(GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
+#endif
 }
 
 void Parse_TeamInfo(char *s)
@@ -1891,6 +1905,8 @@ void Update_TeamInfo()
 }
 
 /***************************** customizeable shownick *************************/
+
+#ifdef GLQUAKE
 
 static ti_player_t shownick;
 
@@ -2988,8 +3004,9 @@ void SCR_DrawElements(void) {
 					Draw_Crosshair ();
 
      			if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
-#ifdef GLQUAKE
 					SCR_Draw_TeamInfo();
+
+#ifdef GLQUAKE
 					SCR_Draw_ShowNick();
 #endif
 					SCR_CheckDrawCenterString ();
@@ -3960,7 +3977,7 @@ void SCR_Init (void)
 #ifdef GLQUAKE
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_coloredfrags);
-
+#endif
 	Cvar_Register (&scr_teaminfo_order);
 	Cvar_Register (&scr_teaminfo_align_right);
 	Cvar_Register (&scr_teaminfo_frame_color);
@@ -3975,8 +3992,8 @@ void SCR_Init (void)
 	Cvar_Register (&scr_teaminfo_show_enemies);
 	Cvar_Register (&scr_teaminfo_show_self);
 	Cvar_Register (&scr_teaminfo);
-
 	Cvar_Register (&scr_shownick_order);
+#ifdef GLQUAKE
 	Cvar_Register (&scr_shownick_frame_color);
 	Cvar_Register (&scr_shownick_scale);
 	Cvar_Register (&scr_shownick_y);
