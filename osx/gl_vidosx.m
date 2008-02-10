@@ -579,9 +579,6 @@ BOOL	VID_SetDisplayMode (void)
     
     if (gVidDisplayFullscreen == YES)
     {
-        // hide cursor:
-        IN_ShowCursor (NO);
-
         // fade the display(s) to black:
         VSH_FadeGammaOut (gVidFadeAllDisplays, VID_FADE_DURATION);
         
