@@ -251,7 +251,8 @@ static void MVD_UpdatePlayerValues(void)
 
 static int MVD_GetBestPlayer(void)
 {
-	int initial, i, bp_id, bp_val;
+	int initial, i, bp_id;
+	float bp_val;
 
 	if (last_track < 0 || last_track > mvd_cg_info.pcount)
 		initial = 0;
@@ -423,6 +424,7 @@ void MVD_AutoTrack_f(void) {
 			}
 		}
 	}
+
 	else if (mvd_autotrack_instant.integer || MVD_SwitchMoment())// mvd_autotrack is 1 or 2 or 3
 	{
 		if (mvd_autotrack.integer == 4) 
