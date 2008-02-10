@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _CONFIG_MANAGER_H_
 
 void ConfigManager_Init (void);
-
+void Config_QuitSave(void);
 
 extern cvar_t	cfg_save_unchanged, cfg_legacy_exec, cfg_legacy_write;
 

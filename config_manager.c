@@ -66,6 +66,7 @@ extern char		allskins[128];
 
 cvar_t	cfg_save_unchanged	=	{"cfg_save_unchanged", "0"};
 cvar_t	cfg_save_userinfo	=	{"cfg_save_userinfo", "2"};
+cvar_t	cfg_save_onquit		=	{"cfg_save_onquit", "0"};
 cvar_t	cfg_legacy_exec		=	{"cfg_legacy_exec", "1"};
 cvar_t	cfg_legacy_write	=	{"cfg_legacy_write", "0"};
 
@@ -897,6 +898,13 @@ void SaveConfig_f(void)
 	Com_Printf("Saving configuration to %s\n", filename);
 }
 
+void Config_QuitSave(void)
+{
+	if (cfg_save_onquit.integer) {
+		SaveConfig_f();
+	}
+}
+
 void ResetConfigs_f(void)
 {
 	int argc = Cmd_Argc();
@@ -1059,6 +1067,7 @@ void ConfigManager_Init(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
 	Cvar_Register(&cfg_save_unchanged);
 	Cvar_Register(&cfg_save_userinfo);
+	Cvar_Register(&cfg_save_onquit);
 	Cvar_Register(&cfg_legacy_exec);
 	Cvar_Register(&cfg_legacy_write);
 	Cvar_Register(&cfg_save_cvars);

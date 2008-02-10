@@ -623,7 +623,7 @@ CEditBox filenameeb;
 enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode = MOCPM_SETTINGS;
 
 extern cvar_t cfg_backup, cfg_legacy_exec, cfg_legacy_write, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
-	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home;
+	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home, cfg_save_onquit;
 
 void MOpt_ImportConfig(void) {
 	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
@@ -1347,7 +1347,8 @@ setting settconfig_arr[] = {
 	
 	ADDSET_SEPARATOR("Config Saving Options"),
     ADDSET_ACTION("Reset Saving Options", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults."),
-    ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
+    ADDSET_BOOL("Auto Save on Quit", cfg_save_onquit),
+	ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Backup old file", cfg_backup),
 	ADDSET_NAMED("Load Legacy", cfg_legacy_exec, MOpt_legacywrite_enum),

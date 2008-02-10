@@ -54,6 +54,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "qsound.h"
 #include "keys.h"
+#include "config_manager.h"
+
 
 #ifdef WITH_ASMLIB
 #include "cpu.h"
@@ -807,8 +809,14 @@ void Host_Shutdown (void)
 
 void Host_Quit (void)
 {
+	// execute user's trigger
 	TP_ExecTrigger ("f_exit");
 	Cbuf_Execute();
+	
+	// save config (conditional)
+	Config_QuitSave();
+
+	// turn off
 	Host_Shutdown ();
 	Sys_Quit ();
 }
