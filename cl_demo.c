@@ -57,6 +57,8 @@ static qbool	qwz_unpacking = false;
 static qbool	qwz_playback = false;
 static qbool	qwz_packing = false;
 
+#define QWZ_DECOMPRESSION_TIMEOUT_MS	10000
+
 static void		OnChange_demo_format(cvar_t*, char*, qbool*);
 cvar_t			demo_format = {"demo_format", "qwz", 0, OnChange_demo_format};
 
@@ -2081,6 +2083,7 @@ static void PlayQWZDemo (void)
 	STARTUPINFO si;
 	PROCESS_INFORMATION	pi;
 	char *name, qwz_name[MAX_PATH], cmdline[512], *p;
+	DWORD res;
 
 	if (hQizmoProcess)
 	{
@@ -2152,6 +2155,12 @@ static void PlayQWZDemo (void)
 		NULL, va("%s/%s", com_basedir, qizmo_dir.string), &si, &pi))
 	{
 		Com_Printf ("Couldn't execute %s/%s/qizmo.exe\n", com_basedir, qizmo_dir.string);
+		return;
+	}
+	
+	res = WaitForSingleObject(pi.hProcess, QWZ_DECOMPRESSION_TIMEOUT_MS);
+	if (res == WAIT_TIMEOUT) {
+		Com_Printf("Decompression took too long, aborting\n");
 		return;
 	}
 
@@ -2801,6 +2810,8 @@ void CL_Play_f (void)
 		{
 			return;
 		}
+
+		playbackfile = FS_OpenVFS (tempqwd_name, "rb", FS_NONE_OS);
 	}
 	else
 	#endif // WIN32
