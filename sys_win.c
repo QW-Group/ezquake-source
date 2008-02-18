@@ -966,7 +966,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		// User doesn't want to be bothered again.
 		argv[argc++] = "+cl_verify_qwprotocol";
 		argv[argc++] = "0";
-		argv[argc++] = "+cfg_save";
 	}
 
 	// We need to check some parms before Host_Init is called
