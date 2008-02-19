@@ -1,0 +1,1157 @@
+Entries in c database: 310
+Analyzing ../../CarbonSndPlayDB.c
+Analyzing ../../Ctrl.c
+Analyzing ../../Ctrl_EditBox.c
+Analyzing ../../Ctrl_PageViewer.c
+Analyzing ../../Ctrl_ScrollBar.c
+Analyzing ../../Ctrl_Tab.c
+Analyzing ../../EX_FileList.c
+Analyzing ../../EX_browser.c
+Analyzing ../../EX_browser_net.c
+Analyzing ../../EX_browser_ping.c
+Analyzing ../../EX_browser_sources.c
+Analyzing ../../auth.c
+Analyzing ../../cd_linux.c
+Analyzing ../../cd_null.c
+Analyzing ../../cd_win.c
+Analyzing ../../cl_cam.c
+Analyzing ../../cl_cmd.c
+Analyzing ../../cl_demo.c
+Analyzing ../../cl_ents.c
+Analyzing ../../cl_input.c
+Analyzing ../../cl_main.c
+Analyzing ../../cl_nqdemo.c
+Analyzing ../../cl_parse.c
+Analyzing ../../cl_pred.c
+Analyzing ../../cl_screen.c
+Analyzing ../../cl_slist.c
+Analyzing ../../cl_tcl.c
+Analyzing ../../cl_tent.c
+Analyzing ../../cl_view.c
+Analyzing ../../cmd.c
+Analyzing ../../cmodel.c
+Analyzing ../../collision.c
+Analyzing ../../com_msg.c
+Analyzing ../../common.c
+Analyzing ../../common_draw.c
+Analyzing ../../config_manager.c
+Analyzing ../../console.c
+Analyzing ../../cpu.c
+Analyzing ../../crc.c
+Analyzing ../../cvar.c
+Analyzing ../../d_edge.c
+Analyzing ../../d_fill.c
+Analyzing ../../d_init.c
+Analyzing ../../d_modech.c
+Analyzing ../../d_part.c
+Analyzing ../../d_polyse.c
+Analyzing ../../d_scan.c
+Analyzing ../../d_sky.c
+Analyzing ../../d_sprite.c
+Analyzing ../../d_surf.c
+Analyzing ../../d_vars.c
+Analyzing ../../d_zpoint.c
+Analyzing ../../demo_controls.c
+Analyzing ../../document_rendering.c
+Analyzing ../../ez_button.c
+Analyzing ../../ez_controls.c
+Analyzing ../../ez_label.c
+Analyzing ../../ez_scrollbar.c
+Analyzing ../../ez_scrollpane.c
+Analyzing ../../ez_slider.c
+Analyzing ../../ez_window.c
+Analyzing ../../fchecks.c
+Analyzing ../../fmod.c
+Analyzing ../../fragstats.c
+Analyzing ../../fs.c
+Analyzing ../../gl_bloom.c
+Analyzing ../../gl_draw.c
+Analyzing ../../gl_framebuffer.c
+Analyzing ../../gl_md3.c
+Analyzing ../../gl_mesh.c
+Analyzing ../../gl_model.c
+Analyzing ../../gl_ngraph.c
+Analyzing ../../gl_refrag.c
+Analyzing ../../gl_rlight.c
+Analyzing ../../gl_rmain.c
+Analyzing ../../gl_rmisc.c
+Analyzing ../../gl_rpart.c
+Analyzing ../../gl_rsurf.c
+Analyzing ../../gl_texture.c
+Analyzing ../../gl_warp.c
+Analyzing ../../hash.c
+Analyzing ../../help.c
+Analyzing ../../help_files.c
+Analyzing ../../host.c
+Analyzing ../../hud.c
+Analyzing ../../hud_common.c
+Analyzing ../../hud_editor.c
+Analyzing ../../ignore.c
+Analyzing ../../image.c
+Analyzing ../../in_linux.c
+Analyzing ../../in_mac.c
+Analyzing ../../in_win.c
+Analyzing ../../keymap.c
+Analyzing ../../keymap_x11.c
+Analyzing ../../keys.c
+Analyzing ../../linux_glimp.c
+Analyzing ../../linux_signals.c
+Analyzing ../../localtime.c
+Analyzing ../../localtime_linux.c
+Analyzing ../../localtime_win.c
+Analyzing ../../logging.c
+Analyzing ../../mac_prefs.c
+Analyzing ../../match_tools.c
+Analyzing ../../mathlib.c
+Analyzing ../../md4.c
+Analyzing ../../menu.c
+Analyzing ../../menu_demo.c
+Analyzing ../../menu_ingame.c
+Analyzing ../../menu_mp3player.c
+Analyzing ../../menu_multiplayer.c
+Analyzing ../../menu_options.c
+Analyzing ../../menu_proxy.c
+Analyzing ../../modules.c
+Analyzing ../../movie.c
+Analyzing ../../movie_avi.c
+Analyzing ../../mp3_audacious.c
+Analyzing ../../mp3_mpd.c
+Analyzing ../../mp3_player.c
+Analyzing ../../mp3_winamp.c
+Analyzing ../../mp3_xmms.c
+Analyzing ../../mp3_xmms2.c
+Analyzing ../../mvd_autotrack.c
+Analyzing ../../mvd_utils.c
+Analyzing ../../mvd_xmlstats.c
+Analyzing ../../net.c
+Analyzing ../../net_chan.c
+Analyzing ../../parser.c
+Analyzing ../../pmove.c
+Analyzing ../../pmovetst.c
+Analyzing ../../pr_cmds.c
+Analyzing ../../pr_edict.c
+Analyzing ../../pr_exec.c
+Analyzing ../../q_shared.c
+Analyzing ../../qtv.c
+Analyzing ../../r_aclip.c
+Analyzing ../../r_alias.c
+Analyzing ../../r_bsp.c
+Analyzing ../../r_draw.c
+Analyzing ../../r_edge.c
+Analyzing ../../r_efrag.c
+Analyzing ../../r_light.c
+Analyzing ../../r_main.c
+Analyzing ../../r_misc.c
+Analyzing ../../r_model.c
+Analyzing ../../r_part.c
+Analyzing ../../r_rast.c
+Analyzing ../../r_sky.c
+Analyzing ../../r_sprite.c
+Analyzing ../../r_surf.c
+Analyzing ../../r_vars.c
+Analyzing ../../rulesets.c
+Analyzing ../../sbar.c
+Analyzing ../../settings_page.c
+Analyzing ../../sha1.c
+Analyzing ../../skin.c
+Analyzing ../../snd_alsa.c
+Analyzing ../../snd_dma.c
+Analyzing ../../snd_linux.c
+Analyzing ../../snd_mac.c
+Analyzing ../../snd_mem.c
+Analyzing ../../snd_mix.c
+Analyzing ../../snd_oss.c
+Analyzing ../../snd_ov.c
+Analyzing ../../snd_win.c
+Analyzing ../../stats_grid.c
+Analyzing ../../sv_ccmds.c
+Analyzing ../../sv_ents.c
+Analyzing ../../sv_init.c
+Analyzing ../../sv_main.c
+Analyzing ../../sv_master.c
+Analyzing ../../sv_move.c
+Analyzing ../../sv_nchan.c
+Analyzing ../../sv_null.c
+Analyzing ../../sv_phys.c
+Analyzing ../../sv_save.c
+Analyzing ../../sv_send.c
+Analyzing ../../sv_sys_unix.c
+Analyzing ../../sv_sys_win.c
+Analyzing ../../sv_user.c
+Analyzing ../../sv_world.c
+Analyzing ../../sys_linux.c
+Analyzing ../../sys_mac.c
+Analyzing ../../sys_win.c
+Analyzing ../../teamplay.c
+Analyzing ../../textencoding.c
+Analyzing ../../tp_msgs.c
+Analyzing ../../tp_triggers.c
+Analyzing ../../tr_init.c
+Analyzing ../../utils.c
+Analyzing ../../version.c
+Analyzing ../../vfs_doomwad.c
+Analyzing ../../vfs_gzip.c
+Analyzing ../../vfs_mmap.c
+Analyzing ../../vfs_os.c
+Analyzing ../../vfs_pak.c
+Analyzing ../../vfs_tar.c
+Analyzing ../../vfs_tcp.c
+Analyzing ../../vfs_zip.c
+Analyzing ../../vid_common_gl.c
+Analyzing ../../vid_glx.c
+Analyzing ../../vid_mac.c
+Analyzing ../../vid_svgalib.c
+Analyzing ../../vid_wgl.c
+Analyzing ../../vid_win.c
+Analyzing ../../vid_x11.c
+Analyzing ../../vx_camera.c
+Analyzing ../../vx_coronas.c
+Analyzing ../../vx_motiontrail.c
+Analyzing ../../vx_stuff.c
+Analyzing ../../vx_tracker.c
+Analyzing ../../vx_vertexlights.c
+Analyzing ../../wad.c
+Analyzing ../../win_glimp.c
+Analyzing ../../win_wndproc.c
+Analyzing ../../xsd.c
+Analyzing ../../xsd_command.c
+Analyzing ../../xsd_document.c
+Analyzing ../../xsd_variable.c
+Analyzing ../../zone.c
+Analyzing ../../zone2.c
+../../Ctrl.c:140: High: fixed size local buffer
+../../Ctrl_PageViewer.c:188: High: fixed size local buffer
+../../Ctrl_Tab.c:81: High: fixed size local buffer
+../../Ctrl_Tab.c:130: High: fixed size local buffer
+../../EX_FileList.c:106: High: fixed size local buffer
+../../EX_FileList.c:236: High: fixed size local buffer
+../../EX_FileList.c:237: High: fixed size local buffer
+../../EX_FileList.c:426: High: fixed size local buffer
+../../EX_FileList.c:457: High: fixed size local buffer
+../../EX_FileList.c:749: High: fixed size local buffer
+../../EX_FileList.c:896: High: fixed size local buffer
+../../EX_FileList.c:964: High: fixed size local buffer
+../../EX_FileList.c:1093: High: fixed size local buffer
+../../EX_FileList.c:1244: High: fixed size local buffer
+../../EX_FileList.c:1271: High: fixed size local buffer
+../../EX_FileList.c:1272: High: fixed size local buffer
+../../EX_FileList.c:1490: High: fixed size local buffer
+../../EX_FileList.c:1491: High: fixed size local buffer
+../../EX_FileList.c:1643: High: fixed size local buffer
+../../EX_FileList.c:1644: High: fixed size local buffer
+../../EX_FileList.c:1647: High: fixed size local buffer
+../../EX_browser.c:180: High: fixed size local buffer
+../../EX_browser.c:194: High: fixed size local buffer
+../../EX_browser.c:445: High: fixed size local buffer
+../../EX_browser.c:464: High: fixed size local buffer
+../../EX_browser.c:538: High: fixed size local buffer
+../../EX_browser.c:563: High: fixed size local buffer
+../../EX_browser.c:623: High: fixed size local buffer
+../../EX_browser.c:635: High: fixed size local buffer
+../../EX_browser.c:660: High: fixed size local buffer
+../../EX_browser.c:720: High: fixed size local buffer
+../../EX_browser.c:935: High: fixed size local buffer
+../../EX_browser.c:1093: High: fixed size local buffer
+../../EX_browser.c:1147: High: fixed size local buffer
+../../EX_browser.c:1173: High: fixed size local buffer
+../../EX_browser.c:1219: High: fixed size local buffer
+../../EX_browser.c:1290: High: fixed size local buffer
+../../EX_browser.c:1319: High: fixed size local buffer
+../../EX_browser.c:1401: High: fixed size local buffer
+../../EX_browser.c:1545: High: fixed size local buffer
+../../EX_browser.c:1678: High: fixed size local buffer
+../../EX_browser.c:1780: High: fixed size local buffer
+../../EX_browser.c:1908: High: fixed size local buffer
+../../EX_browser.c:2026: High: fixed size local buffer
+../../EX_browser.c:2070: High: fixed size local buffer
+../../EX_browser.c:2089: High: fixed size local buffer
+../../EX_browser.c:2229: High: fixed size local buffer
+../../EX_browser.c:2241: High: fixed size local buffer
+../../EX_browser.c:2259: High: fixed size local buffer
+../../EX_browser.c:2364: High: fixed size local buffer
+../../EX_browser.c:2376: High: fixed size local buffer
+../../EX_browser_net.c:31: High: fixed size local buffer
+../../EX_browser_net.c:128: High: fixed size local buffer
+../../EX_browser_net.c:262: High: fixed size local buffer
+../../EX_browser_net.c:425: High: fixed size local buffer
+../../EX_browser_net.c:468: High: fixed size local buffer
+../../EX_browser_ping.c:155: High: fixed size local buffer
+../../EX_browser_ping.c:700: High: fixed size local buffer
+../../EX_browser_sources.c:68: High: fixed size local buffer
+../../EX_browser_sources.c:80: High: fixed size local buffer
+../../EX_browser_sources.c:123: High: fixed size local buffer
+../../EX_browser_sources.c:168: High: fixed size local buffer
+../../EX_browser_sources.c:182: High: fixed size local buffer
+../../EX_browser_sources.c:221: High: fixed size local buffer
+../../EX_browser_sources.c:285: High: fixed size local buffer
+../../EX_browser_sources.c:381: High: fixed size local buffer
+../../EX_browser_sources.c:495: High: fixed size local buffer
+../../EX_browser_sources.c:533: High: fixed size local buffer
+../../EX_browser_sources.c:547: High: fixed size local buffer
+../../EX_browser_sources.c:649: High: fixed size local buffer
+../../auth.c:45: High: fixed size local buffer
+../../auth.c:87: High: fixed size local buffer
+../../auth.c:88: High: fixed size local buffer
+../../auth.c:89: High: fixed size local buffer
+../../auth.c:133: High: fixed size local buffer
+../../cl_cam.c:168: High: fixed size local buffer
+../../cl_cam.c:628: High: fixed size local buffer
+../../cl_cam.c:879: High: fixed size local buffer
+../../cl_cmd.c:94: High: fixed size local buffer
+../../cl_cmd.c:142: High: fixed size local buffer
+../../cl_cmd.c:296: High: fixed size local buffer
+../../cl_cmd.c:362: High: fixed size local buffer
+../../cl_cmd.c:403: High: fixed size local buffer
+../../cl_cmd.c:458: High: fixed size local buffer
+../../cl_cmd.c:528: High: fixed size local buffer
+../../cl_cmd.c:555: High: fixed size local buffer
+../../cl_cmd.c:573: High: fixed size local buffer
+../../cl_cmd.c:634: High: fixed size local buffer
+../../cl_cmd.c:753: High: fixed size local buffer
+../../cl_cmd.c:938: High: fixed size local buffer
+../../cl_cmd.c:979: High: fixed size local buffer
+../../cl_demo.c:412: High: fixed size local buffer
+../../cl_demo.c:436: High: fixed size local buffer
+../../cl_demo.c:548: High: fixed size local buffer
+../../cl_demo.c:1392: High: fixed size local buffer
+../../cl_demo.c:1418: High: fixed size local buffer
+../../cl_demo.c:1503: High: fixed size local buffer
+../../cl_demo.c:1514: High: fixed size local buffer
+../../cl_demo.c:1615: High: fixed size local buffer
+../../cl_demo.c:1616: High: fixed size local buffer
+../../cl_demo.c:1884: High: fixed size local buffer
+../../cl_demo.c:1983: High: fixed size local buffer
+../../cl_demo.c:2061: High: fixed size local buffer
+../../cl_demo.c:2085: High: fixed size local buffer
+../../cl_demo.c:2181: High: fixed size local buffer
+../../cl_demo.c:2182: High: fixed size local buffer
+../../cl_demo.c:2255: High: fixed size local buffer
+../../cl_demo.c:2256: High: fixed size local buffer
+../../cl_demo.c:2265: High: fixed size local buffer
+../../cl_demo.c:2313: High: fixed size local buffer
+../../cl_demo.c:2344: High: fixed size local buffer
+../../cl_demo.c:2345: High: fixed size local buffer
+../../cl_demo.c:2762: High: fixed size local buffer
+../../cl_demo.c:2767: High: fixed size local buffer
+../../cl_demo.c:3001: High: fixed size local buffer
+../../cl_demo.c:3002: High: fixed size local buffer
+../../cl_demo.c:3003: High: fixed size local buffer
+../../cl_demo.c:3195: High: fixed size local buffer
+../../cl_demo.c:3393: High: fixed size local buffer
+../../cl_demo.c:3417: High: fixed size local buffer
+../../cl_input.c:619: High: fixed size local buffer
+../../cl_main.c:258: High: fixed size local buffer
+../../cl_main.c:270: High: fixed size local buffer
+../../cl_main.c:279: High: fixed size local buffer
+../../cl_main.c:323: High: fixed size local buffer
+../../cl_main.c:331: High: fixed size local buffer
+../../cl_main.c:364: High: fixed size local buffer
+../../cl_main.c:426: High: fixed size local buffer
+../../cl_main.c:436: High: fixed size local buffer
+../../cl_main.c:446: High: fixed size local buffer
+../../cl_main.c:455: High: fixed size local buffer
+../../cl_main.c:464: High: fixed size local buffer
+../../cl_main.c:478: High: fixed size local buffer
+../../cl_main.c:485: High: fixed size local buffer
+../../cl_main.c:579: High: fixed size local buffer
+../../cl_main.c:580: High: fixed size local buffer
+../../cl_main.c:604: High: fixed size local buffer
+../../cl_main.c:616: High: fixed size local buffer
+../../cl_main.c:770: High: fixed size local buffer
+../../cl_main.c:959: High: fixed size local buffer
+../../cl_main.c:1208: High: fixed size local buffer
+../../cl_main.c:1520: High: fixed size local buffer
+../../cl_main.c:2226: High: fixed size local buffer
+../../cl_main.c:2698: High: fixed size local buffer
+../../cl_main.c:2699: High: fixed size local buffer
+../../cl_nqdemo.c:376: High: fixed size local buffer
+../../cl_parse.c:860: High: fixed size local buffer
+../../cl_parse.c:1334: High: fixed size local buffer
+../../cl_parse.c:1584: High: fixed size local buffer
+../../cl_parse.c:1970: High: fixed size local buffer
+../../cl_parse.c:2113: High: fixed size local buffer
+../../cl_parse.c:2145: High: fixed size local buffer
+../../cl_parse.c:2318: High: fixed size local buffer
+../../cl_parse.c:2392: High: fixed size local buffer
+../../cl_parse.c:2538: High: fixed size local buffer
+../../cl_screen.c:81: High: fixed size local buffer
+../../cl_screen.c:593: High: fixed size local buffer
+../../cl_screen.c:619: High: fixed size local buffer
+../../cl_screen.c:681: High: fixed size local buffer
+../../cl_screen.c:705: High: fixed size local buffer
+../../cl_screen.c:733: High: fixed size local buffer
+../../cl_screen.c:757: High: fixed size local buffer
+../../cl_screen.c:1048: High: fixed size local buffer
+../../cl_screen.c:1467: High: fixed size local buffer
+../../cl_screen.c:1524: High: fixed size local buffer
+../../cl_screen.c:1750: High: fixed size local buffer
+../../cl_screen.c:2662: High: fixed size local buffer
+../../cl_screen.c:2878: High: fixed size local buffer
+../../cl_screen.c:3407: High: fixed size local buffer
+../../cl_screen.c:3555: High: fixed size local buffer
+../../cl_screen.c:3611: High: fixed size local buffer
+../../cl_screen.c:3666: High: fixed size local buffer
+../../cl_screen.c:3769: High: fixed size local buffer
+../../cl_screen.c:3770: High: fixed size local buffer
+../../cl_screen.c:4327: High: fixed size local buffer
+../../cl_screen.c:4862: High: fixed size local buffer
+../../cl_screen.c:4863: High: fixed size local buffer
+../../cl_screen.c:4864: High: fixed size local buffer
+../../cl_screen.c:4865: High: fixed size local buffer
+../../cl_screen.c:4866: High: fixed size local buffer
+../../cl_screen.c:4868: High: fixed size local buffer
+../../cl_screen.c:5286: High: fixed size local buffer
+../../cl_slist.c:108: High: fixed size local buffer
+../../cl_tcl.c:102: High: fixed size local buffer
+../../cl_tcl.c:211: High: fixed size local buffer
+../../cl_tcl.c:322: High: fixed size local buffer
+../../cl_tcl.c:577: High: fixed size local buffer
+../../cmd.c:197: High: fixed size local buffer
+../../cmd.c:398: High: fixed size local buffer
+../../cmd.c:452: High: fixed size local buffer
+../../cmd.c:453: High: fixed size local buffer
+../../cmd.c:637: High: fixed size local buffer
+../../cmd.c:921: High: fixed size local buffer
+../../cmd.c:1378: High: fixed size local buffer
+../../cmd.c:1551: High: fixed size local buffer
+../../cmd.c:1554: High: fixed size local buffer
+../../cmd.c:1759: High: fixed size local buffer
+../../cmd.c:1847: High: fixed size local buffer
+../../cmd.c:2051: High: fixed size local buffer
+../../cmd.c:2130: High: fixed size local buffer
+../../cmd.c:2171: High: fixed size local buffer
+../../com_msg.c:412: High: fixed size local buffer
+../../com_msg.c:437: High: fixed size local buffer
+../../common.c:81: High: fixed size local buffer
+../../common.c:215: High: fixed size local buffer
+../../common.c:349: High: fixed size local buffer
+../../common.c:351: High: fixed size local buffer
+../../common.c:577: High: fixed size local buffer
+../../common.c:616: High: fixed size local buffer
+../../common.c:617: High: fixed size local buffer
+../../common.c:653: High: fixed size local buffer
+../../common.c:693: High: fixed size local buffer
+../../common.c:729: High: fixed size local buffer
+../../common.c:806: High: fixed size local buffer
+../../common.c:931: High: fixed size local buffer
+../../common.c:960: High: fixed size local buffer
+../../common.c:981: High: fixed size local buffer
+../../common_draw.c:35: High: fixed size local buffer
+../../common_draw.c:359: High: fixed size local buffer
+../../common_draw.c:582: High: fixed size local buffer
+../../common_draw.c:726: High: fixed size local buffer
+../../common_draw.c:740: High: fixed size local buffer
+../../common_draw.c:755: High: fixed size local buffer
+../../config_manager.c:259: High: fixed size local buffer
+../../config_manager.c:655: High: fixed size local buffer
+../../config_manager.c:666: High: fixed size local buffer
+../../config_manager.c:864: High: fixed size local buffer
+../../config_manager.c:926: High: fixed size local buffer
+../../config_manager.c:952: High: fixed size local buffer
+../../config_manager.c:1018: High: fixed size local buffer
+../../console.c:209: High: fixed size local buffer
+../../console.c:537: High: fixed size local buffer
+../../console.c:977: High: fixed size local buffer
+../../cpu.c:38: High: fixed size local buffer
+../../cvar.c:127: High: fixed size local buffer
+../../cvar.c:333: High: fixed size local buffer
+../../cvar.c:457: High: fixed size local buffer
+../../cvar.c:854: High: fixed size local buffer
+../../cvar.c:1057: High: fixed size local buffer
+../../document_rendering.c:40: High: fixed size local buffer
+../../document_rendering.c:508: High: fixed size local buffer
+../../document_rendering.c:602: High: fixed size local buffer
+../../ez_label.c:520: High: fixed size local buffer
+../../ez_label.c:594: High: fixed size local buffer
+../../ez_label.c:1123: High: fixed size local buffer
+../../fmod.c:153: High: fixed size local buffer
+../../fmod.c:169: High: fixed size local buffer
+../../fmod.c:388: High: fixed size local buffer
+../../fragstats.c:735: High: fixed size local buffer
+../../fs.c:73: High: fixed size local buffer
+../../fs.c:83: High: fixed size local buffer
+../../fs.c:89: High: fixed size local buffer
+../../fs.c:253: High: fixed size local buffer
+../../fs.c:299: High: fixed size local buffer
+../../fs.c:317: High: fixed size local buffer
+../../fs.c:358: High: fixed size local buffer
+../../fs.c:385: High: fixed size local buffer
+../../fs.c:528: High: fixed size local buffer
+../../fs.c:674: High: fixed size local buffer
+../../fs.c:721: High: fixed size local buffer
+../../fs.c:817: High: fixed size local buffer
+../../fs.c:818: High: fixed size local buffer
+../../fs.c:884: High: fixed size local buffer
+../../fs.c:914: High: fixed size local buffer
+../../fs.c:1253: High: fixed size local buffer
+../../fs.c:1391: High: fixed size local buffer
+../../fs.c:1512: High: fixed size local buffer
+../../fs.c:1530: High: fixed size local buffer
+../../fs.c:1689: High: fixed size local buffer
+../../fs.c:1778: High: fixed size local buffer
+../../fs.c:1824: High: fixed size local buffer
+../../fs.c:1888: High: fixed size local buffer
+../../fs.c:1889: High: fixed size local buffer
+../../fs.c:2113: High: fixed size local buffer
+../../fs.c:2335: High: fixed size local buffer
+../../fs.c:2466: High: fixed size local buffer
+../../fs.c:2622: High: fixed size local buffer
+../../fs.c:3049: High: fixed size local buffer
+../../fs.c:3050: High: fixed size local buffer
+../../fs.c:3112: High: fixed size local buffer
+../../fs.c:3113: High: fixed size local buffer
+../../fs.c:3152: High: fixed size local buffer
+../../fs.c:3185: High: fixed size local buffer
+../../fs.c:3242: High: fixed size local buffer
+../../fs.c:3274: High: fixed size local buffer
+../../fs.c:3593: High: fixed size local buffer
+../../gl_draw.c:277: High: fixed size local buffer
+../../gl_draw.c:466: High: fixed size local buffer
+../../gl_draw.c:467: High: fixed size local buffer
+../../gl_draw.c:468: High: fixed size local buffer
+../../gl_draw.c:647: High: fixed size local buffer
+../../gl_draw.c:1832: High: fixed size local buffer
+../../gl_draw.c:1892: High: fixed size local buffer
+../../gl_md3.c:242: High: fixed size local buffer
+../../gl_md3.c:275: High: fixed size local buffer
+../../gl_md3.c:276: High: fixed size local buffer
+../../gl_md3.c:277: High: fixed size local buffer
+../../gl_model.c:221: High: fixed size local buffer
+../../gl_model.c:404: High: fixed size local buffer
+../../gl_model.c:405: High: fixed size local buffer
+../../gl_model.c:865: High: fixed size local buffer
+../../gl_model.c:1357: High: fixed size local buffer
+../../gl_model.c:1516: High: fixed size local buffer
+../../gl_model.c:1542: High: fixed size local buffer
+../../gl_model.c:1789: High: fixed size local buffer
+../../gl_model.c:1810: High: fixed size local buffer
+../../gl_ngraph.c:82: High: fixed size local buffer
+../../gl_ngraph.c:142: High: fixed size local buffer
+../../gl_ngraph.c:204: High: fixed size local buffer
+../../gl_rmain.c:1826: High: fixed size local buffer
+../../gl_rmisc.c:86: High: fixed size local buffer
+../../gl_texture.c:64: High: fixed size local buffer
+../../gl_texture.c:501: High: fixed size local buffer
+../../gl_texture.c:590: High: fixed size local buffer
+../../gl_texture.c:610: High: fixed size local buffer
+../../gl_texture.c:617: High: fixed size local buffer
+../../gl_texture.c:834: High: fixed size local buffer
+../../host.c:95: High: fixed size local buffer
+../../host.c:180: High: fixed size local buffer
+../../host.c:181: High: fixed size local buffer
+../../host.c:280: High: fixed size local buffer
+../../host.c:373: High: fixed size local buffer
+../../host.c:460: High: fixed size local buffer
+../../host.c:587: High: fixed size local buffer
+../../host.c:668: High: fixed size local buffer
+../../host.c:762: High: fixed size local buffer
+../../hud.c:135: High: fixed size local buffer
+../../hud.c:539: High: fixed size local buffer
+../../hud.c:819: High: fixed size local buffer
+../../hud.c:1078: High: fixed size local buffer
+../../hud.c:1173: High: fixed size local buffer
+../../hud.c:1331: High: fixed size local buffer
+../../hud_common.c:231: High: fixed size local buffer
+../../hud_common.c:264: High: fixed size local buffer
+../../hud_common.c:304: High: fixed size local buffer
+../../hud_common.c:351: High: fixed size local buffer
+../../hud_common.c:356: High: fixed size local buffer
+../../hud_common.c:481: High: fixed size local buffer
+../../hud_common.c:1707: High: fixed size local buffer
+../../hud_common.c:1947: High: fixed size local buffer
+../../hud_common.c:2143: High: fixed size local buffer
+../../hud_common.c:2682: High: fixed size local buffer
+../../hud_common.c:3095: High: fixed size local buffer
+../../hud_common.c:3096: High: fixed size local buffer
+../../hud_common.c:3201: High: fixed size local buffer
+../../hud_common.c:3898: High: fixed size local buffer
+../../hud_common.c:3926: High: fixed size local buffer
+../../hud_common.c:4005: High: fixed size local buffer
+../../hud_common.c:4006: High: fixed size local buffer
+../../hud_common.c:4655: High: fixed size local buffer
+../../hud_common.c:4699: High: fixed size local buffer
+../../hud_common.c:4879: High: fixed size local buffer
+../../hud_common.c:5126: High: fixed size local buffer
+../../hud_common.c:5858: High: fixed size local buffer
+../../ignore.c:42: High: fixed size local buffer
+../../ignore.c:293: High: fixed size local buffer
+../../ignore.c:341: High: fixed size local buffer
+../../image.c:840: High: fixed size local buffer
+../../image.c:1361: High: fixed size local buffer
+../../image.c:1544: High: fixed size local buffer
+../../in_win.c:869: High: fixed size local buffer
+../../keymap.c:296: High: fixed size local buffer
+../../keymap.c:301: High: fixed size local buffer
+../../keymap.c:397: High: fixed size local buffer
+../../keymap.c:424: High: fixed size local buffer
+../../keymap.c:602: High: fixed size local buffer
+../../keymap.c:671: High: fixed size local buffer
+../../keymap.c:748: High: fixed size local buffer
+../../keymap.c:928: High: fixed size local buffer
+../../keymap_x11.c:204: High: fixed size local buffer
+../../keys.c:308: High: fixed size local buffer
+../../keys.c:367: High: fixed size local buffer
+../../keys.c:563: High: fixed size local buffer
+../../keys.c:659: High: fixed size local buffer
+../../keys.c:1324: High: fixed size local buffer
+../../keys.c:1374: High: fixed size local buffer
+../../keys.c:1375: High: fixed size local buffer
+../../keys.c:1424: High: fixed size local buffer
+../../keys.c:1568: High: fixed size local buffer
+../../keys.c:1594: High: fixed size local buffer
+../../keys.c:1883: High: fixed size local buffer
+../../linux_glimp.c:547: High: fixed size local buffer
+../../linux_glimp.c:1483: High: fixed size local buffer
+../../linux_glimp.c:1505: High: fixed size local buffer
+../../logging.c:45: High: fixed size local buffer
+../../logging.c:208: High: fixed size local buffer
+../../logging.c:257: High: fixed size local buffer
+../../match_tools.c:106: High: fixed size local buffer
+../../match_tools.c:126: High: fixed size local buffer
+../../match_tools.c:160: High: fixed size local buffer
+../../match_tools.c:178: High: fixed size local buffer
+../../match_tools.c:233: High: fixed size local buffer
+../../match_tools.c:283: High: fixed size local buffer
+../../match_tools.c:284: High: fixed size local buffer
+../../match_tools.c:285: High: fixed size local buffer
+../../match_tools.c:286: High: fixed size local buffer
+../../match_tools.c:287: High: fixed size local buffer
+../../match_tools.c:291: High: fixed size local buffer
+../../match_tools.c:292: High: fixed size local buffer
+../../match_tools.c:293: High: fixed size local buffer
+../../match_tools.c:294: High: fixed size local buffer
+../../match_tools.c:301: High: fixed size local buffer
+../../match_tools.c:302: High: fixed size local buffer
+../../match_tools.c:304: High: fixed size local buffer
+../../match_tools.c:305: High: fixed size local buffer
+../../match_tools.c:306: High: fixed size local buffer
+../../match_tools.c:307: High: fixed size local buffer
+../../match_tools.c:358: High: fixed size local buffer
+../../match_tools.c:483: High: fixed size local buffer
+../../match_tools.c:583: High: fixed size local buffer
+../../match_tools.c:615: High: fixed size local buffer
+../../match_tools.c:727: High: fixed size local buffer
+../../match_tools.c:808: High: fixed size local buffer
+../../match_tools.c:809: High: fixed size local buffer
+../../match_tools.c:1021: High: fixed size local buffer
+../../match_tools.c:1076: High: fixed size local buffer
+../../match_tools.c:1077: High: fixed size local buffer
+../../match_tools.c:1294: High: fixed size local buffer
+../../md4.c:56: High: fixed size local buffer
+../../md4.c:168: High: fixed size local buffer
+../../menu.c:979: High: fixed size local buffer
+../../menu_demo.c:73: High: fixed size local buffer
+../../menu_demo.c:74: High: fixed size local buffer
+../../menu_demo.c:75: High: fixed size local buffer
+../../menu_demo.c:538: High: fixed size local buffer
+../../menu_demo.c:894: High: fixed size local buffer
+../../menu_mp3player.c:28: High: fixed size local buffer
+../../menu_mp3player.c:32: High: fixed size local buffer
+../../menu_mp3player.c:95: High: fixed size local buffer
+../../menu_mp3player.c:410: High: fixed size local buffer
+../../modules.c:75: High: fixed size local buffer
+../../movie.c:186: High: fixed size local buffer
+../../movie.c:266: High: fixed size local buffer
+../../mp3_audacious.c:158: High: fixed size local buffer
+../../mp3_audacious.c:297: High: fixed size local buffer
+../../mp3_mpd.c:142: High: fixed size local buffer
+../../mp3_mpd.c:303: High: fixed size local buffer
+../../mp3_mpd.c:414: High: fixed size local buffer
+../../mp3_player.c:102: High: fixed size local buffer
+../../mp3_player.c:133: High: fixed size local buffer
+../../mp3_player.c:186: High: fixed size local buffer
+../../mp3_winamp.c:127: High: fixed size local buffer
+../../mp3_winamp.c:185: High: fixed size local buffer
+../../mp3_winamp.c:338: High: fixed size local buffer
+../../mp3_winamp.c:403: High: fixed size local buffer
+../../mp3_xmms.c:131: High: fixed size local buffer
+../../mp3_xmms.c:270: High: fixed size local buffer
+../../mp3_xmms2.c:169: High: fixed size local buffer
+../../mp3_xmms2.c:532: High: fixed size local buffer
+../../mp3_xmms2.c:637: High: fixed size local buffer
+../../mvd_autotrack.c:365: High: fixed size local buffer
+../../mvd_utils.c:117: High: fixed size local buffer
+../../mvd_utils.c:118: High: fixed size local buffer
+../../mvd_utils.c:119: High: fixed size local buffer
+../../mvd_utils.c:120: High: fixed size local buffer
+../../mvd_utils.c:210: High: fixed size local buffer
+../../mvd_utils.c:270: High: fixed size local buffer
+../../mvd_utils.c:379: High: fixed size local buffer
+../../mvd_utils.c:380: High: fixed size local buffer
+../../mvd_utils.c:804: High: fixed size local buffer
+../../mvd_utils.c:997: High: fixed size local buffer
+../../mvd_xmlstats.c:29: High: fixed size local buffer
+../../net.c:92: High: fixed size local buffer
+../../net.c:103: High: fixed size local buffer
+../../net.c:119: High: fixed size local buffer
+../../net.c:765: High: fixed size local buffer
+../../net_chan.c:134: High: fixed size local buffer
+../../parser.c:656: High: fixed size local buffer
+../../pr_cmds.c:36: High: fixed size local buffer
+../../pr_cmds.c:47: High: fixed size local buffer
+../../pr_cmds.c:1340: High: fixed size local buffer
+../../pr_cmds.c:1617: High: fixed size local buffer
+../../pr_edict.c:189: High: fixed size local buffer
+../../pr_edict.c:233: High: fixed size local buffer
+../../pr_edict.c:277: High: fixed size local buffer
+../../pr_edict.c:300: High: fixed size local buffer
+../../pr_edict.c:491: High: fixed size local buffer
+../../pr_edict.c:552: High: fixed size local buffer
+../../pr_edict.c:613: High: fixed size local buffer
+../../pr_edict.c:860: High: fixed size local buffer
+../../pr_exec.c:211: High: fixed size local buffer
+../../q_shared.c:159: High: fixed size local buffer
+../../q_shared.c:398: High: fixed size local buffer
+../../qtv.c:52: High: fixed size local buffer
+../../qtv.c:137: High: fixed size local buffer
+../../qtv.c:184: High: fixed size local buffer
+../../qtv.c:220: High: fixed size local buffer
+../../r_draw.c:149: High: fixed size local buffer
+../../r_draw.c:150: High: fixed size local buffer
+../../r_draw.c:151: High: fixed size local buffer
+../../r_draw.c:1159: High: fixed size local buffer
+../../r_misc.c:37: High: fixed size local buffer
+../../r_misc.c:210: High: fixed size local buffer
+../../r_misc.c:283: High: fixed size local buffer
+../../r_misc.c:372: High: fixed size local buffer
+../../r_model.c:909: High: fixed size local buffer
+../../r_part.c:265: High: fixed size local buffer
+../../r_part.c:271: High: fixed size local buffer
+../../sbar.c:353: High: fixed size local buffer
+../../sbar.c:401: High: fixed size local buffer
+../../sbar.c:463: High: fixed size local buffer
+../../sbar.c:650: High: fixed size local buffer
+../../sbar.c:751: High: fixed size local buffer
+../../sbar.c:952: High: fixed size local buffer
+../../sbar.c:953: High: fixed size local buffer
+../../sbar.c:989: High: fixed size local buffer
+../../sbar.c:1033: High: fixed size local buffer
+../../sbar.c:1095: High: fixed size local buffer
+../../sbar.c:1096: High: fixed size local buffer
+../../sbar.c:1200: High: fixed size local buffer
+../../sbar.c:1411: High: fixed size local buffer
+../../sbar.c:1540: High: fixed size local buffer
+../../sbar.c:1678: High: fixed size local buffer
+../../sbar.c:1758: High: fixed size local buffer
+../../settings_page.c:99: High: fixed size local buffer
+../../settings_page.c:109: High: fixed size local buffer
+../../settings_page.c:136: High: fixed size local buffer
+../../settings_page.c:211: High: fixed size local buffer
+../../settings_page.c:230: High: fixed size local buffer
+../../settings_page.c:479: High: fixed size local buffer
+../../settings_page.c:540: High: fixed size local buffer
+../../settings_page.c:556: High: fixed size local buffer
+../../settings_page.c:633: High: fixed size local buffer
+../../sha1.c:30: High: fixed size local buffer
+../../sha1.c:35: High: fixed size local buffer
+../../sha1.c:120: High: fixed size local buffer
+../../sha1.c:149: High: fixed size local buffer
+../../sha1.c:159: High: fixed size local buffer
+../../sha1.c:177: High: fixed size local buffer
+../../skin.c:79: High: fixed size local buffer
+../../skin.c:109: High: fixed size local buffer
+../../skin.c:169: High: fixed size local buffer
+../../skin.c:305: High: fixed size local buffer
+../../snd_dma.c:805: High: fixed size local buffer
+../../snd_dma.c:823: High: fixed size local buffer
+../../snd_mem.c:221: High: fixed size local buffer
+../../snd_ov.c:117: High: fixed size local buffer
+../../snd_ov.c:118: High: fixed size local buffer
+../../snd_ov.c:131: High: fixed size local buffer
+../../sv_ccmds.c:49: High: fixed size local buffer
+../../sv_ccmds.c:102: High: fixed size local buffer
+../../sv_ccmds.c:150: High: fixed size local buffer
+../../sv_ccmds.c:298: High: fixed size local buffer
+../../sv_ccmds.c:521: High: fixed size local buffer
+../../sv_main.c:216: High: fixed size local buffer
+../../sv_main.c:332: High: fixed size local buffer
+../../sv_main.c:368: High: fixed size local buffer
+../../sv_main.c:417: High: fixed size local buffer
+../../sv_main.c:722: High: fixed size local buffer
+../../sv_main.c:724: High: fixed size local buffer
+../../sv_main.c:806: High: fixed size local buffer
+../../sv_main.c:829: High: fixed size local buffer
+../../sv_main.c:969: High: fixed size local buffer
+../../sv_main.c:1198: High: fixed size local buffer
+../../sv_master.c:31: High: fixed size local buffer
+../../sv_master.c:62: High: fixed size local buffer
+../../sv_master.c:92: High: fixed size local buffer
+../../sv_save.c:36: High: fixed size local buffer
+../../sv_save.c:53: High: fixed size local buffer
+../../sv_save.c:129: High: fixed size local buffer
+../../sv_send.c:91: High: fixed size local buffer
+../../sv_send.c:106: High: fixed size local buffer
+../../sv_send.c:129: High: fixed size local buffer
+../../sv_sys_unix.c:95: High: fixed size local buffer
+../../sv_sys_unix.c:114: High: fixed size local buffer
+../../sv_sys_unix.c:155: High: fixed size local buffer
+../../sv_sys_win.c:51: High: fixed size local buffer
+../../sv_sys_win.c:93: High: fixed size local buffer
+../../sv_user.c:105: High: fixed size local buffer
+../../sv_user.c:567: High: fixed size local buffer
+../../sv_user.c:679: High: fixed size local buffer
+../../sv_user.c:753: High: fixed size local buffer
+../../sv_user.c:893: High: fixed size local buffer
+../../sv_user.c:1038: High: fixed size local buffer
+../../sv_user.c:1103: High: fixed size local buffer
+../../sv_user.c:1490: High: fixed size local buffer
+../../sys_linux.c:77: High: fixed size local buffer
+../../sys_linux.c:123: High: fixed size local buffer
+../../sys_linux.c:210: High: fixed size local buffer
+../../sys_linux.c:482: High: fixed size local buffer
+../../sys_linux.c:499: High: fixed size local buffer
+../../sys_linux.c:500: High: fixed size local buffer
+../../sys_linux.c:501: High: fixed size local buffer
+../../sys_linux.c:598: High: fixed size local buffer
+../../sys_linux.c:642: High: fixed size local buffer
+../../sys_mac.c:195: High: fixed size local buffer
+../../sys_mac.c:196: High: fixed size local buffer
+../../sys_mac.c:197: High: fixed size local buffer
+../../sys_mac.c:289: High: fixed size local buffer
+../../sys_mac.c:329: High: fixed size local buffer
+../../sys_mac.c:400: High: fixed size local buffer
+../../sys_mac.c:413: High: fixed size local buffer
+../../sys_mac.c:686: High: fixed size local buffer
+../../sys_mac.c:770: High: fixed size local buffer
+../../sys_mac.c:1141: High: fixed size local buffer
+../../sys_mac.c:1478: High: fixed size local buffer
+../../sys_win.c:209: High: fixed size local buffer
+../../sys_win.c:210: High: fixed size local buffer
+../../sys_win.c:211: High: fixed size local buffer
+../../sys_win.c:320: High: fixed size local buffer
+../../sys_win.c:345: High: fixed size local buffer
+../../sys_win.c:440: High: fixed size local buffer
+../../sys_win.c:599: High: fixed size local buffer
+../../sys_win.c:1181: High: fixed size local buffer
+../../teamplay.c:237: High: fixed size local buffer
+../../teamplay.c:328: High: fixed size local buffer
+../../teamplay.c:868: High: fixed size local buffer
+../../teamplay.c:1139: High: fixed size local buffer
+../../teamplay.c:1159: High: fixed size local buffer
+../../teamplay.c:1322: High: fixed size local buffer
+../../teamplay.c:1406: High: fixed size local buffer
+../../teamplay.c:1407: High: fixed size local buffer
+../../teamplay.c:1718: High: fixed size local buffer
+../../teamplay.c:1850: High: fixed size local buffer
+../../teamplay.c:1851: High: fixed size local buffer
+../../teamplay.c:1886: High: fixed size local buffer
+../../teamplay.c:2072: High: fixed size local buffer
+../../teamplay.c:2138: High: fixed size local buffer
+../../teamplay.c:2146: High: fixed size local buffer
+../../teamplay.c:2242: High: fixed size local buffer
+../../teamplay.c:2416: High: fixed size local buffer
+../../teamplay.c:3063: High: fixed size local buffer
+../../textencoding.c:30: High: fixed size local buffer
+../../textencoding.c:161: High: fixed size local buffer
+../../textencoding.c:162: High: fixed size local buffer
+../../tp_msgs.c:90: High: fixed size local buffer
+../../tp_msgs.c:102: High: fixed size local buffer
+../../tp_triggers.c:142: High: fixed size local buffer
+../../tp_triggers.c:221: High: fixed size local buffer
+../../tp_triggers.c:222: High: fixed size local buffer
+../../tr_init.c:142: High: fixed size local buffer
+../../tr_init.c:191: High: fixed size local buffer
+../../utils.c:34: High: fixed size local buffer
+../../utils.c:45: High: fixed size local buffer
+../../utils.c:57: High: fixed size local buffer
+../../utils.c:100: High: fixed size local buffer
+../../utils.c:164: High: fixed size local buffer
+../../utils.c:251: High: fixed size local buffer
+../../utils.c:488: High: fixed size local buffer
+../../utils.c:557: High: fixed size local buffer
+../../utils.c:558: High: fixed size local buffer
+../../utils.c:797: High: fixed size local buffer
+../../version.c:86: High: fixed size local buffer
+../../vfs_doomwad.c:34: High: fixed size local buffer
+../../vfs_doomwad.c:39: High: fixed size local buffer
+../../vfs_doomwad.c:54: High: fixed size local buffer
+../../vfs_doomwad.c:55: High: fixed size local buffer
+../../vfs_doomwad.c:56: High: fixed size local buffer
+../../vfs_gzip.c:40: High: fixed size local buffer
+../../vfs_os.c:124: High: fixed size local buffer
+../../vfs_os.c:167: High: fixed size local buffer
+../../vfs_os.c:208: High: fixed size local buffer
+../../vfs_os.c:230: High: fixed size local buffer
+../../vfs_os.c:254: High: fixed size local buffer
+../../vfs_pak.c:30: High: fixed size local buffer
+../../vfs_pak.c:44: High: fixed size local buffer
+../../vfs_pak.c:50: High: fixed size local buffer
+../../vfs_tar.c:38: High: fixed size local buffer
+../../vfs_tar.c:96: High: fixed size local buffer
+../../vfs_tcp.c:37: High: fixed size local buffer
+../../vfs_tcp.c:40: High: fixed size local buffer
+../../vfs_zip.c:117: High: fixed size local buffer
+../../vfs_zip.c:153: High: fixed size local buffer
+../../vfs_zip.c:228: High: fixed size local buffer
+../../vid_common_gl.c:234: High: fixed size local buffer
+../../vid_mac.c:909: High: fixed size local buffer
+../../vid_wgl.c:51: High: fixed size local buffer
+../../vid_wgl.c:1422: High: fixed size local buffer
+../../vid_wgl.c:1442: High: fixed size local buffer
+../../vid_win.c:145: High: fixed size local buffer
+../../vid_win.c:900: High: fixed size local buffer
+../../vid_win.c:920: High: fixed size local buffer
+../../vid_win.c:2504: High: fixed size local buffer
+../../vid_x11.c:638: High: fixed size local buffer
+../../vx_stuff.c:107: High: fixed size local buffer
+../../vx_stuff.c:282: High: fixed size local buffer
+../../vx_stuff.c:325: High: fixed size local buffer
+../../vx_tracker.c:47: High: fixed size local buffer
+../../vx_tracker.c:56: High: fixed size local buffer
+../../vx_tracker.c:256: High: fixed size local buffer
+../../vx_tracker.c:268: High: fixed size local buffer
+../../vx_tracker.c:280: High: fixed size local buffer
+../../vx_tracker.c:297: High: fixed size local buffer
+../../vx_tracker.c:309: High: fixed size local buffer
+../../vx_tracker.c:323: High: fixed size local buffer
+../../vx_tracker.c:335: High: fixed size local buffer
+../../vx_tracker.c:348: High: fixed size local buffer
+../../vx_tracker.c:355: High: fixed size local buffer
+../../vx_tracker.c:362: High: fixed size local buffer
+../../vx_tracker.c:402: High: fixed size local buffer
+../../vx_tracker.c:418: High: fixed size local buffer
+../../vx_tracker.c:448: High: fixed size local buffer
+../../vx_tracker.c:465: High: fixed size local buffer
+../../wad.c:127: High: fixed size local buffer
+../../wad.c:246: High: fixed size local buffer
+../../win_glimp.c:1219: High: fixed size local buffer
+../../win_glimp.c:1458: High: fixed size local buffer
+../../xsd.c:182: High: fixed size local buffer
+../../xsd.c:183: High: fixed size local buffer
+../../xsd_command.c:139: High: fixed size local buffer
+../../xsd_document.c:1104: High: fixed size local buffer
+../../xsd_variable.c:188: High: fixed size local buffer
+../../zone.c:35: High: fixed size local buffer
+../../zone.c:66: High: fixed size local buffer
+../../zone.c:251: High: fixed size local buffer
+Extra care should be taken to ensure that character arrays that are allocated
+on the stack are used safely.  They are prime targets for buffer overflow
+attacks.
+
+../../EX_browser_sources.c:84: High: fscanf
+../../menu.c:995: High: fscanf
+../../sv_save.c:157: High: fscanf
+../../sv_save.c:171: High: fscanf
+../../sv_save.c:189: High: fscanf
+Check to be sure that the format string passed as argument 2 to this function
+call does not come from an untrusted source that could have added formatting
+characters that the code is not prepared to handle.  Additionally, the format
+string could contain `%s' without precision that could result in a buffer
+overflow.
+
+../../cl_demo.c:2153: High: CreateProcess
+../../cl_demo.c:2220: High: CreateProcess
+../../mp3_winamp.c:207: High: CreateProcess
+Many program execution commands under Windows will search
+the path for a program if you do not explicitly specify a full path to the file. This can allow trojans to be executed instead. Also, be sure to
+specify a file extension, since otherwise multiple extensions will be tried
+by the operating system, providing another opportunity for trojans.
+
+../../cl_demo.c:2153: High: CreateProcess
+../../cl_demo.c:2220: High: CreateProcess
+Argument 3 to this function call should be checked to ensure that it does not
+come from an untrusted source without first verifying that it contains nothing
+dangerous.
+
+../../cl_input.c:625: High: strcpy
+../../cmd.c:1036: High: strcpy
+../../cmd.c:1440: High: strcpy
+../../cmd.c:1451: High: strcpy
+../../cmd.c:2192: High: strcpy
+../../common.c:682: High: strcpy
+../../hud.c:1141: High: strcpy
+../../hud.c:1145: High: strcpy
+../../keys.c:1414: High: strcpy
+../../match_tools.c:201: High: strcpy
+../../match_tools.c:203: High: strcpy
+../../r_model.c:935: High: strcpy
+../../stats_grid.c:178: High: strcpy
+../../stats_grid.c:182: High: strcpy
+../../sys_win.c:719: High: strcpy
+../../teamplay.c:1991: High: strcpy
+../../teamplay.c:2107: High: strcpy
+../../tp_triggers.c:183: High: strcpy
+../../utils.c:747: High: strcpy
+../../xsd.c:166: High: strcpy
+Check to be sure that argument 2 passed to this function call will not copy
+more data than can be handled, resulting in a buffer overflow.
+
+../../cl_main.c:977: High: gethostbyname
+../../net.c:149: High: gethostbyname
+DNS results can easily be forged by an attacker (or arbitrarily set to large values, etc), and should not be trusted.
+
+../../cl_main.c:990: High: gethostbyaddr
+DNS results can easily be forged by an attacker (or arbitrarily set to large values, etc), and should not be trusted.
+
+../../common.c:318: High: GetTempPath
+GetTempPath() may return the current directory or the
+windows directory. Be careful what you place in these locations. Important files may be overwritten, and trojan DLL's may be dropped in these locations. Never use a user-input filename when writing to a location given
+by GetTempPath().
+
+../../common.c:326: High: getenv
+../../fs.c:929: High: getenv
+../../fs.c:1146: High: getenv
+../../mp3_mpd.c:120: High: getenv
+../../mp3_mpd.c:121: High: getenv
+../../mp3_xmms2.c:156: High: getenv
+Environment variables are highly untrustable input. They may be of any length, and contain any data. Do not make any assumptions regarding content or length. If at all possible avoid using them, and if it is necessary, sanitize them and truncate them to a reasonable length.
+
+../../config_manager.c:421: High: fprintf
+../../config_manager.c:422: High: fprintf
+../../config_manager.c:772: High: fprintf
+../../config_manager.c:778: High: fprintf
+../../config_manager.c:784: High: fprintf
+../../config_manager.c:790: High: fprintf
+../../config_manager.c:796: High: fprintf
+../../config_manager.c:800: High: fprintf
+../../config_manager.c:804: High: fprintf
+Check to be sure that the non-constant format string passed as argument 2 to
+this function call does not come from an untrusted source that could have added
+formatting characters that the code is not prepared to handle.
+
+../../image.c:611: High: LoadLibrary
+../../image.c:1933: High: LoadLibrary
+../../in_win.c:619: High: LoadLibrary
+../../in_win.c:872: High: LoadLibrary
+../../in_win.c:1133: High: LoadLibrary
+../../modules.c:81: High: LoadLibrary
+../../movie_avi.c:85: High: LoadLibrary
+../../movie_avi.c:126: High: LoadLibrary
+../../mp3_mpd.c:98: High: LoadLibrary
+../../mp3_xmms2.c:127: High: LoadLibrary
+../../snd_ov.c:72: High: LoadLibrary
+LoadLibrary will search several places for a library if
+no path is specified, allowing trojan DLL's to be inserted elsewhere even
+if the intended DLL is correctly protected from overwriting. Make sure to specify the full path.
+
+../../sv_sys_win.c:158: High: vprintf
+../../sys_mac.c:365: High: vprintf
+Check to be sure that the non-constant format string passed as argument 1 to
+this function call does not come from an untrusted source that could have added
+formatting characters that the code is not prepared to handle.
+
+../../sys_linux.c:483: High: realpath
+../../sys_linux.c:491: High: realpath
+../../sys_mac.c:1479: High: realpath
+../../sys_mac.c:1487: High: realpath
+Be sure the destination buffer is at least MAXPATHLEN big. This function may still internally overflow a static buffer, try to avoid using it. If you must, check the size the path your pass in is no longer than MAXPATHLEN
+
+../../sys_linux.c:613: High: umask
+../../sys_linux.c:615: High: umask
+../../sys_linux.c:619: High: umask
+../../sys_mac.c:145: High: umask
+umask() can easily be used to create files with unsafe priviledges. It should be set to restrictive values.
+
+../../sys_mac.c:292: High: vsprintf
+../../sys_mac.c:332: High: vsprintf
+../../sys_mac.c:404: High: vsprintf
+Check to be sure that the non-constant format string passed as argument 2 to
+this function call does not come from an untrusted source that could have added
+formatting characters that the code is not prepared to handle.
+
+../../sys_mac.c:292: High: vsprintf
+../../sys_mac.c:332: High: vsprintf
+../../sys_mac.c:404: High: vsprintf
+Check to be sure that the format string passed as argument 2 to this function
+call does not come from an untrusted source that could have added formatting
+characters that the code is not prepared to handle.  Additionally, the format
+string could contain `%s' without precision that could result in a buffer
+overflow.
+
+../../sys_mac.c:1252: High: strcat
+Check to be sure that argument 2 passed to this function call will not copy
+more data than can be handled, resulting in a buffer overflow.
+
+../../vid_wgl.c:1451: High: sprintf
+../../vid_wgl.c:1459: High: sprintf
+Check to be sure that the format string passed as argument 2 to this function
+call does not come from an untrusted source that could have added formatting
+characters that the code is not prepared to handle.  Additionally, the format
+string could contain `%s' without precision that could result in a buffer
+overflow.
+
+../../cl_slist.c:115: Medium: getc
+../../cl_slist.c:117: Medium: getc
+Check buffer boundaries if calling this function in a loop and make sure you are not in danger of writing past the allocated space.
+
+../../common.c:369: Medium: GetTempFileName
+Many calls for generating temporary file names are insecure (susceptible to race conditions). Use a securely generated file
+name, for example, by pulling 64 bits of randomness from /dev/random, base 64 encoding it and using that as a file suffix.
+
+../../common.c:381: Medium: tempnam
+Many calls for generating temporary file names are insecure (susceptible to race conditions). Use a securely generated file
+name, for example, by pulling 64 bits of randomness from /dev/random, base 64 encoding it and using that as a file suffix.
+
+../../gl_draw.c:229: Medium: fgetc
+../../keys.c:1639: Medium: fgetc
+../../r_draw.c:790: Medium: fgetc
+../../sv_save.c:198: Medium: fgetc
+Check buffer boundaries if calling this function in a loop and make sure you are not in danger of writing past the allocated space.
+
+../../linux_glimp.c:452: Medium: read
+../../sv_sys_unix.c:162: Medium: read
+../../sys_linux.c:189: Medium: read
+../../sys_linux.c:220: Medium: read
+../../sys_mac.c:168: Medium: read
+../../sys_mac.c:423: Medium: read
+../../vid_glx.c:963: Medium: read
+Check buffer boundaries if calling this function in a loop and make sure you are not in danger of writing past the allocated space.
+
+../../linux_signals.c:61: Medium: signal
+../../linux_signals.c:62: Medium: signal
+../../linux_signals.c:63: Medium: signal
+../../linux_signals.c:64: Medium: signal
+../../linux_signals.c:65: Medium: signal
+../../linux_signals.c:66: Medium: signal
+../../linux_signals.c:67: Medium: signal
+../../linux_signals.c:68: Medium: signal
+../../linux_signals.c:69: Medium: signal
+../../linux_signals.c:70: Medium: signal
+../../sys_linux.c:206: Medium: signal
+../../sys_linux.c:273: Medium: signal
+../../vid_glx.c:457: Medium: signal
+../../vid_glx.c:458: Medium: signal
+../../vid_glx.c:459: Medium: signal
+../../vid_glx.c:460: Medium: signal
+../../vid_glx.c:461: Medium: signal
+../../vid_glx.c:462: Medium: signal
+../../vid_glx.c:463: Medium: signal
+../../vid_glx.c:464: Medium: signal
+../../vid_glx.c:465: Medium: signal
+../../vid_glx.c:466: Medium: signal
+When setting signal handlers, do not use the same function to handle multiple signals. There exists the possibility a race condition will result if 2 or more different signals are sent to the process at nearly the same time. Also, when writing signal handlers, it is best to do as little as possible in them. The best strategy is to use the signal handler to set a flag, that another part of the program tests and performs the appropriate action(s) when it is set.
+See also: http://razor.bindview.com/publish/papers/signals.txt
+
+../../net_chan.c:86: Medium: srand
+Standard random number generators should not be used to generate randomness used for security reasons. For security sensitive randomness a crytographic randomness generator that provides sufficient
+entropy should be used.
+
+../../q_shared.c:874: Medium: realloc
+../../sys_mac.c:1315: Medium: realloc
+../../vfs_mmap.c:75: Medium: realloc
+Don't use on memory intended to be secure, because the old structure will not be zeroed out.
+
+../../sys_linux.c:603: Medium: getlogin
+The results of this call are easy to forge.
+
+../../sys_mac.c:181: Medium: stat
+A potential TOCTOU (Time Of Check, Time Of Use) vulnerability exists.  This is
+the first line where a check has occured.
+The following line(s) contain uses that may match up with this check:
+132 (open), 147 (open), 189 (mkdir)
+
+../../vfs_os.c:92: Medium: tmpfile
+Many calls for generating temporary file names are insecure (susceptible to race conditions). Use a securely generated file
+name, for example, by pulling 64 bits of randomness from /dev/random, base 64 encoding it and using that as a file suffix.
+
+../../vid_x11.c:365: Medium: random
+Standard random number generators should not be used to generate randomness used for security reasons. For security sensitive randomness a crytographic randomness generator that provides sufficient
+entropy should be used.
+
+../../vid_x11.c:407: Medium: srandom
+Standard random number generators should not be used to generate randomness used for security reasons. For security sensitive randomness a crytographic randomness generator that provides sufficient
+entropy should be used.
+
+Total lines analyzed: 181957
+Total time 0.641000 seconds
+283864 lines per second
