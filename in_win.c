@@ -1050,36 +1050,36 @@ void IN_RawInput_MouseRead(HANDLE in_device_handle)
 	}
 
 	// buttons
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) 
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) 
 		Key_Event(K_MOUSE1, true);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_1_UP)   
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP)   
 		Key_Event(K_MOUSE1, false);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) 
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) 
 		Key_Event(K_MOUSE2, true);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_2_UP)   
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP)   
 		Key_Event(K_MOUSE2, false);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) 
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) 
 		Key_Event(K_MOUSE3, true);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_3_UP)   
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP)   
 		Key_Event(K_MOUSE3, false);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) 
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) 
 		Key_Event(K_MOUSE4, true);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_4_UP)   
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP)   
 		Key_Event(K_MOUSE4, false);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) 
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) 
 		Key_Event(K_MOUSE5, true);
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_BUTTON_5_UP)   
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP)   
 		Key_Event(K_MOUSE5, false);
 
 	// mouse wheel
-	if (raw->data.mouse.buttondata.usButtonFlags & RI_MOUSE_WHEEL)
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
 	{      // If the current message has a mouse_wheel message
-		if ((SHORT)raw->data.mouse.buttondata.usButtonData > 0) 
+		if ((SHORT)raw->data.mouse.usButtonData > 0) 
 		{
 			Key_Event(K_MWHEELUP, true);
 			Key_Event(K_MWHEELUP, false);
 		}
-		if ((SHORT)raw->data.mouse.buttondata.usButtonData < 0)
+		if ((SHORT)raw->data.mouse.usButtonData < 0)
 		{
 			Key_Event(K_MWHEELDOWN, true);
 			Key_Event(K_MWHEELDOWN, false);
