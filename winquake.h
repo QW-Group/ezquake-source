@@ -32,7 +32,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MK_XBUTTON1         0x0020
 #define MK_XBUTTON2         0x0040
 
-#ifndef WITHOUT_WINKEYHOOK
+#if !defined(WITHOUT_WINKEYHOOK) && ( !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0400 )
+
+// this is probably needs by some old SDK, but conflicts with Vista SDK
 
 #define LLKHF_UP			(KF_UP >> 8)
 #define KF_UP				0x8000
@@ -46,7 +48,7 @@ typedef struct {
 //	ULONG   dwExtraInfo;
 } *PKBDLLHOOKSTRUCT;
 
-#endif // !WITHOUT_WINKEYHOOK
+#endif // !defined(WITHOUT_WINKEYHOOK) && ( !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0400 )
 
 #ifndef GLQUAKE
 // use it for soft only
