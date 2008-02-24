@@ -1030,23 +1030,28 @@ void R_DrawAliasModel (entity_t *ent) {
 	// FIXME: think need put it after caustics
 	if (bound(0, gl_powerupshells.value, 1))
 	{
-		memset(r_shellcolor, 0, sizeof(r_shellcolor));
-
-		if (ent->effects & EF_RED)
-			r_shellcolor[0] = 1;
-		if (ent->effects & EF_GREEN)
-			r_shellcolor[1] = 1;
-		if (ent->effects & EF_BLUE)
-			r_shellcolor[2] = 1;
-
-		if ( r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2] )
+		// always allow powerupshells for specs or demos.
+		// do not allow powerupshells for eyes in other cases
+		if ( ( cls.demoplayback || cl.spectator ) || ent->model->modhint != MOD_EYES )
 		{
-			GL_DisableMultitexture();
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+			memset(r_shellcolor, 0, sizeof(r_shellcolor));
+        
+			if (ent->effects & EF_RED)
+				r_shellcolor[0] = 1;
+			if (ent->effects & EF_GREEN)
+				r_shellcolor[1] = 1;
+			if (ent->effects & EF_BLUE)
+				r_shellcolor[2] = 1;
+        
+			if ( r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2] )
+			{
+				GL_DisableMultitexture();
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+				R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+			}
+        
+			memset(r_shellcolor, 0, sizeof(r_shellcolor));
 		}
-
-		memset(r_shellcolor, 0, sizeof(r_shellcolor));
 	}
 
 // Underwater caustics on alias models of QRACK -->
