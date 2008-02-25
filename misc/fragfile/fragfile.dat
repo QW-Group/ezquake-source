@@ -135,28 +135,28 @@
 //WEAPON CLASSES
 //
 #DEFINE WEAPON_CLASS    AXE                 "axe"
-#DEFINE WEAPON_CLASS    SHOTGUN             "shotgun"           "\sg\"
-#DEFINE WEAPON_CLASS    Q_SHOTGUN           "q shotgun"         "\sg\ &c009q&r"
-#DEFINE WEAPON_CLASS    SUPER_SHOTGUN       "super shotgun"     "\ssg\"
-#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN     "q super shotgun"   "\ssg\ &c009q&r"
-#DEFINE WEAPON_CLASS    NAILGUN             "nailgun"           "\ng\"
-#DEFINE WEAPON_CLASS    SUPER_NAILGUN       "super nailgun"     "\sng\"
-#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN     "q super nailgun"   "\sng\ &c009q&r"
-#DEFINE WEAPON_CLASS    GRENADE_LAUNCHER    "grenade launcher"  "\gl\"
-#DEFINE WEAPON_CLASS    ROCKET_LAUNCHER     "rocket launcher"   "\rl\"
-#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER   "q rocket launcher" "\rl\ &c009q&r"
-#DEFINE WEAPON_CLASS    LIGHTNING_GUN       "lightning gun"     "\lg\"
-#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN     "q lightning gun"   "\lg\ &c009q&r"
+#DEFINE WEAPON_CLASS    SHOTGUN             "shotgun"           "sg"
+#DEFINE WEAPON_CLASS    Q_SHOTGUN           "q shotgun"         "sg &c009q&r"
+#DEFINE WEAPON_CLASS    SUPER_SHOTGUN       "super shotgun"     "ssg"
+#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN     "q super shotgun"   "ssg &c009q&r"
+#DEFINE WEAPON_CLASS    NAILGUN             "nailgun"           "ng"
+#DEFINE WEAPON_CLASS    SUPER_NAILGUN       "super nailgun"     "sng"
+#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN     "q super nailgun"   "sng &c009q&r"
+#DEFINE WEAPON_CLASS    GRENADE_LAUNCHER    "grenade launcher"  "gl"
+#DEFINE WEAPON_CLASS    ROCKET_LAUNCHER     "rocket launcher"   "rl"
+#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER   "q rocket launcher" "rl &c009q&r"
+#DEFINE WEAPON_CLASS    LIGHTNING_GUN       "lightning gun"     "lg"
+#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN     "q lightning gun"   "lg &c009q&r"
 
-#DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"          "\rail\"		//for dmm8
-#DEFINE WEAPON_CLASS    COIL_GUN            "coil gun"			"\coil\"		//for KTX instagib
+#DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"          "rail"		//for dmm8
+#DEFINE WEAPON_CLASS    COIL_GUN            "coil gun"			"coil"		//for KTX instagib
 
-#DEFINE WEAPON_CLASS    DROWN               "drown"           "\drown\"
-#DEFINE WEAPON_CLASS    LAVA                "lava"           "\lava\"
-#DEFINE WEAPON_CLASS    SLIME               "slime"           "\slime\"
+#DEFINE WEAPON_CLASS    DROWN               "drown"           "drown"
+#DEFINE WEAPON_CLASS    LAVA                "lava"           "lava"
+#DEFINE WEAPON_CLASS    SLIME               "slime"           "slime"
 #DEFINE WEAPON_CLASS    TRAP                "trap"
-#DEFINE WEAPON_CLASS    TELEFRAG            "telefrag"          "\tele\"
-#DEFINE WEAPON_CLASS    DISCHARGE           "discharge"         "\discharge\"
+#DEFINE WEAPON_CLASS    TELEFRAG            "telefrag"          "tele"
+#DEFINE WEAPON_CLASS    DISCHARGE           "discharge"         "discharge"
 #DEFINE WEAPON_CLASS    SQUISH              "squish"
 #DEFINE WEAPON_CLASS    FALL                "fall"
 #DEFINE WEAPON_CLASS    STOMP               "stomp" // ktpro/ktx stomp kills
