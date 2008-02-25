@@ -2337,11 +2337,11 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
 				   "rune1", "rune2", "rune3", "rune4", "resistance", "strength", "haste", "regeneration"};
 
 #define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
-				it_rockets|it_cells||it_pack|it_flag|it_rune1|it_rune2|it_rune3|it_rune4|it_runes)
+				it_rockets|it_cells||it_pack|it_flag|it_runes)
 
  // tp_took
 #define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack| \
-				it_rockets|it_cells|it_mh|it_flag|it_rune1|it_rune2|it_rune3|it_rune4|it_runes)
+				it_rockets|it_cells|it_mh|it_flag|it_runes)
 
 /*
 powerups flag runes players suit armor sentry  mh disp rl lg pack gl sng rockets cells nails
@@ -2351,16 +2351,17 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
 */
 // tp_point
 #define default_pointflags (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
-				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_rune1|it_rune2|it_rune3|it_rune4|it_nails)
+				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_runes|it_nails)
 
-int pkflags = default_pkflags;
-int tookflags = default_tookflags;
-int pointflags = default_pointflags;
+unsigned int pkflags = default_pkflags;
+unsigned int tookflags = default_tookflags;
+unsigned int pointflags = default_pointflags;
 byte pointpriorities[NUM_ITEMFLAGS];
 
-static void DumpFlagCommand(FILE *f, char *name, int flags, int default_flags)
+static void DumpFlagCommand(FILE *f, char *name, unsigned int flags, unsigned int default_flags)
 {
-	int i, all_flags = UINT_MAX;
+	int i;
+	unsigned int all_flags = UINT_MAX;
 
 	fprintf(f, "%s ", name);
 
@@ -2396,6 +2397,10 @@ static void DumpFlagCommand(FILE *f, char *name, int flags, int default_flags)
 		fprintf(f, "players ");
 		flags &= ~it_players;
 	}
+	if ((flags & it_runes) == it_runes) {
+		fprintf(f, "runes ");
+		flags &= ~it_runes;
+	}
 	for (i = 0; i < NUM_ITEMFLAGS; i++) {
 		if (flags & (1 << i))
 			fprintf (f, "%s ", pknames[i]);
@@ -2410,24 +2415,29 @@ void DumpFlagCommands(FILE *f)
 	DumpFlagCommand(f, "tp_point    ", pointflags, default_pointflags);
 }
 
-static void FlagCommand (int *flags, int defaultflags)
+static void FlagCommand (unsigned int *flags, unsigned int defaultflags)
 {
-	int i, j, c, flag;
+	int i, j, c;
+	unsigned int flag;
 	char *p, str[255] = {0};
 	qbool removeflag = false;
 
 	c = Cmd_Argc ();
 	if (c == 1)	{
+		qbool notfirst = false;
 		if (!*flags)
 			strlcpy (str, "none", sizeof (str));
 		for (i = 0 ; i < NUM_ITEMFLAGS ; i++)
 			if (*flags & (1 << i)) {
-				if (*str)
-					strlcat (str, " ", sizeof (str) - strlen (str));
+				if (notfirst)
+					Com_Printf(" ");
+					//strlcat (str, " ", sizeof (str) - strlen (str));
 
-				strlcat (str, pknames[i], sizeof (str) - strlen (str));
+				notfirst = true;
+				Com_Printf("%s", pknames[i]);
+				//strlcat (str, pknames[i], sizeof (str) - strlen (str));
 			}
-		Com_Printf ("%s\n", str);
+		Com_Printf ("\n");
 		return;
 	}
 
@@ -2451,7 +2461,7 @@ static void FlagCommand (int *flags, int defaultflags)
 
 		flag = 0;
 		for (j=0 ; j<NUM_ITEMFLAGS ; j++) {
-			if (!strncasecmp (p, pknames[j], 3)) {
+			if (!strcasecmp (p, pknames[j])) {
 				flag = 1<<j;
 				break;
 			}
@@ -2470,6 +2480,8 @@ static void FlagCommand (int *flags, int defaultflags)
 				flag = it_players;
 			else if (!strcasecmp (p, "default"))
 				flag = defaultflags;
+			else if (!strcasecmp (p, "runes"))
+				flag = it_runes;
 			else if (!strcasecmp (p, "all"))
 				flag = UINT_MAX; //(1 << NUM_ITEMFLAGS); //-1;
 		}
@@ -2507,12 +2519,12 @@ void TP_Point_f (void)
 
 typedef struct
 {
-	int		itemflag;
+	unsigned int		itemflag;
 	cvar_t	*cvar;
 	char	*modelname;
 	vec3_t	offset;		// offset of model graphics center
 	float	radius;		// model graphics radius
-	int		flags;		// TODO: "NOPICKUP" (disp), "TEAMENEMY" (flag, disp)
+	unsigned int		flags;		// TODO: "NOPICKUP" (disp), "TEAMENEMY" (flag, disp)
 } item_t;
 
 item_t	tp_items[] = {
