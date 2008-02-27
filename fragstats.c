@@ -27,6 +27,8 @@ cvar_t cl_parsefrags = {"cl_parseFrags", "1"};
 cvar_t cl_showFragsMessages = {"con_fragmessages", "1"};
 cvar_t cl_loadFragfiles = {"cl_loadFragfiles", "1"};
 
+cvar_t cl_useimagesinfraglog = {"cl_useimagesinfraglog", "0"};
+
 #define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
 #define FRAGFILE_VERSION_1_00		"ezquake-1.00" /* fuh suggest such format */
 
@@ -54,6 +56,7 @@ typedef struct wclass_s {
 	char	*keyword;
 	char	*name;
 	char	*shortname;
+	char	*imagename;
 } wclass_t;
 
 typedef struct fragmsg_s {
@@ -155,6 +158,7 @@ static void InitFragDefs(void)
 		Q_free(wclasses[i].keyword);
 		Q_free(wclasses[i].name);
 		Q_free(wclasses[i].shortname);
+		Q_free(wclasses[i].imagename);
 	}
 
 	memset(&fragdefs, 0, sizeof(fragdefs));
@@ -173,6 +177,12 @@ static void InitFragDefs(void)
 								Com_Printf("Fragfile warning (line %d): %d or %d tokens expected\n", line, x, y);	\
 								goto nextline;																		\
 							}
+
+#define _checkargs3(x, y)	if (c < x || c > y) {																	\
+								Com_Printf("Fragfile warning (line %d): %d to %d tokens expected\n", line, x, y);	\
+								goto nextline;																		\
+							}
+
 
 #define	_check_version_defined	if (!gotversion) {																				\
 									Com_Printf("Fragfile error: #FRAGFILE VERSION must be defined at the head of the file\n");	\
@@ -269,7 +279,8 @@ static void LoadFragFile(char *filename, qbool quiet) {
 			_check_version_defined;
 			if (!strcasecmp(Cmd_Argv(1), "WEAPON_CLASS") || !strcasecmp(Cmd_Argv(1), "WC")) {
 
-				_checkargs2(4, 5);
+				_checkargs3(4, 6);
+
 				token = Cmd_Argv(2);
 				if (!strcasecmp(token, "NOWEAPON") || !strcasecmp(token, "NONE") || !strcasecmp(token, "NULL")) {
 					Com_Printf("Fragfile warning (line %d): \"%s\" is a reserved keyword\n", line, token);
@@ -285,10 +296,10 @@ static void LoadFragFile(char *filename, qbool quiet) {
 					Com_Printf("Fragfile warning (line %d): only %d WEAPON_CLASS's may be #DEFINE'd\n", line, MAX_WEAPON_CLASSES);
 					goto nextline;
 				}
-				wclasses[num_wclasses].keyword = Q_strdup(token);
-				//VULT DISPLAY KILLS - Modified oh so slighly so it looks neater on the tracker
-				wclasses[num_wclasses].name = Q_strdup(Cmd_Argv(3));
+				wclasses[num_wclasses].keyword   = Q_strdup(token);
+				wclasses[num_wclasses].name      = Q_strdup(Cmd_Argv(3));
 				wclasses[num_wclasses].shortname = Q_strdup(Cmd_Argv(4));
+				wclasses[num_wclasses].imagename = Q_strdup(Cmd_Argv(5));
 				num_wclasses++;
 			} else if (	!strcasecmp(Cmd_Argv(1), "OBITUARY") || !strcasecmp(Cmd_Argv(1), "OBIT")) {
 
@@ -803,6 +814,7 @@ void Stats_Init(void) {
 	Cvar_Register(&cl_parsefrags);
 	Cvar_Register(&cl_showFragsMessages);
 	Cvar_Register(&cl_loadFragfiles);
+	Cvar_Register(&cl_useimagesinfraglog);
 	Cvar_ResetCurrentGroup();
 	Cmd_AddCommand("loadFragfile", Load_FragFile_f);
 }
@@ -810,12 +822,14 @@ void Stats_Init(void) {
 //VULT DISPLAYNAMES
 char *GetWeaponName (int num)
 {
-	if (wclasses[num].shortname)
+	if (cl_useimagesinfraglog.integer && wclasses[num].imagename && wclasses[num].imagename[0])
+		return wclasses[num].imagename;
+
+	if (wclasses[num].shortname && wclasses[num].shortname[0])
 		return wclasses[num].shortname;
 
-	if (wclasses[num].name)
+	if (wclasses[num].name && wclasses[num].name[0])
 		return wclasses[num].name;
 
 	return "Unknown";
 }
-
