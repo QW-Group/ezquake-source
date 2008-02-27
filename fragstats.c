@@ -288,8 +288,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				wclasses[num_wclasses].keyword = Q_strdup(token);
 				//VULT DISPLAY KILLS - Modified oh so slighly so it looks neater on the tracker
 				wclasses[num_wclasses].name = Q_strdup(Cmd_Argv(3));
-				if (c == 5)
-					wclasses[num_wclasses].name = Q_strdup(Cmd_Argv(4));
+				wclasses[num_wclasses].shortname = Q_strdup(Cmd_Argv(4));
 				num_wclasses++;
 			} else if (	!strcasecmp(Cmd_Argv(1), "OBITUARY") || !strcasecmp(Cmd_Argv(1), "OBIT")) {
 
@@ -811,6 +810,12 @@ void Stats_Init(void) {
 //VULT DISPLAYNAMES
 char *GetWeaponName (int num)
 {
-	return wclasses[num].name;
+	if (wclasses[num].shortname)
+		return wclasses[num].shortname;
+
+	if (wclasses[num].name)
+		return wclasses[num].name;
+
+	return "Unknown";
 }
 
