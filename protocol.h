@@ -28,7 +28,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef PROTOCOL_VERSION_FTE 
 
-#define FTE_PEXT_ACCURATETIMINGS	0x00000040
+// qqshka: FTE_PEXT_ACCURATETIMINGS - not actually used in ezquake.
+//			I added it to ezquake in hope what someone made some rockets(enitities) smoothing code...
+//			But it not happens, so better turn it off.
+//#define FTE_PEXT_ACCURATETIMINGS	0x00000040
 #define FTE_PEXT_HLBSP				0x00000200	//stops fte servers from complaining
 #define FTE_PEXT_MODELDBL			0x00001000
 #define FTE_PEXT_ENTITYDBL			0x00002000	//max of 1024 ents instead of 512
