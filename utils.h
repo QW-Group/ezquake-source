@@ -40,6 +40,11 @@ byte *StringToRGB(char *s);
 void StringToRGB_W(char *s, byte *rgb);
 int ParseFloats(char *s, float *f, int *f_size);
 
+// don't count ezquake color sequence
+int strlen_color(const char *str);
+
+int HexToInt(char c);
+
 ///
 /// Filename utils
 ///

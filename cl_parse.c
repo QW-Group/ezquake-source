@@ -2633,7 +2633,13 @@ void CL_ParseStufftext (void)
 	else if (!strncmp(s, "//qul ", sizeof("//qul ") - 1))
 	{
 		// qtv user list
-		Parse_QtvUserList( s + 2);
+		Parse_QtvUserList( s + 2 );
+	}
+	else if (!strncmp(s, "//wps ", sizeof("//wps ") - 1))
+	{
+		// weapon stats
+		extern void Parse_WeaponStats(char *s);
+		Parse_WeaponStats( s + 2 );
 	}
 	else
 	{

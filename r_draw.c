@@ -643,19 +643,6 @@ void Draw_Alt_String (int x, int y, const char *str)
 	}
 }
 
-
-int HexToInt(char c)
-{
-	if (isdigit(c))
-		return c - '0';
-	else if (c >= 'a' && c <= 'f')
-		return 10 + c - 'a';
-	else if (c >= 'A' && c <= 'F')
-		return 10 + c - 'A';
-	else
-		return -1;
-}
-
 void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale)
 {
 	int r, g, b;

@@ -5680,7 +5680,6 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 			// Draw a circle around the tracked player.
 			if (highlight != HUD_RADAR_HIGHLIGHT_NONE && Cam_TrackNum() >= 0 && info->userid == cl.players[Cam_TrackNum()].userid)
 			{
-				extern int HexToInt(char c);
 				color_t higlight_color = RGBAVECT_TO_COLOR(hud_radar_highlight_color);
 
 				// Draw the highlight.

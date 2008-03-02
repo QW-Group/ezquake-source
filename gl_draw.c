@@ -139,18 +139,6 @@ static byte crosshairdata[NUMCROSSHAIRS][64] = {
     }
 };
 
-int HexToInt(char c)
-{
-	if (isdigit(c))
-		return c - '0';
-	else if (c >= 'a' && c <= 'f')
-		return 10 + c - 'a';
-	else if (c >= 'A' && c <= 'F')
-		return 10 + c - 'A';
-	else
-		return -1;
-}
-
 void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 {
 	int newval;

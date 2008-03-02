@@ -587,8 +587,6 @@ void Con_PrintW (wchar *txt) {
 	}
 
 	while ((c = *txt)) {
-		extern int HexToInt(char c);
-
 		// get color modificator if any
 		if (*txt == '&') {
 			if (txt[1] == 'c' && txt[2] && txt[3] && txt[4]) {

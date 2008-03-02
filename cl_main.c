@@ -998,6 +998,8 @@ void SCR_ClearTeamInfo(void);
 void SCR_ClearShownick(void);
 #endif // GLQUAKE
 
+void SCR_ClearWeaponStats(void);
+
 void CL_ClearState (void) 
 {
 	int i;
@@ -1047,6 +1049,9 @@ void CL_ClearState (void)
 	// Clear shownick structs
 	SCR_ClearShownick();
 	#endif // !GLQUAKE
+
+	// Clear weapon stats structs
+	SCR_ClearWeaponStats();
 
 	if (!com_serveractive)
 		Cvar_ForceSet (&host_mapname, ""); // Notice mapname not valid yet.

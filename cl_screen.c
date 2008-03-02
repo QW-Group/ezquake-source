@@ -189,6 +189,14 @@ cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6",   CVAR_ARCHI
 cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8", CVAR_ARCHIVE};
 #endif
 
+cvar_t  scr_weaponstats_order        = {"scr_weaponstats_order",       "&c990sg&r:%2 &c099ssg&r:%3 &c900rl&r:#7 &c009lg&r:%8", CVAR_ARCHIVE, OnChange_scr_clock_format};
+cvar_t	scr_weaponstats_align_right  = {"scr_weaponstats_align_right", "1", CVAR_ARCHIVE};
+cvar_t	scr_weaponstats_frame_color  = {"scr_weaponstats_frame_color", "10 0 0 120", CVAR_COLOR};
+cvar_t	scr_weaponstats_scale		 = {"scr_weaponstats_scale",       "1",  CVAR_ARCHIVE};
+cvar_t	scr_weaponstats_y			 = {"scr_weaponstats_y",           "0",  CVAR_ARCHIVE};
+cvar_t  scr_weaponstats_x			 = {"scr_weaponstats_x",           "0",  CVAR_ARCHIVE};
+cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "0",  CVAR_ARCHIVE};
+
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 
 // Tracking text.
@@ -2020,6 +2028,274 @@ static void SCR_Draw_ShowNick(void)
 
 #endif
 
+/***************************** weapon stats *************************/
+
+typedef enum
+{
+	wpNONE = 0,
+	wpAXE,
+	wpSG,
+	wpSSG,
+	wpNG,
+	wpSNG,
+	wpGL,
+	wpRL,
+	wpLG,
+	wpMAX
+
+} weaponName_t;
+
+typedef struct wpType_s {
+
+	int hits;			// hits with this weapon, for SG and SSG this is count of bullets
+	int attacks;		// all attacks with this weapon, for SG and SSG this is count of bullets
+
+} wpType_t;
+
+
+typedef struct ws_player_s {
+
+	int 		client;
+
+	wpType_t	wpn[wpMAX];
+
+} ws_player_t;
+
+static ws_player_t ws_clients[MAX_CLIENTS];
+
+void SCR_ClearWeaponStats(void)
+{
+	memset(ws_clients, 0, sizeof(ws_clients));
+}
+
+static weaponName_t WS_NameToNum(const char *name)
+{
+	if ( !strcmp(name, "axe") )
+		return wpAXE;
+	if ( !strcmp(name, "sg") )
+		return wpSG;
+	if ( !strcmp(name, "ssg") )
+		return wpSSG;
+	if ( !strcmp(name, "ng") )
+		return wpNG;
+	if ( !strcmp(name, "sng") )
+		return wpSNG;
+	if ( !strcmp(name, "gl") )
+		return wpGL;
+	if ( !strcmp(name, "rl") )
+		return wpRL;
+	if ( !strcmp(name, "lg") )
+		return wpLG;
+
+	return wpNONE;
+}
+
+/*
+static char *WS_NumToName( weaponName_t wp )
+{
+	switch ( wp ) {
+		case wpAXE: return "axe";
+		case wpSG:  return "sg";
+		case wpSSG: return "ssg";
+		case wpNG:  return "ng";
+		case wpSNG: return "sng";
+		case wpGL:  return "gl";
+		case wpRL:  return "rl";
+		case wpLG:  return "lg";
+
+		// shut up gcc
+		case wpNONE:
+		case wpMAX: return "unknown";
+	}
+
+	return "unknown";
+}
+*/
+
+void Parse_WeaponStats(char *s)
+{
+	int		client, arg;
+	weaponName_t wp;
+
+	Cmd_TokenizeString( s );
+
+	arg = 1;
+
+	client = atoi( Cmd_Argv( arg++ ) );
+        
+	if (client < 0 || client >= MAX_CLIENTS)
+	{
+		Com_DPrintf("Parse_WeaponStats: wrong client %d\n", client);
+		return;
+	}
+
+	ws_clients[ client ].client = client; // no, its not stupid
+
+	wp = WS_NameToNum( Cmd_Argv( arg++ ) );
+
+	if ( wp == wpNONE )
+	{
+		Com_DPrintf("Parse_WeaponStats: wrong weapon\n");
+		return;
+	}
+
+	ws_clients[ client ].wpn[wp].attacks = atoi( Cmd_Argv( arg++ ) );
+	ws_clients[ client ].wpn[wp].hits    = atoi( Cmd_Argv( arg++ ) );
+}
+
+static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool width_only)
+{
+	char *s, tmp[1024], tmp2[MAX_MACRO_STRING], *start, *end;
+	qbool percentage;
+	int x_in = x; // save x
+	int i;
+	weaponName_t wp;
+
+	if (!ws_cl)
+		return 0;
+
+	i = ws_cl->client;
+
+	if (i < 0 || i >= MAX_CLIENTS)
+	{
+		Com_DPrintf("SCR_Draw_WeaponStatsPlayer: wrong client %d\n", i);
+		return 0;
+	}
+
+	// this limit len of string because TP_ParseFunChars() do not check overflow
+	strlcpy(tmp2, scr_weaponstats_order.string , sizeof(tmp2));
+	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
+	s = tmp2;
+
+	//
+	// parse/draw string like this "#1 %2 %3 #7 %8"
+	//
+
+	start = s; // set start
+
+	for ( ; *s; s++)
+	{
+		if ( s[0] != '%' && s[0] != '#' )
+			continue;
+
+		end = s;
+
+		percentage = (s[0] == '%');
+
+		s++; // advance
+
+		wp = (int)s[0] - '0'; 
+
+		if ( wp <= wpNONE || wp >= wpMAX )
+			continue; // unsupported weapon
+
+		if ( (int)(end - start) > 0 )
+		{
+			strlcpy(tmp, start, bound(1, (int)(end - start + 1), (int)sizeof(tmp)));
+
+			if( !width_only )
+				Draw_ColoredString (x, y, tmp, false);
+
+			x += strlen_color(tmp) * FONTWIDTH;
+		}
+
+		start = s + 1; // set new start
+
+		if ( percentage )
+		{
+			float	accuracy = (ws_cl->wpn[wp].attacks ? 100.0f * ws_cl->wpn[wp].hits / ws_cl->wpn[wp].attacks : 0 );
+			snprintf(tmp, sizeof(tmp), "%.1f", accuracy);
+		}
+		else
+		{
+			snprintf(tmp, sizeof(tmp), "%d", ws_cl->wpn[wp].hits);
+		}
+
+		if(!width_only)
+			Draw_ColoredString (x, y, tmp, false);
+
+		x += strlen_color(tmp) * FONTWIDTH;
+	}
+
+	return (x - x_in) / FONTWIDTH; // return width
+}
+
+static void SCR_Draw_WeaponStats(void)
+{
+	int x, y, w, h;
+	int i;
+
+	byte	*col = scr_weaponstats_frame_color.color;
+	float	scale = bound(0.1, scr_weaponstats_scale.value, 10);
+
+	if ( !scr_weaponstats.integer )
+		return;
+
+	if ( !cls.mvdplayback )
+		return; // only in mvds
+
+	if ( !cl.spectator )
+		return; // required for Cam_TrackNum(), I guess
+
+	i = Cam_TrackNum();
+
+	if ( i < 0 || i >= MAX_CLIENTS )
+		return;
+
+#ifdef GLQUAKE
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glColor4f(1, 1, 1, 1);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+
+	if (scale != 1)
+	{
+		glPushMatrix ();
+		glScalef(scale, scale, 1);
+	}
+#endif
+
+	y = vid.height*0.6/scale + scr_weaponstats_y.value;
+
+	// this does't draw anything, just calculate width
+	w = SCR_Draw_WeaponStatsPlayer(&ws_clients[i], 0, 0, true);
+	h = 1;
+
+	x = (scr_weaponstats_align_right.value ? (vid.width/scale - w * FONTWIDTH) - FONTWIDTH : FONTWIDTH);
+	x += scr_weaponstats_x.value;
+
+	// draw frame
+#ifdef GLQUAKE
+	glDisable (GL_TEXTURE_2D);
+	glColor4ub(col[0], col[1], col[2], col[3]);
+	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
+	glEnable (GL_TEXTURE_2D);
+	glColor4f(1, 1, 1, 1);
+#endif
+
+	SCR_Draw_WeaponStatsPlayer(&ws_clients[i], x, y, false);
+
+#ifdef GLQUAKE
+	if (scale != 1)
+		glPopMatrix();
+
+	glEnable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glColor4f(1, 1, 1, 1);
+#endif
+}
+
+static SCR_MvdWeaponStatsOn_f(void)
+{
+	Cvar_Set (&scr_weaponstats, "1");
+}
+
+static SCR_MvdWeaponStatsOff_f(void)
+{
+	Cvar_Set (&scr_weaponstats, "0");
+}
+
 /**************************************** 262 HUD *****************************/
 // QW262 -->
 typedef char* (*Hud_Func)();
@@ -2631,29 +2907,6 @@ qbool Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
 	return true;
 }
 
-int strlen_color (const char* txt)
-{
-	int l = 0;
-	while (*txt) {
-		if (*txt == '&') {
-			if (txt[1] == 'c' && txt[2] && txt[3] && txt[4]) {
-					txt += 5;
-					continue;
-			} else if (txt[1] == 'r') {
-				txt += 2;
-				continue;
-			} else {
-				txt++;
-				l++;
-			}
-		} else {
-			txt++;
-			l++;
-		}
-	}
-	return l;
-}
-
 void SCR_DrawHud (void)
 {
 	hud_element_t* elem;
@@ -3005,6 +3258,7 @@ void SCR_DrawElements(void) {
 
      			if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
 					SCR_Draw_TeamInfo();
+					SCR_Draw_WeaponStats();
 
 #ifdef GLQUAKE
 					SCR_Draw_ShowNick();
@@ -4001,6 +4255,17 @@ void SCR_Init (void)
 	Cvar_Register (&scr_shownick_name_width);
 	Cvar_Register (&scr_shownick_time);
 #endif
+	Cvar_Register (&scr_weaponstats_order);
+	Cvar_Register (&scr_weaponstats_align_right);
+	Cvar_Register (&scr_weaponstats_frame_color);
+	Cvar_Register (&scr_weaponstats_scale);
+	Cvar_Register (&scr_weaponstats_y);
+	Cvar_Register (&scr_weaponstats_x);
+	Cvar_Register (&scr_weaponstats);
+
+	Cmd_AddCommand ("+mvd_wp_stats", SCR_MvdWeaponStatsOn_f);
+	Cmd_AddCommand ("-mvd_wp_stats", SCR_MvdWeaponStatsOff_f);
+	
 	Cvar_Register (&scr_coloredText);
 
 	// QW 262 HUD

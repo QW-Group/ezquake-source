@@ -158,6 +158,49 @@ int ParseFloats(char *s, float *f, int *f_size) {
 	return (f_size[0] = argc);
 }
 
+// don't count ezquake color sequence
+int strlen_color(const char *str)
+{
+	int len = 0;
+
+	if ( !str )
+		return 0;
+
+	while ( str[0] )
+	{
+		if (str[0] == '&')
+		{
+			if (str[1] == 'c' && HexToInt(str[2]) >= 0 && HexToInt(str[3]) >= 0 && HexToInt(str[4]) >= 0)
+			{
+				str += 5; // skip "&cRGB"
+				continue;
+			}
+			else if (str[1] == 'r')
+			{
+				str += 2; // skip "&r"
+				continue;
+			}
+		}
+
+		len++;
+		str++;
+	}
+
+	return len;
+}
+
+int HexToInt(char c)
+{
+	if (isdigit(c))
+		return c - '0';
+	else if (c >= 'a' && c <= 'f')
+		return 10 + c - 'a';
+	else if (c >= 'A' && c <= 'F')
+		return 10 + c - 'A';
+	else
+		return -1;
+}
+
 /************************************** File Utils **************************************/
 
 int Util_Extend_Filename(char *filename, char **ext) {
