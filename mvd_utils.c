@@ -571,7 +571,7 @@ void MVD_Stats_CalcAvgRuns(void)
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		mvd_info_t *pi = &mvd_new_info[i].info;
-		int r = mvd_new_info[i].info.run;
+//		int r = mvd_new_info[i].info.run;
 		int tf, ttf, tt;
 		int j;
 		tf = ttf = tt = 0;

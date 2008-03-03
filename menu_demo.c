@@ -542,7 +542,7 @@ void Demo_AddZipToPlaylist (const char *zip_path)
 	FS_ZipUnpackToTemp (zip_file, false, false, NULL, temp_path, sizeof(temp_path));
 	FS_ZipUnpackCloseFile (zip_file);
 
-	if (temp_path)
+	if (temp_path[0])
 	{
 		Demo_AddDirToPlaylist (temp_path);
 	}

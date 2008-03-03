@@ -410,7 +410,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 {
 	int	i, scaled_width, scaled_height, crc = 0;
 	qbool load_over_existing = false;
-	gltexture_t *glt;
+	gltexture_t *glt = NULL;
 
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
@@ -464,6 +464,9 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 		glt->texnum = texture_extension_number;
 		texture_extension_number++;
 	}
+
+	if (!glt)
+		Sys_Error("GL_LoadTexture: glt not initialized\n");
 
 	glt->width			= width;
 	glt->height			= height;
