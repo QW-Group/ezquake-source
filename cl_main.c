@@ -994,10 +994,10 @@ void CL_DNS_f(void)
 }
 
 #ifdef GLQUAKE
-void SCR_ClearTeamInfo(void);
 void SCR_ClearShownick(void);
 #endif // GLQUAKE
 
+void SCR_ClearTeamInfo(void);
 void SCR_ClearWeaponStats(void);
 
 void CL_ClearState (void) 
@@ -1044,11 +1044,12 @@ void CL_ClearState (void)
 	memset(&cshift_empty, 0, sizeof(cshift_empty));
 
 	#ifdef GLQUAKE
-	// Clear teaminfo structs
-	SCR_ClearTeamInfo();
 	// Clear shownick structs
 	SCR_ClearShownick();
 	#endif // !GLQUAKE
+
+	// Clear teaminfo structs
+	SCR_ClearTeamInfo();
 
 	// Clear weapon stats structs
 	SCR_ClearWeaponStats();

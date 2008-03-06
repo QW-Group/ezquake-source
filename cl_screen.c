@@ -2286,12 +2286,12 @@ static void SCR_Draw_WeaponStats(void)
 #endif
 }
 
-static SCR_MvdWeaponStatsOn_f(void)
+static void SCR_MvdWeaponStatsOn_f(void)
 {
 	Cvar_Set (&scr_weaponstats, "1");
 }
 
-static SCR_MvdWeaponStatsOff_f(void)
+static void SCR_MvdWeaponStatsOff_f(void)
 {
 	Cvar_Set (&scr_weaponstats, "0");
 }

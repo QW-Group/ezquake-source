@@ -2592,13 +2592,10 @@ void CL_ParseStufftext (void)
 		Cbuf_AddTextEx(&cbuf_svc, va("%s\n", s));
 	else if (!strncmp(s, "//tinfo ", sizeof("//tinfo ") - 1))
 	{
-		// TODO : Don't require GL for this.
-		#ifdef GLQUAKE
 		extern void Parse_TeamInfo(char *s);
 
 		if (!cls.mvdplayback)
 			Parse_TeamInfo( s + 2 );
-		#endif // GLQUAKE
 	}
 	else if (!strncmp(s, "//at ", sizeof("//at ") - 1))
 	{
