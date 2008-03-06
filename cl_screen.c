@@ -2229,13 +2229,7 @@ static void SCR_Draw_WeaponStats(void)
 	if ( !scr_weaponstats.integer )
 		return;
 
-	if ( !cls.mvdplayback )
-		return; // only in mvds
-
-	if ( !cl.spectator )
-		return; // required for Cam_TrackNum(), I guess
-
-	i = Cam_TrackNum();
+	i = ( cl.spectator ? Cam_TrackNum() : cl.playernum );
 
 	if ( i < 0 || i >= MAX_CLIENTS )
 		return;
@@ -4261,8 +4255,8 @@ void SCR_Init (void)
 	Cvar_Register (&scr_weaponstats_x);
 	Cvar_Register (&scr_weaponstats);
 
-	Cmd_AddCommand ("+mvd_wp_stats", SCR_MvdWeaponStatsOn_f);
-	Cmd_AddCommand ("-mvd_wp_stats", SCR_MvdWeaponStatsOff_f);
+	Cmd_AddCommand ("+cl_wp_stats", SCR_MvdWeaponStatsOn_f);
+	Cmd_AddCommand ("-cl_wp_stats", SCR_MvdWeaponStatsOff_f);
 	
 	Cvar_Register (&scr_coloredText);
 
