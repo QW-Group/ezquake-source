@@ -168,7 +168,7 @@ PAVISTREAM Capture_VideoStream (void)
 	return m_codec_fourcc ? m_compressed_video_stream : m_uncompressed_video_stream;
 }
 
-BOOL CALLBACK acmDriverEnumCallback (HACMDRIVERID hadid, DWORD dwInstance, DWORD fdwSupport)
+BOOL CALLBACK acmDriverEnumCallback (HACMDRIVERID hadid, DWORD_PTR dwInstance, DWORD fdwSupport)
 {
 	if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CODEC)
 	{

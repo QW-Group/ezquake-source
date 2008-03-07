@@ -125,6 +125,12 @@ int		LongSwapPDP2Lit (int l);
 float	FloatSwapPDP2Big (float f);
 float	FloatSwapPDP2Lit (float f);
 
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+// vc++ 2005 and up has intrinsics for the BSWAP instruction.
+#define ShortSwap _byteswap_ushort
+#define LongSwap _byteswap_ulong
+#endif
+
 //======================= ENDIAN DECTECTION ==================================
 //======================= WIN32 DEFINES ======================================
 #ifdef _WIN32
@@ -220,8 +226,11 @@ char *Q_strlwr( char *s1 );
 #ifdef _WIN32
 #define strcasecmp(s1, s2)	_stricmp  ((s1),   (s2))
 #define strncasecmp(s1, s2, n)	_strnicmp ((s1),   (s2),   (n))
-int snprintf(char *str, size_t n, char const *fmt, ...);
-int vsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
+// vc++ snprintf and vsnprintf are non-standard and not compatible with C99.
+int qsnprintf(char *str, size_t n, char const *fmt, ...);
+int qvsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
+#define snprintf qsnprintf
+#define vsnprintf qvsnprintf
 #endif
 
 char *strstri(const char *text, const char *find); // Case insensitive strstr.

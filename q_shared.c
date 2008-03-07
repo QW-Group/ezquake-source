@@ -182,7 +182,7 @@ char *Q_strlwr( char *s1 ) {
 
 // Added by VVD {
 #ifdef _WIN32
-int snprintf(char *buffer, size_t count, char const *format, ...)
+int qsnprintf(char *buffer, size_t count, char const *format, ...)
 {
 	int ret;
 	va_list argptr;
@@ -193,7 +193,7 @@ int snprintf(char *buffer, size_t count, char const *format, ...)
 	va_end(argptr);
 	return ret;
 }
-int vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
+int qvsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
 {
 	int ret;
 	if (!count) return 0;
@@ -519,6 +519,7 @@ size_t qwcslcat (wchar *dst, const wchar *src, size_t size)
 	return len;
 }
 
+#ifndef qwcschr
 wchar *qwcschr (const wchar *ws, wchar wc)
 {
 	while (*ws) {
@@ -528,7 +529,9 @@ wchar *qwcschr (const wchar *ws, wchar wc)
 	}
 	return NULL;
 }
+#endif
 
+#ifndef qwcschr
 wchar *qwcsrchr (const wchar *ws, wchar wc)
 {
 	wchar *p = NULL;
@@ -539,6 +542,7 @@ wchar *qwcsrchr (const wchar *ws, wchar wc)
 	}
 	return p;
 }
+#endif
 
 wchar *Q_wcsdup (const wchar *src)
 {
@@ -664,6 +668,8 @@ float FloatSwap (float f) {
 }*/
 
 #ifndef id386
+
+#ifndef ShortSwap
 short ShortSwap (short s)
 {
 	union
@@ -676,7 +682,9 @@ short ShortSwap (short s)
 	dat2.b[1] = dat1.b[0];
 	return dat2.s;
 }
+#endif
 
+#ifndef LongSwap
 int LongSwap (int l)
 {
 	union
@@ -691,6 +699,7 @@ int LongSwap (int l)
 	dat2.b[3] = dat1.b[0];
 	return dat2.l;
 }
+#endif
 
 float FloatSwap (float f)
 {
