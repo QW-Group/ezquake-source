@@ -2403,7 +2403,7 @@ void CL_ParsePrint (void)
 	level = MSG_ReadByte ();
 	s0 = MSG_ReadString ();
 
-	if (cls.mvdplayback == QTV_PLAYBACK) // in case of QTV skip client id, this may be used for filtering/ignoring later
+//	if (cls.mvdplayback == QTV_PLAYBACK) // in case of QTV skip client id, this may be used for filtering/ignoring later
 	{
 		if (s0[0] == '#' && isdigit(s0[1]))
 		{
