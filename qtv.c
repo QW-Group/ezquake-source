@@ -10,13 +10,14 @@
 #include "teamplay.h"
 #include "fs.h"
 
-cvar_t	qtv_buffertime		 = {"qtv_buffertime", "0.5"};
-cvar_t	qtv_chatprefix		 = {"qtv_chatprefix", "$[{QTV}$] "};
-cvar_t  qtv_adjustbuffer	 = {"qtv_adjustbuffer", "0"};
-cvar_t  qtv_adjustminspeed	 = {"qtv_adjustminspeed", "0"};
-cvar_t  qtv_adjustmaxspeed	 = {"qtv_adjustmaxspeed", "999"};
-cvar_t  qtv_adjustlowstart   = {"qtv_adjustlowstart", "1"};
-cvar_t  qtv_adjusthighstart  = {"qtv_adjusthighstart", "1"};
+cvar_t	qtv_buffertime		 = {"qtv_buffertime",		"0.5"};
+cvar_t	qtv_chatprefix		 = {"qtv_chatprefix",		"$[{QTV}$] "};
+cvar_t	qtv_skipchained		 = {"qtv_skipchained",		"1"};
+cvar_t  qtv_adjustbuffer	 = {"qtv_adjustbuffer",		"0"};
+cvar_t  qtv_adjustminspeed	 = {"qtv_adjustminspeed",	"0"};
+cvar_t  qtv_adjustmaxspeed	 = {"qtv_adjustmaxspeed",	"999"};
+cvar_t  qtv_adjustlowstart   = {"qtv_adjustlowstart",	"1"};
+cvar_t  qtv_adjusthighstart  = {"qtv_adjusthighstart",	"1"};
 
 cvar_t  qtv_event_join       = {"qtv_event_join", 		" &c2F2joined&r"};
 cvar_t  qtv_event_leave      = {"qtv_event_leave", 		" &cF22left&r"};
@@ -30,6 +31,7 @@ void QTV_Init(void)
 	
 	Cvar_Register(&qtv_buffertime);
 	Cvar_Register(&qtv_chatprefix);
+	Cvar_Register(&qtv_skipchained);
 	Cvar_Register(&qtv_adjustbuffer);
 	Cvar_Register(&qtv_adjustminspeed);
 	Cvar_Register(&qtv_adjustmaxspeed);

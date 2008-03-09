@@ -63,6 +63,7 @@ void		Parse_QtvUserList(char *s);
 
 extern		cvar_t	qtv_buffertime;
 extern		cvar_t	qtv_chatprefix;
+extern		cvar_t	qtv_skipchained;
 extern		cvar_t  qtv_adjustbuffer;
 extern		cvar_t  qtv_adjustminspeed;
 extern		cvar_t  qtv_adjustmaxspeed;
