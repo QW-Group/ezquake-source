@@ -2477,7 +2477,28 @@ void CL_ParsePrint (void)
 
 	if (qtvtmp)
 	{
-		snprintf(qtvstr, sizeof(qtvstr), "%s%s\n", TP_ParseFunChars(qtv_chatprefix.string, false), qtvtmp);
+		char name[1024] = {0}, *column;
+
+		column = strchr(qtvtmp, ':');
+
+		if (!column)
+		{
+			// this must not be the case, but...
+			column = qtvtmp;
+			name[0] = 0;
+		}
+		else
+		{
+			strlcpy(name, qtvtmp, bound(1, column - qtvtmp + 1, (int)sizeof(name)));
+		}
+
+		if      (!strncmp(s0, "#0:qtv_say_game:",      sizeof("#0:qtv_say_game:")-1))
+			snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
+		else if (!strncmp(s0, "#0:qtv_say_team_game:", sizeof("#0:qtv_say_team_game:")-1))
+			snprintf(qtvstr, sizeof(qtvstr), "%s(%s)%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
+		else
+			snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_chatprefix.string, false), name, column);
+
 		s0 = qtvstr;
 	}
 // }
