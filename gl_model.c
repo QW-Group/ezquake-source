@@ -1512,29 +1512,51 @@ void Mod_FloodFillSkin( byte *skin, int skinwidth, int skinheight ) {
 }
 
 extern qbool RuleSets_DisallowExternalTexture(model_t *mod);
-static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum) {
-	char loadpath[64];
+static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
+{
+	char loadpath[64] = {0};
 	int texmode, texnum;
 
-	if (RuleSets_DisallowExternalTexture(loadmodel)) {
-		*fb_texnum = 0;
+	texnum     = 0;
+	*fb_texnum = 0;
+
+	if (RuleSets_DisallowExternalTexture(loadmodel))
 		return 0;
-	}
 
 	texmode = TEX_MIPMAP;
 	if (!gl_scaleModelTextures.value)
 		texmode |= TEX_NOSCALE;
 
+	if (texnum)
+		return texnum; // wow, we alredy have texnum?
+
+	// try "textures/models/..." path
+
 	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
+	if (texnum)
+	{
+		// not a luma actually, but which suffix use then? _fb or what?
+		snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
+		*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT);
 
-	if (!texnum) {
-		snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
-		texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
+		return texnum;
 	}
 
-	*fb_texnum = 0;
-	return texnum;
+	// try "textures/..." path
+
+	snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
+	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
+	if (texnum)
+	{
+		// not a luma actually, but which suffix use then? _fb or what?
+		snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
+		*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT);
+
+		return texnum;
+	}
+
+	return 0; // we failed miserable
 }
 
 static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
