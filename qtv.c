@@ -22,7 +22,7 @@ cvar_t  qtv_adjusthighstart  = {"qtv_adjusthighstart",	"1"};
 
 cvar_t  qtv_event_join       = {"qtv_event_join", 		" &c2F2joined&r"};
 cvar_t  qtv_event_leave      = {"qtv_event_leave", 		" &cF22left&r"};
-cvar_t  qtv_event_changename = {"qtv_event_changename", " &cFF0changed&r name to "};
+cvar_t  qtv_event_changename = {"qtv_event_changename", " &cFF0changed name to&r "};
 
 void Qtvusers_f (void);
 
