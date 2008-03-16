@@ -431,9 +431,7 @@ static float CalcFov (float fov_x, float width, float height) {
 //Must be called whenever vid changes
 static void SCR_CalcRefdef (void) {
 	float  size;
-#ifdef GLQUAKE
-	qbool full = false;
-#else
+#ifndef GLQUAKE
 	vrect_t vrect;
 #endif
 
@@ -2231,13 +2229,7 @@ static void SCR_Draw_WeaponStats(void)
 	if ( !scr_weaponstats.integer )
 		return;
 
-	if ( !cls.mvdplayback )
-		return; // only in mvds
-
-	if ( !cl.spectator )
-		return; // required for Cam_TrackNum(), I guess
-
-	i = Cam_TrackNum();
+	i = ( cl.spectator ? Cam_TrackNum() : cl.playernum );
 
 	if ( i < 0 || i >= MAX_CLIENTS )
 		return;
