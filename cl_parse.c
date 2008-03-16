@@ -2381,6 +2381,75 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
     return classified;
 }
 
+// QTV chat formed like #qtv2_id:qtv2_name: #qtv1_id:qtv1_name: #qtvClient_id:qtvClient_name: chat text
+// above example was for case qtvClient -> qtv1 -> qtv2 -> server
+
+// So, this fucntion intended for skipping leading proxies names and ids, and just return "qtvClient_name: chat text"
+
+static char *SkipQTVLeadingProxies(char *s)
+{
+	char *last = NULL; // pointer to "qtvClient_name: chat text" at the end of parsing or NULL if we fail of some kind
+
+	for ( ; s[0]; )
+	{
+		if (s[0] == '#' && isdigit(s[1])) // check do we have # and at least one digit
+		{
+			s++; // skip #
+    
+			while(isdigit(s[0])) // skip digits
+				s++;
+    
+			if (s[0] == ':') // ok, seems it was qtv chat
+			{
+				char *name;
+
+				s++; // skip :
+
+				name = s; // remember name start
+
+				// skip name
+				// well, this code allow empty names... like "#id:: chat text"
+				if (s[0] != ' ') // name must NOT start from space, unless someone do "crime"
+				{
+					while(s[0] && s[0] != ':')
+						s++;
+
+					if (s[0] == ':')
+					{
+						last = name; // yeah, its well formed qtv chat string
+
+						if (!qtv_skipchained.integer)
+							break; // user select to not skip chained proxies
+
+						s++; // skip :
+
+						if (s[0] == ' ')
+							s++; // skip space
+
+						continue; // probably we have chained qtvs, lets check it
+					}
+					else
+					{
+						break;
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
+			else
+			{
+				break; // seems it wasn't chat
+			}
+		}
+
+		break;
+	}
+
+	return last;
+}
+
 extern qbool TP_SuppressMessage (wchar *);
 extern cvar_t cl_chatsound, msg_filter;
 extern cvar_t ignore_qizmo_spec;
@@ -2389,7 +2458,7 @@ void CL_ParsePrint (void)
 {
 	qbool suppress_talksound;
 	wchar *s, str[2048], *p, check_flood;
-	char *s0, qtvstr[2048];
+	char *s0, *qtvtmp, qtvstr[2048];
 	int level, flags = 0, offset = 0;
 	size_t len;
 
@@ -2403,25 +2472,36 @@ void CL_ParsePrint (void)
 	level = MSG_ReadByte ();
 	s0 = MSG_ReadString ();
 
-	if (cls.mvdplayback == QTV_PLAYBACK) // in case of QTV skip client id, this may be used for filtering/ignoring later
+// { QTV: check do this string is QTV chat
+	qtvtmp = SkipQTVLeadingProxies(s0);
+
+	if (qtvtmp)
 	{
-		if (s0[0] == '#' && isdigit(s0[1]))
+		char name[1024] = {0}, *column;
+
+		column = strchr(qtvtmp, ':');
+
+		if (!column)
 		{
-			char *start = s0++;
-
-			while(isdigit(s0[0]))
-				s0++;
-
-			if (s0[0] == ':') // ok, it was qtv chat, skip #id: and insert user defined prefix, [qtv] by default
-			{
-				s0++;
-				snprintf(qtvstr, sizeof(qtvstr), "%s%s\n", TP_ParseFunChars(qtv_chatprefix.string,false), s0);
-				s0 = qtvstr;
-			}
-			else
-				s0 = start; // seems it was't chat, so do not skip
+			// this must not be the case, but...
+			column = qtvtmp;
+			name[0] = 0;
 		}
+		else
+		{
+			strlcpy(name, qtvtmp, bound(1, column - qtvtmp + 1, (int)sizeof(name)));
+		}
+
+		if      (!strncmp(s0, "#0:qtv_say_game:",      sizeof("#0:qtv_say_game:")-1))
+			snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
+		else if (!strncmp(s0, "#0:qtv_say_team_game:", sizeof("#0:qtv_say_team_game:")-1))
+			snprintf(qtvstr, sizeof(qtvstr), "%s(%s)%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
+		else
+			snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_chatprefix.string, false), name, column);
+
+		s0 = qtvstr;
 	}
+// }
 
 	s = decode_string (s0);
 
