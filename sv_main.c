@@ -978,9 +978,9 @@ void SV_CheckVars (void) {
 		Cvar_Set (&spectator_password, spw);
 
 		v = 0;
-		if (pw && pw[0] && strcmp(pw, "none"))
+		if (pw[0] && strcmp(pw, "none"))
 			v |= 1;
-		if (spw && spw[0] && strcmp(spw, "none"))
+		if (spw[0] && strcmp(spw, "none"))
 			v |= 2;
 
 		Com_DPrintf ("Updated needpass.\n");
