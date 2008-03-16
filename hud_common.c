@@ -262,11 +262,11 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 {
     int x, y, width, height;
     char st[128];
+#if defined(GLQUAKE) && defined(_WIN32)
 	extern qbool vid_vsync_on;
 	extern double vid_vsync_lag;
 	static double old_lag;
 
-#if defined(GLQUAKE) && defined(_WIN32)
 	if (vid_vsync_on || glConfig.displayFrequency) {
 		// take the average of last two values, otherwise it
 		// changes very fast and is hard to read
