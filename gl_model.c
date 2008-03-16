@@ -1512,10 +1512,31 @@ void Mod_FloodFillSkin( byte *skin, int skinwidth, int skinheight ) {
 }
 
 extern qbool RuleSets_DisallowExternalTexture(model_t *mod);
+
+static qbool Mod_IsLumaAllowed(model_t *mod)
+{
+	switch (mod->modhint)
+	{
+	case MOD_EYES:
+	case MOD_BACKPACK:
+	case MOD_PLAYER:
+
+	case MOD_SENTRYGUN: // tf
+	case MOD_DETPACK:   // tf
+
+		return false; // no luma for such models
+
+	default:
+
+		return true; // luma allowed
+	}
+}
+
 static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
 {
 	char loadpath[64] = {0};
 	int texmode, texnum;
+	qbool luma_allowed = Mod_IsLumaAllowed(loadmodel);
 
 	texnum     = 0;
 	*fb_texnum = 0;
@@ -1538,7 +1559,8 @@ static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
 	{
 		// not a luma actually, but which suffix use then? _fb or what?
 		snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
-		*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT);
+		if (luma_allowed)
+			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT);
 
 		return texnum;
 	}
@@ -1551,7 +1573,8 @@ static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
 	{
 		// not a luma actually, but which suffix use then? _fb or what?
 		snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
-		*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT);
+		if (luma_allowed)
+			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT);
 
 		return texnum;
 	}
