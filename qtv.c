@@ -14,10 +14,10 @@ cvar_t	qtv_buffertime		 = {"qtv_buffertime",		"0.5"};
 cvar_t	qtv_chatprefix		 = {"qtv_chatprefix",		"$[{QTV}$] "};
 cvar_t	qtv_gamechatprefix	 = {"qtv_gamechatprefix",	"$[{QTV>game}$] "};
 cvar_t	qtv_skipchained		 = {"qtv_skipchained",		"1"};
-cvar_t  qtv_adjustbuffer	 = {"qtv_adjustbuffer",		"0"};
+cvar_t  qtv_adjustbuffer	 = {"qtv_adjustbuffer",		"1"};
 cvar_t  qtv_adjustminspeed	 = {"qtv_adjustminspeed",	"0"};
 cvar_t  qtv_adjustmaxspeed	 = {"qtv_adjustmaxspeed",	"999"};
-cvar_t  qtv_adjustlowstart   = {"qtv_adjustlowstart",	"1"};
+cvar_t  qtv_adjustlowstart   = {"qtv_adjustlowstart",	"0.3"};
 cvar_t  qtv_adjusthighstart  = {"qtv_adjusthighstart",	"1"};
 
 cvar_t  qtv_event_join       = {"qtv_event_join", 		" &c2F2joined&r"};
