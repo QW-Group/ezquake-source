@@ -185,7 +185,7 @@ void SYSINFO_Init(void)
 	// MEM
 	f = fopen("/proc/meminfo", "r");
 	if (f) {
-		fscanf (f, "%*s %u %*s\n", &SYSINFO_memory);
+		fscanf (f, "%*s %llu %*s\n", &SYSINFO_memory);
 		fclose (f);
 		SYSINFO_memory /= 1024;
 	} else {
@@ -195,9 +195,8 @@ void SYSINFO_Init(void)
 	//CPU-MHZ
 	f = fopen("/proc/cpuinfo", "r");
 	if (f) {
-		fread (buffer, 1, sizeof(buffer) - 1, f);
+		buffer[fread (buffer, 1, sizeof(buffer) - 1, f)] = '\0';
 		fclose (f);
-		buffer[sizeof(buffer)] = '\0';
 		match = strstr (buffer, "cpu MHz");
 		sscanf (match, "cpu MHz : %i", &SYSINFO_MHz);
 	} else {
