@@ -145,6 +145,13 @@ static check_models_hashes_entry_t mdlhash_plaguespak_v_rock2 = { {0x170a3ecf, 0
 static check_models_hashes_entry_t mdlhash_plaguespak_v_shot = { {0x93dc8f24, 0x6739d838, 0x996b00cc, 0x85c2d98f, 0x430b8e30}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_v_shot2 = { {0x58e68b33, 0x1127186f, 0xd1bdae79, 0x66fd9ca3, 0x82421f9b}, NULL };
 
+// unknown
+// these come with nQuake and are told to be "harmless"
+static check_models_hashes_entry_t mdlhash_unknown_end2 = { {0xe3a1b910, 0x28c4e36a, 0x1af69321, 0x9d19df99, 0x5bcebfcb }, NULL };
+static check_models_hashes_entry_t mdlhash_unknown_end3 = { {0xe3a1b910, 0x28c4e36a, 0x1af69321, 0x9d19df99, 0x5bcebfcb }, NULL };
+static check_models_hashes_entry_t mdlhash_unknown_end4 = { {0xe3a1b910, 0x28c4e36a, 0x1af69321, 0x9d19df99, 0x5bcebfcb }, NULL };
+
+
 #define MAX_CHECK_MODELS 128
 #define	FMOD_DM 1
 #define FMOD_TF 2
@@ -276,9 +283,12 @@ void FMod_Init (void)
 
 	FMod_AddModel ("progs/bolt2.mdl",			FMOD_DM | FMOD_TF,	progs_bolt2_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("progs/end1.mdl",			FMOD_DM | FMOD_TF,	progs_end1_mdl_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("progs/end2.mdl",			FMOD_DM | FMOD_TF,	progs_end2_mdl_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("progs/end3.mdl",			FMOD_DM | FMOD_TF,	progs_end3_mdl_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("progs/end4.mdl",			FMOD_DM | FMOD_TF,	progs_end4_mdl_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("progs/end2.mdl",			FMOD_DM | FMOD_TF,	progs_end2_mdl_FMOD_DM_FMOD_TF);
+	FMod_AddModelAlt(lastid, &mdlhash_unknown_end2);
+	lastid = FMod_AddModel ("progs/end3.mdl",			FMOD_DM | FMOD_TF,	progs_end3_mdl_FMOD_DM_FMOD_TF);
+	FMod_AddModelAlt(lastid, &mdlhash_unknown_end3);
+	lastid = FMod_AddModel ("progs/end4.mdl",			FMOD_DM | FMOD_TF,	progs_end4_mdl_FMOD_DM_FMOD_TF);
+	FMod_AddModelAlt(lastid, &mdlhash_unknown_end4);
 	FMod_AddModel ("progs/eyes.mdl",			FMOD_DM | FMOD_TF,	progs_eyes_mdl_FMOD_DM_FMOD_TF);
 	lastid = FMod_AddModel ("progs/g_light.mdl",			FMOD_DM | FMOD_TF,	progs_g_light_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_g_light);
