@@ -272,6 +272,7 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
 				va("x: %i y: %i", payload->x, payload->y));
 		}
+		*/
 
 		/*
 		if (!strcmp(payload->name, "label"))
