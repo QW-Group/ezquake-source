@@ -151,6 +151,7 @@ cvar_t	show_fps				= {"show_fps", "0"};
 cvar_t	show_fps_x				= {"show_fps_x", "-5"};
 cvar_t	show_fps_y				= {"show_fps_y", "-1"};
 
+cvar_t	scr_sshot_autoname		= {"sshot_autoname", "0"};
 cvar_t	scr_sshot_format		= {"sshot_format", DEFAULT_SSHOT_FORMAT};
 cvar_t	scr_sshot_dir			= {"sshot_dir", ""};
 
@@ -3798,7 +3799,7 @@ int SCR_Screenshot(char *name) {
 int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 {
 	int i = 0;
-	char ext[4];
+	char ext[4], basename[64];
 	FILE *f;
 
 	ext[0] = 0;
@@ -3833,9 +3834,18 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 		strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
 	}
 
+	if(fabsf(scr_sshot_autoname.value - 1.0f) < 0.0001f) {
+		// if sshot_autoname is 1, prefix with map name.
+		snprintf(basename, sizeof(basename), "%s_", host_mapname.string);
+	}
+	else {
+		// otherwise prefix with ezquake.
+		strcpy(basename, "ezquake");
+	}
+
 	for (i = 0; i < MAX_SCREENSHOT_COUNT; i++)
 	{
-		snprintf(name, name_size, "ezquake%03i.%s", i, ext);
+		snprintf(name, name_size, "%s%03i.%s", basename, i, ext);
 		if (!(f = fopen (va("%s/%s", sshot_dir, name), "rb")))
 		{
 			break;  // file doesn't exist
@@ -4277,6 +4287,7 @@ void SCR_Init (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
 	Cvar_Register (&scr_allowsnap);
+	Cvar_Register (&scr_sshot_autoname);
 	Cvar_Register (&scr_sshot_format);
 	Cvar_Register (&scr_sshot_dir);
 
