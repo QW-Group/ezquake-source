@@ -3081,7 +3081,12 @@ void CL_ParseServerMessage (void)
 		else if (cmd < num_svc_strings)
 			SHOWNET(svc_strings[cmd]);
 
-     	// Update msg no:
+		if (cmd > NUMMSG) {
+			// if we dont Host_Error here, next string (net.msgs[cmd]++) will corrupt our memory
+			Host_Error ("CL_ParseServerMessage: NUMMSG > cmd\n");
+		}
+
+		// Update msg no:
     	net.msgs[cmd]++;
 	    oldread = msg_readcount;
 
