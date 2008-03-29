@@ -937,7 +937,7 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 	{
 		if(re)
 		{
-			Q_free(re);
+			free(re);
 		}
 
 		return true;
@@ -946,7 +946,7 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 	// Make sure we clean up.
 	if(re)
 	{
-		Q_free(re);
+		free(re);
 	}
 
 	return false;
