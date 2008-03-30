@@ -121,6 +121,8 @@ int IN_MapKey (int key);
 #include "mw_hook.h"
 void MW_Hook_Message (long buttons);
 
+void IN_RawInput_MouseRead(HANDLE in_device_handle);
+
 /* main window procedure */
 LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lParam) {
 	extern void VID_UpdateWindowStatus (void);
