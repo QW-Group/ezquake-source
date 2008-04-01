@@ -38,6 +38,7 @@ cvar_t	cl_c2spps = {"cl_c2spps","0"};
 cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
 cvar_t  cl_weaponhide = {"cl_weaponhide", "0"};
 cvar_t  cl_weaponpreselect = {"cl_weaponpreselect", "0"};
+cvar_t	cl_weaponhide_axe = {"cl_weaponhide_axe", "0"};
 
 cvar_t	cl_smartjump = {"cl_smartjump", "1"};
 
@@ -188,9 +189,15 @@ void IN_AttackDown(void) {
 
 void IN_AttackUp(void) {
 	if (CL_INPUT_WEAPONHIDE()) {
-		// performs "weapon 2 1"
-		// that means: if player has shotgun and shells, select shotgun, otherwise select axe
-		in_impulse = (cl.stats[STAT_ITEMS] & IT_SHOTGUN && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1; 
+		if (cl_weaponhide_axe.integer) {
+			// always switch to axe because user wants to
+			in_impulse = 1;
+		}
+		else {
+			// performs "weapon 2 1"
+			// that means: if player has shotgun and shells, select shotgun, otherwise select axe
+			in_impulse = (cl.stats[STAT_ITEMS] & IT_SHOTGUN && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1; 
+		}
 	}
 	KeyUp(&in_attack);
 }
@@ -841,6 +848,7 @@ void CL_InitInput (void) {
 	Cvar_Register (&cl_smartjump);
 	Cvar_Register (&cl_weaponhide);
 	Cvar_Register (&cl_weaponpreselect);
+	Cvar_Register (&cl_weaponhide_axe);
 
 	Cvar_Register (&cl_upspeed);
 	Cvar_Register (&cl_forwardspeed);
