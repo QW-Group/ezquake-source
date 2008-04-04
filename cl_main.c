@@ -1524,7 +1524,10 @@ void CL_InitLocal (void)
 {
 	extern cvar_t baseskin, noskins, cl_name_as_skin, enemyforceskins, teamforceskins;
 	char st[256];
-	extern void CL_Messages_f(void);
+
+	extern void Cl_Messages_Init(void);
+
+	Cl_Messages_Init();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
 	Cvar_Register (&cl_parseWhiteText);
@@ -1699,8 +1702,6 @@ void CL_InitLocal (void)
 	Cmd_AddMacro("serverip", CL_Macro_ServerIp);
 	Cmd_AddMacro("conwidth", CL_Macro_Conwidth);
 	Cmd_AddMacro("conheight", CL_Macro_Conheight);
-
-	Cmd_AddCommand ("cl_messages", CL_Messages_f);
 }
 
 void GFX_Init (void) 

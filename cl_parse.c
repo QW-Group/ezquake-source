@@ -145,16 +145,81 @@ int	oldparsecountmod;
 int	parsecountmod;
 double	parsecounttime;
 
-// Cl_Messages data
-#define NUMMSG 70
-typedef struct messages_s 
-{
-	int msgs[NUMMSG];
-	int size[NUMMSG];
-	int printed[NUMMSG];
-} messages_t;
+//=========================================================
+// Cl_Messages, just some simple network statistics/profiling
+//=========================================================
 
-messages_t net;
+#define NUMMSG 256 // for svc_xxx used one byte, so its in range...
+
+typedef struct cl_message_s
+{
+	int msgs;
+	int size;
+
+	int svc; // well, its helpful after qsort
+} cl_message_t;
+
+static cl_message_t cl_messages[NUMMSG];
+
+void CL_Messages_f(void);
+
+void Cl_Messages_Init(void)
+{
+	int i;
+
+	memset(cl_messages, 0, sizeof(cl_messages));
+
+	for (i = 0; i < NUMMSG; i++)
+		cl_messages[i].svc = i; // well, its helpful after qsort
+
+	Cmd_AddCommand ("cl_messages", CL_Messages_f);
+}
+
+static int CL_Messages_qsort(const void *a, const void *b)
+{
+	cl_message_t *msg1 = (cl_message_t*)a;
+	cl_message_t *msg2 = (cl_message_t*)b;
+
+	if ( msg1->size < msg2->size )
+		return -1;
+
+	if ( msg1->size > msg2->size )
+		return 1;
+
+   return 0;
+}
+
+static void CL_Messages_f(void)
+{
+	cl_message_t messages[NUMMSG]; // local copy of cl_messages[] for qsorting
+
+	int i, svc, total;
+	char *svc_name;
+
+	memcpy(messages, cl_messages, sizeof(messages)); // copy it
+	qsort(messages, NUMMSG, sizeof(messages[0]), CL_Messages_qsort); // qsort it
+
+	Com_Printf("Received msgs:\n");
+
+	for (i = 0, total = 0; i < NUMMSG; i++)
+	{
+		if (messages[i].msgs < 1)
+			continue;
+
+		svc = messages[i].svc;
+
+		if (svc < 0 || svc >= NUMMSG)
+			Sys_Error("CL_Messages_f: svc < 0 || svc >= NUMMSG");
+
+		svc_name = ( svc < num_svc_strings ? svc_strings[svc] : "unknown" );
+
+		Com_Printf("%2d:%s: %d msgs: %0.2fk\n", svc, svc_name, messages[i].msgs, (float)(messages[i].size)/1024);
+
+		total += messages[i].size;
+	}
+
+	Com_Printf("Total size: %d\n", total);
+}
 
 //=============================================================================
 
@@ -2993,45 +3058,6 @@ void CL_ParseQizmoVoice (void)
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
 
-void CL_Messages_f(void)
-{
-	int t;
-	int MAX = 64;
-
-	int big = 0;
-	int tope = 0;
-	int doit = true;
-
-	for (t = 0; t < MAX; t++)
-		net.printed[t] = false;
-
-	Com_Printf("Received msgs:\n");
-
-    while (doit)
-	{
-		// Get max
-
-		doit = false;
-		tope = 0;
-		for (t = 0; t < MAX; t++)
-		{
-			if (!net.printed[t] && net.size[t] > tope )
-			{
-				tope = net.size[t];
-				big = t;
-				doit = true;
-			}
-		}
-
-		net.printed[big] = true;
-
-		if (net.msgs[big])
-		{
-			Com_Printf("%d:%s: %d msgs: %0.2fk\n",big,svc_strings[big],net.msgs[big],(float)(((float)(net.size[big]))/1024));
-		}
-	}
-}
-
 void CL_ParseServerMessage (void) 
 {
 	int cmd, i, j = 0;
@@ -3081,13 +3107,10 @@ void CL_ParseServerMessage (void)
 		else if (cmd < num_svc_strings)
 			SHOWNET(svc_strings[cmd]);
 
-		if (cmd > NUMMSG) {
-			// if we dont Host_Error here, next string (net.msgs[cmd]++) will corrupt our memory
-			Host_Error ("CL_ParseServerMessage: NUMMSG > cmd\n");
-		}
-
 		// Update msg no:
-    	net.msgs[cmd]++;
+		if (cmd < NUMMSG)
+    		cl_messages[cmd].msgs++;
+
 	    oldread = msg_readcount;
 
 		// Other commands
@@ -3478,7 +3501,8 @@ void CL_ParseServerMessage (void)
 		}
 
 		// cl_messages, update size
-		net.size[cmd] += msg_readcount - oldread ;
+		if (cmd < NUMMSG)
+			cl_messages[cmd].size += msg_readcount - oldread;
 
 		if (cls.demorecording)
 		{
