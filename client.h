@@ -374,6 +374,8 @@ typedef struct
 	int			td_startframe;      ///< cls.framecount at start
 	float		td_starttime;       ///< Realtime at second frame of timedemo.
 
+	qbool		mvdrecording;		///< this is not real mvd recording, but just cut particular moment of mvd stream
+
 	byte		demomessage_data[MAX_MSGLEN * 2];
 	sizebuf_t	demomessage;
 

@@ -75,6 +75,8 @@ char Demos_Get_Trackname(void);
 int FindBestNick(char *s,int use);
 static void CL_DemoPlaybackInit(void);
 
+char *CL_DemoDirectory(void);
+
 #ifdef WITH_DEMO_REWIND
 //=============================================================================
 //								DEMO KEYFRAMES
@@ -808,6 +810,686 @@ static void CL_WriteStartupData (void)
 	CL_WriteSetDemoMessage();
 }
 
+//=========================================================
+// MVD demo writing
+//=========================================================
+
+static FILE *mvdrecordfile = NULL;
+
+static char mvddemoname[2 * MAX_OSPATH] = {0};
+
+
+static void CL_MVD_DemoWrite (void *data, int len)
+{
+	if (!mvdrecordfile)
+		return;
+
+	fwrite(data, len, 1, mvdrecordfile);
+}
+
+/*
+====================
+CL_WriteRecordMVDMessage
+====================
+*/
+static void CL_WriteRecordMVDMessage (sizebuf_t *msg)
+{
+	int len;
+	byte c;
+
+	if (!cls.mvdrecording)
+		return;
+
+	if (!msg->cursize)
+		return;
+
+	c = 0;
+	CL_MVD_DemoWrite (&c, sizeof(c));
+
+	c = dem_all;
+	CL_MVD_DemoWrite (&c, sizeof(c));
+
+	len = LittleLong (msg->cursize);
+	CL_MVD_DemoWrite (&len, 4);
+
+	CL_MVD_DemoWrite (msg->data, msg->cursize);
+}
+
+/*
+====================
+CL_WriteRecordMVDStatsMessage
+====================
+*/
+static void CL_WriteRecordMVDStatsMessage (sizebuf_t *msg, int client)
+{
+	int len;
+	byte c;
+
+	if (!cls.mvdrecording)
+		return;
+
+	if (!msg->cursize)
+		return;
+
+	if (client < 0 || client >= MAX_CLIENTS)
+		return;
+
+	c = 0;
+	CL_MVD_DemoWrite (&c, sizeof(c));
+
+	c = dem_stats | (client << 3) ; // msg "type" and "to" incapsulated in one byte
+	CL_MVD_DemoWrite (&c, sizeof(c));
+
+	len = LittleLong (msg->cursize);
+	CL_MVD_DemoWrite (&len, 4);
+
+	CL_MVD_DemoWrite (msg->data, msg->cursize);
+}
+
+void CL_WriteMVDStartupData(void)
+{
+	sizebuf_t	buf;
+	unsigned char buf_data[MAX_MSGLEN * 4];
+
+	player_info_t *player;
+
+	entity_state_t *es, blankes;
+
+	entity_t *ent;
+	
+	int i, j, n;
+
+	char *s;
+	
+	/*-------------------------------------------------*/
+
+	// serverdata
+	// send the info about the new client to all connected clients
+	SZ_Init (&buf, buf_data, sizeof(buf_data));
+
+	// send the serverdata
+
+	MSG_WriteByte (&buf, svc_serverdata);
+	MSG_WriteLong (&buf, PROTOCOL_VERSION);
+	MSG_WriteLong (&buf, cl.servercount);
+
+	//
+	// gamedir
+	//
+
+	s = cls.gamedirfile; // FIXME: or do we need to take a look in serverinfo?
+	if (!s[0])
+		s = "qw"; // if empty use "qw" gamedir
+
+	MSG_WriteString (&buf, s);
+
+	MSG_WriteFloat (&buf, cls.demotime); // FIXME: not sure
+
+	// send full levelname
+	MSG_WriteString (&buf, cl.levelname);
+
+	// send the movevars
+	MSG_WriteFloat(&buf, movevars.gravity);
+	MSG_WriteFloat(&buf, movevars.stopspeed);
+	MSG_WriteFloat(&buf, movevars.maxspeed);
+	MSG_WriteFloat(&buf, movevars.spectatormaxspeed);
+	MSG_WriteFloat(&buf, movevars.accelerate);
+	MSG_WriteFloat(&buf, movevars.airaccelerate);
+	MSG_WriteFloat(&buf, movevars.wateraccelerate);
+	MSG_WriteFloat(&buf, movevars.friction);
+	MSG_WriteFloat(&buf, movevars.waterfriction);
+	MSG_WriteFloat(&buf, movevars.entgravity);
+
+	// send music
+	MSG_WriteByte (&buf, svc_cdtrack);
+	MSG_WriteByte (&buf, 0); // none in demos
+
+	// send server info string
+	MSG_WriteByte (&buf, svc_stufftext);
+	MSG_WriteString (&buf, va("fullserverinfo \"%s\"\n", cl.serverinfo));
+
+	// flush packet
+	CL_WriteRecordMVDMessage (&buf);
+	SZ_Clear (&buf);
+
+	//
+	// soundlist
+	//
+	MSG_WriteByte (&buf, svc_soundlist);
+	MSG_WriteByte (&buf, 0);
+
+	n = 0;
+	s = cl.sound_name[n + 1];
+	while (*s)
+	{
+		MSG_WriteString (&buf, s);
+		if (buf.cursize > MAX_MSGLEN/2)
+		{
+			MSG_WriteByte (&buf, 0);
+			MSG_WriteByte (&buf, n);
+			CL_WriteRecordMVDMessage (&buf);
+			SZ_Clear (&buf);
+			MSG_WriteByte (&buf, svc_soundlist);
+			MSG_WriteByte (&buf, n + 1);
+		}
+		n++;
+		s = cl.sound_name[n + 1];
+	}
+
+	if (buf.cursize)
+	{
+		MSG_WriteByte (&buf, 0);
+		MSG_WriteByte (&buf, 0);
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	//
+	// modellist
+	//
+	MSG_WriteByte (&buf, svc_modellist);
+	MSG_WriteByte (&buf, 0);
+
+	n = 0;
+	s = cl.model_name[n+1];
+	while (*s)
+	{
+		MSG_WriteString (&buf, s);
+		if (buf.cursize > MAX_MSGLEN/2)
+		{
+			MSG_WriteByte (&buf, 0);
+			MSG_WriteByte (&buf, n);
+			CL_WriteRecordMVDMessage (&buf);
+			SZ_Clear (&buf);
+			MSG_WriteByte (&buf, svc_modellist);
+			MSG_WriteByte (&buf, n + 1);
+		}
+		n++;
+		s = cl.model_name[n+1];
+	}
+
+	if (buf.cursize)
+	{
+		MSG_WriteByte (&buf, 0);
+		MSG_WriteByte (&buf, 0);
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	//
+	// Write static entities.
+	//
+	for (i = 0; i < cl.num_statics; i++)
+	{
+		// Get the next static entity.
+		ent = cl_static_entities + i;
+
+		// Write ID for static entities.
+		MSG_WriteByte (&buf, svc_spawnstatic);
+
+		// Find if the model is precached or not.
+		for (j = 1; j < MAX_MODELS; j++)
+		{
+			if (ent->model == cl.model_precache[j])
+				break;
+		}
+
+		// Write if the model is precached.
+		if (j == MAX_MODELS)
+			MSG_WriteByte (&buf, 0);
+		else
+			MSG_WriteByte (&buf, j);
+
+		// Write the entities frame and skin number.
+		MSG_WriteByte (&buf, ent->frame);
+		MSG_WriteByte (&buf, 0);
+		MSG_WriteByte (&buf, ent->skinnum);
+
+		// Write the coordinate and angles.
+		for (j = 0; j < 3; j++)
+		{
+			MSG_WriteCoord (&buf, ent->origin[j]);
+			MSG_WriteAngle (&buf, ent->angles[j]);
+		}
+
+		// Flush the buffer if it's half full.
+		if (buf.cursize > MAX_MSGLEN / 2)
+		{
+			CL_WriteRecordMVDMessage (&buf);
+			SZ_Clear (&buf);
+		}
+	}
+
+	if (buf.cursize)
+	{
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	//
+	// Write static sounds
+	//
+	for (i = 0; i < cl.num_static_sounds; i++)
+	{
+		static_sound_t *ss = &cl.static_sounds[i];
+
+		MSG_WriteByte (&buf, svc_spawnstaticsound);
+
+		for (j = 0; j < 3; j++)
+			MSG_WriteCoord (&buf, ss->org[j]);
+
+		MSG_WriteByte (&buf, ss->sound_num);
+		MSG_WriteByte (&buf, ss->vol);
+		MSG_WriteByte (&buf, ss->atten);
+
+		if (buf.cursize > MAX_MSGLEN/2)
+		{
+			CL_WriteRecordMVDMessage (&buf);
+			SZ_Clear (&buf);
+		}
+	}
+
+	if (buf.cursize)
+	{
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	//
+	// Write entity baselines.
+	//
+	memset(&blankes, 0, sizeof(blankes));
+
+	for (i = 0; i < CL_MAX_EDICTS; i++)
+	{
+		es = &cl_entities[i].baseline;
+
+		//
+		// If the entity state isn't blank write it to the buffer.
+		//
+		if (memcmp(es, &blankes, sizeof(blankes)))
+		{
+			// Write ID.
+			MSG_WriteByte (&buf, svc_spawnbaseline);
+			MSG_WriteShort (&buf, i);
+
+			// Write model info.
+			MSG_WriteByte (&buf, es->modelindex);
+			MSG_WriteByte (&buf, es->frame);
+			MSG_WriteByte (&buf, es->colormap);
+			MSG_WriteByte (&buf, es->skinnum);
+
+			// Write coordinates and angles.
+			for (j = 0; j < 3; j++)
+			{
+				MSG_WriteCoord(&buf, es->origin[j]);
+				MSG_WriteAngle(&buf, es->angles[j]);
+			}
+
+			// Flush to demo file if buffer is half full.
+			if (buf.cursize > MAX_MSGLEN / 2)
+			{
+				CL_WriteRecordMVDMessage (&buf);
+				SZ_Clear (&buf);
+			}
+		}
+	}
+
+	if (buf.cursize)
+	{
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	//
+	// Send all current light styles.
+	//
+	for (i = 0; i < MAX_LIGHTSTYLES; i++)
+	{
+		// Don't send empty lightstyle strings.
+		if (!cl_lightstyle[i].length)
+			continue;
+
+		MSG_WriteByte (&buf, svc_lightstyle);
+		MSG_WriteByte (&buf, (char)i);
+		MSG_WriteString (&buf, cl_lightstyle[i].map);
+
+		// Flush to demo file if buffer is half full.
+		if (buf.cursize > MAX_MSGLEN / 2)
+		{
+			CL_WriteRecordMVDMessage (&buf);
+			SZ_Clear (&buf);
+		}
+	}
+
+	if (buf.cursize)
+	{
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	MSG_WriteByte (&buf, svc_stufftext);
+	MSG_WriteString (&buf, va("cmd spawn %i 0\n", cl.servercount));
+
+	if (buf.cursize)
+	{
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	//
+	// send current status of all other players: frags, ping, pl, enter time, userinfo, player id
+	//
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		player = cl.players + i;
+
+		// Frags.
+		MSG_WriteByte (&buf, svc_updatefrags);
+		MSG_WriteByte (&buf, i);
+		MSG_WriteShort (&buf, player->frags);
+
+		// Ping.
+		MSG_WriteByte (&buf, svc_updateping);
+		MSG_WriteByte (&buf, i);
+		MSG_WriteShort (&buf, player->ping);
+
+		// Packet loss.
+		MSG_WriteByte (&buf, svc_updatepl);
+		MSG_WriteByte (&buf, i);
+		MSG_WriteByte (&buf, player->pl);
+
+		// Entertime.
+		MSG_WriteByte (&buf, svc_updateentertime);
+		MSG_WriteByte (&buf, i);
+		MSG_WriteFloat (&buf, cls.realtime - player->entertime);
+
+		// User ID and user info.
+		MSG_WriteByte (&buf, svc_updateuserinfo);
+		MSG_WriteByte (&buf, i);
+		MSG_WriteLong (&buf, player->userid);
+		MSG_WriteString (&buf, player->userinfo);
+
+		// Flush buffer to demo file.
+		if (buf.cursize > MAX_MSGLEN / 2)
+		{
+			CL_WriteRecordMVDMessage (&buf);
+			SZ_Clear (&buf);
+		}
+	}
+
+	if (buf.cursize)
+	{
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	//
+	// this set proper model, origin, angles etc for players
+	//
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		vec3_t origin, angles;
+		int j, flags;
+		player_state_t *state;
+
+		player = cl.players + i;
+
+		state = cl.frames[cl.validsequence & UPDATE_MASK].playerstate + i;
+
+		if (!player->name[0])
+			continue;
+
+// FIXME: do we need send specs?
+//		if (player->spectator)
+//			continue;
+
+		flags =   (DF_ORIGIN << 0) | (DF_ORIGIN << 1) | (DF_ORIGIN << 2)
+				| (DF_ANGLES << 0) | (DF_ANGLES << 1) | (DF_ANGLES << 2)
+				| DF_EFFECTS | DF_SKINNUM 
+				| ((state->flags & PF_DEAD) ? DF_DEAD : 0)
+				| ((state->flags & PF_GIB)  ? DF_GIB  : 0)
+				| DF_WEAPONFRAME | DF_MODEL;
+
+		VectorCopy(state->origin, origin);
+		VectorCopy(state->viewangles, angles);
+
+		MSG_WriteByte (&buf, svc_playerinfo);
+		MSG_WriteByte (&buf, i);
+		MSG_WriteShort (&buf, flags);
+
+		MSG_WriteByte (&buf, state->frame);
+
+		for (j = 0 ; j < 3 ; j++)
+			if (flags & (DF_ORIGIN << j))
+				MSG_WriteCoord (&buf, origin[j]);
+
+		for (j = 0 ; j < 3 ; j++)
+			if (flags & (DF_ANGLES << j))
+				MSG_WriteAngle16 (&buf, angles[j]);
+
+		if (flags & DF_MODEL)
+			MSG_WriteByte (&buf, state->modelindex);
+
+		if (flags & DF_SKINNUM)
+			MSG_WriteByte (&buf, state->skinnum);
+
+		if (flags & DF_EFFECTS)
+			MSG_WriteByte (&buf, state->effects);
+
+		if (flags & DF_WEAPONFRAME)
+			MSG_WriteByte (&buf, state->weaponframe);
+
+		if (buf.cursize > MAX_MSGLEN/2)
+		{
+			CL_WriteRecordMVDMessage (&buf);
+			SZ_Clear (&buf);
+		}
+	}
+
+	// we really need clear buffer before sending stats
+	if (buf.cursize)
+	{
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	// send stats
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		int		*stats;
+		int		j;
+
+		player = cl.players + i;
+
+		if (!player->name[0])
+			continue;
+
+		if (player->spectator)
+			continue;
+
+		stats = cl.players[i].stats;
+
+		for (j = 0; j < MAX_CL_STATS; j++)
+		{
+			if (stats[j] >= 0 && stats[j] <= 255)
+			{
+				MSG_WriteByte(&buf, svc_updatestat);
+				MSG_WriteByte(&buf, j);
+				MSG_WriteByte(&buf, stats[j]);
+			}
+			else
+			{
+				MSG_WriteByte(&buf, svc_updatestatlong);
+				MSG_WriteByte(&buf, j);
+				MSG_WriteLong(&buf, stats[j]);
+			}
+		}
+
+		if (buf.cursize)
+		{
+			CL_WriteRecordMVDStatsMessage(&buf, i);
+			SZ_Clear (&buf);
+		}
+	}
+
+	// above stats writing must clear buffer
+	if (buf.cursize)
+	{
+		Sys_Error("CL_WriteMVDStartupData: buf.cursize %d", buf.cursize);
+	}
+
+	// 
+	// send packetentities
+	//
+	{
+		int ent_index, ent_total;
+		entity_state_t *ent_state;
+
+		// Write the ID byte for a delta entity operation to the demo.
+		MSG_WriteByte (&buf, svc_packetentities);
+
+		// Get the entities list from the frame.
+		ent_state = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].packet_entities.entities;
+		ent_total = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].packet_entities.num_entities;
+
+		// Write all the entity changes since last packet entity message.
+		for (ent_index = 0; ent_index < ent_total; ent_index++, ent_state++)
+			MSG_WriteDeltaEntity (&cl_entities[ent_state->number].baseline, ent_state, &buf, true);
+
+		// End of packetentities.
+		MSG_WriteShort (&buf, 0);
+	}
+
+	if (buf.cursize)
+	{
+		CL_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+	}
+
+	// get the client to check and download skins
+	// when that is completed, a begin command will be issued
+	MSG_WriteByte (&buf, svc_stufftext);
+	MSG_WriteString (&buf, "skins\n");
+
+	CL_WriteRecordMVDMessage (&buf);
+}
+
+//==============
+// commands
+//==============
+
+void CL_StopMvd_f(void)
+{
+	if (mvdrecordfile)
+	{
+		char str[1024];
+		sizebuf_t	buf;
+		unsigned char buf_data[MAX_MSGLEN];
+
+		SZ_Init (&buf, buf_data, sizeof(buf_data));
+
+		// print offensive message
+
+		strlcpy(str, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n"
+	       " Make love not WarCraft\n"
+	       " Get quake at http://nquake.sf.net\n"
+	       "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n",
+			sizeof(str));
+
+		MSG_WriteByte(&buf, svc_print);
+		MSG_WriteByte(&buf, 2);
+		MSG_WriteString(&buf, str);
+
+		// add disconnect
+
+		MSG_WriteByte (&buf, svc_disconnect);
+		MSG_WriteString (&buf, "EndOfDemo");
+
+		CL_WriteRecordMVDMessage (&buf);
+
+		fclose(mvdrecordfile);
+		mvdrecordfile = NULL;
+	}
+
+	cls.mvdrecording = false;
+}
+
+void CL_RecordMvd_f(void)
+{
+	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];
+
+	switch(Cmd_Argc())
+	{
+		case 1:
+		//
+		// Just show if anything is being recorded.
+		//
+		{
+			if (cls.mvdrecording)
+				Com_Printf("Recording to %s\n", mvddemoname);
+			else
+				Com_Printf("Not recording\n");
+			break;
+		}
+		case 2:
+		//
+		// Start recording to the specified demo name.
+		//
+		{
+			if (cls.state != ca_active && cls.state != ca_disconnected)
+			{
+				Com_Printf ("Cannot record whilst connecting\n");
+				return;
+			}
+
+			// Stop any recording in progress.
+			if (cls.mvdrecording)
+				CL_StopMvd_f();
+
+			// Make sure the filename doesn't contain any invalid characters.
+			if (!Util_Is_Valid_Filename(Cmd_Argv(1)))
+			{
+				Com_Printf(Util_Invalid_Filename_Msg(Cmd_Argv(1)));
+				return;
+			}
+
+			// Open the demo file for writing.
+			strlcpy(nameext, Cmd_Argv(1), sizeof(nameext));
+			COM_ForceExtensionEx (nameext, ".mvd", sizeof (nameext));
+
+			// Get the path for the demo and try opening the file for writing.
+			snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
+
+			mvdrecordfile = fopen(name, "wb");
+
+			if (!mvdrecordfile)
+			{
+				Com_Printf ("Error: Couldn't record to %s. Make sure path exists.\n", name);
+				return;
+			}
+
+			// Demo starting has begun.
+			cls.mvdrecording = true;
+
+			// Save the demoname for later use.
+			strlcpy(mvddemoname, name, sizeof(mvddemoname));
+
+			// If we're active, write startup data right away.
+			if (cls.state == ca_active)
+				CL_WriteMVDStartupData();
+
+			Com_Printf ("Recording to %s\n", nameext);
+			break;
+		}
+		default:
+		{
+			Com_Printf("Usage: %s [demoname]\n", Cmd_Argv(0));
+			break;
+		}
+	}
+}
+
 //=============================================================================
 //								DEMO READING
 //=============================================================================
@@ -855,8 +1537,13 @@ int CL_Demo_Read(void *buf, int size, qbool peek)
 
 	if (!peek)
 	{
+		// we are not peeking, so move along buffer
 		pb_cnt -= need;
 		memmove(pb_buf, pb_buf + need, pb_cnt);
+
+		// we get some data from playback file or qtv stream, dump it to file right now
+		if (need > 0 && cls.mvdplayback && cls.mvdrecording)
+			CL_MVD_DemoWrite (buf, need);
 	}
 
 	if (need != size)
@@ -868,7 +1555,7 @@ int CL_Demo_Read(void *buf, int size, qbool peek)
 //
 // Reads a chunk of data from the playback file and returns the number of bytes read.
 //
-int pb_raw_read(void *buf, int size)
+static int pb_raw_read(void *buf, int size)
 {
 	vfserrno_t err;
 	int r = VFS_READ(playbackfile, buf, size, &err);
@@ -3747,6 +4434,12 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand("demo_setspeed", CL_Demo_SetSpeed_f);
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
 	Cmd_AddCommand("demo_controls", DemoControls_f);
+
+	//
+	// mvd "recording"
+	//
+	Cmd_AddCommand("mvdrecord", CL_RecordMvd_f);
+	Cmd_AddCommand("mvdstop", CL_StopMvd_f);
 
 	//
 	// QTV commands.

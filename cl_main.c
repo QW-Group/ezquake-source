@@ -1115,6 +1115,13 @@ void CL_Disconnect (void)
 	if (cls.demorecording && cls.state != ca_disconnected)
 		CL_Stop_f();
 
+	if (cls.mvdrecording)
+	{
+		extern void CL_StopMvd_f(void);
+
+		CL_StopMvd_f();
+	}
+
 	if (cls.demoplayback) 
 	{
 		CL_StopPlayback();
