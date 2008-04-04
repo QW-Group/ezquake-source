@@ -742,6 +742,9 @@ void HUD_Recalculate_f(void)
 //
 void HUD_Init(void)
 {
+	// from hud.c, doesn't suit anywhere
+	void HUD_Inputlag_hit_f(void);
+
 	// Commands.
     Cmd_AddCommand ("show", HUD_Show_f);
     Cmd_AddCommand ("hide", HUD_Hide_f);
@@ -751,6 +754,7 @@ void HUD_Init(void)
     Cmd_AddCommand ("togglehud", HUD_Toggle_f);
     Cmd_AddCommand ("align", HUD_Align_f);
     Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
+	Cmd_AddCommand ("inputlag_hit", HUD_Inputlag_hit_f);
 
 	// Variables.
     Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
