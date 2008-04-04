@@ -1377,6 +1377,17 @@ void GLimp_EndFrame (void)
 //	QGL_EnableLogging( r_logFile.integer );
 }
 
+static void GLW_StartError( void )
+{
+	ST_Printf( PRINT_ERR_FATAL, 
+		"Could not load OpenGL subsystem\n"
+		"\n"
+		"You need to have proper graphics card drivers installed\n"
+		"\n"
+		"[GLW_StartOpenGL()]"
+	);
+}
+
 static void GLW_StartOpenGL( void )
 {
 	qbool attemptedOpenGL32 = false;
@@ -1412,14 +1423,14 @@ static void GLW_StartOpenGL( void )
 				{
 					if ( !GLW_LoadOpenGL( OPENGL_DRIVER_NAME ) )
 					{
-						ST_Printf( PRINT_ERR_FATAL, "GLW_StartOpenGL() - could not load OpenGL subsystem\n" );
+						GLW_StartError();
 					}
 					Cvar_Set( &r_glDriver, OPENGL_DRIVER_NAME );
 					r_glDriver.modified = false;
 				}
 				else
 				{
-					ST_Printf( PRINT_ERR_FATAL, "GLW_StartOpenGL() - could not load OpenGL subsystem\n" );
+					GLW_StartError();
 				}
 			}
 		}
@@ -1433,12 +1444,12 @@ static void GLW_StartOpenGL( void )
 			}
 			else
 			{
-				ST_Printf( PRINT_ERR_FATAL, "GLW_StartOpenGL() - could not load OpenGL subsystem\n" );
+				GLW_StartError();
 			}
 		}
 		else
 		{
-			ST_Printf( PRINT_ERR_FATAL, "GLW_StartOpenGL() - could not load OpenGL subsystem\n" );
+			GLW_StartError();
 		}
 	}
 }
