@@ -1184,6 +1184,8 @@ void CL_WriteMVDStartupData(void)
 	{
 		player = cl.players + i;
 
+		// do NOT ignore specs there, since we need at least userinfo
+
 		// Frags.
 		MSG_WriteByte (&buf, svc_updatefrags);
 		MSG_WriteByte (&buf, i);
@@ -1240,9 +1242,8 @@ void CL_WriteMVDStartupData(void)
 		if (!player->name[0])
 			continue;
 
-// FIXME: do we need send specs?
-//		if (player->spectator)
-//			continue;
+		if (player->spectator)
+			continue; // ignore specs
 
 		flags =   (DF_ORIGIN << 0) | (DF_ORIGIN << 1) | (DF_ORIGIN << 2)
 				| (DF_ANGLES << 0) | (DF_ANGLES << 1) | (DF_ANGLES << 2)
@@ -1306,7 +1307,7 @@ void CL_WriteMVDStartupData(void)
 			continue;
 
 		if (player->spectator)
-			continue;
+			continue; // ignore specs
 
 		stats = cl.players[i].stats;
 
