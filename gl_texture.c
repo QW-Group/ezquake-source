@@ -50,7 +50,7 @@ cvar_t	gl_max_size			= {"gl_max_size", "2048", 0, OnChange_gl_max_size};
 cvar_t	gl_picmip			= {"gl_picmip", "0"};
 cvar_t	gl_miptexLevel		= {"gl_miptexLevel", "0", 0, OnChange_gl_miptexLevel};
 cvar_t	gl_lerpimages		= {"gl_lerpimages", "1"};
-cvar_t	gl_texturemode		= {"gl_texturemode", "GL_LINEAR_MIPMAP_NEAREST", 0, OnChange_gl_texturemode};
+cvar_t	gl_texturemode		= {"gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", 0, OnChange_gl_texturemode};
 cvar_t	gl_anisotropy		= {"gl_anisotropy","1", 0, OnChange_gl_anisotropy};
 
 cvar_t	gl_scaleModelTextures		= {"gl_scaleModelTextures", "0"};
