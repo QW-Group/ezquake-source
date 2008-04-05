@@ -1381,6 +1381,12 @@ void CL_WriteMVDStartupData(void)
 
 void CL_StopMvd_f(void)
 {
+	if (!cls.mvdrecording && !mvdrecordfile)
+	{
+		Com_Printf ("Not recording a demo\n");
+		return;
+	}
+
 	if (mvdrecordfile)
 	{
 		char *quotes[] = {
@@ -1419,6 +1425,12 @@ void CL_StopMvd_f(void)
 
 		fclose(mvdrecordfile);
 		mvdrecordfile = NULL;
+
+		Com_Printf ("Completed demo\n");
+	}
+	else
+	{
+		Com_Printf ("BUG: Demo alredy completed or something\n");
 	}
 
 	cls.mvdrecording = false;
