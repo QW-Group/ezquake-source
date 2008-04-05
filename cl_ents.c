@@ -1675,7 +1675,7 @@ void CL_ParsePlayerinfo (void)
 
 		memcpy(state, prevstate, sizeof(player_state_t));
 
-		if (cls.findtrack && info->stats[STAT_HEALTH] > 0)
+		if (cls.findtrack && info->name[0] && !info->spectator)
 		{
 			extern int ideal_track;
 			autocam = CAM_TRACK;
@@ -1688,7 +1688,6 @@ void CL_ParsePlayerinfo (void)
 		state->flags = MVD_TranslateFlags(flags);
 
 		state->messagenum = cl.parsecount;
-		state->command.msec = 0;
 
 		state->frame = MSG_ReadByte ();
 
