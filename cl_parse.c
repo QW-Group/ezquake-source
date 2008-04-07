@@ -161,7 +161,7 @@ typedef struct cl_message_s
 
 static cl_message_t cl_messages[NUMMSG];
 
-void CL_Messages_f(void);
+static void CL_Messages_f(void);
 
 void Cl_Messages_Init(void)
 {
