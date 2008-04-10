@@ -846,7 +846,7 @@ void DumpHUD(const char *name)
 	qsort(sorted, i, sizeof(cvar_t *), Cvar_CvarCompare);
 
 	spaces = CreateSpaces(max_width - strlen(scr_newHud.name));
-	fprintf(f, "%s%s\"1\"\n", scr_newHud.name, spaces);
+	fprintf(f, "%s%s\"%d\"\n", scr_newHud.name, spaces, scr_newHud.integer);
 
 	for(j = 0; j < i; j++) {
 		spaces = CreateSpaces(max_width - strlen(sorted[j]->name));
