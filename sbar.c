@@ -1553,7 +1553,7 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 	x = 324;
 
 
-	if (/*vid.width < 640 && */cl.teamplay && scr_drawVFrags.value == 2)
+	if (vid.width < 640 && cl.teamplay && scr_drawVFrags.value == 2)
 		goto drawteams;
 
 	// scores
