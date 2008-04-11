@@ -112,6 +112,9 @@ cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};
 #endif
 
 
+// VFrags: only draw the frags for the first player when using mvinset
+#define MULTIVIEWTHISPOV() ((!cl_multiview.value) || (cl_mvinset.value && CURRVIEW == 1))
+
 
 /********************************** CONTROL **********************************/
 
@@ -1550,7 +1553,7 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 	x = 324;
 
 
-	if (vid.width < 640 && cl.teamplay && scr_drawVFrags.value == 2)
+	if (/*vid.width < 640 && */cl.teamplay && scr_drawVFrags.value == 2)
 		goto drawteams;
 
 	// scores
@@ -1875,7 +1878,7 @@ void Sbar_Draw(void) {
 
 	if (vid.width >= 512 && sb_lines > 0 
 		&& cl.gametype == GAME_DEATHMATCH && !scr_centerSbar.value 
-		&& (cl_multiview.value && cl_mvinset.value && CURRVIEW == 1)) // BUGFIX: Only draw the frags for the first player when using mvinset.
+		&& MULTIVIEWTHISPOV())
 	{
 		Sbar_MiniDeathmatchOverlay ();
 	}
