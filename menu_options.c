@@ -583,6 +583,7 @@ void OnShow_SettVideo(void) {
 	StoreCurrentVideoSettings(&mvs_selected);
 
 #endif
+	Settings_OnShow(&settvideo);
 }
 
 qbool CT_Opt_Video_Mouse_Event(const mouse_state_t *ms)
