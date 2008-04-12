@@ -242,6 +242,9 @@ Section "Uninstall"
   Delete "$INSTDIR\ezquake\locs.pak"
   Delete "$INSTDIR\ezquake\progs.pak"
   Delete "$INSTDIR\ezquake\help.pak"
+  Delete "$INSTDIR\ezquake\levelshots.pk3"
+  Delete "$INSTDIR\ezquake\locs.pk3"
+  Delete "$INSTDIR\ezquake\pak.lst"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\ezQuake\*.*"
