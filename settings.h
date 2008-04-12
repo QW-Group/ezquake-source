@@ -113,6 +113,7 @@ typedef struct {
     PScrollBar  scrollbar;  // scrollbar gui element
 	enum { SPM_NORMAL, SPM_BINDING, SPM_VIEWHELP, SPM_CHOOSESKIN } mode;
     int width, height;  // last drawed width and height
+	qbool mini;			// minimalistic version (doesn't display help and has infinite scrolling)
 } settings_page;
 
 #endif // __SETTINGS_H__
