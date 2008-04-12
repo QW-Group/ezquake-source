@@ -432,7 +432,10 @@ static float CalcFov (float fov_x, float width, float height) {
 //Must be called whenever vid changes
 static void SCR_CalcRefdef (void) {
 	float  size;
-#ifndef GLQUAKE
+#ifdef GLQUAKE
+	int h;
+	qbool full = false;
+#else
 	vrect_t vrect;
 #endif
 
@@ -449,64 +452,62 @@ static void SCR_CalcRefdef (void) {
 		Cvar_Set (&scr_viewsize, "120");
 
 	// intermission is always full screen
-	if (cl.intermission) {
-		size = 100.0;
-		sb_lines = 0;
-		sb_drawinventory = sb_drawmain = false;
-	}
+	size = cl.intermission ? 120 : scr_viewsize.value;
+
+	if (size >= 120)
+		sb_lines = 0;           // no status bar at all
+	else if (size >= 110)
+		sb_lines = 24;          // no inventory
 	else
-	{
-		size = scr_viewsize.value;
-
-		// decide how much of the status bar to draw
-		if (size >= 120) {
-			sb_lines = 0;           // no status bar at all
-			sb_drawinventory = sb_drawmain = false;
-		}
-		else if (size >= 110) {
-			sb_lines = 24;          // no inventory
-			sb_drawinventory = false;
-			sb_drawmain = true;
-		}
-		else {
-			sb_lines = 24 + 16 + 8; // full status bar
-			sb_drawinventory = sb_drawmain = true;
-		}
-
-		sb_oldmanssbar = (cl_sbar.value >= 2 && vid.width > 320);
-		sb_oldmanssbar2 = (cl_sbar.value == 3);
-
-		if (!cl_sbar.value || sb_oldmanssbar)
-			sb_lines = 0;
-
-		if (size > 100.0)
-			size = 100.0;
-	}
+		sb_lines = 24 + 16 + 8;
 
 #ifdef GLQUAKE
+
+	if (scr_viewsize.value >= 100.0) {
+		full = true;
+		size = 100.0;
+	} else {
+		size = scr_viewsize.value;
+	}
+	if (cl.intermission) {
+		full = true;
+		size = 100.0;
+		sb_lines = 0;
+	}
 	size /= 100.0;
 
-	r_refdef.vrect.width = (int)(vid.width * size + 1.0) & ~1;
+	if (!cl_sbar.value && full)
+		h = vid.height;
+	else
+		h = vid.height - sb_lines;
+
+	r_refdef.vrect.width = vid.width * size;
 	if (r_refdef.vrect.width < 96) {
 		size = 96.0 / r_refdef.vrect.width;
 		r_refdef.vrect.width = 96;      // min for icons
 	}
 
-	r_refdef.vrect.height = (int)(vid.height * size + 1.0) & ~1;
-	if (r_refdef.vrect.height > vid.height - sb_lines)
-		r_refdef.vrect.height = vid.height - sb_lines;
-	
+	r_refdef.vrect.height = vid.height * size;
+	if (cl_sbar.value || !full) {
+  		if (r_refdef.vrect.height > vid.height - sb_lines)
+  			r_refdef.vrect.height = vid.height - sb_lines;
+	} else if (r_refdef.vrect.height > vid.height) {
+			r_refdef.vrect.height = vid.height;
+	}
 	r_refdef.vrect.x = (vid.width - r_refdef.vrect.width) / 2;
-	r_refdef.vrect.y = (vid.height - sb_lines - r_refdef.vrect.height) / 2;
+	if (full)
+		r_refdef.vrect.y = 0;
+	else
+		r_refdef.vrect.y = (h - r_refdef.vrect.height) / 2;
 
-	r_refdef.fov_x = cl.intermission ? 90.0 : scr_fov.value;
+	r_refdef.fov_x = scr_fov.value;
 	r_refdef.fov_y = CalcFov (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
 
 	scr_vrect = r_refdef.vrect;
 
 #else
 
-	r_refdef.fov_x = cl.intermission ? 90.0 : scr_fov.value;
+	r_refdef.fov_x = scr_fov.value;
 	r_refdef.fov_y = CalcFov (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
 
 	// these calculations mirror those in R_Init() for r_refdef, but take noaccount of water warping

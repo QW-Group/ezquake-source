@@ -126,6 +126,9 @@ qbool Menu_Ingame_Mouse_Event(const mouse_state_t *ms) {
 void Menu_Ingame_Init(void)
 {
 	Settings_Page_Init(ingame_menu, ingame_menu_entries);
+	Settings_Page_SetMinit(ingame_menu);
 	Settings_Page_Init(democtrl_menu, democtrl_menu_entries);
+	Settings_Page_SetMinit(democtrl_menu);
 	Settings_Page_Init(botmatch_menu, botmatch_menu_entries);
+	Settings_Page_SetMinit(botmatch_menu);
 }

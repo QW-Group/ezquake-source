@@ -426,11 +426,21 @@ static void CheckCursor(settings_page *tab, qbool up)
 {	// this makes sure that cursor doesn't point at some meta-entry, section heading or hidden setting
 	setting *s;
 	while (tab->marked < 0) {
-		tab->marked = 0;
+		if (tab->mini) {
+			tab->marked = tab->count - 1;
+		}
+		else {
+			tab->marked = 0;
+		}
 		up = false;
 	}
 	if (tab->marked >= tab->count) {
-		tab->marked = tab->count - 1;
+		if (tab->mini) {
+			tab->marked = 1;
+		}
+		else {
+			tab->marked = tab->count - 1;
+		}
 		up = true;
 	}
 	s = tab->settings + tab->marked;
@@ -793,12 +803,14 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 
     w -= tab->scrollbar->width;
 
-	if (tab->mode != SPM_VIEWHELP) {
-		hbh = HELPLINES * LINEHEIGHT;
-		h -= Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab, false);
-	} else {
-		hbh = h - LINEHEIGHT * 4;
-		h -= Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab, true);
+	if (!tab->mini) {
+		if (tab->mode != SPM_VIEWHELP) {
+			hbh = HELPLINES * LINEHEIGHT;
+			h -= Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab, false);
+		} else {
+			hbh = h - LINEHEIGHT * 4;
+			h -= Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab, true);
+		}
 	}
 
     tab->width = w; tab->height = h;
@@ -926,6 +938,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	page->viewpoint = 0;
 	page->mode = SPM_NORMAL;
     page->scrollbar = ScrollBar_Create(NULL);
+	page->mini = false;
 
 	for (i = 0; i < size; i++) {
 		if (arr[i].type == stt_advmark) advancedmode = true;

@@ -1073,7 +1073,7 @@ setting settfps_arr[] = {
 
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_BOOL		("Linear interpolation", cl_nolerp),
+	ADDSET_BOOL		("Disable Linear interp.", cl_nolerp),
 	ADDSET_BASIC_SECTION(),
 
 

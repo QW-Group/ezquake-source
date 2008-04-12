@@ -118,7 +118,8 @@ Section "!ezQuake client" Main
   SetOutPath $INSTDIR\ezquake
   File "ezquake\pak0.pak"
   File "ezquake\help.pak"
-  File "ezquake\locs.pak"
+  File "ezquake\locs.pk3"
+  File "ezquake\levelshots.pk3"
   File "ezquake\pak.lst"
 
   CreateDirectory $INSTDIR\ezquake\cfg
