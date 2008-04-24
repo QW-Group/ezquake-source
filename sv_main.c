@@ -33,6 +33,7 @@ cvar_t	sv_maxtic = {"sv_maxtic", "0.1"};	//
 cvar_t	sv_timeout = {"sv_timeout","65"};		// seconds without any message
 cvar_t	sv_zombietime = {"sv_zombietime", "2"};	// seconds to sink messages
 											// after disconnect
+cvar_t	sv_cullentities = {"sv_cullentities", "1"};
 
 #ifdef SERVERONLY
 cvar_t	rcon_password = {"rcon_password", ""};	// password for remote server commands
@@ -1101,6 +1102,7 @@ void SV_InitLocal (void) {
 	Cvar_Register (&sv_halflifebsp);
 	Cvar_Register (&sv_maxpitch);
 	Cvar_Register (&sv_minpitch);
+	Cvar_Register (&sv_cullentities);
 
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	Cvar_Register (&sv_downloadchunksperframe);
