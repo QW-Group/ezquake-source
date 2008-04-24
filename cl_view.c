@@ -59,6 +59,7 @@ cvar_t	cl_drawgun = {"r_drawviewmodel", "1"};
 cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};
 cvar_t	r_viewmodeloffset = {"r_viewmodeloffset", ""};
 cvar_t  r_viewpreselgun = {"r_viewpreselgun", "0"};
+cvar_t	r_viewlastfired = {"r_viewmodellastfired", "0"};
 
 void Change_v_idle (cvar_t *var, char *value, qbool *cancel);
 cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", 0, Change_v_idle};
@@ -897,16 +898,40 @@ static int V_CurrentWeaponModel(void) {
 	extern int IN_BestWeapon(void);
 	extern cvar_t cl_weaponpreselect;
 	int bestgun;
+	static int lastfired = 0;
+	static int lastviewplayernum = 0;
+	int realw = cl.stats[STAT_WEAPON];
 
-	if (ShowPreselectedWeap() && r_viewpreselgun.value)
-	{
-		bestgun = IN_BestWeapon();
-		if (bestgun == 1) return cl_modelindices[mi_vaxe];
-		if (bestgun > 1 && bestgun <= 8)
-			return cl_modelindices[mi_weapon1 - 1 + bestgun];
+	if (cls.demoplayback && r_viewlastfired.integer) {
+		if (view_message.weaponframe) {
+			lastfired = realw;
+			lastviewplayernum = cl.viewplayernum;
+			return realw;
+		}
+		else if (lastfired) {
+			if (lastviewplayernum == cl.viewplayernum) {
+				return lastfired;
+			}
+			else {
+				lastfired = realw;
+				lastviewplayernum = cl.viewplayernum;
+				return realw;
+			}
+		}
+		else {
+			return realw;
+		}
 	}
-	
-	return cl.stats[STAT_WEAPON];
+	else {
+		if (ShowPreselectedWeap() && r_viewpreselgun.value)
+		{
+			bestgun = IN_BestWeapon();
+			if (bestgun == 1) return cl_modelindices[mi_vaxe];
+			if (bestgun > 1 && bestgun <= 8)
+				return cl_modelindices[mi_weapon1 - 1 + bestgun];
+		}
+		return cl.stats[STAT_WEAPON];
+	}
 }
 
 extern void TP_ParseWeaponModel(model_t *model);
@@ -1160,6 +1185,7 @@ void V_Init (void) {
 	Cvar_Register (&r_viewmodelsize);
 	Cvar_Register (&r_viewmodeloffset);
 	Cvar_Register (&r_viewpreselgun);
+	Cvar_Register (&r_viewlastfired);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
 	Cvar_Register (&v_kicktime);
