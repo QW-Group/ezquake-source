@@ -970,7 +970,7 @@ void Com_DPrintf (char *fmt, ...)
 	Com_Printf ("%s", msg);
 }
 
-void Com_Printf_State(int state, char *fmt, ...)
+void Com_Printf_State(int state, const char *fmt, ...)
 {
 /* Com_Printf equivalent with importance level as a first parm for each msg,
    it should be one of PRINT_OK, PRINT_INFO, PRINT_FAIL defines

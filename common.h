@@ -250,7 +250,7 @@ void Com_PrintVerticalBar(int width);
 #define PRINT_ERR_FATAL	(1<<5) // do Sys_Error()
 #define PRINT_DBG		(1<<6) // do not have prefix, printed only if developer != 0
 
-void Com_Printf_State(int state, char *fmt, ...);
+void Com_Printf_State(int state, const char *fmt, ...);
 // Com_Printf_State is too long name, so use define
 #define ST_Printf Com_Printf_State
 
