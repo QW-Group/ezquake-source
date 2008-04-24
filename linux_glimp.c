@@ -535,7 +535,12 @@ void EvDev_UpdateMouse(void *v) {
 }
 #endif
 
-void IN_Commands (void) { /* empty */ }
+// from in_linux.c
+extern void IN_CommandsJoystick (void);        
+
+void IN_Commands (void) {
+        IN_CommandsJoystick ();
+}
 
 #ifdef WITH_EVDEV
 // idea/code stolen from Alan 'Strider' Kivlin
@@ -1772,4 +1777,5 @@ void VID_SetDeviceGammaRamp (unsigned short *ramps) {
 		}
 	}
 }
+
 

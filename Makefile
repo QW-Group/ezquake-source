@@ -32,7 +32,7 @@ endif
 
 ifeq ($(OS),linux)
 	DEFAULT_TARGET = glx
-	OS_GL_CFLAGS = -DWITH_DGA -DWITH_EVDEV -DWITH_VMODE
+	OS_GL_CFLAGS = -DWITH_DGA -DWITH_EVDEV -DWITH_VMODE -DWITH_JOYSTICK
 endif
 ifeq ($(OS),darwin)
 	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
