@@ -471,8 +471,11 @@ int oldPingHost(char *host_to_ping, int count)
 
 		/* Look for the RTT */
 		icmp_recv_header = IP_DecodePacket(&ip_recv_packet, bread, &from, addr);
-        if (!(rtt = ICMP_GetEchoResponseTime(icmp_recv_header)))
-            continue;
+		if (icmp_recv_header) {
+			if (!(rtt = ICMP_GetEchoResponseTime(icmp_recv_header))) {
+				continue;
+			}
+		}
 
         break;
     }
