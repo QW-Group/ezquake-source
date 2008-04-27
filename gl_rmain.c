@@ -110,7 +110,7 @@ cvar_t	r_skycolor   = {"r_skycolor", "40 80 150", CVAR_COLOR};
 cvar_t  r_telecolor  = {"r_telecolor", "255 60 60", CVAR_COLOR};
 cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0", CVAR_COLOR};
 cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10", CVAR_COLOR};
-cvar_t  r_watercolor = {"r_watercolor", "50 80 120", CVAR_COLOR};
+cvar_t  r_watercolor = {"r_watercolor", "10 50 80", CVAR_COLOR};;
 
 void OnChange_r_drawflat(cvar_t *v, char *skyname, qbool *cancel);
 cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
