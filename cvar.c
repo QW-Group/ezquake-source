@@ -280,8 +280,16 @@ void Cvar_Set (cvar_t *var, char *value)
 		//       So, flag CVAR_SILENT for latched cvars mean no this warning.
 		//       However keep this flag always on latched variable is stupid imo.
 		//       So, do not mix CVAR_LATCHED | CVAR_SILENT in cvar definition.
-		if ( !(var->flags & CVAR_SILENT) )
-			Com_Printf ("%s needs vid_restart (video/graphics) or snd_restart (sound) to take effect.\n", var->name);
+		if ( !(var->flags & CVAR_SILENT) ) {
+			const char* restartcmd = "vid_restart (video/graphics)";
+			if (strncmp(var->name, "in_", 3) == 0) {
+				restartcmd = "in_restart (input)";
+			}
+			else if (strncmp(var->name, "s_", 2) == 0) {
+				restartcmd = "snd_restart (sound)";
+			}
+			Com_Printf ("%s needs %s to take effect.\n", var->name, restartcmd);
+		}
 		var->latchedString = Z_Strdup (value);
 		var->modified = true; // set to true even car->string is not changed yet, that how q3 does
 		return;
