@@ -249,6 +249,7 @@ cvar_t  in_m_mwhook			= {"in_m_mwhook",        "0",   CVAR_LATCH};
 cvar_t  in_m_os_parameters	= {"in_m_os_parameters", "0",   CVAR_LATCH};
 
 cvar_t  in_di_bufsize		= {"in_di_bufsize",      "16",  CVAR_LATCH}; // if you change default, then change DI_BufSize() too
+cvar_t  in_di_buffered      = {"in_di_buffered",     "1", CVAR_LATCH};
 
 qbool use_m_smooth = false;
 HANDLE m_event;
@@ -1178,13 +1179,16 @@ qbool IN_InitDInput (void) {
 
 	// set the buffer size to DI_BufSize() elements.
 	// the buffer size is a DWORD property associated with the device
-	hr = IDirectInputDevice7_SetProperty(g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
-
-	if (FAILED(hr)) {
-		Com_Printf_State(PRINT_FAIL, "Couldn't set DI buffersize\n");
-		return false;
+	if (in_di_buffered.integer) {
+		hr = IDirectInputDevice7_SetProperty(g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
+		if (FAILED(hr)) {
+			Com_Printf_State(PRINT_FAIL, "Couldn't set DI buffersize\n");
+			return false;
+		}
 	}
-
+	else {
+		// no properties for immediate input
+	}
 
 	IN_SMouseInit();
 
@@ -1334,6 +1338,7 @@ void IN_Init (void) {
     Cvar_Register (&in_m_mwhook);
     Cvar_Register (&in_m_os_parameters);
     Cvar_Register (&in_di_bufsize);
+	Cvar_Register (&in_di_buffered);
 
     if (!host_initialized)
     {
@@ -1515,7 +1520,8 @@ void IN_MouseMove (usercmd_t *cmd) {
 
 		if (use_m_smooth) {
 			IN_SMouseRead(&mx, &my);
-		} else {
+		}
+		else if (in_di_buffered.integer) {
 			while (1) {
 				dwElements = 1;
 
@@ -1565,9 +1571,54 @@ void IN_MouseMove (usercmd_t *cmd) {
 						}
 						break;
 				
+				} // end switch
+			} // end while loop
+		}
+		else {
+			// immediate (non-buffered)
+			MYDATA st;
+
+			hr = IDirectInputDevice_GetDeviceState(g_pMouse, sizeof(st), &st);
+
+			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED)) {
+				dinput_acquired = true;
+				IDirectInputDevice_Acquire(g_pMouse);
+			}
+			else if (hr == DI_OK) {
+				// hr == DI_OK
+				mx += st.lX;
+				my += st.lY;
+				for (i = 0; i < mouse_buttons; i++) {
+					LONG v = *((BYTE*) ((&st.bButtonA) + i));
+					if (v & 0x80) {
+						mstate_di |= (1	<< i);
+					}
+					else {
+						mstate_di &= ~(1 <<	i);
+					}
+				}
+
+				if (in_mwheeltype != MWHEEL_WINDOWMSG)
+				{
+					in_mwheeltype = MWHEEL_DINPUT;
+					value = st.lZ;
+
+					if (value > 0) {
+						Key_Event(K_MWHEELUP, true);
+						Key_Event(K_MWHEELUP, false);
+					} else if (value < 0) {
+						Key_Event(K_MWHEELDOWN, true);
+						Key_Event(K_MWHEELDOWN, false);
+					} else {
+						; // value == 0
+					}
 				}
 			}
-		}
+			else {
+				// hr != DI_OK
+				Com_Printf("DInput: GetDeviceState failed\n");
+			}
+		} // end else: immediate
 		// perform button actions
 		for (i = 0; i < mouse_buttons; i++) {
 			if ( (mstate_di & (1 << i)) && !(mouse_oldbuttonstate & (1 << i)) )
