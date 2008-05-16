@@ -2310,7 +2310,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/bash\nEXECFILE=${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\nLIBPATH=${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\nNEWLIBPATH=\"@executable_path/../SharedSupport\"\n\n# space separated list of libraries\nTARGETS=\"libpcre.dylib libexpat.dylib libpng12.dylib\"\nfor TARGET in ${TARGETS} ; do\nLIBFILE=${LIBPATH}/${TARGET}\nTARGETID=`otool -DX ${LIBPATH}/$TARGET`\nNEWTARGETID=${NEWLIBPATH}/${TARGET}\ninstall_name_tool -id ${NEWTARGETID} ${LIBFILE}\ninstall_name_tool -change ${TARGETID} ${NEWTARGETID} ${EXECFILE}\ndone";
+			shellScript = "#!/bin/bash\nEXECFILE=${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\nLIBPATH=${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\nNEWLIBPATH=\"@executable_path/../SharedSupport\"\n\n# space separated list of libraries\nTARGETS=\"libpcre.dylib libexpat.dylib libjpeg.dylib libpng12.dylib\"\nfor TARGET in ${TARGETS} ; do\nLIBFILE=${LIBPATH}/${TARGET}\nTARGETID=`otool -DX ${LIBPATH}/$TARGET`\nNEWTARGETID=${NEWLIBPATH}/${TARGET}\ninstall_name_tool -id ${NEWTARGETID} ${LIBFILE}\ninstall_name_tool -change ${TARGETID} ${NEWTARGETID} ${EXECFILE}\ndone";
 		};
 		F8D15C9E09FF98B200F9146F /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
