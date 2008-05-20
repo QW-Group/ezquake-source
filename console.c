@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "logging.h"
 #include "utils.h"
 #include "localtime.h"
+#include "irc.h"
 
 
 #define		MINIMUM_CONBUFSIZE	(1 << 15)
@@ -290,26 +291,27 @@ void Con_ClearNotify (void) {
 		con_times[i] = 0;
 }
 
-void Con_MessageMode_f (void) {
+void Con_MessageMode_Common (chat_type t) {
 	if (cls.state != ca_active)
 		return;
 
-	chat_team = false;
+	chat_team = t;
 	key_dest_beforemm = key_dest; // where to return after we finish typing
 	key_dest = key_message;
 	chat_buffer[0] = 0;
 	chat_linepos = 0;
 }
 
-void Con_MessageMode2_f (void) {
-	if (cls.state != ca_active)
-		return;
+void Con_MessageMode_f (void) {
+	Con_MessageMode_Common(chat_mm1);
+}
 
-	chat_team = true;
-	key_dest_beforemm = key_dest; // where to return after we finish typing
-	key_dest = key_message;
-	chat_buffer[0] = 0;
-	chat_linepos = 0;
+void Con_MessageMode2_f (void) {
+	Con_MessageMode_Common(chat_mm2);
+}
+
+void Con_MessageModeIRC_f (void) {
+	Con_MessageMode_Common(chat_irc);
 }
 
 //If the line width has changed, reformat the buffer
@@ -493,6 +495,7 @@ void Con_Init (void) {
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
 	Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
+	Cmd_AddCommand ("messagemodeirc", Con_MessageModeIRC_f);
 	Cmd_AddCommand ("clear", Con_Clear_f);
     Cmd_AddCommand ("date", Date_f);
 	Cmd_AddCommand ("calendar", Calendar_f);
@@ -765,12 +768,22 @@ void Con_DrawNotify (void) {
 		clearnotify = 0;
 		scr_copytop = 1;
 
-		if (chat_team) {
+		if (chat_team == chat_mm2) {
 			Draw_String (8, v + bound(0, con_shift.value, 8), "say_team:");
 			skip = 11;
-		} else {
+		}
+		else if (chat_team == chat_mm1) {
 			Draw_String (8, v + bound(0, con_shift.value, 8), "say:");
 			skip = 5;
+		}
+		else if (chat_team == chat_irc) {
+			char dest[256];
+			
+			strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
+			strlcat(dest, ":", sizeof(dest));
+			skip = strlen(dest) + 1; // is this correct? not sure
+
+			Draw_String (8, v + bound(0, con_shift.value, 8), dest);
 		}
 
 		// FIXME: clean this up

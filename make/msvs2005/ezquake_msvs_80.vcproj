@@ -54,7 +54,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_DEPRECATE&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
+				AdditionalIncludeDirectories="..\..\libs;&quot;$(DXSDK_DIR)\Include&quot;;..\..\libs\libircclient"
 				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP"
 				StringPooling="false"
 				MinimalRebuild="true"
@@ -96,13 +96,13 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
 				ShowProgress="0"
 				OutputFile="..\ezquake-gl-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
+				AdditionalLibraryDirectories="&quot;..\..\libs\windows-x86&quot;;&quot;$(DXSDK_DIR)\Lib\x86&quot;;&quot;$(DXSDK_DIR)\Lib&quot;;..\..\libs\libircclient"
 				GenerateManifest="false"
 				ManifestFile=""
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
@@ -184,7 +184,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
 				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -220,12 +220,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
 				OutputFile="..\ezquake.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
 				GenerateManifest="true"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
 				ModuleDefinitionFile=""
@@ -308,7 +308,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
 				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;GLQUAKE;id386;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -344,12 +344,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
 				OutputFile="..\ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
 				ModuleDefinitionFile=""
@@ -428,7 +428,7 @@
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_DEPRECATE&quot;"
 				Optimization="0"
 				FavorSizeOrSpeed="0"
-				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
 				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP"
 				MinimalRebuild="true"
 				ExceptionHandling="0"
@@ -467,12 +467,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
 				OutputFile="..\ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
 				ModuleDefinitionFile=""
 				GenerateDebugInformation="true"
@@ -1878,6 +1878,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\irc.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\keymap.c"
 					>
 				</File>
@@ -2402,6 +2406,10 @@
 				</File>
 				<File
 					RelativePath="..\..\ignore.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\irc.h"
 					>
 				</File>
 				<File

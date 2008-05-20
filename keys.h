@@ -214,9 +214,11 @@ extern int		key_repeats[UNKNOWN + 256];
 extern qbool	keydown[UNKNOWN + 256];
 extern int		key_lastpress;
 
+typedef enum { chat_mm1, chat_mm2, chat_irc }	chat_type;
 extern wchar 	chat_buffer[];
 extern int 		chat_linepos;
-extern qbool	chat_team;
+extern chat_type chat_team;
+
 
 // this is message type sent across windows that accept mouse pointer
 typedef struct mouse_state_s {

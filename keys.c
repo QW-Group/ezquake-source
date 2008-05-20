@@ -43,6 +43,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 #include "hud_editor.h"
 #include "demo_controls.h"
+#include "irc.h"
 
 //key up events are sent even if in console mode
 
@@ -1205,7 +1206,8 @@ void Key_Console (int key, int unichar)
 
 //============================================================================
 
-qbool	chat_team;
+chat_type chat_team;
+
 qbool chat_observers;	// added by jogi
 qbool chat_server;		// added by jogi
 wchar		chat_buffer[MAXCMDLINE];
@@ -1219,9 +1221,30 @@ void Key_Message (int key, wchar unichar) {
 		case K_ENTER:
 			if (chat_buffer[0])
 			{
-				Cbuf_AddText (chat_team ? "say_team \"" : "say \"");
-				Cbuf_AddText(encode_say(chat_buffer));
-				Cbuf_AddText("\"\n");
+				qbool irccommand = false;
+				switch (chat_team) {
+					case chat_mm2: Cbuf_AddText("say_team \""); break;
+					case chat_irc:
+						if (chat_buffer[0] == '/') {
+							irccommand = true;
+							Cbuf_AddText("irc ");	
+						}
+						else {
+							Cbuf_AddText("irc say \"");
+						}
+						break;
+
+					default:
+					case chat_mm1: Cbuf_AddText("say \""); break;
+				}
+
+				if (irccommand) {
+					Cbuf_AddText(encode_say(chat_buffer+1));
+				}
+				else {
+					Cbuf_AddText(encode_say(chat_buffer));
+					Cbuf_AddText("\"\n");
+				}
 			}
             
 			if (key_dest_beforemm != key_message && key_dest_beforemm != key_console)
@@ -1273,6 +1296,18 @@ void Key_Message (int key, wchar unichar) {
 			if (chat_buffer[chat_linepos])
 				qwcscpy(chat_buffer + chat_linepos, chat_buffer + chat_linepos + 1);
 			return;
+
+		case K_PGDN:
+			if (chat_team == chat_irc) {
+				IRC_NextChan();
+			}
+			break;
+
+		case K_PGUP:
+			if (chat_team == chat_irc) {
+				IRC_PrevChan();
+			}
+			break;
 	}
 
 	if (((key == 'V' || key == 'v') && keydown[K_CTRL] && !keydown[K_ALT])

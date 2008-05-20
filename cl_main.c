@@ -88,6 +88,7 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #endif
 #include "fs.h"
 #include "help.h"
+#include "irc.h"
 
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
@@ -1817,6 +1818,7 @@ void CL_Init (void)
 	Stats_Init();
 	MP3_Init();
 	SB_RootInit();
+	IRC_Init();
 
 	QTV_Init();
 
@@ -2376,6 +2378,8 @@ void CL_Frame (double time)
 	Sys_ReadIPC();
 
 	CL_QTVPoll();
+
+	IRC_Update();
 
 	CL_UpdateCaption(false);
 }
