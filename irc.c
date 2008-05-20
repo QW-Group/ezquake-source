@@ -67,6 +67,13 @@ qbool IRC_Chanlist_Remove(irc_chanlist *list, const char* chan)
 				list->list[i] = list->list[list->size-1];
 			}
 			list->size--;
+
+			if (list->current >= list->size) {
+				// don't select the next window as the removed one was the last one
+				// so select the previous one, or none if list is empty
+				list->current = list->size ? list->size - 1 : 0;
+			}
+
 			return true;
 		}
 	}
@@ -311,14 +318,7 @@ void IRC_event_universal (irc_session_t * session, const char * event, const cha
 	}
 
 
-	Com_Printf ("Event \"%s\", origin: \"%s\", params: %d [%s]", event, origin ? origin : "NULL", cnt, buf);
-}
-
-
-DWORD WINAPI IRC_Run(void * lpParameter)
-{
-	irc_run (irc_singlesession);
-	return 0;
+	Com_Printf ("Event \"%s\", origin: \"%s\", params: %d [%s]\n", event, origin ? origin : "NULL", cnt, buf);
 }
 
 static void IRC_irc_f(void)
@@ -376,6 +376,25 @@ static void IRC_irc_f(void)
 			irc_cmd_msg(irc_singlesession, targetnick, msg);
 			Com_Printf("IRC: (%s) <%s> %s\n", targetnick, ctx->nick, msg);
 		}
+	}
+	else if (strcmp(Cmd_Argv(1), "window") == 0) {
+		if (Cmd_Argc() < 3) {
+		}
+		else {
+			if (strcmp(Cmd_Argv(2), "next") == 0) {
+				IRC_NextChan();
+			}
+			else if (strcmp(Cmd_Argv(2), "prev") == 0) {
+				IRC_PrevChan();
+			}
+			else if (strcmp(Cmd_Argv(2), "close") == 0) {
+				IRC_Chanlist_Remove(&ctx->chanlist, IRC_GetCurrentChan());
+			}
+			else {
+				Com_Printf("Uknown argument. Valid arguments: next, prev, close\n");
+			}
+		}
+		Com_Printf("IRC: Current window: %s\n", IRC_GetCurrentChan());
 	}
 	else if (strcmp(Cmd_Argv(1), "nick") == 0) {
 		if (Cmd_Argc() >= 3) {
