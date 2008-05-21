@@ -61,7 +61,7 @@ qbool IRC_Chanlist_Remove(irc_chanlist *list, const char* chan)
 	int i, found = 0;
 
 	for (i = 0; i < list->size; i++) {
-		if (strcmp(list->list[i], chan)) {
+		if (strcmp(list->list[i], chan) == 0) {
 			Q_free(list->list[i]);
 			if (list->size > 1) {
 				list->list[i] = list->list[list->size-1];
@@ -130,7 +130,9 @@ char *Cmd_ArgLine(unsigned int starting_from_arg)
 	args[0] = '\0';
 
 	for (i = starting_from_arg; i < Cmd_Argc(); i++) {
-		if (i > starting_from_arg) strlcat (args, " ", MAX_MACRO_STRING);
+		if (i > starting_from_arg)
+			strlcat (args, " ", MAX_MACRO_STRING);
+
 		strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
 	}
 

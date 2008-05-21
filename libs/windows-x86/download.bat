@@ -10,3 +10,4 @@ wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/win
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/dinput.lib
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/dsound.lib
 wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/dxguid.lib
+wget http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libircclient-static.lib
