@@ -396,7 +396,7 @@ int Player_StringtoSlot(char *arg)
 	// Match on partial names by only comparing the
 	// same amount of chars as in the given argument
 	// with all the player names. The first match will be picked.
-	arg_length = strlen(arg);
+	arg_length = strlen(arg) + 1;
 
 	// Try finding the player by comparing the argument to all the player names (CASE SENSITIVE)
 	for (i = 0; i < MAX_CLIENTS; i++)
