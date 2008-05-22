@@ -161,13 +161,17 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel)
 	
 	anisotropy_tap = newvalue;
 
+	if (!anisotropy_ext)
+		return; // we doesn't have such extension
+
 	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
 	{
-		if (glt->texmode & TEX_MIPMAP)
-		{
+// well, its funny, in GL_Upload32() we set glTexParameterf() anyway, doesn't matter mipmapped or not, so why we do it different here?
+//		if (glt->texmode & TEX_MIPMAP)
+//		{
 			GL_Bind (glt->texnum);
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, newvalue);
-		}
+//		}
 	}
 }
 
@@ -343,7 +347,7 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	}
 
-	if (anisotropy_ext == 1)
+	if (anisotropy_ext)
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 
 	Q_free(newdata);

@@ -134,7 +134,7 @@ void R_TranslatePlayerSkin (int playernum) {
 
 			// FIXME: in ideal, GL_LoadTexture() must be issued in Skin_Cache(), but I fail with that, so move it here
 			playernmtextures[playernum] = player->skin->texnum =
-				GL_LoadTexture (player->skin->name, player->skin->width, player->skin->height, original, TEX_MIPMAP | TEX_NOSCALE, 4);
+				GL_LoadTexture (player->skin->name, player->skin->width, player->skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 
 			return; // we done all we want
 

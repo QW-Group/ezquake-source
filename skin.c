@@ -289,7 +289,7 @@ void Skins_PreCache(void)
 		if (skins[i].texnum) // seems skin alredy loaded, at least we have some texture
 			continue; 
 
-		skins[i].texnum = GL_LoadTexture (skins[i].name, skins[i].width, skins[i].height, tex, TEX_MIPMAP | TEX_NOSCALE, 4);
+		skins[i].texnum = GL_LoadTexture (skins[i].name, skins[i].width, skins[i].height, tex, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 
 		Com_DPrintf("skin precache: %s, texnum %d\n", skins[i].name, skins[i].texnum);
 	}
