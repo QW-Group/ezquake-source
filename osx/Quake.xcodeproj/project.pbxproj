@@ -2177,7 +2177,6 @@
 				D29BE27809C61F4200EBE023 /* Sources */,
 				D29BE27909C61F4200EBE023 /* Frameworks */,
 				F8D15C9809FF988A00F9146F /* CopyFiles */,
-				F8D15C9E09FF98B200F9146F /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -2200,7 +2199,6 @@
 				D29BE28209C61F5200EBE023 /* Sources */,
 				D29BE28309C61F5200EBE023 /* Frameworks */,
 				F80D05BA09FF8D69000B5B44 /* CopyFiles */,
-				F80D05D109FF8E7A000B5B44 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -2284,35 +2282,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		F80D05D109FF8E7A000B5B44 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "#!/bin/bash\nEXECFILE=${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\nLIBPATH=${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\nNEWLIBPATH=\"@executable_path/../SharedSupport\"\n\n# space separated list of libraries\nTARGETS=\"libpcre.dylib libexpat.dylib libjpeg.dylib libpng12.dylib\"\nfor TARGET in ${TARGETS} ; do\nLIBFILE=${LIBPATH}/${TARGET}\nTARGETID=`otool -DX ${LIBPATH}/$TARGET`\nNEWTARGETID=${NEWLIBPATH}/${TARGET}\ninstall_name_tool -id ${NEWTARGETID} ${LIBFILE}\ninstall_name_tool -change ${TARGETID} ${NEWTARGETID} ${EXECFILE}\ndone";
-		};
-		F8D15C9E09FF98B200F9146F /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "#!/bin/bash\nEXECFILE=${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\nLIBPATH=${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\nNEWLIBPATH=\"@executable_path/../SharedSupport\"\n\n# space separated list of libraries\nTARGETS=\"libpcre.dylib libexpat.dylib\"\nfor TARGET in ${TARGETS} ; do\nLIBFILE=${LIBPATH}/${TARGET}\nTARGETID=`otool -DX ${LIBPATH}/$TARGET`\nNEWTARGETID=${NEWLIBPATH}/${TARGET}\ninstall_name_tool -id ${NEWTARGETID} ${LIBFILE}\ninstall_name_tool -change ${TARGETID} ${NEWTARGETID} ${EXECFILE}\ndone";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		D29BE27809C61F4200EBE023 /* Sources */ = {
