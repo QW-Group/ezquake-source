@@ -826,11 +826,15 @@ void R_DrawAliasModel (entity_t *ent) {
 	paliashdr = (aliashdr_t *) Mod_Extradata (ent->model);	//locate the proper data
 
 	if (ent->frame >= paliashdr->numframes || ent->frame < 0) {
-		Com_DPrintf ("R_DrawAliasModel: no such frame %d\n", ent->frame);
+		if (ent->model->modhint != MOD_EYES)
+			Com_DPrintf ("R_DrawAliasModel: no such frame %d\n", ent->frame);
+
 		ent->frame = 0;
 	}
 	if (ent->oldframe >= paliashdr->numframes || ent->oldframe < 0) {
-		Com_DPrintf ("R_DrawAliasModel: no such oldframe %d\n", ent->oldframe);
+		if (ent->model->modhint != MOD_EYES)
+			Com_DPrintf ("R_DrawAliasModel: no such oldframe %d\n", ent->oldframe);
+
 		ent->oldframe = 0;
 	}
 
