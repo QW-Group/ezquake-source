@@ -2727,7 +2727,15 @@ void CL_ParseStufftext (void)
 {
 	char *s = MSG_ReadString();
 
-	Com_DPrintf ("stufftext: %s\n", s);
+	if (!strncmp(s, "//wps ", sizeof("//wps ") - 1))
+	{
+		if (developer.integer > 1)
+			Com_DPrintf ("stufftext: %s\n", s);	
+	}
+	else
+	{
+		Com_DPrintf ("stufftext: %s\n", s);	
+	}
 
 	if (!strncmp(s, "alias _cs", 9))
 		Cbuf_AddTextEx(&cbuf_svc, "alias _cs \"wait;+attack;wait;wait;-attack;wait\"\n");
