@@ -289,7 +289,7 @@ void Rulesets_Init (void)
 void Rulesets_OnChange_indphys (cvar_t *var, char *value, qbool *cancel)
 {
 	if (cls.state != ca_disconnected) {
-		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
+		Com_Printf ("%s can be changed only when disconnected\n", var->name);
 		*cancel = true;
 	}
 	else *cancel = false;
@@ -356,7 +356,7 @@ static void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel)
 	extern void Cmd_ReInitAllMacro (void);
 
 	if (cls.state != ca_disconnected) {
-		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
+		Com_Printf ("%s can be changed only when disconnected\n", var->name);
 		*cancel = true;
 		return;
 	}
