@@ -266,8 +266,6 @@ int Mod_ReadFlagsFromMD1(char *name, int md3version)
 	return pinmodel->flags;
 }
 
-byte *FS_LoadFile (char *path, int usehunk); //for mem allocation
-
 void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 {
 #define ll(x) x=LittleLong(x)	//easier to type byte swap
