@@ -2022,10 +2022,14 @@ void CL_UpdateUserinfo (void)
 
 	CL_ProcessUserInfo(slot, player, NULL);
 
-	if (player->name[0] && was_empty_slot)
+	if (player->name[0] && was_empty_slot) {
 		CL_PlayerEnterSlot(player);
-	else if (!player->name[0] && !was_empty_slot)
+		MVD_Init_Info_f();
+	}
+	else if (!player->name[0] && !was_empty_slot) {
 		CL_PlayerLeaveSlot(player);
+		MVD_Init_Info_f();
+	}
 }
 
 void CL_SetInfo (void) 

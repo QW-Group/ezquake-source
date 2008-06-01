@@ -22,9 +22,14 @@ $Id: mvd_utils.h,v 1.5 2007-09-24 21:41:17 johnnycz Exp $
 // main header for a group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
 
 void MVD_Screen (void);
+
+// initialize the module, add variables and commands
 void MVD_Utils_Init (void); 
 void MVD_Mainhook_f (void);
 void MVD_Stats_Cleanup_f (void);
+
+// update match info structures
+void MVD_Init_Info_f (void);
 
 extern int powerup_cam_active,cam_1,cam_2,cam_3,cam_4;
 extern cvar_t mvd_pc_view_1,mvd_pc_view_2,mvd_pc_view_3,mvd_pc_view_4;
