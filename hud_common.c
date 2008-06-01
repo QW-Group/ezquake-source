@@ -1285,6 +1285,9 @@ void SCR_HUD_DrawGunCurrent (hud_t *hud)
 	if (ShowPreselectedWeap()) {
 	// using weapon pre-selection so show info for current best pre-selected weapon
 		gun = IN_BestWeapon();
+		if (gun < 2) {
+			return;
+		}
 	} else {
 	// not using weapon pre-selection or player is dead so show current selected weapon
 		switch (HUD_Stats(STAT_ACTIVEWEAPON))
@@ -1299,7 +1302,6 @@ void SCR_HUD_DrawGunCurrent (hud_t *hud)
 			default: return;
 		}
 	}
-
 
     SCR_HUD_DrawGunByNum (hud, gun, scale->value, style->value, wide->value);
 }
