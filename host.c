@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #endif
 #include "quakedef.h"
+#include "winquake.h"
 #include "EX_browser.h"
 #include "fs.h"
 #ifdef WITH_TCL
@@ -769,6 +770,10 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			Startup_Place();
 		}
 	}
+
+#ifdef _WIN32
+	SetForegroundWindow(mainwindow);
+#endif
 }
 
 //FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better
