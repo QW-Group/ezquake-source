@@ -454,12 +454,12 @@ void IN_SMouseRead (int *mx, int *my)
 	// Gather data from	last read seq to now.
 	for ( ; m_history_x_rseq < m_history_x_wseq; m_history_x_rseq++)
 	{
-		x += m_history_x[m_history_x_rseq&M_HIST_MASK].data;
+		x += m_history_x[m_history_x_rseq & M_HIST_MASK].data;
 	}
 	
 	for ( ; m_history_y_rseq < m_history_y_wseq; m_history_y_rseq++)
 	{
-		y += m_history_y[m_history_y_rseq&M_HIST_MASK].data;
+		y += m_history_y[m_history_y_rseq & M_HIST_MASK].data;
 	}
 
 	x -= acc_x;
@@ -1284,7 +1284,7 @@ void IN_StartupMouse (void)
 #if DIRECTINPUT_VERSION	>= 0x0700
 	if (in_mouse.integer == mt_dinput) 
 	{
-		dinput = IN_InitDInput ();
+		dinput = IN_InitDInput();
 
 		if (dinput) 
 		{
@@ -1586,14 +1586,14 @@ void IN_MouseEvent (int mstate)
 
 	if (mouseactive && !dinput) 
 	{
-		// perform button actions
+		// Perform button actions.
 		for (i = 0; i < mouse_buttons; i++) 
 		{
 			if ((mstate & (1 << i)) && !(mouse_oldbuttonstate & (1 << i)))
-				Key_Event (K_MOUSE1 + i, true);
+				Key_Event(K_MOUSE1 + i, true);
 
 			if (!(mstate & (1 << i)) && (mouse_oldbuttonstate & (1 << i)))
-				Key_Event (K_MOUSE1 + i, false);
+				Key_Event(K_MOUSE1 + i, false);
 		}
 		mouse_oldbuttonstate = mstate;
 	}
@@ -1640,7 +1640,7 @@ void IN_MouseMove (usercmd_t *cmd)
 					break;
 				}
 
-				if(hr == DI_BUFFEROVERFLOW)
+				if (hr == DI_BUFFEROVERFLOW)
 					SetBufferSize();
 
 				// Unable to read data or no data available.
@@ -1660,6 +1660,7 @@ void IN_MouseMove (usercmd_t *cmd)
 						my += od.dwData;
 						break;
 					}
+
 					INPUT_CASE_DINPUT_MOUSE_BUTTONS
 					
 					case DIMOFS_Z:
@@ -1772,7 +1773,7 @@ void IN_MouseMove (usercmd_t *cmd)
 	else
 	#endif // USINGRAWINPUT
 	{
-		GetCursorPos (&current_pos);
+		GetCursorPos(&current_pos);
 		mx = current_pos.x - window_center_x + mx_accum;
 		my = current_pos.y - window_center_y + my_accum;
 		mx_accum = my_accum = 0;
@@ -1782,7 +1783,7 @@ void IN_MouseMove (usercmd_t *cmd)
 	// Do not move the player if we're in HUD editor or menu mode. 
 	// And don't apply ingame sensitivity, since that will make movements jerky.
 	//
-	if(key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)
+	if (key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls || key_dest == key_console)
 	{
 		old_mouse_x = mouse_x = mx * cursor_sensitivity.value;
 		old_mouse_y = mouse_y = my * cursor_sensitivity.value;
@@ -1834,7 +1835,9 @@ void IN_MouseMove (usercmd_t *cmd)
 				cl.viewangles[PITCH] = cl.maxpitch;
 			if (cl.viewangles[PITCH] < cl.minpitch)
 				cl.viewangles[PITCH] = cl.minpitch;
-		} else {
+		} 
+		else 
+		{
 			cmd->forwardmove -= m_forward.value * mouse_y;
 		}
 	}
@@ -1842,7 +1845,7 @@ void IN_MouseMove (usercmd_t *cmd)
 	// if the mouse has moved, force it to the center, so there's room to move
 	if (mx || my)
 	{
-		SetCursorPos (window_center_x, window_center_y);
+		SetCursorPos(window_center_x, window_center_y);
 	}
 }
 
@@ -1850,8 +1853,8 @@ void IN_Move (usercmd_t *cmd)
 {
 	if (ActiveApp && !Minimized)
 	{
-		IN_MouseMove (cmd);
-		IN_JoyMove (cmd);
+		IN_MouseMove(cmd);
+		IN_JoyMove(cmd);
 	}
 }
 void IN_Accumulate (void) 
@@ -1868,7 +1871,10 @@ void IN_Accumulate (void)
 		GetCursorPos (&current_pos);
 
 		// Cursor free while not ingame.
-		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)
+		// BUGFIX: Hmmm. Ok this comment doesn't make much sense, anyway having key_hudeditor here caused the
+		// sensitivity of the cursor when in the hud editor and tracking a player while watching a demo or speccing
+		// to go waaay up.
+		if (key_dest == key_game || key_dest == key_menu || key_dest == key_demo_controls)
 		{
 			mx_accum += current_pos.x - window_center_x;
 			my_accum += current_pos.y - window_center_y;
@@ -1879,7 +1885,7 @@ void IN_Accumulate (void)
 			my_accum = 0;
 		}
 
-		// force the mouse to the center, so there's room to move
+		// Force the mouse to the center, so there's room to move.
 		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)
 			SetCursorPos (window_center_x, window_center_y);
 		
