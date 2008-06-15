@@ -2220,20 +2220,20 @@ void CL_Frame (double time)
 			if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected
 			{
 				usercmd_t dummy;
-				IN_Move (&dummy);
+				IN_Move(&dummy);
 			}
 		}
 		else
 		{
 			if (   (!cls.demoplayback && !cl.spectator) // not demo playback and not a spec
-				|| (!cls.demoplayback &&  cl.spectator && Cam_TrackNum() == -1) // not demo, spec free fly
+				|| (!cls.demoplayback && cl.spectator && Cam_TrackNum() == -1) // not demo, spec free fly
 				|| ( cls.demoplayback && cls.mvdplayback && Cam_TrackNum() == -1) // mvd demo and free fly
 				|| cls.state == ca_disconnected // We need to move the mouse also when disconnected
 				) 
 			{
 				usercmd_t dummy;
 				Sys_SendKeyEvents();
-				IN_Move (&dummy);
+				IN_Move(&dummy);
 			}
 		}
 	}

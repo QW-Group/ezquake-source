@@ -3114,7 +3114,7 @@ void SCR_TileClear (void) {
 	}
 }
 
-#else
+#else // GLQUAKE
 
 void SCR_TileClear (void) {
 	if (scr_fullupdate++ < vid.numpages) {	// clear the entire screen
@@ -3139,21 +3139,25 @@ void SCR_TileClear (void) {
 	}
 }
 
-#endif
+#endif // GLQUAKE else
 
-// calculates the cursor scale based on the current screen/text size
 #ifdef GLQUAKE
-static double SCR_GetCursorScale(void) {
+//
+// Calculates the cursor scale based on the current screen/text size
+//
+static double SCR_GetCursorScale(void) 
+{
 	return (double) scr_cursor_scale.value * ((double) vid.width / (double)vid.conwidth);
 }
-#endif
+#endif // GLQUAKE
 
-static void SCR_DrawCursor(void) {
+static void SCR_DrawCursor(void) 
+{
 	// from in_*.c
 	extern float mouse_x, mouse_y;
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
     double scale = SCR_GetCursorScale();
-#endif
+	#endif 
 
 	// Updating cursor location
 	scr_pointer_state.x += mouse_x;
@@ -3174,7 +3178,7 @@ static void SCR_DrawCursor(void) {
 	}
 
 	// Always draw the cursor.
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
 	if (scr_cursor && scr_cursor->texnum)
 	{
 		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, scale);
@@ -3192,7 +3196,7 @@ static void SCR_DrawCursor(void) {
 		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20*scale, 10 * scale, c);
         Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y, cursor_x, cursor_y + (20 * scale), 10 * scale, c);
 	}
-#else
+	#else // GLQUAKE
 	/*
 	// FIXME: When the cursor is loaded in software, width and height are fine, but when reaching this point it's fucked up!!!
 	if (scr_cursor && scr_cursor->width)
@@ -3204,7 +3208,7 @@ static void SCR_DrawCursor(void) {
 	{
 		Draw_Character(cursor_x - LETTERWIDTH/2, cursor_y - LETTERHEIGHT/2, '+');
 	}
-#endif
+	#endif // GLQUAKE else
 
 	if (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)
 	{
@@ -3216,47 +3220,61 @@ static void SCR_DrawCursor(void) {
 	scr_pointer_state.y_old = scr_pointer_state.y;
 }
 
-void SCR_DrawElements(void) {
+void SCR_DrawElements(void) 
+{
   extern qbool  sb_showscores,  sb_showteamscores;
 
-	if (scr_drawloading) {
+	if (scr_drawloading) 
+	{
 		SCR_DrawLoading ();
 		Sbar_Draw ();
 		HUD_Draw ();		// HUD -> hexum
-	} else {
-		if (cl.intermission == 1) {
+	}
+	else 
+	{
+		if (cl.intermission == 1)
+		{
 			Sbar_IntermissionOverlay ();
 			Con_ClearNotify ();
-		} else if (cl.intermission == 2) {
+		} 
+		else if (cl.intermission == 2)
+		{
 			Sbar_FinaleOverlay ();
 			SCR_CheckDrawCenterString ();
 			Con_ClearNotify ();
 		}
 
-		if (cls.state == ca_active) {
+		if (cls.state == ca_active) 
+		{
 			SCR_DrawRam ();
 			SCR_DrawNet ();
 			SCR_DrawTurtle ();
 
-			if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
+			if (!sb_showscores && !sb_showteamscores) 
+			{ 
+				// Do not show if +showscores
 				SCR_DrawPause ();
-#ifdef GLQUAKE
+				
+				#ifdef GLQUAKE
 				SCR_DrawAutoID ();
-#endif
+				#endif
 			}
 
-			if (!cl.intermission) {
-
+			if (!cl.intermission) 
+			{
 				if (key_dest != key_menu && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
 					Draw_Crosshair ();
 
-     			if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
+     			if (!sb_showscores && !sb_showteamscores)
+				{ 
+					// Do not show if +showscores
 					SCR_Draw_TeamInfo();
 					SCR_Draw_WeaponStats();
 
-#ifdef GLQUAKE
+					#ifdef GLQUAKE
 					SCR_Draw_ShowNick();
-#endif
+					#endif
+
 					SCR_CheckDrawCenterString ();
 					SCR_DrawSpeed ();
 					SCR_DrawClock ();
@@ -3271,11 +3289,12 @@ void SCR_DrawElements(void) {
 
 				MVD_Screen ();
 
-#ifdef GLQUAKE
-				//VULT STATS
+				#ifdef GLQUAKE
+				// VULT STATS
 				SCR_DrawAMFstats();
-#endif
-				//VULT DISPLAY KILLS
+				#endif
+				
+				// VULT DISPLAY KILLS
 				if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
 					VX_TrackerThink();
 
@@ -3322,9 +3341,10 @@ void SCR_DrawElements(void) {
 
 #ifdef GLQUAKE
 
-//This is called every frame, and can also be called explicitly to flush text to the screen.
-//WARNING: be very careful calling this from elsewhere, because the refresh needs almost the entire 256k of stack space!
-void SCR_UpdateScreen (void) {
+// This is called every frame, and can also be called explicitly to flush text to the screen.
+// WARNING: be very careful calling this from elsewhere, because the refresh needs almost the entire 256k of stack space!
+void SCR_UpdateScreen (void) 
+{
 	static hud_t *hud_netstats = NULL;
 
 	if (hud_netstats == NULL) // first time
@@ -3343,34 +3363,38 @@ void SCR_UpdateScreen (void) {
 			return;
 	}
 
-#ifdef _WIN32
-	{	// don't suck up any cpu if minimized
+	#ifdef _WIN32
+	{	
+		// Don't suck up any cpu if minimized.
 		extern int Minimized;
 
 		if (Minimized)
 			return;
 	}
-#endif
+	#endif // _WIN32
 
 	vid.numpages = 2 + gl_triplebuffer.value;
 
 	scr_copytop = 0;
 	scr_copyeverything = 0;
 
-	host_screenupdatecount ++;  // kazik - HUD -> hexum
+	host_screenupdatecount++;  // For HUD.
 
-	// check for vid changes
-	if (oldfov != scr_fov.value) {
+	// Check for vid changes.
+	if (oldfov != scr_fov.value) 
+	{
 		oldfov = scr_fov.value;
 		vid.recalc_refdef = true;
 	}
 
-	if (oldscreensize != scr_viewsize.value) {
+	if (oldscreensize != scr_viewsize.value) 
+	{
 		oldscreensize = scr_viewsize.value;
 		vid.recalc_refdef = true;
 	}
 
-	if (oldsbar != cl_sbar.value) {
+	if (oldsbar != cl_sbar.value) 
+	{
 		oldsbar = cl_sbar.value;
 		vid.recalc_refdef = true;
 	}
@@ -3387,8 +3411,8 @@ void SCR_UpdateScreen (void) {
 		SCR_CalcRefdef();
 	}
 
-	// do 3D refresh drawing, and then update the screen
-	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
+	// Do 3D refresh drawing, and then update the screen.
+	GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
 
 	SCR_SetUpToDrawConsole ();
 
@@ -3403,7 +3427,8 @@ void SCR_UpdateScreen (void) {
 	// draw any areas not covered by the refresh
 	SCR_TileClear ();
 
-	if (r_netgraph.value && scr_newHud.value != 1) { // HUD -> hexum
+	if (r_netgraph.value && scr_newHud.value != 1)
+	{
 		// FIXME: ugly hack :(
 		float temp = hud_netgraph->show->value;
 
@@ -3412,7 +3437,8 @@ void SCR_UpdateScreen (void) {
 		Cvar_SetValue(hud_netgraph->show, temp);
 	}
 
-	if (r_netstats.value && scr_newHud.value != 1) {
+	if (r_netstats.value && scr_newHud.value != 1)
+	{
 		// FIXME: ugly hack :(
 		float temp = hud_netstats->show->value;
 
@@ -3459,7 +3485,8 @@ void SCR_UpdateScreen (void) {
 
 #else
 
-void SCR_UpdateScreen (void) {
+void SCR_UpdateScreen (void) 
+{
 	vrect_t vrect;
 
 	if (!scr_initialized)

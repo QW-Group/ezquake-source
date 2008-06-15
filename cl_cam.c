@@ -430,13 +430,17 @@ void Cam_Track(usercmd_t *cmd)
 	player = frame->playerstate + spec_track;
 	self = frame->playerstate + cl.playernum;
 
-	if (!locked || !Cam_IsVisible(player, desired_position)) {
-		if (!locked || cls.realtime - cam_lastviewtime > 0.1) {
+	if (!locked || !Cam_IsVisible(player, desired_position))
+	{
+		if (!locked || cls.realtime - cam_lastviewtime > 0.1) 
+		{
 			if (!InitFlyby(self, player, true))
 				InitFlyby(self, player, false);
 			cam_lastviewtime = cls.realtime;
 		}
-	} else {
+	} 
+	else 
+	{
 		cam_lastviewtime = cls.realtime;
 	}
 	
@@ -444,13 +448,16 @@ void Cam_Track(usercmd_t *cmd)
 	if (!locked || !autocam)
 		return;
 
-	if (cl_chasecam.value) {
+	if (cl_chasecam.value) 
+	{
 		cmd->forwardmove = cmd->sidemove = cmd->upmove = 0;
 
-#ifdef JSS_CAM
-	if (!Cvar_Value ("cam_thirdperson"))
-#endif
-		VectorCopy(player->viewangles, cl.viewangles);
+		#ifdef JSS_CAM
+		if (!Cvar_Value ("cam_thirdperson"))
+		#endif
+		{
+			VectorCopy(player->viewangles, cl.viewangles);
+		}
 		VectorCopy(player->origin, desired_position);
 		if (memcmp(&desired_position, &self->origin, sizeof(desired_position)) != 0) {
 			MSG_WriteByte (&cls.netchan.message, clc_tmove);
@@ -460,12 +467,16 @@ void Cam_Track(usercmd_t *cmd)
 			// move there locally immediately
 			VectorCopy(desired_position, self->origin);
 		}
-	} else {
+	} 
+	else 
+	{
 		// Ok, move to our desired position and set our angles to view
 		// the player
 		VectorSubtract(desired_position, self->origin, vec);
 		cmd->forwardmove = cmd->sidemove = cmd->upmove = 0;
-		if (VectorLength(vec) > 16) { // close enough?
+		if (VectorLength(vec) > 16) 
+		{ 
+			// close enough?
 			MSG_WriteByte (&cls.netchan.message, clc_tmove);
 			MSG_WriteCoord (&cls.netchan.message, desired_position[0]);
 			MSG_WriteCoord (&cls.netchan.message, desired_position[1]);
@@ -481,7 +492,8 @@ void Cam_Track(usercmd_t *cmd)
 	}
 }
 
-void Cam_FinishMove(usercmd_t *cmd) {
+void Cam_FinishMove(usercmd_t *cmd) 
+{
 	int i, end;
 	player_info_t *s;
 
