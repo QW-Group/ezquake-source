@@ -836,12 +836,11 @@ void	Sys_CheckForIDDirectory (void)
             }
         }
         
-        // if the path from the user defaults is bad, look if the id1 folder is located at the same
-        // folder as our Quake application:
+        // if the path from the user defaults is bad, look if the id1 folder is located
+        // in the resource folder of the application bundle.
         if (myDefaultPath == YES)
         {
-            myBasePath = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent]
-                                              stringByAppendingPathComponent: INITIAL_BASE_PATH];
+            myBasePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent: INITIAL_BASE_PATH];
             myPathChanged = YES;
             myDefaultPath = NO;
             continue;
