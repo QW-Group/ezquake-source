@@ -894,6 +894,96 @@ int MsgBoxEx(HWND hwnd, TCHAR *szText, TCHAR *szCaption, HOOKPROC hookproc, UINT
 
 HINSTANCE	global_hInstance;
 
+typedef enum qwurl_regkey_e
+{
+	QWURL_DONT_ASK = 0,
+	QWURL_ASK = 1,
+	QWURL_ASK_IF_OTHER = 2
+} qwurl_regkey_t;
+
+//
+// Sets the registry that decides if the QW URL dialog should be shown at startup or not.
+//
+void WinSetCheckQWURLRegKey(qwurl_regkey_t val)
+{
+	#define EZQUAKE_REG_SUBKEY			"Software\\ezQuake"
+	#define EZQUAKE_REG_QWPROTOCOLKEY	"AskForQWProtocol"
+
+	HKEY keyhandle;
+
+	//
+	// HKCU\Software\ezQuake
+	//
+	{
+		DWORD dval = (DWORD)val;
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, EZQUAKE_REG_SUBKEY, 
+			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"EZQUAKE_REG_SUBKEY"\n");
+			return;
+		}
+
+		// Set the key value.
+		if (RegSetValueEx(keyhandle, EZQUAKE_REG_QWPROTOCOLKEY, 0, REG_DWORD, (BYTE *)&dval, sizeof(DWORD)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"EZQUAKE_REG_SUBKEY"\\"EZQUAKE_REG_QWPROTOCOLKEY"\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+}
+
+//
+// Gets the registry value for the "HKCU\Software\ezQuake\AskForQWProtocol key"
+//
+qwurl_regkey_t WinGetCheckQWURLRegKey()
+{
+	HKEY keyhandle = NULL;
+	DWORD returnval = QWURL_ASK;
+
+	//
+	// HKCU\Software\ezQuake
+	//
+	do
+	{		
+		DWORD val;
+		DWORD type = REG_DWORD;
+		DWORD size = sizeof(DWORD);
+		LONG returnstatus;
+
+		// Open the key.
+		if ((returnstatus = RegOpenKeyEx(HKEY_CURRENT_USER, EZQUAKE_REG_SUBKEY, 0, KEY_ALL_ACCESS, &keyhandle)) != ERROR_SUCCESS)
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not open HKCU\\"EZQUAKE_REG_SUBKEY", %l\n", returnstatus);
+			break;
+		}
+
+
+		// Set the key value.
+		if (RegQueryValueEx(keyhandle, EZQUAKE_REG_QWPROTOCOLKEY, 0, &type, (BYTE *)&val, &size))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"EZQUAKE_REG_SUBKEY"\\"EZQUAKE_REG_QWPROTOCOLKEY"\n");
+			RegCloseKey(keyhandle);
+			break;
+		}
+
+		returnval = (qwurl_regkey_t)val;
+		break;	
+	}
+	while (0);
+
+	if (keyhandle)
+	{
+		RegCloseKey(keyhandle);
+	}
+
+	return returnval;
+}
+
 //
 // Check if we're the registered QW:// protocol handler, if not show a messagebox
 // asking the user what to do. Returns false if the user wants to turn this check off.
@@ -905,10 +995,22 @@ qbool WinCheckQWURL(void)
 
 	int retval;
 
-	// We're not allowed to write to the registry in vista.
-	if (WinVISTA)
+	// Check the registry if we should ask at all. By relying on this
+	// instead of the cfg, the user doesn't have to do a cfg_save after answering
+	// "Don't ask me this again" to keep from getting bugged :D
+	qwurl_regkey_t regstatus = WinGetCheckQWURLRegKey();
+
+	switch (regstatus)
 	{
-		return false;
+		case QWURL_ASK:
+			break;
+
+		case QWURL_ASK_IF_OTHER:
+			break;
+
+		case QWURL_DONT_ASK:
+			// Get out of here!!!
+			return true;
 	}
 
 	if (CL_CheckIfQWProtocolHandler())
@@ -928,6 +1030,7 @@ qbool WinCheckQWURL(void)
 	{
 		case IDYES :
 			CL_RegisterQWURLProtocol_f();
+			WinSetCheckQWURLRegKey(QWURL_ASK);
 			return true;
 
 		case IDNO :
@@ -936,6 +1039,7 @@ qbool WinCheckQWURL(void)
 
 		case IDCANCEL :
 			// User doesn't want to be bugged anymore.
+			WinSetCheckQWURLRegKey(QWURL_DONT_ASK);
 			return false;
 	}
 

@@ -247,8 +247,8 @@ static void CL_FixupModelNames (void) {
 
 #ifdef WIN32
 
-#define QW_URL_OPEN_CMD_REGKEY		"qw\\shell\\Open\\Command"
-#define QW_URL_DEFAULTICON_REGKEY	"qw\\DefaultIcon"
+#define QW_URL_OPEN_CMD_REGKEY		"Software\\Classes\\qw\\shell\\Open\\Command"
+#define QW_URL_DEFAULTICON_REGKEY	"Software\\Classes\\qw\\DefaultIcon"
 
 //
 // Checks if this client is the default qw protocol handler.
@@ -260,7 +260,7 @@ qbool CL_CheckIfQWProtocolHandler()
 	int len = sizeof(reg_path);
 	HKEY hk;
 
-	if (RegOpenKey(HKEY_CLASSES_ROOT, QW_URL_OPEN_CMD_REGKEY, &hk) != 0)
+	if (RegOpenKey(HKEY_CURRENT_USER, QW_URL_OPEN_CMD_REGKEY, &hk) != 0)
 	{
 		return false;
 	}
@@ -326,14 +326,14 @@ void CL_RegisterQWURLProtocol_f(void)
 	Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
 
 	//
-	// HKCR\qw\shell\Open\Command
+	// HKCU\qw\shell\Open\Command
 	//
 	{
 		char open_cmd[1024];
 		snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
 
 		// Open / Create the key.
-		if (RegCreateKeyEx(HKEY_CLASSES_ROOT,		// A handle to an open subkey.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER,		// A handle to an open subkey.
 						QW_URL_OPEN_CMD_REGKEY,		// Subkey.
 						0,							// Reserved, must be 0.
 						NULL,						// Class, ignored.
@@ -343,14 +343,14 @@ void CL_RegisterQWURLProtocol_f(void)
 						&keyhandle,					// Handle to the created key.
 						NULL))						// Don't care if the key existed or not.
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not create HKCR\\"QW_URL_OPEN_CMD_REGKEY"\n");
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"QW_URL_OPEN_CMD_REGKEY"\n");
 			return;
 		}
 
 		// Set the key value.
 		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, open_cmd,  strlen(open_cmd) * sizeof(char)))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCR\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
 			RegCloseKey(keyhandle);
 			return;
 		}
@@ -359,24 +359,24 @@ void CL_RegisterQWURLProtocol_f(void)
 	}
 
 	//
-	// HKCR\qw\DefaultIcon
+	// HKCU\qw\DefaultIcon
 	//
 	{
 		char default_icon[1024];
 		snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
 
 		// Open / Create the key.
-		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, QW_URL_DEFAULTICON_REGKEY, 
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_DEFAULTICON_REGKEY, 
 			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not create HKCR\\"QW_URL_OPEN_CMD_REGKEY"\n");
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"QW_URL_OPEN_CMD_REGKEY"\n");
 			return;
 		}
 
 		// Set the key value.
 		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, default_icon, strlen(default_icon) * sizeof(char)))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCR\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
 			RegCloseKey(keyhandle);
 			return;
 		}
@@ -385,30 +385,30 @@ void CL_RegisterQWURLProtocol_f(void)
 	}
 
 	//
-	// HKCR\qw
+	// HKCU\qw
 	//
 	{
 		char protocol_name[] = "URL:QW Protocol";
 
 		// Open / Create the key.
-		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "qw", 
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, "qw", 
 			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not create HKCR\\qw\n");
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\qw\n");
 			return;
 		}
 
 		// Set the protocol name.
 		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, protocol_name, strlen(protocol_name) * sizeof(char)))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCR\\qw\\@\n");
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\@\n");
 			RegCloseKey(keyhandle);
 			return;
 		}
 
 		if (RegSetValueEx(keyhandle, "URL Protocol", 0, REG_SZ, "", sizeof(char)))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCR\\qw\\URL Protocol\n");
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\URL Protocol\n");
 			RegCloseKey(keyhandle);
 			return;
 		}
