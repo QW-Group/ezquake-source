@@ -298,6 +298,7 @@ typedef struct matchinfo_s {
 	int timelimit;
 	int fraglimit;
 	int teamplay;
+	int maxclients;
 	int deathmatch;
 	char mapname[MAX_OSPATH];
 	char gamedir[MAX_OSPATH];
@@ -420,6 +421,7 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 	matchinfo.timelimit = Q_atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
 	matchinfo.fraglimit = Q_atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 	matchinfo.teamplay = Q_atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
+	matchinfo.maxclients = Q_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
 	matchinfo.deathmatch = cl.deathmatch;
 
 	strlcpy(matchinfo.mapname, MT_MapName(), sizeof(matchinfo.mapname));
@@ -591,10 +593,8 @@ char *MT_ShortStatus(void)
 {
 	static matchinfo_t* matchinfo;
 	matchinfo = MT_GetMatchInfo();
-	if (!matchinfo->teamplay) 
-		return va("pl: %d - %s", matchinfo->numplayers, matchinfo->mapname);
-	else
-		return va("pl: %d/%d - %s", matchinfo->team1count, matchinfo->team2count, matchinfo->mapname);
+
+	return va("%d/%d - %s", matchinfo->numplayers, matchinfo->maxclients, matchinfo->mapname);
 }
 
 #define MT_SCOREBOARD_SHOWIME	4
