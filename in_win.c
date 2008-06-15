@@ -1874,7 +1874,7 @@ void IN_Accumulate (void)
 		// BUGFIX: Hmmm. Ok this comment doesn't make much sense, anyway having key_hudeditor here caused the
 		// sensitivity of the cursor when in the hud editor and tracking a player while watching a demo or speccing
 		// to go waaay up.
-		if (key_dest == key_game || key_dest == key_menu || key_dest == key_demo_controls)
+		if (key_dest == key_game)
 		{
 			mx_accum += current_pos.x - window_center_x;
 			my_accum += current_pos.y - window_center_y;
