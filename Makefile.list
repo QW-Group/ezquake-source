@@ -46,6 +46,7 @@ CLIENT_C_FILES := \
 	hud_editor \
 	ignore \
 	image \
+	irc \
 	keys \
 	logging \
 	match_tools \
