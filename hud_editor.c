@@ -2035,7 +2035,7 @@ static void HUD_Editor_EvaluateState(hud_t *hud_hover)
 	// Alt	 + Mouse 1	= Align
 	// Shift + Mouse 1	= Lock moving to one axis (If you start dragging along x-axis, it will stick to that)
 
-	if(MOUSEDOWN)
+	if (MOUSEDOWN)
 	{
 		// Turn of help on mouse click.
 		hud_editor_showhelp = false;
@@ -2298,47 +2298,14 @@ int Test_OnControlDraw(ez_control_t *self, void *payload)
 	return 0;
 }
 
+static hud_t *hud_hover = NULL;
+
 //
 // Main HUD Editor function.
 //
 static void HUD_Editor(void)
 {
-	extern float mouse_x, mouse_y;
-	qbool found = false;
-	hud_t *hud_hover = NULL;
-
-	// Updating cursor location.
-	if(hud_editor_mode == hud_editmode_move_lockedaxis)
-	{
-		// Don't update the HUD Editor cursor if the axis is locked
-		// so that we avoid explicit checks for that.
-		// The cursor will still move around the screen properly.
-		if(hud_editor_locked_axis_is_x)
-		{
-			hud_mouse_x = cursor_x;
-
-			// Draw a line that indicates that the movement is locked to the X-axis.
-			if (selected_hud)
-			{
-				Draw_AlphaLineRGB(0, HUD_CENTER_Y(selected_hud), vid.width, HUD_CENTER_Y(selected_hud), 1, RGBA_TO_COLOR(255, 0, 0, 75));
-			}
-		}
-		else
-		{
-			hud_mouse_y = cursor_y;
-
-			if (selected_hud)
-			{
-				Draw_AlphaLineRGB(HUD_CENTER_X(selected_hud), 0, HUD_CENTER_X(selected_hud), vid.height, 1, RGBA_TO_COLOR(255, 0, 0, 75));
-			}
-		}
-	}
-	else
-	{
-		// Normal operation, always update cursor.
-		hud_mouse_x = cursor_x;
-		hud_mouse_y = cursor_y;
-	}
+	qbool found = false;	
 
 	// If we just entered hoverlist mode we want to keep the mouse coordinates
 	// so we know where to draw the list until the user has picked a HUD.
@@ -2474,6 +2441,39 @@ void HUD_Editor_Toggle_f(void)
 //
 qbool HUD_Editor_MouseEvent(mouse_state_t *ms)
 {
+	// Updating cursor location.
+	if(hud_editor_mode == hud_editmode_move_lockedaxis)
+	{
+		// Don't update the HUD Editor cursor if the axis is locked
+		// so that we avoid explicit checks for that.
+		// The cursor will still move around the screen properly.
+		if(hud_editor_locked_axis_is_x)
+		{
+			hud_mouse_x = ms->x;
+
+			// Draw a line that indicates that the movement is locked to the X-axis.
+			if (selected_hud)
+			{
+				Draw_AlphaLineRGB(0, HUD_CENTER_Y(selected_hud), vid.width, HUD_CENTER_Y(selected_hud), 1, RGBA_TO_COLOR(255, 0, 0, 75));
+			}
+		}
+		else
+		{
+			hud_mouse_y = ms->y;
+
+			if (selected_hud)
+			{
+				Draw_AlphaLineRGB(HUD_CENTER_X(selected_hud), 0, HUD_CENTER_X(selected_hud), vid.height, 1, RGBA_TO_COLOR(255, 0, 0, 75));
+			}
+		}
+	}
+	else
+	{
+		// Normal operation, always update cursor.
+		hud_mouse_x = ms->x;
+		hud_mouse_y = ms->y;
+	}
+
 	return EZ_tree_MouseEvent(&help_control_tree, ms);
 
 	return false;
@@ -2676,10 +2676,13 @@ void HUD_Editor_Init(void)
 		window = EZ_window_Create(&help_control_tree, root, "Window", NULL, 20, 20, 150, 150, 
 			control_movable | control_focusable | control_resize_h | control_resize_v | control_contained);
 		EZ_control_SetBackgroundColor((ez_control_t *)window, 0, 100, 0, 100);
+		//EZ_control_SetBackgroundImage((ez_control_t *)window, EZ_CONTROL_DEFAULT_BACKGROUND_IMAGE);
+		((ez_control_t *)window)->bg_edge_size_ratio = 0.2;
+		((ez_control_t *)window)->opacity = 0.8;
 
 		EZ_window_SetWindowAreaMinVirtualSize(window, 200, 200);
 
-		EZ_window_AddChild(window, (ez_control_t *)scrollpane);
+		EZ_window_AddChild(window, (ez_control_t *)scrollpane);		
 	}
 
 	/*
