@@ -305,7 +305,8 @@ void CompleteCommandNew_Reset (void)
 ==============================================================================
 */
 
-qbool CheckForCommand (void) {
+qbool CheckForCommand (void) 
+{
 	char command[256], *s;
 
 	strlcpy(command, wcs2str(key_lines[edit_line] + 1), sizeof(command));
@@ -322,7 +323,8 @@ qbool CheckForCommand (void) {
 #define COLUMNWIDTH 20
 #define MINCOLUMNWIDTH 18	// the last column may be slightly smaller
 
-void PaddedPrint (char *s) {
+void PaddedPrint (char *s) 
+{
 	extern int con_linewidth;
 	int nextcolx = 0;
 
@@ -344,11 +346,15 @@ static char	compl_common[64];
 static int	compl_clen;
 static int	compl_len;
 
-static void FindCommonSubString (char *s) {
-	if (!compl_clen) {
+static void FindCommonSubString (char *s) 
+{
+	if (!compl_clen)
+	{
 		strlcpy (compl_common, s, sizeof(compl_common));
 		compl_clen = strlen (compl_common);
-	} else {
+	} 
+	else
+	{
 		while (compl_clen > compl_len && strncasecmp(s, compl_common, compl_clen))
 			compl_clen--;
 	}
@@ -364,11 +370,9 @@ extern cmd_alias_t *cmd_alias;
 extern cvar_t *cvar_vars;
 
 void CompleteCommandNew (void)
-{	// by jogi
+{
 	char *cmd, token[MAXCMDLINE], *s;
 	wchar temp[MAXCMDLINE];
-//	int c, a, v, start, end, i, diff_len, size, test, my_string_length,
-//		my_string_length_count;
 	int c, a, v, start, end, i, diff_len, size, my_string_length;
 
 	if (!
@@ -772,9 +776,11 @@ void Key_Console (int key, int unichar)
 			{
 				qbool no_lf = true;
 
+				// If Ctrl+enter was pressed, regard the chat as a team message.
 				if (((keydown[K_CTRL] && key == K_ENTER) || keydown[K_SHIFT]) && cls.state >= ca_connected)
 				{
-					if (*(key_lines[edit_line] + 1)) // do we have something to say?
+					// Do we have something to say?
+					if (*(key_lines[edit_line] + 1)) 
 					{
 						Cbuf_AddText ((keydown[K_CTRL] && key == K_ENTER) ? "say_team \"" : "say \"");
 						Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
@@ -793,17 +799,19 @@ void Key_Console (int key, int unichar)
 					}
 					else
 					{
+						// Check if it's a chat message or a command.
 						if (cl_chatmode.value != 1 && CheckForCommand())
 						{
-							Cbuf_AddText (wcs2str(key_lines[edit_line] + 1));	// valid command
+							Cbuf_AddText (wcs2str(key_lines[edit_line] + 1));	// Valid command.
 						}
 						else
 						{
-							if (cls.state >= ca_connected)	// can happen if cl_chatmode is 1
+							// It's a chat message.
+							if (cls.state >= ca_connected)	// Can happen if cl_chatmode is 1
 							{
 								if (cl_chatmode.value == 2 || cl_chatmode.value == 1)
 								{
-									if (*(key_lines[edit_line] + 1)) // do we have something to say?
+									if (*(key_lines[edit_line] + 1)) // Do we have something to say?
 									{
 										Cbuf_AddText ("say \"");
 										Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
@@ -847,17 +855,15 @@ void Key_Console (int key, int unichar)
 		}
 		case K_TAB:
 		{
-			// command completion
+			// Command completion
 			if (!(keydown[K_SHIFT]) && keydown[K_CTRL])
 			{
 				CompleteName ();
 			}
-			// added by jogi start
 			else
 			{
 				CompleteCommandNew ();
 			}
-			// added by stopp
 			return;
 		}
 		case 'H': case 'h':		// ^H = BACKSPACE
@@ -1622,24 +1628,33 @@ void Key_BindList_f (void) {
 	}
 }
 
-//Writes lines containing "bind key value"
-void Key_WriteBindings (FILE *f) {
+// Writes lines containing "bind key value"
+void Key_WriteBindings (FILE *f) 
+{
 	int i, leftright;
-#ifdef WITH_KEYMAP
+	
+	#ifdef WITH_KEYMAP
 	char str[ 256 ];
-#endif // WITH_KEYMAP
+	#endif // WITH_KEYMAP
 
-	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
+	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) 
+	{
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
-		if (leftright || keybindings[i]) {
+		
+		if (leftright || keybindings[i]) 
+		{
 			if (i == ';')
+			{
 				fprintf (f, "bind \";\" \"%s\"\n", keybindings[i]);
+			}
 			else
-#ifdef WITH_KEYMAP
+			{
+				#ifdef WITH_KEYMAP
 				fprintf (f, "bind %s \"%s\"\n", Key_KeynumToString(i, str), keybindings[leftright ? i + 1 : i]);
-#else // WITH_KEYMAP
+				#else
 				fprintf (f, "bind %s \"%s\"\n", Key_KeynumToString(i), keybindings[leftright ? i + 1 : i]);
-#endif // WITH_KEYMAP else
+				#endif
+			}
 
 			if (leftright)
 				i += 2;
@@ -1647,7 +1662,6 @@ void Key_WriteBindings (FILE *f) {
 	}
 }
 
-// Added by VVD {
 void History_Init (void)
 {
 	int i, c;
@@ -1657,13 +1671,15 @@ void History_Init (void)
 	Cvar_Register (&cl_savehistory);
 	Cvar_ResetCurrentGroup();
 
-	for (i = 0; i < CMDLINES; i++) {
+	for (i = 0; i < CMDLINES; i++) 
+	{
 		key_lines[i][0] = ']';
 		key_lines[i][1] = 0;
 	}
 	key_linepos = 1;
 
 	if (cl_savehistory.value)
+	{
 		if ((hf = fopen(HISTORY_FILE_NAME, "rt")))
 		{
 			do
@@ -1683,6 +1699,7 @@ void History_Init (void)
 			key_lines[edit_line][0] = ']';
 			key_lines[edit_line][1] = 0;
 		}
+	}
 }
 
 void History_Shutdown (void)

@@ -1410,10 +1410,8 @@ static void Sbar_TeamOverlay (void) {
 	team_t *tm;
 	mpic_t *pic;
 
-	// gavoja -->
 	if (key_dest == key_console)
 		return;
-	// gavoja <--
 
 #ifndef CLIENTONLY
 	// FIXME
@@ -1426,11 +1424,9 @@ static void Sbar_TeamOverlay (void) {
 		Sbar_DeathmatchOverlay(0);
 		return;
 	}
-    // mqwcl -->
+
     if (hud_faderankings.value)
-        //Draw_FadeScreen(0, 0, 0, scr_menualpha.value);
 		Draw_FadeScreen();
-    // mqwcl <--
 
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;

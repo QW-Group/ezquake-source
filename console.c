@@ -68,11 +68,8 @@ cvar_t		con_wordwrap = {"con_wordwrap","1"};
 cvar_t		con_clearnotify = {"con_clearnotify","1"};
 //cvar_t	    xyzh                = {"x", "$x", CVAR_ROM};
 
-// added by jogi start
 cvar_t		con_highlight  		= {"con_highlight","0"};
 cvar_t		con_highlight_mark 	= {"con_highlight_mark",""};
-// added by jogi stop
-
 
 cvar_t      con_sound_mm1_file      = {"s_mm1_file",      "misc/talk.wav"};
 cvar_t      con_sound_mm2_file      = {"s_mm2_file",      "misc/talk.wav"};
