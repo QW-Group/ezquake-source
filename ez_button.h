@@ -53,9 +53,7 @@ typedef struct ez_button_eventhandlers_s
 
 typedef enum ez_button_flags_e
 {
-	use_images	= (1 << 0),
-	tile_center	= (1 << 1),
-	tile_edges	= (1 << 2)
+	use_images	= (1 << 0)
 } ez_button_flags_t;
 
 typedef enum ez_textalign_e

@@ -183,7 +183,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	((ez_control_t *)button)->CLASS_ID	= EZ_BUTTON_ID;
 
 	// TODO : Make a default macro for button flags.
-	((ez_control_t *)button)->ext_flags	|= (flags | control_focusable | control_contained);
+	((ez_control_t *)button)->ext_flags	|= (flags | control_focusable | control_contained | control_bg_tile_center | control_bg_tile_edges);
 
 	// Override the draw function.
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnDraw, OnDraw, ez_control_t);
@@ -214,7 +214,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	EZ_button_SetHoverImage(button, EZ_BUTTON_DEFAULT_HOVER_IMAGE);
 	EZ_button_SetPressedImage(button, EZ_BUTTON_DEFAULT_PRESSED_IMAGE);
 
-	button->ext_flags |= use_images | tile_edges | tile_center;
+	button->ext_flags |= use_images;
 }
 
 //
@@ -224,8 +224,6 @@ void EZ_button_Destroy(ez_control_t *self, qbool destroy_children)
 {
 	ez_button_t *button = (ez_button_t *)self;
 
-	// TODO : Remove event handlers.
-	// TODO : Can we just free a part like this here? How about children, will they be properly destroyed?
 	EZ_control_Destroy(&button->super, destroy_children);
 
 	EZ_eventhandler_Remove(button->event_handlers.OnAction, NULL, true);
@@ -331,22 +329,6 @@ void EZ_button_SetNormalColor(ez_button_t *self, byte r, byte g, byte b, byte al
 }
 
 //
-// Button - Set if the center of the button should be tiled or stretched.
-//
-void EZ_button_SetTileCenter(ez_button_t *button, qbool tilecenter)
-{
-	SET_FLAG(button->ext_flags, tile_center, tilecenter);
-}
-
-//
-// Button - Set if the edges of the button should be tiled or stretched.
-//
-void EZ_button_SetTileEdges(ez_button_t *button, qbool tileedges)
-{
-	SET_FLAG(button->ext_flags, tile_edges, tileedges);
-}
-
-//
 // Button - Sets the pressed color of the button.
 //
 void EZ_button_SetPressedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
@@ -389,103 +371,6 @@ void EZ_button_AddOnAction(ez_button_t *self, ez_eventhandler_fp OnAction, void 
 }
 
 //
-// Button - Draw a button image.
-//
-static void EZ_button_DrawButtonImage(ez_button_t *button, mpic_t *pic)
-{
-	ez_control_t *self	= (ez_control_t *)button;
-
-	int edge_size;		// The number of pixel from the edge of the texture 
-						// to use when drawing the buttons edges.
-	int edge_size2;
-	int x, y;
-
-	if (!pic)
-	{
-		return;
-	}
-
-	edge_size = Q_rint(0.1 * pic->width);
-	edge_size2 = (2 * edge_size);
-
-	EZ_control_GetDrawingPosition(self, &x, &y);
-
-	// Center background.
-	if (button->ext_flags & tile_center)
-	{
-		// Tiled.
-		Draw_SubPicTiled((x + edge_size), (y + edge_size), 
-			(self->width - edge_size2), (self->height - edge_size2),
-			pic, 
-			edge_size, edge_size, 
-			(pic->width - edge_size2), (pic->height - edge_size2),
-			1.0);
-	}
-	else
-	{
-		// Stretch the image.
-		Draw_FitAlphaSubPic((x + edge_size), (y + edge_size), (self->width - edge_size2), (self->height - edge_size2), 
-			pic, edge_size, edge_size, (pic->width - edge_size2), (pic->height - edge_size2), 1.0);
-	}
-
-	if (button->ext_flags & tile_edges)
-	{
-		// Tiled.
-
-		// Top center.
-		Draw_SubPicTiled((x + edge_size), y, (self->width - edge_size2), edge_size, 
-						pic, edge_size, 0, (pic->width - edge_size2), edge_size, 1.0);
-
-		// Bottom center.
-		Draw_SubPicTiled((x + edge_size), (y + self->height - edge_size), (self->width - edge_size2), edge_size, 
-						pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, 1.0);
-		
-		// Left center.
-		Draw_SubPicTiled(x, (y + edge_size), edge_size, (self->height - edge_size2), 
-						pic, 0, edge_size, edge_size, (pic->height - edge_size2), 1.0);
-
-		// Right center.
-		Draw_SubPicTiled((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
-						pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), 1.0);
-	}
-	else
-	{
-		// Stretched.
-
-		// Top center.
-		Draw_FitAlphaSubPic((x + edge_size), y, (self->width - edge_size), edge_size, 
-							pic, edge_size, 0, (pic->width - edge_size2), edge_size, 1.0);
-
-		// Bottom center.
-		Draw_FitAlphaSubPic((x + edge_size), (y + self->height - edge_size), (self->width - edge_size), edge_size, 
-							pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, 1.0);
-
-		// Left center.
-		Draw_FitAlphaSubPic(x, (y + edge_size), edge_size, (self->height - edge_size2), 
-							pic, 0, edge_size, edge_size, (pic->height - edge_size2), 1.0);
-
-		// Right center.
-		Draw_FitAlphaSubPic((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
-							pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), 1.0);
-	}
-
-	// Top left corner.
-	Draw_SSubPic(x, y, pic, 0, 0, edge_size, edge_size, 1.0);
-
-	// Top right corner.
-	Draw_SSubPic((x + self->width - edge_size), y, pic, (pic->width - edge_size), 0, edge_size, edge_size, 1.0);
-
-	// Bottom left corner.
-	Draw_SSubPic(x, (y + self->height - edge_size), pic, 0, (pic->height - edge_size), edge_size, edge_size, 1.0);
-
-	// Bottom right corner.
-	Draw_SSubPic((x + self->width - edge_size), (y + self->height - edge_size), 
-				pic, 
-				(pic->width - edge_size), (pic->height - edge_size), 
-				edge_size, edge_size, 1.0);
-}
-
-//
 // Button - OnDraw event.
 //
 int EZ_button_OnDraw(ez_control_t *self)
@@ -496,11 +381,9 @@ int EZ_button_OnDraw(ez_control_t *self)
 	ez_button_t *button = (ez_button_t *)self;
 
 	int x, y;
+	byte *c = NULL;
 	qbool useimages = (button->ext_flags & use_images);
 	EZ_control_GetDrawingPosition(self, &x, &y);
-
-	// Run the super class's implementation first.
-	EZ_control_OnDraw(self);
 
 	if (self->int_flags & control_mouse_over)
 	{
@@ -508,22 +391,22 @@ int EZ_button_OnDraw(ez_control_t *self)
 		{
 			if (useimages)
 			{
-				EZ_button_DrawButtonImage(button, button->pressed_image);
+				self->background = button->pressed_image;
 			}
 			else
 			{
-				Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_pressed));
+				c = button->color_pressed;
 			}
 		}
 		else
 		{
 			if (useimages)
 			{
-				EZ_button_DrawButtonImage(button, button->hover_image);
+				self->background = button->hover_image;
 			}
 			else
 			{
-				Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_hover));
+				c = button->color_hover;
 			}
 		}
 	}
@@ -531,13 +414,21 @@ int EZ_button_OnDraw(ez_control_t *self)
 	{
 		if (useimages)
 		{
-			EZ_button_DrawButtonImage(button, button->normal_image);
+			self->background = button->normal_image;
 		}
 		else
 		{
-			Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_normal));
+			c = button->color_normal;
 		}
 	}
+
+	if (!useimages && c)
+	{
+		EZ_control_SetBackgroundColor(self, c[0], c[1], c[2], c[3]);
+	}
+
+	// Run the super class's implementation first.
+	EZ_control_OnDraw(self);
 
 	if (self->int_flags & control_focused)
 	{
