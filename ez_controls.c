@@ -877,7 +877,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 
 	// Set the background settings.
 	EZ_control_SetBackgroundImageOpacity(control, 1.0);
-	EZ_control_SetBackgroundImageEdgePercentage(10);
+	EZ_control_SetBackgroundImageEdgePercentage(control, 10);
 
 	EZ_control_SetVirtualSize(control, width, height);
 	EZ_control_SetMinVirtualSize(control, 1, 1);
@@ -1279,7 +1279,7 @@ void EZ_control_SetBackgroundImageEdgePercentage(ez_control_t *self, int percent
 //
 void EZ_control_SetBackgroundTileCenter(ez_control_t *self, qbool tilecenter)
 {
-	SET_FLAG(button->ext_flags, control_bg_tile_center, tilecenter);
+	SET_FLAG(self->ext_flags, control_bg_tile_center, tilecenter);
 }
 
 //
@@ -1287,7 +1287,7 @@ void EZ_control_SetBackgroundTileCenter(ez_control_t *self, qbool tilecenter)
 //
 void EZ_control_SetBackgroundTileEdges(ez_control_t *self, qbool tileedges)
 {
-	SET_FLAG(button->ext_flags, control_bg_tile_edges, tileedges);
+	SET_FLAG(self->ext_flags, control_bg_tile_edges, tileedges);
 }
 
 //
