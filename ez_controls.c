@@ -791,12 +791,12 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->control_tree	= tree;
 	control->name			= name;
 	control->description	= description;
-	control->ext_flags		= flags | control_enabled | control_visible;
+	control->ext_flags		= flags | control_enabled | control_visible | control_bg_tile_center | control_bg_tile_edges;
 	control->anchor_flags	= anchor_none;
 
 	// Default to containing a child within it's parent
 	// if the parent is being contained by it's parent.
-	if (parent && parent->ext_flags & control_contained)
+	if (parent && (parent->ext_flags & control_contained))
 	{
 		control->ext_flags |= control_contained;
 	}
@@ -874,6 +874,10 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->prev_virtual_height	= height;
 
 	control->int_flags |= control_update_anchorgap;
+
+	// Set the background settings.
+	EZ_control_SetBackgroundImageOpacity(control, 1.0);
+	EZ_control_SetBackgroundImageEdgePercentage(10);
 
 	EZ_control_SetVirtualSize(control, width, height);
 	EZ_control_SetMinVirtualSize(control, 1, 1);
@@ -1251,6 +1255,39 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 void EZ_control_SetBackgroundImage(ez_control_t *self, const char *background_path)
 {
 	self->background = background_path ? Draw_CachePicSafe(background_path, false, true) : NULL;
+}
+
+//
+// Control - Set the opacity for the background image for the control.
+//
+void EZ_control_SetBackgroundImageOpacity(ez_control_t *self, float opacity)
+{
+	self->opacity = opacity;
+}
+
+//
+// Control - Set how much percentage of the width of the background image that should be used when drawing the edges of the control.
+//
+void EZ_control_SetBackgroundImageEdgePercentage(ez_control_t *self, int percentage)
+{
+	self->bg_edge_size_ratio = percentage / 100.0;
+	clamp(self->bg_edge_size_ratio, 0.0, 1.0);
+}
+
+//
+// Control - Set if the center of the button should be tiled or stretched.
+//
+void EZ_control_SetBackgroundTileCenter(ez_control_t *self, qbool tilecenter)
+{
+	SET_FLAG(button->ext_flags, control_bg_tile_center, tilecenter);
+}
+
+//
+// Control - Set if the edges of the button should be tiled or stretched.
+//
+void EZ_control_SetBackgroundTileEdges(ez_control_t *self, qbool tileedges)
+{
+	SET_FLAG(button->ext_flags, control_bg_tile_edges, tileedges);
 }
 
 //
@@ -2031,6 +2068,108 @@ int EZ_control_OnEventHandlerChanged(ez_control_t *self)
 }
 
 //
+// Control - Draw the background.
+//
+static void EZ_control_DrawBackgroundImage(ez_control_t *self)
+{
+	int edge_size;		// The number of pixel from the edge of the texture 
+	int edge_size2;		// to use when drawing the buttons edges.
+
+	mpic_t *pic = self->background;
+
+	int x, y;
+
+	if (!pic)
+	{
+		return;
+	}
+
+	// Calculate the number of pixels to use for the edges.
+	edge_size = Q_rint(self->bg_edge_size_ratio * pic->width);
+	edge_size2 = (2 * edge_size);
+
+	EZ_control_GetDrawingPosition(self, &x, &y);
+
+	// Center background.
+	if (self->ext_flags & control_bg_tile_center)
+	{
+		// Tiled.
+		Draw_SubPicTiled((x + edge_size), (y + edge_size), 
+			(self->width - edge_size2), (self->height - edge_size2),
+			pic, 
+			edge_size, edge_size, 
+			(pic->width - edge_size2), (pic->height - edge_size2),
+			self->opacity);
+	}
+	else
+	{
+		// Stretch the image.
+		Draw_FitAlphaSubPic((x + edge_size), (y + edge_size), (self->width - edge_size2), (self->height - edge_size2), 
+			pic, edge_size, edge_size, (pic->width - edge_size2), (pic->height - edge_size2), self->opacity);
+	}
+
+	// Only draw an edge if we have something to draw ;)
+	if (edge_size > 0)
+	{
+		if (self->ext_flags & control_bg_tile_edges)
+		{
+			// Tiled.
+
+			// Top center.
+			Draw_SubPicTiled((x + edge_size), y, (self->width - edge_size2), edge_size, 
+							pic, edge_size, 0, (pic->width - edge_size2), edge_size, self->opacity);
+
+			// Bottom center.
+			Draw_SubPicTiled((x + edge_size), (y + self->height - edge_size), (self->width - edge_size2), edge_size, 
+							pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, self->opacity);
+			
+			// Left center.
+			Draw_SubPicTiled(x, (y + edge_size), edge_size, (self->height - edge_size2), 
+							pic, 0, edge_size, edge_size, (pic->height - edge_size2), self->opacity);
+
+			// Right center.
+			Draw_SubPicTiled((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
+							pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), self->opacity);
+		}
+		else
+		{
+			// Stretched.
+
+			// Top center.
+			Draw_FitAlphaSubPic((x + edge_size), y, (self->width - edge_size), edge_size, 
+								pic, edge_size, 0, (pic->width - edge_size2), edge_size, self->opacity);
+
+			// Bottom center.
+			Draw_FitAlphaSubPic((x + edge_size), (y + self->height - edge_size), (self->width - edge_size), edge_size, 
+								pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, self->opacity);
+
+			// Left center.
+			Draw_FitAlphaSubPic(x, (y + edge_size), edge_size, (self->height - edge_size2), 
+								pic, 0, edge_size, edge_size, (pic->height - edge_size2), self->opacity);
+
+			// Right center.
+			Draw_FitAlphaSubPic((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
+								pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), self->opacity);
+		}
+
+		// Top left corner.
+		Draw_AlphaSubPic(x, y, pic, 0, 0, edge_size, edge_size, self->opacity);
+
+		// Top right corner.
+		Draw_AlphaSubPic((x + self->width - edge_size), y, pic, (pic->width - edge_size), 0, edge_size, edge_size, self->opacity);
+
+		// Bottom left corner.
+		Draw_AlphaSubPic(x, (y + self->height - edge_size), pic, 0, (pic->height - edge_size), edge_size, edge_size, self->opacity);
+
+		// Bottom right corner.
+		Draw_AlphaSubPic((x + self->width - edge_size), (y + self->height - edge_size), 
+					pic, 
+					(pic->width - edge_size), (pic->height - edge_size), 
+					edge_size, edge_size, self->opacity);
+	}
+}
+
+//
 // Control - Draws the control.
 //
 int EZ_control_OnDraw(ez_control_t *self)
@@ -2038,7 +2177,11 @@ int EZ_control_OnDraw(ez_control_t *self)
 	int x, y;
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
-	if (self->background_color[3] > 0)
+	if (self->background)
+	{
+		EZ_control_DrawBackgroundImage(self);
+	}
+	else if (self->background_color[3] > 0)
 	{
 		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, true, RGBAVECT_TO_COLOR(self->background_color));
 	}

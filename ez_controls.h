@@ -607,7 +607,9 @@ typedef enum ez_control_flags_e
 	control_ignore_mouse		= (1 << 9),		// Should the control ignore mouse input?
 	control_anchor_viewport		= (1 << 10),	// Anchor to the visible edges of the controls instead of the virtual edges.
 	control_move_parent			= (1 << 11),	// When moving this control, should we also move it's parent?
-	control_listen_repeat_mouse	= (1 << 12)		// Should the control listen to repeated mouse button events?
+	control_listen_repeat_mouse	= (1 << 12),	// Should the control listen to repeated mouse button events?
+	control_bg_tile_center		= (1 << 13),	// Tile the center of the background image (otherwise it will be stretched).
+	control_bg_tile_edges		= (1 << 14)		// Tile the edges of the background image.
 } ez_control_flags_t;
 
 #define DEFAULT_CONTROL_FLAGS	(control_enabled | control_focusable | control_contained | control_scrollable | control_visible)
@@ -696,6 +698,8 @@ typedef struct ez_control_s
 
 	byte					background_color[4];	// The background color of the control RGBA.
 	mpic_t					*background;			// The background picture.
+	float					bg_edge_size_ratio;		// The percentage of the width of the background picture to use for drawing the edges 
+													// of the background when drawn tiled. Value range 0.0 - 1.0
 	float					opacity;				// The opacity of the control.
 
 	ez_control_events_t			events;				// The base reaction for events. Is only set at initialization.
@@ -826,6 +830,26 @@ void EZ_control_SetEnabled(ez_control_t *self, qbool enabled);
 // Control - Set the background image for the control.
 //
 void EZ_control_SetBackgroundImage(ez_control_t *self, const char *background_path);
+
+//
+// Control - Set the opacity for the background image for the control.
+//
+void EZ_control_SetBackgroundImageOpacity(ez_control_t *self, float opacity);
+
+//
+// Control - Set how much percentage of the width of the background image that should be used when drawing the edges of the control.
+//
+void EZ_control_SetBackgroundImageEdgePercentage(ez_control_t *self, int percentage);
+
+//
+// Control - Set if the center of the button should be tiled or stretched.
+//
+void EZ_control_SetBackgroundTileCenter(ez_control_t *self, qbool tilecenter);
+
+//
+// Control - Set if the edges of the button should be tiled or stretched.
+//
+void EZ_control_SetBackgroundTileEdges(ez_control_t *self, qbool tileedges);
 
 //
 // Control - Sets whetever the control is contained within the bounds of it's parent or not, or is allowed to draw outside it.
