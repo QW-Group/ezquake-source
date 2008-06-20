@@ -29,9 +29,9 @@ $Id: ez_button.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // Button
 // =========================================================================================
 
-#define EZ_BUTTON_DEFAULT_NORMAL_IMAGE	"gfx/ui/button_normal"
-#define EZ_BUTTON_DEFAULT_HOVER_IMAGE	"gfx/ui/button_hover"
-#define EZ_BUTTON_DEFAULT_PRESSED_IMAGE	"gfx/ui/button_pressed"
+#define EZ_BUTTON_DEFAULT_NORMAL_IMAGE	"gfx/ui/ez_button_normal"
+#define EZ_BUTTON_DEFAULT_HOVER_IMAGE	"gfx/ui/ez_button_hover"
+#define EZ_BUTTON_DEFAULT_PRESSED_IMAGE	"gfx/ui/ez_button_pressed"
 
 typedef struct ez_button_eventcount_s
 {
