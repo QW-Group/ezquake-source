@@ -29,6 +29,8 @@ $Id: ez_window.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // Window
 // =========================================================================================
 
+#define EZ_WINDOW_DEFAULT_BACKGROUND_IMAGE	"gfx/ui/ez_window"
+
 typedef struct ez_window_s
 {
 	ez_control_t			super;				// The super class.

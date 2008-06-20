@@ -76,8 +76,10 @@ void EZ_window_Init(ez_window_t *window, ez_tree_t *tree, ez_control_t *parent,
 
 	rh_size = window_ctrl->resize_handle_thickness;
 
-	// Overrided control events.
-	//CONTROL_REGISTER_EVENT(slider, EZ_slider_OnDraw, OnDraw, ez_control_t);
+	// Set the background.
+	EZ_control_SetBackgroundImage(window_ctrl, EZ_WINDOW_DEFAULT_BACKGROUND_IMAGE);
+	EZ_control_SetBackgroundImageOpacity(window_ctrl, 1.0);
+	EZ_control_SetBackgroundImageEdgePercentage(window_ctrl, 20);
 
 	// Title bar.
 	{
@@ -86,14 +88,13 @@ void EZ_window_Init(ez_window_t *window, ez_tree_t *tree, ez_control_t *parent,
 			(control_focusable | control_move_parent | control_movable | control_resizeable | control_enabled | control_anchor_viewport));
 
 		titlebar_ctrl = (ez_control_t *)window->titlebar;
+		EZ_control_SetBackgroundImage(titlebar_ctrl, "gfx/ui/ez_titlebar");
 
 		// Set the size to fit within the resize handles.
 		EZ_control_SetSize(titlebar_ctrl, (window_ctrl->width - (2 * rh_size)), 15);
-		//EZ_control_SetMinVirtualSize(titlebar_ctrl, 1, 1);
 		EZ_control_SetAnchor(titlebar_ctrl, (anchor_left | anchor_top | anchor_right));
 
 		EZ_control_SetDrawOrder(titlebar_ctrl, window_ctrl->draw_order + 1, true);
-		EZ_control_SetBackgroundColor(titlebar_ctrl, 100, 0, 0, 100);
 
 		// Close button.
 		{
@@ -127,8 +128,6 @@ void EZ_window_Init(ez_window_t *window, ez_tree_t *tree, ez_control_t *parent,
 
 		EZ_control_SetAnchor(scrollpane_ctrl, (anchor_left | anchor_right | anchor_bottom | anchor_top));
 
-		EZ_control_SetBackgroundColor(scrollpane_ctrl, 255, 0, 50, 50);
-
 		// Window area.
 		{
 			window->window_area = EZ_control_Create(tree, scrollpane_ctrl, "Window area", NULL, 0, 0, 10, 10, (control_scrollable | control_enabled | control_resizeable));
@@ -136,7 +135,6 @@ void EZ_window_Init(ez_window_t *window, ez_tree_t *tree, ez_control_t *parent,
 			// Set the window area as the target of the scrollpane 
 			// (this will make it a child of the scrollpane, so don't bother to add it as a child to the window itself).
 			EZ_scrollpane_SetTarget(window->scrollpane, window->window_area);
-			EZ_control_SetBackgroundColor(window->window_area, 0, 50, 50, 50);
 			EZ_control_SetDrawOrder(window->window_area, scrollpane_ctrl->draw_order + 1, true);
 		}
 	}
