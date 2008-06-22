@@ -139,6 +139,7 @@ byte* StringToRGB(char *s)
 */
 int ParseFloats(char *s, float *f, int *f_size) {
 	int i, argc;
+	tokenizecontext_t ctx;
 
 	if (!s || !f || !f_size)
 		Sys_Error("ParseFloats() wrong params");
@@ -146,11 +147,12 @@ int ParseFloats(char *s, float *f, int *f_size) {
 	if (f_size[0] <= 0)
 		return (f_size[0] = 0); // array have no size, unusual but no crime
 
-	Cmd_TokenizeString(s);
-	argc = min(Cmd_Argc(), f_size[0]);
+	Cmd_TokenizeStringEx(&ctx, s);
+
+	argc = min(Cmd_ArgcEx(&ctx), f_size[0]);
 	
 	for(i = 0; i < argc; i++)
-		f[i] = Q_atof(Cmd_Argv(i));
+		f[i] = Q_atof(Cmd_ArgvEx(&ctx, i));
 
 	for( ; i < f_size[0]; i++)
 		f[i] = 0; // zeroing unused elements
