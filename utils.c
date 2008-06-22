@@ -94,7 +94,7 @@ char *ColorNameToRGBString(char *color_name)
 /// \brief converts "255 255 0 128" to (255, 255, 0, 128) array and saves it to rgb output argument
 /// \param[in] s string in "R G B A" format
 /// \param[out] rgb array of 4 bytes
-void StringToRGB_W(char *s, byte *rgb)
+int StringToRGB_W(char *s, byte *rgb)
 {
 	int i;
 	char buf[20]; // "255 255 255 255" - the longest possible string
@@ -120,6 +120,8 @@ void StringToRGB_W(char *s, byte *rgb)
 		rgb[2] = col[2];
 	}
 	#endif
+
+	return i;
 }
 
 byte* StringToRGB(char *s)

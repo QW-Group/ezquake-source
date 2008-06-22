@@ -249,10 +249,12 @@ customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random,
 {
 	// TODO : Ok to use this in software also?
 #ifdef GLQUAKE
-	byte *color = StringToRGB(str);
+	byte color[4];
 	int i;
 
-	if (Cmd_Argc() > 1)
+	i = StringToRGB_W(str, color);
+
+	if (i > 1)
 		l->type = lt_custom; // we got at least two params so treat this as custom color
 	else
 		l->type = dlightColor(f, def, random); // this may set lt_custom too

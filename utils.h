@@ -37,7 +37,7 @@ char *SecondsToMinutesString(int print_time);
 char *SecondsToHourString(int time);
 char *ColorNameToRGBString(char *color_name);
 byte *StringToRGB(char *s);
-void StringToRGB_W(char *s, byte *rgb);
+int StringToRGB_W(char *s, byte *rgb);
 int ParseFloats(char *s, float *f, int *f_size);
 
 // don't count ezquake color sequence
