@@ -29,31 +29,41 @@ $Id: ez_button.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // Button
 // =========================================================================================
 
-#define EZ_BUTTON_DEFAULT_NORMAL_IMAGE	"gfx/ui/ez_button_normal"
-#define EZ_BUTTON_DEFAULT_HOVER_IMAGE	"gfx/ui/ez_button_hover"
-#define EZ_BUTTON_DEFAULT_PRESSED_IMAGE	"gfx/ui/ez_button_pressed"
+#define EZ_BUTTON_DEFAULT_NORMAL_IMAGE			"gfx/ui/ez_button_normal"
+#define EZ_BUTTON_DEFAULT_HOVER_IMAGE			"gfx/ui/ez_button_hover"
+#define EZ_BUTTON_DEFAULT_PRESSED_IMAGE			"gfx/ui/ez_button_pressed"
+#define EZ_BUTTON_DEFAULT_PRESSED_HOVER_IMAGE	"gfx/ui/ez_button_pressed_hover"
 
 typedef struct ez_button_eventcount_s
 {
 	int	OnAction;
 	int	OnTextAlignmentChanged;
+	int OnToggled;
 } ez_button_eventcount_t;
 
 typedef struct ez_button_events_s
 {
 	ez_event_fp	OnAction;				// The event that's raised when the button is clicked / activated via a button.
 	ez_event_fp	OnTextAlignmentChanged;	// Text alignment changed.
+	ez_event_fp	OnToggled;				// The button was toggled.
 } ez_button_events_t;
 
 typedef struct ez_button_eventhandlers_s
 {
 	ez_eventhandler_t		*OnAction;
 	ez_eventhandler_t		*OnTextAlignmentChanged;
+	ez_eventhandler_t		*OnToggled;
 } ez_button_eventhandlers_t;
+
+typedef enum ez_button_iflags_e
+{
+	button_toggled = (1 << 0)
+} ez_button_iflags_t;
 
 typedef enum ez_button_flags_e
 {
-	use_images	= (1 << 0)
+	button_use_images		= (1 << 0),
+	button_is_toggleable	= (1 << 1)
 } ez_button_flags_t;
 
 typedef enum ez_textalign_e
@@ -84,13 +94,16 @@ typedef struct ez_button_s
 	mpic_t					*normal_image;		// The normal image used for the button.
 	mpic_t					*hover_image;		// The image that is shown for the button when the mouse is over it.
 	mpic_t					*pressed_image;		// The image that is shown when the button is pressed.
+	mpic_t					*toggled_hover_image; // The image that is shown for the button when the mouse is over it while toggled.
 
 	byte					color_focused[4];	// Color of the focus indicator of the button.
 	byte					color_normal[4];	// The normal color of the button.
 	byte					color_hover[4];		// Color when the button is hovered.
 	byte					color_pressed[4];	// Color when the button is pressed.
+	byte					color_toggled_hover[4]; // Color when the button is hovered while toggled.
 
-	ez_button_flags_t		ext_flags;
+	ez_button_iflags_t		int_flags;			// Internal flags.
+	ez_button_flags_t		ext_flags;			// External flags.
 
 	int						padding_top;
 	int						padding_left;
@@ -148,6 +161,16 @@ int EZ_button_OnResize(ez_control_t *self);
 void EZ_button_SetUseImages(ez_button_t *button, qbool useimages);
 
 //
+// Button - Sets if the button is toggleable.
+//
+void EZ_button_SetToggleable(ez_button_t *button, qbool toggleable);
+
+//
+// Button - Gets if the button is toggled.
+//
+qbool EZ_button_GetIsToggled(ez_button_t *button);
+
+//
 // Button - Set the text of the button. 
 //
 void EZ_button_SetText(ez_button_t *button, const char *text);
@@ -187,6 +210,11 @@ void EZ_button_SetHoverImage(ez_button_t *button, const char *hover_image);
 //
 void EZ_button_SetPressedImage(ez_button_t *button, const char *pressed_image);
 
+//
+// Button - Set the hover image for the button when it is toggled.
+//
+void EZ_button_SetToggledHoverImage(ez_button_t *button, const char *toggled_hover_image);
+
 // 
 // Button - Sets the normal color of the button.
 //
@@ -202,6 +230,11 @@ void EZ_button_SetPressedColor(ez_button_t *self, byte r, byte g, byte b, byte a
 //
 void EZ_button_SetHoverColor(ez_button_t *self, byte r, byte g, byte b, byte alpha);
 
+//
+// Button - Sets the toggled hover color of the button.
+//
+void EZ_button_SetToggledHoverColor(ez_button_t *self, byte r, byte g, byte b, byte alpha);
+
 // 
 // Button - Sets the focused color of the button.
 //
@@ -212,9 +245,39 @@ void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte a
 //
 void EZ_button_AddOnAction(ez_button_t *self, ez_eventhandler_fp OnAction, void *payload);
 
+// 
+// Button - Sets the OnAction event handler.
+//
+void EZ_button_AddOnToggled(ez_button_t *self, ez_eventhandler_fp OnToggled, void *payload);
+
 //
 // Button - OnDraw event.
 //
 int EZ_button_OnDraw(ez_control_t *self);
+
+//
+// Button - OnMouseClick event.
+//
+int EZ_button_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state);
+
+//
+// Button - OnToggled event. The button was toggled.
+//
+int EZ_button_OnToggled(ez_control_t *self);
+
+//
+// Button - OnMouseEnter event.
+//
+int EZ_button_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state);
+
+//
+// Button - OnMouseLeave event.
+//
+int EZ_button_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state);
+
+//
+// Button - OnMouseDown event.
+//
+int EZ_button_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state);
 
 #endif // __EZ_BUTTON_H__

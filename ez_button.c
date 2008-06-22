@@ -169,6 +169,23 @@ ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
 }
 
 //
+// Button - Sets either the background image or color.
+//
+static void EZ_button_SetColorOrBackground(ez_control_t *self, mpic_t *background, byte *c)
+{
+	ez_button_t *button = (ez_button_t *)self;
+
+	if (button->ext_flags & button_use_images)
+	{
+		self->background = background;
+	}
+	else
+	{
+		EZ_control_SetBackgroundColor(self, c[0], c[1], c[2], c[3]);
+	}
+}
+
+//
 // Button - Initializes a button.
 //
 void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
@@ -188,10 +205,15 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	// Override the draw function.
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnDraw, OnDraw, ez_control_t);
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnResize, OnResize, ez_control_t);
+	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseClick, OnMouseClick, ez_control_t);
+	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseLeave, OnMouseLeave, ez_control_t);
+	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseEnter, OnMouseEnter, ez_control_t);	
+	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseDown, OnMouseDown, ez_control_t);	
 
 	// Button specific events.
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnAction, OnAction, ez_button_t);
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnTextAlignmentChanged, OnTextAlignmentChanged, ez_button_t);
+	CONTROL_REGISTER_EVENT(button, EZ_button_OnToggled, OnToggled, ez_button_t);
 
 	// Create the buttons text label.
 	{
@@ -213,8 +235,11 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	EZ_button_SetNormalImage(button, EZ_BUTTON_DEFAULT_NORMAL_IMAGE);
 	EZ_button_SetHoverImage(button, EZ_BUTTON_DEFAULT_HOVER_IMAGE);
 	EZ_button_SetPressedImage(button, EZ_BUTTON_DEFAULT_PRESSED_IMAGE);
+	EZ_button_SetToggledHoverImage(button, EZ_BUTTON_DEFAULT_PRESSED_HOVER_IMAGE);
 
-	button->ext_flags |= use_images;
+	button->ext_flags |= button_use_images;
+
+	EZ_button_SetColorOrBackground((ez_control_t *)button, button->normal_image, button->color_normal);
 }
 
 //
@@ -263,7 +288,23 @@ int EZ_button_OnResize(ez_control_t *self)
 //
 void EZ_button_SetUseImages(ez_button_t *button, qbool useimages)
 {
-	SET_FLAG(button->ext_flags, use_images, useimages);
+	SET_FLAG(button->ext_flags, button_use_images, useimages);
+}
+
+//
+// Button - Sets if the button is toggleable.
+//
+void EZ_button_SetToggleable(ez_button_t *button, qbool toggleable)
+{
+	SET_FLAG(button->ext_flags, button_is_toggleable, toggleable);
+}
+
+//
+// Button - Gets if the button is toggled.
+//
+qbool EZ_button_GetIsToggled(ez_button_t *button)
+{
+	return (button->int_flags & button_toggled);
 }
 
 //
@@ -293,6 +334,15 @@ void EZ_button_AddOnTextAlignmentChanged(ez_button_t *button, ez_eventhandler_fp
 	CONTROL_RAISE_EVENT(NULL, button, ez_control_t, OnEventHandlerChanged);
 }
 
+// 
+// Button - Sets the OnToggled event handler.
+//
+void EZ_button_AddOnToggled(ez_button_t *button, ez_eventhandler_fp OnToggled, void *payload)
+{
+	CONTROL_ADD_EVENTHANDLER(button, EZ_CONTROL_HANDLER, OnToggled, ez_button_t, OnToggled, payload);
+	CONTROL_RAISE_EVENT(NULL, button, ez_control_t, OnEventHandlerChanged);
+}
+
 //
 // Button - Set the normal image for the button.
 //
@@ -315,6 +365,14 @@ void EZ_button_SetHoverImage(ez_button_t *button, const char *hover_image)
 void EZ_button_SetPressedImage(ez_button_t *button, const char *pressed_image)
 {
 	button->pressed_image = pressed_image ? Draw_CachePicSafe(pressed_image, false, true) : NULL;
+}
+
+//
+// Button - Set the hover image for the button when it is toggled.
+//
+void EZ_button_SetToggledHoverImage(ez_button_t *button, const char *toggled_hover_image)
+{
+	button->toggled_hover_image = toggled_hover_image ? Draw_CachePicSafe(toggled_hover_image, false, true) : NULL;
 }
 
 //
@@ -351,6 +409,17 @@ void EZ_button_SetHoverColor(ez_button_t *self, byte r, byte g, byte b, byte alp
 }
 
 //
+// Button - Sets the toggled hover color of the button.
+//
+void EZ_button_SetToggledHoverColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
+{
+	self->color_toggled_hover[0] = r;
+	self->color_toggled_hover[1] = g;
+	self->color_toggled_hover[2] = b;
+	self->color_toggled_hover[3] = alpha;
+}
+
+//
 // Button - Sets the focused color of the button.
 //
 void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
@@ -375,64 +444,17 @@ void EZ_button_AddOnAction(ez_button_t *self, ez_eventhandler_fp OnAction, void 
 //
 int EZ_button_OnDraw(ez_control_t *self)
 {
-	int text_x = 0;
-	int text_y = 0;
-	int text_len = 0;
 	ez_button_t *button = (ez_button_t *)self;
 
 	int x, y;
-	byte *c = NULL;
-	qbool useimages = (button->ext_flags & use_images);
 	EZ_control_GetDrawingPosition(self, &x, &y);
-
-	if (self->int_flags & control_mouse_over)
-	{
-		if (self->int_flags & control_clicked)
-		{
-			if (useimages)
-			{
-				self->background = button->pressed_image;
-			}
-			else
-			{
-				c = button->color_pressed;
-			}
-		}
-		else
-		{
-			if (useimages)
-			{
-				self->background = button->hover_image;
-			}
-			else
-			{
-				c = button->color_hover;
-			}
-		}
-	}
-	else
-	{
-		if (useimages)
-		{
-			self->background = button->normal_image;
-		}
-		else
-		{
-			c = button->color_normal;
-		}
-	}
-
-	if (!useimages && c)
-	{
-		EZ_control_SetBackgroundColor(self, c[0], c[1], c[2], c[3]);
-	}
 
 	// Run the super class's implementation first.
 	EZ_control_OnDraw(self);
 
 	if (self->int_flags & control_focused)
 	{
-		if (useimages)
+		if (button->ext_flags & button_use_images)
 		{
 		}
 		else
@@ -457,6 +479,109 @@ int EZ_button_OnTextAlignmentChanged(ez_control_t *self)
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnTextAlignmentChanged);
 	return 0;
+}
+
+//
+// Button - OnMouseClick event.
+//
+int EZ_button_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state)
+{
+	int mouse_handled = true;
+	ez_button_t *button = (ez_button_t *)self;
+	EZ_control_OnMouseClick(self, mouse_state);
+
+	// Toggle the button.
+	if (button->ext_flags & button_is_toggleable)
+	{
+		button->int_flags ^= button_toggled;
+		CONTROL_RAISE_EVENT(NULL, button, ez_button_t, OnToggled);
+	}
+	else
+	{
+		button->int_flags &= ~button_toggled;
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, ez_control_t, OnMouseClick, mouse_state);
+	return mouse_handled;
+}
+
+//
+// Button - OnToggled event. The button was toggled.
+//
+int EZ_button_OnToggled(ez_control_t *self)
+{
+	ez_button_t *button = (ez_button_t *)self;
+
+	// Set the background based on the new state.
+	if (button->int_flags & button_toggled)
+	{
+		EZ_button_SetColorOrBackground(self, button->pressed_image, button->color_pressed);
+	}
+	else
+	{
+		EZ_button_SetColorOrBackground(self, button->normal_image, button->color_normal);
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnToggled);
+	return 0;
+}
+
+//
+// Button - OnMouseEnter event.
+//
+int EZ_button_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state)
+{
+	ez_button_t *button = (ez_button_t *)self;
+	EZ_control_OnMouseEnter(self, mouse_state);
+
+	// Set the background based on the new state.
+	if (button->int_flags & button_toggled)
+	{
+		EZ_button_SetColorOrBackground(self, button->toggled_hover_image, button->color_toggled_hover);
+	}
+	else
+	{
+		EZ_button_SetColorOrBackground(self, button->hover_image, button->color_hover);
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMouseEnter);
+	return 0;
+}
+
+//
+// Button - OnMouseLeave event.
+//
+int EZ_button_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
+{
+	ez_button_t *button = (ez_button_t *)self;
+	EZ_control_OnMouseLeave(self, mouse_state);
+
+	// Set the background based on the new state.
+	if (button->int_flags & button_toggled)
+	{
+		EZ_button_SetColorOrBackground(self, button->pressed_image, button->color_pressed);
+	}
+	else
+	{
+		EZ_button_SetColorOrBackground(self, button->normal_image, button->color_normal);
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseLeave);
+	return 0;
+}
+
+//
+// Button - OnMouseDown event.
+//
+int EZ_button_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
+{
+	ez_button_t *button = (ez_button_t *)self;
+	EZ_control_OnMouseDown(self, mouse_state);
+
+	EZ_button_SetColorOrBackground(self, button->toggled_hover_image, button->color_toggled_hover);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseDown);
+	return 1;
 }
 
 
