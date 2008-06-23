@@ -715,7 +715,7 @@ void EZ_eventhandler_Remove(ez_eventhandler_t *eventhandler, void *event_func, q
 	{
 		if (all)
 		{
-			prev = prev->next;
+			prev = it->next;
 			Q_free(it);
 			it = prev;
 		}
@@ -2708,9 +2708,5 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 
 	return mouse_handled;
 }
-
-// TODO : Add a checkbox control.
-// TODO : Add a radiobox control.
-// TODO : Add a window control.
 
 
