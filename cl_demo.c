@@ -4309,12 +4309,11 @@ void CL_Demo_SetSpeed_f (void)
 }
 
 //
-// Jumps to a specified time in a demo (forwards only).
+// Jumps to a specified time in a demo.
 //
 void CL_Demo_Jump_f (void)
 {
     int seconds = 0, seen_col, relative = 0;
-	double newdemotime;
     char *text, *s;
 	static char *usage_message = "Usage: %s [+|-][m:]<s> (seconds)\n";
 
@@ -4400,8 +4399,16 @@ void CL_Demo_Jump_f (void)
     seconds += atoi(text);
 	cl.gametime += seconds;
 
+	CL_Demo_Jump(seconds, relative);
+}
+
+//
+// Jumps to a specified time in a demo. Time specified in seconds.
+//
+void CL_Demo_Jump(double seconds, qbool relative)
+{
 	// Calculate the new demo time we want to jump to.
-	newdemotime = relative ? (cls.demotime + relative * seconds) : (demostarttime + seconds);
+	double newdemotime = relative ? (cls.demotime + (relative * seconds)) : (demostarttime + seconds);
 
 	// We need to rewind.
 	if (newdemotime < cls.demotime)
@@ -4409,7 +4416,7 @@ void CL_Demo_Jump_f (void)
 		cls.demo_rewindtime = newdemotime;
 	}
 
-	// Set the new demotime.
+	// Set the new demotime.	
 	cls.demotime = newdemotime;
 
 	cls.demoseeking = true;

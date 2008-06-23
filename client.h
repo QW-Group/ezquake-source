@@ -668,6 +668,7 @@ void CL_WriteDemoEntities (void);
 void CL_StopPlayback (void);
 void CL_Stop_f (void);
 void CL_CheckQizmoCompletion(void);
+void CL_Demo_Jump(double seconds, qbool relative);
 void CL_Demo_Init(void);
 qbool CL_IsDemoExtension(const char *filename);
 
