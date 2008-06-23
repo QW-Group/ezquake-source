@@ -33,6 +33,11 @@ typedef enum ez_slider_iflags_e
 	slider_dragging	= (1 << 0)
 } ez_slider_iflags_t;
 
+typedef enum ez_slider_flags_e
+{
+	slider_jump_to_click = (1 << 0)
+} ez_slider_flags_t;
+
 typedef struct ez_slider_eventcount_s
 {
 	int	OnSliderPositionChanged;
@@ -66,7 +71,8 @@ typedef struct ez_slider_s
 	ez_slider_eventcount_t	inherit_levels;
 	ez_slider_eventcount_t	override_counts;
 
-	ez_slider_iflags_t		int_flags;			// Slider specific flags.
+	ez_slider_flags_t		ext_flags;			// External slider flags.
+	ez_slider_iflags_t		int_flags;			// Slider specific internal flags.
 	int						slider_pos;			// The position of the slider.
 	int						real_slider_pos;	// The actual slider position in pixels.
 	int						max_value;			// The max value allowed for the slider.
@@ -115,6 +121,11 @@ void EZ_slider_AddOnMaxValueChanged(ez_slider_t *slider, ez_eventhandler_fp OnMa
 // Slider - Event handler for OnMinValueChanged.
 //
 void EZ_slider_AddOnMinValueChanged(ez_slider_t *slider, ez_eventhandler_fp OnMinValueChanged, void *payload);
+
+//
+// Slider - Gets the current position of the mouse in slider scale. (This does not care if the mouse is within the control)
+//
+int EZ_slider_GetPositionFromMouse(ez_slider_t *slider, float mouse_x, float mouse_y);
 
 //
 // Slider - Get the current slider position.
@@ -190,5 +201,11 @@ int EZ_slider_OnResize(ez_control_t *self);
 // Slider - Key event.
 //
 int EZ_slider_OnKeyDown(ez_control_t *self, int key, int unichar);
+
+//
+// Slider - Jumps to the point that was clicked on the slider 
+//          (Normal behavior is to make a "big step" when clicking the slider outside the handle).
+//
+void EZ_slider_SetJumpToClick(ez_slider_t *slider, qbool jump_to_click);
 
 #endif // __EZ_SLIDER_H__

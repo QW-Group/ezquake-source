@@ -154,6 +154,16 @@ void EZ_slider_AddOnScaleChanged(ez_slider_t *slider, ez_eventhandler_fp OnScale
 }
 
 //
+// Slider - Gets the current position of the mouse in slider scale. (This does not care if the mouse is within the control)
+//
+int EZ_slider_GetPositionFromMouse(ez_slider_t *slider, float mouse_x, float mouse_y)
+{
+	ez_control_t *self = (ez_control_t *)slider;
+	int x = Q_rint(self->absolute_virtual_x + (slider->scaled_char_size / 2.0));
+	return Q_rint((mouse_x - x) / slider->gap_size);
+}
+
+//
 // Slider - Get the current slider position.
 //
 int EZ_slider_GetPosition(ez_slider_t *slider)
@@ -303,6 +313,16 @@ int EZ_slider_OnSliderPositionChanged(ez_control_t *self)
 }
 
 //
+// Slider - Jumps to the point that was clicked on the slider 
+//          (Normal behavior is to make a "big step" when clicking the slider outside the handle).
+//
+void EZ_slider_SetJumpToClick(ez_slider_t *slider, qbool jump_to_click)
+{
+	SET_FLAG(slider->ext_flags, slider_jump_to_click, jump_to_click);
+	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)slider, ez_control_t, OnFlagsChanged);
+}
+
+//
 // Slider - Mouse down event.
 //
 int EZ_slider_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
@@ -325,9 +345,17 @@ int EZ_slider_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 	{
 		slider->int_flags |= slider_dragging;
 	}
+	else if (slider->ext_flags & slider_jump_to_click)
+	{
+		// Jump to the exact position on the slider that was clicked.
+		int newpos = EZ_slider_GetPositionFromMouse(slider, ms->x, ms->y);
+		EZ_slider_SetPosition(slider, newpos);
+	}
 	else if (ms->x < slider_left_edge)
 	{
-		EZ_slider_SetPosition(slider, slider->slider_pos - big_step);
+		// When clicking on the slider (but not the slider handle)
+		// make a "big step" instead of dragging it.
+		EZ_slider_SetPosition(slider, slider->slider_pos - big_step);		
 	}
 	else if (ms->x > slider_right_edge)
 	{
