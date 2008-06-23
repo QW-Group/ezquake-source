@@ -65,6 +65,8 @@ $Id: EX_browser_ping.c,v 1.40 2007-10-27 08:51:12 dkure Exp $
 #define DEF_PACKET_SIZE  0
 #define MAX_PACKET       1024
 
+#define PING_PACKET_DATA "\xff\xff\xff\xffk\n"
+
 // =============================================================================
 //  Local Types
 // =============================================================================
@@ -644,14 +646,17 @@ void PingSendParrallelMultiHosts(pinghost_t *phosts, int nelms, int count) {
 	int interval; 
 	int i, j;
 	int ret;
+	timerresolution_session_t timer_session;
 
 	count = bound(1, count, 6);
 	interval = 1000.0 / sb_pingspersec.value;
 
+	Sys_TimerResolution_InitSession(&timer_session);
+	Sys_TimerResolution_RequestMinimum(&timer_session);
+
 	for (i = 0; i < count && !abort_ping; i++) {
 		for (j = 0; j < nelms && !abort_ping; j++) {
-			// FIXME: What is this string doing????
-			char *packet = "\xff\xff\xff\xffk\n";
+			char *packet = PING_PACKET_DATA;
 
 			ping_pos = min(1, (j / (double)(nelms * count))) + (i / (double)count);
 
@@ -668,6 +673,8 @@ void PingSendParrallelMultiHosts(pinghost_t *phosts, int nelms, int count) {
 			phosts[j].send++;
 		}
 	}
+
+	Sys_TimerResolution_Clear(&timer_session);
 }
 
 /**

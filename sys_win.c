@@ -1356,3 +1356,39 @@ int Sys_SemDestroy(sem_t *sem)
 		return 0;
 	return -1;
 }
+
+// Timer Resolution Requesting
+void Sys_TimerResolution_InitSession(timerresolution_session_t * s)
+{
+	s->set = false;
+	s->interval = 0;
+}
+
+void Sys_TimerResolution_RequestMinimum(timerresolution_session_t * s)
+{
+	TIMECAPS t;
+	if (timeGetDevCaps(&t, sizeof(TIMECAPS)) == TIMERR_NOERROR) {
+		if (timeBeginPeriod(t.wPeriodMin) == TIMERR_NOERROR) {
+			s->set = true;
+			s->interval = t.wPeriodMin;
+		}
+		else {
+			Com_Printf("Error: Requesting minimum timer resolution failed\n");
+		}
+	}
+	else {
+		Com_Printf("Error: Failed querying timer device\n");
+	}
+}
+
+void Sys_TimerResolution_Clear(timerresolution_session_t * s)
+{
+	if (s->set) {
+		if (timeEndPeriod(s->interval) == TIMERR_NOERROR) {
+			s->set = false;
+		}
+		else {
+			Com_Printf("Error: Failed to clear timer resolution\n");
+		}
+	}
+}

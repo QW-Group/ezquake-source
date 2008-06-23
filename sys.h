@@ -116,3 +116,33 @@ int Sys_SemInit(sem_t *sem, int value, int max_value);
 int Sys_SemWait(sem_t *sem);
 int Sys_SemPost(sem_t *sem);
 int Sys_SemDestroy(sem_t *sem);
+
+// Timer Resolution
+// On windows to Sleep(1) really take only 1 ms it is necessary to explicitly request
+// such a high precision, otherwise the thread would sleep for much higher time (materials mention 18 ms or 50 ms)
+// This interface allows to request a temporary increased resolution of the timer device
+typedef struct timerresolution_session_s {
+	int set;
+	unsigned int interval;
+} timerresolution_session_t;
+
+#ifdef _WIN32
+// for initialization of the session structure
+void Sys_TimerResolution_InitSession(timerresolution_session_t * s);
+
+// request minimum timer resolution for given session
+// call this before a block in which you are using Sleep() with low argument value
+void Sys_TimerResolution_RequestMinimum(timerresolution_session_t * s);
+
+// release the requested resolution for this session
+// lets timer device use lower resolution
+// always call this after you don't need precise Sleep anymore!
+void Sys_TimerResolution_Clear(timerresolution_session_t * s);
+#else
+
+// not implemented on other platforms
+#define Sys_TimerResolution_InitSession(x) (x)
+#define Sys_TimerResolution_RequestMinimum(x) (x)
+#define Sys_TimerResolution_Clear(x) (x)
+
+#endif
