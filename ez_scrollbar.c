@@ -198,9 +198,9 @@ int EZ_scrollbar_Destroy(ez_control_t *self, qbool destroy_children)
 	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self;
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDestroy, destroy_children);
 
-	EZ_control_Destroy(self, destroy_children);
-
 	EZ_eventhandler_Remove(scrollbar->event_handlers.OnTargetChanged, NULL, true);
+
+	EZ_control_Destroy(self, destroy_children);
 
 	return 0;
 }

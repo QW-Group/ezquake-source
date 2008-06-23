@@ -152,7 +152,6 @@ int EZ_window_Destroy(ez_control_t *self, qbool destroy_children)
 
 	// TODO : Remove any event handlers.
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDestroy, destroy_children);
 	return 0;
 }
 

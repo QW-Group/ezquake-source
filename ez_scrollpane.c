@@ -218,10 +218,10 @@ int EZ_scrollpane_Destroy(ez_control_t *self, qbool destroy_children)
 	ez_scrollpane_t *scrollpane = (ez_scrollpane_t *)self;
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDestroy, destroy_children);
 
-	EZ_control_Destroy(self, destroy_children);
-
 	EZ_eventhandler_Remove(scrollpane->event_handlers.OnScrollbarThicknessChanged, NULL, true);
 	EZ_eventhandler_Remove(scrollpane->event_handlers.OnTargetChanged, NULL, true);
+
+	EZ_control_Destroy(self, destroy_children);
 
 	return 0;
 }

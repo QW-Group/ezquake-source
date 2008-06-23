@@ -109,13 +109,13 @@ int EZ_label_Destroy(ez_control_t *self, qbool destroy_children)
 
 	Q_free(label->text);
 
-	// TODO: Can we just free a part like this here? How about children, will they be properly destroyed?
-	EZ_control_Destroy(&label->super, destroy_children);
-
 	EZ_eventhandler_Remove(label->event_handlers.OnCaretMoved, NULL, true);
 	EZ_eventhandler_Remove(label->event_handlers.OnTextChanged, NULL, true);
 	EZ_eventhandler_Remove(label->event_handlers.OnTextFlagsChanged, NULL, true);
 	EZ_eventhandler_Remove(label->event_handlers.OnTextScaleChanged, NULL, true);
+
+	// TODO: Can we just free a part like this here? How about children, will they be properly destroyed?
+	EZ_control_Destroy(&label->super, destroy_children);
 
 	return 0;
 }
