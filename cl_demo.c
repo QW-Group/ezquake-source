@@ -1947,7 +1947,7 @@ qbool CL_GetDemoMessage (void)
 				{
 					// Read the player bit mask from the demo and convert to the correct byte order.
 					// Each bit in this number represents a player, 32-bits, 32 players.
-					CL_Demo_Read(&i, sizeof(i), false);
+					CL_Demo_Read(&i, 4, false);
 					cls.lastto = LittleLong(i);
 					cls.lasttype = dem_multiple;
 					break;
