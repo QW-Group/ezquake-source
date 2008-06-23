@@ -665,12 +665,16 @@ void PingSendParrallelMultiHosts(pinghost_t *phosts, int nelms, int count) {
 			to.sin_addr.s_addr = phosts[j].ip;
 
 			ret = sendto(ping_sock, packet, strlen(packet), 0, (struct sockaddr *)&to, sizeof(struct sockaddr));
-			Sys_MSleep(interval);
-			if (ret == -1) // error
+
+			if (ret == -1) {
 				continue;
+			}
 
 			phosts[j].stime[phosts[j].send] = Sys_DoubleTime();
 			phosts[j].send++;
+
+			Sys_MSleep(interval);
+
 		}
 	}
 
