@@ -2121,7 +2121,7 @@ void VID_Update (vrect_t *rects)
 				IN_ActivateMouse();
 				IN_HideMouse();
 			} 
-			else if (mouseactive && (key_dest != key_game && key_dest != key_hudeditor && key_dest == key_demo_controls && key_dest != key_menu)) 
+			else if (mouseactive && (key_dest != key_game && key_dest != key_hudeditor && key_dest != key_demo_controls && key_dest != key_menu)) 
 			{
 				IN_DeactivateMouse();
 				IN_ShowMouse();
