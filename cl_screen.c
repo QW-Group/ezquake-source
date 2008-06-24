@@ -3327,13 +3327,13 @@ void SCR_DrawElements(void)
 			}
 		}
 
-		if (!scr_autosshot_countdown) {
+		if (!scr_autosshot_countdown)
+		{
 			SCR_DrawConsole ();
 			M_Draw ();
 		}
 
         SCR_DrawCursor();
-
     }
 }
 

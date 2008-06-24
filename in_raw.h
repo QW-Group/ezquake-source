@@ -3,12 +3,7 @@
 
 // Raw input includes
 
-
-
-#define USINGRAWINPUT
-
-
-
+#define USINGRAWINPUT // hehe? :)
 
 #ifdef USINGRAWINPUT
 
@@ -71,17 +66,21 @@
 #define RIDEV_APPKEYS      0x00000400
 
 DECLARE_HANDLE(HRAWINPUT);
-typedef struct tagRAWINPUTHEADER {
+typedef struct tagRAWINPUTHEADER 
+{
 	DWORD dwType;
 	DWORD dwSize;
 	HANDLE hDevice;
 	WPARAM wParam;
 } RAWINPUTHEADER,*PRAWINPUTHEADER;
-typedef struct tagRAWMOUSE {
+typedef struct tagRAWMOUSE 
+{
 	USHORT usFlags;
-	union {
+	union 
+	{
 		ULONG ulButtons;
-		struct {
+		struct 
+		{
 			USHORT usButtonFlags;
 			USHORT usButtonData;
 		};
@@ -91,7 +90,8 @@ typedef struct tagRAWMOUSE {
 	LONG lLastY;
 	ULONG ulExtraInformation;
 } RAWMOUSE,*PRAWMOUSE,*LPRAWMOUSE;
-typedef struct tagRAWKEYBOARD {
+typedef struct tagRAWKEYBOARD 
+{
 	USHORT MakeCode;
 	USHORT Flags;
 	USHORT Reserved;
@@ -99,27 +99,32 @@ typedef struct tagRAWKEYBOARD {
 	UINT Message;
 	ULONG ExtraInformation;
 } RAWKEYBOARD,*PRAWKEYBOARD,*LPRAWKEYBOARD;
-typedef struct tagRAWHID {
+typedef struct tagRAWHID 
+{
 	DWORD dwSizeHid;
 	DWORD dwCount;
 	BYTE bRawData;
 } RAWHID,*PRAWHID,*LPRAWHID;
-typedef struct tagRAWINPUT {
+typedef struct tagRAWINPUT 
+{
 	RAWINPUTHEADER header;
-	union {
+	union 
+	{
 		RAWMOUSE    mouse;
 		RAWKEYBOARD keyboard;
 		RAWHID      hid;
 	} data;
 } RAWINPUT,*PRAWINPUT,*LPRAWINPUT;
-typedef struct tagRAWINPUTDEVICE {
+typedef struct tagRAWINPUTDEVICE 
+{
 	USHORT usUsagePage;
 	USHORT usUsage;
 	DWORD dwFlags;
 	HWND hwndTarget;
 } RAWINPUTDEVICE,*PRAWINPUTDEVICE,*LPRAWINPUTDEVICE;
 typedef const RAWINPUTDEVICE *PCRAWINPUTDEVICE;
-typedef struct tagRAWINPUTDEVICELIST {
+typedef struct tagRAWINPUTDEVICELIST 
+{
 	HANDLE hDevice;
 	DWORD dwType;
 } RAWINPUTDEVICELIST,*PRAWINPUTDEVICELIST;
@@ -133,10 +138,9 @@ WINUSERAPI UINT WINAPI GetRawInputDeviceList(PRAWINPUTDEVICELIST,PUINT,UINT);
 WINUSERAPI UINT WINAPI GetRegisteredRawInputDevices(PRAWINPUTDEVICE,PUINT,UINT);
 WINUSERAPI BOOL WINAPI RegisterRawInputDevices(PCRAWINPUTDEVICE,UINT,UINT);
 
+#endif // !RIM_TYPEMOUSE
 
 void IN_RawInput_MouseRead(HANDLE in_device_handle);
-
-#endif
 
 #endif // USINGRAWINPUT
 

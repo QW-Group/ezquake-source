@@ -582,7 +582,7 @@ void CL_ProxyEnter (void)
 		M_EnterProxyMenu();
 
 	} 
-else if (key_dest == key_menu && m_state == m_proxy) 
+	else if (key_dest == key_menu && m_state == m_proxy) 
 	{
 		// This happens when we connect to a server using a proxy.
 		M_LeaveMenus();

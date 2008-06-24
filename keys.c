@@ -1902,11 +1902,11 @@ void Mouse_MoveEvent(void)
     Mouse_EventDispatch();  // so just dispatch the message with new state
 }
 
-// will tell if the key should be currently translated into command binded to it
-// or send to some client module
+// Will tell if the key should be currently translated into a command bound to it
+// or send it to some client module.
 static qbool Key_ConsoleKey(int key)
 {
-    // this makes it possible to type chars under tilde key into the console
+    // This makes it possible to type chars under tilde key into the console.
     qbool con_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : consolekeys[key];
     qbool hud_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : hudeditorkeys[key];
 	qbool demo_controls_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : democontrolskey[key];
