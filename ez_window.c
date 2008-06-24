@@ -175,6 +175,9 @@ void EZ_window_AddChild(ez_window_t *window, ez_control_t *child)
 
 	EZ_control_AddChild(window->window_area, child);
 	EZ_control_SetDrawOrder(child, window->window_area->draw_order + 1, true);
+	
+	// Make sure we simulate a move so that the absolute position of the new child will be calculated properly.
+	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)window, ez_control_t, OnMove);
 }
 
 
