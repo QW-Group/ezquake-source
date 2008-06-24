@@ -3262,8 +3262,10 @@ void SCR_DrawElements(void)
 
 			if (!cl.intermission) 
 			{
-				if (key_dest != key_menu && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
+				if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
+				{
 					Draw_Crosshair ();
+				}
 
      			if (!sb_showscores && !sb_showteamscores)
 				{ 

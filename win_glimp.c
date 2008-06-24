@@ -1766,13 +1766,15 @@ void VID_UpdateWindowStatus (void) {
 	IN_UpdateClipCursor ();
 }
 
-void VID_NotifyActivity(void) {
+void VID_NotifyActivity(void) 
+{
     if (!ActiveApp && vid_flashonactivity.value)
         FlashWindow(mainwindow, TRUE);
 }
 
 // handle the mouse state when windowed if that's changed
-void CheckWindowedMouse(void) {
+void CheckWindowedMouse(void) 
+{
 	extern qbool	mouseactive;  // from in_win.c
 
 	static int windowed_mouse;
@@ -1794,8 +1796,8 @@ void CheckWindowedMouse(void) {
 		{
 			windowed_mouse = false;
 
-			IN_DeactivateMouse ();
-			IN_ShowMouse ();
+			IN_DeactivateMouse();
+			IN_ShowMouse();
 		}
 	}
 	else
@@ -1804,21 +1806,21 @@ void CheckWindowedMouse(void) {
 
 		if ((key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls) && !mouseactive && ActiveApp)
 		{
-			IN_ActivateMouse ();
-			IN_HideMouse ();
+			IN_ActivateMouse();
+			IN_HideMouse();
 		}
 		else if (mouseactive && (key_dest != key_game && key_dest != key_hudeditor && key_dest != key_demo_controls && key_dest != key_menu))
 		{
-			IN_DeactivateMouse ();
-			IN_ShowMouse ();
+			IN_DeactivateMouse();
+			IN_ShowMouse();
 		}
 	}
 }
 
 /******************************  WG_AppActivate  **********************************/
 
-void WG_AppActivate(BOOL fActive, BOOL minimized) {
-
+void WG_AppActivate(BOOL fActive, BOOL minimized) 
+{
 	if ( fActive )
 	{
 		if ( glConfig.isFullscreen )
@@ -1830,10 +1832,11 @@ void WG_AppActivate(BOOL fActive, BOOL minimized) {
 				if (ChangeDisplaySettings (&(glw_state.dm), CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
 					Sys_Error ("WG_AppActivate: ChangeDisplaySettings failed");
 
-#ifdef NDEBUG /* some alt+tab work around, bring on top of Z order, debug configuration does't have WS_EX_TOPMOST flag so ... */
+				#ifdef NDEBUG // Some alt+tab work around, bring on top of Z order, debug configuration does't have WS_EX_TOPMOST flag so ...
 				SetWindowPos(mainwindow, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-#endif
+				#endif
 				ShowWindow (mainwindow, SW_SHOWNORMAL);
+				
 				// Fix for alt-tab bug in NVidia drivers
 				MoveWindow (mainwindow, 0, 0, glw_state.dm.dmPelsWidth, glw_state.dm.dmPelsHeight, false);
 				Sbar_Changed ();
@@ -1892,8 +1895,9 @@ qbool customgamma		  = false;
 // NOTE: somewhere we use glw_state.hDC somewhere hDC = GetDC( GetDesktopWindow() )
 // !!!!!!!!!
 
-//Note: ramps must point to a static array
-void VID_SetDeviceGammaRamp(unsigned short *ramps) {
+// Note: ramps must point to a static array
+void VID_SetDeviceGammaRamp(unsigned short *ramps) 
+{
 	if ( !vid_gammaworks )
 		return;
 
@@ -1923,7 +1927,8 @@ void VID_SetDeviceGammaRamp(unsigned short *ramps) {
 	}
 }
 
-void WG_CheckHardwareGamma (void) {
+void WG_CheckHardwareGamma (void) 
+{
 	HDC			hDC;
 
 	// main
@@ -1967,7 +1972,8 @@ void WG_CheckHardwareGamma (void) {
 	}
 }
 
-void WG_RestoreGamma(void) {
+void WG_RestoreGamma(void) 
+{
 	if ( vid_gammaworks && customgamma )
 	{
 		customgamma = false;
@@ -1987,7 +1993,8 @@ void WG_RestoreGamma(void) {
 	}
 }
 
-void WG_CheckNeedSetDeviceGammaRamp(void) {
+void WG_CheckNeedSetDeviceGammaRamp(void) 
+{
 	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks && ActiveApp && !Minimized;
 	vid_hwgamma_enabled = vid_hwgamma_enabled && (glConfig.isFullscreen || vid_hwgammacontrol.value == 2);
 
