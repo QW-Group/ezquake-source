@@ -280,4 +280,9 @@ int EZ_button_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state);
 //
 int EZ_button_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state);
 
+//
+// Button - OnMouseDown event.
+//
+int EZ_button_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state);
+
 #endif // __EZ_BUTTON_H__

@@ -208,7 +208,8 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseClick, OnMouseClick, ez_control_t);
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseLeave, OnMouseLeave, ez_control_t);
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseEnter, OnMouseEnter, ez_control_t);	
-	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseDown, OnMouseDown, ez_control_t);	
+	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseDown, OnMouseDown, ez_control_t);
+	CONTROL_REGISTER_EVENT(button, EZ_button_OnMouseUp, OnMouseUp, ez_control_t);	
 
 	// Button specific events.
 	CONTROL_REGISTER_EVENT(button, EZ_button_OnAction, OnAction, ez_button_t);
@@ -581,6 +582,23 @@ int EZ_button_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
 	EZ_button_SetColorOrBackground(self, button->toggled_hover_image, button->color_toggled_hover);
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseDown);
+	return 1;
+}
+
+//
+// Button - OnMouseDown event.
+//
+int EZ_button_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state)
+{
+	ez_button_t *button = (ez_button_t *)self;
+	EZ_control_OnMouseUp(self, mouse_state);
+
+	if (!(button->ext_flags & button_is_toggleable))
+	{
+		EZ_button_SetColorOrBackground(self, button->hover_image, button->color_hover);
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseUp);
 	return 1;
 }
 
