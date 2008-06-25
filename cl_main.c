@@ -1938,7 +1938,8 @@ void CL_CalcFPS(void)
 		cls.min_fps = lastfps;
 }
 
-double Cl_DemoSpeed(void)
+/*
+double Demo_GetSpeed(void)
 {
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
@@ -1971,7 +1972,7 @@ double Cl_DemoSpeed(void)
 
 	return bound(0, cl_demospeed.value, 20);
 }
-
+*/
 
 #define NUMTIMINGS 5
 double timings[NUMTIMINGS];
@@ -2103,7 +2104,7 @@ void CL_Frame (double time)
 		if (cl.paused & PAUSED_DEMO)
 			cls.frametime = 0;
 		else if (!cls.timedemo)
-			cls.frametime *= Cl_DemoSpeed();
+			cls.frametime *= Demo_GetSpeed();
 
 		if (!host_skipframe)
 			cls.demotime += cls.frametime;

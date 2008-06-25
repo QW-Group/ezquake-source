@@ -756,7 +756,7 @@ void SCR_DrawDemoClock (void) {
 
 void SCR_DrawQTVBuffer (void)
 {
-	extern double Cl_DemoSpeed(void);
+	extern double Demo_GetSpeed(void);
 	extern unsigned char pb_buf[];
 	extern int	pb_cnt;
 
@@ -784,7 +784,7 @@ void SCR_DrawQTVBuffer (void)
 
 	len = ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
 
-	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Cl_DemoSpeed());
+	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Demo_GetSpeed());
 
 	x = ELEMENT_X_COORD(scr_qtvbuffer);
 	y = ELEMENT_Y_COORD(scr_qtvbuffer);

@@ -670,6 +670,7 @@ void CL_Stop_f (void);
 void CL_CheckQizmoCompletion(void);
 void CL_Demo_Jump(double seconds, qbool relative);
 void CL_Demo_Init(void);
+double Demo_GetSpeed(void);
 qbool CL_IsDemoExtension(const char *filename);
 
 void CL_AutoRecord_StopMatch(void);
