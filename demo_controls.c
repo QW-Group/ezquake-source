@@ -133,6 +133,19 @@ static int DemoControls_PlayButton_OnMouseClick(ez_control_t *self, void *payloa
 	return 1;
 }
 
+// TODO: Fade these gradually instead.
+static int DemoControls_Window_OnMouseEnter(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	EZ_control_SetOpacity(self, 1.0);
+	return 0;
+}
+
+static int DemoControls_Window_OnMouseLeave(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	EZ_control_SetOpacity(self, 0.5);
+	return 0;
+}
+
 static void DemoControls_Init(void)
 {
 	// Root.
@@ -256,6 +269,9 @@ static void DemoControls_Init(void)
 		window = EZ_window_Create(&democontrol_tree, root, 
 			"Demo controls window", NULL, 50, vid.conheight - 100, 250, 100, control_resize_h | control_resize_v);
 		EZ_control_SetBackgroundColor((ez_control_t *)window, 0, 0, 0, 150);
+
+		EZ_control_AddOnMouseEnter((ez_control_t *)window, DemoControls_Window_OnMouseEnter, NULL);
+		EZ_control_AddOnMouseLeave((ez_control_t *)window, DemoControls_Window_OnMouseLeave, NULL);
 
 		// Add our precious children :D
 		EZ_window_AddChild(window, (ez_control_t *)demo_slider);
