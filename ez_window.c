@@ -160,8 +160,10 @@ int EZ_window_Destroy(ez_control_t *self, qbool destroy_children)
 //
 void EZ_window_SetWindowAreaMinVirtualSize(ez_window_t *window, int min_virtual_width, int min_virtual_height)
 {
-	EZ_control_SetMinVirtualSize(window->window_area, min_virtual_width, min_virtual_height);
-}
+	if (window->window_area)
+	{
+		EZ_control_SetMinVirtualSize(window->window_area, min_virtual_width, min_virtual_height);
+	}
 
 //
 // Window - Adds a child control to the window.
@@ -175,9 +177,6 @@ void EZ_window_AddChild(ez_window_t *window, ez_control_t *child)
 
 	EZ_control_AddChild(window->window_area, child);
 	EZ_control_SetDrawOrder(child, window->window_area->draw_order + 1, true);
-	
-	// Make sure we simulate a move so that the absolute position of the new child will be calculated properly.
-	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)window, ez_control_t, OnMove);
 }
 
 
