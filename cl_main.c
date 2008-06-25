@@ -1938,42 +1938,6 @@ void CL_CalcFPS(void)
 		cls.min_fps = lastfps;
 }
 
-/*
-double Demo_GetSpeed(void)
-{
-	if (cls.mvdplayback == QTV_PLAYBACK)
-	{
-		if (qtv_adjustbuffer.integer)
-		{
-			extern	unsigned char pb_buf[];
-			extern	int		pb_cnt;
-
-			int				ms;
-			double			demospeed, desired, current;
-
-			ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
-
-			desired = max(0.5, QTVBUFFERTIME); // well, we need some reserve for adjusting
-			current = 0.001 * ms;
-
-			// qqshka: this is linear version
-			demospeed = current / desired;
-
-			// if you unwilling constant speed change, then you can set range with qtv_adjustlowstart and qtv_adjusthighstart
-			if (demospeed > bound(0, qtv_adjustlowstart.value, 1) && demospeed < max(1, qtv_adjusthighstart.value))
-				demospeed = 1;
-
-			// bound demospeed
-			demospeed = bound(qtv_adjustminspeed.value, demospeed, qtv_adjustmaxspeed.value);
-
-			return demospeed;
-		}
-	}
-
-	return bound(0, cl_demospeed.value, 20);
-}
-*/
-
 #define NUMTIMINGS 5
 double timings[NUMTIMINGS];
 double render_frame_start, render_frame_end;
