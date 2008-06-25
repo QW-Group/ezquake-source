@@ -164,6 +164,7 @@ void EZ_window_SetWindowAreaMinVirtualSize(ez_window_t *window, int min_virtual_
 	{
 		EZ_control_SetMinVirtualSize(window->window_area, min_virtual_width, min_virtual_height);
 	}
+}
 
 //
 // Window - Adds a child control to the window.
