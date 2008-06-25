@@ -328,12 +328,14 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 
 		// Make sure that the control draws only within it's bounds.
 		Draw_EnableScissor(payload->bound_left, payload->bound_right, payload->bound_top, payload->bound_bottom);
+		Draw_SetOverallAlpha(payload->overall_opacity);
 
 		// Raise the draw event for the control.
 		CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnDraw);
 
 		// Reset the drawing bounds to the entire screen after the control has been drawn.
 		Draw_DisableScissor();
+		Draw_SetOverallAlpha(1.0);
 
 		iter = iter->next;
 	}
@@ -820,6 +822,10 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->description	= description;
 	control->ext_flags		= flags | control_enabled | control_visible | control_bg_tile_center | control_bg_tile_edges | control_resizeable;
 	control->anchor_flags	= anchor_none;
+	
+	// Set the default opacity to full :)
+	control->overall_opacity = 1.0;
+	control->opacity = 1.0;
 
 	// Default to containing a child within it's parent
 	// if the parent is being contained by it's parent.
@@ -864,6 +870,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnEventHandlerChanged, OnEventHandlerChanged, ez_control_t);
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnAnchorChanged, OnAnchorChanged, ez_control_t);
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnVisibilityChanged, OnVisibilityChanged, ez_control_t);
+	CONTROL_REGISTER_EVENT(control, EZ_control_OnOpacityChanged, OnOpacityChanged, ez_control_t);
 
 	// Add the control to the draw and tab list.
 	EZ_double_linked_list_Add(&tree->drawlist, (void *)control);
@@ -1291,7 +1298,7 @@ void EZ_control_SetBackgroundImage(ez_control_t *self, const char *background_pa
 //
 void EZ_control_SetBackgroundImageOpacity(ez_control_t *self, float opacity)
 {
-	self->opacity = opacity;
+	self->bg_opacity = opacity;
 }
 
 //
@@ -2134,13 +2141,13 @@ static void EZ_control_DrawBackgroundImage(ez_control_t *self)
 			pic, 
 			edge_size, edge_size, 
 			(pic->width - edge_size2), (pic->height - edge_size2),
-			self->opacity);
+			self->bg_opacity);
 	}
 	else
 	{
 		// Stretch the image.
 		Draw_FitAlphaSubPic((x + edge_size), (y + edge_size), (self->width - edge_size2), (self->height - edge_size2), 
-			pic, edge_size, edge_size, (pic->width - edge_size2), (pic->height - edge_size2), self->opacity);
+			pic, edge_size, edge_size, (pic->width - edge_size2), (pic->height - edge_size2), self->bg_opacity);
 	}
 
 	// Only draw an edge if we have something to draw ;)
@@ -2152,19 +2159,19 @@ static void EZ_control_DrawBackgroundImage(ez_control_t *self)
 
 			// Top center.
 			Draw_SubPicTiled((x + edge_size), y, (self->width - edge_size2), edge_size, 
-							pic, edge_size, 0, (pic->width - edge_size2), edge_size, self->opacity);
+							pic, edge_size, 0, (pic->width - edge_size2), edge_size, self->bg_opacity);
 
 			// Bottom center.
 			Draw_SubPicTiled((x + edge_size), (y + self->height - edge_size), (self->width - edge_size2), edge_size, 
-							pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, self->opacity);
+							pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, self->bg_opacity);
 			
 			// Left center.
 			Draw_SubPicTiled(x, (y + edge_size), edge_size, (self->height - edge_size2), 
-							pic, 0, edge_size, edge_size, (pic->height - edge_size2), self->opacity);
+							pic, 0, edge_size, edge_size, (pic->height - edge_size2), self->bg_opacity);
 
 			// Right center.
 			Draw_SubPicTiled((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
-							pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), self->opacity);
+							pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), self->bg_opacity);
 		}
 		else
 		{
@@ -2172,35 +2179,35 @@ static void EZ_control_DrawBackgroundImage(ez_control_t *self)
 
 			// Top center.
 			Draw_FitAlphaSubPic((x + edge_size), y, (self->width - edge_size), edge_size, 
-								pic, edge_size, 0, (pic->width - edge_size2), edge_size, self->opacity);
+								pic, edge_size, 0, (pic->width - edge_size2), edge_size, self->bg_opacity);
 
 			// Bottom center.
 			Draw_FitAlphaSubPic((x + edge_size), (y + self->height - edge_size), (self->width - edge_size), edge_size, 
-								pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, self->opacity);
+								pic, edge_size, (pic->height - edge_size), (pic->width - edge_size2), edge_size, self->bg_opacity);
 
 			// Left center.
 			Draw_FitAlphaSubPic(x, (y + edge_size), edge_size, (self->height - edge_size2), 
-								pic, 0, edge_size, edge_size, (pic->height - edge_size2), self->opacity);
+								pic, 0, edge_size, edge_size, (pic->height - edge_size2), self->bg_opacity);
 
 			// Right center.
 			Draw_FitAlphaSubPic((x + self->width - edge_size), (y + edge_size), edge_size, (self->height - edge_size2), 
-								pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), self->opacity);
+								pic, (pic->width - edge_size), edge_size, edge_size, (pic->height - edge_size2), self->bg_opacity);
 		}
 
 		// Top left corner.
-		Draw_AlphaSubPic(x, y, pic, 0, 0, edge_size, edge_size, self->opacity);
+		Draw_AlphaSubPic(x, y, pic, 0, 0, edge_size, edge_size, self->bg_opacity);
 
 		// Top right corner.
-		Draw_AlphaSubPic((x + self->width - edge_size), y, pic, (pic->width - edge_size), 0, edge_size, edge_size, self->opacity);
+		Draw_AlphaSubPic((x + self->width - edge_size), y, pic, (pic->width - edge_size), 0, edge_size, edge_size, self->bg_opacity);
 
 		// Bottom left corner.
-		Draw_AlphaSubPic(x, (y + self->height - edge_size), pic, 0, (pic->height - edge_size), edge_size, edge_size, self->opacity);
+		Draw_AlphaSubPic(x, (y + self->height - edge_size), pic, 0, (pic->height - edge_size), edge_size, edge_size, self->bg_opacity);
 
 		// Bottom right corner.
 		Draw_AlphaSubPic((x + self->width - edge_size), (y + self->height - edge_size), 
 					pic, 
 					(pic->width - edge_size), (pic->height - edge_size), 
-					edge_size, edge_size, self->opacity);
+					edge_size, edge_size, self->bg_opacity);
 	}
 }
 
@@ -2744,4 +2751,35 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 	return mouse_handled;
 }
 
+//
+// Control - Sets the overall opacity of the control (including its children).
+//
+void EZ_control_SetOpacity(ez_control_t *self, float opacity)
+{
+	self->opacity = bound(0, opacity, 1.0);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnOpacityChanged);
+}
+
+//
+// Control - The opacity of the control has just changed.
+//
+int EZ_control_OnOpacityChanged(ez_control_t *self)
+{
+	ez_control_t *child = NULL;
+	ez_dllist_node_t *iter = self->children.head;
+
+	// Add our parents opacity to the equation.
+	self->overall_opacity = self->parent ? (self->opacity * self->parent->overall_opacity) : self->opacity;
+
+	// Tell the children we've changed opacity.
+	while (iter)
+	{
+		child = (ez_control_t *)iter->payload;
+		CONTROL_RAISE_EVENT(NULL, child, ez_control_t, OnOpacityChanged);
+		iter = iter->next;
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnOpacityChanged);
+	return 0;
+}
 

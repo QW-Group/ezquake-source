@@ -520,6 +520,7 @@ typedef struct ez_control_eventcount_s
 	int OnEventHandlerChanged;
 	int OnAnchorChanged;
 	int OnVisibilityChanged;
+	int OnOpacityChanged;
 } ez_control_eventcount_t;
 
 typedef struct ez_control_events_s
@@ -552,6 +553,7 @@ typedef struct ez_control_events_s
 	ez_event_fp					OnEventHandlerChanged;
 	ez_event_fp					OnAnchorChanged;
 	ez_event_fp					OnVisibilityChanged;
+	ez_event_fp					OnOpacityChanged;
 } ez_control_events_t;
 
 typedef struct ez_control_eventhandlers_s
@@ -584,6 +586,7 @@ typedef struct ez_control_eventhandlers_s
 	ez_eventhandler_t	*OnEventHandlerChanged;
 	ez_eventhandler_t	*OnAnchorChanged;
 	ez_eventhandler_t	*OnVisibilityChanged;
+	ez_eventhandler_t	*OnOpacityChanged;
 } ez_control_eventhandlers_t;
 
 typedef enum ez_anchor_e
@@ -705,7 +708,9 @@ typedef struct ez_control_s
 	mpic_t					*background;			// The background picture.
 	float					bg_edge_size_ratio;		// The percentage of the width of the background picture to use for drawing the edges 
 													// of the background when drawn tiled. Value range 0.0 - 1.0
-	float					opacity;				// The opacity of the control.
+	float					bg_opacity;				// The opacity of the control.
+	float					opacity;				// My own opacity only.
+	float					overall_opacity;		// The overall opacity of the control (including my parents opacity).
 
 	ez_control_events_t			events;				// The base reaction for events. Is only set at initialization.
 	ez_control_eventhandlers_t	event_handlers;
@@ -1231,6 +1236,16 @@ int EZ_control_OnMouseWheel(ez_control_t *self, mouse_state_t *mouse_state);
 // Control - The mouse is hovering within the bounds of the control.
 //
 int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
+
+//
+// Control - Sets the overall opacity of the control (including its children).
+//
+void EZ_control_SetOpacity(ez_control_t *self, float opacity);
+
+//
+// Control - The opacity of the control has just changed.
+//
+int EZ_control_OnOpacityChanged(ez_control_t *self);
 
 #endif // __EZ_CONTROLS_H__	
 
