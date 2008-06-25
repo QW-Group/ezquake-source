@@ -261,7 +261,7 @@ void Cvar_Set (cvar_t *var, char *value)
 		return;
 	}
 
-	// we do that before OnChange check, that mean no OnChange check for latched cvars
+	// We do this before OnChange check, which means no OnChange check for latched cvars.
 	if (var->flags & CVAR_LATCH)
 	{
 		if (var->latchedString)
@@ -290,7 +290,7 @@ void Cvar_Set (cvar_t *var, char *value)
 			}
 			Com_Printf ("%s needs %s to take effect.\n", var->name, restartcmd);
 		}
-		var->latchedString = Z_Strdup (value);
+		var->latchedString = Q_strdup(value);
 		var->modified = true; // set to true even car->string is not changed yet, that how q3 does
 		return;
 	}

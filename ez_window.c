@@ -180,4 +180,5 @@ void EZ_window_AddChild(ez_window_t *window, ez_control_t *child)
 	EZ_control_SetDrawOrder(child, window->window_area->draw_order + 1, true);
 }
 
+// TODO: Add an event for when pressing the close button on the window control.
 
