@@ -1895,8 +1895,14 @@ int EZ_control_OnParentResize(ez_control_t *self)
 //
 int EZ_control_OnMinVirtualResize(ez_control_t *self)
 {
-	self->virtual_width		= max(self->virtual_width_min, self->virtual_width);
-	self->virtual_height	= max(self->virtual_height_min, self->virtual_height);
+	int new_virtual_width	= max(self->virtual_width_min, self->virtual_width);
+	int new_virtual_height	= max(self->virtual_height_min, self->virtual_height);
+
+	// Make sure the virtual size isn't smaller than the new minimum virtual size.
+	if ((new_virtual_width != self->virtual_width) || (new_virtual_height != self->virtual_height))
+	{
+		EZ_control_SetVirtualSize(self, new_virtual_width, new_virtual_height);
+	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMinVirtualResize);
 
