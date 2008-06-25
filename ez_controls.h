@@ -269,6 +269,11 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down);
 void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 
 //
+// Control Tree - Refreshes the position of all controls in the tree.
+//
+void EZ_tree_Refresh(ez_tree_t *tree);
+
+//
 // Control Tree - Destroys a tree. Will not free the memory for the tree.
 //
 void EZ_tree_Destroy(ez_tree_t *tree);
@@ -710,6 +715,8 @@ typedef struct ez_control_s
 	ez_control_eventcount_t override_counts;		// This gets resetted each time a event is raised by CONTROL_RAISE_EVENT to the
 													// inheritance level for the event in question.
 
+	qbool					initializing;			// Is the control initializing?
+
 	struct ez_control_s		*parent;				// The parent of the control. Only the root node has no parent.
 	ez_double_linked_list_t	children;				// List of children belonging to the control.
 
@@ -1002,6 +1009,16 @@ void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order, qbool update_ch
 // Control - Sets the size of a control.
 //
 void EZ_control_SetSize(ez_control_t *self, int width, int height);
+
+//
+// Control - Set the max size for the control.
+//
+void EZ_control_SetMaxSize(ez_control_t *self, int max_width, int max_height);
+
+//
+// Control - Set the min size for the control.
+//
+void EZ_control_SetMinSize(ez_control_t *self, int min_width, int min_height);
 
 //
 // Control - Sets the position of a control.

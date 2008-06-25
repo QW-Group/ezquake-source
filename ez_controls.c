@@ -446,6 +446,31 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 }
 
 //
+// Control Tree - Refreshes the position of all controls in the tree.
+//
+void EZ_tree_Refresh(ez_tree_t *tree)
+{
+	if (tree->root)
+	{
+		ez_dllist_node_t *iter = tree->drawlist.head;
+		ez_control_t *payload = NULL;
+
+		//CONTROL_RAISE_EVENT(NULL, (ez_control_t *)tree->root, ez_control_t, OnResize);
+		//CONTROL_RAISE_EVENT(NULL, (ez_control_t *)tree->root, ez_control_t, OnMove);
+
+		while (iter)
+		{
+			payload = (ez_control_t *)iter->payload;
+
+			CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnResize);
+			CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnMove);
+
+			iter = iter->next;
+		}
+	}
+}
+
+//
 // Control Tree - Moves the focus to the next control in the control tree.
 //
 void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
@@ -786,12 +811,14 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 {
 	static int order		= 0;
 
+	control->initializing	= true;
+
 	control->CLASS_ID		= EZ_CONTROL_ID;
 
 	control->control_tree	= tree;
 	control->name			= name;
 	control->description	= description;
-	control->ext_flags		= flags | control_enabled | control_visible | control_bg_tile_center | control_bg_tile_edges;
+	control->ext_flags		= flags | control_enabled | control_visible | control_bg_tile_center | control_bg_tile_edges | control_resizeable;
 	control->anchor_flags	= anchor_none;
 
 	// Default to containing a child within it's parent
@@ -838,23 +865,6 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnAnchorChanged, OnAnchorChanged, ez_control_t);
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnVisibilityChanged, OnVisibilityChanged, ez_control_t);
 
-	// Add the control to the control tree.
-	if(!tree->root)
-	{
-		// The first control will be the root.
-		tree->root = control;
-	}
-	else if(!parent)
-	{
-		// No parent was given so make the control a root child.
-		EZ_control_AddChild(tree->root, control);
-	}
-	else
-	{
-		// Add the control to the specified parent.
-		EZ_control_AddChild(parent, control);
-	}
-
 	// Add the control to the draw and tab list.
 	EZ_double_linked_list_Add(&tree->drawlist, (void *)control);
 	EZ_double_linked_list_Add(&tree->tablist, (void *)control);
@@ -886,6 +896,25 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 
 	// Set a default delay for raising new mouse click events.
 	EZ_control_SetRepeatMouseClickDelay(control, 0.2);
+	
+	// Add the control to the control tree.
+	if (!tree->root)
+	{
+		// The first control will be the root.
+		tree->root = control;
+	}
+	else if (!parent)
+	{
+		// No parent was given so make the control a root child.
+		EZ_control_AddChild(tree->root, control);
+	}
+	else
+	{
+		// Add the control to the specified parent.
+		EZ_control_AddChild(parent, control);
+	}
+
+	control->initializing = false;
 }
 
 //
@@ -1568,8 +1597,8 @@ void EZ_control_SetMaxSize(ez_control_t *self, int max_width, int max_height)
 //
 void EZ_control_SetMinSize(ez_control_t *self, int min_width, int min_height)
 {
-	self->width_max = max(0, min_width);
-	self->height_max = max(0, min_height);
+	self->width_min = max(0, min_width);
+	self->height_min = max(0, min_height);
 
 	// Do we need to change the size of the control to fit?
 	if ((self->width < self->width_min) || (self->height < self->height_min))
@@ -1780,7 +1809,7 @@ int EZ_control_OnResize(ez_control_t *self)
 	}
 
 	// Tell the children we've resized.
-	while(iter)
+	while (iter)
 	{
 		payload = (ez_control_t *)iter->payload;
 		CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnParentResize);
