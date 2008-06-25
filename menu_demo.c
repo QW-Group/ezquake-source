@@ -109,7 +109,7 @@ cvar_t	demo_browser_zipcolor		= {"demo_browser_zipcolor",		"255 170 0 255", CVAR
 CTab_t demo_tab;
 
 // Playlist structures
-demo_playlist_t demo_playlist[DEMO_PLAYLIST_MAX];
+demo_playlist_t demo_playlist[DEMO_PLAYLIST_MAX]; // TODO: A play list probably shouldn't be tied to a GUI, put this in cl_demo.c instead and allow adding demos from the console also.
 
 char track_name[DEMO_PLAYLIST_NAME_MAX];
 char default_track[DEMO_PLAYLIST_NAME_MAX];
