@@ -307,12 +307,15 @@ int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
 		EZ_control_AddOnVirtualResize(scrollpane->target, EZ_scrollpane_OnTargetVirtualResize, scrollpane);
 		EZ_control_AddChild(self, scrollpane->target);
 
+		EZ_control_SetScrollable(scrollpane->target, true);
+		EZ_control_SetMovable(scrollpane->target, true);
+		EZ_control_SetResizeableBoth(scrollpane->target, true);
+		EZ_control_SetResizeable(scrollpane->target, true);
+
 		// Reposition the target inside the scrollpane.
 		EZ_control_SetPosition(scrollpane->target, 0, 0);
 		EZ_control_SetSize(scrollpane->target, (self->width - scrollpane->scrollbar_thickness), (self->height - scrollpane->scrollbar_thickness));
 		EZ_control_SetAnchor(scrollpane->target, (anchor_left | anchor_right | anchor_top | anchor_bottom));
-
-		EZ_control_SetScrollable(scrollpane->target, true);
 
 		// Make sure the target is drawn infront of the scrollpane.
 		EZ_control_SetDrawOrder(scrollpane->target, ((ez_control_t *)scrollpane)->draw_order + 1, true);
@@ -327,7 +330,7 @@ int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
 		EZ_scrollpane_AdjustTargetSize(scrollpane);
 
 		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnResize);
-		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnScroll);
+		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnMove);
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, scrollpane, ez_scrollpane_t, OnTargetChanged);
