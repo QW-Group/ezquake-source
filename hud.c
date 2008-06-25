@@ -15,7 +15,6 @@
 
 #define sbar_last_width 320  // yeah yeah I know, *garbage* -> leave it be :>
 
-#define  num_align_strings_x  5
 char *align_strings_x[] = {
     "left",
     "center",
@@ -23,8 +22,8 @@ char *align_strings_x[] = {
     "before",
     "after"
 };
+#define  num_align_strings_x  (sizeof(align_strings_x) / sizeof(align_strings_x[0]))
 
-#define  num_align_strings_y  6
 char *align_strings_y[] = {
     "top",
     "center",
@@ -33,8 +32,8 @@ char *align_strings_y[] = {
     "after",
     "console"
 };
+#define  num_align_strings_y  (sizeof(align_strings_y) / sizeof(align_strings_y[0]))
 
-#define  num_snap_strings  9
 char *snap_strings[] = {
     "screen",
     "top",
@@ -46,6 +45,7 @@ char *snap_strings[] = {
     "ifree",
     "hfree",
 };
+#define  num_snap_strings  (sizeof(snap_strings) / sizeof(snap_strings[0]))
 
 // Hud elements list.
 hud_t *hud_huds = NULL;
@@ -1400,55 +1400,12 @@ void HUD_DrawObject(hud_t *hud)
 		}
     }
 
-	#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
-	if(use_framebuffer)
-	{
-		// Make sure the main framebuffer is inited.
-		Framebuffer_Main_Init();
-
-		// Start drawing to a renderbuffer.
-		Framebuffer_Enable(&main_fb);
-
-		// clear buffer?
-		glEnable (GL_ALPHA_TEST); // thought it alredy so here
-//		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glClearColor(1, 1, 1, 0); // may be that a right thing, not sure
-		glClear(GL_COLOR_BUFFER_BIT); // so is it actually clear buffer?
-	}
-	#endif // FRAMEBUFFERS & GLQUAKE
-
 	//
 	// Let the HUD element draw itself - updates last_draw_sequence itself.
 	//
 	Draw_SetOverallAlpha(hud->opacity->value);
 	hud->draw_func(hud);
 	Draw_SetOverallAlpha(1.0);
-
-	#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
-	if(use_framebuffer)
-	{
-		// Disable drawing to the renderbuffer.
-		Framebuffer_Disable(&main_fb);
-
-		glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-		if(hud->flags & HUD_OPACITY)
-		{
-			// Draw using semi-transparency.
-			glDisable(GL_ALPHA_TEST);
-			glEnable (GL_BLEND);
-			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glColor4f (1, 1, 1, hud->opacity->value);
-		}
-
-		// Draw the renderbuffer to screen as texture.
-		Framebuffer_Draw(&main_fb);
-
-		// Reset the GL state to how it was before.
-		glPopAttrib();
-	}
-	#endif
 
 	// last_draw_sequence is update by HUD_PrepareDraw
     // if object was succesfully drawn (wasn't outside area etc..)
