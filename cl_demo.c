@@ -3406,8 +3406,8 @@ qbool CL_IsDemoExtension(const char *filename)
 // Resets various states for beginning playback.
 //
 static void CL_DemoPlaybackInit(void)
-{
-	cls.demoplayback	= true;
+{	
+	cls.demoplayback	= true;	
 
 	#ifdef WITH_DEMO_REWIND
 	// Clear the demo keyframes used for rewinding.
@@ -3466,11 +3466,11 @@ static void CL_DemoPlaybackInit(void)
 //
 void CL_Play_f (void)
 {
-#ifndef WITH_VFS_ARCHIVE_LOADING
+	#ifndef WITH_VFS_ARCHIVE_LOADING
 	#ifdef WITH_ZIP
 	char unpacked_path[MAX_OSPATH];
 	#endif // WITH_ZIP
-#endif // WITH_VFS_ARCHIVE_LOADING
+	#endif // WITH_VFS_ARCHIVE_LOADING
 
 	char *real_name;
 	char name[MAX_OSPATH], **s;
@@ -3491,8 +3491,8 @@ void CL_Play_f (void)
 
 	TP_ExecTrigger("f_demostart");
 	
-// VFS-FIXME: This will effect playing qwz inside a zip
-#ifndef WITH_VFS_ARCHIVE_LOADING 
+	// VFS-FIXME: This will affect playing qwz inside a zip
+	#ifndef WITH_VFS_ARCHIVE_LOADING 
 	#ifdef WITH_ZIP
 	//
 	// Unpack the demo if it's zipped or gzipped. And get the path to the unpacked demo file.
@@ -3502,7 +3502,7 @@ void CL_Play_f (void)
 		real_name = unpacked_path;
 	}
 	#endif // WITH_ZIP
-#endif
+	#endif // WITH_VFS_ARCHIVE_LOADING
 
 	#ifdef WIN32
 	//
@@ -3525,7 +3525,7 @@ void CL_Play_f (void)
 	else
 	#endif // WIN32
 
-#ifndef WITH_VFS_ARCHIVE_LOADING
+	#ifndef WITH_VFS_ARCHIVE_LOADING
 	//
 	// Find the demo path, trying different extensions if needed.
 	//
@@ -3560,7 +3560,7 @@ void CL_Play_f (void)
 		}
 	}
 
-#else
+	#else // WITH_VFS_ARCHIVE_LOADING
 	{
 		char *file_ext = COM_FileExtension(Cmd_Argv(1));
 		if (!playbackfile) {
@@ -3598,8 +3598,7 @@ void CL_Play_f (void)
 			}
 		}
 	}
-
-#endif // WITH_VFS_ARCHIVE_LOADING
+	#endif // WITH_VFS_ARCHIVE_LOADING else
 
 	// Read the file completely into memory
 	if (playbackfile) 
@@ -3640,11 +3639,14 @@ void CL_Play_f (void)
 	nTrack2duel			= 0;
 	mv_skinsforced		= false;
 
+	// Reset stuff so demo rewinding works.
 	cls.demoseeking		= false;
+	cls.demorewinding	= false;
+	cls.demo_rewindtime = 0;
 
 	CL_DemoPlaybackInit();
 
-	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
+	Com_Printf("Playing demo from %s\n", COM_SkipPath(name));
 }
 
 //
