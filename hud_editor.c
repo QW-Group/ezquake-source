@@ -2594,13 +2594,15 @@ void HUD_Editor_Init(void)
 
 	// Button.
 	{
-		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", 15, -15, 60, 60, control_contained | control_resizeable);
+		button = EZ_button_Create(&help_control_tree, child1, "button", "A crazy button!", 15, -15, 80, 60, control_contained | control_resizeable);
 		EZ_control_AddOnDraw((ez_control_t *)button, Test_OnButtonDraw, NULL);
 
 		EZ_button_SetFocusedColor(button, 255, 0, 0, 255);
 		EZ_button_SetNormalColor(button, 255, 255, 0, 100);
 		EZ_button_SetPressedColor(button, 255, 255, 0, 255);
 		EZ_button_SetHoverColor(button, 255, 0, 0, 150);
+
+		EZ_button_SetToggleable(button, true);
 
 		EZ_button_SetText(button, "Button");
 		EZ_button_SetTextAlignment(button, middle_center);
@@ -2663,7 +2665,7 @@ void HUD_Editor_Init(void)
 
 	// Scrollpane
 	{
-		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", 50, 150, 150, 150,
+		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", -10, -20, 150, 150,
 			control_resize_h | control_resize_v | control_resizeable);
 		
 		EZ_control_SetBackgroundColor((ez_control_t *)scrollpane, 255, 0, 0, 100);
@@ -2700,6 +2702,8 @@ void HUD_Editor_Init(void)
 		EZ_control_SetBackgroundColor(c, 50, 40, 50, 100);
 	}
 	*/
+
+	EZ_tree_Refresh(&help_control_tree);
 
 #endif 
 	
