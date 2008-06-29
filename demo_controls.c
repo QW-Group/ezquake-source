@@ -57,6 +57,7 @@ static ez_button_t	*next_button;		// Play previous demo in the playlist.
 // State.
 static qbool slider_updating = false;
 static qbool democontrols_on = false;
+static double previous_demospeed = 1.0;
 
 static void DemoControls_SetTimeLabelText(ez_label_t *label, double time)
 {
@@ -103,8 +104,15 @@ static int DemoControls_SliderChanged(ez_control_t *self, void *payload)
 	return 0;
 }
 
-static void DemoControls_SetDemoSpeed(float speed)
+static void DemoControls_SetDemoSpeed(double speed)
 {
+	speed = bound(0.0, speed, 10.0);
+
+	if (speed != previous_demospeed)
+	{
+		previous_demospeed = Demo_GetSpeed();
+	}
+
 	Cvar_SetValue(&cl_demospeed, speed);	
 	EZ_label_SetText(speed_label, va("%i%%", Q_rint(Demo_GetSpeed() * 100)));
 }
@@ -120,9 +128,9 @@ static int DemoControls_SpeedButton_OnMouseClick(ez_control_t *self, void *paylo
 
 static int DemoControls_PlayButton_OnMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
 {
-	if (cl.paused)
+	if ((previous_demospeed != 0.0) && (Demo_GetSpeed() == 0.0))
 	{
-		cl.paused = false;
+		DemoControls_SetDemoSpeed(previous_demospeed);
 	}
 	else
 	{
@@ -130,6 +138,18 @@ static int DemoControls_PlayButton_OnMouseClick(ez_control_t *self, void *payloa
 		DemoControls_SetDemoSpeed(1.0);
 	}
 	
+	return 1;
+}
+
+static int DemoControls_PauseButton_OnMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	DemoControls_SetDemoSpeed(0.0);	
+	return 1;
+}
+
+static int DemoControls_StopButton_OnMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	Cbuf_AddText("disconnect");
 	return 1;
 }
 
@@ -148,6 +168,10 @@ static int DemoControls_Window_OnMouseLeave(ez_control_t *self, void *payload, m
 
 static void DemoControls_Init(void)
 {
+	#define DEMO_BUTTON_GAP		5
+	#define DEMO_BUTTON_HEIGHT	16
+	#define DEMO_BUTTON_WIDTH	24
+
 	// Root.
 	{
 		root = EZ_control_Create(&democontrol_tree, NULL, "Root", "", 0, 0, vid.conwidth, vid.conheight, 0);
@@ -171,7 +195,7 @@ static void DemoControls_Init(void)
 	// Demo time label.
 	{
 		timelabel = EZ_label_Create(&democontrol_tree, root, 
-			"Demo time label", "", -5, 5, 32, 16,  
+			"Demo time label", "", -15, 5, 32, 16,  
 			control_focusable | control_contained | control_resizeable, 
 			0, "");
 
@@ -214,60 +238,78 @@ static void DemoControls_Init(void)
 		// Button container.
 		{
 			button_container = EZ_control_Create(&democontrol_tree, root, 
-				"Demo button container", NULL, 10, 25, 40, 16, control_contained | control_focusable);
+				"Demo button container", NULL, 10, 25, 200, 16, control_contained | control_focusable);
 
 			EZ_control_SetAnchor(button_container, anchor_left | anchor_right);
-			//EZ_control_SetBackgroundColor(button_container, 0, 0, 0, 150);
-		}
+		}		
 
-		// Faster button.
+		// Slower button.
 		{
-			fast_button = EZ_button_Create(&democontrol_tree, button_container,
-				"Faster button", "Speeds up demo playback", 0, 0, 24, 16, control_contained);
+			slow_button = EZ_button_Create(&democontrol_tree, button_container,
+				"Slower button", "Slows down demo playback", 0, 0, DEMO_BUTTON_WIDTH, DEMO_BUTTON_HEIGHT, control_contained);
 
-			EZ_button_SetTextAlignment(fast_button, middle_center);
-			EZ_button_SetText(fast_button, " >>");
-			EZ_control_SetAnchor((ez_control_t *)fast_button, anchor_right | anchor_top);
-			EZ_control_AddOnMouseClick((ez_control_t *)fast_button, DemoControls_SpeedButton_OnMouseClick, NULL);
+			EZ_button_SetTextAlignment(slow_button, middle_center);
+			EZ_button_SetText(slow_button, " <<");
+			EZ_control_SetAnchor((ez_control_t *)slow_button, anchor_top);
+			EZ_control_AddOnMouseClick((ez_control_t *)slow_button, DemoControls_SpeedButton_OnMouseClick, NULL);
 		}
 
 		// Play button.
 		{
 			play_button = EZ_button_Create(&democontrol_tree, button_container,
-				"Play button", "Starts demo playback or resets it to normal speed", 24 + 5, 0, 24, 16, control_contained);
+				"Play button", "Starts demo playback or resets it to normal speed", 
+				(DEMO_BUTTON_WIDTH + DEMO_BUTTON_GAP), 0, 
+				DEMO_BUTTON_WIDTH, DEMO_BUTTON_HEIGHT, control_contained);
 
 			EZ_button_SetTextAlignment(play_button, middle_center);
 			EZ_button_SetText(play_button, " >");
-			EZ_control_SetAnchor((ez_control_t *)play_button, anchor_left | anchor_top);
+			EZ_control_SetAnchor((ez_control_t *)play_button, anchor_top);
 			EZ_control_AddOnMouseClick((ez_control_t *)play_button, DemoControls_PlayButton_OnMouseClick, NULL);
 		}
 
-		// Slower button.
+		// Pause button.
 		{
-			slow_button = EZ_button_Create(&democontrol_tree, button_container,
-				"Slower button", "Slows down demo playback", 0, 0, 24, 16, control_contained);
+			pause_button = EZ_button_Create(&democontrol_tree, button_container,
+				"Pause button", "Pauses demo playback", 
+				2 * (DEMO_BUTTON_WIDTH + DEMO_BUTTON_GAP), 0, 
+				DEMO_BUTTON_WIDTH, DEMO_BUTTON_HEIGHT, control_contained);
 
-			EZ_button_SetTextAlignment(slow_button, middle_center);
-			EZ_button_SetText(slow_button, " <<");
-			EZ_control_SetAnchor((ez_control_t *)slow_button, anchor_left | anchor_top);
-			EZ_control_AddOnMouseClick((ez_control_t *)slow_button, DemoControls_SpeedButton_OnMouseClick, NULL);
+			EZ_button_SetTextAlignment(pause_button, middle_center);
+			EZ_button_SetText(pause_button, " ||");
+			EZ_control_SetAnchor((ez_control_t *)pause_button, anchor_top);
+			EZ_control_AddOnMouseClick((ez_control_t *)pause_button, DemoControls_PauseButton_OnMouseClick, NULL);
 		}
 
-		/*
-		static ez_button_t	*fast_button;	// Faster button.
-		static ez_button_t	*slow_button;	// Slower button.
-		static ez_button_t	*play_button;	// Play button.
-		static ez_button_t	*pause_button;	// Pause button.
-		static ez_button_t	*stop_button;	// Stop button.
-		static ez_button_t	*prev_button;	// Play next demo in the playlist.
-		static ez_button_t	*next_button;	// Play previous demo in the playlist.
-		*/
+		// Stop button.
+		{
+			stop_button = EZ_button_Create(&democontrol_tree, button_container,
+				"Stop button", "Stop demo playback", 
+				3 * (DEMO_BUTTON_WIDTH + DEMO_BUTTON_GAP), 0, 
+				DEMO_BUTTON_WIDTH, DEMO_BUTTON_HEIGHT, control_contained);
+
+			EZ_button_SetTextAlignment(stop_button, middle_center);
+			EZ_button_SetText(stop_button, " []");
+			EZ_control_SetAnchor((ez_control_t *)stop_button, anchor_top);
+			EZ_control_AddOnMouseClick((ez_control_t *)stop_button, DemoControls_StopButton_OnMouseClick, NULL);
+		}
+
+		// Faster button.
+		{
+			fast_button = EZ_button_Create(&democontrol_tree, button_container,
+				"Faster button", "Speeds up demo playback", 
+				4 * (DEMO_BUTTON_WIDTH + DEMO_BUTTON_GAP), 0, 24, 16, control_contained);
+
+			EZ_button_SetTextAlignment(fast_button, middle_center);
+			EZ_button_SetText(fast_button, " >>");
+			EZ_control_SetAnchor((ez_control_t *)fast_button, anchor_top);
+			EZ_control_AddOnMouseClick((ez_control_t *)fast_button, DemoControls_SpeedButton_OnMouseClick, NULL);
+		}
 	}
 
 	// Window.
 	{
 		window = EZ_window_Create(&democontrol_tree, root, 
-			"Demo controls window", NULL, 50, vid.conheight - 100, 250, 100, control_resize_h | control_resize_v);
+			"Demo controls window", NULL, 50, (vid.conheight - 100), 250, 100, control_resize_h | control_resize_v);
 		EZ_control_SetBackgroundColor((ez_control_t *)window, 0, 0, 0, 150);
 
 		EZ_control_AddOnMouseEnter((ez_control_t *)window, DemoControls_Window_OnMouseEnter, NULL);
@@ -281,7 +323,7 @@ static void DemoControls_Init(void)
 		EZ_window_AddChild(window, (ez_control_t *)button_container);
 
 		// Size the children to fit within the window properly.
-		EZ_control_SetSize((ez_control_t *)demo_slider, (window->window_area->virtual_width - 48), 8);
+		EZ_control_SetSize((ez_control_t *)demo_slider, (window->window_area->virtual_width - 56), 8);
 		EZ_control_SetSize((ez_control_t *)button_container, (window->window_area->virtual_width - 20), button_container->height);
 	}
 
