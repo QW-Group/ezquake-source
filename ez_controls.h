@@ -290,6 +290,7 @@ typedef int (*ez_mouse_event_fp) (struct ez_control_s *self, mouse_state_t *mous
 typedef int (*ez_key_event_fp) (struct ez_control_s *self, int key, int unichar, qbool down);
 typedef int (*ez_keyspecific_event_fp) (struct ez_control_s *self, int key, int unichar);
 typedef int (*ez_destroy_event_fp) (struct ez_control_s *self, qbool destroy_children);
+typedef int (*ez_child_event_fp) (struct ez_control_s *self, struct ez_control_s *child);
 
 //
 // Event handlers function pointer types (same as event function types, except they have a payload also).
@@ -299,12 +300,14 @@ typedef int (*ez_mouse_eventhandler_fp) (struct ez_control_s *self, void *payloa
 typedef int (*ez_key_eventhandler_fp) (struct ez_control_s *self, void *payload, int key, int unichar, qbool down);
 typedef int (*ez_keyspecific_eventhandler_fp) (struct ez_control_s *self, void *payload, int key, int unichar);
 typedef int (*ez_destroy_eventhandler_fp) (struct ez_control_s *self, void *payload, qbool destroy_children);
+typedef int (*ez_child_eventhandler_event_fp) (struct ez_control_s *self, void *payload, struct ez_control_s *child);
 
 #define EZ_CONTROL_HANDLER			0
 #define EZ_CONTROL_MOUSE_HANDLER	1
 #define EZ_CONTROL_KEY_HANDLER		2
 #define EZ_CONTROL_KEYSP_HANDLER	3
 #define EZ_CONTROL_DESTROY_HANDLER	4
+#define EZ_CONTROL_CHILD_HANDLER	5
 
 typedef union ez_eventhandlerfunction_u
 {
@@ -313,6 +316,7 @@ typedef union ez_eventhandlerfunction_u
 	ez_key_eventhandler_fp			key;
 	ez_keyspecific_eventhandler_fp	key_sp;
 	ez_destroy_eventhandler_fp		destroy;
+	ez_child_eventhandler_event_fp	child;
 } ez_eventhandlerfunction_t;
 
 typedef struct ez_eventhandler_s
@@ -521,6 +525,8 @@ typedef struct ez_control_eventcount_s
 	int OnAnchorChanged;
 	int OnVisibilityChanged;
 	int OnOpacityChanged;
+	int OnChildMoved;
+	int OnChildResize;
 } ez_control_eventcount_t;
 
 typedef struct ez_control_events_s
@@ -554,6 +560,8 @@ typedef struct ez_control_events_s
 	ez_event_fp					OnAnchorChanged;
 	ez_event_fp					OnVisibilityChanged;
 	ez_event_fp					OnOpacityChanged;
+	ez_child_event_fp			OnChildMoved;
+	ez_child_event_fp			OnChildResize;
 } ez_control_events_t;
 
 typedef struct ez_control_eventhandlers_s
@@ -587,6 +595,8 @@ typedef struct ez_control_eventhandlers_s
 	ez_eventhandler_t	*OnAnchorChanged;
 	ez_eventhandler_t	*OnVisibilityChanged;
 	ez_eventhandler_t	*OnOpacityChanged;
+	ez_eventhandler_t	*OnChildMoved;
+	ez_eventhandler_t	*OnChildResize;
 } ez_control_eventhandlers_t;
 
 typedef enum ez_anchor_e
@@ -711,6 +721,9 @@ typedef struct ez_control_s
 	float					bg_opacity;				// The opacity of the control.
 	float					opacity;				// My own opacity only.
 	float					overall_opacity;		// The overall opacity of the control (including my parents opacity).
+
+	float					x_percent;				// The x position in percentage based on the parents width.
+	float					y_percent;				// The y position in percentage based on the parents height.
 
 	ez_control_events_t			events;				// The base reaction for events. Is only set at initialization.
 	ez_control_eventhandlers_t	event_handlers;
@@ -1047,6 +1060,11 @@ void EZ_control_SetScrollPosition(ez_control_t *self, int scroll_x, int scroll_y
 
 //
 // Control - Sets the anchoring of the control to it's parent.
+//           !!! NOTE !!! 
+//           If you set an anchoring to a single edge, make sure you do this
+//           after the parent has its final size, otherwise you might get some
+//           goofy behavior.
+//           !!! NOTE !!!
 //
 void EZ_control_SetAnchor(ez_control_t *self, ez_anchor_t anchor_flags);
 
@@ -1246,6 +1264,16 @@ void EZ_control_SetOpacity(ez_control_t *self, float opacity);
 // Control - The opacity of the control has just changed.
 //
 int EZ_control_OnOpacityChanged(ez_control_t *self);
+
+//
+// Control - A child control has been moved.
+//
+int EZ_control_OnChildMoved(ez_control_t *self, ez_control_t *child);
+
+//
+// Control - A child control has been resized.
+//
+int EZ_control_OnChildResize(ez_control_t *self, ez_control_t *child);
 
 #endif // __EZ_CONTROLS_H__	
 

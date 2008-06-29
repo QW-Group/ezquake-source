@@ -466,6 +466,7 @@ void EZ_tree_Refresh(ez_tree_t *tree)
 
 			CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnResize);
 			CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnMove);
+			CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnAnchorChanged);
 
 			iter = iter->next;
 		}
@@ -720,6 +721,9 @@ ez_eventhandler_t *EZ_eventhandler_Create(void *event_func, int func_type, void 
 		case EZ_CONTROL_DESTROY_HANDLER :
 			e->function.destroy = (ez_destroy_eventhandler_fp)event_func;
 			break;
+		case EZ_CONTROL_CHILD_HANDLER :
+			e->function.child = (ez_child_eventhandler_event_fp)event_func;
+			break;
 		default :
 			e->function.normal = NULL;
 			break;
@@ -799,6 +803,10 @@ void EZ_eventhandler_Exec(ez_eventhandler_t *event_handler, ez_control_t *ctrl, 
 	{
 		et->destroy(ctrl, payload, va_arg(argptr, qbool));
 	}
+	else if (ft == EZ_CONTROL_CHILD_HANDLER)	
+	{
+		et->child(ctrl, payload, va_arg(argptr, ez_control_t *));
+	}
 
 	va_end(argptr);
 }
@@ -871,6 +879,8 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnAnchorChanged, OnAnchorChanged, ez_control_t);
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnVisibilityChanged, OnVisibilityChanged, ez_control_t);
 	CONTROL_REGISTER_EVENT(control, EZ_control_OnOpacityChanged, OnOpacityChanged, ez_control_t);
+	CONTROL_REGISTER_EVENT(control, EZ_control_OnChildMoved, OnChildMoved, ez_control_t);
+	CONTROL_REGISTER_EVENT(control, EZ_control_OnChildResize, OnChildResize, ez_control_t);
 
 	// Add the control to the draw and tab list.
 	EZ_double_linked_list_Add(&tree->drawlist, (void *)control);
@@ -1492,8 +1502,33 @@ void EZ_control_SetTabOrder(ez_control_t *self, int tab_order)
 }
 
 //
-// Control - Updates the anchor gaps between the controls edges and it's parent 
-//           (the distance to maintain from the parent when anchored to opposit edges).
+// Control - Calculates the position percentages based on the current pixel position.
+//
+static void EZ_control_CalculatePositionPercentages(ez_control_t *self)
+{
+	if (self->parent)
+	{
+		ez_control_t *p = self->parent;
+		// TODO: Should we ever use the normal width of the parent here? If the control is out of the parents view port in this case, it will never be visible.
+		int p_width		= (self->int_flags & control_anchor_viewport) ? p->width  : p->virtual_width;
+		int p_height	= (self->int_flags & control_anchor_viewport) ? p->height : p->virtual_height;
+
+		self->x_percent = self->x / (float)p_width;
+		self->y_percent = self->y / (float)p_height;
+
+		self->x_percent = bound(0, self->x_percent, 1.0);
+		self->y_percent = bound(0, self->y_percent, 1.0);
+	}
+	else
+	{
+		self->x_percent = 0.0;
+		self->y_percent = 0.0;
+	}
+}
+
+//
+// Control - Updates the anchor gaps between the controls edges and its parent 
+//           (the distance to maintain from the parent when anchored to opposite edges).
 //
 static void EZ_control_UpdateAnchorGap(ez_control_t *self)
 {
@@ -1525,6 +1560,11 @@ static void EZ_control_UpdateAnchorGap(ez_control_t *self)
 
 //
 // Control - Sets the anchoring of the control to it's parent.
+//           !!! NOTE !!! 
+//           If you set an anchoring to a single edge, make sure you do this
+//           after the parent has its final size, otherwise you might get some
+//           goofy behavior.
+//           !!! NOTE !!!
 //
 void EZ_control_SetAnchor(ez_control_t *self, ez_anchor_t anchor_flags)
 {
@@ -1744,6 +1784,11 @@ int EZ_control_OnAnchorChanged(ez_control_t *self)
 	// Calculate the gaps to the parents edges (used for anchoring, see OnParentResize for detailed explination).
 	EZ_control_UpdateAnchorGap(self);
 
+	// Calculate the position percentages in relation to the parents size.
+	// We'll use this in the case where the control is only anchored to
+	// one edge of its parent so that it will "flow" as the parent is resized.
+	EZ_control_CalculatePositionPercentages(self);
+
 	// Make sure the control is repositioned correctly.
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnMove);
 	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnParentResize);
@@ -1825,6 +1870,12 @@ int EZ_control_OnResize(ez_control_t *self)
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
 
+	// Tell our parent we've moved.
+	if (self->parent)
+	{
+		CONTROL_RAISE_EVENT(NULL, self->parent, ez_control_t, OnChildResize, self);
+	}
+
 	return 0;
 }
 
@@ -1841,10 +1892,47 @@ int EZ_control_OnParentResize(ez_control_t *self)
 		int new_width			= self->width;
 		int new_height			= self->height;
 		qbool anchor_viewport	= (self->ext_flags & control_anchor_viewport);
-		int parent_prev_width	= anchor_viewport ? self->parent->prev_width	: self->parent->prev_virtual_width;
-		int parent_prev_height	= anchor_viewport ? self->parent->prev_height	: self->parent->prev_virtual_height;
-		int parent_width		= anchor_viewport ? self->parent->width			: self->parent->virtual_width; 
-		int parent_height		= anchor_viewport ? self->parent->height		: self->parent->virtual_height;
+		int parent_prev_width	= anchor_viewport ? p->prev_width	: p->prev_virtual_width;
+		int parent_prev_height	= anchor_viewport ? p->prev_height	: p->prev_virtual_height;
+		int parent_width		= anchor_viewport ? p->width		: p->virtual_width; 
+		int parent_height		= anchor_viewport ? p->height		: p->virtual_height;
+
+		//
+		// Calculate our new position.
+		//
+		{
+			int new_x = self->x;
+			int new_y = self->y;			
+
+			// If we're exlusivly anchored to one edge, we change our position
+			// based on the parents size.
+			if ((self->anchor_flags == anchor_top) || (self->anchor_flags == anchor_bottom))
+			{
+				new_x = Q_rint(parent_width * self->x_percent);
+			}
+			else if ((self->anchor_flags == anchor_left) || (self->anchor_flags == anchor_right))
+			{
+				new_y = Q_rint(parent_height * self->y_percent);
+			}
+
+			// Only update the position if it has changed.
+			if ((new_x != self->x) || (new_y != self->y))
+			{
+				// Only update the position if our calculated position is still within
+				// the bounds of the parent. If we don't check for this, the control
+				// will never be visible in the case were you position a child outside of
+				// the parents viewport, then set the anchoring, and then resize the parent
+				// to its final size. This is because the x/y_percentage vars are only
+				// set on the OnAnchoringChanged event, where x_percent = x / parent_width.
+				// if x is greater than parent_width x_percent will be > 1 which means
+				// any position we calculate here will be outside of the parent control.
+				// (Yes this is confusing :D).
+				if ((new_x < parent_width) && (new_y < parent_height))
+				{
+					EZ_control_SetPosition(self, new_x, new_y);
+				}
+			}
+		}
 
 		if ((self->anchor_flags & (anchor_left | anchor_right)) == (anchor_left | anchor_right))
 		{			
@@ -2011,6 +2099,21 @@ int EZ_control_OnMove(ez_control_t *self)
 		int parent_prev_height	= anchor_viewport ? self->parent->prev_height	: self->parent->prev_virtual_height;
 		int parent_width		= anchor_viewport ? self->parent->width			: self->parent->virtual_width; 
 		int parent_height		= anchor_viewport ? self->parent->height		: self->parent->virtual_height;
+		
+		/*
+		EZ_control_CalculatePositionPercentages(self);
+
+		/*
+		// If we're exlusivly anchored to one edge, we change our position
+		// based on the parents width.
+		if ((self->anchor_flags == anchor_top) || (self->anchor_flags == anchor_bottom))
+		{
+			self->x = Q_rint(parent_width * self->x_percent);
+		}
+		else if ((self->anchor_flags == anchor_left) || (self->anchor_flags == anchor_right)
+		{
+			self->y = Q_rint(parent_height * self->y_percent);
+		}*/
 
 		// If we're anchored to both the left and right part of the parent we position
 		// based on the parents left pos 
@@ -2052,6 +2155,12 @@ int EZ_control_OnMove(ez_control_t *self)
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMove);
+
+	// Tell our parent we've moved.
+	if (self->parent)
+	{
+		CONTROL_RAISE_EVENT(NULL, self->parent, ez_control_t, OnChildMoved, self);
+	}
 
 	return 0;
 }
@@ -2783,3 +2892,53 @@ int EZ_control_OnOpacityChanged(ez_control_t *self)
 	return 0;
 }
 
+//
+// Control - Resizes the virtual size of the control based on the position/size of the child
+//           to make sure that it fits within the parents scrollable area.
+//
+static void EZ_control_ResizeVirtualSizeBasedOnChild(ez_control_t *self, ez_control_t *child)
+{
+	int child_right_edge	= (child->x + child->width);
+	int child_bottom_edge	= (child->y + child->height);
+	int new_vwidth			= self->virtual_width;
+	int new_vheight			= self->virtual_height;
+
+	if (child_right_edge > self->virtual_width)
+	{
+		new_vwidth = self->virtual_width + child_right_edge;
+	}
+
+	if (child_bottom_edge > self->virtual_height)
+	{
+		new_vheight = self->virtual_height + child_bottom_edge;
+	}
+
+	if ((new_vwidth != self->virtual_width) && (new_vheight != self->virtual_height))
+	{
+		EZ_control_SetVirtualSize(self, new_vwidth, new_vheight);
+	}
+
+	// TODO: Hmm should probably shrink the virtual size also, but then we'd have to loop through all children to make sure none are left out.
+}
+
+//
+// Control - A child control has been moved.
+//
+int EZ_control_OnChildMoved(ez_control_t *self, ez_control_t *child)
+{
+	EZ_control_ResizeVirtualSizeBasedOnChild(self, child);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnChildMoved, child);
+	return 0;
+}
+
+//
+// Control - A child control has been resized.
+//
+int EZ_control_OnChildResize(ez_control_t *self, ez_control_t *child)
+{
+	EZ_control_ResizeVirtualSizeBasedOnChild(self, child);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnChildResize, child);
+	return 0;
+}
