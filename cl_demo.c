@@ -1960,39 +1960,7 @@ qbool CL_GetDemoMessage (void)
 
 		// Read the time of the next message in the demo.
 		demotime = CL_PeekDemoTime();
-		#if 0
-		if (cls.mvdplayback)
-		{
-			// Peek inside, but don't read.
-			// (Since it might not be time to continue reading in the demo
-			// we want to be able to check this again later if that's the case).
-			CL_Demo_Read(&mvd_time, sizeof(mvd_time), true);
-
-			// Calculate the demo time.
-			// (The time in an MVD is saved as a byte with number of miliseconds since the last cmd
-			// so we need to multiply it by 0.001 to get it in seconds like normal quake time).
-			demotime = prevtime + (mvd_time * 0.001);
-
-			if ((cls.demotime - nextdemotime) > 0.0001 && (nextdemotime != demotime))
-			{
-				olddemotime = nextdemotime;
-				cls.netchan.incoming_sequence++;
-				cls.netchan.incoming_acknowledged++;
-				cls.netchan.frame_latency = 0;
-				cls.netchan.last_received = cls.demotime; // Make timeout check happy.
-				nextdemotime = demotime;
-			}
-		}
-		else
-		{
-			// Peek inside, but don't read.
-			// (Since it might not be time to continue reading in the demo
-			// we want to be able to check this again later if that's the case).
-			CL_Demo_Read(&demotime, sizeof(demotime), true);
-			demotime = LittleFloat(demotime);
-		}
-		#endif
-		
+				
 		// If we've reached our seek goal, stop seeking.
 		if ((cls.demoseeking || cls.demotest) && (cls.demotime <= demotime))
 		{
@@ -2013,88 +1981,15 @@ qbool CL_GetDemoMessage (void)
 		playback_recordtime = demotime;
 
 		// Decide if it is time to grab the next message from the demo yet.
-		#if 1
 		if (!CL_DemoShouldWeReadNextMessage(demotime))
 		{
 			return false;
 		}
-		#else
-		if (cls.timedemo)
-		{
-			// Timedemo playback, grab the next message as quickly as possible.
 		
-			if (cls.td_lastframe < 0)
-			{
-				// This is the first frame of the timedemo.
-				cls.td_lastframe = demotime;
-			}
-			else if (demotime > cls.td_lastframe)
-			{
-				// We've already read this frame's message so skip it.
-				cls.td_lastframe = demotime;
-				return false;
-			}
-
-			// Did we just start the time demo?
-			if (!cls.td_starttime && (cls.state == ca_active))
-			{
-				// Save the start time (real world time) and current frame number
-				// so that we will know how long it took to go through it all
-				// and calculate the framerate when it's done.
-				cls.td_starttime = Sys_DoubleTime();
-				cls.td_startframe = cls.framecount;
-			}
-
-			cls.demotime = demotime; // Warp.
-		}
-		else if (!(cl.paused & PAUSED_SERVER) && (cls.state == ca_active)) // always grab until fully connected
-		{
-			// Not paused and active.
-
-			if (cls.mvdplayback)
-			{
-				if (nextdemotime < demotime)
-				{
-					return false; // Don't need another message yet.
-				}
-			}
-			else
-			{
-				if (cls.demotime < demotime)
-				{
-					// Don't need another message yet.
-
-					// Adjust the demotime to match what's read from file.
-					if (cls.demotime + 1.0 < demotime)
-						cls.demotime = demotime - 1.0;
-
-					return false;
-				}
-			}
-		}
-		else
-		{
-			cls.demotime = demotime; // We're warping.
-		}
-		#endif
-
 		// Read the time from the packet (we peaked at it earlier),
 		// we're ready to get the next message.
-		#if 1
 		CL_ConsumeDemoTime();
-		#else
-		if (cls.mvdplayback)
-		{
-			byte dummy_newtime;
-			CL_Demo_Read(&dummy_newtime, sizeof(dummy_newtime), false);
-		}
-		else
-		{
-			float dummy_demotime;
-			CL_Demo_Read(&dummy_demotime, sizeof(dummy_demotime), false);
-		}
-		#endif
-
+		
 		// Save the previous time for MVD playback (for the next message),
 		// it is needed to calculate the demotime since in mvd's the time is
 		// saved as the number of miliseconds since last frame message.
@@ -2108,48 +2003,8 @@ qbool CL_GetDemoMessage (void)
 		// QWD Only.
 		if (message_type == dem_cmd)
 		{
-			#if 1
 			CL_DemoReadDemCmd();
-			#else
-			// User cmd read.
-
-			// Get which frame we should read the cmd into from the demo.
-			i = cls.netchan.outgoing_sequence & UPDATE_MASK;
-
-			// Read the user cmd from the demo.
-			pcmd = &cl.frames[i].cmd;
-			CL_Demo_Read(pcmd, sizeof(*pcmd), false);
-
-			// Convert the angles/movement vectors into the correct byte order.
-			for (j = 0; j < 3; j++)
-				pcmd->angles[j] = LittleFloat(pcmd->angles[j]);
-			pcmd->forwardmove = LittleShort(pcmd->forwardmove);
-			pcmd->sidemove = LittleShort(pcmd->sidemove);
-			pcmd->upmove = LittleShort(pcmd->upmove);
-
-			// Set the time time this cmd was sent and increase
-			// how many net messages have been sent.
-			cl.frames[i].senttime = cls.realtime;
-			cl.frames[i].receivedtime = -1;		// We haven't gotten a reply yet.
-			cls.netchan.outgoing_sequence++;
-
-			// Read the viewangles from the demo and convert them to correct byte order.
-			CL_Demo_Read(cl.viewangles, 12, false);
-			for (j = 0; j < 3; j++)
-				cl.viewangles[j] = LittleFloat (cl.viewangles[j]);
-
-			// Calculate the player fps based on the cmd.
-			CL_CalcPlayerFPS(&cl.players[cl.playernum], pcmd->msec);
-
-			// Try locking on to a player.
-			if (cl.spectator)
-				Cam_TryLock();
-
-			// Write the demo to the record file if we're recording.
-			if (cls.demorecording)
-				CL_WriteDemoCmd(pcmd);
-			#endif
-
+			
 			continue; // Get next message.
 		}
 
@@ -2208,80 +2063,19 @@ qbool CL_GetDemoMessage (void)
 		// Get the next net message from the demo file.
 		if (message_type == dem_read)
 		{
-			#if 1
 			if (CL_DemoReadDemRead())
 			{
 				continue; // Continue reading messages.
 			}
-			#else
-			// Read the size of next net message in the demo file
-			// and convert it into the correct byte order.
-			CL_Demo_Read(&net_message.cursize, 4, false);
-			net_message.cursize = LittleLong(net_message.cursize);
-
-			// The message was too big, stop playback.
-			if (net_message.cursize > net_message.maxsize)
-			{
-				Com_DPrintf("CL_GetDemoMessage: net_message.cursize > net_message.maxsize");
-				Host_EndGame();
-				Host_Abort();
-			}
-
-			// Read the net message from the demo.
-			CL_Demo_Read(net_message.data, net_message.cursize, false);
-
-			// Check what the last message type was for MVDs.
-			if (cls.mvdplayback)
-			{
-				switch(cls.lasttype)
-				{
-					case dem_multiple:
-					{
-						// Get the number of the player being tracked.
-						tracknum = Cam_TrackNum();
-
-						// If no player is tracked (free flying), or the player we're tracking
-						// is not affected by this message. If that's the case just read the next message.
-						if (tracknum == -1 || !(cls.lastto & (1 << tracknum)))
-						{
-							continue;
-						}
-						break;
-					}
-					case dem_single:
-					{
-						// If we're not tracking the player referred to in the demo
-						// message it's time to read the next message.
-						tracknum = Cam_TrackNum();
-						if ((tracknum == -1) || (cls.lastto != spec_track))
-						{
-							continue;
-						}
-						break;
-					}
-				}
-			}
-			#endif
-
+			
 			return true; // We just read something.
 		}
 
 		// Gets the sequence numbers for the netchan at the start of the demo.
 		if (message_type == dem_set)
 		{
-			#if 1
 			CL_DemoReadDemSet();
-			#else
-			CL_Demo_Read(&i, sizeof(i), false);
-			cls.netchan.outgoing_sequence = LittleLong(i);
-
-			CL_Demo_Read(&i, sizeof(i), false);
-			cls.netchan.incoming_sequence = LittleLong(i);
-
-			if (cls.mvdplayback)
-				cls.netchan.incoming_acknowledged = cls.netchan.incoming_sequence;
-			#endif
-
+			
 			continue;
 		}
 
