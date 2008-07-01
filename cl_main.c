@@ -174,30 +174,30 @@ cvar_t r_telesplash				= {"r_telesplash", "1"}; // disconnect
 cvar_t r_shaftalpha				= {"r_shaftalpha", "1"};
 
 // info mirrors
-cvar_t	password = {"password", "", CVAR_USERINFO};
-cvar_t	spectator = {"spectator", "", CVAR_USERINFO};
-cvar_t	name = {"name", "player", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	team = {"team", "", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	topcolor = {"topcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	bottomcolor = {"bottomcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	skin = {"skin", "", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	rate = {"rate", "5760", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	msg = {"msg", "1", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t  noaim = {"noaim", "1", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	w_switch = {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	password				= {"password", "", CVAR_USERINFO};
+cvar_t	spectator				= {"spectator", "", CVAR_USERINFO};
+cvar_t	name					= {"name", "player", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	team					= {"team", "", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	topcolor				= {"topcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	bottomcolor				= {"bottomcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	skin					= {"skin", "", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	rate					= {"rate", "5760", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	msg						= {"msg", "1", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t  noaim					= {"noaim", "1", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	w_switch				= {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	b_switch				= {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 
-cvar_t  cl_mediaroot = {"cl_mediaroot", "0", CVAR_ARCHIVE};
+cvar_t  cl_mediaroot			= {"cl_mediaroot", "0", CVAR_ARCHIVE};
 
-cvar_t  msg_filter = {"msg_filter", "0"};
+cvar_t  msg_filter				= {"msg_filter", "0"};
 
-cvar_t cl_onload = {"cl_onload", "menu", CVAR_ARCHIVE};
+cvar_t cl_onload				= {"cl_onload", "menu", CVAR_ARCHIVE};
 
 #ifdef WIN32
-cvar_t cl_verify_qwprotocol = {"cl_verify_qwprotocol", "1", CVAR_ARCHIVE};
+cvar_t cl_verify_qwprotocol		= {"cl_verify_qwprotocol", "1", CVAR_ARCHIVE};
 #endif // WIN32
 
-cvar_t demo_autotrack = {"demo_autotrack", "0", CVAR_ARCHIVE}; // use or not autotrack info from mvd demos
+cvar_t demo_autotrack			= {"demo_autotrack", "0", CVAR_ARCHIVE}; // use or not autotrack info from mvd demos
 
 /// persistent client state
 clientPersistent_t	cls;
@@ -1438,41 +1438,7 @@ void CL_ReadPackets (void)
 				continue; // Wasn't accepted for some reason.
 		}
 
-		{
-#if 0 // TEST STUFF
-			static qbool prevseeking = false;
-			static qbool prevtest = false;
-			static double seektime = 0.0;
-			double start = Sys_DoubleTime();
-#endif // TEST STUFF
-
-			CL_ParseServerMessage();
-			
-#if 0 // TEST STUFF
-			if (cls.demoseeking)
-			{
-				seektime += Sys_DoubleTime() - start;
-			}
-			else if (prevseeking)
-			{
-				Com_Printf("Demoseek in: %f\n", seektime);
-				seektime = 0.0;
-			}
-
-			if (cls.demotest)
-			{
-				seektime += Sys_DoubleTime() - start;
-			}
-			else if (prevtest)
-			{
-				Com_Printf("Demoseek in: %f\n", seektime);
-				seektime = 0.0;
-			}
-
-			prevtest = cls.demotest;
-			prevseeking = cls.demoseeking;
-#endif // TEST STUFF
-		}
+		CL_ParseServerMessage();
 	}
 
 	// Check timeout.
@@ -1998,14 +1964,14 @@ void CL_Frame (double time)
 	static double	extraphysframetime;	//#fps
 
 	extern cvar_t r_lerpframes;
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
 	extern cvar_t gl_clear;
 	extern cvar_t gl_polyblend;
-#else
+	#else
 	extern cvar_t r_waterwarp;
 	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
 		v_damagecshift, v_suitcshift, v_bonusflash;
-#endif // GLQUAKE
+	#endif // GLQUAKE
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();

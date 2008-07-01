@@ -3151,18 +3151,17 @@ void CL_ParseServerMessage (void)
 					break;
 				}
 
-				if (cls.mvdplayback == true) // MVD playback, but not QTV stream
+				if (cls.mvdplayback == true) // MVD playback, but not QTV stream.
 				{
 					extern	int		pb_cnt;
 
-					// we still have some data, so lets try ignore disconnect since it probably multy map MVD
+					// We still have some data, so lets try ignore disconnect since it probably multy map MVD.
 					if (pb_cnt > 0)
 					{
 						if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
 							Com_Printf("WARNING: Non-standard disconnect message in MVD '%s'\n", s);
 
 						Com_DPrintf("Ignoring Server disconnect\n");
-
 						break;
 					}
 				}
@@ -3175,7 +3174,7 @@ void CL_ParseServerMessage (void)
 				else 
 				{
 					Com_DPrintf("Server disconnected\n");
-					Host_EndGame();	// The server will be killed if it tries to kick the local player
+					Host_EndGame();	// The server will be killed if it tries to kick the local player.
 					Host_Abort();
 				}
 				break;

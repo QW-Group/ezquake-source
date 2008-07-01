@@ -44,7 +44,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "demo_controls.h"
 
-float olddemotime, nextdemotime;
+// TODO: Create states for demo_recording, demo_playback, and so on and put all related vars into these. Right now with global vars for everything is a mess. Also renaming some of the time vars to be less confusing is probably good. demotime, olddemotime, nextdemotime, prevtime...
+typedef struct demo_state_s
+{
+	float		olddemotime;
+	float		nextdemotime;
+
+	double		bufferingtime;
+
+	sizebuf_t	democache;
+	qbool		democache_available;
+
+	#ifdef _WIN32
+	qbool		qwz_unpacking;
+	qbool		qwz_playback;
+	qbool		qwz_packing;
+	char		tempqwd_name[256];
+	#endif // _WIN32
+} demo_state_t;
+
+float olddemotime, nextdemotime; // TODO: Put in a demo struct.
 
 double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
 
@@ -77,80 +96,19 @@ static void CL_DemoPlaybackInit(void);
 
 char *CL_DemoDirectory(void);
 
-#ifdef WITH_DEMO_REWIND
-//=============================================================================
-//								DEMO KEYFRAMES
-//=============================================================================
-
-static demo_keyframe_t *demo_keyframes;
-
-// 
-// Adds a new keyframe to the list of demo keyframes.
-//
-static void CL_DemoKeyframeAdd(unsigned long filepos, float timestamp)
-{
-	demo_keyframe_t *keyframe = (demo_keyframe_t *)Q_malloc(sizeof(demo_keyframe_t));
-
-	keyframe->filepos	= filepos;
-	keyframe->timestamp = timestamp;
-	keyframe->prev		= demo_keyframes;
-	demo_keyframes		= keyframe;
-}
-
-//
-// Clears the demo keyframes.
-//
-static void CL_DemoKeyframeClearAll(void)
-{
-	demo_keyframe_t *iter = demo_keyframes;
-	demo_keyframe_t *temp = NULL;
-
-	while (iter)
-	{
-		temp = iter;
-		iter = iter->prev;
-		Q_free(temp);
-	}
-}
-
-//
-// Find the closest timestamp for a specified time.
-//
-static demo_keyframe_t *CL_DemoKeyframeFindClosest(double time)
-{
-	demo_keyframe_t *iter = demo_keyframes;
-	demo_keyframe_t *prev = iter;
-
-	while (iter)
-	{
-		if (iter->timestamp <= time)
-			break;
-
-		prev = iter;
-		iter = iter->prev;
-	}
-	
-	// Return the first timestamp if none was found.
-	if (!iter)
-		return prev;
-
-	return iter;
-}
-#endif // WITH_DEMO_REWIND
-
 //=============================================================================
 //								DEMO WRITING
 //=============================================================================
 
-static FILE *recordfile = NULL;		// File used for recording demos.
-static float playback_recordtime;	// Time when in demo playback and recording.
+static FILE *recordfile = NULL;		// File used for recording demos. // TODO: Put in a demo struct.
+static float playback_recordtime;	// Time when in demo playback and recording. // TODO: Put in a demo struct.
 
 #define DEMORECORDTIME	((float) (cls.demoplayback ? playback_recordtime : cls.realtime))
 #define DEMOCACHE_MINSIZE	(2 * 1024 * 1024)
 #define DEMOCACHE_FLUSHSIZE	(1024 * 1024)
 
-static sizebuf_t democache;
-static qbool democache_available = false;	// Has the user opted to use a demo cache?
+static sizebuf_t democache; // TODO: Put in a demo struct.
+static qbool democache_available = false;	// Has the user opted to use a demo cache? // TODO: Put in a demo struct.
 
 //
 // Opens a demo for writing.
@@ -453,13 +411,15 @@ static void CL_WriteStartupData (void)
 	// Send the serverdata.
 	//
 	MSG_WriteByte (&buf, svc_serverdata);
-#ifdef PROTOCOL_VERSION_FTE
-	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS)	//maintain demo compatibility
+	
+	#ifdef PROTOCOL_VERSION_FTE
+	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS)	// Maintain demo compatibility.
 	{
 		MSG_WriteLong (&buf, PROTOCOL_VERSION_FTE);
 		MSG_WriteLong (&buf, cls.fteprotocolextensions);
 	}
-#endif
+	#endif // PROTOCOL_VERSION_FTE
+	
 	MSG_WriteLong (&buf, PROTOCOL_VERSION);
 	MSG_WriteLong (&buf, cl.servercount);
 	MSG_WriteString (&buf, cls.gamedirfile);
@@ -543,9 +503,10 @@ static void CL_WriteStartupData (void)
 		SZ_Clear (&buf);
 	}
 
-// vwep modellist
-	if (cl.vwep_enabled && cl.vw_model_name[0][0]) {
-		// send VWep precaches
+	// Vwep modellist
+	if (cl.vwep_enabled && cl.vw_model_name[0][0]) 
+	{
+		// Send VWep precaches
 		// pray we don't overflow
 		char ss[1024] = "//vwep ";
 		for (i = 0; i < MAX_VWEP_MODELS; i++) {
@@ -557,13 +518,13 @@ static void CL_WriteStartupData (void)
 			strlcat (ss, TrimModelName(s), sizeof(ss));
 		}
 		strlcat (ss, "\n", sizeof(ss));
-		if (strlen(ss) < sizeof(ss)-1)		// didn't overflow?
+		if (strlen(ss) < sizeof(ss)-1)		// Didn't overflow?
 		{
 			MSG_WriteByte (&buf, svc_stufftext);
 			MSG_WriteString (&buf, ss);
 		}
 	}
-	// don't bother flushing, the vwep list is not that large (I hope)
+	// Don't bother flushing, the vwep list is not that large (I hope).
 
 	//
 	// Modellist.
@@ -654,7 +615,8 @@ static void CL_WriteStartupData (void)
 	}
 
 	// spawnstaticsound
-	for (i = 0; i < cl.num_static_sounds; i++) {
+	for (i = 0; i < cl.num_static_sounds; i++) 
+	{
 		static_sound_t *ss = &cl.static_sounds[i];
 		MSG_WriteByte (&buf, svc_spawnstaticsound);
 		for (j = 0; j < 3; j++)
@@ -663,7 +625,8 @@ static void CL_WriteStartupData (void)
 		MSG_WriteByte (&buf, ss->vol);
 		MSG_WriteByte (&buf, ss->atten);
 
-		if (buf.cursize > MAX_MSGLEN/2) {
+		if (buf.cursize > MAX_MSGLEN/2) 
+		{
 			CL_WriteStartupDemoMessage (&buf, seq++);
 			SZ_Clear (&buf);
 		}
@@ -815,9 +778,7 @@ static void CL_WriteStartupData (void)
 //=========================================================
 
 static FILE *mvdrecordfile = NULL;
-
 static char mvddemoname[2 * MAX_OSPATH] = {0};
-
 
 static void CL_MVD_DemoWrite (void *data, int len)
 {
@@ -827,11 +788,9 @@ static void CL_MVD_DemoWrite (void *data, int len)
 	fwrite(data, len, 1, mvdrecordfile);
 }
 
-/*
-====================
-CL_WriteRecordMVDMessage
-====================
-*/
+// ====================
+// CL_WriteRecordMVDMessage
+// ====================
 static void CL_WriteRecordMVDMessage (sizebuf_t *msg)
 {
 	int len;
@@ -855,11 +814,9 @@ static void CL_WriteRecordMVDMessage (sizebuf_t *msg)
 	CL_MVD_DemoWrite (msg->data, msg->cursize);
 }
 
-/*
-====================
-CL_WriteRecordMVDStatsMessage
-====================
-*/
+// ====================
+// CL_WriteRecordMVDStatsMessage
+// ====================
 static void CL_WriteRecordMVDStatsMessage (sizebuf_t *msg, int client)
 {
 	int len;
@@ -886,24 +843,18 @@ static void CL_WriteRecordMVDStatsMessage (sizebuf_t *msg, int client)
 	CL_MVD_DemoWrite (msg->data, msg->cursize);
 }
 
+// TODO: Split this up?
 void CL_WriteMVDStartupData(void)
 {
 	sizebuf_t	buf;
 	unsigned char buf_data[MAX_MSGLEN * 4];
-
 	player_info_t *player;
-
 	entity_state_t *es, blankes;
-
 	entity_t *ent;
-	
 	int i, j, n;
-
 	char *s;
-	
-	/*-------------------------------------------------*/
 
-	// serverdata
+	// Serverdata
 	// send the info about the new client to all connected clients
 	SZ_Init (&buf, buf_data, sizeof(buf_data));
 
@@ -914,21 +865,21 @@ void CL_WriteMVDStartupData(void)
 	MSG_WriteLong (&buf, cl.servercount);
 
 	//
-	// gamedir
+	// Gamedir.
 	//
 
 	s = cls.gamedirfile; // FIXME: or do we need to take a look in serverinfo?
 	if (!s[0])
-		s = "qw"; // if empty use "qw" gamedir
+		s = "qw"; // If empty use "qw" gamedir
 
 	MSG_WriteString (&buf, s);
 
 	MSG_WriteFloat (&buf, cls.demotime); // FIXME: not sure
 
-	// send full levelname
+	// Send full levelname.
 	MSG_WriteString (&buf, cl.levelname);
 
-	// send the movevars
+	// Send the movevars.
 	MSG_WriteFloat(&buf, movevars.gravity);
 	MSG_WriteFloat(&buf, movevars.stopspeed);
 	MSG_WriteFloat(&buf, movevars.maxspeed);
@@ -940,20 +891,20 @@ void CL_WriteMVDStartupData(void)
 	MSG_WriteFloat(&buf, movevars.waterfriction);
 	MSG_WriteFloat(&buf, movevars.entgravity);
 
-	// send music
+	// Send music.
 	MSG_WriteByte (&buf, svc_cdtrack);
-	MSG_WriteByte (&buf, 0); // none in demos
+	MSG_WriteByte (&buf, 0); // None in demos.
 
-	// send server info string
+	// Send server info string.
 	MSG_WriteByte (&buf, svc_stufftext);
 	MSG_WriteString (&buf, va("fullserverinfo \"%s\"\n", cl.serverinfo));
 
-	// flush packet
+	// Flush packet.
 	CL_WriteRecordMVDMessage (&buf);
 	SZ_Clear (&buf);
 
 	//
-	// soundlist
+	// Soundlist.
 	//
 	MSG_WriteByte (&buf, svc_soundlist);
 	MSG_WriteByte (&buf, 0);
@@ -985,7 +936,7 @@ void CL_WriteMVDStartupData(void)
 	}
 
 	//
-	// modellist
+	// Modellist.
 	//
 	MSG_WriteByte (&buf, svc_modellist);
 	MSG_WriteByte (&buf, 0);
@@ -1178,13 +1129,13 @@ void CL_WriteMVDStartupData(void)
 	}
 
 	//
-	// send current status of all other players: frags, ping, pl, enter time, userinfo, player id
+	// Send current status of all other players: frags, ping, pl, enter time, userinfo, player id.
 	//
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		player = cl.players + i;
 
-		// do NOT ignore specs there, since we need at least userinfo
+		// Do NOT ignore spectators here, since we need at least userinfo.
 
 		// Frags.
 		MSG_WriteByte (&buf, svc_updatefrags);
@@ -1227,7 +1178,7 @@ void CL_WriteMVDStartupData(void)
 	}
 
 	//
-	// this set proper model, origin, angles etc for players
+	// This set proper model, origin, angles etc for players.
 	//
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -1243,7 +1194,7 @@ void CL_WriteMVDStartupData(void)
 			continue;
 
 		if (player->spectator)
-			continue; // ignore specs
+			continue; // Ignore spectators.
 
 		flags =   (DF_ORIGIN << 0) | (DF_ORIGIN << 1) | (DF_ORIGIN << 2)
 				| (DF_ANGLES << 0) | (DF_ANGLES << 1) | (DF_ANGLES << 2)
@@ -1307,7 +1258,7 @@ void CL_WriteMVDStartupData(void)
 			continue;
 
 		if (player->spectator)
-			continue; // ignore specs
+			continue; // Ignore spectators.
 
 		stats = cl.players[i].stats;
 
@@ -1334,14 +1285,14 @@ void CL_WriteMVDStartupData(void)
 		}
 	}
 
-	// above stats writing must clear buffer
+	// Above stats writing must clear buffer.
 	if (buf.cursize)
 	{
 		Sys_Error("CL_WriteMVDStartupData: buf.cursize %d", buf.cursize);
 	}
 
 	// 
-	// send packetentities
+	// Send packetentities.
 	//
 	{
 		int ent_index, ent_total;
@@ -1368,17 +1319,17 @@ void CL_WriteMVDStartupData(void)
 		SZ_Clear (&buf);
 	}
 
-	// get the client to check and download skins
-	// when that is completed, a begin command will be issued
+	// Get the client to check and download skins
+	// when that is completed, a begin command will be issued.
 	MSG_WriteByte (&buf, svc_stufftext);
 	MSG_WriteString (&buf, "skins\n");
 
 	CL_WriteRecordMVDMessage (&buf);
 }
 
-//==============
-// commands
-//==============
+// ==============
+// Commands
+// ==============
 
 void CL_StopMvd_f(void)
 {
@@ -1405,8 +1356,7 @@ void CL_StopMvd_f(void)
 
 		SZ_Init (&buf, buf_data, sizeof(buf_data));
 
-		// print offensive message
-
+		// Print offensive message.
 		snprintf(str, sizeof(str),
 				"\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n"
 		        "%s"
@@ -1417,7 +1367,7 @@ void CL_StopMvd_f(void)
 		MSG_WriteByte(&buf, 2);
 		MSG_WriteString(&buf, str);
 
-		// add disconnect
+		// Add disconnect.
 
 		MSG_WriteByte (&buf, svc_disconnect);
 		MSG_WriteString (&buf, "EndOfDemo");
@@ -1544,7 +1494,7 @@ void CL_Demo_PB_Init(void *buf, int buflen)
 
 //
 // This is memory reading(not from file or socket), we just copy data from pb_buf[] to caller buffer,
-// sure if we not peeking we decrease pb_buf[] size (pb_cnt) and move along pb_buf[] itself.
+// sure if we're not peeking we decrease pb_buf[] size (pb_cnt) and move along pb_buf[] itself.
 //
 int CL_Demo_Read(void *buf, int size, qbool peek)
 {
@@ -1559,13 +1509,13 @@ int CL_Demo_Read(void *buf, int size, qbool peek)
 
 	if (!peek)
 	{
-		// we are not peeking, so move along buffer
+		// We are not peeking, so move along buffer.
 		pb_cnt -= need;
 		memmove(pb_buf, pb_buf + need, pb_cnt);
 
-		// we get some data from playback file or qtv stream, dump it to file right now
+		// We get some data from playback file or qtv stream, dump it to file right now.
 		if (need > 0 && cls.mvdplayback && cls.mvdrecording)
-			CL_MVD_DemoWrite (buf, need);
+			CL_MVD_DemoWrite(buf, need);
 	}
 
 	if (need != size)
@@ -1632,6 +1582,254 @@ qbool pb_ensure(void)
 	return false;
 }
 
+static float prevtime = 0; // TODO: Put in a demo struct.
+
+//
+// Peeks the demo time.
+//
+static float CL_PeekDemoTime(void)
+{
+	float demotime = 0.0;
+
+	if (cls.mvdplayback)
+	{
+		byte mvd_time = 0; // Number of miliseconds since last frame. Can be between 0-255. MVD Only.
+
+		// Peek inside, but don't read.
+		// (Since it might not be time to continue reading in the demo
+		// we want to be able to check this again later if that's the case).
+		CL_Demo_Read(&mvd_time, sizeof(mvd_time), true);
+
+		// Calculate the demo time.
+		// (The time in an MVD is saved as a byte with number of miliseconds since the last cmd
+		// so we need to multiply it by 0.001 to get it in seconds like normal quake time).
+		demotime = prevtime + (mvd_time * 0.001);
+
+		if ((cls.demotime - nextdemotime) > 0.0001 && (nextdemotime != demotime))
+		{
+			olddemotime = nextdemotime;
+			cls.netchan.incoming_sequence++;
+			cls.netchan.incoming_acknowledged++;
+			cls.netchan.frame_latency = 0;
+			cls.netchan.last_received = cls.demotime; // Make timeout check happy.
+			nextdemotime = demotime;
+		}
+	}
+	else
+	{
+		// Peek inside, but don't read.
+		// (Since it might not be time to continue reading in the demo
+		// we want to be able to check this again later if that's the case).
+		CL_Demo_Read(&demotime, sizeof(demotime), true);
+		demotime = LittleFloat(demotime);
+	}
+
+	return demotime;
+}
+
+//
+// Consume the demo time.
+//
+static void CL_ConsumeDemoTime(void)
+{
+	if (cls.mvdplayback)
+	{
+		byte dummy_newtime;
+		CL_Demo_Read(&dummy_newtime, sizeof(dummy_newtime), false);
+	}
+	else
+	{
+		float dummy_demotime;
+		CL_Demo_Read(&dummy_demotime, sizeof(dummy_demotime), false);
+	}
+}
+
+//
+// Reads a dem_cmd message from an demo.
+//
+static void CL_DemoReadDemCmd(void)
+{			
+	// User cmd read.
+
+	// Get which frame we should read the cmd into from the demo.
+	int i = cls.netchan.outgoing_sequence & UPDATE_MASK;
+	int j;
+
+	// Read the user cmd from the demo.
+	usercmd_t *pcmd = &cl.frames[i].cmd;
+	CL_Demo_Read(pcmd, sizeof(*pcmd), false);
+
+	// Convert the angles/movement vectors into the correct byte order.
+	for (j = 0; j < 3; j++)
+		pcmd->angles[j] = LittleFloat(pcmd->angles[j]);
+	pcmd->forwardmove = LittleShort(pcmd->forwardmove);
+	pcmd->sidemove = LittleShort(pcmd->sidemove);
+	pcmd->upmove = LittleShort(pcmd->upmove);
+
+	// Set the time time this cmd was sent and increase
+	// how many net messages have been sent.
+	cl.frames[i].senttime = cls.realtime;
+	cl.frames[i].receivedtime = -1;		// We haven't gotten a reply yet.
+	cls.netchan.outgoing_sequence++;
+
+	// Read the viewangles from the demo and convert them to correct byte order.
+	CL_Demo_Read(cl.viewangles, 12, false);
+	for (j = 0; j < 3; j++)
+		cl.viewangles[j] = LittleFloat (cl.viewangles[j]);
+
+	// Calculate the player fps based on the cmd.
+	CL_CalcPlayerFPS(&cl.players[cl.playernum], pcmd->msec);
+
+	// Try locking on to a player.
+	if (cl.spectator)
+		Cam_TryLock();
+
+	// Write the demo to the record file if we're recording.
+	if (cls.demorecording)
+		CL_WriteDemoCmd(pcmd);
+}
+
+//
+// Reads a dem_read message from a demo. Returns true if we should continue reading messages.
+//
+static qbool CL_DemoReadDemRead(void)
+{
+	// Read the size of next net message in the demo file
+	// and convert it into the correct byte order.
+	CL_Demo_Read(&net_message.cursize, 4, false);
+	net_message.cursize = LittleLong(net_message.cursize);
+
+	// The message was too big, stop playback.
+	if (net_message.cursize > net_message.maxsize)
+	{
+		Com_DPrintf("CL_GetDemoMessage: net_message.cursize > net_message.maxsize");
+		Host_EndGame();
+		Host_Abort();
+	}
+
+	// Read the net message from the demo.
+	CL_Demo_Read(net_message.data, net_message.cursize, false);
+
+	// Check what the last message type was for MVDs.
+	if (cls.mvdplayback)
+	{
+		int tracknum = -1;
+
+		switch(cls.lasttype)
+		{
+			case dem_multiple:
+			{
+				// Get the number of the player being tracked.
+				tracknum = Cam_TrackNum();
+
+				// If no player is tracked (free flying), or the player we're tracking
+				// is not affected by this message. If that's the case just read the next message.
+				if ((tracknum == -1) || !(cls.lastto & (1 << tracknum)))
+				{
+					return true;
+				}
+				break;
+			}
+			case dem_single:
+			{
+				// If we're not tracking the player referred to in the demo
+				// message it's time to read the next message.
+				tracknum = Cam_TrackNum();
+				if ((tracknum == -1) || (cls.lastto != spec_track))
+				{
+					return true;
+				}
+				break;
+			}
+		}
+	}
+
+	return false;
+}
+
+//
+// Reads a dem_set message from a demo.
+//
+static void CL_DemoReadDemSet(void)
+{
+	int i;
+
+	CL_Demo_Read(&i, sizeof(i), false);
+	cls.netchan.outgoing_sequence = LittleLong(i);
+
+	CL_Demo_Read(&i, sizeof(i), false);
+	cls.netchan.incoming_sequence = LittleLong(i);
+
+	if (cls.mvdplayback)
+		cls.netchan.incoming_acknowledged = cls.netchan.incoming_sequence;
+}
+
+//
+// Returns true if it's time to read the next message, false otherwise.
+//
+static qbool CL_DemoShouldWeReadNextMessage(float demotime)
+{
+	if (cls.timedemo)
+	{
+		// Timedemo playback, grab the next message as quickly as possible.
+
+		if (cls.td_lastframe < 0)
+		{
+			// This is the first frame of the timedemo.
+			cls.td_lastframe = demotime;
+		}
+		else if (demotime > cls.td_lastframe)
+		{
+			// We've already read this frame's message so skip it.
+			cls.td_lastframe = demotime;
+			return false;
+		}
+
+		// Did we just start the time demo?
+		if (!cls.td_starttime && (cls.state == ca_active))
+		{
+			// Save the start time (real world time) and current frame number
+			// so that we will know how long it took to go through it all
+			// and calculate the framerate when it's done.
+			cls.td_starttime = Sys_DoubleTime();
+			cls.td_startframe = cls.framecount;
+		}
+
+		cls.demotime = demotime; // Warp.
+	}
+	else if (!(cl.paused & PAUSED_SERVER) && (cls.state == ca_active)) // Always grab until fully connected.
+	{
+		// Not paused and active.
+
+		if (cls.mvdplayback)
+		{
+			if (nextdemotime < demotime)
+			{
+				return false; // Don't need another message yet.
+			}
+		}
+		else
+		{
+			if (cls.demotime < demotime)
+			{
+				// Don't need another message yet.
+
+				// Adjust the demotime to match what's read from file.
+				if (cls.demotime + 1.0 < demotime)
+					cls.demotime = demotime - 1.0;
+
+				return false;
+			}
+		}
+	}
+	else
+	{
+		cls.demotime = demotime; // We're warping.
+	}
+
+	return true;
+}
+
 //
 // When a demo is playing back, all NET_SendMessages are skipped, and NET_GetMessages are read from the demo file.
 // Whenever cl.time gets past the last received message, another message is read from the demo file.
@@ -1659,13 +1857,11 @@ qbool pb_ensure(void)
 //
 qbool CL_GetDemoMessage (void)
 {
-	int i, j, tracknum;
 	float demotime;
 	byte c;
 	byte message_type;
-	usercmd_t *pcmd;
 	byte mvd_time = 0; // Number of miliseconds since last frame. Can be between 0-255. MVD Only.
-	static float prevtime = 0;
+	//static float prevtime = 0;
 
 	// Used to save track status when rewinding.
 	static int rewind_trackslots[4];
@@ -1687,7 +1883,7 @@ qbool CL_GetDemoMessage (void)
 	}
 
 	// We're not ready to parse since we're buffering for QTV.
-	if (bufferingtime && bufferingtime > Sys_DoubleTime())
+	if (bufferingtime && (bufferingtime > Sys_DoubleTime()))
 	{
 		extern qbool	host_skipframe;
 
@@ -1712,6 +1908,7 @@ qbool CL_GetDemoMessage (void)
 			fseek(playbackfile, 0, SEEK_SET);
 			#endif // WITH_FTE_VFS
 
+			// We need to save track information.
 			memcpy(rewind_trackslots, mv_trackslots, sizeof(rewind_trackslots));
 			rewind_duel_track1 = nTrack1duel;
 			rewind_duel_track2 = nTrack2duel;
@@ -1734,6 +1931,9 @@ qbool CL_GetDemoMessage (void)
 			{
 				cls.demotime = cls.demo_rewindtime;
 				cls.demorewinding = false;
+
+				// We have now finished restarting the demo and will now seek
+				// to the new demotime just like we do when seeking forward.
 			}
 		}
 	}
@@ -1759,6 +1959,8 @@ qbool CL_GetDemoMessage (void)
 			return false;
 
 		// Read the time of the next message in the demo.
+		demotime = CL_PeekDemoTime();
+		#if 0
 		if (cls.mvdplayback)
 		{
 			// Peek inside, but don't read.
@@ -1771,7 +1973,7 @@ qbool CL_GetDemoMessage (void)
 			// so we need to multiply it by 0.001 to get it in seconds like normal quake time).
 			demotime = prevtime + (mvd_time * 0.001);
 
-			if (cls.demotime - nextdemotime > 0.0001 && nextdemotime != demotime)
+			if ((cls.demotime - nextdemotime) > 0.0001 && (nextdemotime != demotime))
 			{
 				olddemotime = nextdemotime;
 				cls.netchan.incoming_sequence++;
@@ -1789,6 +1991,7 @@ qbool CL_GetDemoMessage (void)
 			CL_Demo_Read(&demotime, sizeof(demotime), true);
 			demotime = LittleFloat(demotime);
 		}
+		#endif
 		
 		// If we've reached our seek goal, stop seeking.
 		if ((cls.demoseeking || cls.demotest) && (cls.demotime <= demotime))
@@ -1810,6 +2013,12 @@ qbool CL_GetDemoMessage (void)
 		playback_recordtime = demotime;
 
 		// Decide if it is time to grab the next message from the demo yet.
+		#if 1
+		if (!CL_DemoShouldWeReadNextMessage(demotime))
+		{
+			return false;
+		}
+		#else
 		if (cls.timedemo)
 		{
 			// Timedemo playback, grab the next message as quickly as possible.
@@ -1827,7 +2036,7 @@ qbool CL_GetDemoMessage (void)
 			}
 
 			// Did we just start the time demo?
-			if (!cls.td_starttime && cls.state == ca_active)
+			if (!cls.td_starttime && (cls.state == ca_active))
 			{
 				// Save the start time (real world time) and current frame number
 				// so that we will know how long it took to go through it all
@@ -1836,9 +2045,9 @@ qbool CL_GetDemoMessage (void)
 				cls.td_startframe = cls.framecount;
 			}
 
-			cls.demotime = demotime; // warp
+			cls.demotime = demotime; // Warp.
 		}
-		else if (!(cl.paused & PAUSED_SERVER) && cls.state == ca_active) // always grab until fully connected
+		else if (!(cl.paused & PAUSED_SERVER) && (cls.state == ca_active)) // always grab until fully connected
 		{
 			// Not paused and active.
 
@@ -1865,11 +2074,15 @@ qbool CL_GetDemoMessage (void)
 		}
 		else
 		{
-			cls.demotime = demotime; // we're warping
+			cls.demotime = demotime; // We're warping.
 		}
+		#endif
 
 		// Read the time from the packet (we peaked at it earlier),
 		// we're ready to get the next message.
+		#if 1
+		CL_ConsumeDemoTime();
+		#else
 		if (cls.mvdplayback)
 		{
 			byte dummy_newtime;
@@ -1880,6 +2093,7 @@ qbool CL_GetDemoMessage (void)
 			float dummy_demotime;
 			CL_Demo_Read(&dummy_demotime, sizeof(dummy_demotime), false);
 		}
+		#endif
 
 		// Save the previous time for MVD playback (for the next message),
 		// it is needed to calculate the demotime since in mvd's the time is
@@ -1894,6 +2108,9 @@ qbool CL_GetDemoMessage (void)
 		// QWD Only.
 		if (message_type == dem_cmd)
 		{
+			#if 1
+			CL_DemoReadDemCmd();
+			#else
 			// User cmd read.
 
 			// Get which frame we should read the cmd into from the demo.
@@ -1931,12 +2148,13 @@ qbool CL_GetDemoMessage (void)
 			// Write the demo to the record file if we're recording.
 			if (cls.demorecording)
 				CL_WriteDemoCmd(pcmd);
+			#endif
 
 			continue; // Get next message.
 		}
 
 		// MVD Only. These message types tells to which players the message is directed to.
-		if (message_type >= dem_multiple && message_type <= dem_all)
+		if ((message_type >= dem_multiple) && (message_type <= dem_all))
 		{
 			switch (message_type)
 			{
@@ -1947,6 +2165,7 @@ qbool CL_GetDemoMessage (void)
 				{
 					// Read the player bit mask from the demo and convert to the correct byte order.
 					// Each bit in this number represents a player, 32-bits, 32 players.
+					int i;
 					CL_Demo_Read(&i, 4, false);
 					cls.lastto = LittleLong(i);
 					cls.lasttype = dem_multiple;
@@ -1978,8 +2197,7 @@ qbool CL_GetDemoMessage (void)
 				}
 				default:
 				{
-					Host_Error("This can't happen (unknown command type).\n");
-					return false;
+					Host_Error("This can't happen (unknown command type) %c.\n", message_type);
 				}
 			}
 
@@ -1990,6 +2208,12 @@ qbool CL_GetDemoMessage (void)
 		// Get the next net message from the demo file.
 		if (message_type == dem_read)
 		{
+			#if 1
+			if (CL_DemoReadDemRead())
+			{
+				continue; // Continue reading messages.
+			}
+			#else
 			// Read the size of next net message in the demo file
 			// and convert it into the correct byte order.
 			CL_Demo_Read(&net_message.cursize, 4, false);
@@ -2037,6 +2261,7 @@ qbool CL_GetDemoMessage (void)
 					}
 				}
 			}
+			#endif
 
 			return true; // We just read something.
 		}
@@ -2044,6 +2269,9 @@ qbool CL_GetDemoMessage (void)
 		// Gets the sequence numbers for the netchan at the start of the demo.
 		if (message_type == dem_set)
 		{
+			#if 1
+			CL_DemoReadDemSet();
+			#else
 			CL_Demo_Read(&i, sizeof(i), false);
 			cls.netchan.outgoing_sequence = LittleLong(i);
 
@@ -2052,6 +2280,7 @@ qbool CL_GetDemoMessage (void)
 
 			if (cls.mvdplayback)
 				cls.netchan.incoming_acknowledged = cls.netchan.incoming_sequence;
+			#endif
 
 			continue;
 		}
@@ -2941,7 +3170,7 @@ int CL_Demo_Compress(char* qwdname)
 	return 1;
 }
 
-#endif
+#endif // _WIN32
 
 //=============================================================================
 //							DEMO PLAYBACK
@@ -3056,14 +3285,14 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	time_t t = time(&t);
 	struct tm *ptm = localtime(&t);
 	int width = 0, height = 0; 
-#ifdef GLQUAKE
-#ifndef __APPLE__
+	#ifdef GLQUAKE
+	#ifndef __APPLE__
 	float asp = 0;
 	extern cvar_t r_mode;
 
 	R_GetModeInfo(&width, &height, &asp, r_mode.integer);
-#endif
-#endif
+	#endif // __APPLE__
+	#endif // GLQUAKE
 
 
 	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
@@ -3122,11 +3351,6 @@ void CL_StopPlayback (void)
 	playbackfile = NULL;
 	cls.mvdplayback = cls.demoplayback = cls.nqdemoplayback = false;
 	cl.paused &= ~PAUSED_DEMO;
-
-	#ifdef WITH_DEMO_REWIND
-	// Clear the demo keyframes used for rewinding.
-	CL_DemoKeyframeClearAll();
-	#endif // WITH_DEMO_REWIND
 
 	cls.qtv_svversion = 0;
 	cls.qtv_ezquake_ext = 0;
@@ -3390,7 +3614,7 @@ float CL_CalculateDemoTime(vfsfile_t *demfile)
 }
 
 //
-// Returns true if
+// Returns true if the specified filename has a demo extension.
 //
 qbool CL_IsDemoExtension(const char *filename)
 {
@@ -3408,11 +3632,6 @@ qbool CL_IsDemoExtension(const char *filename)
 static void CL_DemoPlaybackInit(void)
 {	
 	cls.demoplayback	= true;	
-
-	#ifdef WITH_DEMO_REWIND
-	// Clear the demo keyframes used for rewinding.
-	CL_DemoKeyframeClearAll();
-	#endif // WITH_DEMO_REWIND
 
 	// Set demoplayback vars depending on the demo type.
 	// CL_GetIsMVD(playbackfile); 
@@ -3533,64 +3752,67 @@ void CL_Play_f (void)
 	{
 		// Strip the extension from the specified filename and append
 		// the one we're currently checking for.
-		COM_StripExtension (real_name, name);
-		strlcpy (name, va("%s.%s", name, *s), sizeof(name));
+		COM_StripExtension(real_name, name);
+		snprintf(name, sizeof(name), "%s.%s", name, *s);
 
 		// Look for the file in the above directory if it has ../ prepended to the filename.
 		if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 		{
-			playbackfile = FS_OpenVFS (va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
+			playbackfile = FS_OpenVFS(va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
 		}
 		else
 		{
 			// Search demo on quake file system, even in paks.
-			playbackfile = FS_OpenVFS (name, "rb", FS_ANY);
+			playbackfile = FS_OpenVFS(name, "rb", FS_ANY);
 		}
 
 		// Look in the demo dir (user specified).
 		if (!playbackfile)
 		{
-			playbackfile = FS_OpenVFS (va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
+			playbackfile = FS_OpenVFS(va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
 		}
 
 		// Check the full system path (Run a demo anywhere on the file system).
 		if (!playbackfile)
 		{
-			playbackfile = FS_OpenVFS (name, "rb", FS_NONE_OS);
+			playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS);
 		}
 	}
 
 	#else // WITH_VFS_ARCHIVE_LOADING
 	{
 		char *file_ext = COM_FileExtension(Cmd_Argv(1));
-		if (!playbackfile) {
+		if (!playbackfile)
+		{
 			// Check the file extension is valid
-			for (s = ext; *s; s++) {
+			for (s = ext; *s; s++) 
+			{
 				if (strcmp(*s, file_ext) == 0)
 					break;
 			}
-			if (*s != NULL) {
+			if (*s != NULL)
+			{
 				strlcpy (name, real_name, sizeof(name));
 				if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 				{
-					playbackfile = FS_OpenVFS (va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
+					playbackfile = FS_OpenVFS(va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
 				}
 				else
 				{
 					// Search demo on quake file system, even in paks.
-					playbackfile = FS_OpenVFS (name, "rb", FS_ANY);
+					playbackfile = FS_OpenVFS(name, "rb", FS_ANY);
 				}
 
 				// Look in the demo dir (user specified).
 				if (!playbackfile)
 				{
-					playbackfile = FS_OpenVFS (va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
+					playbackfile = FS_OpenVFS(va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
 				}
 
 				// Check the full system path (Run a demo anywhere on the file system).
 				if (!playbackfile)
 				{
-					playbackfile = FS_OpenVFS (name, "rb", FS_NONE_OS);
+					playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS);
 				}
 
 				if (playbackfile)

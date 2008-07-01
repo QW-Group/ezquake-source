@@ -403,7 +403,7 @@ typedef struct usercmd_s {
 #define BUTTON_USE		(1 << 2)
 #define BUTTON_ATTACK2	(1 << 3)
 
-
+// TODO: Make into an enum.
 #define dem_cmd			0 // A user cmd movement message.
 #define dem_read		1 // A net message.
 #define dem_set			2 // Appears only once at the beginning of a demo, 

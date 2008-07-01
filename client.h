@@ -285,12 +285,12 @@ typedef struct
 	//
 	// Time vars.
 	//
-	int			framecount;		///< Incremented every frame, never reset.
-	double		realtime;		///< Scaled by cl_demospeed.
-	double		demotime;		///< Scaled by cl_demospeed, reset when starting a demo.
-	double		demo_rewindtime;///< The time that we should jump to when rewinding.
-	double		trueframetime;	///< Time since last frame.
-	double		frametime;		///< Time since last frame, scaled by cl_demospeed.
+	int			framecount;				///< Incremented every frame, never reset.
+	double		realtime;				///< Scaled by cl_demospeed.
+	double		demotime;				///< Scaled by cl_demospeed, reset when starting a demo.
+	double		demo_rewindtime;		///< The time that we should jump to when rewinding.
+	double		trueframetime;			///< Time since last frame.
+	double		frametime;				///< Time since last frame, scaled by cl_demospeed.
 
 	//
 	// Network stuff.
@@ -305,7 +305,7 @@ typedef struct
 	// Variables related to client cmds aka clc_stringcmd, unreliable part, reliable part goes to cls.netchan.message
 	//
 
-	byte		cmdmsg_data[512]; ///< have no idea which size here must be
+	byte		cmdmsg_data[512];		///< have no idea which size here must be
 	sizebuf_t	cmdmsg;
 
 	// TCPCONNECT
@@ -328,7 +328,7 @@ typedef struct
 	//
 	// Download vars.
 	//
-	FILE		*download;			///< file transfer from server
+	FILE		*download;				///< file transfer from server
 	char		downloadtempname[MAX_PATH];
 	char		downloadname[MAX_PATH];
 	int			downloadnumber;
@@ -384,19 +384,18 @@ typedef struct
 
 	int			challenge;
 
-	float		latency;		///< Rolling average
+	float		latency;			///< Rolling average
 
-	qbool		mvdplayback;	///< Playing MVD.
-	float		qtv_svversion;	///< version of qtvsv/proxy, note it float
-	int			qtv_ezquake_ext; ///< qtv ezquake extensions supported by qtvsv/proxy
-	qbool		qtv_donotbuffer;///< do not try buffering even if not enough data
+	qbool		mvdplayback;		///< Playing MVD.
+	float		qtv_svversion;		///< version of qtvsv/proxy, note it float
+	int			qtv_ezquake_ext;	///< qtv ezquake extensions supported by qtvsv/proxy
+	qbool		qtv_donotbuffer;	///< do not try buffering even if not enough data
 
-	/** \brief Tells which players are affected by a demo message.
-		- If multiple players are affected (dem_multiple) this will be a
-		  bit mask containing which players the last demo message relates to. (32-bits, 32 players)
-		- If only a single player should receive the message (dem_single),
-		  this is a a 5-bit number containing the player number. (2^5 = 32 unique player numbers)
-	**/
+	/// \brief Tells which players are affected by a demo message.
+	///	- If multiple players are affected (dem_multiple) this will be a
+	///	  bit mask containing which players the last demo message relates to. (32-bits, 32 players)
+	///	- If only a single player should receive the message (dem_single),
+	///	  this is a a 5-bit number containing the player number. (2^5 = 32 unique player numbers)
 	int			lastto;			
 
 	int			lasttype;		///< The type of the last demo message.
