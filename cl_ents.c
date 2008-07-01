@@ -781,7 +781,8 @@ void CL_ParsePacketEntities (qbool delta)
 }
 
 #ifdef GLQUAKE
-void CL_LinkPacketEntities (void) 
+// TODO: OMG SPLIT THIS UP!
+void CL_LinkPacketEntities(void) 
 {
 	entity_t ent;
 	centity_t *cent;
@@ -798,18 +799,19 @@ void CL_LinkPacketEntities (void)
 
 	autorotate = anglemod(100 * cl.time);
 
-	memset (&ent, 0, sizeof(ent));
+	memset(&ent, 0, sizeof(ent));
 
 	for (pnum = 0; pnum < pack->num_entities; pnum++) 
 	{
 		state = &pack->entities[pnum];
 		cent = &cl_entities[state->number];
 
-		// Control powerup glow for bots
+		// Control powerup glow for bots.
 		if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value) 
 		{
 			flicker = r_lightflicker.value ? (rand() & 31) : 0;
-			// Spawn light flashes, even ones coming from invisible objects
+			
+			// Spawn light flashes, even ones coming from invisible objects.
 			if ((state->effects & (EF_BLUE | EF_RED | EF_GREEN)) == (EF_BLUE | EF_RED | EF_GREEN)) 
 			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_white, 0);
@@ -902,8 +904,11 @@ void CL_LinkPacketEntities (void)
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
 		}
 		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
-		&& cl.vw_model_precache[0] && r_drawvweps.value)
+				&& cl.vw_model_precache[0] && r_drawvweps.value)
+		{
 			ent.model = cl.vw_model_precache[0];
+		}
+
 		ent.skinnum = state->skinnum;
 	
 		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) 
@@ -933,7 +938,6 @@ void CL_LinkPacketEntities (void)
 			ent.colormap = vid.colormap;
 			ent.scoreboard = NULL;
 		}
-
 	
 		if ((cl_nolerp.value && !cls.mvdplayback && !is_monster(state->modelindex))
 			|| cent->deltalerp <= 0)
@@ -951,7 +955,7 @@ void CL_LinkPacketEntities (void)
 			{
 				float d = time - cent->startlerp;
 
-				if (d >= 2 * cent->deltalerp) // seems enitity stopped move
+				if (d >= 2 * cent->deltalerp) // Seems enitity stopped move.
 					VectorCopy(cent->lerp_origin, ent.origin);
 				else // interpolate
 					VectorMA(cent->old_origin, d, cent->velocity, ent.origin);
@@ -962,7 +966,6 @@ void CL_LinkPacketEntities (void)
 			}
 		}
 	
-
 		if (ent.model->flags & EF_ROTATE)
 		{
 			ent.angles[0] = ent.angles[2] = 0;
@@ -1095,7 +1098,9 @@ void CL_LinkPacketEntities (void)
 			{
 				// VULT TRAILS
 				if (model->modhint == MOD_BUILDINGGIBS)
+				{
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
+				}
 				else if (r_grenadetrail.value) 
 				{
 					if (model->modhint == MOD_RAIL)
@@ -1112,18 +1117,22 @@ void CL_LinkPacketEntities (void)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
 					else if (r_grenadetrail.value == 3)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
-					// VULT PARTICLES
 					else if (r_grenadetrail.value == 8)
 					{
+						// VULT PARTICLES
 						byte color[3];
 						color[0] = 0; color[1] = 70; color[2] = 255;
 						FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5);
 					}
 					else if (r_grenadetrail.value == 9)
+					{
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, LAVA_TRAIL);
-					// VULT PARTICLES
+					}
 					else if (r_grenadetrail.value == 10)
+					{
+						// VULT PARTICLES
 						FuelRodGunTrail (*old_origin, ent.origin, ent.angles, &cent->trail_origin);
+					}
 					else if (r_grenadetrail.value == 11)
 					{
 						byte color[3];
@@ -1131,18 +1140,23 @@ void CL_LinkPacketEntities (void)
 						FireballTrailWave (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5, ent.angles);
 					}
 					else if (r_grenadetrail.value == 12)
+					{
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, AMF_ROCKET_TRAIL);
+					}
 					else if (r_grenadetrail.value == 13)
 					{
 						CL_CreateBlurs (*old_origin, ent.origin, &ent);
 						VectorCopy(ent.origin, cent->trail_origin);		
 					}
 					else
+					{
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
+					}
 				}
 				else
+				{
 					VectorCopy(ent.origin, cent->trail_origin);
-
+				}
 			}
 			else if (model->flags & EF_GIB) 
 			{
@@ -1186,10 +1200,10 @@ void CL_LinkPacketEntities (void)
 				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_VORELIGHT, ent.origin);
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
-			}
-			// VULT NAILTRAIL
+			}			
 			else if (model->modhint == MOD_SPIKE && amf_nailtrail.value && !gl_no24bit.integer)
 			{
+				// VULT NAILTRAIL
 				if (amf_nailtrail_plasma.value)
 				{
 					byte color[3];
@@ -1197,11 +1211,13 @@ void CL_LinkPacketEntities (void)
 					FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 0.6, 0.3);
 				}
 				else
+				{
 					ParticleAlphaTrail (*old_origin, ent.origin, &cent->trail_origin, 2, 0.4);
-			}
-			// VULT TRAILS
+				}
+			}			
 			else if (model->modhint == MOD_TF_TRAIL && amf_extratrails.value)
 			{
+				// VULT TRAILS
 				ParticleAlphaTrail (*old_origin, ent.origin, &cent->trail_origin, 4, 0.4);
 			}
 			else if (model->modhint == MOD_LASER && amf_extratrails.value)
@@ -1213,9 +1229,10 @@ void CL_LinkPacketEntities (void)
 				VX_LightningTrail(*old_origin, ent.origin);
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
 			}
-			// VULT CORONAS
 			else if (model->modhint == MOD_DETPACK)
-			if (qmb_initialized) {
+			{
+				// VULT CORONAS
+				if (qmb_initialized) 
 				{
 					vec3_t liteorg, litestop, forward, right, up;
 					VectorCopy(ent.origin, liteorg);
@@ -1234,22 +1251,23 @@ void CL_LinkPacketEntities (void)
 							NewCorona(C_REDLIGHT, liteorg);
 						else
 							NewCorona(C_GREENLIGHT, liteorg);
-					}
+					}			
 				}
 			}
+
 			// VULT BUILDING SPARKS
 			if (!ISPAUSED && amf_buildingsparks.value && (model->modhint == MOD_BUILDINGGIBS && (rand() % 40 < 2)))
 			{
-					vec3_t liteorg, forward, right, up;
-					byte col[3] = {60,100,240};
-					VectorCopy(ent.origin, liteorg);
-					AngleVectors(ent.angles, forward, right, up);
-					VectorMA(liteorg, rand() % 10 - 5, up, liteorg);
-					VectorMA(liteorg, rand() % 10 - 5, right, liteorg);
-					VectorMA(liteorg, rand() % 10 - 5, forward, liteorg);
-					SparkGen (liteorg, col, (int)(6*amf_buildingsparks.value), 100, 1);
-					if (amf_coronas.value)
-						NewCorona(C_BLUESPARK, liteorg);
+				vec3_t liteorg, forward, right, up;
+				byte col[3] = {60,100,240};
+				VectorCopy(ent.origin, liteorg);
+				AngleVectors(ent.angles, forward, right, up);
+				VectorMA(liteorg, rand() % 10 - 5, up, liteorg);
+				VectorMA(liteorg, rand() % 10 - 5, right, liteorg);
+				VectorMA(liteorg, rand() % 10 - 5, forward, liteorg);
+				SparkGen (liteorg, col, (int)(6*amf_buildingsparks.value), 100, 1);
+				if (amf_coronas.value)
+					NewCorona(C_BLUESPARK, liteorg);
 			}
 			// VULT MOTION TRAILS
 			if (model->modhint == MOD_FLAG && amf_motiontrails.value)
@@ -1280,8 +1298,9 @@ void CL_LinkPacketEntities (void)
 		CL_AddEntity (&ent);
 	}
 }
-#else
-void CL_LinkPacketEntities (void) {
+#else // GLQUAKE
+void CL_LinkPacketEntities (void) 
+{
 	entity_t ent;
 	centity_t *cent;
 	packet_entities_t *pack;
@@ -1299,107 +1318,161 @@ void CL_LinkPacketEntities (void) {
 
 	memset (&ent, 0, sizeof(ent));
 
-	for (pnum = 0; pnum < pack->num_entities; pnum++) {
+	for (pnum = 0; pnum < pack->num_entities; pnum++) 
+	{
 		state = &pack->entities[pnum];
 		cent = &cl_entities[state->number];
 
-		// control powerup glow for bots
-		if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value) {
+		// Control powerup glow for bots.
+		if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value) 
+		{
 			flicker = r_lightflicker.value ? (rand() & 31) : 0;
-			// spawn light flashes, even ones coming from invisible objects
-			if ((state->effects & (EF_BLUE | EF_RED | EF_GREEN))
-					== (EF_BLUE | EF_RED | EF_GREEN)) {
+			
+			// Spawn light flashes, even ones coming from invisible objects.
+			if ((state->effects & (EF_BLUE | EF_RED | EF_GREEN)) == (EF_BLUE | EF_RED | EF_GREEN)) 
+			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_white, 0);
-			} else if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) {
+			} 
+			else if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) 
+			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redblue, 0);
-			} else if ((state->effects & (EF_RED | EF_GREEN)) == (EF_RED | EF_GREEN)) {
+			} 
+			else if ((state->effects & (EF_RED | EF_GREEN)) == (EF_RED | EF_GREEN))
+			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redgreen, 0);
-			} else if ((state->effects & (EF_BLUE | EF_GREEN)) == (EF_BLUE | EF_GREEN)) {
+			} 
+			else if ((state->effects & (EF_BLUE | EF_GREEN)) == (EF_BLUE | EF_GREEN)) 
+			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_bluegreen, 0);
-			} else if (state->effects & EF_BLUE) {
+			} 
+			else if (state->effects & EF_BLUE) 
+			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_blue, 0);
-			} else if (state->effects & EF_RED) {
+			} 
+			else if (state->effects & EF_RED) 
+			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_red, 0);
-			} else if (state->effects & EF_GREEN) {
+			}
+			else if (state->effects & EF_GREEN) 
+			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_green, 0);
-			} else if (state->effects & EF_BRIGHTLIGHT) {
+			} 
+			else if (state->effects & EF_BRIGHTLIGHT) 
+			{
 				vec3_t	tmp;
 				VectorCopy (state->origin, tmp);
 				tmp[2] += 16;
 				CL_NewDlight (state->number, tmp, 400 + flicker, 0.1, lt_default, 0);
-			} else if (state->effects & EF_DIMLIGHT) {
-				if (cl.teamfortress && (state->modelindex == cl_modelindices[mi_tf_flag] || state->modelindex == cl_modelindices[mi_tf_stan]))
+			} 
+			else if (state->effects & EF_DIMLIGHT) 
+			{
+				if (cl.teamfortress && 
+					((state->modelindex == cl_modelindices[mi_tf_flag]) 
+					|| (state->modelindex == cl_modelindices[mi_tf_stan])))
+				{
 					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
+				}
 				else if (state->modelindex == cl_modelindices[mi_flag])
+				{
 					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
+				}
 				else
+				{
 					dimlightcolor = lt_default;
+				}
+
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, dimlightcolor, 0);
 			}
 		}
 
-		if (!state->modelindex)		// if set to invisible, skip
+		if (!state->modelindex)		// If set to invisible, skip
 			continue;
 
 		ent.effects = state->effects; // Electro - added for shells
 
-		if (state->modelindex == cl_modelindices[mi_player]) {
+		if (state->modelindex == cl_modelindices[mi_player]) 
+		{
 			i = state->frame;
 
-			if (cl_deadbodyfilter.value == 2) {
+			if (cl_deadbodyfilter.value == 2)
+			{
 				if (ISDEAD(i))
 					continue;
-			} else if (cl_deadbodyfilter.value) {
+			}
+			else if (cl_deadbodyfilter.value) 
+			{
 				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
 					continue;
 			}
 		}
 
-		if (cl_gibfilter.value && (state->modelindex == cl_modelindices[mi_h_player] || 
-		 state->modelindex == cl_modelindices[mi_gib1] || state->modelindex == cl_modelindices[mi_gib2] || state->modelindex == cl_modelindices[mi_gib3]))
+		if (cl_gibfilter.value && 
+			((state->modelindex == cl_modelindices[mi_h_player])
+			|| (state->modelindex == cl_modelindices[mi_gib1]) 
+			|| (state->modelindex == cl_modelindices[mi_gib2]) 
+			|| (state->modelindex == cl_modelindices[mi_gib3])))
 			continue;
 
 		if (!(model = cl.model_precache[state->modelindex]))
+		{
 			Host_Error ("CL_LinkPacketEntities: bad modelindex");
+		}
 
 		ent.model = model;
-		if (state->modelindex == cl_modelindices[mi_rocket]) {
+
+		if (state->modelindex == cl_modelindices[mi_rocket]) 
+		{
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
+			{
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
+			}
 		}
 		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
-		&& cl.vw_model_precache[0] && r_drawvweps.value)
+				&& cl.vw_model_precache[0] && r_drawvweps.value)
+		{
 			ent.model = cl.vw_model_precache[0];
+		}
+
 		ent.skinnum = state->skinnum;
 
-		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) {
+		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) 
+		{
 			continue;
 		}
 	
 		ent.frame = state->frame;
-		if (cent->frametime >= 0 && cent->frametime <= cl.time) {
+		if (cent->frametime >= 0 && cent->frametime <= cl.time) 
+		{
 			ent.oldframe = cent->oldframe;
 			ent.framelerp = (cl.time - cent->frametime) * 10;
-		} else {
+		}
+		else 
+		{
 			ent.oldframe = ent.frame;
 			ent.framelerp = -1;
 		}
 	
 
-		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS && ent.model->modhint == MOD_PLAYER) {
+		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS && ent.model->modhint == MOD_PLAYER) 
+		{
 			ent.colormap = cl.players[state->colormap - 1].translations;
 			ent.scoreboard = &cl.players[state->colormap - 1];
-		} else {
+		}
+		else 
+		{
 			ent.colormap = vid.colormap;
 			ent.scoreboard = NULL;
 		}
 
 	
 		if ((cl_nolerp.value && !cls.mvdplayback && !is_monster(state->modelindex))
-			|| cent->deltalerp <= 0) {
+			|| cent->deltalerp <= 0) 
+		{
 			lerp = -1;
 			VectorCopy(cent->current.origin, ent.origin);
-		} else {
+		}
+		else 
+		{
 			time = cls.mvdplayback ? cls.demotime : cl.time;
 			lerp = (time - cent->startlerp) / (cent->deltalerp);
 			lerp = min(lerp, 1);
@@ -1408,40 +1481,54 @@ void CL_LinkPacketEntities (void) {
 			{
 				float d = time - cent->startlerp;
 
-				if (d >= 2 * cent->deltalerp) // seems enitity stopped move
+				if (d >= 2 * cent->deltalerp) // Seems enitity stopped moving.
 					VectorCopy(cent->lerp_origin, ent.origin);
-				else // interpolate
+				else // Interpolate
 					VectorMA(cent->old_origin, d, cent->velocity, ent.origin);
 			}
 			else
+			{
 				VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
+			}
 		}
 	
 
-		if (ent.model->flags & EF_ROTATE) {
+		if (ent.model->flags & EF_ROTATE) 
+		{
 			ent.angles[0] = ent.angles[2] = 0;
 			ent.angles[1] = autorotate;
 			if (cl_model_bobbing.value)
 				ent.origin[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
-		} else {
-			if (lerp != -1) {
+		} 
+		else 
+		{
+			if (lerp != -1) 
+			{
 				AngleInterpolate(cent->old_angles, lerp, cent->current.angles, ent.angles);
-			} else {
+			}
+			else 
+			{
 				VectorCopy(cent->current.angles, ent.angles);
 			}
 		}
 
-		//add trails
-		if (model->flags & ~EF_ROTATE) {
-			if (!(cent->flags & CENT_TRAILDRAWN) || !VectorL2Compare(cent->trail_origin, ent.origin, 140)) {
-				old_origin = &ent.origin;	//not present last frame or too far away
+		// Add trails.
+		if (model->flags & ~EF_ROTATE)
+		{
+			if (!(cent->flags & CENT_TRAILDRAWN) || !VectorL2Compare(cent->trail_origin, ent.origin, 140)) 
+			{
+				old_origin = &ent.origin;	// Not present last frame or too far away.
 				cent->flags |= CENT_TRAILDRAWN;
-			} else {
+			} 
+			else 
+			{
 				old_origin = &cent->trail_origin;
 			}
 
-			if (model->flags & EF_ROCKET) {
-				if (r_rockettrail.value) {
+			if (model->flags & EF_ROCKET)
+			{
+				if (r_rockettrail.value) 
+				{
 					if (r_rockettrail.value == 2)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
 					else if (r_rockettrail.value == 4)
@@ -1458,29 +1545,44 @@ void CL_LinkPacketEntities (void) {
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
 					else
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ROCKET_TRAIL);
-				} else {
+				} 
+				else 
+				{
 					VectorCopy(ent.origin, cent->trail_origin);		
 				}
 
 				rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
-				if (rocketlightsize >= 1) {
+				if (rocketlightsize >= 1) 
+				{
 					rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
 					CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, rocketlightcolor, 1);
 				}
-			} else if (model->flags & EF_GRENADE) {
+			} 
+			else if (model->flags & EF_GRENADE) 
+			{
 				if (r_grenadetrail.value)
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
 				else
 					VectorCopy(ent.origin, cent->trail_origin);		
-			} else if (model->flags & EF_GIB) {
+			}
+			else if (model->flags & EF_GIB)
+			{
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
-			} else if (model->flags & EF_ZOMGIB) {
+			} 
+			else if (model->flags & EF_ZOMGIB)
+			{
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
-			} else if (model->flags & EF_TRACER) {
+			}
+			else if (model->flags & EF_TRACER)
+			{
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
-			} else if (model->flags & EF_TRACER2) {
+			} 
+			else if (model->flags & EF_TRACER2) 
+			{
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
-			} else if (model->flags & EF_TRACER3) {
+			}
+			else if (model->flags & EF_TRACER3) 
+			{
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
 			}
 		}
@@ -1488,9 +1590,10 @@ void CL_LinkPacketEntities (void) {
 		CL_AddEntity (&ent);
 	}
 } 
-#endif
+#endif // GLQUAKE else
 
-typedef struct {
+typedef struct 
+{
 	int		modelindex;
 	vec3_t	origin;
 	vec3_t	angles;
@@ -1567,39 +1670,45 @@ void CL_ParseProjectiles (qbool indexed)
 	}	
 }
 
-void CL_LinkProjectiles (void) {
+void CL_LinkProjectiles (void) 
+{
 	int i;
 	projectile_t *pr;
 	entity_t ent;
 
-	memset (&ent, 0, sizeof(entity_t));
+	memset(&ent, 0, sizeof(entity_t));
 	ent.colormap = vid.colormap;
 
-	for (i = 0, pr = cl_projectiles; i < cl_num_projectiles; i++, pr++)	{
+	for (i = 0, pr = cl_projectiles; i < cl_num_projectiles; i++, pr++)	
+	{
 		if (pr->modelindex < 1)
 			continue;
 		ent.model = cl.model_precache[pr->modelindex];
-		VectorCopy (pr->origin, ent.origin);
-		VectorCopy (pr->angles, ent.angles);
-		CL_AddEntity (&ent);
+		VectorCopy(pr->origin, ent.origin);
+		VectorCopy(pr->angles, ent.angles);
+		CL_AddEntity(&ent);
 	}
 }
 
-void SetupPlayerEntity(int num, player_state_t *state) {
+void SetupPlayerEntity(int num, player_state_t *state) 
+{
 	centity_t *cent;
 
 	cent = &cl_entities[num];
 
 	if (!cl.oldparsecount || cl.oldparsecount != cent->sequence ||
 		state->modelindex != cent->current.modelindex ||
-		!VectorL2Compare(state->origin, cent->current.origin, 200)
-	) {
+		!VectorL2Compare(state->origin, cent->current.origin, 200)) 
+	{
 		cent->startlerp = cl.time;
 		cent->deltalerp = -1;
 		cent->frametime = -1;
-	} else {
+	} 
+	else 
+	{
 		
-		if (state->frame != cent->current.frame) {
+		if (state->frame != cent->current.frame) 
+		{
 			cent->frametime = cl.time;
 			cent->oldframe = cent->current.frame;
 		}
@@ -1607,10 +1716,13 @@ void SetupPlayerEntity(int num, player_state_t *state) {
 		if (!VectorCompare(state->origin, cent->current.origin) || !VectorCompare(state->viewangles, cent->current.angles)) {
 			VectorCopy(cent->current.origin, cent->old_origin);
 			VectorCopy(cent->current.angles, cent->old_angles);
-			if (cls.mvdplayback) {
+			if (cls.mvdplayback) 
+			{
 				cent->deltalerp = nextdemotime - olddemotime;
 				cent->startlerp = cls.demotime;
-			} else {
+			} 
+			else
+			{
 				cent->deltalerp = cl.time - cent->startlerp;
 				cent->startlerp = cl.time;
 			}
@@ -1635,8 +1747,10 @@ static int MVD_WeaponModelNumber (int cweapon)
 	int i;
 
 	for (i = 0; i < 8; i++)
+	{
 		if (cweapon == cl_modelindices[mi_weapon1 + i])
 			return i + 1;
+	}
 
 	return 0;
 }

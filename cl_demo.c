@@ -1901,7 +1901,7 @@ qbool CL_GetDemoMessage (void)
 		// If we're seeking and our seek destination is in the past we need to rewind.
 		if (cls.demoseeking && !cls.demorewinding && (cls.demotime < nextdemotime))
 		{
-			// Restart playback from the start of the file and then seek to the rewind spot.
+			// Restart playback from the start of the file and then demo seek to the rewind spot.
 			#ifdef WITH_FTE_VFS
 			VFS_SEEK(playbackfile, 0, SEEK_SET);
 			#else
@@ -1919,7 +1919,7 @@ qbool CL_GetDemoMessage (void)
 			CL_DemoPlaybackInit();
 			
 			prevtime			= 0.0;
-			cls.demorewinding	= true;
+			cls.demorewinding	= true;			
 		}
 
 		if (cls.demorewinding)

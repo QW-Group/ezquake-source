@@ -2994,7 +2994,7 @@ void CL_MuzzleFlash (void)
 		}
 	}
 }
-#else
+#else // GLQUAKE
 void CL_MuzzleFlash (void) 
 {
 	vec3_t forward;
@@ -3049,7 +3049,7 @@ void CL_MuzzleFlash (void)
 	dl->die = cl.time + 0.1;
 	dl->type = lt_muzzleflash;
 }
-#endif
+#endif // GLQUAKE else
 
 void CL_ParseQizmoVoice (void) 
 {
