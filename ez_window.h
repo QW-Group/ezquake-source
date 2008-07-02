@@ -35,12 +35,6 @@ typedef struct ez_window_s
 {
 	ez_control_t			super;				// The super class.
 
-	/*
-	ez_slider_events_t		events;				// Slider specific events.
-	ez_slider_eventhandlers_t event_handlers;	// Slider specific event handlers.
-	ez_slider_eventcount_t	inherit_levels;
-	ez_slider_eventcount_t	override_counts;*/
-
 	ez_scrollpane_t			*scrollpane;		// The scrollpane for the window to enable scrolling.
 	ez_control_t			*window_area;		// The window area where child controls are placed, also the target of the scrollpane.
 

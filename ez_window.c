@@ -31,7 +31,7 @@ $Id: ez_window.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 // =========================================================================================
 
 //
-// Window - Creates a new slider and initializes it.
+// Window - Creates a new window and initializes it.
 //
 ez_window_t *EZ_window_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
@@ -55,7 +55,7 @@ ez_window_t *EZ_window_Create(ez_tree_t *tree, ez_control_t *parent,
 }
 
 //
-// Window - Initializes a slider.
+// Window - Initializes a window.
 //
 void EZ_window_Init(ez_window_t *window, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
@@ -70,7 +70,6 @@ void EZ_window_Init(ez_window_t *window, ez_tree_t *tree, ez_control_t *parent,
 	// Initialize the inherited class first.
 	EZ_control_Init(&window->super, tree, parent, name, description, x, y, width, height, flags);
 
-	// Initilize the button specific stuff.
 	((ez_control_t *)window)->CLASS_ID		= EZ_WINDOW_ID;
 	((ez_control_t *)window)->ext_flags		|= (flags | control_focusable | control_contained | control_resizeable);
 
