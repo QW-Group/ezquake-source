@@ -2118,15 +2118,11 @@ void CL_Frame (double time)
 			// process console commands
 			Cbuf_Execute();
 			CL_CheckAutoPause ();
-		}
 
-		if (physframe)	//FIXME?
 			if (com_serveractive)
 				SV_Frame (physframetime);
 
-		if (physframe)
-		{
-			// fetch results from server
+			// Fetch results from server
 			CL_ReadPackets();
 
 			TP_UpdateSkins();
@@ -2192,19 +2188,20 @@ void CL_Frame (double time)
 
 	if (cls.state >= ca_onserver)
 	{
+		qbool setup_player_prediction = ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0);
 		Cam_SetViewPlayer();
 
 		// Set up prediction for other players
-		if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
+		if (setup_player_prediction)
 		{
 			CL_SetUpPlayerPrediction(false);
 		}
 
-		// do client side motion prediction
+		// Do client side motion prediction
 		CL_PredictMove();
 
 		// Set up prediction for other players
-		if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
+		if (setup_player_prediction)
 		{
 			CL_SetUpPlayerPrediction(true);
 		}
