@@ -1009,6 +1009,8 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 	EZ_eventhandler_Remove(self->event_handlers.OnVirtualResize, NULL, true);
 	EZ_eventhandler_Remove(self->event_handlers.OnAnchorChanged, NULL, true);
 	EZ_eventhandler_Remove(self->event_handlers.OnVisibilityChanged, NULL, true);
+	EZ_eventhandler_Remove(self->event_handlers.OnChildMoved, NULL, true);
+	EZ_eventhandler_Remove(self->event_handlers.OnChildResize, NULL, true);
 
 	Q_free(self);
 
