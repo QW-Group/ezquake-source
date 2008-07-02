@@ -2118,6 +2118,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\ez_listview.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\ez_scrollbar.c"
 					>
 				</File>
@@ -2766,6 +2770,10 @@
 				</File>
 				<File
 					RelativePath="..\..\ez_label.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_listview.h"
 					>
 				</File>
 				<File
