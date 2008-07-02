@@ -249,6 +249,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 void EZ_button_Destroy(ez_control_t *self, qbool destroy_children)
 {
 	ez_button_t *button = (ez_button_t *)self;
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDestroy, destroy_children);
 
 	EZ_control_Destroy(&button->super, destroy_children);
 
