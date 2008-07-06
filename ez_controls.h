@@ -173,7 +173,8 @@ typedef enum ez_control_id_e
 	EZ_SCROLLBAR_ID,
 	EZ_SCROLLPANE_ID,
 	EZ_WINDOW_ID,
-	EZ_LISTVIEW_ID
+	EZ_LISTVIEW_ID,
+	EZ_LISTVIEWITEM_ID
 } ez_control_id_t;
 
 // =========================================================================================

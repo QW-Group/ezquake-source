@@ -1975,7 +1975,7 @@ int EZ_control_OnParentResize(ez_control_t *self, void *ext_event_info)
 			// make us stop resizing the child. And since we want the child to
 
 			// We need special behaviour when resizing a control that is anchored to two
-			// opposit edges of it's parent (it should be stretched). A child control is placed
+			// opposite edges of it's parent (it should be stretched). A child control is placed
 			// inside of a parent, and it's given a size and anchoring points. When resizing the
 			// parent, we want to maintain the distance between the parents edges and the childs edges,
 			// that is, if the childs right edge was 10 pixels from it's parents right edge before

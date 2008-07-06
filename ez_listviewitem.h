@@ -1,6 +1,6 @@
 
-#ifndef __EZ_LISTVIEW_H__
-#define __EZ_LISTVIEW_H__
+#ifndef __EZ_LISTVIEWITEM_H__
+#define __EZ_LISTVIEWITEM_H__
 /*
 Copyright (C) 2007 ezQuake team
 
@@ -23,56 +23,58 @@ $Id: ez_listviewitem.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 */
 
 #include "ez_controls.h"
-#include "ez_scrollpane.h"
-#include "ez_listviewitem.h"
 
 // =========================================================================================
-// Listview
+// Listview item
 // =========================================================================================
+
+typedef struct ez_listview_subitem_s
+{
+	char *text;			// The text that should be used in the listview column. The contents of this pointer will be COPIED not used directly.
+	void *payload;		// A pointer to a payload item supplied by the user. Up to the caller to clean this up.
+} ez_listview_subitem_t;
 
 //
 // Information associated with the change of an item column change.
 //
-typedef struct ez_listview_changeinfo_s
+typedef struct ez_listviewitem_changeinfo_s
 {
-	ez_listview_subitem_t *item;		// Contains the info about the new text of the listview column that was changed, and its user associated payload.
-	int row;							// The row of the listview that this item is on.
-	int column;							// The column of the listview that this item is on.
-	void *payload;						// The user associated payload associated with this listview item (the entire row, not just the column).
-} ez_listview_changeinfo_t;
+	ez_listview_subitem_t	*item;		// Contains the info about the new text of the listview column that was changed, and its user associated payload.
+	int						column;		// The column of the listview that this item is on.
+	void					*payload;	// The user associated payload associated with this listview item (the entire row, not just the column).
+} ez_listviewitem_changeinfo_t;
 
-typedef struct ez_listview_s
+typedef struct ez_listviewitem_s
 {
-	ez_scrollpane_t			super;				// The super class
+	ez_control_t			super;				// The super class
 												// (we inherit a scrollpane instead of a normal control so we get scrolling also)
 
-	ez_double_linked_list_t	items;				// The listview items.
-	int						item_height;		// The height of the listview items.
+	ez_double_linked_list_t	subitems;			// The sub items (what's shown in the columns).
 
 	int						override_count;		// These are needed so that subclasses can override listview specific events.
 	int						inheritance_level;
-} ez_listview_t;
+} ez_listviewitem_t;
 
 //
-// Listview - Creates a new listview and initializes it.
+// Listview item - Creates a new listview item and initializes it.
 //
-ez_listview_t *EZ_listview_Create(ez_tree_t *tree, ez_control_t *parent,
+ez_listviewitem_t *EZ_listviewitem_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  ez_control_flags_t flags);
 
 //
-// Listview - Initializes a listview.
+// Listview item - Initializes a listview item.
 //
-void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *parent,
+void EZ_listviewitem_Init(ez_listviewitem_t *listviewitem, ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
 							  int x, int y, int width, int height,
 							  ez_control_flags_t flags);
 
 //
-// Listview - Destroys a listview.
+// Listview item - Destroys a listview item.
 //
-int EZ_listview_Destroy(ez_control_t *self, qbool destroy_children);
+int EZ_listviewitem_Destroy(ez_control_t *self, qbool destroy_children);
 
-#endif // __EZ_LISTVIEW_H__
+#endif // __EZ_LISTVIEWITEM_H__
 

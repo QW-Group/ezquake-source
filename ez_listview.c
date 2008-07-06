@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_window.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
+$Id: ez_listview.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -27,7 +27,7 @@ $Id: ez_window.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 #include "ez_listview.h"
 
 //
-// Listview - Creates a new slider and initializes it.
+// Listview - Creates a new listview and initializes it.
 //
 ez_listview_t *EZ_listview_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description,
@@ -63,7 +63,6 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 	// Initialize the inherited class first.
 	EZ_scrollpane_Init(&listview->super, tree, parent, name, description, x, y, width, height, flags);
 
-	// Initilize the button specific stuff.
 	((ez_control_t *)listview)->CLASS_ID		= EZ_LISTVIEW_ID;
 	((ez_control_t *)listview)->ext_flags		|= (flags | control_focusable | control_contained | control_resizeable);
 
@@ -77,25 +76,19 @@ int EZ_listview_Destroy(ez_control_t *self, qbool destroy_children)
 	ez_listview_t *listview = (ez_listview_t *)self;
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDestroy, destroy_children); 
 
-	EZ_control_Destroy(self, destroy_children);
-
 	// TODO : Remove any event handlers.
 
 	// TODO : Cleanup listview items.
 
+	EZ_control_Destroy(self, destroy_children);
+
 	return 0;
 }
 
-typedef struct ez_listview_column_item_s
-{
-	char *text;			// The text that should be used in the listview column. The contents of this pointer will be COPIED not used directly.
-	void *payload;		// A pointer to a payload item supplied by the user. Up to the caller to clean this up.
-} ez_listview_column_item_t;
-
 //
-// Listview - Adds a listview item to the listview. Expects an array of strings as argument (and a count of how many).
+// Listview - Adds a listview item to the listview. Expects an array of column items as argument (and a count of how many).
 //
-void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_column_item_t *items, int subitems, void *payload)
+void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *items, int subitems, void *payload)
 {
 
 }
@@ -109,7 +102,15 @@ void EZ_listview_RemoveItemByIndex(ez_listview_t *self, int index)
 }
 
 //
-// Listview - Sorts the listview items by a specific 
+// Listview - Removes an item with a specific payload.
+//
+void EZ_listview_RemoveItemByPayload(ez_listview_t *self, void *payload)
+{
+
+}
+
+//
+// Listview - Sorts the listview items by a specified column.
 //
 void EZ_listview_SortByColumn(ez_listview_t *self, int column)
 {
@@ -119,25 +120,19 @@ void EZ_listview_SortByColumn(ez_listview_t *self, int column)
 //
 // Listview - Sorts the list view by a user supplied function.
 //
-void EZ_listview_SortByUserFunc(ez_listview_t *self)
+void EZ_listview_SortByUserFunc(ez_listview_t *self, PtFuncCompare compare_function)
 {
 }
-
-//
-// Information associated with the change of an item column change.
-//
-typedef struct ez_listview_changeinfo_s
-{
-	ez_listview_column_item_t *item;	// Contains the info about the new text of the listview column that was changed, and its user associated payload.
-	int row;							// The row of the listview that this item is on.
-	int column;							// The column of the listview that this item is on.
-	void *payload;						// The user associated payload associated with this listview item (the entire row, not just the column).
-} ez_listview_changeinfo_t;
 
 //
 // Listview - The text changed in one of the listviews items columns.
 //
-int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, ez_listview_changeinfo_t changeinfo)
+int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, void *ext_event_info)
 {
+	ez_listview_changeinfo_t *changeinfo = (ez_listview_changeinfo_t *)ext_event_info;
+
 	return 0;
 }
+
+
+
