@@ -187,7 +187,7 @@ void EZ_scrollbar_Init(ez_scrollbar_t *scrollbar, ez_tree_t *tree, ez_control_t 
 	}
 	*/
 
-	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollbar, ez_control_t, OnResize);
+	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollbar, ez_control_t, OnResize, NULL);
 }
 
 //
@@ -353,7 +353,7 @@ static void EZ_scrollbar_RepositionScrollButtons(ez_scrollbar_t *scrollbar)
 	ez_control_t *forward_ctrl	= (ez_control_t *)scrollbar->forward;
 
 	// Let the super class do it's thing first.
-	EZ_control_OnResize(self);
+	EZ_control_OnResize(self, NULL);
 
 	if (scrollbar->orientation == vertical)
 	{
@@ -392,7 +392,7 @@ static void EZ_scrollbar_RepositionScrollButtons(ez_scrollbar_t *scrollbar)
 //
 // Control - Event handler for when the target control gets scrolled.
 //
-static int EZ_scrollbar_OnTargetScroll(ez_control_t *self, void *payload)
+static int EZ_scrollbar_OnTargetScroll(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	ez_scrollbar_t *scrollbar = NULL;
 
@@ -414,7 +414,7 @@ static int EZ_scrollbar_OnTargetScroll(ez_control_t *self, void *payload)
 //
 // Scrollbar - Generic function of what to do when one of the scrollbars target was resized.
 //
-static int EZ_scrollbar_OnTargetResize(ez_control_t *self, void *payload)
+static int EZ_scrollbar_OnTargetResize(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	ez_scrollbar_t *scrollbar = NULL;
 
@@ -446,13 +446,13 @@ void EZ_scrollbar_SetTarget(ez_scrollbar_t *scrollbar, ez_control_t *target)
 	}
 
 	scrollbar->target = target;
-	CONTROL_RAISE_EVENT(NULL, scrollbar, ez_scrollbar_t, OnTargetChanged);
+	CONTROL_RAISE_EVENT(NULL, scrollbar, ez_scrollbar_t, OnTargetChanged, NULL);
 }
 
 //
 // Scrollbar - The target of the scrollbar changed.
 //
-int EZ_scrollbar_OnTargetChanged(ez_control_t *self)
+int EZ_scrollbar_OnTargetChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self;
 
@@ -462,19 +462,19 @@ int EZ_scrollbar_OnTargetChanged(ez_control_t *self)
 		EZ_control_AddOnResize(scrollbar->target, EZ_scrollbar_OnTargetResize, scrollbar);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, scrollbar, ez_scrollbar_t, OnTargetChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, scrollbar, ez_scrollbar_t, OnTargetChanged, NULL);
 	return 0;
 }
 
 //
 // Scrollbar - OnResize event.
 //
-int EZ_scrollbar_OnResize(ez_control_t *self)
+int EZ_scrollbar_OnResize(ez_control_t *self, void *ext_event_info)
 {
 	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self;
 
 	// Let the super class do it's thing first.
-	EZ_control_OnResize(self);
+	EZ_control_OnResize(self, NULL);
 
 	// Make sure the buttons are in the correct place.
 	EZ_scrollbar_RepositionScrollButtons(scrollbar);
@@ -484,26 +484,26 @@ int EZ_scrollbar_OnResize(ez_control_t *self)
 	// scrollbar won't stop resizing when it's parent is resized.
 	EZ_control_SetMinVirtualSize(self, 1, 1);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize, NULL);
 	return 0;
 }
 
 //
 // Scrollbar - OnParentResize event.
 //
-int EZ_scrollbar_OnParentResize(ez_control_t *self)
+int EZ_scrollbar_OnParentResize(ez_control_t *self, void *ext_event_info)
 {
 	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self;
 
 	// Let the super class do it's thing first.
-	EZ_control_OnParentResize(self);
+	EZ_control_OnParentResize(self, NULL);
 
 	if (scrollbar->ext_flags & target_parent)
 	{
 		EZ_scrollbar_CalculateSliderSize(scrollbar, self->parent);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnParentResize);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnParentResize, NULL);
 	return 0;
 }
 
@@ -606,12 +606,12 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 //
 // Scrollbar - OnParentScroll event.
 //
-int EZ_scrollbar_OnParentScroll(ez_control_t *self)
+int EZ_scrollbar_OnParentScroll(ez_control_t *self, void *ext_event_info)
 {
 	ez_scrollbar_t *scrollbar = (ez_scrollbar_t *)self;
 
 	// Super class.
-	EZ_control_OnParentScroll(self);
+	EZ_control_OnParentScroll(self, NULL);
 
 	// Update the slider button to match the new scroll position.
 	if (scrollbar->ext_flags & target_parent)
@@ -619,7 +619,7 @@ int EZ_scrollbar_OnParentScroll(ez_control_t *self)
 		EZ_scrollbar_UpdateSliderBasedOnTarget(scrollbar, self->parent);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnParentScroll);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnParentScroll, NULL);
 	return 0;
 }
 

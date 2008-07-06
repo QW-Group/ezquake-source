@@ -2221,13 +2221,13 @@ static void HUD_Editor_DrawHelp()
 		0);
 }
 
-int Test_OnGotFocus(ez_control_t *self, void *payload)
+int Test_OnGotFocus(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	EZ_control_SetBackgroundColor(self, self->background_color[0], self->background_color[1], self->background_color[2], 200);
 	return 0;
 }
 
-int Test_OnLostFocus(ez_control_t *self, void *payload)
+int Test_OnLostFocus(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	EZ_control_SetBackgroundColor(self, self->background_color[0], self->background_color[1], self->background_color[2], 100);
 	return 0;
@@ -2244,7 +2244,7 @@ ez_scrollbar_t *scrollbar = NULL;
 ez_scrollpane_t *scrollpane = NULL;
 ez_window_t *window = NULL;
 
-int Test_OnButtonDraw(ez_control_t *self, void *payload)
+int Test_OnButtonDraw(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	int x, y;
 	EZ_control_GetDrawingPosition(self, &x, &y);
@@ -2252,7 +2252,7 @@ int Test_OnButtonDraw(ez_control_t *self, void *payload)
 	return 0;
 }
 
-int Test_OnSliderPositionChanged(ez_control_t *self, void *payload)
+int Test_OnSliderPositionChanged(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
 
@@ -2263,7 +2263,7 @@ int Test_OnSliderPositionChanged(ez_control_t *self, void *payload)
 	return 0;
 }
 
-int Test_OnControlDraw(ez_control_t *self, void *payload)
+int Test_OnControlDraw(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	int x, y; //, i;
 	EZ_control_GetDrawingPosition(self, &x, &y);
@@ -2555,7 +2555,7 @@ void HUD_Editor_Init(void)
 {
 	extern mpic_t *SCR_LoadCursorImage(char *cursorimage);
 	
-#if 0
+#if 1
 	clrinfo_t color;
 
 	color.c = RGBA_TO_COLOR(255, 255, 255, 255);
@@ -2677,10 +2677,8 @@ void HUD_Editor_Init(void)
 	{
 		window = EZ_window_Create(&help_control_tree, root, "Window", NULL, 20, 20, 150, 150, 
 			control_movable | control_focusable | control_resize_h | control_resize_v | control_contained);
+
 		EZ_control_SetBackgroundColor((ez_control_t *)window, 0, 100, 0, 100);
-		//EZ_control_SetBackgroundImage((ez_control_t *)window, EZ_CONTROL_DEFAULT_BACKGROUND_IMAGE);
-		((ez_control_t *)window)->bg_edge_size_ratio = 0.2;
-		((ez_control_t *)window)->opacity = 0.8;
 
 		EZ_window_SetWindowAreaMinVirtualSize(window, 200, 200);
 

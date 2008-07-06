@@ -286,7 +286,7 @@ void EZ_tree_Destroy(ez_tree_t *tree);
 //
 // Event function pointer types.
 //
-typedef int (*ez_event_fp) (struct ez_control_s *self);
+typedef int (*ez_event_fp) (struct ez_control_s *self, void *ext_event_info);
 typedef int (*ez_mouse_event_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
 typedef int (*ez_key_event_fp) (struct ez_control_s *self, int key, int unichar, qbool down);
 typedef int (*ez_keyspecific_event_fp) (struct ez_control_s *self, int key, int unichar);
@@ -296,7 +296,7 @@ typedef int (*ez_child_event_fp) (struct ez_control_s *self, struct ez_control_s
 //
 // Event handlers function pointer types (same as event function types, except they have a payload also).
 //
-typedef int (*ez_eventhandler_fp) (struct ez_control_s *self, void *payload);
+typedef int (*ez_eventhandler_fp) (struct ez_control_s *self, void *payload, void *ext_info);
 typedef int (*ez_mouse_eventhandler_fp) (struct ez_control_s *self, void *payload, mouse_state_t *mouse_state);
 typedef int (*ez_key_eventhandler_fp) (struct ez_control_s *self, void *payload, int key, int unichar, qbool down);
 typedef int (*ez_keyspecific_eventhandler_fp) (struct ez_control_s *self, void *payload, int key, int unichar);
@@ -726,6 +726,8 @@ typedef struct ez_control_s
 	float					x_percent;				// The x position in percentage based on the parents width.
 	float					y_percent;				// The y position in percentage based on the parents height.
 
+	void					*payload;				// A pointer to some user specified data associated with the control. Up to the caller to clean this up.
+
 	ez_control_events_t			events;				// The base reaction for events. Is only set at initialization.
 	ez_control_eventhandlers_t	event_handlers;
 	ez_control_eventcount_t		inherit_levels;		// The number of times each event has been overriden. 
@@ -1015,6 +1017,16 @@ void EZ_control_AddOnEventHandlerChanged(ez_control_t *self, ez_eventhandler_fp 
 void EZ_control_AddOnResizeHandleThicknessChanged(ez_control_t *self, ez_eventhandler_fp OnResizeHandleThicknessChanged, void *payload);
 
 //
+// Control - Sets the OnChildMoved event handler.
+//
+void EZ_control_AddOnChildMoved(ez_control_t *self, ez_eventhandler_fp OnChildMoved, void *payload);
+
+//
+// Control - Sets the OnChildResize event handler.
+//
+void EZ_control_AddOnChildResize(ez_control_t *self, ez_eventhandler_fp OnChildResize, void *payload);
+
+//
 // Control - Set color of a control.
 //
 void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
@@ -1106,32 +1118,32 @@ ez_control_t *EZ_control_RemoveChild(ez_control_t *self, ez_control_t *child);
 //
 // Control - Event for when a new event handler is set for an event.
 //
-int EZ_control_OnEventHandlerChanged(ez_control_t *self);
+int EZ_control_OnEventHandlerChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - The control got focus.
 //
-int EZ_control_OnGotFocus(ez_control_t *self);
+int EZ_control_OnGotFocus(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - The control lost focus.
 //
-int EZ_control_OnLostFocus(ez_control_t *self);
+int EZ_control_OnLostFocus(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - The control was moved.
 //
-int EZ_control_OnMove(ez_control_t *self);
+int EZ_control_OnMove(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - On scroll event.
 //
-int EZ_control_OnScroll(ez_control_t *self);
+int EZ_control_OnScroll(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - On parent scroll event.
 //
-int EZ_control_OnParentScroll(ez_control_t *self);
+int EZ_control_OnParentScroll(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - Convenient function for changing the scroll position by a specified amount.
@@ -1141,52 +1153,52 @@ void EZ_control_SetScrollChange(ez_control_t *self, int delta_scroll_x, int delt
 //
 // Control - The control was resized.
 //
-int EZ_control_OnResize(ez_control_t *self);
+int EZ_control_OnResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - The anchoring for the control changed.
 //
-int EZ_control_OnAnchorChanged(ez_control_t *self);
+int EZ_control_OnAnchorChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - The controls parent was resized.
 //
-int EZ_control_OnParentResize(ez_control_t *self);
+int EZ_control_OnParentResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - The minimum virtual size has changed for the control.
 //
-int EZ_control_OnMinVirtualResize(ez_control_t *self);
+int EZ_control_OnMinVirtualResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Label - The virtual size of the control has changed.
 //
-int EZ_control_OnVirtualResize(ez_control_t *self);
+int EZ_control_OnVirtualResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - Layouts children.
 //
-int EZ_control_OnLayoutChildren(ez_control_t *self);
+int EZ_control_OnLayoutChildren(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - Visibility changed.
 //
-int EZ_control_OnVisibilityChanged(ez_control_t *self);
+int EZ_control_OnVisibilityChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Label - The flags for the control changed.
 //
-int EZ_control_OnFlagsChanged(ez_control_t *self);
+int EZ_control_OnFlagsChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - OnResizeHandleThicknessChanged event.
 //
-int EZ_control_OnResizeHandleThicknessChanged(ez_control_t *self);
+int EZ_control_OnResizeHandleThicknessChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - Draws the control.
 //
-int EZ_control_OnDraw(ez_control_t *self);
+int EZ_control_OnDraw(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - Key down event.
@@ -1264,7 +1276,7 @@ void EZ_control_SetOpacity(ez_control_t *self, float opacity);
 //
 // Control - The opacity of the control has just changed.
 //
-int EZ_control_OnOpacityChanged(ez_control_t *self);
+int EZ_control_OnOpacityChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Control - A child control has been moved.

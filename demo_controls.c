@@ -87,7 +87,7 @@ void DemoControls_Draw(void)
 	}
 }
 
-static int DemoControls_SliderChanged(ez_control_t *self, void *payload)
+static int DemoControls_SliderChanged(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	ez_slider_t *demo_slider = (ez_slider_t *)self;
 

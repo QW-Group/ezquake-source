@@ -105,7 +105,7 @@ static void EZ_scrollpane_DetermineScrollbarVisibility(ez_scrollpane_t *scrollpa
 //
 // Scrollpane - Target changed it's virtual size.
 //
-static int EZ_scrollpane_OnTargetVirtualResize(ez_control_t *self, void *payload)
+static int EZ_scrollpane_OnTargetVirtualResize(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	ez_scrollpane_t *scrollpane = NULL;
 
@@ -249,7 +249,7 @@ void EZ_scrollpane_SetTarget(ez_scrollpane_t *scrollpane, ez_control_t *target)
 {
 	scrollpane->prev_target = scrollpane->target;
 	scrollpane->target = target;
-	CONTROL_RAISE_EVENT(NULL, scrollpane, ez_scrollpane_t, OnTargetChanged);
+	CONTROL_RAISE_EVENT(NULL, scrollpane, ez_scrollpane_t, OnTargetChanged, NULL);
 }
 
 //
@@ -258,17 +258,17 @@ void EZ_scrollpane_SetTarget(ez_scrollpane_t *scrollpane, ez_control_t *target)
 void EZ_scrollpane_SetScrollbarThickness(ez_scrollpane_t *scrollpane, int scrollbar_thickness)
 {
 	scrollpane->scrollbar_thickness = scrollbar_thickness;
-	CONTROL_RAISE_EVENT(NULL, scrollpane, ez_scrollpane_t, OnScrollbarThicknessChanged);
+	CONTROL_RAISE_EVENT(NULL, scrollpane, ez_scrollpane_t, OnScrollbarThicknessChanged, NULL);
 }
 
 //
 // Scrollpane - OnResize event.
 //
-int EZ_scrollpane_OnResize(ez_control_t *self)
+int EZ_scrollpane_OnResize(ez_control_t *self, void *ext_event_info)
 {
 	ez_scrollpane_t *scrollpane = (ez_scrollpane_t *)self;
 
-	EZ_control_OnResize(self);
+	EZ_control_OnResize(self, NULL);
 
 	// Make sure we don't listen to resizing events of the target that we raised
 	// ourselves, it causes an infinite loop.
@@ -278,14 +278,14 @@ int EZ_scrollpane_OnResize(ez_control_t *self)
 		EZ_scrollpane_ResizeScrollbars(scrollpane);
 	}
 	
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize, NULL);
 	return 0;
 }
 
 //
 // Scrollpane - The target control changed.
 //
-int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
+int EZ_scrollpane_OnTargetChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_scrollpane_t *scrollpane = (ez_scrollpane_t *)self;
 
@@ -329,25 +329,25 @@ int EZ_scrollpane_OnTargetChanged(ez_control_t *self)
 		EZ_scrollpane_ResizeScrollbars(scrollpane);
 		EZ_scrollpane_AdjustTargetSize(scrollpane);
 
-		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnResize);
-		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnMove);
+		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnResize, NULL);
+		CONTROL_RAISE_EVENT(NULL, (ez_control_t *)scrollpane->target, ez_control_t, OnMove, NULL);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, scrollpane, ez_scrollpane_t, OnTargetChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, scrollpane, ez_scrollpane_t, OnTargetChanged, NULL);
 	return 0;
 }
 
 //
 // Scrollpane - The scrollbar thickness changed.
 //
-int EZ_scrollpane_OnScrollbarThicknessChanged(ez_control_t *self)
+int EZ_scrollpane_OnScrollbarThicknessChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_scrollpane_t *scrollpane = (ez_scrollpane_t *)self;
 
 	// Resize the scrollbars and target with the new scrollbar thickness.
 	EZ_scrollpane_ResizeScrollbars(scrollpane);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, scrollpane, ez_scrollpane_t, OnScrollbarThicknessChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, scrollpane, ez_scrollpane_t, OnScrollbarThicknessChanged, NULL);
 	return 0;
 }
 

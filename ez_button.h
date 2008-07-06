@@ -143,17 +143,17 @@ void EZ_button_Destroy(ez_control_t *self, qbool destroy_children);
 //
 // Button - OnTextAlignmentChanged event.
 //
-int EZ_button_OnTextAlignmentChanged(ez_control_t *self);
+int EZ_button_OnTextAlignmentChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Button - OnAction event handler.
 //
-int EZ_button_OnAction(ez_control_t *self);
+int EZ_button_OnAction(ez_control_t *self, void *ext_event_info);
 
 //
 // Button - OnResize event handler.
 //
-int EZ_button_OnResize(ez_control_t *self);
+int EZ_button_OnResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Button - Use images for the button?
@@ -253,7 +253,7 @@ void EZ_button_AddOnToggled(ez_button_t *self, ez_eventhandler_fp OnToggled, voi
 //
 // Button - OnDraw event.
 //
-int EZ_button_OnDraw(ez_control_t *self);
+int EZ_button_OnDraw(ez_control_t *self, void *ext_event_info);
 
 //
 // Button - OnMouseClick event.
@@ -263,7 +263,7 @@ int EZ_button_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state);
 //
 // Button - OnToggled event. The button was toggled.
 //
-int EZ_button_OnToggled(ez_control_t *self);
+int EZ_button_OnToggled(ez_control_t *self, void *ext_event_info);
 
 //
 // Button - OnMouseEnter event.

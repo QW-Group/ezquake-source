@@ -128,17 +128,17 @@ void EZ_scrollbar_SetTargetIsParent(ez_scrollbar_t *scrollbar, qbool targetparen
 //
 // Scrollbar - The target of the scrollbar changed.
 //
-int EZ_scrollbar_OnTargetChanged(ez_control_t *self);
+int EZ_scrollbar_OnTargetChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Scrollbar - OnResize event.
 //
-int EZ_scrollbar_OnResize(ez_control_t *self);
+int EZ_scrollbar_OnResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Scrollbar - OnParentResize event.
 //
-int EZ_scrollbar_OnParentResize(ez_control_t *self);
+int EZ_scrollbar_OnParentResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Scrollbar - OnMouseDown event.
@@ -158,6 +158,6 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms);
 //
 // Scrollbar - OnParentScroll event.
 //
-int EZ_scrollbar_OnParentScroll(ez_control_t *self);
+int EZ_scrollbar_OnParentScroll(ez_control_t *self, void *ext_event_info);
 
 #endif // __EZ_SCROLLBAR_H__

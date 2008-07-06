@@ -67,7 +67,6 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 	((ez_control_t *)listview)->CLASS_ID		= EZ_LISTVIEW_ID;
 	((ez_control_t *)listview)->ext_flags		|= (flags | control_focusable | control_contained | control_resizeable);
 
-
 }
 
 //
@@ -76,11 +75,69 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 int EZ_listview_Destroy(ez_control_t *self, qbool destroy_children)
 {
 	ez_listview_t *listview = (ez_listview_t *)self;
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDestroy, destroy_children);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDestroy, destroy_children); 
 
 	EZ_control_Destroy(self, destroy_children);
 
 	// TODO : Remove any event handlers.
 
+	// TODO : Cleanup listview items.
+
+	return 0;
+}
+
+typedef struct ez_listview_column_item_s
+{
+	char *text;			// The text that should be used in the listview column. The contents of this pointer will be COPIED not used directly.
+	void *payload;		// A pointer to a payload item supplied by the user. Up to the caller to clean this up.
+} ez_listview_column_item_t;
+
+//
+// Listview - Adds a listview item to the listview. Expects an array of strings as argument (and a count of how many).
+//
+void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_column_item_t *items, int subitems, void *payload)
+{
+
+}
+
+//
+// Listview - Removes an item at a specific index.
+//
+void EZ_listview_RemoveItemByIndex(ez_listview_t *self, int index)
+{
+
+}
+
+//
+// Listview - Sorts the listview items by a specific 
+//
+void EZ_listview_SortByColumn(ez_listview_t *self, int column)
+{
+
+}
+
+//
+// Listview - Sorts the list view by a user supplied function.
+//
+void EZ_listview_SortByUserFunc(ez_listview_t *self)
+{
+}
+
+//
+// Information associated with the change of an item column change.
+//
+typedef struct ez_listview_changeinfo_s
+{
+	ez_listview_column_item_t *item;	// Contains the info about the new text of the listview column that was changed, and its user associated payload.
+	int row;							// The row of the listview that this item is on.
+	int column;							// The column of the listview that this item is on.
+	void *payload;						// The user associated payload associated with this listview item (the entire row, not just the column).
+} ez_listview_changeinfo_t;
+
+//
+// Listview - The text changed in one of the listviews items columns.
+//
+int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, ez_listview_changeinfo_t changeinfo)
+{
 	return 0;
 }

@@ -34,6 +34,11 @@ typedef struct ez_listview_s
 	ez_scrollpane_t			super;				// The super class
 												// (we inherit a scrollpane instead of a normal control so we get scrolling also)
 
+	ez_double_linked_list_t	items;				// The listview items.
+	
+
+	int						override_count;		// These are needed so that subclasses can override listview specific events.
+	int						inheritance_level;
 } ez_listview_t;
 
 //

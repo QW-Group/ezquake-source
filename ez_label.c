@@ -126,7 +126,7 @@ int EZ_label_Destroy(ez_control_t *self, qbool destroy_children)
 void EZ_label_AddOnTextChanged(ez_label_t *label, ez_eventhandler_fp OnTextChanged, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(label, EZ_CONTROL_HANDLER, OnTextChanged, ez_label_t, OnTextChanged, payload);
-	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
@@ -135,7 +135,7 @@ void EZ_label_AddOnTextChanged(ez_label_t *label, ez_eventhandler_fp OnTextChang
 void EZ_label_AddOnTextScaleChanged(ez_label_t *label, ez_eventhandler_fp OnTextScaleChanged, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(label, EZ_CONTROL_HANDLER, OnTextScaleChanged, ez_label_t, OnTextScaleChanged, payload);
-	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
@@ -144,7 +144,7 @@ void EZ_label_AddOnTextScaleChanged(ez_label_t *label, ez_eventhandler_fp OnText
 void EZ_label_AddOnTextOnCaretMoved(ez_label_t *label, ez_eventhandler_fp OnCaretMoved, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(label, EZ_CONTROL_HANDLER, OnCaretMoved, ez_label_t, OnCaretMoved, payload);
-	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
@@ -237,7 +237,7 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 void EZ_label_SetLargeFont(ez_label_t *label, qbool large_font)
 {
 	SET_FLAG(label->ext_flags, label_largefont, large_font);
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged, NULL);
 }
 
 //
@@ -246,7 +246,7 @@ void EZ_label_SetLargeFont(ez_label_t *label, qbool large_font)
 void EZ_label_SetAutoSize(ez_label_t *label, qbool auto_size)
 {
 	SET_FLAG(label->ext_flags, label_autosize, auto_size);
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged, NULL);
 }
 
 //
@@ -255,7 +255,7 @@ void EZ_label_SetAutoSize(ez_label_t *label, qbool auto_size)
 void EZ_label_SetAutoEllipsis(ez_label_t *label, qbool auto_ellipsis)
 {
 	SET_FLAG(label->ext_flags, label_autoellipsis, auto_ellipsis);
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged, NULL);
 }
 
 //
@@ -264,7 +264,7 @@ void EZ_label_SetAutoEllipsis(ez_label_t *label, qbool auto_ellipsis)
 void EZ_label_SetWrapText(ez_label_t *label, qbool wrap_text)
 {
 	SET_FLAG(label->ext_flags, label_wraptext, wrap_text);
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged, NULL);
 }
 
 //
@@ -273,7 +273,7 @@ void EZ_label_SetWrapText(ez_label_t *label, qbool wrap_text)
 void EZ_label_SetTextSelectable(ez_label_t *label, qbool selectable)
 {
 	SET_FLAG(label->ext_flags, label_selectable, selectable);
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged, NULL);
 }
 
 //
@@ -282,7 +282,7 @@ void EZ_label_SetTextSelectable(ez_label_t *label, qbool selectable)
 void EZ_label_SetReadOnly(ez_label_t *label, qbool read_only)
 {
 	SET_FLAG(label->ext_flags, label_readonly, read_only);
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged, NULL);
 }
 
 //
@@ -291,7 +291,7 @@ void EZ_label_SetReadOnly(ez_label_t *label, qbool read_only)
 void EZ_label_SetTextFlags(ez_label_t *label, ez_label_flags_t flags)
 {
 	label->ext_flags = flags;
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextFlagsChanged, NULL);
 }
 
 //
@@ -309,7 +309,7 @@ void EZ_label_SetTextScale(ez_label_t *label, float scale)
 {
 	label->scale = scale;
 
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextScaleChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextScaleChanged, NULL);
 }
 
 //
@@ -394,7 +394,7 @@ void EZ_label_AppendText(ez_label_t *label, int position, const char *append_tex
 	// Copy the append text into the newly created space in the string.
 	memcpy(label->text + position, append_text, append_text_len * sizeof(char));
 
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged, NULL);
 }
 
 //
@@ -417,7 +417,7 @@ void EZ_label_RemoveText(ez_label_t *label, int start_index, int end_index)
 	
 	label->text = Q_realloc(label->text, (strlen(label->text) + 1) * sizeof(char));
 
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged, NULL);
 }
 
 //
@@ -435,13 +435,13 @@ void EZ_label_SetText(ez_label_t *label, const char *text)
 		strlcpy(label->text, text, text_len);
 	}
 
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged, NULL);
 }
 
 //
 // Label - The text flags for the label changed.
 //
-int EZ_label_OnTextFlagsChanged(ez_control_t *self)
+int EZ_label_OnTextFlagsChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_label_t *label = (ez_label_t *)self;
 
@@ -455,22 +455,22 @@ int EZ_label_OnTextFlagsChanged(ez_control_t *self)
 	// Make sure we recalculate the char size if we changed to large font.
 	if (label->ext_flags & label_largefont)
 	{
-		CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextScaleChanged);
+		CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextScaleChanged, NULL);
 	}
 
 	// The label will autosize on a text change, so trigger an event for that.
 	if (label->ext_flags & label_autosize)
 	{
-		CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged);
+		CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged, NULL);
 	}
 
 	// Recalculate the line ends.
 	if (label->ext_flags & label_wraptext)
 	{
-		CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnResize);
+		CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnResize, NULL);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextFlagsChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextFlagsChanged, NULL);
 
 	return 0;
 }
@@ -478,7 +478,7 @@ int EZ_label_OnTextFlagsChanged(ez_control_t *self)
 //
 // Label - The scale of the text changed.
 //
-int EZ_label_OnTextScaleChanged(ez_control_t *self)
+int EZ_label_OnTextScaleChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_label_t *label		= (ez_label_t *)self;
 	int char_size			= (label->ext_flags & label_largefont) ? 64 : 8;
@@ -488,7 +488,7 @@ int EZ_label_OnTextScaleChanged(ez_control_t *self)
 	// We need to recalculate the wordwrap stuff since the size changed.
 	EZ_label_CalculateWordwraps(label);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextScaleChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextScaleChanged, NULL);
 
 	return 0;
 }
@@ -496,17 +496,17 @@ int EZ_label_OnTextScaleChanged(ez_control_t *self)
 //
 // Label - Happens when the control has resized.
 //
-int EZ_label_OnResize(ez_control_t *self)
+int EZ_label_OnResize(ez_control_t *self, void *ext_event_info)
 {
 	ez_label_t *label = (ez_label_t *)self;
 	
 	// Let the super class try first.
-	EZ_control_OnResize(self);
+	EZ_control_OnResize(self, NULL);
 
 	// Calculate where to wrap the text.
 	EZ_label_CalculateWordwraps(label);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize, NULL);
 
 	return 0;
 }
@@ -514,7 +514,7 @@ int EZ_label_OnResize(ez_control_t *self)
 //
 // Label - Draws a label control.
 //
-int EZ_label_OnDraw(ez_control_t *self)
+int EZ_label_OnDraw(ez_control_t *self, void *ext_event_info)
 {
 	int x, y, i = 0;
 	char line[LABEL_LINE_SIZE];
@@ -528,7 +528,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 	color_t caret_color		= RGBA_TO_COLOR(255, 0, 0, 125);
 
 	// Let the super class draw first.
-	EZ_control_OnDraw(self);
+	EZ_control_OnDraw(self, NULL);
 
 	// Get the position we're drawing at.
 	EZ_control_GetDrawingPosition(self, &x, &y);
@@ -601,7 +601,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 		}
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDraw);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDraw, NULL);
 
 	return 0;
 }
@@ -707,7 +707,7 @@ void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos)
 		EZ_label_DeselectText(label);
 	}
 
-	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnCaretMoved);
+	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnCaretMoved, NULL);
 }
 
 //
@@ -731,7 +731,7 @@ static void EZ_label_MoveCaretVertically(ez_label_t *label, int amount)
 //
 // Label - The caret was moved.
 //
-int EZ_label_OnCaretMoved(ez_control_t *self)
+int EZ_label_OnCaretMoved(ez_control_t *self, void *ext_event_info)
 {
 	ez_label_t *label		= (ez_label_t *)self;
 	int scaled_char_size	= label->scaled_char_size;
@@ -816,7 +816,7 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 		EZ_label_DeselectText(label);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnCaretMoved);
+	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnCaretMoved, NULL);
 
 	return 0;
 }
@@ -824,7 +824,7 @@ int EZ_label_OnCaretMoved(ez_control_t *self)
 //
 // Label - The text changed in the label.
 //
-int EZ_label_OnTextChanged(ez_control_t *self)
+int EZ_label_OnTextChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_label_t *label = (ez_label_t *)self;
 
@@ -847,7 +847,7 @@ int EZ_label_OnTextChanged(ez_control_t *self)
 		}
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, label, ez_label_t, OnTextChanged, NULL);
 
 	return 0;
 }

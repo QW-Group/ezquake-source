@@ -155,27 +155,27 @@ void EZ_slider_SetScale(ez_slider_t *slider, float scale);
 //
 // Slider - Draw function for the slider.
 //
-int EZ_slider_OnDraw(ez_control_t *self);
+int EZ_slider_OnDraw(ez_control_t *self, void *ext_event_info);
 
 //
 // Slider - The max value changed.
 //
-int EZ_slider_OnMaxValueChanged(ez_control_t *self);
+int EZ_slider_OnMaxValueChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Slider - The min value changed.
 //
-int EZ_slider_OnMinValueChanged(ez_control_t *self);
+int EZ_slider_OnMinValueChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Slider - Scale changed.
 //
-int EZ_slider_OnScaleChanged(ez_control_t *self);
+int EZ_slider_OnScaleChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Slider - The slider position changed.
 //
-int EZ_slider_OnSliderPositionChanged(ez_control_t *self);
+int EZ_slider_OnSliderPositionChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Slider - Mouse down event.
@@ -195,7 +195,7 @@ int EZ_slider_OnMouseEvent(ez_control_t *self, mouse_state_t *ms);
 //
 // Slider - The slider was resized.
 //
-int EZ_slider_OnResize(ez_control_t *self);
+int EZ_slider_OnResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Slider - Key event.

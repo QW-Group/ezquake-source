@@ -123,7 +123,7 @@ __inline void EZ_slider_CalculateGapSize(ez_slider_t *slider)
 void EZ_slider_AddOnSliderPositionChanged(ez_slider_t *slider, ez_eventhandler_fp OnSliderPositionChanged, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(slider, EZ_CONTROL_HANDLER, OnSliderPositionChanged, ez_slider_t, OnSliderPositionChanged, payload);
-	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
@@ -132,7 +132,7 @@ void EZ_slider_AddOnSliderPositionChanged(ez_slider_t *slider, ez_eventhandler_f
 void EZ_slider_AddOnMaxValueChanged(ez_slider_t *slider, ez_eventhandler_fp OnMaxValueChanged, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(slider, EZ_CONTROL_HANDLER, OnMaxValueChanged, ez_slider_t, OnMaxValueChanged, payload);
-	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
@@ -141,7 +141,7 @@ void EZ_slider_AddOnMaxValueChanged(ez_slider_t *slider, ez_eventhandler_fp OnMa
 void EZ_slider_AddOnMinValueChanged(ez_slider_t *slider, ez_eventhandler_fp OnMinValueChanged, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(slider, EZ_CONTROL_HANDLER, OnMinValueChanged, ez_slider_t, OnMinValueChanged, payload);
-	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
@@ -150,7 +150,7 @@ void EZ_slider_AddOnMinValueChanged(ez_slider_t *slider, ez_eventhandler_fp OnMi
 void EZ_slider_AddOnScaleChanged(ez_slider_t *slider, ez_eventhandler_fp OnScaleChanged, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(slider, EZ_CONTROL_HANDLER, OnScaleChanged, ez_slider_t, OnScaleChanged, payload);
-	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
@@ -180,7 +180,7 @@ void EZ_slider_SetPosition(ez_slider_t *slider, int slider_pos)
 
 	slider->slider_pos = slider_pos;
 
-	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnSliderPositionChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnSliderPositionChanged, NULL);
 }
 
 //
@@ -190,7 +190,7 @@ void EZ_slider_SetMax(ez_slider_t *slider, int max_value)
 {
 	slider->max_value = max_value;
 
-	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnMaxValueChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnMaxValueChanged, NULL);
 }
 
 //
@@ -200,7 +200,7 @@ void EZ_slider_SetMin(ez_slider_t *slider, int min_value)
 {
 	slider->min_value = min_value;
 
-	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnMinValueChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnMinValueChanged, NULL);
 }
 
 //
@@ -210,13 +210,13 @@ void EZ_slider_SetScale(ez_slider_t *slider, float scale)
 {
 	slider->scale = max(0.1, scale);
 
-	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnScaleChanged);
+	CONTROL_RAISE_EVENT(NULL, slider, ez_slider_t, OnScaleChanged, NULL);
 }
 
 //
 // Slider - Scale changed.
 //
-int EZ_slider_OnScaleChanged(ez_control_t *self)
+int EZ_slider_OnScaleChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
 
@@ -226,7 +226,7 @@ int EZ_slider_OnScaleChanged(ez_control_t *self)
 	// Refit the control to fit the slider.
 	EZ_control_SetSize(self, slider->super.width + slider->scaled_char_size, slider->scaled_char_size);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnScaleChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnScaleChanged, NULL);
 
 	return 0;
 }
@@ -234,7 +234,7 @@ int EZ_slider_OnScaleChanged(ez_control_t *self)
 //
 // Slider - Draw function for the slider.
 //
-int EZ_slider_OnDraw(ez_control_t *self)
+int EZ_slider_OnDraw(ez_control_t *self, void *ext_event_info)
 {
 	int x, y, i;
 	ez_slider_t *slider = (ez_slider_t *)self;
@@ -264,7 +264,7 @@ int EZ_slider_OnDraw(ez_control_t *self)
 //
 // Slider - The max value changed.
 //
-int EZ_slider_OnMaxValueChanged(ez_control_t *self)
+int EZ_slider_OnMaxValueChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
 
@@ -274,7 +274,7 @@ int EZ_slider_OnMaxValueChanged(ez_control_t *self)
 	// Calculate the gap between each slider value.
 	EZ_slider_CalculateGapSize(slider);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnMaxValueChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnMaxValueChanged, NULL);
 
 	return 0;
 }
@@ -282,7 +282,7 @@ int EZ_slider_OnMaxValueChanged(ez_control_t *self)
 //
 // Slider - The min value changed.
 //
-int EZ_slider_OnMinValueChanged(ez_control_t *self)
+int EZ_slider_OnMinValueChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
 
@@ -292,7 +292,7 @@ int EZ_slider_OnMinValueChanged(ez_control_t *self)
 	// Calculate the gap between each slider value.
 	EZ_slider_CalculateGapSize(slider);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnMinValueChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnMinValueChanged, NULL);
 
 	return 0;
 }
@@ -300,14 +300,14 @@ int EZ_slider_OnMinValueChanged(ez_control_t *self)
 //
 // Slider - The slider position changed.
 //
-int EZ_slider_OnSliderPositionChanged(ez_control_t *self)
+int EZ_slider_OnSliderPositionChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
 
 	// Recalculate the drawing position.
 	EZ_slider_CalculateRealSliderPos(slider);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnSliderPositionChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, slider, ez_slider_t, OnSliderPositionChanged, NULL);
 
 	return 0;
 }
@@ -319,7 +319,7 @@ int EZ_slider_OnSliderPositionChanged(ez_control_t *self)
 void EZ_slider_SetJumpToClick(ez_slider_t *slider, qbool jump_to_click)
 {
 	SET_FLAG(slider->ext_flags, slider_jump_to_click, jump_to_click);
-	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)slider, ez_control_t, OnFlagsChanged);
+	CONTROL_RAISE_EVENT(NULL, (ez_control_t *)slider, ez_control_t, OnFlagsChanged, NULL);
 }
 
 //
@@ -418,17 +418,17 @@ int EZ_slider_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 //
 // Slider - The slider was resized.
 //
-int EZ_slider_OnResize(ez_control_t *self)
+int EZ_slider_OnResize(ez_control_t *self, void *ext_event_info)
 {
 	ez_slider_t *slider = (ez_slider_t *)self;
 
 	// Call super class.
-	EZ_control_OnResize(self);
+	EZ_control_OnResize(self, NULL);
 
 	EZ_slider_CalculateGapSize(slider);
 	EZ_slider_CalculateRealSliderPos(slider);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize, NULL);
 
 	return 0;
 }

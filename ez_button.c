@@ -128,7 +128,7 @@ static void EZ_button_RecalculateLabelPosition(ez_button_t *button)
 //
 // Button - Event handler for the buttons OnTextChanged event.
 // 
-static int EZ_button_OnLabelTextChanged(ez_control_t *self, void *payload)
+static int EZ_button_OnLabelTextChanged(ez_control_t *self, void *payload, void *ext_event_info)
 {
 	ez_button_t *button = NULL;
 	
@@ -230,7 +230,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 		EZ_control_SetFocusable((ez_control_t *)button->text_label, false);
 		EZ_control_SetMovable((ez_control_t *)button->text_label, false);
 
-		CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)button), ez_control_t, OnResize);
+		CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)button), ez_control_t, OnResize, NULL);
 	}
 
 	EZ_button_SetNormalImage(button, EZ_BUTTON_DEFAULT_NORMAL_IMAGE);
@@ -260,10 +260,10 @@ void EZ_button_Destroy(ez_control_t *self, qbool destroy_children)
 //
 // Button - OnAction event handler.
 //
-int EZ_button_OnAction(ez_control_t *self)
+int EZ_button_OnAction(ez_control_t *self, void *ext_event_info)
 {
 	ez_button_t *button = (ez_button_t *)self;
-	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnAction);
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnAction, NULL);
 
 	return 0;
 }
@@ -271,16 +271,16 @@ int EZ_button_OnAction(ez_control_t *self)
 //
 // Button - OnResize event handler.
 //
-int EZ_button_OnResize(ez_control_t *self)
+int EZ_button_OnResize(ez_control_t *self, void *ext_event_info)
 {
 	ez_button_t *button = (ez_button_t *)self;
 
 	// Run the super class implementation.
-	EZ_control_OnResize(self);
+	EZ_control_OnResize(self, NULL);
 
 	EZ_button_RecalculateLabelPosition(button);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize, NULL);
 
 	return 0;
 }
@@ -324,7 +324,7 @@ void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignme
 {
 	button->text_alignment = text_alignment;
 
-	CONTROL_RAISE_EVENT(NULL, button, ez_button_t, OnTextAlignmentChanged);
+	CONTROL_RAISE_EVENT(NULL, button, ez_button_t, OnTextAlignmentChanged, NULL);
 }
 
 //
@@ -333,7 +333,7 @@ void EZ_button_SetTextAlignment(ez_button_t *button, ez_textalign_t text_alignme
 void EZ_button_AddOnTextAlignmentChanged(ez_button_t *button, ez_eventhandler_fp OnTextAlignmentChanged, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(button, EZ_CONTROL_HANDLER, OnTextAlignmentChanged, ez_button_t, OnTextAlignmentChanged, payload);
-	CONTROL_RAISE_EVENT(NULL, button, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, button, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 // 
@@ -342,7 +342,7 @@ void EZ_button_AddOnTextAlignmentChanged(ez_button_t *button, ez_eventhandler_fp
 void EZ_button_AddOnToggled(ez_button_t *button, ez_eventhandler_fp OnToggled, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(button, EZ_CONTROL_HANDLER, OnToggled, ez_button_t, OnToggled, payload);
-	CONTROL_RAISE_EVENT(NULL, button, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, button, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
@@ -438,13 +438,13 @@ void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte a
 void EZ_button_AddOnAction(ez_button_t *self, ez_eventhandler_fp OnAction, void *payload)
 {
 	CONTROL_ADD_EVENTHANDLER(self, EZ_CONTROL_HANDLER, OnAction, ez_button_t, OnAction, payload);
-	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged);
+	CONTROL_RAISE_EVENT(NULL, self, ez_control_t, OnEventHandlerChanged, NULL);
 }
 
 //
 // Button - OnDraw event.
 //
-int EZ_button_OnDraw(ez_control_t *self)
+int EZ_button_OnDraw(ez_control_t *self, void *ext_event_info)
 {
 	ez_button_t *button = (ez_button_t *)self;
 
@@ -452,7 +452,7 @@ int EZ_button_OnDraw(ez_control_t *self)
 	EZ_control_GetDrawingPosition(self, &x, &y);
 
 	// Run the super class's implementation first.
-	EZ_control_OnDraw(self);
+	EZ_control_OnDraw(self, NULL);
 
 	if (self->int_flags & control_focused)
 	{
@@ -466,20 +466,20 @@ int EZ_button_OnDraw(ez_control_t *self)
 	}
 
 	// Draw control specifics.
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDraw);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDraw, NULL);
 	return 0;
 }
 
 //
 // Button - OnTextAlignmentChanged event.
 //
-int EZ_button_OnTextAlignmentChanged(ez_control_t *self)
+int EZ_button_OnTextAlignmentChanged(ez_control_t *self, void *ext_event_info)
 {
 	ez_button_t *button = (ez_button_t *)self;
 
 	EZ_button_RecalculateLabelPosition(button);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnTextAlignmentChanged);
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnTextAlignmentChanged, NULL);
 	return 0;
 }
 
@@ -496,7 +496,7 @@ int EZ_button_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state)
 	if (button->ext_flags & button_is_toggleable)
 	{
 		button->int_flags ^= button_toggled;
-		CONTROL_RAISE_EVENT(NULL, button, ez_button_t, OnToggled);
+		CONTROL_RAISE_EVENT(NULL, button, ez_button_t, OnToggled, NULL);
 	}
 	else
 	{
@@ -510,7 +510,7 @@ int EZ_button_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state)
 //
 // Button - OnToggled event. The button was toggled.
 //
-int EZ_button_OnToggled(ez_control_t *self)
+int EZ_button_OnToggled(ez_control_t *self, void *ext_event_info)
 {
 	ez_button_t *button = (ez_button_t *)self;
 
@@ -524,7 +524,7 @@ int EZ_button_OnToggled(ez_control_t *self)
 		EZ_button_SetColorOrBackground(self, button->normal_image, button->color_normal);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnToggled);
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_button_t, OnToggled, NULL);
 	return 0;
 }
 
@@ -546,7 +546,7 @@ int EZ_button_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state)
 		EZ_button_SetColorOrBackground(self, button->hover_image, button->color_hover);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMouseEnter);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnMouseEnter, NULL);
 	return 0;
 }
 
@@ -568,7 +568,7 @@ int EZ_button_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
 		EZ_button_SetColorOrBackground(self, button->normal_image, button->color_normal);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseLeave);
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseLeave, NULL);
 	return 0;
 }
 
@@ -582,7 +582,7 @@ int EZ_button_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
 
 	EZ_button_SetColorOrBackground(self, button->toggled_hover_image, button->color_toggled_hover);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseDown);
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseDown, NULL);
 	return 1;
 }
 
@@ -599,7 +599,7 @@ int EZ_button_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state)
 		EZ_button_SetColorOrBackground(self, button->hover_image, button->color_hover);
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseUp);
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, ez_control_t, OnMouseUp, NULL);
 	return 1;
 }
 

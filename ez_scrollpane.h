@@ -119,16 +119,16 @@ void EZ_scrollpane_SetScrollbarThickness(ez_scrollpane_t *scrollpane, int scroll
 //
 // Scrollpane - The target control changed.
 //
-int EZ_scrollpane_OnTargetChanged(ez_control_t *self);
+int EZ_scrollpane_OnTargetChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Scrollpane - The scrollbar thickness changed.
 //
-int EZ_scrollpane_OnScrollbarThicknessChanged(ez_control_t *self);
+int EZ_scrollpane_OnScrollbarThicknessChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Scrollpane - OnResize event.
 //
-int EZ_scrollpane_OnResize(ez_control_t *self);
+int EZ_scrollpane_OnResize(ez_control_t *self, void *ext_event_info);
 
 #endif // __EZ_SCROLLPANE_H__

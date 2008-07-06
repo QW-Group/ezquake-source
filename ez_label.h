@@ -234,32 +234,32 @@ void EZ_label_SetCaretPosition(ez_label_t *label, int caret_pos);
 //
 // Label - The text flags for the label changed.
 //
-int EZ_label_OnTextFlagsChanged(ez_control_t *self);
+int EZ_label_OnTextFlagsChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Label - The scale of the text changed.
 //
-int EZ_label_OnTextScaleChanged(ez_control_t *self);
+int EZ_label_OnTextScaleChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Label - Happens when the control has resized.
 //
-int EZ_label_OnResize(ez_control_t *self);
+int EZ_label_OnResize(ez_control_t *self, void *ext_event_info);
 
 //
 // Label - On Draw.
 //
-int EZ_label_OnDraw(ez_control_t *label);
+int EZ_label_OnDraw(ez_control_t *label, void *ext_event_info);
 
 //
 // Label - The caret was moved.
 //
-int EZ_label_OnCaretMoved(ez_control_t *self);
+int EZ_label_OnCaretMoved(ez_control_t *self, void *ext_event_info);
 
 //
 // Label - The text changed in the label.
 //
-int EZ_label_OnTextChanged(ez_control_t *self);
+int EZ_label_OnTextChanged(ez_control_t *self, void *ext_event_info);
 
 //
 // Label - Key down event.
