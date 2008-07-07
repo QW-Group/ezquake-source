@@ -459,7 +459,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
     return 0;
 }
 
-extern int oldPingHost(char *host_to_ping, int count, int time_out);
+extern int oldPingHost(char *host_to_ping, int count);
 extern int PingHost(char *host_to_ping, short port, int count, int time_out);
 
 void GetServerPing(server_data *serv)
@@ -472,8 +472,13 @@ void GetServerPing(server_data *serv)
         serv->address.ip[2],
         serv->address.ip[3]);
 
-    p = useNewPing ? PingHost(buf, serv->address.port, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value) : oldPingHost(buf, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value);
-    if (p)
+    p = useNewPing
+			// new ping = UPD QW Packet
+			? PingHost(buf, serv->address.port, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value)
+			// old ping = ICMP PING Packet
+			: oldPingHost(buf, (int)max(1, min(sb_pings.value, 10)));
+    
+	if (p)
         SetPing(serv, p-1);
     else
         SetPing(serv, p-1);
@@ -485,7 +490,14 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
     abort_ping = 0;
 
-    useNewPing ? PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value) : oldPingHosts(servers, serversn, sb_pings.value);
+	if (useNewPing) {
+		// New Ping = UPD QW Packet ping using 2 threads (sender and receiver)
+		PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value);
+	}
+	else {
+		// Old Ping = ICMP PING Packet using single thread
+		oldPingHosts(servers, serversn, sb_pings.value);	
+	}
 
     if (!abort_ping)
     {
