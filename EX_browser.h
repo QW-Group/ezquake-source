@@ -43,6 +43,7 @@ extern cvar_t  sb_infospersec;      // serverinfos per second
 
 extern cvar_t  sb_mastertimeout;    // master server server timeout
 extern cvar_t  sb_masterretries;    // max master-server retries
+extern cvar_t  sb_nosockraw;        // when enabled, forces "new ping" (udp qw query packet, multithreaded) to be used
 
 extern cvar_t  sb_liveupdate;       // serveinfo window update interval (0 = off)
 

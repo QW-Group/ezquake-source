@@ -137,7 +137,7 @@ typedef struct {
 // =============================================================================
 //  Global variables
 // =============================================================================
-qbool useNewPing = false;
+qbool useNewPing = false; // New Ping = UDP QW Packet multithreaded ping
 
 static int sock;
 static int ping_sock;
@@ -355,9 +355,9 @@ void SB_RootInit(void)
 	}
 
 #ifdef _WIN32
-	if (sock < 0 || COM_CheckParm("-nosockraw") || WinVISTA) {
+	if (sock < 0 || COM_CheckParm("-nosockraw") || sb_nosockraw.integer || WinVISTA) {
 #else
-	if (sock < 0 || COM_CheckParm("-nosockraw")) {
+	if (sock < 0 || COM_CheckParm("-nosockraw") || sb_nosockraw.integer) {
 #endif
 		useNewPing = true;
 		return;

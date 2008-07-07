@@ -77,6 +77,7 @@ cvar_t  sb_inforetries   = {"sb_inforetries",      "3"};
 cvar_t  sb_infospersec   = {"sb_infospersec",    "100"};
 cvar_t  sb_mastertimeout = {"sb_mastertimeout", "1000"};
 cvar_t  sb_masterretries = {"sb_masterretries",    "3"};
+cvar_t  sb_nosockraw     = {"sb_nosockraw",        "0"}; // when enabled, forces "new ping" (udp qw query packet, multithreaded) to be used
 
 cvar_t  sb_liveupdate    = {"sb_liveupdate",       "2"}; // not in menu
 
@@ -2734,6 +2735,7 @@ void Browser_Init (void)
     Cvar_Register(&sb_liveupdate);
     Cvar_Register(&sb_mastertimeout);
     Cvar_Register(&sb_masterretries);
+	Cvar_Register(&sb_nosockraw);
     Cvar_Register(&sb_sortservers);
     Cvar_Register(&sb_sortplayers);
     Cvar_Register(&sb_sortsources);
