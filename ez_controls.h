@@ -734,7 +734,7 @@ typedef struct ez_control_s
 	ez_control_eventcount_t		inherit_levels;		// The number of times each event has been overriden. 
 													// (Countdown before executing the event handler for the event, after all
 													// event implementations in the inheritance chain have been run).
-	ez_control_eventcount_t override_counts;		// This gets resetted each time a event is raised by CONTROL_RAISE_EVENT to the
+	ez_control_eventcount_t override_counts;		// This is reset each time an event is raised by CONTROL_RAISE_EVENT to the
 													// inheritance level for the event in question.
 
 	qbool					initializing;			// Is the control initializing?
@@ -744,7 +744,7 @@ typedef struct ez_control_s
 
 	struct ez_tree_s		*control_tree;			// The control tree the control belongs to.
 
-	mouse_state_t			prev_mouse_state;		// The last mouse event that was passed on to this control.
+	mouse_state_t			prev_mouse_state;		// The previous mouse event that was passed on to this control.
 	double					mouse_repeat_delay;		// The time to wait before raising a new mouse click event for this control (if control_listen_repeat_mouse is set).
 } ez_control_t;
 
@@ -763,10 +763,6 @@ ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 
 //
 // Control - Initializes a control and adds it to the specified control tree.
-//
-
-//
-// Control - Initializes a control.
 //
 void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent, 
 							  char *name, char *description, 
@@ -1221,7 +1217,7 @@ int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar, qbool down);
 // The initial mouse event is handled by this, and then raises more specialized event handlers
 // based on the new mouse state.
 // 
-// NOTICE! When extending this event you need to make sure that you need to tell the framework
+// NOTICE! When extending this event you need to make sure that you tell the framework
 // that you've handled all mouse events that happened within the controls bounds in your own
 // implementation by returning true whenever the mouse is inside the control.
 // This can easily be done with the following macro: MOUSE_INSIDE_CONTROL(self, ms); 

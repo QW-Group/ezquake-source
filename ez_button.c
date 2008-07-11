@@ -44,7 +44,7 @@ static void EZ_button_RecalculateLabelPosition(ez_button_t *button)
 	int new_y						= text_label_ctrl->y;
 	int new_anchor					= EZ_control_GetAnchor(text_label_ctrl);
 
-	// TODO : Hmm, should we even bothered with a special case for text alignment? Why not juse use ez_anchor_t stuff? Also remember to add support for middle_top and such.
+	// TODO : Hmm, should we even bothered with a special case for text alignment? Why not just use ez_anchor_t stuff? Also remember to add support for middle_top and such.
 	switch (button->text_alignment)
 	{
 		case top_left :
