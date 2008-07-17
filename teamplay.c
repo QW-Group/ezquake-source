@@ -242,8 +242,18 @@ char *Macro_WeaponAndAmmo (void)
 
 char *Macro_WeaponNum (void)
 {
-	switch (cl.stats[STAT_ACTIVEWEAPON]) {
+	extern cvar_t cl_weaponpreselect;
+	int IN_BestWeapon (void);
+	int best;
 
+	if (cl_weaponpreselect.integer && (best = IN_BestWeapon())) {
+		char buf[4];
+		snprintf(buf, sizeof(buf), "%d", best);
+		strlcpy(macro_buf, buf, sizeof(macro_buf));
+		return macro_buf;
+	}
+	else {
+		switch (cl.stats[STAT_ACTIVEWEAPON]) {
 			case IT_AXE: return "1";
 			case IT_SHOTGUN: return "2";
 			case IT_SUPER_SHOTGUN: return "3";
@@ -254,6 +264,7 @@ char *Macro_WeaponNum (void)
 			case IT_LIGHTNING: return "8";
 			default:
 			return "0";
+		}
 	}
 }
 
