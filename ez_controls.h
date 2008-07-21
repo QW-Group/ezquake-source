@@ -1034,6 +1034,11 @@ void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, b
 void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order, qbool update_children);
 
 //
+// Control - Sets the payload for the control.
+//
+void EZ_control_SetPayload(ez_control_t *self, void *payload);
+
+//
 // Control - Sets the size of a control.
 //
 void EZ_control_SetSize(ez_control_t *self, int width, int height);

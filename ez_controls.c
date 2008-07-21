@@ -1620,6 +1620,14 @@ void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order, qbool update_ch
 }
 
 //
+// Control - Sets the payload for the control.
+//
+void EZ_control_SetPayload(ez_control_t *self, void *payload)
+{
+	self->payload = payload;
+}
+
+//
 // Control - Sets the size of a control.
 //
 void EZ_control_SetSize(ez_control_t *self, int width, int height)
