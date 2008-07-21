@@ -23,10 +23,13 @@ $Id: ez_listviewitem.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 */
 
 #include "ez_controls.h"
+#include "ez_label.h"
 
 // =========================================================================================
 // Listview item
 // =========================================================================================
+
+#define COLUMN_COUNT	32
 
 typedef struct ez_listview_subitem_s
 {
@@ -39,19 +42,51 @@ typedef struct ez_listview_subitem_s
 //
 typedef struct ez_listviewitem_changeinfo_s
 {
-	ez_listview_subitem_t	*item;		// Contains the info about the new text of the listview column that was changed, and its user associated payload.
+	//ez_listview_subitem_t	*item;		// Contains the info about the new text of the listview column that was changed, and its user associated payload.
+	ez_label_t				*item;
 	int						column;		// The column of the listview that this item is on.
 	void					*payload;	// The user associated payload associated with this listview item (the entire row, not just the column).
 } ez_listviewitem_changeinfo_t;
 
+typedef struct ez_listviewitem_eventcount_s
+{
+	int OnColumnAdded;
+	int OnColumnVisibilityChanged;
+	int OnSubItemChanged;
+} ez_listviewitem_eventcount_t;
+
+typedef struct ez_listviewitem_events_s
+{
+	ez_event_fp OnColumnAdded;
+	ez_event_fp	OnColumnVisibilityChanged;
+	ez_event_fp OnSubItemChanged;
+} ez_listviewitem_events_t;
+
+typedef struct ez_listviewitem_eventhandlers_s
+{
+	ez_eventhandler_t *OnColumnAdded;
+	ez_eventhandler_t *OnColumnVisibilityChanged;
+	ez_eventhandler_t *OnSubItemChanged;
+} ez_listviewitem_eventhandlers_t;
+
 typedef struct ez_listviewitem_s
 {
-	ez_control_t			super;				// The super class
-												// (we inherit a scrollpane instead of a normal control so we get scrolling also)
+	ez_control_t			super;							// The super class.
+															// (we inherit a scrollpane instead of a normal control so we get scrolling also)
 
-	ez_double_linked_list_t	subitems;			// The sub items (what's shown in the columns).
+	ez_listviewitem_events_t		events;
+	ez_listviewitem_eventhandlers_t	event_handlers;
+	ez_listviewitem_eventcount_t	inherit_levels;
+	ez_listviewitem_eventcount_t	override_counts;
 
-	int						override_count;		// These are needed so that subclasses can override listview specific events.
+	ez_label_t				*items[COLUMN_COUNT];			// The sub items (what's shown in the columns).
+	int						item_count;						// 
+	//ez_double_linked_list_t	subitems;					// The sub items (what's shown in the columns).
+	int						item_gap;						// The gap between two controls.
+	int						item_widths[COLUMN_COUNT];		// The width of the sub items.
+	qbool					item_visibile[COLUMN_COUNT];	// Which columns are visible?
+
+	int						override_count;					// These are needed so that subclasses can override listview specific events.
 	int						inheritance_level;
 } ez_listviewitem_t;
 
@@ -75,6 +110,41 @@ void EZ_listviewitem_Init(ez_listviewitem_t *listviewitem, ez_tree_t *tree, ez_c
 // Listview item - Destroys a listview item.
 //
 int EZ_listviewitem_Destroy(ez_control_t *self, qbool destroy_children);
+
+//
+// Listview item - Event for when a new column was added to the listview item.
+//
+int EZ_listviewitem_OnColumnAdded(ez_listviewitem_t *self, void *column);
+
+//
+// Listview item - The visibility changed for a column.
+//
+int EZ_listviewitem_OnColumnVisibilityChanged(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview item - Adds a column to the listview item.
+//
+void EZ_listviewitem_AddColumn(ez_listviewitem_t *self, ez_listview_subitem_t data, int width);
+
+//
+// Listview item - Lays out the control.
+//
+void EZ_listviewitem_LayoutControl(ez_listviewitem_t *self);
+
+//
+// Listview item - Gets a column from the listview item.
+//
+ez_label_t *EZ_listviewitem_GetColumn(ez_listviewitem_t *self, int column);
+
+//
+// Listview item - Sets if a column should be visible or not.
+//
+void EZ_listviewitem_SetColumnVisible(ez_listviewitem_t *self, int column, qbool visible);
+
+//
+// Listview item - A sub items text has changed.
+//
+int EZ_listviewitem_OnSubItemChanged(ez_control_t *self, void *ext_event_info);
 
 #endif // __EZ_LISTVIEWITEM_H__
 
