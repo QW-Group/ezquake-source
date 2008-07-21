@@ -522,7 +522,6 @@ extern void Browser_Init2(void);
 #endif
 	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
 
-	Browser_Init2();
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
 	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
 }
@@ -643,6 +642,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	SV_Init ();
 	CL_Init ();
+
+	Browser_Init2();
 
 	Cvar_CleanUpTempVars ();
 
