@@ -1060,6 +1060,14 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
             myKeyboardBuffer = [myEvent charactersIgnoringModifiers];
             myKeyboardBufferSize = [myKeyboardBuffer length];
             
+            // console key is a dead key in quake for mac
+            // lets try to hack-detect it and throw a "~" key
+            // event at the VOID (tm)
+            if ([myEvent keyCode] == 0x0a)
+            {
+                Key_Event (0x7e, (myType == NSKeyDown));
+            }
+            
             for (i = 0; i < myKeyboardBufferSize; i++)
             {
                 myCharacter = [myKeyboardBuffer characterAtIndex: i];
