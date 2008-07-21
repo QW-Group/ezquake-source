@@ -63,6 +63,10 @@ typedef unsigned int socklen_t;
 #define INVALID_SOCKET -1
 #endif
 
+#ifndef SOCKET_ERROR
+#define SOCKET_ERROR -1
+#endif
+
 #define PORT_ANY -1
 
 typedef enum {NA_INVALID, NA_LOOPBACK, NA_IP} netadrtype_t;
