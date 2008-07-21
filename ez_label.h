@@ -113,13 +113,13 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 							  char *name, char *description, 
 							  int x, int y, int width, int height,
 							  ez_control_flags_t flags, ez_label_flags_t text_flags,
-							  char *text);
+							  const char *text);
 
 void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent, 
 				  char *name, char *description, 
 				  int x, int y, int width, int height,
 				  ez_control_flags_t flags, ez_label_flags_t text_flags,
-				  char *text);
+				  const char *text);
 
 //
 // Label - Destroys a label control.
