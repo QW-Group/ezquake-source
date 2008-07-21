@@ -126,6 +126,7 @@ void SV_SaveGame_f (void) {
 }
 
 void SV_LoadGame_f (void) {
+	extern cvar_t sv_progtype;
 	char name[MAX_OSPATH], mapname[MAX_QPATH], str[32 * 1024], *start;
 	FILE *f;
 	float time, tfloat, spawn_parms[NUM_SPAWN_PARMS];
@@ -167,6 +168,11 @@ void SV_LoadGame_f (void) {
 	Cvar_SetValue (&coop, 0);
 	Cvar_SetValue (&teamplay, 0);
 	Cvar_SetValue (&maxclients, 1);
+
+	Cvar_Set (&sv_progsname, "spprogs"); // force progsname
+#ifdef USE_PR2
+	Cvar_Set (&sv_progtype, "0"); // force .dat
+#endif
 
 	fscanf (f, "%s\n", mapname);
 	fscanf (f, "%f\n", &time);

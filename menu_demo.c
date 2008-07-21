@@ -44,8 +44,9 @@
 #define    DEMO_TIME    time_t
 #endif
 
-#define MAX_DEMO_NAME    MAX_OSPATH
-#define MAX_DEMO_FILES    2048
+//unused
+//#define MAX_DEMO_NAME    MAX_OSPATH
+//#define MAX_DEMO_FILES    2048
 #define DEMO_MAXLINES    17
 
 #define DEMO_PLAYLIST_NAME_MAX		16

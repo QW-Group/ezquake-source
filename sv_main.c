@@ -16,119 +16,230 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.32 2007-09-26 21:51:34 tonik Exp $
+	$Id: sv_main.c 775 2008-03-20 13:39:47Z disconn3ct $
 */
 
 #include "qwsvdef.h"
-#include "pmove.h"
-#include "version.h"
 
-int			current_skill;			// for entity spawnflags checking
+//quakeparms_t host_parms;
 
-client_t	*sv_client;					// current client
+int telnetport = 0; // FIXME, perhaps just remove rest of telnet code
 
-cvar_t	sv_mintic = {"sv_mintic", "0.013"};	// bound the size of the
-cvar_t	sv_maxtic = {"sv_maxtic", "0.1"};	//
+struct timeval select_timeout;
 
-cvar_t	sv_timeout = {"sv_timeout","65"};		// seconds without any message
-cvar_t	sv_zombietime = {"sv_zombietime", "2"};	// seconds to sink messages
-											// after disconnect
-cvar_t	sv_cullentities = {"sv_cullentities", "1"};
+qbool		host_initialized;		// true if into command execution (compatability)
 
-#ifdef SERVERONLY
-cvar_t	rcon_password = {"rcon_password", ""};	// password for remote server commands
-cvar_t	password = {"password", ""};	// password for entering the game
+double		realtime;			// without any filtering or bounding
+
+int		host_hunklevel;
+
+int		current_skill;			// for entity spawnflags checking
+
+client_t	*sv_client;			// current client
+
+char		master_rcon_password[128] = "";	//bliP: password for remote server commands
+
+cvar_t	sv_cpserver = {"sv_cpserver", "0"};	// some cp servers couse lags on map changes
+
+
+cvar_t	sv_mintic = {"sv_mintic","0.013"};	// bound the size of the
+cvar_t	sv_maxtic = {"sv_maxtic","0.1"};	// physics time tic
+
+void OnChange_sysselecttimeout_var (cvar_t *var, char *value, qbool *cancel);
+cvar_t	sys_select_timeout = {"sys_select_timeout",
+#ifdef _WIN32
+							"10000"
 #else
-extern cvar_t rcon_password;
-extern cvar_t password;
+							"1000000"
 #endif
+							, 0, OnChange_sysselecttimeout_var};
+// MUST be set to ~ (sv_mintic / 1.3) * 1 000 000 = 10 000
+// (else can occur packets lost if sv_minping > 0)
+// if set too low then occur higher CPU usage
+
+cvar_t	sys_restart_on_error = {"sys_restart_on_error", "0"};
+
+//cvar_t	developer = {"developer", "0"};		// show extra messages
+
+cvar_t	timeout = {"timeout", "65"};		// seconds without any message
+cvar_t	zombietime = {"zombietime", "2"};	// seconds to sink messages
+// after disconnect
+
+//cvar_t	rcon_password = {"rcon_password", ""};	// password for remote server commands
+extern cvar_t	rcon_password;
+//cvar_t	password = {"password", ""};	// password for entering the game
+extern cvar_t	password;
+cvar_t	sv_hashpasswords = {"sv_hashpasswords", "1"}; // 0 - plain passwords; 1 - hashed passwords
+cvar_t	telnet_password = {"telnet_password", ""}; // password for login via telnet
+cvar_t	not_auth_timeout = {"not_auth_timeout", "20"};
+// if no password is sent (telnet_password) in "n" seconds the server refuses connection
+// If set to 0, no timeout will occur
+cvar_t	auth_timeout = {"auth_timeout", "3600"};
+// the server will close the connection "n" seconds after the authentication is completed
+// If set to 0, no timeout will occur
+cvar_t	sv_crypt_rcon = {"sv_crypt_rcon", "1"}; // use SHA1 for encryption of rcon_password and using timestamps
+// Time in seconds during which in rcon command this encryption is valid (change only with master_rcon_password).
+cvar_t	sv_timestamplen = {"sv_timestamplen", "60"};
+cvar_t	sv_rconlim = {"sv_rconlim", "10"};	// rcon bandwith limit: requests per second
+
+//bliP: telnet log level
+//cvar_t	telnet_log_level = {"telnet_log_level", "0"}; // logging level telnet console
+void OnChange_telnetloglevel_var (cvar_t *var, char *string, qbool *cancel);
+cvar_t  telnet_log_level = {"telnet_log_level", "0", 0, OnChange_telnetloglevel_var};
+//<-
+
+cvar_t	frag_log_type = {"frag_log_type", "0"};
+//	frag log type:
+//		0 - old style (  qwsv - v0.165)
+//		1 - new style (v0.168 - v0.172)
+
+void OnChange_qconsolelogsay_var (cvar_t *var, char *string, qbool *cancel);
+cvar_t	qconsole_log_say = {"qconsole_log_say", "0", 0, OnChange_qconsolelogsay_var};
+// logging "say" and "say_team" messages to the qconsole_PORT.log file
+
+cvar_t	sys_command_line = {"sys_command_line", "", CVAR_ROM};
+
+cvar_t	sv_use_dns = {"sv_use_dns", "0"}; // 1 - use DNS lookup in status command, 0 - don't use
 cvar_t	spectator_password = {"spectator_password", ""};	// password for entering as a sepctator
+cvar_t	vip_password = {"vip_password", ""};	// password for entering as a VIP sepctator
+cvar_t	vip_values = {"vip_values", ""};
 
 cvar_t	allow_download = {"allow_download", "1"};
 cvar_t	allow_download_skins = {"allow_download_skins", "1"};
 cvar_t	allow_download_models = {"allow_download_models", "1"};
 cvar_t	allow_download_sounds = {"allow_download_sounds", "1"};
-cvar_t	allow_download_maps = {"allow_download_maps", "1"};
-cvar_t	allow_download_pakmaps = {"allow_download_pakmaps", "0"};
-cvar_t	allow_download_gfx = {"allow_download_gfx", "1"};
-cvar_t	allow_download_other = {"allow_download_other", "1"};
+cvar_t	allow_download_maps	= {"allow_download_maps", "1"};
+cvar_t	allow_download_pakmaps = {"allow_download_pakmaps", "1"};
+cvar_t	allow_download_demos = {"allow_download_demos", "1"};
+cvar_t	allow_download_other = {"allow_download_other", "0"};
+//bliP: init ->
+cvar_t	download_map_url = {"download_map_url", ""};
 
-cvar_t	sv_highchars = {"sv_highchars", "1"};
+cvar_t	sv_specprint = {"sv_specprint", "0"};
+cvar_t	sv_reconnectlimit = {"sv_reconnectlimit", "0"};
+
+void OnChange_admininfo_var (cvar_t *var, char *string, qbool *cancel);
+cvar_t  sv_admininfo = {"sv_admininfo", "", 0, OnChange_admininfo_var};
+
+cvar_t	sv_unfake = {"sv_unfake", "1"}; //bliP: 24/9 kickfake to unfake
+cvar_t	sv_kicktop = {"sv_kicktop", "1"};
+
+cvar_t	sv_allowlastscores = {"sv_allowlastscores", "1"};
+
+cvar_t	sv_maxlogsize = {"sv_maxlogsize", "0"};
+//bliP: 24/9 ->
+void OnChange_logdir_var (cvar_t *var, char *string, qbool *cancel);
+cvar_t  sv_logdir = {"sv_logdir", ".", 0, OnChange_logdir_var};
+
+cvar_t  sv_speedcheck = {"sv_speedcheck", "1"};
+//<-
+//<-
+//cvar_t	sv_highchars = {"sv_highchars", "1"};
 cvar_t	sv_phs = {"sv_phs", "1"};
-cvar_t	sv_pausable = {"pausable", "1"};
-cvar_t	sv_paused = {"sv_paused", "0", CVAR_ROM};
+cvar_t	pausable = {"pausable", "0"};
 cvar_t	sv_maxrate = {"sv_maxrate", "0"};
-cvar_t	sv_fastconnect = {"sv_fastconnect", "0"};
+cvar_t	sv_getrealip = {"sv_getrealip", "1"};
+cvar_t	sv_serverip = {"sv_serverip", ""};
+cvar_t	sv_forcespec_onfull = {"sv_forcespec_onfull", "2"};
+cvar_t	sv_maxdownloadrate = {"sv_maxdownloadrate", "0"};
+
+cvar_t  sv_loadentfiles = {"sv_loadentfiles", "1"}; //loads .ent files by default if there
+cvar_t	sv_default_name = {"sv_default_name", "unnamed"};
+
+void sv_mod_msg_file_OnChange(cvar_t *cvar, const char *value, qbool *cancel);
+cvar_t	sv_mod_msg_file = {"sv_mod_msg_file", "", 0, sv_mod_msg_file_OnChange};
+
+//
+// game rules mirrored in svs.info
+//
+cvar_t	fraglimit = {"fraglimit","0",CVAR_SERVERINFO};
+cvar_t	timelimit = {"timelimit","0",CVAR_SERVERINFO};
+cvar_t	teamplay = {"teamplay","0",CVAR_SERVERINFO};
+cvar_t	maxclients = {"maxclients","24",CVAR_SERVERINFO};
+cvar_t	maxspectators = {"maxspectators","8",CVAR_SERVERINFO};
+cvar_t	maxvip_spectators = {"maxvip_spectators","0"/*,CVAR_SERVERINFO*/};
+cvar_t	deathmatch = {"deathmatch","3",CVAR_SERVERINFO};
+cvar_t	watervis = {"watervis","0",CVAR_SERVERINFO};
+cvar_t	serverdemo = {"serverdemo","",CVAR_SERVERINFO | CVAR_ROM};
+
+cvar_t	samelevel = {"samelevel","1"}; // dont delete this variable - it used by mods
+cvar_t	skill = {"skill", "1"}; // dont delete this variable - it used by mods
+cvar_t	coop = {"coop", "0"}; // dont delete this variable - it used by mods
+
+//cvar_t	version = {"version", full_version, CVAR_ROM};
+cvar_t	sv_paused = {"sv_paused", "0", CVAR_ROM};
+
+cvar_t	hostname = {"hostname", "unnamed", CVAR_SERVERINFO};
+
+cvar_t sv_forcenick = {"sv_forcenick", "0"}; //0 - don't force; 1 - as login;
+cvar_t sv_registrationinfo = {"sv_registrationinfo", ""}; // text shown before "enter login"
+
+cvar_t registered = {"registered", "1", CVAR_ROM};
+// We need this cvar, because ktpro didn't allow to go at some placeses of, for example, start map.
+
+cvar_t sv_ktpro_mode = {"sv_ktpro_mode", "auto"};
 
 cvar_t	sv_halflifebsp = {"halflifebsp", "0", CVAR_ROM};
 
-// game rules mirrored in svs.info
-cvar_t	fraglimit = {"fraglimit", "0", CVAR_SERVERINFO};
-cvar_t	timelimit = {"timelimit", "0", CVAR_SERVERINFO};
-cvar_t	teamplay = {"teamplay", "0", CVAR_SERVERINFO};
-cvar_t	samelevel = {"samelevel", "0", CVAR_SERVERINFO};
-void OnChange_maxclients (cvar_t *var, char *str, qbool *cancel);
-cvar_t	maxclients = {"maxclients","8",CVAR_SERVERINFO, OnChange_maxclients};
-cvar_t	maxspectators = {"maxspectators","8",CVAR_SERVERINFO, OnChange_maxclients};
-cvar_t	deathmatch = {"deathmatch", "1", CVAR_SERVERINFO};			// 0, 1, or 2
-cvar_t	hostname = {"hostname", "unnamed", CVAR_SERVERINFO};
-cvar_t	watervis = {"watervis", "0", CVAR_SERVERINFO};
-cvar_t	coop = {"coop", "0", CVAR_SERVERINFO};
+qbool sv_error = false;
+qbool server_cfg_done = false;
 
-cvar_t	skill = {"skill", "1"};
-
-cvar_t	registered = {"registered", "1", CVAR_ROM};
-// We need this cvar, because ktpro didn't allow to go at some placeses of, for example, start map.
-
-FILE	*sv_fraglogfile;
+client_t *WatcherId = NULL; // QW262
 
 void SV_AcceptClient (netadr_t adr, int userid, char *userinfo);
 
 //============================================================================
 
-// handles both maxclients and maxspectators
-void OnChange_maxclients (cvar_t *var, char *str, qbool *cancel) {
-	int user = Q_atoi(str);
-	int valid = bound(0, user, MAX_CLIENTS);
-	if (user != valid) {
-		Com_Printf("Only values in range %d - %d are allowed\n", 0, MAX_CLIENTS);
-		*cancel = true;
-	}
-}
+qbool GameStarted(void)
+{
+	mvddest_t *d;
 
+	for (d = demo.dest; d; d = d->nextdest)
+		if (d->desttype != DEST_STREAM) // oh, its not stream, treat as "game is started"
+			break;
+
+	return (d || strncasecmp(Info_ValueForKey(svs.info, "status"), "Standby", 8));
+}
 /*
-Used by SV_Shutdown to send a final message to all connected clients before the server goes down.
-The messages are sent immediately, not just stuck on the outgoing message list, because the
-server is going to totally exit after returning from this function.
+================
+SV_Shutdown
+
+Quake calls this before calling Sys_Quit or Sys_Error
+================
 */
-void SV_FinalMessage (char *message) {
+void SV_Shutdown (char *finalmsg)
+{
 	int i;
-	client_t *cl;
 
-	if (!sv.state)
-		return;
-
-	SZ_Clear (&net_message);
-	MSG_WriteByte (&net_message, svc_print);
-	MSG_WriteByte (&net_message, PRINT_HIGH);
-	MSG_WriteString (&net_message, message);
-	MSG_WriteByte (&net_message, svc_disconnect);
-
-	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
-		if (cl->state >= cs_spawned)
-			Netchan_Transmit (&cl->netchan, net_message.cursize, net_message.data);
-}
-
-//Quake calls this before calling Sys_Quit or Sys_Error
-void SV_Shutdown (char *finalmsg) {
-	SV_FinalMessage (finalmsg);
+	if (sv.state)
+		Com_Printf("%s\n", finalmsg);
 
 	Master_Shutdown ();
 
-	if (sv_fraglogfile) {
-		fclose (sv_fraglogfile);
-		sv_fraglogfile = NULL;
+	if (telnetport)
+		SV_Write_Log(TELNET_LOG, 1, "Server shutdown.\n");
+
+	for (i = MIN_LOG; i < MAX_LOG; ++i)
+	{
+		if (logs[i].sv_logfile)
+		{
+			fclose (logs[i].sv_logfile);
+			logs[i].sv_logfile = NULL;
+		}
 	}
+	if (sv.mvdrecording)
+		SV_MVDStop_f();
+
+//	NET_Shutdown ();
+
+#ifdef USE_PR2
+	if ( sv_vm )
+	{
+		PR2_GameShutDown();
+		VM_Unload( sv_vm );
+		sv_vm = NULL;
+	}
+#endif
 
 	memset (&sv, 0, sizeof(sv));
 	sv.state = ss_dead;
@@ -138,32 +249,159 @@ void SV_Shutdown (char *finalmsg) {
 	svs.lastuserid = 0;
 }
 
-//Called when the player is totally leaving the server, either willingly or unwillingly.
-//This is NOT called if the entire server is quiting or crashing.
-void SV_DropClient (client_t *drop) {
+/*
+================
+SV_Error
+
+Sends a datagram to all the clients informing them of the server crash,
+then exits
+================
+*/
+void SV_Error (char *error, ...)
+{
+	static qbool inerror = false;
+	static char string[1024];
+	va_list argptr;
+
+	sv_error = true;
+
+	if (inerror)
+		Sys_Error ("SV_Error: recursively entered (%s)", string);
+
+	inerror = true;
+
+	va_start (argptr, error);
+	vsnprintf (string, sizeof (string), error, argptr);
+	va_end (argptr);
+
+	assert(!string);
+
+	Con_Printf ("SV_Error: %s\n", string);
+
+//	SV_FinalMessage (va ("server crashed: %s\n", string));
+
+//	SV_Shutdown ("SV_Error\n");
+
+	Sys_Error ("SV_Error: %s", string);
+}
+
+static void SV_FreeHeadDelayedPacket(client_t *cl) {
+	if (cl->packets) {
+		packet_t *next = cl->packets->next;
+		cl->packets->next = svs.free_packets;
+		svs.free_packets = cl->packets;
+		cl->packets = next;
+	}
+}
+
+
+void SV_FreeDelayedPackets (client_t *cl) {
+	while (cl->packets)
+		SV_FreeHeadDelayedPacket(cl);
+}
+
+/*
+==================
+SV_FinalMessage
+
+Used by SV_Error and SV_Quit_f to send a final message to all connected
+clients before the server goes down.  The messages are sent immediately,
+not just stuck on the outgoing message list, because the server is going
+to totally exit after returning from this function.
+==================
+*/
+void SV_FinalMessage (const char *message)
+{
+	client_t *cl;
+	int i;
+
+	SZ_Clear (&net_message);
+	MSG_WriteByte (&net_message, svc_print);
+	MSG_WriteByte (&net_message, PRINT_HIGH);
+	MSG_WriteString (&net_message, message);
+	MSG_WriteByte (&net_message, svc_disconnect);
+
+	for (i=0, cl = svs.clients ; i<MAX_CLIENTS ; i++, cl++)
+		if (cl->state >= cs_spawned)
+			Netchan_Transmit (&cl->netchan, net_message.cursize
+			                  , net_message.data);
+}
+
+
+
+/*
+=====================
+SV_DropClient
+
+Called when the player is totally leaving the server, either willingly
+or unwillingly.  This is NOT called if the entire server is quiting
+or crashing.
+=====================
+*/
+#ifdef USE_PR2
+void RemoveBot(client_t *cl);
+#endif
+void SV_DropClient (client_t *drop)
+{
+	//bliP: cuff, mute ->
+	SV_SavePenaltyFilter (drop, ft_mute, drop->lockedtill);
+	SV_SavePenaltyFilter (drop, ft_cuff, drop->cuff_time);
+	//<-
+
+	//bliP: player logging
+	if (drop->name[0])
+		SV_LogPlayer(drop, "disconnect", 1);
+	//<-
+
 	// add the disconnect
+#ifdef USE_PR2
+	if( drop->isBot )
+	{
+		RemoveBot(drop);
+		return;
+	}
+#endif
 	MSG_WriteByte (&drop->netchan.message, svc_disconnect);
 
-	if (drop->state == cs_spawned) {
-		if (!drop->spectator) {
+	if (drop->state == cs_spawned)
+	{
+		if (!drop->spectator)
+		{
 			// call the prog function for removing a client
 			// this will set the body to a dead frame, among other things
 			pr_global_struct->self = EDICT_TO_PROG(drop->edict);
-			PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
-		} else if (SpectatorDisconnect) {
+#ifdef USE_PR2
+			if ( sv_vm )
+				PR2_GameClientDisconnect(0);
+			else
+#endif
+				PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
+		}
+		else if (SpectatorDisconnect
+#ifdef USE_PR2
+			|| ( sv_vm )
+#endif
+			)
+		{
 			// call the prog function for removing a client
 			// this will set the body to a dead frame, among other things
 			pr_global_struct->self = EDICT_TO_PROG(drop->edict);
-			PR_ExecuteProgram (SpectatorDisconnect);
+#ifdef USE_PR2
+			if ( sv_vm )
+				PR2_GameClientDisconnect(1);
+			else
+#endif
+				PR_ExecuteProgram (SpectatorDisconnect);
 		}
 	}
 
 	if (drop->spectator)
-		Com_Printf ("Spectator %s removed\n",drop->name);
+		Con_Printf ("Spectator %s removed\n",drop->name);
 	else
-		Com_Printf ("Client %s removed\n",drop->name);
+		Con_Printf ("Client %s removed\n",drop->name);
 
-	if (drop->download) {
+	if (drop->download)
+	{
 #ifndef WITH_FTE_VFS
 		fclose (drop->download);
 #else
@@ -171,35 +409,65 @@ void SV_DropClient (client_t *drop) {
 #endif
 		drop->download = NULL;
 	}
-	if (drop->upload) {
+	if (drop->upload)
+	{
 		fclose (drop->upload);
 		drop->upload = NULL;
 	}
 	*drop->uploadfn = 0;
 
+	SV_Logout(drop);
+
 	drop->state = cs_zombie;		// become free in a few seconds
-	drop->connection_started = svs.realtime;	// for zombie timeout
+	drop->connection_started = realtime;	// for zombie timeout
+
+// MD -->
+	if (drop == WatcherId)
+		WatcherId = NULL;
+// <-- MD
 
 	drop->old_frags = 0;
-	drop->edict->v.frags = 0;
+	drop->edict->v.frags = 0.0;
 	drop->name[0] = 0;
-	memset (drop->userinfo, 0, sizeof(drop->userinfo));
+
+	Info_RemoveAll(&drop->_userinfo_ctx_);
+	Info_RemoveAll(&drop->_userinfoshort_ctx_);
 
 	// send notification to all remaining clients
 	SV_FullClientUpdate (drop, &sv.reliable_datagram);
 }
 
+
 //====================================================================
 
-int SV_CalcPing (client_t *cl) {
-	float ping;
-	int i, count;
+/*
+===================
+SV_CalcPing
+
+===================
+*/
+int SV_CalcPing (client_t *cl)
+{
 	register client_frame_t *frame;
+	int count, i;
+	float ping;
+
+
+	//bliP: 999 ping for connecting players
+	if (cl->state != cs_spawned)
+		return 999;
+	//<-
 
 	ping = 0;
 	count = 0;
-	for (frame = cl->frames, i = 0; i < UPDATE_BACKUP; i++, frame++) {
-		if (frame->ping_time > 0) {
+#ifdef USE_PR2
+	if( cl->isBot )
+		return ((int) (sv_mintic.value * 1000));
+#endif
+	for (frame = cl->frames, i=0 ; i<UPDATE_BACKUP ; i++, frame++)
+	{
+		if (frame->ping_time > 0)
+		{
 			ping += frame->ping_time;
 			count++;
 		}
@@ -211,15 +479,21 @@ int SV_CalcPing (client_t *cl) {
 	return ping*1000;
 }
 
-//Writes all update values to a sizebuf
-void SV_FullClientUpdate (client_t *client, sizebuf_t *buf) {
+/*
+===================
+SV_FullClientUpdate
+
+Writes all update values to a sizebuf
+===================
+*/
+void SV_FullClientUpdate (client_t *client, sizebuf_t *buf)
+{
+	char info[MAX_EXT_INFO_STRING];
 	int i;
-	char info[MAX_INFO_STRING];
 
 	i = client - svs.clients;
 
-	if (client->state == cs_free && sv_fastconnect.value)
-		return;
+	//Sys_Printf("SV_FullClientUpdate:  Updated frags for client %d\n", i);
 
 	MSG_WriteByte (buf, svc_updatefrags);
 	MSG_WriteByte (buf, i);
@@ -235,9 +509,9 @@ void SV_FullClientUpdate (client_t *client, sizebuf_t *buf) {
 
 	MSG_WriteByte (buf, svc_updateentertime);
 	MSG_WriteByte (buf, i);
-	MSG_WriteFloat (buf, svs.realtime - client->connection_started);
+	MSG_WriteFloat (buf, realtime - client->connection_started);
 
-	strlcpy (info, client->userinfo, sizeof (info));
+	Info_ReverseConvert(&client->_userinfoshort_ctx_, info, sizeof(info));
 	Info_RemovePrefixedKeys (info, '_');	// server passwords, etc
 
 	MSG_WriteByte (buf, svc_updateuserinfo);
@@ -246,25 +520,40 @@ void SV_FullClientUpdate (client_t *client, sizebuf_t *buf) {
 	MSG_WriteString (buf, info);
 }
 
-//Writes all update values to a client's reliable stream
-void SV_FullClientUpdateToClient (client_t *client, client_t *cl) {
-	ClientReliableCheckBlock(cl, 24 + strlen(client->userinfo));
-	if (cl->num_backbuf) {
+/*
+===================
+SV_FullClientUpdateToClient
+
+Writes all update values to a client's reliable stream
+===================
+*/
+void SV_FullClientUpdateToClient (client_t *client, client_t *cl)
+{
+	char info[MAX_EXT_INFO_STRING];
+
+	Info_ReverseConvert(&client->_userinfoshort_ctx_, info, sizeof(info));
+
+	ClientReliableCheckBlock(cl, 24 + strlen(info));
+	if (cl->num_backbuf)
+	{
 		SV_FullClientUpdate (client, &cl->backbuf);
 		ClientReliable_FinishWrite(cl);
-	} else
+	}
+	else
 		SV_FullClientUpdate (client, &cl->netchan.message);
 }
 
-//Returns a unique userid in 1..99 range
+//Returns a unique userid in [1..MAXUSERID] range
+#define MAXUSERID 99
 int SV_GenerateUserID (void)
 {
-	int i;
 	client_t *cl;
+	int i;
+
 
 	do {
 		svs.lastuserid++;
-		if (svs.lastuserid == 100)
+		if (svs.lastuserid == 1 + MAXUSERID)
 			svs.lastuserid = 1;
 		for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
 			if (cl->state != cs_free && cl->userid == svs.lastuserid)
@@ -276,121 +565,243 @@ int SV_GenerateUserID (void)
 
 /*
 ==============================================================================
+
 CONNECTIONLESS COMMANDS
+
 ==============================================================================
 */
 
-//Responds with all the info that qplug or qspy can see
-//This message can be up to around 5k with worst case string lengths.
-void SVC_Status (void) {
+/*
+================
+SVC_Status
+
+Responds with all the info that qplug or qspy can see
+This message can be up to around 5k with worst case string lengths.
+================
+*/
+#define STATUS_OLDSTYLE					0
+#define	STATUS_SERVERINFO				1
+#define	STATUS_PLAYERS					2
+#define	STATUS_SPECTATORS				4
+#define	STATUS_SPECTATORS_AS_PLAYERS	8 //for ASE - change only frags: show as "S"
+#define STATUS_SHOWTEAMS				16
+
+static void SVC_Status (void)
+{
+	int top, bottom, ping, i, opt = 0;
+	char *name, *frags;
 	client_t *cl;
-	int i, ping, top, bottom;
+
+
+	if (Cmd_Argc() > 1)
+		opt = Q_atoi(Cmd_Argv(1));
 
 	SV_BeginRedirect (RD_PACKET);
-	Com_Printf ("%s\n", svs.info);
-	for (i = 0; i < MAX_CLIENTS; i++) {
-		cl = &svs.clients[i];
-		if ((cl->state == cs_connected || cl->state == cs_spawned ) && !cl->spectator) {
-			top = atoi(Info_ValueForKey (cl->userinfo, "topcolor"));
-			bottom = atoi(Info_ValueForKey (cl->userinfo, "bottomcolor"));
-			top = (top < 0) ? 0 : ((top > 13) ? 13 : top);
-			bottom = (bottom < 0) ? 0 : ((bottom > 13) ? 13 : bottom);
-			ping = SV_CalcPing (cl);
-			Com_Printf ("%i %i %i %i \"%s\" \"%s\" %i %i\n", cl->userid,
-				cl->old_frags, (int)(svs.realtime - cl->connection_started)/60,
-				ping, cl->name, Info_ValueForKey (cl->userinfo, "skin"), top, bottom);
+	if (opt == STATUS_OLDSTYLE || (opt & STATUS_SERVERINFO))
+		Con_Printf ("%s\n", svs.info);
+	if (opt == STATUS_OLDSTYLE || (opt & (STATUS_PLAYERS | STATUS_SPECTATORS)))
+		for (i = 0; i < MAX_CLIENTS; i++)
+		{
+			cl = &svs.clients[i];
+			if ( (cl->state >= cs_preconnected/* || cl->state == cs_spawned */) &&
+			        ( (!cl->spectator && ((opt & STATUS_PLAYERS) || opt == STATUS_OLDSTYLE)) ||
+			          ( cl->spectator && ( opt & STATUS_SPECTATORS)) ) )
+			{
+				top    = Q_atoi(Info_Get (&cl->_userinfo_ctx_, "topcolor"));
+				bottom = Q_atoi(Info_Get (&cl->_userinfo_ctx_, "bottomcolor"));
+				top    = (top    < 0) ? 0 : ((top    > 13) ? 13 : top);
+				bottom = (bottom < 0) ? 0 : ((bottom > 13) ? 13 : bottom);
+				ping   = SV_CalcPing (cl);
+				name   = cl->name;
+				if (cl->spectator)
+				{
+					if (opt & STATUS_SPECTATORS_AS_PLAYERS)
+						frags = "S";
+					else
+					{
+						ping  = -ping;
+						frags = "-9999";
+						name  = va("\\s\\%s", name);
+					}
+				}
+				else
+					frags = va("%i", cl->old_frags);
+
+				Con_Printf ("%i %s %i %i \"%s\" \"%s\" %i %i", cl->userid, frags,
+				            (int)(realtime - cl->connection_started)/60, ping, name,
+				            Info_Get (&cl->_userinfo_ctx_, "skin"), top, bottom);
+
+				if (opt & STATUS_SHOWTEAMS)
+					Con_Printf (" \"%s\"\n", cl->team);
+				else
+					Con_Printf ("\n");
+			}
 		}
-	}
 	SV_EndRedirect ();
 }
 
+/*
+===================
+SVC_LastScores
+
+===================
+*/
+void SV_LastScores_f (void);
+static void SVC_LastScores (void)
+{
+	if(!(int)sv_allowlastscores.value)
+		return;
+
+	SV_BeginRedirect (RD_PACKET);
+	SV_LastScores_f ();
+	SV_EndRedirect ();
+}
+
+/*
+===================
+SVC_DemoList
+SVC_DemoListRegex
+===================
+*/
+void SV_DemoList_f (void);
+static void SVC_DemoList (void)
+{
+	SV_BeginRedirect (RD_PACKET);
+	SV_DemoList_f ();
+	SV_EndRedirect ();
+}
+void SV_DemoListRegex_f (void);
+static void SVC_DemoListRegex (void)
+{
+	SV_BeginRedirect (RD_PACKET);
+	SV_DemoListRegex_f ();
+	SV_EndRedirect ();
+}
+
+/*
+===================
+SV_CheckLog
+
+===================
+*/
 #define	LOG_HIGHWATER	(MAX_DATAGRAM - 128)
 #define	LOG_FLUSH		10*60
-void SV_CheckLog (void) {
+static void SV_CheckLog (void)
+{
 	sizebuf_t *sz;
+
+	if (sv.state != ss_active)
+		return;
 
 	sz = &svs.log[svs.logsequence&1];
 
 	// bump sequence if allmost full, or ten minutes have passed and
 	// there is something still sitting there
-	if (sz->cursize > LOG_HIGHWATER || (svs.realtime - svs.logtime > LOG_FLUSH && sz->cursize)) {
+	if (sz->cursize > LOG_HIGHWATER
+	        || (realtime - svs.logtime > LOG_FLUSH && sz->cursize) )
+	{
 		// swap buffers and bump sequence
-		svs.logtime = svs.realtime;
+		svs.logtime = realtime;
 		svs.logsequence++;
 		sz = &svs.log[svs.logsequence&1];
 		sz->cursize = 0;
-		Com_DPrintf ("beginning fraglog sequence %i\n", svs.logsequence);
+		Con_DPrintf ("beginning fraglog sequence %i\n", svs.logsequence);
 	}
+
 }
 
 /*
+================
+SVC_Log
+
 Responds with all the logged frags for ranking programs.
-If a sequence number is passed as a parameter and it is the same as the current sequence,
-an A2A_NACK will be returned instead of the data.
+If a sequence number is passed as a parameter and it is
+the same as the current sequence, an A2A_NACK will be returned
+instead of the data.
+================
 */
-void SVC_Log (void) {
-	int seq;
+static void SVC_Log (void)
+{
 	char data[MAX_DATAGRAM+64];
+	int seq;
+
 
 	if (Cmd_Argc() == 2)
-		seq = atoi(Cmd_Argv(1));
+		seq = Q_atoi(Cmd_Argv(1));
 	else
 		seq = -1;
 
-	if (seq == svs.logsequence-1 || !sv_fraglogfile) {
-		// they already have this data, or we aren't logging frags
+	if (seq == svs.logsequence-1 || !logs[FRAG_LOG].sv_logfile)
+	{	// they already have this data, or we aren't logging frags
 		data[0] = A2A_NACK;
 		NET_SendPacket (NS_SERVER, 1, data, net_from);
 		return;
 	}
 
-	Com_DPrintf ("sending log %i to %s\n", svs.logsequence-1, NET_AdrToString(net_from));
+	Con_DPrintf ("sending log %i to %s\n", svs.logsequence-1, NET_AdrToString(net_from));
 
-	snprintf (data, sizeof (data), "stdlog %i\n", svs.logsequence-1);
-	strlcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)], sizeof (data));
+	snprintf (data, MAX_DATAGRAM + 64, "stdlog %i\n", svs.logsequence-1);
+	strlcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)], MAX_DATAGRAM + 64);
 
 	NET_SendPacket (NS_SERVER, strlen(data)+1, data, net_from);
 }
 
-//Just responds with an acknowledgement
-void SVC_Ping (void) {
-	char data;
+/*
+================
+SVC_Ping
 
-	data = A2A_ACK;
+Just responds with an acknowledgement
+================
+*/
+static void SVC_Ping (void)
+{
+	char data = A2A_ACK;
 
 	NET_SendPacket (NS_SERVER, 1, &data, net_from);
 }
 
-//Returns a challenge number that can be used in a subsequent client_connect command.
-//We do this to prevent denial of service attacks that flood the server with invalid connection IPs.
-//With a challenge, they must give a valid IP address.
-void SVC_GetChallenge (void) {
-	int i, oldest, oldestTime;
+/*
+=================
+SVC_GetChallenge
+
+Returns a challenge number that can be used
+in a subsequent client_connect command.
+We do this to prevent denial of service attacks that
+flood the server with invalid connection IPs.  With a
+challenge, they must give a valid IP address.
+=================
+*/
+static void SVC_GetChallenge (void)
+{
+	int oldestTime, oldest, i;
 	char buf[256], *over;
+
 
 	oldest = 0;
 	oldestTime = 0x7fffffff;
 
 	// see if we already have a challenge for this ip
-	for (i = 0; i < MAX_CHALLENGES; i++) {
+	for (i = 0 ; i < MAX_CHALLENGES ; i++)
+	{
 		if (NET_CompareBaseAdr (net_from, svs.challenges[i].adr))
 			break;
-		if (svs.challenges[i].time < oldestTime) {
+		if (svs.challenges[i].time < oldestTime)
+		{
 			oldestTime = svs.challenges[i].time;
 			oldest = i;
 		}
 	}
 
-	if (i == MAX_CHALLENGES) {
+	if (i == MAX_CHALLENGES)
+	{
 		// overwrite the oldest
 		svs.challenges[oldest].challenge = (rand() << 16) ^ rand();
 		svs.challenges[oldest].adr = net_from;
-		svs.challenges[oldest].time = svs.realtime;
+		svs.challenges[oldest].time = realtime;
 		i = oldest;
 	}
 
 	// send it back
-
 	snprintf(buf, sizeof(buf), "%c%i", S2C_CHALLENGE, svs.challenges[i].challenge);
 	over = buf + strlen(buf) + 1;
 
@@ -409,34 +820,285 @@ void SVC_GetChallenge (void) {
 		over += 4;
 	}
 #endif
-	assert (buf > over);
-	Netchan_OutOfBand(NS_SERVER, net_from, over-buf, (byte *) buf);
+	Netchan_OutOfBand(NS_SERVER, net_from, over-buf, (byte*) buf);
 }
 
-//A connection request that did not come from the master
-void SVC_DirectConnect (void) {
-	char		userinfo[1024], *s;
-	netadr_t	adr;
-	int		i, edictnum, clients, spectators, qport, version, challenge;
-	client_t	*cl, *newcl;
-	edict_t		*ent;
-	qbool	spectator;
+static qbool ValidateUserInfo (char *userinfo)
+{
+	while (*userinfo)
+	{
+		if (*userinfo == '\\')
+			userinfo++;
+
+		if (*userinfo++ == '\\')
+			return false;
+		while (*userinfo && *userinfo != '\\')
+			userinfo++;
+	}
+	return true;
+}
+
+//==============================================
+
+void FixMaxClientsCvars(void)
+{
+	if ((int)maxclients.value > MAX_CLIENTS)
+		Cvar_SetValue (&maxclients, MAX_CLIENTS);
+
+	if ((int)maxspectators.value > MAX_CLIENTS)
+		Cvar_SetValue (&maxspectators, MAX_CLIENTS);
+
+	if ((int)maxvip_spectators.value > MAX_CLIENTS)
+		Cvar_SetValue (&maxvip_spectators, MAX_CLIENTS);
+
+	if ((int)maxspectators.value + maxclients.value > MAX_CLIENTS)
+		Cvar_SetValue (&maxspectators, MAX_CLIENTS - (int)maxclients.value);
+
+	if ((int)maxspectators.value + maxclients.value + maxvip_spectators.value > MAX_CLIENTS)
+		Cvar_SetValue (&maxvip_spectators, MAX_CLIENTS - (int)maxclients.value - (int)maxspectators.value);
+
+}
+
+//==============================================
+
+// see if the challenge is valid
+qbool CheckChallange( int challenge )
+{
+	int i;
+
+	for (i = 0; i < MAX_CHALLENGES; i++)
+	{
+		if (NET_CompareBaseAdr (net_from, svs.challenges[i].adr))
+		{
+			if (challenge == svs.challenges[i].challenge)
+				break;		// good
+
+			Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nBad challenge.\n", A2C_PRINT);
+			return false;
+		}
+	}
+
+	if (i == MAX_CHALLENGES)
+	{
+		Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nNo challenge for address.\n", A2C_PRINT);
+		return false;
+	}
+
+	return true;
+}
+
+//==============================================
+
+qbool CheckProtocol( int ver )
+{
+	if (ver != PROTOCOL_VERSION)
+	{
+//		Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nServer is version %4.2f.\n", A2C_PRINT, QW_VERSION);
+		Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nServer is version " QW_VERSION ".\n", A2C_PRINT);
+		Con_Printf ("* rejected connect from version %i\n", ver);
+		return false;
+	}
+
+	return true;
+}
+
+//==============================================
+
+qbool CheckUserinfo( char *userinfobuf, unsigned int bufsize, char *userinfo )
+{
+	strlcpy (userinfobuf, userinfo, bufsize);
+
+	// and now validate userinfo
+	if ( !ValidateUserInfo( userinfobuf ) )
+	{
+		Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nInvalid userinfo. Restart your qwcl\n", A2C_PRINT);
+		return false;
+	}
+
+	return true;
+}
+
+//==============================================
+
+int SV_VIPbyIP(netadr_t adr);
+int SV_VIPbyPass (char *pass);
+
+qbool CheckPasswords( char *userinfo, int userinfo_size, qbool *spass_ptr, qbool *vip_ptr, int *spectator_ptr )
+{
+	int spectator;
+	qbool spass, vip;
+
+	char *s = Info_ValueForKey (userinfo, "spectator");
+	char *pwd;
+
+	spass = vip = spectator = false;
+
+	if (s[0] && strcmp(s, "0"))
+	{
+		spass = true;
+
+		// first the pass, then ip
+		if ( !( vip = SV_VIPbyPass( s ) ) )
+		{
+			if ( !( vip = SV_VIPbyPass( Info_ValueForKey( userinfo, "password") ) ) )
+			{
+				vip = SV_VIPbyIP( net_from );
+			}
+		}
+
+		pwd = spectator_password.string;
+
+		if (pwd[0] && strcasecmp(pwd, "none") && strcmp(pwd, s))
+		{
+			spass = false; // failed
+		}
+
+		if (!vip && !spass)
+		{
+			Con_Printf ("%s:spectator password failed\n", NET_AdrToString (net_from));
+			Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nrequires a spectator password\n\n", A2C_PRINT);
+
+			return false;
+		}
+
+		Info_RemoveKey (userinfo, "spectator"); // remove passwd
+		Info_SetValueForStarKey (userinfo, "*spectator", "1", userinfo_size);
+
+		spectator = Q_atoi(s);
+
+		if (!spectator)
+			spectator = true;
+	}
+	else
+	{
+		s = Info_ValueForKey (userinfo, "password");
+
+		// first the pass, then ip
+		if (!(vip = SV_VIPbyPass(s)))
+		{
+			vip = SV_VIPbyIP(net_from);
+		}
+
+		pwd = password.string;
+
+		if (!vip && pwd[0] && strcasecmp(pwd, "none") && strcmp(pwd, s))
+		{
+			Con_Printf ("%s:password failed\n", NET_AdrToString (net_from));
+			Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nserver requires a password\n\n", A2C_PRINT);
+
+			return false;
+		}
+
+		Info_RemoveKey (userinfo, "spectator"); // remove "spectator 0" for example
+
+		spectator = false;
+	}
+
+	Info_RemoveKey (userinfo, "password"); // remove passwd
+
+	// copy 
+	*spass_ptr     = spass;
+	*vip_ptr       = vip;
+	*spectator_ptr = spectator;
+
+	return true;
+}
+
+//==============================================
+
+qbool CheckReConnect( netadr_t adr, int qport )
+{
+	int i;
+	client_t *cl;
+
+	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
+	{
+		if (cl->state == cs_free)
+			continue;
+
+		if (NET_CompareBaseAdr (adr, cl->netchan.remote_address) &&
+			(cl->netchan.qport == qport || adr.port == cl->netchan.remote_address.port))
+		{
+			//bliP: reconnect limit
+			if ((realtime - cl->lastconnect) < sv_reconnectlimit.value * 1000)
+			{
+				Con_Printf ("%s:reconnect rejected: too soon\n", NET_AdrToString (adr));
+
+				return false;
+			}
+			//<-
+
+			if (cl->state == cs_connected || cl->state == cs_preconnected)
+			{
+				Con_Printf("%s:dup connect\n", NET_AdrToString (adr));
+				// if client core dumped, then allow to reuse slot (EXPERIMENTAL)
+				SV_DropClient (cl);
+				SV_ClearReliable (cl);	// don't send the disconnect
+				//return false;
+			}
+
+			Con_Printf ("%s:reconnect\n", NET_AdrToString (adr));
+			if (cl->state == cs_spawned)
+			{
+				SV_DropClient (cl);
+				SV_ClearReliable (cl);	// don't send the disconnect
+			}
+
+			cl->state = cs_free;
+			break;
+		}
+	}
+
+	return true;
+}
+
+/*
+==================
+SVC_DirectConnect
+
+A connection request that did not come from the master
+==================
+*/
+extern void MVD_PlayerReset(int player);
+
+#ifdef USE_PR2
+extern char clientnames[MAX_CLIENTS][CLIENT_NAME_LEN];
+#endif
+extern char *shortinfotbl[];
+
+static void SVC_DirectConnect (void)
+{
+	int spectator;
+	qbool spass, vip, rip_vip;
+
+	int clients, spectators, vips;
+	int qport, i, edictnum;
+
+	client_t *cl, *newcl;
+
+	char userinfo[1024];
+	char *s;
+	netadr_t adr;
+	edict_t *ent;
+
 #ifdef PROTOCOL_VERSION_FTE
 	unsigned int protextsupported = 0;
 #endif
 
-	version = atoi(Cmd_Argv(1));
-	if (version != PROTOCOL_VERSION) {
-		Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nServer is version %4.2f.\n", A2C_PRINT, QW_VERSION);
-		Com_Printf ("* rejected connect from version %i\n", version);
-		return;
-	}
+	// check version/protocol
+	if ( !CheckProtocol( Q_atoi( Cmd_Argv( 1 ) ) ) )
+		return; // wrong protocol number
 
-	qport = atoi(Cmd_Argv(2));
-	challenge = atoi(Cmd_Argv(3));
+	// get qport
+	qport = Q_atoi( Cmd_Argv( 2 ) );
 
-	// note an extra byte is needed to replace spectator key
-	strlcpy (userinfo, Cmd_Argv(4), sizeof(userinfo)-1);
+	// see if the challenge is valid
+	if ( !CheckChallange( Q_atoi( Cmd_Argv( 3 ) ) ) )
+		return; // wrong challange
+
+	// and now validate userinfo
+	if ( !CheckUserinfo( userinfo, sizeof( userinfo ), Cmd_Argv( 4 ) ) )
+		return; // wrong userinfo
 
 #ifdef PROTOCOL_VERSION_FTE
 
@@ -444,14 +1106,15 @@ void SVC_DirectConnect (void) {
 // WARNING: WARNING: WARNING: using Cmd_TokenizeString() so do all Cmd_Argv() above.
 //
 
-	while(!msg_badread)
+	while( !msg_badread )
 	{
-		Cmd_TokenizeString(MSG_ReadStringLine());
-		switch(Q_atoi(Cmd_Argv(0)))
+		Cmd_TokenizeString( MSG_ReadStringLine() );
+
+		switch( Q_atoi( Cmd_Argv( 0 ) ) )
 		{
 		case PROTOCOL_VERSION_FTE:
-			protextsupported = Q_atoi(Cmd_Argv(1));
-			Com_DPrintf("Client supports 0x%x fte extensions\n", protextsupported);
+			protextsupported = Q_atoi( Cmd_Argv( 1 ) );
+			Con_DPrintf("Client supports 0x%x fte extensions\n", protextsupported);
 			break;
 		}
 	}
@@ -460,227 +1123,667 @@ void SVC_DirectConnect (void) {
 
 #endif
 
-	// see if the challenge is valid
-	if (net_from.type != NA_LOOPBACK) {
-		for (i = 0; i < MAX_CHALLENGES; i++) {
-			if (NET_CompareBaseAdr (net_from, svs.challenges[i].adr)) {
-				if (challenge == svs.challenges[i].challenge)
-					break;		// good
-				Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nBad challenge.\n", A2C_PRINT);
-				return;
-			}
-		}
-		if (i == MAX_CHALLENGES) {
-			Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nNo challenge for address.\n", A2C_PRINT);
-			return;
-		}
-	}
+	spass = vip = rip_vip = spectator = false;
 
 	// check for password or spectator_password
-	s = Info_ValueForKey (userinfo, "spectator");
-	if (s[0] && strcmp(s, "0")) {
-		if (spectator_password.string[0] &&
-			strcasecmp(spectator_password.string, "none") &&
-			strcmp(spectator_password.string, s) )
-		{	// failed
-			Com_Printf ("%s:spectator password failed\n", NET_AdrToString (net_from));
-			Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nrequires a spectator password\n\n", A2C_PRINT);
-			return;
-		}
-		Info_RemoveKey (userinfo, "spectator"); // remove passwd
-		Info_SetValueForStarKey (userinfo, "*spectator", "1", MAX_INFO_STRING);
-		spectator = true;
-	} else {
-		s = Info_ValueForKey (userinfo, "password");
-		if (password.string[0] && strcasecmp(password.string, "none") && strcmp(password.string, s) ) {
-			Com_Printf ("%s:password failed\n", NET_AdrToString (net_from));
-			Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nserver requires a password\n\n", A2C_PRINT);
-			return;
-		}
-		spectator = false;
-		Info_RemoveKey (userinfo, "password"); // remove passwd
-	}
+	if ( !CheckPasswords( userinfo, sizeof(userinfo), &spass, &vip, &spectator) )
+		return; // pass was wrong
 
 	adr = net_from;
 
-	// if there is already a slot for this ip, reuse it
-	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++,cl++) {
-		if (cl->state == cs_free)
-			continue;
-		if (NET_CompareBaseAdr (adr, cl->netchan.remote_address)
-			&& ( cl->netchan.qport == qport || adr.port == cl->netchan.remote_address.port )) {
-			if (cl->state == cs_connected) {
-				Com_Printf ("%s:dup connect\n", NET_AdrToString (adr));
-				return;
-			}
-
-			Com_Printf ("%s:reconnect\n", NET_AdrToString (adr));
-			if (cl->state == cs_spawned) {
-				SV_DropClient (cl);
-				SV_ClearReliable (cl);	// don't send the disconnect
-			}
-			cl->state = cs_free;
-			break;
-		}
-	}
+	// if there is already a slot for this ip, reuse (changed from drop) it
+	if ( !CheckReConnect( adr, qport ) )
+		return; // can't do that for some reason
 
 	// count up the clients and spectators
-	clients = spectators = 0;
+	clients = spectators = vips = 0;
 	newcl = NULL;
-	for (i = 0,cl=svs.clients; i < MAX_CLIENTS; i++,cl++) {
-		if (cl->state == cs_free) {
+
+	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
+	{
+		if (cl->state == cs_free)
+		{
 			if (!newcl)
-				newcl = cl;		// grab first available slot
+				newcl = cl; // grab first available slot
+
 			continue;
 		}
+
+		if (cl->vip)
+			vips++;
+
 		if (cl->spectator)
-			spectators++;
+		{
+			if (!cl->vip)
+				spectators++;
+		}
 		else
 			clients++;
 	}
 
+	FixMaxClientsCvars();
+
 	// if at server limits, refuse connection
-	if ((spectator && spectators >= (int)maxspectators.value)
-		|| (!spectator && clients >= (int)maxclients.value)
-		|| !newcl)
+
+	if (    (vip && spectator && vips >= (int)maxvip_spectators.value && (spectators >= (int)maxspectators.value || !spass))
+         || (!vip && spectator && (spectators >= (int)maxspectators.value || !spass))
+	     || (!spectator && clients >= (int)maxclients.value)
+         || !newcl
+       )
 	{
-		Com_Printf ("%s:full connect\n", NET_AdrToString (adr));
-		Netchan_OutOfBandPrint (NS_SERVER, adr, "%c\nserver is full\n\n", A2C_PRINT);
-		return;
+		Sys_Printf ("%s:full connect\n", NET_AdrToString (adr));
+
+		// no way to connect does't matter VIP or whatever, just no free slots
+		if (!newcl)
+		{
+			Netchan_OutOfBandPrint (NS_SERVER, adr, "%c\nserver is full\n\n", A2C_PRINT);
+			return;
+		}
+
+		// !!! SPECTATOR 2 FEATURE !!!
+		if (spectator == 2 && !vip &&  vips < (int)maxvip_spectators.value)
+		{
+			vip = rip_vip = 1; // yet can be connected if realip is on vip list
+		}
+		else if (    !spectator && spectators < (int)maxspectators.value
+				  && (
+				  	      (    (Q_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_SPEC_ONFULL)
+				  	      	&& (int)sv_forcespec_onfull.value == 2
+				  	      ) 
+				   	   		|| (int)sv_forcespec_onfull.value == 1
+				   	 )
+				)
+		{
+			Netchan_OutOfBandPrint (NS_SERVER, adr, "%c\nserver is full: connecting as spectator\n", A2C_PRINT);
+			Info_SetValueForStarKey (userinfo, "*spectator", "1", sizeof(userinfo));
+			spectator = true;
+		}
+		else
+		{
+			Netchan_OutOfBandPrint (NS_SERVER, adr, "%c\nserver is full\n\n", A2C_PRINT);
+			return;
+		}
 	}
 
 	// build a new connection
 	// accept the new client
 	// this is the only place a client_t is ever initialized
 	memset (newcl, 0, sizeof(*newcl));
+
 	newcl->userid = SV_GenerateUserID();
 
 #ifdef PROTOCOL_VERSION_FTE
 	newcl->fteprotocolextensions = protextsupported;
 #endif
 
-	strlcpy (newcl->userinfo, userinfo, sizeof(newcl->userinfo));
+	newcl->_userinfo_ctx_.max      = MAX_CLIENT_INFOS;
+	newcl->_userinfoshort_ctx_.max = MAX_CLIENT_INFOS;
+	Info_Convert(&newcl->_userinfo_ctx_, userinfo);
 
-	Netchan_OutOfBandPrint (NS_SERVER, adr, "%c", S2C_CONNECTION );
+	//for (i = 0; i < UPDATE_BACKUP; i++)
+	//	newcl->frames[i].entities.entities = cl_state_entities[newcl-svs.clients][i];
+
+	Netchan_OutOfBandPrint (NS_SERVER, adr, "%c", S2C_CONNECTION);
 
 	Netchan_Setup (NS_SERVER, &newcl->netchan, adr, qport);
 
-	newcl->state = cs_connected;
+	newcl->state = cs_preconnected;
 
-	SZ_Init (&newcl->datagram, newcl->datagram_buf, sizeof(newcl->datagram_buf));
 	newcl->datagram.allowoverflow = true;
+	newcl->datagram.data = newcl->datagram_buf;
+	newcl->datagram.maxsize = sizeof(newcl->datagram_buf);
 
 	// spectator mode can ONLY be set at join time
 	newcl->spectator = spectator;
+	newcl->vip = vip;
+	newcl->rip_vip = rip_vip;
 
 	// extract extensions mask
-	if (net_from.type == NA_LOOPBACK)
-		newcl->extensions = CLIENT_EXTENSIONS;
-	else
-		newcl->extensions = atoi(Info_ValueForKey(newcl->userinfo, "*z_ext"));
-	Info_RemoveKey (newcl->userinfo, "*z_ext");
+	newcl->extensions = Q_atoi(Info_Get(&newcl->_userinfo_ctx_, "*z_ext"));
+	Info_Remove (&newcl->_userinfo_ctx_, "*z_ext");
 
-	edictnum = (newcl - svs.clients) + 1;
+	edictnum = (newcl-svs.clients)+1;
 	ent = EDICT_NUM(edictnum);
 	ent->free = false;
 	newcl->edict = ent;
+#ifdef USE_PR2
+	//restore pointer to client name
+	//for -progtype 0 (VM_NONE) names stored in clientnames array
+	//for -progtype 1 (VM_NATIVE) and -progtype 2 (VM_BYTECODE)  stored in mod memory
+	if(sv_vm)
+		newcl->name = PR2_GetString(ent->v.netname);
+	else
+		newcl->name = clientnames[edictnum - 1];
+	memset(newcl->name, 0, CLIENT_NAME_LEN);
+#endif
+
+	s = ( vip ? va("%d", vip) : "" );
+
+	Info_SetStar (&newcl->_userinfo_ctx_, "*VIP", s);
+
+	// copy the most important userinfo into userinfoshort
+	// {
 
 	// parse some info from the info strings
-	SV_ExtractFromUserinfo (newcl);
+	SV_ExtractFromUserinfo (newcl, true);
 
-	// Init the floodprot stuff.
-	// FIXME: seems to break local server currently?
-	//for (i = 0; i < 10; i++)
-	//	newcl->whensaid[i] = 0.0;
+	for (i = 0; shortinfotbl[i] != NULL; i++)
+	{
+		s = Info_Get(&newcl->_userinfo_ctx_, shortinfotbl[i]);
+		Info_SetStar (&newcl->_userinfoshort_ctx_, shortinfotbl[i], s);
+	}
+
+	// move star keys to infoshort
+	Info_CopyStar( &newcl->_userinfo_ctx_, &newcl->_userinfoshort_ctx_ );
+
+	// }
+
+	// JACK: Init the floodprot stuff.
+	for (i=0; i<10; i++)
+		newcl->whensaid[i] = 0.0;
 	newcl->whensaidhead = 0;
 	newcl->lockedtill = 0;
+	newcl->disable_updates_stop = -1.0; // Vladis
+
+	newcl->realip_num = rand();
+
+	//bliP: init
+	newcl->spec_print = (int)sv_specprint.value;
+	newcl->logincount = 0;
+	//<-
 
 	// call the progs to get default spawn parms for the new client
-	PR_ExecuteProgram (pr_global_struct->SetNewParms);
-	for (i = 0; i < NUM_SPAWN_PARMS; i++)
+#ifdef USE_PR2
+	if ( sv_vm )
+		PR2_GameSetNewParms();
+	else
+#endif
+		PR_ExecuteProgram (pr_global_struct->SetNewParms);
+
+	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
 		newcl->spawn_parms[i] = (&pr_global_struct->parm1)[i];
 
-	if (newcl->spectator)
-		Com_Printf ("Spectator %s connected\n", newcl->name);
-	else
-		Com_DPrintf ("Client %s connected\n", newcl->name);
+	// mvd/qtv related stuff
+	// Well, here is a chance what player connect after demo recording started,
+	// so demo.info[edictnum - 1].model == player_model so SV_MVDWritePackets() will not wrote player model index,
+	// so client during playback this demo will got invisible model, because model index will be 0.
+	// Fixing that.
+	// Btw, struct demo contain different client specific structs, may be they need clearing too, not sure.
+	// Also, we have Cmd_Join_f()/Cmd_Observe_f() which have close behaviour to SVC_DirectConnect(),
+	// so I put same demo fix in mentioned functions too.
+	MVD_PlayerReset(NUM_FOR_EDICT(newcl->edict) - 1);
 
 	newcl->sendinfo = true;
 }
 
-int Rcon_Validate (void) {
-	if (!strlen (rcon_password.string))
+static int char2int (int c)
+{
+	if (c <= '9' && c >= '0')
+		return c - '0';
+	else if (c <= 'f' && c >= 'a')
+		return c - 'a' + 10;
+	else if (c <= 'F' && c >= 'A')
+		return c - 'A' + 10;
+	return 0;
+}
+/*
+ * rcon_bandlim() - check for rcon requests bandwidth limit
+ *
+ *      From kernel of the FreeBSD 4.10 release:
+ *      sys/netinet/ip_icmp.c(846): int badport_bandlim(int which);
+ *
+ *	Return false if it is ok to check rcon_password, true if we have
+ *	hit our bandwidth limit and it is not ok.
+ *
+ *	If sv_rconlim.value is <= 0, the feature is disabled and false is returned.
+ *
+ *	Note that the printing of the error message is delayed so we can
+ *	properly print the rcon limit error rate that the system was trying to do
+ *	(i.e. 22000/100 rcon pps, etc...).  This can cause long delays in printing
+ *	the 'final' error, but it doesn't make sense to solve the printing
+ *	delay with more complex code.
+ */
+static qbool rcon_bandlim (void)
+{
+	static double lticks = 0;
+	static int lpackets = 0;
+
+	/*
+	 * Return ok status if feature disabled or argument out of
+	 * ranage.
+	 */
+
+	if ((int)sv_rconlim.value <= 0)
+		return false;
+
+	/*
+	 * reset stats when cumulative dt exceeds one second.
+	 */
+
+	if (realtime - lticks > 1.0)
+	{
+		if (lpackets > (int)sv_rconlim.value)
+			Sys_Printf("WARNING: Limiting rcon response from %d to %d rcon pequests per second from %s\n",
+			           lpackets, (int)sv_rconlim.value, NET_AdrToString(net_from));
+		lticks = realtime;
+		lpackets = 0;
+	}
+
+	/*
+	 * bump packet count
+	 */
+
+	if (++lpackets > (int)sv_rconlim.value)
+		return true;
+
+	return false;
+}
+//bliP: master rcon/logging ->
+int Rcon_Validate (char *client_string, char *password1)
+{
+	time_t server_time, client_time = 0;
+	double difftime_server_client;
+	unsigned int i;
+
+
+	if (rcon_bandlim())
 		return 0;
 
-	if (strcmp (Cmd_Argv(1), rcon_password.string) )
+	if (!strlen (password1))
 		return 0;
 
+	if ((int)sv_crypt_rcon.value)
+	{
+		time(&server_time);
+		for (i = 0; i < sizeof(client_time) * 2; i += 2)
+		{
+			//			Sys_Printf("1) %c%c, %d\n", (Cmd_Argv(1) + DIGEST_SIZE * 2)[i], (Cmd_Argv(1) + DIGEST_SIZE * 2)[i + 1], client_time);
+
+			client_time +=  (char2int((unsigned char)(Cmd_Argv(1) + DIGEST_SIZE * 2)[i]) << (4 + i * 4)) +
+			                (char2int((unsigned char)(Cmd_Argv(1) + DIGEST_SIZE * 2)[i + 1]) << (i * 4));
+			//			Sys_Printf("2) %d, %d, %d\n", c1 << (4 + i * 4), c2 << (i * 4), client_time);
+		}
+		difftime_server_client = difftime(server_time, client_time);
+		//		Sys_Printf("3) %f, %d, %d\n", difftime_server_client, client_time, server_time);
+
+		if (!(int)sv_timestamplen.value)
+			if (difftime_server_client > (double) sv_timestamplen.value ||
+			        difftime_server_client < - (double) sv_timestamplen.value)
+				return 0;
+		SHA1_Init();
+		SHA1_Update(Cmd_Argv(0));
+		SHA1_Update(" ");
+		SHA1_Update(password1);
+		SHA1_Update(Cmd_Argv(1) + DIGEST_SIZE * 2);
+		SHA1_Update(" ");
+		//		SHA1_Update(va("%s %s%s ", Cmd_Argv(0), password1, Cmd_Argv(1) + DIGEST_SIZE * 2));
+		for (i = 2; (int) i < Cmd_Argc(); i++)
+		{
+			//			SHA1_Update(va("%s ", Cmd_Argv(i)));
+			SHA1_Update(Cmd_Argv(i));
+			SHA1_Update(" ");
+		}
+		//		sha1 = SHA1_Final();
+		//Con_Printf("client_string = %s\nserver_string = %s\nsha1 = %s\n", client_string, server_string, sha1);
+		//Con_Printf("server_string_len = %d, strlen(server_string) = %d\n", server_string_len, strlen(server_string));
+		if (strncmp (Cmd_Argv(1), SHA1_Final(), DIGEST_SIZE * 2))
+			return 0;
+	}
+	else
+		if (strcmp (Cmd_Argv(1), password1))
+			return 0;
 	return 1;
 }
 
+int Master_Rcon_Validate (void)
+{
+	int i, client_string_len = Cmd_Argc() + 1;
+	char *client_string;
+
+
+	for (i = 0; i < Cmd_Argc(); ++i)
+		client_string_len += strlen(Cmd_Argv(i));
+	client_string = (char *) Q_malloc (client_string_len);
+	*client_string = 0;
+	for (i = 0; i < Cmd_Argc(); ++i)
+	{
+		strlcat(client_string, Cmd_Argv(i), client_string_len);
+		strlcat(client_string, " ", client_string_len);
+	}
+	//	Sys_Printf("client_string = %s\nclient_string_len = %d, strlen(client_string) = %d\n",
+	//		client_string, client_string_len, strlen(client_string));
+	i = Rcon_Validate (client_string, master_rcon_password);
+	Q_free(client_string);
+	return i;
+}
+
+// QW262 -->
+void SV_Admin_f (void)
+{
+	client_t *cl;
+	int i = 0;
+
+	if (Cmd_Argc () == 2 && !strcmp (Cmd_Argv (1), "off") && WatcherId &&
+			NET_CompareAdr (WatcherId->netchan.remote_address, net_from))
+	{
+		Con_Printf ("Rcon Watch stopped\n");
+		WatcherId = NULL;
+		return;
+	}
+
+	if (WatcherId)
+		Con_Printf ("Rcon Watch is already being made by %s\n", WatcherId->name);
+	else
+	{
+		for (cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
+		{
+			if (cl->state != cs_spawned)
+				continue;
+
+			if (NET_CompareAdr (cl->netchan.remote_address, net_from))
+				break;
+		}
+
+		if (i == MAX_CLIENTS)
+		{
+			Con_Printf ("You are not connected to server!\n");
+			return;
+		}
+
+		WatcherId = cl;
+		Con_Printf ("Rcon Watch started for %s\n", cl->name);
+	}
+}
+// <-- QW262
+
 /*
+===============
+SVC_RemoteCommand
+
 A client issued an rcon command.
 Shift down the remaining args
 Redirect all printfs
+===============
 */
-void SVC_RemoteCommand (void) {
-	if (!Rcon_Validate ()) {
-		Com_Printf ("Bad rcon from %s:\n%s\n", NET_AdrToString (net_from), net_message.data + 4);
+static void SVC_RemoteCommand (char *remote_command)
+{
+	int			i;
+	char		str[1024];
+	char		plain[32];
+	char		*p;
+	unsigned char *hide;
+	client_t	*cl;
+	qbool		admin_cmd = false;
+	qbool		do_cmd = false;
+	qbool		bad_cmd = false;
+	qbool		banned = false;
+
+
+	if (Rcon_Validate (remote_command, master_rcon_password))
+	{
+		if (SV_FilterPacket()) //banned players can't use rcon, but we log it
+			banned = true;
+		else
+			do_cmd = true;
+	}
+	else if (Rcon_Validate (remote_command, rcon_password.string))
+	{
+		admin_cmd = true;
+		if (SV_FilterPacket()) //banned players can't use rcon, but we log it
+		{
+			bad_cmd = true;
+			banned = true;
+		}
+		else
+		{
+			//
+			// the following line prevents exploits like:
+			//   coop rm
+			//   $coop . *
+			// which expands to:
+			//   rm . *
+
+			Cmd_ExpandString (remote_command, str); // check *expanded* command
+
+			//
+			// since the execution parser is not case sensitive, we
+			// must check not only for chmod, but also CHMOD, ChmoD, etc.
+			// so we lowercase the whole temporary line before checking
+
+			// VVD: strcmp => strcasecmp and we don't need to do this (yes?)
+			//for(i = 0; str[i]; i++)
+			//	str[i] = (char)tolower(str[i]);
+
+			Cmd_TokenizeString (str);		// must check *all* tokens, because
+											// a command/var may not be the first
+											// token -- example: "" ls .
+
+			//
+			// normal rcon can't use these commands
+			//
+			// NOTE: this would still be vulnerable to semicolons if
+			// they were still allowed, so keep that in mind before
+			// re-enabling them
+
+			for (i = 2; i < Cmd_Argc(); i++)
+			{
+				const char *tstr = Cmd_Argv(i);
+
+				if(!tstr[0]) // skip leading empty tokens
+					continue;
+
+				if (!strcasecmp(tstr, "rm") ||
+					!strcasecmp(tstr, "rmdir") ||
+					!strcasecmp(tstr, "ls") ||
+					!strcasecmp(tstr, "chmod") ||
+					!strcasecmp(tstr, "sv_admininfo") ||
+					!strcasecmp(tstr, "if") ||
+					!strcasecmp(tstr, "localcommand") ||
+					!strcasecmp(tstr, "sv_crypt_rcon") ||
+					!strcasecmp(tstr, "sv_timestamplen") ||
+					!strncasecmp(tstr, "log", 3) ||
+					!strcasecmp(tstr, "sys_command_line")
+					)
+				{
+					bad_cmd = true;
+				}
+				break; // stop after first non-empty token
+			}
+
+			Cmd_TokenizeString (remote_command); // restore original tokens
+		}
+		do_cmd = !bad_cmd;
+	}
+
+	//find player name if rcon came from someone on server
+	plain[0] = '\0';
+	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
+	{
+		if (cl->state == cs_free)
+			continue;
+#ifdef USE_PR2
+		if (cl->isBot)
+			continue;
+#endif
+		if (!NET_CompareBaseAdr(net_from, cl->netchan.remote_address))
+			continue;
+		if (cl->netchan.remote_address.port != net_from.port)
+			continue;
+
+		strlcpy(plain, cl->name, sizeof(plain));
+		Q_normalizetext((unsigned char*)plain);
+
+		// we found what we need
+		break;
+	}
+
+	if (do_cmd)
+	{
+		if (!(int)sv_crypt_rcon.value)
+		{
+			hide = net_message.data + 9;
+			p = admin_cmd ? rcon_password.string : master_rcon_password;
+			while (*p)
+			{
+				p++;
+				*hide++ = '*';
+			}
+		}
+
+		if (plain[0])
+			SV_Write_Log(RCON_LOG, 1, va("Rcon from %s (%s): %s\n", NET_AdrToString(net_from), plain, net_message.data + 4));
+		else
+			SV_Write_Log(RCON_LOG, 1, va("Rcon from %s: %s\n", NET_AdrToString(net_from), net_message.data + 4));
+
+		Con_Printf("Rcon from %s:\n%s\n", NET_AdrToString(net_from), net_message.data + 4);
+
+		SV_BeginRedirect(RD_PACKET);
+
+		str[0] = '\0';
+		for (i = 2; i < Cmd_Argc(); i++)
+		{
+			strlcat(str, Cmd_Argv(i), sizeof(str));
+			strlcat(str, " ", sizeof(str));
+		}
+
+		Cmd_ExecuteString(str);
+	}
+	else
+	{
+		if (admin_cmd && !(int)sv_crypt_rcon.value)
+		{
+			hide = net_message.data + 9;
+			p = admin_cmd ? rcon_password.string : master_rcon_password;
+			while (*p)
+			{
+				p++;
+				*hide++ = '*';
+			}
+		}
+
+		Con_Printf ("Bad rcon from %s: %s\n", NET_AdrToString(net_from), net_message.data + 4);
+
+		if (!banned)
+		{
+			if (plain[0])
+				SV_Write_Log(RCON_LOG, 1, va("Bad rcon from %s (%s):\n%s\n", NET_AdrToString(net_from), plain, net_message.data + 4));
+			else
+				SV_Write_Log(RCON_LOG, 1, va("Bad rcon from %s:\n%s\n",	NET_AdrToString (net_from), net_message.data + 4));
+		}
+		else
+		{
+			SV_Write_Log(RCON_LOG, 1, va("Rcon from banned IP: %s: %s\n", NET_AdrToString(net_from), net_message.data + 4));
+			SV_SendBan();
+			return;
+		}
 
 		SV_BeginRedirect (RD_PACKET);
-		Com_Printf ("Bad rcon_password.\n");
-	} else {
-		Com_Printf ("Rcon from %s:\n%s\n", NET_AdrToString (net_from), net_message.data + 4);
-		SV_BeginRedirect (RD_PACKET);
-
-		Cmd_ExecuteString (Cmd_MakeArgs(2));
+		if (admin_cmd)
+			Con_Printf ("Command not valid.\n");
+		else
+			Con_Printf ("Bad rcon_password.\n");
 	}
 	SV_EndRedirect ();
 }
+//<-
 
-//A connectionless packet has four leading 0xff characters to distinguish it from a game channel.
-//Clients that are in the game can still send connectionless packets.
-void SV_ConnectionlessPacket (void) {
-	char *s, *c;
+static void SVC_IP(void)
+{
+	int num;
+	client_t *client;
+
+	if (Cmd_Argc() < 3)
+		return;
+
+	num = Q_atoi(Cmd_Argv(1));
+
+	if (num < 0 || num >= MAX_CLIENTS)
+		return;
+
+	client = &svs.clients[num];
+	if (client->state != cs_preconnected)
+		return;
+
+	// prevent cheating
+	if (client->realip_num != Q_atoi(Cmd_Argv(2)))
+		return;
+
+	// don't override previously set ip
+	if (client->realip.ip[0])
+		return;
+
+	client->realip = net_from;
+
+	// if banned drop
+	if (SV_FilterPacket()/* && !client->vip*/)
+		SV_DropClient(client);
+
+}
+
+
+/*
+=================
+SV_ConnectionlessPacket
+
+A connectionless packet has four leading 0xff
+characters to distinguish it from a game channel.
+Clients that are in the game can still send
+connectionless packets.
+=================
+*/
+
+static void SV_ConnectionlessPacket (void)
+{
+	char	*s;
+	char	*c;
 
 	MSG_BeginReading ();
 	MSG_ReadLong ();		// skip the -1 marker
 
 	s = MSG_ReadStringLine ();
-	s[1023] = 0;
 
 	Cmd_TokenizeString (s);
 
 	c = Cmd_Argv(0);
 
-	if (!strcmp(c, "ping") || (c[0] == A2A_PING && (c[1] == 0 || c[1] == '\n'))) {
+	if (!strcmp(c, "ping") || ( c[0] == A2A_PING && (c[1] == 0 || c[1] == '\n')) )
 		SVC_Ping ();
-		return;
-	}
-	if (c[0] == A2A_ACK && (c[1] == 0 || c[1] == '\n')) {
-		Com_Printf ("A2A_ACK from %s\n", NET_AdrToString (net_from));
-		return;
-	} else if (!strcmp(c, "status")) {
+	else if (c[0] == A2A_ACK && (c[1] == 0 || c[1] == '\n') )
+		Con_Printf ("A2A_ACK from %s\n", NET_AdrToString (net_from));
+	else if (!strcmp(c,"status"))
 		SVC_Status ();
-		return;
-	} else if (!strcmp(c, "log")) {
+	else if (!strcmp(c,"log"))
 		SVC_Log ();
-		return;
-	} else if (!strcmp(c, "connect")) {
+	else if (!strcmp(c, "rcon"))
+		SVC_RemoteCommand (s);
+	else if (!strcmp(c, "ip"))
+		SVC_IP();
+	else if (!strcmp(c,"connect"))
 		SVC_DirectConnect ();
-		return;
-	} else if (!strcmp(c, "getchallenge")) {
+	else if (!strcmp(c,"getchallenge"))
 		SVC_GetChallenge ();
-		return;
-	} else if (!strcmp(c, "rcon")) {
-		SVC_RemoteCommand ();
-	} else {
-		Com_Printf ("bad connectionless packet from %s:\n%s\n", NET_AdrToString (net_from), s);
-	}
+	else if (!strcmp(c,"lastscores"))
+		SVC_LastScores ();
+	else if (!strcmp(c,"dlist"))
+		SVC_DemoList ();
+	else if (!strcmp(c,"dlistr"))
+		SVC_DemoListRegex ();
+	else if (!strcmp(c,"dlistregex"))
+		SVC_DemoListRegex ();
+	else if (!strcmp(c,"demolist"))
+		SVC_DemoList ();
+	else if (!strcmp(c,"demolistr"))
+		SVC_DemoListRegex ();
+	else if (!strcmp(c,"demolistregex"))
+		SVC_DemoListRegex ();
+	else
+		Con_Printf ("bad connectionless packet from %s:\n%s\n"
+		            , NET_AdrToString (net_from), s);
 }
 
 /*
 ==============================================================================
+
 PACKET FILTERING
 
 
@@ -704,43 +1807,68 @@ filterban <0 or 1>
 If 1 (the default), then ip addresses matching the current list will be prohibited from entering the game.  This is the default setting.
 
 If 0, then only addresses matching the list will be allowed.  This lets you easily set up a private game, or a game that only allows players from your local network.
+
+
 ==============================================================================
 */
 
-typedef struct {
+
+/*typedef struct
+{
 	unsigned	mask;
 	unsigned	compare;
+	int			level;
 } ipfilter_t;
+*/
 
 #define	MAX_IPFILTERS	1024
 
 ipfilter_t	ipfilters[MAX_IPFILTERS];
-int			numipfilters;
+int		numipfilters;
+
+ipfilter_t	ipvip[MAX_IPFILTERS];
+int		numipvips;
+
+//bliP: cuff, mute ->
+penfilter_t	penfilters[MAX_PENFILTERS];
+int		numpenfilters;
+//<-
 
 cvar_t	filterban = {"filterban", "1"};
 
-qbool StringToFilter (char *s, ipfilter_t *f) {
-	char num[128];
-	unsigned int i, j;
-	unsigned char b[4], m[4];
+/*
+=================
+StringToFilter
+=================
+*/
+qbool StringToFilter (char *s, ipfilter_t *f)
+{
+	char	num[128];
+	int		i, j;
+	byte	b[4];
+	byte	m[4];
 
-	for (i=0 ; i<4 ; i++) {
+	for (i=0 ; i<4 ; i++)
+	{
 		b[i] = 0;
 		m[i] = 0;
 	}
 
-	for (i=0 ; i<4 ; i++) {
-		if ( !isdigit((int)(unsigned char)*s) ) {
-			Com_Printf ("Bad filter address: %s\n", s);
+	for (i=0 ; i<4 ; i++)
+	{
+		if (*s < '0' || *s > '9')
+		{
+			//Con_Printf ("Bad filter address: %s\n", s);
 			return false;
 		}
 
-		for (j = 0;  isdigit((int)(unsigned char)*s); s++) {
-			if (j + 1 < sizeof(num))
-				num[j++] = *s;
+		j = 0;
+		while (*s >= '0' && *s <= '9')
+		{
+			num[j++] = *s++;
 		}
 		num[j] = 0;
-		b[i] = atoi(num);
+		b[i] = Q_atoi(num);
 		if (b[i] != 0)
 			m[i] = 255;
 
@@ -755,119 +1883,946 @@ qbool StringToFilter (char *s, ipfilter_t *f) {
 	return true;
 }
 
-void SV_AddIP_f (void) {
-	int i;
-
-	for (i = 0; i < numipfilters; i++)
-		if (ipfilters[i].compare == 0xffffffff)
-			break;		// free spot
-	if (i == numipfilters) {
-		if (numipfilters == MAX_IPFILTERS) {
-			Com_Printf ("IP filter list is full\n");
-			return;
-		}
-		numipfilters++;
-	}
-
-	if (!StringToFilter (Cmd_Argv(1), &ipfilters[i]))
-		ipfilters[i].compare = 0xffffffff;
-}
-
-void SV_RemoveIP_f (void) {
+/*
+=================
+SV_AddIPVIP_f
+=================
+*/
+static void SV_AddIPVIP_f (void)
+{
+	int		i, l;
 	ipfilter_t f;
-	int i, j;
 
 	if (!StringToFilter (Cmd_Argv(1), &f))
+	{
+		Con_Printf ("Bad filter address: %s\n", Cmd_Argv(1));
 		return;
-	for (i = 0; i < numipfilters; i++) {
-		if (ipfilters[i].mask == f.mask && ipfilters[i].compare == f.compare) {
-			for (j = i + 1; j < numipfilters; j++)
-				ipfilters[j - 1] = ipfilters[j];
-			numipfilters--;
-			Com_Printf ("Removed.\n");
+	}
+
+	l = Q_atoi(Cmd_Argv(2));
+
+	if (l < 1) l = 1;
+
+	for (i=0 ; i<numipvips ; i++)
+		if (ipvip[i].compare == 0xffffffff || (ipvip[i].mask == f.mask
+		                                       && ipvip[i].compare == f.compare))
+			break;		// free spot
+	if (i == numipvips)
+	{
+		if (numipvips == MAX_IPFILTERS)
+		{
+			Con_Printf ("VIP spectator IP list is full\n");
 			return;
 		}
+		numipvips++;
 	}
-	Com_Printf ("Didn't find %s.\n", Cmd_Argv(1));
+
+	ipvip[i] = f;
+	ipvip[i].level = l;
 }
 
-void SV_ListIP_f (void) {
-	int i;
-	byte b[4];
+/*
+=================
+SV_RemoveIPVIP_f
+=================
+*/
+static void SV_RemoveIPVIP_f (void)
+{
+	ipfilter_t	f;
+	int		i, j;
 
-	Com_Printf ("Filter list:\n");
-	for (i = 0; i < numipfilters; i++) {
-		*(unsigned *)b = ipfilters[i].compare;
-		Com_Printf ("%3i.%3i.%3i.%3i\n", b[0], b[1], b[2], b[3]);
+	if (!StringToFilter (Cmd_Argv(1), &f))
+	{
+		Con_Printf ("Bad filter address: %s\n", Cmd_Argv(1));
+		return;
+	}
+	for (i=0 ; i<numipvips ; i++)
+		if (ipvip[i].mask == f.mask
+		        && ipvip[i].compare == f.compare)
+		{
+			for (j=i+1 ; j<numipvips ; j++)
+				ipvip[j-1] = ipvip[j];
+			numipvips--;
+			Con_Printf ("Removed.\n");
+			return;
+		}
+	Con_Printf ("Didn't find %s.\n", Cmd_Argv(1));
+}
+
+/*
+=================
+SV_ListIP_f
+=================
+*/
+static void SV_ListIPVIP_f (void)
+{
+	int		i;
+	byte	b[4];
+
+	Con_Printf ("VIP list:\n");
+	for (i=0 ; i<numipvips ; i++)
+	{
+		*(unsigned *)b = ipvip[i].compare;
+		Con_Printf ("%3i.%3i.%3i.%3i   level %d\n", b[0], b[1], b[2], b[3], ipvip[i].level);
 	}
 }
 
-void SV_WriteIP_f (void) {
-	FILE *f;
-	char name[MAX_OSPATH];
-	byte b[4];
-	int i;
+/*
+=================
+SV_WriteIPVIP_f
+=================
+*/
+static void SV_WriteIPVIP_f (void)
+{
+	FILE	*f;
+	char	name[MAX_OSPATH];
+	byte	b[4];
+	int		i;
 
-	snprintf (name, sizeof(name), "%s/listip.cfg", com_gamedir);
+	snprintf (name, MAX_OSPATH, "%s/vip_ip.cfg", fs_gamedir);
 
-	Com_Printf ("Writing %s.\n", name);
+	Con_Printf ("Writing %s.\n", name);
 
-	if (!(f = fopen (name, "wb")))	{
-		Com_Printf ("Couldn't open %s\n", name);
+	f = fopen (name, "wb");
+	if (!f)
+	{
+		Con_Printf ("Couldn't open %s\n", name);
 		return;
 	}
 
-	for (i = 0 ; i < numipfilters ; i++) {
-		*(unsigned *) b = ipfilters[i].compare;
-		fprintf (f, "addip %i.%i.%i.%i\n", b[0], b[1], b[2], b[3]);
+	for (i=0 ; i<numipvips ; i++)
+	{
+		*(unsigned *)b = ipvip[i].compare;
+		fprintf (f, "vip_addip %i.%i.%i.%i %d\n", b[0], b[1], b[2], b[3], ipvip[i].level);
 	}
 
 	fclose (f);
 }
 
+
+/*
+=================
+SV_AddIP_f
+=================
+*/
+static void SV_AddIP_f (void)
+{
+	int		i;
+	double	t = 0;
+	char	*s;
+	time_t	long_time = time(NULL);
+	ipfilter_t f;
+	ipfiltertype_t ipft = ipft_ban; // default is ban
+
+	if (!StringToFilter (Cmd_Argv(1), &f) || f.compare == 0)
+	{
+		Con_Printf ("Bad filter address: %s\n", Cmd_Argv(1));
+		return;
+	}
+
+	s = Cmd_Argv(2);
+	if ( !s[0] || !strcmp(s, "ban"))
+		ipft = ipft_ban;
+	else if (!strcmp(s, "safe"))
+		ipft = ipft_safe;
+	else {
+		Con_Printf ("Wrong filter type %s, use ban or safe\n", Cmd_Argv(2));
+		return;
+	}
+
+	s = Cmd_Argv(3);
+	if (long_time > 0) {
+		if (*s == '+')     // "addip 127.0.0.1 ban +10" will ban for 10 seconds from current time
+			s++;
+		else
+			long_time = 0; // "addip 127.0.0.1 ban 1234567" will ban for some seconds since 00:00:00 GMT, January 1, 1970
+
+		t = (sscanf(s, "%lf", &t) == 1) ? t + long_time : 0;
+	}
+
+	f.time = t;
+	f.type = ipft;
+
+	for (i=0 ; i<numipfilters ; i++)
+		if (ipfilters[i].compare == 0xffffffff || (ipfilters[i].mask == f.mask
+		        && ipfilters[i].compare == f.compare))
+			break;		// free spot
+	if (i == numipfilters)
+	{
+		if (numipfilters == MAX_IPFILTERS)
+		{
+			Con_Printf ("IP filter list is full\n");
+			return;
+		}
+		numipfilters++;
+	}
+
+	ipfilters[i] = f;
+}
+
+/*
+=================
+SV_RemoveIP_f
+=================
+*/
+static void SV_RemoveIP_f (void)
+{
+	ipfilter_t	f;
+	int			i, j;
+
+	if (!StringToFilter (Cmd_Argv(1), &f))
+	{
+		Con_Printf ("Bad filter address: %s\n", Cmd_Argv(1));
+		return;
+	}
+
+	for (i=0 ; i<numipfilters ; i++)
+		if (ipfilters[i].mask == f.mask
+		        && ipfilters[i].compare == f.compare)
+		{
+			for (j=i+1 ; j<numipfilters ; j++)
+				ipfilters[j-1] = ipfilters[j];
+			numipfilters--;
+			Con_Printf ("Removed.\n");
+			return;
+		}
+	Con_Printf ("Didn't find %s.\n", Cmd_Argv(1));
+}
+
+/*
+=================
+SV_ListIP_f
+=================
+*/
+static void SV_ListIP_f (void)
+{
+	time_t	long_time = time(NULL);
+	int		i;
+	byte	b[4];
+
+	Con_Printf ("Filter list:\n");
+	for (i=0 ; i<numipfilters ; i++)
+	{
+		*(unsigned *)b = ipfilters[i].compare;
+		Con_Printf ("%3i.%3i.%3i.%3i | ", b[0], b[1], b[2], b[3]);
+		switch((int)ipfilters[i].type){
+			case ipft_ban:  Con_Printf (" ban"); break;
+			case ipft_safe: Con_Printf ("safe"); break;
+			default: Con_Printf ("unkn"); break;
+		}
+		if (ipfilters[i].time)
+			Con_Printf (" | %i s", (int)(ipfilters[i].time-long_time));
+		Con_Printf ("\n");
+	}
+}
+
+/*
+=================
+SV_WriteIP_f
+=================
+*/
+static void SV_WriteIP_f (void)
+{
+	FILE	*f;
+	char	name[MAX_OSPATH], *s;
+	byte	b[4];
+	int		i;
+
+	snprintf (name, MAX_OSPATH, "%s/listip.cfg", fs_gamedir);
+
+	Con_Printf ("Writing %s.\n", name);
+
+	f = fopen (name, "wb");
+	if (!f)
+	{
+		Con_Printf ("Couldn't open %s\n", name);
+		return;
+	}
+
+	// write safe filters first
+	for (i=0 ; i<numipfilters ; i++)
+	{
+		if(ipfilters[i].type != ipft_safe)
+			continue;
+
+		*(unsigned *)b = ipfilters[i].compare;
+		fprintf (f, "addip %i.%i.%i.%i safe %.0f\n", b[0], b[1], b[2], b[3], ipfilters[i].time);
+	}
+
+	for (i=0 ; i<numipfilters ; i++)
+	{
+		if(ipfilters[i].type == ipft_safe)
+			continue; // ignore safe, we already save it
+
+		switch((int)ipfilters[i].type){
+			case ipft_ban:  s = " ban"; break;
+			case ipft_safe: s = "safe"; break;
+			default: s = "unkn"; break;
+		}
+		*(unsigned *)b = ipfilters[i].compare;
+		fprintf (f, "addip %i.%i.%i.%i %s %.0f\n", b[0], b[1], b[2], b[3], s, ipfilters[i].time);
+	}
+
+	fclose (f);
+}
+
+/*
+=================
+SV_SendBan
+=================
+*/
 void SV_SendBan (void)
 {
-	char data[128];
+	char		data[128];
 
 	data[0] = data[1] = data[2] = data[3] = 0xff;
 	data[4] = A2C_PRINT;
 	data[5] = 0;
-	strlcat (data, "\nbanned.\n", sizeof (data));
+	strlcat (data, "\nbanned.\n", sizeof(data));
 
 	NET_SendPacket (NS_SERVER, strlen(data), data, net_from);
 }
 
-//Returns true if net_from.ip is banned
-qbool SV_FilterPacket (void) {
-	int	 i;
-	unsigned in;
-
-	if (net_from.type == NA_LOOPBACK)
-		return false;	// the local client can't be banned
+/*
+=================
+SV_FilterPacket
+=================
+*/
+qbool SV_FilterPacket (void)
+{
+	int		i;
+	unsigned	in;
 
 	in = *(unsigned *)net_from.ip;
 
-	for (i = 0; i < numipfilters; i++)
-		if ( (in & ipfilters[i].mask) == ipfilters[i].compare)
-			return filterban.value;
+	for (i=0 ; i<numipfilters ; i++)
+		if ( ipfilters[i].type == ipft_ban && (in & ipfilters[i].mask) == ipfilters[i].compare )
+			return (int)filterban.value;
 
-	return !filterban.value;
+	return !(int)filterban.value;
+}
+
+// { server internal BAN support
+
+#define AF_REAL_ADMIN  (1<<1) // pass/vip granted admin (real admin in terms of ktpro)
+
+void Do_BanList(ipfiltertype_t ipft)
+{
+	time_t	long_time = time(NULL);
+	int		i;
+	byte	b[4];
+
+	for (i=0 ; i<numipfilters ; i++)
+	{
+		if (ipfilters[i].type != ipft)
+			continue;
+
+		*(unsigned *)b = ipfilters[i].compare;
+		Con_Printf ("%3i|%3i.%3i.%3i.%3i", i, b[0], b[1], b[2], b[3]);
+		switch((int)ipfilters[i].type){
+			case ipft_ban:  Con_Printf ("| ban"); break;
+			case ipft_safe: Con_Printf ("|safe"); break;
+			default: Con_Printf ("|unkn"); break;
+		}
+
+		if (ipfilters[i].time) {
+			long df = ipfilters[i].time-long_time;
+			long d, h, m, s;
+			d = df / (60*60*24);
+			df -= d * 60*60*24;
+			h = df / (60*60);
+			df -= h * 60*60;
+			m = df /  60;
+			df -= m * 60;
+			s = df;
+
+			if (d)
+				Con_Printf ("|%4ldd:%2ldh", d, h);
+			else if (h)
+				Con_Printf ("|%4ldh:%2ldm", h, m);
+			else
+				Con_Printf ("|%4ldm:%2lds", m, s);
+		}
+		else
+			Con_Printf ("|permanent");
+		Con_Printf ("\n");
+	}
+}
+
+void SV_BanList (void)
+{
+	unsigned char blist[64] = "Ban list:", id[64] = "id", ipmask[64] = "ip mask", type[64] = "type", expire[64] = "expire";
+
+	if (numipfilters < 1) {
+		Con_Printf ("Ban list: empty\n");
+		return;
+	}
+
+	Con_Printf ("%s\n"
+				"\235\236\236\236\236\236\236\236\236\236\236\236\236\236\236\236"
+				"\236\236\236\236\236\236\236\236\236\236\236\236\236\236\236\236\236\237\n"
+				"%3.3s|%15.15s|%4.4s|%9.9s\n",
+				Q_redtext(blist), Q_redtext(id), Q_redtext(ipmask), Q_redtext(type), Q_redtext(expire));
+
+	Do_BanList(ipft_safe);
+	Do_BanList(ipft_ban);
+}
+
+qbool SV_CanAddBan (ipfilter_t *f)
+{
+	int i;
+
+	if (f->compare == 0)
+		return false;
+
+	for (i=0 ; i<numipfilters ; i++)
+		if (ipfilters[i].mask == f->mask && ipfilters[i].compare == f->compare && ipfilters[i].type == ipft_safe)
+			return false; // can't add filter f because present "safe" filter
+
+	return true;
+}
+
+void SV_RemoveBansIPFilter (int i)
+{
+	for (; i + 1 < numipfilters; i++)
+		ipfilters[i] = ipfilters[i + 1];
+
+	numipfilters--;
+}
+
+void SV_CleanBansIPList (void)
+{
+	time_t	long_time = time(NULL);
+	int     i;
+
+	if (sv.state != ss_active)
+		return;
+
+	for (i = 0; i < numipfilters;)
+	{
+		if (ipfilters[i].time && ipfilters[i].time <= long_time)
+		{
+			SV_RemoveBansIPFilter (i);
+		}
+		else
+			i++;
+	}
+}
+
+void SV_Cmd_Ban_f(void)
+{
+	edict_t	*ent;
+	eval_t *val;
+	double		d;
+	int			i, j, t;
+	client_t	*cl;
+	ipfilter_t  f;
+	int			uid;
+	int			c;
+	char		reason[80] = "", arg2[32], arg2c[sizeof(arg2)], *s;
+
+	// set up the edict
+	ent = sv_client->edict;
+
+// ============
+// get ADMIN rights from MOD via "mod_admin" field, mod MUST export such field if wanna server ban support
+// ============
+
+	val =
+#ifdef USE_PR2
+	    PR2_GetEdictFieldValue(ent, "mod_admin");
+#else
+	    GetEdictFieldValue(ent, "mod_admin");
+#endif
+	if (!val || !(val->_int & AF_REAL_ADMIN) ) {
+		Con_Printf("You are not an admin\n");
+		return;
+	}
+
+	c = Cmd_Argc ();
+	if (c < 3)
+	{
+		Con_Printf("usage: cmd ban <id/nick> <time<s m h d>> [reason]\n");
+		return;
+	}
+
+	uid = Q_atoi(Cmd_Argv(1));
+
+	strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
+
+	// sscanf safe here since sizeof(arg2) == sizeof(arg2c), right?
+	if (sscanf(arg2, "%d%s", &t, arg2c) != 2 || strlen(arg2c) != 1) {
+		Con_Printf("ban: wrong time arg\n");
+		return;
+	}
+
+	d = t = bound(0, t, 999);
+	switch(arg2c[0]) {
+		case 's': break; // seconds is seconds
+		case 'm': d *= 60; break; // 60 seconds per minute
+		case 'h': d *= 60*60; break; // 3600 seconds per hour
+		case 'd': d *= 60*60*24; break; // 86400 seconds per day
+		default:
+		Con_Printf("ban: wrong time arg\n");
+		return;
+	}
+
+	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
+	{
+		if (!cl->state)
+			continue;
+		if (cl->userid == uid || !strcmp(Cmd_Argv(1), cl->name))
+		{
+			if (c > 3) // serve reason arguments
+			{
+				strlcpy (reason, " (", sizeof(reason));
+				for (j=3 ; j<c; j++)
+				{
+					strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
+					if (j < c-1)
+						strlcat (reason, " ", sizeof(reason)-4);
+				}
+				if (strlen(reason) < 3)
+					reason[0] = '\0';
+				else
+					strlcat (reason, ")", sizeof(reason));
+			}
+
+			s = NET_BaseAdrToString(cl->netchan.remote_address);
+			if (!StringToFilter (s, &f))
+			{
+				Con_Printf ("ban: bad ip address: %s\n", s);
+				return;
+			}
+
+			if (!SV_CanAddBan(&f))
+			{
+				Con_Printf ("ban: can't ban such ip: %s\n", s);
+				return;
+			}
+
+			SV_BroadcastPrintf (PRINT_HIGH, "%s was banned for %d%s%s\n", cl->name, t, arg2c, reason);
+
+			Cbuf_AddText(va("addip %s ban %s%.0lf\n", s, d ? "+" : "", d));
+			Cbuf_AddText("writeip\n");
+			return;
+		}
+	}
+
+	Con_Printf ("Couldn't find user %s\n", Cmd_Argv(1));
+}
+
+void SV_Cmd_Banip_f(void)
+{
+	edict_t	*ent;
+	eval_t *val;
+	byte	b[4];
+	double		d;
+	int			c, t;
+	ipfilter_t  f;
+	char		arg2[32], arg2c[sizeof(arg2)];
+
+	// set up the edict
+	ent = sv_client->edict;
+
+// ============
+// get ADMIN rights from MOD via "mod_admin" field, mod MUST export such field if wanna server ban support
+// ============
+
+	val =
+#ifdef USE_PR2
+	    PR2_GetEdictFieldValue(ent, "mod_admin");
+#else
+	    GetEdictFieldValue(ent, "mod_admin");
+#endif
+	if (!val || !(val->_int & AF_REAL_ADMIN) ) {
+		Con_Printf("You are not an admin\n");
+		return;
+	}
+
+	c = Cmd_Argc ();
+	if (c < 3)
+	{
+		Con_Printf("usage: cmd banip <ip> <time<s m h d>>\n");
+		return;
+	}
+
+	if (!StringToFilter (Cmd_Argv(1), &f))
+	{
+		Con_Printf ("ban: bad ip address: %s\n", Cmd_Argv(1));
+		return;
+	}
+
+	if (!SV_CanAddBan(&f))
+	{
+		Con_Printf ("ban: can't ban such ip: %s\n", Cmd_Argv(1));
+		return;
+	}
+
+	strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
+
+	// sscanf safe here since sizeof(arg2) == sizeof(arg2c), right?
+	if (sscanf(arg2, "%d%s", &t, arg2c) != 2 || strlen(arg2c) != 1) {
+		Con_Printf("ban: wrong time arg\n");
+		return;
+	}
+
+	d = t = bound(0, t, 999);
+	switch(arg2c[0]) {
+		case 's': break; // seconds is seconds
+		case 'm': d *= 60; break; // 60 seconds per minute
+		case 'h': d *= 60*60; break; // 3600 seconds per hour
+		case 'd': d *= 60*60*24; break; // 86400 seconds per day
+		default:
+		Con_Printf("ban: wrong time arg\n");
+		return;
+	}
+
+	*(unsigned *)b = f.compare;
+	SV_BroadcastPrintf (PRINT_HIGH, "%3i.%3i.%3i.%3i was banned for %d%s\n", b[0], b[1], b[2], b[3], t, arg2c);
+
+	Cbuf_AddText(va("addip %i.%i.%i.%i ban %s%.0lf\n", b[0], b[1], b[2], b[3], d ? "+" : "", d));
+	Cbuf_AddText("writeip\n");
+}
+
+void SV_Cmd_Banremove_f(void)
+{
+	edict_t	*ent;
+	eval_t *val;
+	byte	b[4];
+	int		id;
+
+	// set up the edict
+	ent = sv_client->edict;
+
+// ============
+// get ADMIN rights from MOD via "mod_admin" field, mod MUST export such field if wanna server ban support
+// ============
+
+	val =
+#ifdef USE_PR2
+	    PR2_GetEdictFieldValue(ent, "mod_admin");
+#else
+	    GetEdictFieldValue(ent, "mod_admin");
+#endif
+	if (!val || !(val->_int & AF_REAL_ADMIN) ) {
+		Con_Printf("You are not an admin\n");
+		return;
+	}
+
+	if (Cmd_Argc () < 2)
+	{
+		Con_Printf("usage: cmd banrem [banid]\n");
+		SV_BanList();
+		return;
+	}
+
+	id = Q_atoi(Cmd_Argv(1));
+
+	if (id < 0 || id >= numipfilters) {
+		Con_Printf ("Wrong ban id: %d\n", id);
+		return;
+	}
+
+	if (ipfilters[id].type == ipft_safe) {
+		Con_Printf ("Can't remove such ban with id: %d\n", id);
+		return;
+	}
+
+	*(unsigned *)b = ipfilters[id].compare;
+	SV_BroadcastPrintf (PRINT_HIGH, "%3i.%3i.%3i.%3i was unbanned\n", b[0], b[1], b[2], b[3]);
+
+	SV_RemoveBansIPFilter (id);
+	Cbuf_AddText("writeip\n");
+}
+
+// } server internal BAN support
+
+/*
+=================
+SV_VIPbyIP
+=================
+*/
+int SV_VIPbyIP (netadr_t adr)
+{
+	int		i;
+	unsigned	in;
+
+	in = *(unsigned *)adr.ip;
+
+	for (i=0 ; i<numipvips ; i++)
+		if ( (in & ipvip[i].mask) == ipvip[i].compare)
+			return ipvip[i].level;
+
+	return 0;
+}
+
+/*
+=================
+SV_VIPbyPass
+=================
+*/
+int SV_VIPbyPass (char *pass)
+{
+	qbool use_value = false;
+	int vip_value[MAX_ARGS];
+	int i;
+
+	if (!vip_password.string[0] || !strcasecmp(vip_password.string, "none"))
+		return 0;
+
+	if (vip_values.string[0]) {
+		use_value = true;
+		// 2VVD: vip_password count may be not equal vip_values count, what we must do in this case?
+		memset((void*)vip_value, 0, sizeof(vip_value));
+		Cmd_TokenizeString(vip_values.string);
+		for (i = 0; i < Cmd_Argc(); i++)
+			vip_value[i] = atoi(Cmd_Argv(i));
+	}
+
+	Cmd_TokenizeString(vip_password.string);
+
+	for (i = 0; i < Cmd_Argc(); i++)
+		if (!strcmp(Cmd_Argv(i), pass) && strcasecmp(Cmd_Argv(i), "none"))
+			return (use_value ? vip_value[i] : i+1);
+
+	return 0;
+}
+
+static char *DecodeArgs(char *args)
+{
+	static char string[1024];
+	char *p, key[32], *s, *value, ch;
+	extern char chartbl2[256];// defined in pr_cmds.c
+
+	string[0] = 0;
+	p = string;
+
+	while (*args)
+	{
+		// skip whitespaces
+		while (*args && *args <= 32)
+			*p++ = *args++;
+
+		if (*args == '\"')
+		{
+			do *p++ = *args++; while (*args && *args != '\"');
+			*p++ = '\"';
+			if (*args)
+				args++;
+		}
+		else if (*args == '@' || *args == '$')
+		{
+			// get the key and read value from localinfo
+			ch = *args;
+			s = key;
+			args++;
+			while (*args > 32)
+				*s++ = *args++;
+			*s = 0;
+
+			if ((value = Info_ValueForKey (svs.info, key)) == NULL || !*value)
+				value = Info_Get(&_localinfo_, key);
+
+			*p++ = '\"';
+			if (ch == '$')
+			{
+				if (value) while (*value)
+						*p++ = chartbl2[(byte)*value++];
+			}
+			else
+			{
+				if (value) while (*value)
+						*p++ = *value++;
+			}
+			*p++ = '\"';
+		}
+		else while (*args > 32)
+				*p++ = *args++;
+	}
+
+	*p = 0;
+
+	return string;
+}
+
+void SV_Script_f (void)
+{
+	char *path, *p;
+	extern redirect_t sv_redirected;
+
+	if (Cmd_Argc() < 2)
+	{
+		Con_Printf("usage: script <path> [<args>]\n");
+		return;
+	}
+
+	path = Cmd_Argv(1);
+
+	//bliP: 24/9 need subdirs here ->
+	if (!strncmp(path, "../", 3) || !strncmp(path, "..\\", 3))
+		path += 3;
+
+	if (strstr(path, ".."))
+	{
+		Con_Printf("Invalid path.\n");
+		return;
+	}
+	//<-
+
+	path = Cmd_Argv(1);
+
+	p = Cmd_Args();
+	while (*p > 32)
+		p++;
+	while (*p && *p <= 32)
+		p++;
+
+	p = DecodeArgs(p);
+
+	if (sv_redirected != RD_MOD)
+		Sys_Printf("Running %s.qws\n", path);
+
+	Sys_Script(path, va("%d %s", sv_redirected, p));
+
 }
 
 //============================================================================
 
-void SV_ReadPackets (void) {
-	int i, qport;
-	client_t *cl;
+//bliP: cuff, mute ->
+void SV_RemoveIPFilter (int i)
+{
+	for (; i + 1 < numpenfilters; i++)
+		penfilters[i] = penfilters[i + 1];
 
-	while (NET_GetPacket(NS_SERVER)) {
-		if (SV_FilterPacket ()) {
+	numpenfilters--;
+}
+
+static void SV_CleanIPList (void)
+{
+	int     i;
+
+	if (sv.state != ss_active)
+		return;
+
+	for (i = 0; i < numpenfilters;)
+	{
+		if (penfilters[i].time && (penfilters[i].time <= realtime))
+		{
+			SV_RemoveIPFilter (i);
+		}
+		else
+			i++;
+	}
+}
+
+static qbool SV_IPCompare (byte *a, byte *b)
+{
+	int i;
+
+	for (i = 0; i < 1; i++)
+		if (((unsigned int *)a)[i] != ((unsigned int *)b)[i])
+			return false;
+
+	return true;
+}
+
+static void SV_IPCopy (byte *dest, byte *src)
+{
+	int i;
+
+	for (i = 0; i < 1; i++)
+		((unsigned int *)dest)[i] = ((unsigned int *)src)[i];
+}
+
+void SV_SavePenaltyFilter (client_t *cl, filtertype_t type, double pentime)
+{
+	int i;
+
+	if (pentime < realtime)   // no point
+		return;
+
+	for (i = 0; i < numpenfilters; i++)
+		if (SV_IPCompare (penfilters[i].ip, cl->realip.ip)	&& penfilters[i].type == type)
+		{
+			return;
+		}
+
+	if (numpenfilters == MAX_IPFILTERS)
+	{
+		return;
+	}
+
+	SV_IPCopy (penfilters[numpenfilters].ip, cl->realip.ip);
+	penfilters[numpenfilters].time = pentime;
+	penfilters[numpenfilters].type = type;
+	numpenfilters++;
+}
+
+double SV_RestorePenaltyFilter (client_t *cl, filtertype_t type)
+{
+	int i;
+	double time1 = 0.0;
+
+	// search for existing penalty filter of same type
+	for (i = 0; i < numpenfilters; i++)
+	{
+		if (type == penfilters[i].type && SV_IPCompare (cl->realip.ip, penfilters[i].ip))
+		{
+			time1 = penfilters[i].time;
+			SV_RemoveIPFilter (i);
+			return time1;
+		}
+	}
+	return time1;
+}
+//<-
+
+//============================================================================
+
+/*
+=================
+SV_ReadPackets
+=================
+*/
+static void SV_ReadPackets (void)
+{
+	client_t *cl;
+	int qport;
+	int i;
+
+	if (sv.state != ss_active)
+		return;
+
+	// first deal with delayed packets from connected clients
+	for (i = 0, cl=svs.clients; i < MAX_CLIENTS; i++, cl++)
+	{
+		if (cl->state == cs_free)
+			continue;
+
+		net_from = cl->netchan.remote_address;
+
+		while (cl->packets && (realtime - cl->packets->time >= cl->delay || sv.paused))
+		{
+			SZ_Clear(&net_message);
+			SZ_Write(&net_message, cl->packets->msg.data, cl->packets->msg.cursize);
+			SV_ExecuteClientMessage(cl);
+			SV_FreeHeadDelayedPacket(cl);
+		}
+	}
+
+	// now deal with new packets
+	while (NET_GetPacket(NS_SERVER))
+	{
+		if (SV_FilterPacket ())
+		{
 			SV_SendBan ();	// tell them we aren't listening...
 			continue;
 		}
 
 		// check for connectionless packet (0xffffffff) first
-		if (*(int *)net_message.data == -1) {
+		if (*(int *)net_message.data == -1)
+		{
 			SV_ConnectionlessPacket ();
 			continue;
 		}
@@ -875,140 +2830,283 @@ void SV_ReadPackets (void) {
 		// read the qport out of the message so we can fix up
 		// stupid address translating routers
 		MSG_BeginReading ();
-		MSG_ReadLong ();		// sequence number
-		MSG_ReadLong ();		// sequence number
+		MSG_ReadLong (); // sequence number
+		MSG_ReadLong (); // sequence number
 		qport = MSG_ReadShort () & 0xffff;
 
-		// check for packets from connected clients
-		for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++,cl++) {
+		// check which client sent this packet
+		for (i=0, cl=svs.clients ; i<MAX_CLIENTS ; i++,cl++)
+		{
 			if (cl->state == cs_free)
 				continue;
 			if (!NET_CompareBaseAdr (net_from, cl->netchan.remote_address))
 				continue;
 			if (cl->netchan.qport != qport)
 				continue;
-			if (cl->netchan.remote_address.port != net_from.port) {
-				Com_DPrintf ("SV_ReadPackets: fixing up a translated port\n");
+			if (cl->netchan.remote_address.port != net_from.port)
+			{
+				Con_DPrintf ("SV_ReadPackets: fixing up a translated port\n");
 				cl->netchan.remote_address.port = net_from.port;
 			}
-			if (Netchan_Process(&cl->netchan)) {
-				// this is a valid, sequenced packet, so process it
-				svs.stats.packets++;
-				cl->send_message = true;	// reply at end of frame
-				if (cl->state != cs_zombie)
-					SV_ExecuteClientMessage (cl);
-			}
+
 			break;
 		}
 
-		if (i != MAX_CLIENTS)
+		if (i == MAX_CLIENTS)
 			continue;
+
+		// ok, we know who sent this packet, but do we need to delay executing it?
+		if (cl->delay > 0)
+		{
+			if (!svs.free_packets) // packet has to be dropped..
+				break;
+
+			// insert at end of list
+			if (!cl->packets) {
+				cl->last_packet = cl->packets = svs.free_packets;
+			} else {
+				// this works because '=' associates from right to left
+				cl->last_packet = cl->last_packet->next = svs.free_packets;
+			}
+
+			svs.free_packets = svs.free_packets->next;
+			cl->last_packet->next = NULL;
+
+			cl->last_packet->time = realtime;
+			SZ_Clear(&cl->last_packet->msg);
+			SZ_Write(&cl->last_packet->msg, net_message.data, net_message.cursize);
+		}
+		else
+		{
+			SV_ExecuteClientMessage (cl);
+		}
 	}
 }
 
+
 /*
-If a packet has not been received from a client in timeout.value seconds, drop the conneciton.
+==================
+SV_CheckTimeouts
 
-When a client is normally dropped, the client_t goes into a zombie state for a few seconds
-to make sure any final reliable message gets resent if necessary
+If a packet has not been received from a client in timeout.value
+seconds, drop the conneciton.
+
+When a client is normally dropped, the client_t goes into a zombie state
+for a few seconds to make sure any final reliable message gets resent
+if necessary
+==================
 */
-void SV_CheckTimeouts (void) {
+static void SV_CheckTimeouts (void)
+{
 	int i, nclients;
-	client_t *cl;
 	float droptime;
+	client_t *cl;
 
-	droptime = curtime - sv_timeout.value;
+	if (sv.state != ss_active)
+		return;
+
+// BUG: realtime affected by pause, we will never time out...
+//	droptime = realtime - timeout.value;
+	droptime = curtime - timeout.value;
 	nclients = 0;
 
-	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++,cl++) {
-		if (cl->state == cs_connected || cl->state == cs_spawned) {
+	for (i=0,cl=svs.clients ; i<MAX_CLIENTS ; i++,cl++)
+	{
+#ifdef USE_PR2
+		if( cl->isBot )
+			continue;
+#endif
+		if (cl->state >= cs_preconnected /*|| cl->state == cs_spawned*/)
+		{
 			if (!cl->spectator)
 				nclients++;
-			if (cl->netchan.last_received < droptime) {
+			if (cl->netchan.last_received < droptime)
+			{
 				SV_BroadcastPrintf (PRINT_HIGH, "%s timed out\n", cl->name);
 				SV_DropClient (cl);
 				cl->state = cs_free;	// don't bother with zombie state
 			}
+			if (!cl->logged)
+				SV_LoginCheckTimeOut(cl);
 		}
-		if (cl->state == cs_zombie && svs.realtime - cl->connection_started > sv_zombietime.value)
+		if (cl->state == cs_zombie &&
+		        realtime - cl->connection_started > zombietime.value)
+		{
 			cl->state = cs_free;	// can now be reused
+		}
 	}
-	if (((int) sv_paused.value & 1) && !nclients) {
+	if (sv.paused && !nclients)
+	{
 		// nobody left, unpause the server
+		if (GE_ShouldPause) {
+			pr_global_struct->time = sv.time;
+			pr_global_struct->self = EDICT_TO_PROG(sv.edicts);
+			G_FLOAT(OFS_PARM0) = 0 /* newstate = false */;
+			PR_ExecuteProgram (GE_ShouldPause);
+			if (!G_FLOAT(OFS_RETURN))
+				return;		// progs said don't unpause
+		}
 		SV_TogglePause("Pause released since no players are left.\n");
 	}
 }
 
-//Add them exactly as if they had been typed at the console
-void SV_GetConsoleCommands (void) {
-	char *cmd;
+/*
+===================
+SV_GetConsoleCommands
 
-	while (1) {
-		if (!(cmd = Sys_ConsoleInput()))
+Add them exactly as if they had been typed at the console
+===================
+*/
+static void SV_GetConsoleCommands (void)
+{
+	char	*cmd;
+
+	while (1)
+	{
+		cmd = Sys_ConsoleInput ();
+		if (!cmd)
 			break;
 		Cbuf_AddText (cmd);
 		Cbuf_AddText ("\n");
 	}
 }
 
-int SV_BoundRate (int rate) {
+
+/*
+===================
+SV_BoundRate
+===================
+*/
+int SV_BoundRate (qbool dl, int rate)
+{
 	if (!rate)
 		rate = 2500;
+	if (dl)
+	{
+		if (!(int)sv_maxdownloadrate.value && (int)sv_maxrate.value && rate > (int)sv_maxrate.value)
+			rate = (int)sv_maxrate.value;
 
-	if (sv_maxrate.value)
-		rate = min(rate, sv_maxrate.value);
+		if (sv_maxdownloadrate.value && rate > sv_maxdownloadrate.value)
+			rate = (int)sv_maxdownloadrate.value;
+	}
 	else
-		rate = min(rate, 10000);
+		if ((int)sv_maxrate.value && rate > (int) sv_maxrate.value)
+			rate = (int)sv_maxrate.value;
 
-	if (rate < 500)		// not less than 500 no matter what sv_maxrate is
+	if (rate < 500)
 		rate = 500;
+	if (rate > 100000)
+		rate = 100000;
 
 	return rate;
 }
 
-void SV_CheckVars (void) {
-	static char pw[MAX_INFO_STRING] = {0}, spw[MAX_INFO_STRING] = {0};
-	static float old_maxrate = 0;
+
+/*
+===================
+SV_CheckVars
+
+===================
+*/
+
+static void SV_CheckVars (void)
+{
+	static char pw[MAX_KEY_STRING] = {0}, spw[MAX_KEY_STRING] = {0}, vspw[MAX_KEY_STRING]= {0};
+	static float old_maxrate = 0, old_maxdlrate = 0;
 	int v;
 
+	if (sv.state != ss_active)
+		return;
+
 	// check password and spectator_password
-	if (strcmp(password.string, pw) || strcmp(spectator_password.string, spw)) {
+	if (strcmp(password.string, pw) ||
+		strcmp(spectator_password.string, spw) || strcmp(vip_password.string, vspw))
+	{
 		strlcpy (pw, password.string, sizeof(pw));
 		strlcpy (spw, spectator_password.string, sizeof(spw));
+		strlcpy (vspw, vip_password.string, sizeof(vspw));
 		Cvar_Set (&password, pw);
 		Cvar_Set (&spectator_password, spw);
+		Cvar_Set (&vip_password, vspw);
 
 		v = 0;
 		if (pw[0] && strcmp(pw, "none"))
 			v |= 1;
 		if (spw[0] && strcmp(spw, "none"))
 			v |= 2;
+		if (vspw[0] && strcmp(vspw, "none"))
+			v |= 4;
 
-		Com_DPrintf ("Updated needpass.\n");
-
-		Info_SetValueForKey (svs.info, "needpass", v ? va("%i", v) : "", MAX_SERVERINFO_STRING);
+		Con_DPrintf ("Updated needpass.\n");
+		if (!v)
+			Info_SetValueForKey (svs.info, "needpass", "", MAX_SERVERINFO_STRING);
+		else
+			Info_SetValueForKey (svs.info, "needpass", va("%i",v), MAX_SERVERINFO_STRING);
 	}
 
 	// check sv_maxrate
-	if (sv_maxrate.value != old_maxrate) {
-		client_t *cl;
-		int i;
-		char *val;
+	if ((int)sv_maxrate.value != old_maxrate || (int)sv_maxdownloadrate.value != old_maxdlrate )
+	{
+		client_t	*cl;
+		int			i;
+		char		*val;
 
-		old_maxrate = sv_maxrate.value;
+		old_maxrate = (int)sv_maxrate.value;
+		old_maxdlrate = (int)sv_maxdownloadrate.value;
 
-		for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++) {
-			if (cl->state < cs_connected)
+		for (i=0, cl = svs.clients ; i<MAX_CLIENTS ; i++, cl++)
+		{
+			if (cl->state < cs_preconnected)
 				continue;
 
-			val = Info_ValueForKey (cl->userinfo, "rate");
-			cl->netchan.rate = 1.0 / SV_BoundRate (atoi(val));
+			val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
+			cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, Q_atoi(*val ? val : "99999"));
 		}
 	}
 }
 
-void SV_Frame (double time) {
+static void PausedTic (void)
+{
+	if (sv.state != ss_active)
+		return;
+
+#ifdef USE_PR2
+	if ( sv_vm )
+		PR2_PausedTic(Sys_DoubleTime() - sv.pausedsince);
+	else
+#endif
+	if (GE_PausedTic) {
+		G_FLOAT(OFS_PARM0) = Sys_DoubleTime() - sv.pausedsince;
+		PR_ExecuteProgram (GE_PausedTic);
+	}
+}
+
+static void KtproAirstepFix(void)
+{
+// ktpro is old school, do not allow pm_airstep
+	extern cvar_t	pm_airstep;
+
+	if (sv.state != ss_active)
+		return;
+
+	if (is_ktpro && pm_airstep.value) {
+		Con_Printf("Forcing pm_airstep to 0 in ktpro\n");
+		Cvar_SetValue (&pm_airstep, 0);
+	}
+}
+
+/*
+==================
+SV_Frame
+
+==================
+*/
+void SV_Map (qbool now);
+void SV_Frame (double time1)
+{
 	static double start, end;
+	double demo_start, demo_end;
+
 
 	start = Sys_DoubleTime ();
 	svs.stats.idle += start - end;
@@ -1016,26 +3114,34 @@ void SV_Frame (double time) {
 	// keep the random time dependent
 	rand ();
 
+	// do not allow pm_airstep it ktpro
+	KtproAirstepFix();
+
 	// decide the simulation time
-	if (!sv_paused.value) {
-		svs.realtime += time;
-		sv.time += time;
+	if (!sv.paused)
+	{
+		realtime += time1;
+		sv.time += time1;
 	}
 
 	// check timeouts
 	SV_CheckTimeouts ();
 
+	//bliP: cuff, mute ->
+	// clean out expired cuffs/mutes
+	SV_CleanIPList ();
+	//<-
+
+	// clean out bans
+	SV_CleanBansIPList ();
+
 	// toggle the log buffer if full
 	SV_CheckLog ();
 
-	// move autonomous things around if enough time has passed
-	if (!sv_paused.value)
-		SV_Physics ();
+	SV_MVDStream_Poll();
 
-	// get packets
-	SV_ReadPackets ();
-
-	if (dedicated) {
+	if (dedicated)
+	{
 		// check for commands typed to the host
 		SV_GetConsoleCommands ();
 
@@ -1043,10 +3149,29 @@ void SV_Frame (double time) {
 		Cbuf_Execute ();
 	}
 
+	// check for map change;
+	SV_Map(true);
+
 	SV_CheckVars ();
+
+	// get packets
+	SV_ReadPackets ();
+
+	// move autonomous things around if enough time has passed
+	if (!sv.paused)
+		SV_Physics ();
+	else
+		PausedTic ();
 
 	// send messages back to the clients that had packets read this frame
 	SV_SendClientMessages ();
+
+	demo_start = Sys_DoubleTime ();
+	
+	SV_SendDemoMessage();
+	
+	demo_end = Sys_DoubleTime ();
+	svs.stats.demo += demo_end - demo_start;
 
 	// send a heartbeat to the master if needed
 	Master_Heartbeat ();
@@ -1054,249 +3179,777 @@ void SV_Frame (double time) {
 	// collect timing statistics
 	end = Sys_DoubleTime ();
 	svs.stats.active += end-start;
-	if (++svs.stats.count == STATFRAMES) {
+	if (++svs.stats.count == STATFRAMES)
+	{
 		svs.stats.latched_active = svs.stats.active;
 		svs.stats.latched_idle = svs.stats.idle;
 		svs.stats.latched_packets = svs.stats.packets;
+		svs.stats.latched_demo = svs.stats.demo;
 		svs.stats.active = 0;
 		svs.stats.idle = 0;
 		svs.stats.packets = 0;
 		svs.stats.count = 0;
+		svs.stats.demo = 0;
 	}
 }
 
-void SV_InitLocal (void) {
-	int i;
-	extern cvar_t sv_spectalk, sv_mapcheck, sv_nailhack, sv_loadentfiles, sv_maxvelocity, sv_gravity;
-	extern cvar_t sv_maxpitch, sv_minpitch, pm_airstep, pm_pground, pm_slidefix, pm_ktjump, pm_bunnyspeedcap;
-	extern cvar_t pm_stopspeed, pm_spectatormaxspeed, pm_accelerate, pm_airaccelerate, pm_wateraccelerate;
-	extern cvar_t pm_friction, pm_waterfriction;
-#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-	extern cvar_t sv_downloadchunksperframe;
-#endif
+/*
+===============
+SV_InitLocal
+===============
+*/
+void SV_InitLocal (void)
+{
+	int		i;
+//	int		len;
+	extern	cvar_t	sv_maxvelocity;
+	extern	cvar_t	sv_gravity;
+	extern	cvar_t	sv_stopspeed;
+	extern	cvar_t	sv_spectatormaxspeed;
+	extern	cvar_t	sv_accelerate;
+	extern	cvar_t	sv_airaccelerate;
+	extern	cvar_t	sv_wateraccelerate;
+	extern	cvar_t	sv_friction;
+	extern	cvar_t	sv_waterfriction;
+	extern	cvar_t	sv_nailhack;
+
+	extern	cvar_t	pm_airstep;
+	extern	cvar_t	pm_pground;
+	//extern	cvar_t	pm_slidefix;
+	extern	cvar_t	pm_ktjump;
+	//extern	cvar_t	pm_bunnyspeedcap;
+	packet_t *packet_freeblock; // initialise delayed packet free block
+
+
+//	Cvar_Init ();
 
 	SV_InitOperatorCommands	();
+	SV_UserInit ();
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
-	if (dedicated) {
+	Cvar_Register (&sv_getrealip);
+	Cvar_Register (&sv_maxdownloadrate);
+	Cvar_Register (&sv_serverip);
+	Cvar_Register (&sv_forcespec_onfull);
+	Cvar_Register (&sv_cpserver);
+
+//	Cvar_Register (&rcon_password);
+//	Cvar_Register (&password);
+
+	if (dedicated)
+	{
 		Cvar_Register (&rcon_password);
 		Cvar_Register (&password);
 	}
-	Cvar_Register (&spectator_password);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_MAIN);
-	Cvar_Register (&sv_highchars);
-	Cvar_Register (&sv_phs);
-	Cvar_Register (&sv_paused);
-	Cvar_Register (&sv_pausable);
+	Cvar_Register (&sv_hashpasswords);
+	//Added by VVD {
+	Cvar_Register (&sv_crypt_rcon);
+	Cvar_Register (&sv_timestamplen);
+	Cvar_Register (&sv_rconlim);
+
+	Cvar_Register (&telnet_password);
+	Cvar_Register (&telnet_log_level);
+	Cvar_Register (&not_auth_timeout);
+	Cvar_Register (&auth_timeout);
+
+	Cvar_Register (&frag_log_type);
+	Cvar_Register (&qconsole_log_say);
+	Cvar_Register (&sv_use_dns);
+#if 0 // FIXME
+	for (i = 0, len = 1; i < com_argc; i++)
+		len += strlen(com_argv[i]) + 1;
+	sys_command_line.string = (char *) Q_malloc (len);
+	sys_command_line.string[0] = 0;
+	for (i = 0; i < com_argc; i++)
+	{
+		strlcat(sys_command_line.string, com_argv[i], len);
+		strlcat(sys_command_line.string, " ", len);
+	}
+#endif
+	Cvar_Register (&sys_command_line);
+
+//	snprintf(full_version, SIZEOF_FULL_VERSION, FULL_VERSION "\n" BUILD_DATE "\n", build_number());
+//	Cvar_Register (&version);
+	//Added by VVD }
+	Cvar_Register (&spectator_password);
+	Cvar_Register (&vip_password);
+	Cvar_Register (&vip_values);
+
 	Cvar_Register (&sv_nailhack);
-	Cvar_Register (&sv_maxrate);
-	Cvar_Register (&sv_fastconnect);
-	Cvar_Register (&sv_loadentfiles);
+
 	Cvar_Register (&sv_mintic);
 	Cvar_Register (&sv_maxtic);
-	Cvar_Register (&sv_timeout);
-	Cvar_Register (&sv_zombietime);
-	Cvar_Register (&sv_spectalk);
-	Cvar_Register (&sv_mapcheck);
-	Cvar_Register (&sv_halflifebsp);
-	Cvar_Register (&sv_maxpitch);
-	Cvar_Register (&sv_minpitch);
-	Cvar_Register (&sv_cullentities);
+	Cvar_Register (&sys_select_timeout);
+	Cvar_Register (&sys_restart_on_error);
 
-#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-	Cvar_Register (&sv_downloadchunksperframe);
-#endif
-
-	Cvar_Register (&filterban);
 	Cvar_Register (&skill);
 	Cvar_Register (&coop);
-	Cvar_Register (&registered);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SERVERINFO);
-	Cvar_Register (&deathmatch);
-	Cvar_Register (&teamplay);
 	Cvar_Register (&fraglimit);
 	Cvar_Register (&timelimit);
+	Cvar_Register (&teamplay);
 	Cvar_Register (&samelevel);
 	Cvar_Register (&maxclients);
 	Cvar_Register (&maxspectators);
+	Cvar_Register (&maxvip_spectators);
 	Cvar_Register (&hostname);
+	Cvar_Register (&deathmatch);
 	Cvar_Register (&watervis);
+	Cvar_Register (&serverdemo);
+	Cvar_Register (&sv_paused);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_PHYSICS);
+//	Cvar_Register (&developer);
+
+	Cvar_Register (&timeout);
+	Cvar_Register (&zombietime);
+
 	Cvar_Register (&sv_maxvelocity);
 	Cvar_Register (&sv_gravity);
-	Cvar_Register (&pm_stopspeed);
-	Cvar_Register (&pm_maxspeed);
-	Cvar_Register (&pm_spectatormaxspeed);
-	Cvar_Register (&pm_accelerate);
-	Cvar_Register (&pm_airaccelerate);
-	Cvar_Register (&pm_wateraccelerate);
-	Cvar_Register (&pm_friction);
-	Cvar_Register (&pm_waterfriction);
-	Cvar_Register (&pm_bunnyspeedcap);
-	Cvar_Register (&pm_ktjump);
-	Cvar_Register (&pm_slidefix);
-	Cvar_Register (&pm_airstep);
-	Cvar_Register (&pm_pground);
+	Cvar_Register (&sv_stopspeed);
+	Cvar_Register (&sv_maxspeed);
+	Cvar_Register (&sv_spectatormaxspeed);
+	Cvar_Register (&sv_accelerate);
+	Cvar_Register (&sv_airaccelerate);
+	Cvar_Register (&sv_wateraccelerate);
+	Cvar_Register (&sv_friction);
+	Cvar_Register (&sv_waterfriction);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_PERMISSIONS);
+	//Cvar_Register (&pm_bunnyspeedcap);
+	Cvar_Register (&pm_ktjump);
+	//Cvar_Register (&pm_slidefix);
+	Cvar_Register (&pm_pground);
+	Cvar_Register (&pm_airstep);
+
+	Cvar_Register (&filterban);
+
 	Cvar_Register (&allow_download);
 	Cvar_Register (&allow_download_skins);
 	Cvar_Register (&allow_download_models);
 	Cvar_Register (&allow_download_sounds);
 	Cvar_Register (&allow_download_maps);
 	Cvar_Register (&allow_download_pakmaps);
-	Cvar_Register (&allow_download_gfx);
+	Cvar_Register (&allow_download_demos);
 	Cvar_Register (&allow_download_other);
+	//bliP: init ->
+	Cvar_Register (&download_map_url);
 
-	Cvar_ResetCurrentGroup();
+	Cvar_Register (&sv_specprint);
+	Cvar_Register (&sv_admininfo);
+	Cvar_Register (&sv_reconnectlimit);
+	Cvar_Register (&sv_maxlogsize);
+	//bliP: 24/9 ->
+	Cvar_Register (&sv_logdir);
+	Cvar_Register (&sv_speedcheck);
+	Cvar_Register (&sv_unfake); // kickfake to unfake
+	//<-
+	Cvar_Register (&sv_kicktop);
+	//<-
+	Cvar_Register (&sv_allowlastscores);
+//	Cvar_Register (&sv_highchars);
+	Cvar_Register (&sv_phs);
+	Cvar_Register (&pausable);
+	Cvar_Register (&sv_maxrate);
+	Cvar_Register (&sv_loadentfiles);
+	Cvar_Register (&sv_default_name);
+	Cvar_Register (&sv_mod_msg_file);
+	Cvar_Register (&sv_forcenick);
+	Cvar_Register (&sv_registrationinfo);
+	Cvar_Register (&registered);
+	Cvar_Register (&sv_ktpro_mode);
+
+	Cvar_Register (&sv_halflifebsp);
+
+// QW262 -->
+	Cmd_AddCommand ("svadmin", SV_Admin_f);
+// <-- QW262
 
 	Cmd_AddCommand ("addip", SV_AddIP_f);
 	Cmd_AddCommand ("removeip", SV_RemoveIP_f);
 	Cmd_AddCommand ("listip", SV_ListIP_f);
 	Cmd_AddCommand ("writeip", SV_WriteIP_f);
+	Cmd_AddCommand ("vip_addip", SV_AddIPVIP_f);
+	Cmd_AddCommand ("vip_removeip", SV_RemoveIPVIP_f);
+	Cmd_AddCommand ("vip_listip", SV_ListIPVIP_f);
+	Cmd_AddCommand ("vip_writeip", SV_WriteIPVIP_f);
 
-	Cmd_AddLegacyCommand ("pausable", "sv_pausable");
-	Cmd_AddLegacyCommand ("timeout", "sv_timeout");
-	Cmd_AddLegacyCommand ("zombietime", "sv_zombietime");
 
-	if (!dedicated)
-		Cvar_SetDefault(&sv_mintic, 0);
+	for (i=0 ; i<MAX_MODELS ; i++)
+		snprintf (localmodels[i], MODEL_NAME_LEN, "*%i", i);
 
-	for (i = 1; i < MAX_MODELS; i++)
-		snprintf (localmodels[i], sizeof(localmodels[i]), "*%i", i);
+#ifdef FTE_PEXT_ACCURATETIMINGS
+	svs.fteprotocolextensions |= FTE_PEXT_ACCURATETIMINGS;
+#endif
 
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	svs.fteprotocolextensions |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif
 
-	Info_SetValueForStarKey (svs.info, "*version", va("ezQuake %s", VersionString()), MAX_SERVERINFO_STRING);
-//	Info_SetValueForStarKey (svs.info, "*ez_version", VersionString(), MAX_SERVERINFO_STRING);
+//	Info_SetValueForStarKey (svs.info, "*qwe_version", QWE_VERSION, MAX_SERVERINFO_STRING);
+//	Info_SetValueForStarKey (svs.info, "*version", QW_VERSION, MAX_SERVERINFO_STRING);
+//	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " QWE_VERSION, MAX_SERVERINFO_STRING);
+	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " VERSION_NUMBER, MAX_SERVERINFO_STRING);
 	Info_SetValueForStarKey (svs.info, "*z_ext", va("%i", SERVER_EXTENSIONS), MAX_SERVERINFO_STRING);
-
-	if (strcmp(com_gamedirfile, "qw"))
-		Info_SetValueForStarKey (svs.info, "*gamedir", com_gamedirfile, MAX_SERVERINFO_STRING);
-
-	if (!Info_ValueForKey(svs.info, "maxfps")[0])
-		Info_SetValueForKey (svs.info, "maxfps", "77", MAX_SERVERINFO_STRING);
 
 	// init fraglog stuff
 	svs.logsequence = 1;
-	svs.logtime = svs.realtime;
-	SZ_Init (&svs.log[0], svs.log_buf[0], sizeof(svs.log_buf[0]));
+	svs.logtime = realtime;
+	svs.log[0].data = svs.log_buf[0];
+	svs.log[0].maxsize = sizeof(svs.log_buf[0]);
+	svs.log[0].cursize = 0;
 	svs.log[0].allowoverflow = true;
-
-	SZ_Init (&svs.log[1], svs.log_buf[1], sizeof(svs.log_buf[1]));
+	svs.log[1].data = svs.log_buf[1];
+	svs.log[1].maxsize = sizeof(svs.log_buf[1]);
+	svs.log[1].cursize = 0;
 	svs.log[1].allowoverflow = true;
+
+	packet_freeblock = (packet_t *) Hunk_AllocName (MAX_DELAYED_PACKETS * sizeof(packet_t), "delayed_packets");
+
+	for (i = 0; i < MAX_DELAYED_PACKETS; i++) {
+		SZ_Init (&packet_freeblock[i].msg, packet_freeblock[i].buf, sizeof(packet_freeblock[i].buf));
+		packet_freeblock[i].next = &packet_freeblock[i + 1];
+	}
+	packet_freeblock[MAX_DELAYED_PACKETS - 1].next = NULL;
+	svs.free_packets = &packet_freeblock[0];
 }
 
 
 //============================================================================
 
-//Pull specific info from a newly changed userinfo string into a more C freindly form.
-void SV_ExtractFromUserinfo (client_t *cl) {
-	char *val, *p, *q, newname[80];
-	int i, dupc = 1;
-	client_t *client;
+/*
+=================
+SV_ExtractFromUserinfo
 
-	// name for C code
-	val = Info_ValueForKey (cl->userinfo, "name");
+Pull specific info from a newly changed userinfo string
+into a more C freindly form.
+=================
+*/
+// Added by VVD {
+// ktpro crash if absolute value of userinfo keys "ls" or/and "lw" is to large
+static void SV_SetUserInfoKeyLimit (char *key, int limit, client_t *cl, qbool warning_msg)
+{
+	if (warning_msg)
+		SV_ClientPrintf (cl, PRINT_HIGH, "WARNING: You can't set setinfo %s %s %i.\n",
+		                 key, limit > 0 ? ">" : "<", limit);
 
-	// trim user name
-	strlcpy (newname, val, sizeof(newname));
+	Info_Set (&cl->_userinfo_ctx_, key, va("%i", limit));
 
-	for (p = newname; (*p == ' ' || *p == '\r' || *p == '\n') && *p; p++)
-		;
+	MSG_WriteByte (&cl->netchan.message, svc_stufftext);
+	MSG_WriteString (&cl->netchan.message, va("setinfo \"%s\" \"%i\"\n", key, limit));
+}
 
-	if (p != newname && !*p) {
-		//white space only
-		strlcpy (newname, "unnamed", sizeof (newname));
-		p = newname;
-	}
+static void SV_CheckUserInfoKeyLimit (char *key, int limit, client_t *cl)
+{
+	char *value_c = Info_Get (&cl->_userinfo_ctx_, key);
+	int value = Q_atoi(value_c);
 
-	if (p != newname && *p) {
-		for (q = newname; *p; *q++ = *p++)
-			;
-		*q = 0;
-	}
-	for (p = newname + strlen(newname) - 1; p != newname && (*p == ' ' || *p == '\r' || *p == '\n') ; p--)
-		;
-	p[1] = 0;
+	if (value > limit)
+		SV_SetUserInfoKeyLimit (key, limit, cl, true);
+	else if (value < -limit)
+		SV_SetUserInfoKeyLimit (key, -limit, cl, true);
+	else if (strcmp(value_c, va("%i", value)) && *value_c)
+		SV_SetUserInfoKeyLimit (key, value, cl, false);
+}
+// } Added by VVD
 
-	if (strcmp(val, newname)) {
-		Info_SetValueForKey (cl->userinfo, "name", newname, MAX_INFO_STRING);
-		val = Info_ValueForKey (cl->userinfo, "name");
-	}
+extern func_t UserInfo_Changed;
 
-	if (!val[0] || !strcasecmp(val, "console")) {
-		Info_SetValueForKey (cl->userinfo, "name", "unnamed", MAX_INFO_STRING);
-		val = Info_ValueForKey (cl->userinfo, "name");
-	}
+void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
+{
+	char	*val, *p;
+	int		i, limit;
+	client_t	*client;
+	int		dupc = 1;
+	char	newname[CLIENT_NAME_LEN];
 
-	// check to see if another user by the same name exists
-	while (1) {
-		for (i = 0, client = svs.clients; i < MAX_CLIENTS; i++, client++) {
-			if (client->state != cs_spawned || client == cl)
-				continue;
-			if (!strcasecmp(client->name, val))
+	if (namechanged)
+	{
+		// name for C code
+		val = Info_Get (&cl->_userinfo_ctx_, "name");
+
+		// trim user name
+		strlcpy (newname, val, sizeof(newname));
+
+		for (p = val; *p; p++)
+		{
+			if ((*p & 127) == '\\' || *p == '\r' || *p == '\n' || *p == '$' || *p == '#' || *p == '"' || *p == ';')
+			{ // illegal characters in name, set some default
+				strlcpy(newname, sv_default_name.string, sizeof(newname));
+				break;
+			}
+		}
+
+		for (p = newname; *p && (*p & 127) == ' '; p++)
+			; // empty operator
+
+		if (p != newname) // skip prefixed spaces, if any, even whole string of spaces
+			strlcpy(newname, p, sizeof(newname));
+
+		for (p = newname + strlen(newname) - 1; p >= newname; p--)
+		{
+			if (*p && (*p & 127) != ' ') // skip spaces in suffix, if any
+			{
+				p[1] = 0;
+				break;
+			}
+		}
+
+		if (strcmp(val, newname))
+		{
+			Info_Set (&cl->_userinfo_ctx_, "name", newname);
+			val = Info_Get (&cl->_userinfo_ctx_, "name");
+		}
+
+		if (!val[0] || !strcasecmp(val, "console"))
+		{
+			Info_Set (&cl->_userinfo_ctx_, "name", sv_default_name.string);
+			val = Info_Get (&cl->_userinfo_ctx_, "name");
+		}
+
+		// check to see if another user by the same name exists
+		while ( 1 )
+		{
+			for (i = 0, client = svs.clients ; i<MAX_CLIENTS ; i++, client++)
+			{
+				if (client->state != cs_spawned || client == cl)
+					continue;
+
+				if (!strcasecmp(client->name, val))
+					break;
+			}
+			if (i != MAX_CLIENTS)
+			{ // dup name
+				if (strlen(val) > CLIENT_NAME_LEN - 1)
+					val[CLIENT_NAME_LEN - 4] = 0;
+				p = val;
+
+				if (val[0] == '(')
+				{
+					if (val[2] == ')')
+						p = val + 3;
+					else if (val[3] == ')')
+						p = val + 4;
+				}
+
+				snprintf(newname, sizeof(newname), "(%d)%-.10s", dupc++, p);
+				Info_Set (&cl->_userinfo_ctx_, "name", newname);
+				val = Info_Get (&cl->_userinfo_ctx_, "name");
+			}
+			else
 				break;
 		}
-		if (i != MAX_CLIENTS) { // dup name
-			if (strlen(val) > sizeof(cl->name) - 1)
-				val[sizeof(cl->name) - 4] = 0;
-			p = val;
 
-			if (val[0] == '(') {
-				if (val[2] == ')')
-					p = val + 3;
-				else if (val[3] == ')')
-					p = val + 4;
+		if (strncmp(val, cl->name, strlen(cl->name) + 1))
+		{
+			if (!sv.paused)
+			{
+				if (!cl->lastnametime || realtime - cl->lastnametime > 5)
+				{
+					cl->lastnamecount = 0;
+					cl->lastnametime = realtime;
+				}
+				else if (cl->lastnamecount++ > 4)
+				{
+					SV_BroadcastPrintf (PRINT_HIGH, "%s was kicked for name spamming\n", cl->name);
+					SV_ClientPrintf (cl, PRINT_HIGH, "You were kicked from the game for name spamming\n");
+					SV_LogPlayer(cl, "name spam", 1); //bliP: player logging
+					SV_DropClient (cl);
+					return;
+				}
 			}
 
-			snprintf(newname, sizeof (newname), "(%d)%-.40s", dupc++, p);
-			Info_SetValueForKey (cl->userinfo, "name", newname, MAX_INFO_STRING);
-			val = Info_ValueForKey (cl->userinfo, "name");
-		} else
-			break;
-	}
-
-	if (strncmp(val, cl->name, strlen(cl->name))) {
-		if (!sv_paused.value) {
-			if (!cl->lastnametime || svs.realtime - cl->lastnametime > 5) {
-				cl->lastnamecount = 0;
-				cl->lastnametime = svs.realtime;
-			} else if (cl->lastnamecount++ > 4) {
-				SV_BroadcastPrintf (PRINT_HIGH, "%s was kicked for name spam\n", cl->name);
-				SV_ClientPrintf (cl, PRINT_HIGH, "You were kicked from the game for name spamming\n");
-				SV_DropClient (cl);
-				return;
-			}
+			if (cl->state >= cs_spawned && !cl->spectator)
+				SV_BroadcastPrintf (PRINT_HIGH, "%s changed name to %s\n", cl->name, val);
 		}
 
-		if (cl->state >= cs_spawned && !cl->spectator)
-			SV_BroadcastPrintf (PRINT_HIGH, "%s changed name to %s\n", cl->name, val);
+		strlcpy (cl->name, val, CLIENT_NAME_LEN);
+
+		if (cl->state >= cs_spawned) //bliP: player logging
+			SV_LogPlayer(cl, "name change", 1);
 	}
 
-	strlcpy (cl->name, val, sizeof(cl->name));
+	// team
+	strlcpy (cl->team, Info_Get (&cl->_userinfo_ctx_, "team"), sizeof(cl->team));
 
 	// rate
-	val = Info_ValueForKey (cl->userinfo, "rate");
-	cl->netchan.rate = 1.0 / SV_BoundRate (atoi(val));
+	val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
+	cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, Q_atoi(*val ? val : "99999"));
 
 	// message level
-	val = Info_ValueForKey (cl->userinfo, "msg");
-	if (strlen(val))
-		cl->messagelevel = atoi(val);
+	val = Info_Get (&cl->_userinfo_ctx_, "msg");
+	if (val[0])
+		cl->messagelevel = Q_atoi(val);
 
+	//bliP: spectator print ->
+	val = Info_Get(&cl->_userinfo_ctx_, "sp");
+	if (val[0])
+		cl->spec_print = Q_atoi(val);
+	//<-
+	// Added by VVD {
+// ktpro version before 1.67 crash if absolute value of userinfo keys "ls" or/and "lw" is to large
+	limit = 63;
+	SV_CheckUserInfoKeyLimit("lw", limit, cl);
+	SV_CheckUserInfoKeyLimit("ls", limit, cl);
+	// } Added by VVD
 }
+
 
 //============================================================================
 
-void SV_Init (void) {
+void OnChange_sysselecttimeout_var (cvar_t *var, char *value, qbool *cancel)
+{
+	int t = Q_atoi (value);
+	if (t <= 1000000 && t >= 10)
+	{
+		select_timeout.tv_sec  =  t / 1000000;
+#if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)) && defined(KQUEUE)
+		select_timeout.tv_nsec = (t - select_timeout.tv_sec) * 1000;
+#else
+		select_timeout.tv_usec =  t - select_timeout.tv_sec;
+#endif
+		return;
+	}
+
+	Con_Printf("WARNING: sys_select_timeout can't be less then 10 (10 microseconds) and more then 1 000 000 (1 second).\n");
+	*cancel = true;
+}
+//bliP: 24/9 logdir ->
+void OnChange_logdir_var (cvar_t *var, char *value, qbool *cancel)
+{
+	if (strstr(value, ".."))
+	{
+		*cancel = true;
+		return;
+	}	
+
+	if (value[0])
+		Sys_mkdir (value);
+}
+//<-
+
+//bliP: admininfo ->
+void OnChange_admininfo_var (cvar_t *var, char *value, qbool *cancel)
+{
+	if (value[0])
+		Info_SetValueForStarKey (svs.info, "*admin", value, MAX_SERVERINFO_STRING);
+	else
+		Info_RemoveKey (svs.info, "*admin");
+}
+//<-
+
+//bliP: telnet log level ->
+void OnChange_telnetloglevel_var (cvar_t *var, char *value, qbool *cancel)
+{
+	logs[TELNET_LOG].log_level = Q_atoi(value);
+}
+//<-
+void OnChange_qconsolelogsay_var (cvar_t *var, char *value, qbool *cancel)
+{
+	logs[CONSOLE_LOG].log_level = Q_atoi(value);
+}
+
+/*
+====================
+SV_Init
+====================
+*/
+void SV_Init (/*quakeparms_t *parms */ void)
+{
+	memset(&_localinfo_, 0, sizeof(_localinfo_));
+	_localinfo_.max = MAX_LOCALINFOS;
+
+//	COM_InitArgv (parms->argc, parms->argv);
+
+//	if (COM_CheckParm ("-minmemory"))
+//		parms->memsize = MINIMUM_MEMORY;
+
+//	host_parms = *parms;
+
+//	if (parms->memsize < MINIMUM_MEMORY)
+//		SV_Error ("Only %4.1f megs of memory reported, can't execute game",
+//					parms->memsize / (float)0x100000);
+
+//	Memory_Init (parms->membase, parms->memsize);
+//	Cbuf_Init ();
+
+//	Cmd_Init ();
+
+//	FS_Init();
+
+#ifdef USE_PR2
+	PR2_Init();
+#else
 	PR_Init ();
+#endif
+
+//	SV_InitNet ();
+
 	SV_InitLocal ();
 
-	svs.last_heartbeat = -99999; // send immediately
+//	Sys_Init ();
+//	CM_Init ();
+
+	SV_MVDInit ();
+	Login_Init ();
+
+//	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
+//	host_hunklevel = Hunk_LowMark ();
+
+//	Cbuf_InsertText ("exec server.cfg\n");
+
+//	host_initialized = true;
+
+//	Con_Printf ("%4.1f megabyte heap\n", parms->memsize / (float)0x100000);
+
+//	Version_f();
+
+//	Con_Printf ("======== QuakeWorld Initialized ========\n");
+
+	// process command line arguments
+//	Cmd_StuffCmds_f ();
+//	Cbuf_Execute ();
+
+	if (telnetport)
+	{
+		SV_Write_Log(TELNET_LOG, 1, "============================================\n");
+//		SV_Write_Log(TELNET_LOG, 1, SERVER_NAME " " QWE_VERSION " started\n");
+		SV_Write_Log(TELNET_LOG, 1, SERVER_NAME " " VERSION_NUMBER " started\n");
+	}
+
+//	SV_Map(true);
+
+	server_cfg_done  = true;
+
+	// if a map wasn't specified on the command line, spawn start map
+//	if (sv.state == ss_dead)
+//	{
+//		Cmd_ExecuteString ("map start");
+//		SV_Map(true);
+//	}
+
+//	if (sv.state == ss_dead)
+//		SV_Error ("Couldn't spawn a server");
+}
+
+/*
+============
+SV_TimeOfDay
+============
+*/
+void SV_TimeOfDay(date_t *date)
+{
+	struct tm *newtime;
+	time_t long_time;
+
+	time(&long_time);
+	newtime = localtime(&long_time);
+
+	//bliP: date check ->
+	if (!newtime)
+	{
+		date->day = 0;
+		date->mon = 0;
+		date->year = 0;
+		date->hour = 0;
+		date->min = 0;
+		date->sec = 0;
+		strlcpy(date->str, "#bad date#", sizeof(date->str));
+		return;
+	}
+	//<-
+
+	date->day = newtime->tm_mday;
+	date->mon = newtime->tm_mon;
+	date->year = newtime->tm_year + 1900;
+	date->hour = newtime->tm_hour;
+	date->min = newtime->tm_min;
+	date->sec = newtime->tm_sec;
+	strftime(date->str, sizeof(date->str)-1, "%a %b %d, %H:%M:%S %Y", newtime);
+}
+
+//bliP: player logging ->
+/*
+============
+SV_LogPlayer
+============
+*/
+void SV_LogPlayer(client_t *cl, char *msg, int level)
+{
+	char info[MAX_EXT_INFO_STRING];
+
+	Info_ReverseConvert(&cl->_userinfo_ctx_, info, sizeof(info));
+
+	SV_Write_Log(PLAYER_LOG, level,
+	             va("%s\\%s\\%i\\%s\\%s\\%i%s\n",
+	                msg,
+	                cl->name,
+	                cl->userid,
+	                NET_BaseAdrToString(cl->netchan.remote_address),
+	                NET_BaseAdrToString(cl->realip),
+	                cl->netchan.remote_address.port,
+	                info
+	               )
+	            );
+}
+
+/*
+============
+SV_Write_Log
+============
+*/
+void SV_Write_Log(int sv_log, int level, char *msg)
+{
+	static date_t date;
+	char *log_msg, *error_msg;
+
+	if (!(logs[sv_log].sv_logfile && *msg))
+		return;
+
+	//bliP: moved telnet bit to on cvar change ->
+	//if (sv_log == TELNET_LOG)
+	//	logs[sv_log].log_level = Cvar_Value("telnet_log_level");
+	//<-
+
+	if (logs[sv_log].log_level < level)
+		return;
+
+	SV_TimeOfDay(&date);
+
+	switch (sv_log)
+	{
+	case FRAG_LOG:
+	case MOD_FRAG_LOG:
+		log_msg = msg; // these logs aren't in fs_gamedir
+		error_msg = va("Can't write in %s log file: "/*%s/ */"%sN.log.\n",
+		               /*fs_gamedir,*/ logs[sv_log].message_on,
+		               logs[sv_log].file_name);
+		break;
+	default:
+		log_msg = va("[%s].[%d] %s", date.str, level, msg);
+		error_msg = va("Can't write in %s log file: "/*%s/ */"%s%i.log.\n",
+		               /*fs_gamedir,*/ logs[sv_log].message_on,
+		               logs[sv_log].file_name, NET_UDPSVPort());
+	}
+
+	if (fprintf(logs[sv_log].sv_logfile, "%s", log_msg) < 0)
+	{
+		//bliP: Sys_Error to Con_DPrintf ->
+		//VVD: Con_DPrintf to Sys_Printf ->
+		Sys_Printf("%s", error_msg);
+		//<-
+		SV_Logfile(sv_log, false);
+	}
+	else
+	{
+		fflush(logs[sv_log].sv_logfile);
+		if ((int)sv_maxlogsize.value &&
+		        (FS_FileLength(logs[sv_log].sv_logfile) > (int)sv_maxlogsize.value))
+		{
+			SV_Logfile(sv_log, true);
+		}
+	}
+}
+
+/*
+============
+Sys_compare_by functions for sort files in list
+============
+*/
+int Sys_compare_by_date (const void *a, const void *b)
+{
+	return (int)(((file_t *)a)->time - ((file_t *)b)->time);
+}
+
+int Sys_compare_by_name (const void *a, const void *b)
+{
+	return strncmp(((file_t *)a)->name, ((file_t *)b)->name, MAX_DEMO_NAME);
+}
+
+//bliP: plain player names ->
+/*char qfont_table[256] = {
+	'\0', '#', '#', '#', '#', '.', '#', '#',
+	'#', 9, 10, '#', ' ', 13, '.', '.',
+	'[', ']', '0', '1', '2', '3', '4', '5',
+	'6', '7', '8', '9', '.', '<', '=', '>',
+	' ', '!', '"', '#', '$', '%', '&', '\'',
+	'(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+	'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
+	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+	'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+	'x', 'y', 'z', '{', '|', '}', '~', '<',
+
+	'<', '=', '>', '#', '#', '.', '#', '#',
+	'#', '#', ' ', '#', ' ', '>', '.', '.',
+	'[', ']', '0', '1', '2', '3', '4', '5',
+	'6', '7', '8', '9', '.', '<', '=', '>',
+	' ', '!', '"', '#', '$', '%', '&', '\'',
+	'(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+	'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
+	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+	'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+	'x', 'y', 'z', '{', '|', '}', '~', '<'
+};*/
+
+/*
+==================
+Q_normalizetext
+returns readable extended quake names
+==================
+*/
+unsigned char *Q_normalizetext (unsigned char *str)
+{
+	extern char chartbl2[];
+	unsigned char	*i;
+
+	for (i = str; *i; i++)
+		*i = chartbl2[*i];
+	return str;
+}
+
+/*
+==================
+Q_redtext
+returns extended quake names
+==================
+*/
+unsigned char *Q_redtext (unsigned char *str)
+{
+	unsigned char *i;
+	for (i = str; *i; i++)
+		if (*i > 32 && *i < 128)
+			*i |= 128;
+	return str;
+}
+//<-
+
+/*
+==================
+Q_yelltext
+returns extended quake names (yellow numbers)
+==================
+*/
+unsigned char *Q_yelltext (unsigned char *str)
+{
+	unsigned char *i;
+	for (i = str; *i; i++)
+	{
+		if (*i >= '0' && *i <= '9')
+			*i += 18 - '0';
+		else if (*i > 32 && *i < 128)
+			*i |= 128;
+		else if (*i == 13)
+			*i = ' ';
+	}
+	return str;
 }

@@ -91,3 +91,8 @@ unsigned short CRC_Block (byte *start, unsigned int count)
 	return crc;
 }
 
+void CRC_AddBlock (unsigned short *crcvalue, byte *start, int count)
+{
+    while (count--)
+		CRC_ProcessByte(crcvalue, *start++);
+}

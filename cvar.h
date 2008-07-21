@@ -83,6 +83,10 @@ void Cvar_Set (cvar_t *var, char *value);
 // same but silent for latched var
 void Cvar_LatchedSet (cvar_t *var, char *value);
 
+// equivalent to "<name> <variable>" typed at the console
+void Cvar_SetByName (char *var_name, char *value);
+void Cvar_SetValueByName (char *var_name, float value);
+
 // force a set even if the cvar is read only
 void Cvar_ForceSet (cvar_t *var, char *value);
 

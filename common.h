@@ -43,7 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // per-level limits
 #define	CL_MAX_EDICTS		2048	// FIXME: ouch! ouch! ouch!
-#define	SV_MAX_EDICTS		1024	// FIXME: ouch! ouch! ouch!
+//#define	SV_MAX_EDICTS		1024	// FIXME: ouch! ouch! ouch!
+#define	MAX_EDICTS			512		// FIXME: ouch! ouch! ouch! - trying to fix...
 #define	MAX_LIGHTSTYLES		64
 #define	MAX_MODELS			512		// these are sent over the net as bytes
 #define MAX_VWEP_MODELS 	32		// could be increased to 256
@@ -141,14 +142,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	MAX_SERVERINFO_STRING 512
 #define	MAX_LOCALINFO_STRING 32768
 
+#define	MAX_KEY_STRING      (MAX_INFO_KEY)     // mvdsv compatibility
+#define	MAX_EXT_INFO_STRING (MAX_INFO_STRING)  // mvdsv compatibility
+
 //============================================================================
+
+#define Cvar_SetROM	Cvar_ForceSet	// mvdsv compatibility
+
+#define Con_Printf  Com_Printf  	// mvdsv compatibility
+#define Con_DPrintf Com_DPrintf		// mvdsv compatibility
+#define fs_gamedir  com_gamedir		// mvdsv compatibility
+
+//============================================================================
+
 
 #define MAX_COM_TOKEN 1024
 
 extern	char	com_token[MAX_COM_TOKEN];
 extern	qbool	com_eof;
+typedef enum {TTP_UNKNOWN, TTP_STRING} com_tokentype_t;
 
 char *COM_Parse (char *data);
+char *COM_ParseToken (const char *data, const char *punctuation);
+
 char *COM_Argv (int arg); // range and null checked
 void COM_ClearArgv (int arg);
 void COM_AddParm (char *parm);
@@ -156,6 +172,7 @@ void COM_InitArgv (int argc, char **argv);
 int COM_Argc (void);
 int COM_CheckParm (char *parm);
 int COM_CheckParmOffset (char *parm, int offset);
+
 
 // equals to consecutive calls of strtok(s, " ") that assign values to array
 // "1 3.5 6 7" will lead to fl_array[0] = 1.0; fl_array[1] = 3.5; ...
@@ -220,6 +237,52 @@ char *FS_LegacyDir (char *media_dir);
 int FS_FileLength (FILE *f);
 int FS_FileOpenRead (char *path, FILE **hndl);
 
+//============================================================
+// Alternative variant manipulation with info strings
+//============================================================
+
+#define INFO_HASHPOOL_SIZE 256
+
+#define MAX_CLIENT_INFOS 128
+
+typedef struct info_s {
+	struct info_s	*hash_next;
+	struct info_s	*next;
+
+	char				*name;
+	char				*value;
+
+} info_t;
+
+typedef struct ctxinfo_s {
+
+	info_t	*info_hash[INFO_HASHPOOL_SIZE];
+	info_t	*info_list;
+
+	int		cur; // current infos
+	int		max; // max    infos
+
+} ctxinfo_t;
+
+// return value for given key
+char			*Info_Get(ctxinfo_t *ctx, const char *name);
+// set value for given key
+qbool			Info_Set (ctxinfo_t *ctx, const char *name, const char *value);
+// set value for given star key
+qbool			Info_SetStar (ctxinfo_t *ctx, const char *name, const char *value);
+// remove given key
+qbool			Info_Remove (ctxinfo_t *ctx, const char *name);
+// remove all infos
+void			Info_RemoveAll (ctxinfo_t *ctx);
+// convert old way infostring to new way: \name\qqshka\noaim\1 to hashed variant
+qbool			Info_Convert(ctxinfo_t *ctx, char *str);
+// convert new way to old way
+qbool			Info_ReverseConvert(ctxinfo_t *ctx, char *str, int size);
+// copy star keys from ont ctx to other
+qbool			Info_CopyStar(ctxinfo_t *ctx_from, ctxinfo_t *ctx_to);
+// just print all key value pairs
+void			Info_PrintList(ctxinfo_t *ctx);
+
 //============================================================================
 
 char *Info_ValueForKey (char *s, char *key);
@@ -273,7 +336,7 @@ void MSG_WriteByte (sizebuf_t *sb, int c);
 void MSG_WriteShort (sizebuf_t *sb, int c);
 void MSG_WriteLong (sizebuf_t *sb, int c);
 void MSG_WriteFloat (sizebuf_t *sb, float f);
-void MSG_WriteString (sizebuf_t *sb, char *s);
+void MSG_WriteString (sizebuf_t *sb, const char *s);
 void MSG_WriteUnterminatedString (sizebuf_t *sb, char *s);
 void MSG_WriteCoord (sizebuf_t *sb, float f);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
@@ -343,6 +406,8 @@ void Con_Init (void);
 void SV_Init (void);
 void SV_Shutdown (char *finalmsg);
 void SV_Frame (double time);
+
+void SV_Error (char *error, ...);
 
 void COM_ParseIPCData(const char *buf, unsigned int bufsize);
 

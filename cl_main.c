@@ -2074,7 +2074,7 @@ void CL_Frame (double time)
 		Cbuf_Execute();
 		CL_CheckAutoPause();
 
-		if (com_serveractive)
+//		if (com_serveractive)
 			SV_Frame(cls.frametime);
 
 		// fetch results from server
@@ -2119,7 +2119,7 @@ void CL_Frame (double time)
 			Cbuf_Execute();
 			CL_CheckAutoPause ();
 
-			if (com_serveractive)
+//			if (com_serveractive)
 				SV_Frame (physframetime);
 
 			// Fetch results from server

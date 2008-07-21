@@ -97,6 +97,8 @@ typedef enum {
 } FS_Load_File_Types;
 
 void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
+
+char *FS_NextPath (char *prevpath);
 #endif
 
 #ifdef WITH_FTE_VFS

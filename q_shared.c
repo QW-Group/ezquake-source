@@ -798,10 +798,17 @@ unsigned short BuffLittleShort (const unsigned char *buffer)
 
 //===========================================================================
 
-void SZ_Init (sizebuf_t *buf, byte *data, int length) {
-	memset (buf, 0, sizeof(*buf));
+void SZ_InitEx (sizebuf_t *buf, byte *data, int length, qbool allowoverflow)
+{
+	memset (buf, 0, sizeof (*buf));
 	buf->data = data;
 	buf->maxsize = length;
+	buf->allowoverflow = allowoverflow;
+}
+
+void SZ_Init (sizebuf_t *buf, byte *data, int length)
+{
+	SZ_InitEx (buf, data, length, false);
 }
 
 void SZ_Clear (sizebuf_t *buf) {
@@ -830,7 +837,7 @@ void *SZ_GetSpace (sizebuf_t *buf, int length) {
 	return data;
 }
 
-void SZ_Write (sizebuf_t *buf, void *data, int length) {
+void SZ_Write (sizebuf_t *buf, const void *data, int length) {
 	memcpy (SZ_GetSpace(buf,length),data,length);
 }
 
@@ -861,9 +868,9 @@ void *Q_malloc (size_t size)
 	if (!p)
 		Sys_Error ("Q_malloc: Not enough memory free; check disk space\n");
 
-#ifndef _DEBUG
+//#ifndef _DEBUG
 	memset(p, 0, size);
-#endif
+//#endif
 
 	return p;
 }

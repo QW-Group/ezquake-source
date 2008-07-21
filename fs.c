@@ -314,10 +314,7 @@ qbool FS_WriteFile (char *filename, void *data, int len)
 #else
 qbool FS_WriteFileRelative(char *filename, void *data, int len, int relativeto)
 {
-	char name[MAX_PATH];
 	vfsfile_t *f;
-
-	snprintf (name, sizeof(name), "%s", filename);
 
 	FS_CreatePathRelative(filename, relativeto);
 	f = FS_OpenVFS(filename, "wb", relativeto);
@@ -1036,6 +1033,28 @@ void FS_SetGamedir (char *dir)
 #ifndef SERVERONLY
 	FS_AddUserDirectory(dir);
 #endif
+}
+
+char *FS_NextPath (char *prevpath)
+{
+	searchpath_t	*s;
+	char			*prev;
+
+	if (!prevpath)
+		return com_gamedir;
+
+	prev = com_gamedir;
+	for (s=fs_searchpaths ; s ; s=s->next)
+	{
+		if (s->funcs != &osfilefuncs)
+			continue;
+
+		if (prevpath == prev)
+			return s->handle;
+		prev = s->handle;
+	}
+
+	return NULL;
 }
 
 void FS_ShutDown( void ) {

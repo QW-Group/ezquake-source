@@ -336,6 +336,28 @@ void Cvar_ForceSet (cvar_t *var, char *value)
 	var->flags = saved_flags;
 }
 
+void Cvar_SetByName (char *var_name, char *value)
+{
+	cvar_t	*var;
+
+	var = Cvar_Find (var_name);
+	if (!var)
+	{	// there is an error in C code if this happens
+		Com_DPrintf ("Cvar_Set: variable %s not found\n", var_name);
+		return;
+	}
+
+	Cvar_Set (var, value);
+}
+
+void Cvar_SetValueByName (char *var_name, float value)
+{
+	char val[32];
+
+	snprintf (val, sizeof (val), "%.8g", value);
+	Cvar_SetByName (var_name, val);
+}
+
 void Cvar_SetValue (cvar_t *var, float value)
 {
 	char val[128];

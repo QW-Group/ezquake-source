@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //define	PARANOID			// speed sapping error checking
 
+#include <time.h>
 #include "common.h"
 #include "fs.h"
 
@@ -32,4 +33,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "server.h"
+
+#ifdef USE_PR2
+// Angel -->
+#include "pr2_vm.h"
+#include "pr2.h"
+#include "g_public.h"
+// <-- Angel
+#endif
+
+
+#include "net.h"
+#include "crc.h"
+#include "sha1.h"
+#include "pmove.h"
+#include "version.h"
+#include "sv_log.h"
 #include "sv_world.h"

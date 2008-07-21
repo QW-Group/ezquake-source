@@ -174,6 +174,11 @@ qbool NET_StringToAdr (char *s, netadr_t *a)
 	return true;
 }
 
+int NET_UDPSVPort (void)
+{
+	return ntohs(net_local_sv_ipadr.port);
+}
+
 /*
 =============================================================================
 LOOPBACK BUFFERS FOR LOCAL PLAYER
@@ -580,6 +585,55 @@ void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 
 //=============================================================================
 
+qbool TCP_Set_KEEPALIVE(int sock)
+{
+	int		iOptVal = 1;
+
+	if (sock == INVALID_SOCKET) {
+		Con_Printf("TCP_Set_KEEPALIVE: invalid socket\n");
+		return false;
+	}
+
+	if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void*)&iOptVal, sizeof(iOptVal)) == SOCKET_ERROR) {
+		Con_Printf ("TCP_Set_KEEPALIVE: setsockopt: (%i): %s\n", qerrno, strerror (qerrno));
+		return false;
+	}
+
+#if defined(__linux__)
+
+//	The time (in seconds) the connection needs to remain idle before TCP starts sending keepalive probes, 
+//  if the socket option SO_KEEPALIVE has been set on this socket.
+
+	iOptVal = 60;
+
+	if (setsockopt(sock, SOL_TCP, TCP_KEEPIDLE, (void*)&iOptVal, sizeof(iOptVal)) == -1) {
+		Con_Printf ("TCP_Set_KEEPALIVE: setsockopt TCP_KEEPIDLE: (%i): %s\n", qerrno, strerror(qerrno));
+		return false;
+	}
+
+//  The time (in seconds) between individual keepalive probes.
+	iOptVal = 30;
+
+	if (setsockopt(sock, SOL_TCP, TCP_KEEPINTVL, (void*)&iOptVal, sizeof(iOptVal)) == -1) {
+		Con_Printf ("TCP_Set_KEEPALIVE: setsockopt TCP_KEEPINTVL: (%i): %s\n", qerrno, strerror(qerrno));
+		return false;
+	}
+
+//  The maximum number of keepalive probes TCP should send before dropping the connection. 
+	iOptVal = 6;
+
+	if (setsockopt(sock, SOL_TCP, TCP_KEEPCNT, (void*)&iOptVal, sizeof(iOptVal)) == -1) {
+		Con_Printf ("TCP_Set_KEEPALIVE: setsockopt TCP_KEEPCNT: (%i): %s\n", qerrno, strerror(qerrno));
+		return false;
+	}
+#else
+	// FIXME: windows, bsd etc...
+#endif
+
+	return true;
+}
+
+
 int TCP_OpenStream (netadr_t remoteaddr)
 {
 	unsigned long _true = true;
@@ -863,8 +917,8 @@ void NET_CloseServer (void)
 
 // TCPCONNECT -->
 	if (svs.sockettcp != INVALID_SOCKET) {
-	closesocket(svs.sockettcp);
-	svs.sockettcp = INVALID_SOCKET;
+		closesocket(svs.sockettcp);
+		svs.sockettcp = INVALID_SOCKET;
 	}
 // <--TCPCONNECT
 

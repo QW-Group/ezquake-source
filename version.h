@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#define	QW_VERSION			2.40
+#define	QW_VERSION			"2.40"
 
 #if defined(_WIN32)
 #define QW_PLATFORM			"Win32"
@@ -72,5 +72,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int build_number (void);
 void CL_Version_f (void);
 char *VersionString (void);
+
+#define SERVER_NAME			"EZQUAKE"
+
+// MVDSV compatibility
+#define QWE_VERSION			"0.28"
+#define QWE_VERNUM			0.28
+#define QWE_SERVER_NAME		"MVDSV"
 
 #endif /* !__VERSION_H__ */

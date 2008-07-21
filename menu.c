@@ -808,11 +808,18 @@ static void CheckSPGame (void) {
 }
 
 static void StartNewGame (void) {
+	extern cvar_t sv_progtype;
+
 	key_dest = key_game;
 	Cvar_Set (&maxclients, "1");
 	Cvar_Set (&teamplay, "0");
 	Cvar_Set (&deathmatch, "0");
 	Cvar_Set (&coop, "0");
+
+	Cvar_Set (&sv_progsname, "spprogs"); // force progsname
+#ifdef USE_PR2
+	Cvar_Set (&sv_progtype, "0"); // force .dat
+#endif
 
 	if (com_serveractive)
 		Cbuf_AddText ("disconnect\n");

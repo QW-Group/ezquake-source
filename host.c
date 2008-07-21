@@ -487,6 +487,7 @@ char *Host_PrintBars(char *s, int len)
 static void Commands_For_Configs_Init (void)
 {
 extern void SV_Floodprot_f (void);
+extern void SV_Floodprotmsg_f (void);
 extern void TP_MsgTrigger_f (void);
 extern void TP_MsgFilter_f (void);
 extern void TP_Took_f (void);
@@ -505,6 +506,7 @@ extern void SB_SourceMark(void);
 
 	//disconnect: fix it if i forgot something
 	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
+	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
 	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
 	Cmd_AddCommand ("filter", TP_MsgFilter_f);
 	Cmd_AddCommand ("tp_took", TP_Took_f);

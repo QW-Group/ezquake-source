@@ -34,6 +34,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "resource.h"
 #include "keys.h"
+#include "server.h"
+#include "pcre.h"
+
 
 #define MINIMUM_WIN_MEMORY	0x0c00000
 #define MAXIMUM_WIN_MEMORY	0x2000000
@@ -201,6 +204,11 @@ int Sys_remove (char *path)
 	return remove(path);
 }
 
+int Sys_rmdir (const char *path)
+{
+	return _rmdir(path);
+}
+
 // D-Kure: This is added for FTE vfs
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm)
 {
@@ -266,6 +274,107 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 
 	return go;
 }
+
+
+/*
+================
+Sys_listdir
+================
+*/
+
+dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
+{
+	static file_t	list[MAX_DIRFILES];
+	dir_t	dir;
+	HANDLE	h;
+	WIN32_FIND_DATA fd;
+	char	pathname[MAX_DEMO_NAME];
+	qbool all;
+
+	int	r;
+	pcre	*preg;
+	const char	*errbuf;
+
+	memset(list, 0, sizeof(list));
+	memset(&dir, 0, sizeof(dir));
+
+	dir.files = list;
+	all = !strncmp(ext, ".*", 3);
+	if (!all)
+		if (!(preg = pcre_compile(ext, PCRE_CASELESS, &errbuf, &r, NULL)))
+		{
+			Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
+			           ext, errbuf, r);
+			Q_free(preg);
+			return dir;
+		}
+
+	snprintf(pathname, sizeof(pathname), "%s/*.*", path);
+	if ((h = FindFirstFile (pathname , &fd)) == INVALID_HANDLE_VALUE)
+	{
+		if (!all)
+			Q_free(preg);
+		return dir;
+	}
+
+	do
+	{
+		if (!strncmp(fd.cFileName, ".", 2) || !strncmp(fd.cFileName, "..", 3))
+			continue;
+		if (!all)
+		{
+			switch (r = pcre_exec(preg, NULL, fd.cFileName,
+			                      strlen(fd.cFileName), 0, 0, NULL, 0))
+			{
+			case 0: break;
+			case PCRE_ERROR_NOMATCH: continue;
+			default:
+				Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
+				           ext, fd.cFileName, r);
+				if (!all)
+					Q_free(preg);
+				return dir;
+			}
+		}
+
+		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) //bliP: list dir
+		{
+			dir.numdirs++;
+			list[dir.numfiles].isdir = true;
+			list[dir.numfiles].size = list[dir.numfiles].time = 0;
+		}
+		else
+		{
+			list[dir.numfiles].isdir = false;
+			snprintf(pathname, sizeof(pathname), "%s/%s", path, fd.cFileName);
+			list[dir.numfiles].time = 0; //Sys_FileTime(pathname);
+			dir.size += (list[dir.numfiles].size = fd.nFileSizeLow);
+		}
+		strlcpy (list[dir.numfiles].name, fd.cFileName, sizeof(list[0].name));
+
+		if (++dir.numfiles == MAX_DIRFILES - 1)
+			break;
+
+	}
+	while (FindNextFile(h, &fd));
+
+	FindClose (h);
+	if (!all)
+		Q_free(preg);
+
+	switch (sort_type)
+	{
+	case SORT_NO: break;
+	case SORT_BY_DATE:
+		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_date);
+		break;
+	case SORT_BY_NAME:
+		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_name);
+		break;
+	}
+	return dir;
+}
+
 
 // ===============================================================================
 // SYSTEM IO
@@ -1391,4 +1500,44 @@ void Sys_TimerResolution_Clear(timerresolution_session_t * s)
 			Com_Printf("Error: Failed to clear timer resolution\n");
 		}
 	}
+}
+
+//========================================================================
+
+int Sys_Script (const char *path, const char *args)
+{
+	STARTUPINFO			si;
+	PROCESS_INFORMATION	pi;
+	char cmdline[1024], curdir[MAX_OSPATH];
+
+	memset (&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_SHOWMINNOACTIVE;
+
+	GetCurrentDirectory(sizeof(curdir), curdir);
+
+
+	snprintf(cmdline, sizeof(cmdline), "%s\\sh.exe %s.qws %s", curdir, path, args);
+	strlcat(curdir, va("\\%s", fs_gamedir+2), MAX_OSPATH);
+
+	return CreateProcess (NULL, cmdline, NULL, NULL,
+	                      FALSE, 0/*DETACHED_PROCESS /*CREATE_NEW_CONSOLE*/ , NULL, curdir, &si, &pi);
+}
+
+//=========================================================================
+
+DL_t Sys_DLOpen (const char *path)
+{
+	return LoadLibrary (path);
+}
+
+qbool Sys_DLClose (DL_t dl)
+{
+	return FreeLibrary (dl);
+}
+
+void *Sys_DLProc (DL_t dl, const char *name)
+{
+	return (void *) GetProcAddress (dl, name);
 }

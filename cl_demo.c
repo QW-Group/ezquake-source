@@ -43,6 +43,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "logging.h"
 #include "version.h"
 #include "demo_controls.h"
+#ifndef CLIENTONLY
+#include "server.h"
+#endif
 
 // TODO: Create states for demo_recording, demo_playback, and so on and put all related vars into these. Right now with global vars for everything is a mess. Also renaming some of the time vars to be less confusing is probably good. demotime, olddemotime, nextdemotime, prevtime...
 typedef struct demo_state_s
@@ -2203,6 +2206,12 @@ static void CL_StopRecording (void)
 //
 void CL_Stop_f (void)
 {
+	if ( com_serveractive )
+	{
+		SV_MVDStop_f();
+		return;
+	}
+
 	if (!cls.demorecording)
 	{
 		Com_Printf ("Not recording a demo\n");
@@ -2244,6 +2253,12 @@ char *CL_DemoDirectory(void)
 void CL_Record_f (void)
 {
 	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];
+
+	if ( com_serveractive )
+	{
+		SV_MVD_Record_f();
+		return;
+	}
 
 	if (cls.state != ca_active)
 	{
@@ -2446,6 +2461,12 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 void CL_EasyRecord_f (void)
 {
 	char *name;
+
+	if ( com_serveractive )
+	{
+		SV_MVDEasyRecord_f();
+		return;
+	}
 
 	if (cls.state != ca_active)
 	{

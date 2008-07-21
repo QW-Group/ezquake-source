@@ -57,6 +57,8 @@ typedef unsigned int socklen_t;
 #define ioctlsocket ioctl
 #endif //_WIN32
 
+#include <errno.h>
+
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET -1
 #endif
@@ -87,6 +89,8 @@ extern	byte		net_message_buffer[MSG_BUF_SIZE];
 
 extern	cvar_t	hostname;
 
+qbool TCP_Set_KEEPALIVE(int sock);
+
 int TCP_OpenStream (netadr_t remoteaddr); //makes things easier
 
 void	NET_Init (void);
@@ -105,6 +109,8 @@ qbool	NET_CompareBaseAdr (netadr_t a, netadr_t b);
 char	*NET_AdrToString (netadr_t a);
 char	*NET_BaseAdrToString (netadr_t a);
 qbool	NET_StringToAdr (char *s, netadr_t *a);
+
+int		NET_UDPSVPort (void);
 
 //============================================================================
 

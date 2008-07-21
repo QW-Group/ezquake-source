@@ -164,7 +164,7 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	qbool write  = !!strchr(mode, 'w');
 	qbool append = !!strchr(mode, 'a');
 	qbool text   = !!strchr(mode, 't');
-	char newmode[3];
+	char newmode[10];
 	int modec = 0;
 
 	if (read)

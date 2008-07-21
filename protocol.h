@@ -270,6 +270,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	U_EFFECTS	(1 << 5)
 #define	U_SOLID		(1 << 6)	// the entity should be solid for prediction
 
+
+#define	U_CHECKMOREBITS	((1<<9) - 1) /* MVDSV compatibility */
+
+
 #ifdef PROTOCOL_VERSION_FTE
 #define U_FTE_EVENMORE	(1<<7)		//extension info follows
 

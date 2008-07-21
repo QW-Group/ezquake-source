@@ -34,6 +34,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define wchar unsigned short	// 16-bit Unicode char
 
+#undef true
+#undef false
+typedef enum {false, true} qbool;
+
 #include "mathlib.h"
 #include "sys.h"
 
@@ -51,10 +55,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 typedef unsigned char byte;
-
-#undef true
-#undef false
-typedef enum {false, true} qbool;
 
 #ifndef NULL
 #define NULL ((void *) 0)
@@ -110,9 +110,10 @@ typedef struct sizebuf_s {
 extern char *com_args_original;
 
 void SZ_Init (sizebuf_t *buf, byte *data, int length);
+void SZ_InitEx (sizebuf_t *buf, byte *data, int length, qbool allowoverflow);
 void SZ_Clear (sizebuf_t *buf);
 void *SZ_GetSpace (sizebuf_t *buf, int length);
-void SZ_Write (sizebuf_t *buf, void *data, int length);
+void SZ_Write (sizebuf_t *buf, const void *data, int length);
 void SZ_Print (sizebuf_t *buf, char *data);	// strcats onto the sizebuf
 
 //============================================================================
@@ -301,5 +302,13 @@ char *Q_strdup (const char *src);
 #define	MAX_DATAGRAM		1450		// max length of unreliable message
 #define	MSG_BUF_SIZE		8192		// max length of msg buf; MVD demo need it
 #define	FILE_TRANSFER_BUF_SIZE	MAX_MSGLEN - 100
+
+// qqshka: Its all messy.
+// For example ezquake (and FTE?) expect maximum message is MSG_BUF_SIZE == 8192 with mvd header which have not fixed size,
+// however fuhquake uses less msg size as I recall.
+// mvd header max size is 10 bytes.
+// 
+// MAX_MVD_SIZE - max size of single mvd message _WITHOUT_ header
+#define	MAX_MVD_SIZE			(MSG_BUF_SIZE - 100)
 
 #endif /* __Q_SHARED_H__ */

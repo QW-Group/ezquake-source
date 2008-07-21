@@ -42,6 +42,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _MAX_DIR 1024
 #endif
 
+
+
 #include "localtime.h"
 
 // create thread (process under linux)
@@ -145,4 +147,43 @@ void Sys_TimerResolution_Clear(timerresolution_session_t * s);
 #define Sys_TimerResolution_RequestMinimum(x) (x)
 #define Sys_TimerResolution_Clear(x) (x)
 
+#endif
+
+
+// MVDSV compatibility
+
+#define MAX_DIRFILES 4096
+#define MAX_DEMO_NAME 196
+
+typedef struct
+{
+	char	name[MAX_DEMO_NAME];
+	int	size;
+	int	time;
+	qbool	isdir; //bliP: list dir
+} file_t;
+
+typedef struct
+{
+	file_t *files;
+	int	size;
+	int	numfiles;
+	int	numdirs;
+} dir_t;
+
+int		Sys_Script (const char *path, const char *args);
+
+int		Sys_rmdir (const char *path);
+dir_t	Sys_listdir (const char *path, const char *ext, int sort_type);
+
+int		Sys_compare_by_date (const void *a, const void *b);
+int		Sys_compare_by_name (const void *a, const void *b);
+#define SORT_NO			0
+#define SORT_BY_DATE	1
+#define SORT_BY_NAME	2
+
+#if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)) && defined(KQUEUE)
+	extern struct timespec select_timeout;
+#else
+	extern struct timeval  select_timeout;
 #endif

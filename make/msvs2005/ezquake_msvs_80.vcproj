@@ -55,7 +55,7 @@
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_DEPRECATE&quot;"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\libs;&quot;$(DXSDK_DIR)\Include&quot;;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;USE_PR2"
 				StringPooling="false"
 				MinimalRebuild="true"
 				ExceptionHandling="0"
@@ -309,7 +309,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;GLQUAKE;id386;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;GLQUAKE;id386;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;USE_PR2"
 				StringPooling="true"
 				MinimalRebuild="false"
 				ExceptionHandling="0"
@@ -1047,6 +1047,18 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\sv_demo.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\sv_demo_misc.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\sv_demo_qtv.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\sv_ents.c"
 					>
 				</File>
@@ -1055,11 +1067,19 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\sv_login.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\sv_main.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\sv_master.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\sv_mod_frags.c"
 					>
 				</File>
 				<File
@@ -1095,6 +1115,22 @@
 				Name="VM"
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
 				>
+				<File
+					RelativePath="..\..\pr2_cmds.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\pr2_edict.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\pr2_exec.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\pr2_vm.c"
+					>
+				</File>
 				<File
 					RelativePath="..\..\pr_cmds.c"
 					>
