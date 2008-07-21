@@ -501,7 +501,6 @@ extern void CL_Fog_f (void);
 #endif
 extern void SB_SourceUnmarkAll(void);
 extern void SB_SourceMark(void);
-extern void Browser_Init2(void);
 
 
 	//disconnect: fix it if i forgot something
@@ -540,6 +539,7 @@ void Startup_Place(void)
 
 void Host_Init (int argc, char **argv, int default_memsize)
 {
+extern void Browser_Init2(void);
 #ifndef WITH_FTE_VFS
 	FILE *f;
 #else
