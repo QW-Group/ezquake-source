@@ -48,9 +48,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <pthread.h>
 
+#include <dlfcn.h>
+
 #include "quakedef.h"
 #include "server.h"
 #include "pcre.h"
+
 
 // BSD only defines FNDELAY:
 #ifndef O_NDELAY
@@ -157,6 +160,21 @@ int Sys_remove (char *path)
 int Sys_rmdir (const char *path)
 {
 	return rmdir(path);
+}
+
+int Sys_FileSizeTime (char *path, int *time1)
+{
+	struct stat buf;
+	if (stat(path, &buf) == -1)
+	{
+		*time1 = -1;
+		return 0;
+	}
+	else
+	{
+		*time1 = buf.st_mtime;
+		return buf.st_size;
+	}
 }
 
 /*
