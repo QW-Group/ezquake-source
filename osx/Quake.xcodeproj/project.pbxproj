@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		920C63540E3657690024236F /* pr2_cmds.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63500E3657690024236F /* pr2_cmds.c */; };
+		920C63550E3657690024236F /* pr2_edict.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63510E3657690024236F /* pr2_edict.c */; };
+		920C63560E3657690024236F /* pr2_exec.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63520E3657690024236F /* pr2_exec.c */; };
+		920C63570E3657690024236F /* pr2_vm.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63530E3657690024236F /* pr2_vm.c */; };
+		920C635E0E3657AB0024236F /* sv_demo.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63590E3657AB0024236F /* sv_demo.c */; };
+		920C635F0E3657AB0024236F /* sv_demo_misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635A0E3657AB0024236F /* sv_demo_misc.c */; };
+		920C63600E3657AB0024236F /* sv_demo_qtv.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635B0E3657AB0024236F /* sv_demo_qtv.c */; };
+		920C63610E3657AB0024236F /* sv_login.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635C0E3657AB0024236F /* sv_login.c */; };
+		920C63620E3657AB0024236F /* sv_mod_frags.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635D0E3657AB0024236F /* sv_mod_frags.c */; };
 		92B5D0620CE7028A0023B45F /* ez_button.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0560CE7028A0023B45F /* ez_button.c */; };
 		92B5D0630CE7028A0023B45F /* ez_label.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0580CE7028A0023B45F /* ez_label.c */; };
 		92B5D0640CE7028A0023B45F /* ez_scrollbar.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05A0CE7028A0023B45F /* ez_scrollbar.c */; };
@@ -1060,6 +1069,15 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		920C63500E3657690024236F /* pr2_cmds.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr2_cmds.c; sourceTree = "<group>"; };
+		920C63510E3657690024236F /* pr2_edict.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr2_edict.c; sourceTree = "<group>"; };
+		920C63520E3657690024236F /* pr2_exec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr2_exec.c; sourceTree = "<group>"; };
+		920C63530E3657690024236F /* pr2_vm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr2_vm.c; sourceTree = "<group>"; };
+		920C63590E3657AB0024236F /* sv_demo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_demo.c; sourceTree = "<group>"; };
+		920C635A0E3657AB0024236F /* sv_demo_misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_demo_misc.c; sourceTree = "<group>"; };
+		920C635B0E3657AB0024236F /* sv_demo_qtv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_demo_qtv.c; sourceTree = "<group>"; };
+		920C635C0E3657AB0024236F /* sv_login.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_login.c; sourceTree = "<group>"; };
+		920C635D0E3657AB0024236F /* sv_mod_frags.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_mod_frags.c; sourceTree = "<group>"; };
 		92B5D0560CE7028A0023B45F /* ez_button.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_button.c; sourceTree = "<group>"; };
 		92B5D0570CE7028A0023B45F /* ez_button.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_button.h; sourceTree = "<group>"; };
 		92B5D0580CE7028A0023B45F /* ez_label.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_label.c; sourceTree = "<group>"; };
@@ -1610,6 +1628,15 @@
 		D211454309C7822100FD70CB /* EZQuake */ = {
 			isa = PBXGroup;
 			children = (
+				920C63590E3657AB0024236F /* sv_demo.c */,
+				920C635A0E3657AB0024236F /* sv_demo_misc.c */,
+				920C635B0E3657AB0024236F /* sv_demo_qtv.c */,
+				920C635C0E3657AB0024236F /* sv_login.c */,
+				920C635D0E3657AB0024236F /* sv_mod_frags.c */,
+				920C63500E3657690024236F /* pr2_cmds.c */,
+				920C63510E3657690024236F /* pr2_edict.c */,
+				920C63520E3657690024236F /* pr2_exec.c */,
+				920C63530E3657690024236F /* pr2_vm.c */,
 				F82769EA09DFE12C00AE5EF8 /* General */,
 				F827786A09E01D1300AE5EF8 /* OpenGL Renderer */,
 				F827785B09E0186B00AE5EF8 /* Software Renderer */,
@@ -2626,6 +2653,15 @@
 				92B5D0670CE7028A0023B45F /* ez_window.c in Sources */,
 				92CAD75A0CF082CE00A0767A /* menu_multiplayer.c in Sources */,
 				92F0198B0DE7FB0800F1108A /* irc.c in Sources */,
+				920C63540E3657690024236F /* pr2_cmds.c in Sources */,
+				920C63550E3657690024236F /* pr2_edict.c in Sources */,
+				920C63560E3657690024236F /* pr2_exec.c in Sources */,
+				920C63570E3657690024236F /* pr2_vm.c in Sources */,
+				920C635E0E3657AB0024236F /* sv_demo.c in Sources */,
+				920C635F0E3657AB0024236F /* sv_demo_misc.c in Sources */,
+				920C63600E3657AB0024236F /* sv_demo_qtv.c in Sources */,
+				920C63610E3657AB0024236F /* sv_login.c in Sources */,
+				920C63620E3657AB0024236F /* sv_mod_frags.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2861,6 +2897,7 @@
 					WITH_ZIP,
 					WITH_ZLIB,
 					WITH_JPEG,
+					USE_PR2,
 					_DEBUG,
 				);
 				GENERATE_PROFILING_CODE = YES;
@@ -2903,6 +2940,7 @@
 					WITH_ZIP,
 					WITH_ZLIB,
 					WITH_JPEG,
+					USE_PR2,
 				);
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../libs/**";
 				INFOPLIST_FILE = GLQuakeWorld/Info.plist;

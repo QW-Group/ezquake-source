@@ -19,12 +19,7 @@
 #import <IOKit/IOKitLib.h>
 #import <IOKit/hidsystem/IOHIDLib.h>
 #import <IOKit/hidsystem/IOHIDParameter.h>
-
-#ifdef __i386__
 #import <IOKit/hidsystem/event_status_driver.h>
-#else
-#import <drivers/event_status_driver.h>
-#endif // __i386__
 
 #import "quakedef.h"
 #import "keys.h"

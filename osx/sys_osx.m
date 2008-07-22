@@ -69,16 +69,7 @@
 #import <sys/param.h>
 #import <errno.h>
 #import <dirent.h>
-
-#ifdef __i386__
-
 #import <IOKit/hidsystem/event_status_driver.h>
-
-#else
-
-#import <drivers/event_status_driver.h>
-
-#endif // __i386__
 
 #if defined(SERVERONLY)
 
@@ -87,12 +78,15 @@
 #else
 
 #import "quakedef.h"
+#import "server.h"
+#import "pcre.h"
 #import "keys.h"
 #import "QuakeApplication.h"
 #import "Quake.h"
 #import "in_osx.h"
 #import "sys_osx.h"
 #import "vid_osx.h"
+#include <dlfcn.h>
 
 #endif /* SERVERONLY */
 
@@ -1377,6 +1371,122 @@ int Sys_remove (char *path)
 	return unlink(path);
 }
 
+int Sys_rmdir (const char *path)
+{
+	return rmdir(path);
+}
+
+int Sys_FileSizeTime (char *path, int *time1)
+{
+	struct stat buf;
+	if (stat(path, &buf) == -1)
+	{
+		*time1 = -1;
+		return 0;
+	}
+	else
+	{
+		*time1 = buf.st_mtime;
+		return buf.st_size;
+	}
+}
+
+/*
+================
+Sys_listdir
+================
+*/
+
+dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
+{
+	static file_t list[MAX_DIRFILES];
+	dir_t dir;
+	char pathname[MAX_OSPATH];
+	DIR *d;
+	DIR *testdir; //bliP: list dir
+	struct dirent *oneentry;
+	qbool all;
+
+	int r;
+	pcre *preg = NULL;
+	const char *errbuf;
+
+	memset(list, 0, sizeof(list));
+	memset(&dir, 0, sizeof(dir));
+
+	dir.files = list;
+	all = !strncmp(ext, ".*", 3);
+	if (!all)
+		if (!(preg = pcre_compile(ext, PCRE_CASELESS, &errbuf, &r, NULL)))
+		{
+			Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
+			           ext, errbuf, r);
+			Q_free(preg);
+			return dir;
+		}
+
+	if (!(d = opendir(path)))
+	{
+		if (!all)
+			Q_free(preg);
+		return dir;
+	}
+	while ((oneentry = readdir(d)))
+	{
+		if (!strncmp(oneentry->d_name, ".", 2) || !strncmp(oneentry->d_name, "..", 3))
+			continue;
+		if (!all)
+		{
+			switch (r = pcre_exec(preg, NULL, oneentry->d_name,
+			                      strlen(oneentry->d_name), 0, 0, NULL, 0))
+			{
+			case 0: break;
+			case PCRE_ERROR_NOMATCH: continue;
+			default:
+				Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
+				           ext, oneentry->d_name, r);
+				Q_free(preg);
+				return dir;
+			}
+		}
+		snprintf(pathname, sizeof(pathname), "%s/%s", path, oneentry->d_name);
+		if ((testdir = opendir(pathname)))
+		{
+			dir.numdirs++;
+			list[dir.numfiles].isdir = true;
+			list[dir.numfiles].size = list[dir.numfiles].time = 0;
+			closedir(testdir);
+		}
+		else
+		{
+			list[dir.numfiles].isdir = false;
+			//list[dir.numfiles].time = Sys_FileTime(pathname);
+			dir.size +=
+				(list[dir.numfiles].size = Sys_FileSizeTime(pathname, &list[dir.numfiles].time));
+		}
+		strlcpy (list[dir.numfiles].name, oneentry->d_name, MAX_DEMO_NAME);
+
+		if (++dir.numfiles == MAX_DIRFILES - 1)
+			break;
+	}
+	closedir(d);
+	if (!all)
+		Q_free(preg);
+
+	switch (sort_type)
+	{
+	case SORT_NO: break;
+	case SORT_BY_DATE:
+		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_date);
+		break;
+	case SORT_BY_NAME:
+		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_name);
+		break;
+	}
+
+	return dir;
+}
+
 // kazik -->
 int Sys_chdir (const char *path)
 {
@@ -1436,3 +1546,31 @@ int Sys_SemDestroy(sem_t *sem)
     return sem_destroy(sem);
 }
 
+/*********************************************************************************/
+
+int Sys_Script (const char *path, const char *args)
+{
+	char str[1024];
+
+	snprintf(str, sizeof(str), "cd %s\n./%s.qws %s &\ncd ..", fs_gamedir, path, args);
+
+	if (system(str) == -1)
+		return 0;
+
+	return 1;
+}
+
+DL_t Sys_DLOpen(const char *path)
+{
+	return dlopen(path, RTLD_NOW);
+}
+
+qbool Sys_DLClose(DL_t dl)
+{
+	return !dlclose(dl);
+}
+
+void *Sys_DLProc(DL_t dl, const char *name)
+{
+	return dlsym(dl, name);
+}
