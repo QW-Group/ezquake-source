@@ -99,6 +99,10 @@ SERVER_C_FILES := \
 	pr_cmds \
 	pr_edict \
 	pr_exec \
+	pr2_cmds \
+	pr2_edict \
+	pr2_exec \
+	pr2_vm \
 	sv_ccmds \
 	sv_ents \
 	sv_init \
@@ -110,7 +114,12 @@ SERVER_C_FILES := \
 	sv_save \
 	sv_send \
 	sv_user \
-	sv_world
+	sv_world \
+	sv_demo \
+	sv_demo_misc \
+	sv_demo_qtv \
+	sv_login \
+	sv_mod_frags
 
 COMMON_C_FILES := \
 	cmodel \
