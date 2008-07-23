@@ -356,7 +356,10 @@ static void install_grabs(void)
 		if (in_mmt.integer)
 		{
 			if (!evdev_mt)
+			{
+				evdev_mt = 1; //EvDev_UpdateMouse use evdev_mt at begining of function, better let it know we going in thread mode 
 				evdev_mt = !pthread_create(&evdev_thread, NULL, (void *)EvDev_UpdateMouse, NULL);
+			}
 
 			if (evdev_mt)
 			{
@@ -401,18 +404,18 @@ static void install_grabs(void)
 
 static void uninstall_grabs(void)
 {
-  if (in_mouse.integer == mt_dga)
-  {
+	if (in_mouse.integer == mt_dga)
+	{
 		if (developer.value)
 			ST_Printf( PRINT_ALL, "DGA Mouse - Disabling DGA DirectVideo\n" );
-    XF86DGADirectVideo(dpy, DefaultScreen(dpy), 0);
-  }
+		XF86DGADirectVideo(dpy, DefaultScreen(dpy), 0);
+	}
 #ifdef WITH_EVDEV
 	else if (in_mouse.integer == mt_evdev)
 	{
 		if (evdev_fd)
 		{
-      Com_DPrintf("Evdev %s closed\n", in_evdevice.string);
+			Com_DPrintf("Evdev %s closed\n", in_evdevice.string);
 			close(evdev_fd);
 			evdev_fd = 0;
 		}
@@ -447,6 +450,12 @@ void EvDev_UpdateMouse(void *v) {
 	struct input_event event;
 	int ret;
 
+	// this should help pthread_cancel kill thread immidiatelly
+	if (evdev_mt)
+	{
+		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	}
+
 	for ( ;; )
 	{
 		ret = (evdev_fd ? read(evdev_fd, &event, sizeof(struct input_event)) : -1);
@@ -456,7 +465,7 @@ void EvDev_UpdateMouse(void *v) {
 		if (!evdev_fd) {
 			// device is not open, sleep or return depend of do we use thread or not
 			if (evdev_mt)	{
-        usleep(10*1000); // 10 ms
+				usleep(10*1000); // 10 ms
 				continue;
 			}
 			else
