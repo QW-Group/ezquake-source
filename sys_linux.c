@@ -665,7 +665,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		if (*ent->d_name != '.')
 			if (wildcmp(match, ent->d_name))
 			{
-				snprintf(file, sizeof(file), "%s/%s", gpath, ent->d_name);
+				snprintf(file, sizeof(file), "%s/%s", truepath, ent->d_name);
 				//would use stat, but it breaks on fat32.
 
 				if ((dir2 = opendir(file)))
