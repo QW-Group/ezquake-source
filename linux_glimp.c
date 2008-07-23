@@ -81,6 +81,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tr_types.h"
 #include "input.h"
 #include "rulesets.h"
+#include "utils.h"
 
 //
 // cvars
@@ -136,10 +137,12 @@ static int amx = 0, amy = 0; // Zzzz hard to explain why we have amx and mx, for
 int mx, my;
 
 #ifdef WITH_EVDEV
+static char evdevice_str[64] = {0};
 static int evdev_fd = 0;
 static int evdev_mt = 0;
 static pthread_t evdev_thread;
 void EvDev_UpdateMouse(void *v);
+char *evdevice(void);
 #endif
 
 // Time mouse was reset, we ignore the first 50ms of the mouse to allow settling of events
@@ -372,18 +375,20 @@ static void install_grabs(void)
 			}
 		}
 
+		evdevice_str[0] = 0; // force search it again 
+
 		// in thread case we use blocking read
-		evdev_fd = open(in_evdevice.string, O_RDONLY | (evdev_mt ? 0 : O_NONBLOCK));
+		evdev_fd = open(evdevice(), O_RDONLY | (evdev_mt ? 0 : O_NONBLOCK));
 
 		if (evdev_fd == -1)
 		{
 			evdev_fd = 0;
-			Com_Printf("Evdev error: open %s failed\n", in_evdevice.string);
+			Com_Printf("Evdev error: open %s failed\n", evdevice());
 			Cvar_LatchedSetValue(&in_mouse, mt_normal); // switch to normal mouse
 		}
 		else
 		{
-			Com_DPrintf("Evdev %s enabled\n", in_evdevice.string);
+			Com_DPrintf("Evdev %s enabled\n", evdevice());
 		}
 	}
 #endif
@@ -415,10 +420,13 @@ static void uninstall_grabs(void)
 	{
 		if (evdev_fd)
 		{
-			Com_DPrintf("Evdev %s closed\n", in_evdevice.string);
+			Com_DPrintf("Evdev %s closed\n", evdevice());
 			close(evdev_fd);
 			evdev_fd = 0;
 		}
+
+		evdevice_str[0] = 0; // force search it again 
+
 		if (evdev_mt)
 		{
 			if (pthread_cancel(evdev_thread))
@@ -477,7 +485,7 @@ void EvDev_UpdateMouse(void *v) {
 
 		if (ret < sizeof(struct input_event)) {
 			Com_Printf("Evdev error: reading from %s\n"
-						"Reverting to standard mouse input\n", in_evdevice.string);
+						"Reverting to standard mouse input\n", evdevice());
 
 			if (evdev_fd)
 			{
@@ -573,6 +581,65 @@ void IN_EvdevList_f(void) {
 		Com_Printf("event%i: %s\n", i, name);		
 	}
 }
+
+char *evdevice(void)
+{
+	int fd, i;
+
+//	Com_DPrintf("evdevice\n"); // DEBUG
+
+	if (evdevice_str[0])
+	{
+//		Com_DPrintf("evdevice: alredy found as %s\n", evdevice_str); // DEBUG
+		return evdevice_str;
+	}
+
+	if (!in_evdevice.string[0])
+	{
+		Com_Printf("BUG: %s not set\n", in_evdevice.name);
+		strlcpy(evdevice_str, "/dev/input/event?????", sizeof(evdevice_str));
+		return evdevice_str;
+	}
+
+	// check old style, like: /dev/input/eventX, where X is number
+	if (Utils_RegExpMatch("/dev/input/event[0123456789]", in_evdevice.string))
+	{
+		strlcpy(evdevice_str, in_evdevice.string, sizeof(evdevice_str));
+//		Com_DPrintf("evdevice: old style, found as %s\n", evdevice_str); // DEBUG
+		return evdevice_str;
+	}
+
+	// new style
+
+	for( i = 0; i < 10; i++ )
+	{
+		char device[64], name[128];
+
+		snprintf(device, sizeof(device), "/dev/input/event%i", i);
+		fd = open(device, O_RDONLY);
+		
+		if( fd == -1 )
+			continue;
+
+		name[0] = 0;
+		ioctl(fd, EVIOCGNAME(sizeof(name)), name);
+		close(fd);
+
+		if (Utils_RegExpMatch(in_evdevice.string, name))
+		{
+			// we found it
+			strlcpy(evdevice_str, device, sizeof(evdevice_str));
+//			Com_DPrintf("evdevice: new style, found as %s\n", evdevice_str); // DEBUG
+			return evdevice_str;
+		}
+	}
+
+	// bad luck - perhaps user have own opinion how evedev should look
+	strlcpy(evdevice_str, in_evdevice.string, sizeof(evdevice_str));
+//	Com_DPrintf("evdevice: bad luck, found as %s\n", evdevice_str); // DEBUG
+	return evdevice_str;
+}
+
 #endif
 
 void IN_StartupMouse(void) {
@@ -598,7 +665,7 @@ void IN_StartupMouse(void) {
 	if (in_mouse.integer == mt_evdev && !in_evdevice.string[0])
 	{
 		Com_Printf("Mouse forsed to normal due to empty %s\n", in_evdevice.name);
-    Cvar_LatchedSetValue( &in_mouse, mt_normal );
+		Cvar_LatchedSetValue( &in_mouse, mt_normal );
 	}
 #endif
 
