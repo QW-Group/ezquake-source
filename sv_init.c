@@ -466,7 +466,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// information about the server
 //	ent->v.netname = PR_SetString(version.string);
 
-	Com_Printf("KTPRO: %s\n", is_ktpro ? "yes" : "no");
+//	Com_Printf("KTPRO: %s\n", is_ktpro ? "yes" : "no");
 
 	ent->v.netname = PR_SetString(is_ktpro ? QWE_SERVER_NAME " " QWE_VERSION : VersionString());
 	ent->v.targetname = PR_SetString(is_ktpro ? QWE_SERVER_NAME : SERVER_NAME);
