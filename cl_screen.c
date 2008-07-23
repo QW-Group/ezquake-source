@@ -59,6 +59,10 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "qtv.h"
 #include "demo_controls.h"
 
+#ifndef CLIENTONLY
+#include "server.h"
+#endif
+
 #ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
 #endif
@@ -792,7 +796,6 @@ void SCR_DrawQTVBuffer (void)
 }
 
 void SCR_DrawPause (void) {
-	extern cvar_t sv_paused;
 	mpic_t *pic;
 
 	if (!scr_showpause.value)               // turn off for screenshots
@@ -802,7 +805,7 @@ void SCR_DrawPause (void) {
 		return;
 
 #ifndef CLIENTONLY
-	if (sv_paused.value == 2)
+	if (sv.paused == 2)
 		return; // auto-paused in single player
 #endif
 

@@ -258,7 +258,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 		chan->cleartime += send.cursize * chan->rate;
 
 #ifndef CLIENTONLY
-	if (chan->sock == NS_SERVER && sv_paused.value)
+	if (chan->sock == NS_SERVER && sv.paused)
 		chan->cleartime = curtime;
 #endif
 

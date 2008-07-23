@@ -577,8 +577,10 @@ static void Cmd_Spawn_f (void)
 	if (sv.loadgame)
 	{
 		// loaded games are already fully initialized 
-		// if this is the last client to be connected, unpause 
-		Cvar_ForceSet (&sv_paused, "0");
+		// if this is the last client to be connected, unpause
+
+		if (sv.paused & 1)
+			SV_TogglePause (NULL, 1);
 	}
 	else
 	{
@@ -1870,16 +1872,18 @@ static void Cmd_Kill_f (void)
 SV_TogglePause
 ==================
 */
-void SV_TogglePause (const char *msg)
+void SV_TogglePause (const char *msg, int bit)
 {
 	int i;
 	client_t *cl;
 	extern cvar_t sv_paused;
 
-	sv.paused = !sv.paused;
+	sv.paused ^= bit;
+	
+	Cvar_SetROM (&sv_paused, va("%i", sv.paused));
+
 	if (sv.paused)
 		sv.pausedsince = Sys_DoubleTime();
-	Cvar_SetROM (&sv_paused, sv.paused ? "1" : "0");
 
 	if (msg)
 		SV_BroadcastPrintf (PRINT_HIGH, "%s", msg);
@@ -1907,7 +1911,7 @@ static void Cmd_Pause_f (void)
 	char st[CLIENT_NAME_LEN + 32];
 	qbool newstate;
 
-	newstate = !sv.paused;
+	newstate = sv.paused ^ 1;
 
 	if (!(int)pausable.value)
 	{
@@ -1930,12 +1934,12 @@ static void Cmd_Pause_f (void)
 			return;		// progs said ignore the request
 	}
 
-	if (newstate)
+	if (newstate & 1)
 		snprintf (st, sizeof(st), "%s paused the game\n", sv_client->name);
 	else
 		snprintf (st, sizeof(st), "%s unpaused the game\n", sv_client->name);
 
-	SV_TogglePause(st);
+	SV_TogglePause(st, 1);
 }
 
 

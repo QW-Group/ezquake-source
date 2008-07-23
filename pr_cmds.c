@@ -2734,11 +2734,12 @@ void PF_registercvar (void)
 // void(float pause) setpause = #531;
 void PF_setpause (void)
 {
-	qbool pause;
+	int pause;
 
-	pause = G_FLOAT(OFS_PARM0) ? true : false;
-	if (pause != sv.paused)
-		SV_TogglePause (NULL);
+	pause = G_FLOAT(OFS_PARM0) ? 1 : 0;
+
+	if (pause != (sv.paused & 1))
+		SV_TogglePause (NULL, 1);
 }
 
 

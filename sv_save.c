@@ -187,7 +187,11 @@ void SV_LoadGame_f (void) {
 		Com_Printf ("Couldn't load map\n");
 		return;
 	}
-	Cvar_ForceSet (&sv_paused, "1"); // pause until all clients connect
+
+	// pause until all clients connect
+	if (!(sv.paused & 1))
+		SV_TogglePause (NULL, 1);
+
 	sv.loadgame = true;
 
 	// load the light styles

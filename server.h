@@ -792,7 +792,7 @@ void SV_FindModelNumbers (void);
 //
 void SV_ExecuteClientMessage (client_t *cl);
 void SV_UserInit (void);
-void SV_TogglePause (const char *msg);
+void SV_TogglePause (const char *msg, int bit);
 
 
 //

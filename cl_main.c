@@ -1810,24 +1810,23 @@ void CL_BeginLocalConnection (void)
 		cls.state = ca_connected;
 }
 
-
-extern void SV_TogglePause (const char *msg);
-extern cvar_t sv_paused,maxclients;
-
 // automatically pause the game when going into the menus in single player
 static void CL_CheckAutoPause (void) 
 {
 	#ifndef CLIENTONLY
+
+	extern cvar_t maxclients;
+
 	if (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1
 		&& (key_dest == key_menu /*|| key_dest == key_console*/))
 	{
-		if (!((int)sv_paused.value & 2))
-			SV_TogglePause (NULL);
+		if (!(sv.paused & 2))
+			SV_TogglePause (NULL, 2);
 	}
 	else 
 	{
-		if ((int)sv_paused.value & 2)
-			SV_TogglePause (NULL);
+		if (sv.paused & 2)
+			SV_TogglePause (NULL, 2);
 	}
 	#endif // CLIENTONLY
 }

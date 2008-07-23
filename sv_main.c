@@ -2935,7 +2935,7 @@ static void SV_CheckTimeouts (void)
 			cl->state = cs_free;	// can now be reused
 		}
 	}
-	if (sv.paused && !nclients)
+	if ((sv.paused & 1) && !nclients)
 	{
 		// nobody left, unpause the server
 		if (GE_ShouldPause) {
@@ -2946,7 +2946,7 @@ static void SV_CheckTimeouts (void)
 			if (!G_FLOAT(OFS_RETURN))
 				return;		// progs said don't unpause
 		}
-		SV_TogglePause("Pause released since no players are left.\n");
+		SV_TogglePause("Pause released since no players are left.\n", 1);
 	}
 }
 

@@ -2794,11 +2794,12 @@ void PF2_makevectors(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 // a la the ZQ_PAUSE QC extension
 void PF2_setpause(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 {
-	qbool pause;
+	int pause;
 
-	pause = stack[0]._int ? true : false;
-	if (pause != sv.paused)
-		SV_TogglePause (NULL);
+	pause = stack[0]._int ? 1 : 0;
+
+	if (pause != (sv.paused & 1))
+		SV_TogglePause (NULL, 1);
 }
 
 #define SETUSERINFO_STAR          (1<<0) // allow set star keys
