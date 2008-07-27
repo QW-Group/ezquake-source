@@ -1701,12 +1701,12 @@ void SV_MVDInit (void)
 
 	Cmd_AddCommand ("cancel",			SV_MVD_Cancel_f);
 	Cmd_AddCommand ("sv_lastscores",	SV_LastScores_f);
-	Cmd_AddCommand ("dlist",			SV_DemoList_f);
-	Cmd_AddCommand ("dlistr",			SV_DemoListRegex_f);
-	Cmd_AddCommand ("dlistregex",		SV_DemoListRegex_f);
-	Cmd_AddCommand ("demolist",			SV_DemoList_f);
-	Cmd_AddCommand ("demolistr",		SV_DemoListRegex_f);
-	Cmd_AddCommand ("demolistregex",	SV_DemoListRegex_f);
+	Cmd_AddCommand ("sv_dlist",			SV_DemoList_f);
+	Cmd_AddCommand ("sv_dlistr",		SV_DemoListRegex_f);
+	Cmd_AddCommand ("sv_dlistregex",	SV_DemoListRegex_f);
+	Cmd_AddCommand ("sv_demolist",		SV_DemoList_f);
+	Cmd_AddCommand ("sv_demolistr",		SV_DemoListRegex_f);
+	Cmd_AddCommand ("sv_demolistregex",	SV_DemoListRegex_f);
 	Cmd_AddCommand ("rmdemo",			SV_MVDRemove_f);
 	Cmd_AddCommand ("rmdemonum",		SV_MVDRemoveNum_f);
 	Cmd_AddCommand ("script",			SV_Script_f);
