@@ -1700,7 +1700,7 @@ void SV_MVDInit (void)
 	}
 
 	Cmd_AddCommand ("cancel",			SV_MVD_Cancel_f);
-	Cmd_AddCommand ("lastscores",		SV_LastScores_f);
+	Cmd_AddCommand ("sv_lastscores",	SV_LastScores_f);
 	Cmd_AddCommand ("dlist",			SV_DemoList_f);
 	Cmd_AddCommand ("dlistr",			SV_DemoListRegex_f);
 	Cmd_AddCommand ("dlistregex",		SV_DemoListRegex_f);
