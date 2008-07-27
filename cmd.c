@@ -593,7 +593,7 @@ void Cmd_AliasList_f (void)
 	cmd_alias_t *a;
 	int i, c, m = 0;
 	static int count;
-	static cmd_alias_t *sorted_aliases[2048];
+	static cmd_alias_t *sorted_aliases[4096];
 
 #define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
 
