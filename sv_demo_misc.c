@@ -928,8 +928,11 @@ void SV_LastScores_f (void)
 		{
 			if (!feof(f))
 			{
+				char *nl;
+
 				buf[fread (buf, 1, sizeof(buf) - 1, f)] = 0;
-				*strchr(buf, '\n') = 0;
+				if ((nl = strchr(buf, '\n')))
+					nl[0] = 0;
 				Con_Printf("%s\n", Q_yelltext((unsigned char*)buf));
 			}
 			else
