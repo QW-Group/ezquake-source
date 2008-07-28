@@ -13,7 +13,7 @@
 //	       Radeon users may switch FSAA on the fly.
 //	       Introduces multitexture option for MacOS X v10.2 [see "video options"].
 // v1.0.7: Brings back the video options menu.
-//	       "vid_wait" now availavle via video options.
+//	       "vid_vsync" now availavle via video options.
 //	       ATI Radeon only:
 //	       Added support for FSAA, via variable "gl_fsaa" or video options.
 //	       Added support for Truform, via variable "gl_truform" or video options.
@@ -24,7 +24,7 @@
 // v1.0.4: Fixed continuous console output, if gamma setting fails.
 //	       Fixed a multi-monitor issue.
 // v1.0.3: Enables setting the gamma via the brightness slider at the options dialog.
-//	       Enable/Disable VBL syncing via "vid_wait".
+//	       Enable/Disable VBL syncing via "vid_vsync".
 // v1.0.2: GLQuake/GLQuakeWorld:
 //	       Fixed a performance issue [see "gl_rsurf.c"].
 //         Default value of "gl_keeptjunctions" is now "1" [see "gl_rmain.c"].
@@ -118,7 +118,7 @@ const char						*gl_renderer,
 
 cvar_t							vid_mode = { "vid_mode", "0", 0 },
 								vid_redrawfull = { "vid_redrawfull", "0", 0 },
-								vid_wait = { "vid_wait", "0", 0 },
+								vid_vsync = { "vid_vsync", "0", 0 },
 								vid_overbright = { "gamma_overbright", "1", 1 },
 								_vid_default_mode = { "_vid_default_mode", "0", 1 },
 								_vid_default_blit_mode = { "_vid_default_blit_mode", "0", 1 },
@@ -545,7 +545,7 @@ void VID_SetWait (UInt32 theState)
     [gGLContext makeCurrentContext];
     if(CGLSetParameter (CGLGetCurrentContext (), kCGLCPSwapInterval, &params) == CGDisplayNoErr)
     {
-        gGLVideoWait = vid_wait.value;
+        gGLVideoWait = vid_vsync.value;
         if (theState == 0)
         {
             Com_Printf ("video wait successfully disabled!\n");
@@ -557,7 +557,7 @@ void VID_SetWait (UInt32 theState)
     }
     else
     {
-        vid_wait.value = gGLVideoWait;
+        vid_vsync.value = gGLVideoWait;
         Com_Printf ("Error while trying to change video wait!\n");
     }    
 }
@@ -680,7 +680,7 @@ BOOL	VID_SetDisplayMode (void)
     }
     
     // Lock the OpenGL context to the refresh rate of the display [for clean rendering], if desired:
-    VID_SetWait((UInt32) vid_wait.value);
+    VID_SetWait((UInt32) vid_vsync.value);
     
     return (YES);
 }
@@ -696,7 +696,7 @@ void	VID_Init (unsigned char *thePalette)
     Cvar_Register (&vid_mode);
     Cvar_Register (&_vid_default_mode);
     Cvar_Register (&_vid_default_blit_mode);
-    Cvar_Register (&vid_wait);
+    Cvar_Register (&vid_vsync);
     Cvar_Register (&vid_redrawfull);
     Cvar_Register (&vid_overbright);
 	Cvar_Register(&vid_hwgammacontrol);
@@ -873,9 +873,9 @@ void	VID_MenuDraw (void)
     myPicture = Draw_CachePic ("gfx/vidmodes.lmp");
     M_DrawPic ((320 - myPicture->width) / 2, 4, myPicture);
     
-    // draw vid_wait option:
+    // draw vid_vsync option:
     M_Print (VID_FONT_WIDTH, myRow, "Video Sync:");
-    if (vid_wait.value) M_Print ((39 - 2) * VID_FONT_WIDTH, myRow, "On");
+    if (vid_vsync.value) M_Print ((39 - 2) * VID_FONT_WIDTH, myRow, "On");
         else M_Print ((39 - 3) * VID_FONT_WIDTH, myRow, "Off");
     if (gGLMenuLine == myRow) gGLMenuItem = VID_MENUITEM_WAIT;
     myRow += VID_FONT_HEIGHT;
@@ -1006,7 +1006,7 @@ void	VID_MenuKey (int theKey)
             switch (gGLMenuItem)
             {
                 case VID_MENUITEM_WAIT:
-                    Cvar_SetValue (&vid_wait, (vid_wait.value == 0.0f) ? 1.0f : 0.0f);
+                    Cvar_SetValue (&vid_vsync, (vid_vsync.value == 0.0f) ? 1.0f : 0.0f);
                     break;
                 case VID_MENUITEM_OVERBRIGHT:
                     Cvar_SetValue (&vid_overbright, (vid_overbright.value == 0.0f) ? 1.0f : 0.0f);
@@ -1032,7 +1032,7 @@ void	VID_MenuKey (int theKey)
             switch (gGLMenuItem)
             {
                 case VID_MENUITEM_WAIT:
-                    Cvar_SetValue (&vid_wait, (vid_wait.value == 0.0f) ? 1.0f : 0.0f);
+                    Cvar_SetValue (&vid_vsync, (vid_vsync.value == 0.0f) ? 1.0f : 0.0f);
                     break;
                 case VID_MENUITEM_OVERBRIGHT:
                     Cvar_SetValue (&vid_overbright, (vid_overbright.value == 0.0f) ? 1.0f : 0.0f);
@@ -1789,9 +1789,9 @@ void	GL_EndRendering (void)
     }
 
     // check if video_wait changed:
-    if(vid_wait.value != gGLVideoWait)
+    if(vid_vsync.value != gGLVideoWait)
     {
-        VID_SetWait ((UInt32) vid_wait.value);
+        VID_SetWait ((UInt32) vid_vsync.value);
     }
 
     // check if anisotropic texture filtering changed:

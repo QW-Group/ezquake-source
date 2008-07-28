@@ -82,7 +82,7 @@ extern int numDevices;
 extern cvar_t 			vid_mode,
 						gl_vid_screen,
 						gl_vid_windowed,
-						vid_wait,
+						vid_vsync,
 						gl_vid_colorbits,
 						gl_texturebits;
 						

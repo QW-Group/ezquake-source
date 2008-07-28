@@ -100,7 +100,7 @@ extern viddef_t				vid;
 
 cvar_t						vid_mode				= { "vid_mode", "0", 0 };
 cvar_t						vid_redrawfull			= { "vid_redrawfull", "0", 0 };
-cvar_t						vid_wait				= { "vid_wait", "0", 0 };
+cvar_t						vid_vsync				= { "vid_vsync", "0", 0 };
 cvar_t						vid_overbright			= { "gamma_overbright", "1", 1 };
 cvar_t						_vid_default_mode		= { "_vid_default_mode", "0", 1 };
 cvar_t						_vid_default_blit_mode	= { "_vid_default_blit_mode", "0", 1 };
@@ -604,7 +604,7 @@ void	VID_Blit1x1(void)
     myWidthLoop = gVidGraphMode.OffWidth / sizeof (UInt64);
 
     // wait for the VBL, if requested:
-    if (vid_wait.value)
+    if (vid_vsync.value)
     {
         CGDisplayWaitForBeamPositionOutsideLines (gVidDisplayList[gVidDisplay], 0, 1);
     }
@@ -661,7 +661,7 @@ void	VID_Blit1x2 (void)
     myWidthLoop = gVidGraphMode.OffWidth / sizeof (UInt64);
 
     // wait for the VBL, if requested:
-    if (vid_wait.value)
+    if (vid_vsync.value)
     {
         CGDisplayWaitForBeamPositionOutsideLines (gVidDisplayList[gVidDisplay], 0, 1);
     }
@@ -706,7 +706,7 @@ void	VID_Blit2x1 (void)
     myWidthLoop = gVidGraphMode.OffWidth >> 2;
     
     // wait for the VBL, if requested:
-    if (vid_wait.value)
+    if (vid_vsync.value)
     {
         CGDisplayWaitForBeamPositionOutsideLines (gVidDisplayList[gVidDisplay], 0, 1);
     }
@@ -767,7 +767,7 @@ void	VID_Blit2x2 (void)
     myWidthLoop = gVidGraphMode.OffWidth >> 2;
     
     // wait for the VBL, if requested:
-    if (vid_wait.value)
+    if (vid_vsync.value)
     {
         CGDisplayWaitForBeamPositionOutsideLines (gVidDisplayList[gVidDisplay], 0, 1);
     }
@@ -1009,7 +1009,7 @@ void	VID_Init (unsigned char *thePalette)
     // register variables:
     Cvar_Register (&vid_mode);
     Cvar_Register (&vid_redrawfull);
-    Cvar_Register (&vid_wait);
+    Cvar_Register (&vid_vsync);
     Cvar_Register (&vid_overbright);
     Cvar_Register (&_vid_default_mode);
     Cvar_Register (&_vid_default_blit_mode);
@@ -1533,7 +1533,7 @@ void	D_BeginDirectRect (SInt x, SInt y, UInt8 *theBitmap, SInt theWidth, SInt th
     myBackingBuffer = gVidBackingBuffer;
 
     // wait for the VBL:
-    if (vid_wait.value != 0.0f)
+    if (vid_vsync.value != 0.0f)
     {
         CGDisplayWaitForBeamPositionOutsideLines (gVidDisplayList[gVidDisplay], y, y + theHeight);
     }
@@ -1643,7 +1643,7 @@ void	D_EndDirectRect (SInt x, SInt y, SInt theWidth, SInt theHeight)
     myBackingBuffer = gVidBackingBuffer;
     
     // wait for the VBL:
-    if (vid_wait.value)
+    if (vid_vsync.value)
     {
         CGDisplayWaitForBeamPositionOutsideLines (gVidDisplayList[gVidDisplay], y, y + theHeight);
     }
