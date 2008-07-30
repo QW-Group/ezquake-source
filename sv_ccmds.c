@@ -805,6 +805,13 @@ void SV_Kick_f (void)
 	c = Cmd_Argc ();
 	if (c < 2)
 	{
+#ifndef SERVERONLY
+		// some mods use a "kick" alias for their own needs, sigh
+		if (CL_ClientState() && Cmd_FindAlias("kick")) {
+			Cmd_ExecuteString (Cmd_AliasString("kick"));
+			return;
+		}
+#endif
 		Con_Printf ("kick <userid> [reason]\n");
 		return;
 	}
