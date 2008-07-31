@@ -89,7 +89,7 @@ cvar_t	v_pentcshift = {"v_pentcshift", "0.75"};
 cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
 #endif
 
-cvar_t	v_bonusflash = {"cl_bonusflash", "1"}; // 0
+cvar_t	v_bonusflash = {"cl_bonusflash", "0"}; // 0
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 

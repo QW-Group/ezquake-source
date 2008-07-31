@@ -896,8 +896,8 @@ setting settgeneral_arr[] = {
 	//Connection
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
-	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
 	ADDSET_BOOL		("QTV buffer adjusting", qtv_adjustbuffer),
 	ADDSET_BASIC_SECTION(),
 
@@ -905,8 +905,8 @@ setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
-	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
 	ADDSET_BOOL		("Log Readable", log_readable),
 	ADDSET_ENUM 	("Screenshot Format", scr_sshot_format, scr_sshot_format_enum),
 #ifdef _WIN32
@@ -937,11 +937,13 @@ setting settplayer_arr[] = {
 	ADDSET_STRING	("Name", name),
 	ADDSET_STRING	("Teamchat Prefix", cl_fakename),
 	ADDSET_STRING	("Team", team),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SKIN		("Skin", skin),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
-	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
 	ADDSET_BASIC_SECTION(),
 	
@@ -960,8 +962,8 @@ setting settplayer_arr[] = {
 	ADDSET_SEPARATOR("Team Skin & Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
-	ADDSET_SKIN		("Skin", cl_teamskin),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SKIN		("Skin", cl_teamskin),
 	ADDSET_ENUM		("Force Skins", teamforceskins, teamforceskins_enum),
 	ADDSET_SKIN		("Quad Skin", cl_teamquadskin),
 	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
@@ -971,8 +973,8 @@ setting settplayer_arr[] = {
 	ADDSET_SEPARATOR("Enemy Skin & Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
 	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
-	ADDSET_SKIN		("Skin", cl_enemyskin),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SKIN		("Skin", cl_enemyskin),
 	ADDSET_ENUM		("Force Skins", enemyforceskins, enemyforceskins_enum),
 	ADDSET_SKIN		("Quad Skin", cl_enemyquadskin),
 	ADDSET_SKIN		("Pent Skin", cl_enemypentskin),
@@ -1016,6 +1018,7 @@ setting settfps_arr[] = {
 #endif	
 	
 	ADDSET_SEPARATOR("Player & Weapon Model"),
+	ADDSET_ADVANCED_SECTION(),
 #ifdef GLQUAKE
 	ADDSET_BOOL		("Powerup Luma", gl_powerupshells),
 	ADDSET_NUMBER	("Powerup Luma Size", gl_powerupshells_size, 1, 10, 1),
@@ -1023,9 +1026,12 @@ setting settfps_arr[] = {
 #else
 	ADDSET_BOOL		("Weapon Show", cl_drawgun),
 #endif
+	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Weapon Size", r_viewmodelsize, 0.1, 1, 0.05),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Weapon Shift", r_viewmodeloffset, -10, 10, 1),
 	ADDSET_NAMED	("Weapon Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
+	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Environment"),
 	ADDSET_ADVANCED_SECTION(),
@@ -1037,7 +1043,9 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Backpack filter", cl_backpackfilter),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
+	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Projectiles"),
 	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
@@ -1045,8 +1053,10 @@ setting settfps_arr[] = {
 	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Rocket Light", r_rocketlight),
 	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
 #ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
@@ -1058,17 +1068,20 @@ setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Lighting"),
 #ifdef GLQUAKE
 	ADDSET_BOOL		("GL Bloom", r_bloom),
-	ADDSET_BOOL		("Powerup Shells", gl_powerupshells),
 #endif
 	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
+	ADDSET_BASIC_SECTION(),
 #ifdef GLQUAKE
 	ADDSET_BOOL		("Colored Lights", gl_colorlights),
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
 	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
+	ADDSET_BASIC_SECTION(),
 #endif
 
 	ADDSET_ADVANCED_SECTION(),
@@ -1087,8 +1100,10 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
 	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
 #ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Crosshair alpha", gl_crosshairalpha, 0.1, 1, 0.1),
 	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
+	ADDSET_BASIC_SECTION(),
 #endif
 
 	ADDSET_SEPARATOR("New HUD"),
@@ -1101,9 +1116,9 @@ setting setthud_arr[] = {
 	ADDSET_BOOLLATE ("Own Frags Announcer", hud_ownfrags_show),
 	ADDSET_BOOLLATE ("Teamholdbar", hud_teamholdbar_show),
 	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
+	ADDSET_BOOLLATE ("Clock", hud_clock_show),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOLLATE ("FPS", hud_fps_show),
-	ADDSET_BOOLLATE ("Clock", hud_clock_show),
 #ifdef GLQUAKE
 	ADDSET_BOOLLATE ("Radar", hud_radar_show),
 #endif
@@ -1112,16 +1127,18 @@ setting setthud_arr[] = {
 	ADDSET_BOOL		("Status Bar", cl_sbar),
 	ADDSET_BOOL		("HUD Left", cl_hudswap),
 	ADDSET_BOOL		("Show FPS", show_fps),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Show Clock", scr_clock),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
 #ifdef GLQUAKE
 
 	ADDSET_SEPARATOR("Tracker Messages"),
+	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Flags", amf_tracker_flags),
 	ADDSET_BOOL		("Frags", amf_tracker_frags),
-	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
 	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
-	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
 	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
 	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
@@ -1229,9 +1246,9 @@ setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_BIND("Show Scores", "+showscores"),
 	ADDSET_BIND("Screenshot", "screenshot"),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Pause", "pause"),
 	ADDSET_BIND("Quit", "quit"),
-	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
 	ADDSET_BASIC_SECTION(),
 
@@ -1240,7 +1257,9 @@ setting settbinds_arr[] = {
 	ADDSET_BOOL		("Freelook", freelook),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
 #ifdef _WIN32
     ADDSET_ADVANCED_SECTION(),
@@ -1261,8 +1280,8 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Point at item", "tp_msgpoint"),
 	ADDSET_BIND("Took item", "tp_msgtook"),
 	ADDSET_BIND("Need items", "tp_msgneed"),
-	ADDSET_BIND("Yes/Ok", "tp_msgyesok"),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BIND("Yes/Ok", "tp_msgyesok"),
 	ADDSET_BIND("Coming from location", "tp_msgcoming"),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BIND("Help location", "tp_msghelp"),
