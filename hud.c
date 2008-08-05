@@ -512,6 +512,36 @@ void HUD_Move_f (void)
 }
 
 //
+// Resets a hud item to the center of the screen.
+//
+void HUD_Reset_f (void)
+{
+	hud_t *hud = NULL;
+	char *hudname = NULL;
+
+    if (Cmd_Argc() != 2)
+    {
+        Com_Printf("Usage: reset <name>\n");
+        Com_Printf("Resets the position of the given HUD element to the center of the screen.\n");
+        return;
+    }
+
+	hudname = Cmd_Argv(1);
+
+    hud = HUD_Find(hudname);
+
+	if (!hud)
+	{
+		Com_Printf("No such HUD element %s.\n", hudname);
+		return;
+	}
+	
+	Cbuf_AddText(va("place %s screen", hudname));
+	Cbuf_AddText(va("move %s 0 0", hudname));
+	Cbuf_AddText(va("align %s center center", hudname));
+}
+
+//
 // Reorders children so that they are place infront of their parent.
 //
 void HUD_ReorderChildren(void)
@@ -750,6 +780,7 @@ void HUD_Init(void)
     Cmd_AddCommand ("hide", HUD_Hide_f);
     Cmd_AddCommand ("move", HUD_Move_f);
     Cmd_AddCommand ("place", HUD_Place_f);
+	Cmd_AddCommand ("reset", HUD_Reset_f);
 	Cmd_AddCommand ("order", HUD_Order_f);
     Cmd_AddCommand ("togglehud", HUD_Toggle_f);
     Cmd_AddCommand ("align", HUD_Align_f);
