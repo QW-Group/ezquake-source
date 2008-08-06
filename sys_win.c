@@ -1076,7 +1076,6 @@ qwurl_regkey_t WinGetCheckQWURLRegKey()
 		if (RegQueryValueEx(keyhandle, EZQUAKE_REG_QWPROTOCOLKEY, 0, &type, (BYTE *)&val, &size))
 		{
 			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"EZQUAKE_REG_SUBKEY"\\"EZQUAKE_REG_QWPROTOCOLKEY"\n");
-			RegCloseKey(keyhandle);
 			break;
 		}
 
