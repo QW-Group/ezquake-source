@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -78,17 +78,17 @@ void Sys_SetFPCW(void) {}
 void MaskExceptions(void) {}
 #endif
 
-void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
+void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel)
 {
-	if (Q_atof(string)) 
+	if (Q_atof(string))
 	{
-		if (!WinKeyHook_isActive) 
+		if (!WinKeyHook_isActive)
 		{
-			if ((WinKeyHook = SetWindowsHookEx(13, LLWinKeyHook, global_hInstance, 0))) 
+			if ((WinKeyHook = SetWindowsHookEx(13, LLWinKeyHook, global_hInstance, 0)))
 			{
 				WinKeyHook_isActive = true;
-			} 
-			else 
+			}
+			else
 			{
 				Com_Printf("Failed to install winkey hook.\n");
 				Com_Printf("Microsoft Windows NT 4.0, 2000 or XP is required.\n");
@@ -96,8 +96,8 @@ void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel)
 				return;
 			}
 		}
-	} 
-	else 
+	}
+	else
 	{
 		if (WinKeyHook_isActive)
 		{
@@ -107,27 +107,27 @@ void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel)
 	}
 }
 
-LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam) 
+LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam)
 {
 	PKBDLLHOOKSTRUCT p;
 
 	p = (PKBDLLHOOKSTRUCT) lParam;
 
-	if (ActiveApp) 
+	if (ActiveApp)
 	{
-		switch(p->vkCode) 
+		switch(p->vkCode)
 		{
-			case VK_LWIN: 
-				Key_Event (K_LWIN, !(p->flags & LLKHF_UP)); 
+			case VK_LWIN:
+				Key_Event (K_LWIN, !(p->flags & LLKHF_UP));
 				return 1;
-			case VK_RWIN: 
-				Key_Event (K_RWIN, !(p->flags & LLKHF_UP)); 
+			case VK_RWIN:
+				Key_Event (K_RWIN, !(p->flags & LLKHF_UP));
 				return 1;
-			case VK_APPS: 
-				Key_Event (K_MENU, !(p->flags & LLKHF_UP)); 
+			case VK_APPS:
+				Key_Event (K_MENU, !(p->flags & LLKHF_UP));
 				return 1;
-			case VK_SNAPSHOT: 
-				Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP)); 
+			case VK_SNAPSHOT:
+				Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP));
 				return 1;
 		}
 	}
@@ -138,11 +138,11 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam)
 #endif
 
 
-int Sys_SetPriority(int priority) 
+int Sys_SetPriority(int priority)
 {
     DWORD p;
 
-	switch (priority) 
+	switch (priority)
 	{
 		case 0:	p = IDLE_PRIORITY_CLASS; break;
 		case 1:	p = NORMAL_PRIORITY_CLASS; break;
@@ -154,30 +154,30 @@ int Sys_SetPriority(int priority)
 	return SetPriorityClass(GetCurrentProcess(), p);
 }
 
-void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel) 
+void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
 {
 	int ok, q_priority;
 	char *desc;
 	float priority;
 
 	priority = Q_atof(s);
-	if (priority == 1) 
+	if (priority == 1)
 	{
 		q_priority = 2;
 		desc = "high";
-	} 
-	else if (priority == -1) 
+	}
+	else if (priority == -1)
 	{
 		q_priority = 0;
 		desc = "low";
-	} 
-	else 
+	}
+	else
 	{
 		q_priority = 1;
 		desc = "normal";
 	}
 
-	if (!(ok = Sys_SetPriority(q_priority))) 
+	if (!(ok = Sys_SetPriority(q_priority)))
 	{
 		Com_Printf("Changing process priority failed\n");
 		*cancel = true;
@@ -191,7 +191,7 @@ void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
 // FILE IO
 //===============================================================================
 
-void Sys_mkdir (const char *path) 
+void Sys_mkdir (const char *path)
 {
 	_mkdir (path);
 }
@@ -205,7 +205,7 @@ int Sys_remove (char *path)
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm)
 {
 	HANDLE r;
-	WIN32_FIND_DATA fd; 
+	WIN32_FIND_DATA fd;
 	char apath[MAX_OSPATH];
 	char apath2[MAX_OSPATH];
 	char file[MAX_OSPATH];
@@ -217,7 +217,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	snprintf(apath, sizeof(apath), "%s/%s", gpath, match);
 	for (s = apath+strlen(apath)-1; s> apath; s--)
 	{
-		if (*s == '/') 
+		if (*s == '/')
 			break;
 	}
 	*s = '\0';
@@ -271,7 +271,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 // SYSTEM IO
 // ===============================================================================
 
-void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) 
+void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 {
 	DWORD  flOldProtect;
 
@@ -296,25 +296,25 @@ static void Sys_DisableScreenSaving(void)
 	int bIsEnabled = 0;
 
 	// disables screen saver
-	if ( SystemParametersInfo(SPI_GETSCREENSAVEACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled ) 
+	if ( SystemParametersInfo(SPI_GETSCREENSAVEACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled )
 	{
-		if ( SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) ) 
+		if ( SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) )
 		{
 			ScreenSaver_isDisabled = true;
 		}
 	}
 
 	// disables screen power off
-	if ( SystemParametersInfo(SPI_GETPOWEROFFACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled ) 
+	if ( SystemParametersInfo(SPI_GETPOWEROFFACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled )
 	{
-		if ( SystemParametersInfo(SPI_SETPOWEROFFACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) ) 
+		if ( SystemParametersInfo(SPI_SETPOWEROFFACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) )
 		{
 			PowerOff_isDisabled = true;
 		}
 	}
 }
 
-void Sys_Error (char *error, ...) 
+void Sys_Error (char *error, ...)
 {
 	va_list argptr;
 	char text[1024];
@@ -335,11 +335,11 @@ void Sys_Error (char *error, ...)
 		CloseHandle (qwclsemaphore);
 
 	Sys_RestoreScreenSaving();
- 
+
 	exit (1);
 }
 
-void Sys_Printf (char *fmt, ...) 
+void Sys_Printf (char *fmt, ...)
 {
 	va_list argptr;
 	char text[1024];
@@ -357,7 +357,7 @@ void Sys_Printf (char *fmt, ...)
 	WriteFile (houtput, text, strlen(text), &dummy, NULL);
 }
 
-void Sys_Quit (void) 
+void Sys_Quit (void)
 {
 	if (tevent)
 		CloseHandle (tevent);
@@ -373,31 +373,31 @@ void Sys_Quit (void)
 #endif
 
 	Sys_RestoreScreenSaving();
- 
+
 	exit (0);
 }
 
 static double pfreq;
 static qbool hwtimer = false;
 
-void Sys_InitDoubleTime (void) 
+void Sys_InitDoubleTime (void)
 {
 	__int64 freq;
 
-	if (!COM_CheckParm("-nohwtimer") && QueryPerformanceFrequency((LARGE_INTEGER *)&freq) && freq > 0) 
+	if (!COM_CheckParm("-nohwtimer") && QueryPerformanceFrequency((LARGE_INTEGER *)&freq) && freq > 0)
 	{
 		// Hardware timer available
 		pfreq = (double)freq;
 		hwtimer = true;
-	} 
-	else 
+	}
+	else
 	{
 		// Make sure the timer is high precision, otherwise NT gets 18ms resolution
 		timeBeginPeriod (1);
 	}
 }
 
-double Sys_DoubleTime (void) 
+double Sys_DoubleTime (void)
 {
 	__int64 pcount;
 	static __int64 startcount;
@@ -405,10 +405,10 @@ double Sys_DoubleTime (void)
 	static qbool first = true;
 	DWORD now;
 
-	if (hwtimer) 
+	if (hwtimer)
 	{
 		QueryPerformanceCounter ((LARGE_INTEGER *)&pcount);
-		if (first) 
+		if (first)
 		{
 			first = false;
 			startcount = pcount;
@@ -443,7 +443,7 @@ char *Sys_ConsoleInput (void)
 	int i, dummy, ch, numread, numevents;
 	char *textCopied;
 
-	while (1) 
+	while (1)
 	{
 		if (!GetNumberOfConsoleInputEvents (hinput, &numevents))
 			Sys_Error ("Error getting # of console events");
@@ -457,12 +457,12 @@ char *Sys_ConsoleInput (void)
 		if (numread != 1)
 			Sys_Error ("Couldn't read console input");
 
-		if (rec.EventType == KEY_EVENT) 
+		if (rec.EventType == KEY_EVENT)
 		{
-			if (rec.Event.KeyEvent.bKeyDown) 
+			if (rec.Event.KeyEvent.bKeyDown)
 			{
 				ch = rec.Event.KeyEvent.uChar.AsciiChar;
-				switch (ch) 
+				switch (ch)
 				{
 					case '\r':
 						WriteFile(houtput, "\r\n", 2, &dummy, NULL);
@@ -481,15 +481,15 @@ char *Sys_ConsoleInput (void)
 
 					default:
 						if ((ch == ('V' & 31)) || // Ctrl + v
-							((rec.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) && (rec.Event.KeyEvent.wVirtualKeyCode == VK_INSERT))) 
+							((rec.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) && (rec.Event.KeyEvent.wVirtualKeyCode == VK_INSERT)))
 						{
-							if ((textCopied = wcs2str(Sys_GetClipboardTextW()))) 
+							if ((textCopied = wcs2str(Sys_GetClipboardTextW())))
 							{
 								i = strlen(textCopied);
 								if (i + len >= sizeof(text))
 									i = sizeof(text) - len - 1;
-								
-								if (i > 0) 
+
+								if (i > 0)
 								{
 									textCopied[i] = 0;
 									text[len] = 0;
@@ -498,10 +498,10 @@ char *Sys_ConsoleInput (void)
 									len += dummy;
 								}
 							}
-						} 
-						else if (ch >= ' ') 
+						}
+						else if (ch >= ' ')
 						{
-							WriteFile(houtput, &ch, 1, &dummy, NULL);	
+							WriteFile(houtput, &ch, 1, &dummy, NULL);
 							text[len] = ch;
 							len = (len + 1) & 0xff;
 						}
@@ -514,11 +514,11 @@ char *Sys_ConsoleInput (void)
 	return NULL;
 }
 
-void Sys_SendKeyEvents (void) 
+void Sys_SendKeyEvents (void)
 {
     MSG msg;
 
-	while (PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE)) 
+	while (PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE))
 	{
 		// We always update if there are any event, even if we're paused
 		scr_skipupdate = 0;
@@ -530,10 +530,10 @@ void Sys_SendKeyEvents (void)
 	}
 }
 
-BOOL WINAPI HandlerRoutine (DWORD dwCtrlType) 
+BOOL WINAPI HandlerRoutine (DWORD dwCtrlType)
 {
 	switch (dwCtrlType) {
-		case CTRL_C_EVENT:		
+		case CTRL_C_EVENT:
 		case CTRL_BREAK_EVENT:
 		case CTRL_CLOSE_EVENT:
 		case CTRL_LOGOFF_EVENT:
@@ -545,7 +545,7 @@ BOOL WINAPI HandlerRoutine (DWORD dwCtrlType)
 }
 
 // Quake calls this so the system can register variables before host_hunklevel is marked
-void Sys_Init (void) 
+void Sys_Init (void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
 	Cvar_Register(&sys_highpriority);
@@ -553,7 +553,7 @@ void Sys_Init (void)
 	Cvar_Register(&sys_inactivesleep);
 #ifndef WITHOUT_WINKEYHOOK
 	if (WinNT)
-		Cvar_Register(&sys_disableWinKeys);	
+		Cvar_Register(&sys_disableWinKeys);
 #endif
 	Cvar_ResetCurrentGroup();
 
@@ -578,7 +578,7 @@ void WinCheckOSInfo(void)
 	WinVISTA = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 0); // Vista or Longhorn Server
 }
 
-void Sys_Init_ (void) 
+void Sys_Init_ (void)
 {
 	// Allocate a named semaphore on the client so the front end can tell if it is alive.
 	if (!dedicated
@@ -616,7 +616,7 @@ void Sys_Init_ (void)
 				Sys_Error ("QWCL is already running on this system");
 			}
 		}
-		
+
 		CloseHandle (qwclsemaphore);
 
 		qwclsemaphore = CreateSemaphore(
@@ -636,7 +636,7 @@ void Sys_Init_ (void)
 
 #define SYS_CLIPBOARD_SIZE		256
 
-wchar *Sys_GetClipboardTextW(void) 
+wchar *Sys_GetClipboardTextW(void)
 {
 	HANDLE th;
 	wchar *clipText, *s, *t;
@@ -645,31 +645,31 @@ wchar *Sys_GetClipboardTextW(void)
 	if (!OpenClipboard(NULL))
 		return NULL;
 
-	if (WinNT) 
+	if (WinNT)
 	{
-		if (!(th = GetClipboardData(CF_UNICODETEXT))) 
+		if (!(th = GetClipboardData(CF_UNICODETEXT)))
 		{
 			CloseClipboard();
 			return NULL;
 		}
 
-		if (!(clipText = GlobalLock(th))) 
+		if (!(clipText = GlobalLock(th)))
 		{
 			CloseClipboard();
 			return NULL;
 		}
-	} 
-	else 
+	}
+	else
 	{
 		char *txt;
 
-		if (!(th = GetClipboardData(CF_TEXT))) 
+		if (!(th = GetClipboardData(CF_TEXT)))
 		{
 			CloseClipboard();
 			return NULL;
 		}
 
-		if (!(txt = GlobalLock(th))) 
+		if (!(txt = GlobalLock(th)))
 		{
 			CloseClipboard();
 			return NULL;
@@ -690,7 +690,7 @@ wchar *Sys_GetClipboardTextW(void)
 }
 
 // Copies given text to clipboard
-void Sys_CopyToClipboard(char *text) 
+void Sys_CopyToClipboard(char *text)
 {
 	char *clipText;
 	HGLOBAL hglbCopy;
@@ -698,19 +698,19 @@ void Sys_CopyToClipboard(char *text)
 	if (!OpenClipboard(NULL))
 		return;
 
-	if (!EmptyClipboard()) 
+	if (!EmptyClipboard())
 	{
 		CloseClipboard();
 		return;
 	}
 
-	if (!(hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text) + 1))) 
+	if (!(hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text) + 1)))
 	{
 		CloseClipboard();
 		return;
 	}
 
-	if (!(clipText = (char *)GlobalLock(hglbCopy))) 
+	if (!(clipText = (char *)GlobalLock(hglbCopy)))
 	{
 		CloseClipboard();
 		return;
@@ -733,7 +733,7 @@ int		argc;
 char	*argv[MAX_NUM_ARGVS];
 static char exename[1024] = {0};
 
-void ParseCommandLine (char *lpCmdLine) 
+void ParseCommandLine (char *lpCmdLine)
 {
     int i;
 	argc = 1;
@@ -741,7 +741,7 @@ void ParseCommandLine (char *lpCmdLine)
 
 	if(!(i = GetModuleFileName(NULL, exename, sizeof(exename)-1))) // here we get loong string, with full path
 		exename[0] = 0; // oh, something bad
-	else 
+	else
 	{
 		exename[i] = 0; // ensure null terminator
 		strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
@@ -782,7 +782,7 @@ void ParseCommandLine (char *lpCmdLine)
 	}
 }
 
-void SleepUntilInput (int time) 
+void SleepUntilInput (int time)
 {
 	MsgWaitForMultipleObjects (1, &tevent, FALSE, time, QS_ALLINPUT);
 }
@@ -820,7 +820,7 @@ LRESULT CALLBACK QWURLProtocolButtonsHookProc(int nCode, WPARAM wParam, LPARAM l
 			hwnd = (HWND)wParam;
 			GetClientRect(hwnd, &rectClient);
 			GetWindowRect(hwnd, &rectWindow);
-			
+
 			// Place the buttons at the bottom of the window.
 			y_pos = rectClient.bottom - BOTTOM_OFFSET - BUTTON_HEIGHT;
 
@@ -828,15 +828,15 @@ LRESULT CALLBACK QWURLProtocolButtonsHookProc(int nCode, WPARAM wParam, LPARAM l
 			if (rectClient.right < ALL_BUTTON_WIDTH)
 			{
 				// TODO: Hmm does this work properly? Got some weird behaviour where the control wouldn't draw if the cy argument wasn't a constant.
-				SetWindowPos(hwnd, HWND_TOP, 20, 20, 
-					(ALL_BUTTON_WIDTH + (BUTTON_GAP * 2)), 
-					(int)(rectWindow.bottom - rectWindow.top), 
+				SetWindowPos(hwnd, HWND_TOP, 20, 20,
+					(ALL_BUTTON_WIDTH + (BUTTON_GAP * 2)),
+					(int)(rectWindow.bottom - rectWindow.top),
 					0);
 			}
 
 			// Center the buttons.
 			x_pos = Q_rint((rectClient.right - ALL_BUTTON_WIDTH) / 2.0);
-			
+
 			// Modify the Yes button.
 			hwndYESButton = GetDlgItem(hwnd, IDYES);
 			SetWindowText(hwndYESButton, _T("Set as default"));
@@ -873,9 +873,9 @@ int MsgBoxEx(HWND hwnd, TCHAR *szText, TCHAR *szCaption, HOOKPROC hookproc, UINT
 	if (hookproc != NULL)
 	{
 		hMsgBoxHook = SetWindowsHookEx(
-			WH_CBT, 
-			hookproc, 
-			NULL, 
+			WH_CBT,
+			hookproc,
+			NULL,
 			GetCurrentThreadId()		// Only install for THIS thread!!!
 			);
 	}
@@ -894,6 +894,95 @@ int MsgBoxEx(HWND hwnd, TCHAR *szText, TCHAR *szCaption, HOOKPROC hookproc, UINT
 
 HINSTANCE	global_hInstance;
 
+typedef enum qwurl_regkey_e
+{
+	QWURL_DONT_ASK = 0,
+	QWURL_ASK = 1,
+	QWURL_ASK_IF_OTHER = 2
+} qwurl_regkey_t;
+
+//
+// Sets the registry that decides if the QW URL dialog should be shown at startup or not.
+//
+void WinSetCheckQWURLRegKey(qwurl_regkey_t val)
+{
+	#define EZQUAKE_REG_SUBKEY			"Software\\ezQuake"
+	#define EZQUAKE_REG_QWPROTOCOLKEY	"AskForQWProtocol"
+
+	HKEY keyhandle;
+
+	//
+	// HKCU\Software\ezQuake
+	//
+	{
+		DWORD dval = (DWORD)val;
+
+		// Open / Create the key.
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, EZQUAKE_REG_SUBKEY,
+			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"EZQUAKE_REG_SUBKEY"\n");
+			return;
+		}
+
+		// Set the key value.
+		if (RegSetValueEx(keyhandle, EZQUAKE_REG_QWPROTOCOLKEY, 0, REG_DWORD, (BYTE *)&dval, sizeof(DWORD)))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"EZQUAKE_REG_SUBKEY"\\"EZQUAKE_REG_QWPROTOCOLKEY"\n");
+			RegCloseKey(keyhandle);
+			return;
+		}
+
+		RegCloseKey(keyhandle);
+	}
+}
+
+//
+// Gets the registry value for the "HKCU\Software\ezQuake\AskForQWProtocol key"
+//
+qwurl_regkey_t WinGetCheckQWURLRegKey()
+{
+	HKEY keyhandle = NULL;
+	DWORD returnval = QWURL_ASK;
+
+	//
+	// HKCU\Software\ezQuake
+	//
+	do
+	{
+		DWORD val;
+		DWORD type = REG_DWORD;
+		DWORD size = sizeof(DWORD);
+		LONG returnstatus;
+
+		// Open the key.
+		if ((returnstatus = RegOpenKeyEx(HKEY_CURRENT_USER, EZQUAKE_REG_SUBKEY, 0, KEY_ALL_ACCESS, &keyhandle)) != ERROR_SUCCESS)
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not open HKCU\\"EZQUAKE_REG_SUBKEY", %l\n", returnstatus);
+			break;
+		}
+
+
+		// Set the key value.
+		if (RegQueryValueEx(keyhandle, EZQUAKE_REG_QWPROTOCOLKEY, 0, &type, (BYTE *)&val, &size))
+		{
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"EZQUAKE_REG_SUBKEY"\\"EZQUAKE_REG_QWPROTOCOLKEY"\n");
+			break;
+		}
+
+		returnval = (qwurl_regkey_t)val;
+		break;
+	}
+	while (0);
+
+	if (keyhandle)
+	{
+		RegCloseKey(keyhandle);
+	}
+
+	return returnval;
+}
+
 //
 // Check if we're the registered QW:// protocol handler, if not show a messagebox
 // asking the user what to do. Returns false if the user wants to turn this check off.
@@ -905,29 +994,42 @@ qbool WinCheckQWURL(void)
 
 	int retval;
 
-	// We're not allowed to write to the registry in vista.
-	if (WinVISTA)
+	// Check the registry if we should ask at all. By relying on this
+	// instead of the cfg, the user doesn't have to do a cfg_save after answering
+	// "Don't ask me this again" to keep from getting bugged :D
+	qwurl_regkey_t regstatus = WinGetCheckQWURLRegKey();
+
+	switch (regstatus)
 	{
-		return false;
+		case QWURL_ASK:
+			break;
+
+		case QWURL_ASK_IF_OTHER:
+			break;
+
+		case QWURL_DONT_ASK:
+			// Get out of here!!!
+			return true;
 	}
 
 	if (CL_CheckIfQWProtocolHandler())
 	{
 		return true;
 	}
-	
+
 	// Instead of creating a completly custom messagebox (which is a major pain)
 	// just show a normal one, but replace the text on the buttons using event hooking.
-	retval = MsgBoxEx(mainwindow, 
+	retval = MsgBoxEx(mainwindow,
 					"The current ezQuake client is not registered as the default qw:// protocol handler!\n"
 					"This lets you launch ezQuake by clicking qw://server:port URLs like a normal URL.\n\n"
-					"Do you want to set ezQuake as the default qw:// protocol handler?", 
+					"Do you want to set ezQuake as the default qw:// protocol handler?",
 					"QW URL Protocol", QWURLProtocolButtonsHookProc, MB_YESNOCANCEL | MB_ICONWARNING);
 
 	switch (retval)
 	{
 		case IDYES :
 			CL_RegisterQWURLProtocol_f();
+			WinSetCheckQWURLRegKey(QWURL_ASK);
 			return true;
 
 		case IDNO :
@@ -936,6 +1038,7 @@ qbool WinCheckQWURL(void)
 
 		case IDCANCEL :
 			// User doesn't want to be bugged anymore.
+			WinSetCheckQWURLRegKey(QWURL_DONT_ASK);
 			return false;
 	}
 
@@ -945,7 +1048,7 @@ qbool WinCheckQWURL(void)
 //
 // Application entry point.
 //
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	int memsize, i;
 	double time, oldtime, newtime;
@@ -972,7 +1075,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	COM_InitArgv (argc, argv);
 
 	// Let me use -condebug C:\condebug.log before Quake FS init, so I get ALL messages before quake fully init
-	if ((i = COM_CheckParm("-condebug")) && i < COM_Argc() - 1) 
+	if ((i = COM_CheckParm("-condebug")) && i < COM_Argc() - 1)
 	{
 		extern FILE *qconsole_log;
 		char *s = COM_Argv(i + 1);
@@ -984,7 +1087,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	dedicated = COM_CheckParm ("-dedicated");
 #endif
 
-	if (dedicated) 
+	if (dedicated)
 	{
 		if (!AllocConsole())
 			Sys_Error ("Couldn't allocate dedicated server console");
@@ -993,7 +1096,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		hinput = GetStdHandle (STD_INPUT_HANDLE);
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
 	}
-	else 
+	else
 	{
 		Sys_DisableScreenSaving();
 	}
@@ -1033,20 +1136,20 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	oldtime = Sys_DoubleTime ();
 
     // Main window message loop.
-	while (1) 
+	while (1)
 	{
-		if (dedicated) 
+		if (dedicated)
 		{
 			NET_Sleep(1);
-		} 
-		else if (sys_inactivesleep.value) 
+		}
+		else if (sys_inactivesleep.value)
 		{
 			// Yield the CPU for a little while when paused, minimized, or not the focus
 			if ((ISPAUSED && (!ActiveApp && !DDActive)) || Minimized || block_drawing)
 			{
 				SleepUntilInput (PAUSE_SLEEP);
 				scr_skipupdate = 1;		// no point in bothering to draw
-			} 
+			}
 			else if (!ActiveApp && !DDActive)
 			{
 				SleepUntilInput (NOT_FOCUS_SLEEP);
@@ -1145,7 +1248,7 @@ char * Sys_getcwd (char *buf, int bufsize)
 char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 {
     return _fullpath(absPath, relPath, maxLength);
-} 
+}
 
 void Sys_GetFullExePath(char *path, unsigned int path_length, qbool long_name)
 {
@@ -1163,12 +1266,12 @@ void Sys_GetFullExePath(char *path, unsigned int path_length, qbool long_name)
 HANDLE ezquake_server_mailslot;
 
 void Sys_InitIPC()
-{	
-	ezquake_server_mailslot = CreateMailslot( 
+{
+	ezquake_server_mailslot = CreateMailslot(
 							  EZQUAKE_MAILSLOT,					// Mailslot name
-							  MAILSLOT_BUFFERSIZE,              // Input buffer size 
+							  MAILSLOT_BUFFERSIZE,              // Input buffer size
 							  0,								// Timeout
-							  NULL);							// Default security attribute 
+							  NULL);							// Default security attribute
 }
 
 void Sys_CloseIPC()
@@ -1187,11 +1290,11 @@ void Sys_ReadIPC()
 	}
 
 	// Read client message
-	ReadFile( ezquake_server_mailslot,	// Handle to mailslot 
-				buf,						// Buffer to receive data 
-				sizeof(buf),				// Size of buffer 
-				&num_bytes_read,			// Number of bytes read 
-				NULL);						// Not overlapped I/O 
+	ReadFile( ezquake_server_mailslot,	// Handle to mailslot
+				buf,						// Buffer to receive data
+				sizeof(buf),				// Size of buffer
+				&num_bytes_read,			// Number of bytes read
+				NULL);						// Not overlapped I/O
 
 	COM_ParseIPCData(buf, num_bytes_read);
 }
@@ -1203,19 +1306,19 @@ unsigned int Sys_SendIPC(const char *buf)
 	qbool result = false;
 
 	// Connect to the server mailslot using CreateFile()
-	hMailslot = CreateFile( EZQUAKE_MAILSLOT,		// Mailslot name 
-							GENERIC_WRITE,			// Mailslot write only 
+	hMailslot = CreateFile( EZQUAKE_MAILSLOT,		// Mailslot name
+							GENERIC_WRITE,			// Mailslot write only
 							FILE_SHARE_READ,		// Required for mailslots
 							NULL,					// Default security attributes
-							OPEN_EXISTING,			// Opens existing mailslot 
-							FILE_ATTRIBUTE_NORMAL,	// Normal attributes 
-							NULL);					// No template file 
+							OPEN_EXISTING,			// Opens existing mailslot
+							FILE_ATTRIBUTE_NORMAL,	// Normal attributes
+							NULL);					// No template file
 
 	// Send the message to server.
-	result = WriteFile( hMailslot,			// Handle to mailslot 
-						buf,				// Buffer to write from 
+	result = WriteFile( hMailslot,			// Handle to mailslot
+						buf,				// Buffer to write from
 						strlen(buf) + 1,	// Number of bytes to write, include the NULL
-						&num_bytes_written,	// Number of bytes written 
+						&num_bytes_written,	// Number of bytes written
 						NULL);				// Not overlapped I/O
 
 	 CloseHandle(hMailslot);
@@ -1224,7 +1327,7 @@ unsigned int Sys_SendIPC(const char *buf)
 
 /********************************** SEMAPHORES *******************************/
 /* Sys_Sem*() returns 0 on success; on error, -1 is returned */
-int Sys_SemInit(sem_t *sem, int value, int max_value) 
+int Sys_SemInit(sem_t *sem, int value, int max_value)
 {
 	*sem = CreateSemaphore(NULL, value, max_value, NULL);// None named Semaphore
 	if (*sem == NULL)
@@ -1232,7 +1335,7 @@ int Sys_SemInit(sem_t *sem, int value, int max_value)
 	return 0;
 }
 
-int Sys_SemWait(sem_t *sem) 
+int Sys_SemWait(sem_t *sem)
 {
 	if (WaitForSingleObject(*sem, INFINITE) == WAIT_FAILED)
 		return -1;
