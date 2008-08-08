@@ -4169,6 +4169,10 @@ void CL_QTVPlay_f (void)
 	// The stream address.
 	connrequest = Cmd_Argv(1);
 
+	// We've succesfully connected to a QTV proxy, save the connrequest string so we can use it to reconnect.
+	strlcpy(prev_qtv_connrequest, connrequest, sizeof(prev_qtv_connrequest));
+	strlcpy(prev_qtv_password, qtvpassword, sizeof(prev_qtv_password));
+
 	//
 	// If a "#" is at the beginning of the given address it refers to a .qtv file.
 	//
@@ -4341,10 +4345,6 @@ void CL_QTVPlay_f (void)
 	// socket for the actual streaming :)
 	QTV_CloseRequest(false);
 	qtvrequest = newf;
-
-	// We've succesfully connected to a QTV proxy, save the connrequest string so we can use it to reconnect.
-	strlcpy(prev_qtv_connrequest, connrequest, sizeof(prev_qtv_connrequest));
-	strlcpy(prev_qtv_password, qtvpassword, sizeof(prev_qtv_password));
 }
 
 
