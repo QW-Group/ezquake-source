@@ -59,6 +59,8 @@ cvar_t	gl_externalTextures_world	= {"gl_externalTextures_world", "1"};
 cvar_t	gl_externalTextures_bmodels	= {"gl_externalTextures_bmodels", "1"};
 cvar_t  gl_no24bit                  = {"gl_no24bit", "0", CVAR_LATCH};
 
+cvar_t  gl_wicked_luma_level        = {"gl_wicked_luma_level", "0", CVAR_LATCH};
+
 typedef struct {
 	int			texnum;
 	char		identifier[MAX_QPATH];
@@ -306,6 +308,18 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode)
 	{
 		// Scale is a power of 2, just copy the data.
 		memcpy (newdata, data, width * height * 4);
+	}
+
+	if ((mode & TEX_FULLBRIGHT) && (mode & TEX_LUMA) && gl_wicked_luma_level.integer > 0)
+	{ 
+		int i, cnt = width * height * 4, level = gl_wicked_luma_level.integer;
+		byte *bdata = (byte*)newdata;
+
+		for (i = 0; i < cnt; i += 4)
+		{
+			if (bdata[i] < level && bdata[i+1] < level && bdata[i+2] < level)
+				bdata[i+3] = 0; // make black pixels transparent, well not always black, depends of level...
+		}
 	}
 
 	// Get the scaled dimension (scales according to gl_picmip and max allowed texture size).
@@ -1012,6 +1026,7 @@ void GL_Texture_Init(void)
 	Cvar_Register(&gl_externalTextures_world);
 	Cvar_Register(&gl_externalTextures_bmodels);
     Cvar_Register(&gl_no24bit);
+	Cvar_Register(&gl_wicked_luma_level);
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&gl_max_size_default);
 	Cvar_SetDefault(&gl_max_size, gl_max_size_default);
