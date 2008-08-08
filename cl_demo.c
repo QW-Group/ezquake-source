@@ -1932,7 +1932,7 @@ qbool CL_GetDemoMessage (void)
 			// Before we're active, cl.demotime will just get overwritten.
 			if (cls.state >= ca_active)
 			{
-				cls.demotime = cls.demo_rewindtime;
+				cls.demotime = demostarttime + cls.demo_rewindtime;
 				cls.demorewinding = false;
 
 				// We have now finished restarting the demo and will now seek
@@ -4465,7 +4465,7 @@ void CL_Demo_Jump_f (void)
 //
 // Jumps to a specified time in a demo. Time specified in seconds.
 //
-void CL_Demo_Jump(double seconds, qbool relative)
+void CL_Demo_Jump(double seconds, int relative)
 {
 	// Calculate the new demo time we want to jump to.
 	double newdemotime = relative ? (cls.demotime + (relative * seconds)) : (demostarttime + seconds);
@@ -4473,7 +4473,7 @@ void CL_Demo_Jump(double seconds, qbool relative)
 	// We need to rewind.
 	if (newdemotime < cls.demotime)
 	{
-		cls.demo_rewindtime = newdemotime;
+		cls.demo_rewindtime = newdemotime - demostarttime;
 	}
 
 	// Set the new demotime.	
