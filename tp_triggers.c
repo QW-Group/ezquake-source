@@ -75,6 +75,7 @@ f_trigger_t f_triggers[] = {
 	{"f_demostart", false, false},
 	{"f_demoend", false, false},
 	{"f_captureframe", false, false},
+	{"f_sbrefreshdone", false, false},
 
 	{"f_freeflyspectate", false, false},
 	{"f_trackspectate", false, false},
@@ -93,7 +94,7 @@ f_trigger_t f_triggers[] = {
  
 #define num_f_triggers	(sizeof(f_triggers) / sizeof(f_triggers[0]))
  
-void TP_ExecTrigger (char *trigger)
+void TP_ExecTrigger (const char *trigger)
 {
 	int i, j, numteammates = 0;
 	cmd_alias_t *alias;

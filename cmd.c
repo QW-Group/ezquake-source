@@ -483,7 +483,7 @@ void Cmd_Echo_f (void)
 cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 cmd_alias_t	*cmd_alias;
 
-cmd_alias_t *Cmd_FindAlias (char *name)
+cmd_alias_t *Cmd_FindAlias (const char *name)
 {
 	int key;
 	cmd_alias_t *alias;

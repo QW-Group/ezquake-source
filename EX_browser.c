@@ -2750,6 +2750,7 @@ void Browser_Init (void)
 	Cvar_ResetCurrentGroup();
 
     Cmd_AddCommand("addserver", AddServer_f);
+	Cmd_AddCommand("sb_refresh", GetServerPingsAndInfos);
 }
 
 void Browser_Init2 (void)

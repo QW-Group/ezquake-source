@@ -198,7 +198,7 @@ char * next_quote(char *s);
 // net
 void GetServerInfo(server_data *serv);
 void GetServerPing(server_data *serv);
-void GetServerPingsAndInfos();
+void GetServerPingsAndInfos(void);
 void Start_Autoupdate(server_data *s);
 void Alter_Autoupdate(server_data *s)
 ;

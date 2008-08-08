@@ -486,6 +486,8 @@ void GetServerPing(server_data *serv)
 
 int oldPingHosts(server_data *servs[], int servsn, int count);
 int PingHosts(server_data *servs[], int servsn, int count, int time_out);
+void TP_ExecTrigger (const char *s);
+
 DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
     abort_ping = 0;
@@ -511,6 +513,8 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
     resort_servers = 1;
     rebuild_all_players = 1;
     ping_phase = 0;
+
+	TP_ExecTrigger("f_sbrefreshdone");
 
     return 0;
 }

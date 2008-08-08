@@ -46,7 +46,7 @@ qbool TP_IsItemVisible(item_vis_t *visitem);
 
 
 // triggers
-void TP_ExecTrigger (char *s);
+void TP_ExecTrigger (const char *s);
 void TP_StatChanged (int stat, int value);
 void TP_CheckPickupSound (char *s, vec3_t org);
 qbool TP_CheckSoundTrigger (wchar *str);
