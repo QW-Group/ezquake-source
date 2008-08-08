@@ -363,26 +363,26 @@ int CL_CalcNetStatistics(
         if (samples[a].status == packet_netlimit)
         {
             // not even sent
-            lost_netlimit ++;
+            lost_netlimit++;
             continue;
         }
 
         // packet was sent
-        samples_sent ++;
+        samples_sent++;
 
         size_sent += samples[a].sentsize;
 
         switch (samples[a].status)
         {
 			case packet_delta:
-				lost_delta ++;
-				samples_delta ++;
+				lost_delta++;
+				samples_delta++;
 				break;
 			case packet_choked:
-				lost_rate ++;
+				lost_rate++;
 				break;
 			case packet_dropped:
-				lost_lost ++;
+				lost_lost++;
 				break;
 			case packet_ok:
 				// packet received
@@ -390,7 +390,7 @@ int CL_CalcNetStatistics(
 					float ping;
 					int frames;
 
-					samples_received ++;
+					samples_received++;
 					frames = samples[a].seq_diff;
 					ping = 1000*(samples[a].receivedtime - samples[a].senttime);
 
@@ -405,7 +405,7 @@ int CL_CalcNetStatistics(
 					size_received += samples[a].receivedsize;
 
 					if (samples[a].delta)
-						samples_delta ++;
+						samples_delta++;
 				}
 			default:
 				break;
@@ -503,7 +503,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 	}
 #endif // WITH_FTE_VFS
 
-	// ZOID - can't download when playback, except qtv which support download
+	// Can't download when playback, except qtv which support download
 	if (cls.demoplayback)
 	{
 		if (cls.mvdplayback == QTV_PLAYBACK)
@@ -628,7 +628,7 @@ void CL_Prespawn (void)
 	StatsGrid_Remove(&stats_grid);
 	StatsGrid_ResetHoldItems();
 #ifdef GLQUAKE
-	HUD_NewMap(); // Cokeman 2006-05-28 HUD mvdradar
+	HUD_NewMap();
 #endif
 	Hunk_Check(); // make sure nothing is hurt
 
