@@ -4131,6 +4131,23 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	Com_Printf("Attempting to stream QTV data, buffer is %.1fs\n", (double)(QTVBUFFERTIME));
 }
 
+static char prev_qtv_connrequest[512];
+static char prev_qtv_password[128];
+
+//
+// Reconnects to the previous QTV.
+//
+void CL_QTVReconnect_f (void)
+{
+	if (!prev_qtv_connrequest[0])
+	{
+		Com_Printf("No previous QTV proxy available to connect to.\n");
+		return;
+	}
+
+	Cbuf_AddText(va("qtvplay %s %s\n", prev_qtv_connrequest, prev_qtv_password));
+}
+
 //
 // Start playback of a QTV stream.
 //
@@ -4260,14 +4277,14 @@ void CL_QTVPlay_f (void)
 	connrequest = strchrrev(stream_host, '@');
 	if (connrequest)
 	{
-		stream = stream_host; // stream part
-		connrequest[0] = 0; // truncate
-		host   = connrequest + 1; // host part
+		stream = stream_host;		// Stream part.
+		connrequest[0] = 0;			// Truncate.
+		host   = connrequest + 1;	// Host part.
 	}
 	else
 	{
-		stream = ""; // use default stream, user not specifie stream part
-		host   = stream_host; // arg is just host
+		stream = "";				// Use default stream, user not specifie stream part.
+		host   = stream_host;		// Arg is just host.
 	}
 
 	// Open a TCP socket to the specified host.
@@ -4324,6 +4341,10 @@ void CL_QTVPlay_f (void)
 	// socket for the actual streaming :)
 	QTV_CloseRequest(false);
 	qtvrequest = newf;
+
+	// We've succesfully connected to a QTV proxy, save the connrequest string so we can use it to reconnect.
+	strlcpy(prev_qtv_connrequest, connrequest, sizeof(prev_qtv_connrequest));
+	strlcpy(prev_qtv_password, qtvpassword, sizeof(prev_qtv_password));
 }
 
 
@@ -4548,6 +4569,7 @@ void CL_Demo_Init(void)
 	//
 	Cmd_AddCommand ("qtvplay", CL_QTVPlay_f);
 	Cmd_AddCommand ("qtvlist", CL_QTVList_f);
+	Cmd_AddCommand ("qtvreconnect", CL_QTVReconnect_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 #ifdef _WIN32
