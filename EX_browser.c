@@ -530,6 +530,21 @@ void AddServer_f(void)
     }
 }
 
+void SB_PingsDump_f(void)
+{
+	extern qbool useNewPing;
+	int i;
+
+	Com_Printf("// server ping dump\n// format: ip ping\n// protocol: %s\n", useNewPing ? "UDP" : "ICMP");
+	for (i = 0; i < serversn; i++) {
+		int ping = servers[i]->ping;
+
+		if (ping >= 0 && ping < 999) {
+			Com_Printf("%s %d\n", NET_BaseAdrToString(servers[i]->address), ping);
+		}
+	}
+}
+
 //
 // drawing routines
 //
@@ -2751,6 +2766,7 @@ void Browser_Init (void)
 
     Cmd_AddCommand("addserver", AddServer_f);
 	Cmd_AddCommand("sb_refresh", GetServerPingsAndInfos);
+	Cmd_AddCommand("sb_pingsdump", SB_PingsDump_f);
 }
 
 void Browser_Init2 (void)
