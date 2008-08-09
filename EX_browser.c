@@ -2079,7 +2079,7 @@ void RemoveSourceProc(void)
     // remove from SB
     if (Sources_pos < sourcesn - 1)
     {
-		free(sources+Sources_pos); // FIXME
+		free(sources[Sources_pos]); // FIXME
 		memmove(sources+Sources_pos,
                 sources+Sources_pos + 1,
                 (sourcesn-Sources_pos-1)*sizeof(source_data *));
