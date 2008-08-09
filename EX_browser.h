@@ -111,9 +111,15 @@ typedef struct server_data_s
 
 #define MAX_SOURCE_NAME 25
 
+typedef enum sb_source_type_e {
+	type_master,
+	type_file,
+	type_dummy
+} sb_source_type_t;
+
 typedef struct source_data_s
 {
-    enum {type_master, type_file, type_dummy} type;           // source type
+    sb_source_type_t type;           // source type
     union
     {
         netadr_t    address;            // IP for master type
@@ -200,10 +206,8 @@ void GetServerInfo(server_data *serv);
 void GetServerPing(server_data *serv);
 void GetServerPingsAndInfos(void);
 void Start_Autoupdate(server_data *s);
-void Alter_Autoupdate(server_data *s)
-;
-void Update_Multiple_Sources(source_data *s[], int sn)
-;
+void Alter_Autoupdate(server_data *s);
+void SB_Sources_Update(qbool full);
 
 char *ValueForKey(server_data *s, char *k);
 

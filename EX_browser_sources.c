@@ -296,6 +296,7 @@ typedef struct infohost_s
 
 source_data **psources;
 int psourcesn;
+void TP_ExecTrigger (const char *s);
 
 DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 {
@@ -462,12 +463,12 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
         Sys_MSleep(500);
 
     updating_sources = 0;
+	TP_ExecTrigger("f_sbupdatesourcesdone");
     return 0;    
 }
 
 void Update_Multiple_Sources(source_data *s[], int sn)
 {
-
     psources = s;
     psourcesn = sn;
 
@@ -476,7 +477,12 @@ void Update_Multiple_Sources(source_data *s[], int sn)
     ping_pos = 0;
 
     Sys_CreateThread(Update_Multiple_Sources_Proc, NULL);
+}
 
+void SB_Sources_Update(qbool full)
+{
+	source_full_update = (full);
+	Update_Multiple_Sources(sources, sourcesn);
 }
 
 void Toggle_Source(source_data *s)

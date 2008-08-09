@@ -1528,6 +1528,79 @@ void WriteSourcesConfiguration(FILE *f)
             fprintf(f, "sb_sourcemark \"%s\"\n", sources[i]->name);
 }
 
+void SB_Source_Add(const char* name, const char* address, sb_source_type_t type)
+{
+	FILE *f;
+	source_data *s;
+	char addr[512];
+
+	if (strlen(name) <= 0  ||  strlen(address) <= 0)
+		return;
+
+	// create new source
+	s = Create_Source();
+	s->type = type;
+	strlcpy (s->name, name, sizeof (s->name));
+	strlcpy (addr, address, sizeof (addr));
+
+	if (s->type == type_file) {
+		strlcpy (s->address.filename, address, sizeof (s->address.filename));
+	}
+	else {
+		if (!strchr(addr, ':')) {
+			strlcat (addr, ":27000", sizeof (addr));
+		}
+		if (!NET_StringToAdr(addr, &(s->address.address))) {
+			return;
+		}
+	}
+
+	sources[sourcesn] = s;
+	sourcesn++;
+	Sources_pos = sourcesn-1;
+
+	// and also add to file
+	if (!FS_FCreateFile("sb/sources.txt", &f, "ezquake", "at"))
+		return;
+
+	fprintf(f, "%s \"%s\" %s\n",
+			newsource_master ? "master" : "file",
+			name,
+			addr);
+
+	fclose(f);
+
+	Mark_Source(sources[Sources_pos]);
+	Update_Source(sources[Sources_pos]);
+	adding_source = 0;
+}
+
+void SB_Source_Add_f(void)
+{
+	sb_source_type_t type = type_dummy;
+
+	if (Cmd_Argc() != 4) {
+		Com_Printf("Usage: %s <name> <address/filename> <master|file>\n", Cmd_Argv(0));
+		if (Cmd_Argc() != 1) {
+			Com_Printf("You supplied incorrect amount of arguments\n");
+		}
+		return;
+	}
+
+	if (strcmp(Cmd_Argv(3), "master") == 0) {
+		type = type_master;
+	}
+	else if (strcmp(Cmd_Argv(3), "file") == 0) {
+		type = type_file;
+	}
+	else {
+		Com_Printf("Usage: %s <name> <address/filename> <master|file>\n", Cmd_Argv(0));
+		Com_Printf("Last argument must be 'master' or 'file'\n");
+		return;
+	}
+
+	SB_Source_Add(Cmd_Argv(1), Cmd_Argv(2), type);
+}
 
 void Add_Source_Key(int key)
 {
@@ -1556,51 +1629,7 @@ void Add_Source_Key(int key)
         case 3:
             if (key == K_ENTER)
             {
-                FILE *f;
-                source_data *s;
-                char addr[512];
-
-                if (strlen(edit1.text) <= 0  ||  strlen(edit2.text) <= 0)
-                    break;
-
-                // create new source
-                s = Create_Source();
-                s->type = newsource_master ? type_master : type_file;
-				strlcpy (s->name, edit1.text, sizeof (s->name));
-                strlcpy (addr, edit2.text, sizeof (addr));
-
-                if (s->type == type_file)
-                    strlcpy (s->address.filename, edit2.text, sizeof (s->address.filename));
-                else
-                {
-                    if (!strchr(addr, ':'))
-                        strlcat (addr, ":27000", sizeof (addr));
-                    if (!NET_StringToAdr(addr, &(s->address.address)))
-                        break;
-                }
-
-                sources[sourcesn] = s;
-                sourcesn++;
-
-                Sources_pos = sourcesn-1;
-
-                // and also add to file
-                //f = fopen(SOURCES_PATH, "at");
-                //if (f == NULL)
-                    //break;
-                if (!FS_FCreateFile("sb/sources.txt", &f, "ezquake", "at"))
-                    break;
-
-                fprintf(f, "%s \"%s\" %s\n",
-                        newsource_master ? "master" : "file",
-                        edit1.text,
-                        addr);
-
-                fclose(f);
-
-                Mark_Source(sources[Sources_pos]);
-                Update_Source(sources[Sources_pos]);
-                adding_source = 0;
+				SB_Source_Add(edit1.text, edit2.text, newsource_master ? type_master : type_file);
             }
 
             break;
@@ -2220,8 +2249,7 @@ int SB_Sources_Key(int key)
         case ']':
             Toggle_Source(sources[Sources_pos]); break;
         case K_SPACE:
-            source_full_update = (isCtrlDown());
-            Update_Multiple_Sources(sources, sourcesn);
+			SB_Sources_Update(isCtrlDown());
             break;
         case '=':
         case '+':   // select all sources
@@ -2723,6 +2751,11 @@ void Rebuild_All_Players(void)
 	//Players_pos = 0;
 }
 
+void SB_Sources_Update_f(void)
+{
+	SB_Sources_Update(true);
+}
+
 void Shutdown_SB(void)
 {
     Serverinfo_Stop();
@@ -2767,6 +2800,8 @@ void Browser_Init (void)
     Cmd_AddCommand("addserver", AddServer_f);
 	Cmd_AddCommand("sb_refresh", GetServerPingsAndInfos);
 	Cmd_AddCommand("sb_pingsdump", SB_PingsDump_f);
+	Cmd_AddCommand("sb_sourceadd", SB_Source_Add_f);
+	Cmd_AddCommand("sb_sourcesupdate", SB_Sources_Update_f);
 }
 
 void Browser_Init2 (void)
