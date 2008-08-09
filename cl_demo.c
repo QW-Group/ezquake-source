@@ -1023,7 +1023,7 @@ qbool CL_GetDemoMessage (void)
 			// Before we're active, cl.demotime will just get overwritten.
 			if (cls.state >= ca_active)
 			{
-				cls.demotime = cls.demo_rewindtime;
+				cls.demotime = demostarttime + cls.demo_rewindtime;
 				cls.demorewinding = false;
 			}
 		}
@@ -3697,7 +3697,7 @@ void CL_Demo_Jump_f (void)
 	// We need to rewind.
 	if (newdemotime < cls.demotime)
 	{
-		cls.demo_rewindtime = newdemotime;
+		cls.demo_rewindtime = newdemotime - demostarttime;
 	}
 
 	// Set the new demotime.
