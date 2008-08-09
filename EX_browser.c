@@ -540,7 +540,7 @@ void SB_PingsDump_f(void)
 		int ping = servers[i]->ping;
 
 		if (ping >= 0 && ping < 999) {
-			Com_Printf("%s %d\n", NET_BaseAdrToString(servers[i]->address), ping);
+			Com_Printf("%s %d\n", NET_AdrToString(servers[i]->address), ping);
 		}
 	}
 }
