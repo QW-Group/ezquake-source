@@ -59,7 +59,7 @@ cvar_t	gl_externalTextures_world	= {"gl_externalTextures_world", "1"};
 cvar_t	gl_externalTextures_bmodels	= {"gl_externalTextures_bmodels", "1"};
 cvar_t  gl_no24bit                  = {"gl_no24bit", "0", CVAR_LATCH};
 
-cvar_t  gl_wicked_luma_level        = {"gl_wicked_luma_level", "0", CVAR_LATCH};
+cvar_t  gl_wicked_luma_level        = {"gl_luma_level", "1", CVAR_LATCH};
 
 typedef struct {
 	int			texnum;
