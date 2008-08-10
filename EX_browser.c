@@ -1478,9 +1478,6 @@ void SB_Players_Draw (int x, int y, int w, int h)
         Draw_Server_Statusbar(x, y, w, h, all_players[Players_pos]->serv, Players_pos, all_players_n);
 }
 
-
-
-
 void SB_SourceUnmarkAll(void)
 {
     int i;
@@ -1512,7 +1509,8 @@ void MarkDefaultSources(void) {
 	{
         if (!strcmp(sources[i]->name, "id limbo") || 
 			!strcmp(sources[i]->name, "Global") ||
-			!strcmp(sources[i]->name, "QuakeServers.net")
+			!strcmp(sources[i]->name, "QuakeServers.net") ||
+			!strcmp(sources[i]->name, "Asgaard")
 		)
             sources[i]->checked = 1;
 	}
@@ -1526,53 +1524,6 @@ void WriteSourcesConfiguration(FILE *f)
     for (i=0; i < sourcesn; i++)
         if (sources[i]->checked)
             fprintf(f, "sb_sourcemark \"%s\"\n", sources[i]->name);
-}
-
-void SB_Source_Add(const char* name, const char* address, sb_source_type_t type)
-{
-	FILE *f;
-	source_data *s;
-	char addr[512];
-
-	if (strlen(name) <= 0  ||  strlen(address) <= 0)
-		return;
-
-	// create new source
-	s = Create_Source();
-	s->type = type;
-	strlcpy (s->name, name, sizeof (s->name));
-	strlcpy (addr, address, sizeof (addr));
-
-	if (s->type == type_file) {
-		strlcpy (s->address.filename, address, sizeof (s->address.filename));
-	}
-	else {
-		if (!strchr(addr, ':')) {
-			strlcat (addr, ":27000", sizeof (addr));
-		}
-		if (!NET_StringToAdr(addr, &(s->address.address))) {
-			return;
-		}
-	}
-
-	sources[sourcesn] = s;
-	sourcesn++;
-	Sources_pos = sourcesn-1;
-
-	// and also add to file
-	if (!FS_FCreateFile("sb/sources.txt", &f, "ezquake", "at"))
-		return;
-
-	fprintf(f, "%s \"%s\" %s\n",
-			newsource_master ? "master" : "file",
-			name,
-			addr);
-
-	fclose(f);
-
-	Mark_Source(sources[Sources_pos]);
-	Update_Source(sources[Sources_pos]);
-	adding_source = 0;
 }
 
 void SB_Source_Add_f(void)
@@ -1629,7 +1580,14 @@ void Add_Source_Key(int key)
         case 3:
             if (key == K_ENTER)
             {
-				SB_Source_Add(edit1.text, edit2.text, newsource_master ? type_master : type_file);
+				int newpos;
+				
+				newpos = SB_Source_Add(edit1.text, edit2.text, newsource_master ? type_master : type_file);
+				if (newpos >= 0) {
+					Sources_pos = newpos;
+				}
+
+				adding_source = 0;
             }
 
             break;
@@ -2059,150 +2017,13 @@ void Serverinfo_Sources_Key(int key)
     serverinfo_sources_pos = min(serverinfo_sources_pos, sourcesn_updated-1);
 }
 
-
-void RemoveSourceProc(void)
+void SB_RemoveSourceProc(void)
 {
-    source_data *s;
-    int removed = 0;
-#ifndef WITH_FTE_VFS
-    FILE *f;
-#else
-	vfsfile_t *f;
-	char ln[2048];
-#endif
-    int length;
-    char *filebuf; // *p, *q;
-    s = sources[Sources_pos];
-    if (s->type == type_dummy)
-        return;
+	SB_Source_Remove(Sources_pos);
 
-    // remove from SB
-    if (Sources_pos < sourcesn - 1)
-    {
-		free(sources[Sources_pos]); // FIXME
-		memmove(sources+Sources_pos,
-                sources+Sources_pos + 1,
-                (sourcesn-Sources_pos-1)*sizeof(source_data *));
-    }
-    sourcesn--;
-
-    // and from file
-    //length = COM_FileOpenRead (SOURCES_PATH, &f);
-#ifndef WITH_FTE_VFS
-    length = FS_FOpenFile("sb/sources.txt", &f);
-    if (length < 0)
-    {
-        //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
-        return;
-    }
-
-#else
-	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
-	if (!f) {
-        //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
-		return;
+	if (Sources_pos >= sourcesn) {
+		Sources_pos = sourcesn - 1;
 	}
-	length = VFS_GETLEN(f);
-#endif
-
-
-    filebuf = (char *)Q_malloc(length + 512);
-    filebuf[0] = 0;
-#ifndef WITH_FTE_VFS
-    while (!feof(f))
-    {
-        char c = 'A';
-        char line[2048];
-        char *p, *q;
-
-        if (fscanf(f, "%[ -~	]s", line) != 1)
-		{
-			while (!feof(f)  &&  c != '\n')
-				fscanf(f, "%c", &c);
-			continue;
-		}
-        while (!feof(f)  &&  c != '\n')
-        {
-            int len;
-            fscanf(f, "%c", &c);
-            len = strlen(line);
-            line[len] = c;
-            line[len+1] = 0;
-        }
-#else
-	while(VFS_GETS(f, ln, sizeof(ln))) {
-		char line[2048];
-		char *p, *q;
-
-		if (sscanf(ln, "%[ -~    ]s", line) != 1)
-			continue;
-#endif
-
-        if (removed)
-        {
-            strlcat (filebuf, line, sizeof (filebuf));
-            continue;
-        }
-        p = next_nonspace(line);
-        if (*p == '/')
-        {
-            strlcat (filebuf, line, sizeof (filebuf));
-            continue;   // comment
-        }
-
-        q = next_space(p);
-
-        if (s->type == type_master && strncmp(p, "master", q-p))
-        {
-            strlcat (filebuf, line, sizeof (filebuf));
-            continue;
-        }
-        if (s->type == type_file && strncmp(p, "file", q-p))
-        {
-            strlcat (filebuf, line, sizeof (filebuf));
-            continue;
-        }
-
-        p = next_nonspace(q);
-        q = (*p == '\"') ? next_quote(++p) : next_space(p);
-
-        if (q-p <= 0)
-        {
-            strlcat (filebuf, line, sizeof (filebuf));
-            continue;
-        }
-
-        if (strlen(s->name) != q-p  ||  strncmp(s->name, p, q-p))
-        {
-            strlcat (filebuf, line, sizeof (filebuf));
-            continue;
-        }
-
-        removed = 1;
-    }
-
-#ifndef WITH_FTE_VFS
-    fclose(f);
-#else
-	VFS_CLOSE(f);
-#endif
-
-    //f = fopen(SOURCES_PATH, "wb");
-    //if (f != NULL)
-#ifndef WITH_FTE_VFS
-    if (FS_FCreateFile("sb/sources.txt", &f, "ezquake", "wb"))
-    {
-        fwrite(filebuf, 1, strlen(filebuf), f);
-        fclose(f);
-    }
-#else
-	if ((f = FS_OpenVFS("sb/sources.txt", "wb", FS_ANY))) 
-	{
-		VFS_WRITE(f, filebuf, strlen(filebuf));
-		VFS_CLOSE(f);
-	}
-#endif
-	Q_free(filebuf);
 }
 
 int SB_Sources_Key(int key)
@@ -2225,7 +2046,7 @@ int SB_Sources_Key(int key)
         case K_DEL:
         case 'd':       // remove source
             if (sources[Sources_pos]->type != type_dummy)
-                SB_Confirmation(va("Remove %-.20s", sources[Sources_pos]->name), RemoveSourceProc);
+                SB_Confirmation(va("Remove %-.20s", sources[Sources_pos]->name), SB_RemoveSourceProc);
             break;
         case 'u':
             Update_Source(sources[Sources_pos]); break;

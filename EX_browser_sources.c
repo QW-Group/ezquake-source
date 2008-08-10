@@ -19,6 +19,8 @@
 
 #include "EX_browser.h"
 
+#define SOURCES_LIST_FILENAME "sb/sources.txt"
+
 // sources table
 source_data *sources[MAX_SOURCES];
 int sourcesn;
@@ -50,6 +52,7 @@ void Reset_Source(source_data *s)
     //s->name[0] = 0;
 }
 
+// used only for list re-loading
 void Delete_Source(source_data *s)
 {
     Reset_Source(s);
@@ -533,6 +536,104 @@ char * next_quote(char *s)
     return ret;
 }
 
+qbool SB_Sources_Dump(void)
+{
+	FILE *f;
+	int i;
+
+	if (!FS_FCreateFile(SOURCES_LIST_FILENAME, &f, "ezquake", "wt")) {
+		return false;
+	}
+ 
+	for (i = 0; i < sourcesn; i++) {
+		sb_source_type_t type = sources[i]->type;
+
+		if (type == type_master || type == type_file) {
+			const char *typestr;
+			const char *name = sources[i]->name;
+			const char *loc;
+
+			if (type == type_master) {
+				typestr = "master";
+				loc = NET_AdrToString(sources[i]->address.address);
+			}
+			else {
+				typestr = "file";
+				loc = sources[i]->address.filename;
+			}
+			
+			fprintf(f, "%s \"%s\" %s\n", typestr, name, loc);
+		}
+	}
+
+	fclose(f);
+
+	return true;
+}
+
+int SB_Source_Add(const char* name, const char* address, sb_source_type_t type)
+{
+	source_data *s;
+	char addr[512];
+	int pos;
+
+	if (strlen(name) <= 0  ||  strlen(address) <= 0)
+		return -1;
+
+	// create new source
+	s = Create_Source();
+	s->type = type;
+	strlcpy (s->name, name, sizeof (s->name));
+	strlcpy (addr, address, sizeof (addr));
+
+	if (s->type == type_file) {
+		strlcpy (s->address.filename, address, sizeof (s->address.filename));
+	}
+	else {
+		if (!strchr(addr, ':')) {
+			strlcat (addr, ":27000", sizeof (addr));
+		}
+		if (!NET_StringToAdr(addr, &(s->address.address))) {
+			return -1;
+		}
+	}
+
+	pos = sourcesn++;
+	sources[pos] = s;
+	Mark_Source(sources[pos]);
+	Update_Source(sources[pos]);
+
+	SB_Sources_Dump();
+
+	return pos;
+}
+
+void SB_Source_Remove(int i)
+{
+    source_data *s;
+
+	if (i < 0 || i >= MAX_SOURCES) {
+		return;
+	}
+
+	s = sources[i];
+    if (s->type == type_dummy)
+        return;
+
+	Q_free(sources[i]);
+
+    // remove from SB
+    if (i < sourcesn - 1)
+    {
+		memmove(sources+i,
+                sources+i + 1,
+                (sourcesn-i-1)*sizeof(*sources));
+    }
+    sourcesn--;
+
+	SB_Sources_Dump();
+}
+
 void Reload_Sources(void)
 {
     int i;
@@ -551,7 +652,7 @@ void Reload_Sources(void)
 
 #ifndef WITH_FTE_VFS
     //length = COM_FileOpenRead (SOURCES_PATH, &f);
-    length = FS_FOpenFile("sb/sources.txt", &f);
+    length = FS_FOpenFile(SOURCES_LIST_FILENAME, &f);
     if (length < 0)
     {
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
@@ -559,7 +660,7 @@ void Reload_Sources(void)
     }
 
 #else
-	f = FS_OpenVFS("sb/sources.txt", "rb", FS_ANY);
+	f = FS_OpenVFS(SOURCES_LIST_FILENAME, "rb", FS_ANY);
 	if (!f) 
 	{
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);

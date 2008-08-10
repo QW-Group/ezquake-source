@@ -201,13 +201,19 @@ char * next_nonspace(char *s);
 char * next_quote(char *s);
 
 
+// sources
+qbool SB_Sources_Dump(void);
+int SB_Source_Add(const char* name, const char* address, sb_source_type_t type);
+void SB_Sources_Update(qbool full);
+void SB_Source_Remove(int i);
+
+
 // net
 void GetServerInfo(server_data *serv);
 void GetServerPing(server_data *serv);
 void GetServerPingsAndInfos(void);
 void Start_Autoupdate(server_data *s);
 void Alter_Autoupdate(server_data *s);
-void SB_Sources_Update(qbool full);
 
 char *ValueForKey(server_data *s, char *k);
 
