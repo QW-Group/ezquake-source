@@ -397,6 +397,8 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// fill sv.mapname and sv.modelname with new map name
 	strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
 	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
+	// set cvar
+	Cvar_ForceSet (&host_mapname, mapname);
 
 	if (!(sv.worldmodel = CM_LoadMap (sv.modelname, false, &sv.map_checksum, &sv.map_checksum2))) // true if bad map
 	{
