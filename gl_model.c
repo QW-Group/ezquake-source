@@ -1560,7 +1560,7 @@ static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
 		// not a luma actually, but which suffix use then? _fb or what?
 		snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
 		if (luma_allowed)
-			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT);
+			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
 
 		return texnum;
 	}
@@ -1574,7 +1574,7 @@ static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
 		// not a luma actually, but which suffix use then? _fb or what?
 		snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
 		if (luma_allowed)
-			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT);
+			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
 
 		return texnum;
 	}
