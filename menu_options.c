@@ -1113,7 +1113,9 @@ setting setthud_arr[] = {
 	ADDSET_BOOL		("Teaminfo table", scr_teaminfo),
 #endif
 	ADDSET_ADVANCED_SECTION(),
+#ifdef GLQUAKE
 	ADDSET_BOOLLATE ("Own Frags Announcer", hud_ownfrags_show),
+#endif
 	ADDSET_BOOLLATE ("Teamholdbar", hud_teamholdbar_show),
 	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
 	ADDSET_BOOLLATE ("Clock", hud_clock_show),
