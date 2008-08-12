@@ -114,7 +114,7 @@ int EZ_listviewitem_Destroy(ez_control_t *self, qbool destroy_children);
 //
 // Listview item - Event for when a new column was added to the listview item.
 //
-int EZ_listviewitem_OnColumnAdded(ez_listviewitem_t *self, void *column);
+int EZ_listviewitem_OnColumnAdded(ez_control_t *self, void *column);
 
 //
 // Listview item - The visibility changed for a column.
