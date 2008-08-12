@@ -1,6 +1,6 @@
 
 /*
-Copyright (C) 2007 ezQuake team
+Copyright (C) 2008 ezQuake team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@ $Id: ez_listviewitem.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 #include "common_draw.h"
 #include "ez_listviewitem.h"
 
-#define VALID_COLUMN(column) ((column >= 0) || (column < self->item_count))
+#define VALID_COLUMN(column) ((column >= 0) && (column < self->item_count))
 
 //
 // Listview item - Creates a new listview item and initializes it.
@@ -74,7 +74,7 @@ void EZ_listviewitem_Init(ez_listviewitem_t *listviewitem, ez_tree_t *tree, ez_c
 	// Listview item specific events.
 	CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnColumnAdded, OnColumnAdded, ez_listviewitem_t);
 	CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnColumnVisibilityChanged, OnColumnVisibilityChanged, ez_listviewitem_t);
-	CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnSubItemChanged, OnSubItemChanged, ez_listviewitem_t);
+	//CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnSubItemChanged, OnSubItemChanged, ez_listviewitem_t);
 }
 
 //
@@ -89,7 +89,7 @@ int EZ_listviewitem_Destroy(ez_control_t *self, qbool destroy_children)
 	// TODO : Remove any event handlers.
 	EZ_eventhandler_Remove(listviewitem->event_handlers.OnColumnAdded, NULL, true);
 	EZ_eventhandler_Remove(listviewitem->event_handlers.OnColumnVisibilityChanged, NULL, true);
-	EZ_eventhandler_Remove(listviewitem->event_handlers.OnSubItemChanged, NULL, true);
+	//EZ_eventhandler_Remove(listviewitem->event_handlers.OnSubItemChanged, NULL, true);
 
 	// Cleanup columns.
 	for (i = 0; i < listviewitem->item_count; i++)
@@ -177,15 +177,6 @@ ez_label_t *EZ_listviewitem_GetColumn(ez_listviewitem_t *self, int column)
 	return VALID_COLUMN(column) ? self->items[column] : NULL;
 }
 
-/*
-//
-// Listview item - Sets the specified column index to use the supplied data (which will be copied).
-//
-void EZ_listviewitem_SetColumn(ez_listviewitem_t *self, ez_listview_subitem_t data, int column)
-{
-}
-*/
-
 //
 // Listview item - Sets if a column should be visible or not.
 //
@@ -209,6 +200,7 @@ int EZ_listviewitem_OnColumnVisibilityChanged(ez_control_t *self, void *column)
 	return 0;
 }
 
+#if 0
 //
 // Listview item - A sub items text has changed.
 //
@@ -220,7 +212,7 @@ int EZ_listviewitem_OnSubItemChanged(ez_control_t *self, void *ext_event_info)
 	return 0;
 }
 
-/*
+
 //
 // Listview item - The text of a label in a sub item changed (event handler).
 //
@@ -239,5 +231,5 @@ static int EZ_listviewitem_OnLabelTextChanged(ez_control_t *self, void *payload,
 
 	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnSubItemChanged, (void *)&change);
 }
-*/
+#endif
 
