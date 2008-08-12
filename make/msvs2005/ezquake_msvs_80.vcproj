@@ -115,6 +115,8 @@
 				SubSystem="2"
 				OptimizeForWindows98="1"
 				SetChecksum="false"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -134,9 +136,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -238,6 +237,8 @@
 				OptimizeForWindows98="1"
 				LinkTimeCodeGeneration="1"
 				SetChecksum="true"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -257,9 +258,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -362,6 +360,8 @@
 				OptimizeForWindows98="1"
 				LinkTimeCodeGeneration="1"
 				SetChecksum="true"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -381,9 +381,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -482,6 +479,8 @@
 				MapFileName="$(TargetDir)$(TargetName).map"
 				SubSystem="2"
 				OptimizeForWindows98="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -501,9 +500,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -954,26 +950,6 @@
 				</File>
 				<File
 					RelativePath="..\..\win_glimp.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\win_wndproc.c"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1812,6 +1788,26 @@
 						/>
 					</FileConfiguration>
 				</File>
+				<File
+					RelativePath="..\..\win_wndproc.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
 			</Filter>
 			<Filter
 				Name="Client"
@@ -2155,6 +2151,10 @@
 				</File>
 				<File
 					RelativePath="..\..\ez_listview.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_listviewitem.c"
 					>
 				</File>
 				<File
@@ -2810,6 +2810,10 @@
 				</File>
 				<File
 					RelativePath="..\..\ez_listview.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_listviewitem.h"
 					>
 				</File>
 				<File
