@@ -102,7 +102,7 @@ void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *sub_i
 		EZ_listviewitem_AddColumn(item, sub_items[i], 30); // TODO: Hmm what default width should we use?
 	}
 
-	EZ_double_linked_list_Add(self->items, (void *)item);
+	EZ_double_linked_list_Add(&self->items, (void *)item);
 }
 
 //
