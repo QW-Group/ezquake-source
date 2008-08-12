@@ -63,14 +63,5 @@ Troubleshooting:
 
 Developer notes:
 ---------------------------
-Detailed changelog:
-"C:\Program Files\TortoiseCVS\cvs" -d:ext:USERNAME@ezquake.cvs.sourceforge.net:/cvsroot/ezquake log -d "2006-06-01<" -b -N > log.log < empty.txt
-- this will dump all the changes from cvs logs from 2006-06-01 to now on into log.log
-- requires CVS_RSH environmental variable set to putty's plink.exe path (control panel -> system -> ...)
-- this log should be uploaded into /test/changelogs/ dir on the shell (web)
-- in http://ezquake.sf.net/test/changelogs/ there is an php file which parses such changelogs into an overall
-  detailed changelog page and extract usefull info from all those logs
-- naming convention for .log files is "Until_yyyy-mm-dd.log", yyyy = year, mm = month, dd = day
-
 Debugger detected:
 - Error warning that MS VS gives you when you try to run debug build in your quake dir. Solution: move ezquake-security.dll out of your quake dir
