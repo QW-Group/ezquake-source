@@ -88,9 +88,21 @@ int EZ_listview_Destroy(ez_control_t *self, qbool destroy_children)
 //
 // Listview - Adds a listview item to the listview. Expects an array of column items as argument (and a count of how many).
 //
-void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *items, int subitems, void *payload)
+void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *sub_items, int subitem_count, void *payload)
 {
+	int i;
+	ez_control_t *ctrl_lstview = (ez_control_t *)self;
+	ez_listviewitem_t *item;
+	
+	item = EZ_listviewitem_Create(ctrl_lstview->control_tree, ctrl_lstview, "List view item", "", 
+								0, 0, ctrl_lstview->width, self->item_height, 0);
 
+	for (i = 0; i < subitem_count; i++)
+	{
+		EZ_listviewitem_AddColumn(item, sub_items[i], 30); // TODO: Hmm what default width should we use?
+	}
+
+	EZ_double_linked_list_Add(self->items, (void *)item);
 }
 
 //

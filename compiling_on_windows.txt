@@ -1,4 +1,4 @@
-Compiling ezQuake sources on Windows: (updated Jan 12, 2007)
+Compiling ezQuake sources on Windows: (updated 2008-08-12)
 ---------------------------------------------------------------------------------------------------------
 
 *** Sources are compilable with Microsoft Visual Studio 8 (2005). Older versions (6, 7, 7.1) may have problems in project files ***
@@ -7,41 +7,29 @@ Compiling ezQuake sources on Windows: (updated Jan 12, 2007)
 
 Instructions:
 --------------------
-1) Grab source from ezquake CVS:
- - cvs -d:pserver:anonymous@ezquake.cvs.sourceforge.net:/cvsroot/ezquake
- - checkout module ezquake:
- - cvs -z3 -d:pserver:anonymous@ezquake.cvs.sourceforge.net:/cvsroot/ezquake co -P ezquake
+1) Grab sources from ezquake SVN (most devs use http://tortoisesvn.tigris.org/ for this since it integrates with explorer):
+  - SVN root path (includes trunk+branches): https://ezquake.svn.sourceforge.net/svnroot/ezquake/
+  - To check only the HEAD branch and ezquake itself you do:
+    svn co https://ezquake.svn.sourceforge.net/svnroot/ezquake/trunk ezquake
 
-2) Get Microsoft Visual Studio 8 and install it. Insteand of expensive MSVS8 you can install Visual C++ 2005 Express Edition which is free.
- - http://msdn.microsoft.com/vstudio/express/downloads/default.aspx
- - just follow instructions
+2) Get Microsoft Visual Studio 8 and install it. 
+   Instead of the expensive MSVS8 you can install Visual C++ 2008 Express Edition which is free.
+  - http://www.microsoft.com/Express/Download/
+  - Just follow the instructions (you don't need SQL server).
 
-3) Get platfrom SDK and set it up
- - http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/default.aspx
- - just follow instructions
+3) Download all dependancies and tools needed for the build process (ml.exe and gas2masm.exe):
+  - Run ezquake/make/download_dependencies.bat
+  - Or download them manually from http://ezquake.svn.sourceforge.net/viewvc/ezquake/trunk/libs/windows-x86/
 
-4) Download all required libraries, there are two ways to do it:
- A) Go to http://ezquake.cvs.sourceforge.net/ezquake/libs/windows-x86/
-    and manually download all *.lib files from there, save them into libs\windows-x86 directory
- B) Go to libs/windows-x86 dir and launch download.bat
-    *** This requires you to have wget.exe present in your system. if you don't have it, download it from: ***
-    http://www.christopherlewis.com/WGet/wget-1.10.2b.zip
-    and place wget.exe either in the same dir as download.bat or in your system dir
+4) Open open ezquake_msvs_80.sln located in ezquake/make/msvs2005
 
-5) Download x86 assembler tools, there are two ways to do it:
- A) Go to http://ezquake.cvs.sourceforge.net/ezquake/libs/windows-x86/
-    and manually download gas2masm.exe and ML.EXE files from there, save them into masm32 directory
- B) Go to masm32 dir and launch download.bat
-    *** This requires you to have wget.exe present in your system. if you don't have it, download it from: ***
-    http://www.christopherlewis.com/WGet/wget-1.10.2b.zip
-    and place wget.exe either in the same dir as download.bat or in your system dir
-
-6) Open open ezquake_msvs_80.sln located in ezquake/make/msvs2005
-
-7) Select GLDebug configuration and press "Build".
-
-
-
+5) Select GLDebug configuration and press "Build".
+  - Note, to use the game files in your normal quake dir do the following in Visual studio:
+    1. Click "Project -> ezquake properties"
+    2. Choose "All configurations" from the Configuration drop down box at the top.
+    3. Go to "Configuration properties -> Debugging"
+    4. In "Working directory" enter the path to your quake dir.
+    5. In "Command arguments" add any additional commandline switches. I always use -window when debugging.
 
 Microsoft Visual Studio 8 and .s (asm) files:
 ---------------------------------------------------------------------
@@ -52,9 +40,9 @@ Microsoft Visual Studio 8 and .s (asm) files:
  - Visual Studio reads all instructions from qasm.rules
  - That file is included in the project file (ezquake_msvs_80.vcproj)
  - Instructions are named 'qasm' and are applied on *.s files
- - Visual Studio 8 doesn't have ml.exe (known as masm32) so we have ml.exe in masm32 dir (binary in CVS)
+ - Visual Studio 8 doesn't have ml.exe (known as masm32) so we have ml.exe in masm32 dir (binary in SVN)
  - We dont include gas2masm in ezquake solution
- - gas2masm.exe is stored in our CVS
+ - gas2masm.exe is stored in our SVN
  - How custom build works:
    1) cl (optimizer), input is .s file, output is .spp (optimized) file
    2) gas2masm, input is .spp file, output is .asm file
