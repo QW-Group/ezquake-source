@@ -536,9 +536,9 @@ void HUD_Reset_f (void)
 		return;
 	}
 	
-	Cbuf_AddText(va("place %s screen", hudname));
-	Cbuf_AddText(va("move %s 0 0", hudname));
-	Cbuf_AddText(va("align %s center center", hudname));
+	Cbuf_AddText(va("place %s screen\n", hudname));
+	Cbuf_AddText(va("move %s 0 0\n", hudname));
+	Cbuf_AddText(va("align %s center center\n", hudname));
 }
 
 //
