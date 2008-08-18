@@ -28,6 +28,8 @@
 		92B5D06B0CE7028A0023B45F /* ez_scrollpane.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05C0CE7028A0023B45F /* ez_scrollpane.c */; };
 		92B5D06C0CE7028A0023B45F /* ez_slider.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05E0CE7028A0023B45F /* ez_slider.c */; };
 		92B5D06D0CE7028A0023B45F /* ez_window.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0600CE7028A0023B45F /* ez_window.c */; };
+		92C655F80E535CBF00437A38 /* ez_listview.c in Sources */ = {isa = PBXBuildFile; fileRef = 92C655F40E535CBF00437A38 /* ez_listview.c */; };
+		92C655F90E535CBF00437A38 /* ez_listviewitem.c in Sources */ = {isa = PBXBuildFile; fileRef = 92C655F60E535CBF00437A38 /* ez_listviewitem.c */; };
 		92CAD75A0CF082CE00A0767A /* menu_multiplayer.c in Sources */ = {isa = PBXBuildFile; fileRef = 92CAD7580CF082CE00A0767A /* menu_multiplayer.c */; };
 		92CAD75B0CF082CE00A0767A /* menu_multiplayer.c in Sources */ = {isa = PBXBuildFile; fileRef = 92CAD7580CF082CE00A0767A /* menu_multiplayer.c */; };
 		92F019830DE7F9F400F1108A /* libircclient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F0197E0DE7F89800F1108A /* libircclient.a */; };
@@ -1090,6 +1092,11 @@
 		92B5D05F0CE7028A0023B45F /* ez_slider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_slider.h; sourceTree = "<group>"; };
 		92B5D0600CE7028A0023B45F /* ez_window.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_window.c; sourceTree = "<group>"; };
 		92B5D0610CE7028A0023B45F /* ez_window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_window.h; sourceTree = "<group>"; };
+		92C655F40E535CBF00437A38 /* ez_listview.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_listview.c; sourceTree = "<group>"; };
+		92C655F50E535CBF00437A38 /* ez_listview.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_listview.h; sourceTree = "<group>"; };
+		92C655F60E535CBF00437A38 /* ez_listviewitem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_listviewitem.c; sourceTree = "<group>"; };
+		92C655F70E535CBF00437A38 /* ez_listviewitem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_listviewitem.h; sourceTree = "<group>"; };
+		92C655FD0E535D5B00437A38 /* fs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fs.h; sourceTree = "<group>"; };
 		92CAD7580CF082CE00A0767A /* menu_multiplayer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = menu_multiplayer.c; sourceTree = "<group>"; };
 		92CAD7590CF082CE00A0767A /* menu_multiplayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = menu_multiplayer.h; sourceTree = "<group>"; };
 		92F0197E0DE7F89800F1108A /* libircclient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libircclient.a; path = ../libs/macosx/libircclient.a; sourceTree = SOURCE_ROOT; };
@@ -1628,6 +1635,11 @@
 		D211454309C7822100FD70CB /* EZQuake */ = {
 			isa = PBXGroup;
 			children = (
+				92C655FD0E535D5B00437A38 /* fs.h */,
+				92C655F40E535CBF00437A38 /* ez_listview.c */,
+				92C655F50E535CBF00437A38 /* ez_listview.h */,
+				92C655F60E535CBF00437A38 /* ez_listviewitem.c */,
+				92C655F70E535CBF00437A38 /* ez_listviewitem.h */,
 				920C63590E3657AB0024236F /* sv_demo.c */,
 				920C635A0E3657AB0024236F /* sv_demo_misc.c */,
 				920C635B0E3657AB0024236F /* sv_demo_qtv.c */,
@@ -2662,6 +2674,8 @@
 				920C63600E3657AB0024236F /* sv_demo_qtv.c in Sources */,
 				920C63610E3657AB0024236F /* sv_login.c in Sources */,
 				920C63620E3657AB0024236F /* sv_mod_frags.c in Sources */,
+				92C655F80E535CBF00437A38 /* ez_listview.c in Sources */,
+				92C655F90E535CBF00437A38 /* ez_listviewitem.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
