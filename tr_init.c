@@ -501,20 +501,21 @@ void R_Register( void )
 		w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 		h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 
-#ifdef _WIN32
+		#ifdef _WIN32
 		if (!( // no!
 			strcmp (r_displayRefresh.defaultvalue, r_displayRefresh.string) || // refresh rate wasnt changed
 			strcmp (r_colorbits.defaultvalue, r_colorbits.string ) || // bpp wasnt changed
 			strcmp (r_mode.defaultvalue, r_mode.string ) || // bpp wasnt changed
 			w || h) // width and height wasnt changed
-		) {
+			) 
+		{
 			// ok, pseudo current
 			int freq = 0;
 			DEVMODE dm;
 
 			memset( &dm, 0, sizeof( dm ) );
 			dm.dmSize = sizeof( dm );
-			if ( EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) )
+			if ( EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) ) // FIXME: Do we need to care about which device we get this? With several monitors we might...
 				freq = dm.dmDisplayFrequency; // get actual frequency
 
 			w = GetSystemMetrics (SM_CXSCREEN);
@@ -522,9 +523,10 @@ void R_Register( void )
 			Cvar_LatchedSetValue(&r_displayRefresh, freq); // current mean current
 			Cvar_LatchedSetValue(&r_colorbits, 0); // use desktop bpp
 		}
-#endif
+		#endif // _WIN32
 
-		if ( w || h ) {
+		if ( w || h ) 
+		{
 			int m = R_MatchMode( w, h );
 
 			if (m == -1) { // ok, mode not found, trying custom

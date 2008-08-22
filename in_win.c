@@ -333,6 +333,11 @@ static void SetBufferSize(void)
 	}
 }
 
+void IN_CenterMouseToWindow(void)
+{
+	SetCursorPos (window_center_x, window_center_y);
+}
+
 DWORD WINAPI IN_SMouseProc (void* lpParameter) 
 {
 	// read mouse events and generate history tables
@@ -787,7 +792,7 @@ void IN_ActivateMouse (void)
 			if (mouseparmsvalid)
 				restore_spi = SystemParametersInfo (SPI_SETMOUSE, 0, newmouseparms, 0);
 
-			SetCursorPos (window_center_x, window_center_y);
+			IN_CenterMouseToWindow();
 			SetCapture (mainwindow);
 			ClipCursor (&window_rect);
 		}
@@ -1860,7 +1865,7 @@ void IN_MouseMove (usercmd_t *cmd)
 	// if the mouse has moved, force it to the center, so there's room to move
 	if (mx || my)
 	{
-		SetCursorPos(window_center_x, window_center_y);
+		IN_CenterMouseToWindow();
 	}
 }
 
@@ -1902,7 +1907,7 @@ void IN_Accumulate (void)
 
 		// Force the mouse to the center, so there's room to move.
 		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)
-			SetCursorPos (window_center_x, window_center_y);
+			IN_CenterMouseToWindow();
 		
 		// Avoid center with no-game mode
 	}

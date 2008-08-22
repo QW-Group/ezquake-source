@@ -61,6 +61,9 @@ $Id: win_glimp.c,v 1.26 2007-10-27 20:23:36 tonik Exp $
 extern	HWND	mainwindow;
 extern  LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+HMONITOR		prevMonitor; // The previous monitor the window was on before getting destroyed.
+MONITORINFOEX	prevMonInfo; // Information about the previous monitor the window was on before getting destroyed.
+
 // exported to the client
 qbool	vid_vsync_on;
 double	vid_vsync_lag;
@@ -147,6 +150,21 @@ int ( WINAPI * qwglSwapIntervalEXT)( int interval );
 BOOL  ( WINAPI * qwglGetDeviceGammaRamp3DFX)( HDC, LPVOID );
 BOOL  ( WINAPI * qwglSetDeviceGammaRamp3DFX)( HDC, LPVOID );
 
+// Finds out what monitor the window is currently on.
+HMONITOR VID_GetCurrentMonitor()
+{
+	return MonitorFromWindow(mainwindow, MONITOR_DEFAULTTOPRIMARY);
+}
+
+// Finds out info about the current monitor.
+MONITORINFOEX VID_GetCurrentMonitorInfo(HMONITOR monitor)
+{
+	MONITORINFOEX inf;
+	memset(&inf, 0, sizeof(MONITORINFOEX));
+	inf.cbSize = sizeof(MONITORINFOEX);
+	GetMonitorInfo(monitor, (LPMONITORINFO)&inf);
+	return inf;
+}
 
 qbool QGL_Init( const char *dllname ) {
 	// bombastic function
@@ -761,11 +779,11 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 
 		if ( cdsFullscreen || !strcasecmp( _3DFX_DRIVER_NAME, drivername ) )
 		{
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			exstyle   = 0; // this must allow debug in full screen
-#else
+			#else
 			exstyle   = WS_EX_TOPMOST;
-#endif
+			#endif
 			stylebits = WS_POPUP|WS_VISIBLE|WS_SYSMENU;
 		}
 		else
@@ -785,11 +803,29 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 
 		if ( cdsFullscreen || !strcasecmp( _3DFX_DRIVER_NAME, drivername ) )
 		{
-			x = 0;
-			y = 0;
+			// TODO: Have a cvar that lets you default to fullscreen on a specific monitor.
+
+			// Do we have a multimonitor setup?
+			if (prevMonInfo.cbSize && prevMonitor)
+			{
+				// When going fullscreen on a monitor other than the primary one
+				// we can't just position ourselves at 0,0 since that would
+				// be the primary monitors origin...
+				RECT rc = prevMonInfo.rcMonitor;
+				x = rc.left;
+				y = rc.top;
+				w = rc.right - rc.left;
+				h = rc.bottom - rc.top;
+			}
+			else
+			{
+				x = 0;
+				y = 0;
+			}
 		}
 		else
 		{
+			// TODO: Don't assume we only have one monitor here, adjust the coordinates only if they're outside ALL monitors in a multi-monitor setup.
 			x = vid_xpos.integer;
 			y = vid_ypos.integer;
 
@@ -940,8 +976,14 @@ static rserr_t GLW_SetMode( const char *drivername,
 	// do a CDS if needed
 	if ( cdsFullscreen )
 	{
+		if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
+		{
+			ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
+			ChangeDisplaySettings( 0, 0 );
+			return RSERR_INVALID_MODE;
+		}
+
 		memset( &dm, 0, sizeof( dm ) );
-		
 		dm.dmSize = sizeof( dm );
 		
 		dm.dmPelsWidth  = glConfig.vidWidth;
@@ -979,13 +1021,6 @@ static rserr_t GLW_SetMode( const char *drivername,
 		if ( glw_state.cdsFullscreen )
 		{
 			ST_Printf( PRINT_R_VERBOSE, "...already fullscreen, avoiding redundant CDS\n" );
-
-			if ( !GLW_CreateWindow ( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true ) )
-			{
-				ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
-				ChangeDisplaySettings( 0, 0 );
-				return RSERR_INVALID_MODE;
-			}
 		}
 		//
 		// need to call CDS
@@ -993,19 +1028,22 @@ static rserr_t GLW_SetMode( const char *drivername,
 		else
 		{
 			ST_Printf( PRINT_R_VERBOSE, "...calling CDS: " );
-			
-			// try setting the exact mode requested, because some drivers don't report
+
+			// Try setting the exact mode requested, because some drivers don't report
 			// the low res modes in EnumDisplaySettings, but still work
-			if ( ( cdsRet = ChangeDisplaySettings( &dm, CDS_FULLSCREEN ) ) == DISP_CHANGE_SUCCESSFUL )
+			if ( ( cdsRet = ChangeDisplaySettingsEx( prevMonInfo.szDevice, &dm, NULL, CDS_FULLSCREEN, NULL) ) == DISP_CHANGE_SUCCESSFUL )
 			{
+				RECT rc;
+				MONITORINFOEX monInfo;
+
 				ST_Printf( PRINT_R_VERBOSE, "ok\n" );
 
-				if ( !GLW_CreateWindow ( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
-				{
-					ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
-					ChangeDisplaySettings( 0, 0 );
-					return RSERR_INVALID_MODE;
-				}
+				// We need to get the new monitor information since the resolution might have changed.
+				monInfo = VID_GetCurrentMonitorInfo(prevMonitor);
+				rc = monInfo.rcMonitor;
+
+				SetWindowPos(mainwindow, NULL, rc.left, rc.top, glConfig.vidWidth, glConfig.vidHeight,
+							SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOOWNERZORDER | SWP_NOREPOSITION | SWP_NOZORDER);
 				
 				glw_state.cdsFullscreen = true;
 			}
@@ -1018,33 +1056,30 @@ static rserr_t GLW_SetMode( const char *drivername,
 				int			modeNum;
 
 				ST_Printf( PRINT_R_VERBOSE, "failed, " );
-				
+
 				PrintCDSError( cdsRet );
 			
 				ST_Printf( PRINT_R_VERBOSE, "...trying next higher resolution:" );
 				
 				// we could do a better matching job here...
-				for ( modeNum = 0 ; ; modeNum++ ) {
-					if ( !EnumDisplaySettings( NULL, modeNum, &devmode ) ) {
+				for ( modeNum = 0 ; ; modeNum++ ) 
+				{
+					if ( !EnumDisplaySettings( NULL, modeNum, &devmode ) ) 
+					{
 						modeNum = -1;
 						break;
 					}
 					if ( devmode.dmPelsWidth >= glConfig.vidWidth
 						&& devmode.dmPelsHeight >= glConfig.vidHeight
-						&& devmode.dmBitsPerPel >= 15 ) {
+						&& devmode.dmBitsPerPel >= 15 ) 
+					{
 						break;
 					}
 				}
 
-				if ( modeNum != -1 && ( cdsRet = ChangeDisplaySettings( &devmode, CDS_FULLSCREEN ) ) == DISP_CHANGE_SUCCESSFUL )
+				if ( modeNum != -1 && ( cdsRet = ChangeDisplaySettingsEx( prevMonInfo.szDevice, &devmode, NULL, CDS_FULLSCREEN, NULL ) ) == DISP_CHANGE_SUCCESSFUL )
 				{
 					ST_Printf( PRINT_R_VERBOSE, " ok\n" );
-					if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
-					{
-						ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
-						ChangeDisplaySettings( 0, 0 );
-						return RSERR_INVALID_MODE;
-					}
 					
 					glw_state.cdsFullscreen = true;
 				}
@@ -1059,10 +1094,7 @@ static rserr_t GLW_SetMode( const char *drivername,
 					
 					glw_state.cdsFullscreen = false;
 					glConfig.isFullscreen = false;
-					if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, false) )
-					{
-						return RSERR_INVALID_MODE;
-					}
+
 					return RSERR_INVALID_FULLSCREEN;
 				}
 			}
@@ -1070,12 +1102,17 @@ static rserr_t GLW_SetMode( const char *drivername,
 	}
 	else
 	{
+		//
+		// Windowed
+		//
+
 		if ( glw_state.cdsFullscreen )
 		{
 			ChangeDisplaySettings( 0, 0 );
 		}
 
 		glw_state.cdsFullscreen = false;
+		
 		if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, false ) )
 		{
 			return RSERR_INVALID_MODE;
@@ -1087,18 +1124,20 @@ static rserr_t GLW_SetMode( const char *drivername,
 	//
 	memset( &dm, 0, sizeof( dm ) );
 	dm.dmSize = sizeof( dm );
-//{ alt + tab
-	glw_state.dm = dm;
-	glw_state.vid_canalttab    = false;
-	glw_state.vid_wassuspended = false;
-//}
+	
+	// alt + tab
+	{
+		glw_state.dm = dm;
+		glw_state.vid_canalttab    = false;
+		glw_state.vid_wassuspended = false;
+	}
+	
 	if ( EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) )
 	{
 		glConfig.displayFrequency = dm.dmDisplayFrequency;
-//{ alt + tab
+		// alt + tab
 		glw_state.dm = dm;
 		glw_state.vid_canalttab = true;
-//}
 	}
 
 	// NOTE: this is overridden later on standalone 3Dfx drivers
@@ -1642,6 +1681,13 @@ void GLimp_Shutdown( void )
 	// destroy window
 	if ( mainwindow )
 	{
+		// Find out the name of the device this window
+		// is on (this is for multi-monitor setups).
+		// We do this so we can recreate the new window
+		// on the same screen later when going to fullscreen.
+		prevMonitor = VID_GetCurrentMonitor();
+		prevMonInfo = VID_GetCurrentMonitorInfo(prevMonitor);
+
 		ST_Printf( PRINT_R_VERBOSE, "...destroying window\n" );
 		ShowWindow( mainwindow, SW_HIDE );
 		DestroyWindow( mainwindow );
@@ -1664,17 +1710,15 @@ void GLimp_Shutdown( void )
 		glw_state.cdsFullscreen = false;
 	}
 
-//{ alt + tab
+	// alt + tab
 	memset( &(glw_state.dm), 0, sizeof( glw_state.dm ) );
 	glw_state.vid_canalttab    = false;
 	glw_state.vid_wassuspended = false;
-//}
 
 	// shutdown QGL subsystem
 	QGL_Shutdown();
 
 	memset( &glConfig, 0, sizeof( glConfig ) );
-//	memset( &glState, 0, sizeof( glState ) );
 }
 
 /*
@@ -1731,10 +1775,11 @@ void VID_ShowFreq_f(void) {
 
 /******************************** WINDOW STUFF ********************************/
 
-int		window_center_x, window_center_y;
-RECT	window_rect;
+int				window_center_x, window_center_y;
+RECT			window_rect;
 
-void VID_SetCaption (char *text) {
+void VID_SetCaption (char *text) 
+{
 	if (mainwindow)
 	{
 		SetWindowText(mainwindow, text);
@@ -1743,22 +1788,31 @@ void VID_SetCaption (char *text) {
 }
 
 // *sigh* that more input code than video... in q3 it more clear...
-void VID_UpdateWindowStatus (void) {
-	int			width, height;
-//	RECT		window_rect;
+void VID_UpdateWindowStatus (void) 
+{
+	RECT			monitor_rect;
+	HMONITOR		hCurrMon;
+	MONITORINFOEX	currMonInfo;
 
-	width  = GetSystemMetrics (SM_CXSCREEN);
-	height = GetSystemMetrics (SM_CYSCREEN);
+	// Get the current monitor and info about it.
+	hCurrMon = VID_GetCurrentMonitor();
+	currMonInfo = VID_GetCurrentMonitorInfo(hCurrMon);
 
-	GetWindowRect ( mainwindow, &window_rect );
-	if (window_rect.left < 0)
-		window_rect.left = 0;
-	if (window_rect.top < 0)
-		window_rect.top = 0;
-	if (window_rect.right >= width)
-		window_rect.right = width-1;
-	if (window_rect.bottom >= height-1)
-		window_rect.bottom = height-1;
+	monitor_rect = currMonInfo.rcMonitor;
+	GetWindowRect( mainwindow, &window_rect );
+
+	// If the window is partially offscreen, we only want to center 
+	// the mouse within the part that is actually on screen, otherwise
+	// we might center the mouse outside the window and loose focus
+	// as the user clicks...
+	if (window_rect.left < monitor_rect.left)
+		window_rect.left = monitor_rect.left;
+	if (window_rect.top < monitor_rect.top)
+		window_rect.top = monitor_rect.top;
+	if (window_rect.right >= monitor_rect.right)
+		window_rect.right = monitor_rect.right - 1;
+	if (window_rect.bottom >= monitor_rect.bottom)
+		window_rect.bottom = monitor_rect.bottom - 1;
 
 	window_center_x = (window_rect.right + window_rect.left) / 2;
 	window_center_y = (window_rect.top + window_rect.bottom) / 2;
