@@ -241,6 +241,9 @@ void Mouse_MoveEvent(void);
 void History_Init (void);
 void History_Shutdown (void);
 
+// this will clear any typping in console
+void Key_ClearTyping (void);
+
 void Key_Event (int key, qbool down);
 void Key_EventEx (int key, wchar unichar, qbool down);
 void Key_Init (void);
@@ -260,5 +263,17 @@ void Key_Unbindall_f (void);
 int isShiftDown(void);                                                                       
 int isCtrlDown(void);                                                                        
 int isAltDown(void);
+
+// should not be public actually but...
+// {
+#define		CMDLINES	(1<<8)
+#define		MAXCMDLINE	256
+
+extern wchar	key_lines[CMDLINES][MAXCMDLINE];
+extern int		key_linepos;
+extern int		edit_line;
+extern qbool	con_redchars;
+
+// }
 
 #endif // _KEYS_H_ 

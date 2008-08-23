@@ -58,9 +58,7 @@ cvar_t	cl_showkeycodes = {"cl_showkeycodes", "0"};
 
 cvar_t	cl_savehistory = {"cl_savehistory", "1"};
 #define		HISTORY_FILE_NAME	"ezquake/.ezquake_history"
-#define		CMDLINES	(1<<8)
 
-#define		MAXCMDLINE	256
 wchar	key_lines[CMDLINES][MAXCMDLINE];
 int		key_linepos;
 #ifndef WITH_KEYMAP
@@ -751,6 +749,19 @@ static qbool yellowchars = false;
 #endif // WITH_KEYMAP
 qbool con_redchars    = false;
 
+
+// 1) clear any typing
+// 2) put what was typed in console to the history if any
+void Key_ClearTyping (void)
+{
+	edit_line = (edit_line + 1) & (CMDLINES - 1);
+	history_line = edit_line;
+	key_lines[edit_line][0] = ']';
+	key_lines[edit_line][1] = 0;
+	key_linepos = 1;
+}
+
+
 //
 // Interactive line editing and console scrollback.
 //
@@ -842,11 +853,8 @@ void Key_Console (int key, int unichar)
 
 			Con_PrintW (key_lines[edit_line]);	// FIXME logging
 			Con_PrintW (str2wcs("\n"));
-			edit_line = (edit_line + 1) & (CMDLINES - 1);
-			history_line = edit_line;
-			key_lines[edit_line][0] = ']';
-			key_lines[edit_line][1] = 0;
-			key_linepos = 1;
+
+			Key_ClearTyping ();
 
 			if (cls.state == ca_disconnected)
 				SCR_UpdateScreen ();	// force an update, because the command

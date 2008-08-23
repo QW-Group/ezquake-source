@@ -91,11 +91,6 @@ float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated
 int			con_vislines;
 int			con_notifylines;			// scan lines to clear for notify lines
 
-#define		MAXCMDLINE	256
-extern	wchar	key_lines[32][MAXCMDLINE];
-extern	int		edit_line;
-extern	int		key_linepos;
-
 qbool	con_initialized = false;
 qbool	con_suppress = false;
 
@@ -229,11 +224,6 @@ void Calendar_f(void)
 
         day++;
     }
-}
-
-void Key_ClearTyping (void) {
-	key_lines[edit_line][1] = 0;	// clear any typing
-	key_linepos = 1;
 }
 
 void Con_ToggleConsole_f (void) {
@@ -684,7 +674,6 @@ DRAWING
 
 //The input line scrolls horizontally if typing goes beyond the right edge
 static void Con_DrawInput(void) {
-	extern qbool con_redchars;
 	int		len, i;
 	wchar	*text;
 	wchar	temp[MAXCMDLINE + 1];       //+ 1 for cursor if stlen(key_lines[edit_line]) == 255

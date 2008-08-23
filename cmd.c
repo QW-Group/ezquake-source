@@ -41,6 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif /* !SERVERONLY */
 #include "parser.h"
 #include "utils.h"
+#include "keys.h"
 
 #ifndef SERVERONLY
 qbool CL_CheckServerCommand (void);
@@ -624,19 +625,11 @@ void Cmd_AliasList_f (void)
 	Com_Printf ("------------\n%i/%i aliases\n", m, count);
 }
 
-
-
-
-
 void Cmd_EditAlias_f (void)
 {
-#define		MAXCMDLINE	256
-	extern wchar	key_lines[32][MAXCMDLINE];
-	extern int		edit_line;
 	cmd_alias_t	*a;
-	char *s, final_string[MAXCMDLINE -1];
+	char *s, final_string[MAXCMDLINE - 1];
 	int c;
-	extern void Key_ClearTyping();
 
 	c = Cmd_Argc();
 	if (c == 1)	{
