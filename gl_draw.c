@@ -146,7 +146,7 @@ void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 
 	newval = Q_atoi (string);
 
-	if ((newval == gl_smoothfont.integer) || !char_textures[0])
+	if (!char_textures[0])
 		return;
 
 	for (i = 0; i < MAX_CHARSETS; i++)
