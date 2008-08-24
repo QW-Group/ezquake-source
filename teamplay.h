@@ -73,6 +73,19 @@ char *TP_GetMapGroupName(char *mapname, qbool *system);
 char *TP_ParseMacroString (char *s);
 char *TP_ParseFunChars (char *s, qbool chat);
 void TP_NewMap (void);
+
+
+#define msgtype_unknown   0
+#define msgtype_normal    1
+#define msgtype_team      2
+#define msgtype_spec      4
+#define msgtype_specteam  8
+#define msgtype_qtv       16
+/*
+returns a logical combination of msgtype_* values
+Note that sometimes we can't be sure who really sent the message,  e.g. when there's a
+player "unnamed" in your team and "(unnamed)" in the enemy team. The result will be 3 (1+2)
+*/
 int TP_CategorizeMessage (const char *s, int *offset);
 qbool TP_FilterMessage (wchar *s);
 

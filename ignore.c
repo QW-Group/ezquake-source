@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "ignore.h"
 #include "utils.h"
+#include "teamplay.h"
 
 
 #define MAX_TEAMIGNORELIST	4
@@ -340,22 +341,22 @@ qbool Ignore_Message(char *s, int flags, int offset) {
 	int slot, i, p, q, len;	
 	char name[32];
 
-	if (!ignore_mode.value && (flags & 2))
+	if (!ignore_mode.value && (flags & msgtype_team))
 		return false;		
 
 
-	if (ignore_spec.value == 2 && (flags == 4 || (flags == 8 && ignore_mode.value)))
+	if (ignore_spec.value == 2 && (flags == msgtype_spec || (flags == msgtype_specteam && ignore_mode.value)))
 		return true;
-	else if (ignore_spec.value == 1 && (flags == 4) && !cl.spectator)
+	else if (ignore_spec.value == 1 && (flags == msgtype_spec) && !cl.spectator)
 		return true;
 
-	if (flags == 1 || flags == 4) {
+	if (flags == msgtype_normal || flags == msgtype_spec) {
 		p = 0;
 		q = offset - 3;
-	} else if (flags == 2) {
+	} else if (flags == msgtype_team) {
 		p = 1;
 		q = offset - 4;
-	} else if (flags == 8) {
+	} else if (flags == msgtype_specteam) {
 		p = 7;
 		q = offset - 3;
 	} else {
@@ -376,7 +377,7 @@ qbool Ignore_Message(char *s, int flags, int offset) {
 			(int) ignore_opponents.value == 1 ||
 			(cls.state >= ca_connected && !cl.standby && !cls.demoplayback && !cl.spectator) // match?
 			) && 
-		flags == 1 && !cl.spectator && slot != cl.playernum &&
+		flags == msgtype_normal && !cl.spectator && slot != cl.playernum &&
 		(!cl.teamplay || strcmp(cl.players[slot].team, cl.players[cl.playernum].team))
 		)
 		return true;
