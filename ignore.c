@@ -294,18 +294,18 @@ char Ignore_Check_Flood(char *s, int flags, int offset) {
 	char name[MAX_INFO_STRING];
 
 	if ( !(  
-	 ( (ignore_flood.value == 1 && (flags == 1 || flags == 4)) ||
-	 (ignore_flood.value == 2 && flags != 0) )
+	 ( (ignore_flood.value == 1 && (flags == msgtype_normal || flags == msgtype_spec)) ||
+	 (ignore_flood.value == 2 && flags != msgtype_unknown) )
 	   )  )
 		return NO_IGNORE_NO_ADD;
 
-	if (flags == 1 || flags == 4) {
+	if (flags == msgtype_normal || flags == msgtype_spec) {
 		p = 0;
 		q = offset - 3;
-	} else if (flags == 2) {
+	} else if (flags == msgtype_team) {
 		p = 1;
 		q = offset - 4;
-	} else if (flags == 8) {
+	} else if (flags == msgtype_specteam) {
 		p = 7;
 		q = offset -3;
 	} else
