@@ -435,6 +435,20 @@ char *Macro_LastReportedLoc(void)
 	return vars.lastreportedloc;
 }
 
+char *Macro_Rune (void)
+{
+	if (cl.stats[STAT_ITEMS] & IT_SIGIL1)
+		return tp_name_rune1.string;
+	else if (cl.stats[STAT_ITEMS] & IT_SIGIL2)
+		return tp_name_rune2.string;
+	else if (cl.stats[STAT_ITEMS] & IT_SIGIL3)
+		return tp_name_rune3.string;
+	else if (cl.stats[STAT_ITEMS] & IT_SIGIL4)
+		return tp_name_rune4.string;
+	else
+		return "";
+}
+
 char *Macro_Time (void)
 {
 	time_t t;
@@ -1240,6 +1254,7 @@ char *TP_ParseMacroString (char *s)
 					case 'p':	macro_string = Macro_Powerups(); break;
 					case 'q':	macro_string = Macro_LastSeenPowerup(); break;
 					case 'r':	macro_string = Macro_LastReportedLoc(); break;
+					case 'R':	macro_string = Macro_Rune(); break;
 					case 's':	macro_string = Macro_EnemyStatus_LED(); break;
 					case 'S':	macro_string = Macro_TF_Skin(); break;
 					case 't':	macro_string = Macro_PointNameAtLocation(); break;
