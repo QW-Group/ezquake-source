@@ -1752,7 +1752,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 void Update_TeamInfo(void);
 
-#define TEAMINFO_SHOWSELF() ((scr_teaminfo.integer == 1) || (scr_teaminfo_show_self.integer == 2 && cls.mvdplayback))
+#define TEAMINFO_SHOWSELF() ((scr_teaminfo.integer == 1) && (scr_teaminfo_show_self.integer >= 1 && cls.mvdplayback))
 
 static void SCR_Draw_TeamInfo(void)
 {
