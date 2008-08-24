@@ -165,6 +165,7 @@ cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_autoid				= {"scr_autoid", "5"};
+cvar_t	scr_autoid_drawname		= {"scr_autoid_drawname", "1"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 #endif
 
@@ -1202,7 +1203,8 @@ void SCR_DrawAutoID (void)
 	{
 		x =  autoids[i].x * vid.width / glwidth;
 		y =  (glheight - autoids[i].y) * vid.height / glheight;
-		Draw_String(x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
+		if(scr_autoid_drawname.value)
+			Draw_String(x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
 
 		// We only have health/armor info for all players when in demo playback.
 		if(cls.demoplayback && scr_autoid.value >= 2)
@@ -4265,6 +4267,7 @@ void SCR_Init (void)
 
 #ifdef GLQUAKE
 	Cvar_Register (&scr_autoid);
+	Cvar_Register (&scr_autoid_drawname);
 	Cvar_Register (&scr_coloredfrags);
 #endif
 	Cvar_Register (&scr_teaminfo_order);
