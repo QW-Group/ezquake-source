@@ -2306,7 +2306,7 @@ int TP_CategorizeMessage (const char *s, int *offset)
 	flags = msgtype_unknown;
 	*offset = 0;
 	if (!(msglen = strlen(s)))
-		return 0;
+		return msgtype_unknown;
 
 	for (i = 0, player = cl.players; i < MAX_CLIENTS; i++, player++)	{
 		if (!player->name[0])
