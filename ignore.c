@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t		ignore_spec				= {"ignore_spec", "0"};		
 cvar_t		ignore_qizmo_spec		= {"ignore_qizmo_spec", "0"};
+cvar_t      ignore_qtv              = {"ignore_qtv", "0"};
 cvar_t		ignore_mode				= {"ignore_mode", "0"};
 cvar_t		ignore_flood_duration	= {"ignore_flood_duration", "4"};
 cvar_t		ignore_flood			= {"ignore_flood", "0"};		
@@ -77,6 +78,9 @@ static void Display_Ignorelist(void) {
 
 	if (ignore_qizmo_spec.value)
 		Com_Printf("\x02" "Qizmo spectators are Ignored\n");
+
+	if (ignore_qtv.integer)
+		Com_Printf("\x02" "QuakeTV observers are Ignored\n");
 
 	Com_Printf("\n");
 }
@@ -349,6 +353,8 @@ qbool Ignore_Message(char *s, int flags, int offset) {
 		return true;
 	else if (ignore_spec.value == 1 && (flags == msgtype_spec) && !cl.spectator)
 		return true;
+	else if (ignore_qtv.integer && (flags & msgtype_qtv))
+		return true;
 
 	if (flags == msgtype_normal || flags == msgtype_spec) {
 		p = 0;
@@ -417,6 +423,7 @@ void Ignore_Init(void) {
 	Cvar_Register (&ignore_flood);
 	Cvar_Register (&ignore_spec);
 	Cvar_Register (&ignore_qizmo_spec);
+	Cvar_Register (&ignore_qtv);
 	Cvar_Register (&ignore_mode);
 	Cvar_Register (&ignore_opponents);
 

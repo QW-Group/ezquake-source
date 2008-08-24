@@ -2585,6 +2585,10 @@ void CL_ParsePrint (void)
 		s0 = wcs2str (s); // TP_SuppressMessage may modify the source string, so s0 should be updated
 
 		flags = TP_CategorizeMessage (s0, &offset);
+		if (qtvtmp) {
+			flags |= msgtype_qtv;
+		}
+
 		FChecks_CheckRequest (s0);
 		Auth_CheckResponse (s, flags, offset);
 
