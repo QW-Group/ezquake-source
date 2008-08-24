@@ -182,9 +182,16 @@ void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 		Com_Printf("Couldn't load image %s\n", s);
 		return;
 	}
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	if(gl_smoothfont.integer)
+	{
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	} 
+	else
+	{
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
 	crosshairpic = *pic;
 	customcrosshair_loaded |= CROSSHAIR_IMAGE;
 }
