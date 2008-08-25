@@ -186,7 +186,7 @@ void QTV_Say_f (void)
 {
 	char *s = Cmd_Args();
 	char text[1024] = {0};
-	int len;
+	// int len;
 	tokenizecontext_t tmpcontext;
 
 	// save context, so we can later restore it
