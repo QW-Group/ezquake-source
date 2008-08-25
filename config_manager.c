@@ -279,7 +279,7 @@ void DumpVariablesDefaults_f(void)
     if (fclose(f))
         Com_Printf("Couldn't close %s", filepath);
     else
-        Com_Printf("Variables default values dumped to:\n%s", filepath);
+        Com_Printf("Variables default values dumped to:\n%s\n", filepath);
 }
 
 #define MAX_ALIGN_COL 60

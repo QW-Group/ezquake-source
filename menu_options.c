@@ -308,7 +308,11 @@ qbool CT_Opt_Player_Mouse_Event(const mouse_state_t *ms)
 // <BINDS>
 
 extern cvar_t in_mouse, in_m_smooth, m_rate, in_m_os_parameters;
-const char* in_mouse_enum[] = { "off", "system", "Direct Input" };
+#ifdef _WIN32
+const char* in_mouse_enum[] = { "off", "system", "Direct Input", "Raw Input" };
+#else
+const char* in_mouse_enum[] = { "off", "DGA Mouse", "X Mouse", "EVDEV Mouse" };
+#endif
 const char* in_m_os_parameters_enum[] = { "off", "Keep accel settings", "Keep speed settings", "Keep all settings" };
 
 void Menu_Input_Restart(void) { Cbuf_AddText("in_restart\n"); }
@@ -581,6 +585,7 @@ void OnShow_SettVideo(void) {
 #ifdef GLQUAKE
 
 	StoreCurrentVideoSettings(&mvs_selected);
+	Settings_OnShow(&settvideo);
 
 #endif
 }
