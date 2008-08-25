@@ -943,14 +943,14 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 
 	flags = TP_CategorizeMessage (msg, &offset);
 
-	if (flags == 2 && !TP_FilterMessage(str2wcs(msg) + offset))
+	if (flags == msgtype_team && !TP_FilterMessage(str2wcs(msg) + offset))
 		return;
 
 	if (con_sound_mm2_volume.value > 0 && nodisplay == 0) {
 		S_LocalSoundWithVol(con_sound_mm2_file.string, con_sound_mm2_volume.value);
 	}
 
-	if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) {
+	if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != msgtype_team)) {
 		for (s = msg; *s; s++)
 			if (*s == 0x0D || (*s == 0x0A && s[1]))
 				*s = ' ';
