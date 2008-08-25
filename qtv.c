@@ -192,14 +192,19 @@ void QTV_Say_f (void)
 	// save context, so we can later restore it
 	Cmd_SaveContext(&tmpcontext);
 
+	// in our last tests, this check was not necessary
+	// and even lead to issues
+	// so we are disabling it temporarily to see if everything works ok without it
+#if 0
 	// get rid of quotes, if any
-	if (s[0] == '\"' && s[(len = strlen(s))-1] == '\"' && len > 2)
+	if (0 && s[0] == '\"' && s[(len = strlen(s))-1] == '\"' && len > 2)
 	{
 		snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s + 1);
 		if ((len = strlen(text)))
 			text[len - 1] = 0;
 		Cmd_TokenizeString(text);
 	}
+#endif
 
 	QTV_ForwardToServerEx (true, true);
 
