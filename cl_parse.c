@@ -58,7 +58,6 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "qtv.h"
 
 void R_TranslatePlayerSkin (int playernum);
-void R_PreMapLoad(char *mapname);
 
 char *svc_strings[] = {
 	"svc_bad",
@@ -1649,7 +1648,6 @@ void CL_ParseModellist (qbool extended)
 				char mapname[MAX_QPATH];
 				COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
 				Cvar_ForceSet (&host_mapname, mapname);
-				R_PreMapLoad(mapname);
 			}
 	}
 

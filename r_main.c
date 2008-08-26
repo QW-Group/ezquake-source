@@ -303,8 +303,6 @@ void R_Init (void) {
 }
 
 
-void R_PreMapLoad(char *name) { }
-
 void R_NewMap (void) {
 	int i;
 

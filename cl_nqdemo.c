@@ -20,7 +20,6 @@
 int CL_Demo_Read(void *buf, int size, qbool peek);
 #define SCR_EndLoadingPlaque()
 int cl_entframecount;
-void R_PreMapLoad (char *);
 #define CL_EntityParticles(a)
 extern cvar_t cl_rocket2grenade;
 #define R_ModelFlags(model) model->flags
@@ -373,7 +372,6 @@ static void NQD_ParseServerData (void)
 	char	*str;
 	int		i;
 	int		nummodels, numsounds;
-	char	mapname_s[MAX_QPATH];
 
 	Com_DPrintf ("Serverdata packet received.\n");
 
@@ -432,8 +430,6 @@ static void NQD_ParseServerData (void)
 	}
 
 	// now we try to load everything else until a cache allocation fails
-	COM_StripExtension (COM_SkipPath (cl.model_name[1]), mapname_s); // ?TONIK?
-	R_PreMapLoad (mapname_s); // ?TONIK?
 	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
 
 	for (i = 1; i < nummodels; i++)

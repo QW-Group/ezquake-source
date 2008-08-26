@@ -387,13 +387,6 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		svs.clients[i].old_frags = 0;
 	}
 
-#ifndef SERVERONLY
-	{
-		void R_PreMapLoad (char *mapname);
-		R_PreMapLoad (mapname);
-	}
-#endif
-
 	// fill sv.mapname and sv.modelname with new map name
 	strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
 	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);

@@ -264,12 +264,6 @@ void R_TranslatePlayerSkin (int playernum) {
 }
 
 
-void R_PreMapLoad(char *name)
-{
-	if (!dedicated)
-		lightmode = gl_lightmode.value == 0 ? 0 : 2;
-}
-
 void R_NewMap (qbool vid_restart) {
 	int	i, waterline;
 
@@ -298,6 +292,7 @@ void R_NewMap (qbool vid_restart) {
 		HUD_NewRadarMap();			// Need to reload the radar picture.
 	}
 
+	lightmode = gl_lightmode.value == 0 ? 0 : 2;
 	GL_BuildLightmaps ();
 
 	if (!vid_restart) {
