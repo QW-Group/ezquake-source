@@ -104,7 +104,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	svc_disconnect			2
 #define	svc_updatestat			3		// [byte] [byte]
 #define	nq_svc_version			4		// [long] server version
-#define	svc_setview				5		// [short] entity number
+#define	nq_svc_setview			5		// [short] entity number
 #define	svc_sound				6		// <see code>
 #define	nq_svc_time				7		// [float] server time
 #define	svc_print				8		// [byte] id [string] null terminated string
@@ -344,6 +344,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	TE_BLOOD			12
 #define	TE_LIGHTNINGBLOOD	13
 
+#define NQ_TE_EXPLOSION2	12
+#define NQ_TE_BEAM			13
 
 #define	DEFAULT_VIEWHEIGHT	22
 
