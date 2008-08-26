@@ -3041,5 +3041,9 @@ void PR2_InitProg()
 	pr_globals = (float *) pr_global_struct;
 	fields = (field_t*)PR2_GetString((int)gamedata->fields);
 	pr_edict_size = gamedata->sizeofent;
+#ifdef WITH_NQPROGS
+	pr_nqprogs = false;
+	PR_InitPatchTables ();	// reset to QW state
+#endif
 }
 #endif /* USE_PR2 */

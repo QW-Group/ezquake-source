@@ -435,6 +435,53 @@ inrange:
 }
 
 
+void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
+					   int replacement_te, int replacement_count)
+{
+	int		i, v;
+	qbool	send_count;
+
+	//if (AllClientsWantSVCParticle())
+	if (0)
+	{
+		MSG_WriteByte (&sv.multicast, nq_svc_particle);
+		MSG_WriteCoord (&sv.multicast, org[0]);
+		MSG_WriteCoord (&sv.multicast, org[1]);
+		MSG_WriteCoord (&sv.multicast, org[2]);
+		for (i=0 ; i<3 ; i++)
+		{
+			v = dir[i]*16;
+			if (v > 127)
+				v = 127;
+			else if (v < -128)
+				v = -128;
+			MSG_WriteChar (&sv.multicast, v);
+		}
+		MSG_WriteByte (&sv.multicast, count);
+		MSG_WriteByte (&sv.multicast, color);
+	}
+	else
+	{
+		if (replacement_te == TE_EXPLOSION || replacement_te == TE_LIGHTNINGBLOOD)
+			send_count = false;
+		else if (replacement_te == TE_BLOOD || replacement_te == TE_GUNSHOT)
+			send_count = true;
+		else
+			return;		// don't send anything
+
+		MSG_WriteByte (&sv.multicast, svc_temp_entity);
+		MSG_WriteByte (&sv.multicast, replacement_te);
+		if (send_count)
+			MSG_WriteByte (&sv.multicast, replacement_count);
+		MSG_WriteCoord (&sv.multicast, org[0]);
+		MSG_WriteCoord (&sv.multicast, org[1]);
+		MSG_WriteCoord (&sv.multicast, org[2]);
+	}
+
+	SV_Multicast (org, MULTICAST_PVS);
+}
+
+
 /*
 ==================
 SV_StartSound
@@ -699,7 +746,7 @@ void SV_UpdateClientStats (client_t *client)
 	if (!client->spectator || client->spec_track > 0)
 		stats[STAT_ACTIVEWEAPON] = ent->v.weapon;
 	// stuff the sigil bits into the high bits of items for sbar
-	stats[STAT_ITEMS] = (int) ent->v.items | ((int) pr_global_struct->serverflags << 28);
+	stats[STAT_ITEMS] = (int) ent->v.items | ((int) PR_GLOBAL(serverflags) << 28);
 	if (fofs_items2)	// ZQ_ITEMS2 extension
 		stats[STAT_ITEMS] |= (int)EdictFieldFloat(ent, fofs_items2) << 23;
 
@@ -1070,7 +1117,7 @@ void MVD_WriteStats(void)
 			stats[STAT_VIEWHEIGHT] = ent->v.view_ofs[2];
 
 		// stuff the sigil bits into the high bits of items for sbar
-		stats[STAT_ITEMS] = (int) ent->v.items | ((int) pr_global_struct->serverflags << 28);
+		stats[STAT_ITEMS] = (int) ent->v.items | ((int) PR_GLOBAL(serverflags) << 28);
 
 		for (j = 0 ; j < MAX_CL_STATS; j++)
 		{

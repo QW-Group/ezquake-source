@@ -82,10 +82,35 @@ extern	cvar_t		sv_progsname;
 
 //============================================================================
 
+#ifdef WITH_NQPROGS
+
+extern	qbool			pr_nqprogs;
+
+extern	int pr_fieldoffsetpatch[106];
+extern	int pr_globaloffsetpatch[62];
+
+#define PR_FIELDOFS(i) ((unsigned int)(i) > 105 ? (i) : pr_fieldoffsetpatch[i])
+#define PR_GLOBAL(field) (((globalvars_t *)((byte *)pr_global_struct + \
+	pr_globaloffsetpatch[((int *)&((globalvars_t *)0)->field - (int *)0) - 28]))->field)
+
+void NQP_Reset (void);
+
+#else	// !WITH_NQPROGS
+
+#define pr_nqprogs 0
+#define PR_FIELDOFS(i) (i)
+#define PR_GLOBAL(field) pr_global_struct->field
+#define NQP_Reset()
+
+#endif
+
+//============================================================================
+
 void PR_Init (void);
 
 void PR_ExecuteProgram (func_t fnum);
 void PR_LoadProgs (void);
+void PR_InitPatchTables (void);	// NQ progs support
 
 void PR_Profile_f (void);
 
@@ -128,7 +153,7 @@ int NUM_FOR_EDICT(edict_t *e);
 #define	E_FLOAT(e,o) (((float*)&e->v)[o])
 #define	E_INT(e,o) (*(int *)&((float*)&e->v)[o])
 #define	E_VECTOR(e,o) (&((float*)&e->v)[o])
-#define	E_STRING(e,o) (PR_GetString(*(string_t *)&((float*)&e->v)[o]))
+#define	E_STRING(e,o) (PR_GetString(*(string_t *)&((float*)&e->v)[PR_FIELDOFS(o)]))
 
 extern	int		type_size[8];
 

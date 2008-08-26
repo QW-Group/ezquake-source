@@ -559,7 +559,7 @@ void PR_ExecuteProgram (func_t fnum)
 #endif
 			if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
 				PR_RunError ("assignment to world entity");
-			c->_int = (byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts;
+			c->_int = (byte *)((int *)&ed->v + PR_FIELDOFS(b->_int)) - (byte *)sv.edicts;
 			break;
 
 		case OP_LOAD_F:
@@ -574,7 +574,7 @@ void PR_ExecuteProgram (func_t fnum)
 			//need for checking 'cmd mmode player N', if N >= 0x10000000 =(signed)=> negative
 			if (b->_int >= 0)
 			{
-				a = (eval_t *)((int *)&ed->v + b->_int);
+				a = (eval_t *)((int *)&ed->v + PR_FIELDOFS(b->_int));
 				c->_int = a->_int;
 			}
 			else
@@ -586,7 +586,7 @@ void PR_ExecuteProgram (func_t fnum)
 #ifdef PARANOID
 			NUM_FOR_EDICT(ed);		// make sure it's in range
 #endif
-			a = (eval_t *)((int *)&ed->v + b->_int);
+			a = (eval_t *)((int *)&ed->v + PR_FIELDOFS(b->_int));
 			c->vector[0] = a->vector[0];
 			c->vector[1] = a->vector[1];
 			c->vector[2] = a->vector[2];

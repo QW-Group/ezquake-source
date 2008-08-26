@@ -1451,7 +1451,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t *dest)
 			stats[STAT_VIEWHEIGHT] = ent->v.view_ofs[2];
 
 		// stuff the sigil bits into the high bits of items for sbar
-		stats[STAT_ITEMS] = (int) ent->v.items | ((int) pr_global_struct->serverflags << 28);
+		stats[STAT_ITEMS] = (int) ent->v.items | ((int) PR_GLOBAL(serverflags) << 28);
 
 		for (j = 0; j < MAX_CL_STATS; j++)
 		{

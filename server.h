@@ -764,6 +764,7 @@ void SV_AddGravity (edict_t *ent, float scale);
 qbool SV_RunThink (edict_t *ent);
 void SV_Physics_Toss (edict_t *ent);
 void SV_RunNewmis (void);
+void SV_RunNQNewmis (void);
 void SV_Impact (edict_t *e1, edict_t *e2);
 void SV_SetMoveVars(void);
 
@@ -775,6 +776,8 @@ void SV_BeginRedirect (redirect_t rd);
 void SV_EndRedirect (void);
 
 void SV_Multicast (vec3_t origin, int to);
+void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
+					   int replacement_te, int replacement_count);
 void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
     float attenuation);
 void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...);

@@ -879,7 +879,7 @@ void SV_ProgStartFrame (void)
 		PR2_GameStartFrame();
 	else
 #endif
-		PR_ExecuteProgram (pr_global_struct->StartFrame);
+		PR_ExecuteProgram (PR_GLOBAL(StartFrame));
 }
 
 /*
@@ -919,6 +919,40 @@ void SV_RunEntity (edict_t *ent)
 }
 
 /*
+** SV_RunNQNewmis
+** 
+** sv_player will be valid
+*/
+void SV_RunNQNewmis (void)
+{
+	edict_t	*ent;
+	double save_frametime;
+	int i, pl;
+
+	pl = EDICT_TO_PROG(sv_player);
+	ent = NEXT_EDICT(sv.edicts);
+	for (i=1 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	{
+		if (ent->free)
+			continue;
+		if (ent->lastruntime || ent->v.owner != pl)
+			continue;
+		if (ent->v.movetype != MOVETYPE_FLY &&
+			ent->v.movetype != MOVETYPE_FLYMISSILE && 
+			ent->v.movetype != MOVETYPE_BOUNCE) 
+			continue;
+		if (ent->v.solid != SOLID_BBOX && ent->v.solid != SOLID_TRIGGER)
+			continue;
+
+		save_frametime = sv_frametime;
+		sv_frametime = 0.05;
+		SV_RunEntity (ent);
+		sv_frametime = save_frametime;
+		return;
+	}
+}
+
+/*
 ================
 SV_RunNewmis
 ================
@@ -927,6 +961,9 @@ void SV_RunNewmis (void)
 {
 	edict_t	*ent;
 	double save_frametime;
+
+	if (pr_nqprogs)
+		return;
 
 	if (!pr_global_struct->newmis)
 		return;
@@ -979,7 +1016,10 @@ void SV_Physics (void)
 
 	sv.physicstime = sv.time;
 
-	pr_global_struct->frametime = sv_frametime;
+	if (pr_nqprogs)
+		NQP_Reset ();
+
+	PR_GLOBAL(frametime) = sv_frametime;
 
 	SV_ProgStartFrame ();
 
@@ -993,7 +1033,7 @@ void SV_Physics (void)
 		if (ent->free)
 			continue;
 
-		if (pr_global_struct->force_retouch)
+		if (PR_GLOBAL(force_retouch))
 			SV_LinkEdict (ent, true);	// force retouch even for stationary
 
 		if (i > 0 && i <= MAX_CLIENTS)
@@ -1003,8 +1043,8 @@ void SV_Physics (void)
 		SV_RunNewmis ();
 	}
 
-	if (pr_global_struct->force_retouch)
-		pr_global_struct->force_retouch--;
+	if (PR_GLOBAL(force_retouch))
+		PR_GLOBAL(force_retouch)--;
 
 #ifdef USE_PR2
 	savesvpl = sv_player;

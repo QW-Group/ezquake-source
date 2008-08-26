@@ -175,7 +175,7 @@ static void SV_SaveSpawnparms (void)
 		return;		// no progs loaded yet
 
 	// serverflags is the only game related thing maintained
-	svs.serverflags = pr_global_struct->serverflags;
+	svs.serverflags = PR_GLOBAL(serverflags);
 
 	for (i=0, sv_client = svs.clients ; i<MAX_CLIENTS ; i++, sv_client++)
 	{
@@ -192,9 +192,9 @@ static void SV_SaveSpawnparms (void)
 			PR2_GameSetChangeParms();
 		else
 #endif
-			PR_ExecuteProgram (pr_global_struct->SetChangeParms);
+			PR_ExecuteProgram (PR_GLOBAL(SetChangeParms));
 		for (j=0 ; j<NUM_SPAWN_PARMS ; j++)
-			sv_client->spawn_parms[j] = (&pr_global_struct->parm1)[j];
+			sv_client->spawn_parms[j] = (&PR_GLOBAL(parm1))[j];
 
 	}
 }
@@ -480,12 +480,27 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		strlcpy((char*)PR2_GetString(pr_global_struct->mapname) , sv.mapname, 64);
 	else
 #endif
-	pr_global_struct->mapname = PR_SetString(sv.mapname);
+	PR_GLOBAL(mapname) = PR_SetString(sv.mapname);
 	// serverflags are for cross level information (sigils)
-	pr_global_struct->serverflags = svs.serverflags;
+	PR_GLOBAL(serverflags) = svs.serverflags;
+	if (pr_nqprogs) {
+		pr_globals[35] = deathmatch.value;
+		pr_globals[36] = coop.value;
+		pr_globals[37] = teamplay.value;
+		NQP_Reset ();
+	}
+
+	if (pr_nqprogs) {
+		// register the cvars that NetQuake provides for mod use
+		const char **var, *nqcvars[] = {"gamecfg", "scratch1", "scratch2", "scratch3", "scratch4",
+			"saved1", "saved2", "saved3", "saved4", "savedgamecfg", "temp1", NULL};
+		for (var = nqcvars; *var; var++)
+			Cvar_Create((char *)/*stupid const warning*/*var, "0", 0);
+	}
 
 	// run the frame start qc function to let progs check cvars
-	SV_ProgStartFrame ();
+	if (!pr_nqprogs)
+		SV_ProgStartFrame ();
 
 	// ********* External Entity support (.ent file(s) in gamedir/maps) pinched from ZQuake *********
 	// load and spawn all other entities

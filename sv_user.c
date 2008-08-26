@@ -639,19 +639,19 @@ static void Cmd_Spawn_f (void)
 
 	ClientReliableWrite_Begin (sv_client, svc_updatestatlong, 6);
 	ClientReliableWrite_Byte (sv_client, STAT_TOTALSECRETS);
-	ClientReliableWrite_Long (sv_client, pr_global_struct->total_secrets);
+	ClientReliableWrite_Long (sv_client, PR_GLOBAL(total_secrets));
 
 	ClientReliableWrite_Begin (sv_client, svc_updatestatlong, 6);
 	ClientReliableWrite_Byte (sv_client, STAT_TOTALMONSTERS);
-	ClientReliableWrite_Long (sv_client, pr_global_struct->total_monsters);
+	ClientReliableWrite_Long (sv_client, PR_GLOBAL(total_monsters));
 
 	ClientReliableWrite_Begin (sv_client, svc_updatestatlong, 6);
 	ClientReliableWrite_Byte (sv_client, STAT_SECRETS);
-	ClientReliableWrite_Long (sv_client, pr_global_struct->found_secrets);
+	ClientReliableWrite_Long (sv_client, PR_GLOBAL(found_secrets));
 
 	ClientReliableWrite_Begin (sv_client, svc_updatestatlong, 6);
 	ClientReliableWrite_Byte (sv_client, STAT_MONSTERS);
-	ClientReliableWrite_Long (sv_client, pr_global_struct->killed_monsters);
+	ClientReliableWrite_Long (sv_client, PR_GLOBAL(killed_monsters));
 
 	// get the client to check and download skins
 	// when that is completed, a begin command will be issued
@@ -734,7 +734,7 @@ static void Cmd_Begin_f (void)
 			{
 				// copy spawn parms out of the client_t
 				for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
-					(&pr_global_struct->parm1)[i] = sv_client->spawn_parms[i];
+					(&PR_GLOBAL(parm1))[i] = sv_client->spawn_parms[i];
 
 				// call the spawn function
 				pr_global_struct->time = sv.time;
@@ -763,7 +763,7 @@ static void Cmd_Begin_f (void)
 		{
 			// copy spawn parms out of the client_t
 			for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
-				(&pr_global_struct->parm1)[i] = sv_client->spawn_parms[i];
+				(&PR_GLOBAL(parm1))[i] = sv_client->spawn_parms[i];
 
 			// call the spawn function
 			pr_global_struct->time = sv.time;
@@ -774,7 +774,7 @@ static void Cmd_Begin_f (void)
 				PR2_GameClientConnect(0);
 			else
 #endif
-				PR_ExecuteProgram (pr_global_struct->ClientConnect);
+				PR_ExecuteProgram (PR_GLOBAL(ClientConnect));
 
 			// actually spawn the player
 			pr_global_struct->time = sv.time;
@@ -784,7 +784,7 @@ static void Cmd_Begin_f (void)
 				PR2_GamePutClientInServer(0);
 			else
 #endif
-				PR_ExecuteProgram (pr_global_struct->PutClientInServer);
+				PR_ExecuteProgram (PR_GLOBAL(PutClientInServer));
 		}
 	}
 
@@ -1864,7 +1864,7 @@ static void Cmd_Kill_f (void)
 		PR2_ClientCmd();
 	else
 #endif
-		PR_ExecuteProgram (pr_global_struct->ClientKill);
+		PR_ExecuteProgram (PR_GLOBAL(ClientKill));
 }
 
 /*
@@ -2567,11 +2567,11 @@ static void Cmd_Join_f (void)
 		PR2_GameSetNewParms();
 	else
 #endif
-		PR_ExecuteProgram (pr_global_struct->SetNewParms);
+		PR_ExecuteProgram (PR_GLOBAL(SetNewParms));
 
 	// copy spawn parms out of the client_t
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
-		sv_client->spawn_parms[i] = (&pr_global_struct->parm1)[i];
+		sv_client->spawn_parms[i] = (&PR_GLOBAL(parm1))[i];
 
 	// call the spawn function
 	pr_global_struct->time = sv.time;
@@ -2582,7 +2582,7 @@ static void Cmd_Join_f (void)
 		PR2_GameClientConnect(0);
 	else
 #endif
-		PR_ExecuteProgram (pr_global_struct->ClientConnect);
+		PR_ExecuteProgram (PR_GLOBAL(ClientConnect));
 	
 	// actually spawn the player
 	pr_global_struct->time = sv.time;
@@ -2593,7 +2593,7 @@ static void Cmd_Join_f (void)
 		PR2_GamePutClientInServer(0);
 	else
 #endif
-		PR_ExecuteProgram (pr_global_struct->PutClientInServer);
+		PR_ExecuteProgram (PR_GLOBAL(PutClientInServer));
 
 	// look in SVC_DirectConnect() for for extended comment whats this for
 	MVD_PlayerReset(NUM_FOR_EDICT(sv_player) - 1);
@@ -2657,7 +2657,7 @@ static void Cmd_Observe_f (void)
 		PR2_GameClientDisconnect(0);
 	else
 #endif
-		PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
+		PR_ExecuteProgram (PR_GLOBAL(ClientDisconnect));
 
 	// this is like SVC_DirectConnect.
 	// turn the player into a spectator
@@ -2677,7 +2677,7 @@ static void Cmd_Observe_f (void)
 		PR2_GameSetNewParms();
 	else
 #endif
-		PR_ExecuteProgram (pr_global_struct->SetNewParms);
+		PR_ExecuteProgram (PR_GLOBAL(SetNewParms));
 
 	SV_SpawnSpectator ();
 	
@@ -2690,7 +2690,7 @@ static void Cmd_Observe_f (void)
 	{
 		// copy spawn parms out of the client_t
 		for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
-			sv_client->spawn_parms[i] = (&pr_global_struct->parm1)[i];
+			sv_client->spawn_parms[i] = (&PR_GLOBAL(parm1))[i];
 
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
@@ -3089,10 +3089,16 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside) //bliP: 24/9
 
 	if (!sv_client->spectator)
 	{
+		vec3_t	oldvelocity;
+		float	old_teleport_time;
+
 		VectorCopy (sv_player->v.velocity, originalvel);
 		onground = (int) sv_player->v.flags & FL_ONGROUND;
-		
-		pr_global_struct->frametime = sv_frametime;
+
+		VectorCopy (sv_player->v.velocity, oldvelocity);
+		old_teleport_time = sv_player->v.teleport_time;
+
+		PR_GLOBAL(frametime) = sv_frametime;
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 #ifdef USE_PR2
@@ -3100,7 +3106,12 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside) //bliP: 24/9
 			PR2_GameClientPreThink(0);
 		else
 #endif
-			PR_ExecuteProgram (pr_global_struct->PlayerPreThink);
+			PR_ExecuteProgram (PR_GLOBAL(PlayerPreThink));
+
+		if (pr_nqprogs) {
+			sv_player->v.teleport_time = old_teleport_time;
+			VectorCopy (oldvelocity, sv_player->v.velocity);
+		}
 
 		if ( onground && originalvel[2] < 0 && sv_player->v.velocity[2] == 0 &&
 		originalvel[0] == sv_player->v.velocity[0] &&
@@ -3160,6 +3171,8 @@ FIXME
 	// get player state back out of pmove
 	sv_client->jump_held = pmove.jump_held;
 	sv_player->v.teleport_time = pmove.waterjumptime;
+	if (pr_nqprogs)
+		sv_player->v.flags = ((int)sv_player->v.flags & ~FL_WATERJUMP) | (pmove.waterjumptime ? FL_WATERJUMP : 0);
 	sv_player->v.waterlevel = pmove.waterlevel;
 	sv_player->v.watertype = pmove.watertype;
 	if (pmove.onground)
@@ -3223,7 +3236,7 @@ void SV_PostRunCmd(void)
 			PR2_GameClientPostThink(0);
 		else
 #endif
-			PR_ExecuteProgram (pr_global_struct->PlayerPostThink);
+			PR_ExecuteProgram (PR_GLOBAL(PlayerPostThink));
 
 		if ( onground && originalvel[2] < 0 && sv_player->v.velocity[2] == 0
 		&& originalvel[0] == sv_player->v.velocity[0]
@@ -3232,7 +3245,13 @@ void SV_PostRunCmd(void)
 			sv_player->v.velocity[2] = originalvel[2];
 		}
 
-		SV_RunNewmis ();
+		if (pr_nqprogs)
+			VectorCopy (originalvel, sv_player->v.velocity);
+
+		if (pr_nqprogs)
+			SV_RunNQNewmis ();
+		else
+			SV_RunNewmis ();
 	}
 	else if (SpectatorThink
 #ifdef USE_PR2

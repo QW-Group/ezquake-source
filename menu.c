@@ -743,6 +743,7 @@ void M_SinglePlayer_Draw (void) {
 	mpic_t *p;
 	int itemheight;
 
+#ifndef WITH_NQPROGS
 	if (m_singleplayer_notavail) {
 		p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 		M_DrawPic ( (320-p->width)/2, 4, p);
@@ -751,6 +752,7 @@ void M_SinglePlayer_Draw (void) {
 		M_PrintWhite (80, 13*8, "spprogs.dat not found");
 		return;
 	}
+#endif
 
 	if (m_singleplayer_confirm) {
 		M_PrintWhite (64, 11*8, "Are you sure you want to");
@@ -785,6 +787,7 @@ void M_SinglePlayer_Draw (void) {
 
 }
 
+#ifndef WITH_NQPROGS
 static void CheckSPGame (void) {
 #ifndef WITH_FTE_VFS
 	FILE *f;
@@ -806,6 +809,7 @@ static void CheckSPGame (void) {
 	}
 #endif
 }
+#endif	// !WITH_NQPROGS
 
 static void StartNewGame (void) {
 	extern cvar_t sv_progtype;
@@ -831,6 +835,7 @@ static void StartNewGame (void) {
 }
 
 void M_SinglePlayer_Key (int key) {
+#ifndef WITH_NQPROGS
 	if (m_singleplayer_notavail) {
 		switch (key) {
 			case K_BACKSPACE:
@@ -841,6 +846,7 @@ void M_SinglePlayer_Key (int key) {
 		}
 		return;
 	}
+#endif
 
 	if (m_singleplayer_confirm) {
 		if (key == K_ESCAPE || key == 'n' || key == K_MOUSE2) {
@@ -896,11 +902,13 @@ void M_SinglePlayer_Key (int key) {
 		case K_MOUSE1:
 			switch (m_singleplayer_cursor) {
 				case 0:
+#ifndef WITH_NQPROGS
 					CheckSPGame ();
 					if (m_singleplayer_notavail) {
 						m_entersound = true;
 						return;
 					}
+#endif
 					if (com_serveractive) {
 						// bring up confirmation dialog
 						m_singleplayer_confirm = true;

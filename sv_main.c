@@ -379,7 +379,7 @@ void SV_DropClient (client_t *drop)
 				PR2_GameClientDisconnect(0);
 			else
 #endif
-				PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
+				PR_ExecuteProgram (PR_GLOBAL(ClientDisconnect));
 		}
 		else if (SpectatorDisconnect
 #ifdef USE_PR2
@@ -1302,10 +1302,10 @@ static void SVC_DirectConnect (void)
 		PR2_GameSetNewParms();
 	else
 #endif
-		PR_ExecuteProgram (pr_global_struct->SetNewParms);
+		PR_ExecuteProgram (PR_GLOBAL(SetNewParms));
 
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
-		newcl->spawn_parms[i] = (&pr_global_struct->parm1)[i];
+		newcl->spawn_parms[i] = (&PR_GLOBAL(parm1))[i];
 
 	// mvd/qtv related stuff
 	// Well, here is a chance what player connect after demo recording started,

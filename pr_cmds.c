@@ -105,7 +105,7 @@ makevectors(vector)
 */
 void PF_makevectors (void)
 {
-	AngleVectors (G_VECTOR(OFS_PARM0), pr_global_struct->v_forward, pr_global_struct->v_right, pr_global_struct->v_up);
+	AngleVectors (G_VECTOR(OFS_PARM0), PR_GLOBAL(v_forward), PR_GLOBAL(v_right), PR_GLOBAL(v_up));
 }
 
 /*
@@ -189,7 +189,19 @@ ok:
 		VectorSubtract (mod->maxs, mod->mins, e->v.size);
 		SV_LinkEdict (e, false);
 	}
-
+	else if (pr_nqprogs) {
+		// hacks to make NQ progs happy
+		if (!strcmp(PR_GetString(e->v.model), "maps/b_explob.bsp")) {
+			VectorClear (e->v.mins);
+			VectorSet (e->v.maxs, 32, 32, 64);
+		} else {
+			// FTE does this, so we do, too; I'm not sure if it makes a difference
+			VectorSet (e->v.mins, -16, -16, -16);
+			VectorSet (e->v.maxs, 16, 16, 16);
+		}
+		VectorSubtract (e->v.maxs, e->v.mins, e->v.size);
+		SV_LinkEdict (e, false);
+	}
 }
 
 /*
@@ -206,9 +218,14 @@ void PF_bprint (void)
 	char		*s;
 	int			level;
 
-	level = G_FLOAT(OFS_PARM0);
+	if (pr_nqprogs) {
+		level = PRINT_HIGH;
+		s = PF_VarString(0);
+	} else {
+		level = G_FLOAT(OFS_PARM0);
+		s = PF_VarString(1);
+	}
 
-	s = PF_VarString(1);
 	SV_BroadcastPrintf (level, "%s", s);
 }
 
@@ -233,9 +250,13 @@ void PF_sprint (void)
 	int			i;
 
 	entnum = G_EDICTNUM(OFS_PARM0);
-	level = G_FLOAT(OFS_PARM1);
-
-	s = PF_VarString(2);
+	if (pr_nqprogs) {
+		level = PRINT_HIGH;
+		s = PF_VarString(1);
+	} else {
+		level = G_FLOAT(OFS_PARM1);
+		s = PF_VarString(2);
+	}
 
 	if (entnum < 1 || entnum > MAX_CLIENTS)
 	{
@@ -461,6 +482,49 @@ void PF_random (void)
 
 /*
 =================
+PF_particle
+
+particle(origin, dir, color, count [,replacement_te [,replacement_count]]) = #48
+For NQ progs (or as a QW extension)
+=================
+*/
+static void PF_particle (void)
+{
+	float	*org, *dir;
+	float	color, count;
+	int		replacement_te;
+	int		replacement_count = 0 /* suppress compiler warning */;
+			
+	org = G_VECTOR(OFS_PARM0);
+	dir = G_VECTOR(OFS_PARM1);
+	color = G_FLOAT(OFS_PARM2);
+	count = G_FLOAT(OFS_PARM3);
+
+	// Progs should provide a tempentity code and particle count for the case
+	// when a client doesn't support svc_particle
+	if (pr_argc >= 5) {
+		replacement_te = G_FLOAT(OFS_PARM4);
+		replacement_count = (pr_argc >= 6) ? G_FLOAT(OFS_PARM5) : 1;
+	} else {
+		// To aid porting of NQ mods, if the extra arguments are not provided, try
+		// to figure out what progs want by inspecting color and count
+		if (count == 255) {
+			replacement_te = TE_EXPLOSION;		// count is not used
+		} else if (color == 73) {
+			replacement_te = TE_BLOOD;
+			replacement_count = 1;	// FIXME: use count / <some value>?
+		} else if (color == 225) {
+			replacement_te = TE_LIGHTNINGBLOOD;	// count is not used
+		} else {
+			replacement_te = 0;		// don't send anything
+		}
+	}
+
+	SV_StartParticle (org, dir, color, count, replacement_te, replacement_count);
+}
+
+/*
+=================
 PF_ambientsound
  
 =================
@@ -573,18 +637,18 @@ void PF_traceline (void)
 
 	trace = SV_Trace (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
 
-	pr_global_struct->trace_allsolid = trace.allsolid;
-	pr_global_struct->trace_startsolid = trace.startsolid;
-	pr_global_struct->trace_fraction = trace.fraction;
-	pr_global_struct->trace_inwater = trace.inwater;
-	pr_global_struct->trace_inopen = trace.inopen;
-	VectorCopy (trace.endpos, pr_global_struct->trace_endpos);
-	VectorCopy (trace.plane.normal, pr_global_struct->trace_plane_normal);
-	pr_global_struct->trace_plane_dist =  trace.plane.dist;
+	PR_GLOBAL(trace_allsolid) = trace.allsolid;
+	PR_GLOBAL(trace_startsolid) = trace.startsolid;
+	PR_GLOBAL(trace_fraction) = trace.fraction;
+	PR_GLOBAL(trace_inwater) = trace.inwater;
+	PR_GLOBAL(trace_inopen) = trace.inopen;
+	VectorCopy (trace.endpos, PR_GLOBAL(trace_endpos));
+	VectorCopy (trace.plane.normal, PR_GLOBAL(trace_plane_normal));
+	PR_GLOBAL(trace_plane_dist) =  trace.plane.dist;	
 	if (trace.e.ent)
-		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.e.ent);
+		PR_GLOBAL(trace_ent) = EDICT_TO_PROG(trace.e.ent);
 	else
-		pr_global_struct->trace_ent = EDICT_TO_PROG(sv.edicts);
+		PR_GLOBAL(trace_ent) = EDICT_TO_PROG(sv.edicts);
 }
 
 /*
@@ -791,6 +855,12 @@ void PF_localcmd (void)
 	char	*str;
 
 	str = G_STRING(OFS_PARM0);
+
+	if (pr_nqprogs && !strcmp(str, "restart\n")) {
+		Cbuf_AddText (va("map %s\n", host_mapname.string));
+		return;
+	}
+
 	Cbuf_AddText (str);
 }
 
@@ -1335,6 +1405,13 @@ void PF_cvar (void)
 		return;
 	}
 
+	if (pr_nqprogs && !pr_globals[35]/* deathmatch */
+	&& (!strcmp(str, "timelimit") || !strcmp(str, "samelevel"))) {
+		// workaround for NQ progs bug: timelimit and samelevel are checked in SP/coop
+		G_FLOAT(OFS_RETURN) = 0.0;
+		return;
+	}
+
 	G_FLOAT(OFS_RETURN) = Cvar_Value (str);
 }
 
@@ -1824,7 +1901,7 @@ vector aim(entity, missilespeed)
 */
 void PF_aim (void)
 {
-	VectorCopy (pr_global_struct->v_forward, G_VECTOR(OFS_RETURN));
+	VectorCopy (PR_GLOBAL(v_forward), G_VECTOR(OFS_RETURN));
 }
 
 /*
@@ -1900,7 +1977,7 @@ sizebuf_t *WriteDest (void)
 	case MSG_ONE:
 		SV_Error("Shouldn't be at MSG_ONE");
 #if 0
-		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+		ent = PROG_TO_EDICT(PR_GLOBAL(msg_entity));
 		entnum = NUM_FOR_EDICT(ent);
 		if (entnum < 1 || entnum > MAX_CLIENTS)
 			PR_RunError ("WriteDest: not a client");
@@ -1931,7 +2008,7 @@ static client_t *Write_GetClient(void)
 	int		entnum;
 	edict_t	*ent;
 
-	ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+	ent = PROG_TO_EDICT(PR_GLOBAL(msg_entity));
 	entnum = NUM_FOR_EDICT(ent);
 	if (entnum < 1 || entnum > MAX_CLIENTS)
 		PR_RunError ("WriteDest: not a client");
@@ -1939,8 +2016,224 @@ static client_t *Write_GetClient(void)
 }
 
 
+#ifdef WITH_NQPROGS
+static byte nqp_buf_data[1024] /* must be large enough for svc_finale text */;
+static sizebuf_t nqp_buf;
+static qbool nqp_ignore_this_frame;
+static int nqp_expect;
+
+void NQP_Reset (void)
+{
+	nqp_ignore_this_frame = false;
+	nqp_expect = 0;
+	SZ_Init (&nqp_buf, nqp_buf_data, sizeof(nqp_buf_data));
+}
+
+static void NQP_Flush (int count)
+{
+// FIXME, we make no distinction reliable or not
+	assert (count <= nqp_buf.cursize);
+	SZ_Write (&sv.reliable_datagram, nqp_buf_data, count);
+	memcpy (nqp_buf_data, nqp_buf_data + count, nqp_buf.cursize - count);
+	nqp_buf.cursize -= count;
+}
+
+static void NQP_Skip (int count)
+{
+	assert (count <= nqp_buf.cursize);
+	memcpy (nqp_buf_data, nqp_buf_data + count, nqp_buf.cursize - count);
+	nqp_buf.cursize -= count;
+}
+
+static void NQP_Process (void)
+{
+	int cmd;
+
+	if (nqp_ignore_this_frame) {
+		SZ_Clear (&nqp_buf);
+		return;
+	}
+
+	while (1) {
+		if (nqp_expect) {
+			if (nqp_buf.cursize >= nqp_expect) {
+				NQP_Flush (nqp_expect);
+				nqp_expect = 0;
+			}
+			else
+				break;
+		}
+
+		if (!nqp_buf.cursize)
+			break;
+
+		nqp_expect = 0;
+
+		cmd = nqp_buf_data[0];
+		if (cmd == svc_killedmonster || cmd == svc_foundsecret || cmd == svc_sellscreen)
+			nqp_expect = 1;
+		else if (cmd == svc_updatestat) {
+			NQP_Skip (1);
+			MSG_WriteByte (&sv.reliable_datagram, svc_updatestatlong);
+			nqp_expect = 5;
+		}
+		else if (cmd == svc_print) {
+			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
+			if (!p)
+				goto waitformore;
+			MSG_WriteByte(&sv.reliable_datagram, svc_print);
+			MSG_WriteByte(&sv.reliable_datagram, PRINT_HIGH);
+			MSG_WriteString(&sv.reliable_datagram, (char *)(nqp_buf_data + 1));
+			NQP_Skip(p - nqp_buf_data + 1);
+		}
+		else if (cmd == nq_svc_setview) {
+			if (nqp_buf.cursize < 3)
+				goto waitformore;
+			NQP_Skip (3);		// TODO: make an extension for this
+		}
+		else if (cmd == svc_updatefrags)
+			nqp_expect = 4;
+		else if (cmd == nq_svc_updatecolors) {
+			if (nqp_buf.cursize < 3)
+				goto waitformore;
+			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
+			MSG_WriteByte (&sv.reliable_datagram, nqp_buf_data[1]);
+			MSG_WriteString (&sv.reliable_datagram, "topcolor");
+			MSG_WriteString (&sv.reliable_datagram, va("%i", min(nqp_buf_data[2] & 15, 13)));
+			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
+			MSG_WriteByte (&sv.reliable_datagram, nqp_buf_data[1]);
+			MSG_WriteString (&sv.reliable_datagram, "bottomcolor");
+			MSG_WriteString (&sv.reliable_datagram, va("%i", min((nqp_buf_data[2] >> 4)& 15, 13)));
+			NQP_Skip (3);
+		}
+		else if (cmd == nq_svc_updatename) {
+			int slot;
+			byte *p;
+			if (nqp_buf.cursize < 3)
+				goto waitformore;
+			slot = nqp_buf_data[1];
+			p = (byte *)memchr (nqp_buf_data + 2, 0, nqp_buf.cursize - 2);
+			if (!p)
+				goto waitformore;
+			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
+			MSG_WriteByte (&sv.reliable_datagram, slot);
+			MSG_WriteString (&sv.reliable_datagram, "name");
+			MSG_WriteString (&sv.reliable_datagram, (char *)nqp_buf_data + 2);
+			MSG_WriteByte (&sv.reliable_datagram, svc_updateping);
+			MSG_WriteByte (&sv.reliable_datagram, slot);
+			MSG_WriteShort (&sv.reliable_datagram, 0);
+			// We expect bots to set their name when they enter the game and never change it
+			MSG_WriteByte (&sv.reliable_datagram, svc_updateentertime);
+			MSG_WriteByte (&sv.reliable_datagram, slot);
+			MSG_WriteFloat (&sv.reliable_datagram, 0);
+			NQP_Skip ((p - nqp_buf_data) + 1);
+		}
+		else if (cmd == svc_cdtrack) {
+			if (nqp_buf.cursize < 3)
+				goto waitformore;
+			NQP_Flush (2);
+			NQP_Skip (1);
+		}
+		else if (cmd == svc_finale) {
+			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
+			if (!p)
+				goto waitformore;
+			nqp_expect = (p - nqp_buf_data) + 1;
+		}
+		else if (cmd == svc_intermission) {
+			int i;
+			NQP_Flush (1);
+			for (i = 0; i < 3; i++)
+				MSG_WriteCoord (&sv.reliable_datagram, svs.clients[0].edict->v.origin[i]);
+			for (i = 0; i < 3; i++)
+				MSG_WriteAngle (&sv.reliable_datagram, svs.clients[0].edict->v.angles[i]);
+		}
+		else if (cmd == nq_svc_cutscene) {
+			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
+			if (!p)
+				goto waitformore;
+			MSG_WriteByte (&sv.reliable_datagram, svc_stufftext);
+			MSG_WriteString (&sv.reliable_datagram, "//cutscene\n"); // ZQ extension
+			NQP_Skip (p - nqp_buf_data + 1);
+		}
+		else if (nqp_buf_data[0] == svc_temp_entity) {
+			if (nqp_buf.cursize < 2)
+				break;
+
+switch (nqp_buf_data[1]) {
+  case TE_SPIKE:
+  case TE_SUPERSPIKE:
+  case TE_EXPLOSION:
+  case TE_TAREXPLOSION:
+  case TE_WIZSPIKE:
+  case TE_KNIGHTSPIKE:
+  case TE_LAVASPLASH:
+  case TE_TELEPORT:
+		nqp_expect = 8;
+		break;
+  case TE_GUNSHOT:
+		if (nqp_buf.cursize < 8)
+			goto waitformore;
+		NQP_Flush (2);
+		MSG_WriteByte (&sv.reliable_datagram, 1);
+		NQP_Flush (6);
+		break;
+
+  case TE_LIGHTNING1:
+  case TE_LIGHTNING2:
+  case TE_LIGHTNING3:
+		nqp_expect = 16;
+	  break;
+  case NQ_TE_BEAM:
+  {		int entnum;
+		if (nqp_buf.cursize < 16)
+			goto waitformore;
+		MSG_WriteByte (&sv.reliable_datagram, svc_temp_entity);
+		MSG_WriteByte (&sv.reliable_datagram, TE_LIGHTNING1);
+		entnum = nqp_buf_data[2] + nqp_buf_data[3]*256;
+		if ((unsigned int)entnum > 1023)
+			entnum = 0;
+		MSG_WriteShort (&sv.reliable_datagram, (short)(entnum - 1288));
+		NQP_Skip (4);
+		nqp_expect = 12;
+		break;
+  }
+
+  case NQ_TE_EXPLOSION2:
+		nqp_expect = 10;
+		break;
+  default:
+		Com_Printf ("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
+	    goto ignore;
+}
+
+		}
+		else {
+			Com_Printf ("WARNING: progs.dat sent an unsupported svc: %i\n", cmd);
+ignore:
+			nqp_ignore_this_frame = true;
+			break;
+		}
+	}
+waitformore:;
+}
+
+#else // !WITH_NQPROGS
+#define NQP_Process()
+sizebuf_t nqp_buf;	// dummy
+#endif
+
+
 void PF_WriteByte (void)
 {
+	if (pr_nqprogs) {
+		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
+			return;	// we don't support this
+		MSG_WriteByte (&nqp_buf, G_FLOAT(OFS_PARM1));
+		NQP_Process ();
+		return;
+	}
+
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
 		client_t *cl = Write_GetClient();
@@ -1960,6 +2253,14 @@ void PF_WriteByte (void)
 
 void PF_WriteChar (void)
 {
+	if (pr_nqprogs) {
+		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
+			return;	// we don't support this
+		MSG_WriteByte (&nqp_buf, G_FLOAT(OFS_PARM1));
+		NQP_Process ();
+		return;
+	}
+
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
 		client_t *cl = Write_GetClient();
@@ -1979,6 +2280,14 @@ void PF_WriteChar (void)
 
 void PF_WriteShort (void)
 {
+	if (pr_nqprogs) {
+		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
+			return;	// we don't support this
+		MSG_WriteShort (&nqp_buf, G_FLOAT(OFS_PARM1));
+		NQP_Process ();
+		return;
+	}
+
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
 		client_t *cl = Write_GetClient();
@@ -1998,6 +2307,14 @@ void PF_WriteShort (void)
 
 void PF_WriteLong (void)
 {
+	if (pr_nqprogs) {
+		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
+			return;	// we don't support this
+		MSG_WriteLong (&nqp_buf, G_FLOAT(OFS_PARM1));
+		NQP_Process ();
+		return;
+	}
+
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
 		client_t *cl = Write_GetClient();
@@ -2017,6 +2334,14 @@ void PF_WriteLong (void)
 
 void PF_WriteAngle (void)
 {
+	if (pr_nqprogs) {
+		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
+			return;	// we don't support this
+		MSG_WriteAngle (&nqp_buf, G_FLOAT(OFS_PARM1));
+		NQP_Process ();
+		return;
+	}
+
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
 		client_t *cl = Write_GetClient();
@@ -2036,6 +2361,14 @@ void PF_WriteAngle (void)
 
 void PF_WriteCoord (void)
 {
+	if (pr_nqprogs) {
+		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
+			return;	// we don't support this
+		MSG_WriteCoord (&nqp_buf, G_FLOAT(OFS_PARM1));
+		NQP_Process ();
+		return;
+	}
+
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
 		client_t *cl = Write_GetClient();
@@ -2055,6 +2388,14 @@ void PF_WriteCoord (void)
 
 void PF_WriteString (void)
 {
+	if (pr_nqprogs) {
+		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
+			return;	// we don't support this
+		MSG_WriteString (&nqp_buf, G_STRING(OFS_PARM1));
+		NQP_Process ();
+		return;
+	}
+
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
 		client_t *cl = Write_GetClient();
@@ -2075,6 +2416,14 @@ void PF_WriteString (void)
 
 void PF_WriteEntity (void)
 {
+	if (pr_nqprogs) {
+		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
+			return;	// we don't support this
+		MSG_WriteShort (&nqp_buf, G_EDICTNUM(OFS_PARM1));
+		NQP_Process ();
+		return;
+	}
+
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
 		client_t *cl = Write_GetClient();
@@ -2146,7 +2495,7 @@ void PF_setspawnparms (void)
 	client = svs.clients + (i-1);
 
 	for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
-		(&pr_global_struct->parm1)[i] = client->spawn_parms[i];
+		(&PR_GLOBAL(parm1))[i] = client->spawn_parms[i];
 }
 
 /*
@@ -2652,18 +3001,18 @@ static void PF_tracebox (void)
 
         trace = SV_Trace (v1, mins, maxs, v2, nomonsters, ent);
 
-        pr_global_struct->trace_allsolid = trace.allsolid;
-        pr_global_struct->trace_startsolid = trace.startsolid;
-        pr_global_struct->trace_fraction = trace.fraction;
-        pr_global_struct->trace_inwater = trace.inwater;
-        pr_global_struct->trace_inopen = trace.inopen;
-        VectorCopy (trace.endpos, pr_global_struct->trace_endpos);
-        VectorCopy (trace.plane.normal, pr_global_struct->trace_plane_normal);
-        pr_global_struct->trace_plane_dist =  trace.plane.dist;
+        PR_GLOBAL(trace_allsolid) = trace.allsolid;
+        PR_GLOBAL(trace_startsolid) = trace.startsolid;
+        PR_GLOBAL(trace_fraction) = trace.fraction;
+        PR_GLOBAL(trace_inwater) = trace.inwater;
+        PR_GLOBAL(trace_inopen) = trace.inopen;
+        VectorCopy (trace.endpos, PR_GLOBAL(trace_endpos));
+        VectorCopy (trace.plane.normal, PR_GLOBAL(trace_plane_normal));
+        PR_GLOBAL(trace_plane_dist) =  trace.plane.dist;
         if (trace.e.ent)
-                pr_global_struct->trace_ent = EDICT_TO_PROG(trace.e.ent);
+                PR_GLOBAL(trace_ent) = EDICT_TO_PROG(trace.e.ent);
         else
-                pr_global_struct->trace_ent = EDICT_TO_PROG(sv.edicts);
+                PR_GLOBAL(trace_ent) = EDICT_TO_PROG(sv.edicts);
 }
 
 /*
@@ -2845,7 +3194,7 @@ static builtin_t std_builtins[] =
         PF_cvar,
         PF_localcmd,
         PF_nextent,
-        PF_Fixme,
+		PF_particle,
         PF_changeyaw,
         PF_Fixme,		//#50
         PF_vectoangles,
