@@ -195,13 +195,14 @@ cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6",   CVAR_ARCHI
 cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8", CVAR_ARCHIVE};
 #endif
 
+void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel);
 cvar_t  scr_weaponstats_order        = {"scr_weaponstats_order",       "&c990sg&r:%2 &c099ssg&r:%3 &c900rl&r:#7 &c009lg&r:%8", CVAR_ARCHIVE, OnChange_scr_clock_format};
 cvar_t	scr_weaponstats_align_right  = {"scr_weaponstats_align_right", "1", CVAR_ARCHIVE};
 cvar_t	scr_weaponstats_frame_color  = {"scr_weaponstats_frame_color", "10 0 0 120", CVAR_COLOR};
 cvar_t	scr_weaponstats_scale		 = {"scr_weaponstats_scale",       "1",  CVAR_ARCHIVE};
 cvar_t	scr_weaponstats_y			 = {"scr_weaponstats_y",           "0",  CVAR_ARCHIVE};
 cvar_t  scr_weaponstats_x			 = {"scr_weaponstats_x",           "0",  CVAR_ARCHIVE};
-cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "",   CVAR_ARCHIVE};
+cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "",   CVAR_ARCHIVE, OnChange_scr_weaponstats};
 
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 
@@ -2233,15 +2234,6 @@ static void SCR_Draw_WeaponStats(void)
 	byte	*col = scr_weaponstats_frame_color.color;
 	float	scale = bound(0.1, scr_weaponstats_scale.value, 10);
 
-	if (scr_weaponstats.modified)
-	{
-		extern void CL_UserinfoChanged (char *key, char *value);
-
-		// do not allow set "wpsx" to "0" instead set it to ""
-		CL_UserinfoChanged("wpsx", strcmp(scr_weaponstats.string, "0") ? scr_weaponstats.string : "");
-		scr_weaponstats.modified = false;
-	}
-
 	if ( !scr_weaponstats.integer )
 		return;
 
@@ -2292,6 +2284,14 @@ static void SCR_Draw_WeaponStats(void)
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
 #endif
+}
+
+void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel)
+{
+	extern void CL_UserinfoChanged (char *key, char *value);
+
+	// do not allow set "wpsx" to "0" instead set it to ""
+	CL_UserinfoChanged("wpsx", strcmp(value, "0") ? value : "");
 }
 
 static void SCR_MvdWeaponStatsOn_f(void)
