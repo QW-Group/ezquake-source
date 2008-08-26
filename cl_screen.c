@@ -201,7 +201,7 @@ cvar_t	scr_weaponstats_frame_color  = {"scr_weaponstats_frame_color", "10 0 0 12
 cvar_t	scr_weaponstats_scale		 = {"scr_weaponstats_scale",       "1",  CVAR_ARCHIVE};
 cvar_t	scr_weaponstats_y			 = {"scr_weaponstats_y",           "0",  CVAR_ARCHIVE};
 cvar_t  scr_weaponstats_x			 = {"scr_weaponstats_x",           "0",  CVAR_ARCHIVE};
-cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "0",  CVAR_ARCHIVE};
+cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "",   CVAR_ARCHIVE};
 
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 
@@ -2232,6 +2232,15 @@ static void SCR_Draw_WeaponStats(void)
 
 	byte	*col = scr_weaponstats_frame_color.color;
 	float	scale = bound(0.1, scr_weaponstats_scale.value, 10);
+
+	if (scr_weaponstats.modified)
+	{
+		extern void CL_UserinfoChanged (char *key, char *value);
+
+		// do not allow set "wpsx" to "0" instead set it to ""
+		CL_UserinfoChanged("wpsx", strcmp(scr_weaponstats.string, "0") ? scr_weaponstats.string : "");
+		scr_weaponstats.modified = false;
+	}
 
 	if ( !scr_weaponstats.integer )
 		return;
