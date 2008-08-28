@@ -386,7 +386,7 @@ typedef struct
 
 	float		latency;			///< Rolling average
 
-	qbool		mvdplayback;		///< Playing MVD.
+	int			mvdplayback;		///< 0 = Not playing MVD; 1 = Playing MVD; 2 = Playing QTV
 	float		qtv_svversion;		///< version of qtvsv/proxy, note it float
 	int			qtv_ezquake_ext;	///< qtv ezquake extensions supported by qtvsv/proxy
 	qbool		qtv_donotbuffer;	///< do not try buffering even if not enough data
