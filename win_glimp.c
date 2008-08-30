@@ -1082,26 +1082,6 @@ static rserr_t GLW_SetMode( const char *drivername,
 				}
 			}
 		}
-
-		if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
-		{
-			ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
-			ChangeDisplaySettings( 0, 0 );
-			return RSERR_INVALID_MODE;
-		}
-
-		// Make sure we get the proper info for multiple monitor support
-		// and position the window correctly.
-		{
-			RECT rc;
-			MONITORINFOEX monInfo;
-
-			// We need to get the new monitor information since the resolution might have changed.
-			monInfo = VID_GetCurrentMonitorInfo(prevMonitor);
-			rc = monInfo.rcMonitor;
-
-			MoveWindow(mainwindow, rc.left, rc.top, glConfig.vidWidth, glConfig.vidHeight, false);
-		}
 	}
 	else
 	{
@@ -1115,11 +1095,29 @@ static rserr_t GLW_SetMode( const char *drivername,
 		}
 
 		glw_state.cdsFullscreen = false;
-		
-		if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, false ) )
-		{
-			return RSERR_INVALID_MODE;
-		}
+	}
+
+	// IMPORTANT! We need to create the window after we have set the things above, some gfx drivers
+	// seem to get fps drops if we do it the other way around.
+	if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, cdsFullscreen) )
+	{
+		ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
+		ChangeDisplaySettings( 0, 0 );
+		return RSERR_INVALID_MODE;
+	}
+
+	// Make sure we get the proper info for multiple monitor support
+	// and position the window correctly after the window is created.
+	if (cdsFullscreen)
+	{
+		RECT rc;
+		MONITORINFOEX monInfo;
+
+		// We need to get the new monitor information since the resolution might have changed.
+		monInfo = VID_GetCurrentMonitorInfo(prevMonitor);
+		rc = monInfo.rcMonitor;
+
+		MoveWindow(mainwindow, rc.left, rc.top, glConfig.vidWidth, glConfig.vidHeight, false);
 	}
 
 	//
