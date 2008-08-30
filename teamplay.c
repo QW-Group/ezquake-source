@@ -639,9 +639,9 @@ char *Macro_LastTrigger_Match(void)
 char *Macro_LastDropTime (void)
 {
 	if (vars.lastdrop_time)
-		snprintf (macro_buf, 32, "%d", (int) (cls.realtime - vars.lastdrop_time));
+		snprintf (macro_buf, sizeof (macro_buf), "%d", (int) (cls.realtime - vars.lastdrop_time));
 	else
-		snprintf (macro_buf, 32, "%d", -1);
+		snprintf (macro_buf, sizeof (macro_buf), "%d", -1);
 	return macro_buf;
 }
 
