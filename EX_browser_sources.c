@@ -650,6 +650,14 @@ void Reload_Sources(void)
         Delete_Source(sources[i]);
     sourcesn = 0;
 
+    // create dummy unbound source
+    sources[0] = Create_Source();
+    sources[0]->type = type_dummy;
+    strlcpy (sources[0]->name, "Unbound", sizeof (sources[0]->name));
+    sources[0]->servers = (server_data **) Q_malloc(MAX_UNBOUND*sizeof(server_data *));
+
+	sourcesn = 1;
+
 #ifndef WITH_FTE_VFS
     //length = COM_FileOpenRead (SOURCES_PATH, &f);
     length = FS_FOpenFile(SOURCES_LIST_FILENAME, &f);
@@ -667,13 +675,6 @@ void Reload_Sources(void)
 		return;
 	}
 #endif
-
-    // create dummy unbound source
-    sources[0] = Create_Source();
-    sources[0]->type = type_dummy;
-    strlcpy (sources[0]->name, "Unbound", sizeof (sources[0]->name));
-    sources[0]->servers = (server_data **) Q_malloc(MAX_UNBOUND*sizeof(server_data *));
-    sourcesn = 1;
 
     s = Create_Source();
 #ifndef WITH_FTE_VFS
