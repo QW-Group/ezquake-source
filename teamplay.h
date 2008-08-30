@@ -195,7 +195,7 @@ typedef struct tvars_s
     char	tookloc[MAX_LOC_NAME];
 	double	tooktime;
 	double	pointtime; // cls.realtime for which pointitem & pointloc are valid
-	char	pointname[32];
+	char	pointname[64];
     int     pointflag;
 	char	pointloc[MAX_LOC_NAME];
 	int		pointtype;
