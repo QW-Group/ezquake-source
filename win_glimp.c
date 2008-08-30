@@ -976,13 +976,6 @@ static rserr_t GLW_SetMode( const char *drivername,
 	// do a CDS if needed
 	if ( cdsFullscreen )
 	{
-		if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
-		{
-			ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
-			ChangeDisplaySettings( 0, 0 );
-			return RSERR_INVALID_MODE;
-		}
-
 		memset( &dm, 0, sizeof( dm ) );
 		dm.dmSize = sizeof( dm );
 		
@@ -1033,18 +1026,8 @@ static rserr_t GLW_SetMode( const char *drivername,
 			// the low res modes in EnumDisplaySettings, but still work
 			if ( ( cdsRet = ChangeDisplaySettingsEx( prevMonInfo.szDevice, &dm, NULL, CDS_FULLSCREEN, NULL) ) == DISP_CHANGE_SUCCESSFUL )
 			{
-				RECT rc;
-				MONITORINFOEX monInfo;
-
 				ST_Printf( PRINT_R_VERBOSE, "ok\n" );
 
-				// We need to get the new monitor information since the resolution might have changed.
-				monInfo = VID_GetCurrentMonitorInfo(prevMonitor);
-				rc = monInfo.rcMonitor;
-
-				SetWindowPos(mainwindow, NULL, rc.left, rc.top, glConfig.vidWidth, glConfig.vidHeight,
-							SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOOWNERZORDER | SWP_NOREPOSITION | SWP_NOZORDER);
-				
 				glw_state.cdsFullscreen = true;
 			}
 			else
@@ -1098,6 +1081,26 @@ static rserr_t GLW_SetMode( const char *drivername,
 					return RSERR_INVALID_FULLSCREEN;
 				}
 			}
+		}
+
+		if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
+		{
+			ST_Printf( PRINT_R_VERBOSE, "...restoring display settings\n" );
+			ChangeDisplaySettings( 0, 0 );
+			return RSERR_INVALID_MODE;
+		}
+
+		// Make sure we get the proper info for multiple monitor support
+		// and position the window correctly.
+		{
+			RECT rc;
+			MONITORINFOEX monInfo;
+
+			// We need to get the new monitor information since the resolution might have changed.
+			monInfo = VID_GetCurrentMonitorInfo(prevMonitor);
+			rc = monInfo.rcMonitor;
+
+			MoveWindow(mainwindow, rc.left, rc.top, glConfig.vidWidth, glConfig.vidHeight, false);
 		}
 	}
 	else

@@ -1298,6 +1298,7 @@ qbool VID_SetFullDIBMode (int modenum)
 	modestate = MS_FULLDIB;
 	vid_fulldib_on_focus_mode = modenum;
 
+	// TODO: We need to set these based on what screen we're on in a multi-monitor setup.
 	WindowRect.top = WindowRect.left = 0;
 
 	hdc = GetDC(NULL);
@@ -1317,6 +1318,7 @@ qbool VID_SetFullDIBMode (int modenum)
 	SetWindowLong(mainwindow, GWL_STYLE, WindowStyle | WS_VISIBLE);
 	SetWindowLong(mainwindow, GWL_EXSTYLE, ExWindowStyle);
 
+	// TODO: We need to set these based on what screen we're on in a multi-monitor setup.
 	if (!SetWindowPos (mainwindow,
 						   NULL,
 						   0, 0,
@@ -1327,6 +1329,7 @@ qbool VID_SetFullDIBMode (int modenum)
 		Sys_Error ("Couldn't resize DIB window");
 	}
 
+	// TODO: We need to set these based on what screen we're on in a multi-monitor setup.
 	// position and show the DIB window
 	SetWindowPos (mainwindow, HWND_TOPMOST, 0, 0, 0, 0,
 				  SWP_NOSIZE | SWP_SHOWWINDOW | SWP_DRAWFRAME);
@@ -1360,6 +1363,7 @@ qbool VID_SetFullDIBMode (int modenum)
 
 	vid_stretched = modelist[modenum].stretched;
 
+	// TODO: We need to set these based on what screen we're on in a multi-monitor setup.
 	// needed because we're not getting WM_MOVE messages fullscreen on NT
 	window_x = 0;
 	window_y = 0;
