@@ -675,6 +675,8 @@ void TCL_InterpInit (void)
 	Tcl_CreateObjCommand (interp, "cmd", TCL_Cmd, NULL, NULL);
 	Tcl_CreateObjCommand (interp, "alias", TCL_Alias, NULL, NULL);
 
+	TCL_InterpInitCommands();
+
 	if (strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
 		TCL_ReplaceProc ("after", TCL_DenyProc); // if this may changes or invoke error sometimes, this should be disabled 
 		TCL_ReplaceProc ("cd", TCL_DenyProc); // external interconnection (and qw may crash?)
