@@ -1121,10 +1121,6 @@ void Key_Console (int key, int unichar)
 				memcpy (key_lines[edit_line] + key_linepos, clipText, len*sizeof(wchar));
 				key_linepos += len;
 			}
-            
-#ifdef __APPLE__
-            free(clipText);
-#endif
 		}
 		return;
 	}

@@ -661,31 +661,6 @@ void *	Sys_GetProcAddress (const char *theName, Boolean theSafeMode)
 
 wchar * Sys_GetClipboardTextW(void)
 {
-    int i;
-    wchar *clipText;
-    char *tmp2 = Sys_GetClipboardData();
-    
-    if(tmp2 == NULL)
-    {
-        return NULL;
-    }
-    
-    clipText = malloc((strlen(tmp2) + 1) * sizeof(wchar));
-    
-    memset(clipText, 0, sizeof(clipText));
-    
-    for(i = 0; i < strlen(tmp2); i++)
-    {
-        clipText[i] = tmp2[i];
-    }
-    
-    free(tmp2);
-    
-	return clipText;
-}
-
-char *	Sys_GetClipboardData (void)
-{
     NSPasteboard	*myPasteboard = NULL;
     NSArray 		*myPasteboardTypes = NULL;
 
@@ -698,7 +673,7 @@ char *	Sys_GetClipboardData (void)
         myClipboardString = [myPasteboard stringForType: NSStringPboardType];
         if (myClipboardString != NULL && [myClipboardString length] > 0)
         {
-            return (strdup ([myClipboardString cString]));
+            return (str2wcs([myClipboardString cString]));
         }
     }
     return (NULL);
