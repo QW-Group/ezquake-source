@@ -659,8 +659,29 @@ void *	Sys_GetProcAddress (const char *theName, Boolean theSafeMode)
 
 //______________________________________________________________________________________________________Sys_GetClipboardData()
 
-wchar *	Sys_GetClipboardTextW(void) {
-	return NULL;
+wchar * Sys_GetClipboardTextW(void)
+{
+    int i;
+    wchar *clipText;
+    char *tmp2 = Sys_GetClipboardData();
+    
+    if(tmp2 == NULL)
+    {
+        return NULL;
+    }
+    
+    clipText = malloc((strlen(tmp2) + 1) * sizeof(wchar));
+    
+    memset(clipText, 0, sizeof(clipText));
+    
+    for(i = 0; i < strlen(tmp2); i++)
+    {
+        clipText[i] = tmp2[i];
+    }
+    
+    free(tmp2);
+    
+	return clipText;
 }
 
 char *	Sys_GetClipboardData (void)
