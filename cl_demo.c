@@ -1963,7 +1963,7 @@ qbool CL_GetDemoMessage (void)
 
 		// Read the time of the next message in the demo.
 		demotime = CL_PeekDemoTime();
-				
+
 		// If we've reached our seek goal, stop seeking.
 		if ((cls.demoseeking || cls.demotest) && (cls.demotime <= demotime))
 		{
@@ -1978,6 +1978,8 @@ qbool CL_GetDemoMessage (void)
 				nTrack2duel			= rewind_duel_track2;
 				Cam_Lock(rewind_spec_track);
 				cls.findtrack		= false;
+
+				R_InitParticles();
 			}
 		}
 
@@ -3568,7 +3570,7 @@ void CL_Play_f (void)
 		// Strip the extension from the specified filename and append
 		// the one we're currently checking for.
 		COM_StripExtension(real_name, name);
-		snprintf(name, sizeof(name), "%s.%s", name, *s);
+		strlcpy(name, va("%s.%s", name, *s), sizeof(name));
 
 		// Look for the file in the above directory if it has ../ prepended to the filename.
 		if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
@@ -3809,7 +3811,7 @@ void CL_QTVPoll (void)
 	// server sent float version, but we compare only major version number here
 	if ((int)svversion != (int)QTV_VERSION)
 	{
-		Com_Printf("QTV server doesn't support a compatable protocol version, returned %.2f, need %.2f\n", svversion, QTV_VERSION);
+		Com_Printf("QTV server doesn't support a compatible protocol version, returned %.2f, need %.2f\n", svversion, QTV_VERSION);
 		QTV_CloseRequest(true);
 		return;
 	}
