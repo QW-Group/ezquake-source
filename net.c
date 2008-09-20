@@ -236,11 +236,37 @@ void NET_ClearLoopback (void)
 	loopbacks[1].send = loopbacks[1].get = 0;
 }
 
-qbool NET_GetPacket (netsrc_t netsrc)
+static cl_delayed_packet_t cl_delayed_packets_get[CL_MAX_DELAYED_PACKETS];
+
+qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 {
 	int ret, socket, err, i;
 	struct sockaddr_storage from;
 	socklen_t fromlen;
+
+	if (delay)
+	{
+		double time = Sys_DoubleTime();
+
+		for (i = 0; i < CL_MAX_DELAYED_PACKETS; i++)
+		{
+			if (!cl_delayed_packets_get[i].time)
+				continue; // unused slot
+			if (cl_delayed_packets_get[i].time > time)
+				continue; // we are not yet ready to get this
+
+			// ok, we got something
+			SZ_Clear(&net_message);
+			SZ_Write(&net_message, cl_delayed_packets_get[i].data, cl_delayed_packets_get[i].length);
+			net_from = cl_delayed_packets_get[i].addr;
+
+			cl_delayed_packets_get[i].time = 0; // mark as free slot
+
+			return true;
+		}
+
+		return false;
+	}
 
 	if (NET_GetLoopPacket(netsrc, &net_from, &net_message))
 		return true;
@@ -494,14 +520,70 @@ closesvstream:
 	return false;
 }
 
+qbool CL_QueInputPacket(void)
+{
+	int i;
+
+	if (!NET_GetPacketEx(NS_CLIENT, false))
+		return false;
+	
+	for (i = 0; i < CL_MAX_DELAYED_PACKETS; i++)
+	{
+		if (cl_delayed_packets_get[i].time)
+			continue; // busy slot
+
+		// we found unused slot, copy packet, get it later, later depends of cl_delay_packet
+		memmove(cl_delayed_packets_get[i].data, net_message.data, net_message.cursize);
+		cl_delayed_packets_get[i].length = net_message.cursize;
+		cl_delayed_packets_get[i].addr = net_from;
+		cl_delayed_packets_get[i].time = Sys_DoubleTime() + 0.001 * bound(1, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
+
+		return true;
+	}
+
+	Com_DPrintf("CL_QueInputPacket: cl_delayed_packets_get overflowed\n");
+
+	return false;
+}
+
+qbool NET_GetPacket (netsrc_t netsrc)
+{
+	qbool delay = (netsrc == NS_CLIENT && cl_delay_packet.integer);
+
+	return NET_GetPacketEx (netsrc, delay);
+}
+
 //=============================================================================
 
-void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
+static cl_delayed_packet_t cl_delayed_packets_send[CL_MAX_DELAYED_PACKETS];
+
+void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbool delay)
 {
 	struct sockaddr_storage addr;
 	int socket;
 	int size;
 	int ret;
+
+	if (delay)
+	{
+		int i;
+
+		for (i = 0; i < CL_MAX_DELAYED_PACKETS; i++)
+		{
+			if (cl_delayed_packets_send[i].time)
+				continue; // busy slot
+			// we found unused slot, copy packet, send it later, later depends of cl_delay_packet
+			memmove(cl_delayed_packets_send[i].data, data, length);
+			cl_delayed_packets_send[i].length = length;
+			cl_delayed_packets_send[i].addr = to;
+			cl_delayed_packets_send[i].time = Sys_DoubleTime() + 0.001 * bound(1, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
+
+			return;
+		}
+
+		Com_DPrintf("NET_SendPacketEx: cl_delayed_packets_send overflowed\n");
+		return;
+	}
 
 	if (to.type == NA_LOOPBACK) {
 		NET_SendLoopPacket (netsrc, length, data, to);
@@ -581,6 +663,36 @@ void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 #endif
 		Sys_Printf ("NET_SendPacket: sendto: (%i): %s %i\n", qerrno, strerror(qerrno), socket);
 	}
+}
+
+void CL_UnqueOutputPacket(void)
+{
+	int i;
+	double time = Sys_DoubleTime();
+
+	for (i = 0; i < CL_MAX_DELAYED_PACKETS; i++)
+	{
+		if (!cl_delayed_packets_send[i].time)
+			continue; // unused slot
+		if (cl_delayed_packets_send[i].time > time)
+			continue; // we are not yet ready for send
+
+		// ok, send it
+		NET_SendPacketEx(NS_CLIENT, cl_delayed_packets_send[i].length, 
+			cl_delayed_packets_send[i].data, cl_delayed_packets_send[i].addr, false);
+
+		cl_delayed_packets_send[i].time = 0; // mark as unused slot
+
+// perhaps there other packets should be sent
+//		return;
+	}
+}
+
+void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
+{
+	qbool delay = (netsrc == NS_CLIENT && cl_delay_packet.integer);
+
+	NET_SendPacketEx (netsrc, length, data, to, delay);
 }
 
 //=============================================================================

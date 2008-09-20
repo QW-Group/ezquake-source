@@ -938,3 +938,24 @@ extern int		nBonusflash;				// v_bonusflash
 
 
 // ===================================================================================
+// client side min_ping aka delay
+
+extern cvar_t cl_delay_packet;
+
+#define CL_MAX_DELAYED_PACKETS 16 /* 13 * 16 = 208 ms, should be enough */
+#define CL_MAX_PACKET_DELAY 75 /* total delay two times more */
+
+typedef struct cl_delayed_packet_s
+{
+	byte data[MSG_BUF_SIZE]; // packet data, perhaps we can/should use [MAX_MSGLEN + PACKET_HEADER]
+	int length; // how much data we actually have in data[]
+	netadr_t addr; // to/from
+
+	double time; // when we should read/send this packet
+
+} cl_delayed_packet_t;
+
+qbool CL_QueInputPacket(void);
+void CL_UnqueOutputPacket(void);
+
+// ===================================================================================

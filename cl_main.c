@@ -97,6 +97,8 @@ cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
 
 cvar_t	cl_timeout = {"cl_timeout", "60"};
 
+cvar_t	cl_delay_packet = {"cl_delay_packet", "0"};
+
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #ifdef PROTOCOL_VERSION_FTE
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// will break demos!
@@ -1608,6 +1610,8 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_crypt_rcon);
 	Cvar_Register (&cl_fix_mvd);
 
+	Cvar_Register (&cl_delay_packet);
+
 #ifdef PROTOCOL_VERSION_FTE
 	Cvar_Register (&cl_pext_other);
 #endif
@@ -1987,7 +1991,20 @@ void CL_Frame (double time)
 			usleep( bound( 0, sys_yieldcpu.integer, 1000 ) );
 			#endif
 		}
+
+		if (cl_delay_packet.integer)
+		{
+			CL_QueInputPacket();
+			CL_UnqueOutputPacket();
+		}
+
 		return;
+	}
+
+	if (cl_delay_packet.integer)
+	{
+		CL_QueInputPacket();
+		CL_UnqueOutputPacket();
 	}
 
 	if (VSyncLagFix())
