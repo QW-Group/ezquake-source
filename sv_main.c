@@ -870,6 +870,9 @@ qbool CheckChallange( int challenge )
 {
 	int i;
 
+	if (net_from.type == NA_LOOPBACK)
+		return true; // local client do not need challenge
+
 	for (i = 0; i < MAX_CHALLENGES; i++)
 	{
 		if (NET_CompareBaseAdr (net_from, svs.challenges[i].adr))
