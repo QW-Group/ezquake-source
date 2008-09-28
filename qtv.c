@@ -7,6 +7,7 @@
 #include "quakedef.h"
 #include "winquake.h"
 #include "qtv.h"
+#include "input.h"
 #include "teamplay.h"
 #include "fs.h"
 
@@ -456,8 +457,17 @@ void Qtvusers_f (void)
 	qtvuser_t *current;
 	int c;
 
-	if (cls.mvdplayback != QTV_PLAYBACK)
+	if (cls.state == ca_disconnected)
+	{
+		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
 		return;
+	}
+
+	if (cls.mvdplayback != QTV_PLAYBACK)
+	{
+		CL_SendClientCommand(true, "%s %s", Cmd_Argv(0), Cmd_Args());
+		return;
+	}
 
 	c = 0;
 	Com_Printf ("userid name\n");
