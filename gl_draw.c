@@ -182,18 +182,15 @@ void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 		Com_Printf("Couldn't load image %s\n", s);
 		return;
 	}
-	if(gl_smoothfont.integer)
-	{
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	} 
-	else
-	{
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
+
 	crosshairpic = *pic;
 	customcrosshair_loaded |= CROSSHAIR_IMAGE;
+	
+	// Make crosshair independent of gl_texturemode setting so it always looks sharp and not blurred
+	GL_Bind(crosshairpic.texnum);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+ 
 }
 
 void customCrosshair_Init(void)
