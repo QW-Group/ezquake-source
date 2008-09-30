@@ -115,8 +115,6 @@
 				SubSystem="2"
 				OptimizeForWindows98="1"
 				SetChecksum="false"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -136,6 +134,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -203,6 +204,7 @@
 				WarningLevel="3"
 				WarnAsError="false"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 				CompileAs="1"
 			/>
 			<Tool
@@ -228,6 +230,7 @@
 				GenerateManifest="true"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
 				ModuleDefinitionFile=""
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
 				GenerateMapFile="true"
 				MapFileName="$(TargetDir)$(TargetName).map"
@@ -237,8 +240,6 @@
 				OptimizeForWindows98="1"
 				LinkTimeCodeGeneration="1"
 				SetChecksum="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -258,6 +259,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -326,6 +330,7 @@
 				WarningLevel="3"
 				WarnAsError="false"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 				CompileAs="1"
 			/>
 			<Tool
@@ -351,6 +356,7 @@
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
 				ModuleDefinitionFile=""
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
 				GenerateMapFile="true"
 				MapFileName="$(TargetDir)$(TargetName).map"
@@ -360,8 +366,6 @@
 				OptimizeForWindows98="1"
 				LinkTimeCodeGeneration="1"
 				SetChecksum="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -381,6 +385,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -479,8 +486,6 @@
 				MapFileName="$(TargetDir)$(TargetName).map"
 				SubSystem="2"
 				OptimizeForWindows98="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -500,6 +505,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
