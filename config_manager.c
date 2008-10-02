@@ -1041,6 +1041,7 @@ void Config_LegacyQuake_f(void)
 		Cbuf_AddText(
 			"hide ownfrags;echo hiding the ownfrags hud element (undo: show ownfrags);"
 			"menu_ingame 0;echo turning off ingame menu (undo: menu_ingame 1);"
+			"gl_powerupshells 0;echo turning off powerup shell (undo: gl_powerupshells 1);"
 			);
 	}
 
@@ -1050,6 +1051,8 @@ void Config_LegacyQuake_f(void)
 			"frags extra_spec_info 0;echo disabling extra spec info for frags hud element (undo: frags extra_spec_info 1);"
 			"teamfrags extra_spec_info 0;echo disabling extra spec info for teamfrags hud element (undo: teamfrags extra_spec_info 1);"
 			"hide radar;echo hiding the radar hud element (undo: show rader);"
+			"in_builtinkeymap 1;echo disabling os-keyboard layout (undo: in_builtinkeymap 0);"
+			"con_particles_images 0;echo disabling console particles (undo: con_particles_images 3);"
 		// "r_chaticons_alpha 0;echo chaticon drawing disabled;"
 		);
 	}
