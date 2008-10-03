@@ -1716,7 +1716,7 @@ void SetupPlayerEntity(int num, player_state_t *state)
 		if (state->frame != cent->current.frame) 
 		{
 			cent->frametime = cl.time;
-			if (ISAXSTND(cent->oldframe) == ISAXSTND(state->frame))
+			if (ISAXSTND(cent->current.frame) == ISAXSTND(state->frame))
 				cent->oldframe = cent->current.frame;
 			else
 				cent->oldframe = state->frame;	// hack: no lerping if changing to/from axe
