@@ -337,6 +337,38 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 	}
 }
 
+void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
+{
+	int ival = Q_atoi(value);	// this is used in the code
+	float fval = Q_atof(value); // this is used to check value validity
+
+	if (ival == var->integer && fval == var->value) {
+		// no change
+		return;
+	}
+
+	if (fval < 0) {
+		Com_Printf("%s doesn't allow negative values\n", var->name);
+		*cancel = true;
+		return;
+	}
+
+	if (cls.state == ca_active) {
+		if (cl.standby) {
+			// allow in standby
+			Cbuf_AddText(va("say delay packet: %d ms\n", ival));
+		}
+		else {
+			// disallow during the match
+			Com_Printf("%s changes are not allowed during the match\n", var->name);
+			*cancel = true;
+		}
+	}
+	else {
+		// allow in not fully connected state
+	}
+}
+
 void Rulesets_OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel)
 {
 	float fakeshaft = Q_atof (value);

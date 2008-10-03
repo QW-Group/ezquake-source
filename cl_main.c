@@ -97,7 +97,7 @@ cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
 
 cvar_t	cl_timeout = {"cl_timeout", "60"};
 
-cvar_t	cl_delay_packet = {"cl_delay_packet", "0"};
+cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #ifdef PROTOCOL_VERSION_FTE
