@@ -1710,7 +1710,10 @@ void SetupPlayerEntity(int num, player_state_t *state)
 		if (state->frame != cent->current.frame) 
 		{
 			cent->frametime = cl.time;
-			cent->oldframe = cent->current.frame;
+			if (state->vw_index == cent->old_vw_index)
+				cent->old_vw_frame = cent->oldframe;
+			else
+				cent->old_vw_frame = state->frame;	// no lerping if vwep model changed
 		}
 
 		if (!VectorCompare(state->origin, cent->current.origin) || !VectorCompare(state->viewangles, cent->current.angles)) {
@@ -1728,13 +1731,13 @@ void SetupPlayerEntity(int num, player_state_t *state)
 			}
 		}
 	}
-	
-	
+
 	VectorCopy(state->origin, cent->current.origin);
 	VectorCopy(state->viewangles, cent->current.angles);
 	cent->current.frame = state->frame;
 	cent->sequence = state->messagenum;	
-	cent->current.modelindex = state->modelindex;	
+	cent->current.modelindex = state->modelindex;
+	cent->old_vw_index = state->vw_index;
 }
 
 extern int parsecountmod;
@@ -2041,7 +2044,7 @@ void CL_AddFlagModels (entity_t *ent, int team)
 CL_AddVWepModel
 ================
 */
-static qbool CL_AddVWepModel (entity_t *ent, int vw_index)
+static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 {
 	entity_t	newent;
 
@@ -2060,7 +2063,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index)
 	VectorCopy (ent->angles, newent.angles);
 	newent.model = cl.vw_model_precache[vw_index];
 	newent.frame = ent->frame;
-	newent.oldframe = ent->oldframe;
+	newent.oldframe = old_vw_frame;
 	newent.framelerp = ent->framelerp;
 	newent.skinnum = 0;
 	newent.colormap = vid.colormap;
@@ -2307,7 +2310,7 @@ void CL_LinkPlayers (void)
 		if (cl.vwep_enabled && r_drawvweps.value && state->vw_index) 
 		{
 			qbool vwep;
-			vwep = CL_AddVWepModel (&ent, state->vw_index);
+			vwep = CL_AddVWepModel (&ent, state->vw_index, cent->old_vw_frame);
 			if (vwep) 
 			{
 				if (cl.vw_model_name[0][0] != '-') 

@@ -195,6 +195,9 @@ typedef struct
 	double			startlerp;
 	double			deltalerp;
 	double			frametime;
+
+	int				old_vw_index;	// player entities only
+	int				old_vw_frame;	// player entities only
 } centity_t;
 
 #define CENT_TRAILDRAWN		1
