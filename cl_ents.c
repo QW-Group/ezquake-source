@@ -907,6 +907,7 @@ void CL_LinkPacketEntities(void)
 				&& cl.vw_model_precache[0] && r_drawvweps.value)
 		{
 			ent.model = cl.vw_model_precache[0];
+			ent.renderfx |= RF_PLAYERMODEL;
 		}
 
 		ent.skinnum = state->skinnum;
@@ -928,7 +929,8 @@ void CL_LinkPacketEntities(void)
 			ent.framelerp = -1;
 		}
 	
-		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS && ent.model->modhint == MOD_PLAYER) 
+		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS
+		&& (ent.model->modhint == MOD_PLAYER || (ent.renderfx & RF_PLAYERMODEL)))
 		{
 			ent.colormap = cl.players[state->colormap - 1].translations;
 			ent.scoreboard = &cl.players[state->colormap - 1];
@@ -1431,6 +1433,7 @@ void CL_LinkPacketEntities (void)
 				&& cl.vw_model_precache[0] && r_drawvweps.value)
 		{
 			ent.model = cl.vw_model_precache[0];
+			ent.renderfx |= RF_PLAYERMODEL;
 		}
 
 		ent.skinnum = state->skinnum;
@@ -1453,7 +1456,8 @@ void CL_LinkPacketEntities (void)
 		}
 	
 
-		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS && ent.model->modhint == MOD_PLAYER) 
+		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS
+		&& (ent.model->modhint == MOD_PLAYER || (ent.renderfx & RF_PLAYERMODEL)))
 		{
 			ent.colormap = cl.players[state->colormap - 1].translations;
 			ent.scoreboard = &cl.players[state->colormap - 1];
