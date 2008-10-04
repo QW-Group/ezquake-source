@@ -272,8 +272,14 @@ static void CL_LerpMove (double msgtime)
 		return;
 	}
 
-    	frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
-    	frac = bound (0, frac, 1);
+    frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
+    frac = bound (0, frac, 1);
+
+	if (cl.spectator && cl.viewplayernum != cl.playernum)
+	{
+		// we track someone, so lerp angles
+		AngleInterpolate(lerp_angles[from], frac, lerp_angles[to], cl.simangles);
+	}
 
 	for (i = 0; i < 3; i++)
 	{
