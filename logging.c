@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "logging.h"
 #include "utils.h"
+#include "hash.h"
+#include "vfs.h"
 
 
 static void OnChange_log_dir(cvar_t *var, char *string, qbool *cancel);
@@ -31,9 +33,11 @@ cvar_t		log_dir			= {"log_dir", "", 0, OnChange_log_dir};
 cvar_t		log_readable	= {"log_readable", "1"};
 
 #define			LOG_FILENAME_MAXSIZE	(MAX_PATH)
+#define			LOGFILEBUFFER			(128*1024)
 
-static FILE		*logfile;				
-static char		logfilename[LOG_FILENAME_MAXSIZE];
+static FILE       *logfile;     // opened file with log, writing is not performed until logging is stopped to avoid fps spikes
+static vfsfile_t  *memlogfile;  // allocated memory where the log is being written
+static char       logfilename[LOG_FILENAME_MAXSIZE];
 
 static qbool autologging = false;
 
@@ -49,11 +53,27 @@ static char *Log_LogDirectory(void) {
 }
 
 static void Log_Stop(void) {
+	int read;
+	vfserrno_t err;
+	char buf[1024];
+	int size;
+
 	if (!Log_IsLogging())
 		return;
 
+	size = (int) VFS_TELL(memlogfile);
+
+	VFS_SEEK(memlogfile, 0, SEEK_SET);
+	while (size > 0 && (read = VFS_READ(memlogfile, buf, 1024, &err))) {
+		fwrite(buf, 1, min(read, size), logfile);
+		size -= read;
+	}
+
+	VFS_CLOSE(memlogfile);
 	fclose(logfile);
+
 	logfile = NULL;
+	memlogfile = NULL;
 }
 
 static void OnChange_log_dir(cvar_t *var, char *string, qbool *cancel) {
@@ -72,6 +92,7 @@ static void OnChange_log_dir(cvar_t *var, char *string, qbool *cancel) {
 static void Log_log_f(void) {
 	char *fulllogname;
 	FILE *templog;
+	void *buf;
 
 	switch (Cmd_Argc()) {
 	case 1:
@@ -122,6 +143,12 @@ static void Log_log_f(void) {
 				return;
 			}
 		}
+		buf = Q_calloc(1, LOGFILEBUFFER);
+		if (!buf) {
+			Com_Printf("Not enough memory to allocate log buffer\n");
+			return;
+		}
+		memlogfile = FSMMAP_OpenVFS(buf, LOGFILEBUFFER);
 		Com_Printf("Logging to %s\n", logfilename);
 		logfile = templog;
 		break;
@@ -149,8 +176,9 @@ void Log_Shutdown(void) {
 void Log_Write(char *s) {
 	if (!Log_IsLogging())
 		return;
-
-	fprintf(logfile, "%s", s);
+	
+	VFS_WRITE(memlogfile, s, strlen(s));
+	// fprintf(logfile, "%s", s);
 }
 
 //=============================================================================
@@ -207,6 +235,7 @@ void Log_AutoLogging_CancelMatch(void) {
 void Log_AutoLogging_StartMatch(char *logname) {
 	char extendedname[MAX_OSPATH * 2], *fullname;
 	FILE *templog;
+	void *buf;
 
 	temp_log_ready = false;
 
@@ -239,6 +268,13 @@ void Log_AutoLogging_StartMatch(char *logname) {
 			return;
 		}
 	}
+
+	buf = Q_calloc(1, LOGFILEBUFFER);
+	if (!buf) {
+		Com_Printf("Not enough memory to allocate log buffer\n");
+		return;
+	}
+	memlogfile = FSMMAP_OpenVFS(buf, LOGFILEBUFFER);
 
 	Com_Printf ("Auto console logging commenced\n");
 
