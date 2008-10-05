@@ -182,51 +182,75 @@ void Update_Source(source_data *s)
         unsigned char answer[10000];
         fd_set fd;
         struct timeval tv;
+		int trynum;
+		int timeout;
 
         newsocket = UDP_OpenSocket(PORT_ANY);
         // so we have a socket
 
         // send status request
 
-        NetadrToSockadr (&(s->address.address), &server);
-        ret = sendto (newsocket, request, sizeof(request), 0,
-                      (struct sockaddr *)&server, sizeof(server) );
+		for (trynum=0; trynum < sb_masterretries.value; trynum++) {
+			NetadrToSockadr (&(s->address.address), &server);
+			ret = sendto (newsocket, request, sizeof(request), 0,
+						  (struct sockaddr *)&server, sizeof(server) );
+		}
+
         if (ret < 0)
             return;
 
-        //fd.fd_count = 1;
-        //fd.fd_array[0] = newsocket;
-    FD_ZERO(&fd);
-  FD_SET(newsocket, &fd);
-        tv.tv_sec = 0;
-        tv.tv_usec = 1000 * 1.5 * sb_mastertimeout.value; // multiply timeout by 1.5
-        ret = select(newsocket+1, &fd, NULL, NULL, &tv);
+		timeout = Sys_DoubleTime() + (sb_mastertimeout.value / 1000.0);
+		while (Sys_DoubleTime() < timeout) {
+			//fd.fd_count = 1;
+			//fd.fd_array[0] = newsocket;
+			FD_ZERO(&fd);
+			FD_SET(newsocket, &fd);
+			tv.tv_sec = 0;
+			tv.tv_usec = 1000 * 1.5 * sb_mastertimeout.value; // multiply timeout by 1.5
+			ret = select(newsocket+1, &fd, NULL, NULL, &tv);
 
-        // get answer
-        if (ret > 0)
-            ret = recvfrom (newsocket, answer, 10000, 0, NULL, NULL);
+			// get answer
+			if (ret > 0)
+				ret = recvfrom (newsocket, answer, 10000, 0, NULL, NULL);
 
-        if (ret > 0  &&  ret < 10000)
-        {
-            answer[ret] = 0;
+			if (ret > 0  &&  ret < 10000)
+			{
+				answer[ret] = 0;
 
-            if (memcmp(answer, "\xff\xff\xff\xff\x64\x0a", 6))
-            {
-                closesocket(newsocket);
-                return;
-            }
+				if (memcmp(answer, "\xff\xff\xff\xff\x64\x0a", 6))
+				{
+					closesocket(newsocket);
+					return;
+				}
 
-            for (i=6; i+5 < ret; i+=6)
-            {
-                char buf[32];
-                snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
-                    (int)answer[i+0], (int)answer[i+1],
-                    (int)answer[i+2], (int)answer[i+3],
-                    256 * (int)answer[i+4] + (int)answer[i+5]);
+				// create servers avoiding duplicates
+				for (i=6; i+5 < ret; i+=6)
+				{
+					char buf[32];
+					server_data* server;
+					qbool exists = false;
+					int j;
 
-                servers[serversn++] = Create_Server(buf);
-            }
-        }
+					snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
+						(int)answer[i+0], (int)answer[i+1],
+						(int)answer[i+2], (int)answer[i+3],
+						256 * (int)answer[i+4] + (int)answer[i+5]);
+
+					server = Create_Server(buf);
+					for (j=0; j<serversn; j++) {
+						if (NET_CompareAdr(servers[j]->address, server->address)) {
+							exists = true;
+							break;
+						}
+					}
+					
+					if (!exists)
+						servers[serversn++] = server;
+					else
+						Delete_Server(server);
+				}
+			}
+		}
  
         closesocket(newsocket);
         
@@ -237,8 +261,8 @@ void Update_Source(source_data *s)
     {
         Reset_Source(s);
         s->servers = (server_data **) Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
-        for (i=0; i < serversn; i++)
-            s->servers[i] = servers[i];
+		for (i=0; i < serversn; i++)
+			s->servers[i] = servers[i];
         s->serversn = serversn;
 
         if (s->checked)
@@ -310,7 +334,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
                 total_masters++;
             }
         }
-
+	
     // update master sources
     newsocket = UDP_OpenSocket(PORT_ANY);
 
@@ -320,6 +344,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
         int serversn = 0;
         int trynum = 0;
         source_data *s = psources[sourcenum];
+		double timeout;
 
         if (psources[sourcenum]->type != type_master  ||  !psources[sourcenum]->checked)
             continue;
@@ -332,23 +357,26 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
                 continue;
         }
 
-        while (trynum < sb_masterretries.value)
+		// send trynum queries to master server
+        for (trynum=0; trynum < sb_masterretries.value; trynum++)
         {
+			NetadrToSockadr (&(s->address.address), &server);
+            ret = sendto (newsocket, request, sizeof(request), 0,
+                          (struct sockaddr *)&server, sizeof(server) );
+		}
+
+		if (ret <= 0)
+			continue;
+
+		timeout = Sys_DoubleTime() + (sb_mastertimeout.value / 1000.0);
+		while (Sys_DoubleTime() < timeout) {
 			struct sockaddr_storage hostaddr;
             netadr_t from;
 
-            trynum++;
-
-            NetadrToSockadr (&(s->address.address), &server);
-            ret = sendto (newsocket, request, sizeof(request), 0,
-                          (struct sockaddr *)&server, sizeof(server) );
-            if (ret == -1)
-                continue;
-
             //fd.fd_count = 1;
             //fd.fd_array[0] = newsocket;
-        FD_ZERO(&fd);
-      FD_SET(newsocket, &fd);
+			FD_ZERO(&fd);
+			FD_SET(newsocket, &fd);
             tv.tv_sec = 0;
             tv.tv_usec = 1000 * sb_mastertimeout.value;
             ret = select(newsocket+1, &fd, NULL, NULL, &tv);
@@ -376,25 +404,40 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
                         continue;
                     }
 
-                    for (i=6; i+5 < ret; i+=6)
-                    {
-                        char buf[32];
-                        snprintf (buf, sizeof (buf), "%u.%u.%u.%u:%u",
-                            (int)answer[i+0], (int)answer[i+1],
-                            (int)answer[i+2], (int)answer[i+3],
-                            256 * (int)answer[i+4] + (int)answer[i+5]);
+                    // create servers avoiding duplicates
+					for (i=6; i+5 < ret; i+=6)
+					{
+						char buf[32];
+						server_data* server;
+						qbool exists = false;
+						int j;
 
-                        servers[serversn++] = Create_Server(buf);
-                    }
+						snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
+							(int)answer[i+0], (int)answer[i+1],
+							(int)answer[i+2], (int)answer[i+3],
+							256 * (int)answer[i+4] + (int)answer[i+5]);
 
-                    updated++;
-                    break;
+						server = Create_Server(buf);
+						for (j=0; j<serversn; j++) {
+							if (NET_CompareAdr(servers[j]->address, server->address)) {
+								exists = true;
+								break;
+							}
+						}
+						
+						if (!exists)
+							servers[serversn++] = server;
+						else
+							Delete_Server(server);
+					}
                 }
             }
-        }
+		}
+
         // copy all servers to source list
         if (serversn > 0)
         {
+			updated++;
             Reset_Source(s);
             s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
             for (i=0; i < serversn; i++)

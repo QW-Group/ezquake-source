@@ -46,6 +46,7 @@ cvar_t allow_f_cmdline = {"allow_f_cmdline", "1"};
 extern cvar_t enemyforceskins;
 extern cvar_t cl_independentPhysics;
 extern cvar_t allow_scripts;
+extern cvar_t cl_delay_packet;
 extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
 
@@ -197,18 +198,17 @@ static qbool FChecks_CheckFServerRequest (const char *s)
 
 static qbool FChecks_CheckFRulesetRequest (const char *s)
 {
-	char *sScripts, *sIPhysics, *sp1, *sp2;
+	char *sScripts, *sIPhysics, *sDelayP;
 
 	if (cl.spectator || (f_ruleset_reply_time && cls.realtime - f_ruleset_reply_time < 20))
 		return false;
 
 	if (Util_F_Match(s, "f_ruleset"))	{
-		sScripts = (allow_scripts.integer) ? "" : "\x90rj scripts blocked\x91";
-		sIPhysics = (cl_independentPhysics.integer) ? "" : "\x90indep. physics off\x91";
-		sp1 = *sScripts || *sIPhysics ? " " : "";
-		sp2 = *sIPhysics && *sScripts ? " " : "";
+		sScripts = (allow_scripts.integer) ? "" : " \x90rj scripts blocked\x91";
+		sIPhysics = (cl_independentPhysics.integer) ? "" : " \x90indep. physics off\x91";
+		sDelayP = (cl_delay_packet.integer) ? (" \x90" "packet delay\x91") : "";
 
-		Cbuf_AddText(va("say ezQuake Ruleset: %s%s%s%s%s\n", Rulesets_Ruleset(), sp1, sScripts, sp2, sIPhysics));
+		Cbuf_AddText(va("say ezQuake Ruleset: %s%s%s%s\n", Rulesets_Ruleset(), sScripts, sIPhysics, sDelayP));
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}
