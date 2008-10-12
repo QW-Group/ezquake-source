@@ -1694,8 +1694,6 @@ void CL_LinkProjectiles (void)
 	}
 }
 
-#define ISAXSTND(x) ((x) >= 17/*axstnd1*/ && (x) <= 28/*axstnd12*/)
-
 void SetupPlayerEntity(int num, player_state_t *state) 
 {
 	centity_t *cent;
@@ -1716,10 +1714,7 @@ void SetupPlayerEntity(int num, player_state_t *state)
 		if (state->frame != cent->current.frame) 
 		{
 			cent->frametime = cl.time;
-			if (ISAXSTND(cent->current.frame) == ISAXSTND(state->frame))
-				cent->oldframe = cent->current.frame;
-			else
-				cent->oldframe = state->frame;	// hack: no lerping if changing to/from axe
+			cent->oldframe = cent->current.frame;
 			if (state->vw_index == cent->old_vw_index)
 				cent->old_vw_frame = cent->oldframe;
 			else
