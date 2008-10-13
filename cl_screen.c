@@ -994,6 +994,7 @@ void SCR_SetupAutoID (void) {
 	float model[16], project[16], winz, *origin;
 	player_state_t *state;
 	player_info_t *info;
+	centity_t *cent;
 	item_vis_t visitem;
 	autoid_player_t *id;
 
@@ -1024,8 +1025,9 @@ void SCR_SetupAutoID (void) {
 
 	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
 	info = cl.players;
+	cent = &cl_entities[1];
 
-	for (j = 0; j < MAX_CLIENTS; j++, info++, state++)
+	for (j = 0; j < MAX_CLIENTS; j++, info++, state++, cent++)
 	{
 		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator)
 			continue;
@@ -1034,12 +1036,14 @@ void SCR_SetupAutoID (void) {
 			state->modelindex == cl_modelindices[mi_h_player])
 			continue;
 
+		origin = cent->lerp_origin;
+
 		// FIXME: In multiview, this will detect some players being outside of the view even though
 		// he's visible on screen, this only happens in some cases.
-		if (R_CullSphere(state->origin, 0))
+		if (R_CullSphere(origin, 0))
 			continue;
 
-		VectorCopy (state->origin, visitem.entorg);
+		VectorCopy (origin, visitem.entorg);
 		visitem.entorg[2] += 27;
 		VectorSubtract (visitem.entorg, visitem.vieworg, visitem.dir);
 		visitem.dist = DotProduct (visitem.dir, visitem.forward);
@@ -1050,7 +1054,6 @@ void SCR_SetupAutoID (void) {
 
 		id = &autoids[autoid_count];
 		id->player = info;
-		origin = state->origin;
 		if (qglProject(origin[0], origin[1], origin[2] + 28, model, project, view, &id->x, &id->y, &winz))
 			autoid_count++;
 	}
