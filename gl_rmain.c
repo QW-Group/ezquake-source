@@ -227,7 +227,7 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *e, msprite2_t *psprite) {
 	frame = e->frame;
 
 	if (frame >= psprite->numframes || frame < 0) {
-		Com_Printf ("R_GetSpriteFrame: no such frame %d\n", frame);
+		Com_DPrintf ("R_GetSpriteFrame: no such frame %d (model %s)\n", frame, e->model->name);
 		return NULL;
 	}
 
