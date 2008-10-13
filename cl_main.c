@@ -113,6 +113,7 @@ cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0", CVAR_ARCHIVE};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
+cvar_t	cl_physfps_spectator = {"cl_physfps_spectator", "30"};
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnChange_indphys};
 cvar_t	cl_vsync_lag_fix = {"cl_vsync_lag_fix", "0"};
 cvar_t	cl_vsync_lag_tweak = {"cl_vsync_lag_tweak", "1.0"};
@@ -1545,6 +1546,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_lerp_monsters);
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_physfps);
+	Cvar_Register (&cl_physfps_spectator);
 	Cvar_Register (&cl_independentPhysics);
 	Cvar_Register (&cl_vsync_lag_fix);
 	Cvar_Register (&cl_vsync_lag_tweak);
@@ -1877,10 +1879,12 @@ static double MinPhysFrameTime (void)
 {
 	// Server policy
 	float fpscap = (cl.maxfps ? cl.maxfps : 72.0);
+	// Use either cl_physfps_spectator or cl_physfps
+	float physfps = ((cl.spectator && !cls.demoplayback) ? cl_physfps_spectator.value : cl_physfps.value);
 
 	// the user can lower it for testing (or really shit connection)
-	if (cl_physfps.value)
-		fpscap = min(fpscap, cl_physfps.value);
+	if (physfps)
+		fpscap = min(fpscap, physfps);
 
 	// not less than this no matter what
 	fpscap = max(fpscap, 10);
