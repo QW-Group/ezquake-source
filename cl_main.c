@@ -2025,7 +2025,7 @@ void CL_Frame (double time)
 	else
 		cls.frametime = min(0.2, cls.trueframetime);
 
-	if (cl_independentPhysics.value != 0)
+	if (cl_independentPhysics.value != 0 && !cls.demoplayback)
 	{
 		double minphysframetime = MinPhysFrameTime();
 
