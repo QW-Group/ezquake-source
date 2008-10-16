@@ -187,7 +187,7 @@ void Parse_Serverinfo(server_data *s, char *info)
     n = s->playersn + s->spectatorsn - 2;
     for (i = 0; i <= n; i++)
         for (j = n; j >= i; j--)
-            if (s->players[j]->frags  <  s->players[j+1]->frags)
+            if (s->players[j] && s->players[j+1] && s->players[j]->frags < s->players[j+1]->frags)
             {
                 swap = (void*)s->players[j];
                 s->players[j] = s->players[j+1];

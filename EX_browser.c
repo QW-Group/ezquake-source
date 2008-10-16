@@ -255,7 +255,10 @@ void Reset_Server (server_data *s)
 	for (i = 0; i < s->keysn; i++)
 	{
 		Q_free(s->keys[i]);
-		Q_free(s->values[i]);
+		if (s->values[i]) {
+			// fixme: this was causing a crash so a check for not-null-ness was added
+			Q_free(s->values[i]);
+		}
     }
 
 	s->keysn = 0;
