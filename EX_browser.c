@@ -2401,9 +2401,7 @@ int SB_Players_Key(int key)
 qbool SB_Servers_Mouse_Event(const mouse_state_t *ms)
 {
     if (show_serverinfo) {
-        if (ms->button_up) {
-            SB_Servers_Key(K_MOUSE1 - 1 + ms->button_up);
-        } else return true;
+		return true;
     }
     if (ms->button_up == 1)
     {
