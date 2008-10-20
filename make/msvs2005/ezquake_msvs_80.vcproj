@@ -204,6 +204,7 @@
 				WarningLevel="3"
 				WarnAsError="false"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 				CompileAs="1"
 			/>
 			<Tool
@@ -229,6 +230,7 @@
 				GenerateManifest="true"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
 				ModuleDefinitionFile=""
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
 				GenerateMapFile="true"
 				MapFileName="$(TargetDir)$(TargetName).map"
@@ -328,6 +330,7 @@
 				WarningLevel="3"
 				WarnAsError="false"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 				CompileAs="1"
 			/>
 			<Tool
@@ -353,6 +356,7 @@
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
 				ModuleDefinitionFile=""
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
 				GenerateMapFile="true"
 				MapFileName="$(TargetDir)$(TargetName).map"
