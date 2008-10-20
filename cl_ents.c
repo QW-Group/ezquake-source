@@ -906,8 +906,10 @@ void CL_LinkPacketEntities(void)
 		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
 				&& cl.vw_model_precache[0] && r_drawvweps.value)
 		{
-			ent.model = cl.vw_model_precache[0];
-			ent.renderfx |= RF_PLAYERMODEL;
+			// This currently triggers a bug in GL renderer
+			// where world is not drawn, producing a hall of mirrors effect
+			//ent.model = cl.vw_model_precache[0];
+			//ent.renderfx |= RF_PLAYERMODEL;
 		}
 
 		ent.skinnum = state->skinnum;
