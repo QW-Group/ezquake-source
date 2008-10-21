@@ -156,10 +156,10 @@ void CL_CalcCrouch (void) {
 
 extern qbool physframe; // for fps-independent physics
 
-static void CL_LerpMove (double msgtime)
+static void CL_LerpMove (void)
 {	
 	static int		lastsequence = 0;
-	static vec3_t	lerp_angles[3]; // FIXME: These are not being used, why? :)
+	static vec3_t	lerp_angles[3];
 	static vec3_t	lerp_origin[3];
 	static double	lerp_times[3];
 	static qbool	nolerp[2];
@@ -200,7 +200,6 @@ static void CL_LerpMove (double msgtime)
 		VectorCopy (lerp_origin[0], lerp_origin[1]);
 		VectorCopy (cl.simorg, lerp_origin[0]);
 
-		// FIXME: These are never used... Should they be?
 		VectorCopy (lerp_angles[1], lerp_angles[2]);
 		VectorCopy (lerp_angles[0], lerp_angles[1]);
 		VectorCopy (cl.simangles, lerp_angles[0]);
@@ -275,9 +274,6 @@ static void CL_LerpMove (double msgtime)
 	}
 }
 
-double lerp_time;
-
-
 void CL_PredictMove (void) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
@@ -287,7 +283,7 @@ void CL_PredictMove (void) {
 	if (playertime > cls.realtime)
 		playertime = cls.realtime;
 
-	if(cl.paused)
+	if (cl.paused)
 		return;
 
 	if (cl.intermission) {
@@ -332,53 +328,30 @@ void CL_PredictMove (void) {
 		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 		CL_CategorizePosition ();
-		if (cl_independentPhysics.value != 0) 
-			lerp_time = cls.realtime;	//#fps
 	}
-	else
-//#fps
-if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
-{
-	oldphysent = pmove.numphysent;
-	CL_SetSolidPlayers (cl.playernum);
+	else if (physframe || !cl_independentPhysics.value)
+	{
+		oldphysent = pmove.numphysent;
+		CL_SetSolidPlayers (cl.playernum);
 
-	// run frames
-	for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
-		from = to;
-		to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
-		CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
+		// run frames
+		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
+			from = to;
+			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
+			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
+		}
+
+		pmove.numphysent = oldphysent;
+
+		// save results
+		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
+		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 		cl.onground = pmove.onground;
 		cl.waterlevel = pmove.waterlevel;
 	}
 
-	pmove.numphysent = oldphysent;
-
-// shaman RFE 1036160 {
-/*
-	// copy results out for rendering
-	VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
-	VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
-	if (physframe && cl_independentPhysics.value != 0)
-		lerp_time = cls.realtime;
-*/
-
-//	for (i = 0; i < 3; i++) {
-//		if ( fabs(from->playerstate[cl.playernum].origin[i] - to->playerstate[cl.playernum].origin[i]) > 128) {
-			// teleported, so don't lerp
-			VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
-			VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
-//			goto out;
-//		}
-//	} 
-
-	if (physframe && cl_independentPhysics.value != 0)
-		lerp_time = playertime;
-
-// } shaman RFE 1036160
-}
-
 	if (!cls.demoplayback && cl_independentPhysics.value != 0)
-		CL_LerpMove (lerp_time);
+		CL_LerpMove ();
     CL_CalcCrouch ();
 
 #ifdef JSS_CAM
