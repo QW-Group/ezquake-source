@@ -1928,9 +1928,18 @@ void CL_NewTranslation (int slot)
 
 	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR))
 	{
-		qbool teammate;
+		qbool teammate = false;
 
-		teammate = !strcmp(player->team, skinforcing_team);
+		// it's me or it's teamplay and he's my teammate
+		if (cl.spectator && slot == spec_track) {
+			teammate = true;
+		}
+		else if (!cl.spectator && slot == cl.playernum) {
+			teammate = true;
+		}
+		else if (cl.teamplay && !strcmp(player->team, skinforcing_team)) {
+			teammate = true;
+		}
 
 		if (cl_teamtopcolor.value >= 0 && teammate)
 		{
