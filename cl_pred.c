@@ -170,6 +170,7 @@ static void CL_LerpMove (double msgtime)
 	int		from, to;
 	extern cvar_t cl_nolerp;
 	extern int cmdtime_msec;
+	extern double physframetime;
 
 	if (cl_nolerp.value) 
 	{
@@ -237,22 +238,9 @@ static void CL_LerpMove (double msgtime)
 	} 
 	else
 	{
-		// Drift towards ideal latency.
-		float ideal_latency = 0;
-
-		// Independent physics.
+		// slowly drift down till corrected
 		if (physframe)
-		{
-			if (demo_latency > ideal_latency)
-			{
-				demo_latency = max(demo_latency - cls.frametime * 0.1, ideal_latency);
-			}
-			
-			if (demo_latency < ideal_latency)
-			{
-				demo_latency = min(demo_latency + cls.frametime * 0.1, ideal_latency);
-			}
-		}
+			demo_latency -= min(physframetime * 0.005, 0.001);
 	}
 
 	// decide where to lerp from
