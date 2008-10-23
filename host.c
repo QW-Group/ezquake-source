@@ -84,31 +84,45 @@ char * SYSINFO_GetString(void)
 {
 	return f_system_string;
 }
+
 unsigned long long	SYSINFO_memory = 0;
 int					SYSINFO_MHz = 0;
 char				*SYSINFO_processor_description = NULL;
 char				*SYSINFO_3D_description        = NULL;
 
+typedef BOOL (WINAPI *PGMSE)(LPMEMORYSTATUSEX);
+
 #ifdef _WIN32
 void SYSINFO_Init(void)
 {
-#ifdef WITH_ASMLIB
-	char temp[1024];
-#endif
-	MEMORYSTATUSEX	memstat;
 	LONG            ret;
 	HKEY            hKey;
+	PGMSE			pGMSE;
 
-	memstat.dwLength = sizeof(memstat);
-	GlobalMemoryStatusEx(&memstat);
-	SYSINFO_memory = memstat.ullTotalPhys;
+	// Get memory size.
+	if ((pGMSE = (PGMSE)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GlobalMemoryStatusEx")) != NULL)
+	{
+		MEMORYSTATUSEX	memstat;
+		memstat.dwLength = sizeof(memstat);
+		pGMSE(&memstat);
+		SYSINFO_memory = memstat.ullTotalPhys;
+	}
+	else
+	{
+		// Win9x doesn't have GlobalMemoryStatusEx.
+		MEMORYSTATUS memstat;
+		GlobalMemoryStatus(&memstat);
+		SYSINFO_memory = memstat.dwTotalPhys;
+	}
 
+	// Get processor info.
 	ret = RegOpenKey(
 	          HKEY_LOCAL_MACHINE,
 	          "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
 	          &hKey);
 
-	if (ret == ERROR_SUCCESS) {
+	if (ret == ERROR_SUCCESS) 
+	{
 		DWORD type;
 		byte  data[1024];
 		DWORD datasize;
@@ -125,7 +139,7 @@ void SYSINFO_Init(void)
 		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_DWORD)
 			SYSINFO_MHz = *((DWORD *)data);
 
-#ifndef WITH_ASMLIB
+		#ifndef WITH_ASMLIB
 		datasize = 1024;
 		ret = RegQueryValueEx(
 		          hKey,
@@ -137,41 +151,51 @@ void SYSINFO_Init(void)
 
 		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_SZ)
 			SYSINFO_processor_description = Q_strdup((char *) data);
-#endif
+		#endif // !WITH_ASMLIB
 
 		RegCloseKey(hKey);
 	}
 
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
 	{
 		extern const char *gl_renderer;
 
 		if (gl_renderer  &&  gl_renderer[0])
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
-#endif
+	#endif // GLQUAKE
 
+	//
+	// Create the f_system string.
+	//
+	
 	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
 
-#ifdef WITH_ASMLIB
-	ProcessorName (temp);
-	strlcat(f_system_string, ", ", sizeof(f_system_string));
-	strlcat(f_system_string, temp, sizeof(f_system_string));
-#else
-	if (SYSINFO_processor_description) {
+	#ifdef WITH_ASMLIB
+	{
+		char temp[1024];
+		ProcessorName (temp);
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, temp, sizeof(f_system_string));
+	}
+	#else 
+	if (SYSINFO_processor_description) 
+	{
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
-#endif
+	#endif // WITH_ASMLIB
 
-	if (SYSINFO_MHz) {
+	if (SYSINFO_MHz) 
+	{
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
-	if (SYSINFO_3D_description) {
+
+	if (SYSINFO_3D_description) 
+	{
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
-
 }
 #elif defined(__linux__)
 void SYSINFO_Init(void)
