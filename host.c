@@ -90,9 +90,9 @@ int					SYSINFO_MHz = 0;
 char				*SYSINFO_processor_description = NULL;
 char				*SYSINFO_3D_description        = NULL;
 
+#ifdef _WIN32
 typedef BOOL (WINAPI *PGMSE)(LPMEMORYSTATUSEX);
 
-#ifdef _WIN32
 void SYSINFO_Init(void)
 {
 	LONG            ret;
