@@ -549,6 +549,7 @@ extern void SB_SourceMark(void);
 
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
 	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
+	Browser_Init2();
 }
 
 void Startup_Place(void)
@@ -565,7 +566,6 @@ void Startup_Place(void)
 
 void Host_Init (int argc, char **argv, int default_memsize)
 {
-extern void Browser_Init2(void);
 #ifndef WITH_FTE_VFS
 	FILE *f;
 #else
@@ -605,6 +605,7 @@ extern void Browser_Init2(void);
 //#else
 	FS_InitFilesystem ();
 //#endif
+	NET_Init ();
 
 	Commands_For_Configs_Init ();
 
@@ -653,7 +654,6 @@ extern void Browser_Init2(void);
 	Cbuf_Execute ();
 
 	Con_Init ();
-	NET_Init ();
 	NET_InitClient ();
 	Netchan_Init ();
 
@@ -668,8 +668,6 @@ extern void Browser_Init2(void);
 
 	SV_Init ();
 	CL_Init ();
-
-	Browser_Init2();
 
 	Cvar_CleanUpTempVars ();
 
