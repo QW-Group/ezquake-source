@@ -919,41 +919,45 @@ void DrawTextureChains (model_t *model, int contents)
 
                 glBegin (GL_POLYGON);
                 v = s->polys->verts[0];
-				for (k = 0 ; k < s->polys->numverts ; k++, v += VERTEXSIZE)
-				{
-					if (doMtex1)
-					{
-						
-						//Tei: textureless for the map model, and the internal models 
-						if((gl_textureless.value && (isInternalModel || !brushmodel)) )
-						{ //Qrack
-							qglMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
-                            
-							if (mtex_lightmaps)
-								qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
 
-							if (mtex_fbs)
-								qglMultiTexCoord2f (GL_TEXTURE2_ARB, 0, 0);
+				if (!s->texinfo->flags & TEX_SPECIAL)
+				{
+					for (k = 0 ; k < s->polys->numverts ; k++, v += VERTEXSIZE)
+					{
+						if (doMtex1)
+						{
+							
+							//Tei: textureless for the map model, and the internal models 
+							if((gl_textureless.value && (isInternalModel || !brushmodel)) )
+							{ //Qrack
+								qglMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
+	                            
+								if (mtex_lightmaps)
+									qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+
+								if (mtex_fbs)
+									qglMultiTexCoord2f (GL_TEXTURE2_ARB, 0, 0);
+							}
+							else
+							{
+								qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+
+								if (mtex_lightmaps)
+									qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+
+								if (mtex_fbs)
+									qglMultiTexCoord2f (GL_FB_TEXTURE, v[3], v[4]);
+							}
 						}
 						else
 						{
-							qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
-
-							if (mtex_lightmaps)
-								qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
-
-							if (mtex_fbs)
-								qglMultiTexCoord2f (GL_FB_TEXTURE, v[3], v[4]);
+								if((gl_textureless.value) && !brushmodel) //Qrack
+									glTexCoord2f (0, 0);
+								else
+									glTexCoord2f (v[3], v[4]);
 						}
+						glVertex3fv (v);
 					}
-					else
-					{
-                            if((gl_textureless.value) && !brushmodel) //Qrack
-								glTexCoord2f (0, 0);
-							else
-                                glTexCoord2f (v[3], v[4]);
-					}
-					glVertex3fv (v);
 				}
 				glEnd ();
 
