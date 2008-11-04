@@ -106,7 +106,7 @@ cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// will break demos!
 
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
-cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "2"};
+cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "5"};
 #endif
 
 cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
