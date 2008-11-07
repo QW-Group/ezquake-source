@@ -1042,6 +1042,7 @@ void Config_LegacyQuake_f(void)
 			"hide ownfrags;echo hiding the ownfrags hud element (undo: show ownfrags);"
 			"menu_ingame 0;echo turning off ingame menu (undo: menu_ingame 1);"
 			"gl_powerupshells 0;echo turning off powerup shell (undo: gl_powerupshells 1);"
+			"r_drawvweps 0;echo turning off vweps (undo: r_drawvweps 1);"
 			);
 	}
 
