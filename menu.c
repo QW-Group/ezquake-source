@@ -1099,7 +1099,7 @@ void M_Save_Draw (void) {
 			M_Print_GetPoint (16, 32 + 8 * i, &lx, &ly, m_filenames[i], load_cursor == i);
 	}
 
-	save_window.w = lx - SAVEGAME_COMMENT_LENGTH*8;
+	save_window.w = SAVEGAME_COMMENT_LENGTH*8; // presume 8 pixels for each letter
 	save_window.h = ly - save_window.y + 8;
 
 	// line cursor
@@ -1199,7 +1199,12 @@ void M_Save_Key (int key) {
 
 qbool M_Save_Mouse_Event(const mouse_state_t *ms)
 {
-	return M_Mouse_Select(&save_window, ms, MAX_SAVEGAMES, &load_cursor);
+	M_Mouse_Select(&save_window, ms, MAX_SAVEGAMES, &load_cursor);
+
+    if (ms->button_up == 1) M_Save_Key(K_MOUSE1);
+    if (ms->button_up == 2) M_Save_Key(K_MOUSE2);
+
+	return true;
 }
 
 qbool M_Load_Mouse_Event(const mouse_state_t *ms)
@@ -1500,7 +1505,7 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_multiplayer_submenu: return M_MultiPlayerSub_Mouse_Event(ms);
 #ifndef CLIENTONLY
 	case m_load:			return M_Load_Mouse_Event(ms);
-	case m_save:			return M_Load_Mouse_Event(ms);
+	case m_save:			return M_Save_Mouse_Event(ms);
 #endif
 	case m_options:			return Menu_Options_Mouse_Event(ms);
 	case m_demos:			return Menu_Demo_Mouse_Event(ms);
