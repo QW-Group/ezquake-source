@@ -262,7 +262,7 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 	}
 	else
 	{
-		message = tp_ib_name_enemy " {%q}"; // %q is last seen powerup of enemy. defaults to quad, which is nice (but it won't be colored)
+		message = tp_ib_name_enemy " %q"; // %q is last seen powerup of enemy. defaults to quad, which is nice (but it won't be colored)
 	}
 
 	TP_Send_TeamSay("%s", message);
