@@ -104,3 +104,47 @@ extern int		d_minmip;
 extern float	d_scalemip[3];
 
 extern void (*d_drawspans) (espan_t *pspan);
+
+#ifdef FTE_PEXT_TRANS
+#define PAL555_SIZE 32*32*32
+#define TRANS_LEVELS 65
+#define TRANS_MAX (TRANS_LEVELS - 1)
+
+#define TRANS_UPPER_CAP (TRANS_MAX / (TRANS_LEVELS + 0.0))
+#define TRANS_LOWER_CAP (1.0 / TRANS_LEVELS)
+
+#define REMAP_MAX 64
+
+// palette remap cache
+typedef struct palremap_s {
+	int r;
+	int g;
+	int b;
+	int key;
+	int references;
+	qbyte pal[256];
+} palremap_t;
+
+palremap_t *palremaps;
+int palremapsize;
+
+#define fbremapidx(x) palremaps[1].pal[x]
+
+#define identityremap palremaps[0]
+#define fullbrightremap palremaps[1]
+
+palremap_t *D_GetPaletteRemap(int red, int green, int blue, qboolean desaturate, qboolean fullbrights, int topcolor, int bottomcolor);
+qbyte *D_GetMenuTintPal(void);
+struct palremap_s *D_IdentityRemap(void);
+void D_DereferenceRemap(palremap_t *palremap);
+
+void D_InitTrans(void);
+// void Set_TransLevelI(int level);
+void D_SetTransLevel(float level, blendmode_t blend);
+extern qbyte Trans(qbyte p, qbyte p2);
+extern qbyte AddBlend(qbyte p, qbyte p2);
+
+extern qbyte *pal555to8;
+
+void D_ShutdownTrans(void);
+#endif

@@ -77,6 +77,8 @@ typedef struct
 
 	int			flags;			// Dead, gib, etc.
 
+	byte alpha;
+
 	byte		vw_index;
 	byte		pm_type;
 	float		waterjumptime;

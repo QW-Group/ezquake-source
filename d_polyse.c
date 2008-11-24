@@ -198,6 +198,19 @@ void D_DrawSubdiv (void)
 	ptri = r_affinetridesc.ptriangles;
 	lnumtriangles = r_affinetridesc.numtriangles;
 
+#ifdef FTE_PEXT_TRANS
+	if (transbackfac)
+	{
+		if (r_pixbytes == 4)
+			drawfnc = D_PolysetRecursiveTriangle32Trans;
+		else if (r_pixbytes == 2)
+			drawfnc = D_PolysetRecursiveTriangle16C;
+		else //if (r_pixbytes == 1)
+			drawfnc = D_PolysetRecursiveTriangleTrans;
+	}
+	else
+#endif
+
 	for (i=0 ; i<lnumtriangles ; i++)
 	{
 		index0 = pfv + ptri[i].vertindex[0];

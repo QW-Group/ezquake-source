@@ -543,6 +543,9 @@ unsigned int CL_SupportedFTEExtensions (void)
 #ifdef FTE_PEXT_ACCURATETIMINGS
 	fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
 #endif
+#ifdef FTE_PEXT_TRANS
+	fteprotextsupported |= FTE_PEXT_TRANS;
+#endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (cl_pext_chunkeddownloads.value)
 		fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
@@ -607,6 +610,7 @@ static void CL_SendConnectPacket(
 	{
 		char tmp[128];
 		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
+		Con_Printf( "0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
 		strlcat(data, tmp, sizeof(data));
 	}
 	#endif // PROTOCOL_VERSION_FTE 

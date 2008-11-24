@@ -69,6 +69,10 @@ void D_Init (void) {
 	Cvar_ResetCurrentGroup();
 
 	r_aliasuvscale = 1.0;
+
+#ifdef FTE_PEXT_TRANS
+	D_InitTrans();
+#endif
 }
 
 void D_EnableBackBufferAccess (void) {

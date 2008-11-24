@@ -498,6 +498,11 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	}
 
 #ifdef PROTOCOL_VERSION_FTE
+#ifdef FTE_PEXT_TRANS
+	if (morebits & U_FTE_TRANS && cls.fteprotocolextensions & FTE_PEXT_TRANS)
+		to->trans = MSG_ReadByte();
+#endif
+
 #ifdef FTE_PEXT_ENTITYDBL
 	if (morebits & U_FTE_ENTITYDBL)
 		to->number += 512;
@@ -969,7 +974,12 @@ void CL_LinkPacketEntities(void)
 				VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
 			}
 		}
-	
+
+#ifdef FTE_PEXT_TRANS
+		//set trans
+		ent.alpha = state->trans/255.0;
+#endif
+
 		if (ent.model->flags & EF_ROTATE)
 		{
 			ent.angles[0] = ent.angles[2] = 0;
@@ -1920,6 +1930,13 @@ void CL_ParsePlayerinfo (void)
 			state->weaponframe = MSG_ReadByte ();
 		else
 			state->weaponframe = 0;
+
+
+	state->alpha = 255;
+#ifdef FTE_PEXT_TRANS
+		if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
+			state->alpha = MSG_ReadByte();
+#endif
 
 		if (cl.z_ext & Z_EXT_PM_TYPE)
 		{

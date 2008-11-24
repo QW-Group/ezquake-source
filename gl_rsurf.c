@@ -1140,6 +1140,13 @@ void R_DrawBrushModel (entity_t *e) {
 		rotated = true;
 		if (R_CullSphere (e->origin, clmodel->radius))
 			return;
+	   if (e->alpha) {
+		  glEnable (GL_BLEND);
+		  glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		  glColor4f (1, 1, 1, e->alpha);
+	   } else {
+		  glColor3f (1,1,1);
+	   } 
 	} else {
 		rotated = false;
 		VectorAdd (e->origin, clmodel->mins, mins);
@@ -1147,6 +1154,14 @@ void R_DrawBrushModel (entity_t *e) {
 
 		if (R_CullBox (mins, maxs))
 			return;
+
+	   if (e->alpha) {
+		  glEnable (GL_BLEND);
+		  glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		  glColor4f (1, 1, 1, e->alpha);
+	   } else {
+		  glColor3f (1,1,1);
+	   } 
 	}
 
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
