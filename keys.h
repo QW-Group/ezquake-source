@@ -251,7 +251,7 @@ void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, const char *binding);
 void Key_Unbind (int keynum);
 void Key_ClearStates (void);
-int	 Key_StringToKeynum (char *str);
+int	 Key_StringToKeynum (const char *str);
 #ifdef WITH_KEYMAP
 char	*Key_KeynumToString (int keynum, char *buffer);
 int	IN_Key_Clean(int key);

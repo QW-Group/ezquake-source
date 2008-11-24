@@ -1364,7 +1364,7 @@ void Key_Message (int key, wchar unichar) {
 //Returns a key number to be used to index keybindings[] by looking at the given string.
 //Single ascii characters return themselves, while the K_* names are matched up.
 #define UNKNOWN_S "UNKNOWN"
-int Key_StringToKeynum (char *str)
+int Key_StringToKeynum (const char *str)
 {
 	keyname_t *kn;
 #ifdef WITH_KEYMAP
@@ -2045,6 +2045,11 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			kb = keybindings[key];
 			if (kb)
 			{
+				if (Key_TryMovementProtected(kb, down, key)) {
+					// this was a protected movement binding and was executed
+					return;
+				}
+
 				if (kb[0] == '+' && keyactive[key]) 
 				{
 					snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
@@ -2087,6 +2092,11 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		
 		if (kb) 
 		{
+			if (Key_TryMovementProtected(kb, down, key)) {
+				// this was a protected movement binding and was executed
+				return;
+			}
+
 			if (kb[0] == '+')
 			{	
 				// Button commands add keynum as a parm.

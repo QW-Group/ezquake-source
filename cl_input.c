@@ -85,17 +85,8 @@ int weapon_order[MAXWEAPONS] = {2, 1};
 
 int IN_BestWeapon (void);
 
-void KeyDown (kbutton_t *b) 
+void KeyDown_common (kbutton_t *b, int k) 
 {
-	int k;
-	char *c;
-	
-	c = Cmd_Argv(1);
-	if (c[0])
-		k = atoi(c);
-	else
-		k = -1;		// typed manually at the console for continuous down
-
 	if (k == b->down[0] || k == b->down[1])
 		return;		// repeating key
 	
@@ -118,15 +109,9 @@ void KeyDown (kbutton_t *b)
 	b->state |= 1 + 2;	// down + impulse down
 }
 
-void KeyUp (kbutton_t *b)
+void KeyUp_common (kbutton_t *b, int k)
 {
-	int k;
-	char *c;
-	
-	c = Cmd_Argv(1);
-	if (c[0]) {
-		k = atoi(c);
-	} else { // typed manually at the console, assume for unsticking, so clear all
+	if (k == -1) { // typed manually at the console, assume for unsticking, so clear all
 		b->down[0] = b->down[1] = 0;
 		b->state &= ~1;		// now up
 		b->state |= 4; 		// impulse up
@@ -149,6 +134,28 @@ void KeyUp (kbutton_t *b)
 	b->state |= 4; 		// impulse up
 }
 
+void KeyDown(kbutton_t *b)
+{
+	int k = -1;
+	char *c = Cmd_Argv(1);
+	if (*c) {
+		k = atoi(c);
+	}
+
+	KeyDown_common(b, k);
+}
+
+void KeyUp(kbutton_t *b)
+{
+	int k = -1;
+	char *c = Cmd_Argv(1);
+	if (*c) {
+		k = atoi(c);
+	}
+
+	KeyUp_common(b, k);
+}
+
 void IN_KLookDown (void) {KeyDown(&in_klook);}
 void IN_KLookUp (void) {KeyUp(&in_klook);}
 
@@ -161,31 +168,64 @@ void IN_MLookUp (void)
 		V_StartPitchDrift();
 }
 
-void IN_UpDown(void) {KeyDown(&in_up);}
-void IN_UpUp(void) {KeyUp(&in_up);}
-void IN_DownDown(void) {KeyDown(&in_down);}
-void IN_DownUp(void) {KeyUp(&in_down);}
-void IN_LeftDown(void) {KeyDown(&in_left);}
-void IN_LeftUp(void) {KeyUp(&in_left);}
-void IN_RightDown(void) {KeyDown(&in_right);}
-void IN_RightUp(void) {KeyUp(&in_right);}
-void IN_ForwardDown(void) {KeyDown(&in_forward);}
-void IN_ForwardUp(void) {KeyUp(&in_forward);}
-void IN_BackDown(void) {KeyDown(&in_back);}
-void IN_BackUp(void) {KeyUp(&in_back);}
-void IN_LookupDown(void) {KeyDown(&in_lookup);}
-void IN_LookupUp(void) {KeyUp(&in_lookup);}
-void IN_LookdownDown(void) {KeyDown(&in_lookdown);}
-void IN_LookdownUp(void) {KeyUp(&in_lookdown);}
-void IN_MoveleftDown(void) {KeyDown(&in_moveleft);}
-void IN_MoveleftUp(void) {KeyUp(&in_moveleft);}
-void IN_MoverightDown(void) {KeyDown(&in_moveright);}
-void IN_MoverightUp(void) {KeyUp(&in_moveright);}
+#define PROTECTEDKEY()                                 \
+	if (allow_scripts.integer == 0) {                  \
+		Com_Printf("Movement scripts are disabled\n"); \
+		return;                                        \
+	}
+
+void IN_UpDown(void) {PROTECTEDKEY(); KeyDown(&in_up);}
+void IN_UpUp(void) {PROTECTEDKEY(); KeyUp(&in_up);}
+void IN_DownDown(void) {PROTECTEDKEY(); KeyDown(&in_down);}
+void IN_DownUp(void) {PROTECTEDKEY(); KeyUp(&in_down);}
+void IN_LeftDown(void) {PROTECTEDKEY(); KeyDown(&in_left);}
+void IN_LeftUp(void) {PROTECTEDKEY(); KeyUp(&in_left);}
+void IN_RightDown(void) {PROTECTEDKEY(); KeyDown(&in_right);}
+void IN_RightUp(void) {PROTECTEDKEY(); KeyUp(&in_right);}
+void IN_ForwardDown(void) {PROTECTEDKEY(); KeyDown(&in_forward);}
+void IN_ForwardUp(void) {PROTECTEDKEY(); KeyUp(&in_forward);}
+void IN_BackDown(void) {PROTECTEDKEY(); KeyDown(&in_back);}
+void IN_BackUp(void) {PROTECTEDKEY(); KeyUp(&in_back);}
+void IN_LookupDown(void) {PROTECTEDKEY(); KeyDown(&in_lookup);}
+void IN_LookupUp(void) {PROTECTEDKEY(); KeyUp(&in_lookup);}
+void IN_LookdownDown(void) {PROTECTEDKEY(); KeyDown(&in_lookdown);}
+void IN_LookdownUp(void) {PROTECTEDKEY(); KeyUp(&in_lookdown);}
+void IN_MoveleftDown(void) {PROTECTEDKEY(); KeyDown(&in_moveleft);}
+void IN_MoveleftUp(void) {PROTECTEDKEY(); KeyUp(&in_moveleft);}
+void IN_MoverightDown(void) {PROTECTEDKEY(); KeyDown(&in_moveright);}
+void IN_MoverightUp(void) {PROTECTEDKEY(); KeyUp(&in_moveright);}
 
 void IN_SpeedDown(void) {KeyDown(&in_speed);}
 void IN_SpeedUp(void) {KeyUp(&in_speed);}
 void IN_StrafeDown(void) {KeyDown(&in_strafe);}
 void IN_StrafeUp(void) {KeyUp(&in_strafe);}
+
+// returns true if given command is a protected movement command and was executed successfully
+qbool Key_TryMovementProtected(const char *cmd, qbool down, int key)
+{
+	typedef void (*KeyPress_fnc) (kbutton_t *b, int key);
+	KeyPress_fnc f = down ? KeyDown_common : KeyUp_common;
+	kbutton_t *b = NULL;
+
+	if      (strcmp(cmd, "+forward") == 0) b = &in_forward;
+	else if (strcmp(cmd, "+back") == 0) b = &in_back;
+	else if (strcmp(cmd, "+moveleft") == 0) b = &in_moveleft;
+	else if (strcmp(cmd, "+moveright") == 0) b = &in_moveright;
+	else if (strcmp(cmd, "+left") == 0) b = &in_left;
+	else if (strcmp(cmd, "+right") == 0) b = &in_right;
+	else if (strcmp(cmd, "+lookup") == 0) b = &in_lookup;
+	else if (strcmp(cmd, "+lookdown") == 0) b = &in_lookdown;
+	else if (strcmp(cmd, "+up") == 0) b = &in_up;
+	else if (strcmp(cmd, "+down") == 0) b = &in_down;
+
+	if (b) {
+		f(b, key);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
 
 void IN_AttackDown(void) 
 {
