@@ -48,7 +48,7 @@ void CL_SendClientCommand(qbool reliable, char *format, ...);
 void CL_SendCmd (void);
 void CL_BaseMove (usercmd_t *cmd);
 float CL_KeyState (kbutton_t *key, qbool lookbutton);
-
+qbool Key_TryMovementProtected(const char *cmd, qbool down, int key);
 
 extern cvar_t	allow_scripts;
 
