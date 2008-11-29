@@ -77,7 +77,7 @@ typedef struct
 
 	int			flags;			// Dead, gib, etc.
 
-	byte alpha;
+	byte		alpha;
 
 	byte		vw_index;
 	byte		pm_type;
