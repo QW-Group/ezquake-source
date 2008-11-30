@@ -120,6 +120,8 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 		fclose(d->file);
 	if (d->socket)
 		closesocket(d->socket);
+	if (d->qtvuserlist)
+		QTVsv_FreeUserList(d);
 
 	if (destroyfiles)
 	{

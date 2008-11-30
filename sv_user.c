@@ -957,7 +957,7 @@ void SV_NextChunkedDownload(int chunknum, int percent, int chunked_download_numb
 
 	if (sv_client->download_chunks_perframe)
 	{
-		int maxchunks = bound(1, (int)sv_downloadchunksperframe.value, 5);
+		int maxchunks = bound(1, (int)sv_downloadchunksperframe.value, 4);
 		// too much requests or client sent something wrong
 		if (sv_client->download_chunks_perframe >= maxchunks || chunked_download_number < 1)
 			return;
@@ -2732,6 +2732,10 @@ void SV_Cmd_Banip_f(void);
 void SV_Cmd_Banremove_f(void);
 // } bans
 
+// { qtv
+void Cmd_Qtvusers_f (void);
+// }
+
 typedef struct
 {
 	char	*name;
@@ -2796,6 +2800,8 @@ static ucmd_t ucmds[] =
 
 	{"join", Cmd_Join_f, true},
 	{"observe", Cmd_Observe_f, true},
+
+	{"qtvusers", Cmd_Qtvusers_f, true},
 
 	{NULL, NULL}
 

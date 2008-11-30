@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __SERVER_H__
 
 #include "progs.h"
+#include "qtv.h"
 
 // { !!! FIXME: MOVE ME TO SYS.H !!!
 
@@ -401,6 +402,7 @@ typedef struct mvddest_s
 	int				inbuffersize;
 
 	char			qtvname[64];
+	qtvuser_t		*qtvuserlist;
 // }
 
 	struct mvddest_s *nextdest;
@@ -601,7 +603,10 @@ typedef struct
 
 // force player enter server as spectator if all players's slots are busy and
 // if there are empty slots for spectators and sv_forcespec_onfull == 2
-#define SVF_SPEC_ONFULL			(1<<0)	
+#define SVF_SPEC_ONFULL			(1<<0)
+// do not join server as spectator if server full and sv_forcespec_onfull == 1
+#define SVF_NO_SPEC_ONFULL		(1<<1)
+
 
 // } server flags
 
@@ -783,6 +788,11 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
 void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...);
 void SV_ClientPrintf2 (client_t *cl, int level, char *fmt, ...);
 void SV_BroadcastPrintf (int level, char *fmt, ...);
+#define BPRINT_IGNOREINDEMO  (1<<0) // broad cast print will be not put in demo
+#define BPRINT_IGNORECLIENTS (1<<1) // broad cast print will not be seen by clients, but may be seen in demo
+#define BPRINT_QTVONLY       (1<<2) // if broad cast print goes to demo, then it will be only qtv sream, but not file
+#define BPRINT_IGNORECONSOLE (1<<3) // broad cast print will not be put in server console
+void SV_BroadcastPrintfEx (int level, int flags, char *fmt, ...);
 void SV_BroadcastCommand (char *fmt, ...);
 void SV_SendClientMessages (void);
 void SV_SendDemoMessage(void);
@@ -919,6 +929,9 @@ extern cvar_t	qtv_streamtimeout;
 void SV_MVDStream_Poll(void);
 void SV_MVDCloseStreams(void);
 void SV_QTV_Init(void);
+
+void DemoWriteQTV (sizebuf_t *msg);
+void QTVsv_FreeUserList(mvddest_t *d);
 
 //
 // sv_login.c

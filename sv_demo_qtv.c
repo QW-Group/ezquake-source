@@ -65,9 +65,9 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	strlcpy(dst->qtvname, name, sizeof(dst->qtvname));
 
 	if (dst->qtvname[0])
-		SV_BroadcastPrintf (PRINT_CHAT, "Smile, you're on QTV(%s)!\n", dst->qtvname);
+		Con_Printf ("Connected to QTV(%s)\n", dst->qtvname);
 	else
-		SV_BroadcastPrintf (PRINT_CHAT, "Smile, you're on QTV!\n");
+		Con_Printf ("Connected to QTV\n");
 
 	return dst;
 }
@@ -782,6 +782,267 @@ void QTVcmd_Say_f(mvddest_t *d)
 
 // }
 
+// {
+
+static qtvuser_t *QTVsv_UserById(mvddest_t *d, int id)
+{
+	qtvuser_t *current;
+
+	for (current = d->qtvuserlist; current; current = current->next)
+		if (current->id == id)
+			return current;
+
+	return NULL;
+}
+
+static void QTVsv_SetUser(qtvuser_t *to, qtvuser_t *from)
+{
+	*to = *from;
+}
+
+static int QTVsv_UsersCount(mvddest_t *d)
+{
+	qtvuser_t *current;
+	int c = 0;
+
+	for (current = d->qtvuserlist; current; current = current->next)
+		c++;
+
+	return c;
+}
+
+// allocate data and set fields, perform linkage to qtvuserlist
+// Well, instead of QTVsv_NewUser(int id, char *name, ...) I pass params with single qtvuser_t *user struct, well its OK for current struct.
+static qtvuser_t *QTVsv_NewUser(mvddest_t *d, qtvuser_t *user)
+{
+	// check, may be user alredy exist, so reuse it
+	qtvuser_t *newuser = QTVsv_UserById(d, user->id);
+
+	if (!newuser)
+	{
+		// user does't exist, alloc data
+		if (QTVsv_UsersCount(d) > 2048)
+		{
+			Con_Printf("QTVsv_NewUser: too much users, haxors? Dropping dest\n");
+			d->error = true; // drop dest later
+			return NULL;
+		}
+
+		newuser = Q_malloc(sizeof(*newuser)); // alloc
+
+		QTVsv_SetUser(newuser, user);
+
+		// perform linkage
+		newuser->next = d->qtvuserlist;
+		d->qtvuserlist = newuser;
+	}
+	else
+	{
+		// we do not need linkage, just save current
+		qtvuser_t *oldnext = newuser->next; // we need save this before assign all fields
+
+		QTVsv_SetUser(newuser, user);
+
+		newuser->next = oldnext;
+	}
+
+	return newuser;
+}
+
+// free data, perform unlink if requested
+static void QTVsv_FreeUser(mvddest_t *d, qtvuser_t *user, qbool unlink)
+{
+	if (!user)
+		return;
+
+	if (unlink)
+	{
+		qtvuser_t *next, *prev, *current;
+
+		prev = NULL;
+		current = d->qtvuserlist;
+
+		for ( ; current; )
+		{
+			next = current->next;
+
+			if (user == current)
+			{
+				if (prev)
+					prev->next = next;
+				else
+					d->qtvuserlist = next;
+
+				break;
+			}
+
+			prev = current;
+			current = next;
+		}
+	}
+
+	Q_free(user);
+}
+
+// free whole qtvuserlist
+void QTVsv_FreeUserList(mvddest_t *d)
+{
+	qtvuser_t *next, *current;
+
+	current = d->qtvuserlist;
+
+	for ( ; current; current = next)
+	{
+		next = current->next;
+		QTVsv_FreeUser(d, current, false);
+	}
+
+	d->qtvuserlist = NULL;
+}
+
+#define QTV_EVENT_PREFIX "QTV: "
+
+// user join qtv
+void QTVsv_JoinEvent(mvddest_t *d, qtvuser_t *user)
+{
+	// make it optional message
+//	if (!qtv_event_join.string[0])
+//		return;
+
+	// do not show "user joined" at moment of connection to QTV, it mostly QTV just spammed userlist to us.
+//	if (cls.state <= ca_demostart)
+//		return;
+
+	if (QTVsv_UserById(d, user->id))
+	{
+		// we alredy have this user, do not double trigger
+		return;
+	}
+
+	Con_Printf("%s%s: %s%s\n", QTV_EVENT_PREFIX, d->qtvname, user->name, /*qtv_event_join.string*/ " join");
+}
+
+// user leaved/left qtv
+void QTVsv_LeaveEvent(mvddest_t *d, qtvuser_t *user)
+{
+	qtvuser_t *olduser;
+
+	// make it optional message
+//	if (!qtv_event_leave.string[0])
+//		return;
+
+	if (!(olduser = QTVsv_UserById(d, user->id)))
+	{
+		// we do not have this user
+		return;
+	}
+
+	Con_Printf("%s%s: %s%s\n", QTV_EVENT_PREFIX, d->qtvname, olduser->name, /*qtv_event_leave.string*/ " left");
+}
+
+// user changed name on qtv
+void QTVsv_ChangeEvent(mvddest_t *d, qtvuser_t *user)
+{
+	qtvuser_t *olduser;
+
+	// well, too spammy, make it as option
+//	if (!qtv_event_changename.string[0])
+//		return;
+
+	if (!(olduser = QTVsv_UserById(d, user->id)))
+	{
+		// we do not have this user yet
+		Con_DPrintf("qtv: change event without olduser\n");
+		return;
+	}
+
+	Con_Printf("%s%s: %s%s%s\n", QTV_EVENT_PREFIX, d->qtvname, olduser->name, /*qtv_event_changename.string*/ " changed name to ", user->name);
+}
+
+static void QTVcmd_QtvUserList_f(mvddest_t *d)
+{
+	qtvuser_t		tmpuser;
+	qtvuserlist_t	action;
+	int				cnt = 1;
+	
+	memset(&tmpuser, 0, sizeof(tmpuser));
+
+	// action id [\"name\"]
+
+//	Cmd_TokenizeString( s );
+
+	action 		= atoi( Cmd_Argv( cnt++ ) );
+	tmpuser.id	= atoi( Cmd_Argv( cnt++ ) );
+	strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
+
+	switch ( action )
+	{
+		case QUL_ADD:
+			QTVsv_JoinEvent(d, &tmpuser);
+			QTVsv_NewUser(d, &tmpuser);
+
+		break;
+		
+		case QUL_CHANGE:
+			QTVsv_ChangeEvent(d, &tmpuser);
+			QTVsv_NewUser(d, &tmpuser);
+
+		break;
+
+		case QUL_DEL:
+			QTVsv_LeaveEvent(d, &tmpuser);
+			QTVsv_FreeUser(d, QTVsv_UserById(d, tmpuser.id), true);
+
+		break;
+
+		default:
+			Con_Printf("Parse_QtvUserList: unknown action %d\n", action);
+
+		return;
+	}
+}
+
+// this issued remotely by user
+void Cmd_Qtvusers_f (void)
+{
+	mvddest_t *d;
+	qbool found = false;
+
+	for (d = demo.dest; d; d = d->nextdest)
+	{
+		qtvuser_t *current;
+		int c;
+
+		if (d->desttype != DEST_STREAM)
+			continue;
+
+		found = true;
+
+		c = 0;
+		Con_Printf ("Proxy name: %s, id: %d\n", d->qtvname, d->id);
+		Con_Printf ("userid name\n");
+		Con_Printf ("------ ----\n");
+
+		for (current = d->qtvuserlist; current; current = current->next)
+		{
+			Con_Printf ("%6i %s\n", current->id, current->name);
+			c++;
+		}
+
+		Con_Printf ("%i total users\n", c);
+	}
+
+	if (!found)
+	{
+		Con_Printf ("no single qtv connected\n");
+		return;
+	}
+}
+
+
+// }
+
+
 char QTV_cmd[MAX_PROXY_INBUFFER]; // global so it does't allocated on stack, this save some CPU I think
 
 typedef struct
@@ -796,6 +1057,8 @@ static qtv_ucmd_t ucmds[] =
 	{"say", 			QTVcmd_Say_f},
 	{"say_team",		QTVcmd_Say_f},
 	{"say_game",		QTVcmd_Say_f},
+
+	{"qul",				QTVcmd_QtvUserList_f},
 
 	{NULL, NULL}
 };
@@ -1033,6 +1296,32 @@ void DemoWriteQTVTimePad (int msecs)	//broadcast to all proxies
 	}
 }
 */
+
+//broadcast to all proxies
+void DemoWriteQTV (sizebuf_t *msg)
+{
+	mvddest_t		*d;
+	sizebuf_t		mvdheader;
+	byte			mvdheader_buf[6];
+
+	SZ_InitEx(&mvdheader, mvdheader_buf, sizeof(mvdheader_buf), false);
+
+	//duration
+	MSG_WriteByte (&mvdheader, 0);
+	//message type
+	MSG_WriteByte (&mvdheader, dem_all);
+	//length
+	MSG_WriteLong (&mvdheader, msg->cursize);
+
+	for (d = demo.dest; d; d = d->nextdest)
+	{
+		if (d->desttype == DEST_STREAM)
+		{
+			DemoWriteDest(mvdheader.data, mvdheader.cursize, d);
+			DemoWriteDest(msg->data, msg->cursize, d);
+		}
+	}
+}
 
 void Qtv_List_f(void)
 {
