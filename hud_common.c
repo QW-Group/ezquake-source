@@ -1845,18 +1845,19 @@ void SCR_HUD_DrawArmor(hud_t *hud)
 {
     int level;
     qbool low;
-    static cvar_t *scale = NULL, *style, *digits, *align;
+    static cvar_t *scale = NULL, *style, *digits, *align, *pent_666;
     if (scale == NULL)  // first time called
     {
         scale  = HUD_FindVar(hud, "scale");
         style  = HUD_FindVar(hud, "style");
         digits = HUD_FindVar(hud, "digits");
         align  = HUD_FindVar(hud, "align");
+		pent_666 = HUD_FindVar(hud, "pent_666"); // Show 666 or armor value when carrying pentagram
     }
 
     if (HUD_Stats(STAT_HEALTH) > 0)
     {
-        if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
+		if ((HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) && pent_666->integer)
         {
             level = 666;
             low = true;
@@ -6489,6 +6490,7 @@ void CommonDraw_Init(void)
         "scale",  "1",
         "align",  "right",
         "digits", "3",
+		"pent_666", "1",  // Show 666 instead of armor value	
         NULL);
 
 	// armor icon
