@@ -40,6 +40,8 @@
 #import "d_local.h"
 #import "in_osx.h"
 #import "vid_osx.h"
+#import "keys.h"
+#import "wad.h"
 
 #pragma mark -
 
@@ -1812,7 +1814,7 @@ void	VID_TestMode_f (void)
     else
     {
         // don't allow overlapping tests:
-        Con_Print ("Please wait until the first test has finished!\n");
+        Com_Printf ("Please wait until the first test has finished!\n");
     }
 }
 

@@ -16,6 +16,23 @@
 		920C63600E3657AB0024236F /* sv_demo_qtv.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635B0E3657AB0024236F /* sv_demo_qtv.c */; };
 		920C63610E3657AB0024236F /* sv_login.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635C0E3657AB0024236F /* sv_login.c */; };
 		920C63620E3657AB0024236F /* sv_mod_frags.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635D0E3657AB0024236F /* sv_mod_frags.c */; };
+		924527910EE883F500EA8BCA /* libexpat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019930DE7FFCC00F1108A /* libexpat.a */; };
+		924527940EE8841100EA8BCA /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019940DE7FFCC00F1108A /* libjpeg.a */; };
+		924527950EE8841800EA8BCA /* libpcre.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019950DE7FFCC00F1108A /* libpcre.a */; };
+		924527960EE8841E00EA8BCA /* libpng.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019960DE7FFCC00F1108A /* libpng.a */; };
+		924527970EE8842B00EA8BCA /* libz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019970DE7FFCC00F1108A /* libz.a */; };
+		924527A70EE8856600EA8BCA /* pr2_cmds.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63500E3657690024236F /* pr2_cmds.c */; };
+		924527A80EE8856700EA8BCA /* pr2_edict.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63510E3657690024236F /* pr2_edict.c */; };
+		924527A90EE8856700EA8BCA /* pr2_exec.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63520E3657690024236F /* pr2_exec.c */; };
+		924527AA0EE8856800EA8BCA /* pr2_vm.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63530E3657690024236F /* pr2_vm.c */; };
+		924527B20EE8857F00EA8BCA /* sv_demo.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63590E3657AB0024236F /* sv_demo.c */; };
+		924527B30EE8858000EA8BCA /* sv_demo_misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635A0E3657AB0024236F /* sv_demo_misc.c */; };
+		924527B40EE8858000EA8BCA /* sv_demo_qtv.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635B0E3657AB0024236F /* sv_demo_qtv.c */; };
+		924527B50EE8858200EA8BCA /* sv_login.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635C0E3657AB0024236F /* sv_login.c */; };
+		924527C20EE886F500EA8BCA /* vx_tracker.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276E0C09DFE12F00AE5EF8 /* vx_tracker.c */; };
+		924527C60EE887CD00EA8BCA /* sv_mod_frags.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635D0E3657AB0024236F /* sv_mod_frags.c */; };
+		924527C80EE8887700EA8BCA /* libircclient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F0197E0DE7F89800F1108A /* libircclient.a */; };
+		924527CE0EE8892900EA8BCA /* irc.c in Sources */ = {isa = PBXBuildFile; fileRef = 92F019890DE7FB0800F1108A /* irc.c */; };
 		92B5D0620CE7028A0023B45F /* ez_button.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0560CE7028A0023B45F /* ez_button.c */; };
 		92B5D0630CE7028A0023B45F /* ez_label.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D0580CE7028A0023B45F /* ez_label.c */; };
 		92B5D0640CE7028A0023B45F /* ez_scrollbar.c in Sources */ = {isa = PBXBuildFile; fileRef = 92B5D05A0CE7028A0023B45F /* ez_scrollbar.c */; };
@@ -1524,6 +1541,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				924527C80EE8887700EA8BCA /* libircclient.a in Frameworks */,
+				924527970EE8842B00EA8BCA /* libz.a in Frameworks */,
+				924527960EE8841E00EA8BCA /* libpng.a in Frameworks */,
+				924527950EE8841800EA8BCA /* libpcre.a in Frameworks */,
+				924527940EE8841100EA8BCA /* libjpeg.a in Frameworks */,
+				924527910EE883F500EA8BCA /* libexpat.a in Frameworks */,
 				D29BE2A809C6207C00EBE023 /* CoreAudio.framework in Frameworks */,
 				D29BE2AD09C6208E00EBE023 /* IOKit.framework in Frameworks */,
 				D29BE2B209C6209F00EBE023 /* QuickTime.framework in Frameworks */,
@@ -2494,6 +2517,17 @@
 				92B5D06C0CE7028A0023B45F /* ez_slider.c in Sources */,
 				92B5D06D0CE7028A0023B45F /* ez_window.c in Sources */,
 				92CAD75B0CF082CE00A0767A /* menu_multiplayer.c in Sources */,
+				924527A70EE8856600EA8BCA /* pr2_cmds.c in Sources */,
+				924527A80EE8856700EA8BCA /* pr2_edict.c in Sources */,
+				924527A90EE8856700EA8BCA /* pr2_exec.c in Sources */,
+				924527AA0EE8856800EA8BCA /* pr2_vm.c in Sources */,
+				924527B20EE8857F00EA8BCA /* sv_demo.c in Sources */,
+				924527B30EE8858000EA8BCA /* sv_demo_misc.c in Sources */,
+				924527B40EE8858000EA8BCA /* sv_demo_qtv.c in Sources */,
+				924527B50EE8858200EA8BCA /* sv_login.c in Sources */,
+				924527C20EE886F500EA8BCA /* vx_tracker.c in Sources */,
+				924527C60EE887CD00EA8BCA /* sv_mod_frags.c in Sources */,
+				924527CE0EE8892900EA8BCA /* irc.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2840,7 +2874,11 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = "";
 				GCC_OPTIMIZATION_LEVEL = 3;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/../libs";
+				GCC_PREPROCESSOR_DEFINITIONS = "";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					"$(SRCROOT)/../libs",
+				);
 				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_LDFLAGS = "";
@@ -2853,15 +2891,25 @@
 			buildSettings = {
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = QUAKE_WORLD;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					WITH_KEYMAP,
+					WITH_ZLIB,
+					WITH_FTE_VFS,
+					WITH_PNG,
+					USE_PR2,
+					JSS_CAM,
+					QUAKE_WORLD,
+				);
 				INFOPLIST_FILE = QuakeWorld/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LIBRARY_SEARCH_PATHS)",
 					"$(SRCROOT)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../libs/macosx\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../libs/macosx\"";
 				PRODUCT_NAME = EZQuake;
 				WRAPPER_EXTENSION = app;
 			};
@@ -2881,15 +2929,19 @@
 					JSS_CAM,
 					QUAKE_WORLD,
 					WITH_FTE_VFS,
+					WITH_PNG,
 					WITH_KEYMAP,
-					WITH_ZIP,
+					WITH_ZLIB,
+					USE_PR2,
 				);
 				INFOPLIST_FILE = QuakeWorld/Info.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../libs/macosx\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../libs/macosx\"";
 				PRODUCT_NAME = EZQuake;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				WRAPPER_EXTENSION = app;
