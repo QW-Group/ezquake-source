@@ -71,7 +71,9 @@ void D_Init (void) {
 	r_aliasuvscale = 1.0;
 
 #ifdef FTE_PEXT_TRANS
+#ifdef GLQUAKE
 	D_InitTrans();
+#endif
 #endif
 }
 

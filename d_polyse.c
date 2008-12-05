@@ -199,6 +199,7 @@ void D_DrawSubdiv (void)
 	lnumtriangles = r_affinetridesc.numtriangles;
 
 #ifdef FTE_PEXT_TRANS
+#ifdef GLQUAKE
 	if (transbackfac)
 	{
 		if (r_pixbytes == 4)
@@ -209,6 +210,7 @@ void D_DrawSubdiv (void)
 			drawfnc = D_PolysetRecursiveTriangleTrans;
 	}
 	else
+#endif
 #endif
 
 	for (i=0 ; i<lnumtriangles ; i++)

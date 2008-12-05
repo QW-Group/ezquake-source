@@ -122,7 +122,7 @@ typedef struct palremap_s {
 	int b;
 	int key;
 	int references;
-	qbyte pal[256];
+	byte pal[256];
 } palremap_t;
 
 palremap_t *palremaps;
@@ -133,18 +133,18 @@ int palremapsize;
 #define identityremap palremaps[0]
 #define fullbrightremap palremaps[1]
 
-palremap_t *D_GetPaletteRemap(int red, int green, int blue, qboolean desaturate, qboolean fullbrights, int topcolor, int bottomcolor);
-qbyte *D_GetMenuTintPal(void);
+palremap_t *D_GetPaletteRemap(int red, int green, int blue, qbool desaturate, qbool fullbrights, int topcolor, int bottomcolor);
+byte *D_GetMenuTintPal(void);
 struct palremap_s *D_IdentityRemap(void);
 void D_DereferenceRemap(palremap_t *palremap);
 
 void D_InitTrans(void);
 // void Set_TransLevelI(int level);
-void D_SetTransLevel(float level, blendmode_t blend);
-extern qbyte Trans(qbyte p, qbyte p2);
-extern qbyte AddBlend(qbyte p, qbyte p2);
+//void D_SetTransLevel(float level, blendmode_t blend);
+extern byte Trans(byte p, byte p2);
+extern byte AddBlend(byte p, byte p2);
 
-extern qbyte *pal555to8;
+extern byte *pal555to8;
 
 void D_ShutdownTrans(void);
 #endif
