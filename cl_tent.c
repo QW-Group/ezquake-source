@@ -415,6 +415,8 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 		FuelRodExplosion(pos);
 	}
 	#endif // GLQUAKE
+	else if (r_explosiontype.value == 10)
+	{ /* Explosions turned off */ }
 	else
 	{	
 		// sprite and particles
