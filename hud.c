@@ -126,7 +126,7 @@ void HUD_Func_f(void)
     if (!hud)
     {
         // This should never happen...
-        Com_Printf("wtf?\n");
+        Com_Printf("Hud element not found\n");
         return;
     }
 
@@ -1347,7 +1347,7 @@ hud_t * HUD_Find(char *name)
 
     while (hud)
     {
-        if (!strcmp(hud->name, name))
+        if (!stricmp(hud->name, name))
 		{
             return hud;
 		}
