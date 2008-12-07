@@ -1312,7 +1312,9 @@ void QMB_ParticleExplosion (vec3_t org) {
 			AddParticle(p_spark, org, 25, 60, 0.75, NULL, zerodir);
 		}
 	} else {
-		AddParticle(p_fire, org, 16, 18, 1, NULL, zerodir);
+		if (r_explosiontype.value != 9) { 	
+			AddParticle(p_fire, org, 16, 18, 1, NULL, zerodir);
+		}
 		if (r_explosiontype.value != 1) {
 			AddParticle(p_spark, org, 50, 250, 0.925f, NULL, zerodir);
 			AddParticle(p_spark,org, 25, 150, 0.925f,  NULL, zerodir);
