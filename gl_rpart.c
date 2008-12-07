@@ -1304,7 +1304,9 @@ void QMB_ParticleExplosion (vec3_t org) {
 
 	contents = TruePointContents(org);
 	if (ISUNDERWATER(contents)) {
-		AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
+		if (r_explosiontype.value != 9) {
+			AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
+		}
 		AddParticle(p_bubble, org, 6, 3.0, 2.5, NULL, zerodir);
 		AddParticle(p_bubble, org, 4, 2.35, 2.5, NULL, zerodir);
 		if (r_explosiontype.value != 1) {
@@ -2073,12 +2075,16 @@ void VXExplosion (vec3_t org)
 	contents = TruePointContents(org);
 	if (ISUNDERWATER(contents)) 
 	{
-		AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
+		if (r_explosiontype.value != 9) {
+			AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
+		}
 		AddParticle(p_bubble, org, 12, 3.0, 2.5, NULL, zerodir);
 		AddParticle(p_bubble, org, 8, 2.35, 2.5, NULL, zerodir);
 	}
 	else 
-		AddParticle(p_fire, org, 16, 18, 1, NULL, zerodir);
+		if (r_explosiontype.value != 9) { 
+			AddParticle(p_fire, org, 16, 18, 1, NULL, zerodir);
+		}
 
 	for (a=0;a<120*amf_part_explosion.value;a++)
 	{
