@@ -1347,7 +1347,7 @@ hud_t * HUD_Find(char *name)
 
     while (hud)
     {
-        if (!stricmp(hud->name, name))
+        if (!strcasecmp(hud->name, name))
 		{
             return hud;
 		}
