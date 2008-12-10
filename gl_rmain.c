@@ -1209,6 +1209,7 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				if(!gl_ztrick.value)
 				{
 					glEnable(GL_POLYGON_OFFSET_FILL);
+					glEnable(GL_POLYGON_OFFSET_LINE);
 				}
 
 				R_DrawBrushModel (currententity);
@@ -1216,6 +1217,7 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				if(!gl_ztrick.value)
 				{
 					glDisable(GL_POLYGON_OFFSET_FILL);
+					glDisable(GL_POLYGON_OFFSET_LINE);
 				}
 				
 				brushmodel = 0;
