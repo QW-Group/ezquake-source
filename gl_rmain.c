@@ -178,6 +178,8 @@ cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
 cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
 cvar_t  gl_fogsky			= {"gl_fogsky", "1"}; 
 
+cvar_t	vid_wideaspect		= {"vid_wideaspect", "0"};
+
 int		lightmode = 2;
 
 //static int deathframes[] = { 49, 60, 69, 77, 84, 93, 102, 0 };
@@ -1388,11 +1390,17 @@ int SignbitsForPlane (mplane_t *out) {
 
 void R_SetFrustum (void) {
 	int i;
+	float aspect;
+
+	// Widescreen aspectratio for wide screens playing in a 4:3 resolution
+	if (vid_wideaspect.value) {
+		aspect = 1.6;
+	} else aspect = 1;
 
 	// rotate VPN right by FOV_X/2 degrees
-	RotatePointAroundVector( frustum[0].normal, vup, vpn, -(90-r_refdef.fov_x / 2 ) );
+	RotatePointAroundVector( frustum[0].normal, vup, vpn, -(90-r_refdef.fov_x*aspect / 2 ) );
 	// rotate VPN left by FOV_X/2 degrees
-	RotatePointAroundVector( frustum[1].normal, vup, vpn, 90-r_refdef.fov_x / 2 );
+	RotatePointAroundVector( frustum[1].normal, vup, vpn, 90-r_refdef.fov_x*aspect / 2 );
 	// rotate VPN up by FOV_X/2 degrees
 	RotatePointAroundVector( frustum[2].normal, vright, vpn, 90-r_refdef.fov_y / 2 );
 	// rotate VPN down by FOV_X/2 degrees
@@ -1569,10 +1577,17 @@ void R_SetupGL (void) {
 	{
 		glViewport (glx + x, gly + y2, w, h);
 	}
-
-    screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
+	
 	farclip = max((int) r_farclip.value, 4096);
-    MYgluPerspective (r_refdef.fov_y, screenaspect, 4, farclip);
+
+	// Adding a widescreen aspectratio for wide screens playing in a 4:3 resolution
+	if (vid_wideaspect.integer == 1) {
+		screenaspect = (float)(r_refdef.vrect.width*1.6/1.33)/r_refdef.vrect.height;
+	} else {
+		screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
+	}
+
+	MYgluPerspective (r_refdef.fov_y, screenaspect, 4, farclip);
 
 	glCullFace(GL_FRONT);
 
@@ -1738,6 +1753,7 @@ void R_Init (void) {
 	Cvar_Register(&cl_mvinset);
 	Cvar_Register(&cl_mvinsetcrosshair);
 	Cvar_Register(&cl_mvinsethud);
+	Cvar_Register(&vid_wideaspect);
 
 	Cvar_ResetCurrentGroup();
 
