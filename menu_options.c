@@ -1026,7 +1026,7 @@ setting settfps_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 #ifdef GLQUAKE
 	ADDSET_BOOL		("Powerup Luma", gl_powerupshells),
-	ADDSET_NUMBER	("Powerup Luma Size", gl_powerupshells_size, 1, 10, 1),
+	ADDSET_NUMBER	("Powerup Luma Size", gl_powerupshells_size, 0, 10, 1),
 	ADDSET_NUMBER	("Weapon Opacity", cl_drawgun, 0, 1, 0.05),
 #else
 	ADDSET_BOOL		("Weapon Show", cl_drawgun),

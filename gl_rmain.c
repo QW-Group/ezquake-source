@@ -380,7 +380,7 @@ int GL_GenerateShellTexture(void)
 	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
 }
 
-void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) {
+void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir) {
     int *order, count;
 	vec3_t interpolated_verts;
     float l, lerpfrac;
@@ -403,7 +403,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 	{
 		float scroll[2];
 		float v[3];
-		float shell_size = bound(5, gl_powerupshells_size.value, 50);
+		float shell_size = bound(0, gl_powerupshells_size.value, 20);
 
 		// LordHavoc: set the state to what we need for rendering a shell
 		if (!shelltexture)
@@ -412,14 +412,22 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 		glEnable (GL_BLEND);
 
 		if (gl_powerupshells_style.integer)
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		else
 			glBlendFunc(GL_ONE, GL_ONE);
 
 		glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1)); // alpha so we can see colour underneath still
 
-		scroll[0] = cos(cl.time * 1.5); // FIXME: cl.time ????
-		scroll[1] = sin(cl.time * 1.1);
+		if (scrolldir)
+		{
+			scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
+			scroll[1] = sin(cl.time * -0.5);
+		}
+		else
+		{
+			scroll[0] = cos(cl.time * 1.5);
+			scroll[1] = sin(cl.time * 1.1);
+		}
 
 		// get the vertex count and primitive type
 		for (;;)
@@ -438,6 +446,8 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 
 			do
 			{
+				glTexCoord2f (((float *) order)[0] * 2.0f + scroll[0], ((float *) order)[1] * 2.0f + scroll[1]);
+
 				order += 2;
 
 				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
@@ -446,7 +456,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 				v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
 				v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
 				v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
-				glTexCoord2f(v[0] * (1.0f / 256.0f) + scroll[0], v[1] * (1.0f / 256.0f) + scroll[1]);
+
 				glVertex3f(v[0], v[1], v[2]);
 
 				verts1++;
@@ -540,7 +550,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 	}
 }
 
-void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex) {
+void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir) {
 	int oldpose, pose, numposes;
 	float interval;
 
@@ -558,7 +568,7 @@ void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, a
 		pose += (int) (r_refdef2.time / interval) % numposes;
 	}
 
-	GL_DrawAliasFrame (paliashdr, oldpose, pose, mtex);
+	GL_DrawAliasFrame (paliashdr, oldpose, pose, mtex, scrolldir);
 }
 
 extern vec3_t lightspot;
@@ -990,7 +1000,7 @@ void R_DrawAliasModel (entity_t *ent) {
 			default:	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	break;
 		}
    
-		R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+		R_SetupAliasFrame (oldframe, frame, paliashdr, false, false);
 		
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
@@ -1008,7 +1018,7 @@ void R_DrawAliasModel (entity_t *ent) {
     
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     
-			R_SetupAliasFrame (oldframe, frame, paliashdr, true);
+			R_SetupAliasFrame (oldframe, frame, paliashdr, true, false);
     
 			GL_DisableMultitexture ();
 		} 
@@ -1019,14 +1029,14 @@ void R_DrawAliasModel (entity_t *ent) {
 			
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     
-			R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+			R_SetupAliasFrame (oldframe, frame, paliashdr, false, false);
     
 			if (fb_texture) {
 				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 				glEnable (GL_ALPHA_TEST);
 				GL_Bind (fb_texture);
     
-				R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+				R_SetupAliasFrame (oldframe, frame, paliashdr, false, false);
     
 				glDisable (GL_ALPHA_TEST);
 			}
@@ -1043,17 +1053,46 @@ void R_DrawAliasModel (entity_t *ent) {
 			memset(r_shellcolor, 0, sizeof(r_shellcolor));
         
 			if (ent->effects & EF_RED)
+			{
 				r_shellcolor[0] = 1;
+				r_shellcolor[1] = 0.25;
+				r_shellcolor[2] = 0.25;
+			}
 			if (ent->effects & EF_GREEN)
+			{
+				r_shellcolor[0] = 0.25;
 				r_shellcolor[1] = 1;
+				r_shellcolor[2] = 0.25;
+			}
 			if (ent->effects & EF_BLUE)
+			{
+				r_shellcolor[0] = 0.25;
+				r_shellcolor[1] = 0.25;
 				r_shellcolor[2] = 1;
+			}
         
 			if ( r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2] )
 			{
 				GL_DisableMultitexture();
 				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+				R_SetupAliasFrame (oldframe, frame, paliashdr, false, false);
+			}
+
+			if ( (ent->effects & EF_RED) || (ent->effects & EF_GREEN) || (ent->effects & EF_BLUE) )
+				r_shellcolor[0] = r_shellcolor[1] = r_shellcolor[2] = 0.4;
+
+			if (ent->effects & EF_RED)
+				r_shellcolor[0] += 0.2;
+			if (ent->effects & EF_GREEN)
+				r_shellcolor[1] += 0.2;
+			if (ent->effects & EF_BLUE)
+				r_shellcolor[2] += 0.2;
+
+			if ( r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2] )
+			{
+				GL_DisableMultitexture();
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+				R_SetupAliasFrame (oldframe, frame, paliashdr, false, true);
 			}
         
 			memset(r_shellcolor, 0, sizeof(r_shellcolor));
@@ -1080,7 +1119,7 @@ void R_DrawAliasModel (entity_t *ent) {
 		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		glEnable (GL_BLEND);
 
-		R_SetupAliasFrame (oldframe, frame, paliashdr, true);
+		R_SetupAliasFrame (oldframe, frame, paliashdr, true, false);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_BLEND);            
