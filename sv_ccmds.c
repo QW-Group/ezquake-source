@@ -317,7 +317,7 @@ SV_Give_f
 void SV_Give_f (void)
 {
 	char	*t;
-	int		v;
+	int		v, cnt;
 
 	if (!sv_allow_cheats)
 	{
@@ -328,8 +328,11 @@ void SV_Give_f (void)
 	if (!SV_SetPlayer ())
 		return;
 
-	t = Cmd_Argv(2);
-	v = Q_atoi (Cmd_Argv(3));
+	// HACK: for cheat commands which comes from client rather than from server console
+	cnt = (sv_redirected == RD_CLIENT ? 1 : 2);
+
+	t = Cmd_Argv(cnt++);
+	v = Q_atoi (Cmd_Argv(cnt++));
 
 	switch (t[0])
 	{
