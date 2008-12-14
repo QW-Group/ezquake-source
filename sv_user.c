@@ -2736,6 +2736,13 @@ void SV_Cmd_Banremove_f(void);
 void Cmd_Qtvusers_f (void);
 // }
 
+// { cheats
+void SV_God_f (void);
+void SV_Give_f (void);
+void SV_Noclip_f (void);
+void SV_Fly_f (void);
+// }
+
 typedef struct
 {
 	char	*name;
@@ -2802,6 +2809,13 @@ static ucmd_t ucmds[] =
 	{"observe", Cmd_Observe_f, true},
 
 	{"qtvusers", Cmd_Qtvusers_f, true},
+
+	// cheat commands
+	{"god", SV_God_f, true},
+	{"give", SV_Give_f, true},
+	{"noclip", SV_Noclip_f, true},
+	{"fly", SV_Fly_f, true},
+
 
 	{NULL, NULL}
 

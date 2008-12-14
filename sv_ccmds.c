@@ -237,6 +237,12 @@ qbool SV_SetPlayer (void)
 
 	idnum = Q_atoi(Cmd_Argv(1));
 
+	// HACK: for cheat commands which comes from client rather than from server console
+	if (sv_client && sv_redirected == RD_CLIENT)
+	{
+		idnum = sv_client->userid;
+	}
+
 	for (i=0,cl=svs.clients ; i<MAX_CLIENTS ; i++,cl++)
 	{
 		if (!cl->state)
@@ -264,7 +270,7 @@ void SV_God_f (void)
 {
 	if (!sv_allow_cheats)
 	{
-		Con_Printf ("You must run the server with -cheats to enable this command.\n");
+		Con_Printf ("Cheats are not allowed on this server\n");
 		return;
 	}
 
@@ -283,7 +289,7 @@ void SV_Noclip_f (void)
 {
 	if (!sv_allow_cheats)
 	{
-		Con_Printf ("You must run the server with -cheats to enable this command.\n");
+		Con_Printf ("Cheats are not allowed on this server\n");
 		return;
 	}
 
@@ -315,7 +321,7 @@ void SV_Give_f (void)
 
 	if (!sv_allow_cheats)
 	{
-		Con_Printf ("You must run the server with -cheats to enable this command.\n");
+		Con_Printf ("Cheats are not allowed on this server\n");
 		return;
 	}
 
@@ -353,6 +359,32 @@ void SV_Give_f (void)
 	case 'c':
 		sv_player->v.ammo_cells = v;
 		break;
+	}
+}
+
+void SV_Fly_f (void)
+{
+	if (!sv_allow_cheats)
+	{
+		Con_Printf ("Cheats are not allowed on this server\n");
+		return;
+	}
+
+	if (!SV_SetPlayer ())
+		return;
+
+	if (sv_player->v.solid != SOLID_SLIDEBOX)
+		return;		// dead don't fly
+
+	if (sv_player->v.movetype != MOVETYPE_FLY)
+	{
+		sv_player->v.movetype = MOVETYPE_FLY;
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "flymode ON\n");
+	}
+	else
+	{
+		sv_player->v.movetype = MOVETYPE_WALK;
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "flymode OFF\n");
 	}
 }
 
@@ -1957,6 +1989,7 @@ void SV_InitOperatorCommands (void)
 		Cmd_AddCommand ("god", SV_God_f);
 		Cmd_AddCommand ("give", SV_Give_f);
 		Cmd_AddCommand ("noclip", SV_Noclip_f);
+		Cmd_AddCommand ("fly", SV_Fly_f);
 	}
 
 	Cmd_AddCommand ("localinfo", SV_Localinfo_f);
