@@ -1886,6 +1886,10 @@ static double MinPhysFrameTime (void)
 	// Use either cl_physfps_spectator or cl_physfps
 	float physfps = ((cl.spectator && !cls.demoplayback) ? cl_physfps_spectator.value : cl_physfps.value);
 
+	// this makes things smooth in mvd demo play back, since mvd interpolation applied each frame
+	if (cls.demoplayback)
+		return 0;
+
 	// the user can lower it for testing (or really shit connection)
 	if (physfps)
 		fpscap = min(fpscap, physfps);
@@ -2029,7 +2033,7 @@ void CL_Frame (double time)
 	else
 		cls.frametime = min(0.2, cls.trueframetime);
 
-	if (cl_independentPhysics.value != 0 && !cls.demoplayback)
+	if (cl_independentPhysics.value != 0)
 	{
 		double minphysframetime = MinPhysFrameTime();
 
@@ -2049,7 +2053,9 @@ void CL_Frame (double time)
 	} 
 	else 
 	{
-		extraphysframetime = 0;
+		// this vars SHOULD NOT be used in case of cl_independentPhysics == 0, so we just reset it for sanity
+		physframetime = extraphysframetime = 0;
+		// this var actually used
 		physframe = true;
 	}
 
