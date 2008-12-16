@@ -54,7 +54,7 @@ cvar_t re_subi[10] = {{"internal0"},
 static pcre_trigger_t *re_triggers;
 static pcre_internal_trigger_t *internal_triggers;
 
-extern char lastip[32];
+extern char lastip[64];
 
 /********************************** TRIGGERS **********************************/
  
@@ -858,16 +858,21 @@ static void INTRIG_Lastip_port (const char *s)
 {
 	/* subpatterns of this regexp is maximum 21 chars */
 	/* strlen (<3>.<3>.<3>.<3>:< 5 >) = 21 */
+	/* or if it's matched as a string it can be up to 63 characters */
  
 	// reset current lastip value
 	memset (lastip, 0, sizeof (lastip));
  
-	snprintf (lastip, sizeof (lastip), "%s.%s.%s.%s:%s",
-						re_subi[1].string,
-						re_subi[2].string,
-						re_subi[3].string,
-						re_subi[4].string,
-						re_subi[5].string);
+	if ( strlen(re_subi[1].string) <= 3 ) {
+		snprintf (lastip, sizeof (lastip), "%d.%d.%d.%d:%d",
+						re_subi[1].integer,
+						re_subi[2].integer,
+						re_subi[3].integer,
+						re_subi[4].integer,
+						re_subi[5].integer);
+	} else {
+		snprintf (lastip, sizeof (lastip), "%s", re_subi[1].string);
+	}
 }
  
 static void InitInternalTriggers(void)
@@ -877,7 +882,9 @@ static void InitInternalTriggers(void)
 	// dont allow cheating by triggering dispenser warning
 	AddInternalTrigger("^Enemies are using your dispenser!$", 16, INTRIG_Disable);
 	// lastip
-	AddInternalTrigger("([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\:(\\d{5})", 8, INTRIG_Lastip_port);
+	AddInternalTrigger("([0-9]|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\:(\\d{4,5})", 8, INTRIG_Lastip_port);
+	// lastip address, restricted to 64 bytes
+	AddInternalTrigger("\\b([A-Za-z0-9-.]{1,53}?\\.[A-Za-z]{2,4}\\:\\d{4,5})", 8, INTRIG_Lastip_port);
 }
  
 void TP_InitTriggers (void)

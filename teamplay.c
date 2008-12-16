@@ -146,7 +146,7 @@ void R_TranslatePlayerSkin (int playernum);
 
 tvars_t vars;
 
-char lastip[32]; // FIXME: remove it
+char lastip[64]; // FIXME: remove it
 
 /*********************************** MACROS ***********************************/
 
