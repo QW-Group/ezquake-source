@@ -313,7 +313,7 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 		int width = Q_atoi(string);
 
 		width = max(320, width);
-		width &= 0xfff8; // make it a multiple of eight
+//		width &= 0xfff8; // make it a multiple of eight
 
 		if (glConfig.vidWidth)
 			vid.width = vid.conwidth = width = min(glConfig.vidWidth, width);
