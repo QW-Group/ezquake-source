@@ -1124,9 +1124,9 @@
 		92F019950DE7FFCC00F1108A /* libpcre.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpcre.a; path = ../libs/macosx/libpcre.a; sourceTree = SOURCE_ROOT; };
 		92F019960DE7FFCC00F1108A /* libpng.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng.a; path = ../libs/macosx/libpng.a; sourceTree = SOURCE_ROOT; };
 		92F019970DE7FFCC00F1108A /* libz.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libz.a; path = ../libs/macosx/libz.a; sourceTree = SOURCE_ROOT; };
-		D21140FF09C76DF800FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = Quake/Info.plist; sourceTree = "<group>"; };
-		D211410009C76E2100FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = GLQuake/Info.plist; sourceTree = "<group>"; };
-		D21146F009C78AB800FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = QuakeWorld/Info.plist; sourceTree = "<group>"; };
+		D21140FF09C76DF800FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; name = Info.plist; path = Quake/Info.plist; sourceTree = "<group>"; };
+		D211410009C76E2100FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; name = Info.plist; path = GLQuake/Info.plist; sourceTree = "<group>"; };
+		D21146F009C78AB800FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; name = Info.plist; path = QuakeWorld/Info.plist; sourceTree = "<group>"; };
 		D21146F109C78AB800FD70CB /* QuakeWorld.scriptSuite */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = QuakeWorld.scriptSuite; path = QuakeWorld/QuakeWorld.scriptSuite; sourceTree = "<group>"; };
 		D21146F909C78AC700FD70CB /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = QuakeWorld/English.lproj/QuakeWorld.nib; sourceTree = "<group>"; };
 		D21146FC09C78AE000FD70CB /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = English; path = QuakeWorld/English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -1135,7 +1135,7 @@
 		D211470D09C78AFD00FD70CB /* German */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = German; path = QuakeWorld/German.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		D211470E09C78B0400FD70CB /* Swedish */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Swedish; path = QuakeWorld/Swedish.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		D211470F09C78B3100FD70CB /* GLQuakeWorld.scriptSuite */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = GLQuakeWorld.scriptSuite; path = GLQuakeWorld/GLQuakeWorld.scriptSuite; sourceTree = "<group>"; };
-		D211471009C78B3100FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = GLQuakeWorld/Info.plist; sourceTree = "<group>"; };
+		D211471009C78B3100FD70CB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; name = Info.plist; path = GLQuakeWorld/Info.plist; sourceTree = "<group>"; };
 		D211471809C78B3D00FD70CB /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = GLQuakeWorld/English.lproj/GLQuakeWorld.nib; sourceTree = "<group>"; };
 		D211471B09C78B4C00FD70CB /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = English; path = GLQuakeWorld/English.lproj/GLQuakeWorld.scriptTerminology; sourceTree = "<group>"; };
 		D211471D09C78B4C00FD70CB /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = English; path = GLQuakeWorld/English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -1143,7 +1143,7 @@
 		D211473309C78B6900FD70CB /* German */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = German; path = GLQuakeWorld/German.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		D211473409C78B6D00FD70CB /* Swedish */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Swedish; path = GLQuakeWorld/Swedish.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		D211676509C8DB28002C3564 /* readme.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = readme.m; sourceTree = "<group>"; };
-		D21167C209C8DC45002C3564 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = "Read Me/Info.plist"; sourceTree = "<group>"; };
+		D21167C209C8DC45002C3564 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Read Me/Info.plist"; sourceTree = "<group>"; };
 		D212A48A09D8763B00DDA1F3 /* Quake Help.helpindex */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Quake Help.helpindex"; path = "Help/English/Quake Help.helpindex"; sourceTree = "<group>"; };
 		D284547309C645EA003F47E0 /* Quake.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Quake.h; sourceTree = "<group>"; };
 		D29BE27B09C61F4200EBE023 /* EZQuake.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EZQuake.app; sourceTree = BUILT_PRODUCTS_DIR; };
