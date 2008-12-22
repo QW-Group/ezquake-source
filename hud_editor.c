@@ -2555,7 +2555,7 @@ void HUD_Editor_Init(void)
 {
 	extern mpic_t *SCR_LoadCursorImage(char *cursorimage);
 	
-#if 1
+#if 0
 	clrinfo_t color;
 
 	color.c = RGBA_TO_COLOR(255, 255, 255, 255);
