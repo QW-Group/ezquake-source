@@ -5334,11 +5334,11 @@ void SCR_DrawMVStatusStrings(void)
 										weapon,
 										sAmmo);
 		}
-		else if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (vid.width <= 512))
+		else if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (vid.width <= 400))
 		{
-			// Resolution width <= 512 and dead
+			// Resolution width <= 400 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng), "%.2s  %s %s:%-3s",name,
+			snprintf(strng, sizeof (strng), "%.4s  %s %s:%-3s",name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -5365,11 +5365,11 @@ void SCR_DrawMVStatusStrings(void)
 												weapon,
 												sAmmo);
 		}
-		else if (cl_multiview.value && vid.width <= 512)
+		else if (cl_multiview.value && vid.width <= 400)
 		{
-			// <= 512 and alive
+			// <= 400 and alive
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng),"%s %.2s %c%03d %03d %s:%-3s", pups,
+			snprintf(strng, sizeof (strng),"%s %.4s %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
