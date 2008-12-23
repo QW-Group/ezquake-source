@@ -1453,14 +1453,7 @@ void HUD_Draw(void)
 	// Only draw the hud once in multiview.
 	if (cl_multiview.integer)
 	{
-		if (cl_mvinset.integer)
-		{
-			if (CURRVIEW != 2)
-			{
-				return;
-			}
-		}
-		else if (CURRVIEW != 1)
+		if (CURRVIEW != 1)
 		{
 			return;
 		}
