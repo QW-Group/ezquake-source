@@ -956,6 +956,8 @@ void CL_Autotrack_f(void)
 //
 int Cam_TrackNum(void) 
 {
+	static int saved_track;
+
 	// What does this do?!?! mvlatch... /Cokeman 
 	if (cl_multiview.value && !locked 
 #ifndef GLQUAKE
@@ -977,7 +979,14 @@ int Cam_TrackNum(void)
 		return -1;
 	}
 
-	return spec_track;
+	// Disregards calls during cl_multiview 2+ except for the first view.
+	// This is to prevent features such as scr_teaminfo not to get confused
+	// which team it's supposed to track.
+
+	if (CURRVIEW == 1 || CURRVIEW == 0) 
+		saved_track = spec_track;
+	
+	return saved_track;
 }
 
 int WhoIsSpectated (void)
