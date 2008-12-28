@@ -1506,15 +1506,25 @@ void MV_UpdateSkins()
 				{
 					if (cl_enemytopcolor.integer != -1)
 						cl.players[i].topcolor = cl_enemytopcolor.integer;
+					else
+						cl.players[i].topcolor = cl.players[i].real_topcolor;
+
 					if (cl_enemybottomcolor.integer != -1)
 						cl.players[i].bottomcolor = cl_enemybottomcolor.integer;
+					else
+						cl.players[i].bottomcolor = cl.players[i].real_bottomcolor;
 				}
 				else
 				{
 					if (cl_teamtopcolor.integer != -1)
 						cl.players[i].topcolor = cl_teamtopcolor.integer;
+					else
+						cl.players[i].topcolor = cl.players[i].real_topcolor;
+					
 					if (cl_teambottomcolor.integer != -1)
 						cl.players[i].bottomcolor = cl_teambottomcolor.integer;
+					else
+						cl.players[i].bottomcolor = cl.players[i].real_bottomcolor;
 				}
 			}
 
