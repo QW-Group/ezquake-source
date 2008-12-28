@@ -1504,13 +1504,17 @@ void MV_UpdateSkins()
 			{
 				if(strcmp(cl.players[i].team, skinforcing_team))
 				{
-					cl.players[i].topcolor = cl_enemytopcolor.value;
-					cl.players[i].bottomcolor = cl_enemybottomcolor.value;
+					if (cl_enemytopcolor.integer != -1)
+						cl.players[i].topcolor = cl_enemytopcolor.integer;
+					if (cl_enemybottomcolor.integer != -1)
+						cl.players[i].bottomcolor = cl_enemybottomcolor.integer;
 				}
 				else
 				{
-					cl.players[i].topcolor = cl_teamtopcolor.value;
-					cl.players[i].bottomcolor = cl_teambottomcolor.value;
+					if (cl_teamtopcolor.integer != -1)
+						cl.players[i].topcolor = cl_teamtopcolor.integer;
+					if (cl_teambottomcolor.integer != -1)
+						cl.players[i].bottomcolor = cl_teambottomcolor.integer;
 				}
 			}
 
