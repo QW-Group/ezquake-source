@@ -1768,6 +1768,9 @@ static void SCR_Draw_TeamInfo(void)
 
 	float	scale = bound(0.1, scr_teaminfo_scale.value, 10);
 
+	if ( CURRVIEW != 1 && CURRVIEW != 0)
+		return;
+
 	if ( !cl.teamplay || !scr_teaminfo.integer )  // non teamplay mode
 		return;
 
