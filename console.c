@@ -301,6 +301,10 @@ void Con_MessageModeIRC_f (void) {
 	Con_MessageMode_Common(chat_irc);
 }
 
+void Con_MessageModeQTVtoGAME_f (void) {
+	Con_MessageMode_Common(chat_qtvtogame);
+}
+
 //If the line width has changed, reformat the buffer
 void Con_CheckResize (void) {
 	int i, j, width, oldwidth, oldtotallines, numlines, numchars;
@@ -483,6 +487,7 @@ void Con_Init (void) {
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
 	Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
 	Cmd_AddCommand ("messagemodeirc", Con_MessageModeIRC_f);
+	Cmd_AddCommand ("messagemodeqtvtogame", Con_MessageModeQTVtoGAME_f);
 	Cmd_AddCommand ("clear", Con_Clear_f);
     Cmd_AddCommand ("date", Date_f);
 	Cmd_AddCommand ("calendar", Calendar_f);
@@ -770,6 +775,10 @@ void Con_DrawNotify (void) {
 			skip = strlen(dest) + 1; // is this correct? not sure
 
 			Draw_String (8, v + bound(0, con_shift.value, 8), dest);
+		}
+		else if (chat_team == chat_qtvtogame) {
+			Draw_String (8, v + bound(0, con_shift.value, 8), "say_game:");
+			skip = 11;
 		}
 
 		// FIXME: clean this up

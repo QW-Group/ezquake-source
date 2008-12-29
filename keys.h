@@ -214,7 +214,7 @@ extern int		key_repeats[UNKNOWN + 256];
 extern qbool	keydown[UNKNOWN + 256];
 extern int		key_lastpress;
 
-typedef enum { chat_mm1, chat_mm2, chat_irc }	chat_type;
+typedef enum { chat_mm1, chat_mm2, chat_irc, chat_qtvtogame }	chat_type;
 extern wchar 	chat_buffer[];
 extern int 		chat_linepos;
 extern chat_type chat_team;

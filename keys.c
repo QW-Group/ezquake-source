@@ -46,6 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_editor.h"
 #include "demo_controls.h"
 #include "irc.h"
+#include "qtv.h"
 
 //key up events are sent even if in console mode
 
@@ -1240,6 +1241,14 @@ void Key_Message (int key, wchar unichar) {
 				qbool irccommand = false;
 				switch (chat_team) {
 					case chat_mm2: Cbuf_AddText("say_team \""); break;
+					case chat_qtvtogame: 
+						if (cls.mvdplayback == QTV_PLAYBACK) {
+							Cbuf_AddText("say \"say_game ");  // QTV parses the text, no say_game command has been implemented
+						} else {
+							Cbuf_AddText("// "); // silence output to remove "unknown command" error message
+							Com_Printf("&cf00Error: messagemodeqtvtogame requires you to be connected to a QTV server&cfff\n");
+						}
+						break;
 					case chat_irc:
 						if (chat_buffer[0] == '/') {
 							irccommand = true;
