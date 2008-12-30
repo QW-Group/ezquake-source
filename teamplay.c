@@ -1653,15 +1653,16 @@ void TP_ColorForcing (cvar_t *topcolor, cvar_t *bottomcolor)
 	int	top, bottom;
 
 	if (Cmd_Argc() == 1) {
-		if (topcolor->value < 0)
+		if (topcolor->integer == -1 && bottomcolor->integer == -1)
 			Com_Printf ("\"%s\" is \"off\"\n", Cmd_Argv(0));
 		else
-			Com_Printf ("\"%s\" is \"%i %i\"\n", Cmd_Argv(0), (int) topcolor->value, (int) bottomcolor->value);
+			Com_Printf ("\"%s\" is \"%i %i\"\n", Cmd_Argv(0), topcolor->integer, bottomcolor->integer);
 		return;
 	}
 
 	if (!strcasecmp(Cmd_Argv(1), "off") || !strcasecmp(Cmd_Argv(1), "")) {
-		topcolor->value = -1;
+		Cvar_SetValue(topcolor, -1);
+		Cvar_SetValue(bottomcolor, -1);
 		TP_RefreshSkins();
 		return;
 	}
