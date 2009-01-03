@@ -3792,7 +3792,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				}
 			}
 
-			if (cl_multiview.value)
+			if (cl_multiview.value && CURRVIEW != 1 )  // Only draw bracket for first view, might make todo below unnecessary
 			{
 				// TODO: Check if "track team" is set, if it is then draw brackets around that team.
 				//cl.players[nPlayernum]
