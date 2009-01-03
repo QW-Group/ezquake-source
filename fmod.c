@@ -392,12 +392,13 @@ void FMod_Init (void)
 	FMod_AddModel ("gfx/palette.lmp",			FMOD_DM | FMOD_TF,	gfx_palette_lmp_FMOD_DM_FMOD_TF);
 }
 
-void FMod_Response (void)
+char *FMod_Response_Text(void)
 {
+	static char buf[512];
 	int i, count;
-	char buf[512] = {'m', 'o', 'd', 'i', 'f', 'i', 'e', 'd', ':', '\0'};
 	qbool relevent;
 
+	strlcpy(buf, "modified:", sizeof(buf));
 
 	for (i = count = 0; i < check_models_num; i++) {
 		relevent = (cl.teamfortress && (check_models[i].flags & FMOD_TF)) || 
@@ -416,6 +417,11 @@ void FMod_Response (void)
 
 	if (!count)
 		strlcpy (buf, "all models ok", sizeof (buf));
+	
+	return buf;
+}
 
-	Cbuf_AddText (va ("%s %s\n", cls.state == ca_disconnected ? "echo" : "say", buf));
+void FMod_Response (void)
+{
+	Cbuf_AddText (va ("%s %s\n", cls.state == ca_disconnected ? "echo" : "say", FMod_Response_Text));
 }

@@ -59,20 +59,30 @@ static void FChecks_VersionResponse (void)
 		Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
 }
 
-static void FChecks_FServerResponse (void)
+static char *FChecks_FServerResponse_Text(void)
 {
 	netadr_t adr;
 
 	if (!NET_StringToAdr (cls.servername, &adr))
-		return;
+		return NULL;
 
 	if (adr.port == 0)
 		adr.port = BigShort (PORT_SERVER);
 
+	return NET_AdrToString(adr);
+}
+
+static void FChecks_FServerResponse (void)
+{
+	char *text = FChecks_FServerResponse_Text();
+
+	if (!text)
+		return;
+
 	if (Modules_SecurityLoaded())
-		Cbuf_AddText(va("say ezQuake f_server response: %s  crc: %s\n", NET_AdrToString(adr), Auth_Generate_Crc()));
+		Cbuf_AddText(va("say ezQuake f_server response: %s  crc: %s\n", text, Auth_Generate_Crc()));
 	else
-		Cbuf_AddText(va("say ezQuake f_server response: %s\n", NET_AdrToString(adr)));
+		Cbuf_AddText(va("say ezQuake f_server response: %s\n", text));
 }
 
 static void FChecks_SkinsResponse (float fbskins)
@@ -198,17 +208,31 @@ static qbool FChecks_CheckFServerRequest (const char *s)
 
 static qbool FChecks_CheckFRulesetRequest (const char *s)
 {
-	char *sScripts, *sIPhysics, *sDelayP;
+	char *sScripts, *sIPhysics, *sDelayP, *sFakeS, *sEnemySk, *sModMod, *fServer;
+	char padding[13] = "             ";
+	size_t name_len = strlen(cl.players[cl.playernum].name);
+	size_t pad_len = 12 - bound(0, name_len, 12);
 
 	if (cl.spectator || (f_ruleset_reply_time && cls.realtime - f_ruleset_reply_time < 20))
 		return false;
 
-	if (Util_F_Match(s, "f_ruleset"))	{
-		sScripts = (allow_scripts.integer) ? "" : " \x90rj scripts blocked\x91";
-		sIPhysics = (cl_independentPhysics.integer) ? "" : " \x90indep. physics off\x91";
-		sDelayP = (cl_delay_packet.integer) ? (" \x90" "packet delay\x91") : "";
+	padding[pad_len] = '\0';
 
-		Cbuf_AddText(va("say ezQuake Ruleset: %s%s%s%s\n", Rulesets_Ruleset(), sScripts, sIPhysics, sDelayP));
+	if (Util_F_Match(s, "f_ruleset"))	{
+		sScripts  = (allow_scripts.integer)         ? "rjsc" : "{rjsc}";
+		sEnemySk  = (enemyforceskins.integer)       ? "skif" : "{skif}";
+		sDelayP   = (cl_delay_packet.integer)       ? "pakd" : "{pakd}";
+		sFakeS    = (cl_fakeshaft.integer)          ? "faks" : "{faks}";
+		sIPhysics = (cl_independentPhysics.integer) ? "indp" : "{indp}";
+		sModMod   = (strcmp(FMod_Response_Text(), "all models ok") != 0)
+		                                            ? "modf" : "{modf}";
+		fServer = FChecks_FServerResponse_Text();
+		if (!fServer) {
+			fServer = "server-na";
+		}
+
+		Cbuf_AddText(va("say \"%s%s %s %s %s %s %s %s ezQuake %s %s\"\n",
+			padding, Rulesets_Ruleset(), sModMod, sScripts, sEnemySk, sDelayP, sFakeS, sIPhysics, VERSION_NUMBER, fServer));
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}
