@@ -42,6 +42,8 @@ cvar_t	cl_weaponhide_axe = {"cl_weaponhide_axe", "0"};
 
 cvar_t	cl_smartjump = {"cl_smartjump", "1"};
 
+cvar_t	cl_iDrive = {"cl_iDrive", "0"};
+
 extern cvar_t cl_independentPhysics;
 extern qbool physframe;
 extern double physframetime;
@@ -107,6 +109,7 @@ void KeyDown_common (kbutton_t *b, int k)
 	if (b->state & 1)
 		return;		// still down
 	b->state |= 1 + 2;	// down + impulse down
+	b->downtime = curtime;
 }
 
 void KeyUp_common (kbutton_t *b, int k)
@@ -115,6 +118,7 @@ void KeyUp_common (kbutton_t *b, int k)
 		b->down[0] = b->down[1] = 0;
 		b->state &= ~1;		// now up
 		b->state |= 4; 		// impulse up
+		b->uptime = curtime;
 		return;
 	}
 
@@ -132,6 +136,7 @@ void KeyUp_common (kbutton_t *b, int k)
 		return;		// still up (this should not happen)
 	b->state &= ~1;		// now up
 	b->state |= 4; 		// impulse up
+	b->uptime = curtime;
 }
 
 void KeyDown(kbutton_t *b)
@@ -155,6 +160,7 @@ void KeyUp(kbutton_t *b)
 
 	KeyUp_common(b, k);
 }
+
 
 void IN_KLookDown (void) {KeyDown(&in_klook);}
 void IN_KLookUp (void) {KeyUp(&in_klook);}
@@ -562,23 +568,93 @@ void CL_BaseMove (usercmd_t *cmd)
 	memset (cmd, 0, sizeof(*cmd));
 	
 	VectorCopy (cl.viewangles, cmd->angles);
-	if (in_strafe.state & 1) 
+	
+	if (cl_iDrive.integer)
 	{
-		cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right, false);
-		cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left, false);
+		float s1, s2;
+
+		if (in_strafe.state & 1) 
+		{
+			s1 = CL_KeyState (&in_right, false);
+			s2 = CL_KeyState (&in_left, false);
+
+			if (s1 && s2)
+			{
+				if (in_right.downtime > in_left.downtime)
+					s2 = 0;
+				if (in_right.downtime < in_left.downtime)
+					s1 = 0;
+			}
+
+			cmd->sidemove += cl_sidespeed.value * s1;
+			cmd->sidemove -= cl_sidespeed.value * s2;
+		}
+
+		s1 = CL_KeyState (&in_moveright, false);
+		s2 = CL_KeyState (&in_moveleft, false);
+
+		if (s1 && s2)
+		{
+			if (in_moveright.downtime > in_moveleft.downtime)
+				s2 = 0;
+			if (in_moveright.downtime < in_moveleft.downtime)
+				s1 = 0;
+		}
+
+		cmd->sidemove += cl_sidespeed.value * s1;
+		cmd->sidemove -= cl_sidespeed.value * s2;
+
+		s1 = CL_KeyState (&in_up, false);
+		s2 = CL_KeyState (&in_down, false);
+
+		if (s1 && s2)
+		{
+			if (in_up.downtime > in_down.downtime)
+				s2 = 0;
+			if (in_up.downtime < in_down.downtime)
+				s1 = 0;
+		}
+
+		cmd->upmove += cl_upspeed.value * s1;
+		cmd->upmove -= cl_upspeed.value * s2;
+
+		if (!(in_klook.state & 1)) 
+		{
+			s1 = CL_KeyState (&in_forward, false);
+			s2 = CL_KeyState (&in_back, false);
+
+			if (s1 && s2)
+			{
+				if (in_forward.downtime > in_back.downtime)
+					s2 = 0;
+				if (in_forward.downtime < in_back.downtime)
+					s1 = 0;
+			}
+
+			cmd->forwardmove += cl_forwardspeed.value * s1;
+			cmd->forwardmove -= cl_backspeed.value * s2;
+		}
 	}
-
-	cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_moveright, false);
-	cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_moveleft, false);
-
-	cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up, false);
-	cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down, false);
-
-	if (!(in_klook.state & 1)) 
+	else
 	{
-		cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward, false);
-		cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back, false);
-	}	
+		if (in_strafe.state & 1) 
+		{
+			cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right, false);
+			cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left, false);
+		}
+
+		cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_moveright, false);
+		cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_moveleft, false);
+
+		cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up, false);
+		cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down, false);
+
+		if (!(in_klook.state & 1)) 
+		{
+			cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward, false);
+			cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back, false);
+		}
+	}
 
 	// adjust for speed key
 	if (in_speed.state & 1)	
@@ -956,6 +1032,8 @@ void CL_InitInput (void)
 	Cvar_Register (&cl_yawspeed);
 	Cvar_Register (&cl_pitchspeed);
 	Cvar_Register (&cl_anglespeedkey);
+
+	Cvar_Register (&cl_iDrive);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MISC);
 	Cvar_Register (&lookspring);
