@@ -2240,7 +2240,7 @@ static void SCR_Draw_WeaponStats(void)
 	byte	*col = scr_weaponstats_frame_color.color;
 	float	scale = bound(0.1, scr_weaponstats_scale.value, 10);
 
-	if ( !scr_weaponstats.integer )
+	if ( !scr_weaponstats.integer || CURRVIEW > 1 )
 		return;
 
 	i = ( cl.spectator ? Cam_TrackNum() : cl.playernum );
