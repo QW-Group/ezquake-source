@@ -474,20 +474,21 @@ void MVD_Status_Announcer_f (int i, int z){
 		if (!mvd_moreinfo.integer)
 			return;
 
-		switch (z){
-			case 2: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ssg.string,TP_LocationName(*pl));break;
-			case 3: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ng.string,TP_LocationName(*pl));break;
-			case 4: Com_Printf("%s Took %s @ %s\n",pn, tp_name_sng.string,TP_LocationName(*pl));break;
-			case 5: Com_Printf("%s Took %s @ %s\n",pn, tp_name_gl.string,TP_LocationName(*pl));break;
-			case 6: Com_Printf("%s Took %s @ %s\n",pn, tp_name_rl.string,TP_LocationName(*pl));break;
-			case 7: Com_Printf("%s Took %s @ %s\n",pn, tp_name_lg.string,TP_LocationName(*pl));break;
-			case 8: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ring.string,TP_LocationName(*pl));break;
-			case 9: Com_Printf("%s Took %s @ %s\n",pn, tp_name_quad.string,TP_LocationName(*pl));break;
-			case 10: Com_Printf("%s Took %s @ %s\n",pn, tp_name_pent.string,TP_LocationName(*pl));break;
-			case 11: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ga.string,TP_LocationName(*pl));break;
-			case 12: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ya.string,TP_LocationName(*pl));break;
-			case 13: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ra.string,TP_LocationName(*pl));break;
-			case 14: Com_Printf("%s Took %s @ %s\n",pn, tp_name_mh.string,TP_LocationName(*pl));break;
+		switch (z)
+		{
+			case 2: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ssg.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 3: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ng.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 4: Com_Printf("%s Took %s @ %s\n",pn, tp_name_sng.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 5: Com_Printf("%s Took %s @ %s\n",pn, tp_name_gl.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 6: Com_Printf("%s Took %s @ %s\n",pn, tp_name_rl.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 7: Com_Printf("%s Took %s @ %s\n",pn, tp_name_lg.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 8: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ring.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 9: Com_Printf("%s Took %s @ %s\n",pn, tp_name_quad.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 10: Com_Printf("%s Took %s @ %s\n",pn, tp_name_pent.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 11: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ga.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 12: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ya.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 13: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ra.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 14: Com_Printf("%s Took %s @ %s\n",pn, tp_name_mh.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 		}
 	}
 	else if (mvd_new_info[i].info.info[z].mention==-1)
@@ -498,21 +499,21 @@ void MVD_Status_Announcer_f (int i, int z){
 			return;
 
 		switch (z) {
-			case 5: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_gl.string,TP_LocationName(*pl));break;
-			case 6: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_rl.string,TP_LocationName(*pl));break;
-			case 7: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_lg.string,TP_LocationName(*pl));break;
-			case 8: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ring.string,TP_LocationName(*pl));break;
-			case 9: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_quad.string,TP_LocationName(*pl));break;
+			case 5: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_gl.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 6: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_rl.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 7: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_lg.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 8: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ring.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 9: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_quad.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 			case 10:
 				if (mvd_new_info[i].info.info[QUAD_INFO].starttime - cls.demotime < 30) {
-					Com_Printf("%s Lost %s @ %s\n",pn, tp_name_pent.string,TP_LocationName(*pl));break;
+					Com_Printf("%s Lost %s @ %s\n",pn, tp_name_pent.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 				} else {
-					Com_Printf("%s's %s ended\n",pn, tp_name_pent.string,TP_LocationName(*pl));break;
+					Com_Printf("%s's %s ended\n",pn, tp_name_pent.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 				}
-			case 11: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ga.string,TP_LocationName(*pl));break;
-			case 12: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ya.string,TP_LocationName(*pl));break;
-			case 13: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ra.string,TP_LocationName(*pl));break;
-			case 14: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_mh.string,TP_LocationName(*pl));break;
+			case 11: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ga.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 12: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ya.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 13: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ra.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
+			case 14: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_mh.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 		}
 	}
 }
