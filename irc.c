@@ -420,7 +420,7 @@ void IRC_Update(void)
 	struct timeval timeout = { 0, 0 };
 	int r;
 
-	if (irc_is_connected(irc_singlesession)) {
+	if (irc_singlesession && irc_is_connected(irc_singlesession)) {
 		FD_ZERO(&irc_fd_in);
 		FD_ZERO(&irc_fd_out);
 		r = irc_add_select_descriptors(irc_singlesession, &irc_fd_in, &irc_fd_out, &irc_maxfd);
