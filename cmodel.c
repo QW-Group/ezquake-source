@@ -143,7 +143,11 @@ int CM_HullPointContents (hull_t *hull, int num, vec3_t p)
 
 	while (num >= 0) {
 		if (num < hull->firstclipnode || num > hull->lastclipnode)
+		{
+			if (map_halflife && num == hull->lastclipnode + 1)
+				return CONTENTS_EMPTY;
 			Sys_Error ("CM_HullPointContents: bad node number");
+		}
 
 		node = hull->clipnodes + num;
 		plane = hull->planes + node->planenum;
@@ -210,7 +214,11 @@ start:
 
 	// FIXME, check at load time
 	if (num < hull->firstclipnode || num > hull->lastclipnode)
+	{
+		if (map_halflife && num == hull->lastclipnode + 1)
+			return TR_EMPTY;
 		Sys_Error ("RecursiveHullTrace: bad node number");
+	}
 
 	node = hull->clipnodes + num;
 
