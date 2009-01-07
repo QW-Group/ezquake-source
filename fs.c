@@ -140,6 +140,7 @@ int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation
 void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int FS_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);
+void FS_ListFiles_f(void);
 void FS_FlushFSHash(void);
 void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
@@ -2557,6 +2558,7 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("fs_diff", FS_DiffFile_f); 		// VFS-FIXME <-- Only a debug function
 	Cmd_AddCommand("dir", FS_Dir_f);
 	Cmd_AddCommand("locate", FS_Locate_f);
+	Cmd_AddCommand("fs_search", FS_ListFiles_f);
 	Cvar_Register(&fs_cache);
 	Com_Printf("Initialising quake VFS filesystem\n");
 #endif
@@ -3587,6 +3589,34 @@ void FS_ReloadPackFiles_f(void)
 		FS_ReloadPackFilesFlags(atoi(Cmd_Argv(1)));
 	else
 		FS_ReloadPackFilesFlags(FS_LOAD_FILE_ALL);
+
+}
+
+void FS_ListFiles_f(void)
+{
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: fs_search <extension>\nLists files in search paths with given extension\n");
+	}
+	else if (!fs_cache.integer) {
+		Com_Printf("Can't search, fs_cache must be turned on\n");
+	}
+	else {
+		int i;
+		char *ext = Cmd_Argv(1);
+		size_t ext_len = strlen(ext);
+
+		for (i = 0; i < filesystemhash->numbuckets; i++) {
+			bucket_t *b = filesystemhash->bucket[i];
+			while (b) {
+				char *key = b->keystring;
+				size_t len = strlen(key);
+				if (strcmp(key+len-ext_len, ext) == 0) {
+					Com_Printf("%s\n", b->keystring);
+				}
+				b = b->next;
+			}
+		}
+	}
 }
 
 void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm)
