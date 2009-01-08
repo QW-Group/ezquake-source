@@ -11,3 +11,4 @@
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/dsound.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/dxguid.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libircclient-static.lib
+"../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/glew32.lib

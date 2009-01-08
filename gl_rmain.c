@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#ifdef GLSL
+#include "gl_shader.h"
+#endif // GLSL
 #include "vx_stuff.h"
 #include "vx_vertexlights.h"
 #include "utils.h"
@@ -1236,7 +1239,22 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 					}
 				}
 
+// I am apologise, but can't imagine a better way for example
+#ifdef GLSLEXAMPLE
+				{
+					extern qbool SHD_EXAMPLE_StartShader(void);
+
+					qbool shader_ok = SHD_EXAMPLE_StartShader();
+
+					R_DrawAliasModel (currententity);
+
+					if (shader_ok)
+						SHD_Unbind();
+				}
+#else
 				R_DrawAliasModel (currententity);
+#endif
+
 				break;
 			case mod_alias3:
 				R_DrawAlias3Model (currententity);

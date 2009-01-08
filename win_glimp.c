@@ -1152,6 +1152,19 @@ static rserr_t GLW_SetMode( const char *drivername,
 */
 static void GLW_InitExtensions( void )
 {
+#ifdef GLSL
+
+	/*	glew is not shaders lib, its OpenGL extensions lib,
+		but atm we use it for shaders only, so surround with #ifdef */
+
+
+	// glew lib unable to deinit, so init it even r_allowExtensions is zero
+	if ( glewInit () != GLEW_OK )
+	{
+		ST_Printf( PRINT_R_VERBOSE, "*** ERROR in glewInit ***\n" );
+	}
+#endif
+
 	if ( !r_allowExtensions.integer )
 	{
 		ST_Printf( PRINT_ALL, "*** IGNORING OPENGL EXTENSIONS ***\n" );

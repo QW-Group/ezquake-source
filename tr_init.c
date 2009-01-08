@@ -29,6 +29,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
+#ifdef GLSL
+#include "gl_shader.h"
+#endif // GLSL
 #if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
 #endif // _WIN32 || __linux__ || __FreeBSD__
@@ -100,7 +103,6 @@ cvar_t  r_showextensions	= { "vid_showextensions", 	"0",	CVAR_SILENT };
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
 void ( APIENTRY * qglActiveTextureARB )( GLenum texture );
 void ( APIENTRY * qglClientActiveTextureARB )( GLenum texture );
-
 
 static void GfxInfo_f( void );
 
@@ -626,6 +628,10 @@ void VID_Shutdown (void) {
 
 #endif
 
+#ifdef GLSL
+	SHD_Shutdown();
+#endif
+
 	RE_Shutdown( true );
 }
 
@@ -664,6 +670,10 @@ void VID_Init (unsigned char *palette) {
 	VID_SetPalette(palette);
 
 	RE_Init();
+
+#ifdef GLSL
+	SHD_Init();
+#endif
 
 	VID_zzz();
 

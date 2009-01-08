@@ -630,6 +630,26 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\..\gl_shader.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath="..\..\gl_ngraph.c"
 					>
 					<FileConfiguration
@@ -2550,6 +2570,10 @@
 				</File>
 				<File
 					RelativePath="..\..\gl_local.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\gl_shader.h"
 					>
 				</File>
 				<File
