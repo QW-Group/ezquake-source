@@ -373,17 +373,7 @@ void Menu_MultiPlayer_Draw (void)
 {
 	int x, y, w, h;
 
-#ifdef GLQUAKE
-	// do not scale this menu
-	if (scr_scaleMenu.value)
-	{
-		menuwidth = vid.width;
-		menuheight = vid.height;
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
-	}
-#endif
+	M_Unscale_Menu();
 
 	w = min(640, vid.width) - BROWSERPADDING*2;
 	h = min(480, vid.height) - BROWSERPADDING*2;

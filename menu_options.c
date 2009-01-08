@@ -845,16 +845,7 @@ void Menu_Options_Key(int key, int unichar) {
 void Menu_Options_Draw(void) {
 	int x, y, w, h;
 
-#ifdef GLQUAKE
-	// do not scale this menu
-	if (scr_scaleMenu.value) {
-		menuwidth = vid.width;
-		menuheight = vid.height;
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
-	}
-#endif
+	M_Unscale_Menu();
 
     // this will add top, left and bottom padding
     // right padding is not added because it causes annoying scrollbar behaviour
