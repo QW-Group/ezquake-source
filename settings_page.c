@@ -967,7 +967,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 
 void Settings_MainInit(void)
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
+	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
 	Cvar_Register(&skin_browser_showsize);
     Cvar_Register(&skin_browser_showdate);
     Cvar_Register(&skin_browser_showtime);
