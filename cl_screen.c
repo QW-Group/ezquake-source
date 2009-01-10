@@ -1468,33 +1468,10 @@ void DrawCI (void) {
 
 #endif
 
+// scr_teaminfo 
+// Variable ti_clients and related functions also used by hud_teaminfo in hud_common.c
+ti_player_t ti_clients[MAX_CLIENTS];
 
-/********************************* q3 like team info *****************************/
-
-// team info
-#define TEAMINFO_NICKLEN 5
-typedef struct ti_player_s {
-
-	int 		client;
-
-	vec3_t		org;
-	int			items;
-	int			health;
-	int			armor;
-	char		nick[TEAMINFO_NICKLEN]; // yeah, nick is nick, must be short
-	double		time; // when we recive last update about this player, so we can guess disconnects and etc
-
-} ti_player_t;
-
-/*do not show player if no info about him during this time, affect us if we lagging too*/
-#define TI_TIMEOUT (5)
-
-static ti_player_t ti_clients[MAX_CLIENTS];
-
-#define FONTWIDTH (8)
-
-qbool VX_TrackerIsEnemy(int player);
-char *TP_LocationName (vec3_t location);
 mpic_t * SCR_GetWeaponIconByFlag (int flag);
 
 void SCR_ClearTeamInfo(void)
@@ -1755,10 +1732,6 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 	return (x - x_in) / FONTWIDTH; // return width
 }
-
-void Update_TeamInfo(void);
-
-#define TEAMINFO_SHOWSELF() ((scr_teaminfo.integer == 1) && (scr_teaminfo_show_self.integer >= 1 && cls.mvdplayback))
 
 static void SCR_Draw_TeamInfo(void)
 {

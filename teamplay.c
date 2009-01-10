@@ -133,7 +133,7 @@ char *skinforcing_team = "";
 
 void TP_FindModelNumbers (void);
 void TP_FindPoint (void);
-char *TP_LocationName (vec3_t location);
+
 static void CountNearbyPlayers(qbool dead);
 char *Macro_LastTookOrPointed (void);
 char *Macro_LastTookOrPointed2 (void);

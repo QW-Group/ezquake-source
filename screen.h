@@ -75,3 +75,31 @@ extern double cursor_x, cursor_y;
 
 // kazik, HUD, incremented every screen update, never reset
 extern  int         host_screenupdatecount;
+
+// scr_teaminfo
+
+#define TEAMINFO_SHOWSELF() ((scr_teaminfo.integer == 1) && (scr_teaminfo_show_self.integer >= 1 && cls.mvdplayback))
+#define TEAMINFO_NICKLEN 5
+#define FONTWIDTH (8)
+
+/*do not show player if no info about him during this time, affect us if we lagging too*/
+#define TI_TIMEOUT (5)
+
+typedef struct ti_player_s {
+
+	int 		client;
+
+	vec3_t		org;
+	int			items;
+	int			health;
+	int			armor;
+	char		nick[TEAMINFO_NICKLEN]; // yeah, nick is nick, must be short
+	double		time; // when we recive last update about this player, so we can guess disconnects and etc
+
+} ti_player_t;
+
+void Update_TeamInfo(void);
+char *SCR_GetWeaponShortNameByFlag (int flag);
+
+// end - scr_teaminfo
+
