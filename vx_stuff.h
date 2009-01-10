@@ -156,5 +156,6 @@ void Amf_Reset_DamageStats (void);
 int VX_OwnFragTextLen(void);
 double VX_OwnFragTime(void);
 const char * VX_OwnFragText(void);
+qbool VX_TrackerIsEnemy(int player);
 
 #endif // __VX_STUFF__H__
