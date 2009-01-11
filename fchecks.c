@@ -208,7 +208,7 @@ static qbool FChecks_CheckFServerRequest (const char *s)
 
 static qbool FChecks_CheckFRulesetRequest (const char *s)
 {
-	char *sScripts, *sIPhysics, *sDelayP, *sFakeS, *sEnemySk, *sModMod, *fServer;
+	char *sScripts, *sEnemySk, *sModMod, *fServer;
 	char padding[13] = "             ";
 	size_t name_len = strlen(cl.players[cl.playernum].name);
 	size_t pad_len = 12 - bound(0, name_len, 12);
@@ -221,9 +221,6 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 	if (Util_F_Match(s, "f_ruleset"))	{
 		sScripts  = (allow_scripts.integer)         ? "rjsc" : "{rjsc}";
 		sEnemySk  = (enemyforceskins.integer)       ? "skif" : "{skif}";
-		sDelayP   = (cl_delay_packet.integer)       ? "pakd" : "{pakd}";
-		sFakeS    = (cl_fakeshaft.integer)          ? "faks" : "{faks}";
-		sIPhysics = (cl_independentPhysics.integer) ? "indp" : "{indp}";
 		sModMod   = (strcmp(FMod_Response_Text(), "all models ok") != 0)
 		                                            ? "modf" : "{modf}";
 		fServer = FChecks_FServerResponse_Text();
@@ -231,8 +228,8 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 			fServer = "server-na";
 		}
 
-		Cbuf_AddText(va("say \"%s%s %s %s %s %s %s %s ezQuake %s %s\"\n",
-			padding, Rulesets_Ruleset(), sModMod, sScripts, sEnemySk, sDelayP, sFakeS, sIPhysics, VERSION_NUMBER, fServer));
+		Cbuf_AddText(va("say \"%s%s %s %s %s ezq%s %s\"\n",
+			padding, Rulesets_Ruleset(), sModMod, sScripts, sEnemySk, VERSION_NUMBER, fServer));
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}
