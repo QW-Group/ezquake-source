@@ -4855,7 +4855,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		*hud_teaminfo_low_health,
 		*hud_teaminfo_armor_style,
 		*hud_teaminfo_show_enemies,
-		*hud_teaminfo_show_self;
+		*hud_teaminfo_show_self,
+		*hud_teaminfo_scale;
 
 	if (hud_teaminfo_weapon_style == NULL)    // first time
 	{
@@ -4869,6 +4870,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_armor_style			= HUD_FindVar(hud, "armor_style");
 		hud_teaminfo_show_enemies			= HUD_FindVar(hud, "show_enemies");
 		hud_teaminfo_show_self				= HUD_FindVar(hud, "show_self");
+		hud_teaminfo_scale					= HUD_FindVar(hud, "scale");
 	}
 
 	// Don't update hud item unless first view is beeing displayed
@@ -4915,18 +4917,18 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		return;
 
 	// this does't draw anything, just calculate width
-	width = FONTWIDTH * SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud);
-	height = FONTWIDTH * slots_num;
+	width = FONTWIDTH * hud_teaminfo_scale->value * SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud);
+	height = FONTWIDTH * hud_teaminfo_scale->value * slots_num;
 
 	HUD_PrepareDraw(hud, width , height, &x, &y);
 
-	_y = y;
-	x = (hud_teaminfo_align_right->value ? x - (width * FONTWIDTH) : x);
+	_y = y ;
+	x = (hud_teaminfo_align_right->value ? x - (width * (FONTWIDTH * hud_teaminfo_scale->value)) : x);
 
 	for ( j = 0; j < slots_num; j++ ) {
 		i = slots[j];
 		SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud);
-		_y += FONTWIDTH;
+		_y += FONTWIDTH * hud_teaminfo_scale->value;
 	}
 }
 
@@ -4938,6 +4940,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	int x_in = x; // save x
 	int i;
 	mpic_t *pic;
+	float scale = HUD_FindVar(hud, "scale")->value;
 
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t  *sb_armor[3];
@@ -4974,9 +4977,9 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				if(!width_only) {
 					char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
 					snprintf(tmp, sizeof(tmp), "%*.*s", maxname, maxname, nick);
-					Draw_ColoredString (x, y, tmp, false);
+					Draw_SString (x, y, tmp, scale);
 				}
-				x += maxname * FONTWIDTH;
+				x += maxname * FONTWIDTH * scale;
 
 				break;
 			case 'w': // draw "best" weapon icon/name
@@ -4984,15 +4987,15 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				switch (HUD_FindVar(hud, "weapon_style")->integer) {
 				case 1:
 					if(!width_only)
-						Draw_ColoredString (x, y, SCR_GetWeaponShortNameByFlag(BestWeaponFromStatItems( ti_cl->items )), false);
-					x += 3 * FONTWIDTH;
+						Draw_SString (x, y, SCR_GetWeaponShortNameByFlag(BestWeaponFromStatItems( ti_cl->items )), scale);
+					x += 3 * FONTWIDTH * scale;
 
 					break;
 				default: // draw image by default
 					if(!width_only)
 						if ( (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems( ti_cl->items ))) )
-							Draw_SPic (x, y, pic, 0.5);
-					x += 2 * FONTWIDTH;
+							Draw_SPic (x, y, pic, 0.5 * scale);
+					x += 2 * FONTWIDTH * scale;
 
 					break;
 				}
@@ -5003,9 +5006,9 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 				if(!width_only) {
 					snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < HUD_FindVar(hud, "low_health")->integer ? "&cf00" : ""), ti_cl->health);
-					Draw_ColoredString (x, y, tmp, false);
+					Draw_SString (x, y, tmp, scale);
 				}
-				x += 3 * FONTWIDTH;
+				x += 3 * FONTWIDTH * scale;
 
 				break;
 			case 'a': // draw armor, padded with space on left side
@@ -5020,13 +5023,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				case 1: // image prefixed armor value
 					if(!width_only) {
 						if (ti_cl->items & IT_ARMOR3)
-							Draw_SPic (x, y, sb_armor[2], 1.0/3);
+							Draw_SPic (x, y, sb_armor[2], 1.0/3 * scale);
 						else if (ti_cl->items & IT_ARMOR2)
-							Draw_SPic (x, y, sb_armor[1], 1.0/3);
+							Draw_SPic (x, y, sb_armor[1], 1.0/3 * scale);
 						else if (ti_cl->items & IT_ARMOR1)
-							Draw_SPic (x, y, sb_armor[0], 1.0/3);
+							Draw_SPic (x, y, sb_armor[0], 1.0/3 * scale);
 					}
-					x += FONTWIDTH;
+					x += FONTWIDTH * scale;
 
 					break;
 				case 2: // colored background of armor value
@@ -5059,22 +5062,22 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				case 4: // armor value prefixed with letter
 					if(!width_only) {
 						if (ti_cl->items & IT_ARMOR3)
-							Draw_ColoredString (x, y, "r", false);
+							Draw_SString (x, y, "r", scale);
 						else if (ti_cl->items & IT_ARMOR2)
-							Draw_ColoredString (x, y, "y", false);
+							Draw_SString (x, y, "y", scale);
 						else if (ti_cl->items & IT_ARMOR1)
-							Draw_ColoredString (x, y, "g", false);
+							Draw_SString (x, y, "g", scale);
 					}
-					x += FONTWIDTH;
+					x += FONTWIDTH * scale;
 
 					break;
 				}
 
 				if(!width_only) { // value drawed no matter which style
 					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
-					Draw_ColoredString (x, y, tmp, false);
+					Draw_SString (x, y, tmp, scale);
 				}
-				x += 3 * FONTWIDTH;
+				x += 3 * FONTWIDTH * scale;
 
 				break;
 			case 'l': // draw location
@@ -5085,34 +5088,34 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 						loc = "unknown";
 
 					snprintf(tmp, sizeof(tmp), "%*.*s", maxloc, maxloc, TP_ParseFunChars(loc, false));
-					Draw_ColoredString (x, y, tmp, false);
+					Draw_SString (x, y, tmp, scale);
 				}
-				x += maxloc * FONTWIDTH;
+				x += maxloc * FONTWIDTH * scale;
 
 				break;
 			case 'p': // draw powerups
 
 				if(!width_only)
 					if ( sb_face_quad && (ti_cl->items & IT_QUAD))
-						Draw_SPic (x, y, sb_face_quad, 1.0/3);
-				x += FONTWIDTH;
+						Draw_SPic (x, y, sb_face_quad, 1.0/3*scale);
+				x += FONTWIDTH * scale;
 
 				if(!width_only)
 					if ( sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
-						Draw_SPic (x, y, sb_face_invuln, 1.0/3);
-				x += FONTWIDTH;
+						Draw_SPic (x, y, sb_face_invuln, 1.0/3*scale);
+				x += FONTWIDTH * scale;
 
 				if(!width_only)
 					if ( sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
-						Draw_SPic (x, y, sb_face_invis, 1.0/3);
-				x += FONTWIDTH;
+						Draw_SPic (x, y, sb_face_invis, 1.0/3*scale);
+				x += FONTWIDTH * scale;
 
 				break;
 			case '%': // wow, %% result in one %, how smart
 
 				if(!width_only)
-					Draw_ColoredString (x, y, "%", false);
-				x += FONTWIDTH;
+					Draw_SString (x, y, "%", scale);
+				x += FONTWIDTH * scale;
 
 				break;
 
@@ -5120,9 +5123,9 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 				if(!width_only) {
 					snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
-					Draw_ColoredString (x, y, tmp, false);
+					Draw_SString (x, y, tmp, scale);
 				}
-				x += (s[0] ? 2 : 1) * FONTWIDTH;
+				x += (s[0] ? 2 : 1) * FONTWIDTH * scale;
 
 				break;
 			}
@@ -5133,15 +5136,15 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 			if(!width_only) {
 				snprintf(tmp, sizeof(tmp), "%c", s[0]);
 				if (s[0] != ' ') // inhuman smart optimization, do not print space!
-					Draw_ColoredString (x, y, tmp, false);
+					Draw_SString (x, y, tmp, scale);
 			}
-			x += FONTWIDTH;
+			x += FONTWIDTH * scale;
 
 			break;
 		}
 	}
 
-	return (x - x_in) / FONTWIDTH; // return width
+	return (x - x_in) / (FONTWIDTH * scale); // return width
 }
 
 #ifdef WITH_PNG
@@ -6994,6 +6997,7 @@ void CommonDraw_Init(void)
 		"weapon_style","0",
 		"show_enemies","0",
 		"show_self","1",
+		"scale","1",
 		NULL);
 
 	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
