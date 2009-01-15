@@ -221,8 +221,8 @@ qbool Key_TryMovementProtected(const char *cmd, qbool down, int key)
 	else if (strcmp(cmd, "+right") == 0) b = &in_right;
 	else if (strcmp(cmd, "+lookup") == 0) b = &in_lookup;
 	else if (strcmp(cmd, "+lookdown") == 0) b = &in_lookdown;
-	else if (strcmp(cmd, "+up") == 0) b = &in_up;
-	else if (strcmp(cmd, "+down") == 0) b = &in_down;
+	else if (strcmp(cmd, "+moveup") == 0) b = &in_up;
+	else if (strcmp(cmd, "+movedown") == 0) b = &in_down;
 
 	if (b) {
 		f(b, key);
