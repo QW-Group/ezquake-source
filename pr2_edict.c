@@ -173,17 +173,4 @@ void ED2_PrintEdicts (void)
 
 }
 
-/*
-============
-PR2_Profile_f
- 
-============
-*/
-/*void PR2_Profile_f (void)
-{
-        if(!sv_vm)
-        	PR_Profile_f();
- 
-}*/
-
 #endif /* USE_PR2 */
