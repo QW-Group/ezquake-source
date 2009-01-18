@@ -1697,23 +1697,24 @@ void QMB_DetpackExplosion (vec3_t org) {
 	float theta;
 	vec3_t neworg, angle = {0, 0, 0};
 
+	byte *f_color = (gl_part_detpackexplosion_fire_color.string[0] ? gl_part_detpackexplosion_fire_color.color : ColorForParticle(p_inferno_flame));
+	byte *r_color = (gl_part_detpackexplosion_ray_color.string[0] ? gl_part_detpackexplosion_ray_color.color : NULL);
 	
 	contents = TruePointContents(org);
 	if (ISUNDERWATER(contents)) {
 		AddParticle(p_bubble, org, 8, 2.8, 2.5, NULL, zerodir);
 		AddParticle(p_bubble, org, 6, 2.2, 2.5, NULL, zerodir);
-		AddParticle(p_fire, org, 10, 25, 0.75, ColorForParticle(p_inferno_flame), zerodir);
+		AddParticle(p_fire, org, 10, 25, 0.75, f_color, zerodir);
 	} else {
-		AddParticle(p_fire, org, 14, 33, 0.75, ColorForParticle(p_inferno_flame), zerodir);
+		AddParticle(p_fire, org, 14, 33, 0.75, f_color, zerodir);
 	}
-
 	
 	for (i = 0; i < 5; i++) {
 		angle[2] = 0;
 		for (j = 0; j < 5; j++) {
 			AngleVectors(angle, NULL, NULL, neworg);
 			VectorMA(org, 90, neworg, neworg);	
-			AddParticle(p_sparkray, org, 1, 9 + (i & 3), 0.75,  NULL, neworg);
+			AddParticle(p_sparkray, org, 1, 9 + (i & 3), 0.75,  r_color, neworg);
 			angle[2] += 360 / 5;
 		}
 		angle[0] += 180 / 5;

@@ -168,6 +168,10 @@ cvar_t gl_part_blobs = {"gl_part_blobs", "0"}; // 1
 cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"}; // 1
 cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
 
+cvar_t gl_part_detpackexplosion_fire_color = {"gl_part_detpackexplosion_fire_color", "", CVAR_COLOR};
+cvar_t gl_part_detpackexplosion_ray_color = {"gl_part_detpackexplosion_ray_color", "", CVAR_COLOR};
+
+
 cvar_t gl_powerupshells = {"gl_powerupshells", "1"};
 cvar_t gl_powerupshells_style = {"gl_powerupshells_style", "0"};
 cvar_t gl_powerupshells_size = {"gl_powerupshells_size", "5"};
@@ -1723,6 +1727,9 @@ void R_Init (void) {
 	Cvar_Register (&gl_part_blobs);
 	Cvar_Register (&gl_part_lavasplash);
 	Cvar_Register (&gl_part_inferno);
+
+	Cvar_Register (&gl_part_detpackexplosion_fire_color);
+	Cvar_Register (&gl_part_detpackexplosion_ray_color);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TURB);
 	Cvar_Register (&r_skyname);

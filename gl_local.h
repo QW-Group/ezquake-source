@@ -227,6 +227,8 @@ extern  cvar_t gl_part_telesplash;
 extern  cvar_t gl_part_blobs;
 extern  cvar_t gl_part_lavasplash;
 extern	cvar_t gl_part_inferno;
+extern	cvar_t gl_part_detpackexplosion_fire_color;
+extern	cvar_t gl_part_detpackexplosion_ray_color;
 
 extern	cvar_t gl_powerupshells;
 extern	cvar_t gl_powerupshells_style;
