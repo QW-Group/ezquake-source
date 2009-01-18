@@ -217,7 +217,8 @@ void SB_Test_Init(char *address);
 void SB_Test_Change(char *address);
 void SB_Test_Frame(void);
 
-void Browser_Init (void);
+void Browser_Init(void);
+void Browser_Init2(void);
 
 void SB_Servers_Draw (int x, int y, int w, int h);
 int SB_Servers_Key(int key);

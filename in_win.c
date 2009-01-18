@@ -242,6 +242,7 @@ void IN_JoyMove (usercmd_t *cmd);
 cvar_t	m_rate				= {"m_rate",	         "125", CVAR_SILENT};
 cvar_t	m_showrate			= {"m_showrate",         "0",   CVAR_SILENT};
 cvar_t  in_mouse			= {"in_mouse",           "1",   CVAR_LATCH};  // NOTE: "1" is mt_normal
+cvar_t  in_raw_allbuttons   = {"in_raw_allbuttons",  "0"};
 cvar_t  in_m_smooth			= {"in_m_smooth",        "0",   CVAR_LATCH};
 
 cvar_t  in_m_mwhook			= {"in_m_mwhook",        "0",   CVAR_LATCH};
@@ -991,6 +992,31 @@ void IN_RawInput_Init(void)
 	return; // success
 }
 
+
+void IN_RawInput_Buttons(USHORT usButtonFlags)
+{
+	if (usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) 
+		Key_Event(K_MOUSE1, true);
+	if (usButtonFlags & RI_MOUSE_BUTTON_1_UP)   
+		Key_Event(K_MOUSE1, false);
+	if (usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) 
+		Key_Event(K_MOUSE2, true);
+	if (usButtonFlags & RI_MOUSE_BUTTON_2_UP)   
+		Key_Event(K_MOUSE2, false);
+	if (usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) 
+		Key_Event(K_MOUSE3, true);
+	if (usButtonFlags & RI_MOUSE_BUTTON_3_UP)   
+		Key_Event(K_MOUSE3, false);
+	if (usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) 
+		Key_Event(K_MOUSE4, true);
+	if (usButtonFlags & RI_MOUSE_BUTTON_4_UP)   
+		Key_Event(K_MOUSE4, false);
+	if (usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) 
+		Key_Event(K_MOUSE5, true);
+	if (usButtonFlags & RI_MOUSE_BUTTON_5_UP)   
+		Key_Event(K_MOUSE5, false);
+}
+
 //================================
 // raw input read functions
 //================================
@@ -1028,8 +1054,14 @@ void IN_RawInput_MouseRead(HANDLE in_device_handle)
 			break;
 	}
 
-	if (i == rawmicecount) // we're not tracking this mouse
+	if (i == rawmicecount) {
+		// we're not tracking this mouse
+		if (in_raw_allbuttons.integer) {
+			// user wants to get button events from all the devices, so be it
+			IN_RawInput_Buttons(raw->data.mouse.usButtonFlags);
+		}
 		return;
+	}
 
 	// movement
 	if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
@@ -1050,26 +1082,7 @@ void IN_RawInput_MouseRead(HANDLE in_device_handle)
 	}
 
 	// buttons
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) 
-		Key_Event(K_MOUSE1, true);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP)   
-		Key_Event(K_MOUSE1, false);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) 
-		Key_Event(K_MOUSE2, true);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP)   
-		Key_Event(K_MOUSE2, false);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) 
-		Key_Event(K_MOUSE3, true);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP)   
-		Key_Event(K_MOUSE3, false);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) 
-		Key_Event(K_MOUSE4, true);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP)   
-		Key_Event(K_MOUSE4, false);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) 
-		Key_Event(K_MOUSE5, true);
-	if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP)   
-		Key_Event(K_MOUSE5, false);
+	IN_RawInput_Buttons(raw->data.mouse.usButtonFlags);
 
 	// mouse wheel
 	if (raw->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
@@ -1367,6 +1380,8 @@ void IN_Init (void) {
 		Cvar_Register (&in_joystick);
 
 		Cmd_AddCommand ("in_restart", IN_Restart_f);
+
+		Cvar_Register (&in_raw_allbuttons);
 	}
 
 	Cvar_ResetCurrentGroup ();
