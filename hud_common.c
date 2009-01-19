@@ -2037,12 +2037,13 @@ void SCR_HUD_NetProblem (hud_t *hud) {
 	if(scale == NULL)
 		scale = HUD_FindVar(hud, "scale");
 
-	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP-1)
+	if (!HUD_PrepareDraw(hud, scr_net->width, scr_net->height, &x, &y))
 		return;
-	if (cls.demoplayback)
+
+	if ((cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP-1) || cls.demoplayback)
 		return;
-	if (HUD_PrepareDraw(hud, scr_net->width, scr_net->height, &x, &y))
-		Draw_SPic (x, y, scr_net, scale->value);
+
+	Draw_SPic (x, y, scr_net, scale->value);
 }
 
 // ============================================================================0
