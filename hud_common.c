@@ -4895,13 +4895,6 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_scale					= HUD_FindVar(hud, "scale");
 	}
 
-	// Don't update hud item unless first view is beeing displayed
-	if ( CURRVIEW != 1 && CURRVIEW != 0)
-		return;
-
-	if (!cl.teamplay)  // non teamplay mode
-		return;
-
 	if (cls.mvdplayback)
 		Update_TeamInfo();
 
@@ -4942,7 +4935,15 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	width = FONTWIDTH * hud_teaminfo_scale->value * SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud);
 	height = FONTWIDTH * hud_teaminfo_scale->value * slots_num;
 
-	HUD_PrepareDraw(hud, width , height, &x, &y);
+	if (!HUD_PrepareDraw(hud, width , height, &x, &y))
+		return;
+
+	// Don't update hud item unless first view is beeing displayed
+	if ( CURRVIEW != 1 && CURRVIEW != 0)
+		return;
+
+	if (!cl.teamplay)  // non teamplay mode
+		return;
 
 	_y = y ;
 	x = (hud_teaminfo_align_right->value ? x - (width * (FONTWIDTH * hud_teaminfo_scale->value)) : x);
