@@ -1736,7 +1736,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
         align = 2; break;
     }
 
-	switch ((int)hud_digits_trim.value)
+	switch (hud_digits_trim.integer)
 	{
 	case 0:
 		snprintf(buf, sizeof (buf), "%d", num);
@@ -3276,12 +3276,12 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		clamp(space_y, 0, 128);
 	}
 
-	sort_teamsort = (int)hud_frags_teamsort->value;
+	sort_teamsort = hud_frags_teamsort->integer;
 
 	// Set character scaling.
 	char_size = (hud_frags_bignum->value > 0) ? 8 * hud_frags_bignum->value : 8;
 
-    if ((int)hud_frags_strip->value)
+    if (hud_frags_strip->integer)
     {
 		// Auto set the number of rows / cols based on the number of players.
 		// (This is kinda fucked up, but I won't mess with it for the sake of backwards compability).
@@ -3620,7 +3620,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 void SCR_HUD_DrawTeamFrags(hud_t *hud)
 {
-    int width, height;
+    int width = 0, height = 0;
     int x, y;
 	int max_team_length = 0, num = 0;
     int rows, cols, cell_width, cell_height, space_x, space_y;
@@ -3667,9 +3667,10 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		hud_teamfrags_colors_alpha	= HUD_FindVar(hud, "colors_alpha");
     }
 
-	// Don't draw the frags if we're note in teamplay.
+	// Don't draw the frags if we're not in teamplay.
 	if(hud_teamfrags_onlytp->value && !cl.teamplay)
 	{
+		HUD_PrepareDraw(hud, width, height, &x, &y);
 		return;
 	}
 
@@ -3939,10 +3940,11 @@ char *Get_MP3_HUD_style(float style, char *st)
 // Draws MP3 Title.
 void SCR_HUD_DrawMP3_Title(hud_t *hud)
 {
-#ifdef WITH_MP3_PLAYER
 	int x=0, y=0/*, n=1*/;
     int width = 64;
 	int height = 8;
+
+#ifdef WITH_MP3_PLAYER
 	//int width_as_text = 0;
 	static int title_length = 0;
 	//int row_break = 0;
@@ -4016,14 +4018,16 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 	{
 		SCR_DrawWordWrapString(x, y, 8, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title);
 	}
+#else
+	HUD_PrepareDraw(hud, width , height, &x, &y);
 #endif
 }
 
 // Draws MP3 Time as a HUD-element.
 void SCR_HUD_DrawMP3_Time(hud_t *hud)
 {
-#ifdef WITH_MP3_PLAYER
 	int x = 0, y = 0, width = 0, height = 0;
+#ifdef WITH_MP3_PLAYER
 	int elapsed = 0;
 	int remain = 0;
 	int total = 0;
@@ -4109,6 +4113,8 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
 		Draw_String(x, y, time_string);
+#else
+	HUD_PrepareDraw(hud, width , height, &x, &y);
 #endif
 }
 
@@ -5174,7 +5180,6 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 void SCR_HUD_DrawOwnFrags(hud_t *hud)
 {
-	#ifdef GLQUAKE
     // not implemented yet: scale, color
     // fixme: add appropriate opengl functions that will add alpha, scale and color
     int width = VX_OwnFragTextLen() * LETTERWIDTH;
@@ -5186,7 +5191,11 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
         *hud_ownfrags_scale = NULL;
 //        *hud_ownfrags_color = NULL;
 
-    if (!width) return;
+    if (!width) 
+	{
+		HUD_PrepareDraw(hud, width , height, &x, &y);
+		return;
+	}
     
     if (hud_ownfrags_timeout == NULL)    // first time
     {
@@ -5195,8 +5204,10 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
         hud_ownfrags_timeout            = HUD_FindVar(hud, "timeout");
     }
 
-    if (VX_OwnFragTime() > hud_ownfrags_timeout->value) {
-        return;
+    if (VX_OwnFragTime() > hud_ownfrags_timeout->value) 
+	{
+		HUD_PrepareDraw(hud, width , height, &x, &y);
+		return;
     }
 
     width *= hud_ownfrags_scale->value;
@@ -5210,7 +5221,6 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
 
     if (VX_OwnFragTime() < hud_ownfrags_timeout->value)
         Draw_SString(x, y, VX_OwnFragText(), hud_ownfrags_scale->value);
-	#endif // GLQUAKE
 }
 
 void SCR_HUD_DrawKeys(hud_t *hud)
@@ -6302,12 +6312,14 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	// Don't show anything if it's a normal player.
 	if(!(cls.demoplayback || cl.spectator))
 	{
+		HUD_PrepareDraw(hud, hud_radar_width->value, hud_radar_height->value, &x, &y);
 		return;
 	}
 
 	// Don't show when not in teamplay/demoplayback.
 	if(!HUD_ShowInDemoplayback(hud_radar_onlytp->value))
 	{
+		HUD_PrepareDraw(hud, hud_radar_width->value, hud_radar_height->value, &x, &y);
 		return;
 	}
 
@@ -7100,7 +7112,6 @@ void CommonDraw_Init(void)
 		"itemfilter", "quad ra ya ga mega pent rl quad",
         NULL);
 
-#ifdef GLQUAKE
     HUD_Register("ownfrags" /* jeez someone give me a better name please */, NULL, "Highlights your own frags",
         0, ca_active, 1, SCR_HUD_DrawOwnFrags,
         "1", "screen", "center", "top", "0", "50", "0.2", "0 0 100", NULL,
@@ -7111,8 +7122,6 @@ void CommonDraw_Init(void)
 		"scale", "1.5",
         NULL
         );
-
-#endif
 
 	HUD_Register("keys", NULL, "Shows which keys user does press at the moment",
 		0, ca_active, 1, SCR_HUD_DrawKeys,
