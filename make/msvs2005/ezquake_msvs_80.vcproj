@@ -630,26 +630,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\gl_shader.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
 					RelativePath="..\..\gl_ngraph.c"
 					>
 					<FileConfiguration
@@ -793,6 +773,26 @@
 				</File>
 				<File
 					RelativePath="..\..\gl_rsurf.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\gl_shader.c"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -2573,10 +2573,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\gl_shader.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\gl_md3.h"
 					>
 					<FileConfiguration
@@ -2598,6 +2594,10 @@
 				</File>
 				<File
 					RelativePath="..\..\gl_model.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\gl_shader.h"
 					>
 				</File>
 				<File
