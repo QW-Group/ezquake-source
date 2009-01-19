@@ -2027,6 +2027,24 @@ void SCR_HUD_DrawAmmo4(hud_t *hud)
     SCR_HUD_DrawAmmo(hud, 4, scale->value, style->value, digits->value, align->string);
 }
 
+// Problem icon, Net
+
+void SCR_HUD_NetProblem (hud_t *hud) {
+	extern mpic_t *scr_net;
+	static cvar_t *scale = NULL;
+	int x, y;
+
+	if(scale == NULL)
+		scale = HUD_FindVar(hud, "scale");
+
+	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP-1)
+		return;
+	if (cls.demoplayback)
+		return;
+	if (HUD_PrepareDraw(hud, scr_net->width, scr_net->height, &x, &y))
+		Draw_SPic (x, y, scr_net, scale->value);
+}
+
 // ============================================================================0
 // Groups
 // ============================================================================0
@@ -6679,6 +6697,13 @@ void CommonDraw_Init(void)
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawQuad,
         "1", "suit", "left", "after", "0", "0", "0", "0 0 0", NULL,
         "style", "0",
+        "scale", "1",
+        NULL);
+
+	// netproblem icon
+    HUD_Register("netproblem", NULL, "Shows an icon if you are experiencing network problems",
+        HUD_NO_FRAME, ca_active, 0, SCR_HUD_NetProblem,
+        "1", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
         "scale", "1",
         NULL);
 

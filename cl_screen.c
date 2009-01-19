@@ -595,7 +595,7 @@ void SCR_DrawTurtle (void) {
 void SCR_DrawNet (void) {
 	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP-1)
 		return;
-	if (cls.demoplayback)
+	if (cls.demoplayback || scr_newHud.value == 1)
 		return;
 
 	Draw_Pic (scr_vrect.x + 64, scr_vrect.y, scr_net);
