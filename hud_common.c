@@ -666,7 +666,8 @@ void SCR_HUD_DrawGameClock(hud_t *hud)
         *hud_gameclock_style,
         *hud_gameclock_blink,
 		*hud_gameclock_countdown,
-		*hud_gameclock_scale;
+		*hud_gameclock_scale,
+		*hud_gameclock_offset;
 
     if (hud_gameclock_big == NULL)    // first time
     {
@@ -675,6 +676,8 @@ void SCR_HUD_DrawGameClock(hud_t *hud)
         hud_gameclock_blink = HUD_FindVar(hud, "blink");
 		hud_gameclock_countdown = HUD_FindVar(hud, "countdown");
 		hud_gameclock_scale = HUD_FindVar(hud, "scale");
+		hud_gameclock_offset = HUD_FindVar(hud, "offset");
+		gameclockoffset = &hud_gameclock_offset->integer;
     }
 
 	timetype = (hud_gameclock_countdown->value) ? TIMETYPE_GAMECLOCKINV : TIMETYPE_GAMECLOCK;
@@ -6475,6 +6478,7 @@ void CommonDraw_Init(void)
 		"scale",    "1",
         "blink",    "1",
 		"countdown","0",
+		"offset","0",
         NULL);
 
 	HUD_Register("notify", NULL, "Shows last console lines",

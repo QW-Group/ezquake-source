@@ -138,6 +138,7 @@ cvar_t	scr_clock_y				= {"cl_clock_y", "-1"};
 cvar_t	scr_gameclock			= {"cl_gameclock", "0"};
 cvar_t	scr_gameclock_x			= {"cl_gameclock_x", "0"};
 cvar_t	scr_gameclock_y			= {"cl_gameclock_y", "-3"};
+cvar_t	scr_gameclock_offset	= {"cl_gameclock_offset", "0"};
 
 cvar_t	scr_democlock			= {"cl_democlock", "0"};
 cvar_t	scr_democlock_x			= {"cl_democlock_x", "0"};
@@ -730,7 +731,7 @@ void SCR_DrawGameClock (void) {
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToHourString(timelimit), sizeof(str));
 	else
-		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime)), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
 
 	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strstr(str, ":")))
 		s++;		// or just use SecondsToMinutesString() ...
@@ -4233,6 +4234,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_clock_format);
 	Cvar_Register (&scr_clock);
 
+	Cvar_Register (&scr_gameclock_offset);
 	Cvar_Register (&scr_gameclock_x);
 	Cvar_Register (&scr_gameclock_y);
 	Cvar_Register (&scr_gameclock);

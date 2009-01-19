@@ -745,7 +745,7 @@ char* SCR_GetGameTime(int t)
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));
 	else
-		strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime)), sizeof(str));
+		strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime + *gameclockoffset)), sizeof(str));
 
 	return str;
 }

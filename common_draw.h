@@ -68,4 +68,6 @@ void HUD_AfterDraw();
 
 qbool Draw_BigFontAvailable(void);
 
+int *gameclockoffset;  // hud_gameclock time offset in seconds
+
 #endif  // __COMMON_DRAW__H__
