@@ -1056,7 +1056,7 @@ void M_Menu_Save_f (void) {
 void M_Load_Draw (void) {
 	int i;
 	mpic_t *p;
-	int lx, ly;	// lower bounds of the window
+	int lx = 0, ly = 0;	// lower bounds of the window
 
 	p = Draw_CachePic ("gfx/p_load.lmp");
 	M_DrawPic ( (320 - p->width) >> 1, 4, p);
@@ -1079,7 +1079,7 @@ void M_Load_Draw (void) {
 void M_Save_Draw (void) {
 	int i;
 	mpic_t *p;
-	int lx, ly;	// lower bounds of the window
+	int lx = 0, ly = 0;	// lower bounds of the window
 
 	p = Draw_CachePic ("gfx/p_save.lmp");
 	M_DrawPic ( (320 - p->width) >> 1, 4, p);

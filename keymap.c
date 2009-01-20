@@ -294,7 +294,6 @@ The file-format is like this:
 void IN_Keymap_Load_f (void)
 {
 	char            filename[MAX_QPATH];
-	FILE           *f = NULL;
 	char           *data;
 	int             i;
 	unsigned int    linecount;

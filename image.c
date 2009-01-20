@@ -2139,7 +2139,7 @@ static void JPEG_IO_term_destination (j_compress_ptr cinfo)
 #ifndef WITH_FTE_VFS
 		if (fwrite(dest->buffer, 1, datacount, dest->outfile) != datacount)
 #else
-		if (VFS_WRITE(dest->outfile, dest->buffer, datacount) != datacount)
+		if (((size_t) VFS_WRITE(dest->outfile, dest->buffer, datacount)) != datacount)
 #endif
 		{
 			jpeg_in_error = true;

@@ -215,7 +215,7 @@ LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 
 LOCAL expr_val operator_plus (EParser p, const expr_val e1, const expr_val e2)
 {
-	expr_val ret;
+	expr_val ret = {0};
 
 	switch (e1.type) {
 	case ET_INT: switch (e2.type) {

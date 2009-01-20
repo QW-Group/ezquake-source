@@ -597,7 +597,6 @@ int MVD_Stats_Gather_f (void){
 
 	if(cl.countdown == true){
 		return 0;
-		quad_time = pent_time = 0;
 	}
 	if(cl.standby == true)
 		return 0;

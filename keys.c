@@ -561,7 +561,7 @@ void CompleteCommandNew (void)
 	else if ((key_linepos >= 2
 		  || isspace (key_lines[edit_line][key_linepos - 1]))
 		 &&  called_second
-		 && (key_linepos == key_lineposorig) && (old_keyline_length == qwcslen(key_lines[edit_line])))
+		 && (key_linepos == key_lineposorig) && (old_keyline_length == (int) qwcslen(key_lines[edit_line])))
 	{
 		if (count != try)
 		{

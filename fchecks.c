@@ -209,7 +209,7 @@ static qbool FChecks_CheckFServerRequest (const char *s)
 static qbool FChecks_CheckFRulesetRequest (const char *s)
 {
 	char *sScripts, *sEnemySk, *sModMod, *fServer;
-	char padding[13] = "             ";
+	char padding[13] = "            ";
 	size_t name_len = strlen(cl.players[cl.playernum].name);
 	size_t pad_len = 12 - bound(0, name_len, 12);
 

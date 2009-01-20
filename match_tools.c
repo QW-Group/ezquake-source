@@ -351,8 +351,6 @@ static matchtype_t MT_GetMatchType(matchinfo_t *matchinfo) {
 		case 4: return mt_4on4;
 		default: return mt_tdm;
 	}
-
-	return mt_unknown_gamedir;
 }
 
 static matchinfo_t *MT_GetMatchInfo(void) {

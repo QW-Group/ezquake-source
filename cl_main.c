@@ -260,7 +260,7 @@ qbool CL_CheckIfQWProtocolHandler()
 {
 	DWORD type;
 	char reg_path[1024];
-	int len = sizeof(reg_path);
+	DWORD len = (DWORD) sizeof(reg_path);
 	HKEY hk;
 
 	if (RegOpenKey(HKEY_CURRENT_USER, QW_URL_OPEN_CMD_REGKEY, &hk) != 0)
@@ -2407,7 +2407,7 @@ qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can'
 int		nPlayernum;
 
 int		mv_trackslots[4];			// The different track slots for each view.
-char	currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
+char	currteam[MAX_INFO_STRING];  // The name of the current team being tracked in multiview mode.
 int		mvlatch;
 qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.
 int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.

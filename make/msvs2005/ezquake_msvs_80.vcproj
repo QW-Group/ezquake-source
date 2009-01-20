@@ -75,11 +75,12 @@
 				XMLDocumentationFileName=""
 				BrowseInformation="1"
 				BrowseInformationFile="$(IntDir)\"
-				WarningLevel="3"
+				WarningLevel="4"
 				WarnAsError="false"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CompileAs="1"
+				DisableSpecificWarnings="4706;4201;4100;4115;4201;4055;4054;4210;4152;4221;4204;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

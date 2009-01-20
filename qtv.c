@@ -185,9 +185,6 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 
 void QTV_Say_f (void)
 {
-	char *s = Cmd_Args();
-	char text[1024] = {0};
-	// int len;
 	tokenizecontext_t tmpcontext;
 
 	// save context, so we can later restore it
@@ -198,8 +195,11 @@ void QTV_Say_f (void)
 	// so we are disabling it temporarily to see if everything works ok without it
 #if 0
 	// get rid of quotes, if any
+	char *s = Cmd_Args();
 	if (0 && s[0] == '\"' && s[(len = strlen(s))-1] == '\"' && len > 2)
 	{
+		int len;
+		char text[1024] = {0};
 		snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s + 1);
 		if ((len = strlen(text)))
 			text[len - 1] = 0;

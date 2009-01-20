@@ -426,7 +426,8 @@ void GL_Upload8 (byte *data, int width, int height, int mode)
 
 int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) 
 {
-	int	i, scaled_width, scaled_height, crc = 0;
+	int	i, scaled_width, scaled_height;
+	unsigned short crc = 0;
 	qbool load_over_existing = false;
 	gltexture_t *glt = NULL;
 

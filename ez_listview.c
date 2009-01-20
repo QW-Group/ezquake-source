@@ -26,6 +26,10 @@ $Id: ez_listview.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 #include "common_draw.h"
 #include "ez_listview.h"
 
+#ifdef _WIN32
+#pragma warning( disable : 4189 )
+#endif
+
 //
 // Listview - Creates a new listview and initializes it.
 //

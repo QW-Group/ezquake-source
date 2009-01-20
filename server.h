@@ -493,7 +493,7 @@ typedef struct
 	int				spawncount;		// number of servers spawned since start,
 						// used to check late spawns
 	int				lastuserid;		// userid of last spawned client
-	int socketip;
+	socket_t socketip;
 
 // TCPCONNECT -->
 	int sockettcp;

@@ -2994,7 +2994,7 @@ int sv_syscall(int arg, ...) //must passed ints
 
 	va_start(ap,arg);
 
-	pr2_API[arg] ( 0,~0, (pr2val_t*)ap, &ret);
+	pr2_API[arg] ( 0, (unsigned int) ~0, (pr2val_t*)ap, &ret);
 
 	return ret._int;
 }

@@ -57,7 +57,7 @@ cvar_t	sys_inactivesleep = {"sys_inactiveSleep", "1"};
 
 static HANDLE	qwclsemaphore;
 static HANDLE	tevent;
-static HANDLE	hinput, houtput;
+HANDLE	hinput, houtput;
 
 void MaskExceptions (void);
 void Sys_PopFPCW (void);
@@ -549,7 +549,8 @@ char *Sys_ConsoleInput (void)
 	static char	text[256];
 	static int len;
 	INPUT_RECORD rec;
-	int i, dummy, ch, numread, numevents;
+	int i, ch;
+	unsigned long dummy, numread, numevents;
 	char *textCopied;
 
 	while (1) 
@@ -1425,7 +1426,7 @@ void Sys_ReadIPC()
 unsigned int Sys_SendIPC(const char *buf)
 {
 	HANDLE hMailslot;
-	unsigned int num_bytes_written;
+	unsigned long num_bytes_written;
 	qbool result = false;
 
 	// Connect to the server mailslot using CreateFile()

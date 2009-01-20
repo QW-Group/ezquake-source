@@ -326,7 +326,7 @@ void WAD3_LoadWadFile (char *filename)
 #ifndef WITH_FTE_VFS
 	if (fread(lumps, 1, sizeof(lumpinfo_t) * numlumps, file) != sizeof(lumpinfo_t) * numlumps) {
 #else
-	if (VFS_READ(file, lumps, sizeof(lumpinfo_t)*numlumps, &err) != sizeof(lumpinfo_t) * numlumps) {
+	if (((size_t) VFS_READ(file, lumps, sizeof(lumpinfo_t)*numlumps, &err)) != sizeof(lumpinfo_t) * numlumps) {
 #endif
 		Com_Printf ("WAD3_LoadWadFile: unable to read lump table\n");
 		Hunk_FreeToLowMark(lowmark);

@@ -756,7 +756,7 @@ void SV_MVDInfoAdd_f (void)
 		else
 		{
 			char buf[1024*200] = {0}; // 200 kb
-			int sz = fread((void*) buf, 1, sizeof(buf), src); // read from src
+			size_t sz = fread((void*) buf, 1, sizeof(buf), src); // read from src
 
 			if (sz <= 0)
 				Con_Printf("failed to read or empty input file\n");

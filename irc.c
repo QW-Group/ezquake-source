@@ -58,7 +58,7 @@ void IRC_Chanlist_Add(irc_chanlist *list, const char* chan)
 
 qbool IRC_Chanlist_Remove(irc_chanlist *list, const char* chan)
 {
-	int i, found = 0;
+	int i;
 
 	for (i = 0; i < list->size; i++) {
 		if (strcmp(list->list[i], chan) == 0) {
@@ -195,8 +195,6 @@ void IRC_event_privmsg(irc_session_t * session, const char * event, const char *
 
 void IRC_event_channel (irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	irc_ctx_t *ctx = (irc_ctx_t *) irc_get_ctx(session);
-
 	if (count > 1) {
 		Com_Printf("IRC: (%s) <%s> %s\n", params[0], IRC_mask_to_nick(origin), params[1]);
 	}

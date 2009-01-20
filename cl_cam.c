@@ -68,6 +68,9 @@ float	last_lock = 0;			// Last tracked player.
 
 static int	killer = -1;		// id of the player who killed the player we are now tracking
 
+// true if the player in given slot is an existing player
+#define VALID_PLAYER(i) (cl.players[i].name[0] && !cl.players[i].spectator)
+
 void CL_Cam_SetKiller(int killernum, int victimnum) {
 	if (victimnum != cl.viewplayernum) return;
 	if (killernum < 0 || killernum >= MAX_CLIENTS) return;
@@ -1036,9 +1039,10 @@ void CL_TrackTeam_f(void)
 		// Find the the first team.
 		for(i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(!currteam[0] || strcmp(currteam, cl.players[i].team))
-			strlcpy(currteam, cl.players[i].team, sizeof(currteam));
-			break;
+			if(VALID_PLAYER(i) && strcmp(currteam, cl.players[i].team) != 0) {
+				strlcpy(currteam, cl.players[i].team, sizeof(currteam));
+				break;
+			}
 		}
 	}
 

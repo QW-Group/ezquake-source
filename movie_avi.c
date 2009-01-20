@@ -425,7 +425,7 @@ void Capture_WriteVideo (byte *pixel_buffer, int size)
 
 void Capture_WriteAudio (int samples, byte *sample_buffer)
 {
-	HRESULT		hr;
+	HRESULT		hr = E_UNEXPECTED;
 	unsigned long	sample_bufsize;
 
 	if (!m_audio_stream)

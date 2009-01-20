@@ -244,7 +244,7 @@ static char ChangeColor(char c)
 static void Render_String(document_rendering_context_t *cx, char *text)
 {
     int l;
-    signed char c;
+    char c;
     document_rendered_link_t *link;
 
     char *txt = text;
@@ -293,11 +293,11 @@ static void Render_String(document_rendering_context_t *cx, char *text)
 
         switch (c)
         {
-        case (signed char)('\n' | 128):
+        case (char)('\n' | 128):
             LineFeed(cx);
             break;
 
-        case (signed char)(' ' | 128):
+        case (char)(' ' | 128):
             cx->line_buf[cx->line_pos++] = ' ';
             break;
 

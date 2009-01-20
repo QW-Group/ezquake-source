@@ -785,8 +785,6 @@ char *Macro_Point_LED(void)
 		return tp_name_status_yellow.string;
 	else // POINT_TYPE_ITEM
 		return tp_name_status_blue.string;
-
-	return macro_buf;
 }
 
 
@@ -2366,12 +2364,12 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
                    "teammate", "enemy", "eyes", "sentry", "disp", "quaded", "pented", \
 				   "rune1", "rune2", "rune3", "rune4", "resistance", "strength", "haste", "regeneration"};
 
-#define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
-				it_rockets|it_cells||it_pack|it_flag|it_runes)
+#define default_pkflags ((unsigned int) (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
+				it_rockets|it_cells||it_pack|it_flag|it_runes))
 
  // tp_took
-#define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack| \
-				it_rockets|it_cells|it_mh|it_flag|it_runes)
+#define default_tookflags ((unsigned int) (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack| \
+				it_rockets|it_cells|it_mh|it_flag|it_runes))
 
 /*
 powerups flag runes players suit armor sentry  mh disp rl lg pack gl sng rockets cells nails
@@ -2380,8 +2378,8 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
  below are defaults for tp_point (what comes up in point. also see tp_pointpriorities to prioritize this list) First items have highest priority (powerups in this case)
 */
 // tp_point
-#define default_pointflags (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
-				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_runes|it_nails)
+#define default_pointflags ((unsigned int) (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
+				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_runes|it_nails))
 
 unsigned int pkflags = default_pkflags;
 unsigned int tookflags = default_tookflags;
@@ -2660,7 +2658,7 @@ item_t	tp_items[] = {
                         {	it_rune3,	&tp_name_rune3,	"progs/end3.mdl",
                           {0, 0, 20},	18,
                         },
-                        {	it_rune4,	&tp_name_rune4,	"progs/end4.mdl",
+                        {	(unsigned int) it_rune4,	&tp_name_rune4,	"progs/end4.mdl",
                           {0, 0, 20},	18,
                         },
                         {	it_ra|it_ya|it_ga, NULL,	"progs/armor.mdl",

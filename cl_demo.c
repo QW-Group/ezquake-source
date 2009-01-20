@@ -1863,7 +1863,6 @@ qbool CL_GetDemoMessage (void)
 	float demotime;
 	byte c;
 	byte message_type;
-	byte mvd_time = 0; // Number of miliseconds since last frame. Can be between 0-255. MVD Only.
 	//static float prevtime = 0;
 
 	// Used to save track status when rewinding.

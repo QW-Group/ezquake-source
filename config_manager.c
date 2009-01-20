@@ -1031,7 +1031,7 @@ void DumpHUD_f(void)
 void Config_LegacyQuake_f(void)
 {
 	qbool specific = Cmd_Argc() > 1;
-	const char *ver;
+	const char *ver = NULL;
 	
 	if (specific) {
 		ver = Cmd_Argv(1);

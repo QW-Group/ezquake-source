@@ -473,14 +473,14 @@ closesvstream:
 		}
 
 		if (svs.sockettcp != INVALID_SOCKET) {
-			int newsock;
+			socket_t newsock;
 			if ((newsock = accept(svs.sockettcp, (struct sockaddr*)&from, &fromlen)) == INVALID_SOCKET) {
 				// FIXME it is Com_DPrintf because accept reutrns '-1' very often... (always?)
 				Com_DPrintf ("NET_GetPacket: accept: (%i): %s\n", qerrno, strerror(qerrno));
 			}
 
 			if (newsock != INVALID_SOCKET) {
-				int _true;
+				u_long _true;
 
 #ifndef _WIN32
 				if ((fcntl (newsock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@

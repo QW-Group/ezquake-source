@@ -149,7 +149,7 @@ static void S_TransferPaintBuffer(int endtime)
 	DWORD *pbuf;
 #ifdef _WIN32
 	int reps;
-	DWORD dwSize,dwSize2, *pbuf2;
+	DWORD dwSize = 0, dwSize2, *pbuf2;
 	HRESULT hresult;
 #endif
 

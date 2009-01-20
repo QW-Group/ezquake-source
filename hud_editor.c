@@ -2475,8 +2475,6 @@ qbool HUD_Editor_MouseEvent(mouse_state_t *ms)
 	}
 
 	return EZ_tree_MouseEvent(&help_control_tree, ms);
-
-	return false;
 }
 
 //

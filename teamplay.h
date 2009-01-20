@@ -168,7 +168,7 @@ int BestWeaponFromStatItems (int stat);
 #define it_rune1	(1 << 28)
 #define it_rune2	(1 << 29)
 #define it_rune3	(1 << 30)
-#define it_rune4	(1 << 31)
+#define it_rune4	((unsigned int) (1 << 31))
 #define NUM_ITEMFLAGS 32
  
 #define it_runes	(it_rune1|it_rune2|it_rune3|it_rune4)

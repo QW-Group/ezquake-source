@@ -787,7 +787,7 @@ void Con_DrawNotify (void) {
 
 		// add the cursor frame
 		if ((int) (curtime * con_cursorspeed) & 1) {
-			if (chat_linepos == qwcslen(s))
+			if (chat_linepos == (int) qwcslen(s))
 				s[chat_linepos+1] = '\0';
 			s[chat_linepos] = 11;
 		}
@@ -947,7 +947,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 		// Add the cursor frame.
 		if ((int) (curtime * con_cursorspeed) & 1)
 		{
-			if (chat_linepos == qwcslen(s))
+			if (chat_linepos == (int) qwcslen(s))
 				s[chat_linepos+1] = '\0';
 			s[chat_linepos] = 11;
 		}
@@ -1195,7 +1195,7 @@ static void CP_Bind(cp_texture_t *cptex, int *texture)
 double cp_time;
 
 void AddCP(void) {
-	conpart_t *p;
+	conpart_t *p = NULL;
 	int i;
 
 	static double last_time = 0;

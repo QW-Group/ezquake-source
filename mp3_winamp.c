@@ -126,7 +126,7 @@ long WINAMP_GetPlaylist(char **buf)
 	FILE *f;
 	char path[512];
 	int pathlength;
-	long filelength;
+	size_t filelength;
 	COPYDATASTRUCT cds;
 
 	if (!MP3_WINAMP_IsPlayerRunning())
@@ -145,7 +145,7 @@ long WINAMP_GetPlaylist(char **buf)
 		path[pathlength - 1] = 0;
 	
 	strlcat (path, "/winamp.m3u", sizeof (path));
-	filelength = FS_FileOpenRead(path, &f);
+	filelength = (size_t) FS_FileOpenRead(path, &f);
 	
 	if (!f)
 		return -1;
@@ -160,7 +160,7 @@ long WINAMP_GetPlaylist(char **buf)
 	}
 
 	fclose(f);
-	return filelength;
+	return (long) filelength;
 }
 
 
@@ -536,7 +536,7 @@ double Media_WINAMP_GetVolume(void)
 {
 	static double vol = 0;
 
-	vol = SendMessage(mp3_hwnd, WM_WA_IPC, -666, IPC_SETVOLUME) / 255.0;
+	vol = SendMessage(mp3_hwnd, WM_WA_IPC, (WPARAM) -666, IPC_SETVOLUME) / 255.0;
 	vol = ((int) (vol * 100)) / 100.0;
 
 	return vol;

@@ -351,7 +351,6 @@ DWORD WINAPI IN_SMouseProc (void* lpParameter)
 
 		if ((ret = WaitForSingleObject(m_event,	500/*INFINITE*/)) == WAIT_OBJECT_0) 
 		{
-			int mx = 0, my = 0;
 			DIDEVICEOBJECTDATA	od;
 			HRESULT hr;
 			double time;
@@ -1924,7 +1923,7 @@ void IN_StartupJoystick (void)
 { 
 	int numdevs;
 	JOYCAPS jc;
-	MMRESULT mmr;
+	MMRESULT mmr = 0;
  
  	// assume no joystick
 	joy_avail = false; 

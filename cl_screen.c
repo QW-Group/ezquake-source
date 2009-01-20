@@ -4022,7 +4022,7 @@ void SCR_RSShot_f (void) {
 		else
 		{
 			screen_shot = (byte *) Q_malloc (size);
-			if (fread(screen_shot, 1, size, f) == size)
+			if (fread(screen_shot, 1, (size_t) size, f) == (size_t) size)
 			{
 				Com_Printf ("Sending screenshot to server...\n");
 				CL_StartUpload(screen_shot, size);

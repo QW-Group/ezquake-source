@@ -1,5 +1,4 @@
 #include "quakedef.h"
-
 #ifdef _WIN32
 #include "winquake.h"
 #else
@@ -20,10 +19,26 @@
 #include "sbar.h"
 #include "keys.h"
 
-
 extern qbool useNewPing;
+int oldPingHost(char *host_to_ping, int count);
+int oldPingHosts(server_data *servs[], int servsn, int count);
+int PingHost(char *host_to_ping, short port, int count, int time_out);
+int PingHosts(server_data *servs[], int servsn, int count, int time_out);
+void TP_ExecTrigger (const char *s);
+
+typedef struct infohost_s
+{
+    double lastsenttime;
+    int phase;
+} infohost;
+
+int autoupdate_serverinfo = 0;
+
+server_data *autoupdate_server;
 
 static const char senddata[] = {255, 255, 255, 255, 's','t','a','t','u','s',' ','2','3','\n'};
+
+int server_during_update = 0;
 
 int ReadInt (char *playerinfo, int *i)
 {
@@ -252,11 +267,9 @@ void Parse_Serverinfo(server_data *s, char *info)
         snprintf(s->display.players, sizeof (s->display.players), "%2d/%-2s", i, tmp==NULL ? "" : tmp);
 }
 
-int server_during_update = 0;
-
 void GetServerInfo(server_data *serv)
 {
-    int newsocket;
+    socket_t newsocket;
     struct sockaddr_storage server;
     int ret;
     char answer[5000];
@@ -302,19 +315,12 @@ void GetServerInfo(server_data *serv)
 // Gets multiple server info simultaneously
 //
 
-typedef struct infohost_s
-{
-    double lastsenttime;
-    int phase;
-} infohost;
-
-
 DWORD WINAPI GetServerInfosProc(void * lpParameter)
 {
     infohost *hosts;   // 0 if not sent yet, -1 if data read
     double interval, lastsenttime;
 
-    int newsocket;
+    socket_t newsocket;
     struct sockaddr_storage dest;
     int ret, i;
     fd_set fd;
@@ -459,9 +465,6 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
     return 0;
 }
 
-extern int oldPingHost(char *host_to_ping, int count);
-extern int PingHost(char *host_to_ping, short port, int count, int time_out);
-
 void GetServerPing(server_data *serv)
 {
     int p;
@@ -484,10 +487,6 @@ void GetServerPing(server_data *serv)
         SetPing(serv, p-1);
 }
 
-int oldPingHosts(server_data *servs[], int servsn, int count);
-int PingHosts(server_data *servs[], int servsn, int count, int time_out);
-void TP_ExecTrigger (const char *s);
-
 DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
     abort_ping = 0;
@@ -507,8 +506,10 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
         GetServerInfosProc(NULL);
     }
 
-    if (abort_ping)
+    /*
+	if (abort_ping)
         Sys_MSleep(500);    // let the packets end the road
+	*/
 
     resort_servers = 1;
     rebuild_all_players = 1;
@@ -521,7 +522,6 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 
 void GetServerPingsAndInfos(void)
 {
-
     if (rebuild_servers_list)
         Rebuild_Servers_List();
 
@@ -538,9 +538,6 @@ void GetServerPingsAndInfos(void)
 //
 // autoupdate serverinfo
 //
-
-int autoupdate_serverinfo = 0;
-server_data *autoupdate_server;
 
 DWORD WINAPI AutoupdateProc(void * lpParameter)
 {

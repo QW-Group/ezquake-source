@@ -25,7 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 #include <winsock2.h>
-typedef unsigned int socklen_t;
+typedef int socklen_t;
+typedef SOCKET socket_t;
 
 #define EWOULDBLOCK	WSAEWOULDBLOCK
 #define EMSGSIZE	WSAEMSGSIZE
@@ -34,7 +35,6 @@ typedef unsigned int socklen_t;
 #define ECONNREFUSED	WSAECONNREFUSED
 #define EADDRNOTAVAIL	WSAEADDRNOTAVAIL
 #define EAFNOSUPPORT	WSAEAFNOSUPPORT
-
 #define qerrno WSAGetLastError()
 #else //_WIN32
 #define qerrno errno
@@ -55,6 +55,7 @@ typedef unsigned int socklen_t;
 
 #define closesocket close
 #define ioctlsocket ioctl
+#define int socket_t;
 #endif //_WIN32
 
 #include <errno.h>

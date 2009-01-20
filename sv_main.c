@@ -3964,7 +3964,7 @@ unsigned char *Q_yelltext (unsigned char *str)
 	for (i = str; *i; i++)
 	{
 		if (*i >= '0' && *i <= '9')
-			*i += 18 - '0';
+			*i += (unsigned char) (18 - '0');
 		else if (*i > 32 && *i < 128)
 			*i |= 128;
 		else if (*i == 13)

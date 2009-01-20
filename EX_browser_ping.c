@@ -117,8 +117,8 @@ typedef union ICMP_Packet_u {
 /* Struct for storing ping reponses */
 typedef struct pinghost_s
 {
-    u_long ip;
-    short port;
+    int ip;
+    unsigned short port;
     int recv, send;
     int phase;
 	double ping;
@@ -139,8 +139,8 @@ typedef struct {
 // =============================================================================
 qbool useNewPing = false; // New Ping = UDP QW Packet multithreaded ping
 
-static int sock;
-static int ping_sock;
+socket_t sock;
+socket_t ping_sock;
 
 /* Used for thread syncronisation */
 static qbool ping_finished = false;
@@ -152,7 +152,7 @@ static sem_t ping_semaphore;
 /**
  * Given a string of the form "ip:port", gets the addr, port in integer format
  */
-static int ParseServerIp(char *server_port, int *addr, int *port) 
+static int ParseServerIp(char *server_port, int *addr, unsigned short *port) 
 {
 	char server_ip[50];
 	char *port_divide;
@@ -172,7 +172,7 @@ static int ParseServerIp(char *server_port, int *addr, int *port)
 	if (port) 
 	{
 		if (port_divide != NULL)
-			*port = Q_atoi(port_divide+1);
+			*port = (unsigned short) Q_atoi(port_divide+1);
 		else
 			*port = 27500;
 	}
@@ -193,7 +193,8 @@ static pinghost_t *ParseServerList(server_data *servs[], int servsn, int *host_n
 	nelms = 0;
 	for (i=0; i < servsn; i++) 
 	{
-		int addr, port;
+		int addr;
+		unsigned short port;
 
 		if (ParseServerIp(servs[i]->display.ip, &addr, &port)) 
 		{
@@ -233,8 +234,9 @@ static void FillServerListPings(server_data *servs[], int servsn,
 	int i, j;
 
 	for (i = 0; i < host_nelms; i++) {
-		unsigned int ping;
-		int addr, port;
+		int ping;
+		int addr;
+		unsigned short port;
 
 		/* Take the average of the recieved pings */
 		if (phosts[i].recv > 0)
@@ -343,7 +345,7 @@ static void ICMP_FillData(ICMP_packet_t *packet, int datasize)
 // =============================================================================
 void SB_RootInit(void)
 {
-    int arg;
+    u_long arg;
 
 	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET) {
 		/* disconnect: SOCK_RAW is only avail for root on linux
@@ -609,7 +611,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
             if (icmp_answer && (randomizer == icmp_answer->randomizer))
             {
                 int index, phase;
-                unsigned int fromhost;
+                int fromhost;
 
                 fromhost = icmp_answer->id;
                 index    = icmp_answer->index;
@@ -721,7 +723,7 @@ unsigned int PingRecvProc(void *lpParameter)
 				continue;
 	
 			for (k = 0; k < host_list->nelms; k++) {
-				if (host_list->hosts[k].ip == from.sin_addr.s_addr &&
+				if (host_list->hosts[k].ip == (int) from.sin_addr.s_addr &&
 				    host_list->hosts[k].port == ntohs(from.sin_port)) {
 					host_list->hosts[k].ping += Sys_DoubleTime() 
 									- host_list->hosts[k]
@@ -743,7 +745,8 @@ unsigned int PingRecvProc(void *lpParameter)
  */
 int PingHost(char *host_to_ping, short port, int count, int time_out)
 {
-	int sock, i, ret, pings;
+	socket_t sock;
+	int i, ret, pings;
 	struct sockaddr_in addr_to, addr_from;
 	struct timeval timeout;
 	fd_set fd;
@@ -797,7 +800,7 @@ _select:
  */
 int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 {
-	int arg;
+	u_long arg;
 	pinghost_list_t host_list;
 
 	host_list.hosts = ParseServerList(servs, servsn, &host_list.nelms);
