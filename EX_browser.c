@@ -109,7 +109,8 @@ int serversn_passed;
 player_host ** all_players = NULL;
 int all_players_n = 0;
 
-int resort_servers = 1;
+/// when 1, in the next frame in which the list is drawn also sorting will be done
+int resort_servers = 1; 
 int resort_sources = 1;
 void Sort_Servers (void);
 
@@ -729,7 +730,7 @@ void SB_Servers_OnShow (void)
 	static qbool updated = false;
 
 	if (sb_autoupdate.value && !updated) {
-		GetServerPingsAndInfos();
+		GetServerPingsAndInfos(true);
 		updated = true;
 	}
 
@@ -1663,7 +1664,7 @@ int SB_Servers_Key(int key)
         return false;
 
 	if (key == K_SPACE) {
-		GetServerPingsAndInfos();
+		GetServerPingsAndInfos(isCtrlDown());
 		return true;
 	}
 
@@ -1731,7 +1732,7 @@ int SB_Servers_Key(int key)
             case K_ENTER:
                 Serverinfo_Start(servers[Servers_pos]); break;
             case K_SPACE:
-                GetServerPingsAndInfos();
+                GetServerPingsAndInfos(isCtrlDown());
                 break;
             case '1':
             case '2':
@@ -2144,7 +2145,7 @@ int SB_Players_Key(int key)
                 Observe_Server(all_players[Players_pos]->serv);
                 break;
             case K_SPACE:
-                GetServerPingsAndInfos();
+                GetServerPingsAndInfos(isCtrlDown());
                 break;
 
 			case K_INS: // go to servers -- locate
@@ -2585,7 +2586,7 @@ void Browser_Init (void)
 	Cvar_ResetCurrentGroup();
 
     Cmd_AddCommand("addserver", AddServer_f);
-	Cmd_AddCommand("sb_refresh", GetServerPingsAndInfos);
+	Cmd_AddCommand("sb_refresh", GetServerPingsAndInfos_f);
 	Cmd_AddCommand("sb_pingsdump", SB_PingsDump_f);
 	Cmd_AddCommand("sb_sourceadd", SB_Source_Add_f);
 	Cmd_AddCommand("sb_sourcesupdate", SB_Sources_Update_f);

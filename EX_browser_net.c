@@ -340,8 +340,13 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
         Reset_Server(servers[i]);
 
         // do not update dead servers
-        if (servers[i]->ping < 0)
+		if (servers[i]->ping < 0) {
             hosts[i].phase = -1;//(int)sb_inforetries.value;
+		}
+		// do not update too distant servers
+		else if (sb_hidehighping.integer && servers[i]->ping > sb_pinglimit.integer) {
+			hosts[i].phase = -1;
+		}
     }
 
     interval = (1000.0 / sb_infospersec.value) / 1000;
@@ -489,15 +494,18 @@ void GetServerPing(server_data *serv)
 
 DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
+	int full = (int) lpParameter;
     abort_ping = 0;
 
-	if (useNewPing) {
-		// New Ping = UPD QW Packet ping using 2 threads (sender and receiver)
-		PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value);
-	}
-	else {
-		// Old Ping = ICMP PING Packet using single thread
-		oldPingHosts(servers, serversn, sb_pings.value);	
+	if (full || serversn_passed == 0) {
+		if (useNewPing) {
+			// New Ping = UPD QW Packet ping using 2 threads (sender and receiver)
+			PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value);
+		}
+		else {
+			// Old Ping = ICMP PING Packet using single thread
+			oldPingHosts(servers, serversn, sb_pings.value);	
+		}
 	}
 
     if (!abort_ping)
@@ -520,7 +528,7 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
     return 0;
 }
 
-void GetServerPingsAndInfos(void)
+void GetServerPingsAndInfos(int full)
 {
     if (rebuild_servers_list)
         Rebuild_Servers_List();
@@ -531,9 +539,13 @@ void GetServerPingsAndInfos(void)
     ping_phase = 1;
     ping_pos = 0;
 
-    Sys_CreateThread (GetServerPingsAndInfosProc, NULL);
+	Sys_CreateThread (GetServerPingsAndInfosProc, (void *) full);
 }
 
+void GetServerPingsAndInfos_f()
+{
+	GetServerPingsAndInfos(true);
+}
 
 //
 // autoupdate serverinfo

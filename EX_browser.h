@@ -60,6 +60,7 @@ extern cvar_t  sb_hidenotempty;
 extern cvar_t  sb_hidefull;
 extern cvar_t  sb_hidedead;
 extern cvar_t  sb_hidehighping;
+extern cvar_t  sb_pinglimit;
 
 typedef struct column_s
 {
@@ -212,7 +213,8 @@ void SB_Source_Remove(int i);
 // net
 void GetServerInfo(server_data *serv);
 void GetServerPing(server_data *serv);
-void GetServerPingsAndInfos(void);
+void GetServerPingsAndInfos(int full);
+void GetServerPingsAndInfos_f(void);
 void Start_Autoupdate(server_data *s);
 void Alter_Autoupdate(server_data *s);
 
