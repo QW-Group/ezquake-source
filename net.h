@@ -55,7 +55,7 @@ typedef SOCKET socket_t;
 
 #define closesocket close
 #define ioctlsocket ioctl
-#define int socket_t;
+typedef int socket_t;
 #endif //_WIN32
 
 #include <errno.h>
