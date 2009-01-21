@@ -2033,14 +2033,19 @@ void SCR_HUD_NetProblem (hud_t *hud) {
 	extern mpic_t *scr_net;
 	static cvar_t *scale = NULL;
 	int x, y;
+	extern qbool hud_editor;
 
 	if(scale == NULL)
 		scale = HUD_FindVar(hud, "scale");
 
-	if (!HUD_PrepareDraw(hud, scr_net->width, scr_net->height, &x, &y))
-		return;
-
 	if ((cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < UPDATE_BACKUP-1) || cls.demoplayback)
+	{
+		if (hud_editor)
+			HUD_PrepareDraw(hud, scr_net->width, scr_net->height, &x, &y);
+		return;
+	}
+
+	if (!HUD_PrepareDraw(hud, scr_net->width, scr_net->height, &x, &y))
 		return;
 
 	Draw_SPic (x, y, scr_net, scale->value);
@@ -4872,6 +4877,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 	// Used for hud_teaminfo, data is collected in screen.c / scr_teaminfo
 	extern ti_player_t ti_clients[MAX_CLIENTS];
+	
+	extern qbool hud_editor;
 
 	static cvar_t
 		*hud_teaminfo_weapon_style = NULL,
@@ -4900,6 +4907,10 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_show_self				= HUD_FindVar(hud, "show_self");
 		hud_teaminfo_scale					= HUD_FindVar(hud, "scale");
 	}
+
+	// Don't update hud item unless first view is beeing displayed
+	if ( CURRVIEW != 1 && CURRVIEW != 0)
+		return;
 
 	if (cls.mvdplayback)
 		Update_TeamInfo();
@@ -4934,21 +4945,20 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	// limit name length
 	maxname = bound(0, maxname, hud_teaminfo_name_width->integer);
 
-	if ( !slots_num )
-		return;
-
 	// this does't draw anything, just calculate width
 	width = FONTWIDTH * hud_teaminfo_scale->value * SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud);
 	height = FONTWIDTH * hud_teaminfo_scale->value * slots_num;
 
-	if (!HUD_PrepareDraw(hud, width , height, &x, &y))
-		return;
+	if (hud_editor)
+		HUD_PrepareDraw(hud, width , FONTWIDTH, &x, &y);
 
-	// Don't update hud item unless first view is beeing displayed
-	if ( CURRVIEW != 1 && CURRVIEW != 0)
+	if ( !slots_num )
 		return;
 
 	if (!cl.teamplay)  // non teamplay mode
+		return;
+
+	if (!HUD_PrepareDraw(hud, width , height, &x, &y))
 		return;
 
 	_y = y ;
@@ -5190,25 +5200,23 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
         *hud_ownfrags_timeout = NULL,
         *hud_ownfrags_scale = NULL;
 //        *hud_ownfrags_color = NULL;
+	extern qbool hud_editor;
 
-    if (!width) 
-	{
-		HUD_PrepareDraw(hud, width , height, &x, &y);
-		return;
-	}
-    
-    if (hud_ownfrags_timeout == NULL)    // first time
+	if (hud_ownfrags_timeout == NULL)    // first time
     {
 		hud_ownfrags_scale				= HUD_FindVar(hud, "scale");
         // hud_ownfrags_color               = HUD_FindVar(hud, "color");
         hud_ownfrags_timeout            = HUD_FindVar(hud, "timeout");
     }
 
-    if (VX_OwnFragTime() > hud_ownfrags_timeout->value) 
-	{
-		HUD_PrepareDraw(hud, width , height, &x, &y);
+	if (hud_editor)
+			HUD_PrepareDraw(hud, 10 * LETTERWIDTH , height * hud_ownfrags_scale->value, &x, &y);
+
+	if (!width)
 		return;
-    }
+
+    if (VX_OwnFragTime() > hud_ownfrags_timeout->value) 
+		return;
 
     width *= hud_ownfrags_scale->value;
     height *= hud_ownfrags_scale->value;
