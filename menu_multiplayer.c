@@ -33,6 +33,7 @@ static setting sbsettings_arr[] = {
 	ADDSET_BOOL		("Hide Full", sb_hidefull),
 	ADDSET_BOOL		("Hide Not Empty", sb_hidenotempty),
 	ADDSET_BOOL		("Hide Dead", sb_hidedead),
+	ADDSET_BOOL     ("Hide High Ping", sb_hidehighping),
 
 	ADDSET_SEPARATOR("Display Columns"),
 	ADDSET_BOOL		("Show Ping", sb_showping),

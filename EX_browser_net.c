@@ -22,7 +22,7 @@
 extern qbool useNewPing;
 int oldPingHost(char *host_to_ping, int count);
 int oldPingHosts(server_data *servs[], int servsn, int count);
-int PingHost(char *host_to_ping, short port, int count, int time_out);
+int PingHost(char *host_to_ping, unsigned short port, int count, int time_out);
 int PingHosts(server_data *servs[], int servsn, int count, int time_out);
 void TP_ExecTrigger (const char *s);
 

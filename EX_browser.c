@@ -93,6 +93,8 @@ cvar_t  sb_hideempty     = {"sb_hideempty",        "1"};
 cvar_t  sb_hidenotempty  = {"sb_hidenotempty",     "0"};
 cvar_t  sb_hidefull      = {"sb_hidefull",         "0"};
 cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
+cvar_t  sb_hidehighping  = {"sb_hidehighping",     "0"};
+cvar_t  sb_pinglimit     = {"sb_pinglimit",        "80"};
 
 cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"}; // not in menu
 cvar_t  sb_mastercache     = {"sb_mastercache",    "1"};  // not in menu
@@ -763,23 +765,6 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 
         listsize--;     // column titles
 
-/*
-        if (sb_showtimelimit.value)
-            Add_Column(line, &pos, "tl", COL_TIMELIMIT);
-        if (sb_showfraglimit.value)
-            Add_Column(line, &pos, " fl", COL_FRAGLIMIT);
-        if (sb_showplayers.value)
-            Add_Column(line, &pos, "plyrs", COL_PLAYERS);
-        if (sb_showmap.value)
-            Add_Column(line, &pos, "map", COL_MAP);
-        if (sb_showgamedir.value)
-            Add_Column(line, &pos, "gamedir", COL_GAMEDIR);
-        if (sb_showping.value)
-            Add_Column(line, &pos, "png", COL_PING);
-        if (sb_showaddress.value)
-            Add_Column(line, &pos, "address", COL_IP);
-*/
-//void Add_Column2(int x, int y, int *pos, char *t, int w, int red)
         if (sb_showtimelimit.value)
             Add_Column2(x, y, &pos, "tl", COL_TIMELIMIT, true);
         if (sb_showfraglimit.value)
@@ -796,8 +781,6 @@ void SB_Servers_Draw (int x, int y, int w, int h)
             Add_Column2(x, y, &pos, "address", COL_IP, true);
 
         UI_Print(x, y, "name", true);
-//        memcpy(line, "name", min(pos, 4));
-//        UI_Print_Center(x, y, w, line, true);
 
         if (Servers_pos > Servers_disp + listsize - 1)
             Servers_disp = Servers_pos - listsize + 1;
@@ -827,23 +810,8 @@ void SB_Servers_Draw (int x, int y, int w, int h)
             // Display server
             pos = w/8;
             memset(line, ' ', 1000);
-/*
-            if (sb_showtimelimit.value)
-                Add_Column(line, &pos, servers[servnum]->display.timelimit, COL_TIMELIMIT);
-            if (sb_showfraglimit.value)
-                Add_Column(line, &pos, servers[servnum]->display.fraglimit, COL_FRAGLIMIT);
-            if (sb_showplayers.value)
-                Add_Column(line, &pos, servers[servnum]->display.players, COL_PLAYERS);
-            if (sb_showmap.value)
-                Add_Column(line, &pos, servers[servnum]->display.map, COL_MAP);
-            if (sb_showgamedir.value)
-                Add_Column(line, &pos, servers[servnum]->display.gamedir, COL_GAMEDIR);
-            if (sb_showping.value)
-                Add_Column(line, &pos, servers[servnum]->display.ping, COL_PING);
-            if (sb_showaddress.value)
-                Add_Column(line, &pos, servers[servnum]->display.ip, COL_IP);
-*/
-            if (sb_showtimelimit.value)
+
+			if (sb_showtimelimit.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.timelimit, COL_TIMELIMIT, servnum==Servers_pos);
             if (sb_showfraglimit.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.fraglimit, COL_FRAGLIMIT, servnum==Servers_pos);
@@ -862,15 +830,7 @@ void SB_Servers_Draw (int x, int y, int w, int h)
             name = (servers[servnum]->display.name[0]) ?
                     servers[servnum]->display.name :
                     servers[servnum]->display.ip;
-/*
-            memcpy(line, name, min(pos, strlen(name)));
 
-            if (servnum==Servers_pos)
-                line[pos] = 141;
-
-            line[w/8] = 0;
-            UI_Print_Center(x, y+8*(i+1), w, line, servnum==Servers_pos);
-*/
 			// WTF -->
             strlcpy (line, name, min (sizeof (line), pos + 1));
             line[pos] = 0;
@@ -2445,6 +2405,9 @@ void Filter_Servers(void)
         if (sb_hidenotempty.value  &&  s->playersn + s->spectatorsn > 0)
             continue;
 
+		if (sb_hidehighping.integer && s->ping > sb_pinglimit.integer)
+			continue;
+
         tmp = ValueForKey(s, "maxclients");
         if (sb_hidefull.value  &&  s->playersn >= (tmp ? atoi(tmp) : 255))
             continue;
@@ -2614,6 +2577,8 @@ void Browser_Init (void)
     Cvar_Register(&sb_hidenotempty);
     Cvar_Register(&sb_hidefull);
     Cvar_Register(&sb_hidedead);
+	Cvar_Register(&sb_hidehighping);
+	Cvar_Register(&sb_pinglimit);
     Cvar_Register(&sb_sourcevalidity);
     Cvar_Register(&sb_mastercache);
 	Cvar_Register(&sb_autoupdate);

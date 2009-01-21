@@ -743,7 +743,7 @@ unsigned int PingRecvProc(void *lpParameter)
 /**
  * Ping a single host count times, returns the average of the responses
  */
-int PingHost(char *host_to_ping, short port, int count, int time_out)
+int PingHost(char *host_to_ping, unsigned short port, int count, int time_out)
 {
 	socket_t sock;
 	int i, ret, pings;

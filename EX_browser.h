@@ -59,6 +59,7 @@ extern cvar_t  sb_hideempty;
 extern cvar_t  sb_hidenotempty;
 extern cvar_t  sb_hidefull;
 extern cvar_t  sb_hidedead;
+extern cvar_t  sb_hidehighping;
 
 typedef struct column_s
 {
