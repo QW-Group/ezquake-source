@@ -423,5 +423,5 @@ char *FMod_Response_Text(void)
 
 void FMod_Response (void)
 {
-	Cbuf_AddText (va ("%s %s\n", cls.state == ca_disconnected ? "echo" : "say", FMod_Response_Text));
+	Cbuf_AddText (va ("%s %s\n", cls.state == ca_disconnected ? "echo" : "say", FMod_Response_Text()));
 }
