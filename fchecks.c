@@ -206,35 +206,96 @@ static qbool FChecks_CheckFServerRequest (const char *s)
 	return false;
 }
 
+void FChecks_RulesetFeatureAppend(qbool on, const char *code, char *feat_on_buf,
+								  size_t feat_on_size, char *feat_off_buf, size_t feat_off_size)
+{
+	if (on) {
+		strlcat(feat_on_buf, code, feat_on_size);
+	}
+	else {
+		strlcat(feat_off_buf, code, feat_off_size);
+	}
+}
+
+void FChecks_RulesetAdditionString(char *feat_on_buf, size_t feat_on_size, char *feat_off_buf, size_t feat_off_size)
+{
+#define APPENDFEATURE(on,code) FChecks_RulesetFeatureAppend((on),(code),feat_on_buf,feat_on_size,feat_off_buf,feat_off_size)
+	// modified models or sounds
+	APPENDFEATURE((strcmp(FMod_Response_Text(), "all models ok") != 0),"m");
+
+	// movement scripts enabled
+	APPENDFEATURE((allow_scripts.integer),"s");
+
+	// enemy skin forcing enabled
+	APPENDFEATURE((enemyforceskins.integer),"f");
+
+#undef APPENDFEATURE
+}
+
 static qbool FChecks_CheckFRulesetRequest (const char *s)
 {
-	char *sScripts, *sEnemySk, *sModMod, *fServer;
-	char padding[13] = "            ";
+	// format of the reply:
+	// [nick: ]
+	// [padding] - so that "nick: " + padding is 17 chars long
+	// [ip address] - padded with spaces to 21 chars
+	// - this fits to 38 chars which is length of line with conwidth 320
+	// [space]
+	// [client version] - padded to 16 chars
+	// [ruleset name]
+	// [ruleset addition]
+	// - these 4 should be less than 38 chars so that reply does never take up more than 2 lines
+	char *fServer;
+	char features_on[16] = "+";
+	char features_off[16] = "-";
+	char features[32] = "";
+	char *emptystring = "";
+	char *brief_version = "ezq" VERSION_NUMBER;
+	char *ruleset = Rulesets_Ruleset();
 	size_t name_len = strlen(cl.players[cl.playernum].name);
-	size_t pad_len = 12 - bound(0, name_len, 12);
+	size_t pad_len = 15 - bound(0, name_len, 15);
 
 	if (cl.spectator || (f_ruleset_reply_time && cls.realtime - f_ruleset_reply_time < 20))
 		return false;
 
-	padding[pad_len] = '\0';
-
 	if (Util_F_Match(s, "f_ruleset"))	{
-		sScripts  = (allow_scripts.integer)         ? "rjsc" : "{rjsc}";
-		sEnemySk  = (enemyforceskins.integer)       ? "skif" : "{skif}";
-		sModMod   = (strcmp(FMod_Response_Text(), "all models ok") != 0)
-		                                            ? "modf" : "{modf}";
+		FChecks_RulesetAdditionString(features_on, sizeof (features_on), features_off, sizeof (features_off));
 		fServer = FChecks_FServerResponse_Text();
 		if (!fServer) {
 			fServer = "server-na";
 		}
 
-		Cbuf_AddText(va("say \"%s%s %s %s %s ezq%s %s\"\n",
-			padding, Rulesets_Ruleset(), sModMod, sScripts, sEnemySk, VERSION_NUMBER, fServer));
+		if (strlen(features_on) > 1) {
+			strlcat(features, features_on, sizeof (features));
+		}
+		if (strlen(features_off) > 1) {
+			strlcat(features, features_off, sizeof (features));
+		}
+
+		Cbuf_AddText(va("say \"%*s%21s %16s %s%s\"\n",
+			pad_len, emptystring, fServer, brief_version, ruleset, features));
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}
 
 	return false;
+}
+
+void FChecks_FRuleset_cmd(void)
+{
+	if (Cmd_Argc() < 2 || strcmp(Cmd_Argv(1), "check") != 0) {
+		Com_Printf("Purpose:\n  "
+			"All clients on the server should respond to \"f_ruleset\" message with their client settings in the reply\n"
+			"Usage\n  f_ruleset - prints this help\n"
+			"  f_ruleset check - sends check message to all players on the server\n"
+			"Flags:\n  End of the reply is ruleset name + flags denoting enabled and disabled features:\n"
+			"  m - modified models or sounds\n"
+			"  s - movement scripts\n"
+			"  f - enemy skin forcing\n"
+			"  flags that start with + mean feature is enabled, - means disabled\n");
+	}
+	else {
+		Cbuf_AddText("say \"f_ruleset\"\n");
+	}		
 }
 
 static qbool FChecks_CmdlineRequest (const char *s)
@@ -308,4 +369,5 @@ void FChecks_Init (void)
 
 	FMod_Init();
 	Cmd_AddCommand ("f_server", FChecks_FServerResponse);
+	Cmd_AddCommand ("f_ruleset", FChecks_FRuleset_cmd);
 }
