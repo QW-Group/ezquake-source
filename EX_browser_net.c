@@ -499,7 +499,7 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 
 	if (full || serversn_passed == 0) {
 		SB_Sources_Update(true);
-		Sleep(300); // without this the pinging phase would crash badly, dunno why; 100 ms is enough
+		Sys_MSleep(300); // without this the pinging phase would crash badly, dunno why; 100 ms is enough
 		if (useNewPing) {
 			// New Ping = UPD QW Packet ping using 2 threads (sender and receiver)
 			PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value);
