@@ -790,6 +790,10 @@ void SB_Servers_Draw (int x, int y, int w, int h)
         if (Servers_pos < Servers_disp)
             Servers_disp = Servers_pos;
 
+		if (updating_sources) {
+			return;
+		}
+
         for (i = 0; i < listsize; i++)
         {
             char *name;
