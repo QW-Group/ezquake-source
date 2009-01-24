@@ -470,7 +470,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
     return 0;    
 }
 
-void Update_Multiple_Sources(source_data *s[], int sn)
+void Update_Init(source_data *s[], int sn)
 {
     psources = s;
     psourcesn = sn;
@@ -478,14 +478,32 @@ void Update_Multiple_Sources(source_data *s[], int sn)
     abort_ping = 0;
     updating_sources = 1;
     ping_pos = 0;
+}
 
+// starts asynchronous sources update
+void Update_Multiple_Sources_Begin(source_data *s[], int sn)
+{
+	Update_Init(s, sn);
     Sys_CreateThread(Update_Multiple_Sources_Proc, NULL);
+}
+
+// starts synchronous sources update
+void Update_Multiple_Sources(source_data *s[], int sn)
+{
+	Update_Init(s, sn);
+    Update_Multiple_Sources_Proc(NULL);
 }
 
 void SB_Sources_Update(qbool full)
 {
-	source_full_update = (full);
+	source_full_update = full;
 	Update_Multiple_Sources(sources, sourcesn);
+}
+
+void SB_Sources_Update_Begin(qbool full)
+{
+	source_full_update = full;
+	Update_Multiple_Sources_Begin(sources, sourcesn);
 }
 
 void Toggle_Source(source_data *s)

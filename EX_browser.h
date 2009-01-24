@@ -206,6 +206,9 @@ char * next_quote(char *s);
 // sources
 qbool SB_Sources_Dump(void);
 int SB_Source_Add(const char* name, const char* address, sb_source_type_t type);
+// asynchronous sources update (in new thread)
+void SB_Sources_Update_Begin(qbool full);
+// synchronous sources update
 void SB_Sources_Update(qbool full);
 void SB_Source_Remove(int i);
 

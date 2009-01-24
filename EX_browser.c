@@ -2034,7 +2034,7 @@ int SB_Sources_Key(int key)
         case ']':
             Toggle_Source(sources[Sources_pos]); break;
         case K_SPACE:
-			SB_Sources_Update(isCtrlDown());
+			SB_Sources_Update_Begin(isCtrlDown());
             break;
         case '=':
         case '+':   // select all sources
@@ -2539,7 +2539,7 @@ void Rebuild_All_Players(void)
 
 void SB_Sources_Update_f(void)
 {
-	SB_Sources_Update(true);
+	SB_Sources_Update_Begin(true);
 }
 
 void Shutdown_SB(void)
