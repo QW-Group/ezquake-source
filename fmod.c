@@ -93,7 +93,7 @@ static const int gfx_palette_lmp_FMOD_DM_FMOD_TF[5]				= {0xa6a2e242, 0xbad0f7da
 // debug
 static check_models_hashes_entry_t mdlhash_debug_armor = { {0x8d264ffc, 0xfabb1e7c, 0xc81128bc, 0x21633d32, 0xfa0b594f}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_backpack = { {0xe7c1f382, 0x0c3dc22e, 0xd31a04c0, 0x7251ed52, 0x45baf223}, NULL };
-static check_models_hashes_entry_t mdlhash_debug_flame = { {0xcfd8e629, 0x143a35a7, 0x4781ad82, 0x4254f247, 0xe07cd565}, NULL };
+//static check_models_hashes_entry_t mdlhash_debug_flame = { {0xcfd8e629, 0x143a35a7, 0x4781ad82, 0x4254f247, 0xe07cd565}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_g_light = { {0x9d78b478, 0xfb44c849, 0xc56b6d9d, 0xab737839, 0x1fcfd848}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_g_nail = { {0xc6619f5d, 0x55511a85, 0x6de0cc63, 0xef61171a, 0x36b1b173}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_g_nail2 = { {0x9cd58369, 0xe54c8527, 0xcea234b4, 0x472bd93e, 0x7dfa8655}, NULL };
@@ -104,13 +104,14 @@ static check_models_hashes_entry_t mdlhash_debug_gib1 = { {0x69ee06fd, 0x8bac848
 static check_models_hashes_entry_t mdlhash_debug_gib2 = { {0x3251a1df, 0x50e68208, 0xeff0f797, 0x89894e71, 0x65505be3}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_gib3 = { {0x798f0b46, 0xe55c7250, 0x882ff3f5, 0x75495a80, 0x19a3ed99}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_grenade = { {0xdaf5db12, 0x41d4fc02, 0x764dd35a, 0xa4490888, 0xd5d26cea}, NULL };
-static check_models_hashes_entry_t mdlhash_debug_h_player = { {0x22ee657b, 0x31ac0cb9, 0x8ce678cc, 0xb174b570, 0x1a102fd9}, NULL };
+//static check_models_hashes_entry_t mdlhash_debug_h_player = { {0x22ee657b, 0x31ac0cb9, 0x8ce678cc, 0xb174b570, 0x1a102fd9}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_invisibl = { {0xe5acae60, 0x8b2fe8fd, 0xb8ef8e78, 0x8d236ae4, 0xc3db0be3}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_invulner = { {0x57b00a3e, 0x009afa6d, 0xa4c2c8cb, 0xa7b0eccc, 0xa9e57049}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_missile = { {0x2ae7a078, 0xc39393d4, 0x73576788, 0x242699d2, 0x8f190bfd}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_quaddama = { {0x9010a156, 0x1b63addb, 0xbc9bd9e3, 0xff8d6e4e, 0xcecd1260}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_s_spike = { {0xb159e4cc, 0xbc5dccf0, 0x656e93ab, 0x3e72dd24, 0x10446fc6}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_spike = { {0xe78bb944, 0x92a753e4, 0x435c226b, 0x4021a65e, 0xef388c6b}, NULL };
+/*
 static check_models_hashes_entry_t mdlhash_debug_v_axe = { {0x77c9f8d4, 0x66d8b9e8, 0xaa75b3ce, 0xe6325d71, 0x70f57eea}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_v_light = { {0xf1ac7d77, 0x9ff2321d, 0x4ad3b6f0, 0x4372d11e, 0x46765fa7}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_v_nail = { {0x2322c673, 0xd5ec1e41, 0xe762d27e, 0x89c6ae72, 0x9006bd90}, NULL };
@@ -119,14 +120,15 @@ static check_models_hashes_entry_t mdlhash_debug_v_rock = { {0xf13c7070, 0xecc5c
 static check_models_hashes_entry_t mdlhash_debug_v_rock2 = { {0xda85f801, 0xa8bd2523, 0xa338f574, 0xa0466a00, 0xc5dc3964}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_v_shot = { {0x67e9aa5b, 0x294674a8, 0x553aea03, 0x13165b3c, 0x161e851e}, NULL };
 static check_models_hashes_entry_t mdlhash_debug_v_shot2 = { {0x309594be, 0xe11e461a, 0x92cfcfdd, 0xe9b78788, 0x650daa89}, NULL };
+*/
 
 // ruohis
 static check_models_hashes_entry_t mdlhash_ruohis_armor = { {0x7772c52a, 0xdee37c13, 0xbbbc8523, 0x348525ba, 0x6e1bd649}, NULL };
 
 // plagues
 static check_models_hashes_entry_t mdlhash_plaguespak_armor = { {0x5647e7b2, 0x52465746, 0xc10320fa, 0x1e92c90c, 0x27577c72}, NULL };
-static check_models_hashes_entry_t mdlhash_plaguespak_b_g_key = { {0x3f9779fe, 0x5ec019b7, 0xa25fe622, 0x6e217fa6, 0xe84cee45}, NULL };
-static check_models_hashes_entry_t mdlhash_plaguespak_b_s_key = { {0x370e1810, 0xb9bc0a5b, 0x4bb3fb54, 0x1573b0f5, 0x351207ab}, NULL };
+//static check_models_hashes_entry_t mdlhash_plaguespak_b_g_key = { {0x3f9779fe, 0x5ec019b7, 0xa25fe622, 0x6e217fa6, 0xe84cee45}, NULL };
+//static check_models_hashes_entry_t mdlhash_plaguespak_b_s_key = { {0x370e1810, 0xb9bc0a5b, 0x4bb3fb54, 0x1573b0f5, 0x351207ab}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_g_light = { {0x6231b892, 0x1f39d616, 0x1442715d, 0xfbfc2826, 0xc866d8d6}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_g_nail = { {0xcb2e31c6, 0x1f1064ab, 0x5e0be681, 0x5e658642, 0xd9411ef4}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_g_nail2 = { {0x7d3fe401, 0x738a4344, 0x4ab62439, 0xba7313eb, 0x6a6f8536}, NULL };
@@ -137,6 +139,7 @@ static check_models_hashes_entry_t mdlhash_plaguespak_grenade = { {0xe3a1b910, 0
 static check_models_hashes_entry_t mdlhash_plaguespak_missile = { {0xe047b3ec, 0xad03d2e2, 0x2a146207, 0x99e1f2df, 0xfb229f42}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_s_spike = { {0xe7c61b11, 0x703a7f30, 0x0051a5da, 0xb84a5bd1, 0xe23645ac}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_spike = { {0x28f1cb95, 0xafb8ed91, 0x6a8300ff, 0xeb29c03f, 0x28a2bbcb}, NULL };
+/*
 static check_models_hashes_entry_t mdlhash_plaguespak_v_light = { {0x3c9ca1d7, 0x77303f95, 0x0ad05a82, 0x64a83757, 0x8257cf75}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_v_nail = { {0x71876b6d, 0x934d5f0a, 0x322763f9, 0x924fb71c, 0x5027e3b4}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_v_nail2 = { {0x0b154635, 0x5a49f995, 0x9671641a, 0x2dfb1212, 0xe2631d44}, NULL };
@@ -144,6 +147,7 @@ static check_models_hashes_entry_t mdlhash_plaguespak_v_rock = { {0xbac51d54, 0x
 static check_models_hashes_entry_t mdlhash_plaguespak_v_rock2 = { {0x170a3ecf, 0x5cd131ab, 0xfcecd4fb, 0x62151b89, 0x3bc663b7}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_v_shot = { {0x93dc8f24, 0x6739d838, 0x996b00cc, 0x85c2d98f, 0x430b8e30}, NULL };
 static check_models_hashes_entry_t mdlhash_plaguespak_v_shot2 = { {0x58e68b33, 0x1127186f, 0xd1bdae79, 0x66fd9ca3, 0x82421f9b}, NULL };
+*/
 
 // unknown
 // these come with nQuake and are told to be "harmless"
