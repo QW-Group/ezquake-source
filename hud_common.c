@@ -4882,9 +4882,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 	static cvar_t
 		*hud_teaminfo_weapon_style = NULL,
-		*hud_teaminfo_order,
+		*hud_teaminfo_layout,
 		*hud_teaminfo_align_right,
-		*hud_teaminfo_frame_color,
 		*hud_teaminfo_loc_width,
 		*hud_teaminfo_name_width,
 		*hud_teaminfo_low_health,
@@ -4896,9 +4895,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	if (hud_teaminfo_weapon_style == NULL)    // first time
 	{
 		hud_teaminfo_weapon_style			= HUD_FindVar(hud, "weapon_style");
-		hud_teaminfo_order					= HUD_FindVar(hud, "order");
+		hud_teaminfo_layout					= HUD_FindVar(hud, "layout");
 		hud_teaminfo_align_right			= HUD_FindVar(hud, "align_right");
-		hud_teaminfo_frame_color			= HUD_FindVar(hud, "frame_color");
 		hud_teaminfo_loc_width				= HUD_FindVar(hud, "loc_width");
 		hud_teaminfo_name_width				= HUD_FindVar(hud, "name_width");
 		hud_teaminfo_low_health				= HUD_FindVar(hud, "low_health");
@@ -4996,7 +4994,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	strlcpy(tmp2, HUD_FindVar(hud, "order")->string , sizeof(tmp2));
+	strlcpy(tmp2, HUD_FindVar(hud, "layout")->string , sizeof(tmp2));
 	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
@@ -7038,9 +7036,8 @@ void CommonDraw_Init(void)
     HUD_Register("teaminfo", NULL, "Show information about your team in short form.",
         0, ca_active, 0, SCR_HUD_DrawTeamInfo,
         "0", "", "right", "center", "0", "0", "0.2", "20 20 20", NULL,
-		"order", "%p%n $x10%l$x11 %a/%H %w",
+		"layout", "%p%n $x10%l$x11 %a/%H %w",
 		"align_right","0",
-		"frame_color","10 0 0 120",
 		"loc_width","5",
 		"name_width","6",
 		"low_health","25",
