@@ -26,7 +26,7 @@
 #include "sbar.h"
 #include "hud.h"
 #include "Ctrl.h"
-#include "console.h" 
+#include "console.h"
 #include "teamplay.h"
 
 #ifndef STAT_MINUS
@@ -39,7 +39,8 @@ hud_t *hud_netgraph = NULL;
 // HUD planning
 //
 
-struct {
+struct
+{
 	// this is temporary storage place for some of user's settings
 	// hud_* values will be dumped into config file
 	int old_multiview;
@@ -154,7 +155,7 @@ int TP_TeamFortressEngineerSpanner(void) {
 	char *model_name=cl.model_precache[cl.viewent.current.modelindex]->name;
 	if (cl.teamfortress && player_skin
 			&& (strcasecmp(player_skin, "tf_eng") == 0)
-			&& model_name 
+			&& model_name
 			&& (strcasecmp(model_name, "progs/v_span.mdl") == 0)) {
 		return 1;
 	} else {
@@ -2076,7 +2077,7 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 
 	clamp(width, 1, 99999);
     clamp(height, 1, 99999);
-	
+
 	// Set it to this, because 1.0 will make the colors
 	// completly saturated, and no semi-transparency will show.
 	pic_alpha = (pic_alpha) >= 1.0 ? 0.99 : pic_alpha;
@@ -4877,7 +4878,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 	// Used for hud_teaminfo, data is collected in screen.c / scr_teaminfo
 	extern ti_player_t ti_clients[MAX_CLIENTS];
-	
+
 	extern qbool hud_editor;
 
 	static cvar_t
@@ -5213,12 +5214,12 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
 	if (!width)
 		return;
 
-    if (VX_OwnFragTime() > hud_ownfrags_timeout->value) 
+    if (VX_OwnFragTime() > hud_ownfrags_timeout->value)
 		return;
 
     width *= hud_ownfrags_scale->value;
     height *= hud_ownfrags_scale->value;
-    
+
     alpha = 2 - hud_ownfrags_timeout->value / VX_OwnFragTime() * 2;
     alpha = bound(0, alpha, 1);
 
@@ -5237,7 +5238,7 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	int i;
 	static cvar_t* vscale = NULL;
 	float scale;
-	
+
 	if (!vscale) {
 		vscale = HUD_FindVar(hud, "scale");
 	}
@@ -5251,14 +5252,14 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	line1[i++] = b.jump    ? 'J' + 128 : 'J';
 	line1[i++] = '\0';
 	i = 0;
-	line2[i++] = b.left    ? '<' + 128 : '<'; 
+	line2[i++] = b.left    ? '<' + 128 : '<';
 	line2[i++] = b.back    ? '_' + 128 : '_';
 	line2[i++] = b.right   ? '>' + 128 : '>';
 	line2[i++] = '\0';
 
 	width = LETTERWIDTH * strlen(line1) * scale;
 	height = LETTERHEIGHT * 2 * scale;
-	
+
     if (!HUD_PrepareDraw(hud, width ,height, &x, &y))
         return;
 
@@ -5309,7 +5310,7 @@ void SCR_HUD_DrawInputlag(hud_t *hud)
 		int middle = x+w*0.5;
 		Draw_AlphaRectangleRGB(x+w*Inputlag_Linepos(), y, 1, h,
 			1, true, RGBA_TO_COLOR(255,255,255,255));
-		
+
 		Draw_AlphaRectangleRGB(middle-1, y, 1, h,
 			1, true, RGBA_TO_COLOR(255,255,0,255));
 
@@ -6529,7 +6530,7 @@ void CommonDraw_Init(void)
 		NULL);
 
 	// fps
-	HUD_Register("fps", NULL, 
+	HUD_Register("fps", NULL,
         "Shows your current framerate in frames per second (fps). "
         "Can also show minimum framerate, that occured in last measure period.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
@@ -6539,7 +6540,7 @@ void CommonDraw_Init(void)
 		"decimals", "1",
         NULL);
 
-	HUD_Register("vidlag", NULL, 
+	HUD_Register("vidlag", NULL,
         "Shows the delay between the time a frame is rendered and the time it's displayed.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawVidLag,
         "0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
@@ -6852,7 +6853,7 @@ void CommonDraw_Init(void)
         "scale",  "1",
         "align",  "right",
         "digits", "3",
-		"pent_666", "1",  // Show 666 instead of armor value	
+		"pent_666", "1",  // Show 666 instead of armor value
         NULL);
 
 	// armor icon
