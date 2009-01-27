@@ -47,7 +47,7 @@ OUTPUTDIR	= r'%s\ezquake\make' % (TRUNK, )
 SOLUTIONFILE	= r'%s\msvs2005\ezquake_msvs_80.sln' % (OUTPUTDIR, )
 
 # Set this to an empty string if you want to use pageant instead.
-KEYLOCATION	= r'c:\key\ezquake.ppk'
+KEYLOCATION	= r''
 
 # Server settings
 LOGIN		= r'nightly'
@@ -75,10 +75,31 @@ def load_file_as_dict(filename = None):
 def main(argv = None):
 	# Change dir
 	os.chdir(TRUNK)
+	
+	# Get old revision
+	os.system(r'"%s" info > %s/revision.txt' % (SVNBIN, OUTPUTDIR))
+	revision = load_file_as_dict("%s/revision.txt" % (OUTPUTDIR, ))
+	oldrevnum = revision["Revision"].strip()
 
 	# Update from SVN
 	print "Updating from SVN..."
 	os.system(r'"%s" update' % (SVNBIN, ))
+	
+	# Get the new revision number
+	print "Getting revision information..."
+	os.system(r'"%s" info > %s/revision.txt' % (SVNBIN, OUTPUTDIR))
+	revision = load_file_as_dict("%s/revision.txt" % (OUTPUTDIR, ))
+	revnum = revision["Revision"].strip()
+	
+	print "Old revision: %s" % (oldrevnum, )
+	print "New revision: %s" % (revnum, )
+	
+	if int(revnum) == int(oldrevnum):
+		print "Same revision as last time, no need to build!!!"
+		return 0
+	
+	# Get the revision log since last time we built
+	os.system(r'"%s" log -r %s:%s > %s/changes.txt' % (SVNBIN, int(oldrevnum) + 1, revnum, OUTPUTDIR))
 
 	# Compile ezquake-gl
 	print "Compiling ezquake-gl..."
@@ -88,11 +109,7 @@ def main(argv = None):
 	print "Compiling ezquake software..."
 	os.system(r'"%s" %s /rebuild Release /project ezquake' % (DEVENV, SOLUTIONFILE))
 
-	# Get revision
-	print "Getting revision information..."
-	os.system(r'"%s" info > %s/revision.txt' % (SVNBIN, OUTPUTDIR))
-	revision = load_file_as_dict("%s/revision.txt" % (OUTPUTDIR, ))
-	revnum = revision["Revision"].strip()
+	# Set the names of the compiled files
 	softwarename = "ezquake-r%s.exe" % revnum
 	glname = "ezquake-gl-r%s.exe" % revnum
 
@@ -104,7 +121,7 @@ def main(argv = None):
 	os.chdir(OUTPUTDIR)
 	os.system(r'move ezquake.exe %s' % softwarename)
 	os.system(r'move ezquake-gl.exe %s' % glname)
-	os.system(r'"%s" a %s %s %s README.TXT revision.txt' % (SEVENZIP, zipname, softwarename, glname))
+	os.system(r'"%s" a %s %s %s README.TXT revision.txt changes.txt' % (SEVENZIP, zipname, softwarename, glname))
 	
 	# If no key location is supplied, use pageant instead.
 	keyuse = ""
