@@ -150,15 +150,19 @@ int TP_IsAmmoLow(int weapon)
     }
 }
 
-int TP_TeamFortressEngineerSpanner(void) {
+int TP_TeamFortressEngineerSpanner(void)
+{
 	char *player_skin=Info_ValueForKey(cl.players[cl.playernum].userinfo,"skin");
 	char *model_name=cl.model_precache[cl.viewent.current.modelindex]->name;
 	if (cl.teamfortress && player_skin
 			&& (strcasecmp(player_skin, "tf_eng") == 0)
 			&& model_name
-			&& (strcasecmp(model_name, "progs/v_span.mdl") == 0)) {
+			&& (strcasecmp(model_name, "progs/v_span.mdl") == 0))
+	{
 		return 1;
-	} else {
+	}
+	else
+	{
 		return 0;
 	}
 }
@@ -268,7 +272,8 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 	extern double vid_vsync_lag;
 	static double old_lag;
 
-	if (vid_vsync_on || glConfig.displayFrequency) {
+	if (vid_vsync_on || glConfig.displayFrequency)
+	{
 		// take the average of last two values, otherwise it
 		// changes very fast and is hard to read
 		double current, avg;
