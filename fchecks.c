@@ -217,9 +217,18 @@ void FChecks_RulesetFeatureAppend(qbool on, const char *code, char *feat_on_buf,
 	}
 }
 
-void FChecks_RulesetAdditionString(char *feat_on_buf, size_t feat_on_size, char *feat_off_buf, size_t feat_off_size)
+// constructs a string telling which extra features are enabled
+// besides those covered by the current ruleset)
+// format: [+<enabled features>][-<disabled features>]
+const char* FChecks_RulesetAdditionString()
 {
-#define APPENDFEATURE(on,code) FChecks_RulesetFeatureAppend((on),(code),feat_on_buf,feat_on_size,feat_off_buf,feat_off_size)
+	char feat_on_buf[16] = "+";
+	char feat_off_buf[16] = "-";
+	static char features[32] = "";
+
+	*features = '\0';
+
+	#define APPENDFEATURE(on,code) FChecks_RulesetFeatureAppend((on),(code),feat_on_buf,sizeof (feat_on_buf),feat_off_buf,sizeof (feat_off_buf))
 	// modified models or sounds
 	APPENDFEATURE((strcmp(FMod_Response_Text(), "all models ok") != 0),"m");
 
@@ -228,8 +237,16 @@ void FChecks_RulesetAdditionString(char *feat_on_buf, size_t feat_on_size, char 
 
 	// enemy skin forcing enabled
 	APPENDFEATURE((enemyforceskins.integer),"f");
+	#undef APPENDFEATURE
 
-#undef APPENDFEATURE
+	if (strlen(feat_on_buf) > 1) {
+		strlcat(features, feat_on_buf, sizeof (features));
+	}
+	if (strlen(feat_off_buf) > 1) {
+		strlcat(features, feat_off_buf, sizeof (features));
+	}
+
+	return features;
 }
 
 static qbool FChecks_CheckFRulesetRequest (const char *s)
@@ -245,30 +262,21 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 	// [ruleset addition]
 	// - these 4 should be less than 38 chars so that reply does never take up more than 2 lines
 	char *fServer;
-	char features_on[16] = "+";
-	char features_off[16] = "-";
-	char features[32] = "";
+	const char *features;
 	char *emptystring = "";
 	char *brief_version = "ezq" VERSION_NUMBER;
 	char *ruleset = Rulesets_Ruleset();
 	size_t name_len = strlen(cl.players[cl.playernum].name);
-	size_t pad_len = 15 - bound(0, name_len, 15);
+	size_t pad_len = 15 - min(name_len, 15);
 
 	if (cl.spectator || (f_ruleset_reply_time && cls.realtime - f_ruleset_reply_time < 20))
 		return false;
 
 	if (Util_F_Match(s, "f_ruleset"))	{
-		FChecks_RulesetAdditionString(features_on, sizeof (features_on), features_off, sizeof (features_off));
+		features = FChecks_RulesetAdditionString();
 		fServer = FChecks_FServerResponse_Text();
 		if (!fServer) {
 			fServer = "server-na";
-		}
-
-		if (strlen(features_on) > 1) {
-			strlcat(features, features_on, sizeof (features));
-		}
-		if (strlen(features_off) > 1) {
-			strlcat(features, features_off, sizeof (features));
 		}
 
 		Cbuf_AddText(va("say \"%*s%21s %16s %s%s\"\n",
@@ -285,7 +293,7 @@ void FChecks_FRuleset_cmd(void)
 	if (Cmd_Argc() < 2 || strcmp(Cmd_Argv(1), "check") != 0) {
 		Com_Printf("Purpose:\n  "
 			"All clients on the server should respond to \"f_ruleset\" message with their client settings in the reply\n"
-			"Usage\n  f_ruleset - prints this help\n"
+			"Usage:\n  f_ruleset - prints this help\n"
 			"  f_ruleset check - sends check message to all players on the server\n"
 			"Flags:\n  End of the reply is ruleset name + flags denoting enabled and disabled features:\n"
 			"  m - modified models or sounds\n"
