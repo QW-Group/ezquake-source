@@ -343,9 +343,6 @@ static char *TranslateTextureName (texture_t *tx)
 int Mod_LoadExternalTexture(texture_t *tx, int mode, int brighten_flag) {
 	char *name, *altname, *mapname, *groupname;
 
-	if (loadmodel->bspversion == HL_BSPVERSION)
-		return 0;
-
 	if (loadmodel->isworldmodel) {
 		if (!gl_externalTextures_world.value)
 			return 0;
