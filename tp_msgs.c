@@ -227,6 +227,10 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		{
 			message = tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
 		}
+		else
+		{
+			message = tp_ib_name_enemy " %q"; // %q is last seen powerup of enemy. defaults to quad, which is nice (but it won't be colored)
+		}
 	}
 	else if (HAVE_POWERUP())
 	{
@@ -258,6 +262,10 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		else if (INPOINT(pented))
 		{
 			message = tp_ib_name_team " " tp_ib_name_pent;	
+		}
+		else
+		{
+			message = tp_ib_name_enemy " %q"; // %q is last seen powerup of enemy. defaults to quad, which is nice (but it won't be colored)
 		}
 	}
 	else
