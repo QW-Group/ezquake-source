@@ -490,6 +490,8 @@ qbool QTV_FindBestNick (const char *nick, char *result, size_t result_len)
 
 	qtvuser_t *current = NULL, *bestplayer = NULL;
 
+	result[0] = 0;
+
 	for (current = qtvuserlist; current; current = current->next)
 	{
 		if (!current->name[0])

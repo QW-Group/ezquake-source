@@ -540,6 +540,8 @@ qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len
 	int i, bestplayer = -1, best = 999999;
 	char name[MAX_SCOREBOARDNAME], *match;
 
+	result[0] = 0;
+
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (flags & FBN_IGNORE_SPECS)
