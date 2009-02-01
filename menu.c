@@ -100,8 +100,6 @@ void M_Main_Key (int key);
 
 void M_Menu_Help_f (void);
 
-int FindBestNick (char *s,int use);
-
 #define QUAKE_ID_PLAQUE_PATH	"gfx/qplaque.lmp"
 
 m_state_t m_state;

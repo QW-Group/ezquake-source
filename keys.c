@@ -47,6 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "demo_controls.h"
 #include "irc.h"
 #include "qtv.h"
+#include "utils.h"
 
 //key up events are sent even if in console mode
 
@@ -625,76 +626,51 @@ void CompleteCommandNew (void)
 	}
 }
 
-
-extern char readableChars[];
-char disallowed[] = {'\n', '\f', '\\', '/', '\"', ' ' , ';'};
-
-static void RemoveColors (char *name, size_t len)
+static void CompleteName_InsertNick(const char *name, wchar *s, wchar *p, wchar *q)
 {
-	char *s = name;
+	int i, diff;
+	wchar t[MAXCMDLINE];
 
-	if (!s || !*s)
-		return;
+	qwcslcpy(t, str2wcs(name), sizeof(t)/sizeof(t[0]));
 
-	while (*s) {
-		*s = readableChars[(unsigned char)*s] & 127;
+	for (i = 0; t[i]; i++)
+	{
+		if ((127 & t[i]) == ' ')
+		{
+			int k;
 
-		if (strchr (disallowed, *s))
-			*s = '_';
-
-		s++;
-	}
-
-	// get rid of whitespace
-	s = name;
-	for (s = name; *s == '_'; s++) ;
-		memmove (name, s, strlen(s) + 1);
-
-	for (s = name + strlen(name); s > name  &&  (*(s - 1) == '_'); s--) ;
-
-	*s = 0;
-
-	if (!name[0])
-		strlcpy (name, "_", len);
-}
-
-
-// i added a second parameter to the function, 0 will use both players and spectators, 1 ignores spectators, 2 ignores players
-int FindBestNick (char *s,int use) {
-	int i, j, bestplayer = -1, best = -1;
-	char name[MAX_SCOREBOARDNAME], *match;
-
-	for (i = 0; i < MAX_CLIENTS; i++) {
-		if (use == 1)
-			if (cl.players[i].spectator)
-				continue;
-		if (use == 2)
-			if (!cl.players[i].spectator)
-				continue;
-
-		if (cl.players[i].name[0]) {
-			strlcpy(name, cl.players[i].name, sizeof(name));
-			RemoveColors (name, sizeof (name));
-			for (j = 0; j < strlen(name); j++)
-				name[j] = tolower(name[j]);
-			if ((match = strstr(name, s))  &&  (best == -1 || match - name < best)) {
-				best = match - name;
-				bestplayer = i;
+			if ((k = qwcslen(t)) < MAXCMDLINE - 2)
+			{
+				memmove(t + 1, t, (k + 1)*sizeof(wchar));
+				t[k + 2] = 0;
+				t[k + 1] = t[0] = '\"';
 			}
+			break;
 		}
 	}
-	return bestplayer;
+	diff = qwcslen(t) - qwcslen(s);
+
+	memmove(q + diff, q, (qwcslen(q) + 1)*sizeof(wchar));
+	memmove(p, t, qwcslen(t)*sizeof(wchar));
+	key_linepos += diff;
+	if (!key_lines[edit_line][key_linepos] && key_linepos < MAXCMDLINE - 1)
+	{
+		key_lines[edit_line][key_linepos] = ' ';
+		key_lines[edit_line][++key_linepos] = 0;
+	}
 }
 
 
+void CompleteName(void)
+{
+	extern const char disallowed_in_nick[]; // utils.c
 
-void CompleteName(void) {
-	wchar s[MAXCMDLINE], t[MAXCMDLINE], *p, *q;
-	int best, diff, i;
+	wchar s[MAXCMDLINE], *p, *q;
+	char name[128] = {0};
 
 	p = q = key_lines[edit_line] + key_linepos;
 	while (--p >= key_lines[edit_line] + 1)
-		if (!(  (*(signed short *)p >= 32) && !strchr(disallowed, wc2char(*p)) ))
+		if (!(  (*(signed short *)p >= 32) && !strchr(disallowed_in_nick, wc2char(*p)) ))
 			break;
 	p++;
 	if (q - p <= 0)
@@ -702,32 +678,8 @@ void CompleteName(void) {
 
 	qwcslcpy (s, p, q - p + 1);
 
-	best = FindBestNick (wcs2str(s), 0);
-	if (best >= 0) {
-		qwcslcpy(t, str2wcs(cl.players[best].name), sizeof(t)/sizeof(t[0]));
-
-		for (i = 0; t[i]; i++) {
-			if ((127 & t[i]) == ' ') {
-				int k;
-
-				if ((k = qwcslen(t)) < MAXCMDLINE - 2) {
-					memmove(t + 1, t, (k + 1)*sizeof(wchar));
-					t[k + 2] = 0;
-					t[k + 1] = t[0] = '\"';
-				}
-				break;
-			}
-		}
-		diff = qwcslen(t) - qwcslen(s);
-
-		memmove(q + diff, q, (qwcslen(q) + 1)*sizeof(wchar));
-		memmove(p, t, qwcslen(t)*sizeof(wchar));
-		key_linepos += diff;
-		if (!key_lines[edit_line][key_linepos] && key_linepos < MAXCMDLINE - 1) {
-			key_lines[edit_line][key_linepos] = ' ';
-			key_lines[edit_line][++key_linepos] = 0;
-		}
-	}
+	if (FindBestNick(wcs2str(s), 0, name, sizeof(name)))
+		CompleteName_InsertNick(name, s, p, q);
 }
 
 //===================================================================

@@ -166,8 +166,6 @@ extern char *Weapon_NumToString(int num);
 
 mvd_new_info_t mvd_new_info[MAX_CLIENTS];
 
-int FindBestNick(char *s, int use);
-
 int mvd_demo_track_run = 0;
 
 // mvd_info cvars
@@ -269,21 +267,22 @@ void MVD_Init_Info_f (void) {
 void MVD_Demo_Track (void){
 	extern char track_name[16];
     extern cvar_t demo_playlist_track_name;
-	int track_player ;
+	char track_player[128] = {0};
 
 	#ifdef DEBUG
 	printf("MVD_Demo_Track Started\n");
 	#endif
 
 
-	if(strlen(track_name)){
-		track_player=FindBestNick(track_name,1);
-		if (track_player != -1 )
-			Cbuf_AddText (va("track \"%s\"\n",cl.players[track_player].name));
-	}else if (strlen(demo_playlist_track_name.string)){
-		track_player=FindBestNick(demo_playlist_track_name.string,1);
-		if (track_player != -1 )
-			Cbuf_AddText (va("track \"%s\"\n",cl.players[track_player].name));
+	if(strlen(track_name))
+	{
+		if (FindBestNick(track_name, FBN_IGNORE_SPECS | FBN_IGNORE_QTVSPECS, track_player, sizeof(track_player)))
+			Cbuf_AddText (va("track \"%s\"\n", track_player));
+	}
+	else if (strlen(demo_playlist_track_name.string))
+	{
+		if (FindBestNick(demo_playlist_track_name.string, FBN_IGNORE_SPECS | FBN_IGNORE_QTVSPECS, track_player, sizeof(track_player)))
+			Cbuf_AddText (va("track \"%s\"\n", track_player));
 	}
 
 	mvd_demo_track_run = 1;

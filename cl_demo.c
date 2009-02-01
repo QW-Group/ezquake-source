@@ -94,7 +94,6 @@ cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 
 char Demos_Get_Trackname(void);
-int FindBestNick(char *s,int use);
 static void CL_DemoPlaybackInit(void);
 
 char *CL_DemoDirectory(void);

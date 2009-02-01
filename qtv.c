@@ -10,6 +10,7 @@
 #include "input.h"
 #include "teamplay.h"
 #include "fs.h"
+#include "utils.h"
 
 cvar_t	qtv_buffertime		 = {"qtv_buffertime",		"0.5"};
 cvar_t	qtv_chatprefix		 = {"qtv_chatprefix",		"$[{QTV}$] "};
@@ -480,4 +481,40 @@ void Qtvusers_f (void)
 	}
 
 	Com_Printf ("%i total users\n", c);
+}
+
+qbool QTV_FindBestNick (const char *nick, char *result, size_t result_len)
+{
+	int best = 999999;
+	char name[128], *match;
+
+	qtvuser_t *current = NULL, *bestplayer = NULL;
+
+	for (current = qtvuserlist; current; current = current->next)
+	{
+		if (!current->name[0])
+			continue;
+
+		strlcpy(name, current->name, sizeof(name));
+		RemoveColors(name, sizeof (name));
+		for (match = name; match[0]; match++)
+			match[0] = tolower(match[0]);
+
+		if (!name[0])
+			continue;
+
+		if ((match = strstr(name, nick)) && match - name < best)
+		{
+			best = match - name;
+			bestplayer = current;
+		}
+	}
+
+	if (bestplayer)
+	{
+		strlcpy(result, bestplayer->name, result_len);
+		return true;
+	}
+
+	return false;
 }

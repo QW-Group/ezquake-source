@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pcre.h"
 #include "hud.h"
 #include "utils.h"
+#include "qtv.h"
 
 
 int TP_CategorizeMessage (const char *s, int *offset);
@@ -495,6 +496,87 @@ int Player_GetSlot(char *arg)
 	}
 
 	return PLAYER_NUM_NOMATCH;
+}
+
+/********************************** Nick completion related ****************************************/
+
+const char disallowed_in_nick[] = {'\n', '\f', '\\', '/', '\"', ' ' , ';'};
+
+// yet another utility, there also exist at least one similar function Player_StripNameColor(), but not the same
+void RemoveColors (char *name, size_t len)
+{
+	extern char readableChars[];
+	char *s = name;
+
+	if (!s || !*s)
+		return;
+
+	while (*s)
+	{
+		*s = readableChars[(unsigned char)*s] & 127;
+
+		if (strchr (disallowed_in_nick, *s))
+			*s = '_';
+
+		s++;
+	}
+
+	// get rid of whitespace
+	s = name;
+	for (s = name; *s == '_'; s++) ;
+		memmove (name, s, strlen(s) + 1);
+
+	for (s = name + strlen(name); s > name  &&  (*(s - 1) == '_'); s--)
+		; // empty
+
+	*s = 0;
+
+	if (!name[0])
+		strlcpy (name, "_", len);
+}
+
+qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len)
+{
+	int i, bestplayer = -1, best = 999999;
+	char name[MAX_SCOREBOARDNAME], *match;
+
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (flags & FBN_IGNORE_SPECS)
+			if (cl.players[i].spectator)
+				continue;
+		if (flags & FBN_IGNORE_PLAYERS)
+			if (!cl.players[i].spectator)
+				continue;
+
+		if (!cl.players[i].name[0])
+			continue;
+
+		strlcpy(name, cl.players[i].name, sizeof(name));
+		RemoveColors (name, sizeof (name));
+		for (match = name; match[0]; match++)
+			match[0] = tolower(match[0]);
+
+		if (!name[0])
+			continue;
+
+		if ((match = strstr(name, nick))  && match - name < best)
+		{
+			best = match - name;
+			bestplayer = i;
+		}
+	}
+
+	if (bestplayer != -1)
+	{
+		strlcpy(result, cl.players[bestplayer].name, result_len);
+		return true;
+	}
+
+	if (flags & FBN_IGNORE_QTVSPECS)
+		return false;
+
+	return QTV_FindBestNick (nick, result, result_len);
 }
 
 

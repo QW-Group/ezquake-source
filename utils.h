@@ -70,6 +70,20 @@ int Player_GetSlot(char *arg);
 char *Player_MyName(void);
 
 ///
+/// Nick completion related
+///
+
+
+// yet another utility, there also exist at least one similar function Player_StripNameColor(), but not the same
+void RemoveColors (char *name, size_t len);
+
+#define FBN_IGNORE_SPECS		(1<<0)
+#define FBN_IGNORE_PLAYERS		(1<<1)
+#define FBN_IGNORE_QTVSPECS		(1<<2)
+
+qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len);
+
+///
 /// Clipboard
 ///
 void CopyToClipboard(const char *text);

@@ -59,6 +59,8 @@ typedef struct qtvuser_s {
 void		QTV_FreeUserList(void);
 void		Parse_QtvUserList(char *s);
 
+qbool		QTV_FindBestNick (const char *nick, char *result, size_t result_len);
+
 //======================================
 
 extern		cvar_t	qtv_buffertime;
