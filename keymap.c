@@ -243,7 +243,7 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 
 	// if set, print the current Key information
 	if (cl_showkeycodes.value > 0) {
-		IN_Keycode_Print_f (scancode, (extended > 0) ? true : false, down, key);
+		IN_Keycode_Print_f (scancode, (extended > 0) ? true : false, down, unichar ? unichar : key);
 	}
 
 	Key_EventEx (key, unichar, down);
