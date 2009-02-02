@@ -697,13 +697,13 @@ qbool Settings_Key(settings_page* tab, int key)
 	case K_BACKSPACE: case '-': case KP_MINUS:
 		switch (type) {
 		case stt_action: return false;
-		case stt_string: CEditBox_Key(&editbox, key); return true;
+		case stt_string: CEditBox_Key(&editbox, key, key); return true;
 		default: Setting_Decrease(tab->settings + tab->marked);	return true;
 		}
 
 	case K_DEL:
 		switch (type) {
-		case stt_string: CEditBox_Key(&editbox, key); return true;
+		case stt_string: CEditBox_Key(&editbox, key, key); return true;
 		case stt_bind: Setting_UnbindKey(tab->settings + tab->marked); return true;
 		default: Setting_Reset(tab->settings + tab->marked); return true;
 		}
@@ -735,7 +735,7 @@ qbool Settings_Key(settings_page* tab, int key)
 		switch (type) {
 		case stt_string:
 			if (key != K_TAB && key != K_ESCAPE && key != K_LEFTARROW && key != K_RIGHTARROW) {
-				CEditBox_Key(&editbox, key);
+				CEditBox_Key(&editbox, key, key);
 				return true;
 			}
 			return false;

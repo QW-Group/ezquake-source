@@ -688,7 +688,7 @@ void MOpt_FilenameInputBoxDraw(int x, int y, int w, int h)
 
 qbool MOpt_FileNameInputBoxKey(int key)
 {
-	CEditBox_Key(&filenameeb, key);
+	CEditBox_Key(&filenameeb, key, key);
 	return true;
 }
 

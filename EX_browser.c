@@ -1521,7 +1521,7 @@ void SB_Source_Add_f(void)
 	SB_Source_Add(Cmd_Argv(1), Cmd_Argv(2), type);
 }
 
-void Add_Source_Key(int key)
+void Add_Source_Key(int key, wchar unichar)
 {
     switch (key)
     {
@@ -1577,16 +1577,16 @@ void Add_Source_Key(int key)
     if ((!isCtrlDown() || tolower(key)=='v') && !isAltDown())
     {
         if (newsource_pos == 1)
-            CEditBox_Key(&edit1, key);
+            CEditBox_Key(&edit1, key, unichar);
         if (newsource_pos == 2)
-            CEditBox_Key(&edit2, key);
+            CEditBox_Key(&edit2, key, unichar);
     }
 
     newsource_pos = max(newsource_pos, 0);
     newsource_pos = min(newsource_pos, 4);
 }
 
-void Add_Server_Key(int key)
+void Add_Server_Key(int key, wchar unichar)
 {
     switch (key)
     {
@@ -1636,7 +1636,7 @@ void Add_Server_Key(int key)
     if ((!isCtrlDown() || tolower(key)=='v') && !isAltDown())
     {
         if (newserver_pos == 0)
-            CEditBox_Key(&edit1, key);
+            CEditBox_Key(&edit1, key, unichar);
     }
 
     newserver_pos = max(newserver_pos, 0);
@@ -2274,7 +2274,7 @@ void SB_Specials_Draw(void)
     if (confirmation) SB_Confirmation_Draw();
 }
 
-qbool SB_Specials_Key(int key)
+qbool SB_Specials_Key(int key, wchar unichar)
 {
 	if (confirmation)
     {
@@ -2307,13 +2307,13 @@ qbool SB_Specials_Key(int key)
 
     if (adding_source)
     {
-        Add_Source_Key(key);
+        Add_Source_Key(key, unichar);
         return true;
     }
 
     if (adding_server)
     {
-        Add_Server_Key(key);
+        Add_Server_Key(key, unichar);
         return true;
     }
 

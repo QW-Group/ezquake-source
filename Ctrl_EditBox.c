@@ -40,9 +40,8 @@ void CEditBox_Draw(CEditBox *e, int x, int y, qbool active)
 		Draw_Character(x+8*(e->pos-e->disp), y, 10+((int)(cls.realtime*4)&1));
 }
 
-void CEditBox_Key(CEditBox *e, int key)
+void CEditBox_Key(CEditBox *e, int key, wchar unichar)
 {
-	char c;
 
 	switch (key) {
 			case K_LEFTARROW:
@@ -99,12 +98,8 @@ void CEditBox_Key(CEditBox *e, int key)
 		memmove(e->text + e->pos + 1,
 			e->text + e->pos,
 			strlen(e->text + e->pos) + 1);
-		
-		c = key;
-		if (isShiftDown() && c >= 'a' && c <= 'z')
-			c = toupper(c);
 
-		e->text[e->pos] = c;
+		e->text[e->pos] = unichar;
 
 		e->pos++;
 	}

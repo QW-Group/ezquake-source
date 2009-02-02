@@ -4,7 +4,7 @@ void Menu_MultiPlayer_Init(void);
 
 void Menu_MultiPlayer_Draw (void);
 
-void Menu_MultiPlayer_Key(int key);
+void Menu_MultiPlayer_Key(int key, wchar unichar);
 
 qbool Menu_MultiPlayer_Mouse_Event(const mouse_state_t *ms);
 

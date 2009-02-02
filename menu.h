@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // menus
 //
 void M_Init (void);
-void M_Keydown (int key, int unichar);
+void M_Keydown (int key, wchar unichar);
 void M_Draw (void);
 void M_ToggleMenu_f (void);
 void M_LeaveMenus (void);

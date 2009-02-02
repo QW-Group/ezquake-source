@@ -1454,7 +1454,7 @@ void M_Draw (void) {
 #endif
 }
 
-void M_Keydown (int key, int unichar) {
+void M_Keydown (int key, wchar unichar) {
 	switch (m_state) {
 		case m_none: return;
 		case m_main:			M_Main_Key(key); return;
@@ -1463,7 +1463,7 @@ void M_Keydown (int key, int unichar) {
 		case m_load:			M_Load_Key(key); return;
 		case m_save:			M_Save_Key(key); return;
 #endif
-		case m_multiplayer:		Menu_MultiPlayer_Key(key); return;
+		case m_multiplayer:		Menu_MultiPlayer_Key(key, unichar); return;
 		case m_multiplayer_submenu: M_MultiPlayerSub_Key(key); return;
 		case m_options: 		M_Options_Key(key, unichar); return;
 		case m_proxy:			M_Proxy_Key(key); return;

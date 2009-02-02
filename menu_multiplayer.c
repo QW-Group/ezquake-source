@@ -391,9 +391,9 @@ void Menu_MultiPlayer_Draw (void)
 	SB_Specials_Draw();
 }
 
-void Menu_MultiPlayer_Key(int key)
+void Menu_MultiPlayer_Key(int key, wchar unichar)
 {
-	if (SB_Specials_Key(key)) return;
+	if (SB_Specials_Key(key, unichar)) return;
 	
 	CTab_Key(&sb_tab, key);
 }
@@ -403,7 +403,7 @@ qbool Menu_MultiPlayer_Mouse_Event(const mouse_state_t *ms)
 	mouse_state_t nms = *ms;
 
     if (ms->button_up == 2) {
-        Menu_MultiPlayer_Key(K_MOUSE2);
+        Menu_MultiPlayer_Key(K_MOUSE2, 0);
         return true;
     }
 
