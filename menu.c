@@ -94,7 +94,7 @@ void M_Main_Key (int key);
 		void M_Demo_Key (int key);
 		qbool M_GameOptions_Key (int key);
 		void M_Proxy_Key (int key);
-	void M_Options_Key (int key, int unichar);
+	void M_Options_Key (int key, wchar unichar);
 	void M_Help_Key (int key);
 	void M_Quit_Key (int key);
 

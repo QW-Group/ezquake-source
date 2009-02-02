@@ -153,7 +153,7 @@ static void Help_Tutorials_Init(void)
 	FL_SetDirsOption(&help_tutorials_fl, false);
 }
 
-static int Help_Index_Key(int key, CTab_t *tab, CTabPage_t *page)
+static int Help_Index_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
     qbool processed;
 
@@ -183,7 +183,7 @@ static qbool Help_Index_Mouse_Event(const mouse_state_t *ms)
     if (FL_Mouse_Event(&help_index_fl, ms)) {
         return true;
     } else if (ms->button_up >= 1 && ms->button_up <= 2) {
-        Help_Index_Key(K_MOUSE1 - 1 + ms->button_up, &help_tab, help_tab.pages + HELPM_INDEX);
+        Help_Index_Key(K_MOUSE1 - 1 + ms->button_up, 0, &help_tab, help_tab.pages + HELPM_INDEX);
         return true;
     }
 
@@ -192,7 +192,7 @@ static qbool Help_Index_Mouse_Event(const mouse_state_t *ms)
 }
 
 
-static int Help_Tutorials_Key(int key, CTab_t *tab, CTabPage_t *page)
+static int Help_Tutorials_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
     qbool processed;
 
@@ -222,7 +222,7 @@ static qbool Help_Tutorials_Mouse_Event(const mouse_state_t *ms)
     if (FL_Mouse_Event(&help_tutorials_fl, ms)) {
         return true;
     } else if (ms->button_up >= 1 && ms->button_up <= 2) {
-        Help_Tutorials_Key(K_MOUSE1 - 1 + ms->button_up, &help_tab, help_tab.pages + HELPM_TUTORIALS);
+        Help_Tutorials_Key(K_MOUSE1 - 1 + ms->button_up, 0, &help_tab, help_tab.pages + HELPM_TUTORIALS);
         return true;
     }
 

@@ -331,7 +331,7 @@ static void Sources_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *p
 	SB_Sources_Draw(x,y,w,h);
 }
 
-static int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)
+static int Sources_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
 	return SB_Sources_Key(key);
 }
@@ -346,7 +346,7 @@ static void Players_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pa
 	SB_Players_Draw(x, y, w, h);
 }
 
-static int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
+static int Players_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
 	return SB_Players_Key(key);
 }

@@ -633,7 +633,7 @@ int CT_Demo_Browser_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
     return processed;
 }
 
-int CT_Demo_Playlist_Key(int key, CTab_t *tab, CTabPage_t *page)
+int CT_Demo_Playlist_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
 	switch (key)
 	{
