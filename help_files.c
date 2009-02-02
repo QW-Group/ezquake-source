@@ -32,9 +32,9 @@ void Help_Browser_Init(void)
     CPageViewer_GoUrl(&help_viewer, "help/index.xml");
 }
 
-int Help_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
+int Help_Browser_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
-    return CPageViewer_Key(&help_viewer, key);
+    return CPageViewer_Key(&help_viewer, key, unichar);
 }
 
 void Help_Browser_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
@@ -269,11 +269,11 @@ void Menu_Help_Init(void)
     CTab_SetCurrentId(&help_tab, HELPM_BROWSER);
 }
 
-void Menu_Help_Key(int key)
+void Menu_Help_Key(int key, wchar unichar)
 {
 	extern void M_Menu_Main_f (void);
 
-    int handled = CTab_Key(&help_tab, key);
+    int handled = CTab_Key(&help_tab, key, unichar);
 
     if (!handled)
     {
@@ -294,7 +294,7 @@ qbool Menu_Help_Mouse_Event(const mouse_state_t *ms)
 	mouse_state_t nms = *ms;
 
     if (ms->button_up == 2) {
-        Menu_Help_Key(K_MOUSE2);
+        Menu_Help_Key(K_MOUSE2, 0);
         return true;
     }
 

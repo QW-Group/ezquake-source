@@ -14,7 +14,7 @@ struct CTabPage_s;
 
 typedef void (*CTabPage_OnShowType) (void);
 typedef void (*CTabPage_DrawType)(int x, int y, int w, int h, struct CTab_s *, struct CTabPage_s *);
-typedef int  (*CTabPage_KeyType)(int key, struct CTab_s *, struct CTabPage_s *);
+typedef int  (*CTabPage_KeyType)(int key, wchar unichar, struct CTab_s *, struct CTabPage_s *);
 typedef qbool (*CTabPage_MouseMoveType) (const mouse_state_t * ms);
 
 typedef struct CTabPage_Handlers_s
@@ -67,7 +67,7 @@ void CTab_AddPage(CTab_t *, const char *name, int id, const CTabPage_Handlers_t 
 void CTab_Draw(CTab_t *, int x, int y, int w, int h);
 
 // process key
-int CTab_Key(CTab_t *, int key);
+int CTab_Key(CTab_t *, int key, wchar unichar);
 
 // process mouse move event
 qbool CTab_Mouse_Event(CTab_t *, const mouse_state_t *ms);

@@ -8,7 +8,7 @@
 void Menu_Options_Init(void);
 
 // process key press that belongs to demo menu
-void Menu_Options_Key(int key, int unichar);
+void Menu_Options_Key(int key, wchar unichar);
 
 // process request to draw the demo menu
 void Menu_Options_Draw (void);

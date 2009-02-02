@@ -570,7 +570,7 @@ fail:
 // ==============================
 // <key processing for each page>
 
-int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
+int CT_Demo_Browser_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
 	extern void M_ToggleMenu_f (void);
 	extern void M_LeaveMenu (int);
@@ -720,7 +720,7 @@ int CT_Demo_Playlist_Key(int key, CTab_t *tab, CTabPage_t *page)
 	return true;
 }
 
-int CT_Demo_Entry_Key(int key, CTab_t *tab, CTabPage_t *page)
+int CT_Demo_Entry_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
 	int l;
 
@@ -799,9 +799,9 @@ int CT_Demo_Entry_Key(int key, CTab_t *tab, CTabPage_t *page)
 	return true;
 }
 
-int CT_Demo_Options_Key(int key, CTab_t *tab, CTabPage_t *page)
+int CT_Demo_Options_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
-	return Settings_Key(&demoplsett, key);
+	return Settings_Key(&demoplsett, key, unichar);
 }
 
 qbool CT_Demo_Browser_Mouse_Event(const mouse_state_t *ms)
@@ -809,7 +809,7 @@ qbool CT_Demo_Browser_Mouse_Event(const mouse_state_t *ms)
     if (FL_Mouse_Event(&demo_filelist, ms)) {
         return true;
     } else if (ms->button_up >= 1 && ms->button_up <= 2) {
-        CT_Demo_Browser_Key(K_MOUSE1 - 1 + ms->button_up, &demo_tab, demo_tab.pages + DEMOPG_BROWSER);
+        CT_Demo_Browser_Key(K_MOUSE1 - 1 + ms->button_up, 0, &demo_tab, demo_tab.pages + DEMOPG_BROWSER);
         return true;
     }
 
@@ -823,11 +823,11 @@ qbool CT_Demo_Options_Mouse_Event(const mouse_state_t *ms)
 }
 
 // will lead to call of one of the 4 functions above
-void Menu_Demo_Key(int key)
+void Menu_Demo_Key(int key, wchar unichar)
 {
 	extern void M_Menu_Main_f (void);
 
-    int handled = CTab_Key(&demo_tab, key);
+    int handled = CTab_Key(&demo_tab, key, unichar);
 
     if (!handled)
     {
@@ -844,7 +844,7 @@ qbool Menu_Demo_Mouse_Event(const mouse_state_t *ms)
 	mouse_state_t nms = *ms;
 
     if (ms->button_up == 2) {
-        Menu_Demo_Key(K_MOUSE2);
+        Menu_Demo_Key(K_MOUSE2, 0);
         return true;
     }
 

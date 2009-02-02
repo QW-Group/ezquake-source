@@ -10,7 +10,7 @@
 void Menu_Demo_Init(void);
 
 // process key press that belongs to demo menu
-void Menu_Demo_Key(int key);
+void Menu_Demo_Key(int key, wchar unichar);
 
 // process request to draw the demo menu
 void Menu_Demo_Draw (void);

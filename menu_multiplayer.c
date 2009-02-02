@@ -311,7 +311,7 @@ static void Servers_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *p
 	SB_Servers_Draw(x,y,w,h);
 }
 
-static int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
+static int Servers_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
 	return SB_Servers_Key(key);
 }
@@ -360,9 +360,9 @@ static qbool Options_Mouse_Event(const mouse_state_t *ms)
 	return Settings_Mouse_Event(&sbsettings, ms);
 }
 
-static int Options_Key(int key, CTab_t *tab, CTabPage_t *page)
+static int Options_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
-	return Settings_Key(&sbsettings, key);
+	return Settings_Key(&sbsettings, key, unichar);
 }
 
 static void Options_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
@@ -395,7 +395,7 @@ void Menu_MultiPlayer_Key(int key, wchar unichar)
 {
 	if (SB_Specials_Key(key, unichar)) return;
 	
-	CTab_Key(&sb_tab, key);
+	CTab_Key(&sb_tab, key, unichar);
 }
 
 qbool Menu_MultiPlayer_Mouse_Event(const mouse_state_t *ms)
@@ -420,9 +420,9 @@ static qbool CreateGame_Mouse_Event(const mouse_state_t *ms)
 	return Settings_Mouse_Event(&create_game_options, ms);
 }
 
-static int CreateGame_Key(int key, CTab_t *tab, CTabPage_t *page)
+static int CreateGame_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
-	return Settings_Key(&create_game_options, key);
+	return Settings_Key(&create_game_options, key, unichar);
 }
 
 static void CreateGame_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)

@@ -62,7 +62,7 @@ void CPageViewer_Back(CPageViewer_t *viewer, int level);
 void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h);
 
 // handle keyboard
-qbool CPageViewer_Key(CPageViewer_t *viewer, int key);
+qbool CPageViewer_Key(CPageViewer_t *viewer, int key, wchar unichar);
 
 // clear control
 void CPageViewer_Clear(CPageViewer_t *viewer);

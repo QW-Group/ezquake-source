@@ -29,7 +29,7 @@ void Help_Init (void);
 // help menu
 void Menu_Help_Init (void);
 void Menu_Help_Draw (int x, int y, int w, int h);
-void Menu_Help_Key (int key);
+void Menu_Help_Key (int key, wchar unichar);
 qbool Menu_Help_Mouse_Event (const mouse_state_t *ms);
 
 #endif // __HELP_H__

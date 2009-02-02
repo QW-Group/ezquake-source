@@ -159,7 +159,7 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
 
 
 // process key
-int CTab_Key(CTab_t *tab, int key)
+int CTab_Key(CTab_t *tab, int key, wchar unichar)
 {
     int handled;
 
@@ -175,7 +175,7 @@ int CTab_Key(CTab_t *tab, int key)
     // purposes
     handled = false;
     if (tab->pages[tab->activePage].handlers.key != NULL)
-        handled = tab->pages[tab->activePage].handlers.key(key, tab, &tab->pages[tab->activePage]);
+        handled = tab->pages[tab->activePage].handlers.key(key, unichar, tab, &tab->pages[tab->activePage]);
 
     // then try our handlers
     if (!handled)
@@ -229,10 +229,10 @@ static qbool CTab_Navi_Mouse_Event (CTab_t *tab, const mouse_state_t *ms)
 	if (!tab->width) return false;
 
     if (ms->button_up == 1) {
-        CTab_Key(tab, K_MOUSE1);
+        CTab_Key(tab, K_MOUSE1, 0);
         return true;
     } else if (ms->button_up == 2) {
-        CTab_Key(tab, K_MOUSE2);
+        CTab_Key(tab, K_MOUSE2, 0);
         return true;
     }
 

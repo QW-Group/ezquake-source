@@ -109,7 +109,7 @@ void M_Ingame_Draw(void) {
 }
 
 void M_Ingame_Key(int key) {
-	if (Settings_Key(M_Ingame_Current(), key)) return;
+	if (Settings_Key(M_Ingame_Current(), key, 0)) return;
 
 	switch (key) {
 	case K_MOUSE2:

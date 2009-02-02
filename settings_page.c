@@ -620,7 +620,7 @@ static void Setting_Slider_Click(const settings_page *page, const mouse_state_t 
 	}
 }
 
-qbool Settings_Key(settings_page* tab, int key)
+qbool Settings_Key(settings_page* tab, int key, wchar unichar)
 {
 	qbool up = false;
 	setting_type type;
@@ -697,13 +697,13 @@ qbool Settings_Key(settings_page* tab, int key)
 	case K_BACKSPACE: case '-': case KP_MINUS:
 		switch (type) {
 		case stt_action: return false;
-		case stt_string: CEditBox_Key(&editbox, key, key); return true;
+		case stt_string: CEditBox_Key(&editbox, key, unichar); return true;
 		default: Setting_Decrease(tab->settings + tab->marked);	return true;
 		}
 
 	case K_DEL:
 		switch (type) {
-		case stt_string: CEditBox_Key(&editbox, key, key); return true;
+		case stt_string: CEditBox_Key(&editbox, key, unichar); return true;
 		case stt_bind: Setting_UnbindKey(tab->settings + tab->marked); return true;
 		default: Setting_Reset(tab->settings + tab->marked); return true;
 		}
@@ -735,7 +735,7 @@ qbool Settings_Key(settings_page* tab, int key)
 		switch (type) {
 		case stt_string:
 			if (key != K_TAB && key != K_ESCAPE && key != K_LEFTARROW && key != K_RIGHTARROW) {
-				CEditBox_Key(&editbox, key, key);
+				CEditBox_Key(&editbox, key, unichar);
 				return true;
 			}
 			return false;
@@ -760,7 +760,7 @@ static void Setting_Click(settings_page* page, const mouse_state_t *ms)
 
     if (page->settings[page->marked].type == stt_num) {
         Setting_Slider_Click(page, ms);
-    } else Settings_Key(page, K_MOUSE1);
+    } else Settings_Key(page, K_MOUSE1, 0);
 }
 
 static void Settings_AdjustScrollBar(settings_page *page)
@@ -899,7 +899,7 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
 
     case SPM_CHOOSESKIN:
         if (FL_Mouse_Event(&skins_filelist, ms)) return true;
-        else if (ms->button_up == 1) Settings_Key(page, K_MOUSE1);
+        else if (ms->button_up == 1) Settings_Key(page, K_MOUSE1, 0);
         return true;
 		break;
 

@@ -564,7 +564,7 @@ void M_Menu_Options_f (void) {
 	M_EnterMenu (m_options);
 }
 
-void M_Options_Key (int key, int unichar) {
+void M_Options_Key (int key, wchar unichar) {
 	Menu_Options_Key(key, unichar); // menu_options module
 }
 
@@ -1468,9 +1468,9 @@ void M_Keydown (int key, wchar unichar) {
 		case m_options: 		M_Options_Key(key, unichar); return;
 		case m_proxy:			M_Proxy_Key(key); return;
 		case m_ingame:			M_Ingame_Key(key); return;
-		case m_help:			Menu_Help_Key(key); return;
+		case m_help:			Menu_Help_Key(key, unichar); return;
 		case m_quit:			M_Quit_Key(key); return;
-		case m_demos:			Menu_Demo_Key(key); break;
+		case m_demos:			Menu_Demo_Key(key, unichar); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control: 	M_Menu_MP3_Control_Key(key); break;
 		case m_mp3_playlist: 	M_Menu_MP3_Playlist_Key(key); break;

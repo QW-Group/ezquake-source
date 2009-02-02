@@ -32,7 +32,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* page);
 void Settings_OnShow(settings_page *tab);
 
 // key press handler
-qbool Settings_Key(settings_page* page, int key);
+qbool Settings_Key(settings_page* page, int key, wchar unichar);
 
 // mouse move handler
 qbool Settings_Mouse_Event(settings_page * page, const mouse_state_t *ms);

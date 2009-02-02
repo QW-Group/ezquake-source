@@ -240,8 +240,8 @@ void CT_Opt_Settings_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *
 	Settings_Draw(x, y, w, h, &settgeneral);
 }
 
-int CT_Opt_Settings_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settgeneral, k);
+int CT_Opt_Settings_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settgeneral, k, unichar);
 }
 
 void OnShow_SettMain(void) { Settings_OnShow(&settgeneral); }
@@ -260,8 +260,8 @@ void CT_Opt_Demo_Spec_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t 
 	Settings_Draw(x, y, w, h, &settdemo_spec);
 }
 
-int CT_Opt_Demo_Spec_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settdemo_spec, k);
+int CT_Opt_Demo_Spec_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settdemo_spec, k, unichar);
 }
 
 void OnShow_SettDemo_Spec(void) { Settings_OnShow(&settdemo_spec); }
@@ -277,8 +277,8 @@ void CT_Opt_HUD_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 	Settings_Draw(x, y, w, h, &setthud);
 }
 
-int CT_Opt_HUD_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&setthud, k);
+int CT_Opt_HUD_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&setthud, k, unichar);
 }
 
 void OnShow_SettHUD(void) { Settings_OnShow(&setthud); }
@@ -292,8 +292,8 @@ void CT_Opt_Player_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pa
 	Settings_Draw(x, y, w, h, &settplayer);
 }
 
-int CT_Opt_Player_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settplayer, k);
+int CT_Opt_Player_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settplayer, k, unichar);
 }
 
 void OnShow_SettPlayer(void) { Settings_OnShow(&settplayer); }
@@ -323,8 +323,8 @@ void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *p
 	Settings_Draw(x2, y2, w, h, &settbinds);
 }
 
-int CT_Opt_Binds_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settbinds, k);
+int CT_Opt_Binds_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settbinds, k, unichar);
 }
 
 void OnShow_SettBinds(void) { Settings_OnShow(&settbinds); }
@@ -420,8 +420,8 @@ void CT_Opt_FPS_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 	Settings_Draw(x, y, w, h, &settfps);
 }
 
-int CT_Opt_FPS_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settfps, k);
+int CT_Opt_FPS_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settfps, k, unichar);
 }
 
 void OnShow_SettFPS(void) { Settings_OnShow(&settfps); }
@@ -553,7 +553,7 @@ void CT_Opt_Video_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 #endif
 }
 
-int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
+int CT_Opt_Video_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page) {
 #ifndef GLQUAKE
 
 	// Software Rendering version menu
@@ -576,7 +576,7 @@ int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
 
 		return true;
 	} else
-		return Settings_Key(&settvideo, key);
+		return Settings_Key(&settvideo, key, unichar);
 
 #endif
 }
@@ -715,11 +715,11 @@ void CT_Opt_Config_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 	}
 }
 
-int CT_Opt_Config_Key(int key, CTab_t *tab, CTabPage_t *page)
+int CT_Opt_Config_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
 	switch (MOpt_configpage_mode) {
 	case MOCPM_SETTINGS:
-		return Settings_Key(&settconfig, key);
+		return Settings_Key(&settconfig, key, unichar);
 		break;
 
 	case MOCPM_CHOOSECONFIG:
@@ -764,7 +764,7 @@ qbool CT_Opt_Config_Mouse_Event(const mouse_state_t *ms)
         if (FL_Mouse_Event(&configs_filelist, ms))
             return true;
         else if (ms->button_up == 1 || ms->button_up == 2)
-            return CT_Opt_Config_Key(K_MOUSE1 - 1 + ms->button_up, &options_tab, options_tab.pages + OPTPG_CONFIG);
+            return CT_Opt_Config_Key(K_MOUSE1 - 1 + ms->button_up, 0, &options_tab, options_tab.pages + OPTPG_CONFIG);
 
         return true;
     }
@@ -834,8 +834,8 @@ CTabPage_Handlers_t options_config_handlers = {
 	CT_Opt_Config_Mouse_Event
 };
 
-void Menu_Options_Key(int key, int unichar) {
-    int handled = CTab_Key(&options_tab, key);
+void Menu_Options_Key(int key, wchar unichar) {
+    int handled = CTab_Key(&options_tab, key, unichar);
 	options_unichar = unichar;
 
 	if (!handled && (key == K_ESCAPE || key == K_MOUSE2))

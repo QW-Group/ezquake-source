@@ -318,7 +318,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
     viewer->page->last_height = sh;
 }
 
-qbool CPageViewer_Key(CPageViewer_t *viewer, int key)
+qbool CPageViewer_Key(CPageViewer_t *viewer, int key, wchar unichar)
 {
     qbool ret = false;
 
