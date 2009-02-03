@@ -1198,7 +1198,7 @@ void Key_Message (int key, wchar unichar) {
 							Cbuf_AddText("say \"say_game ");  // QTV parses the text, no say_game command has been implemented
 						} else {
 							Cbuf_AddText("// "); // silence output to remove "unknown command" error message
-							Com_Printf("&cf00Error: messagemodeqtvtogame requires you to be connected to a QTV server&cfff\n");
+							Com_Printf("&cf00Error&r: &c090messagemodeqtvtogame&r requires you to be connected to a &c666QTV&r server\n");
 						}
 						break;
 					case chat_irc:
