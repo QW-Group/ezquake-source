@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "input.h"
 #include "pmove.h"		// PM_FLY etc
+#include "rulesets.h"
 
 
 cvar_t	cl_nodelta = {"cl_nodelta","0"};
@@ -42,7 +43,7 @@ cvar_t	cl_weaponhide_axe = {"cl_weaponhide_axe", "0"};
 
 cvar_t	cl_smartjump = {"cl_smartjump", "1"};
 
-cvar_t	cl_iDrive = {"cl_iDrive", "0"};
+cvar_t	cl_iDrive = {"cl_iDrive", "0", 0, Rulesets_OnChange_cl_iDrive};
 
 extern cvar_t cl_independentPhysics;
 extern qbool physframe;

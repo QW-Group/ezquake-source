@@ -49,6 +49,7 @@ extern cvar_t allow_scripts;
 extern cvar_t cl_delay_packet;
 extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
+extern cvar_t cl_iDrive;
 
 
 static void FChecks_VersionResponse (void)
@@ -237,6 +238,9 @@ const char* FChecks_RulesetAdditionString()
 
 	// enemy skin forcing enabled
 	APPENDFEATURE((enemyforceskins.integer),"f");
+
+	// cl_iDrive - strafing aid
+	APPENDFEATURE((cl_iDrive.integer),"i");
 	#undef APPENDFEATURE
 
 	if (strlen(feat_on_buf) > 1) {
@@ -299,6 +303,7 @@ void FChecks_FRuleset_cmd(void)
 			"  m - modified models or sounds\n"
 			"  s - movement scripts\n"
 			"  f - enemy skin forcing\n"
+			"  i - side step aid (strafescript)\n"
 			"  flags that start with + mean feature is enabled, - means disabled\n");
 	}
 	else {
