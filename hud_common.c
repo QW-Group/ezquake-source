@@ -579,6 +579,7 @@ static const char *SCR_HUD_ClockFormat(int format)
 	switch (format) {
 		case 1: return "%I:%M %p";
 		case 2: return "%I:%M:%S %p";
+		case 3: return "%H:%M";
 		default: case 0: return "%H:%M:%S";
 	}
 }
