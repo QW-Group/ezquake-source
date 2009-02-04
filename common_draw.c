@@ -828,7 +828,10 @@ void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, const cha
 			x += 16*scale;
         }
         else
+		{
+			Draw_SCharacter(x, y, *t+(style?128:0), 3*scale);
             x += 24*scale;
+		}
         t++;
     }
 }
