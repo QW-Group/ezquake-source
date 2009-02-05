@@ -37,6 +37,8 @@ typedef struct
 {
 	int		down[2];		// key nums holding it down
 	int		state;			// low bit is down state
+	double	downtime;		// when KeyDown() last time called for that button
+	double	uptime;			// when KeyUp() last time called for that button
 } kbutton_t;
 
 extern kbutton_t in_mlook, in_klook;
@@ -48,7 +50,7 @@ void CL_SendClientCommand(qbool reliable, char *format, ...);
 void CL_SendCmd (void);
 void CL_BaseMove (usercmd_t *cmd);
 float CL_KeyState (kbutton_t *key, qbool lookbutton);
-
+qbool Key_TryMovementProtected(const char *cmd, qbool down, int key);
 
 extern cvar_t	allow_scripts;
 
