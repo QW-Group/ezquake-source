@@ -422,6 +422,7 @@ static qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename,
 			strlcpy (loc->rawname, zip->filename, sizeof (loc->rawname));
 			loc->offset = pf->filepos;
 			loc->len = pf->filelen;
+			loc->search = NULL;
 	
 			// VFS-FIXME: What is the purpose of the stuff below....
 //			unzLocateFileMy (zip->handle, loc->index, zip->files[loc->index].filepos);
