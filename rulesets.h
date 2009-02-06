@@ -29,6 +29,7 @@ qbool Rulesets_RestrictTriggers(void);
 qbool Rulesets_RestrictPacket(void);
 qbool Rulesets_RestrictParticles(void);
 qbool Rulesets_AllowNoShadows(void);
+qbool Rulesets_RestrictTCL(void);
 
 // OnChange functions controling when a variable value changes
 void Rulesets_OnChange_indphys (cvar_t *var, char *value, qbool *cancel);

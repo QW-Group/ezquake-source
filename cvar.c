@@ -592,10 +592,10 @@ qbool Cvar_Command (void)
 				Com_Printf ("latched: \"%s\"\n", v->latchedString);
 		}
 	} else {
-		// hexum - do not allow crafty people to avoid use of "set" with user created variables under ruleset smackdown
-
-		if (!strcasecmp(Rulesets_Ruleset(), "smackdown") && (v->flags & CVAR_USER_CREATED)) {
-			Com_Printf ("Ruleset smackdown requires use of \"set\" with user created variables\n");
+		// RestrictTriggers means that advanced (possibly cheaty) scripts are not allowed
+		// So we will force the usage of user-created variables to go through the set command
+		if ((v->flags & CVAR_USER_CREATED) && Rulesets_RestrictTriggers()) {
+			Com_Printf ("Current ruleset requires \"set\" with user created variables\n");
 			return true;
 		}
 

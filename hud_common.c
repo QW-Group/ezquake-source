@@ -4115,9 +4115,10 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 
 	}
 
-	// Don't allow showing the timer during ruleset smackdown,
-	// can be used for timing powerups.
-	if(!strncasecmp(Rulesets_Ruleset(), "smackdown", 9))
+	// Don't allow showing the timer if ruleset disallows it
+	// It could be used for timing powerups
+	// Use same check that is used for any external communication
+	if(Rulesets_RestrictPacket())
 		snprintf (time_string, sizeof (time_string), "\x10%s\x11", "Not allowed");
 
 	width = strlen (time_string) * 8;

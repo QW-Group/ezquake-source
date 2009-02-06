@@ -122,6 +122,18 @@ qbool Rulesets_RestrictParticles (void)
 	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictParticles && !r_refdef2.allow_cheats;
 }
 
+qbool Rulesets_RestrictTCL(void)
+{
+	switch(rulesetDef.ruleset) {
+	case rs_mtfl:
+		return false;
+	case rs_smackdown:
+		return true;
+	default:
+		return false;
+	}
+}
+
 char *Rulesets_Ruleset (void)
 {
 	switch(rulesetDef.ruleset) {

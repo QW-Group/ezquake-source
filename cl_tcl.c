@@ -677,7 +677,7 @@ void TCL_InterpInit (void)
 
 	TCL_InterpInitCommands();
 
-	if (strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
+	if (!Rulesets_RestrictTCL()) {
 		TCL_ReplaceProc ("after", TCL_DenyProc); // if this may changes or invoke error sometimes, this should be disabled 
 		TCL_ReplaceProc ("cd", TCL_DenyProc); // external interconnection (and qw may crash?)
 		TCL_ReplaceProc ("clock", TCL_DenyProc); // disable timers
