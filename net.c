@@ -815,7 +815,7 @@ int TCP_OpenListenSocket (int port)
 	// check for interface binding option
 	if ((i = COM_CheckParm("-ip")) != 0 && i < COM_Argc()) {
 		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
-		Com_Printf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
+		Com_DPrintf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	} else {
 		address.sin_addr.s_addr = INADDR_ANY;
 	}
@@ -873,7 +873,7 @@ int UDP_OpenSocket (int port)
 	// check for interface binding option
 	if ((i = COM_CheckParm("-ip")) != 0 && i < COM_Argc()) {
 		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
-		Com_Printf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
+		Com_DPrintf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	} else {
 		address.sin_addr.s_addr = INADDR_ANY;
 	}
