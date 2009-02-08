@@ -1534,6 +1534,8 @@ void Add_Source_Key(int key, wchar unichar)
     case K_UPARROW:
 	case K_MWHEELUP:
         newsource_pos--; break;
+	case K_TAB:
+		isShiftDown()?newsource_pos--:newsource_pos++; break;
     case K_DOWNARROW:
 	case K_MWHEELDOWN:
         newsource_pos++; break;
@@ -1599,6 +1601,8 @@ void Add_Server_Key(int key, wchar unichar)
     case K_UPARROW:
 	case K_MWHEELUP:
         newserver_pos--; break;
+	case K_TAB:
+		isShiftDown()?newserver_pos--:newserver_pos++; break;
     case K_DOWNARROW:
 	case K_MWHEELDOWN:
         newserver_pos++; break;
