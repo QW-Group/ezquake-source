@@ -1584,8 +1584,8 @@ void Add_Source_Key(int key, wchar unichar)
             CEditBox_Key(&edit2, key, unichar);
     }
 
-    newsource_pos = max(newsource_pos, 0);
-    newsource_pos = min(newsource_pos, 4);
+	// Make sure value stays within limits and enable field wrapping 0..4->0
+    newsource_pos = (newsource_pos + 5) % 5;
 }
 
 void Add_Server_Key(int key, wchar unichar)
@@ -1643,8 +1643,8 @@ void Add_Server_Key(int key, wchar unichar)
             CEditBox_Key(&edit1, key, unichar);
     }
 
-    newserver_pos = max(newserver_pos, 0);
-    newserver_pos = min(newserver_pos, 2);
+	// Make sure value stays within limits and enable field wrapping 0..2->0
+    newserver_pos = (newserver_pos + 3) % 3;
 }
 
 qbool SearchNextServer (int pos)
