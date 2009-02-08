@@ -903,7 +903,7 @@ int	Sys_CheckSpecialKeys (int theKey)
 {
     extern qbool	keydown[];
     int				myKey;
-
+	
     // do a fast evaluation:
     if (keydown[K_CMD] == false)
     {
@@ -1061,7 +1061,7 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
             for (i = 0; i < myKeyboardBufferSize; i++)
             {
                 myCharacter = [myKeyboardBuffer characterAtIndex: i];
-                
+				
                 if ((myCharacter & 0xFF00) ==  0xF700)
                 {
                     myCharacter -= 0xF700;
@@ -1090,9 +1090,13 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
                     }
                     if (myCharacter < 0x80)
                     {
-                        if (myCharacter >= 'A' && myCharacter <= 'Z')
-                            myCharacter += 'a' - 'A';
-                        Key_Event (myCharacter, (myType == NSKeyDown));
+						if (Sys_CheckSpecialKeys (myCharacter) == 0)
+						{
+							if (myCharacter >= 'A' && myCharacter <= 'Z')
+								myCharacter += 'a' - 'A';
+							
+							Key_Event (myCharacter, (myType == NSKeyDown));
+						}
                     }
                 }
             }
