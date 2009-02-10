@@ -706,7 +706,7 @@ LOCAL expr_val Match_String(EParser p)
 		SetError(p, ERR_OUT_OF_MEM);
 		return Get_Expr_Dummy();
 	}
-	strlcpy(ret.s_val, p->string + startpos, len);
+	strlcpy(ret.s_val, p->string + startpos, len+1);
 
 	Next_Token(p);
 
