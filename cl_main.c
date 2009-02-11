@@ -1724,6 +1724,11 @@ void CL_Init (void)
 {
 	if (dedicated)
 		return;
+	
+	// When ezquake was launched via a webpage (qtv) the working directory wasn't properly
+	// set. Changing the directory makes sure it starts out in the directory where ezquake 
+	// is located.
+	Sys_chdir(com_basedir);
 
 	cls.state = ca_disconnected;
 	cls.min_fps = 999999;
