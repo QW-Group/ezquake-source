@@ -790,7 +790,8 @@ void R_AliasSetupLighting(entity_t *ent) {
 		else if (fbskins == 0) {
 			ambientlight = max(ambientlight, 8);
 			shadelight = max(shadelight, 8);
-			full_light = true;
+			full_light = (cl.teamfortress ? true : false); // full_light == true will turn off full bright texture during mdl rendering,
+														   // that right in TF, they do not use full bright skins.
 		}
 		else if (fbskins) {
 			ambientlight = max(ambientlight, 8 + fbskins * 120);
