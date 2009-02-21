@@ -347,6 +347,7 @@ static void Setting_Reset(setting* set)
 		case stt_skin:
 		case stt_advmark:
 		case stt_basemark:
+		case stt_intnum:
 			break;
 	}
 }

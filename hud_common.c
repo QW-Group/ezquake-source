@@ -5279,7 +5279,7 @@ double Inputlag_Linepos(void)
 	return cl.time - ((int) cl.time);
 }
 
-static double inputlag_lasthit = -1;
+//static double inputlag_lasthit = -1;
 
 void HUD_Inputlag_hit_f(void)
 {

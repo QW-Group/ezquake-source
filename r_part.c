@@ -824,6 +824,8 @@ void Classic_DrawParticles (void) {
 		case pt_grav:
 			p->vel[2] -= grav;
 			break;
+		case pt_rail:
+			break;
 		}
 	}
 

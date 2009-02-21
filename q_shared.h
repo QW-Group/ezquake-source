@@ -168,10 +168,13 @@ float	FloatSwapPDP2Lit (float f);
 //======================= FreeBSD DEFINES ====================================
 #ifdef __FreeBSD__
 
-#if !idppc
-#define __LITTLE_ENDIAN__
-#else
+#include <machine/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
 #define __BIG_ENDIAN__
+#elif BYTE_ORDER == LITTLE_ENDIAN
+#define __LITTLE_ENDIAN__
+#elif BYTE_ORDER == PDP_ENDIAN
+#define __PDP_ENDIAN__
 #endif
 
 #endif
@@ -301,7 +304,7 @@ char *Q_strdup (const char *src);
 #define	MAX_MSGLEN			1450		// max length of a reliable message
 #define	MAX_DATAGRAM		1450		// max length of unreliable message
 #define	MSG_BUF_SIZE		8192		// max length of msg buf; MVD demo need it
-#define	FILE_TRANSFER_BUF_SIZE	MAX_MSGLEN - 100
+#define	FILE_TRANSFER_BUF_SIZE	(MAX_MSGLEN - 100)
 
 // qqshka: Its all messy.
 // For example ezquake (and FTE?) expect maximum message is MSG_BUF_SIZE == 8192 with mvd header which have not fixed size,

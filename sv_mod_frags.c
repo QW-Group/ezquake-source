@@ -45,7 +45,7 @@ void free_qwmsg_t(qwmsg_t **qwmsg1)
 		}
 }
 
-qbool sv_mod_msg_file_OnChange(cvar_t *cvar, const char *value)
+void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 {
 	FILE *fp = NULL;
 	char *str_tok, buf[128];
@@ -105,7 +105,7 @@ qbool sv_mod_msg_file_OnChange(cvar_t *cvar, const char *value)
 		fclose(fp);
 	}
 	qwmsg[i] = NULL;
-	return false;
+	*cancel = false;
 }
 
 const char **qwmsg_pcre_check(const char *str, const char *qwm_str, int str_len)

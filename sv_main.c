@@ -150,8 +150,8 @@ cvar_t	sv_maxdownloadrate = {"sv_maxdownloadrate", "0"};
 cvar_t  sv_loadentfiles = {"sv_loadentfiles", "1"}; //loads .ent files by default if there
 cvar_t	sv_default_name = {"sv_default_name", "unnamed"};
 
-void sv_mod_msg_file_OnChange(cvar_t *cvar, const char *value, qbool *cancel);
-cvar_t	sv_mod_msg_file = {"sv_mod_msg_file", "", 0, sv_mod_msg_file_OnChange};
+void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel);
+cvar_t	sv_mod_msg_file = {"sv_mod_msg_file", "", CVAR_NONE, sv_mod_msg_file_OnChange};
 
 cvar_t	sv_qwfwd_port = {"sv_qwfwd_port", "30000"};
 
@@ -1423,19 +1423,19 @@ int Rcon_Validate (char *client_string, char *password1)
 			        difftime_server_client < - (double) sv_timestamplen.value)
 				return 0;
 		SHA1_Init();
-		SHA1_Update(Cmd_Argv(0));
-		SHA1_Update(" ");
-		SHA1_Update(password1);
-		SHA1_Update(Cmd_Argv(1) + DIGEST_SIZE * 2);
-		SHA1_Update(" ");
-		//		SHA1_Update(va("%s %s%s ", Cmd_Argv(0), password1, Cmd_Argv(1) + DIGEST_SIZE * 2));
+		SHA1_Update((unsigned char *)Cmd_Argv(0));
+		SHA1_Update((unsigned char *)" ");
+		SHA1_Update((unsigned char *)password1);
+		SHA1_Update((unsigned char *)(Cmd_Argv(1) + DIGEST_SIZE * 2));
+		SHA1_Update((unsigned char *)" ");
+		//SHA1_Update((unsigned char *)va("%s %s%s ", Cmd_Argv(0), password1, Cmd_Argv(1) + DIGEST_SIZE * 2));
 		for (i = 2; (int) i < Cmd_Argc(); i++)
 		{
-			//			SHA1_Update(va("%s ", Cmd_Argv(i)));
-			SHA1_Update(Cmd_Argv(i));
-			SHA1_Update(" ");
+			//SHA1_Update((unsigned char *)va("%s ", Cmd_Argv(i)));
+			SHA1_Update((unsigned char *)Cmd_Argv(i));
+			SHA1_Update((unsigned char *)" ");
 		}
-		//		sha1 = SHA1_Final();
+		//sha1 = SHA1_Final();
 		//Con_Printf("client_string = %s\nserver_string = %s\nsha1 = %s\n", client_string, server_string, sha1);
 		//Con_Printf("server_string_len = %d, strlen(server_string) = %d\n", server_string_len, strlen(server_string));
 		if (strncmp (Cmd_Argv(1), SHA1_Final(), DIGEST_SIZE * 2))

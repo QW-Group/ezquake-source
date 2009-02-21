@@ -134,10 +134,9 @@ COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LI
 GL_LIBS = libs/$(LIB_PREFIX)/libjpeg.a
 
 ifeq ($(OS),freebsd)
-X11BASE ?= /usr/X11R6
 LOCALBASE ?= /usr/local
-CFLAGS += -I$(X11BASE)/include -I$(LOCALBASE)/include
-LDFLAGS += -L$(X11BASE)/lib -L$(LOCALBASE)/lib
+CFLAGS += -I$(LOCALBASE)/include
+LDFLAGS += -L$(LOCALBASE)/lib
 endif
 
 include Makefile.list

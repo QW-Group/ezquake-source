@@ -310,8 +310,10 @@ qbool CT_Opt_Player_Mouse_Event(const mouse_state_t *ms)
 extern cvar_t in_mouse, in_m_smooth, m_rate, in_m_os_parameters;
 #ifdef _WIN32
 const char* in_mouse_enum[] = { "off", "system", "Direct Input", "Raw Input" };
-#else
+#elif defined __linux__
 const char* in_mouse_enum[] = { "off", "DGA Mouse", "X Mouse", "EVDEV Mouse" };
+#else
+const char* in_mouse_enum[] = { "off", "DGA Mouse", "X Mouse" };
 #endif
 const char* in_m_os_parameters_enum[] = { "off", "Keep accel settings", "Keep speed settings", "Keep all settings" };
 

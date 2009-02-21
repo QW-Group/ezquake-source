@@ -159,7 +159,7 @@ static void EZ_label_CalculateWordwraps(ez_label_t *label)
 	int i					= 0;
 	int current_index		= -1;
 	int last_index			= -1;
-	int current_col			= 0;
+//	int current_col			= 0;
 	int scaled_char_size	= label->scaled_char_size;
 
 	label->num_rows			= 1;

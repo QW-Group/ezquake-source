@@ -710,7 +710,7 @@ static void Con_DrawInput(void) {
 
 //Draws the last few lines of output transparently over the game top
 void Con_DrawNotify (void) {
-	int x, v, skip, maxlines, i, idx;
+	int x, v, skip = 0, maxlines, i, idx;
 	wchar *text, *s;
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];

@@ -214,9 +214,9 @@ int EZ_scrollbar_Destroy(ez_control_t *self, qbool destroy_children)
 //
 static void EZ_scrollbar_CalculateParentScrollPosition(ez_scrollbar_t *scrollbar, ez_control_t *target)
 {
-	ez_control_t *self			= (ez_control_t *)scrollbar;
+//	ez_control_t *self			= (ez_control_t *)scrollbar;
 	ez_control_t *back_ctrl		= (ez_control_t *)scrollbar->back;
-	ez_control_t *forward_ctrl	= (ez_control_t *)scrollbar->forward;
+//	ez_control_t *forward_ctrl	= (ez_control_t *)scrollbar->forward;
 	ez_control_t *slider_ctrl	= (ez_control_t *)scrollbar->slider;
 	float scroll_ratio;
 
@@ -517,7 +517,7 @@ int EZ_scrollbar_OnParentResize(ez_control_t *self, void *ext_event_info)
 int EZ_scrollbar_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 {
 	qbool  mouse_handled = false;
-	ez_scrollbar_t *scrollbar	= (ez_scrollbar_t *)self;
+//	ez_scrollbar_t *scrollbar	= (ez_scrollbar_t *)self;
 
 	EZ_control_OnMouseDown(self, ms);
 
@@ -565,7 +565,7 @@ int EZ_scrollbar_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		{
 			if (scrollbar->orientation == vertical)
 			{
-				float scroll_ratio = 0;
+//				float scroll_ratio = 0;
 
 				// Reposition the slider within the scrollbar control based on where the mouse moves.
 				int new_y = slider_ctrl->y + m_delta_y;

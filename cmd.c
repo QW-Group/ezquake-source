@@ -2247,3 +2247,4 @@ void Cmd_Init (void)
 	      sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
 	      sizeof(msgtrigger_commands[0]),Commands_Compare_Func);
 }
+

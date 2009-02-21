@@ -51,8 +51,8 @@ static ez_button_t	*slow_button;		// Slower button.
 static ez_button_t	*play_button;		// Play button.
 static ez_button_t	*pause_button;		// Pause button.
 static ez_button_t	*stop_button;		// Stop button.
-static ez_button_t	*prev_button;		// Play next demo in the playlist.
-static ez_button_t	*next_button;		// Play previous demo in the playlist.
+//static ez_button_t	*prev_button;		// Play next demo in the playlist.
+//static ez_button_t	*next_button;		// Play previous demo in the playlist.
 
 // State.
 static qbool slider_updating = false;

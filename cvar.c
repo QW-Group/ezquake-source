@@ -1303,3 +1303,4 @@ void Cvar_Init (void)
 
 	Cvar_ResetCurrentGroup();
 }
+

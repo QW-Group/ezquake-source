@@ -67,7 +67,7 @@ static void EZ_scrollpane_ResizeScrollbars(ez_scrollpane_t *scrollpane)
 	ez_control_t *v_scroll_ctrl		= (ez_control_t *)scrollpane->v_scrollbar;
 	ez_control_t *h_scroll_ctrl		= (ez_control_t *)scrollpane->h_scrollbar;
 
-	qbool size_changed	= false;
+//	qbool size_changed	= false;
 	qbool show_v		= (scrollpane->ext_flags & always_h_scrollbar) || (scrollpane->int_flags & show_v_scrollbar);
 	qbool show_h		= (scrollpane->ext_flags & always_v_scrollbar) || (scrollpane->int_flags & show_h_scrollbar);
 	int rh_size_v		= (scrollpane_ctrl->ext_flags & control_resize_v ? scrollpane_ctrl->resize_handle_thickness : 0); 

@@ -1809,8 +1809,8 @@ static void SCR_Draw_TeamInfo(void)
 		x += scr_teaminfo_x.value;
 
 		if ( !j ) { // draw frame
-			byte	*col = scr_teaminfo_frame_color.color;
 #ifdef GLQUAKE
+			byte	*col = scr_teaminfo_frame_color.color;
 			glDisable (GL_TEXTURE_2D);
 			glColor4ub(col[0], col[1], col[2], col[3]);
 			glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
@@ -2211,7 +2211,9 @@ static void SCR_Draw_WeaponStats(void)
 	int x, y, w, h;
 	int i;
 
+#ifdef GLQUAKE
 	byte	*col = scr_weaponstats_frame_color.color;
+#endif
 	float	scale = bound(0.1, scr_weaponstats_scale.value, 10);
 
 	if ( !scr_weaponstats.integer || CURRVIEW > 1 )

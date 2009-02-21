@@ -112,7 +112,7 @@ void IN_JoyMove (usercmd_t *cmd);
 cvar_t	m_filter        = {"m_filter",       "0", CVAR_SILENT};
 cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
 cvar_t	_windowed_mouse = {"_windowed_mouse", win_mouse, CVAR_ARCHIVE | CVAR_SILENT};
-
+cvar_t	m_showrate      = {"m_showrate",     "0", CVAR_SILENT};
 
 extern int mx, my;
 extern qbool mouseinitialized;
@@ -203,6 +203,19 @@ void IN_MouseMove (usercmd_t *cmd)
 
 void IN_Move (usercmd_t *cmd)
 {
+	static struct timeval old_tv = {0, 0};
+	struct timeval tv;
+	static long old_mouserate = 0;
+	long usec, mouserate;
+	if (m_showrate.value && (mx || my)) {
+		gettimeofday(&tv, NULL);
+		usec = (tv.tv_sec - old_tv.tv_sec) * 1000000L + (tv.tv_usec - old_tv.tv_usec);
+		mouserate = usec ? 1000000L / usec : old_mouserate;
+		Com_Printf("mouse rate: %4ld\n", (mouserate + old_mouserate) / 2);
+		old_tv = tv;
+		old_mouserate = mouserate;
+	}
+
 	IN_MouseMove (cmd);
 }
 
@@ -216,6 +229,7 @@ void IN_Init (void)
 
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_MOUSE);
 	Cvar_Register (&m_filter);
+	Cvar_Register (&m_showrate);
 #ifndef _Soft_SVGA
 	Cvar_Register (&_windowed_mouse);
 #endif
@@ -516,7 +530,7 @@ qbool IN_ReadJoystick (void) {
 		return true;
 	} else {
 		// read error occurred
-		// turning off the joystick seems too harsh for 1 read error,\
+		// turning off the joystick seems too harsh for 1 read error,
 		// but what should be done?
 		// Com_Printf ("IN_ReadJoystick: no response\n");
 		// joy_avail = false;

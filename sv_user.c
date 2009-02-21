@@ -1228,7 +1228,9 @@ static void Cmd_Download_f(void)
 	extern	cvar_t	allow_download_other;
 	extern  cvar_t  download_map_url; //bliP: download url
 	extern	cvar_t	sv_demoDir;
+#ifndef WITH_FTE_VFS
 	extern	qbool file_from_pak; // ZOID did file come from pak?
+#endif
 	int i;
 	qbool allow_dl = false;
 

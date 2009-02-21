@@ -552,11 +552,15 @@ void EvDev_UpdateMouse(void *v) {
 }
 #endif
 
+#ifdef WITH_JOYSTICK
 // from in_linux.c
 extern void IN_CommandsJoystick (void);        
+#endif // WITH_JOYSTICK
 
 void IN_Commands (void) {
+#ifdef WITH_JOYSTICK
         IN_CommandsJoystick ();
+#endif // WITH_JOYSTICK
 }
 
 #ifdef WITH_EVDEV

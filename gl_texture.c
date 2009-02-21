@@ -311,7 +311,7 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode)
 	}
 
 	if ((mode & TEX_FULLBRIGHT) && (mode & TEX_LUMA) && gl_wicked_luma_level.integer > 0)
-	{ 
+	{
 		int i, cnt = width * height * 4, level = gl_wicked_luma_level.integer;
 		byte *bdata = (byte*)newdata;
 

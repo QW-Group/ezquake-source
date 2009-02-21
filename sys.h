@@ -143,9 +143,9 @@ void Sys_TimerResolution_Clear(timerresolution_session_t * s);
 #else
 
 // not implemented on other platforms
-#define Sys_TimerResolution_InitSession(x) (x)
-#define Sys_TimerResolution_RequestMinimum(x) (x)
-#define Sys_TimerResolution_Clear(x) (x)
+#define Sys_TimerResolution_InitSession(x)
+#define Sys_TimerResolution_RequestMinimum(x)
+#define Sys_TimerResolution_Clear(x)
 
 #endif
 

@@ -148,7 +148,7 @@ void EZ_window_Init(ez_window_t *window, ez_tree_t *tree, ez_control_t *parent,
 //
 int EZ_window_Destroy(ez_control_t *self, qbool destroy_children)
 {
-	ez_window_t *window = (ez_window_t *)self;
+//	ez_window_t *window = (ez_window_t *)self;
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnDestroy, destroy_children);
 
 	EZ_control_Destroy(self, destroy_children);

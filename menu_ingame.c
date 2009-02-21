@@ -33,7 +33,7 @@ MENU_ALIAS(MIng_Observe,"observe",true);
 MENU_ALIAS(MDemoCtrl_DemoBrowser,"menu_demos",false);
 MENU_ALIAS(MDemoCtrl_SkipMinute,"demo_jump +1:00",false);
 MENU_ALIAS(MIng_Disconnect,"disconnect",true);
-MENU_ALIAS(MIng_Quit,"quit",false);
+//MENU_ALIAS(MIng_Quit,"quit",false);
 MENU_ALIAS(MIng_Ready, "ready",true);
 MENU_ALIAS(MIng_Break, "break",true);
 MENU_ALIAS(MIng_SkillUp, "skillup",false);

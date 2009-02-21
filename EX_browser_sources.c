@@ -181,7 +181,7 @@ void Update_Source(source_data *s)
 
         socket_t newsocket;
 		struct sockaddr_storage server;
-        int ret, i;
+        int ret = 0, i;
         unsigned char answer[10000];
         fd_set fd;
         struct timeval tv;
@@ -309,7 +309,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 
     socket_t newsocket;
 	struct sockaddr_storage server;
-    int ret, i, sourcenum;
+    int ret = 0, i, sourcenum;
     unsigned char answer[10000];
     fd_set fd;
     struct timeval tv;

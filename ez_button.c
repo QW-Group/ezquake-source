@@ -43,7 +43,7 @@ static void EZ_button_RecalculateLabelPosition(ez_button_t *button)
 	ez_control_t *self				= ((ez_control_t *)button);
 	ez_label_t *label				= button->text_label;
 	ez_control_t *text_label_ctrl	= ((ez_control_t *)label);
-	ez_textalign_t alignment		= button->text_alignment;
+//	ez_textalign_t alignment		= button->text_alignment;
 	int new_x						= text_label_ctrl->x;
 	int new_y						= text_label_ctrl->y;
 	int new_anchor					= EZ_control_GetAnchor(text_label_ctrl);

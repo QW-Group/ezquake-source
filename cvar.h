@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cvar_groups.h"
 
 // cvar flags
+#define CVAR_NONE		(0)
 #define CVAR_ARCHIVE		(1<<0)
 #define CVAR_USERINFO		(1<<1)	// mirrored to userinfo
 #define CVAR_SERVERINFO		(1<<2)	// mirrored to serverinfo

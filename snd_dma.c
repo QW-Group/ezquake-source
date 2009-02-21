@@ -93,8 +93,8 @@ cvar_t s_swapstereo = {"s_swapstereo", "0", CVAR_ARCHIVE};
 cvar_t s_khz = {"s_khz", "11", CVAR_ARCHIVE, OnChange_s_khz};
 #ifdef __FreeBSD__
 cvar_t s_stereo = {"s_stereo", "1"};
-cvar_t s_device = {"s_device", "/dev/dsp0.0"};
 cvar_t s_bits = {"s_bits", "16"};
+cvar_t s_device = {"s_device", "/dev/dsp"};
 #endif
 
 #ifdef __linux__

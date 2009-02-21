@@ -527,8 +527,8 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 {
 	int key_handled = false;
-	ez_control_t *payload = NULL;
-	ez_dllist_node_t *iter = NULL;
+//	ez_control_t *payload = NULL;
+//	ez_dllist_node_t *iter = NULL;
 
 	if (!tree)
 	{
@@ -602,7 +602,7 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree)
 //
 void EZ_tree_Destroy(ez_tree_t *tree)
 {
-	ez_dllist_node_t *iter = NULL;
+//	ez_dllist_node_t *iter = NULL;
 
 	if (!tree)
 	{
@@ -1924,8 +1924,8 @@ int EZ_control_OnParentResize(ez_control_t *self, void *ext_event_info)
 		int new_width			= self->width;
 		int new_height			= self->height;
 		qbool anchor_viewport	= (self->ext_flags & control_anchor_viewport);
-		int parent_prev_width	= anchor_viewport ? p->prev_width	: p->prev_virtual_width;
-		int parent_prev_height	= anchor_viewport ? p->prev_height	: p->prev_virtual_height;
+//		int parent_prev_width	= anchor_viewport ? p->prev_width	: p->prev_virtual_width;
+//		int parent_prev_height	= anchor_viewport ? p->prev_height	: p->prev_virtual_height;
 		int parent_width		= anchor_viewport ? p->width		: p->virtual_width; 
 		int parent_height		= anchor_viewport ? p->height		: p->virtual_height;
 
@@ -2127,15 +2127,14 @@ int EZ_control_OnMove(ez_control_t *self, void *ext_event_info)
 	{
 		// If the control has a parent, position it in relation to it
 		// and the way it's anchored to it.
-		int parent_prev_width	= anchor_viewport ? self->parent->prev_width	: self->parent->prev_virtual_width;
-		int parent_prev_height	= anchor_viewport ? self->parent->prev_height	: self->parent->prev_virtual_height;
+//		int parent_prev_width	= anchor_viewport ? self->parent->prev_width	: self->parent->prev_virtual_width;
+//		int parent_prev_height	= anchor_viewport ? self->parent->prev_height	: self->parent->prev_virtual_height;
 		int parent_width		= anchor_viewport ? self->parent->width			: self->parent->virtual_width; 
 		int parent_height		= anchor_viewport ? self->parent->height		: self->parent->virtual_height;
 		
 		/*
 		EZ_control_CalculatePositionPercentages(self);
 
-		/*
 		// If we're exlusivly anchored to one edge, we change our position
 		// based on the parents width.
 		if ((self->anchor_flags == anchor_top) || (self->anchor_flags == anchor_bottom))
@@ -2415,8 +2414,8 @@ int EZ_control_OnKeyUp(ez_control_t *self, int key, int unichar)
 int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar, qbool down)
 {
 	int key_handled			= false;
-	ez_control_t *payload	= NULL;
-	ez_dllist_node_t *iter	= self->children.head;
+//	ez_control_t *payload	= NULL;
+//	ez_dllist_node_t *iter	= self->children.head;
 
 	if (down)
 	{
@@ -2514,9 +2513,9 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	mouse_state_t *old_ms			= &self->prev_mouse_state;
 	qbool mouse_inside				= false;
 	qbool prev_mouse_inside			= false;
-	qbool mouse_inside_parent		= false;
-	qbool prev_mouse_inside_parent	= false;
-	qbool is_contained				= CONTROL_IS_CONTAINED(self);
+//	qbool mouse_inside_parent		= false;
+//	qbool prev_mouse_inside_parent	= false;
+//	qbool is_contained				= CONTROL_IS_CONTAINED(self);
 	int mouse_handled_tmp			= false;
 	int mouse_handled				= false;
 	int mouse_delta_x				= 0;

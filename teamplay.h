@@ -231,3 +231,4 @@ void TP_GetNeed(void);
 char *Macro_PointName (void);
 
 char *TP_LocationName (vec3_t location);
+
