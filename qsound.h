@@ -114,7 +114,7 @@ int SND_Rate(int rate);
 // ====================================================================
 
 #define MAX_CHANNELS 128
-#define MAX_DYNAMIC_CHANNELS 8
+#define MAX_DYNAMIC_CHANNELS 32
 
 
 extern channel_t	channels[MAX_CHANNELS];
