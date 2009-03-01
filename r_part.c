@@ -879,28 +879,22 @@ void R_DrawParticles(void) {
 		Classic_RunParticleEffect(org, dir, color, count);
 
 void R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count) {
-	#ifndef GLQUAKE
-
+#ifndef GLQUAKE
 	Classic_RunParticleEffect(org, dir, color, count);
-
-	#else
-
-	if (color == 73 || color == 225) {
-		RunParticleEffect(blood, org, dir, color, count);
-		return;
-	}
-
+#else
 	switch (count) {
 	case 10:
 	case 20:
 	case 30:
 		RunParticleEffect(spikes, org, dir, color, count);
 		break;
+	case 50: // LG Blood
+		RunParticleEffect(blood, org, dir, color, count);
+		return;
 	default:
 		RunParticleEffect(gunshots, org, dir, color, count);
 	}
-
-	#endif
+#endif  //GLQUAKE
 }
 
 void R_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type) {

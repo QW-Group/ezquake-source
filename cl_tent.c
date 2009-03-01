@@ -594,7 +594,7 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(void)
 		if (cls.demoseeking)
 			return;
 
-		R_RunParticleEffect(pos, vec3_origin, r_lgblood.value, 50); // 225 default
+		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value?225:r_lgblood.value, 50); // 225 default
 	}
 }
 
