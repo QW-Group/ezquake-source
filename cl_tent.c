@@ -593,8 +593,11 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(void)
 
 		if (cls.demoseeking)
 			return;
-
+#ifdef GLQUAKE
 		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value?225:r_lgblood.value, 50); // 225 default
+#else
+		R_RunParticleEffect(pos, vec3_origin, r_lgblood.value, 50); // 225 default
+#endif //GLQUAKE
 	}
 }
 
