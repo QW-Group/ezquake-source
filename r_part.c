@@ -882,6 +882,12 @@ void R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count) {
 #ifndef GLQUAKE
 	Classic_RunParticleEffect(org, dir, color, count);
 #else
+
+	if (color == 73 || color == 225) {
+		RunParticleEffect(blood, org, dir, color, count);
+		return;
+	}
+
 	switch (count) {
 	case 10:
 	case 20:
