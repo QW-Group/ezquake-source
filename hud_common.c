@@ -2270,6 +2270,7 @@ void SCR_HUD_Group1(hud_t *hud)
         pic_scalemode		= HUD_FindVar(hud, "pic_scalemode");
 
 		picture->OnChange	= SCR_HUD_OnChangePic_Group1;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group1, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2297,7 +2298,8 @@ void SCR_HUD_Group2(hud_t *hud)
 		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange = SCR_HUD_OnChangePic_Group2;
+		picture->OnChange	= SCR_HUD_OnChangePic_Group2;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group2, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2325,6 +2327,7 @@ void SCR_HUD_Group3(hud_t *hud)
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
 		picture->OnChange	= SCR_HUD_OnChangePic_Group3;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group3, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2352,6 +2355,7 @@ void SCR_HUD_Group4(hud_t *hud)
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
 		picture->OnChange	= SCR_HUD_OnChangePic_Group4;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group4, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2379,6 +2383,7 @@ void SCR_HUD_Group5(hud_t *hud)
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
 		picture->OnChange	= SCR_HUD_OnChangePic_Group5;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group5, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2406,6 +2411,7 @@ void SCR_HUD_Group6(hud_t *hud)
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
 		picture->OnChange	= SCR_HUD_OnChangePic_Group6;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group6, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2433,6 +2439,7 @@ void SCR_HUD_Group7(hud_t *hud)
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
 		picture->OnChange	= SCR_HUD_OnChangePic_Group7;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group7, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2460,6 +2467,7 @@ void SCR_HUD_Group8(hud_t *hud)
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
 		picture->OnChange	= SCR_HUD_OnChangePic_Group8;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group8, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2487,6 +2495,7 @@ void SCR_HUD_Group9(hud_t *hud)
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
 		picture->OnChange	= SCR_HUD_OnChangePic_Group9;
+		SCR_HUD_LoadGroupPic(picture, &hud_pic_group9, picture->string);
     }
 
 	SCR_HUD_DrawGroup(hud,
