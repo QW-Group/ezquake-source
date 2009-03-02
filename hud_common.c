@@ -2188,6 +2188,7 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t **hud_pic, char *newpic)
 	// If we have no pic name.
 	if(!newpic || !strcmp (newpic, ""))
 	{
+		*hud_pic = NULL;
 		return false;
 	}
 
