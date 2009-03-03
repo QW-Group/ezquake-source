@@ -1077,9 +1077,15 @@ void R_DrawFlat (model_t *model) {
 				VectorCopy(s->plane->normal, n);
 				VectorNormalize(n);
 				if (n[2] < -0.5 || n[2] > 0.5) // floor or ceiling
-					glColor3ubv(f);
+					if (r_drawflat.integer == 2 || r_drawflat.integer == 1)
+						glColor3ubv(f);
+					else
+						continue;
 				else										// walls
-					glColor3ubv(w);
+					if (r_drawflat.integer == 3 || r_drawflat.integer == 1)
+						glColor3ubv(w);
+					else
+						continue;
 												
 				glBegin(GL_POLYGON);
 				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
@@ -1225,7 +1231,13 @@ void R_DrawBrushModel (entity_t *e) {
 	// START shaman FIX for no simple textures on world brush models {
 	//draw the textures chains for the model
 	if (r_drawflat.value != 0 && clmodel->isworldmodel)
-		R_DrawFlat(clmodel);
+		if(r_drawflat.integer==1)
+			R_DrawFlat(clmodel);
+		else
+		{
+			DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
+			R_DrawFlat(clmodel);
+		}
 	else
 		DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
 
@@ -1351,7 +1363,13 @@ void R_DrawWorld (void) {
 
 	//draw the world
 	if (r_drawflat.value)
-		R_DrawFlat (cl.worldmodel);
+		if(r_drawflat.integer==1)
+			R_DrawFlat(cl.worldmodel);
+		else
+		{
+			DrawTextureChains (cl.worldmodel,0);
+			R_DrawFlat(cl.worldmodel);
+		}
 	else
 		DrawTextureChains (cl.worldmodel, 0);
 
