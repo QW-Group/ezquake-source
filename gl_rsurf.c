@@ -1039,7 +1039,7 @@ void R_DrawFlat (model_t *model) {
 	vec3_t n;
 	byte w[3], f[3];
 	qbool draw_caustics = underwatertexture && gl_caustics.value;
-	
+
 	memcpy(w, r_wallcolor.color, 3);
 	memcpy(f, r_floorcolor.color, 3);
 	
@@ -1076,17 +1076,34 @@ void R_DrawFlat (model_t *model) {
 				v = s->polys->verts[0];
 				VectorCopy(s->plane->normal, n);
 				VectorNormalize(n);
+
+				// r_drawflat 1 == All solid colors
+				// r_drawflat 2 == Solid floor/ceiling only
+				// r_drawflat 3 == Solid walls only
+
 				if (n[2] < -0.5 || n[2] > 0.5) // floor or ceiling
+				{
 					if (r_drawflat.integer == 2 || r_drawflat.integer == 1)
+					{
 						glColor3ubv(f);
+					}
 					else
+					{
 						continue;
+					}
+				}
 				else										// walls
+				{
 					if (r_drawflat.integer == 3 || r_drawflat.integer == 1)
+					{
 						glColor3ubv(w);
+					}
 					else
+					{
 						continue;
-												
+					}
+				}
+
 				glBegin(GL_POLYGON);
 				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 					glTexCoord2f(v[5], v[6]);
@@ -1232,15 +1249,18 @@ void R_DrawBrushModel (entity_t *e) {
 	//draw the textures chains for the model
 	if (r_drawflat.value != 0 && clmodel->isworldmodel)
 		if(r_drawflat.integer==1)
+		{
 			R_DrawFlat(clmodel);
+		}
 		else
 		{
 			DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
 			R_DrawFlat(clmodel);
 		}
 	else
+	{
 		DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
-
+	}
 	// } END shaman FIX for no simple textures on world brush models
 
 	R_DrawSkyChain();
@@ -1363,15 +1383,21 @@ void R_DrawWorld (void) {
 
 	//draw the world
 	if (r_drawflat.value)
+	{
 		if(r_drawflat.integer==1)
+		{
 			R_DrawFlat(cl.worldmodel);
+		}
 		else
 		{
 			DrawTextureChains (cl.worldmodel,0);
 			R_DrawFlat(cl.worldmodel);
 		}
+	}
 	else
+	{
 		DrawTextureChains (cl.worldmodel, 0);
+	}
 
 	//draw the world alpha textures
 	R_DrawAlphaChain ();
