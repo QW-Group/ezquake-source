@@ -206,7 +206,8 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 	nextsize = cbuf->text_end - cbuf->text_start;
 #endif
 
-	while (cbuf->text_end > cbuf->text_start) {
+	while (cbuf->text_end > cbuf->text_start)
+	{
 		// find a \n or ; line break
 		text = (char *) cbuf->text_buf + cbuf->text_start;
 
@@ -214,31 +215,46 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		comment = false;
 		quotes = 0;
 
-		for (i = 0; i < cursize; i++) {
-			if (text[i] == '\\') {
-				if (text[i+1] == '\n') { // escaped endline
-					text[i] = text[i+1] = '\r'; // '\r' removed later during copying
-					i++;
-					continue;
-				} else if (text[i+1] == '\r' && text[i+2] == '\n') { // escaped dos endline
-					text[i] = text[i+2] = '\r';
-					i+=2;
-					continue;
+		for (i = 0; i < cursize; i++)
+		{
+			if (cl_curlybraces.integer)
+			{
+				if (text[i] == '\\')
+				{
+					if (i + 1 < cursize && text[i+1] == '\n')
+					{ // escaped endline
+						text[i] = text[i+1] = '\r'; // '\r' removed later during copying
+						i++;
+						continue;
+					}
+					else if (i + 2 < cursize && text[i+1] == '\r' && text[i+2] == '\n')
+					{ // escaped dos endline
+						text[i] = text[i+2] = '\r';
+						i+=2;
+						continue;
+					}
 				}
 			}
+
 			if (text[i] == '\n')
 				break;
 
-			if (text[i] == '"' && quotes <= 0) {
+			if (text[i] == '"' && quotes <= 0)
+			{
 				if (!quotes)
 					quotes = -1;
 				else
 					quotes = 0;
-			} else if (quotes >= 0) {
-				if (text[i] == '{' && cl_curlybraces.integer)
-					quotes++;
-				else if (text[i] == '}' && cl_curlybraces.integer)
-					quotes--;
+			}
+			else if (quotes >= 0)
+			{
+				if (cl_curlybraces.integer)
+				{
+					if (text[i] == '{')
+						quotes++;
+					else if (text[i] == '}')
+						quotes--;
+				}
 			}
 
 			if (comment || quotes)
@@ -265,7 +281,8 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		src = text;
 		dest = line;
 		j = min (i, sizeof (line) - 1);
-		for ( ; j; j--, src++) {
+		for ( ; j; j--, src++)
+		{
 			if (*src != '\r')
 				*dest++ = *src;
 		}
@@ -273,9 +290,12 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 
 		// delete the text from the command buffer and move remaining commands down  This is necessary
 		// because commands (exec, alias) can insert data at the beginning of the text buffer
-		if (i == cursize) {
+		if (i == cursize)
+		{
 			cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
-		} else {
+		}
+		else
+		{
 			i++;
 			cbuf->text_start += i;
 		}
@@ -287,14 +307,16 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		if (cbuf->text_end - cbuf->text_start > cursize)
 			cbuf->runAwayLoop++;
 
-		if (cbuf->runAwayLoop > MAX_RUNAWAYLOOP) {
+		if (cbuf->runAwayLoop > MAX_RUNAWAYLOOP)
+		{
 			Com_Printf("\x02" "A recursive alias has caused an infinite loop.");
 			Com_Printf("\x02" " Clearing execution buffer to prevent lockup.\n");
 			cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
 			cbuf->runAwayLoop = 0;
 		}
 
-		if (cbuf->wait) {
+		if (cbuf->wait)
+		{
 			// skip out while text still remains in buffer, leaving it for next frame
 			cbuf->wait = false;
 #ifndef SERVERONLY
