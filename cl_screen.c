@@ -368,16 +368,33 @@ void SCR_EraseCenterString (void) {
 
 extern	cvar_t		v_idlescale;
 qbool	concussioned = false;
+float	nonwidefov = 0; // Store original fov if vid_wideaspect is used
 
 void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 {
-
 	float newfov = Q_atof(value);
 
+	if (nonwidefov == 0)
+		nonwidefov = newfov;		// save first fov value to initialize nonwidefov
+
+#ifdef GLQUAKE
+	if (vid_wideaspect.value) 
+	{
+		newfov = tan((newfov/2)*M_PI/180);
+		newfov = newfov*48/40;				// 3/4 * 16/10
+		newfov = 2 * atan(newfov)*180/M_PI;
+		Com_Printf("vid_wideaspect enabled - fov recalculated to %f\n", newfov);
+	}
+	else
+	{
+		nonwidefov=newfov;
+	}
+#endif // GLQUAKE
+
 	if (newfov > 140)
-		newfov = 140;
+		nonwidefov = newfov = 140;
 	else if (newfov < 10)
-		newfov = 10;
+		nonwidefov = newfov = 10;
 
 	if (newfov == scr_fov.value) {
 		*cancel = true;
@@ -5641,4 +5658,3 @@ void Hud_262Init (void)
 //	Cmd_AddCommand ("hud262_button",Hud_Button_f);
 }
 // <-- QW262
-

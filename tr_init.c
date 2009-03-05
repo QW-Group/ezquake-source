@@ -310,13 +310,19 @@ static void R_ModeList_f( void )
 
 //============================================================================
 
+int nonwideconheight = 0;  // Store original conheight if vid_wideaspect is used
+
 void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
+	
+	extern cvar_t vid_wideaspect;
+	float scale = 1;
+
 	if (var == &r_conwidth) {
 		int width = Q_atoi(string);
 
 		width = max(320, width);
-//		width &= 0xfff8; // make it a multiple of eight
-
+		//width &= 0xfff8; // make it a multiple of eight
+		
 		if (glConfig.vidWidth)
 			vid.width = vid.conwidth = width = min(glConfig.vidWidth, width);
 		else
@@ -324,11 +330,29 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 
 		Cvar_SetValue(var, (float)width);
 	}
-	else if (var == &r_conheight) {
+	else if (var == &r_conheight)
+	{
 		int height = Q_atoi(string);
 
+		if (nonwideconheight==0)
+			nonwideconheight=height; // save original conheight
+
+		if (vid_wideaspect.value == 0)
+		{
+			scale = 1;
+			height = floor(height * scale + 0.5);
+		}
+		else
+		{
+			nonwideconheight=height;
+			scale = (4.0/3) / (16.0/10); //widescreen
+			height = floor(height * scale + 0.5);
+		}
+
 		height = max(200, height);
-//		height &= 0xfff8; // make it a multiple of eight
+		//height &= 0xfff8; // make it a multiple of eight
+		if (vid_wideaspect.value != 0)
+			Com_Printf("vid_wideaspect enabled - conheight recalculated to %i\n", height);
 
 		if (glConfig.vidHeight)
 			vid.height = vid.conheight = height = min(glConfig.vidHeight, height);
@@ -337,7 +361,8 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 
 		Cvar_SetValue(var, (float)height);
 	}
-	else {
+	else
+	{
 		*cancel = true; // hrm?
 		return;
 	}
