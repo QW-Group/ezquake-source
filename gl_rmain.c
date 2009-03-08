@@ -185,10 +185,6 @@ cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
 cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
 cvar_t  gl_fogsky			= {"gl_fogsky", "1"}; 
 
-// aspect ratio for widescreens
-void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel);
-cvar_t	vid_wideaspect		= {"vid_wideaspect", "0", CVAR_NO_RESET, OnChange_vid_wideaspect};
-
 int		lightmode = 2;
 
 //static int deathframes[] = { 49, 60, 69, 77, 84, 93, 102, 0 };
@@ -1809,7 +1805,6 @@ void R_Init (void) {
 	Cvar_Register(&cl_mvinset);
 	Cvar_Register(&cl_mvinsetcrosshair);
 	Cvar_Register(&cl_mvinsethud);
-	Cvar_Register (&vid_wideaspect);
 
 	Cvar_ResetCurrentGroup();
 
@@ -2020,34 +2015,5 @@ void R_RenderView (void) {
 		time2 = Sys_DoubleTime ();
 		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys); 
-	}
-}
-void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel) 
-{
-	extern float nonwidefov;
-	extern int nonwideconheight;
-	extern cvar_t scr_fov, r_conheight;
-
-	if (Q_atoi(string) == vid_wideaspect.value) 
-	{
-		*cancel = true;
-		return;
-	}
-
-	Cvar_Set (&vid_wideaspect, string);
-
-	if (nonwidefov != 0 && nonwideconheight != 0)
-	{
-		if (vid_wideaspect.integer == 0)
-		{
-			scr_fov.OnChange(&scr_fov, Q_ftos(nonwidefov), cancel);
-			r_conheight.OnChange(&r_conheight, Q_ftos(nonwideconheight), cancel);
-
-		}
-		else
-		{
-			scr_fov.OnChange(&scr_fov, Q_ftos(scr_fov.value), cancel);
-			r_conheight.OnChange(&r_conheight, Q_ftos(r_conheight.value), cancel);
-		}
 	}
 }

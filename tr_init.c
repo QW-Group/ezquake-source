@@ -99,6 +99,9 @@ cvar_t	r_verbose			= { "vid_verbose",			"0",	CVAR_SILENT };
 // print gl extension in /gfxinfo
 cvar_t  r_showextensions	= { "vid_showextensions", 	"0",	CVAR_SILENT };
 
+// aspect ratio for widescreens
+void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel);
+cvar_t	vid_wideaspect		= {"vid_wideaspect", "0", CVAR_NO_RESET, OnChange_vid_wideaspect};
 
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
 void ( APIENTRY * qglActiveTextureARB )( GLenum texture );
@@ -511,6 +514,7 @@ void R_Register( void )
 	Cvar_Register (&vid_ypos);
 	Cvar_Register (&r_conwidth);
 	Cvar_Register (&r_conheight);
+	Cvar_Register (&vid_wideaspect);
 
 	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
@@ -744,4 +748,34 @@ void VID_Restart_f (void)
 
 	// window may be re-created, so caption need to be forced to update
 	CL_UpdateCaption(true);
+}
+
+void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel) 
+{
+	extern float nonwidefov;
+	extern int nonwideconheight;
+	extern cvar_t scr_fov, r_conheight;
+
+	if (Q_atoi(string) == vid_wideaspect.value) 
+	{
+		*cancel = true;
+		return;
+	}
+
+	Cvar_Set (&vid_wideaspect, string);
+
+	if (nonwidefov != 0 && nonwideconheight != 0)
+	{
+		if (vid_wideaspect.integer == 0)
+		{
+			scr_fov.OnChange(&scr_fov, Q_ftos(nonwidefov), cancel);
+			r_conheight.OnChange(&r_conheight, Q_ftos(nonwideconheight), cancel);
+
+		}
+		else
+		{
+			scr_fov.OnChange(&scr_fov, Q_ftos(scr_fov.value), cancel);
+			r_conheight.OnChange(&r_conheight, Q_ftos(r_conheight.value), cancel);
+		}
+	}
 }
