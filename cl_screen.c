@@ -377,7 +377,7 @@ void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 	if (nonwidefov == 0)
 		nonwidefov = newfov;		// save first fov value to initialize nonwidefov
 
-#ifndef (__APPLE__)
+#ifndef __APPLE__
 #ifdef GLQUAKE
 	if (vid_wideaspect.value) 
 	{
