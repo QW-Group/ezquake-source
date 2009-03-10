@@ -92,6 +92,19 @@ void SetPing(server_data *s, int ping)
     s->ping = ping;
 }
 
+qbool SB_AllServersDead()
+{
+	int i;
+	
+	for (i = 0; i < serversn; i++) {
+		if (servers[i]->ping != -1) {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
 void Parse_Serverinfo(server_data *s, char *info)
 {
     int i, j;
@@ -535,7 +548,7 @@ void GetServerPingsAndInfos(int full)
     if (rebuild_servers_list)
         Rebuild_Servers_List();
 
-	if (serversn <= 0) {
+	if (serversn <= 0 || (sb_hidedead.integer == 0 && SB_AllServersDead())) {
 		// there's a possibility that sources hasn't been queried yet
 		// so let's do a full update, that ensures sources are updated
         full = true;
