@@ -16,7 +16,7 @@ STRIPFLAGS = --strip-unneeded --remove-section=.comment
 
 # ARCH = x86 ppc
 # OS = linux darwin freebsd
-ARCH = $(shell uname -m | sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g')
+ARCH = $(shell uname -m | sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g' -e 's/amd64/x86_64/g')
 OS = $(shell uname -s | tr A-Z a-z)
 
 # add special architecture based flags
