@@ -54,6 +54,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t cl_chatmode          = {"cl_chatmode", "2"};
 cvar_t con_funchars_mode    = {"con_funchars_mode", "0"};
 cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
+cvar_t con_completion_format= {"con_completion_format", "1"}; // new completion format displayed in 1 column with extra details shown
 
 #ifdef WITH_KEYMAP
 // variable to enable/disable key informations (e.g. scancode) to the consoloe:
@@ -330,18 +331,40 @@ void PaddedPrint (char *s)
 	extern int con_linewidth;
 	int nextcolx = 0;
 
-	if (con.x)
-		nextcolx = (int)((con.x + COLUMNWIDTH)/COLUMNWIDTH)*COLUMNWIDTH;
+	if (con_completion_format.integer)
+	{
+		if (con.x)
+			nextcolx = (int)((con.x + COLUMNWIDTH)/COLUMNWIDTH)*COLUMNWIDTH;
 
-	if (nextcolx > con_linewidth - MINCOLUMNWIDTH
-		|| (con.x && nextcolx + strlen(s) >= con_linewidth))
-		Com_Printf ("\n");
+		if (nextcolx > con_linewidth - MINCOLUMNWIDTH || (con.x && nextcolx + strlen(s) >= con_linewidth))
+			Com_Printf ("\n");
 
-	if (con.x)
-		Com_Printf (" ");
-	while (con.x % COLUMNWIDTH)
-		Com_Printf (" ");
-	Com_Printf ("%s", s);
+		if (con.x)
+			Com_Printf (" ");
+		while (con.x % COLUMNWIDTH)
+			Com_Printf (" ");
+		Com_Printf ("%s", s);
+	}
+	else // plain list
+	{
+		Com_Printf ("%s\n", s);
+	}
+}
+
+void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default value
+{
+	if (con_completion_format.integer) // old style listing
+	{
+		PaddedPrint(s);
+		return;
+	}
+	else // 1 column with value and default values printed
+	{
+		if (strcmp(s, dv)) // if they are the same don't print the default value (ie. if it's an alias)
+			Com_Printf ("&c0aa%s&r : &cda3\"&r%s&cda3\"&r (\"%s\")\n", s, v, dv);
+		else
+			Com_Printf ("&c0aa%s&r : &cda3\"&r%s&cda3\"&r\n", s, v);
+	}
 }
 
 static char	compl_common[64];
@@ -463,7 +486,7 @@ void CompleteCommandNew (void)
 				{
 					if (!strncasecmp(s, var->name, compl_len))
 					{
-						PaddedPrint (var->name);
+						PaddedPrintValue (var->name, var->string, var->defaultvalue);
 						FindCommonSubString (var->name);
 						jogi_avail_complete[count].
 						name = var->name;
@@ -484,7 +507,7 @@ void CompleteCommandNew (void)
 				{
 					if (!strncasecmp(s, alias->name, compl_len))
 					{
-						PaddedPrint (alias->name);
+						PaddedPrintValue (alias->name, alias->value, alias->name);
 						FindCommonSubString (alias->name);
 						jogi_avail_complete[count].
 						name = alias->name;
@@ -1803,6 +1826,7 @@ void Key_Init (void) {
 	Cvar_Register (&cl_chatmode);
 	Cvar_Register (&con_funchars_mode);
     Cvar_Register (&con_tilde_mode);
+	Cvar_Register (&con_completion_format);
 
 	Cvar_ResetCurrentGroup();
 }
