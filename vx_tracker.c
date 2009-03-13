@@ -172,7 +172,7 @@ static void VX_OwnFragNew(const char *victim)
 
 int VX_OwnFragTextLen(void)
 {
-    return (int) strlen(ownfragtext.text);
+    return (int) strlen_color(ownfragtext.text);
 }
 
 double VX_OwnFragTime(void)
