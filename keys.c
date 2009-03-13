@@ -56,6 +56,16 @@ cvar_t con_funchars_mode    = {"con_funchars_mode", "0"};
 cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
 cvar_t con_completion_format= {"con_completion_format", "1"}; // new completion format displayed in 1 column with extra details shown
 
+char* escape_regex(char* string);
+void OnChange_con_completion_color(cvar_t *var, char *string, qbool *cancel);
+cvar_t con_completion_color_name = {"con_completion_color_name", "0aa", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_value_current = {"con_completion_color_value_current", "fff", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_value_default = {"con_completion_color_value_default", "fff", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_quotes_current = {"con_completion_color_quotes_current", "da3", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_quotes_default = {"con_completion_color_quotes_default", "da3", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_brackets = {"con_completion_color_brackets", "fff", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_colon = {"con_completion_color_colon", "fff", CVAR_NONE, OnChange_con_completion_color};
+
 #ifdef WITH_KEYMAP
 // variable to enable/disable key informations (e.g. scancode) to the consoloe:
 cvar_t	cl_showkeycodes = {"cl_showkeycodes", "0"};
@@ -347,7 +357,7 @@ void PaddedPrint (char *s)
 	}
 	else // plain list
 	{
-		Com_Printf ("%s\n", s);
+		Com_Printf ("&c%s%s&r\n", con_completion_color_name.string, s);
 	}
 }
 
@@ -361,9 +371,17 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 	else // 1 column with value and default values printed
 	{
 		if (strcmp(s, dv)) // if they are the same don't print the default value (ie. if it's an alias)
-			Com_Printf ("&c0aa%s&r : &cda3\"&r%s&cda3\"&r (\"%s\")\n", s, v, dv);
+			Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\" &c%s(&c%s\"&c%s%s&c%s\"&c%s)&r\n",
+				con_completion_color_name.string, s , con_completion_color_colon.string,
+				con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+				con_completion_color_quotes_current.string, con_completion_color_brackets.string,
+				con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
+				con_completion_color_quotes_default.string, con_completion_color_brackets.string);
 		else
-			Com_Printf ("&c0aa%s&r : &cda3\"&r%s&cda3\"&r\n", s, v);
+			Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
+				con_completion_color_name.string, s , con_completion_color_colon.string,
+				con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+				con_completion_color_quotes_current.string);
 	}
 }
 
@@ -399,6 +417,24 @@ void CompleteCommandNew (void)
 	char *cmd, token[MAXCMDLINE], *s;
 	wchar temp[MAXCMDLINE];
 	int c, a, v, start, end, i, diff_len, size, my_string_length;
+
+	char completebuff[MAXCMDLINE];
+	cmd_alias_t *s_a;
+	cmd_function_t *s_c;
+	cvar_t *s_v;
+	int s_count;
+	
+	static cmd_alias_t *sorted_aliases[4096];
+	static cmd_function_t *sorted_cmds[4096];
+	static cvar_t *sorted_cvars[4096];
+	
+	#define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
+	#define MAX_SORTED_CVARS (sizeof (sorted_cvars) / sizeof (sorted_cvars[0]))
+	#define MAX_SORTED_CMDS (sizeof (sorted_cmds) / sizeof (sorted_cmds[0]))
+
+	extern int Cmd_AliasCompare (const void *,const void *);
+	extern int Cmd_CommandCompare (const void *, const void *);
+	extern int Cvar_CvarCompare (const void *, const void *);
 
 	if (!
 		 (key_linepos < 2
@@ -448,30 +484,26 @@ void CompleteCommandNew (void)
 
 		if (c + a + v > 1)
 		{
-			cmd_function_t *cmd;
-			cmd_alias_t *alias;
-			cvar_t *var;
-
 			Com_Printf ("\n");
 
 			if (c)
 			{
-				Com_Printf ("\x02" "Commands:\n");
-				for (cmd = cmd_functions; cmd;
-				     cmd = cmd->next)
-				{
-					if (!strncasecmp
-					    (s, cmd->name, compl_len))
+				Com_Printf ("\x02" "Commands (%d):\n", c);
+				for (s_c = cmd_functions, s_count = 0; s_c && s_count < MAX_SORTED_CMDS; s_c = s_c->next, s_count++)
+					sorted_cmds[s_count] = s_c;
+
+				qsort(sorted_cmds, s_count, sizeof (cmd_function_t *), Cmd_CommandCompare);
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
+
+				for (i = 0; i < s_count; i++) {
+					if (Utils_RegExpMatch(completebuff, sorted_cmds[i]->name))
 					{
-						PaddedPrint (cmd->name);
-						FindCommonSubString (cmd->name);
-						jogi_avail_complete[count].
-						name = cmd->name;
-						jogi_avail_complete[count].
-						type = "command";
+						PaddedPrint (sorted_cmds[i]->name);
+						FindCommonSubString (sorted_cmds[i]->name);
+						jogi_avail_complete[count].name = sorted_cmds[i]->name;
+						jogi_avail_complete[count].type = "command";
 						count++;
 						count_cmd++;
-
 					}
 				}
 
@@ -481,38 +513,47 @@ void CompleteCommandNew (void)
 
 			if (v)
 			{
-				Com_Printf ("\x02" "Variables:\n");
-				for (var = cvar_vars; var; var = var->next)
-				{
-					if (!strncasecmp(s, var->name, compl_len))
+				Com_Printf ("\x02" "Variables (%d):\n", v);
+
+				for (s_v = cvar_vars, s_count = 0; s_v && s_count < MAX_SORTED_CVARS; s_v = s_v->next, s_count++)
+					sorted_cvars[s_count] = s_v;
+
+				qsort(sorted_cvars, s_count, sizeof (cvar_t *), Cvar_CvarCompare);
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
+
+				for (i = 0; i < s_count; i++) {
+					if (Utils_RegExpMatch(completebuff, sorted_cvars[i]->name))
 					{
-						PaddedPrintValue (var->name, var->string, var->defaultvalue);
-						FindCommonSubString (var->name);
-						jogi_avail_complete[count].
-						name = var->name;
-						jogi_avail_complete[count].
-						type = "variable";
+						PaddedPrintValue (sorted_cvars[i]->name, sorted_cvars[i]->string, sorted_cvars[i]->defaultvalue);
+						FindCommonSubString (sorted_cvars[i]->name);
+						jogi_avail_complete[count].name = sorted_cvars[i]->name;
+						jogi_avail_complete[count].type = "variable";
 						count++;
 						count_cvar++;
 					}
 				}
+				
 				if (con.x)
 					Com_Printf ("\n");
 			}
 
 			if (a)
 			{
-				Com_Printf ("\x02" "Aliases:\n");
-				for (alias = cmd_alias; alias; alias = alias->next)
-				{
-					if (!strncasecmp(s, alias->name, compl_len))
+				Com_Printf ("\x02" "Aliases (%d):\n", a);
+
+				for (s_a = cmd_alias, s_count = 0; s_a && s_count < MAX_SORTED_ALIASES; s_a = s_a->next, s_count++)
+					sorted_aliases[s_count] = s_a;
+
+				qsort(sorted_aliases, s_count, sizeof (cmd_alias_t *), Cmd_AliasCompare);				
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));				
+
+				for (i = 0; i < s_count; i++) {
+					if (Utils_RegExpMatch(completebuff, sorted_aliases[i]->name))
 					{
-						PaddedPrintValue (alias->name, alias->value, alias->name);
-						FindCommonSubString (alias->name);
-						jogi_avail_complete[count].
-						name = alias->name;
-						jogi_avail_complete[count].
-						type = "alias";
+						PaddedPrintValue(sorted_aliases[i]->name, sorted_aliases[i]->value, sorted_aliases[i]->name);
+						FindCommonSubString(sorted_aliases[i]->name);
+						jogi_avail_complete[count].name = sorted_aliases[i]->name;
+						jogi_avail_complete[count].type = "alias";
 						count++;
 						count_alias++;
 					}
@@ -521,7 +562,6 @@ void CompleteCommandNew (void)
 				if (con.x)
 					Com_Printf ("\n");
 			}
-
 		}
 
 		if (c + a + v == 1)
@@ -1827,6 +1867,13 @@ void Key_Init (void) {
 	Cvar_Register (&con_funchars_mode);
     Cvar_Register (&con_tilde_mode);
 	Cvar_Register (&con_completion_format);
+	Cvar_Register (&con_completion_color_value_current);
+	Cvar_Register (&con_completion_color_value_default);
+	Cvar_Register (&con_completion_color_name);
+	Cvar_Register (&con_completion_color_quotes_current);
+	Cvar_Register (&con_completion_color_quotes_default);
+	Cvar_Register (&con_completion_color_brackets);
+	Cvar_Register (&con_completion_color_colon);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -2181,4 +2228,47 @@ void Key_ClearStates (void)
 		keydown[i] = false;
 		key_repeats[i] = false;
 	}
+}
+
+void OnChange_con_completion_color (cvar_t *var, char *string, qbool *cancel)
+{
+	if (!Utils_RegExpMatch("^[0-9a-fA-F]{3}$", string))
+		*cancel = true;
+}
+
+char* escape_regex(char* string)
+{
+	// TODO: Rename and move this to a more appropriate place so other functions may use it (utils.c ?)
+    int i, j, len;
+    char c;
+    char *out = "";
+
+	len = strlen(string);
+	out = (char*) Q_malloc(len * 2 * sizeof(char));
+
+    for (i = 0, j = 0; i < len; i++)
+    {
+        c = string[i];
+
+        switch (c)
+        {
+            case '+':
+            case '.':
+			case '[':
+			case ']':
+                out[j++] = '\\';
+                out[j++] = string[i];
+                break;
+            default:
+                out[j++] = string[i];
+                break;
+        }
+    }
+
+    out[j++] = '\0';
+	
+	// weird behavious on my machine, try to uncomment it
+	//out = Q_realloc(out, sizeof(char) * j);
+
+    return out;
 }
