@@ -57,6 +57,8 @@ cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
 cvar_t con_completion_format= {"con_completion_format", "1"}; // new completion format displayed in 1 column with extra details shown
 
 char* escape_regex(char* string);
+void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
+cvar_t con_prompt_charcode      = {"con_prompt_charcode", "93", CVAR_NONE, OnChange_con_prompt_charcode};	// 126 in qw charset is "]"
 void OnChange_con_completion_color(cvar_t *var, char *string, qbool *cancel);
 cvar_t con_completion_color_name = {"con_completion_color_name", "0aa", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_value_current = {"con_completion_color_value_current", "fff", CVAR_NONE, OnChange_con_completion_color};
@@ -774,7 +776,7 @@ void Key_ClearTyping (void)
 {
 	edit_line = (edit_line + 1) & (CMDLINES - 1);
 	history_line = edit_line;
-	key_lines[edit_line][0] = ']';
+	key_lines[edit_line][0] = con_prompt_charcode.integer;
 	key_lines[edit_line][1] = 0;
 	key_linepos = 1;
 }
@@ -1045,7 +1047,7 @@ void Key_Console (int key, int unichar)
 
 			if (history_line == edit_line)
 			{
-				key_lines[edit_line][0] = ']';
+				key_lines[edit_line][0] = con_prompt_charcode.integer;
 				key_lines[edit_line][1] = 0;
 				key_linepos = 1;
 			}
@@ -1707,7 +1709,7 @@ void History_Init (void)
 
 	for (i = 0; i < CMDLINES; i++) 
 	{
-		key_lines[i][0] = ']';
+		key_lines[i][0] = con_prompt_charcode.integer;
 		key_lines[i][1] = 0;
 	}
 	key_linepos = 1;
@@ -1730,7 +1732,7 @@ void History_Init (void)
 			fclose(hf);
 
 			history_line = edit_line = (edit_line - 1) & (CMDLINES - 1);
-			key_lines[edit_line][0] = ']';
+			key_lines[edit_line][0] = con_prompt_charcode.integer;
 			key_lines[edit_line][1] = 0;
 		}
 	}
@@ -1874,6 +1876,7 @@ void Key_Init (void) {
 	Cvar_Register (&con_completion_color_quotes_default);
 	Cvar_Register (&con_completion_color_brackets);
 	Cvar_Register (&con_completion_color_colon);
+	Cvar_Register (&con_prompt_charcode);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -2230,6 +2233,27 @@ void Key_ClearStates (void)
 	}
 }
 
+void OnChange_con_prompt_charcode (cvar_t *var, char *string, qbool *cancel)
+{	
+	int i, charcode = Q_atoi(string);
+	*cancel = true;
+
+	if ((charcode > 31) && (charcode <= 255) && (charcode != con_prompt_charcode.integer))
+	{
+		// changes prompt in current line
+		key_lines[edit_line][0] = charcode;
+		
+		// changes prompt in all lines
+		for (i = 0; i < CMDLINES; i++)
+		{
+			if (qwcslen(key_lines[i]) > 1)
+				key_lines[i][0] = charcode;
+		}
+
+		*cancel = false;
+	}
+}
+
 void OnChange_con_completion_color (cvar_t *var, char *string, qbool *cancel)
 {
 	if (!Utils_RegExpMatch("^[0-9a-fA-F]{3}$", string))
@@ -2266,9 +2290,6 @@ char* escape_regex(char* string)
     }
 
     out[j++] = '\0';
-	
-	// weird behavious on my machine, try to uncomment it
-	//out = Q_realloc(out, sizeof(char) * j);
 
     return out;
 }
