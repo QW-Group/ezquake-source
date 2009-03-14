@@ -1192,7 +1192,7 @@ void Key_Console (int key, int unichar)
 		}
 		else
 		{
-			switch (key)
+			switch (unichar)
 			{
 				case '[': unichar = 0x10; break;
 				case ']': unichar = 0x11; break;
