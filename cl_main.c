@@ -153,6 +153,7 @@ cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};
 cvar_t cl_fp_persecond		= {"cl_fp_persecond", "4"};
 cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};
 cvar_t cl_useproxy			= {"cl_useproxy", "0"};
+cvar_t cl_proxyaddr         = {"cl_proxyaddr", ""};
 cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
@@ -752,6 +753,7 @@ void CL_QWURL_f (void)
 void CL_Connect_f (void) 
 {
 	qbool proxy;
+	char *connect_addr = NULL;
 
 	if (Cmd_Argc() != 2) 
 	{
@@ -759,16 +761,28 @@ void CL_Connect_f (void)
 		return;
 	}
 
+	if (cl_proxyaddr.string[0]) {
+		Info_SetValueForKey (cls.userinfo, "prx", Cmd_Argv(1), MAX_INFO_STRING);
+		if (cls.state >= ca_connected) {
+			Cmd_ForwardToServer ();
+		}
+		connect_addr = cl_proxyaddr.string;
+	}
+	else
+	{
+		connect_addr = Cmd_Argv(1);
+	}
+
 	proxy = cl_useproxy.value && CL_ConnectedToProxy();
 
 	if (proxy)
 	{
-		Cbuf_AddText(va("say ,connect %s", Cmd_Argv(1)));
+		Cbuf_AddText(va("say ,connect %s", connect_addr));
 	} 
 	else
 	{
 		Host_EndGame();
-		strlcpy(cls.servername, Cmd_Argv(1), sizeof(cls.servername));
+		strlcpy(cls.servername, connect_addr, sizeof(cls.servername));
 		CL_BeginServerConnect();
 	}
 }
@@ -1613,6 +1627,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_predict_half);
 	Cvar_Register (&cl_timeout);
 	Cvar_Register (&cl_useproxy);
+	Cvar_Register (&cl_proxyaddr);
 	Cvar_Register (&cl_crypt_rcon);
 	Cvar_Register (&cl_fix_mvd);
 
