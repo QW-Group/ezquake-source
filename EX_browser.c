@@ -807,6 +807,8 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 			}
 			else if (servers[servnum]->qizmo)
 				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 25, 75, 255));
+			else if (servers[servnum]->qwfwd)
+				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 50, 25, 255));
 			else if (servnum % 2)
 				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 25, 25, 125));
 			else 

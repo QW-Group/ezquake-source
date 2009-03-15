@@ -105,6 +105,21 @@ qbool SB_AllServersDead()
 	return true;
 }
 
+qbool SB_IsServerQWfwd(server_data *s)
+{
+	char *ident_match = "qwfwd";
+	size_t match_len = strlen(ident_match);
+	char *ident_value = ValueForKey(s, "*version");
+	
+	if (ident_value) {
+		return strncmp(ident_value, ident_match, match_len) == 0;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void Parse_Serverinfo(server_data *s, char *info)
 {
     int i, j;
@@ -237,6 +252,8 @@ void Parse_Serverinfo(server_data *s, char *info)
     }
 
     // fill-in display
+	s->qwfwd = SB_IsServerQWfwd(s);
+
     tmp = ValueForKey(s, "hostname");
     if (tmp != NULL)
         snprintf (s->display.name, sizeof (s->display.name),"%-.*s", COL_NAME, tmp);
