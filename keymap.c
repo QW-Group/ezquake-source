@@ -234,6 +234,7 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 				BYTE	state[256];
 				WCHAR	uni;
 				GetKeyboardState (state);
+				state[0x11] = 1;  // skip check for CTRL key since it messes up ToUnicode
 				ToUnicode (wParam, lParam >> 16, state, &uni, 1, 0);
 				unichar = uni;
 			}
