@@ -115,7 +115,7 @@ void DumpBindings (FILE *f)
 }
 
 #define CONFIG_MAX_COL 60
-#define MAX_DUMPED_CVARS 2048
+#define MAX_DUMPED_CVARS 4096
 static void DumpVariables(FILE	*f)
 {
 	cvar_t *var, *sorted_vars[MAX_DUMPED_CVARS];

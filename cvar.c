@@ -677,7 +677,7 @@ int Cvar_CvarCompare (const void *p1, const void *p2)
 
 void Cvar_CvarList (qbool use_regex)
 {
-	static cvar_t *sorted_cvars[2048];
+	static cvar_t *sorted_cvars[4096];
 	int i, c, m = 0, count;
 	cvar_t *var;
 	char *pattern;
