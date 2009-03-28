@@ -1497,15 +1497,25 @@ void CL_SendToServer (void)
 
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 {
-	char *clrpart = val;
+	char *clrpart;
+
+	// check for &r
+	if (strstr(val, "&r")) {
+		*cancel = true;
+		Com_Printf("Using color codes in your name is not allowed\n");
+		return;
+	}
 	
+	// check for &cRGB
+	// RGB has to be a valid hexadecimal number, otherwise it's ok
+	clrpart = val;
 	do {
 		if (clrpart = strstr(clrpart, "&c")) {
 			clrpart += 2;
 			if (clrpart[0] && clrpart[1] && clrpart[2]) {
 				if (HexToInt(clrpart[0]) >= 0 && HexToInt(clrpart[1]) >= 0 && HexToInt(clrpart[2]) >= 0) {
 					*cancel = true;
-					Con_Printf("Using color codes in your name is not allowed");
+					Com_Printf("Using color codes in your name is not allowed\n");
 				}
 			}
 		}
