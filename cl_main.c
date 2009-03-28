@@ -180,7 +180,8 @@ cvar_t r_shaftalpha				= {"r_shaftalpha", "1"};
 // info mirrors
 cvar_t	password				= {"password", "", CVAR_USERINFO};
 cvar_t	spectator				= {"spectator", "", CVAR_USERINFO};
-cvar_t	name					= {"name", "player", CVAR_ARCHIVE|CVAR_USERINFO};
+void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
+cvar_t	name					= {"name", "player", CVAR_ARCHIVE|CVAR_USERINFO, CL_OnChange_name_validate};
 cvar_t	team					= {"team", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	topcolor				= {"topcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	bottomcolor				= {"bottomcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
@@ -1492,6 +1493,23 @@ void CL_SendToServer (void)
 		CL_CheckForResend ();
 	else
 		CL_SendCmd ();
+}
+
+void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
+{
+	char *clrpart = val;
+	
+	do {
+		if (clrpart = strstr(clrpart, "&c")) {
+			clrpart += 2;
+			if (clrpart[0] && clrpart[1] && clrpart[2]) {
+				if (HexToInt(clrpart[0]) >= 0 && HexToInt(clrpart[1]) >= 0 && HexToInt(clrpart[2]) >= 0) {
+					*cancel = true;
+					Con_Printf("Using color codes in your name is not allowed");
+				}
+			}
+		}
+	} while (clrpart);
 }
 
 //=============================================================================
