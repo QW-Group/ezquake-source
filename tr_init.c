@@ -101,7 +101,7 @@ cvar_t  r_showextensions	= { "vid_showextensions", 	"0",	CVAR_SILENT };
 
 // aspect ratio for widescreens
 void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel);
-cvar_t	vid_wideaspect		= {"vid_wideaspect", "0", CVAR_NO_RESET, OnChange_vid_wideaspect};
+cvar_t	vid_wideaspect		= {"vid_wideaspect", "0", CVAR_NO_RESET | CVAR_SILENT, OnChange_vid_wideaspect};
 
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
 void ( APIENTRY * qglActiveTextureARB )( GLenum texture );
@@ -317,7 +317,6 @@ int nonwideconheight = 0;  // Store original conheight if vid_wideaspect is used
 
 void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 	
-	extern cvar_t vid_wideaspect;
 	float scale = 1;
 
 	if (var == &r_conwidth) {
@@ -671,13 +670,14 @@ extern void ClearAllStates (void);
 #endif
 
 void VID_zzz (void) {
+	extern int nonwideconheight;
 
 	vid.width  = vid.conwidth  = min(vid.conwidth,  glConfig.vidWidth);
 	vid.height = vid.conheight = min(vid.conheight, glConfig.vidHeight);
 
 	// we need cap cvars, after resolution changed, here may be conwidth > width, so set cvars right
 	Cvar_SetValue(&r_conwidth,  r_conwidth.value);  // must trigger callback which validate value
-	Cvar_SetValue(&r_conheight, r_conheight.value); // must trigger callback which validate value
+	Cvar_SetValue(&r_conheight, nonwideconheight); // must trigger callback which validate value
 
 	vid.numpages = 2;
 
@@ -713,6 +713,8 @@ void VID_Restart_f (void)
 {
 	extern void GFX_Init(void);
 	extern void ReloadPaletteAndColormap(void);
+	extern cvar_t gl_smoothfont;
+	extern int nonwideconheight;
 	qbool old_con_suppress;
 
 	if (!host_initialized) { // sanity
@@ -748,6 +750,9 @@ void VID_Restart_f (void)
 
 	// window may be re-created, so caption need to be forced to update
 	CL_UpdateCaption(true);
+
+	// refresh smoothfont
+	OnChange_gl_smoothfont(&gl_smoothfont, gl_smoothfont.string, 0);
 }
 
 void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel) 
