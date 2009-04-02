@@ -2254,7 +2254,7 @@ void CL_Record_f (void)
 {
 	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];
 
-	if ( com_serveractive )
+	if (com_serveractive && strcmp(Cmd_Argv(0), "record") == 0)
 	{
 		SV_MVD_Record_f();
 		return;
@@ -4549,6 +4549,7 @@ void CL_Demo_Init(void)
 	// Add demo commands.
 	//
 	Cmd_AddCommand ("record", CL_Record_f);
+	Cmd_AddCommand ("recordqwd", CL_Record_f);
 	Cmd_AddCommand ("stop", CL_Stop_f);
 	Cmd_AddCommand ("playdemo", CL_Play_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
