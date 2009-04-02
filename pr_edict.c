@@ -932,10 +932,15 @@ to call ED_CallSpawnFunctions () to let the objects initialize themselves.
 */
 void ED_LoadFromFile (char *data)
 {
+	extern cvar_t cl_curlybraces;
 	edict_t		*ent;
 	int			inhibit;
 	dfunction_t	*func;
+	float curlybraces_oldvalue = cl_curlybraces.value;
 
+	if (curlybraces_oldvalue) {
+		Cvar_SetValue(&cl_curlybraces, 0);
+	}
 	ent = NULL;
 	inhibit = 0;
 	pr_global_struct->time = sv.time;
@@ -1003,6 +1008,9 @@ void ED_LoadFromFile (char *data)
 	}
 
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
+	if (curlybraces_oldvalue) {
+		Cvar_SetValue(&cl_curlybraces, curlybraces_oldvalue);
+	}
 }
 extern redirect_t	sv_redirected;
 qbool PR_ConsoleCmd(void)
