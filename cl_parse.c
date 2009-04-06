@@ -1978,8 +1978,12 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 
 	player->spectator = (Info_ValueForKey (player->userinfo, "*spectator")[0]) ? true : false;
 
-	if (slot == cl.playernum && player->name[0])
-		cl.spectator = player->spectator;
+	if (slot == cl.playernum && player->name[0]) {
+		if (cl.spectator != player->spectator) {
+			cl.spectator = player->spectator;
+			TP_RefreshSkins();
+		}
+	}
 
 	Sbar_Changed();
 
