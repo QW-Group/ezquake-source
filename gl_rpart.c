@@ -1193,8 +1193,11 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 		VectorScale(delta, 1 / length, vf);
 		VectorVectors(vf, vr, vup);
 		break;
+	case p_trailbleed:
+		count = length / 1.1;
+		break;
 	default:
-		//assert(!"AddParticleTrail: unexpected type"); -> hexum - FIXME not all types are handled, seems to work ok though
+		Com_DPrintf("AddParticleTrail: unexpected type %d\n", type);
 		break;
 	}
 
