@@ -21,7 +21,7 @@ OS = $(shell uname -s | tr A-Z a-z)
 
 # add special architecture based flags
 ifeq ($(ARCH),x86_64)
-	ARCH_CFLAGS = -mtune=nocona -mmmx -msse -msse2 -m64
+	ARCH_CFLAGS = -march=nocona -m64
 endif
 ifeq ($(ARCH),x86)
 	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
