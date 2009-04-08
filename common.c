@@ -958,9 +958,9 @@ void Info_Print (char *s) {
 //============================================================
 
 // this is seems to be "better" than Com_HashKey()
-static unsigned long Info_HashKey (const char *str)
+static unsigned int Info_HashKey (const char *str)
 {
-	unsigned long hash = 0;
+	unsigned int hash = 0;
 	int c;
 
 	// the (c&~32) makes it case-insensitive

@@ -818,7 +818,7 @@ static void SVC_GetChallenge (void)
 		int lng;
 
 		lng = LittleLong(PROTOCOL_VERSION_FTE);
-		memcpy(over, &lng, sizeof(int)); // FIXME sizeof(int) or sizeof(long)???
+		memcpy(over, &lng, sizeof(int)); // FIXME sizeof(int) or sizeof(long)??? -> sizeof(int) is correct, the function should really be named LittleInt - hexum
 		over += 4;
 
 		lng = LittleLong(svs.fteprotocolextensions);

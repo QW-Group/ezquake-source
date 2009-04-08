@@ -30,7 +30,7 @@ typedef unsigned char *POINTER;
 typedef unsigned short int UINT2;
 
 /* UINT4 defines a four byte word */
-#if defined(__alpha__) || defined(_LP64)
+#if defined(__alpha__) || defined(_LP64) || defined(__x86_64)
 typedef unsigned int UINT4;
 #else
 typedef unsigned long int UINT4;

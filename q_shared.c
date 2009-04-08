@@ -614,8 +614,8 @@ qbool Q_glob_match (const char *pattern, const char *text)
 	return (*text == '\0');
 }
 
-unsigned long Com_HashKey (const char *str) {
-	unsigned long hash = 0;
+unsigned int Com_HashKey (const char *str) {
+	unsigned int hash = 0;
 	int c;
 
 	// the (c&~32) makes it case-insensitive

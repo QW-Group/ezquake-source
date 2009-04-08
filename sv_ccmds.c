@@ -1138,7 +1138,7 @@ resolve IP via DNS lookup
 char *SV_Resolve(char *addr)
 {
 #if defined (__linux__) || defined (_WIN32)
-	unsigned long ip;
+	unsigned int ip;
 #else
 	in_addr_t ip;
 #endif

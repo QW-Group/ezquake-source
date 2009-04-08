@@ -97,7 +97,7 @@ typedef struct ICMP_header_s
     unsigned short i_seq;
     /* This is not the std header, but we reserve space for our needs */
     double timestamp;
-    u_long id;   // ip
+    u_int id;   // ip
     int index;  // server num
     int phase;  // ping phase
     int randomizer;
@@ -264,7 +264,7 @@ static void FillServerListPings(server_data *servs[], int servsn,
  * Decode an IP packet and return the underlying ICMP header
  */
 static ICMP_header_t *IP_DecodePacket(IP_packet_t *ip_packet, int bytes,
-								struct sockaddr_in *from, u_long ip)
+								struct sockaddr_in *from, u_int ip)
 {
     ICMP_packet_t *icmp_packet;
     unsigned short iphdrlen;
@@ -303,7 +303,7 @@ static int ICMP_GetEchoResponseTime(ICMP_header_t *icmp_hdr)
  */
 static unsigned short ICMP_Checksum(ICMP_packet_t *packet, int size)
 {
-  unsigned long cksum=0;
+  unsigned int cksum=0;
   unsigned short *buffer = (unsigned short *)packet->data;
 
 	while(size >1)
@@ -345,7 +345,7 @@ static void ICMP_FillData(ICMP_packet_t *packet, int datasize)
 // =============================================================================
 void SB_RootInit(void)
 {
-    u_long arg;
+    u_int arg;
 
 	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET) {
 		/* disconnect: SOCK_RAW is only avail for root on linux
@@ -800,7 +800,7 @@ _select:
  */
 int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 {
-	u_long arg;
+	u_int arg;
 	pinghost_list_t host_list;
 
 	host_list.hosts = ParseServerList(servs, servsn, &host_list.nelms);

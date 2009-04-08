@@ -277,7 +277,7 @@ wchar *Q_wcsdup(const wchar *src);
 
 qbool Q_glob_match (const char *pattern, const char *text);
 
-unsigned long Com_HashKey (const char *name);
+unsigned int Com_HashKey (const char *name);
 
 //============================================================================
 
