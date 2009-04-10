@@ -390,7 +390,7 @@ void GL_Upload8 (byte *data, int width, int height, int mode)
 			if (p < 224)
 				trans[i] = table[p] & LittleLong(0x00FFFFFF); // Transparent.
 			else
-				trans[i] = table[p]; // Fullbright.
+				trans[i] = (p == 255) ? LittleLong(0xff535b9f) : table[p]; // Fullbright. Disable transparancy on fullbright colors (255).
 		}
 	} 
 	else if (mode & TEX_ALPHA) 
