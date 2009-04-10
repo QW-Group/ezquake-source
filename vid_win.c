@@ -75,13 +75,15 @@ extern qbool	mouseactive; // from in_win.c
 #define NO_MODE					(MODE_WINDOWED - 1)
 #define MODE_FULLSCREEN_DEFAULT	(MODE_WINDOWED + 3)
 
+void OnChange_vid_windowed(struct cvar_s *var, char *value, qbool *cancel);
+
 cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
 
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
 qbool		allow_flash = false; 
 cvar_t		vid_mode = {"vid_mode", "0"};											// Note that 0 is MODE_WINDOWED
-cvar_t		_vid_default_mode = {"_vid_default_mode", "0", CVAR_ARCHIVE};			// Note that 0 is MODE_WINDOWED
-cvar_t		_vid_default_mode_win = {"_vid_default_mode_win", "3", CVAR_ARCHIVE};	// Note that 3 is MODE_FULLSCREEN_DEFAULT
+cvar_t		_vid_default_mode = {"_vid_default_mode", "3", CVAR_ARCHIVE};			// Note that 3 is MODE_FULLSCREEN_DEFAULT
+cvar_t		_vid_default_mode_win = {"_vid_default_mode_win", "0", CVAR_ARCHIVE};	// Note that 0 is MODE_WINDOWED
 cvar_t		vid_nopageflip = {"vid_nopageflip", "0", CVAR_ARCHIVE};
 cvar_t		vid_config_x = {"vid_config_x", "800", CVAR_ARCHIVE};
 cvar_t		vid_config_y = {"vid_config_y", "600", CVAR_ARCHIVE};
@@ -94,6 +96,7 @@ cvar_t		vid_window_x = {"vid_window_x", "0", CVAR_ARCHIVE};
 cvar_t		vid_window_y = {"vid_window_y", "0", CVAR_ARCHIVE};
 cvar_t		vid_resetonswitch = {"vid_resetonswitch", "0", CVAR_ARCHIVE};
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", CVAR_INIT};
+cvar_t		vid_windowed = {"vid_windowed", "1", CVAR_ARCHIVE, OnChange_vid_windowed};	// since vid_mode defaults to windowed, this defaults to 1
 
 typedef struct 
 {
@@ -1540,6 +1543,15 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	return true;
 }
 
+void OnChange_vid_windowed(struct cvar_s *var, char *value, qbool *cancel)
+{
+	Cvar_Set(var, value);
+	if (var->value)
+		VID_SetMode(_vid_default_mode_win.value, vid_curpal);
+	else
+		VID_SetMode(_vid_default_mode.value, vid_curpal);
+}
+
 void VID_LockBuffer (void) 
 {
 	if (dibdc)
@@ -1717,16 +1729,6 @@ void VID_TestMode_f (void)
 	}
 }
 
-void VID_Windowed_f (void) 
-{
-	VID_SetMode ((int) vid_windowed_mode.value, vid_curpal);
-}
-
-void VID_Fullscreen_f (void) 
-{
-	VID_SetMode ((int) vid_fullscreen_mode.value, vid_curpal);
-}
-
 void VID_Minimize_f (void) 
 {
 	// we only support minimizing windows; if you're fullscreen, switch to windowed first
@@ -1771,14 +1773,13 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&vid_resetonswitch);
 	Cvar_Register (&vid_displayfrequency);
 	Cvar_Register (&vid_flashonactivity);
+	Cvar_Register (&vid_windowed);
 
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("vid_testmode", VID_TestMode_f);
 	Cmd_AddCommand ("vid_modelist", VID_ModeList_f);
 	Cmd_AddCommand ("vid_forcemode", VID_ForceMode_f);
-	Cmd_AddCommand ("vid_windowed", VID_Windowed_f);
-	Cmd_AddCommand ("vid_fullscreen", VID_Fullscreen_f);
 	Cmd_AddCommand ("vid_minimize", VID_Minimize_f);
 
 	memset(modelist, 0, sizeof(modelist));	
@@ -2049,8 +2050,7 @@ void VID_Update (vrect_t *rects)
 			}
 		}
 
-		if (_vid_default_mode_win.value != vid_default && 
-			(!startwindowed || _vid_default_mode_win.value < MODE_FULLSCREEN_DEFAULT))
+		if (_vid_default_mode_win.value != vid_default && (startwindowed || vid_windowed.value))
 		{
 			firstupdate = 0;
 
@@ -2063,6 +2063,16 @@ void VID_Update (vrect_t *rects)
 				Cvar_SetValue (&_vid_default_mode_win, windowed_default);
 
 			Cvar_SetValue (&vid_mode, _vid_default_mode_win.value);
+		}
+
+		if (_vid_default_mode.value != vid_default && (!startwindowed || !vid_windowed.value))
+		{
+			firstupdate = 0;
+
+			if (_vid_default_mode.value < 3 || _vid_default_mode.value >= nummodes)
+				Cvar_SetValue(&_vid_default_mode, 3);
+
+			Cvar_SetValue(&vid_mode, _vid_default_mode.value);
 		}
 	}
 
