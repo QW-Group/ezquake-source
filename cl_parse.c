@@ -731,7 +731,8 @@ void Model_NextDownload (void)
 
 	if (cls.downloadnumber == 0) 
 	{
-		Com_Printf ("Checking models...\n");
+		if (!com_serveractive || developer.value)
+			Com_Printf ("Checking models...\n");
 		cls.downloadnumber = 1;
 	}
 
@@ -779,7 +780,8 @@ void Sound_NextDownload (void)
 
 	if (cls.downloadnumber == 0)
 	{
-		Com_Printf ("Checking sounds...\n");
+		if (!com_serveractive || developer.value)
+			Com_Printf ("Checking sounds...\n");
 		cls.downloadnumber = 1;
 	}
 
