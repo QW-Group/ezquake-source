@@ -214,14 +214,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	PF_PMC_MASK		7
 #define	PF_ONGROUND		(1<<14)			// ZQuake extension
 
-// player move types
+// encoded player move types
 #define PMC_NORMAL				0		// normal ground movement
 #define PMC_NORMAL_JUMP_HELD	1		// normal ground novement + jump_held
 #define PMC_OLD_SPECTATOR		2		// fly through walls (QW compatibility mode)
 #define PMC_SPECTATOR			3		// fly through walls
 #define PMC_FLY					4		// fly, bump into walls
 #define PMC_NONE				5		// can't move (client had better lerp the origin...)
-#define PMC_FREEZE				6		// TODO: lerp movement and viewangles
+#define PMC_LOCK				6		// TODO: lerp movement and viewangles
 #define PMC_EXTRA3				7		// future extension
 
 //==============================================

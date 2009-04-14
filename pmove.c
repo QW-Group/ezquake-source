@@ -770,7 +770,7 @@ void PM_PlayerMove (void)
 	pm_frametime = pmove.cmd.msec * 0.001;
 	pmove.numtouch = 0;
 
-	if (pmove.pm_type == PM_NONE || pmove.pm_type == PM_FREEZE) {
+	if (pmove.pm_type == PM_NONE || pmove.pm_type == PM_LOCK) {
 		PM_CategorizePosition ();
 		return;
 	}

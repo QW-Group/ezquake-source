@@ -444,8 +444,8 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 			case PM_NONE:
 				pm_code = PMC_NONE;
 				break;
-			case PM_FREEZE:
-				pm_code = PMC_FREEZE;
+			case PM_LOCK:
+				pm_code = PMC_LOCK;
 				break;
 			default:
 				assert (false);
@@ -456,6 +456,9 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 		// Z_EXT_PF_ONGROUND protocol extension
 		if ((int)ent->v.flags & FL_ONGROUND)
 			pflags |= PF_ONGROUND;
+
+		if (pm_type == PM_LOCK && ent == clent)
+			pflags |= PF_COMMAND;	// send forced view angles
 
 		if (client->spec_track && client->spec_track - 1 == j &&
 		        ent->v.weaponframe)
@@ -492,8 +495,16 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 			cmd.buttons = 0;	// never send buttons
 			cmd.impulse = 0;	// never send impulses
 
+			if (ent == clent) {
+				// this is PM_LOCK, we only want to send view angles
+				VectorCopy(ent->v.v_angle, cmd.angles);
+				cmd.forwardmove = 0;
+				cmd.sidemove = 0;
+				cmd.upmove = 0;
+			}
+
 			if ((client->extensions & Z_EXT_VWEP) && sv.vw_model_name[0]
-					&& fofs_vw_index) {
+					&& fofs_vw_index && ent != clent) {
 				cmd.impulse = EdictFieldFloat (ent, fofs_vw_index);
 			}
 

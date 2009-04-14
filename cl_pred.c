@@ -323,6 +323,13 @@ void CL_PredictMove (void) {
 #endif
 		CL_CategorizePosition ();
 	}
+	else if (to->playerstate[cl.playernum].pm_type == PM_LOCK)
+	{
+		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
+		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
+		VectorCopy (to->playerstate[cl.playernum].command.angles, cl.simangles);
+		cl.onground = false;
+	}
 	else
 	if ((cl_nopred.value && !cls.mvdplayback) || cl.validsequence + 1 >= cls.netchan.outgoing_sequence) {	
 		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);

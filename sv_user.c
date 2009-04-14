@@ -2987,6 +2987,9 @@ int SV_PMTypeForClient (client_t *cl)
 	if (cl->edict->v.movetype == MOVETYPE_NONE)
 		return PM_NONE;
 
+	if (cl->edict->v.movetype == MOVETYPE_LOCK)
+		return PM_LOCK;
+
 	if (cl->edict->v.health <= 0)
 		return PM_DEAD;
 

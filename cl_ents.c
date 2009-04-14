@@ -1971,8 +1971,8 @@ void CL_ParsePlayerinfo (void)
 							case PMC_NONE:
 								state->pm_type = PM_NONE;
 								break;
-							case PMC_FREEZE:
-								state->pm_type = PM_FREEZE;
+							case PMC_LOCK:
+								state->pm_type = PM_LOCK;
 								break;
 							default:
 								// future extension?

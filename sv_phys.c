@@ -899,6 +899,7 @@ void SV_RunEntity (edict_t *ent)
 		SV_Physics_Pusher (ent);
 		break;
 	case MOVETYPE_NONE:
+	case MOVETYPE_LOCK:
 		SV_Physics_None (ent);
 		break;
 	case MOVETYPE_NOCLIP:
