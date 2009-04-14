@@ -378,7 +378,8 @@ void Skin_NextDownload (void) {
 	int i;
 
 	if (cls.downloadnumber == 0)
-		Com_Printf ("Checking skins...\n");
+		if (!com_serveractive || developer.value)
+			Com_Printf ("Checking skins...\n");
 
 	cls.downloadtype = dl_skin;
 
