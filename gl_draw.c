@@ -913,11 +913,13 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	}
 	glEnd();
 
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+//	4x speedup without these, might cause problems elsewhere (seems ok in my 5 minute test) - hexum
 
-	glColor4ubv(color_white);
+//	glEnable(GL_ALPHA_TEST);
+//	glDisable(GL_BLEND);
+//	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+//	glColor4ubv(color_white);
 }
 
 void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float alpha)
