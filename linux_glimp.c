@@ -193,15 +193,19 @@ GLint (APIENTRY *qglXSwapIntervalSGI)(GLint interval);
 
 const GLubyte * fix_glGetString (GLenum name) {
 	GLubyte *ret;
-	
-	ST_Printf(PRINT_ALL, "fix_glGetString (%08x)\n", name);
+	static GLubyte retv[16][1024];
+	static cur = 0;
 
 	if (!(ret = glGetString(name)))
 		ret = "";
 
-	ST_Printf(PRINT_ALL, "fix_glGetString ret \"%s\"\n", ret);
+	strlcpy(retv[cur++], ret, 1024);
+	cur %= 16;
 	
-	return ret;
+	if (cur == 0)
+		return retv[15];
+	else
+		return retv[cur-1];
 }
 
 void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
