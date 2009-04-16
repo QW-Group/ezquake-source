@@ -1085,6 +1085,17 @@ static void Sbar_SoloScoreboard (void) {
 #define Draw_AlphaFill(a, b, c, d, e, f)
 #endif
 
+static qbool Sbar_ShowTeamKills(void)
+{
+	if (cl.teamfortress) {
+		return ((cl.teamplay & 21) != 21);
+	}
+	else {
+		// in teamplay 3 it's not possible to make teamkills
+		return (cl.teamplay != 3);
+	}
+}
+
 static void Sbar_DeathmatchOverlay (int start) {
 	int stats_basic, stats_team, stats_touches, stats_caps, playerstats[7];
 	int scoreboardsize, colors_thickness, statswidth, stats_xoffset = 0;
@@ -1134,15 +1145,12 @@ static void Sbar_DeathmatchOverlay (int start) {
 			stats_basic++;
 			if (cl.teamplay) {
 				if (rank_width + statswidth + RANK_WIDTH_TEAMSTATS < vid.width - 16) {
-					if (
-						(cl.teamfortress || cl.teamplay != 3) &&
-						(!cl.teamfortress || (cl.teamplay & 21) != 21)
-						) {
+					if (Sbar_ShowTeamKills()) {
 							statswidth += RANK_WIDTH_TEAMSTATS;
 							stats_team++;
-						}
+					}
 				}
-				if (Stats_IsFlagsParsed()) {
+				if (cl.teamfortress && Stats_IsFlagsParsed()) {
 					if (rank_width + statswidth + RANK_WIDTH_TCHSTATS < vid.width - 16) {
 						statswidth += RANK_WIDTH_TCHSTATS;
 						stats_touches++;
