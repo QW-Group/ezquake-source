@@ -194,8 +194,12 @@ GLint (APIENTRY *qglXSwapIntervalSGI)(GLint interval);
 const GLubyte * fix_glGetString (GLenum name) {
 	GLubyte *ret;
 	
+	ST_Printf(PRINT_ALL, "fix_glGetString (%08x)\n", name);
+
 	if (!(ret = glGetString(name)))
 		ret = "";
+
+	ST_Printf(PRINT_ALL, "fix_glGetString ret \"%s\"\n", ret);
 	
 	return ret;
 }
