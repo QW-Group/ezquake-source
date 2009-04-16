@@ -191,6 +191,15 @@ const char *(APIENTRY *qglXQueryExtensionsString)(Display *dpy, int screen);
 //GLX_SGI_swap_control
 GLint (APIENTRY *qglXSwapIntervalSGI)(GLint interval);
 
+const GLubyte * fix_glGetString (GLenum name) {
+	GLubyte *ret;
+	
+	if (!(ret = glGetString(name)))
+		ret = "";
+	
+	return ret;
+}
+
 void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
 
 qbool QGL_Init( const char *dllname ) {
@@ -199,7 +208,7 @@ qbool QGL_Init( const char *dllname ) {
 
 	qglGetIntegerv               = glGetIntegerv;
 	qglGetError                  = glGetError;
-	qglGetString                 = glGetString;
+	qglGetString                 = fix_glGetString;
 
 	qglXChooseVisual             = glXChooseVisual;
 	qglXCreateContext            = glXCreateContext;
