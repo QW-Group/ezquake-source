@@ -318,7 +318,10 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 	edict_t *ent;
 	int hideent;
 
-	hideent = (clent && fofs_hideentity) ? ((eval_t *)((byte *)&(clent)->v + fofs_hideentity))->_int : 0;
+	if (clent && fofs_hideentity)
+		hideent = ((eval_t *)((byte *)&(clent)->v + fofs_hideentity))->_int / pr_edict_size;
+	else
+		hideent = 0;
 
 	demo_frame = &demo.frames[demo.parsecount&UPDATE_MASK];
 
@@ -610,7 +613,10 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 
 	numnails = 0;
 
-	hideent = fofs_hideentity ? ((eval_t *)((byte *)&(clent)->v + fofs_hideentity))->_int : 0;
+	if (fofs_hideentity)
+		hideent = ((eval_t *)((byte *)&(clent)->v + fofs_hideentity))->_int / pr_edict_size;
+	else
+		hideent = 0;
 
 	if (!disable_updates)
 	{// Vladis, server flash
