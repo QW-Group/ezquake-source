@@ -55,17 +55,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define Z_EXT_JOIN_OBSERVE	(1<<5)	// server: "join" and "observe" commands are supported
 									// client: on-the-fly spectator <-> player switching supported
 #define Z_EXT_PF_ONGROUND	(1<<6)	// server: PF_ONGROUND is valid for all svc_playerinfo
-#define Z_EXT_VWEP			(1<<7)	// fake bit (not 'officially' supported yet)
+#define Z_EXT_VWEP			(1<<7)	// ZQ_VWEP extension
+#define Z_EXT_PF_SOLID		(1<<8)
 
 // what our client supports
 #define CLIENT_EXTENSIONS (Z_EXT_PM_TYPE|Z_EXT_PM_TYPE_NEW| \
 		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS| \
-		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND|Z_EXT_VWEP)
+		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND|Z_EXT_VWEP|Z_EXT_PF_SOLID)
 
 // what our server supports
 #define SERVER_EXTENSIONS (Z_EXT_PM_TYPE|Z_EXT_PM_TYPE_NEW| \
 		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS| \
-		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND|Z_EXT_VWEP)
+		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND|Z_EXT_VWEP|Z_EXT_PF_SOLID)
 
 //=========================================
 
@@ -213,6 +214,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PF_PMC_SHIFT	11
 #define	PF_PMC_MASK		7
 #define	PF_ONGROUND		(1<<14)			// ZQuake extension
+#define	PF_SOLID		(1<<15)			// ZQuake extension
 
 // encoded player move types
 #define PMC_NORMAL				0		// normal ground movement
@@ -221,7 +223,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PMC_SPECTATOR			3		// fly through walls
 #define PMC_FLY					4		// fly, bump into walls
 #define PMC_NONE				5		// can't move (client had better lerp the origin...)
-#define PMC_LOCK				6		// TODO: lerp movement and viewangles
+#define PMC_LOCK				6		// server controls view angles
 #define PMC_EXTRA3				7		// future extension
 
 //==============================================

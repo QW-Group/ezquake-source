@@ -2003,6 +2003,14 @@ guess_pm_type:
 	else
 		state->onground = false;
 
+	if (!(cl.z_ext & Z_EXT_PF_SOLID))
+	{	// the PF_SOLID bit is unsupported, use our best guess
+		if (cl.players[num].spectator || (state->flags & PF_DEAD))
+			state->flags &= ~PF_SOLID;
+		else
+			state->flags |= PF_SOLID;
+	}
+
 	VectorCopy (state->command.angles, state->viewangles);
 	
 	TP_ParsePlayerInfo(&oldplayerstates[num], state, info);
@@ -2483,8 +2491,8 @@ void CL_SetSolidPlayers (int playernum)
 		if (j == playernum)
 			continue;
 
-		if (pplayer->flags & PF_DEAD)
-			continue; // dead players aren't solid
+		if (!(pplayer->flags & PF_SOLID))
+			continue;
 
 		pent->model = 0;
 		VectorCopy(pplayer->origin, pent->origin);

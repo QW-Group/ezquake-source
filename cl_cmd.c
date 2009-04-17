@@ -908,7 +908,8 @@ static z_ext_map_t z_map[] =
 	{ "PITCHLIMITS",	Z_EXT_PITCHLIMITS },
 	{ "JOIN_OBSERVES",	Z_EXT_JOIN_OBSERVE },
 	{ "PF_ONGROUND",	Z_EXT_PF_ONGROUND },
-	{ "VWEP",			Z_EXT_VWEP }
+	{ "VWEP",			Z_EXT_VWEP },
+	{ "PF_SOLID",		Z_EXT_PF_SOLID },
 };
 
 static int z_map_cnt = sizeof(z_map)/sizeof(z_map[0]);

@@ -464,6 +464,10 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 		if ((int)ent->v.flags & FL_ONGROUND)
 			pflags |= PF_ONGROUND;
 
+		// Z_EXT_PF_SOLID protocol extension
+		if (ent->v.solid == SOLID_BBOX || ent->v.solid == SOLID_SLIDEBOX)
+			pflags |= PF_SOLID;
+
 		if (pm_type == PM_LOCK && ent == clent)
 			pflags |= PF_COMMAND;	// send forced view angles
 
