@@ -1773,7 +1773,22 @@ void GL_EndRendering (void) {
 
 	GLW_CheckNeedSetDeviceGammaRamp();
 
-	GLimp_EndFrame();
+	if (!scr_skipupdate || block_drawing) {
+
+		// Multiview - Only swap the back buffer to front when all views have been drawn in multiview.
+		if (cl_multiview.value && cls.mvdplayback) 
+		{
+			if (CURRVIEW == 1)
+			{
+				GLimp_EndFrame();
+			}
+		}
+		else 
+		{
+			// Normal, swap on each frame.
+			GLimp_EndFrame(); 
+		}
+	}
 }
 
 
