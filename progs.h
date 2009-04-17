@@ -174,6 +174,7 @@ extern int fofs_items2; // ZQ_ITEMS2 extension
 extern int fofs_vw_index;	// ZQ_VWEP
 extern int fofs_movement;
 extern int fofs_gravity, fofs_maxspeed;
+extern int fofs_hideentity;
 
 #define EdictFieldFloat(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->_float
 #define EdictFieldVector(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->vector

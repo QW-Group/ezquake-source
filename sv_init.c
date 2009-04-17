@@ -41,6 +41,7 @@ int fofs_items2;
 int fofs_maxspeed, fofs_gravity;
 int fofs_movement;
 int fofs_vw_index;
+int fofs_hideentity;
 
 /*
 ================
@@ -359,12 +360,14 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	fofs_gravity = ED2_FindFieldOffset ("gravity");
 	fofs_movement = ED2_FindFieldOffset ("movement");
 	fofs_vw_index = ED2_FindFieldOffset ("vw_index");
+	fofs_hideentity = ED2_FindFieldOffset ("hideentity");
 #else
 	fofs_items2 = ED_FindFieldOffset ("items2"); // ZQ_ITEMS2 extension
 	fofs_maxspeed = ED_FindFieldOffset ("maxspeed");
 	fofs_gravity = ED_FindFieldOffset ("gravity");
 	fofs_movement = 0;
 	fofs_vw_index = ED_FindFieldOffset ("vw_index");
+	fofs_hideentity = ED_FindFieldOffset ("hideentity");
 #endif
 
 	// leave slots at start for clients only

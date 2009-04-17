@@ -316,7 +316,9 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 	usercmd_t cmd;
 	client_t *cl;
 	edict_t *ent;
+	int hideent;
 
+	hideent = (clent && fofs_hideentity) ? ((eval_t *)((byte *)&(clent)->v + fofs_hideentity))->_int : 0;
 
 	demo_frame = &demo.frames[demo.parsecount&UPDATE_MASK];
 
@@ -371,12 +373,14 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 			continue;
 		}
 
-
 		// ZOID visibility tracking
 		if (ent != clent &&
 		        !(client->spec_track && client->spec_track - 1 == j))
 		{
 			if (cl->spectator)
+				continue;
+
+			if (cl - svs.clients == hideent - 1)
 				continue;
 
 			// ignore if not touching a PV leaf
@@ -552,7 +556,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 	edict_t *ent;
 	vec3_t org;
 	byte *pvs;
-
+	int hideent;
 
 	// this is the frame we are creating
 	frame = &client->frames[client->netchan.incoming_sequence & UPDATE_MASK];
@@ -606,6 +610,8 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 
 	numnails = 0;
 
+	hideent = fofs_hideentity ? ((eval_t *)((byte *)&(clent)->v + fofs_hideentity))->_int : 0;
+
 	if (!disable_updates)
 	{// Vladis, server flash
 
@@ -631,6 +637,9 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 					PR_GetString(ent->v.model)
 #endif
 			   )
+				continue;
+
+			if (e == hideent)
 				continue;
 
 			if (!(int)sv_demoNoVis.value || !recorder)
