@@ -1371,13 +1371,16 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count) {
 	case 10:	
 		AddParticle(p_spark, org, 4, 70, 0.9, NULL, zerodir);
 		break;
-	case 20:	
-		AddParticle(p_spark, org, 8, 85, 0.9, NULL, zerodir);
-		break;
 	case 30:	
 		AddParticle(p_chunk, org, 10, 1, 4, NULL, zerodir);
 		AddParticle(p_spark, org, 8, 105, 0.9, NULL, zerodir);
 		break;
+	case 20:	
+		if (col != 256) {
+			AddParticle(p_spark, org, 8, 85, 0.9, NULL, zerodir);
+			break;
+		}
+		/* fall through */
 	default:	
 		if (count > 130) {
 			scale = 2.274;

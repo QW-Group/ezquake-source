@@ -526,7 +526,7 @@ static void CL_Parse_TE_GUNSHOT(void)
 	else
 	#endif // GLQUAKE
 	{
-		R_RunParticleEffect(pos, vec3_origin, 0, 20 * count);
+		R_RunParticleEffect(pos, vec3_origin, 256 /* magic! */, 20 * count);
 	}
 }
 
