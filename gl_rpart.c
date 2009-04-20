@@ -1405,7 +1405,11 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count) {
 			neworg[1] = org[1] + scale * ((rand() & 15) - 8);
 			neworg[2] = org[2] + scale * ((rand() & 15) - 8);
 
-			AddParticle(p_smoke, neworg, 1, 4, 0.825f + ((rand() % 10) - 5) / 40.0, NULL, zerodir);
+			// col == 256 means it gun shot.
+			// So we always USE smoke when it NOT a gun shot, in case of gun shot we DON'T use smoke when gl_part_gunshots == 2
+			if (col != 256 || gl_part_gunshots.integer != 2)
+				AddParticle(p_smoke, neworg, 1, 4, 0.825f + ((rand() % 10) - 5) / 40.0, NULL, zerodir);
+
 			z = particlecount / chunkcount;
 			if (!z || (i % z == 0))
 				AddParticle(p_chunk, neworg, 1, 0.75, 3.75, NULL, zerodir);
