@@ -49,7 +49,7 @@ extern PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2fEXT     = NULL;
 //
 void Framebuffer_Init (void)
 {
-	char *ext = (char*)glGetString( GL_EXTENSIONS );
+	char *ext = (char*)qglGetString( GL_EXTENSIONS );
 //	int temp;
 
 	// FIXME: alredy initialized, what to do?
