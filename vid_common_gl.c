@@ -176,11 +176,13 @@ void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cance
 
 /************************************** GL INIT **************************************/
 
+extern const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
+
 void GL_Init (void) {
-	gl_vendor     = (const char*) glGetString (GL_VENDOR);
-	gl_renderer   = (const char*) glGetString (GL_RENDERER);
-	gl_version    = (const char*) glGetString (GL_VERSION);
-	gl_extensions = (const char*) glGetString (GL_EXTENSIONS);
+	gl_vendor     = (const char*) qglGetString (GL_VENDOR);
+	gl_renderer   = (const char*) qglGetString (GL_RENDERER);
+	gl_version    = (const char*) qglGetString (GL_VERSION);
+	gl_extensions = (const char*) qglGetString (GL_EXTENSIONS);
 
 #if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
 	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n",   gl_vendor);
