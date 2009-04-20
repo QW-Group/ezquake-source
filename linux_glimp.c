@@ -191,21 +191,49 @@ const char *(APIENTRY *qglXQueryExtensionsString)(Display *dpy, int screen);
 //GLX_SGI_swap_control
 GLint (APIENTRY *qglXSwapIntervalSGI)(GLint interval);
 
+// workaround for bad MesaGL implementation - hexum
 const GLubyte * fix_glGetString (GLenum name) {
 	GLubyte *ret;
-	static GLubyte retv[16][1024];
-	static cur = 0;
+	static GLubyte * retv[6];
+	int cur;
 
 	if (!(ret = glGetString(name)))
 		ret = "";
-
-	strlcpy(retv[cur++], ret, 1024);
-	cur %= 16;
 	
-	if (cur == 0)
-		return retv[15];
-	else
-		return retv[cur-1];
+	switch (name) {
+		case GL_VENDOR:
+			cur = 0;
+			break;
+
+		case GL_RENDERER:
+			cur = 1;
+			break;
+
+		case GL_VERSION:
+			cur = 2;
+			break;
+
+		case GL_SHADING_LANGUAGE_VERSION:
+			cur = 3;
+			break;
+
+		case GL_EXTENSIONS:
+			cur = 4;
+			break;
+
+		default:		// GL returns NULL here but none of the code checks for NULL, so just return ""
+			cur = 5;
+			ret = "";
+			break;
+	}
+
+	if (retv[cur])
+		return retv[cur];
+
+	retv[cur] = (GLubyte *)malloc(strlen(ret) + 1);
+	strcpy(retv[cur], ret);
+
+	return retv[cur];
 }
 
 void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
