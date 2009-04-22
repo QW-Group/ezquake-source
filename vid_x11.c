@@ -49,7 +49,10 @@ extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
 
 extern int ctrlDown, shiftDown, altDown;
 
+void OnChange_vid_default_blit_mode (cvar_t *var, char *value, qbool *cancel);
+
 cvar_t vid_ref = {"vid_ref", "soft", CVAR_ROM};
+cvar_t _vid_default_blit_mode = {"_vid_default_blit_mode", "0", CVAR_ARCHIVE, OnChange_vid_default_blit_mode};
 
 // disconnect; needed for some asm stuff -->
 int VGA_width, VGA_height, VGA_rowbytes, VGA_bufferrowbytes, VGA_planar;
@@ -311,9 +314,9 @@ static void ResetFrameBuffer (void)
 	if (pwidth == 3)
 		pwidth = 4;
 
-	mem = ((vid.width*pwidth+7)&~7) * vid.height;
+	mem = ((vid.actualwidth*pwidth+7)&~7) * vid.actualheight;
 
-	x_framebuffer[0] = XCreateImage (x_disp,	x_vis, x_visinfo->depth, ZPixmap, 0, (char *) Q_malloc (mem), vid.width, vid.height, 32, 0);
+	x_framebuffer[0] = XCreateImage (x_disp,	x_vis, x_visinfo->depth, ZPixmap, 0, (char *) Q_malloc (mem), vid.actualwidth, vid.actualheight, 32, 0);
 
 	if (!x_framebuffer[0])
 		Sys_Error("VID: XCreateImage failed\n");
@@ -355,7 +358,7 @@ static void ResetSharedFrameBuffers (void)
 		}
 
 		// create the image
-		x_framebuffer[frm] = XShmCreateImage (x_disp, x_vis, x_visinfo->depth, ZPixmap, 0, &x_shminfo[frm], vid.width, vid.height);
+		x_framebuffer[frm] = XShmCreateImage (x_disp, x_vis, x_visinfo->depth, ZPixmap, 0, &x_shminfo[frm], vid.actualwidth, vid.actualheight);
 
 		// grab shared memory
 		size = x_framebuffer[frm]->bytes_per_line * x_framebuffer[frm]->height;
@@ -384,6 +387,115 @@ static void ResetSharedFrameBuffers (void)
 	}
 }
 
+void VID_Blit1x1 (int x, int y, int *width, int *height)
+{
+	// do nothing
+}
+
+void VID_Blit2x1 (int x, int y, int *width, int *height)
+{
+	unsigned char *src, *dest;
+	unsigned int i, j, rowbytes = x_framebuffer[current_framebuffer]->bytes_per_line;
+
+	src = (unsigned char *)x_framebuffer[current_framebuffer]->data;
+	dest = (unsigned char *)x_framebuffer[!current_framebuffer]->data;
+
+	*width *= 2;
+	
+	for (i = y; i < *height; i++)
+		for (j = x; j < *width; j++)
+			dest[i * rowbytes + j] = src[i * rowbytes + j / 2];
+
+	for (i = y; i < *height; i++)
+		for (j = x; j < *width; j++)
+			src[i * rowbytes + j] = dest[i * rowbytes + j];
+}
+
+void VID_Blit1x2 (int x, int y, int *width, int *height)
+{
+	unsigned char *src, *dest;
+	unsigned int i, j, rowbytes = x_framebuffer[current_framebuffer]->bytes_per_line;
+
+	src = (unsigned char *)x_framebuffer[current_framebuffer]->data;
+	dest = (unsigned char *)x_framebuffer[!current_framebuffer]->data;
+
+	*height *= 2;
+
+	for (i = y; i < *height; i++)
+		for (j = x; j < *width; j++)
+			dest[i * rowbytes + j] = src[i / 2 * rowbytes + j];
+
+	for (i = y; i < *height; i++)
+		for (j = x; j < *width; j++)
+			src[i * rowbytes + j] = dest[i * rowbytes + j];
+}
+
+void VID_Blit2x2 (int x, int y, int *width, int *height)
+{
+	unsigned char *src, *dest;
+	unsigned int i, j, rowbytes = x_framebuffer[current_framebuffer]->bytes_per_line;
+
+	src = (unsigned char *)x_framebuffer[current_framebuffer]->data;
+	dest = (unsigned char *)x_framebuffer[!current_framebuffer]->data;
+
+	*width *= 2;
+	*height *= 2;
+
+	for (i = y; i < *height; i++)
+		for (j = x; j < *width; j++)
+			dest[i * rowbytes + j] = src[i / 2 * rowbytes + j / 2];
+
+	for (i = y; i < *height; i++)
+		for (j = x; j < *width; j++)
+			src[i * rowbytes + j] = dest[i * rowbytes + j];
+}
+
+void OnChange_vid_default_blit_mode (cvar_t *var, char *value, qbool *cancel)
+{
+	if (vid.actualwidth >= 640 && vid.actualheight >= 480) {
+		switch (Q_atoi(value)) {
+			case 0:
+				vid.blitter = VID_Blit1x1;
+				vid.width = vid.conwidth = vid.actualwidth;
+				vid.height = vid.conheight = vid.actualheight;
+				vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+				break;
+			case 1:
+				vid.blitter = VID_Blit1x2;
+				vid.width = vid.conwidth = vid.actualwidth;
+				vid.height = vid.conheight = vid.actualheight >> 1;
+				vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+				break;
+			case 2:
+				vid.blitter = VID_Blit2x1;
+				vid.width = vid.conwidth = vid.actualwidth >> 1;
+				vid.height = vid.conheight = vid.actualheight;
+				vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+				break;
+			case 3:
+				vid.blitter = VID_Blit2x2;
+				vid.width = vid.conwidth = vid.actualwidth >> 1;
+				vid.height = vid.conheight = vid.actualheight >> 1;
+				vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+				break;
+			default:
+				vid.blitter = VID_Blit1x1;
+				vid.width = vid.conwidth = vid.actualwidth;
+				vid.height = vid.conheight = vid.actualheight;
+				vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+				Cvar_SetValue(&_vid_default_blit_mode, 0);
+				break;
+		}
+	}
+
+	vid.recalc_refdef = 1;
+
+	if (doShm)
+		ResetSharedFrameBuffers();
+	else
+		ResetFrameBuffer();
+}
+
 // Called at startup to set up translation tables, takes 256 8 bit RGB values
 // the palette data will go away after the call, so it must be copied off if
 // the video driver will need it again
@@ -396,13 +508,15 @@ void VID_Init (unsigned char *palette)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_Register (&vid_ref);
+	Cvar_Register (&_vid_default_blit_mode);
 	Cvar_ResetCurrentGroup();
 
 	ignorenext = 0;
-	vid.width = 320;
-	vid.height = 200;
+	vid.width = vid.actualwidth = 320;
+	vid.height = vid.actualheight = 200;
 	vid.numpages = 2;
 	vid.colormap = host_colormap;
+	vid.blitter = VID_Blit1x1;
 
 	srandom(getpid());
 
@@ -432,8 +546,8 @@ void VID_Init (unsigned char *palette)
 		if (pnum >= COM_Argc()-2)
 			Sys_Error("VID: -winsize <width> <height>\n");
 
-		vid.width = Q_atoi(COM_Argv(pnum+1));
-		vid.height = Q_atoi(COM_Argv(pnum+2));
+		vid.width = vid.actualwidth = Q_atoi(COM_Argv(pnum+1));
+		vid.height = vid.actualheight = Q_atoi(COM_Argv(pnum+2));
 		if (!vid.width || !vid.height)
 			Sys_Error("VID: Bad window width/height\n");
 	}
@@ -442,7 +556,7 @@ void VID_Init (unsigned char *palette)
 		if (pnum >= COM_Argc() - 1)
 			Sys_Error("VID: -width <width>\n");
 
-		vid.width = Q_atoi(COM_Argv(pnum + 1));
+		vid.width = vid.actualwidth = Q_atoi(COM_Argv(pnum + 1));
 
 		if (!vid.width)
 			Sys_Error("VID: Bad window width\n");
@@ -455,7 +569,7 @@ void VID_Init (unsigned char *palette)
 		if (pnum >= COM_Argc() - 1)
 			Sys_Error("VID: -height <height>\n");
 
-		vid.height = Q_atoi(COM_Argv(pnum + 1));
+		vid.height = vid.actualheight = Q_atoi(COM_Argv(pnum + 1));
 
 		if (!vid.height)
 			Sys_Error("VID: Bad window height\n");
@@ -577,6 +691,31 @@ void VID_Init (unsigned char *palette)
 		ResetSharedFrameBuffers();
 	} else {
 		ResetFrameBuffer();
+	}
+
+	if (vid.width >= 640 && vid.height >= 480) {
+		switch ((int)_vid_default_blit_mode.value) {
+			case 0:
+				vid.blitter = VID_Blit1x1;
+				break;
+			case 1:
+				vid.blitter = VID_Blit1x2;
+				vid.height = vid.actualheight >> 1;
+				break;
+			case 2:
+				vid.blitter = VID_Blit2x1;
+				vid.width = vid.actualwidth >> 1;
+				break;
+			case 3:
+				vid.blitter = VID_Blit2x2;
+				vid.width = vid.actualwidth >> 1;
+				vid.height = vid.actualheight >> 1;
+				break;
+			default:
+				vid.blitter = VID_Blit1x1;
+				Cvar_SetValue(&_vid_default_blit_mode, 0);
+				break;
+		}
 	}
 
 	current_framebuffer = 0;
@@ -877,8 +1016,8 @@ void VID_Update (vrect_t *rects)
 	if (config_notify) {
 		fprintf(stderr, "config notify\n");
 		config_notify = 0;
-		vid.width = config_notify_width & ~7;
-		vid.height = config_notify_height;
+		vid.width = vid.actualwidth = config_notify_width & ~7;
+		vid.height = vid.actualheight = config_notify_height;
 
 		if (doShm)
 			ResetSharedFrameBuffers();
@@ -900,6 +1039,8 @@ void VID_Update (vrect_t *rects)
 		// oppymv 010904 - FIXME
 		if (!cls.mvdplayback || !cl_multiview.value || (cl_multiview.value>0 && CURRVIEW == 1)) {
 			while (rects){
+				vid.blitter(rects->x, rects->y, &rects->width, &rects->height);
+
 				if (x_visinfo->depth == 24)
 					st3_fixup(x_framebuffer[current_framebuffer], rects->x, rects->y, rects->width, rects->height);
 				else if (x_visinfo->depth == 16)
@@ -923,6 +1064,8 @@ void VID_Update (vrect_t *rects)
 		}
 	} else {
 		while (rects) {
+			vid.blitter(rects->x, rects->y, &rects->width, &rects->height);
+
 			if (x_visinfo->depth == 24)
 				st3_fixup(x_framebuffer[current_framebuffer], rects->x, rects->y, rects->width, rects->height);
 			else if (x_visinfo->depth == 16)

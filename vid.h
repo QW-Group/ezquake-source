@@ -34,14 +34,15 @@ typedef struct {
 	pixel_t			*colormap;		// 256 * VID_GRADES size
 	unsigned short	*colormap16;	// 256 * VID_GRADES size
 	unsigned		rowbytes;		// may be > width if displayed in a window
-	unsigned		width;		
-	unsigned		height;
+	unsigned		width, actualwidth;		
+	unsigned		height, actualheight;
 	float			aspect;			// width / height -- < 0 is taller than wide
 	int				numpages;
 	int				recalc_refdef;	// if true, recalc vid-based stuff
 	unsigned		conwidth;
 	unsigned		conheight;
 	pixel_t			*direct;		// direct drawing to framebuffer, if not NULL
+	void 			(*blitter)(int x, int y, int *width, int *height);	// blitter function
 } viddef_t;
 
 extern viddef_t vid; // global video state
