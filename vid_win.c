@@ -355,14 +355,14 @@ void registerAllMemDrivers(void)
 static void AddModeDesc(vmode_t *mode) 
 {
 	if (mode->frequency)
-		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d@%d", mode->width, mode->height, mode->frequency);
+		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d@%d", mode->stretched ? mode->width << 1 : mode->width, mode->stretched ? mode->height << 1 : mode->height, mode->frequency);
 	else
-		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d", mode->width, mode->height);
+		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d", mode->stretched ? mode->width << 1 : mode->width, mode->stretched ? mode->height << 1 : mode->height);
 }
 
 void VID_InitMGLFull (HINSTANCE hInstance) 
 {
-	int i, xRes, yRes, bits, lowres, curmode, temp, lowstretchedres, stretchedmode, lowstretched;
+	int i, xRes, yRes, bits, lowres, curmode, temp;
     uchar *m;
 
 	// FIXME: NT is checked for because MGL currently has a bug that causes it to try to use WinDirect modes even on NT
@@ -381,12 +381,10 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 
 	if (m[0] != 0xFF) 
 	{
-		lowres = lowstretchedres = 99999;
-		lowstretched = 0;
+		lowres = 99999;
 		curmode = 0;
 
-		// find the lowest-res mode, or a mode we can stretch up to and get
-		// lowest-res that way
+		// find the lowest-res mode
 		for (i = 0; m[i] != 0xFF; i++)
 		{
 			MGL_modeResolution(m[i], &xRes, &yRes,&bits);
@@ -410,26 +408,11 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 					lowres = xRes;
 					mode = i;
 				}
-
-				if ((xRes < lowstretchedres) && ((xRes >> 1) >= 320)) 
-				{
-					lowstretchedres = xRes >> 1;
-					stretchedmode = i;
-				}
 			}
 			curmode++;
 		}
 
-		// if there's a mode we can stretch by 2 up to, thereby effectively getting a lower-res mode than
-		// the lowest-res real but still at least 320x200, that will be our default mode
-		if (lowstretchedres < lowres) 
-		{
-			mode = stretchedmode;
-			lowres = lowstretchedres;
-			lowstretched = 1;
-		}
-
-		// build the mode list, leaving room for the low-res stretched mode, if any
+		// build the mode list
 		nummodes++;		// leave room for default mode
 
 		for (i = 0; m[i] != 0xFF; i++)
@@ -440,15 +423,7 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 			{
 				if (i == mode)
 				{
-					if (lowstretched)
-					{
-						stretchedmode = nummodes;
-						curmode = nummodes++;
-					} 
-					else 
-					{
-						curmode = MODE_FULLSCREEN_DEFAULT;
-					}
+					curmode = MODE_FULLSCREEN_DEFAULT;
 				}
 				else
 				{
@@ -458,6 +433,7 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 				modelist[curmode].type = MS_FULLSCREEN;
 				modelist[curmode].width = xRes;
 				modelist[curmode].height = yRes;
+				modelist[curmode].stretched = 0;
 				AddModeDesc(&modelist[curmode]);
 
 				if (m[i] == grVGA_320x200x256)
@@ -466,7 +442,6 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 					modelist[curmode].mode13 = 0;
 
 				modelist[curmode].modenum = m[i];
-				modelist[curmode].stretched = 0;
 				modelist[curmode].dib = 0;
 				modelist[curmode].fullscreen = 1;
 				modelist[curmode].halfscreen = 0;
@@ -474,13 +449,23 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 			}
 		}
 
-		if (lowstretched) 
-		{
-			modelist[MODE_FULLSCREEN_DEFAULT] = modelist[stretchedmode];
-			modelist[MODE_FULLSCREEN_DEFAULT].stretched = 1;
-			modelist[MODE_FULLSCREEN_DEFAULT].width >>= 1;
-			modelist[MODE_FULLSCREEN_DEFAULT].height >>= 1;
-			AddModeDesc(&modelist[MODE_FULLSCREEN_DEFAULT]);
+		// add stretched vid modes to end of list
+		temp = nummodes;
+		for (i = 0; i < temp; i++) {
+			if ((modelist[i].width >> 1) >= 320 && (modelist[i].height >> 1) >= 200) {
+				modelist[nummodes].type = modelist[i].type;
+				modelist[nummodes].width = modelist[i].width >> 1;
+				modelist[nummodes].height = modelist[i].height >> 1;
+				modelist[nummodes].stretched = 1;
+				AddModeDesc(&modelist[nummodes]);
+				modelist[nummodes].mode13 = modelist[i].mode13;
+				modelist[nummodes].modenum = modelist[i].modenum;
+				modelist[nummodes].dib = modelist[i].dib;
+				modelist[nummodes].fullscreen = modelist[i].fullscreen;
+				modelist[nummodes].halfscreen = modelist[i].halfscreen;
+				modelist[nummodes].bpp = modelist[i].bpp;
+				nummodes++;
+			}
 		}
 
 		vid_default = MODE_FULLSCREEN_DEFAULT;
@@ -991,6 +976,9 @@ char *VID_GetModeDescription2 (int mode)
 	else
 		snprintf(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
 
+	if (modelist[mode].stretched)
+		strlcat(pinfo, " stretched", sizeof(pinfo));
+
 	return pinfo;
 }
 
@@ -1011,6 +999,9 @@ char *VID_GetExtModeDescription (int mode)
 		snprintf(pinfo, sizeof(pinfo), "%s fullscreen DIB", pv->modedesc);
 	else
 		snprintf(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
+
+	if (modelist[mode].stretched)
+		strlcat(pinfo, " stretched", sizeof(pinfo));
 
 	return pinfo;
 }
