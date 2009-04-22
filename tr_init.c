@@ -713,6 +713,7 @@ void VID_Restart_f (void)
 {
 	extern void GFX_Init(void);
 	extern void ReloadPaletteAndColormap(void);
+	extern void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel);
 	extern cvar_t gl_smoothfont;
 	extern int nonwideconheight;
 	qbool old_con_suppress;
