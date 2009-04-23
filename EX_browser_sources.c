@@ -462,8 +462,10 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 
     closesocket(newsocket);
 
-    if (abort_ping)
-        Sys_MSleep(500);
+	// Not having this here leads to crash almost always when some
+	// other action with servers list happens right after this function.
+	// Even 1 ms delay was enough during the tests, previously 500 ms was used.
+    Sys_MSleep(100);
 
     updating_sources = 0;
 	TP_ExecTrigger("f_sbupdatesourcesdone");
