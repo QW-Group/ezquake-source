@@ -33,7 +33,6 @@
 #define COL_DATE        8
 #define COL_TIME        5
 
-extern void cvar_toggle (cvar_t *var);
 extern void _splitpath (const char *path, char *drive, char *dir, char *file, char *ext);
 
 #define FL_SEARCH_TIMEOUT	2.0
@@ -1229,11 +1228,11 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 			switch (key)
 			{
 			case '2':
-				cvar_toggle(fl->show_size); break;
+				Cvar_Toggle(fl->show_size); break;
 			case '3':
-				cvar_toggle(fl->show_date); break;
+				Cvar_Toggle(fl->show_date); break;
 			case '4':
-				cvar_toggle(fl->show_time); break;
+				Cvar_Toggle(fl->show_time); break;
 			default:
 				break;
 			}

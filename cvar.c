@@ -373,6 +373,11 @@ void Cvar_SetValue (cvar_t *var, float value)
 	Cvar_Set (var, val);
 }
 
+void Cvar_Toggle (cvar_t *var)
+{
+	Cvar_SetValue (var, (var->value == 0) ? 1 : 0);
+}
+
 // silently set value for latched cvar
 void Cvar_LatchedSet (cvar_t *var, char *value)
 {
@@ -621,7 +626,7 @@ void Cvar_WriteVariables (FILE *f)
 			fprintf (f, "seta %s \"%s\"\n", var->name, var->string);
 }
 
-void Cvar_Toggle (qbool use_regex)
+static void Cvar_Toggle_f_base (qbool use_regex)
 {
 	qbool re_search = false;
 	cvar_t *var;
@@ -663,11 +668,11 @@ void Cvar_Toggle (qbool use_regex)
 
 void Cvar_Toggle_f (void)
 {
-	Cvar_Toggle(false);
+	Cvar_Toggle_f_base(false);
 }
 void Cvar_Toggle_re_f (void)
 {
-	Cvar_Toggle(true);
+	Cvar_Toggle_f_base(true);
 }
 
 int Cvar_CvarCompare (const void *p1, const void *p2)

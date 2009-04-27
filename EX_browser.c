@@ -124,11 +124,6 @@ extern cvar_t cl_proxyaddr;
 
 void Serverinfo_Stop(void);
 
-void cvar_toggle (cvar_t *var)
-{
-	Cvar_SetValue (var, (var->value == 0) ? 1 : 0);
-}
-
 static qbool SB_Is_Selected_Proxy(server_data *s)
 {
 	return (strcmp(s->display.ip, cl_proxyaddr.string) == 0);
@@ -1818,13 +1813,13 @@ int SB_Servers_Key(int key)
 				{
 					switch (key)
 					{
-					case '2': cvar_toggle(&sb_showaddress);    break;
-					case '3': cvar_toggle(&sb_showping);       break;
-					case '4': cvar_toggle(&sb_showgamedir);    break;
-					case '5': cvar_toggle(&sb_showmap);        break;
-					case '6': cvar_toggle(&sb_showplayers);    break;
-					case '7': cvar_toggle(&sb_showfraglimit);  break;
-					case '8': cvar_toggle(&sb_showtimelimit);  break;
+					case '2': Cvar_Toggle(&sb_showaddress);    break;
+					case '3': Cvar_Toggle(&sb_showping);       break;
+					case '4': Cvar_Toggle(&sb_showgamedir);    break;
+					case '5': Cvar_Toggle(&sb_showmap);        break;
+					case '6': Cvar_Toggle(&sb_showplayers);    break;
+					case '7': Cvar_Toggle(&sb_showfraglimit);  break;
+					case '8': Cvar_Toggle(&sb_showtimelimit);  break;
 					}
 				}
 				break;

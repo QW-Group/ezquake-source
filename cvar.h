@@ -96,6 +96,9 @@ void Cvar_SetValue (cvar_t *var, float value);
 // same but silent for latched var
 void Cvar_LatchedSetValue (cvar_t *var, float value);
 
+// toggle boolean variable
+void Cvar_Toggle (cvar_t *var);
+
 // sets ruleset limit for variable
 // when ruleset is active you can't set lower/higher value than this
 void Cvar_RulesetSet(cvar_t *var, char *val, int m); // m=0 --> min, m=1--> max, m=2-->locked(max&min)
