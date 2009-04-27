@@ -25,6 +25,7 @@
 #include "menu.h"
 #include "utils.h"
 #include "menu_multiplayer.h"
+#include "qsound.h"
 
 
 int source_unique = 0;
@@ -119,9 +120,20 @@ int ping_phase = 0;
 double ping_pos;
 int abort_ping;
 
+void Serverinfo_Stop(void);
+
 void cvar_toggle (cvar_t *var)
 {
 	Cvar_SetValue (var, (var->value == 0) ? 1 : 0);
+}
+
+static void SB_Select_QWfwd(server_data *s)
+{
+	extern cvar_t cl_proxyaddr;
+
+	Cvar_Set(&cl_proxyaddr, show_serverinfo->display.ip);
+	S_LocalSound ("misc/menu2.wav");
+	Serverinfo_Stop();
 }
 
 static void Join_Server (server_data *s)
@@ -739,6 +751,7 @@ void SB_Servers_OnShow (void)
 
 void SB_Servers_Draw (int x, int y, int w, int h)
 {
+	extern cvar_t cl_proxyaddr;
 	char line[1024];
 	int i, pos, listsize;
 
@@ -804,15 +817,19 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 			if (servnum==Servers_pos) {
 				UI_DrawGrayBox(x, y+8*(i+1), w, 8);
 				UI_DrawCharacter(x + 8*pos, y+8*(i+1), FLASHINGARROW());
-			}
-			else if (servers[servnum]->qizmo)
+			} else if (servers[servnum]->qizmo) {
 				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 25, 75, 255));
-			else if (servers[servnum]->qwfwd)
-				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 50, 25, 255));
-			else if (servnum % 2)
+			} else if (servers[servnum]->qwfwd) {
+				if (strcmp(cl_proxyaddr.string, servers[servnum]->display.ip) == 0) {
+					UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 120, 40, 255));
+				} else {
+					UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 50, 25, 255));
+				}
+			} else if (servnum % 2) {
 				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 25, 25, 125));
-			else 
+			} else {
 				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(50, 50, 50, 125));
+			}
 
             // Display server
             pos = w/8;
@@ -1812,12 +1829,15 @@ void Serverinfo_Key(int key)
     {
         case K_MOUSE1:
         case K_ENTER:
-            if (serverinfo_pos != 2)
+			if (serverinfo_pos != 2)
             {
-                if (isCtrlDown())
+				if (show_serverinfo->qwfwd) {
+					SB_Select_QWfwd(show_serverinfo);
+				} else if (isCtrlDown()) {
                     Observe_Server(show_serverinfo);
-                else
-                    Join_Server(show_serverinfo);
+				} else {
+					Join_Server(show_serverinfo);
+				}
             }
             else
                 Serverinfo_Sources_Key(key);
