@@ -120,6 +120,8 @@ int ping_phase = 0;
 double ping_pos;
 int abort_ping;
 
+extern cvar_t cl_proxyaddr;
+
 void Serverinfo_Stop(void);
 
 void cvar_toggle (cvar_t *var)
@@ -127,11 +129,21 @@ void cvar_toggle (cvar_t *var)
 	Cvar_SetValue (var, (var->value == 0) ? 1 : 0);
 }
 
+static qbool SB_Is_Selected_Proxy(server_data *s)
+{
+	return (strcmp(s->display.ip, cl_proxyaddr.string) == 0);
+}
+
 static void SB_Select_QWfwd(server_data *s)
 {
-	extern cvar_t cl_proxyaddr;
-
-	Cvar_Set(&cl_proxyaddr, show_serverinfo->display.ip);
+	if (SB_Is_Selected_Proxy(s)) {
+		// unselect
+		Cvar_Set(&cl_proxyaddr, "");
+	}
+	else {
+		// select
+		Cvar_Set(&cl_proxyaddr, show_serverinfo->display.ip);
+	}
 	S_LocalSound ("misc/menu2.wav");
 	Serverinfo_Stop();
 }
@@ -751,7 +763,6 @@ void SB_Servers_OnShow (void)
 
 void SB_Servers_Draw (int x, int y, int w, int h)
 {
-	extern cvar_t cl_proxyaddr;
 	char line[1024];
 	int i, pos, listsize;
 
@@ -809,7 +820,6 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 
         for (i = 0; i < listsize; i++)
         {
-            char *name;
             int servnum = Servers_disp + i;
             if (servnum >= serversn_passed)
                 break;
@@ -820,7 +830,7 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 			} else if (servers[servnum]->qizmo) {
 				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 25, 75, 255));
 			} else if (servers[servnum]->qwfwd) {
-				if (strcmp(cl_proxyaddr.string, servers[servnum]->display.ip) == 0) {
+				if (SB_Is_Selected_Proxy(servers[servnum])) {
 					UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 120, 40, 255));
 				} else {
 					UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, RGBA_TO_COLOR(25, 50, 25, 255));
@@ -850,15 +860,25 @@ void SB_Servers_Draw (int x, int y, int w, int h)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ping, COL_PING, servnum==Servers_pos);
             if (sb_showaddress.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ip, COL_IP, servnum==Servers_pos);
-
-            name = (servers[servnum]->display.name[0]) ?
-                    servers[servnum]->display.name :
-                    servers[servnum]->display.ip;
-
-			// WTF -->
-            strlcpy (line, name, min (sizeof (line), pos + 1));
-            line[pos] = 0;
-			// <-- WTF
+			
+			// 'name' column
+			if (servers[servnum]->qwfwd) {
+				if (servers[servnum]->display.name[0]) {
+					snprintf(line, sizeof(line), "proxy %s", servers[servnum]->display.name);
+				}
+				else {
+					snprintf(line, sizeof(line), "proxy %s", servers[servnum]->display.ip);
+				}
+			}
+			else if (servers[servnum]->display.name[0]) {
+				snprintf(line, sizeof(line), "%s", servers[servnum]->display.name);
+			}
+			else {
+				snprintf(line, sizeof(line), "%s", servers[servnum]->display.ip);
+			}
+			
+			// display only as much as fits into the column
+            line[min(pos, sizeof(line)-1)] = '\0';
 
             UI_Print(x, y+8*(i+1), line, servnum==Servers_pos);
         }
