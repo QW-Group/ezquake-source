@@ -26,6 +26,8 @@ extern int menuheight;
 #define menuheight vid.height
 #endif
 
+const char* sb_showproxies_labels[] = { "hide", "show", "exclusively" };
+
 static settings_page sbsettings;
 static setting sbsettings_arr[] = {
 	ADDSET_SEPARATOR("Server Filters"),
@@ -34,6 +36,7 @@ static setting sbsettings_arr[] = {
 	ADDSET_BOOL		("Hide Not Empty", sb_hidenotempty),
 	ADDSET_BOOL		("Hide Dead", sb_hidedead),
 	ADDSET_BOOL     ("Hide High Ping", sb_hidehighping),
+	ADDSET_NAMED    ("Show Proxies", sb_showproxies, sb_showproxies_labels),
 
 	ADDSET_SEPARATOR("Display Columns"),
 	ADDSET_BOOL		("Show Ping", sb_showping),

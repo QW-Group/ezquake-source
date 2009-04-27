@@ -95,7 +95,8 @@ cvar_t  sb_hidenotempty  = {"sb_hidenotempty",     "0"};
 cvar_t  sb_hidefull      = {"sb_hidefull",         "0"};
 cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
 cvar_t  sb_hidehighping  = {"sb_hidehighping",     "0"};
-cvar_t  sb_pinglimit     = {"sb_pinglimit",        "80"};
+cvar_t  sb_pinglimit     = {"sb_pinglimit",       "80"};
+cvar_t  sb_showproxies   = {"sb_showproxies",      "0"};
 
 cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"}; // not in menu
 cvar_t  sb_mastercache     = {"sb_mastercache",    "1"};  // not in menu
@@ -2442,14 +2443,22 @@ void Filter_Servers(void)
         server_data *s = servers[i];
         s->passed_filters = 0;
 
+		if (sb_showproxies.integer == 0 && (s->qwfwd || s->qizmo))
+			continue; // hide
+
+		if (sb_showproxies.integer == 2 && !(s->qwfwd || s->qizmo))
+			continue; // exclusive
+
         if (sb_hidedead.value  &&  s->ping < 0)
             continue;
 
-        if (sb_hideempty.value  &&  s->playersn + s->spectatorsn <= 0)
-            continue;
+		if (!s->qizmo && !s->qwfwd) {
+			if (sb_hideempty.value  &&  s->playersn + s->spectatorsn <= 0)
+				continue;
 
-        if (sb_hidenotempty.value  &&  s->playersn + s->spectatorsn > 0)
-            continue;
+			if (sb_hidenotempty.value  &&  s->playersn + s->spectatorsn > 0)
+				continue;
+		}
 
 		if (sb_hidehighping.integer && s->ping > sb_pinglimit.integer)
 			continue;
@@ -2458,7 +2467,7 @@ void Filter_Servers(void)
         if (sb_hidefull.value  &&  s->playersn >= (tmp ? atoi(tmp) : 255))
             continue;
 
-        s->passed_filters = 1;  // passed
+		s->passed_filters = 1;  // passed
         serversn_passed++;
     }
     return;
@@ -2625,6 +2634,7 @@ void Browser_Init (void)
     Cvar_Register(&sb_hidedead);
 	Cvar_Register(&sb_hidehighping);
 	Cvar_Register(&sb_pinglimit);
+	Cvar_Register(&sb_showproxies);
     Cvar_Register(&sb_sourcevalidity);
     Cvar_Register(&sb_mastercache);
 	Cvar_Register(&sb_autoupdate);
