@@ -146,6 +146,8 @@ cvar_t	cl_fakename = {"cl_fakename", ""};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
 
+cvar_t	cl_earlypackets = {"cl_earlypackets", "0"};
+
 cvar_t	cl_restrictions = {"cl_restrictions", "0"}; // 1 is FuhQuake and QW262 defaults
 
 cvar_t cl_floodprot			= {"cl_floodprot", "0"};
@@ -1661,6 +1663,8 @@ void CL_InitLocal (void)
 
 	Cvar_Register (&cl_delay_packet);
 
+	Cvar_Register (&cl_earlypackets);
+
 #ifdef PROTOCOL_VERSION_FTE
 	Cvar_Register (&cl_pext_other);
 #endif
@@ -2230,6 +2234,11 @@ void CL_Frame (double time)
 		}
 		else
 		{
+			if (!cls.demoplayback && cl_earlypackets.integer)
+			{
+				CL_ReadPackets(); // read packets ASAP
+			}
+
 			if (   (!cls.demoplayback && !cl.spectator) // not demo playback and not a spec
 				|| (!cls.demoplayback && cl.spectator && Cam_TrackNum() == -1) // not demo, spec free fly
 				|| ( cls.demoplayback && cls.mvdplayback && Cam_TrackNum() == -1) // mvd demo and free fly
@@ -2267,6 +2276,18 @@ void CL_Frame (double time)
 	if (cls.state >= ca_onserver)
 	{
 		qbool setup_player_prediction = ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0);
+		if (!cls.demoplayback && cl_earlypackets.integer)
+		{
+			// actually it should be curtime == cls.netchan.last_received but that did not work on float values...
+			if (curtime - cls.netchan.last_received < 0.00001)
+			{
+				if (!setup_player_prediction)
+				{
+//					Com_DPrintf("force players prediction\n");
+					setup_player_prediction = true;
+				}
+			}
+		}
 		Cam_SetViewPlayer();
 
 		// Set up prediction for other players
