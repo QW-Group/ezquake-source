@@ -237,12 +237,14 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
     static cvar_t
         *hud_fps_show_min = NULL,
+		*hud_fps_style,
         *hud_fps_title,
 		*hud_fps_decimals;
 
     if (hud_fps_show_min == NULL)   // first time called
     {
         hud_fps_show_min = HUD_FindVar(hud, "show_min");
+		hud_fps_style    = HUD_FindVar(hud, "style");
         hud_fps_title    = HUD_FindVar(hud, "title");
 		hud_fps_decimals = HUD_FindVar(hud, "decimals");
     }
@@ -260,7 +262,10 @@ void SCR_HUD_DrawFPS(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-        Draw_String(x, y, st);
+		if (hud_fps_style->value)
+			Draw_Alt_String(x, y, st);
+		else
+			Draw_String(x, y, st);
 }
 
 void SCR_HUD_DrawVidLag(hud_t *hud)
@@ -271,6 +276,12 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 	extern qbool vid_vsync_on;
 	extern double vid_vsync_lag;
 	static double old_lag;
+	static cvar_t *hud_vidlag_style = NULL;
+
+	if (hud_vidlag_style == NULL)  // first time called
+	{
+		hud_vidlag_style = HUD_FindVar(hud, "style");
+	}
 
 	if (vid_vsync_on || glConfig.displayFrequency)
 	{
@@ -295,7 +306,10 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-        Draw_String(x, y, st);
+		if (hud_vidlag_style->value)
+			Draw_Alt_String(x, y, st);
+		else
+			Draw_String(x, y, st);
 }
 
 #ifdef WIN32
@@ -313,10 +327,13 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
 	static double lastframetime;	// last refresh
 #endif
 
-    static cvar_t *hud_mouserate_interval, *hud_mouserate_title = NULL;
+    static cvar_t *hud_mouserate_title = NULL,
+		*hud_mouserate_interval,
+		*hud_mouserate_style;
 
     if (hud_mouserate_title == NULL) // first time called
     {
+		hud_mouserate_style    = HUD_FindVar(hud, "style");
         hud_mouserate_title    = HUD_FindVar(hud, "title");
 		hud_mouserate_interval = HUD_FindVar(hud, "interval");
     }
@@ -347,7 +364,10 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-        Draw_String(x, y, st);
+		if (hud_mouserate_style->value)
+			Draw_Alt_String(x, y, st);
+		else
+			Draw_String(x, y, st);
 }
 
 #define MAX_TRACKING_STRING		512
@@ -492,6 +512,7 @@ void SCR_HUD_DrawPing(hud_t *hud)
         *hud_ping_show_dev,
         *hud_ping_show_min,
         *hud_ping_show_max,
+		*hud_ping_style,
         *hud_ping_blink;
 
     if (hud_ping_period == NULL)    // first time
@@ -501,6 +522,7 @@ void SCR_HUD_DrawPing(hud_t *hud)
         hud_ping_show_dev = HUD_FindVar(hud, "show_dev");
         hud_ping_show_min = HUD_FindVar(hud, "show_min");
         hud_ping_show_max = HUD_FindVar(hud, "show_max");
+		hud_ping_style    = HUD_FindVar(hud, "style");
         hud_ping_blink    = HUD_FindVar(hud, "blink");
     }
 
@@ -571,7 +593,10 @@ void SCR_HUD_DrawPing(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
-        Draw_String(x, y, buf);
+		if (hud_ping_style->value)
+			Draw_Alt_String(x, y, buf);
+		else
+			Draw_String(x, y, buf);
 }
 
 static const char *SCR_HUD_ClockFormat(int format)
@@ -6553,6 +6578,7 @@ void CommonDraw_Init(void)
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
         "1", "gameclock", "center", "after", "0", "0", "0", "0 0 0", NULL,
         "show_min", "0",
+		"style",	"0",
         "title",    "1",
 		"decimals", "1",
         NULL);
@@ -6561,6 +6587,7 @@ void CommonDraw_Init(void)
         "Shows the delay between the time a frame is rendered and the time it's displayed.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawVidLag,
         "0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
+		"style",	"0",
         NULL);
 
 	HUD_Register("mouserate", NULL, "Show your current mouse input rate", HUD_PLUSMINUS, ca_active, 9,
@@ -6568,6 +6595,7 @@ void CommonDraw_Init(void)
 		"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
 		"title", "1",
 		"interval", "1",
+		"style",	"0",
 		NULL);
 
     // init clock
@@ -6600,6 +6628,7 @@ void CommonDraw_Init(void)
         "show_min",     "0",
         "show_max",     "0",
         "show_dev",     "0",
+		"style",		"0",
         "blink",        "1",
         NULL);
 
