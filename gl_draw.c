@@ -805,11 +805,18 @@ qbool R_CharAvailable (wchar num)
 #define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
 #define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
 
-static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar)
+// x, y					= Pixel position of char.
+// num					= The character to draw.
+// scale				= The scale of the character.
+// apply_overall_alpha	= Should the overall alpha for all drawing apply to this char?
+// color				= Color!
+// bigchar				= Draw this char using the big character charset.
+// gl_statechange		= Change the gl state before drawing?
+static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar) //, qbool gl_statechange)
 {
 	float frow, fcol;
-	int i = 0;
-	int slot = 0;
+	int i;
+	int slot;
 	int char_size = (bigchar ? 64 : 8);
 
 	// Totally off screen.
@@ -823,25 +830,32 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	// Only apply overall opacity if it's not fully opague.
 	apply_overall_alpha = (apply_overall_alpha && (overall_alpha < 1.0));
 
-	// Turn on alpha transparency.
-	if ((gl_alphafont.value || apply_overall_alpha))
+	// Only change the GL state if we're told to. We keep track of the need for GL state changes
+	// in the string drawing function instead. For character drawing functions we do this every time.
+	// (For instance, only change color in a string when the actual color changes, instead of doing
+	// it on each character always).
+//	if (gl_statechange)
 	{
-		glDisable(GL_ALPHA_TEST);
-	}
+		// Turn on alpha transparency.
+		if ((gl_alphafont.value || apply_overall_alpha))
+		{
+			glDisable(GL_ALPHA_TEST);
+		}
 
-	glEnable(GL_BLEND);
+		glEnable(GL_BLEND);
 
-	if (scr_coloredText.integer)
-	{
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	}
-	else
-	{
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	}
+		if (scr_coloredText.integer)
+		{
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		}
+		else
+		{
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		}
 
-	// Set the overall alpha.
-	glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
+		// Set the overall alpha.
+		glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
+	}
 
 	if (bigchar)
 	{
@@ -868,6 +882,8 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 
 		// TODO : Force players to have mcharset.png or fallback to overscaling normal font? :s
 	}
+
+	slot = 0;
 	
 	// Is this is a wchar, find a charset that has the char in it.
 	if ((num & 0xFF00) != 0)
@@ -896,21 +912,24 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	// Draw the character polygon.
 	glBegin(GL_QUADS);
 	{
+		float scale8 = scale * 8;
+		float scale8_2 = scale8 * 2;
+
 		// Top left.
 		glTexCoord2f (fcol, frow);
 		glVertex2f (x, y);
 
 		// Top right.
-		glTexCoord2f (fcol + CHARSET_CHAR_WIDTH, frow);
-		glVertex2f (x + (scale * 8), y);
+		glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow);
+		glVertex2f(x + scale8, y);
 
 		// Bottom right.
-		glTexCoord2f (fcol + CHARSET_CHAR_WIDTH, frow + CHARSET_CHAR_WIDTH);
-		glVertex2f (x + (scale * 8), y + (scale * 8 * 2));
+		glTexCoord2f(fcol + CHARSET_CHAR_WIDTH, frow + CHARSET_CHAR_WIDTH);
+		glVertex2f(x + scale8, y + scale8_2);
 
 		// Bottom left.
-		glTexCoord2f (fcol, frow + CHARSET_CHAR_WIDTH);
-		glVertex2f (x, y + (scale * 8 * 2));
+		glTexCoord2f(fcol, frow + CHARSET_CHAR_WIDTH);
+		glVertex2f(x, y + scale8_2);
 	}
 	glEnd();
 }
