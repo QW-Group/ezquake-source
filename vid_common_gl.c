@@ -90,13 +90,15 @@ cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
 cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
 cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
 
+extern const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
+
 /************************************* EXTENSIONS *************************************/
 
 qbool CheckExtension (const char *extension) {
 	const char *start;
 	char *where, *terminator;
 
-	if (!gl_extensions && !(gl_extensions = (const char*) glGetString (GL_EXTENSIONS)))
+	if (!gl_extensions && !(gl_extensions = (const char*) qglGetString (GL_EXTENSIONS)))
 		return false;
 
 
@@ -175,8 +177,6 @@ void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cance
 }
 
 /************************************** GL INIT **************************************/
-
-extern const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
 
 void GL_Init (void) {
 	gl_vendor     = (const char*) qglGetString (GL_VENDOR);
