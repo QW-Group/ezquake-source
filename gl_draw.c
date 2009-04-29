@@ -660,7 +660,8 @@ static int Draw_LoadCharset(const char *name)
 
 	// Load cyrillic charset if available -->
 	char_textures[1] = 0;
-	if (loaded && strcasecmp(name, "original")) {
+	if (loaded && strcasecmp(name, "original")) 
+	{
 		if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s-cyr", name), "pic:charset-cyr")))
 		{
 			char_textures[1] = texnum;
@@ -912,11 +913,13 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 		glVertex2f (x, y + (scale * 8 * 2));
 	}
 	glEnd();
+}
 
+static void Draw_ResetCharGLState()
+{
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor4ubv(color_white);
 }
 
@@ -925,6 +928,7 @@ void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float a
 	byte rgba[4];
 	COLOR_TO_RGBA(color, rgba);
 	Draw_CharacterBase(x, y, char2wc(c), scale, true, rgba, true);
+	Draw_ResetCharGLState();
 }
 
 void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scale)
@@ -932,26 +936,31 @@ void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scal
 	byte rgba[4];
 	COLOR_TO_RGBA(color, rgba);
 	Draw_CharacterBase(x, y, num, scale, true, rgba, false);
+	Draw_ResetCharGLState();
 }
 
 void Draw_SCharacter (int x, int y, int num, float scale)
 {
 	Draw_CharacterBase(x, y, char2wc(num), scale, true, color_white, false);
+	Draw_ResetCharGLState();
 }
 
 void Draw_SCharacterW (int x, int y, wchar num, float scale)
 {
 	Draw_CharacterBase(x, y, num, scale, true, color_white, false);
+	Draw_ResetCharGLState();
 }
 
 void Draw_CharacterW (int x, int y, wchar num)
 {
 	Draw_CharacterBase(x, y, num, 1, true, color_white, false);
+	Draw_ResetCharGLState();
 }
 
 void Draw_Character (int x, int y, int num)
 {
 	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white, false);
+	Draw_ResetCharGLState();
 }
 
 static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
@@ -1051,6 +1060,8 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 
 		x += ((bigchar ? 64 : 8) * scale) + char_gap;
 	}
+
+	Draw_ResetCharGLState();
 }
 
 void Draw_BigString (int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
