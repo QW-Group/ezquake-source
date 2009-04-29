@@ -306,9 +306,11 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
+#if defined(GLQUAKE) && defined(_WIN32)
 		if (hud_vidlag_style->value)
 			Draw_Alt_String(x, y, st);
 		else
+#endif
 			Draw_String(x, y, st);
 }
 
