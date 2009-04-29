@@ -812,7 +812,7 @@ qbool R_CharAvailable (wchar num)
 // color				= Color!
 // bigchar				= Draw this char using the big character charset.
 // gl_statechange		= Change the gl state before drawing?
-static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar) //, qbool gl_statechange)
+static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4], qbool bigchar, qbool gl_statechange)
 {
 	float frow, fcol;
 	int i;
@@ -834,7 +834,7 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	// in the string drawing function instead. For character drawing functions we do this every time.
 	// (For instance, only change color in a string when the actual color changes, instead of doing
 	// it on each character always).
-//	if (gl_statechange)
+	if (gl_statechange)
 	{
 		// Turn on alpha transparency.
 		if ((gl_alphafont.value || apply_overall_alpha))
@@ -946,7 +946,7 @@ void Draw_BigCharacter(int x, int y, char c, color_t color, float scale, float a
 {
 	byte rgba[4];
 	COLOR_TO_RGBA(color, rgba);
-	Draw_CharacterBase(x, y, char2wc(c), scale, true, rgba, true);
+	Draw_CharacterBase(x, y, char2wc(c), scale, true, rgba, true, true);
 	Draw_ResetCharGLState();
 }
 
@@ -954,32 +954,40 @@ void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scal
 {
 	byte rgba[4];
 	COLOR_TO_RGBA(color, rgba);
-	Draw_CharacterBase(x, y, num, scale, true, rgba, false);
+	Draw_CharacterBase(x, y, num, scale, true, rgba, false, true);
 	Draw_ResetCharGLState();
 }
 
 void Draw_SCharacter (int x, int y, int num, float scale)
 {
-	Draw_CharacterBase(x, y, char2wc(num), scale, true, color_white, false);
+	Draw_CharacterBase(x, y, char2wc(num), scale, true, color_white, false, true);
 	Draw_ResetCharGLState();
 }
 
 void Draw_SCharacterW (int x, int y, wchar num, float scale)
 {
-	Draw_CharacterBase(x, y, num, scale, true, color_white, false);
+	Draw_CharacterBase(x, y, num, scale, true, color_white, false, true);
 	Draw_ResetCharGLState();
 }
 
 void Draw_CharacterW (int x, int y, wchar num)
 {
-	Draw_CharacterBase(x, y, num, 1, true, color_white, false);
+	Draw_CharacterBase(x, y, num, 1, true, color_white, false, true);
 	Draw_ResetCharGLState();
 }
 
 void Draw_Character (int x, int y, int num)
 {
-	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white, false);
+	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white, false, true);
 	Draw_ResetCharGLState();
+}
+
+static void Draw_SetColor(byte *rgba, float alpha)
+{
+	if (scr_coloredText.value)
+	{
+		glColor4ub(rgba[0], rgba[1], rgba[2], rgba[3] * alpha * overall_alpha);
+	}
 }
 
 static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool bigchar, int char_gap)
@@ -995,14 +1003,24 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 	if (!*text)
 		return;
 
+	// Turn on alpha transparency.
+	if (gl_alphafont.value || (overall_alpha < 1.0))
+	{
+		glDisable(GL_ALPHA_TEST);
+	}
+
+	glEnable(GL_BLEND);
+
 	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
 	if (scr_coloredText.value && (color_count > 0))
 	{
 		COLOR_TO_RGBA(color[color_index].c, rgba);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 	else
 	{
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		memcpy(rgba, color_white, sizeof(byte) * 4);
 	}
 
@@ -1028,10 +1046,12 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 							rgba[1] = (g * 16);
 							rgba[2] = (b * 16);
 							rgba[3] = 255;
-							color_is_white = false;
+							color_is_white = false;							
 						}
 
 						color_count++; // Keep track on how many colors we're using.
+
+						Draw_SetColor(rgba, alpha);
 
 						i += 4;
 						continue;
@@ -1043,6 +1063,7 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 					{
 						memcpy(rgba, color_white, sizeof(byte) * 4);
 						color_is_white = true;
+						Draw_SetColor(rgba, alpha);
 					}
 
 					i++;
@@ -1060,6 +1081,7 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 				last_color = color[color_index].c;
 				COLOR_TO_RGBA(color[color_index].c, rgba);
 				rgba[3] = 255;
+				Draw_SetColor(rgba, alpha);
 			}
 
 			color_index++; // Goto next color.
@@ -1072,10 +1094,11 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 			curr_char |= 128;
 
 		// Set the alpha.
-		rgba[3] *= alpha;
+		//rgba[3] *= alpha;
 
-		// Draw the character but don't apply overall opacity, we've already done that.
-		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar);
+		// Draw the character but don't apply overall opacity, we've already done that
+		// And don't update the glstate, we've done that also!
+		Draw_CharacterBase(x, y, curr_char, scale, false, rgba, bigchar, false);
 
 		x += ((bigchar ? 64 : 8) * scale) + char_gap;
 	}
