@@ -855,8 +855,9 @@ void CL_Userdir_f (void)
 // <-- QW262
 
 #ifdef _WIN32
-void CL_Windows_f (void) {
-#ifdef GLQUAKE
+void CL_Windows_f (void) 
+{
+	#ifdef GLQUAKE
 
 	//
 	// WIN OpenGL version
@@ -866,24 +867,26 @@ void CL_Windows_f (void) {
 
 	ShowWindow(mainwindow, SW_MINIMIZE);
 
-#else
+	#else // Software
 
 	//
 	// software version
 	//
 	SendMessage(mainwindow, WM_SYSKEYUP, VK_TAB, 1 | (0x0F << 16) | (1<<29));
 
-#endif
+	#endif // GLQUAKE else
 }
-#endif
+#endif // WIN32
 
-void CL_Serverinfo_f (void) {
-#ifndef CLIENTONLY
-	if (cls.state < ca_connected || com_serveractive) {
+void CL_Serverinfo_f (void) 
+{
+	#ifndef CLIENTONLY
+	if (cls.state < ca_connected || com_serveractive) 
+	{
 		SV_Serverinfo_f();
 		return;
 	}
-#endif
+	#endif // CLIENTONLY
 
 	if (cls.state >= ca_onserver && cl.serverinfo)
 		Info_Print (cl.serverinfo);
