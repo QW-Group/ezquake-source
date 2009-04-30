@@ -272,16 +272,12 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 {
     int x, y, width, height;
     char st[128];
+	static cvar_t *hud_vidlag_style = NULL;
+
 #if defined(GLQUAKE) && defined(_WIN32)
 	extern qbool vid_vsync_on;
 	extern double vid_vsync_lag;
 	static double old_lag;
-	static cvar_t *hud_vidlag_style = NULL;
-
-	if (hud_vidlag_style == NULL)  // first time called
-	{
-		hud_vidlag_style = HUD_FindVar(hud, "style");
-	}
 
 	if (vid_vsync_on || glConfig.displayFrequency)
 	{
@@ -300,17 +296,20 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 #endif
 		strcpy(st, "?");
 
+	if (hud_vidlag_style == NULL)  // first time called
+	{
+		hud_vidlag_style = HUD_FindVar(hud, "style");
+	}
+
 	strlcat (st, " ms", sizeof (st));
 
     width = 8*strlen(st);
     height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-#if defined(GLQUAKE) && defined(_WIN32)
 		if (hud_vidlag_style->value)
 			Draw_Alt_String(x, y, st);
 		else
-#endif
 			Draw_String(x, y, st);
 }
 
