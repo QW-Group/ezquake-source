@@ -1013,9 +1013,13 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 
 	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
-	if (scr_coloredText.value && (color_count > 0))
+	if (scr_coloredText.integer)
 	{
-		COLOR_TO_RGBA(color[color_index].c, rgba);
+		if (color_count > 0)
+		{
+			COLOR_TO_RGBA(color[color_index].c, rgba);
+		}
+
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 	else
@@ -1092,9 +1096,6 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 		// Do not convert the character to red if we're applying color to the text.
 		if (red && color_count <= 0)
 			curr_char |= 128;
-
-		// Set the alpha.
-		//rgba[3] *= alpha;
 
 		// Draw the character but don't apply overall opacity, we've already done that
 		// And don't update the glstate, we've done that also!
