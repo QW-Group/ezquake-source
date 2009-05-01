@@ -54,7 +54,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t cl_chatmode          = {"cl_chatmode", "2"};
 cvar_t con_funchars_mode    = {"con_funchars_mode", "0"};
 cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
-cvar_t con_completion_format= {"con_completion_format", "1"}; // new completion format displayed in 1 column with extra details shown
+cvar_t con_completion_format= {"con_completion_format", "0"}; // 0 - old, 1,2,3 is modern ones (current + default values , current only, and default only)
 
 char* escape_regex(char* string);
 void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
@@ -65,7 +65,6 @@ cvar_t con_completion_color_value_current = {"con_completion_color_value_current
 cvar_t con_completion_color_value_default = {"con_completion_color_value_default", "fff", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_quotes_current = {"con_completion_color_quotes_current", "da3", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_quotes_default = {"con_completion_color_quotes_default", "da3", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_brackets = {"con_completion_color_brackets", "fff", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_colon = {"con_completion_color_colon", "fff", CVAR_NONE, OnChange_con_completion_color};
 
 #ifdef WITH_KEYMAP
@@ -343,47 +342,55 @@ void PaddedPrint (char *s)
 	extern int con_linewidth;
 	int nextcolx = 0;
 
-	if (con_completion_format.integer)
-	{
-		if (con.x)
-			nextcolx = (int)((con.x + COLUMNWIDTH)/COLUMNWIDTH)*COLUMNWIDTH;
+	if (con.x)
+		nextcolx = (int)((con.x + COLUMNWIDTH)/COLUMNWIDTH)*COLUMNWIDTH;
 
-		if (nextcolx > con_linewidth - MINCOLUMNWIDTH || (con.x && nextcolx + strlen(s) >= con_linewidth))
-			Com_Printf ("\n");
+	if (nextcolx > con_linewidth - MINCOLUMNWIDTH || (con.x && nextcolx + strlen(s) >= con_linewidth))
+		Com_Printf ("\n");
 
-		if (con.x)
-			Com_Printf (" ");
-		while (con.x % COLUMNWIDTH)
-			Com_Printf (" ");
-		Com_Printf ("%s", s);
-	}
-	else // plain list
-	{
-		Com_Printf ("&c%s%s&r\n", con_completion_color_name.string, s);
-	}
+	if (con.x)
+		Com_Printf (" ");
+	while (con.x % COLUMNWIDTH)
+		Com_Printf (" ");
+	Com_Printf ("%s", s);
 }
 
 void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default value
 {
-	if (con_completion_format.integer) // old style listing
+	switch (con_completion_format.integer)
 	{
-		PaddedPrint(s);
-		return;
-	}
-	else // 1 column with value and default values printed
-	{
-		if (strcmp(s, dv)) // if they are the same don't print the default value (ie. if it's an alias)
-			Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\" &c%s(&c%s\"&c%s%s&c%s\"&c%s)&r\n",
-				con_completion_color_name.string, s , con_completion_color_colon.string,
-				con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
-				con_completion_color_quotes_current.string, con_completion_color_brackets.string,
-				con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
-				con_completion_color_quotes_default.string, con_completion_color_brackets.string);
-		else
+		case 1:	// current + deafault
+			if (strcmp(s, dv))
+				Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
+					con_completion_color_name.string, s , con_completion_color_colon.string,
+					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+					con_completion_color_quotes_current.string, con_completion_color_colon.string,
+					con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
+					con_completion_color_quotes_default.string);
+			else
+				Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
+					con_completion_color_name.string, s , con_completion_color_colon.string,
+					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+					con_completion_color_quotes_current.string);
+			break;
+
+		case 2:	// current only
 			Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
 				con_completion_color_name.string, s , con_completion_color_colon.string,
 				con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 				con_completion_color_quotes_current.string);
+			break;
+
+		case 3:	// default only value
+			Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
+				con_completion_color_name.string, s, con_completion_color_colon.string,
+				con_completion_color_quotes_default.string, con_completion_color_value_default.string,
+				dv, con_completion_color_quotes_default.string);
+			break;
+
+		default:	// old completion
+			PaddedPrint(s);
+			break;
 	}
 }
 
@@ -1874,7 +1881,6 @@ void Key_Init (void) {
 	Cvar_Register (&con_completion_color_name);
 	Cvar_Register (&con_completion_color_quotes_current);
 	Cvar_Register (&con_completion_color_quotes_default);
-	Cvar_Register (&con_completion_color_brackets);
 	Cvar_Register (&con_completion_color_colon);
 	Cvar_Register (&con_prompt_charcode);
 
