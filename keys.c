@@ -337,22 +337,30 @@ qbool CheckForCommand (void)
 #define COLUMNWIDTH 20
 #define MINCOLUMNWIDTH 18	// the last column may be slightly smaller
 
+	
 void PaddedPrint (char *s) 
 {
 	extern int con_linewidth;
 	int nextcolx = 0;
 
-	if (con.x)
-		nextcolx = (int)((con.x + COLUMNWIDTH)/COLUMNWIDTH)*COLUMNWIDTH;
+	if (con_completion_format.integer)  // plain list
+	{
+		Com_Printf ("&c%s%s&r\n", con_completion_color_name.string, s);
+	}
+	else
+	{
+		if (con.x)
+			nextcolx = (int)((con.x + COLUMNWIDTH)/COLUMNWIDTH)*COLUMNWIDTH;
 
-	if (nextcolx > con_linewidth - MINCOLUMNWIDTH || (con.x && nextcolx + strlen(s) >= con_linewidth))
-		Com_Printf ("\n");
+		if (nextcolx > con_linewidth - MINCOLUMNWIDTH || (con.x && nextcolx + strlen(s) >= con_linewidth))
+			Com_Printf ("\n");
 
-	if (con.x)
-		Com_Printf (" ");
-	while (con.x % COLUMNWIDTH)
-		Com_Printf (" ");
-	Com_Printf ("%s", s);
+		if (con.x)
+			Com_Printf (" ");
+		while (con.x % COLUMNWIDTH)
+			Com_Printf (" ");
+		Com_Printf ("%s", s);
+	}
 }
 
 void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default value
