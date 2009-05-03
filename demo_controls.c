@@ -42,6 +42,7 @@ static ez_control_t *root;				// Root of the control tree (transparent, as big a
 static ez_window_t	*window;			// The demo controls window.
 static ez_slider_t	*demo_slider;		// The demo time slider.
 static ez_label_t	*timelabel;			// The text label that shows the current time.
+static ez_label_t	*hover_timelabel;	// The text label that shows the time where the cursor is positioned on the slider.
 static ez_label_t	*speed_title_label;	// The title text label for the speed.
 static ez_label_t	*speed_label;		// The text label that shows the current demo speed in percent.
 
@@ -61,8 +62,7 @@ static double previous_demospeed = 1.0;
 
 static void DemoControls_SetTimeLabelText(ez_label_t *label, double time)
 {
-	// TODO: Format this properly so that 5:3 => 05:03
-	EZ_label_SetText(label, va("%d:%d", Q_rint(time / 60), Q_rint((int)time % 60)));
+	EZ_label_SetText(label, va("%02d:%02d", Q_rint(time / 60), Q_rint((int)time % 60)));
 }
 
 void DemoControls_Draw(void)
@@ -100,6 +100,30 @@ static int DemoControls_SliderChanged(ez_control_t *self, void *payload, void *e
 
 		CL_Demo_Jump(newdemotime, false);
 	}
+
+	return 0;
+}
+
+static int DemoControls_Slider_OnMouseEnter(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	EZ_control_SetVisible((ez_control_t *)hover_timelabel, true);
+	return 0;
+}
+
+static int DemoControls_Slider_OnMouseLeave(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	EZ_control_SetVisible((ez_control_t *)hover_timelabel, false);
+	return 0;
+}
+
+static int DemoControls_Slider_OnMouseHover(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	ez_slider_t *demo_slider = (ez_slider_t *)self;
+	float demo_length = CL_GetDemoLength();
+	double demotime = ((EZ_slider_GetPositionFromMouse(demo_slider, ms->x, ms->y) * demo_length) / (double)demo_slider->max_value);
+
+	EZ_control_SetPosition((ez_control_t *)hover_timelabel, (ms->x - self->absolute_x), -8);
+	EZ_label_SetText(hover_timelabel, va("%02d:%02d", Q_rint(demotime / 60), max(0, Q_rint((int)demotime % 60))));
 
 	return 0;
 }
@@ -187,6 +211,9 @@ static void DemoControls_Init(void)
 
 		// Add a event handler for when the slider handle changes position.
 		EZ_slider_AddOnSliderPositionChanged(demo_slider, DemoControls_SliderChanged, NULL);
+		EZ_control_AddOnMouseHover((ez_control_t *)demo_slider, DemoControls_Slider_OnMouseHover, NULL);
+		EZ_control_AddOnMouseEnter((ez_control_t *)demo_slider, DemoControls_Slider_OnMouseEnter, NULL);
+		EZ_control_AddOnMouseLeave((ez_control_t *)demo_slider, DemoControls_Slider_OnMouseLeave, NULL);
 
 		// When we click a point on the slider, make the slider handle jump there.
 		EZ_slider_SetJumpToClick(demo_slider, true);
@@ -195,13 +222,31 @@ static void DemoControls_Init(void)
 	// Demo time label.
 	{
 		timelabel = EZ_label_Create(&democontrol_tree, root, 
-			"Demo time label", "", -15, 5, 32, 16,  
+			"Demo time label", "", -15, 5, 40, 16,  
 			control_focusable | control_contained | control_resizeable, 
 			0, "");
 
 		EZ_label_SetReadOnly(timelabel, true);
 		EZ_label_SetTextSelectable(timelabel, false);
 		EZ_control_SetAnchor((ez_control_t *)timelabel, anchor_right | anchor_top);
+	}
+
+	// Demo hover time label (when the slider is hovered).
+	{
+		ez_control_t *tmp;
+		hover_timelabel = EZ_label_Create(&democontrol_tree, (ez_control_t *)demo_slider, 
+			"Hover demo time label", "", 0, 0, 40, 8, 0, 0, "");
+
+		tmp = (ez_control_t *)hover_timelabel;
+
+		EZ_label_SetReadOnly(hover_timelabel, true);
+		EZ_label_SetTextSelectable(hover_timelabel, false);
+		EZ_label_SetTextColor(hover_timelabel, 125, 125, 0, 255);
+		EZ_control_SetAnchor(tmp, anchor_left | anchor_top);
+		EZ_control_SetVisible(tmp, false);
+		EZ_control_SetContained(tmp, false);
+		EZ_control_SetBackgroundColor(tmp, 0, 0, 0, 125);
+		EZ_control_SetFocusable(tmp, false);
 	}
 
 	// Demo speed title label.
@@ -227,7 +272,7 @@ static void DemoControls_Init(void)
 			0, "");
 
 		EZ_label_SetAutoSize(speed_label, true);
-		EZ_label_SetText(speed_label, "100%");
+		EZ_label_SetText(speed_label, va("%i%%", Q_rint(Demo_GetSpeed() * 100)));
 		EZ_label_SetReadOnly(speed_label, true);
 		EZ_label_SetTextSelectable(speed_label, false);
 		EZ_control_SetAnchor((ez_control_t *)speed_label, anchor_right | anchor_top);
@@ -315,7 +360,7 @@ static void DemoControls_Init(void)
 		EZ_control_AddOnMouseEnter((ez_control_t *)window, DemoControls_Window_OnMouseEnter, NULL);
 		EZ_control_AddOnMouseLeave((ez_control_t *)window, DemoControls_Window_OnMouseLeave, NULL);
 
-		// Add our precious children :D
+		// Add our precious children :D		
 		EZ_window_AddChild(window, (ez_control_t *)demo_slider);
 		EZ_window_AddChild(window, (ez_control_t *)timelabel);
 		EZ_window_AddChild(window, (ez_control_t *)speed_title_label);
@@ -323,7 +368,7 @@ static void DemoControls_Init(void)
 		EZ_window_AddChild(window, (ez_control_t *)button_container);
 
 		// Size the children to fit within the window properly.
-		EZ_control_SetSize((ez_control_t *)demo_slider, (window->window_area->virtual_width - 56), 8);
+		EZ_control_SetSize((ez_control_t *)demo_slider, (window->window_area->virtual_width - 64), 8);
 		EZ_control_SetSize((ez_control_t *)button_container, (window->window_area->virtual_width - 20), button_container->height);
 	}
 
