@@ -551,15 +551,7 @@ void CL_ParsePacketEntities (qbool delta)
 	packet_entities_t *oldp, *newp, dummy;
 	qbool full;
 	byte from;
-
-	#ifdef PROTOCOL_VERSION_FTE
-	int maxentities;
-
-	if (cls.mvdplayback || (cls.fteprotocolextensions & FTE_PEXT_256PACKETENTITIES))
-		maxentities	= MAX_MVD_PACKET_ENTITIES; // @!@!@!
-	else
-		maxentities = MAX_PACKET_ENTITIES;
-	#endif // PROTOCOL_VERSION_FTE
+	int maxentities = MAX_MVD_PACKET_ENTITIES; // allow as many as we can handle
 
 	newpacket = cls.netchan.incoming_sequence & UPDATE_MASK;
 	newp = &cl.frames[newpacket].packet_entities;
@@ -634,14 +626,8 @@ void CL_ParsePacketEntities (qbool delta)
 			{
 				// Copy all the rest of the entities from the old packet
 				
-				#ifdef PROTOCOL_VERSION_FTE
 				if (newindex >= maxentities)
-				#else
-				if (newindex >= MAX_MVD_PACKET_ENTITIES || (newindex >= MAX_PACKET_ENTITIES && !cls.mvdplayback))
-				#endif // PROTOCOL_VERSION_FTE
-				{
 					Host_Error ("CL_ParsePacketEntities: newindex == MAX_PACKET_ENTITIES");
-				}
 
 				newp->entities[newindex] = oldp->entities[oldindex];
 				CL_SetupPacketEntity(newp->entities[newindex].number, &newp->entities[newindex], false);
@@ -692,11 +678,7 @@ void CL_ParsePacketEntities (qbool delta)
 			}
 
 			// Copy one of the old entities over to the new packet unchanged
-			#ifdef PROTOCOL_VERSION_FTE
 			if (newindex >= maxentities)
-			#else
-			if (newindex >= MAX_MVD_PACKET_ENTITIES || (newindex >= MAX_PACKET_ENTITIES && !cls.mvdplayback))
-			#endif // PROTOCOL_VERSION_FTE
 				Host_Error ("CL_ParsePacketEntities: newindex == MAX_PACKET_ENTITIES");
 
 			newp->entities[newindex] = oldp->entities[oldindex];
@@ -730,14 +712,8 @@ void CL_ParsePacketEntities (qbool delta)
 				continue;
 			}
 
-			#ifdef PROTOCOL_VERSION_FTE
 			if (newindex >= maxentities)
-			#else
-			if (newindex >= MAX_MVD_PACKET_ENTITIES || (newindex >= MAX_PACKET_ENTITIES && !cls.mvdplayback))
-			#endif // PROTOCOL_VERSION_FTE
-			{
 				Host_Error ("CL_ParsePacketEntities: newindex == MAX_PACKET_ENTITIES");
-			}
 
 			CL_ParseDelta (&cl_entities[newnum].baseline, &newp->entities[newindex], word);
 			CL_SetupPacketEntity (newnum, &newp->entities[newindex], word > 511); 
@@ -768,10 +744,6 @@ void CL_ParsePacketEntities (qbool delta)
 				continue;
 			}
 
-			#ifdef PROTOCOL_VERSION_FTE
-			if (newindex >= maxentities)
-				Host_Error ("CL_ParsePacketEntities: newindex == MAX_PACKET_ENTITIES");
-			#endif // PROTOCOL_VERSION_FTE
 			CL_ParseDelta (&oldp->entities[oldindex], &newp->entities[newindex], word);
 			CL_SetupPacketEntity (newnum, &newp->entities[newindex], word > 511);
 			newindex++;
