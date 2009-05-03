@@ -330,7 +330,13 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 			continue;
 		}
 
-		// Make sure that the control draws only within it's bounds.
+		// Make sure we keep raising Mouse hover events while inside the control.
+		if (POINT_IN_CONTROL_DRAWBOUNDS(payload, payload->prev_mouse_state.x, payload->prev_mouse_state.y))
+		{
+			CONTROL_RAISE_EVENT(NULL, payload, ez_control_t, OnMouseHover, &payload->prev_mouse_state);
+		}
+
+		// Make sure that the control draws only within its bounds.
 		Draw_EnableScissor(payload->bound_left, payload->bound_right, payload->bound_top, payload->bound_bottom);
 		Draw_SetOverallAlpha(payload->overall_opacity);
 
