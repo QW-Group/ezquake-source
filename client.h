@@ -669,6 +669,7 @@ qbool CL_GetDemoMessage (void);
 void CL_WriteDemoCmd (usercmd_t *pcmd);
 void CL_WriteDemoMessage (sizebuf_t *msg);
 void CL_WriteDemoEntities (void);
+void CL_WriteServerdata (sizebuf_t *msg);
 void CL_StopPlayback (void);
 void CL_Stop_f (void);
 void CL_CheckQizmoCompletion(void);

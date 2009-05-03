@@ -3568,6 +3568,8 @@ void CL_ParseServerMessage (void)
 			else if (cmd == svc_download) {
 				// there's no point in writing it to the demo
 			}
+			else if (cmd == svc_serverdata)
+				CL_WriteServerdata(&cls.demomessage);
 			else
 				SZ_Write(&cls.demomessage, net_message.data + msg_svc_start, msg_readcount - msg_svc_start);
 		}

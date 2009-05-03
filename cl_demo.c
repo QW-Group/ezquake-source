@@ -389,6 +389,44 @@ static char *TrimModelName (const char *full)
 	return shortn;
 }
 
+void CL_WriteServerdata (sizebuf_t *msg)
+{
+	MSG_WriteByte (msg, svc_serverdata);
+	
+	#ifdef PROTOCOL_VERSION_FTE
+	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS)	// Maintain demo compatibility.
+	{
+		MSG_WriteLong (msg, PROTOCOL_VERSION_FTE);
+		MSG_WriteLong (msg, cls.fteprotocolextensions);
+	}
+	#endif // PROTOCOL_VERSION_FTE
+	
+	MSG_WriteLong (msg, PROTOCOL_VERSION);
+	MSG_WriteLong (msg, cl.servercount);
+	MSG_WriteString (msg, cls.gamedirfile);
+
+	// Write if we're a spectator or not.
+	if (cl.spectator)
+		MSG_WriteByte (msg, cl.playernum | 128);
+	else
+		MSG_WriteByte (msg, cl.playernum);
+
+	// Send full levelname.
+	MSG_WriteString (msg, cl.levelname);
+
+	// Send the movevars.
+	MSG_WriteFloat(msg, movevars.gravity);
+	MSG_WriteFloat(msg, movevars.stopspeed);
+	MSG_WriteFloat(msg, cl.maxspeed);
+	MSG_WriteFloat(msg, movevars.spectatormaxspeed);
+	MSG_WriteFloat(msg, movevars.accelerate);
+	MSG_WriteFloat(msg, movevars.airaccelerate);
+	MSG_WriteFloat(msg, movevars.wateraccelerate);
+	MSG_WriteFloat(msg, movevars.friction);
+	MSG_WriteFloat(msg, movevars.waterfriction);
+	MSG_WriteFloat(msg, cl.entgravity);
+}
+
 //
 // Write startup data to demo (called when demo started and cls.state == ca_active)
 //
@@ -412,40 +450,7 @@ static void CL_WriteStartupData (void)
 	//
 	// Send the serverdata.
 	//
-	MSG_WriteByte (&buf, svc_serverdata);
-	
-	#ifdef PROTOCOL_VERSION_FTE
-	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS)	// Maintain demo compatibility.
-	{
-		MSG_WriteLong (&buf, PROTOCOL_VERSION_FTE);
-		MSG_WriteLong (&buf, cls.fteprotocolextensions);
-	}
-	#endif // PROTOCOL_VERSION_FTE
-	
-	MSG_WriteLong (&buf, PROTOCOL_VERSION);
-	MSG_WriteLong (&buf, cl.servercount);
-	MSG_WriteString (&buf, cls.gamedirfile);
-
-	// Write if we're a spectator or not.
-	if (cl.spectator)
-		MSG_WriteByte (&buf, cl.playernum | 128);
-	else
-		MSG_WriteByte (&buf, cl.playernum);
-
-	// Send full levelname.
-	MSG_WriteString (&buf, cl.levelname);
-
-	// Send the movevars.
-	MSG_WriteFloat(&buf, movevars.gravity);
-	MSG_WriteFloat(&buf, movevars.stopspeed);
-	MSG_WriteFloat(&buf, cl.maxspeed);
-	MSG_WriteFloat(&buf, movevars.spectatormaxspeed);
-	MSG_WriteFloat(&buf, movevars.accelerate);
-	MSG_WriteFloat(&buf, movevars.airaccelerate);
-	MSG_WriteFloat(&buf, movevars.wateraccelerate);
-	MSG_WriteFloat(&buf, movevars.friction);
-	MSG_WriteFloat(&buf, movevars.waterfriction);
-	MSG_WriteFloat(&buf, cl.entgravity);
+	CL_WriteServerdata (&buf);
 
 	// Send music.
 	MSG_WriteByte (&buf, svc_cdtrack);
@@ -2257,12 +2262,6 @@ void CL_Record_f (void)
 	if (com_serveractive && strcmp(Cmd_Argv(0), "record") == 0)
 	{
 		SV_MVD_Record_f();
-		return;
-	}
-
-	if (cls.state != ca_active)
-	{
-		Com_Printf ("You must be connected before using record\n");
 		return;
 	}
 
