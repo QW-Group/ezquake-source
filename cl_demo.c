@@ -394,7 +394,8 @@ void CL_WriteServerdata (sizebuf_t *msg)
 	MSG_WriteByte (msg, svc_serverdata);
 	
 	#ifdef PROTOCOL_VERSION_FTE
-	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS)	// Maintain demo compatibility.
+	if (cls.fteprotocolextensions
+		&~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES))	// Maintain demo compatibility.
 	{
 		MSG_WriteLong (msg, PROTOCOL_VERSION_FTE);
 		MSG_WriteLong (msg, cls.fteprotocolextensions);
@@ -2265,7 +2266,7 @@ void CL_Record_f (void)
 		return;
 	}
 
-	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS) {
+	if (cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)) {
 		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo may not be playable in older clients. "
 			"Use cl_pext_other 0 for 100% compatible demos\n");
 	}

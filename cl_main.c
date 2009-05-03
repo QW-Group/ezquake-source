@@ -103,7 +103,9 @@ cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #ifdef PROTOCOL_VERSION_FTE
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// will break demos!
 #endif
-
+#ifdef FTE_PEXT_256PACKETENTITIES
+cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
+#endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
 cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "5"};
@@ -550,6 +552,10 @@ unsigned int CL_SupportedFTEExtensions (void)
 #ifdef FTE_PEXT_TRANS
 	fteprotextsupported |= FTE_PEXT_TRANS;
 #endif
+#ifdef FTE_PEXT_256PACKETENTITIES
+	if (cl_pext_256packetentities.value)
+		fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
+#endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (cl_pext_chunkeddownloads.value)
 		fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
@@ -574,7 +580,7 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 
 	if (!cl_pext_other.value)
-		fteprotextsupported &= FTE_PEXT_CHUNKEDDOWNLOADS;
+		fteprotextsupported &= (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES);
 
 	return fteprotextsupported;
 }
@@ -1667,6 +1673,9 @@ void CL_InitLocal (void)
 
 #ifdef PROTOCOL_VERSION_FTE
 	Cvar_Register (&cl_pext_other);
+#endif
+#ifdef FTE_PEXT_256PACKETENTITIES
+	Cvar_Register (&cl_pext_256packetentities);
 #endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	Cvar_Register (&cl_pext_chunkeddownloads);
