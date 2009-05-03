@@ -575,9 +575,6 @@ unsigned int CL_SupportedFTEExtensions (void)
 #ifdef FTE_PEXT_SPAWNSTATIC2
 	fteprotextsupported |= FTE_PEXT_SPAWNSTATIC2;
 #endif
-#ifdef FTE_PEXT_256PACKETENTITIES
-	fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
-#endif
 
 	if (!cl_pext_other.value)
 		fteprotextsupported &= (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES);
