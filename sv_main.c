@@ -3393,7 +3393,9 @@ void SV_InitLocal (void)
 #ifdef FTE_PEXT_ACCURATETIMINGS
 	svs.fteprotocolextensions |= FTE_PEXT_ACCURATETIMINGS;
 #endif
-
+#ifdef FTE_PEXT_256PACKETENTITIES
+	svs.fteprotocolextensions |= FTE_PEXT_256PACKETENTITIES;
+#endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	svs.fteprotocolextensions |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif

@@ -554,7 +554,7 @@ svc_playerinfo messages
 
 void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 {
-	int e, i, max_packet_entities = MAX_PACKET_ENTITIES;
+	int e, i, max_packet_entities;
 	packet_entities_t *pack;
 	client_frame_t *frame;
 	entity_state_t *state;
@@ -575,6 +575,10 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 	{
 		VectorAdd (clent->v.origin, clent->v.view_ofs, org);
 		pvs = CM_FatPVS (org);
+		if (client->fteprotocolextensions & FTE_PEXT_256PACKETENTITIES)
+			max_packet_entities = 256;
+		else
+			max_packet_entities = MAX_PACKET_ENTITIES;
 	}
 	else
 	{
