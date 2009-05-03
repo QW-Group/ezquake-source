@@ -984,7 +984,7 @@ void Draw_Character (int x, int y, int num)
 
 static void Draw_SetColor(byte *rgba, float alpha)
 {
-	if (scr_coloredText.value)
+	if (scr_coloredText.integer)
 	{
 		glColor4ub(rgba[0], rgba[1], rgba[2], rgba[3] * alpha * overall_alpha);
 	}
