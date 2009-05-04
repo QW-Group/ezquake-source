@@ -848,7 +848,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 			continue;
 
 		time = cls.realtime - time;
-		if (time > con_notifytime.value)
+		if (time > notifyTime)
 			continue;
 
 		idx = (i % con_totallines)*con_linewidth;
