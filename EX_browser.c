@@ -101,6 +101,7 @@ cvar_t  sb_showproxies   = {"sb_showproxies",      "0"};
 cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"}; // not in menu
 cvar_t  sb_mastercache     = {"sb_mastercache",    "1"};  // not in menu
 cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"};  // not in menu
+cvar_t  sb_listcache       = {"sb_listcache",      "0"};
 
 // servers table
 server_data *servers[MAX_SERVERS];
@@ -2596,6 +2597,136 @@ void SB_Sources_Update_f(void)
 	SB_Sources_Update_Begin(true);
 }
 
+// Server list serialization.
+// When user set sb_listcache 1, the server list will be saved to his home dir after each update
+// so that next time the client is started the list is immediately full of servers
+// and it's not necessary to do full refresh, just get infos from alive servers is enough
+// (which is significantly faster than full refresh).
+// Of course users should do full-update of their list after some time so that 
+// new servers have a chance to appear.
+#define SERIALIZE_FILE_VERSION 1002
+void SB_Serverlist_Serialize(FILE *f)
+{
+	int version = SERIALIZE_FILE_VERSION;
+	size_t server_data_size = sizeof(server_data);
+	int i;
+
+	// header
+	// - version
+	fwrite(&version, sizeof(int), 1, f);
+	// - server_data struct size
+	fwrite(&server_data_size, sizeof(size_t), 1, f);
+	// - number of servers
+	fwrite(&serversn, sizeof(int), 1, f);
+	// - number of filtered servers
+	fwrite(&serversn_passed, sizeof(int), 1, f);
+
+	// body
+	for (i = 0; i < serversn; i++) {
+		server_data t = *servers[i];
+		t.keysn = 0; // we don't store the keys
+		fwrite(&t, sizeof(server_data), 1, f);
+	}
+}
+
+int SB_Serverlist_Unserialize(FILE *f)
+{
+	size_t server_data_size;
+	int i;
+	int version;
+	int serversn_buffer, serversn_passed_buffer;
+
+	fread(&version, sizeof(int), 1, f);
+	if (version != SERIALIZE_FILE_VERSION) {
+		return -1;
+	}
+
+	fread(&server_data_size, sizeof(size_t), 1, f);
+	if (server_data_size != sizeof(server_data)) {
+		return -1;
+	}
+
+	fread(&serversn_buffer, sizeof(int), 1, f);
+	if (serversn_buffer > MAX_SERVERS) {
+		return -2;
+	}
+
+	fread(&serversn_passed_buffer, sizeof(int), 1, f);
+	if (serversn_passed_buffer > MAX_SERVERS) {
+		return -2;
+	}
+
+	serversn = serversn_buffer;
+	serversn_passed = serversn_passed_buffer;
+
+	for (i = 0; i < serversn; i++) {
+		server_data *s = (server_data *) Q_malloc(sizeof(server_data));
+		int j;
+
+		fread(s, sizeof(server_data), 1, f);
+		servers[i] = s;
+
+		// Create empty entries because
+		// serialized playersn and spectatorsn is not zero, that's needed
+		// to not get empty list on "hide empty". Empty list leads to full refresh
+		// which makes the un/serialization stuff useless.
+		for (j = 0; j < s->playersn + s->spectatorsn; j++) {
+			servers[i]->players[j] = Q_calloc(1, sizeof(playerinfo));
+		}
+	}
+
+	rebuild_servers_list = 0;
+
+	return serversn;
+}
+
+void SB_Serverlist_Serialize_f(void)
+{
+	FILE *f;
+	char *filename = va("%s/%s", com_homedir, "servers_data");
+
+	if (!(f	= fopen	(filename, "wb"))) {
+		FS_CreatePath(filename);
+		if (!(f	= fopen	(filename, "wb"))) {
+			Com_Printf ("Couldn't write	%s.\n",	filename);
+			return;
+		}
+	}
+
+	SB_Serverlist_Serialize(f);
+	Com_Printf("Wrote server list contents to disk\n");
+	fclose(f);
+	filesystemchanged = true;
+}
+
+void SB_Serverlist_Unserialize_f(void)
+{
+	FILE *f;
+	char *filename = va("%s/%s", com_homedir, "servers_data");
+	int err;
+
+	if (!(f	= fopen	(filename, "rb"))) {
+		Com_Printf ("Couldn't read %s.\n", filename);
+		return;
+	}
+
+	err = SB_Serverlist_Unserialize(f);
+	if (err > 0) {
+		Com_Printf("Successfully read %d servers\n", err);
+	}
+	else if (err == -1) {
+		Com_Printf("Format didn't match\n");
+	}
+	else if (err == -2) {
+		Com_Printf("Format error (servers number too big)\n");
+	}
+	else { // err == 0
+		Com_Printf("No servers read\n");
+	}
+
+	fclose(f);
+}
+
 void Shutdown_SB(void)
 {
     Serverinfo_Stop();
@@ -2638,6 +2769,7 @@ void Browser_Init (void)
     Cvar_Register(&sb_sourcevalidity);
     Cvar_Register(&sb_mastercache);
 	Cvar_Register(&sb_autoupdate);
+	Cvar_Register(&sb_listcache);
 	Cvar_ResetCurrentGroup();
 
     Cmd_AddCommand("addserver", AddServer_f);
@@ -2645,6 +2777,10 @@ void Browser_Init (void)
 	Cmd_AddCommand("sb_pingsdump", SB_PingsDump_f);
 	Cmd_AddCommand("sb_sourceadd", SB_Source_Add_f);
 	Cmd_AddCommand("sb_sourcesupdate", SB_Sources_Update_f);
+
+	if (sb_listcache.integer) {
+		SB_Serverlist_Unserialize_f();
+	}
 }
 
 void Browser_Init2 (void)

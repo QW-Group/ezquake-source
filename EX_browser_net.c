@@ -524,6 +524,9 @@ void GetServerPing(server_data *serv)
 
 DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
+	extern cvar_t sb_listcache;
+	extern void SB_Serverlist_Serialize_f();
+
 	int full = (int) lpParameter;
     abort_ping = 0;
 
@@ -555,6 +558,10 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
     ping_phase = 0;
 
 	TP_ExecTrigger("f_sbrefreshdone");
+	
+	if (sb_listcache.integer) {
+		SB_Serverlist_Serialize_f();
+	}
 
     return 0;
 }
