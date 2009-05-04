@@ -60,11 +60,11 @@ char* escape_regex(char* string);
 void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
 cvar_t con_prompt_charcode      = {"con_prompt_charcode", "93", CVAR_NONE, OnChange_con_prompt_charcode};	// 126 in qw charset is "]"
 void OnChange_con_completion_color(cvar_t *var, char *string, qbool *cancel);
-cvar_t con_completion_color_name = {"con_completion_color_name", "0aa", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_name = {"con_completion_color_name", "8ff", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_value_current = {"con_completion_color_value_current", "fff", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_value_default = {"con_completion_color_value_default", "fff", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_quotes_current = {"con_completion_color_quotes_current", "da3", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_quotes_default = {"con_completion_color_quotes_default", "da3", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_quotes_current = {"con_completion_color_quotes_current", "ff8", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_quotes_default = {"con_completion_color_quotes_default", "ff8", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_colon = {"con_completion_color_colon", "fff", CVAR_NONE, OnChange_con_completion_color};
 
 #ifdef WITH_KEYMAP
