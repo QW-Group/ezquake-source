@@ -201,29 +201,50 @@ typedef struct ez_double_linked_list_s
 } ez_double_linked_list_t;
 
 //
-// Add item to double linked list.
+// Double Linked List - Add item to double linked list.
 //
 void EZ_double_linked_list_Add(ez_double_linked_list_t *list, void *payload);
 
 //
-// Finds a given node based on the specified payload.
+// Double Linked List - Finds a given node based on the specified payload.
 //
-ez_dllist_node_t *EZ_double_linked_list_FindByPayload(ez_double_linked_list_t *list, void *payload);
+ez_dllist_node_t *EZ_double_linked_list_FindByPayload(const ez_double_linked_list_t *list, void *payload);
 
 //
-// Removes an item from a linked list by it's payload.
+// Double Linked List - Find a item by its index.
+//
+ez_dllist_node_t *EZ_double_linked_list_FindByIndex(const ez_double_linked_list_t *list, int index);
+
+//
+// Double Linked List - Removes an item from a linked list by its index.
+//
+void *EZ_double_linked_list_RemoveByIndex(ez_double_linked_list_t *list, int index);
+
+//
+// Double Linked List - Removes an item from a linked list by its payload.
 //
 void *EZ_double_linked_list_RemoveByPayload(ez_double_linked_list_t *list, void *payload);
 
 //
-// Removes the first occurance of the item from double linked list and returns it's payload.
+// Double Linked List - A function pointer to a cleanup function that is run on each item when removing a range of items.
+//
+typedef void (*ez_removerange_cleanup_function_t)(void *payload);
+
+//
+// Double Linked List - Removes a range of items in the list. 
+//						A cleanup function needs to be supplied so that the payload of the item is also cleaned up.
+//
+void EZ_double_linked_list_RemoveRange(ez_double_linked_list_t *list, int start, int end, ez_removerange_cleanup_function_t func);
+
+//
+// Double Linked List - Removes the first occurance of the item from double linked list and returns its payload.
 //
 void *EZ_double_linked_list_Remove(ez_double_linked_list_t *list, ez_dllist_node_t *item);
 
 //
 // Double Linked List - Orders a list.
 //
-void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare compare_function);
+void EZ_double_linked_list_Sort(ez_double_linked_list_t *list, PtFuncCompare compare_function);
 
 // =========================================================================================
 // Control Tree

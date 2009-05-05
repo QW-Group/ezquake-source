@@ -71,7 +71,7 @@ void EZ_double_linked_list_Add(ez_double_linked_list_t *list, void *payload)
 //
 // Finds a given node based on the specified payload.
 //
-ez_dllist_node_t *EZ_double_linked_list_FindByPayload(ez_double_linked_list_t *list, void *payload)
+ez_dllist_node_t *EZ_double_linked_list_FindByPayload(const ez_double_linked_list_t *list, const void *payload)
 {
 	ez_dllist_node_t *iter = list->head;
 
@@ -89,16 +89,38 @@ ez_dllist_node_t *EZ_double_linked_list_FindByPayload(ez_double_linked_list_t *l
 }
 
 //
-// Removes an item from a linked list by it's payload.
+// Double Linked List - Find a item by its index.
 //
-void *EZ_double_linked_list_RemoveByPayload(ez_double_linked_list_t *list, void *payload)
+ez_dllist_node_t *EZ_double_linked_list_FindByIndex(const ez_double_linked_list_t *list, int index)
 {
-	ez_dllist_node_t *node = EZ_double_linked_list_FindByPayload(list, payload);
-	return EZ_double_linked_list_Remove(list, node);
+	int i;
+	ez_dllist_node_t *iter = NULL;
+	qbool fromStart = (list->count - i) >= i;
+
+	if (fromStart)
+	{
+		iter = list->head;
+		
+		for (i = 0; i < index; i++)
+		{
+			iter = iter->next;
+		}
+	}
+	else
+	{
+		iter = list->tail;
+		
+		for (i = list->count - 1; i >= index; i--)
+		{
+			iter = iter->previous;
+		}
+	}
+	
+	return iter;
 }
 
 //
-// Removes the first occurance of the item from double linked list and returns it's payload.
+// Double Linked List - Removes the first occurance of the item from double linked list and returns its payload.
 //
 void *EZ_double_linked_list_Remove(ez_double_linked_list_t *list, ez_dllist_node_t *item)
 {
@@ -128,7 +150,64 @@ void *EZ_double_linked_list_Remove(ez_double_linked_list_t *list, ez_dllist_node
 
 	Q_free(item);
 
-	return payload;
+	return payload; // WARNING THIS MUST BE FREED BY THE CALLER!
+}
+
+//
+// Double Linked List - Removes an item from a linked list by its index.
+//
+void *EZ_double_linked_list_RemoveByIndex(ez_double_linked_list_t *list, int index)
+{
+	ez_dllist_node_t *node;
+	
+	if ((index < 0) || (index >= list->count))
+	{
+		return NULL;
+	}
+
+	node = EZ_double_linked_list_FindByIndex(list, index);
+	return EZ_double_linked_list_Remove(list, node);
+}
+
+//
+// Double Linked List - Removes a range of items in the list. 
+//						A cleanup function needs to be supplied so that the payload of the item is also cleaned up.
+//
+void EZ_double_linked_list_RemoveRange(ez_double_linked_list_t *list, int start, int end, ez_removerange_cleanup_function_t func)
+{
+	int i;
+	ez_dllist_node_t *iter;
+	ez_dllist_node_t *tmp;
+
+	if ((start < 0) || (end < 0) || (start >= list->count) || (end >= list->count) || (start > end))
+	{
+		return;
+	}
+
+	// Find the start index.
+	for (i = 0; i <= start; i++)
+	{
+		iter = iter->next;
+	}
+
+	// Remove all items until the end.
+	for (i = start; i <= end; i++)
+	{
+		tmp = iter;
+
+		// Run the cleanup function on the current 
+		func(EZ_double_linked_list_Remove(list, iter));
+		iter = tmp->next;
+	}
+}
+
+//
+// Double Linked List - Removes an item from a linked list by its payload.
+//
+void *EZ_double_linked_list_RemoveByPayload(ez_double_linked_list_t *list, void *payload)
+{
+	ez_dllist_node_t *node = EZ_double_linked_list_FindByPayload(list, payload);
+	return EZ_double_linked_list_Remove(list, node);
 }
 
 typedef void * PVOID;
@@ -136,7 +215,7 @@ typedef void * PVOID;
 //
 // Double Linked List - Orders a list.
 //
-void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare compare_function)
+void EZ_double_linked_list_Sort(ez_double_linked_list_t *list, PtFuncCompare compare_function)
 {
 	int i = 0;
 	ez_dllist_node_t *iter = NULL;
@@ -636,7 +715,7 @@ static int EZ_tree_DrawOrderFunc(const void *val1, const void *val2)
 //
 void EZ_tree_OrderDrawList(ez_tree_t *tree)
 {
-	EZ_double_linked_list_Order(&tree->drawlist, EZ_tree_DrawOrderFunc);
+	EZ_double_linked_list_Sort(&tree->drawlist, EZ_tree_DrawOrderFunc);
 }
 
 //
@@ -655,7 +734,7 @@ static int EZ_tree_TabOrderFunc(const void *val1, const void *val2)
 //
 void EZ_tree_OrderTabList(ez_tree_t *tree)
 {
-	EZ_double_linked_list_Order(&tree->tablist, EZ_tree_TabOrderFunc);
+	EZ_double_linked_list_Sort(&tree->tablist, EZ_tree_TabOrderFunc);
 }
 
 // =========================================================================================
