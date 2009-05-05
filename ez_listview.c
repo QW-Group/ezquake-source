@@ -114,7 +114,12 @@ void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *sub_i
 //
 void EZ_listview_RemoveItemByIndex(ez_listview_t *self, int index)
 {
-
+	ez_listviewitem_t *item = EZ_double_linked_list_RemoveByIndex(&self->items, index);
+	
+	if (item != NULL)
+	{
+		EZ_listviewitem_Destroy((ez_control_t *)item, true);
+	}
 }
 
 //
@@ -122,15 +127,55 @@ void EZ_listview_RemoveItemByIndex(ez_listview_t *self, int index)
 //
 void EZ_listview_RemoveItemByPayload(ez_listview_t *self, void *payload)
 {
-
+	ez_listviewitem_t *item = EZ_double_linked_list_RemoveByPayload(&self->items, payload);
+	
+	if (item != NULL)
+	{
+		EZ_listviewitem_Destroy((ez_control_t *)item, true);
+	}
 }
 
 //
-// Listview - Sorts the listview items by a specified column.
+// Listview - Cleans up a listview item when it is removed in a range.
 //
-void EZ_listview_SortByColumn(ez_listview_t *self, int column)
+static void EZ_listview_CleanupRangeItem(void *payload)
 {
+	if (payload != NULL)
+	{
+		ez_listviewitem_t *item = (ez_listviewitem_t *)payload;
+		EZ_listviewitem_Destroy((ez_control_t *)item, true);
+	}
+}
 
+//
+// Listview - Removes a range of items from a listview.
+//
+void EZ_listview_RemoveRange(ez_listview_t *self, int start, int end)
+{
+	EZ_double_linked_list_RemoveRange(&self->items, start, end, EZ_listview_CleanupRangeItem);
+}
+
+//
+// Listview - Compares two columns to each other (based on the sort column set in the listview object they are related with).
+//
+static int EZ_listview_ColumnCompareFunc(const void *it1, const void *it2)
+{
+	int sci;
+	int res = 0;
+	ez_listviewitem_t *lvi1 = GET_LISTVIEW_ITEM(it1);
+	ez_listviewitem_t *lvi2 = GET_LISTVIEW_ITEM(it2);
+	ez_listview_t *lv = (ez_listview_t *)lvi1->super.parent; // We assume the item has a listview as parent, otherwise something is wrong.
+
+	sci = lv->sort_column_index;
+
+	if (sci < 0 || sci >= COLUMN_COUNT)
+	{
+		return 0;
+	}
+
+	res = strcmp(lvi1->items[sci]->text, lvi2->items[sci]->text);
+
+	return (lv->sort_ascending) ? res : -res;
 }
 
 //
@@ -138,6 +183,15 @@ void EZ_listview_SortByColumn(ez_listview_t *self, int column)
 //
 void EZ_listview_SortByUserFunc(ez_listview_t *self, PtFuncCompare compare_function)
 {
+	EZ_double_linked_list_Sort(&self->items, EZ_listview_ColumnCompareFunc);
+}
+
+//
+// Listview - Sorts the listview items by a specified column.
+//
+void EZ_listview_SortByColumn(ez_listview_t *self, int column)
+{
+	EZ_listview_SortByUserFunc(self, EZ_listview_ColumnCompareFunc);
 }
 
 //

@@ -48,6 +48,8 @@ typedef struct ez_listview_s
 
 	ez_double_linked_list_t	items;				// The listview items.
 	int						item_height;		// The height of the listview items.
+	int						sort_column_index;	// The index of the column that we should sort by.
+	qbool					sort_ascending;		// Sort ascending or descending when sorting by column?
 
 	int						override_count;		// These are needed so that subclasses can override listview specific events.
 	int						inheritance_level;
@@ -73,6 +75,46 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 // Listview - Destroys a listview.
 //
 int EZ_listview_Destroy(ez_control_t *self, qbool destroy_children);
+
+//
+// Listview - Adds a listview item to the listview. Expects an array of column items as argument (and a count of how many).
+//
+void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *sub_items, int subitem_count, void *payload);
+
+//
+// Listview - Removes an item at a specific index.
+//
+void EZ_listview_RemoveItemByIndex(ez_listview_t *self, int index);
+
+//
+// Listview - Removes an item with a specific payload.
+//
+void EZ_listview_RemoveItemByPayload(ez_listview_t *self, void *payload);
+
+//
+// Listview - Removes a range of items from a listview.
+//
+void EZ_listview_RemoveRange(ez_listview_t *self, int start, int end);
+
+// 
+// Convenience macro for getting the listview items from a void pointer in comparison functions.
+//
+#define GET_LISTVIEW_ITEM(lnode) ((ez_listviewitem_t *)( (ez_dllist_node_t *)(lnode))->payload)
+
+//
+// Listview - Sorts the list view by a user supplied function. (The listview items will have the listview as a parent).
+//
+void EZ_listview_SortByUserFunc(ez_listview_t *self, PtFuncCompare compare_function);
+
+//
+// Listview - Sorts the listview items by a specified column.
+//
+void EZ_listview_SortByColumn(ez_listview_t *self, int column);
+
+//
+// Listview - The text changed in one of the listviews items columns.
+//
+int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, void *ext_event_info);
 
 #endif // __EZ_LISTVIEW_H__
 
