@@ -31,6 +31,24 @@ $Id: ez_listview.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 #endif
 
 //
+// Listview - 
+//
+static int EZ_listview_OnHeaderMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	int column = (int)payload;
+	ez_listview_t *listview = (ez_listview_t *)self;
+
+	// Change the sorting.
+	listview->sort_ascending = !listview->sort_ascending;
+	EZ_listview_SetSortColumn(listview, column);
+
+	// Sort!
+	EZ_listview_SortByColumn(listview);
+
+	return 0;
+}
+
+//
 // Listview - Creates a new listview and initializes it.
 //
 ez_listview_t *EZ_listview_Create(ez_tree_t *tree, ez_control_t *parent,
@@ -62,6 +80,8 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 							  int x, int y, int width, int height,
 							  ez_control_flags_t flags)
 {
+	int i;
+	ez_listview_subitem_t subitem;
 	ez_control_t *listview_ctrl	= (ez_control_t *)listview;
 
 	// Initialize the inherited class first.
@@ -70,6 +90,34 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 	((ez_control_t *)listview)->CLASS_ID		= EZ_LISTVIEW_ID;
 	((ez_control_t *)listview)->ext_flags		|= (flags | control_focusable | control_contained | control_resizeable);
 
+	// Create the header controls and set their text to "" to start with.
+	{
+		listview->header = EZ_listviewitem_Create(listview_ctrl->control_tree, listview_ctrl, "List view header", "", 
+									0, 0, listview_ctrl->width, 8, 0);
+
+		subitem.payload = NULL;
+		subitem.text = "";
+
+		for (i = 0; i < LISTVIEW_COLUMN_COUNT; i++)
+		{
+			EZ_listviewitem_AddColumn(listview->header, subitem, 30);
+
+			// Pass the column index as payload (so we know what column to sort by when a header is clicked).
+			EZ_control_AddOnMouseClick((ez_control_t *)listview->header, (void *)i, EZ_listview_OnHeaderMouseClick);
+		}
+	}
+}
+
+//
+// Listview - Cleans up a listview item when it is removed in a range.
+//
+static void EZ_listview_CleanupRangeItem(void *payload)
+{
+	if (payload != NULL)
+	{
+		ez_listviewitem_t *item = (ez_listviewitem_t *)payload;
+		EZ_listviewitem_Destroy((ez_control_t *)item, true);
+	}
 }
 
 //
@@ -82,8 +130,9 @@ int EZ_listview_Destroy(ez_control_t *self, qbool destroy_children)
 
 	// TODO : Remove any event handlers.
 
-	// TODO : Cleanup listview items.
-
+	// Cleanup listview items.
+	EZ_double_linked_list_RemoveRange(&listview->items, 0, listview->items.count - 1, EZ_listview_CleanupRangeItem);
+	
 	EZ_control_Destroy(self, destroy_children);
 
 	return 0;
@@ -107,6 +156,19 @@ void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *sub_i
 	}
 
 	EZ_double_linked_list_Add(&self->items, (void *)item);
+}
+
+//
+// Listview - Set the text of the header.
+//
+void EZ_listview_SetHeaderText(ez_listview_t *self, int column, const char *text)
+{
+	if (column < 0 || column >= LISTVIEW_COLUMN_COUNT)
+	{
+		return;
+	}
+
+	EZ_label_SetText(self->header->items[column], text);
 }
 
 //
@@ -136,18 +198,6 @@ void EZ_listview_RemoveItemByPayload(ez_listview_t *self, void *payload)
 }
 
 //
-// Listview - Cleans up a listview item when it is removed in a range.
-//
-static void EZ_listview_CleanupRangeItem(void *payload)
-{
-	if (payload != NULL)
-	{
-		ez_listviewitem_t *item = (ez_listviewitem_t *)payload;
-		EZ_listviewitem_Destroy((ez_control_t *)item, true);
-	}
-}
-
-//
 // Listview - Removes a range of items from a listview.
 //
 void EZ_listview_RemoveRange(ez_listview_t *self, int start, int end)
@@ -168,7 +218,7 @@ static int EZ_listview_ColumnCompareFunc(const void *it1, const void *it2)
 
 	sci = lv->sort_column_index;
 
-	if (sci < 0 || sci >= COLUMN_COUNT)
+	if (sci < 0 || sci >= LISTVIEW_COLUMN_COUNT)
 	{
 		return 0;
 	}
@@ -189,9 +239,17 @@ void EZ_listview_SortByUserFunc(ez_listview_t *self, PtFuncCompare compare_funct
 //
 // Listview - Sorts the listview items by a specified column.
 //
-void EZ_listview_SortByColumn(ez_listview_t *self, int column)
+void EZ_listview_SortByColumn(ez_listview_t *self)
 {
 	EZ_listview_SortByUserFunc(self, EZ_listview_ColumnCompareFunc);
+}
+
+//
+// Listview - Set the column to sort by.
+//
+void EZ_listview_SetSortColumn(ez_listview_t *self, int column)
+{
+	self->sort_column_index = column;
 }
 
 //

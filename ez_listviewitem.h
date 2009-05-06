@@ -29,7 +29,7 @@ $Id: ez_listviewitem.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // Listview item
 // =========================================================================================
 
-#define COLUMN_COUNT	32
+#define LISTVIEW_COLUMN_COUNT	32
 
 typedef struct ez_listview_subitem_s
 {
@@ -79,14 +79,13 @@ typedef struct ez_listviewitem_s
 	ez_listviewitem_eventcount_t	inherit_levels;
 	ez_listviewitem_eventcount_t	override_counts;
 
-	ez_label_t				*items[COLUMN_COUNT];			// The sub items (what's shown in the columns).
-	int						item_count;						// 
-	//ez_double_linked_list_t	subitems;					// The sub items (what's shown in the columns).
-	int						item_gap;						// The gap between two controls.
-	int						item_widths[COLUMN_COUNT];		// The width of the sub items.
-	qbool					item_visibile[COLUMN_COUNT];	// Which columns are visible?
+	ez_label_t				*items[LISTVIEW_COLUMN_COUNT];			// The sub items (what's shown in the columns).
+	int						item_count;								// 
+	int						item_gap;								// The gap between two controls.
+	int						item_widths[LISTVIEW_COLUMN_COUNT];		// The width of the sub items.
+	qbool					item_visibile[LISTVIEW_COLUMN_COUNT];	// Which columns are visible?
 
-	int						override_count;					// These are needed so that subclasses can override listview specific events.
+	int						override_count;							// These are needed so that subclasses can override listview specific events.
 	int						inheritance_level;
 } ez_listviewitem_t;
 

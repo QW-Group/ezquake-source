@@ -46,8 +46,12 @@ typedef struct ez_listview_s
 	ez_scrollpane_t			super;				// The super class
 												// (we inherit a scrollpane instead of a normal control so we get scrolling also)
 
+	ez_listviewitem_t		*header;			// The header row control of the listview.
 	ez_double_linked_list_t	items;				// The listview items.
 	int						item_height;		// The height of the listview items.
+	int						col_gap;			// The gap to use between columns.
+	int						row_gap;			// The gap to use between rows.
+
 	int						sort_column_index;	// The index of the column that we should sort by.
 	qbool					sort_ascending;		// Sort ascending or descending when sorting by column?
 
@@ -109,12 +113,22 @@ void EZ_listview_SortByUserFunc(ez_listview_t *self, PtFuncCompare compare_funct
 //
 // Listview - Sorts the listview items by a specified column.
 //
-void EZ_listview_SortByColumn(ez_listview_t *self, int column);
+void EZ_listview_SortByColumn(ez_listview_t *self);
+
+//
+// Listview - Set the column to sort by.
+//
+void EZ_listview_SetSortColumn(ez_listview_t *self, int column);
 
 //
 // Listview - The text changed in one of the listviews items columns.
 //
 int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview - Set the text of the header.
+//
+void EZ_listview_SetHeaderText(ez_listview_t *self, int column, const char *text);
 
 #endif // __EZ_LISTVIEW_H__
 
