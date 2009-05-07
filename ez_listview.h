@@ -41,14 +41,47 @@ typedef struct ez_listview_changeinfo_s
 	void *payload;						// The user associated payload associated with this listview item (the entire row, not just the column).
 } ez_listview_changeinfo_t;
 
+typedef struct ez_listview_eventcount_s
+{
+	int OnItemAdded;
+	int OnRowGapChanged;
+	int OnColumnGapChanged;
+	int OnColumnWidthChanged;
+	int OnRowHeightChanged;
+} ez_listview_eventcount_t;
+
+typedef struct ez_listview_events_s
+{
+	ez_event_fp OnItemAdded;			// When an item is added to the listview.
+	ez_event_fp OnRowGapChanged;		// The row gap has changed.
+	ez_event_fp OnColumnGapChanged;		// The column gap has changed.
+	ez_event_fp OnColumnWidthChanged;	// The width of a column has changed.
+	ez_event_fp OnRowHeightChanged;		// The height of the rows has been changed.
+} ez_listview_events_t;
+
+typedef struct ez_listview_eventhandlers_s
+{
+	ez_eventhandler_t	*OnItemAdded;
+	ez_eventhandler_t	*OnRowGapChanged;
+	ez_eventhandler_t	*OnColumnGapChanged;
+	ez_eventhandler_t	*OnColumnWidthChanged;
+	ez_eventhandler_t	*OnRowHeightChanged;
+} ez_listview_eventhandlers_t;
+
 typedef struct ez_listview_s
 {
 	ez_scrollpane_t			super;				// The super class
 												// (we inherit a scrollpane instead of a normal control so we get scrolling also)
 
+	ez_listview_events_t	events;				// Specific events for the listview control.
+	ez_listview_eventhandlers_t event_handlers;	// Specific event handlers for the listview control.
+	ez_listview_eventcount_t inherit_levels;
+	ez_listview_eventcount_t override_counts;
+
 	ez_listviewitem_t		*header;			// The header row control of the listview.
 	ez_double_linked_list_t	items;				// The listview items.
-	int						item_height;		// The height of the listview items.
+	int						row_height;			// The height of the listview rows.
+	int						col_widths[LISTVIEW_COLUMN_COUNT];	// The widths of the  items.
 	int						col_gap;			// The gap to use between columns.
 	int						row_gap;			// The gap to use between rows.
 
@@ -129,6 +162,56 @@ int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, void *ext_event_info
 // Listview - Set the text of the header.
 //
 void EZ_listview_SetHeaderText(ez_listview_t *self, int column, const char *text);
+
+//
+// Listview - On Resize event handler.
+//
+int EZ_listview_OnResize(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview - An item was added to the listview.
+//
+int EZ_listview_OnItemAdded(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview - Sets the column gap size of the listview.
+//
+void EZ_listview_SetColumnGap(ez_listview_t *self, int gap);
+
+//
+// Listview - Sets the row gap size of the listview.
+//
+void EZ_listview_SetRowGap(ez_listview_t *self, int gap);
+
+//
+// Listview - The column gap size has changed.
+//
+int EZ_listview_OnColumnGapChanged(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview - The row gap size has changed.
+//
+int EZ_listview_OnRowGapChanged(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview - Set the width of a column.
+//
+void EZ_listview_SetColumnWidth(ez_listview_t *self, int column, int width);
+
+//
+// Listview - The width of a column has changed.
+//
+int EZ_listview_OnColumnWidthChanged(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview - Set the width of a column.
+//
+void EZ_listview_SetRowHeight(ez_listview_t *self, int row_height);
+
+//
+// Listview - The height of the rows has changed.
+//
+int EZ_listview_OnRowHeightChanged(ez_control_t *self, void *ext_event_info);
 
 #endif // __EZ_LISTVIEW_H__
 

@@ -74,6 +74,9 @@ void EZ_listviewitem_Init(ez_listviewitem_t *listviewitem, ez_tree_t *tree, ez_c
 	// Listview item specific events.
 	CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnColumnAdded, OnColumnAdded, ez_listviewitem_t);
 	CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnColumnVisibilityChanged, OnColumnVisibilityChanged, ez_listviewitem_t);
+	CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnColumnGapChanged, OnColumnGapChanged, ez_listviewitem_t);
+	CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnColumnWidthChanged, OnColumnWidthChanged, ez_listviewitem_t);
+	
 	//CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnSubItemChanged, OnSubItemChanged, ez_listviewitem_t);
 }
 
@@ -120,6 +123,7 @@ void EZ_listviewitem_AddColumn(ez_listviewitem_t *self, ez_listview_subitem_t da
 	// Create a new label to use as the column.
 	label = EZ_label_Create(ctrl->control_tree, ctrl, "Listview item column", "", 0, 0, width, 5, 0, 0, data.text);
 	EZ_control_SetPayload(ctrl, data.payload);
+	EZ_control_SetAnchor(ctrl, anchor_left | anchor_top | anchor_bottom);
 
 	// Add the item to the columns.
 	self->items[self->item_count] = label;
@@ -134,10 +138,10 @@ void EZ_listviewitem_AddColumn(ez_listviewitem_t *self, ez_listview_subitem_t da
 //
 int EZ_listviewitem_OnColumnAdded(ez_control_t *self, void *column)
 {
-	ez_listviewitem_t *listview = (ez_listviewitem_t *)self;
-	EZ_listviewitem_LayoutControl(listview);
+	ez_listviewitem_t *lvi = (ez_listviewitem_t *)self;
+	EZ_listviewitem_LayoutControl(lvi);
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, listview, ez_listviewitem_t, OnColumnAdded, column);
+	CONTROL_EVENT_HANDLER_CALL(NULL, lvi, ez_listviewitem_t, OnColumnAdded, column);
 	// TODO: Layout the control again if some mischevaous event handler changed the size/position of the columns? :D
 
 	return 0;
@@ -188,7 +192,7 @@ void EZ_listviewitem_SetColumnVisible(ez_listviewitem_t *self, int column, qbool
 	self->item_visibile[column] = visible;
 	EZ_control_SetVisible((ez_control_t *)self->items[column], visible);
 
-	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnColumnVisibilityChanged, &column);
+	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnColumnVisibilityChanged, (void *)column);
 }
 
 //
@@ -197,6 +201,55 @@ void EZ_listviewitem_SetColumnVisible(ez_listviewitem_t *self, int column, qbool
 int EZ_listviewitem_OnColumnVisibilityChanged(ez_control_t *self, void *column)
 {
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_listviewitem_t, OnColumnVisibilityChanged, column);
+	return 0;
+}
+
+//
+// Listview item - Sets the gap between columns.
+//
+void EZ_listviewitem_SetColumnGap(ez_listviewitem_t *self, int gap)
+{
+	self->item_gap = gap;
+
+	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnColumnGapChanged, NULL);
+}
+
+//
+// Listview item - Event for when the column gap has changed.
+//
+int EZ_listviewitem_OnColumnGapChanged(ez_control_t *self, void *ext_event_info)
+{
+	ez_listviewitem_t *lvi = (ez_listviewitem_t *)self;
+	EZ_listviewitem_LayoutControl(lvi);
+	
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_listviewitem_t, OnColumnGapChanged, NULL);
+	return 0;
+}
+
+//
+// Listview item - Sets the column width for a given column.
+//
+void EZ_listviewitem_SetColumnWidth(ez_listviewitem_t *self, int column, int width)
+{
+	if (!VALID_COLUMN(column))
+		return;
+
+	self->item_widths[column] = width;
+
+	CONTROL_RAISE_EVENT(NULL, self, ez_listviewitem_t, OnColumnWidthChanged, (void *)column);
+}
+
+//
+// Listview item - The column width has changed for some column.
+//
+int EZ_listviewitem_OnColumnWidthChanged(ez_control_t *self, void *ext_event_info)
+{
+	ez_listviewitem_t *lvi = (ez_listviewitem_t *)self;
+	int column = (int)ext_event_info;
+
+	EZ_control_SetSize(self, lvi->item_widths[column], self->height);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, lvi, ez_listviewitem_t, OnColumnWidthChanged, ext_event_info);
 	return 0;
 }
 

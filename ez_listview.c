@@ -31,7 +31,32 @@ $Id: ez_listview.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 #endif
 
 //
-// Listview - 
+// Listview - Lays out the control.
+//
+static void EZ_listview_Layout(ez_listview_t *self)
+{
+	ez_dllist_node_t *it = (self->sort_ascending ? self->items.head : self->items.tail);
+	ez_control_t *lvi = NULL;
+	int y = 0;
+
+	// Make sure the header hasn't moved.
+	EZ_control_SetPosition((ez_control_t *)self->header, 0, 0);
+	y += ((ez_control_t *)self->header)->height + self->row_gap;
+
+	// Position all the listview items according to the sort order.
+	while ((self->sort_ascending ? it->next : it->previous))
+	{
+		lvi = (ez_control_t *)it->payload;
+		
+		EZ_control_SetPosition(lvi, 0, y);
+		y += lvi->height + self->row_gap;
+
+		it = (self->sort_ascending ? it->next : it->previous);
+	}
+}
+
+//
+// Listview - On Mouse Click event handler for when a header label is clicked.
 //
 static int EZ_listview_OnHeaderMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
 {
@@ -44,6 +69,8 @@ static int EZ_listview_OnHeaderMouseClick(ez_control_t *self, void *payload, mou
 
 	// Sort!
 	EZ_listview_SortByColumn(listview);
+
+	EZ_listview_Layout(listview);
 
 	return 0;
 }
@@ -90,21 +117,40 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 	((ez_control_t *)listview)->CLASS_ID		= EZ_LISTVIEW_ID;
 	((ez_control_t *)listview)->ext_flags		|= (flags | control_focusable | control_contained | control_resizeable);
 
-	// Create the header controls and set their text to "" to start with.
+	// Overridden events.
+	CONTROL_REGISTER_EVENT(listview_ctrl, EZ_listview_OnResize, OnResize, ez_control_t);
+
+	// Listview specific events.
+	CONTROL_REGISTER_EVENT(listview, EZ_listview_OnItemAdded, OnItemAdded, ez_listview_t);
+	CONTROL_REGISTER_EVENT(listview, EZ_listview_OnRowGapChanged, OnRowGapChanged, ez_listview_t);
+	CONTROL_REGISTER_EVENT(listview, EZ_listview_OnColumnGapChanged, OnColumnGapChanged, ez_listview_t);
+	CONTROL_REGISTER_EVENT(listview, EZ_listview_OnColumnWidthChanged, OnColumnWidthChanged, ez_listview_t);
+	CONTROL_REGISTER_EVENT(listview, EZ_listview_OnRowHeightChanged, OnRowHeightChanged, ez_listview_t);
+
+	// Create the header listviewitem and add subitems to it and set their text to "" to start with.
 	{
+		ez_label_t *curlabel = NULL;
 		listview->header = EZ_listviewitem_Create(listview_ctrl->control_tree, listview_ctrl, "List view header", "", 
 									0, 0, listview_ctrl->width, 8, 0);
 
 		subitem.payload = NULL;
 		subitem.text = "";
 
+		// Init the labels in the header list view item.
 		for (i = 0; i < LISTVIEW_COLUMN_COUNT; i++)
 		{
 			EZ_listviewitem_AddColumn(listview->header, subitem, 30);
+			curlabel = listview->header->items[i];
 
 			// Pass the column index as payload (so we know what column to sort by when a header is clicked).
-			EZ_control_AddOnMouseClick((ez_control_t *)listview->header, (void *)i, EZ_listview_OnHeaderMouseClick);
+			EZ_control_AddOnMouseClick((ez_control_t *)curlabel, (void *)i, EZ_listview_OnHeaderMouseClick);
+			
+			EZ_label_SetReadOnly(curlabel, true);
+			EZ_label_SetAutoSize(curlabel, false);
+			EZ_label_SetTextSelectable(curlabel, false);
 		}
+
+		// TODO: Add ez_control_t's that will act as resize handles between the column headers.
 	}
 }
 
@@ -148,7 +194,7 @@ void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *sub_i
 	ez_listviewitem_t *item;
 	
 	item = EZ_listviewitem_Create(ctrl_lstview->control_tree, ctrl_lstview, "List view item", "", 
-								0, 0, ctrl_lstview->width, self->item_height, 0);
+								0, 0, ctrl_lstview->width, self->row_height, 0);
 
 	for (i = 0; i < subitem_count; i++)
 	{
@@ -156,6 +202,23 @@ void EZ_listview_AddItem(ez_listview_t *self, const ez_listview_subitem_t *sub_i
 	}
 
 	EZ_double_linked_list_Add(&self->items, (void *)item);
+
+	CONTROL_RAISE_EVENT(NULL, self, ez_listview_t, OnItemAdded, NULL)
+}
+
+//
+// Listview - An item was added to the listview.
+//
+int EZ_listview_OnItemAdded(ez_control_t *self, void *ext_event_info)
+{
+	ez_listview_t *listview = (ez_listview_t *)self;
+
+	// TODO: Maybe we should allow you to supress layout while adding a bunch of items.
+	EZ_listview_Layout(listview);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, listview, ez_listview_t, OnItemAdded, NULL);
+
+	return 0;
 }
 
 //
@@ -225,7 +288,7 @@ static int EZ_listview_ColumnCompareFunc(const void *it1, const void *it2)
 
 	res = strcmp(lvi1->items[sci]->text, lvi2->items[sci]->text);
 
-	return (lv->sort_ascending) ? res : -res;
+	return res; // (lv->sort_ascending) ? res : -res; // HMM! Nevermind this, since we're using a double linked list to store the listview items we can just layout them from tail -> head instead of doing a sort :)
 }
 
 //
@@ -262,5 +325,156 @@ int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, void *ext_event_info
 	return 0;
 }
 
+//
+// Listview - OnResize event handler.
+//
+int EZ_listview_OnResize(ez_control_t *self, void *ext_event_info)
+{
+	ez_listview_t *listview = (ez_listview_t *)self;
+
+	// Run the super class implementation.
+	EZ_scrollpane_OnResize(self, ext_event_info);
+
+	//EZ_listview_Layout(listview);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, ez_control_t, OnResize, NULL);
+
+	return 0;
+}
+
+//
+// Listview - Sets the row gap size of the listview.
+//
+void EZ_listview_SetRowGap(ez_listview_t *self, int gap)
+{
+	self->row_gap = gap;
+	EZ_listview_Layout(self);
+
+	CONTROL_RAISE_EVENT(NULL, self, ez_listview_t, OnRowGapChanged, NULL);
+}
+
+//
+// Listview - The row gap size has changed.
+//
+int EZ_listview_OnRowGapChanged(ez_control_t *self, void *ext_event_info)
+{
+	ez_listview_t *listview = (ez_listview_t *)self;
+
+	EZ_listview_Layout(listview);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, listview, ez_listview_t, OnRowGapChanged, ext_event_info);
+
+	return 0;
+}
+
+//
+// Listview - Sets the column gap size of the listview.
+//
+void EZ_listview_SetColumnGap(ez_listview_t *self, int gap)
+{
+	self->col_gap = gap;
+	CONTROL_RAISE_EVENT(NULL, self, ez_listview_t, OnRowGapChanged, NULL);
+}
+
+//
+// Listview - The column gap size has changed.
+//
+int EZ_listview_OnColumnGapChanged(ez_control_t *self, void *ext_event_info)
+{
+	ez_listview_t *listview = (ez_listview_t *)self;
+	ez_dllist_node_t *it = listview->items.head;
+	ez_listviewitem_t *lvi = NULL;
+
+	// Update all listview items to know about the new gap size.
+	if (listview->items.count > 0)
+	{
+		while (it->next)
+		{
+			lvi = (ez_listviewitem_t *)it->payload;
+
+			EZ_listviewitem_SetColumnGap(lvi, listview->col_gap);
+
+			it = it->next;
+		}
+	}
+
+	EZ_listview_Layout(listview);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, listview, ez_listview_t, OnColumnGapChanged, ext_event_info);
+
+	return 0;
+}
+
+//
+// Listview - Set the width of a column.
+//
+void EZ_listview_SetColumnWidth(ez_listview_t *self, int column, int width)
+{
+	ez_listview_t *listview = (ez_listview_t *)self;
+
+	if (column < 0 || column >= LISTVIEW_COLUMN_COUNT)
+		return;
+
+	self->col_widths[column] = width;
+
+	CONTROL_RAISE_EVENT(NULL, listview, ez_listview_t, OnColumnWidthChanged, (void *)column);
+}
+
+//
+// Listview - The width of a column has changed.
+//
+int EZ_listview_OnColumnWidthChanged(ez_control_t *self, void *ext_event_info)
+{
+	ez_listview_t *listview = (ez_listview_t *)self;
+	ez_dllist_node_t *it = listview->items.head;
+	ez_listviewitem_t *lvi = NULL;
+	int column = (int)ext_event_info;
+
+	if (listview->items.count > 0)
+	{
+		while (it->next)
+		{
+			lvi = (ez_listviewitem_t *)it->payload;
+			EZ_listviewitem_SetColumnWidth(lvi, column, listview->col_widths[column]);
+			it = it->next;
+		}
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, listview, ez_listview_t, OnColumnWidthChanged, ext_event_info);
+	return 0;
+}
+
+//
+// Listview - Set the width of a column.
+//
+void EZ_listview_SetRowHeight(ez_listview_t *self, int row_height)
+{
+	self->row_height = row_height;
+
+	CONTROL_RAISE_EVENT(NULL, self, ez_listview_t, OnRowHeightChanged, NULL);
+}
+
+//
+// Listview - The height of the rows has changed.
+//
+int EZ_listview_OnRowHeightChanged(ez_control_t *self, void *ext_event_info)
+{
+	ez_listview_t *listview = (ez_listview_t *)self;
+	ez_dllist_node_t *it = listview->items.head;
+	ez_control_t *lvi = NULL;
+
+	if (listview->items.count > 0)
+	{
+		while (it->next)
+		{
+			lvi = (ez_control_t *)it->payload;
+			EZ_control_SetSize(lvi, lvi->width, lvi->height);
+			it = it->next;
+		}
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, listview, ez_listview_t, OnRowHeightChanged, ext_event_info);
+	return 0;
+}
 
 

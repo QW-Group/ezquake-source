@@ -52,6 +52,8 @@ typedef struct ez_listviewitem_eventcount_s
 {
 	int OnColumnAdded;
 	int OnColumnVisibilityChanged;
+	int OnColumnGapChanged;
+	int OnColumnWidthChanged;
 	//int OnSubItemChanged;
 } ez_listviewitem_eventcount_t;
 
@@ -59,6 +61,8 @@ typedef struct ez_listviewitem_events_s
 {
 	ez_event_fp OnColumnAdded;
 	ez_event_fp	OnColumnVisibilityChanged;
+	ez_event_fp OnColumnGapChanged;
+	ez_event_fp OnColumnWidthChanged;
 	//ez_event_fp OnSubItemChanged;
 } ez_listviewitem_events_t;
 
@@ -66,6 +70,8 @@ typedef struct ez_listviewitem_eventhandlers_s
 {
 	ez_eventhandler_t *OnColumnAdded;
 	ez_eventhandler_t *OnColumnVisibilityChanged;
+	ez_eventhandler_t *OnColumnGapChanged;
+	ez_eventhandler_t *OnColumnWidthChanged;
 	//ez_eventhandler_t *OnSubItemChanged;
 } ez_listviewitem_eventhandlers_t;
 
@@ -144,6 +150,26 @@ void EZ_listviewitem_SetColumnVisible(ez_listviewitem_t *self, int column, qbool
 // Listview item - A sub items text has changed.
 //
 int EZ_listviewitem_OnSubItemChanged(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview item - Event for when the column gap has changed.
+//
+int EZ_listviewitem_OnColumnGapChanged(ez_control_t *self, void *ext_event_info);
+
+//
+// Listview item - Sets the gap between columns.
+//
+void EZ_listviewitem_SetColumnGap(ez_listviewitem_t *self, int gap);
+
+//
+// Listview item - Sets the column width for a given column.
+//
+void EZ_listviewitem_SetColumnWidth(ez_listviewitem_t *self, int column, int width);
+
+//
+// Listview item - The column width has changed for some column.
+//
+int EZ_listviewitem_OnColumnWidthChanged(ez_control_t *self, void *ext_event_info);
 
 #endif // __EZ_LISTVIEWITEM_H__
 
