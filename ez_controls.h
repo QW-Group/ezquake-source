@@ -208,7 +208,7 @@ void EZ_double_linked_list_Add(ez_double_linked_list_t *list, void *payload);
 //
 // Double Linked List - Finds a given node based on the specified payload.
 //
-ez_dllist_node_t *EZ_double_linked_list_FindByPayload(const ez_double_linked_list_t *list, void *payload);
+ez_dllist_node_t *EZ_double_linked_list_FindByPayload(const ez_double_linked_list_t *list, const void *payload);
 
 //
 // Double Linked List - Find a item by its index.
