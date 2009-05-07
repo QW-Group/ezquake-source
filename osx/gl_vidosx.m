@@ -52,6 +52,9 @@
 #import "Quake.h"
 #import "QuakeView.h"
 #import "FDGLScreenshot.h"
+#import "gl_local.h"
+
+const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
 
 #pragma mark -
 
@@ -691,6 +694,8 @@ void	VID_Init (unsigned char *thePalette)
 {
     char		myGLDir[MAX_OSPATH];
     UInt		i;
+	
+	qglGetString = glGetString;
 
     // register miscelanous vars:
     Cvar_Register (&vid_mode);
@@ -860,6 +865,8 @@ void	VID_Shutdown (void)
             [gVidWindow release];
         }
     }
+	
+	qglGetString = NULL;
 }
 
 //______________________________________________________________________________________________________________VID_MenuDraw()
