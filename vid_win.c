@@ -65,7 +65,7 @@ static qbool	vid_initialized = false, vid_palettized;
 static int		lockcount;
 static int		vid_fulldib_on_focus_mode;
 static qbool	force_minimized, in_mode_set, is_mode0x13, force_mode_set;
-static int		vid_stretched, windowed_mouse;
+static int		windowed_mouse;
 static qbool	palette_changed, syscolchg, vid_mode_set, hide_window, pal_is_nostatic;
 static HICON	hIcon;
 extern qbool	mouseactive; // from in_win.c
@@ -76,6 +76,8 @@ extern qbool	mouseactive; // from in_win.c
 #define MODE_FULLSCREEN_DEFAULT	(MODE_WINDOWED + 3)
 
 void OnChange_vid_windowed(struct cvar_s *var, char *value, qbool *cancel);
+void OnChange_vid_stretch_x(struct cvar_s *var, char *value, qbool *cancel);
+void OnChange_vid_stretch_y(struct cvar_s *var, char *value, qbool *cancel);
 
 cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
 
@@ -84,9 +86,8 @@ qbool		allow_flash = false;
 cvar_t		vid_mode = {"vid_mode", "3"};											// Note that 3 is MODE_FULLSCREEN_DEFAULT
 cvar_t		_vid_default_mode = {"_vid_default_mode", "3", CVAR_ARCHIVE};			// Note that 3 is MODE_FULLSCREEN_DEFAULT
 cvar_t		vid_nopageflip = {"vid_nopageflip", "0", CVAR_ARCHIVE};
-cvar_t		vid_config_x = {"vid_config_x", "320", CVAR_ARCHIVE};
-cvar_t		vid_config_y = {"vid_config_y", "200", CVAR_ARCHIVE};
-cvar_t		vid_stretch_by_2 = {"vid_stretch_by_2", "1", CVAR_ARCHIVE};
+cvar_t		vid_stretch_x = {"vid_stretch_x", "0", CVAR_ARCHIVE, OnChange_vid_stretch_x};
+cvar_t		vid_stretch_y = {"vid_stretch_y", "0", CVAR_ARCHIVE, OnChange_vid_stretch_y};
 cvar_t		_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};
 cvar_t		block_switch = {"block_switch", "0", CVAR_ARCHIVE};
 cvar_t		vid_window_x = {"vid_window_x", "0", CVAR_ARCHIVE};
@@ -133,11 +134,10 @@ MGLDC		*mgldc = NULL,*memdc = NULL,*dibdc = NULL,*windc = NULL;
 typedef struct 
 {
 	modestate_t	type;
-	int			width;
-	int			height;
+	int			width, actualwidth;
+	int			height, actualheight;
 	int			modenum;
 	int			mode13;
-	int			stretched;
 	int			dib;
 	int			fullscreen;
 	int			bpp;
@@ -355,9 +355,9 @@ void registerAllMemDrivers(void)
 static void AddModeDesc(vmode_t *mode) 
 {
 	if (mode->frequency)
-		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d@%d", mode->stretched ? mode->width << 1 : mode->width, mode->stretched ? mode->height << 1 : mode->height, mode->frequency);
+		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d@%d", mode->width, mode->height, mode->frequency);
 	else
-		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d", mode->stretched ? mode->width << 1 : mode->width, mode->stretched ? mode->height << 1 : mode->height);
+		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d", mode->width, mode->height);
 }
 
 void VID_InitMGLFull (HINSTANCE hInstance) 
@@ -431,9 +431,8 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 				}
 
 				modelist[curmode].type = MS_FULLSCREEN;
-				modelist[curmode].width = xRes;
-				modelist[curmode].height = yRes;
-				modelist[curmode].stretched = 0;
+				modelist[curmode].width = modelist[curmode].actualwidth = xRes;
+				modelist[curmode].height = modelist[curmode].actualheight = yRes;
 				AddModeDesc(&modelist[curmode]);
 
 				if (m[i] == grVGA_320x200x256)
@@ -446,25 +445,6 @@ void VID_InitMGLFull (HINSTANCE hInstance)
 				modelist[curmode].fullscreen = 1;
 				modelist[curmode].halfscreen = 0;
 				modelist[curmode].bpp = 8;
-			}
-		}
-
-		// add stretched vid modes to end of list
-		temp = nummodes;
-		for (i = 0; i < temp; i++) {
-			if ((modelist[i].width >> 1) >= 320 && (modelist[i].height >> 1) >= 200) {
-				modelist[nummodes].type = modelist[i].type;
-				modelist[nummodes].width = modelist[i].width >> 1;
-				modelist[nummodes].height = modelist[i].height >> 1;
-				modelist[nummodes].stretched = 1;
-				AddModeDesc(&modelist[nummodes]);
-				modelist[nummodes].mode13 = modelist[i].mode13;
-				modelist[nummodes].modenum = modelist[i].modenum;
-				modelist[nummodes].dib = modelist[i].dib;
-				modelist[nummodes].fullscreen = modelist[i].fullscreen;
-				modelist[nummodes].halfscreen = modelist[i].halfscreen;
-				modelist[nummodes].bpp = modelist[i].bpp;
-				nummodes++;
 			}
 		}
 
@@ -577,36 +557,33 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 	MGL_initWindowed("");
 
 	modelist[0].type = MS_WINDOWED;
-	modelist[0].width = 320;
-	modelist[0].height = 240;
+	modelist[0].width = modelist[0].actualwidth = 320;
+	modelist[0].height = modelist[0].actualheight = 240;
 	strlcpy (modelist[0].modedesc, "320x240", sizeof (modelist[0].modedesc));
 	modelist[0].mode13 = 0;
 	modelist[0].modenum = MODE_WINDOWED;
-	modelist[0].stretched = 0;
 	modelist[0].dib = 1;
 	modelist[0].fullscreen = 0;
 	modelist[0].halfscreen = 0;
 	modelist[0].bpp = 8;
 
 	modelist[1].type = MS_WINDOWED;
-	modelist[1].width = 640;
-	modelist[1].height = 480;
+	modelist[1].width = modelist[1].actualwidth = 640;
+	modelist[1].height = modelist[1].actualheight = 480;
 	strlcpy (modelist[1].modedesc, "640x480", sizeof (modelist[1].modedesc));
 	modelist[1].mode13 = 0;
 	modelist[1].modenum = MODE_WINDOWED + 1;
-	modelist[1].stretched = 1;
 	modelist[1].dib = 1;
 	modelist[1].fullscreen = 0;
 	modelist[1].halfscreen = 0;
 	modelist[1].bpp = 8;
 
 	modelist[2].type = MS_WINDOWED;
-	modelist[2].width = 800;
-	modelist[2].height = 600;
+	modelist[2].width = modelist[2].actualwidth = 800;
+	modelist[2].height = modelist[2].actualheight = 600;
 	strlcpy (modelist[2].modedesc, "800x600", sizeof (modelist[2].modedesc));
 	modelist[2].mode13 = 0;
 	modelist[2].modenum = MODE_WINDOWED + 2;
-	modelist[2].stretched = 1;
 	modelist[2].dib = 1;
 	modelist[2].fullscreen = 0;
 	modelist[2].halfscreen = 0;
@@ -632,7 +609,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance)
 void VID_InitFullDIB (HINSTANCE hInstance) 
 {
 	DEVMODE	devmode;
-	int i, j, modenum, existingmode, originalnummodes, lowestres, numlowresmodes, bpp, done, cstretch, istretch, mstretch;
+	int i, j, modenum, existingmode, originalnummodes, lowestres, numlowresmodes, bpp, done;
 	BOOL stat;
 
 	// enumerate 8 bpp modes
@@ -652,11 +629,10 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 			if (ChangeDisplaySettings (&devmode, CDS_TEST | CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
 			{
 				modelist[nummodes].type = MS_FULLDIB;
-				modelist[nummodes].width = devmode.dmPelsWidth;
-				modelist[nummodes].height = devmode.dmPelsHeight;
+				modelist[nummodes].width = modelist[nummodes].actualwidth = devmode.dmPelsWidth;
+				modelist[nummodes].height = modelist[nummodes].actualheight = devmode.dmPelsHeight;
 				modelist[nummodes].modenum = 0;
 				modelist[nummodes].mode13 = 0;
-				modelist[nummodes].stretched = 0;
 				modelist[nummodes].halfscreen = 0;
 				modelist[nummodes].dib = 1;
 				modelist[nummodes].fullscreen = 1;
@@ -722,11 +698,10 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 				if (ChangeDisplaySettings (&devmode, CDS_TEST | CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
 				{
 					modelist[nummodes].type = MS_FULLDIB;
-					modelist[nummodes].width = devmode.dmPelsWidth;
-					modelist[nummodes].height = devmode.dmPelsHeight;
+					modelist[nummodes].width = modelist[nummodes].actualwidth = devmode.dmPelsWidth;
+					modelist[nummodes].height = modelist[nummodes].actualheight = devmode.dmPelsHeight;
 					modelist[nummodes].modenum = 0;
 					modelist[nummodes].mode13 = 0;
-					modelist[nummodes].stretched = 0;
 					modelist[nummodes].halfscreen = 0;
 					modelist[nummodes].dib = 1;
 					modelist[nummodes].fullscreen = 1;
@@ -803,11 +778,10 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 			if (ChangeDisplaySettings (&devmode, CDS_TEST | CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL) 
 			{
 					modelist[nummodes].type = MS_FULLDIB;
-					modelist[nummodes].width = devmode.dmPelsWidth;
-					modelist[nummodes].height = devmode.dmPelsHeight;
+					modelist[nummodes].width = modelist[nummodes].actualwidth = devmode.dmPelsWidth;
+					modelist[nummodes].height = modelist[nummodes].actualheight = devmode.dmPelsHeight;
 					modelist[nummodes].modenum = 0;
 					modelist[nummodes].mode13 = 0;
-					modelist[nummodes].stretched = 0;
 					modelist[nummodes].halfscreen = 0;
 					modelist[nummodes].dib = 1;
 					modelist[nummodes].fullscreen = 1;
@@ -851,39 +825,6 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 		}
 	}
 
-	// now add the lowest stretch-by-2 pseudo-modes between 320-wide (inclusive) and
-	// lowest real res (not inclusive) don't bother if we have a real VGA mode 0x13 mode
-	if (!is_mode0x13) 
-	{
-		for (i = originalnummodes, cstretch = 0; i < nummodes; i++) 
-		{
-			if ((modelist[i].width >> 1) < lowestres && (modelist[i].width >> 1) >= 320)
-			{
-				lowestres = modelist[i].width >> 1;
-				cstretch = 1;
-				mstretch = i;
-			}
-		}
-
-		if ((nummodes + cstretch) > MAX_MODE_LIST)
-			cstretch = MAX_MODE_LIST - nummodes;
-
-		if (cstretch > 0) 
-		{
-			for (i = nummodes - 1; i >= originalnummodes; i--)
-				modelist[i + cstretch] = modelist[i];
-
-			nummodes += cstretch;
-			istretch = originalnummodes;
-
-			modelist[istretch] = modelist[mstretch];
-			modelist[istretch].width >>= 1;
-			modelist[istretch].height >>= 1;
-			modelist[istretch].stretched = 1;
-			AddModeDesc(&modelist[istretch]);
-		}
-	}
-
 	if (nummodes != originalnummodes)
 		vid_default = MODE_FULLSCREEN_DEFAULT;
 	else
@@ -903,26 +844,6 @@ vmode_t *VID_GetModePtr (int modenum)
 		return &badmode;
 }
 
-void VID_CheckModedescFixup (int mode) 
-{
-	int stretch;
-
-	if (mode == MODE_SETTABLE_WINDOW) {
-		modelist[mode].stretched = (int) vid_stretch_by_2.value;
-		stretch = modelist[mode].stretched;
-
-		if (vid_config_x.value < (320 << stretch))
-			Cvar_SetValue(&vid_config_x, 320 << stretch);
-
-		if (vid_config_y.value < (200 << stretch))
-			Cvar_SetValue(&vid_config_y, 200 << stretch);
-
-		modelist[mode].width = (int) vid_config_x.value;
-		modelist[mode].height = (int) vid_config_y.value;
-		AddModeDesc(&modelist[mode]);
-	}
-}
-
 char *VID_GetModeDescriptionMemCheck (int mode) 
 {
 	char *pinfo;
@@ -930,8 +851,6 @@ char *VID_GetModeDescriptionMemCheck (int mode)
 
 	if ((mode < 0) || (mode >= nummodes))
 		return NULL;
-
-	VID_CheckModedescFixup (mode);
 
 	pv = VID_GetModePtr (mode);
 	pinfo = pv->modedesc;
@@ -950,8 +869,6 @@ char *VID_GetModeDescription (int mode)
 	if (mode < 0 || mode >= nummodes)
 		return NULL;
 
-	VID_CheckModedescFixup (mode);
-
 	pv = VID_GetModePtr (mode);
 	pinfo = pv->modedesc;
 	return pinfo;
@@ -966,7 +883,6 @@ char *VID_GetModeDescription2 (int mode)
 	if ((mode < 0) || (mode >= nummodes))
 		return NULL;
 
-	VID_CheckModedescFixup (mode);
 	pv = VID_GetModePtr (mode);
 
 	if (modelist[mode].type == MS_FULLSCREEN)
@@ -975,9 +891,6 @@ char *VID_GetModeDescription2 (int mode)
 		snprintf(pinfo, sizeof(pinfo), "%s fullscreen", pv->modedesc);
 	else
 		snprintf(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
-
-	if (modelist[mode].stretched)
-		strlcat(pinfo, " stretched", sizeof(pinfo));
 
 	return pinfo;
 }
@@ -990,8 +903,6 @@ char *VID_GetExtModeDescription (int mode)
 	if (mode < 0 || mode >= nummodes)
 		return NULL;
 
-	VID_CheckModedescFixup (mode);
-
 	pv = VID_GetModePtr (mode);
 	if (modelist[mode].type == MS_FULLSCREEN)
 		snprintf(pinfo, sizeof(pinfo), "%s fullscreen %s", pv->modedesc, MGL_modeDriverName(pv->modenum));
@@ -999,9 +910,6 @@ char *VID_GetExtModeDescription (int mode)
 		snprintf(pinfo, sizeof(pinfo), "%s fullscreen DIB", pv->modedesc);
 	else
 		snprintf(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
-
-	if (modelist[mode].stretched)
-		strlcat(pinfo, " stretched", sizeof(pinfo));
 
 	return pinfo;
 }
@@ -1049,7 +957,6 @@ qbool VID_SetWindowedMode (int modenum)
 {
 	HDC hdc;
 	pixel_format_t pf;
-	qbool stretched;
 	int lastmodestate;
 
 	if (!windowed_mode_set) 
@@ -1061,8 +968,6 @@ qbool VID_SetWindowedMode (int modenum)
 		}
 		windowed_mode_set;
 	}
-
-	VID_CheckModedescFixup (modenum);
 
 	DDActive = 0;
 	lastmodestate = modestate;
@@ -1082,17 +987,11 @@ qbool VID_SetWindowedMode (int modenum)
 
 	WindowRect.top = WindowRect.left = 0;
 
-	WindowRect.right = modelist[modenum].width;
-	WindowRect.bottom = modelist[modenum].height;
-	stretched = modelist[modenum].stretched;
+	WindowRect.right = modelist[modenum].actualwidth;
+	WindowRect.bottom = modelist[modenum].actualheight;
 
 	DIBWidth = modelist[modenum].width;
 	DIBHeight = modelist[modenum].height;
-
-	if (stretched) {
-		DIBWidth >>= 1;
-		DIBHeight >>= 1;
-	}
 
 	WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU |
 				  WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPSIBLINGS |
@@ -1184,8 +1083,6 @@ qbool VID_SetWindowedMode (int modenum)
 	vid.width = vid.conwidth = DIBWidth;
 	vid.aspect = ((float) vid.height / (float) vid.width) * (320.0 / 240.0);
 
-	vid_stretched = stretched;
-
 	SendMessage (mainwindow, WM_SETICON, (WPARAM)TRUE, (LPARAM)hIcon);
 	SendMessage (mainwindow, WM_SETICON, (WPARAM)FALSE, (LPARAM)hIcon);
 
@@ -1198,6 +1095,7 @@ qbool VID_SetWindowedMode (int modenum)
 
 qbool VID_SetFullscreenMode (int modenum) 
 {
+	qbool forcemem = false;
 
 	DDActive = 1;
 
@@ -1213,12 +1111,15 @@ qbool VID_SetFullscreenMode (int modenum)
 		MGL_destroyDC (memdc);
 	mgldc = memdc = NULL;
 
+	if (vid_nopageflip.integer || vid_stretch_x.integer || vid_stretch_y.integer)
+		forcemem = true;
+
 	// Multiview - for fullscreen flipping problems
 	if (cl_multiview.value && cls.mvdplayback)
 	{
 		mgldc = createDisplayDC (1);
 	}
-	else if ((mgldc = createDisplayDC (modelist[modenum].stretched || (int) vid_nopageflip.value)) == NULL)
+	else if ((mgldc = createDisplayDC (forcemem)) == NULL)
 	{
 		return false;
 	}
@@ -1230,8 +1131,6 @@ qbool VID_SetFullscreenMode (int modenum)
 	DIBHeight = vid.height = vid.conheight = modelist[modenum].height;
 	DIBWidth = vid.width = vid.conwidth = modelist[modenum].width;
 	vid.aspect = ((float) vid.height / (float) vid.width) * (320.0 / 240.0);
-
-	vid_stretched = modelist[modenum].stretched;
 
 	// needed because we're not getting WM_MOVE messages fullscreen on NT
 	window_x = 0;
@@ -1271,8 +1170,8 @@ qbool VID_SetFullDIBMode (int modenum)
 
 	gdevmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 	gdevmode.dmBitsPerPel = modelist[modenum].bpp;
-	gdevmode.dmPelsWidth = modelist[modenum].width << modelist[modenum].stretched << modelist[modenum].halfscreen;
-	gdevmode.dmPelsHeight = modelist[modenum].height << modelist[modenum].stretched;
+	gdevmode.dmPelsWidth = modelist[modenum].actualwidth << modelist[modenum].halfscreen;
+	gdevmode.dmPelsHeight = modelist[modenum].actualheight;
 	gdevmode.dmSize = sizeof (gdevmode);
 
 	freq = modelist[modenum].frequency > 0 ? modelist[modenum].frequency : (int) vid_displayfrequency.value > 0 ? (int) vid_displayfrequency.value : 0;
@@ -1294,8 +1193,8 @@ qbool VID_SetFullDIBMode (int modenum)
 
 	hdc = GetDC(NULL);
 
-	WindowRect.right = modelist[modenum].width << modelist[modenum].stretched;
-	WindowRect.bottom = modelist[modenum].height << modelist[modenum].stretched;
+	WindowRect.right = modelist[modenum].actualwidth;
+	WindowRect.bottom = modelist[modenum].actualheight;
 
 	ReleaseDC(NULL,hdc);
 
@@ -1351,8 +1250,6 @@ qbool VID_SetFullDIBMode (int modenum)
 	vid.width = vid.conwidth = DIBWidth;
 	vid.aspect = ((float)vid.height / (float)vid.width) *
 				(320.0 / 240.0);
-
-	vid_stretched = modelist[modenum].stretched;
 
 	// TODO: We need to set these based on what screen we're on in a multi-monitor setup.
 	// needed because we're not getting WM_MOVE messages fullscreen on NT
@@ -1413,6 +1310,16 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	else
 		original_mode = vid_modenum;
 
+	if (vid_stretch_x.integer)
+		modelist[modenum].width = modelist[modenum].actualwidth >> 1;
+	else
+		modelist[modenum].width = modelist[modenum].actualwidth;
+
+	if (vid_stretch_y.integer)
+		modelist[modenum].height = modelist[modenum].actualheight >> 1;
+	else
+		modelist[modenum].height = modelist[modenum].actualheight;
+
 	// Set either the fullscreen or windowed mode
 	if (modelist[modenum].type == MS_WINDOWED) 
 	{
@@ -1442,8 +1349,8 @@ int VID_SetMode (int modenum, unsigned char *palette)
 		IN_HideMouse();
 	}
 
-	window_width = vid.width << vid_stretched;
-	window_height = vid.height << vid_stretched;
+	window_width = modelist[modenum].actualwidth;
+	window_height = modelist[modenum].actualheight;
 	VID_UpdateWindowStatus();
 
 	CDAudio_Resume();
@@ -1521,10 +1428,25 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	return true;
 }
 
-void OnChange_vid_windowed(struct cvar_s *var, char *value, qbool *cancel)
+void OnChange_vid_stretch_x(struct cvar_s *var, char *value, qbool *cancel)
 {
 	Cvar_Set(var, value);
-	if (var->value)
+	force_mode_set = true;
+	VID_SetMode(vid_modenum, vid_curpal);
+	force_mode_set = false;
+}
+
+void OnChange_vid_stretch_y(struct cvar_s *var, char *value, qbool *cancel)
+{
+	Cvar_Set(var, value);
+	force_mode_set = true;
+	VID_SetMode(vid_modenum, vid_curpal);
+	force_mode_set = false;
+}
+
+void OnChange_vid_windowed(struct cvar_s *var, char *value, qbool *cancel)
+{
+	if (Q_atoi(value))
 		VID_SetMode(windowed_default, vid_curpal);
 	else
 		VID_SetMode(_vid_default_mode.value, vid_curpal);
@@ -1738,9 +1660,8 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&vid_mode);
 	Cvar_Register (&vid_nopageflip);
 	Cvar_Register (&_vid_default_mode);
-	Cvar_Register (&vid_config_x);
-	Cvar_Register (&vid_config_y);
-	Cvar_Register (&vid_stretch_by_2);
+	Cvar_Register (&vid_stretch_x);
+	Cvar_Register (&vid_stretch_y);
 	Cvar_Register (&_windowed_mouse);
 	Cvar_Register (&block_switch);
 	Cvar_Register (&vid_window_x);
@@ -1912,17 +1833,17 @@ void FlipScreen(vrect_t *rects)
 			{
 				while (rects)
 				{
-					if (vid_stretched) 
+					if (vid_stretch_x.integer || vid_stretch_y.integer) 
 					{
 						MGL_stretchBltCoord(mgldc, memdc,
 									rects->x,
 									rects->y,
 									rects->x + rects->width,
 									rects->y + rects->height,
-									rects->x << 1,
-									rects->y << 1,
-									(rects->x + rects->width) << 1,
-									(rects->y + rects->height) << 1);
+									rects->x << !!vid_stretch_x.integer,
+									rects->y << !!vid_stretch_y.integer,
+									(rects->x + rects->width) << !!vid_stretch_x.integer,
+									(rects->y + rects->height) << !!vid_stretch_y.integer);
 					}
 					else
 					{
@@ -1959,14 +1880,14 @@ void FlipScreen(vrect_t *rects)
 
 			while (rects) 
 			{
-				if (vid_stretched) 
+				if (vid_stretch_x.integer || vid_stretch_y.integer) 
 				{
 					MGL_stretchBltCoord(windc,dibdc,
 						rects->x, rects->y,
 						rects->x + rects->width, rects->y + rects->height,
-						rects->x << 1, rects->y << 1,
-						(rects->x + rects->width) << 1,
-						(rects->y + rects->height) << 1);
+						rects->x << !!vid_stretch_x.integer, rects->y << !!vid_stretch_y.integer,
+						(rects->x + rects->width) << !!vid_stretch_x.integer,
+						(rects->y + rects->height) << !!vid_stretch_y.integer);
 				} 
 				else 
 				{
