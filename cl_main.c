@@ -795,7 +795,7 @@ void CL_Connect_f (void)
 
 void CL_TCPConnect_f (void)
 {
-	char buffer[6];
+	char buffer[6] = {'q', 'i', 'z', 'm', 'o', '\n'};
 	int newsocket;
 	int len;
 	int _true = true;
@@ -835,6 +835,12 @@ void CL_TCPConnect_f (void)
 
 	giveuptime = Sys_DoubleTime() + 10;
 
+#if 1 // qqshka: qizmo sends "qizmo\n" then expects reply, unfortunatelly that does not work for mvdsv
+	// that how MVDSV expects, should work with qizmo too
+	send(newsocket, buffer, sizeof(buffer), 0);
+	memset(buffer, 0, sizeof(buffer));
+#endif
+
 	while(giveuptime > Sys_DoubleTime())
 	{
 		len = recv(newsocket, buffer, sizeof(buffer), 0);
@@ -855,7 +861,11 @@ void CL_TCPConnect_f (void)
 
 	Com_Printf("Confirmed\n");
 
+#if 0 // qqshka: qizmo sends "qizmo\n" then expects reply, unfortunatelly that does not work for mvdsv
+	// that how qizmo expects, does not work with MVDSV
 	send(cls.sockettcp, buffer, sizeof(buffer), 0);
+#endif
+
 	if (setsockopt(cls.sockettcp, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true)) == -1) {
 		Com_Printf ("CL_TCPConnect_f: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
 	}
@@ -1161,6 +1171,12 @@ void CL_Disconnect (void)
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
+
+		// TCP connect, that gives TCP a chance to transfer data to the server...
+		if (cls.sockettcp != INVALID_SOCKET)
+		{
+			Sys_MSleep(1000);
+		}
 	}
 
 	memset(&cls.netchan, 0, sizeof(cls.netchan));
