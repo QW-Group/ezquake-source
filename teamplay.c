@@ -1902,7 +1902,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 
 	// Get the default path for loc-files and make sure the path
 	// won't be too long.
-	strlcpy (locname, va("%s/%s/", com_gamedirfile, "locs"), sizeof (locname));
+	strlcpy (locname, "locs/", sizeof (locname));
 	if (strlen(path) + strlen(locname) + 2 + 4 > MAX_OSPATH) {
 		Com_Printf ("TP_SaveLocFile: path name > MAX_OSPATH\n");
 		return false;
