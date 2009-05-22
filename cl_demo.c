@@ -2212,7 +2212,7 @@ static void CL_StopRecording (void)
 //
 void CL_Stop_f (void)
 {
-	if ( com_serveractive )
+	if (com_serveractive && strcmp(Cmd_Argv(0), "stop") == 0)
 	{
 		SV_MVDStop_f();
 		return;
@@ -4551,6 +4551,7 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand ("record", CL_Record_f);
 	Cmd_AddCommand ("recordqwd", CL_Record_f);
 	Cmd_AddCommand ("stop", CL_Stop_f);
+	Cmd_AddCommand ("stopqwd", CL_Stop_f);
 	Cmd_AddCommand ("playdemo", CL_Play_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
 	Cmd_AddCommand ("easyrecord", CL_EasyRecord_f);
