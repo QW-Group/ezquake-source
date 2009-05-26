@@ -1889,6 +1889,12 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	char		locname[MAX_OSPATH];
 	extern char com_gamedirfile[MAX_QPATH];
 
+	// Prevents saving of junk data
+	if (!loc_count) {
+		Com_Printf("TP_SaveLocFile: There is no locations to save.\n");
+		return false;	
+	}
+
 	// Make sure we have a path to work with.
 	if (!*path) {
 		return false;
@@ -1921,11 +1927,14 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	}
 
 	// Write all the nodes to the buffer.
-	for (node = locdata; node; node = node->next) {
+	//for (node = locdata; node; node = node->next) {
+	node = locdata;
+	while (node) {
 		char row[2*MAX_LOC_NAME];
 
 		snprintf(row, sizeof (row),"%4d %4d %4d %s\n", Q_rint(8*node->coord[0]), Q_rint(8*node->coord[1]), Q_rint(8*node->coord[2]), node->name);
 		strlcat (buf, row, (loc_count * (MAX_LOC_NAME + 24)));
+		node = node->next;
 	}
 
 	// Try writing the buffer containing the locs to file.
