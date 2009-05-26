@@ -55,6 +55,7 @@ cvar_t cl_chatmode          = {"cl_chatmode", "2"};
 cvar_t con_funchars_mode    = {"con_funchars_mode", "0"};
 cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
 cvar_t con_completion_format= {"con_completion_format", "0"}; // 0 - old, 1,2,3 is modern ones (current + default values , current only, and default only)
+cvar_t con_hide_chat_input	=	{"con_hide_chat_input", "0"};
 
 char* escape_regex(char* string);
 void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
@@ -803,6 +804,7 @@ void Key_ClearTyping (void)
 void Key_Console (int key, int unichar)
 {
 	int i, len;
+	qbool print_in_console = true;
 
 	switch (key)
 	{
@@ -862,6 +864,9 @@ void Key_Console (int key, int unichar)
 										Cbuf_AddText ("say \"");
 										Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
 										Cbuf_AddText ("\"");
+
+										if (!con_hide_chat_input.integer)
+											print_in_console = false;
 									}
 									else
 									{
@@ -886,7 +891,16 @@ void Key_Console (int key, int unichar)
 				}
 			}
 
+			// cut'n'paste rocks!
+			if (!print_in_console)
+				Print_flags[Print_current] |= PR_SKIP;
+
 			Con_PrintW (key_lines[edit_line]);	// FIXME logging
+
+			// cut'n'paste rocks!
+			if (!print_in_console)
+				Print_flags[Print_current] |= PR_SKIP;
+
 			Con_PrintW (str2wcs("\n"));
 
 			Key_ClearTyping ();
@@ -1891,6 +1905,7 @@ void Key_Init (void) {
 	Cvar_Register (&con_completion_color_quotes_default);
 	Cvar_Register (&con_completion_color_colon);
 	Cvar_Register (&con_prompt_charcode);
+	Cvar_Register (&con_hide_chat_input);
 
 	Cvar_ResetCurrentGroup();
 }
