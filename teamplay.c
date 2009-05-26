@@ -2013,6 +2013,13 @@ void TP_RemoveClosestLoc (vec3_t location)
 		node = node->next;
 	}
 
+	if (!best)
+	{
+		Com_Printf("There is no locations left for deletion!\n");
+		return;
+	}
+
+
 	Com_Printf(va("Removed location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", best->name, best->coord[0], best->coord[1], best->coord[2]));
 
 	// If the node we're trying to delete has a
