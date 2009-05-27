@@ -31,6 +31,25 @@ int TP_CategorizeMessage (const char *s, int *offset);
 
 /************************************** General Utils **************************************/
 
+char *str_repeat (char *str, int amount)
+{
+    char *ret = NULL;
+    int i = 0;
+
+    if (str == NULL)
+        return NULL;
+
+    if (amount <= 0)
+        return "";
+
+    ret = (char *) Q_calloc(strlen(str) * amount + 1, sizeof(char)); 
+
+    for (i = 0; i < amount; i++)
+        strcat(ret, str);
+
+    return ret;
+}
+
 char *CreateSpaces(int amount) {
 	static char spaces[1024];
 	int size;

@@ -67,6 +67,8 @@ cvar_t con_completion_color_value_default = {"con_completion_color_value_default
 cvar_t con_completion_color_quotes_current = {"con_completion_color_quotes_current", "ff8", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_quotes_default = {"con_completion_color_quotes_default", "ff8", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_colon = {"con_completion_color_colon", "fff", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_title = {"con_completion_color_title", "ff3", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_padding = {"con_completion_padding", "2"};
 
 #ifdef WITH_KEYMAP
 // variable to enable/disable key informations (e.g. scancode) to the consoloe:
@@ -342,11 +344,12 @@ qbool CheckForCommand (void)
 void PaddedPrint (char *s) 
 {
 	extern int con_linewidth;
+	extern char *str_repeat (char *str, int amount);
 	int nextcolx = 0;
 
 	if (con_completion_format.integer)  // plain list
 	{
-		Com_Printf ("&c%s%s&r\n", con_completion_color_name.string, s);
+		Com_Printf ("%s&c%s%s&r\n", str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s);
 	}
 	else
 	{
@@ -366,33 +369,35 @@ void PaddedPrint (char *s)
 
 void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default value
 {
+	extern char *str_repeat (char *str, int amount);
+
 	switch (con_completion_format.integer)
 	{
 		case 1:	// current + deafault
 			if (strcmp(s, dv))
-				Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-					con_completion_color_name.string, s , con_completion_color_colon.string,
+				Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
+					str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
 					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 					con_completion_color_quotes_current.string, con_completion_color_colon.string,
 					con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
 					con_completion_color_quotes_default.string);
 			else
-				Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-					con_completion_color_name.string, s , con_completion_color_colon.string,
+				Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
+					str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
 					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 					con_completion_color_quotes_current.string);
 			break;
 
 		case 2:	// current only
-			Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-				con_completion_color_name.string, s , con_completion_color_colon.string,
+			Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
+				str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
 				con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 				con_completion_color_quotes_current.string);
 			break;
 
 		case 3:	// default only value
-			Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-				con_completion_color_name.string, s, con_completion_color_colon.string,
+			Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
+				str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s, con_completion_color_colon.string,
 				con_completion_color_quotes_default.string, con_completion_color_value_default.string,
 				dv, con_completion_color_quotes_default.string);
 			break;
@@ -506,7 +511,11 @@ void CompleteCommandNew (void)
 
 			if (c)
 			{
-				Com_Printf ("\x02" "Commands (%d):\n", c);
+				if (con_completion_format.integer)
+					Com_Printf ("&c%sCommands (%d):&r\n", con_completion_color_title.string, c);
+				else
+					Com_Printf ("\x02" "Commands (%d):\n", c);
+
 				for (s_c = cmd_functions, s_count = 0; s_c && s_count < MAX_SORTED_CMDS; s_c = s_c->next, s_count++)
 					sorted_cmds[s_count] = s_c;
 
@@ -531,7 +540,10 @@ void CompleteCommandNew (void)
 
 			if (v)
 			{
-				Com_Printf ("\x02" "Variables (%d):\n", v);
+				if (con_completion_format.integer)
+					Com_Printf ("&c%sVariables (%d):&r\n", con_completion_color_title.string, v);
+				else
+					Com_Printf ("\x02" "Variables (%d):\n", v);
 
 				for (s_v = cvar_vars, s_count = 0; s_v && s_count < MAX_SORTED_CVARS; s_v = s_v->next, s_count++)
 					sorted_cvars[s_count] = s_v;
@@ -557,7 +569,10 @@ void CompleteCommandNew (void)
 
 			if (a)
 			{
-				Com_Printf ("\x02" "Aliases (%d):\n", a);
+				if (con_completion_format.integer)
+					Com_Printf ("&c%sAliases (%d):&r\n", con_completion_color_title.string, a);
+				else
+					Com_Printf ("\x02" "Aliases (%d):\n", a);
 
 				for (s_a = cmd_alias, s_count = 0; s_a && s_count < MAX_SORTED_ALIASES; s_a = s_a->next, s_count++)
 					sorted_aliases[s_count] = s_a;
@@ -1906,6 +1921,8 @@ void Key_Init (void) {
 	Cvar_Register (&con_completion_color_colon);
 	Cvar_Register (&con_prompt_charcode);
 	Cvar_Register (&con_hide_chat_input);
+	Cvar_Register (&con_completion_padding);
+	Cvar_Register (&con_completion_color_title);
 
 	Cvar_ResetCurrentGroup();
 }
