@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef WITH_WINAMP
 
 #include "windows.h"
+#include "ShlObj.h"
 
 static HWND mp3_hwnd = 0;
 
@@ -148,7 +149,18 @@ long WINAMP_GetPlaylist(char **buf)
 	filelength = (size_t) FS_FileOpenRead(path, &f);
 	
 	if (!f)
-		return -1;
+	{
+		// now winamp can store setting + playlist.m3u under %APPDATA% directory
+		// so we should try to find it there too
+		if (SHGetSpecialFolderPath(0, path, CSIDL_APPDATA, false))
+		{
+			strlcat (path, "/winamp/winamp.m3u", sizeof (path));
+			filelength = (size_t) FS_FileOpenRead(path, &f);
+		}
+		
+		if (!f)
+			return -1;
+	}
 
 	*buf = Q_malloc(filelength);
 	
