@@ -209,17 +209,25 @@ void M_Menu_MP3_Control_Key(int key) {
 			break;
 		case K_DOWNARROW:
 		case K_MWHEELDOWN:
-			if (mp3_cursor < M_MP3_CONTROL_NUMENTRIES - 1)
-				mp3_cursor++;
-			if (mp3_cursor == M_MP3_CONTROL_NUMENTRIES - 2)
-				mp3_cursor++;
+			if (mp3_cursor == M_MP3_CONTROL_NUMENTRIES - 1) {
+				mp3_cursor = 0;
+			} else {
+				if (mp3_cursor < M_MP3_CONTROL_NUMENTRIES - 1)
+					mp3_cursor++;
+				if (mp3_cursor == M_MP3_CONTROL_NUMENTRIES - 2)
+					mp3_cursor++;
+			}
 			break;
 		case K_UPARROW:
 		case K_MWHEELUP:
-			if (mp3_cursor > 0)
-				mp3_cursor--;
-			if (mp3_cursor == M_MP3_CONTROL_NUMENTRIES - 2)
-				mp3_cursor--;
+			if (mp3_cursor == 0) {
+				mp3_cursor = M_MP3_CONTROL_NUMENTRIES - 1;
+			} else {
+				if (mp3_cursor > 0)
+					mp3_cursor--;
+				if (mp3_cursor == M_MP3_CONTROL_NUMENTRIES - 2)
+					mp3_cursor--;
+			}
 			break;
 		case K_MOUSE1:
 		case K_ENTER:
@@ -348,6 +356,15 @@ void M_Menu_MP3_Playlist_MoveBase(int absolute) {
  */
 void M_Menu_MP3_Playlist_MoveCursorRel(int offset) {
 	/* Already at the bottom */
+	
+	// jump to the top if we use downarrow/downscroll
+	if ( (offset == 1) && (playlist_base + playlist_cursor == playlist_size - 1) )
+	{
+		M_Menu_MP3_Playlist_MoveCursor(0);
+		M_Menu_MP3_Playlist_MoveBase(0);
+		return;
+	}
+
 	if (playlist_base + playlist_cursor + offset > playlist_size - 1) {
 		// Already at the top
 	} else if (playlist_cursor + offset > PLAYLIST_MAXLINES - 1) {
@@ -356,6 +373,14 @@ void M_Menu_MP3_Playlist_MoveCursorRel(int offset) {
 		playlist_cursor = PLAYLIST_MAXLINES - 1;
 	} else if (playlist_cursor + offset < 0) {
 		/* Need to scroll up*/
+		
+		// jump to the bottom if we use uparrow/upscroll
+		if ( (offset == -1) && (playlist_cursor == 0) && (playlist_base == 0) ){
+			M_Menu_MP3_Playlist_MoveCursor(playlist_size-1);
+			M_Menu_MP3_Playlist_MoveBase(playlist_size-1);
+			return;
+		}
+
 		M_Menu_MP3_Playlist_MoveBaseRel(offset);
 		playlist_cursor = 0;
 	} else {
@@ -532,7 +557,8 @@ void M_Menu_MP3_Playlist_Key (int k) {
 			break;
 
 		case K_PGDN:
-			M_Menu_MP3_Playlist_MoveBaseRel(PLAYLIST_MAXLINES);
+			if (playlist_size > PLAYLIST_MAXLINES)
+				M_Menu_MP3_Playlist_MoveBaseRel(PLAYLIST_MAXLINES);
 			break;
 
 		case K_ENTER:
