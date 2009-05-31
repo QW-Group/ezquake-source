@@ -363,11 +363,15 @@ typedef enum
 #define	EF_TRACER2	64			// orange split trail + rotate
 #define	EF_TRACER3	128			// purple trail
 
+#define MAX_SIMPLE_TEXTURES 5
+
 typedef struct model_s {
 	char				name[MAX_QPATH];
 	qbool				needload; // bmodels and sprites don't cache normally
 
 	unsigned short		crc;
+
+	int					simpletexture[MAX_SIMPLE_TEXTURES]; // for simpleitmes
 
 	modhint_t			modhint;
 

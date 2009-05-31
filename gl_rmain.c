@@ -185,6 +185,10 @@ cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
 cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
 cvar_t  gl_fogsky			= {"gl_fogsky", "1"}; 
 
+cvar_t	gl_simpleitems		= {"gl_simpleitems", ""};
+cvar_t	gl_simpleitems_size		= {"gl_simpleitems_size", "16"};
+cvar_t	gl_simpleitems_orientation = {"gl_simpleitems_orientation", "2"};
+
 int		lightmode = 2;
 
 //static int deathframes[] = { 49, 60, 69, 77, 84, 93, 102, 0 };
@@ -1177,6 +1181,105 @@ void R_DrawAliasModel (entity_t *ent) {
 	glColor3ubv (color_white);
 }
 
+static qbool R_DrawTrySimpleItem(void)
+{
+	int sprtype = gl_simpleitems_orientation.integer;
+	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
+	int simpletexture;
+	vec3_t point, right, up, org, offset;
+
+	if (!currententity || !currententity->model)
+		return false;
+
+	if (currententity->skinnum < 0 || currententity->skinnum >= MAX_SIMPLE_TEXTURES)
+		simpletexture = currententity->model->simpletexture[0]; // ah...
+	else
+		simpletexture = currententity->model->simpletexture[currententity->skinnum];
+
+	if (!simpletexture)
+		return false;
+
+	autorotate = anglemod(100 * cl.time);
+
+	if (sprtype == SPR_ORIENTED)
+	{
+		// bullet marks on walls
+		vec3_t angles;
+		angles[0] = angles[2] = 0;
+		angles[1] = autorotate;
+		AngleVectors (angles, NULL, right, up);
+	} 
+	else if (sprtype == SPR_FACING_UPRIGHT)
+	{
+		VectorSet (up, 0, 0, 1);
+		right[0] = currententity->origin[1] - r_origin[1];
+		right[1] = -(currententity->origin[0] - r_origin[0]);
+		right[2] = 0;
+		VectorNormalizeFast (right);
+	} 
+	else if (sprtype == SPR_VP_PARALLEL_UPRIGHT)
+	{
+		VectorSet (up, 0, 0, 1);
+		VectorCopy (vright, right);
+	}
+	else
+	{	// normal sprite
+		VectorCopy (vup, up);
+		VectorCopy (vright, right);
+	}
+
+	VectorCopy(currententity->origin, org);
+	// brush models require some additional centering
+	if (currententity->model->type == mod_brush)
+	{
+		extern cvar_t cl_model_bobbing;
+
+		VectorSubtract(currententity->model->maxs, currententity->model->mins, offset);
+		offset[2] = 0;
+		VectorMA(org, 0.5, offset, org);
+
+		if (cl_model_bobbing.value)
+			org[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
+	}
+	org[2] += sprsize;
+
+	glPushAttrib(GL_ENABLE_BIT);
+
+	glDisable(GL_CULL_FACE);
+	glEnable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
+
+	GL_Bind(simpletexture);
+
+	glBegin (GL_QUADS);
+
+	glTexCoord2f (0, 1);
+	VectorMA (org, -sprsize, up, point);
+	VectorMA (point, -sprsize, right, point);
+	glVertex3fv (point);
+
+	glTexCoord2f (0, 0);
+	VectorMA (org, sprsize, up, point);
+	VectorMA (point, -sprsize, right, point);
+	glVertex3fv (point);
+
+	glTexCoord2f (1, 0);
+	VectorMA (org, sprsize, up, point);
+	VectorMA (point, sprsize, right, point);
+	glVertex3fv (point);
+
+	glTexCoord2f (1, 1);
+	VectorMA (org, -sprsize, up, point);
+	VectorMA (point, sprsize, right, point);
+	glVertex3fv (point);
+
+	glEnd ();
+
+	glPopAttrib();
+
+	return true;
+}
+
 void R_DrawEntitiesOnList (visentlist_t *vislist) {
 	int i;
 
@@ -1190,6 +1293,9 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 	for (i = 0; i < vislist->count; i++) 
 	{
 		currententity = &vislist->list[i];
+
+		if (gl_simpleitems.value && R_DrawTrySimpleItem())
+			continue;
 
 		switch (currententity->model->type) 
 		{
@@ -1701,6 +1807,10 @@ void R_Init (void) {
 	Cvar_Register (&gl_powerupshells);
 	Cvar_Register (&gl_powerupshells_style);
 	Cvar_Register (&gl_powerupshells_size);
+
+	Cvar_Register (&gl_simpleitems);
+	Cvar_Register (&gl_simpleitems_size);
+	Cvar_Register (&gl_simpleitems_orientation);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);

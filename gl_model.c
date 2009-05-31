@@ -48,6 +48,8 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer);
 void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize);
 model_t *Mod_LoadModel (model_t *mod, qbool crash);
 
+int Mod_LoadSimpleTexture(model_t *mod, int skinnum);
+
 byte	mod_novis[MAX_MAP_LEAFS/8];
 
 #define	MAX_MOD_KNOWN	512
@@ -445,6 +447,10 @@ void R_LoadBrushModelTextures (model_t *m)
 
 	loadmodel = m;
 
+	// try load simple textures
+	memset(loadmodel->simpletexture, 0, sizeof(loadmodel->simpletexture));
+	loadmodel->simpletexture[0] = Mod_LoadSimpleTexture(loadmodel, 0);
+
 	if (!loadmodel->textures)
 		return;
 
@@ -686,21 +692,6 @@ void Mod_LoadTextures (lump_t *l) {
 	}
 }
 
-/*
-void Mod_LoadSpriteModelTextures (model_t *m)
-{
-	// TODO
-}
-*/
-
-void Mod_LoadModelTextures (model_t *m)
-{
-	if (m->type == mod_brush)
-		R_LoadBrushModelTextures (m);
-//	else if (m->type == mod_sprite)
-//		Mod_LoadSpriteModelTextures (m);
-}
-
 // this is callback from VID after a vid_restart
 void Mod_ReloadModelsTextures (void)
 {
@@ -711,7 +702,8 @@ void Mod_ReloadModelsTextures (void)
 	if (cls.state != ca_active)
 		return; // seems we are not loaded models yet, so no need to reload textures
 
-	// mark all textures as not loaded, for brush models only, this speed up loading
+	// mark all textures as not loaded, for brush models only, this speed up loading.
+	// seems textures shared between models, so we mark textures from ALL models than actually load textures, that why we use two for()
 	for (i = 1; i < MAX_MODELS; i++)
 	{
 		if (!cl.model_name[i][0])
@@ -734,11 +726,17 @@ void Mod_ReloadModelsTextures (void)
 		}
 	}
 
+	// now actually load textures for brush models
 	for (i = 1; i < MAX_MODELS; i++)
 	{
 		if (!cl.model_name[i][0])
 			break;
-		Mod_LoadModelTextures (cl.model_precache[i]);
+
+		m = cl.model_precache[i];
+		if (m->type != mod_brush)
+			continue; // actual only for brush models
+
+		R_LoadBrushModelTextures (m);
 	}
 }
 
@@ -1821,6 +1819,11 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize) {
 		return;
 	memcpy (mod->cache.data, pheader, total);
 
+	// try load simple textures
+	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
+	for (i = 0; i < MAX_SIMPLE_TEXTURES && i < pheader->numskins; i++)
+		mod->simpletexture[i] = Mod_LoadSimpleTexture(mod, i);
+
 	Hunk_FreeToLowMark (start);
 }
 
@@ -2157,3 +2160,48 @@ void Mod_AddModelFlags(model_t *mod)
 	else
 		mod->modhint = MOD_NORMAL;
 }
+
+int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
+{
+	int tex = 0, texmode = 0;
+	char basename[64], indentifier[64];
+
+	if (!mod)
+		return 0;
+
+	if (RuleSets_DisallowExternalTexture(mod))
+		return 0;
+
+	// well, it have nothing with luma, but quite same restrictions...
+	if (!Mod_IsLumaAllowed(mod))
+		return 0;
+
+	COM_StripExtension(COM_SkipPath(mod->name), basename);
+
+	texmode = TEX_MIPMAP | TEX_ALPHA;
+	if (!gl_scaleModelTextures.value)
+		texmode |= TEX_NOSCALE;
+
+	snprintf(indentifier, sizeof(indentifier), "simple_%s_%d", basename, skinnum);
+
+	if (developer.value > 1)
+		Com_DPrintf("Mod_LoadSimpleTexture: %s ", indentifier);
+
+	if (mod->type == mod_brush)
+	{
+		tex = GL_LoadTextureImage (va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
+	}
+	else if (mod->type == mod_alias || mod->type == mod_alias3)
+	{
+		tex = GL_LoadTextureImage (va("textures/models/%s", indentifier), indentifier, 0, 0, texmode);
+	}
+
+	if (!tex)
+		tex = GL_LoadTextureImage (va("textures/%s", indentifier), indentifier, 0, 0, texmode);
+
+	if (developer.value > 1)
+		Com_DPrintf("%s\n", tex ? "OK" : "FAIL");
+
+	return tex;
+}
+
