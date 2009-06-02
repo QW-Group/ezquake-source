@@ -198,6 +198,7 @@ extern cvar_t	r_swapInterval;
 
 extern cvar_t	vid_xpos;
 extern cvar_t	vid_ypos;
+extern cvar_t	vid_minpos;
 extern cvar_t	r_conwidth;
 extern cvar_t	r_conheight;
 extern cvar_t	vid_ref;

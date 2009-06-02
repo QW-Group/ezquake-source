@@ -831,10 +831,10 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 
 			// adjust window coordinates if necessary 
 			// so that the window is completely on screen
-			if ( x < 0 )
-				x = 0;
-			if ( y < 0 )
-				y = 0;
+			if ( x < vid_minpos.integer )
+				x = vid_minpos.integer;
+			if ( y < vid_minpos.integer )
+				y = vid_minpos.integer;
 
 			if ( w < glw_state.desktopWidth &&
 				 h < glw_state.desktopHeight )

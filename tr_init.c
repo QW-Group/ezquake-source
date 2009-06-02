@@ -78,9 +78,10 @@ cvar_t	r_swapInterval		= { "vid_vsync",			"0",	CVAR_ARCHIVE | CVAR_SILENT };
 //cvar_t	r_gamma			= { "vid_gamma",			"1",	CVAR_ARCHIVE | CVAR_SILENT };
 #endif
 
-cvar_t	vid_xpos			= { "vid_xpos",				"3",	CVAR_ARCHIVE | CVAR_SILENT };
-cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_ARCHIVE | CVAR_SILENT };
-
+void OnChange_vid_pos(cvar_t *var, char *string, qbool *cancel);
+cvar_t	vid_xpos			= { "vid_xpos",				"3",	CVAR_ARCHIVE | CVAR_SILENT, OnChange_vid_pos};
+cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_ARCHIVE | CVAR_SILENT, OnChange_vid_pos};
+cvar_t	vid_minpos  = { "vid_minpos",	"0",	CVAR_ARCHIVE | CVAR_SILENT};
 
 void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel);
 cvar_t	r_conwidth			= { "vid_conwidth",			"640",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx };
@@ -511,6 +512,7 @@ void R_Register( void )
 
 	Cvar_Register (&vid_xpos);
 	Cvar_Register (&vid_ypos);
+	Cvar_Register (&vid_minpos);
 	Cvar_Register (&r_conwidth);
 	Cvar_Register (&r_conheight);
 	Cvar_Register (&vid_wideaspect);
@@ -785,3 +787,24 @@ void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel)
 		}
 	}
 }
+
+void OnChange_vid_pos(cvar_t *var, char *string, qbool *cancel)
+{
+#ifdef WIN32
+	if (!r_fullscreen.integer)
+	{
+		extern	HWND	mainwindow;
+		if (mainwindow)
+		{
+			SetWindowPos(	mainwindow,
+							NULL,
+							var == &vid_xpos ? atof(string) : vid_xpos.value,
+							var == &vid_ypos ? atof(string) : vid_ypos.value,
+							0,
+							0,
+							SWP_NOSIZE | SWP_NOZORDER);
+		}
+	}
+#endif
+}
+
