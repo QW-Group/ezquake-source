@@ -27,6 +27,8 @@ void MVD_Screen (void);
 void MVD_Utils_Init (void); 
 void MVD_Mainhook_f (void);
 void MVD_Stats_Cleanup_f (void);
+void MVD_ClockList_TopItems_Draw(double time_limit, int x, int y);
+void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int *width, int *height);
 
 // update match info structures
 void MVD_Init_Info_f (void);

@@ -34,6 +34,8 @@ $Id: mvd_utils.c,v 1.57 2007-10-11 17:56:47 johnnycz Exp $
 #include "teamplay.h"
 #include "utils.h"
 #include "mvd_utils_common.h"
+#include "Ctrl.h"
+
 
 mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 	{gt_1on1,"duel"},
@@ -46,22 +48,32 @@ mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 mvd_cg_info_s mvd_cg_info;
 
 mvd_wp_info_t mvd_wp_info[mvd_info_types] = {
-	{AXE_INFO,"axe",IT_AXE},
-	{SG_INFO,"sg",IT_SHOTGUN},
-	{SSG_INFO,"ssg",IT_SUPER_SHOTGUN},
-	{NG_INFO,"ng",IT_NAILGUN},
-	{SNG_INFO,"sng",IT_SUPER_NAILGUN},
-	{GL_INFO,"gl",IT_GRENADE_LAUNCHER},
-	{RL_INFO,"rl",IT_ROCKET_LAUNCHER},
-	{LG_INFO,"lg",IT_LIGHTNING},
-	{RING_INFO,"ring",IT_INVISIBILITY},
-	{QUAD_INFO,"quad",IT_QUAD},
-	{PENT_INFO,"pent",IT_INVULNERABILITY},
-	{GA_INFO,"ga",IT_ARMOR1},
-	{YA_INFO,"ya",IT_ARMOR2},
-	{RA_INFO,"ra",IT_ARMOR3},
-	{MH_INFO,"mh",IT_SUPERHEALTH},
+	{AXE_INFO,"axe",IT_AXE,"axe"},
+	{SG_INFO,"sg",IT_SHOTGUN,"sg"},
+	{SSG_INFO,"ssg",IT_SUPER_SHOTGUN,"&cf0fssg&r"},
+	{NG_INFO,"ng",IT_NAILGUN,"&cf0fng&r"},
+	{SNG_INFO,"sng",IT_SUPER_NAILGUN,"&cf0fsng&r"},
+	{GL_INFO,"gl",IT_GRENADE_LAUNCHER,"&cf0fgl&r"},
+	{RL_INFO,"rl",IT_ROCKET_LAUNCHER,"&cf0frl&r"},
+	{LG_INFO,"lg",IT_LIGHTNING,"&cf0flg&r"},
+	{RING_INFO,"ring",IT_INVISIBILITY,"&cff0ring&r"},
+	{QUAD_INFO,"quad",IT_QUAD,"&c00fquad&r"},
+	{PENT_INFO,"pent",IT_INVULNERABILITY,"&cf00pent&r"},
+	{GA_INFO,"ga",IT_ARMOR1,"&c0f0ga&r"},
+	{YA_INFO,"ya",IT_ARMOR2,"&cff0ya&r"},
+	{RA_INFO,"ra",IT_ARMOR3,"&cf00ra&r"},
+	{MH_INFO,"mh",IT_SUPERHEALTH,"&c00fmh&r"},
 };
+
+typedef struct mvd_clock_t {
+	int itemtype;             // RA, Quad, RL, ...
+	double clockval;          // time when the clock expires
+	struct mvd_clock_t *next; // next item in the linked list
+	struct mvd_clock_t *prev; // prev item in the linked list
+} mvd_clock_t;
+
+// points to the first (earliest) item of the clock list
+static mvd_clock_t *mvd_clocklist = NULL;
 
 typedef struct quad_cams_s {
 	vec3_t	org;
@@ -259,6 +271,149 @@ void MVD_Init_Info_f (void) {
 
 	for (i = 0; i < mvd_cg_info.pcount; i++)
 		mvd_new_info[i].p_state = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[mvd_new_info[i].id];
+}
+
+double MVD_RespawnTimeGet(int itemtype)
+{
+	switch (itemtype) {
+		case RA_INFO:
+		case YA_INFO:
+		case GA_INFO:
+		case MH_INFO:
+			return 20.0;
+			
+		case SSG_INFO:
+		case NG_INFO:
+		case SNG_INFO:
+		case GL_INFO:
+		case RL_INFO:
+		case LG_INFO:
+			return 30.0;
+
+		case QUAD_INFO:
+			return 60.0;
+
+		case RING_INFO:
+		case PENT_INFO:
+			return 300.0;
+
+		default:
+			Com_DPrintf("Warning in MVD_RespawnTimeGet(): unknown item type %d\n", itemtype);
+			return 0.0;
+	}
+}
+
+void MVD_ClockList_Insert(mvd_clock_t *newclock)
+{
+	if (mvd_clocklist == NULL) {
+		mvd_clocklist = newclock;
+		newclock->next = NULL;
+		newclock->prev = NULL;
+	}
+	else {
+		mvd_clock_t *current = mvd_clocklist;
+		mvd_clock_t *last = NULL;
+		while (current && current->clockval < newclock->clockval) {
+			last = current;
+			current = current->next;
+		}
+		if (current) {
+			newclock->next = current;
+			newclock->prev = current->prev;
+			if (current->prev) {
+				current->prev->next = newclock;
+			}
+			current->prev = newclock;
+			if (last == NULL) {
+				mvd_clocklist = newclock;
+			}
+		}
+		else {
+			if (last) {
+				last->next = newclock;
+				newclock->prev = last;
+				newclock->next = NULL;
+			}
+			else {
+				newclock->prev = NULL;
+				newclock->next = mvd_clocklist;
+				mvd_clocklist = newclock;
+			}
+		}
+	}
+}
+
+mvd_clock_t *MVD_ClockList_Remove(mvd_clock_t *item)
+{
+	mvd_clock_t *ret = NULL;
+
+	if (item == mvd_clocklist) {
+		mvd_clocklist = item->next;
+		Q_free(item);
+		return mvd_clocklist;
+	}
+	
+	ret = item->next;
+	// item->prev is not null
+	if (item->next) {
+		item->next->prev = item->prev;
+		item->prev->next = item->next;
+	}
+	else {
+		item->prev->next = NULL;
+	}
+	Q_free(item);
+	return ret;
+}
+
+void MVD_ClockStart(int itemtype)
+{
+	mvd_clock_t *newclock = (mvd_clock_t *) Q_malloc(sizeof (mvd_clock_t));
+	newclock->clockval = cls.realtime + MVD_RespawnTimeGet(itemtype);
+	newclock->itemtype = itemtype;
+	MVD_ClockList_Insert(newclock);
+}
+
+void MVD_ClockList_RemoveExpired(void)
+{
+	mvd_clock_t *current = mvd_clocklist;
+
+	while (current && current->clockval + 1 < cls.realtime) {
+		// we keep the item there for 1 second so that "spawn" is displayed
+		current = MVD_ClockList_Remove(current);
+	}
+}
+
+void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int *width, int *height)
+{
+	int lines = 0;
+	mvd_clock_t *current = mvd_clocklist;
+	
+	while (current && current->clockval - cls.realtime < time_limit) {
+		lines++;
+		current = current->next;
+	}
+
+	*width = LETTERWIDTH * (sizeof ("QUAD spawn") - 1); // the longest possible string
+	*height = LETTERHEIGHT * lines;
+}
+
+void MVD_ClockList_TopItems_Draw(double time_limit, int x, int y)
+{
+	mvd_clock_t *current = mvd_clocklist;
+
+	while (current && current->clockval - cls.realtime < time_limit) {
+		int time = (int) ((current->clockval - cls.realtime) + 1);
+		if (time > 0) {
+			Draw_String(x, y, va("%s %d", mvd_wp_info[current->itemtype].colored_name,
+				time));
+		}
+		else {
+			Draw_String(x, y, va("%s &c8ffspawn&r", mvd_wp_info[current->itemtype].colored_name));
+		}
+		current = current->next;
+		y += LETTERHEIGHT;
+	}
 }
 
 // this steps in action if the user has created a demo playlist and has specified
@@ -519,13 +674,15 @@ void MVD_Status_Announcer_f (int i, int z){
 
 void MVD_Status_WP_f (int i){
 	int j,k;
-	for (k=j=2;j<8;j++){
+	for (k = j = SSG_INFO; j <= LG_INFO; j++, k = k*2){
 		if (!mvd_new_info[i].info.info[j].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & k){
+			if (j >= GL_INFO && cl.deathmatch == 1) {
+				MVD_ClockStart(j);
+			}
 			mvd_new_info[i].info.info[j].mention = 1;
 			mvd_new_info[i].info.info[j].has = 1;
 			mvd_new_info[i].info.info[j].count++;
 		}
-	k=k*2;
 	}
 
 }
@@ -536,6 +693,9 @@ void MVD_Stats_Cleanup_f (void){
 	powerup_cam_active=0;
 	cam_1=cam_2=cam_3=cam_4=0;
 	was_standby = true;
+	while (mvd_clocklist) {
+		MVD_ClockList_Remove(mvd_clocklist);
+	}
 
 	memset(&mvd_new_info, 0, sizeof(mvd_new_info_t));
 	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info_s));
@@ -652,8 +812,9 @@ int MVD_Stats_Gather_f (void){
 
 
 		for (x=GA_INFO;x<=RA_INFO && mvd_cg_info.deathmatch!=4;x++){
-			if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it){
+			if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
 				if (!mvd_new_info[i].info.info[x].has){
+					MVD_ClockStart(x);
 					MVD_Set_Armor_Stats_f(x,i);
 					mvd_new_info[i].info.info[x].count++;
 					mvd_new_info[i].info.info[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
@@ -671,6 +832,7 @@ int MVD_Stats_Gather_f (void){
 
 		for (x=RING_INFO;x<=PENT_INFO && mvd_cg_info.deathmatch!=4;x++){
 			if(!mvd_new_info[i].info.info[x].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it){
+				MVD_ClockStart(x);
 				mvd_new_info[i].info.info[x].mention = 1;
 				mvd_new_info[i].info.info[x].has = 1;
 				if (x==PENT_INFO && (powerup_cam_active == 3 || powerup_cam_active == 2)){
@@ -705,8 +867,10 @@ int MVD_Stats_Gather_f (void){
 			mvd_new_info[i].info.info[MH_INFO].has = 1;
 			mvd_new_info[i].info.info[MH_INFO].count++;
 		}
-		if (mvd_new_info[i].info.info[MH_INFO].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH))
+		if (mvd_new_info[i].info.info[MH_INFO].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH)) {
 			mvd_new_info[i].info.info[MH_INFO].has = 0;
+			MVD_ClockStart(MH_INFO);
+		}
 
 		for (z=RING_INFO;z<=PENT_INFO;z++){
 			if (mvd_new_info[i].info.info[z].has == 1){
@@ -988,6 +1152,7 @@ void MVD_Mainhook_f (void){
 	MVD_Stats_Gather_f();
 	MVD_Stats_CalcAvgRuns();
 	MVD_AutoTrack_f ();
+	MVD_ClockList_RemoveExpired();
 	if (cls.mvdplayback && mvd_demo_track_run == 0)
 		MVD_Demo_Track ();
 }

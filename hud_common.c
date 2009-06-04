@@ -28,6 +28,7 @@
 #include "Ctrl.h"
 #include "console.h"
 #include "teamplay.h"
+#include "mvd_utils.h"
 
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
@@ -5228,6 +5229,31 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	return (x - x_in) / (FONTWIDTH * scale); // return width
 }
 
+void SCR_HUD_DrawItemsClock(hud_t *hud)
+{
+	extern qbool hud_editor;
+	int width, height;
+	int x, y;
+	static cvar_t *hud_itemsclock_timelimit = NULL;
+
+	if (hud_itemsclock_timelimit == NULL) {
+		hud_itemsclock_timelimit = HUD_FindVar(hud, "timelimit");
+	}
+
+	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, &width, &height);
+	
+	if (hud_editor)
+		HUD_PrepareDraw(hud, width, LETTERHEIGHT, &x, &y);
+
+	if (!height)
+		return;
+
+    if (!HUD_PrepareDraw(hud, width, height, &x, &y))
+        return;
+	
+	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, x, y);
+}
+
 #ifdef WITH_PNG
 
 void SCR_HUD_DrawOwnFrags(hud_t *hud)
@@ -7189,6 +7215,13 @@ void CommonDraw_Init(void)
 		"width", "200",
 		"height", "60",
 		"style", "0",
+		NULL
+		);
+	
+	HUD_Register("itemsclock", NULL, "Displays upcoming item respawns",
+		0, ca_active, 1, SCR_HUD_DrawItemsClock,
+		"0", "screen", "center", "center", "0", "0", "0", "0 0 0", NULL,
+		"timelimit", "10",
 		NULL
 		);
 
