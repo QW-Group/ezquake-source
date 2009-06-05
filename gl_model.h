@@ -449,6 +449,8 @@ byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 qbool	Img_HasFullbrights (byte *pixels, int size);
 void	Mod_ReloadModelsTextures (void); // for vid_restart
 
+int		Mod_LoadSimpleTexture(model_t *mod, int skinnum);
+
 #include "gl_md3.h"
 
 #endif	// __MODEL__

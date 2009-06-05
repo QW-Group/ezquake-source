@@ -472,6 +472,10 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 		return;
 	memcpy (mod->cache.data, pheader, total);
 
+	// try load simple textures
+	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));
+	mod->simpletexture[0] = Mod_LoadSimpleTexture(mod, 0);
+
 	Hunk_FreeToLowMark (start);
 
 	mod->flags = Mod_ReadFlagsFromMD1(mod->name, mem->flags);

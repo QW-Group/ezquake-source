@@ -48,8 +48,6 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer);
 void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize);
 model_t *Mod_LoadModel (model_t *mod, qbool crash);
 
-int Mod_LoadSimpleTexture(model_t *mod, int skinnum);
-
 byte	mod_novis[MAX_MAP_LEAFS/8];
 
 #define	MAX_MOD_KNOWN	512
