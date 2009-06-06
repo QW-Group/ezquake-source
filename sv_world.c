@@ -204,10 +204,10 @@ SV_UnlinkEdict
 */
 void SV_UnlinkEdict (edict_t *ent)
 {
-	if (!ent->area.prev)
+	if (!ent->e->area.prev)
 		return;		// not linked in anywhere
-	RemoveLink (&ent->area);
-	ent->area.prev = ent->area.next = NULL;
+	RemoveLink (&ent->e->area);
+	ent->e->area.prev = ent->e->area.next = NULL;
 }
 
 /*
@@ -327,11 +327,11 @@ void SV_LinkToLeafs (edict_t *ent)
 {
 	int	i, leafnums[MAX_ENT_LEAFS];
 
-	ent->num_leafs = CM_FindTouchedLeafs (ent->v.absmin, ent->v.absmax, leafnums,
+	ent->e->num_leafs = CM_FindTouchedLeafs (ent->v.absmin, ent->v.absmax, leafnums,
 					      MAX_ENT_LEAFS, 0, NULL);
-	for (i = 0; i < ent->num_leafs; i++) {
-		// ent->leafnums are real leafnum minus one (for pvs checks)
-		ent->leafnums[i] = leafnums[i] - 1;
+	for (i = 0; i < ent->e->num_leafs; i++) {
+		// ent->e->leafnums are real leafnum minus one (for pvs checks)
+		ent->e->leafnums[i] = leafnums[i] - 1;
 	}
 }
 
@@ -346,13 +346,13 @@ void SV_LinkEdict (edict_t *ent, qbool touch_triggers)
 {
 	areanode_t	*node;
 	
-	if (ent->area.prev)
+	if (ent->e->area.prev)
 		SV_UnlinkEdict (ent);	// unlink from old position
 		
 	if (ent == sv.edicts)
 		return;		// don't add the world
 
-	if (ent->free)
+	if (ent->e->free)
 		return;
 
 // set the abs box
@@ -385,7 +385,7 @@ void SV_LinkEdict (edict_t *ent, qbool touch_triggers)
 	if (ent->v.modelindex)
 		SV_LinkToLeafs (ent);
 	else
-		ent->num_leafs = 0;
+		ent->e->num_leafs = 0;
 
 	if (ent->v.solid == SOLID_NOT)
 		return;
@@ -407,9 +407,9 @@ void SV_LinkEdict (edict_t *ent, qbool touch_triggers)
 // link it in	
 
 	if (ent->v.solid == SOLID_TRIGGER)
-		InsertLinkBefore (&ent->area, &node->trigger_edicts);
+		InsertLinkBefore (&ent->e->area, &node->trigger_edicts);
 	else
-		InsertLinkBefore (&ent->area, &node->solid_edicts);
+		InsertLinkBefore (&ent->e->area, &node->solid_edicts);
 	
 // if touch_triggers, touch all entities at this node and decend for more
 	if (touch_triggers)

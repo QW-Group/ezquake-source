@@ -635,7 +635,7 @@ int PF2_newcheckclient(int check)
 		if (i == check)
 			break;	// didn't find anything else
 
-		if (ent->free)
+		if (ent->e->free)
 			continue;
 		if (ent->v.health <= 0)
 			continue;
@@ -673,7 +673,7 @@ void PF2_checkclient(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 
 	// return check if it might be visible
 	ent = EDICT_NUM(sv.lastcheck);
-	if (ent->free || ent->v.health <= 0)
+	if (ent->e->free || ent->v.health <= 0)
 	{
 		// RETURN_EDICT(sv.edicts);
 		retval->_int = NUM_FOR_EDICT(sv.edicts);
@@ -985,7 +985,7 @@ void PF2_FindRadius( byte * base, unsigned int mask, pr2val_t * stack, pr2val_t 
 	{
 		ed = EDICT_NUM( e );
 
-		if ( ed->free )
+		if (ed->e->free)
 			continue;
 		if (ed->v.solid == SOLID_NOT)
 			continue;
@@ -1228,7 +1228,7 @@ void PF2_nextent(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 			return;
 		}
 		ent = EDICT_NUM(i);
-		if (!ent->free)
+		if (!ent->e->free)
 		{
 			retval->_int = i;
 			return;
@@ -1260,7 +1260,7 @@ void PF2_nextclient(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*ret
 			return;
 		}
 		ent = EDICT_NUM(i);
-		if (!ent->free) // actually that always true for clients edicts
+		if (!ent->e->free) // actually that always true for clients edicts
 		{
 			if (svs.clients[i-1].state == cs_spawned) // client in game
 			{
@@ -1296,7 +1296,7 @@ void PF2_Find (byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 	for (e++ ; e < sv.num_edicts ; e++)
 	{
 		ed = EDICT_NUM(e);
-		if (ed->free)
+		if (ed->e->free)
 			continue;
 		t = (char *) VM_POINTER(base,mask,*(int*)((char *) ed + fofs));
 		if (!t)

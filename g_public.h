@@ -31,7 +31,7 @@
 //
 // g_public.h -- game module information visible to server
 
-#define	GAME_API_VERSION	12
+#define	GAME_API_VERSION	13
 
 
 //===============================================================
@@ -188,7 +188,7 @@ typedef enum
 	// The game can issue trap_argc() / trap_argv() commands to get the command
 	// and parameters.  Return qfalse if the game doesn't recognize it as a command.
 	GAME_CLIENT_SAY,			// ( int isTeamSay );
-	GAME_PAUSED_TIC,			// ( int duration );	// duration is in msecs
+	GAME_PAUSED_TIC,			// ( int duration_msec );	// duration is in msecs
 
 } gameExport_t;
 

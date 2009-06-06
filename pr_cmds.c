@@ -698,7 +698,7 @@ int PF_newcheckclient (int check)
 		if (i == check)
 			break;	// didn't find anything else
 
-		if (ent->free)
+		if (ent->e->free)
 			continue;
 		if (ent->v.health <= 0)
 			continue;
@@ -748,7 +748,7 @@ static void PF_checkclient (void)
 
 // return check if it might be visible	
 	ent = EDICT_NUM(sv.lastcheck);
-	if (ent->free || ent->v.health <= 0)
+	if (ent->e->free || ent->v.health <= 0)
 	{
 		RETURN_EDICT(sv.edicts);
 		return;
@@ -1574,7 +1574,7 @@ void PF_Find (void)
 	for (e++ ; e < sv.num_edicts ; e++)
 	{
 		ed = EDICT_NUM(e);
-		if (ed->free)
+		if (ed->e->free)
 			continue;
 		t = E_STRING(ed,f);
 		if (!t)
@@ -1883,7 +1883,7 @@ void PF_nextent (void)
 			return;
 		}
 		ent = EDICT_NUM(i);
-		if (!ent->free)
+		if (!ent->e->free)
 		{
 			RETURN_EDICT(ent);
 			return;

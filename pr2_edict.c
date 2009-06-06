@@ -67,7 +67,7 @@ Sets everything to NULL
 void ED2_ClearEdict(edict_t *e)
 {
 	memset(&e->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
-	e->free = false;
+	e->e->free = false;
 }
 
 /*
@@ -91,7 +91,7 @@ edict_t *ED2_Alloc(void)
 		e = EDICT_NUM(i);
 		// the first couple seconds of server time can involve a lot of
 		// freeing and allocating, so relax the replacement policy
-		if (e->free && (e->freetime < 2 || sv.time - e->freetime > 0.5))
+		if (e->e->free && (e->e->freetime < 2 || sv.time - e->e->freetime > 0.5))
 		{
 			ED2_ClearEdict(e);
 			return e;
@@ -126,7 +126,7 @@ void ED2_Free(edict_t *ed)
 {
 	SV_UnlinkEdict (ed);		// unlink from world bsp
 
-	ed->free = true;
+	ed->e->free = true;
 	ed->v.model = 0;
 	ed->v.takedamage = 0;
 	ed->v.modelindex = 0;
@@ -138,7 +138,7 @@ void ED2_Free(edict_t *ed)
 	ed->v.nextthink = -1;
 	ed->v.solid = 0;
 
-	ed->freetime = sv.time;
+	ed->e->freetime = sv.time;
 }
 
 

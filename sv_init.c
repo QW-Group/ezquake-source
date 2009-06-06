@@ -103,7 +103,7 @@ static void SV_CreateBaseline (void)
 	for (entnum = 0; entnum < sv.num_edicts ; entnum++)
 	{
 		svent = EDICT_NUM(entnum);
-		if (svent->free)
+		if (svent->e->free)
 			continue;
 		// create baselines for all player slots,
 		// and any other edict that has a visible model
@@ -113,19 +113,19 @@ static void SV_CreateBaseline (void)
 		//
 		// create entity baseline
 		//
-		VectorCopy (svent->v.origin, svent->baseline.origin);
-		VectorCopy (svent->v.angles, svent->baseline.angles);
-		svent->baseline.frame = svent->v.frame;
-		svent->baseline.skinnum = svent->v.skin;
+		VectorCopy (svent->v.origin, svent->e->baseline.origin);
+		VectorCopy (svent->v.angles, svent->e->baseline.angles);
+		svent->e->baseline.frame = svent->v.frame;
+		svent->e->baseline.skinnum = svent->v.skin;
 		if (entnum > 0 && entnum <= MAX_CLIENTS)
 		{
-			svent->baseline.colormap = entnum;
-			svent->baseline.modelindex = SV_ModelIndex("progs/player.mdl");
+			svent->e->baseline.colormap = entnum;
+			svent->e->baseline.modelindex = SV_ModelIndex("progs/player.mdl");
 		}
 		else
 		{
-			svent->baseline.colormap = 0;
-			svent->baseline.modelindex = SV_ModelIndex(
+			svent->e->baseline.colormap = 0;
+			svent->e->baseline.modelindex = SV_ModelIndex(
 #ifdef USE_PR2
 				PR2_GetString(svent->v.model)
 #else
@@ -146,14 +146,14 @@ static void SV_CreateBaseline (void)
 		MSG_WriteByte (&sv.signon,svc_spawnbaseline);
 		MSG_WriteShort (&sv.signon,entnum);
 
-		MSG_WriteByte (&sv.signon, svent->baseline.modelindex);
-		MSG_WriteByte (&sv.signon, svent->baseline.frame);
-		MSG_WriteByte (&sv.signon, svent->baseline.colormap);
-		MSG_WriteByte (&sv.signon, svent->baseline.skinnum);
+		MSG_WriteByte (&sv.signon, svent->e->baseline.modelindex);
+		MSG_WriteByte (&sv.signon, svent->e->baseline.frame);
+		MSG_WriteByte (&sv.signon, svent->e->baseline.colormap);
+		MSG_WriteByte (&sv.signon, svent->e->baseline.skinnum);
 		for (i=0 ; i<3 ; i++)
 		{
-			MSG_WriteCoord(&sv.signon, svent->baseline.origin[i]);
-			MSG_WriteAngle(&sv.signon, svent->baseline.angles[i]);
+			MSG_WriteCoord(&sv.signon, svent->e->baseline.origin[i]);
+			MSG_WriteAngle(&sv.signon, svent->e->baseline.angles[i]);
 		}
 	}
 }
@@ -347,11 +347,17 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		PR2_InitProg();
 	else
 #endif
-
 	{
 		PR_LoadProgs ();
 		PR_InitBuiltins ();
 		sv.edicts = (edict_t*) Hunk_AllocName (MAX_EDICTS * pr_edict_size, "edicts");
+	}
+
+	for (i = 0; i < MAX_EDICTS; i++)
+	{
+		ent = EDICT_NUM(i);
+		ent->e = &sv.sv_edicts[i]; // assigning ->e field in each edict_t
+		ent->e->area.ed = ent; // yeah, pretty funny, but this help to find which edict_t own this area (link_t)
 	}
 
 #ifdef USE_PR2
@@ -450,7 +456,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	com_serveractive = true;
 
 	ent = EDICT_NUM(0);
-	ent->free = false;
+	ent->e->free = false;
 #ifdef USE_PR2
 	if ( sv_vm )
 		strlcpy(PR2_GetString(ent->v.model), sv.modelname, 64);

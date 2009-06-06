@@ -263,7 +263,7 @@ static void SV_EmitPacketEntities (client_t *client, packet_entities_t *to, size
 			}
 			ent = EDICT_NUM(newnum);
 			//Con_Printf ("baseline %i\n", newnum);
-			SV_WriteDelta (&ent->baseline, &to->entities[newindex], msg, true);
+			SV_WriteDelta (&ent->e->baseline, &to->entities[newindex], msg, true);
 			newindex++;
 			continue;
 		}
@@ -387,10 +387,10 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 				continue;
 
 			// ignore if not touching a PV leaf
-			for (i=0 ; i < ent->num_leafs ; i++)
-				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
+			for (i=0 ; i < ent->e->num_leafs ; i++)
+				if (pvs[ent->e->leafnums[i] >> 3] & (1 << (ent->e->leafnums[i]&7) ))
 					break;
-			if (i == ent->num_leafs)
+			if (i == ent->e->num_leafs)
 				continue; // not visable
 		}
 
@@ -659,11 +659,11 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 			if (!(int)sv_demoNoVis.value || !recorder)
 			{
 				// ignore if not touching a PV leaf
-				for (i=0 ; i < ent->num_leafs ; i++)
-					if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
+				for (i=0 ; i < ent->e->num_leafs ; i++)
+					if (pvs[ent->e->leafnums[i] >> 3] & (1 << (ent->e->leafnums[i]&7) ))
 						break;
 
-				if (i == ent->num_leafs)
+				if (i == ent->e->num_leafs)
 					continue;		// not visible
 			}
 
@@ -705,8 +705,8 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 			continue;
 
 		// ignore if not touching a PV leaf
-		for (i=0 ; i < ent->num_leafs ; i++)
-			if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
+		for (i=0 ; i < ent->e->num_leafs ; i++)
+			if (pvs[ent->e->leafnums[i] >> 3] & (1 << (ent->e->leafnums[i]&7) ))
 				break;
 
 		if ((int)ent->v.effects & EF_MUZZLEFLASH) {

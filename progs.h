@@ -35,34 +35,41 @@ typedef union eval_s
 	int		edict;
 } eval_t;
 
+struct edict_s; // forward referecnce for link_t
+
 typedef struct link_s
 {
+	struct edict_s *ed;
+
 	struct link_s	*prev, *next;
 } link_t;
 
-// (type *)STRUCT_FROM_LINK(link_t *link, type, member)
-// ent = STRUCT_FROM_LINK(link,entity_t,order)
-// FIXME: remove this mess!
-#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
-#define	EDICT_FROM_AREA(l) STRUCT_FROM_LINK(l,edict_t,area)
+#define	EDICT_FROM_AREA(l)	((l)->ed)
 
 #define	MAX_ENT_LEAFS	16
-typedef struct edict_s
+
+typedef struct sv_edict_s
 {
 	qbool		free;
 	link_t		area;			// linked to a division node or leaf
 
-	int		num_leafs;
+	int			num_leafs;
 	short		leafnums[MAX_ENT_LEAFS];
 
 	entity_state_t	baseline;
 
 	float		freetime;		// sv.time when the object was freed
-	double		lastruntime;		// sv.time when SV_RunEntity was last
-						// called for this edict (Tonik)
+	double		lastruntime;	// sv.time when SV_RunEntity was last called for this edict (Tonik)
+} sv_edict_t;
+
+typedef struct edict_s
+{
+	sv_edict_t	*e;			// server side part of the edict_t,
+							// basically we can get rid of this pointer at all, since we can access it via sv.sv_edicts[num]
+							// but this way it more friendly, I think.
 
 	entvars_t	v;			// C exported fields from progs
-// other fields from progs come immediately after
+	// other fields from progs come immediately after
 } edict_t;
 
 //============================================================================

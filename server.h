@@ -111,6 +111,7 @@ typedef struct
 	edict_t		*edicts;			// can NOT be array indexed, because
 							// edict_t is variable sized, but can
 							// be used to reference the world ent
+	sv_edict_t	sv_edicts[MAX_EDICTS]; // part of the edict_t
 
 	byte		*pvs, *phs;			// fully expanded and decompressed
 

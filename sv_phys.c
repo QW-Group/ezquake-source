@@ -164,7 +164,7 @@ qbool SV_RunThink (edict_t *ent)
 #endif
 			PR_ExecuteProgram (ent->v.think);
 
-		if (ent->free)
+		if (ent->e->free)
 			return false;
 	} while (1);
 
@@ -325,7 +325,7 @@ int SV_FlyMove (edict_t *ent, float time1, trace_t *steptrace, int type)
 		// run the impact function
 		//
 		SV_Impact (ent, trace.e.ent);
-		if (ent->free)
+		if (ent->e->free)
 			break;	 // removed by the impact function
 
 
@@ -474,7 +474,7 @@ qbool SV_Push (edict_t *pusher, vec3_t move)
 	check = NEXT_EDICT(sv.edicts);
 	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
 	{
-		if (check->free)
+		if (check->e->free)
 			continue;
 		if (check->v.movetype == MOVETYPE_PUSH
 		|| check->v.movetype == MOVETYPE_NONE
@@ -650,7 +650,7 @@ void SV_Physics_Pusher (edict_t *ent)
 		else
 #endif
 			PR_ExecuteProgram (ent->v.think);
-		if (ent->free)
+		if (ent->e->free)
 			return;
 		VectorSubtract (ent->v.origin, oldorg, move);
 
@@ -784,7 +784,7 @@ void SV_Physics_Toss (edict_t *ent)
 	trace = SV_PushEntity (ent, move);
 	if (trace.fraction == 1)
 		return;
-	if (ent->free)
+	if (ent->e->free)
 		return;
 
 	if (ent->v.movetype == MOVETYPE_BOUNCE)
@@ -889,9 +889,9 @@ SV_RunEntity
 */
 void SV_RunEntity (edict_t *ent)
 {
-	if (ent->lastruntime == sv.time)
+	if (ent->e->lastruntime == sv.time)
 		return;
-	ent->lastruntime = sv.time;
+	ent->e->lastruntime = sv.time;
 
 	switch ((int)ent->v.movetype)
 	{
@@ -934,9 +934,9 @@ void SV_RunNQNewmis (void)
 	ent = NEXT_EDICT(sv.edicts);
 	for (i=1 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
 	{
-		if (ent->free)
+		if (ent->e->free)
 			continue;
-		if (ent->lastruntime || ent->v.owner != pl)
+		if (ent->e->lastruntime || ent->v.owner != pl)
 			continue;
 		if (ent->v.movetype != MOVETYPE_FLY &&
 			ent->v.movetype != MOVETYPE_FLYMISSILE && 
@@ -1031,7 +1031,7 @@ void SV_Physics (void)
 	ent = sv.edicts;
 	for (i=0 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
 	{
-		if (ent->free)
+		if (ent->e->free)
 			continue;
 
 		if (PR_GLOBAL(force_retouch))
