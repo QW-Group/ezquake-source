@@ -4917,7 +4917,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 void SCR_HUD_DrawTeamInfo(hud_t *hud)
 {
 	int x, y, _y, width, height;
-	int i, j, slots[MAX_CLIENTS], slots_num, maxname, maxloc;
+	int i, j, k, slots[MAX_CLIENTS], slots_num, maxname, maxloc;
 	char tmp[1024], *nick;
 
 	// Used for hud_teaminfo, data is collected in screen.c / scr_teaminfo
@@ -4990,7 +4990,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 	// this does't draw anything, just calculate width
 	width = FONTWIDTH * hud_teaminfo_scale->value * SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud);
-	height = FONTWIDTH * hud_teaminfo_scale->value * slots_num;
+	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer?slots_num+n_teams:slots_num);
 
 	if (hud_editor)
 		HUD_PrepareDraw(hud, width , FONTWIDTH, &x, &y);
@@ -5007,10 +5007,33 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	_y = y ;
 	x = (hud_teaminfo_align_right->value ? x - (width * (FONTWIDTH * hud_teaminfo_scale->value)) : x);
 
-	for ( j = 0; j < slots_num; j++ ) {
-		i = slots[j];
-		SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud);
-		_y += FONTWIDTH * hud_teaminfo_scale->value;
+	// If multiple teams are displayed then sort the display and print team header on overlay
+	k=0;
+	if (hud_teaminfo_show_enemies->integer)
+	{
+		while (sorted_teams[k].name)
+		{
+			Draw_SString (x, _y, sorted_teams[k].name, hud_teaminfo_scale->value);
+			_y += FONTWIDTH * hud_teaminfo_scale->value;
+			for ( j = 0; j < slots_num; j++ ) 
+			{
+				i = slots[j];
+				if (!strcmp(cl.players[i].team,sorted_teams[k].name))
+				{
+					SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud);
+					_y += FONTWIDTH * hud_teaminfo_scale->value;
+				}
+			}
+		k++;
+		}
+	}
+	else 
+	{
+		for ( j = 0; j < slots_num; j++ ) {
+			i = slots[j];
+			SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud);
+			_y += FONTWIDTH * hud_teaminfo_scale->value;
+		}
 	}
 }
 
