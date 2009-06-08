@@ -349,6 +349,9 @@ mvd_clock_t *MVD_ClockList_Remove(mvd_clock_t *item)
 
 	if (item == mvd_clocklist) {
 		mvd_clocklist = item->next;
+		if (mvd_clocklist) {
+			mvd_clocklist->prev = NULL;
+		}
 		Q_free(item);
 		return mvd_clocklist;
 	}
