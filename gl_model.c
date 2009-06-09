@@ -2171,7 +2171,7 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 		return 0;
 
 	// well, it have nothing with luma, but quite same restrictions...
-	if (!Mod_IsLumaAllowed(mod))
+	if ( (mod->modhint != MOD_BACKPACK) && !Mod_IsLumaAllowed(mod) )
 		return 0;
 
 	COM_StripExtension(COM_SkipPath(mod->name), basename);
