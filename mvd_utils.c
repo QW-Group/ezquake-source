@@ -387,7 +387,51 @@ void MVD_ClockList_RemoveExpired(void)
 	}
 }
 
-void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int *width, int *height)
+char *MVD_ClockList_TPNameStringByItemInt(int item)
+{
+	switch (item)
+	{
+		case IT_AXE: return tp_name_axe.string;
+		case IT_SHOTGUN: return tp_name_sg.string;
+		case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
+		case IT_NAILGUN: return tp_name_ng.string;
+		case IT_SUPER_NAILGUN: return tp_name_sng.string;
+		case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
+		case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
+		case IT_LIGHTNING: return tp_name_lg.string;
+		case IT_INVISIBILITY: return tp_name_ring.string;
+		case IT_QUAD: return tp_name_quad.string;
+		case IT_INVULNERABILITY: return tp_name_pent.string;
+		case IT_ARMOR1: return tp_name_ga.string;
+		case IT_ARMOR2: return tp_name_ya.string;
+		case IT_ARMOR3:	return tp_name_ra.string;
+		case IT_SUPERHEALTH: return tp_name_mh.string;
+		default: return tp_name_none.string;
+	}
+}
+
+int MVD_ClockList_GetLongestName(void)
+{
+	int i, current, longest = 0;	
+	int items[] = {
+		IT_AXE, IT_SHOTGUN, IT_SUPER_SHOTGUN, IT_NAILGUN, IT_SUPER_NAILGUN,
+		IT_GRENADE_LAUNCHER, IT_ROCKET_LAUNCHER, IT_LIGHTNING, IT_INVISIBILITY,
+		IT_QUAD, IT_INVULNERABILITY, IT_ARMOR1, IT_ARMOR2, IT_ARMOR3, IT_SUPERHEALTH
+	};
+
+	for (i = 0; i < sizeof(items); i++){
+#ifdef GLQUAKE
+		current = strlen_color(MVD_ClockList_TPNameStringByItemInt(items[i]));
+#else
+		current = strlen(MVD_ClockList_TPNameStringByItemInt(items[i]));
+#endif
+		if (longest < current)
+			longest = current;
+	}
+	return longest;
+}
+
+void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *width, int *height)
 {
 	int lines = 0;
 	mvd_clock_t *current = mvd_clocklist;
@@ -397,23 +441,44 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int *width, int *he
 		current = current->next;
 	}
 
-	*width = LETTERWIDTH * (sizeof ("QUAD spawn") - 1); // the longest possible string
+	// the longest possible string
+	if (style == 1)
+		*width = LETTERWIDTH * (MVD_ClockList_GetLongestName() + sizeof(" spawn") - 1);
+	else
+		*width = LETTERWIDTH * (sizeof ("QUAD spawn") - 1);
+
 	*height = LETTERHEIGHT * lines;
 }
 
-void MVD_ClockList_TopItems_Draw(double time_limit, int x, int y)
+void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y)
 {
 	mvd_clock_t *current = mvd_clocklist;
+	char *clockitem;
 
 	while (current && current->clockval - cls.realtime < time_limit) {
 		int time = (int) ((current->clockval - cls.realtime) + 1);
-		if (time > 0) {
-			Draw_String(x, y, va("%s %d", mvd_wp_info[current->itemtype].colored_name,
-				time));
+
+		if(style == 1){	// tp_name_*
+			clockitem = va("%s", MVD_ClockList_TPNameStringByItemInt(mvd_wp_info[current->itemtype].it));
+		}else if (style == 2){	// brown + white
+			clockitem = va("%s", mvd_wp_info[current->itemtype].name);
+			CharsToBrown(clockitem, clockitem + strlen(mvd_wp_info[current->itemtype].name));
+		}else{	// built-in color(GL) or simple white (software)
+#ifdef GLQUAKE
+			clockitem = va("%s", mvd_wp_info[current->itemtype].colored_name);
+#else
+			clockitem = va("%s", mvd_wp_info[current->itemtype].name);
+#endif
 		}
-		else {
-			Draw_String(x, y, va("%s &c8ffspawn&r", mvd_wp_info[current->itemtype].colored_name));
-		}
+
+		if(time > 0)
+			clockitem = va("%s %d", clockitem, time);
+		else
+			clockitem = va("%s spawn", clockitem);
+
+		Draw_String(x, y, clockitem);
+
+
 		current = current->next;
 		y += LETTERHEIGHT;
 	}

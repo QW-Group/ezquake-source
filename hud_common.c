@@ -5257,13 +5257,14 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	extern qbool hud_editor;
 	int width, height;
 	int x, y;
-	static cvar_t *hud_itemsclock_timelimit = NULL;
+	static cvar_t *hud_itemsclock_timelimit = NULL, *hud_itemsclock_style;
 
 	if (hud_itemsclock_timelimit == NULL) {
 		hud_itemsclock_timelimit = HUD_FindVar(hud, "timelimit");
+		hud_itemsclock_style = HUD_FindVar(hud, "style");
 	}
 
-	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, &width, &height);
+	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height);
 	
 	if (hud_editor)
 		HUD_PrepareDraw(hud, width, LETTERHEIGHT, &x, &y);
@@ -5274,7 +5275,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
     if (!HUD_PrepareDraw(hud, width, height, &x, &y))
         return;
 	
-	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, x, y);
+	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y);
 }
 
 #ifdef WITH_PNG
@@ -7245,6 +7246,7 @@ void CommonDraw_Init(void)
 		0, ca_active, 1, SCR_HUD_DrawItemsClock,
 		"0", "screen", "center", "center", "0", "0", "0", "0 0 0", NULL,
 		"timelimit", "10",
+		"style", "0",
 		NULL
 		);
 
