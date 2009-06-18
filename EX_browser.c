@@ -2663,7 +2663,18 @@ int SB_Serverlist_Unserialize(FILE *f)
 		server_data *s = (server_data *) Q_malloc(sizeof(server_data));
 		int j;
 
-		fread(s, sizeof(server_data), 1, f);
+		if (fread(s, sizeof(server_data), 1, f) != 1 ||
+			s->playersn < 0 || s->playersn > MAX_CLIENTS || s->spectatorsn < 0 || s->spectatorsn > MAX_CLIENTS) {
+			// naive check for corrupted data
+			serversn = 0;
+			serversn_passed = 0;
+			Q_free(s);
+			for (j = 0; j < i; j++) {
+				Q_free(servers[j]);
+			}
+			return -3;
+		}
+
 		servers[i] = s;
 
 		// Create empty entries because
@@ -2719,6 +2730,9 @@ void SB_Serverlist_Unserialize_f(void)
 	}
 	else if (err == -2) {
 		Com_Printf("Format error (servers number too big)\n");
+	}
+	else if (err == -3) {
+		Com_Printf("Corrupted data\n");
 	}
 	else { // err == 0
 		Com_Printf("No servers read\n");
