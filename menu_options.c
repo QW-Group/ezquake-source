@@ -873,6 +873,9 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0, 3, 0.05),
 	ADDSET_NUMBER	("Mouse Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NUMBER	("Menu Mouse Sensitivity", cursor_sensitivity, 0.10 , 3, 0.10),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
 
 	//Sound & Volume
@@ -1258,6 +1261,7 @@ setting settbinds_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NUMBER	("Menu Mouse Sensitivity", cursor_sensitivity, 0.10 , 3, 0.10),
 	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
@@ -1466,13 +1470,13 @@ void Menu_Options_Init(void) {
 	CEditBox_Init(&filenameeb, 32, 64);
 
 	CTab_Init(&options_tab);
-	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, &options_main_handlers);
-	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, &options_player_handlers);
-	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, &options_graphics_handlers);
-	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, &options_hud_handlers);
-	CTab_AddPage(&options_tab, "demo/spec", OPTPG_DEMO_SPEC, &options_demo_spec_handlers);
-	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, &options_controls_handlers);
-	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, &options_video_handlers);
-	CTab_AddPage(&options_tab, "config", OPTPG_CONFIG, &options_config_handlers);
+	CTab_AddPage(&options_tab, "Main", OPTPG_SETTINGS, &options_main_handlers);
+	CTab_AddPage(&options_tab, "Player", OPTPG_PLAYER, &options_player_handlers);
+	CTab_AddPage(&options_tab, "Graphics", OPTPG_FPS, &options_graphics_handlers);
+	CTab_AddPage(&options_tab, "HUD", OPTPG_HUD, &options_hud_handlers);
+	CTab_AddPage(&options_tab, "Demo/Spec", OPTPG_DEMO_SPEC, &options_demo_spec_handlers);
+	CTab_AddPage(&options_tab, "Controls", OPTPG_BINDS, &options_controls_handlers);
+	CTab_AddPage(&options_tab, "Video", OPTPG_VIDEO, &options_video_handlers);
+	CTab_AddPage(&options_tab, "Config", OPTPG_CONFIG, &options_config_handlers);
 	CTab_SetCurrentId(&options_tab, OPTPG_SETTINGS);
 }

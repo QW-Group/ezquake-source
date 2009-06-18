@@ -474,11 +474,11 @@ void Menu_MultiPlayer_Init()
 	Settings_Page_Init(create_game_options, create_game_options_arr);
 
 	CTab_Init(&sb_tab);
-	CTab_AddPage(&sb_tab, "servers", SBPG_SERVERS, &sb_servers_handlers);
-	CTab_AddPage(&sb_tab, "sources", SBPG_SOURCES, &sb_sources_handlers);
-	CTab_AddPage(&sb_tab, "players", SBPG_PLAYERS, &sb_players_handlers);
-	CTab_AddPage(&sb_tab, "options", SBPG_OPTIONS, &sb_options_handlers);
-	CTab_AddPage(&sb_tab, "create", SBPG_CREATEGAME, &sb_creategame_handlers);
+	CTab_AddPage(&sb_tab, "Servers", SBPG_SERVERS, &sb_servers_handlers);
+	CTab_AddPage(&sb_tab, "Sources", SBPG_SOURCES, &sb_sources_handlers);
+	CTab_AddPage(&sb_tab, "Players", SBPG_PLAYERS, &sb_players_handlers);
+	CTab_AddPage(&sb_tab, "Options", SBPG_OPTIONS, &sb_options_handlers);
+	CTab_AddPage(&sb_tab, "Create", SBPG_CREATEGAME, &sb_creategame_handlers);
 	CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
 }
 

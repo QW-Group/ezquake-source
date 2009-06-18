@@ -262,9 +262,9 @@ void Menu_Help_Init(void)
     Help_Index_Init();
 	Help_Tutorials_Init();
 
-    CTab_AddPage(&help_tab, "browser", HELPM_BROWSER, &help_browser_handlers);
-	CTab_AddPage(&help_tab, "index", HELPM_INDEX, &help_index_handlers);
-	CTab_AddPage(&help_tab, "tutorials", HELPM_TUTORIALS, &help_tutorials_handlers);
+    CTab_AddPage(&help_tab, "Browser", HELPM_BROWSER, &help_browser_handlers);
+	CTab_AddPage(&help_tab, "Index", HELPM_INDEX, &help_index_handlers);
+	CTab_AddPage(&help_tab, "Tutorials", HELPM_TUTORIALS, &help_tutorials_handlers);
 
     CTab_SetCurrentId(&help_tab, HELPM_BROWSER);
 }

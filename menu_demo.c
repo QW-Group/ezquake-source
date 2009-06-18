@@ -955,9 +955,9 @@ void Menu_Demo_Init(void)
 
 	// initialize tab control
     CTab_Init(&demo_tab);
-	CTab_AddPage(&demo_tab, "browser", DEMOPG_BROWSER, &demo_browser_handlers);
-	CTab_AddPage(&demo_tab, "playlist", DEMOPG_PLAYLIST, &demo_playlist_handlers);
-	CTab_AddPage(&demo_tab, "entry", DEMOPG_ENTRY, &demo_entry_handlers);
-	CTab_AddPage(&demo_tab, "options", DEMOPG_OPTIONS, &demo_options_handlers);
+	CTab_AddPage(&demo_tab, "Browser", DEMOPG_BROWSER, &demo_browser_handlers);
+	CTab_AddPage(&demo_tab, "Playlist", DEMOPG_PLAYLIST, &demo_playlist_handlers);
+	CTab_AddPage(&demo_tab, "Entry", DEMOPG_ENTRY, &demo_entry_handlers);
+	CTab_AddPage(&demo_tab, "Options", DEMOPG_OPTIONS, &demo_options_handlers);
 	CTab_SetCurrentId(&demo_tab, DEMOPG_BROWSER);
 }
