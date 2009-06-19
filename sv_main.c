@@ -28,6 +28,7 @@ int telnetport = 0; // FIXME, perhaps just remove rest of telnet code
 struct timeval select_timeout;
 
 qbool		host_initialized;		// true if into command execution (compatability)
+qbool		host_everything_loaded;	// true if OnChange() applied to every var, end of Host_Init()
 
 double		realtime;			// without any filtering or bounding
 

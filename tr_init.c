@@ -340,22 +340,31 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 		if (nonwideconheight==0)
 			nonwideconheight=height; // save original conheight
 
-		if (vid_wideaspect.value == 0)
+		if (host_everything_loaded)
 		{
-			scale = 1;
+			if (vid_wideaspect.integer)
+			{
+				nonwideconheight=height;
+				scale = (4.0/3) / (16.0/10); //widescreen				
+			}
+			else
+			{
+				scale = 1;
+			}
+
 			height = floor(height * scale + 0.5);
+			//height &= 0xfff8; // make it a multiple of eight
+
+			if (vid_wideaspect.value != 0)
+				Com_Printf("vid_wideaspect enabled - conheight recalculated to %i\n", height);
 		}
-		else
+		else if (host_initialized && vid_wideaspect.integer)
 		{
-			nonwideconheight=height;
-			scale = (4.0/3) / (16.0/10); //widescreen
-			height = floor(height * scale + 0.5);
+				scale = (16.0/10) / (4.0/3); // standard
+				nonwideconheight = floor( height * scale + 0.5);
 		}
 
 		height = max(200, height);
-		//height &= 0xfff8; // make it a multiple of eight
-		if (vid_wideaspect.value != 0)
-			Com_Printf("vid_wideaspect enabled - conheight recalculated to %i\n", height);
 
 		if (glConfig.vidHeight)
 			vid.height = vid.conheight = height = min(glConfig.vidHeight, height);
@@ -771,6 +780,9 @@ void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel)
 	}
 
 	Cvar_Set (&vid_wideaspect, string);
+
+	if(!host_everything_loaded)
+		return;
 
 	if (nonwidefov != 0 && nonwideconheight != 0)
 	{

@@ -72,7 +72,8 @@ static int	host_hunklevel;
 static void	*host_membase;
 
 qbool	host_initialized;	// true if into command execution
-int			host_memsize;
+qbool	host_everything_loaded;	// true if OnChange() applied to every var, end of Host_Init()
+int		host_memsize;
 
 static jmp_buf 	host_abort;
 
@@ -799,6 +800,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 #ifdef _WIN32
 	SetForegroundWindow(mainwindow);
 #endif
+
+	host_everything_loaded = true;
 }
 
 //FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better

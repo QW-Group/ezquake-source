@@ -379,16 +379,18 @@ void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 
 #ifndef __APPLE__
 #ifdef GLQUAKE
-	if (vid_wideaspect.value) 
+	if (host_everything_loaded && vid_wideaspect.integer)
 	{
 		newfov = tan((newfov/2)*M_PI/180);
 		newfov = newfov*48/40;				// 3/4 * 16/10
 		newfov = 2 * atan(newfov)*180/M_PI;
 		Com_Printf("vid_wideaspect enabled - fov recalculated to %f\n", newfov);
 	}
-	else
+	else if (host_initialized && vid_wideaspect.integer)
 	{
-		nonwidefov=newfov;
+			nonwidefov = tan((newfov/2)*M_PI/180);
+			nonwidefov = nonwidefov * 40 / 48;
+			nonwidefov = 2 * atan(nonwidefov) * 180 / M_PI;
 	}
 #endif // GLQUAKE
 #endif // __APPLE__

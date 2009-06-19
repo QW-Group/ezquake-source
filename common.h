@@ -384,6 +384,7 @@ extern double	curtime; // not bounded or scaled, shared by local client and serv
 
 // host
 extern qbool host_initialized;
+extern qbool host_everything_loaded;
 extern int host_memsize;
 
 void Host_Init (int argc, char **argv, int default_memsize);
