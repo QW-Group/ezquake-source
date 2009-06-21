@@ -55,7 +55,32 @@ extern	qbool		scr_skipupdate;
 extern	qbool		block_drawing;
 
 // QW262 HUD
+typedef char* (*Hud_Func)();
+
+#define		HUD_CVAR		1
+#define		HUD_FUNC		2
+#define		HUD_STRING		4
+#define		HUD_BLINK_F		8
+#define		HUD_BLINK_B		16
+#define		HUD_IMAGE		32
+#define		HUD_ENABLED		512
+
+typedef struct hud_element_s {
+	struct hud_element_s*	next;
+	char					*name;
+	unsigned				flags;
+	signed char				coords[4]; // pos_type, x, y, bg
+	unsigned				width;
+	float					blink;
+	void*					contents;
+	int					charset;
+	float					alpha;
+	char					*f_hover, *f_button;
+	unsigned				scr_width, scr_height;
+} hud_element_t;
+
 void Hud_262Init (void);
+void Hud_262LoadOnFirstStart(void);
 
 qbool Hud_ElementExists(const char* name);
 

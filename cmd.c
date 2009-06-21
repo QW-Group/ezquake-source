@@ -59,6 +59,7 @@ cbuf_t cbuf_svc;
 cbuf_t cbuf_safe, cbuf_formatted_comms;
 #endif
 
+char *hud262_load_buff = NULL;
 cbuf_t *cbuf_current = NULL;
 
 #ifdef WITH_DP_MEM
@@ -81,6 +82,36 @@ void Cmd_Wait_f (void)
 		cbuf_current->wait = true;
 
 	return;
+}
+
+void Hud262_CatchStringsOnLoad(char *line)
+{
+	int i;
+	char *tmpbuff;
+	static char *hud262_commands[8] = {
+		"hud262_add", "hud262_alpha", "hud262_bg", "hud262_blink",
+		"hud262_disable", "hud262_enable", "hud262_position", "hud262_width"};
+
+
+	for(i = 0; i < 8; i++)
+	{
+		if (Utils_RegExpMatch(va("^((\\s+)?(?i)%s)", hud262_commands[i]), line))
+		{
+			if (hud262_load_buff == NULL)
+			{
+				hud262_load_buff = (char*) Q_malloc( (strlen(line) + 2) * sizeof(char));
+				snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
+			}
+			else
+			{
+				tmpbuff = (char *) Q_malloc(strlen(hud262_load_buff) + 1);
+				strcpy(tmpbuff, hud262_load_buff);
+				hud262_load_buff = (char *) Q_realloc(hud262_load_buff, (strlen(tmpbuff) + strlen(line) + 2) * sizeof(char));
+				snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
+				Q_free(tmpbuff);
+			}
+		}
+	}
 }
 
 /*
@@ -301,6 +332,14 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		}
 
 		cursize = cbuf->text_end - cbuf->text_start;
+
+		// TODO: make it in a more right way
+		// since, hud262_add can not correctly create hud elements during normal start
+		// (some cvars are not created/initialized at the time when we want to use them in hud262)
+		// we should save these commands to buffer and execute it when all
+		// cvars will be created
+		if(!host_everything_loaded)
+			Hud262_CatchStringsOnLoad(line);
 
 		Cmd_ExecuteStringEx (cbuf, line);	// execute the command line
 
@@ -2103,7 +2142,7 @@ void Cmd_Alias_In_f (void)
 	Z_Free (alias->value);
 	alias->value = Z_Strdup(buf);
 	if (strchr(buf, '%'))
-		alias->flags |= ALIAS_HAS_PARAMETERS; 
+		alias->flags |= ALIAS_HAS_PARAMETERS;
 }
 
 void Cmd_Alias_Out_f (void)

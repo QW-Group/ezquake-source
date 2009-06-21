@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "fs.h"
 
-
 void Key_WriteBindings (FILE *);
 
 #ifdef WITH_KEYMAP
@@ -480,6 +479,40 @@ void DumpCmdLine(FILE *f)
 	fprintf(f, "// %s\n", cl_cmdline.string);
 }
 
+void DumpHUD262(FILE *f)
+{
+	hud_element_t *elem;
+	char *type;
+	char *param;
+	int i, mask;
+	extern hud_element_t *hud_list;
+
+	elem = hud_list;
+
+	for(i = 0; elem; elem = elem->next, i++) {
+		if (elem->flags & HUD_CVAR) {
+			type = "cvar";
+			param = ((cvar_t*)elem->contents)->name;
+		} else if (elem->flags & HUD_STRING) {
+			type = "str";
+			param = elem->contents;
+		} else {
+			continue;
+		}
+
+		mask = (elem->flags & HUD_BLINK_F) ? 1 : 0 + (elem->flags & HUD_BLINK_B) ? 2 : 0;
+		fprintf(f, "hud262_add %s %s %s\n", elem->name, type, param);
+#ifdef GLQUAKE
+		fprintf(f, "hud262_alpha %s %1.2f\n", elem->name, elem->alpha);
+#endif		
+		fprintf(f, "hud262_bg %s %d\n", elem->name, elem->coords[3]);
+		fprintf(f, "hud262_blink %s %d %d\n", elem->name, (int) ceil(elem->blink * 1000.0), mask);
+		fprintf(f, "hud262_%s %s\n", (elem->flags & HUD_ENABLED) ? "enable" : "disable", elem->name);
+		fprintf(f, "hud262_position %s %d %d %d\n", elem->name, elem->coords[0], elem->coords[1], elem->coords[2]);
+		fprintf(f, "hud262_width %s %d\n", elem->name, elem->width);
+	}
+}
+
 /************************************ RESET FUNCTIONS ************************************/
 
 static void ResetVariables(int cvar_flags, qbool userinfo)
@@ -778,6 +811,10 @@ void DumpConfig(char *name)
 	}
 
 	if (cfg_save_cmds.value) {
+		Config_PrintHeading(f, "Q W 2 6 2   H U D");
+		DumpHUD262(f);
+		fprintf(f, newlines);
+
 		Config_PrintHeading(f, "T E A M P L A Y   C O M M A N D S");
 		DumpTeamplay(f);
 		fprintf(f, newlines);

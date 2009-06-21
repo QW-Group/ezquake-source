@@ -1875,6 +1875,7 @@ void CL_Init (void)
 	Sys_InitIPC();
 
 	Rulesets_Init();
+	Hud_262LoadOnFirstStart();
 }
 
 //============================================================================

@@ -78,20 +78,6 @@ int				glx, gly, glwidth, glheight;
 
 extern byte	current_pal[768];	// Tonik
 
-typedef struct hud_element_s {
-	struct hud_element_s*	next;
-	char					*name;
-	unsigned				flags;
-	signed char				coords[4]; // pos_type, x, y, bg
-	unsigned				width;
-	float					blink;
-	void*					contents;
-	int					charset;
-	float					alpha;
-	char					*f_hover, *f_button;
-	unsigned				scr_width, scr_height;
-} hud_element_t;
-
 int	host_screenupdatecount; // kazik - HUD -> hexum
 
 // only the refresh window will be updated unless these variables are flagged
@@ -2309,18 +2295,9 @@ static void SCR_MvdWeaponStatsOff_f(void)
 
 /**************************************** 262 HUD *****************************/
 // QW262 -->
-typedef char* (*Hud_Func)();
-#define		HUD_CVAR		1
-#define		HUD_FUNC		2
-#define		HUD_STRING		4
-#define		HUD_BLINK_F		8
-#define		HUD_BLINK_B		16
-#define		HUD_IMAGE		32
-#define		HUD_ENABLED		512
-
-static hud_element_t *hud_list=NULL;
-static hud_element_t *prev;
-
+hud_element_t *hud_list=NULL; 
+hud_element_t *prev;
+ 
 hud_element_t *Hud_FindElement(const char *name)
 {
 	hud_element_t *elem;
@@ -5660,5 +5637,16 @@ void Hud_262Init (void)
 	Cmd_AddCommand ("hud262_bringtofront",Hud_BringToFront_f);
 //	Cmd_AddCommand ("hud262_hover",);
 //	Cmd_AddCommand ("hud262_button",Hud_Button_f);
+}
+
+void Hud_262LoadOnFirstStart(void)
+{
+	extern char *hud262_load_buff;
+
+	if (hud262_load_buff != NULL){
+		Cbuf_AddText(hud262_load_buff);
+		Cbuf_Execute();
+	}
+	Q_free(hud262_load_buff);
 }
 // <-- QW262
