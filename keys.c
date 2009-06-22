@@ -55,7 +55,7 @@ cvar_t cl_chatmode          = {"cl_chatmode", "2"};
 cvar_t con_funchars_mode    = {"con_funchars_mode", "0"};
 cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
 cvar_t con_completion_format= {"con_completion_format", "0"}; // 0 - old, 1,2,3 is modern ones (current + default values , current only, and default only)
-cvar_t con_hide_chat_input	=	{"con_hide_chat_input", "0"};
+cvar_t con_hide_chat_input	=	{"con_hide_chat_input", "1"};
 
 char* escape_regex(char* string);
 void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
@@ -880,7 +880,7 @@ void Key_Console (int key, int unichar)
 										Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
 										Cbuf_AddText ("\"");
 
-										if (!con_hide_chat_input.integer)
+										if (con_hide_chat_input.integer)
 											print_in_console = false;
 									}
 									else
