@@ -86,30 +86,22 @@ void Cmd_Wait_f (void)
 
 void Hud262_CatchStringsOnLoad(char *line)
 {
-	int i;
 	char *tmpbuff;
-	static char *hud262_commands[8] = {
-		"hud262_add", "hud262_alpha", "hud262_bg", "hud262_blink",
-		"hud262_disable", "hud262_enable", "hud262_position", "hud262_width"};
 
-
-	for(i = 0; i < 8; i++)
+	if (Utils_RegExpMatch("^((\\s+)?(?i)hud262_(add|alpha|bg|blink|disable|enable|position|width))", line))
 	{
-		if (Utils_RegExpMatch(va("^((\\s+)?(?i)%s)", hud262_commands[i]), line))
+		if (hud262_load_buff == NULL)
 		{
-			if (hud262_load_buff == NULL)
-			{
-				hud262_load_buff = (char*) Q_malloc( (strlen(line) + 2) * sizeof(char));
-				snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
-			}
-			else
-			{
-				tmpbuff = (char *) Q_malloc(strlen(hud262_load_buff) + 1);
-				strcpy(tmpbuff, hud262_load_buff);
-				hud262_load_buff = (char *) Q_realloc(hud262_load_buff, (strlen(tmpbuff) + strlen(line) + 2) * sizeof(char));
-				snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
-				Q_free(tmpbuff);
-			}
+			hud262_load_buff = (char*) Q_malloc( (strlen(line) + 2) * sizeof(char));
+			snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
+		}
+		else
+		{
+			tmpbuff = (char *) Q_malloc(strlen(hud262_load_buff) + 1);
+			strcpy(tmpbuff, hud262_load_buff);
+			hud262_load_buff = (char *) Q_realloc(hud262_load_buff, (strlen(tmpbuff) + strlen(line) + 2) * sizeof(char));
+			snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
+			Q_free(tmpbuff);
 		}
 	}
 }
@@ -338,7 +330,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		// (some cvars are not created/initialized at the time when we want to use them in hud262)
 		// we should save these commands to buffer and execute it when all
 		// cvars will be created
-		if(!host_everything_loaded)
+		if(!host_initialized)
 			Hud262_CatchStringsOnLoad(line);
 
 		Cmd_ExecuteStringEx (cbuf, line);	// execute the command line

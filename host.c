@@ -702,6 +702,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		snprintf(val, sizeof(val), "%s", v->string);
 		Cvar_Set(v, val);
 	}
+	
+	Hud_262LoadOnFirstStart();
 
 	Com_Printf_State (PRINT_INFO, "Exe: "__TIME__" "__DATE__"\n");
 	Com_Printf_State (PRINT_INFO, "Hunk allocation: %4.1f MB.\n", (float) host_memsize / (1024 * 1024));
