@@ -159,6 +159,8 @@ void GFXPresetToggle(qbool back) {
 	}
 }
 
+const char* amf_tracker_frags_enum[] = {"off", "related", "all" };
+
 const char* mvdautohud_enum[] = { "off", "simple", "customizable" };
 const char* mvdautotrack_enum[] = { "off", "auto", "custom", "multitrack", "simple" };
 const char* funcharsmode_enum[] = { "ctrl+key", "ctrl+y" };
@@ -348,9 +350,9 @@ extern cvar_t cl_rocket2grenade;
 extern cvar_t v_damagecshift;
 extern cvar_t r_fastsky;
 extern cvar_t r_drawflame;
+#ifdef GLQUAKE
 extern cvar_t gl_simpleitems;
 extern cvar_t gl_simpleitems_orientation;
-#ifdef GLQUAKE
 extern cvar_t gl_part_inferno;
 extern cvar_t amf_lightning;
 #endif
@@ -1047,8 +1049,10 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
 	ADDSET_BOOL		("Simple Walls", r_drawflat),
 	ADDSET_BOOL		("Simple Turbs", r_fastturb),
+#ifdef GLQUAKE
 	ADDSET_BOOL		("Simple Items", gl_simpleitems),
 	ADDSET_NAMED	("Simple Items Orientation", gl_simpleitems_orientation, simpleitemsorientation_enum),
+#endif
 	ADDSET_BOOL		("Draw Flame", r_drawflame),
 	ADDSET_BOOL		("Backpack Filter", cl_backpackfilter),
 	ADDSET_BASIC_SECTION(),
@@ -1149,7 +1153,7 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Flags", amf_tracker_flags),
-	ADDSET_BOOL		("Frags", amf_tracker_frags),
+	ADDSET_NAMED	("Frags", amf_tracker_frags, amf_tracker_frags_enum),
 	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
 	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
 	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),

@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "vx_tracker.h"
 
+extern cvar_t		cl_useimagesinfraglog;
 
 static int active_track = 0;
 static int max_active_tracks = 0;
@@ -245,6 +246,11 @@ static char *OddFragColor(int killer)
 	return (!VX_TrackerIsEnemy(killer) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
 }
 
+static char *EnemyColor()
+{
+	return empty_is_000(amf_tracker_color_bad.string);
+}
+
 // well, I'm too lazy making different functions for each type of TK
 static char *TKColor(int player)
 {
@@ -256,7 +262,12 @@ void VX_TrackerDeath(int player, int weapon, int count)
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", cl.players[player].name, SuiColor(player), GetWeaponName(weapon), amf_tracker_string_died.string);
+	{
+		if (cl_useimagesinfraglog.integer)
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s&c%s%s&r", SuiColor(player), cl.players[player].name, GetWeaponName(weapon), SuiColor(player), amf_tracker_string_died.string);
+		else
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", cl.players[player].name, SuiColor(player), GetWeaponName(weapon), amf_tracker_string_died.string);
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c960You died&r\n%s deaths: %i", GetWeaponName(weapon), count);
 
@@ -268,7 +279,12 @@ void VX_TrackerSuicide(int player, int weapon, int count)
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", cl.players[player].name, SuiColor(player), GetWeaponName(weapon), amf_tracker_string_suicides.string);
+	{
+		if (cl_useimagesinfraglog.integer)
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s&c%s%s&r", SuiColor(player), cl.players[player].name, GetWeaponName(weapon), SuiColor(player), amf_tracker_string_suicides.string);
+		else
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", cl.players[player].name, SuiColor(player), GetWeaponName(weapon), amf_tracker_string_suicides.string);
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c960You killed yourself&r\n%s suicides: %i", GetWeaponName(weapon), count);
 
@@ -280,7 +296,12 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", cl.players[killer].name, XvsYColor(player, killer), GetWeaponName(weapon), cl.players[player].name);
+	{
+		if (cl_useimagesinfraglog.integer)
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%s%s&r", XvsYColor(player, killer), cl.players[killer].name, GetWeaponName(weapon), XvsYColor(killer, player), cl.players[player].name);
+		else
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", cl.players[killer].name, XvsYColor(player, killer), GetWeaponName(weapon), cl.players[player].name);
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&r%s &c900killed you&r\n%s deaths: %i", cl.players[killer].name, GetWeaponName(weapon), player_wcount);
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
@@ -297,7 +318,12 @@ void VX_TrackerOddFrag(int player, int weapon, int wcount)
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r enemy", cl.players[player].name, OddFragColor(player), GetWeaponName(weapon));
+	{
+		if (cl_useimagesinfraglog.integer)
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%senemy&r", OddFragColor(player), cl.players[player].name, GetWeaponName(weapon), EnemyColor());
+		else
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r enemy", cl.players[player].name, OddFragColor(player), GetWeaponName(weapon));
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c900You killed&r an enemy\n%s kills: %i", GetWeaponName(weapon), wcount);
 
@@ -309,7 +335,12 @@ void VX_TrackerTK_XvsY(int player, int killer, int weapon, int p_count, int p_ic
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", cl.players[killer].name, TKColor(player), GetWeaponName(weapon), cl.players[player].name);
+	{
+		if (cl_useimagesinfraglog.integer)
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%s%s&r", TKColor(player), cl.players[killer].name, GetWeaponName(weapon), TKColor(player), cl.players[player].name);
+		else
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", cl.players[killer].name, TKColor(player), GetWeaponName(weapon), cl.players[player].name);
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c380Teammate&r %s &c900killed you\nTimes: %i\nTotal Teamkills: %i", cl.players[killer].name, p_icount, p_count);
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
@@ -323,7 +354,12 @@ void VX_TrackerOddTeamkill(int player, int weapon, int count)
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r teammate", cl.players[player].name, TKColor(player), GetWeaponName(weapon));
+	{
+		if (cl_useimagesinfraglog.integer)
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%steammate&r", TKColor(player), cl.players[player].name, GetWeaponName(weapon), TKColor(player));
+		else
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r teammate", cl.players[player].name, TKColor(player), GetWeaponName(weapon));
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c900You killed &c380a teammate&r\nTotal Teamkills: %i", count);
 
@@ -335,7 +371,12 @@ void VX_TrackerOddTeamkilled(int player, int weapon)
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&rteammate &c%s%s&r %s", TKColor(player), GetWeaponName(weapon), cl.players[player].name);
+	{
+		if (cl_useimagesinfraglog.integer)
+			snprintf(outstring, sizeof(outstring), "&c%steammate&r %s &c%s%s&r", TKColor(player), GetWeaponName(weapon), TKColor(player), cl.players[player].name);
+		else
+			snprintf(outstring, sizeof(outstring), "&rteammate &c%s%s&r %s", TKColor(player), GetWeaponName(weapon), cl.players[player].name);
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))	
 		snprintf(outstring, sizeof(outstring), "&c380Teammate &c900killed you&r");
 
