@@ -185,7 +185,7 @@ cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
 cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
 cvar_t  gl_fogsky			= {"gl_fogsky", "1"}; 
 
-cvar_t	gl_simpleitems		= {"gl_simpleitems", ""};
+cvar_t	gl_simpleitems		= {"gl_simpleitems", "0"};
 cvar_t	gl_simpleitems_size		= {"gl_simpleitems_size", "16"};
 cvar_t	gl_simpleitems_orientation = {"gl_simpleitems_orientation", "2"};
 
