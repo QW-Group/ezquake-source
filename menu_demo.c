@@ -122,7 +122,16 @@ cvar_t    demo_playlist_track_name = {"demo_playlist_track_name",""};
 // demo playlist options
 settings_page demoplsett;
 setting demoplsett_arr[] = {
-	ADDSET_SEPARATOR("playlist options"),
+	ADDSET_SEPARATOR("Display columns"),
+	ADDSET_BOOL("Show size", demo_browser_showsize),
+	ADDSET_BOOL("Show date", demo_browser_showdate),
+	ADDSET_BOOL("Show time", demo_browser_showtime),
+	ADDSET_SEPARATOR("Display"),
+	ADDSET_BOOL("Show status", demo_browser_showstatus),
+	ADDSET_BOOL("Scroll names", demo_browser_scrollnames),
+	ADDSET_BOOL("Strip names", demo_browser_stripnames),
+	ADDSET_BOOL("Show status", demo_browser_showstatus),
+	ADDSET_SEPARATOR("Playlist options"),
 	ADDSET_BOOL("looping", demo_playlist_loop),
 	ADDSET_STRING("default track", demo_playlist_track_name)
 };

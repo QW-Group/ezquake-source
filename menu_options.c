@@ -183,7 +183,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
 	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
 	enemyforceskins, teamforceskins, cl_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
-	mvd_autotrack_lockteam, qtv_adjustbuffer
+	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, sys_inactivesound;
@@ -348,6 +348,8 @@ extern cvar_t cl_rocket2grenade;
 extern cvar_t v_damagecshift;
 extern cvar_t r_fastsky;
 extern cvar_t r_drawflame;
+extern cvar_t gl_simpleitems;
+extern cvar_t gl_simpleitems_orientation;
 #ifdef GLQUAKE
 extern cvar_t gl_part_inferno;
 extern cvar_t amf_lightning;
@@ -360,6 +362,9 @@ const char* explosiontype_enum[] =
 const char* muzzleflashes_enum[] =
 { "off", "on", "own off" };
 
+const char* simpleitemsorientation_enum[] =
+{"Parallel upright", "Facing upright", "Parallel", "Oriented"};
+
 const char* deadbodyfilter_enum[] =
 { "off", "decent", "instant" };
 
@@ -367,12 +372,13 @@ const char* rocketmodel_enum[] =
 { "rocket", "grenade" };
 
 const char* rockettrail_enum[] =
-{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma" };
+{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma 2", "alt normal 2", "motion trail" };
 
 const char* powerupglow_enum[] =
 { "off", "on", "own off" };
 
-const char* grenadetrail_enum[] = { "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma rocket" };
+const char* grenadetrail_enum[] =
+{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma 2", "alt normal 2", "motion trail" };
 
 extern cvar_t cl_maxfps;
 const char* FpslimitRead(void) {
@@ -898,6 +904,7 @@ setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Early Packets", cl_earlypackets),
 	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
 	ADDSET_BOOL		("QTV buffer adjusting", qtv_adjustbuffer),
 	ADDSET_BASIC_SECTION(),
@@ -1038,10 +1045,12 @@ setting settfps_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Fullbright World", r_fullbright),
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
-	ADDSET_BOOL		("Simple walls", r_drawflat),
-	ADDSET_BOOL		("Simple turbs", r_fastturb),
-	ADDSET_BOOL		("Draw flame", r_drawflame),
-	ADDSET_BOOL		("Backpack filter", cl_backpackfilter),
+	ADDSET_BOOL		("Simple Walls", r_drawflat),
+	ADDSET_BOOL		("Simple Turbs", r_fastturb),
+	ADDSET_BOOL		("Simple Items", gl_simpleitems),
+	ADDSET_NAMED	("Simple Items Orientation", gl_simpleitems_orientation, simpleitemsorientation_enum),
+	ADDSET_BOOL		("Draw Flame", r_drawflame),
+	ADDSET_BOOL		("Backpack Filter", cl_backpackfilter),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
 	ADDSET_ADVANCED_SECTION(),
@@ -1080,7 +1089,7 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
 	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
+	ADDSET_NUMBER	("Light Mode", gl_lightmode, 0, 2, 1),
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 	ADDSET_BASIC_SECTION(),
 #endif
@@ -1099,10 +1108,10 @@ setting setthud_arr[] = {
 	ADDSET_SEPARATOR("Head Up Display"),
 	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
 	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
-	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
+	ADDSET_NUMBER	("Crosshair Size", crosshairsize, 0.2, 3, 0.2),
 #ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Crosshair alpha", gl_crosshairalpha, 0.1, 1, 0.1),
+	ADDSET_NUMBER	("Crosshair Alpha", gl_crosshairalpha, 0.1, 1, 0.1),
 	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
 	ADDSET_BASIC_SECTION(),
 #endif
@@ -1111,7 +1120,7 @@ setting setthud_arr[] = {
 	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
 	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
 #ifdef GLQUAKE
-	ADDSET_BOOL		("Teaminfo table", scr_teaminfo),
+	ADDSET_BOOL		("Teaminfo Table", scr_teaminfo),
 #endif
 	ADDSET_ADVANCED_SECTION(),
 #ifdef GLQUAKE
@@ -1144,6 +1153,7 @@ setting setthud_arr[] = {
 	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
 	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
 	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
+	ADDSET_BOOL		("Use Images", cl_useimagesinfraglog),
 	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
 	ADDSET_BASIC_SECTION(),
 
