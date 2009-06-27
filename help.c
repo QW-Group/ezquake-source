@@ -182,10 +182,20 @@ void Help_DescribeCvar (cvar_t *v)
 
 void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 {
+	extern void CharsToBrown(char*, char*);
+	extern cvar_t menu_advanced;
 	xml_variable_t *var;
 	variable_enum_value_t *cv;
 
 	var = XSD_Variable_Load (va ("help/variables/%s.xml", varname));
+	
+	if(menu_advanced.integer && strlen(varname)){
+		strlcat(buf, "Variable name: ", bufsize);
+		strlcat(buf, varname, bufsize);
+		CharsToBrown(buf, buf + strlen (buf) - strlen(varname));
+		strlcat(buf, "\n", bufsize);
+	}
+	
 	if (!var)
 		return;
 
