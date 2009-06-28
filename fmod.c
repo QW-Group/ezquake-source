@@ -122,8 +122,44 @@ static check_models_hashes_entry_t mdlhash_debug_v_shot = { {0x67e9aa5b, 0x29467
 static check_models_hashes_entry_t mdlhash_debug_v_shot2 = { {0x309594be, 0xe11e461a, 0x92cfcfdd, 0xe9b78788, 0x650daa89}, NULL };
 */
 
+// Primevil deathmatch pack
+static check_models_hashes_entry_t mdlhash_pdp_g_nail = { {0x86dd1964, 0xebe66f85, 0xf27e5b4c, 0x3230aeda, 0x10c13860}, NULL };
+static check_models_hashes_entry_t mdlhash_pdp_g_rock = { {0x10e990fe, 0x3b401ed2, 0x9a9d71ad, 0x9085f059, 0x7710088f}, NULL };
+static check_models_hashes_entry_t mdlhash_pdp_g_rock2 = { {0x3c4280d9, 0xd8a43a56, 0xeff931eb, 0xb76310af, 0xb28c39ad}, NULL };
+static check_models_hashes_entry_t mdlhash_pdp_g_shot = { {0x3a9f015f, 0xd817a29e, 0xdc7a87fa, 0xc6e31628, 0xaa991119}, NULL };
+
 // ruohis
 static check_models_hashes_entry_t mdlhash_ruohis_armor = { {0x7772c52a, 0xdee37c13, 0xbbbc8523, 0x348525ba, 0x6e1bd649}, NULL };
+//static check_models_hashes_entry_t mdlhash_ruohis_backpack = { {0x1a57bc37, 0xabe69424, 0xaa3b6b52, 0x64af310b, 0x177b9c20}, NULL };
+
+static check_models_hashes_entry_t mdlhash_ruohis_g_light = { {0xfe2d50b8, 0x6ad56eb4, 0xe579fceb, 0x43e46f6d, 0x82f616da}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_g_nail = { {0xbe7da37e, 0xb531272b, 0x0c7de89a, 0x26f387bd, 0x20dc31ee}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_g_nail2 = { {0x38df15ca, 0xe2db4350, 0x5c065841, 0x67ec548c, 0x3db3f0b2}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_g_rock = { {0xd2e3e29a, 0x1e3a2acf, 0xa2f21d53, 0x60452add, 0xd8732afa}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_g_rock2 = { {0x54350c58, 0x6a09fd88, 0xae214b80, 0xc71d71de, 0x109d0fe6}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_g_shot = { {0xc74cafd8, 0xbc3af902, 0xbb52b588, 0x6f6fca30, 0x5b2ab554}, NULL };
+
+static check_models_hashes_entry_t mdlhash_ruohis_gib1 = { {0x05ff57f8, 0x1073a096, 0xc7e5d055, 0x9c6c040b, 0x96d2eb8a}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_gib2 = { {0xdf23d687, 0x51ea9047, 0xbfdb3497, 0xed7b63db, 0x131a1bfb}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_gib3 = { {0xff5df01e, 0x7606952f, 0xdd36c784, 0xa0d72d33, 0x066afa33}, NULL };
+
+static check_models_hashes_entry_t mdlhash_ruohis_invisibl = { {0xb7507e7e, 0x84dc7019, 0x8f5f1c39, 0xc0df2979, 0xe86b93dd}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_invulner = { {0xddcca118, 0x9e143d41, 0xa2a8dc57, 0x82744eb7, 0x09af301b}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_quaddama = { {0xdb93cf6c, 0x7006a0b8, 0x90b28c56, 0xf97afba7, 0x423699cb}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_suit = { {0xbf4de4f3, 0xe60927c1, 0xf4824f00, 0x21feef56, 0xac00a897}, NULL };
+
+static check_models_hashes_entry_t mdlhash_ruohis_grenade = { {0xece5571e, 0xa35d61e8, 0xe2b6df49, 0xf35372d9, 0x7ac78910}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_missile = { {0x7e844aca, 0xb1b07ef9, 0x3d8994d8, 0xe6b4d14e, 0x56c49858}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_spike = { {0xd8225980, 0x0299e9f7, 0x6732fd66, 0x54555264, 0x67bda403}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_s_spike = { {0x40bf84c5, 0xcab85a9c, 0x498baa24, 0xbe07d9c6, 0x6b666756}, NULL };
+
+static check_models_hashes_entry_t mdlhash_ruohis_end1 = { {0x51ff9322, 0x8b31b83d, 0x8988bebf, 0x0917dce7, 0xd9578e04}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_end2 = { {0x2ea71e4b, 0x0ef6cf22, 0x86d53ba5, 0x1145433d, 0xe6712054}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_end3 = { {0x04c3eda0, 0x2b4f2534, 0x127abbca, 0x755c97cf, 0x135b6597}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_end4 = { {0x4d5a54c1, 0x1fa8aaba, 0x600a5b2b, 0x7508ff3f, 0xc7af03de}, NULL };
+
+static check_models_hashes_entry_t mdlhash_ruohis_b_bh100 = { {0x527fd5b6, 0xd490707f, 0xabd69622, 0xf3d18a69, 0xe9bc0eb9}, NULL };
+static check_models_hashes_entry_t mdlhash_ruohis_b_bh100_other = { {0xb42135c1, 0x6816429c, 0x21e3ce3e, 0xfab9f8fc, 0x09387ae1}, NULL };
 
 // plagues
 static check_models_hashes_entry_t mdlhash_plaguespak_armor = { {0x5647e7b2, 0x52465746, 0xc10320fa, 0x1e92c90c, 0x27577c72}, NULL };
@@ -154,6 +190,11 @@ static check_models_hashes_entry_t mdlhash_plaguespak_v_shot2 = { {0x58e68b33, 0
 static check_models_hashes_entry_t mdlhash_unknown_end2 = { {0xe3a1b910, 0x28c4e36a, 0x1af69321, 0x9d19df99, 0x5bcebfcb }, NULL };
 static check_models_hashes_entry_t mdlhash_unknown_end3 = { {0xe3a1b910, 0x28c4e36a, 0x1af69321, 0x9d19df99, 0x5bcebfcb }, NULL };
 static check_models_hashes_entry_t mdlhash_unknown_end4 = { {0xe3a1b910, 0x28c4e36a, 0x1af69321, 0x9d19df99, 0x5bcebfcb }, NULL };
+
+// grenade converted from CPMA
+//static check_models_hashes_entry_t mdlhash_cpma_grenade = { {0xe89d9866, 0xf52324c9, 0x005d0507, 0x083c8cb4, 0xc1918636 }, NULL };
+// megaheath converted from Generations Arena
+//static check_models_hashes_entry_t mdlhash_generations_b_bh100 = { {0xc6b455ff, 0xad7cb845, 0xa7356729, 0x35375fcf, 0x10adb479}, NULL };
 
 
 #define MAX_CHECK_MODELS 128
@@ -286,73 +327,98 @@ void FMod_Init (void)
 	FMod_AddModelAlt(lastid, &mdlhash_debug_backpack);
 
 	FMod_AddModel ("progs/bolt2.mdl",			FMOD_DM | FMOD_TF,	progs_bolt2_mdl_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("progs/end1.mdl",			FMOD_DM | FMOD_TF,	progs_end1_mdl_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("progs/end1.mdl",			FMOD_DM | FMOD_TF,	progs_end1_mdl_FMOD_DM_FMOD_TF);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_end1);
 	lastid = FMod_AddModel ("progs/end2.mdl",			FMOD_DM | FMOD_TF,	progs_end2_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_unknown_end2);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_end2);
 	lastid = FMod_AddModel ("progs/end3.mdl",			FMOD_DM | FMOD_TF,	progs_end3_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_unknown_end3);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_end3);
 	lastid = FMod_AddModel ("progs/end4.mdl",			FMOD_DM | FMOD_TF,	progs_end4_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_unknown_end4);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_end4);
 	FMod_AddModel ("progs/eyes.mdl",			FMOD_DM | FMOD_TF,	progs_eyes_mdl_FMOD_DM_FMOD_TF);
 	lastid = FMod_AddModel ("progs/g_light.mdl",			FMOD_DM | FMOD_TF,	progs_g_light_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_g_light);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_g_light);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_g_light);
 
 	lastid = FMod_AddModel ("progs/g_nail.mdl",			FMOD_DM | FMOD_TF,	progs_g_nail_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_g_nail);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_g_nail);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_g_nail);
+	FMod_AddModelAlt(lastid, &mdlhash_pdp_g_nail);
 
 	lastid = FMod_AddModel ("progs/g_nail2.mdl",			FMOD_DM | FMOD_TF,	progs_g_nail2_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_g_nail2);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_g_nail2);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_g_nail2);
 
 	lastid = FMod_AddModel ("progs/g_rock.mdl",			FMOD_DM | FMOD_TF,	progs_g_rock_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_g_rock);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_g_rock);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_g_rock);
+	FMod_AddModelAlt(lastid, &mdlhash_pdp_g_rock);
 
 	lastid = FMod_AddModel ("progs/g_rock2.mdl",			FMOD_DM | FMOD_TF,	progs_g_rock2_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_g_rock2);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_g_rock2);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_g_rock2);
+	FMod_AddModelAlt(lastid, &mdlhash_pdp_g_rock2);
 
 	lastid = FMod_AddModel ("progs/g_shot.mdl",			FMOD_DM | FMOD_TF,	progs_g_shot_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_g_shot);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_g_shot);
+	FMod_AddModelAlt(lastid, &mdlhash_pdp_g_shot);
 
 	lastid = FMod_AddModel ("progs/gib1.mdl",			FMOD_DM | FMOD_TF,	progs_gib1_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_gib1);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_gib1);
 
 	lastid = FMod_AddModel ("progs/gib2.mdl",			FMOD_DM | FMOD_TF,	progs_gib2_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_gib2);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_gib2);
 
 	lastid = FMod_AddModel ("progs/gib3.mdl",			FMOD_DM | FMOD_TF,	progs_gib3_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_gib3);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_gib3);
 
 	lastid = FMod_AddModel ("progs/grenade.mdl",			FMOD_DM | FMOD_TF,	progs_grenade_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_grenade);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_grenade);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_grenade);
+	//FMod_AddModelAlt(lastid, &mdlhash_cpma_grenade);
 
 	lastid = FMod_AddModel ("progs/invisibl.mdl",		FMOD_DM | FMOD_TF,	progs_invisibl_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_invisibl);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_invisibl);
 
 	lastid = FMod_AddModel ("progs/invulner.mdl",		FMOD_DM | FMOD_TF,	progs_invulner_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_invulner);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_invulner);
 
 	lastid = FMod_AddModel ("progs/missile.mdl",			FMOD_DM | FMOD_TF,	progs_missile_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_missile);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_missile);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_missile);
 
 	lastid = FMod_AddModel ("progs/quaddama.mdl",		FMOD_DM | FMOD_TF,	progs_quaddama_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_quaddama);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_quaddama);
 
 	lastid = FMod_AddModel ("progs/s_spike.mdl",			FMOD_DM | FMOD_TF,	progs_s_spike_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_s_spike);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_s_spike);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_s_spike);
 
 	lastid = FMod_AddModel ("progs/spike.mdl",			FMOD_DM | FMOD_TF,	progs_spike_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_spike);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_spike);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_spike);
 
-	FMod_AddModel ("progs/suit.mdl",			FMOD_DM | FMOD_TF,	progs_suit_mdl_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("progs/suit.mdl",			FMOD_DM | FMOD_TF,	progs_suit_mdl_FMOD_DM_FMOD_TF);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_suit);
 
 	FMod_AddModel ("progs/player.mdl",			FMOD_DM,			progs_player_mdl_FMOD_DM);
 	FMod_AddModel ("progs/player.mdl",			FMOD_TF,			progs_player_mdl_FMOD_TF);
@@ -369,7 +435,10 @@ void FMod_Init (void)
 	FMod_AddModel ("progs/s_bubble.spr",		FMOD_DM | FMOD_TF,	progs_s_bubble_spr_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("progs/s_explod.spr",		FMOD_DM | FMOD_TF,	progs_s_explod_spr_FMOD_DM_FMOD_TF);
 
-	FMod_AddModel ("maps/b_bh100.bsp",			FMOD_DM | FMOD_TF,	maps_b_bh100_bsp_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("maps/b_bh100.bsp",			FMOD_DM | FMOD_TF,	maps_b_bh100_bsp_FMOD_DM_FMOD_TF);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_b_bh100);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_b_bh100_other);
+	//FMod_AddModelAlt(lastid, &mdlhash_generations_b_bh100);
 
 	FMod_AddModel ("sound/buttons/airbut1.wav",	FMOD_DM | FMOD_TF,	sound_buttons_airbut1_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/items/armor1.wav",	FMOD_DM | FMOD_TF,	sound_items_armor1_wav_FMOD_DM_FMOD_TF);
