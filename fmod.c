@@ -194,7 +194,7 @@ static check_models_hashes_entry_t mdlhash_unknown_end4 = { {0xe3a1b910, 0x28c4e
 // grenade converted from CPMA
 //static check_models_hashes_entry_t mdlhash_cpma_grenade = { {0xe89d9866, 0xf52324c9, 0x005d0507, 0x083c8cb4, 0xc1918636 }, NULL };
 // megaheath converted from Generations Arena
-//static check_models_hashes_entry_t mdlhash_generations_b_bh100 = { {0xc6b455ff, 0xad7cb845, 0xa7356729, 0x35375fcf, 0x10adb479}, NULL };
+static check_models_hashes_entry_t mdlhash_generations_b_bh100 = { {0xc6b455ff, 0xad7cb845, 0xa7356729, 0x35375fcf, 0x10adb479}, NULL };
 
 
 #define MAX_CHECK_MODELS 128
@@ -438,7 +438,7 @@ void FMod_Init (void)
 	lastid = FMod_AddModel ("maps/b_bh100.bsp",			FMOD_DM | FMOD_TF,	maps_b_bh100_bsp_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_ruohis_b_bh100);
 	FMod_AddModelAlt(lastid, &mdlhash_ruohis_b_bh100_other);
-	//FMod_AddModelAlt(lastid, &mdlhash_generations_b_bh100);
+	FMod_AddModelAlt(lastid, &mdlhash_generations_b_bh100);
 
 	FMod_AddModel ("sound/buttons/airbut1.wav",	FMOD_DM | FMOD_TF,	sound_buttons_airbut1_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/items/armor1.wav",	FMOD_DM | FMOD_TF,	sound_items_armor1_wav_FMOD_DM_FMOD_TF);

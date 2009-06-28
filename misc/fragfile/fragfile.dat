@@ -136,27 +136,27 @@
 //
 #DEFINE WEAPON_CLASS    AXE                 "axe"
 #DEFINE WEAPON_CLASS    SHOTGUN             "shotgun"           "sg"             "\sg\"
-#DEFINE WEAPON_CLASS    Q_SHOTGUN           "q shotgun"         "sg &c009q&r"    "\sg\ &c009q&r"
+#DEFINE WEAPON_CLASS    Q_SHOTGUN           "q shotgun"         "sg &c06fQ&r"    "\sg\ &c06fQ&r"
 #DEFINE WEAPON_CLASS    SUPER_SHOTGUN       "super shotgun"     "ssg"            "\ssg\"
-#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN     "q super shotgun"   "ssg &c009q&r"   "\ssg\ &c009q&r"
+#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN     "q super shotgun"   "ssg &c06fQ&r"   "\ssg\ &c06fQ&r"
 #DEFINE WEAPON_CLASS    NAILGUN             "nailgun"           "ng"             "\ng\"
 #DEFINE WEAPON_CLASS    SUPER_NAILGUN       "super nailgun"     "sng"            "\sng\"
-#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN     "q super nailgun"   "sng &c009q&r"   "\sng\ &c009q&r"
+#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN     "q super nailgun"   "sng &c06fQ&r"   "\sng\ &c06fQ&r"
 #DEFINE WEAPON_CLASS    GRENADE_LAUNCHER    "grenade launcher"  "gl"             "\gl\"
 #DEFINE WEAPON_CLASS    ROCKET_LAUNCHER     "rocket launcher"   "rl"             "\rl\"
-#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER   "q rocket launcher" "rl &c009q&r"    "\rl\ &c009q&r"
+#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER   "q rocket launcher" "rl &c06fQ&r"    "\rl\ &c06fQ&r"
 #DEFINE WEAPON_CLASS    LIGHTNING_GUN       "lightning gun"     "lg"             "\lg\"
-#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN     "q lightning gun"   "lg &c009q&r"    "\lg\ &c009q&r"
+#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN     "q lightning gun"   "lg &c06fQ&r"    "\lg\ &c06fQ&r"
 
-#DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"          "rail"           "\rail\" //for dmm8
-#DEFINE WEAPON_CLASS    COIL_GUN            "coil gun"			"coil"           "\coil\" //for KTX instagib
+#DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"          "rail"//           "\rail\" //for dmm8
+#DEFINE WEAPON_CLASS    COIL_GUN            "coil gun"			"coil"//           "\coil\" //for KTX instagib
 
 #DEFINE WEAPON_CLASS    DROWN               "drown"             "drown"          "\drown\"
 #DEFINE WEAPON_CLASS    LAVA                "lava"              "lava"           "\lava\"
 #DEFINE WEAPON_CLASS    SLIME               "slime"             "slime"          "\slime\"
 #DEFINE WEAPON_CLASS    TRAP                "trap"
 #DEFINE WEAPON_CLASS    TELEFRAG            "telefrag"          "tele"           "\tele\"
-#DEFINE WEAPON_CLASS    DISCHARGE           "discharge"         "discharge"      "\discharge\"
+#DEFINE WEAPON_CLASS    DISCHARGE           "discharge"         "discharge"      "\lg\ discharge"
 #DEFINE WEAPON_CLASS    SQUISH              "squish"
 #DEFINE WEAPON_CLASS    FALL                "fall"
 #DEFINE WEAPON_CLASS    STOMP               "stomp" // ktpro/ktx stomp kills
@@ -221,7 +221,6 @@
 #DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP			" was jumped by her teammate"  // ktx addon for ktpro stomp tk
 
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" softens "   "'s fall" // ktpro stomp kill
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" softens "   "' fall" // ktpro stomp kill
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" tried to catch "      // ktpro stomp kill
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" was crushed by "      // ktpro stomp kill
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" was jumped by "       // ktpro stomp kill
@@ -231,11 +230,8 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was ax-murdered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SHOTGUN			" was lead poisoned by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" chewed on " "'s boomstick"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" chewed on " "' boomstick"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SUPER_SHOTGUN		" ate 8 loads of "   "'s buckshot"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SUPER_SHOTGUN		" ate 8 loads of "   "' buckshot"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		" ate 2 loads of "   "'s buckshot"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		" ate 2 loads of "   "' buckshot"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" was body pierced by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" was nailed by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_NAILGUN		" was perforated by "
@@ -243,20 +239,13 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_NAILGUN		" was ventilated by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SUPER_NAILGUN		" was straw-cuttered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	GRENADE_LAUNCHER	" eats " "'s pineapple"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	GRENADE_LAUNCHER	" eats " "' pineapple"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	GRENADE_LAUNCHER	" was gibbed by " "'s grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	GRENADE_LAUNCHER	" was gibbed by " "' grenade"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_ROCKET_LAUNCHER	" was smeared by "   "'s quad rocket"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_ROCKET_LAUNCHER	" was smeared by "   "' quad rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_ROCKET_LAUNCHER	" was brutalized by " "'s quad rocket"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_ROCKET_LAUNCHER	" was brutalized by " "' quad rocket"
 #DEFINE OBITUARY	X_FRAGS_Y		Q_ROCKET_LAUNCHER	" rips " " a new one"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" was gibbed by " "'s rocket"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" was gibbed by " "' rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" rides " "'s rocket"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" rides " "' rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	LIGHTNING_GUN		" accepts "  "'s shaft"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	LIGHTNING_GUN		" accepts "  "' shaft"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_LIGHTNING_GUN		" gets a natural disaster from "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was axed to pieces by " // KTX instagib
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	COIL_GUN			" was instagibbed by " // KTX instagib
@@ -266,9 +255,7 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	TELEFRAG			" was telefragged by "
 #DEFINE OBITUARY	X_FRAGS_Y		SQUISH				" squishes "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE			" accepts "  "'s discharge"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE			" accepts "  "' discharge"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE			" drains "   "'s batteries"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE			" drains "   "' batteries"
 
 
 
