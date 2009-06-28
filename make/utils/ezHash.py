@@ -1,32 +1,31 @@
 #!/usr/bin/env python
 """
-    ezQuake's check_models_hashes_entry_t generator
+    check_models_hashes_entry_t generator
     AAS 2009
 """
 
-import getopt, hashlib, optparse, os, sys
+import hashlib, optparse, os, sys
 
 ALLOWED_EXTENSIONS = ["bsp", "lmp", "md3", "mdl", "spr", "wav"]
+VERSION = "1.1"
     
 def print_error(n = None):
     """Bad input"""
     if n == 1:
-        text = "Directory must exists and be readable"
+        text = "Directory must exist and be readable"
     elif n == 2:
-        text = "Groupname must be alphanumerical value [0-9a-zA-Z]"
-    elif n == 3:
-        text = "No files found to process"
+        text = "Groupname must be alphanumerical value and contain at least one character"
         
-    print "Error:%d: %s" % (n, text)
-    sys.exit(n)
+    print("Error:%d: %s" % (n, text))
+    sys.exit()
 
 def main():
     """Main action"""
-    
+    desc = "check_models_hashes_entry_t generator by AAS / 2009"
     usage = "Usage: %prog [options] <directory> <groupname>\n" \
         "Examples: 'c:\>python %prog d:\ ruohis' or '$ ./%prog ~/dirtocache/ unknown'"
     
-    parser = optparse.OptionParser(usage = usage)
+    parser = optparse.OptionParser(description = desc, usage = usage, version = VERSION)
     parser.add_option("-v", "--verbose", help="print additional messages", dest="verbose", default=False, action="store_true")
     (opts, args) = parser.parse_args()
 
@@ -54,24 +53,22 @@ def main():
                 
                 line = "static check_models_hashes_entry_t mdlhash_%s_%s = { {" % (groupname.lower(), name.lower())
                 
-                for i in xrange(0,5):
+                for i in xrange(0, 5):
                     uint = sha1[i*8 : (i+1)*8]
-                    uint = [uint[k:k+2] for k in xrange(0, len(uint), 2)]
-                    uint.reverse()
+                    uint = [uint[k-2:k] for k in xrange(len(uint), 0, -2)]
                     line += "0x" + "".join(uint)
                     
-                    if i != 5:
+                    if i < 4:
                         line += ", "
                     
                 line += "}, NULL };"
-                print line
+                print(line)
                 processed += 1
                 
         if opts.verbose:
-            print
-            print "Files processed: %d" % processed
+            print("Files processed: %d" % processed)
             
-    sys.exit(0)
+    sys.exit()
 
 if __name__ == "__main__":
     main()
