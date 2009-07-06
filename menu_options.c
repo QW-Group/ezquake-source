@@ -185,7 +185,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
 	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
 	enemyforceskins, teamforceskins, cl_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
-	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog
+	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, sys_inactivesound;
@@ -218,6 +218,10 @@ const char* demoformat_enum[] = { "QuakeWorld Demo", "qwd", "Qizmo compressed QW
 
 const char* cl_chatmode_enum[] = {
 	"All Commands", "All Chat", "First Word" };
+
+const char* con_completion_format_enum[] = {
+	"Old", "New:Current+Default", "New:Current", "New:Default"
+};
 	
 const char* scr_conback_enum[] = {
 	"Off", "On Load", "Always", };
@@ -1171,12 +1175,13 @@ setting setthud_arr[] = {
 	ADDSET_ENUM 	("Ignore Flood", ignore_flood, ignore_flood_enum),
 	ADDSET_NUMBER 	("Ignore Flood Duration", ignore_flood_duration, 0, 10, 1),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
-	ADDSET_SEPARATOR("Outgoing filtering"),
-	ADDSET_BOOL		("Filter colored text", cl_sayfilter_coloredtext),
-	ADDSET_BOOL		("Send #u/#c versions", cl_sayfilter_sendboth),
+	ADDSET_SEPARATOR("Outgoing Filtering"),
+	ADDSET_BOOL		("Filter Colored Text", cl_sayfilter_coloredtext),
+	ADDSET_BOOL		("Send #u/#c Versions", cl_sayfilter_sendboth),
 	ADDSET_SEPARATOR("Console Options"),
 	ADDSET_BOOL		("Timestamps", con_timestamps),
 	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
+	ADDSET_NAMED	("Completion Format", con_completion_format, con_completion_format_enum),
 	ADDSET_NUMBER	("Size", scr_consize, 0, 1, 0.1),
 	ADDSET_NUMBER	("Speed", scr_conspeed, 1000, 9999, 1000),
 #ifdef GLQUAKE
@@ -1267,6 +1272,7 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Pause", "pause"),
 	ADDSET_BIND("Quit", "quit"),
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
+	ADDSET_BIND("Demo Controls", "demo_controls"),
 	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Mouse Settings"),
