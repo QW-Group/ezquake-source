@@ -96,7 +96,7 @@
 
 #pragma mark =Defines=
 
-#define	SYS_ID1_VALIDATION_FILE		@"/PAK0.PAK"
+#define	SYS_ID1_VALIDATION_FILE		@"/pak0.pak"
 #define SYS_QWSV_BASE_PATH			"."
 #define	SYS_STRING_SIZE				1024				// string size for vsnprintf ().
 
@@ -854,7 +854,7 @@ void	Sys_CheckForIDDirectory (void)
                     NSRunInformationalAlertPanel (@"You have not selected the \"id1\" folder.",
                                                   @"The \"id1\" folder comes with the shareware or retail "
                                                   @"version of Quake and has to contain at least the two "
-                                                  @"files \"PAK0.PAK\" and \"PAK1.PAK\".",
+                                                  @"files \"pak0.pak\" and \"pak1.pak\".",
                                                   NULL, NULL, NULL);
                 }
             }
