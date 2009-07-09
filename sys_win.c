@@ -45,7 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
 qbool		ActiveApp, Minimized;
-qbool		WinNT, Win2K, WinXP, Win2K3, WinVISTA;
+qbool		WinNT, Win2K, WinXP, Win2K3, WinVISTA, Win7;
 
 
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
@@ -685,7 +685,8 @@ void WinCheckOSInfo(void)
 	Win2K = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 0);	// 2000
 	WinXP = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 1);	// XP
 	Win2K3 = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 2);	// 2003 or 2003 R2 or XP Pro 64
-	WinVISTA = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 0); // Vista or Longhorn Server
+	WinVISTA = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 0); // Vista or 2008 Server
+	Win7 = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 1); // Se7en or 2008 Server R2
 }
 
 void Sys_Init_ (void) 

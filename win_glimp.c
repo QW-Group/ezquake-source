@@ -1976,7 +1976,7 @@ void VID_SetDeviceGammaRamp(unsigned short *ramps)
 
 	customgamma = true;
 
-	if ( Win2K || WinXP || Win2K3 || WinVISTA)
+	if ( Win2K || WinXP || Win2K3 || WinVISTA || Win7)
 	{
 		int i, j;
 

@@ -73,7 +73,7 @@ extern modestate_t	modestate;
 extern HWND			mainwindow;
 extern qbool		ActiveApp, Minimized;
 
-extern qbool WinNT, Win2K, WinXP, Win2K3, WinVISTA;
+extern qbool WinNT, Win2K, WinXP, Win2K3, WinVISTA, Win7;
 
 void IN_ShowMouse (void);
 void IN_DeactivateMouse (void);

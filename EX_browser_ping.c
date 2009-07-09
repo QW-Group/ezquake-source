@@ -357,7 +357,7 @@ void SB_RootInit(void)
 	}
 
 #ifdef _WIN32
-	if (sock < 0 || COM_CheckParm("-nosockraw") || sb_nosockraw.integer || WinVISTA) {
+	if (sock < 0 || COM_CheckParm("-nosockraw") || sb_nosockraw.integer || WinVISTA || Win7) {
 #else
 	if (sock < 0 || COM_CheckParm("-nosockraw") || sb_nosockraw.integer) {
 #endif
