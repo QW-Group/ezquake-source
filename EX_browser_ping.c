@@ -373,7 +373,7 @@ void SB_RootInit(void)
 #endif
 
     arg = 1;
-	if (ioctlsocket (sock, FIONBIO, &arg) == -1) { // make asynchronous
+	if (ioctlsocket (sock, FIONBIO, (u_long *)&arg) == -1) { // make asynchronous
 		Com_Printf ("SB_RootInit: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
 		//closesocket(newsocket);
 	}
@@ -816,7 +816,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 #endif
 
 	arg = 1;
-	if (ioctlsocket (ping_sock, FIONBIO, &arg) == -1) { // make asynchronous
+	if (ioctlsocket (ping_sock, FIONBIO, (u_long *)&arg) == -1) { // make asynchronous
 		Com_Printf ("PingHosts: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
 		//closesocket(newsocket);
 	}

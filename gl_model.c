@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "wad.h"
 #include "crc.h"
 #include "fmod.h"
+#include "utils.h"
 
 
 //VULT MODELS
@@ -2192,7 +2193,7 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	else if (mod->type == mod_alias || mod->type == mod_alias3)
 	{
 		// hack for loading models saved as .bsp under /maps directory
-		if (Utils_RegExpMatch("^(?i)maps\/b_(.*)\.bsp", mod->name))
+		if (Utils_RegExpMatch("^(?i)maps\\/b_(.*)\\.bsp", mod->name))
 		{
 			tex = GL_LoadTextureImage (va("textures/bmodels/%s", indentifier), indentifier, 0, 0, texmode);
 		}
