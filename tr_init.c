@@ -724,8 +724,6 @@ void VID_Restart_f (void)
 {
 	extern void GFX_Init(void);
 	extern void ReloadPaletteAndColormap(void);
-	extern void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel);
-	extern cvar_t gl_smoothfont;
 	extern int nonwideconheight;
 	qbool old_con_suppress;
 
@@ -763,8 +761,6 @@ void VID_Restart_f (void)
 	// window may be re-created, so caption need to be forced to update
 	CL_UpdateCaption(true);
 
-	// refresh smoothfont
-	OnChange_gl_smoothfont(&gl_smoothfont, gl_smoothfont.string, 0);
 }
 
 void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel) 

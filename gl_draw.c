@@ -616,6 +616,7 @@ static int LoadAlternateCharset (char *name)
 	}
 
 	texnum = GL_LoadTexture (va("pic:%s", name), 128, 256, buf, TEX_ALPHA, 1);
+	GL_Bind(texnum);
 	if (!gl_smoothfont.integer)
 	{
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -626,7 +627,7 @@ static int LoadAlternateCharset (char *name)
 
 static int Draw_LoadCharset(const char *name)
 {
-	int texnum;
+	int texnum, i=0;
 	qbool loaded = false;
 
 	if (!strcasecmp(name, "original"))
@@ -682,11 +683,16 @@ static int Draw_LoadCharset(const char *name)
 		Com_Printf ("Couldn't load charset \"%s\"\n", name);
 		return 1;
 	}
-
-	if (!gl_smoothfont.integer)
+	
+	while (i < 2 && char_textures[i] != 0) // Apply filtering on both console textures if available
 	{
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		GL_Bind(char_textures[i]);
+		if (!gl_smoothfont.integer)
+		{
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		}
+		i++;
 	}
 
 	return 0;
