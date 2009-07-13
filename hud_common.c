@@ -263,10 +263,16 @@ void SCR_HUD_DrawFPS(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
+    {
 		if (hud_fps_style->value)
+		{
 			Draw_Alt_String(x, y, st);
+		}
 		else
+		{
 			Draw_String(x, y, st);
+		}
+    }
 }
 
 void SCR_HUD_DrawVidLag(hud_t *hud)
@@ -308,10 +314,16 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
+    {
 		if (hud_vidlag_style->value)
+		{
 			Draw_Alt_String(x, y, st);
+		}
 		else
+		{
 			Draw_String(x, y, st);
+		}
+    }
 }
 
 #ifdef WIN32
@@ -366,10 +378,16 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
+    {
 		if (hud_mouserate_style->value)
+		{
 			Draw_Alt_String(x, y, st);
+		}
 		else
+		{
 			Draw_String(x, y, st);
+		}
+    }
 }
 
 #define MAX_TRACKING_STRING		512
@@ -595,10 +613,16 @@ void SCR_HUD_DrawPing(hud_t *hud)
     height = 8;
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
+    {
 		if (hud_ping_style->value)
+		{
 			Draw_Alt_String(x, y, buf);
+		}
 		else
+		{
 			Draw_String(x, y, buf);
+		}
+    }
 }
 
 static const char *SCR_HUD_ClockFormat(int format)

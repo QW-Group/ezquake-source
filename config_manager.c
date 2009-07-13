@@ -789,43 +789,43 @@ void DumpConfig(char *name)
 	if (cfg_save_cmdline.value && strlen(cl_cmdline.string) > 1) {
 		Config_PrintHeading(f, "C O M M A N D   L I N E");
 		DumpCmdLine(f);
-		fprintf(f, newlines);
+		fprintf(f, "%s", newlines);
 	}
 
 	if (cfg_save_cvars.value) {
 		Config_PrintHeading(f, "V A R I A B L E S");
 		DumpVariables(f);
-		fprintf(f, newlines);
+		fprintf(f, "%s", newlines);
 	}
 
 	if (cfg_save_cmds.value) {
 		Config_PrintHeading(f, "S E L E C T E D   S O U R C E S");
 		WriteSourcesConfiguration(f);
-		fprintf(f, newlines);
+		fprintf(f, "%s", newlines);
 	}
 
 	if (cfg_save_aliases.value) {
 		Config_PrintHeading(f, "A L I A S E S");
 		DumpAliases(f);
-		fprintf(f, newlines);
+		fprintf(f, "%s", newlines);
 	}
 
 	if (cfg_save_cmds.value) {
 		Config_PrintHeading(f, "Q W 2 6 2   H U D");
 		DumpHUD262(f);
-		fprintf(f, newlines);
+		fprintf(f, "%s", newlines);
 
 		Config_PrintHeading(f, "T E A M P L A Y   C O M M A N D S");
 		DumpTeamplay(f);
-		fprintf(f, newlines);
+		fprintf(f, "%s", newlines);
 
 		Config_PrintHeading(f, "M I S C E L L A N E O U S   C O M M A N D S");
 		DumpMisc(f);
-		fprintf(f, newlines);
+		fprintf(f, "%s", newlines);
 
 		Config_PrintHeading(f, "P L U S   C O M M A N D S");
 		DumpPlusCommands(f);
-		fprintf(f, newlines);
+		fprintf(f, "%s", newlines);
 	}
 
 	if (cfg_save_binds.value) {

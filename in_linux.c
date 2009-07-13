@@ -457,7 +457,7 @@ void Joy_AdvancedUpdate_f (void) {
 
 void IN_CommandsJoystick (void) {
 	int i, key_index;
-	DWORD buttonstate, povstate;
+	DWORD buttonstate;//, povstate;
         struct js_event js;
 
 	if (!joy_avail)

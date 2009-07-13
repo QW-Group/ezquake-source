@@ -1640,7 +1640,7 @@ void SV_MVDEasyRecord_f (void)
 		Q_free(name3);
 	}
 
-	snprintf(name2, sizeof(name2), va("%s/%s/%s.mvd", fs_gamedir, sv_demoDir.string, name2));
+	snprintf(name2, sizeof(name2), "%s", va("%s/%s/%s.mvd", fs_gamedir, sv_demoDir.string, name2));
 
 	SV_MVD_Record (SV_InitRecordFile(name2), false);
 }

@@ -1531,7 +1531,8 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 	// RGB has to be a valid hexadecimal number, otherwise it's ok
 	clrpart = val;
 	do {
-		if (clrpart = strstr(clrpart, "&c")) {
+		clrpart = strstr(clrpart, "&c");
+		if (clrpart) {
 			clrpart += 2;
 			if (clrpart[0] && clrpart[1] && clrpart[2]) {
 				if (HexToInt(clrpart[0]) >= 0 && HexToInt(clrpart[1]) >= 0 && HexToInt(clrpart[2]) >= 0) {

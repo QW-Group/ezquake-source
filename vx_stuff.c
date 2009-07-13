@@ -328,7 +328,7 @@ void Amf_SetMode_f(void)
 		Com_Printf("Usage: %s [modename]\n", Cmd_Argv(0));
 		return;
 	}
-	snprintf(mode, sizeof (mode), Cmd_Argv(1));
+	snprintf(mode, sizeof (mode), "%s", Cmd_Argv(1));
 	if (!strcmp(mode, "newtrails"))
 	{
 			Cvar_SetValue (&amf_buildingsparks, 3);
