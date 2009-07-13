@@ -370,6 +370,7 @@ void FMod_Init (void)
 	lastid = FMod_AddModel ("progs/g_shot.mdl",			FMOD_DM | FMOD_TF,	progs_g_shot_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_debug_g_shot);
 	FMod_AddModelAlt(lastid, &mdlhash_plaguespak_g_shot);
+	FMod_AddModelAlt(lastid, &mdlhash_ruohis_g_shot);
 	FMod_AddModelAlt(lastid, &mdlhash_pdp_g_shot);
 
 	lastid = FMod_AddModel ("progs/gib1.mdl",			FMOD_DM | FMOD_TF,	progs_gib1_mdl_FMOD_DM_FMOD_TF);
