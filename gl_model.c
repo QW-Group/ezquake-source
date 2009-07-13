@@ -808,7 +808,7 @@ void Mod_LoadLighting (lump_t *l) {
 		} else if ((lit_ver = LittleLong(((int *)data)[1])) != 1) {
 			Com_Printf("Unknown .lit file version (v%d)\n", lit_ver);
 		} else {
-			if (developer.value || cl_warncmd.value)
+			if (developer.integer || cl_warncmd.integer)
 				Com_Printf("Static coloured lighting loaded\n");
 			loadmodel->lightdata = data + 8;
 

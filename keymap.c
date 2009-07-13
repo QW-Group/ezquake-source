@@ -336,7 +336,7 @@ void IN_Keymap_Load_f (void)
 		data = strtok (data, "\r\n");
 		do {
 			if (strlen(data) >= 256) { // sanity check
-				if (cl_warncmd.value > 0 || developer.value > 0)
+				if (cl_warncmd.integer || developer.integer)
 					Com_Printf ("WARNING: Line %u in file \"%s\" is too long (>256 chars)!\n", linecount, filename);
 			}
 			else {
@@ -369,13 +369,13 @@ void IN_Keymap_Load_f (void)
 		if (name[0] != (char)'\0')
 			Cvar_Set( &keymap_name, name );
 
-		if (cl_warncmd.value > 0 || developer.value > 0)
+		if (cl_warncmd.integer || developer.integer)
 			Com_Printf ("keymapping \"%s\" from file \"%s\" loaded\n",
 			            keymap_name.string ? keymap_name.string : "<custom>",
 			            filename);
 	}
 	else {
-		if (cl_warncmd.value > 0 || developer.value > 0)
+		if (cl_warncmd.integer || developer.integer)
 			Com_Printf ("Couldn't open keymap file \"%s\"\n", filename);
 	}
 } // END_FUNC IN_Keymap_Load_f
@@ -446,7 +446,7 @@ void IN_Keymap_Save_f (void)
 		fprintf (f, "// END OF KEYMAP FILE\n");
 		fclose (f);
 
-		if (cl_warncmd.value || developer.value)
+		if (cl_warncmd.integer || developer.integer)
 			Com_Printf ("keymappings \"%s\" saved to \"%s\"\n", keymap_name.string, filename);
 	}
 	else {
@@ -676,7 +676,7 @@ static void IN_Keycode_Set_f (qbool showerr, char *filename, unsigned int lineco
 	if (filename != NULL)
 		snprintf (linetext, sizeof (linetext), "%s (line %u): ", filename, linecount);
 
-	if (cl_warncmd.value <= 0 && developer.value <= 0)
+	if (cl_warncmd.integer <= 0 && developer.integer <= 0)
 		showerr = false;
 
 	key[0] = key[1] = key[2] = 0;
@@ -820,7 +820,7 @@ void IN_Keymap_Reset_f (void) {
 	// reset the layout name to the default:
 	Cvar_ResetVar( &keymap_name );
 
-	if (cl_warncmd.value || developer.value)
+	if (cl_warncmd.integer || developer.integer)
 		Com_Printf ("Keymappings have been reset to internal defaults (US keyboard)!\n");
 } // END_FUNC IN_Keymap_Reset_f
 

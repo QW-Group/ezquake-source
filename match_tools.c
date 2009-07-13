@@ -1012,7 +1012,7 @@ void MT_MapGroup_f(void) {
 		}
 
 		if (!removeflag && (tempnode = GetGroupWithMember(member)) && tempnode != group) {
-			if (cl_warncmd.value || developer.value)
+			if (cl_warncmd.integer || developer.integer)
 				Com_Printf("Warning: \"%s\" is already a member of group \"%s\"...ignoring\n", member, tempnode->groupname);
 			continue;
 		}
@@ -1282,7 +1282,7 @@ void MT_SkyGroup_f(void) {
 		}
 
 		if (!removeflag && (tempnode = GetSkyGroupWithMember(member)) && tempnode != group) {
-			if (cl_warncmd.value || developer.value)
+			if (cl_warncmd.integer || developer.integer)
 				Com_Printf("Warning: \"%s\" is already a member of group \"%s\"...ignoring\n", member, tempnode->groupname);
 			continue;
 		}
