@@ -2606,7 +2606,7 @@ void CL_Multiview(void)
 	//
 	// Increase the current view being rendered.
 	//
-	CURRVIEW = CL_IncrLoop(CURRVIEW, (int)cl_multiview.value);
+	CURRVIEW = CL_IncrLoop(CURRVIEW, cl_multiview.integer);
 
 	if (cl_mvinset.value && cl_multiview.value == 2)
 	{
