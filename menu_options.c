@@ -43,13 +43,13 @@
 #include "hud_common.h"
 
 typedef enum {
-	OPTPG_SETTINGS,
+	OPTPG_MISC,
 	OPTPG_PLAYER,
 	OPTPG_FPS,
 	OPTPG_HUD,
 	OPTPG_DEMO_SPEC,
 	OPTPG_BINDS,
-	OPTPG_VIDEO,
+	OPTPG_SYSTEM,
 	OPTPG_CONFIG,
 }	options_tab_t;
 
@@ -185,10 +185,10 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
 	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
 	enemyforceskins, teamforceskins, cl_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
-	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format
+	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, vid_wideaspect
 ;
 #ifdef _WIN32
-extern cvar_t demo_format, sys_highpriority, cl_window_caption, sys_inactivesound;
+extern cvar_t demo_format, sys_highpriority, cl_window_caption, sys_inactivesound, vid_flashonactivity;
 void CL_RegisterQWURLProtocol_f(void);
 #endif
 #ifdef GLQUAKE
@@ -227,7 +227,13 @@ const char* scr_conback_enum[] = {
 	"Off", "On Load", "Always", };
 
 const char* s_khz_enum[] = {
-	"11 kHz", "11", "22 kHz", "22", "44 kHz", "44" };
+	"11 kHz", "11", "22 kHz", "22", "44 kHz", "44"
+#if defined(__linux__)
+	,"48 kHz", "48"
+#endif
+};
+
+const char* cl_nolerp_enum[] = {"on", "off"};
 const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smackdown", "Moscow TF League", "mtfl" };
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
 const char *teamforceskins_enum[] = { "off", "use player's name", "use player's userid", "set t1, t2, t3, ..." };
@@ -240,58 +246,41 @@ const char *priority_enum[] = { "low", "-1", "normal", "0", "high", "1" };
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset full\n"); }
 
-settings_page settgeneral;
+settings_page settmisc;
 
 void CT_Opt_Settings_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
-	Settings_Draw(x, y, w, h, &settgeneral);
+	Settings_Draw(x, y, w, h, &settmisc);
 }
 
 int CT_Opt_Settings_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settgeneral, k, unichar);
+	return Settings_Key(&settmisc, k, unichar);
 }
 
-void OnShow_SettMain(void) { Settings_OnShow(&settgeneral); }
+void OnShow_SettMain(void) { Settings_OnShow(&settmisc); }
 
 qbool CT_Opt_Settings_Mouse_Event(const mouse_state_t *ms)
 {
-	return Settings_Mouse_Event(&settgeneral, ms);
+	return Settings_Mouse_Event(&settmisc, ms);
 }
 
 // </SETTINGS>
 //=============================================================================
 
-settings_page settdemo_spec;
+settings_page settview;
 
-void CT_Opt_Demo_Spec_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
-	Settings_Draw(x, y, w, h, &settdemo_spec);
+void CT_Opt_View_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
+	Settings_Draw(x, y, w, h, &settview);
 }
 
-int CT_Opt_Demo_Spec_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&settdemo_spec, k, unichar);
+int CT_Opt_View_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settview, k, unichar);
 }
 
-void OnShow_SettDemo_Spec(void) { Settings_OnShow(&settdemo_spec); }
+void OnShow_SettView(void) { Settings_OnShow(&settview); }
 
-qbool CT_Opt_Demo_Spec_Mouse_Event(const mouse_state_t *ms)
+qbool CT_Opt_View_Mouse_Event(const mouse_state_t *ms)
 {
-	return Settings_Mouse_Event(&settdemo_spec, ms);
-}
-
-settings_page setthud;
-
-void CT_Opt_HUD_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
-	Settings_Draw(x, y, w, h, &setthud);
-}
-
-int CT_Opt_HUD_Key (int k, wchar unichar, CTab_t *tab, CTabPage_t *page) {
-	return Settings_Key(&setthud, k, unichar);
-}
-
-void OnShow_SettHUD(void) { Settings_OnShow(&setthud); }
-
-qbool CT_Opt_HUD_Mouse_Event(const mouse_state_t *ms)
-{
-	return Settings_Mouse_Event(&setthud, ms);
+	return Settings_Mouse_Event(&settview, ms);
 }
 settings_page settplayer;
 void CT_Opt_Player_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
@@ -451,7 +440,7 @@ qbool CT_Opt_FPS_Mouse_Event(const mouse_state_t *ms)
 
 
 //=============================================================================
-// <VIDEO>
+// <SYSTEM>
 
 #ifdef GLQUAKE
 
@@ -462,17 +451,17 @@ typedef struct menu_video_settings_s {
 	int bpp;
 	qbool fullscreen;
 	cvar_t freq;	// this is not an int just because we need to fool settings_page module
-} menu_video_settings_t;
-qbool mvs_askmode = false;
+} menu_system_settings_t;
+qbool mss_askmode = false;
 
 // here we store the configuration that user selected in menu
-menu_video_settings_t mvs_selected;
+menu_system_settings_t mss_selected;
 
 // here we store the current video config in case the new video settings weren't successfull
-menu_video_settings_t mvs_previous;
+menu_system_settings_t mss_previous;
 
 // will apply given video settings
-static void ApplyVideoSettings(const menu_video_settings_t *s) {
+static void ApplyVideoSettings(const menu_system_settings_t *s) {
 #ifndef __APPLE__
 	Cvar_SetValue(&r_mode, s->res);
 	Cvar_SetValue(&r_colorbits, s->bpp);
@@ -480,11 +469,11 @@ static void ApplyVideoSettings(const menu_video_settings_t *s) {
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
 #endif
 	Cbuf_AddText("vid_restart\n");
-    Com_Printf("askmode: %s\n", mvs_askmode ? "on" : "off");
+    Com_Printf("askmode: %s\n", mss_askmode ? "on" : "off");
 }
 
 // will store current video settings into the given structure
-static void StoreCurrentVideoSettings(menu_video_settings_t *out) {
+static void StoreCurrentVideoSettings(menu_system_settings_t *out) {
 #ifndef __APPLE__
 	out->res = (int) r_mode.value;
 	out->bpp = (int) r_colorbits.value;
@@ -496,125 +485,153 @@ static void StoreCurrentVideoSettings(menu_video_settings_t *out) {
 // performed when user hits the "apply" button
 void VideoApplySettings (void)
 {
-	StoreCurrentVideoSettings(&mvs_previous);
+	StoreCurrentVideoSettings(&mss_previous);
 
-	ApplyVideoSettings(&mvs_selected);
+	ApplyVideoSettings(&mss_selected);
 
-	mvs_askmode = true;
+	mss_askmode = true;
 }
 
 // two possible results of the "keep these video settings?" dialogue
-static void KeepNewVideoSettings (void) { mvs_askmode = false; }
+static void KeepNewVideoSettings (void) { mss_askmode = false; }
 static void CancelNewVideoSettings (void) {
-	mvs_askmode = false;
-	ApplyVideoSettings(&mvs_previous);
+	mss_askmode = false;
+	ApplyVideoSettings(&mss_previous);
 }
 
 // this is a duplicate from tr_init.c!
 const char* glmodes[] = { "320x240", "400x300", "512x384", "640x480", "800x600", "960x720", "1024x768", "1152x864", "1280x1024", "1600x1200", "2048x1536" };
 int glmodes_size = sizeof(glmodes) / sizeof(char*);
 
-const char* BitDepthRead(void) { return mvs_selected.bpp == 32 ? "32 bit" : mvs_selected.bpp == 16 ? "16 bit" : "use desktop settings"; }
-const char* ResolutionRead(void) { return glmodes[bound(0, mvs_selected.res, glmodes_size-1)]; }
-const char* FullScreenRead(void) { return mvs_selected.fullscreen ? "on" : "off"; }
+const char* BitDepthRead(void) { return mss_selected.bpp == 32 ? "32 bit" : mss_selected.bpp == 16 ? "16 bit" : "use desktop settings"; }
+const char* ResolutionRead(void) { return glmodes[bound(0, mss_selected.res, glmodes_size-1)]; }
+const char* FullScreenRead(void) { return mss_selected.fullscreen ? "on" : "off"; }
 
 void ResolutionToggle(qbool back) {
-	if (back) mvs_selected.res--; else mvs_selected.res++;
-	mvs_selected.res = (mvs_selected.res + glmodes_size) % glmodes_size;
+	if (back) mss_selected.res--; else mss_selected.res++;
+	mss_selected.res = (mss_selected.res + glmodes_size) % glmodes_size;
 }
 void BitDepthToggle(qbool back) {
 	if (back) {
-		switch (mvs_selected.bpp) {
-		case 0: mvs_selected.bpp = 32; return;
-		case 16: mvs_selected.bpp = 0; return;
-		default: mvs_selected.bpp = 16; return;
+		switch (mss_selected.bpp) {
+		case 0: mss_selected.bpp = 32; return;
+		case 16: mss_selected.bpp = 0; return;
+		default: mss_selected.bpp = 16; return;
 		}
 	} else {
-		switch (mvs_selected.bpp) {
-		case 0: mvs_selected.bpp = 16; return;
-		case 16: mvs_selected.bpp = 32; return;
-		case 32: mvs_selected.bpp = 0; return;
+		switch (mss_selected.bpp) {
+		case 0: mss_selected.bpp = 16; return;
+		case 16: mss_selected.bpp = 32; return;
+		case 32: mss_selected.bpp = 0; return;
 		}
 	}
 }
-void FullScreenToggle(qbool back) { mvs_selected.fullscreen = mvs_selected.fullscreen ? 0 : 1; }
+void FullScreenToggle(qbool back) { mss_selected.fullscreen = mss_selected.fullscreen ? 0 : 1; }
 
-
-settings_page settvideo;
-
-#endif
-
-void CT_Opt_Video_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
-#ifndef GLQUAKE
-
-	// Software Rendering version menu
-#ifdef _WIN32
-	(*vid_menudrawfn) ();
-#endif
 #else
+#ifdef _WIN32
 
-	// (Open)GL version menu
+qbool mss_software_change_resolution_mode = false;
 
-#define ASKBOXWIDTH 300
+static void System_ChangeResolution(void)
+{
+	mss_software_change_resolution_mode = true;
+}
+#endif
+#endif
 
-	if (mvs_askmode) {
+settings_page settsystem;
+
+void CT_Opt_System_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
+{
+#ifndef GLQUAKE	// SOFT
+#ifdef _WIN32
+	if(mss_software_change_resolution_mode)
+	{
+		(*vid_menudrawfn) ();
+	}
+	else
+	{
+		Settings_Draw(x,y,w,h, &settsystem);
+	}
+#else
+	Settings_Draw(x,y,w,h, &settsystem);
+#endif
+#else	// GL
+	#define ASKBOXWIDTH 300
+	if(mss_askmode)
+	{
 		UI_DrawBox((w-ASKBOXWIDTH)/2, h/2 - 16, ASKBOXWIDTH, 32);
 		UI_Print_Center((w-ASKBOXWIDTH)/2, h/2 - 8, ASKBOXWIDTH, "Do you wish to keep these settings?", false);
 		UI_Print_Center((w-ASKBOXWIDTH)/2, h/2, ASKBOXWIDTH, "(y/n)", true);
-	} else
-		Settings_Draw(x,y,w,h, &settvideo);
-
+	}
+	else
+	{
+		Settings_Draw(x,y,w,h, &settsystem);
+	}
 #endif
 }
 
-int CT_Opt_Video_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page) {
-#ifndef GLQUAKE
-
-	// Software Rendering version menu
+int CT_Opt_System_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
+{
+#ifndef GLQUAKE	// SOFT
 #ifdef _WIN32
-	(*vid_menukeyfn) (key);
-#endif
-	// i was too lazy&scared to change vid_menukeyfn functions out there
-	// so because i know what keys have some function in there, i list them here:
-	return key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER || key == 'd';
+	if(mss_software_change_resolution_mode)
+	{
 
+		if(key == K_ESCAPE)
+		{
+			mss_software_change_resolution_mode = false;
+		}
+
+		(*vid_menukeyfn) (key);
+		// i was too lazy&scared to change vid_menukeyfn functions out there
+		// so because i know what keys have some function in there, i list them here:
+		return key == K_ESCAPE || key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER || key == 'd';
+	}
+	else
+	{
+		return Settings_Key(&settsystem, key, unichar);
+	}
 #else
+	return Settings_Key(&settsystem, key, unichar);
+#endif
+#else	// GL
+	if (mss_askmode)
+	{
 
-	// (Open)GL version menu
-
-	if (mvs_askmode) {
 		if (key == 'y' || key == K_ENTER)
+		{
 			KeepNewVideoSettings();
-		else if (key == 'n' || key == K_ESCAPE)
+		}
+		else if(key == 'n' || key == K_ESCAPE)
+		{
 			CancelNewVideoSettings();
-
+		}
 		return true;
-	} else
-		return Settings_Key(&settvideo, key, unichar);
-
+	}
+	else
+	{
+		return Settings_Key(&settsystem, key, unichar);
+	}
 #endif
 }
 
-void OnShow_SettVideo(void) {
-#ifdef GLQUAKE
-
-	StoreCurrentVideoSettings(&mvs_selected);
-	Settings_OnShow(&settvideo);
-
-#endif
-}
-
-qbool CT_Opt_Video_Mouse_Event(const mouse_state_t *ms)
+void OnShow_SettSystem(void)
 {
 #ifdef GLQUAKE
-	return Settings_Mouse_Event(&settvideo, ms);
-#else
-	return false;
+	StoreCurrentVideoSettings(&mss_selected);
 #endif
+	Settings_OnShow(&settsystem);
+}
+
+qbool CT_Opt_System_Mouse_Event(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Event(&settsystem, ms);
 }
 
 
-// </VIDEO>
+// </SYSTEM>
 
 // *********
 // <CONFIG>
@@ -792,7 +809,7 @@ qbool CT_Opt_Config_Mouse_Event(const mouse_state_t *ms)
 // </CONFIG>
 // *********
 
-CTabPage_Handlers_t options_main_handlers = {
+CTabPage_Handlers_t options_misc_handlers = {
 	CT_Opt_Settings_Draw,
 	CT_Opt_Settings_Key,
 	OnShow_SettMain,
@@ -813,18 +830,11 @@ CTabPage_Handlers_t options_graphics_handlers = {
 	CT_Opt_FPS_Mouse_Event
 };
 
-CTabPage_Handlers_t options_hud_handlers = {
-	CT_Opt_HUD_Draw,
-	CT_Opt_HUD_Key,
-	OnShow_SettHUD,
-	CT_Opt_HUD_Mouse_Event
-};
-
-CTabPage_Handlers_t options_demo_spec_handlers = {
-	CT_Opt_Demo_Spec_Draw,
-	CT_Opt_Demo_Spec_Key,
-	OnShow_SettDemo_Spec,
-	CT_Opt_Demo_Spec_Mouse_Event
+CTabPage_Handlers_t options_view_handlers = {
+	CT_Opt_View_Draw,
+	CT_Opt_View_Key,
+	OnShow_SettView,
+	CT_Opt_View_Mouse_Event
 };
 
 CTabPage_Handlers_t options_controls_handlers = {
@@ -834,11 +844,11 @@ CTabPage_Handlers_t options_controls_handlers = {
 	CT_Opt_Binds_Mouse_Event
 };
 
-CTabPage_Handlers_t options_video_handlers = {
-	CT_Opt_Video_Draw,
-	CT_Opt_Video_Key,
-	OnShow_SettVideo,
-	CT_Opt_Video_Mouse_Event
+CTabPage_Handlers_t options_system_handlers = {
+	CT_Opt_System_Draw,
+	CT_Opt_System_Key,
+	OnShow_SettSystem,
+	CT_Opt_System_Mouse_Event
 };
 
 CTabPage_Handlers_t options_config_handlers = {
@@ -872,77 +882,6 @@ void Menu_Options_Draw(void) {
 	CTab_Draw(&options_tab, x, y, w, h);
 }
 
-// MAIN TAB
-setting settgeneral_arr[] = {
-	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
-
-	ADDSET_SEPARATOR("Basic Setup"),
-
-	ADDSET_STRING	("Name", name),
-	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
-	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
-	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
-	ADDSET_NUMBER	("Gamma", v_gamma, 0, 3, 0.05),
-	ADDSET_NUMBER	("Mouse Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Menu Mouse Sensitivity", cursor_sensitivity, 0.10 , 3, 0.10),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
-
-	//Sound & Volume
-	ADDSET_SEPARATOR("Sound & Volume"),
-	ADDSET_NUMBER	("Primary Volume", s_volume, 0, 1, 0.05),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
-	ADDSET_NUMBER	("Chat Volume", con_sound_mm1_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Team Chat Volume", con_sound_mm2_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
-	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
-#ifdef _WIN32
-	ADDSET_BOOL		("Sounds when minimized", sys_inactivesound),
-#endif
-	ADDSET_BASIC_SECTION(),
-	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
-
-	//Connection
-	ADDSET_SEPARATOR("Connection"),
-	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Early Packets", cl_earlypackets),
-	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
-	ADDSET_BOOL		("QTV buffer adjusting", qtv_adjustbuffer),
-	ADDSET_BASIC_SECTION(),
-
-	//Match Tools
-	ADDSET_SEPARATOR("Match Tools"),
-	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
-	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
-	ADDSET_BOOL		("Log Readable", log_readable),
-	ADDSET_ENUM 	("Screenshot Format", scr_sshot_format, scr_sshot_format_enum),
-#ifdef _WIN32
-	ADDSET_ENUM     ("Demo Format", demo_format, demoformat_enum),
-#endif
-	ADDSET_BASIC_SECTION(),
-	
-	ADDSET_ADVANCED_SECTION(),
-	//Paths
-	ADDSET_SEPARATOR("Paths"),
-	ADDSET_NAMED    ("Media Paths Type", cl_mediaroot, mediaroot_enum),
-	ADDSET_STRING   ("Screenshots Path", scr_sshot_dir),
-	ADDSET_STRING	("Demos Path", demo_dir),
-	ADDSET_STRING   ("Logs Path", log_dir),
-	ADDSET_STRING	("Qizmo Path", qizmo_dir),
-	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
-#ifdef _WIN32
-	ADDSET_ACTION	("Set qw:// assoc.", CL_RegisterQWURLProtocol_f,
-		"Sets this application as the handler of qw:// URLs, so by double-clicking such links in your operating system, this client will open and connect to given address"),
-#endif
-	ADDSET_BASIC_SECTION(),
-};
 
 // PLAYER TAB
 setting settplayer_arr[] = {
@@ -957,14 +896,14 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
+	ADDSET_BOOL		("Fullbright Skins", r_fullbrightSkins),
 	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
 	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Weapon Handling"),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to the weapon picked up if it is more powerful than what you're currently holding."),
 	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
-	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
+	ADDSET_BOOL		("Gun Auto Hide", cl_weaponhide),
 	
     ADDSET_SEPARATOR("Movement"),
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum forward speed at all times."),
@@ -1003,7 +942,7 @@ setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphic presets."),
 
-	ADDSET_SEPARATOR("Field of View"),
+	ADDSET_SEPARATOR("Field Of View"),
 	ADDSET_ADVANCED_SECTION(),
 #ifdef GLQUAKE
 	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
@@ -1101,17 +1040,10 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 	ADDSET_BASIC_SECTION(),
 #endif
-
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_BOOL		("Disable Linear interp.", cl_nolerp),
-	ADDSET_BASIC_SECTION(),
-
-
 };
 
-// HUD TAB
-setting setthud_arr[] = {
+// VIEW TAB
+setting settview_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	ADDSET_SEPARATOR("Head Up Display"),
 	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
@@ -1126,7 +1058,9 @@ setting setthud_arr[] = {
 
 	ADDSET_SEPARATOR("New HUD"),
 	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
+	ADDSET_BASIC_SECTION(),
 #ifdef GLQUAKE
 	ADDSET_BOOL		("Teaminfo Table", scr_teaminfo),
 #endif
@@ -1140,7 +1074,9 @@ setting setthud_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOLLATE ("FPS", hud_fps_show),
 #ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOLLATE ("Radar", hud_radar_show),
+	ADDSET_BASIC_SECTION(),
 #endif
 
 	ADDSET_SEPARATOR("Quake Classic HUD"),
@@ -1151,8 +1087,8 @@ setting setthud_arr[] = {
 	ADDSET_BOOL		("Show Clock", scr_clock),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
-#ifdef GLQUAKE
 
+#ifdef GLQUAKE
 	ADDSET_SEPARATOR("Tracker Messages"),
 	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
 	ADDSET_ADVANCED_SECTION(),
@@ -1164,7 +1100,6 @@ setting setthud_arr[] = {
 	ADDSET_BOOL		("Use Images", cl_useimagesinfraglog),
 	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
 	ADDSET_BASIC_SECTION(),
-
 #endif
 
 	ADDSET_ADVANCED_SECTION(),
@@ -1175,9 +1110,11 @@ setting setthud_arr[] = {
 	ADDSET_ENUM 	("Ignore Flood", ignore_flood, ignore_flood_enum),
 	ADDSET_NUMBER 	("Ignore Flood Duration", ignore_flood_duration, 0, 10, 1),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
+
 	ADDSET_SEPARATOR("Outgoing Filtering"),
 	ADDSET_BOOL		("Filter Colored Text", cl_sayfilter_coloredtext),
 	ADDSET_BOOL		("Send #u/#c Versions", cl_sayfilter_sendboth),
+
 	ADDSET_SEPARATOR("Console Options"),
 	ADDSET_BOOL		("Timestamps", con_timestamps),
 	ADDSET_NAMED	("Chat Mode", cl_chatmode, cl_chatmode_enum),
@@ -1194,15 +1131,9 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
 	ADDSET_BOOL		("Confirm Quit", cl_confirmquit),
 	ADDSET_BASIC_SECTION(),
-};
 
-
-// DEMO/SPETATOR TAB
-setting settdemo_spec_arr[] = {
-	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	ADDSET_SEPARATOR("Demo & Observing"),
-	ADDSET_BOOL		("Point of View", cl_chasecam),
-	ADDSET_BIND		("Autotrack", "autotrack"),
+	ADDSET_BOOL		("Chasecam", cl_chasecam),
 
 	ADDSET_SEPARATOR("Demo Playback"),
 	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
@@ -1216,20 +1147,14 @@ setting settdemo_spec_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Multiview Demos"),
-	ADDSET_ACTION	("Toggle autotrack", CL_Autotrack_f, "Toggle auto-tracking of the best player"),
+	ADDSET_ACTION	("Toggle Autotrack", CL_Autotrack_f, "Toggle auto-tracking of the best player"),
 	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
 	ADDSET_NAMED	("Autotrack Type", mvd_autotrack, mvdautotrack_enum),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Autotrack lock team", mvd_autotrack_lockteam),
+	ADDSET_BOOL		("Autotrack Lock Team", mvd_autotrack_lockteam),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
 	ADDSET_BOOL     ("Status", mvd_status),
-
-	ADDSET_SEPARATOR("Demo Binds"),
-	ADDSET_BIND		("Play", "cl_demospeed 1;echo Playing demo."),
-	ADDSET_BIND		("Stop", "disconnect"),
-	ADDSET_BIND		("Pause", "cl_demospeed 0;echo Demo paused."),
-	ADDSET_BIND		("Fast Forward", "cl_demospeed 5;echo Demo paused."),
 };
 
 // CONTROLS TAB
@@ -1237,6 +1162,31 @@ setting settdemo_spec_arr[] = {
 setting settbinds_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	
+	ADDSET_SEPARATOR("Mouse Settings"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Freelook", freelook),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NUMBER	("Menu Mouse Sensitivity", cursor_sensitivity, 0.10 , 3, 0.10),
+	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
+    ADDSET_ADVANCED_SECTION(),
+    ADDSET_STRING   ("X-axis Sensitivity", m_yaw),
+    ADDSET_STRING   ("Y-axis Sensitivity", m_pitch),
+// maybe its okay for FreeBSD and MAC OS X too
+#if defined(_WIN32) || (defined(__linux__) && defined(GLQUAKE))
+	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
+#endif
+#ifdef _WIN32
+	ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
+    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
+	ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
+#endif
+    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
+    ADDSET_BASIC_SECTION(),
+
 	ADDSET_SEPARATOR("Movement"),
 	ADDSET_BIND("Attack", "+attack"),
 	ADDSET_BIND("Jump/Swim up", "+jump"),
@@ -1261,9 +1211,10 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Grenade Launcher", "weapon 6"),
 	ADDSET_BIND("Rocket Launcher", "weapon 7"),
 	ADDSET_BIND("Thunderbolt", "weapon 8"),
+
 	ADDSET_SEPARATOR("Chat settings"),
-	ADDSET_BIND		("Chat", "messagemode"),
-	ADDSET_BIND		("Teamchat", "messagemode2"),
+	ADDSET_BIND	("Chat", "messagemode"),
+	ADDSET_BIND	("Teamchat", "messagemode2"),
 
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_BIND("Show Scores", "+showscores"),
@@ -1272,113 +1223,175 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Pause", "pause"),
 	ADDSET_BIND("Quit", "quit"),
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
-	ADDSET_BIND("Demo Controls", "demo_controls"),
 	ADDSET_BASIC_SECTION(),
 
-	ADDSET_SEPARATOR("Mouse Settings"),
+	ADDSET_SEPARATOR("Demo & Spec"),
+	ADDSET_BIND("Demo Controls", "demo_controls"),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Freelook", freelook),
+	ADDSET_BIND("Autotrack", "autotrack"),
+	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
+	ADDSET_BIND("Stop", "disconnect"),
+	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused."),
+	ADDSET_BIND("Fast Forward", "cl_demospeed 5;echo Demo paused."),
 	ADDSET_BASIC_SECTION(),
-	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 20, 0.25), // My sens is 16, so maybe some people have it up to 20?
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Menu Mouse Sensitivity", cursor_sensitivity, 0.10 , 3, 0.10),
-	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
-#ifdef _WIN32
-    ADDSET_ADVANCED_SECTION(),
-    ADDSET_STRING   ("X-axis sensitivity", m_yaw),
-    ADDSET_STRING   ("Y-axis sensitivity", m_pitch),
-	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
-	ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
-    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
-	ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
-    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
-    ADDSET_BASIC_SECTION(),
-#endif
 
 	ADDSET_SEPARATOR("Teamplay"),
 	ADDSET_BIND("Report Status", "tp_msgreport"),
-	ADDSET_BIND("Lost location", "tp_msglost"),
-	ADDSET_BIND("Location safe", "tp_msgsafe"),
-	ADDSET_BIND("Point at item", "tp_msgpoint"),
-	ADDSET_BIND("Took item", "tp_msgtook"),
-	ADDSET_BIND("Need items", "tp_msgneed"),
+	ADDSET_BIND("Lost Location", "tp_msglost"),
+	ADDSET_BIND("Location Safe", "tp_msgsafe"),
+	ADDSET_BIND("Point At Item", "tp_msgpoint"),
+	ADDSET_BIND("Took Item", "tp_msgtook"),
+	ADDSET_BIND("Need Items", "tp_msgneed"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Yes/Ok", "tp_msgyesok"),
-	ADDSET_BIND("Coming from location", "tp_msgcoming"),
+	ADDSET_BIND("Coming From Location", "tp_msgcoming"),
 	ADDSET_BASIC_SECTION(),
-	ADDSET_BIND("Help location", "tp_msghelp"),
+	ADDSET_BIND("Help Location", "tp_msghelp"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Get Quad", "tp_msggetquad"),
 	ADDSET_BIND("Get Pent", "tp_msggetpent"),
 	ADDSET_BIND("Enemy Quad Dead", "tp_msgquaddead"),
-	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
-	ADDSET_BIND("Trick at location", "tp_msgtrick"),
-	ADDSET_BIND("Replace at location", "tp_msgreplace"),
+	ADDSET_BIND("Enemy Has Powerup", "tp_msgenemypwr"),
+	ADDSET_BIND("Trick At Location", "tp_msgtrick"),
+	ADDSET_BIND("Replace At Location", "tp_msgreplace"),
 	ADDSET_BIND("You Take Item", "tp_msgutake"),
 	ADDSET_BIND("Waiting", "tp_msgwaiting"),
 	ADDSET_BIND("Enemy Slipped", "tp_msgslipped"),
 	ADDSET_BASIC_SECTION(),
 };
 
-// VIDEO TAB
-#ifdef GLQUAKE
-setting settvideo_arr[] = {
+// MISC TAB
+setting settmisc_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
+
+	//Match Tools
+	ADDSET_SEPARATOR("Match Tools"),
+	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
+	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
+	ADDSET_BOOL		("Log Readable", log_readable),
+	ADDSET_ENUM 	("Screenshot Format", scr_sshot_format, scr_sshot_format_enum),
+#ifdef _WIN32
+	ADDSET_ENUM     ("Demo Format", demo_format, demoformat_enum),
+#endif
+	ADDSET_BASIC_SECTION(),
+
+	ADDSET_ADVANCED_SECTION(),
+	//Paths
+	ADDSET_SEPARATOR("Paths"),
+	ADDSET_NAMED    ("Media Paths Type", cl_mediaroot, mediaroot_enum),
+	ADDSET_STRING   ("Screenshots Path", scr_sshot_dir),
+	ADDSET_STRING	("Demos Path", demo_dir),
+	ADDSET_STRING   ("Logs Path", log_dir),
+	ADDSET_STRING	("Qizmo Path", qizmo_dir),
+	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
+#ifdef _WIN32
+	ADDSET_ACTION	("Set qw:// assoc.", CL_RegisterQWURLProtocol_f,
+		"Sets this application as the handler of qw:// URLs, so by double-clicking such links in your operating system, this client will open and connect to given address"),
+#endif
+	ADDSET_BASIC_SECTION(),
+
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_NAMED		("Linear Interpolation", cl_nolerp, cl_nolerp_enum),
+	ADDSET_BASIC_SECTION(),
+};
+
+// SYSTEM TAB
+setting settsystem_arr[] = {
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
+
 	//Video
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
+#ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Clear Video Buffer", gl_clear),
-	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
+	ADDSET_NUMBER	("Anisotropy Filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 	ADDSET_BASIC_SECTION(),
-
-#ifndef __APPLE__
-	ADDSET_SEPARATOR("Screen settings"),
-	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
-	ADDSET_BOOL("Vertical sync", r_swapInterval),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL("Vsync lag fix", cl_vsync_lag_fix),
-	ADDSET_BASIC_SECTION(),
-	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
-	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
-	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
-	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
 #endif
 
+#if !defined(__APPLE__) && !defined(_Soft_X11) && !defined(_Soft_SVGA)
+	ADDSET_SEPARATOR("Screen Settings"),
+#ifdef GLQUAKE
+	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
+	ADDSET_BOOL("Wide Aspect", vid_wideaspect),
+	ADDSET_BOOL("Vertical Sync", r_swapInterval),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL("Vsync Lag Fix", cl_vsync_lag_fix),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
+	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
+	ADDSET_STRING("Refresh Frequency", mss_selected.freq),
+	ADDSET_ACTION("Apply Changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
+#else
+#ifdef _WIN32
+	ADDSET_ACTION("Change Resolution", System_ChangeResolution, "Change Display Resolution"),
+#endif
+#endif
+#endif
+
+	//Font
+#ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Font"),
 #ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
 #endif
-	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
+	ADDSET_BOOL("Font Smoothing", gl_smoothfont),
+	ADDSET_BASIC_SECTION(),
+#endif
 
-	ADDSET_SEPARATOR("Miscellaneous"),
+	//Sound & Volume
+	ADDSET_SEPARATOR("Sound & Volume"),
+	ADDSET_NUMBER	("Primary Volume", s_volume, 0, 1, 0.05),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
+	ADDSET_NUMBER	("Chat Volume", con_sound_mm1_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Team Chat Volume", con_sound_mm2_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
+	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
+#ifdef _WIN32
+	ADDSET_BOOL		("Sounds When Minimized", sys_inactivesound),
+#endif
+	ADDSET_BASIC_SECTION(),
+	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
+
+	//Connection
+	ADDSET_SEPARATOR("Connection"),
+	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Early Packets", cl_earlypackets),
+	ADDSET_ENUM		("Packetloss", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
+	ADDSET_BOOL		("QTV Buffer Adjusting", qtv_adjustbuffer),
+	ADDSET_BASIC_SECTION(),
+
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
 #ifdef _WIN32
-	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL("Taskbar Flash", vid_flashonactivity),
-	ADDSET_BOOL("Taskbar Name", cl_window_caption),
+	ADDSET_BOOL		("Taskbar Flash", vid_flashonactivity),
+	ADDSET_BOOL		("Taskbar Name", cl_window_caption),
 #endif
 	ADDSET_BASIC_SECTION(),
 };
-#endif // GLQUAKE
 
 // CONFIG TAB
 setting settconfig_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
+
     ADDSET_SEPARATOR("Load & Save"),
-    ADDSET_ACTION("Reload settings", MOpt_LoadCfg, "Reset the settings to last saved configuration."),
-    ADDSET_ACTION("Save settings", MOpt_SaveCfg, "Save the settings"),
+    ADDSET_ACTION("Reload Settings", MOpt_LoadCfg, "Reset the settings to last saved configuration."),
+    ADDSET_ACTION("Save Settings", MOpt_SaveCfg, "Save the settings"),
 	ADDSET_ADVANCED_SECTION(),
-    ADDSET_BOOL("Save to profile dir", cfg_use_home),
+    ADDSET_BOOL("Save To Profile Dir", cfg_use_home),
     ADDSET_BASIC_SECTION(),
 	ADDSET_ACTION("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 
@@ -1390,10 +1403,10 @@ setting settconfig_arr[] = {
 	
 	ADDSET_SEPARATOR("Config Saving Options"),
     ADDSET_ACTION("Reset Saving Options", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults."),
-    ADDSET_BOOL("Auto Save on Quit", cfg_save_onquit),
+    ADDSET_BOOL("Auto Save On Quit", cfg_save_onquit),
 	ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL("Backup old file", cfg_backup),
+	ADDSET_BOOL("Backup Old File", cfg_backup),
 	ADDSET_NAMED("Load Legacy", cfg_legacy_exec, MOpt_legacywrite_enum),
 	ADDSET_BOOL("Save Legacy", cfg_legacy_write),
 	ADDSET_BOOL("Aliases", cfg_save_aliases),
@@ -1426,26 +1439,23 @@ qbool Menu_Options_Mouse_Event(const mouse_state_t *ms)
 void Menu_Options_Init(void) {
 	Settings_MainInit();
 
-	Settings_Page_Init(settgeneral, settgeneral_arr);
+	Settings_Page_Init(settmisc, settmisc_arr);
 	Settings_Page_Init(settfps, settfps_arr);
-	Settings_Page_Init(settdemo_spec, settdemo_spec_arr);
-	Settings_Page_Init(setthud, setthud_arr);
+	Settings_Page_Init(settview, settview_arr);
 	Settings_Page_Init(settplayer, settplayer_arr);
 	Settings_Page_Init(settbinds, settbinds_arr);
-#ifdef GLQUAKE
-	Settings_Page_Init(settvideo, settvideo_arr);
-#endif
+	Settings_Page_Init(settsystem, settsystem_arr);
 	Settings_Page_Init(settconfig, settconfig_arr);
 
 	Cvar_Register(&menu_advanced);
 #ifdef GLQUAKE
 	// this is here just to not get a crash in Cvar_Set
-    mvs_selected.freq.name = "menu_tempval_video_freq";
-	mvs_previous.freq.name = mvs_selected.freq.name;
-    mvs_selected.freq.string = NULL;
-    mvs_previous.freq.string = NULL;
-    mvs_selected.freq.next = &mvs_selected.freq;
-    mvs_previous.freq.next = &mvs_previous.freq;
+    mss_selected.freq.name = "menu_tempval_video_freq";
+	mss_previous.freq.name = mss_selected.freq.name;
+    mss_selected.freq.string = NULL;
+    mss_previous.freq.string = NULL;
+    mss_selected.freq.next = &mss_selected.freq;
+    mss_previous.freq.next = &mss_previous.freq;
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
@@ -1490,13 +1500,12 @@ void Menu_Options_Init(void) {
 	CEditBox_Init(&filenameeb, 32, 64);
 
 	CTab_Init(&options_tab);
-	CTab_AddPage(&options_tab, "Main", OPTPG_SETTINGS, &options_main_handlers);
 	CTab_AddPage(&options_tab, "Player", OPTPG_PLAYER, &options_player_handlers);
 	CTab_AddPage(&options_tab, "Graphics", OPTPG_FPS, &options_graphics_handlers);
-	CTab_AddPage(&options_tab, "HUD", OPTPG_HUD, &options_hud_handlers);
-	CTab_AddPage(&options_tab, "Demo/Spec", OPTPG_DEMO_SPEC, &options_demo_spec_handlers);
+	CTab_AddPage(&options_tab, "View", OPTPG_HUD, &options_view_handlers);
 	CTab_AddPage(&options_tab, "Controls", OPTPG_BINDS, &options_controls_handlers);
-	CTab_AddPage(&options_tab, "Video", OPTPG_VIDEO, &options_video_handlers);
+	CTab_AddPage(&options_tab, "Misc", OPTPG_MISC, &options_misc_handlers);
+	CTab_AddPage(&options_tab, "System", OPTPG_SYSTEM, &options_system_handlers);
 	CTab_AddPage(&options_tab, "Config", OPTPG_CONFIG, &options_config_handlers);
-	CTab_SetCurrentId(&options_tab, OPTPG_SETTINGS);
+	CTab_SetCurrentId(&options_tab, OPTPG_PLAYER);
 }

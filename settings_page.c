@@ -219,7 +219,7 @@ static void Setting_DrawBind(int x, int y, int w, setting* set, qbool active, qb
 		UI_Print(x, y, c, active);
 	}
 
-	x += LETW*2;
+	//x += LETW*2;
 
 	M_FindKeysForCommand (set->varname, keys);
 

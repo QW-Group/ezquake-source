@@ -83,7 +83,7 @@ typedef enum  {
 	stt_string,		// string - fully editable by the user, needs only cvar
 	stt_playercolor,// named enum 0..13
 	stt_skin,		// player skin
-	stt_bind,		// keybinding, not implemented
+	stt_bind,		// keybinding
 	stt_advmark,	// denotes advanced settings area
 	stt_basemark    // denotes basic settings area
 } setting_type;
