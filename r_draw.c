@@ -65,10 +65,10 @@ int	scissor_right	= 0;
 int scissor_top		= 0;
 int scissor_bottom	= 0;
 
-#define CLIP_TOP(y)		((y) < scissor_top)
-#define CLIP_BOTTOM(y)	((y) > scissor_bottom)
-#define CLIP_LEFT(x)	((x) < scissor_left)
-#define CLIP_RIGHT(x)	((x) > scissor_right)
+#define CLIP_TOP(y)		((y) <	scissor_top)
+#define CLIP_BOTTOM(y)	((y) >= scissor_bottom)
+#define CLIP_LEFT(x)	((x) <	scissor_left)
+#define CLIP_RIGHT(x)	((x) >= scissor_right)
 
 //=============================================================================
 // Support Routines
