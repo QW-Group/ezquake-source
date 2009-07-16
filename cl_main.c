@@ -145,6 +145,7 @@ cvar_t  demo_getpings      = {"demo_getpings",    "1"};
 cvar_t	cl_chatsound = {"s_chat_custom", "1"};
 cvar_t	cl_confirmquit = {"cl_confirmquit", "0"}; // , CVAR_INIT
 cvar_t	cl_fakename = {"cl_fakename", ""};
+cvar_t	cl_fakename_appendage = {"cl_fakename_appendage", ""};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
 
@@ -1579,6 +1580,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_chatsound);
 	Cmd_AddLegacyCommand ("cl_chatsound", "s_chat_custom");
 	Cvar_Register (&cl_fakename);
+	Cvar_Register (&cl_fakename_appendage);
 
 	Cvar_Register (&cl_restrictions);
 

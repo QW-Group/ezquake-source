@@ -297,6 +297,7 @@ void CL_Say_f (void) {
 	int tmp;
 	qbool qizmo = false;
 	extern cvar_t cl_fakename;
+	extern cvar_t cl_fakename_appendage;
 
 	if (cls.mvdplayback == QTV_PLAYBACK) {
 		QTV_Say_f();
@@ -359,19 +360,28 @@ void CL_Say_f (void) {
     // if team message mode and teamname is set and message is not custom mm2 message...
 	if (!strcasecmp(Cmd_Argv(0), "say_team") && !cl.spectator && cl_fakename.string[0] && !strchr(s, '\x0d'))
 	{
-		char tmp[1024], tmp2[1024];
+		char c_fn[1024], c_fna[1024], c_msg[1024];
         size_t len = strlen(s) - 1; // cut the trailing quote (")
 
-        len = bound(0, len, sizeof(tmp));
+        len = bound(0, len, sizeof(c_fn));
 
 		// TP_ParseFunChars wants a string < 1024 chars (fix it?)
-        strlcpy (tmp, cl_fakename.string, sizeof(tmp));
+        strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
+        strlcpy (c_fna, cl_fakename_appendage.string, sizeof(c_fna));
 		
         // 1) save the message text, because TP_ParseFunChars will overwrite the temp memory
         // 2) cut the leading quote (+1) and also the trailing quote (len is 1 char shorter)
-        strlcpy (tmp2, s+1, len);
+        strlcpy (c_msg, s+1, len);
 
-		snprintf (msg, sizeof(msg), "\x0d%s: %s", TP_ParseFunChars(tmp, true), tmp2);
+		if(cl_fakename_appendage.string[0])
+		{
+			snprintf (msg, sizeof(msg), "\x0d%s%s", TP_ParseFunChars( strcat(c_fn, c_fna), true), c_msg);
+		}
+		else
+		{
+			snprintf (msg, sizeof(msg), "\x0d%s: %s", TP_ParseFunChars(c_fn, true), c_msg);
+		}
+
 		s = msg;
 	}
 
