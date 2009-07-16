@@ -579,7 +579,7 @@ int CT_Opt_System_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 	if(mss_software_change_resolution_mode)
 	{
 
-		if(key == K_ESCAPE)
+		if(key == K_ESCAPE || key == K_MOUSE2)
 		{
 			mss_software_change_resolution_mode = false;
 		}
@@ -587,7 +587,7 @@ int CT_Opt_System_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 		(*vid_menukeyfn) (key);
 		// i was too lazy&scared to change vid_menukeyfn functions out there
 		// so because i know what keys have some function in there, i list them here:
-		return key == K_ESCAPE || key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER || key == 'd';
+		return key == K_ESCAPE || key == K_MOUSE2 || key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER || key == 'd';
 	}
 	else
 	{

@@ -73,7 +73,7 @@ setting democtrl_menu_entries[] = {
 };
 
 setting botmatch_menu_entries[] = {
-	ADDSET_SEPARATOR("Demo Control Menu"),
+	ADDSET_SEPARATOR("Botmatch Menu"),
 	ADDSET_ACTION("Ready", MIng_Ready, ""),
 	ADDSET_ACTION("Break", MIng_Break, ""),
 	ADDSET_ACTION("Team Blue", MIng_TeamBlue, ""),
