@@ -2311,7 +2311,7 @@ void CL_LinkPlayers (void)
 		}
 		#endif // GLQUAKE
 
-		if (cl.vwep_enabled && r_drawvweps.value && state->vw_index) 
+		if ((cl.vwep_enabled && r_drawvweps.value && state->vw_index) && (state->modelindex != cl_modelindices[mi_eyes])) 
 		{
 			qbool vwep;
 			vwep = CL_AddVWepModel (&ent, state->vw_index, cent->old_vw_frame);
