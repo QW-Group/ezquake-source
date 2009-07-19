@@ -12,8 +12,6 @@
 
 	made by:
 		johnnycz, Jan 2006
-	last edit:
-		$Id: menu_options.c,v 1.85 2007/10/08 21:40:01 johnnycz Exp $
 
 */
 
@@ -1133,11 +1131,11 @@ setting settview_arr[] = {
 	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
 	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
 	ADDSET_BOOL		("Confirm Quit", cl_confirmquit),
-	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Demo & Observing"),
 	ADDSET_BOOL		("Chasecam", cl_chasecam),
 
+	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Demo Playback"),
 	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
 	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
@@ -1157,7 +1155,9 @@ setting settview_arr[] = {
 	ADDSET_BOOL		("Autotrack Lock Team", mvd_autotrack_lockteam),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL     ("Status", mvd_status),
+	ADDSET_BASIC_SECTION(),
 };
 
 // CONTROLS TAB
