@@ -890,7 +890,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 	qbool team, hide = false;
 	char dest[4096], msg[4096], *s, *d, c, *name;
 	int length, offset, flags;
-	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume, cl_fakename, cl_fakename_appendage;
+	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume, cl_fakename, cl_fakename_suffix;
 
 	if (!buf || !(length = strlen(buf)))
 		return;
@@ -935,16 +935,9 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
         {
         	char c_fn[1024], c_fna[1024];
         	strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
-        	strlcpy (c_fna, cl_fakename_appendage.string, sizeof(c_fna));
+        	strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
 
-        	if (cl_fakename_appendage.string[0])
-        	{
-        		snprintf(msg, sizeof(msg), "%s\n", TP_ParseFunChars(strcat(strcat(c_fn, c_fna), dest) , true));
-        	}
-        	else
-        	{
-        		snprintf(msg, sizeof(msg), "%s\n", TP_ParseFunChars(strcat(strcat(c_fn, ": "), dest) , true));
-        	}
+			snprintf(msg, sizeof(msg), "%s\n", TP_ParseFunChars(strcat(strcat(c_fn, c_fna), dest) , true));
         }
         else
         {

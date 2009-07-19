@@ -297,7 +297,7 @@ void CL_Say_f (void) {
 	int tmp;
 	qbool qizmo = false;
 	extern cvar_t cl_fakename;
-	extern cvar_t cl_fakename_appendage;
+	extern cvar_t cl_fakename_suffix;
 
 	if (cls.mvdplayback == QTV_PLAYBACK) {
 		QTV_Say_f();
@@ -367,20 +367,13 @@ void CL_Say_f (void) {
 
 		// TP_ParseFunChars wants a string < 1024 chars (fix it?)
         strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
-        strlcpy (c_fna, cl_fakename_appendage.string, sizeof(c_fna));
+        strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
 		
         // 1) save the message text, because TP_ParseFunChars will overwrite the temp memory
         // 2) cut the leading quote (+1) and also the trailing quote (len is 1 char shorter)
         strlcpy (c_msg, s+1, len);
 
-		if(cl_fakename_appendage.string[0])
-		{
-			snprintf (msg, sizeof(msg), "\x0d%s%s", TP_ParseFunChars( strcat(c_fn, c_fna), true), c_msg);
-		}
-		else
-		{
-			snprintf (msg, sizeof(msg), "\x0d%s: %s", TP_ParseFunChars(c_fn, true), c_msg);
-		}
+		snprintf (msg, sizeof(msg), "\x0d%s%s", TP_ParseFunChars(strcat(c_fn, c_fna), true), c_msg);
 
 		s = msg;
 	}
