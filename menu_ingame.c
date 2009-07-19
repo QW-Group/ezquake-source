@@ -52,24 +52,28 @@ setting ingame_menu_entries[] = {
 	ADDSET_ACTION("Break", MIng_Break, ""),
 	ADDSET_ACTION("Join", MIng_Join, ""),
 	ADDSET_ACTION("Observe", MIng_Observe, ""),
+	ADDSET_BLANK(),
 	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
 	ADDSET_ACTION("Server Browser", MIng_ServerBrowser, ""),
 	ADDSET_ACTION("Options", MIng_Options, ""),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
-	ADDSET_ACTION("Return to game", MIng_Back, ""),
+	ADDSET_BLANK(),
+	ADDSET_ACTION("Return To Game", MIng_Back, ""),
 };
 
 setting democtrl_menu_entries[] = {
 	ADDSET_SEPARATOR("Demo Control Menu"),
-	ADDSET_ACTION("Rewind 1 min", MDemoCtrl_Back1Min, ""),
-	ADDSET_ACTION("Rewind 10 sec", MDemoCtrl_Back10Sec, ""),
-	ADDSET_ACTION("Skip 1 min", MDemoCtrl_SkipMinute, ""),
-	ADDSET_ACTION("Skip 10 sec", MDemoCtrl_Skip10Sec, ""),
+	ADDSET_ACTION("Rewind 1 Min", MDemoCtrl_Back1Min, ""),
+	ADDSET_ACTION("Rewind 10 Sec", MDemoCtrl_Back10Sec, ""),
+	ADDSET_ACTION("Skip 1 Min", MDemoCtrl_SkipMinute, ""),
+	ADDSET_ACTION("Skip 10 Sec", MDemoCtrl_Skip10Sec, ""),
+	ADDSET_BLANK(),
 	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
 	ADDSET_ACTION("Demo Browser", MDemoCtrl_DemoBrowser, ""),
 	ADDSET_ACTION("Options", MIng_Options, ""),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
-	ADDSET_ACTION("Return to game", MIng_Back, ""),
+	ADDSET_BLANK(),
+	ADDSET_ACTION("Return To Demo", MIng_Back, ""),
 };
 
 setting botmatch_menu_entries[] = {
@@ -82,10 +86,12 @@ setting botmatch_menu_entries[] = {
 	ADDSET_ACTION("Remove Bot", MIng_RemoveBot, ""),
 	ADDSET_ACTION("Increase Bot Skill", MIng_SkillUp, ""),
 	ADDSET_ACTION("Decrease Bot Skill", MIng_SkillDown, ""),
+	ADDSET_BLANK(),
 	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
 	ADDSET_ACTION("Options", MIng_Options, ""),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
-	ADDSET_ACTION("Return to game", MIng_Back, ""),
+	ADDSET_BLANK(),
+	ADDSET_ACTION("Return To Game", MIng_Back, ""),
 };
 
 #define DEMOPLAYBACK() (cls.demoplayback || cls.mvdplayback)

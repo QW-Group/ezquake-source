@@ -20,6 +20,9 @@
 // separator: decorating purpose
 #define ADDSET_SEPARATOR(label) { stt_separator, label, false, NULL, 0, 0, 0, NULL, NULL, NULL, NULL }
 
+// blank: decorating purpose
+#define ADDSET_BLANK() { stt_blank, NULL, false, NULL, 0, 0, 0, NULL, NULL, NULL, NULL }
+
 // action: user can hit enter to execute function assigned to this setting
 #define ADDSET_ACTION(label,fnc,desc) { stt_action, label, false, NULL, 0, 0, 0, NULL, NULL, fnc, NULL, NULL, desc }
 
@@ -85,7 +88,8 @@ typedef enum  {
 	stt_skin,		// player skin
 	stt_bind,		// keybinding
 	stt_advmark,	// denotes advanced settings area
-	stt_basemark    // denotes basic settings area
+	stt_basemark,	// denotes basic settings area
+	stt_blank
 } setting_type;
 
 typedef struct {

@@ -183,7 +183,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
 	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
 	enemyforceskins, teamforceskins, cl_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
-	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, vid_wideaspect
+	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, vid_wideaspect, menu_ingame 
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, sys_inactivesound, vid_flashonactivity;
@@ -1270,17 +1270,14 @@ setting settmisc_arr[] = {
 	//Match Tools
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
-	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
-	ADDSET_BOOL		("Log Readable", log_readable),
 	ADDSET_ENUM 	("Screenshot Format", scr_sshot_format, scr_sshot_format_enum),
+	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
 #ifdef _WIN32
 	ADDSET_ENUM     ("Demo Format", demo_format, demoformat_enum),
 #endif
-	ADDSET_BASIC_SECTION(),
+	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
+	ADDSET_BOOL		("Log Readable", log_readable),
 
-	ADDSET_ADVANCED_SECTION(),
 	//Paths
 	ADDSET_SEPARATOR("Paths"),
 	ADDSET_NAMED    ("Media Paths Type", cl_mediaroot, mediaroot_enum),
@@ -1293,11 +1290,11 @@ setting settmisc_arr[] = {
 	ADDSET_ACTION	("Set qw:// assoc.", CL_RegisterQWURLProtocol_f,
 		"Sets this application as the handler of qw:// URLs, so by double-clicking such links in your operating system, this client will open and connect to given address"),
 #endif
-	ADDSET_BASIC_SECTION(),
 
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_SEPARATOR	("Miscellaneous"),
 	ADDSET_NAMED		("Linear Interpolation", cl_nolerp, cl_nolerp_enum),
+	ADDSET_BOOL			("In-Game Menu", menu_ingame),
 	ADDSET_BASIC_SECTION(),
 };
 

@@ -288,6 +288,7 @@ static void Setting_Increase(setting* set) {
 		case stt_skin:
 		case stt_advmark:
 		case stt_basemark:
+		case stt_blank:
 			break;
 	}
 }
@@ -324,6 +325,7 @@ static void Setting_Decrease(setting* set) {
 		case stt_skin:
 		case stt_advmark:
 		case stt_basemark:
+		case stt_blank:
 			break;
 	}
 }
@@ -348,6 +350,7 @@ static void Setting_Reset(setting* set)
 		case stt_advmark:
 		case stt_basemark:
 		case stt_intnum:
+		case stt_blank:
 			break;
 	}
 }
@@ -445,7 +448,7 @@ static void CheckCursor(settings_page *tab, qbool up)
 		up = true;
 	}
 	s = tab->settings + tab->marked;
-	if (s->type == stt_separator || (s->advanced && !menu_advanced.value) || s->type == stt_advmark || s->type == stt_basemark) {
+	if (s->type == stt_separator || (s->advanced && !menu_advanced.value) || s->type == stt_advmark || s->type == stt_basemark || s->type == stt_blank) {
 		tab->marked += up ? -1 : +1;
 		CheckCursor(tab, up);
 	}
@@ -846,6 +849,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			// unhandled
 			case stt_advmark:
 			case stt_basemark:
+			case stt_blank:
 				break;
 		}
 		y += ch;
