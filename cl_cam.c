@@ -495,6 +495,22 @@ void Cam_Track(usercmd_t *cmd)
 	}
 }
 
+// Returns true if last new button command was jump
+qbool Cam_JumpCheck(usercmd_t *cmd)
+{
+	if ((cmd->buttons & BUTTON_JUMP) && (oldbuttons & BUTTON_JUMP))
+		return false;		// don't pogo stick
+
+	if (!(cmd->buttons & BUTTON_JUMP))
+	{
+		oldbuttons &= ~BUTTON_JUMP;
+		return false;
+	}
+	oldbuttons |= BUTTON_JUMP;	// don't jump again until released
+
+	return true;
+}
+
 void Cam_FinishMove(usercmd_t *cmd) 
 {
 	int i, end;
@@ -529,19 +545,18 @@ void Cam_FinishMove(usercmd_t *cmd)
 	if (autocam && cl_hightrack.value) 
 	{
 		Cam_CheckHighTarget();
+		if (Cam_JumpCheck(cmd))
+		{
+			ST_Printf(PRINT_FAIL,"cl_hightrack enabled. Unable to switch POV.\n");
+		}
 		return;
 	}
 
 	if (locked) {
-		if ((cmd->buttons & BUTTON_JUMP) && (oldbuttons & BUTTON_JUMP))
-			return;		// don't pogo stick
-
-		if (!(cmd->buttons & BUTTON_JUMP)) {
-			oldbuttons &= ~BUTTON_JUMP;
+		if(!Cam_JumpCheck(cmd))
+		{
 			return;
 		}
-		oldbuttons |= BUTTON_JUMP;	// don't jump again until released
-
 		// Swap the Multiview mvinset/main view pov when jump button is pressed.
 		if (!nSwapPov)
 		{
