@@ -498,7 +498,7 @@ static void CancelNewVideoSettings (void) {
 }
 
 // this is a duplicate from tr_init.c!
-const char* glmodes[] = { "320x240", "400x300", "512x384", "640x480", "800x600", "960x720", "1024x768", "1152x864", "1280x1024", "1600x1200", "2048x1536" };
+const char* glmodes[] = { "320x240", "400x300", "512x384", "640x480", "800x600", "960x720", "1024x768", "1152x864", "1280x1024", "1600x1200", "2048x1536", "1920x1200", "1920x1080", "1680x1050", "1440x900", "1280x800" };
 int glmodes_size = sizeof(glmodes) / sizeof(char*);
 
 const char* BitDepthRead(void) { return mss_selected.bpp == 32 ? "32 bit" : mss_selected.bpp == 16 ? "16 bit" : "use desktop settings"; }
