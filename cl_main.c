@@ -89,6 +89,9 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include "fs.h"
 #include "help.h"
 #include "irc.h"
+#ifdef _WIN32
+#include "mumble.h"
+#endif
 
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
@@ -1875,6 +1878,8 @@ void CL_Init (void)
 
 	QTV_Init();
 
+	Mumble_Init();
+
 	Sys_InitIPC();
 
 	Rulesets_Init();
@@ -2432,6 +2437,8 @@ void CL_Frame (double time)
 	CL_QTVPoll();
 
 	IRC_Update();
+
+	updateMumble();
 
 	CL_UpdateCaption(false);
 }

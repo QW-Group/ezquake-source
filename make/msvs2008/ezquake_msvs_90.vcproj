@@ -1960,6 +1960,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\mumble.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\qtv.c"
 					>
 				</File>
@@ -2500,6 +2504,10 @@
 				</File>
 				<File
 					RelativePath="..\..\mp3_player.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\mumble.h"
 					>
 				</File>
 				<File
