@@ -1878,7 +1878,9 @@ void CL_Init (void)
 
 	QTV_Init();
 
+#ifdef _WIN32
 	Mumble_Init();
+#endif
 
 	Sys_InitIPC();
 
@@ -2438,7 +2440,9 @@ void CL_Frame (double time)
 
 	IRC_Update();
 
+#ifdef _WIN32
 	updateMumble();
+#endif
 
 	CL_UpdateCaption(false);
 }
