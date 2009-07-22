@@ -23,8 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 
+void OnChange_mumble_enabled(cvar_t *var, char *value, qbool *cancel);
 void updateMumble (void);
 void Mumble_Init (void);
+void Mumble_CreateLink(void);
+void Mumble_DestroyLink(void);
 
 #endif // WIN32
 

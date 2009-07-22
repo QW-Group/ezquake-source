@@ -19,10 +19,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
+#include "mumble.h"
 
 #ifdef _WIN32
 
-cvar_t mumble_enabled = {"mumble_enabled", "1"};
+cvar_t mumble_enabled = {"mumble_enabled", "1", CVAR_NONE, OnChange_mumble_enabled};
 cvar_t mumble_distance_ratio = {"mumble_distance_ratio", "0.0254"};
 cvar_t mumble_debug = {"mumble_debug", "0"};
 
@@ -46,38 +47,81 @@ void Mumble_Init(void)
 	Cvar_Register (&mumble_distance_ratio);
 	Cvar_Register (&mumble_debug);
 
+	if(mumble_enabled.integer)
+		Mumble_CreateLink();
+}
+
+void Mumble_CreateLink()
+{
+	if (hMapObject != NULL)
+	{
+		ST_Printf(PRINT_FAIL,"Mumble Link already initialized.\n");
+		return;
+	}
 	hMapObject = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, L"MumbleLink");
 	if (hMapObject == NULL)
 	{
-		ST_Printf(PRINT_FAIL,"Mumble initialization failed.\n");
+		ST_Printf(PRINT_FAIL,"Mumble initialization failed. Mumble not started ?\n");
 		return;
 	}
-	//struct Linkedmem;
+
 	lm = (struct LinkedMem *) MapViewOfFile(hMapObject, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(struct LinkedMem));
 	if (lm == NULL) {
 		CloseHandle(hMapObject);
 		hMapObject = NULL;
-		ST_Printf(PRINT_FAIL,"Mumble object initialization failed.\n");
+		ST_Printf(PRINT_FAIL,"Mumble Link initialization failed.\n");
 		return;
 	}
 	wcscpy_s(lm->name, 256, L"ezQuake");
 
-	ST_Printf(PRINT_INFO,"Mumble initialization successful.\n");
-	return;
+	ST_Printf(PRINT_INFO,"Mumble Link initialization successful.\n");
+}
+
+void Mumble_DestroyLink()
+{
+	if (hMapObject != NULL)
+	{
+		CloseHandle(hMapObject);
+		hMapObject = NULL;
+		ST_Printf(PRINT_INFO,"Mumble Link shut down.\n");
+		return;
+	} 
+	else
+	{
+		ST_Printf(PRINT_FAIL,"Mumble Link not established, unable to shut down.\n");
+	}
+}
+
+void OnChange_mumble_enabled(cvar_t *var, char *value, qbool *cancel)
+{
+	int mumble = Q_atoi (value);
+
+	if (mumble)
+		Mumble_CreateLink();
+	else
+		Mumble_DestroyLink();
 }
 
 void updateMumble() {
 
 	vec3_t  right;
+	static qbool mpa_report_active = true;
 
-	if (!mumble_enabled.integer)
+	if (!mumble_enabled.integer || !lm )
 		return;
 
+	// Only activate Mumble Positional Audio if you are an active player
 	if (cls.demoplayback || cl.spectator)
+	{
+		if (mpa_report_active)
+		{
+			// Setting position to 0 disables Mumble Positional Audio
+			VectorClear(lm->fPosition);
+			mpa_report_active = false;
+			ST_Printf(PRINT_INFO,"Mumble Position Audio reporting disabled\n");
+		}
 		return ;
-
-	if (!lm)
-		return;
+	}
 
 	// Set player origin for Mumble
 	VectorCopy(cl.simorg , lm->fPosition);
@@ -98,9 +142,18 @@ void updateMumble() {
 	if (mumble_debug.integer)
 		Com_Printf("X=%f Y=%f Z=%f\n",lm->fPosition[0],lm->fPosition[1],lm->fPosition[2]);
 
+	// If a link is lost struct is reset, reinitialize lm->name
+	if(lm->name[0] != 'e')
+		wcscpy_s(lm->name, 256, L"ezQuake");
 	// Required by Mumble
 	lm->uiVersion = 1;
 	lm->uiTick = GetTickCount();
+	
+	if(!mpa_report_active)
+	{
+		ST_Printf(PRINT_INFO,"Mumble Position Audio reporting enabled.\n");
+		mpa_report_active = true;
+	}
 }
 
 #endif
