@@ -129,6 +129,9 @@ cvar_t	gl_detail			= {"gl_detail","0"};
 cvar_t	gl_caustics			= {"gl_caustics", "0"}; // 1		
 cvar_t  gl_waterfog			= {"gl_turbfog", "0"}; // 2			
 cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};	
+cvar_t	gl_waterfog_color_water = {"gl_turbfog_color_water", "32 64 128", CVAR_COLOR};
+cvar_t	gl_waterfog_color_lava = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR};
+cvar_t	gl_waterfog_color_slime = {"gl_turbfog_color_slime", "128 255 0", CVAR_COLOR};
 
 cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64", CVAR_ARCHIVE};
@@ -1846,6 +1849,9 @@ void R_Init (void) {
 	if (!COM_CheckParm ("-nomtex")) {
 		Cvar_Register (&gl_waterfog);
 		Cvar_Register (&gl_waterfog_density);
+		Cvar_Register (&gl_waterfog_color_water);
+		Cvar_Register (&gl_waterfog_color_lava);
+		Cvar_Register (&gl_waterfog_color_slime);
 	}
 
 	Cvar_Register (&gl_fogenable); 

@@ -518,10 +518,11 @@ void V_SetContentsColor (int contents) {
 
 #ifdef GLQUAKE
 void V_AddWaterfog (int contents) {
-	float *colors;
-	float lava[4] =  {1.0f,   0.314f, 0.0f,   0.5f};
-	float slime[4] = {0.039f,   0.738f,  0.333f,   0.5f};
-	float water[4] = {0.039f, 0.584f, 0.888f, 0.5f};	
+	extern cvar_t gl_waterfog_color_water;
+	extern cvar_t gl_waterfog_color_lava;
+	extern cvar_t gl_waterfog_color_slime;
+
+	float colors[4];
 
 	if (!gl_waterfog.value || COM_CheckParm ("-nomtex") || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
 		glDisable(GL_FOG);
@@ -530,16 +531,24 @@ void V_AddWaterfog (int contents) {
 
 	switch (contents) {
 		case CONTENTS_LAVA:
-			colors = lava;
+			colors[0] = (float) gl_waterfog_color_lava.color[0] / 255.0;
+			colors[1] = (float) gl_waterfog_color_lava.color[1] / 255.0;
+			colors[2] = (float) gl_waterfog_color_lava.color[2] / 255.0;
+			colors[3] = (float) gl_waterfog_color_lava.color[3] / 255.0;
 			break;
 		case CONTENTS_SLIME:
-			colors = slime;
+			colors[0] = (float) gl_waterfog_color_slime.color[0] / 255.0;
+			colors[1] = (float) gl_waterfog_color_slime.color[1] / 255.0;
+			colors[2] = (float) gl_waterfog_color_slime.color[2] / 255.0;
+			colors[3] = (float) gl_waterfog_color_slime.color[3] / 255.0;
 			break;
 		default:
-			colors = water;
+			colors[0] = (float) gl_waterfog_color_water.color[0] / 255.0;
+			colors[1] = (float) gl_waterfog_color_water.color[1] / 255.0;
+			colors[2] = (float) gl_waterfog_color_water.color[2] / 255.0;
+			colors[3] = (float) gl_waterfog_color_water.color[3] / 255.0;
 			break;
 	}
-
 	
 	glFogfv(GL_FOG_COLOR, colors);
 	if (( (int) gl_waterfog.value ) == 2) {
