@@ -168,7 +168,7 @@ qbool R_AliasCheckBBox (entity_t *ent) {
 	for (i = 0; i < 8; i++) {
 		R_AliasTransformVector  (&basepts[i][0], &viewaux[i].fv[0]);
 
-		if (viewaux[i].fv[2] < ALIAS_Z_CLIP_PLANE) {
+		if (viewaux[i].fv[2] < r_nearclip.value) {
 			// we must clip points that are closer than the near clip plane
 			viewpts[i].flags = ALIAS_Z_CLIP;
 			zclipped = true;
@@ -196,10 +196,10 @@ qbool R_AliasCheckBBox (entity_t *ent) {
 
 			// if one end is clipped and the other isn't, make a new point
 			if (pv0->flags ^ pv1->flags) {
-				frac = (ALIAS_Z_CLIP_PLANE - pa0->fv[2]) / (pa1->fv[2] - pa0->fv[2]);
+				frac = (r_nearclip.value - pa0->fv[2]) / (pa1->fv[2] - pa0->fv[2]);
 				viewaux[numv].fv[0] = pa0->fv[0] + (pa1->fv[0] - pa0->fv[0]) * frac;
 				viewaux[numv].fv[1] = pa0->fv[1] + (pa1->fv[1] - pa0->fv[1]) * frac;
-				viewaux[numv].fv[2] = ALIAS_Z_CLIP_PLANE;
+				viewaux[numv].fv[2] = r_nearclip.value;
 				viewpts[numv].flags = 0;
 				numv++;
 			}
@@ -266,7 +266,7 @@ void R_AliasPreparePoints (void) {
 
 	for (i = 0; i < r_anumverts; i++, fv++, av++, r_oldapverts++, r_apverts++, pstverts++) {
 		R_AliasTransformFinalVert (fv, av, r_oldapverts, r_apverts, pstverts);
-		if (av->fv[2] < ALIAS_Z_CLIP_PLANE) {
+		if (av->fv[2] < r_nearclip.value) {
 			fv->flags |= ALIAS_Z_CLIP;
 		} else {
 			 R_AliasProjectFinalVert (fv, av);

@@ -50,12 +50,10 @@ cvar_t	v_kicktime = {"v_kicktime", "0.0"};
 cvar_t	v_kickroll = {"v_kickroll", "0.0"};
 cvar_t	v_kickpitch = {"v_kickpitch", "0.0"};
 cvar_t	v_gunkick = {"v_gunkick", "0"};
-
-
 cvar_t	v_viewheight = {"v_viewheight", "0"};
 
-
 cvar_t	cl_drawgun = {"r_drawviewmodel", "1"};
+cvar_t  r_nearclip = {"r_nearclip", "1", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 5.f, 5.f, 0.1f};
 cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};
 cvar_t	r_viewmodeloffset = {"r_viewmodeloffset", ""};
 cvar_t  r_viewpreselgun = {"r_viewpreselgun", "0"};
@@ -1168,6 +1166,7 @@ void V_Init (void) {
 	Cvar_Register (&v_iyaw_level);
 	Cvar_Register (&v_iroll_level);
 	Cvar_Register (&v_ipitch_level);
+	Cvar_Register (&r_nearclip);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
 	Cvar_Register (&crosshaircolor);

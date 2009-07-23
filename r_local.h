@@ -182,7 +182,8 @@ void	R_InitTurb (void);
 //=========================================================
 
 #define MAXALIASVERTS		2000	// TODO: tune this
-#define ALIAS_Z_CLIP_PLANE	5
+
+extern	cvar_t	r_nearclip;
 
 extern int				numverts;
 extern int				a_skinwidth;

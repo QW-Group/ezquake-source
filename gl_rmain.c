@@ -1742,7 +1742,7 @@ void R_SetupGL (void) {
 
 	screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
 
-	MYgluPerspective (r_refdef.fov_y, screenaspect, 4, farclip);
+	MYgluPerspective (r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
 
 	glCullFace(GL_FRONT);
 
