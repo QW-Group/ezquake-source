@@ -89,7 +89,7 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include "fs.h"
 #include "help.h"
 #include "irc.h"
-#ifdef _WIN32
+#if defined (_WIN32) || defined (__linux__)
 #include "mumble.h"
 #endif
 
@@ -1908,7 +1908,7 @@ void CL_Init (void)
 
 	QTV_Init();
 
-#ifdef _WIN32
+#if defined (_WIN32) || defined (__linux__)
 	Mumble_Init();
 #endif
 
@@ -2470,7 +2470,7 @@ void CL_Frame (double time)
 
 	IRC_Update();
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined (__linux__)
 	updateMumble();
 #endif
 

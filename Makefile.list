@@ -205,6 +205,7 @@ LINUX_C_FILES := \
 	in_linux \
 	keymap_x11 \
 	localtime_linux \
+	mumble \
 	snd_alsa \
 	snd_linux \
 	snd_oss \

@@ -20,16 +20,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "mumble.h"
+#ifdef __linux__
+#include <sys/time.h>
+#include <sys/mman.h>
+#endif
 
-#ifdef _WIN32
+#if defined (_WIN32) || defined (__linux__)
 
 cvar_t mumble_enabled = {"mumble_enabled", "1", CVAR_NONE, OnChange_mumble_enabled};
 cvar_t mumble_distance_ratio = {"mumble_distance_ratio", "0.0254"};
 cvar_t mumble_debug = {"mumble_debug", "0"};
 
 struct LinkedMem {
+#ifdef _WIN32
 	UINT32	uiVersion;
 	DWORD	uiTick;
+#else // Linux
+	uint32_t uiVersion;
+	uint32_t uiTick;
+#endif
 
 	float	fPosition[3];
 	float	fFront[3];
@@ -38,21 +47,23 @@ struct LinkedMem {
 };
 
 struct LinkedMem *lm = NULL;
+#ifdef _WIN32
 static HANDLE hMapObject = NULL;
+#else //Linux
+static int shmfd = -1;
+#endif
 
 void Mumble_Init(void) 
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
+	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
 	Cvar_Register (&mumble_enabled);
 	Cvar_Register (&mumble_distance_ratio);
 	Cvar_Register (&mumble_debug);
-
-	if(mumble_enabled.integer)
-		Mumble_CreateLink();
 }
 
 void Mumble_CreateLink()
 {
+#ifdef _WIN32
 	if (hMapObject != NULL)
 	{
 		ST_Printf(PRINT_FAIL,"Mumble Link already initialized.\n");
@@ -72,22 +83,50 @@ void Mumble_CreateLink()
 		ST_Printf(PRINT_FAIL,"Mumble Link initialization failed.\n");
 		return;
 	}
-	wcscpy_s(lm->name, 256, L"ezQuake");
+#else //Linux
+	char memname[256];
+	snprintf(memname, 256, "/MumbleLink.%d", getuid());
 
+	shmfd = shm_open(memname, O_RDWR, S_IRUSR | S_IWUSR);
+
+	if(shmfd < 0)
+	{
+		ST_Printf(PRINT_FAIL,"Mumble initialization failed. Mumble not started ?\n");
+		return;
+	}
+
+	lm = (struct LinkedMem *) (mmap(NULL, sizeof(struct LinkedMem), PROT_READ | PROT_WRITE, MAP_SHARED, shmfd,0));
+
+	if (lm == (void *) (-1))
+	{
+		lm = NULL;
+		ST_Printf(PRINT_FAIL,"Mumble Link initialization failed.\n");
+		return;
+	}
+#endif
+
+	mbstowcs(lm->name, "ezQuake", sizeof(lm->name));
 	ST_Printf(PRINT_INFO,"Mumble Link initialization successful.\n");
 }
 
 void Mumble_DestroyLink()
 {
+#ifdef _WIN32
 	if (hMapObject != NULL)
 	{
 		CloseHandle(hMapObject);
 		hMapObject = NULL;
-		ST_Printf(PRINT_INFO,"Mumble Link shut down.\n");
+#else //Linux
+	if (lm == (void *) (-1))
+	{
+		lm = NULL;
+#endif
+		ST_Printf(PRINT_FAIL,"Mumble Link shut down.\n");
 		return;
-	} 
+	}
 	else
 	{
+	if (mumble_debug.integer)
 		ST_Printf(PRINT_FAIL,"Mumble Link not established, unable to shut down.\n");
 	}
 }
@@ -102,8 +141,18 @@ void OnChange_mumble_enabled(cvar_t *var, char *value, qbool *cancel)
 		Mumble_DestroyLink();
 }
 
-void updateMumble() {
+#ifndef WIN32
+static const int32_t GetTickCount() 
+{
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
 
+	return tv.tv_usec / 1000 + tv.tv_sec * 1000;
+}
+#endif
+
+void updateMumble() 
+{
 	vec3_t  right;
 	static qbool mpa_report_active = true;
 
@@ -144,7 +193,8 @@ void updateMumble() {
 
 	// If a link is lost struct is reset, reinitialize lm->name
 	if(lm->name[0] != 'e')
-		wcscpy_s(lm->name, 256, L"ezQuake");
+		mbstowcs(lm->name, "ezQuake", sizeof(lm->name));
+
 	// Required by Mumble
 	lm->uiVersion = 1;
 	lm->uiTick = GetTickCount();
@@ -156,4 +206,5 @@ void updateMumble() {
 	}
 }
 
-#endif
+#endif // WIN32 && LINUX
+

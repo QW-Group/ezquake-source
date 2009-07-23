@@ -125,9 +125,9 @@ CFLAGS = $(BASE_CFLAGS) $(DEBUG_CFLAGS) -D_DEBUG
 endif
 
 ifeq ($(TYPE),release)
-LDFLAGS = -lm -lpthread
+LDFLAGS = -lm -lpthread -lrt
 else
-LDFLAGS = -ggdb -lm -lpthread
+LDFLAGS = -ggdb -lm -lpthread -lrt
 endif
 
 COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl.a libs/$(LIB_PREFIX)/libircclient.a
