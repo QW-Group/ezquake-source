@@ -232,7 +232,7 @@ visentlist_t	cl_visents, cl_visbents;
 #endif
 
 double		connect_time = 0;		// for connection retransmits
-qbool		connected_via_proxy = FALSE;
+qbool		connected_via_proxy = false;
 float nViewsizeExit=100;
 
 qbool	host_skipframe;			// used in demo playback
@@ -779,12 +779,12 @@ void CL_Connect_f (void)
 			Cmd_ForwardToServer ();
 		}
 		connect_addr = cl_proxyaddr.string;
-		connected_via_proxy = TRUE;
+		connected_via_proxy = true;
 	}
 	else
 	{
 		connect_addr = Cmd_Argv(1);
-		connected_via_proxy = FALSE;
+		connected_via_proxy = false;
 	}
 
 	// in this part proxy means Qizmo proxy
