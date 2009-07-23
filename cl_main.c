@@ -232,6 +232,7 @@ visentlist_t	cl_visents, cl_visbents;
 #endif
 
 double		connect_time = 0;		// for connection retransmits
+qbool		connected_via_proxy = FALSE;
 float nViewsizeExit=100;
 
 qbool	host_skipframe;			// used in demo playback
@@ -771,18 +772,22 @@ void CL_Connect_f (void)
 		return;
 	}
 
+	// in this part proxy means QWFWD proxy
 	if (cl_proxyaddr.string[0]) {
 		Info_SetValueForKey (cls.userinfo, "prx", Cmd_Argv(1), MAX_INFO_STRING);
 		if (cls.state >= ca_connected) {
 			Cmd_ForwardToServer ();
 		}
 		connect_addr = cl_proxyaddr.string;
+		connected_via_proxy = TRUE;
 	}
 	else
 	{
 		connect_addr = Cmd_Argv(1);
+		connected_via_proxy = FALSE;
 	}
 
+	// in this part proxy means Qizmo proxy
 	proxy = cl_useproxy.value && CL_ConnectedToProxy();
 
 	if (proxy)
@@ -1254,6 +1259,31 @@ void CL_Reconnect_f (void)
 		Com_Printf ("No server to reconnect to.\n");
 		return;
 	}
+
+	if (connected_via_proxy && cl_proxyaddr.string[0]) {
+		// we were on a proxy and user still wants to use a proxy
+		// but maybe this time different one (while the target server is the same)
+		// so change the proxy (actual connection point), while the target server is in userinfo/prx
+		strlcpy(cls.servername, cl_proxyaddr.string, sizeof(cls.servername));
+	}
+	else if (connected_via_proxy && !cl_proxyaddr.string[0]) {
+		// now user wants to connect directly to the server, so take what should be left in the userinfo/prx
+		// actual address of the server should still be there available
+		strlcpy(cls.servername, Info_ValueForKey(cls.userinfo, "prx"), sizeof(cls.servername));
+	}
+	else if (!connected_via_proxy && cl_proxyaddr.string[0]) {
+		// everything changes, the current server address gets moved to userinfo/prx
+		Info_SetValueForKey (cls.userinfo, "prx", cls.servername, MAX_INFO_STRING);
+		if (cls.state >= ca_connected) {
+			Cmd_ForwardToServer ();
+		}
+		// and we will connect to the proxy
+		strlcpy(cls.servername, cl_proxyaddr.string, sizeof(cls.servername));
+	}
+	// else if (!connected_via_proxy && !cl_proxyaddr.string[0]) // <- 4th case, good old reconnect, no need to do anything special
+
+	// remember what's the type of this new connection
+	connected_via_proxy = cl_proxyaddr.string[0];
 
 	Host_EndGame();
 	CL_BeginServerConnect();
