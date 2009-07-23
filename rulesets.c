@@ -279,6 +279,7 @@ void Rulesets_Init (void)
 {
 	int temp;
 
+	Cvar_SetCurrentGroup(CVAR_GROUP_USERINFO);
 	Cvar_Register (&ruleset);
 
 	if ((temp = COM_CheckParm ("-ruleset")) && temp + 1 < COM_Argc()) {
