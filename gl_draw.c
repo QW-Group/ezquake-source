@@ -37,6 +37,7 @@ extern cvar_t scr_coloredText, con_shift;
 cvar_t	scr_conalpha		= {"scr_conalpha", "0.8"};
 cvar_t	scr_conback			= {"scr_conback", "1"};
 cvar_t	scr_menualpha		= {"scr_menualpha", "0.7"};
+cvar_t	scr_menudrawhud		= {"scr_menudrawhud", "0"};
 
 
 void OnChange_gl_crosshairimage(cvar_t *, char *, qbool *);
@@ -757,6 +758,7 @@ void Draw_Init (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_menualpha);
+	Cvar_Register (&scr_menudrawhud);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
 	Cvar_Register (&gl_crosshairimage);

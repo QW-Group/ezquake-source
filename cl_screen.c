@@ -3217,6 +3217,7 @@ static void SCR_DrawCursor(void)
 void SCR_DrawElements(void) 
 {
   extern qbool  sb_showscores,  sb_showteamscores;
+  extern cvar_t	scr_menudrawhud;
 
 	if (scr_drawloading) 
 	{
@@ -3238,7 +3239,7 @@ void SCR_DrawElements(void)
 			Con_ClearNotify ();
 		}
 
-		if (cls.state == ca_active) 
+		if (cls.state == ca_active && !(!scr_menudrawhud.integer && (m_state != m_none)))
 		{
 			SCR_DrawRam ();
 			SCR_DrawNet ();

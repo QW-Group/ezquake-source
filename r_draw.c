@@ -55,6 +55,7 @@ mpic_t		*draw_backtile;
 
 cvar_t	scr_conalpha	= {"scr_conalpha", "1"};
 cvar_t	scr_menualpha	= {"scr_menualpha", "0.7"};
+cvar_t	scr_menudrawhud	= {"scr_menudrawhud", "0"};
 
 void customCrosshair_Init(void);
 
@@ -303,6 +304,7 @@ void Draw_Init (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register(&scr_menualpha);
+	Cvar_Register (&scr_menudrawhud);
 
 	Cvar_ResetCurrentGroup();
 
