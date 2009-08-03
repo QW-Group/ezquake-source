@@ -3227,100 +3227,103 @@ void SCR_DrawElements(void)
 	}
 	else 
 	{
-		if (cl.intermission == 1)
+		if( !(!scr_menudrawhud.integer && (m_state != m_none)) )
 		{
-			Sbar_IntermissionOverlay ();
-			Con_ClearNotify ();
-		} 
-		else if (cl.intermission == 2)
-		{
-			Sbar_FinaleOverlay ();
-			SCR_CheckDrawCenterString ();
-			Con_ClearNotify ();
-		}
-
-		if (cls.state == ca_active && !(!scr_menudrawhud.integer && (m_state != m_none)))
-		{
-			SCR_DrawRam ();
-			SCR_DrawNet ();
-			SCR_DrawTurtle ();
-
-			if (!sb_showscores && !sb_showteamscores) 
-			{ 
-				// Do not show if +showscores
-				SCR_DrawPause ();
-				
-				#ifdef GLQUAKE
-				SCR_DrawAutoID ();
-				#endif
+			if (cl.intermission == 1)
+			{
+				Sbar_IntermissionOverlay ();
+				Con_ClearNotify ();
+			} 
+			else if (cl.intermission == 2)
+			{
+				Sbar_FinaleOverlay ();
+				SCR_CheckDrawCenterString ();
+				Con_ClearNotify ();
 			}
 
-			if (!cl.intermission) 
+			if (cls.state == ca_active)
 			{
-				if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
-				{
-					Draw_Crosshair ();
-				}
+				SCR_DrawRam ();
+				SCR_DrawNet ();
+				SCR_DrawTurtle ();
 
-     			if (!sb_showscores && !sb_showteamscores)
+				if (!sb_showscores && !sb_showteamscores) 
 				{ 
 					// Do not show if +showscores
-					SCR_Draw_TeamInfo();
-					SCR_Draw_WeaponStats();
-
+					SCR_DrawPause ();
+					
 					#ifdef GLQUAKE
-					SCR_Draw_ShowNick();
+					SCR_DrawAutoID ();
 					#endif
-
-					SCR_CheckDrawCenterString ();
-					SCR_DrawSpeed ();
-					SCR_DrawClock ();
-					SCR_DrawGameClock ();
-					SCR_DrawDemoClock ();
-					SCR_DrawQTVBuffer ();
-					SCR_DrawFPS ();
 				}
 
-				// QW262
-				SCR_DrawHud ();
-
-				MVD_Screen ();
-
-				#ifdef GLQUAKE
-				// VULT STATS
-				SCR_DrawAMFstats();
-				#endif
-				
-				// VULT DISPLAY KILLS
-				if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
-					VX_TrackerThink();
-
-				// Multiview
-				if (cl_multiview.integer && cls.mvdplayback)
+				if (!cl.intermission) 
 				{
-					// Draw multiview mini-HUD's.
-					if (cl_mvdisplayhud.integer)
+					if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
 					{
-						if(cl_mvdisplayhud.integer >= 2)
-						{
-							// Graphical with icons.
-							SCR_DrawMVStatus();
-						}
-						else
-						{
-							// Only strings.
-							SCR_DrawMVStatusStrings();
-						}
+						Draw_Crosshair ();
 					}
 
-					// Draw a black border between the views.
-					SCR_DrawMultiviewBorders();
-				}
+     				if (!sb_showscores && !sb_showteamscores)
+					{ 
+						// Do not show if +showscores
+						SCR_Draw_TeamInfo();
+						SCR_Draw_WeaponStats();
 
-				Sbar_Draw();
-				HUD_Draw();
-				HUD_Editor_Draw();
-				DemoControls_Draw();
+						#ifdef GLQUAKE
+						SCR_Draw_ShowNick();
+						#endif
+
+						SCR_CheckDrawCenterString ();
+						SCR_DrawSpeed ();
+						SCR_DrawClock ();
+						SCR_DrawGameClock ();
+						SCR_DrawDemoClock ();
+						SCR_DrawQTVBuffer ();
+						SCR_DrawFPS ();
+					}
+
+					// QW262
+					SCR_DrawHud ();
+
+					MVD_Screen ();
+
+					#ifdef GLQUAKE
+					// VULT STATS
+					SCR_DrawAMFstats();
+					#endif
+					
+					// VULT DISPLAY KILLS
+					if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
+						VX_TrackerThink();
+
+					// Multiview
+					if (cl_multiview.integer && cls.mvdplayback)
+					{
+						// Draw multiview mini-HUD's.
+						if (cl_mvdisplayhud.integer)
+						{
+							if(cl_mvdisplayhud.integer >= 2)
+							{
+								// Graphical with icons.
+								SCR_DrawMVStatus();
+							}
+							else
+							{
+								// Only strings.
+								SCR_DrawMVStatusStrings();
+							}
+						}
+
+						// Draw a black border between the views.
+						SCR_DrawMultiviewBorders();
+					}
+
+					Sbar_Draw();
+					HUD_Draw();
+					HUD_Editor_Draw();
+					DemoControls_Draw();
+				}
 			}
 		}
 
