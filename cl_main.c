@@ -1583,19 +1583,25 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 void CL_InitCommands (void);
 
 #ifdef GLQUAKE
-void CL_Fog_f (void) 
+void CL_Fog_f(void) 
 {
-	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
+	extern cvar_t gl_fog_color, gl_fogenable;
+	char s[16];
 	
-	if (Cmd_Argc() == 1) 
+	if(Cmd_Argc() == 1) 
 	{
-		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);
-		return;
+		Com_Printf("\"fog\" is \"%d %d %d\"\n", gl_fog_color.color[0], gl_fog_color.color[1], gl_fog_color.color[2]);
 	}
-	Cvar_SetValue (&gl_fogenable, 1);
-	Cvar_SetValue (&gl_fogred, atof(Cmd_Argv(1)));
-	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
-	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
+	else if (Cmd_Argc() == 4)
+	{
+		Cvar_SetValue(&gl_fogenable, 1);
+		snprintf(s, sizeof(s), "%d %d %d", Q_atoi(Cmd_Argv(1)), Q_atoi(Cmd_Argv(2)), Q_atoi(Cmd_Argv(3)));
+		Cvar_Set(&gl_fog_color, s);
+	}
+	else
+	{
+		Com_Printf("Usage: \"fog R G B\", where R,G and B are values >= 0 and <= 255\n");
+	}
 }
 #endif
 

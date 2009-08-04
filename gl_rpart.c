@@ -708,11 +708,6 @@ void QMB_DrawParticles (void) {
 	if (!ISPAUSED)
 		QMB_UpdateParticles();
 
-	if (gl_fogenable.value)
-	{
-		glDisable(GL_FOG);
-	}
-
 	VectorAdd(vup, vright, billboard[2]);
 	VectorSubtract(vright, vup, billboard[3]);
 	VectorNegate(billboard[2], billboard[0]);
@@ -916,12 +911,6 @@ void QMB_DrawParticles (void) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glShadeModel(GL_FLAT);
-
-	if (gl_fogenable.value)
-	{
-		glEnable(GL_FOG);
-	}
-
 }
 
 #define	INIT_NEW_PARTICLE(_pt, _p, _color, _size, _time)	\

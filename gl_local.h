@@ -158,9 +158,7 @@ extern	int shelltexture;
 extern  cvar_t  gl_fogenable;
 extern  cvar_t  gl_fogstart;
 extern  cvar_t  gl_fogend;
-extern  cvar_t  gl_fogred;
-extern  cvar_t  gl_fogblue;
-extern  cvar_t  gl_foggreen;
+extern  cvar_t  gl_fog_color;
 extern  cvar_t  gl_fogsky;
 // Tomaz - Fog End
 
@@ -200,7 +198,7 @@ extern	cvar_t	r_skyname;
 extern  cvar_t  gl_caustics;
 extern  cvar_t  gl_detail;
 extern  cvar_t  gl_waterfog;
-extern  cvar_t  gl_waterfog_density;
+extern  cvar_t  gl_fog_density;
 
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	gl_clear;

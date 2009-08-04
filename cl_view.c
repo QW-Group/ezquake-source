@@ -517,48 +517,66 @@ void V_SetContentsColor (int contents) {
 }
 
 #ifdef GLQUAKE
-void V_AddWaterfog (int contents) {
+void V_Fog(int contents)
+{
 	extern cvar_t gl_waterfog_color_water;
 	extern cvar_t gl_waterfog_color_lava;
 	extern cvar_t gl_waterfog_color_slime;
+	GLfloat colors[4];
+	int fogmode = GL_LINEAR;
 
-	float colors[4];
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_FOG);
 
-	if (!gl_waterfog.value || COM_CheckParm ("-nomtex") || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
-		glDisable(GL_FOG);
+	if(COM_CheckParm("-nomtex") || !(gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value) )
+	{
 		return;
 	}
 
-	switch (contents) {
-		case CONTENTS_LAVA:
-			colors[0] = (float) gl_waterfog_color_lava.color[0] / 255.0;
-			colors[1] = (float) gl_waterfog_color_lava.color[1] / 255.0;
-			colors[2] = (float) gl_waterfog_color_lava.color[2] / 255.0;
-			colors[3] = (float) gl_waterfog_color_lava.color[3] / 255.0;
-			break;
-		case CONTENTS_SLIME:
-			colors[0] = (float) gl_waterfog_color_slime.color[0] / 255.0;
-			colors[1] = (float) gl_waterfog_color_slime.color[1] / 255.0;
-			colors[2] = (float) gl_waterfog_color_slime.color[2] / 255.0;
-			colors[3] = (float) gl_waterfog_color_slime.color[3] / 255.0;
-			break;
-		default:
-			colors[0] = (float) gl_waterfog_color_water.color[0] / 255.0;
-			colors[1] = (float) gl_waterfog_color_water.color[1] / 255.0;
-			colors[2] = (float) gl_waterfog_color_water.color[2] / 255.0;
-			colors[3] = (float) gl_waterfog_color_water.color[3] / 255.0;
-			break;
+	// normal fog
+	if(gl_fogenable.value && (contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) )
+	{
+		colors[0] = gl_fog_color.color[0] / 255.0;
+		colors[1] = gl_fog_color.color[1] / 255.0;
+		colors[2] = gl_fog_color.color[2] / 255.0;
+		colors[3] = 1.0;
+
+		fogmode = gl_fogenable.value > 1.0 ? (gl_fogenable.value > 2.0 ? GL_EXP2 : GL_EXP) : GL_LINEAR;
 	}
-	
+	// water fog
+	else if(gl_waterfog.value && ISUNDERWATER(contents))
+	{
+		switch (contents) {
+			case CONTENTS_LAVA:
+				colors[0] = gl_waterfog_color_lava.color[0] / 255.0;
+				colors[1] = gl_waterfog_color_lava.color[1] / 255.0;
+				colors[2] = gl_waterfog_color_lava.color[2] / 255.0;
+				break;
+			case CONTENTS_SLIME:
+				colors[0] = gl_waterfog_color_slime.color[0] / 255.0;
+				colors[1] = gl_waterfog_color_slime.color[1] / 255.0;
+				colors[2] = gl_waterfog_color_slime.color[2] / 255.0;
+				break;
+			case CONTENTS_WATER:
+				colors[0] = gl_waterfog_color_water.color[0] / 255.0;
+				colors[1] = gl_waterfog_color_water.color[1] / 255.0;
+				colors[2] = gl_waterfog_color_water.color[2] / 255.0;
+				break;
+		}
+		colors[3] = 1.0;
+
+		fogmode = gl_waterfog.value > 1.0 ? (gl_waterfog.value > 2.0 ? GL_EXP2 : GL_EXP) : GL_LINEAR;
+	}
+	else
+	{
+		return;
+	}
+
+	glFogi(GL_FOG_MODE, fogmode);
 	glFogfv(GL_FOG_COLOR, colors);
-	if (( (int) gl_waterfog.value ) == 2) {
-		glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
-		glFogi(GL_FOG_MODE, GL_EXP);
-	} else {
-		glFogi(GL_FOG_MODE, GL_LINEAR);
-		glFogf(GL_FOG_START, 150.0f);	
-		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound (0, gl_waterfog_density.value, 1));	
-	}
+	glFogf(GL_FOG_START, gl_fogstart.value);
+	glFogf(GL_FOG_END, gl_fogend.value);
+	glFogf(GL_FOG_DENSITY, 0.01 * bound(0, gl_fog_density.value, 1));
 	glEnable(GL_FOG);
 }
 #endif 

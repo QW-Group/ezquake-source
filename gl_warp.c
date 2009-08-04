@@ -271,8 +271,8 @@ void EmitWaterPolys (msurface_t *fa) {
 
 	GL_DisableMultitexture();
 
-	if (gl_fogenable.value)
-		glEnable(GL_FOG);
+	//if (gl_fogenable.value)
+	//	glEnable(GL_FOG);
 
 	if (r_fastturb.value)
 	{
@@ -350,8 +350,8 @@ void EmitWaterPolys (msurface_t *fa) {
 		}
 	}
 
-	if (gl_fogenable.value)
-		glDisable(GL_FOG);
+	//if (gl_fogenable.value)
+	//	glDisable(GL_FOG);
 }
 
 
@@ -441,8 +441,9 @@ void R_DrawSkyChain (void) {
 
 	GL_DisableMultitexture();
 
-	if (gl_fogenable.value && gl_fogsky.value)
-		glEnable(GL_FOG);
+	if (gl_fogenable.value && !gl_fogsky.value)
+		glDisable(GL_FOG);
+
 	if (r_fastsky.value || cl.worldmodel->bspversion == HL_BSPVERSION) {
 		glDisable (GL_TEXTURE_2D);
 
@@ -493,8 +494,8 @@ void R_DrawSkyChain (void) {
 		}
 	}
 
-	if (gl_fogenable.value && gl_fogsky.value)
-		glDisable(GL_FOG);
+	if (gl_fogenable.value && !gl_fogsky.value)
+		glEnable(GL_FOG);
 
 	skychain = NULL;
 	skychain_tail = &skychain;
@@ -1030,6 +1031,9 @@ void R_DrawSky (void)
 		ignore_z = false;
 	}
 
+	if(gl_fogenable.value && !gl_fogsky.value)
+		glDisable(GL_FOG);
+
 	// turn off Z tests & writes to avoid problems on large maps
 	glDisable (GL_DEPTH_TEST);
 
@@ -1044,12 +1048,14 @@ void R_DrawSky (void)
 	// draw the sky polys into the Z buffer
 	// don't need depth test yet
 	if (!ignore_z) {
-		if (gl_fogenable.value && gl_fogsky.value) {
-			glEnable(GL_FOG);
-			glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1); 
-			glBlendFunc(GL_ONE, GL_ZERO);		
+		if (gl_fogenable.value && gl_fogsky.value)
+		{
+			//glEnable(GL_FOG);
+			glColor4f(gl_fog_color.color[0]/255.0, gl_fog_color.color[1]/255.0, gl_fog_color.color[2]/255.0, 1.0);
+			glBlendFunc(GL_ZERO, GL_ONE);
 		}
-		else {
+		else
+		{
 			glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 			glBlendFunc(GL_ZERO, GL_ONE);
 		}
@@ -1060,14 +1066,20 @@ void R_DrawSky (void)
 			EmitFlatPoly (fa);
 
 		if (gl_fogenable.value && gl_fogsky.value)
-			glDisable (GL_FOG);
-		else {
+		{
+			//glDisable (GL_FOG);
+		}
+		else
+		{
 			glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		}
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable (GL_TEXTURE_2D);
 		glDisable(GL_BLEND);
 	}
+
+	if(gl_fogenable.value && !gl_fogsky.value)
+		glEnable(GL_FOG);
 
 	skychain = NULL;
 	skychain_tail = &skychain;
