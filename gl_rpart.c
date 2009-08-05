@@ -83,6 +83,10 @@ typedef enum {
 	p_bloodcloud,
 	p_chunkdir,
 	p_smallspark,
+	//[HyperNewbie] - particles!
+	p_slimeglow, //slime glow
+	p_slimebubble, //slime yellowish growing popping bubble
+	p_blacklavasmoke,
 	num_particletypes,
 } part_type_t;
 
@@ -205,11 +209,13 @@ static byte *ColorForParticle(part_type_t type) {
 	case p_fire:
 		color[0] = 255; color[1] = 142; color[2] = 62;
 		break;
+	case p_slimebubble:
 	case p_bubble:
 	case p_staticbubble:
 		color[0] = color[1] = color[2] = 192 + (rand() & 63);
 		break;
 	case p_teleflare:
+	case p_slimeglow:
 	case p_lavasplash:
 		color[0] = color[1] = color[2] = 128 + (rand() & 127);
 		break;
@@ -388,6 +394,11 @@ void QMB_InitParticles (void) {
 	ADD_PARTICLE_TYPE(p_bloodcloud, pd_billboard, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ptex_generic, 255, -3, 0, pm_normal, 0);
 	ADD_PARTICLE_TYPE(p_chunkdir, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, -32, 0, pm_bounce, 1.475);
 	ADD_PARTICLE_TYPE(p_smallspark, pd_beam, GL_SRC_ALPHA, GL_ONE, ptex_spark, 255, -64, 0, pm_bounce, 1.5); //grav was -64
+
+	//HyperNewbie particles
+	ADD_PARTICLE_TYPE(p_slimeglow, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_lava, 72, 0, 0, pm_nophysics, 0); //Glow
+	ADD_PARTICLE_TYPE(p_slimebubble, pd_billboard, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 0, 0, pm_static, 0);
+	ADD_PARTICLE_TYPE(p_blacklavasmoke, pd_billboard, GL_ZERO, GL_ONE_MINUS_SRC_COLOR, ptex_smoke, 140, 3, 0, pm_normal, 0);
 
 	//Allow overkill trails
 	if (amf_part_fulldetail.integer)
@@ -982,6 +993,10 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 			VectorCopy(org, p->org);
 			VectorCopy(dir, p->vel);	
 			break;
+		case p_slimeglow:
+			VectorCopy(org, p->org);
+			VectorCopy(dir, p->vel);	
+			break;
 		case p_gunblast:
 			p->size = 1;
 			VectorCopy(org, p->org);
@@ -1021,6 +1036,12 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 		case p_staticbubble:
 			VectorCopy(org, p->org);
 			VectorClear(p->vel);
+			break;
+		case p_slimebubble:
+			//HyperNewbie - Rising, popping bubbles
+			VectorCopy(org, p->org);
+			VectorClear(p->vel);
+			p->growth = 7.5;
 			break;
 		case p_teleflare:
 			VectorCopy(org, p->org);
@@ -1110,6 +1131,13 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 				p->org[j] = org[j] + (rand() & 30) - 15;
 			VectorClear(p->vel);
 			p->size = (rand() % (int)size)+10;
+			break;
+		//HyperNewbie Particles
+		case p_blacklavasmoke:
+			VectorCopy(org, p->org);
+			VectorCopy(dir, p->vel);
+			p->growth = 7.5;
+			p->rotspeed = (rand() & 63) + 16;
 			break;
 		case p_chunkdir:
 			VectorCopy(org, p->org);
@@ -2784,6 +2812,34 @@ void ParticleSlime (vec3_t org)
 
 	AddParticle(4, org, 1, lhrandom(1,32), lhrandom(1,3), color, dir);//zerodir);
 	AddParticle(11, org, 1, lhrandom(1,32), lhrandom(1,10), color, dir);//zerodir);
+}
+
+//HyperNewbie Particles
+void ParticleSmallerFirePool (vec3_t org) 
+{
+	col_t color={255,100,25, 78};
+
+	AddParticle(p_flame, org, 1,lhrandom(4,7), 0.8, color, zerodir);
+}
+
+void ParticleSlimeBubbles (vec3_t org) 
+{
+	col_t color={32,32,1, 250};
+	AddParticle(p_slimebubble, org, 1, lhrandom(4,6), lhrandom(1,5), color, zerodir);
+}
+
+void ParticleSlimeGlow (vec3_t org) 
+{
+	col_t color={0,128,128, 200};
+	vec3_t dir={0,0,5};
+	AddParticle(p_slimeglow, org, 1, lhrandom(32,64), lhrandom(7,8), color, dir);
+}
+
+void ParticleLavaSmokePool (vec3_t org) 
+{
+	col_t color={15,15,15, 1};
+	vec3_t dir={0,0,lhrandom(0,1)};
+	AddParticle(p_blacklavasmoke, org, 1, lhrandom(14,23), lhrandom(1,3), color, dir);
 }
 
 //TEI PARTICLES

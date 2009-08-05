@@ -580,6 +580,10 @@ void R_DrawWaterSurfaces (void) {
 	ESHADER(ParticleSlime);
 	ESHADER(ParticleSlimeHarcore);
 	ESHADER(ParticleBloodPool);
+	ESHADER(ParticleSlimeBubbles); //HyperNewbie particles init
+	ESHADER(ParticleSlimeGlow);
+	ESHADER(ParticleSmallerFirePool);
+	ESHADER(ParticleLavaSmokePool);
 
 	
 	if (!waterchain)
@@ -610,16 +614,29 @@ void R_DrawWaterSurfaces (void) {
 			case 'l':
 			case 'L':
 
+				if (tei_lavafire.value == 1)
+				{
+					EmitParticleEffect(s,ParticleFire);//Tei lavafire, normal 
+				}
+				else
 				if (tei_lavafire.value == 2)
 				{
 					EmitParticleEffect(s,ParticleFirePool);//Tei lavafire HARDCORE
 					EmitParticleEffect(s,ParticleBloodPool);//Tei redblood smoke
 				}
 				else
-				if (tei_lavafire.value == 1)
+				if(tei_lavafire.value == 3) //HyperNewbie's smokefire
 				{
-					EmitParticleEffect(s,ParticleFire);//Tei lavafire, normal 
-					
+					EmitParticleEffect(s,ParticleSmallerFirePool);
+					EmitParticleEffect(s,ParticleLavaSmokePool);
+				}
+				else
+				if(tei_lavafire.value == 4) //HyperNewbie's super smokefire
+				{
+					EmitParticleEffect(s,ParticleSmallerFirePool);
+					EmitParticleEffect(s,ParticleLavaSmokePool);
+					EmitParticleEffect(s,ParticleLavaSmokePool);
+					EmitParticleEffect(s,ParticleLavaSmokePool);
 				}
 
 				
@@ -636,6 +653,15 @@ void R_DrawWaterSurfaces (void) {
 				else
 				if (tei_slime.value == 2)
 					EmitParticleEffect(s,ParticleSlimeHarcore);
+				else
+				if (tei_slime.value == 3) {
+					if(!(rand() % 40)) EmitParticleEffect(s,ParticleSlimeGlow);
+					if(!(rand() % 40)) EmitParticleEffect(s,ParticleSlimeBubbles);
+				} else
+				if (tei_slime.value == 4) {
+					if(!(rand() % 10)) EmitParticleEffect(s,ParticleSlimeGlow);
+					if(!(rand() % 10)) EmitParticleEffect(s,ParticleSlimeBubbles);
+				}
 
 				break;
 			case 'w':
