@@ -525,7 +525,6 @@ void V_Fog(int contents)
 	GLfloat colors[4];
 	int fogmode = GL_LINEAR;
 
-	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_FOG);
 
 	if(COM_CheckParm("-nomtex") || !(gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value) )

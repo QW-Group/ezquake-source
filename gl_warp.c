@@ -271,9 +271,6 @@ void EmitWaterPolys (msurface_t *fa) {
 
 	GL_DisableMultitexture();
 
-	//if (gl_fogenable.value)
-	//	glEnable(GL_FOG);
-
 	if (r_fastturb.value)
 	{
 		glDisable (GL_TEXTURE_2D);
@@ -349,9 +346,6 @@ void EmitWaterPolys (msurface_t *fa) {
 			glEnd();
 		}
 	}
-
-	//if (gl_fogenable.value)
-	//	glDisable(GL_FOG);
 }
 
 

@@ -1594,7 +1594,7 @@ void CL_Fog_f(void)
 	}
 	else if (Cmd_Argc() == 4)
 	{
-		Cvar_SetValue(&gl_fogenable, 1);
+		//Cvar_SetValue(&gl_fogenable, 1);
 		snprintf(s, sizeof(s), "%d %d %d", Q_atoi(Cmd_Argv(1)), Q_atoi(Cmd_Argv(2)), Q_atoi(Cmd_Argv(3)));
 		Cvar_Set(&gl_fog_color, s);
 	}

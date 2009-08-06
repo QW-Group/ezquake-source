@@ -123,7 +123,7 @@ void R_DrawCoronas(void)
 	float fdist, scale, alpha;
 	corona_t *c;
 
-	if (gl_fogenable.value)
+	if (gl_fogenable.value || gl_waterfog.value)
 	{
 		glDisable(GL_FOG);
 	}
@@ -209,7 +209,7 @@ void R_DrawCoronas(void)
 	glShadeModel(GL_FLAT);
 	glColor3f (1, 1, 1);
 
-	if (gl_fogenable.value)
+	if (gl_fogenable.value || gl_waterfog.value)
 			glEnable(GL_FOG);
 
 }

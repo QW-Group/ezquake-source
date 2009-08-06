@@ -181,7 +181,7 @@ cvar_t  gl_fog_color			= {"gl_fog_color", "96 128 160", CVAR_COLOR};
 cvar_t  gl_fog_density			= {"gl_fog_density", "0.05"};
 cvar_t  gl_fogsky				= {"gl_fog_sky", "1"};
 
-cvar_t  gl_waterfog				= {"gl_fog_liquids", "1"};	// 0/1/2/3
+cvar_t  gl_waterfog				= {"gl_fog_liquids", "0"};	// 0/1/2/3
 cvar_t	gl_waterfog_color_water = {"gl_fog_color_water", "32 64 128", CVAR_COLOR};
 cvar_t	gl_waterfog_color_lava	= {"gl_fog_color_lava", "255 64 0", CVAR_COLOR};
 cvar_t	gl_waterfog_color_slime = {"gl_fog_color_slime", "128 255 0", CVAR_COLOR};

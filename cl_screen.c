@@ -1412,7 +1412,7 @@ void DrawCI (void) {
 	if (!bound(0, r_chaticons_alpha.value, 1) || ci_count < 1)
 		return;
 
-	if (gl_fogenable.value)
+	if (gl_fogenable.value || gl_waterfog.value)
 	{
 		glDisable(GL_FOG);
 	}
@@ -1468,7 +1468,7 @@ void DrawCI (void) {
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glShadeModel(GL_FLAT);
 
-	if (gl_fogenable.value)
+	if (gl_fogenable.value || gl_waterfog.value)
 	{
 		glEnable(GL_FOG);
 	}
