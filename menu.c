@@ -806,6 +806,7 @@ static void StartNewGame (void) {
 	extern cvar_t sv_progtype;
 
 	key_dest = key_game;
+	m_state = m_none;
 	Cvar_Set (&maxclients, "1");
 	Cvar_Set (&teamplay, "0");
 	Cvar_Set (&deathmatch, "0");
