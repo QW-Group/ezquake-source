@@ -814,6 +814,8 @@ void DrawTextureChains (model_t *model, int contents)
 	}
 
 	GL_DisableMultitexture();
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
 
 	//Tei: notice the paranoid testing :D
 	if (model && model->name && model->name[0]=='*')
@@ -1049,6 +1051,9 @@ void DrawTextureChains (model_t *model, int contents)
 			R_RenderFullbrights();
 	}
 
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
+
 	EmitCausticsPolys();
 	EmitDetailPolys();
 }
@@ -1068,6 +1073,11 @@ void R_DrawFlat (model_t *model) {
 	
 	GL_DisableMultitexture();
 
+	// START shaman BUG /fog not working with /r_drawflat {
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
+	// } END shaman BUG /fog not working with /r_drawflat
+	
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
 	
 	GL_SelectTexture(GL_TEXTURE0_ARB);
@@ -1135,6 +1145,9 @@ void R_DrawFlat (model_t *model) {
 			}
 		}		
 	}
+
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glPopAttrib();

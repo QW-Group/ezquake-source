@@ -127,6 +127,11 @@ cvar_t	r_skyname			= {"r_skyname", "", 0, OnChange_r_skyname};
 cvar_t	gl_detail			= {"gl_detail","0"};			
 
 cvar_t	gl_caustics			= {"gl_caustics", "0"}; // 1		
+cvar_t  gl_waterfog			= {"gl_turbfog", "0"}; // 2			
+cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};	
+cvar_t	gl_waterfog_color_water = {"gl_turbfog_color_water", "32 64 128", CVAR_COLOR};
+cvar_t	gl_waterfog_color_lava = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR};
+cvar_t	gl_waterfog_color_slime = {"gl_turbfog_color_slime", "128 255 0", CVAR_COLOR};
 
 cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64", CVAR_ARCHIVE};
@@ -174,17 +179,14 @@ cvar_t gl_powerupshells = {"gl_powerupshells", "1"};
 cvar_t gl_powerupshells_style = {"gl_powerupshells_style", "0"};
 cvar_t gl_powerupshells_size = {"gl_powerupshells_size", "5"};
 
-cvar_t  gl_fogenable			= {"gl_fog", "0"};	// 0/1/2/3
-cvar_t  gl_fogstart				= {"gl_fog_start", "120"};
-cvar_t  gl_fogend				= {"gl_fog_end", "2400"};
-cvar_t  gl_fog_color			= {"gl_fog_color", "96 128 160", CVAR_COLOR};
-cvar_t  gl_fog_density			= {"gl_fog_density", "0.05"};
-cvar_t  gl_fogsky				= {"gl_fog_sky", "1"};
+cvar_t  gl_fogenable		= {"gl_fog", "0"};
 
-cvar_t  gl_waterfog				= {"gl_fog_liquids", "0"};	// 0/1/2/3
-cvar_t	gl_waterfog_color_water = {"gl_fog_color_water", "32 64 128", CVAR_COLOR};
-cvar_t	gl_waterfog_color_lava	= {"gl_fog_color_lava", "255 64 0", CVAR_COLOR};
-cvar_t	gl_waterfog_color_slime = {"gl_fog_color_slime", "128 255 0", CVAR_COLOR};
+cvar_t  gl_fogstart			= {"gl_fogstart", "50.0"};
+cvar_t  gl_fogend			= {"gl_fogend", "800.0"};
+cvar_t  gl_fogred			= {"gl_fogred", "0.6"};
+cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
+cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
+cvar_t  gl_fogsky			= {"gl_fogsky", "1"}; 
 
 cvar_t	gl_simpleitems		= {"gl_simpleitems", "0"};
 cvar_t	gl_simpleitems_size		= {"gl_simpleitems_size", "16"};
@@ -1611,7 +1613,7 @@ void R_SetupFrame (void) {
 	}
 
 	V_SetContentsColor (r_viewleaf->contents);
-	V_Fog (r_viewleaf->contents);	 
+	V_AddWaterfog (r_viewleaf->contents);	 
 	V_CalcBlend ();
 
 	r_cache_thrash = false;
@@ -1846,23 +1848,19 @@ void R_Init (void) {
 	Cvar_Register (&gl_caustics);
 	if (!COM_CheckParm ("-nomtex")) {
 		Cvar_Register (&gl_waterfog);
-		Cvar_Register (&gl_fog_density);
+		Cvar_Register (&gl_waterfog_density);
 		Cvar_Register (&gl_waterfog_color_water);
 		Cvar_Register (&gl_waterfog_color_lava);
 		Cvar_Register (&gl_waterfog_color_slime);
-		Cvar_Register (&gl_fogenable); 
-		Cvar_Register (&gl_fogstart); 
-		Cvar_Register (&gl_fogend); 
-		Cvar_Register (&gl_fogsky);
-		Cvar_Register (&gl_fog_color);
-
-		// 1.9 > 2.0
-		Cmd_AddLegacyCommand("gl_fogsky", "gl_fog_sky");
-		Cmd_AddLegacyCommand("gl_turbfog", "gl_fog_liquids");
-		Cmd_AddLegacyCommand("gl_turbfogDensity", "gl_fog_density");
-		Cmd_AddLegacyCommand("gl_fogstart", "gl_fog_start");
-		Cmd_AddLegacyCommand("gl_fogend", "gl_fog_end");
 	}
+
+	Cvar_Register (&gl_fogenable); 
+	Cvar_Register (&gl_fogstart); 
+	Cvar_Register (&gl_fogend); 
+	Cvar_Register (&gl_fogsky);
+	Cvar_Register (&gl_fogred); 
+	Cvar_Register (&gl_fogblue);
+	Cvar_Register (&gl_foggreen);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_BLEND);
 	Cvar_Register (&gl_polyblend);
@@ -1974,6 +1972,8 @@ extern msurface_t	*alphachain;
 void R_RenderScene (void) {
 	extern void Skins_PreCache(void);
 
+	vec3_t		colors;
+
 	R_SetupFrame ();
 
 	R_SetFrustum ();
@@ -1994,6 +1994,22 @@ void R_RenderScene (void) {
 	R_DrawWaterSurfaces ();
 
 	GL_DisableMultitexture();
+
+	// START shaman BUG fog was out of control when fogstart>fogend {
+	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value)	// } END shaman BUG fog was out of control when fogstart>fogend
+	{
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+			colors[0] = gl_fogred.value;
+			colors[1] = gl_foggreen.value;
+			colors[2] = gl_fogblue.value; 
+		glFogfv(GL_FOG_COLOR, colors); 
+		glFogf(GL_FOG_START, gl_fogstart.value); 
+		glFogf(GL_FOG_END, gl_fogend.value); 
+		glEnable(GL_FOG);
+	}
+	else
+		glDisable(GL_FOG);
+
 }
 
 int gl_ztrickframe = 0;
@@ -2027,9 +2043,9 @@ void R_Clear (void) {
 	if (gl_clear.value)
 	{
 		if (gl_fogenable.value)
-			glClearColor(gl_fog_color.color[0] / 255.0, gl_fog_color.color[1] / 255.0, gl_fog_color.color[2] / 255.0, 0.5);
+			glClearColor(gl_fogred.value,gl_foggreen.value,gl_fogblue.value,0.5);//Tei custom clear color
 		else
-			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
+			glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
 	}
 
 	// This variables toggles the use of a trick to prevent the clearning of the 
