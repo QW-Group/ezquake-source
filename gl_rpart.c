@@ -377,7 +377,7 @@ void QMB_InitParticles (void) {
 	ADD_PARTICLE_TYPE(p_alphatrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 100, 0, 0, pm_static, 0);
 	ADD_PARTICLE_TYPE(p_railtrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, 0, 0, pm_die, 0);
 
-	ADD_PARTICLE_TYPE(p_vxblood, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_blood3, 255, -38, 0, pm_normal, 0);
+	ADD_PARTICLE_TYPE(p_vxblood, pd_billboard, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ptex_blood3, 255, -38, 0, pm_normal, 0); //HyperNewbie - Blood does NOT glow like fairy light
 	ADD_PARTICLE_TYPE(p_streak, pd_hide, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -64, 0, pm_streak, 1.5); //grav was -64
 	ADD_PARTICLE_TYPE(p_streakwave, pd_hide, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, 0, 0, pm_streakwave, 0);
 	ADD_PARTICLE_TYPE(p_lavatrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, 3, 0, pm_normal, 0);
