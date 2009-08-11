@@ -3227,7 +3227,7 @@ void SCR_DrawElements(void)
 	}
 	else 
 	{
-		if( !(!scr_menudrawhud.integer && (m_state != m_none)) )
+		if( !(!scr_menudrawhud.integer && (m_state != m_none)) || (!scr_menudrawhud.integer && (m_state == m_proxy)) )
 		{
 			if (cl.intermission == 1)
 			{
