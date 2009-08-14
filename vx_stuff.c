@@ -37,8 +37,9 @@ cvar_t		amf_stat_loss = {"r_damagestats", "0", CVAR_ARCHIVE};
 cvar_t		amf_lightning = {"gl_lightning", "0", CVAR_ARCHIVE}; // 1
 
 cvar_t		amf_lightning_size = {"gl_lightning_size", "3", CVAR_ARCHIVE};
-
 cvar_t		amf_lightning_sparks = {"gl_lightning_sparks", "0", CVAR_ARCHIVE}; // 0.4
+cvar_t		amf_lightning_sparks_size = {"gl_lightning_sparks_size", "300", CVAR_ARCHIVE | CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 300, 300, 1};
+cvar_t		amf_lightning_color = {"gl_lightning_color", "120 140 255", CVAR_ARCHIVE | CVAR_COLOR};
 cvar_t		amf_lighting_vertex = {"gl_lighting_vertex", "0", CVAR_ARCHIVE}; // 1
 cvar_t		amf_lighting_colour = {"gl_lighting_colour", "0", CVAR_ARCHIVE}; // 1
 
@@ -465,8 +466,10 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_detpacklights);
 	Cvar_Register (&amf_buildingsparks);
 	Cvar_Register (&amf_lightning);
+	Cvar_Register (&amf_lightning_color);
 	Cvar_Register (&amf_lightning_size);
 	Cvar_Register (&amf_lightning_sparks);
+	Cvar_Register (&amf_lightning_sparks_size);
 	Cvar_Register (&amf_motiontrails);
 	Cvar_Register (&amf_motiontrails_wtf);
 	Cvar_Register (&amf_inferno_trail);

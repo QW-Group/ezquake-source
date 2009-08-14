@@ -876,14 +876,14 @@ void CL_UpdateBeams(void)
 			VectorAdd (org, dist, org);
 #ifdef GLQUAKE
 			// LIGHTNING SPARKS
-			if (amf_lightning_sparks.value && (cls.demoplayback || cl.spectator) && !sparks && !ISPAUSED && !gl_no24bit.integer)
+			if (amf_lightning_sparks.value && !Rulesets_RestrictParticles() && !sparks && !ISPAUSED && !gl_no24bit.integer)
 			{
 				trace_t	trace;
 				trace = PM_TraceLine (org, b->end);
 				if (trace.fraction < 1)
 				{
-					byte col[3] = {60,100,240};
-					SparkGen (trace.endpos, col, (int)(3*amf_lightning_sparks.value), 300, 0.25);
+					//byte col[3] = {60,100,240};
+					SparkGen (trace.endpos, amf_lightning_color.color, (int)(3*amf_lightning_sparks.value), amf_lightning_sparks_size.value, 0.25);
 					sparks = true;
 				}
 			}
