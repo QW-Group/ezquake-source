@@ -1074,7 +1074,33 @@ qbool Info_SetStar (ctxinfo_t *ctx, const char *name, const char *value)
 	}
 
 	// copy value
-	a->value = Q_strdup (value);
+#if 0
+	{
+		// unfortunatelly evil users use non printable/control chars, so that does not work well
+		a->value = Q_strdup (value);
+	}
+#else
+	{
+		// skip some control chars, doh
+		char v_buf[MAX_KEY_STRING] = {0}, *v = v_buf;
+		int i;
+
+		for (i = 0; value[i]; i++) // len of 'value' should be less than MAX_KEY_STRING according to above checks
+		{
+			if ((unsigned char)value[i] > 13)
+				*v++ = value[i];
+		}
+		*v = 0;
+
+		a->value = Q_strdup (v_buf);
+	}
+#endif
+
+	// hrm, empty value, remove it then
+	if (!a->value[0])
+	{
+		return Info_Remove(ctx, name);
+	}
 
 	return true;
 }
