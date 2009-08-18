@@ -1284,9 +1284,7 @@ void Key_Console (int key, int unichar)
 
 //============================================================================
 
-#ifdef WITH_IRC
 chat_type chat_team;
-#endif
 
 qbool chat_observers;	// added by jogi
 qbool chat_server;		// added by jogi
