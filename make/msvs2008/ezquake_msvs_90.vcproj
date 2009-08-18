@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ezquake"
 	ProjectGUID="{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
 	RootNamespace="ezquake"
@@ -97,7 +97,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
 				ShowProgress="0"
 				OutputFile="..\ezquake-gl-debug.exe"
@@ -115,7 +114,7 @@
 				GenerateMapFile="true"
 				MapFileName="$(TargetDir)$(TargetName).map"
 				SubSystem="2"
-				OptimizeForWindows98="1"
+				OptimizeForWindows98="0"
 				SetChecksum="false"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -221,7 +220,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
 				OutputFile="..\ezquake.exe"
 				Version=""
@@ -238,7 +236,7 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"
+				OptimizeForWindows98="0"
 				LinkTimeCodeGeneration="1"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
@@ -346,7 +344,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386 "
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
 				OutputFile="..\ezquake-gl.exe"
 				Version=""
@@ -363,7 +360,7 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"
+				OptimizeForWindows98="0"
 				LinkTimeCodeGeneration="1"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
@@ -469,7 +466,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
 				OutputFile="..\ezquake-debug.exe"
 				Version=""
@@ -484,7 +480,7 @@
 				GenerateMapFile="true"
 				MapFileName="$(TargetDir)$(TargetName).map"
 				SubSystem="2"
-				OptimizeForWindows98="1"
+				OptimizeForWindows98="0"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				TargetMachine="1"
@@ -675,7 +671,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							BrowseInformationFile="Debug-gl\"
+							BrowseInformationFile="$(IntDir)\"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
