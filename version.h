@@ -25,7 +25,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	QW_VERSION			"2.40"
 
 #if defined(_WIN32)
-#define QW_PLATFORM			"Win32"
+
+#if defined(_WIN64)
+	#define QW_PLATFORM			"Win64"
+#else
+	#define QW_PLATFORM			"Win32"
+#endif
 
 #elif defined(__FreeBSD__)
 #define QW_PLATFORM			"FreeBSD"

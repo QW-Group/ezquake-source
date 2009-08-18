@@ -2,7 +2,7 @@
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86_64/libjpeg.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86_64/libpcre.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86_64/libpng.lib
-"../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86_64/libtcl.lib
+@rem "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86_64/libtcl.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86_64/libz.lib
 @rem "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86_64/mgllt.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86_64/minizip.lib

@@ -6,19 +6,31 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
 		GLDebug|Win32 = GLDebug|Win32
+		GLDebug|x64 = GLDebug|x64
 		GLRelease|Win32 = GLRelease|Win32
+		GLRelease|x64 = GLRelease|x64
 		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|Win32.ActiveCfg = Debug|Win32
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|Win32.Build.0 = Debug|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|x64.ActiveCfg = Debug|x64
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|x64.Build.0 = Debug|x64
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLDebug|Win32.ActiveCfg = GLDebug|Win32
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLDebug|Win32.Build.0 = GLDebug|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLDebug|x64.ActiveCfg = GLDebug|x64
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLDebug|x64.Build.0 = GLDebug|x64
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLRelease|Win32.ActiveCfg = GLRelease|Win32
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLRelease|Win32.Build.0 = GLRelease|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLRelease|x64.ActiveCfg = GLRelease|x64
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLRelease|x64.Build.0 = GLRelease|x64
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Release|Win32.ActiveCfg = Release|Win32
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Release|Win32.Build.0 = Release|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Release|x64.ActiveCfg = Release|x64
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
