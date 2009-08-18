@@ -681,8 +681,8 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							OmitFramePointers="true"
-							BrowseInformation="1"
-							BrowseInformationFile="Release\"
+							BrowseInformation="0"
+							BrowseInformationFile="$(IntDir)\"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -691,7 +691,7 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							OmitFramePointers="true"
-							BrowseInformationFile="Release-gl\"
+							BrowseInformationFile="$(IntDir)\"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -701,7 +701,7 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							ObjectFile="Debug\"
-							BrowseInformationFile="Debug\"
+							BrowseInformationFile="$(IntDir)\"
 						/>
 					</FileConfiguration>
 				</File>
