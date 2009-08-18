@@ -8,6 +8,7 @@
 	johnnycz
 **/
 
+#ifdef WITH_IRC
 /// initializes the IRC module, creates libircclient session 
 void IRC_Init(void);
 
@@ -22,3 +23,4 @@ void IRC_NextChan(void);
 
 /// select previous channel from the channels list as the current channel
 void IRC_PrevChan(void);
+#endif

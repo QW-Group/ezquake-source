@@ -1904,7 +1904,9 @@ void CL_Init (void)
 	Stats_Init();
 	MP3_Init();
 	SB_RootInit();
+#ifdef WITH_IRC	
 	IRC_Init();
+#endif
 
 	QTV_Init();
 
@@ -2467,8 +2469,9 @@ void CL_Frame (double time)
 	Sys_ReadIPC();
 
 	CL_QTVPoll();
-
+#ifdef WITH_IRC
 	IRC_Update();
+#endif
 
 #if defined(_WIN32) || defined (__linux__)
 	updateMumble();

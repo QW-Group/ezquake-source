@@ -1,3 +1,5 @@
+#ifdef WITH_IRC
+
 #include "quakedef.h"
 #include "libircclient.h"
 #include "libirc_rfcnumeric.h"
@@ -492,3 +494,4 @@ void IRC_Deinit(void)
 {
 	irc_destroy_session(irc_singlesession);
 }
+#endif

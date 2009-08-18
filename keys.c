@@ -1284,7 +1284,9 @@ void Key_Console (int key, int unichar)
 
 //============================================================================
 
+#ifdef WITH_IRC
 chat_type chat_team;
+#endif
 
 qbool chat_observers;	// added by jogi
 qbool chat_server;		// added by jogi
@@ -1310,6 +1312,7 @@ void Key_Message (int key, wchar unichar) {
 							Com_Printf("&cf00Error&r: &c090messagemodeqtvtogame&r requires you to be connected to a &c666QTV&r server\n");
 						}
 						break;
+#ifdef WITH_IRC
 					case chat_irc:
 						if (chat_buffer[0] == '/') {
 							irccommand = true;
@@ -1319,6 +1322,7 @@ void Key_Message (int key, wchar unichar) {
 							Cbuf_AddText("irc say \"");
 						}
 						break;
+#endif
 
 					default:
 					case chat_mm1: Cbuf_AddText("say \""); break;
@@ -1384,15 +1388,19 @@ void Key_Message (int key, wchar unichar) {
 			return;
 
 		case K_PGDN:
+#ifdef WITH_IRC
 			if (chat_team == chat_irc) {
 				IRC_NextChan();
 			}
+#endif
 			break;
 
 		case K_PGUP:
+#ifdef WITH_IRC
 			if (chat_team == chat_irc) {
 				IRC_PrevChan();
 			}
+#endif
 			break;
 	}
 

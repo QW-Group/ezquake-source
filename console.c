@@ -305,9 +305,11 @@ void Con_MessageMode2_f (void) {
 	}
 }
 
+#ifdef WITH_IRC
 void Con_MessageModeIRC_f (void) {
 	Con_MessageMode_Common(chat_irc);
 }
+#endif
 
 void Con_MessageModeQTVtoGAME_f (void) {
 	Con_MessageMode_Common(chat_qtvtogame);
@@ -494,7 +496,9 @@ void Con_Init (void) {
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
 	Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
+#ifdef WITH_IRC
 	Cmd_AddCommand ("messagemodeirc", Con_MessageModeIRC_f);
+#endif
 	Cmd_AddCommand ("messagemodeqtvtogame", Con_MessageModeQTVtoGAME_f);
 	Cmd_AddCommand ("clear", Con_Clear_f);
     Cmd_AddCommand ("date", Date_f);
@@ -775,6 +779,7 @@ void Con_DrawNotify (void) {
 			Draw_String (8, v + bound(0, con_shift.value, 8), "say:");
 			skip = 5;
 		}
+#ifdef WITH_IRC
 		else if (chat_team == chat_irc) {
 			char dest[256];
 			
@@ -784,6 +789,7 @@ void Con_DrawNotify (void) {
 
 			Draw_String (8, v + bound(0, con_shift.value, 8), dest);
 		}
+#endif
 		else if (chat_team == chat_qtvtogame) {
 			Draw_String (8, v + bound(0, con_shift.value, 8), "say_game:");
 			skip = 11;
