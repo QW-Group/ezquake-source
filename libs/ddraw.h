@@ -208,7 +208,10 @@ typedef struct _DDCOLORCONTROL          FAR *LPDDCOLORCONTROL;
 #define DDCREATE_EMULATIONONLY          0x00000002l
 
 #if defined(WINNT) || !defined(WIN32)
-typedef long HRESULT;
+#ifndef _HRESULT_DEFINED
+#define _HRESULT_DEFINED
+typedef __success(return >= 0) long HRESULT;
+#endif // !_HRESULT_DEFINED
 #endif
 
 //#ifndef WINNT
@@ -2963,6 +2966,31 @@ typedef struct _DDCOLORCONTROL
  */
 #define DDSCAPS3_DMAP                           0x00001000L
 
+/* D3D9Ex only -- */
+#if !defined(D3D_DISABLE_9EX)
+
+/*
+ * This indicates that this surface is to be shared by processes
+ */
+#define DDSCAPS3_CREATESHAREDRESOURCE           0x00002000L
+
+/*
+ * This indicates that this surface need to be initialized before being
+ * shared, this bit implies that this surface is read only after initialization
+ * absence of this bit implies that this surface allows both read and write
+ */
+#define DDSCAPS3_READONLYRESOURCE               0x00004000L
+
+/*
+ * This indicates that this surface is to share an existing video memory with 
+ * another surface created with DDSCAPS3_CREATESHAREDRESOURCE, This bit is never
+ * used with DDSCAPS3_CREATESHAREDRESOURCE
+ */
+#define DDSCAPS3_OPENSHAREDRESOURCE             0x00008000L
+
+#endif // !D3D_DISABLE_9EX
+/* -- D3D9Ex only */
+
 
  /****************************************************************************
  *
@@ -3331,6 +3359,17 @@ typedef struct _DDCOLORCONTROL
  * Driver supports auto-generation of mipmaps.
  */
 #define DDCAPS2_CANAUTOGENMIPMAP              0x40000000L
+
+/* D3D9Ex only -- */
+#if !defined(D3D_DISABLE_9EX)
+
+/*
+ * Driver supports sharing of cross process resouces
+ */
+#define DDCAPS2_CANSHARERESOURCE              0x80000000L
+
+#endif // !D3D_DISABLE_9EX
+/* -- D3D9Ex only */
 
 
 /****************************************************************************
@@ -4715,6 +4754,31 @@ typedef struct _DDCOLORCONTROL
  */
 #define DDOVER_DEGRADEARGBSCALING               0x04000000l
 
+
+#ifdef  COMBOX_SANDBOX
+#define DX_LONGHORN_PRESERVEDC
+#endif
+
+#ifdef DX_LONGHORN_PRESERVEDC
+
+/****************************************************************************
+ *
+ * DIRECTDRAWSURFACE SETSURFACEDESC FLAGS
+ *
+ ****************************************************************************/
+
+/*
+ * The default.  The GDI DC will be tore down.
+ */
+#define DDSETSURFACEDESC_RECREATEDC             0x00000000L     // default
+
+/*
+ * The default.  The GDI DC will be kept.
+ */
+#define DDSETSURFACEDESC_PRESERVEDC             0x00000001L
+
+
+#endif // DX_LONGHORN_PRESERVEDC
 
 /****************************************************************************
  *

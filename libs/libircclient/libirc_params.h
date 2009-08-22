@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2004 Georgy Yunaev tim@krasnogorsk.ru
+ * Copyright (C) 2004-2009 Georgy Yunaev gyunaev@ulduzsoft.com
  *
  * This library is free software; you can redistribute it and/or modify it 
  * under the terms of the GNU Lesser General Public License as published by 
@@ -10,8 +10,6 @@
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public 
  * License for more details.
- *
- * $Id: libirc_params.h 67 2006-08-29 19:02:57Z gyunaev $
  */
 
 #ifndef INCLUDE_IRC_PARAMS_H

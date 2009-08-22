@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2004 Georgy Yunaev tim@krasnogorsk.ru
+ * Copyright (C) 2004-2009 Georgy Yunaev gyunaev@ulduzsoft.com
  *
  * This library is free software; you can redistribute it and/or modify it 
  * under the terms of the GNU Lesser General Public License as published by 
@@ -10,8 +10,6 @@
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public 
  * License for more details.
- *
- * $Id: libirc_errors.h 28 2004-10-04 10:34:58Z gyunaev $
  */
 
 /*! 
@@ -193,8 +191,18 @@
 #define LIBIRC_ERR_TERMINATED	15
 
 
+/*! \brief IPv6 not supported
+ * 
+ * The function which requires IPv6 support was called, but the IPv6 support was not compiled
+ * into the application
+ *
+ * \ingroup errorcodes
+ */
+#define LIBIRC_ERR_NOIPV6		16
+
+
 /*! brief Internal max error value count
  */
-#define LIBIRC_ERR_MAX			16
+#define LIBIRC_ERR_MAX			17
 
 #endif /* INCLUDE_IRC_ERRORS_H */

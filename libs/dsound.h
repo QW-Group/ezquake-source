@@ -1969,7 +1969,6 @@ DECLARE_INTERFACE_(IDirectSoundFullDuplex, IUnknown)
 
 // No sound driver is available for use
 #define DSERR_NODRIVER                  MAKE_DSHRESULT(120)
-
 // This object is already initialized
 #define DSERR_ALREADYINITIALIZED        MAKE_DSHRESULT(130)
 
@@ -2038,8 +2037,14 @@ DECLARE_INTERFACE_(IDirectSoundFullDuplex, IUnknown)
 #define DSSPEAKER_QUAD              0x00000003
 #define DSSPEAKER_STEREO            0x00000004
 #define DSSPEAKER_SURROUND          0x00000005
-#define DSSPEAKER_5POINT1           0x00000006
-#define DSSPEAKER_7POINT1           0x00000007
+#define DSSPEAKER_5POINT1           0x00000006  // obsolete 5.1 setting
+#define DSSPEAKER_7POINT1           0x00000007  // obsolete 7.1 setting
+#define DSSPEAKER_7POINT1_SURROUND  0x00000008  // correct 7.1 Home Theater setting
+#define DSSPEAKER_7POINT1_WIDE      DSSPEAKER_7POINT1
+#if (DIRECTSOUND_VERSION >= 0x1000)
+    #define DSSPEAKER_5POINT1_SURROUND  0x00000009  // correct 5.1 setting
+    #define DSSPEAKER_5POINT1_BACK      DSSPEAKER_5POINT1
+#endif
 
 #define DSSPEAKER_GEOMETRY_MIN      0x00000005  //   5 degrees
 #define DSSPEAKER_GEOMETRY_NARROW   0x0000000A  //  10 degrees
@@ -2065,6 +2070,11 @@ DECLARE_INTERFACE_(IDirectSoundFullDuplex, IUnknown)
 #define DSBCAPS_GETCURRENTPOSITION2 0x00010000
 #define DSBCAPS_MUTE3DATMAXDISTANCE 0x00020000
 #define DSBCAPS_LOCDEFER            0x00040000
+#if (DIRECTSOUND_VERSION >= 0x1000)
+    // Force GetCurrentPosition() to return a buffer's true play position;
+    // unmodified by aids to enhance backward compatibility.
+    #define DSBCAPS_TRUEPLAYPOSITION    0x00080000
+#endif
 
 #define DSBPLAY_LOOPING             0x00000001
 #define DSBPLAY_LOCHARDWARE         0x00000002
@@ -2101,6 +2111,8 @@ DECLARE_INTERFACE_(IDirectSoundFullDuplex, IUnknown)
 #define DSBSIZE_MIN                 4
 #define DSBSIZE_MAX                 0x0FFFFFFF
 #define DSBSIZE_FX_MIN              150  // NOTE: Milliseconds, not bytes
+
+#define DSBNOTIFICATIONS_MAX        100000UL
 
 #define DS3DMODE_NORMAL             0x00000000
 #define DS3DMODE_HEADRELATIVE       0x00000001
@@ -2354,5 +2366,4 @@ DEFINE_GUID(GUID_DSCFX_SYSTEM_NS, 0x5ab0882e, 0x7274, 0x4516, 0x87, 0x7d, 0x4e, 
 #ifdef __cplusplus
 };
 #endif // __cplusplus
-
 

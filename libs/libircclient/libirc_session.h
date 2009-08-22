@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2004 Georgy Yunaev tim@krasnogorsk.ru
+ * Copyright (C) 2004-2009 Georgy Yunaev gyunaev@ulduzsoft.com
  *
  * This library is free software; you can redistribute it and/or modify it 
  * under the terms of the GNU Lesser General Public License as published by 
@@ -10,8 +10,6 @@
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public 
  * License for more details.
- *
- * $Id: libirc_session.h 18 2004-09-14 19:50:10Z gyunaev $
  */
 
 
@@ -54,7 +52,11 @@ struct irc_session_s
 	char		  * username;
 	char		  *	nick;
 
+#if defined( ENABLE_IPV6 )
+	struct in6_addr	local_addr;
+#else
 	struct in_addr	local_addr;
+#endif
 	irc_dcc_t		dcc_last_id;
 	irc_dcc_session_t * dcc_sessions;
 	port_mutex_t	mutex_dcc;
