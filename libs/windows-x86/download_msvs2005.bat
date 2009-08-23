@@ -3,7 +3,7 @@ REM this script therefore downloads older versions which were compiled with msvs
 
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libexpat.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/ezquake/trunk/libs/windows-x86/libjpeg.lib?revision=1363 -O libjpeg.lib
-"../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libpcre.lib
+"../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/libpcre.lib?revision=3464 -O libpcre.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/ezquake/trunk/libs/windows-x86/libpng.lib?revision=3585 -O libpng.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/ezquake/trunk/libs/windows-x86/libtcl.lib?revision=3464 -O libtcl.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/ezquake/trunk/libs/windows-x86/libz.lib?revision=1784 -O libz.lib
