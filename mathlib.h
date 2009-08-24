@@ -22,10 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __MATHLIB_H__
 #define __MATHLIB_H__
 
-#ifdef WITH_ASMLIB
-#include "asmlib.h"
-#endif
-
 typedef float vec_t;
 typedef vec_t vec3_t[3];
 typedef vec_t vec5_t[5];
@@ -201,10 +197,6 @@ extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 #define clamp(a,b,c) (a = min(max(a, b), c))
 #define sgn(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))
 
-#ifdef WITH_ASMLIB
-#define Q_rint(x) (Round(x))
-#define INT(x) (Truncate(x))
-#else
 #define Q_rint(x) ((x) > 0 ? (int) ((x) + 0.5) : (int) ((x) - 0.5))
 #define INT(x) (int(x))
 
@@ -212,7 +204,5 @@ extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 #define MinD(a,b) min(a,b)
 #define MaxI(a,b) max(a,b)
 #define MaxD(a,b) max(a,b)
-
-#endif
 
 #endif	/* __MATHLIB_H__ */

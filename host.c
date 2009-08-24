@@ -57,11 +57,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "config_manager.h"
 
-
-#ifdef WITH_ASMLIB
-#include "cpu.h"
-#endif
-
 #if !defined(CLIENTONLY) && !defined(SERVERONLY)
 qbool	dedicated = false;
 #endif
@@ -140,7 +135,6 @@ void SYSINFO_Init(void)
 		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_DWORD)
 			SYSINFO_MHz = *((DWORD *)data);
 
-		#ifndef WITH_ASMLIB
 		datasize = 1024;
 		ret = RegQueryValueEx(
 		          hKey,
@@ -152,7 +146,6 @@ void SYSINFO_Init(void)
 
 		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_SZ)
 			SYSINFO_processor_description = Q_strdup((char *) data);
-		#endif // !WITH_ASMLIB
 
 		RegCloseKey(hKey);
 	}
@@ -172,20 +165,11 @@ void SYSINFO_Init(void)
 	
 	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
 
-	#ifdef WITH_ASMLIB
-	{
-		char temp[1024];
-		ProcessorName (temp);
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, temp, sizeof(f_system_string));
-	}
-	#else 
 	if (SYSINFO_processor_description) 
 	{
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
-	#endif // WITH_ASMLIB
 
 	if (SYSINFO_MHz) 
 	{
@@ -574,9 +558,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 #endif // WITH_FTE_VFS
 	cvar_t *v;
 
-#ifdef WITH_ASMLIB
-	CPU_Init ();
-#endif
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
@@ -673,9 +654,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cvar_CleanUpTempVars ();
 
 	SYSINFO_Init();
-#ifdef WITH_ASMLIB
-	Cmd_AddCommand ("cpuinfo", CPU_Info);
-#endif
 
 #ifdef WITH_TCL
 	if (!TCL_InterpLoaded())

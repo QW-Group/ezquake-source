@@ -1,5 +1,4 @@
 #!/bin/sh
-wget 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/linux-x86/asmlibe.a'
 wget 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/linux-x86/libexpat.a'
 wget 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/linux-x86/libircclient.a'
 wget 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/linux-x86/libjpeg.a'

@@ -9,7 +9,6 @@ REM this script therefore downloads older versions which were compiled with msvs
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/ezquake/trunk/libs/windows-x86/libz.lib?revision=1784 -O libz.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/mgllt.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/minizip.lib
-"../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/asmlibm.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/dinput.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/dsound.lib
 "../../make/wget.exe" http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/windows-x86/dxguid.lib
