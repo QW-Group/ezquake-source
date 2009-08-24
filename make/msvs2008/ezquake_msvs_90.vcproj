@@ -3221,42 +3221,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\cpu.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|x64"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
 					RelativePath="..\..\fchecks.c"
 					>
 				</File>
@@ -3829,10 +3793,6 @@
 				>
 				<File
 					RelativePath="..\..\auth.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\cpu.h"
 					>
 				</File>
 				<File
