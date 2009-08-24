@@ -2900,6 +2900,7 @@
 					JSS_CAM,
 					QUAKE_WORLD,
 				);
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../libs/**";
 				INFOPLIST_FILE = QuakeWorld/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
@@ -2935,6 +2936,7 @@
 					WITH_ZLIB,
 					USE_PR2,
 				);
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../libs/**";
 				INFOPLIST_FILE = QuakeWorld/Info.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
