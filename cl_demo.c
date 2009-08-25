@@ -92,6 +92,7 @@ int CL_Demo_Compress(char*);
 static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
+cvar_t cl_startupdemo = {"cl_startupdemo", ""};
 
 char Demos_Get_Trackname(void);
 static void CL_DemoPlaybackInit(void);
@@ -4579,6 +4580,7 @@ void CL_Demo_Init(void)
 #endif
 	Cvar_Register(&demo_dir);
 	Cvar_Register(&demo_benchmarkdumps);
+	Cvar_Register(&cl_startupdemo);
 
 	Cvar_ResetCurrentGroup();
 }

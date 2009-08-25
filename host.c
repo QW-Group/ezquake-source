@@ -540,13 +540,22 @@ extern void SB_SourceMark(void);
 void Startup_Place(void)
 {
     extern cvar_t cl_onload;
-    if (!strcmp(cl_onload.string, "menu"))
-	    Cbuf_AddText("togglemenu\n");
-    else if (!strcmp(cl_onload.string, "browser"))
-	    Cbuf_AddText("menu_slist\n");
-	else if (!strcmp(cl_onload.string, "console"))
-		; // donothing
-	else Cbuf_AddText(va("%s\n", cl_onload.string));
+	extern cvar_t cl_startupdemo;
+
+	if (cl_startupdemo.string[0]) {
+		Cbuf_AddText(va("playdemo %s\n", cl_startupdemo.string));
+		key_dest = key_startupdemo;
+	}
+	else
+	{
+		if (!strcmp(cl_onload.string, "menu"))
+			Cbuf_AddText("togglemenu\n");
+		else if (!strcmp(cl_onload.string, "browser"))
+			Cbuf_AddText("menu_slist\n");
+		else if (!strcmp(cl_onload.string, "console"))
+			; // donothing
+		else Cbuf_AddText(va("%s\n", cl_onload.string));
+	}
 }
 
 void Host_Init (int argc, char **argv, int default_memsize)

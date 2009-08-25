@@ -2102,6 +2102,9 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			case key_demo_controls:
 				DemoControls_KeyEvent(key, unichar, down);
 				break;
+			case key_startupdemo:
+				Cbuf_AddText("disconnect;togglemenu\n");
+				break;
 			default:
 				assert(!"Bad key_dest");
 		}
@@ -2235,6 +2238,10 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 
 		case key_demo_controls:
 			DemoControls_KeyEvent(key, unichar, down);
+			break;
+
+		case key_startupdemo:
+			Cbuf_AddText("disconnect;togglemenu\n");
 			break;
 
 		default:
