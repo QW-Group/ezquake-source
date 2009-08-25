@@ -145,369 +145,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
-			ConfigurationType="1"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			DeleteExtensionsOnClean="*.asm;*.bsc;*.cod;*.dep;*.idb;*.ilk;*.obj;*.pgc;*.pgd;*.res;*.rsp;*.sbr;*.tlb;*.tlh;*.tli;*.tmp;*.manifest*;$(TargetPath)"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="qasm"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName="Release\ezquake.tlb"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;WITH_IRC"
-				StringPooling="true"
-				MinimalRebuild="false"
-				ExceptionHandling="0"
-				RuntimeLibrary="0"
-				BufferSecurityCheck="true"
-				EnableFunctionLevelLinking="false"
-				DefaultCharIsUnsigned="true"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
-				AssemblerListingLocation="$(IntDir)\"
-				ObjectFile="$(IntDir)\"
-				ProgramDataBaseFileName="Release\"
-				XMLDocumentationFileName=""
-				BrowseInformation="0"
-				BrowseInformationFile="$(IntDir)\"
-				WarningLevel="3"
-				WarnAsError="false"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="3"
-				CompileAs="1"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="3081"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
-				OutputFile="..\ezquake.exe"
-				Version=""
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
-				GenerateManifest="true"
-				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
-				ModuleDefinitionFile=""
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
-				GenerateMapFile="true"
-				MapFileName="$(TargetDir)$(TargetName).map"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				OptimizeForWindows98="0"
-				LinkTimeCodeGeneration="1"
-				SetChecksum="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="GLRelease|Win32"
-			OutputDirectory="Release-gl"
-			IntermediateDirectory="Release-gl"
-			ConfigurationType="1"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			DeleteExtensionsOnClean="*.asm;*.bsc;*.cod;*.dep;*.idb;*.ilk;*.obj;*.pgc;*.pgd;*.res;*.rsp;*.sbr;*.tlb;*.tlh;*.tli;*.tmp;*.manifest*;$(TargetPath)"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="qasm"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName="Release-gl\ezquake.tlb"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;GLQUAKE;id386;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;USE_PR2;WITH_IRC"
-				StringPooling="true"
-				MinimalRebuild="false"
-				ExceptionHandling="0"
-				RuntimeLibrary="0"
-				BufferSecurityCheck="true"
-				EnableFunctionLevelLinking="false"
-				DefaultCharIsUnsigned="true"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
-				AssemblerListingLocation="$(IntDir)\"
-				ObjectFile="$(IntDir)\"
-				ProgramDataBaseFileName="Release-gl\"
-				XMLDocumentationFileName=""
-				BrowseInformation="0"
-				BrowseInformationFile="$(IntDir)\"
-				WarningLevel="3"
-				WarnAsError="false"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="3"
-				CompileAs="1"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="3081"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
-				OutputFile="..\ezquake-gl.exe"
-				Version=""
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
-				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
-				ModuleDefinitionFile=""
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
-				GenerateMapFile="true"
-				MapFileName="$(TargetDir)$(TargetName).map"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				OptimizeForWindows98="0"
-				LinkTimeCodeGeneration="1"
-				SetChecksum="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
-			ConfigurationType="1"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			DeleteExtensionsOnClean="*.asm;*.bsc;*.cod;*.dep;*.idb;*.ilk;*.obj;*.pgc;*.pgd;*.res;*.rsp;*.sbr;*.tlb;*.tlh;*.tli;*.tmp;*.manifest*;$(TargetPath)"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-				ExcludedFromBuild="false"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="qasm"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName="Debug\ezquake.tlb"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				FavorSizeOrSpeed="0"
-				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;WITH_IRC"
-				MinimalRebuild="true"
-				ExceptionHandling="0"
-				BasicRuntimeChecks="3"
-				SmallerTypeCheck="false"
-				RuntimeLibrary="1"
-				BufferSecurityCheck="true"
-				EnableFunctionLevelLinking="true"
-				DefaultCharIsUnsigned="true"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
-				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)\"
-				ObjectFile="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\$(TargetName).pdb"
-				XMLDocumentationFileName=""
-				BrowseInformation="1"
-				BrowseInformationFile="$(IntDir)\"
-				WarningLevel="3"
-				WarnAsError="false"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="4"
-				CompileAs="1"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="3081"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
-				OutputFile="..\ezquake-debug.exe"
-				Version=""
-				LinkIncremental="2"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
-				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
-				ModuleDefinitionFile=""
-				GenerateDebugInformation="true"
-				AssemblyDebug="1"
-				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
-				GenerateMapFile="true"
-				MapFileName="$(TargetDir)$(TargetName).map"
-				SubSystem="2"
-				OptimizeForWindows98="0"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="GLDebug|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -607,6 +244,129 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			DeleteExtensionsOnClean="*.asm;*.bsc;*.cod;*.dep;*.idb;*.ilk;*.obj;*.pgc;*.pgd;*.res;*.rsp;*.sbr;*.tlb;*.tlh;*.tli;*.tmp;*.manifest*;$(TargetPath)"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="qasm"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName="Release\ezquake.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;WITH_IRC"
+				StringPooling="true"
+				MinimalRebuild="false"
+				ExceptionHandling="0"
+				RuntimeLibrary="0"
+				BufferSecurityCheck="true"
+				EnableFunctionLevelLinking="false"
+				DefaultCharIsUnsigned="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\"
+				ProgramDataBaseFileName="Release\"
+				XMLDocumentationFileName=""
+				BrowseInformation="0"
+				BrowseInformationFile="$(IntDir)\"
+				WarningLevel="3"
+				WarnAsError="false"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
+				CompileAs="1"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="3081"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
+				OutputFile="..\ezquake.exe"
+				Version=""
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
+				GenerateManifest="true"
+				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
+				ModuleDefinitionFile=""
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
+				GenerateMapFile="true"
+				MapFileName="$(TargetDir)$(TargetName).map"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				OptimizeForWindows98="0"
+				LinkTimeCodeGeneration="1"
+				SetChecksum="true"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -754,6 +514,130 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="GLRelease|Win32"
+			OutputDirectory="Release-gl"
+			IntermediateDirectory="Release-gl"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			DeleteExtensionsOnClean="*.asm;*.bsc;*.cod;*.dep;*.idb;*.ilk;*.obj;*.pgc;*.pgd;*.res;*.rsp;*.sbr;*.tlb;*.tlh;*.tli;*.tmp;*.manifest*;$(TargetPath)"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="qasm"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName="Release-gl\ezquake.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;GLQUAKE;id386;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;USE_PR2;WITH_IRC"
+				StringPooling="true"
+				MinimalRebuild="false"
+				ExceptionHandling="0"
+				RuntimeLibrary="0"
+				BufferSecurityCheck="true"
+				EnableFunctionLevelLinking="false"
+				EnableEnhancedInstructionSet="2"
+				DefaultCharIsUnsigned="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\"
+				ProgramDataBaseFileName="Release-gl\"
+				XMLDocumentationFileName=""
+				BrowseInformation="0"
+				BrowseInformationFile="$(IntDir)\"
+				WarningLevel="3"
+				WarnAsError="false"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
+				CompileAs="1"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="3081"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
+				OutputFile="..\ezquake-gl.exe"
+				Version=""
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
+				IgnoreAllDefaultLibraries="false"
+				IgnoreDefaultLibraryNames="MSVCRT;LIBC"
+				ModuleDefinitionFile=""
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
+				GenerateMapFile="true"
+				MapFileName="$(TargetDir)$(TargetName).map"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				OptimizeForWindows98="0"
+				LinkTimeCodeGeneration="1"
+				SetChecksum="true"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
 			Name="GLRelease|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -854,6 +738,123 @@
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="Debug"
+			IntermediateDirectory="Debug"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			DeleteExtensionsOnClean="*.asm;*.bsc;*.cod;*.dep;*.idb;*.ilk;*.obj;*.pgc;*.pgd;*.res;*.rsp;*.sbr;*.tlb;*.tlh;*.tli;*.tmp;*.manifest*;$(TargetPath)"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+				ExcludedFromBuild="false"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="qasm"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName="Debug\ezquake.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				FavorSizeOrSpeed="0"
+				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;WITH_IRC"
+				MinimalRebuild="true"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="3"
+				SmallerTypeCheck="false"
+				RuntimeLibrary="1"
+				BufferSecurityCheck="true"
+				EnableFunctionLevelLinking="true"
+				DefaultCharIsUnsigned="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
+				AssemblerOutput="2"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetName).pdb"
+				XMLDocumentationFileName=""
+				BrowseInformation="1"
+				BrowseInformationFile="$(IntDir)\"
+				WarningLevel="3"
+				WarnAsError="false"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="4"
+				CompileAs="1"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="3081"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
+				OutputFile="..\ezquake-debug.exe"
+				Version=""
+				LinkIncremental="2"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
+				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
+				ModuleDefinitionFile=""
+				GenerateDebugInformation="true"
+				AssemblyDebug="1"
+				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
+				GenerateMapFile="true"
+				MapFileName="$(TargetDir)$(TargetName).map"
+				SubSystem="2"
+				OptimizeForWindows98="0"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -1022,7 +1023,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1030,7 +1031,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1058,7 +1059,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1066,7 +1067,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1094,7 +1095,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1102,7 +1103,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1130,7 +1131,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1138,7 +1139,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1166,7 +1167,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1174,7 +1175,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1202,7 +1203,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1210,7 +1211,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1238,7 +1239,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1246,7 +1247,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1274,7 +1275,26 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="GLDebug|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							BrowseInformationFile="$(IntDir)\"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							OmitFramePointers="true"
+							BrowseInformation="0"
+							BrowseInformationFile="$(IntDir)\"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1294,40 +1314,21 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="GLRelease|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							OmitFramePointers="true"
+							BrowseInformationFile="$(IntDir)\"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
 							ObjectFile="Debug\"
-							BrowseInformationFile="$(IntDir)\"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="GLDebug|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							BrowseInformationFile="$(IntDir)\"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							OmitFramePointers="true"
-							BrowseInformation="0"
-							BrowseInformationFile="$(IntDir)\"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="GLRelease|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							OmitFramePointers="true"
 							BrowseInformationFile="$(IntDir)\"
 						/>
 					</FileConfiguration>
@@ -1354,7 +1355,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1362,7 +1363,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1390,7 +1391,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1398,7 +1399,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1426,7 +1427,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1434,7 +1435,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1462,7 +1463,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1470,7 +1471,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1498,7 +1499,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1506,7 +1507,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1534,7 +1535,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1542,7 +1543,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1570,7 +1571,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1578,7 +1579,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1613,7 +1614,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|x64"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1621,7 +1622,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|x64"
+							Name="Debug|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1649,7 +1650,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|x64"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1657,7 +1658,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|x64"
+							Name="Debug|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1685,7 +1686,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|x64"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1693,7 +1694,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|x64"
+							Name="Debug|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1721,7 +1722,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|x64"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1729,7 +1730,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|x64"
+							Name="Debug|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1761,7 +1762,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|x64"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1769,7 +1770,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|x64"
+							Name="Debug|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -1811,7 +1812,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -1819,7 +1820,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2075,7 +2076,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2083,7 +2084,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2111,7 +2112,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2119,7 +2120,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2147,7 +2148,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2155,7 +2156,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2183,7 +2184,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2191,7 +2192,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2219,7 +2220,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2227,7 +2228,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2255,7 +2256,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2263,7 +2264,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2291,7 +2292,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2299,7 +2300,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2327,7 +2328,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2335,7 +2336,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2363,7 +2364,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2371,7 +2372,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2399,7 +2400,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2407,7 +2408,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2439,7 +2440,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2447,7 +2448,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2475,7 +2476,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2483,7 +2484,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2511,7 +2512,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2519,7 +2520,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2547,7 +2548,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2555,7 +2556,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2583,7 +2584,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2591,7 +2592,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2623,7 +2624,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2631,7 +2632,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2659,7 +2660,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2667,7 +2668,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2695,7 +2696,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2703,7 +2704,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2731,7 +2732,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2739,7 +2740,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2767,7 +2768,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2775,7 +2776,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2803,7 +2804,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2811,7 +2812,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2839,7 +2840,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2847,7 +2848,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2875,7 +2876,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2883,7 +2884,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2911,7 +2912,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2919,7 +2920,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2947,7 +2948,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2955,7 +2956,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2983,7 +2984,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -2991,7 +2992,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3023,7 +3024,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3031,7 +3032,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3059,7 +3060,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3067,7 +3068,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3095,7 +3096,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLRelease|Win32"
+						Name="GLDebug|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3103,7 +3104,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="GLDebug|x64"
+						Name="GLRelease|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3131,7 +3132,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3139,7 +3140,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3592,7 +3593,25 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
+							Name="GLDebug|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\"
+								XMLDocumentationFileName=""
+							/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|x64"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -3610,39 +3629,21 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)\"
-								XMLDocumentationFileName=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="GLDebug|x64"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)\"
-								XMLDocumentationFileName=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|x64"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)\$(InputName)1.obj"
-								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="GLRelease|x64"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
 								ObjectFile="$(IntDir)\$(InputName)1.obj"
 								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\"
+								XMLDocumentationFileName=""
 							/>
 						</FileConfiguration>
 						<FileConfiguration
@@ -3923,7 +3924,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
+						Name="Release|x64"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3931,7 +3932,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|x64"
+						Name="Debug|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool
@@ -3978,7 +3979,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|x64"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -3986,7 +3987,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|x64"
+							Name="Debug|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -4014,7 +4015,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|x64"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -4022,7 +4023,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|x64"
+							Name="Debug|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -4054,7 +4055,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|x64"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -4062,7 +4063,7 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Release|x64"
+							Name="Debug|Win32"
 							ExcludedFromBuild="true"
 							>
 							<Tool
@@ -4385,23 +4386,15 @@
 				RelativePath="..\..\cl_math.s"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4418,6 +4411,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4445,31 +4446,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4485,7 +4470,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4513,31 +4514,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4553,7 +4538,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4581,31 +4582,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4621,7 +4606,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4649,31 +4650,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4689,7 +4674,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4717,31 +4718,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4757,7 +4742,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4785,31 +4786,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4825,7 +4810,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4853,31 +4854,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4893,7 +4878,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4913,23 +4914,15 @@
 				RelativePath="..\..\math.s"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4946,6 +4939,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -4973,31 +4974,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5013,7 +4998,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5041,31 +5042,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5081,7 +5066,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5109,31 +5110,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5149,7 +5134,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5177,31 +5178,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5217,7 +5202,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5245,31 +5246,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5285,7 +5270,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5305,23 +5306,15 @@
 				RelativePath="..\..\snd_mixa.s"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5338,6 +5331,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5365,31 +5366,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5405,7 +5390,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5433,31 +5434,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5473,7 +5458,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5493,23 +5494,15 @@
 				RelativePath="..\..\sys_x86.s"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -5526,6 +5519,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="GLRelease|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
