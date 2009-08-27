@@ -587,7 +587,7 @@ static void ResetPlusCommands(void)
 	Cbuf_AddText("-showteamscores\n");
 }
 
-static void ResetBinds(void)
+void ResetBinds(void)
 {
 	Key_Unbindall_f();
 
@@ -750,7 +750,7 @@ static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 	if (read_legacy_configs)
 	{
 		Cbuf_AddText ("cl_warncmd 0\n");
-		Cbuf_AddText ("exec default.cfg\n");
+		//Cbuf_AddText ("exec default.cfg\n");
 #ifndef WITH_FTE_VFS
 		if (FS_FOpenFile("autoexec.cfg", &f) != -1) {
 			Cbuf_AddText ("exec autoexec.cfg\n");
