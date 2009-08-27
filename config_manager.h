@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void ConfigManager_Init (void);
 void Config_QuitSave(void);
+void ResetBinds(void);
 
 extern cvar_t	cfg_save_unchanged, cfg_legacy_exec, cfg_legacy_write;
 

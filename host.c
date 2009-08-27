@@ -613,7 +613,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	if (!dedicated) {
 		char cfg[MAX_PATH] = {0};
 
-		Cbuf_AddText("exec default.cfg\n");
+		// use new built-in binds insted of ones from default.cfg
+		ResetBinds();
+		//Cbuf_AddText("exec default.cfg\n");
 
 #ifndef WITH_FTE_VFS
 		snprintf(cfg, sizeof(cfg), "%s/config.cfg", com_homedir);
