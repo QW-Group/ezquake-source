@@ -44,14 +44,17 @@ static void EZ_listview_Layout(ez_listview_t *self)
 	y += ((ez_control_t *)self->header)->height + self->row_gap;
 
 	// Position all the listview items according to the sort order.
-	while ((self->sort_ascending ? it->next : it->previous))
+	if (self->items.count > 0)
 	{
-		lvi = (ez_control_t *)it->payload;
-		
-		EZ_control_SetPosition(lvi, 0, y);
-		y += lvi->height + self->row_gap;
+		while ((self->sort_ascending ? it->next : it->previous))
+		{
+			lvi = (ez_control_t *)it->payload;
+			
+			EZ_control_SetPosition(lvi, 0, y);
+			y += lvi->height + self->row_gap;
 
-		it = (self->sort_ascending ? it->next : it->previous);
+			it = (self->sort_ascending ? it->next : it->previous);
+		}
 	}
 }
 
@@ -112,13 +115,14 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 	ez_control_t *listview_ctrl	= (ez_control_t *)listview;
 
 	// Initialize the inherited class first.
-	EZ_scrollpane_Init(&listview->super, tree, parent, name, description, x, y, width, height, flags);
+	//EZ_scrollpane_Init(&listview->super, tree, parent, name, description, x, y, width, height, flags);
+	EZ_control_Init(&listview->super, tree, parent, name, description, x, y, width, height, flags);
 
 	((ez_control_t *)listview)->CLASS_ID		= EZ_LISTVIEW_ID;
 	((ez_control_t *)listview)->ext_flags		|= (flags | control_focusable | control_contained | control_resizeable);
 
 	// Overridden events.
-	CONTROL_REGISTER_EVENT(listview_ctrl, EZ_listview_OnResize, OnResize, ez_control_t);
+	//CONTROL_REGISTER_EVENT(listview_ctrl, EZ_listview_OnResize, OnResize, ez_control_t);
 
 	// Listview specific events.
 	CONTROL_REGISTER_EVENT(listview, EZ_listview_OnItemAdded, OnItemAdded, ez_listview_t);
@@ -134,7 +138,7 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 									0, 0, listview_ctrl->width, 8, 0);
 
 		subitem.payload = NULL;
-		subitem.text = "";
+		subitem.text = "HEJ";
 
 		// Init the labels in the header list view item.
 		for (i = 0; i < LISTVIEW_COLUMN_COUNT; i++)
@@ -145,13 +149,17 @@ void EZ_listview_Init(ez_listview_t *listview, ez_tree_t *tree, ez_control_t *pa
 			// Pass the column index as payload (so we know what column to sort by when a header is clicked).
 			EZ_control_AddOnMouseClick((ez_control_t *)curlabel, (void *)i, EZ_listview_OnHeaderMouseClick);
 			
+			EZ_control_SetAnchor((ez_control_t *)curlabel, anchor_left | anchor_top);
 			EZ_label_SetReadOnly(curlabel, true);
 			EZ_label_SetAutoSize(curlabel, false);
 			EZ_label_SetTextSelectable(curlabel, false);
+			EZ_control_SetBackgroundColor((ez_control_t *)curlabel, 0, 255, 0, 125); // TODO: Remove this.
 		}
 
 		// TODO: Add ez_control_t's that will act as resize handles between the column headers.
 	}
+
+	EZ_listview_Layout(listview);
 }
 
 //
@@ -325,6 +333,7 @@ int EZ_listview_OnItemColumnTextChanged(ez_control_t *self, void *ext_event_info
 	return 0;
 }
 
+/*
 //
 // Listview - OnResize event handler.
 //
@@ -341,6 +350,7 @@ int EZ_listview_OnResize(ez_control_t *self, void *ext_event_info)
 
 	return 0;
 }
+*/
 
 //
 // Listview - Sets the row gap size of the listview.

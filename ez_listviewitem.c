@@ -60,6 +60,7 @@ void EZ_listviewitem_Init(ez_listviewitem_t *listviewitem, ez_tree_t *tree, ez_c
 							  int x, int y, int width, int height,
 							  ez_control_flags_t flags)
 {
+	int i;
 	ez_control_t *self	= (ez_control_t *)listviewitem;
 
 	// Initialize the inherited class first.
@@ -69,7 +70,10 @@ void EZ_listviewitem_Init(ez_listviewitem_t *listviewitem, ez_tree_t *tree, ez_c
 	((ez_control_t *)listviewitem)->ext_flags		|= (flags | control_focusable | control_contained | control_resizeable);
 
 	// Make all columns visible by default :)
-	memset(self, true, sizeof(qbool) * sizeof(listviewitem->item_visibile));
+	for (i = 0; i < LISTVIEW_COLUMN_COUNT; i++)
+	{
+		listviewitem->item_visibile[i] = true;
+	}
 
 	// Listview item specific events.
 	CONTROL_REGISTER_EVENT(listviewitem, EZ_listviewitem_OnColumnAdded, OnColumnAdded, ez_listviewitem_t);
@@ -130,7 +134,7 @@ void EZ_listviewitem_AddColumn(ez_listviewitem_t *self, ez_listview_subitem_t da
 	column = self->item_count;
 	self->item_count++;
 
-	CONTROL_RAISE_EVENT(NULL, ctrl, ez_listviewitem_t, OnColumnAdded, &column);
+	CONTROL_RAISE_EVENT(NULL, ctrl, ez_listviewitem_t, OnColumnAdded, (void *)column);
 }
 
 //

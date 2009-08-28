@@ -95,7 +95,7 @@ ez_dllist_node_t *EZ_double_linked_list_FindByIndex(const ez_double_linked_list_
 {
 	int i;
 	ez_dllist_node_t *iter = NULL;
-	qbool fromStart = (list->count - i) >= i;
+	qbool fromStart = (list->count - index) >= index;
 
 	if (fromStart)
 	{
@@ -176,10 +176,10 @@ void *EZ_double_linked_list_RemoveByIndex(ez_double_linked_list_t *list, int ind
 void EZ_double_linked_list_RemoveRange(ez_double_linked_list_t *list, int start, int end, ez_removerange_cleanup_function_t func)
 {
 	int i;
-	ez_dllist_node_t *iter;
+	ez_dllist_node_t *iter = list->head;
 	ez_dllist_node_t *tmp;
 
-	if ((start < 0) || (end < 0) || (start >= list->count) || (end >= list->count) || (start > end))
+	if (!iter || (start < 0) || (end < 0) || (start >= list->count) || (end >= list->count) || (start > end))
 	{
 		return;
 	}

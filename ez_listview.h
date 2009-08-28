@@ -70,7 +70,8 @@ typedef struct ez_listview_eventhandlers_s
 
 typedef struct ez_listview_s
 {
-	ez_scrollpane_t			super;				// The super class
+	ez_control_t			super;
+	//ez_scrollpane_t			super;				// The super class
 												// (we inherit a scrollpane instead of a normal control so we get scrolling also)
 
 	ez_listview_events_t	events;				// Specific events for the listview control.
