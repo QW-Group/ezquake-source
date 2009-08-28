@@ -1903,11 +1903,19 @@ void WG_AppActivate(BOOL fActive, BOOL minimized)
 				#ifdef NDEBUG // Some alt+tab work around, bring on top of Z order, debug configuration does't have WS_EX_TOPMOST flag so ...
 				SetWindowPos(mainwindow, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 				#endif
-				ShowWindow (mainwindow, SW_SHOWNORMAL);
+				ShowWindow(mainwindow, SW_SHOWNORMAL);
 				
-				// Fix for alt-tab bug in NVidia drivers
-				MoveWindow (mainwindow, 0, 0, glw_state.dm.dmPelsWidth, glw_state.dm.dmPelsHeight, false);
-				Sbar_Changed ();
+				// Fix for alt-tab bug in NVidia drivers.
+				// Make sure we get the proper info for multiple monitor support
+				// and position the window correctly after the window is created.
+				{
+					// We need to get the new monitor information since the resolution might have changed.
+					MONITORINFOEX monInfo = VID_GetCurrentMonitorInfo(prevMonitor);
+					MoveWindow(mainwindow, monInfo.rcMonitor.left, monInfo.rcMonitor.top, 
+							glw_state.dm.dmPelsWidth, glw_state.dm.dmPelsHeight, false);
+				}
+
+				Sbar_Changed();
 			}
 		}
 		else if ( !glConfig.isFullscreen && minimized )
@@ -1936,9 +1944,9 @@ void WG_AppActivate(BOOL fActive, BOOL minimized)
 				glw_state.vid_wassuspended = true;
 
 				ChangeDisplaySettings( 0, 0 );
-#ifdef NDEBUG /* some alt+tab work around, bring on bottom of Z order, debug configuration does't have WS_EX_TOPMOST flag so ...*/
+				#ifdef NDEBUG /* some alt+tab work around, bring on bottom of Z order, debug configuration does't have WS_EX_TOPMOST flag so ...*/
 				SetWindowPos(mainwindow, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-#endif
+				#endif
 				ShowWindow (mainwindow, SW_MINIMIZE);
 			}
 		}
