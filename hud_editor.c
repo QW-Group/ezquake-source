@@ -20,6 +20,7 @@
 #include "ez_scrollbar.h"
 #include "ez_scrollpane.h"
 #include "ez_slider.h"
+#include "ez_listview.h"
 #include "ez_window.h"
 #include "hud.h"
 #include "hud_editor.h"
@@ -2242,6 +2243,7 @@ ez_label_t *label2 = NULL;
 ez_slider_t *slider = NULL;
 ez_scrollbar_t *scrollbar = NULL;
 ez_scrollpane_t *scrollpane = NULL;
+ez_listview_t *listview = NULL;
 ez_window_t *window = NULL;
 
 int Test_OnButtonDraw(ez_control_t *self, void *payload, void *ext_event_info)
@@ -2661,6 +2663,18 @@ void HUD_Editor_Init(void)
 	}
 	*/
 
+	// Listview
+	{
+		listview = EZ_listview_Create(&help_control_tree, root, "Listview", "", 50, 50, 200, 200,
+			control_resize_h | control_resize_v | control_resizeable);
+
+		EZ_listview_SetHeaderText(listview, 0, "Hej");
+		EZ_listview_SetHeaderText(listview, 1, "Hej 2");
+
+		EZ_listview_SetColumnWidth(listview, 0, 80);
+		EZ_listview_SetColumnWidth(listview, 1, 50);
+	}
+
 	// Scrollpane
 	{
 		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", -10, -20, 150, 150,
@@ -2668,7 +2682,8 @@ void HUD_Editor_Init(void)
 		
 		EZ_control_SetBackgroundColor((ez_control_t *)scrollpane, 255, 0, 0, 100);
 
-		EZ_scrollpane_SetTarget(scrollpane, child1);
+		//EZ_scrollpane_SetTarget(scrollpane, child1);
+		EZ_scrollpane_SetTarget(scrollpane, (ez_control_t *)listview);
 	}
 
 	// Window.
@@ -2680,7 +2695,7 @@ void HUD_Editor_Init(void)
 
 		EZ_window_SetWindowAreaMinVirtualSize(window, 200, 200);
 
-		EZ_window_AddChild(window, (ez_control_t *)scrollpane);		
+		//EZ_window_AddChild(window, (ez_control_t *)scrollpane);		
 	}
 
 	/*
