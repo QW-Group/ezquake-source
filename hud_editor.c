@@ -181,7 +181,7 @@ static hud_grephandle_t *HUD_Editor_CreateHoverHud(hud_t *hud)
 		return NULL;
 	}
 
-	// Check if the HUD already exists and use that one if that's the case.
+	// Check if the HUD already exists and use that one if that's the case...
 	for(j = 0; j < MAX_HUD_ELEMENTS && hud_containers[j].hud; j++)
 	{
 		if(hud_containers[j].hud == hud)
@@ -2307,7 +2307,7 @@ static hud_t *hud_hover = NULL;
 //
 static void HUD_Editor(void)
 {
-	qbool found = false;	
+	qbool found = false;
 
 	// If we just entered hoverlist mode we want to keep the mouse coordinates
 	// so we know where to draw the list until the user has picked a HUD.
@@ -2554,7 +2554,7 @@ void HUD_Editor_Key(int key, int unichar, qbool down)
 void HUD_Editor_Init(void)
 {
 	extern mpic_t *SCR_LoadCursorImage(char *cursorimage);
-	
+
 #if 0
 	clrinfo_t color;
 
@@ -2609,27 +2609,27 @@ void HUD_Editor_Init(void)
 
 		EZ_control_SetAnchor((ez_control_t *)button, (anchor_left | anchor_right | anchor_bottom));
 	}
-	
+
 	// Label.
 	{
-		label = EZ_label_Create(&help_control_tree, root, 
-			"label", "A crazy label!", 200, 200, 250, 80, 
-			control_focusable | control_contained | control_resizeable | control_scrollable /*| control_movable */ | control_resize_h | control_resize_v, 
-			label_wraptext | label_autosize, 
+		label = EZ_label_Create(&help_control_tree, root,
+			"label", "A crazy label!", 200, 200, 250, 80,
+			control_focusable | control_contained | control_resizeable | control_scrollable /*| control_movable */ | control_resize_h | control_resize_v,
+			label_wraptext | label_autosize,
 			"Hello\nthis is a test are you fine because I am bla bla bla this is a very long string and it's plenty of fun haha!");
 
 		EZ_label_SetTextScale(label, 2.0);
 		//EZ_label_SetTextFlags(label, LABEL_READONLY);
 
 		EZ_control_SetBackgroundColor((ez_control_t *)label, 150, 150, 0, 50);
-		//EZ_control_SetAnchor((ez_control_t *)label, anchor_top | anchor_right | anchor_bottom); 
+		//EZ_control_SetAnchor((ez_control_t *)label, anchor_top | anchor_right | anchor_bottom);
 	}
 
 	// Label 2.
 	{
-		label2 = EZ_label_Create(&help_control_tree, root, 
-			"label2", "A crazy label!", 100, 50, 32, 16,  
-			control_focusable | control_contained | control_resizeable, 
+		label2 = EZ_label_Create(&help_control_tree, root,
+			"label2", "A crazy label!", 100, 50, 32, 16,
+			control_focusable | control_contained | control_resizeable,
 			0, "");
 	}
 
@@ -2638,7 +2638,7 @@ void HUD_Editor_Init(void)
 		slider = EZ_slider_Create(&help_control_tree, root,
 			"slider", "Slider omg", 50, 100, 150, 8, control_focusable | control_contained | control_resizeable);
 
-		EZ_control_SetAnchor((ez_control_t *)slider, anchor_left | anchor_right); 
+		EZ_control_SetAnchor((ez_control_t *)slider, anchor_left | anchor_right);
 
 		EZ_slider_SetMax(slider, 100);
 		EZ_slider_SetMin(slider, 50);
@@ -2653,7 +2653,7 @@ void HUD_Editor_Init(void)
 	{
 		ez_control_t *label_ctrl = (ez_control_t *)label;
 
-		scrollbar = EZ_scrollbar_Create(&help_control_tree, root, "Scrollbar", "", 
+		scrollbar = EZ_scrollbar_Create(&help_control_tree, root, "Scrollbar", "",
 			30, 150, 10, 150, control_anchor_viewport);
 
 		EZ_scrollbar_SetTargetParent(scrollbar, false);
@@ -2679,7 +2679,7 @@ void HUD_Editor_Init(void)
 	{
 		scrollpane = EZ_scrollpane_Create(&help_control_tree, root, "Scrollpane", "", -10, -20, 150, 150,
 			control_resize_h | control_resize_v | control_resizeable);
-		
+
 		EZ_control_SetBackgroundColor((ez_control_t *)scrollpane, 255, 0, 0, 100);
 
 		//EZ_scrollpane_SetTarget(scrollpane, child1);
@@ -2688,14 +2688,14 @@ void HUD_Editor_Init(void)
 
 	// Window.
 	{
-		window = EZ_window_Create(&help_control_tree, root, "Window", NULL, 20, 20, 150, 150, 
+		window = EZ_window_Create(&help_control_tree, root, "Window", NULL, 20, 20, 150, 150,
 			control_movable | control_focusable | control_resize_h | control_resize_v | control_contained);
 
 		EZ_control_SetBackgroundColor((ez_control_t *)window, 0, 100, 0, 100);
 
 		EZ_window_SetWindowAreaMinVirtualSize(window, 200, 200);
 
-		//EZ_window_AddChild(window, (ez_control_t *)scrollpane);		
+		//EZ_window_AddChild(window, (ez_control_t *)scrollpane);
 	}
 
 	/*
@@ -2716,8 +2716,8 @@ void HUD_Editor_Init(void)
 
 	EZ_tree_Refresh(&help_control_tree);
 
-#endif 
-	
+#endif
+
 	// Register commands.
 	Cmd_AddCommand("hud_editor", HUD_Editor_Toggle_f);
 
