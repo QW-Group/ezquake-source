@@ -246,13 +246,13 @@ static qbool HUD_Editor_DrawHoverList(int x, int y, hud_grephandle_t *list)
 
 	// No point in showing a list if there's only one hud under the cursor
 	// or if the user hasn't right-clicked.
-	if(hud_hoverlist_count <= 1 || hud_editor_mode != hud_editmode_hoverlist)
+	if (hud_hoverlist_count <= 1 || hud_editor_mode != hud_editmode_hoverlist)
 	{
 		return false;
 	}
 
 	// Get the width of to draw with.
-	while(hud_iter)
+	while (hud_iter)
 	{
 		width = max(width, (PADDING + 2 + strlen(hud_iter->hud->name)) * 8);
 		hud_iter = hud_iter->next;
@@ -264,7 +264,7 @@ static qbool HUD_Editor_DrawHoverList(int x, int y, hud_grephandle_t *list)
 
 	hud_iter = list;
 
-	// Highlight color (yellow).
+	// Highlight color (yellow)...
 	highlight.c = RGBA_TO_COLOR(0, 255, 0, 255);
 	highlight.i = 0;
 
