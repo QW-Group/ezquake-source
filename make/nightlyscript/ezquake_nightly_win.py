@@ -131,7 +131,7 @@ def main(argv = None):
 		keyuse = "-i %s" % (KEYLOCATION, )
 	
 	# SCP the file to the server.
-	os.system(r'%s -scp %s -v -l %s %s\%s %s:%s' % (PSCP, keyuse, LOGIN, OUTPUTDIR, zipname, SERVERHOST, REMOTEPATH))
+	os.system(r'"%s" -scp %s -v -l %s %s\%s %s:%s' % (PSCP, keyuse, LOGIN, OUTPUTDIR, zipname, SERVERHOST, REMOTEPATH))
 	
 	return 0
 
