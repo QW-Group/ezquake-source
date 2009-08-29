@@ -232,7 +232,7 @@ static hud_t *HUD_Editor_FindHoverListSelection(hud_grephandle_t *list)
 }
 
 //
-// Draw the hover list..
+// Draw the hover list...
 //
 static qbool HUD_Editor_DrawHoverList(int x, int y, hud_grephandle_t *list)
 {
