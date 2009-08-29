@@ -902,7 +902,7 @@ void V_CalcViewRoll (void) {
 // todo: if user selects different weapon while the current one is still
 // firing, wait until the animation is finished
 static int V_CurrentWeaponModel(void) { 
-	extern int IN_BestWeapon(void);
+	extern int IN_BestWeaponReal(void);
 	extern cvar_t cl_weaponpreselect;
 	int bestgun;
 	static int lastfired = 0;
@@ -932,7 +932,7 @@ static int V_CurrentWeaponModel(void) {
 	else {
 		if (ShowPreselectedWeap() && r_viewpreselgun.value)
 		{
-			bestgun = IN_BestWeapon();
+			bestgun = IN_BestWeaponReal();
 			if (bestgun == 1) return cl_modelindices[mi_vaxe];
 			if (bestgun > 1 && bestgun <= 8)
 				return cl_modelindices[mi_weapon1 - 1 + bestgun];

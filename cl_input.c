@@ -307,12 +307,29 @@ void IN_RememberWpOrder (void)
 		weapon_order[i] = (i < c) ? Q_atoi(Cmd_Argv(i+1)) : 0;
 }
 
+static int IN_BestWeapon_Common(int best);
+
 // picks the best available (carried & having some ammunition) weapon according to users current preference
-int IN_BestWeapon (void) 
+// or if the intersection (whished * carried) is empty
+// select the top wished weapon
+int IN_BestWeapon(void)
+{
+	return IN_BestWeapon_Common(weapon_order[0]);
+}
+
+// picks the best available (carried & having some ammunition) weapon according to users current preference
+// or if the intersection (whished * carried) is empty
+// select the current weapon
+int IN_BestWeaponReal(void)
+{
+	return IN_BestWeapon_Common(in_impulse);
+}
+
+// finds the best weapon from the carried weapons; if none is found, returns implicit
+static int IN_BestWeapon_Common(int implicit) 
 {
 	int i, imp, items;
-	// we select at least 'some' weapon to get 'no ammo.' or 'no weapon.' message again
-	int best = weapon_order[0];
+	int best = implicit;
 
 	items = cl.stats[STAT_ITEMS];
 
