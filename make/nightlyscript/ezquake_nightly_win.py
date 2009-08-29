@@ -36,15 +36,15 @@ import sys
 #
 
 # Program paths
-SVNBIN		= r'C:\Program Files\svn-win32-1.4.4\bin\svn.exe'
-DEVENV		= r'C:\Program Files\Microsoft Visual Studio 8\Common7\IDE\devenv.exe'
+SVNBIN		= r'C:\Program Files\svn-1.4.5\bin\svn.exe'
+DEVENV		= r'C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\devenv.exe'
 SEVENZIP 	= r'C:\Program Files\7-Zip\7z.exe'
-PSCP		= r'C:\WINDOWS\System32\pscp.exe'
+PSCP		= r'C:\Program Files\putty\pscp.exe'
 
 # Local paths
-TRUNK		= r'c:\cvs\ezquake_svn_HEAD\\trunk'
-OUTPUTDIR	= r'%s\ezquake\make' % (TRUNK, )
-SOLUTIONFILE	= r'%s\msvs2005\ezquake_msvs_80.sln' % (OUTPUTDIR, )
+TRUNK		= r'H:\DEV\ezquake.NIGHTLY'
+OUTPUTDIR	= r'%s\make' % (TRUNK, )
+SOLUTIONFILE	= r'%s\msvs2008\ezquake_msvs_90.sln' % (OUTPUTDIR, )
 
 # Set this to an empty string if you want to use pageant instead.
 KEYLOCATION	= r''
@@ -112,6 +112,8 @@ def main(argv = None):
 	# Set the names of the compiled files
 	softwarename = "ezquake-r%s.exe" % revnum
 	glname = "ezquake-gl-r%s.exe" % revnum
+	softwarepdbname = "ezquake-r%s.pdb" % revnum
+	glpdbname = "ezquake-gl-r%s.pdb" % revnum
 
 	# Set name
 	zipname = "%s-r%s-ezquake.7z" % (datetime.date.today().strftime("%Y-%m-%d"), revnum)
@@ -121,7 +123,9 @@ def main(argv = None):
 	os.chdir(OUTPUTDIR)
 	os.system(r'move ezquake.exe %s' % softwarename)
 	os.system(r'move ezquake-gl.exe %s' % glname)
-	os.system(r'"%s" a %s %s %s README.TXT revision.txt changes.txt' % (SEVENZIP, zipname, softwarename, glname))
+	os.system(r'move ezquake.pdb %s' % softwarepdbname)
+	os.system(r'move ezquake-gl.pdb %s' % glpdbname)
+	os.system(r'"%s" a %s %s %s %s %s README.TXT revision.txt changes.txt' % (SEVENZIP, zipname, softwarename, glname, softwarepdbname, glpdbname))
 	
 	# If no key location is supplied, use pageant instead.
 	keyuse = ""
