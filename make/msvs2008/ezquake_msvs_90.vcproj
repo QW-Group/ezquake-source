@@ -563,7 +563,7 @@
 				RuntimeLibrary="0"
 				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="false"
-				EnableEnhancedInstructionSet="2"
+				EnableEnhancedInstructionSet="0"
 				DefaultCharIsUnsigned="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
