@@ -185,6 +185,9 @@ void OnChange_scr_conpicture(cvar_t *v, char *s, qbool *cancel)
 
 	memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 	Draw_AdjustConback();
+	GL_Bind(conback.texnum);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
@@ -209,7 +212,6 @@ void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 	GL_Bind(crosshairpic.texnum);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
- 
 }
 
 void customCrosshair_Init(void)
