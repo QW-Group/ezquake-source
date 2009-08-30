@@ -26,6 +26,8 @@ int PingHost(char *host_to_ping, unsigned short port, int count, int time_out);
 int PingHosts(server_data *servs[], int servsn, int count, int time_out);
 void TP_ExecTrigger (const char *s);
 
+extern sem_t serverlist_semaphore;
+
 typedef struct infohost_s
 {
     double lastsenttime;

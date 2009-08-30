@@ -124,6 +124,8 @@ int abort_ping;
 
 extern cvar_t cl_proxyaddr;
 
+sem_t serverlist_semaphore;
+
 void Serverinfo_Stop(void);
 
 static qbool SB_Is_Selected_Proxy(server_data *s)
