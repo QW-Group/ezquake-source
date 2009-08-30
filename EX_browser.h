@@ -255,4 +255,6 @@ qbool SB_Players_Mouse_Event(const mouse_state_t *ms);
 void SB_Specials_Draw(void);
 qbool SB_Specials_Key(int key, wchar unichar);
 
+sem_t serverlist_semaphore;
+
 #endif  // __EX_BROWSER__H__

@@ -337,7 +337,6 @@ void GetServerInfo(server_data *serv)
         Parse_Serverinfo(serv, answer);
         server_during_update = 0;
     }
-
     closesocket(newsocket);
 }
 
@@ -600,29 +599,29 @@ DWORD WINAPI AutoupdateProc(void * lpParameter)
     {
         double time = Sys_DoubleTime();
 
-        if (((int)sb_liveupdate.value > 0)  &&
-            time >= lastupdatetime + (int)sb_liveupdate.value  &&
+        if ((sb_liveupdate.integer > 0)  &&
+            time >= lastupdatetime + sb_liveupdate.integer  &&
             key_dest == key_menu /* todo: add "on server list tab" condition here */)
         {
-            server_data *serv = autoupdate_server;
-            if (serv != NULL)
+            server_data *serv;
+			
+			Sys_SemWait(&serverlist_semaphore);
+			serv = autoupdate_server;
+			if (serv != NULL)
             {
                 GetServerInfo(serv);
                 lastupdatetime = time;
             }
-        }
-        Sys_MSleep(100);
+			Sys_SemPost(&serverlist_semaphore);
+		}
     }
     return 0;
 }
 
 void Start_Autoupdate(server_data *s)
 {
-
     autoupdate_server = s;
-
     Sys_CreateThread(AutoupdateProc, (void *) s);
-
 }
 
 void Alter_Autoupdate(server_data *s)
