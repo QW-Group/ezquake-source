@@ -124,6 +124,8 @@ int abort_ping;
 
 extern cvar_t cl_proxyaddr;
 
+sem_t serverlist_semaphore;
+
 void Serverinfo_Stop(void);
 
 static qbool SB_Is_Selected_Proxy(server_data *s)
@@ -444,10 +446,12 @@ int serverinfo_players_pos;
 int serverinfo_sources_pos;
 int serverinfo_sources_disp;
 extern int autoupdate_serverinfo; // declared in EX_browser_net.c
+
 void Serverinfo_Stop(void)
 {
 	show_serverinfo = NULL;
 	autoupdate_serverinfo = 0;
+	Sys_SemDestroy(&serverlist_semaphore);
 }
 
 void Serverinfo_Start (server_data *s)
@@ -460,6 +464,8 @@ void Serverinfo_Start (server_data *s)
 
 	autoupdate_serverinfo = 1;
 	show_serverinfo = s;
+
+	Sys_SemInit(&serverlist_semaphore, 1, 1);
 
     // sort for eliminating ot-updated
 	Sort_Sources();
@@ -885,7 +891,19 @@ void SB_Servers_Draw (int x, int y, int w, int h)
         // status line
         //
         if (sb_status.value  &&  serversn_passed > 0)
-            Draw_Server_Statusbar(x, y, w, h, servers[Servers_pos], Servers_pos, serversn_passed);
+		{
+			// Semaphore lock
+			if(show_serverinfo)
+			{
+				Sys_SemWait(&serverlist_semaphore);
+				Draw_Server_Statusbar(x, y, w, h, servers[Servers_pos], Servers_pos, serversn_passed);
+				Sys_SemPost(&serverlist_semaphore);
+			} 
+			else 
+			{
+				Draw_Server_Statusbar(x, y, w, h, servers[Servers_pos], Servers_pos, serversn_passed);
+			}
+		}
 	} else if (!adding_server) {
 		UI_Print_Center(x, y+8, w, "No servers filtered", false);
 		UI_Print_Center(x, y+24, w, "Press [space] to refresh the list", true);
@@ -1003,6 +1021,7 @@ void Serverinfo_Draw ()
     if (testing_connection)
         h -= 5*8;
 
+	Sys_SemWait(&serverlist_semaphore);
     switch (serverinfo_pos)
     {
         case 0: // players
@@ -1014,6 +1033,7 @@ void Serverinfo_Draw ()
         default:
             ;
     }
+	Sys_SemPost(&serverlist_semaphore);
 
     if (testing_connection)
         SB_Test_Frame();

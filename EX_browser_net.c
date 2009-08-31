@@ -26,6 +26,8 @@ int PingHost(char *host_to_ping, unsigned short port, int count, int time_out);
 int PingHosts(server_data *servs[], int servsn, int count, int time_out);
 void TP_ExecTrigger (const char *s);
 
+extern sem_t serverlist_semaphore;
+
 typedef struct infohost_s
 {
     double lastsenttime;
@@ -337,7 +339,6 @@ void GetServerInfo(server_data *serv)
         Parse_Serverinfo(serv, answer);
         server_during_update = 0;
     }
-
     closesocket(newsocket);
 }
 
@@ -600,29 +601,31 @@ DWORD WINAPI AutoupdateProc(void * lpParameter)
     {
         double time = Sys_DoubleTime();
 
-        if (((int)sb_liveupdate.value > 0)  &&
-            time >= lastupdatetime + (int)sb_liveupdate.value  &&
+        if ((sb_liveupdate.integer > 0)  &&
+            time >= lastupdatetime + sb_liveupdate.integer  &&
             key_dest == key_menu /* todo: add "on server list tab" condition here */)
         {
-            server_data *serv = autoupdate_server;
-            if (serv != NULL)
+            server_data *serv;
+			
+			Sys_SemWait(&serverlist_semaphore);
+			serv = autoupdate_server;
+			if (serv != NULL)
             {
                 GetServerInfo(serv);
                 lastupdatetime = time;
             }
-        }
-        Sys_MSleep(100);
+			Sys_SemPost(&serverlist_semaphore);
+		}
+		
+		Sys_MSleep(1000); // we don't need nor allow updates faster than 1 second anyway
     }
     return 0;
 }
 
 void Start_Autoupdate(server_data *s)
 {
-
     autoupdate_server = s;
-
     Sys_CreateThread(AutoupdateProc, (void *) s);
-
 }
 
 void Alter_Autoupdate(server_data *s)
