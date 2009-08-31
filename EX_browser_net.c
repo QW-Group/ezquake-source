@@ -616,6 +616,8 @@ DWORD WINAPI AutoupdateProc(void * lpParameter)
             }
 			Sys_SemPost(&serverlist_semaphore);
 		}
+		
+		Sys_MSleep(1000); // we don't need nor allow updates faster than 1 second anyway
     }
     return 0;
 }
