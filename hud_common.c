@@ -456,8 +456,11 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 		Replace_In_String(track_string, sizeof(track_string), '%', 2,
 			"n", cl.players[spec_track].name,						// Replace %n with player name.
 			"t", cl.teamplay ? cl.players[spec_track].team : "");	// Replace %t with player team if teamplay is on.
-
+#ifdef GLQUAKE
+		width = 8 * strlen_color(track_string);
+#else
 		width = 8 * strlen(track_string);
+#endif
 	}
 
 	height = 8 * views;
