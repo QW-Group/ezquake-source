@@ -36,7 +36,7 @@ mpic_t				*hud_editor_align_icon	= NULL;
 mpic_t				*hud_editor_place_icon	= NULL;
 
 cvar_t				hud_editor_allowresize	= {"hud_editor_allowresize", "1"};	// Show resize handles / allow resizing.
-cvar_t				hud_editor_allowmove	= {"hud_editor_allowmove", "1"};	// Allow moving.
+cvar_t				hud_editor_allowmove	= {"hud_editor_allowmove", "1"};	// Allow moving..
 cvar_t				hud_editor_allowplace	= {"hud_editor_allowplace", "1"};	// Allow placing HUDs.
 cvar_t				hud_editor_allowalign	= {"hud_editor_allowalign", "1"};	// Allow aligning HUDs.
 
