@@ -115,6 +115,7 @@ void	OnChange_scr_allowsnap(cvar_t *, char *, qbool *);
 cvar_t	scr_allowsnap			= {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
 
 cvar_t	scr_newHud = {"scr_newhud", "0"};
+cvar_t	scr_newHudClear = {"scr_newhud_clear", "0"};	// force clearing screen on every frame (necessary with viewsize)
 
 cvar_t	scr_clock				= {"cl_clock", "0"};
 cvar_t	scr_clock_format		= {"cl_clock_format", "%H:%M:%S", 0, OnChange_scr_clock_format};
@@ -3083,6 +3084,9 @@ qbool Hud_CheckBounds (hud_element_t *elem, int x, int y)
 #ifdef GLQUAKE
 
 void SCR_TileClear (void) {
+	int sb_lines_cleared = (scr_newHud.integer && scr_newHudClear.integer)
+		? 0 : sb_lines; // newhud does not (typically) have solid status bar, so clear the bottom of the screen
+
 	if (cls.state != ca_active && cl.intermission) {
 		Draw_TileClear (0, 0, vid.width, vid.height);
 		return;
@@ -3090,21 +3094,21 @@ void SCR_TileClear (void) {
 
 	if (r_refdef.vrect.x > 0) {
 		// left
-		Draw_TileClear (0, 0, r_refdef.vrect.x, vid.height - sb_lines);
+		Draw_TileClear (0, 0, r_refdef.vrect.x, vid.height - sb_lines_cleared);
 		// right
 		Draw_TileClear (r_refdef.vrect.x + r_refdef.vrect.width, 0,
-			vid.width - (r_refdef.vrect.x + r_refdef.vrect.width), vid.height - sb_lines);
+			vid.width - (r_refdef.vrect.x + r_refdef.vrect.width), vid.height - sb_lines_cleared);
 	}
 	if (r_refdef.vrect.y > 0) {
 		// top
 		Draw_TileClear (r_refdef.vrect.x, 0, r_refdef.vrect.width, r_refdef.vrect.y);
 	}
-	if (r_refdef.vrect.y + r_refdef.vrect.height < vid.height - sb_lines) {
+	if (r_refdef.vrect.y + r_refdef.vrect.height < vid.height - sb_lines_cleared) {
 		// bottom
 		Draw_TileClear (r_refdef.vrect.x,
 			r_refdef.vrect.y + r_refdef.vrect.height,
 			r_refdef.vrect.width,
-			vid.height - sb_lines - (r_refdef.vrect.height + r_refdef.vrect.y));
+			vid.height - sb_lines_cleared - (r_refdef.vrect.height + r_refdef.vrect.y));
 	}
 }
 
@@ -3118,17 +3122,22 @@ void SCR_TileClear (void) {
 	} else {
 		char str[11] = "xxxxxxxxxx";
 		if (scr_viewsize.value < 100) {
-			// clear background for counters
-			if (show_speed.value)
-				Draw_TileClear(ELEMENT_X_COORD(show_speed), ELEMENT_Y_COORD(show_speed), 10 * 8, 8);
-			if (show_fps.value)
-				Draw_TileClear(ELEMENT_X_COORD(show_fps), ELEMENT_Y_COORD(show_fps), 10 * 8, 8);
-			if (scr_clock.value)
-				Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
-			if (scr_gameclock.value)
-				Draw_TileClear(ELEMENT_X_COORD(scr_gameclock), ELEMENT_Y_COORD(scr_gameclock), 10 * 8, 8);
-			if (scr_democlock.value)
-				Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
+			if (scr_newHud.integer && scr_newHudClear.integer) {
+				Draw_TileClear (0, 0, vid.width, vid.height);
+			}
+			else {
+				// clear background for counters
+				if (show_speed.value)
+					Draw_TileClear(ELEMENT_X_COORD(show_speed), ELEMENT_Y_COORD(show_speed), 10 * 8, 8);
+				if (show_fps.value)
+					Draw_TileClear(ELEMENT_X_COORD(show_fps), ELEMENT_Y_COORD(show_fps), 10 * 8, 8);
+				if (scr_clock.value)
+					Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
+				if (scr_gameclock.value)
+					Draw_TileClear(ELEMENT_X_COORD(scr_gameclock), ELEMENT_Y_COORD(scr_gameclock), 10 * 8, 8);
+				if (scr_democlock.value)
+					Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
+			}
 		}
 	}
 }
@@ -4211,6 +4220,7 @@ void SCR_Init (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&scr_newHud);
+	Cvar_Register (&scr_newHudClear);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
