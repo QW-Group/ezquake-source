@@ -140,7 +140,7 @@ typedef struct hud_grephandle_s
 hud_grephandle_t	*hud_greps = NULL;					// The list of "grep handles" that are shown if a HUD element is moved offscreen.
 
 hud_grephandle_t	*hud_hoverlist = NULL;				// The list of HUDs the mouse is hovering.
-int					hud_hoverlist_count = 0;			// The number of hovered HUDs.
+int					hud_hoverlist_count = 0;			// The number of hovered HUDs..
 qbool				hud_hoverlist_pos_is_set = false;	// Has the coordinates been set for the hoverlist yet?
 float				hud_hoverlist_x;					// The x position of the hover list.
 float				hud_hoverlist_y;					// The y position of the hover list.
