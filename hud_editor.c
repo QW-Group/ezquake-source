@@ -40,7 +40,7 @@ cvar_t				hud_editor_allowmove	= {"hud_editor_allowmove", "1"};	// Allow moving.
 cvar_t				hud_editor_allowplace	= {"hud_editor_allowplace", "1"};	// Allow placing HUDs.
 cvar_t				hud_editor_allowalign	= {"hud_editor_allowalign", "1"};	// Allow aligning HUDs.
 
-extern hud_t		*hud_huds;										// The list of HUDs.
+extern hud_t		*hud_huds;										// The list of HUDs..
 hud_t				*selected_hud			= NULL;					// The currently selected HUD.
 
 qbool				hud_editor				= false;				// If we're in HUD editor mode or not.
