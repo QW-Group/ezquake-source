@@ -757,6 +757,16 @@ void SB_Servers_OnShow (void)
 	static qbool updated = false;
 
 	if (sb_autoupdate.value && !updated) {
+		if (rebuild_servers_list)
+			Rebuild_Servers_List();
+
+		if (resort_servers)
+		{
+			Sort_Servers();
+			resort_servers = 0;
+		}
+
+
 		GetServerPingsAndInfos(true);
 		updated = true;
 	}
