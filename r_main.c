@@ -599,10 +599,18 @@ void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect) {
 
 // TODO: collect 386-specific code in one place
 #ifdef id386
-	Sys_MakeCodeWriteable ((long)R_Surf8Start,
-		(long)R_Surf8End - (long)R_Surf8Start);
-	colormap = vid.colormap;
-	R_Surf8Patch ();
+	{
+		unsigned long surfcode_start = (unsigned long)R_Surf8Start;
+		unsigned long surfcode_end = (unsigned long)R_Surf8End;
+		unsigned long surfcode_len = surfcode_end - surfcode_start;
+		if (surfcode_end < surfcode_start) {
+			// happens e.g. when incremental linking was enabled
+			Sys_Error("Wrong R_Surf8Start vs. R_Surf8End alignment");
+		}
+		Sys_MakeCodeWriteable (surfcode_start, surfcode_len);
+		colormap = vid.colormap;
+		R_Surf8Patch ();
+	}
 #endif	// id386
 
 	D_ViewChanged ();

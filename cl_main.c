@@ -622,7 +622,7 @@ static void CL_SendConnectPacket(
 	{
 		char tmp[128];
 		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
-		Com_Printf( "0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
+		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
 		strlcat(data, tmp, sizeof(data));
 	}
 	#endif // PROTOCOL_VERSION_FTE 

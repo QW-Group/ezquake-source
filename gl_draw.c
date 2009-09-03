@@ -36,6 +36,8 @@ extern cvar_t scr_coloredText, con_shift;
 
 cvar_t	scr_conalpha		= {"scr_conalpha", "0.8"};
 cvar_t	scr_conback			= {"scr_conback", "1"};
+void OnChange_scr_conpicture(cvar_t *, char *, qbool *);
+cvar_t  scr_conpicture      = {"scr_conpicture", "conback", 0, OnChange_scr_conpicture};
 cvar_t	scr_menualpha		= {"scr_menualpha", "0.7"};
 cvar_t	scr_menudrawhud		= {"scr_menudrawhud", "0"};
 
@@ -168,6 +170,25 @@ void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 	}
 }
 
+void OnChange_scr_conpicture(cvar_t *v, char *s, qbool *cancel)
+{
+	mpic_t *pic_24bit;
+
+	if (!s[0])
+		return;
+
+	if (!(pic_24bit = GL_LoadPicImage(va("gfx/%s", s), "conback", 0, 0, 0)))
+	{
+		Com_Printf("Couldn't load image gfx/%s\n", s);
+		return;
+	}
+
+	memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
+	Draw_AdjustConback();
+	GL_Bind(conback.texnum);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
 
 void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 {
@@ -191,7 +212,6 @@ void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 	GL_Bind(crosshairpic.texnum);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
- 
 }
 
 void customCrosshair_Init(void)
@@ -752,6 +772,7 @@ void Draw_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&scr_conalpha);
 	Cvar_Register (&scr_conback);
+	Cvar_Register (&scr_conpicture);
 	Cvar_Register (&gl_smoothfont);
 	Cvar_Register (&gl_consolefont);
 	Cvar_Register (&gl_alphafont);
@@ -1908,7 +1929,7 @@ void Draw_InitConback (void)
 	if (cb->width != 320 || cb->height != 200)
 		Sys_Error ("Draw_InitConback: conback.lmp size is not 320x200");
 
-	if ((pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0)))
+	if ((pic_24bit = GL_LoadPicImage(va("gfx/%s", scr_conpicture.string), "conback", 0, 0, 0)))
 	{
 		memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 	}
