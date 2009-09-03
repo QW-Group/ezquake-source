@@ -336,7 +336,7 @@ void	Sys_mkdir (const char *path)
 
 //_____________________________________________________________________________________________________Sys_MakeCodeWriteable()
 
-void	Sys_MakeCodeWriteable (UInt32 theStartAddress, UInt32 theLength)
+void	Sys_MakeCodeWriteable (unsigned long theStartAddress, unsigned long theLength)
 {
     SInt			myPageSize = getpagesize();
     unsigned long 	myAddress = (theStartAddress & ~(myPageSize - 1)) - myPageSize;
