@@ -14,9 +14,11 @@
 #include "Ctrl.h"
 #include "settings.h"
 #include "settings_page.h"
+#include "server.h"
 
 #define TOPMARGIN (6*LETTERWIDTH)
 
+settings_page single_menu;
 settings_page ingame_menu;
 settings_page democtrl_menu;
 settings_page botmatch_menu;
@@ -30,10 +32,7 @@ MENU_ALIAS(MIng_ServerBrowser,"menu_slist",false);
 MENU_ALIAS(MIng_Options,"menu_options",false);
 MENU_ALIAS(MIng_Join,"join",true);
 MENU_ALIAS(MIng_Observe,"observe",true);
-MENU_ALIAS(MDemoCtrl_DemoBrowser,"menu_demos",false);
-MENU_ALIAS(MDemoCtrl_SkipMinute,"demo_jump +1:00",false);
 MENU_ALIAS(MIng_Disconnect,"disconnect",true);
-//MENU_ALIAS(MIng_Quit,"quit",false);
 MENU_ALIAS(MIng_Ready, "ready",true);
 MENU_ALIAS(MIng_Break, "break",true);
 MENU_ALIAS(MIng_SkillUp, "skillup",false);
@@ -42,9 +41,24 @@ MENU_ALIAS(MIng_AddBot, "addbot",false);
 MENU_ALIAS(MIng_RemoveBot, "removebot",false);
 MENU_ALIAS(MIng_TeamBlue, "team blue;color 13",true);
 MENU_ALIAS(MIng_TeamRed, "team red;color 4",true);
+MENU_ALIAS(MDemoCtrl_DemoBrowser,"menu_demos",false);
+MENU_ALIAS(MDemoCtrl_SkipMinute,"demo_jump +1:00",false);
 MENU_ALIAS(MDemoCtrl_Skip10Sec, "demo_jump +0:10",false);
 MENU_ALIAS(MDemoCtrl_Back1Min, "demo_jump -1:00",false);
 MENU_ALIAS(MDemoCtrl_Back10Sec, "demo_jump -0:10", false);
+MENU_ALIAS(MSP_Load, "menu_load", false);
+MENU_ALIAS(MSP_Save, "menu_save", false);
+
+setting single_menu_entries[] = {
+	ADDSET_SEPARATOR("In-game Menu"),
+	ADDSET_ACTION("Load Game", MSP_Load, ""),
+	ADDSET_ACTION("Save Game", MSP_Save, ""),
+	ADDSET_BLANK(),
+	ADDSET_ACTION("Options", MIng_Options, ""),
+	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
+	ADDSET_BLANK(),
+	ADDSET_ACTION("Return To Game", MIng_Back, ""),
+};
 
 setting ingame_menu_entries[] = {
 	ADDSET_SEPARATOR("In-game Menu"),
@@ -96,6 +110,7 @@ setting botmatch_menu_entries[] = {
 
 #define DEMOPLAYBACK() (cls.demoplayback || cls.mvdplayback)
 #define BOTMATCH() (!strcmp(cls.gamedirfile, "fbca"))
+#define SINGLEPLAYER() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
 
 static settings_page *M_Ingame_Current(void) {
 	if (DEMOPLAYBACK()) {
@@ -103,6 +118,10 @@ static settings_page *M_Ingame_Current(void) {
 	}
 	else if (BOTMATCH()) {
 		return &botmatch_menu;
+	}
+	else if (SINGLEPLAYER())
+	{
+		return &single_menu;
 	}
 	else {
 		return &ingame_menu;
@@ -131,6 +150,8 @@ qbool Menu_Ingame_Mouse_Event(const mouse_state_t *ms) {
 
 void Menu_Ingame_Init(void)
 {
+	Settings_Page_Init(single_menu, single_menu_entries);
+	Settings_Page_SetMinit(single_menu);
 	Settings_Page_Init(ingame_menu, ingame_menu_entries);
 	Settings_Page_SetMinit(ingame_menu);
 	Settings_Page_Init(democtrl_menu, democtrl_menu_entries);

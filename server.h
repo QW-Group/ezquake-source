@@ -629,6 +629,7 @@ extern	cvar_t	fraglimit;
 extern	cvar_t	timelimit;
 extern	cvar_t	skill;
 extern	cvar_t	coop;
+extern	cvar_t	maxclients;
 
 extern	cvar_t	sv_specprint;	//bliP: spectator print
 
