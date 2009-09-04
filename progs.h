@@ -86,6 +86,7 @@ extern	float		*pr_globals;	// same as pr_global_struct
 extern	int		pr_edict_size;	// in bytes
 extern	int		pr_teamfield;
 extern	cvar_t		sv_progsname; 
+extern	cvar_t		sv_forcenqprogs; 
 
 //============================================================================
 
