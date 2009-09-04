@@ -821,8 +821,8 @@ static void StartNewGame (void) {
 		Cbuf_AddText ("disconnect\n");
 
 	progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat", NULL);
-	if (progs && !file_from_gamedir)
-		Cbuf_AddText ("gamedir qw\n");
+	//if (progs && !file_from_gamedir)
+	//	Cbuf_AddText ("gamedir qw\n");
 	Cbuf_AddText ("map start\n");
 }
 
