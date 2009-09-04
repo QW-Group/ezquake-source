@@ -88,7 +88,7 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 # -DWITH_XMMS2     for xmms2     MP3 player support
 # -DWITH_MPD       for mpd       MP3 player support
 # -DWITH_WINAMP    for winamp    MP3 player support
-PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP -DWITH_FTE_VFS -DUSE_PR2 -DWITH_IRC
+PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP -DWITH_FTE_VFS -DUSE_PR2 -DWITH_IRC -DWITH_TCL
 BASE_CFLAGS = -pipe -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I./libs -I./libs/libircclient
 
 

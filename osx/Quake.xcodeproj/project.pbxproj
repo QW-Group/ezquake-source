@@ -2935,6 +2935,7 @@
 					WITH_KEYMAP,
 					WITH_ZLIB,
 					USE_PR2,
+					WITH_TCL,
 				);
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../libs/**";
 				INFOPLIST_FILE = QuakeWorld/Info.plist;
@@ -3011,6 +3012,7 @@
 					WITH_ZLIB,
 					WITH_JPEG,
 					USE_PR2,
+					WITH_TCL,
 				);
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../libs/**";
 				INFOPLIST_FILE = GLQuakeWorld/Info.plist;
