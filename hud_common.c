@@ -5045,6 +5045,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		while (sorted_teams[k].name)
 		{
 			Draw_SString (x, _y, sorted_teams[k].name, hud_teaminfo_scale->value);
+			sprintf(tmp,"%s %i",TP_ParseFunChars("$.",false), sorted_teams[k].frags);
+			Draw_SString (x+(strlen(sorted_teams[k].name)+1)*FONTWIDTH, _y, tmp, hud_teaminfo_scale->value);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 			for ( j = 0; j < slots_num; j++ ) 
 			{
@@ -5247,6 +5249,16 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				x += FONTWIDTH * scale;
 
 				break;
+
+			case 't':
+				if(!width_only)
+				{
+					sprintf(tmp, "%i", Player_GetTrackId(cl.players[ti_cl->client].userid));
+					Draw_SString (x, y, tmp, scale);
+				}
+				x += FONTWIDTH * scale; // will break if tracknumber is double digits
+				break;
+
 			case '%': // wow, %% result in one %, how smart
 
 				if(!width_only)

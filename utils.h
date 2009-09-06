@@ -67,6 +67,7 @@ int Player_NametoSlot(char *name);
 int Player_StringtoSlot(char *arg);
 int Player_NumtoSlot (int num);
 int Player_GetSlot(char *arg);
+int Player_GetTrackId(int player_id);
 char *Player_MyName(void);
 
 ///
