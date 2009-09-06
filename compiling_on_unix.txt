@@ -1,0 +1,8 @@
+Ubuntu Linux
+============
+
+$ sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev libasound2-dev \
+                       x11proto-xf86dga-dev x11proto-xf86vidmode-dev \
+                       libxxf86dga-dev libxxf86vm-dev libxext-dev libsvga1-dev
+$ ./libs/linux-<arch>/download.sh
+$ make glx x11 svga
