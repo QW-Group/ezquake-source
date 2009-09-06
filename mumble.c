@@ -72,7 +72,7 @@ void Mumble_CreateLink()
 	hMapObject = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, L"MumbleLink");
 	if (hMapObject == NULL)
 	{
-		ST_Printf(PRINT_FAIL,"Mumble initialization failed. Mumble not started ?\n");
+		ST_Printf(PRINT_INFO,"Mumble initialization skipped. Mumble not running.\n");
 		return;
 	}
 
@@ -91,7 +91,7 @@ void Mumble_CreateLink()
 
 	if(shmfd < 0)
 	{
-		ST_Printf(PRINT_FAIL,"Mumble initialization failed. Mumble not started ?\n");
+		ST_Printf(PRINT_INFO,"Mumble initialization skipped. Mumble not running.\n");
 		return;
 	}
 
@@ -121,7 +121,7 @@ void Mumble_DestroyLink()
 	{
 		lm = NULL;
 #endif
-		ST_Printf(PRINT_FAIL,"Mumble Link shut down.\n");
+		ST_Printf(PRINT_INFO,"Mumble Link shut down.\n");
 		return;
 	}
 	else
