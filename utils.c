@@ -490,6 +490,35 @@ char *Player_MyName (void) {
 	return Info_ValueForKey(cls.demoplayback ? cls.userinfo : cl.players[cl.playernum].userinfo, "name");
 }
 
+int Player_GetTrackId(int player_id)
+{
+	int i, count;
+	player_info_t *players[MAX_CLIENTS];
+
+	// Get all the joined players (including spectators).
+	for (count = i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (cl.players[i].name[0])
+		{
+			players[count++] = &cl.players[i];
+		}
+	}
+	
+	// Sort them according to team and if they're a spectator.
+	qsort(players, count, sizeof(player_info_t *), Player_Compare);
+
+	// Find track_id of player.
+	for (i = 0; i < count; i++)
+	{
+		if (player_id == players[i]->userid)
+		{
+			return i+1;
+		}
+	}
+	return -1;
+}
+
+
 int Player_GetSlot(char *arg) 
 {
 	int response;
