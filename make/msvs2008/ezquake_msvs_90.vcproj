@@ -187,7 +187,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;WITH_IRC;WITH_NQPROGS"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;NDEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;WITH_IRC;WITH_NQPROGS;id386"
 				StringPooling="true"
 				MinimalRebuild="false"
 				ExceptionHandling="0"
@@ -429,7 +429,7 @@
 				Optimization="0"
 				FavorSizeOrSpeed="0"
 				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;WITH_IRC;WITH_NQPROGS"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_FTE_VFS;WITH_WINAMP;WITH_IRC;WITH_NQPROGS;id386"
 				MinimalRebuild="true"
 				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
@@ -469,7 +469,7 @@
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
 				OutputFile="..\ezquake-debug.exe"
 				Version=""
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
@@ -956,7 +956,7 @@
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib"
 				OutputFile="..\ezquake64-debug.exe"
 				Version=""
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib;..\..\libs\libircclient"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
@@ -4426,7 +4426,6 @@
 				>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4434,7 +4433,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4486,7 +4484,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4502,7 +4499,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4554,7 +4550,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4570,7 +4565,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4622,7 +4616,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4638,7 +4631,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4690,7 +4682,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4706,7 +4697,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4758,7 +4748,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4774,7 +4763,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4826,7 +4814,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4842,7 +4829,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4894,7 +4880,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4910,7 +4895,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4954,7 +4938,6 @@
 				>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -4962,7 +4945,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5014,7 +4996,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5030,7 +5011,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5082,7 +5062,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5098,7 +5077,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5150,7 +5128,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5166,7 +5143,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5218,7 +5194,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5234,7 +5209,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5286,7 +5260,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5302,7 +5275,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5346,7 +5318,6 @@
 				>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5354,7 +5325,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5406,7 +5376,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5422,7 +5391,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5474,7 +5442,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5490,7 +5457,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5534,7 +5500,6 @@
 				>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
@@ -5542,7 +5507,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="qasm"
