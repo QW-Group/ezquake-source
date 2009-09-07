@@ -6,23 +6,22 @@
 ;  ezquake-gl.exe (GLRelease)
 ;  ezquake.exe (Release)
 ;  gnu.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
-;  mw_hook.dll (who uses this nowaday? :-/ )
 ;  qw/ (dir)
 ;    fragfile.dat (CVS/ezquake/misc/fragfile/fragfile.dat)
 ;    skins/ (dir)
 ;      (CVS/media/game/skins/ go here)
 ;  ezquake/ (dir)
-;    pak0.pak (pak)
+;    base.pk3 (pak)
 ;      / (from cvs/media/game except for cvs/media/game/textures/wad and cvs/media/game/skins/)
-;    hud.pak (pak)
+;    hud.pk3 (pak)
 ;      /textures/wad (from cvs/media/textures/wad)
-;    help.pak
+;    help.pk3
 ;      /help/variables/ (from documentation system)
 ;      /help/commands/ (from documentation system)
-;    progs.pak (pak)
+;    progs.pk3 (pak)
 ;      qwprogs.dat (http://zquake.frag.ru/files/qwprogs.dat)
 ;      spprogs.dat (http://zquake.frag.ru/files/spprogs.dat)
-;    locs.pak (pak) (CVS/media/game/locs.pak)
+;    locs.pk3 (pak) (CVS/media/game/locs)
 ;    cfg/ (dir, see CVS/ezquake/misc/cfg/)
 ;    help/ (dir, see CVS/documentation)
 ;      manual/ (cvs/documentation/manual)
@@ -116,8 +115,8 @@ Section "!ezQuake client" Main
 
   CreateDirectory $INSTDIR\ezquake
   SetOutPath $INSTDIR\ezquake
-  File "ezquake\pak0.pak"
-  File "ezquake\help.pak"
+  File "ezquake\base.pk3"
+  File "ezquake\help.pk3"
   File "ezquake\locs.pk3"
   File "ezquake\levelshots.pk3"
   File "ezquake\pak.lst"
@@ -185,7 +184,7 @@ SectionEnd
 
 Section "QuakeWorld Progs" Progs
   SetOutPath $INSTDIR\ezquake
-  File "ezquake\progs.pak"
+  File "ezquake\progs.pk3"
 SectionEnd
 
 Section "Manual" Manual
@@ -196,17 +195,12 @@ SectionEnd
 
 Section /o "Modern HUD Icons" HUDIcons
   SetOutPath $INSTDIR\ezquake
-  File "ezquake\hud.pak"
+  File "ezquake\hud.pk3"
 SectionEnd
 
 Section /o "Software rendering" Software
   SetOutPath $INSTDIR
   File "ezquake.exe"
-SectionEnd
-
-Section /o "MouseWare Hook" MWHook
-  SetOutPath $INSTDIR
-  File "mw_hook.dll"
 SectionEnd
 
 ; Optional section (can be disabled by the user)
@@ -237,11 +231,11 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\ezquake\keymaps"
   RMDir /r "$INSTDIR\ezquake\manual"
   RMDir /r "$INSTDIR\ezquake\sb"
-  Delete "$INSTDIR\ezquake\pak0.pak"
-  Delete "$INSTDIR\ezquake\hud.pak"
-  Delete "$INSTDIR\ezquake\locs.pak"
-  Delete "$INSTDIR\ezquake\progs.pak"
-  Delete "$INSTDIR\ezquake\help.pak"
+  Delete "$INSTDIR\ezquake\base.pk3"
+  Delete "$INSTDIR\ezquake\hud.pk3"
+  Delete "$INSTDIR\ezquake\locs.pk3"
+  Delete "$INSTDIR\ezquake\progs.pk3"
+  Delete "$INSTDIR\ezquake\help.pk3"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\ezQuake\*.*"
@@ -274,7 +268,6 @@ LangString DSC_SCT_PGS ${LANG_ENGLISH} "You need this to host a Multiplayer game
   !insertmacro MUI_DESCRIPTION_TEXT ${SBIndex} $(DESC_Section2)
   !insertmacro MUI_DESCRIPTION_TEXT ${HUDIcons} $(DESC_Section3)
   !insertmacro MUI_DESCRIPTION_TEXT ${Software} $(DESC_Section4)
-  !insertmacro MUI_DESCRIPTION_TEXT ${MWHook} $(DESC_Section5)
   !insertmacro MUI_DESCRIPTION_TEXT ${StartMenu} $(DESC_Section6)
   !insertmacro MUI_DESCRIPTION_TEXT ${Manual} $(DSC_SCT_MAN)
   !insertmacro MUI_DESCRIPTION_TEXT ${Progs} $(DSC_SCT_PGS)
