@@ -242,7 +242,7 @@ void IN_JoyMove (usercmd_t *cmd);
 cvar_t	m_rate				= {"m_rate",	         "125", CVAR_SILENT};
 cvar_t	m_showrate			= {"m_showrate",         "0",   CVAR_SILENT};
 cvar_t  in_mouse			= {"in_mouse",           "1",   CVAR_LATCH};  // NOTE: "1" is mt_normal
-cvar_t  in_raw_allbuttons   = {"in_raw_allbuttons",  "0"};
+cvar_t  in_raw_allbuttons   = {"in_raw_allbuttons",  "1"};
 cvar_t  in_m_smooth			= {"in_m_smooth",        "0",   CVAR_LATCH};
 
 cvar_t  in_m_mwhook			= {"in_m_mwhook",        "0",   CVAR_LATCH};
