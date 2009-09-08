@@ -139,7 +139,7 @@ void Precache_Source(source_data *s)
     if (serversn > 0)
     {
         SYSTEMTIME tm;
-        if (GetFileLocalTime(va("%s/%s", com_filesearchpath, name), &tm))
+        if (GetFileLocalTime(va("%s/ezquake/%s", com_basedir, name), &tm))
         {
             Reset_Source(s);
             s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
