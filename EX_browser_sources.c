@@ -41,7 +41,7 @@ source_data * Create_Source(void)
 void Reset_Source(source_data *s)
 {
     int i;
-    if (servers != NULL)
+	if (s->servers != NULL)
     {
         for (i=0; i < s->serversn; i++)
             Q_free(s->servers[i]);
@@ -272,8 +272,10 @@ void Update_Source(source_data *s)
             rebuild_servers_list = 1;
 
         if (sb_mastercache.value)
-            DumpSource(s);
-
+		{
+			DumpSource(s);
+			should_dump = false;
+		}
         GetLocalTime(&(s->last_update));
     }
     else
@@ -465,7 +467,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 	// Not having this here leads to crash almost always when some
 	// other action with servers list happens right after this function.
 	// Even 1 ms delay was enough during the tests, previously 500 ms was used.
-    Sys_MSleep(100);
+    //Sys_MSleep(100);
 
     updating_sources = 0;
 	TP_ExecTrigger("f_sbupdatesourcesdone");
@@ -500,6 +502,8 @@ void SB_Sources_Update(qbool full)
 {
 	source_full_update = full;
 	Update_Multiple_Sources(sources, sourcesn);
+    if (rebuild_servers_list)
+        Rebuild_Servers_List();
 }
 
 void SB_Sources_Update_Begin(qbool full)
