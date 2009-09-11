@@ -1447,7 +1447,8 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count) {
 
 void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type) {
 	col_t color;
-	extern cvar_t gl_part_tracer1_color, gl_part_tracer2_color;
+	extern cvar_t gl_part_tracer1_color, gl_part_tracer1_size, gl_part_tracer1_time,
+                  gl_part_tracer2_color, gl_part_tracer2_size, gl_part_tracer2_time;
 
 	switch (type) {
 		case GRENADE_TRAIL:
@@ -1462,10 +1463,10 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 			AddParticleTrail(p_blood3, start, end, type == BLOOD_TRAIL ? 1.35 : 2.4, 2, NULL);
 			break;
 		case TRACER1_TRAIL:
-			AddParticleTrail (p_trailpart, start, end, 3.75, 0.5, gl_part_tracer1_color.color);
+			AddParticleTrail (p_trailpart, start, end, gl_part_tracer1_size.value, gl_part_tracer1_time.value, gl_part_tracer1_color.color);
 			break;
 		case TRACER2_TRAIL:
-			AddParticleTrail (p_trailpart, start, end, 3.75, 0.5, gl_part_tracer2_color.color);
+			AddParticleTrail (p_trailpart, start, end, gl_part_tracer2_size.value, gl_part_tracer2_time.value, gl_part_tracer2_color.color);
 			break;
 		case VOOR_TRAIL:
 			color[0] = 77; color[1] = 0; color[2] = 255;

@@ -163,6 +163,10 @@ cvar_t gl_part_explosions = {"gl_part_explosions", "0"}; // 1
 cvar_t gl_part_trails = {"gl_part_trails", "0"}; // 1
 cvar_t gl_part_tracer1_color = {"gl_part_tracer1_color", "0 124 0", CVAR_COLOR};
 cvar_t gl_part_tracer2_color = {"gl_part_tracer2_color", "255 77 0", CVAR_COLOR};
+cvar_t gl_part_tracer1_size = {"gl_part_tracer1_size", "3.75"};
+cvar_t gl_part_tracer1_time = {"gl_part_tracer1_time", "0.5"};
+cvar_t gl_part_tracer2_size = {"gl_part_tracer2_size", "3.75"};
+cvar_t gl_part_tracer2_time = {"gl_part_tracer2_time", "0.5"};
 cvar_t gl_part_spikes = {"gl_part_spikes", "0"}; // 1
 cvar_t gl_part_gunshots = {"gl_part_gunshots", "0"}; // 1
 cvar_t gl_part_blood = {"gl_part_blood", "0"}; // 1
@@ -1820,7 +1824,11 @@ void R_Init (void) {
 	Cvar_Register (&gl_part_explosions);
 	Cvar_Register (&gl_part_trails);
 	Cvar_Register (&gl_part_tracer1_color);
+	Cvar_Register (&gl_part_tracer1_size);
+	Cvar_Register (&gl_part_tracer1_time);
 	Cvar_Register (&gl_part_tracer2_color);
+	Cvar_Register (&gl_part_tracer2_size);
+	Cvar_Register (&gl_part_tracer2_time);
 	Cvar_Register (&gl_part_spikes);
 	Cvar_Register (&gl_part_gunshots);
 	Cvar_Register (&gl_part_blood);
