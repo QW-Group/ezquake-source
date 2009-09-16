@@ -65,6 +65,8 @@ cvar_t	sys_restart_on_error = {"sys_restart_on_error", "0"};
 cvar_t	timeout = {"timeout", "65"};		// seconds without any message
 cvar_t	zombietime = {"zombietime", "2"};	// seconds to sink messages
 // after disconnect
+cvar_t	sv_cullentities = {"sv_cullentities", "1"};
+
 
 #ifdef SERVERONLY
 cvar_t	rcon_password = {"rcon_password", ""};	// password for remote server commands
@@ -3373,6 +3375,8 @@ void SV_InitLocal (void)
 	Cvar_Register (&sv_qwfwd_port);
 
 	Cvar_Register (&sv_halflifebsp);
+
+	Cvar_Register (&sv_cullentities);
 
 // QW262 -->
 	Cmd_AddCommand ("svadmin", SV_Admin_f);

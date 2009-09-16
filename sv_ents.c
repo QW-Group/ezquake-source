@@ -540,6 +540,63 @@ static void SV_WritePlayersToClient (client_t *client, edict_t *clent, byte *pvs
 	}
 }
 
+#define offsetrandom(MIN,MAX) ((rand() & 32767) * (((MAX)-(MIN)) * (1.0f / 32767.0f)) + (MIN))
+
+extern cvar_t sv_cullentities;
+extern trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end);
+
+qbool SV_InvisibleToClient(edict_t *viewer, edict_t *seen)
+{
+    int		i;
+    trace_t	tr;
+    vec3_t	start;
+    vec3_t	end;
+
+    if (seen->v.movetype == MOVETYPE_PUSH )//dont cull doors and plats :(
+    {
+        return false;
+    }
+
+    if (sv_cullentities.value == 1)    //1 only check player models, 2 = check all ents
+    if (strcmp(pr_strings + seen->v.classname, "player"))    
+        return false;
+
+    memset (&tr, 0, sizeof(tr));                
+    tr.fraction = 1;
+
+    start[0] = viewer->v.origin[0];
+    start[1] = viewer->v.origin[1];
+    start[2] = viewer->v.origin[2] + viewer->v.view_ofs[2];
+
+    //aim straight at the center of "seen" from our eyes
+    end[0] = 0.5 * (seen->v.mins[0] + seen->v.maxs[0]);
+    end[1] = 0.5 * (seen->v.mins[1] + seen->v.maxs[1]);
+    end[2] = 0.5 * (seen->v.mins[2] + seen->v.maxs[2]);            
+
+    tr = SV_ClipMoveToEntity (sv.edicts, start, vec3_origin, vec3_origin, end);
+    if (tr.fraction == 1)// line hit the ent
+            return false;
+
+    //last attempt to eliminate any flaws...
+    if ((!strcmp(pr_strings + seen->v.classname, "player")) || (sv_cullentities.value > 1))
+    {
+        for (i = 0; i < 64; i++)
+        {
+            end[0] = seen->v.origin[0] + offsetrandom(seen->v.mins[0], seen->v.maxs[0]);
+            end[1] = seen->v.origin[1] + offsetrandom(seen->v.mins[1], seen->v.maxs[1]);
+            end[2] = seen->v.origin[2] + offsetrandom(seen->v.mins[2], seen->v.maxs[2]);
+
+            tr = SV_ClipMoveToEntity (sv.edicts, start, vec3_origin, vec3_origin, end);
+            if (tr.fraction == 1)// line hit the ent
+			{
+				    Com_DPrintf (va("found ent in %i hits\n", i));
+                    return false;
+			}
+        }
+    }
+
+    return true;
+}
 
 /*
 =============
@@ -665,6 +722,9 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 
 				if (i == ent->e->num_leafs)
 					continue;		// not visible
+
+				if ((SV_InvisibleToClient(clent,ent)) && (sv_cullentities.value))
+					continue;
 			}
 
 			if (SV_AddNailUpdate (ent))
