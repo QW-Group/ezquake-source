@@ -65,7 +65,7 @@ cvar_t	sys_restart_on_error = {"sys_restart_on_error", "0"};
 cvar_t	timeout = {"timeout", "65"};		// seconds without any message
 cvar_t	zombietime = {"zombietime", "2"};	// seconds to sink messages
 // after disconnect
-cvar_t	sv_cullentities = {"sv_cullentities", "1"};
+cvar_t	sv_cullentities = {"sv_cullentities", "0"};
 
 
 #ifdef SERVERONLY

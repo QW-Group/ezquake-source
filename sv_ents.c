@@ -551,14 +551,16 @@ qbool SV_InvisibleToClient(edict_t *viewer, edict_t *seen)
     trace_t	tr;
     vec3_t	start;
     vec3_t	end;
+	qbool	player;
 
-    if (seen->v.movetype == MOVETYPE_PUSH )//dont cull doors and plats :(
-    {
+    if (seen->v.movetype == MOVETYPE_PUSH ) //dont cull doors and plats :(
         return false;
-    }
 
-    if (sv_cullentities.value == 1)    //1 only check player models, 2 = check all ents
-    if (strcmp(pr_strings + seen->v.classname, "player"))    
+	i = NUM_FOR_EDICT(seen);
+	player = (i >= 1 && i <= MAX_CLIENTS);
+
+	//1 = only check player models, 2 = check all ents
+    if (sv_cullentities.value == 1 && !player)
         return false;
 
     memset (&tr, 0, sizeof(tr));                
@@ -578,7 +580,7 @@ qbool SV_InvisibleToClient(edict_t *viewer, edict_t *seen)
             return false;
 
     //last attempt to eliminate any flaws...
-    if ((!strcmp(pr_strings + seen->v.classname, "player")) || (sv_cullentities.value > 1))
+    if (player || sv_cullentities.value != 1)
     {
         for (i = 0; i < 64; i++)
         {
@@ -589,7 +591,7 @@ qbool SV_InvisibleToClient(edict_t *viewer, edict_t *seen)
             tr = SV_ClipMoveToEntity (sv.edicts, start, vec3_origin, vec3_origin, end);
             if (tr.fraction == 1)// line hit the ent
 			{
-				    Com_DPrintf (va("found ent in %i hits\n", i));
+//				    Com_DPrintf (va("found ent in %i hits\n", i));
                     return false;
 			}
         }
@@ -723,7 +725,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 				if (i == ent->e->num_leafs)
 					continue;		// not visible
 
-				if ((SV_InvisibleToClient(clent,ent)) && (sv_cullentities.value))
+				if (sv_cullentities.value && SV_InvisibleToClient(clent, ent))
 					continue;
 			}
 
