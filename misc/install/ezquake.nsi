@@ -53,7 +53,7 @@
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP "inst_gfx\left.bmp"
 !define MUI_HEADERIMAGE_BITMAP_NOSTRETCH
 !define MUI_FINISHPAGE_NOAUTOCLOSE
-SetCompressor /FINAL /SOLID lzma
+SetCompressor /SOLID /FINAL lzma
 
 ; The name of the installer
 Name "ezQuake"
@@ -235,6 +235,8 @@ Section "Uninstall"
   Delete "$INSTDIR\ezquake\locs.pk3"
   Delete "$INSTDIR\ezquake\progs.pk3"
   Delete "$INSTDIR\ezquake\help.pk3"
+  Delete "$INSTDIR\ezquake\levelshots.pk3"
+  Delete "$INSTDIR\ezquake\pak.lst"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\ezQuake\*.*"
