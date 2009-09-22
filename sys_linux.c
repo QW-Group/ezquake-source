@@ -696,20 +696,21 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 
 /********************************* CLIPBOARD *********************************/
 
-#define SYS_CLIPBOARD_SIZE		256
-static char clipboard_buffer[SYS_CLIPBOARD_SIZE] = {0};
+#if 0
 
-wchar *Sys_GetClipboardTextW(void) {
+#define SYS_CLIPBOARD_SIZE		256
+static wchar clipboard_buffer[SYS_CLIPBOARD_SIZE] = {0};
+
+wchar *Sys_GetClipboardTextW(void)
+{
 	return NULL;
 }
 
-char *Sys_GetClipboardData(void) {
-	return clipboard_buffer;
+void Sys_CopyToClipboard(char *text)
+{
 }
 
-void Sys_CopyToClipboard(char *text) {
-	strlcpy(clipboard_buffer, text, SYS_CLIPBOARD_SIZE);
-}
+#endif
 
 /*************************** INTER PROCESS CALLS *****************************/
 #define PIPE_BUFFERSIZE		1024

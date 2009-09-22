@@ -64,6 +64,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
+#include <X11/Xatom.h>
 
 #include <X11/extensions/xf86dga.h>
 #include <X11/extensions/xf86vmode.h>
@@ -1918,4 +1919,73 @@ void VID_SetDeviceGammaRamp (unsigned short *ramps) {
 	}
 }
 
+/********************************* CLIPBOARD *********************************/
+
+#define SYS_CLIPBOARD_SIZE		256
+static wchar clipboard_buffer[SYS_CLIPBOARD_SIZE] = {0};
+
+wchar *Sys_GetClipboardTextW(void)
+{
+	// in warsow, it depends on is it CTRL-V or SHIFT-INS
+	qbool primary = ((keydown[K_INS] || keydown[KP_INS]) && keydown[K_SHIFT]);
+
+	Window win;
+	Atom type;
+	int format, ret;
+	unsigned long nitems, bytes_after, bytes_left;
+	unsigned char *data;
+        wchar *s, *t;
+	Atom atom;
+
+	if( !dpy )
+		return NULL;
+
+	if( primary )
+	{
+		atom = XInternAtom( dpy, "PRIMARY", True );
+	}
+	else
+	{
+		atom = XInternAtom( dpy, "CLIPBOARD", True );
+	}
+	if( atom == None )
+		return NULL;
+
+	win = XGetSelectionOwner( dpy, atom );
+	if( win == None )
+		return NULL;
+
+	XConvertSelection( dpy, atom, XA_STRING, atom, win, CurrentTime );
+	XFlush( dpy );
+
+	XGetWindowProperty( dpy, win, atom, 0, 0, False, AnyPropertyType, &type, &format, &nitems, &bytes_left,
+	                    &data );
+	if( bytes_left <= 0 )
+		return NULL;
+
+	ret = XGetWindowProperty( dpy, win, atom, 0, bytes_left, False, AnyPropertyType, &type,
+	                          &format, &nitems, &bytes_after, &data );
+	if( ret != Success )
+	{
+		XFree( data );
+		return NULL;
+	}
+
+        s = str2wcs((char *)data);
+        t = clipboard_buffer;
+	// we stop pasting if found particular chars, perhaps that no so smart, we may replace they with space?
+	// however in windows we do the same, so...
+        while (*s && t - clipboard_buffer < SYS_CLIPBOARD_SIZE - 1 && *s != '\n' && *s != '\r' && *s != '\b')
+                *t++ = *s++;
+        *t = 0;
+
+	XFree( data );
+
+	return clipboard_buffer;
+}
+
+void Sys_CopyToClipboard(char *text)
+{
+	; // TODO in 2019
+}
 
