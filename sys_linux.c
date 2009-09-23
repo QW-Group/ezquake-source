@@ -694,24 +694,6 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 
 #endif /* WITH_FTE_VFS */
 
-/********************************* CLIPBOARD *********************************/
-
-#if 0
-
-#define SYS_CLIPBOARD_SIZE		256
-static wchar clipboard_buffer[SYS_CLIPBOARD_SIZE] = {0};
-
-wchar *Sys_GetClipboardTextW(void)
-{
-	return NULL;
-}
-
-void Sys_CopyToClipboard(char *text)
-{
-}
-
-#endif
-
 /*************************** INTER PROCESS CALLS *****************************/
 #define PIPE_BUFFERSIZE		1024
 
