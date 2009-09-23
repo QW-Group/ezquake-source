@@ -25,6 +25,8 @@
 source_data *sources[MAX_SOURCES];
 int sourcesn;
 
+extern sem_t serverlist_semaphore;
+
 source_data * Create_Source(void)
 {
     source_data *s;
@@ -41,7 +43,7 @@ source_data * Create_Source(void)
 void Reset_Source(source_data *s)
 {
     int i;
-    if (servers != NULL)
+	if (s->servers != NULL)
     {
         for (i=0; i < s->serversn; i++)
             Q_free(s->servers[i]);
@@ -139,7 +141,7 @@ void Precache_Source(source_data *s)
     if (serversn > 0)
     {
         SYSTEMTIME tm;
-        if (GetFileLocalTime(va("%s/%s", com_filesearchpath, name), &tm))
+        if (GetFileLocalTime(va("%s/ezquake/%s", com_basedir, name), &tm))
         {
             Reset_Source(s);
             s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
@@ -259,6 +261,7 @@ void Update_Source(source_data *s)
         
     }
 
+	Sys_SemWait(&serverlist_semaphore);
     // copy all servers to source list
     if (serversn > 0)
     {
@@ -272,8 +275,10 @@ void Update_Source(source_data *s)
             rebuild_servers_list = 1;
 
         if (sb_mastercache.value)
-            DumpSource(s);
-
+		{
+			DumpSource(s);
+			should_dump = false;
+		}
         GetLocalTime(&(s->last_update));
     }
     else
@@ -282,7 +287,7 @@ void Update_Source(source_data *s)
             Reset_Source(s);
             s->servers = (server_data **) Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
         }
-    
+    Sys_SemPost(&serverlist_semaphore);
     if (should_dump)
         DumpSource(s);
     //Com_Printf ("Updating %15.15s: %d servers\n", s->name, serversn);
@@ -465,7 +470,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 	// Not having this here leads to crash almost always when some
 	// other action with servers list happens right after this function.
 	// Even 1 ms delay was enough during the tests, previously 500 ms was used.
-    Sys_MSleep(100);
+    //Sys_MSleep(100);
 
     updating_sources = 0;
 	TP_ExecTrigger("f_sbupdatesourcesdone");
@@ -500,6 +505,8 @@ void SB_Sources_Update(qbool full)
 {
 	source_full_update = full;
 	Update_Multiple_Sources(sources, sourcesn);
+    if (rebuild_servers_list)
+        Rebuild_Servers_List();
 }
 
 void SB_Sources_Update_Begin(qbool full)
@@ -790,6 +797,10 @@ void Rebuild_Servers_List(void)
 {
     int i;
     serversn = 0;
+	
+    rebuild_servers_list = 0;
+	Sys_SemWait(&serverlist_semaphore);
+
     for (i=0; i < sourcesn; i++)
         if (sources[i]->checked)
         {
@@ -809,8 +820,9 @@ void Rebuild_Servers_List(void)
     resort_servers = 1;
     rebuild_all_players = 1;
     Servers_pos = 0;
-    rebuild_servers_list = 0;
     serversn_passed = serversn;
+
+	Sys_SemPost(&serverlist_semaphore);
 }
 
 void DumpSource(source_data *s)

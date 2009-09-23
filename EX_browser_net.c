@@ -26,7 +26,9 @@ int PingHost(char *host_to_ping, unsigned short port, int count, int time_out);
 int PingHosts(server_data *servs[], int servsn, int count, int time_out);
 void TP_ExecTrigger (const char *s);
 
-extern sem_t serverlist_semaphore;
+extern sem_t serverinfo_semaphore;
+// To prevent several Serverinfo threads to be started at the same time
+int serverinfo_lock;
 
 typedef struct infohost_s
 {
@@ -564,13 +566,23 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 		SB_Serverlist_Serialize_f();
 	}
 
+	serverinfo_lock = 0;
     return 0;
 }
 
 void GetServerPingsAndInfos(int full)
 {
-    if (rebuild_servers_list)
+	// To prevent several threads to exist simultaneously
+	while(serverinfo_lock)
+		Sys_MSleep(50);
+
+	serverinfo_lock = 1;
+	
+	if (rebuild_servers_list)
         Rebuild_Servers_List();
+
+	if (rebuild_all_players  &&  show_serverinfo == NULL)
+        Rebuild_All_Players();
 
 	if (serversn <= 0 || (sb_hidedead.integer == 0 && SB_AllServersDead())) {
 		// there's a possibility that sources hasn't been queried yet
@@ -607,14 +619,14 @@ DWORD WINAPI AutoupdateProc(void * lpParameter)
         {
             server_data *serv;
 			
-			Sys_SemWait(&serverlist_semaphore);
+			Sys_SemWait(&serverinfo_semaphore);
 			serv = autoupdate_server;
 			if (serv != NULL)
             {
                 GetServerInfo(serv);
                 lastupdatetime = time;
             }
-			Sys_SemPost(&serverlist_semaphore);
+			Sys_SemPost(&serverinfo_semaphore);
 		}
 		
 		Sys_MSleep(1000); // we don't need nor allow updates faster than 1 second anyway
