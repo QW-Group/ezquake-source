@@ -593,6 +593,9 @@ void ResetBinds(void)
 
 	Key_SetBinding(K_ESCAPE, "togglemenu");
 	Key_SetBinding('`',      "toggleconsole");
+#ifdef __APPLE__
+	Key_SetBinding('~',      "toggleconsole");
+#endif
 	Key_SetBinding(K_PAUSE,  "toggleproxymenu");
 
 	Key_SetBinding(K_MOUSE1, "+attack");
