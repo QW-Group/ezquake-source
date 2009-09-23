@@ -1734,7 +1734,7 @@ void TP_ClearLocs_f (void)
 	num_locs = loc_count;
 	TP_ClearLocs ();
 
-	Com_Printf (va("Cleared %d locs.\n", num_locs));
+	Com_Printf ("Cleared %d locs.\n", num_locs);
 }
 
 static void TP_AddLocNode(vec3_t coord, char *name)
@@ -1911,7 +1911,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 
 	// Check if the filename is too long.
 	if(strlen(path) > MAX_LOC_NAME) {
-		Com_Printf(va("TP_SaveLocFile: Filename too long. Max allowed is %d characters\n", MAX_LOC_NAME));
+		Com_Printf("TP_SaveLocFile: Filename too long. Max allowed is %d characters\n", MAX_LOC_NAME);
 		return false;
 	}
 
@@ -1949,7 +1949,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	// Try writing the buffer containing the locs to file.
 	if(!FS_WriteFile(locname, buf, strlen(buf))) {
 		if(!quiet) {
-			Com_Printf(va("TP_SaveLocFile: Could not open %s for writing\n", locname));
+			Com_Printf("TP_SaveLocFile: Could not open %s for writing\n", locname);
 		}
 
 		// Make sure we free our buffer.
@@ -1991,7 +1991,7 @@ void TP_AddLoc(char *locname)
 
 	TP_AddLocNode(location, locname);
 
-	Com_Printf (va("Added location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", locname, location[0], location[1], location[2]));
+	Com_Printf ("Added location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", locname, location[0], location[1], location[2]);
 }
 
 void TP_AddLoc_f (void)
@@ -2038,7 +2038,7 @@ void TP_RemoveClosestLoc (vec3_t location)
 	}
 
 
-	Com_Printf(va("Removed location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", best->name, best->coord[0], best->coord[1], best->coord[2]));
+	Com_Printf("Removed location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", best->name, best->coord[0], best->coord[1], best->coord[2]);
 
 	// If the node we're trying to delete has a
 	// next node attached to it, copy the data from
