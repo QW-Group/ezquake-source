@@ -652,6 +652,8 @@ void PingSendParrallelMultiHosts(pinghost_t *phosts, int nelms, int count) {
 	int i, j;
 	int ret;
 	timerresolution_session_t timer_session;
+	
+	memset(&timer_session, 0, sizeof(timer_session));
 
 	count = bound(1, count, 6);
 	interval = 1000.0 / sb_pingspersec.value;
