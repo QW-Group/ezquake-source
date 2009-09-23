@@ -495,3 +495,4 @@ void IRC_Deinit(void)
 	irc_destroy_session(irc_singlesession);
 }
 #endif
+

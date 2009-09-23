@@ -2352,3 +2352,4 @@ char* escape_regex(char* string)
 
     return out;
 }
+

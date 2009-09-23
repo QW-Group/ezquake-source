@@ -2830,3 +2830,4 @@ void CL_UpdateCaption(qbool force)
 		strlcpy(caption, str, sizeof(caption));
 	}
 }
+

@@ -1897,7 +1897,6 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	locdata_t	*node;
 	char		*buf;
 	char		locname[MAX_OSPATH];
-	extern char com_gamedirfile[MAX_QPATH];
 
 	// Prevents saving of junk data
 	if (!loc_count) {

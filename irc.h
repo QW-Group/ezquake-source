@@ -24,3 +24,4 @@ void IRC_NextChan(void);
 /// select previous channel from the channels list as the current channel
 void IRC_PrevChan(void);
 #endif
+
