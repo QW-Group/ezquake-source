@@ -25,6 +25,8 @@
 source_data *sources[MAX_SOURCES];
 int sourcesn;
 
+extern sem_t serverlist_semaphore;
+
 source_data * Create_Source(void)
 {
     source_data *s;
@@ -259,6 +261,7 @@ void Update_Source(source_data *s)
         
     }
 
+	Sys_SemWait(&serverlist_semaphore);
     // copy all servers to source list
     if (serversn > 0)
     {
@@ -284,7 +287,7 @@ void Update_Source(source_data *s)
             Reset_Source(s);
             s->servers = (server_data **) Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
         }
-    
+    Sys_SemPost(&serverlist_semaphore);
     if (should_dump)
         DumpSource(s);
     //Com_Printf ("Updating %15.15s: %d servers\n", s->name, serversn);
@@ -794,6 +797,10 @@ void Rebuild_Servers_List(void)
 {
     int i;
     serversn = 0;
+	
+    rebuild_servers_list = 0;
+	Sys_SemWait(&serverlist_semaphore);
+
     for (i=0; i < sourcesn; i++)
         if (sources[i]->checked)
         {
@@ -813,8 +820,9 @@ void Rebuild_Servers_List(void)
     resort_servers = 1;
     rebuild_all_players = 1;
     Servers_pos = 0;
-    rebuild_servers_list = 0;
     serversn_passed = serversn;
+
+	Sys_SemPost(&serverlist_semaphore);
 }
 
 void DumpSource(source_data *s)

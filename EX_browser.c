@@ -125,6 +125,7 @@ int abort_ping;
 extern cvar_t cl_proxyaddr;
 
 sem_t serverlist_semaphore;
+sem_t serverinfo_semaphore;
 
 void Serverinfo_Stop(void);
 
@@ -451,7 +452,7 @@ void Serverinfo_Stop(void)
 {
 	show_serverinfo = NULL;
 	autoupdate_serverinfo = 0;
-	Sys_SemDestroy(&serverlist_semaphore);
+	Sys_SemDestroy(&serverinfo_semaphore);
 }
 
 void Serverinfo_Start (server_data *s)
@@ -465,7 +466,7 @@ void Serverinfo_Start (server_data *s)
 	autoupdate_serverinfo = 1;
 	show_serverinfo = s;
 
-	Sys_SemInit(&serverlist_semaphore, 1, 1);
+	Sys_SemInit(&serverinfo_semaphore, 1, 1);
 
     // sort for eliminating ot-updated
 	Sort_Sources();
@@ -784,6 +785,8 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 
 	if (serversn_passed > 0)
 	{
+		Sys_SemWait(&serverlist_semaphore);
+
         Servers_pos = max(Servers_pos, 0);
         Servers_pos = min(Servers_pos, serversn_passed-1);
 
@@ -819,6 +822,7 @@ void SB_Servers_Draw (int x, int y, int w, int h)
             Servers_disp = Servers_pos;
 
 		if (updating_sources) {
+			Sys_SemPost(&serverlist_semaphore);
 			return;
 		}
 
@@ -896,15 +900,16 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 			// Semaphore lock
 			if(show_serverinfo)
 			{
-				Sys_SemWait(&serverlist_semaphore);
+				Sys_SemWait(&serverinfo_semaphore);
 				Draw_Server_Statusbar(x, y, w, h, servers[Servers_pos], Servers_pos, serversn_passed);
-				Sys_SemPost(&serverlist_semaphore);
-			} 
-			else 
+				Sys_SemPost(&serverinfo_semaphore);
+			}
+			else
 			{
 				Draw_Server_Statusbar(x, y, w, h, servers[Servers_pos], Servers_pos, serversn_passed);
 			}
 		}
+		Sys_SemPost(&serverlist_semaphore);
 	} else if (!adding_server) {
 		UI_Print_Center(x, y+8, w, "No servers filtered", false);
 		UI_Print_Center(x, y+24, w, "Press [space] to refresh the list", true);
@@ -1022,7 +1027,7 @@ void Serverinfo_Draw ()
     if (testing_connection)
         h -= 5*8;
 
-	Sys_SemWait(&serverlist_semaphore);
+	Sys_SemWait(&serverinfo_semaphore);
     switch (serverinfo_pos)
     {
         case 0: // players
@@ -1034,7 +1039,7 @@ void Serverinfo_Draw ()
         default:
             ;
     }
-	Sys_SemPost(&serverlist_semaphore);
+	Sys_SemPost(&serverinfo_semaphore);
 
     if (testing_connection)
         SB_Test_Frame();
@@ -2497,8 +2502,10 @@ void Filter_Servers(void)
 
 void Sort_Servers (void)
 {
+	Sys_SemWait(&serverlist_semaphore);
     Filter_Servers();
     qsort(servers, serversn, sizeof(servers[0]), Servers_Compare_Func);
+	Sys_SemPost(&serverlist_semaphore);
 }
 
 
@@ -2833,6 +2840,8 @@ void Browser_Init2 (void)
 
     serversn = serversn_passed = 0;
     sourcesn = 0;
+
+	Sys_SemInit(&serverlist_semaphore, 1, 1);
 
     // read sources from SOURCES_PATH
 	Reload_Sources();
