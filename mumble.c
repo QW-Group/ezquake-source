@@ -142,7 +142,7 @@ void OnChange_mumble_enabled(cvar_t *var, char *value, qbool *cancel)
 }
 
 #ifndef WIN32
-static const int32_t GetTickCount() 
+static int32_t GetTickCount() 
 {
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
