@@ -1137,3 +1137,74 @@ int VID_ConsoleY (int y)
 	return (y);
 }
 // <-- QW262
+
+/********************************* CLIPBOARD *********************************/
+
+#define SYS_CLIPBOARD_SIZE		256
+static wchar clipboard_buffer[SYS_CLIPBOARD_SIZE] = {0};
+
+wchar *Sys_GetClipboardTextW(void)
+{
+	// in warsow, it depends on is it CTRL-V or SHIFT-INS
+	qbool primary = ((keydown[K_INS] || keydown[KP_INS]) && keydown[K_SHIFT]);
+
+	Window win;
+	Atom type;
+	int format, ret;
+	unsigned long nitems, bytes_after, bytes_left;
+	unsigned char *data;
+        wchar *s, *t;
+	Atom atom;
+
+	if( !x_disp )
+		return NULL;
+
+	if( primary )
+	{
+		atom = XInternAtom( x_disp, "PRIMARY", True );
+	}
+	else
+	{
+		atom = XInternAtom( x_disp, "CLIPBOARD", True );
+	}
+	if( atom == None )
+		return NULL;
+
+	win = XGetSelectionOwner( x_disp, atom );
+	if( win == None )
+		return NULL;
+
+	XConvertSelection( x_disp, atom, XA_STRING, atom, win, CurrentTime );
+	XFlush( x_disp );
+
+	XGetWindowProperty( x_disp, win, atom, 0, 0, False, AnyPropertyType, &type, &format, &nitems, &bytes_left,
+	                    &data );
+	if( bytes_left <= 0 )
+		return NULL;
+
+	ret = XGetWindowProperty( x_disp, win, atom, 0, bytes_left, False, AnyPropertyType, &type,
+	                          &format, &nitems, &bytes_after, &data );
+	if( ret != Success )
+	{
+		XFree( data );
+		return NULL;
+	}
+
+        s = str2wcs((char *)data);
+        t = clipboard_buffer;
+	// we stop pasting if found particular chars, perhaps that no so smart, we may replace they with space?
+	// however in windows we do the same, so...
+        while (*s && t - clipboard_buffer < SYS_CLIPBOARD_SIZE - 1 && *s != '\n' && *s != '\r' && *s != '\b')
+                *t++ = *s++;
+        *t = 0;
+
+	XFree( data );
+
+	return clipboard_buffer;
+}
+
+void Sys_CopyToClipboard(char *text)
+{
+	; // TODO in 2019
+}
+
