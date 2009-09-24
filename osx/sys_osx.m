@@ -1055,7 +1055,7 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
             // event at the VOID (tm)
             if ([myEvent keyCode] == 0x0a)
             {
-                Key_Event (0x7e, (myType == NSKeyDown));
+                Key_Event (96, (myType == NSKeyDown));
             }
             
             for (i = 0; i < myKeyboardBufferSize; i++)
