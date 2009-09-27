@@ -1609,6 +1609,7 @@ void Add_Source_Key(int key, wchar unichar)
         {
         case 0:
             newsource_master = !newsource_master; break;
+		case 2:
         case 3:
             if (key == K_ENTER)
             {
@@ -1674,6 +1675,7 @@ void Add_Server_Key(int key, wchar unichar)
     case '-':
         switch (newserver_pos)
         {
+		case 0:
         case 1: // accept
             if (key == K_ENTER)
             {

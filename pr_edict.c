@@ -70,6 +70,8 @@ func_t UserInfo_Changed, localinfoChanged;
 func_t ChatMessage;
 
 cvar_t	sv_progsname = {"sv_progsname", "qwprogs"};
+cvar_t  sv_forcenqprogs = {"sv_forcenqprogs", "0"};
+
 /*
 =================
 ED_ClearEdict
@@ -1266,6 +1268,7 @@ PR_Init
 void PR_Init (void)
 {
 	Cvar_Register(&sv_progsname);
+	Cvar_Register(&sv_forcenqprogs);
 
 	Cmd_AddCommand ("edict", ED_PrintEdict_f);
 	Cmd_AddCommand ("edicts", ED_PrintEdicts);

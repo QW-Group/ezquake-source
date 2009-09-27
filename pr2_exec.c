@@ -43,6 +43,7 @@ void PR2_Init(void)
 	int usedll;
 	Cvar_Register(&sv_progtype);
 	Cvar_Register(&sv_progsname);
+	Cvar_Register(&sv_forcenqprogs);
 #ifdef QVM_PROFILE
 	Cvar_Register(&sv_enableprofile);
 #endif

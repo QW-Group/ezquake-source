@@ -1985,7 +1985,7 @@ void SV_InitOperatorCommands (void)
 	} 
 #endif
 
-	Cmd_AddCommand ("restart", SV_Restart_f);
+	//Cmd_AddCommand ("restart", SV_Restart_f);
 
 	if (dedicated)
 	{

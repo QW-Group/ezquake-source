@@ -6,23 +6,22 @@
 ;  ezquake-gl.exe (GLRelease)
 ;  ezquake.exe (Release)
 ;  gnu.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
-;  mw_hook.dll (who uses this nowaday? :-/ )
 ;  qw/ (dir)
 ;    fragfile.dat (CVS/ezquake/misc/fragfile/fragfile.dat)
 ;    skins/ (dir)
 ;      (CVS/media/game/skins/ go here)
 ;  ezquake/ (dir)
-;    pak0.pak (pak)
+;    base.pk3 (pak)
 ;      / (from cvs/media/game except for cvs/media/game/textures/wad and cvs/media/game/skins/)
-;    hud.pak (pak)
+;    hud.pk3 (pak)
 ;      /textures/wad (from cvs/media/textures/wad)
-;    help.pak
+;    help.pk3
 ;      /help/variables/ (from documentation system)
 ;      /help/commands/ (from documentation system)
-;    progs.pak (pak)
+;    progs.pk3 (pak)
 ;      qwprogs.dat (http://zquake.frag.ru/files/qwprogs.dat)
 ;      spprogs.dat (http://zquake.frag.ru/files/spprogs.dat)
-;    locs.pak (pak) (CVS/media/game/locs.pak)
+;    locs.pk3 (pak) (CVS/media/game/locs)
 ;    cfg/ (dir, see CVS/ezquake/misc/cfg/)
 ;    help/ (dir, see CVS/documentation)
 ;      manual/ (cvs/documentation/manual)
@@ -30,7 +29,7 @@
 ;      xsl/ (cvs/documentation/xsl)
 ;      index.xml (cvs/documentation/index.xml)
 ;    keymaps/ (dir, see CVS/ezquake/misc/keymaps/)
-;    manual/ (dir, offline version of http://ezQuake.SF.net/docs/)
+;    manual/ (dir, link to online version at http://ezquake.sourceforge.net/docs/)
 ;    sb/ (dir, see CVS/ezquake/misc/sb)
 ;  inst_gfx/ (dir)
 ;    top.bmp (cuky)
@@ -54,6 +53,7 @@
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP "inst_gfx\left.bmp"
 !define MUI_HEADERIMAGE_BITMAP_NOSTRETCH
 !define MUI_FINISHPAGE_NOAUTOCLOSE
+SetCompressor /SOLID /FINAL lzma
 
 ; The name of the installer
 Name "ezQuake"
@@ -86,9 +86,9 @@ InstallDirRegKey HKLM "Software\ezQuake" "Install_dir"
 
 !insertmacro MUI_PAGE_INSTFILES
 
-!define MUI_FINISHPAGE_SHOWREADME file://$INSTDIR/ezquake/manual/ezquake.sourceforge.net/docs/indexa0f8.html?setup
+!define MUI_FINISHPAGE_SHOWREADME http://ezquake.sourceforge.net/docs/?setup
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Show Readme"
-!define MUI_FINISHPAGE_LINK_LOCATION file://$INSTDIR/ezquake/manual/ezquake.sourceforge.net/docs/index6b30.html?changelog
+!define MUI_FINISHPAGE_LINK_LOCATION http://ezquake.sourceforge.net/docs/?changelog
 !define MUI_FINISHPAGE_LINK "Changelog"
 !insertmacro MUI_PAGE_FINISH
 
@@ -116,8 +116,8 @@ Section "!ezQuake client" Main
 
   CreateDirectory $INSTDIR\ezquake
   SetOutPath $INSTDIR\ezquake
-  File "ezquake\pak0.pak"
-  File "ezquake\help.pak"
+  File "ezquake\base.pk3"
+  File "ezquake\help.pk3"
   File "ezquake\locs.pk3"
   File "ezquake\levelshots.pk3"
   File "ezquake\pak.lst"
@@ -165,6 +165,10 @@ Section "!ezQuake client" Main
   CreateDirectory $INSTDIR\qw\skins
   SetOutPath $INSTDIR\qw\skins
   File "qw\skins\*.*"
+  
+  CreateDirectory $INSTDIR\ezquake\manual
+  SetOutPath $INSTDIR\ezquake\manual
+  File /r "ezquake\manual\*.*"  
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\ezQuake "Install_Dir" "$INSTDIR"
@@ -185,28 +189,17 @@ SectionEnd
 
 Section "QuakeWorld Progs" Progs
   SetOutPath $INSTDIR\ezquake
-  File "ezquake\progs.pak"
-SectionEnd
-
-Section "Manual" Manual
-  CreateDirectory $INSTDIR\ezquake\manual
-  SetOutPath $INSTDIR\ezquake\manual
-  File /r "ezquake\manual\*.*"
+  File "ezquake\progs.pk3"
 SectionEnd
 
 Section /o "Modern HUD Icons" HUDIcons
   SetOutPath $INSTDIR\ezquake
-  File "ezquake\hud.pak"
+  File "ezquake\hud.pk3"
 SectionEnd
 
 Section /o "Software rendering" Software
   SetOutPath $INSTDIR
   File "ezquake.exe"
-SectionEnd
-
-Section /o "MouseWare Hook" MWHook
-  SetOutPath $INSTDIR
-  File "mw_hook.dll"
 SectionEnd
 
 ; Optional section (can be disabled by the user)
@@ -215,7 +208,7 @@ Section "Start Menu Shortcuts" StartMenu
   CreateDirectory "$SMPROGRAMS\ezQuake"
   CreateShortCut "$SMPROGRAMS\ezQuake\Uninstall.lnk" "$INSTDIR\ezuninstall.exe" ""
   CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezquake-gl.exe" "" "$INSTDIR\ezquake-gl.exe"
-  CreateShortCut "$SMPROGRAMS\ezQuake\Manual.lnk" "$INSTDIR\ezquake\manual\index.html" ""
+  CreateShortCut "$SMPROGRAMS\ezQuake\Manual.lnk" "http://ezquake.sourceforge.net/docs/" ""
 SectionEnd
 
 ;--------------------------------
@@ -237,11 +230,13 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\ezquake\keymaps"
   RMDir /r "$INSTDIR\ezquake\manual"
   RMDir /r "$INSTDIR\ezquake\sb"
-  Delete "$INSTDIR\ezquake\pak0.pak"
-  Delete "$INSTDIR\ezquake\hud.pak"
-  Delete "$INSTDIR\ezquake\locs.pak"
-  Delete "$INSTDIR\ezquake\progs.pak"
-  Delete "$INSTDIR\ezquake\help.pak"
+  Delete "$INSTDIR\ezquake\base.pk3"
+  Delete "$INSTDIR\ezquake\hud.pk3"
+  Delete "$INSTDIR\ezquake\locs.pk3"
+  Delete "$INSTDIR\ezquake\progs.pk3"
+  Delete "$INSTDIR\ezquake\help.pk3"
+  Delete "$INSTDIR\ezquake\levelshots.pk3"
+  Delete "$INSTDIR\ezquake\pak.lst"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\ezQuake\*.*"
@@ -266,7 +261,6 @@ LangString DESC_Section3 ${LANG_ENGLISH} "Modern stylish head up display icons."
 LangString DESC_Section4 ${LANG_ENGLISH} "Will install executable with software rendering support. Install this if your computer's graphics card is really old or is missing OpenGL acceleration."
 LangString DESC_Section5 ${LANG_ENGLISH} "Check in case you want to bind extra mouse buttons when using Logitech mouse with MouseWare drivers."
 LangString DESC_Section6 ${LANG_ENGLISH} "Start menu shortcuts"
-LangString DSC_SCT_MAN ${LANG_ENGLISH} "Offline version of the documentation."
 LangString DSC_SCT_PGS ${LANG_ENGLISH} "You need this to host a Multiplayer game or start a Singleplayer game."
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -274,8 +268,6 @@ LangString DSC_SCT_PGS ${LANG_ENGLISH} "You need this to host a Multiplayer game
   !insertmacro MUI_DESCRIPTION_TEXT ${SBIndex} $(DESC_Section2)
   !insertmacro MUI_DESCRIPTION_TEXT ${HUDIcons} $(DESC_Section3)
   !insertmacro MUI_DESCRIPTION_TEXT ${Software} $(DESC_Section4)
-  !insertmacro MUI_DESCRIPTION_TEXT ${MWHook} $(DESC_Section5)
   !insertmacro MUI_DESCRIPTION_TEXT ${StartMenu} $(DESC_Section6)
-  !insertmacro MUI_DESCRIPTION_TEXT ${Manual} $(DSC_SCT_MAN)
   !insertmacro MUI_DESCRIPTION_TEXT ${Progs} $(DSC_SCT_PGS)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END

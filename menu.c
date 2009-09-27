@@ -821,8 +821,8 @@ static void StartNewGame (void) {
 		Cbuf_AddText ("disconnect\n");
 
 	progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat", NULL);
-	if (progs && !file_from_gamedir)
-		Cbuf_AddText ("gamedir qw\n");
+	//if (progs && !file_from_gamedir)
+	//	Cbuf_AddText ("gamedir qw\n");
 	Cbuf_AddText ("map start\n");
 }
 
@@ -1123,7 +1123,7 @@ void M_Load_Key (int key) {
 
 			// issue the load command
 			if (FS_LoadHunkFile ("spprogs.dat", NULL) && !file_from_gamedir)
-				Cbuf_AddText("disconnect; gamedir qw\n");
+				; //Cbuf_AddText("disconnect; gamedir qw\n");
 			Cbuf_AddText (va ("load s%i\n", load_cursor) );
 			return;
 
