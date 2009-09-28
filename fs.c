@@ -1597,6 +1597,13 @@ archive_fail:
 		return VFSOS_Open(fullname, mode);
 
 	case FS_GAME_OS:	//OS access only, no paks
+		//sss: check userdir first
+		snprintf(fullname, sizeof(fullname), "%s/%s", com_userdir, filename);
+		vfs = VFSOS_Open(fullname, mode);
+		if (vfs) {
+				return vfs;
+		}
+
 		if (*com_homedir)
 		{
 			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
