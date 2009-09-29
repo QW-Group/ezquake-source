@@ -1827,13 +1827,13 @@ int SB_Servers_Key(int key)
 						else
 						{
 							buf[0] = '-';
-							strlcpy (buf + 1, sb_sortservers.string, sizeof (buf));
+							strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
 						}
                     }
 					else
 					{
 						buf[0] = key;
-						strlcpy (buf + 1, sb_sortservers.string, sizeof (buf));
+						strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
                     }
 
 					Cvar_Set(&sb_sortservers, buf);
