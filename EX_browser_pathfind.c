@@ -178,51 +178,49 @@ static nodeid_t SB_PingTree_AddServer(const server_data *data)
 	return node_id;
 }
 
-static void SB_Proxy_ParseReply(nodeid_t id, const char *buf, int buflen)
+static void SB_PingTree_AddProxyPing(netadr_t adr, short dist)
 {
-	int pos = 0;
-	ipaddr_t ip;
-	short dist;
 	nodeid_t id_neighbour;
+	ipaddr_t ip = SB_Netaddr2Ipaddr(&adr);
 
-	ping_nodes[id].nlist_start = ping_neighbours_count;
-	while (pos + 8 <= buflen) {
-		ip.data[0] = *buf++;
-		ip.data[1] = *buf++;
-		ip.data[2] = *buf++;
-		ip.data[3] = *buf++;
-		
-		// skip the port
-		buf++;
-		buf++;
-
-		dist = 0;
-		dist |= 0xF & *buf++;
-		dist |= 0xF0 & *buf++;
-
-		// debug code
-		if (ping_nodes[id].ipaddr.data[0] == 83 && ip.data[0] == 82) {
-			Com_DPrintf("proxy 83.*.*.* ping to 82.*.*.* is %d ms\n", dist);
-		}
-
-		pos += 8;
-		
-		id_neighbour = SB_PingTree_FindIp(ip); // most of the servers should be found
-		if (id_neighbour == -1) {
-			// strange - there is no direct route to this server, but a proxy can reach it (!)
-			id_neighbour = SB_PingTree_AddNode(ip, -1, -1, -1, DIST_INFINITY, 0);
-		}
-		
-		SB_PingTree_AddNeighbour(id_neighbour, dist);
+	id_neighbour = SB_PingTree_FindIp(ip); // most of the servers should be found
+	if (id_neighbour == -1) {
+		// strange - there is no direct route to this server, but a proxy can reach it (!)
+		id_neighbour = SB_PingTree_AddNode(ip, -1, -1, -1, DIST_INFINITY, 0);
 	}
-	ping_nodes[id].nlist_end = ping_neighbours_count;
+	
+	SB_PingTree_AddNeighbour(id_neighbour, dist);
 }
 
-static void SB_Proxy_QueryForPingList(nodeid_t id, const netadr_t *address)
+static void SB_Proxy_ParseReply(const byte *buf, int buflen, proxy_ping_report_callback callback)
+{
+	int entries = buflen / 8;
+	int i;
+
+	for (i = 0; i < entries; i++) {
+		netadr_t adr;
+		short dist = 0;
+
+		adr.type = NA_IP;
+		memcpy(adr.ip, buf, 4);
+		buf += 4;
+		
+		adr.port = 0;
+		adr.port |= 0x00FF & *buf++;
+		adr.port |= 0xFF00 & (*buf++ << 8);
+
+		dist |= 0x00FF & *buf++;
+		dist |= 0xFF00 & (*buf++ << 8);
+
+		callback(adr, dist);
+	}
+}
+
+void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callback callback)
 {
 	socket_t sock;
 	char packet[] = PROXY_PINGLIST_QUERY;
-	char buf[MAX_SERVERS*8];
+	byte buf[MAX_SERVERS*8];
 	struct sockaddr_in addr_to, addr_from;
 	struct timeval timeout;
 	fd_set fd;
@@ -263,7 +261,7 @@ _select:
 		if (addr_from.sin_addr.s_addr != addr_to.sin_addr.s_addr) // martian, discard and see if a valid response came in after it
 			goto _select;
 		if (strncmp("\xff\xff\xff\xffn", buf, 5) == 0)
-			SB_Proxy_ParseReply(id, buf+5, ret-5);
+			SB_Proxy_ParseReply(buf+5, ret-5, callback);
 
 		break;
 	}
@@ -277,7 +275,7 @@ static void SB_PingTree_AddProxy(const server_data *data)
 	id = SB_PingTree_AddServer(data);
 
 	ping_nodes[id].nlist_start = ping_neighbours_count;
-	SB_Proxy_QueryForPingList(id, &data->address);
+	SB_Proxy_QueryForPingList(&data->address, SB_PingTree_AddProxyPing);
 	ping_nodes[id].nlist_end = ping_neighbours_count;
 }
 

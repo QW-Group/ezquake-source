@@ -2774,6 +2774,31 @@ void SB_Serverlist_Unserialize_f(void)
 	fclose(f);
 }
 
+void SB_ProxyDumpPing(netadr_t adr, short dist)
+{
+	Com_Printf("%3d.%3d.%3d.%3d:%5d   %d\n",
+		adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], (int) adr.port, dist);
+}
+
+void SB_ProxyGetPings_f(void)
+{
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <ip>\n", Cmd_Argv(0));
+		return;
+	}
+	else {
+		netadr_t adr;
+
+		if (!NET_StringToAdr(Cmd_Argv(1), &adr)) {
+			Com_Printf("Invalid address\n");
+			return;
+		}
+		Com_Printf("List:\n");
+		SB_Proxy_QueryForPingList(&adr, SB_ProxyDumpPing);
+		Com_Printf("End of list.\n");
+	}
+}
+
 void Shutdown_SB(void)
 {
     Serverinfo_Stop();
@@ -2825,6 +2850,7 @@ void Browser_Init (void)
 	Cmd_AddCommand("sb_sourceadd", SB_Source_Add_f);
 	Cmd_AddCommand("sb_sourcesupdate", SB_Sources_Update_f);
 	Cmd_AddCommand("sb_buildpingtree", SB_PingTree_Build);
+	Cmd_AddCommand("sb_proxygetpings", SB_ProxyGetPings_f);
 
 	if (sb_listcache.integer) {
 		SB_Serverlist_Unserialize_f();

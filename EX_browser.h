@@ -256,7 +256,10 @@ void SB_Specials_Draw(void);
 qbool SB_Specials_Key(int key, wchar unichar);
 
 // EX_browser_pathfind
+typedef void (* proxy_ping_report_callback) (netadr_t adr, short dist);
+
 void SB_PingTree_Build(void);
 void SB_PingTree_DumpPath(const netadr_t *addr);
+void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callback callback);
 
 #endif  // __EX_BROWSER__H__
