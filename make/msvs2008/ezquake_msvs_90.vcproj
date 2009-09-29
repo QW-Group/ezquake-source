@@ -3309,6 +3309,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\EX_browser_pathfind.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\EX_browser_ping.c"
 						>
 					</File>
@@ -4386,13 +4390,6 @@
 				RelativePath="..\..\cl_math.s"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
 					ExcludedFromBuild="true"
 					>
@@ -4431,13 +4428,6 @@
 				<FileConfiguration
 					Name="GLDebug|Win32"
 					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="qasm"
@@ -4496,13 +4486,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -4549,13 +4532,6 @@
 				<FileConfiguration
 					Name="GLDebug|Win32"
 					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="qasm"
@@ -4614,13 +4590,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -4667,13 +4636,6 @@
 				<FileConfiguration
 					Name="GLDebug|Win32"
 					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="qasm"
@@ -4732,13 +4694,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -4791,13 +4746,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -4842,13 +4790,6 @@
 				RelativePath="..\..\math.s"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
 					ExcludedFromBuild="true"
 					>
@@ -4887,13 +4828,6 @@
 				<FileConfiguration
 					Name="GLDebug|Win32"
 					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="qasm"
@@ -4952,13 +4886,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -5005,13 +4932,6 @@
 				<FileConfiguration
 					Name="GLDebug|Win32"
 					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="qasm"
@@ -5070,13 +4990,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -5129,13 +5042,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -5180,13 +5086,6 @@
 				RelativePath="..\..\snd_mixa.s"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLDebug|x64"
 					ExcludedFromBuild="true"
 					>
@@ -5225,13 +5124,6 @@
 				<FileConfiguration
 					Name="GLDebug|Win32"
 					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
 					>
 					<Tool
 						Name="qasm"
@@ -5290,13 +5182,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
@@ -5340,13 +5225,6 @@
 			<File
 				RelativePath="..\..\sys_x86.s"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="GLDebug|x64"
 					ExcludedFromBuild="true"

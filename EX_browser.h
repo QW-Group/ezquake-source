@@ -7,7 +7,7 @@
 #define MAX_UNBOUND 200
 
 #define MAX_SOURCES 200
-#define MAX_SERVERS 5000
+#define MAX_SERVERS 1000
 
 #define MAX_KEYS    100
 #define MAX_PLAYERS 128
@@ -254,5 +254,9 @@ qbool SB_Players_Mouse_Event(const mouse_state_t *ms);
 
 void SB_Specials_Draw(void);
 qbool SB_Specials_Key(int key, wchar unichar);
+
+// EX_browser_pathfind
+void SB_PingTree_Build(void);
+void SB_PingTree_DumpPath(const netadr_t *addr);
 
 #endif  // __EX_BROWSER__H__

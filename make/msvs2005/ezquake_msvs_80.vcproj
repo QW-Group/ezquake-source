@@ -1991,6 +1991,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\EX_browser_pathfind.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\EX_browser_ping.c"
 						>
 					</File>

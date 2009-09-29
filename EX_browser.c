@@ -1966,6 +1966,9 @@ void Serverinfo_Key(int key)
         case 'v':   // past server into console
              PasteServerToConsole(show_serverinfo);
              break;
+		case 'i':
+			SB_PingTree_DumpPath(&show_serverinfo->address);
+			break;
         default:
             switch (serverinfo_pos)
             {
@@ -2821,6 +2824,7 @@ void Browser_Init (void)
 	Cmd_AddCommand("sb_pingsdump", SB_PingsDump_f);
 	Cmd_AddCommand("sb_sourceadd", SB_Source_Add_f);
 	Cmd_AddCommand("sb_sourcesupdate", SB_Sources_Update_f);
+	Cmd_AddCommand("sb_buildpingtree", SB_PingTree_Build);
 
 	if (sb_listcache.integer) {
 		SB_Serverlist_Unserialize_f();
