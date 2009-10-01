@@ -765,6 +765,7 @@ void CL_Connect_f (void)
 {
 	qbool proxy;
 	char *connect_addr = NULL;
+	char *server_buf = NULL;
 
 	if (Cmd_Argc() != 2) 
 	{
@@ -774,11 +775,28 @@ void CL_Connect_f (void)
 
 	// in this part proxy means QWFWD proxy
 	if (cl_proxyaddr.string[0]) {
-		Info_SetValueForKey (cls.userinfo, "prx", Cmd_Argv(1), MAX_INFO_STRING);
-		if (cls.state >= ca_connected) {
-			Cmd_ForwardToServer ();
+		char *secondproxy;
+		if (secondproxy = strchr(cl_proxyaddr.string, '@')) {
+			size_t prx_buf_len = strlen(cl_proxyaddr.string) + strlen(Cmd_Argv(1)) + 2;
+			char *prx_buf = (char *) Q_malloc(prx_buf_len);
+			server_buf = (char *) Q_malloc(strlen(cl_proxyaddr.string) + 1); // much more than needed
+
+			strlcpy(server_buf, cl_proxyaddr.string, secondproxy - cl_proxyaddr.string + 1);
+			connect_addr = server_buf;
+			
+			strlcpy(prx_buf, secondproxy + 1, prx_buf_len);
+			strlcat(prx_buf, "@", prx_buf_len);
+			strlcat(prx_buf, Cmd_Argv(1), prx_buf_len);
+			Info_SetValueForKey(cls.userinfo, "prx", prx_buf, MAX_INFO_STRING);
+			Q_free(prx_buf);
 		}
-		connect_addr = cl_proxyaddr.string;
+		else {
+			Info_SetValueForKey (cls.userinfo, "prx", Cmd_Argv(1), MAX_INFO_STRING);
+			if (cls.state >= ca_connected) {
+				Cmd_ForwardToServer ();
+			}
+			connect_addr = cl_proxyaddr.string;
+		}
 		connected_via_proxy = true;
 	}
 	else
@@ -800,6 +818,8 @@ void CL_Connect_f (void)
 		strlcpy(cls.servername, connect_addr, sizeof(cls.servername));
 		CL_BeginServerConnect();
 	}
+
+	if (server_buf) Q_free(server_buf);
 }
 
 void CL_TCPConnect_f (void)
@@ -1260,33 +1280,32 @@ void CL_Reconnect_f (void)
 		return;
 	}
 
-	if (connected_via_proxy && cl_proxyaddr.string[0]) {
-		// we were on a proxy and user still wants to use a proxy
-		// but maybe this time different one (while the target server is the same)
-		// so change the proxy (actual connection point), while the target server is in userinfo/prx
-		strlcpy(cls.servername, cl_proxyaddr.string, sizeof(cls.servername));
-	}
-	else if (connected_via_proxy && !cl_proxyaddr.string[0]) {
-		// now user wants to connect directly to the server, so take what should be left in the userinfo/prx
-		// actual address of the server should still be there available
-		strlcpy(cls.servername, Info_ValueForKey(cls.userinfo, "prx"), sizeof(cls.servername));
+	if (connected_via_proxy) {
+		// we were connected via a proxy
+		// the target server is (hopefully still) in userinfo/prx
+		char *prx = Info_ValueForKey(cls.userinfo, "prx");
+		char *lastnode = strrchr(prx, '@');
+		if (lastnode) {
+			lastnode++;
+		}
+		else {
+			lastnode = prx;
+		}
+		
+		Cbuf_AddText(va("connect %s\n", lastnode));
 	}
 	else if (!connected_via_proxy && cl_proxyaddr.string[0]) {
-		// everything changes, the current server address gets moved to userinfo/prx
-		Info_SetValueForKey (cls.userinfo, "prx", cls.servername, MAX_INFO_STRING);
-		if (cls.state >= ca_connected) {
-			Cmd_ForwardToServer ();
-		}
-		// and we will connect to the proxy
-		strlcpy(cls.servername, cl_proxyaddr.string, sizeof(cls.servername));
+		// switch the stuff
+		Cbuf_AddText(va("connect %s\n", cls.servername));
 	}
-	// else if (!connected_via_proxy && !cl_proxyaddr.string[0]) // <- 4th case, good old reconnect, no need to do anything special
+	else {
+		// good old reconnect, no need to do anything special
+		Host_EndGame();
+		CL_BeginServerConnect();
+	}
 
 	// remember what's the type of this new connection
 	connected_via_proxy = cl_proxyaddr.string[0];
-
-	Host_EndGame();
-	CL_BeginServerConnect();
 }
 
 extern double qstat_senttime;

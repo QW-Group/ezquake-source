@@ -129,20 +129,69 @@ sem_t serverinfo_semaphore;
 
 void Serverinfo_Stop(void);
 
-static qbool SB_Is_Selected_Proxy(server_data *s)
+static qbool SB_Is_Selected_Proxy(const server_data *s)
 {
-	return (strcmp(s->display.ip, cl_proxyaddr.string) == 0);
+	return (strstr(cl_proxyaddr.string, s->display.ip) != NULL);
+}
+
+// removes given proxy from the proxyaddr list
+// if cl_proxyaddr "a:b:c" and s->ip = "b" then it changes cl_proxyaddr to "a:c"
+static void SB_Proxy_Unselect(const server_data *s)
+{
+	const char *start = strstr(cl_proxyaddr.string, s->display.ip);
+	const char *end;
+	char *buf = (char *) Q_malloc(strlen(cl_proxyaddr.string) + 1);
+	char *bufstart = buf;
+	const char *cur;
+
+	if (start == NULL) {
+		Q_free(buf);
+		return; // invalid call, proxy is not selected
+	}
+
+	for (cur = cl_proxyaddr.string; cur < start - 1;) {
+		*buf++ = *cur++;
+	}
+	*buf = '\0';
+
+	end = strchr(start, '@');
+	if (end != NULL) {
+		cur = end;
+		if (*bufstart == '\0') cur++; // don't copy the '@' sign
+		while (*cur) *buf++ = *cur++;
+		*buf++ = '\0';
+	}
+
+	Cvar_Set(&cl_proxyaddr, bufstart);
+
+	Q_free(bufstart);
+}
+
+// adds selected proxy to the end of the proxies list
+static void SB_Proxy_Select(const server_data *s)
+{
+	size_t len = strlen(s->display.ip) + strlen(cl_proxyaddr.string) + 2;
+	char *buf = (char *) Q_malloc(len);
+	
+	*buf = '\0';
+	strlcat(buf, cl_proxyaddr.string, len);
+	if (*buf) {
+		strlcat(buf, "@", len);
+	}
+	strlcat(buf, s->display.ip, len);
+
+	Cvar_Set(&cl_proxyaddr, buf);
+
+	Q_free(buf);
 }
 
 static void SB_Select_QWfwd(server_data *s)
 {
 	if (SB_Is_Selected_Proxy(s)) {
-		// unselect
-		Cvar_Set(&cl_proxyaddr, "");
+		SB_Proxy_Unselect(s);
 	}
 	else {
-		// select
-		Cvar_Set(&cl_proxyaddr, show_serverinfo->display.ip);
+		SB_Proxy_Select(s);
 	}
 	S_LocalSound ("misc/menu2.wav");
 	Serverinfo_Stop();
