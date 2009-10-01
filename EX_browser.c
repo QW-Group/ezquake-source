@@ -87,7 +87,7 @@ cvar_t  sb_sortplayers   = {"sb_sortplayers",     "92"}; // not in new menu
 cvar_t  sb_sortsources   = {"sb_sortsources",      "3"}; // not in new menu
 
 cvar_t  sb_autohide      = {"sb_autohide",         "1"}; // not in menu
-
+cvar_t  sb_findroutes    = {"sb_findroutes",       "0"};
 
 // filters
 cvar_t  sb_hideempty     = {"sb_hideempty",        "1"};
@@ -128,6 +128,16 @@ sem_t serverlist_semaphore;
 sem_t serverinfo_semaphore;
 
 void Serverinfo_Stop(void);
+
+void SB_ServerList_Lock(void)
+{
+	Sys_SemWait(&serverlist_semaphore);
+}
+
+void SB_ServerList_Unlock(void)
+{
+	Sys_SemPost(&serverlist_semaphore);
+}
 
 static qbool SB_Is_Selected_Proxy(const server_data *s)
 {
@@ -197,12 +207,8 @@ static void SB_Select_QWfwd(server_data *s)
 	Serverinfo_Stop();
 }
 
-static void Join_Server (server_data *s)
+static void SB_Browser_Hide(const server_data *s)
 {
-	Cbuf_AddText ("join ");
-	Cbuf_AddText (s->display.ip);
-	Cbuf_AddText ("\n");
-
 	if (sb_autohide.value)
 	{
 		if (sb_autohide.value > 1  ||  strcmp(s->display.gamedir, "qizmo")) {
@@ -213,20 +219,21 @@ static void Join_Server (server_data *s)
 	}
 }
 
+static void Join_Server (server_data *s)
+{
+	Cbuf_AddText ("join ");
+	Cbuf_AddText (s->display.ip);
+	Cbuf_AddText ("\n");
+	SB_Browser_Hide(s);
+}
+
 static void Observe_Server (server_data *s)
 {
 	Cbuf_AddText ("observe ");
 	Cbuf_AddText (s->display.ip);
 	Cbuf_AddText ("\n");
 
-	if (sb_autohide.value)
-	{
-		if (sb_autohide.value > 1  ||  strcmp(s->display.gamedir, "qizmo")) {
-			key_dest = key_game;
-			m_state = m_none;
-			M_Draw();
-		}
-	}
+	SB_Browser_Hide(s);
 }
 
 // case insensitive and red-insensitive compare
@@ -641,7 +648,7 @@ void Add_ColumnColored(int x, int y, int *pos, const char *t, int w, const char*
 	snprintf (buf, sizeof(buf), "&c%s%s", color, t);
 	
     (*pos) -= w;
-	UI_Print_Center(x + (*pos)*8, y, 8*(w+4), buf, false);
+	UI_Print_Center(x + (*pos)*8, y, 8*(w+5), buf, false);
     (*pos)--;
 }
 
@@ -913,8 +920,14 @@ void SB_Servers_Draw (int x, int y, int w, int h)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.map, COL_MAP, servnum==Servers_pos);
             if (sb_showgamedir.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.gamedir, COL_GAMEDIR, servnum==Servers_pos);
-            if (sb_showping.value)
-                Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ping, COL_PING, servnum==Servers_pos);
+			if (sb_showping.value) {
+				if (servers[servnum]->bestping >= 0) {
+					Add_ColumnColored(x, y+8*(i+1), &pos, servers[servnum]->display.bestping, COL_PING, "ff0");
+				}
+				else {
+					Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ping, COL_PING, servnum==Servers_pos);
+				}
+			}
             if (sb_showaddress.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ip, COL_IP, servnum==Servers_pos);
 			
@@ -2018,6 +2031,10 @@ void Serverinfo_Key(int key)
 		case 'i':
 			SB_PingTree_DumpPath(&show_serverinfo->address);
 			break;
+		case 'x':
+			SB_PingTree_ConnectBestPath(&show_serverinfo->address);
+			SB_Browser_Hide(show_serverinfo);
+			break;
         default:
             switch (serverinfo_pos)
             {
@@ -2686,7 +2703,7 @@ void SB_Sources_Update_f(void)
 // (which is significantly faster than full refresh).
 // Of course users should do full-update of their list after some time so that 
 // new servers have a chance to appear.
-#define SERIALIZE_FILE_VERSION 1002
+#define SERIALIZE_FILE_VERSION 1003
 void SB_Serverlist_Serialize(FILE *f)
 {
 	int version = SERIALIZE_FILE_VERSION;
@@ -2891,6 +2908,7 @@ void Browser_Init (void)
     Cvar_Register(&sb_mastercache);
 	Cvar_Register(&sb_autoupdate);
 	Cvar_Register(&sb_listcache);
+	Cvar_Register(&sb_findroutes);
 	Cvar_ResetCurrentGroup();
 
     Cmd_AddCommand("addserver", AddServer_f);

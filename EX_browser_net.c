@@ -94,6 +94,18 @@ void SetPing(server_data *s, int ping)
         snprintf (s->display.ping, sizeof (s->display.ping), "%3d", ping > 999 ? 999 : ping);
 
     s->ping = ping;
+	
+	SB_Server_SetBestPing(s, -1);
+}
+
+void SB_Server_SetBestPing(server_data *s, int bestping)
+{
+    if (bestping < 0)
+        strlcpy (s->display.bestping, "n/a", sizeof (s->display.bestping));
+    else
+        snprintf (s->display.bestping, sizeof (s->display.bestping), "%3d", bestping > 999 ? 999 : bestping);
+
+    s->bestping = bestping;
 }
 
 qbool SB_AllServersDead()
@@ -564,6 +576,10 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 	
 	if (sb_listcache.integer) {
 		SB_Serverlist_Serialize_f();
+	}
+
+	if (sb_findroutes.integer) {
+		SB_PingTree_Build();
 	}
 
 	serverinfo_lock = 0;

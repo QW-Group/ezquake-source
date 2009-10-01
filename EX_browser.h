@@ -52,6 +52,8 @@ extern cvar_t  sb_sortservers;      // sorting mode in servers list
 
 extern cvar_t  sb_autohide;         // hide browser after connect
 
+extern cvar_t  sb_findroutes;       // look for best available route automatically
+
 extern cvar_t  sb_sourcevalidity;   // source validity in minutes
 extern cvar_t  sb_mastercache;      // if cache master query results
 
@@ -66,6 +68,7 @@ extern cvar_t  sb_showproxies;
 typedef struct column_s
 {
     char ping [COL_PING + 1];
+	char bestping [COL_PING + 1];
     char ip [COL_IP + 1];
     char name [COL_NAME + 1];
     char map [COL_MAP + 1];
@@ -98,6 +101,7 @@ typedef struct server_data_s
 {
     int passed_filters;
     int ping;
+	int bestping;
     netadr_t    address;
     columns     display;
     char *keys[MAX_KEYS], *values[MAX_KEYS];
@@ -204,6 +208,8 @@ char * next_space(char *s);
 char * next_nonspace(char *s);
 char * next_quote(char *s);
 
+void SB_ServerList_Lock(void);
+void SB_ServerList_Unlock(void);
 
 // sources
 qbool SB_Sources_Dump(void);
@@ -227,6 +233,7 @@ char *ValueForKey(server_data *s, char *k);
 
 void SetPing999(server_data *s);
 void SetPing(server_data *s, int ping);
+void SB_Server_SetBestPing(server_data *s, int bestping);
 
 void Shutdown_SB(void);
 void SB_RootInit(void);    // must be called as root
@@ -261,5 +268,6 @@ typedef void (* proxy_ping_report_callback) (netadr_t adr, short dist);
 void SB_PingTree_Build(void);
 void SB_PingTree_DumpPath(const netadr_t *addr);
 void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callback callback);
+void SB_PingTree_ConnectBestPath(const netadr_t *addr);
 
 #endif  // __EX_BROWSER__H__
