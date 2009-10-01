@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -88,25 +88,25 @@ int weapon_order[MAXWEAPONS] = {2, 1};
 
 int IN_BestWeapon (void);
 
-void KeyDown_common (kbutton_t *b, int k) 
+void KeyDown_common (kbutton_t *b, int k)
 {
 	if (k == b->down[0] || k == b->down[1])
 		return;		// repeating key
-	
-	if (!b->down[0]) 
+
+	if (!b->down[0])
 	{
 		b->down[0] = k;
-	} 
-	else if (!b->down[1]) 
+	}
+	else if (!b->down[1])
 	{
 		b->down[1] = k;
-	} 
-	else 
+	}
+	else
 	{
 		Com_Printf ("Three keys down for a button!\n");
 		return;
 	}
-	
+
 	if (b->state & 1)
 		return;		// still down
 	b->state |= 1 + 2;	// down + impulse down
@@ -167,7 +167,7 @@ void IN_KLookDown (void) {KeyDown(&in_klook);}
 void IN_KLookUp (void) {KeyUp(&in_klook);}
 
 void IN_MLookDown (void) {KeyDown(&in_mlook);}
-void IN_MLookUp (void) 
+void IN_MLookUp (void)
 {
 	if (concussioned) return;
 	KeyUp(&in_mlook);
@@ -207,7 +207,7 @@ void IN_SpeedUp(void) {KeyUp(&in_speed);}
 void IN_StrafeDown(void) {KeyDown(&in_strafe);}
 void IN_StrafeUp(void) {KeyUp(&in_strafe);}
 
-// returns true if given command is a protected movement command and was executed successfully
+// Returns true if given command is a protected movement command and was executed successfully
 qbool Key_TryMovementProtected(const char *cmd, qbool down, int key)
 {
 	typedef void (*KeyPress_fnc) (kbutton_t *b, int key);
@@ -234,20 +234,20 @@ qbool Key_TryMovementProtected(const char *cmd, qbool down, int key)
 	}
 }
 
-void IN_AttackDown(void) 
+void IN_AttackDown(void)
 {
 	int best;
 	if (cl_weaponpreselect.value && (best = IN_BestWeapon()))
 			in_impulse = best;
-	
+
 	KeyDown(&in_attack);
 }
 
 void IN_AttackUp(void)
 {
-	if (CL_INPUT_WEAPONHIDE()) 
+	if (CL_INPUT_WEAPONHIDE())
 	{
-		if (cl_weaponhide_axe.integer) 
+		if (cl_weaponhide_axe.integer)
 		{
 			// always switch to axe because user wants to
 			in_impulse = 1;
@@ -256,7 +256,7 @@ void IN_AttackUp(void)
 		{
 			// performs "weapon 2 1"
 			// that means: if player has shotgun and shells, select shotgun, otherwise select axe
-			in_impulse = (cl.stats[STAT_ITEMS] & IT_SHOTGUN && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1; 
+			in_impulse = (cl.stats[STAT_ITEMS] & IT_SHOTGUN && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1;
 		}
 	}
 	KeyUp(&in_attack);
@@ -268,7 +268,7 @@ void IN_Attack2Down (void) { KeyDown(&in_attack2);}
 void IN_Attack2Up (void) { KeyUp(&in_attack2);}
 
 
-void IN_JumpDown(void) 
+void IN_JumpDown(void)
 {
 	qbool up;
 	int pmt;
@@ -290,7 +290,7 @@ void IN_JumpDown(void)
 
 	KeyDown(up ? &in_up : &in_jump);
 }
-void IN_JumpUp(void) 
+void IN_JumpUp(void)
 {
 	if (cl_smartjump.value)
 		KeyUp(&in_up);
@@ -298,12 +298,12 @@ void IN_JumpUp(void)
 }
 
 // called within 'impulse' or 'weapon' commands, remembers it's first 10 (MAXWEAPONS) arguments
-void IN_RememberWpOrder (void) 
+void IN_RememberWpOrder (void)
 {
 	int i, c;
 	c = Cmd_Argc() - 1;
 
-	for (i = 0; i < MAXWEAPONS; i++) 
+	for (i = 0; i < MAXWEAPONS; i++)
 		weapon_order[i] = (i < c) ? Q_atoi(Cmd_Argv(i+1)) : 0;
 }
 
@@ -326,20 +326,20 @@ int IN_BestWeaponReal(void)
 }
 
 // finds the best weapon from the carried weapons; if none is found, returns implicit
-static int IN_BestWeapon_Common(int implicit) 
+static int IN_BestWeapon_Common(int implicit)
 {
 	int i, imp, items;
 	int best = implicit;
 
 	items = cl.stats[STAT_ITEMS];
 
-	for (i = MAXWEAPONS - 1; i >= 0; i--) 
+	for (i = MAXWEAPONS - 1; i >= 0; i--)
 	{
 		imp = weapon_order[i];
 		if (imp < 1 || imp > 8)
 			continue;
 
-		switch (imp) 
+		switch (imp)
 		{
 			case 1:
 				if (items & IT_AXE)
@@ -378,7 +378,7 @@ static int IN_BestWeapon_Common(int implicit)
 	return best;
 }
 
-void IN_Impulse (void) 
+void IN_Impulse (void)
 {
 	int best;
 
@@ -394,7 +394,7 @@ void IN_Impulse (void)
 }
 
 // This is the same command as impulse but cl_weaponpreselect can be used in here, while for impulses cannot be used.
-void IN_Weapon(void) 
+void IN_Weapon(void)
 {
 	int c, best, mode;
 	if ((c = Cmd_Argc() - 1) < 1) {
@@ -422,7 +422,7 @@ void IN_Weapon(void)
 		mode = (cl.deathmatch == 1) ? 2 : 0;
 	}
 
-	switch (mode) 
+	switch (mode)
 	{
 		case 2:
 			if ((in_attack.state & 3) && best) // user is holding +attack and there is some weapon available
@@ -432,7 +432,7 @@ void IN_Weapon(void)
 		default: case 0:	// no pre-selection
 			if (best)
 				in_impulse = best;
-			
+
 			break;
 	}
 }
@@ -443,16 +443,16 @@ Returns 0.25 if a key was pressed and released during the frame,
 0 if held then released, and
 1.0 if held for the entire time
 */
-float CL_KeyState (kbutton_t *key, qbool lookbutton) 
+float CL_KeyState (kbutton_t *key, qbool lookbutton)
 {
 	float val;
 	qbool impulsedown, impulseup, down;
-	
+
 	impulsedown = key->state & 2;
 	impulseup = key->state & 4;
 	down = key->state & 1;
 	val = 0.0;
-	
+
 	if (impulsedown && !impulseup)
 	{
 		if (down)
@@ -483,7 +483,7 @@ float CL_KeyState (kbutton_t *key, qbool lookbutton)
 	}
 
 	key->state &= 1;	// clear impulses
-	
+
 	return val;
 }
 
@@ -513,9 +513,9 @@ cvar_t	m_side = {"m_side","0.8"};
 cvar_t	m_accel = {"m_accel", "0", CVAR_ARCHIVE};
 
 
-void CL_Rotate_f (void) 
+void CL_Rotate_f (void)
 {
-	if (Cmd_Argc() != 2) 
+	if (Cmd_Argc() != 2)
 	{
 		Com_Printf("Usage: %s <degrees>\n", Cmd_Argv(0));
 		return;
@@ -528,7 +528,7 @@ void CL_Rotate_f (void)
 }
 
 // Moves the local angle positions.
-void CL_AdjustAngles (void) 
+void CL_AdjustAngles (void)
 {
 	float basespeed, speed, up, down, frametime;
 
@@ -538,8 +538,8 @@ void CL_AdjustAngles (void)
 		frametime = cls.trueframetime;
 
 	basespeed = ((in_speed.state & 1) ? cl_anglespeedkey.value : 1);
-	
-	if (!(in_strafe.state & 1)) 
+
+	if (!(in_strafe.state & 1))
 	{
 		speed = basespeed * cl_yawspeed.value;
 		if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2)
@@ -549,19 +549,19 @@ void CL_AdjustAngles (void)
 		cl.viewangles[YAW] += speed * CL_KeyState(&in_left, true);
 		cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
 	}
-	
+
 	speed = basespeed * cl_pitchspeed.value;
 	if ((cl.fpd & FPD_LIMIT_PITCH) || allow_scripts.value == 0)
 		speed = bound(-700, speed, 700);
 	speed *= frametime;
-	if (in_klook.state & 1)	
+	if (in_klook.state & 1)
 	{
 		V_StopPitchDrift ();
 		cl.viewangles[PITCH] -= speed * CL_KeyState(&in_forward, true);
 		cl.viewangles[PITCH] += speed * CL_KeyState(&in_back, true);
 	}
 
-	
+
 	up = CL_KeyState(&in_lookup, true);
 	down = CL_KeyState(&in_lookdown, true);
 	cl.viewangles[PITCH] -= speed * up;
@@ -575,23 +575,23 @@ void CL_AdjustAngles (void)
 		cl.viewangles[PITCH] = cl.minpitch;
 
 	//cl.viewangles[PITCH] = bound(cl.min!pitch, cl.viewangles[PITCH], cl.ma!xpitch);
-	cl.viewangles[ROLL] = bound(-50, cl.viewangles[ROLL], 50);		
-} 
+	cl.viewangles[ROLL] = bound(-50, cl.viewangles[ROLL], 50);
+}
 
 // Send the intended movement message to the server.
-void CL_BaseMove (usercmd_t *cmd) 
-{	
+void CL_BaseMove (usercmd_t *cmd)
+{
 	CL_AdjustAngles ();
-	
+
 	memset (cmd, 0, sizeof(*cmd));
-	
+
 	VectorCopy (cl.viewangles, cmd->angles);
-	
+
 	if (cl_iDrive.integer)
 	{
 		float s1, s2;
 
-		if (in_strafe.state & 1) 
+		if (in_strafe.state & 1)
 		{
 			s1 = CL_KeyState (&in_right, false);
 			s2 = CL_KeyState (&in_left, false);
@@ -636,7 +636,7 @@ void CL_BaseMove (usercmd_t *cmd)
 		cmd->upmove += cl_upspeed.value * s1;
 		cmd->upmove -= cl_upspeed.value * s2;
 
-		if (!(in_klook.state & 1)) 
+		if (!(in_klook.state & 1))
 		{
 			s1 = CL_KeyState (&in_forward, false);
 			s2 = CL_KeyState (&in_back, false);
@@ -655,7 +655,7 @@ void CL_BaseMove (usercmd_t *cmd)
 	}
 	else
 	{
-		if (in_strafe.state & 1) 
+		if (in_strafe.state & 1)
 		{
 			cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right, false);
 			cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left, false);
@@ -667,7 +667,7 @@ void CL_BaseMove (usercmd_t *cmd)
 		cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up, false);
 		cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down, false);
 
-		if (!(in_klook.state & 1)) 
+		if (!(in_klook.state & 1))
 		{
 			cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward, false);
 			cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back, false);
@@ -675,13 +675,13 @@ void CL_BaseMove (usercmd_t *cmd)
 	}
 
 	// adjust for speed key
-	if (in_speed.state & 1)	
+	if (in_speed.state & 1)
 	{
 		cmd->forwardmove *= cl_movespeedkey.value;
 		cmd->sidemove *= cl_movespeedkey.value;
 		cmd->upmove *= cl_movespeedkey.value;
-	}	
-	
+	}
+
 	#ifdef JSS_CAM
 	{
 		static float zoomspeed = 0;
@@ -690,15 +690,15 @@ void CL_BaseMove (usercmd_t *cmd)
 		{
 			zoomspeed -= CL_KeyState(&in_forward, false) * cls.trueframetime * cam_zoomaccel.value;
 			zoomspeed += CL_KeyState(&in_back, false) * cls.trueframetime * cam_zoomaccel.value;
-			if (!CL_KeyState(&in_forward, false) && !CL_KeyState(&in_back, false)) 
+			if (!CL_KeyState(&in_forward, false) && !CL_KeyState(&in_back, false))
 			{
-				if (zoomspeed > 0) 
+				if (zoomspeed > 0)
 				{
 					zoomspeed -= cls.trueframetime * cam_zoomaccel.value;
 					if (zoomspeed < 0)
 						zoomspeed = 0;
 				}
-				else if (zoomspeed < 0) 
+				else if (zoomspeed < 0)
 				{
 					zoomspeed += cls.trueframetime * cam_zoomaccel.value;
 					if (zoomspeed > 0)
@@ -707,7 +707,7 @@ void CL_BaseMove (usercmd_t *cmd)
 			}
 			zoomspeed = bound (-cam_zoomspeed.value, zoomspeed, cam_zoomspeed.value);
 
-			if (zoomspeed) 
+			if (zoomspeed)
 			{
 				float dist = Cvar_Value("cam_dist");
 
@@ -721,7 +721,7 @@ void CL_BaseMove (usercmd_t *cmd)
 	#endif // JSS_CAM
 }
 
-int MakeChar (int i) 
+int MakeChar (int i)
 {
 	i &= ~3;
 	if (i < -127 * 4)
@@ -736,7 +736,7 @@ void CL_FinishMove (usercmd_t *cmd)
 	int i, ms;
 	float frametime;
 	static double extramsec = 0;
-	extern cvar_t allow_scripts; 
+	extern cvar_t allow_scripts;
 
 	if (Movie_IsCapturing() && movie_steadycam.value)
 		frametime = movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
@@ -781,8 +781,8 @@ void CL_FinishMove (usercmd_t *cmd)
 	)
 	{
 			cmd->impulse = 0;
-	} 
-	else 
+	}
+	else
 	{
 		cmd->impulse = in_impulse;
 	}
@@ -824,7 +824,7 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 
 int cmdtime_msec = 0;
 
-void CL_SendCmd (void) 
+void CL_SendCmd (void)
 {
 	sizebuf_t buf;
 	byte data[128];
@@ -834,7 +834,7 @@ void CL_SendCmd (void)
 	static float pps_balance = 0;
 	static int dropcount = 0;
 
-	if (cls.demoplayback && !cls.mvdplayback)	
+	if (cls.demoplayback && !cls.mvdplayback)
 		return; // sendcmds come from the demo
 
 	#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
@@ -859,7 +859,7 @@ void CL_SendCmd (void)
 
 	// allow mice or other external controllers to add to the move
 
-	if (cl_independentPhysics.value == 0 || (physframe && cl_independentPhysics.value != 0)) 
+	if (cl_independentPhysics.value == 0 || (physframe && cl_independentPhysics.value != 0))
 	{
 		IN_Move(cmd);
 	}
@@ -873,14 +873,14 @@ void CL_SendCmd (void)
 
 	Cam_FinishMove(cmd);
 
-	if (cls.mvdplayback) 
+	if (cls.mvdplayback)
 	{
 		CL_CalcPlayerFPS(&cl.players[cl.playernum], cmd->msec);
         cls.netchan.outgoing_sequence++;
 		return;
 	}
 
-	SZ_Init (&buf, data, sizeof(data)); 
+	SZ_Init (&buf, data, sizeof(data));
 
 	SZ_Write (&buf, cls.cmdmsg.data, cls.cmdmsg.cursize);
 	if (cls.cmdmsg.overflowed)
@@ -927,13 +927,13 @@ void CL_SendCmd (void)
 		cls.netchan.outgoing_sequence);
 
 	// request delta compression of entities
-	if (cls.netchan.outgoing_sequence - cl.validsequence >= UPDATE_BACKUP - 1) 
+	if (cls.netchan.outgoing_sequence - cl.validsequence >= UPDATE_BACKUP - 1)
 	{
 		cl.validsequence = 0;
 		cl.delta_sequence = 0;
 	}
 
-	if (cl.delta_sequence && !cl_nodelta.value && cls.state == ca_active) 
+	if (cl.delta_sequence && !cl_nodelta.value && cls.state == ca_active)
 	{
 		cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].delta_sequence = cl.delta_sequence;
 		MSG_WriteByte (&buf, clc_delta);
@@ -941,8 +941,8 @@ void CL_SendCmd (void)
 
 		// network stats table
 		network_stats[cls.netchan.outgoing_sequence&NETWORK_STATS_MASK].delta = 1;
-	} 
-	else 
+	}
+	else
 	{
 		cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].delta_sequence = -1;
 	}
@@ -966,8 +966,8 @@ void CL_SendCmd (void)
 			if (pps_balance > 0.1) pps_balance = 0.1;
 			if (pps_balance < -0.1) pps_balance = -0.1;
 			dropcount = 0;
-		} 
-		else 
+		}
+		else
 		{
 			// don't count this message when calculating PL
 			cl.frames[i].receivedtime = -3;
@@ -977,7 +977,7 @@ void CL_SendCmd (void)
 			return;
 		}
 	}
-	else 
+	else
 	{
 		pps_balance = 0;
 		dropcount = 0;
@@ -988,10 +988,10 @@ void CL_SendCmd (void)
 	network_stats[cls.netchan.outgoing_sequence&NETWORK_STATS_MASK].sentsize = buf.cursize + 8;
 
 	// deliver the message
-	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);	
+	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);
 }
 
-void CL_InitInput (void) 
+void CL_InitInput (void)
 {
 	Cmd_AddCommand ("+moveup",IN_UpDown);
 	Cmd_AddCommand ("-moveup",IN_UpUp);
@@ -1032,7 +1032,7 @@ void CL_InitInput (void)
 	Cmd_AddCommand ("+mlook", IN_MLookDown);
 	Cmd_AddCommand ("-mlook", IN_MLookUp);
 
-	
+
 	Cmd_AddCommand ("rotate",CL_Rotate_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
@@ -1057,7 +1057,7 @@ void CL_InitInput (void)
 	Cvar_Register (&lookspring);
 	Cvar_Register (&lookstrafe);
 	Cvar_Register (&sensitivity);
-	Cvar_Register (&cursor_sensitivity);	
+	Cvar_Register (&cursor_sensitivity);
 	Cvar_Register (&freelook);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
@@ -1073,7 +1073,7 @@ void CL_InitInput (void)
 	Cvar_Register (&cl_c2spps);
 
 	Cvar_ResetCurrentGroup();
-	
+
 	#ifdef JSS_CAM
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
 	Cvar_Register (&cam_zoomspeed);
