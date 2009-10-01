@@ -428,13 +428,12 @@ void SB_PingTree_ConnectBestPath(const netadr_t *addr)
 	nodeid_t target = SB_PingTree_FindIp(SB_Netaddr2Ipaddr(addr));
 
 	if (target == INVALID_NODE || ping_nodes[target].prev == INVALID_NODE) {
-		Com_Printf("No route found, trying to connect directly...");
+		Com_Printf("No route found, trying to connect directly...\n");
 		Cvar_Set(&cl_proxyaddr, "");
 	}
 	else if (ping_nodes[target].prev == startnode_id) {
-		Com_Printf("Direct route is the best route, connecting directly...");
+		Com_Printf("Direct route is the best route, connecting directly...\n");
 		Cvar_Set(&cl_proxyaddr, "");
-		Cbuf_AddText(va("connect %s\n", NET_AdrToString(*addr)));
 	}
 	else {
 		char proxylist_buf[32*MAX_NONLEAVES] = "";
@@ -451,7 +450,7 @@ void SB_PingTree_ConnectBestPath(const netadr_t *addr)
 			current = ping_nodes[current].prev;
 		}
 		
-		Com_Printf("Connecting using %d %s, with best ping %d ms\n",
+		Com_Printf("Connecting using %d %s with best ping %d ms\n",
 			proxies, ((proxies == 1) ? "proxy" : "proxies"), ping_nodes[target].dist);
 		Cvar_Set(&cl_proxyaddr, proxylist_buf);
 	}
