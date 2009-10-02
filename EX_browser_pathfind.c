@@ -26,11 +26,19 @@
 #endif
 #include "EX_browser.h"
 
+// declared in EX_browser.c
+extern cvar_t sb_proxinfopersec;
+extern cvar_t sb_proxretries;
+extern cvar_t sb_proxtimeout;
+
 // non-leaf = proxy (or users computer) = has more than 1 neighbour
 // at the time of writing this code there were 10 active proxies around the world
 #define MAX_NONLEAVES 40
 
 #define PROXY_PINGLIST_QUERY "\xff\xff\xff\xffpingstatus"
+#define PROXY_PINGLIST_QUERY_LEN (sizeof(PROXY_PINGLIST_QUERY)-1)
+#define PROXY_REPLY_ENTRY_LEN 8
+#define PROXY_REPLY_BUFFER_SIZE (PROXY_REPLY_ENTRY_LEN*MAX_SERVERS)
 
 // current amount of qw servers ~ 300
 #define INVALID_NODE (-1)
@@ -54,12 +62,25 @@ typedef struct ping_node_t {
 	qbool visited;
 	unsigned short proxport; // if there's a proxy on this address,
 	                         // this is the port it's running on
+	                         // and it is already in the network format
 } ping_node_t;
 
 typedef struct ping_neighbour_t {
 	nodeid_t id;
 	dist_t dist;
 } ping_neighbour_t;
+
+typedef struct proxy_query_request_t {
+	socket_t sock;
+	nodeid_t nodeid;
+	qbool done;
+} proxy_query_request_t;
+
+typedef struct proxy_request_queue_t {
+	proxy_query_request_t *data;
+	size_t items;
+	qbool sending_done;
+} proxy_request_queue;
 
 static ping_node_t ping_nodes[MAX_SERVERS];
 static nodeid_t ping_nodes_count = 0;
@@ -200,8 +221,10 @@ static void SB_PingTree_AddProxyPing(netadr_t adr, dist_t dist)
 
 static void SB_Proxy_ParseReply(const byte *buf, int buflen, proxy_ping_report_callback callback)
 {
-	int entries = buflen / 8;
+	int entries = buflen / PROXY_REPLY_ENTRY_LEN;
 	int i;
+
+	Com_DPrintf("Reading %d entries from a proxy reply\n", entries);
 
 	for (i = 0; i < entries; i++) {
 		netadr_t adr;
@@ -226,7 +249,7 @@ void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callba
 {
 	socket_t sock;
 	char packet[] = PROXY_PINGLIST_QUERY;
-	byte buf[MAX_SERVERS*8];
+	byte buf[PROXY_REPLY_BUFFER_SIZE];
 	struct sockaddr_in addr_to, addr_from;
 	struct timeval timeout;
 	fd_set fd;
@@ -240,10 +263,10 @@ void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callba
 		return;
 	}
 	addr_to.sin_family = AF_INET;
-	addr_to.sin_port = address->port; // xxx: i'm not sure why htons() is not supposed to be used here
+	addr_to.sin_port = address->port;
 
 	sock = UDP_OpenSocket(PORT_ANY);
-	for (i = 0; i < sb_inforetries.integer; i++) {
+	for (i = 0; i < sb_proxretries.integer; i++) {
 		ret = sendto(sock, packet, strlen(packet), 0, (struct sockaddr *)&addr_to, sizeof(struct sockaddr));
 		if (ret == -1) // failure, try again
 			continue;
@@ -251,8 +274,8 @@ void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callba
 _select:
 		FD_ZERO(&fd);
 		FD_SET(sock, &fd);
-		timeout.tv_sec = 2;
-		timeout.tv_usec = 0;
+		timeout.tv_sec = 0;
+		timeout.tv_usec = sb_proxtimeout.integer * 1000;
 		ret = select(sock+1, &fd, NULL, NULL, &timeout);
 		if (ret <= 0) { // timed out or error
 			Com_DPrintf("select() gave errno = %d : %s\n", errno, strerror(errno));
@@ -288,23 +311,158 @@ static void SB_PingTree_AddNodes(void)
 	SB_ServerList_Unlock();
 }
 
+static netadr_t SB_NodeNetadr_Get(nodeid_t id)
+{
+	netadr_t ret;
+	ret.type = NA_IP;
+	ret.port = ping_nodes[id].proxport;
+	memcpy(&ret.ip, ping_nodes[id].ipaddr.data, 4);
+	return ret;
+}
+
+DWORD WINAPI SB_PingTree_SendQueryThread(void *thread_arg)
+{
+	proxy_request_queue *queue = (proxy_request_queue *) thread_arg;
+	int i, ret;
+	double interval_ms = (1.0 / sb_proxinfopersec.value) * 1000.0;
+	timerresolution_session_t timersession;
+
+	Sys_TimerResolution_InitSession(&timersession);
+	Sys_TimerResolution_RequestMinimum(&timersession);
+
+	for (i = 0; i < queue->items; i++) {
+		if (!queue->data[i].done) {
+			struct sockaddr_storage addr_to;
+			netadr_t netadr = SB_NodeNetadr_Get(queue->data[i].nodeid);
+
+			NetadrToSockadr(&netadr, &addr_to);
+			ret = sendto(queue->data[i].sock,
+				PROXY_PINGLIST_QUERY, PROXY_PINGLIST_QUERY_LEN, 0,
+				(struct sockaddr *) &addr_to, sizeof (struct sockaddr));
+			if (ret < 0) {
+				Com_DPrintf("SB_PingTree_SendQueryThread sendto returned %d\n", ret);
+			}
+			Sys_MSleep(interval_ms);
+		}
+	}
+
+	Sys_TimerResolution_Clear(&timersession);
+
+	queue->sending_done = true;
+
+	return 0;
+}
+
+static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
+{
+	qbool last_cycle = false;
+	fd_set recvset;
+	int maxsock = 0;
+	int i, ret;
+	struct timeval timeout;
+	double last_cycle_timeout = 0;
+	qbool allrecved = false;
+
+	timeout.tv_sec = 0;
+	timeout.tv_usec = sb_proxtimeout.integer * 1000;
+
+	for (;;) {
+		if (queue->sending_done) {
+			last_cycle = true;
+		}
+		
+		allrecved = true;
+		FD_ZERO(&recvset);
+		for (i = 0; i < queue->items; i++) {
+			if (!queue->data[i].done) {
+				socket_t sock = queue->data[i].sock;
+				FD_SET(sock, &recvset);
+				if ((int) sock > maxsock) {
+					maxsock = (int) sock;
+				}
+				allrecved = false;
+			}
+		}
+		if (allrecved) break;
+
+		ret = select((maxsock + 1), &recvset, NULL, NULL, &timeout);
+
+		if (ret == 0 && last_cycle == true) {
+			break; // ret = 0 means we got timeout
+		}
+
+		if (ret == 0) {
+			continue; // not all proxies were queried yet
+		}
+
+		if (ret < 0) {
+			Com_DPrintf("select returned %d\n", ret);
+			break;
+		}
+
+		for (i = 0; i < queue->items; i++) {
+			if (!queue->data[i].done && FD_ISSET(queue->data[i].sock, &recvset)) {
+				byte buf[PROXY_REPLY_BUFFER_SIZE];
+				struct sockaddr_storage addr_from;
+				socklen_t addr_from_len = sizeof(struct sockaddr_in);
+
+				ret = recvfrom(queue->data[i].sock, buf, PROXY_REPLY_BUFFER_SIZE, 0, (struct sockaddr *) &addr_from, &addr_from_len);
+				if (ret == -1) {
+					Com_DPrintf("SB_PingTree_RecvQuery recvfrom failed\n");
+					continue;
+				}
+
+				if (strncmp("\xff\xff\xff\xffn", buf, 5) == 0) {
+					nodeid_t id = queue->data[i].nodeid;
+					queue->data[i].done = true;
+					ping_nodes[id].nlist_start = ping_neighbours_count;
+					SB_Proxy_ParseReply(buf+5, ret-5, SB_PingTree_AddProxyPing);
+					ping_nodes[id].nlist_end = ping_neighbours_count;
+				}
+				else {
+					Com_DPrintf("Invalid reply received\n");
+				}
+			}
+		}
+	}
+
+	return allrecved;
+}
+
 static void SB_PingTree_ScanProxies(void)
 {
 	int i;
+	proxy_request_queue queue = { NULL, 0, false };
+	size_t request = 0;
 
-	// scan proxies
 	for (i = 0; i < ping_nodes_count; i++) {
 		if (ping_nodes[i].proxport) {
-			netadr_t adr;
-			adr.type = NA_IP;
-			adr.port = ping_nodes[i].proxport;
-			memcpy(adr.ip, ping_nodes[i].ipaddr.data, 4);
-
-			ping_nodes[i].nlist_start = ping_neighbours_count;
-			SB_Proxy_QueryForPingList(&adr, SB_PingTree_AddProxyPing);
-			ping_nodes[i].nlist_end = ping_neighbours_count;
+			queue.items++;
 		}
 	}
+
+	if (!queue.items) return;
+
+	queue.data = (proxy_query_request_t *) Q_malloc(sizeof(proxy_query_request_t) * queue.items);
+
+	for (i = 0; i < ping_nodes_count; i++) {
+		if (ping_nodes[i].proxport) {
+			queue.data[request].done = false;
+			queue.data[request].nodeid = i;
+			queue.data[request].sock = UDP_OpenSocket(PORT_ANY);
+			request++;
+		}
+	}
+
+	for (i = 0; i < sb_proxretries.integer; i++) {
+		queue.sending_done = false;
+		Sys_CreateThread(SB_PingTree_SendQueryThread, (void *) &queue);
+		if (SB_PingTree_RecvQuery(&queue)) {
+			break;
+		}
+	}
+
+	Q_free(queue.data);
 }
 
 static nodeid_t SB_PingTree_NearestNodeGet(void)

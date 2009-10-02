@@ -76,6 +76,9 @@ cvar_t  sb_pingspersec   = {"sb_pingspersec",    "150"}; // Pings per second
 cvar_t  sb_pings         = {"sb_pings",            "3"}; // Number of times to ping a server
 cvar_t  sb_inforetries   = {"sb_inforetries",      "3"};
 cvar_t  sb_infospersec   = {"sb_infospersec",    "100"};
+cvar_t  sb_proxinfopersec= {"sb_proxinfopersec",  "10"};
+cvar_t  sb_proxretries   = {"sb_proxretries",      "3"};
+cvar_t  sb_proxtimeout   = {"sb_proxtimeout",   "1000"};
 cvar_t  sb_mastertimeout = {"sb_mastertimeout", "1000"};
 cvar_t  sb_masterretries = {"sb_masterretries",    "3"};
 cvar_t  sb_nosockraw     = {"sb_nosockraw",        "0"}; // when enabled, forces "new ping" (udp qw query packet, multithreaded) to be used
@@ -2889,6 +2892,9 @@ void Browser_Init (void)
     Cvar_Register(&sb_pingspersec);
     Cvar_Register(&sb_inforetries);
     Cvar_Register(&sb_infospersec);
+	Cvar_Register(&sb_proxinfopersec);
+	Cvar_Register(&sb_proxretries);
+	Cvar_Register(&sb_proxtimeout);
     Cvar_Register(&sb_liveupdate);
     Cvar_Register(&sb_mastertimeout);
     Cvar_Register(&sb_masterretries);
