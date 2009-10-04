@@ -515,6 +515,20 @@ void SB_Sources_Update_Begin(qbool full)
 	Update_Multiple_Sources_Begin(sources, sourcesn);
 }
 
+unsigned int SB_Sources_Marked_Count(void)
+{
+	int i;
+	unsigned int ret = 0;
+
+	for (i = 0; i < sourcesn; i++) {
+		if (sources[i]->checked == 1) {
+			ret++;
+		}
+	}
+
+	return ret;
+}
+
 void Toggle_Source(source_data *s)
 {
     s->checked = !(s->checked);

@@ -539,6 +539,7 @@ void GetServerPing(server_data *serv)
 
 DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
+	unsigned int SB_Sources_Marked_Count(void);
 	extern cvar_t sb_listcache;
 	extern void SB_Serverlist_Serialize_f();
 
@@ -546,6 +547,11 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
     abort_ping = 0;
 
 	if (full || serversn_passed == 0) {
+		if (SB_Sources_Marked_Count() == 0) {
+			// ensure some sources are marked, otherwise the refresh makes no sense
+			MarkDefaultSources();
+		}
+
 		SB_Sources_Update(true);
 		if (useNewPing) {
 			// New Ping = UPD QW Packet ping using 2 threads (sender and receiver)
