@@ -656,7 +656,7 @@ void PingSendParrallelMultiHosts(pinghost_t *phosts, int nelms, int count) {
 	memset(&timer_session, 0, sizeof(timer_session));
 
 	count = bound(1, count, 6);
-	interval = 1000.0 / sb_pingspersec.value;
+	interval = 1000.0 / sb_pingspersec.integer;
 
 	Sys_TimerResolution_InitSession(&timer_session);
 	Sys_TimerResolution_RequestMinimum(&timer_session);
@@ -800,7 +800,7 @@ _select:
  * Send several ping requests at once, start another thread to recieve
  * the responses. 
  */
-int PingHosts(server_data *servs[], int servsn, int count, int time_out)
+int PingHosts(server_data *servs[], int servsn, int count)
 {
 	u_int arg;
 	pinghost_list_t host_list;

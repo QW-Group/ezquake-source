@@ -23,7 +23,7 @@ extern qbool useNewPing;
 int oldPingHost(char *host_to_ping, int count);
 int oldPingHosts(server_data *servs[], int servsn, int count);
 int PingHost(char *host_to_ping, unsigned short port, int count, int time_out);
-int PingHosts(server_data *servs[], int servsn, int count, int time_out);
+int PingHosts(server_data *servs[], int servsn, int count);
 void TP_ExecTrigger (const char *s);
 
 extern sem_t serverinfo_semaphore;
@@ -549,11 +549,11 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 		SB_Sources_Update(true);
 		if (useNewPing) {
 			// New Ping = UPD QW Packet ping using 2 threads (sender and receiver)
-			PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value);
+			PingHosts(servers, serversn, sb_pings.integer, sb_pingtimeout.integer);
 		}
 		else {
 			// Old Ping = ICMP PING Packet using single thread
-			oldPingHosts(servers, serversn, sb_pings.value);	
+			oldPingHosts(servers, serversn, sb_pings.integer );	
 		}
 	}
 
