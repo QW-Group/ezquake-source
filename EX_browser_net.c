@@ -549,7 +549,7 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 		SB_Sources_Update(true);
 		if (useNewPing) {
 			// New Ping = UPD QW Packet ping using 2 threads (sender and receiver)
-			PingHosts(servers, serversn, sb_pings.integer, sb_pingtimeout.integer);
+			PingHosts(servers, serversn, sb_pings.integer);
 		}
 		else {
 			// Old Ping = ICMP PING Packet using single thread
