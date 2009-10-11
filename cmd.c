@@ -50,7 +50,9 @@ qbool CL_CheckServerCommand (void);
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
 
-cvar_t cl_warncmd = {"cl_warncmd", "0"};
+cvar_t cl_warncmd = {"cl_warncmd", "1"};
+
+cvar_t cl_warnexec = {"cl_warnexec", "1"};
 cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 
 cbuf_t cbuf_main;
@@ -472,7 +474,7 @@ void Cmd_Exec_f (void)
 			return;
 		}
 	}
-	if (cl_warncmd.integer || developer.integer)
+	if (cl_warnexec.integer || developer.integer)
 		Com_Printf ("execing %s\n", name);
 
 #ifndef SERVERONLY
@@ -2294,6 +2296,7 @@ void Cmd_Init (void)
 #endif
 
 	Cvar_Register(&cl_curlybraces);
+    Cvar_Register(&cl_warnexec);
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
 	qsort(msgtrigger_commands,
