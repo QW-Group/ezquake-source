@@ -863,7 +863,7 @@ void Key_Console (int key, int unichar)
 					else
 					{
 						// Check if it's a chat message or a command.
-						if (cl_chatmode.value != 1 && CheckForCommand())
+						if (cls.state == ca_disconnected || (cl_chatmode.value != 1 && CheckForCommand()))
 						{
 							Cbuf_AddText (wcs2str(key_lines[edit_line] + 1));	// Valid command.
 						}
