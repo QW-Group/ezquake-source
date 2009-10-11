@@ -235,7 +235,7 @@ void SetPing999(server_data *s);
 void SetPing(server_data *s, int ping);
 void SB_Server_SetBestPing(server_data *s, int bestping);
 
-void Shutdown_SB(void);
+void SB_Shutdown(void);
 void SB_RootInit(void);    // must be called as root
 
 // connection tester
@@ -264,6 +264,9 @@ qbool SB_Specials_Key(int key, wchar unichar);
 
 // EX_browser_pathfind
 typedef void (* proxy_ping_report_callback) (netadr_t adr, short dist);
+
+void SB_PingTree_Init(void);
+void SB_PingTree_Shutdown(void);
 
 void SB_PingTree_Build(void);
 void SB_PingTree_DumpPath(const netadr_t *addr);

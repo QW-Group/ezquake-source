@@ -2868,8 +2868,9 @@ void SB_ProxyGetPings_f(void)
 	}
 }
 
-void Shutdown_SB(void)
+void SB_Shutdown(void)
 {
+	SB_PingTree_Shutdown();
     Serverinfo_Stop();
     Sys_MSleep(150);     // wait for thread to terminate
 }
@@ -2947,6 +2948,7 @@ void Browser_Init2 (void)
     sourcesn = 0;
 
 	Sys_SemInit(&serverlist_semaphore, 1, 1);
+	SB_PingTree_Init();
 
     // read sources from SOURCES_PATH
 	Reload_Sources();

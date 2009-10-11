@@ -92,6 +92,8 @@ static nodeid_t startnode_id = 0;
 static qbool building_pingtree = false; // when true, the pingtree build thread is still working
 static qbool pingtree_built = false;
 
+static sem_t phase2thread_lock;
+
 static void SB_PingTree_Assertions(void)
 {
 	if (ping_nodes_count >= MAX_SERVERS) {
@@ -177,7 +179,7 @@ static void SB_PingTree_AddSelf(void)
 	startnode_id = SB_PingTree_AddNode(SB_DummyIpAddr(), 0);
 }
 
-static void SB_PingTree_Init(void)
+static void SB_PingTree_Clear(void)
 {
 	ping_nodes_count = 0;
 	ping_neighbours_count = 0;
@@ -360,7 +362,6 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 	int maxsock = 0;
 	int i, ret;
 	struct timeval timeout;
-	double last_cycle_timeout = 0;
 	qbool allrecved = false;
 
 	timeout.tv_sec = 0;
@@ -506,7 +507,7 @@ static void SB_PingTree_Dijkstra(void)
 
 static void SB_PingTree_Phase1(void)
 {
-	SB_PingTree_Init();
+	SB_PingTree_Clear();
 	SB_PingTree_AddNodes();
 }
 
@@ -533,6 +534,7 @@ DWORD WINAPI SB_PingTree_Phase2(void *ignored_arg)
 	SB_PingTree_UpdateServerList();
 
 	Com_Printf("Ping tree has been created\n");
+	Sys_SemPost(&phase2thread_lock);
 	building_pingtree = false;
 	pingtree_built = true;
 	return 0;
@@ -554,6 +556,7 @@ void SB_PingTree_Build(void)
 	// first quick phase is initialization + quick read of data from the server browser
 	SB_PingTree_Phase1();
 	// second longer phase is querying the proxies for their ping data + dijkstra algo
+	Sys_SemWait(&phase2thread_lock);
 	Sys_CreateThread(SB_PingTree_Phase2, NULL);
 }
 
@@ -614,4 +617,15 @@ void SB_PingTree_ConnectBestPath(const netadr_t *addr)
 	}
 
 	Cbuf_AddText(va("connect %s\n", NET_AdrToString(*addr)));
+}
+
+void SB_PingTree_Init(void)
+{
+	Sys_SemInit(&phase2thread_lock, 1, 1);
+}
+
+void SB_PingTree_Shutdown(void)
+{
+	Sys_SemWait(&phase2thread_lock);
+	Sys_SemDestroy(&phase2thread_lock);
 }
