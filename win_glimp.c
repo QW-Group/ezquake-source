@@ -750,7 +750,7 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 		wc.cbClsExtra    = 0;
 		wc.cbWndExtra    = 0;
 		wc.hInstance     = global_hInstance;
-		wc.hIcon         = LoadIcon ( global_hInstance, MAKEINTRESOURCE (IDI_APPICON) );;
+		wc.hIcon         = LoadIcon ( global_hInstance, MAKEINTRESOURCE (IDI_APPICON) );
 		wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
 		wc.hbrBackground = (void *)COLOR_GRAYTEXT;
 		wc.lpszMenuName  = 0;
