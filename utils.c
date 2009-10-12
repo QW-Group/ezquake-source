@@ -213,6 +213,42 @@ int strlen_color(const char *str)
 	return len;
 }
 
+// skip ezquake color sequence
+void Util_SkipEZColors(char *dst, const char *src, size_t size)
+{
+	if ( !dst || !src )
+		Sys_Error("Util_SkipColors: invalid input params");
+
+	if ( !size )
+		return; // no space
+
+	while ( src[0] && size )
+	{
+		if ( src[0] == '&' )
+		{
+			if ( src[1] == 'c' && HexToInt(src[2]) >= 0 && HexToInt(src[3]) >= 0 && HexToInt(src[4]) >= 0 )
+			{
+				src += 5; // skip "&cRGB"
+				continue;
+			}
+			else if ( src[1] == 'r' )
+			{
+				src += 2; // skip "&r"
+				continue;
+			}
+		}
+
+		*dst++ = *src++;
+		size--;
+	}
+
+	if ( !size )
+		dst--; // seems we truncate string, step back for null terminator
+
+	dst[0] = 0;
+}
+
+
 int HexToInt(char c)
 {
 	if (isdigit(c))
