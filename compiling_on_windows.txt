@@ -10,7 +10,11 @@ Instructions:
 1) Grab sources from ezquake SVN (most devs use http://tortoisesvn.tigris.org/ for this since it integrates with explorer):
   - SVN root path (includes trunk+branches): https://ezquake.svn.sourceforge.net/svnroot/ezquake/
   - To check only the HEAD branch and ezquake itself you do:
-    svn co https://ezquake.svn.sourceforge.net/svnroot/ezquake/trunk ezquake
+    - TortoiseSVN
+      1. right-click inside of some directory, select "SVN Checkout..."
+      2. as "URL of repository" use https://ezquake.svn.sourceforge.net/svnroot/ezquake/trunk
+    - Command-line Subversion:
+      svn co https://ezquake.svn.sourceforge.net/svnroot/ezquake/trunk ezquake
 
 2) Get Microsoft Visual Studio 8 and install it. 
    Instead of the expensive MSVS8 you can install Visual C++ 2008 Express Edition which is free.
@@ -21,7 +25,7 @@ Instructions:
   - Run ezquake/make/download_dependencies.bat
   - Or download them manually from http://ezquake.svn.sourceforge.net/viewvc/ezquake/trunk/libs/windows-x86/
 
-4) Open open ezquake_msvs_80.sln located in ezquake/make/msvs2005
+4) Open open ezquake_msvs_90.sln located in ezquake/make/msvs2008
 
 5) Select GLDebug configuration and press "Build".
   - Note, to use the game files in your normal quake dir do the following in Visual studio:
