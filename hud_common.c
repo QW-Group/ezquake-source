@@ -7287,8 +7287,8 @@ void CommonDraw_Init(void)
 	
 	HUD_Register("itemsclock", NULL, "Displays upcoming item respawns",
 		0, ca_active, 1, SCR_HUD_DrawItemsClock,
-		"0", "screen", "center", "center", "0", "0", "0", "0 0 0", NULL,
-		"timelimit", "10",
+		"1", "screen", "right", "center", "0", "0", "0", "0 0 0", NULL,
+		"timelimit", "5",
 		"style", "0",
 		NULL
 		);

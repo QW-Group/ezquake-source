@@ -1067,6 +1067,18 @@ void Config_LegacyQuake_f(void)
 		ver = Cmd_Argv(1);
 	}
 	
+	if (!specific || (strcmp("2.1", ver) == 0)) {
+		Cbuf_AddText(
+			"hide itemsclock;echo hiding the itemsclock hud element (undo: show itemsclock);"
+			);
+	}
+
+	if (!specific || (strcmp("2.1", ver) == 0)) {
+		Cbuf_AddText(
+			"cl_physfps_spectator 0;turning off spectator smoothing (undo: cl_physfps_spectator 30);"
+			);
+	}
+
 	if (!specific || (strcmp("1.9", ver) == 0)) {
 		Cbuf_AddText(
 			"hide ownfrags;echo hiding the ownfrags hud element (undo: show ownfrags);"
