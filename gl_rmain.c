@@ -182,6 +182,10 @@ cvar_t gl_part_detpackexplosion_ray_color = {"gl_part_detpackexplosion_ray_color
 cvar_t gl_powerupshells = {"gl_powerupshells", "1"};
 cvar_t gl_powerupshells_style = {"gl_powerupshells_style", "0"};
 cvar_t gl_powerupshells_size = {"gl_powerupshells_size", "5"};
+cvar_t gl_powerupshells_effect1level = {"gl_powerupshells_effect1level", "0.75"};
+cvar_t gl_powerupshells_base1level = {"gl_powerupshells_base1level", "0.05"};
+cvar_t gl_powerupshells_effect2level = {"gl_powerupshells_effect2level", "0.4"};
+cvar_t gl_powerupshells_base2level = {"gl_powerupshells_base2level", "0.1"};
 
 cvar_t  gl_fogenable		= {"gl_fog", "0"};
 
@@ -815,6 +819,26 @@ void R_AliasSetupLighting(entity_t *ent) {
 		ambientlight = shadelight = minlight;
 }
 
+void R_DrawPowerupShell(int effects, int layer_no, float base_level, float effect_level,
+	maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr)
+{
+	base_level = bound(0, base_level, 1);
+	effect_level = bound(0, effect_level, 1);
+
+	r_shellcolor[0] = r_shellcolor[1] = r_shellcolor[2] = base_level;
+
+	if (effects & EF_RED)
+		r_shellcolor[0] += effect_level;
+	if (effects & EF_GREEN)
+		r_shellcolor[1] += effect_level;
+	if (effects & EF_BLUE)
+		r_shellcolor[2] += effect_level;
+
+	GL_DisableMultitexture();
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	R_SetupAliasFrame (oldframe, frame, paliashdr, false, layer_no == 1);
+}
+
 void R_DrawAliasModel (entity_t *ent) {
 	int i, anim, skinnum, texture, fb_texture, playernum = -1;
 	float scale;
@@ -1067,51 +1091,13 @@ void R_DrawAliasModel (entity_t *ent) {
 		// do not allow powerupshells for eyes in other cases
 		if ( ( cls.demoplayback || cl.spectator ) || ent->model->modhint != MOD_EYES )
 		{
-			memset(r_shellcolor, 0, sizeof(r_shellcolor));
-        
-			if (ent->effects & EF_RED)
-			{
-				r_shellcolor[0] = 1;
-				r_shellcolor[1] = 0.25;
-				r_shellcolor[2] = 0.25;
-			}
-			if (ent->effects & EF_GREEN)
-			{
-				r_shellcolor[0] = 0.25;
-				r_shellcolor[1] = 1;
-				r_shellcolor[2] = 0.25;
-			}
-			if (ent->effects & EF_BLUE)
-			{
-				r_shellcolor[0] = 0.25;
-				r_shellcolor[1] = 0.25;
-				r_shellcolor[2] = 1;
-			}
-        
-			if ( r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2] )
-			{
-				GL_DisableMultitexture();
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				R_SetupAliasFrame (oldframe, frame, paliashdr, false, false);
+			if ((ent->effects & EF_RED) || (ent->effects & EF_GREEN) || (ent->effects & EF_BLUE)) {
+				R_DrawPowerupShell(ent->effects, 0, gl_powerupshells_base1level.value,
+					gl_powerupshells_effect1level.value, oldframe, frame, paliashdr);
+				R_DrawPowerupShell(ent->effects, 1, gl_powerupshells_base2level.value,
+					gl_powerupshells_effect2level.value, oldframe, frame, paliashdr);
 			}
 
-			if ( (ent->effects & EF_RED) || (ent->effects & EF_GREEN) || (ent->effects & EF_BLUE) )
-				r_shellcolor[0] = r_shellcolor[1] = r_shellcolor[2] = 0.4;
-
-			if (ent->effects & EF_RED)
-				r_shellcolor[0] += 0.2;
-			if (ent->effects & EF_GREEN)
-				r_shellcolor[1] += 0.2;
-			if (ent->effects & EF_BLUE)
-				r_shellcolor[2] += 0.2;
-
-			if ( r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2] )
-			{
-				GL_DisableMultitexture();
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				R_SetupAliasFrame (oldframe, frame, paliashdr, false, true);
-			}
-        
 			memset(r_shellcolor, 0, sizeof(r_shellcolor));
 		}
 	}
@@ -1814,6 +1800,10 @@ void R_Init (void) {
 	Cvar_Register (&gl_powerupshells);
 	Cvar_Register (&gl_powerupshells_style);
 	Cvar_Register (&gl_powerupshells_size);
+	Cvar_Register (&gl_powerupshells_base1level);
+	Cvar_Register (&gl_powerupshells_effect1level);
+	Cvar_Register (&gl_powerupshells_base2level);
+	Cvar_Register (&gl_powerupshells_effect2level);
 
 	Cvar_Register (&gl_simpleitems);
 	Cvar_Register (&gl_simpleitems_size);
