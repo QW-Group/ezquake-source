@@ -79,7 +79,8 @@ typedef struct proxy_query_request_t {
 typedef struct proxy_request_queue_t {
 	proxy_query_request_t *data;
 	size_t items;
-	qbool sending_done;
+	qbool sending_done; // sending thread ended
+	qbool allrecved;	// all proxies have been successfully scanned
 } proxy_request_queue;
 
 static ping_node_t ping_nodes[MAX_SERVERS];
@@ -346,6 +347,8 @@ DWORD WINAPI SB_PingTree_SendQueryThread(void *thread_arg)
 			}
 			Sys_MSleep(interval_ms);
 		}
+
+		if (queue->allrecved) break;
 	}
 
 	Sys_TimerResolution_Clear(&timersession);
@@ -384,7 +387,10 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 				allrecved = false;
 			}
 		}
-		if (allrecved) break;
+		if (allrecved) {
+			queue->allrecved = true;
+			break;
+		}
 
 		ret = select((maxsock + 1), &recvset, NULL, NULL, &timeout);
 
@@ -458,9 +464,15 @@ static void SB_PingTree_ScanProxies(void)
 	for (i = 0; i < sb_proxretries.integer; i++) {
 		queue.sending_done = false;
 		Sys_CreateThread(SB_PingTree_SendQueryThread, (void *) &queue);
-		if (SB_PingTree_RecvQuery(&queue)) {
+		SB_PingTree_RecvQuery(&queue);
+		if (queue.allrecved) {
 			break;
 		}
+	}
+
+	while (!queue.sending_done) {
+		// XXX: use semaphore instead
+		Sys_MSleep(100);
 	}
 
 	Q_free(queue.data);
