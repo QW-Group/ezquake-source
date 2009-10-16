@@ -475,6 +475,10 @@ static void SB_PingTree_ScanProxies(void)
 		Sys_MSleep(100);
 	}
 
+	for (i = 0; i < queue.items; i++) {
+		closesocket(queue.data[i].sock);
+	}
+
 	Q_free(queue.data);
 }
 
