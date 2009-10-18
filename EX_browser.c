@@ -2871,8 +2871,10 @@ void SB_ProxyGetPings_f(void)
 void SB_Shutdown(void)
 {
 	SB_PingTree_Shutdown();
-    Serverinfo_Stop();
-    Sys_MSleep(150);     // wait for thread to terminate
+
+	// FIXME - this probably never worked
+    // Serverinfo_Stop();
+    // Sys_MSleep(150);     // wait for thread to terminate
 }
 
 
