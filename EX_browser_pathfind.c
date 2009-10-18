@@ -556,6 +556,12 @@ DWORD WINAPI SB_PingTree_Phase2(void *ignored_arg)
 	return 0;
 }
 
+/// Has the Ping Tree been already built?
+qbool SB_PingTree_Built(void)
+{
+	return ping_nodes_count > 0;
+}
+
 /// Creates whole graph structure for looking up shortest paths to servers (ping-wise).
 ///
 /// Grabs data from the server browser and then from the proxies.

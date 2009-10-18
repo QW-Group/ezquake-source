@@ -584,7 +584,7 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 		SB_Serverlist_Serialize_f();
 	}
 
-	if (sb_findroutes.integer) {
+	if (sb_findroutes.integer && (full || !SB_PingTree_Built())) {
 		SB_PingTree_Build();
 	}
 
