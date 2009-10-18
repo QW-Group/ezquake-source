@@ -593,14 +593,14 @@ void SB_PingTree_DumpPath(const netadr_t *addr)
 	else {
 		nodeid_t current = target;
 
-		Com_Printf("Shortest path length: %d\nRoute: \n", ping_nodes[current].dist);
+		Com_Printf("Shortest path length: %d ms\nRoute: \n", ping_nodes[current].dist);
 		while (current != startnode_id && current != INVALID_NODE) {
 			byte *ip = ping_nodes[current].ipaddr.data;
-			Com_Printf("%d.%d.%d.%d:%d (%d ms) < ", ip[0], ip[1], ip[2], ip[3],
-				ntohs(ping_nodes[current].proxport), ping_nodes[current].dist);
+			Com_Printf("%4d ms  %d.%d.%d.%d:%d\n", ping_nodes[current].dist, 
+				ip[0], ip[1], ip[2], ip[3],	ntohs(ping_nodes[current].proxport));
 			current = ping_nodes[current].prev;
 		}
-		Com_Printf("you\n");
+		Com_Printf("%4d ms  localhost (your machine)\n", 0);
 	}
 }
 
