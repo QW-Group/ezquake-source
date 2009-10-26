@@ -37,7 +37,7 @@ cvar_t mvd_autotrack_2on2_values = {"mvd_autotrack_2on2_values", "1 2 3 2 3 5 8 
 cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10 10 1 2 3 500 900 1000"};
 cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
-cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"};
+cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 4 6 6 1 2 3 500 900 1000"};
 cvar_t mvd_autotrack_lockteam = {"mvd_autotrack_lockteam", "0"};
 
 cvar_t mvd_multitrack_1 = {"mvd_multitrack_1", "%f"};
@@ -181,6 +181,8 @@ static expr_val MVD_Var_Vals(const char *n)
     case 'O': return Get_Expr_Integer(mvd_new_info[i].info.info[RA_INFO].count);
     case 'p': return Get_Expr_Double(bp_pw);
 
+	// id, so that player are always distinguishable by something
+	case 'u': return Get_Expr_Integer(i);
 	// v - average run time
 	case 'v': return Get_Expr_Double(mvd_new_info[i].info.run_stats.all.avg_time);
 	// V - average run frags
@@ -249,17 +251,32 @@ static void MVD_UpdatePlayerValues(void)
 	}
 }
 
+static int MVD_FindId_By_TrackId(int track_id)
+{
+	int i;
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		if (mvd_new_info[i].id == track_id) {
+			return i;
+		}
+	}
+
+	return 0;
+}
+
 static int MVD_GetBestPlayer(void)
 {
-	int initial, i, bp_id;
+	int initial_track, initial_id, i, bp_id;
 	float bp_val;
 
 	if (last_track < 0 || last_track > mvd_cg_info.pcount)
-		initial = 0;
-	else initial = last_track;
+		initial_track = 0;
+	else
+		initial_track = last_track;
 
-	bp_val = mvd_new_info[initial].value;
-	bp_id = mvd_new_info[initial].id;
+	initial_id = MVD_FindId_By_TrackId(initial_track);
+
+	bp_val = mvd_new_info[initial_id].value;
+	bp_id = mvd_new_info[initial_id].id;
 	for ( i=0 ; i<mvd_cg_info.pcount ; i++ ) {
 		if (bp_val < mvd_new_info[i].value) {
 			if (mvd_autotrack_lockteam.integer && strcmp(mvd_new_info[i].p_info->team, cl.players[cl.viewplayernum].team))
