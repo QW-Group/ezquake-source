@@ -822,6 +822,61 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 	}
 }
 
+void CL_SendAntilagInfo(void)
+{
+// we can't send origins for all players in one string,
+// parse will fail because its 4 * 32 argumens and MAX_ARGS = 80
+#define MAX_PLAYERS_ORIGINS 10
+
+	extern cvar_t cl_antilag;
+
+	vec3_t *v;
+	int j, cnt;
+	player_state_t *state;
+	player_info_t *info;
+	centity_t *cent;
+	char one_origin[4 * (sizeof("-12345 ")-1) + 1];
+	char origins[sizeof("al") - 1 + 4 * (sizeof("-12345 ")-1) * MAX_PLAYERS_ORIGINS + 1];
+
+	if (!cl_antilag.integer)
+		return;
+
+	if (cls.demoplayback || cl.spectator || cls.state != ca_active || !cl.validsequence)
+		return;
+
+	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
+	info = cl.players;
+	cent = &cl_entities[1];
+	origins[0] = 0;
+
+	for (j = cnt = 0; j < MAX_CLIENTS; j++, info++, state++, cent++)
+	{
+		if (state->messagenum != cl.parsecount /* || j == cl.playernum */ || info->spectator)
+			continue;
+
+		if (!origins[0])
+			strlcat(origins, "al", sizeof(origins));
+
+		v = (j == cl.playernum ? &cl.simorg : &cent->lerp_origin);
+
+		snprintf(one_origin, sizeof(one_origin), " %d %d %d %d", j, (int)(v[0][0]), (int)(v[0][1]), (int)(v[0][2]));
+
+		strlcat(origins, one_origin, sizeof(origins));
+
+		if (++cnt >= MAX_PLAYERS_ORIGINS)
+		{
+			CL_SendClientCommand(false, origins);
+			origins[0] = 0;
+			cnt = 0;
+		}
+	}
+
+	if (origins[0])
+		CL_SendClientCommand(false, origins);
+
+#undef MAX_PLAYERS_ORIGINS
+}
+
 int cmdtime_msec = 0;
 
 void CL_SendCmd (void)
@@ -840,6 +895,8 @@ void CL_SendCmd (void)
 	#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	CL_SendChunkDownloadReq();
 	#endif
+
+	CL_SendAntilagInfo();
 
 	// save this command off for prediction
 	i = cls.netchan.outgoing_sequence & UPDATE_MASK;

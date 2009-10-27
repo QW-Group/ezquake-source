@@ -310,7 +310,7 @@ typedef struct
 	// Variables related to client cmds aka clc_stringcmd, unreliable part, reliable part goes to cls.netchan.message
 	//
 
-	byte		cmdmsg_data[512];		///< have no idea which size here must be
+	byte		cmdmsg_data[1024];		///< have no idea which size here must be
 	sizebuf_t	cmdmsg;
 
 	// TCPCONNECT
