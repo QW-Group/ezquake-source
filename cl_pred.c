@@ -171,8 +171,9 @@ static void CL_LerpMove (void)
 	extern cvar_t cl_nolerp;
 	extern int cmdtime_msec;
 	extern double physframetime;
+	extern int cl_nolerp_onentity_flag;
 
-	if (cl_nolerp.value) 
+	if ((cl_nolerp.value || cl_nolerp_onentity_flag)) 
 	{
 		lastsequence = ((unsigned)-1) >> 1;	//reset
 		return;

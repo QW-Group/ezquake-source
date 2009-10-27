@@ -167,6 +167,10 @@ cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
+
+cvar_t cl_nolerp_onentity	= {"cl_nolerp_onentity", "0"};
+int cl_nolerp_onentity_flag = 0;
+
 cvar_t cl_newlerp				= {"cl_newlerp", "0"};
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
 cvar_t cl_fix_mvd				= {"cl_fix_mvd", "0", CVAR_ARCHIVE};
@@ -1684,6 +1688,7 @@ void CL_InitLocal (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&cl_model_bobbing);
 	Cvar_Register (&cl_nolerp);
+	Cvar_Register (&cl_nolerp_onentity);
 	Cvar_Register (&cl_newlerp);
 	Cvar_Register (&cl_lerp_monsters);
 	Cvar_Register (&cl_maxfps);

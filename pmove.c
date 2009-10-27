@@ -825,6 +825,26 @@ void PM_PlayerMove (void)
 	// set onground, watertype, and waterlevel for final spot
 	PM_CategorizePosition ();
 
+
+        if(pmove.onground)
+        {
+          extern cvar_t cl_nolerp;
+          extern cvar_t cl_nolerp_onentity;
+          extern int cl_nolerp_onentity_flag;
+          if(pmove.groundent > 0 &&
+             //todo: how to check that ground ent is moving?
+             // entity_is_moving(pmove.groundent) &&
+            cl_nolerp_onentity.value)
+          {
+             cl_nolerp_onentity_flag = 1;
+          }
+          else
+          {
+             cl_nolerp_onentity_flag = 0;
+          }
+        }
+
+
 	if (!movevars.pground) {
 		// this is to make sure landing sound is not played twice
 		// and falling damage is calculated correctly

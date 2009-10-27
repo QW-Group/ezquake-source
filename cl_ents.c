@@ -757,6 +757,7 @@ void CL_ParsePacketEntities (qbool delta)
 		CL_MakeActive();
 }
 
+extern int cl_nolerp_onentity_flag;
 #ifdef GLQUAKE
 // TODO: OMG SPLIT THIS UP!
 void CL_LinkPacketEntities(void) 
@@ -920,7 +921,7 @@ void CL_LinkPacketEntities(void)
 			ent.scoreboard = NULL;
 		}
 	
-		if ((cl_nolerp.value && !cls.mvdplayback && !is_monster(state->modelindex))
+		if (((cl_nolerp.value || cl_nolerp_onentity_flag) && !cls.mvdplayback && !is_monster(state->modelindex))
 			|| cent->deltalerp <= 0)
 		{
 			lerp = -1;
@@ -1452,8 +1453,7 @@ void CL_LinkPacketEntities (void)
 			ent.scoreboard = NULL;
 		}
 
-	
-		if ((cl_nolerp.value && !cls.mvdplayback && !is_monster(state->modelindex))
+		if (((cl_nolerp.value || cl_nolerp_onentity_flag) && !cls.mvdplayback && !is_monster(state->modelindex))
 			|| cent->deltalerp <= 0) 
 		{
 			lerp = -1;
