@@ -838,7 +838,7 @@ void CL_SendAntilagInfo(void)
 	char one_origin[4 * (sizeof("-12345 ")-1) + 1];
 	char origins[sizeof("al") - 1 + 4 * (sizeof("-12345 ")-1) * MAX_PLAYERS_ORIGINS + 1];
 
-	if (!cl_antilag.integer)
+	if (!cl_antilag.integer || !atoi(Info_ValueForKey(cl.serverinfo, "al")))
 		return;
 
 	if (cls.demoplayback || cl.spectator || cls.state != ca_active || !cl.validsequence)
