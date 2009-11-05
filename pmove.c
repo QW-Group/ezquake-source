@@ -763,35 +763,17 @@ void PM_SpectatorMove (void) {
 	VectorMA (pmove.origin, pm_frametime, pmove.velocity, pmove.origin);
 }
 
-int cl_nolerp_onentity_flag = false;
-
-void check_standing_on_moving_entity()
+qbool cl_nolerp_onentity_flag = false;
+// function check_standing_on_entity(void)
+// raises flag cl_nolerp_onentity_flag if standing on entity
+// and cl_nolerp_onentity.value is 1
+static void check_standing_on_entity(void)
 {
   extern cvar_t cl_nolerp;
   extern cvar_t cl_nolerp_onentity;
-  extern int cl_nolerp_onentity_flag;
-  static int on_entity_counter = 0;
-  qbool is_moving(int n); //defined in pr_edict.c
 
-  cl_nolerp_onentity_flag = false;
-
-  if (pmove.onground && pmove.groundent > 0 && cl_nolerp_onentity.value)
-  {
-    if (is_moving(pmove.physents[pmove.groundent].info))
-    {
-       on_entity_counter++;
-    }
-
-    if (on_entity_counter >= 1)
-    {
-      on_entity_counter = 1;
-      cl_nolerp_onentity_flag = true;
-    }
-  }
-  else
-  {
-    on_entity_counter = 0;
-  }
+  cl_nolerp_onentity_flag = 
+        (pmove.onground && pmove.groundent > 0 && cl_nolerp_onentity.value);
 }
 
 //Returns with origin, angles, and velocity modified in place.
@@ -856,7 +838,7 @@ void PM_PlayerMove (void)
 	// set onground, watertype, and waterlevel for final spot
 	PM_CategorizePosition ();
 
-    check_standing_on_moving_entity();
+	check_standing_on_entity();
 		
 	if (!movevars.pground) {
 		// this is to make sure landing sound is not played twice
