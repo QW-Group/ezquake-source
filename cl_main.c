@@ -168,8 +168,9 @@ cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
 
+//this var has effect only if cl_nolerp is 1 and indep-phys enabled
+//setting it to 0 removes jerking when standing on platforms
 cvar_t cl_nolerp_onentity	= {"cl_nolerp_onentity", "0"};
-int cl_nolerp_onentity_flag = 0;
 
 cvar_t cl_newlerp				= {"cl_newlerp", "0"};
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};

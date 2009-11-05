@@ -1299,3 +1299,26 @@ int NUM_FOR_EDICT(edict_t *e)
 
 	return b;
 }
+
+//used if cl_nolerp_onentity is 1 in function check_standing_on_moving_entity()
+qbool is_moving(int n)
+{
+	int result;
+	edict_t* ed;
+	vec3_t* v;
+
+	ed  = EDICT_NUM(n);
+	if(ed == NULL)
+	{
+		//this case happens if you are standing in immigrant's lorry on border1
+		result = 1;
+	}
+	else
+	{
+	  v =  &(ed->v.velocity);
+	  result = fabs( (*v)[0] ) > 1. || fabs( (*v)[1] ) > 1. || fabs( (*v)[2] ) > 1.;
+	}
+
+	return result;
+}
+

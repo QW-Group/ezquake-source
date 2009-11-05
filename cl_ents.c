@@ -757,7 +757,7 @@ void CL_ParsePacketEntities (qbool delta)
 		CL_MakeActive();
 }
 
-extern int cl_nolerp_onentity_flag;
+extern qbool cl_nolerp_onentity_flag;
 #ifdef GLQUAKE
 // TODO: OMG SPLIT THIS UP!
 void CL_LinkPacketEntities(void) 
