@@ -757,8 +757,6 @@ void CL_ParsePacketEntities (qbool delta)
 		CL_MakeActive();
 }
 
-extern qbool cl_nolerp_onentity_flag;
-#ifdef GLQUAKE
 // TODO: OMG SPLIT THIS UP!
 void CL_LinkPacketEntities(void) 
 {
@@ -771,7 +769,12 @@ void CL_LinkPacketEntities(void)
 	double time;
 	float autorotate, lerp, rocketlightsize;
 	int i, pnum, flicker;
+#ifdef GLQUAKE
 	customlight_t cst_lt = {0};
+#else
+	dlighttype_t rocketlightcolor, dimlightcolor;
+#endif
+	extern qbool cl_nolerp_onentity_flag;
 
 	pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
 
@@ -801,7 +804,7 @@ void CL_LinkPacketEntities(void)
 			else if ((state->effects & (EF_BLUE | EF_GREEN)) == (EF_BLUE | EF_GREEN)) 
 			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_bluegreen, 0);
-			} 
+			}
 			else if ((state->effects & (EF_RED | EF_GREEN)) == (EF_RED | EF_GREEN)) 
 			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redgreen, 0);
@@ -813,12 +816,11 @@ void CL_LinkPacketEntities(void)
 			else if (state->effects & EF_RED) 
 			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_red, 0);
-			} 
+			}
 			else if (state->effects & EF_GREEN) 
 			{
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_green, 0);
-
-			} 
+			}
 			else if (state->effects & EF_BRIGHTLIGHT) 
 			{
 				vec3_t	tmp;
@@ -828,6 +830,7 @@ void CL_LinkPacketEntities(void)
 			}
 			else if (state->effects & EF_DIMLIGHT)
 			{
+				#ifdef GLQUAKE
 				qbool flagcolor = false;
 
 				if (cl.teamfortress && (state->modelindex == cl_modelindices[mi_tf_flag] || state->modelindex == cl_modelindices[mi_tf_stan]))
@@ -844,10 +847,28 @@ void CL_LinkPacketEntities(void)
 				{
 					CL_NewDlight(state->number, state->origin, 200 + flicker, 0.1, lt_default, 0);
 				}
+				#else
+				if (cl.teamfortress && 
+					((state->modelindex == cl_modelindices[mi_tf_flag]) 
+					|| (state->modelindex == cl_modelindices[mi_tf_stan])))
+				{
+					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
+				}
+				else if (state->modelindex == cl_modelindices[mi_flag])
+				{
+					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
+				}
+				else
+				{
+					dimlightcolor = lt_default;
+				}
+
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, dimlightcolor, 0);
+				#endif
 			}
 		}
 
-		if (!state->modelindex)		// if set to invisible, skip
+		if (!state->modelindex)		// If set to invisible, skip
 			continue;
 
 		ent.effects = state->effects; // Electro - added for shells
@@ -860,7 +881,7 @@ void CL_LinkPacketEntities(void)
 			{
 				if (ISDEAD(i))
 					continue;
-			} 
+			}
 			else if (cl_deadbodyfilter.value) 
 			{
 				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
@@ -868,14 +889,20 @@ void CL_LinkPacketEntities(void)
 			}
 		}
 
-		if (cl_gibfilter.value && (state->modelindex == cl_modelindices[mi_h_player] || 
-		 state->modelindex == cl_modelindices[mi_gib1] || state->modelindex == cl_modelindices[mi_gib2] || state->modelindex == cl_modelindices[mi_gib3]))
+		if (cl_gibfilter.value &&
+			(state->modelindex == cl_modelindices[mi_h_player]
+			|| state->modelindex == cl_modelindices[mi_gib1]
+			|| state->modelindex == cl_modelindices[mi_gib2]
+			|| state->modelindex == cl_modelindices[mi_gib3]))
 			continue;
 
 		if (!(model = cl.model_precache[state->modelindex]))
+		{
 			Host_Error ("CL_LinkPacketEntities: bad modelindex");
+		}
 
 		ent.model = model;
+
 		if (state->modelindex == cl_modelindices[mi_rocket]) 
 		{
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
@@ -884,14 +911,16 @@ void CL_LinkPacketEntities(void)
 		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
 				&& cl.vw_model_precache[0] && r_drawvweps.value)
 		{
+			#ifndef GLQUAKE
 			// This currently triggers a bug in GL renderer
 			// where world is not drawn, producing a hall of mirrors effect
-			//ent.model = cl.vw_model_precache[0];
-			//ent.renderfx |= RF_PLAYERMODEL;
+			ent.model = cl.vw_model_precache[0];
+			ent.renderfx |= RF_PLAYERMODEL;
+			#endif
 		}
 
 		ent.skinnum = state->skinnum;
-	
+
 		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) 
 		{
 			continue;
@@ -908,7 +937,7 @@ void CL_LinkPacketEntities(void)
 			ent.oldframe = ent.frame;
 			ent.framelerp = -1;
 		}
-	
+
 		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS
 		&& (ent.model->modhint == MOD_PLAYER || (ent.renderfx & RF_PLAYERMODEL)))
 		{
@@ -947,8 +976,7 @@ void CL_LinkPacketEntities(void)
 				VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
 			}
 		}
-
-#ifdef FTE_PEXT_TRANS
+#if defined(GLQUAKE) && defined(FTE_PEXT_TRANS)
 		//set trans
 		ent.alpha = state->trans/255.0;
 #endif
@@ -965,13 +993,14 @@ void CL_LinkPacketEntities(void)
 			if (lerp != -1) 
 			{
 				AngleInterpolate(cent->old_angles, lerp, cent->current.angles, ent.angles);
-			} 
+			}
 			else 
 			{
 				VectorCopy(cent->current.angles, ent.angles);
 			}
 		}
 
+#ifdef GLQUAKE
 		if (qmb_initialized) 
 		{
 			if (state->modelindex == cl_modelindices[mi_explod1] || state->modelindex == cl_modelindices[mi_explod2]) 
@@ -989,9 +1018,15 @@ void CL_LinkPacketEntities(void)
 				continue;
 			}
 		}
+#endif
 
 		// Add trails
-		if (model->flags & ~EF_ROTATE || model->modhint) 
+		if (model->flags & ~EF_ROTATE
+                         #ifdef GLQUAKE
+                          // TODO: Why only GL?
+					|| model->modhint
+                         #endif
+		   ) 
 		{
 			if (!(cent->flags & CENT_TRAILDRAWN) || !VectorL2Compare(cent->trail_origin, ent.origin, 140)) 
 			{
@@ -1003,14 +1038,19 @@ void CL_LinkPacketEntities(void)
 				old_origin = &cent->trail_origin;
 			}
 
+#ifdef GLQUAKE
 			if (model->modhint == MOD_LAVABALL)
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, LAVA_TRAIL);
-			else if (model->flags & EF_ROCKET) 
+			else 
+#endif
+			if (model->flags & EF_ROCKET)
 			{
 				if (r_rockettrail.value) 
 				{
 					if (r_rockettrail.value == 2)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
+					else if (r_rockettrail.value == 3)
+						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
 					else if (r_rockettrail.value == 4)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
 					else if (r_rockettrail.value == 5)
@@ -1019,8 +1059,7 @@ void CL_LinkPacketEntities(void)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
 					else if (r_rockettrail.value == 7)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
-					else if (r_rockettrail.value == 3)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
+#ifdef GLQUAKE
 					else if (r_rockettrail.value == 8)
 					{
 						byte color[3];
@@ -1044,6 +1083,10 @@ void CL_LinkPacketEntities(void)
 						CL_CreateBlurs (*old_origin, ent.origin, &ent);
 						VectorCopy(ent.origin, cent->trail_origin);		
 					}
+#else
+					else if (r_rockettrail.value == 8)
+						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
+#endif
 					else
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ROCKET_TRAIL);
 				} 
@@ -1056,6 +1099,7 @@ void CL_LinkPacketEntities(void)
 				rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
 				if (rocketlightsize >= 1)
 				{
+#ifdef GLQUAKE
 					int bubble = gl_rl_globe.integer ? 2 : 1;
 
 					if ((r_rockettrail.value < 8 || r_rockettrail.value == 12) && model->modhint != MOD_LAVABALL)
@@ -1079,10 +1123,15 @@ void CL_LinkPacketEntities(void)
 						// FUEL ROD GUN
 						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_green, bubble);
 					}
+#else
+					rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
+					CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, rocketlightcolor, 1);
+#endif
 				}
 			}
 			else if (model->flags & EF_GRENADE)
 			{
+#ifdef GLQUAKE
 				// VULT TRAILS
 				if (model->modhint == MOD_BUILDINGGIBS)
 				{
@@ -1144,50 +1193,71 @@ void CL_LinkPacketEntities(void)
 				{
 					VectorCopy(ent.origin, cent->trail_origin);
 				}
+#else
+				if (r_grenadetrail.value)
+					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
+				else
+					VectorCopy(ent.origin, cent->trail_origin);
+#endif
 			}
-			else if (model->flags & EF_GIB) 
+			else if (model->flags & EF_GIB)
 			{
+#ifdef GLQUAKE
 				if (amf_part_gibtrails.value)
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLEEDING_TRAIL);
 				else
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
+#else
+				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
+#endif
 			}
 			else if (model->flags & EF_ZOMGIB) 
 			{
+#ifdef GLQUAKE
 				if (model->modhint == MOD_RAIL2)
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, RAIL_TRAIL2);
 				else if (amf_part_gibtrails.value)
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLEEDING_TRAIL);
 				else
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
+#else
+					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
+#endif
 			}
 			else if (model->flags & EF_TRACER) 
 			{
+#ifdef GLQUAKE
 				// VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_green, true);
 				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_WIZLIGHT, ent.origin);
+#endif
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
 			}
 			else if (model->flags & EF_TRACER2) 
 			{
+#ifdef GLQUAKE
 				// VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_default, true);
 				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_KNIGHTLIGHT, ent.origin);
+#endif
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
 			}
 			else if (model->flags & EF_TRACER3) 
 			{
+#ifdef GLQUAKE
 				// VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_blue, true);
 				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_VORELIGHT, ent.origin);
+#endif
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
-			}			
+			}
+#ifdef GLQUAKE
 			else if (model->modhint == MOD_SPIKE && amf_nailtrail.value && !gl_no24bit.integer)
 			{
 				// VULT NAILTRAIL
@@ -1278,307 +1348,16 @@ void CL_LinkPacketEntities(void)
 				liteorg[2] += 32;
 				VX_TeslaCharge(liteorg);
 			}
+#endif
 		}
 		VectorCopy (ent.origin, cent->lerp_origin);
+#ifdef GLQUAKE
 		if (amf_motiontrails_wtf.value)
 			CL_CreateBlurs (ent.origin, ent.origin, &ent);
+#endif
 		CL_AddEntity (&ent);
 	}
 }
-#else // GLQUAKE
-void CL_LinkPacketEntities (void) 
-{
-	entity_t ent;
-	centity_t *cent;
-	packet_entities_t *pack;
-	entity_state_t *state;
-	model_t *model;
-	vec3_t *old_origin;
-	double time;
-	float autorotate, lerp, rocketlightsize;
-	int i, pnum, flicker;
-	dlighttype_t rocketlightcolor, dimlightcolor;
-
-	pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
-
-	autorotate = anglemod(100 * cl.time);
-
-	memset (&ent, 0, sizeof(ent));
-
-	for (pnum = 0; pnum < pack->num_entities; pnum++) 
-	{
-		state = &pack->entities[pnum];
-		cent = &cl_entities[state->number];
-
-		// Control powerup glow for bots.
-		if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value) 
-		{
-			flicker = r_lightflicker.value ? (rand() & 31) : 0;
-			
-			// Spawn light flashes, even ones coming from invisible objects.
-			if ((state->effects & (EF_BLUE | EF_RED | EF_GREEN)) == (EF_BLUE | EF_RED | EF_GREEN)) 
-			{
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_white, 0);
-			} 
-			else if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) 
-			{
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redblue, 0);
-			} 
-			else if ((state->effects & (EF_RED | EF_GREEN)) == (EF_RED | EF_GREEN))
-			{
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redgreen, 0);
-			} 
-			else if ((state->effects & (EF_BLUE | EF_GREEN)) == (EF_BLUE | EF_GREEN)) 
-			{
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_bluegreen, 0);
-			} 
-			else if (state->effects & EF_BLUE) 
-			{
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_blue, 0);
-			} 
-			else if (state->effects & EF_RED) 
-			{
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_red, 0);
-			}
-			else if (state->effects & EF_GREEN) 
-			{
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_green, 0);
-			} 
-			else if (state->effects & EF_BRIGHTLIGHT) 
-			{
-				vec3_t	tmp;
-				VectorCopy (state->origin, tmp);
-				tmp[2] += 16;
-				CL_NewDlight (state->number, tmp, 400 + flicker, 0.1, lt_default, 0);
-			} 
-			else if (state->effects & EF_DIMLIGHT) 
-			{
-				if (cl.teamfortress && 
-					((state->modelindex == cl_modelindices[mi_tf_flag]) 
-					|| (state->modelindex == cl_modelindices[mi_tf_stan])))
-				{
-					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
-				}
-				else if (state->modelindex == cl_modelindices[mi_flag])
-				{
-					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
-				}
-				else
-				{
-					dimlightcolor = lt_default;
-				}
-
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, dimlightcolor, 0);
-			}
-		}
-
-		if (!state->modelindex)		// If set to invisible, skip
-			continue;
-
-		ent.effects = state->effects; // Electro - added for shells
-
-		if (state->modelindex == cl_modelindices[mi_player]) 
-		{
-			i = state->frame;
-
-			if (cl_deadbodyfilter.value == 2)
-			{
-				if (ISDEAD(i))
-					continue;
-			}
-			else if (cl_deadbodyfilter.value) 
-			{
-				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
-					continue;
-			}
-		}
-
-		if (cl_gibfilter.value && 
-			((state->modelindex == cl_modelindices[mi_h_player])
-			|| (state->modelindex == cl_modelindices[mi_gib1]) 
-			|| (state->modelindex == cl_modelindices[mi_gib2]) 
-			|| (state->modelindex == cl_modelindices[mi_gib3])))
-			continue;
-
-		if (!(model = cl.model_precache[state->modelindex]))
-		{
-			Host_Error ("CL_LinkPacketEntities: bad modelindex");
-		}
-
-		ent.model = model;
-
-		if (state->modelindex == cl_modelindices[mi_rocket]) 
-		{
-			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
-			{
-				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
-			}
-		}
-		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
-				&& cl.vw_model_precache[0] && r_drawvweps.value)
-		{
-			ent.model = cl.vw_model_precache[0];
-			ent.renderfx |= RF_PLAYERMODEL;
-		}
-
-		ent.skinnum = state->skinnum;
-
-		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) 
-		{
-			continue;
-		}
-	
-		ent.frame = state->frame;
-		if (cent->frametime >= 0 && cent->frametime <= cl.time) 
-		{
-			ent.oldframe = cent->oldframe;
-			ent.framelerp = (cl.time - cent->frametime) * 10;
-		}
-		else 
-		{
-			ent.oldframe = ent.frame;
-			ent.framelerp = -1;
-		}
-	
-
-		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS
-		&& (ent.model->modhint == MOD_PLAYER || (ent.renderfx & RF_PLAYERMODEL)))
-		{
-			ent.colormap = cl.players[state->colormap - 1].translations;
-			ent.scoreboard = &cl.players[state->colormap - 1];
-		}
-		else 
-		{
-			ent.colormap = vid.colormap;
-			ent.scoreboard = NULL;
-		}
-
-		if (((cl_nolerp.value || cl_nolerp_onentity_flag) && !cls.mvdplayback && !is_monster(state->modelindex))
-			|| cent->deltalerp <= 0) 
-		{
-			lerp = -1;
-			VectorCopy(cent->current.origin, ent.origin);
-		}
-		else 
-		{
-			time = cls.mvdplayback ? cls.demotime : cl.time;
-			lerp = (time - cent->startlerp) / (cent->deltalerp);
-			lerp = min(lerp, 1);
-
-			if (NewLerp_AbleModel(cent->current.modelindex))
-			{
-				float d = time - cent->startlerp;
-
-				if (d >= 2 * cent->deltalerp) // Seems enitity stopped moving.
-					VectorCopy(cent->lerp_origin, ent.origin);
-				else // Interpolate
-					VectorMA(cent->old_origin, d, cent->velocity, ent.origin);
-			}
-			else
-			{
-				VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
-			}
-		}
-	
-
-		if (ent.model->flags & EF_ROTATE) 
-		{
-			ent.angles[0] = ent.angles[2] = 0;
-			ent.angles[1] = autorotate;
-			if (cl_model_bobbing.value)
-				ent.origin[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
-		} 
-		else 
-		{
-			if (lerp != -1) 
-			{
-				AngleInterpolate(cent->old_angles, lerp, cent->current.angles, ent.angles);
-			}
-			else 
-			{
-				VectorCopy(cent->current.angles, ent.angles);
-			}
-		}
-
-		// Add trails.
-		if (model->flags & ~EF_ROTATE)
-		{
-			if (!(cent->flags & CENT_TRAILDRAWN) || !VectorL2Compare(cent->trail_origin, ent.origin, 140)) 
-			{
-				old_origin = &ent.origin;	// Not present last frame or too far away.
-				cent->flags |= CENT_TRAILDRAWN;
-			} 
-			else 
-			{
-				old_origin = &cent->trail_origin;
-			}
-
-			if (model->flags & EF_ROCKET)
-			{
-				if (r_rockettrail.value) 
-				{
-					if (r_rockettrail.value == 2)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
-					else if (r_rockettrail.value == 4)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
-					else if (r_rockettrail.value == 5)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
-					else if (r_rockettrail.value == 6)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
-					else if (r_rockettrail.value == 7)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
-					else if (r_rockettrail.value == 8)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
-					else if (r_rockettrail.value == 3)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
-					else
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ROCKET_TRAIL);
-				} 
-				else 
-				{
-					VectorCopy(ent.origin, cent->trail_origin);		
-				}
-
-				rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
-				if (rocketlightsize >= 1) 
-				{
-					rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
-					CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, rocketlightcolor, 1);
-				}
-			} 
-			else if (model->flags & EF_GRENADE) 
-			{
-				if (r_grenadetrail.value)
-					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
-				else
-					VectorCopy(ent.origin, cent->trail_origin);		
-			}
-			else if (model->flags & EF_GIB)
-			{
-				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
-			} 
-			else if (model->flags & EF_ZOMGIB)
-			{
-				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
-			}
-			else if (model->flags & EF_TRACER)
-			{
-				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
-			} 
-			else if (model->flags & EF_TRACER2) 
-			{
-				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
-			}
-			else if (model->flags & EF_TRACER3) 
-			{
-				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
-			}
-		}
-		VectorCopy (ent.origin, cent->lerp_origin);
-		CL_AddEntity (&ent);
-	}
-} 
-#endif // GLQUAKE else
 
 typedef struct 
 {
