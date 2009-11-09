@@ -813,7 +813,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 		}
 	}
 	// any TF related stuff?
-	else if (!(clmodel->modhint == MOD_EYES && strncasecmp(Rulesets_Ruleset(), "default", 7)) && gl_fb_models.integer) {
+	else if (!( (clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) && gl_fb_models.integer) {
 		ambientlight = shadelight = 4096;
 	}
 
