@@ -54,7 +54,7 @@ void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 void CL_Disconnect_f(void);
 
-extern cvar_t con_shift;
+extern cvar_t con_shift, scr_menualpha;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
@@ -1386,7 +1386,7 @@ void M_Draw (void) {
 		} else {
 			// if you don't like fade in ingame menu, uncomment this
 			// if (m_state != m_ingame && m_state != m_democtrl)
-			Draw_FadeScreen ();
+			Draw_FadeScreen (scr_menualpha.value);
 		}
 
 		scr_fullupdate = 0;

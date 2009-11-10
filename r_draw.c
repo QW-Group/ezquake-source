@@ -1833,9 +1833,9 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 }
 
 
-void Draw_FadeScreen (void)
+void Draw_FadeScreen (float alpha)
 {
-	Draw_FadeBox(0, 0, vid.width, vid.height, 0, scr_menualpha.value);
+	Draw_FadeBox(0, 0, vid.width, vid.height, 0, alpha);
 }
 
 //

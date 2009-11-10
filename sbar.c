@@ -1110,8 +1110,8 @@ static void Sbar_DeathmatchOverlay (int start) {
 
     scr_scoreboard_drawfps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
     offset = 8 * scr_scoreboard_drawfps;
-    if (!start  &&  hud_faderankings.value)
-		Draw_FadeScreen();
+    if (!start && hud_faderankings.value)
+		Draw_FadeScreen(hud_faderankings.value);
 
 #ifndef CLIENTONLY
 	// FIXME
@@ -1434,7 +1434,7 @@ static void Sbar_TeamOverlay (void) {
 	}
 
     if (hud_faderankings.value)
-		Draw_FadeScreen();
+		Draw_FadeScreen(hud_faderankings.value);
 
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;

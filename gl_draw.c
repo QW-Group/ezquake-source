@@ -32,7 +32,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #endif
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
-extern cvar_t scr_coloredText, con_shift;
+extern cvar_t scr_coloredText, con_shift, hud_faderankings;
 
 cvar_t	scr_conalpha		= {"scr_conalpha", "0.8"};
 cvar_t	scr_conback			= {"scr_conback", "1"};
@@ -1989,11 +1989,9 @@ void Draw_ConsoleBackground (int lines)
 		Draw_AlphaPic(0, (lines - vid.height) + (int)con_shift.value, lvlshot ? lvlshot : &conback, alpha);
 }
 
-void Draw_FadeScreen (void)
+void Draw_FadeScreen (float alpha)
 {
-	float alpha;
-
-	alpha = bound(0, scr_menualpha.value, 1) * overall_alpha;
+	alpha = bound(0, alpha, 1) * overall_alpha;
 	if (!alpha)
 		return;
 
