@@ -247,7 +247,7 @@ static void DumpVariables(FILE	*f)
 		var = sorted_vars[i];
 
 		spaces = CreateSpaces(col_size - strlen(var->name) - 5);
-		fprintf	(f, "%s %s%s\"%s\"\n", (var->flags & CVAR_USER_ARCHIVE) ? "seta" : "set ", var->name, spaces, var->string);
+		fprintf	(f, "%s %s%s\"%s\"\n", (var->flags & CVAR_USER_ARCHIVE) ? "seta" : (var->teamplay) ? "set_tp" : "set", var->name, spaces, var->string);
 	}
 }
 
