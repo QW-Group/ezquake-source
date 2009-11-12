@@ -229,11 +229,7 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_wi
 	}
 #endif // GLQUAKE
 
-#ifndef WITH_FTE_VFS
-	if ((pic = Image_LoadPCX (NULL, 0, name, 0, 0, real_width, real_height))) 
-#else
 	if ((pic = Image_LoadPCX (NULL, name, 0, 0, real_width, real_height))) 
-#endif
 	{
 		// PCX is limited.
 		*max_w = 320;

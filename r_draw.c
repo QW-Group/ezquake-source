@@ -144,11 +144,7 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool syserror, qbool only24bit)
 	// if (only24bit)
 	//		Try to load PNG.
 	//
-#ifndef WITH_FTE_VFS
-	FILE *f = NULL;
-#else
 	vfsfile_t *v;
-#endif
 	char stripped_path[MAX_PATH];
 	char lmp_path[MAX_PATH];
 	char png_path[MAX_PATH];
@@ -165,19 +161,11 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool syserror, qbool only24bit)
 		return (mpic_t *)dat;
 
 	#ifdef WITH_PNG
-#ifndef WITH_FTE_VFS
-	if (only24bit && FS_FOpenFile(png_path, &f) > 0)
-#else
 	if (only24bit && (v = FS_OpenVFS(png_path, "rb", FS_ANY)))
-#endif
 	{
 		int i;
 		mpic_t *png_pic = NULL;
-#ifndef WITH_FTE_VFS
-		byte *png_data = Image_LoadPNG(f, path, 0, 0, &real_width, &real_height);
-#else
 		byte *png_data = Image_LoadPNG(v, path, 0, 0, &real_width, &real_height);
-#endif
 
 		// Nothing loaded.
 		if (!png_data)
@@ -758,35 +746,17 @@ static qbool customcrosshairdata[64];
 static qbool customcrosshair_loaded;
 void customCrosshair_Init(void)
 {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	char ch;
 	vfsfile_t *f;
 	vfserrno_t err;
-#endif
 	int i = 0, c;
 
 	customcrosshair_loaded = false;
-#ifndef WITH_FTE_VFS
-	if (FS_FOpenFile("crosshairs/crosshair.txt", &f) == -1)
-#else
 	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY)))
-#endif
 		return;
 
 	while (i < 64)
 	{
-#ifndef WITH_FTE_VFS
-		c = fgetc(f);
-		if (c == EOF)
-		{
-			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
-			fclose(f);
-			return;
-		}
-
-#else
 		VFS_READ(f, &ch, sizeof(char), &err);
 		if (err == VFSERR_EOF)
 		{
@@ -795,18 +765,13 @@ void customCrosshair_Init(void)
 			return;
 		}
 		c = ch;
-#endif
 
 		if (isspace(c))
 			continue;
 		if (c  != 'x' && c  != 'X' && c  != 'O' && c  != 'o')
 		{
 			Com_Printf("Invalid format in crosshair.txt (Only X's and O's and whitespace permitted)\n");
-#ifndef WITH_FTE_VFS
-			fclose(f);
-#else
 			VFS_CLOSE(f);
-#endif
 			return;
 		}
 		else if (c == 'x' || c  == 'X' )
@@ -814,11 +779,7 @@ void customCrosshair_Init(void)
 		else
 			customcrosshairdata[i++] = false;
 	}
-#ifndef WITH_FTE_VFS
-	fclose(f);
-#else
 	VFS_CLOSE(f);
-#endif
 	customcrosshair_loaded = true;
 }
 

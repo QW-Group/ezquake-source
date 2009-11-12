@@ -81,10 +81,6 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode,relativeto_t relativeto);
 // TCP VFS file
 vfsfile_t *FS_OpenTCP(char *name);
 
-#ifndef WITH_FTE_VFS
-void FS_AddGameDirectory (char *path_to_dir, char *dir);
-#else
-
 typedef enum {
 	FS_LOAD_NONE     = 1,
 	FS_LOAD_FILE_PAK = 2,
@@ -99,12 +95,9 @@ typedef enum {
 void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
 
 char *FS_NextPath (char *prevpath);
-#endif
 
-#ifdef WITH_FTE_VFS
 extern cvar_t fs_cache;
 extern qbool filesystemchanged;
-#endif /* WITH_FTE_VFS */
 
 // ====================================================================
 // GZIP & ZIP De/compression

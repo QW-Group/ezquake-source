@@ -21,26 +21,26 @@ static int active_track = 0;
 static int max_active_tracks = 0;
 
 
-cvar_t		amf_tracker_flags			= {"r_tracker_flags", "0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_frags			= {"r_tracker_frags", "1", CVAR_ARCHIVE};
-cvar_t		amf_tracker_streaks			= {"r_tracker_streaks", "0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_time			= {"r_tracker_time", "4", CVAR_ARCHIVE};
-cvar_t		amf_tracker_messages		= {"r_tracker_messages", "10", CVAR_ARCHIVE};
-cvar_t		amf_tracker_align_right		= {"r_tracker_align_right", "1", CVAR_ARCHIVE};
-cvar_t		amf_tracker_x				= {"r_tracker_x", "0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_y				= {"r_tracker_y", "0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_frame_color		= {"r_tracker_frame_color", "0 0 0 0", CVAR_ARCHIVE | CVAR_COLOR};
-cvar_t		amf_tracker_scale			= {"r_tracker_scale", "1", CVAR_ARCHIVE};
-cvar_t		amf_tracker_images_scale	= {"r_tracker_images_scale", "1", CVAR_ARCHIVE};
-cvar_t		amf_tracker_color_good      = {"r_tracker_color_good",     "090", CVAR_ARCHIVE}; // good news
-cvar_t		amf_tracker_color_bad       = {"r_tracker_color_bad",      "900", CVAR_ARCHIVE}; // bad news
-cvar_t		amf_tracker_color_tkgood    = {"r_tracker_color_tkgood",   "990", CVAR_ARCHIVE}; // team kill, not on ur team
-cvar_t		amf_tracker_color_tkbad     = {"r_tracker_color_tkbad",    "009", CVAR_ARCHIVE}; // team kill, on ur team
-cvar_t		amf_tracker_color_myfrag    = {"r_tracker_color_myfrag",   "090", CVAR_ARCHIVE}; // use this color for frag which u done
-cvar_t		amf_tracker_color_fragonme  = {"r_tracker_color_fragonme", "900", CVAR_ARCHIVE}; // use this color when u frag someone
-cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900", CVAR_ARCHIVE}; // use this color when u suicides
-cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)", CVAR_ARCHIVE};
-cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)",     CVAR_ARCHIVE};
+cvar_t		amf_tracker_flags			= {"r_tracker_flags", "0"};
+cvar_t		amf_tracker_frags			= {"r_tracker_frags", "1"};
+cvar_t		amf_tracker_streaks			= {"r_tracker_streaks", "0"};
+cvar_t		amf_tracker_time			= {"r_tracker_time", "4"};
+cvar_t		amf_tracker_messages		= {"r_tracker_messages", "10"};
+cvar_t		amf_tracker_align_right		= {"r_tracker_align_right", "1"};
+cvar_t		amf_tracker_x				= {"r_tracker_x", "0"};
+cvar_t		amf_tracker_y				= {"r_tracker_y", "0"};
+cvar_t		amf_tracker_frame_color		= {"r_tracker_frame_color", "0 0 0 0", CVAR_COLOR};
+cvar_t		amf_tracker_scale			= {"r_tracker_scale", "1"};
+cvar_t		amf_tracker_images_scale	= {"r_tracker_images_scale", "1"};
+cvar_t		amf_tracker_color_good      = {"r_tracker_color_good",     "090"}; // good news
+cvar_t		amf_tracker_color_bad       = {"r_tracker_color_bad",      "900"}; // bad news
+cvar_t		amf_tracker_color_tkgood    = {"r_tracker_color_tkgood",   "990"}; // team kill, not on ur team
+cvar_t		amf_tracker_color_tkbad     = {"r_tracker_color_tkbad",    "009"}; // team kill, on ur team
+cvar_t		amf_tracker_color_myfrag    = {"r_tracker_color_myfrag",   "090"}; // use this color for frag which u done
+cvar_t		amf_tracker_color_fragonme  = {"r_tracker_color_fragonme", "900"}; // use this color when u frag someone
+cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900"}; // use this color when u suicides
+cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)"};
+cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)"};
 
 
 #define MAX_TRACKERMESSAGES 30

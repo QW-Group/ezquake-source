@@ -19,7 +19,6 @@
  */
 
 #ifdef WITH_ZIP
-#ifdef WITH_FTE_VFS
 
 #include "quakedef.h"
 #include "hash.h"
@@ -581,5 +580,4 @@ searchpathfuncs_t zipfilefuncs = {
 	FSZIP_OpenVFS
 };
 
-#endif // WITH_FTE_VFS
 #endif // WITH_ZIP

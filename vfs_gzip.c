@@ -18,7 +18,6 @@
  *             
  */
 
-#ifdef WITH_FTE_VFS
 #ifdef WITH_ZLIB
 
 #include <zlib.h>
@@ -333,4 +332,3 @@ searchpathfuncs_t gzipfilefuncs = {
 };
 
 #endif // WITH_ZLIB
-#endif // WITH_FTE_VFS

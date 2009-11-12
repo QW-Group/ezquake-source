@@ -407,11 +407,7 @@ void SV_Map (qbool now)
 	static char	expanded[MAX_QPATH];
 	static qbool changed = false;
 	// -> scream
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	vfsfile_t *f;
-#endif
 	char	*s;
 	//bliP: date check
 	/*time_t	t;
@@ -429,22 +425,12 @@ void SV_Map (qbool now)
 
 		// uh, is it possible ?
 
-#ifndef WITH_FTE_VFS
-		FS_FOpenFile (expanded, &f);
-		if (!f)
-		{
-			Con_Printf ("Can't find %s\n", expanded);
-			return;
-		}
-		fclose (f);
-#else
 		if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
 		{
 			Con_Printf ("Can't find %s\n", expanded);
 			return;
 		}
 		VFS_CLOSE(f);
-#endif
 
 		if (sv.mvdrecording)
 			SV_MVDStop_f();
@@ -498,23 +484,12 @@ void SV_Map (qbool now)
 	// check to make sure the level exists
 	snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
 
-#ifndef WITH_FTE_VFS
-	FS_FOpenFile (expanded, &f);
-	if (!f)
-	{
-		Con_Printf ("Can't find %s\n", expanded);
-		return;
-	}
-	fclose (f);
-#else
 	if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
 	{
 		Con_Printf ("Can't find %s\n", expanded);
 		return;
 	}
 	VFS_CLOSE(f);
-#endif
-
 	changed = true;
 }
 

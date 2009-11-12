@@ -216,37 +216,19 @@ void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 
 void customCrosshair_Init(void)
 {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	char ch;
 	vfsfile_t *f;
 	vfserrno_t err;
-#endif
 	int i = 0, c;
 
 	customcrosshair_loaded = CROSSHAIR_NONE;
 	crosshairtexture_txt = 0;
 
-#ifndef WITH_FTE_VFS
-	if (FS_FOpenFile("crosshairs/crosshair.txt", &f) == -1)
-		return;
-#else
 	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY)))
 		return;
-#endif
 
 	while (i < 64)
 	{
-#ifndef WITH_FTE_VFS
-		c = fgetc(f);
-		if (c == EOF)
-		{
-			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
-			fclose(f);
-			return;
-		}
-#else
 		VFS_READ(f, &ch, sizeof(char), &err);
 		if (err == VFSERR_EOF) 
 		{
@@ -255,7 +237,6 @@ void customCrosshair_Init(void)
 			return;
 		}
 		c = ch;
-#endif
 
 		if (isspace(c))
 			continue;
@@ -263,21 +244,13 @@ void customCrosshair_Init(void)
 		if (tolower(c) != 'x' && tolower(c) != 'o')
 		{
 			Com_Printf("Invalid format in crosshair.txt (Only X's and O's and whitespace permitted)\n");
-#ifndef WITH_FTE_VFS
-			fclose(f);
-#else
 			VFS_CLOSE(f);
-#endif
 			return;
 		}
 		customcrosshairdata[i++] = (c == 'x' || c  == 'X') ? 0xfe : 0xff;
 	}
 
-#ifndef WITH_FTE_VFS
-	fclose(f);
-#else
 	VFS_CLOSE(f);
-#endif
 	crosshairtexture_txt = GL_LoadTexture ("", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -482,11 +455,7 @@ mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
 	mpic_t *pic, *fpic, *pic_24bit;
 	qbool lmp_found = false;
 	qpic_t *dat = NULL;
-#ifndef WITH_FTE_VFS
-	FILE *f = NULL;
-#else
 	vfsfile_t *v = NULL;
-#endif // WITH_FTE_VFS
 
 	// Check if the picture was already cached.
 	if ((fpic = CachePic_Find(path)))
@@ -519,15 +488,9 @@ mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
 	}
 
 	// Load the ".lmp" file.
-#ifndef WITH_FTE_VFS
-	if (FS_FOpenFile(lmp_path, &f) > 0)
-	{
-		fclose (f);
-#else
 	if ((v = FS_OpenVFS(lmp_path, "rb", FS_ANY)))
 	{
 		VFS_CLOSE(v);
-#endif // WITH_FTE_VFS
 
 		if (!(dat = (qpic_t *)FS_LoadTempFile(lmp_path, NULL)))
 		{

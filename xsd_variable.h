@@ -52,11 +52,7 @@ xml_variable_t;
 void XSD_Variable_Free(xml_t *);
 
 // read variable content from file, return NULL if error
-#ifndef WITH_FTE_VFS
-xml_t * XSD_Variable_LoadFromHandle(FILE *f, int len);
-#else
 xml_t * XSD_Variable_LoadFromHandle(vfsfile_t *v, int filelen);
-#endif
 
 // read variable content from file, return NULL if error
 xml_variable_t * XSD_Variable_Load(char *filename);

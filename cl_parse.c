@@ -472,12 +472,7 @@ int CL_CalcNetStatistics(
 // Returns true if the file exists, otherwise it attempts to start a download from the server.
 qbool CL_CheckOrDownloadFile (char *filename) 
 {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	vfsfile_t *f;
-#endif
-
 
 	if (strstr (filename, ".."))
 	{
@@ -485,22 +480,12 @@ qbool CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-#ifndef WITH_FTE_VFS
-	FS_FOpenFile (filename, &f);
-	if (f) 
-	{	
-		// It exists, no need to download
-		fclose (f);
-		return true;
-	}
-#else
 	f = FS_OpenVFS(filename, "rb", FS_ANY);
 	if (f) 
 	{
 		VFS_CLOSE(f);
 		return true;
 	}
-#endif // WITH_FTE_VFS
 
 	// Can't download when playback, except qtv which support download
 	if (cls.demoplayback)
@@ -1089,10 +1074,8 @@ void CL_FinishDownload(qbool rename_files)
 	cls.downloadpercent = 0;
 	cls.downloadmethod = DL_NONE;
 
-#ifdef WITH_FTE_VFS
 	// VFS-FIXME: D-Kure: Surely there is somewhere better for this in fs.c
-	filesystemchanged = true;	
-#endif
+	filesystemchanged = true;
 
 	// get another file if needed
 
@@ -1397,8 +1380,7 @@ void CL_StopUpload(void)
 
 void CL_ParseServerData (void) 
 {
-	char *str, fn[MAX_OSPATH];
-	FILE *f;
+	char *str;
 	qbool cflag = false;
 	int i, protover;
 
@@ -1456,8 +1438,6 @@ void CL_ParseServerData (void)
 
 	if (strcasecmp(cls.gamedirfile, str)) 
 	{
-		// save current config
-		CL_WriteConfiguration();
 		strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
 		snprintf (cls.gamedir, sizeof(cls.gamedir),
 			"%s/%s", com_basedir, cls.gamedirfile);
@@ -1466,50 +1446,6 @@ void CL_ParseServerData (void)
 
 	if (!com_serveractive)
 		FS_SetGamedir (str);
-
-	// run config.cfg and frontend.cfg in the gamedir if they exist
-
-	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
-	{
-		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");
-		Cbuf_AddText ("cl_warncmd 0\n");
-		if ((f = fopen(fn, "r")) != NULL) 
-		{
-			fclose(f);
-			if (!strcmp(cls.gamedirfile, com_gamedirfile))
-				Cbuf_AddText ("exec config.cfg\n");
-			else
-				Cbuf_AddText (va("exec ../%s/config.cfg\n", cls.gamedirfile));
-		} 
-		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
-		{
-			snprintf (fn, sizeof(fn), "qw/%s", "config.cfg");
-			if ((f = fopen(fn, "r")) != NULL) 
-			{
-				fclose(f);
-				Cbuf_AddText ("exec config.cfg\n");
-			}
-		}
-		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
-		if ((f = fopen(fn, "r")) != NULL) 
-		{
-			fclose(f);
-			if (!strcmp(cls.gamedirfile, com_gamedirfile))
-				Cbuf_AddText ("exec frontend.cfg\n");
-			else
-				Cbuf_AddText (va("exec ../%s/frontend.cfg\n", cls.gamedirfile));
-		} 
-		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
-		{
-			snprintf (fn, sizeof(fn), "qw/%s", "frontend.cfg");
-			if ((f = fopen(fn, "r")) != NULL) 
-			{
-				fclose(f);
-				Cbuf_AddText ("exec frontend.cfg\n");
-			}
-		}
-		Cbuf_AddText ("cl_warncmd 1\n");
-	}
 
 	// parse player slot, high bit means spectator
 	if (cls.mvdplayback)

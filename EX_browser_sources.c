@@ -66,40 +66,18 @@ void Delete_Source(source_data *s)
 // which require the source to be dumped to file in corrected form
 qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers, int *pserversn)
 {
-#ifndef WITH_FTE_VFS
-    FILE *f;
-#else
 	vfsfile_t *f;
 	char line[2048];
-#endif
     qbool should_dump = false;
 
     //length = COM_FileOpenRead (fname, &f);
-#ifndef WITH_FTE_VFS
-    FS_FOpenFile(fname, &f);
-
-    if (f) {
-		while (!feof(f))
-		{
-			char c = 'A';
-			char line[2048];
-			netadr_t addr;
-			int ret;
-
-			ret = fscanf(f, "%s", line);
-			while (!feof(f)  &&  c != '\n')
-				fscanf(f, "%c", &c);
-
-			if (ret != 1)
-				continue;
-#else
 	f = FS_OpenVFS(fname, "rb", FS_ANY);
 
     if (f) {
 		while (VFS_GETS(f, line, sizeof(line)))
 		{
 			netadr_t addr;
-#endif
+
 			if (!strchr(line, ':'))
 				strlcat (line, ":27000", sizeof (line));
 			if (!NET_StringToAdr(line, &addr))
@@ -109,11 +87,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 			if (line[0] <= '0'  ||  line[0] >= '9')
 				should_dump = true;
 		}
-#ifndef WITH_FTE_VFS
-		fclose(f);
-#else
 		VFS_CLOSE(f);
-#endif
     } else {
         //Com_Printf ("Updating %15.15s failed: file not found\n", s->name);
         // ?????? should_dump = true;
@@ -678,13 +652,8 @@ void SB_Source_Remove(int i)
 void Reload_Sources(void)
 {
     int i;
-#ifndef WITH_FTE_VFS
-    FILE *f;
-    int length;
-#else
 	vfsfile_t *f;
 	char ln[2048];
-#endif
     source_data *s;
 
     for (i=0; i < sourcesn; i++)
@@ -699,41 +668,14 @@ void Reload_Sources(void)
 
 	sourcesn = 1;
 
-#ifndef WITH_FTE_VFS
-    //length = COM_FileOpenRead (SOURCES_PATH, &f);
-    length = FS_FOpenFile(SOURCES_LIST_FILENAME, &f);
-    if (length < 0)
-    {
-        //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
-        return;
-    }
-
-#else
 	f = FS_OpenVFS(SOURCES_LIST_FILENAME, "rb", FS_ANY);
 	if (!f) 
 	{
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
 		return;
 	}
-#endif
 
     s = Create_Source();
-#ifndef WITH_FTE_VFS
-    while (!feof(f))
-    {
-        char c = 'A';
-        char line[2048];
-        char *p, *q;
-
-        if (fscanf(f, "%[ -~	]s", line) != 1)
-		{
-			while (!feof(f)  &&  c != '\n')
-				fscanf(f, "%c", &c);
-			continue;
-		}
-        while (!feof(f)  &&  c != '\n')
-            fscanf(f, "%c", &c);
-#else
     while (VFS_GETS(f, ln, sizeof(ln)))
     {
 		char line[2048];
@@ -742,7 +684,6 @@ void Reload_Sources(void)
         if (sscanf(ln, "%[ -~	]s", line) != 1) {
 			continue;
 		}
-#endif
 
         p = next_nonspace(line);
         if (*p == '/')
@@ -786,12 +727,8 @@ void Reload_Sources(void)
     }
 
     Delete_Source(s);
-
-#ifndef WITH_FTE_VFS
-    fclose(f);
-#else
 	VFS_CLOSE(f);
-#endif
+
     //Com_Printf("Read %d sources for Server Browser\n", sourcesn);
 
     // update all file sources

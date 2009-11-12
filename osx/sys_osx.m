@@ -681,7 +681,6 @@ wchar * Sys_GetClipboardTextW(void)
 
 //___________________________________________________________________________________________________Sys_EnumerateFiles()
 
-#ifdef WITH_FTE_VFS
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm) {
 	DIR *dir, *dir2;
 	char apath[MAX_OSPATH];
@@ -757,7 +756,6 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 
 	return true;
 }
-#endif
 
 //___________________________________________________________________________________________________Sys_CheckForIDDirectory()
 

@@ -81,20 +81,20 @@ void OnChange_vid_stretch_y(struct cvar_s *var, char *value, qbool *cancel);
 
 cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
 
-cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
+cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1"};
 qbool		allow_flash = false; 
 cvar_t		vid_mode = {"vid_mode", "3"};											// Note that 3 is MODE_FULLSCREEN_DEFAULT
-cvar_t		_vid_default_mode = {"_vid_default_mode", "3", CVAR_ARCHIVE};			// Note that 3 is MODE_FULLSCREEN_DEFAULT
-cvar_t		vid_nopageflip = {"vid_nopageflip", "0", CVAR_ARCHIVE};
-cvar_t		vid_stretch_x = {"vid_stretch_x", "0", CVAR_ARCHIVE, OnChange_vid_stretch_x};
-cvar_t		vid_stretch_y = {"vid_stretch_y", "0", CVAR_ARCHIVE, OnChange_vid_stretch_y};
-cvar_t		_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};
-cvar_t		block_switch = {"block_switch", "0", CVAR_ARCHIVE};
-cvar_t		vid_window_x = {"vid_window_x", "0", CVAR_ARCHIVE};
-cvar_t		vid_window_y = {"vid_window_y", "0", CVAR_ARCHIVE};
-cvar_t		vid_resetonswitch = {"vid_resetonswitch", "0", CVAR_ARCHIVE};
+cvar_t		_vid_default_mode = {"_vid_default_mode", "3"};			// Note that 3 is MODE_FULLSCREEN_DEFAULT
+cvar_t		vid_nopageflip = {"vid_nopageflip", "0"};
+cvar_t		vid_stretch_x = {"vid_stretch_x", "0", CVAR_NONE, OnChange_vid_stretch_x};
+cvar_t		vid_stretch_y = {"vid_stretch_y", "0", CVAR_NONE, OnChange_vid_stretch_y};
+cvar_t		_windowed_mouse = {"_windowed_mouse", "1"};
+cvar_t		block_switch = {"block_switch", "0"};
+cvar_t		vid_window_x = {"vid_window_x", "0"};
+cvar_t		vid_window_y = {"vid_window_y", "0"};
+cvar_t		vid_resetonswitch = {"vid_resetonswitch", "0"};
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", CVAR_INIT};
-cvar_t		vid_windowed = {"vid_windowed", "0", CVAR_ARCHIVE, OnChange_vid_windowed};
+cvar_t		vid_windowed = {"vid_windowed", "0", CVAR_NONE, OnChange_vid_windowed};
 
 typedef struct 
 {

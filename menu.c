@@ -780,17 +780,6 @@ void M_SinglePlayer_Draw (void) {
 
 #ifndef WITH_NQPROGS
 static void CheckSPGame (void) {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-	FS_FOpenFile ("spprogs.dat", &f);
-	if (f) {
-		fclose (f);
-		m_singleplayer_notavail = false;
-	} else {
-		m_singleplayer_notavail = true;
-	}
-
-#else
 	vfsfile_t *v;
 	if ((v = FS_OpenVFS("spprogs.dat", "rb", FS_ANY))) {
 		VFS_CLOSE(v);
@@ -798,7 +787,6 @@ static void CheckSPGame (void) {
 	} else {
 		m_singleplayer_notavail = true;
 	}
-#endif
 }
 #endif	// !WITH_NQPROGS
 
@@ -984,24 +972,12 @@ menu_window_t load_window, save_window;
 void M_ScanSaves (char *sp_gamedir) {
 	int i, j, version;
 	char name[MAX_OSPATH];
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	vfsfile_t *f;
-#endif
 
 	for (i = 0; i < MAX_SAVEGAMES; i++) {
 		strlcpy (m_filenames[i], "--- UNUSED SLOT ---", SAVEGAME_COMMENT_LENGTH + 1);
 		loadable[i] = false;
 
-#ifndef WITH_FTE_VFS
-		snprintf (name, sizeof(name), "%s/save/s%i.sav", sp_gamedir, i);
-		if (!(f = fopen (name, "r")))
-			continue;
-		fscanf (f, "%i\n", &version);
-		fscanf (f, "%79s\n", name);
-		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
-#else
 		snprintf (name, sizeof(name), "save/s%i.sav", i);
 		if (!(f = FS_OpenVFS(name, "rb", FS_GAME_OS)))
 			continue;
@@ -1009,33 +985,21 @@ void M_ScanSaves (char *sp_gamedir) {
 		version = atoi(name);
 		VFS_GETS(f, name, sizeof(name));
 		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
-#endif
 
 		// change _ back to space
 		for (j = 0; j < SAVEGAME_COMMENT_LENGTH; j++)
 			if (m_filenames[i][j] == '_')
 				m_filenames[i][j] = ' ';
 		loadable[i] = true;
-#ifndef WITH_FTE_VFS
-		fclose (f);
-#else
 		VFS_CLOSE(f);
-#endif
 	}
 }
 
 void M_Menu_Load_f (void) {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-
-	if (FS_FOpenFile ("spprogs.dat", &f) == -1)
-		return;
-#else
 	vfsfile_t *f;
 
 	if (!(f = FS_OpenVFS("spprogs.dat", "rb", FS_ANY)))
 		return;
-#endif
 
 	M_EnterMenu (m_load);
 	// VFS-FIXME: file_from_gamedir is not set in FS_OpenVFS

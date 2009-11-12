@@ -25,8 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "fs.h"
 
-void Key_WriteBindings (FILE *);
-
 #ifdef WITH_KEYMAP
 char *Key_KeynumToString (int keynum, char *buffer);
 #else
@@ -66,18 +64,13 @@ extern char		allskins[128];
 cvar_t	cfg_save_unchanged	=	{"cfg_save_unchanged", "0"};
 cvar_t	cfg_save_userinfo	=	{"cfg_save_userinfo", "2"};
 cvar_t	cfg_save_onquit		=	{"cfg_save_onquit", "0"};
-cvar_t	cfg_legacy_exec		=	{"cfg_legacy_exec", "1"};
-cvar_t	cfg_legacy_write	=	{"cfg_legacy_write", "0"};
-
 cvar_t	cfg_save_cvars		=	{"cfg_save_cvars", "1"};
 cvar_t	cfg_save_aliases	=	{"cfg_save_aliases", "1"};
 cvar_t	cfg_save_cmds		=	{"cfg_save_cmds", "1"};
 cvar_t	cfg_save_binds		=	{"cfg_save_binds", "1"};
 cvar_t	cfg_save_sysinfo	=	{"cfg_save_sysinfo", "0"};
 cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1"};
-
 cvar_t	cfg_backup			=	{"cfg_backup", "0"};
-
 cvar_t  cfg_use_home		=	{"cfg_use_home", "0"};
 
 /************************************ DUMP FUNCTIONS ************************************/
@@ -247,7 +240,7 @@ static void DumpVariables(FILE	*f)
 		var = sorted_vars[i];
 
 		spaces = CreateSpaces(col_size - strlen(var->name) - 5);
-		fprintf	(f, "%s %s%s\"%s\"\n", (var->flags & CVAR_USER_ARCHIVE) ? "seta" : (var->teamplay) ? "set_tp" : "set", var->name, spaces, var->string);
+		fprintf	(f, "%s %s%s\"%s\"\n", (var->teamplay) ? "set_tp" : "set", var->name, spaces, var->string);
 	}
 }
 
@@ -623,7 +616,6 @@ void ResetBinds(void)
 	Key_SetBinding('0',		 "impulse 10");
 
 	Key_SetBinding(K_ALT,    "+zoom");
-	Key_SetBinding(K_F12,    "screenshot");
 	Key_SetBinding(K_TAB,    "+showscores");
 
 	Key_SetBinding('r',      "tp_msgreport");
@@ -642,6 +634,8 @@ void ResetBinds(void)
 	Key_SetBinding(K_F4,     "break");
 	Key_SetBinding(K_F5,     "join");
 	Key_SetBinding(K_F6,     "observe");
+	Key_SetBinding(K_F10,    "quit");
+	Key_SetBinding(K_F12,    "screenshot");
 }
 
 static void ResetTeamplayCommands(void)
@@ -730,41 +724,23 @@ static void Config_PrintPreamble(FILE *f)
 
 static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	vfsfile_t *v;
-#endif
 
 	ResetVariables(CVAR_SERVERINFO, !resetall);
-
 	DeleteUserAliases();
-
 	DeleteUserVariables();
-
 	ResetBinds();
-
 	ResetPlusCommands();
-
 	ResetTeamplayCommands();
-
 	ResetMiscCommands();
 
 	if (read_legacy_configs)
 	{
 		Cbuf_AddText ("cl_warncmd 0\n");
-		//Cbuf_AddText ("exec default.cfg\n");
-#ifndef WITH_FTE_VFS
-		if (FS_FOpenFile("autoexec.cfg", &f) != -1) {
-			Cbuf_AddText ("exec autoexec.cfg\n");
-			fclose(f);
-		}
-#else
 		if ((v = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
 			Cbuf_AddText ("exec autoexec.cfg\n");
 			VFS_CLOSE(v);
 		}
-#endif
 		Cbuf_AddText ("cl_warncmd 1\n");
 	}
 }
@@ -775,9 +751,9 @@ void DumpConfig(char *name)
 	char	*outfile, *newlines = "\n";
 
 	if (cfg_use_home.integer) // use home dir for cfg
-		outfile = va("%s/%s", com_homedir, name);
+		outfile = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, name);
 	else // use ezquake dir
-		outfile = va("%s/ezquake/configs/%s", com_basedir, name);
+		outfile = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, name);
 
 	if (!(f	= fopen	(outfile, "w"))) {
 		FS_CreatePath(outfile);
@@ -895,7 +871,6 @@ void SaveConfig_f(void)
 	size_t len;
 	FILE *f;
 
-
 	arg1 = COM_SkipPath(Cmd_Argv(1));
 	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
 
@@ -903,9 +878,9 @@ void SaveConfig_f(void)
 
 	if (cfg_backup.integer) {
 		if (cfg_use_home.integer) // use home dir for cfg
-			filename_ext = va("%s/%s", com_homedir, filename);
-		else // use ezquake dir
-			filename_ext = va("%s/ezquake/configs/%s", com_basedir, filename);
+			filename_ext = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile,	filename);
+		else // use mod dir
+			filename_ext = va("%s/%s/configs/%s", com_basedir,(strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
 
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
@@ -951,18 +926,13 @@ void ResetConfigs_f(void)
 
 // well exec /home/qqshka/ezquake/config.cfg does't work, security or something, so adding this
 // so this is some replacement for exec
-void LoadHomeCfg(const char *filename)
+qbool LoadCfg(FILE *f)
 {
-	char fullname[MAX_PATH] = {0}, *fileBuffer;
+	char *fileBuffer;
     int size;
-    FILE *f;
 
-	snprintf(fullname, sizeof(fullname) - 4, "%s/%s", com_homedir, filename);
-	COM_ForceExtensionEx (fullname, ".cfg", sizeof (fullname));
-
-	if (!(f = fopen(fullname, "rb"))) {
-	    Com_DPrintf("LoadHomeCfg: %s not found\n", filename); // hrm
-		return;
+	if (!f) {
+		return false;
 	}
 
 	size = FS_FileLength(f);
@@ -974,61 +944,60 @@ void LoadHomeCfg(const char *filename)
 	Cbuf_AddText (fileBuffer);
 	Cbuf_AddText ("\n");
 	Q_free(fileBuffer);
+	return true;
 }
 
+/*
+	example how it works
+	
+	=== ./ezquake -game testmod -config testcfg
+	home/testmod/testcfg.cfg (fullname)
+	home/ezquake/ezquake/testcfg.cfg (fullname_moddefault)
+	quakedir/testmod/configs/testcfg.cfg
+	quakedir/ezquake/configs/testcfg.cfg
+	built-in ezquake config
+*/
 void LoadConfig_f(void)
 {
-	FILE *f;
-	char filename[MAX_PATH] = {0}, fullname[MAX_PATH] = {0}, *arg1;
-	int use_home;
-
-/* load config.cfg by default if no params
-	if (Cmd_Argc() != 2) {
-		Com_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
-		return;
-	}
-*/
+	FILE	*f;
+	char	filename[MAX_PATH] = {0},
+			fullname[MAX_PATH] = {0},
+			fullname_moddefault[MAX_PATH] = {0},
+			*arg1;
+	int		use_home;
 
 	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
 	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
-
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
+	use_home = cfg_use_home.integer || !host_everything_loaded;
 
-	use_home = cfg_use_home.integer;
+	// home
+	snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
+	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/%s", com_homedir, filename);
 
-	if (use_home) // use home dir for cfg
-		snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-	else // use ezquake dir
-		snprintf(fullname, sizeof(fullname), "%s/ezquake/configs/%s", com_basedir, filename);
-
-	if (!(f = fopen(fullname, "r"))) {
-		use_home = !use_home; // cfg was't found, invert setting and repeat search, mostly this need only at load time
-
-		if (use_home) // use home dir for cfg
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-		else // use ezquake dir
-			snprintf(fullname, sizeof(fullname), "%s/ezquake/configs/%s", com_basedir, filename);
-
-		if (!(f = fopen(fullname, "r"))) {
-			Com_Printf("Couldn't load config %s\n", filename);
-			return;
-		}
+	if(use_home && !(f = fopen(fullname, "rb")) && !(f = fopen(fullname_moddefault, "rb")) )
+	{
+		use_home = false;
 	}
 
-	fclose(f);
+	// basedir
+	snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
+	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
+
+	if(!use_home && !(f = fopen(fullname, "rb")) && !(f = fopen(fullname_moddefault, "rb")) )
+	{
+		Com_Printf("Couldn't load %s\n", filename);
+		return;
+	}
 
 	con_suppress = true;
 	ResetConfigs(false, true);
 	con_suppress = false;
-
-	Com_Printf("Loading config %s ...\n", filename);
-
+	Com_Printf("Loading %s ...\n", filename);
 	Cbuf_AddText ("cl_warncmd 0\n");
 
-	if (use_home)
-		LoadHomeCfg(filename); // well, we can't use exec here, because exec does't support full path by design
-	else
-		Cbuf_AddText(va("exec configs/%s\n", filename));
+	LoadCfg(f);
+	fclose(f);
 
 	/* johnnycz:
 	  This should be called with TP_ExecTrigger("f_cfgload"); but definition
@@ -1114,8 +1083,6 @@ void ConfigManager_Init(void)
 	Cvar_Register(&cfg_save_unchanged);
 	Cvar_Register(&cfg_save_userinfo);
 	Cvar_Register(&cfg_save_onquit);
-	Cvar_Register(&cfg_legacy_exec);
-	Cvar_Register(&cfg_legacy_write);
 	Cvar_Register(&cfg_save_cvars);
 	Cvar_Register(&cfg_save_aliases);
 	Cvar_Register(&cfg_save_cmds);
@@ -1124,6 +1091,5 @@ void ConfigManager_Init(void)
 	Cvar_Register(&cfg_save_sysinfo);
 	Cvar_Register(&cfg_backup);
 	Cvar_Register(&cfg_use_home);
-
 	Cvar_ResetCurrentGroup();
 }

@@ -27,7 +27,6 @@
 #include "vfs.h"
 
 #ifdef DOOMWADS
-#ifdef WITH_FTE_VFS
 typedef struct
 {
 	int		filepos, filelen;
@@ -227,6 +226,3 @@ searchpathfuncs_t doomwadfilefuncs = {
 
 
 #endif // DOOMWADS
-#endif // WITH_FTE_VFS
-
-

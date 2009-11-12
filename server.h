@@ -232,16 +232,9 @@ typedef struct client_s
 
 	client_frame_t	frames[UPDATE_BACKUP];		// updates can be deltad from here
 
-#ifndef WITH_FTE_VFS
-	FILE			*download;			// file being downloaded
-#else
 	vfsfile_t		*download;			// file being downloaded
-#endif
 
 #ifdef PROTOCOL_VERSION_FTE
-#ifndef WITH_FTE_VFS
-	int				download_position; // chunked download used fseek(), since this is may be pak file, we need offset in pak file
-#endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	int				download_chunks_perframe;
 #endif

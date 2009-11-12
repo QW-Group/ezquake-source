@@ -189,7 +189,6 @@ void Sys_mkdir (const char *path)
 	mkdir(path, 0777);
 }
 
-#ifdef WITH_FTE_VFS
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm) {
 	DIR *dir, *dir2;
 	char apath[MAX_OSPATH];
@@ -265,7 +264,6 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 
 	return true;
 }
-#endif
 
 /*
 ===============================================================================

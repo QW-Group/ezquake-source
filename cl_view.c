@@ -68,14 +68,14 @@ cvar_t	v_iroll_level = {"v_iroll_level", "0.1", 0, Change_v_idle};
 cvar_t	v_ipitch_level = {"v_ipitch_level", "0.3", 0, Change_v_idle};
 cvar_t	v_idlescale = {"v_idlescale", "0", 0, Change_v_idle};
 
-cvar_t	crosshair = {"crosshair", "3", CVAR_ARCHIVE};
-cvar_t	crosshaircolor = {"crosshaircolor", "255 255 255", CVAR_ARCHIVE | CVAR_COLOR};
+cvar_t	crosshair = {"crosshair", "3",};
+cvar_t	crosshaircolor = {"crosshaircolor", "255 255 255", CVAR_COLOR};
 cvar_t	crosshairsize	= {"crosshairsize", "1"};
-cvar_t  cl_crossx = {"cl_crossx", "0", CVAR_ARCHIVE};
-cvar_t  cl_crossy = {"cl_crossy", "0", CVAR_ARCHIVE};
+cvar_t  cl_crossx = {"cl_crossx", "0"};
+cvar_t  cl_crossy = {"cl_crossy", "0"};
 
 // QW262: less flash grenade effect in demos
-cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", ".33", CVAR_ARCHIVE};
+cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", ".33"};
 
 cvar_t  v_contentblend = {"v_contentblend", "0.33"};
 cvar_t	v_damagecshift = {"v_damagecshift", "0.33"};
@@ -249,11 +249,11 @@ cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
 cvar_t		gl_hwblend = {"gl_hwblend", "1"};
 float		v_blend[4];		// rgba 0.0 - 1.0
 #ifdef NDEBUG
-cvar_t		v_gamma = {"gl_gamma", "0.8", CVAR_ARCHIVE};
-cvar_t		v_contrast = {"gl_contrast", "1.3", CVAR_ARCHIVE};
+cvar_t		v_gamma = {"gl_gamma", "0.8"};
+cvar_t		v_contrast = {"gl_contrast", "1.3"};
 #else
-cvar_t		v_gamma = {"gl_gamma", "1.0", CVAR_ARCHIVE};
-cvar_t		v_contrast = {"gl_contrast", "1.0", CVAR_ARCHIVE};
+cvar_t		v_gamma = {"gl_gamma", "1.0"};
+cvar_t		v_contrast = {"gl_contrast", "1.0"};
 #endif
 unsigned short	ramps[3][256];
 
@@ -261,8 +261,8 @@ unsigned short	ramps[3][256];
 
 byte		gammatable[256];	// palette is sent through this
 byte		current_pal[768];	// Tonik: used for screenshots
-cvar_t		v_gamma = {"sw_gamma", "1", CVAR_ARCHIVE};
-cvar_t		v_contrast = {"sw_contrast", "1", CVAR_ARCHIVE};
+cvar_t		v_gamma = {"sw_gamma", "1"};
+cvar_t		v_contrast = {"sw_contrast", "1"};
 
 #endif
 

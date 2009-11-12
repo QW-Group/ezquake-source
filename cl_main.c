@@ -115,9 +115,9 @@ cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
 cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "5"};
 #endif
 
-cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
-cvar_t	cl_hudswap	= {"cl_hudswap", "0", CVAR_ARCHIVE};
-cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
+cvar_t	cl_sbar		= {"cl_sbar", "0"};
+cvar_t	cl_hudswap	= {"cl_hudswap", "0"};
+cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
 cvar_t	cl_physfps_spectator = {"cl_physfps_spectator", "30"};
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnChange_indphys};
@@ -174,7 +174,7 @@ cvar_t cl_nolerp_onentity	= {"cl_nolerp_onentity", "0"};
 
 cvar_t cl_newlerp				= {"cl_newlerp", "0"};
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
-cvar_t cl_fix_mvd				= {"cl_fix_mvd", "0", CVAR_ARCHIVE};
+cvar_t cl_fix_mvd				= {"cl_fix_mvd", "0"};
 
 cvar_t r_rocketlight			= {"r_rocketLight", "1"};
 cvar_t r_rocketlightcolor		= {"r_rocketLightColor", "0"};
@@ -195,28 +195,28 @@ cvar_t r_shaftalpha				= {"r_shaftalpha", "1"};
 cvar_t	password				= {"password", "", CVAR_USERINFO};
 cvar_t	spectator				= {"spectator", "", CVAR_USERINFO};
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
-cvar_t	name					= {"name", "player", CVAR_ARCHIVE|CVAR_USERINFO, CL_OnChange_name_validate};
-cvar_t	team					= {"team", "", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	topcolor				= {"topcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	bottomcolor				= {"bottomcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	skin					= {"skin", "", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	rate					= {"rate", "5760", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	msg						= {"msg", "1", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t  noaim					= {"noaim", "1", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	w_switch				= {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	b_switch				= {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	name					= {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};
+cvar_t	team					= {"team", "", CVAR_USERINFO};
+cvar_t	topcolor				= {"topcolor","", CVAR_USERINFO};
+cvar_t	bottomcolor				= {"bottomcolor","", CVAR_USERINFO};
+cvar_t	skin					= {"skin", "", CVAR_USERINFO};
+cvar_t	rate					= {"rate", "5760", CVAR_USERINFO};
+cvar_t	msg						= {"msg", "1", CVAR_USERINFO};
+cvar_t  noaim					= {"noaim", "1", CVAR_USERINFO};
+cvar_t	w_switch				= {"w_switch", "", CVAR_USERINFO};
+cvar_t	b_switch				= {"b_switch", "", CVAR_USERINFO};
 
-cvar_t  cl_mediaroot			= {"cl_mediaroot", "0", CVAR_ARCHIVE};
+cvar_t  cl_mediaroot			= {"cl_mediaroot", "0"};
 
 cvar_t  msg_filter				= {"msg_filter", "0"};
 
-cvar_t cl_onload				= {"cl_onload", "menu", CVAR_ARCHIVE};
+cvar_t cl_onload				= {"cl_onload", "menu"};
 
 #ifdef WIN32
-cvar_t cl_verify_qwprotocol		= {"cl_verify_qwprotocol", "1", CVAR_ARCHIVE};
+cvar_t cl_verify_qwprotocol		= {"cl_verify_qwprotocol", "1"};
 #endif // WIN32
 
-cvar_t demo_autotrack			= {"demo_autotrack", "0", CVAR_ARCHIVE}; // use or not autotrack info from mvd demos
+cvar_t demo_autotrack			= {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 /// persistent client state
 clientPersistent_t	cls;
@@ -2531,9 +2531,6 @@ void CL_Frame (double time)
 void CL_Shutdown (void) 
 {
 	CL_Disconnect();
-
-	CL_WriteConfiguration();
-
 	SList_Shutdown();
 	CDAudio_Shutdown();
 	S_Shutdown();

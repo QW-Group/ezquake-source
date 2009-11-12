@@ -1714,39 +1714,6 @@ void Key_BindList_f (void) {
 	}
 }
 
-// Writes lines containing "bind key value"
-void Key_WriteBindings (FILE *f) 
-{
-	int i, leftright;
-	
-	#ifdef WITH_KEYMAP
-	char str[ 256 ];
-	#endif // WITH_KEYMAP
-
-	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) 
-	{
-		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
-		
-		if (leftright || keybindings[i]) 
-		{
-			if (i == ';')
-			{
-				fprintf (f, "bind \";\" \"%s\"\n", keybindings[i]);
-			}
-			else
-			{
-				#ifdef WITH_KEYMAP
-				fprintf (f, "bind %s \"%s\"\n", Key_KeynumToString(i, str), keybindings[leftright ? i + 1 : i]);
-				#else
-				fprintf (f, "bind %s \"%s\"\n", Key_KeynumToString(i), keybindings[leftright ? i + 1 : i]);
-				#endif
-			}
-
-			if (leftright)
-				i += 2;
-		}
-	}
-}
 
 void History_Init (void)
 {

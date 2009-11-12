@@ -252,7 +252,6 @@ void Key_ClearTyping (void);
 void Key_Event (int key, qbool down);
 void Key_EventEx (int key, wchar unichar, qbool down);
 void Key_Init (void);
-void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, const char *binding);
 void Key_Unbind (int keynum);
 void Key_ClearStates (void);

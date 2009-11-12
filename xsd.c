@@ -4,11 +4,7 @@
 #include "expat.h"
 #include "xsd.h"
 
-#ifndef WITH_FTE_VFS
-typedef xml_t * (*XSD_DocumentLoadType)(FILE *f, int len);
-#else
 typedef xml_t * (*XSD_DocumentLoadType)(vfsfile_t *v, int len);
-#endif
 typedef void (*XSD_DocumentFreeType)(xml_t *);
 typedef xml_document_t * (*XSD_DocumentConvertType)(xml_t *);
 
@@ -171,33 +167,18 @@ xml_t * XSD_LoadDocument(char *filename)
 {
     xml_t *ret = NULL;
     int i;
-#ifndef WITH_FTE_VFS
-    FILE *f = NULL;
-#else
 	vfsfile_t *f;
-#endif // WITH_FTE_VFS
     XML_Parser parser = NULL;
     int len;
 	int filelen;
     char buf[XML_READ_BUFSIZE];
     char document_type[1024];
 	
-#ifndef WITH_FTE_VFS
-	extern int FS_FOpenPathFile (const char *filename, FILE **file);
-
-    // try to open the file
-	if ((filelen = FS_FOpenFile(filename, &f)) < 0) {
-		if ((filelen = FS_FOpenPathFile(filename, &f)) < 0) {
-	        return NULL;
-		}
-	}
-#else
 	// FIXME: D-Kure, does FS_ANY handle both the above cases
 	if (!(f = FS_OpenVFS(filename, "rb", FS_ANY))) {
 		return NULL;
 	}
 	filelen = VFS_GETLEN(f);
-#endif
 
     // initialize XML parser
     parser = XML_ParserCreate(NULL);
@@ -210,11 +191,7 @@ xml_t * XSD_LoadDocument(char *filename)
 
     document_type[0] = 0;
 
-#ifndef WITH_FTE_VFS
-    while (document_type[0] == 0  &&  (len = fread(buf, 1, XML_READ_BUFSIZE, f)) > 0)
-#else
     while (document_type[0] == 0  &&  (len = VFS_READ(f, buf, XML_READ_BUFSIZE, NULL)) > 0)
-#endif
     {
 		if (XML_Parse(parser, buf, len, 0) != XML_STATUS_OK) {
 			Com_Printf("could not open3\n");
@@ -233,11 +210,7 @@ xml_t * XSD_LoadDocument(char *filename)
     parser = NULL;
 
     // fseek to the beginning of the file
-#ifndef WITH_FTE_VFS
-    fseek(f, 0, SEEK_SET);
-#else
 	VFS_SEEK(f, 0, SEEK_SET);
-#endif
 
     // execute loading parser
     i = 0;
@@ -245,11 +218,8 @@ xml_t * XSD_LoadDocument(char *filename)
     {
         if (!strcmp(xsd_mappings[i].document_type, document_type))
         {
-#ifndef WITH_FTE_VFS
+			//???
             ret = xsd_mappings[i].load_function(f, filelen);
-#else
-            ret = xsd_mappings[i].load_function(f, filelen);
-#endif
             break;
         }
         i++;
@@ -257,21 +227,13 @@ xml_t * XSD_LoadDocument(char *filename)
 
     if (ret)
     {
-#ifndef WITH_FTE_VFS
-        fclose(f);
-#else
 		VFS_CLOSE(f);
-#endif
         return ret;
     }
 
 error:
     if (f)
-#ifndef WITH_FTE_VFS
-        fclose(f);
-#else
 		VFS_CLOSE(f);
-#endif
 
     if (parser)
         XML_ParserFree(parser);

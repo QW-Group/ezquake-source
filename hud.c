@@ -1122,8 +1122,6 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     // Default.
 	var->string = Q_strdup(value);
 
-    var->flags = CVAR_ARCHIVE;
-
     Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
     Cvar_Register(var);
     Cvar_ResetCurrentGroup();

@@ -14,72 +14,72 @@ int coronatexture;
 
 extern cvar_t gl_bounceparticles;
 
-cvar_t		amf_showstats = {"r_glstats", "0", CVAR_ARCHIVE};
+cvar_t		amf_showstats = {"r_glstats", "0"};
 
-cvar_t		tei_lavafire = {"gl_surface_lava", "0", CVAR_ARCHIVE};
-cvar_t		tei_slime	 = {"gl_surface_slime", "0", CVAR_ARCHIVE};
+cvar_t		tei_lavafire = {"gl_surface_lava", "0"};
+cvar_t		tei_slime	 = {"gl_surface_slime", "0"};
 
-cvar_t		amf_coronas = {"gl_coronas", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_coronas_tele = {"gl_coronas_tele", "0", CVAR_ARCHIVE};
-cvar_t		amf_weather_rain = {"gl_weather_rain", "0", CVAR_ARCHIVE};
-cvar_t		amf_weather_rain_fast = {"gl_weather_rain_fast", "0", CVAR_ARCHIVE};
-cvar_t		amf_extratrails = {"gl_extratrails", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_detpacklights = {"gl_detpacklights", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_buildingsparks = {"gl_buildingsparks", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_waterripple = {"gl_turbripple", "0", CVAR_ARCHIVE};
-cvar_t		amf_cutf_tesla_effect = {"gl_cutf_tesla_effect", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_underwater_trails = {"gl_turb_trails", "0", CVAR_ARCHIVE}; // 1
+cvar_t		amf_coronas = {"gl_coronas", "0"}; // 1
+cvar_t		amf_coronas_tele = {"gl_coronas_tele", "0"};
+cvar_t		amf_weather_rain = {"gl_weather_rain", "0"};
+cvar_t		amf_weather_rain_fast = {"gl_weather_rain_fast", "0"};
+cvar_t		amf_extratrails = {"gl_extratrails", "0"}; // 1
+cvar_t		amf_detpacklights = {"gl_detpacklights", "0"}; // 1
+cvar_t		amf_buildingsparks = {"gl_buildingsparks", "0"}; // 1
+cvar_t		amf_waterripple = {"gl_turbripple", "0"};
+cvar_t		amf_cutf_tesla_effect = {"gl_cutf_tesla_effect", "0"}; // 1
+cvar_t		amf_underwater_trails = {"gl_turb_trails", "0"}; // 1
 
-cvar_t		amf_hidenails = {"cl_hidenails", "0", CVAR_ARCHIVE};
-cvar_t		amf_hiderockets = {"cl_hiderockets", "0", CVAR_ARCHIVE};
+cvar_t		amf_hidenails = {"cl_hidenails", "0"};
+cvar_t		amf_hiderockets = {"cl_hiderockets", "0"};
 
-cvar_t		amf_stat_loss = {"r_damagestats", "0", CVAR_ARCHIVE};
-cvar_t		amf_lightning = {"gl_lightning", "0", CVAR_ARCHIVE}; // 1
+cvar_t		amf_stat_loss = {"r_damagestats", "0"};
+cvar_t		amf_lightning = {"gl_lightning", "0"}; // 1
 
-cvar_t		amf_lightning_size = {"gl_lightning_size", "3", CVAR_ARCHIVE};
-cvar_t		amf_lightning_sparks = {"gl_lightning_sparks", "0", CVAR_ARCHIVE}; // 0.4
-cvar_t		amf_lightning_sparks_size = {"gl_lightning_sparks_size", "300", CVAR_ARCHIVE | CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 300, 300, 1};
-cvar_t		amf_lightning_color = {"gl_lightning_color", "120 140 255", CVAR_ARCHIVE | CVAR_COLOR};
-cvar_t		amf_lighting_vertex = {"gl_lighting_vertex", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_lighting_colour = {"gl_lighting_colour", "0", CVAR_ARCHIVE}; // 1
+cvar_t		amf_lightning_size = {"gl_lightning_size", "3"};
+cvar_t		amf_lightning_sparks = {"gl_lightning_sparks", "0"}; // 0.4
+cvar_t		amf_lightning_sparks_size = {"gl_lightning_sparks_size", "300", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 300, 300, 1};
+cvar_t		amf_lightning_color = {"gl_lightning_color", "120 140 255", CVAR_COLOR};
+cvar_t		amf_lighting_vertex = {"gl_lighting_vertex", "0"}; // 1
+cvar_t		amf_lighting_colour = {"gl_lighting_colour", "0"}; // 1
 
-cvar_t		amf_inferno_trail = {"gl_inferno_trail", "2", CVAR_ARCHIVE};
-cvar_t		amf_inferno_speed = {"gl_inferno_speed", "1000", CVAR_ARCHIVE};
+cvar_t		amf_inferno_trail = {"gl_inferno_trail", "2"};
+cvar_t		amf_inferno_speed = {"gl_inferno_speed", "1000"};
 
-cvar_t		amf_camera_chase = {"cl_camera_tpp", "0", CVAR_ARCHIVE};
-cvar_t		amf_camera_chase_dist = {"cl_camera_tpp_distance", "-56", CVAR_ARCHIVE};
-cvar_t		amf_camera_chase_height = {"cl_camera_tpp_height", "24", CVAR_ARCHIVE};
-cvar_t		amf_camera_death = {"cl_camera_death", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_motiontrails = {"gl_motiontrails", "0", CVAR_ARCHIVE};
-cvar_t		amf_motiontrails_wtf = {"gl_motiontrails_wtf", "0", CVAR_ARCHIVE};
-cvar_t		amf_nailtrail_water = {"gl_nailtrail_turb", "0", CVAR_ARCHIVE};
-cvar_t		amf_nailtrail_plasma = {"gl_nailtrail_plasma", "0", CVAR_ARCHIVE};
-cvar_t		amf_nailtrail = {"gl_nailtrail", "0", CVAR_ARCHIVE}; // 1
+cvar_t		amf_camera_chase = {"cl_camera_tpp", "0"};
+cvar_t		amf_camera_chase_dist = {"cl_camera_tpp_distance", "-56"};
+cvar_t		amf_camera_chase_height = {"cl_camera_tpp_height", "24"};
+cvar_t		amf_camera_death = {"cl_camera_death", "0"}; // 1
+cvar_t		amf_motiontrails = {"gl_motiontrails", "0"};
+cvar_t		amf_motiontrails_wtf = {"gl_motiontrails_wtf", "0"};
+cvar_t		amf_nailtrail_water = {"gl_nailtrail_turb", "0"};
+cvar_t		amf_nailtrail_plasma = {"gl_nailtrail_plasma", "0"};
+cvar_t		amf_nailtrail = {"gl_nailtrail", "0"}; // 1
 
-cvar_t		amf_part_gunshot = {"gl_particle_gunshots", "0", CVAR_ARCHIVE};
-cvar_t		amf_part_gunshot_type = {"gl_particle_gunshots_type", "1", CVAR_ARCHIVE};
-cvar_t		amf_part_spikes = {"gl_particle_spikes", "0", CVAR_ARCHIVE}; // 0.1
-cvar_t		amf_part_spikes_type = {"gl_particle_spikes_type", "1", CVAR_ARCHIVE};
-cvar_t		amf_part_shockwaves = {"gl_particle_shockwaves", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_part_2dshockwaves = {"gl_particle_shockwaves_flat", "0", CVAR_ARCHIVE};
-cvar_t		amf_part_blood = {"gl_particle_blood", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_part_blood_color = {"gl_particle_blood_color", "1", CVAR_ARCHIVE};
-cvar_t		amf_part_blood_type = {"gl_particle_blood_type", "1", CVAR_ARCHIVE};
-cvar_t		amf_part_explosion = {"gl_particle_explosions", "0", CVAR_ARCHIVE};
-cvar_t		amf_part_blobexplosion = {"gl_particle_blobs", "0", CVAR_ARCHIVE}; // 0.1
-cvar_t		amf_part_fasttrails = {"gl_particle_fasttrails", "0", CVAR_ARCHIVE};
-cvar_t		amf_part_gibtrails = {"gl_particle_gibtrails", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_part_muzzleflash = {"gl_particle_muzzleflash", "0", CVAR_ARCHIVE};
-cvar_t		amf_part_deatheffect = {"gl_particle_deatheffect", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_part_teleport = {"gl_particle_telesplash", "0", CVAR_ARCHIVE};
-cvar_t		amf_part_fire = {"gl_particle_fire", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_part_firecolor = {"gl_particle_firecolor", "", CVAR_ARCHIVE}; // 1
-cvar_t		amf_part_sparks = {"gl_particle_sparks", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_part_traillen    = {"gl_particle_trail_lenght", "1", CVAR_ARCHIVE};
-cvar_t		amf_part_trailtime   = {"gl_particle_trail_time",   "1", CVAR_ARCHIVE};
-cvar_t		amf_part_trailwidth  = {"gl_particle_trail_width",  "3", CVAR_ARCHIVE};
-cvar_t		amf_part_traildetail = {"gl_particle_trail_detail", "1", CVAR_ARCHIVE};
-cvar_t		amf_part_trailtype   = {"gl_particle_trail_type",   "1", CVAR_ARCHIVE};
+cvar_t		amf_part_gunshot = {"gl_particle_gunshots", "0"};
+cvar_t		amf_part_gunshot_type = {"gl_particle_gunshots_type", "1"};
+cvar_t		amf_part_spikes = {"gl_particle_spikes", "0"}; // 0.1
+cvar_t		amf_part_spikes_type = {"gl_particle_spikes_type", "1"};
+cvar_t		amf_part_shockwaves = {"gl_particle_shockwaves", "0"}; // 1
+cvar_t		amf_part_2dshockwaves = {"gl_particle_shockwaves_flat", "0"};
+cvar_t		amf_part_blood = {"gl_particle_blood", "0"}; // 1
+cvar_t		amf_part_blood_color = {"gl_particle_blood_color", "1"};
+cvar_t		amf_part_blood_type = {"gl_particle_blood_type", "1"};
+cvar_t		amf_part_explosion = {"gl_particle_explosions", "0"};
+cvar_t		amf_part_blobexplosion = {"gl_particle_blobs", "0"}; // 0.1
+cvar_t		amf_part_fasttrails = {"gl_particle_fasttrails", "0"};
+cvar_t		amf_part_gibtrails = {"gl_particle_gibtrails", "0"}; // 1
+cvar_t		amf_part_muzzleflash = {"gl_particle_muzzleflash", "0"};
+cvar_t		amf_part_deatheffect = {"gl_particle_deatheffect", "0"}; // 1
+cvar_t		amf_part_teleport = {"gl_particle_telesplash", "0"};
+cvar_t		amf_part_fire = {"gl_particle_fire", "0"}; // 1
+cvar_t		amf_part_firecolor = {"gl_particle_firecolor", ""}; // 1
+cvar_t		amf_part_sparks = {"gl_particle_sparks", "0"}; // 1
+cvar_t		amf_part_traillen    = {"gl_particle_trail_lenght", "1"};
+cvar_t		amf_part_trailtime   = {"gl_particle_trail_time",   "1"};
+cvar_t		amf_part_trailwidth  = {"gl_particle_trail_width",  "3"};
+cvar_t		amf_part_traildetail = {"gl_particle_trail_detail", "1"};
+cvar_t		amf_part_trailtype   = {"gl_particle_trail_type",   "1"};
 
 
 int vxdamagecount;

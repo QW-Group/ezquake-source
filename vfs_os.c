@@ -107,54 +107,6 @@ vfsfile_t *FS_OpenTemp(void)
 	return (vfsfile_t*)file;
 }
 
-// if f == NULL then use fopen(name, ...);
-#ifndef WITH_FTE_VFS
-// Slightly different version below were we don't take in a FILE *
-vfsfile_t *VFSOS_Open(char *name, FILE *f, char *mode)
-{
-	vfsosfile_t *file;
-
-	if (!strchr(mode, 'r') && !strchr(mode, 'w'))
-		return NULL; // hm, no read and no write mode?
-
-	if (!f) {
-		qbool read  = !!strchr(mode, 'r');
-		qbool write = !!strchr(mode, 'w');
-		qbool text  = !!strchr(mode, 't');
-		char newmode[10];
-		int modec = 0;
-
-		if (read)
-			newmode[modec++] = 'r';
-		if (write)
-			newmode[modec++] = 'w';
-		if (text)
-			newmode[modec++] = 't';
-		else
-			newmode[modec++] = 'b';
-		newmode[modec++] = '\0';
-    
-		f = fopen(name, newmode);
-	}
-
-	if (!f)
-		return NULL;
-
-	file = Q_calloc(1, sizeof(vfsosfile_t));
-
-	file->funcs.ReadBytes	= (strchr(mode, 'r') ? VFSOS_ReadBytes  : NULL);
-	file->funcs.WriteBytes	= (strchr(mode, 'w') ? VFSOS_WriteBytes : NULL);
-	file->funcs.Seek		= VFSOS_Seek;
-	file->funcs.Tell		= VFSOS_Tell;
-	file->funcs.GetLen		= VFSOS_GetSize;
-	file->funcs.Close		= VFSOS_Close;
-
-	file->handle = f;
-
-	return (vfsfile_t*)file;
-}
-#else 
-
 // VFS-XXX: This is slightly different to fs.c version in that we don't take in a FILE *f
 vfsfile_t *VFSOS_Open(char *osname, char *mode)
 {
@@ -197,12 +149,9 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	return (vfsfile_t*)file;
 }
 
-#endif // WTIH_FTE_VFS
-
 //==================================
 // STDIO files (OS) - Search functions
 //==================================
-#ifdef WITH_FTE_VFS
 vfsfile_t *FSOS_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
 	char diskname[MAX_OSPATH];
@@ -314,6 +263,3 @@ searchpathfuncs_t osfilefuncs = {
 	NULL,
 	FSOS_OpenVFS
 };
-
-#endif // WITH_FTE_VFS
-

@@ -44,54 +44,54 @@ glconfig_t	glConfig;
 // latched variables that can only change over a restart
 //
 
-cvar_t	r_glDriver 			= { "vid_glDriver", OPENGL_DRIVER_NAME, CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_allowExtensions	= { "vid_allowExtensions",	"1",	CVAR_ARCHIVE | CVAR_LATCH };
+cvar_t	r_glDriver 			= { "vid_glDriver", OPENGL_DRIVER_NAME, CVAR_LATCH };
+cvar_t	r_allowExtensions	= { "vid_allowExtensions",	"1", CVAR_LATCH };
 
-//cvar_t r_texturebits		= { "vid_texturebits",		"0",	CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_colorbits			= { "vid_colorbits",		"0",	CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_stereo			= { "vid_stereo",			"0",	CVAR_ARCHIVE | CVAR_LATCH };
+//cvar_t r_texturebits		= { "vid_texturebits",		"0", CVAR_LATCH };
+cvar_t	r_colorbits			= { "vid_colorbits",		"0", CVAR_LATCH };
+cvar_t	r_stereo			= { "vid_stereo",			"0", CVAR_LATCH };
 #ifdef __linux__
-cvar_t	r_stencilbits		= { "vid_stencilbits",		"0",	CVAR_ARCHIVE | CVAR_LATCH };
+cvar_t	r_stencilbits		= { "vid_stencilbits",		"0", CVAR_LATCH };
 #else
-cvar_t	r_stencilbits		= { "vid_stencilbits",		"8",	CVAR_ARCHIVE | CVAR_LATCH };
+cvar_t	r_stencilbits		= { "vid_stencilbits",		"8", CVAR_LATCH };
 #endif
-cvar_t	r_depthbits			= { "vid_depthbits",		"0",	CVAR_ARCHIVE | CVAR_LATCH };
-//cvar_t	r_overBrightBits= { "vid_overBrightBits",	"1",	CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_mode				= { "vid_mode",				"3",	CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_fullscreen		= { "vid_fullscreen",		"1",	CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_customwidth		= { "vid_customwidth",		"1600",	CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_customheight		= { "vid_customheight",		"1024",	CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_customaspect		= { "vid_customaspect",		"1",	CVAR_ARCHIVE | CVAR_LATCH }; // qqshka: unused even in q3, but I keep cvar, just do not register it
-cvar_t	r_displayRefresh	= { "vid_displayfrequency", "0",	CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	vid_borderless		= { "vid_borderless",		"0",	CVAR_ARCHIVE | CVAR_LATCH };
+cvar_t	r_depthbits			= { "vid_depthbits",		"0", CVAR_LATCH };
+//cvar_t	r_overBrightBits= { "vid_overBrightBits",	"1", CVAR_LATCH };
+cvar_t	r_mode				= { "vid_mode",				"3",	CVAR_LATCH };
+cvar_t	r_fullscreen		= { "vid_fullscreen",		"1",	CVAR_LATCH };
+cvar_t	r_customwidth		= { "vid_customwidth",		"1600",	CVAR_LATCH };
+cvar_t	r_customheight		= { "vid_customheight",		"1024",	CVAR_LATCH };
+cvar_t	r_customaspect		= { "vid_customaspect",		"1",	CVAR_LATCH }; // qqshka: unused even in q3, but I keep cvar, just do not register it
+cvar_t	r_displayRefresh	= { "vid_displayfrequency", "0",	CVAR_LATCH };
+cvar_t	vid_borderless		= { "vid_borderless",		"0",	CVAR_LATCH };
 //cvar_t	r_intensity		= { "vid_intensity",		"1",	CVAR_LATCH };
 
 //
 // archived variables that can change at any time
 //
-cvar_t	r_ignoreGLErrors	= { "vid_ignoreGLErrors",	"1",	CVAR_ARCHIVE | CVAR_SILENT };
-//cvar_t	r_textureMode	= { "vid_textureMode",	"GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE };
-cvar_t	r_swapInterval		= { "vid_vsync",			"0",	CVAR_ARCHIVE | CVAR_SILENT };
+cvar_t	r_ignoreGLErrors	= { "vid_ignoreGLErrors",	"1",	CVAR_SILENT };
+//cvar_t	r_textureMode	= { "vid_textureMode",	"GL_LINEAR_MIPMAP_NEAREST"};
+cvar_t	r_swapInterval		= { "vid_vsync",			"0",	CVAR_SILENT };
 #ifdef __MACOS__
-//cvar_t	r_gamma			= { "vid_gamma",			"1.2",	CVAR_ARCHIVE | CVAR_SILENT };
+//cvar_t	r_gamma			= { "vid_gamma",			"1.2",	CVAR_SILENT };
 #else
-//cvar_t	r_gamma			= { "vid_gamma",			"1",	CVAR_ARCHIVE | CVAR_SILENT };
+//cvar_t	r_gamma			= { "vid_gamma",			"1",	CVAR_SILENT };
 #endif
 
 void OnChange_vid_pos(cvar_t *var, char *string, qbool *cancel);
-cvar_t	vid_xpos			= { "vid_xpos",				"3",	CVAR_ARCHIVE | CVAR_SILENT, OnChange_vid_pos};
-cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_ARCHIVE | CVAR_SILENT, OnChange_vid_pos};
-cvar_t	vid_minpos  = { "vid_minpos",	"0",	CVAR_ARCHIVE | CVAR_SILENT};
+cvar_t	vid_xpos			= { "vid_xpos",				"3",	CVAR_SILENT, OnChange_vid_pos};
+cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_SILENT, OnChange_vid_pos};
+cvar_t	vid_minpos  = { "vid_minpos",	"0",	CVAR_SILENT};
 
 void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel);
 cvar_t	r_conwidth			= { "vid_conwidth",			"640",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx };
 cvar_t	r_conheight			= { "vid_conheight",		"0",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something
 
 cvar_t	vid_ref				= { "vid_ref",				"gl",	CVAR_ROM | CVAR_SILENT };
-cvar_t  vid_hwgammacontrol	= { "vid_hwgammacontrol", 	"2",    CVAR_ARCHIVE | CVAR_SILENT };
+cvar_t  vid_hwgammacontrol	= { "vid_hwgammacontrol", 	"2",    CVAR_SILENT };
 #ifdef _WIN32
-cvar_t  vid_flashonactivity = { "vid_flashonactivity",	"1", CVAR_ARCHIVE | CVAR_SILENT };
-cvar_t	_windowed_mouse		= { "_windowed_mouse",		"1",	CVAR_ARCHIVE | CVAR_SILENT }; // actually that more like input, but input registered after video in windows
+cvar_t  vid_flashonactivity = { "vid_flashonactivity",	"1",	CVAR_SILENT };
+cvar_t	_windowed_mouse		= { "_windowed_mouse",		"1",	CVAR_SILENT }; // actually that more like input, but input registered after video in windows
 #endif
 
 cvar_t	r_verbose			= { "vid_verbose",			"0",	CVAR_SILENT };

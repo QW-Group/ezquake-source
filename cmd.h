@@ -200,7 +200,6 @@ typedef struct cmd_alias_s {
 qbool Cmd_DeleteAlias (char *name);	// return true if successful
 cmd_alias_t *Cmd_FindAlias (const char *name); // returns NULL on failure
 char *Cmd_AliasString (char *name); // returns NULL on failure
-void Cmd_WriteAliases (FILE *f);
 
 void DeleteServerAliases (void);
 

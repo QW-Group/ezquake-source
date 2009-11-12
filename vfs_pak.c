@@ -54,13 +54,7 @@ typedef struct
 
 typedef struct {
     vfsfile_t funcs; // <= must be at top/begining of struct
-
-#ifdef WITH_FTE_VFS
-    pack_t *parentpak;
-#else
-    FILE *handle;
-#endif
-
+	pack_t *parentpak;
     unsigned long startpos;
     unsigned long length;
     unsigned long currentpos;
@@ -71,31 +65,6 @@ typedef struct {
 //=====================================
 //PACK files (*.pak) - VFS functions
 //=====================================
-#ifndef WITH_FTE_VFS
-static int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-	unsigned long have = vfsp->length - (vfsp->currentpos - vfsp->startpos);
-	unsigned long r;
-
-	if (bytestoread < 0)
-		Sys_Error("VFSPAK_ReadBytes: bytestoread < 0"); // ffs
-
-	have = min((unsigned long)bytestoread, have); // mixing sign and unsign types is STUPID and dangerous
-
-// all must work without this, if not then somewhere bug
-//	if (ftell(vfsp->handle) != vfsp->currentpos)
-//		fseek(vfsp->handle, vfsp->currentpos);
-
-	r = fread(buffer, 1, have, vfsp->handle);
-	vfsp->currentpos += r;
-
-	if (err) // if bytestoread <= 0 it will be treated as non error even we read zero bytes
-		*err = ((r || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
-
-	return r;
-}
-#else
 static int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
@@ -118,26 +87,12 @@ static int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestorea
 
 	return read;
 }
-#endif // WITH_FTE_VFS
-
 static int VFSPAK_WriteBytes (struct vfsfile_s *vfs, const void *buffer, int bytestoread)
 {	//not supported.
 	Sys_Error("VFSPAK_WriteBytes: Cannot write to pak files");
 	return 0;
 }
 
-#ifndef WITH_FTE_VFS
-static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos, int whence)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
-
-	if (pos > vfsp->length)
-		return -1;
-
-	vfsp->currentpos = pos + vfsp->startpos;
-	return fseek(vfsp->handle, vfsp->currentpos, whence);
-}
-#else
 static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
@@ -164,7 +119,6 @@ static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 
 	return 0;
 }
-#endif /* FS_FTE */
 
 static unsigned long VFSPAK_Tell (struct vfsfile_s *vfs)
 {
@@ -177,15 +131,7 @@ static unsigned long VFSPAK_GetLen (struct vfsfile_s *vfs)
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 	return vfsp->length;
 }
-#ifndef WITH_FTE_VFS
-static void VFSPAK_Close(vfsfile_t *vfs)
-{
-	vfspack_t *vfsp = (vfspack_t*)vfs;
 
-	fclose(vfsp->handle);
-	Q_free(vfsp);	//free ourselves.
-}
-#else
 static void FSPAK_ClosePath(void *handle);
 static void VFSPAK_Close(vfsfile_t *vfs)
 {
@@ -194,35 +140,6 @@ static void VFSPAK_Close(vfsfile_t *vfs)
 										// more (reference counts)
 	Q_free(vfsp);
 }
-#endif /* WITH_FTE_VFS */
-
-#ifndef WITH_FTE_VFS
-vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
-{
-	vfspack_t *vfsp;
-
-	if (strcmp(mode, "rb") || !handle || fsize < 0 || fpos < 0)
-		return NULL; // support only "rb" mode
-
-	vfsp = Q_calloc(1, sizeof(vfspack_t));
-
-	vfsp->handle = handle;
-
-	vfsp->startpos   = fpos;
-	vfsp->length     = fsize;
-	vfsp->currentpos = vfsp->startpos;
-
-	vfsp->funcs.ReadBytes  = VFSPAK_ReadBytes;
-	vfsp->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
-	vfsp->funcs.Seek       = VFSPAK_Seek;
-	vfsp->funcs.Tell       = VFSPAK_Tell;
-	vfsp->funcs.GetLen	   = VFSPAK_GetLen;
-	vfsp->funcs.Close	   = VFSPAK_Close;
-
-	return (vfsfile_t *)vfsp;
-}
-
-#else
 
 static vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
@@ -253,12 +170,10 @@ static vfsfile_t *FSPAK_OpenVFS(void *handle, flocation_t *loc, char *mode)
 
 	return (vfsfile_t *)vfsp;
 }
-#endif /* WITH_FTE_VFS */
 
 //======================================
 // PACK files (*.pak) - Search functions
 //======================================
-#ifdef WITH_FTE_VFS
 static void FSPAK_PrintPath(void *handle)
 {
 	pack_t *pak = handle;
@@ -452,5 +367,3 @@ searchpathfuncs_t packfilefuncs = {
 	NULL,
 	FSPAK_OpenVFS
 };
-#endif // WITH_FTE_VFS
-

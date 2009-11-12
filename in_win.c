@@ -94,10 +94,10 @@ static HRESULT (WINAPI *pDirectInputCreateEx)(HINSTANCE hinst,
 		DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter) = NULL;
 
 // mouse variables
-cvar_t	m_filter = {"m_filter", "0", CVAR_ARCHIVE | CVAR_SILENT};
+cvar_t	m_filter = {"m_filter", "0", CVAR_SILENT};
 
 // compatibility with old Quake -- setting to 0 disables KP_* codes
-cvar_t	cl_keypad = {"cl_keypad", "1", CVAR_ARCHIVE};
+cvar_t	cl_keypad = {"cl_keypad", "1"};
 
 int			mouse_buttons;
 int			mouse_oldbuttonstate;
@@ -144,7 +144,7 @@ PDWORD	pdwRawValue[JOY_MAX_AXES];
 // this means that advanced controller configuration needs to be executed each time.
 // this avoids any problems with getting back to a default usage or when changing from one controller to another.
 // this way at least something works.
-cvar_t	in_joystick  = {"joystick","0",CVAR_ARCHIVE};
+cvar_t	in_joystick  = {"joystick","0"};
 cvar_t	joy_name     = {"joyname", "joystick"};
 cvar_t	joy_advanced = {"joyadvanced", "0"};
 cvar_t	joy_advaxisx = {"joyadvaxisx", "0"};

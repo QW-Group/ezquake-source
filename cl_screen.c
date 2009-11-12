@@ -100,9 +100,9 @@ float	unzoomedsensitivity;
 void OnFovChange (cvar_t *var, char *value, qbool *cancel);
 void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel);
 void OnChange_scr_clock_format (cvar_t *var, char *value, qbool *cancel);
-cvar_t	scr_fov					= {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
-cvar_t	default_fov				= {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
-cvar_t	scr_viewsize			= {"viewsize", "100", CVAR_ARCHIVE};
+cvar_t	scr_fov					= {"fov", "90", CVAR_NONE, OnFovChange};	// 10 - 140
+cvar_t	default_fov				= {"default_fov", "90", CVAR_NONE, OnDefaultFovChange};
+cvar_t	scr_viewsize			= {"viewsize", "100", CVAR_NONE};
 cvar_t	scr_consize				= {"scr_consize", "0.5"};
 cvar_t	scr_conspeed			= {"scr_conspeed", "1000"};
 cvar_t	scr_centertime			= {"scr_centertime", "2"};
@@ -150,7 +150,7 @@ cvar_t	scr_sshot_dir			= {"sshot_dir", ""};
 cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 
 #ifdef GLQUAKE
-cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1", CVAR_ARCHIVE};
+cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_autoid				= {"scr_autoid", "5"};
 cvar_t	scr_autoid_drawname		= {"scr_autoid_drawname", "1"};
@@ -158,39 +158,39 @@ cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 #endif
 
 
-cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n $x10%l$x11 %a/%H %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
-cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1", CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n $x10%l$x11 %a/%H %w", CVAR_NONE, OnChange_scr_clock_format};
+cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1"};
 cvar_t	scr_teaminfo_frame_color = {"scr_teaminfo_frame_color", "10 0 0 120", CVAR_COLOR};
-cvar_t	scr_teaminfo_scale		 = {"scr_teaminfo_scale",       "1",  CVAR_ARCHIVE};
-cvar_t	scr_teaminfo_y			 = {"scr_teaminfo_y",           "0",  CVAR_ARCHIVE};
-cvar_t  scr_teaminfo_x			 = {"scr_teaminfo_x",           "0",  CVAR_ARCHIVE};
-cvar_t  scr_teaminfo_loc_width	 = {"scr_teaminfo_loc_width",   "5",  CVAR_ARCHIVE};
-cvar_t  scr_teaminfo_name_width	 = {"scr_teaminfo_name_width",  "6",  CVAR_ARCHIVE};
-cvar_t	scr_teaminfo_low_health	 = {"scr_teaminfo_low_health",  "25", CVAR_ARCHIVE};
-cvar_t	scr_teaminfo_armor_style = {"scr_teaminfo_armor_style", "3",  CVAR_ARCHIVE};
-cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","0",  CVAR_ARCHIVE};
-cvar_t  scr_teaminfo_show_enemies= {"scr_teaminfo_show_enemies","0",  CVAR_ARCHIVE};
-cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2",  CVAR_ARCHIVE};
-cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1",  CVAR_ARCHIVE};
+cvar_t	scr_teaminfo_scale		 = {"scr_teaminfo_scale",       "1"};
+cvar_t	scr_teaminfo_y			 = {"scr_teaminfo_y",           "0"};
+cvar_t  scr_teaminfo_x			 = {"scr_teaminfo_x",           "0"};
+cvar_t  scr_teaminfo_loc_width	 = {"scr_teaminfo_loc_width",   "5"};
+cvar_t  scr_teaminfo_name_width	 = {"scr_teaminfo_name_width",  "6"};
+cvar_t	scr_teaminfo_low_health	 = {"scr_teaminfo_low_health",  "25"};
+cvar_t	scr_teaminfo_armor_style = {"scr_teaminfo_armor_style", "3"};
+cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","0"};
+cvar_t  scr_teaminfo_show_enemies= {"scr_teaminfo_show_enemies","0"};
+cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2"};
+cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1"};
 
-cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
+cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_NONE, OnChange_scr_clock_format};
 #ifdef GLQUAKE
-cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_ARCHIVE | CVAR_COLOR};
-cvar_t	scr_shownick_scale		 = {"scr_shownick_scale",		"1",   CVAR_ARCHIVE};
-cvar_t	scr_shownick_y			 = {"scr_shownick_y",			"0",   CVAR_ARCHIVE};
-cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0",   CVAR_ARCHIVE};
-cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6",   CVAR_ARCHIVE};
-cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8", CVAR_ARCHIVE};
+cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR};
+cvar_t	scr_shownick_scale		 = {"scr_shownick_scale",		"1"};
+cvar_t	scr_shownick_y			 = {"scr_shownick_y",			"0"};
+cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0"};
+cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6"};
+cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8"};
 #endif
 
 void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel);
-cvar_t  scr_weaponstats_order        = {"scr_weaponstats_order",       "&c990sg&r:%2 &c099ssg&r:%3 &c900rl&r:#7 &c009lg&r:%8", CVAR_ARCHIVE, OnChange_scr_clock_format};
-cvar_t	scr_weaponstats_align_right  = {"scr_weaponstats_align_right", "1", CVAR_ARCHIVE};
+cvar_t  scr_weaponstats_order        = {"scr_weaponstats_order",       "&c990sg&r:%2 &c099ssg&r:%3 &c900rl&r:#7 &c009lg&r:%8", CVAR_NONE, OnChange_scr_clock_format};
+cvar_t	scr_weaponstats_align_right  = {"scr_weaponstats_align_right", "1"};
 cvar_t	scr_weaponstats_frame_color  = {"scr_weaponstats_frame_color", "10 0 0 120", CVAR_COLOR};
-cvar_t	scr_weaponstats_scale		 = {"scr_weaponstats_scale",       "1",  CVAR_ARCHIVE};
-cvar_t	scr_weaponstats_y			 = {"scr_weaponstats_y",           "0",  CVAR_ARCHIVE};
-cvar_t  scr_weaponstats_x			 = {"scr_weaponstats_x",           "0",  CVAR_ARCHIVE};
-cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "",   CVAR_ARCHIVE, OnChange_scr_weaponstats};
+cvar_t	scr_weaponstats_scale		 = {"scr_weaponstats_scale",       "1"};
+cvar_t	scr_weaponstats_y			 = {"scr_weaponstats_y",           "0"};
+cvar_t  scr_weaponstats_x			 = {"scr_weaponstats_x",           "0"};
+cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "", CVAR_NONE, OnChange_scr_weaponstats};
 
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 

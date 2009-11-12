@@ -610,22 +610,6 @@ qbool Cvar_Command (void)
 	return true;
 }
 
-//Writes lines containing "set variable value" for all variables with the archive flag set to true.
-void Cvar_WriteVariables (FILE *f)
-{
-	cvar_t *var;
-
-	// write builtin cvars in a QW compatible way
-	for (var = cvar_vars ; var ; var = var->next)
-		if (var->flags & CVAR_ARCHIVE)
-			fprintf (f, "%s \"%s\"\n", var->name, var->string);
-
-	// write everything else
-	for (var = cvar_vars ; var ; var = var->next)
-		if (var->flags & CVAR_USER_ARCHIVE)
-			fprintf (f, "seta %s \"%s\"\n", var->name, var->string);
-}
-
 static void Cvar_Toggle_f_base (qbool use_regex)
 {
 	qbool re_search = false;
@@ -713,8 +697,7 @@ void Cvar_CvarList (qbool use_regex)
 				continue;
 		}
 
-		Com_Printf ("%c%c%c %s\n",
-			var->flags & (CVAR_ARCHIVE|CVAR_USER_ARCHIVE) ? '*' : ' ',
+		Com_Printf ("%c%c %s\n",
 			var->flags & CVAR_USERINFO ? 'u' : ' ',
 			var->flags & CVAR_SERVERINFO ? 's' : ' ',
 			var->name);
@@ -843,9 +826,6 @@ void Cvar_Set_f (void)
 		}
 		var = Cvar_Create (var_name, Cmd_Argv(2), 0);
 	}
-
-	if (cvar_seta)
-		var->flags |= CVAR_USER_ARCHIVE;
 }
 
 void Cvar_Set_tp_f (void)
@@ -876,9 +856,6 @@ void Cvar_Set_tp_f (void)
 		var = Cvar_Create (var_name, Cmd_Argv(2), 0);
         var->teamplay = true;
 	}
-
-	if (cvar_seta)
-		var->flags |= CVAR_USER_ARCHIVE;
 }
 
 void Cvar_Set_ex_f (void)
@@ -910,9 +887,6 @@ void Cvar_Set_ex_f (void)
 	st = TP_ParseFunChars(st, false);
 
 	Cvar_Set (var, st );
-
-	if (cvar_seta)
-		var->flags |= CVAR_USER_ARCHIVE;
 }
 
 void Cvar_Set_Alias_Str_f (void)
@@ -957,8 +931,6 @@ void Cvar_Set_Alias_Str_f (void)
 				Cvar_Set (var, str);*/
 		Cvar_Set (var, v);
 	}
-	if (cvar_seta)
-		var->flags |= CVAR_USER_ARCHIVE;
 }
 
 void Cvar_Set_Bind_Str_f (void)
@@ -1291,7 +1263,6 @@ void Cvar_Init (void)
 	Cmd_AddCommand ("set_ex", Cvar_Set_ex_f);
 	Cmd_AddCommand ("set_alias_str", Cvar_Set_Alias_Str_f);
 	Cmd_AddCommand ("set_bind_str", Cvar_Set_Bind_Str_f);
-	//Cmd_AddCommand ("seta", Cvar_Seta_f);
 	Cmd_AddCommand ("unset", Cvar_UnSet_f);
 	Cmd_AddCommand ("unset_re", Cvar_UnSet_re_f);
 	Cmd_AddCommand ("toggle", Cvar_Toggle_f);

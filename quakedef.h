@@ -52,9 +52,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "draw.h"
 #include "console.h"
 #include "cl_view.h"
-#ifdef WITH_FTE_VFS
 #include "fs.h"
-#endif
 
 #include "client.h"
 

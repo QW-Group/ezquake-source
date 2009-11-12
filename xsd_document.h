@@ -283,11 +283,7 @@ xml_document_t * XSD_Document_New(void);
 void XSD_Document_Free(xml_t *);
 
 // read document content from file, return NULL if error
-#ifndef WITH_FTE_VFS
-xml_t * XSD_Document_LoadFromHandle(FILE *f, int len);
-#else
 xml_t * XSD_Document_LoadFromHandle(vfsfile_t *v, int filelen);
-#endif
 
 // read document content from file, return NULL if error
 xml_document_t * XSD_Document_Load(char *filename);

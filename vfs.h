@@ -58,21 +58,14 @@ typedef struct {
 
 typedef struct searchpath_s
 {
-#ifndef WITH_FTE_VFS 	 
-	char    filename[MAX_OSPATH]; 	 
-	struct pack_s *pack; // only one of filename / pack will be used 	 
-#else
 	searchpathfuncs_t *funcs;
 	qbool copyprotected;	// don't allow downloads from here.
 	qbool istemporary;
 	void *handle;
-
 	int crc_check;	// client sorts packs according to this checksum
 	int crc_reply;	// client sends a different crc back to the server, 
 	                // for the paks it's actually loaded.
-
 	struct searchpath_s *nextpure;
-#endif // WITH_FTE_VFS
 	struct searchpath_s *next;
 } searchpath_t;
 
@@ -94,15 +87,10 @@ typedef struct {
 
 } vfsosfile_t;
 
-#ifndef WITH_FTE_VFS
-vfsfile_t *VFSOS_Open(char *name, FILE *f, char *mode);
-
-#else
 vfsfile_t *FS_OpenTemp(void);
 vfsfile_t *VFSOS_Open(char *osname, char *mode);
 
 extern searchpathfuncs_t osfilefuncs;
-#endif
 
 //====================
 // PACK (*pak) Support
@@ -116,11 +104,7 @@ typedef struct
 	int		filepos, filelen;
 } packfile_t;
 
-#ifndef WITH_FTE_VFS
-vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode);
-#else
 extern searchpathfuncs_t packfilefuncs;
-#endif // WITH_FTE_VFS
 
 //===========================
 // ZIP (*.zip, *.pk3) Support

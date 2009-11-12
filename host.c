@@ -511,6 +511,7 @@ extern void CL_Fog_f (void);
 #endif
 extern void SB_SourceUnmarkAll(void);
 extern void SB_SourceMark(void);
+extern void LoadConfig_f(void);
 
 
 	//disconnect: fix it if i forgot something
@@ -521,6 +522,7 @@ extern void SB_SourceMark(void);
 	Cmd_AddCommand ("tp_took", TP_Took_f);
 	Cmd_AddCommand ("tp_pickup", TP_Pickup_f);
 	Cmd_AddCommand ("tp_point", TP_Point_f);
+	Cmd_AddCommand("cfg_load", LoadConfig_f);
 
 	MT_AddMapGroups ();
 	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
@@ -560,11 +562,7 @@ void Startup_Place(void)
 
 void Host_Init (int argc, char **argv, int default_memsize)
 {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	vfsfile_t *vf;
-#endif // WITH_FTE_VFS
 	cvar_t *v;
 
 	COM_InitArgv (argc, argv);
@@ -591,55 +589,21 @@ void Host_Init (int argc, char **argv, int default_memsize)
 #endif
 	Cache_Init_Commands ();
 
-//#ifdef WITH_FTE_VFS
-//	COM_InitFilesystem();
-//#else
 	FS_InitFilesystem ();
-//#endif
 	NET_Init ();
 
 	Commands_For_Configs_Init ();
 
 	if (!dedicated) {
 		char cfg[MAX_PATH] = {0};
+		int i;
 
-		// use new built-in binds insted of ones from default.cfg
 		ResetBinds();
-		//Cbuf_AddText("exec default.cfg\n");
 
-#ifndef WITH_FTE_VFS
-		snprintf(cfg, sizeof(cfg), "%s/config.cfg", com_homedir);
-		if ((f = fopen(cfg, "r"))) { // found cfg in home dir, use it
-		    extern void LoadHomeCfg(const char *filename);
-
-			fclose(f);
-#else
-		snprintf(cfg, sizeof(cfg), "config.cfg");
-		if ((vf = FS_OpenVFS(cfg, "rb", FS_HOME))) {
-		    extern void LoadHomeCfg(const char *filename);
-			VFS_CLOSE(vf);
-#endif
-
-			Com_Printf("Using home config %s\n", cfg);
-			LoadHomeCfg("config.cfg"); // well, we can't use exec here, because exec does't support full path by design
-		}
-		else {
-			snprintf(cfg, sizeof(cfg), "%s/ezquake/configs/config.cfg", com_basedir);
-
-#ifndef WITH_FTE_VFS
-			if ((f = fopen(cfg, "r"))) { // found cfg in ezquake dir, use it, if not found in home dir
-				fclose(f);
-#else
-			if ((vf = FS_OpenVFS(cfg, "rb", FS_NONE_OS))) {
-				VFS_CLOSE(vf);
-#endif
-
-				Cbuf_AddText("exec configs/config.cfg\n");
-			}
-			else // well, search it on whole file system if not found in above cases
-				Cbuf_AddText("exec config.cfg\n");
-		}
-
+		i = COM_CheckParm("-config");
+		snprintf(cfg, sizeof(cfg), (i && (i + 1 < COM_Argc())) ? COM_Argv(i + 1) : "config.cfg");
+		COM_ForceExtensionEx (cfg, ".cfg", sizeof (cfg));
+		Cbuf_AddText(va("cfg_load %s\n", cfg));
 		Cbuf_Execute();
 	}
 
@@ -721,22 +685,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		if (!com_serveractive)
 			Host_Error ("Couldn't spawn a server");
 	} else {
-/*		Cbuf_AddText ("exec default.cfg\n");
-		if (FS_FOpenFile("config.cfg", &f) != -1) {
-			Cbuf_AddText ("exec config.cfg\n");
-			fclose(f);
-		} */
-#ifndef WITH_FTE_VFS
-		if (FS_FOpenFile("autoexec.cfg", &f) != -1) {
-			Cbuf_AddText ("exec autoexec.cfg\n");
-			fclose(f);
-		}
-#else
 		if ((vf = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
 			Cbuf_AddText ("exec autoexec.cfg\n");
 			VFS_CLOSE(vf);
 		}
-#endif
+
 		Cmd_StuffCmds_f ();		// process command line arguments
 		Cbuf_AddText ("cl_warncmd 1\n");
 	}

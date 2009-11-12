@@ -654,7 +654,6 @@ extern char emodel_name[], pmodel_name[];
 typedef struct {
 	qbool forward, back, left, right, jump, attack, up, down;
 } usermainbuttons_t;
-void CL_WriteConfiguration (void);
 void CL_PrintQStatReply (char *s);
 // returns last button user pressed
 usermainbuttons_t CL_GetLastCmd (void);

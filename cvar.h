@@ -24,14 +24,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cvar_groups.h"
 
 // cvar flags
-#define CVAR_NONE		(0)
-#define CVAR_ARCHIVE		(1<<0)
+#define CVAR_NONE			(0)
+#define CVAR_ARCHIVE		(1<<0)	// !!!obsolete!!!
 #define CVAR_USERINFO		(1<<1)	// mirrored to userinfo
 #define CVAR_SERVERINFO		(1<<2)	// mirrored to serverinfo
 #define CVAR_ROM			(1<<3)	// read only
 #define CVAR_INIT			(1<<4)	// can only be set during initialization
 #define	CVAR_USER_CREATED	(1<<5)	// created by a set command
-#define	CVAR_USER_ARCHIVE	(1<<6)	// created by a seta command
+#define	CVAR_USER_ARCHIVE	(1<<6)	// created by a seta command !!!obsolete!!!
 #define CVAR_RULESET_MAX	(1<<7)	// limited by ruleset
 #define CVAR_RULESET_MIN	(1<<8)	// limited by ruleset
 #define CVAR_NO_RESET		(1<<9)	// do not perform reset to default in /cfg_load command, but /cvar_reset will still work
@@ -125,10 +125,6 @@ char  *Cvar_CompleteVariable (char *partial);
 // command.  Returns true if the command was a variable reference that
 // was handled. (print or change)
 qbool Cvar_Command (void);
-
-// Writes lines containing "set variable value" for all variables
-// with the archive flag set to true.
-void Cvar_WriteVariables (FILE *f);
 
 cvar_t *Cvar_Find (const char *name);
 qbool Cvar_Delete (const char *name);

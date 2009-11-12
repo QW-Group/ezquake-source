@@ -30,11 +30,7 @@ xml_command_t;
 void XSD_Command_Free(xml_t *);
 
 // read document content from file, return NULL if error
-#ifndef WITH_FTE_VFS
-xml_t *XSD_Command_LoadFromHandle(FILE *f, int len);
-#else
 xml_t *XSD_Command_LoadFromHandle(vfsfile_t *v, int filelen);
-#endif
 
 // read document content from file, return NULL if error
 xml_command_t * XSD_Command_Load(char *filename);

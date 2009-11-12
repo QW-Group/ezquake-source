@@ -142,11 +142,7 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 	char *str;
 	int i, j, start, length;
 	char soundname[MAX_OSPATH];
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	vfsfile_t *v;
-#endif
 
 	str = wcs2str (wstr);
  
@@ -191,16 +187,9 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 				COM_DefaultExtension (soundname, ".wav");
  
 				// make sure we have it on disk (FIXME)
-#ifndef WITH_FTE_VFS
-				FS_FOpenFile (va("sound/%s", soundname), &f);
-				if (!f)
-					return false;
-				fclose (f);
-#else
 				if (!(v = FS_OpenVFS(va("sound/%s", soundname), "rb", FS_ANY))) 
 					return false;
 				VFS_CLOSE(v);
-#endif
  
 				// now play the sound
 				S_LocalSound (soundname);

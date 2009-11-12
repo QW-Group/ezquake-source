@@ -52,7 +52,7 @@ typedef struct particle_s {
 #define ABSOLUTE_MIN_PARTICLES	512
 #define ABSOLUTE_MAX_PARTICLES	8192
 
-cvar_t r_particles_count = {"r_particles_count", "2048", CVAR_ARCHIVE};
+cvar_t r_particles_count = {"r_particles_count", "2048"};
 
 static int	ramp1[8] = {0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61};
 static int	ramp2[8] = {0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66};
@@ -257,14 +257,9 @@ void Classic_ClearParticles (void) {
 
 #ifndef CLIENTONLY
 void R_ReadPointFile_f (void) {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-	int r;
-#else
 	vfsfile_t *v;
 	char line[1024];
     char *s;
-#endif
 	vec3_t org;
 	int c;
 	particle_t *p;
@@ -275,11 +270,7 @@ void R_ReadPointFile_f (void) {
 
 	snprintf (name, sizeof(name), "maps/%s.pts", host_mapname.string);
 
-#ifndef WITH_FTE_VFS
-	if (FS_FOpenFile (name, &f) == -1) {
-#else
 	if (!(v = FS_OpenVFS(name, "rb", FS_ANY))) {
-#endif
 		Com_Printf ("couldn't open %s\n", name);
 		return;
 	}
@@ -287,12 +278,6 @@ void R_ReadPointFile_f (void) {
 	Com_Printf ("Reading %s...\n", name);
 	c = 0;
 	while (1) {
-#ifndef WITH_FTE_VFS
-		r = fscanf (f,"%f %f %f\n", &org[0], &org[1], &org[2]);
-		if (r != 3)
-			break;
-
-#else
 		VFS_GETS(v, line, sizeof(line));
 		s = COM_Parse(line);
 		org[0] = atof(com_token);
@@ -308,7 +293,6 @@ void R_ReadPointFile_f (void) {
 		org[2] = atof(com_token);
 		if (COM_Parse(s))
 			break;
-#endif
 
 		c++;
 		if (!free_particles) {
@@ -327,11 +311,7 @@ void R_ReadPointFile_f (void) {
 		VectorCopy (org, p->org);
 	}
 
-#ifndef WITH_FTE_VFS
-	fclose (f);
-#else
 	VFS_CLOSE(v);
-#endif
 	Com_Printf ("%i points read\n", c);
 }
 #endif

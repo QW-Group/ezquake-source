@@ -411,11 +411,8 @@ void SV_DropClient (client_t *drop)
 
 	if (drop->download)
 	{
-#ifndef WITH_FTE_VFS
-		fclose (drop->download);
-#else
+
 		VFS_CLOSE(drop->download);
-#endif
 		drop->download = NULL;
 	}
 	if (drop->upload)

@@ -8,8 +8,6 @@
 #include "q_shared.h"
 #include "hash.h"
 
-#ifdef WITH_FTE_VFS
-
 hashtable_t *Hash_InitTable(int numbucks)
 {
 	hashtable_t *table;
@@ -355,5 +353,3 @@ void Hash_BucketStats(hashtable_t *table)
 	}
 }
 #endif
-
-#endif // WITH_FTE_VFS

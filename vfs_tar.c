@@ -18,8 +18,6 @@
  *             
  */
 
-#ifdef WITH_FTE_VFS
-
 #include "quakedef.h"
 #include "hash.h"
 #include "common.h"
@@ -482,5 +480,3 @@ searchpathfuncs_t tarfilefuncs = {
 	NULL, // VFS-FIXME: Might be used for f_modification
 	FSTAR_OpenVFS 
 };
-
-#endif // WITH_FTE_VFS

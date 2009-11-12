@@ -656,7 +656,7 @@ CEditBox filenameeb;
 
 enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode = MOCPM_SETTINGS;
 
-extern cvar_t cfg_backup, cfg_legacy_exec, cfg_legacy_write, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
+extern cvar_t cfg_backup, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
 	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home, cfg_save_onquit;
 
 void MOpt_ImportConfig(void) {
@@ -680,8 +680,6 @@ void MOpt_LoadScript(void) {
 void MOpt_CfgSaveAllOn(void) {
 	S_LocalSound("misc/basekey.wav");
 	Cvar_SetValue(&cfg_backup, 1);
-	Cvar_SetValue(&cfg_legacy_exec, 1);
-	Cvar_SetValue(&cfg_legacy_write, 0);
 	Cvar_SetValue(&cfg_save_aliases, 1);
 	Cvar_SetValue(&cfg_save_binds, 1);
 	Cvar_SetValue(&cfg_save_cmdline, 1);
@@ -691,7 +689,6 @@ void MOpt_CfgSaveAllOn(void) {
 	Cvar_SetValue(&cfg_save_userinfo, 2);
 }
 
-const char* MOpt_legacywrite_enum[] = { "off", "non-qw dir frontend.cfg", "also config.cfg", "non-qw config.cfg" };
 const char* MOpt_userinfo_enum[] = { "off", "all but player", "all" };
 
 void MOpt_LoadCfg(void) {
@@ -1407,8 +1404,6 @@ setting settconfig_arr[] = {
 	ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Backup Old File", cfg_backup),
-	ADDSET_NAMED("Load Legacy", cfg_legacy_exec, MOpt_legacywrite_enum),
-	ADDSET_BOOL("Save Legacy", cfg_legacy_write),
 	ADDSET_BOOL("Aliases", cfg_save_aliases),
 	ADDSET_BOOL("Binds", cfg_save_binds),
 	ADDSET_BOOL("Cmdline", cfg_save_cmdline),

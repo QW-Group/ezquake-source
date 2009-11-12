@@ -134,7 +134,7 @@ cvar_t	gl_waterfog_color_lava = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR
 cvar_t	gl_waterfog_color_slime = {"gl_turbfog_color_slime", "128 255 0", CVAR_COLOR};
 
 cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
-cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64", CVAR_ARCHIVE};
+cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64"};
 cvar_t	gl_clear = {"gl_clear", "0"};
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
 cvar_t	gl_clearColor = {"gl_clearColor", "0 0 0", CVAR_COLOR, OnChange_gl_clearColor};

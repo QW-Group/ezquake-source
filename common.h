@@ -216,9 +216,6 @@ extern char	com_basedir[MAX_OSPATH];
 extern char	com_gamedirfile[MAX_QPATH];
 extern char com_homedir[MAX_PATH];
 
-#ifndef WITH_FTE_VFS
-extern qbool file_from_pak;		// set if file came from a pak file
-#endif // WITH_FTE_VFS
 extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
 
 void FS_InitFilesystem (void);

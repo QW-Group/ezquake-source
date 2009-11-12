@@ -1910,11 +1910,7 @@ qbool CL_GetDemoMessage (void)
 		if (cls.demoseeking && !cls.demorewinding && (cls.demotime < nextdemotime))
 		{
 			// Restart playback from the start of the file and then demo seek to the rewind spot.
-			#ifdef WITH_FTE_VFS
 			VFS_SEEK(playbackfile, 0, SEEK_SET);
-			#else
-			fseek(playbackfile, 0, SEEK_SET);
-			#endif // WITH_FTE_VFS
 
 			// We need to save track information.
 			memcpy(rewind_trackslots, mv_trackslots, sizeof(rewind_trackslots));

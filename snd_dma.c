@@ -78,19 +78,19 @@ static sfx_t	*ambient_sfx[NUM_AMBIENTS];
 // User-setable variables
 // ====================================================================
 
-cvar_t bgmvolume = {"bgmvolume", "1", CVAR_ARCHIVE};
-cvar_t s_volume = {"volume", "0.7", CVAR_ARCHIVE};
+cvar_t bgmvolume = {"bgmvolume", "1"};
+cvar_t s_volume = {"volume", "0.7"};
 cvar_t s_nosound = {"s_nosound", "0"};
 cvar_t s_precache = {"s_precache", "1"};
-cvar_t s_loadas8bit = {"s_loadas8bit", "0", CVAR_ARCHIVE};
-cvar_t s_ambientlevel = {"s_ambientlevel", "0.3", CVAR_ARCHIVE};
-cvar_t s_ambientfade = {"s_ambientfade", "100", CVAR_ARCHIVE};
+cvar_t s_loadas8bit = {"s_loadas8bit", "0"};
+cvar_t s_ambientlevel = {"s_ambientlevel", "0.3"};
+cvar_t s_ambientfade = {"s_ambientfade", "100"};
 cvar_t s_noextraupdate = {"s_noextraupdate", "0"};
 cvar_t s_show = {"s_show", "0"};
-cvar_t s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
-cvar_t s_swapstereo = {"s_swapstereo", "0", CVAR_ARCHIVE};
+cvar_t s_mixahead = {"s_mixahead", "0.1"};
+cvar_t s_swapstereo = {"s_swapstereo", "0"};
 
-cvar_t s_khz = {"s_khz", "11", CVAR_ARCHIVE, OnChange_s_khz};
+cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
 #ifdef __FreeBSD__
 cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_bits = {"s_bits", "16"};

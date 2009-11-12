@@ -66,51 +66,14 @@ char	com_userdir[MAX_OSPATH] = {0};
 int		userdir_type = -1;
 #endif
 
-#ifndef WITH_FTE_VFS
-// on disk
-typedef struct pack_s
-{
-	char    filename[MAX_OSPATH];
-	FILE    *handle;
-
-	int     numfiles;
-	packfile_t  *files;
-} pack_t;
-
-// on disk
-typedef struct
-{
-    char    name[56];
-    int     filepos, filelen;
-} dpackfile_t;
-
-typedef struct
-{
-    char    id[4];
-    int     dirofs;
-    int     dirlen;
-} dpackheader_t;
-
-#endif
-
 searchpath_t	*fs_searchpaths = NULL;
 searchpath_t	*fs_base_searchpaths = NULL;	// without gamedirs
-#ifdef WITH_FTE_VFS
 searchpath_t	*fs_purepaths;
-#endif
 
-#ifndef WITH_FTE_VFS
-static qbool FS_AddPak (char *pakfile);
-#else
 static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpathfuncs_t *funcs);
-#endif // WITH_FTE_VFS
 static qbool FS_RemovePak (const char *pakfile);
 
 //============================================================================
-#ifdef WITH_FTE_VFS
-
-#define WITH_VFS_WILD
-
 #include "q_shared.h"
 
 #ifndef CLIENTONLY
@@ -154,7 +117,7 @@ void FS_Locate_f (void);
 // VFS-FIXME: Debug file for trying to open files
 static void FS_DiffFile_f(void);
 
-#endif /* WITH_FTE_VFS */
+
 //============================================================================
 
 
@@ -200,23 +163,6 @@ int FS_FileOpenRead (char *path, FILE **hndl)
 FS_Path_f
 ============
 */
-#ifndef WITH_FTE_VFS
-void FS_Path_f (void)
-{
-	searchpath_t *search;
-
-	Com_Printf ("Current search path:\n");
-	for (search = fs_searchpaths; search; search = search->next) {
-		if (search == fs_base_searchpaths)
-			Com_Printf ("----------\n");
-		if (search->pack)
-			Com_Printf ("%s (%i files)\n", search->pack->filename, search->pack->numfiles);
-		else
-			Com_Printf ("%s\n", search->filename);
-	}
-}
-#else
-
 void FS_Path_f (void)
 {
 	searchpath_t	*search;
@@ -240,39 +186,15 @@ void FS_Path_f (void)
 		search->funcs->PrintPath(search->handle);
 	}
 }
-#endif// WITH_FTE_VFS
-
-
 
 
 // VFS-FIXME: D-Kure This removes a sanity check
 int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 {
-#ifndef WITH_FTE_VFS
-	searchpath_t *search;
-#endif
 	char fullpath[MAX_OSPATH];
 
 	if (path == NULL)
 		path = com_gamedir;
-#ifndef WITH_FTE_VFS
-	else {
-		// check if given path is in one of mounted filesystem
-		// we do not allow others
-		for (search = fs_searchpaths ; search ; search = search->next) {
-			if (search->pack != NULL)
-				continue;   // no writes to pak files
-
-			if (strlen(search->filename) > strlen(path)  &&
-			        !strcmp(search->filename + strlen(search->filename) - strlen(path), path) &&
-			        *(search->filename + strlen(search->filename) - strlen(path) - 1) == '/') {
-				break;
-			}
-		}
-		if (search == NULL)
-			Sys_Error("FS_FCreateFile: out of Quake filesystem\n");
-	}
-#endif
 
 	if (mode == NULL)
 		mode = "wb";
@@ -293,26 +215,6 @@ int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 }
 
 //The filename will be prefixed by com_basedir
-#ifndef WITH_FTE_VFS
-qbool FS_WriteFile (char *filename, void *data, int len)
-{
-	FILE *f;
-	char name[MAX_OSPATH];
-
-	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
-
-	if (!(f = fopen (name, "wb"))) {
-		FS_CreatePath (name);
-		if (!(f = fopen (name, "wb")))
-			return false;
-	}
-	Sys_Printf ("FS_WriteFile: %s\n", name);
-	fwrite (data, 1, len, f);
-	fclose (f);
-	return true;
-}
-
-#else
 qbool FS_WriteFileRelative(char *filename, void *data, int len, int relativeto)
 {
 	vfsfile_t *f;
@@ -346,29 +248,6 @@ qbool FS_WriteFile (char *filename, void *data, int len)
 	return FS_WriteFileRelative(filename, data, len, FS_GAME_OS);
 }
 
-#endif // WITH_FTE_VFS
-
-#ifndef WITH_FTE_VFS
-//The filename used as is
-qbool FS_WriteFile_2 (char *filename, void *data, int len)
-{
-	FILE *f;
-	char name[MAX_PATH];
-
-	snprintf (name, sizeof(name), "%s", filename);
-
-	if (!(f = fopen (name, "wb"))) {
-		FS_CreatePath (name);
-		if (!(f = fopen (name, "wb")))
-			return false;
-	}
-	Sys_Printf ("FS_WriteFile_2: %s\n", name);
-	fwrite (data, 1, len, f);
-	fclose (f);
-	return true;
-}
-
-#else
 //The filename used as is
 qbool FS_WriteFile_2 (char *filename, void *data, int len)
 {
@@ -391,9 +270,6 @@ FILE *FS_WriteFileOpen (char *filename)	//like fopen, but based around quake's p
 	return f;
 }
 #endif
-
-#endif // WITH_FTE_VFS
-
 
 //Only used for CopyFile and download
 
@@ -453,85 +329,19 @@ qbool	file_from_pak;		// global indicating file came from a packfile
 qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
 
 // VFS-FIXME: D-Kure: This function will be removed once we have the VFS layer
-#ifndef WITH_FTE_VFS
-int FS_FOpenFile (const char *filename, FILE **file) {
-	searchpath_t *search;
-	pack_t *pak;
-	int i;
-
-	*file = NULL;
-	file_from_pak = false;
-	file_from_gamedir = true;
-	fs_filepos = 0;
-	fs_netpath[0] = 0;
-
-	// search through the path, one element at a time
-	for (search = fs_searchpaths; search; search = search->next) {
-		if (search == fs_base_searchpaths && fs_searchpaths != fs_base_searchpaths)
-			file_from_gamedir = false;
-
-		// is the element a pak file?
-		if (search->pack) {
-			// look through all the pak file elements
-			pak = search->pack;
-			for (i = 0; i < pak->numfiles; i++) {
-				if (!strcmp (pak->files[i].name, filename)) {	// found it!
-					if (developer.integer >= 3)
-						Com_DPrintf ("PackFile: %s : %s\n", pak->filename, filename);
-					// open a new file on the pakfile
-					if (!(*file = fopen (pak->filename, "rb")))
-						Sys_Error ("Couldn't reopen %s\n", pak->filename);
-					fseek (*file, pak->files[i].filepos, SEEK_SET);
-					fs_filepos = pak->files[i].filepos;
-					com_filesearchpath = search->filename;
-
-					file_from_pak = true;
-					snprintf (fs_netpath, sizeof(fs_netpath), "%s#%i", pak->filename, i);
-					return pak->files[i].filelen;
-				}
-			}
-		} else {
-			snprintf (fs_netpath, sizeof(fs_netpath), "%s/%s", search->filename, filename);
-
-			if (!(*file = fopen (fs_netpath, "rb")))
-				continue;
-
-			if (developer.value)
-				Sys_Printf ("FindFile: %s\n", fs_netpath);
-
-			fs_filepos = 0;
-			return FS_FileLength (*file);
-		}
-	}
-
-	if (developer.value)
-		Sys_Printf ("FindFile: can't find %s\n", filename);
-
-	return -1;
-}
-#endif // WITH_FTE_VFS
 
 // Filename are relative to the quake directory.
 // Always appends a 0 byte to the loaded data.
 static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 {
-#ifndef WITH_FTE_VFS
-	FILE *h;
-#else
 	vfsfile_t *f = NULL;
 	vfserrno_t err;
 	flocation_t loc;
-#endif
 	byte *buf;
 	char base[32];
 	int len;
 
 	// Look for it in the filesystem or pack files.
-#ifndef WITH_FTE_VFS
-	len = FS_FOpenFile (path, &h);
-	if (!h)
-		return NULL;
-#else
 	//blanket-bans - Avoid combination of / & \ for directories
     if (Sys_PathProtection(path)) 
 		return NULL;
@@ -547,7 +357,6 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	if (!f)
 		return NULL;
 	len = VFS_GETLEN(f);
-#endif
 	if (file_length)
 		*file_length = len;
 
@@ -584,13 +393,8 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	Draw_BeginDisc ();
 	#endif
 
-#ifndef WITH_FTE_VFS
-	fread (buf, 1, len, h);
-	fclose (h);
-#else
 	VFS_READ(f, buf, len, &err);
 	VFS_CLOSE(f);
-#endif
 
 	#ifndef SERVERONLY
 	Draw_EndDisc ();
@@ -612,54 +416,6 @@ byte *FS_LoadHeapFile (const char *path, int *len)
 {
 	return FS_LoadFile (path, 5, len);
 }
-
-
-/*
-Takes an explicit (not game tree related) path to a pak file.
-
-Loads the header and directory, adding the files at the beginning
-of the list so they override previous pack files.
-*/
-#ifndef WITH_FTE_VFS
-pack_t *FS_LoadPackFile (char *packfile) {
-	dpackheader_t header;
-	int i;
-	packfile_t *newfiles;
-	pack_t *pack;
-	FILE *packhandle;
-	dpackfile_t *info;
-
-	if (FS_FileOpenRead (packfile, &packhandle) == -1)
-		return NULL;
-
-	fread (&header, 1, sizeof(header), packhandle);
-	if (header.id[0] != 'P' || header.id[1] != 'A' || header.id[2] != 'C' || header.id[3] != 'K')
-		Sys_Error ("%s is not a packfile\n", packfile);
-	header.dirofs = LittleLong (header.dirofs);
-	header.dirlen = LittleLong (header.dirlen);
-
-	pack = (pack_t *) Q_malloc (sizeof (pack_t));
-	strlcpy (pack->filename, packfile, sizeof (pack->filename));
-	pack->handle = packhandle;
-	pack->numfiles = header.dirlen / sizeof(dpackfile_t);
-
-	pack->files = newfiles = (packfile_t *) Q_malloc (pack->numfiles * sizeof(packfile_t));
-	info = (dpackfile_t *) Q_malloc (header.dirlen);
-
-	fseek (packhandle, header.dirofs, SEEK_SET);
-	fread (info, 1, header.dirlen, packhandle);
-
-	// parse the directory
-	for (i = 0; i < pack->numfiles; i++) {
-		strlcpy (newfiles[i].name, info[i].name, MAX_QPATH);
-		newfiles[i].filepos = LittleLong(info[i].filepos);
-		newfiles[i].filelen = LittleLong(info[i].filelen);
-	}
-
-	Q_free(info);
-	return pack;
-}
-#endif // WITH_FTE_VFS
 
 // QW262 -->
 #ifndef SERVERONLY
@@ -684,25 +440,6 @@ void FS_SetUserDirectory (char *dir, char *type) {
 	FS_SetGamedir(tmp); // restore
 }
 #endif
-
-#ifndef WITH_FTE_VFS
-static qbool FS_AddPak (char *pakfile) {
-	searchpath_t *search;
-	pack_t *pak;
-
-	pak = FS_LoadPackFile (pakfile);
-	if (!pak)
-		return false;
-
-	//search = Hunk_Alloc (sizeof(searchpath_t));
-	search = (searchpath_t *) Q_malloc(sizeof(searchpath_t));
-	search->pack = pak;
-	search->next = fs_searchpaths;
-	fs_searchpaths = search;
-	return true;
-}
-
-#else
 
 // ==========
 // FS_AddPak
@@ -762,34 +499,13 @@ static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpa
 
 	return 0;
 }
-#endif
 
 static qbool FS_RemovePak (const char *pakfile) {
 	searchpath_t *prev = NULL;
 	searchpath_t *cur = fs_searchpaths;
-#ifndef WITH_FTE_VFS // unused with the VFS stuff
-	searchpath_t *temp;
-#endif
 	qbool ret = false;
 
 	while (cur) {
-#ifndef WITH_FTE_VFS
-		if (cur->pack) {
-			if (!strcmp(cur->pack->filename, pakfile)) {
-				if (!fclose(cur->pack->handle)) {
-					if (prev)
-						prev->next = cur->next;
-					else
-						fs_searchpaths = cur->next;
-
-					temp = cur;
-					cur = cur->next;
-					Q_free(temp);
-					ret = true;
-				} else Com_Printf("Couldn't close file handler to %s\n", cur->pack->filename);
-			}
-		}
-#endif // WITH_FTE_VFS
 		prev = cur;
 		cur = cur->next;
 	}
@@ -805,11 +521,7 @@ static qbool FS_RemovePak (const char *pakfile) {
 // Reads the pak.lst from the give directory 
 // and adds the given paks 
 
-#ifndef WITH_FTE_VFS
-static void FS_AddUserPaks (char *dir)
-#else
 static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types loadstuff) 
-#endif
 {
 	FILE	*f;
 	char	pakfile[MAX_OSPATH];
@@ -842,30 +554,18 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 			if (!strncasecmp(userpak,"gl", 2))
 				continue;
 #endif // GLQUAKE
-
-#ifndef WITH_FTE_VFS
-			snprintf (pakfile, sizeof (pakfile), "%s/%s", dir, userpak);
-			FS_AddPak(pakfile);
-#else
 			FS_AddPak(dir, userpak, parent, NULL);
-#endif // WITH_FTE_VFS
-
 		}
 		fclose(f);
 	}
 	// add userdir.pak
 	if (UserdirSet) {
-#ifndef WITH_FTE_VFS
-		snprintf (pakfile, sizeof (pakfile), "%s/%s.pak", dir, userdirfile);
-		FS_AddPak(pakfile);
-#else
 		snprintf (pakfile, sizeof (pakfile), "%s.pak", userdirfile);
 		FS_AddPak(dir, pakfile, parent, NULL);
 #ifdef WITH_ZIP
 		snprintf (pakfile, sizeof (pakfile), "%s.pk3", userdirfile);
 		FS_AddPak(dir, pakfile, parent, NULL);
 #endif // WITH_ZIP
-#endif // WITH_FTE_VFS
 	}
 }
 
@@ -874,46 +574,10 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 
 // <-- QW262
 
-//Sets com_gamedir, adds the directory to the head of the path, then loads and adds pak1.pak pak2.pak ...
-#ifndef WITH_FTE_VFS
-void FS_AddGameDirectory (char *path_to_dir, char *dir) {
-	int i;
-	searchpath_t *search;
-	char pakfile[MAX_OSPATH];
-
-	strlcpy(com_gamedirfile, dir, sizeof(com_gamedirfile));
-	snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", path_to_dir, dir);
-
-	// add the directory to the search path
-	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
-	strlcpy (search->filename, com_gamedir, sizeof (search->filename));
-	search->pack = NULL;
-	search->next = fs_searchpaths;
-	fs_searchpaths = search;
-
-	// add any pak files in the format pak0.pak pak1.pak, ...
-	for (i = 0; ; i++) {
-		snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", com_gamedir, i);
-		if(!FS_AddPak(pakfile))
-			break;
-	}
-#ifndef SERVERONLY
-	// other paks
-	FS_AddUserPaks (com_gamedir);
-#endif
-}
-#endif // WITH_FTE_VFS
-
 #ifndef SERVERONLY
 void FS_AddUserDirectory ( char *dir ) {
-#ifndef WITH_FTE_VFS
-	int i;
-	searchpath_t *search;
-	char pakfile[MAX_OSPATH];
-#else
 	size_t dir_len;
 	char *malloc_dir;
-#endif // WITH_FTE_VFS
 
 	if ( !UserdirSet )
 		return;
@@ -933,31 +597,10 @@ void FS_AddUserDirectory ( char *dir ) {
 			return;
 	}
 
-#ifndef WITH_FTE_VFS
-	// add the directory to the search path
-	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
-	// VFS-FIXME: D-Kure: What is this search->filename & pack used for??
-	strlcpy (search->filename, com_userdir, sizeof (search->filename));
-	search->pack = NULL;
-	search->next = fs_searchpaths;
-	fs_searchpaths = search;
-
-	// add any pak files in the format pak0.pak pak1.pak, ...
-	for (i = 0; ; i++) {
-		snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", com_userdir, i);
-		if(!FS_AddPak(pakfile))
-			break;
-	}
-
-	// other paks
-	FS_AddUserPaks (com_userdir);
-#else
 	dir_len = strlen(com_userdir) + 2;
 	malloc_dir = Q_malloc(sizeof(char)*dir_len);
 	snprintf(malloc_dir, dir_len, "%s/", com_userdir);
 	FS_AddPathHandle(com_userdir, &osfilefuncs, malloc_dir, false, false, FS_LOAD_FILE_ALL);
-
-#endif // WITH_FTE_VFS
 }
 #endif /* SERVERONLY */
 
@@ -980,21 +623,6 @@ void FS_SetGamedir (char *dir)
 	strlcpy (com_gamedirfile, dir, sizeof(com_gamedirfile));
 
 	// Free up any current game dir info.
-#ifndef WITH_FTE_VFS
-	while (fs_searchpaths != fs_base_searchpaths)	
-	{
-		if (fs_searchpaths->pack) 
-		{
-			fclose (fs_searchpaths->pack->handle);
-			Q_free (fs_searchpaths->pack->files);
-			Q_free (fs_searchpaths->pack);
-		}
-
-		next = fs_searchpaths->next;
-		Q_free (fs_searchpaths);
-		fs_searchpaths = next;
-	}
-#else
 	FS_FlushFSHash();
 
 	// free up any current game dir info
@@ -1007,24 +635,16 @@ void FS_SetGamedir (char *dir)
 	}
 
 	filesystemchanged=true;
-#endif
 
 	// Flush all data, so it will be forced to reload.
 	Cache_Flush ();
 
 	snprintf (com_gamedir, sizeof (com_gamedir), "%s/%s", com_basedir, dir);
 
-#ifndef WITH_FTE_VFS
-	if (strcmp(dir, "id1") && strcmp(dir, "qw") && strcmp(dir, "ezquake"))
-	{
-		FS_AddGameDirectory(com_basedir, dir);
-	}
-#else
 	FS_AddGameDirectory(va("%s/%s", com_basedir, dir), FS_LOAD_FILE_ALL);
 	if (*com_homedir) {
 		FS_AddHomeDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
 	}
-#endif
 
 #ifdef GLQUAKE
 	// Reload gamedir specific conback as its not flushed
@@ -1063,15 +683,6 @@ void FS_ShutDown( void ) {
 	// free data
 	while (fs_searchpaths)	{
 		searchpath_t  *next;
-
-#ifndef WITH_FTE_VFS
-		// VFS-FIXME: D-Kure: Need to add some VFS Cleanup here
-		if (fs_searchpaths->pack) {
-			fclose (fs_searchpaths->pack->handle); // close pack file handler
-			Q_free (fs_searchpaths->pack->files);
-			Q_free (fs_searchpaths->pack);
-		}
-#endif
 		next = fs_searchpaths->next;
 		Q_free (fs_searchpaths);
 		fs_searchpaths = next;
@@ -1182,26 +793,13 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #endif
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
 	}
-	else
-	{
-#ifndef WITH_FTE_VFS
-		// if homedir not used set it equal to basedir
-		strlcpy(com_homedir, com_basedir, sizeof(com_homedir));
-#endif // WITH_FTE_VFS
-	}
 
 	// start up with id1 by default
-#ifndef WITH_FTE_VFS
-	FS_AddGameDirectory(com_basedir, "id1");
-	FS_AddGameDirectory(com_basedir, "ezquake");
-	FS_AddGameDirectory(com_basedir, "qw");
-#else
 	FS_AddGameDirectory(va("%s/%s", com_basedir, "id1"),     FS_LOAD_FILE_ALL);
 	FS_AddGameDirectory(va("%s/%s", com_basedir, "ezquake"), FS_LOAD_FILE_ALL);
 	FS_AddGameDirectory(va("%s/%s", com_basedir, "qw"),      FS_LOAD_FILE_ALL);
 	if (*com_homedir)
 	        FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
-#endif
 
 	//
 	// -data <datadir>
@@ -1213,11 +811,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	{
 		if (i && i < COM_Argc()-1)
 		{
-#ifndef WITH_FTE_VFS
-			FS_AddGameDirectory(com_basedir,COM_Argv(i+1));
-#else
 			FS_AddGameDirectory(va("%s%s", com_basedir, COM_Argv(i+1)), FS_LOAD_FILE_ALL);
-#endif
 		}
 		i++;
 	}
@@ -1239,28 +833,15 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 }
 
 void FS_InitFilesystem( void ) {
-#ifndef WITH_FTE_VFS
-	FILE *f;
-#else
 	vfsfile_t *vfs;
-#endif
 
 	FS_InitModuleFS();
-
 	FS_InitFilesystemEx( false ); // first attempt, simplified
-
-#ifndef WITH_FTE_VFS
-	if ( FS_FOpenFile( "gfx.wad", &f ) >= 0 ) { // we found gfx.wad, seems we have proper com_basedir
-		fclose( f );
-		return;
-	}
-#else
 	vfs = FS_OpenVFS("gfx.wad", "rb", FS_ANY); 
 	if (vfs) { // // we found gfx.wad, seems we have proper com_basedir
 		VFS_CLOSE(vfs);
 		return;
 	}
-#endif // WITH_FTE_VFS
 
 	FS_InitFilesystemEx( true );  // second attempt
 }
@@ -1403,57 +984,6 @@ qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
 // some general function to open VFS file, except VFSTCP
 //
 
-#ifndef WITH_FTE_VFS
-vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
-{
-	vfsfile_t *vf;
-	FILE *file;
-	char fullname[MAX_PATH];
-	int filesize;
-
-	switch (relativeto)
-	{
-	case FS_NONE_OS:	//OS access only, no paks, open file as is
-		snprintf(fullname, sizeof(fullname), "%s", filename);
-
-		return VFSOS_Open(fullname, NULL, mode);
-
-	case FS_GAME_OS:	//OS access only, no paks, open file in gamedir
-		snprintf(fullname, sizeof(fullname), "%s/%s", com_gamedir, filename);
-
-		return VFSOS_Open(fullname, NULL, mode);
-
-	case FS_ANY: // any source on quake fs: paks, gamedir etc..
-		if (strcmp(mode, "rb"))
-			return NULL; // "rb" mode required
-
-		snprintf(fullname, sizeof(fullname), "%s", filename);
-
-		filesize = FS_FOpenFile(filename, &file); // search file in paks gamedir etc..
-
-		if (file) { // we open stdio FILE, probably that point in pak file as well
-
-			if (file_from_pak) // yea, that a pak
-				vf = FSPAK_OpenVFS(file, filesize, fs_filepos, mode);
-			else // no, just ordinar file
-				vf = VFSOS_Open(fullname, file, mode);
-
-			if (!vf) // hm, we in troubles, do not forget close stdio FILE
-				fclose(file);
-
-			return vf;
-		}
-
-		return NULL;
-
-	default:
-		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
-		break;
-	}
-
-	return NULL;
-}
-#else 
 
 #ifdef WITH_VFS_ARCHIVE_LOADING
 /* 
@@ -1692,7 +1222,6 @@ archive_fail:
 		return VFSOS_Open(fullname, mode);
 	return NULL;
 }
-#endif /* WITH_FTE_VFS */
 
 
 
@@ -2558,9 +2087,6 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("loadpak", FS_PakAdd_f);
 	Cmd_AddCommand("removepak", FS_PakRem_f);
 	Cmd_AddCommand("path", FS_Path_f);
-#ifndef WITH_FTE_VFS
-	Com_Printf("Initialising standard quake filesystem\n");
-#else
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
 	Cmd_AddCommand("fs_diff", FS_DiffFile_f); 		// VFS-FIXME <-- Only a debug function
 	Cmd_AddCommand("dir", FS_Dir_f);
@@ -2568,10 +2094,8 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("fs_search", FS_ListFiles_f);
 	Cvar_Register(&fs_cache);
 	Com_Printf("Initialising quake VFS filesystem\n");
-#endif
 }
 
-#ifdef WITH_FTE_VFS
 
 /******************************************************************************
  *     TODO:
@@ -3250,7 +2774,6 @@ void FS_CreatePathRelative(char *pname, int relativeto)
 	FS_CreatePath(fullname);
 }
 
-#ifdef WITH_VFS_WILD
 // Compile this part of code for all wildcard searching 
 // for pak files to be opened
 
@@ -3294,16 +2817,13 @@ static int FS_AddWildDataFiles (char *descriptor, int size, void *vparam)
 
 	return true;
 }
-#endif // WITH_VFS_WILD
 
 static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension, searchpathfuncs_t *funcs)
 {
 	int				i;
 	char			pakfile[MAX_OSPATH];
-#ifdef WITH_VFS_WILD
 	wildpaks_t wp;
 	FILE *pak_lst;
-#endif // WITH_VFS_WILD
 
 	for (i=0 ; ; i++)
 	{
@@ -3312,7 +2832,6 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 			break;
 	}
 
-#ifdef WITH_VFS_WILD 
 	/* VFS-FIXME: Sure there is a better way to do this.... */
 	snprintf (pakfile, sizeof (pakfile), "%s/pak.lst", pathto);
 	pak_lst = fopen(pakfile, "r");
@@ -3325,7 +2844,6 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 	} else {
 		fclose(pak_lst);
 	}
-#endif // WITH_VFS_WILD
 }
 
 void FS_RefreshFSCache_f(void)
@@ -3635,7 +3153,6 @@ void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *par
 }
 
 // DEBUG FUNCTION
-#ifdef WITH_FTE_VFS
 // ===============
 // FS_DiffFile_f
 // ===============
@@ -3706,7 +3223,6 @@ end:
 	VFS_CLOSE(file2);
 }
 
-#endif // WITH_FTE_VFS DEBUG_FUNCTION
 
 
-#endif /* WITH_FTE_VFS */
+

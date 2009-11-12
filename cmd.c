@@ -774,8 +774,6 @@ void Cmd_Alias_f (void)
 		++s;
 	}
 	// <-- QW262
-	if (!strcasecmp(Cmd_Argv(0), "aliasa"))
-		a->flags |= ALIAS_ARCHIVE;
 
 #ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc)
@@ -913,17 +911,6 @@ void DeleteServerAliases(void)
 		if (a->flags & ALIAS_SERVER)
 			Cmd_DeleteAlias (a->name);
 	}
-}
-
-
-
-void Cmd_WriteAliases (FILE *f)
-{
-	cmd_alias_t	*a;
-
-	for (a = cmd_alias ; a ; a=a->next)
-		if (a->flags & ALIAS_ARCHIVE)
-			fprintf (f, "aliasa %s \"%s\"\n", a->name, a->value);
 }
 
 /*
@@ -2273,7 +2260,6 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
 	Cmd_AddCommand ("aliaslist", Cmd_AliasList_f);
 	Cmd_AddCommand ("aliasedit", Cmd_EditAlias_f);
-	//Cmd_AddCommand ("aliasa", Cmd_Alias_f);
 	Cmd_AddCommand ("alias", Cmd_Alias_f);
 	Cmd_AddCommand ("tempalias", Cmd_Alias_f);
 	Cmd_AddCommand ("viewalias", Cmd_Viewalias_f);

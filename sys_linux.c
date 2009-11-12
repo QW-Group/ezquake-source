@@ -614,7 +614,6 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 }
 // kazik <--
 
-#ifdef WITH_FTE_VFS
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm)
 {
 	DIR *dir, *dir2;
@@ -691,8 +690,6 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 
 	return true;
 }
-
-#endif /* WITH_FTE_VFS */
 
 /*************************** INTER PROCESS CALLS *****************************/
 #define PIPE_BUFFERSIZE		1024
