@@ -666,7 +666,7 @@ void MOpt_ImportConfig(void) {
 	if (cfg_use_home.value)
 		FL_SetCurrentDir(&configs_filelist, (cfg_use_gamedir.integer) ? va("%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? com_gamedirfile : "ezquake") : va("%s/ezquake", com_homedir));
     else
-		FL_SetCurrentDir(&configs_filelist, (cfg_use_gamedir.integer) ? va("%s/%s/configs", com_baseedir, (strcmp(com_gamedirfile, "qw") == 0) ? com_gamedirfile : "ezquake") : va("%s/ezquake/configs", com_basedir));
+		FL_SetCurrentDir(&configs_filelist, (cfg_use_gamedir.integer) ? va("%s/%s/configs", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? com_gamedirfile : "ezquake") : va("%s/ezquake/configs", com_basedir));
 }
 void MOpt_ExportConfig(void) {
 	MOpt_configpage_mode = MOCPM_ENTERFILENAME;
