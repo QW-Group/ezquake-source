@@ -72,6 +72,7 @@ cvar_t	cfg_save_sysinfo	=	{"cfg_save_sysinfo", "0"};
 cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1"};
 cvar_t	cfg_backup			=	{"cfg_backup", "0"};
 cvar_t  cfg_use_home		=	{"cfg_use_home", "0"};
+cvar_t  cfg_use_gamedir		=	{"cfg_use_gamedir", "1"};
 
 /************************************ DUMP FUNCTIONS ************************************/
 
@@ -750,10 +751,10 @@ void DumpConfig(char *name)
 	FILE	*f;
 	char	*outfile, *newlines = "\n";
 
-	if (cfg_use_home.integer) // use home dir for cfg
-		outfile = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, name);
-	else // use ezquake dir
-		outfile = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, name);
+	if (cfg_use_home.integer) // homedir
+		outfile = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, name);
+	else // basedir
+		outfile = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, name);
 
 	if (!(f	= fopen	(outfile, "w"))) {
 		FS_CreatePath(outfile);
@@ -877,10 +878,10 @@ void SaveConfig_f(void)
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 
 	if (cfg_backup.integer) {
-		if (cfg_use_home.integer) // use home dir for cfg
-			filename_ext = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile,	filename);
-		else // use mod dir
-			filename_ext = va("%s/%s/configs/%s", com_basedir,(strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
+		if (cfg_use_home.integer)	// homedir
+			filename_ext = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, filename);
+		else	// basedir
+			filename_ext = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, filename);
 
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
@@ -975,7 +976,7 @@ void LoadConfig_f(void)
 	snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
 	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/%s", com_homedir, filename);
 
-	if(use_home && !(f = fopen(fullname, "rb")) && !(f = fopen(fullname_moddefault, "rb")) )
+	if(use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
 	{
 		use_home = false;
 	}
@@ -984,9 +985,9 @@ void LoadConfig_f(void)
 	snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
 	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
 
-	if(!use_home && !(f = fopen(fullname, "rb")) && !(f = fopen(fullname_moddefault, "rb")) )
+	if(!use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
 	{
-		Com_Printf("Couldn't load %s\n", filename);
+		Com_Printf("Couldn't load %s %s\n", filename, (cfg_use_gamedir.integer) ? "(using gamedir search)": "(not using gamedir search)");
 		return;
 	}
 
@@ -1091,5 +1092,6 @@ void ConfigManager_Init(void)
 	Cvar_Register(&cfg_save_sysinfo);
 	Cvar_Register(&cfg_backup);
 	Cvar_Register(&cfg_use_home);
+	Cvar_Register(&cfg_use_gamedir);
 	Cvar_ResetCurrentGroup();
 }

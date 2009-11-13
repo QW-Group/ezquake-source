@@ -1946,7 +1946,8 @@ void CL_Init (void)
 	Auth_Init();
 	Log_Init();
 	Movie_Init();
-	ConfigManager_Init();
+	// moved to host.c:Host_Init()
+	//ConfigManager_Init();
 	Stats_Init();
 	MP3_Init();
 	SB_RootInit();

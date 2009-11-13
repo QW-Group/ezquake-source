@@ -657,14 +657,16 @@ CEditBox filenameeb;
 enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode = MOCPM_SETTINGS;
 
 extern cvar_t cfg_backup, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
-	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home, cfg_save_onquit;
+	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home, cfg_save_onquit, cfg_use_gamedir;
 
 void MOpt_ImportConfig(void) {
 	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
-    if (cfg_use_home.value)
-        FL_SetCurrentDir(&configs_filelist, com_homedir);
+	
+	// hope few doubled trinary operator won't hurt your brains
+	if (cfg_use_home.value)
+		FL_SetCurrentDir(&configs_filelist, (cfg_use_gamedir.integer) ? va("%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? com_gamedirfile : "ezquake") : va("%s/ezquake", com_homedir));
     else
-	    FL_SetCurrentDir(&configs_filelist, "./ezquake/configs");
+		FL_SetCurrentDir(&configs_filelist, (cfg_use_gamedir.integer) ? va("%s/%s/configs", com_baseedir, (strcmp(com_gamedirfile, "qw") == 0) ? com_gamedirfile : "ezquake") : va("%s/ezquake/configs", com_basedir));
 }
 void MOpt_ExportConfig(void) {
 	MOpt_configpage_mode = MOCPM_ENTERFILENAME;
@@ -1389,6 +1391,7 @@ setting settconfig_arr[] = {
     ADDSET_ACTION("Save Settings", MOpt_SaveCfg, "Save the settings"),
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL("Save To Profile Dir", cfg_use_home),
+	ADDSET_BOOL("Save To Mod Directory", cfg_use_gamedir),
     ADDSET_BASIC_SECTION(),
 	ADDSET_ACTION("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 

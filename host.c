@@ -522,7 +522,6 @@ extern void LoadConfig_f(void);
 	Cmd_AddCommand ("tp_took", TP_Took_f);
 	Cmd_AddCommand ("tp_pickup", TP_Pickup_f);
 	Cmd_AddCommand ("tp_point", TP_Point_f);
-	Cmd_AddCommand("cfg_load", LoadConfig_f);
 
 	MT_AddMapGroups ();
 	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
@@ -593,6 +592,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	NET_Init ();
 
 	Commands_For_Configs_Init ();
+	ConfigManager_Init();
 
 	if (!dedicated) {
 		char cfg[MAX_PATH] = {0};
