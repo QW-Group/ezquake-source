@@ -1059,13 +1059,17 @@ void CL_LinkPacketEntities(void)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
 					else if (r_rockettrail.value == 7)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
-#ifdef GLQUAKE
 					else if (r_rockettrail.value == 8)
 					{
+						#ifdef GLQUAKE
 						byte color[3];
 						color[0] = 0; color[1] = 70; color[2] = 255;
 						FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5);
+						#else
+						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
+						#endif
 					}
+#ifdef GLQUAKE
 					else if (r_rockettrail.value == 9)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, LAVA_TRAIL);
 					else if (r_rockettrail.value == 10)
@@ -1083,9 +1087,6 @@ void CL_LinkPacketEntities(void)
 						CL_CreateBlurs (*old_origin, ent.origin, &ent);
 						VectorCopy(ent.origin, cent->trail_origin);		
 					}
-#else
-					else if (r_rockettrail.value == 8)
-						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
 #endif
 					else
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ROCKET_TRAIL);
@@ -1137,11 +1138,16 @@ void CL_LinkPacketEntities(void)
 				{
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
 				}
-				else if (r_grenadetrail.value) 
+				else
+#endif
+				if (r_grenadetrail.value) 
 				{
+#ifdef GLQUAKE
 					if (model->modhint == MOD_RAIL)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, RAIL_TRAIL);
-					else if (r_grenadetrail.value == 2)
+					else
+#endif
+					if (r_grenadetrail.value == 2)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ROCKET_TRAIL);
 					else if (r_grenadetrail.value == 4)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
@@ -1155,11 +1161,16 @@ void CL_LinkPacketEntities(void)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
 					else if (r_grenadetrail.value == 8)
 					{
+						#ifdef GLQUAKE
 						// VULT PARTICLES
 						byte color[3];
 						color[0] = 0; color[1] = 70; color[2] = 255;
 						FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5);
+						#else
+						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
+						#endif
 					}
+#ifdef GLQUAKE
 					else if (r_grenadetrail.value == 9)
 					{
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, LAVA_TRAIL);
@@ -1184,6 +1195,7 @@ void CL_LinkPacketEntities(void)
 						CL_CreateBlurs (*old_origin, ent.origin, &ent);
 						VectorCopy(ent.origin, cent->trail_origin);		
 					}
+#endif
 					else
 					{
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
@@ -1193,12 +1205,6 @@ void CL_LinkPacketEntities(void)
 				{
 					VectorCopy(ent.origin, cent->trail_origin);
 				}
-#else
-				if (r_grenadetrail.value)
-					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
-				else
-					VectorCopy(ent.origin, cent->trail_origin);
-#endif
 			}
 			else if (model->flags & EF_GIB)
 			{
