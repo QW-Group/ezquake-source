@@ -148,8 +148,8 @@
 #DEFINE WEAPON_CLASS    LIGHTNING_GUN		"lightning gun"		"lg"			"\lg\"
 #DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN		"q lightning gun"	"lg &c06fQ&r"	"\lg\ \q\"
 
-#DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"          "rail"//           "\rail\" //for dmm8
-#DEFINE WEAPON_CLASS    COIL_GUN            "coil gun"			"coil"//           "\coil\" //for KTX instagib
+#DEFINE WEAPON_CLASS    RAIL_GUN		"rail gun"		"rail"		"\rail\" //for dmm8
+#DEFINE WEAPON_CLASS    COIL_GUN		"coil gun"		"coil"		"\coil\" //for KTX instagib
 
 #DEFINE WEAPON_CLASS    DROWN			"drown"			"drown"		"\drown\"
 #DEFINE WEAPON_CLASS    LAVA			"lava"			"lava"		"\lava\"
