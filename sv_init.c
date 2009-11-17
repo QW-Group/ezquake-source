@@ -253,6 +253,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	char oldmap[MAP_NAME_LEN];
 	extern qbool	sv_allow_cheats;
 	extern cvar_t	sv_cheats, sv_paused;
+	extern void CL_ClearState (void);
 
 	// store old map name
 	snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
@@ -578,10 +579,6 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// we change map - clear whole demo struct and sent initial state to all dest if any (for QTV only I thought)
 	SV_MVD_Record(NULL, true);
 
-	if (!dedicated)
-	{
-		void CL_ClearState (void);
-		CL_ClearState ();
-	}
+	CL_ClearState ();
 }
 
