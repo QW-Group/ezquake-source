@@ -70,4 +70,6 @@ qbool Draw_BigFontAvailable(void);
 
 int *gameclockoffset;  // hud_gameclock time offset in seconds
 
+void SCR_DrawWadString(int x, int y, float scale, const char *t);
+
 #endif  // __COMMON_DRAW__H__

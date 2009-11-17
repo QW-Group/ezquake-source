@@ -265,10 +265,10 @@ void Draw_AMFStatLoss (int stat, hud_t* hud) {
 				digits = HUD_FindVar(hud, "digits");
 				align  = HUD_FindVar(hud, "align");
 			}
-			SCR_HUD_DrawNum (hud, -(*vxdmgcnt), 1,
-                scale->value, style->value, 4, align->string);
+			SCR_HUD_DrawNum (hud, abs(*vxdmgcnt), 1,
+                scale->value, style->value, digits->integer, align->string);
 		} else {
-      		Sbar_DrawNum (x, -24, -(*vxdmgcnt), 3, (*vxdmgcnt) > 0);
+      		Sbar_DrawNum (x, -24, abs(*vxdmgcnt), 3, (*vxdmgcnt) > 0);
 		}
       	glEnable(GL_ALPHA_TEST);
       	glDisable (GL_BLEND);

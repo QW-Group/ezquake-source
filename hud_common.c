@@ -1773,21 +1773,22 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 {
     extern mpic_t *sb_nums[2][11];
 
-    int  i, t;
+    int  i;
     char buf[sizeof(int) * 3]; // each byte need <= 3 chars
     int  len;
 
     int width, height, x, y;
     int size;
     int align;
-	qbool overflow;
 
-	if (num < 0) num = -num;
-    clamp(num, 0, 999999);
+    clamp(num, -99999, 999999);
 
     scale = max(scale, 0.01);
 
-    clamp(digits, 1, 6);
+    if (digits > 0)
+		clamp(digits, 1, 6);
+	else
+		digits = 0; // auto-resize
 
     align = 2;
     switch (tolower(s_align[0]))
@@ -1801,95 +1802,110 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
         align = 2; break;
     }
 
-	switch (hud_digits_trim.integer)
-	{
-	case 0:
-		snprintf(buf, sizeof (buf), "%d", num);
-		len = strlen(buf);
-		if (len > digits)
-		{
-			char *p = buf;
-			for (i = 0; i < digits; i++)
-				*p++ = '9';
-			*p = 0;
-			len = digits;
-		}
-		break;
-    default:
-	case 1:
-		t = 1;	// let's presume digits = 3
-		for (i = 0; i < digits; i++) t *= 10;	// t = 10^digits
+	snprintf(buf, sizeof (buf), "%d", (style == 2 || style == 3) ? num : abs(num));
 
-		overflow = num >= t;		// 10090 >= 1000
-		num %= t;					// num = 90
-	    snprintf(buf, sizeof (buf), "%d", num);	// "90"
-    	len = strlen(buf);			// 2
-		t = digits - len;			// t = 3-2 = 1
-		if (t > 0 && overflow)		// 1 > 0 && true
+	if(digits)
+	{
+		switch (hud_digits_trim.integer)
 		{
-			snprintf(buf + t, sizeof (buf) - t, "%d", num);	// " 90"
-			for (i = 0; i < t; i++)
-				buf[i] = '0';				// "090"
-			len = digits;
+			case 0: // 10030 -> 999
+				len = strlen(buf);
+				if (len > digits)
+				{
+					char *p = buf;
+					if(num < 0)
+						*p++ = '-';
+					for (i = (num < 0) ? 1 : 0 ; i < digits; i++)
+						*p++ = '9';
+					*p = 0;
+					len = digits;
+				}
+				break;
+			default:
+			case 1: // 10030 -> 030
+				len = strlen(buf);
+				if(len > digits)
+				{
+					char *p = buf;
+					memmove(p, p + (len - digits), digits);
+					buf[digits] = '\0';
+					len = strlen(buf);
+				}
+				break;
+			case 2: // 10030 -> 100
+				buf[digits] = '\0';
+    			len = strlen(buf);
+				break;
 		}
-		break;
-	case 2:
-	    snprintf (buf, sizeof (buf), "%d", num);
-		buf[digits] = '\0';
-    	len = strlen(buf);
+	}
+	else
+	{
+		len = strlen(buf);
 	}
 
     switch (style)
     {
-    case 1:
-        size = 8;
-        break;
-    default:
-        size = 24;
-        break;
+		case 1:
+		case 3:
+			size = 8;
+			break;
+		case 0:
+		case 2:
+		default:
+			size = 24;
+			break;
     }
 
-    width = digits * size;
+    if(digits)
+		width = digits * size;
+	else
+		width = size * len;
+
     height = size;
 
     switch (style)
     {
-    case 1:
-        if (!HUD_PrepareDraw(hud, scale*width, scale*height, &x, &y))
-            return;
-        switch (align)
-        {
-        case 0: break;
-        case 1: x += scale * (width - size * len) / 2; break;
-        case 2: x += scale * (width - size * len); break;
-        }
-        if (low)
-            Draw_SAlt_String(x, y, buf, scale);
-        else
-            Draw_SString(x, y, buf, scale);
-        break;
-    default:
-        if (!HUD_PrepareDraw(hud, scale*width, scale*height, &x, &y))
-            return;
-        switch (align)
-        {
-        case 0: break;
-        case 1: x += scale * (width - size * len) / 2; break;
-        case 2: x += scale * (width - size * len); break;
-        }
-        for (i=0; i < len; i++)
-        {
-            if (low)
-				if(buf[i] == '-') {
-					Draw_STransPic (x, y, sb_nums[1][STAT_MINUS], scale);
-				} else {
-					Draw_STransPic (x, y, sb_nums[1][buf[i] - '0'], scale);
+		case 1:
+		case 3:
+			if (!HUD_PrepareDraw(hud, scale*width, scale*height, &x, &y))
+				return;
+			switch (align)
+			{
+				case 0: break;
+				case 1: x += scale * (width - size * len) / 2; break;
+				case 2: x += scale * (width - size * len); break;
+			}
+			if (low)
+				Draw_SAlt_String(x, y, buf, scale);
+			else
+				Draw_SString(x, y, buf, scale);
+			break;
+
+		case 0:
+		case 2:
+		default:
+			if (!HUD_PrepareDraw(hud, scale*width, scale*height, &x, &y))
+				return;
+			switch (align)
+			{
+				case 0: break;
+				case 1: x += scale * (width - size * len) / 2; break;
+				case 2: x += scale * (width - size * len); break;
+			}
+			for (i = 0; i < len; i++)
+			{
+				if(buf[i] == '-' && style == 2)
+				{
+					Draw_STransPic (x, y, sb_nums[low ? 1 : 0][STAT_MINUS], scale);
+					x += 24 * scale;
 				}
-            else
-                Draw_STransPic (x, y, sb_nums[0][buf[i] - '0'], scale);
-            x += 24 * scale;
-        }
-        break;
+				else
+				{
+					Draw_STransPic (x, y, sb_nums[low ? 1 : 0][buf[i] - '0'], scale);
+					x += 24 * scale;
+				}
+			}
+			break;
     }
 }
 
@@ -5321,6 +5337,552 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y);
 }
 
+//
+// TODO: decide what to do in freefly mode (and how to catch it?!), now all score_* hud elements just draws "0"
+//
+void SCR_HUD_DrawScoresTeam(hud_t *hud)
+{
+    static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
+	int value = 0;
+	int i;
+
+    if (scale == NULL)  // first time called
+    {
+        scale		= HUD_FindVar(hud, "scale");
+        style		= HUD_FindVar(hud, "style");
+        digits		= HUD_FindVar(hud, "digits");
+        align		= HUD_FindVar(hud, "align");
+		colorize	= HUD_FindVar(hud, "colorize");
+    }
+
+	// draw scores for 1st view only
+	if(cl_multiview.value && CURRVIEW != 1)
+		return;
+	
+	//
+	// AAS: someone please tell me how to do it in a proper way!
+	//
+	if(cl.teamplay)
+	{
+		for(i = 0; i < n_teams; i++)
+		{
+			// playing qwd demo || mvd spec/demo || playing 
+			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
+			{
+				value = sorted_teams[i].frags;
+				break;
+			}
+		}
+	}
+	else if(cl.deathmatch)
+	{
+		for(i = 0; i < n_players; i++)
+		{
+			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
+			{
+				value = cl.players[sorted_players[i].playernum].frags;
+				break;
+			}
+		}
+	}
+
+	SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+}
+
+void SCR_HUD_DrawScoresEnemy(hud_t *hud)
+{
+    static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
+	int value = 0;
+	int i;
+
+    if (scale == NULL)  // first time called
+    {
+        scale		= HUD_FindVar(hud, "scale");
+        style		= HUD_FindVar(hud, "style");
+        digits		= HUD_FindVar(hud, "digits");
+        align		= HUD_FindVar(hud, "align");
+		colorize	= HUD_FindVar(hud, "colorize");
+    }
+
+	// draw scores for 1st view only
+	if (cl_multiview.value && CURRVIEW != 1)
+		return;
+	
+	//
+	// AAS: voodoo, again
+	//
+	if(cl.teamplay)
+	{
+		for(i = 0; i < n_teams; i++)
+		{
+			
+			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
+			{
+				if(n_teams > 1)
+					value = sorted_teams[i == 0 ? 1 : 0].frags;
+				break;
+			}
+		}
+	}
+	else if(cl.deathmatch)
+	{
+		for(i = 0; i < n_players; i++)
+		{
+			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
+			{
+				if(n_players > 1)
+					value = cl.players[sorted_players[i == 0 ? 1 : 0].playernum].frags;
+				break;
+			}
+		}
+	}
+
+    SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+}
+
+void SCR_HUD_DrawScoresDifference(hud_t *hud)
+{
+    static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
+	int value = 0;
+	int i;
+
+    if (scale == NULL)  // first time called
+    {
+        scale		= HUD_FindVar(hud, "scale");
+        style		= HUD_FindVar(hud, "style");
+        digits		= HUD_FindVar(hud, "digits");
+        align		= HUD_FindVar(hud, "align");
+		colorize	= HUD_FindVar(hud, "colorize");
+    }
+
+	// draw scores for 1st view only
+	if (cl_multiview.value && CURRVIEW != 1)
+		return;
+	//
+	// AAS: more voodoo
+	//
+	if(cl.teamplay)
+	{
+		for(i = 0; i < n_teams; i++)
+		{
+			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
+			{
+				if(i == 0)
+				{
+					if(n_teams > 1)
+						value = sorted_teams[0].frags - sorted_teams[1].frags;
+					else
+						value = sorted_teams[0].frags;
+				}
+				else
+				{
+					if(n_teams > 1)
+						value = sorted_teams[i].frags - sorted_teams[0].frags;
+				}
+				break;
+			}
+		}
+	}
+	else if(cl.deathmatch)
+	{
+		for(i = 0; i < n_players; i++)
+		{
+			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
+			{
+				if(i == 0)
+				{
+					if(n_players > 1)
+						value = cl.players[sorted_players[0].playernum].frags - cl.players[sorted_players[1].playernum].frags;
+					else
+						value = cl.players[sorted_players[0].playernum].frags;
+				}
+				else
+				{
+					if(n_players > 1)
+						value = cl.players[sorted_players[i].playernum].frags - cl.players[sorted_players[0].playernum].frags;
+				}
+				break;
+			}
+		}
+	}
+
+    SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+}
+
+/*
+	ezQuake's analogue of +scores of KTX
+	( t:x e:x [x] )
+*/
+void SCR_HUD_DrawScoresBar(hud_t *hud)
+{
+	static	cvar_t *scale = NULL, *style, *digits, *format_big, *format_small;
+	int		width = 0, height = 0, x, y;
+	int		i;
+
+	int		s_team = 0, s_enemy = 0, s_difference = 0;
+	char	*n_team = "T", *n_enemy = "E";
+
+	char	buf[MAX_MACRO_STRING];
+	char	c, *out, *temp,	*in;
+
+    if (scale == NULL)  // first time called
+    {
+        scale		= HUD_FindVar(hud, "scale");
+        style		= HUD_FindVar(hud, "style");
+		format_big	= HUD_FindVar(hud, "format_big");
+		format_small= HUD_FindVar(hud, "format_small");
+    }
+
+	// draw scores for 1st view only
+	if (cl_multiview.value && CURRVIEW != 1)
+		return;
+
+	//
+	// AAS: nightmare comes back
+	//
+
+	if(cl.teamplay)
+	{
+		for(i = 0; i < n_teams; i++)
+		{
+			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
+			{
+				s_team = sorted_teams[i].frags;
+				n_team = sorted_teams[i].name;
+				if(n_teams > 1)
+				{
+					s_enemy = sorted_teams[i == 0 ? 1 : 0].frags;
+					n_enemy = sorted_teams[i == 0 ? 1 : 0].name;
+				}
+				s_difference = s_team - s_enemy;
+				break;
+			}
+		}
+	}
+	else if(cl.deathmatch)
+	{
+		for(i = 0; i < n_players; i++)
+		{
+			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
+			{
+				s_team = cl.players[sorted_players[i].playernum].frags;
+				if(n_players > 1)
+				{
+					s_enemy = cl.players[sorted_players[i == 0 ? 1 : 0].playernum].frags;
+				}
+				s_difference = s_team - s_enemy;
+				break;
+			}
+		}
+	}
+
+
+	// two pots of delicious customized copypasta from math_tools.c
+	switch(style->integer)
+	{
+		// Big
+		case 1:
+			in = TP_ParseFunChars(format_big->string, false);
+			buf[0] = 0;
+			out = buf;
+
+			while((c = *in++) && (out - buf < MAX_MACRO_STRING - 1))
+			{
+				if((c == '%') && *in)
+				{
+					switch((c = *in++))
+					{
+						// c = colorize, r = reset
+						case 'd':
+							temp = va("%d", s_difference);
+							width += (s_difference >= 0) ? strlen(temp) * 24 : ((strlen(temp) - 1) * 24) + 16;
+							break;
+						case 'D':
+							temp = va("c%dr", s_difference);
+							width += (s_difference >= 0) ? (strlen(temp) - 2) * 24 : ((strlen(temp) - 3) * 24) + 16;
+							break;
+						case 'e':
+							temp = va("%d", s_enemy);
+							width += (s_enemy >= 0) ? strlen(temp) * 24 : ((strlen(temp) - 1) * 24) + 16;
+							break;
+						case 'E':
+							temp = va("c%dr", s_enemy);
+							width += (s_enemy >= 0) ? (strlen(temp) - 2) * 24 : ((strlen(temp) - 3) * 24) + 16;
+							break;
+						case 't':
+							temp = va("%d", s_team);
+							width += (s_team >= 0) ? strlen(temp) * 24 : ((strlen(temp) - 1) * 24) + 16;
+							break;
+						case 'T':
+							temp = va("c%dr", s_team);
+							width += (s_team >= 0) ? (strlen(temp) - 2) * 24 : ((strlen(temp) - 3) * 24) + 16;
+							break;
+						case 'z':
+							if(s_difference >= 0)
+							{
+								temp = va("%d", s_difference);
+								width += strlen(temp) * 24;
+							}
+							else
+							{
+								temp = va("c%dr", -(s_difference));
+								width += (strlen(temp) - 2) * 24;
+							}
+							break;
+						case 'Z':
+							if(s_difference >= 0)
+							{
+								temp = va("c%dr", s_difference);
+								width += (strlen(temp) - 2) * 24;
+							}
+							else
+							{
+								temp = va("%d", -(s_difference));
+								width += strlen(temp) * 24;
+							}
+							break;
+						default:
+							temp = NULL;
+							break;
+					}
+					
+					if(temp != NULL)
+					{
+						strlcpy(out, temp, sizeof(buf) - (out - buf));
+						out += strlen(temp);
+					}
+				}
+				else if (c == ':' || c == '/' || c == '-' || c == ' ')
+				{
+					width += 16;
+					*out++ = c;
+				}
+			}
+			*out = 0;
+			break;
+
+		// Small
+		case 0:	
+		default:
+			in = TP_ParseFunChars(format_small->string, false);
+			buf[0] = 0;
+			out = buf;
+
+			while((c = *in++) && (out - buf < MAX_MACRO_STRING - 1))
+			{
+				if((c == '%') && *in)
+				{
+					switch((c = *in++))
+					{
+						case '%':
+							temp = "%";
+							break;
+						case 't':
+							temp = va("%d", s_team);
+							break;
+						case 'e':
+							temp = va("%d", s_enemy);
+							break;
+						case 'd':
+							temp = va("%d", s_difference);
+							break;
+						case 'T':
+							temp = n_team;
+							break;
+						case 'E':
+							temp = n_enemy;
+							break;
+						case 'D':
+							temp = va("%+d", s_difference);
+							break;
+						default:
+							temp = va("%%%c", c);
+							break;
+					}
+					strlcpy(out, temp, sizeof(buf) - (out - buf));
+					out += strlen(temp);
+				}
+				else
+				{
+					*out++ = c;
+				}
+			}
+			*out = 0;
+			break;
+	}
+
+	switch(style->integer)
+	{
+		// Big
+		case 1:
+			width *= scale->value;
+			height = 24 * scale->value;
+
+			if(HUD_PrepareDraw(hud, width, height, &x, &y))
+			{
+				SCR_DrawWadString(x, y, scale->value, buf);
+			}
+			break;
+
+		// Small
+		case 0:
+		default:
+#ifdef GLQUAKE
+			width = 8 * strlen_color(buf) * scale->value;
+#else
+			width = 8 * strlen(buf) * scale->value;
+#endif
+			height = 8 * scale->value;
+
+			if(HUD_PrepareDraw(hud, width, height, &x, &y))
+			{
+				Draw_SString(x, y, buf, scale->value);
+			}
+			break;
+	}
+}
+
+void SCR_HUD_DrawBarArmor(hud_t *hud)
+{
+	static	cvar_t *width = NULL, *height, *direction, *color_noarmor, *color_ga, *color_ya, *color_ra, *color_unnatural;
+	int		x, y;
+	int		armor = HUD_Stats(STAT_ARMOR);
+	int		armor_amount_width;
+	
+	if (width == NULL)  // first time called
+    {
+		width			= HUD_FindVar(hud, "width");
+		height			= HUD_FindVar(hud, "height");
+		direction		= HUD_FindVar(hud, "direction");
+		color_noarmor	= HUD_FindVar(hud, "color_noarmor");
+		color_ga		= HUD_FindVar(hud, "color_ga");
+		color_ya		= HUD_FindVar(hud, "color_ya");
+		color_ra		= HUD_FindVar(hud, "color_ra");
+		color_unnatural	= HUD_FindVar(hud, "color_unnatural");
+	}
+	
+	if(HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y))
+	{
+		if(!width->integer || !height->integer)
+			return;
+
+        if(HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
+		{
+			Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_unnatural->color));
+		}
+        else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3)
+		{
+			armor_amount_width = Q_rint(abs((width->integer * armor) / 200.0));
+			if(!direction->integer)
+				Draw_AlphaFillRGB(x, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ra->color));
+			else
+				Draw_AlphaFillRGB(x + width->integer - armor_amount_width, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ra->color));
+		}
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2)
+		{
+			armor_amount_width = Q_rint(abs((width->integer * armor) / 150.0));
+			if(!direction->integer)
+				Draw_AlphaFillRGB(x, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ya->color));
+			else
+				Draw_AlphaFillRGB(x + width->integer - armor_amount_width, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ya->color));
+		}
+        else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1)
+		{
+			armor_amount_width = Q_rint(abs((width->integer * armor) / 100.0));
+			if(!direction->integer)
+				Draw_AlphaFillRGB(x, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ga->color));
+			else
+				Draw_AlphaFillRGB(x + width->integer - armor_amount_width, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ga->color));
+		}
+		else
+		{
+			Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_noarmor->color));
+		}
+	}
+}
+
+
+void SCR_HUD_DrawBarHeath(hud_t *hud)
+{
+	static	cvar_t *width = NULL, *height, *direction, *color_normal, *color_mega, *color_twomega, *color_unnatural;
+	int		x, y;
+	int		health = cl.stats[STAT_HEALTH];
+	int		health_amount_width = 0;
+
+	if (width == NULL)  // first time called
+    {
+		width			= HUD_FindVar(hud, "width");
+		height			= HUD_FindVar(hud, "height");
+		direction		= HUD_FindVar(hud, "direction");
+		color_normal	= HUD_FindVar(hud, "color_normal");
+		color_mega		= HUD_FindVar(hud, "color_mega");
+		color_twomega	= HUD_FindVar(hud, "color_twomega");
+		color_unnatural	= HUD_FindVar(hud, "color_unnatural");
+	}
+
+	if(HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y))
+	{
+		if(!width->integer || !height->integer)
+			return;
+
+		health = min(100, health);
+		health_amount_width = Q_rint(abs((width->integer * health) / 100.0));
+
+		if(health > 0)
+		{
+			if(!direction->integer) // left->right
+				Draw_AlphaFillRGB(x, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_normal->color));
+			else // left<-right
+				Draw_AlphaFillRGB(x + width->integer - health_amount_width, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_normal->color));				
+		}
+
+		health = cl.stats[STAT_HEALTH];
+
+		if(health > 100 && health <= 200) // Mega health.
+		{			
+			health_amount_width = Q_rint((width->integer / 100.0) * (health - 100));
+			if(!direction->integer)
+				Draw_AlphaFillRGB(x, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_mega->color));
+			else
+				Draw_AlphaFillRGB(x + width->integer - health_amount_width, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_mega->color));
+		}
+		else if(health > 200 && health <= 250) // Super health.
+		{
+			health_amount_width = Q_rint((width->integer / 100.0) * (health - 200));
+			if(!direction->integer)
+			{
+				Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_mega->color));
+				Draw_AlphaFillRGB(x, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_twomega->color));
+			}
+			else
+			{
+				Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_mega->color));
+				Draw_AlphaFillRGB(x + width->integer - health_amount_width, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_twomega->color));
+			}
+		}
+		else if(health > 250) // Crazy health.
+		{
+				Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_unnatural->color));
+		}
+	}
+}
+
 #ifdef WITH_PNG
 
 void SCR_HUD_DrawOwnFrags(hud_t *hud)
@@ -7291,6 +7853,81 @@ void CommonDraw_Init(void)
 		"timelimit", "5",
 		"style", "0",
 		NULL
+		);
+
+    HUD_Register("score_team", NULL, "Own scores or team scores.",
+        0, ca_active, 0, SCR_HUD_DrawScoresTeam,
+        "0", "screen", "left", "bottom", "0", "0", "0.5", "4 8 32", NULL,
+        "style", "0",
+        "scale", "1",
+        "align", "right",
+        "digits", "0",
+		"colorize", "0",
+        NULL
+		);
+
+	HUD_Register("score_enemy", NULL, "Scores of enemy or enemy team.",
+        0, ca_active, 0, SCR_HUD_DrawScoresEnemy,
+        "0", "score_team", "after", "bottom", "0", "0", "0.5", "32 4 0", NULL,
+        "style", "0",
+        "scale", "1",
+        "align", "right",
+        "digits", "0",
+		"colorize", "0",
+        NULL
+		);
+
+	HUD_Register("score_difference", NULL, "Difference between teamscores and enemyscores.",
+        0, ca_active, 0, SCR_HUD_DrawScoresDifference,
+        "0", "score_enemy", "after", "bottom", "0", "0", "0.5", "0 0 0", NULL,
+        "style", "0",
+        "scale", "1",
+        "align", "right",
+        "digits", "0",
+		"colorize", "1",
+        NULL
+		);
+	
+	HUD_Register("score_bar", NULL, "Team, enemy, and difference scores together.",
+        HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawScoresBar,
+        "0", "screen", "center", "console", "0", "0", "0.5", "0 0 0", NULL,
+        "style", "0",
+        "scale", "1",
+#ifdef GLQUAKE
+		"format_small", "&c69f%T&r:%t &cf10%E&r:%e $[%D$]",
+#else
+		"format_small", "%T:%t %E:%e $[%D$]",
+#endif
+		"format_big", "%t:%e:%Z",
+
+        NULL
+		);
+
+	HUD_Register("bar_armor", NULL, "Armor bar.",
+        HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawBarArmor,
+        "0", "armor", "left", "center", "0", "0", "0", "0 0 0", NULL,
+        "height", "16",
+        "width", "64",
+		"direction", "1",
+		"color_noarmor", "0 0 0 0",
+		"color_ga", "32 128 0 128",
+		"color_ya", "192 128 0 128",
+		"color_ra", "128 0 0 128",
+		"color_unnatural", "255 255 255 128",
+        NULL
+		);
+
+	HUD_Register("bar_health", NULL, "Health bar.",
+        HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawBarHeath,
+        "0", "health", "right", "center", "0", "0", "0", "0 0 0", NULL,
+        "height", "16",
+        "width", "64",
+		"direction", "0",
+		"color_normal", "32 64 128 128",
+		"color_mega", "64 96 128 128",
+		"color_twomega", "128 128 255 128",
+		"color_unnatural", "255 255 255 128",
+        NULL
 		);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)

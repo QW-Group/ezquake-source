@@ -1357,3 +1357,48 @@ qbool Draw_BigFontAvailable(void)
 #endif
 }
 
+void SCR_DrawWadString(int x, int y, float scale, const char *t)
+{
+    extern  mpic_t	*sb_nums[2][11];
+    extern  mpic_t	*sb_colon, *sb_slash;
+	qbool			red = false;
+
+	while (*t)
+    {
+        if (*t >= '0'  &&  *t <= '9')
+        {
+			Draw_STransPic(x, y, sb_nums[red ? 1 : 0][*t-'0'], scale);
+            x += 24*scale;
+        }
+        else if (*t == ':')
+        {
+			Draw_STransPic (x, y, sb_colon, scale);
+			x += 16*scale;
+        }
+		else if (*t == '/')
+		{
+			Draw_STransPic(x, y, sb_slash, scale);
+            x += 16*scale;
+		}
+		else if (*t == '-')
+		{
+			x -= 12*scale;
+			Draw_STransPic (x, y, sb_nums[red ? 1 : 0][10], scale);
+			x += 28*scale;
+		}
+		else if (*t == ' ')
+		{
+			x += 16*scale;
+		}
+		else if(*t == 'c')
+		{
+			red = true;
+		}
+		else if(*t == 'r')
+		{
+			red = false;
+		}
+        t++;
+    }
+}
+
