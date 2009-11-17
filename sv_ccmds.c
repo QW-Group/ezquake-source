@@ -435,10 +435,8 @@ void SV_Map (qbool now)
 		if (sv.mvdrecording)
 			SV_MVDStop_f();
 
-#ifndef SERVERONLY
 		if (!dedicated)
 			CL_BeginLocalConnection ();
-#endif
 
 		SV_BroadcastCommand ("changing\n");
 		SV_SendMessagesToAll ();
@@ -798,13 +796,11 @@ void SV_Kick_f (void)
 	c = Cmd_Argc ();
 	if (c < 2)
 	{
-#ifndef SERVERONLY
 		// some mods use a "kick" alias for their own needs, sigh
 		if (CL_ClientState() && Cmd_FindAlias("kick")) {
 			Cmd_ExecuteString (Cmd_AliasString("kick"));
 			return;
 		}
-#endif
 		Con_Printf ("kick <userid> [reason]\n");
 		return;
 	}
@@ -1758,12 +1754,10 @@ void SV_Gamedir_f (void)
 		return;
 	}
 
-#ifndef SERVERONLY
 	if (CL_ClientState()) {
 		Com_Printf ("you must disconnect before changing gamedir\n");
 		return;
 	}
-#endif
 
 	FS_SetGamedir (dir);
 	Info_SetValueForStarKey (svs.info, "*gamedir", dir, MAX_SERVERINFO_STRING);
@@ -1952,13 +1946,11 @@ void SV_InitOperatorCommands (void)
 		Cmd_AddCommand ("serverinfo", SV_Serverinfo_f);
 	}
 
-#ifndef SERVERONLY
 	if (!dedicated)
 	{ 
 		Cmd_AddCommand ("save", SV_SaveGame_f); 
 		Cmd_AddCommand ("load", SV_LoadGame_f); 
 	} 
-#endif
 
 	//Cmd_AddCommand ("restart", SV_Restart_f);
 

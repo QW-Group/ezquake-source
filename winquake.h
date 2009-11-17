@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <windows.h>
 
-#ifndef SERVERONLY
-
 #define WM_MOUSEWHEEL		0x020A
 #define WM_XBUTTONDOWN		0x020B
 #define WM_XBUTTONUP		0x020C
@@ -96,5 +94,5 @@ void IN_UpdateClipCursor (void);
 void S_BlockSound (void);
 void S_UnblockSound (void);
 
-#endif // !SERVERONLY
+
 #endif // _WIN32

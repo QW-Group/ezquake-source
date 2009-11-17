@@ -66,11 +66,7 @@ typedef struct qlib_dllfunction_s {
 	void **function;
 } qlib_dllfunction_t;
 
-#ifdef SERVERONLY
-typedef enum qlib_id_s {qlib_nummodules} qlib_id_t;
-#else
 typedef enum qlib_id_s {qlib_libpng, qlib_libjpeg, qlib_nummodules} qlib_id_t;
-#endif
 
 typedef void (*qlib_shutdown_fn) (void);
 

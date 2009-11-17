@@ -42,11 +42,9 @@ typedef struct cbuf_s {
 } cbuf_t;
 
 extern cbuf_t cbuf_main;
-#ifndef SERVERONLY
 extern cbuf_t cbuf_safe; // msg_trigger commands
 extern cbuf_t cbuf_formatted_comms;
 extern cbuf_t cbuf_svc; // svc_stufftext commands
-#endif
 extern cbuf_t *cbuf_current;
 
 void Cbuf_AddTextEx (cbuf_t *cbuf, const char *text);

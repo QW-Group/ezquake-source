@@ -71,12 +71,6 @@
 #import <dirent.h>
 #import <IOKit/hidsystem/event_status_driver.h>
 
-#if defined(SERVERONLY)
-
-#import "qwsvdef.h"
-
-#else
-
 #import "quakedef.h"
 #import "server.h"
 #import "pcre.h"
@@ -87,8 +81,6 @@
 #import "sys_osx.h"
 #import "vid_osx.h"
 #include <dlfcn.h>
-
-#endif /* SERVERONLY */
 
 #pragma mark -
 
@@ -341,13 +333,6 @@ void	Sys_MakeCodeWriteable (unsigned long theStartAddress, unsigned long theLeng
     SInt			myPageSize = getpagesize();
     unsigned long 	myAddress = (theStartAddress & ~(myPageSize - 1)) - myPageSize;
     
-#if defined (SERVERONLY)
-
-    fprintf (stderr, "writable code %lx(%lx)-%lx, length=%lx\n", theStartAddress, myAddress,
-                                                                 theStartAddress + theLength, theLength);
-
-#endif /* SERVERONLY */
-
     if (mprotect ((char*)myAddress, theLength + theStartAddress - myAddress + myPageSize, 7) < 0)
     {
         Sys_Error ("Memory protection change failed!\n");
@@ -367,14 +352,6 @@ void	Sys_Error (char *theError, ...)
     vsnprintf (myString, SYS_STRING_SIZE, theError, myArgPtr);
     va_end (myArgPtr);
 
-#ifdef SERVERONLY
-
-    fprintf (stderr, "Error: %s\n", myString);
-    
-    exit (1);
-
-#else
-
     Host_Shutdown();
     [[NSApp delegate] setHostInitialized: NO];
     
@@ -386,8 +363,6 @@ void	Sys_Error (char *theError, ...)
     NSLog (@"An error has occured: %@\n", [NSString stringWithCString: myString]);
 
     exit (1);
-
-#endif /* SERVERONLY */
 }
 
 //__________________________________________________________________________________________________________________Sys_Warn()
@@ -401,11 +376,7 @@ void	Sys_Warn (char *theWarning, ...)
     vsnprintf (myString, SYS_STRING_SIZE, theWarning, myArgPtr);
     va_end (myArgPtr);
 
-#if defined (SERVERONLY)
-    fprintf (stderr, "Warning: %s\n", myString);
-#else
     NSLog (@"Warning: %s\n", myString);
-#endif /* SERVERONLY */
 } 
 
 //_______________________________________________________________________________________________________________Sys_sprintf()
@@ -427,50 +398,13 @@ char *	Sys_sprintf (char *theFormat, ...)
 void	Sys_Printf (char *theFormat, ...)
 {
 // only required by qwsv [command line only]:
-
-#if defined(SERVERONLY)
-    
-    va_list         	myArgPtr;
-    unsigned char *		myChar;
-    char				myString[SYS_STRING_SIZE * 2];
-    
-    if (sys_nostdout.value != 0.0f)
-    {
-        return;
-    }
-    
-    va_start (myArgPtr, theFormat);
-    vsnprintf (myString, SYS_STRING_SIZE * 2, theFormat, myArgPtr);
-    va_end (myArgPtr);
-    
-    for (myChar = (unsigned char *) myString; *myChar; myChar++)
-    {
-        *myChar &= 0x7f;
-        if ((*myChar > 128 || *myChar < 32) && *myChar != 10 && *myChar != 13 && *myChar != 9)
-        {
-            fprintf (stderr, "[%02x]", *myChar);
-        }
-        else
-        {
-            putc (*myChar, stderr);
-        }
-    }
-    
-    fflush (stderr);
-
-#else
-
     return;
-
-#endif /* SERVERONLY */
 }
 
 //__________________________________________________________________________________________________________________Sys_Quit()
 
 void	Sys_Quit (void)
 {
-#if !defined (SERVERONLY)
-
 #ifdef GLQUAKE
 
     extern cvar_t	gl_fsaa;
@@ -507,8 +441,6 @@ void	Sys_Quit (void)
 
 #endif /* GLQUAKE */
     
-#endif /* SERVERONLY */
-
     exit (0);
 }
 
@@ -538,38 +470,7 @@ char *	Sys_ConsoleInput (void)
 {
     // only required by "qwsv", since it's the only app that runs from the command line:
 
-#if defined (SERVERONLY)
-
-    static char		myText[256];
-    SInt			myLength;
-
-#if 0
-    if (stdin_ready == NO || gSysDoStdIn == NO)
-#else
-    if (!stdin_ready || !do_stdin)
-#endif
-    {
-	return NULL;		// the select didn't say it was ready
-    }
-    stdin_ready = 0;
-    myLength = read (0, myText, sizeof (myText));
-    if (myLength == 0)
-    {
-        gSysDoStdIn = YES;
-	return (NULL);
-    }
-    if (myLength < 1)
-    {
-        return(NULL);
-    }
-    myText[myLength - 1] = 0x00;
-    return (myText);
-
-#else
-
     return (NULL);
-
-#endif /* SERVERONLY */
 }
 
 //_______________________________________________________________________________________________________Sys_HighFPPrecision()
@@ -616,7 +517,6 @@ void	Sys_DebugLog (char *theFile, char *theFormat, ...)
 
 //________________________________________________________________________________________________________Sys_GetProcAddress()
 
-#if !defined (SERVERONLY)
 
 void *	Sys_GetProcAddress (const char *theName, Boolean theSafeMode)
 {
@@ -1134,79 +1034,12 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
     }
 }
 
-#endif /* !SERVERONLY */
-
 #pragma mark -
 
 //______________________________________________________________________________________________________________________main()
 
 SInt	main (SInt theArgCount, const char **theArgValues)
 {
-#if defined (SERVERONLY)
-
-    extern SInt		net_socket;
-
-    double			myTime, myOldtime, myNewtime;
-    quakeparms_t	myParameters;
-    fd_set			myDescriptor;
-    struct timeval	myTimeout;
-    SInt			j;
-
-    // do some nice credits:
-    Com_Printf ("\n=============================================\n");
-    Com_Printf ("QuakeWorld Server for MacOS X -- Version %0.2f\n", MACOSX_VERSION);
-    Com_Printf ("        Ported by: awe^fruitz of dojo\n");
-    Com_Printf ("     Visit: http://www.fruitz-of-dojo.de\n");
-    Com_Printf ("\n        tiger style kung fu is strong\n");
-    Com_Printf ("       but our style is more effective!\n");
-    Com_Printf ("=============================================\n\n");
-    
-    // init the server:
-    memset (&myParameters, 0, sizeof (myParameters));
-    COM_InitArgv (theArgCount, (char **) theArgValues);
-    myParameters.argc = com_argc;
-    myParameters.argv = com_argv;
-    myParameters.basedir = SYS_QWSV_BASE_PATH;    
-    myParameters.memsize = 16*1024*1024;
-    j = COM_CheckParm("-mem");
-    
-    if (j) myParameters.memsize = (int) (Q_atof (com_argv[j+1]) * 1024 * 1024);
-    if ((myParameters.membase = malloc (myParameters.memsize)) == NULL)
-    {
-        Sys_Error ("Can't allocate %ld bytes of memory.\n", myParameters.memsize);
-    }
-        
-    SV_Init (&myParameters);
-    SV_Frame (0.1);
-    
-    myOldtime = Sys_DoubleTime () - 0.1;
-    
-    // our main loop:
-    while (1)
-    {
-        FD_ZERO (&myDescriptor);
-	if (gSysDoStdIn == YES)
-        {
-            FD_SET (0, &myDescriptor);
-        }
-        FD_SET (net_socket, &myDescriptor);
-	
-        myTimeout.tv_sec = 1;
-	myTimeout.tv_usec = 0;
-	if (select (net_socket+1, &myDescriptor, NULL, NULL, &myTimeout) == -1)
-            continue;
-	stdin_ready = FD_ISSET (0, &myDescriptor);
-	myNewtime = Sys_DoubleTime ();
-	myTime = myNewtime - myOldtime;
-        myOldtime = myNewtime;
-	
-        SV_Frame (myTime);
-        
-	if (sys_extrasleep.value)
-            usleep (sys_extrasleep.value);
-    }	
-
-#else
 
     NSAutoreleasePool *	myPool = [[NSAutoreleasePool alloc] init];
     NSUserDefaults *	myDefaults = [NSUserDefaults standardUserDefaults];
@@ -1228,8 +1061,6 @@ SInt	main (SInt theArgCount, const char **theArgValues)
 
     // just startup the application [if we have no commandline app]:    
     return (NSApplicationMain (theArgCount, theArgValues));
-
-#endif /* SERVERONLY */
 }
 
 // disconnect -->

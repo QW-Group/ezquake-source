@@ -19,12 +19,10 @@ void FS_InitModuleFS (void);
 // original common FS functions are declared in common.h
 
 // QW262 -->
-#ifndef SERVERONLY
 #define UserdirSet (userdirfile[0] != '\0')
 extern	char userdirfile[MAX_OSPATH];
 extern	char com_userdir[MAX_OSPATH];
 void FS_SetUserDirectory (char *dir, char *type);
-#endif
 // <-- QW262
 
 // ====================================================================

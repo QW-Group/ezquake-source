@@ -30,11 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <unistd.h>
 #endif
 
-#ifdef SERVERONLY
-#include "qwsvdef.h"
-#else
 #include "quakedef.h"
-#endif
 
 #include "utils.h"
 #ifdef GLQUAKE
@@ -1416,11 +1412,9 @@ void Com_Printf (char *fmt, ...)
 	// also echo to debugging console
 	Sys_Printf ("%s", msg);
 
-#ifndef SERVERONLY
 	// Triggers with mask 64
 	if (!(Print_flags[Print_current] & PR_TR_SKIP))
 		CL_SearchForReTriggers (msg, RE_PRINT_INTERNAL);
-#endif
 
 	// write it to the scrollable buffer
 	//	Con_Print (va("ezQuake: %s", msg));

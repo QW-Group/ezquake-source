@@ -595,13 +595,8 @@ void PM_CheckJump (void) {
 	if (!pmove.onground)
 		return; // in air, so no effect
 
-#ifdef SERVERONLY
-	if (pmove.jump_held)
-		return; // don't pogo stick
-#else
 	if (pmove.jump_held && !pmove.jump_msec)
 		return; // don't pogo stick
-#endif
 
 	if (!movevars.pground) {
 		// check for jump bug
@@ -623,10 +618,7 @@ void PM_CheckJump (void) {
 	}
 
 	pmove.jump_held = true; // don't jump again until released
-
-#ifndef SERVERONLY
 	pmove.jump_msec = pmove.cmd.msec;
-#endif
 }
 
 void PM_CheckWaterJump (void) {
@@ -817,13 +809,11 @@ void PM_PlayerMove (void)
 			pmove.waterjumptime = 0;
 	}
 
-#ifndef SERVERONLY
 	if (pmove.jump_msec) {
 		pmove.jump_msec += pmove.cmd.msec;
 		if (pmove.jump_msec > 50)
 			pmove.jump_msec = 0;
 	}
-#endif
 
 	PM_CheckJump ();
 

@@ -121,9 +121,7 @@ void Netchan_OutOfBand (netsrc_t sock, netadr_t adr, int length, byte *data)
 
 	// send the datagram
 	//zoid, no input in demo playback mode
-#ifndef SERVERONLY
 	if (!cls.demoplayback)
-#endif
 		NET_SendPacket (sock, send.cursize, send.data, adr);
 }
 
@@ -247,9 +245,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 	chan->outgoing_time[i] = curtime;
 
 	//zoid, no input in demo playback mode
-#ifndef SERVERONLY
 	if (!cls.demoplayback)
-#endif
 		NET_SendPacket (chan->sock, send.cursize, send.data, chan->remote_address);
 
 	if (chan->cleartime < curtime)
@@ -263,9 +259,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 #endif
 
 	if (showpackets.value) {
-#ifndef SERVERONLY
 		Print_flags[Print_current] |= PR_TR_SKIP;
-#endif
 		Com_Printf ("--> s=%i(%i) a=%i(%i) %i\n"
 		            , chan->outgoing_sequence
 		            , send_reliable
@@ -298,9 +292,7 @@ qbool Netchan_Process (netchan_t *chan)
 	sequence_ack &= ~(1 << 31);
 
 	if (showpackets.value) {
-#ifndef SERVERONLY
 		Print_flags[Print_current] |= PR_TR_SKIP;
-#endif
 		Com_Printf ("<-- s=%i(%i) a=%i(%i) %i\n"
 		            , sequence
 		            , reliable_message
@@ -312,9 +304,7 @@ qbool Netchan_Process (netchan_t *chan)
 	// discard stale or duplicated packets
 	if (sequence <= (unsigned)chan->incoming_sequence) {
 		if (showdrop.value) {
-#ifndef SERVERONLY
 			Print_flags[Print_current] |= PR_TR_SKIP;
-#endif
 			Com_Printf ("%s:Out of order packet %i at %i\n"
 			            , NET_AdrToString (chan->remote_address)
 			            ,  sequence
@@ -329,9 +319,7 @@ qbool Netchan_Process (netchan_t *chan)
 		chan->drop_count += 1;
 
 		if (showdrop.value) {
-#ifndef SERVERONLY
 			Print_flags[Print_current] |= PR_TR_SKIP;
-#endif
 			Com_Printf ("%s:Dropped %i packets at %i\n"
 			            , NET_AdrToString (chan->remote_address)
 			            , chan->dropped

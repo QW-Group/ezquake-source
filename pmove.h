@@ -49,9 +49,7 @@ typedef struct {
 	vec3_t		angles;
 	vec3_t		velocity;
 	qbool		jump_held;
-#ifndef SERVERONLY
 	int			jump_msec; // msec since last jump
-#endif
 	float		waterjumptime;
 	qbool		onground;
 	int			pm_type;

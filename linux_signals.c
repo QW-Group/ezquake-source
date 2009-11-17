@@ -41,7 +41,6 @@ static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo hu
 	signalcaught = true;
 	printf("Received signal %d, exiting...\n", sig);
 
-#ifndef SERVERONLY
 //
 // client related things
 //
@@ -49,8 +48,6 @@ static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo hu
 	IN_Shutdown();
 #endif
 	VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown
-
-#endif
 
 	Sys_Quit();
 	exit(0);

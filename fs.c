@@ -59,12 +59,9 @@ char	com_gamedirfile[MAX_QPATH]; // qw tf ctf and etc. In other words single dir
 char	com_gamedir[MAX_OSPATH];    // c:/quake/qw
 char	com_basedir[MAX_OSPATH];	// c:/quake
 char	com_homedir[MAX_PATH];		// something really long C:/Documents and Settings/qqshka
-
-#ifndef SERVERONLY
 char	userdirfile[MAX_OSPATH] = {0};
 char	com_userdir[MAX_OSPATH] = {0};
 int		userdir_type = -1;
-#endif
 
 searchpath_t	*fs_searchpaths = NULL;
 searchpath_t	*fs_base_searchpaths = NULL;	// without gamedirs
@@ -389,16 +386,12 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 
 	((byte *)buf)[len] = 0;
 
-	#ifndef SERVERONLY
 	Draw_BeginDisc ();
-	#endif
 
 	VFS_READ(f, buf, len, &err);
 	VFS_CLOSE(f);
 
-	#ifndef SERVERONLY
 	Draw_EndDisc ();
-	#endif
 
 	return buf;
 }
@@ -418,7 +411,6 @@ byte *FS_LoadHeapFile (const char *path, int *len)
 }
 
 // QW262 -->
-#ifndef SERVERONLY
 /*
 ================
 FS_SetUserDirectory
@@ -439,7 +431,6 @@ void FS_SetUserDirectory (char *dir, char *type) {
 	com_gamedirfile[0]='\0'; // force reread
 	FS_SetGamedir(tmp); // restore
 }
-#endif
 
 // ==========
 // FS_AddPak
@@ -513,8 +504,6 @@ static qbool FS_RemovePak (const char *pakfile) {
 	return ret;
 }
 
-#ifndef SERVERONLY
-
 // ==============
 // FS_AddUserPaks
 // ==============
@@ -569,12 +558,9 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 	}
 }
 
-#endif // SERVERONLY
-
 
 // <-- QW262
 
-#ifndef SERVERONLY
 void FS_AddUserDirectory ( char *dir ) {
 	size_t dir_len;
 	char *malloc_dir;
@@ -602,7 +588,6 @@ void FS_AddUserDirectory ( char *dir ) {
 	snprintf(malloc_dir, dir_len, "%s/", com_userdir);
 	FS_AddPathHandle(com_userdir, &osfilefuncs, malloc_dir, false, false, FS_LOAD_FILE_ALL);
 }
-#endif /* SERVERONLY */
 
 void Draw_InitConback(void);
 
@@ -651,9 +636,7 @@ void FS_SetGamedir (char *dir)
 	Draw_InitConback();
 #endif // GLQUAKE
 
-#ifndef SERVERONLY
 	FS_AddUserDirectory(dir);
-#endif
 }
 
 char *FS_NextPath (char *prevpath)
@@ -700,11 +683,9 @@ void FS_ShutDown( void ) {
 	com_basedir[0]		= 0;
 	com_homedir[0]		= 0;
 
-#ifndef SERVERONLY
 	userdirfile[0]		= 0;
 	com_userdir[0]		= 0;
 	userdir_type		= -1;
-#endif
 }
 
 void FS_InitFilesystemEx( qbool guess_cwd ) {
@@ -820,10 +801,8 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	// any set gamedirs will be freed up to here
 	fs_base_searchpaths = fs_searchpaths;
 
-#ifndef SERVERONLY
 	if ((i = COM_CheckParm("-userdir")) && i < COM_Argc() - 2)
 		FS_SetUserDirectory(COM_Argv(i+1), COM_Argv(i+2));
-#endif
 
 	// the user might want to override default game directory
 	if (!(i = COM_CheckParm ("-game")))
@@ -3045,15 +3024,12 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	searchpath_t	*oldbase;
 	searchpath_t	*next;
 
-
 	//a lame way to fix pure paks
-#ifndef SERVERONLY
 	if (cls.state)
 	{
 		CL_Disconnect_f();
 		CL_Reconnect_f();
 	}
-#endif
 
 	FS_FlushFSHash();
 

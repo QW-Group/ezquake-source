@@ -3108,9 +3108,7 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside) //bliP: 24/9
 	pmove.pm_type = SV_PMTypeForClient (sv_client);
 	pmove.onground = ((int)sv_player->v.flags & FL_ONGROUND) != 0;
 	pmove.jump_held = sv_client->jump_held;
-#ifndef SERVERONLY
 	pmove.jump_msec = 0;
-#endif
 	
 	// let KTeams'/KTPro's "broken ankle" code work
 	if (

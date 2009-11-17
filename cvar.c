@@ -214,10 +214,8 @@ void Cvar_RulesetSet(cvar_t *var, char *val, int m)
 
 void Cvar_Set (cvar_t *var, char *value)
 {
-#ifndef SERVERONLY
 	extern cvar_t cl_warncmd;
 	extern cvar_t re_subi[10];
-#endif
 	static qbool changing = false;
 	float test ;
 
@@ -254,10 +252,8 @@ void Cvar_Set (cvar_t *var, char *value)
 	}
 
 	if ((var->flags & CVAR_INIT) && host_initialized) {
-#ifndef SERVERONLY
 		if (cl_warncmd.value || developer.value)
 			Com_Printf ("\"%s\" can only be changed with \"+set %s %s\" on the command line.\n", var->name, var->name, value);
-#endif
 		return;
 	}
 
@@ -317,10 +313,8 @@ void Cvar_Set (cvar_t *var, char *value)
 		SV_ServerinfoChanged (var->name, var->string);
 #endif
 
-#ifndef SERVERONLY
 	if (var->flags & CVAR_USERINFO)
 		CL_UserinfoChanged (var->name, var->string);
-#endif
 }
 
 void Cvar_ForceSet (cvar_t *var, char *value)
@@ -563,10 +557,8 @@ void Cvar_Register (cvar_t *var)
 		SV_ServerinfoChanged (var->name, var->string);
 #endif
 
-#ifndef SERVERONLY
 	if (var->flags & CVAR_USERINFO)
 		CL_UserinfoChanged (var->name, var->string);
-#endif
 }
 
 qbool Cvar_Command (void)

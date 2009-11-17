@@ -124,17 +124,10 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring);
 qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **resultstring, int *resultlength, int group);
 
 // regexp match support for group operations in scripts
-#ifndef SERVERONLY
 qbool IsRegexp(const char *str);
 qbool ReSearchInit (const char *wildcard);
 qbool ReSearchMatch (const char *str);
 void ReSearchDone (void);
-#else
-#define IsRegexp(name) (false)
-#define ReSearchInit(wildcard) (true)
-#define ReSearchMatch(str) (false)
-#define ReSearchDone() {}
-#endif
 
 ///
 /// RANDOM GENERATORS

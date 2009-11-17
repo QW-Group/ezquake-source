@@ -19,8 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	$Id: sv_save.c,v 1.13 2007-10-11 05:55:47 dkure Exp $
 */
 
-#ifndef SERVERONLY
-
 #include "quakedef.h"
 #include "server.h"
 #include "sv_world.h"
@@ -251,4 +249,3 @@ void SV_LoadGame_f (void) {
 		svs.clients->spawn_parms[i] = spawn_parms[i];
 }
 
-#endif	//!SERVERONLY

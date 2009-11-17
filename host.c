@@ -57,7 +57,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "config_manager.h"
 
-#if !defined(CLIENTONLY) && !defined(SERVERONLY)
+#if !defined(CLIENTONLY)
 qbool	dedicated = false;
 #endif
 
@@ -440,10 +440,8 @@ void Host_ClearMemory (void)
 		D_FlushCaches ();
 
 	// FIXME, move to CL_ClearState
-#ifndef SERVERONLY
 	if (!dedicated)
 		Mod_ClearAll ();
-#endif
 
 	CM_InvalidateMap ();
 
@@ -760,12 +758,10 @@ void Host_Shutdown (void)
 	}
 	isdown = true;
 
-#ifndef SERVERONLY
 	// on low-end systems quit process may last long time (was about 1 minute for me on old compo),
 	// at the same time may repeats repeats repeats some sounds, trying preventing this
 	S_StopAllSounds (true);
 	S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-#endif
 
 	SV_Shutdown ("Server quit\n");
 
@@ -775,9 +771,7 @@ void Host_Shutdown (void)
 
 	CL_Shutdown ();
 	NET_Shutdown ();
-#ifndef SERVERONLY
 	Con_Shutdown();
-#endif
 #ifdef WITH_TCL
 	TCL_Shutdown ();
 #endif

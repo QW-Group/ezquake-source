@@ -363,13 +363,7 @@ void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int pr
 
 //============================================================================
 
-#ifdef SERVERONLY
-#define dedicated 1
-#elif CLIENTONLY
-#define dedicated 0
-#else
 extern qbool	dedicated;
-#endif
 
 extern cvar_t	developer;
 extern cvar_t	host_mapname;

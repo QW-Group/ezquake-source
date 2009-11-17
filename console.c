@@ -678,9 +678,7 @@ void Con_PrintW (wchar *txt) {
 		}
 	}
 zomfg:
-#ifndef SERVERONLY
 	Print_flags[Print_current] = 0;
-#endif
 }
 
 /*

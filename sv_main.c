@@ -67,14 +67,8 @@ cvar_t	zombietime = {"zombietime", "2"};	// seconds to sink messages
 // after disconnect
 cvar_t	sv_cullentities = {"sv_cullentities", "0"};
 
-
-#ifdef SERVERONLY
-cvar_t	rcon_password = {"rcon_password", ""};	// password for remote server commands
-cvar_t	password = {"password", ""};	// password for entering the game
-#else
 extern cvar_t rcon_password;
 extern cvar_t password;
-#endif
 
 cvar_t	sv_hashpasswords = {"sv_hashpasswords", "1"}; // 0 - plain passwords; 1 - hashed passwords
 cvar_t	telnet_password = {"telnet_password", ""}; // password for login via telnet

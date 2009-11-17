@@ -36,8 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef id386
 
-#ifndef SERVERONLY
-
 // !!! must be kept the same as in d_iface.h !!!
 #define TRANSPARENT_COLOR	255
 
@@ -271,8 +269,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	.extern C(vright)
 	.extern C(vup)
 	.extern C(vpn)
-
-#endif	// SERVERONLY
 
 #else
 #undef id386

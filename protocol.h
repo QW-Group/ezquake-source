@@ -381,17 +381,6 @@ typedef struct entity_state_s {
 	byte	trans;
 } entity_state_t;
 
-#ifdef SERVERONLY
-
-#define	MAX_PACKET_ENTITIES	64
-
-typedef struct packet_entities_s {
-	int		num_entities;
-	entity_state_t	entities[MAX_PACKET_ENTITIES];
-} packet_entities_t;
-
-#else
-
 #define	MAX_MVD_PACKET_ENTITIES	300		
 #define	MAX_PACKET_ENTITIES	64
 
@@ -399,8 +388,6 @@ typedef struct packet_entities_s {
 	int		num_entities;
 	entity_state_t	entities[MAX_MVD_PACKET_ENTITIES];
 } packet_entities_t;
-
-#endif
 
 typedef struct usercmd_s {
 	byte	msec;

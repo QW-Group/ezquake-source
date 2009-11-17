@@ -283,15 +283,10 @@ qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 				socket = INVALID_SOCKET;
 	#endif
 		} else {
-	#ifdef SERVERONLY
-			Sys_Error("NET_GetPacket: Bad netsrc");
-			socket = 0;
-	#else
 			if (i == 0)
 				socket = cls.socketip;
 			else
 				socket = INVALID_SOCKET;
-	#endif
 		}
 
 		// socket = (netsrc == NS_SERVER) ? svs.socketip : cls.socketip;
@@ -335,7 +330,6 @@ qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 	}
 
 // TCPCONNECT -->
-#ifndef SERVERONLY
 	if (netsrc == NS_CLIENT) {
 		if (cls.sockettcp != INVALID_SOCKET) { //client receiving only via tcp
 			ret = recv(cls.sockettcp, cls.tcpinbuffer+cls.tcpinlen, sizeof(cls.tcpinbuffer)-cls.tcpinlen, 0);
@@ -385,7 +379,7 @@ qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 			return true;
 		}
 	}
-#endif
+
 #ifndef CLIENTONLY
 	if (netsrc == NS_SERVER) {
 		float timeval = Sys_DoubleTime();
@@ -619,11 +613,6 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 		socket = svs.socketip;
 #endif
 	} else {
-#ifdef SERVERONLY
-		Sys_Error("NET_SendPacket: Bad netsrc");
-		socket = 0;
-#else
-
 // TCPCONNECT -->
 		if (cls.sockettcp != INVALID_SOCKET)
 		{
@@ -640,7 +629,6 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 // <--TCPCONNECT
 
 		socket = cls.socketip;
-#endif
 	}
 
 	// socket = (netsrc == NS_SERVER) ? svs.socketip : cls.socketip;
@@ -657,10 +645,8 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 			return;
 		if (qerrno == ECONNREFUSED)
 			return;
-#ifndef SERVERONLY
 		if (qerrno == EADDRNOTAVAIL)
 			return;
-#endif
 		Sys_Printf ("NET_SendPacket: sendto: (%i): %s %i\n", qerrno, strerror(qerrno), socket);
 	}
 }
@@ -971,12 +957,10 @@ void NET_Init (void)
 
 	Com_DPrintf("UDP Initialized\n");
 
-#ifndef SERVERONLY
 	cls.socketip = INVALID_SOCKET;
 // TCPCONNECT -->
 	cls.sockettcp = INVALID_SOCKET;
 // <--TCPCONNECT
-#endif
 
 #ifndef CLIENTONLY
 	svs.socketip = INVALID_SOCKET;
@@ -986,7 +970,6 @@ void NET_Init (void)
 #endif
 }
 
-#ifndef SERVERONLY
 void NET_InitClient(void)
 {
 	int port = PORT_CLIENT;
@@ -1017,7 +1000,6 @@ void NET_InitClient(void)
 
 	Com_Printf_State (PRINT_OK, "Client port Initialized\n");
 }
-#endif
 
 #ifndef CLIENTONLY
 void NET_CloseServer (void)
@@ -1070,14 +1052,10 @@ void NET_InitServer (void)
 // <-- TCPCONNECT
 
 	if (svs.socketip == INVALID_SOCKET) {
-#ifdef SERVERONLY
-		Sys_Error ("Couldn't allocate server socket\n");
-#else
 		if (dedicated)
 			Sys_Error ("Couldn't allocate server socket\n");
 		else
 			Com_Printf ("WARNING: Couldn't allocate server socket\n");
-#endif
 	}
 
 #ifdef _WIN32
@@ -1095,12 +1073,10 @@ void NET_Shutdown (void)
 #ifndef CLIENTONLY
 	NET_CloseServer();
 #endif
-#ifndef SERVERONLY
 	if (cls.socketip != INVALID_SOCKET) {
 	closesocket(cls.socketip);
 		cls.socketip = INVALID_SOCKET;
 	}
-#endif
 
 #ifdef _WIN32
 	WSACleanup ();

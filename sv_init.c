@@ -578,12 +578,10 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// we change map - clear whole demo struct and sent initial state to all dest if any (for QTV only I thought)
 	SV_MVD_Record(NULL, true);
 
-#ifndef SERVERONLY
 	if (!dedicated)
 	{
 		void CL_ClearState (void);
 		CL_ClearState ();
 	}
-#endif
 }
 

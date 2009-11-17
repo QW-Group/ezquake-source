@@ -1176,7 +1176,6 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **results
 }
 
 
-#ifndef SERVERONLY
 // QW262 -->
 // regexp match support for group operations in scripts
 int			wildcard_level = 0;
@@ -1234,7 +1233,6 @@ void ReSearchDone (void)
 	if (wildcard_re_extra[wildcard_level]) (pcre_free)(wildcard_re_extra[wildcard_level]);
 }
 // <-- QW262
-#endif
 
 
 // ***************** VC issues **********************************

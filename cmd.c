@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef WITH_TCL
 #include "embed_tcl.h"
 #endif
-#ifndef SERVERONLY
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
@@ -38,14 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "rulesets.h"
 #include "tp_triggers.h"
-#endif /* !SERVERONLY */
 #include "parser.h"
 #include "utils.h"
 #include "keys.h"
 
-#ifndef SERVERONLY
 qbool CL_CheckServerCommand (void);
-#endif
 
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
@@ -56,10 +52,8 @@ cvar_t cl_warnexec = {"cl_warnexec", "1"};
 cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 
 cbuf_t cbuf_main;
-#ifndef SERVERONLY
 cbuf_t cbuf_svc;
 cbuf_t cbuf_safe, cbuf_formatted_comms;
-#endif
 
 char *hud262_load_buff = NULL;
 cbuf_t *cbuf_current = NULL;
@@ -127,10 +121,8 @@ void Cbuf_InsertText (const char *text)
 void Cbuf_Execute (void)
 {
 	Cbuf_ExecuteEx (&cbuf_main);
-#ifndef SERVERONLY
 	Cbuf_ExecuteEx (&cbuf_safe);
 	Cbuf_ExecuteEx (&cbuf_formatted_comms);
-#endif
 }
 
 //fuh : ideally we should have 'cbuf_t *Cbuf_Register(int maxsize, int flags, qbool (*blockcmd)(void))
@@ -150,11 +142,9 @@ static void Cbuf_Register (cbuf_t *cbuf, int maxsize)
 void Cbuf_Init (void)
 {
 	Cbuf_Register (&cbuf_main, 1 << 18); // 256kb
-#ifndef SERVERONLY
 	Cbuf_Register (&cbuf_svc, 1 << 13); // 8kb
 	Cbuf_Register (&cbuf_safe, 1 << 11); // 2kb
 	Cbuf_Register (&cbuf_formatted_comms, 1 << 11); // 2kb
-#endif
 }
 
 //Adds command text at the end of the buffer
@@ -224,12 +214,10 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 	qbool comment;
 	int quotes;
 
-#ifndef SERVERONLY
 	if (cbuf == &cbuf_safe)
 		gtf++;
 
 	nextsize = cbuf->text_end - cbuf->text_start;
-#endif
 
 	while (cbuf->text_end > cbuf->text_start)
 	{
@@ -291,7 +279,6 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 				break;
 		}
 
-#ifndef SERVERONLY
 		if ((cursize - i) < nextsize) // have we reached the next command?
 			nextsize = cursize - i;
 
@@ -300,7 +287,6 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 
 		if (cbuf_current == &cbuf_svc && i == cursize)
 			break;
-#endif
 
 		// Copy text to line, skipping carriage return chars
 		src = text;
@@ -352,20 +338,16 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		{
 			// skip out while text still remains in buffer, leaving it for next frame
 			cbuf->wait = false;
-#ifndef SERVERONLY
 			cbuf->runAwayLoop += Q_rint (0.5 * cls.frametime * MAX_RUNAWAYLOOP);
 
 			if (cbuf == &cbuf_safe)
 				gtf--;
-#endif
 			return;
 		}
 	}
 
-#ifndef SERVERONLY
 	if (cbuf == &cbuf_safe)
 		gtf--;
-#endif
 
 	cbuf->runAwayLoop = 0;
 
@@ -477,12 +459,10 @@ void Cmd_Exec_f (void)
 	if (cl_warnexec.integer || developer.integer)
 		Com_Printf ("execing %s\n", name);
 
-#ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc) {
 		Cbuf_AddTextEx (&cbuf_main, f);
 		Cbuf_AddTextEx (&cbuf_main, "\n");
 	} else
-#endif
 	{
 		Cbuf_InsertText ("\n");
 		Cbuf_InsertText (f);
@@ -500,9 +480,6 @@ void Cmd_Exec_f (void)
 }*/
 void Cmd_Echo_f (void)
 {
-#ifdef SERVERONLY
-	Com_Printf ("%s\n",Cmd_Args());
-#else
 	int	i;
 	char *str;
 	char args[MAX_MACRO_STRING];
@@ -527,7 +504,6 @@ void Cmd_Echo_f (void)
 	CL_SearchForReTriggers (buf, RE_PRINT_ECHO); 	// BorisU
 	Print_flags[Print_current] |= PR_TR_SKIP;
 	Com_Printf ("%s\n", buf);
-#endif
 }
 
 /*
@@ -775,12 +751,10 @@ void Cmd_Alias_f (void)
 	}
 	// <-- QW262
 
-#ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc)
 		a->flags |= ALIAS_SERVER;
 	if (!strcasecmp(Cmd_Argv(0), "tempalias"))
 		a->flags |= ALIAS_TEMP;
-#endif
 
 	// copy the rest of the command line
 	a->value = Z_Strdup (Cmd_MakeArgs(2));
@@ -1351,10 +1325,8 @@ char *Cmd_MacroString (const char *s, int *macro_length)
 	for (i = 0; i < macro_count; i++) {
 		macro = &macro_commands[i];
 		if (!strncasecmp (s, macro->name, strlen (macro->name))) {
-#ifndef SERVERONLY
 			if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED))
 				cbuf_current = &cbuf_formatted_comms;
-#endif
 			*macro_length = strlen (macro->name);
 			return macro->func();
 		}
@@ -1405,7 +1377,7 @@ void Cmd_MacroList_f (void)
 
 
 //Expands all $cvar expressions to cvar values
-//If not SERVERONLY, also expands $macro expressions
+//Also expands $macro expressions
 //Note: dest must point to a 1024 byte buffer
 void Cmd_ExpandString (const char *data, char *dest)
 {
@@ -1413,9 +1385,7 @@ void Cmd_ExpandString (const char *data, char *dest)
 	char buf[255], *str;
 	int i, len = 0, quotes = 0, name_length = 0;
 	cvar_t *var, *bestvar;
-#ifndef SERVERONLY
 	int macro_length;
-#endif
 
 	while ((c = *data)) {
 		if (c == '"')
@@ -1443,7 +1413,6 @@ void Cmd_ExpandString (const char *data, char *dest)
 					break; // there no more space in buf
 			}
 
-#ifndef SERVERONLY
 			if (!dedicated) {
 				str = Cmd_MacroString (buf, &macro_length);
 				name_length = macro_length;
@@ -1455,7 +1424,6 @@ void Cmd_ExpandString (const char *data, char *dest)
                         cbuf_current = &cbuf_formatted_comms;
 				}
 			} else
-#endif
 			{
 				if (bestvar) {
 					str = bestvar->string;
@@ -1530,7 +1498,6 @@ char *formatted_comms_commands[] = {
 float	impulse_time = -9999;
 int		impulse_counter;
 
-#ifndef SERVERONLY
 qbool AllowedImpulse(int imp)
 {
 
@@ -1575,7 +1542,6 @@ static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 	}
 	return *s != NULL;
 }
-#endif /* SERVERONLY */
 
 //A complete command line has been parsed, so try to execute it
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
@@ -1591,26 +1557,19 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	oldcontext = cbuf_current;
 	cbuf_current = context;
 
-#ifndef SERVERONLY
 	Cmd_ExpandString (text, text_exp);
 	Cmd_TokenizeString (text_exp);
-#else
-	Cmd_TokenizeString (text);
-#endif
 
 	if (!Cmd_Argc())
 		goto done; // no tokens
 
-#ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc) {
 		if (CL_CheckServerCommand())
 			goto done;
 	}
-#endif
 
 	// check functions
 	if ((cmd = Cmd_FindCommand(Cmd_Argv(0)))) {
-#ifndef SERVERONLY
 		if (gtf || cbuf_current == &cbuf_safe) {
 			if (!Cmd_IsCommandAllowedInMessageTrigger(Cmd_Argv(0))) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", Cmd_Argv(0));
@@ -1622,7 +1581,6 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 				goto done;
 			}
 		}
-#endif
 
 		if (cmd->function)
 			cmd->function();
@@ -1637,12 +1595,10 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check cvars
 	if ((v = Cvar_Find(Cmd_Argv(0)))) {
-#ifndef SERVERONLY
 		if ((cbuf_current == &cbuf_formatted_comms)) {
 			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
 			goto done;
 		}
-#endif
 		if (Cvar_Command())
 			goto done;
 	}
@@ -1703,21 +1659,13 @@ checkaliases:
 			p = a->value;
 		// <-- QW262
 
-#ifndef SERVERONLY
 		if (cbuf_current == &cbuf_svc)
 		{
 			Cbuf_AddText (p);
 			Cbuf_AddText ("\n");
 		} else
-#endif
 		{
-
-#ifdef SERVERONLY
-			inserttarget = &cbuf_main;
-#else
 			inserttarget = cbuf_current ? cbuf_current : &cbuf_main;
-#endif
-
 			Cbuf_InsertTextEx (inserttarget, "\n");
 
 			// if the alias value is a command or cvar and
@@ -1733,19 +1681,15 @@ checkaliases:
 		goto done;
 	}
 
-#ifndef SERVERONLY
 	if (Cmd_LegacyCommand())
 		goto done;
-#endif
 
 	if (!host_initialized && Cmd_Argc() > 1) {
 		if (Cvar_CreateTempVar())
 			goto done;
 	}
 
-#ifndef SERVERONLY
 	if (cbuf_current != &cbuf_svc)
-#endif
 	{
 		if (cl_warncmd.integer || developer.integer)
 			Com_Printf ("Unknown command \"%s\"\n", Cmd_Argv(0));
@@ -1760,7 +1704,6 @@ void Cmd_ExecuteString (char *text)
 	Cmd_ExecuteStringEx (NULL, text);
 }
 
-#ifndef SERVERONLY
 static qbool is_numeric (char *c)
 {
 	return ( isdigit((int)(unsigned char)*c) ||
@@ -1997,10 +1940,8 @@ void Cmd_If_Exists_f(void)
 	name = Cmd_Argv(2);
 	if ( ( (iscvar = !strcmp(type, "cvar")) && Cvar_Find(name) )			||
 	        ( (isalias = !strcmp(type, "alias")) && Cmd_FindAlias (name) )			||
-#ifndef SERVERONLY
 	        ( (istrigger = !strcmp(type, "trigger")) && CL_FindReTrigger (name) )	||
 	        ( (ishud = !strcmp(type, "hud")) && Hud_ElementExists (name) ) )
-#endif
 		exists = true;
 	else {
 		exists = false;
@@ -2234,7 +2175,7 @@ void Cmd_Cvar_Out_f (void)
 	Cvar_Set (var1, buf);
 }
 // <-- QW262
-#endif /* SERVERONLY */
+
 
 
 /*
@@ -2269,7 +2210,6 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
 	Cmd_AddCommand ("cmdlist", Cmd_CmdList_f);
 	Cmd_AddCommand ("cmdlist_re", Cmd_CmdList_re_f);
-#ifndef SERVERONLY
 	Cmd_AddCommand ("if", Cmd_If_f);
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
 	Cmd_AddCommand ("eval", Cmd_Eval_f);
@@ -2279,7 +2219,6 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("cvar_in", Cmd_Cvar_In_f);
 	Cmd_AddCommand ("cvar_out", Cmd_Cvar_Out_f);
 // <-- QW262
-#endif
 
 	Cvar_Register(&cl_curlybraces);
     Cvar_Register(&cl_warnexec);
