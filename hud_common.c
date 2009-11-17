@@ -5763,7 +5763,6 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 	static	cvar_t *width = NULL, *height, *direction, *color_noarmor, *color_ga, *color_ya, *color_ra, *color_unnatural;
 	int		x, y;
 	int		armor = HUD_Stats(STAT_ARMOR);
-	int		armor_amount_width;
 	
 	if (width == NULL)  // first time called
     {
@@ -5779,51 +5778,37 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 	
 	if(HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y))
 	{
-		if(!width->integer || !height->integer)
+		if(!width->integer || !height->integer || HUD_Stats(STAT_HEALTH) < 1)
 			return;
 
         if(HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
 		{
-			Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_unnatural->color));
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
 		}
         else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3)
 		{
-			armor_amount_width = Q_rint(abs((width->integer * armor) / 200.0));
-			if(!direction->integer)
-				Draw_AlphaFillRGB(x, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ra->color));
-			else
-				Draw_AlphaFillRGB(x + width->integer - armor_amount_width, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ra->color));
+			SCR_HUD_DrawBar(direction->integer, armor, 200.0, color_ra->color, x, y, width->integer, height->integer);
 		}
 		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2)
 		{
-			armor_amount_width = Q_rint(abs((width->integer * armor) / 150.0));
-			if(!direction->integer)
-				Draw_AlphaFillRGB(x, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ya->color));
-			else
-				Draw_AlphaFillRGB(x + width->integer - armor_amount_width, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ya->color));
+			SCR_HUD_DrawBar(direction->integer, armor, 150.0, color_ya->color, x, y, width->integer, height->integer);
 		}
         else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1)
 		{
-			armor_amount_width = Q_rint(abs((width->integer * armor) / 100.0));
-			if(!direction->integer)
-				Draw_AlphaFillRGB(x, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ga->color));
-			else
-				Draw_AlphaFillRGB(x + width->integer - armor_amount_width, y, armor_amount_width, height->integer, RGBAVECT_TO_COLOR(color_ga->color));
+			SCR_HUD_DrawBar(direction->integer, armor, 100.0, color_ga->color, x, y, width->integer, height->integer);
 		}
 		else
 		{
-			Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_noarmor->color));
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
 		}
 	}
 }
-
 
 void SCR_HUD_DrawBarHeath(hud_t *hud)
 {
 	static	cvar_t *width = NULL, *height, *direction, *color_normal, *color_mega, *color_twomega, *color_unnatural;
 	int		x, y;
 	int		health = cl.stats[STAT_HEALTH];
-	int		health_amount_width = 0;
 
 	if (width == NULL)  // first time called
     {
@@ -5842,43 +5827,26 @@ void SCR_HUD_DrawBarHeath(hud_t *hud)
 			return;
 
 		health = min(100, health);
-		health_amount_width = Q_rint(abs((width->integer * health) / 100.0));
 
 		if(health > 0)
 		{
-			if(!direction->integer) // left->right
-				Draw_AlphaFillRGB(x, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_normal->color));
-			else // left<-right
-				Draw_AlphaFillRGB(x + width->integer - health_amount_width, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_normal->color));				
+			SCR_HUD_DrawBar(direction->integer, health, 100.0, color_normal->color, x, y, width->integer, height->integer);
 		}
 
 		health = cl.stats[STAT_HEALTH];
 
 		if(health > 100 && health <= 200) // Mega health.
-		{			
-			health_amount_width = Q_rint((width->integer / 100.0) * (health - 100));
-			if(!direction->integer)
-				Draw_AlphaFillRGB(x, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_mega->color));
-			else
-				Draw_AlphaFillRGB(x + width->integer - health_amount_width, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_mega->color));
+		{
+			SCR_HUD_DrawBar(direction->integer, health - 100, 100.0, color_mega->color, x, y, width->integer, height->integer);
 		}
 		else if(health > 200 && health <= 250) // Super health.
 		{
-			health_amount_width = Q_rint((width->integer / 100.0) * (health - 200));
-			if(!direction->integer)
-			{
-				Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_mega->color));
-				Draw_AlphaFillRGB(x, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_twomega->color));
-			}
-			else
-			{
-				Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_mega->color));
-				Draw_AlphaFillRGB(x + width->integer - health_amount_width, y, health_amount_width, height->integer, RGBAVECT_TO_COLOR(color_twomega->color));
-			}
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_mega->color, x, y, width->integer, height->integer);
+			SCR_HUD_DrawBar(direction->integer, health - 200, 100.0, color_twomega->color, x, y, width->integer, height->integer);
 		}
 		else if(health > 250) // Crazy health.
 		{
-				Draw_AlphaFillRGB(x, y, width->integer, height->integer, RGBAVECT_TO_COLOR(color_unnatural->color));
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
 		}
 	}
 }

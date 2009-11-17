@@ -1402,3 +1402,28 @@ void SCR_DrawWadString(int x, int y, float scale, const char *t)
     }
 }
 
+// little shortcut for SCR_HUD_DrawBar* functions
+void SCR_HUD_DrawBar(int direction, int value, float max_value, byte *color, int x, int y, int width, int height)
+{
+	int amount;
+
+	if(direction >= 2)
+		// top-down
+		amount = Q_rint(abs((height * value) / max_value));
+	else// left-right
+		amount = Q_rint(abs((width * value) / max_value));
+
+	if(direction == 0)
+		// left->right
+		Draw_AlphaFillRGB(x, y, amount, height, RGBAVECT_TO_COLOR(color));
+	else if (direction == 1)
+		// right->left
+		Draw_AlphaFillRGB(x + width - amount, y, amount, height, RGBAVECT_TO_COLOR(color));
+	else if (direction == 2)
+		// down -> up
+		Draw_AlphaFillRGB(x, y + height - amount, width, amount, RGBAVECT_TO_COLOR(color));
+	else
+		// up -> down
+		Draw_AlphaFillRGB(x, y, width, amount, RGBAVECT_TO_COLOR(color));
+}
+
