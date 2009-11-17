@@ -435,7 +435,8 @@ void SV_Map (qbool now)
 		if (sv.mvdrecording)
 			SV_MVDStop_f();
 
-		CL_BeginLocalConnection ();
+		if (!dedicated)
+			CL_BeginLocalConnection ();
 
 		SV_BroadcastCommand ("changing\n");
 		SV_SendMessagesToAll ();
@@ -1934,19 +1935,35 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("map", SV_Map_f);
 	Cmd_AddCommand ("devmap", SV_Map_f);
 	Cmd_AddCommand ("setmaster", SV_SetMaster_f);
+
 	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f);
-	Cmd_AddCommand ("save", SV_SaveGame_f); 
-	Cmd_AddCommand ("load", SV_LoadGame_f); 
-	//Cmd_AddCommand ("say", SV_ConSay_f);
-	//Cmd_AddCommand ("quit", SV_Quit_f);
-	//Cmd_AddCommand ("user", SV_User_f);
-	//Cmd_AddCommand ("serverinfo", SV_Serverinfo_f);
+
+	if (dedicated)
+	{
+		Cmd_AddCommand ("say", SV_ConSay_f);
+		Cmd_AddCommand ("quit", SV_Quit_f);
+		Cmd_AddCommand ("user", SV_User_f);
+		Cmd_AddCommand ("serverinfo", SV_Serverinfo_f);
+	}
+
+	if (!dedicated)
+	{ 
+		Cmd_AddCommand ("save", SV_SaveGame_f); 
+		Cmd_AddCommand ("load", SV_LoadGame_f); 
+	} 
+
 	//Cmd_AddCommand ("restart", SV_Restart_f);
-	//Cmd_AddCommand ("god", SV_God_f);
-	//Cmd_AddCommand ("give", SV_Give_f);
-	//Cmd_AddCommand ("noclip", SV_Noclip_f);
-	//Cmd_AddCommand ("fly", SV_Fly_f);
+
+	if (dedicated)
+	{
+		Cmd_AddCommand ("god", SV_God_f);
+		Cmd_AddCommand ("give", SV_Give_f);
+		Cmd_AddCommand ("noclip", SV_Noclip_f);
+		Cmd_AddCommand ("fly", SV_Fly_f);
+	}
+
 	Cmd_AddCommand ("localinfo", SV_Localinfo_f);
+
 	Cmd_AddCommand ("gamedir", SV_Gamedir_f);
 	Cmd_AddCommand ("sv_gamedir", SV_Gamedir);
 

@@ -83,7 +83,8 @@ void Sys_Printf (char *fmt, ...) {
 	unsigned char *p;
 
 #ifdef NDEBUG
-	return;
+	if (!dedicated)
+		return;
 #endif
 
 	va_start (argptr,fmt);
@@ -110,9 +111,15 @@ void Sys_Quit (void) {
 }
 
 void Sys_Init(void) {
+	if (dedicated) {
+		Cvar_Register (&sys_nostdout);
+		Cvar_Register (&sys_extrasleep);
+	}
+	else {
     Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
     Cvar_Register (&sys_yieldcpu);
     Cvar_ResetCurrentGroup();
+	}
 }
 
 void Sys_Error (char *error, ...) {
@@ -325,7 +332,8 @@ char *Sys_ConsoleInput (void) {
 	static char text[256];
 	int len;
 
-	return NULL;
+	if (!dedicated)
+		return NULL;
 
 	if (!stdin_ready || !do_stdin)
 		return NULL; // the select didn't say it was ready
@@ -379,6 +387,11 @@ int main (int argc, char **argv) {
 			qconsole_log = fopen(s, "a");
 	}
 
+#if !defined(CLIENTONLY)
+	dedicated = COM_CheckParm ("-dedicated");
+#endif
+
+	if (!dedicated) {
 		signal(SIGFPE, SIG_IGN);
 
 		// we need to check for -noconinput and -nostdout before Host_Init is called
@@ -429,17 +442,26 @@ int main (int argc, char **argv) {
 		#ifdef id386
 			Sys_SetFPCW();
 		#endif
-
+	}
 
     Host_Init (argc, argv, 32 * 1024 * 1024);
 
 	oldtime = Sys_DoubleTime ();
 	while (1) {
+		if (dedicated)
+			NET_Sleep (10);
+
 		// find time spent rendering last frame
 		newtime = Sys_DoubleTime ();
 		time = newtime - oldtime;
 		oldtime = newtime;
+
 		Host_Frame(time);
+
+		if (dedicated) {
+			if (sys_extrasleep.value)
+				usleep (sys_extrasleep.value);
+		}
     }
 }
 

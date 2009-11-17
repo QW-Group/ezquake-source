@@ -1203,7 +1203,7 @@ void Mod_LoadLeafs (lump_t *l) {
 		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
-		if (out->contents != CONTENTS_EMPTY) {
+		if (!dedicated && out->contents != CONTENTS_EMPTY) {
 			for (j = 0; j < out->nummarksurfaces; j++)
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
 		}
@@ -1313,7 +1313,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
 	Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
 	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
-	if (loadmodel->bspversion == HL_BSPVERSION)
+	if (loadmodel->bspversion == HL_BSPVERSION && !dedicated)
 		Mod_ParseWadsFromEntityLump (&header->lumps[LUMP_ENTITIES]);
 	Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
 	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);

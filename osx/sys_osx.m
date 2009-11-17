@@ -2,9 +2,9 @@
 // "sys_osx.m" - MacOS X system functions.
 //
 // Written by:	Axel 'awe' Wefers			[mailto:awe@fruitz-of-dojo.de].
-//				ï¿½2001-2006 Fruitz Of Dojo 	[http://www.fruitz-of-dojo.de].
+//				©2001-2006 Fruitz Of Dojo 	[http://www.fruitz-of-dojo.de].
 //
-// Quakeï¿½ is copyrighted by id software	[http://www.idsoftware.com].
+// Quakeª is copyrighted by id software	[http://www.idsoftware.com].
 //
 // Version History:
 // v1.0.9: Revised the event handling model [Uses now a NSTimer and a subclassed NSApplication instance].
@@ -32,7 +32,7 @@
 //	       Reenabled keyboard repeat and mousescaling.
 //         Some internal changes.
 // v1.0.1: Added support for GLQuake.
-//	       Obscure characters within the base pathname [like 'ï¿½'...] are now allowed.
+//	       Obscure characters within the base pathname [like 'Ä'...] are now allowed.
 //	       Better support for case sensitive file systems.
 //	       FIX: "mkdir" commmand [for QuakeWorld].
 //	       FIX: The "id1" folder had to be lower case. Can now be upper or lower case.
@@ -98,6 +98,8 @@
 
 #pragma mark =Variables=
 
+qbool			isDedicated;
+
 SInt32				gSysArgCount;
 char **				gSysArgValues = NULL;
 
@@ -127,6 +129,10 @@ SInt 		main (SInt, const char **);
 
 void	Sys_Init (void)
 {
+    if(dedicated) {
+	Cvar_Register (&sys_nostdout);
+	Cvar_Register (&sys_extrasleep);
+    }
 }
 
 //____________________________________________________________________________________________________________Sys_SwitchCase()

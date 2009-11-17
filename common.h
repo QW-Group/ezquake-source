@@ -363,6 +363,8 @@ void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int pr
 
 //============================================================================
 
+extern qbool	dedicated;
+
 extern cvar_t	developer;
 extern cvar_t	host_mapname;
 

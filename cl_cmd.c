@@ -822,10 +822,17 @@ void SV_Quit_f (void);
 void CL_Quit_f (void) {
 	extern cvar_t cl_confirmquit;
 
-	if (cl_confirmquit.value)
-		M_Menu_Quit_f ();
+#ifndef CLIENTONLY
+	if (dedicated)
+		SV_Quit_f ();
 	else
-		Host_Quit ();
+#endif
+	{
+		if (cl_confirmquit.value)
+			M_Menu_Quit_f ();
+		else
+			Host_Quit ();
+	}
 }
 
 // QW262 -->

@@ -975,6 +975,9 @@ void NET_InitClient(void)
 	int port = PORT_CLIENT;
 	int p;
 
+	if (dedicated)
+		return;
+
 	p = COM_CheckParm ("-clientport");
 	if (p && p < COM_Argc()) {
 		port = atoi(COM_Argv(p+1));
@@ -1049,8 +1052,17 @@ void NET_InitServer (void)
 // <-- TCPCONNECT
 
 	if (svs.socketip == INVALID_SOCKET) {
-		Com_Printf ("WARNING: Couldn't allocate server socket\n");
+		if (dedicated)
+			Sys_Error ("Couldn't allocate server socket\n");
+		else
+			Com_Printf ("WARNING: Couldn't allocate server socket\n");
 	}
+
+#ifdef _WIN32
+	if (dedicated)
+		SetConsoleTitle (va("ezqds: %i", port));
+#endif
+
 	// init the message buffer
 	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
 }
