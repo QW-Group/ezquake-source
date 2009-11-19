@@ -356,7 +356,7 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 		snprintf(outstring, sizeof(outstring), "&c900You killed &r%s\n%s kills: %i", VX_Name(player), GetWeaponName(weapon), killer_wcount);
     
     if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
-        VX_OwnFragNew(VX_Name(player));
+        VX_OwnFragNew(cl.players[player].name);
 
 	VX_TrackerAddText(outstring, tt_death);
 }
