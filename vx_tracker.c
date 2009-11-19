@@ -41,6 +41,7 @@ cvar_t		amf_tracker_color_fragonme  = {"r_tracker_color_fragonme", "900"}; // us
 cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900"}; // use this color when u suicides
 cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)"};
 cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)"};
+cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",     " 0"};
 
 
 #define MAX_TRACKERMESSAGES 30
@@ -86,6 +87,8 @@ void InitTracker(void)
 
 	Cvar_Register (&amf_tracker_string_suicides);
 	Cvar_Register (&amf_tracker_string_died);
+
+	Cvar_Register (&amf_tracker_name_width);
 }
 
 void VX_TrackerClear()
@@ -167,7 +170,14 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 
 static char *VX_Name(int player)
 {
-	return cl.players[player].name;
+	static char string[2][MAX_SCOREBOARDNAME];
+	static int idx = 0;
+
+	if (amf_tracker_name_width.integer <= 0)
+		return cl.players[player].name;
+
+	strlcpy (string[++idx % 2], cl.players[player].name, amf_tracker_name_width.integer);
+	return string[idx % 2];
 }
 
 // Own Frags Text
