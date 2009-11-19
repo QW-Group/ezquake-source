@@ -41,6 +41,7 @@ cvar_t		amf_tracker_color_fragonme  = {"r_tracker_color_fragonme", "900"}; // us
 cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900"}; // use this color when u suicides
 cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)"};
 cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)"};
+cvar_t		amf_tracker_string_teammate = {"r_tracker_string_teammate", "teammate"};
 cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",     " 0"};
 cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
 
@@ -419,12 +420,12 @@ void VX_TrackerOddTeamkill(int player, int weapon, int count)
 	{
 		if (cl_useimagesinfraglog.integer)
 		{
-			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%steammate&r", TKColor(player), VX_Name(player), GetWeaponName(weapon), TKColor(player));
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%s%s&r", TKColor(player), VX_Name(player), GetWeaponName(weapon), TKColor(player), amf_tracker_string_teammate.string);
 			Q_normalizetext(outstring);
 		}
 		else
 		{
-			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r teammate", VX_Name(player), TKColor(player), GetWeaponName(weapon));
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", VX_Name(player), TKColor(player), GetWeaponName(weapon), amf_tracker_string_teammate.string);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
@@ -443,12 +444,12 @@ void VX_TrackerOddTeamkilled(int player, int weapon)
 	{
 		if (cl_useimagesinfraglog.integer)
 		{
-			snprintf(outstring, sizeof(outstring), "&c%steammate&r %s &c%s%s&r", TKColor(player), GetWeaponName(weapon), TKColor(player), VX_Name(player));
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%s%s&r", TKColor(player), amf_tracker_string_teammate.string, GetWeaponName(weapon), TKColor(player), VX_Name(player));
 			Q_normalizetext(outstring);
 		}
 		else
 		{
-			snprintf(outstring, sizeof(outstring), "&rteammate &c%s%s&r %s", TKColor(player), GetWeaponName(weapon), VX_Name(player));
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", amf_tracker_string_teammate.string, TKColor(player), GetWeaponName(weapon), VX_Name(player));
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
