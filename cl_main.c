@@ -2164,8 +2164,7 @@ void CL_Frame (double time)
 			#ifdef _WIN32
 			Sys_MSleep(0);
 			#else
-			// That work bad on linux, at least on my system, dunno why.
-			usleep( bound( 0, sys_yieldcpu.integer, 1000 ) );
+			usleep( (minframetime - extratime) * 1000 * 1000 );
 			#endif
 		}
 
