@@ -92,6 +92,9 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #if defined (_WIN32) || defined (__linux__)
 #include "mumble.h"
 #endif
+#ifdef __linux__
+extern qbool ActiveApp, Minimized;
+#endif
 
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
@@ -2371,13 +2374,13 @@ void CL_Frame (double time)
 		if (key_dest != key_game) // add chat flag if in console, menus, mm1, mm2 etc...
 			cif_flags |= CIF_CHAT;
 
-		#ifdef _WIN32
+		#if defined(_WIN32) || defined(__linux__)
 		// add AFK flag if app minimized, or not the focus
 		// FIXME: i dunno how to check the same for *nix
 		// TODO: may be add afk flag on idle? if no user input in 45 seconds for example?
 		if (!ActiveApp || Minimized)
 			cif_flags |= CIF_AFK;
-		#endif // WIN32
+		#endif // WIN32 or linux
 
 		if (cif_flags && cls.state >= ca_connected) // put key in userinfo only then we are connected, remove key if we not connected yet
 			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);

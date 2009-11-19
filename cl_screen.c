@@ -3372,7 +3372,7 @@ void SCR_UpdateScreen (void)
 			return;
 	}
 
-	#ifdef _WIN32
+	#if defined(_WIN32) || defined(__linux__)
 	{	
 		// Don't suck up any cpu if minimized.
 		extern int Minimized;
@@ -3380,7 +3380,7 @@ void SCR_UpdateScreen (void)
 		if (Minimized)
 			return;
 	}
-	#endif // _WIN32
+	#endif // _WIN32 or __linux__
 
 	vid.numpages = 2 + gl_triplebuffer.value;
 
@@ -3511,7 +3511,7 @@ void SCR_UpdateScreen (void)
 			return;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__linux__)
 	{	// don't suck up any cpu if minimized
 		extern int Minimized;
 
