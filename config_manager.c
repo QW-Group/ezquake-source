@@ -83,6 +83,7 @@ void DumpBindings (FILE *f)
 	char *spaces, *string;
 	qbool printed = false;
 
+	fprintf(f, "unbindall\n");
 	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
 
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
@@ -283,6 +284,7 @@ static void DumpAliases(FILE *f)
 	cmd_alias_t	*b, *a, *sorted_aliases[1024], *lonely_pluses[512];
 	qbool partner, printed;
 
+	fprintf(f, "unaliasall\n");
 	for (count = maxlen = 0, a = cmd_alias;	(count < (sizeof(sorted_aliases) / sizeof(*sorted_aliases))) && a; a = a->next) {
 		if (!(a->flags & (ALIAS_SERVER|ALIAS_TEMP))) {
 			maxlen = max(maxlen, strlen(a->name));
