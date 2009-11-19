@@ -970,7 +970,7 @@ void LoadConfig_f(void)
 	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
 	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
-	use_home = cfg_use_home.integer;
+	use_home = cfg_use_home.integer || !host_everything_loaded;
 
 	// home
 	snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : com_gamedirfile, filename);
