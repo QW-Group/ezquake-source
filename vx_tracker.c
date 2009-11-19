@@ -180,10 +180,10 @@ static char *VX_Name(int player)
 	if (length <= 0)
 		return cl.players[player].name;
 
-	strlcpy (string[++idx % 2], cl.players[player].name, length);
+	strlcpy (string[++idx % 2], cl.players[player].name, MAX_SCOREBOARDNAME);
 
 	// align by adding spaces
-	for (i = strlen(string[idx % 2]); i < length; i++) {
+	for (i = min(strlen(string[idx % 2]), length); i < length; i++) {
 		string[idx % 2][i] = ' ';
 	}
 	string[idx % 2][i] = 0;
