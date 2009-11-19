@@ -172,6 +172,31 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	active_track += 1;
 }
 
+static char *VX_SkipCommonPrefix(int player)
+{
+	unsigned players_left;
+	int i, j;
+
+	players_left = 0xFFFF;
+	players_left &= ~(1 << player);
+
+	for (i = 0; i < strlen(cl.players[player].name); i++) {
+		for (j = 0; j < MAX_CLIENTS; j++) {
+			if ((players_left & (1 << j)) == 0)
+				continue;
+			if (strlen(cl.players[j].name) < i + 1 || cl.players[j].name[i] != cl.players[player].name[i])
+				players_left &= ~(1 << j);
+		}
+		if (players_left == 0)
+			break;
+	}
+
+	if (i == strlen(cl.players[player].name))
+		return cl.players[player].name;
+
+	return cl.players[player].name + i;
+}
+
 static char *VX_Name(int player)
 {
 	static char string[2][MAX_SCOREBOARDNAME];
