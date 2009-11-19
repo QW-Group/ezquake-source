@@ -165,6 +165,7 @@ static int num_vidmodes;
 static qbool vidmode_active = false;
 
 static qbool focus = false;
+qbool Minimized = true;
 
 //
 // function declaration
@@ -1039,6 +1040,14 @@ static void HandleEvents(void)
         Key_ClearStates();
         focus = false;
       }
+      break;
+
+    case MapNotify:
+      Minimized = false;
+      break;
+
+    case UnmapNotify:
+      Minimized = true;
       break;
 
     }
