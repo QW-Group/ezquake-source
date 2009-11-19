@@ -129,7 +129,7 @@ Atom wm_delete_window_atom; //LordHavoc
 
 #define KEY_MASK   ( KeyPressMask | KeyReleaseMask )
 #define MOUSE_MASK ( ButtonPressMask | ButtonReleaseMask | PointerMotionMask | ButtonMotionMask )
-#define X_MASK     ( KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask )
+#define X_MASK     ( KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask | FocusChangeMask )
 
        qbool mouseinitialized = false; // unfortunately non static, lame...
 static qbool mouse_active = false;
@@ -164,6 +164,7 @@ static XF86VidModeModeInfo **vidmodes;
 static int num_vidmodes;
 static qbool vidmode_active = false;
 
+static qbool focus = false;
 
 //
 // function declaration
@@ -1024,6 +1025,22 @@ static void HandleEvents(void)
       win_x = event.xconfigure.x;
       win_y = event.xconfigure.y;
       break;
+
+    case FocusIn:
+      if (!focus)
+      {
+        focus = true;
+      }
+      break;
+
+    case FocusOut:
+      if (focus)
+      {
+        Key_ClearStates();
+        focus = false;
+      }
+      break;
+
     }
   }
 
