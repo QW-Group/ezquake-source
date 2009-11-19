@@ -2017,6 +2017,11 @@ static double CL_MinFrameTime (void)
 	if (cls.timedemo || Movie_IsCapturing())
 		return 0;
 
+#if defined(_WIN32) || defined(__linux__)
+	if (Minimized)
+		return 30;
+#endif
+
 	if (cls.demoplayback)
 	{
 		if (!cl_maxfps.value)
@@ -2162,7 +2167,11 @@ void CL_Frame (double time)
 	if (extratime < minframetime) 
 	{
 		extern cvar_t sys_yieldcpu;
+		#if defined(_WIN32) || defined(__linux__)
+		if (sys_yieldcpu.integer || Minimized)
+		#else
 		if (sys_yieldcpu.integer)
+		#endif
 		{
 			#ifdef _WIN32
 			Sys_MSleep(0);
