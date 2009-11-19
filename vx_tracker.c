@@ -42,6 +42,7 @@ cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900"}; // us
 cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)"};
 cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)"};
 cvar_t		amf_tracker_string_teammate = {"r_tracker_string_teammate", "teammate"};
+cvar_t		amf_tracker_string_enemy    = {"r_tracker_string_enemy",    "enemy"};
 cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",     " 0"};
 cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
 
@@ -370,12 +371,12 @@ void VX_TrackerOddFrag(int player, int weapon, int wcount)
 	{
 		if (cl_useimagesinfraglog.integer)
 		{
-			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%senemy&r", OddFragColor(player), VX_Name(player), GetWeaponName(weapon), EnemyColor());
+			snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%s%s&r", OddFragColor(player), VX_Name(player), GetWeaponName(weapon), EnemyColor(), amf_tracker_string_enemy.string);
 			Q_normalizetext(outstring);
 		}
 		else
 		{
-			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r enemy", VX_Name(player), OddFragColor(player), GetWeaponName(weapon));
+			snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", VX_Name(player), OddFragColor(player), GetWeaponName(weapon), amf_tracker_string_enemy.string);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
