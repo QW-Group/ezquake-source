@@ -186,6 +186,8 @@ static char *VX_SkipCommonPrefix(int player)
 		for (j = 0; j < MAX_CLIENTS; j++) {
 			if ((players_left & (1 << j)) == 0)
 				continue;
+			if (cl.players[j].spectator)
+				players_left &= ~(1 << j);
 			if (strlen(cl.players[j].name) < i + 1 || cl.players[j].name[i] != cl.players[player].name[i])
 				players_left &= ~(1 << j);
 		}
