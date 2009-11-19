@@ -44,6 +44,7 @@ cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)"};
 cvar_t		amf_tracker_string_teammate = {"r_tracker_string_teammate", "teammate"};
 cvar_t		amf_tracker_string_enemy    = {"r_tracker_string_enemy",    "enemy"};
 cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",      "0"};
+cvar_t		amf_tracker_name_skip_prefix = {"r_tracker_name_skip_prefix", "0"};
 cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
 
 
@@ -92,6 +93,7 @@ void InitTracker(void)
 	Cvar_Register (&amf_tracker_string_died);
 
 	Cvar_Register (&amf_tracker_name_width);
+	Cvar_Register (&amf_tracker_name_skip_prefix);
 	Cvar_Register (&amf_tracker_own_frag_prefix);
 }
 
@@ -206,16 +208,16 @@ static char *VX_Name(int player)
 
 	length = bound(amf_tracker_name_width.integer, 0, MAX_SCOREBOARDNAME - 1);
 
-	if (length <= 0)
-		return cl.players[player].name;
+	strlcpy (string[++idx % 2], (amf_tracker_name_skip_prefix.integer ?
+		VX_SkipCommonPrefix(player) : cl.players[player].name), MAX_SCOREBOARDNAME);
 
-	strlcpy (string[++idx % 2], cl.players[player].name, MAX_SCOREBOARDNAME);
-
-	// align by adding spaces
-	for (i = min(strlen(string[idx % 2]), length); i < length; i++) {
-		string[idx % 2][i] = ' ';
+	if (length > 0) {
+		// align by adding spaces
+		for (i = min(strlen(string[idx % 2]), length); i < length; i++) {
+			string[idx % 2][i] = ' ';
+		}
+		string[idx % 2][i] = 0;
 	}
-	string[idx % 2][i] = 0;
 
 	return string[idx % 2];
 }
