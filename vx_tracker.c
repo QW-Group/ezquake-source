@@ -42,6 +42,7 @@ cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900"}; // us
 cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)"};
 cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)"};
 cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",     " 0"};
+cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
 
 
 #define MAX_TRACKERMESSAGES 30
@@ -89,6 +90,7 @@ void InitTracker(void)
 	Cvar_Register (&amf_tracker_string_died);
 
 	Cvar_Register (&amf_tracker_name_width);
+	Cvar_Register (&amf_tracker_own_frag_prefix);
 }
 
 void VX_TrackerClear()
@@ -192,12 +194,10 @@ static char *VX_Name(int player)
 }
 
 // Own Frags Text
-#define OWNFRAGPREFIX "You fragged "
-
 static void VX_OwnFragNew(const char *victim)
 {
     ownfragtext.time = r_refdef2.time;
-    snprintf(ownfragtext.text, sizeof(ownfragtext.text), "%s%s", OWNFRAGPREFIX, victim);
+    snprintf(ownfragtext.text, sizeof(ownfragtext.text), "%s%s", amf_tracker_own_frag_prefix.string, victim);
 }
 
 int VX_OwnFragTextLen(void)
