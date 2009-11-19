@@ -164,7 +164,7 @@ static XF86VidModeModeInfo **vidmodes;
 static int num_vidmodes;
 static qbool vidmode_active = false;
 
-static qbool focus = false;
+qbool ActiveApp = false;
 qbool Minimized = true;
 
 //
@@ -1028,17 +1028,17 @@ static void HandleEvents(void)
       break;
 
     case FocusIn:
-      if (!focus)
+      if (!ActiveApp)
       {
-        focus = true;
+        ActiveApp = true;
       }
       break;
 
     case FocusOut:
-      if (focus)
+      if (ActiveApp)
       {
         Key_ClearStates();
-        focus = false;
+        ActiveApp = false;
       }
       break;
 
