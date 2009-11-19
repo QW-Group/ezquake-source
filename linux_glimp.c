@@ -164,8 +164,8 @@ static XF86VidModeModeInfo **vidmodes;
 static int num_vidmodes;
 static qbool vidmode_active = false;
 
-qbool ActiveApp = false;
-qbool Minimized = true;
+qbool ActiveApp = true;
+qbool Minimized = false;
 
 //
 // function declaration
