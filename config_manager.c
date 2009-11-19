@@ -942,7 +942,6 @@ qbool LoadCfg(FILE *f)
 	fileBuffer = Q_malloc(size + 1); // +1 for null terminator
 	fread(fileBuffer, 1, size, f);
 	fileBuffer[size] = 0;
-	fclose(f);
 
 	Cbuf_AddText (fileBuffer);
 	Cbuf_AddText ("\n");
