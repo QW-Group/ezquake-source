@@ -172,11 +172,22 @@ static char *VX_Name(int player)
 {
 	static char string[2][MAX_SCOREBOARDNAME];
 	static int idx = 0;
+	int length;
+	int i;
 
-	if (amf_tracker_name_width.integer <= 0)
+	length = bound(amf_tracker_name_width.integer, 0, MAX_SCOREBOARDNAME - 1);
+
+	if (length <= 0)
 		return cl.players[player].name;
 
-	strlcpy (string[++idx % 2], cl.players[player].name, amf_tracker_name_width.integer);
+	strlcpy (string[++idx % 2], cl.players[player].name, length);
+
+	// align by adding spaces
+	for (i = strlen(string[idx % 2]); i < length; i++) {
+		string[idx % 2][i] = ' ';
+	}
+	string[idx % 2][i] = 0;
+
 	return string[idx % 2];
 }
 
