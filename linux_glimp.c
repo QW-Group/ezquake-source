@@ -728,7 +728,7 @@ void IN_DeactivateMouse( void )
 
 void IN_Frame (void) {
 
-  if ( key_dest != key_game )
+  if ( key_dest != key_game || cls.state != ca_active )
   {
     // temporarily deactivate if not in the game and
     // running on the desktop
