@@ -393,7 +393,7 @@ qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 				Com_Printf("\x02" "Please use -config <cfgname> to load named config, after that RTFM and DIE!\n");
 				Com_Printf("    -Sincerely yours, ezQuake DEV-TEAM\n");
 			}
-			else if(strncasecmp(str, "set ", 9) != 0) //+set is processed in Cbuf_AddEarlyCommands()
+			else if(strncasecmp(str, "set ", 4) != 0) //+set is processed in Cbuf_AddEarlyCommands()
 			{
 				Com_Printf("+%s is not allowed in cmdline or obsolete, please RTFM a bit!\n", *banned_cmd);
 			}
