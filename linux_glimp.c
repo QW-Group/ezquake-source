@@ -877,6 +877,57 @@ static int XLateKey(XKeyEvent *ev) {
 	return key;
 }
 
+static qbool X11_PendingInput( void )
+{
+	assert( dpy );
+
+	// Flush the display connection and look to see if events are queued
+	XFlush( dpy );
+	if( XEventsQueued( dpy, QueuedAlready ) )
+		return true;
+
+	{ // More drastic measures are required -- see if X is ready to talk
+		static struct timeval zero_time;
+		int x11_fd;
+		fd_set fdset;
+
+		x11_fd = ConnectionNumber( dpy );
+		FD_ZERO( &fdset );
+		FD_SET( x11_fd, &fdset );
+		if( select( x11_fd+1, &fdset, NULL, NULL, &zero_time ) == 1 )
+			return ( XPending( dpy ) );
+	}
+
+	// Oh well, nothing is ready ..
+	return false;
+}
+
+// filters repeated KeyRelease events
+static qbool repeated_press( XEvent *event )
+{
+	XEvent peekevent;
+	qbool repeated = false;
+
+	assert( dpy );
+
+        if (event->type != KeyRelease)
+		return false;
+
+	if( X11_PendingInput() )
+	{
+		XPeekEvent( dpy, &peekevent );
+
+		if( ( peekevent.type == KeyPress ) &&
+		   ( peekevent.xkey.keycode == event->xkey.keycode ) &&
+		   ( peekevent.xkey.time == event->xkey.time ) )
+		{
+			repeated = true;
+		}
+	}
+
+	return repeated;
+}
+
 static void HandleEvents(void)
 {
   extern int ctrlDown, shiftDown, altDown;
@@ -901,6 +952,8 @@ static void HandleEvents(void)
     {
 	  case KeyPress:
 	  case KeyRelease:
+		  if (repeated_press(&event))
+			  break;
 		  key = XLateKey(&event.xkey);
 		  if (key == K_CTRL  || key == K_LCTRL  || key == K_RCTRL)
         ctrlDown  = event.type == KeyPress;
