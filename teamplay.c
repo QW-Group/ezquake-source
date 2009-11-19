@@ -2404,7 +2404,7 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
 */
 // tp_point
 #define default_pointflags ((unsigned int) (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
-				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_runes|it_nails))
+				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_runes))
 
 unsigned int pkflags = default_pkflags;
 unsigned int tookflags = default_tookflags;
