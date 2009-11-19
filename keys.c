@@ -2138,8 +2138,11 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
 	{
 		Key_ClearStates(); // Zzzz
+		con_suppress = true;
 		Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );
 		Cbuf_AddText( "vid_restart\n" );
+		Cbuf_Execute();
+		con_suppress = false;
 		return;
 	}
 	#endif // __linux__ GLQUAKE
