@@ -352,9 +352,9 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
-		snprintf(outstring, sizeof(outstring), "&r%s &c900killed you&r\n%s deaths: %i", VX_Name(killer), GetWeaponName(weapon), player_wcount);
+		snprintf(outstring, sizeof(outstring), "&r%s &c900killed you&r\n%s deaths: %i", cl.players[killer].name, GetWeaponName(weapon), player_wcount);
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
-		snprintf(outstring, sizeof(outstring), "&c900You killed &r%s\n%s kills: %i", VX_Name(player), GetWeaponName(weapon), killer_wcount);
+		snprintf(outstring, sizeof(outstring), "&c900You killed &r%s\n%s kills: %i", cl.players[player].name, GetWeaponName(weapon), killer_wcount);
     
     if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
         VX_OwnFragNew(cl.players[player].name);
@@ -402,11 +402,11 @@ void VX_TrackerTK_XvsY(int player, int killer, int weapon, int p_count, int p_ic
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 	{
-		snprintf(outstring, sizeof(outstring), "&c380Teammate&r %s &c900killed you\nTimes: %i\nTotal Teamkills: %i", VX_Name(killer), p_icount, p_count);
+		snprintf(outstring, sizeof(outstring), "&c380Teammate&r %s &c900killed you\nTimes: %i\nTotal Teamkills: %i", cl.players[killer].name, p_icount, p_count);
 	}
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
 	{
-		snprintf(outstring, sizeof(outstring), "&c900You killed &c380teammate&r %s\nTimes: %i\nTotal Teamkills: %i", VX_Name(player), k_icount, k_count);
+		snprintf(outstring, sizeof(outstring), "&c900You killed &c380teammate&r %s\nTimes: %i\nTotal Teamkills: %i", cl.players[player].name, k_icount, k_count);
 	}
 
 	VX_TrackerAddText(outstring, tt_death);
