@@ -379,6 +379,30 @@ void Cbuf_AddEarlyCommands (void)
 	}
 }
 
+qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
+{
+	char*	banned_list[] = {"set ", "cfg_load ", NULL};
+	char**	banned_cmd = banned_list;
+
+	while(*banned_cmd)
+	{
+		if(strncasecmp(str, *banned_cmd, strlen(*banned_cmd)) == 0)
+		{
+			if(strncasecmp(str, "cfg_load ", 9) == 0)
+			{
+				Com_Printf("\x02" "Please use -config <cfgname> to load named config, after that RTFM and DIE!\n");
+				Com_Printf("    -Sincerely yours, ezQuake DEV-TEAM\n");
+			}
+			else if(strncasecmp(str, "set ", 9) != 0) //+set is processed in Cbuf_AddEarlyCommands()
+			{
+				Com_Printf("+%s is not allowed in cmdline or obsolete, please RTFM a bit!\n", *banned_cmd);
+			}
+			return false;
+		}
+		banned_cmd++;
+	}
+	return true;
+}
 
 /*
 Adds command line parameters as script statements
@@ -417,7 +441,7 @@ void Cmd_StuffCmds_f (void)
 				token[k++] = s[0];
 			token[k++] = '\n';
 			token[k] = 0;
-			if (strncasecmp(token, "set ", 4))
+			if(Cmd_IsAllowedStuffCmdsCommand(token))
 				Cbuf_AddText (token);
 		} else if (*s == '-') {
 			for (s = s + 1; s[0] && s[0] != ' '; s++)

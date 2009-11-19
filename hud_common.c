@@ -5354,10 +5354,6 @@ void SCR_HUD_DrawScoresTeam(hud_t *hud)
         align		= HUD_FindVar(hud, "align");
 		colorize	= HUD_FindVar(hud, "colorize");
     }
-
-	// draw scores for 1st view only
-	if(cl_multiview.value && CURRVIEW != 1)
-		return;
 	
 	//
 	// AAS: someone please tell me how to do it in a proper way!
@@ -5407,10 +5403,6 @@ void SCR_HUD_DrawScoresEnemy(hud_t *hud)
         align		= HUD_FindVar(hud, "align");
 		colorize	= HUD_FindVar(hud, "colorize");
     }
-
-	// draw scores for 1st view only
-	if (cl_multiview.value && CURRVIEW != 1)
-		return;
 	
 	//
 	// AAS: voodoo, again
@@ -5463,9 +5455,6 @@ void SCR_HUD_DrawScoresDifference(hud_t *hud)
 		colorize	= HUD_FindVar(hud, "colorize");
     }
 
-	// draw scores for 1st view only
-	if (cl_multiview.value && CURRVIEW != 1)
-		return;
 	//
 	// AAS: more voodoo
 	//
@@ -5544,10 +5533,6 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 		format_big	= HUD_FindVar(hud, "format_big");
 		format_small= HUD_FindVar(hud, "format_small");
     }
-
-	// draw scores for 1st view only
-	if (cl_multiview.value && CURRVIEW != 1)
-		return;
 
 	//
 	// AAS: nightmare comes back

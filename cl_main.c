@@ -205,6 +205,7 @@ cvar_t	msg						= {"msg", "1", CVAR_USERINFO};
 cvar_t  noaim					= {"noaim", "1", CVAR_USERINFO};
 cvar_t	w_switch				= {"w_switch", "", CVAR_USERINFO};
 cvar_t	b_switch				= {"b_switch", "", CVAR_USERINFO};
+cvar_t	railcolor				= {"railcolor", "", CVAR_USERINFO};
 
 cvar_t  cl_mediaroot			= {"cl_mediaroot", "0"};
 
@@ -1750,6 +1751,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&bottomcolor);
 	Cvar_Register (&w_switch);
 	Cvar_Register (&b_switch);
+	Cvar_Register (&railcolor);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register (&cl_predict_players);

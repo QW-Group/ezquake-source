@@ -752,7 +752,7 @@ void DumpConfig(char *name)
 	char	*outfile, *newlines = "\n";
 
 	if (cfg_use_home.integer) // homedir
-		outfile = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, name);
+		outfile = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "" : com_gamedirfile, name);
 	else // basedir
 		outfile = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, name);
 
@@ -879,7 +879,7 @@ void SaveConfig_f(void)
 
 	if (cfg_backup.integer) {
 		if (cfg_use_home.integer)	// homedir
-			filename_ext = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, filename);
+			filename_ext = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "" : com_gamedirfile, filename);
 		else	// basedir
 			filename_ext = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, filename);
 
@@ -952,8 +952,8 @@ qbool LoadCfg(FILE *f)
 	example how it works
 	
 	=== ./ezquake -game testmod -config testcfg
-	home/testmod/testcfg.cfg (fullname)
-	home/ezquake/ezquake/testcfg.cfg (fullname_moddefault)
+	homedir/testmod/testcfg.cfg (fullname)
+	homedir/testcfg.cfg (fullname_moddefault)
 	quakedir/testmod/configs/testcfg.cfg
 	quakedir/ezquake/configs/testcfg.cfg
 	built-in ezquake config
@@ -970,11 +970,11 @@ void LoadConfig_f(void)
 	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
 	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
-	use_home = cfg_use_home.integer || !host_everything_loaded;
+	use_home = cfg_use_home.integer;
 
 	// home
-	snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
-	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/%s", com_homedir, filename);
+	snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : com_gamedirfile, filename);
+	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
 
 	if(use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
 	{
