@@ -172,8 +172,8 @@ int BestWeaponFromStatItems (int stat);
 #define NUM_ITEMFLAGS 32
  
 #define it_runes	(it_rune1|it_rune2|it_rune3|it_rune4)
-#define it_powerups	(it_quad|it_pent|it_ring)
-#define it_weapons	(it_lg|it_rl|it_gl|it_sng)// Does anyone really care to report ng/ssg?
+#define it_powerups	(it_quad|it_pent|it_ring|it_suit)
+#define it_weapons	(it_lg|it_rl|it_gl|it_sng|it_ssg)
 #define it_armor	(it_ra|it_ya|it_ga)
 #define it_ammo		(it_cells|it_rockets|it_nails|it_shells)
 #define it_players	(it_teammate|it_enemy|it_eyes)

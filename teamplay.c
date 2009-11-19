@@ -2389,11 +2389,11 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
                    "teammate", "enemy", "eyes", "sentry", "disp", "quaded", "pented", \
 				   "rune1", "rune2", "rune3", "rune4", "resistance", "strength", "haste", "regeneration"};
 
-#define default_pkflags ((unsigned int) (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
-				it_rockets|it_cells||it_pack|it_flag|it_runes))
+#define default_pkflags ((unsigned int) (it_powerups|it_armor|it_weapons|it_mh|it_pack| \
+				it_rockets|it_cells|it_pack|it_flag|it_runes))
 
  // tp_took
-#define default_tookflags ((unsigned int) (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack| \
+#define default_tookflags ((unsigned int) (it_powerups|it_armor|it_weapons|it_pack| \
 				it_rockets|it_cells|it_mh|it_flag|it_runes))
 
 /*
@@ -2403,8 +2403,8 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
  below are defaults for tp_point (what comes up in point. also see tp_pointpriorities to prioritize this list) First items have highest priority (powerups in this case)
 */
 // tp_point
-#define default_pointflags ((unsigned int) (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
-				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_runes))
+#define default_pointflags ((unsigned int) (it_powerups|it_players|it_armor|it_weapons|it_mh|it_pack| \
+				it_rockets|it_cells|it_sentry|it_disp|it_flag|it_runes))
 
 unsigned int pkflags = default_pkflags;
 unsigned int tookflags = default_tookflags;
