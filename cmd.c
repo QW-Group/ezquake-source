@@ -390,7 +390,7 @@ qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 		{
 			if(strncasecmp(str, "cfg_load ", 9) == 0)
 			{
-				Com_Printf("Dear user, please use \"-config <cfgname>\" to load named config.\n");
+				Com_Printf("+cfg_load is deprecated; use -config instead\n");
 			}
 			else if(strncasecmp(str, "set ", 4) != 0) //+set is processed in Cbuf_AddEarlyCommands()
 			{

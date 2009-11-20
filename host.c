@@ -594,12 +594,24 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	if (!dedicated) {
 		char cfg[MAX_PATH] = {0};
-		int i;
+		int i, j;
+		char *cfg_name;
 
 		ResetBinds();
 
 		i = COM_CheckParm("-config");
-		snprintf(cfg, sizeof(cfg), (i && (i + 1 < COM_Argc())) ? COM_Argv(i + 1) : "config.cfg");
+		j = COM_CheckParm("+cfg_load");
+
+		if (i && (i + 1 < COM_Argc())) {
+			cfg_name = COM_Argv(i + 1);
+		}
+		else if (j && (j + 1 < COM_Argc())) {
+			cfg_name = COM_Argv(j + 1);	
+		}
+		else {
+			cfg_name = "config.cfg";
+		}
+		snprintf(cfg, sizeof(cfg), "%s", cfg_name);
 		COM_ForceExtensionEx (cfg, ".cfg", sizeof (cfg));
 		Cbuf_AddText(va("cfg_load %s\n", cfg));
 		Cbuf_Execute();
