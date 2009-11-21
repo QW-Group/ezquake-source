@@ -1909,11 +1909,9 @@ void CL_Init (void)
 
 #ifdef __linux__
 	IN_Init ();
-#endif
-
 	VID_Init (host_basepal);
-
-#ifndef __linux__
+#else
+	VID_Init (host_basepal);
 	IN_Init ();
 #endif
 
@@ -2017,7 +2015,7 @@ static double CL_MinFrameTime (void)
 	if (cls.timedemo || Movie_IsCapturing())
 		return 0;
 
-#if defined(_WIN32) || defined(__linux__) || defined (__FreeBSD__)
+#if defined (_WIN32) || defined (__linux__) || defined (__FreeBSD__)
 	if (Minimized)
 		return 30;
 #endif
@@ -2168,7 +2166,7 @@ void CL_Frame (double time)
 	{
 		extern cvar_t sys_yieldcpu;
 		if (sys_yieldcpu.integer
-		#if defined(_WIN32) || defined(__linux__) || defined (__FreeBSD__)
+		#if defined (_WIN32) || defined (__linux__) || defined (__FreeBSD__)
 			|| Minimized
 		#endif
 			)
@@ -2383,13 +2381,13 @@ void CL_Frame (double time)
 		if (key_dest != key_game) // add chat flag if in console, menus, mm1, mm2 etc...
 			cif_flags |= CIF_CHAT;
 
-		#if defined(_WIN32) || defined(__linux__) || defined (__FreeBSD__)
+		#if defined (_WIN32) || defined (__linux__) || defined (__FreeBSD__)
 		// add AFK flag if app minimized, or not the focus
 		// FIXME: i dunno how to check the same for *nix
 		// TODO: may be add afk flag on idle? if no user input in 45 seconds for example?
 		if (!ActiveApp || Minimized)
 			cif_flags |= CIF_AFK;
-		#endif // WIN32 or linux
+		#endif // WIN32 or linux or FreeBSD
 
 		if (cif_flags && cls.state >= ca_connected) // put key in userinfo only then we are connected, remove key if we not connected yet
 			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
@@ -2533,7 +2531,7 @@ void CL_Frame (double time)
 	IRC_Update();
 #endif
 
-#if defined(_WIN32) || defined (__linux__)
+#if defined (_WIN32) || defined (__linux__)
 	updateMumble();
 #endif
 
