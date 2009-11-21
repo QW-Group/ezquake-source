@@ -135,9 +135,15 @@ cvar_t	scr_qtvbuffer			= {"scr_qtvbuffer", "0"};
 cvar_t	scr_qtvbuffer_x			= {"scr_qtvbuffer_x", "0"};
 cvar_t	scr_qtvbuffer_y			= {"scr_qtvbuffer_y", "-10"};
 
-cvar_t	show_speed				= {"show_speed", "0"};
+cvar_t	show_speed			= {"show_speed", "0"};
 cvar_t	show_speed_x			= {"show_speed_x", "-1"};
 cvar_t	show_speed_y			= {"show_speed_y", "1"};
+
+#ifdef GLQUAKE
+cvar_t	show_velocity_3d		= {"show_velocity_3d", "0"};
+cvar_t	show_velocity_3d_offset_forward	= {"show_velocity_3d_offset_forward", "5"};
+cvar_t	show_velocity_3d_offset_down	= {"show_velocity_3d_offset_down", "5"};
+#endif
 
 cvar_t	show_fps				= {"show_fps", "0"};
 cvar_t	show_fps_x				= {"show_fps_x", "-5"};
@@ -4264,6 +4270,12 @@ void SCR_Init (void)
 	Cvar_Register (&show_speed);
 	Cvar_Register (&show_speed_x);
 	Cvar_Register (&show_speed_y);
+
+#ifdef GLQUAKE
+	Cvar_Register (&show_velocity_3d);
+	Cvar_Register (&show_velocity_3d_offset_forward);
+	Cvar_Register (&show_velocity_3d_offset_down);
+#endif
 
 	Cvar_Register (&show_fps);
 	Cvar_Register (&show_fps_x);

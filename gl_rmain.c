@@ -33,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_bloom.h"
 #include "rulesets.h"
 
+#ifdef GLQUAKE
+	// for  show_velocity3d which is available only for GL
+	#include "pmove.h"
+#endif
 
 entity_t	r_worldentity;
 
@@ -2079,11 +2083,78 @@ void R_Clear (void) {
 	glDepthRange (gldepthmin, gldepthmax);
 }
 
+// player velocity is drawn on screen
+// as 3d vector and its projections
+void draw_velocity_3d(void)
+{
+  extern cvar_t show_velocity_3d_offset_forward;
+  extern cvar_t show_velocity_3d_offset_down;
+
+  const vec3_t *const origin = &r_refdef.vieworg;
+  const vec3_t *const angles = &r_refdef.viewangles;
+
+  const float vx = pmove.velocity[0];
+  const float vy = pmove.velocity[1];
+  const float vz = pmove.velocity[2];
+
+  const float yaw_degrees = (*angles)[YAW];
+  const float yaw = DEG2RAD(yaw_degrees);
+
+  const double c = cos(yaw);
+  const double s = sin(yaw);
+
+  const double scale_factor = 0.04;
+  const float v_side = (float) (scale_factor * (-vx * s + vy * c));
+  const float v_forward = (float) (scale_factor * (vx * c + vy * s));
+  const float v_up = (float) (scale_factor * vz);
+
+  glPushMatrix();
+
+  glTranslatef((*origin)[0], (*origin)[1], (*origin)[2]);
+  glRotatef(yaw_degrees, 0, 0, 1);
+  glTranslatef(show_velocity_3d_offset_forward.value,
+               0, -show_velocity_3d_offset_down.value);
+
+  //TODO: when r_drawviewmodel 0 lines  are just gray. Why?
+  glColor4f(1.f, 0.f, 0.f, 1.f);
+  glLineWidth(10.f);
+  glBegin(GL_LINES);
+  glVertex3f(0, 0, 0);
+  glVertex3f(v_forward, v_side, 0);
+  glEnd();
+
+  glColor4f(0.f, 1.f, 0.f, 1.f);
+  glBegin(GL_LINES);
+  glVertex3f(0, 0, 0);
+  glVertex3f(v_forward, v_side, v_up);
+  glEnd();
+
+  glColor4f(0.5f, 0.5f, 0.5f, 1.f);
+  glLineWidth(5.f);
+  glLineStipple(1, 0xFF00);
+  glEnable(GL_LINE_STIPPLE);
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, v_side, 0);
+  glVertex3f(v_forward, v_side, 0);
+  glVertex3f(v_forward, 0, 0);
+  glEnd();
+
+  glBegin(GL_LINES);
+  glVertex3f(v_forward, v_side, 0);
+  glVertex3f(v_forward, v_side, v_up);
+  glEnd();
+
+  glDisable(GL_LINE_STIPPLE);
+
+  glPopMatrix();
+}
+
 void DrawCI (void);
 
 void R_RenderView (void) {
 	double time1 = 0, time2;
-
 	if (!r_worldentity.model || !cl.worldmodel)
 		Sys_Error ("R_RenderView: NULL worldmodel");
 
@@ -2113,6 +2184,11 @@ void R_RenderView (void) {
 
 	R_DrawViewModel ();
 
+	{
+		extern cvar_t show_velocity_3d;
+		if(show_velocity_3d.integer) draw_velocity_3d();
+	}
+
 	SCR_SetupAutoID ();
 
 	if (cl_multiview.value && cls.mvdplayback)
@@ -2135,3 +2211,4 @@ void R_RenderView (void) {
 		Com_Printf ("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys); 
 	}
 }
+
