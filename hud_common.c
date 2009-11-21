@@ -5510,6 +5510,54 @@ void SCR_HUD_DrawScoresDifference(hud_t *hud)
     SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
 }
 
+void SCR_HUD_DrawScoresPosition(hud_t *hud)
+{
+    static cvar_t *scale = NULL, *style, *digits, *align, *colorize;
+	int value = 0;
+	int i;
+
+    if (scale == NULL)  // first time called
+    {
+        scale		= HUD_FindVar(hud, "scale");
+        style		= HUD_FindVar(hud, "style");
+        digits		= HUD_FindVar(hud, "digits");
+        align		= HUD_FindVar(hud, "align");
+		colorize	= HUD_FindVar(hud, "colorize");
+    }
+
+	//
+	// AAS: someone, please stop me
+	//
+	if(cl.teamplay)
+	{
+		for(i = 0; i < n_teams; i++)
+		{
+			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
+			{
+				value = i;
+				break;
+			}
+		}
+	}
+	else if(cl.deathmatch)
+	{
+		for(i = 0; i < n_players; i++)
+		{
+			if( (cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
+				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
+				(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
+			{
+				value = i;
+				break;
+			}
+		}
+	}
+
+    SCR_HUD_DrawNum(hud, value, (colorize->integer) ? (value < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string);
+}
+
 /*
 	ezQuake's analogue of +scores of KTX
 	( t:x e:x [x] )
@@ -5537,7 +5585,6 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 	//
 	// AAS: nightmare comes back
 	//
-
 	if(cl.teamplay)
 	{
 		for(i = 0; i < n_teams; i++)
@@ -5609,6 +5656,10 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 						case 'E':
 							temp = va("c%dr", s_enemy);
 							width += (s_enemy >= 0) ? (strlen(temp) - 2) * 24 : ((strlen(temp) - 3) * 24) + 16;
+							break;
+						case 'p':
+							temp = va("%d", i + 1);
+							width += 24;
 							break;
 						case 't':
 							temp = va("%d", s_team);
@@ -5686,6 +5737,9 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 							break;
 						case 'd':
 							temp = va("%d", s_difference);
+							break;
+						case 'p':
+							temp = va("%d", i + 1);
 							break;
 						case 'T':
 							temp = n_team;
@@ -7840,7 +7894,18 @@ void CommonDraw_Init(void)
 		"colorize", "1",
         NULL
 		);
-	
+
+	HUD_Register("score_position", NULL, "Position on scoreboard.",
+        0, ca_active, 0, SCR_HUD_DrawScoresPosition,
+        "0", "score_difference", "after", "bottom", "0", "0", "0.5", "0 0 0", NULL,
+        "style", "0",
+        "scale", "1",
+        "align", "right",
+        "digits", "0",
+		"colorize", "1",
+        NULL
+		);
+
 	HUD_Register("score_bar", NULL, "Team, enemy, and difference scores together.",
         HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawScoresBar,
         "0", "screen", "center", "console", "0", "0", "0.5", "0 0 0", NULL,
