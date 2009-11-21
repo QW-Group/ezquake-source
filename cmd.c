@@ -388,11 +388,8 @@ qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 	{
 		if(strncasecmp(str, *banned_cmd, strlen(*banned_cmd)) == 0)
 		{
-			if(strncasecmp(str, "cfg_load ", 9) == 0)
-			{
-				Com_Printf("+cfg_load is deprecated; use -config instead\n");
-			}
-			else if(strncasecmp(str, "set ", 4) != 0) //+set is processed in Cbuf_AddEarlyCommands()
+			//+set is processed in Cbuf_AddEarlyCommands(), +cfg_load allowed only once in Host_Init()
+			if((strncasecmp(str, "set ", 4) != 0) && (strncasecmp(str, "cfg_load ", 9) != 0))
 			{
 				Com_Printf("+%s is not allowed in cmdline or obsolete.\n", *banned_cmd);
 			}
