@@ -289,6 +289,7 @@ void SYSINFO_Init(void)
 	char cpu_model[256];
 
 	int mib[2], val;
+	unsigned long val_ul;
 	size_t len;
 
 #ifdef id386
@@ -306,9 +307,9 @@ void SYSINFO_Init(void)
 // VVD: We can use HW_REALMEM (hw.realmem) for RELENG_5/6/7 for getting exact result,
 // but RELENG_4 have only HW_PHYSMEM (hw.physmem).
 	len = sizeof(val);
-	sysctl(mib, sizeof(mib) / sizeof(mib[0]), &val, &len, NULL, 0);
+	sysctl(mib, sizeof(mib) / sizeof(mib[0]), &val_ul, &len, NULL, 0);
 
-	SYSINFO_memory = val;
+	SYSINFO_memory = val_ul;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_MODEL;

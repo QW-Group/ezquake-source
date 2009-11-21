@@ -185,6 +185,7 @@ void GL_Init (void) {
 	gl_extensions = (const char*) qglGetString (GL_EXTENSIONS);
 
 #if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
+/* FIXME/TODO: FreeBSD too? */
 	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n",   gl_vendor);
 	Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", gl_renderer);
 	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n",  gl_version);

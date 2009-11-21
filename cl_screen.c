@@ -3378,7 +3378,7 @@ void SCR_UpdateScreen (void)
 			return;
 	}
 
-	#if defined(_WIN32) || defined(__linux__)
+	#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 	{	
 		// Don't suck up any cpu if minimized.
 		extern int Minimized;
@@ -3386,7 +3386,7 @@ void SCR_UpdateScreen (void)
 		if (Minimized)
 			return;
 	}
-	#endif // _WIN32 or __linux__
+	#endif // _WIN32 or __linux__ or __FreeBSD__
 
 	vid.numpages = 2 + gl_triplebuffer.value;
 
@@ -3517,7 +3517,7 @@ void SCR_UpdateScreen (void)
 			return;
 	}
 
-#if defined(_WIN32) || defined(__linux__)
+#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 	{	// don't suck up any cpu if minimized
 		extern int Minimized;
 

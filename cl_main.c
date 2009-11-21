@@ -92,7 +92,7 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #if defined (_WIN32) || defined (__linux__)
 #include "mumble.h"
 #endif
-#ifdef __linux__
+#if defined (__linux__) || defined (__FreeBSD__)
 extern qbool ActiveApp, Minimized;
 #endif
 
@@ -2017,7 +2017,7 @@ static double CL_MinFrameTime (void)
 	if (cls.timedemo || Movie_IsCapturing())
 		return 0;
 
-#if defined(_WIN32) || defined(__linux__)
+#if defined(_WIN32) || defined(__linux__) || defined (__FreeBSD__)
 	if (Minimized)
 		return 30;
 #endif
@@ -2167,11 +2167,11 @@ void CL_Frame (double time)
 	if (extratime < minframetime) 
 	{
 		extern cvar_t sys_yieldcpu;
-		#if defined(_WIN32) || defined(__linux__)
-		if (sys_yieldcpu.integer || Minimized)
-		#else
-		if (sys_yieldcpu.integer)
+		if (sys_yieldcpu.integer
+		#if defined(_WIN32) || defined(__linux__) || defined (__FreeBSD__)
+			|| Minimized
 		#endif
+			)
 		{
 			#ifdef _WIN32
 			Sys_MSleep(0);
@@ -2383,7 +2383,7 @@ void CL_Frame (double time)
 		if (key_dest != key_game) // add chat flag if in console, menus, mm1, mm2 etc...
 			cif_flags |= CIF_CHAT;
 
-		#if defined(_WIN32) || defined(__linux__)
+		#if defined(_WIN32) || defined(__linux__) || defined (__FreeBSD__)
 		// add AFK flag if app minimized, or not the focus
 		// FIXME: i dunno how to check the same for *nix
 		// TODO: may be add afk flag on idle? if no user input in 45 seconds for example?

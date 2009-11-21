@@ -226,7 +226,7 @@ const char* scr_conback_enum[] = {
 
 const char* s_khz_enum[] = {
 	"11 kHz", "11", "22 kHz", "22", "44 kHz", "44"
-#if defined(__linux__)
+#if defined(__linux__) || defined(__FreeBSD__)
 	,"48 kHz", "48"
 #endif
 };
@@ -1178,7 +1178,7 @@ setting settbinds_arr[] = {
     ADDSET_STRING   ("X-axis Sensitivity", m_yaw),
     ADDSET_STRING   ("Y-axis Sensitivity", m_pitch),
 // maybe its okay for FreeBSD and MAC OS X too
-#if defined(_WIN32) || (defined(__linux__) && defined(GLQUAKE))
+#if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(GLQUAKE))
 	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
 #endif
 #ifdef _WIN32
