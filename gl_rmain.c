@@ -2115,7 +2115,11 @@ void draw_velocity_3d(void)
   glTranslatef(show_velocity_3d_offset_forward.value,
                0, -show_velocity_3d_offset_down.value);
 
-  //TODO: when r_drawviewmodel 0 lines  are just gray. Why?
+  glPushAttrib(GL_LINE_BIT | GL_TEXTURE_BIT);
+
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_LINE_STIPPLE);
+
   glColor4f(1.f, 0.f, 0.f, 1.f);
   glLineWidth(10.f);
   glBegin(GL_LINES);
@@ -2146,8 +2150,7 @@ void draw_velocity_3d(void)
   glVertex3f(v_forward, v_side, v_up);
   glEnd();
 
-  glDisable(GL_LINE_STIPPLE);
-
+  glPopAttrib();
   glPopMatrix();
 }
 
