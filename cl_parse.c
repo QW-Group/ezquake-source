@@ -2551,7 +2551,7 @@ void CL_ParsePrint (void)
 	if (level == PRINT_CHAT) 
 	{
 		if (TP_SuppressMessage (s)) {
-			Com_DPrintf("Suppressed TP message: %s\n", s)
+			Com_DPrintf("Suppressed TP message: %s\n", s);
 			return;
 		}
 
