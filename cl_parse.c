@@ -1447,6 +1447,24 @@ void CL_ParseServerData (void)
 	if (!com_serveractive)
 		FS_SetGamedir (str);
 
+	if(cflag && cfg_exec_onconnect.integer)
+	{
+		//char cfg[MAX_PATH] = {0};
+		int i = COM_CheckParm("+cfg_load");
+
+		// only config.cfg
+		if(cfg_exec_onconnect.integer == 1)
+		{
+			Cbuf_AddText("cfg_load config.cfg\n");
+		}
+		// only named.cfg specified as +cfg_load parameter
+		else if(cfg_exec_onconnect.integer == 2 && (i && (i + 1 < COM_Argc())))
+		{
+			Cbuf_AddText(va("cfg_load %s\n", COM_Argv(i + 1)));
+		}
+	}
+
+
 	// parse player slot, high bit means spectator
 	if (cls.mvdplayback)
 	{

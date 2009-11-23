@@ -73,6 +73,7 @@ cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1"};
 cvar_t	cfg_backup			=	{"cfg_backup", "0"};
 cvar_t  cfg_use_home		=	{"cfg_use_home", "0"};
 cvar_t  cfg_use_gamedir		=	{"cfg_use_gamedir", "1"};
+cvar_t	cfg_exec_onconnect	=	{"cfg_exec_onconnect", "1"};
 
 /************************************ DUMP FUNCTIONS ************************************/
 
@@ -995,7 +996,12 @@ void LoadConfig_f(void)
 	con_suppress = true;
 	ResetConfigs(false, true);
 	con_suppress = false;
-	Com_Printf("Loading %s ...\n", filename);
+
+	if(use_home)
+		Com_Printf("Loading %s%s (Using Home Directory) ...\n", (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/",com_gamedirfile), filename);
+	else
+		Com_Printf("Loading %s/configs/%s ...\n", (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
+	
 	Cbuf_AddText ("cl_warncmd 0\n");
 
 	LoadCfg(f);
@@ -1094,5 +1100,6 @@ void ConfigManager_Init(void)
 	Cvar_Register(&cfg_backup);
 	Cvar_Register(&cfg_use_home);
 	Cvar_Register(&cfg_use_gamedir);
+	Cvar_Register(&cfg_exec_onconnect);
 	Cvar_ResetCurrentGroup();
 }

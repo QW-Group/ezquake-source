@@ -236,6 +236,7 @@ const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smack
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
 const char *teamforceskins_enum[] = { "off", "use player's name", "use player's userid", "set t1, t2, t3, ..." };
 const char *enemyforceskins_enum[] = { "off", "use player's name", "use player's userid", "set e1, e2, e3, ..." };
+const char *cfg_exec_onconnect_enum[] = {"nothing", "0", "config.cfg", "1", "+cfg_load argument", "2"};
 
 #ifdef _WIN32
 const char *priority_enum[] = { "low", "-1", "normal", "0", "high", "1" };
@@ -657,7 +658,7 @@ CEditBox filenameeb;
 enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode = MOCPM_SETTINGS;
 
 extern cvar_t cfg_backup, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
-	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home, cfg_save_onquit, cfg_use_gamedir;
+	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home, cfg_save_onquit, cfg_use_gamedir, cfg_exec_onconnect;
 
 void MOpt_ImportConfig(void) {
 	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
@@ -1392,6 +1393,7 @@ setting settconfig_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL("Save To Profile Dir", cfg_use_home),
 	ADDSET_BOOL("Save To Mod Directory", cfg_use_gamedir),
+	ADDSET_ENUM("Exec On Connect", cfg_exec_onconnect, cfg_exec_onconnect_enum),
     ADDSET_BASIC_SECTION(),
 	ADDSET_ACTION("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 
