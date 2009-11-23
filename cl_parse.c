@@ -2532,8 +2532,10 @@ void CL_ParsePrint (void)
 
 	if (level == PRINT_CHAT) 
 	{
-		if (TP_SuppressMessage (s))
+		if (TP_SuppressMessage (s)) {
+			Com_DPrintf("Suppressed TP message: %s\n", s)
 			return;
+		}
 
 		s0 = wcs2str (s); // TP_SuppressMessage may modify the source string, so s0 should be updated
 
@@ -2547,18 +2549,26 @@ void CL_ParsePrint (void)
 
 		s0 = wcs2str (s); // Auth_CheckResponse may modify the source string, so s0 should be updated
 
-		if (Ignore_Message(s0, flags, offset)) // @CHECKME@
+		if (Ignore_Message(s0, flags, offset)) {
+			Com_DPrintf("Ignoring message: %s\n", s0);
 			return;
+		}
 
-		if (flags == 0 && ignore_qizmo_spec.value && strlen (s0) > 0 && s0[0] == '[' && strstr(s0, "]: ") )
+		if (flags == 0 && ignore_qizmo_spec.value && strlen (s0) > 0 && s0[0] == '[' && strstr(s0, "]: ") ) {
+			Com_DPrintf("Ignoring qizmo message: %s\n", s0);
 			return;
+		}
 
-		if (flags == 2 && !TP_FilterMessage (s + offset))
+		if (flags == 2 && !TP_FilterMessage (s + offset)) {
+			Com_DPrintf("Filtered message: %s\n", s0);
 			return;
+		}
 
 		check_flood = Ignore_Check_Flood(s0, flags, offset); // @CHECKME@
-		if (check_flood == IGNORE_NO_ADD)
+		if (check_flood == IGNORE_NO_ADD) {
+			Com_DPrintf("Ignoring flood message: %s\n", s0);
 			return;
+		}
 		else if (check_flood == NO_IGNORE_ADD)
 			Ignore_Flood_Add(s0); // @CHECKME@
 
