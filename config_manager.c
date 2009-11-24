@@ -71,9 +71,9 @@ cvar_t	cfg_save_binds		=	{"cfg_save_binds", "1"};
 cvar_t	cfg_save_sysinfo	=	{"cfg_save_sysinfo", "0"};
 cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1"};
 cvar_t	cfg_backup			=	{"cfg_backup", "0"};
+cvar_t	cfg_legacy_exec		=	{"cfg_legacy_exec", "1"};
 cvar_t  cfg_use_home		=	{"cfg_use_home", "0"};
 cvar_t  cfg_use_gamedir		=	{"cfg_use_gamedir", "1"};
-cvar_t	cfg_exec_onconnect	=	{"cfg_exec_onconnect", "1"};
 
 /************************************ DUMP FUNCTIONS ************************************/
 
@@ -975,7 +975,7 @@ void LoadConfig_f(void)
 	use_home = cfg_use_home.integer || !host_everything_loaded;
 
 	// home
-	snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : com_gamedirfile, filename);
+	snprintf(fullname, sizeof(fullname), "%s/%s%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/", com_gamedirfile), filename);
 	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
 
 	if(use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
@@ -1098,8 +1098,8 @@ void ConfigManager_Init(void)
 	Cvar_Register(&cfg_save_cmdline);
 	Cvar_Register(&cfg_save_sysinfo);
 	Cvar_Register(&cfg_backup);
+	Cvar_Register(&cfg_legacy_exec);
 	Cvar_Register(&cfg_use_home);
 	Cvar_Register(&cfg_use_gamedir);
-	Cvar_Register(&cfg_exec_onconnect);
 	Cvar_ResetCurrentGroup();
 }

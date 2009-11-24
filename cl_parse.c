@@ -1380,7 +1380,8 @@ void CL_StopUpload(void)
 
 void CL_ParseServerData (void) 
 {
-	char *str;
+	char *str, fn[MAX_OSPATH];
+	FILE *f;
 	qbool cflag = false;
 	int i, protover;
 
@@ -1447,21 +1448,46 @@ void CL_ParseServerData (void)
 	if (!com_serveractive)
 		FS_SetGamedir (str);
 
-	if(cflag && cfg_exec_onconnect.integer)
+	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
 	{
-		//char cfg[MAX_PATH] = {0};
-		int i = COM_CheckParm("+cfg_load");
-
-		// only config.cfg
-		if(cfg_exec_onconnect.integer == 1)
+		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");
+		Cbuf_AddText ("cl_warncmd 0\n");
+		if ((f = fopen(fn, "r")) != NULL) 
 		{
-			Cbuf_AddText("cfg_load config.cfg\n");
-		}
-		// only named.cfg specified as +cfg_load parameter
-		else if(cfg_exec_onconnect.integer == 2 && (i && (i + 1 < COM_Argc())))
+			fclose(f);
+			if (!strcmp(cls.gamedirfile, com_gamedirfile))
+				Cbuf_AddText ("exec config.cfg\n");
+			else
+				Cbuf_AddText (va("exec ../%s/config.cfg\n", cls.gamedirfile));
+		} 
+		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{
-			Cbuf_AddText(va("cfg_load %s\n", COM_Argv(i + 1)));
+			snprintf (fn, sizeof(fn), "qw/%s", "config.cfg");
+			if ((f = fopen(fn, "r")) != NULL) 
+			{
+				fclose(f);
+				Cbuf_AddText ("exec config.cfg\n");
+			}
 		}
+		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
+		if ((f = fopen(fn, "r")) != NULL) 
+		{
+			fclose(f);
+			if (!strcmp(cls.gamedirfile, com_gamedirfile))
+				Cbuf_AddText ("exec frontend.cfg\n");
+			else
+				Cbuf_AddText (va("exec ../%s/frontend.cfg\n", cls.gamedirfile));
+		} 
+		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
+		{
+			snprintf (fn, sizeof(fn), "qw/%s", "frontend.cfg");
+			if ((f = fopen(fn, "r")) != NULL) 
+			{
+				fclose(f);
+				Cbuf_AddText ("exec frontend.cfg\n");
+			}
+		}
+		Cbuf_AddText ("cl_warncmd 1\n");
 	}
 
 

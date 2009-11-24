@@ -236,7 +236,6 @@ const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smack
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
 const char *teamforceskins_enum[] = { "off", "use player's name", "use player's userid", "set t1, t2, t3, ..." };
 const char *enemyforceskins_enum[] = { "off", "use player's name", "use player's userid", "set e1, e2, e3, ..." };
-const char *cfg_exec_onconnect_enum[] = {"nothing", "0", "config.cfg", "1", "+cfg_load argument", "2"};
 
 #ifdef _WIN32
 const char *priority_enum[] = { "low", "-1", "normal", "0", "high", "1" };
@@ -658,7 +657,7 @@ CEditBox filenameeb;
 enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode = MOCPM_SETTINGS;
 
 extern cvar_t cfg_backup, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
-	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home, cfg_save_onquit, cfg_use_gamedir, cfg_exec_onconnect;
+	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home, cfg_save_onquit, cfg_use_gamedir, cfg_legacy_exec;
 
 void MOpt_ImportConfig(void) {
 	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
@@ -683,6 +682,7 @@ void MOpt_LoadScript(void) {
 void MOpt_CfgSaveAllOn(void) {
 	S_LocalSound("misc/basekey.wav");
 	Cvar_SetValue(&cfg_backup, 1);
+	Cvar_SetValue(&cfg_legacy_exec, 1);
 	Cvar_SetValue(&cfg_save_aliases, 1);
 	Cvar_SetValue(&cfg_save_binds, 1);
 	Cvar_SetValue(&cfg_save_cmdline, 1);
@@ -692,6 +692,7 @@ void MOpt_CfgSaveAllOn(void) {
 	Cvar_SetValue(&cfg_save_userinfo, 2);
 }
 
+const char* MOpt_legacywrite_enum[] = { "off", "non-qw dir frontend.cfg", "also config.cfg", "non-qw config.cfg" };
 const char* MOpt_userinfo_enum[] = { "off", "all but player", "all" };
 
 void MOpt_LoadCfg(void) {
@@ -1393,7 +1394,6 @@ setting settconfig_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL("Save To Profile Dir", cfg_use_home),
 	ADDSET_BOOL("Save To Mod Directory", cfg_use_gamedir),
-	ADDSET_ENUM("Exec On Connect", cfg_exec_onconnect, cfg_exec_onconnect_enum),
     ADDSET_BASIC_SECTION(),
 	ADDSET_ACTION("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 
@@ -1409,6 +1409,7 @@ setting settconfig_arr[] = {
 	ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Backup Old File", cfg_backup),
+	ADDSET_NAMED("Load Legacy", cfg_legacy_exec, MOpt_legacywrite_enum),
 	ADDSET_BOOL("Aliases", cfg_save_aliases),
 	ADDSET_BOOL("Binds", cfg_save_binds),
 	ADDSET_BOOL("Cmdline", cfg_save_cmdline),

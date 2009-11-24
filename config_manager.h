@@ -26,6 +26,6 @@ void ConfigManager_Init (void);
 void Config_QuitSave(void);
 void ResetBinds(void);
 
-extern cvar_t	cfg_save_unchanged, cfg_exec_onconnect;
+extern cvar_t	cfg_save_unchanged, cfg_legacy_exec;
 
 #endif
