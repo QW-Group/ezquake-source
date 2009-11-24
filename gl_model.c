@@ -2156,6 +2156,11 @@ void Mod_AddModelFlags(model_t *mod)
 		mod->modhint = MOD_BUILDINGGIBS;
 	else if (!strcmp(mod->name, "progs/backpack.mdl"))
 		mod->modhint = MOD_BACKPACK;
+	else if (!strcmp(mod->name, "progs/gib1.mdl") ||
+		!strcmp(mod->name, "progs/gib2.mdl") ||
+		!strcmp(mod->name, "progs/gib3.mdl") ||
+		!strcmp(mod->name, "progs/h_player.mdl"))
+		mod->modhint = MOD_GIB;
 	else
 		mod->modhint = MOD_NORMAL;
 }
