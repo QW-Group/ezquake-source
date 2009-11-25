@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 
 #ifdef GLQUAKE
-	// for  show_velocity3d which is available only for GL
+	// for  show_velocity_3d which is available only for GL
 	#include "pmove.h"
 #endif
 
@@ -2087,10 +2087,11 @@ void R_Clear (void) {
 
 // player velocity is drawn on screen
 // as 3d vector and its projections
-void draw_velocity_3d(void)
+static void draw_velocity_3d(void)
 {
   extern cvar_t show_velocity_3d_offset_forward;
   extern cvar_t show_velocity_3d_offset_down;
+  extern cvar_t show_velocity_3d;
 
   const vec3_t *const origin = &r_refdef.vieworg;
   const vec3_t *const angles = &r_refdef.viewangles;
@@ -2110,47 +2111,68 @@ void draw_velocity_3d(void)
   const float v_forward = (float) (scale_factor * (vx * c + vy * s));
   const float v_up = (float) (scale_factor * vz);
 
+  const float line_width = 10.f;
+  const float stipple_line_width = 5.f;
+  const float stipple_line_colour[3] = { 0.5f, 0.5f, 0.5f };
+  const vec3_t v3_zero = {0.f, 0.f, 0.f };
+
   glPushMatrix();
 
   glTranslatef((*origin)[0], (*origin)[1], (*origin)[2]);
-  glRotatef(yaw_degrees, 0, 0, 1);
+  glRotatef(yaw_degrees, 0.f, 0.f, 1.f);
   glTranslatef(show_velocity_3d_offset_forward.value,
-               0, -show_velocity_3d_offset_down.value);
+               0.f, -show_velocity_3d_offset_down.value);
 
   glPushAttrib(GL_LINE_BIT | GL_TEXTURE_BIT);
 
   glDisable(GL_TEXTURE_2D);
-  glDisable(GL_LINE_STIPPLE);
 
-  glColor4f(1.f, 0.f, 0.f, 1.f);
-  glLineWidth(10.f);
-  glBegin(GL_LINES);
-  glVertex3f(0, 0, 0);
-  glVertex3f(v_forward, v_side, 0);
-  glEnd();
+  switch (show_velocity_3d.integer)
+  {
+    case 1:                    //show vertical
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, 0xFF00);
+      glLineWidth(stipple_line_width);
 
-  glColor4f(0.f, 1.f, 0.f, 1.f);
-  glBegin(GL_LINES);
-  glVertex3f(0, 0, 0);
-  glVertex3f(v_forward, v_side, v_up);
-  glEnd();
+      glColor3fv(stipple_line_colour);
+      glBegin(GL_LINES);
+      glVertex3f(v_forward, v_side, 0.f);
+      glVertex3f(v_forward, v_side, v_up);
+      glEnd();
 
-  glColor4f(0.5f, 0.5f, 0.5f, 1.f);
-  glLineWidth(5.f);
-  glLineStipple(1, 0xFF00);
-  glEnable(GL_LINE_STIPPLE);
+      glDisable(GL_LINE_STIPPLE);
+      glLineWidth(line_width);
+      glColor3f(0.f, 1.f, 0.f);
 
-  glBegin(GL_LINE_LOOP);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0, v_side, 0);
-  glVertex3f(v_forward, v_side, 0);
-  glVertex3f(v_forward, 0, 0);
-  glEnd();
+      glBegin(GL_LINES);
+      glVertex3fv(v3_zero);
+      glVertex3f(v_forward, v_side, v_up);
+      glEnd();
+      //no break here
 
-  glBegin(GL_LINES);
-  glVertex3f(v_forward, v_side, 0);
-  glVertex3f(v_forward, v_side, v_up);
-  glEnd();
+    case 2:                    //show horizontal velocity only
+      glColor3f(1.f, 0.f, 0.f);
+      glLineWidth(line_width);
+      glBegin(GL_LINES);
+      glVertex3fv(v3_zero);
+      glVertex3f(v_forward, v_side, 0.f);
+      glEnd();
+
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, 0xFF00);
+      glColor3fv(stipple_line_colour);
+      glLineWidth(stipple_line_width);
+
+      glBegin(GL_LINE_LOOP);
+      glVertex3fv(v3_zero);
+      glVertex3f(0.f, v_side, 0.f);
+      glVertex3f(v_forward, v_side, 0.f);
+      glVertex3f(v_forward, 0.f, 0.f);
+      glEnd();
+
+    default:
+      break;
+  }
 
   glPopAttrib();
   glPopMatrix();
