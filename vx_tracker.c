@@ -91,6 +91,8 @@ void InitTracker(void)
 
 	Cvar_Register (&amf_tracker_string_suicides);
 	Cvar_Register (&amf_tracker_string_died);
+	Cvar_Register (&amf_tracker_string_teammate);
+	Cvar_Register (&amf_tracker_string_enemy);
 
 	Cvar_Register (&amf_tracker_name_width);
 	Cvar_Register (&amf_tracker_name_skip_prefix);
