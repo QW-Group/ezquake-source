@@ -2017,7 +2017,7 @@ static double CL_MinFrameTime (void)
 
 #if defined (_WIN32) || defined (__linux__) || defined (__FreeBSD__)
 	if (Minimized)
-		return 30;
+		return 1 / 30.0;
 #endif
 
 	if (cls.demoplayback)
