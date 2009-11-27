@@ -2161,6 +2161,8 @@ void Mod_AddModelFlags(model_t *mod)
 		!strcmp(mod->name, "progs/gib3.mdl") ||
 		!strcmp(mod->name, "progs/h_player.mdl"))
 		mod->modhint = MOD_GIB;
+	else if (!strncasecmp(mod->name, "progs/v_", 8))
+		mod->modhint = MOD_VMODEL;
 	else
 		mod->modhint = MOD_NORMAL;
 }

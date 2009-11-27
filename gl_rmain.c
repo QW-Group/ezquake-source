@@ -818,7 +818,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 	}
 	else if (
 		!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
-		(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB)
+		(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL)
 	) {
 		ambientlight = shadelight = 4096;
 	}
