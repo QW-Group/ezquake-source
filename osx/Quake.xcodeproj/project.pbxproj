@@ -2925,7 +2925,9 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../libs/macosx\"";
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = EZQuake;
+				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -3000,7 +3002,9 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../libs/macosx\"";
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "EZQuake-GL";
+				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
