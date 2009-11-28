@@ -89,11 +89,13 @@ extern int        menuheight;
 // Demo browser container
 filelist_t demo_filelist;
 
+static void OnChange_demo_sortmode(cvar_t *var, char *string, qbool *cancel);
+
 // Demo browser cvars
 cvar_t  demo_browser_showsize		= {"demo_browser_showsize",		"1"};
 cvar_t  demo_browser_showdate		= {"demo_browser_showdate",		"1"};
 cvar_t  demo_browser_showtime		= {"demo_browser_showtime",		"0"};
-cvar_t  demo_browser_sortmode		= {"demo_browser_sortmode",		"1"};
+cvar_t  demo_browser_sortmode		= {"demo_browser_sortmode",		"1", CVAR_NONE, OnChange_demo_sortmode};
 cvar_t  demo_browser_showstatus		= {"demo_browser_showstatus",	"1"};
 cvar_t  demo_browser_stripnames		= {"demo_browser_stripnames",	"1"};
 cvar_t  demo_browser_interline		= {"demo_browser_interline",	"0"};
@@ -969,4 +971,12 @@ void Menu_Demo_Init(void)
 	CTab_AddPage(&demo_tab, "Entry", DEMOPG_ENTRY, &demo_entry_handlers);
 	CTab_AddPage(&demo_tab, "Options", DEMOPG_OPTIONS, &demo_options_handlers);
 	CTab_SetCurrentId(&demo_tab, DEMOPG_BROWSER);
+}
+
+static void OnChange_demo_sortmode(cvar_t *var, char *string, qbool *cancel)
+{
+	extern qbool host_everything_loaded;
+
+	if(host_everything_loaded)
+		demo_filelist.need_resort = true;
 }
