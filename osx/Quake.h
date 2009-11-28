@@ -22,6 +22,7 @@
 
 #define	DEFAULT_BASE_PATH			@"Quake ID1 Path"
 #define	DEFAULT_OPTION_KEY			@"Quake Dialog Requires Option Key"
+#define DEFAULT_ITUNESPAUSE			@"Quake Pause iTunes"
 #define DEFAULT_USE_MP3				@"Quake Use MP3"
 #define DEFAULT_MP3_PATH			@"Quake MP3 Path"
 #define DEFAULT_USE_PARAMETERS		@"Quake Use Command-Line Parameters"
@@ -40,6 +41,7 @@
 
 #define INITIAL_BASE_PATH			@"id1"
 #define	INITIAL_OPTION_KEY			@"NO"
+#define INITIAL_ITUNESPAUSE			@"NO"
 #define INITIAL_USE_MP3				@"NO"
 #define INITIAL_MP3_PATH			@""
 #define INITIAL_USE_PARAMETERS		@"NO"
@@ -110,6 +112,7 @@
     NSMutableArray					*mModeList;
 #endif /* GLQUAKE */
 
+    IBOutlet NSButton				*iTunesCheckBox;
     IBOutlet NSButton				*mp3CheckBox;
     IBOutlet NSButton				*mp3Button;
     IBOutlet NSTextField			*mp3TextField;

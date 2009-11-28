@@ -11,6 +11,7 @@
 #pragma mark =Includes=
 
 #import <Cocoa/Cocoa.h>
+#import <Foundation/NSAppleScript.h>
 #import <fcntl.h>
 #import <unistd.h>
 
@@ -1077,6 +1078,11 @@ NSLog (@"C!");
         [self saveCheckBox: fadeAllCheckBox initial: FADE_ALL_INITIAL default: FADE_ALL_DEFAULT
                                                                  userDefaults: myDefaults];
         
+	// save the state of the "iTunes" checkbox:
+        [self saveCheckBox: iTunesCheckBox initial: INITIAL_ITUNESPAUSE
+                                           default: DEFAULT_ITUNESPAUSE
+                                      userDefaults: myDefaults];
+        
         // save the state of the "MP3" checkbox:
         [self saveCheckBox: mp3CheckBox initial: INITIAL_USE_MP3
                                         default: DEFAULT_USE_MP3
@@ -1108,6 +1114,14 @@ NSLog (@"C!");
             {
                 [self stringToParameters: [parameterTextField stringValue]];
             }
+        }
+        
+        if ([iTunesCheckBox state] == YES)
+        {
+            NSAppleScript *aps = [[NSAppleScript alloc] initWithSource: @"tell application \"iTunes\" to pause"];
+
+            [aps executeAndReturnError:nil];
+            [aps dealloc];
         }
         
         if ([mp3CheckBox state] == YES)
@@ -1417,9 +1431,10 @@ NSLog (@"C!");
         [self toggleColorsEnabled: self];
     
 #endif /* GLQUAKE */
-
+        
         [fadeAllCheckBox setState: [myDefaults boolForKey: FADE_ALL_DEFAULT]];
-    
+        [iTunesCheckBox setState: [myDefaults boolForKey: DEFAULT_ITUNESPAUSE]];
+        
         // prepare the "MP3 path" textfield:
         [mp3TextField setStringValue: [myDefaults stringForKey: DEFAULT_MP3_PATH]];
         [mp3CheckBox setState: [myDefaults boolForKey: DEFAULT_USE_MP3]];
