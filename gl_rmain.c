@@ -641,6 +641,7 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum) {
 //VULT COLOURED MODEL LIGHTING
 vec3_t dlight_color;
 extern float bubblecolor[NUM_DLIGHTTYPES][4];
+extern cvar_t maxclients;
 void R_AliasSetupLighting(entity_t *ent) {
 	int minlight, lnum;
 	float add, fbskins;
@@ -818,7 +819,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 	}
 	else if (
 		!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
-		(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL)
+		(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !(com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1))
 	) {
 		ambientlight = shadelight = 4096;
 	}
