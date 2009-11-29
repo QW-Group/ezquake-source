@@ -115,6 +115,8 @@ int do_stdin = 1;
 
 cvar_t  sys_yieldcpu = {"sys_yieldcpu", "0"};
 
+int iTunesWasPaused;
+
 #pragma mark -
 
 //_________________________________________________________________________________________________________fUNCTION_pROTOTYPES
@@ -440,6 +442,20 @@ void	Sys_Quit (void)
     [myDefaults synchronize];
 
 #endif /* GLQUAKE */
+	
+    if (iTunesWasPaused)
+    {
+        NSAppleScript *aps = [[NSAppleScript alloc] initWithSource:
+            @"\
+            if application \"iTunes\" is running\n\
+                tell application \"iTunes\"\n\
+                    play\n\
+                end tell\n\
+            end if"];
+		
+            [aps executeAndReturnError:nil];
+            [aps release];
+	}
     
     exit (0);
 }

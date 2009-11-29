@@ -64,6 +64,7 @@
 #pragma mark =Function Prototypes=
 
 extern void 			M_Menu_Quit_f (void);
+extern int iTunesWasPaused;
 
 #pragma mark -
 
@@ -1116,6 +1117,8 @@ NSLog (@"C!");
             }
         }
         
+        iTunesWasPaused = 0;
+        
         if ([iTunesCheckBox state] == YES)
         {
             NSAppleScript *aps = [[NSAppleScript alloc] initWithSource:
@@ -1124,12 +1127,15 @@ NSLog (@"C!");
                     tell application \"iTunes\"\n\
                         if player state is playing then\n\
                             pause\n\
-			end if\n\
+                            return 1\n\
+                        end if\n\
                     end tell\n\
                 end if"];
             
-            [aps executeAndReturnError:nil];
-            [aps dealloc];
+            NSAppleEventDescriptor *eds = [aps executeAndReturnError:nil];
+            [aps release];
+            
+            iTunesWasPaused = [eds int32Value];
         }
         
         if ([mp3CheckBox state] == YES)
