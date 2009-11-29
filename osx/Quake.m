@@ -1118,8 +1118,16 @@ NSLog (@"C!");
         
         if ([iTunesCheckBox state] == YES)
         {
-            NSAppleScript *aps = [[NSAppleScript alloc] initWithSource: @"tell application \"iTunes\" to pause"];
-
+            NSAppleScript *aps = [[NSAppleScript alloc] initWithSource:
+                @"\
+                if application \"iTunes\" is running\n\
+                    tell application \"iTunes\"\n\
+                        if player state is playing then\n\
+                            pause\n\
+			end if\n\
+                    end tell\n\
+                end if"];
+            
             [aps executeAndReturnError:nil];
             [aps dealloc];
         }
