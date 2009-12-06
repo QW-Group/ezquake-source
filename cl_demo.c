@@ -3711,7 +3711,7 @@ void CL_TimeDemo_f (void)
 
 void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen);
 
-char qtvrequestbuffer[4096] = {0};
+char qtvrequestbuffer[512 * 1024] = {0}; // mmm, demo list may be pretty long
 int  qtvrequestsize = 0;
 
 char qtvpassword[128] = {0};
@@ -3853,7 +3853,17 @@ void CL_QTVPoll (void)
 				}
 				else if (!strcmp(start, "ADEMO"))
 				{
-					Com_Printf("Demo%s is available\n", colon);
+					//
+					// Print demos.
+					//
+
+					if (!saidheader)
+					{
+						saidheader = true;
+						Com_Printf("Available Demos:\n");
+					}
+
+					Com_Printf("%s\n", colon);
 				}
 				else if (!strcmp(start, "ASOURCE"))
 				{
@@ -4005,17 +4015,18 @@ void CL_QTVPoll (void)
 }
 
 //
-// Returns a list of available stream sources from a QTV proxy.
+// Returns a list of available stream sources (or demos) from a QTV proxy.
 //
 void CL_QTVList_f (void)
 {
 	char *connrequest;
 	vfsfile_t *newf;
+	qbool qtvlist = !strcmp("qtvlist", Cmd_Argv(0));
 
 	// Not enough arguments, show usage.
 	if (Cmd_Argc() < 2)
 	{
-		Com_Printf("Usage: qtvlist hostname[:port]\n");
+		Com_Printf("Usage: %s hostname[:port] [password]\n", Cmd_Argv(0));
 		return;
 	}
 
@@ -4033,7 +4044,7 @@ void CL_QTVList_f (void)
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
 	// Get a source list from the server.
-	connrequest =	"SOURCELIST\n";
+	connrequest = qtvlist ? "SOURCELIST\n" : "DEMOLIST\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
 	// Send our userinfo
@@ -4568,6 +4579,7 @@ void CL_Demo_Init(void)
 	//
 	Cmd_AddCommand ("qtvplay", CL_QTVPlay_f);
 	Cmd_AddCommand ("qtvlist", CL_QTVList_f);
+	Cmd_AddCommand ("qtvdemolist", CL_QTVList_f);
 	Cmd_AddCommand ("qtvreconnect", CL_QTVReconnect_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
