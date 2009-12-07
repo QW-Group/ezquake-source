@@ -43,6 +43,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define stringify(m) { #m, m }
 
+// FIXME: actually implement these
+qbool ActiveApp = true;
+qbool Minimized = false;
+
 extern int ctrlDown, shiftDown, altDown;
 
 static byte *vid_surfcache;
