@@ -2383,7 +2383,6 @@ void CL_Frame (double time)
 
 		#if defined (_WIN32) || defined (__linux__) || defined (__FreeBSD__)
 		// add AFK flag if app minimized, or not the focus
-		// FIXME: i dunno how to check the same for *nix
 		// TODO: may be add afk flag on idle? if no user input in 45 seconds for example?
 		if (!ActiveApp || Minimized)
 			cif_flags |= CIF_AFK;
