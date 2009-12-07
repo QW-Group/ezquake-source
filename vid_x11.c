@@ -47,6 +47,10 @@ typedef unsigned int	PIXEL24;
 extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
 #endif // WITH_KEYMAP
 
+// FIXME: actually implement these
+qbool ActiveApp = true;
+qbool Minimized = false;
+
 extern int ctrlDown, shiftDown, altDown;
 
 void OnChange_vid_default_blit_mode (cvar_t *var, char *value, qbool *cancel);
