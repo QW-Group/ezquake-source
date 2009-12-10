@@ -179,7 +179,8 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 static char *VX_SkipCommonPrefix(int player)
 {
 	unsigned players_left;
-	int i, j;
+	size_t i;
+	int j;
 
 	players_left = 0xFFFF;
 	players_left &= ~(1 << player);
