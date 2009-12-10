@@ -141,15 +141,15 @@ GLOBAL void TP_Msg_Lost_f (void)
  
 		if (HOLD_RL() || HOLD_LG() || HOLD_GL()) // gl could be useful too
 		{
-			msg2 = "lost "  COLORED(f0f,$weapon) " $[{%d}$] %E";
+			msg2 = "{&cf00lost&cfff} "  COLORED(f0f,$weapon) " $[{%d}$] %E";
 		}
 		else
 		{
-			msg2 = "lost $[{%d}$] %E";
+			msg2 = "{&cf00lost&cfff} $[{%d}$] %E";
 		}
 	}
 	else // if currently alive, then report last death location
-		msg1 = "lost $[{%d}$]";
+		msg1 = "{&cf00lost&cfff} $[{%d}$]";
 		
     TP_Send_TeamSay("%s%s", msg1, msg2);
 }
