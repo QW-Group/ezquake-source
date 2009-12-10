@@ -258,7 +258,7 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		}		
 		else if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells)) // all things we care for
 		{
-			message = tp_ib_name_team " $colored_powerups need %u";
+			message = tp_ib_name_team " $colored_powerups need %u $[{%l}$]";
 		}
 		else
 		{
