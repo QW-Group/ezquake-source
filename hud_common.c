@@ -5241,7 +5241,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 					if (!loc[0])
 						loc = "unknown";
 
-					snprintf(tmp, sizeof(tmp), "%*.*s", maxloc, maxloc, TP_ParseFunChars(loc, false));
+					str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(loc, false), maxloc);
 					Draw_SString (x, y, tmp, scale);
 				}
 				x += maxloc * FONTWIDTH * scale;

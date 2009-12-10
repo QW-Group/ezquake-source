@@ -1688,7 +1688,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 					if (!loc[0])
 						loc = "unknown";
 
-					snprintf(tmp, sizeof(tmp), "%*.*s", maxloc, maxloc, TP_ParseFunChars(loc, false));
+					str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(loc, false), maxloc);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += maxloc * FONTWIDTH;
