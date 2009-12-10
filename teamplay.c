@@ -3528,6 +3528,7 @@ void TP_Init (void)
 
 	Cmd_AddCommand ("tp_msgyesok", TP_Msg_YesOk_f);
 	Cmd_AddCommand ("tp_msgutake", TP_Msg_YouTake_f);
+	Cmd_AddCommand ("tp_msgitemsoon", TP_Msg_ItemSoon_f);
 	Cmd_AddCommand ("tp_msgwaiting", TP_Msg_Waiting_f);
 	Cmd_AddCommand ("tp_msgslipped", TP_Msg_Slipped_f);
 	

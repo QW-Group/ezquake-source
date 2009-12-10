@@ -527,6 +527,7 @@ GLOBAL void TP_Msg_Need_f (void)
 
 GLOBAL void TP_Msg_YesOk_f (void) { TP_MSG_GENERIC("{&c9ffyes/ok&cfff}"); } //cyan yes/ok
 GLOBAL void TP_Msg_YouTake_f (void) { TP_MSG_GENERIC("you take"); }
+GLOBAL void TP_Msg_ItemSoon_f (void) { TP_MSG_GENERIC("item soon"); }
 GLOBAL void TP_Msg_Waiting_f (void) { TP_MSG_GENERIC("waiting"); }
 GLOBAL void TP_Msg_Slipped_f (void) { TP_MSG_GENERIC("enemy slipped"); }
 GLOBAL void TP_Msg_Replace_f (void) { TP_MSG_GENERIC("{&c9ffreplace&cfff}"); } //cyan replace
