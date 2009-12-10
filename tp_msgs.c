@@ -92,11 +92,15 @@ extern cvar_t cl_fakename;
 // will return short version of player's nick for teamplay messages
 LOCAL char *TP_ShortNick(void)
 {
-	static char buf[7];
+	static char buf[64];
  
 	if (*(cl_fakename.string)) return "";
 	else {
-		snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
+		if (Cvar_String("nick")) {
+			snprintf(buf, sizeof(buf), "$\\%s:", Cvar_String("nick"));
+		} else {
+			snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
+		}
 		return buf;
 	}
 }      
