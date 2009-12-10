@@ -170,7 +170,7 @@ GLOBAL void TP_Msg_Report_f (void)
 		}
 	
 	if (HAVE_POWERUP())
-		powerup = "$colored_short_powerups";
+		powerup = "$colored_short_powerups ";
 	else
 		powerup = "";
  
@@ -189,7 +189,7 @@ GLOBAL void TP_Msg_Report_f (void)
 	armor_health = "$colored_armor/%h";
 	location = "$[{%l}$]";
 	 
-	TP_Send_TeamSay("%s %s %s%s%s", powerup, armor_health, location, weap_ammo, extra_ammo);
+	TP_Send_TeamSay("%s%s %s%s%s", powerup, armor_health, location, weap_ammo, extra_ammo);
 }
 
 
@@ -404,17 +404,17 @@ GLOBAL void TP_Msg_Took_f (void)
 		
 		if (HAVE_POWERUP())
 		{
-			powerup = "$colored_short_powerups";
+			powerup = "$colored_short_powerups ";
 		}
 		else
 		{
 			powerup = "";
 		}
 		
-		at_location = "$[{%Y}$]"; // %Y is "forgotten" macro - location of item you took
-		took_msg = " took ";
+		at_location = " $[{%Y}$]"; // %Y is "forgotten" macro - location of item you took
+		took_msg = "took ";
 	}
-	TP_Send_TeamSay("%s%s%s %s", powerup, took_msg, took, at_location);
+	TP_Send_TeamSay("%s%s%s%s", powerup, took_msg, took, at_location);
 }
 
 extern cvar_t tp_name_teammate;
@@ -488,12 +488,12 @@ GLOBAL void TP_Msg_Point_f (void)
 	}
 	
 		if (HAVE_POWERUP())
-			powerup = "$colored_short_powerups";
+			powerup = "$colored_short_powerups ";
 		else
 			powerup = "";
 	
 	//led(1) item(2) at loc(3)
-	TP_Send_TeamSay("%s %s %s", powerup, point, at_location);
+	TP_Send_TeamSay("%s%s %s", powerup, point, at_location);
 }
 
 
