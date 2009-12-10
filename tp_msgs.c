@@ -129,10 +129,10 @@ LOCAL void TP_Send_TeamSay(char *format, ...)
 ///////////////////////////////////
 
 GLOBAL void TP_Msg_Lost_f (void)
-{ // This function has no use in being an external (client bind), excep that people are probably used to having this. Notice that tp_report makes this function obsolete.
+{ // Even though tp_msgreport is the same thing as this when dead, it's still useful to have tp_msglost for reporting last lost location after respawning
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
-	if (DEAD()) // make sure you're dead when you press this bind, else it's useless. this check exists in case player has a bind tp_lost, b/c in tp_report we always check if dead.
+	if (DEAD())
 	{
 		if (HAVE_QUAD())
 		{
