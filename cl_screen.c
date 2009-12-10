@@ -1569,8 +1569,9 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 				if(!width_only) {
 					char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
-					snprintf(tmp, sizeof(tmp), "%*.*s", maxname, maxname, nick);
-					Draw_ColoredString (x, y, tmp, false);
+					if (strlen(nick) > maxname)
+						nick[maxname] = 0;
+					Draw_ColoredString (x, y, nick, false);
 				}
 				x += maxname * FONTWIDTH;
 
