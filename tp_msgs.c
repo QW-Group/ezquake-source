@@ -19,6 +19,8 @@
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
 #define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
 #define HAVE_GL() (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER)
+#define HAVE_SNG() (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN)
+#define HAVE_SSG() (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN)
 #define HOLD_GL() (cl.stats[STAT_ACTIVEWEAPON] == IT_GRENADE_LAUNCHER)
 #define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
 #define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
@@ -61,6 +63,7 @@ use the %-macros nor the $-macros.
 #define tp_ib_name_lg	    COLORED(f0f,lg)	    // purple lg
 #define tp_ib_name_gl	    COLORED(f0f,gl)	    // purple gl
 #define tp_ib_name_sng	    COLORED(f0f,sng)	// purple sng
+#define tp_ib_name_ssg	    COLORED(f0f,ssg)	// purple ssg
 #define tp_ib_name_ga	    COLORED(0b0,ga)	    // green ga
 #define tp_ib_name_ya	    COLORED(ff0,ya)	    // yellow ya
 #define tp_ib_name_ra	    COLORED(e00,ra)	    // red ra
@@ -168,6 +171,8 @@ GLOBAL void TP_Msg_Report_f (void)
     else if (HAVE_RL())					weap_ammo = tp_ib_name_rl ":$rockets";
     else if (HAVE_LG())					weap_ammo = tp_ib_name_lg ":$cells";
 	else if (HAVE_GL())					weap_ammo = tp_ib_name_gl ":$rockets";
+	else if (HAVE_SNG())				weap_ammo = tp_ib_name_sng ":$nails";
+	else if (HAVE_SSG())				weap_ammo = tp_ib_name_ssg;
     else								weap_ammo = "";
  
 	armor_health = "$colored_armor/%h";
