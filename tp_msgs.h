@@ -25,6 +25,7 @@ extern void TP_Msg_Point_f (void);
 extern void TP_Msg_Need_f (void);
 extern void TP_Msg_Need_f (void);
 extern void TP_Msg_YesOk_f (void);
+extern void TP_Msg_NoCancel_f (void);
 extern void TP_Msg_YouTake_f (void);
 extern void TP_Msg_ItemSoon_f (void);
 extern void TP_Msg_Waiting_f (void);
