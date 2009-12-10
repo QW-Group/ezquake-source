@@ -512,7 +512,7 @@ GLOBAL void TP_Msg_Need_f (void)
 	
 	if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells) || NEED(shells) || NEED(nails))
 	{
-		need = "{need} %u";
+		need = "{need} %u $[{%l}$]";
 	}
 	else
 	{
