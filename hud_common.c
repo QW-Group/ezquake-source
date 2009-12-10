@@ -5817,23 +5817,26 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 	
 	if(HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y))
 	{
-		if(!width->integer || !height->integer || HUD_Stats(STAT_HEALTH) < 1)
+		if(!width->integer || !height->integer)
 			return;
 
-        if(HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
+		if(HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
 		{
 			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
 		}
         else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3)
 		{
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, armor, 200.0, color_ra->color, x, y, width->integer, height->integer);
 		}
 		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2)
 		{
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, armor, 150.0, color_ya->color, x, y, width->integer, height->integer);
 		}
         else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1)
 		{
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, armor, 100.0, color_ga->color, x, y, width->integer, height->integer);
 		}
 		else
@@ -5845,7 +5848,7 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 
 void SCR_HUD_DrawBarHeath(hud_t *hud)
 {
-	static	cvar_t *width = NULL, *height, *direction, *color_normal, *color_mega, *color_twomega, *color_unnatural;
+	static	cvar_t *width = NULL, *height, *direction, *color_nohealth, *color_normal, *color_mega, *color_twomega, *color_unnatural;
 	int		x, y;
 	int		health = cl.stats[STAT_HEALTH];
 
@@ -5854,6 +5857,7 @@ void SCR_HUD_DrawBarHeath(hud_t *hud)
 		width			= HUD_FindVar(hud, "width");
 		height			= HUD_FindVar(hud, "height");
 		direction		= HUD_FindVar(hud, "direction");
+		color_nohealth	= HUD_FindVar(hud, "color_nohealth");
 		color_normal	= HUD_FindVar(hud, "color_normal");
 		color_mega		= HUD_FindVar(hud, "color_mega");
 		color_twomega	= HUD_FindVar(hud, "color_twomega");
@@ -5865,27 +5869,28 @@ void SCR_HUD_DrawBarHeath(hud_t *hud)
 		if(!width->integer || !height->integer)
 			return;
 
-		health = min(100, health);
-
-		if(health > 0)
+		if(health > 250)
 		{
-			SCR_HUD_DrawBar(direction->integer, health, 100.0, color_normal->color, x, y, width->integer, height->integer);
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
 		}
-
-		health = cl.stats[STAT_HEALTH];
-
-		if(health > 100 && health <= 200) // Mega health.
-		{
-			SCR_HUD_DrawBar(direction->integer, health - 100, 100.0, color_mega->color, x, y, width->integer, height->integer);
-		}
-		else if(health > 200 && health <= 250) // Super health.
+		else if(health > 200)
 		{
 			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_mega->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, health - 200, 100.0, color_twomega->color, x, y, width->integer, height->integer);
 		}
-		else if(health > 250) // Crazy health.
+		else if(health > 100)
 		{
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_normal->color, x, y, width->integer, height->integer);
+			SCR_HUD_DrawBar(direction->integer, health - 100, 100.0, color_mega->color, x, y, width->integer, height->integer);
+		}
+		else if(health > 0)
+		{
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_nohealth->color, x, y, width->integer, height->integer);
+			SCR_HUD_DrawBar(direction->integer, health, 100.0, color_normal->color, x, y, width->integer, height->integer);
+		}
+		else
+		{
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_nohealth->color, x, y, width->integer, height->integer);
 		}
 	}
 }
@@ -7927,7 +7932,7 @@ void CommonDraw_Init(void)
         "height", "16",
         "width", "64",
 		"direction", "1",
-		"color_noarmor", "0 0 0 0",
+		"color_noarmor", "128 128 128 64",
 		"color_ga", "32 128 0 128",
 		"color_ya", "192 128 0 128",
 		"color_ra", "128 0 0 128",
@@ -7941,6 +7946,7 @@ void CommonDraw_Init(void)
         "height", "16",
         "width", "64",
 		"direction", "0",
+		"color_nohealth", "128 128 128 64",
 		"color_normal", "32 64 128 128",
 		"color_mega", "64 96 128 128",
 		"color_twomega", "128 128 255 128",
