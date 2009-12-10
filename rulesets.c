@@ -153,6 +153,7 @@ static void Rulesets_Smackdown (qbool enable)
 	extern cvar_t cl_rollalpha;
 	extern cvar_t r_shiftbeam;
 	extern cvar_t allow_scripts;
+	extern cvar_t cl_iDrive;
 #ifndef GLQUAKE
 	extern cvar_t r_aliasstats;
 #endif
@@ -160,6 +161,7 @@ static void Rulesets_Smackdown (qbool enable)
 
 	locked_cvar_t disabled_cvars[] = {
 		{&allow_scripts, "0"},      // disable movement scripting
+		{&cl_iDrive, "0"},          // disable strafing aid
 		{&cl_hud, "0"},				// allows you place any text on the screen & filter incoming messages (hud strings)
 		{&cl_rollalpha, "20"},		// allows you to not dodge while seeing enemies dodging
 		{&r_shiftbeam, "0"},		// perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
