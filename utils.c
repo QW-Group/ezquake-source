@@ -31,6 +31,25 @@ int TP_CategorizeMessage (const char *s, int *offset);
 
 /************************************** General Utils **************************************/
 
+void str_align_right (char *target, size_t size, const char *source, size_t length)
+{
+	if (length > size - 1)
+		length = size - 1;
+
+	if (strlen(source) >= length) {
+		strlcpy(target, source, size);
+		target[length] = 0;
+	} else {
+		int i;
+
+		for (i = 0; i < length - strlen(source); i++) {
+			target[i] = ' ';
+		}
+
+		strlcpy(target + i, source, size - i);
+	}
+}
+
 char *str_repeat (char *str, int amount)
 {
     char *ret = NULL;

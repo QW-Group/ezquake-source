@@ -5130,9 +5130,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 				if(!width_only) {
 					char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
-					if (strlen(nick) > maxname)
-						nick[maxname] = 0;
-					Draw_SString (x, y, nick, scale);
+					str_align_right(tmp, sizeof(tmp), nick, maxname);
+					Draw_SString (x, y, tmp, scale);
 				}
 				x += maxname * FONTWIDTH * scale;
 
