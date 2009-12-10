@@ -499,27 +499,28 @@ GLOBAL void TP_Msg_Point_f (void)
 
 GLOBAL void TP_Msg_Need_f (void)
 {
+    MSGPART powerup = "";
     MSGPART need = "";
  
 	if (DEAD())
-	{
 		return; // if you're dead, you need better aim :E
-	}
-	else
-	{
-		TP_GetNeed();
-	}
+
+	TP_GetNeed();
 	
 	if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells) || NEED(shells) || NEED(nails))
 	{
-		need = "{need} %u $[{%l}$]";
+		need = "need %u $[{%l}$]";
 	}
-	else
+
+	if (HAVE_POWERUP())
 	{
-		return;
+		powerup = tp_ib_name_team " $colored_powerups ";
 	}
+
+	if (need[0] == 0 && powerup[0] == 0)
+		return;
 	
-	TP_Send_TeamSay("%s", need);
+	TP_Send_TeamSay("%s%s", powerup, need);
 }
 
 // The following define allows us to make as many functions as we want and get the message "powerup message location"
