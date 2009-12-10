@@ -33,6 +33,8 @@
 #define HAVE_YA() (cl.stats[STAT_ITEMS] & IT_ARMOR2) //ya
 #define HAVE_RA() (cl.stats[STAT_ITEMS] & IT_ARMOR3) //ra
 
+#define HAVE_CELLS() (cl.stats[STAT_CELLS] > 0)
+
 // just some shortcuts:
 #define INPOINTARMOR() (INPOINT(ra) || INPOINT(ya) || INPOINT(ga))
 #define INPOINTWEAPON() (INPOINT(rl) || INPOINT(lg) || INPOINT(gl) || INPOINT(sng))
@@ -155,6 +157,7 @@ GLOBAL void TP_Msg_Report_f (void)
 	MSGPART armor_health = "";
 	MSGPART location = "";
 	MSGPART weap_ammo = "";
+	MSGPART extra_ammo = "";
  
 	if (DEAD()) // no matter what, if dead report lost (how could you be coming if you're dead?)
 		{
@@ -167,18 +170,22 @@ GLOBAL void TP_Msg_Report_f (void)
 	else
 		powerup = "";
  
-    if		(HAVE_RL() && HAVE_LG())	weap_ammo = tp_ib_name_rlg ":$rockets/$cells";
-    else if (HAVE_RL())					weap_ammo = tp_ib_name_rl ":$rockets";
-    else if (HAVE_LG())					weap_ammo = tp_ib_name_lg ":$cells";
-	else if (HAVE_GL())					weap_ammo = tp_ib_name_gl ":$rockets";
-	else if (HAVE_SNG())				weap_ammo = tp_ib_name_sng ":$nails";
-	else if (HAVE_SSG())				weap_ammo = tp_ib_name_ssg;
+    if		(HAVE_RL() && HAVE_LG())	weap_ammo = " " tp_ib_name_rlg ":$rockets/$cells";
+    else if (HAVE_RL())					weap_ammo = " " tp_ib_name_rl ":$rockets";
+    else if (HAVE_LG())					weap_ammo = " " tp_ib_name_lg ":$cells";
+	else if (HAVE_GL())					weap_ammo = " " tp_ib_name_gl ":$rockets";
+	else if (HAVE_SNG())				weap_ammo = " " tp_ib_name_sng ":$nails";
+	else if (HAVE_SSG())				weap_ammo = " " tp_ib_name_ssg;
     else								weap_ammo = "";
+
+	if (!HAVE_LG() && HAVE_CELLS()) {
+		extra_ammo = " c:$cells";
+	}
  
 	armor_health = "$colored_armor/%h";
 	location = "$[{%l}$]";
 	 
-	TP_Send_TeamSay("%s %s %s %s", powerup, armor_health, location, weap_ammo);
+	TP_Send_TeamSay("%s %s %s%s%s", powerup, armor_health, location, weap_ammo, extra_ammo);
 }
 
 
