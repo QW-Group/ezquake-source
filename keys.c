@@ -51,24 +51,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //key up events are sent even if in console mode
 
-cvar_t cl_chatmode          = {"cl_chatmode", "2"};
-cvar_t con_funchars_mode    = {"con_funchars_mode", "0"};
-cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
-cvar_t con_completion_format= {"con_completion_format", "0"}; // 0 - old, 1,2,3 is modern ones (current + default values , current only, and default only)
-cvar_t con_hide_chat_input	=	{"con_hide_chat_input", "1"};
+cvar_t cl_chatmode					= {"cl_chatmode", "2"};
+cvar_t con_funchars_mode			= {"con_funchars_mode", "0"};
+cvar_t con_tilde_mode				= {"con_tilde_mode", "0"};
+cvar_t con_completion_format		= {"con_completion_format", "0"}; // 0 - old, 1,2,3 is modern ones (current + default values , current only, and default only)
+cvar_t con_hide_chat_input			= {"con_hide_chat_input", "1"};
+cvar_t con_completion_changed_mark	= {"con_completion_changed_mark", "1"};
 
 char* escape_regex(char* string);
 void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
-cvar_t con_prompt_charcode      = {"con_prompt_charcode", "93", CVAR_NONE, OnChange_con_prompt_charcode};	// 126 in qw charset is "]"
 void OnChange_con_completion_color(cvar_t *var, char *string, qbool *cancel);
-cvar_t con_completion_color_name = {"con_completion_color_name", "8ff", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_value_current = {"con_completion_color_value_current", "fff", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_value_default = {"con_completion_color_value_default", "fff", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_quotes_current = {"con_completion_color_quotes_current", "ff8", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_quotes_default = {"con_completion_color_quotes_default", "ff8", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_colon = {"con_completion_color_colon", "fff", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_color_title = {"con_completion_color_title", "ff3", CVAR_NONE, OnChange_con_completion_color};
-cvar_t con_completion_padding = {"con_completion_padding", "2"};
+cvar_t con_prompt_charcode					= {"con_prompt_charcode", "93", CVAR_NONE, OnChange_con_prompt_charcode};	// 126 in qw charset is "]"
+cvar_t con_completion_color_name			= {"con_completion_color_name", "8ff", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_value_current	= {"con_completion_color_value_current", "fff", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_value_default	= {"con_completion_color_value_default", "fff", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_quotes_current	= {"con_completion_color_quotes_current", "ff8", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_quotes_default	= {"con_completion_color_quotes_default", "ff8", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_colon			= {"con_completion_color_colon", "fff", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_title			= {"con_completion_color_title", "ff3", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_color_changed_mark	= {"con_completion_color_changed_mark", "f30", CVAR_NONE, OnChange_con_completion_color};
+cvar_t con_completion_padding				= {"con_completion_padding", "2"};
 
 #ifdef WITH_KEYMAP
 // variable to enable/disable key informations (e.g. scancode) to the consoloe:
@@ -370,12 +372,16 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 {
 	extern char *str_repeat (char *str, int amount);
 
+	// completion changed && name != value (alias check) && value != default value
+	qbool add_mark = ((con_completion_changed_mark.integer > 0) && (strcmp(s, dv) != 0) && (strcmp(dv, v) != 0));
+
 	switch (con_completion_format.integer)
 	{
 		case 1:	// current + deafault
 			if (strcmp(s, dv))
 				Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-					str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
+					(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+					con_completion_color_name.string, s , con_completion_color_colon.string,
 					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 					con_completion_color_quotes_current.string, con_completion_color_colon.string,
 					con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
@@ -389,19 +395,21 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 
 		case 2:	// current only
 			Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-				str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
+				(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+				con_completion_color_name.string, s , con_completion_color_colon.string,
 				con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 				con_completion_color_quotes_current.string);
 			break;
 
-		case 3:	// default only value
+		case 3:	// default only
 			Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-				str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s, con_completion_color_colon.string,
+				(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+				con_completion_color_name.string, s, con_completion_color_colon.string,
 				con_completion_color_quotes_default.string, con_completion_color_value_default.string,
 				dv, con_completion_color_quotes_default.string);
 			break;
 
-		default:	// old completion
+		default: // old completion
 			PaddedPrint(s);
 			break;
 	}
@@ -1877,25 +1885,27 @@ void Key_Init (void) {
     memset(&scr_pointer_state, 0, sizeof(mouse_state_t));
 
 	// register our functions
-	Cmd_AddCommand ("bindlist",Key_BindList_f);
-	Cmd_AddCommand ("bind",Key_Bind_f);
-	Cmd_AddCommand ("unbind",Key_Unbind_f);
-	Cmd_AddCommand ("unbindall",Key_Unbindall_f);
+	Cmd_AddCommand("bindlist",Key_BindList_f);
+	Cmd_AddCommand("bind",Key_Bind_f);
+	Cmd_AddCommand("unbind",Key_Unbind_f);
+	Cmd_AddCommand("unbindall",Key_Unbindall_f);
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
-	Cvar_Register (&cl_chatmode);
-	Cvar_Register (&con_funchars_mode);
-    Cvar_Register (&con_tilde_mode);
-	Cvar_Register (&con_completion_format);
-	Cvar_Register (&con_completion_color_value_current);
-	Cvar_Register (&con_completion_color_value_default);
-	Cvar_Register (&con_completion_color_name);
-	Cvar_Register (&con_completion_color_quotes_current);
-	Cvar_Register (&con_completion_color_quotes_default);
-	Cvar_Register (&con_completion_color_colon);
-	Cvar_Register (&con_prompt_charcode);
-	Cvar_Register (&con_hide_chat_input);
-	Cvar_Register (&con_completion_padding);
-	Cvar_Register (&con_completion_color_title);
+	Cvar_Register(&cl_chatmode);
+	Cvar_Register(&con_funchars_mode);
+    Cvar_Register(&con_tilde_mode);
+	Cvar_Register(&con_completion_format);
+	Cvar_Register(&con_completion_color_value_current);
+	Cvar_Register(&con_completion_color_value_default);
+	Cvar_Register(&con_completion_color_name);
+	Cvar_Register(&con_completion_color_quotes_current);
+	Cvar_Register(&con_completion_color_quotes_default);
+	Cvar_Register(&con_completion_color_colon);
+	Cvar_Register(&con_completion_color_changed_mark);
+	Cvar_Register(&con_prompt_charcode);
+	Cvar_Register(&con_hide_chat_input);
+	Cvar_Register(&con_completion_padding);
+	Cvar_Register(&con_completion_color_title);
+	Cvar_Register(&con_completion_changed_mark);
 
 	Cvar_ResetCurrentGroup();
 }
