@@ -117,7 +117,6 @@ typedef struct
 	char *name;
 	char *type;
 } jogi_avail_complete_t;
-jogi_avail_complete_t jogi_avail_complete[1024];
 
 
 typedef struct {
@@ -450,6 +449,7 @@ void CompleteCommandNew (void)
 	static cmd_alias_t *sorted_aliases[4096];
 	static cmd_function_t *sorted_cmds[4096];
 	static cvar_t *sorted_cvars[4096];
+	static jogi_avail_complete_t jogi_avail_complete[4096];
 	
 	#define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
 	#define MAX_SORTED_CVARS (sizeof (sorted_cvars) / sizeof (sorted_cvars[0]))
