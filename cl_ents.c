@@ -774,7 +774,7 @@ void CL_LinkPacketEntities(void)
 #else
 	dlighttype_t rocketlightcolor, dimlightcolor;
 #endif
-	extern qbool cl_nolerp_onentity_flag;
+	extern qbool cl_nolerp_on_entity_flag;
 
 	pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
 
@@ -950,7 +950,7 @@ void CL_LinkPacketEntities(void)
 			ent.scoreboard = NULL;
 		}
 	
-		if (((cl_nolerp.value || cl_nolerp_onentity_flag) && !cls.mvdplayback && !is_monster(state->modelindex))
+		if (((cl_nolerp.value || cl_nolerp_on_entity_flag) && !cls.mvdplayback && !is_monster(state->modelindex))
 			|| cent->deltalerp <= 0)
 		{
 			lerp = -1;
@@ -2498,3 +2498,4 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec)
 		info->fps_measure_time += 1.0;
     }
 }
+

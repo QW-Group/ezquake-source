@@ -171,9 +171,9 @@ static void CL_LerpMove (void)
 	extern cvar_t cl_nolerp;
 	extern int cmdtime_msec;
 	extern double physframetime;
-	extern qbool cl_nolerp_onentity_flag;
+	extern qbool cl_nolerp_on_entity_flag;
 
-	if ((cl_nolerp.value || cl_nolerp_onentity_flag)) 
+	if ((cl_nolerp.value || cl_nolerp_on_entity_flag)) 
 	{
 		lastsequence = ((unsigned)-1) >> 1;	//reset
 		return;
@@ -275,18 +275,18 @@ static void CL_LerpMove (void)
 	}
 }
 
-qbool cl_nolerp_onentity_flag = false;
+qbool cl_nolerp_on_entity_flag = false;
 // function check_standing_on_entity(void)
-// raises flag cl_nolerp_onentity_flag if standing on entity
-// and cl_nolerp_onentity.value is 1
+// raises flag cl_nolerp_on_entity_flag if standing on entity
+// and cl_nolerp_on_entity.value is 1
 static void check_standing_on_entity(void)
 {
   extern cvar_t cl_nolerp;
-  extern cvar_t cl_nolerp_onentity;
+  extern cvar_t cl_nolerp_on_entity;
   extern cvar_t cl_independentPhysics;
-  cl_nolerp_onentity_flag = 
+  cl_nolerp_on_entity_flag = 
        (pmove.onground && pmove.groundent > 0 &&
-        cl_nolerp_onentity.value &&
+        cl_nolerp_on_entity.value &&
         cl_independentPhysics.value);
 }
 
