@@ -141,7 +141,7 @@ cvar_t	show_speed_y			= {"show_speed_y", "1"};
 
 #ifdef GLQUAKE
 cvar_t	show_velocity_3d		= {"show_velocity_3d", "0"};
-cvar_t	show_velocity_3d_offset_forward	= {"show_velocity_3d_offset_forward", "5"};
+cvar_t	show_velocity_3d_offset_forward	= {"show_velocity_3d_offset_forward", "2.5"};
 cvar_t	show_velocity_3d_offset_down	= {"show_velocity_3d_offset_down", "5"};
 #endif
 

@@ -33,11 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_bloom.h"
 #include "rulesets.h"
 
-#ifdef GLQUAKE
-	// for  show_velocity_3d which is available only for GL
-	#include "pmove.h"
-#endif
-
 entity_t	r_worldentity;
 
 qbool	r_cache_thrash;		// compatability
@@ -2097,9 +2092,9 @@ static void draw_velocity_3d(void)
   const vec3_t *const origin = &r_refdef.vieworg;
   const vec3_t *const angles = &r_refdef.viewangles;
 
-  const float vx = pmove.velocity[0];
-  const float vy = pmove.velocity[1];
-  const float vz = pmove.velocity[2];
+  const float vx = cl.simvel[0];
+  const float vy = cl.simvel[1];
+  const float vz = cl.simvel[2];
 
   const float yaw_degrees = (*angles)[YAW];
   const float yaw = DEG2RAD(yaw_degrees);
