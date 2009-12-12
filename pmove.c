@@ -755,19 +755,6 @@ void PM_SpectatorMove (void) {
 	VectorMA (pmove.origin, pm_frametime, pmove.velocity, pmove.origin);
 }
 
-qbool cl_nolerp_onentity_flag = false;
-// function check_standing_on_entity(void)
-// raises flag cl_nolerp_onentity_flag if standing on entity
-// and cl_nolerp_onentity.value is 1
-static void check_standing_on_entity(void)
-{
-  extern cvar_t cl_nolerp;
-  extern cvar_t cl_nolerp_onentity;
-  extern cvar_t cl_independentPhysics;
-  cl_nolerp_onentity_flag = 
-        (pmove.onground && pmove.groundent > 0 &&
-         cl_nolerp_onentity.value && cl_independentPhysics.value);
-}
 
 //Returns with origin, angles, and velocity modified in place.
 //Numtouch and touchindex[] will be set if any of the physents were contacted during the move.
@@ -828,8 +815,6 @@ void PM_PlayerMove (void)
 
 	// set onground, watertype, and waterlevel for final spot
 	PM_CategorizePosition ();
-
-	check_standing_on_entity();
 		
 	if (!movevars.pground) {
 		// this is to make sure landing sound is not played twice
@@ -839,3 +824,4 @@ void PM_PlayerMove (void)
 			PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
 	}
 }
+
