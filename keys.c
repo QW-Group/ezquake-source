@@ -813,7 +813,11 @@ qbool con_redchars    = false;
 // 2) put what was typed in console to the history if any
 void Key_ClearTyping (void)
 {
-	edit_line = (edit_line + 1) & (CMDLINES - 1);
+	//if new input is the same as previous one
+	// do not increment edit_line
+	if(wcscmp (key_lines[edit_line], key_lines[(edit_line - 1) & (CMDLINES - 1)]))
+		edit_line = (edit_line + 1) & (CMDLINES - 1);
+
 	history_line = edit_line;
 	key_lines[edit_line][0] = con_prompt_charcode.integer;
 	key_lines[edit_line][1] = 0;
