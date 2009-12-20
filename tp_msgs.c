@@ -96,7 +96,7 @@ LOCAL char *TP_ShortNick(void)
  
 	if (*(cl_fakename.string)) return "";
 	else {
-		if (Cvar_String("nick")) {
+		if (*(Cvar_String("nick"))) { // isn't cl_fakename and name enough?
 			snprintf(buf, sizeof(buf), "$\\%s:", Cvar_String("nick"));
 		} else {
 			snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
