@@ -5875,6 +5875,7 @@ void SCR_HUD_DrawBarHeath(hud_t *hud)
 		}
 		else if(health > 200)
 		{
+			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_normal->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_mega->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, health - 200, 100.0, color_twomega->color, x, y, width->integer, height->integer);
 		}
