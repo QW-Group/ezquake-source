@@ -54,14 +54,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t cl_chatmode					= {"cl_chatmode", "2"};
 cvar_t con_funchars_mode			= {"con_funchars_mode", "0"};
 cvar_t con_tilde_mode				= {"con_tilde_mode", "0"};
-cvar_t con_completion_format		= {"con_completion_format", "0"}; // 0 - old, 1,2,3 is modern ones (current + default values , current only, and default only)
+// values: old style, current + default values , current only, default only, current + default if changed, none.
+cvar_t con_completion_format		= {"con_completion_format", "2"};
 cvar_t con_hide_chat_input			= {"con_hide_chat_input", "1"};
 cvar_t con_completion_changed_mark	= {"con_completion_changed_mark", "1"};
 
 char* escape_regex(char* string);
 void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
 void OnChange_con_completion_color(cvar_t *var, char *string, qbool *cancel);
-cvar_t con_prompt_charcode					= {"con_prompt_charcode", "93", CVAR_NONE, OnChange_con_prompt_charcode};	// 126 in qw charset is "]"
+cvar_t con_prompt_charcode					= {"con_prompt_charcode", "93", CVAR_NONE, OnChange_con_prompt_charcode};
 cvar_t con_completion_color_name			= {"con_completion_color_name", "8ff", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_value_current	= {"con_completion_color_value_current", "fff", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_color_value_default	= {"con_completion_color_value_default", "fff", CVAR_NONE, OnChange_con_completion_color};
@@ -372,13 +373,14 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 {
 	extern char *str_repeat (char *str, int amount);
 
-	// completion changed && name != value (alias check) && value != default value
-	qbool add_mark = ((con_completion_changed_mark.integer > 0) && (strcmp(s, dv) != 0) && (strcmp(dv, v) != 0));
+	qbool changed = (strcmp(s, dv) != 0) && (strcmp(dv, v) != 0);
+	qbool add_mark = (con_completion_changed_mark.integer > 0) && changed;
 
 	switch (con_completion_format.integer)
 	{
 		case 1:	// current + deafault
 			if (strcmp(s, dv))
+			{
 				Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
 					(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
 					con_completion_color_name.string, s , con_completion_color_colon.string,
@@ -386,11 +388,14 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 					con_completion_color_quotes_current.string, con_completion_color_colon.string,
 					con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
 					con_completion_color_quotes_default.string);
+			}
 			else
+			{
 				Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
 					str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
 					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 					con_completion_color_quotes_current.string);
+			}
 			break;
 
 		case 2:	// current only
@@ -407,6 +412,43 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 				con_completion_color_name.string, s, con_completion_color_colon.string,
 				con_completion_color_quotes_default.string, con_completion_color_value_default.string,
 				dv, con_completion_color_quotes_default.string);
+			break;
+
+		case 4:	// current+default if changed
+			if(changed)
+			{
+				if (strcmp(s, dv))
+				{
+					Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
+						(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+						con_completion_color_name.string, s , con_completion_color_colon.string,
+						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+						con_completion_color_quotes_current.string, con_completion_color_colon.string,
+						con_completion_color_quotes_default.string, con_completion_color_value_default.string, dv,
+						con_completion_color_quotes_default.string);
+				}
+				else
+				{
+					Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
+						str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
+						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+						con_completion_color_quotes_current.string);
+				}
+			}
+			else
+			{
+				Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
+					(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+					con_completion_color_name.string, s , con_completion_color_colon.string,
+					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
+					con_completion_color_quotes_current.string);
+			}
+			break;
+
+		case 5:	// none
+			Com_Printf ("%s&c%s%s&r\n",
+				(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+				con_completion_color_name.string, s);
 			break;
 
 		default: // old completion
@@ -2307,17 +2349,14 @@ char* escape_regex(char* string)
 {
 	// TODO: Rename and move this to a more appropriate place so other functions may use it (utils.c ?)
     int i, j, len;
-    char c;
     char *out = "";
 
 	len = strlen(string);
 	out = (char*) Q_malloc(len * 2 * sizeof(char));
 
-    for (i = 0, j = 0; i < len; i++)
+    for(i = 0, j = 0; i < len; i++)
     {
-        c = string[i];
-
-        switch (c)
+        switch(string[i])
         {
             case '+':
             case '.':

@@ -218,7 +218,7 @@ const char* cl_chatmode_enum[] = {
 	"All Commands", "All Chat", "First Word" };
 
 const char* con_completion_format_enum[] = {
-	"Old", "New:Current+Default", "New:Current", "New:Default"
+	"Old", "New:Current+Default", "New:Current", "New:Default", "New:Current+Default,if changed", "New:Without values"
 };
 	
 const char* scr_conback_enum[] = {
