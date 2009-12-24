@@ -5802,6 +5802,7 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 	static	cvar_t *width = NULL, *height, *direction, *color_noarmor, *color_ga, *color_ya, *color_ra, *color_unnatural;
 	int		x, y;
 	int		armor = HUD_Stats(STAT_ARMOR);
+	qbool	alive = cl.stats[STAT_HEALTH] > 0;
 	
 	if (width == NULL)  // first time called
     {
@@ -5820,21 +5821,21 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 		if(!width->integer || !height->integer)
 			return;
 
-		if(HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
+		if(HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY && alive)
 		{
 			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_unnatural->color, x, y, width->integer, height->integer);
 		}
-        else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3)
+        else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3 && alive)
 		{
 			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, armor, 200.0, color_ra->color, x, y, width->integer, height->integer);
 		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2)
+		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2 && alive)
 		{
 			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, armor, 150.0, color_ya->color, x, y, width->integer, height->integer);
 		}
-        else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1)
+        else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1 && alive)
 		{
 			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
 			SCR_HUD_DrawBar(direction->integer, armor, 100.0, color_ga->color, x, y, width->integer, height->integer);
