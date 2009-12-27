@@ -88,6 +88,13 @@ void Mumble_CreateLink()
 	}
 #else // Linux && Mac
 	char memname[256];
+	
+	if (lm != NULL)
+	{
+		ST_Printf(PRINT_FAIL,"Mumble Link already initialized.\n");
+		return;
+	}
+	
 	snprintf(memname, 256, "/MumbleLink.%d", getuid());
 
 	shmfd = shm_open(memname, O_RDWR, S_IRUSR | S_IWUSR);
@@ -103,6 +110,10 @@ void Mumble_CreateLink()
 	if (lm == (void *) (-1))
 	{
 		lm = NULL;
+		
+		close(shmfd);
+		shmfd = -1;
+		
 		ST_Printf(PRINT_FAIL,"Mumble Link initialization failed.\n");
 		return;
 	}
@@ -124,14 +135,17 @@ void Mumble_DestroyLink()
 	{
 		munmap(lm, sizeof(struct LinkedMem));
 		lm = NULL;
+		
+		close(shmfd);
+		shmfd = -1;
 #endif
 		ST_Printf(PRINT_INFO,"Mumble Link shut down.\n");
 		return;
 	}
 	else
 	{
-	if (mumble_debug.integer)
-		ST_Printf(PRINT_FAIL,"Mumble Link not established, unable to shut down.\n");
+		if (mumble_debug.integer)
+			ST_Printf(PRINT_FAIL,"Mumble Link not established, unable to shut down.\n");
 	}
 }
 
