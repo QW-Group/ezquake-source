@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		920874B410E7F9DB0027FC20 /* mumble.c in Sources */ = {isa = PBXBuildFile; fileRef = 920874B210E7F9DB0027FC20 /* mumble.c */; };
+		920874B510E7F9DB0027FC20 /* mumble.c in Sources */ = {isa = PBXBuildFile; fileRef = 920874B210E7F9DB0027FC20 /* mumble.c */; };
 		920C63540E3657690024236F /* pr2_cmds.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63500E3657690024236F /* pr2_cmds.c */; };
 		920C63550E3657690024236F /* pr2_edict.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63510E3657690024236F /* pr2_edict.c */; };
 		920C63560E3657690024236F /* pr2_exec.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63520E3657690024236F /* pr2_exec.c */; };
@@ -1092,6 +1094,8 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		920874B210E7F9DB0027FC20 /* mumble.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mumble.c; sourceTree = "<group>"; };
+		920874B310E7F9DB0027FC20 /* mumble.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mumble.h; sourceTree = "<group>"; };
 		920C63500E3657690024236F /* pr2_cmds.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr2_cmds.c; sourceTree = "<group>"; };
 		920C63510E3657690024236F /* pr2_edict.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr2_edict.c; sourceTree = "<group>"; };
 		920C63520E3657690024236F /* pr2_exec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr2_exec.c; sourceTree = "<group>"; };
@@ -1666,6 +1670,8 @@
 		D211454309C7822100FD70CB /* EZQuake */ = {
 			isa = PBXGroup;
 			children = (
+				920874B210E7F9DB0027FC20 /* mumble.c */,
+				920874B310E7F9DB0027FC20 /* mumble.h */,
 				9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */,
 				92C655FD0E535D5B00437A38 /* fs.h */,
 				92C655F40E535CBF00437A38 /* ez_listview.c */,
@@ -2539,6 +2545,7 @@
 				924527C60EE887CD00EA8BCA /* sv_mod_frags.c in Sources */,
 				924527CE0EE8892900EA8BCA /* irc.c in Sources */,
 				9226C6CE10728E7500F07127 /* EX_browser_pathfind.c in Sources */,
+				920874B510E7F9DB0027FC20 /* mumble.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2722,6 +2729,7 @@
 				92C655F80E535CBF00437A38 /* ez_listview.c in Sources */,
 				92C655F90E535CBF00437A38 /* ez_listviewitem.c in Sources */,
 				9226C6CD10728E7500F07127 /* EX_browser_pathfind.c in Sources */,
+				920874B410E7F9DB0027FC20 /* mumble.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

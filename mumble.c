@@ -23,9 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef __linux__
 #include <sys/time.h>
 #include <sys/mman.h>
+#elif defined __APPLE__
+#include <sys/types.h>
+#include <sys/mman.h>
 #endif
 
-#if defined (_WIN32) || defined (__linux__)
+#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
 
 cvar_t mumble_enabled = {"mumble_enabled", "1", CVAR_NONE, OnChange_mumble_enabled};
 cvar_t mumble_distance_ratio = {"mumble_distance_ratio", "0.0254"};
@@ -35,7 +38,7 @@ struct LinkedMem {
 #ifdef _WIN32
 	UINT32	uiVersion;
 	DWORD	uiTick;
-#else // Linux
+#else // Linux && Mac
 	uint32_t uiVersion;
 	uint32_t uiTick;
 #endif
@@ -49,7 +52,7 @@ struct LinkedMem {
 struct LinkedMem *lm = NULL;
 #ifdef _WIN32
 static HANDLE hMapObject = NULL;
-#else //Linux
+#else // Linux && Mac
 static int shmfd = -1;
 #endif
 
@@ -83,7 +86,7 @@ void Mumble_CreateLink()
 		ST_Printf(PRINT_FAIL,"Mumble Link initialization failed.\n");
 		return;
 	}
-#else //Linux
+#else // Linux && Mac
 	char memname[256];
 	snprintf(memname, 256, "/MumbleLink.%d", getuid());
 
@@ -116,9 +119,10 @@ void Mumble_DestroyLink()
 	{
 		CloseHandle(hMapObject);
 		hMapObject = NULL;
-#else //Linux
-	if (lm == (void *) (-1))
+#else // Linux && Mac
+	if (lm != NULL)
 	{
+		munmap(lm, sizeof(struct LinkedMem));
 		lm = NULL;
 #endif
 		ST_Printf(PRINT_INFO,"Mumble Link shut down.\n");
@@ -206,5 +210,5 @@ void updateMumble()
 	}
 }
 
-#endif // WIN32 && LINUX
+#endif // WIN32 && LINUX & MAC
 

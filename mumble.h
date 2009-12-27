@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _MUMBLE_H_
 #define _MUMBLE_H_
 
-#if defined (_WIN32) || defined (__linux__)
+#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
 
 void OnChange_mumble_enabled(cvar_t *var, char *value, qbool *cancel);
 void updateMumble (void);
@@ -29,7 +29,7 @@ void Mumble_Init (void);
 void Mumble_CreateLink(void);
 void Mumble_DestroyLink(void);
 
-#endif // WIN32 && Linux
+#endif // WIN32 && Linux && Mac
 
 #endif // _MUMBLE_H_
 

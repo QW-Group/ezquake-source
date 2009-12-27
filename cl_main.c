@@ -1960,7 +1960,7 @@ void CL_Init (void)
 
 	QTV_Init();
 
-#if defined (_WIN32) || defined (__linux__)
+#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
 	Mumble_Init();
 #endif
 
