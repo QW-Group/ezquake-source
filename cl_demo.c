@@ -1966,10 +1966,9 @@ qbool CL_GetDemoMessage (void)
 		demotime = CL_PeekDemoTime();
 
 		// If we've reached our seek goal, stop seeking.
-		if ((cls.demoseeking || cls.demotest) && (cls.demotime <= demotime))
+		if (cls.demoseeking && cls.demotime <= demotime)
 		{
 			cls.demoseeking = false;
-			cls.demotest = false;
 
 			if (cls.demorewinding)
 			{
@@ -4488,7 +4487,6 @@ void CL_Demo_Jump(double seconds, int relative)
 	cls.demotime = newdemotime;
 
 	cls.demoseeking = true;
-	cls.demotest = false;
 }
 
 double Demo_GetSpeed(void)

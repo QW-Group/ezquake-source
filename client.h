@@ -371,7 +371,6 @@ typedef struct
 	demotype_t	demoplayback;
 	qbool		demoseeking;
 	qbool		demorewinding;
-	qbool		demotest;
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
 	qbool		timedemo;
