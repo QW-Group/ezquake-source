@@ -852,6 +852,7 @@ static char *XLateKey(XKeyEvent *ev, int *key) {
 		case XK_Alt_L:
 		case XK_Meta_L:			*key = K_LALT; break;
 		case XK_Alt_R:
+		case XK_ISO_Level3_Shift:
 		case XK_Meta_R:			*key = K_RALT; break;
 
 		case XK_Super_L:		*key = K_LWIN; break;
