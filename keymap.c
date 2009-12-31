@@ -70,7 +70,7 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,       0,       0,       0,    KP_ENTER,K_RCTRL,    0,       0,        // 1 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 2 ext
-    0,       0,       0,       0,       0,    KP_SLASH,   0, K_PRINT_SCREEN,
+    0,       0,       0,       0,       0,    KP_SLASH,   0, K_PRINTSCR,
  K_RALT,     0,       0,       0,       0,       0,       0,       0,        // 3 ext
     0,       0,       0,       0,       0,    KP_NUMLOCK, 0,    K_HOME,
  K_UPARROW,K_PGUP,    0,    K_LEFTARROW,0,    K_RIGHTARROW,0,   K_END,       // 4 ext
@@ -107,7 +107,7 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,       0,       0,       0,    KP_ENTER,K_RCTRL,    0,       0,        // 1 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 2 ext
-    0,       0,       0,       0,       0,    KP_SLASH,   0, K_PRINT_SCREEN,
+    0,       0,       0,       0,       0,    KP_SLASH,   0, K_PRINTSCR,
  K_RALT,     0,       0,       0,       0,       0,       0,       0,        // 3 ext
     0,       0,       0,       0,       0,    KP_NUMLOCK, 0,    K_HOME,
  K_UPARROW,K_PGUP,    0,    K_LEFTARROW,0,    K_RIGHTARROW,0,   K_END,       // 4 ext
