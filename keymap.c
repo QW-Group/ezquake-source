@@ -70,13 +70,13 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,       0,       0,       0,    KP_ENTER,K_RCTRL,    0,       0,        // 1 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 2 ext
-    0,       0,       0,       0,       0,    KP_SLASH,   0, PRINT_SCREEN,
+    0,       0,       0,       0,       0,    KP_SLASH,   0, K_PRINT_SCREEN,
  K_RALT,     0,       0,       0,       0,       0,       0,       0,        // 3 ext
     0,       0,       0,       0,       0,    KP_NUMLOCK, 0,    K_HOME,
  K_UPARROW,K_PGUP,    0,    K_LEFTARROW,0,    K_RIGHTARROW,0,   K_END,       // 4 ext
  K_DOWNARROW,K_PGDN,K_INS,  K_DEL,      0,       0,       0,       0,
     0,       0,    K_WIN,   K_LWIN,  K_RWIN,  K_MENU,     0,       0,        // 5 ext
-    0,       0,       0,    WAKE_UP,    0,       0,       0,       0,
+    0,       0,       0,    K_WAKE_UP,    0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 6 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0         // 7 ext
@@ -107,13 +107,13 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,       0,       0,       0,    KP_ENTER,K_RCTRL,    0,       0,        // 1 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 2 ext
-    0,       0,       0,       0,       0,    KP_SLASH,   0, PRINT_SCREEN,
+    0,       0,       0,       0,       0,    KP_SLASH,   0, K_PRINT_SCREEN,
  K_RALT,     0,       0,       0,       0,       0,       0,       0,        // 3 ext
     0,       0,       0,       0,       0,    KP_NUMLOCK, 0,    K_HOME,
  K_UPARROW,K_PGUP,    0,    K_LEFTARROW,0,    K_RIGHTARROW,0,   K_END,       // 4 ext
  K_DOWNARROW,K_PGDN,K_INS,  K_DEL,      0,       0,       0,       0,
     0,       0,    K_WIN,   K_LWIN,  K_RWIN,  K_MENU,     0,       0,        // 5 ext
-    0,       0,       0,    WAKE_UP,    0,       0,       0,       0,
+    0,       0,       0,    K_WAKE_UP,    0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 6 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0         // 7 ext

@@ -295,8 +295,8 @@ keyname_t keynames[] = {
 
 	{"SEMICOLON", ';'},	// because a raw semicolon separates commands
 
-	{"PRINT_SCREEN", PRINT_SCREEN},
-	{"WAKE_UP", WAKE_UP},
+	{"PRINT_SCREEN", K_PRINT_SCREEN},
+	{"WAKE_UP", K_WAKE_UP},
 
 	{NULL,0}
 };
