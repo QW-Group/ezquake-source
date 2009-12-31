@@ -287,7 +287,13 @@ static char *SuiColor(int player)
 	if (its_you(player))
 		return empty_is_000(amf_tracker_color_suicide.string);
 	
-	return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
+	// with images color_bad == enemy color
+	// without images color bad == bad frag for us
+	if (cl_useimagesinfraglog.integer) {
+		return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_bad.string) : empty_is_000(amf_tracker_color_good.string));
+	} else {
+		return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
+	}
 }
 
 static char *XvsYColor(int player, int killer)
