@@ -771,6 +771,7 @@ static char *XLateKey(XKeyEvent *ev, int *key) {
 	keysym = XLookupKeysym (ev, 0);
 
 	switch(keysym) {
+		case XK_Print:			*key = K_PRINTSCR; break;
 		case XK_Scroll_Lock:	*key = K_SCRLCK; break;
 
 		case XK_Caps_Lock:		*key = K_CAPSLOCK; break;
