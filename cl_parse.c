@@ -2806,6 +2806,12 @@ void CL_ParseStufftext (void)
 		extern void Parse_WeaponStats(char *s);
 		Parse_WeaponStats( s + 2 );
 	}
+	else if (!strcmp(s, "//demomark\n"))
+	{
+		// demo mark
+		if (cls.demoseeking == DST_SEEKING_DEMOMARK)
+			cls.demoseeking = DST_SEEKING_DEMOMARK_FOUND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
+	}
 	else
 	{
 		Cbuf_AddTextEx(&cbuf_svc, s);

@@ -1965,10 +1965,14 @@ qbool CL_GetDemoMessage (void)
 		// Read the time of the next message in the demo.
 		demotime = CL_PeekDemoTime();
 
+		// If we found demomark, we should stop seeking, so reset time to the proper value.
+		if (cls.demoseeking == DST_SEEKING_DEMOMARK_FOUND)
+			cls.demotime = demotime; // this will trigger seeking stop
+
 		// If we've reached our seek goal, stop seeking.
 		if (cls.demoseeking && cls.demotime <= demotime)
 		{
-			cls.demoseeking = false;
+			cls.demoseeking = DST_SEEKING_NONE;
 
 			if (cls.demorewinding)
 			{
@@ -3673,7 +3677,7 @@ void CL_Play_f (void)
 	mv_skinsforced		= false;
 
 	// Reset stuff so demo rewinding works.
-	cls.demoseeking		= false;
+	cls.demoseeking		= DST_SEEKING_NONE;
 	cls.demorewinding	= false;
 	cls.demo_rewindtime = 0;
 
@@ -4466,13 +4470,44 @@ void CL_Demo_Jump_f (void)
     seconds += atoi(text);
 	cl.gametime += seconds;
 
-	CL_Demo_Jump(seconds, relative);
+	CL_Demo_Jump(seconds, relative, DST_SEEKING_NORMAL);
 }
+
+//
+// Jumps to a specified time in a demo.
+//
+void CL_Demo_Jump_Mark_f (void)
+{
+	int seconds = 99999; // as far as possibile, we have NO idea about time, we search MARK
+
+	// Cannot jump without playing demo.
+	if (!cls.demoplayback)
+	{
+		Com_Printf("Error: not playing a demo\n");
+        return;
+	}
+
+	// Must be active to jump.
+	if (cls.state < ca_active)
+	{
+		Com_Printf("Error: demo must be active first\n");
+		return;
+	}
+
+#if 0 // FIXME: have no idea about seconds
+	// The numbers after the first colon will be seconds.
+    seconds += atoi(text);
+	cl.gametime += seconds;
+#endif
+
+	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
+}
+
 
 //
 // Jumps to a specified time in a demo. Time specified in seconds.
 //
-void CL_Demo_Jump(double seconds, int relative)
+void CL_Demo_Jump(double seconds, int relative, demoseekingtype_t seeking)
 {
 	// Calculate the new demo time we want to jump to.
 	double newdemotime = relative ? (cls.demotime + (relative * seconds)) : (demostarttime + seconds);
@@ -4486,7 +4521,7 @@ void CL_Demo_Jump(double seconds, int relative)
 	// Set the new demotime.	
 	cls.demotime = newdemotime;
 
-	cls.demoseeking = true;
+	cls.demoseeking = seeking;
 }
 
 double Demo_GetSpeed(void)
@@ -4564,6 +4599,7 @@ void CL_Demo_Init(void)
 
 	Cmd_AddCommand("demo_setspeed", CL_Demo_SetSpeed_f);
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
+	Cmd_AddCommand("demo_jump_mark", CL_Demo_Jump_Mark_f);
 	Cmd_AddCommand("demo_controls", DemoControls_f);
 
 	//

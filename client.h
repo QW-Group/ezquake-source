@@ -281,6 +281,15 @@ typedef enum demotype_e
 	DT_NQDEMO
 } demotype_t;
 
+typedef enum demoseekingtype_e
+{
+	DST_SEEKING_NONE = 0, ///< seeking nothing
+	DST_SEEKING_NORMAL = 1, ///< demo_jump seeking
+	DST_SEEKING_DEMOMARK, ///< demo_jump_mark seeking
+	DST_SEEKING_DEMOMARK_FOUND ///< demo_jump_mark seeking, hint what we found mark and should stop seeking
+} demoseekingtype_t;
+
+
 /// A structure that is persistent through an arbitrary number of server connections.
 typedef struct
 {
@@ -369,7 +378,7 @@ typedef struct
 	//
 	qbool		demorecording;
 	demotype_t	demoplayback;
-	qbool		demoseeking;
+	demoseekingtype_t demoseeking;
 	qbool		demorewinding;
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
@@ -671,7 +680,7 @@ void CL_WriteServerdata (sizebuf_t *msg);
 void CL_StopPlayback (void);
 void CL_Stop_f (void);
 void CL_CheckQizmoCompletion(void);
-void CL_Demo_Jump(double seconds, int relative);
+void CL_Demo_Jump(double seconds, int relative, demoseekingtype_t seeking);
 void CL_Demo_Init(void);
 double Demo_GetSpeed(void);
 qbool CL_IsDemoExtension(const char *filename);

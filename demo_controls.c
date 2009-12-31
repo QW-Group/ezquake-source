@@ -98,7 +98,7 @@ static int DemoControls_SliderChanged(ez_control_t *self, void *payload, void *e
 
 		DemoControls_SetTimeLabelText(timelabel, newdemotime);
 
-		CL_Demo_Jump(newdemotime, false);
+		CL_Demo_Jump(newdemotime, false, DST_SEEKING_NORMAL);
 	}
 
 	return 0;
