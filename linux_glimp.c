@@ -856,6 +856,7 @@ static char *XLateKey(XKeyEvent *ev, int *key) {
 
 		case XK_Super_L:		*key = K_LWIN; break;
 		case XK_Super_R:		*key = K_RWIN; break;
+		case XK_Multi_key:		*key = K_RWIN; break;
 		case XK_Menu:			*key = K_MENU; break;
 
 		case XK_KP_Begin:		*key = kp ? KP_5 : '5'; break;
