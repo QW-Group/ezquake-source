@@ -755,126 +755,130 @@ void IN_Restart_f(void)
 		IN_ActivateMouse();
 }
 
-static int XLateKey(XKeyEvent *ev) {
-	int key, kp;
-	//char buf[64];
+static char *XLateKey(XKeyEvent *ev, int *key) {
+	static char buf[64];
+	int kp;
 	KeySym keysym;
 
-	key = 0;
+	*key = 0;
 	kp = (int) cl_keypad.value;
 
 	keysym = XLookupKeysym (ev, 0);
-	//XLookupString(ev, buf, sizeof (buf), &keysym, 0);
+	XLookupString(ev, buf, sizeof (buf), &keysym, 0);
+
+	// keysym without modifiers
+	ev->state = 0;
+	keysym = XLookupKeysym (ev, 0);
 
 	switch(keysym) {
-		case XK_Scroll_Lock:	key = K_SCRLCK; break;
+		case XK_Scroll_Lock:	*key = K_SCRLCK; break;
 
-		case XK_Caps_Lock:		key = K_CAPSLOCK; break;
+		case XK_Caps_Lock:		*key = K_CAPSLOCK; break;
 
-		case XK_Num_Lock:		key = kp ? KP_NUMLOCK : K_PAUSE; break;
+		case XK_Num_Lock:		*key = kp ? KP_NUMLOCK : K_PAUSE; break;
 
-		case XK_KP_Page_Up:		key = kp ? KP_PGUP : K_PGUP; break;
-		case XK_Page_Up:		key = K_PGUP; break;
+		case XK_KP_Page_Up:		*key = kp ? KP_PGUP : K_PGUP; break;
+		case XK_Page_Up:		*key = K_PGUP; break;
 
-		case XK_KP_Page_Down:	key = kp ? KP_PGDN : K_PGDN; break;
-		case XK_Page_Down:		key = K_PGDN; break;
+		case XK_KP_Page_Down:	*key = kp ? KP_PGDN : K_PGDN; break;
+		case XK_Page_Down:		*key = K_PGDN; break;
 
-		case XK_KP_Home:		key = kp ? KP_HOME : K_HOME; break;
-		case XK_Home:			key = K_HOME; break;
+		case XK_KP_Home:		*key = kp ? KP_HOME : K_HOME; break;
+		case XK_Home:			*key = K_HOME; break;
 
-		case XK_KP_End:			key = kp ? KP_END : K_END; break;
-		case XK_End:			key = K_END; break;
+		case XK_KP_End:			*key = kp ? KP_END : K_END; break;
+		case XK_End:			*key = K_END; break;
 
-		case XK_KP_Left:		key = kp ? KP_LEFTARROW : K_LEFTARROW; break;
-		case XK_Left:			key = K_LEFTARROW; break;
+		case XK_KP_Left:		*key = kp ? KP_LEFTARROW : K_LEFTARROW; break;
+		case XK_Left:			*key = K_LEFTARROW; break;
 
-		case XK_KP_Right:		key = kp ? KP_RIGHTARROW : K_RIGHTARROW; break;
-		case XK_Right:			key = K_RIGHTARROW; break;
+		case XK_KP_Right:		*key = kp ? KP_RIGHTARROW : K_RIGHTARROW; break;
+		case XK_Right:			*key = K_RIGHTARROW; break;
 
-		case XK_KP_Down:		key = kp ? KP_DOWNARROW : K_DOWNARROW; break;
+		case XK_KP_Down:		*key = kp ? KP_DOWNARROW : K_DOWNARROW; break;
 
-		case XK_Down:			key = K_DOWNARROW; break;
+		case XK_Down:			*key = K_DOWNARROW; break;
 
-		case XK_KP_Up:			key = kp ? KP_UPARROW : K_UPARROW; break;
+		case XK_KP_Up:			*key = kp ? KP_UPARROW : K_UPARROW; break;
 
-		case XK_Up:				key = K_UPARROW; break;
+		case XK_Up:				*key = K_UPARROW; break;
 
-		case XK_Escape:			key = K_ESCAPE; break;
+		case XK_Escape:			*key = K_ESCAPE; break;
 
-		case XK_KP_Enter:		key = kp ? KP_ENTER : K_ENTER; break;
+		case XK_KP_Enter:		*key = kp ? KP_ENTER : K_ENTER; break;
 
-		case XK_Return:			key = K_ENTER; break;
+		case XK_Return:			*key = K_ENTER; break;
 
-		case XK_Tab:			key = K_TAB; break;
+		case XK_Tab:			*key = K_TAB; break;
 
-		case XK_F1:				key = K_F1; break;
+		case XK_F1:				*key = K_F1; break;
 
-		case XK_F2:				key = K_F2; break;
+		case XK_F2:				*key = K_F2; break;
 
-		case XK_F3:				key = K_F3; break;
+		case XK_F3:				*key = K_F3; break;
 
-		case XK_F4:				key = K_F4; break;
+		case XK_F4:				*key = K_F4; break;
 
-		case XK_F5:				key = K_F5; break;
+		case XK_F5:				*key = K_F5; break;
 
-		case XK_F6:				key = K_F6; break;
+		case XK_F6:				*key = K_F6; break;
 
-		case XK_F7:				key = K_F7; break;
+		case XK_F7:				*key = K_F7; break;
 
-		case XK_F8:				key = K_F8; break;
+		case XK_F8:				*key = K_F8; break;
 
-		case XK_F9:				key = K_F9; break;
+		case XK_F9:				*key = K_F9; break;
 
-		case XK_F10:			key = K_F10; break;
+		case XK_F10:			*key = K_F10; break;
 
-		case XK_F11:			key = K_F11; break;
+		case XK_F11:			*key = K_F11; break;
 
-		case XK_F12:			key = K_F12; break;
+		case XK_F12:			*key = K_F12; break;
 
-		case XK_BackSpace:		key = K_BACKSPACE; break;
+		case XK_BackSpace:		*key = K_BACKSPACE; break;
 
-		case XK_KP_Delete:		key = kp ? KP_DEL : K_DEL; break;
-		case XK_Delete:			key = K_DEL; break;
+		case XK_KP_Delete:		*key = kp ? KP_DEL : K_DEL; break;
+		case XK_Delete:			*key = K_DEL; break;
 
-		case XK_Pause:			key = K_PAUSE; break;
+		case XK_Pause:			*key = K_PAUSE; break;
 
-		case XK_Shift_L:		key = K_LSHIFT; break;
-		case XK_Shift_R:		key = K_RSHIFT; break;
+		case XK_Shift_L:		*key = K_LSHIFT; break;
+		case XK_Shift_R:		*key = K_RSHIFT; break;
 
 		case XK_Execute:
-		case XK_Control_L:		key = K_LCTRL; break;
-		case XK_Control_R:		key = K_RCTRL; break;
+		case XK_Control_L:		*key = K_LCTRL; break;
+		case XK_Control_R:		*key = K_RCTRL; break;
 
 		case XK_Alt_L:
-		case XK_Meta_L:			key = K_LALT; break;
+		case XK_Meta_L:			*key = K_LALT; break;
 		case XK_Alt_R:
-		case XK_Meta_R:			key = K_RALT; break;
+		case XK_Meta_R:			*key = K_RALT; break;
 
-		case XK_Super_L:		key = K_LWIN; break;
-		case XK_Super_R:		key = K_RWIN; break;
-		case XK_Menu:			key = K_MENU; break;
+		case XK_Super_L:		*key = K_LWIN; break;
+		case XK_Super_R:		*key = K_RWIN; break;
+		case XK_Menu:			*key = K_MENU; break;
 
-		case XK_KP_Begin:		key = kp ? KP_5 : '5'; break;
+		case XK_KP_Begin:		*key = kp ? KP_5 : '5'; break;
 
-		case XK_KP_Insert:		key = kp ? KP_INS : K_INS; break;
-		case XK_Insert:			key = K_INS; break;
+		case XK_KP_Insert:		*key = kp ? KP_INS : K_INS; break;
+		case XK_Insert:			*key = K_INS; break;
 
-		case XK_KP_Multiply:	key = kp ? KP_STAR : '*'; break;
+		case XK_KP_Multiply:	*key = kp ? KP_STAR : '*'; break;
 
-		case XK_KP_Add:			key = kp ? KP_PLUS : '+'; break;
+		case XK_KP_Add:			*key = kp ? KP_PLUS : '+'; break;
 
-		case XK_KP_Subtract:	key = kp ? KP_MINUS : '-'; break;
+		case XK_KP_Subtract:	*key = kp ? KP_MINUS : '-'; break;
 
-		case XK_KP_Divide:		key = kp ? KP_SLASH : '/'; break;
+		case XK_KP_Divide:		*key = kp ? KP_SLASH : '/'; break;
 
 
 		default:
 			if (keysym >= 32 && keysym <= 126) {
-				key = tolower(keysym);
+				*key = keysym;
 			}
 			break;
 	}
-	return key;
+	return buf;
 }
 
 static qbool X11_PendingInput( void )
@@ -932,6 +936,7 @@ static void HandleEvents(void)
 {
   extern int ctrlDown, shiftDown, altDown;
   int key;
+  char *text;
   XEvent event;
   qbool dowarp = false;
   int dx, dy;
@@ -954,7 +959,7 @@ static void HandleEvents(void)
 	  case KeyRelease:
 		  if (repeated_press(&event))
 			  break;
-		  key = XLateKey(&event.xkey);
+		  text = XLateKey(&event.xkey, &key);
 		  if (key == K_CTRL  || key == K_LCTRL  || key == K_RCTRL)
         ctrlDown  = event.type == KeyPress;
 		  if (key == K_SHIFT || key == K_LSHIFT || key == K_RSHIFT)
@@ -968,7 +973,11 @@ static void HandleEvents(void)
 			 IN_Keycode_Print_f (&event.xkey, false, event.type == KeyPress, key);
 #endif // WITH_KEYMAP
 
-		  Key_Event(key, event.type == KeyPress);
+		  if (strlen(text) == 1) {
+			  Key_EventEx(key, text[0], event.type == KeyPress);
+		  } else {
+			  Key_EventEx(key, 0, event.type == KeyPress);
+		  }
 		  break;
 
     case MotionNotify:
