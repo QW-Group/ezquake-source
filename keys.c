@@ -295,6 +295,12 @@ keyname_t keynames[] = {
 
 	{"SEMICOLON", ';'},	// because a raw semicolon separates commands
 
+	{"SECTION", K_SECTION},
+	{"ACUTE", K_ACUTE},
+	{"DIAERESIS", K_DIAERESIS},
+	{"ARING", K_ARING},
+	{"ADIAERESIS", K_ADIAERESIS},
+	{"ODIAERESIS", K_ODIAERESIS},
 	{"WAKE_UP", K_WAKE_UP},
 
 	{NULL,0}

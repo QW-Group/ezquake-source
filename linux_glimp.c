@@ -861,6 +861,16 @@ static char *XLateKey(XKeyEvent *ev, int *key) {
 		case XK_Multi_key:		*key = K_RWIN; break;
 		case XK_Menu:			*key = K_MENU; break;
 
+		case XK_section:		*key = K_SECTION; break;
+		case XK_acute:
+		case XK_dead_acute:		*key = K_ACUTE; break;
+		case XK_diaeresis:
+		case XK_dead_diaeresis:	*key = K_DIAERESIS; break;
+
+		case XK_aring:			*key = K_ARING; break;
+		case XK_adiaeresis:		*key = K_ADIAERESIS; break;
+		case XK_odiaeresis:		*key = K_ODIAERESIS; break;
+
 		case XK_KP_Begin:		*key = kp ? KP_5 : '5'; break;
 
 		case XK_KP_Insert:		*key = kp ? KP_INS : K_INS; break;

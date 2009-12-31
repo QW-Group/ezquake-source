@@ -136,7 +136,13 @@ typedef enum {
 	KP_DOT=KP_DEL,
 #endif
 
-	K_WAKE_UP,		//185
+	K_SECTION,
+	K_ACUTE,
+	K_DIAERESIS,
+	K_ARING,
+	K_ADIAERESIS,
+	K_ODIAERESIS,
+	K_WAKE_UP,		//191
 
 //
 // mouse buttons generate virtual keys
