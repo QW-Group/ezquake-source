@@ -28,6 +28,7 @@ $Id: cvar.c,v 1.59 2007-10-18 05:28:23 dkure Exp $
 #include "rulesets.h"
 #include "keys.h"
 #include "utils.h"
+#include "parser.h"
 
 extern void CL_UserinfoChanged (char *key, char *value);
 extern void SV_ServerinfoChanged (char *key, char *value);
@@ -1200,6 +1201,55 @@ void Cvar_Set_Calc_f(void)
 
 // <-- QW262
 
+void Cvar_Set_Eval_f(void)
+{
+	if (Cmd_Argc() < 3) {
+		Com_Printf("Usage:\n"
+			"set_eval <variable> <expression>\n"
+			"set_eval is similar to set_calc but supports richer expressions\n");
+		return;
+	}
+	else {
+		const char *expression;
+		char *var_name;
+		cvar_t *var;
+		int errn;
+		expr_val result;
+
+		var_name = Cmd_Argv (1);
+		var = Cvar_Find (var_name);
+
+		if (!var)
+			var = Cvar_Create (var_name, Cmd_Argv (1), 0);
+
+		expression = Cmd_MakeArgs(2);
+
+		result = Expr_Eval(expression, NULL, &errn);
+
+		if (errn == EXPR_EVAL_SUCCESS) {
+			switch (result.type) {
+				case ET_INT:
+					Cvar_SetValue(var, result.i_val);
+					break;
+				case ET_DBL:
+					Cvar_SetValue(var, result.d_val);
+					break;
+				case ET_BOOL:
+					Cvar_SetValue(var, result.b_val ? 1 : 0);
+					break;
+				case ET_STR:
+					Cvar_Set(var, result.s_val);
+					free(result.s_val);
+					break;
+			}
+		}
+		else {
+			Com_Printf("Error in expression: %s\n", Parser_Error_Description(errn));
+		}
+	}
+}
+
+
 
 void Cvar_Inc_f (void)
 {
@@ -1263,6 +1313,7 @@ void Cvar_Init (void)
 	Cmd_AddCommand ("cvar_reset_re", Cvar_Reset_re_f);
 	Cmd_AddCommand ("inc", Cvar_Inc_f);
 	Cmd_AddCommand ("set_calc", Cvar_Set_Calc_f);
+	Cmd_AddCommand ("set_eval", Cvar_Set_Eval_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&cvar_viewdefault);

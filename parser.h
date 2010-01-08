@@ -81,4 +81,7 @@ extern int Expr_Eval_Int(const char *str, const parser_extra*, int *result);
 extern int Expr_Eval_Double(const char *str, const parser_extra*, double *result);
 extern int Expr_Eval_Bool(const char* std, const parser_extra*, int *result);
 
+// run unit tests, return number of errors
+int Expr_Run_Unit_Tests(void);
+
 #endif // __PARSER_H__
