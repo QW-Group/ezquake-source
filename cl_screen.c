@@ -4327,15 +4327,17 @@ void SCR_Init (void)
 
 	Cvar_Register (&scr_tracking);
 	Cvar_Register (&scr_spectatorMessage);
+	Cvar_Register (&scr_showcrosshair);
+	Cvar_ResetCurrentGroup();
 
+	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
 	Cvar_Register (&scr_cursor_scale);
 	Cvar_Register (&scr_cursor_iconoffset_x);
 	Cvar_Register (&scr_cursor_iconoffset_y);
 #ifdef GLQUAKE
 	Cvar_Register (&scr_cursor_alpha);
 #endif
-
-	Cvar_Register (&scr_showcrosshair);
+	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
 	Cvar_Register (&scr_allowsnap);

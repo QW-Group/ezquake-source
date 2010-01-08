@@ -1448,7 +1448,10 @@ void Menu_Options_Init(void) {
 	Settings_Page_Init(settsystem, settsystem_arr);
 	Settings_Page_Init(settconfig, settconfig_arr);
 
+	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
 	Cvar_Register(&menu_advanced);
+	Cvar_ResetCurrentGroup();
+
 #ifdef GLQUAKE
 	// this is here just to not get a crash in Cvar_Set
     mss_selected.freq.name = "menu_tempval_video_freq";

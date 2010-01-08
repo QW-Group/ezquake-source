@@ -1292,7 +1292,7 @@ void M_Init (void) {
 	extern cvar_t menu_marked_fade;
 #endif
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
+	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
 	Cvar_Register (&scr_centerMenu);
 	Cvar_Register (&menu_ingame);
 #ifdef GLQUAKE

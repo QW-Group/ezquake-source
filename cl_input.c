@@ -1114,8 +1114,10 @@ void CL_InitInput (void)
 	Cvar_Register (&lookspring);
 	Cvar_Register (&lookstrafe);
 	Cvar_Register (&sensitivity);
-	Cvar_Register (&cursor_sensitivity);
 	Cvar_Register (&freelook);
+	
+	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
+	Cvar_Register (&cursor_sensitivity);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
 	Cvar_Register (&m_pitch);
