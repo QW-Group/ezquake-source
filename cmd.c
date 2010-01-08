@@ -1986,10 +1986,6 @@ void Cmd_Eval_f(void)
 	int errn;
 	expr_val value;
 
-#ifdef _DEBUG
-	// Com_DPrintf("Expr_Run_Unit_Tests() returned %d errors\n", Expr_Run_Unit_Tests());
-#endif
-
 	if (Cmd_Argc() != 2) {
 		Com_Printf("Usage: eval <expression>\n"
 			"Prints the value of given expression after evaluation in the internal parser\n");

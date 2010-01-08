@@ -89,6 +89,9 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include "fs.h"
 #include "help.h"
 #include "irc.h"
+#ifdef _DEBUG
+#include "parser.h"
+#endif
 #if defined (_WIN32) || defined (__linux__)
 #include "mumble.h"
 #endif
@@ -1949,6 +1952,13 @@ void CL_Init (void)
 	Auth_Init();
 	Log_Init();
 	Movie_Init();
+
+#ifdef _DEBUG
+	if (Expr_Run_Unit_Tests() != 0) {
+		Sys_Error("One of the expression parser unit tests failed");
+	}
+#endif
+
 	// moved to host.c:Host_Init()
 	//ConfigManager_Init();
 	Stats_Init();

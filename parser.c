@@ -109,6 +109,13 @@ LOCAL void SetError(EParser p, int error)
 	} // else keep the previous error
 }
 
+LOCAL void FreeIfStr(const expr_val *e)
+{
+	if (e->type == ET_STR) {
+		free(e->s_val);
+	}
+}
+
 LOCAL double Get_Double(const expr_val e)
 {
 	switch (e.type) {
@@ -135,8 +142,12 @@ LOCAL int Get_Bool(const expr_val e)
 	case ET_INT: return e.i_val;
 	case ET_DBL: return (int) e.d_val;
 	case ET_BOOL:return e.b_val;
-	case ET_STR: return *e.s_val;
-	default: return 0;
+	case ET_STR: {
+		int retval = (*e.s_val) ? BOOL_TRUE : BOOL_FALSE;
+		free(e.s_val);
+		return retval;
+		}
+	default: assert(false); return 0;
 	}
 }
 
@@ -168,7 +179,7 @@ GLOBAL expr_val Get_Expr_Bool(int v)
 {
 	expr_val t = {0};
 	t.type = ET_BOOL;
-	t.b_val = v ? 1 : 0;
+	t.b_val = v ? BOOL_TRUE : BOOL_FALSE;
 	return t;
 }
 
@@ -232,6 +243,8 @@ LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 	ret.s_val = malloc(len);
 	if (!ret.s_val) {
 		SetError(p, ERR_OUT_OF_MEM);
+		FreeIfStr(&e1);
+		FreeIfStr(&e2);
 		return Get_Expr_Dummy();
 	}
 	strlcpy(ret.s_val, e1.s_val, len);
@@ -349,7 +362,7 @@ LOCAL expr_val operator_xor(EParser p, const expr_val e1, const expr_val e2)
 	}
 	else if (e1.type == ET_BOOL && e2.type == ET_BOOL) {
 		ret.type = ET_BOOL;
-		ret.b_val = ((e1.b_val ? 1 : 0) ^ (e2.b_val ? 1 : 0)) ? 1 : 0;
+		ret.b_val = ((e1.b_val ? 1 : 0) ^ (e2.b_val ? 1 : 0)) ? BOOL_TRUE : BOOL_FALSE;
 	}
 	else {
 		SetError(p, ERR_TYPE_MISMATCH);
@@ -463,6 +476,10 @@ LOCAL expr_val operator_substr(EParser p, const expr_val arg1, const expr_val ar
 		ret = Get_Expr_Dummy();
 	}
 
+	FreeIfStr(&arg1);
+	FreeIfStr(&arg2);
+	FreeIfStr(&arg3);
+
 	return ret;
 }
 
@@ -489,6 +506,8 @@ LOCAL expr_val operator_pos(EParser p, const expr_val arg1, const expr_val arg2)
 	}
 	else {
 		SetError(p, ERR_TYPE_MISMATCH);
+		FreeIfStr(&arg1);
+		FreeIfStr(&arg2);
 		ret = Get_Expr_Dummy();
 	}
 
@@ -533,6 +552,7 @@ LOCAL expr_val operator_tobrown(EParser p, const expr_val arg1)
 		ret = Get_Expr_Dummy();
 	}
 
+	FreeIfStr(&arg1);
 	return ret;
 }
 
@@ -549,6 +569,8 @@ LOCAL expr_val operator_towhite(EParser p, const expr_val arg1)
 		SetError(p, ERR_TYPE_MISMATCH);
 		ret = Get_Expr_Dummy();
 	}
+
+	FreeIfStr(&arg1);
 
 	return ret;
 }
@@ -788,6 +810,9 @@ LOCAL expr_val operator_and(EParser p, const expr_val e1, const expr_val e2)
 		} break;
 	}
 
+	FreeIfStr(&e1);
+	FreeIfStr(&e2);
+
 	return ret;
 }
 
@@ -823,6 +848,9 @@ LOCAL expr_val operator_or(EParser p, const expr_val e1, const expr_val e2)
 		case ET_STR: ret.b_val = *e1.s_val || *e2.s_val; break;
 		} break;
 	}
+
+	FreeIfStr(&e1);
+	FreeIfStr(&e2);
 
 	return ret;
 }
@@ -1511,7 +1539,17 @@ GLOBAL int Expr_Run_Unit_Tests(void)
 	errors += Expr_Run_Test_Str("substr(\"abcdef\", 0, 2)", "ab");
 	errors += Expr_Run_Test_Str("substr(\"abcdef\", 2, 1)", "c");
 
+	errors += Expr_Run_Test_Bool("(1 and 0) or (0 and 2) or (0 xor 0)", 0);
+	errors += Expr_Run_Test_Bool("(1 and 0) or (0 and 2) or (0 xor 1)", 1);
+	errors += Expr_Run_Test_Bool("0 or 0 or 0 or 0 or 1 or 0 or 0 or 0", 1);
+	errors += Expr_Run_Test_Bool("1 and 1 and 1 and 1 and 0 and 1 and 1", 0);
+	errors += Expr_Run_Test_Bool("1 and 1 and 1 and 1 and 2 and 1 and 1", 1);
+	errors += Expr_Run_Test_Bool("1<2 && 3<4 && 5<=5 && 6<=7 && 8>=8 && 10>9", 1);
+
+	errors += Expr_Run_Test_Bool("(abc isin dabcd or (x !isin xxxx and 3 < 5)) and 'a'+'bc' isin 'dab'+'cd'", 1);
+
 	// todo: tobrown, towhite
 
 	return errors;
 }
+
