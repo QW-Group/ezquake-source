@@ -38,26 +38,41 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
 #define FL_SEARCH_TIMEOUT	2.0
 static double last_search_enter_time = 0.0;
 
+cvar_t  file_browser_show_size       = {"file_browser_show_size",      "1"};
+cvar_t  file_browser_show_date       = {"file_browser_show_date",      "1"};
+cvar_t  file_browser_show_time       = {"file_browser_show_time",      "0"};
+cvar_t  file_browser_sort_mode       = {"file_browser_sort_mode",      "1"};
+cvar_t  file_browser_show_status     = {"file_browser_show_status",    "1"};
+cvar_t  file_browser_strip_names     = {"file_browser_strip_names",    "1"};
+cvar_t  file_browser_interline       = {"file_browser_interline",      "0"};
+cvar_t  file_browser_scrollnames     = {"file_browser_scrollnames" ,   "1"};
+cvar_t	file_browser_selected_color  = {"file_browser_selected_color", "0 150 235 255", CVAR_COLOR};
+cvar_t  file_browser_file_color      = {"file_browser_file_color",     "255 255 255 255", CVAR_COLOR};
+cvar_t  file_browser_dir_color       = {"file_browser_dir_color",	   "170 80 0 255", CVAR_COLOR};
+cvar_t  file_browser_archive_color   = {"file_browser_archive_color",  "255 170 0 255", CVAR_COLOR};
+
+void EX_FileList_Init(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
+    Cvar_Register(&file_browser_show_size);
+    Cvar_Register(&file_browser_show_date);
+    Cvar_Register(&file_browser_show_time);
+    Cvar_Register(&file_browser_sort_mode);
+    Cvar_Register(&file_browser_show_status);
+    Cvar_Register(&file_browser_strip_names);
+    Cvar_Register(&file_browser_interline);
+	Cvar_Register(&file_browser_scrollnames);
+	Cvar_Register(&file_browser_file_color);
+	Cvar_Register(&file_browser_selected_color);
+	Cvar_Register(&file_browser_dir_color);
+	Cvar_Register(&file_browser_archive_color);
+	Cvar_ResetCurrentGroup();
+}
 
 //
 // Create list
 //
-void FL_Init(filelist_t	*	fl,
-             cvar_t *       sort_mode,
-             cvar_t *       show_size,
-             cvar_t *       show_date,
-             cvar_t *       show_time,
-             cvar_t *       strip_names,
-             cvar_t *       interline,
-             cvar_t *       show_status,
-			 cvar_t *		scroll_names,
-			 cvar_t *		file_color,
-			 cvar_t *		selected_color,
-			 cvar_t *		dir_color,
-#ifdef WITH_ZIP
-			 cvar_t *		archive_color,
-#endif
-			 char *			 initdir)
+void FL_Init(filelist_t	*fl, char *initdir)
 {
     Sys_getcwd(fl->current_dir, MAX_PATH);
 	FL_SetCurrentDir(fl, initdir);
@@ -67,31 +82,18 @@ void FL_Init(filelist_t	*	fl,
     fl->current_entry = 0;
     fl->num_filetypes = 0;
 
-    fl->sort_mode = sort_mode;
-    fl->show_size = show_size;
-    fl->show_date = show_date;
-    fl->show_time = show_time;
-    fl->strip_names = strip_names;
-    fl->interline = interline;
-    fl->show_status = show_status;
-	fl->scroll_names = scroll_names;
 	fl->search_string[0] = 0;
     fl->last_page_size = 0;
 
     fl->search_valid = false;
     fl->cdup_find = false;
 
-	fl->file_color = file_color;
-	fl->selected_color = selected_color;
-	fl->dir_color = dir_color;
 	fl->show_dirup = true;
 	fl->show_dirs = true;
 
     fl->scrollbar = ScrollBar_Create(NULL);
 
 	#ifdef WITH_ZIP
-	fl->archive_color = archive_color;
-
 	fl->current_archive[0] = 0;
 	fl->in_archive = false;
 	#endif // WITH_ZIP
@@ -262,7 +264,7 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 		COM_StripExtension(namebuf, namebuf); 
 	}
 
-    if (fl->strip_names->value && !f->is_directory)
+    if (file_browser_strip_names.value && !f->is_directory)
     {
         char *s;
 
@@ -356,7 +358,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 	extern int  SYSTEMTIMEcmp(const SYSTEMTIME *, const SYSTEMTIME *);
     int reverse = 0;
     filelist_t *fl = FL_CompareFunc_FileList;
-    char *sort_string = fl->sort_mode->string;
+    char *sort_string = file_browser_sort_mode.string;
     const filedesc_t *d1 = (filedesc_t *)p_d1;
     const filedesc_t *d2 = (filedesc_t *)p_d2;
 
@@ -425,8 +427,8 @@ void FL_SortDir (filelist_t *fl)
 	char name[MAX_PATH+1] = "";
 
 	if (fl->num_entries <= 0  ||
-		fl->sort_mode->string == NULL  ||
-		fl->sort_mode->string[0] == 0)
+		file_browser_sort_mode.string == NULL  ||
+		file_browser_sort_mode.string[0] == 0)
 		return;
 
 	FL_CompareFunc_FileList = fl;
@@ -1228,11 +1230,11 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 			switch (key)
 			{
 			case '2':
-				Cvar_Toggle(fl->show_size); break;
+				Cvar_Toggle(&file_browser_show_size); break;
 			case '3':
-				Cvar_Toggle(fl->show_date); break;
+				Cvar_Toggle(&file_browser_show_date); break;
 			case '4':
-				Cvar_Toggle(fl->show_time); break;
+				Cvar_Toggle(&file_browser_show_time); break;
 			default:
 				break;
 			}
@@ -1242,7 +1244,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 		{
 			char buf[128];
 
-			strlcpy(buf, fl->sort_mode->string, 32); // WTF?
+			strlcpy(buf, file_browser_sort_mode.string, 32); // WTF?
 			if (key  ==  buf[0])
 			{
 				// reverse order
@@ -1255,7 +1257,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 				buf[0] = key;
 			}
 			buf[8] = 0;
-			Cvar_Set(fl->sort_mode, buf);
+			Cvar_Set(&file_browser_sort_mode, buf);
 
 			fl->need_resort = true;
 			return true;
@@ -1526,7 +1528,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     w -= fl->scrollbar->width;
 
     // Calculate interline (The space between each row)
-    interline = fl->interline->value;
+    interline = file_browser_interline.value;
     interline = max(interline, 0);
     interline = min(interline, 6);
     inter_up = interline / 2;
@@ -1592,11 +1594,11 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     memset(line, ' ', pos);
     line[pos] = 0;
 
-    if (fl->show_time->value)
+    if (file_browser_show_time.value)
         Add_Column(line, &pos, "time", COL_TIME);
-    if (fl->show_date->value)
+    if (file_browser_show_date.value)
         Add_Column(line, &pos, "date", COL_DATE);
-    if (fl->show_size->value)
+    if (file_browser_show_size.value)
         Add_Column(line, &pos, "  kb", COL_SIZE);
 
     memcpy(line, "name", min(pos, 4));
@@ -1619,7 +1621,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     }
 
 	// If we're showing the status bar we have less room for the file list.
-    if (fl->show_status->value)
+    if (file_browser_show_status.value)
 	{
         listsize -= 3;
 	}
@@ -1691,11 +1693,11 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		line[pos] = 0;
 
 		// Add columns.
-        if (fl->show_time->value)
+        if (file_browser_show_time.value)
             Add_Column(line, &pos, time, COL_TIME);
-        if (fl->show_date->value)
+        if (file_browser_show_date.value)
             Add_Column(line, &pos, date, COL_DATE);
-        if (fl->show_size->value)
+        if (file_browser_show_size.value)
             Add_Column(line, &pos, size, COL_SIZE);
 
 		// End of name, switch to white.
@@ -1710,7 +1712,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		//
 		// Copy the display name of the entry into the space that's left on the row.
 		//
-		if (filenum == fl->current_entry && fl->scroll_names->value && strlen(name) > pos)
+		if (filenum == fl->current_entry && file_browser_scrollnames.value && strlen(name) > pos)
 		{
 			// We need to scroll the text since it doesn't fit.
 			#define SCROLL_RIGHT	1
@@ -1791,18 +1793,18 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 				if (entry->is_directory)
 				{
 					// Set directory color.
-					clr[0].c = (fl->dir_color == NULL) ? COLOR_WHITE : RGBAVECT_TO_COLOR(fl->dir_color->color);
+					clr[0].c = RGBAVECT_TO_COLOR(file_browser_dir_color.color);
 				}
 				#ifdef WITH_ZIP
 				else if (entry->is_archive)
 				{
 					// Set zip color.
-					clr[0].c = (fl->archive_color == NULL) ? COLOR_WHITE : RGBAVECT_TO_COLOR(fl->archive_color->color);
+					clr[0].c = RGBAVECT_TO_COLOR(file_browser_archive_color.color);
 				}
 				#endif // WITH_ZIP
 				else
 				{
-					clr[0].c = (fl->file_color == NULL) ? COLOR_WHITE : RGBAVECT_TO_COLOR(fl->file_color->color);
+					clr[0].c = RGBAVECT_TO_COLOR(file_browser_file_color.color);
 				}
 			}
 
@@ -1822,7 +1824,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		// Color the selected entry.
 		if (filenum == fl->current_entry)
 		{
-			clr[0].c = (fl->selected_color == NULL) ? COLOR_WHITE : RGBAVECT_TO_COLOR(fl->selected_color->color);
+			clr[0].c = RGBAVECT_TO_COLOR(file_browser_selected_color.color);
 			clr[0].i = 1; // Don't color the cursor (index 0).
 		}
 
@@ -1839,7 +1841,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     }
 
 	// Show a statusbar displaying the currently selected entry.
-    if (fl->show_status->value)
+    if (file_browser_show_status.value)
     {
 		// Print a line to part the status bar from the file list.
         memset(line, '\x1E', w/8);

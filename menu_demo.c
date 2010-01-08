@@ -903,23 +903,6 @@ void Menu_Demo_NewHome(const char *homedir)
 
 void Menu_Demo_Init(void)
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
-	Cvar_Register(&demo_browser_showsize);
-    Cvar_Register(&demo_browser_showdate);
-    Cvar_Register(&demo_browser_showtime);
-    Cvar_Register(&demo_browser_sortmode);
-    Cvar_Register(&demo_browser_showstatus);
-    Cvar_Register(&demo_browser_stripnames);
-    Cvar_Register(&demo_browser_interline);
-	Cvar_Register(&demo_browser_scrollnames);
-	Cvar_Register(&demo_browser_selectedcolor);
-	Cvar_Register(&demo_browser_democolor);
-	Cvar_Register(&demo_browser_dircolor);
-#ifdef WITH_ZIP
-	Cvar_Register(&demo_browser_zipcolor);
-#endif
-	Cvar_ResetCurrentGroup();
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&demo_playlist_loop);
 	Cvar_Register (&demo_playlist_track_name);
@@ -930,22 +913,7 @@ void Menu_Demo_Init(void)
 	Cmd_AddCommand ("demo_playlist_prev", M_Demo_Playlist_Prev_f);
 	Cmd_AddCommand ("demo_playlist_clear", M_Demo_Playlist_Clear_f);
 
-	FL_Init(&demo_filelist,
-        &demo_browser_sortmode,
-        &demo_browser_showsize,
-        &demo_browser_showdate,
-        &demo_browser_showtime,
-        &demo_browser_stripnames,
-        &demo_browser_interline,
-        &demo_browser_showstatus,
-		&demo_browser_scrollnames,
-		&demo_browser_democolor,
-		&demo_browser_selectedcolor,
-		&demo_browser_dircolor,
-	#ifdef WITH_ZIP
-		&demo_browser_zipcolor,
-	#endif
-		"./qw");
+	FL_Init(&demo_filelist, "./qw");
     FL_AddFileType(&demo_filelist, 0, ".qwd");
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
 	FL_AddFileType(&demo_filelist, 2, ".mvd");

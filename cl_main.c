@@ -1878,6 +1878,7 @@ void ReloadPaletteAndColormap(void)
 	FMod_CheckModel("gfx/colormap.lmp", host_colormap, filesize);
 }
 
+void EX_FileList_Init(void);
 
 void CL_Init (void) 
 {
@@ -1942,6 +1943,7 @@ void CL_Init (void)
 	HUD_Init();
 	Help_Init();
 	M_Init ();
+	EX_FileList_Init();
 
 	SList_Init ();
 	SList_Load ();

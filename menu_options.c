@@ -1459,40 +1459,7 @@ void Menu_Options_Init(void) {
     mss_previous.freq.next = &mss_previous.freq;
 #endif
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
-	Cvar_Register(&cfg_browser_showsize);
-    Cvar_Register(&cfg_browser_showdate);
-    Cvar_Register(&cfg_browser_showtime);
-    Cvar_Register(&cfg_browser_sortmode);
-    Cvar_Register(&cfg_browser_showstatus);
-    Cvar_Register(&cfg_browser_stripnames);
-    Cvar_Register(&cfg_browser_interline);
-	Cvar_Register(&cfg_browser_scrollnames);
-	Cvar_Register(&cfg_browser_selectedcolor);
-	Cvar_Register(&cfg_browser_democolor);
-	Cvar_Register(&cfg_browser_dircolor);
-#ifdef WITH_ZIP
-	Cvar_Register(&cfg_browser_zipcolor);
-#endif
-	Cvar_ResetCurrentGroup();
-
-
-	FL_Init(&configs_filelist,
-        &cfg_browser_sortmode,
-        &cfg_browser_showsize,
-        &cfg_browser_showdate,
-        &cfg_browser_showtime,
-        &cfg_browser_stripnames,
-        &cfg_browser_interline,
-        &cfg_browser_showstatus,
-		&cfg_browser_scrollnames,
-		&cfg_browser_democolor,
-		&cfg_browser_selectedcolor,
-		&cfg_browser_dircolor,
-#ifdef WITH_ZIP
-		&cfg_browser_zipcolor,
-#endif
-		"./ezquake/configs");
+	FL_Init(&configs_filelist, "./ezquake/configs");
 	FL_SetDirUpOption(&configs_filelist, false);
 	FL_SetDirsOption(&configs_filelist, false);
 	FL_AddFileType(&configs_filelist, 0, ".cfg");

@@ -55,62 +55,9 @@ static qbool Help_Browser_Mouse_Event(const mouse_state_t *ms)
 filelist_t help_index_fl;
 filelist_t help_tutorials_fl;
 
-cvar_t  help_files_showsize		= {"help_files_showsize",		"1"};
-cvar_t  help_files_showdate		= {"help_files_showdate",		"1"};
-cvar_t  help_files_showtime		= {"help_files_showtime",		"0"};
-cvar_t  help_files_sortmode		= {"help_files_sortmode",		"1"};
-cvar_t  help_files_showstatus	= {"help_files_showstatus",		"1"};
-cvar_t  help_files_stripnames	= {"help_files_stripnames",		"1"};
-cvar_t  help_files_interline	= {"help_files_interline",		"0"};
-cvar_t  help_files_scrollnames	= {"help_files_scrollnames",	"0"};
-cvar_t	help_files_selectedcolor= {"help_files_selectedcolor",	"255 255 255 255", CVAR_COLOR};
-cvar_t  help_files_filecolor	= {"help_files_filecolor",		"255 255 255 255", CVAR_COLOR};
-cvar_t  help_files_dircolor		= {"help_files_dircolor",		"255 255 255 255", CVAR_COLOR};
-
-cvar_t  help_tutorials_showsize		= {"help_tutorials_showsize",		"1"};
-cvar_t  help_tutorials_showdate		= {"help_tutorials_showdate",		"1"};
-cvar_t  help_tutorials_showtime		= {"help_tutorials_showtime",		"0"};
-cvar_t  help_tutorials_sortmode		= {"help_tutorials_sortmode",		"1"};
-cvar_t  help_tutorials_showstatus	= {"help_tutorials_showstatus",		"1"};
-cvar_t  help_tutorials_stripnames	= {"help_tutorials_stripnames",		"1"};
-cvar_t  help_tutorials_interline	= {"help_tutorials_interline",		"0"};
-cvar_t  help_tutorials_scrollnames	= {"help_tutorials_scrollnames",	"0"};
-cvar_t	help_tutorials_selectedcolor= {"help_tutorials_selectedcolor",	"255 255 255 255", CVAR_COLOR};
-cvar_t  help_tutorials_filecolor	= {"help_tutorials_filecolor",		"255 255 255 255", CVAR_COLOR};
-cvar_t  help_tutorials_dircolor		= {"help_tutorials_dircolor",		"255 255 255 255", CVAR_COLOR};
-
 static void Help_Index_Init(void)
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_HELP_BROWSER);
-    Cvar_Register(&help_files_showsize);
-    Cvar_Register(&help_files_showdate);
-    Cvar_Register(&help_files_showtime);
-    Cvar_Register(&help_files_sortmode);
-    Cvar_Register(&help_files_showstatus);
-    Cvar_Register(&help_files_stripnames);
-    Cvar_Register(&help_files_interline);
-	Cvar_Register(&help_files_scrollnames);
-	Cvar_Register(&help_files_filecolor);
-	Cvar_Register(&help_files_selectedcolor);
-	Cvar_Register(&help_files_dircolor);
-	Cvar_ResetCurrentGroup();
-
-    FL_Init(&help_index_fl,
-        &help_files_sortmode,
-        &help_files_showsize,
-        &help_files_showdate,
-        &help_files_showtime,
-        &help_files_stripnames,
-        &help_files_interline,
-        &help_files_showstatus,
-		&help_files_scrollnames,
-		&help_files_filecolor,
-		&help_files_selectedcolor,
-		&help_files_dircolor,
-#ifdef WITH_ZIP
-		NULL, // No ZIP color needed for help files.
-#endif
-		"./ezquake/help/manual");
+    FL_Init(&help_index_fl,	"./ezquake/help/manual");
     FL_AddFileType(&help_index_fl, 0, ".xml");
 	FL_SetDirUpOption(&help_index_fl, false);
 	FL_SetDirsOption(&help_index_fl, false);
@@ -118,36 +65,7 @@ static void Help_Index_Init(void)
 
 static void Help_Tutorials_Init(void)
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_HELP_BROWSER);
-	Cvar_Register(&help_tutorials_showsize);
-    Cvar_Register(&help_tutorials_showdate);
-    Cvar_Register(&help_tutorials_showtime);
-    Cvar_Register(&help_tutorials_sortmode);
-    Cvar_Register(&help_tutorials_showstatus);
-    Cvar_Register(&help_tutorials_stripnames);
-    Cvar_Register(&help_tutorials_interline);
-	Cvar_Register(&help_tutorials_scrollnames);
-	Cvar_Register(&help_tutorials_filecolor);
-	Cvar_Register(&help_tutorials_selectedcolor);
-	Cvar_Register(&help_tutorials_dircolor);
-	Cvar_ResetCurrentGroup();
-
-    FL_Init(&help_tutorials_fl,
-        &help_tutorials_sortmode,
-        &help_tutorials_showsize,
-        &help_tutorials_showdate,
-        &help_tutorials_showtime,
-        &help_tutorials_stripnames,
-        &help_tutorials_interline,
-        &help_tutorials_showstatus,
-		&help_tutorials_scrollnames,
-		&help_tutorials_filecolor,
-		&help_tutorials_selectedcolor,
-		&help_tutorials_dircolor,
-#ifdef WITH_ZIP
-		NULL, // No ZIP color needed for help files.
-#endif
-		"./ezquake/help/manual/demos");
+    FL_Init(&help_tutorials_fl,	"./ezquake/help/manual/demos");
     FL_AddFileType(&help_tutorials_fl, 0, ".mvd");
 	FL_SetDirUpOption(&help_tutorials_fl, false);
 	FL_SetDirsOption(&help_tutorials_fl, false);

@@ -972,39 +972,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 
 void Settings_MainInit(void)
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
-	Cvar_Register(&skin_browser_showsize);
-    Cvar_Register(&skin_browser_showdate);
-    Cvar_Register(&skin_browser_showtime);
-    Cvar_Register(&skin_browser_sortmode);
-    Cvar_Register(&skin_browser_showstatus);
-    Cvar_Register(&skin_browser_stripnames);
-    Cvar_Register(&skin_browser_interline);
-	Cvar_Register(&skin_browser_scrollnames);
-	Cvar_Register(&skin_browser_selectedcolor);
-	Cvar_Register(&skin_browser_democolor);
-	Cvar_Register(&skin_browser_dircolor);
-#ifdef WITH_ZIP
-	Cvar_Register(&skin_browser_zipcolor);
-#endif
-	Cvar_ResetCurrentGroup();
-
-	FL_Init(&skins_filelist,
-        &skin_browser_sortmode,
-        &skin_browser_showsize,
-        &skin_browser_showdate,
-        &skin_browser_showtime,
-        &skin_browser_stripnames,
-        &skin_browser_interline,
-        &skin_browser_showstatus,
-		&skin_browser_scrollnames,
-		&skin_browser_democolor,
-		&skin_browser_selectedcolor,
-		&skin_browser_dircolor,
-#ifdef WITH_ZIP
-		&skin_browser_zipcolor,
-#endif
-		"./qw/skins");
+	FL_Init(&skins_filelist, "./qw/skins");
 	
 	FL_SetDirUpOption(&skins_filelist, false);
 	FL_SetDirsOption(&skins_filelist, false);
