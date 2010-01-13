@@ -637,21 +637,6 @@ qbool CT_Opt_System_Mouse_Event(const mouse_state_t *ms)
 // Menu Options Config Page Mode
 
 filelist_t configs_filelist;
-cvar_t  cfg_browser_showsize		= {"cfg_browser_showsize",		"1"};
-cvar_t  cfg_browser_showdate		= {"cfg_browser_showdate",		"1"};
-cvar_t  cfg_browser_showtime		= {"cfg_browser_showtime",		"1"};
-cvar_t  cfg_browser_sortmode		= {"cfg_browser_sortmode",		"1"};
-cvar_t  cfg_browser_showstatus		= {"cfg_browser_showstatus",	"1"};
-cvar_t  cfg_browser_stripnames		= {"cfg_browser_stripnames",	"1"};
-cvar_t  cfg_browser_interline		= {"cfg_browser_interline",	"0"};
-cvar_t  cfg_browser_scrollnames	= {"cfg_browser_scrollnames",	"1"};
-cvar_t	cfg_browser_democolor		= {"cfg_browser_democolor",	"255 255 255 255", CVAR_COLOR};	// White.
-cvar_t	cfg_browser_selectedcolor	= {"cfg_browser_selectedcolor","0 150 235 255", CVAR_COLOR};	// Light blue.
-cvar_t	cfg_browser_dircolor		= {"cfg_browser_dircolor",		"170 80 0 255", CVAR_COLOR};	// Redish.
-#ifdef WITH_ZIP
-cvar_t	cfg_browser_zipcolor		= {"cfg_browser_zipcolor",		"255 170 0 255", CVAR_COLOR};	// Orange.
-#endif
-
 CEditBox filenameeb;
 
 enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode = MOCPM_SETTINGS;

@@ -38,10 +38,13 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
 #define FL_SEARCH_TIMEOUT	2.0
 static double last_search_enter_time = 0.0;
 
+
+static void OnChange_file_browser_sort_mode(cvar_t *var, char *string, qbool *cancel);
+
 cvar_t  file_browser_show_size       = {"file_browser_show_size",      "1"};
 cvar_t  file_browser_show_date       = {"file_browser_show_date",      "1"};
 cvar_t  file_browser_show_time       = {"file_browser_show_time",      "0"};
-cvar_t  file_browser_sort_mode       = {"file_browser_sort_mode",      "1"};
+cvar_t  file_browser_sort_mode       = {"file_browser_sort_mode",      "1",	CVAR_NONE, OnChange_file_browser_sort_mode};
 cvar_t  file_browser_show_status     = {"file_browser_show_status",    "1"};
 cvar_t  file_browser_strip_names     = {"file_browser_strip_names",    "1"};
 cvar_t  file_browser_interline       = {"file_browser_interline",      "0"};
@@ -1878,3 +1881,22 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
 // make ../backspace work fine (ala demoplayer)
 // do not show hidden files
+
+static void OnChange_file_browser_sort_mode(cvar_t *var, char *string, qbool *cancel)
+{
+	extern qbool host_everything_loaded;
+	extern filelist_t demo_filelist;
+	extern filelist_t help_index_fl;
+	extern filelist_t help_tutorials_fl;
+	extern filelist_t configs_filelist;
+	extern filelist_t skins_filelist;
+
+	if(host_everything_loaded)
+	{
+		demo_filelist.need_resort		= true;
+		help_index_fl.need_resort		= true;
+		help_tutorials_fl.need_resort	= true;
+		configs_filelist.need_resort	= true;
+		skins_filelist.need_resort		= true;
+	}
+}

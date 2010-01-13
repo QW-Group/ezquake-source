@@ -85,28 +85,8 @@ extern int        menuheight;
 #define menuheight vid.height
 #endif
 
-
 // Demo browser container
 filelist_t demo_filelist;
-
-static void OnChange_demo_sortmode(cvar_t *var, char *string, qbool *cancel);
-
-// Demo browser cvars
-cvar_t  demo_browser_showsize		= {"demo_browser_showsize",		"1"};
-cvar_t  demo_browser_showdate		= {"demo_browser_showdate",		"1"};
-cvar_t  demo_browser_showtime		= {"demo_browser_showtime",		"0"};
-cvar_t  demo_browser_sortmode		= {"demo_browser_sortmode",		"1", CVAR_NONE, OnChange_demo_sortmode};
-cvar_t  demo_browser_showstatus		= {"demo_browser_showstatus",	"1"};
-cvar_t  demo_browser_stripnames		= {"demo_browser_stripnames",	"1"};
-cvar_t  demo_browser_interline		= {"demo_browser_interline",	"0"};
-cvar_t  demo_browser_scrollnames	= {"demo_browser_scrollnames",	"1"};
-
-cvar_t	demo_browser_democolor		= {"demo_browser_democolor",	"255 255 255 255", CVAR_COLOR};	// White.
-cvar_t	demo_browser_selectedcolor	= {"demo_browser_selectedcolor","0 150 235 255", CVAR_COLOR};	// Light blue.
-cvar_t	demo_browser_dircolor		= {"demo_browser_dircolor",		"170 80 0 255", CVAR_COLOR};	// Redish.
-#ifdef WITH_ZIP
-cvar_t	demo_browser_zipcolor		= {"demo_browser_zipcolor",		"255 170 0 255", CVAR_COLOR};	// Orange.
-#endif
 
 // Demo menu container
 CTab_t demo_tab;
@@ -124,15 +104,6 @@ cvar_t    demo_playlist_track_name = {"demo_playlist_track_name",""};
 // demo playlist options
 settings_page demoplsett;
 setting demoplsett_arr[] = {
-	ADDSET_SEPARATOR("Display columns"),
-	ADDSET_BOOL("Show size", demo_browser_showsize),
-	ADDSET_BOOL("Show date", demo_browser_showdate),
-	ADDSET_BOOL("Show time", demo_browser_showtime),
-	ADDSET_SEPARATOR("Display"),
-	ADDSET_BOOL("Show status", demo_browser_showstatus),
-	ADDSET_BOOL("Scroll names", demo_browser_scrollnames),
-	ADDSET_BOOL("Strip names", demo_browser_stripnames),
-	ADDSET_BOOL("Show status", demo_browser_showstatus),
 	ADDSET_SEPARATOR("Playlist options"),
 	ADDSET_BOOL("looping", demo_playlist_loop),
 	ADDSET_STRING("default track", demo_playlist_track_name)
@@ -939,12 +910,4 @@ void Menu_Demo_Init(void)
 	CTab_AddPage(&demo_tab, "Entry", DEMOPG_ENTRY, &demo_entry_handlers);
 	CTab_AddPage(&demo_tab, "Options", DEMOPG_OPTIONS, &demo_options_handlers);
 	CTab_SetCurrentId(&demo_tab, DEMOPG_BROWSER);
-}
-
-static void OnChange_demo_sortmode(cvar_t *var, char *string, qbool *cancel)
-{
-	extern qbool host_everything_loaded;
-
-	if(host_everything_loaded)
-		demo_filelist.need_resort = true;
 }
