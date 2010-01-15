@@ -2046,6 +2046,7 @@ term_source (j_decompress_ptr cinfo)
 {
 }
 
+/*
 GLOBAL(void)
 jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 {
@@ -2074,6 +2075,7 @@ jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 	src->currentpos = 0;
 	src->maxlen = maxlen;
 }
+*/
 
 byte *Image_LoadJPEG(vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 {
