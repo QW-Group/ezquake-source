@@ -35,7 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _WIN32
 #include <errno.h>
 #include <Shlobj.h>
-#include <Shfolder.h>
 #else
 #include <unistd.h>
 #include <strings.h>
