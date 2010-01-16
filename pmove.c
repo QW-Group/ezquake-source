@@ -345,6 +345,12 @@ void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel) {
 	VectorMA(pmove.velocity, accelspeed, wishdir, pmove.velocity);
 }
 
+#ifdef EXPERIMENTAL_SHOW_ACCELERATION
+qbool player_in_air = false;
+float addspeed_val = 0.f;
+qbool flag_player_pmove;
+#endif
+
 void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel) {
 	float addspeed, accelspeed, currentspeed, wishspd = wishspeed;
 	float originalspeed = 0.0, newspeed = 0.0, speedcap = 0.0;
@@ -360,6 +366,15 @@ void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel) {
 	wishspd = min(wishspd, 30);
 	currentspeed = DotProduct (pmove.velocity, wishdir);
 	addspeed = wishspd - currentspeed;
+
+#ifdef EXPERIMENTAL_SHOW_ACCELERATION
+	if(flag_player_pmove)
+	{
+		addspeed_val = addspeed;
+		player_in_air = TRUE;
+	}
+#endif
+
 	if (addspeed <= 0)
 		return;
 	accelspeed = accel * wishspeed * pm_frametime;
@@ -760,6 +775,10 @@ void PM_SpectatorMove (void) {
 //Numtouch and touchindex[] will be set if any of the physents were contacted during the move.
 void PM_PlayerMove (void) 
 {
+#ifdef EXPERIMENTAL_SHOW_ACCELERATION
+	if(flag_player_pmove) player_in_air = false;
+#endif
+
 	pm_frametime = pmove.cmd.msec * 0.001;
 	pmove.numtouch = 0;
 

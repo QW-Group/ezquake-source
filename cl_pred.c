@@ -354,6 +354,9 @@ void CL_PredictMove (void) {
 	}
 	else if (physframe || !cl_independentPhysics.value)
 	{
+#ifdef EXPERIMENTAL_SHOW_ACCELERATION
+		extern qbool flag_player_pmove;
+#endif
 		oldphysent = pmove.numphysent;
 		CL_SetSolidPlayers (cl.playernum);
 
@@ -361,7 +364,13 @@ void CL_PredictMove (void) {
 		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
 			from = to;
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
+#ifdef EXPERIMENTAL_SHOW_ACCELERATION
+				flag_player_pmove = TRUE;
+#endif
 			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
+#ifdef EXPERIMENTAL_SHOW_ACCELERATION
+				flag_player_pmove = FALSE;
+#endif
 		}
 
 		pmove.numphysent = oldphysent;
