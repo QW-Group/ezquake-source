@@ -3202,10 +3202,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\cl_tcl.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\cl_tent.c"
 					>
 				</File>
@@ -3417,6 +3413,10 @@
 			<Filter
 				Name="Scripting"
 				>
+				<File
+					RelativePath="..\..\cl_tcl.c"
+					>
+				</File>
 				<File
 					RelativePath="..\..\cmd.c"
 					>
