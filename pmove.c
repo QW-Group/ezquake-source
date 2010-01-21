@@ -371,7 +371,7 @@ void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel) {
 	if(flag_player_pmove)
 	{
 		addspeed_val = addspeed;
-		player_in_air = TRUE;
+		player_in_air = true;
 	}
 #endif
 

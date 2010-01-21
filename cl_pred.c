@@ -365,11 +365,11 @@ void CL_PredictMove (void) {
 			from = to;
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
-				flag_player_pmove = TRUE;
+				flag_player_pmove = true;
 #endif
 			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
-				flag_player_pmove = FALSE;
+				flag_player_pmove = false;
 #endif
 		}
 
