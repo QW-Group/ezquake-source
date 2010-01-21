@@ -36,6 +36,9 @@ typedef unsigned int	PIXEL24;
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include <X11/extensions/XShm.h>
+#include <X11/xpm.h>
+
+#include "ezquake.xpm"
 
 #include "quakedef.h"
 #include "keys.h"
@@ -626,6 +629,9 @@ void VID_Init (unsigned char *palette)
 		int attribmask = CWEventMask  | CWColormap | CWBorderPixel;
 		XSetWindowAttributes attribs;
 		Colormap tmpcmap;
+		XSizeHints sizehints;
+		XWMHints wmhints;
+		Pixmap icon_pixmap, icon_mask;
 
 		tmpcmap = XCreateColormap(x_disp, XRootWindow(x_disp, x_visinfo->screen), x_vis, AllocNone);
 
@@ -644,7 +650,21 @@ void VID_Init (unsigned char *palette)
 			x_vis,
 			attribmask,
 			&attribs );
-		XStoreName( x_disp,x_win,"ezquake");
+
+		XStoreName( x_disp,x_win,"ezQuake");
+
+		/* GH: Don't let the window be resized */
+		sizehints.flags = PMinSize | PMaxSize;
+		sizehints.min_width = sizehints.max_width = vid.width;
+		sizehints.min_height = sizehints.max_height = vid.height;
+
+		XSetWMNormalHints( x_disp, x_win, &sizehints );
+
+		XpmCreatePixmapFromData( x_disp, XRootWindow(x_disp, x_visinfo->screen), ezquake_xpm__, &icon_pixmap, &icon_mask, NULL );
+		wmhints.icon_pixmap = icon_pixmap;
+		wmhints.icon_mask = icon_mask;
+		wmhints.flags = IconPixmapHint | IconMaskHint;
+		XSetWMHints( x_disp, x_win, &wmhints );
 
 		if (x_visinfo->class != TrueColor)
 			XFreeColormap(x_disp, tmpcmap);

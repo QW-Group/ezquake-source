@@ -178,7 +178,7 @@ $(GLX_S_OBJS): $(GLX_DIR)/%.o: %.s
 X11_C_OBJS = $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_C_FILES)))
 X11_S_OBJS = $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_S_FILES)))
 X11_CFLAGS = $(CFLAGS) -D_Soft_X11
-X11_LDFLAGS = $(LDFLAGS) -lX11 -lXext
+X11_LDFLAGS = $(LDFLAGS) -lX11 -lXext -lXpm
 
 x11: _DIR = $(X11_DIR)
 x11: _OBJS = $(X11_C_OBJS) $(X11_S_OBJS) $(COMMON_LIBS)
