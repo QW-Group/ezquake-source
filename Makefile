@@ -147,7 +147,7 @@ include Makefile.list
 GLX_C_OBJS = $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_C_FILES)))
 GLX_S_OBJS = $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_S_FILES)))
 GLX_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-GLX_LDFLAGS = $(LDFLAGS) -lGL -lXxf86dga -lXxf86vm
+GLX_LDFLAGS = $(LDFLAGS) -lGL -lXxf86dga -lXxf86vm -lXpm
 
 glx: _DIR = $(GLX_DIR)
 glx: _OBJS = $(GLX_C_OBJS) $(GLX_S_OBJS) $(COMMON_LIBS) $(GL_LIBS)

@@ -65,6 +65,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>
+#include <X11/xpm.h>
 
 #include <X11/extensions/xf86dga.h>
 #include <X11/extensions/xf86vmode.h>
@@ -76,6 +77,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <errno.h>
 #include <pthread.h>
 #endif
+
+#include "ezquake.xpm"
 
 #include "quakedef.h"
 #include "keys.h"
@@ -1281,6 +1284,8 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
   XVisualInfo *visinfo;
   XSetWindowAttributes attr;
   XSizeHints sizehints;
+  XWMHints wmhints;
+  Pixmap icon_pixmap, icon_mask;
   unsigned long mask;
   int colorbits, depthbits, stencilbits;
   int tcolorbits, tdepthbits, tstencilbits;
@@ -1532,6 +1537,12 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
   sizehints.min_height = sizehints.max_height = actualHeight;
 
   XSetWMNormalHints( dpy, win, &sizehints );
+
+  XpmCreatePixmapFromData( dpy, root, ezquake_xpm__, &icon_pixmap, &icon_mask, NULL );
+  wmhints.icon_pixmap = icon_pixmap;
+  wmhints.icon_mask = icon_mask;
+  wmhints.flags = IconPixmapHint | IconMaskHint;
+  XSetWMHints( dpy, win, &wmhints );
 
   XMapWindow( dpy, win );
 
