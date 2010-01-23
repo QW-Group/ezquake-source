@@ -125,11 +125,6 @@ static int SB_PingTree_FindIp(ipaddr_t ipaddr)
 	return INVALID_NODE;
 }
 
-static qbool SB_PingTree_HasIp(ipaddr_t ipaddr)
-{
-	return SB_PingTree_FindIp(ipaddr) >= 0;
-}
-
 static int SB_PingTree_AddNode(ipaddr_t ipaddr, unsigned short proxport)
 {
 	int id = SB_PingTree_FindIp(ipaddr);
@@ -292,7 +287,7 @@ _select:
 			continue;
 		if (addr_from.sin_addr.s_addr != addr_to.sin_addr.s_addr) // martian, discard and see if a valid response came in after it
 			goto _select;
-		if (strncmp("\xff\xff\xff\xffn", buf, 5) == 0)
+		if (strncmp("\xff\xff\xff\xffn", (char *) buf, 5) == 0)
 			SB_Proxy_ParseReply(buf+5, ret-5, callback);
 
 		break;
@@ -328,7 +323,7 @@ DWORD WINAPI SB_PingTree_SendQueryThread(void *thread_arg)
 	proxy_request_queue *queue = (proxy_request_queue *) thread_arg;
 	int i, ret;
 	double interval_ms = (1.0 / sb_proxinfopersec.value) * 1000.0;
-	timerresolution_session_t timersession;
+	timerresolution_session_t timersession = {0, 0};
 
 	Sys_TimerResolution_InitSession(&timersession);
 	Sys_TimerResolution_RequestMinimum(&timersession);
@@ -419,7 +414,7 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 					continue;
 				}
 
-				if (strncmp("\xff\xff\xff\xffn", buf, 5) == 0) {
+				if (strncmp("\xff\xff\xff\xffn", (char *) buf, 5) == 0) {
 					nodeid_t id = queue->data[i].nodeid;
 					queue->data[i].done = true;
 					ping_nodes[id].nlist_start = ping_neighbours_count;
