@@ -55,6 +55,8 @@
 		92C655F90E535CBF00437A38 /* ez_listviewitem.c in Sources */ = {isa = PBXBuildFile; fileRef = 92C655F60E535CBF00437A38 /* ez_listviewitem.c */; };
 		92CAD75A0CF082CE00A0767A /* menu_multiplayer.c in Sources */ = {isa = PBXBuildFile; fileRef = 92CAD7580CF082CE00A0767A /* menu_multiplayer.c */; };
 		92CAD75B0CF082CE00A0767A /* menu_multiplayer.c in Sources */ = {isa = PBXBuildFile; fileRef = 92CAD7580CF082CE00A0767A /* menu_multiplayer.c */; };
+		92DAC3A0110B94DA0072AAC4 /* plugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 92DAC39F110B94DA0072AAC4 /* plugin.c */; };
+		92DAC3A1110B94DA0072AAC4 /* plugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 92DAC39F110B94DA0072AAC4 /* plugin.c */; };
 		92F019830DE7F9F400F1108A /* libircclient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F0197E0DE7F89800F1108A /* libircclient.a */; };
 		92F0198B0DE7FB0800F1108A /* irc.c in Sources */ = {isa = PBXBuildFile; fileRef = 92F019890DE7FB0800F1108A /* irc.c */; };
 		92F019980DE7FFCC00F1108A /* libexpat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019930DE7FFCC00F1108A /* libexpat.a */; };
@@ -1126,6 +1128,7 @@
 		92C655FD0E535D5B00437A38 /* fs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fs.h; sourceTree = "<group>"; };
 		92CAD7580CF082CE00A0767A /* menu_multiplayer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = menu_multiplayer.c; sourceTree = "<group>"; };
 		92CAD7590CF082CE00A0767A /* menu_multiplayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = menu_multiplayer.h; sourceTree = "<group>"; };
+		92DAC39F110B94DA0072AAC4 /* plugin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = plugin.c; sourceTree = "<group>"; };
 		92F0197E0DE7F89800F1108A /* libircclient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libircclient.a; path = ../libs/macosx/libircclient.a; sourceTree = SOURCE_ROOT; };
 		92F019890DE7FB0800F1108A /* irc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = irc.c; sourceTree = "<group>"; };
 		92F0198A0DE7FB0800F1108A /* irc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = irc.h; sourceTree = "<group>"; };
@@ -1670,6 +1673,7 @@
 		D211454309C7822100FD70CB /* EZQuake */ = {
 			isa = PBXGroup;
 			children = (
+				92DAC39F110B94DA0072AAC4 /* plugin.c */,
 				920874B210E7F9DB0027FC20 /* mumble.c */,
 				920874B310E7F9DB0027FC20 /* mumble.h */,
 				9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */,
@@ -2546,6 +2550,7 @@
 				924527CE0EE8892900EA8BCA /* irc.c in Sources */,
 				9226C6CE10728E7500F07127 /* EX_browser_pathfind.c in Sources */,
 				920874B510E7F9DB0027FC20 /* mumble.c in Sources */,
+				92DAC3A1110B94DA0072AAC4 /* plugin.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2730,6 +2735,7 @@
 				92C655F90E535CBF00437A38 /* ez_listviewitem.c in Sources */,
 				9226C6CD10728E7500F07127 /* EX_browser_pathfind.c in Sources */,
 				920874B410E7F9DB0027FC20 /* mumble.c in Sources */,
+				92DAC3A0110B94DA0072AAC4 /* plugin.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
