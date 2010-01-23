@@ -1394,7 +1394,7 @@ void M_Draw (void) {
 		case m_help:			M_Help_Draw(); break;
 		case m_quit:			M_Quit_Draw(); break;
 		case m_demos:			Menu_Demo_Draw(); break;
-		case m_plugin:			Plug_Menu_Event(0, (int)(realtime*1000));
+		case m_plugin:			Plug_Menu_Event(0, (int)(realtime*1000)); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control:		M_Menu_MP3_Control_Draw(); break;
 		case m_mp3_playlist:	M_Menu_MP3_Playlist_Draw(); break;
