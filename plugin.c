@@ -875,7 +875,7 @@ plugin_t *Plug_Load(char *file)
 
 	for (newplug = plugs; newplug; newplug = newplug->next)
 	{
-		if (!stricmp(newplug->name, file))
+		if (!strcasecmp(newplug->name, file))
 			return newplug;
 	}
 
@@ -1242,7 +1242,7 @@ void Plug_Command_f(void)
 		if (!plugincommandarray[i].plugin)
 			continue;	//don't check commands who's owners died.
 
-		if (stricmp(plugincommandarray[i].command, cmd))	//not the right command
+		if (strcasecmp(plugincommandarray[i].command, cmd))	//not the right command
 			continue;
 
 		currentplug = plugincommandarray[i].plugin;
