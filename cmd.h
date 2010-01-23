@@ -83,6 +83,7 @@ typedef struct cmd_function_s {
 	struct cmd_function_s	*next;
 	char					*name;
 	xcommand_t				function;
+	qbool                   zmalloced;
 } cmd_function_t;
 
 void Cmd_Init (void);
@@ -94,6 +95,12 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function);
 // The cmd_name is referenced later, so it should not be in temp memory
 // if function is NULL, the command will be forwarded to the server
 // as a clc_stringcmd instead of executed locally
+
+// plugins use it; command is Q_malloced, name is stored within the same memory piece
+qbool Cmd_AddRemCommand (char *cmd_name, xcommand_t function);
+
+// only used by plugins, other commands stay in the client forever
+void Cmd_RemoveCommand (char *cmd_name);
 
 qbool Cmd_Exists (char *cmd_name);
 // used by the cvar code to check for cvar / command name overlap

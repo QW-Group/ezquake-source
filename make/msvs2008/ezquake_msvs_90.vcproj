@@ -421,7 +421,7 @@
 				Optimization="0"
 				FavorSizeOrSpeed="0"
 				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_WINAMP;WITH_IRC;WITH_NQPROGS;id386"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_WINAMP;WITH_IRC;WITH_NQPROGS;id386;USE_PR2"
 				StringPooling="true"
 				MinimalRebuild="true"
 				ExceptionHandling="0"
@@ -3237,6 +3237,10 @@
 				</File>
 				<File
 					RelativePath="..\..\mumble.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\plugin.c"
 					>
 				</File>
 				<File

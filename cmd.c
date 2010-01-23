@@ -1151,6 +1151,63 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	cmd_hash_array[key] = cmd;
 }
 
+qbool Cmd_AddRemCommand (char *cmd_name, xcommand_t function)
+{
+	cmd_function_t *cmd;
+	int	key;
+
+	key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
+
+	// fail if the command already exists
+	for (cmd = cmd_hash_array[key]; cmd; cmd=cmd->hash_next) {
+		if (!strcasecmp (cmd_name, cmd->name)) {
+			Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
+			return false;
+		}
+	}
+
+	cmd = (cmd_function_t*)Z_Malloc (sizeof(cmd_function_t)+strlen(cmd_name)+1);
+	cmd->name = (char*)(cmd+1); // points to extra space created after the structure
+	strcpy(cmd->name, cmd_name);
+	cmd->function = function;
+	cmd->next = cmd_functions;
+	cmd->zmalloced = true;
+	cmd_functions = cmd;
+	cmd->hash_next = cmd_hash_array[key];
+	cmd_hash_array[key] = cmd;
+
+
+	return true;
+}
+
+void	Cmd_RemoveCommand (char *cmd_name)
+{
+	cmd_function_t	*cmd, **back;
+
+	back = &cmd_functions;
+	while (1)
+	{
+		cmd = *back;
+		if (!cmd)
+		{
+//			Con_Printf ("Cmd_RemoveCommand: %s not added\n", cmd_name);
+			return;
+		}
+		if (!strcmp (cmd_name, cmd->name))
+		{
+			*back = cmd->next;
+			if (!cmd->zmalloced)
+			{
+				Con_Printf("Cmd_RemoveCommand: %s was not added dynamically\n", cmd_name);
+				return;
+			}
+			Z_Free (cmd);
+			return;
+		}
+		back = &cmd->next;
+	}
+}
+
 qbool Cmd_Exists (char *cmd_name)
 {
 	int	key;

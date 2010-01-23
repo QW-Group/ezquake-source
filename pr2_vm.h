@@ -39,9 +39,33 @@
 #define MAX_vmMain_Call	100
 #define MAX_CYCLES		100000
 
+// for syscall users
+#define VM_LONG(x)		(*(int*)&(x))	//note: on 64bit platforms, the later bits can contain junk
+#define VM_FLOAT(x)		(*(float*)&(x))	//note: on 64bit platforms, the later bits can contain junk
+#define VM_POINTERQ(x)	((x)?(void*)((char *)offset+((x)%mask)):NULL)
+#define VM_OOB(p,l)		((p) + (l) >= mask || VM_POINTERQ(p) < offset)
+
 #define VM_POINTER(base,mask,x)	 ((void*)((char *)base+((x)&mask)))
 #define POINTER_TO_VM(base,mask,x)	 ((x)?(int)((char *)(x) - (char*)base)&mask:0)
 
+// <qintptr_t>
+#if defined(_WIN64)
+	#define qintptr_t __int64
+	#define FTE_WORDSIZE 64
+#elif defined(_WIN32)
+	#define qintptr_t __int32
+	#define FTE_WORDSIZE 32
+#else
+	#if __WORDSIZE == 64
+		#define qintptr_t long long
+		#define FTE_WORDSIZE 64
+	#else
+		#define qintptr_t long
+		#define FTE_WORDSIZE 32
+	#endif
+#endif
+#define quintptr_t unsigned qintptr_t
+// </qintptr_t>
 
 typedef union pr2val_s
 {
@@ -247,5 +271,6 @@ vm_t* VM_Load(vm_t *vm, vm_type_t type, char *name,sys_call_t syscall,sys_callex
 extern int VM_Call(vm_t *vm, int /*command*/, int /*arg0*/, int , int , int , int , int , 
 				int , int , int , int , int , int /*arg11*/);
 void  QVM_StackTrace( qvm_t * qvm );
+void VM_PrintInfo( vm_t * vm);
 
 #endif /* !__PR2_VM_H__ */

@@ -1879,6 +1879,7 @@ void ReloadPaletteAndColormap(void)
 }
 
 void EX_FileList_Init(void);
+void Plug_Init(void);
 
 void CL_Init (void) 
 {
@@ -1979,6 +1980,7 @@ void CL_Init (void)
 	Sys_InitIPC();
 
 	Rulesets_Init();
+	Plug_Init();
 }
 
 //============================================================================

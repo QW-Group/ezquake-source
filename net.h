@@ -122,6 +122,7 @@ int		NET_UDPSVPort (void);
 #define OLD_AVG 0.99 // total = oldtotal*OLD_AVG + new*(1-OLD_AVG)
 
 #define MAX_LATENT 32
+#define MAX_ADR_SIZE	64
 
 typedef struct {
 	qbool		fatal_error;
