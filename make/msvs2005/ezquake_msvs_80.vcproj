@@ -1948,7 +1948,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\plugins.c"
+					RelativePath="..\..\plugin.c"
 					>
 				</File>
 				<File
