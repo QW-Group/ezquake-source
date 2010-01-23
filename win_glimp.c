@@ -914,6 +914,8 @@ static void PrintCDSError( int value )
 	}
 }
 
+void Plug_ResChanged(void);
+
 /*
 ** GLW_SetMode
 */
@@ -1143,6 +1145,8 @@ static rserr_t GLW_SetMode( const char *drivername,
 
 	// NOTE: this is overridden later on standalone 3Dfx drivers
 	glConfig.isFullscreen = cdsFullscreen;
+
+	Plug_ResChanged();
 
 	return RSERR_OK;
 }

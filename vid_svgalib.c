@@ -395,6 +395,8 @@ void VID_ShiftPalette (unsigned char *p)
 	VID_SetPalette(p);
 }
 
+void Plug_ResChanged(void);
+
 int VID_SetMode (int modenum, unsigned char *palette)
 {
 	int bsize, zsize, tsize;
@@ -467,6 +469,8 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	svgalib_inited=1;
 
 	vid.recalc_refdef = 1; // force a surface cache flush
+
+	Plug_ResChanged();
 
 	return 0;
 }

@@ -542,6 +542,8 @@ qbool VID_SetFullDIBMode (int modenum) {
 	return true;
 }
 
+void Plug_ResChanged(void);
+
 int VID_SetMode (int modenum, unsigned char *palette) {
 	int temp;
 	qbool stat;
@@ -622,6 +624,8 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	//VID_SetPalette (palette);
 
 	vid.recalc_refdef = 1;
+
+	Plug_ResChanged();
 
 	return true;
 }

@@ -1342,6 +1342,7 @@ void CL_Reconnect_f (void)
 
 extern double qstat_senttime;
 extern void CL_PrintQStatReply (char *s);
+int Plug_ConnectionlessClientPacket(char *buffer, int size);
 
 // Responses to broadcasts, etc
 void CL_ConnectionlessPacket (void) 
@@ -1355,6 +1356,9 @@ void CL_ConnectionlessPacket (void)
 
     MSG_BeginReading();
     MSG_ReadLong();	// Skip the -1
+
+	if (Plug_ConnectionlessClientPacket(net_message.data+4, net_message.cursize-4))
+		return;
 
 	c = MSG_ReadByte();
 

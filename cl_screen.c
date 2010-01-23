@@ -3293,6 +3293,8 @@ static void SCR_DrawCursor(void)
 	scr_pointer_state.y_old = scr_pointer_state.y;
 }
 
+void Plug_SBar(void);
+
 void SCR_DrawElements(void) 
 {
   extern qbool  sb_showscores,  sb_showteamscores;
@@ -3301,6 +3303,7 @@ void SCR_DrawElements(void)
 	if (scr_drawloading) 
 	{
 		SCR_DrawLoading ();
+		Plug_SBar();
 		Sbar_Draw ();
 		HUD_Draw ();		// HUD -> hexum
 	}
@@ -3401,6 +3404,7 @@ void SCR_DrawElements(void)
 						SCR_DrawMultiviewBorders();
 					}
 
+					Plug_SBar();
 					Sbar_Draw();
 					HUD_Draw();
 					HUD_Editor_Draw();

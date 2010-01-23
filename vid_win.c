@@ -1284,6 +1284,8 @@ void VID_RestoreOldMode (int original_mode)
 	inerror = false;
 }
 
+void Plug_ResChanged(void);
+
 int VID_SetMode (int modenum, unsigned char *palette) 
 {
 	int original_mode, temp;
@@ -1424,6 +1426,8 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	vid.recalc_refdef = 1;
 
 	firstupdate = 1;
+
+	Plug_ResChanged();
 
 	return true;
 }
