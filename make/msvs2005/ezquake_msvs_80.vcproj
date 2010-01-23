@@ -1948,6 +1948,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\plugins.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\qtv.c"
 					>
 				</File>
