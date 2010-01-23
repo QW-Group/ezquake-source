@@ -2153,6 +2153,7 @@ qbool VSyncLagFix (void)
 }
 
 void CL_QTVPoll (void);
+void Plug_Tick(void);
 
 qbool physframe;
 double physframetime;
@@ -2258,6 +2259,8 @@ void CL_Frame (double time)
 			cls.demotime += cls.frametime;
 		host_skipframe = false;
 	}
+
+	Plug_Tick();
 
 	cls.realtime += cls.frametime;
 
