@@ -81,7 +81,7 @@
 #define RGLQUAKE
 #endif
 #define QR_OPENGL 1
-#define qrenderer QR_OPENGL;
+#define qrenderer QR_OPENGL
 #define qbyte byte
 #define sockaddr_qstorage sockaddr_storage
 #define plug_sbar_value 0
