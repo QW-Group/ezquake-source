@@ -90,6 +90,10 @@ cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
 cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
 cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
 
+// GL_ARB_texture_non_power_of_two
+qbool gl_support_arb_texture_non_power_of_two = false;
+cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
+
 extern const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
 
 /************************************* EXTENSIONS *************************************/
@@ -164,6 +168,18 @@ void GL_CheckExtensions (void) {
 		Cvar_Register (&gl_ext_texture_compression);
 		Cvar_ResetCurrentGroup();
 	}
+
+	// GL_ARB_texture_non_power_of_two
+	// NOTE: we always register cvar even if ext is not supported.
+	// cvar added just to be able force OFF an extension.
+	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
+	Cvar_Register (&gl_ext_arb_texture_non_power_of_two);
+	Cvar_ResetCurrentGroup();
+
+	gl_support_arb_texture_non_power_of_two =
+		gl_ext_arb_texture_non_power_of_two.integer && CheckExtension("GL_ARB_texture_non_power_of_two");
+	Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n", 
+		gl_support_arb_texture_non_power_of_two ? "found" : "not found");
 }
 
 void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {

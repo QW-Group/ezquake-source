@@ -252,8 +252,16 @@ static void ScaleDimensions(int width, int height, int *scaled_width, int *scale
 	int maxsize, picmip;
 	qbool scale = (mode & TEX_MIPMAP) && !(mode & TEX_NOSCALE);
 
-	Q_ROUND_POWER2(width, *scaled_width);
-	Q_ROUND_POWER2(height, *scaled_height);
+	if (gl_support_arb_texture_non_power_of_two)
+	{
+		*scaled_width = width;
+		*scaled_height = height;
+	}
+	else
+	{
+		Q_ROUND_POWER2(width, *scaled_width);
+		Q_ROUND_POWER2(height, *scaled_height);
+	}
 
 	if (scale) 
 	{
@@ -291,8 +299,16 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode)
 	int	internal_format, tempwidth, tempheight, miplevel;
 	unsigned int *newdata;
 
-	Q_ROUND_POWER2(width, tempwidth);
-	Q_ROUND_POWER2(height, tempheight);
+	if (gl_support_arb_texture_non_power_of_two)
+	{
+		tempwidth = width;
+		tempheight = height;
+	}
+	else
+	{
+		Q_ROUND_POWER2(width, tempwidth);
+		Q_ROUND_POWER2(height, tempheight);
+	}
 
 	newdata = (unsigned int *) Q_malloc(tempwidth * tempheight * 4);
 
@@ -434,7 +450,11 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
 	if (developer.integer >= 3)
-		Com_DPrintf("GL_LoadTexture: %s\n", identifier);
+	{
+		Com_DPrintf("Texture: %s %dx%d -> %dx%d %s\n",
+				identifier, width, height, scaled_width, scaled_height,
+				((scaled_width & (scaled_width-1)) || (scaled_height & (scaled_height-1))) ? "non power of two" : "");
+	}
 
 	// If we were given an identifier for the texture, search through
 	// the list of loaded texture and see if we find a match, if so

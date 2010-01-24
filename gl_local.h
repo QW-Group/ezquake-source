@@ -359,6 +359,7 @@ extern qbool gl_mtexable;
 extern int gl_textureunits;
 extern qbool gl_combine, gl_add_ext;
 extern qbool gl_allow_ztrick;
+extern qbool gl_support_arb_texture_non_power_of_two;
 
 qbool CheckExtension (const char *extension);
 void Check_Gamma (unsigned char *pal);
