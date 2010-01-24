@@ -17,6 +17,43 @@
 	 - everything in #ifdef GNUTLS was removed
 	 - some missing types were added to here and to pr2_vm.h
 	 - multiple console stuff pretends it's doing something, while actually it isn't
+
+	How does it work?
+	For loading the plugin library we use code that is common with e.g. mod loading
+	in the server.
+
+	Also we use the same mechanism to negotiate syscall functions addresses.
+
+	Every plugin exports two functions - vmMain and dllEntry
+		- via dllEntry we tell the plugin what is the address of the syscall function
+			- it's a function via which all other functions calls are made
+		- vmMain is plugin's "syscall/plugin call" function, via this function
+			all plugin's functions are called
+	
+	Once the plugin library is loaded, the client uses OS-specific function to get
+	addresses of both these function. It will then immediately call dllEntry to
+	tell the plugin where the client's function is.
+
+	At this point client knows plugin's syscall point, the plugin knows client's syscall point.
+
+	After load is done, we call function number 0 in the plugin, which typically is
+	some Plug_InitAPI and we pass to it the (address of) function Plug_GetEngineFunction
+	as the only argument. Here the API gets negotiated.
+	
+	Using the Plug_GetEngineFunction the plugin asks the client for addresses of all
+	the functions it will need to work. As mentioned above, all function are looked up
+	by their name, both for client->plugin and plugin->client functions.
+
+	The plugin will then add it's hooks to the client code via Plug_Export function.
+	There are hooks for e.g. resolution change, command execution, server message,
+	chat message, connectionless packet, menu event, and some others. When such event
+	happens, a client will go through all loaded plugins and call those plugins,
+	which registered their hook for given event.
+
+	At this point the plugin has access to main program's functions and vice versa.
+
+	Finally the plugin starts initialization of the specific plugin stuff - like adding
+	Quake variables and commands to the client.
 **/
 
 #include "quakedef.h"
@@ -38,24 +75,26 @@
 #endif
 
 // FTEQW type and naming compatibility
+// it's not really necessary, simple find & replace would do the job too
 #define qboolean qbool
 #ifdef GLQUAKE
 #define RGLQUAKE
 #endif
 #define QR_OPENGL 1
-static const int qrenderer = QR_OPENGL;
+#define qrenderer QR_OPENGL;
 #define qbyte byte
-#define BZ_Realloc Q_realloc
 #define sockaddr_qstorage sockaddr_storage
 #define plug_sbar_value 0
 #define cl_splitclients 1
-// 4550: if (Draw_Image) { ... }
-// 4057: ioctlsocket u_long* vs int*
-#pragma warning( disable : 4550 4057 )
 #define Q_strncpyz strlcpy
 #define Cvar_Get(name, default, flags, group) Cvar_Create((name), (default), (flags))
 #define BZ_Malloc Q_malloc
+#define BZ_Realloc Q_realloc
 #define BZ_Free Q_free
+
+// 4550: if (Draw_Image) { ... }
+// 4057: ioctlsocket u_long* vs int*
+#pragma warning( disable : 4550 4057 )
 
 //custom plugin builtins.
 typedef qintptr_t (EXPORT_FN *Plug_Builtin_t)(void *offset, quintptr_t mask, const qintptr_t *arg);
@@ -109,7 +148,6 @@ static mpic_t *Draw_SafeCachePic(char *pic)
 	return Draw_CachePicSafe(pic, false, false);
 }
 
-// FIXME - probably totally wrong function
 static int Draw_Image (float x, float y, float w, float h, float s1, float t1, float s2, float t2, mpic_t* image)
 {
 	float src_x = image->width*s1;
