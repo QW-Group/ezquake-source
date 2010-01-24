@@ -2075,9 +2075,8 @@ void Plug_SBar(void)
 			if (currentplug->sbarlevel[0])
 			{
 				for (cp = 0; cp < cl_splitclients; cp++)
-				{	//if you don't use splitscreen, use a full videosize rect.
-					// TODO
-					// SCR_VRectForPlayer(&rect, cp);
+				{
+					SCR_VRectForPlayer(&rect, cp);
 					if (Draw_ImageColours)
 						Draw_ImageColours(1, 1, 1, 1); // ensure menu colors are reset
 					ret |= VM_CallEx(currentplug->vm, currentplug->sbarlevel[0], cp, rect.x, rect.y, rect.width, rect.height, sb_showscores+sb_showteamscores*2);

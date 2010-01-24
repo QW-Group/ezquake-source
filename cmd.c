@@ -1145,6 +1145,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 #endif
 	cmd->name = cmd_name;
 	cmd->function = function;
+	cmd->zmalloced = false;
 	cmd->next = cmd_functions;
 	cmd_functions = cmd;
 	cmd->hash_next = cmd_hash_array[key];
@@ -1176,15 +1177,38 @@ qbool Cmd_AddRemCommand (char *cmd_name, xcommand_t function)
 	cmd->hash_next = cmd_hash_array[key];
 	cmd_hash_array[key] = cmd;
 
-
 	return true;
 }
 
-void	Cmd_RemoveCommand (char *cmd_name)
+// removes command from the hash map of the commands
+cmd_function_t *Cmd_RemoveCommand_Hash(char *cmd_name)
 {
-	// TODO
-	// FIXME
-	// properly remove cmd from the hash maps
+	int key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
+	cmd_function_t *cmd = cmd_hash_array[key];
+	cmd_function_t *prev = NULL;
+	cmd_function_t *retval = NULL;
+
+	if (strcasecmp(cmd_name, cmd->name) == 0) {
+		retval = cmd;
+		cmd_hash_array[key] = cmd_hash_array[key]->hash_next;
+	}
+	else
+	{
+		prev = cmd;
+		for (cmd = cmd->hash_next; cmd; cmd = cmd->hash_next) {
+			if (strcasecmp(cmd_name, cmd->name) == 0) {
+				retval = cmd;
+				prev->hash_next = cmd->hash_next;
+			}
+		}
+	}
+
+	return retval;
+}
+
+// removes command from the linked list of all commands
+cmd_function_t *Cmd_RemoveCommand_List (char *cmd_name)
+{
 	cmd_function_t	*cmd, **back;
 
 	back = &cmd_functions;
@@ -1193,21 +1217,34 @@ void	Cmd_RemoveCommand (char *cmd_name)
 		cmd = *back;
 		if (!cmd)
 		{
-//			Con_Printf ("Cmd_RemoveCommand: %s not added\n", cmd_name);
-			return;
+			return NULL;
 		}
 		if (!strcmp (cmd_name, cmd->name))
 		{
 			*back = cmd->next;
-			if (!cmd->zmalloced)
-			{
-				Con_Printf("Cmd_RemoveCommand: %s was not added dynamically\n", cmd_name);
-				return;
-			}
-			Z_Free (cmd);
-			return;
+			return cmd;
 		}
 		back = &cmd->next;
+	}
+}
+
+// removes command from all structures and deallocates it
+void Cmd_RemoveCommand (char *cmd_name)
+{
+	cmd_function_t *cmd;
+
+	cmd = Cmd_RemoveCommand_List(cmd_name);
+	cmd = Cmd_RemoveCommand_Hash(cmd_name);
+
+	if (cmd) {
+		if (cmd->zmalloced)
+		{
+			Z_Free(cmd);
+		}
+		else
+		{
+			Con_Printf("Cmd_RemoveCommand: %s was not added dynamically\n", cmd_name);
+		}
 	}
 }
 
