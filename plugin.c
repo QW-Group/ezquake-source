@@ -112,10 +112,18 @@ static mpic_t *Draw_SafeCachePic(char *pic)
 // FIXME - probably totally wrong function
 static int Draw_Image (float x, float y, float w, float h, float s1, float t1, float s2, float t2, mpic_t* image)
 {
-	Draw_SubPic(x, y,
+	float src_x = image->width*s1;
+	float src_y = image->height*t1;
+	float src_width = image->width*s2 - src_x;
+	float src_height = image->height*t2 - src_y;
+	float scale_x = w / src_width;
+	float scale_y = h / src_height;
+
+	Draw_SAlphaSubPic2(x, y,
 		image,
-		image->width*s1, image->height*t1,
-		image->width*s2 - image->width*s1, image->height*t2 - image->height*t1);
+		src_x, src_y,
+		src_width, src_height,
+		scale_x, scale_y, 1);
 	return 1;
 }
 

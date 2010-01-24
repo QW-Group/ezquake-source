@@ -1361,7 +1361,7 @@ void M_Draw (void) {
 	}
 
 #ifdef GLQUAKE
-	if (scr_scaleMenu.value) {
+	if (scr_scaleMenu.value && m_state != m_plugin) {
 		menuwidth = 320;
 		menuheight = min (vid.height, 240);
 		glMatrixMode(GL_PROJECTION);
