@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 #include <winsock2.h>
+#include <ws2tcpip.h>
 typedef int socklen_t;
 typedef SOCKET socket_t;
 
