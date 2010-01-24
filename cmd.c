@@ -1182,6 +1182,9 @@ qbool Cmd_AddRemCommand (char *cmd_name, xcommand_t function)
 
 void	Cmd_RemoveCommand (char *cmd_name)
 {
+	// TODO
+	// FIXME
+	// properly remove cmd from the hash maps
 	cmd_function_t	*cmd, **back;
 
 	back = &cmd_functions;

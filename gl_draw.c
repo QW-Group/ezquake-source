@@ -979,7 +979,7 @@ void Draw_Character (int x, int y, int num)
 	Draw_ResetCharGLState();
 }
 
-static void Draw_SetColor(byte *rgba, float alpha)
+void Draw_SetColor(byte *rgba, float alpha)
 {
 	if (scr_coloredText.integer)
 	{

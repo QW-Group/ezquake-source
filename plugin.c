@@ -112,13 +112,22 @@ static mpic_t *Draw_SafeCachePic(char *pic)
 // FIXME - probably totally wrong function
 static int Draw_Image (float x, float y, float w, float h, float s1, float t1, float s2, float t2, mpic_t* image)
 {
-	Draw_FitPic(x, y, w, h, image);
+	Draw_SubPic(x, y,
+		image,
+		image->width*s1, image->height*t1,
+		image->width*s2 - image->width*s1, image->height*t2 - image->height*t1);
 	return 1;
 }
 
+void Draw_SetColor(byte *rgba, float alpha);
 static void Draw_ImageColours(float r, float g, float b, float a)
 {
-	// FIXME
+	byte rgba[4];
+	rgba[0] = r*255;
+	rgba[1] = g*255;
+	rgba[2] = b*255;
+	rgba[3] = a*255;
+	Draw_SetColor(rgba, a);
 }
 
 static qbool Sbar_ShouldDraw()
@@ -2008,7 +2017,7 @@ qboolean Plug_Menu_Event(int eventtype, int param)	//eventtype = draw/keydown/ke
 		return false;
 
 	currentplug = menuplug;
-	ret = VM_CallEx(menuplug->vm, menuplug->menufunction, eventtype, param, scr_pointer_state.x, scr_pointer_state.y);
+	ret = VM_CallEx(menuplug->vm, menuplug->menufunction, eventtype, param, (int) scr_pointer_state.x, (int) scr_pointer_state.y);
 	currentplug=oc;
 	return ret;
 }
