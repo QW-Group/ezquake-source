@@ -276,9 +276,9 @@ void Draw_EnableScissorRectangle(int x, int y, int width, int height)
 void Draw_DisableScissor()
 {
 	scissor_left	= 0;
-	scissor_right	= vid.conwidth;
+	scissor_right	= vid.width;
 	scissor_top		= 0;
-	scissor_bottom	= vid.conheight;
+	scissor_bottom	= vid.height;
 }
 
 void Draw_Init (void)
