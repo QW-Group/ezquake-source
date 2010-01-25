@@ -165,15 +165,17 @@ static int Draw_Image (float x, float y, float w, float h, float s1, float t1, f
 	return 1;
 }
 
-void Draw_SetColor(byte *rgba, float alpha);
 static void Draw_ImageColours(float r, float g, float b, float a)
 {
+#ifdef _GLQUAKE
+	void Draw_SetColor(byte *rgba, float alpha);
 	byte rgba[4];
 	rgba[0] = r*255;
 	rgba[1] = g*255;
 	rgba[2] = b*255;
 	rgba[3] = a*255;
 	Draw_SetColor(rgba, a);
+#endif
 }
 
 static qbool Sbar_ShouldDraw()
