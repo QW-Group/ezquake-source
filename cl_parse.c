@@ -2595,7 +2595,7 @@ void CL_ParsePrint ()
 
 		s0 = wcs2str (s); // Auth_CheckResponse may modify the source string, so s0 should be updated
 
-		if (Plug_ChatMessage(s0 + offset, -1, flags)) {
+		if (!Plug_ChatMessage(s0 + offset, -1, flags)) {
 			return;
 		}
 
