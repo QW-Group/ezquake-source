@@ -70,7 +70,7 @@ CLIENT_C_FILES := \
 	mvd_utils \
 	mvd_xmlstats \
 	parser \
-	plugins \
+	plugin \
 	qtv \
 	r_part \
 	rulesets \
