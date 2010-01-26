@@ -526,7 +526,7 @@ void R_InitSky (texture_t *mt) {
 	((byte *) &transpix)[2] = b / (128 * 128);
 	((byte *) &transpix)[3] = 0;
 
-	solidskytexture = GL_LoadTexture ("***solidskytexture***", 128, 128, (byte *)trans, 0, 4);
+	solidskytexture = GL_LoadTexture ("***solidskytexture***", 128, 128, (byte *)trans, TEX_MIPMAP, 4);
 
 	for (i = 0; i < 128; i++) {
 		for (j = 0; j < 128; j++) {
@@ -535,7 +535,7 @@ void R_InitSky (texture_t *mt) {
 		}
 	}
 
-	alphaskytexture = GL_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA, 4);
+	alphaskytexture = GL_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | TEX_MIPMAP, 4);
 }
 
 

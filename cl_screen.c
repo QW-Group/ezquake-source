@@ -1358,7 +1358,7 @@ void CI_Init (void) {
 
 	ci_initialized = false;
 
-	if (!(ci_font = GL_LoadTextureImage ("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN)))
+	if (!(ci_font = GL_LoadTextureImage ("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN | TEX_MIPMAP)))
 		return;
 
 	ADD_CICON_TEXTURE(citex_chat,     ci_font, 0, 1,  0, 0,  64, 64); // get chat part from font

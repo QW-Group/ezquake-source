@@ -51,6 +51,7 @@ cvar_t	gl_picmip			= {"gl_picmip", "0"};
 cvar_t	gl_miptexLevel		= {"gl_miptexLevel", "0", 0, OnChange_gl_miptexLevel};
 cvar_t	gl_lerpimages		= {"gl_lerpimages", "1"};
 cvar_t	gl_texturemode		= {"gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", 0, OnChange_gl_texturemode};
+cvar_t	gl_texturemode2d	= {"gl_texturemode2d", "GL_LINEAR", 0, OnChange_gl_texturemode};
 cvar_t	gl_anisotropy		= {"gl_anisotropy","1", 0, OnChange_gl_anisotropy};
 
 cvar_t	gl_scaleModelTextures		= {"gl_scaleModelTextures", "0"};
@@ -117,10 +118,12 @@ glmode_t modes[] = {
 
 static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 static int gl_filter_max = GL_LINEAR;
+static int gl_filter_max_2d = GL_LINEAR;
 
 void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel) 
 {
-	int i;
+	int i, filter_min, filter_max;
+	qbool mipmap;
 	gltexture_t	*glt;
 
 	for (i = 0; i < GLMODE_NUMODES; i++) 
@@ -136,17 +139,38 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel)
 		return;
 	}
 
-	gl_filter_min = modes[i].minimize;
-	gl_filter_max = modes[i].maximize;
+	if (var == &gl_texturemode)
+	{
+		gl_filter_min = filter_min = modes[i].minimize;
+		gl_filter_max = filter_max = modes[i].maximize;
+		mipmap = true;
+	}
+	else if (var == &gl_texturemode2d)
+	{
+		gl_filter_max_2d = filter_min = filter_max = modes[i].maximize;
+		mipmap = false;
+	}
+	else
+	{
+		Sys_Error("OnChange_gl_texturemode: unexpected cvar!");
+		return;
+	}
 
-	// Make sure we set the proper texture filters for mipmaped textures.
+	// Make sure we set the proper texture filters for textures.
 	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
 	{
-		if (glt->texmode & TEX_MIPMAP)
+		if (glt->texmode & TEX_NO_TEXTUREMODE)
+			continue;	// This texture must NOT be affected by texture mode changes,
+						// for example charset which rather controlled by gl_smoothfont.
+
+		// true == true or false == false
+		if ( mipmap == !!(glt->texmode & TEX_MIPMAP) )
 		{
+			if (developer.integer > 100)
+				Com_DPrintf("texturemode: %s\n", glt->identifier);
 			GL_Bind (glt->texnum);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_min);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_max);
 		}
 	}
 }
@@ -373,8 +397,8 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode)
 	} 
 	else
 	{
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
 
 	if (anisotropy_ext)
@@ -878,7 +902,7 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 	return &pic;
 }
 
-int GL_LoadCharsetImage (char *filename, char *identifier) 
+int GL_LoadCharsetImage (char *filename, char *identifier, int flags) 
 {
 	int i, texnum, image_size, real_width, real_height;
 	byte *data, *buf, *dest, *src;
@@ -886,7 +910,7 @@ int GL_LoadCharsetImage (char *filename, char *identifier)
 	if (no24bit)
 		return 0;
 
-	if (!(data = GL_LoadImagePixels (filename, 0, 0, 0, &real_width, &real_height)))
+	if (!(data = GL_LoadImagePixels (filename, 0, 0, flags, &real_width, &real_height)))
 		return 0;
 
 	if (!identifier)
@@ -903,7 +927,7 @@ int GL_LoadCharsetImage (char *filename, char *identifier)
 		dest += image_size >> 1;
 	}
 
-	texnum = GL_LoadTexture (identifier, real_width, real_height * 2, buf, TEX_ALPHA | TEX_NOCOMPRESS, 4);
+	texnum = GL_LoadTexture (identifier, real_width, real_height * 2, buf, flags, 4);
 
 	Q_free(buf);
 	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
@@ -914,7 +938,7 @@ void GL_Texture_Init(void)
 {
 	cvar_t *cv;
 	int i;
-	extern int translate_texture, scrap_texnum, lightmap_textures;
+	extern int translate_texture, lightmap_textures;
 
 	// Reset some global vars, probably we need here even more...
 
@@ -937,10 +961,6 @@ void GL_Texture_Init(void)
 
 	// Save a texture slot for translated picture.
 	translate_texture = texture_extension_number++;
-
-	// Save slots for scraps.
-	scrap_texnum = texture_extension_number;
-	texture_extension_number += MAX_SCRAPS;
 
 	// Particles.
 	particletexture = texture_extension_number++;
@@ -971,6 +991,7 @@ void GL_Texture_Init(void)
 	Cvar_Register(&gl_picmip);
 	Cvar_Register(&gl_lerpimages);
 	Cvar_Register(&gl_texturemode);
+	Cvar_Register(&gl_texturemode2d);
 	Cvar_Register(&gl_anisotropy);
 	Cvar_Register(&gl_scaleModelTextures);
 	Cvar_Register(&gl_scaleTurbTextures);

@@ -142,12 +142,10 @@ static byte crosshairdata[NUMCROSSHAIRS][64] = {
     }
 };
 
-void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
+// call it when gl_smoothfont changed or after we load charset
+static void Apply_OnChange_gl_smoothfont(int value)
 {
-	int newval;
 	int i;
-
-	newval = Q_atoi (string);
 
 	if (!char_textures[0])
 		return;
@@ -156,8 +154,9 @@ void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 	{
 		if (!char_textures[i])
 			break;
+
 		GL_Bind(char_textures[i]);
-		if (newval)
+		if (value)
 		{
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -168,6 +167,32 @@ void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		}
 	}
+}
+
+void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
+{
+	Apply_OnChange_gl_smoothfont( Q_atoi(string) );
+}
+
+/*
+* Draw_CopyMPICKeepSize
+* Copy data from src to dst but keep unchanged dst->width and dst->height
+*/
+static void Draw_CopyMPICKeepSize(mpic_t *dst, mpic_t *src)
+{
+	byte width[sizeof(dst->width)];
+	byte height[sizeof(dst->height)];
+
+	// remember particular fields
+	memcpy(width, (byte*)&dst->width, sizeof(width));
+	memcpy(height, (byte*)&dst->height, sizeof(height));
+
+	// bit by bit copy
+	*dst = *src;
+
+	// restore fields
+	memcpy((byte*)&dst->width, width, sizeof(width));
+	memcpy((byte*)&dst->height, height, sizeof(height));
 }
 
 void OnChange_scr_conpicture(cvar_t *v, char *s, qbool *cancel)
@@ -183,7 +208,7 @@ void OnChange_scr_conpicture(cvar_t *v, char *s, qbool *cancel)
 		return;
 	}
 
-	memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
+	Draw_CopyMPICKeepSize(&conback, pic_24bit);
 	Draw_AdjustConback();
 	GL_Bind(conback.texnum);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -251,7 +276,7 @@ void customCrosshair_Init(void)
 	}
 
 	VFS_CLOSE(f);
-	crosshairtexture_txt = GL_LoadTexture ("", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
+	crosshairtexture_txt = GL_LoadTexture ("cross:custom", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	customcrosshair_loaded |= CROSSHAIR_TXT;
@@ -266,7 +291,8 @@ void Draw_InitCrosshairs(void)
 
 	for (i = 0; i < NUMCROSSHAIRS; i++)
 	{
-		crosshairtextures[i] = GL_LoadTexture ("", 8, 8, crosshairdata[i], TEX_ALPHA, 1);
+		snprintf(str, sizeof(str), "cross:hardcoded%d", i);
+		crosshairtextures[i] = GL_LoadTexture (str, 8, 8, crosshairdata[i], TEX_ALPHA, 1);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
@@ -318,16 +344,19 @@ void Draw_DisableScissor()
 // Some cards have low quality of alpha pics, so load the pics
 // without transparent pixels into a different scrap block.
 // scrap 0 is solid pics, 1 is transparent.
+#define	MAX_SCRAPS		2 // funny, but you can't change this size unless you rewrote code,
+						  // you can looks in FTE how they done it.
+						  // there really no point to split transparent and solid images.
 #define	BLOCK_WIDTH		256
 #define	BLOCK_HEIGHT	256
 
-int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
-byte		scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT*4];
-int			scrap_dirty = 0;	// Bit mask.
-int			scrap_texnum;
+static int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
+static byte			scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT];
+static int			scrap_dirty;	// Bit mask.
+static int			scrap_texnum[MAX_SCRAPS];
 
 // Returns false if allocation failed.
-qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
+static qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
 {
 	int i, j, best, best2;
 
@@ -364,18 +393,36 @@ qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
 	return true;
 }
 
-void Scrap_Upload (void)
+static void Scrap_Upload (void)
 {
 	int i;
 
 	for (i = 0; i < MAX_SCRAPS; i++)
 	{
-		if (!(scrap_dirty & (1 << i)))
-			continue;
-		scrap_dirty &= ~(1 << i);
-		GL_Bind(scrap_texnum + i);
-		GL_Upload8 (scrap_texels[i], BLOCK_WIDTH, BLOCK_HEIGHT, TEX_ALPHA);
+		// is dirty?
+		if (scrap_dirty & (1 << i))
+		{
+			char id[64];
+			// generate id
+			snprintf(id, sizeof(id), "scrap:%d", i);
+			// upload it
+			scrap_texnum[i] = GL_LoadTexture(id, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], TEX_ALPHA | TEX_NOSCALE, 1);
+		}
 	}
+
+	// no we are clear!
+	scrap_dirty = 0;
+}
+
+static void Scap_Init(void)
+{
+	memset (scrap_allocated, 0, sizeof(scrap_allocated));
+	memset (scrap_texels,    0, sizeof(scrap_texels));
+	memset (scrap_texnum,    0, sizeof(scrap_texnum));
+	scrap_dirty = ~0;	// Bit mask - make all bits dirty!
+
+	// upload at least first time, so we set scrap_texnum[], its required
+	Scrap_Upload();
 }
 
 //=============================================================================
@@ -405,9 +452,11 @@ mpic_t *Draw_CacheWadPic (char *name)
 	// Load little ones into the scrap.
 	if (p->width < 64 && p->height < 64)
 	{
-		int x = 0, y = 0, i, j, k, texnum;
-
-		texnum = memchr(p->data, 255, p->width * p->height) != NULL;
+		int x = 0, y = 0, i, j, k;
+		// is this pic contain alpha bytes (255)
+		qbool alpha = memchr(p->data, 255, p->width * p->height) != NULL;
+		// FIXME: as you can see, MAX_SCRAPS hardcoded to 2 and define is just a fiction!
+		int texnum = alpha ? 1 : 0;
 
 		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y))
 		{
@@ -425,12 +474,17 @@ mpic_t *Draw_CacheWadPic (char *name)
 			}
 		}
 
-		texnum += scrap_texnum;
-		pic->texnum = texnum;
 		pic->sl = (x + 0.25) / (float) BLOCK_WIDTH;
 		pic->sh = (x + p->width - 0.25) / (float) BLOCK_WIDTH;
 		pic->tl = (y + 0.25) / (float) BLOCK_WIDTH;
 		pic->th = (y + p->height - 0.25) / (float) BLOCK_WIDTH;
+
+		if (!scrap_texnum[texnum])
+		{
+			Com_Printf("Scrap_Upload: texture[%d] still not set, HUD will be broken\n", texnum);
+		}
+
+		pic->texnum = scrap_texnum[texnum];
 	}
 	else
 	{
@@ -546,7 +600,10 @@ mpic_t *Draw_CachePic (char *path)
 	return Draw_CachePicSafe (path, true, false);
 }
 
-static int LoadAlternateCharset (char *name)
+/*
+* Load_LMP_Charset
+*/
+static int Load_LMP_Charset (char *name, int flags)
 {
 	int i;
 	byte	buf[128*256];
@@ -556,7 +613,16 @@ static int LoadAlternateCharset (char *name)
 	int filesize;
 
 	// We expect an .lmp to be in QPIC format, but it's ok if it's just raw data.
-	data = FS_LoadTempFile (va("gfx/%s.lmp", name), &filesize);
+	if (!strcasecmp(name, "charset"))
+	{
+		// work around for original charset
+		data = draw_chars;
+		filesize = 128*128;
+	}
+	else
+	{
+		data = FS_LoadTempFile (va("gfx/%s.lmp", name), &filesize);	
+	}
 
 	if (!data)
 		return 0;
@@ -599,90 +665,73 @@ static int LoadAlternateCharset (char *name)
 		dest += 128*8*2;
 	}
 
-	texnum = GL_LoadTexture (va("pic:%s", name), 128, 256, buf, TEX_ALPHA, 1);
-	GL_Bind(texnum);
-	if (!gl_smoothfont.integer)
-	{
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
+	texnum = GL_LoadTexture (va("pic:%s", name), 128, 256, buf, flags, 1);
 	return texnum;
+}
+
+/*
+* Load_Locale_Charset
+*/
+static int Load_Locale_Charset (const char *name, const char *locale, unsigned int num, int range, int flags)
+{
+	char texture[1024], id[256], lmp[256];
+
+	if (num >= MAX_CHARSETS)
+		return 0;
+
+	char_range[num] = 0;
+
+	snprintf(texture, sizeof(texture), "textures/charsets/%s-%s", name, locale);
+	snprintf(id, sizeof(id), "pic:charset-%s", locale);
+	snprintf(lmp, sizeof(lmp), "conchars-%s", locale);
+
+	// try first 24 bit
+	char_textures[num] = GL_LoadCharsetImage (texture, id, flags);
+	// then 8 bit
+	if (!char_textures[num])
+		char_textures[num] = Load_LMP_Charset (lmp, flags);
+
+	char_range[num] = char_textures[num] ? range : 0;
+
+	return char_textures[num];
 }
 
 static int Draw_LoadCharset(const char *name)
 {
-	int texnum, i=0;
+	int flags = TEX_ALPHA | TEX_NOCOMPRESS | TEX_NOSCALE | TEX_NO_TEXTUREMODE;
+	int texnum;
 	qbool loaded = false;
+
+	//
+	// NOTE: we trying to not change char_textures[0] if we can't load charset.
+	//		This way user still have some charset and can fix issue.
+	//
 
 	if (!strcasecmp(name, "original"))
 	{
-		// Convert the 128*128 conchars texture to 128*256 leaving
-		// empty space between rows so that chars don't stumble on
-		// each other because of texture smoothing.
-		// This hack costs us 64K of GL texture memory
-		int i;
-		char buf[128 * 256], *src, *dest;
-
-		memset (buf, 255, sizeof(buf));
-		src = (char *) draw_chars;
-		dest = buf;
-
-		for (i = 0; i < 16; i++)
+		if ((texnum = Load_LMP_Charset("charset", flags)))
 		{
-			memcpy (dest, src, 128 * 8);
-			src += 128 * 8;
-			dest += 128 * 8 * 2;
+			char_textures[0] = texnum;
+			loaded = true;
 		}
-
-		char_textures[0] = GL_LoadTexture ("pic:charset", 128, 256, (byte *)buf, TEX_ALPHA, 1);
-		loaded = true;
 	}
-	else if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s", name), "pic:charset")))
+	else if ((texnum = GL_LoadCharsetImage(va("textures/charsets/%s", name), "pic:charset", flags)))
 	{
 		char_textures[0] = texnum;
 		loaded = true;
 	}
-
-	// Load cyrillic charset if available -->
-	char_textures[1] = 0;
-	if (loaded && strcasecmp(name, "original")) 
-	{
-		if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s-cyr", name), "pic:charset-cyr")))
-		{
-			char_textures[1] = texnum;
-		}
-	}
-
-	if (!char_textures[1])
-		char_textures[1] = LoadAlternateCharset ("conchars-cyr");
-
-	if (char_textures[1])
-		char_range[1] = 0x0400;
-	else
-		char_range[1] = 0;
-	// <---
 
 	if (!loaded)
 	{
 		Com_Printf ("Couldn't load charset \"%s\"\n", name);
 		return 1;
 	}
-	
-	while (i < 2 && char_textures[i] != 0) // Apply filtering on both console textures if available
-	{
-		GL_Bind(char_textures[i]);
-		if (!gl_smoothfont.integer)
-		{
-			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		}
-		else
-		{
-			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		}
-		i++;
-	}
+
+	// Load cyrillic charset if available
+	Load_Locale_Charset(name, "cyr", 1, 0x0400, flags);
+
+	// apply gl_smoothfont
+	Apply_OnChange_gl_smoothfont(gl_smoothfont.integer);
 
 	return 0;
 }
@@ -761,12 +810,10 @@ void Draw_Init (void)
 	W_LoadWadFile("gfx.wad"); // Safe re-init.
 	CachePics_DeInit();
 
-	// Clear the scrap.
-	memset (scrap_allocated, 0, sizeof(scrap_allocated));
-	memset (scrap_texels,    0, sizeof(scrap_texels));
-	scrap_dirty = 0;	// Bit mask.
-
 	GL_Texture_Init();  // Probably safe to re-init now.
+
+	// Clear the scrap, should be called ASAP after textures initialization
+	Scap_Init();
 
 	// Load the console background and the charset by hand, because we need to write the version
 	// string into the background before turning it into a texture.
@@ -1899,7 +1946,7 @@ void Draw_InitConback (void)
 
 	if ((pic_24bit = GL_LoadPicImage(va("gfx/%s", scr_conpicture.string), "conback", 0, 0, 0)))
 	{
-		memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
+		Draw_CopyMPICKeepSize(&conback, pic_24bit);
 	}
 	else
 	{
