@@ -159,7 +159,7 @@ cvar_t	cl_fakename_suffix = {"cl_fakename_suffix", ": "};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
 
-cvar_t	cl_earlypackets = {"cl_earlypackets", "0"};
+cvar_t	cl_earlypackets = {"cl_earlypackets", "1"};
 
 cvar_t	cl_restrictions = {"cl_restrictions", "0"}; // 1 is FuhQuake and QW262 defaults
 
