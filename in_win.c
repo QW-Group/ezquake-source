@@ -94,7 +94,8 @@ static HRESULT (WINAPI *pDirectInputCreateEx)(HINSTANCE hinst,
 		DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter) = NULL;
 
 // mouse variables
-cvar_t	m_filter = {"m_filter", "0", CVAR_SILENT};
+void OnChange_m_filter(struct cvar_s *var, char *value, qbool *cancel);
+cvar_t	m_filter = {"m_filter", "0", CVAR_SILENT, OnChange_m_filter};
 
 // compatibility with old Quake -- setting to 0 disables KP_* codes
 cvar_t	cl_keypad = {"cl_keypad", "1"};
@@ -330,6 +331,14 @@ static void SetBufferSize(void)
 	if(FAILED(hr)) 
 	{
 		Com_Printf_State (PRINT_FAIL, "Unable to increase DirectInput buffer size.\n");
+	}
+}
+
+void OnChange_m_filter(struct cvar_s *var, char *value, qbool *cancel)
+{
+	float fval = Q_atof(value);
+	if (fval != 0) {
+		Com_Printf("Warning: m_filter adds a delay to the input processing\n");
 	}
 }
 
