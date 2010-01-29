@@ -344,6 +344,8 @@ GLOBAL void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
 GLOBAL void TP_Msg_QuadDead_f (void)
 {
     MSGPART quad_dead = "";
+
+	TP_FindPoint();
  
 	if (DEAD() && HAVE_QUAD()) // when you have quad and you die, before you spawn you're still glowing (in some mods/settings), meaning you have quad. this check is necessary!
 	{
