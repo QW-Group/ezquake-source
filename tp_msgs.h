@@ -12,6 +12,7 @@
 #define __TP_MSGS_H__
 
 extern void TP_Msg_Lost_f (void);
+extern void TP_Msg_Pack_f (void);
 extern void TP_Msg_Report_f (void);
 extern void TP_Msg_Coming_f (void);
 extern void TP_Msg_EnemyPowerup_f (void);

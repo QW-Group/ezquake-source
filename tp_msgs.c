@@ -154,7 +154,6 @@ GLOBAL void TP_Msg_Lost_f (void)
     TP_Send_TeamSay("%s%s", msg1, msg2);
 }
 
-
 GLOBAL void TP_Msg_Report_f (void)
 {
 	MSGPART powerup = "";
@@ -537,6 +536,8 @@ GLOBAL void TP_Msg_Trick_f (void) { TP_MSG_GENERIC("trick"); }
 GLOBAL void TP_Msg_Safe_f (void) { TP_MSG_GENERIC("{&c0b0safe&cfff}"); } // green safe
 GLOBAL void TP_Msg_Help_f (void) { TP_MSG_GENERIC("{&cff0help&cfff}"); } // yellow help
 GLOBAL void TP_Msg_Coming_f (void) { TP_MSG_GENERIC("{&cf50coming&cfff}"); } // orange coming
+
+GLOBAL void TP_Msg_Pack_f (void) { TP_Send_TeamSay("%s", "{&cf00pack&cfff} $[{%d}$] %E"); }
 
 
 ///////////////////////////////////

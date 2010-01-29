@@ -3514,6 +3514,7 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_msgreport", TP_Msg_Report_f);
 	Cmd_AddCommand ("tp_msgcoming", TP_Msg_Coming_f);
     Cmd_AddCommand ("tp_msglost", TP_Msg_Lost_f);
+    Cmd_AddCommand ("tp_msgpack", TP_Msg_Pack_f);
     Cmd_AddCommand ("tp_msgenemypwr", TP_Msg_EnemyPowerup_f);
 	Cmd_AddCommand ("tp_msgquaddead", TP_Msg_QuadDead_f);
     Cmd_AddCommand ("tp_msgsafe", TP_Msg_Safe_f);
