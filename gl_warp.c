@@ -539,58 +539,59 @@ void R_InitSky (texture_t *mt) {
 }
 
 
-static char *skybox_ext[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
+static char *skybox_ext[MAX_SKYBOXTEXTURES] = {"rt", "bk", "lf", "ft", "up", "dn"};
 
 
 int R_SetSky(char *skyname)
 {
-	int i, error = 0;
-	byte *data[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+	int i;
 	int real_width, real_height;
-	
-	char *mapname, *groupname;
+	char *groupname;
 
 	r_skyboxloaded = false;
-	
-	mapname = TP_MapName();
-	groupname = TP_GetSkyGroupName(mapname, NULL);
-	if (groupname) {
-		skyname = groupname;
+
+	// set skyname to groupname if any
+	skyname	= (groupname = TP_GetSkyGroupName(TP_MapName(), NULL)) ? groupname : skyname;
+
+	if (!skyname || !skyname[0] || strchr(skyname, '.'))
+	{
+		// Empty name or contain dot(dot causing troubles with skipping part of the name as file extenson),
+		// so do nothing.
+		return 1;
 	}
 
-	if (strlen(skyname) == 0) {
-		error = 1;
-		goto cleanup;		
-	}
+	for (i = 0; i < MAX_SKYBOXTEXTURES; i++)
+	{
+		byte *data;
 
-	for (i = 0; i < 6; i++) {
 		if (
-				!(data[i] = GL_LoadImagePixels (va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height)) &&
-				!(data[i] = GL_LoadImagePixels (va("gfx/env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height)) &&
-				!(data[i] = GL_LoadImagePixels (va("env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height)) &&
-				!(data[i] = GL_LoadImagePixels (va("gfx/env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
-			) {
-			Com_Printf ("Couldn't load skybox \"%s\"\n", skyname);
-			error = 1;
-			
-			goto cleanup;
+		       (data = GL_LoadImagePixels (va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
+			|| (data = GL_LoadImagePixels (va("gfx/env/%s%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
+			|| (data = GL_LoadImagePixels (va("env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
+			|| (data = GL_LoadImagePixels (va("gfx/env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0, &real_width, &real_height))
+			)
+		{
+			skyboxtextures[i] = GL_LoadTexture(
+									va("skybox:%s", skybox_ext[i]),
+									real_width, real_height, data, TEX_NOCOMPRESS | TEX_MIPMAP, 4);
+			// we shold free data from GL_LoadImagePixels()
+			Q_free(data);
 		}
-	}
-	for (i = 0; i < 6; i++) {
-		GL_Bind (skyboxtextures + i);
-		GL_Upload32 ((unsigned int *) data[i], real_width, real_height, TEX_NOCOMPRESS);
-	}
-	r_skyboxloaded = true;
+		else
+		{
+			skyboxtextures[i] = 0; // GL_LoadImagePixels() fail to load anything
+		}
 
-cleanup:
-	for (i = 0; i < 6; i++) {
-		if (data[i]) {
-			Q_free(data[i]);
-		} else {
-			break;
+		if (!skyboxtextures[i])
+		{
+			Com_Printf ("Couldn't load skybox \"%s\"\n", skyname);
+			return 1;
 		}
 	}
-	return error;
+
+	// everything was OK
+	r_skyboxloaded = true;
+	return 0;
 }
 
 qbool OnChange_r_skyname (cvar_t *v, char *skyname) {
@@ -831,17 +832,17 @@ void MakeSkyVec (float s, float t, int axis) {
 R_DrawSkyBox
 ==============
 */
-static int	skytexorder[6] = {0,2,1,3,4,5};
+static int	skytexorder[MAX_SKYBOXTEXTURES] = {0,2,1,3,4,5};
 static void R_DrawSkyBox (void)
 {
 	int		i;
 
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < MAX_SKYBOXTEXTURES; i++)
 	{
 		if ((skymins[0][i] >= skymaxs[0][i]	|| skymins[1][i] >= skymaxs[1][i]))
 			continue;
 
-		GL_Bind (skyboxtextures + skytexorder[i]);
+		GL_Bind (skyboxtextures[(int)bound(0, skytexorder[i], MAX_SKYBOXTEXTURES-1)]);
 
 		glBegin (GL_QUADS);
 		MakeSkyVec (skymins[0][i], skymins[1][i], i);

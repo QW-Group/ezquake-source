@@ -318,7 +318,7 @@ static void brighten32 (byte *data, int size)
 //
 // Uploads a 32-bit texture to OpenGL. Makes sure it's the correct size and creates mipmaps if requested.
 //
-void GL_Upload32 (unsigned *data, int width, int height, int mode) 
+static void GL_Upload32 (unsigned *data, int width, int height, int mode) 
 {
 	int	internal_format, tempwidth, tempheight, miplevel;
 	unsigned int *newdata;
@@ -407,7 +407,7 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode)
 	Q_free(newdata);
 }
 
-void GL_Upload8 (byte *data, int width, int height, int mode) 
+static void GL_Upload8 (byte *data, int width, int height, int mode) 
 {
 	static unsigned trans[640 * 480];
 	int	i, image_size, p;
@@ -962,9 +962,6 @@ void GL_Texture_Init(void)
 	// Save a texture slot for translated picture.
 	translate_texture = texture_extension_number++;
 
-	// Particles.
-	particletexture = texture_extension_number++;
-
 	// Netgraph.
 	netgraphtexture = texture_extension_number++;
 
@@ -973,16 +970,18 @@ void GL_Texture_Init(void)
 	texture_extension_number += MAX_CLIENTS; // Normal skins.
 	texture_extension_number += MAX_CLIENTS; // Fullbright skins.
 
-	// Sky.
-	skyboxtextures = texture_extension_number;
-	texture_extension_number += 6;
-
 	// Lightmap.
 	lightmap_textures = texture_extension_number;
 	texture_extension_number += MAX_LIGHTMAPS;
 
 	// Powerup shells.
 	shelltexture = 0; // Force reload.
+
+	// Particles.
+	particletexture = 0; // Force reload.
+
+	// Sky.
+	memset(skyboxtextures, 0, sizeof(skyboxtextures)); // Force reload.
 
 	i = (cv = Cvar_Find(gl_max_size.name)) ? cv->integer : 0;
 

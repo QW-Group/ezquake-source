@@ -46,8 +46,6 @@ void GL_EnableTMU (GLenum target);
 void GL_DisableTMU(GLenum target);
 
 
-void GL_Upload8 (byte *data, int width, int height, int mode);
-void GL_Upload32 (unsigned *data, int width, int height, int mode);
 int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp);
 int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data);
 

@@ -149,7 +149,8 @@ extern	int	netgraphtexture;
 extern	int	playertextures;
 extern	int	playernmtextures[MAX_CLIENTS];
 extern	int	playerfbtextures[MAX_CLIENTS];
-extern	int	skyboxtextures;
+#define MAX_SKYBOXTEXTURES 6
+extern	int	skyboxtextures[MAX_SKYBOXTEXTURES];
 extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	int underwatertexture, detailtexture;
 extern	int shelltexture;

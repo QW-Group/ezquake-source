@@ -194,8 +194,6 @@ void Classic_LoadParticleTexures (void) {
 	int	i, x, y;
 	unsigned int data[32][32];
 
-    GL_Bind(particletexture);
-
 	// clear to transparent white
 	for (i = 0; i < 32 * 32; i++)
 		((unsigned *) data)[i] = LittleLong(0x00FFFFFF);
@@ -208,11 +206,11 @@ void Classic_LoadParticleTexures (void) {
 		}
 	}
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	GL_Upload32 ((unsigned *) data, 32, 32, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE ); // TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	// TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
+	particletexture = GL_LoadTexture("particles:classic", 32, 32, (byte*) data, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE, 4);
+
+	if (!particletexture)
+		Sys_Error("Classic_LoadParticleTexures: can't load texture");
 }
 #endif
 
@@ -691,6 +689,10 @@ void Classic_DrawParticles (void) {
 
 #ifdef GLQUAKE
 	r_partscale = 0.004 * tan (r_refdef.fov_x * (M_PI / 180) * 0.5f);
+
+	// load texture if not done yet
+	if (!particletexture)
+		Classic_LoadParticleTexures();
 
 	GL_Bind(particletexture);
 

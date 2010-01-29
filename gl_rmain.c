@@ -51,7 +51,7 @@ int			particletexture;	// little dot for particles
 int			playertextures;		// up to 16 color translated skins
 int			playernmtextures[MAX_CLIENTS];
 int			playerfbtextures[MAX_CLIENTS];
-int			skyboxtextures;
+int			skyboxtextures[MAX_SKYBOXTEXTURES];
 int			underwatertexture, detailtexture;	
 
 float		gldepthmin, gldepthmax;	// for gl_ztrick
