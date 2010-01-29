@@ -295,6 +295,8 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 LOCAL void TP_Msg_GetPentQuad(qbool quad)
 {
 	MSGPART get_powerup = "";
+
+	TP_FindPoint();
  
 	if (quad)
 	{
