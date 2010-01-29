@@ -22,6 +22,7 @@ settings_page single_menu;
 settings_page ingame_menu;
 settings_page democtrl_menu;
 settings_page botmatch_menu;
+settings_page qtv_menu;
 
 #define MENU_ALIAS(func,command,leavem) static void func(void) { Cbuf_AddText(command "\n"); if (leavem) M_LeaveMenus(); }
 
@@ -48,6 +49,10 @@ MENU_ALIAS(MDemoCtrl_Back1Min, "demo_jump -1:00",false);
 MENU_ALIAS(MDemoCtrl_Back10Sec, "demo_jump -0:10", false);
 MENU_ALIAS(MSP_Load, "menu_load", false);
 MENU_ALIAS(MSP_Save, "menu_save", false);
+MENU_ALIAS(MQTV_Autotrack, "autotrack", true);
+MENU_ALIAS(MQTV_Lastscores, "lastscores", true);
+MENU_ALIAS(MQTV_Observers, "qtvusers", true);
+MENU_ALIAS(MQTV_Reconnect, "qtvreconnect", true);
 
 setting single_menu_entries[] = {
 	ADDSET_SEPARATOR("In-game Menu"),
@@ -90,6 +95,21 @@ setting democtrl_menu_entries[] = {
 	ADDSET_ACTION("Return To Demo", MIng_Back, ""),
 };
 
+setting qtv_menu_entries[] = {
+	ADDSET_SEPARATOR("QuakeTV Menu"),
+	ADDSET_ACTION("Toggle autotrack", MQTV_Autotrack, ""),
+	ADDSET_ACTION("Last scores", MQTV_Lastscores, ""),
+	ADDSET_ACTION("List observers", MQTV_Observers, ""),
+	ADDSET_BLANK(),
+	ADDSET_ACTION("Reconnect", MQTV_Reconnect, ""),
+	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
+	ADDSET_BLANK(),
+	ADDSET_ACTION("Options", MIng_Options, ""),
+	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
+	ADDSET_BLANK(),
+	ADDSET_ACTION("Return To Game", MIng_Back, ""),
+};
+
 setting botmatch_menu_entries[] = {
 	ADDSET_SEPARATOR("Botmatch Menu"),
 	ADDSET_ACTION("Ready", MIng_Ready, ""),
@@ -108,9 +128,12 @@ setting botmatch_menu_entries[] = {
 	ADDSET_ACTION("Return To Game", MIng_Back, ""),
 };
 
-#define DEMOPLAYBACK() (cls.demoplayback || cls.mvdplayback)
+#define DEMOPLAYBACK() (cls.demoplayback == DT_QWD \
+	|| (cls.demoplayback == DT_MVD && cls.mvdplayback == 1) \
+	|| cls.demoplayback == DT_NQDEMO)
 #define BOTMATCH() (!strcmp(cls.gamedirfile, "fbca"))
 #define SINGLEPLAYER() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
+#define QTVPLAYBACK() (cls.mvdplayback == 2)
 
 static settings_page *M_Ingame_Current(void) {
 	if (DEMOPLAYBACK()) {
@@ -122,6 +145,9 @@ static settings_page *M_Ingame_Current(void) {
 	else if (SINGLEPLAYER())
 	{
 		return &single_menu;
+	}
+	else if (QTVPLAYBACK()) {
+		return &qtv_menu;
 	}
 	else {
 		return &ingame_menu;
@@ -158,4 +184,6 @@ void Menu_Ingame_Init(void)
 	Settings_Page_SetMinit(democtrl_menu);
 	Settings_Page_Init(botmatch_menu, botmatch_menu_entries);
 	Settings_Page_SetMinit(botmatch_menu);
+	Settings_Page_Init(qtv_menu, qtv_menu_entries);
+	Settings_Page_SetMinit(qtv_menu);
 }
