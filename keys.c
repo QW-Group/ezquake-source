@@ -850,9 +850,7 @@ static void AdjustConsoleHeight (int delta) {
 	Cvar_SetValue (&scr_consize, (float)height / vid.height);
 }
 
-#ifdef WITH_KEYMAP
 static qbool yellowchars = false;
-#endif // WITH_KEYMAP
 qbool con_redchars    = false;
 
 
@@ -1261,7 +1259,6 @@ void Key_Console (int key, int unichar)
 	if (!unichar)
 		return;	// non printable
 
-#ifdef WITH_KEYMAP
 	if (con_funchars_mode.value)
 	{
 		// CTRL+y toggles yellowchars
@@ -1285,9 +1282,6 @@ void Key_Console (int key, int unichar)
 	}
 
 	if ( yellowchars || (keydown[K_CTRL] && !(con_funchars_mode.value)))
-#else // WITH_KEYMAP
-	if (keydown[K_CTRL])
-#endif // WITH_KEYMAP else
 	{
 		if (unichar >= '0' && unichar <= '9')
 		{
@@ -1319,11 +1313,7 @@ void Key_Console (int key, int unichar)
 		}
 	}
 
-#ifdef WITH_KEYMAP
 	if (con_redchars || (keydown[K_ALT] && !(con_funchars_mode.value)))
-#else // WITH_KEYMAP
-	if (keydown[K_ALT])
-#endif // WITH_KEYMAP else
 	{
 		unichar |= 128;		// red char
 	}
