@@ -149,7 +149,7 @@ GLOBAL void TP_Msg_Lost_f (void)
 		}
 	}
 	else // if currently alive, then report last death location
-		msg1 = "{&cf00lost&cfff} $[{%d}$]";
+		msg1 = "{&cf00lost&cfff} $[{%d}$] %E";
 		
     TP_Send_TeamSay("%s%s", msg1, msg2);
 }
