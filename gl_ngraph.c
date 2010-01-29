@@ -28,6 +28,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int	netgraphtexture;	// netgraph texture
 
 // HUD -> hexum
+
+//
+// FIXME:
+// This code commented for ages now.
+// Think it somehow related to netgraphtexture which not used, well used but never initialized/uploaded.
+// Have anyone idea that is hud_netgraph_full is?
+// Think its all unfinished code or junk.
+//
+
 #if 0
 extern byte *draw_chars;				// 8 * 8 graphic characters
 
