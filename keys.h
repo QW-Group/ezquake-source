@@ -49,9 +49,6 @@ typedef enum {
 	K_ALT,
 	K_LALT,
 	K_RALT,
-#ifdef WITH_KEYMAP
-	K_ALTGR,    // Right Alt-Key (=AltGr Key; this key must be used, if a third level of mappings is needed)
-#endif // WITH_KEYMAP 
 	K_CTRL,			//140
 	K_LCTRL,
 	K_RCTRL,

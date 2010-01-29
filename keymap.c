@@ -185,7 +185,7 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 		if (keymap_active) {
 			key     = keymaps[ 0 ][ scancode + (extended ? 128 : 0) ];
 			unichar = key;
-			if ( keydown[K_ALTGR] )
+			if ( keydown[K_RALT] )
 				unichar = keymaps[ 2 ][ scancode + (extended ? 128 : 0) ];
 			else
 			if ( keydown[K_SHIFT] )
@@ -893,7 +893,7 @@ static void IN_Keycode_Print_f( int scancode, qbool ext, qbool down, int key ) {
 	    ( (flag & 1) > 0 && down == true )) {
 		if ( key != K_SHIFT && key != K_LSHIFT && key != K_RSHIFT &&
 		     key != K_CTRL && key != K_LCTRL && key != K_RCTRL &&
-		     key != K_ALT && key != K_LALT && key != K_RALT && key != K_ALTGR )
+		     key != K_ALT && key != K_LALT && key != K_RALT )
 			Com_Printf ("keycode %s %3.3u %s: %s%s%s%s%s %d\n",
 			            ext == true ? "ext" : "   ",
 			            (unsigned int)scancode,
@@ -901,7 +901,7 @@ static void IN_Keycode_Print_f( int scancode, qbool ext, qbool down, int key ) {
 			            keydown[K_SHIFT] ? (char *)"SHIFT+" : (char *)"\0",
 			            keydown[K_CTRL] ? (char *)"CTRL+" : (char *)"\0",
 			            keydown[K_ALT] ? (char *)"ALT+" : (char *)"\0",
-			            keydown[K_ALTGR] ? (char *)"ALTGR+" : (char *)"\0",
+			            keydown[K_RALT] ? (char *)"ALTGR+" : (char *)"\0",
 			            Key_KeynumToString(key, NULL), key );
 		else
 			Com_Printf ("keycode %s %3.3u %s: %s %i\n",

@@ -161,8 +161,8 @@ keyname_t keynames[] = {
 	{"RALT", K_RALT},
 
 #ifdef WITH_KEYMAP
-	{"ALTGR", K_ALTGR},
-	{"ALTCHAR", K_ALTGR},
+	{"ALTGR", K_RALT},
+	{"ALTCHAR", K_RALT},
 #endif // WITH_KEYMAP
 
 	{"CTRL", K_CTRL},
@@ -1265,7 +1265,7 @@ void Key_Console (int key, int unichar)
 	if (con_funchars_mode.value)
 	{
 		// CTRL+y toggles yellowchars
-		if (keydown[K_CTRL] && key == 'y' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
+		if (keydown[K_CTRL] && key == 'y' && !keydown[K_RALT] && !keydown[K_ALT]) {
 			yellowchars = !yellowchars;
 			con_redchars    = false;
 			Com_Printf( "input of yellow numbers is now o%s!\n", yellowchars ? "n" : "ff" );
@@ -1273,7 +1273,7 @@ void Key_Console (int key, int unichar)
 		}
 
 		// CTRL+r toggles red chars
-		if (keydown[K_CTRL] && key == 'r' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
+		if (keydown[K_CTRL] && key == 'r' && !keydown[K_RALT] && !keydown[K_ALT]) {
 			con_redchars    = !con_redchars;
 			if ( yellowchars )
 			{
