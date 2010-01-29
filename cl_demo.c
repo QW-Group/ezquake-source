@@ -4159,6 +4159,24 @@ void CL_QTVReconnect_f (void)
 	Cbuf_AddText(va("qtvplay %s %s\n", prev_qtv_connrequest, prev_qtv_password));
 }
 
+// checks if the argument is of the form http://quakeworld.fi:28000/watch.qtv?sid=8
+// if so, issue a new qtvplay command with stream@hostname:port format
+static qbool CL_QTVPlay_URL_format(void)
+{
+	const char *prefix = strstr(Cmd_Argv(1), "http://");
+	const char *docpart = strstr(Cmd_Argv(1), "/watch.qtv?sid=");
+
+	if (prefix && docpart && prefix == Cmd_Argv(1) && prefix < docpart) {
+		int streamid = Q_atoi(docpart + strlen("/watch.qtv?sid="));
+		int hostnamelen = docpart - prefix - strlen("http://");
+		Cbuf_AddText(va("qtvplay %d@%.*s\n", streamid, hostnamelen, Cmd_Argv(1) + strlen("http://")));
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 //
 // Start playback of a QTV stream.
 //
@@ -4174,6 +4192,9 @@ void CL_QTVPlay_f (void)
 		Com_Printf("Usage: qtvplay [stream@]hostname[:port] [password]\n");
 		return;
 	}
+
+	if (CL_QTVPlay_URL_format())
+		return;
 
 	strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
 
