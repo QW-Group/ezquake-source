@@ -85,6 +85,8 @@ static const int sound_player_plyrjmp8_wav_FMOD_DM_FMOD_TF[5]	= {0x75e2e946, 0xc
 static const int sound_items_protect_wav_FMOD_DM_FMOD_TF[5]		= {0x38ff1351, 0x7d6799c7, 0x7577256d, 0xbf233192, 0xb6223baa};
 static const int sound_items_protect2_wav_FMOD_DM_FMOD_TF[5]	= {0x588dd159, 0xae489f2c, 0x22f7118e, 0x487eeb4c, 0x3c54c997};
 static const int sound_items_protect3_wav_FMOD_DM_FMOD_TF[5]	= {0x869a1143, 0xc9e6a404, 0xcbd5d90e, 0xa1b57e4c, 0xae77dd20};
+static const int sound_items_r_item1_wav_FMOD_DM_FMOD_TF[5]     = {0xdde12941, 0xfbb3b804, 0x776cf5fa, 0xe81df8ea, 0xa1429f63};
+static const int sound_items_r_item2_wav_FMOD_DM_FMOD_TF[5]     = {0xd9da4047, 0x5a7b191a, 0xc02d860d, 0x18f679de, 0xc47bd93a};
 static const int sound_misc_water1_wav_FMOD_DM_FMOD_TF[5]		= {0x8625dbc7, 0xbaf30ae6, 0xfdb53965, 0x2d7eb9d6, 0xf9fd9304};
 static const int sound_misc_water2_wav_FMOD_DM_FMOD_TF[5]		= {0xccda75ec, 0xfb5cd780, 0xe2d73b5b, 0x9f3560ad, 0x4e116b85};
 static const int gfx_colormap_lmp_FMOD_DM_FMOD_TF[5]			= {0xa93b3795, 0x17016397, 0x0a761d38, 0x4866e67d, 0x3c2a2a75};
@@ -459,6 +461,8 @@ void FMod_Init (void)
 	FMod_AddModel ("sound/items/protect.wav",	FMOD_DM | FMOD_TF,	sound_items_protect_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/items/protect2.wav",	FMOD_DM | FMOD_TF,	sound_items_protect2_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/items/protect3.wav",	FMOD_DM | FMOD_TF,	sound_items_protect3_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModel ("sound/items/r_item1.wav",	FMOD_DM | FMOD_TF,	sound_items_r_item1_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModel ("sound/items/r_item2.wav",	FMOD_DM | FMOD_TF,	sound_items_r_item2_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/misc/water1.wav",		FMOD_DM | FMOD_TF,	sound_misc_water1_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/misc/water2.wav",		FMOD_DM | FMOD_TF,	sound_misc_water2_wav_FMOD_DM_FMOD_TF);
 
