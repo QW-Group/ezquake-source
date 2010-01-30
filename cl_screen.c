@@ -605,8 +605,8 @@ void SCR_DrawAccel (void) {
 	length = vid.width / 3;
 	x = (vid.width - length) / 2;
 	y = vid.height - sb_lines - charsize - 1;
-	pos = (int) ((addspeed_val / 30.f) * length) ;
 
+	pos = (int) (addspeed_val * (length / 60.f) + length / 2);
 #ifdef GLQUAKE
 	glPushAttrib(GL_TEXTURE_BIT);
 	glDisable(GL_TEXTURE_2D);
@@ -622,6 +622,16 @@ void SCR_DrawAccel (void) {
 	glEnd();
 
 
+	//Draw_Fill(x + length/2 - 2, y, 5, charsize, 152);
+	glColor3f(0.f, 1.f, 0.f);
+	glBegin(GL_QUADS);
+	glVertex2f (x + length/2 - 2, y);
+	glVertex2f (x + length/2 - 2 + 5, y);
+	glVertex2f (x + length/2 - 2 + 5, y + charsize);
+	glVertex2f (x + length/2 - 2, y + charsize);
+	glEnd();
+
+
 	//Draw_Fill(x + pos - 1, y, 3, charsize, 192);
 	glColor3f(0.f, 0.f, 1.f);
 	glBegin(GL_QUADS);
@@ -632,22 +642,13 @@ void SCR_DrawAccel (void) {
 	glEnd();
 
 
-	//Draw_Fill(x + length/2 - 1, y, 3, charsize, 152);
-	glColor3f(0.f, 1.f, 0.f);
-	glBegin(GL_QUADS);
-	glVertex2f (x + length/2 - 1, y);
-	glVertex2f (x + length/2 - 1 + 3, y);
-	glVertex2f (x + length/2 - 1 + 3, y + charsize);
-	glVertex2f (x + length/2 - 1, y + charsize);
-	glEnd();
-
 	glPopAttrib();
 
 #else
 	// draw the coloured indicator strip
 	Draw_Fill(x, y, length, charsize, 184);
+	Draw_Fill(x + length/2 - 2, y, 5, charsize, 152);
 	Draw_Fill(x + pos - 1, y, 3, charsize, 192);
-	Draw_Fill(x + length/2 - 1, y, 3, charsize, 152);
 #endif
 }
 #endif
