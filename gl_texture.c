@@ -567,8 +567,16 @@ int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data)
 	char fullname[MAX_QPATH] = "pic:";
 	byte *src, *dest, *buf;
 
-	Q_ROUND_POWER2(pic->width, glwidth);
-	Q_ROUND_POWER2(pic->height, glheight);
+	if (gl_support_arb_texture_non_power_of_two)
+	{
+		glwidth = pic->width;
+		glheight = pic->height;
+	}
+	else
+	{
+		Q_ROUND_POWER2(pic->width, glwidth);
+		Q_ROUND_POWER2(pic->height, glheight);
+	}
 
 	strlcpy (fullname + 4, name, sizeof(fullname) - 4);
 	if (glwidth == pic->width && glheight == pic->height)
@@ -856,8 +864,16 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 		}
 	}
 
-	Q_ROUND_POWER2(pic.width, width);
-	Q_ROUND_POWER2(pic.height, height);
+	if (gl_support_arb_texture_non_power_of_two)
+	{
+		width = pic.width;
+		height = pic.height;
+	}
+	else
+	{
+		Q_ROUND_POWER2(pic.width, width);
+		Q_ROUND_POWER2(pic.height, height);
+	}
 
 	strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
 
