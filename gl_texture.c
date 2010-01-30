@@ -42,7 +42,7 @@ extern float vid_gamma;
 
 
 extern int anisotropy_ext;
-int	anisotropy_tap = 1;
+int	anisotropy_tap = 1; //  1 - is off
 int	gl_max_size_default;
 int	gl_lightmap_format = 3, gl_solid_format = 3, gl_alpha_format = 4;
 
@@ -182,22 +182,22 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel)
 
 	int newvalue = Q_atoi(string);
 
-	if (newvalue <= 0)
-		newvalue = 1; // 0 is bad, 1 is off, 2 and higher are valid modes
-	
-	anisotropy_tap = newvalue;
+	anisotropy_tap = max(1, newvalue); // 0 is bad, 1 is off, 2 and higher are valid modes
 
 	if (!anisotropy_ext)
 		return; // we doesn't have such extension
 
 	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
 	{
-// well, its funny, in GL_Upload32() we set glTexParameterf() anyway, doesn't matter mipmapped or not, so why we do it different here?
-//		if (glt->texmode & TEX_MIPMAP)
-//		{
+		if (glt->texmode & TEX_NO_TEXTUREMODE)
+			continue;	// This texture must NOT be affected by texture mode changes,
+						// for example charset which rather controlled by gl_smoothfont.
+
+		if (glt->texmode & TEX_MIPMAP)
+		{
 			GL_Bind (glt->texnum);
-			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, newvalue);
-//		}
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
+		}
 	}
 }
 
@@ -394,15 +394,15 @@ static void GL_Upload32 (unsigned *data, int width, int height, int mode)
 
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+
+		if (anisotropy_ext)
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 	} 
 	else
 	{
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max_2d);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max_2d);
 	}
-
-	if (anisotropy_ext)
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy_tap);
 
 	Q_free(newdata);
 }
