@@ -196,15 +196,20 @@ void Classic_LoadParticleTexures (void) {
 
 	// clear to transparent white
 	for (i = 0; i < 32 * 32; i++)
+	{
 		((unsigned *) data)[i] = LittleLong(0x00FFFFFF);
+	}
 
-	// draw a circle in the top left corner
-	for (x = 0; x < 16; x++) {
-		for (y = 0; y < 16; y++) {
-			if ((x - 7.5) * (x - 7.5) + (y - 7.5) * (y - 7.5) <= 8 * 8)
+	// draw a circle in the top left corner or squire, depends of cvar
+	for (x = 0; x < 16; x++)
+	{
+		for (y = 0; y < 16; y++)
+		{
+			if ( gl_squareparticles.integer || ((x - 7.5) * (x - 7.5) + (y - 7.5) * (y - 7.5) <= 8 * 8))
 				data[y][x] = LittleLong(0xFFFFFFFF);	// solid white
 		}
 	}
+
 
 	// TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
 	particletexture = GL_LoadTexture("particles:classic", 32, 32, (byte*) data, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE, 4);

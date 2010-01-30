@@ -158,6 +158,7 @@ cvar_t	gl_loadlitfiles = {"gl_loadlitfiles", "1"};
 cvar_t	gl_colorlights = {"gl_colorlights", "1"};
 
 cvar_t gl_solidparticles = {"gl_solidparticles", "0"}; // 1
+cvar_t gl_squareparticles = {"gl_squareparticles", "0", CVAR_LATCH};
 cvar_t gl_part_explosions = {"gl_part_explosions", "0"}; // 1
 cvar_t gl_part_trails = {"gl_part_trails", "0"}; // 1
 cvar_t gl_part_tracer1_color = {"gl_part_tracer1_color", "0 124 0", CVAR_COLOR};
@@ -1817,6 +1818,7 @@ void R_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);
+	Cvar_Register (&gl_squareparticles);
 	Cvar_Register (&gl_part_explosions);
 	Cvar_Register (&gl_part_trails);
 	Cvar_Register (&gl_part_tracer1_color);

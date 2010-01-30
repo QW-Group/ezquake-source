@@ -217,6 +217,7 @@ extern	cvar_t	gl_fb_bmodels;
 extern	cvar_t	gl_fb_models;
 extern	cvar_t	gl_lightmode;
 extern  cvar_t  gl_solidparticles;
+extern  cvar_t  gl_squareparticles;
 extern	cvar_t	gl_playermip;
 
 
