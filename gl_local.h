@@ -305,6 +305,9 @@ void R_DrawWaterSurfaces (void);
 void R_DrawAlphaChain (void);
 void GL_BuildLightmaps (void);
 
+qbool R_FullBrightAllowed(void);
+void R_Check_R_FullBright(void);
+
 // gl_ngraph.c
 //void R_NetGraph (void); // HUD -> hexum
 #define MAX_NET_GRAPHHEIGHT 256

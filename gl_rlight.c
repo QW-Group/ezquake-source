@@ -597,7 +597,7 @@ int R_LightPoint (vec3_t p)
 	vec3_t		end;
 	qbool		full_light;
 	
-	full_light = ((r_fullbright.value && r_refdef2.allow_cheats) || !cl.worldmodel->lightdata);
+	full_light = (R_FullBrightAllowed() || !cl.worldmodel->lightdata);
 	if (full_light && !r_shadows.value)
 		goto skip_trace;  // go grab yourself a copy of "'GOTO Considered Harmful' Considered Harmful"
 

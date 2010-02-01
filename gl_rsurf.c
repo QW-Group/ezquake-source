@@ -88,6 +88,47 @@ extern cvar_t gl_textureless; //Qrack
 void DrawGLPoly (glpoly_t *p);
 void R_DrawFlat (model_t *model);
 
+// mark all surfaces so ALL light maps will reload in R_RenderDynamicLightmaps()
+static void R_ForceReloadLightMaps(void)
+{
+	model_t	*m;
+	int i, j;
+
+	Com_DPrintf("forcing of reloading all light maps!\n");
+
+	for (j = 1; j < MAX_MODELS; j++)
+	{
+		if (!(m = cl.model_precache[j]))
+			break;
+
+		if (m->name[0] == '*')
+			continue;
+
+		for (i = 0; i < m->numsurfaces; i++)
+		{
+			m->surfaces[i].cached_dlight = true; // kinda hack, so we force reload light map
+		}
+	}
+}
+
+qbool R_FullBrightAllowed(void)
+{
+	return r_fullbright.value && r_refdef2.allow_cheats;
+}
+
+void R_Check_R_FullBright(void)
+{
+	static qbool allowed;
+
+	// not changed, nothing to do
+	if( allowed == R_FullBrightAllowed() )
+		return;
+
+	// ok, it changed, lets update all our light maps...
+	allowed = R_FullBrightAllowed();
+	R_ForceReloadLightMaps();
+}
+
 void R_RenderFullbrights (void) {
 	int i;
 	glpoly_t *p;
@@ -325,6 +366,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	int smax, tmax, t, i, j, size, blocksize, maps;
 	byte *lightmap;
 	unsigned scale, *bl;
+	qbool fullbright = false;
 
 	surf->cached_dlight = !!numdlights;
 
@@ -334,21 +376,28 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	blocksize = size * 3;
 	lightmap = surf->samples;
 
-	// set to full bright if no light data
-	if ((r_fullbright.value && r_refdef2.allow_cheats) || !cl.worldmodel->lightdata)  {
+	// check for full bright or no light data
+	fullbright = (R_FullBrightAllowed() || !cl.worldmodel->lightdata);
+
+	if (fullbright)
+	{	// set to full bright
 		for (i = 0; i < blocksize; i++)
 			blocklights[i] = 255 << 8;
-		goto store;
+	}
+	else
+	{
+		// clear to no light
+		memset (blocklights, 0, blocksize * sizeof(int));
 	}
 
-	// clear to no light
-	memset (blocklights, 0, blocksize * sizeof(int));
-
 	// add all the lightmaps
-	if (lightmap) {
-		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
-			scale = d_lightstylevalue[surf->styles[maps]];
-			surf->cached_light[maps] = scale;	// 8.8 fraction
+	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
+	{
+		scale = d_lightstylevalue[surf->styles[maps]];
+		surf->cached_light[maps] = scale;	// 8.8 fraction
+		
+		if (!fullbright && lightmap)
+		{
 			bl = blocklights;
 			for (i = 0; i < blocksize; i++)
 				*bl++ += lightmap[i] * scale;
@@ -357,11 +406,13 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	}
 
 	// add all the dynamic lights
-	if (numdlights)
-		R_AddDynamicLights (surf);
+	if (!fullbright)
+	{
+		if (numdlights)
+			R_AddDynamicLights (surf);
+	}
 
 	// bound, invert, and shift
-store:
 	bl = blocklights;
 	stride -= smax * 3;
 	for (i = 0; i < tmax; i++, dest += stride) {
@@ -476,8 +527,8 @@ void R_BlendLightmaps (void) {
 	glpoly_t *p;
 	float *v;
 
-	if (r_fullbright.value && r_refdef2.allow_cheats)
-		return;
+//	if (R_FullBrightAllowed())
+//		return;
 
 	glDepthMask (GL_FALSE);		// don't bother writing Z
 	if (gl_invlightmaps)

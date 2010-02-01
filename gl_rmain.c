@@ -1983,6 +1983,8 @@ void R_RenderScene (void) {
 
 	R_SetupGL ();
 
+	R_Check_R_FullBright(); // check for changes in r_fullbright
+
 	R_MarkLeaves ();	// done here so we know if we're in water
 
 	Skins_PreCache ();  // preache skins if needed
@@ -2011,8 +2013,9 @@ void R_RenderScene (void) {
 		glEnable(GL_FOG);
 	}
 	else
+	{
 		glDisable(GL_FOG);
-
+	}
 }
 
 int gl_ztrickframe = 0;
