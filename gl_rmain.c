@@ -73,7 +73,6 @@ mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 texture_t	*r_notexture_mip = NULL;
 
 int			d_lightstylevalue[256];	// 8.8 fraction of base light value
-int			brushmodel = 0;
 
 cvar_t cl_multiview = {"cl_multiview", "0" };
 cvar_t cl_mvdisplayhud = {"cl_mvdisplayhud", "1"};
@@ -1369,7 +1368,6 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				R_DrawAlias3Model (currententity);
 				break;
 			case mod_brush:
-				brushmodel = 1;
 
 				// Get rid of Z-fighting for textures by offsetting the
 				// drawing of entity models compared to normal polygons.
@@ -1387,8 +1385,7 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 					glDisable(GL_POLYGON_OFFSET_FILL);
 					glDisable(GL_POLYGON_OFFSET_LINE);
 				}
-				
-				brushmodel = 0;
+
 				break;
 			case mod_sprite:
 				R_DrawSpriteModel (currententity);

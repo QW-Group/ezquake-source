@@ -83,7 +83,6 @@ qbool drawfullbrights = false, drawlumas = false;
 glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
 
-extern int brushmodel; //Qrack  
 extern cvar_t gl_textureless; //Qrack
 
 void DrawGLPoly (glpoly_t *p);
@@ -796,9 +795,6 @@ void DrawTextureChains (model_t *model, int contents)
 
 	qbool mtex_lightmaps, mtex_fbs;
 
-	//Internal models are compiled inside the bsp file, used for moving things, like platforms
-	qbool isInternalModel;
-
 	draw_caustics = underwatertexture && gl_caustics.value;
 	draw_details  = detailtexture && gl_detail.value;
 
@@ -817,12 +813,6 @@ void DrawTextureChains (model_t *model, int contents)
 	if (gl_fogenable.value)
 		glEnable(GL_FOG);
 
-	//Tei: notice the paranoid testing :D
-	if (model && model->name && model->name[0]=='*')
-		isInternalModel = true;
-	else
-		isInternalModel = false;
-	
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	for (i = 0; i < model->numtextures; i++)
@@ -952,9 +942,8 @@ void DrawTextureChains (model_t *model, int contents)
 					{
 						if (doMtex1)
 						{
-							
-							//Tei: textureless for the map model, and the internal models 
-							if((gl_textureless.value && (isInternalModel || !brushmodel)) )
+							//Tei: textureless for the world brush models
+							if(gl_textureless.value && model->isworldmodel)
 							{ //Qrack
 								qglMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
 	                            
@@ -977,7 +966,7 @@ void DrawTextureChains (model_t *model, int contents)
 						}
 						else
 						{
-								if((gl_textureless.value) && !brushmodel) //Qrack
+								if(gl_textureless.value && model->isworldmodel) //Qrack
 									glTexCoord2f (0, 0);
 								else
 									glTexCoord2f (v[3], v[4]);
@@ -987,16 +976,10 @@ void DrawTextureChains (model_t *model, int contents)
 				}
 				glEnd ();
 
-				if (waterline && draw_caustics)
+				if ( draw_caustics && ( waterline || ISUNDERWATER( contents ) ) )
 				{
 					s->polys->caustics_chain = caustics_polys;
 					caustics_polys = s->polys;
-				}
-
-				if ((brushmodel && gl_caustics.value && underwatertexture && ISUNDERWATER(contents)))
-				{ //Qrack
-					s->polys->caustics_chain = caustics_polys;
-					caustics_polys = s->polys;                    
 				}
 
 				if (!waterline && draw_details)
@@ -1386,7 +1369,8 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags) {
 	R_RecursiveWorldNode (node->children[!side], clipflags);
 }
 
-void R_DrawWorld (void) {
+void R_DrawWorld (void)
+{
 	entity_t ent;
 
 	memset (&ent, 0, sizeof(ent));
