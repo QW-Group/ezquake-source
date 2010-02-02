@@ -492,11 +492,14 @@ void Cvar_Register (cvar_t *var)
 	old = Cvar_Find (var->name);
 
 	// we alredy register cvar, warn about it
-	if (old && !(old->flags & CVAR_USER_CREATED)) {
+	if (old && !(old->flags & CVAR_USER_CREATED))
+	{
 		// allow re-register lacthed cvar
-		if (old->flags & CVAR_LATCH) {
+		if (old->flags & CVAR_LATCH)
+		{
 			// if we have a latched string, take that value now
-			if ( old->latchedString ) {
+			if ( old->latchedString )
+			{
 				// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
 				Z_Free (old->string);
 				old->string  = old->latchedString;
@@ -513,8 +516,12 @@ void Cvar_Register (cvar_t *var)
 		// warn if CVAR_SILENT is not set
 		if (!(old->flags & CVAR_SILENT))
 			Com_Printf ("Can't register variable %s, already defined\n", var->name);
+
 		return;
 	}
+
+	if (old && old == var)
+		Sys_Error("Cvar_Register: something wrong with %s", var->name);
 
 /*	// check for overlap with a command
 	if (Cmd_Exists (var->name)) {
@@ -522,16 +529,19 @@ void Cvar_Register (cvar_t *var)
 		return;
 	} */
 
+	if (var->defaultvalue)
+		Sys_Error("Cvar_Register: defaultvalue alredy set for %s", var->name);
+
 	var->defaultvalue = Z_Strdup (var->string);
-	if (old) {
+	if (old)
+	{
 		var->flags |= old->flags & ~(CVAR_USER_CREATED|CVAR_TEMP);
-		strlcpy (string, old->string, sizeof(string));
+		strlcpy (string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
 		Cvar_Delete (old->name);
-		if (!(var->flags & CVAR_ROM))
-			var->string = Z_Strdup (string);
-		else
-			var->string = Z_Strdup (var->string);
-	} else {
+		var->string = Z_Strdup (string);
+	}
+	else
+	{
 		// allocate the string on zone because future sets will Z_Free it
 		var->string = Z_Strdup (var->string);
 	}
