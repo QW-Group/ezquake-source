@@ -303,7 +303,7 @@ void Parse_Serverinfo(server_data *s, char *info)
         snprintf(s->display.map, sizeof (s->display.map), "%-.*s", COL_MAP, tmp==NULL ? "" : tmp);
 
     tmp = ValueForKey(s, "maxclients");
-    if (tmp != NULL  &&  strlen(tmp) > 2)
+    if (!tmp || strlen(tmp) > 2)
         tmp = "99";
     i = s->playersn > 99 ? 99 : s->playersn;
     if (i < 1) { s->occupancy = SERVER_EMPTY; }
