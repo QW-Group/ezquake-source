@@ -105,6 +105,7 @@ cvar_t in_evdevice        = { "in_evdevice",  "", CVAR_ARCHIVE | CVAR_LATCH };
 cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
 
 cvar_t r_allowSoftwareGL  = { "vid_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
+static cvar_t vid_flashonactivity = {"vid_flashonactivity", "1"};
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
@@ -1108,7 +1109,11 @@ static void HandleEvents(void)
     case FocusIn:
       if (!ActiveApp)
       {
+        XWMHints wmhints;
         ActiveApp = true;
+        // CLear urgency bit
+        wmhints.flags = 0;
+        XSetWMHints( dpy, win, &wmhints );
       }
       break;
 
@@ -1711,6 +1716,7 @@ void GLimp_Init( void )
 //  cvar_t *lastValidRenderer = ri.Cvar_Get( "vid_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
+	Cvar_Register (&vid_flashonactivity);
 	Cvar_Register (&r_allowSoftwareGL);
 	Cvar_ResetCurrentGroup();
 
@@ -1917,6 +1923,19 @@ void VID_SetCaption (char *text)
 	if (!dpy)
 		return;
 	XStoreName (dpy, win, text);
+}
+
+void VID_NotifyActivity(void) {
+	XWMHints wmhints;
+
+	if (!dpy)
+		return;
+
+	if (ActiveApp || !vid_flashonactivity.value)
+		return;
+
+	wmhints.flags = XUrgencyHint;
+	XSetWMHints( dpy, win, &wmhints );
 }
 
 /************************************* HW GAMMA *************************************/

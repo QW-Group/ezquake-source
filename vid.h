@@ -76,9 +76,7 @@ void VID_Update (vrect_t *rects);
 void VID_LockBuffer (void);
 void VID_UnlockBuffer (void);
 
-#ifdef _WIN32
 void VID_NotifyActivity(void);
-#endif
 
 void VID_SetCaption (char *text);
 

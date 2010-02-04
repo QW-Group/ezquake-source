@@ -2691,10 +2691,8 @@ void CL_ParsePrint ()
             S_LocalSoundWithVol(chat_sound_file, chat_sound_vol);
 		}
 
-#ifdef _WIN32
 	    if (level >= PRINT_HIGH && s[0]) // actually there are no need for level >= PRINT_HIGH check
 	        VID_NotifyActivity();
-#endif
 
 		if (s[0])  // KT sometimes sends empty strings
 		{
@@ -3166,9 +3164,7 @@ void CL_ParseServerMessage (void)
 			}
 			case svc_disconnect:
 			{
-				#ifdef _WIN32
 				VID_NotifyActivity();
-				#endif // WIN32
 
 				if (cls.mvdplayback == QTV_PLAYBACK)
 				{ 
