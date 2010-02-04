@@ -425,4 +425,8 @@ void	VSH_FadeGammaIn (BOOL theFadeOnAllDisplays, float theDuration)
     }
 }
 
+void VID_NotifyActivity(void)
+{
+}
+
 //_________________________________________________________________________________________________________________________eOF
