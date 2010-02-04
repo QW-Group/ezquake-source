@@ -647,6 +647,7 @@ void IN_StartupMouse (void)
 
 void IN_Commands (void) {}
 void VID_SetCaption (char *text) {}
+void VID_NotifyActivity(void) {}
 
 // QW262 -->
 /*

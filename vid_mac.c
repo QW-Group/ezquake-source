@@ -1702,6 +1702,7 @@ void VID_Init (unsigned char *palette)
 
 // TODO: implement this
 void VID_SetCaption (char *text) {}
+void VID_NotifyActivity(void) {}
 
 // kazik -->
 

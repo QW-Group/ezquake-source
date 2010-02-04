@@ -1144,6 +1144,7 @@ void IN_Commands (void)
 void VID_LockBuffer (void) {}
 void VID_UnlockBuffer (void) {}
 void VID_SetCaption (char *text) {}
+void VID_NotifyActivity(void) {}
 
 // QW262 -->
 /*
