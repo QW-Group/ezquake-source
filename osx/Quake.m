@@ -27,6 +27,8 @@
 #import "sys_osx.h"
 #import "vid_osx.h"
 
+#import <Growl/Growl.h>
+
 #pragma mark -
 
 //_____________________________________________________________________________________________________________________dEFINES
@@ -659,6 +661,17 @@ NSLog (@"C!");
 
     // required for event handling:
     mDistantPast = [[NSDate distantPast] retain];
+
+    // Growl
+    [GrowlApplicationBridge setGrowlDelegate:@""];
+
+    [GrowlApplicationBridge notifyWithTitle:@"Alert"
+        description:@"Hello!"
+        notificationName:@"EZQuake"
+        iconData:nil
+        priority:0
+        isSticky:NO 
+        clickContext:[NSDate date]];
 
     // initialize the toolbar:
     mToolbarItems = [[NSMutableDictionary dictionary] retain];

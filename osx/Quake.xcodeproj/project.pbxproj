@@ -20,6 +20,11 @@
 		920C63620E3657AB0024236F /* sv_mod_frags.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635D0E3657AB0024236F /* sv_mod_frags.c */; };
 		9226C6CD10728E7500F07127 /* EX_browser_pathfind.c in Sources */ = {isa = PBXBuildFile; fileRef = 9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */; };
 		9226C6CE10728E7500F07127 /* EX_browser_pathfind.c in Sources */ = {isa = PBXBuildFile; fileRef = 9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */; };
+		92434710111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 9243470F111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict */; };
+		92434711111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 9243470F111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict */; };
+		92434736111B68FA004ECAE5 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92434735111B68F9004ECAE5 /* Growl.framework */; };
+		9243479A111B6E85004ECAE5 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 92434735111B68F9004ECAE5 /* Growl.framework */; };
+		924347DD111B70F6004ECAE5 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 92434735111B68F9004ECAE5 /* Growl.framework */; };
 		924527910EE883F500EA8BCA /* libexpat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019930DE7FFCC00F1108A /* libexpat.a */; };
 		924527940EE8841100EA8BCA /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019940DE7FFCC00F1108A /* libjpeg.a */; };
 		924527950EE8841800EA8BCA /* libpcre.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019950DE7FFCC00F1108A /* libpcre.a */; };
@@ -714,6 +719,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		924347A3111B6EA5004ECAE5 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = ../Frameworks;
+			dstSubfolderSpec = 6;
+			files = (
+				9243479A111B6E85004ECAE5 /* Growl.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D2B98F1B09C7A8CE00727E3D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1072,21 +1087,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F80D05BA09FF8D69000B5B44 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 12;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		F8D15C9809FF988A00F9146F /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 12;
+			dstPath = ../Frameworks;
+			dstSubfolderSpec = 6;
 			files = (
+				924347DD111B70F6004ECAE5 /* Growl.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1108,6 +1115,8 @@
 		920C635C0E3657AB0024236F /* sv_login.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_login.c; sourceTree = "<group>"; };
 		920C635D0E3657AB0024236F /* sv_mod_frags.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_mod_frags.c; sourceTree = "<group>"; };
 		9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = EX_browser_pathfind.c; sourceTree = "<group>"; };
+		9243470F111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "Growl Registration Ticket.growlRegDict"; sourceTree = "<group>"; };
+		92434735111B68F9004ECAE5 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Growl.framework; sourceTree = "<group>"; };
 		925E4A9A10542F6E00A65FB3 /* libtcl8.5.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtcl8.5.a; path = ../libs/macosx/libtcl8.5.a; sourceTree = SOURCE_ROOT; };
 		92B5D0560CE7028A0023B45F /* ez_button.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_button.c; sourceTree = "<group>"; };
 		92B5D0570CE7028A0023B45F /* ez_button.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_button.h; sourceTree = "<group>"; };
@@ -1588,6 +1597,7 @@
 				92F0199B0DE7FFCC00F1108A /* libpng.a in Frameworks */,
 				92F0199C0DE7FFCC00F1108A /* libz.a in Frameworks */,
 				925E4A9B10542F6E00A65FB3 /* libtcl8.5.a in Frameworks */,
+				92434736111B68FA004ECAE5 /* Growl.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1641,6 +1651,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				9243470F111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict */,
 				D29BE89E09C62D3800EBE023 /* Toolbar */,
 				D2B98C8409C79F2C00727E3D /* Help */,
 				D29BE8EB09C62D8800EBE023 /* GLQuake */,
@@ -1666,6 +1677,7 @@
 			children = (
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+				92434735111B68F9004ECAE5 /* Growl.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -2280,7 +2292,7 @@
 				D2B98FA609C7A9DF00727E3D /* CopyFiles */,
 				D29BE28209C61F5200EBE023 /* Sources */,
 				D29BE28309C61F5200EBE023 /* Frameworks */,
-				F80D05BA09FF8D69000B5B44 /* CopyFiles */,
+				924347A3111B6EA5004ECAE5 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -2321,6 +2333,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92434711111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict in Resources */,
 				D29BE8D709C62D7700EBE023 /* about.tiff in Resources */,
 				D29BE8D809C62D7700EBE023 /* cli.tiff in Resources */,
 				D29BE8D909C62D7700EBE023 /* displays.tiff in Resources */,
@@ -2344,6 +2357,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92434710111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict in Resources */,
 				D29BE8E609C62D7700EBE023 /* about.tiff in Resources */,
 				D29BE8E709C62D7700EBE023 /* cli.tiff in Resources */,
 				D29BE8E809C62D7700EBE023 /* displays.tiff in Resources */,
@@ -2988,6 +3002,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)\"";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					WITH_NQPROGS,
@@ -3033,6 +3052,11 @@
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)\"";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = "";
 				GCC_OPTIMIZATION_LEVEL = 3;
