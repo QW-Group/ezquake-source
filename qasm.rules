@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <VisualStudioToolFile
 	Name="Quake Asm Files"
 	Version="8,00"
@@ -7,7 +7,7 @@
 		<CustomBuildRule
 			Name="qasm"
 			DisplayName="cl, gas2masm, masm32"
-			CommandLine="cl /EP &gt; &quot;$(OUTDIR)\$(InputName).spp&quot; &quot;$(InputPath)&quot;&#x0D;&#x0A;..\..\masm32\gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt; $(OUTDIR)\$(InputName).asm&#x0D;&#x0A;..\..\masm32\ml /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm&#x0D;&#x0A;del $(OUTDIR)\$(InputName).spp"
+			CommandLine="cl /EP &gt; &quot;$(OUTDIR)\$(InputName).spp&quot; &quot;$(InputPath)&quot;&#x0D;&#x0A;..\..\masm32\gas2masm &lt; &quot;$(OUTDIR)\$(InputName).spp&quot; &gt; &quot;$(OUTDIR)\$(InputName).asm&quot;&#x0D;&#x0A;..\..\masm32\ml /c /Cp /coff &quot;/Fo$(OUTDIR)\$(InputName).obj&quot; /Zm /Zi &quot;$(OUTDIR)\$(InputName).asm&quot;&#x0D;&#x0A;del &quot;$(OUTDIR)\$(InputName).spp&quot;"
 			Outputs="$(OUTDIR)\$(InputName).obj"
 			FileExtensions="*.s"
 			ExecutionDescription="Processing .s file"
