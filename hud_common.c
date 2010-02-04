@@ -3283,7 +3283,7 @@ int Frags_DrawText(int px, int py,
 
 void SCR_HUD_DrawFrags(hud_t *hud)
 {
-    int width, height;
+    int width = 0, height = 0;
     int x, y;
 	int max_team_length = 0;
 	int max_name_length = 0;
@@ -3311,7 +3311,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		*hud_frags_style,
 		*hud_frags_bignum,
 		*hud_frags_colors_alpha,
-		*hud_frags_maxname;
+		*hud_frags_maxname,
+		*hud_frags_notintp;
 
 	extern mpic_t *sb_weapons[7][8]; // sbar.c ... Used for displaying the RL.
 	mpic_t *rl_picture;				 // Picture of RL.
@@ -3340,12 +3341,20 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_bignum		= HUD_FindVar(hud, "bignum");
 		hud_frags_colors_alpha	= HUD_FindVar(hud, "colors_alpha");
 		hud_frags_maxname		= HUD_FindVar(hud, "maxname");
+		hud_frags_notintp		= HUD_FindVar(hud, "notintp");
 
 		// Set the OnChange function for extra spec info.
 		hud_frags_extra_spec->OnChange = Frags_OnChangeExtraSpecInfo;
 		strlcpy(specval, hud_frags_extra_spec->string, sizeof(specval));
 		Cvar_Set(hud_frags_extra_spec, specval);
     }
+
+	// Don't draw the frags if we're in teamplay.
+	if(hud_frags_notintp->value && cl.teamplay)
+	{
+		HUD_PrepareDraw(hud, width, height, &x, &y);
+		return;
+	}
 
 	//
 	// Clamp values to be "sane".
@@ -7726,6 +7735,7 @@ void CommonDraw_Init(void)
 		"bignum", "0",
 		"colors_alpha", "1.0",
 		"maxname", "16",
+		"notintp", "0",
         NULL);
 
     HUD_Register("teamfrags", NULL, "Show list of team frags in short form.",
