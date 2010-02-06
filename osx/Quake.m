@@ -665,13 +665,13 @@ NSLog (@"C!");
     // Growl
     [GrowlApplicationBridge setGrowlDelegate:@""];
 
-    [GrowlApplicationBridge notifyWithTitle:@"Alert"
+ /*   [GrowlApplicationBridge notifyWithTitle:@"Alert"
         description:@"Hello!"
         notificationName:@"EZQuake"
         iconData:nil
         priority:0
         isSticky:NO 
-        clickContext:[NSDate date]];
+        clickContext:[NSDate date]]; */
 
     // initialize the toolbar:
     mToolbarItems = [[NSMutableDictionary dictionary] retain];

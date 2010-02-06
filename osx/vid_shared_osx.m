@@ -427,6 +427,7 @@ void	VSH_FadeGammaIn (BOOL theFadeOnAllDisplays, float theDuration)
 
 void VID_NotifyActivity(void)
 {
+	[NSApp requestUserAttention:NSInformationalRequest];
 }
 
 //_________________________________________________________________________________________________________________________eOF
