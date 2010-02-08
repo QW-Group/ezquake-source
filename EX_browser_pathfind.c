@@ -30,6 +30,7 @@
 extern cvar_t sb_proxinfopersec;
 extern cvar_t sb_proxretries;
 extern cvar_t sb_proxtimeout;
+extern cvar_t sb_listcache;
 
 // non-leaf = proxy (or users computer) = has more than 1 neighbour
 // at the time of writing this code there were 10 active proxies around the world
@@ -353,6 +354,31 @@ DWORD WINAPI SB_PingTree_SendQueryThread(void *thread_arg)
 	return 0;
 }
 
+#define PROXY_SERIALIZE_FILE_VERSION 1
+void SB_Proxylist_Serialize_Start(FILE *f)
+{
+	int version = PROXY_SERIALIZE_FILE_VERSION;
+
+	// header
+	// - version
+	fwrite(&version, sizeof(int), 1, f);
+}
+
+void SB_Proxylist_Serialize_Reply(FILE *f, netadr_t proxy, void *buf, size_t buflen)
+{
+	fwrite(&proxy, sizeof(netadr_t), 1, f);
+	fwrite(&buflen, sizeof(size_t), 1, f);
+	fwrite(buf, buflen, 1, f);
+}
+
+void SB_Proxylist_Serialize_End(FILE *f)
+{
+	netadr_t invalid;
+
+	invalid.type = NA_INVALID;
+	fwrite(&invalid, sizeof(netadr_t), 1, f);
+}
+
 static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 {
 	qbool last_cycle = false;
@@ -361,6 +387,13 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 	int i, ret;
 	struct timeval timeout;
 	qbool allrecved = false;
+	FILE *f = NULL;
+
+	if (sb_listcache.value) {
+		f = fopen(va("%s/%s", com_homedir, "proxies_data"), "wb");
+		if (f)
+			SB_Proxylist_Serialize_Start(f);
+	}
 
 	timeout.tv_sec = 0;
 	timeout.tv_usec = sb_proxtimeout.integer * 1000;
@@ -418,6 +451,8 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 					nodeid_t id = queue->data[i].nodeid;
 					queue->data[i].done = true;
 					ping_nodes[id].nlist_start = ping_neighbours_count;
+					if (f && ret > 5)
+							SB_Proxylist_Serialize_Reply(f, SB_NodeNetadr_Get(id), buf+5, ret-5);
 					SB_Proxy_ParseReply(buf+5, ret-5, SB_PingTree_AddProxyPing);
 					ping_nodes[id].nlist_end = ping_neighbours_count;
 				}
@@ -426,6 +461,11 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 				}
 			}
 		}
+	}
+
+	if (f) {
+		SB_Proxylist_Serialize_End(f);
+		fclose(f);
 	}
 
 	return allrecved;
@@ -634,6 +674,82 @@ void SB_PingTree_ConnectBestPath(const netadr_t *addr)
 	}
 
 	Cbuf_AddText(va("connect %s\n", NET_AdrToString(*addr)));
+}
+
+int SB_Proxylist_Unserialize(FILE *f)
+{
+	int version, count = 0;
+
+	if (fread(&version, sizeof(int), 1, f) != 1)
+		return -1;
+	if (version != PROXY_SERIALIZE_FILE_VERSION)
+		return -1;
+
+	while (!ferror(f) && !feof(f)) {
+		netadr_t proxy;
+		size_t buflen;
+		byte buf[PROXY_REPLY_BUFFER_SIZE];
+		nodeid_t id;
+
+		if (fread(&proxy, sizeof(netadr_t), 1, f) != 1)
+			return -3;
+
+		if (proxy.type == NA_INVALID)
+			break;
+
+		if (fread(&buflen, sizeof(size_t), 1, f) != 1)
+			return -3;
+		if (buflen > PROXY_REPLY_BUFFER_SIZE)
+			return -3;
+		if (fread(buf, buflen, 1, f) != 1)
+			return -3;
+
+		id = SB_PingTree_FindIp(SB_Netaddr2Ipaddr(&proxy));
+		if (id == INVALID_NODE)
+			return -3;
+
+		ping_nodes[id].nlist_start = ping_neighbours_count;
+		SB_Proxy_ParseReply(buf, buflen, SB_PingTree_AddProxyPing);
+		ping_nodes[id].nlist_end = ping_neighbours_count;
+
+		count++;
+	}
+
+	return count;
+}
+
+void SB_Proxylist_Unserialize_f(void)
+{
+	FILE *f;
+	char *filename = va("%s/%s", com_homedir, "proxies_data");
+	int err;
+
+	if (!(f	= fopen	(filename, "rb"))) {
+		Com_Printf ("Couldn't read %s.\n", filename);
+		return;
+	}
+
+	building_pingtree = true;
+	SB_PingTree_Phase1();
+	err = SB_Proxylist_Unserialize(f);
+	if (err > 0) {
+		Com_Printf("Successfully read %d proxies\n", err);
+		SB_PingTree_Dijkstra();
+		SB_PingTree_UpdateServerList();
+		pingtree_built = true;
+	}
+	else if (err == -1) {
+		Com_Printf("Format didn't match\n");
+	}
+	else if (err == -3) {
+		Com_Printf("Corrupted data\n");
+	}
+	else { // err == 0
+		Com_Printf("No proxies read\n");
+	}
+	building_pingtree = false;
+
+	fclose(f);
 }
 
 void SB_PingTree_Init(void)

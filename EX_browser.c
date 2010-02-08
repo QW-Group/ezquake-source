@@ -2930,6 +2930,7 @@ void Browser_Init (void)
 
 	if (sb_listcache.integer) {
 		SB_Serverlist_Unserialize_f();
+		SB_Proxylist_Unserialize_f();
 	}
 }
 
