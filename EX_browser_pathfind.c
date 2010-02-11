@@ -379,7 +379,7 @@ void SB_Proxylist_Serialize_End(FILE *f)
 	fwrite(&invalid, sizeof(netadr_t), 1, f);
 }
 
-static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
+static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue, FILE *f)
 {
 	qbool last_cycle = false;
 	fd_set recvset;
@@ -387,13 +387,6 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 	int i, ret;
 	struct timeval timeout;
 	qbool allrecved = false;
-	FILE *f = NULL;
-
-	if (sb_listcache.value) {
-		f = fopen(va("%s/%s", com_homedir, "proxies_data"), "wb");
-		if (f)
-			SB_Proxylist_Serialize_Start(f);
-	}
 
 	timeout.tv_sec = 0;
 	timeout.tv_usec = sb_proxtimeout.integer * 1000;
@@ -463,11 +456,6 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue)
 		}
 	}
 
-	if (f) {
-		SB_Proxylist_Serialize_End(f);
-		fclose(f);
-	}
-
 	return allrecved;
 }
 
@@ -476,6 +464,7 @@ static void SB_PingTree_ScanProxies(void)
 	int i;
 	proxy_request_queue queue = { NULL, 0, false };
 	size_t request = 0;
+	FILE *f = NULL;
 
 	for (i = 0; i < ping_nodes_count; i++) {
 		if (ping_nodes[i].proxport) {
@@ -496,13 +485,24 @@ static void SB_PingTree_ScanProxies(void)
 		}
 	}
 
+	if (sb_listcache.value) {
+		f = fopen(va("%s/%s", com_homedir, "proxies_data"), "wb");
+		if (f)
+			SB_Proxylist_Serialize_Start(f);
+	}
+
 	for (i = 0; i < sb_proxretries.integer; i++) {
 		queue.sending_done = false;
 		Sys_CreateThread(SB_PingTree_SendQueryThread, (void *) &queue);
-		SB_PingTree_RecvQuery(&queue);
+		SB_PingTree_RecvQuery(&queue, f);
 		if (queue.allrecved) {
 			break;
 		}
+	}
+
+	if (f) {
+		SB_Proxylist_Serialize_End(f);
+		fclose(f);
 	}
 
 	while (!queue.sending_done) {
