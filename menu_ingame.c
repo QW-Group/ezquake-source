@@ -1,12 +1,12 @@
 /**
+	\file
 
+	\brief
 	In-game menu
 
-	made by johnnycz, June 2007
-	last edit:
-	$Id: menu_ingame.c,v 1.4 2007-10-07 14:30:31 johnnycz Exp $
-
-*/
+	\author
+	johnnycz
+**/
 
 #include "quakedef.h"
 #include "keys.h"
@@ -43,10 +43,7 @@ MENU_ALIAS(MIng_RemoveBot, "removebot",false);
 MENU_ALIAS(MIng_TeamBlue, "team blue;color 13",true);
 MENU_ALIAS(MIng_TeamRed, "team red;color 4",true);
 MENU_ALIAS(MDemoCtrl_DemoBrowser,"menu_demos",false);
-MENU_ALIAS(MDemoCtrl_SkipMinute,"demo_jump +1:00",false);
-MENU_ALIAS(MDemoCtrl_Skip10Sec, "demo_jump +0:10",false);
-MENU_ALIAS(MDemoCtrl_Back1Min, "demo_jump -1:00",false);
-MENU_ALIAS(MDemoCtrl_Back10Sec, "demo_jump -0:10", false);
+MENU_ALIAS(MDemoCtrl_DemoControls, "demo_controls",true);
 MENU_ALIAS(MSP_Load, "menu_load", false);
 MENU_ALIAS(MSP_Save, "menu_save", false);
 MENU_ALIAS(MQTV_Autotrack, "autotrack", true);
@@ -82,10 +79,9 @@ setting ingame_menu_entries[] = {
 
 setting democtrl_menu_entries[] = {
 	ADDSET_SEPARATOR("Demo Control Menu"),
-	ADDSET_ACTION("Rewind 1 Min", MDemoCtrl_Back1Min, ""),
-	ADDSET_ACTION("Rewind 10 Sec", MDemoCtrl_Back10Sec, ""),
-	ADDSET_ACTION("Skip 1 Min", MDemoCtrl_SkipMinute, ""),
-	ADDSET_ACTION("Skip 10 Sec", MDemoCtrl_Skip10Sec, ""),
+	ADDSET_ACTION("Toggle autotrack", MQTV_Autotrack, ""),
+	ADDSET_ACTION("Demo controls", MDemoCtrl_DemoControls, ""),
+	ADDSET_BLANK(),
 	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
 	ADDSET_BLANK(),
 	ADDSET_ACTION("Demo Browser", MDemoCtrl_DemoBrowser, ""),
