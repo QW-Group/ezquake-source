@@ -190,6 +190,20 @@ static int DemoControls_Window_OnMouseLeave(ez_control_t *self, void *payload, m
 	return 0;
 }
 
+static void DemoControls_Destroy(void)
+{
+	democontrols_on = false;
+	key_dest = key_game;
+	key_dest_beforecon = key_game;
+	EZ_tree_Destroy(&democontrol_tree);
+}
+
+static int DemoControls_Window_OnCloseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
+{
+	DemoControls_Destroy();
+	return 0;
+}
+
 static void DemoControls_Init(void)
 {
 	#define DEMO_BUTTON_GAP		5
@@ -370,20 +384,15 @@ static void DemoControls_Init(void)
 		// Size the children to fit within the window properly.
 		EZ_control_SetSize((ez_control_t *)demo_slider, (window->window_area->virtual_width - 64), 8);
 		EZ_control_SetSize((ez_control_t *)button_container, (window->window_area->virtual_width - 20), button_container->height);
+
+		// Enable the window close button.
+		EZ_control_AddOnMouseClick((ez_control_t *)window->close_button, DemoControls_Window_OnCloseClick, NULL);
 	}
 
 	// Make sure all the controls are properly position and sized.
 	EZ_tree_Refresh(&democontrol_tree);
 
 	key_dest = key_demo_controls;
-}
-
-static void DemoControls_Destroy(void)
-{
-	democontrols_on = false;
-	key_dest = key_game;
-	key_dest_beforecon = key_game;
-	EZ_tree_Destroy(&democontrol_tree);
 }
 
 qbool DemoControls_MouseEvent(mouse_state_t *ms)
