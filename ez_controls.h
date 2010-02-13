@@ -253,6 +253,7 @@ void EZ_double_linked_list_Sort(ez_double_linked_list_t *list, PtFuncCompare com
 typedef struct ez_tree_s
 {
 	struct ez_control_s		*root;					// The control tree.
+	qbool					destroying;				// Is the tree being destroyed? So we don't try to run any events when stuff is being removed.
 	ez_dllist_node_t		*focused_node;			// The node of focused control (from the tablist). 
 	ez_double_linked_list_t	drawlist;				// A list with the controls ordered in their drawing order.
 	ez_double_linked_list_t	tablist;				// A list with the controls ordered in their tabbing order.
