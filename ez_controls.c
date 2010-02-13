@@ -327,11 +327,6 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = tree->drawlist.head;
 
-	if (tree->destroying)
-	{
-		return;
-	}
-
 	while (iter)
 	{
 		payload = (ez_control_t *)iter->payload;
@@ -476,6 +471,11 @@ static void EZ_tree_RaiseRepeatedMouseButtonEvents(ez_tree_t *tree)
 //
 void EZ_tree_EventLoop(ez_tree_t *tree)
 {
+	if (!tree)
+	{
+		return;
+	}
+
 	// We wait with destroying until after all events have run.
 	if (tree->destroying)
 	{
@@ -512,11 +512,6 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 		Sys_Error("EZ_tree_MouseEvent: NULL tree reference.\n");
 	}
 
-	if (tree->destroying)
-	{
-		return false;
-	}
-
 	// Save the time that the specified button was last pressed.
 	if (ms->button_down || ms->button_up)
 	{
@@ -540,11 +535,6 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 	// that the foremost control gets it first.
 	for (iter = tree->drawlist.tail; iter; iter = iter->previous)
 	{
-		// The mouse event we just created might have destroyed the tree
-		// (close button for instance) so check for it before propagating the event.
-		if (tree->destroying)
-			break;
-
 		control = (ez_control_t *)iter->payload;
 
 		// Notify the control of the mouse event.
@@ -564,7 +554,7 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 //
 void EZ_tree_Refresh(ez_tree_t *tree)
 {
-	if (tree->root && !tree->destroying)
+	if (tree->root)
 	{
 		ez_dllist_node_t *iter = tree->drawlist.head;
 		ez_control_t *payload = NULL;
@@ -643,11 +633,6 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 		Sys_Error("EZ_tree_KeyEvent(): NULL control tree specified.\n");
 	}
 
-	if (tree->destroying)
-	{
-		return false;
-	}
-
 	if (tree->root && down)
 	{
 		switch (key)
@@ -686,11 +671,6 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree)
 	if(!tree)
 	{
 		assert(!"EZ_control_UnOrphanizeChildren: No control tree specified.\n");
-		return;
-	}
-
-	if (tree->destroying)
-	{
 		return;
 	}
 

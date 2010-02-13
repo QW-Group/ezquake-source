@@ -67,7 +67,7 @@ static void DemoControls_SetTimeLabelText(ez_label_t *label, double time)
 
 void DemoControls_Draw(void)
 {
-	if (democontrols_on && democontrol_tree.root)
+	if (democontrols_on)
 	{
 		// Position the slider based on the current demo time.
 		{
@@ -82,9 +82,10 @@ void DemoControls_Draw(void)
 			EZ_slider_SetPosition(demo_slider, pos);
 			slider_updating = false;
 		}
-
-		EZ_tree_EventLoop(&democontrol_tree);
 	}
+
+	// Should always be run so that any final cleanup is done on a destroy.
+	EZ_tree_EventLoop(&democontrol_tree);
 }
 
 static int DemoControls_SliderChanged(ez_control_t *self, void *payload, void *ext_event_info)
