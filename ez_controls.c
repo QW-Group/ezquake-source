@@ -249,6 +249,20 @@ void EZ_double_linked_list_Sort(ez_double_linked_list_t *list, PtFuncCompare com
 // =========================================================================================
 
 //
+// Control Tree - Actually destroys the tree. We try this as soon as all current events have run.
+//
+static void EZ_tree_TryDestroy(ez_tree_t *tree)
+{
+	// We wait with destroying until after all events have run.
+	if (tree && tree->destroying)
+	{
+		EZ_control_Destroy(tree->root, true);
+		memset(tree, 0, sizeof(ez_tree_t));
+		return;
+	}
+}
+
+//
 // Control tree -
 // Sets the drawing bounds for a control and then calls the function
 // recursivly on all it's children. These bounds are used to restrict the drawing
@@ -477,12 +491,7 @@ void EZ_tree_EventLoop(ez_tree_t *tree)
 	}
 
 	// We wait with destroying until after all events have run.
-	if (tree->destroying)
-	{
-		EZ_control_Destroy(tree->root, true);
-		memset(tree, 0, sizeof(ez_tree_t));
-		return;
-	}
+	EZ_tree_TryDestroy(tree);
 
 	if (!tree->root)
 	{
@@ -512,6 +521,8 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 		Sys_Error("EZ_tree_MouseEvent: NULL tree reference.\n");
 	}
 
+	EZ_tree_TryDestroy(tree);
+
 	// Save the time that the specified button was last pressed.
 	if (ms->button_down || ms->button_up)
 	{
@@ -535,10 +546,14 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 	// that the foremost control gets it first.
 	for (iter = tree->drawlist.tail; iter; iter = iter->previous)
 	{
+		EZ_tree_TryDestroy(tree);
+
 		control = (ez_control_t *)iter->payload;
 
 		// Notify the control of the mouse event.
 		CONTROL_RAISE_EVENT(&mouse_handled, control, ez_control_t, OnMouseEvent, ms);
+
+		EZ_tree_TryDestroy(tree);
 
 		if (mouse_handled)
 		{
@@ -625,13 +640,13 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 {
 	int key_handled = false;
-//	ez_control_t *payload = NULL;
-//	ez_dllist_node_t *iter = NULL;
 
 	if (!tree)
 	{
 		Sys_Error("EZ_tree_KeyEvent(): NULL control tree specified.\n");
 	}
+
+	EZ_tree_TryDestroy(tree);
 
 	if (tree->root && down)
 	{
@@ -651,10 +666,13 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 		}
 	}
 
+	EZ_tree_TryDestroy(tree);
+
 	// Send key events to the focused control.
 	if (tree->focused_node && tree->focused_node->payload)
 	{
 		CONTROL_RAISE_EVENT(&key_handled, (ez_control_t *)tree->focused_node->payload, ez_control_t, OnKeyEvent, key, unichar, down);
+		EZ_tree_TryDestroy(tree);
 	}
 
 	return key_handled;
