@@ -868,15 +868,13 @@ void DumpHUD(const char *name)
 
 extern qbool filesystemchanged; // fix bug 2359900
 
-void SaveConfig_f(void)
+void SaveConfig(const char *cfgname)
 {
 	char filename[MAX_PATH] = {0}, *filename_ext, *backupname_ext;
-	const char* arg1;
 	size_t len;
 	FILE *f;
 
-	arg1 = COM_SkipPath(Cmd_Argv(1));
-	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
+	snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : "config.cfg"); // use config.cfg if no params was specified
 
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 
@@ -907,10 +905,15 @@ void SaveConfig_f(void)
 	filesystemchanged = true; // fix bug 2359900
 }
 
+void SaveConfig_f(void)
+{
+	SaveConfig(COM_SkipPath(Cmd_Argv(1)));
+}
+
 void Config_QuitSave(void)
 {
 	if (cfg_save_onquit.integer) {
-		SaveConfig_f();
+		SaveConfig("");
 	}
 }
 
@@ -1047,12 +1050,14 @@ void Config_LegacyQuake_f(void)
 	if (!specific || (strcmp("2.1", ver) == 0)) {
 		Cbuf_AddText(
 			"hide itemsclock;echo hiding the itemsclock hud element (undo: show itemsclock);"
+			"\n"
 			);
 	}
 
 	if (!specific || (strcmp("2.1", ver) == 0)) {
 		Cbuf_AddText(
 			"cl_physfps_spectator 0;turning off spectator smoothing (undo: cl_physfps_spectator 30);"
+			"\n"
 			);
 	}
 
@@ -1062,6 +1067,7 @@ void Config_LegacyQuake_f(void)
 			"menu_ingame 0;echo turning off ingame menu (undo: menu_ingame 1);"
 			"gl_powerupshells 0;echo turning off powerup shell (undo: gl_powerupshells 1);"
 			"r_drawvweps 0;echo turning off vweps (undo: r_drawvweps 1);"
+			"\n"
 			);
 	}
 
@@ -1073,6 +1079,7 @@ void Config_LegacyQuake_f(void)
 			"hide radar;echo hiding the radar hud element (undo: show rader);"
 			"in_builtinkeymap 1;echo disabling os-keyboard layout (undo: in_builtinkeymap 0);"
 			"con_particles_images 0;echo disabling console particles (undo: con_particles_images 3);"
+			"\n"
 		// "r_chaticons_alpha 0;echo chaticon drawing disabled;"
 		);
 	}

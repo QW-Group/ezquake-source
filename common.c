@@ -1509,7 +1509,7 @@ void COM_ParseIPCData(const char *buf, unsigned int bufsize)
 		// TODO : Expect some more fancy commands and stuff here instead.. if we want to use it for more than qw:// urls...
 		if (!strncasecmp(buf, "qw://", 5))
 		{
-			Cbuf_AddText(va("qwurl %s", buf));
+			Cbuf_AddText(va("qwurl %s\n", buf));
 		}
 		else
 		{

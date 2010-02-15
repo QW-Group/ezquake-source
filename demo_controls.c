@@ -173,7 +173,7 @@ static int DemoControls_PauseButton_OnMouseClick(ez_control_t *self, void *paylo
 
 static int DemoControls_StopButton_OnMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
 {
-	Cbuf_AddText("disconnect");
+	Cbuf_AddText("disconnect\n");
 	return 1;
 }
 

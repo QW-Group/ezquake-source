@@ -756,17 +756,17 @@ void CL_QWURL_f (void)
 	// Default to connecting.
 	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
 	{
-		Cbuf_AddText(va("connect %s", connection_str));
+		Cbuf_AddText(va("connect %s\n", connection_str));
 	}
 	else if (!strncasecmp(command, "spectate", 8) || !strncasecmp(command, "observe", 7))
 	{
-		Cbuf_AddText(va("observe %s", connection_str));
+		Cbuf_AddText(va("observe %s\n", connection_str));
 	}
 	else if (!strncasecmp(command, "qtv", 3))
 	{
 		char *password = command + 4;
 
-		Cbuf_AddText(va("qtvplay %s%s", connection_str, ((*password) ? va(" %s", password) : "")));
+		Cbuf_AddText(va("qtvplay %s%s\n", connection_str, ((*password) ? va(" %s", password) : "")));
 	}
 	else
 	{
@@ -823,7 +823,7 @@ void CL_Connect_f (void)
 
 	if (proxy)
 	{
-		Cbuf_AddText(va("say ,connect %s", connect_addr));
+		Cbuf_AddText(va("say ,connect %s\n", connect_addr));
 	} 
 	else
 	{
