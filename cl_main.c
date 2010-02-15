@@ -2310,7 +2310,7 @@ void CL_Frame (double time)
 		if (cls.mvdplayback && !cls.demoseeking)
 		{
 			MVD_Interpolate();
-			MVD_Mainhook_f();
+			MVD_Mainhook();
 			
 			if (!cl.standby && physframe)
 			{
@@ -2356,7 +2356,7 @@ void CL_Frame (double time)
 			if (cls.mvdplayback && !cls.demoseeking)
 			{
 				MVD_Interpolate();
-				MVD_Mainhook_f();
+				MVD_Mainhook();
 			
 				if (!cl.standby && physframe)
 				{

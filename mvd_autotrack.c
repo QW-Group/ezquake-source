@@ -77,7 +77,7 @@ int last_track = 0;
 
 static int currentplayer_num;
 
-static int MVD_AutoTrackBW_f(int i){
+static int MVD_AutoTrackBW(int i){
 	extern cvar_t tp_weapon_order;
 	int j;
 	player_info_t *bp_info;
@@ -190,7 +190,7 @@ static expr_val MVD_Var_Vals(const char *n)
 	// w - average run teamfrags
 	case 'w': return Get_Expr_Double(mvd_new_info[i].info.run_stats.all.avg_teamfrags);
 
-    case 'W': return Get_Expr_Integer(MVD_AutoTrackBW_f(i));
+    case 'W': return Get_Expr_Integer(MVD_AutoTrackBW(i));
     case 'x': return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].count);
     case 'X': return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].lost);
     case 'y': return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].count);
@@ -289,7 +289,7 @@ static int MVD_GetBestPlayer(void)
 	return bp_id ;
 }
 
-static int MVD_FindBestPlayer_f(void) {
+static int MVD_FindBestPlayer(void) {
 	MVD_UpdatePlayerValues();
 	return MVD_GetBestPlayer();
 }
@@ -378,13 +378,13 @@ static qbool MVD_SwitchMoment(void) {
 
 
 
-void MVD_AutoTrack_f(void) {
+void MVD_AutoTrack(void) {
 	char arg[64];
 	int id;
 	static double lastupdate = 0;
 
 	#ifdef DEBUG
-	printf("MVD_AutoTrack_f Started\n");
+	printf("MVD_AutoTrack Started\n");
 	#endif
 
 	if (!mvd_autotrack.value)
@@ -403,7 +403,7 @@ void MVD_AutoTrack_f(void) {
 		if (cl_multiview.value >= 1 ){
 			multitrack_str = mvd_multitrack_1.string;
 			multitrack_val = mvd_multitrack_1_values.string;
-			id = MVD_FindBestPlayer_f();
+			id = MVD_FindBestPlayer();
 			if (id != multitrack_id_1){
 				snprintf(arg, sizeof (arg), "track1 %i \n",id);
 				Cbuf_AddText(arg);
@@ -413,7 +413,7 @@ void MVD_AutoTrack_f(void) {
 		if (cl_multiview.value >= 2 ){
 			multitrack_str = mvd_multitrack_2.string;
 			multitrack_val = mvd_multitrack_2_values.string;
-			id = MVD_FindBestPlayer_f();
+			id = MVD_FindBestPlayer();
 			if (id != multitrack_id_2){
 				snprintf(arg, sizeof (arg), "track2 %i \n",id);
 				Cbuf_AddText(arg);
@@ -423,7 +423,7 @@ void MVD_AutoTrack_f(void) {
 		if (cl_multiview.value >= 3 ){
 			multitrack_str = mvd_multitrack_3.string;
 			multitrack_val = mvd_multitrack_3_values.string;
-			id = MVD_FindBestPlayer_f();
+			id = MVD_FindBestPlayer();
 			if (id != multitrack_id_3){
 				snprintf(arg, sizeof (arg), "track3 %i \n",id);
 				Cbuf_AddText(arg);
@@ -433,7 +433,7 @@ void MVD_AutoTrack_f(void) {
 		if (cl_multiview.value >= 4 ){
 			multitrack_str = mvd_multitrack_4.string;
 	 		multitrack_val = mvd_multitrack_4_values.string;
-			id = MVD_FindBestPlayer_f();
+			id = MVD_FindBestPlayer();
 			if (id != multitrack_id_4){
 				snprintf(arg, sizeof (arg), "track4 %i \n",id);
 				Cbuf_AddText(arg);
@@ -447,7 +447,7 @@ void MVD_AutoTrack_f(void) {
 		if (mvd_autotrack.integer == 4) 
 			id = MVD_FindBestPlayerSimple();
 		else
-			id = MVD_FindBestPlayer_f();
+			id = MVD_FindBestPlayer();
 
 		if (id != last_track || cl.viewplayernum != id) {
 			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
@@ -456,7 +456,7 @@ void MVD_AutoTrack_f(void) {
 		}
 	}
 	#ifdef DEBUG
-	printf("MVD_AutoTrack_f Stopped\n");
+	printf("MVD_AutoTrack Stopped\n");
 	#endif
 }
 

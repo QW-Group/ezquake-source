@@ -231,7 +231,7 @@ char *Make_Red (char *s,int i){
     return buf;
 }
 
-void MVD_Init_Info_f (void) {
+void MVD_Init_Info (void) {
 	int i;
 	int z;
 
@@ -684,7 +684,7 @@ void MVD_Info (void){
 	}
 }
 
-void MVD_Status_Announcer_f (int i, int z){
+void MVD_Status_Announcer(int i, int z){
 	char *pn;
 	vec3_t *pl;
 	pn=mvd_new_info[i].p_info->name;
@@ -740,7 +740,7 @@ void MVD_Status_Announcer_f (int i, int z){
 	}
 }
 
-void MVD_Status_WP_f (int i){
+void MVD_Status_WP(int i){
 	int j,k;
 	for (k = j = SSG_INFO; j <= LG_INFO; j++, k = k*2){
 		if (!mvd_new_info[i].info.info[j].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & k){
@@ -755,7 +755,7 @@ void MVD_Status_WP_f (int i){
 
 }
 
-void MVD_Stats_Cleanup_f (void){
+void MVD_Stats_Cleanup (void){
 	quad_is_active=0;
 	pent_is_active=0;
 	powerup_cam_active=0;
@@ -769,7 +769,7 @@ void MVD_Stats_Cleanup_f (void){
 	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info_s));
 }
 
-void MVD_Set_Armor_Stats_f (int z,int i){
+void MVD_Set_Armor_Stats(int z,int i){
 	switch(z){
 		case GA_INFO:
 			mvd_new_info[i].info.info[YA_INFO].has=0;
@@ -818,7 +818,7 @@ void MVD_Stats_CalcAvgRuns(void)
 	}
 }
 
-int MVD_Stats_Gather_f (void){
+int MVD_Stats_Gather(void){
 	int death_stats = 0;
 	int x,i,z,killdiff;
 
@@ -883,7 +883,7 @@ int MVD_Stats_Gather_f (void){
 			if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
 				if (!mvd_new_info[i].info.info[x].has){
 					MVD_ClockStart(x);
-					MVD_Set_Armor_Stats_f(x,i);
+					MVD_Set_Armor_Stats(x,i);
 					mvd_new_info[i].info.info[x].count++;
 					mvd_new_info[i].info.info[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 					mvd_new_info[i].info.info[x].mention=1;
@@ -996,9 +996,9 @@ int MVD_Stats_Gather_f (void){
 		if (mvd_new_info[i].p_state->weaponframe > 0)
 				mvd_new_info[i].info.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
 		if (mvd_cg_info.deathmatch!=4){
-			MVD_Status_WP_f(i);
+			MVD_Status_WP(i);
 			for (z=SSG_INFO;z<=RA_INFO;z++)
-				MVD_Status_Announcer_f(i,z);
+				MVD_Status_Announcer(i,z);
 			}
 		}
 		if ((((pent_time + 300) - cls.demotime) < 5) && !pent_is_active){
@@ -1196,14 +1196,6 @@ void MVD_Status (void){
 	}
 }
 
-#ifdef _DEBUG
-void MVD_Testor_f (void) {
-	extern qbool Match_Running;
-	Com_Printf("%i\n",Match_Running);
-	Com_Printf("%s : %s \n",mvd_cg_info.team1,mvd_cg_info.team2);
-}
-#endif
-
 qbool MVD_MatchStarted(void) {
 	if (was_standby && !cl.standby) {
 		was_standby = false;
@@ -1213,13 +1205,13 @@ qbool MVD_MatchStarted(void) {
 	return false;
 }
 
-void MVD_Mainhook_f (void){
+void MVD_Mainhook (void){
 	if (MVD_MatchStarted())
-		MVD_Init_Info_f();
+		MVD_Init_Info();
 
-	MVD_Stats_Gather_f();
+	MVD_Stats_Gather();
 	MVD_Stats_CalcAvgRuns();
-	MVD_AutoTrack_f ();
+	MVD_AutoTrack();
 	MVD_ClockList_RemoveExpired();
 	if (cls.mvdplayback && mvd_demo_track_run == 0)
 		MVD_Demo_Track ();
@@ -1279,7 +1271,7 @@ void MVD_PC_Get_Coords (void){
 }
 
 
-void MVD_Powerup_Cams_f (void){
+void MVD_Powerup_Cams(void){
 	int i;
 	int x=1;
 
@@ -1408,12 +1400,6 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_pc_view_4);
 
 	Cvar_Register (&mvd_moreinfo);
-
-#ifdef _DEBUG
-	Cmd_AddCommand ("mvd_test",MVD_Testor_f);
-#endif
-
-	Cmd_AddCommand ("mvd_utils_reinit", MVD_Init_Info_f);
 
 	Cvar_ResetCurrentGroup();
 }

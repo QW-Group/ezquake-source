@@ -606,7 +606,7 @@ void CL_Prespawn (void)
 	MT_NewMap();
 	Stats_NewMap();
 	CL_ProxyEnter();
-	MVD_Stats_Cleanup_f();
+	MVD_Stats_Cleanup();
 
 	// Reset the status grid.
 	StatsGrid_Remove(&stats_grid);
@@ -2021,11 +2021,11 @@ void CL_UpdateUserinfo (void)
 
 	if (player->name[0] && was_empty_slot) {
 		CL_PlayerEnterSlot(player);
-		MVD_Init_Info_f();
+		MVD_Init_Info();
 	}
 	else if (!player->name[0] && !was_empty_slot) {
 		CL_PlayerLeaveSlot(player);
-		MVD_Init_Info_f();
+		MVD_Init_Info();
 	}
 }
 

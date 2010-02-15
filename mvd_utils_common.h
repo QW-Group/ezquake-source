@@ -188,7 +188,7 @@ typedef struct mvd_wp_info_s {
 extern mvd_wp_info_t mvd_wp_info[mvd_info_types];
 
 // mvd_autotrack:
-void MVD_AutoTrack_f(void);
+void MVD_AutoTrack(void);
 void MVD_AutoTrack_Init(void);
 
 // mvd_xmlstats:
