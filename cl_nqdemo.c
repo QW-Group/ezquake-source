@@ -118,7 +118,7 @@ static qbool CL_GetNQDemoMessage (void)
 			// if this is the second frame, grab the real td_starttime
 			// so the bogus time on the first frame doesn't count
 			if (cls.framecount == cls.td_startframe + 1)
-				cls.td_starttime = cls.realtime;
+				cls.td_starttime = Sys_DoubleTime();
 		}
 		else if (cl.time <= nq_mtime[0])
 		{
