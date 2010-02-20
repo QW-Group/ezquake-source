@@ -239,6 +239,7 @@ void MVD_Init_Info (void) {
 		if (!cl.players[i].name[0] || cl.players[i].spectator == 1)
 				continue;
 		mvd_new_info[z].id = i;
+		memset(mvd_new_info[z].item_info, 0, sizeof(mvd_new_info[z].item_info));
 		mvd_new_info[z++].p_info = &cl.players[i];
 	}
 
