@@ -305,6 +305,7 @@ double MVD_RespawnTimeGet(int itemtype)
 
 void MVD_ClockList_Insert(mvd_clock_t *newclock)
 {
+	Com_DPrintf("MVD_ClockList_Insert type=%d\n", newclock->itemtype);
 	if (mvd_clocklist == NULL) {
 		mvd_clocklist = newclock;
 		newclock->next = NULL;
@@ -890,6 +891,7 @@ int MVD_Stats_Gather(void){
 					mvd_new_info[i].info.info[x].has=1;
 				}
 				if (mvd_new_info[i].info.info[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
+					MVD_ClockStart(x);
 					mvd_new_info[i].info.info[x].count++;
 					mvd_new_info[i].info.info[x].mention = 1;
 				}
