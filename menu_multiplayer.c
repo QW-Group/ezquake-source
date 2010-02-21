@@ -58,7 +58,8 @@ static setting sbsettings_arr[] = {
 	ADDSET_NUMBER	("Master Retries", sb_masterretries, 1, 5, 1),
 	ADDSET_NUMBER	("Info Timeout", sb_infotimeout, 50, 1000, 50),
 	ADDSET_NUMBER	("Info Retries", sb_inforetries, 0, 4, 1),
-	ADDSET_NUMBER	("Infos Per Second", sb_infospersec, 10, 1000, 10)
+	ADDSET_NUMBER	("Infos Per Second", sb_infospersec, 10, 1000, 10),
+	ADDSET_BOOL     ("Find best routes", sb_findroutes)
 };
 
 /* generates a toggle function for custom enum in ADDSET_CUSTOM setting type */

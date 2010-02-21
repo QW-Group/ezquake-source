@@ -16,6 +16,8 @@
 		920C63600E3657AB0024236F /* sv_demo_qtv.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635B0E3657AB0024236F /* sv_demo_qtv.c */; };
 		920C63610E3657AB0024236F /* sv_login.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635C0E3657AB0024236F /* sv_login.c */; };
 		920C63620E3657AB0024236F /* sv_mod_frags.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635D0E3657AB0024236F /* sv_mod_frags.c */; };
+		9226C6CD10728E7500F07127 /* EX_browser_pathfind.c in Sources */ = {isa = PBXBuildFile; fileRef = 9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */; };
+		9226C6CE10728E7500F07127 /* EX_browser_pathfind.c in Sources */ = {isa = PBXBuildFile; fileRef = 9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */; };
 		924527910EE883F500EA8BCA /* libexpat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019930DE7FFCC00F1108A /* libexpat.a */; };
 		924527940EE8841100EA8BCA /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019940DE7FFCC00F1108A /* libjpeg.a */; };
 		924527950EE8841800EA8BCA /* libpcre.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019950DE7FFCC00F1108A /* libpcre.a */; };
@@ -1663,6 +1665,7 @@
 		D211454309C7822100FD70CB /* EZQuake */ = {
 			isa = PBXGroup;
 			children = (
+				9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */,
 				92C655FD0E535D5B00437A38 /* fs.h */,
 				92C655F40E535CBF00437A38 /* ez_listview.c */,
 				92C655F50E535CBF00437A38 /* ez_listview.h */,
@@ -2534,6 +2537,7 @@
 				924527C20EE886F500EA8BCA /* vx_tracker.c in Sources */,
 				924527C60EE887CD00EA8BCA /* sv_mod_frags.c in Sources */,
 				924527CE0EE8892900EA8BCA /* irc.c in Sources */,
+				9226C6CE10728E7500F07127 /* EX_browser_pathfind.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2716,6 +2720,7 @@
 				920C63620E3657AB0024236F /* sv_mod_frags.c in Sources */,
 				92C655F80E535CBF00437A38 /* ez_listview.c in Sources */,
 				92C655F90E535CBF00437A38 /* ez_listviewitem.c in Sources */,
+				9226C6CD10728E7500F07127 /* EX_browser_pathfind.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

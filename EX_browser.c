@@ -76,6 +76,9 @@ cvar_t  sb_pingspersec   = {"sb_pingspersec",    "150"}; // Pings per second
 cvar_t  sb_pings         = {"sb_pings",            "3"}; // Number of times to ping a server
 cvar_t  sb_inforetries   = {"sb_inforetries",      "3"};
 cvar_t  sb_infospersec   = {"sb_infospersec",    "100"};
+cvar_t  sb_proxinfopersec= {"sb_proxinfopersec",  "10"};
+cvar_t  sb_proxretries   = {"sb_proxretries",      "3"};
+cvar_t  sb_proxtimeout   = {"sb_proxtimeout",   "1000"};
 cvar_t  sb_mastertimeout = {"sb_mastertimeout", "1000"};
 cvar_t  sb_masterretries = {"sb_masterretries",    "3"};
 cvar_t  sb_nosockraw     = {"sb_nosockraw",        "0"}; // when enabled, forces "new ping" (udp qw query packet, multithreaded) to be used
@@ -87,7 +90,7 @@ cvar_t  sb_sortplayers   = {"sb_sortplayers",     "92"}; // not in new menu
 cvar_t  sb_sortsources   = {"sb_sortsources",      "3"}; // not in new menu
 
 cvar_t  sb_autohide      = {"sb_autohide",         "1"}; // not in menu
-
+cvar_t  sb_findroutes    = {"sb_findroutes",       "0"};
 
 // filters
 cvar_t  sb_hideempty     = {"sb_hideempty",        "1"};
@@ -129,31 +132,86 @@ sem_t serverinfo_semaphore;
 
 void Serverinfo_Stop(void);
 
-static qbool SB_Is_Selected_Proxy(server_data *s)
+void SB_ServerList_Lock(void)
 {
-	return (strcmp(s->display.ip, cl_proxyaddr.string) == 0);
+	Sys_SemWait(&serverlist_semaphore);
+}
+
+void SB_ServerList_Unlock(void)
+{
+	Sys_SemPost(&serverlist_semaphore);
+}
+
+static qbool SB_Is_Selected_Proxy(const server_data *s)
+{
+	return (strstr(cl_proxyaddr.string, s->display.ip) != NULL);
+}
+
+// removes given proxy from the proxyaddr list
+// if cl_proxyaddr "a:b:c" and s->ip = "b" then it changes cl_proxyaddr to "a:c"
+static void SB_Proxy_Unselect(const server_data *s)
+{
+	const char *start = strstr(cl_proxyaddr.string, s->display.ip);
+	const char *end;
+	char *buf = (char *) Q_malloc(strlen(cl_proxyaddr.string) + 1);
+	char *bufstart = buf;
+	const char *cur;
+
+	if (start == NULL) {
+		Q_free(buf);
+		return; // invalid call, proxy is not selected
+	}
+
+	for (cur = cl_proxyaddr.string; cur < start - 1;) {
+		*buf++ = *cur++;
+	}
+	*buf = '\0';
+
+	end = strchr(start, '@');
+	if (end != NULL) {
+		cur = end;
+		if (*bufstart == '\0') cur++; // don't copy the '@' sign
+		while (*cur) *buf++ = *cur++;
+		*buf++ = '\0';
+	}
+
+	Cvar_Set(&cl_proxyaddr, bufstart);
+
+	Q_free(bufstart);
+}
+
+// adds selected proxy to the end of the proxies list
+static void SB_Proxy_Select(const server_data *s)
+{
+	size_t len = strlen(s->display.ip) + strlen(cl_proxyaddr.string) + 2;
+	char *buf = (char *) Q_malloc(len);
+	
+	*buf = '\0';
+	strlcat(buf, cl_proxyaddr.string, len);
+	if (*buf) {
+		strlcat(buf, "@", len);
+	}
+	strlcat(buf, s->display.ip, len);
+
+	Cvar_Set(&cl_proxyaddr, buf);
+
+	Q_free(buf);
 }
 
 static void SB_Select_QWfwd(server_data *s)
 {
 	if (SB_Is_Selected_Proxy(s)) {
-		// unselect
-		Cvar_Set(&cl_proxyaddr, "");
+		SB_Proxy_Unselect(s);
 	}
 	else {
-		// select
-		Cvar_Set(&cl_proxyaddr, show_serverinfo->display.ip);
+		SB_Proxy_Select(s);
 	}
 	S_LocalSound ("misc/menu2.wav");
 	Serverinfo_Stop();
 }
 
-static void Join_Server (server_data *s)
+static void SB_Browser_Hide(const server_data *s)
 {
-	Cbuf_AddText ("join ");
-	Cbuf_AddText (s->display.ip);
-	Cbuf_AddText ("\n");
-
 	if (sb_autohide.value)
 	{
 		if (sb_autohide.value > 1  ||  strcmp(s->display.gamedir, "qizmo")) {
@@ -162,6 +220,14 @@ static void Join_Server (server_data *s)
 			M_Draw();
 		}
 	}
+}
+
+static void Join_Server (server_data *s)
+{
+	Cbuf_AddText ("join ");
+	Cbuf_AddText (s->display.ip);
+	Cbuf_AddText ("\n");
+	SB_Browser_Hide(s);
 }
 
 static void Observe_Server (server_data *s)
@@ -170,14 +236,7 @@ static void Observe_Server (server_data *s)
 	Cbuf_AddText (s->display.ip);
 	Cbuf_AddText ("\n");
 
-	if (sb_autohide.value)
-	{
-		if (sb_autohide.value > 1  ||  strcmp(s->display.gamedir, "qizmo")) {
-			key_dest = key_game;
-			m_state = m_none;
-			M_Draw();
-		}
-	}
+	SB_Browser_Hide(s);
 }
 
 // case insensitive and red-insensitive compare
@@ -592,7 +651,7 @@ void Add_ColumnColored(int x, int y, int *pos, const char *t, int w, const char*
 	snprintf (buf, sizeof(buf), "&c%s%s", color, t);
 	
     (*pos) -= w;
-	UI_Print_Center(x + (*pos)*8, y, 8*(w+4), buf, false);
+	UI_Print_Center(x + (*pos)*8, y, 8*(w+5), buf, false);
     (*pos)--;
 }
 
@@ -864,8 +923,14 @@ void SB_Servers_Draw (int x, int y, int w, int h)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.map, COL_MAP, servnum==Servers_pos);
             if (sb_showgamedir.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.gamedir, COL_GAMEDIR, servnum==Servers_pos);
-            if (sb_showping.value)
-                Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ping, COL_PING, servnum==Servers_pos);
+			if (sb_showping.value) {
+				if (servers[servnum]->bestping >= 0) {
+					Add_ColumnColored(x, y+8*(i+1), &pos, servers[servnum]->display.bestping, COL_PING, "ff0");
+				}
+				else {
+					Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ping, COL_PING, servnum==Servers_pos);
+				}
+			}
             if (sb_showaddress.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ip, COL_IP, servnum==Servers_pos);
 			
@@ -1827,13 +1892,13 @@ int SB_Servers_Key(int key)
 						else
 						{
 							buf[0] = '-';
-							strlcpy (buf + 1, sb_sortservers.string, sizeof (buf));
+							strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
 						}
                     }
 					else
 					{
 						buf[0] = key;
-						strlcpy (buf + 1, sb_sortservers.string, sizeof (buf));
+						strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
                     }
 
 					Cvar_Set(&sb_sortservers, buf);
@@ -1966,6 +2031,13 @@ void Serverinfo_Key(int key)
         case 'v':   // past server into console
              PasteServerToConsole(show_serverinfo);
              break;
+		case 'i':
+			SB_PingTree_DumpPath(&show_serverinfo->address);
+			break;
+		case 'x':
+			SB_PingTree_ConnectBestPath(&show_serverinfo->address);
+			SB_Browser_Hide(show_serverinfo);
+			break;
         default:
             switch (serverinfo_pos)
             {
@@ -2634,7 +2706,7 @@ void SB_Sources_Update_f(void)
 // (which is significantly faster than full refresh).
 // Of course users should do full-update of their list after some time so that 
 // new servers have a chance to appear.
-#define SERIALIZE_FILE_VERSION 1002
+#define SERIALIZE_FILE_VERSION 1003
 void SB_Serverlist_Serialize(FILE *f)
 {
 	int version = SERIALIZE_FILE_VERSION;
@@ -2771,10 +2843,38 @@ void SB_Serverlist_Unserialize_f(void)
 	fclose(f);
 }
 
-void Shutdown_SB(void)
+void SB_ProxyDumpPing(netadr_t adr, short dist)
 {
-    Serverinfo_Stop();
-    Sys_MSleep(150);     // wait for thread to terminate
+	Com_Printf("%3d.%3d.%3d.%3d:%5d   %d\n",
+		adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], (int) adr.port, dist);
+}
+
+void SB_ProxyGetPings_f(void)
+{
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <ip>\n", Cmd_Argv(0));
+		return;
+	}
+	else {
+		netadr_t adr;
+
+		if (!NET_StringToAdr(Cmd_Argv(1), &adr)) {
+			Com_Printf("Invalid address\n");
+			return;
+		}
+		Com_Printf("List:\n");
+		SB_Proxy_QueryForPingList(&adr, SB_ProxyDumpPing);
+		Com_Printf("End of list.\n");
+	}
+}
+
+void SB_Shutdown(void)
+{
+	SB_PingTree_Shutdown();
+
+	// FIXME - this probably never worked
+    // Serverinfo_Stop();
+    // Sys_MSleep(150);     // wait for thread to terminate
 }
 
 
@@ -2795,6 +2895,9 @@ void Browser_Init (void)
     Cvar_Register(&sb_pingspersec);
     Cvar_Register(&sb_inforetries);
     Cvar_Register(&sb_infospersec);
+	Cvar_Register(&sb_proxinfopersec);
+	Cvar_Register(&sb_proxretries);
+	Cvar_Register(&sb_proxtimeout);
     Cvar_Register(&sb_liveupdate);
     Cvar_Register(&sb_mastertimeout);
     Cvar_Register(&sb_masterretries);
@@ -2814,6 +2917,7 @@ void Browser_Init (void)
     Cvar_Register(&sb_mastercache);
 	Cvar_Register(&sb_autoupdate);
 	Cvar_Register(&sb_listcache);
+	Cvar_Register(&sb_findroutes);
 	Cvar_ResetCurrentGroup();
 
     Cmd_AddCommand("addserver", AddServer_f);
@@ -2821,9 +2925,12 @@ void Browser_Init (void)
 	Cmd_AddCommand("sb_pingsdump", SB_PingsDump_f);
 	Cmd_AddCommand("sb_sourceadd", SB_Source_Add_f);
 	Cmd_AddCommand("sb_sourcesupdate", SB_Sources_Update_f);
+	Cmd_AddCommand("sb_buildpingtree", SB_PingTree_Build);
+	Cmd_AddCommand("sb_proxygetpings", SB_ProxyGetPings_f);
 
 	if (sb_listcache.integer) {
 		SB_Serverlist_Unserialize_f();
+		SB_Proxylist_Unserialize_f();
 	}
 }
 
@@ -2844,6 +2951,7 @@ void Browser_Init2 (void)
     sourcesn = 0;
 
 	Sys_SemInit(&serverlist_semaphore, 1, 1);
+	SB_PingTree_Init();
 
     // read sources from SOURCES_PATH
 	Reload_Sources();
