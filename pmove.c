@@ -347,7 +347,7 @@ void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel) {
 
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 qbool player_in_air = false;
-float addspeed_val = 0.f;
+float cosinus_val = 0.f;
 qbool flag_player_pmove;
 #endif
 
@@ -370,7 +370,10 @@ void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel) {
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 	if(flag_player_pmove)
 	{
-		addspeed_val = addspeed - 30.f;
+	    cosinus_val = 0.f;
+		originalspeed = sqrt(pmove.velocity[0] * pmove.velocity[0] + pmove.velocity[1] * pmove.velocity[1]);
+		if(originalspeed > 1.f) cosinus_val = currentspeed / originalspeed;
+
 		player_in_air = true;
 	}
 #endif

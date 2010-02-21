@@ -589,24 +589,8 @@ void SCR_DrawRam (void) {
 }
 
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
-void SCR_DrawAccel (void) {
-	extern qbool player_in_air;
-	extern float addspeed_val;
-
-	int x, y, length, charsize, pos;
-
-	if(!player_in_air) return;
-
-#ifdef GLQUAKE
-	charsize = (int) (8.f * vid.height / vid.conheight);
-#else
-	charsize = 8;
-#endif
-	length = vid.width / 3;
-	x = (vid.width - length) / 2;
-	y = vid.height - sb_lines - charsize - 1;
-
-	pos = (int) (addspeed_val * (length / 60.f) + length / 2);
+static void draw_accel_bar(int x, int y, int length, int charsize, int pos)
+{
 #ifdef GLQUAKE
 	glPushAttrib(GL_TEXTURE_BIT);
 	glDisable(GL_TEXTURE_2D);
@@ -650,6 +634,33 @@ void SCR_DrawAccel (void) {
 	Draw_Fill(x + length/2 - 2, y, 5, charsize, 152);
 	Draw_Fill(x + pos - 1, y, 3, charsize, 192);
 #endif
+}
+
+void SCR_DrawAccel (void) {
+	extern qbool player_in_air;
+	extern float cosinus_val;
+
+	int x, y, length, charsize, pos;
+	const float scale_factor = 10.f;
+	if(!player_in_air) return;
+
+#ifdef GLQUAKE
+	charsize = (int) (8.f * vid.height / vid.conheight);
+#else
+	charsize = 8;
+#endif
+	length = vid.width / 3;
+	x = (vid.width - length) / 2;
+	y = vid.height - sb_lines - charsize - 1;
+
+	pos = (int) ((cosinus_val + 1) * length / 2);
+
+	draw_accel_bar(x, y, length, charsize, pos);
+
+	//scale: show most interesting
+	pos = (int) ((cosinus_val * scale_factor + 1) * length / 2);
+
+	draw_accel_bar(x, y + 2 * charsize, length, charsize, pos);
 }
 #endif
 
