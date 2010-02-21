@@ -687,6 +687,7 @@ void Classic_DrawParticles (void) {
 	unsigned char *at, theAlpha;
 	vec3_t up, right;
 	float dist, scale, r_partscale;
+	extern cvar_t gl_particle_style;
 #endif
 
 	if (!active_particles)
@@ -701,11 +702,17 @@ void Classic_DrawParticles (void) {
 
 	GL_Bind(particletexture);
 
-	glEnable (GL_BLEND);
+	if(!gl_particle_style.integer) // if not sw style particles
+		glEnable (GL_BLEND);
+
 	if (!gl_solidparticles.value)
 		glDepthMask (GL_FALSE);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glBegin (GL_TRIANGLES);
+
+	if (gl_particle_style.integer)
+		glBegin (GL_QUADS); // for sw style particles
+	else
+		glBegin (GL_TRIANGLES);
 
 	VectorScale (vup, 1.5, up);
 	VectorScale (vright, 1.5, right);
@@ -760,6 +767,11 @@ void Classic_DrawParticles (void) {
 		glColor4ub (*at, *(at + 1), *(at + 2), theAlpha);
 		glTexCoord2f (0, 0); glVertex3fv (p->org);
 		glTexCoord2f (1, 0); glVertex3f (p->org[0] + up[0] * scale, p->org[1] + up[1] * scale, p->org[2] + up[2] * scale);
+
+		if(gl_particle_style.integer) //4th point for sw style particle
+		{
+			glTexCoord2f (1, 1); glVertex3f (p->org[0] + (right[0] + up[0]) * scale, p->org[1] + (right[1] + up[1]) * scale, p->org[2] + (right[2] + up[2]) * scale);
+		}
 		glTexCoord2f (0, 1); glVertex3f (p->org[0] + right[0] * scale, p->org[1] + right[1] * scale, p->org[2] + right[2] * scale);
 #else
 		D_DrawParticle (p);
