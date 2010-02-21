@@ -702,17 +702,23 @@ void Classic_DrawParticles (void) {
 
 	GL_Bind(particletexture);
 
-	if(!gl_particle_style.integer) // if not sw style particles
-		glEnable (GL_BLEND);
+	glEnable (GL_BLEND);
 
 	if (!gl_solidparticles.value)
 		glDepthMask (GL_FALSE);
+
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	if (gl_particle_style.integer)
-		glBegin (GL_QUADS); // for sw style particles
+	{
+		// for sw style particles
+		glDisable (GL_TEXTURE_2D); // don't use texture
+		glBegin (GL_QUADS);
+	}
 	else
+	{
 		glBegin (GL_TRIANGLES);
+	}
 
 	VectorScale (vup, 1.5, up);
 	VectorScale (vright, 1.5, right);
@@ -835,7 +841,8 @@ void Classic_DrawParticles (void) {
 	glEnd ();
 	glDisable (GL_BLEND);
 	glDepthMask (GL_TRUE);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glEnable (GL_TEXTURE_2D);
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor3ubv (color_white);
 #endif
 }
