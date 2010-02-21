@@ -642,6 +642,7 @@ void SCR_DrawAccel (void) {
 
 	int x, y, length, charsize, pos;
 	const float scale_factor = 10.f;
+	char cosinus_str[10];
 	if(!player_in_air) return;
 
 #ifdef GLQUAKE
@@ -660,7 +661,11 @@ void SCR_DrawAccel (void) {
 	//scale: show most interesting
 	pos = (int) ((cosinus_val * scale_factor + 1) * length / 2);
 
-	draw_accel_bar(x, y + 2 * charsize, length, charsize, pos);
+	draw_accel_bar(x, y - 2 * charsize, length, charsize, pos);
+	
+	cosinus_str[0] = '\0';
+	sprintf(cosinus_str,"%.3f", cosinus_val);
+	Draw_String(x, y - charsize, cosinus_str);
 }
 #endif
 
