@@ -84,8 +84,10 @@ cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_SILENT, OnChange_vid_pos};
 cvar_t	vid_minpos  = { "vid_minpos",	"0",	CVAR_SILENT};
 
 void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel);
+void OnChange_r_conaspect (cvar_t *var, char *string, qbool *cancel);
 cvar_t	r_conwidth			= { "vid_conwidth",			"640",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx };
 cvar_t	r_conheight			= { "vid_conheight",		"0",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something
+cvar_t	r_conaspect			= { "vid_conaspect",		"",		CVAR_SILENT, OnChange_r_conaspect }; // auto-adjusts vid_conheight
 
 cvar_t	vid_ref				= { "vid_ref",				"gl",	CVAR_ROM | CVAR_SILENT };
 cvar_t  vid_hwgammacontrol	= { "vid_hwgammacontrol", 	"2",    CVAR_SILENT };
@@ -322,12 +324,75 @@ static void R_ModeList_f( void )
 int nonwideconheight = 0;  // Store original conheight if vid_wideaspect is used
 void Plug_ResChanged(void);
 
+/// Parses the value vid_conaspect cvar.
+///
+/// \return true if vid_conaspect contained some valid ratio
+qbool VID_r_con_aspect_get(int *x, int *y)
+{
+	char *var = r_conaspect.string;
+	char buf[16];
+	int x_, y_;
+	char *colon;
+	
+	strlcpy(buf, var, sizeof(buf));
+
+	colon = strchr(buf, ':');
+	if (colon) {
+		*colon = '\0';
+		x_ = Q_atoi(var);
+		y_ = Q_atoi(colon+1);
+
+		if (x_ > 0 && y_ > 0) {
+			*x = x_;
+			*y = y_;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/// Recalculates height if vid_conaspect is set.
+///
+/// \return true if recalculation was done
+qbool VID_r_con_height_adjust(int width, int *height)
+{
+	int x, y;
+	if (VID_r_con_aspect_get(&x, &y)) {
+		*height = width * y / x;
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void VID_r_con_height_apply(int height)
+{
+	if (glConfig.vidHeight)
+		vid.height = vid.conheight = height = min(glConfig.vidHeight, height);
+	else
+		vid.conheight = height; // issued from cmd line ? then do not set vid.height because code may relay what it 0
+	Cvar_SetValue(&r_conheight, (float)height);
+}
+
+void OnChange_r_conaspect(cvar_t *var, char *string, qbool *cancel) {
+	int height;
+
+	Cvar_Set(var, string); // just accept the new value
+
+	if (VID_r_con_height_adjust(r_conwidth.integer, &height)) {
+		VID_r_con_height_apply(height);
+	}
+}
+
 void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 	
 	float scale = 1;
 
 	if (var == &r_conwidth) {
 		int width = Q_atoi(string);
+		int height;
 
 		width = max(320, width);
 		//width &= 0xfff8; // make it a multiple of eight
@@ -338,6 +403,10 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 			vid.conwidth = width; // issued from cmd line ? then do not set vid.width because code may relay what it 0
 
 		Cvar_SetValue(var, (float)width);
+
+		if (VID_r_con_height_adjust(width, &height)) {
+			VID_r_con_height_apply(height);
+		}
 	}
 	else if (var == &r_conheight)
 	{
@@ -372,12 +441,7 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 
 		height = max(200, height);
 
-		if (glConfig.vidHeight)
-			vid.height = vid.conheight = height = min(glConfig.vidHeight, height);
-		else
-			vid.conheight = height; // issued from cmd line ? then do not set vid.height because code may relay what it 0
-
-		Cvar_SetValue(var, (float)height);
+		VID_r_con_height_apply(height);
 	}
 	else
 	{
@@ -534,6 +598,7 @@ void R_Register( void )
 	Cvar_Register (&r_conwidth);
 	Cvar_Register (&r_conheight);
 	Cvar_Register (&vid_wideaspect);
+	Cvar_Register (&r_conaspect);
 
 	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
