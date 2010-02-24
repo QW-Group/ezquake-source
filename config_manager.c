@@ -901,7 +901,7 @@ void SaveConfig(const char *cfgname)
 	}
 
 	DumpConfig(filename);
-	Com_Printf("Saving configuration to %s\n", filename);
+	Com_Printf("Saving configuration to %s\n", filename_ext);
 	filesystemchanged = true; // fix bug 2359900
 }
 
