@@ -100,7 +100,7 @@ void TP_RefreshSkins(void);
 qbool TP_NeedRefreshSkins(void);
 
 extern char *skinforcing_team;
-
+char *TP_SkinForcingTeam();
 
 void TP_Init (void);
 

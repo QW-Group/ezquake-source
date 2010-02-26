@@ -62,6 +62,7 @@ cvar_t	cl_teampentskin = {"teampentskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_enemypentskin = {"enemypentskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_teambothskin = {"teambothskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_enemybothskin = {"enemybothskin", "", 0, OnChangeSkinForcing};
+cvar_t	cl_teamlock = {"teamlock", "0", 0, OnChangeSkinForcing};
 
 
 cvar_t	tp_name_axe = {"tp_name_axe", "axe"};
@@ -1431,6 +1432,36 @@ char *TP_ParseFunChars (char *s, qbool chat)
 }
 
 /************************* SKIN FORCING & REFRESHING *************************/
+
+char *TP_SkinForcingTeam()
+{
+	int tracknum;
+
+	if (cl_teamlock.integer == 1) {
+		int i;
+		for (i = 0; i < MAX_CLIENTS; i++) {
+			if (cl.players[i].name[0] && !cl.players[i].spectator && cl.players[i].team[0]) {
+				return cl.players[i].team;
+				break;
+			}
+		}
+	}
+	else if (cl_teamlock.string[0]) {
+		return cl_teamlock.string;
+	}
+	else if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
+	{
+		// Spectating and tracking someone (not free flying).
+		return cl.players[tracknum].team;
+	}
+	else if (!cl.spectator)
+	{
+		// Normal player.
+		return cl.players[cl.playernum].team;
+	}
+
+	return "";
+}
 
 void MV_UpdateSkins()
 {
@@ -3429,6 +3460,7 @@ void TP_Init (void)
 	Cvar_Register (&cl_teamquadskin);
 	Cvar_Register (&cl_enemyskin);
 	Cvar_Register (&cl_teamskin);
+	Cvar_Register (&cl_teamlock);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
 	Cvar_Register (&tp_loadlocs);

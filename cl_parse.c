@@ -1876,7 +1876,6 @@ void CL_ParseClientdata (void)
 void CL_NewTranslation (int slot)
 {
 	player_info_t *player;
-	int tracknum;
 
 	if (cls.state < ca_connected)
 	{
@@ -1897,16 +1896,7 @@ void CL_NewTranslation (int slot)
 	player->topcolor	= player->real_topcolor;
 	player->bottomcolor = player->real_bottomcolor;
 
-	if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
-	{
-		// Spectating and tracking someone (not free flying).
-		skinforcing_team = cl.players[tracknum].team;
-	}
-	else if (!cl.spectator)
-	{
-		// Normal player.
-		skinforcing_team = cl.players[cl.playernum].team;
-	}
+	skinforcing_team = TP_SkinForcingTeam();
 
 	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR))
 	{

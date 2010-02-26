@@ -105,7 +105,6 @@ char *Skin_AsNameOrId (player_info_t *sc) {
 }
 
 char *Skin_FindName (player_info_t *sc) {
-	int tracknum;
 	static char name[MAX_OSPATH];
 
 	if (allskins[0]) {
@@ -122,10 +121,7 @@ char *Skin_FindName (player_info_t *sc) {
 			strlcpy(name, baseskin.string, sizeof(name));
 	}
 
-	if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
-		skinforcing_team = cl.players[tracknum].team;
-	else if (!cl.spectator)
-		skinforcing_team = cl.players[cl.playernum].team;
+	skinforcing_team = TP_SkinForcingTeam();
 
 	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_SKIN)) {
 		char *skinname = NULL;

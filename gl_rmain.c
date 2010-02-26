@@ -1016,8 +1016,10 @@ void R_DrawAliasModel (entity_t *ent) {
 	if ((ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL)
 		&& playernum >= 0 && playernum < MAX_CLIENTS)
 	{
-		extern qbool VX_TrackerIsEnemy(int player);
-		cv = VX_TrackerIsEnemy(playernum) ? &r_enemyskincolor : &r_teamskincolor;
+		if (strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0)
+			cv = &r_teamskincolor;
+		else 
+			cv = &r_enemyskincolor;
 	}
 
 	if (cv && cv->string[0])
