@@ -1446,7 +1446,7 @@ char *TP_SkinForcingTeam()
 			}
 		}
 	}
-	else if (cl_teamlock.string[0]) {
+	else if (cl_teamlock.string[0] && cl_teamlock.string[0] != '0') {
 		return cl_teamlock.string;
 	}
 	else if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
