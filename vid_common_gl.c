@@ -185,9 +185,6 @@ void GL_CheckExtensions (void) {
 void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
 	float newval = Q_atof(string);
 
-	if (!newval == !var->value)
-		return;
-
 	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA;
 	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB;
 }
