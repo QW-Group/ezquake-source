@@ -767,6 +767,8 @@ void DumpConfig(char *name)
 		}
 	}
 
+	Com_Printf("Saving configuration to %s\n", outfile);
+
 	Config_PrintPreamble(f);
 
 	if (cfg_save_cmdline.value && strlen(cl_cmdline.string) > 1) {
@@ -901,7 +903,6 @@ void SaveConfig(const char *cfgname)
 	}
 
 	DumpConfig(filename);
-	Com_Printf("Saving configuration to %s\n", filename_ext);
 	filesystemchanged = true; // fix bug 2359900
 }
 

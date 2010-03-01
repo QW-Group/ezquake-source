@@ -166,8 +166,7 @@ static int SB_PingTree_AddNeighbour(nodeid_t neighbour_id, dist_t dist)
 
 static ipaddr_t SB_DummyIpAddr(void)
 {
-	ipaddr_t dummy;
-	dummy.data[0] = 0;
+	ipaddr_t dummy = {{0, 0, 0, 0}};
 	return dummy;
 }
 
