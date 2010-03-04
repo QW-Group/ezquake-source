@@ -1416,6 +1416,9 @@ void GLimp_EndFrame (void)
 */
 
 	time_before_swap = Sys_DoubleTime();
+#ifdef USEFAKEGL
+	FakeSwapBuffers();
+#else
 	if ( glConfig.driverType > GLDRV_ICD )
 	{
 		if ( !qwglSwapBuffers( glw_state.hDC ) )
@@ -1427,6 +1430,7 @@ void GLimp_EndFrame (void)
 	{
 		SwapBuffers( glw_state.hDC );
 	}
+#endif
 	vid_last_swap_time = Sys_DoubleTime();
 	vid_vsync_lag = vid_last_swap_time - time_before_swap;
 

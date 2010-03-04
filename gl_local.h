@@ -36,8 +36,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #else // __APPLE__
 
+#ifdef USEFAKEGL
+#include "fakegl.h"
+#else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
 
 #ifdef __GNUC__
 #include <GL/glext.h>
