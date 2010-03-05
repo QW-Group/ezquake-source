@@ -90,11 +90,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ====================================================================================================================================
 */
 
-// qqshka: does not compiles, replaced with #include <windows.h> and "fakegl.h"
+// qqshka: does not compiles, replaced with #include "fakegl.h"
 //#include "quakedef.h"
 
 #ifdef USEFAKEGL
-#include <windows.h>
+
 #include <d3d8.h>
 #include <d3dx8.h>
 
@@ -2423,7 +2423,7 @@ D3DFORMAT D3D_GetAdapterModeFormat (int width, int height, int bpp)
 			if (FAILED (hr)) continue;
 
 			// d3d8 doesn't specify a format when enumerating so we need to restrict this to the correct format
-			if (mode.Format != d3d_Formats[i]);
+			if (mode.Format != d3d_Formats[i]) continue; // qqshka: mh omit continue for some reason...
 
 			// ensure that we can get a depth buffer
 			if (D3D_GetDepthFormat (d3d_Formats[i]) == D3DFMT_UNKNOWN) continue;
@@ -2447,7 +2447,6 @@ D3DFORMAT D3D_GetAdapterModeFormat (int width, int height, int bpp)
 	return D3DFMT_UNKNOWN;
 }
 
-
 BOOL WINAPI SetPixelFormat (HDC hdc, int format, CONST PIXELFORMATDESCRIPTOR *ppfd)
 {
 	if (ppfd->cStencilBits)
@@ -2458,7 +2457,6 @@ BOOL WINAPI SetPixelFormat (HDC hdc, int format, CONST PIXELFORMATDESCRIPTOR *pp
 	// just silently pass the PFD through unmodified
 	return TRUE;
 }
-
 
 void D3D_SetupPresentParams (int width, int height, int bpp, BOOL windowed)
 {
@@ -2487,7 +2485,8 @@ void D3D_SetupPresentParams (int width, int height, int bpp, BOOL windowed)
 
 	// fill in mode-dependent stuff
 	d3d_PresentParams.BackBufferFormat = d3d_CurrentMode.Format;
-	d3d_PresentParams.FullScreen_RefreshRateInHz = d3d_CurrentMode.RefreshRate;
+	d3d_PresentParams.FullScreen_RefreshRateInHz = ( windowed ) ? 0 : d3d_CurrentMode.RefreshRate;
+	d3d_PresentParams.FullScreen_PresentationInterval = ( windowed ) ? 0 : D3DPRESENT_INTERVAL_IMMEDIATE;//D3DPRESENT_DONOTWAIT;
 	d3d_PresentParams.Windowed = windowed;
 
 	// request 1 backbuffer

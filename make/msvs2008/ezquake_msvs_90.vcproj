@@ -577,7 +577,7 @@
 				LinkLibraryDependencies="true"
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
 				ShowProgress="0"
-				OutputFile="..\ezquake-gl-debug.exe"
+				OutputFile="..\ezquake-gl-d3d-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -697,7 +697,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
-				OutputFile="..\ezquake-gl.exe"
+				OutputFile="..\ezquake-gl-d3d.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
