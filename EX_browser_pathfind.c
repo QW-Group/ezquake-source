@@ -546,6 +546,19 @@ static void SB_PingTree_Dijkstra(void)
 		ping_nodes[cur].visited = true;
 		for (i = ping_nodes[cur].nlist_start; i < ping_nodes[cur].nlist_end; i++) {
 			dist_t altdist = ping_nodes[cur].dist + ping_neighbours[i].dist;
+			if (ping_neighbours[i].dist < 0) {
+				// FIXME
+				// this sometimes happens in release version
+				// it is a bug
+				byte *ip_ = ping_nodes[ping_neighbours[i].id].ipaddr.data;
+				byte *ips = ping_nodes[cur].ipaddr.data;
+				Com_DPrintf("Negative ping found: %d\n", (int) ping_neighbours[i].dist);
+				Com_DPrintf("node id %d\n", ping_neighbours[i].id);
+				Com_DPrintf("ip: %d.%d.%d.%d\n", ip_[0], ip_[1], ip_[2], ip_[3]);
+				Com_DPrintf("source ip: %d.%d.%d.%d\n", ips[0], ips[1], ips[2], ips[3]);
+				continue;
+			}
+
 			if (altdist < ping_nodes[ping_neighbours[i].id].dist) {
 				// so-called Relax()
 				ping_nodes[ping_neighbours[i].id].dist = altdist;
