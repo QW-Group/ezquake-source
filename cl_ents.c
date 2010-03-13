@@ -2206,8 +2206,7 @@ void CL_SetUpPlayerPrediction(qbool dopred)
 		} 
 		else 
 		{
-			// Only predict half the move to minimize overruns
-			msec = 500 * (playertime - state->state_time);
+			msec = (cl_predict_half.value ? 500 : 1000) * (playertime - state->state_time);
 			if (msec <= 0 || !cl_predict_players.value || !dopred || cls.mvdplayback) 
 			{ 
 				VectorCopy (state->origin, pplayer->origin);
