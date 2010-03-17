@@ -530,7 +530,7 @@ qbool CL_QueInputPacket(void)
 		memmove(cl_delayed_packets_get[i].data, net_message.data, net_message.cursize);
 		cl_delayed_packets_get[i].length = net_message.cursize;
 		cl_delayed_packets_get[i].addr = net_from;
-		cl_delayed_packets_get[i].time = Sys_DoubleTime() + 0.001 * bound(1, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
+		cl_delayed_packets_get[i].time = Sys_DoubleTime() + 0.001 * bound(0, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
 
 		return true;
 	}
@@ -570,7 +570,7 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 			memmove(cl_delayed_packets_send[i].data, data, length);
 			cl_delayed_packets_send[i].length = length;
 			cl_delayed_packets_send[i].addr = to;
-			cl_delayed_packets_send[i].time = Sys_DoubleTime() + 0.001 * bound(1, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
+			cl_delayed_packets_send[i].time = Sys_DoubleTime() + 0.001 * bound(0, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
 
 			return;
 		}
