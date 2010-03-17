@@ -651,7 +651,7 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 	}
 }
 
-void CL_UnqueOutputPacket(void)
+void CL_UnqueOutputPacket(qbool sendall)
 {
 	int i;
 	double time = Sys_DoubleTime();
@@ -660,7 +660,7 @@ void CL_UnqueOutputPacket(void)
 	{
 		if (!cl_delayed_packets_send[i].time)
 			continue; // unused slot
-		if (cl_delayed_packets_send[i].time > time)
+		if (cl_delayed_packets_send[i].time > time && !sendall)
 			continue; // we are not yet ready for send
 
 		// ok, send it

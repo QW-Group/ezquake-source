@@ -969,6 +969,6 @@ typedef struct cl_delayed_packet_s
 } cl_delayed_packet_t;
 
 qbool CL_QueInputPacket(void);
-void CL_UnqueOutputPacket(void);
+void CL_UnqueOutputPacket(qbool sendall);
 
 // ===================================================================================

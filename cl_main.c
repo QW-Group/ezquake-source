@@ -1233,6 +1233,8 @@ void CL_Disconnect (void)
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
 
+		CL_UnqueOutputPacket(true);
+
 		// TCP connect, that gives TCP a chance to transfer data to the server...
 		if (cls.sockettcp != INVALID_SOCKET)
 		{
@@ -2200,7 +2202,7 @@ void CL_Frame (double time)
 		if (cl_delay_packet.integer)
 		{
 			CL_QueInputPacket();
-			CL_UnqueOutputPacket();
+			CL_UnqueOutputPacket(false);
 		}
 
 		return;
@@ -2209,7 +2211,7 @@ void CL_Frame (double time)
 	if (cl_delay_packet.integer)
 	{
 		CL_QueInputPacket();
-		CL_UnqueOutputPacket();
+		CL_UnqueOutputPacket(false);
 	}
 
 	if (VSyncLagFix())
