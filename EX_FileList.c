@@ -518,10 +518,14 @@ void FL_ReadArchive (filelist_t *fl)
 	int temp = 0;
 	unzFile zip_file;
 	sys_dirent ent;
+	SYSTEMTIME archive_time;
+
+	// Save the file modification time of the current archive
+	archive_time = fl->entries[fl->current_entry].time;
 
 	fl->error = true;
-    fl->need_refresh = false;
-    fl->display_entry = 0;
+	fl->need_refresh = false;
+	fl->display_entry = 0;
 	fl->num_entries = 0;
 	fl->current_entry = 0;
 
@@ -553,6 +557,30 @@ void FL_ReadArchive (filelist_t *fl)
 	// regarded as zip files, since the files with the same index
 	// in the parent directory were zip files.
 	memset(fl->entries, 0, sizeof(fl->entries));
+
+	// Add ".." entry to allow navigating out of archive if setting says so.
+	if (fl->show_dirup)
+	{
+		// Pointer to the current file entry.
+		filedesc_t *f = &fl->entries[fl->num_entries];
+
+		// Populate the file descriptor
+		f->type_index = -1;
+		f->is_directory = true;
+		snprintf(f->name, sizeof(f->name), "..");
+		f->size = 0;
+		f->time = archive_time;
+
+		// Find friendly name.
+		FL_StripFileName(fl, f);
+
+		// Increase counter of how many files have been found.
+		fl->num_entries++;
+		if (fl->num_entries >= MAX_FILELIST_ENTRIES)
+		{
+			goto finish;
+		}
+	}
 
 	do
     {
@@ -688,6 +716,10 @@ void FL_ReadArchive (filelist_t *fl)
 	searchpathfuncs_t *funcs;
 	vfsfile_t *vfs = NULL;
 	void  *archive_handle = NULL;
+	SYSTEMTIME archive_time;
+
+	// Save the file modification time of the current archive
+	archive_time = fl->entries[fl->current_entry].time;
 
 	/* Set up for error case */
 	fl->error         = true;
@@ -717,6 +749,31 @@ void FL_ReadArchive (filelist_t *fl)
 	// regarded as zip files, since the files with the same index
 	// in the parent directory were zip files.
 	memset(fl->entries, 0, sizeof(fl->entries));
+
+	// Add ".." entry to allow navigating out of archive if setting says so.
+	if (fl->show_dirup)
+	{
+		// Pointer to the current file entry.
+		filedesc_t *f = &fl->entries[fl->num_entries];
+
+		// Populate the file descriptor
+		f->type_index = -1;
+		f->is_directory = true;
+		snprintf(f->name, sizeof(f->name), "..");
+		f->size = 0;
+		f->time = archive_time;
+
+		// Find friendly name.
+		FL_StripFileName(fl, f);
+
+		// Increase counter of how many files have been found.
+		fl->num_entries++;
+		if (fl->num_entries >= MAX_FILELIST_ENTRIES)
+		{
+			goto fail;
+		}
+	}
+
 
 	funcs->EnumerateFiles(archive_handle, "*", FL_EnumerateArchive, fl);
 	fl->need_resort = true;
@@ -774,7 +831,6 @@ void FL_ReadDir(filelist_t *fl)
     fl->error = false;
 
 	// Get the first entry in the dir.
-
 	search = Sys_ReadDirFirst(&ent);
 	if (!search)
 	{
@@ -961,47 +1017,6 @@ void FL_ChangeArchive(filelist_t *fl, char *archive)
 }
 
 //
-// FL_ChangeDir - changes directory
-//
-void FL_ChangeDir(filelist_t *fl, char *newdir)
-{
-	char olddir[MAX_PATH+1];
-
-	// Get the current dir from the OS and save it.
-    if (Sys_getcwd(olddir, MAX_PATH+1) == NULL)
-	{
-		return;
-	}
-
-	// Change to the current dir that we're in (might be different from the OS's).
-	// If we're changing dirs in a relative fashion ".." for instance we need to
-	// be in this dir, and not the dir that the OS is in.
-    if (Sys_chdir(fl->current_dir) == 0)
-	{
-		// Normal directory.
-        return;
-	}
-
-	// Change to the new dir requested.
-	Sys_chdir (newdir);
-
-	// Save the current dir we just changed to.
-	Sys_getcwd (fl->current_dir, MAX_PATH+1);
-
-	// Go back to where the OS wants to be.
-    Sys_chdir (olddir);
-
-    fl->need_refresh = true;
-
-	#ifdef WITH_ZIP
-	// Since we just changed to a new directory we can't be in a zip file.
-	fl->current_archive[0] = 0;
-	fl->in_archive = false;
-	#endif // WITH_ZIP
-}
-
-
-//
 // FL_ChangeDirUp - cd ..
 //
 void FL_ChangeDirUp(filelist_t *fl)
@@ -1009,9 +1024,9 @@ void FL_ChangeDirUp(filelist_t *fl)
 	int current_len = 0;
 
 	// No point doing anything.
-    if (strlen(fl->current_dir) < 2)
+	if (strlen(fl->current_dir) < 2)
 	{
-        return;
+		return;
 	}
 
 	// Get the name of the directory we're leaving, so that we can highlight it
@@ -1037,18 +1052,64 @@ void FL_ChangeDirUp(filelist_t *fl)
 		// If the full path was:
 		// c:\quake\qw\the_directory_were_leaving
 	}
+}
 
-	// Change the dir to "c:\quake\qw" (from above example).
+//
+// FL_ChangeDir - changes directory
+//
+void FL_ChangeDir(filelist_t *fl, char *newdir)
+{
+	char olddir[MAX_PATH+1];
+
+	// Get the current dir from the OS and save it.
+	if (Sys_getcwd(olddir, MAX_PATH+1) == NULL)
+	{
+		return;
+	}
+
+	// Check if changing to parent directory or leaving archive
+	if (newdir != NULL && strcmp(newdir, "..") == 0)
+	{
+		FL_ChangeDirUp(fl);
+
+		#ifdef WITH_ZIP
+		if (fl->in_archive)
+		{
+			// Leaving a zip file.
+			fl->current_archive[0] = 0;
+			fl->in_archive = false;
+			fl->need_refresh = true;
+
+			return;
+		}
+		#endif // WITH_ZIP
+	}
+
+	// Change to the current dir that we're in (might be different from the OS's).
+	// If we're changing dirs in a relative fashion ".." for instance we need to
+	// be in this dir, and not the dir that the OS is in.
+	if (Sys_chdir(fl->current_dir) == 0)
+	{
+		// Normal directory.
+		return;
+	}
+
+	// Change to the new dir requested.
+	Sys_chdir (newdir);
+
+	// Save the current dir we just changed to.
+	Sys_getcwd (fl->current_dir, MAX_PATH+1);
+
+	// Go back to where the OS wants to be.
+	Sys_chdir (olddir);
+
+	fl->need_refresh = true;
+
 	#ifdef WITH_ZIP
-	if (fl->in_archive)
-	{
-		FL_ChangeDir(fl, fl->current_dir);
-	}
-	else
+	// Since we just changed to a new directory we can't be in a zip file.
+	fl->current_archive[0] = 0;
+	fl->in_archive = false;
 	#endif // WITH_ZIP
-	{
-		FL_ChangeDir(fl, "..");
-	}
 }
 
 //
@@ -1321,7 +1382,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
     if (key == K_BACKSPACE)
     {
 		if (fl->show_dirup)
-			FL_ChangeDirUp(fl);
+			FL_ChangeDir(fl, "..");
         return true;
     }
 
