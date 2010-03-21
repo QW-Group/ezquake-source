@@ -1725,19 +1725,11 @@ static void FS_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_in
 	ent->size = (unsigned int)unzip_fileinfo->uncompressed_size;
 
     // Get the filetime.
-	{
-		// FIXME: This gets the wrong date...
-		#ifdef WIN32
-		FILETIME filetime;
-		FILETIME local_filetime;
-		DosDateTimeToFileTime (unzip_fileinfo->dosDate, 0, &filetime);
-		FileTimeToLocalFileTime (&filetime, &local_filetime);
-		FileTimeToSystemTime(&local_filetime, &ent->time);
-		#else
-		// FIXME: Dunno how to do this in *nix.
-		memset (&ent->time, 0, sizeof (ent->time));
-		#endif // WIN32
-	}
+	ent->time.wYear = unzip_fileinfo->tmu_date.tm_year;
+	ent->time.wMonth = unzip_fileinfo->tmu_date.tm_mon;
+	ent->time.wDay = unzip_fileinfo->tmu_date.tm_mday;
+	ent->time.wHour = unzip_fileinfo->tmu_date.tm_hour;
+	ent->time.wMinute = unzip_fileinfo->tmu_date.tm_min;
 
 	// FIXME: There is no directory structure inside of zip files, but the files are named as if there is.
 	// that is, if the file is in the root it will be named "file" in the zip file info. If it's in a directory
