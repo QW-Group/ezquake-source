@@ -1726,7 +1726,7 @@ static void FS_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_in
 
     // Get the filetime.
 	ent->time.wYear = unzip_fileinfo->tmu_date.tm_year;
-	ent->time.wMonth = unzip_fileinfo->tmu_date.tm_mon;
+	ent->time.wMonth = unzip_fileinfo->tmu_date.tm_mon + 1;
 	ent->time.wDay = unzip_fileinfo->tmu_date.tm_mday;
 	ent->time.wHour = unzip_fileinfo->tmu_date.tm_hour;
 	ent->time.wMinute = unzip_fileinfo->tmu_date.tm_min;
