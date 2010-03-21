@@ -1718,26 +1718,14 @@ int FS_ZipUnpackCloseFile (unzFile zip_file)
 static void FS_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_info *unzip_fileinfo)
 {
 	// Save the name.
-    strlcpy(ent->fname, filename_inzip, sizeof(ent->fname));
-    ent->fname[MAX_PATH_LENGTH-1] = 0;
+	strlcpy(ent->fname, filename_inzip, sizeof(ent->fname));
+	ent->fname[MAX_PATH_LENGTH-1] = 0;
 
 	// TODO : Zip size is unsigned long, dir entry unsigned int, data loss possible for really large files.
 	ent->size = (unsigned int)unzip_fileinfo->uncompressed_size;
 
-    // Get the filetime.
-	{
-		// FIXME: This gets the wrong date...
-		#ifdef WIN32
-		FILETIME filetime;
-		FILETIME local_filetime;
-		DosDateTimeToFileTime (unzip_fileinfo->dosDate, 0, &filetime);
-		FileTimeToLocalFileTime (&filetime, &local_filetime);
-		FileTimeToSystemTime(&local_filetime, &ent->time);
-		#else
-		// FIXME: Dunno how to do this in *nix.
-		memset (&ent->time, 0, sizeof (ent->time));
-		#endif // WIN32
-	}
+	// Convert timestamp to correct format
+	DostimeToWintime(&ent->time, unzip_fileinfo->dosDate);
 
 	// FIXME: There is no directory structure inside of zip files, but the files are named as if there is.
 	// that is, if the file is in the root it will be named "file" in the zip file info. If it's in a directory

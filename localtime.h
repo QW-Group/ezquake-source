@@ -28,6 +28,7 @@ void GetLocalTime(SYSTEMTIME *);
 
 int  GetFileLocalTime(char *, SYSTEMTIME *);
 void UnixtimeToWintime(SYSTEMTIME *, struct tm *);
+void DostimeToWintime(SYSTEMTIME *, unsigned long);
 int  SYSTEMTIMEcmp(const SYSTEMTIME *, const SYSTEMTIME *);
 
 #endif // __LOCALTIME_H__

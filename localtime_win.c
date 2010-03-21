@@ -4,6 +4,22 @@
 // localtime built-in
 // void GetLocalTime(SYSTEMTIME *wintime);
 
+//
+// Convert DOS time (used in zip-files) to Win format
+//
+void DostimeToWintime(SYSTEMTIME *wintime, unsigned long dostime)
+{
+	FILETIME filetime;
+	FILETIME local_filetime;
+
+	if (wintime != NULL)
+	{
+		DosDateTimeToFileTime ((dostime >> 16), 0, &filetime);
+		FileTimeToLocalFileTime (&filetime, &local_filetime);
+		FileTimeToSystemTime(&local_filetime, wintime);
+	}
+}
+
 
 // local file time
 int  GetFileLocalTime(char *path, SYSTEMTIME *wintime)
