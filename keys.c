@@ -1007,45 +1007,104 @@ void Key_Console (int key, int unichar)
 			// added by jogi start
 			CompleteCommandNew_Reset();
 			// added by jogi stop
-
-			if (key_linepos > 1)
+			
+			// removes word before cursor
+			if(keydown[K_CTRL])
 			{
-				qwcscpy (key_lines[edit_line] + key_linepos - 1,
-					key_lines[edit_line] + key_linepos);
-				key_linepos--;
+				len = 0;
+
+				while(key_linepos > 1 && key_lines[edit_line][key_linepos - 1] == ' ')
+				{
+					key_linepos--;
+					len++;
+				}
+
+				while(key_linepos > 1 && key_lines[edit_line][key_linepos - 1] != ' ')
+				{
+					key_linepos--;
+					len++;
+				}
+
+				// remove spaces after this word leaving only last one
+				while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][key_linepos - 1] == ' ' && key_lines[edit_line][key_linepos - 2] == ' ')
+				{
+					key_linepos--;
+					len++;
+				}
+
+				qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + len);
 			}
+			else
+			{
+				if(key_linepos > 1)
+				{
+					qwcscpy(key_lines[edit_line] + key_linepos - 1, key_lines[edit_line] + key_linepos);
+					key_linepos--;
+				}
+			}
+
 			// disable red chars mode if the last character was deleted
-			if (key_linepos == 1)
+			if(key_linepos == 1 && qwcslen(key_lines[edit_line]) == 1)
 				con_redchars = false;
+
 			return;
 		}
 		case K_DEL:
 		{
 			// added by jogi start
-			if ((del_removes) && (key_linepos == key_lineposorig))
+			if((del_removes) && (key_linepos == key_lineposorig))
 			{
-				int i;
-				for (i = 0; i <= last_cmd_length; i++)
-				{
-
-					qwcscpy (key_lines[edit_line] + key_linepos,
-						key_lines[edit_line] + key_linepos +
-						1);
-				}
+				qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + last_cmd_length);
 
 				del_removes = 0;
 				called_second = 0;
 				try = 0;
 			}
 			// added by jogi stopp
-			if (key_linepos < qwcslen(key_lines[edit_line]))
+			
+			// removes word after cursor
+			if(keydown[K_CTRL])
 			{
-				qwcscpy (key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + 1);
-			}
-			// disable red chars mode if the last character was deleted
+				i = key_linepos;
+				len = 0;				
 
+				while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][i] == ' ')
+				{
+					i++;
+					len++;
+				}
+
+				// don't remove regular chars if we removed spaces before
+				if(len == 0)
+				{
+					while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][i] != ' ' && key_lines[edit_line][i] != 0)
+					{
+						i++;
+						len++;
+					}
+
+					// remove spaces after this word
+					while(key_linepos < qwcslen(key_lines[edit_line]) && key_lines[edit_line][i] == ' ')
+					{
+						i++;
+						len++;
+					}
+				}
+
+				qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + len);
+			}
+			else
+			{
+				if(key_linepos < qwcslen(key_lines[edit_line]))
+				{
+					qwcscpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + 1);
+				}
+			}
+
+			// disable red chars mode if the last character was deleted
 			if (key_linepos == 1 && qwcslen(key_lines[edit_line]) == 1)
 				con_redchars = false;
+
 			return;
 		}
 		case K_RIGHTARROW:
