@@ -10,44 +10,13 @@
 // helper
 void UnixtimeToWintime(SYSTEMTIME *wintime, struct tm* time)
 {
-    if (wintime != NULL)
-    {
-        wintime->wYear      = time->tm_year + 1900;
-        wintime->wMonth     = time->tm_mon + 1;
-        wintime->wDay       = time->tm_mday;
-        wintime->wDayOfWeek = time->tm_wday;
-        wintime->wHour      = time->tm_hour;
-        wintime->wMinute    = time->tm_min;
-        wintime->wSecond    = time->tm_sec;
-    }
-}
-
-//
-// Convert DOS time (used in zip-files) to Win format
-// Dos time format:
-//                24                16                 8                 0
-// +-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
-// |Y|Y|Y|Y|Y|Y|Y|M| |M|M|M|D|D|D|D|D| |h|h|h|h|h|m|m|m| |m|m|m|s|s|s|s|s|
-// +-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
-//  \___________/\________/\_________/ \________/\____________/\_________/
-//    year        month       day      hour       minute        second
-// The year is stored as an offset from 1980. Seconds are stored in two-second
-// increments. (So if the "second" value is 15, it actually represents 
-// 30 seconds.)
-// Source: http://blogs.msdn.com/oldnewthing/archive/2003/09/05/54806.aspx
-//
-void DostimeToWintime(SYSTEMTIME *wintime, unsigned long dostime)
-{
-	if (wintime != NULL)
-	{
-		wintime->wYear      = ((dostime & 0xFE000000) >> 25) + 1980;
-		wintime->wMonth     = (dostime & 0x01E00000) >> 21;
-		wintime->wDay       = (dostime & 0x1F0000) >> 16;
-		wintime->wDayOfWeek = 0; // Don't waste time trying to find out day of week
-		wintime->wHour      = (dostime & 0xF800) >> 11;
-		wintime->wMinute    = (dostime & 0x07E0) >> 5;
-		wintime->wSecond    = (dostime & 0x1F) * 2;
-	}
+    wintime->wYear      = time->tm_year + 1900;
+    wintime->wMonth     = time->tm_mon + 1;
+    wintime->wDay       = time->tm_mday;
+    wintime->wDayOfWeek = time->tm_wday;
+    wintime->wHour      = time->tm_hour;
+    wintime->wMinute    = time->tm_min;
+    wintime->wSecond    = time->tm_sec;
 }
 
 
