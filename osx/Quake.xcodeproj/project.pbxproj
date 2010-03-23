@@ -62,6 +62,7 @@
 		92CAD75B0CF082CE00A0767A /* menu_multiplayer.c in Sources */ = {isa = PBXBuildFile; fileRef = 92CAD7580CF082CE00A0767A /* menu_multiplayer.c */; };
 		92DAC3A0110B94DA0072AAC4 /* plugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 92DAC39F110B94DA0072AAC4 /* plugin.c */; };
 		92DAC3A1110B94DA0072AAC4 /* plugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 92DAC39F110B94DA0072AAC4 /* plugin.c */; };
+		92E0309F1159609F002A6FDB /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92434735111B68F9004ECAE5 /* Growl.framework */; };
 		92F019830DE7F9F400F1108A /* libircclient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F0197E0DE7F89800F1108A /* libircclient.a */; };
 		92F0198B0DE7FB0800F1108A /* irc.c in Sources */ = {isa = PBXBuildFile; fileRef = 92F019890DE7FB0800F1108A /* irc.c */; };
 		92F019980DE7FFCC00F1108A /* libexpat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019930DE7FFCC00F1108A /* libexpat.a */; };
@@ -343,7 +344,6 @@
 		F82770C309DFE12F00AE5EF8 /* mp3_player.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CDA09DFE12E00AE5EF8 /* mp3_player.h */; };
 		F82770C409DFE12F00AE5EF8 /* mvd_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CDB09DFE12E00AE5EF8 /* mvd_utils.c */; };
 		F82770C509DFE12F00AE5EF8 /* mvd_utils.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CDC09DFE12E00AE5EF8 /* mvd_utils.h */; };
-		F82770C609DFE12F00AE5EF8 /* mw_hook.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CDD09DFE12E00AE5EF8 /* mw_hook.h */; };
 		F82770C709DFE12F00AE5EF8 /* net.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CDE09DFE12E00AE5EF8 /* net.h */; };
 		F82770C809DFE12F00AE5EF8 /* net_chan.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CDF09DFE12E00AE5EF8 /* net_chan.c */; };
 		F82770CB09DFE12F00AE5EF8 /* parser.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CE209DFE12E00AE5EF8 /* parser.c */; };
@@ -544,7 +544,6 @@
 		F82774A609DFE13000AE5EF8 /* mp3_player.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CDA09DFE12E00AE5EF8 /* mp3_player.h */; };
 		F82774A709DFE13000AE5EF8 /* mvd_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CDB09DFE12E00AE5EF8 /* mvd_utils.c */; };
 		F82774A809DFE13000AE5EF8 /* mvd_utils.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CDC09DFE12E00AE5EF8 /* mvd_utils.h */; };
-		F82774A909DFE13000AE5EF8 /* mw_hook.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CDD09DFE12E00AE5EF8 /* mw_hook.h */; };
 		F82774AA09DFE13000AE5EF8 /* net.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CDE09DFE12E00AE5EF8 /* net.h */; };
 		F82774AB09DFE13000AE5EF8 /* net_chan.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CDF09DFE12E00AE5EF8 /* net_chan.c */; };
 		F82774AE09DFE13000AE5EF8 /* parser.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CE209DFE12E00AE5EF8 /* parser.c */; };
@@ -790,7 +789,6 @@
 				F82774A209DFE13000AE5EF8 /* movie.h in CopyFiles */,
 				F82774A609DFE13000AE5EF8 /* mp3_player.h in CopyFiles */,
 				F82774A809DFE13000AE5EF8 /* mvd_utils.h in CopyFiles */,
-				F82774A909DFE13000AE5EF8 /* mw_hook.h in CopyFiles */,
 				F82774AA09DFE13000AE5EF8 /* net.h in CopyFiles */,
 				F82774AF09DFE13000AE5EF8 /* parser.h in CopyFiles */,
 				F827756509DFE13000AE5EF8 /* pmove.h in CopyFiles */,
@@ -902,7 +900,6 @@
 				F82770BF09DFE12F00AE5EF8 /* movie.h in CopyFiles */,
 				F82770C309DFE12F00AE5EF8 /* mp3_player.h in CopyFiles */,
 				F82770C509DFE12F00AE5EF8 /* mvd_utils.h in CopyFiles */,
-				F82770C609DFE12F00AE5EF8 /* mw_hook.h in CopyFiles */,
 				F82770C709DFE12F00AE5EF8 /* net.h in CopyFiles */,
 				F82770CC09DFE12F00AE5EF8 /* parser.h in CopyFiles */,
 				F827718209DFE13000AE5EF8 /* pmove.h in CopyFiles */,
@@ -1563,6 +1560,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92E0309F1159609F002A6FDB /* Growl.framework in Frameworks */,
 				924527C80EE8887700EA8BCA /* libircclient.a in Frameworks */,
 				924527970EE8842B00EA8BCA /* libz.a in Frameworks */,
 				924527960EE8841E00EA8BCA /* libpng.a in Frameworks */,
@@ -2929,6 +2927,11 @@
 		D29BE27F09C61F4300EBE023 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)\"";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -2968,6 +2971,11 @@
 					i386,
 				);
 				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)\"";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_OPTIMIZATION_LEVEL = 2;
 				GCC_PREPROCESSOR_DEFINITIONS = (
