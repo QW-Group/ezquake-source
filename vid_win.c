@@ -2343,10 +2343,6 @@ LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 int IN_MapKey (int key);
 #endif // WITH_KEYMAP else
 
-#include "mw_hook.h"
-void MW_Hook_Message (long buttons);
-
-
 // Main window procedure.
 LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
@@ -2567,12 +2563,6 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				lRet = 0;
 			}
 			break;
-		}
-		case WM_MWHOOK:
-		{
-			MW_Hook_Message (lParam);
-			break;
-		
 		}
 		case WM_PALETTECHANGED:
 		{

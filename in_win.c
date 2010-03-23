@@ -245,9 +245,6 @@ cvar_t	m_showrate			= {"m_showrate",         "0",   CVAR_SILENT};
 cvar_t  in_mouse			= {"in_mouse",           "1",   CVAR_LATCH};  // NOTE: "1" is mt_normal
 cvar_t  in_raw_allbuttons   = {"in_raw_allbuttons",  "1"};
 cvar_t  in_m_smooth			= {"in_m_smooth",        "0",   CVAR_LATCH};
-
-cvar_t  in_m_mwhook			= {"in_m_mwhook",        "0",   CVAR_LATCH};
-
 cvar_t  in_m_os_parameters	= {"in_m_os_parameters", "0",   CVAR_LATCH};
 
 cvar_t  in_di_bufsize		= {"in_di_bufsize",      "16",  CVAR_LATCH}; // if you change default, then change DI_BufSize() too
@@ -642,89 +639,6 @@ int IN_GetMouseRate(void)
 	return -1;
 }
 #endif // DIRECTINPUT_VERSION >= 0x700 else
-
-typedef void (*MW_DllFunc1)(void);
-typedef int (*MW_DllFunc2)(HWND);
-
-MW_DllFunc1 DLL_MW_RemoveHook = NULL;
-MW_DllFunc2 DLL_MW_SetHook = NULL;
-qbool MW_Hook_enabled = false;
-HINSTANCE mw_hDLL;
-
-static long mw_old_buttons = 0;
-
-static void MW_Set_Hook (void)
-{
-	if (MW_Hook_enabled) 
-	{
-		Com_Printf("MouseWare hook already loaded\n");
-		return;
-	}
-
-	mw_old_buttons = 0;
-
-	if (!(mw_hDLL = LoadLibrary("mw_hook.dll"))) 
-	{
-		Com_Printf("Couldn't find mw_hook.dll\n");
-		return;
-	}
-	DLL_MW_RemoveHook = (MW_DllFunc1) GetProcAddress(mw_hDLL, "MW_RemoveHook");
-	DLL_MW_SetHook = (MW_DllFunc2) GetProcAddress(mw_hDLL, "MW_SetHook");
-	if (!DLL_MW_SetHook || !DLL_MW_RemoveHook) 
-	{
-		Com_Printf("Error initializing MouseWare hook\n");
-		FreeLibrary(mw_hDLL);
-		return;
-	}
-	if (!DLL_MW_SetHook(mainwindow)) 
-	{
-		Com_Printf("Couldn't initialize MouseWare hook\n");
-		FreeLibrary(mw_hDLL);
-		return;
-	}
-
-	MW_Hook_enabled = true;
-	Com_Printf_State (PRINT_OK, "MouseWare hook initialized\n");
-}
-
-static void MW_Remove_Hook (void) 
-{
-	if (MW_Hook_enabled) 
-	{
-		DLL_MW_RemoveHook();
-		FreeLibrary(mw_hDLL);
-		MW_Hook_enabled = false;
-		Com_Printf("MouseWare hook removed\n");
-		return;
-	}
-	Com_Printf("MouseWare hook not loaded\n");
-}
-
-static void MW_Shutdown(void) 
-{
-	if (!MW_Hook_enabled)
-		return;
-	MW_Remove_Hook();
-}
-
-void MW_Hook_Message (long buttons) 
-{
-	int key, flag;
-	long changed_buttons;
-
-	buttons &= 0xFFF8;
-	changed_buttons = buttons ^ mw_old_buttons;
-
-	for (key = K_MOUSE4, flag = 8; key <= K_MOUSE8; key++, flag <<= 1)
-	{
-		if (changed_buttons & flag)
-		{
-			Key_Event(key, !!(buttons & flag));
-		}
-	}
-
-	mw_old_buttons = buttons;
-}
 
 void IN_UpdateClipCursor (void) 
 {
@@ -1363,9 +1277,6 @@ void IN_StartupMouse (void)
 		#endif // USINGRAWINPUT
 	}
 
-	if (in_m_mwhook.integer)
-		MW_Set_Hook();
-
 	// If a fullscreen video mode was set before the mouse was initialized, set the mouse state appropriately.
 	if (mouseactivatetoggle)
 		IN_ActivateMouse ();
@@ -1450,7 +1361,6 @@ void IN_Init (void)
 	// Latched.
     Cvar_Register (&in_mouse);
     Cvar_Register (&in_m_smooth);
-    Cvar_Register (&in_m_mwhook);
     Cvar_Register (&in_m_os_parameters);
     Cvar_Register (&in_di_bufsize);
 	Cvar_Register (&in_di_buffered);
@@ -1467,9 +1377,6 @@ void IN_Init (void)
 
 		if (COM_CheckParm("-m_smooth"))
 			Cvar_LatchedSetValue (&in_m_smooth, 1);
-
-		if (COM_CheckParm ("-m_mwhook"))
-			Cvar_LatchedSetValue (&in_m_mwhook, 1);
 
 		if (COM_CheckParm ("-noforcemspd")) 
 			Cvar_LatchedSetValue (&in_m_os_parameters, 1);
@@ -1569,17 +1476,11 @@ void IN_Shutdown (void)
 		g_pdi = NULL;
 	}
 
-	MW_Shutdown(); // Mouseware hook.
-
 	if (hInstDI) 
 	{
 		FreeLibrary(hInstDI);
 		hInstDI = NULL;
 	}
-
-	#else // DIRECTINPUT_VERSION	>= 0x0700
-
-	MW_Shutdown(); // mouseware hook
 
 	#endif // DIRECTINPUT_VERSION	>= 0x0700 else
 
