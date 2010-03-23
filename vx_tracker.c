@@ -46,6 +46,7 @@ cvar_t		amf_tracker_string_enemy    = {"r_tracker_string_enemy",    "enemy"};
 cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",      "0"};
 cvar_t		amf_tracker_name_skip_prefix = {"r_tracker_name_skip_prefix", "0"};
 cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
+cvar_t		amf_tracker_postive_enemy_suicide = {"r_tracker_postive_enemy_suicide", "0"};	// Medar wanted it to be customizable
 
 
 #define MAX_TRACKERMESSAGES 30
@@ -97,6 +98,7 @@ void InitTracker(void)
 	Cvar_Register (&amf_tracker_name_width);
 	Cvar_Register (&amf_tracker_name_skip_prefix);
 	Cvar_Register (&amf_tracker_own_frag_prefix);
+	Cvar_Register (&amf_tracker_postive_enemy_suicide);
 }
 
 void VX_TrackerClear()
@@ -290,7 +292,10 @@ static char *SuiColor(int player)
 	// with images color_bad == enemy color
 	// without images color bad == bad frag for us
 	if (cl_useimagesinfraglog.integer) {
-		return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_bad.string) : empty_is_000(amf_tracker_color_good.string));
+		if (amf_tracker_postive_enemy_suicide.integer)
+			return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
+		else
+			return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_bad.string) : empty_is_000(amf_tracker_color_good.string));
 	} else {
 		return (VX_TrackerIsEnemy(player) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
 	}
