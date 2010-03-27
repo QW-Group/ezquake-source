@@ -596,8 +596,21 @@ For debugging, prints a single edicy
 void ED_PrintEdict_f (void)
 {
 	int		i;
+	if (Cmd_Argc () != 2)
+	{
+		Com_Printf ("\nUsage:\nedict [num]\n");
+		return;
+	}
+
 
 	i = Q_atoi (Cmd_Argv(1));
+	if(i < 0 || i >= sv.num_edicts)
+	{
+		Com_Printf ("\nNo such edict: %i\n", i);
+		return;
+	}
+
+	
 	Con_Printf ("\n EDICT %i:\n",i);
 	ED_PrintNum (i);
 }
