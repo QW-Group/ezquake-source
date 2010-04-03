@@ -5856,7 +5856,7 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 	}
 }
 
-void SCR_HUD_DrawBarHeath(hud_t *hud)
+void SCR_HUD_DrawBarHealth(hud_t *hud)
 {
 	static	cvar_t *width = NULL, *height, *direction, *color_nohealth, *color_normal, *color_mega, *color_twomega, *color_unnatural;
 	int		x, y;
@@ -7953,7 +7953,7 @@ void CommonDraw_Init(void)
 		);
 
 	HUD_Register("bar_health", NULL, "Health bar.",
-        HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawBarHeath,
+        HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawBarHealth,
         "0", "health", "right", "center", "0", "0", "0", "0 0 0", NULL,
         "height", "16",
         "width", "64",
