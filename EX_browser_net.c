@@ -80,7 +80,7 @@ char *ValueForKey(server_data *s, char *k)
 {
     int i;
     for (i=0; i < s->keysn; i++)
-        if (!strcmp(k, s->keys[i]))
+        if (s->keys[i] && !strcmp(k, s->keys[i]))
             return s->values[i];
 
     return NULL;
