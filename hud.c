@@ -1449,7 +1449,7 @@ void HUD_Draw(void)
     hud_t *hud;
 
 	// Only draw the hud once in multiview.
-	if (cl_multiview.integer)
+	if (cl_multiview.integer && cls.mvdplayback)
 	{
 		if (CURRVIEW != 1)
 		{
