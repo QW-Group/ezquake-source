@@ -97,9 +97,9 @@ LOCAL char *TP_ShortNick(void)
 	if (*(cl_fakename.string)) return "";
 	else {
 		if (*(Cvar_String("nick"))) { // isn't cl_fakename and name enough?
-			snprintf(buf, sizeof(buf), "$\\%s:", Cvar_String("nick"));
+			snprintf(buf, sizeof(buf), "$\\%s%s", Cvar_String("nick"), Cvar_String("cl_fakename_suffix"));
 		} else {
-			snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
+			snprintf(buf, sizeof(buf), "$\\%.3s%s", TP_PlayerName(), Cvar_String("cl_fakename_suffix"));
 		}
 		return buf;
 	}
@@ -111,7 +111,7 @@ LOCAL void TP_Send_TeamSay(char *format, ...)
     char tp_msg_head[256], tp_msg_body[256], tp_msg[512];
     va_list argptr;
  
-    snprintf(tp_msg_head, sizeof(tp_msg_head), "say_team %s ", TP_ShortNick());
+    snprintf(tp_msg_head, sizeof(tp_msg_head), "say_team %s", TP_ShortNick());
  
 	va_start (argptr, format);
     vsnprintf(tp_msg_body, sizeof(tp_msg_body), format, argptr);
