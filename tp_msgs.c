@@ -541,7 +541,7 @@ GLOBAL void TP_Msg_Safe_f (void) { TP_MSG_GENERIC("{&c0b0safe&cfff}"); } // gree
 GLOBAL void TP_Msg_Coming_f (void) { TP_MSG_GENERIC("{&cf50coming&cfff}"); } // orange coming
 
 GLOBAL void TP_Msg_Pack_f (void) { TP_Send_TeamSay("%s", "{&cf00packs left&cfff} $[{%d}$] %E"); }
-GLOBAL void TP_Msg_Help_f (void) { TP_Send_TeamSay("%s%s", (HAVE_POWERUP() ? "$colored_short_powerups " : ""), "{&cff0help&cfff} $[{%d}$] %E"); } // yellow help
+GLOBAL void TP_Msg_Help_f (void) { TP_Send_TeamSay("%s%s", (HAVE_POWERUP() ? "$colored_short_powerups " : ""), "{&cff0help&cfff} $[{%l}$] %e"); } // yellow help
 
 
 ///////////////////////////////////
