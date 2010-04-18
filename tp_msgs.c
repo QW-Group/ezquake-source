@@ -538,10 +538,10 @@ GLOBAL void TP_Msg_Slipped_f (void) { TP_MSG_GENERIC("enemy slipped"); }
 GLOBAL void TP_Msg_Replace_f (void) { TP_MSG_GENERIC("{&c9ffreplace&cfff}"); } //cyan replace
 GLOBAL void TP_Msg_Trick_f (void) { TP_MSG_GENERIC("trick"); }
 GLOBAL void TP_Msg_Safe_f (void) { TP_MSG_GENERIC("{&c0b0safe&cfff}"); } // green safe
-GLOBAL void TP_Msg_Help_f (void) { TP_MSG_GENERIC("{&cff0help&cfff}"); } // yellow help
 GLOBAL void TP_Msg_Coming_f (void) { TP_MSG_GENERIC("{&cf50coming&cfff}"); } // orange coming
 
-GLOBAL void TP_Msg_Pack_f (void) { TP_Send_TeamSay("%s", "{&cf00pack&cfff} $[{%d}$] %E"); }
+GLOBAL void TP_Msg_Pack_f (void) { TP_Send_TeamSay("%s", "{&cf00packs left&cfff} $[{%d}$] %E"); }
+GLOBAL void TP_Msg_Help_f (void) { TP_Send_TeamSay("%s%s", (HAVE_POWERUP() ? "$colored_short_powerups " : ""), "{&cff0help&cfff} $[{%d}$] %E"); } // yellow help
 
 
 ///////////////////////////////////
