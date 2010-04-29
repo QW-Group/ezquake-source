@@ -1039,6 +1039,84 @@ void DumpHUD_f(void)
 	Com_Printf("HUD variables exported to %s\n",buf);
 }
 
+void Config_TroubleShoot_Tip(const char* problem, const char* description,
+							 const char* solution, int priority)
+{
+	con_ormask = 128;
+	switch (priority) {
+	case 0:
+		Com_Printf("Minor issue: ");
+		break;
+	case 1: default:
+		Com_Printf("Major issue: ");
+		break;
+	}
+	con_ormask = 0;
+
+	Com_Printf("%s\n", problem);
+
+	con_margin = 2;
+	Com_Printf("%s\n\n", description);
+	con_margin = 0;
+
+	con_ormask = 128;
+	Com_Printf("Solution: ");
+	con_ormask = 0;
+
+	con_margin = 2;
+	Com_Printf("%s\n", solution);
+	con_margin = 0;
+}
+
+void Config_TroubleShoot_f(void)
+{
+	unsigned problems = 0;
+	extern cvar_t r_novis, cl_maxfps, in_mouse, hud_planmode;
+#ifdef WIN32
+	extern cvar_t m_filter, sys_yieldcpu;
+#endif
+
+	if (r_novis.value) {
+		Config_TroubleShoot_Tip("r_novis is enabled",
+			"r_novis causes a major performance hit, it's only useful if you need transparent liquids "
+			"on non-vised maps",
+			"set r_novis to 0", 1);
+		problems++;
+	}
+#ifdef WIN32
+	if (m_filter.value) {
+		Config_TroubleShoot_Tip("m_filter is enabled",
+			"m_filter causes a serious delay in processing of the mouse input data",
+			"set m_filter to 0", 1);
+		problems++;
+	}
+	if (cl_maxfps.integer == 0 && sys_yieldcpu.integer == 0) {
+		Config_TroubleShoot_Tip("cl_maxfps is 0 and sys_yieldcpu is 0",
+			"unlimited FPS with CPU yielding disabled typically leads to interrputs "
+			"in reading the input devices (keyboard, mouse)",
+			"enable sys_yieldcpu or limit your FPS", 1);
+		problems++;
+	}
+	if (in_mouse.integer != 3) {
+		Config_TroubleShoot_Tip("in_mouse is not set to 3",
+			"in_mouse 3 enables Raw Input, probably the most troublefree mouse input method "
+			"It is the currently most recommended setting for mouse input",
+			"set in_mouse to 3", 0);
+		problems++;
+	}
+#endif
+	if (hud_planmode.value) {
+		Config_TroubleShoot_Tip("hud_planmode is enabled",
+			"hud_planmode turns on the display of all possible head up display elements "
+			"so that you can fine-tune your head up display settings",
+			"set hud_planmode to 0", 1);
+	}
+	//if (
+	if (!problems) {
+		Com_Printf("No problems found\n");
+	}
+}
+
 void Config_LegacyQuake_f(void)
 {
 	qbool specific = Cmd_Argc() > 1;
@@ -1094,6 +1172,7 @@ void ConfigManager_Init(void)
 	Cmd_AddCommand("hud_export", DumpHUD_f);
 	Cmd_AddCommand("dump_defaults", DumpVariablesDefaults_f);
 	Cmd_AddCommand("legacyquake", Config_LegacyQuake_f);
+	Cmd_AddCommand("troubleshoot", Config_TroubleShoot_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
 	Cvar_Register(&cfg_save_unchanged);
