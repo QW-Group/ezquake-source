@@ -192,7 +192,7 @@ episode_t    episodes[] = {
 			default:			cfg = "ffa"; break;
 		}
 
-		Cbuf_AddText(va("disconnect;gamedir fbca;exec configs/%s.cfg;map %s\n",cfg,map));
+		Cbuf_AddText(va("disconnect;sv_progsname qwprogs;gamedir fbca;exec configs/%s.cfg;map %s\n",cfg,map));
 		M_LeaveMenus();
 	}
 
@@ -254,7 +254,7 @@ void Menu_CG_DM_StartGame(void)
 	int dm;
 	int tp;
 
-	Cbuf_AddText("disconnect; gamedir qw; coop 0;\n");
+	Cbuf_AddText("disconnect; gamedir qw; coop 0; sv_progsname qwprogs;\n");
 	switch (DM_game_mode_var) {
 		case DMGM_ffa: tp = 0; dm = 3; break;
 		case DMGM_duel: tp = 0; dm = 3; break;
@@ -275,7 +275,7 @@ void Menu_CG_Coop_StartGame(void)
 	int tp = (cg_teamdamage_var == TD_OFF) ? 1 : 2;
 	int skill = game_skill_var;
 
-	Cbuf_AddText("disconnect; gamedir qw; coop 1; deathmatch 0\n");
+	Cbuf_AddText("disconnect; sv_progstype qwprogs; gamedir qw; coop 1; deathmatch 0\n");
 	Cbuf_AddText(va("teamplay %d; skill %d;maxclients %d;map start",
 					tp,skill,coopmaxplayers));
 	M_LeaveMenus();
