@@ -1480,6 +1480,7 @@ void IN_Shutdown (void)
 	{
 		FreeLibrary(hInstDI);
 		hInstDI = NULL;
+		pDirectInputCreateEx = NULL;
 	}
 
 	#endif // DIRECTINPUT_VERSION	>= 0x0700 else
