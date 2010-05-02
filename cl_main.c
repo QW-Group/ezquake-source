@@ -148,6 +148,7 @@ cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_demospeed = {"cl_demospeed", "1"};
 cvar_t	cl_staticsounds = {"cl_staticSounds", "1"};
 cvar_t	cl_fakeshaft = {"cl_fakeshaft", "0", 0, Rulesets_OnChange_cl_fakeshaft};
+cvar_t	cl_fakeshaft_extra_updates = {"cl_fakeshaft_extra_updates", "1"};
 cvar_t	cl_parseWhiteText = {"cl_parseWhiteText", "1"};
 cvar_t	cl_filterdrawviewmodel = {"cl_filterdrawviewmodel", "0"};
 cvar_t	cl_demoPingInterval = {"cl_demoPingInterval", "5"};
@@ -1729,6 +1730,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&r_explosionlightcolor);
 	Cvar_Register (&r_flagcolor);
 	Cvar_Register (&cl_fakeshaft);
+	Cvar_Register (&cl_fakeshaft_extra_updates);
 	Cmd_AddLegacyCommand ("cl_truelightning", "cl_fakeshaft");
 	Cvar_Register (&r_telesplash);
 	Cvar_Register (&r_shaftalpha);

@@ -46,6 +46,7 @@ typedef struct
 beam_t cl_beams[MAX_BEAMS];
 
 static vec3_t playerbeam_end;
+static qbool playerbeam_update;
 
 #define MAX_EXPLOSIONS 32
 typedef struct explosion_s 
@@ -215,8 +216,10 @@ static void CL_ParseBeam(int type)
 			break;
 	}
 	
-	if (ent == cl.viewplayernum + 1)
+	if (ent == cl.viewplayernum + 1) {
 		VectorCopy(end, playerbeam_end); // for cl_fakeshaft
+		playerbeam_update = true;
+	}
 
 	// Override any beam with the same entity.
 	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++) 
@@ -762,13 +765,24 @@ void CL_UpdateBeams(void)
 			b->start[2] += cl.crouch + bound(-7, v_viewheight.value, 4);
 			VectorMA(b->start, r_shiftbeam.value, vright, b->start);
 
-			if (cl_fakeshaft.value)
+			if (fakeshaft && (cl_fakeshaft_extra_updates.value || playerbeam_update))
 			{
-				vec3_t	forward, v, org, ang;
+				vec3_t	forward, v, org, ang, target_angles, target_origin;
 				float	delta;
 				trace_t	trace;
 
-				VectorSubtract (playerbeam_end, cl.simorg, v);
+				playerbeam_update = false;
+
+				if (cl_fakeshaft.value == 2) { // try to simulate 13 ms ping
+					frame_t *frame = &cl.frames[(cls.netchan.outgoing_sequence - 2) & UPDATE_MASK];
+					VectorCopy(frame->cmd.angles, target_angles);
+					VectorCopy(frame->playerstate[cl.viewplayernum].origin, target_origin);
+				} else {
+					VectorCopy(cl.simangles, target_angles);
+					VectorCopy(cl.simorg, target_origin);
+				}
+
+				VectorSubtract (playerbeam_end, target_origin, v);
 				v[2] -= 22;	// Adjust for view height.
 				vectoangles (v, ang);
 
@@ -776,10 +790,10 @@ void CL_UpdateBeams(void)
 				ang[0] = -ang[0];
 				if (ang[0] < -180)
 					ang[0] += 360;
-				ang[0] += (cl.simangles[0] - ang[0]) * fakeshaft;
+				ang[0] += (target_angles[0] - ang[0]) * fakeshaft;
 
 				// Lerp yaw.
-				delta = cl.simangles[1] - ang[1];
+				delta = target_angles[1] - ang[1];
 				if (delta > 180)
 					delta -= 360;
 				if (delta < -180)
@@ -789,7 +803,7 @@ void CL_UpdateBeams(void)
 
 				AngleVectors (ang, forward, NULL, NULL);
 				VectorScale (forward, 600, forward);
-				VectorCopy (cl.simorg, org);
+				VectorCopy (target_origin, org);
 				org[2] += 16;
 				VectorAdd (org, forward, b->end);
 

@@ -627,6 +627,7 @@ extern	cvar_t	cl_gibfilter;
 extern  cvar_t  cl_backpackfilter;
 extern	cvar_t	cl_muzzleflash;
 extern	cvar_t	cl_fakeshaft;
+extern	cvar_t	cl_fakeshaft_extra_updates;
 
 extern cvar_t r_rockettrail;
 extern cvar_t r_grenadetrail;
