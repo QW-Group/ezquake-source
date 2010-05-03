@@ -178,7 +178,7 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 					break;	// no thank you
  
 				// clean up the message
-				strcpy (str + j, str + i);
+				Q_strcpy (str + j, str + i);
 				qwcscpy (wstr + j, wstr + i);
  
 				if (!snd_initialized)

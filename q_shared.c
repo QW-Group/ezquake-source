@@ -169,6 +169,24 @@ char *Q_ftos (float value)
 	return str;
 }
 
+// like strcpy, but allow overlapping strings
+char *Q_strcpy( char *to, char *from )
+{
+	int i;
+
+	if (to < from) {
+		for (i = 0; from[i] != 0; i++) {
+			to[i] = from[i];
+		}
+	} else {
+		for (i = strlen(from) - 1; i >= 0; i--) {
+			to[i] = from[i];
+		}
+	}
+
+	return to;
+}
+
 char *Q_strlwr( char *s1 ) {
     char	*s;
 
