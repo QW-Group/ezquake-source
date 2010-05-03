@@ -224,6 +224,7 @@ int Q_atoi (const char *str);
 float Q_atof (const char *str);
 char *Q_ftos (float value); // removes trailing zero chars
 
+char *Q_strcpy( char *to, char *from );
 char *Q_strlwr( char *s1 );
 
 // Added by VVD {
