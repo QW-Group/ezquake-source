@@ -178,8 +178,9 @@ char *Q_strcpy( char *to, char *from )
 		for (i = 0; from[i] != 0; i++) {
 			to[i] = from[i];
 		}
+		to[i] = from[i];
 	} else {
-		for (i = strlen(from) - 1; i >= 0; i--) {
+		for (i = strlen(from); i >= 0; i--) {
 			to[i] = from[i];
 		}
 	}
