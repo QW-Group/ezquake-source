@@ -384,8 +384,10 @@ void Image_Resample (void *indata, int inwidth, int inheight,
 
 void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp) 
 {
+	const byte *inrow;
 	int x, y, nextrow;
 
+	inrow = in;
 	nextrow = *width * bpp;
 
 	if (*width > 1) 
@@ -394,13 +396,14 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 
 		if (*height > 1) 
 		{
+			// reduce both (width and height)
 			*height >>= 1;
 		
 			if (bpp == 4)
 			{
-				for (y = 0; y < *height; y++) 
+				for (y = 0; y < *height; y++, inrow += nextrow * 2)
 				{
-					for (x = 0; x < *width; x++) 
+					for (in = inrow, x = 0; x < *width; x++)
 					{
 						out[0] = (byte) ((in[0] + in[4] + in[nextrow] + in[nextrow + 4]) >> 2);
 						out[1] = (byte) ((in[1] + in[5] + in[nextrow + 1] + in[nextrow + 5]) >> 2);
@@ -409,14 +412,13 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 						out += 4;
 						in += 8;
 					}
-					in += nextrow;
 				}
 			} 
 			else if (bpp == 3) 
 			{
-				for (y = 0; y < *height; y++)
+				for (y = 0; y < *height; y++, inrow += nextrow * 2)
 				{
-					for (x = 0; x < *width; x++)
+					for (in = inrow, x = 0; x < *width; x++)
 					{
 						out[0] = (byte) ((in[0] + in[3] + in[nextrow] + in[nextrow + 3]) >> 2);
 						out[1] = (byte) ((in[1] + in[4] + in[nextrow + 1] + in[nextrow + 4]) >> 2);
@@ -424,7 +426,6 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 						out += 3;
 						in += 6;
 					}
-					in += nextrow;
 				}
 			} 
 			else 
@@ -434,11 +435,12 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 		} 
 		else 
 		{
+			// reduce width
 			if (bpp == 4)
 			{
-				for (y = 0; y < *height; y++) 
+				for (y = 0; y < *height; y++, inrow += nextrow)
 				{
-					for (x = 0; x < *width; x++) 
+					for (in = inrow, x = 0; x < *width; x++)
 					{
 						out[0] = (byte) ((in[0] + in[4]) >> 1);
 						out[1] = (byte) ((in[1] + in[5]) >> 1);
@@ -451,9 +453,9 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 			} 
 			else if (bpp == 3) 
 			{
-				for (y = 0; y < *height; y++) 
+				for (y = 0; y < *height; y++, inrow += nextrow)
 				{
-					for (x = 0; x < *width; x++)
+					for (in = inrow, x = 0; x < *width; x++)
 					{
 						out[0] = (byte) ((in[0] + in[3]) >> 1);
 						out[1] = (byte) ((in[1] + in[4]) >> 1);
@@ -471,13 +473,14 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 	}
 	else if (*height > 1)
 	{
+		// reduce height
 		*height >>= 1;
 
 		if (bpp == 4) 
 		{
-			for (y = 0; y < *height; y++) 
+			for (y = 0; y < *height; y++, inrow += nextrow * 2)
 			{
-				for (x = 0; x < *width; x++) 
+				for (in = inrow, x = 0; x < *width; x++)
 				{
 					out[0] = (byte) ((in[0] + in[nextrow]) >> 1);
 					out[1] = (byte) ((in[1] + in[nextrow + 1]) >> 1);
@@ -486,14 +489,13 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 					out += 4;
 					in += 4;
 				}
-				in += nextrow;
 			}
 		}
 		else if (bpp == 3) 
 		{
-			for (y = 0; y < *height; y++) 
+			for (y = 0; y < *height; y++, inrow += nextrow * 2)
 			{
-				for (x = 0; x < *width; x++) 
+				for (in = inrow, x = 0; x < *width; x++)
 				{
 					out[0] = (byte) ((in[0] + in[nextrow]) >> 1);
 					out[1] = (byte) ((in[1] + in[nextrow + 1]) >> 1);
@@ -501,7 +503,6 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp)
 					out += 3;
 					in += 3;
 				}
-				in += nextrow;
 			}
 		} 
 		else 
