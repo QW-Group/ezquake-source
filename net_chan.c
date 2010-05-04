@@ -309,8 +309,8 @@ qbool Netchan_Process (netchan_t *chan)
 			            , NET_AdrToString (chan->remote_address)
 			            ,  sequence
 			            , chan->incoming_sequence);
-			return false;
 		}
+		return false;
 	}
 
 	// dropped packets don't keep the message from being used
