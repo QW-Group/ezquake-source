@@ -31,7 +31,7 @@ void Image_Init(void);
 
 void Image_Resample (void *indata, int inwidth, int inheight,
 					 void *outdata, int outwidth, int outheight, int bpp, int quality);
-void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp);
+void Image_MipReduce (const byte *in, byte *out, int *width, int *height, int bpp);
 
 typedef struct
 {
@@ -71,3 +71,4 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 extern cvar_t image_jpeg_quality_level, image_png_compression_level;
 
 #endif	//_IMAGE_H
+

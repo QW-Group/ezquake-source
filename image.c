@@ -382,7 +382,7 @@ void Image_Resample (void *indata, int inwidth, int inheight,
 		Sys_Error("Image_Resample: unsupported bpp (%d)", bpp);
 }
 
-void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp) 
+void Image_MipReduce (const byte *in, byte *out, int *width, int *height, int bpp) 
 {
 	const byte *inrow;
 	int x, y, nextrow;
