@@ -1088,7 +1088,7 @@ void CL_ParseDownload (void)
 {
 	int size, percent;
 
-	static float time = 0;
+	static double time = 0;
 	static int s = 0;
 
 	#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
@@ -1107,9 +1107,9 @@ void CL_ParseDownload (void)
 	percent = MSG_ReadByte ();
 
 	s += size;
-	if (cls.realtime - time > 1) 
+	if (cls.realtime - time > 1 || cls.realtime < time) 
 	{
-		cls.downloadrate = s / (1024 * (cls.realtime - time));
+		cls.downloadrate = max(0, s / (1024 * (cls.realtime - time)));
 		time = cls.realtime;
 		s = 0;
 	}
