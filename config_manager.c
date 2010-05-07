@@ -1071,11 +1071,15 @@ void Config_TroubleShoot_Tip(const char* problem, const char* description,
 void Config_TroubleShoot_f(void)
 {
 	unsigned problems = 0;
-	extern cvar_t r_novis, cl_maxfps, in_mouse, hud_planmode;
+#ifdef GLQUAKE
+	extern cvar_t r_novis;
+#endif
+	extern cvar_t cl_maxfps, in_mouse, hud_planmode;
 #ifdef WIN32
 	extern cvar_t m_filter, sys_yieldcpu;
 #endif
 
+#ifdef GLQUAKE
 	if (r_novis.value) {
 		Config_TroubleShoot_Tip("r_novis is enabled",
 			"r_novis causes a major performance hit, it's only useful if you need transparent liquids "
@@ -1083,6 +1087,7 @@ void Config_TroubleShoot_f(void)
 			"set r_novis to 0", 1);
 		problems++;
 	}
+#endif
 #ifdef WIN32
 	if (m_filter.value) {
 		Config_TroubleShoot_Tip("m_filter is enabled",
