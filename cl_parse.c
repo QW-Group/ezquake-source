@@ -1088,6 +1088,7 @@ void CL_ParseDownload (void)
 {
 	int size, percent;
 
+	double current = Sys_DoubleTime();
 	static double time = 0;
 	static int s = 0;
 
@@ -1107,10 +1108,10 @@ void CL_ParseDownload (void)
 	percent = MSG_ReadByte ();
 
 	s += size;
-	if (cls.realtime - time > 1 || cls.realtime < time) 
+	if (current - time > 1) 
 	{
-		cls.downloadrate = max(0, s / (1024 * (cls.realtime - time)));
-		time = cls.realtime;
+		cls.downloadrate = s / (1024 * (current - time));
+		time = current;
 		s = 0;
 	}
 
@@ -1199,6 +1200,7 @@ void CL_NextUpload(void)
 	int		percent;
 	int		size;
 	static int s = 0;
+	double current = Sys_DoubleTime();
 	static double	time;
 
 	if ((!cls.is_file && !cls.mem_upload) || (cls.is_file && !cls.upload))
@@ -1226,10 +1228,10 @@ void CL_NextUpload(void)
 	Com_DPrintf ("UPLOAD: %6d: %d written\n", cls.upload_pos - r, r);
 
 	s += r;
-	if (cls.realtime - time > 1) 
+	if (current - time > 1) 
 	{
-		cls.uploadrate = s/(1024*(cls.realtime - time));
-		time = cls.realtime;
+		cls.uploadrate = s/(1024*(current - time));
+		time = current;
 		s = 0;
 	}
 	
