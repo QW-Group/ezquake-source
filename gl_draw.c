@@ -210,9 +210,6 @@ void OnChange_scr_conpicture(cvar_t *v, char *s, qbool *cancel)
 
 	Draw_CopyMPICKeepSize(&conback, pic_24bit);
 	Draw_AdjustConback();
-	GL_Bind(conback.texnum);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
@@ -232,11 +229,6 @@ void OnChange_gl_crosshairimage(cvar_t *v, char *s, qbool *cancel)
 
 	crosshairpic = *pic;
 	customcrosshair_loaded |= CROSSHAIR_IMAGE;
-	
-	// Make crosshair independent of gl_texturemode setting so it always looks sharp and not blurred
-	GL_Bind(crosshairpic.texnum);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 void customCrosshair_Init(void)
@@ -277,8 +269,6 @@ void customCrosshair_Init(void)
 
 	VFS_CLOSE(f);
 	crosshairtexture_txt = GL_LoadTexture ("cross:custom", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	customcrosshair_loaded |= CROSSHAIR_TXT;
 }
 
@@ -293,8 +283,6 @@ void Draw_InitCrosshairs(void)
 	{
 		snprintf(str, sizeof(str), "cross:hardcoded%d", i);
 		crosshairtextures[i] = GL_LoadTexture (str, 8, 8, crosshairdata[i], TEX_ALPHA, 1);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 	customCrosshair_Init(); // safe re-init
 

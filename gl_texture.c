@@ -840,6 +840,9 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 	byte *data, *src, *dest, *buf;
 	static mpic_t pic;
 
+	// this is 2D texture loading so it must not have MIP MAPS
+	mode = mode & ~TEX_MIPMAP;
+
 	if (no24bit)
 		return NULL;
 
@@ -906,7 +909,7 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 			dest += width * 4;		// Next line in the target.
 		}
 
-		pic.texnum = GL_LoadTexture (identifier, width, height, buf, mode & ~TEX_MIPMAP, 4);
+		pic.texnum = GL_LoadTexture (identifier, width, height, buf, mode, 4);
 		pic.sl = 0;
 		pic.sh = (float) pic.width / width;
 		pic.tl = 0;

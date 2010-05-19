@@ -755,9 +755,6 @@ void VXSCR_DrawTrackerString (void)
 
 							if ((pic = Draw_CachePicSafe(fullpath, false, true)))
 							{
-								//GL_Bind(pic->texnum);
-								//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-								//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 								Draw_FitPic(
 									(float)x - 0.5 * 8 * 2 * (im_scale - 1) * scale, 
 									(float)y - 0.5 * 8 * (im_scale - 1) * scale, 
