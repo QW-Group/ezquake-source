@@ -1778,7 +1778,7 @@ void Sbar_Draw(void) {
 		if (!cl.spectator || autocam == CAM_TRACK)
 			Sbar_DrawInventory();
 
-		if (cl.gametype == GAME_DEATHMATCH && (!headsup || vid.width < 512))
+		if (cl.gametype == GAME_DEATHMATCH && (!headsup || vid.width < 512 || (vid.width >= 512 && scr_centerSbar.value )))
 			Sbar_DrawFrags();
 	}
 
