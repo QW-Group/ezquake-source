@@ -203,6 +203,8 @@ cvar_t	gl_simpleitems		= {"gl_simpleitems", "0"};
 cvar_t	gl_simpleitems_size		= {"gl_simpleitems_size", "16"};
 cvar_t	gl_simpleitems_orientation = {"gl_simpleitems_orientation", "2"};
 
+cvar_t gl_gammacorrection = {"gl_gammacorrection", "0", CVAR_LATCH};
+
 int		lightmode = 2;
 
 //static int deathframes[] = { 49, 60, 69, 77, 84, 93, 102, 0 };
@@ -1783,6 +1785,15 @@ void R_SetupGL (void) {
 	glHint (GL_FOG_HINT,GL_NICEST);
 
 	glEnable(GL_DEPTH_TEST);
+
+	if(gl_gammacorrection.integer)
+	{
+		glEnable(GL_FRAMEBUFFER_SRGB);
+	}
+	else
+	{
+		glDisable(GL_FRAMEBUFFER_SRGB);
+	}
 }
 
 void CI_Init (void);
@@ -1916,6 +1927,7 @@ void R_Init (void) {
 
 	Cvar_Register (&gl_nocolors);
 	Cvar_Register (&gl_finish);
+	Cvar_Register (&gl_gammacorrection);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_speeds);

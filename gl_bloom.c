@@ -192,7 +192,7 @@ extern int texture_extension_number;
 void R_Bloom_InitTextures( void )
 {
 	unsigned char *data;
-	int maxtexsize;
+	int maxtexsize, glinternalfmt;
 	size_t size;
 
 	// Find closer power of 2 to screen size.
@@ -218,8 +218,17 @@ void R_Bloom_InitTextures( void )
 	if (!r_bloomscreentexture)
 		r_bloomscreentexture = texture_extension_number++;
 
+	if(gl_gammacorrection.integer)
+	{
+		glinternalfmt = GL_SRGB8;
+	}
+	else
+	{
+		glinternalfmt = gl_solid_format;
+	}
+
 	GL_Bind (r_bloomscreentexture);
-	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D (GL_TEXTURE_2D, 0, glinternalfmt, screen_texture_width, screen_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 

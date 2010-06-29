@@ -241,6 +241,8 @@ extern	cvar_t gl_powerupshells;
 extern	cvar_t gl_powerupshells_style;
 extern	cvar_t gl_powerupshells_size;
 
+extern cvar_t gl_gammacorrection;
+
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel;
 extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;
 
@@ -300,7 +302,7 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
 
 // gl_rsurf.c
 
-#define	MAX_LIGHTMAPS		64
+#define	MAX_LIGHTMAPS		128
 
 void EmitDetailPolys (void);
 void R_DrawBrushModel (entity_t *e);
@@ -350,6 +352,11 @@ void R_InitOtherTextures(void);
 #define GL_TEXTURE_COMPRESSED_ARB				0x86A1
 #define GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB	0x86A2
 #define GL_COMPRESSED_TEXTURE_FORMATS_ARB		0x86A3
+
+//sRGB gamma correction
+#define GL_SRGB8 0x8C41
+#define GL_SRGB8_ALPHA8 0x8C43
+#define GL_FRAMEBUFFER_SRGB 0x8DB9
 
 //combine extension
 #define GL_COMBINE_EXT				0x8570

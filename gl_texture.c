@@ -373,10 +373,18 @@ static void GL_Upload32 (unsigned *data, int width, int height, int mode)
 	if (mode & TEX_BRIGHTEN)
 		brighten32 ((byte *)newdata, width * height * 4);
 
-	if (mode & TEX_NOCOMPRESS)
+	if(gl_gammacorrection.integer)
+	{
+		internal_format = (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
+	}
+	else if(mode & TEX_NOCOMPRESS)
+	{
 		internal_format = (mode & TEX_ALPHA) ? 4 : 3;
+	}
 	else
+	{
 		internal_format = (mode & TEX_ALPHA) ? gl_alpha_format : gl_solid_format;
+	}
 
 	// Upload the main texture to OpenGL.
 	miplevel = 0;
