@@ -1964,10 +1964,10 @@ void CL_LinkPlayers (void)
 		#endif // GLQUAKE
 
 		if (
-			#if !GLQUAKE       //TODO: why !GLQUAKE ?
-                        if (j == cl.playernum) ||
-                        #endif
-			!Cam_DrawPlayer(j)
+					#if !GLQUAKE       //TODO: why !GLQUAKE ?
+					(j == cl.playernum) ||
+					#endif
+					!Cam_DrawPlayer(j)
 		   )
 		{
 			continue;
