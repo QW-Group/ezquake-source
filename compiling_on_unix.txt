@@ -7,7 +7,9 @@ UNIX ezQuake build guide
 ==========
 $ sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev libasound2-dev \
                        x11proto-xf86dga-dev x11proto-xf86vidmode-dev \
-                       libxxf86dga-dev libxxf86vm-dev libxext-dev libsvga1-dev
+                       libxxf86dga-dev libxxf86vm-dev libxext-dev \
+                       libsvga1-dev libxpm-dev
+
 1.2)OpenSUSE
 ============
 $ sudo zypper install freeglut-devel alsa-devel
@@ -15,7 +17,7 @@ $ sudo zypper install freeglut-devel alsa-devel
 
 2) Download static libraries
 
-$ ./libs/`uname -s|tr A-Z a-z`-`uname -m|sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g' -e 's/amd64/x86_64/g'`/download.sh
+$ cd <ezquake-trunk-root>/ezquake/libs/`uname -s|tr A-Z a-z`-`uname -m|sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g' -e 's/amd64/x86_64/g'`/ && ./download.sh
 
 
 3) Build 
