@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "keys.h"
 #include "fs.h"
+#include "config_manager.h"
 
 #ifdef WITH_KEYMAP
 char *Key_KeynumToString (int keynum, char *buffer);
@@ -876,7 +877,7 @@ void SaveConfig(const char *cfgname)
 	size_t len;
 	FILE *f;
 
-	snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : "config.cfg"); // use config.cfg if no params was specified
+	snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
 
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 
@@ -974,7 +975,7 @@ void LoadConfig_f(void)
 	int		use_home;
 
 	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
-	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
+	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 	use_home = cfg_use_home.integer || !host_everything_loaded;
 

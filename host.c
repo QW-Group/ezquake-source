@@ -606,7 +606,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			cfg_name = COM_Argv(i + 1);
 		}
 		else {
-			cfg_name = "config.cfg";
+			cfg_name = MAIN_CONFIG_FILENAME;
 		}
 		snprintf(cfg, sizeof(cfg), "%s", cfg_name);
 		COM_ForceExtensionEx (cfg, ".cfg", sizeof (cfg));
@@ -750,6 +750,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 #ifdef _WIN32
 	SetForegroundWindow(mainwindow);
+	SetActiveWindow(mainwindow);
 #endif
 
 	host_everything_loaded = true;

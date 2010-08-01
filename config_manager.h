@@ -28,4 +28,13 @@ void ResetBinds(void);
 
 extern cvar_t	cfg_save_unchanged, cfg_legacy_exec;
 
+#define MAIN_GL_CONFIG_FILENAME "config.cfg"
+#define MAIN_SW_CONFIG_FILENAME "configsw.cfg"
+
+#ifdef GLQUAKE
+#define MAIN_CONFIG_FILENAME MAIN_GL_CONFIG_FILENAME
+#else
+#define MAIN_CONFIG_FILENAME MAIN_SW_CONFIG_FILENAME
+#endif
+
 #endif
