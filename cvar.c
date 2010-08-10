@@ -804,9 +804,6 @@ qbool Cvar_Delete (const char *name)
 	return false;
 }
 
-
-static qbool cvar_seta = false;
-
 void Cvar_Set_f (void)
 {
 	cvar_t *var;
@@ -1045,15 +1042,6 @@ void Cvar_UnSet_re_f(void)
 	Cvar_UnSet(true);
 }
 // <-- disconnect
-
-/*
-void Cvar_Seta_f (void)
-{
-	cvar_seta = true;
-	Cvar_Set_f ();
-	cvar_seta = false;
-}
-*/
 
 // QW262 -->
 
