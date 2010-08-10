@@ -5573,9 +5573,9 @@ void SCR_HUD_DrawScoresPosition(hud_t *hud)
 */
 void SCR_HUD_DrawScoresBar(hud_t *hud)
 {
-	static	cvar_t *scale = NULL, *style, *digits, *format_big, *format_small;
+	static	cvar_t *scale = NULL, *style, *format_big, *format_small;
 	int		width = 0, height = 0, x, y;
-	int		i;
+	int		i = 0;
 
 	int		s_team = 0, s_enemy = 0, s_difference = 0;
 	char	*n_team = "T", *n_enemy = "E";
