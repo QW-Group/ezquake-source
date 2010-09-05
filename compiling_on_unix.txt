@@ -3,14 +3,14 @@ UNIX ezQuake build guide
 
 1) Install build dependencies
 
-1.1)Ubuntu
+1.1) Ubuntu
 ==========
 $ sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev libasound2-dev \
                        x11proto-xf86dga-dev x11proto-xf86vidmode-dev \
                        libxxf86dga-dev libxxf86vm-dev libxext-dev \
                        libsvga1-dev libxpm-dev
 
-1.2)OpenSUSE
+1.2) OpenSUSE
 ============
 $ sudo zypper install freeglut-devel alsa-devel
 
