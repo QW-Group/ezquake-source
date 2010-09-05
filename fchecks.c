@@ -122,7 +122,9 @@ static qbool FChecks_ScriptsRequest (const char *s)
 
 static void FChecks_FakeshaftResponse (void)
 {
-	if (cl_fakeshaft.value > 0.999)
+	if (cl_fakeshaft.integer == 2)
+		Cbuf_AddText("say fakeshaft 2 (emulation of fakeshaft 0 for servers with antilag feature)\n");
+	else if (cl_fakeshaft.value > 0.999)
 		Cbuf_AddText("say fakeshaft on\n");
 	else if (cl_fakeshaft.value < 0.001)
 		Cbuf_AddText("say fakeshaft off\n");
