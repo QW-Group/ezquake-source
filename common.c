@@ -1577,7 +1577,7 @@ int Com_TranslateMapChecksum (const char *mapname, int checksum)
 {
 	csentry_t *p;
 
-	Com_Printf ("Map checksum (%s): 0x%x\n", mapname, checksum);
+//	Com_Printf ("Map checksum (%s): 0x%x\n", mapname, checksum);
 
 	for (p = table; p->mapname; p++)
 		if (!strcmp(p->mapname, mapname)) {
