@@ -713,6 +713,7 @@ void Model_NextDownload (void)
 {
 	int	i;
 	char *s;
+	char mapname[MAX_QPATH];
 
 	if (cls.downloadnumber == 0) 
 	{
@@ -733,6 +734,8 @@ void Model_NextDownload (void)
 	}
 
 	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
+	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
 
 	for (i = 1; i < MAX_MODELS; i++) 
 	{

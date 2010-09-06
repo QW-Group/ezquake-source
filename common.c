@@ -1548,3 +1548,45 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
     return false;
 }
 
+
+//=====================================================================
+
+// "GPL map" support.  If we encounter a map with a known "GPL" CRC,
+// we fake the CRC so that, on the client side, the CRC of the original
+// map is transferred to the server, and on the server side, comparison
+// of clients' CRC is done against the orignal one
+typedef struct {
+	const char *mapname;
+	int original;
+	int gpl;
+} csentry_t;
+
+static csentry_t table[] = {
+	// CRCs for AquaShark's "simpletextures" maps
+	{ "dm1", 0xc5c7dab3, 0x7d37618e },
+	{ "dm2", 0x65f63634, 0x7b337440 },
+	{ "dm3", 0x15e20df8, 0x912781ae },
+	{ "dm4", 0x9c6fe4bf, 0xc374df89 },
+	{ "dm5", 0xb02d48fd, 0x77ca7ce5 },
+	{ "dm6", 0x5208da2b, 0x200c8b5d },
+	{ "end", 0xbbd4b4a5, 0xf89b12ae }, // this is the version with the extra room
+	{ NULL, 0, 0 },
+};
+
+int Com_TranslateMapChecksum (const char *mapname, int checksum)
+{
+	csentry_t *p;
+
+	Com_Printf ("Map checksum (%s): 0x%x\n", mapname, checksum);
+
+	for (p = table; p->mapname; p++)
+		if (!strcmp(p->mapname, mapname)) {
+			if (checksum == p->gpl)
+				return p->original;
+			else
+				return checksum;
+		}
+
+	return checksum;
+}
+

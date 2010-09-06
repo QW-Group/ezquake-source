@@ -372,6 +372,7 @@ static void NQD_ParseServerData (void)
 	char	*str;
 	int		i;
 	int		nummodels, numsounds;
+	char	mapname[MAX_QPATH];
 
 	Com_DPrintf ("Serverdata packet received.\n");
 
@@ -431,6 +432,8 @@ static void NQD_ParseServerData (void)
 
 	// now we try to load everything else until a cache allocation fails
 	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
+	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
 
 	for (i = 1; i < nummodels; i++)
 	{

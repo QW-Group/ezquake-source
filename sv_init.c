@@ -418,6 +418,8 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		if (!sv.worldmodel)
 			SV_Error ("CM_LoadMap: bad map");
 	}
+	
+	sv.map_checksum2 = Com_TranslateMapChecksum (sv.mapname, sv.map_checksum2);
 
 	SV_ClearWorld (); // clear physics interaction links
 
