@@ -652,7 +652,7 @@ void VWepModel_NextDownload (void)
 	int		i;
 	extern cvar_t cl_novweps;
 
-	if (((!cl.z_ext & Z_EXT_VWEP || !cl.vw_model_name[0][0]) && !cls.mvdplayback)
+	if (((!(cl.z_ext & Z_EXT_VWEP) || !cl.vw_model_name[0][0]) && !cls.mvdplayback)
 	|| cl_novweps.value) 
 	{
 		// no vwep support, go straight to prespawn
