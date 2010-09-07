@@ -242,6 +242,7 @@ extern	cvar_t gl_powerupshells_style;
 extern	cvar_t gl_powerupshells_size;
 
 extern cvar_t gl_gammacorrection;
+extern cvar_t gl_modulate;
 
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel;
 extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;

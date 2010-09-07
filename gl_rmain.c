@@ -204,6 +204,7 @@ cvar_t	gl_simpleitems_size		= {"gl_simpleitems_size", "16"};
 cvar_t	gl_simpleitems_orientation = {"gl_simpleitems_orientation", "2"};
 
 cvar_t gl_gammacorrection = {"gl_gammacorrection", "0", CVAR_LATCH};
+cvar_t	gl_modulate = {"gl_modulate", "1"};
 
 int		lightmode = 2;
 
@@ -1928,6 +1929,7 @@ void R_Init (void) {
 	Cvar_Register (&gl_nocolors);
 	Cvar_Register (&gl_finish);
 	Cvar_Register (&gl_gammacorrection);
+	Cvar_Register (&gl_modulate);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_speeds);

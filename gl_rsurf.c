@@ -416,54 +416,29 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	bl = blocklights;
 	stride -= smax * 3;
 	for (i = 0; i < tmax; i++, dest += stride) {
-
+		int scale = (lightmode == 2) ? (int)(256 * 1.5) : 256 * 2;
+		scale *= bound(0.5, gl_modulate.value, 3);
 		if (gl_invlightmaps) {
-			if (lightmode == 2) {
-				for (j = smax; j; j--) {
-					t = bl[0]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-					dest[0] = 255 - t;
-					t = bl[1]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-					dest[1] = 255 - t;
-					t = bl[2]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-					dest[2] = 255 - t;
-					bl += 3;
-					dest += 3;
-				}
-			} else {
-				for (j = smax; j; j--) {
-					t = bl[0]; t = t >> 7; if (t > 255) t = 255;
-					dest[0] = 255 - t;
-					t = bl[1]; t = t >> 7; if (t > 255) t = 255;
-					dest[1] = 255 - t;
-					t = bl[2]; t = t >> 7; if (t > 255) t = 255;
-					dest[2] = 255 - t;
-					bl += 3;
-					dest += 3;
-				}
+			for (j = smax; j; j--) {
+				t = bl[0]; t = (t * scale) >> 16; if (t > 255) t = 255;
+				dest[0] = 255 - t;
+				t = bl[1]; t = (t * scale) >> 16; if (t > 255) t = 255;
+				dest[1] = 255 - t;
+				t = bl[2]; t = (t * scale) >> 16; if (t > 255) t = 255;
+				dest[2] = 255 - t;
+				bl += 3;
+				dest += 3;
 			}
 		} else {
-			if (lightmode == 2) {
-				for (j = smax; j; j--) {
-					t = bl[0]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-					dest[0] = t;
-					t = bl[1]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-					dest[1] = t;
-					t = bl[2]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-					dest[2] = t;
-					bl += 3;
-					dest += 3;
-				}
-			} else {
-				for (j = smax; j; j--) {
-					t = bl[0]; t = t >> 7; if (t > 255) t = 255;
-					dest[0] = t;
-					t = bl[1]; t = t >> 7; if (t > 255) t = 255;
-					dest[1] = t;
-					t = bl[2]; t = t >> 7; if (t > 255) t = 255;
-					dest[2] = t;
-					bl += 3;
-					dest += 3;
-				}
+			for (j = smax; j; j--) {
+				t = bl[0]; t = (t * scale) >> 16; if (t > 255) t = 255;
+				dest[0] = t;
+				t = bl[1]; t = (t * scale) >> 16; if (t > 255) t = 255;
+				dest[1] = t;
+				t = bl[2]; t = (t * scale) >> 16; if (t > 255) t = 255;
+				dest[2] = t;
+				bl += 3;
+				dest += 3;
 			}
 		}
 	}
