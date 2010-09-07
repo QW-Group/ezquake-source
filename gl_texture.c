@@ -479,6 +479,9 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 	qbool load_over_existing = false;
 	gltexture_t *glt = NULL;
 
+	if (lightmode != 2)
+		mode &= ~TEX_BRIGHTEN;
+
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
 	if (developer.integer >= 3)

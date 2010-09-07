@@ -282,6 +282,8 @@ void R_NewMap (qbool vid_restart) {
 
 	R_SetSky (r_skyname.string);
 
+	lightmode = gl_lightmode.value ? 2 : 0;
+
 	if (!vid_restart) {
 		for (i = 0; i < 256; i++)
 			d_lightstylevalue[i] = 264;		// normal light value
@@ -302,7 +304,6 @@ void R_NewMap (qbool vid_restart) {
 		HUD_NewRadarMap();			// Need to reload the radar picture.
 	}
 
-	lightmode = gl_lightmode.value == 0 ? 0 : 2;
 	GL_BuildLightmaps ();
 
 	if (!vid_restart) {
