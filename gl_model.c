@@ -45,9 +45,10 @@ model_t	*loadmodel;
 char	loadname[32];	// for hunk tags
 
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
-void Mod_LoadBrushModel (model_t *mod, void *buffer);
+void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize);
 void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize);
 model_t *Mod_LoadModel (model_t *mod, qbool crash);
+void *Mod_BSPX_FindLump(char *lumpname, int *plumpsize);
 
 byte	mod_novis[MAX_MAP_LEAFS/8];
 
@@ -256,7 +257,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 		break;
 
 	default:
-		Mod_LoadBrushModel (mod, buf);
+		Mod_LoadBrushModel (mod, buf, filesize);
 		break;
 	}
 
@@ -296,6 +297,7 @@ qbool Img_HasFullbrights (byte *pixels, int size) {
 #define ISALPHATEX(name)	(loadmodel->bspversion == HL_BSPVERSION && (name)[0] == '{')
 
 byte	*mod_base;
+static struct bspx_header_s *bspx_header;
 
 /* Some id maps have textures with identical names but different looks.
 We hardcode a list of names, checksums and alternative names to provide a way
@@ -797,6 +799,29 @@ void Mod_LoadLighting (lump_t *l) {
 		return;
 	}
 
+	if (!Cvar_Value("gl_noinlinergb")) {
+		int threshold = (lightmode == 1 ? 255 : lightmode == 2 ? 170 : 128);
+		int lumpsize;
+		byte *rgb = Mod_BSPX_FindLump("RGBLIGHTING", &lumpsize);
+		if (rgb && lumpsize == l->filelen * 3) {
+			loadmodel->lightdata = (byte *) Hunk_AllocName(lumpsize, loadname);
+			memcpy(loadmodel->lightdata, rgb, lumpsize);
+			// we trust the inline RGB data to be bug free so we don't check it against the mono lightmap
+			// what we do though is prevent color wash-out in brightly lit areas
+			// (one day we may do it in R_BuildLightMap instead)
+			out = loadmodel->lightdata;
+			for (i = 0; i < l->filelen; i++, out += 3) {
+				int m = max(out[0], max(out[1], out[2]));
+				if (m > threshold) {
+					out[0] = out[0] * threshold / m;
+					out[1] = out[1] * threshold / m;
+					out[2] = out[2] * threshold / m;
+				}
+			}
+			// all done, but we let them override it with a .lit
+		}
+	}
+	
 	//check for a .lit file
 	mark = Hunk_LowMark();
 	data = LoadColoredLighting(loadmodel->name, &litfilename, &filesize);
@@ -862,6 +887,10 @@ void Mod_LoadLighting (lump_t *l) {
 		}
 		Hunk_FreeToLowMark (mark);
 	}
+	
+	if (loadmodel->lightdata)
+		return;		// we have loaded inline RGB data
+	
 	//no .lit found, expand the white lighting data to color
 	loadmodel->lightdata = (byte *) Hunk_AllocName (l->filelen * 3, va("%s_@lightdata", loadmodel->name));
 	in = mod_base + l->fileofs;
@@ -1313,7 +1342,82 @@ float RadiusFromBounds (vec3_t mins, vec3_t maxs) {
 	return VectorLength (corner);
 }
 
-void Mod_LoadBrushModel (model_t *mod, void *buffer) {
+//============================================================
+// BSPX loading
+
+typedef struct bspx_header_s {
+    char id[4];  // 'BSPX'
+    int numlumps;
+} bspx_header_t;
+
+// lumps immediately follow:
+typedef struct {
+    char lumpname[24];
+    int fileofs;
+    int filelen;
+} bspx_lump_t;
+
+static void Mod_LoadBSPX (int filesize) {
+	dheader_t *header;
+	bspx_header_t *xheader;
+	bspx_lump_t *lump;
+	int i;
+	int xofs;
+	
+	bspx_header = NULL;
+	
+	// find end of last lump
+	header = (dheader_t *) mod_base;
+	xofs = 0;
+	for (i = 0; i < HEADER_LUMPS; i++)
+		xofs = max(xofs, header->lumps[i].fileofs + header->lumps[i].filelen);
+	
+	if (xofs + sizeof(bspx_header_t) > filesize)
+		return;
+
+	xheader = (bspx_header_t *) (mod_base + xofs);
+	xheader->numlumps = LittleLong (xheader->numlumps);
+
+	if (xheader->numlumps < 0 || xofs + sizeof(bspx_header_t) + xheader->numlumps * sizeof(bspx_lump_t) > filesize)
+		return;
+
+	// byte-swap and check sanity
+	lump = (bspx_lump_t *) (xheader + 1); // lumps immediately follow the header
+	for (i = 0; i < xheader->numlumps; i++, lump++) {
+		lump->lumpname[sizeof(lump->lumpname)-1] = '\0'; // make sure it ends with zero
+		lump->fileofs = LittleLong(lump->fileofs);
+		lump->filelen = LittleLong(lump->filelen);
+		if (lump->fileofs < 0 || lump->filelen < 0 || (unsigned)(lump->fileofs + lump->filelen) > (unsigned)filesize)
+			return;
+	}
+
+	// success
+	bspx_header = xheader;
+}
+
+void *Mod_BSPX_FindLump(char *lumpname, int *plumpsize)
+{
+	int i;
+	bspx_lump_t *lump;
+
+	if (!bspx_header)
+		return NULL;
+
+	lump = (bspx_lump_t *) (bspx_header + 1);
+	for (i = 0; i < bspx_header->numlumps; i++, lump++) {
+		if (!strcmp(lump->lumpname, lumpname)) {
+			if (plumpsize)
+				*plumpsize = lump->filelen;
+			return mod_base + lump->fileofs;
+		}
+	}
+
+	return NULL;
+}
+
+//============================================================
+
+void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 	int i;
 	dheader_t *header;
 	dmodel_t *bm;
@@ -1335,6 +1439,9 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 	for (i = 0; i < sizeof(dheader_t) / 4; i++)
 		((int *) header)[i] = LittleLong (((int *) header)[i]);
 
+	// check for BSPX extensions
+	Mod_LoadBSPX (filesize);
+	
 	// load into heap
 
 	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
