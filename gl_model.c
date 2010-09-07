@@ -782,7 +782,7 @@ static byte *LoadColoredLighting(char *name, char **litfilename, int *filesize) 
 }
 
 void Mod_LoadLighting (lump_t *l) {
-	int i, lit_ver, b, mark;
+	int i, lit_ver, mark;
 	byte *in, *out, *data;
 	char *litfilename;
 	int filesize;
@@ -814,16 +814,48 @@ void Mod_LoadLighting (lump_t *l) {
 
 			in = mod_base + l->fileofs;
 			out = loadmodel->lightdata;
-			for (i = 0; i < l->filelen; i++, in++, out+=3) {
-				if (!out[0] && !out[1] && !out[2])
-					continue;
-				
-				b = max(out[0], max(out[1], out[2]));
-				{
-					float r = *in / (float) b;
-					out[0] = (int) (r * out[0]);
-					out[1] = (int) (r * out[1]);
-					out[2] = (int) (r * out[2]);
+			if (Cvar_Value("gl_oldlitscaling")) {
+				// old way (makes colored areas too dark)
+				for (i = 0; i < l->filelen; i++, in++, out+=3) {
+					float m, s;
+					
+					m = max(out[0], max(out[1], out[2]));
+					if (!m) {
+						out[0] = out[1] = out[2] = *in;
+					} else {
+						s = *in / m;
+						out[0] = (int) (s * out[0]);
+						out[1] = (int) (s * out[1]);
+						out[2] = (int) (s * out[2]);
+					}
+				}
+			} else {
+				// new way
+				float threshold = (lightmode == 1 ? 255 : lightmode == 2 ? 170 : 128);
+				for (i = 0; i < l->filelen; i++, in++, out+=3) {
+					float r, g, b, m, p, s;
+					if (!out[0] && !out[1] && !out[2]) {
+						out[0] = out[1] = out[2] = *in;
+						continue;
+					}
+
+					// calculate perceived brightness of the color sample
+					p = out[0]*0.31 + out[1]*0.52 + out[2]*0.17;
+					// scale to match perceived brightness of monochrome sample
+					s = *in / p;
+					r = s * out[0];
+					g = s * out[1];
+					b = s * out[2];
+					m = max(r, max(g, b));
+					if (m > threshold) {
+						// scale down to avoid color washout
+						r *= threshold/m;
+						g *= threshold/m;
+						b *= threshold/m;
+					}
+					out[0] = (int) (r + 0.5);
+					out[1] = (int) (g + 0.5);
+					out[2] = (int) (b + 0.5);
 				}
 			}
 			return;
