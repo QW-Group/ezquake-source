@@ -783,7 +783,7 @@ static byte *LoadColoredLighting(char *name, char **litfilename, int *filesize) 
 
 void Mod_LoadLighting (lump_t *l) {
 	int i, lit_ver, b, mark;
-	byte *in, *out, *data, d;
+	byte *in, *out, *data;
 	char *litfilename;
 	int filesize;
 
@@ -814,18 +814,16 @@ void Mod_LoadLighting (lump_t *l) {
 
 			in = mod_base + l->fileofs;
 			out = loadmodel->lightdata;
-			for (i = 0; i < l->filelen; i++) {
-				b = max(out[3 * i], max(out[3 * i + 1], out[3 * i + 2]));
-
-				if (!b) {
-
-					out[3 * i] = out[3 * i + 1] = out[3 * i + 2] = in[i];
-				} else {
-
-					float r = in[i] / (float) b;
-					out[3 *i + 0] = (int) (r * out[3 * i + 0]);
-					out[3 *i + 1] = (int) (r * out[3 * i + 1]);
-					out[3 *i + 2] = (int) (r * out[3 * i + 2]);
+			for (i = 0; i < l->filelen; i++, in++, out+=3) {
+				if (!out[0] && !out[1] && !out[2])
+					continue;
+				
+				b = max(out[0], max(out[1], out[2]));
+				{
+					float r = *in / (float) b;
+					out[0] = (int) (r * out[0]);
+					out[1] = (int) (r * out[1]);
+					out[2] = (int) (r * out[2]);
 				}
 			}
 			return;
@@ -834,13 +832,10 @@ void Mod_LoadLighting (lump_t *l) {
 	}
 	//no .lit found, expand the white lighting data to color
 	loadmodel->lightdata = (byte *) Hunk_AllocName (l->filelen * 3, va("%s_@lightdata", loadmodel->name));
-	in = loadmodel->lightdata + l->filelen * 2; // place the file at the end, so it will not be overwritten until the very last write
+	in = mod_base + l->fileofs;
 	out = loadmodel->lightdata;
-	memcpy (in, mod_base + l->fileofs, l->filelen);
-	for (i = 0; i < l->filelen; i++, out += 3) {
-		d = *in++;
-		out[0] = out[1] = out[2] = d;
-	}
+	for (i = 0; i < l->filelen; i++, out += 3)
+		out[0] = out[1] = out[2] = *in++;
 }
 
 void Mod_LoadVisibility (lump_t *l) {
