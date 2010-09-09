@@ -363,7 +363,7 @@ void R_AddDynamicLights (msurface_t *surf) {
 
 //Combine and scale multiple lightmaps into the 8.8 format in blocklights
 void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
-	int smax, tmax, t, i, j, size, blocksize, maps;
+	int smax, tmax, i, j, size, blocksize, maps;
 	byte *lightmap;
 	unsigned scale, *bl;
 	qbool fullbright = false;
@@ -416,30 +416,32 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	bl = blocklights;
 	stride -= smax * 3;
 	for (i = 0; i < tmax; i++, dest += stride) {
-		int scale = (lightmode == 2) ? (int)(256 * 1.5) : 256 * 2;
+		scale = (lightmode == 2) ? (int)(256 * 1.5) : 256 * 2;
 		scale *= bound(0.5, gl_modulate.value, 3);
-		if (gl_invlightmaps) {
-			for (j = smax; j; j--) {
-				t = bl[0]; t = (t * scale) >> 16; if (t > 255) t = 255;
-				dest[0] = 255 - t;
-				t = bl[1]; t = (t * scale) >> 16; if (t > 255) t = 255;
-				dest[1] = 255 - t;
-				t = bl[2]; t = (t * scale) >> 16; if (t > 255) t = 255;
-				dest[2] = 255 - t;
-				bl += 3;
-				dest += 3;
+		for (j = smax; j; j--) {
+			unsigned r, g, b, m;
+			r = bl[0] * scale;
+			g = bl[1] * scale;
+			b = bl[2] * scale;
+			m = max(r, g);
+			m = max(m, b);
+			if (m > ((255<<16) + (1<<15))) {
+				unsigned s = (((255<<16) + (1<<15)) << 8) / m;
+				r = (r >> 8) * s;
+				g = (g >> 8) * s;
+				b = (b >> 8) * s;
 			}
-		} else {
-			for (j = smax; j; j--) {
-				t = bl[0]; t = (t * scale) >> 16; if (t > 255) t = 255;
-				dest[0] = t;
-				t = bl[1]; t = (t * scale) >> 16; if (t > 255) t = 255;
-				dest[1] = t;
-				t = bl[2]; t = (t * scale) >> 16; if (t > 255) t = 255;
-				dest[2] = t;
-				bl += 3;
-				dest += 3;
+			if (gl_invlightmaps) {
+				dest[0] = 255 - (r >> 16);
+				dest[1] = 255 - (g >> 16);
+				dest[2] = 255 - (b >> 16);
+			} else {
+				dest[0] = r >> 16;
+				dest[1] = g >> 16;
+				dest[2] = b >> 16;
 			}
+			bl += 3;
+			dest += 3;
 		}
 	}
 }
