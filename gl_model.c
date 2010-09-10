@@ -865,7 +865,8 @@ void Mod_LoadLighting (lump_t *l) {
 					}
 
 					// calculate perceived brightness of the color sample
-					p = out[0]*0.31 + out[1]*0.52 + out[2]*0.17;
+					// kudos to Darel Rex Finley for his HSP color model
+					p = sqrt(out[0]*out[0]*0.241 + out[1]*out[1]*0.691 + out[2]*out[2]*0.068);
 					// scale to match perceived brightness of monochrome sample
 					s = *in / p;
 					r = s * out[0];
