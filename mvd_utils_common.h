@@ -106,7 +106,7 @@ typedef struct mvd_info_s {
     float value;
     int lfw;				//last fired weapon
 	mvd_ds_t das;			//dead alive stats
-	mvd_pw_t itemstats[15];		//item stats
+	mvd_pw_t itemstats[mvd_info_types];		//item stats
 	mvd_runs_t runs[512];	//
 	mvd_avgruns_all_t run_stats;	// calculated from other items
 	mvd_ks_t killstats;		// killstats
@@ -140,13 +140,13 @@ typedef struct mvd_new_info_s {
 	float value;						//mvd_info/mvd_autotrack value
 
 	mvd_event_t		*event;
-	items_t			item_info[mvd_info_types];
+	//items_t			item_info[mvd_info_types];
 	player_state_t	*p_state ;
 	player_info_t	*p_info;
 	//p_state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i];
 	//p_info_players = cl.players[i];
 	int lwf;						// last weapon fired
-	mvd_info_t info;
+	mvd_info_t mvdinfo;
 } mvd_new_info_t;// mvd_new_info;
 
 extern mvd_new_info_t mvd_new_info[MAX_CLIENTS];

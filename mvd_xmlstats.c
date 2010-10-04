@@ -75,55 +75,55 @@ static void mvd_s_p (FILE *f,int i,int k){
 			fprintf(f,"		<team>%s</team>\n",mvd_name_to_xml(mvd_new_info[i].p_info->team));
 		fprintf(f,"		<kills>\n");
 		for (z=0,x=AXE_INFO;x<=LG_INFO;x++){
-			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].info.killstats.normal[x].kills,mvd_wp_info[x].name);
-			z+=mvd_new_info[i].info.killstats.normal[x].kills;
+			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].mvdinfo.killstats.normal[x].kills,mvd_wp_info[x].name);
+			z+=mvd_new_info[i].mvdinfo.killstats.normal[x].kills;
 		}
-		fprintf(f,"			<spawn>%i</spawn>\n",mvd_new_info[i].info.spawntelefrags);
-		z+=mvd_new_info[i].info.spawntelefrags;
+		fprintf(f,"			<spawn>%i</spawn>\n",mvd_new_info[i].mvdinfo.spawntelefrags);
+		z+=mvd_new_info[i].mvdinfo.spawntelefrags;
 			fprintf(f,"			<all>%i</all>\n",z);
 		fprintf(f,"		</kills>\n");
 		fprintf(f,"		<teamkills>\n");
 		for (z=0,x=AXE_INFO;x<=LG_INFO;x++){
-			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].info.killstats.normal[x].teamkills,mvd_wp_info[x].name);
-			z+=mvd_new_info[i].info.killstats.normal[x].teamkills;
+			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].mvdinfo.killstats.normal[x].teamkills,mvd_wp_info[x].name);
+			z+=mvd_new_info[i].mvdinfo.killstats.normal[x].teamkills;
 		}
-		fprintf(f,"			<spawn>%i</spawn>\n",mvd_new_info[i].info.teamspawntelefrags);
-		z+=mvd_new_info[i].info.teamspawntelefrags;
+		fprintf(f,"			<spawn>%i</spawn>\n",mvd_new_info[i].mvdinfo.teamspawntelefrags);
+		z+=mvd_new_info[i].mvdinfo.teamspawntelefrags;
 			fprintf(f,"			<all>%i</all>\n",z);
 
 		fprintf(f,"		</teamkills>\n");
-		fprintf(f,"		<deaths>%i</deaths>\n",mvd_new_info[i].info.das.deathcount);
+		fprintf(f,"		<deaths>%i</deaths>\n",mvd_new_info[i].mvdinfo.das.deathcount);
 		fprintf(f,"		<took>\n");
 		for (x=SSG_INFO;x<=MH_INFO;x++){
-			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].info.itemstats[x].count,mvd_wp_info[x].name);
+			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].mvdinfo.itemstats[x].count,mvd_wp_info[x].name);
 		}
 		fprintf(f,"		</took>\n");
 		fprintf(f,"		<lost>\n");
 		for (x=SSG_INFO;x<=MH_INFO;x++){
-			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].info.itemstats[x].lost,mvd_wp_info[x].name);
+			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].mvdinfo.itemstats[x].lost,mvd_wp_info[x].name);
 		}
 		fprintf(f,"		</lost>\n");
 
 		fprintf(f,"	<runs>\n");
-		for(x=0;x<mvd_new_info[i].info.run;x++){
+		for(x=0;x<mvd_new_info[i].mvdinfo.run;x++){
 			fprintf(f,"		<run id=\"%i\">\n",x);
-			fprintf(f,"			<time>%9.3f</time>\n",mvd_new_info[i].info.runs[x].time);
-			fprintf(f,"			<frags>%i</frags>\n",mvd_new_info[i].info.runs[x].frags);
-			fprintf(f,"			<teamfrags>%i</teamfrags>\n",mvd_new_info[i].info.runs[x].teamfrags);
+			fprintf(f,"			<time>%9.3f</time>\n",mvd_new_info[i].mvdinfo.runs[x].time);
+			fprintf(f,"			<frags>%i</frags>\n",mvd_new_info[i].mvdinfo.runs[x].frags);
+			fprintf(f,"			<teamfrags>%i</teamfrags>\n",mvd_new_info[i].mvdinfo.runs[x].teamfrags);
 			fprintf(f,"		</run>\n");
 		}
 		fprintf(f,"	</runs>\n");
 
 		for(y=RING_INFO;y<=PENT_INFO ;y++){
-			if (mvd_new_info[i].info.itemstats[y].run == 0)
+			if (mvd_new_info[i].mvdinfo.itemstats[y].run == 0)
 				continue;
 			fprintf(f,"	<%s_runs>\n",mvd_wp_info[y].name);
 
-			for(x=0;x<mvd_new_info[i].info.itemstats[y].run;x++){
+			for(x=0;x<mvd_new_info[i].mvdinfo.itemstats[y].run;x++){
 			fprintf(f,"		<run id=\"%i\">\n",x);
-			fprintf(f,"			<time>%9.3f</time>\n",mvd_new_info[i].info.itemstats[y].runs[x].time);
-			fprintf(f,"			<frags>%i</frags>\n",mvd_new_info[i].info.itemstats[y].runs[x].frags);
-			fprintf(f,"			<teamfrags>%i</teamfrags>\n",mvd_new_info[i].info.itemstats[y].runs[x].teamfrags);;
+			fprintf(f,"			<time>%9.3f</time>\n",mvd_new_info[i].mvdinfo.itemstats[y].runs[x].time);
+			fprintf(f,"			<frags>%i</frags>\n",mvd_new_info[i].mvdinfo.itemstats[y].runs[x].frags);
+			fprintf(f,"			<teamfrags>%i</teamfrags>\n",mvd_new_info[i].mvdinfo.itemstats[y].runs[x].teamfrags);;
 			fprintf(f,"		</run>\n");
 			}
 			fprintf(f,"	</%s_runs>\n",mvd_wp_info[y].name);
@@ -157,7 +157,7 @@ static void mvd_s_t (FILE *f){
 		for (i = 0; i < mvd_cg_info.gametype; i++) {
 			if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1))
 				continue;
-			count+=mvd_new_info[i].info.itemstats[z].count;
+			count+=mvd_new_info[i].mvdinfo.itemstats[z].count;
 
 		}
 		fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
@@ -169,7 +169,7 @@ static void mvd_s_t (FILE *f){
 		for (i = 0; i < mvd_cg_info.pcount; i++) {
 			if (!strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1))
 				continue;
-			count+=mvd_new_info[i].info.itemstats[z].lost;
+			count+=mvd_new_info[i].mvdinfo.itemstats[z].lost;
 
 		}
 		fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
@@ -182,7 +182,7 @@ static void mvd_s_t (FILE *f){
 		for (i = 0; i < mvd_cg_info.pcount; i++) {
 			if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1))
 				continue;
-			count+=mvd_new_info[i].info.killstats.normal[z].kills;
+			count+=mvd_new_info[i].mvdinfo.killstats.normal[z].kills;
 
 		}
 		fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
@@ -209,7 +209,7 @@ static void mvd_s_t (FILE *f){
 			for (i = 0; i < mvd_cg_info.gametype; i++) {
 				if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team2))
 					continue;
-				count+=mvd_new_info[i].info.itemstats[z].count;
+				count+=mvd_new_info[i].mvdinfo.itemstats[z].count;
 
 			}
 			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
@@ -222,7 +222,7 @@ static void mvd_s_t (FILE *f){
 			for (i = 0; i < mvd_cg_info.pcount; i++) {
 				if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team2))
 					continue;
-				count+=mvd_new_info[i].info.itemstats[z].lost;
+				count+=mvd_new_info[i].mvdinfo.itemstats[z].lost;
 
 			}
 			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
@@ -235,7 +235,7 @@ static void mvd_s_t (FILE *f){
 			for (i = 0; i < mvd_cg_info.pcount; i++) {
 				if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team2))
 					continue;
-				count+=mvd_new_info[i].info.killstats.normal[z].kills;
+				count+=mvd_new_info[i].mvdinfo.killstats.normal[z].kills;
 
 			}
 			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);

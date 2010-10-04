@@ -142,60 +142,60 @@ static expr_val MVD_Var_Vals(const char *n)
 	/// armor type
     case 'A': return Get_Expr_Double(bp_at);
 	/// current run time
-    case 'c': return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time);
+    case 'c': return Get_Expr_Double(mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].time);
 	/// current run frags
-    case 'C': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags);
+    case 'C': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].frags);
 	/// current run teamfrags
-	case 'd': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].teamfrags);
+	case 'd': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].teamfrags);
 
 	/// frags
     case 'f': return Get_Expr_Integer(mvd_new_info[i].p_info->frags);
 
 	/// teamfrags
-    case 'F': return Get_Expr_Integer(mvd_new_info[i].info.teamfrags);
+    case 'F': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.teamfrags);
 		
 	/// deaths
-	case 'g': return Get_Expr_Integer(mvd_new_info[i].info.das.deathcount);
+	case 'g': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.das.deathcount);
 	/// health
     case 'h': return Get_Expr_Integer(mvd_new_info[i].p_info->stats[STAT_HEALTH]);
 
 	/// taken super-shotguns
-	case 'I': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[SSG_INFO].count);
+	case 'I': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[SSG_INFO].count);
 	/// taken nailguns
-    case 'j': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[NG_INFO].count);
+    case 'j': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[NG_INFO].count);
 	/// taken super-nailguns
-    case 'J': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[SNG_INFO].count);
+    case 'J': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[SNG_INFO].count);
 	/// taken grenade launchers
-    case 'k': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[GL_INFO].count);
+    case 'k': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[GL_INFO].count);
 	/// # of lost grenade launchers
-    case 'K': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[GL_INFO].lost);
+    case 'K': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[GL_INFO].lost);
 	/// # of taken rocket launchers
-    case 'l': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[RL_INFO].count);
+    case 'l': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[RL_INFO].count);
     /// # of lost rocket launchers
-	case 'L': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[RL_INFO].lost);
-    case 'm': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[LG_INFO].count);
-    case 'M': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[LG_INFO].lost);
-    case 'n': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[MH_INFO].count);
-    case 'N': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[GA_INFO].count);
-    case 'o': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[YA_INFO].count);
-    case 'O': return Get_Expr_Integer(mvd_new_info[i].info.itemstats[RA_INFO].count);
+	case 'L': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[RL_INFO].lost);
+    case 'm': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[LG_INFO].count);
+    case 'M': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[LG_INFO].lost);
+    case 'n': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count);
+    case 'N': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[GA_INFO].count);
+    case 'o': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[YA_INFO].count);
+    case 'O': return Get_Expr_Integer(mvd_new_info[i].mvdinfo.itemstats[RA_INFO].count);
     case 'p': return Get_Expr_Double(bp_pw);
 
 	// id, so that player are always distinguishable by something
 	case 'u': return Get_Expr_Integer(i);
 	// v - average run time
-	case 'v': return Get_Expr_Double(mvd_new_info[i].info.run_stats.all.avg_time);
+	case 'v': return Get_Expr_Double(mvd_new_info[i].mvdinfo.run_stats.all.avg_time);
 	// V - average run frags
-	case 'V': return Get_Expr_Double(mvd_new_info[i].info.run_stats.all.avg_frags);
+	case 'V': return Get_Expr_Double(mvd_new_info[i].mvdinfo.run_stats.all.avg_frags);
 	// w - average run teamfrags
-	case 'w': return Get_Expr_Double(mvd_new_info[i].info.run_stats.all.avg_teamfrags);
+	case 'w': return Get_Expr_Double(mvd_new_info[i].mvdinfo.run_stats.all.avg_teamfrags);
 
     case 'W': return Get_Expr_Integer(MVD_AutoTrackBW(i));
-    case 'x': return Get_Expr_Double(mvd_new_info[i].info.itemstats[RING_INFO].count);
-    case 'X': return Get_Expr_Double(mvd_new_info[i].info.itemstats[RING_INFO].lost);
-    case 'y': return Get_Expr_Double(mvd_new_info[i].info.itemstats[QUAD_INFO].count);
-    case 'Y': return Get_Expr_Double(mvd_new_info[i].info.itemstats[QUAD_INFO].lost);
-    case 'z': return Get_Expr_Double(mvd_new_info[i].info.itemstats[PENT_INFO].count);
+    case 'x': return Get_Expr_Double(mvd_new_info[i].mvdinfo.itemstats[RING_INFO].count);
+    case 'X': return Get_Expr_Double(mvd_new_info[i].mvdinfo.itemstats[RING_INFO].lost);
+    case 'y': return Get_Expr_Double(mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].count);
+    case 'Y': return Get_Expr_Double(mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].lost);
+    case 'z': return Get_Expr_Double(mvd_new_info[i].mvdinfo.itemstats[PENT_INFO].count);
 	}
 	return Get_Expr_Integer(0);
 }
