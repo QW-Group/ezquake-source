@@ -2471,8 +2471,17 @@ qbool SB_Specials_Key(int key, wchar unichar)
 }
 
 //
-// sorting routine
+// sorting routines
 //
+
+static int Servers_Compare_Ping_Func(const server_data *s1, const server_data *s2)
+{
+	int p1 = (sb_findroutes.integer && s1->bestping > 0) ? s1->bestping : s1->ping;
+	int p2 = (sb_findroutes.integer && s2->bestping > 0) ? s2->bestping : s2->ping;
+	int diff = p1 - p2;
+
+	return diff;
+}
 
 int Servers_Compare_Func(const void * p_s1, const void * p_s2)
 {
@@ -2514,7 +2523,8 @@ int Servers_Compare_Func(const void * p_s1, const void * p_s2)
                     d = ntohs(s1->address.port) - ntohs(s2->address.port);
                 break;
             case '3':
-                d = s1->ping - s2->ping; break;
+				d = Servers_Compare_Ping_Func(s1, s2);
+				break;
             case '4':
                 d = strcmp2(s1->display.gamedir, s2->display.gamedir); break;
             case '5':
