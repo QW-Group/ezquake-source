@@ -224,18 +224,30 @@ static void SB_Browser_Hide(const server_data *s)
 
 static void Join_Server (server_data *s)
 {
-	Cbuf_AddText ("join ");
-	Cbuf_AddText (s->display.ip);
-	Cbuf_AddText ("\n");
+	if (sb_findroutes.integer) {
+		Cbuf_AddText("spectator 0\n");
+		SB_PingTree_ConnectBestPath(&s->address);
+	}
+	else {
+		Cbuf_AddText ("join ");
+		Cbuf_AddText (s->display.ip);
+		Cbuf_AddText ("\n");
+	}
+
 	SB_Browser_Hide(s);
 }
 
 static void Observe_Server (server_data *s)
 {
-	Cbuf_AddText ("observe ");
-	Cbuf_AddText (s->display.ip);
-	Cbuf_AddText ("\n");
-
+	if (sb_findroutes.integer) {
+		Cbuf_AddText("spectator 1\n");
+		SB_PingTree_ConnectBestPath(&s->address);
+	}
+	else {
+		Cbuf_AddText ("observe ");
+		Cbuf_AddText (s->display.ip);
+		Cbuf_AddText ("\n");
+	}
 	SB_Browser_Hide(s);
 }
 
@@ -1955,6 +1967,7 @@ void Serverinfo_Key(int key)
     switch (key)
     {
         case K_MOUSE1:
+		case 'x': // x was once used for best route connection
         case K_ENTER:
 			if (serverinfo_pos != 2)
             {
@@ -2050,10 +2063,6 @@ void Serverinfo_Key(int key)
              break;
 		case 'i':
 			SB_PingTree_DumpPath(&show_serverinfo->address);
-			break;
-		case 'x':
-			SB_PingTree_ConnectBestPath(&show_serverinfo->address);
-			SB_Browser_Hide(show_serverinfo);
 			break;
         default:
             switch (serverinfo_pos)
