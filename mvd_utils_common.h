@@ -106,7 +106,7 @@ typedef struct mvd_info_s {
     float value;
     int lfw;				//last fired weapon
 	mvd_ds_t das;			//dead alive stats
-	mvd_pw_t info[15];		//iteam stats
+	mvd_pw_t itemstats[15];		//item stats
 	mvd_runs_t runs[512];	//
 	mvd_avgruns_all_t run_stats;	// calculated from other items
 	mvd_ks_t killstats;		// killstats

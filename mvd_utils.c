@@ -691,9 +691,9 @@ void MVD_Status_Announcer(int i, int z){
 	vec3_t *pl;
 	pn=mvd_new_info[i].p_info->name;
 	pl=&mvd_new_info[i].p_state->origin;
-	if (mvd_new_info[i].info.info[z].mention==1)
+	if (mvd_new_info[i].info.itemstats[z].mention==1)
 	{
-		mvd_new_info[i].info.info[z].mention = 0;
+		mvd_new_info[i].info.itemstats[z].mention = 0;
 
 		if (!mvd_moreinfo.integer)
 			return;
@@ -715,9 +715,9 @@ void MVD_Status_Announcer(int i, int z){
 			case 14: Com_Printf("%s Took %s @ %s\n",pn, tp_name_mh.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 		}
 	}
-	else if (mvd_new_info[i].info.info[z].mention==-1)
+	else if (mvd_new_info[i].info.itemstats[z].mention==-1)
 	{
-		mvd_new_info[i].info.info[z].mention = 0;
+		mvd_new_info[i].info.itemstats[z].mention = 0;
 
 		if (!mvd_moreinfo.integer)
 			return;
@@ -729,7 +729,7 @@ void MVD_Status_Announcer(int i, int z){
 			case 8: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ring.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 			case 9: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_quad.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 			case 10:
-				if (mvd_new_info[i].info.info[QUAD_INFO].starttime - cls.demotime < 30) {
+				if (mvd_new_info[i].info.itemstats[QUAD_INFO].starttime - cls.demotime < 30) {
 					Com_Printf("%s Lost %s @ %s\n",pn, tp_name_pent.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
 				} else {
 					Com_Printf("%s's %s ended\n",pn, tp_name_pent.string,TP_ParseFunChars(TP_LocationName(*pl),false));break;
@@ -745,13 +745,13 @@ void MVD_Status_Announcer(int i, int z){
 void MVD_Status_WP(int i){
 	int j,k;
 	for (k = j = SSG_INFO; j <= LG_INFO; j++, k = k*2){
-		if (!mvd_new_info[i].info.info[j].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & k){
+		if (!mvd_new_info[i].info.itemstats[j].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & k){
 			if (j >= GL_INFO && cl.deathmatch == 1) {
 				MVD_ClockStart(j);
 			}
-			mvd_new_info[i].info.info[j].mention = 1;
-			mvd_new_info[i].info.info[j].has = 1;
-			mvd_new_info[i].info.info[j].count++;
+			mvd_new_info[i].info.itemstats[j].mention = 1;
+			mvd_new_info[i].info.itemstats[j].has = 1;
+			mvd_new_info[i].info.itemstats[j].count++;
 		}
 	}
 
@@ -774,16 +774,16 @@ void MVD_Stats_Cleanup (void){
 void MVD_Set_Armor_Stats(int z,int i){
 	switch(z){
 		case GA_INFO:
-			mvd_new_info[i].info.info[YA_INFO].has=0;
-			mvd_new_info[i].info.info[RA_INFO].has=0;
+			mvd_new_info[i].info.itemstats[YA_INFO].has=0;
+			mvd_new_info[i].info.itemstats[RA_INFO].has=0;
 			break;
 		case YA_INFO:
-			mvd_new_info[i].info.info[GA_INFO].has=0;
-			mvd_new_info[i].info.info[RA_INFO].has=0;
+			mvd_new_info[i].info.itemstats[GA_INFO].has=0;
+			mvd_new_info[i].info.itemstats[RA_INFO].has=0;
 			break;
 		case RA_INFO:
-			mvd_new_info[i].info.info[GA_INFO].has=0;
-			mvd_new_info[i].info.info[YA_INFO].has=0;
+			mvd_new_info[i].info.itemstats[GA_INFO].has=0;
+			mvd_new_info[i].info.itemstats[YA_INFO].has=0;
 			break;
 
 	}
@@ -864,17 +864,17 @@ int MVD_Stats_Gather(void){
 			for(x=0;x<13;x++){
 
 				if (x == MVD_Weapon_LWF(mvd_new_info[i].info.lfw)){
-						mvd_new_info[i].info.info[x].mention=-1;
-						mvd_new_info[i].info.info[x].lost++;
+						mvd_new_info[i].info.itemstats[x].mention=-1;
+						mvd_new_info[i].info.itemstats[x].lost++;
 				}
 
-				if (x == QUAD_INFO && mvd_new_info[i].info.info[QUAD_INFO].has){
-					if (mvd_new_info[i].info.info[x].starttime - cls.demotime < 30 )
+				if (x == QUAD_INFO && mvd_new_info[i].info.itemstats[QUAD_INFO].has){
+					if (mvd_new_info[i].info.itemstats[x].starttime - cls.demotime < 30 )
 						quad_is_active = 0;
-						mvd_new_info[i].info.info[x].run++;
-						mvd_new_info[i].info.info[x].lost++;
+						mvd_new_info[i].info.itemstats[x].run++;
+						mvd_new_info[i].info.itemstats[x].lost++;
 				}
-				mvd_new_info[i].info.info[x].has=0;
+				mvd_new_info[i].info.itemstats[x].has=0;
 			}
 			mvd_new_info[i].info.lfw = -1;
 		}
@@ -883,29 +883,29 @@ int MVD_Stats_Gather(void){
 
 		for (x=GA_INFO;x<=RA_INFO && mvd_cg_info.deathmatch!=4;x++){
 			if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
-				if (!mvd_new_info[i].info.info[x].has){
+				if (!mvd_new_info[i].info.itemstats[x].has){
 					MVD_ClockStart(x);
 					MVD_Set_Armor_Stats(x,i);
-					mvd_new_info[i].info.info[x].count++;
-					mvd_new_info[i].info.info[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
-					mvd_new_info[i].info.info[x].mention=1;
-					mvd_new_info[i].info.info[x].has=1;
+					mvd_new_info[i].info.itemstats[x].count++;
+					mvd_new_info[i].info.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
+					mvd_new_info[i].info.itemstats[x].mention=1;
+					mvd_new_info[i].info.itemstats[x].has=1;
 				}
-				if (mvd_new_info[i].info.info[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
+				if (mvd_new_info[i].info.itemstats[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
 					MVD_ClockStart(x);
-					mvd_new_info[i].info.info[x].count++;
-					mvd_new_info[i].info.info[x].mention = 1;
+					mvd_new_info[i].info.itemstats[x].count++;
+					mvd_new_info[i].info.itemstats[x].mention = 1;
 				}
-				mvd_new_info[i].info.info[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
+				mvd_new_info[i].info.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 			}
 		}
 
 
 		for (x=RING_INFO;x<=PENT_INFO && mvd_cg_info.deathmatch!=4;x++){
-			if(!mvd_new_info[i].info.info[x].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it){
+			if(!mvd_new_info[i].info.itemstats[x].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it){
 				MVD_ClockStart(x);
-				mvd_new_info[i].info.info[x].mention = 1;
-				mvd_new_info[i].info.info[x].has = 1;
+				mvd_new_info[i].info.itemstats[x].mention = 1;
+				mvd_new_info[i].info.itemstats[x].has = 1;
 				if (x==PENT_INFO && (powerup_cam_active == 3 || powerup_cam_active == 2)){
 					pent_mentioned=0;
 					pent_is_active=1;
@@ -916,37 +916,37 @@ int MVD_Stats_Gather(void){
 					quad_is_active=1;
 					powerup_cam_active-=1;
 				}
-				mvd_new_info[i].info.info[x].starttime = cls.demotime;
-				mvd_new_info[i].info.info[x].count++;
+				mvd_new_info[i].info.itemstats[x].starttime = cls.demotime;
+				mvd_new_info[i].info.itemstats[x].count++;
 			}
-			if (mvd_new_info[i].info.info[x].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it)){
-				mvd_new_info[i].info.info[x].has = 0;
+			if (mvd_new_info[i].info.itemstats[x].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it)){
+				mvd_new_info[i].info.itemstats[x].has = 0;
 				if (x==QUAD_INFO && quad_is_active){
 					quad_is_active=0;
 				}
 				if (x==PENT_INFO && pent_is_active){
 					pent_is_active=0;
 				}
-				mvd_new_info[i].info.info[x].runs[mvd_new_info[i].info.info[x].run].starttime = mvd_new_info[i].info.info[x].starttime;
-				mvd_new_info[i].info.info[x].runs[mvd_new_info[i].info.info[x].run].time = cls.demotime - mvd_new_info[i].info.info[x].starttime;
-				mvd_new_info[i].info.info[x].run++;
+				mvd_new_info[i].info.itemstats[x].runs[mvd_new_info[i].info.itemstats[x].run].starttime = mvd_new_info[i].info.itemstats[x].starttime;
+				mvd_new_info[i].info.itemstats[x].runs[mvd_new_info[i].info.itemstats[x].run].time = cls.demotime - mvd_new_info[i].info.itemstats[x].starttime;
+				mvd_new_info[i].info.itemstats[x].run++;
 			}
 		}
 
-		if (!mvd_new_info[i].info.info[MH_INFO].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH){
-			mvd_new_info[i].info.info[MH_INFO].mention = 1;
-			mvd_new_info[i].info.info[MH_INFO].has = 1;
-			mvd_new_info[i].info.info[MH_INFO].count++;
+		if (!mvd_new_info[i].info.itemstats[MH_INFO].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH){
+			mvd_new_info[i].info.itemstats[MH_INFO].mention = 1;
+			mvd_new_info[i].info.itemstats[MH_INFO].has = 1;
+			mvd_new_info[i].info.itemstats[MH_INFO].count++;
 		}
-		if (mvd_new_info[i].info.info[MH_INFO].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH)) {
-			mvd_new_info[i].info.info[MH_INFO].has = 0;
+		if (mvd_new_info[i].info.itemstats[MH_INFO].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH)) {
+			mvd_new_info[i].info.itemstats[MH_INFO].has = 0;
 			MVD_ClockStart(MH_INFO);
 		}
 
 		for (z=RING_INFO;z<=PENT_INFO;z++){
-			if (mvd_new_info[i].info.info[z].has == 1){
-				mvd_new_info[i].info.info[z].runs[mvd_new_info[i].info.info[z].run].starttime = mvd_new_info[i].info.info[z].starttime;
-				mvd_new_info[i].info.info[z].runs[mvd_new_info[i].info.info[z].run].time = cls.demotime - mvd_new_info[i].info.info[z].starttime;
+			if (mvd_new_info[i].info.itemstats[z].has == 1){
+				mvd_new_info[i].info.itemstats[z].runs[mvd_new_info[i].info.itemstats[z].run].starttime = mvd_new_info[i].info.itemstats[z].starttime;
+				mvd_new_info[i].info.itemstats[z].runs[mvd_new_info[i].info.itemstats[z].run].time = cls.demotime - mvd_new_info[i].info.itemstats[z].starttime;
 			}
 		}
 
@@ -960,8 +960,8 @@ int MVD_Stats_Gather(void){
 				if (mvd_new_info[i].info.lfw == -1)
 					mvd_new_info[i].info.spawntelefrags+=killdiff;
 				for(z=8;z<11;z++){
-					if(mvd_new_info[i].info.info[z].has)
-						mvd_new_info[i].info.info[z].runs[mvd_new_info[i].info.info[z].run].frags+=killdiff;
+					if(mvd_new_info[i].info.itemstats[z].has)
+						mvd_new_info[i].info.itemstats[z].runs[mvd_new_info[i].info.itemstats[z].run].frags+=killdiff;
 				}
 				mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags++;
 				}else if (mvd_new_info[i].info.lastfrags > mvd_new_info[i].p_info->frags){
@@ -975,8 +975,8 @@ int MVD_Stats_Gather(void){
 
 				}
 				for(z=8;z<11;z++){
-					if(mvd_new_info[i].info.info[z].has)
-						mvd_new_info[i].info.info[z].runs[mvd_new_info[i].info.info[z].run].teamfrags+=killdiff;
+					if(mvd_new_info[i].info.itemstats[z].has)
+						mvd_new_info[i].info.itemstats[z].runs[mvd_new_info[i].info.itemstats[z].run].teamfrags+=killdiff;
 				}
 				mvd_new_info[i].info.runs[mvd_new_info[i].info.run].teamfrags++;
 				}
@@ -1066,19 +1066,19 @@ void MVD_Status (void){
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
 	strlcpy(str,va("RL: %i LG: %i GL: %i RA: %i YA: %i GA:%i",\
-		mvd_new_info[id].info.info[RL_INFO].count,\
-		mvd_new_info[id].info.info[LG_INFO].count,\
-		mvd_new_info[id].info.info[GL_INFO].count,\
-		mvd_new_info[id].info.info[RA_INFO].count,\
-		mvd_new_info[id].info.info[YA_INFO].count,\
-		mvd_new_info[id].info.info[RA_INFO].count),sizeof(str));
+		mvd_new_info[id].info.itemstats[RL_INFO].count,\
+		mvd_new_info[id].info.itemstats[LG_INFO].count,\
+		mvd_new_info[id].info.itemstats[GL_INFO].count,\
+		mvd_new_info[id].info.itemstats[RA_INFO].count,\
+		mvd_new_info[id].info.itemstats[YA_INFO].count,\
+		mvd_new_info[id].info.itemstats[RA_INFO].count),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
     strlcpy(str,va("Ring: %i Quad: %i Pent: %i MH: %i",\
-		mvd_new_info[id].info.info[RING_INFO].count,\
-		mvd_new_info[id].info.info[QUAD_INFO].count,\
-		mvd_new_info[id].info.info[PENT_INFO].count,\
-		mvd_new_info[id].info.info[MH_INFO].count),sizeof(str));
+		mvd_new_info[id].info.itemstats[RING_INFO].count,\
+		mvd_new_info[id].info.itemstats[QUAD_INFO].count,\
+		mvd_new_info[id].info.itemstats[PENT_INFO].count,\
+		mvd_new_info[id].info.itemstats[MH_INFO].count),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
@@ -1137,10 +1137,10 @@ void MVD_Status (void){
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
 	strlcpy(str,va("RL: %i LG: %i GL: %i QUAD: %i",\
-		mvd_new_info[id].info.info[RL_INFO].lost,\
-		mvd_new_info[id].info.info[LG_INFO].lost,\
-		mvd_new_info[id].info.info[GL_INFO].lost,\
-		mvd_new_info[id].info.info[QUAD_INFO].lost),sizeof(str));
+		mvd_new_info[id].info.itemstats[RL_INFO].lost,\
+		mvd_new_info[id].info.itemstats[LG_INFO].lost,\
+		mvd_new_info[id].info.itemstats[GL_INFO].lost,\
+		mvd_new_info[id].info.itemstats[QUAD_INFO].lost),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
@@ -1190,11 +1190,11 @@ void MVD_Status (void){
 	strlcpy(str,Make_Red(str,0),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	p=mvd_new_info[id].info.info[QUAD_INFO].run-3;
+	p=mvd_new_info[id].info.itemstats[QUAD_INFO].run-3;
 	if (p<0)
 		p=0;
-	for(;p<=mvd_new_info[id].info.info[QUAD_INFO].run && mvd_new_info[id].info.info[QUAD_INFO].runs[p].time ;p++){
-		strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.info[QUAD_INFO].runs[p].time,mvd_new_info[id].info.info[QUAD_INFO].runs[p].frags,mvd_new_info[id].info.info[QUAD_INFO].runs[p].teamfrags),sizeof(str));
+	for(;p<=mvd_new_info[id].info.itemstats[QUAD_INFO].run && mvd_new_info[id].info.itemstats[QUAD_INFO].runs[p].time ;p++){
+		strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.itemstats[QUAD_INFO].runs[p].time,mvd_new_info[id].info.itemstats[QUAD_INFO].runs[p].frags,mvd_new_info[id].info.itemstats[QUAD_INFO].runs[p].teamfrags),sizeof(str));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
 	}
 }

@@ -95,12 +95,12 @@ static void mvd_s_p (FILE *f,int i,int k){
 		fprintf(f,"		<deaths>%i</deaths>\n",mvd_new_info[i].info.das.deathcount);
 		fprintf(f,"		<took>\n");
 		for (x=SSG_INFO;x<=MH_INFO;x++){
-			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].info.info[x].count,mvd_wp_info[x].name);
+			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].info.itemstats[x].count,mvd_wp_info[x].name);
 		}
 		fprintf(f,"		</took>\n");
 		fprintf(f,"		<lost>\n");
 		for (x=SSG_INFO;x<=MH_INFO;x++){
-			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].info.info[x].lost,mvd_wp_info[x].name);
+			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[x].name,mvd_new_info[i].info.itemstats[x].lost,mvd_wp_info[x].name);
 		}
 		fprintf(f,"		</lost>\n");
 
@@ -115,15 +115,15 @@ static void mvd_s_p (FILE *f,int i,int k){
 		fprintf(f,"	</runs>\n");
 
 		for(y=RING_INFO;y<=PENT_INFO ;y++){
-			if (mvd_new_info[i].info.info[y].run == 0)
+			if (mvd_new_info[i].info.itemstats[y].run == 0)
 				continue;
 			fprintf(f,"	<%s_runs>\n",mvd_wp_info[y].name);
 
-			for(x=0;x<mvd_new_info[i].info.info[y].run;x++){
+			for(x=0;x<mvd_new_info[i].info.itemstats[y].run;x++){
 			fprintf(f,"		<run id=\"%i\">\n",x);
-			fprintf(f,"			<time>%9.3f</time>\n",mvd_new_info[i].info.info[y].runs[x].time);
-			fprintf(f,"			<frags>%i</frags>\n",mvd_new_info[i].info.info[y].runs[x].frags);
-			fprintf(f,"			<teamfrags>%i</teamfrags>\n",mvd_new_info[i].info.info[y].runs[x].teamfrags);;
+			fprintf(f,"			<time>%9.3f</time>\n",mvd_new_info[i].info.itemstats[y].runs[x].time);
+			fprintf(f,"			<frags>%i</frags>\n",mvd_new_info[i].info.itemstats[y].runs[x].frags);
+			fprintf(f,"			<teamfrags>%i</teamfrags>\n",mvd_new_info[i].info.itemstats[y].runs[x].teamfrags);;
 			fprintf(f,"		</run>\n");
 			}
 			fprintf(f,"	</%s_runs>\n",mvd_wp_info[y].name);
@@ -157,7 +157,7 @@ static void mvd_s_t (FILE *f){
 		for (i = 0; i < mvd_cg_info.gametype; i++) {
 			if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1))
 				continue;
-			count+=mvd_new_info[i].info.info[z].count;
+			count+=mvd_new_info[i].info.itemstats[z].count;
 
 		}
 		fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
@@ -169,7 +169,7 @@ static void mvd_s_t (FILE *f){
 		for (i = 0; i < mvd_cg_info.pcount; i++) {
 			if (!strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1))
 				continue;
-			count+=mvd_new_info[i].info.info[z].lost;
+			count+=mvd_new_info[i].info.itemstats[z].lost;
 
 		}
 		fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
@@ -209,7 +209,7 @@ static void mvd_s_t (FILE *f){
 			for (i = 0; i < mvd_cg_info.gametype; i++) {
 				if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team2))
 					continue;
-				count+=mvd_new_info[i].info.info[z].count;
+				count+=mvd_new_info[i].info.itemstats[z].count;
 
 			}
 			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
@@ -222,7 +222,7 @@ static void mvd_s_t (FILE *f){
 			for (i = 0; i < mvd_cg_info.pcount; i++) {
 				if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team2))
 					continue;
-				count+=mvd_new_info[i].info.info[z].lost;
+				count+=mvd_new_info[i].info.itemstats[z].lost;
 
 			}
 			fprintf(f,"			<%s>%i</%s>\n",mvd_wp_info[z].name,count,mvd_wp_info[z].name);
