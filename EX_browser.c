@@ -825,6 +825,26 @@ void SB_Servers_OnShow (void)
 	resort_servers = 1;
 }
 
+static const char *SB_Ping_Color(int ping)
+{
+	double frame_duration = 1000.0/77.0;
+	int frames = ping / frame_duration;
+
+	switch (frames) {
+		case 0: return "1f0"; // 13
+		case 1: return "3d0"; // 26
+		case 2: return "790"; // 39
+		case 3: return "880"; // 51
+		case 4: return "a60"; // 65
+		case 5: 
+		case 6: 
+		case 7: 
+		case 8:
+		case 9: return "d30"; // 70-116
+		default: return "f00"; // 116+
+	}
+}
+
 void SB_Servers_Draw (int x, int y, int w, int h)
 {
 	char line[1024];
@@ -924,12 +944,9 @@ void SB_Servers_Draw (int x, int y, int w, int h)
             if (sb_showgamedir.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.gamedir, COL_GAMEDIR, servnum==Servers_pos);
 			if (sb_showping.value) {
-				if (servers[servnum]->bestping >= 0) {
-					Add_ColumnColored(x, y+8*(i+1), &pos, servers[servnum]->display.bestping, COL_PING, "ff0");
-				}
-				else {
-					Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ping, COL_PING, servnum==Servers_pos);
-				}
+				const char *ping = (servers[servnum]->bestping >= 0) ? servers[servnum]->display.bestping : servers[servnum]->display.ping;
+				const char *color = SB_Ping_Color((servers[servnum]->bestping >= 0) ? servers[servnum]->bestping : servers[servnum]->ping);
+				Add_ColumnColored(x, y+8*(i+1), &pos, ping, COL_PING, color);
 			}
             if (sb_showaddress.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.ip, COL_IP, servnum==Servers_pos);
