@@ -158,9 +158,6 @@ void VX_TrackerThink()
 
 void VX_TrackerAddText(char *msg, tracktype_t tt)
 {
-	if (active_track >= max_active_tracks) // no more space!!
-		return;
-
 	if (!msg || !msg[0])
 		return;
 
@@ -170,6 +167,17 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 		case tt_streak: if (!amf_tracker_streaks.value) return; break;
 		case tt_flag:   if (!amf_tracker_flags.value)   return; break;
 		default: return;
+	}
+
+	if (active_track >= max_active_tracks) { // free space by removing the oldest one
+		int i;
+
+		for (i = 1; i < max_active_tracks; i++) {
+			trackermsg[i-1].die = trackermsg[i].die;
+			strlcpy(trackermsg[i-1].msg, trackermsg[i].msg, sizeof(trackermsg[0].msg));
+			trackermsg[i-1].tt = trackermsg[i].tt;
+		}
+		active_track--;
 	}
 
 	strlcpy(trackermsg[active_track].msg, msg, sizeof(trackermsg[0].msg));
