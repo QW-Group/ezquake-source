@@ -5988,67 +5988,6 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	Draw_SString(x, y + LETTERHEIGHT*scale, line2, scale);
 }
 
-double Inputlag_Linepos(void)
-{
-	return cl.time - ((int) cl.time);
-}
-
-//static double inputlag_lasthit = -1;
-
-void HUD_Inputlag_hit_f(void)
-{
-	int il = (Inputlag_Linepos()-0.5)*1000;
-	Com_Printf("Input lag: %d ms\n", il);
-}
-
-void SCR_HUD_DrawInputlag(hud_t *hud)
-{
-	static cvar_t
-		*vwidth = NULL,
-		*vheight = NULL,
-		*vstyle = NULL;
-	int x, y, w, h;
-	int style = 0;
-
-	if (!vwidth) {
-		vwidth = HUD_FindVar(hud, "width");
-		vheight = HUD_FindVar(hud, "height");
-		vstyle = HUD_FindVar(hud, "style");
-	}
-
-	w = vwidth->integer;
-	h = vheight->integer;
-	style = vstyle->integer;
-	style = bound(0, style, 1);
-
-    if (!HUD_PrepareDraw(hud, w, h, &x, &y))
-        return;
-
-	Draw_AlphaRectangleRGB(x, y, w, h,
-		1, true, RGBA_TO_COLOR(0,0,128,255));
-
-	if (style == 0) {
-		int middle = x+w*0.5;
-		Draw_AlphaRectangleRGB(x+w*Inputlag_Linepos(), y, 1, h,
-			1, true, RGBA_TO_COLOR(255,255,255,255));
-
-		Draw_AlphaRectangleRGB(middle-1, y, 1, h,
-			1, true, RGBA_TO_COLOR(255,255,0,255));
-
-		Draw_AlphaRectangleRGB(middle+1, y, 1, h,
-			1, true, RGBA_TO_COLOR(255,255,0,255));
-	}
-	else if (style == 1) {
-		double p = Inputlag_Linepos();
-
-		if (p >= 0.5 && p < 0.6) {
-			Draw_AlphaRectangleRGB(x, y, w, h,
-				1, true, RGBA_TO_COLOR(128,0,0,255));
-		}
-	}
-}
-
-
 #ifdef GLQUAKE
 
 
@@ -7862,15 +7801,6 @@ void CommonDraw_Init(void)
 		NULL
 		);
 
-	HUD_Register("inputlag", NULL, "Allows you to measure the input lag",
-		0, ca_active, 1, SCR_HUD_DrawInputlag,
-		"0", "screen", "center", "center", "0", "0", "0", "0 0 0", NULL,
-		"width", "200",
-		"height", "60",
-		"style", "0",
-		NULL
-		);
-	
 	HUD_Register("itemsclock", NULL, "Displays upcoming item respawns",
 		0, ca_active, 1, SCR_HUD_DrawItemsClock,
 		"0", "screen", "right", "center", "0", "0", "0", "0 0 0", NULL,

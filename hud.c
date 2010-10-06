@@ -785,7 +785,6 @@ void HUD_Init(void)
     Cmd_AddCommand ("togglehud", HUD_Toggle_f);
     Cmd_AddCommand ("align", HUD_Align_f);
     Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
-	Cmd_AddCommand ("inputlag_hit", HUD_Inputlag_hit_f);
 
 	// Variables.
     Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
