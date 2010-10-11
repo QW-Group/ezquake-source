@@ -231,7 +231,7 @@ char *Make_Red (char *s,int i){
     return buf;
 }
 
-void MVD_Init_Info (void) {
+void MVD_Init_Info (int player_slot) {
 	int i;
 	int z;
 
@@ -239,6 +239,9 @@ void MVD_Init_Info (void) {
 		if (!cl.players[i].name[0] || cl.players[i].spectator == 1)
 				continue;
 		mvd_new_info[z].id = i;
+		if (player_slot == i || player_slot == MAX_CLIENTS) {
+			mvd_new_info[z].mvdinfo.initialized = false;
+		}
 		// memset(mvd_new_info[z].item_info, 0, sizeof(mvd_new_info[z].item_info));
 		mvd_new_info[z++].p_info = &cl.players[i];
 	}
@@ -483,6 +486,14 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y)
 
 		current = current->next;
 		y += LETTERHEIGHT;
+	}
+}
+
+static void MVD_Took(int player, int item)
+{
+	if (mvd_new_info[player].mvdinfo.initialized) {
+		MVD_ClockStart(item);
+		mvd_new_info[player].mvdinfo.itemstats[item].mention = 1;
 	}
 }
 
@@ -747,9 +758,8 @@ void MVD_Status_WP(int i){
 	for (k = j = SSG_INFO; j <= LG_INFO; j++, k = k*2){
 		if (!mvd_new_info[i].mvdinfo.itemstats[j].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & k){
 			if (j >= GL_INFO && cl.deathmatch == 1) {
-				MVD_ClockStart(j);
+				MVD_Took(i, j);
 			}
-			mvd_new_info[i].mvdinfo.itemstats[j].mention = 1;
 			mvd_new_info[i].mvdinfo.itemstats[j].has = 1;
 			mvd_new_info[i].mvdinfo.itemstats[j].count++;
 		}
@@ -884,17 +894,15 @@ int MVD_Stats_Gather(void){
 		for (x=GA_INFO;x<=RA_INFO && mvd_cg_info.deathmatch!=4;x++){
 			if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
 				if (!mvd_new_info[i].mvdinfo.itemstats[x].has){
-					MVD_ClockStart(x);
+					MVD_Took(i, x);
 					MVD_Set_Armor_Stats(x,i);
 					mvd_new_info[i].mvdinfo.itemstats[x].count++;
 					mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
-					mvd_new_info[i].mvdinfo.itemstats[x].mention=1;
 					mvd_new_info[i].mvdinfo.itemstats[x].has=1;
 				}
 				if (mvd_new_info[i].mvdinfo.itemstats[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
-					MVD_ClockStart(x);
+					MVD_Took(i, x);
 					mvd_new_info[i].mvdinfo.itemstats[x].count++;
-					mvd_new_info[i].mvdinfo.itemstats[x].mention = 1;
 				}
 				mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 			}
@@ -903,8 +911,7 @@ int MVD_Stats_Gather(void){
 
 		for (x=RING_INFO;x<=PENT_INFO && mvd_cg_info.deathmatch!=4;x++){
 			if(!mvd_new_info[i].mvdinfo.itemstats[x].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it){
-				MVD_ClockStart(x);
-				mvd_new_info[i].mvdinfo.itemstats[x].mention = 1;
+				MVD_Took(i, x);
 				mvd_new_info[i].mvdinfo.itemstats[x].has = 1;
 				if (x==PENT_INFO && (powerup_cam_active == 3 || powerup_cam_active == 2)){
 					pent_mentioned=0;
@@ -1026,7 +1033,7 @@ int MVD_Stats_Gather(void){
 			else if (powerup_cam_active == 0)
 				powerup_cam_active = 1;
 		}
-
+		mvd_new_info[i].mvdinfo.initialized = true;
 	}
 
 	return 1;
@@ -1210,7 +1217,7 @@ qbool MVD_MatchStarted(void) {
 
 void MVD_Mainhook (void){
 	if (MVD_MatchStarted())
-		MVD_Init_Info();
+		MVD_Init_Info(MAX_CLIENTS);
 
 	MVD_Stats_Gather();
 	MVD_Stats_CalcAvgRuns();

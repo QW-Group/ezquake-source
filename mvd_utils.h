@@ -31,7 +31,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y);
 void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *width, int *height);
 
 // update match info structures
-void MVD_Init_Info(void);
+void MVD_Init_Info(int player_slot);
 
 extern int powerup_cam_active,cam_1,cam_2,cam_3,cam_4;
 extern cvar_t mvd_pc_view_1,mvd_pc_view_2,mvd_pc_view_3,mvd_pc_view_4;

@@ -2016,11 +2016,11 @@ void CL_UpdateUserinfo (void)
 
 	if (player->name[0] && was_empty_slot) {
 		CL_PlayerEnterSlot(player);
-		MVD_Init_Info();
+		MVD_Init_Info(slot);
 	}
 	else if (!player->name[0] && !was_empty_slot) {
 		CL_PlayerLeaveSlot(player);
-		MVD_Init_Info();
+		MVD_Init_Info(slot);
 	}
 }
 

@@ -116,7 +116,7 @@ typedef struct mvd_info_s {
 	int lastfrags;
 	int run;
 	int firstrun;
-
+	qbool initialized;
 } mvd_info_t;
 
 typedef struct items_s {
@@ -140,11 +140,8 @@ typedef struct mvd_new_info_s {
 	float value;						//mvd_info/mvd_autotrack value
 
 	mvd_event_t		*event;
-	//items_t			item_info[mvd_info_types];
 	player_state_t	*p_state ;
 	player_info_t	*p_info;
-	//p_state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i];
-	//p_info_players = cl.players[i];
 	int lwf;						// last weapon fired
 	mvd_info_t mvdinfo;
 } mvd_new_info_t;// mvd_new_info;
