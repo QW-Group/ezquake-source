@@ -1934,6 +1934,7 @@ qbool CL_GetDemoMessage (void)
 			if (cls.state >= ca_active)
 			{
 				cls.demotime = demostarttime + cls.demo_rewindtime;
+				cls.demoseeking = DST_SEEKING_NORMAL;
 				cls.demorewinding = false;
 
 				// We have now finished restarting the demo and will now seek
@@ -1964,6 +1965,10 @@ qbool CL_GetDemoMessage (void)
 
 		// Read the time of the next message in the demo.
 		demotime = CL_PeekDemoTime();
+
+		// Keep gameclock up-to-date if we are seeking
+		if (cls.demoseeking && demotime > prevtime)
+			cl.gametime += demotime - prevtime;
 
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
 		if (cls.demoseeking == DST_SEEKING_DEMOMARK_FOUND)
@@ -2002,8 +2007,8 @@ qbool CL_GetDemoMessage (void)
 		// Save the previous time for MVD playback (for the next message),
 		// it is needed to calculate the demotime since in mvd's the time is
 		// saved as the number of miliseconds since last frame message.
-		if (cls.mvdplayback)
-			prevtime = demotime;
+		// This is also used when seeking in qwds to keep the gameclock in time.
+		prevtime = demotime;
 
 		// Get the msg type.
 		CL_Demo_Read(&c, sizeof(c), false);
@@ -4489,7 +4494,6 @@ void CL_Demo_Jump_f (void)
 
 	// The numbers after the first colon will be seconds.
     seconds += atoi(text);
-	cl.gametime += seconds;
 
 	CL_Demo_Jump(seconds, relative, DST_SEEKING_NORMAL);
 }
@@ -4514,12 +4518,6 @@ void CL_Demo_Jump_Mark_f (void)
 		Com_Printf("Error: demo must be active first\n");
 		return;
 	}
-
-#if 0 // FIXME: have no idea about seconds
-	// The numbers after the first colon will be seconds.
-    seconds += atoi(text);
-	cl.gametime += seconds;
-#endif
 
 	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
 }

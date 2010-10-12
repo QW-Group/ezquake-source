@@ -2184,7 +2184,7 @@ void CL_ParseServerInfoChange (void)
 		{
 			if (cls.demoplayback) 
 			{
-				cl.gametime = (cl.timelimit * 60) - timeleft; // This one causes demo_jump de-sync. however it must be here to maintain overtime.
+				cl.gametime = (cl.timelimit * 60) - timeleft;
 			}
 			else 
 			{
