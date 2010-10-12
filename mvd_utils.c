@@ -830,9 +830,137 @@ void MVD_Stats_CalcAvgRuns(void)
 	}
 }
 
+static void MVD_Stats_Gather_AlivePlayer(int player_index)
+{
+	int x; // item index
+	int z; // item index
+	int i = player_index;
+	int killdiff;
+
+	for (x=GA_INFO;x<=RA_INFO && mvd_cg_info.deathmatch!=4;x++){
+		if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
+			if (!mvd_new_info[i].mvdinfo.itemstats[x].has){
+				MVD_Took(i, x);
+				MVD_Set_Armor_Stats(x,i);
+				mvd_new_info[i].mvdinfo.itemstats[x].count++;
+				mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
+				mvd_new_info[i].mvdinfo.itemstats[x].has=1;
+			}
+			if (mvd_new_info[i].mvdinfo.itemstats[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
+				MVD_Took(i, x);
+				mvd_new_info[i].mvdinfo.itemstats[x].count++;
+			}
+			mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
+		}
+	}
+
+	for (x=RING_INFO;x<=PENT_INFO && mvd_cg_info.deathmatch!=4;x++){
+		if(!mvd_new_info[i].mvdinfo.itemstats[x].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it){
+			MVD_Took(i, x);
+			mvd_new_info[i].mvdinfo.itemstats[x].has = 1;
+			if (x==PENT_INFO && (powerup_cam_active == 3 || powerup_cam_active == 2)){
+				pent_mentioned=0;
+				pent_is_active=1;
+				powerup_cam_active-=2;
+			}
+			if (x==QUAD_INFO && (powerup_cam_active == 3 || powerup_cam_active == 1)){
+				quad_mentioned=0;
+				quad_is_active=1;
+				powerup_cam_active-=1;
+			}
+			mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demotime;
+			mvd_new_info[i].mvdinfo.itemstats[x].count++;
+		}
+		if (mvd_new_info[i].mvdinfo.itemstats[x].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it)){
+			mvd_new_info[i].mvdinfo.itemstats[x].has = 0;
+			if (x==QUAD_INFO && quad_is_active){
+				quad_is_active=0;
+			}
+			if (x==PENT_INFO && pent_is_active){
+				pent_is_active=0;
+			}
+			mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].starttime = mvd_new_info[i].mvdinfo.itemstats[x].starttime;
+			mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].time = cls.demotime - mvd_new_info[i].mvdinfo.itemstats[x].starttime;
+			mvd_new_info[i].mvdinfo.itemstats[x].run++;
+		}
+	}
+
+	if (!mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH){
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = 1;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 1;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
+	}
+	if (mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH)) {
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 0;
+		MVD_ClockStart(MH_INFO);
+	}
+
+	for (z=RING_INFO;z<=PENT_INFO;z++){
+		if (mvd_new_info[i].mvdinfo.itemstats[z].has == 1){
+			mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].starttime = mvd_new_info[i].mvdinfo.itemstats[z].starttime;
+			mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].time = cls.demotime - mvd_new_info[i].mvdinfo.itemstats[z].starttime;
+		}
+	}
+
+	if (mvd_new_info[i].mvdinfo.lastfrags != mvd_new_info[i].p_info->frags ){
+		if (mvd_new_info[i].mvdinfo.lastfrags < mvd_new_info[i].p_info->frags){
+			killdiff = mvd_new_info[i].p_info->frags - mvd_new_info[i].mvdinfo.lastfrags;
+			for (z=0;z<8;z++){
+				if (z == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw))
+						mvd_new_info[i].mvdinfo.killstats.normal[z].kills+=killdiff;
+			}
+			if (mvd_new_info[i].mvdinfo.lfw == -1)
+				mvd_new_info[i].mvdinfo.spawntelefrags+=killdiff;
+			for(z=8;z<11;z++){
+				if(mvd_new_info[i].mvdinfo.itemstats[z].has)
+					mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].frags+=killdiff;
+			}
+			mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].frags++;
+			}else if (mvd_new_info[i].mvdinfo.lastfrags > mvd_new_info[i].p_info->frags){
+			killdiff = mvd_new_info[i].mvdinfo.lastfrags - mvd_new_info[i].p_info->frags ;
+			for (z=AXE_INFO;z<=LG_INFO;z++){
+				if (z == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw))
+					mvd_new_info[i].mvdinfo.killstats.normal[z].teamkills+=killdiff;
+			}
+			if (mvd_new_info[i].mvdinfo.lfw == -1){
+				mvd_new_info[i].mvdinfo.teamspawntelefrags+=killdiff;
+
+			}
+			for(z=8;z<11;z++){
+				if(mvd_new_info[i].mvdinfo.itemstats[z].has)
+					mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].teamfrags+=killdiff;
+			}
+			mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].teamfrags++;
+			}
+
+
+		mvd_new_info[i].mvdinfo.lastfrags = mvd_new_info[i].p_info->frags ;
+	}
+
+	mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].time=cls.demotime - mvd_new_info[i].mvdinfo.das.alivetimestart;
+
+	if (mvd_new_info[i].mvdinfo.lfw == -1){
+		if (mvd_new_info[i].mvdinfo.lastfrags > mvd_new_info[i].p_info->frags ){
+			mvd_new_info[i].mvdinfo.teamspawntelefrags += mvd_new_info[i].p_info->frags - mvd_new_info[i].mvdinfo.lastfrags ;
+		}else if (mvd_new_info[i].mvdinfo.lastfrags < mvd_new_info[i].p_info->frags ){
+			mvd_new_info[i].mvdinfo.spawntelefrags += mvd_new_info[i].p_info->frags -mvd_new_info[i].mvdinfo.lastfrags  ;
+		}
+		mvd_new_info[i].mvdinfo.lastfrags = mvd_new_info[i].p_info->frags;
+	}
+
+	if (mvd_new_info[i].p_state->weaponframe > 0)
+			mvd_new_info[i].mvdinfo.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
+	if (mvd_cg_info.deathmatch!=4){
+		MVD_Status_WP(i);
+		for (z=SSG_INFO;z<=RA_INFO;z++) {
+			MVD_Status_Announcer(i,z);
+		}
+	}
+}
+
 int MVD_Stats_Gather(void){
 	int death_stats = 0;
-	int x,i,z,killdiff;
+	int x,i;
 
 	if(cl.countdown == true){
 		return 0;
@@ -871,7 +999,7 @@ int MVD_Stats_Gather(void){
 			mvd_new_info[i].mvdinfo.run++;
 
 
-			for(x=0;x<13;x++){
+			for(x=0;x<13;x++){ // XXX: x<13? for sure? maybe x<mvd_info_types?
 
 				if (x == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw)){
 						mvd_new_info[i].mvdinfo.itemstats[x].mention=-1;
@@ -888,129 +1016,11 @@ int MVD_Stats_Gather(void){
 			}
 			mvd_new_info[i].mvdinfo.lfw = -1;
 		}
-		if(!mvd_new_info[i].mvdinfo.das.isdead){
 
-
-		for (x=GA_INFO;x<=RA_INFO && mvd_cg_info.deathmatch!=4;x++){
-			if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
-				if (!mvd_new_info[i].mvdinfo.itemstats[x].has){
-					MVD_Took(i, x);
-					MVD_Set_Armor_Stats(x,i);
-					mvd_new_info[i].mvdinfo.itemstats[x].count++;
-					mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
-					mvd_new_info[i].mvdinfo.itemstats[x].has=1;
-				}
-				if (mvd_new_info[i].mvdinfo.itemstats[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
-					MVD_Took(i, x);
-					mvd_new_info[i].mvdinfo.itemstats[x].count++;
-				}
-				mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
-			}
+		if(!mvd_new_info[i].mvdinfo.das.isdead) {
+			MVD_Stats_Gather_AlivePlayer(i);
 		}
 
-
-		for (x=RING_INFO;x<=PENT_INFO && mvd_cg_info.deathmatch!=4;x++){
-			if(!mvd_new_info[i].mvdinfo.itemstats[x].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it){
-				MVD_Took(i, x);
-				mvd_new_info[i].mvdinfo.itemstats[x].has = 1;
-				if (x==PENT_INFO && (powerup_cam_active == 3 || powerup_cam_active == 2)){
-					pent_mentioned=0;
-					pent_is_active=1;
-					powerup_cam_active-=2;
-				}
-				if (x==QUAD_INFO && (powerup_cam_active == 3 || powerup_cam_active == 1)){
-					quad_mentioned=0;
-					quad_is_active=1;
-					powerup_cam_active-=1;
-				}
-				mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demotime;
-				mvd_new_info[i].mvdinfo.itemstats[x].count++;
-			}
-			if (mvd_new_info[i].mvdinfo.itemstats[x].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it)){
-				mvd_new_info[i].mvdinfo.itemstats[x].has = 0;
-				if (x==QUAD_INFO && quad_is_active){
-					quad_is_active=0;
-				}
-				if (x==PENT_INFO && pent_is_active){
-					pent_is_active=0;
-				}
-				mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].starttime = mvd_new_info[i].mvdinfo.itemstats[x].starttime;
-				mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].time = cls.demotime - mvd_new_info[i].mvdinfo.itemstats[x].starttime;
-				mvd_new_info[i].mvdinfo.itemstats[x].run++;
-			}
-		}
-
-		if (!mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH){
-			mvd_new_info[i].mvdinfo.itemstats[MH_INFO].mention = 1;
-			mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 1;
-			mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
-		}
-		if (mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_SUPERHEALTH)) {
-			mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 0;
-			MVD_ClockStart(MH_INFO);
-		}
-
-		for (z=RING_INFO;z<=PENT_INFO;z++){
-			if (mvd_new_info[i].mvdinfo.itemstats[z].has == 1){
-				mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].starttime = mvd_new_info[i].mvdinfo.itemstats[z].starttime;
-				mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].time = cls.demotime - mvd_new_info[i].mvdinfo.itemstats[z].starttime;
-			}
-		}
-
-		if (mvd_new_info[i].mvdinfo.lastfrags != mvd_new_info[i].p_info->frags ){
-			if (mvd_new_info[i].mvdinfo.lastfrags < mvd_new_info[i].p_info->frags){
-				killdiff = mvd_new_info[i].p_info->frags - mvd_new_info[i].mvdinfo.lastfrags;
-				for (z=0;z<8;z++){
-					if (z == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw))
-							mvd_new_info[i].mvdinfo.killstats.normal[z].kills+=killdiff;
-				}
-				if (mvd_new_info[i].mvdinfo.lfw == -1)
-					mvd_new_info[i].mvdinfo.spawntelefrags+=killdiff;
-				for(z=8;z<11;z++){
-					if(mvd_new_info[i].mvdinfo.itemstats[z].has)
-						mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].frags+=killdiff;
-				}
-				mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].frags++;
-				}else if (mvd_new_info[i].mvdinfo.lastfrags > mvd_new_info[i].p_info->frags){
-				killdiff = mvd_new_info[i].mvdinfo.lastfrags - mvd_new_info[i].p_info->frags ;
-				for (z=AXE_INFO;z<=LG_INFO;z++){
-					if (z == MVD_Weapon_LWF(mvd_new_info[i].mvdinfo.lfw))
-						mvd_new_info[i].mvdinfo.killstats.normal[z].teamkills+=killdiff;
-				}
-				if (mvd_new_info[i].mvdinfo.lfw == -1){
-					mvd_new_info[i].mvdinfo.teamspawntelefrags+=killdiff;
-
-				}
-				for(z=8;z<11;z++){
-					if(mvd_new_info[i].mvdinfo.itemstats[z].has)
-						mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].teamfrags+=killdiff;
-				}
-				mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].teamfrags++;
-				}
-
-
-			mvd_new_info[i].mvdinfo.lastfrags = mvd_new_info[i].p_info->frags ;
-		}
-
-		mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].time=cls.demotime - mvd_new_info[i].mvdinfo.das.alivetimestart;
-
-		if (mvd_new_info[i].mvdinfo.lfw == -1){
-			if (mvd_new_info[i].mvdinfo.lastfrags > mvd_new_info[i].p_info->frags ){
-				mvd_new_info[i].mvdinfo.teamspawntelefrags += mvd_new_info[i].p_info->frags - mvd_new_info[i].mvdinfo.lastfrags ;
-			}else if (mvd_new_info[i].mvdinfo.lastfrags < mvd_new_info[i].p_info->frags ){
-				mvd_new_info[i].mvdinfo.spawntelefrags += mvd_new_info[i].p_info->frags -mvd_new_info[i].mvdinfo.lastfrags  ;
-			}
-			mvd_new_info[i].mvdinfo.lastfrags = mvd_new_info[i].p_info->frags;
-		}
-
-		if (mvd_new_info[i].p_state->weaponframe > 0)
-				mvd_new_info[i].mvdinfo.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
-		if (mvd_cg_info.deathmatch!=4){
-			MVD_Status_WP(i);
-			for (z=SSG_INFO;z<=RA_INFO;z++)
-				MVD_Status_Announcer(i,z);
-			}
-		}
 		if ((((pent_time + 300) - cls.demotime) < 5) && !pent_is_active){
 			if(!pent_mentioned){
 				pent_mentioned = 1;
@@ -1037,7 +1047,6 @@ int MVD_Stats_Gather(void){
 	}
 
 	return 1;
-
 }
 
 void MVD_Status (void){
