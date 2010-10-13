@@ -39,6 +39,10 @@ $Id: mvd_utils_common.h,v 1.2 2007-09-24 21:34:51 johnnycz Exp $
 #define AXE_INFO	0
 #define mvd_info_types 15
 
+#define IS_WEAPON(x) ((x) >= SSG_INFO && (x) <= LG_INFO)
+
+#define AMMO_TYPES 4
+
 // killstats structures
 typedef struct mvd_ks_w_s {
 	int kills;
@@ -107,6 +111,7 @@ typedef struct mvd_info_s {
     int lfw;				//last fired weapon
 	mvd_ds_t das;			//dead alive stats
 	mvd_pw_t itemstats[mvd_info_types];		//item stats
+	unsigned short ammostats[AMMO_TYPES];
 	mvd_runs_t runs[512];	//
 	mvd_avgruns_all_t run_stats;	// calculated from other items
 	mvd_ks_t killstats;		// killstats

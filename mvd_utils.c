@@ -489,10 +489,12 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y)
 	}
 }
 
-static void MVD_Took(int player, int item)
+static void MVD_Took(int player, int item, qbool addclock)
 {
 	if (mvd_new_info[player].mvdinfo.initialized) {
-		MVD_ClockStart(item);
+		if (addclock) {
+			MVD_ClockStart(item);
+		}
 		mvd_new_info[player].mvdinfo.itemstats[item].mention = 1;
 	}
 }
@@ -753,12 +755,12 @@ void MVD_Status_Announcer(int i, int z){
 	}
 }
 
-void MVD_Status_WP(int i){
+void MVD_Status_WP(int i, int *taken){
 	int j,k;
 	for (k = j = SSG_INFO; j <= LG_INFO; j++, k = k*2){
 		if (!mvd_new_info[i].mvdinfo.itemstats[j].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & k){
 			if (j >= GL_INFO && cl.deathmatch == 1) {
-				MVD_Took(i, j);
+				*taken |= (1 << j);
 			}
 			mvd_new_info[i].mvdinfo.itemstats[j].has = 1;
 			mvd_new_info[i].mvdinfo.itemstats[j].count++;
@@ -830,24 +832,99 @@ void MVD_Stats_CalcAvgRuns(void)
 	}
 }
 
+static qbool MVD_Weapon_From_Backpack(int weapon, int taken, int *ammotaken)
+{
+	// Things that signalize backpack took:
+	// a) some taken ammo, different than weapon pickup gives, or
+	// b) more than one weapon was taken
+
+	// From the info we have the process is undeterministic.
+	// The current semantics is "paranoid":
+	// When not sure, expect it was a backpack pickup.
+	// Howver, it is still impossible to distinguish some backpack pickups.
+
+	// Why?
+	// For example when player has sg and 199 shells and his status
+	// changes to ssg + 200 shells, it's impossible to tell whether
+	// he picked up ssg from pack or regular ssg spawn.
+	// Or when he has 0 rockets and then picks rl pack with 5 rockets,
+	// it looks like he picked regular rl.
+	// Also there's the thing which is dependent on deathmatch setting when you
+	// get extra rockets that even weren't in the rl pack originally
+	// but you get them anyway if you have no rox.
+
+	// Also worth mentioning this does not reflect custom mods
+	// like tf, ctf and others...
+
+	// Possible approach would be to check player coordinates
+	// and check whether on given bsp some of the spawnpoints
+	// of given item is close enough to the player.
+
+	// Another possible approach would be to extend the protocol with
+	// proper pickup info delivery.
+
+	int i;
+
+	if (weapon == SSG_INFO) {
+		if (ammotaken[0] != 5 || ammotaken[1] > 0 || ammotaken[2] > 0 || ammotaken[3] > 0) {
+			return true;
+		}
+	}
+	if (weapon == NG_INFO) {
+		if (ammotaken[0] > 0 || ammotaken[1] != 30 || ammotaken[2] > 0 || ammotaken[3] > 0) {
+			return true;
+		}
+	}
+	if (weapon == SNG_INFO) {
+		if (ammotaken[0] > 0 || ammotaken[1] != 30 || ammotaken[2] > 0 || ammotaken[3] > 0) {
+			return true;
+		}
+	}
+	if (weapon == GL_INFO) {
+		if (ammotaken[0] > 0 || ammotaken[1] > 0 || ammotaken[2] != 5 || ammotaken[3] > 0) {
+			return true;
+		}
+	}
+	if (weapon == RL_INFO) {
+		if (ammotaken[0] > 0 || ammotaken[1] > 0 || ammotaken[2] != 5 || ammotaken[3] > 0) {
+			return true;
+		}
+	}
+	if (weapon == LG_INFO) {
+		if (ammotaken[0] > 0 || ammotaken[1] > 0 || ammotaken[2] > 0 || ammotaken[3] != 15) {
+			return true;
+		}
+	}		 
+
+	for (i = SSG_INFO; i <= LG_INFO; i++) {
+		if ((taken & (1 << i)) && i != weapon) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static void MVD_Stats_Gather_AlivePlayer(int player_index)
 {
 	int x; // item index
 	int z; // item index
 	int i = player_index;
 	int killdiff;
+	int taken = 0;
+	int ammotaken[AMMO_TYPES] = {0, 0, 0, 0};
 
 	for (x=GA_INFO;x<=RA_INFO && mvd_cg_info.deathmatch!=4;x++){
 		if(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it) {
 			if (!mvd_new_info[i].mvdinfo.itemstats[x].has){
-				MVD_Took(i, x);
+				taken |= (1 << x);
 				MVD_Set_Armor_Stats(x,i);
 				mvd_new_info[i].mvdinfo.itemstats[x].count++;
 				mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 				mvd_new_info[i].mvdinfo.itemstats[x].has=1;
 			}
 			if (mvd_new_info[i].mvdinfo.itemstats[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
-				MVD_Took(i, x);
+				taken |= (1 << x);
 				mvd_new_info[i].mvdinfo.itemstats[x].count++;
 			}
 			mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
@@ -856,7 +933,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 
 	for (x=RING_INFO;x<=PENT_INFO && mvd_cg_info.deathmatch!=4;x++){
 		if(!mvd_new_info[i].mvdinfo.itemstats[x].has && mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it){
-			MVD_Took(i, x);
+			taken |= (1 << x);
 			mvd_new_info[i].mvdinfo.itemstats[x].has = 1;
 			if (x==PENT_INFO && (powerup_cam_active == 3 || powerup_cam_active == 2)){
 				pent_mentioned=0;
@@ -951,9 +1028,33 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 	if (mvd_new_info[i].p_state->weaponframe > 0)
 			mvd_new_info[i].mvdinfo.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
 	if (mvd_cg_info.deathmatch!=4){
-		MVD_Status_WP(i);
+		MVD_Status_WP(i, &taken);
 		for (z=SSG_INFO;z<=RA_INFO;z++) {
 			MVD_Status_Announcer(i,z);
+		}
+	}
+
+	for (x = 0; x < AMMO_TYPES; x++) {
+		int ammo_new = mvd_new_info[i].p_info->stats[STAT_SHELLS + x];
+		int ammo_old = mvd_new_info[i].mvdinfo.ammostats[x];
+		if (mvd_new_info[i].mvdinfo.initialized && ammo_new > ammo_old) {
+			int diff = ammo_new - ammo_old;
+			ammotaken[x] = diff;
+		}
+		mvd_new_info[i].mvdinfo.ammostats[x] =
+			mvd_new_info[i].p_info->stats[STAT_SHELLS + x];
+	}
+
+	for (x = 0; x < mvd_info_types; x++) {
+		if (taken & (1 << x)) {
+			qbool weapon_from_backpack =
+				IS_WEAPON(x) && MVD_Weapon_From_Backpack(x, taken, ammotaken);
+			// don't start clock if item was from backpack
+			qbool add_clock = !weapon_from_backpack;
+			Com_DPrintf("player %i took %i, weapon from backpack: %s\n",
+				i, x, weapon_from_backpack ? "yes" : "no");
+
+			MVD_Took(i, x, add_clock);
 		}
 	}
 }
