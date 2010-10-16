@@ -1,0 +1,13 @@
+
+/make/*.exe
+/make/*.ilk
+/make/*.map
+/make/*.pdb
+/masm32/gas2masm.exe
+/masm32/ml.exe
+/make/msvs2008/Debug-gl
+/make/msvs2008/Debug
+/make/msvs2008/Release-gl
+/make/msvs2008/*.ncb
+/make/msvs2008/*.suo
+/make/msvs2008/*.user
