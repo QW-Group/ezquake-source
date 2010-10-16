@@ -161,6 +161,11 @@ static void DumpVariables(FILE	*f)
 			            !strcmp(var->name, "topcolor") || !strcmp(var->name, "bottomcolor")
 			        ))
 				continue;
+			
+			if (!strcmp(var->name, "cl_delay_packet") || !strcmp(var->name, "cl_proxyaddr")) {
+				continue;
+			}
+			
 			if (!(var->flags & (CVAR_USER_CREATED |	CVAR_ROM | CVAR_INIT))) {
 				if (cfg_save_unchanged.value || strcmp(var->string, var->defaultvalue)) {
 					sorted_vars[count++] = var;
