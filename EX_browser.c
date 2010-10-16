@@ -47,7 +47,7 @@ char searchstring[MAX_SEARCH+1];
 // add source
 CEditBox edit1, edit2;
 int adding_source = 0;
-int newsource_master; // 0 = file
+sb_source_type_t newsource_type; // 0 = file
 int newsource_pos;
 
 // add server
@@ -1379,6 +1379,31 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
     }
 }
 
+const char* SB_Source_Type_Name(sb_source_type_t type)
+{
+	switch (type) {
+	case type_master: return "master";
+	case type_file: return "file  ";
+	case type_url: return "url   ";
+	case type_dummy: return "dummy ";
+	default:
+		Sys_Error("SB_Source_Type_Name(): Invalid sb_source_type_t type");
+		return "ERROR";
+	}
+}
+
+const char *SB_Source_Type_Location_Name(sb_source_type_t type)
+{
+	switch (type) {
+	case type_master: return "addr";
+	case type_file: return "file";
+	case type_url: return "url";
+	case type_dummy: return "dummy";
+	default:
+		Sys_Error("SB_Source_Type_Location_Name(): Invalid sb_source_type_t type");
+		return "ERROR";
+	}
+}
 
 void Add_Source_Draw(void)
 {
@@ -1400,7 +1425,7 @@ void Add_Source_Draw(void)
     UI_Print_Center(x, y+4, w, "Create new source", true);
 
     UI_Print(x+4, y + 20, "type", newsource_pos==0);
-    UI_Print(x+54, y + 20, newsource_master ? "master" : "file", newsource_pos==0);
+    UI_Print(x+54, y + 20, SB_Source_Type_Name(newsource_type), newsource_pos==0);
     if (newsource_pos == 0)
         Draw_Character (x+42, y+20, 13);
 
@@ -1409,7 +1434,7 @@ void Add_Source_Draw(void)
     if (newsource_pos == 1)
         Draw_Character (x+42, y+30, 13);
 
-    UI_Print(x+4, y + 40, newsource_master ? "addr" : "file", newsource_pos==2);
+    UI_Print(x+4, y + 40, SB_Source_Type_Location_Name(newsource_type), newsource_pos==2);
     CEditBox_Draw(&edit2, x+54, y+40, newsource_pos==2);
     if (newsource_pos == 2)
         Draw_Character (x+42, y+40, 13);
@@ -1463,14 +1488,7 @@ void SB_Sources_Draw (int x, int y, int w, int h)
         if (sourcenum >= sourcesn)
             break;
 
-        if (s->type == type_master)
-            strlcpy(type, "master", sizeof (type));
-        else if (s->type == type_file)
-            strlcpy(type, " file ", sizeof (type));
-        else if (s->type == type_dummy)
-            strlcpy(type, "dummy ", sizeof (type));
-        else
-			strlcpy(type, " ???? ", sizeof (type));
+		strlcpy(type, SB_Source_Type_Name(s->type), sizeof (type));
 
         if (s->type == type_dummy)
             strlcpy (time, " n/a ", sizeof (time));
@@ -1668,6 +1686,9 @@ void SB_Source_Add_f(void)
 	else if (strcmp(Cmd_Argv(3), "file") == 0) {
 		type = type_file;
 	}
+	else if (strcmp(Cmd_Argv(3), "url") == 0) {
+		type = type_url;
+	}
 	else {
 		Com_Printf("Usage: %s <name> <address/filename> <master|file>\n", Cmd_Argv(0));
 		Com_Printf("Last argument must be 'master' or 'file'\n");
@@ -1675,6 +1696,12 @@ void SB_Source_Add_f(void)
 	}
 
 	SB_Source_Add(Cmd_Argv(1), Cmd_Argv(2), type);
+}
+
+static void SB_NewSource_Shift()
+{
+	// excluding dummy, presuming dummy is last
+	newsource_type = (newsource_type + 1) % (type_dummy);
 }
 
 void Add_Source_Key(int key, wchar unichar)
@@ -1702,14 +1729,15 @@ void Add_Source_Key(int key, wchar unichar)
         switch (newsource_pos)
         {
         case 0:
-            newsource_master = !newsource_master; break;
+            SB_NewSource_Shift();
+			break;
 		case 2:
         case 3:
             if (key == K_ENTER)
             {
 				int newpos;
 				
-				newpos = SB_Source_Add(edit1.text, edit2.text, newsource_master ? type_master : type_file);
+				newpos = SB_Source_Add(edit1.text, edit2.text, newsource_type);
 				if (newpos >= 0) {
 					Sources_pos = newpos;
 				}
@@ -2175,7 +2203,7 @@ int SB_Sources_Key(int key)
         case K_INS:
         case 'n':       // new source
             newsource_pos = 0;
-            newsource_master = 1;
+            newsource_type = type_file;
             CEditBox_Init(&edit1, 16, 25);
             CEditBox_Init(&edit2, 16, 100);
             adding_source = 1;

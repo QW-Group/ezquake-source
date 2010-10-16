@@ -122,6 +122,7 @@ typedef struct server_data_s
 typedef enum sb_source_type_e {
 	type_master,
 	type_file,
+	type_url,
 	type_dummy
 } sb_source_type_t;
 
@@ -132,6 +133,7 @@ typedef struct source_data_s
     {
         netadr_t    address;            // IP for master type
         char        filename[200];      // filename for file type
+		char        url[512];           // URL with the list of servers
     } address;
 
     char name[MAX_SOURCE_NAME+1];       // source name
