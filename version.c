@@ -143,6 +143,7 @@ void CL_Version_f (void)
 	else if (_MSC_VER == 1310) { Con_Printf("Visual C++ 2003, version 7.1\n"); }
 	else if (_MSC_VER == 1400) { Con_Printf("Visual C++ 2005, version 8.0\n"); }
 	else if (_MSC_VER == 1500) { Con_Printf("Visual C++ 2008, version 9.0\n"); }
+	else if (_MSC_VER == 1600) { Con_Printf("Visual C++ 2010, version 10.0\n"); }
 	else
 	{
 		Con_Printf("Unknown Microsoft C++ compiler: %i %i \n",_MSC_VER, _MSC_FULL_VER);
