@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <unistd.h>
 #endif
+#include <curl/curl.h>
 
 #include "EX_browser.h"
 
@@ -26,6 +27,12 @@ source_data *sources[MAX_SOURCES];
 int sourcesn;
 
 extern sem_t serverlist_semaphore;
+
+typedef struct url_receive_buffer_s {
+	char *buffer;
+	size_t buffer_size;
+	size_t received;
+} url_receive_buffer_t;
 
 source_data * Create_Source(void)
 {
@@ -131,6 +138,75 @@ void Precache_Source(source_data *s)
     }
 }
 
+size_t SB_Curl_Write_Data(void *buffer, size_t size, size_t nmemb, void *userp)
+{
+	url_receive_buffer_t *buf = (url_receive_buffer_t *) userp;
+	size_t totalsize = size*nmemb;
+	
+	if (buf->buffer_size > buf->received + totalsize) {
+		memcpy(buf->buffer + buf->received, buffer, totalsize);
+		buf->received += totalsize;
+		return totalsize;
+	}
+	else {
+		Com_Printf("SB_Curl_Write_Data() Warning: Receive buffer too small\n");
+		return totalsize;
+	}
+}
+
+static void SB_Process_URL_Buffer(url_receive_buffer_t *buf, server_data *servers[],
+	int *serversn)
+{
+	// buffer is null-terminated
+	char *p;
+	netadr_t addr;
+
+	p = strtok (buf->buffer,"\n\r");
+	while (p != NULL) {
+		NET_StringToAdr(p, &addr);
+		servers[(*serversn)++] = Create_Server2(addr);
+		p = strtok (NULL,"\n\r");
+	}
+}
+
+static void SB_Update_Source_From_URL(const source_data *s, server_data *servers[],
+	int *serversn)
+{
+	CURL *curl;
+	CURLcode res;
+	url_receive_buffer_t buf;
+ 
+	if (s->type != type_url) {
+		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Invalid argument\n");
+		return;
+	}
+
+	curl = curl_easy_init();
+	if (curl) {
+		curl_easy_setopt(curl, CURLOPT_URL, s->address.url);
+	}
+	
+	buf.buffer = Q_malloc(10240);
+	buf.buffer_size = 10240;
+	buf.received = 0;
+
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, SB_Curl_Write_Data);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
+
+	res = curl_easy_perform(curl);
+	if (res != CURLE_OK) {
+		Com_Printf("Error: Could not read URL %s\n", s->address.url);
+	}
+
+	buf.buffer[buf.received] = '\0';
+	SB_Process_URL_Buffer(&buf, servers, serversn);
+	Q_free(buf.buffer);
+
+
+    /* always cleanup */ 
+    curl_easy_cleanup(curl);
+}
+
 void Update_Source(source_data *s)
 {
     int i;
@@ -149,6 +225,11 @@ void Update_Source(source_data *s)
         should_dump = Update_Source_From_File(s, name, servers, &serversn);
         GetLocalTime(&(s->last_update));
     }
+
+	if (s->type == type_url)
+	{	
+		SB_Update_Source_From_URL(s, servers, &serversn);
+	}
 
     if (s->type == type_master)
     {
@@ -603,6 +684,9 @@ int SB_Source_Add(const char* name, const char* address, sb_source_type_t type)
 
 	if (s->type == type_file) {
 		strlcpy (s->address.filename, address, sizeof (s->address.filename));
+	}
+	else if (s->type == type_url) {
+		strlcpy(s->address.url, address, sizeof(s->address.url));
 	}
 	else {
 		if (!strchr(addr, ':')) {

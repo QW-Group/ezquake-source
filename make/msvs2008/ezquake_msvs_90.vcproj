@@ -58,7 +58,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\libs;&quot;$(DXSDK_DIR)\Include&quot;;..\..\libs\libircclient"
-				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_WINAMP;USE_PR2;WITH_IRC;WITH_NQPROGS"
+				PreprocessorDefinitions="WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_DISABLE_PERFCRIT_LOCKS;__LITTLE_ENDIAN;_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM;WITH_WINAMP;USE_PR2;WITH_IRC;WITH_NQPROGS;CURL_STATICLIB"
 				StringPooling="true"
 				MinimalRebuild="true"
 				ExceptionHandling="0"
@@ -99,7 +99,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
-				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib"
+				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib libircclient-static.lib libcurl.lib"
 				ShowProgress="0"
 				OutputFile="..\ezquake-gl-debug.exe"
 				Version=""
