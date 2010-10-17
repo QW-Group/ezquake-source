@@ -385,6 +385,8 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
         {
             if (psources[sourcenum]->type == type_file)
                 Update_Source(psources[sourcenum]);
+			if (psources[sourcenum]->type == type_url)
+				Update_Source(psources[sourcenum]); // todo cache this too
             else if (psources[sourcenum]->type == type_master)
             {
                 source_data *s = psources[sourcenum];
@@ -644,7 +646,7 @@ qbool SB_Sources_Dump(void)
 	for (i = 0; i < sourcesn; i++) {
 		sb_source_type_t type = sources[i]->type;
 
-		if (type == type_master || type == type_file) {
+		if (type == type_master || type == type_file || type == type_url) {
 			const char *typestr;
 			const char *name = sources[i]->name;
 			const char *loc;
@@ -652,6 +654,10 @@ qbool SB_Sources_Dump(void)
 			if (type == type_master) {
 				typestr = "master";
 				loc = NET_AdrToString(sources[i]->address.address);
+			}
+			if (type == type_url) {
+				typestr = "url";
+				loc = sources[i]->address.url;
 			}
 			else {
 				typestr = "file";
@@ -774,13 +780,18 @@ void Reload_Sources(void)
             continue;   // comment
         q = next_space(p);
 
-        if (!strncmp(p, "master", q-p))
+		if (!strncmp(p, "master", q-p)) {
             s->type = type_master;
-        else
-            if (!strncmp(p, "file", q-p))
-                s->type = type_file;
-            else
-                continue;
+		}
+		else if (!strncmp(p, "file", q-p)) {
+			s->type = type_file;
+		}
+		else if (!strncmp(p, "url", q-p)) {
+			s->type = type_url;
+		}
+		else {
+			continue;
+		}
 
         p = next_nonspace(q);
         q = (*p == '\"') ? next_quote(++p) : next_space(p);
@@ -799,6 +810,8 @@ void Reload_Sources(void)
 
         if (s->type == type_file)
             strlcpy (s->address.filename, p, sizeof (s->address.filename));
+		else if (s->type == type_url)
+			strlcpy (s->address.url, p, sizeof (s->address.url));
         else
             if (!NET_StringToAdr(p, &(s->address.address)))
                 continue;
@@ -817,7 +830,7 @@ void Reload_Sources(void)
 
     // update all file sources
     for (i=0; i < sourcesn; i++)
-        if (sources[i]->type == type_file)
+        if (sources[i]->type == type_file || sources[i]->type == type_url)
             Update_Source(sources[i]);
         else if (sources[i]->type == type_master)
             Precache_Source(sources[i]);

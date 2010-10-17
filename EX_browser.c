@@ -210,6 +210,19 @@ static void SB_Select_QWfwd(server_data *s)
 	Serverinfo_Stop();
 }
 
+static const char* SB_Source_Type_Name(sb_source_type_t type)
+{
+	switch (type) {
+	case type_master: return "master";
+	case type_file: return "file  ";
+	case type_url: return "url   ";
+	case type_dummy: return "dummy ";
+	default:
+		Sys_Error("SB_Source_Type_Name(): Invalid sb_source_type_t type");
+		return "ERROR";
+	}
+}
+
 static void SB_Browser_Hide(const server_data *s)
 {
 	if (sb_autohide.value)
@@ -1361,12 +1374,7 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
         if (serverinfo_sources_disp + i >= sourcesn_updated)
             break;
 
-        if (sources[serverinfo_sources_disp+i]->type == type_file)
-            strlcpy (buf2, " file ", sizeof (buf2));
-        else if (sources[serverinfo_sources_disp+i]->type == type_master)
-            strlcpy(buf2, "master", sizeof (buf2));
-        else if (sources[serverinfo_sources_disp+i]->type == type_dummy)
-            strlcpy(buf2, "dummy ", sizeof (buf2));
+		strlcpy(buf, SB_Source_Type_Name(sources[serverinfo_sources_disp+i]->type), sizeof (buf2));
 
         snprintf(buf, sizeof (buf), "%s   %s", buf2, sources[serverinfo_sources_disp+i]->name);
         buf[w/8] = 0;
@@ -1377,19 +1385,6 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
         if (serverinfo_sources_pos == serverinfo_sources_disp+i)
             UI_DrawCharacter(x+8*7, y+i*8+8, '\x8D');
     }
-}
-
-const char* SB_Source_Type_Name(sb_source_type_t type)
-{
-	switch (type) {
-	case type_master: return "master";
-	case type_file: return "file  ";
-	case type_url: return "url   ";
-	case type_dummy: return "dummy ";
-	default:
-		Sys_Error("SB_Source_Type_Name(): Invalid sb_source_type_t type");
-		return "ERROR";
-	}
 }
 
 const char *SB_Source_Type_Location_Name(sb_source_type_t type)
