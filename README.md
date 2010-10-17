@@ -31,7 +31,7 @@ custom configurations, try [nQuake][nQuake].
 ## Support
 
 Need help with using ezQuake? Visit us on IRC at QuakeNet, channel #ezQuake:
-[webchat][webchat] or [IRC URI][IRC].
+[webchat][webchat] or [IRC][IRC].
 
 Sometimes help of other users of ezQuake might be more usefull to you so you
 can also try visiting [ezQuake Forum][forum].
