@@ -601,6 +601,9 @@ void MT_TakeScreenshot(void);
 
 cvar_t match_auto_record = {"match_auto_record", "0"};
 cvar_t match_auto_logconsole = {"match_auto_logconsole", "1"};
+cvar_t match_auto_logupload = {"match_auto_logupload", "0"};
+cvar_t match_auto_logupload_token = {"match_auto_logupload_token", ""};
+cvar_t match_auto_logurl = {"match_auto_logurl", "http://stats.quakeworld.nu/logupload"};
 cvar_t match_auto_sshot = {"match_auto_sshot", "0"};
 cvar_t match_auto_minlength = {"match_auto_minlength", "30"};
 cvar_t match_auto_spectating = {"match_auto_spectating", "0"};
@@ -1386,6 +1389,9 @@ void MT_Init(void) {
 
 	Cvar_Register(&match_auto_record);
 	Cvar_Register(&match_auto_logconsole);
+	Cvar_Register(&match_auto_logupload);
+	Cvar_Register(&match_auto_logurl);
+	Cvar_Register(&match_auto_logupload_token);
 	Cvar_Register(&match_auto_sshot);
 	Cvar_Register(&match_auto_minlength);
 	Cvar_Register(&match_auto_spectating);
