@@ -300,7 +300,7 @@ DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vfilename)
 
 	curl = curl_easy_init();
 
-	headers = curl_slist_append(headers, "Content-Type: image/jpeg");
+	headers = curl_slist_append(headers, "Content-Type: text/plain");
 
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "name",
