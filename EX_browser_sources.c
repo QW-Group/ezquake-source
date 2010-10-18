@@ -28,12 +28,6 @@ int sourcesn;
 
 extern sem_t serverlist_semaphore;
 
-typedef struct url_receive_buffer_s {
-	char *buffer;
-	size_t buffer_size;
-	size_t received;
-} url_receive_buffer_t;
-
 source_data * Create_Source(void)
 {
     source_data *s;
@@ -67,7 +61,6 @@ void Delete_Source(source_data *s)
     Reset_Source(s);
     Q_free(s);
 }
-
 
 // returns true, if there were some problems (like domain-name addresses)
 // which require the source to be dumped to file in corrected form
@@ -103,6 +96,40 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
     return should_dump;
 }
 
+static size_t SB_URL_to_FileName(const char *str, char *dest, size_t size)
+{
+	size_t written = 0;
+	char *hexa = "0123456789abcdef";
+	
+	while (*str != '\0' && written + 1 < size) {
+		if (isalnum(*str) || *str == '.') {
+			*dest++ = *str++;
+			written++;
+		}
+		else {
+			if (written + 1 < size) {
+				int curchar = *str++;
+				written += 3;
+
+				*dest++ = '_';
+				*dest++ = hexa[curchar / 16];
+				*dest++ = hexa[curchar % 16];
+			}
+			else {
+				break;
+			}
+		}
+	}
+	*dest = '\0';
+
+	return written;
+}
+
+static size_t SB_URL_To_Filename_Length(const char *s)
+{
+	return strlen(s)*3+1;
+}
+
 void Precache_Source(source_data *s)
 {
     int i;
@@ -110,14 +137,26 @@ void Precache_Source(source_data *s)
     server_data *servers[MAX_SERVERS];
     int serversn = 0;
 
-    if (s->type != type_master)
-        return;
-    
-    snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
-            s->address.address.ip[0], s->address.address.ip[1],
-            s->address.address.ip[2], s->address.address.ip[3],
-            ntohs(s->address.address.port));
-    Update_Source_From_File(s, name, servers, &serversn);
+	if (s->type == type_url) {
+		char *filename;
+		size_t filename_size = SB_URL_To_Filename_Length(s->address.url);
+
+		filename = Q_malloc(filename_size);
+		SB_URL_to_FileName(s->address.url, filename, filename_size);
+		snprintf(name, sizeof (name), "sb/cache/%s", filename);
+		Q_free(filename);
+	}
+	else if (s->type == type_master) {
+		snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
+				s->address.address.ip[0], s->address.address.ip[1],
+				s->address.address.ip[2], s->address.address.ip[3],
+				ntohs(s->address.address.port));
+	}
+	else {
+		return;
+	}
+
+	Update_Source_From_File(s, name, servers, &serversn);
 
     if (serversn > 0)
     {
@@ -140,32 +179,32 @@ void Precache_Source(source_data *s)
 
 size_t SB_Curl_Write_Data(void *buffer, size_t size, size_t nmemb, void *userp)
 {
-	url_receive_buffer_t *buf = (url_receive_buffer_t *) userp;
+	FILE *file = (FILE *) userp;
+	char *textbuf = (char *) buffer;
 	size_t totalsize = size*nmemb;
+	size_t read = 0;
 	
-	if (buf->buffer_size > buf->received + totalsize) {
-		memcpy(buf->buffer + buf->received, buffer, totalsize);
-		buf->received += totalsize;
-		return totalsize;
+	while (read < totalsize) {
+		int c = *textbuf++;
+		read++;
+
+		if (isalnum(c) || c == '.' || c == ':' || c == '\n' || c == '\r') {
+			fputc(c, file);
+		}
 	}
-	else {
-		Com_Printf("SB_Curl_Write_Data() Warning: Receive buffer too small\n");
-		return totalsize;
-	}
+
+	return totalsize;
 }
 
-static void SB_Process_URL_Buffer(url_receive_buffer_t *buf, server_data *servers[],
+static void SB_Process_URL_Buffer(FILE *f, server_data *servers[],
 	int *serversn)
 {
-	// buffer is null-terminated
-	char *p;
 	netadr_t addr;
+	char buf[32];
 
-	p = strtok (buf->buffer,"\n\r");
-	while (p != NULL) {
-		NET_StringToAdr(p, &addr);
+	while (fgets(buf, sizeof (buf), f) != NULL) {
+		NET_StringToAdr(buf, &addr);
 		servers[(*serversn)++] = Create_Server2(addr);
-		p = strtok (NULL,"\n\r");
 	}
 }
 
@@ -174,7 +213,9 @@ static void SB_Update_Source_From_URL(const source_data *s, server_data *servers
 {
 	CURL *curl;
 	CURLcode res;
-	url_receive_buffer_t buf;
+	size_t filename_buf_len;
+	char *filename;
+	FILE *f;
  
 	if (s->type != type_url) {
 		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Invalid argument\n");
@@ -186,22 +227,27 @@ static void SB_Update_Source_From_URL(const source_data *s, server_data *servers
 		curl_easy_setopt(curl, CURLOPT_URL, s->address.url);
 	}
 	
-	buf.buffer = Q_malloc(10240);
-	buf.buffer_size = 10240;
-	buf.received = 0;
+	filename_buf_len = SB_URL_To_Filename_Length(s->address.url);
+	filename = Q_malloc(filename_buf_len);
+	SB_URL_to_FileName(s->address.url, filename, filename_buf_len);
+	if (!FS_FCreateFile(filename, &f, "ezquake/sb/cache", "wt+")) {
+		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Can't open cached file");
+		return;
+	}
 
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, SB_Curl_Write_Data);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
 
 	res = curl_easy_perform(curl);
 	if (res != CURLE_OK) {
 		Com_Printf("Error: Could not read URL %s\n", s->address.url);
 	}
 
-	buf.buffer[buf.received] = '\0';
-	SB_Process_URL_Buffer(&buf, servers, serversn);
-	Q_free(buf.buffer);
-
+	fseek(f, 0, SEEK_SET);
+	
+	SB_Process_URL_Buffer(f, servers, serversn);
+	fclose(f);
+	Q_free(filename);
 
     /* always cleanup */ 
     curl_easy_cleanup(curl);
@@ -830,9 +876,9 @@ void Reload_Sources(void)
 
     // update all file sources
     for (i=0; i < sourcesn; i++)
-        if (sources[i]->type == type_file || sources[i]->type == type_url)
+        if (sources[i]->type == type_file)
             Update_Source(sources[i]);
-        else if (sources[i]->type == type_master)
+        else if (sources[i]->type == type_master || sources[i]->type == type_url)
             Precache_Source(sources[i]);
 
     rebuild_servers_list = 1;
