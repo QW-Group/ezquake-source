@@ -177,25 +177,6 @@ void Precache_Source(source_data *s)
     }
 }
 
-size_t SB_Curl_Write_Data(void *buffer, size_t size, size_t nmemb, void *userp)
-{
-	FILE *file = (FILE *) userp;
-	char *textbuf = (char *) buffer;
-	size_t totalsize = size*nmemb;
-	size_t read = 0;
-	
-	while (read < totalsize) {
-		int c = *textbuf++;
-		read++;
-
-		if (isalnum(c) || c == '.' || c == ':' || c == '\n' || c == '\r') {
-			fputc(c, file);
-		}
-	}
-
-	return totalsize;
-}
-
 static void SB_Process_URL_Buffer(FILE *f, server_data *servers[],
 	int *serversn)
 {
@@ -235,7 +216,7 @@ static void SB_Update_Source_From_URL(const source_data *s, server_data *servers
 		return;
 	}
 
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, SB_Curl_Write_Data);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
 
 	res = curl_easy_perform(curl);
