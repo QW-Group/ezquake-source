@@ -2939,6 +2939,8 @@ void SB_Shutdown(void)
 
 void Browser_Init (void)
 {
+	void QTVList_Init(void);
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_BROWSER);
     Cvar_Register(&sb_status);
     Cvar_Register(&sb_showping);
@@ -2991,6 +2993,8 @@ void Browser_Init (void)
 		SB_Serverlist_Unserialize_f();
 		SB_Proxylist_Unserialize_f();
 	}
+
+	QTVList_Init();
 }
 
 void Browser_Init2 (void)

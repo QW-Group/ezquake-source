@@ -207,6 +207,10 @@ static void SB_Update_Source_From_URL(const source_data *s, server_data *servers
 	if (curl) {
 		curl_easy_setopt(curl, CURLOPT_URL, s->address.url);
 	}
+	else {
+		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Can't init cURL\n");
+		return;
+	}
 	
 	filename_buf_len = SB_URL_To_Filename_Length(s->address.url);
 	filename = Q_malloc(filename_buf_len);

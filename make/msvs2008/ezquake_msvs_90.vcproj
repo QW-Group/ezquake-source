@@ -3989,6 +3989,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\EX_browser_qtvlist.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\EX_browser_sources.c"
 						>
 					</File>

@@ -46,6 +46,9 @@ int strlen_color(const char *str);
 void Util_SkipEZColors(char *dst, const char *src, size_t size);
 void str_align_right (char *target, size_t size, const char *source, size_t length);
 
+// skip whitespace from both beginning and end
+char *str_trim(char *str);
+
 int HexToInt(char c);
 
 ///
