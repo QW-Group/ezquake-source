@@ -9,6 +9,7 @@ CLIENT_C_FILES := \
 	EX_browser_net \
 	EX_browser_pathfind \
 	EX_browser_ping \
+	EX_browser_qtvlist \
 	EX_browser_sources \
 	ez_controls \
 	ez_scrollbar \

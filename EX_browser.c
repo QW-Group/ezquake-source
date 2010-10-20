@@ -2940,9 +2940,10 @@ void SB_Shutdown(void)
 }
 
 
+void QTVList_Init(void);
+
 void Browser_Init (void)
 {
-	void QTVList_Init(void);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_BROWSER);
     Cvar_Register(&sb_status);

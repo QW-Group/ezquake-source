@@ -309,11 +309,6 @@ static vfsfile_t *QTVList_Cache_File_Open(char *mode)
 	return FS_OpenVFS(QTVLIST_CACHE_FILE_DIR "/" QTVLIST_CACHE_FILE, mode, FS_BASE);
 }
 
-static qbool QTVList_Cache_File_Exists(void)
-{
-	return QTVList_Cache_File_Open("rb") != NULL;
-}
-
 static void QTVList_Resolve_Hostnames(void)
 {
 	sb_qtventry_t *cur = sb_qtvlist_cache.sb_qtventries;
