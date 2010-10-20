@@ -2053,6 +2053,9 @@ void Serverinfo_Key(int key)
             serverinfo_pos--; break;
         case K_RIGHTARROW:
             serverinfo_pos++; break;
+		case 'q':
+			Cbuf_AddText(va("observeqtv %s\n", NET_AdrToString(show_serverinfo->address)));
+			break;
         case 'j':
         case 'p':
             Join_Server(show_serverinfo);

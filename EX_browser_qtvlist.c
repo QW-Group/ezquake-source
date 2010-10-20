@@ -18,10 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "EX_browser.h"
-#include "expat.h"
-#include "xsd.h"
 #include "utils.h"
+#include "expat.h"
 #include <curl/curl.h>
 
 #define QTVLIST_CACHE_FILE_DIR "ezquake/sb/cache"
@@ -249,7 +247,7 @@ void QTVList_Process_Full_List(vfsfile_t *f, sb_qtvlist_parse_state_t *sb_qtvpar
 	XML_Parser parser = NULL;
 	int len;
 	enum XML_Status status;
-	char buf[XML_READ_BUFSIZE];
+	char buf[4096];
 	vfserrno_t err;
 
     // initialize XML parser
@@ -263,7 +261,7 @@ void QTVList_Process_Full_List(vfsfile_t *f, sb_qtvlist_parse_state_t *sb_qtvpar
 	XML_SetEndElementHandler(parser, QTVList_Parse_EndElement);
     XML_SetUserData(parser, (void *) sb_qtvparse);
 
-    while ((len = VFS_READ(f, buf, XML_READ_BUFSIZE, &err)) > 0)
+    while ((len = VFS_READ(f, buf, 4096, &err)) > 0)
     {
 		if ((status = XML_Parse(parser, buf, len, 0)) != XML_STATUS_OK) {
 			enum XML_Error err = XML_GetErrorCode(parser);
@@ -321,7 +319,8 @@ static void QTVList_Resolve_Hostnames(void)
 	sb_qtventry_t *cur = sb_qtvlist_cache.sb_qtventries;
 
 	while (cur) {
-		NET_StringToAdr(cur->hostname, &cur->addr);
+		NET_StringToAdr(va("%s:%d", cur->hostname, cur->port), &cur->addr);
+		cur->addr.type = NA_IP;
 		cur = cur->next;
 	}
 }
@@ -373,6 +372,59 @@ void QTVList_Initialize_Streammap(void)
 	Sys_CreateThread(QTVList_Refresh_Cache, (void *) false);
 }
 
+static netadr_t QTVList_Current_IP(void)
+{
+	netadr_t adr;
+	char *prx = Info_ValueForKey(cls.userinfo, "prx");
+
+	if (prx && *prx) {
+		char *lastsep = strrchr(prx, '@');
+		lastsep = lastsep ? lastsep + 1 : prx;
+		
+		NET_StringToAdr(lastsep, &adr);
+		return adr;
+	}
+	else {
+		return cls.server_adr;
+	}
+}
+
+void QTVList_Observeqtv_f(void)
+{
+	netadr_t addr;
+	sb_qtventry_t *cur;
+
+	if (sb_qtvlist_cache.status != QTVLIST_READY) {
+		Com_Printf("QTV cache is still being rebuilt\n");
+		return;
+	}
+	
+	if (Cmd_Argc() < 1) {
+		addr = QTVList_Current_IP();
+	}
+	else {
+		NET_StringToAdr(Cmd_Argv(1), &addr);
+	}
+
+	if (addr.type == NA_IP) {
+		cur = sb_qtvlist_cache.sb_qtventries;
+
+		while (cur) {
+			if (cur->addr.port == addr.port && memcmp(cur->addr.ip, addr.ip, sizeof (addr.ip)) == 0) {
+				Cbuf_AddText(va("qtvplay %s\n", cur->link));
+				return;
+			}
+
+			cur = cur->next;
+		}
+
+		Com_Printf("Cannot find current server on any QTV\n");
+	}
+	else {
+		Com_Printf("Can't observe current server via QTV\n");
+	}
+}
+
 void QTVList_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_BROWSER);
@@ -380,6 +432,8 @@ void QTVList_Init(void)
 	Cvar_Register(&sb_qtvlist_url);
 
 	Cvar_ResetCurrentGroup();
+
+	Cmd_AddCommand("observeqtv", QTVList_Observeqtv_f);
 
 	QTVList_Initialize_Streammap();
 }
