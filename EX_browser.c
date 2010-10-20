@@ -1374,7 +1374,7 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
         if (serverinfo_sources_disp + i >= sourcesn_updated)
             break;
 
-		strlcpy(buf, SB_Source_Type_Name(sources[serverinfo_sources_disp+i]->type), sizeof (buf2));
+		strlcpy(buf2, SB_Source_Type_Name(sources[serverinfo_sources_disp+i]->type), sizeof (buf2));
 
         snprintf(buf, sizeof (buf), "%s   %s", buf2, sources[serverinfo_sources_disp+i]->name);
         buf[w/8] = 0;
