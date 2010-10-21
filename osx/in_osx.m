@@ -215,7 +215,7 @@ void	IN_SetF12EjectEnabled (qbool theState)
 void	IN_SetMouseScalingEnabled (BOOL theState)
 {
     static BOOL		myMouseScalingEnabled	= YES;
-    static double	myOldAcceleration		= 0.0;
+    static double	myOldAcceleration		= -1.0;
     io_connect_t	myIOHandle				= 0;
 
     // Do we have a state change?
@@ -248,7 +248,7 @@ void	IN_SetMouseScalingEnabled (BOOL theState)
                                                 &myOldAcceleration);
 
         // change only the settings, if we were successfull!
-        if (myStatus != kIOReturnSuccess || myOldAcceleration == 0.0)
+        if (myStatus != kIOReturnSuccess)
         {
             theState = YES;
         }
@@ -256,7 +256,7 @@ void	IN_SetMouseScalingEnabled (BOOL theState)
         // finally change the acceleration:
         if (theState == NO)
         {
-            IOHIDSetAccelerationWithKey (myIOHandle,  CFSTR (kIOHIDMouseAccelerationType), -1.0);
+            IOHIDSetAccelerationWithKey (myIOHandle,  CFSTR (kIOHIDMouseAccelerationType), 0.0);
         }
     }
     
