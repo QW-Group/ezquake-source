@@ -1,4 +1,4 @@
-"../../make/wget.exe" -O libexpat.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/dinput.lib
+"../../make/wget.exe" -O libexpat.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/libexpat.lib
 "../../make/wget.exe" -O libjpeg.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/libjpeg.lib
 "../../make/wget.exe" -O libpcre.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/libpcre.lib
 "../../make/wget.exe" -O libpng.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/libpng.lib
