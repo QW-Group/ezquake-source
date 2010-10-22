@@ -320,6 +320,39 @@ static void QTVList_Resolve_Hostnames(void)
 	}
 }
 
+static qbool QTVList_Cache_File_Is_Old(void)
+{
+	SYSTEMTIME cache_time;
+	SYSTEMTIME min_time; // minimum required time
+	int diff;
+
+	GetFileLocalTime(va("%s/%s/%s", com_basedir,
+		QTVLIST_CACHE_FILE_DIR, QTVLIST_CACHE_FILE), &cache_time);
+
+	GetLocalTime(&min_time);
+
+	// subtract 7 days
+	if (min_time.wDay > 7) {
+		min_time.wDay -= 7;
+	}
+	else {
+		// approximately 7 days in this case
+		// let's not bother if a month has 28, 29, 30 or 31 days
+		if (min_time.wMonth > 1) {
+			min_time.wMonth -= 1;
+			min_time.wDay += 22;
+		}
+		else {
+			min_time.wYear -= 1;
+			min_time.wMonth = 12;
+			min_time.wDay += 22;
+		}
+	}
+
+	diff = SYSTEMTIMEcmp(&cache_time, &min_time);
+	return diff < 0;
+}
+
 DWORD WINAPI QTVList_Refresh_Cache(void *userData)
 {
 	qbool force_redownload = (qbool) userData;
@@ -328,7 +361,10 @@ DWORD WINAPI QTVList_Refresh_Cache(void *userData)
 
 	Sys_mkdir(va("%s/" QTVLIST_CACHE_FILE_DIR, com_basedir));
 
-	if (force_redownload || !(cache_file = QTVList_Cache_File_Open("rb"))) {
+	if (force_redownload
+		|| !(cache_file = QTVList_Cache_File_Open("rb"))
+		|| QTVList_Cache_File_Is_Old())
+	{
 		sb_qtvlist_cache.status = QTVLIST_DOWNLOADING;
 		QTVList_Cache_File_Download();
 
