@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		92077B461271F6E000068D48 /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92077B451271F6E000068D48 /* libcurl.a */; };
+		92077B4C1271F7A700068D48 /* EX_browser_qtvlist.c in Sources */ = {isa = PBXBuildFile; fileRef = 92077B4B1271F7A700068D48 /* EX_browser_qtvlist.c */; };
+		92077B4D1271F7A700068D48 /* EX_browser_qtvlist.c in Sources */ = {isa = PBXBuildFile; fileRef = 92077B4B1271F7A700068D48 /* EX_browser_qtvlist.c */; };
+		92077B6C1271FA4400068D48 /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92077B451271F6E000068D48 /* libcurl.a */; };
 		920874B410E7F9DB0027FC20 /* mumble.c in Sources */ = {isa = PBXBuildFile; fileRef = 920874B210E7F9DB0027FC20 /* mumble.c */; };
 		920874B510E7F9DB0027FC20 /* mumble.c in Sources */ = {isa = PBXBuildFile; fileRef = 920874B210E7F9DB0027FC20 /* mumble.c */; };
 		920C63540E3657690024236F /* pr2_cmds.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C63500E3657690024236F /* pr2_cmds.c */; };
@@ -1099,6 +1103,8 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		92077B451271F6E000068D48 /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = "/Users/zwoch/Documents/ezquake-source/libs/macosx/libcurl.a"; sourceTree = "<absolute>"; };
+		92077B4B1271F7A700068D48 /* EX_browser_qtvlist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = EX_browser_qtvlist.c; sourceTree = "<group>"; };
 		920874B210E7F9DB0027FC20 /* mumble.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mumble.c; sourceTree = "<group>"; };
 		920874B310E7F9DB0027FC20 /* mumble.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mumble.h; sourceTree = "<group>"; };
 		920C63500E3657690024236F /* pr2_cmds.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr2_cmds.c; sourceTree = "<group>"; };
@@ -1562,6 +1568,7 @@
 				F85B523D0B57A893000F10BA /* Cocoa.framework in Frameworks */,
 				F8E5E5050CDA33330096C0CC /* minizip.a in Frameworks */,
 				925E4A9C10542F6E00A65FB3 /* libtcl8.5.a in Frameworks */,
+				92077B6C1271FA4400068D48 /* libcurl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1584,6 +1591,7 @@
 				92F0199C0DE7FFCC00F1108A /* libz.a in Frameworks */,
 				925E4A9B10542F6E00A65FB3 /* libtcl8.5.a in Frameworks */,
 				92434736111B68FA004ECAE5 /* Growl.framework in Frameworks */,
+				92077B461271F6E000068D48 /* libcurl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1669,6 +1677,7 @@
 		D211454309C7822100FD70CB /* EZQuake */ = {
 			isa = PBXGroup;
 			children = (
+				92077B4B1271F7A700068D48 /* EX_browser_qtvlist.c */,
 				92DAC39F110B94DA0072AAC4 /* plugin.c */,
 				920874B210E7F9DB0027FC20 /* mumble.c */,
 				920874B310E7F9DB0027FC20 /* mumble.h */,
@@ -1890,6 +1899,7 @@
 				92F019970DE7FFCC00F1108A /* libz.a */,
 				92F0197E0DE7F89800F1108A /* libircclient.a */,
 				F8E5E5030CDA33330096C0CC /* minizip.a */,
+				92077B451271F6E000068D48 /* libcurl.a */,
 			);
 			name = Libs;
 			sourceTree = "<group>";
@@ -2531,6 +2541,7 @@
 				9226C6CE10728E7500F07127 /* EX_browser_pathfind.c in Sources */,
 				920874B510E7F9DB0027FC20 /* mumble.c in Sources */,
 				92DAC3A1110B94DA0072AAC4 /* plugin.c in Sources */,
+				92077B4D1271F7A700068D48 /* EX_browser_qtvlist.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2716,6 +2727,7 @@
 				9226C6CD10728E7500F07127 /* EX_browser_pathfind.c in Sources */,
 				920874B410E7F9DB0027FC20 /* mumble.c in Sources */,
 				92DAC3A0110B94DA0072AAC4 /* plugin.c in Sources */,
+				92077B4C1271F7A700068D48 /* EX_browser_qtvlist.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2896,10 +2908,12 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../libs/macosx\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../libs/macosx\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = EZQuake;
 				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
@@ -2939,10 +2953,12 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../libs/macosx\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../libs/macosx\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = EZQuake;
 				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
@@ -2983,10 +2999,12 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../libs/macosx\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../libs/macosx\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "EZQuake-GL";
 				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
@@ -3034,10 +3052,12 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../libs/macosx\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../libs/macosx\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../libs/macosx\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "EZQuake-GL";
 				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
