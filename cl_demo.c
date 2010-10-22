@@ -4022,6 +4022,7 @@ void CL_QTVPoll (void)
 	QTV_CloseRequest(true);
 }
 
+void QTVList_Print_Global(void);
 //
 // Returns a list of available stream sources (or demos) from a QTV proxy.
 //
@@ -4034,8 +4035,14 @@ void CL_QTVList_f (void)
 	// Not enough arguments, show usage.
 	if (Cmd_Argc() < 2)
 	{
-		Com_Printf("Usage: %s hostname[:port] [password]\n", Cmd_Argv(0));
-		return;
+		if (qtvlist) {
+			QTVList_Print_Global();
+			return;
+		}
+		else {
+			Com_Printf("Usage: %s hostname[:port] [password]\n", Cmd_Argv(0));
+			return;
+		}
 	}
 
 	// Open the TCP connection to the QTV proxy.

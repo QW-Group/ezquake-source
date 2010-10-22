@@ -65,6 +65,7 @@ typedef enum {
 	QTVLIST_DOWNLOADING,
 	QTVLIST_PARSING,
 	QTVLIST_RESOLVING,
+	QTVLIST_PRINTING,
 	QTVLIST_READY
 } sb_qtvlist_status_t;
 
@@ -353,9 +354,8 @@ static qbool QTVList_Cache_File_Is_Old(void)
 	return diff < 0;
 }
 
-DWORD WINAPI QTVList_Refresh_Cache(void *userData)
+void QTVList_Refresh_Cache(qbool force_redownload)
 {
-	qbool force_redownload = (qbool) userData;
 	vfsfile_t *cache_file;
 	sb_qtvlist_parse_state_t *sb_qtvparse;
 
@@ -372,7 +372,6 @@ DWORD WINAPI QTVList_Refresh_Cache(void *userData)
 		if (!cache_file) {
 			Com_Printf("Can't open QTV cache file\n");
 			sb_qtvlist_cache.status = QTVLIST_INIT;
-			return 1;
 		}
 	}
 
@@ -386,10 +385,117 @@ DWORD WINAPI QTVList_Refresh_Cache(void *userData)
 	
 	sb_qtvlist_cache.status = QTVLIST_RESOLVING;
 	QTVList_Resolve_Hostnames();
+}
 
+static size_t QTVList_Length(const sb_qtventry_t *first)
+{
+	size_t ret = 0;
+	const sb_qtventry_t *cur = first;
+
+	while (cur) {
+		ret++;
+		cur = cur->next;
+	}
+
+	return ret;
+}
+
+static size_t QTVList_Player_Count(const sb_qtventry_t *entry)
+{
+	const sb_qtvplayer_t *cur = entry->players;
+	size_t ret = 0;
+
+	while (cur) {
+		ret++;
+		cur = cur->next;
+	}
+
+	return ret;
+}
+
+int QTVList_Entry_Cmp(const void *a_v, const void *b_v)
+{
+	sb_qtventry_t *entry_a = (sb_qtventry_t *) a_v;
+	sb_qtventry_t *entry_b = (sb_qtventry_t *) b_v;
+
+	if (entry_a->observercount > entry_b->observercount) {
+		return -1;
+	}
+	else if (entry_a->observercount == entry_b->observercount) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
+static void QTVList_Print(void)
+{
+	size_t len = QTVList_Length(sb_qtvlist_cache.sb_qtventries);
+	sb_qtventry_t *entries_array;
+	sb_qtventry_t *cur;
+	int i;
+	size_t players;
+	sb_qtvplayer_t *player;
+
+	entries_array = Q_malloc(len * sizeof (sb_qtventry_t));
+
+	cur = sb_qtvlist_cache.sb_qtventries;
+
+	i = 0;
+	while (cur) {
+		memcpy(&entries_array[i++], cur, sizeof (sb_qtventry_t));
+		cur = cur->next;
+	}
+
+	qsort(entries_array, len, sizeof (sb_qtventry_t), QTVList_Entry_Cmp);
+
+	for (i = 0; i < len; i++) {
+		cur = &entries_array[i];
+		players = QTVList_Player_Count(cur);
+
+		if (players == 0) {
+			continue;
+		}
+
+		Com_Printf("--- %3d %3u %30s ---\n",
+			cur->observercount, players, cur->title);
+
+		player = cur->players;
+		while (player) {
+			Com_Printf("      %4d [%4s] %s\n", player->frags, player->team, player->name);
+			player = player->next;
+		}
+	}
+}
+
+DWORD WINAPI QTVList_Refresh_Cache_Thread(void *userData)
+{
+	QTVList_Refresh_Cache((qbool) userData);
+	sb_qtvlist_cache.status = QTVLIST_READY;
+	return 0;
+}
+
+DWORD WINAPI QTVList_Download_And_Print_Thread(void *userData)
+{
+	Com_Printf("QuakeTV list downloading...\n");
+	QTVList_Refresh_Cache(true);
+	sb_qtvlist_cache.status = QTVLIST_PRINTING;
+	QTVList_Print();
 	sb_qtvlist_cache.status = QTVLIST_READY;
 
 	return 0;
+}
+
+void QTVList_Print_Global(void)
+{
+	if (sb_qtvlist_cache.status != QTVLIST_READY && sb_qtvlist_cache.status != QTVLIST_INIT) {
+		Com_Printf("QTV cache is still being rebuilt\n");
+		return;
+	}
+
+	sb_qtvlist_cache.status = QTVLIST_PROCESSING;
+	Sys_CreateThread(QTVList_Download_And_Print_Thread, NULL);
 }
 
 void QTVList_Initialize_Streammap(void)
@@ -400,7 +506,7 @@ void QTVList_Initialize_Streammap(void)
 	}
 
 	sb_qtvlist_cache.status = QTVLIST_PROCESSING;
-	Sys_CreateThread(QTVList_Refresh_Cache, (void *) false);
+	Sys_CreateThread(QTVList_Refresh_Cache_Thread, (void *) false);
 }
 
 static netadr_t QTVList_Current_IP(void)
