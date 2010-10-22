@@ -1,3 +1,4 @@
+url "QuakeServers URL" http://www.quakeservers.net/lists/servers/global.txt
 master "QuakeServers.net" master.quakeservers.net:27000
 master "Asgaard" 85.10.201.75:27000
 file "Global" global.txt

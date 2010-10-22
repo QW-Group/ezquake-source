@@ -267,6 +267,41 @@ void Util_SkipEZColors(char *dst, const char *src, size_t size)
 	dst[0] = 0;
 }
 
+char *str_trim(char *str)
+{
+	char *start; // points at first non-whitespace
+	char *end; // points at last non-whitespace
+	char *pos = str, *orig_str = str;
+
+	while (*pos && isspace(*pos)) {
+		pos++;
+	}
+
+	if (*pos == '\0') {
+		*str = '\0';
+		return orig_str;
+	}
+	
+	start = pos;
+	end = pos++;
+
+	while (*pos) {
+		if (!isspace(*pos)) {
+			end = pos;
+		}
+		pos++;
+	}
+
+	if (start != orig_str || (end + 1) != pos) {
+		for (pos = start; pos <= end; pos++) {
+			*str++ = *pos;
+		}
+
+		*str = '\0';
+	}
+
+	return orig_str;
+}
 
 int HexToInt(char c)
 {

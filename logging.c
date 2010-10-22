@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "hash.h"
 #include "vfs.h"
+#include <curl/curl.h>
 
 
 static void OnChange_log_dir(cvar_t *var, char *string, qbool *cancel);
@@ -193,7 +194,8 @@ static float auto_starttime;
 
 char *MT_TempDirectory(void);
 
-extern cvar_t match_auto_logconsole, match_auto_minlength;
+extern cvar_t match_auto_logconsole, match_auto_minlength,
+	match_auto_logupload, match_auto_logurl, match_auto_logupload_token;
 
 #define TEMP_LOG_NAME "_!_temp_!_.log"
 
@@ -287,6 +289,56 @@ qbool Log_AutoLogging_Status(void) {
 	return temp_log_ready ? 2 : autologging ? 1 : 0;
 }
 
+DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vfilename)
+{
+	const char *filename = (const char *) vfilename;
+	CURL *curl;
+	CURLcode res;
+	struct curl_httppost *post=NULL;
+	struct curl_httppost *last=NULL;
+	struct curl_slist *headers=NULL;
+
+	curl = curl_easy_init();
+
+	headers = curl_slist_append(headers, "Content-Type: text/plain");
+
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "name",
+		CURLFORM_COPYCONTENTS, cl.players[cl.playernum].name, CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "token",
+		CURLFORM_COPYCONTENTS, match_auto_logupload_token.string, CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "log",
+		CURLFORM_FILE, filename,
+		CURLFORM_CONTENTHEADER, headers,
+		CURLFORM_END);
+
+	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+	curl_easy_setopt(curl, CURLOPT_URL, match_auto_logurl.string);
+
+	res = curl_easy_perform(curl); /* post away! */
+
+	curl_formfree(post);
+	curl_easy_cleanup(curl);
+
+	if (res != CURLE_OK) {
+		Com_Printf("Uploading of log failed:\n%s\n", curl_easy_strerror(res));
+	}
+	else {
+		Com_Printf("Match log uplaoded\n");
+	}
+
+	Q_free(vfilename);
+	return 0;
+}
+
+void Log_AutoLogging_Upload(const char *filename)
+{
+	Com_Printf("Uploading match log...\n");
+	Sys_CreateThread(Log_AutoLogging_Upload_Thread, (void *) Q_strdup(filename));
+}
+
 void Log_AutoLogging_SaveMatch(void) {
 	int error, num;
 	FILE *f;
@@ -319,6 +371,10 @@ void Log_AutoLogging_SaveMatch(void) {
 		error = rename(tempname, fullsavedname);
 	}
 
-	if (!error)
+	if (!error) {
 		Com_Printf("Match console log saved to %s\n", savedname);
+		if (match_auto_logupload.integer) {
+			Log_AutoLogging_Upload(fullsavedname);
+		}
+	}
 }
