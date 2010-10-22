@@ -11,3 +11,4 @@
 "../../make/wget.exe" -O dxguid.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/dxguid.lib
 "../../make/wget.exe" -O libircclient-static.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/libircclient-static.lib
 "../../make/wget.exe" -O glew32.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/glew32.lib
+"../../make/wget.exe" -O libcurl.lib http://github.com/ezQuake/ezquake-libs/raw/master/windows-x86/libcurl.lib
