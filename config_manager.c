@@ -110,6 +110,13 @@ void DumpBindings (FILE *f)
 		fprintf(f, "//no bindings\n");
 }
 
+static qbool Config_Unsaved_Cvar(const char *name)
+{
+	return (!strcmp(name, "cl_delay_packet"))
+	    || (!strcmp(name, "cl_proxyaddr"))
+	    || (!strcmp(name, "hud_planmode"));
+}
+
 #define CONFIG_MAX_COL 60
 #define MAX_DUMPED_CVARS 4096
 static void DumpVariables(FILE	*f)
@@ -162,7 +169,7 @@ static void DumpVariables(FILE	*f)
 			        ))
 				continue;
 			
-			if (!strcmp(var->name, "cl_delay_packet") || !strcmp(var->name, "cl_proxyaddr")) {
+			if (Config_Unsaved_Cvar(var->name)) {
 				continue;
 			}
 			
