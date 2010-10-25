@@ -373,7 +373,11 @@ void Log_AutoLogging_SaveMatch(void) {
 
 	if (!error) {
 		Com_Printf("Match console log saved to %s\n", savedname);
-		if (match_auto_logupload.integer) {
+		if (match_auto_logupload.integer
+			&& cls.demoplayback == DT_NONE
+			&& cls.server_adr.type != NA_LOOPBACK) {
+			// note: we allow the client to be a spectator, so that spectators
+			// can submit logs for matches they spec in case players don't do it
 			Log_AutoLogging_Upload(fullsavedname);
 		}
 	}
