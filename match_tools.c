@@ -589,10 +589,10 @@ char *MT_MatchName(void) {
 
 char *MT_ShortStatus(void)
 {
-	static matchinfo_t* matchinfo;
-	matchinfo = MT_GetMatchInfo();
+	int maxclients = Q_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
+	char *mapname = TP_MapName();
 
-	return va("%d/%d - %s", matchinfo->numplayers, matchinfo->maxclients, matchinfo->mapname);
+	return va("%d/%d - %s", TP_CountPlayers(), maxclients, mapname);
 }
 
 #define MT_SCOREBOARD_SHOWIME	4

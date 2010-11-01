@@ -1980,6 +1980,25 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 	strlcpy(player->_team, player->team, sizeof (player->_team));
 }
 
+void CL_NotifyOnFull(void)
+{
+	if (!cl.spectator && !cls.demoplayback) {
+		int limit = Q_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
+		int players = 0;
+		int i;
+
+		for (i = 0; i < MAX_CLIENTS; i++) {
+			if (*cl.players[i].name && !cl.players[i].spectator) {
+				players++;
+			}
+		}
+
+		if (players >= limit) {
+			VID_NotifyActivity();
+		}
+	}
+}
+
 void CL_PlayerEnterSlot(player_info_t *player) 
 {
 	extern player_state_t oldplayerstates[MAX_CLIENTS];
@@ -1988,6 +2007,7 @@ void CL_PlayerEnterSlot(player_info_t *player)
 	player->f_server[0] = 0;
 	memset(&oldplayerstates[player - cl.players], 0, sizeof(player_state_t));
 	Stats_EnterSlot(player - cl.players);
+	CL_NotifyOnFull();
 }
 
 void CL_PlayerLeaveSlot(player_info_t *player) 
