@@ -349,7 +349,7 @@ qbool Ignore_Message(char *s, int flags, int offset) {
 		return false;		
 
 
-	if (ignore_spec.value == 2 && (flags == msgtype_spec || (flags == msgtype_specteam && ignore_mode.value)))
+	if (ignore_spec.value == 2 && (flags == msgtype_spec || flags == msgtype_specteam))
 		return true;
 	else if (ignore_spec.value == 1 && (flags == msgtype_spec) && !cl.spectator)
 		return true;
