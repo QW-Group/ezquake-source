@@ -226,3 +226,4 @@ searchpathfuncs_t doomwadfilefuncs = {
 
 
 #endif // DOOMWADS
+

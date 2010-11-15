@@ -1961,3 +1961,4 @@ static void OnChange_file_browser_sort_mode(cvar_t *var, char *string, qbool *ca
 		skins_filelist.need_resort		= true;
 	}
 }
+

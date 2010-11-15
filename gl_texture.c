@@ -1040,3 +1040,4 @@ void GL_Texture_Init(void)
 	no24bit = (COM_CheckParm("-no24bit") || gl_no24bit.integer) ? true : false;
 	forceTextureReload = COM_CheckParm("-forceTextureReload") ? true : false;
 }
+
