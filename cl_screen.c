@@ -158,9 +158,10 @@ cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 #ifdef GLQUAKE
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
-cvar_t	scr_autoid				= {"scr_autoid", "5"};
+cvar_t	scr_autoid				= {"scr_autoid", "255"};
 cvar_t	scr_autoid_namelength	= {"scr_autoid_namelength", "0"};
 cvar_t	scr_autoid_barlength	= {"scr_autoid_barlength", "16"};
+cvar_t	scr_autoid_weaponicon	= {"scr_autoid_weaponicon", "1"};
 cvar_t	scr_autoid_scale		= {"scr_autoid_scale", "1"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 #endif
@@ -1028,6 +1029,15 @@ void SCR_DrawConsole (void) {
 
 /*********************************** AUTOID ***********************************/
 
+#define AUTOID_NAME			1
+#define AUTOID_HEALTH		2
+#define AUTOID_ARMOR		4
+#define AUTOID_WEAPON_RL	8
+#define AUTOID_WEAPON_LG	16
+#define AUTOID_WEAPON_GL	32
+#define AUTOID_WEAPON_OTHER	64
+#define AUTOID_ARMOR_NAME	128
+
 #define AUTOID_HEALTHBAR_BG_COLOR			180, 115, 115
 #define AUTOID_HEALTHBAR_NORMAL_COLOR		80, 0, 0
 #define AUTOID_HEALTHBAR_MEGA_COLOR			255, 0, 0
@@ -1157,18 +1167,10 @@ void SCR_SetupAutoID (void) {
 	}
 }
 
-#define AUTOID_NAME			1
-#define AUTOID_HEALTH		2
-#define AUTOID_ARMOR		4
-#define AUTOID_WEAPON_RL	8
-#define AUTOID_WEAPON_LG	16
-#define AUTOID_WEAPON_GL	32
-#define AUTOID_WEAPON_OTHER	64
-#define AUTOID_ARMOR_NAME	128
-
 void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 {
 	char armor_name[20];
+	char weapon_name[20];
 	int bar_length;
 
 	if (scr_autoid_barlength.integer > 0) {
@@ -1281,24 +1283,31 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 		{
 			case IT_SHOTGUN:
 				weapon_pic = sb_weapons[0][0];
+				strlcpy(weapon_name, "SG", sizeof(weapon_name));
 				break;
 			case IT_SUPER_SHOTGUN:
 				weapon_pic = sb_weapons[0][1];
+				strlcpy(weapon_name, "BS", sizeof(weapon_name));
 				break;
 			case IT_NAILGUN:
 				weapon_pic = sb_weapons[0][2];
+				strlcpy(weapon_name, "NG", sizeof(weapon_name));
 				break;
 			case IT_SUPER_NAILGUN:
 				weapon_pic = sb_weapons[0][3];
+				strlcpy(weapon_name, "SN", sizeof(weapon_name));
 				break;
 			case IT_GRENADE_LAUNCHER:
 				weapon_pic = sb_weapons[0][4];
+				strlcpy(weapon_name, "GL", sizeof(weapon_name));
 				break;
 			case IT_ROCKET_LAUNCHER:
 				weapon_pic = sb_weapons[0][5];
+				strlcpy(weapon_name, "RL", sizeof(weapon_name));
 				break;
 			case IT_LIGHTNING:
 				weapon_pic = sb_weapons[0][6];
+				strlcpy(weapon_name, "LG", sizeof(weapon_name));
 				break;
 			default :
 				// No weapon.
@@ -1311,15 +1320,22 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 			|| (scr_autoid.integer & AUTOID_WEAPON_GL && best_weapon == IT_GRENADE_LAUNCHER)
 			|| (scr_autoid.integer & AUTOID_WEAPON_OTHER && best_weapon > 0 && best_weapon < 6)))
 		{
-			Draw_SSubPic (
-				x - (bar_length + weapon_pic->width + AUTOID_WEAPON_OFFSET_X) * scale,
-				y - (AUTOID_HEALTHBAR_OFFSET_Y + Q_rint((weapon_pic->height/2.0))) * scale,
-				weapon_pic,
-				0,
-				0,
-				weapon_pic->width,
-				weapon_pic->height,
-				scale);
+			if (scr_autoid_weaponicon.value) {
+				Draw_SSubPic (
+					x - (bar_length + weapon_pic->width + AUTOID_WEAPON_OFFSET_X) * scale,
+					y - (AUTOID_HEALTHBAR_OFFSET_Y + Q_rint((weapon_pic->height/2.0))) * scale,
+					weapon_pic,
+					0,
+					0,
+					weapon_pic->width,
+					weapon_pic->height,
+					scale);
+			} else {
+				Draw_SColoredString(
+					x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
+					y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
+					str2wcs(weapon_name), NULL, 0, 0, scale);
+			}
 		}
 	}
 }
@@ -4417,6 +4433,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_autoid_namelength);
 	Cvar_Register (&scr_autoid_barlength);
+	Cvar_Register (&scr_autoid_weaponicon);
 	Cvar_Register (&scr_autoid_scale);
 	Cvar_Register (&scr_coloredfrags);
 #endif
