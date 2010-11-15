@@ -1308,8 +1308,17 @@ void SCR_DrawAutoID (void)
 	{
 		x =  autoids[i].x * vid.width / glwidth;
 		y =  (glheight - autoids[i].y) * vid.height / glheight;
-		if(scr_autoid_drawname.value)
-			Draw_String(x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
+		if(scr_autoid_drawname.value) {
+			if (scr_autoid_drawname.integer > 1 && scr_autoid_drawname.integer < MAX_SCOREBOARDNAME) {
+				char name[MAX_SCOREBOARDNAME];
+
+				strlcpy(name, autoids[i].player->name, sizeof(name));
+				name[scr_autoid_drawname.integer] = 0;
+				Draw_String(x - strlen(name) * 4, y - 8, name);
+			} else {
+				Draw_String(x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
+			}
+		}
 
 		// We only have health/armor info for all players when in demo playback.
 		if(cls.demoplayback && scr_autoid.value >= 2)
