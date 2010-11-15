@@ -7,3 +7,4 @@ wget --no-check-certificate -O 'libpng.a' 'http://github.com/ezQuake/ezquake-lib
 wget --no-check-certificate -O 'libtcl.a' 'http://github.com/ezQuake/ezquake-libs/raw/master/linux-x86_64/libtcl.a'
 wget --no-check-certificate -O 'libz.a' 'http://github.com/ezQuake/ezquake-libs/raw/master/linux-x86_64/libz.a'
 wget --no-check-certificate -O 'minizip.a' 'http://github.com/ezQuake/ezquake-libs/raw/master/linux-x86_64/minizip.a'
+wget --no-check-certificate -O 'libcurl.a' 'http://github.com/ezQuake/ezquake-libs/raw/master/linux-x86_64/libcurl.a'
