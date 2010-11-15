@@ -22,7 +22,7 @@
 #endif
 
 #ifdef __FreeBSD__
-#include "pcre.config.bsd.h"
+#include "pcre.config.freebsd.h"
 #endif
 
 /* an old header under new name */

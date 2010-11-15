@@ -17,5 +17,5 @@
 #endif
 
 #ifdef __FreeBSD__
-#include "jconfig.bsd.h"
+#include "jconfig.freebsd.h"
 #endif

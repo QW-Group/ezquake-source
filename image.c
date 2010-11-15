@@ -535,7 +535,11 @@ static png_infop (*qpng_create_info_struct)(png_structp);
 static void (*qpng_write_info)(png_structp, png_infop);
 static void (*qpng_read_info)(png_structp, png_infop);
 static void (*qpng_set_expand)(png_structp);
+#ifdef __Q_PNG14__
+static void (*qpng_set_expand_gray_1_2_4_to_8)(png_structp);
+#else
 static void (*qpng_set_gray_1_2_4_to_8)(png_structp);
+#endif
 static void (*qpng_set_palette_to_rgb)(png_structp);
 static void (*qpng_set_tRNS_to_alpha)(png_structp);
 static void (*qpng_set_gray_to_rgb)(png_structp);
@@ -571,7 +575,11 @@ qlib_dllfunction_t pngprocs[] = {
 	{"png_write_info", (void **) &qpng_write_info},
 	{"png_read_info", (void **) &qpng_read_info},
 	{"png_set_expand", (void **) &qpng_set_expand},
+#ifdef __Q_PNG14__
+	{"png_set_expand_gray_1_2_4_to_8", (void **) &qpng_set_expand_gray_1_2_4_to_8},
+#else
 	{"png_set_gray_1_2_4_to_8", (void **) &qpng_set_gray_1_2_4_to_8},
+#endif
 	{"png_set_palette_to_rgb", (void **) &qpng_set_palette_to_rgb},
 	{"png_set_tRNS_to_alpha", (void **) &qpng_set_tRNS_to_alpha},
 	{"png_set_gray_to_rgb", (void **) &qpng_set_gray_to_rgb},
@@ -735,7 +743,11 @@ byte *Image_LoadPNG (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	}
 
 	if (colortype == PNG_COLOR_TYPE_GRAY && bitdepth < 8) 
+#ifdef __Q_PNG14__
+		qpng_set_expand_gray_1_2_4_to_8(png_ptr);
+#else   
 		qpng_set_gray_1_2_4_to_8(png_ptr);
+#endif
 	
 	if (qpng_get_valid(png_ptr, pnginfo, PNG_INFO_tRNS))	
 		qpng_set_tRNS_to_alpha(png_ptr);
@@ -1050,7 +1062,11 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 
 		if (colortype == PNG_COLOR_TYPE_GRAY && bitdepth < 8) 
 		{
+#ifdef __Q_PNG14__
+			png_set_expand_gray_1_2_4_to_8(png_ptr);
+#else
 			png_set_gray_1_2_4_to_8(png_ptr);
+#endif
 		}
 		
 		if (png_get_valid(png_ptr, pnginfo, PNG_INFO_tRNS))	
