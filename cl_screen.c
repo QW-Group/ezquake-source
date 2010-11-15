@@ -161,6 +161,7 @@ cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_autoid				= {"scr_autoid", "5"};
 cvar_t	scr_autoid_drawname		= {"scr_autoid_drawname", "1"};
 cvar_t	scr_autoid_barlength	= {"scr_autoid_barlength", "16"};
+cvar_t	scr_autoid_scale		= {"scr_autoid_scale", "1"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 #endif
 
@@ -1169,8 +1170,8 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	if (scr_autoid_barlength.integer > 0) {
 		bar_length = scr_autoid_barlength.integer;
 	} else {
-		if (scr_autoid_drawname->integer > 1) {
-			bar_length = MIN(scr_autoid_drawname->integer, strlen(autoid_p->player->name)) * 4;
+		if (scr_autoid_drawname.integer > 1) {
+			bar_length = min(scr_autoid_drawname.integer, strlen(autoid_p->player->name)) * 4;
 		} else {
 			bar_length = strlen(autoid_p->player->name) * 4;
 		}
@@ -1304,6 +1305,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 void SCR_DrawAutoID (void)
 {
 	int i, x, y;
+	float scale;
 
 	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator))
 		return;
@@ -1312,15 +1314,17 @@ void SCR_DrawAutoID (void)
 	{
 		x =  autoids[i].x * vid.width / glwidth;
 		y =  (glheight - autoids[i].y) * vid.height / glheight;
+		scale = (scr_autoid_scale.value > 0 ? scr_autoid_scale.value : 1.0);
+
 		if(scr_autoid_drawname.value) {
 			if (scr_autoid_drawname.integer > 1 && scr_autoid_drawname.integer < MAX_SCOREBOARDNAME) {
 				char name[MAX_SCOREBOARDNAME];
 
 				strlcpy(name, autoids[i].player->name, sizeof(name));
 				name[scr_autoid_drawname.integer] = 0;
-				Draw_String(x - strlen(name) * 4, y - 8, name);
+				Draw_SString(x - strlen(name) * 4 * scale, y - 8 * scale, name, scale);
 			} else {
-				Draw_String(x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
+				Draw_SString(x - strlen(autoids[i].player->name) * 4 * scale, y - 8 * scale, autoids[i].player->name, scale);
 			}
 		}
 
@@ -4391,6 +4395,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_autoid_drawname);
 	Cvar_Register (&scr_autoid_barlength);
+	Cvar_Register (&scr_autoid_scale);
 	Cvar_Register (&scr_coloredfrags);
 #endif
 	Cvar_Register (&scr_teaminfo_order);
