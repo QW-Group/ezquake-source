@@ -158,7 +158,8 @@ cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 #ifdef GLQUAKE
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
-cvar_t	scr_autoid				= {"scr_autoid", "255"};
+cvar_t	scr_autoid				= {"scr_autoid", "15"};
+cvar_t	scr_autoid_weapons		= {"scr_autoid_weapons", "2"};
 cvar_t	scr_autoid_namelength	= {"scr_autoid_namelength", "0"};
 cvar_t	scr_autoid_barlength	= {"scr_autoid_barlength", "16"};
 cvar_t	scr_autoid_weaponicon	= {"scr_autoid_weaponicon", "1"};
@@ -1032,11 +1033,8 @@ void SCR_DrawConsole (void) {
 #define AUTOID_NAME			1
 #define AUTOID_HEALTH		2
 #define AUTOID_ARMOR		4
-#define AUTOID_WEAPON_RL	8
-#define AUTOID_WEAPON_LG	16
-#define AUTOID_WEAPON_GL	32
-#define AUTOID_WEAPON_OTHER	64
-#define AUTOID_ARMOR_NAME	128
+#define AUTOID_WEAPON		8
+#define AUTOID_ARMOR_NAME	16
 
 #define AUTOID_HEALTHBAR_BG_COLOR			180, 115, 115
 #define AUTOID_HEALTHBAR_NORMAL_COLOR		80, 0, 0
@@ -1269,8 +1267,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 			str2wcs(armor_name), NULL, 0, 0, scale);
 	}
 
-	if((scr_autoid.integer & AUTOID_WEAPON_RL) || (scr_autoid.integer & AUTOID_WEAPON_LG) ||
-			(scr_autoid.integer & AUTOID_WEAPON_GL) || (scr_autoid.integer & AUTOID_WEAPON_OTHER))
+	if(scr_autoid_weapons.integer > 0 && (scr_autoid.integer & AUTOID_WEAPON))
 	{
 		// Draw the players weapon.
 		int best_weapon = -1;
@@ -1314,11 +1311,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 				break;
 		}
 
-		if(weapon_pic != NULL &&
-			((scr_autoid.integer & AUTOID_WEAPON_RL && best_weapon == IT_ROCKET_LAUNCHER)
-			|| (scr_autoid.integer & AUTOID_WEAPON_LG && best_weapon == IT_LIGHTNING)
-			|| (scr_autoid.integer & AUTOID_WEAPON_GL && best_weapon == IT_GRENADE_LAUNCHER)
-			|| (scr_autoid.integer & AUTOID_WEAPON_OTHER && best_weapon > 0 && best_weapon < 6)))
+		if(weapon_pic != NULL && best_weapon > 0 && best_weapon >= scr_autoid_weapons.integer)
 		{
 			if (scr_autoid_weaponicon.value) {
 				Draw_SSubPic (
@@ -4431,6 +4424,7 @@ void SCR_Init (void)
 
 #ifdef GLQUAKE
 	Cvar_Register (&scr_autoid);
+	Cvar_Register (&scr_autoid_weapons);
 	Cvar_Register (&scr_autoid_namelength);
 	Cvar_Register (&scr_autoid_barlength);
 	Cvar_Register (&scr_autoid_weaponicon);
