@@ -1169,7 +1169,11 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	if (scr_autoid_barlength.integer > 0) {
 		bar_length = scr_autoid_barlength.integer;
 	} else {
-		bar_length = strlen(autoid_p->player->name) * 4;
+		if (scr_autoid_drawname->integer > 1) {
+			bar_length = MIN(scr_autoid_drawname->integer, strlen(autoid_p->player->name)) * 4;
+		} else {
+			bar_length = strlen(autoid_p->player->name) * 4;
+		}
 	}
 	health = autoid_p->player->stats[STAT_HEALTH];
 	health = min(100, health);
