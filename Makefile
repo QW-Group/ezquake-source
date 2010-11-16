@@ -72,7 +72,7 @@ QUAKE_DIR="/opt/quake/"
 
 ################
 
-C_BUILD = $(_E)$(CC) -c -o $@ $(_CFLAGS) $<
+C_BUILD = $(_E)$(CC) -MD -c -o $@ $(_CFLAGS) $<
 S_BUILD = $(_E)$(CC) -c -o $@ $(_CFLAGS) -DELF -x assembler-with-cpp $<
 BUILD = $(_E)$(CC) -o $@ $(_OBJS) $(_LDFLAGS)
 MKDIR = $(_E)mkdir -p $@
@@ -163,13 +163,21 @@ ifeq ($(TYPE),release)
 	$(STRIP) $(STRIPFLAGS) $(GLX_TARGET)
 endif
 
+df_glx = $(GLX_DIR)/$(*F)
+
 $(GLX_C_OBJS): $(GLX_DIR)/%.o: %.c
 	@echo [CC] $<
-	$(C_BUILD)
+	$(C_BUILD); \
+		cp $(df_glx).d $(df_glx).P; \
+		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+			-e '/^$$/ d' -e 's/$$/ :/' < $(df_glx).d >> $(df_glx).P; \
+		rm -f $(df_glx).d
 
 $(GLX_S_OBJS): $(GLX_DIR)/%.o: %.s
 	@echo [CC] $<
 	$(S_BUILD)
+
+-include $(GLX_C_OBJS:.o=.P)
 
 #######
 # X11 #
@@ -194,13 +202,21 @@ ifeq ($(TYPE),release)
 	$(STRIP) $(STRIPFLAGS) $(X11_TARGET)
 endif
 
+df_x11 = $(X11_DIR)/$(*F)
+
 $(X11_C_OBJS): $(X11_DIR)/%.o: %.c
 	@echo [CC] $<
-	$(C_BUILD)
+	$(C_BUILD); \
+		cp $(df_x11).d $(df_x11).P; \
+		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+			-e '/^$$/ d' -e 's/$$/ :/' < $(df_x11).d >> $(df_x11).P; \
+		rm -f $(df_x11).d
 
 $(X11_S_OBJS): $(X11_DIR)/%.o: %.s
 	@echo [CC] $<
 	$(S_BUILD)
+
+-include $(X11_C_OBJS:.o=.P)
 
 ########
 # SVGA #
@@ -232,13 +248,21 @@ ifeq ($(TYPE),release)
 	$(STRIP) $(STRIPFLAGS) $(SVGA_TARGET)
 endif
 
+df_svga = $(SVGA_DIR)/$(*F)
+
 $(SVGA_C_OBJS): $(SVGA_DIR)/%.o: %.c
 	@echo [CC] $<
-	$(C_BUILD)
+	$(C_BUILD); \
+		cp $(df_svga).d $(df_svga).P; \
+		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+			-e '/^$$/ d' -e 's/$$/ :/' < $(df_svga).d >> $(df_svga).P; \
+		rm -f $(df_svga).d
 
 $(SVGA_S_OBJS): $(SVGA_DIR)/%.o: %.s
 	@echo [CC] $<
 	$(S_BUILD)
+
+-include $(SVGA_C_OBJS:.o=.P)
 
 #######
 # MAC #

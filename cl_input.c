@@ -113,14 +113,14 @@ void KeyDown_common (kbutton_t *b, int k)
 	b->downtime = curtime;
 }
 
-void KeyUp_common (kbutton_t *b, int k)
+qbool KeyUp_common (kbutton_t *b, int k)
 {
 	if (k == -1) { // typed manually at the console, assume for unsticking, so clear all
 		b->down[0] = b->down[1] = 0;
 		b->state &= ~1;		// now up
 		b->state |= 4; 		// impulse up
 		b->uptime = curtime;
-		return;
+		return true;
 	}
 
 	if (b->down[0] == k)
@@ -128,16 +128,17 @@ void KeyUp_common (kbutton_t *b, int k)
 	else if (b->down[1] == k)
 		b->down[1] = 0;
 	else
-		return;		// key up without coresponding down (menu pass through)
+		return true;		// key up without coresponding down (menu pass through)
 
 	if (b->down[0] || b->down[1])
-		return;		// some other key is still holding it down
+		return false;		// some other key is still holding it down
 
 	if (!(b->state & 1))
-		return;		// still up (this should not happen)
+		return true;		// still up (this should not happen)
 	b->state &= ~1;		// now up
 	b->state |= 4; 		// impulse up
 	b->uptime = curtime;
+	return true;
 }
 
 void KeyDown(kbutton_t *b)
@@ -151,7 +152,8 @@ void KeyDown(kbutton_t *b)
 	KeyDown_common(b, k);
 }
 
-void KeyUp(kbutton_t *b)
+// returns whether the button is now up, will not be if other key is holding it down
+qbool KeyUp(kbutton_t *b)
 {
 	int k = -1;
 	char *c = Cmd_Argv(1);
@@ -159,7 +161,7 @@ void KeyUp(kbutton_t *b)
 		k = atoi(c);
 	}
 
-	KeyUp_common(b, k);
+	return KeyUp_common(b, k);
 }
 
 
@@ -211,7 +213,7 @@ void IN_StrafeUp(void) {KeyUp(&in_strafe);}
 qbool Key_TryMovementProtected(const char *cmd, qbool down, int key)
 {
 	typedef void (*KeyPress_fnc) (kbutton_t *b, int key);
-	KeyPress_fnc f = down ? KeyDown_common : KeyUp_common;
+	KeyPress_fnc f = down ? KeyDown_common : (KeyPress_fnc)KeyUp_common;
 	kbutton_t *b = NULL;
 
 	if      (strcmp(cmd, "+forward") == 0) b = &in_forward;
@@ -245,7 +247,9 @@ void IN_AttackDown(void)
 
 void IN_AttackUp(void)
 {
-	if (CL_INPUT_WEAPONHIDE())
+	qbool up = KeyUp(&in_attack);
+
+	if (up && CL_INPUT_WEAPONHIDE())
 	{
 		if (cl_weaponhide_axe.integer)
 		{
@@ -259,7 +263,6 @@ void IN_AttackUp(void)
 			in_impulse = (cl.stats[STAT_ITEMS] & IT_SHOTGUN && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1;
 		}
 	}
-	KeyUp(&in_attack);
 }
 
 void IN_UseDown (void) {KeyDown(&in_use);}

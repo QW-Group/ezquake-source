@@ -11,3 +11,8 @@
 /make/msvs2008/*.ncb
 /make/msvs2008/*.suo
 /make/msvs2008/*.user
+
+/release-*/
+/debug-*/
+/libs/linux-x86/*.a
+/libs/linux-x86_64/*.a
