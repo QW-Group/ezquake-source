@@ -4,7 +4,7 @@
 	// VVD
 */
  
-#ifdef __FreeBSD__
+#if defined __FreeBSD__ || defined __APPLE__
 #include "png14.h"
 #define __Q_PNG14__
 #else
