@@ -158,8 +158,12 @@ cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 #ifdef GLQUAKE
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
-cvar_t	scr_autoid				= {"scr_autoid", "5"};
-cvar_t	scr_autoid_drawname		= {"scr_autoid_drawname", "1"};
+cvar_t	scr_autoid				= {"scr_autoid", "15"};
+cvar_t	scr_autoid_weapons		= {"scr_autoid_weapons", "2"};
+cvar_t	scr_autoid_namelength	= {"scr_autoid_namelength", "0"};
+cvar_t	scr_autoid_barlength	= {"scr_autoid_barlength", "16"};
+cvar_t	scr_autoid_weaponicon	= {"scr_autoid_weaponicon", "1"};
+cvar_t	scr_autoid_scale		= {"scr_autoid_scale", "1"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 #endif
 
@@ -1026,6 +1030,12 @@ void SCR_DrawConsole (void) {
 
 /*********************************** AUTOID ***********************************/
 
+#define AUTOID_NAME			1
+#define AUTOID_HEALTH		2
+#define AUTOID_ARMOR		4
+#define AUTOID_WEAPON		8
+#define AUTOID_ARMOR_NAME	16
+
 #define AUTOID_HEALTHBAR_BG_COLOR			180, 115, 115
 #define AUTOID_HEALTHBAR_NORMAL_COLOR		80, 0, 0
 #define AUTOID_HEALTHBAR_MEGA_COLOR			255, 0, 0
@@ -1038,9 +1048,9 @@ void SCR_DrawConsole (void) {
 #define AUTOID_ARMORBAR_YELLOW_ARMOR		255, 220, 0
 #define AUTOID_ARMORBAR_RED_ARMOR			255, 0, 0
 
-#define AUTOID_ARMORBAR_OFFSET_Y			AUTOID_HEALTHBAR_OFFSET_Y - 5
-#define AUTOID_ARMORNAME_OFFSET_Y			AUTOID_ARMORBAR_OFFSET_Y - 8 - 2
-#define AUTOID_ARMORNAME_OFFSET_X			8/2
+#define AUTOID_ARMORBAR_OFFSET_Y			(AUTOID_HEALTHBAR_OFFSET_Y + 5)
+#define AUTOID_ARMORNAME_OFFSET_Y			(AUTOID_ARMORBAR_OFFSET_Y + 8 + 2)
+#define AUTOID_ARMORNAME_OFFSET_X			8
 
 #define AUTOID_WEAPON_OFFSET_Y				AUTOID_HEALTHBAR_OFFSET_Y
 #define AUTOID_WEAPON_OFFSET_X				2
@@ -1155,88 +1165,109 @@ void SCR_SetupAutoID (void) {
 	}
 }
 
-void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
+void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 {
 	char armor_name[20];
-	int health;
-	int name_length;
-	int health_length;
-	int armor;
-	int armor_length;
+	char weapon_name[20];
+	int bar_length;
+
+	if (scr_autoid_barlength.integer > 0) {
+		bar_length = scr_autoid_barlength.integer;
+	} else {
+		if (scr_autoid_namelength.integer >= 1) {
+			bar_length = min(scr_autoid_namelength.integer, strlen(autoid_p->player->name)) * 4;
+		} else {
+			bar_length = strlen(autoid_p->player->name) * 4;
+		}
+	}
 
 	// Draw health above the name.
-	name_length = strlen(autoid_p->player->name) * 4;
-	health = autoid_p->player->stats[STAT_HEALTH];
-	health = min(100, health);
-	health_length = Q_rint((name_length/100.0) * health);
-
-	// Normal health.
-	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_BG_COLOR, 100));
-	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_NORMAL_COLOR, 255));
-
-	health = autoid_p->player->stats[STAT_HEALTH];
-
-	// Mega health
-	if(health > 100 && health <= 200)
+	if (scr_autoid.integer & AUTOID_HEALTH)
 	{
-		health_length = Q_rint((name_length/100.0) * (health - 100));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, 255));
-	}
-	else if(health > 200 && health <= 250)
-	{
-		// Super health.
-		health_length = Q_rint((name_length/100.0) * (health - 200));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, 255));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_TWO_MEGA_COLOR, 255));
-	}
-	else if(health > 250)
-	{
-		// Crazy health.
-		// This will never happen during a normal game.
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_UNNATURAL_COLOR, 255));
+		int health;
+		int health_length;
+
+		health = autoid_p->player->stats[STAT_HEALTH];
+		health = min(100, health);
+		health_length = Q_rint((bar_length/100.0) * health);
+
+		// Normal health.
+		Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_BG_COLOR, 100));
+		Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_NORMAL_COLOR, 255));
+
+		health = autoid_p->player->stats[STAT_HEALTH];
+
+		// Mega health
+		if(health > 100 && health <= 200)
+		{
+			health_length = Q_rint((bar_length/100.0) * (health - 100));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, 255));
+		}
+		else if(health > 200 && health <= 250)
+		{
+			// Super health.
+			health_length = Q_rint((bar_length/100.0) * (health - 200));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, 255));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, health_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_TWO_MEGA_COLOR, 255));
+		}
+		else if(health > 250)
+		{
+			// Crazy health.
+			// This will never happen during a normal game.
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_HEALTHBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_HEALTHBAR_UNNATURAL_COLOR, 255));
+		}
 	}
 
 	// Draw armor.
-	armor = autoid_p->player->stats[STAT_ARMOR];
-	armor = min(100, armor);
-	armor_length = Q_rint((name_length/100.0) * armor);
+	if (scr_autoid.integer & AUTOID_ARMOR)
+	{
+		int armor;
+		int armor_length;
 
-	if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1)
-	{
-		// Green armor.
-		strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
-		//Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length * 2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 0.2);
-		//Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 1.0);
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_GREEN_ARMOR, 50));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_GREEN_ARMOR, 255));
-	}
-	else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2)
-	{
-		// Yellow armor.
-		strlcpy(armor_name, "&cff0YA", sizeof(armor_name));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_YELLOW_ARMOR, 50));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_YELLOW_ARMOR, 255));
-	}
-	else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR3)
-	{
-		// Red armor.
-		strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_RED_ARMOR, 50));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_RED_ARMOR, 255));
-	}
+		armor = autoid_p->player->stats[STAT_ARMOR];
+		armor = min(100, armor);
+		armor_length = Q_rint((bar_length/100.0) * armor);
 
-	if(scr_autoid.value >= 3 && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
-	{
-		//
-		// Draw the name of the armor type.
-		//
-		Draw_ColoredString(
-			x - AUTOID_ARMORNAME_OFFSET_X,
-			y - AUTOID_ARMORNAME_OFFSET_Y,
-			armor_name, 0);
+		if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1)
+		{
+			// Green armor.
+			//Draw_AlphaFillRGB(x - bar_length, y - AUTOID_ARMORBAR_OFFSET_Y, bar_length * 2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 0.2);
+			//Draw_AlphaFillRGB(x - bar_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 1.0);
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_GREEN_ARMOR, 50));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, armor_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_GREEN_ARMOR, 255));
+		}
+		else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2)
+		{
+			// Yellow armor.
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_YELLOW_ARMOR, 50));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, armor_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_YELLOW_ARMOR, 255));
+		}
+		else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR3)
+		{
+			// Red armor.
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, bar_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_RED_ARMOR, 50));
+			Draw_AlphaFillRGB(x - bar_length * scale, y - AUTOID_ARMORBAR_OFFSET_Y * scale, armor_length * 2 * scale, 4 * scale, RGBA_TO_COLOR(AUTOID_ARMORBAR_RED_ARMOR, 255));
+		}
 	}
 
-	if(scr_autoid.value >= 4)
+	// Draw the name of the armor type.
+	if((scr_autoid.integer & AUTOID_ARMOR_NAME) && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
+	{
+		if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1) {
+			strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
+		} else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2) {
+			strlcpy(armor_name, "&cff0YA", sizeof(armor_name));
+		} else {
+			strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
+		}
+
+		Draw_SColoredString(
+			x - AUTOID_ARMORNAME_OFFSET_X * scale,
+			y - AUTOID_ARMORNAME_OFFSET_Y * scale,
+			str2wcs(armor_name), NULL, 0, 0, scale);
+	}
+
+	if(scr_autoid_weapons.integer > 0 && (scr_autoid.integer & AUTOID_WEAPON))
 	{
 		// Draw the players weapon.
 		int best_weapon = -1;
@@ -1249,45 +1280,55 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 		{
 			case IT_SHOTGUN:
 				weapon_pic = sb_weapons[0][0];
+				strlcpy(weapon_name, "SG", sizeof(weapon_name));
 				break;
 			case IT_SUPER_SHOTGUN:
 				weapon_pic = sb_weapons[0][1];
+				strlcpy(weapon_name, "BS", sizeof(weapon_name));
 				break;
 			case IT_NAILGUN:
 				weapon_pic = sb_weapons[0][2];
+				strlcpy(weapon_name, "NG", sizeof(weapon_name));
 				break;
 			case IT_SUPER_NAILGUN:
 				weapon_pic = sb_weapons[0][3];
+				strlcpy(weapon_name, "SN", sizeof(weapon_name));
 				break;
 			case IT_GRENADE_LAUNCHER:
 				weapon_pic = sb_weapons[0][4];
+				strlcpy(weapon_name, "GL", sizeof(weapon_name));
 				break;
 			case IT_ROCKET_LAUNCHER:
 				weapon_pic = sb_weapons[0][5];
+				strlcpy(weapon_name, "RL", sizeof(weapon_name));
 				break;
 			case IT_LIGHTNING:
 				weapon_pic = sb_weapons[0][6];
+				strlcpy(weapon_name, "LG", sizeof(weapon_name));
 				break;
 			default :
 				// No weapon.
 				break;
 		}
 
-		// Only draw the best weapon if it's the RL when autoid = 4
-		// Otherwise draw the current best weapon when autoid = 5
-		if(weapon_pic != NULL &&
-			((scr_autoid.value == 4 && best_weapon == IT_ROCKET_LAUNCHER)
-			|| (scr_autoid.value >= 5 && best_weapon > 0)))
+		if(weapon_pic != NULL && best_weapon > 0 && best_weapon >= scr_autoid_weapons.integer)
 		{
-			Draw_SSubPic (
-				x - name_length - weapon_pic->width - AUTOID_WEAPON_OFFSET_X,
-				y - AUTOID_HEALTHBAR_OFFSET_Y - Q_rint((weapon_pic->height/2.0)),
-				weapon_pic,
-				0,
-				0,
-				weapon_pic->width,
-				weapon_pic->height,
-				1);
+			if (scr_autoid_weaponicon.value) {
+				Draw_SSubPic (
+					x - (bar_length + weapon_pic->width + AUTOID_WEAPON_OFFSET_X) * scale,
+					y - (AUTOID_HEALTHBAR_OFFSET_Y + Q_rint((weapon_pic->height/2.0))) * scale,
+					weapon_pic,
+					0,
+					0,
+					weapon_pic->width,
+					weapon_pic->height,
+					scale);
+			} else {
+				Draw_SColoredString(
+					x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
+					y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
+					str2wcs(weapon_name), NULL, 0, 0, scale);
+			}
 		}
 	}
 }
@@ -1295,6 +1336,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 void SCR_DrawAutoID (void)
 {
 	int i, x, y;
+	float scale;
 
 	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator))
 		return;
@@ -1303,13 +1345,24 @@ void SCR_DrawAutoID (void)
 	{
 		x =  autoids[i].x * vid.width / glwidth;
 		y =  (glheight - autoids[i].y) * vid.height / glheight;
-		if(scr_autoid_drawname.value)
-			Draw_String(x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
+		scale = (scr_autoid_scale.value > 0 ? scr_autoid_scale.value : 1.0);
+
+		if(scr_autoid.integer & AUTOID_NAME) {
+			if (scr_autoid_namelength.integer >= 1 && scr_autoid_namelength.integer < MAX_SCOREBOARDNAME) {
+				char name[MAX_SCOREBOARDNAME];
+
+				strlcpy(name, autoids[i].player->name, sizeof(name));
+				name[scr_autoid_namelength.integer] = 0;
+				Draw_SString(x - strlen(name) * 4 * scale, y - 8 * scale, name, scale);
+			} else {
+				Draw_SString(x - strlen(autoids[i].player->name) * 4 * scale, y - 8 * scale, autoids[i].player->name, scale);
+			}
+		}
 
 		// We only have health/armor info for all players when in demo playback.
 		if(cls.demoplayback && scr_autoid.value >= 2)
 		{
-			SCR_DrawAutoIDStatus(&autoids[i], x, y);
+			SCR_DrawAutoIDStatus(&autoids[i], x, y, scale);
 		}
 	}
 }
@@ -4371,7 +4424,11 @@ void SCR_Init (void)
 
 #ifdef GLQUAKE
 	Cvar_Register (&scr_autoid);
-	Cvar_Register (&scr_autoid_drawname);
+	Cvar_Register (&scr_autoid_weapons);
+	Cvar_Register (&scr_autoid_namelength);
+	Cvar_Register (&scr_autoid_barlength);
+	Cvar_Register (&scr_autoid_weaponicon);
+	Cvar_Register (&scr_autoid_scale);
 	Cvar_Register (&scr_coloredfrags);
 #endif
 	Cvar_Register (&scr_teaminfo_order);
