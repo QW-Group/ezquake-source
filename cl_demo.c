@@ -4650,6 +4650,29 @@ static void CL_Demo_Jump_Status_Check (void)
 	}
 }
 
+static int CL_Demo_Jump_Status_Parse_Weapon (const char *arg)
+{
+	if (!strcasecmp("axe", arg)) {
+		return IT_AXE;
+	} else if (!strcasecmp("sg", arg)) {
+		return IT_SHOTGUN;
+	} else if (!strcasecmp("ssg", arg)) {
+		return IT_SUPER_SHOTGUN;
+	} else if (!strcasecmp("ng", arg)) {
+		return IT_NAILGUN;
+	} else if (!strcasecmp("sng", arg)) {
+		return IT_SUPER_NAILGUN;
+	} else if (!strcasecmp("gl", arg)) {
+		return IT_GRENADE_LAUNCHER;
+	} else if (!strcasecmp("rl", arg)) {
+		return IT_ROCKET_LAUNCHER;
+	} else if (!strcasecmp("lg", arg)) {
+		return IT_LIGHTNING;
+	} else {
+		return 0;
+	}
+}
+
 //
 // Jumps to a point in demo based on the status of player in POV
 //
@@ -4684,6 +4707,7 @@ static void CL_Demo_Jump_Status_f (void)
 		demoseekingstatus_condition_t *condition = NULL;
 		qbool neg = false;
 		char *arg = Cmd_Argv(i);
+		int weapon;
 
 		if (!strcasecmp("or", arg)) {
 			if (cls.demoseekingstatus.conditions == NULL) {
@@ -4699,14 +4723,10 @@ static void CL_Demo_Jump_Status_f (void)
 			arg++;
 		}
 
-		if (!strcasecmp("rl", arg)) {
-			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ROCKET_LAUNCHER);
-		} else if (!strcasecmp("lg", arg)) {
-			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_LIGHTNING);
-		} else if (!strcasecmp("+rl", arg)) {
-			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ACTIVEWEAPON, IT_ROCKET_LAUNCHER);
-		} else if (!strcasecmp("+lg", arg)) {
-			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ACTIVEWEAPON, IT_LIGHTNING);
+		if ((weapon = CL_Demo_Jump_Status_Parse_Weapon(arg)) != 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, weapon);
+		} else if (arg[0] == '+' && (weapon = CL_Demo_Jump_Status_Parse_Weapon(arg+1)) != 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_EQUAL, STAT_ACTIVEWEAPON, weapon);
 		} else if (!strcasecmp("quad", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_QUAD);
 		} else if (!strcasecmp("ring", arg)) {
