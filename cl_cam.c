@@ -43,6 +43,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static vec3_t desired_position; // where the camera wants to be.
 static qbool locked = false;	// Is the spectator locked to a players view or free flying.
 static int oldbuttons;
+static qbool cmddown, olddown;
 
 cvar_t cl_hightrack = {"cl_hightrack", "0" };	// track high fragger 
 cvar_t cl_chasecam = {"cl_chasecam", "1"};		// "through the eyes" view
@@ -376,6 +377,9 @@ void Cam_Track(usercmd_t *cmd)
 		return;
 	}
 
+	// hack: save +movedown command
+	cmddown = cmd->upmove < 0;
+
 	// cl_hightrack 
 	if (cl_hightrack.value && !locked)
 	{
@@ -511,9 +515,25 @@ qbool Cam_JumpCheck(usercmd_t *cmd)
 	return true;
 }
 
+// Returns true if last new button command was jump
+qbool Cam_MoveDownCheck(usercmd_t *cmd)
+{
+	if (cmddown && olddown)
+		return false;
+
+	if (!cmddown)
+	{
+		olddown = false;
+		return false;
+	}
+	olddown = true;
+
+	return true;
+}
+
 void Cam_FinishMove(usercmd_t *cmd) 
 {
-	int i, end;
+	int i, end, inc;
 	player_info_t *s;
 
 	if (cls.state != ca_active)
@@ -552,21 +572,23 @@ void Cam_FinishMove(usercmd_t *cmd)
 		return;
 	}
 
+	if (Cam_MoveDownCheck(cmd)) {
+		inc = -1;
+	} else {
+		inc = 1;
+	}
+
 	if (locked) {
-		if(!Cam_JumpCheck(cmd))
-		{
+		if (!Cam_JumpCheck(cmd) && inc == 1) {
 			return;
 		}
 		// Swap the Multiview mvinset/main view pov when jump button is pressed.
-		if (!nSwapPov)
-		{
-			nSwapPov = true; 
-		}
+		nSwapPov = inc;
 	}
 
 	
 	if (locked && autocam)
-		end = (ideal_track + 1) % MAX_CLIENTS;
+		end = (ideal_track + MAX_CLIENTS + inc) % MAX_CLIENTS;
 	else
 		end = ideal_track;
 
@@ -580,7 +602,7 @@ void Cam_FinishMove(usercmd_t *cmd)
 			ideal_track = i;    
 			return;
 		}
-		i = (i + 1) % MAX_CLIENTS;
+		i = (i + MAX_CLIENTS + inc) % MAX_CLIENTS;
 	} while (i != end);
 	// stay on same guy?	
 

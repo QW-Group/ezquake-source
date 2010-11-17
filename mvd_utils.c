@@ -377,7 +377,7 @@ mvd_clock_t *MVD_ClockList_Remove(mvd_clock_t *item)
 void MVD_ClockStart(int itemtype)
 {
 	mvd_clock_t *newclock = (mvd_clock_t *) Q_malloc(sizeof (mvd_clock_t));
-	newclock->clockval = cls.realtime + MVD_RespawnTimeGet(itemtype);
+	newclock->clockval = cls.demotime + MVD_RespawnTimeGet(itemtype);
 	newclock->itemtype = itemtype;
 	MVD_ClockList_Insert(newclock);
 }
@@ -386,7 +386,7 @@ void MVD_ClockList_RemoveExpired(void)
 {
 	mvd_clock_t *current = mvd_clocklist;
 
-	while (current && current->clockval + 1 < cls.realtime) {
+	while (current && current->clockval + 1 < cls.demotime) {
 		// we keep the item there for 1 second so that "spawn" is displayed
 		current = MVD_ClockList_Remove(current);
 	}
@@ -441,7 +441,7 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 	int lines = 0;
 	mvd_clock_t *current = mvd_clocklist;
 	
-	while (current && current->clockval - cls.realtime < time_limit) {
+	while (current && current->clockval - cls.demotime < time_limit) {
 		lines++;
 		current = current->next;
 	}
@@ -460,8 +460,8 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y)
 	mvd_clock_t *current = mvd_clocklist;
 	char *clockitem;
 
-	while (current && current->clockval - cls.realtime < time_limit) {
-		int time = (int) ((current->clockval - cls.realtime) + 1);
+	while (current && current->clockval - cls.demotime < time_limit) {
+		int time = (int) ((current->clockval - cls.demotime) + 1);
 
 		if(style == 1){	// tp_name_*
 			clockitem = va("%s", MVD_ClockList_TPNameStringByItemInt(mvd_wp_info[current->itemtype].it));
@@ -808,8 +808,8 @@ void MVD_Stats_CalcAvgRuns(void)
 	static double lastupdate = 0;
 
 	// no need to recalculate the values in every frame
-	if (cls.realtime - lastupdate < 0.5) return;
-	else lastupdate = cls.realtime;
+	if (cls.demotime - lastupdate < 0.5) return;
+	else lastupdate = cls.demotime;
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		mvd_info_t *pi = &mvd_new_info[i].mvdinfo;

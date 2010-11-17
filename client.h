@@ -286,9 +286,34 @@ typedef enum demoseekingtype_e
 	DST_SEEKING_NONE = 0, ///< seeking nothing
 	DST_SEEKING_NORMAL = 1, ///< demo_jump seeking
 	DST_SEEKING_DEMOMARK, ///< demo_jump_mark seeking
-	DST_SEEKING_DEMOMARK_FOUND ///< demo_jump_mark seeking, hint what we found mark and should stop seeking
+	DST_SEEKING_STATUS, ///< demo_jump_status seeking
+	DST_SEEKING_FOUND ///< mark/status seeking, hint that we are done and should stop seeking
 } demoseekingtype_t;
 
+typedef enum
+{
+	DEMOSEEKINGSTATUS_MATCH_EQUAL,
+	DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL,
+	DEMOSEEKINGSTATUS_MATCH_LESS_THAN,
+	DEMOSEEKINGSTATUS_MATCH_GREATER_THAN,
+	DEMOSEEKINGSTATUS_MATCH_BIT_ON,
+	DEMOSEEKINGSTATUS_MATCH_BIT_OFF
+} demoseekingstatus_matchtype_t;
+
+typedef struct demoseekingstatus_condition_s demoseekingstatus_condition_t;
+
+struct demoseekingstatus_condition_s {
+	demoseekingstatus_matchtype_t	type;
+	int		stat;
+	int		value;
+	demoseekingstatus_condition_t *or;
+	demoseekingstatus_condition_t *and;
+};
+
+typedef struct {
+	qbool		non_matching_found; // whether a non matching frame has been found yet
+	demoseekingstatus_condition_t *conditions;
+} demoseekingstatus_t;
 
 /// A structure that is persistent through an arbitrary number of server connections.
 typedef struct
@@ -379,6 +404,7 @@ typedef struct
 	qbool		demorecording;
 	demotype_t	demoplayback;
 	demoseekingtype_t demoseeking;
+	demoseekingstatus_t demoseekingstatus;
 	qbool		demorewinding;
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
@@ -927,7 +953,7 @@ extern int		nPlayernum;
 extern int		mv_trackslots[4];			// The different track slots for each view.
 extern char		currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
 extern int		mvlatch;
-extern qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.
+extern int		nSwapPov;					// Change in POV positive for next, negative for previous.
 extern int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
 extern int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
 

@@ -98,6 +98,7 @@ char Demos_Get_Trackname(void);
 static void CL_DemoPlaybackInit(void);
 
 char *CL_DemoDirectory(void);
+static void CL_Demo_Jump_Status_Check (void);
 
 //=============================================================================
 //								DEMO WRITING
@@ -1970,8 +1971,20 @@ qbool CL_GetDemoMessage (void)
 		if (cls.demoseeking && demotime > prevtime)
 			cl.gametime += demotime - prevtime;
 
+		// Keep MVD features such as itemsclock up-to-date during seeking
+		if (cls.demoseeking) {
+			double tmp = cls.demotime;
+			cls.demotime = demotime;
+			MVD_Interpolate();
+			MVD_Mainhook();
+			cls.demotime = tmp;
+		}
+
+		if (cls.demoseeking == DST_SEEKING_STATUS)
+			CL_Demo_Jump_Status_Check();
+
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
-		if (cls.demoseeking == DST_SEEKING_DEMOMARK_FOUND)
+		if (cls.demoseeking == DST_SEEKING_FOUND)
 			cls.demotime = demotime; // this will trigger seeking stop
 
 		// If we've reached our seek goal, stop seeking.
@@ -4529,6 +4542,274 @@ void CL_Demo_Jump_Mark_f (void)
 	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
 }
 
+static void CL_Demo_Jump_Status_Free (demoseekingstatus_condition_t *condition)
+{
+	if (condition == NULL)
+		return;
+
+	CL_Demo_Jump_Status_Free(condition->or);
+	CL_Demo_Jump_Status_Free(condition->and);
+
+	Q_free(condition);
+}
+
+static demoseekingstatus_condition_t *CL_Demo_Jump_Status_Condition_New (demoseekingstatus_matchtype_t type, int stat, int value)
+{
+	demoseekingstatus_condition_t *condition = Q_malloc(sizeof(demoseekingstatus_condition_t));
+
+	condition->type = type;
+	condition->stat = stat;
+	condition->value = value;
+	condition->or = NULL;
+	condition->and = NULL;
+
+	return condition;
+}
+
+static void CL_Demo_Jump_Status_Condition_Negate (demoseekingstatus_condition_t *condition)
+{
+	switch (condition->type) {
+		case DEMOSEEKINGSTATUS_MATCH_EQUAL:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_EQUAL;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_LESS_THAN:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_GREATER_THAN;
+			condition->value -= 1;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_GREATER_THAN:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_LESS_THAN;
+			condition->value += 1;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_BIT_ON:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_BIT_OFF;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_BIT_OFF:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_BIT_ON;
+			break;
+		default:
+			assert(false);
+			break;
+	}
+}
+
+static qbool CL_Demo_Jump_Status_Match (demoseekingstatus_condition_t *condition)
+{
+	if (condition->or && CL_Demo_Jump_Status_Match(condition->or))
+		return true;
+
+	switch (condition->type) {
+		case DEMOSEEKINGSTATUS_MATCH_EQUAL:
+			if (cl.stats[condition->stat] != condition->value)
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL:
+			if (cl.stats[condition->stat] == condition->value)
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_LESS_THAN:
+			if (cl.stats[condition->stat] >= condition->value)
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_GREATER_THAN:
+			if (cl.stats[condition->stat] <= condition->value)
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_BIT_ON:
+			if (!(cl.stats[condition->stat] & condition->value))
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_BIT_OFF:
+			if (cl.stats[condition->stat] & condition->value)
+				return false;
+			break;
+		default:
+			assert(false);
+			return false;
+	}
+
+	if (condition->and != NULL) {
+		return CL_Demo_Jump_Status_Match(condition->and);
+	} else {
+		return true;
+	}
+}
+
+static void CL_Demo_Jump_Status_Check (void)
+{
+	if (CL_Demo_Jump_Status_Match(cls.demoseekingstatus.conditions)) {
+		if (cls.demoseekingstatus.non_matching_found) {
+			CL_Demo_Jump_Status_Free(cls.demoseekingstatus.conditions);
+			cls.demoseekingstatus.conditions = NULL;
+			cls.demoseeking = DST_SEEKING_FOUND;
+		}
+	} else if (!cls.demoseekingstatus.non_matching_found) {
+		cls.demoseekingstatus.non_matching_found = true;
+	}
+}
+
+static int CL_Demo_Jump_Status_Parse_Weapon (const char *arg)
+{
+	if (!strcasecmp("axe", arg)) {
+		return IT_AXE;
+	} else if (!strcasecmp("sg", arg)) {
+		return IT_SHOTGUN;
+	} else if (!strcasecmp("ssg", arg)) {
+		return IT_SUPER_SHOTGUN;
+	} else if (!strcasecmp("ng", arg)) {
+		return IT_NAILGUN;
+	} else if (!strcasecmp("sng", arg)) {
+		return IT_SUPER_NAILGUN;
+	} else if (!strcasecmp("gl", arg)) {
+		return IT_GRENADE_LAUNCHER;
+	} else if (!strcasecmp("rl", arg)) {
+		return IT_ROCKET_LAUNCHER;
+	} else if (!strcasecmp("lg", arg)) {
+		return IT_LIGHTNING;
+	} else {
+		return 0;
+	}
+}
+
+static int CL_Demo_Jump_Status_Parse_Constraint (const char *arg, int *value)
+{
+	if (strlen(arg) < 2)
+		return -1;
+
+	*value = strtoll(arg+1, NULL, 10);
+
+	switch (arg[0]) {
+		case '=':
+			return DEMOSEEKINGSTATUS_MATCH_EQUAL;
+		case '<':
+			return DEMOSEEKINGSTATUS_MATCH_LESS_THAN;
+		case '>':
+			return DEMOSEEKINGSTATUS_MATCH_GREATER_THAN;
+		default:
+			return -1;
+	}
+}
+
+//
+// Jumps to a point in demo based on the status of player in POV
+//
+static void CL_Demo_Jump_Status_f (void)
+{
+	int i;
+	qbool or = false;
+	demoseekingstatus_condition_t *parent = NULL;
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf("Usage: %s <conditions>\n", Cmd_Argv(0));
+		Com_Printf("\n");
+		Com_Printf("Skip forward in the demo until the conditions based on the player in POV are met.\n");
+		Com_Printf("\n");
+		Com_Printf("Valid conditions are:\n");
+		Com_Printf("  Weapon, armor and powerup names (rl, ya, quad etc.), for items held\n");
+		Com_Printf("  Weapon names with + in front (+rl), for the weapon in hand\n");
+		Com_Printf("  Constraints on health, armor and ammo held with syntax id=value, id<value or id>value\n");
+		Com_Printf("    The id can be h for health, a for armor, s for shells, n for nails, r for rockets or c for cells\n");
+		Com_Printf("  All the conditions can be negated by inserting a ! character in front\n");
+		Com_Printf("  Special value \"or\" can be used to connect two conditions requiring only one of them to be true\n");
+		Com_Printf("\n");
+		Com_Printf("Example: %s h<1 +rl or +lg\n", Cmd_Argv(0));
+		Com_Printf("  Skip to the next position where player in the POV drops a RL or LG pack\n");
+		return;
+	}
+
+	// Cannot jump without playing demo.
+	if (!cls.demoplayback) {
+		Com_Printf("Error: not playing a demo\n");
+		return;
+	}
+
+	// Must be active to jump.
+	if (cls.state < ca_active) {
+		Com_Printf("Error: demo must be active first\n");
+		return;
+	}
+
+	cls.demoseekingstatus.non_matching_found = false;
+	CL_Demo_Jump_Status_Free(cls.demoseekingstatus.conditions);
+	cls.demoseekingstatus.conditions = NULL;
+
+	for (i = 1; i < Cmd_Argc(); i++) {
+		demoseekingstatus_condition_t *condition = NULL;
+		qbool neg = false;
+		char *arg = Cmd_Argv(i);
+		int weapon, value;
+		int type;
+
+		if (!strcasecmp("or", arg)) {
+			if (cls.demoseekingstatus.conditions == NULL) {
+				Com_Printf("Error: or can't be the first argument\n");
+				return;
+			}
+			or = true;
+			continue;
+		}
+
+		if (arg[0] == '!') {
+			neg = true;
+			arg++;
+		}
+
+		if ((weapon = CL_Demo_Jump_Status_Parse_Weapon(arg)) != 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, weapon);
+		} else if (arg[0] == '+' && (weapon = CL_Demo_Jump_Status_Parse_Weapon(arg+1)) != 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_EQUAL, STAT_ACTIVEWEAPON, weapon);
+		} else if (arg[0] == 'h' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_HEALTH, value);
+		} else if (arg[0] == 'a' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_ARMOR, value);
+		} else if (arg[0] == 's' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_SHELLS, value);
+		} else if (arg[0] == 'n' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_NAILS, value);
+		} else if (arg[0] == 'r' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_ROCKETS, value);
+		} else if (arg[0] == 'c' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_CELLS, value);
+		} else if (!strcasecmp("ga", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR1);
+		} else if (!strcasecmp("ya", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR2);
+		} else if (!strcasecmp("ra", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR3);
+		} else if (!strcasecmp("quad", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_QUAD);
+		} else if (!strcasecmp("ring", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVISIBILITY);
+		} else if (!strcasecmp("pent", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVULNERABILITY);
+		} else {
+			Com_Printf("Error: unknown condition: %s\n", Cmd_Argv(i));
+			CL_Demo_Jump_Status_Free(cls.demoseekingstatus.conditions);
+			cls.demoseekingstatus.conditions = NULL;
+			return;
+		}
+
+		if (neg)
+			CL_Demo_Jump_Status_Condition_Negate(condition);
+
+		if (parent != NULL) {
+			if (or) {
+				parent->or = condition;
+			} else {
+				parent->and = condition;
+			}
+		} else {
+			cls.demoseekingstatus.conditions = condition;
+		}
+		parent = condition;
+		or = false;
+	}
+
+	CL_Demo_Jump(99999, 0, DST_SEEKING_STATUS);
+}
+
 
 //
 // Jumps to a specified time in a demo. Time specified in seconds.
@@ -4626,6 +4907,7 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand("demo_setspeed", CL_Demo_SetSpeed_f);
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
 	Cmd_AddCommand("demo_jump_mark", CL_Demo_Jump_Mark_f);
+	Cmd_AddCommand("demo_jump_status", CL_Demo_Jump_Status_f);
 	Cmd_AddCommand("demo_controls", DemoControls_f);
 
 	//

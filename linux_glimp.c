@@ -1127,10 +1127,12 @@ static void HandleEvents(void)
 
     case MapNotify:
       Minimized = false;
+      GLW_CheckNeedSetDeviceGammaRamp();
       break;
 
     case UnmapNotify:
       Minimized = true;
+      GLW_CheckNeedSetDeviceGammaRamp();
       break;
 
     }
@@ -1987,7 +1989,7 @@ void GLW_RestoreGamma(void) {
 }
 
 void GLW_CheckNeedSetDeviceGammaRamp(void) {
-	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks/* && ActiveApp && !Minimized */;
+	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks && (ActiveApp || vid_hwgammacontrol.value == 3) && !Minimized;
 	vid_hwgamma_enabled = vid_hwgamma_enabled && (glConfig.isFullscreen || vid_hwgammacontrol.value == 2);
 
 	if ( vid_hwgamma_enabled != old_hwgamma_enabled )
