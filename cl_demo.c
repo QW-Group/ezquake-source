@@ -98,6 +98,7 @@ char Demos_Get_Trackname(void);
 static void CL_DemoPlaybackInit(void);
 
 char *CL_DemoDirectory(void);
+static void CL_Demo_Jump_Status_Check (void);
 
 //=============================================================================
 //								DEMO WRITING
@@ -1978,6 +1979,9 @@ qbool CL_GetDemoMessage (void)
 			MVD_Mainhook();
 			cls.demotime = tmp;
 		}
+
+		if (cls.demoseeking == DST_SEEKING_STATUS)
+			CL_Demo_Jump_Status_Check();
 
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
 		if (cls.demoseeking == DST_SEEKING_FOUND)
@@ -4538,15 +4542,33 @@ void CL_Demo_Jump_Mark_f (void)
 	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
 }
 
+static qbool CL_Demo_Jump_Status_Match (void)
+{
+	if (!(cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER))
+		return false;
+
+	return true;
+}
+
+static void CL_Demo_Jump_Status_Check (void)
+{
+	if (CL_Demo_Jump_Status_Match()) {
+		if (cls.demoseekingstatus.non_matching_found)
+			cls.demoseeking = DST_SEEKING_FOUND;
+	} else if (!cls.demoseekingstatus.non_matching_found) {
+		cls.demoseekingstatus.non_matching_found = true;
+	}
+}
+
 //
 // Jumps to a point in demo based on the status of player in POV
 //
 static void CL_Demo_Jump_Status_f (void)
 {
 	// Cannot jump without playing demo.
-	if (!cls.demoplayback || !cls.mvdplayback)
+	if (!cls.demoplayback)
 	{
-		Com_Printf("Error: not playing a MVD demo\n");
+		Com_Printf("Error: not playing a demo\n");
         return;
 	}
 
@@ -4557,6 +4579,7 @@ static void CL_Demo_Jump_Status_f (void)
 		return;
 	}
 
+	cls.demoseekingstatus.non_matching_found = false;
 	CL_Demo_Jump(99999, 0, DST_SEEKING_STATUS);
 }
 

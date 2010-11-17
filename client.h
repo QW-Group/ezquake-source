@@ -290,6 +290,9 @@ typedef enum demoseekingtype_e
 	DST_SEEKING_FOUND ///< mark/status seeking, hint that we are done and should stop seeking
 } demoseekingtype_t;
 
+typedef struct {
+	qbool		non_matching_found; // whether a non matching frame has been found yet
+} demoseekingstatus_t;
 
 /// A structure that is persistent through an arbitrary number of server connections.
 typedef struct
@@ -380,6 +383,7 @@ typedef struct
 	qbool		demorecording;
 	demotype_t	demoplayback;
 	demoseekingtype_t demoseeking;
+	demoseekingstatus_t demoseekingstatus;
 	qbool		demorewinding;
 	char		demoname[MAX_PATH];
 	qbool		nqdemoplayback;
