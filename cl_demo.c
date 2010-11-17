@@ -4673,6 +4673,25 @@ static int CL_Demo_Jump_Status_Parse_Weapon (const char *arg)
 	}
 }
 
+static demoseekingstatus_matchtype_t CL_Demo_Jump_Status_Parse_Constraint (const char *arg, int *value)
+{
+	if (strlen(arg) < 2)
+		return -1;
+
+	*value = strtoll(arg+1, NULL, 10);
+
+	switch (arg[0]) {
+		case '=':
+			return DEMOSEEKINGSTATUS_MATCH_EQUAL;
+		case '<':
+			return DEMOSEEKINGSTATUS_MATCH_LESS_THAN;
+		case '>':
+			return DEMOSEEKINGSTATUS_MATCH_GREATER_THAN;
+		default:
+			return -1;
+	}
+}
+
 //
 // Jumps to a point in demo based on the status of player in POV
 //
@@ -4707,7 +4726,8 @@ static void CL_Demo_Jump_Status_f (void)
 		demoseekingstatus_condition_t *condition = NULL;
 		qbool neg = false;
 		char *arg = Cmd_Argv(i);
-		int weapon;
+		int weapon, value;
+		demoseekingstatus_matchtype_t type;
 
 		if (!strcasecmp("or", arg)) {
 			if (cls.demoseekingstatus.conditions == NULL) {
@@ -4727,6 +4747,10 @@ static void CL_Demo_Jump_Status_f (void)
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, weapon);
 		} else if (arg[0] == '+' && (weapon = CL_Demo_Jump_Status_Parse_Weapon(arg+1)) != 0) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_EQUAL, STAT_ACTIVEWEAPON, weapon);
+		} else if (arg[0] == 'h' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_HEALTH, value);
+		} else if (arg[0] == 'a' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_ARMOR, value);
 		} else if (!strcasecmp("quad", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_QUAD);
 		} else if (!strcasecmp("ring", arg)) {
