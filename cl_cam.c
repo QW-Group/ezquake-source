@@ -572,17 +572,14 @@ void Cam_FinishMove(usercmd_t *cmd)
 		return;
 	}
 
-	if (Cam_JumpCheck(cmd)) {
-		inc = 1;
-	} else if (Cam_MoveDownCheck(cmd)) {
+	if (Cam_MoveDownCheck(cmd)) {
 		inc = -1;
 	} else {
-		inc = 0;
+		inc = 1;
 	}
 
 	if (locked) {
-		if(!inc)
-		{
+		if (!Cam_JumpCheck(cmd)) {
 			return;
 		}
 		// Swap the Multiview mvinset/main view pov when jump button is pressed.
