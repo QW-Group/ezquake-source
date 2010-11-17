@@ -2832,7 +2832,7 @@ void CL_ParseStufftext (void)
 	{
 		// demo mark
 		if (cls.demoseeking == DST_SEEKING_DEMOMARK)
-			cls.demoseeking = DST_SEEKING_DEMOMARK_FOUND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
+			cls.demoseeking = DST_SEEKING_FOUND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
 	}
 	else
 	{

@@ -1980,7 +1980,7 @@ qbool CL_GetDemoMessage (void)
 		}
 
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
-		if (cls.demoseeking == DST_SEEKING_DEMOMARK_FOUND)
+		if (cls.demoseeking == DST_SEEKING_FOUND)
 			cls.demotime = demotime; // this will trigger seeking stop
 
 		// If we've reached our seek goal, stop seeking.
@@ -4538,6 +4538,28 @@ void CL_Demo_Jump_Mark_f (void)
 	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
 }
 
+//
+// Jumps to a point in demo based on the status of player in POV
+//
+static void CL_Demo_Jump_Status_f (void)
+{
+	// Cannot jump without playing demo.
+	if (!cls.demoplayback)
+	{
+		Com_Printf("Error: not playing a demo\n");
+        return;
+	}
+
+	// Must be active to jump.
+	if (cls.state < ca_active)
+	{
+		Com_Printf("Error: demo must be active first\n");
+		return;
+	}
+
+	CL_Demo_Jump(99999, 0, DST_SEEKING_STATUS);
+}
+
 
 //
 // Jumps to a specified time in a demo. Time specified in seconds.
@@ -4635,6 +4657,7 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand("demo_setspeed", CL_Demo_SetSpeed_f);
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
 	Cmd_AddCommand("demo_jump_mark", CL_Demo_Jump_Mark_f);
+	Cmd_AddCommand("demo_jump_status", CL_Demo_Jump_Status_f);
 	Cmd_AddCommand("demo_controls", DemoControls_f);
 
 	//

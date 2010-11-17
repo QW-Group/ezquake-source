@@ -1150,6 +1150,27 @@ int MVD_Stats_Gather(void){
 	return 1;
 }
 
+void MVD_DemoJumpStatus (void)
+{
+	int i, id = 0;
+
+	if (cls.demoseeking != DST_SEEKING_STATUS)
+		return;
+
+	for (i = 0; i < mvd_cg_info.pcount; i++) {
+		if (mvd_new_info[i].id == spec_track) {
+			id = i;
+			break;
+		}
+	}
+
+	if (i == mvd_cg_info.pcount)
+		return;
+
+	if (MVD_BestWeapon (id) == IT_ROCKET_LAUNCHER)
+		cls.demoseeking = DST_SEEKING_FOUND;
+}
+
 void MVD_Status (void){
 	int x, y,p ;
 	char str[1024];
@@ -1335,6 +1356,7 @@ void MVD_Mainhook (void){
 	MVD_ClockList_RemoveExpired();
 	if (cls.mvdplayback && mvd_demo_track_run == 0)
 		MVD_Demo_Track ();
+	MVD_DemoJumpStatus();
 }
 
 void MVD_PC_Get_Coords (void){

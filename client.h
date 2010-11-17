@@ -286,7 +286,8 @@ typedef enum demoseekingtype_e
 	DST_SEEKING_NONE = 0, ///< seeking nothing
 	DST_SEEKING_NORMAL = 1, ///< demo_jump seeking
 	DST_SEEKING_DEMOMARK, ///< demo_jump_mark seeking
-	DST_SEEKING_DEMOMARK_FOUND ///< demo_jump_mark seeking, hint what we found mark and should stop seeking
+	DST_SEEKING_STATUS, ///< demo_jump_status seeking
+	DST_SEEKING_FOUND ///< mark/status seeking, hint that we are done and should stop seeking
 } demoseekingtype_t;
 
 
