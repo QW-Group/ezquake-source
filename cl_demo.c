@@ -4566,6 +4566,35 @@ static demoseekingstatus_condition_t *CL_Demo_Jump_Status_Condition_New (demosee
 	return condition;
 }
 
+static void CL_Demo_Jump_Status_Condition_Negate (demoseekingstatus_condition_t *condition)
+{
+	switch (condition->type) {
+		case DEMOSEEKINGSTATUS_MATCH_EQUAL:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_EQUAL;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_LESS_THAN:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_GREATER_THAN;
+			condition->value -= 1;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_GREATER_THAN:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_LESS_THAN;
+			condition->value += 1;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_BIT_ON:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_BIT_OFF;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_BIT_OFF:
+			condition->type = DEMOSEEKINGSTATUS_MATCH_BIT_ON;
+			break;
+		default:
+			assert(false);
+			break;
+	}
+}
+
 static qbool CL_Demo_Jump_Status_Match (demoseekingstatus_condition_t *condition)
 {
 	if (condition->or && CL_Demo_Jump_Status_Match(condition->or))
@@ -4652,18 +4681,28 @@ static void CL_Demo_Jump_Status_f (void)
 	demoseekingstatus_condition_t *parent = NULL;
 	for (i = 1; i < Cmd_Argc(); i++) {
 		demoseekingstatus_condition_t *condition = NULL;
+		qbool neg = false;
+		char *arg = Cmd_Argv(i);
 
-		if (!strcasecmp("rl", Cmd_Argv(i))) {
+		if (arg[0] == '!') {
+			neg = true;
+			arg++;
+		}
+
+		if (!strcasecmp("rl", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ROCKET_LAUNCHER);
-		} else if (!strcasecmp("lg", Cmd_Argv(i))) {
+		} else if (!strcasecmp("lg", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_LIGHTNING);
-		} else if (!strcasecmp("+rl", Cmd_Argv(i))) {
+		} else if (!strcasecmp("+rl", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ACTIVEWEAPON, IT_ROCKET_LAUNCHER);
-		} else if (!strcasecmp("+lg", Cmd_Argv(i))) {
+		} else if (!strcasecmp("+lg", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ACTIVEWEAPON, IT_LIGHTNING);
-		} else if (!strcasecmp("dead", Cmd_Argv(i))) {
+		} else if (!strcasecmp("dead", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_LESS_THAN, STAT_HEALTH, 1);
 		}
+
+		if (neg)
+			CL_Demo_Jump_Status_Condition_Negate(condition);
 
 		if (condition == NULL) {
 			Com_Printf("Error: unknown condition: %s\n", Cmd_Argv(i));
