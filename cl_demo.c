@@ -4553,6 +4553,19 @@ static void CL_Demo_Jump_Status_Free (demoseekingstatus_condition_t *condition)
 	Q_free(condition);
 }
 
+static demoseekingstatus_condition_t *CL_Demo_Jump_Status_Condition_New (demoseekingstatus_matchtype_t type, int stat, int value)
+{
+	demoseekingstatus_condition_t *condition = Q_malloc(sizeof(demoseekingstatus_condition_t));
+
+	condition->type = type;
+	condition->stat = stat;
+	condition->value = value;
+	condition->or = NULL;
+	condition->and = NULL;
+
+	return condition;
+}
+
 static qbool CL_Demo_Jump_Status_Match (demoseekingstatus_condition_t *condition)
 {
 	if (condition->or && CL_Demo_Jump_Status_Match(condition->or))
@@ -4640,13 +4653,16 @@ static void CL_Demo_Jump_Status_f (void)
 	for (i = 1; i < Cmd_Argc(); i++) {
 		demoseekingstatus_condition_t *condition = NULL;
 
-		if (!strncasecmp("rl", Cmd_Argv(i), 2)) {
-			condition = Q_malloc(sizeof(demoseekingstatus_condition_t));
-			condition->type = DEMOSEEKINGSTATUS_MATCH_BIT_ON;
-			condition->stat = STAT_ITEMS;
-			condition->value = IT_ROCKET_LAUNCHER;
-			condition->or = NULL;
-			condition->and = NULL;
+		if (!strcasecmp("rl", Cmd_Argv(i))) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ROCKET_LAUNCHER);
+		} else if (!strcasecmp("lg", Cmd_Argv(i))) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_LIGHTNING);
+		} else if (!strcasecmp("+rl", Cmd_Argv(i))) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ACTIVEWEAPON, IT_ROCKET_LAUNCHER);
+		} else if (!strcasecmp("+lg", Cmd_Argv(i))) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ACTIVEWEAPON, IT_LIGHTNING);
+		} else if (!strcasecmp("dead", Cmd_Argv(i))) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_LESS_THAN, STAT_HEALTH, 1);
 		}
 
 		if (condition == NULL) {
