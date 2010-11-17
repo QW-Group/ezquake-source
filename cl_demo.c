@@ -4542,17 +4542,43 @@ void CL_Demo_Jump_Mark_f (void)
 	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
 }
 
-static qbool CL_Demo_Jump_Status_Match (void)
+static qbool CL_Demo_Jump_Status_Match (demoseekingstatus_condition_t *condition)
 {
-	if (!(cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER))
-		return false;
+	if (condition->or && CL_Demo_Jump_Status_Match(condition->or))
+		return true;
 
-	return true;
+	switch (condition->type) {
+		case DEMOSEEKINGSTATUS_MATCH_EQUAL:
+			if (cl.stats[condition->stat] != condition->value)
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL:
+			if (cl.stats[condition->stat] == condition->value)
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_LESS_THAN:
+			if (cl.stats[condition->stat] >= condition->value)
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_GREATER_THAN:
+			if (cl.stats[condition->stat] <= condition->value)
+				return false;
+			break;
+		default:
+			assert(false);
+			return false;
+	}
+
+	if (condition->and != NULL) {
+		return CL_Demo_Jump_Status_Match(condition->and);
+	} else {
+		return true;
+	}
 }
 
 static void CL_Demo_Jump_Status_Check (void)
 {
-	if (CL_Demo_Jump_Status_Match()) {
+	if (CL_Demo_Jump_Status_Match(cls.demoseekingstatus.conditions)) {
 		if (cls.demoseekingstatus.non_matching_found)
 			cls.demoseeking = DST_SEEKING_FOUND;
 	} else if (!cls.demoseekingstatus.non_matching_found) {

@@ -290,8 +290,27 @@ typedef enum demoseekingtype_e
 	DST_SEEKING_FOUND ///< mark/status seeking, hint that we are done and should stop seeking
 } demoseekingtype_t;
 
+typedef enum
+{
+	DEMOSEEKINGSTATUS_MATCH_EQUAL,
+	DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL,
+	DEMOSEEKINGSTATUS_MATCH_LESS_THAN,
+	DEMOSEEKINGSTATUS_MATCH_GREATER_THAN,
+} demoseekingstatus_matchtype_t;
+
+typedef struct demoseekingstatus_condition_s demoseekingstatus_condition_t;
+
+struct demoseekingstatus_condition_s {
+	demoseekingstatus_matchtype_t	type;
+	int		stat;
+	int		value;
+	demoseekingstatus_condition_t *or;
+	demoseekingstatus_condition_t *and;
+};
+
 typedef struct {
 	qbool		non_matching_found; // whether a non matching frame has been found yet
+	demoseekingstatus_condition_t *conditions;
 } demoseekingstatus_t;
 
 /// A structure that is persistent through an arbitrary number of server connections.
