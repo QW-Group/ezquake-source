@@ -2520,7 +2520,13 @@ void CL_Frame (double time)
 	{
 		if (cls.state == ca_active)
 		{
-			S_Update (r_origin, vpn, vright, vup);
+			if (cl_demospeed.value) {
+				S_Update (r_origin, vpn, vright, vup);
+			} else {
+				// do not play loop sounds (lifts etc.) when paused
+				vec3_t hax = { NAN, NAN, NAN };
+				S_Update(hax, vec3_origin, vec3_origin, vec3_origin);
+			}
 			CL_DecayLights ();
 		}
 		else
