@@ -4710,8 +4710,9 @@ static void CL_Demo_Jump_Status_f (void)
 		Com_Printf("  Weapon, armor and powerup names (rl, ya, quad etc.), for items held\n");
 		Com_Printf("  Weapon names with + in front (+rl), for the weapon in hand\n");
 		Com_Printf("  Constraints on health, armor and ammo held with syntax id=value, id<value or id>value\n");
-		Com_Printf("    The id can be h for health, a for armor, s for shells, n for nails, r for rockets or c for cells.\n");
-		Com_Printf("  Special value \"or\" can be used to connect two conditions requiring only one of them to be true.\n");
+		Com_Printf("    The id can be h for health, a for armor, s for shells, n for nails, r for rockets or c for cells\n");
+		Com_Printf("  All the conditions can be negated by inserting a ! character in front\n");
+		Com_Printf("  Special value \"or\" can be used to connect two conditions requiring only one of them to be true\n");
 		Com_Printf("\n");
 		Com_Printf("Example: %s h<1 +rl or +lg\n", Cmd_Argv(0));
 		Com_Printf("  Skip to the next position where player in the POV drops a RL or LG pack\n");
