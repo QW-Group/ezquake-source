@@ -4656,6 +4656,8 @@ static void CL_Demo_Jump_Status_Check (void)
 static void CL_Demo_Jump_Status_f (void)
 {
 	int i;
+	qbool or = false;
+	demoseekingstatus_condition_t *parent = NULL;
 
 	if (Cmd_Argc() < 2) {
 		Com_Printf("Usage: demo_jump_status <conditions>\n");
@@ -4678,11 +4680,19 @@ static void CL_Demo_Jump_Status_f (void)
 	CL_Demo_Jump_Status_Free(cls.demoseekingstatus.conditions);
 	cls.demoseekingstatus.conditions = NULL;
 
-	demoseekingstatus_condition_t *parent = NULL;
 	for (i = 1; i < Cmd_Argc(); i++) {
 		demoseekingstatus_condition_t *condition = NULL;
 		qbool neg = false;
 		char *arg = Cmd_Argv(i);
+
+		if (!strcasecmp("or", arg)) {
+			if (cls.demoseekingstatus.conditions == NULL) {
+				Com_Printf("Error: or can't be the first argument\n");
+				return;
+			}
+			or = true;
+			continue;
+		}
 
 		if (arg[0] == '!') {
 			neg = true;
@@ -4712,11 +4722,16 @@ static void CL_Demo_Jump_Status_f (void)
 		}
 
 		if (parent != NULL) {
-			parent->and = condition;
+			if (or) {
+				parent->or = condition;
+			} else {
+				parent->and = condition;
+			}
 		} else {
 			cls.demoseekingstatus.conditions = condition;
 		}
 		parent = condition;
+		or = false;
 	}
 
 	CL_Demo_Jump(99999, 0, DST_SEEKING_STATUS);
