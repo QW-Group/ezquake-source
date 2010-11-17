@@ -829,6 +829,16 @@ int	Sys_CheckSpecialKeys (int theKey)
     // check the keys:
     switch (myKey)
     {
+#ifdef GLQUAKE
+	case 'F':
+	    VID_Shutdown();
+	    gVidDisplayFullscreen = (gVidDisplayFullscreen == YES) ? NO : YES;
+	    VID_Init(host_basepal);
+	    GFX_Init();
+
+	    return (1);
+	    break;
+#endif
         case K_TAB:
         case 'H':
             if (gVidDisplayFullscreen == NO)
