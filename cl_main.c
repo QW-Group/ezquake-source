@@ -2609,6 +2609,31 @@ int CL_NextPlayer(int plr)
 	return plr;
 }
 
+int CL_PrevPlayer(int plr)
+{
+	do
+	{
+		plr--;
+	} while ((plr >= 0) && (cl.players[plr].spectator || !cl.players[plr].name[0]));
+
+	if (plr < 0)
+	{
+		plr = MAX_CLIENTS;
+
+		do
+		{
+			plr--;
+		} while ((plr >= 0) && (cl.players[plr].spectator || !cl.players[plr].name[0]));
+	}
+
+	if (plr < 0)
+	{
+		plr = 0;
+	}
+
+	return plr;
+}
+
 // Multiview vars
 // ===================================================================================
 int		CURRVIEW;					// The current view being drawn in multiview mode.
@@ -2625,7 +2650,7 @@ int		nPlayernum;
 int		mv_trackslots[4];			// The different track slots for each view.
 char	currteam[MAX_INFO_STRING];  // The name of the current team being tracked in multiview mode.
 int		mvlatch;
-qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.
+int		nSwapPov;					// Change in POV positive for next, negative for previous.
 int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
 int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
 
@@ -2754,8 +2779,13 @@ void CL_Multiview(void)
 		// The user pressed jump so we need to swap the pov.
 		if (nSwapPov)
 		{
-			nTrack1duel = CL_NextPlayer(nTrack1duel);
-			nTrack2duel = CL_NextPlayer(nTrack2duel);
+			if (nSwapPov > 0) {
+				nTrack1duel = CL_NextPlayer(nTrack1duel);
+				nTrack2duel = CL_NextPlayer(nTrack2duel);
+			} else {
+				nTrack1duel = CL_PrevPlayer(nTrack1duel);
+				nTrack2duel = CL_PrevPlayer(nTrack2duel);
+			}
 			nSwapPov = false;
 		}
 		else

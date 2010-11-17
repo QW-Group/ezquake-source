@@ -586,10 +586,7 @@ void Cam_FinishMove(usercmd_t *cmd)
 			return;
 		}
 		// Swap the Multiview mvinset/main view pov when jump button is pressed.
-		if (!nSwapPov)
-		{
-			nSwapPov = true; 
-		}
+		nSwapPov = inc;
 	}
 
 	

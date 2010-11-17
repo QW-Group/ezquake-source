@@ -927,7 +927,7 @@ extern int		nPlayernum;
 extern int		mv_trackslots[4];			// The different track slots for each view.
 extern char		currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
 extern int		mvlatch;
-extern qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.
+extern int		nSwapPov;					// Change in POV positive for next, negative for previous.
 extern int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
 extern int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
 
