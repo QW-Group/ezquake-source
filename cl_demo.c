@@ -4751,6 +4751,14 @@ static void CL_Demo_Jump_Status_f (void)
 			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_HEALTH, value);
 		} else if (arg[0] == 'a' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
 			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_ARMOR, value);
+		} else if (arg[0] == 's' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_SHELLS, value);
+		} else if (arg[0] == 'n' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_NAILS, value);
+		} else if (arg[0] == 'r' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_ROCKETS, value);
+		} else if (arg[0] == 'c' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
+			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_CELLS, value);
 		} else if (!strcasecmp("quad", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_QUAD);
 		} else if (!strcasecmp("ring", arg)) {
