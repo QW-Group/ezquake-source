@@ -4544,9 +4544,9 @@ void CL_Demo_Jump_Mark_f (void)
 static void CL_Demo_Jump_Status_f (void)
 {
 	// Cannot jump without playing demo.
-	if (!cls.demoplayback)
+	if (!cls.demoplayback || !cls.mvdplayback)
 	{
-		Com_Printf("Error: not playing a demo\n");
+		Com_Printf("Error: not playing a MVD demo\n");
         return;
 	}
 
