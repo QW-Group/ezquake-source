@@ -1970,6 +1970,15 @@ qbool CL_GetDemoMessage (void)
 		if (cls.demoseeking && demotime > prevtime)
 			cl.gametime += demotime - prevtime;
 
+		// Keep MVD features such as itemsclock up-to-date during seeking
+		if (cls.demoseeking) {
+			double tmp = cls.demotime;
+			cls.demotime = demotime;
+			MVD_Interpolate();
+			MVD_Mainhook();
+			cls.demotime = tmp;
+		}
+
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
 		if (cls.demoseeking == DST_SEEKING_DEMOMARK_FOUND)
 			cls.demotime = demotime; // this will trigger seeking stop
