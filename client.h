@@ -296,6 +296,8 @@ typedef enum
 	DEMOSEEKINGSTATUS_MATCH_NOT_EQUAL,
 	DEMOSEEKINGSTATUS_MATCH_LESS_THAN,
 	DEMOSEEKINGSTATUS_MATCH_GREATER_THAN,
+	DEMOSEEKINGSTATUS_MATCH_BIT_ON,
+	DEMOSEEKINGSTATUS_MATCH_BIT_OFF
 } demoseekingstatus_matchtype_t;
 
 typedef struct demoseekingstatus_condition_s demoseekingstatus_condition_t;

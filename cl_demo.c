@@ -4564,6 +4564,14 @@ static qbool CL_Demo_Jump_Status_Match (demoseekingstatus_condition_t *condition
 			if (cl.stats[condition->stat] <= condition->value)
 				return false;
 			break;
+		case DEMOSEEKINGSTATUS_MATCH_BIT_ON:
+			if (!(cl.stats[condition->stat] & condition->value))
+				return false;
+			break;
+		case DEMOSEEKINGSTATUS_MATCH_BIT_OFF:
+			if (cl.stats[condition->stat] & condition->value)
+				return false;
+			break;
 		default:
 			assert(false);
 			return false;
