@@ -4784,19 +4784,15 @@ static void CL_Demo_Jump_Status_f (void)
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVISIBILITY);
 		} else if (!strcasecmp("pent", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVULNERABILITY);
-		} else if (!strcasecmp("dead", arg)) {
-			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_LESS_THAN, STAT_HEALTH, 1);
-		}
-
-		if (neg)
-			CL_Demo_Jump_Status_Condition_Negate(condition);
-
-		if (condition == NULL) {
+		} else {
 			Com_Printf("Error: unknown condition: %s\n", Cmd_Argv(i));
 			CL_Demo_Jump_Status_Free(cls.demoseekingstatus.conditions);
 			cls.demoseekingstatus.conditions = NULL;
 			return;
 		}
+
+		if (neg)
+			CL_Demo_Jump_Status_Condition_Negate(condition);
 
 		if (parent != NULL) {
 			if (or) {
