@@ -4707,6 +4707,12 @@ static void CL_Demo_Jump_Status_f (void)
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ACTIVEWEAPON, IT_ROCKET_LAUNCHER);
 		} else if (!strcasecmp("+lg", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ACTIVEWEAPON, IT_LIGHTNING);
+		} else if (!strcasecmp("quad", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_QUAD);
+		} else if (!strcasecmp("ring", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVISIBILITY);
+		} else if (!strcasecmp("pent", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVULNERABILITY);
 		} else if (!strcasecmp("dead", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_LESS_THAN, STAT_HEALTH, 1);
 		}
