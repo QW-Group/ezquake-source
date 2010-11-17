@@ -4542,6 +4542,17 @@ void CL_Demo_Jump_Mark_f (void)
 	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
 }
 
+static void CL_Demo_Jump_Status_Free (demoseekingstatus_condition_t *condition)
+{
+	if (condition == NULL)
+		return;
+
+	CL_Demo_Jump_Status_Free(condition->or);
+	CL_Demo_Jump_Status_Free(condition->and);
+
+	Q_free(condition);
+}
+
 static qbool CL_Demo_Jump_Status_Match (demoseekingstatus_condition_t *condition)
 {
 	if (condition->or && CL_Demo_Jump_Status_Match(condition->or))
@@ -4587,8 +4598,11 @@ static qbool CL_Demo_Jump_Status_Match (demoseekingstatus_condition_t *condition
 static void CL_Demo_Jump_Status_Check (void)
 {
 	if (CL_Demo_Jump_Status_Match(cls.demoseekingstatus.conditions)) {
-		if (cls.demoseekingstatus.non_matching_found)
+		if (cls.demoseekingstatus.non_matching_found) {
+			CL_Demo_Jump_Status_Free(cls.demoseekingstatus.conditions);
+			cls.demoseekingstatus.conditions = NULL;
 			cls.demoseeking = DST_SEEKING_FOUND;
+		}
 	} else if (!cls.demoseekingstatus.non_matching_found) {
 		cls.demoseekingstatus.non_matching_found = true;
 	}
@@ -4599,21 +4613,57 @@ static void CL_Demo_Jump_Status_Check (void)
 //
 static void CL_Demo_Jump_Status_f (void)
 {
+	int i;
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf("Usage: demo_jump_status <conditions>\n");
+		return;
+	}
+
 	// Cannot jump without playing demo.
-	if (!cls.demoplayback)
-	{
+	if (!cls.demoplayback) {
 		Com_Printf("Error: not playing a demo\n");
-        return;
+		return;
 	}
 
 	// Must be active to jump.
-	if (cls.state < ca_active)
-	{
+	if (cls.state < ca_active) {
 		Com_Printf("Error: demo must be active first\n");
 		return;
 	}
 
 	cls.demoseekingstatus.non_matching_found = false;
+	CL_Demo_Jump_Status_Free(cls.demoseekingstatus.conditions);
+	cls.demoseekingstatus.conditions = NULL;
+
+	demoseekingstatus_condition_t *parent = NULL;
+	for (i = 1; i < Cmd_Argc(); i++) {
+		demoseekingstatus_condition_t *condition = NULL;
+
+		if (!strncasecmp("rl", Cmd_Argv(i), 2)) {
+			condition = Q_malloc(sizeof(demoseekingstatus_condition_t));
+			condition->type = DEMOSEEKINGSTATUS_MATCH_BIT_ON;
+			condition->stat = STAT_ITEMS;
+			condition->value = IT_ROCKET_LAUNCHER;
+			condition->or = NULL;
+			condition->and = NULL;
+		}
+
+		if (condition == NULL) {
+			Com_Printf("Error: unknown condition: %s\n", Cmd_Argv(i));
+			CL_Demo_Jump_Status_Free(cls.demoseekingstatus.conditions);
+			cls.demoseekingstatus.conditions = NULL;
+			return;
+		}
+
+		if (parent != NULL) {
+			parent->and = condition;
+		} else {
+			cls.demoseekingstatus.conditions = condition;
+		}
+		parent = condition;
+	}
+
 	CL_Demo_Jump(99999, 0, DST_SEEKING_STATUS);
 }
 
