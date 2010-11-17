@@ -4673,7 +4673,7 @@ static int CL_Demo_Jump_Status_Parse_Weapon (const char *arg)
 	}
 }
 
-static demoseekingstatus_matchtype_t CL_Demo_Jump_Status_Parse_Constraint (const char *arg, int *value)
+static int CL_Demo_Jump_Status_Parse_Constraint (const char *arg, int *value)
 {
 	if (strlen(arg) < 2)
 		return -1;
@@ -4727,7 +4727,7 @@ static void CL_Demo_Jump_Status_f (void)
 		qbool neg = false;
 		char *arg = Cmd_Argv(i);
 		int weapon, value;
-		demoseekingstatus_matchtype_t type;
+		int type;
 
 		if (!strcasecmp("or", arg)) {
 			if (cls.demoseekingstatus.conditions == NULL) {
@@ -4759,6 +4759,12 @@ static void CL_Demo_Jump_Status_f (void)
 			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_ROCKETS, value);
 		} else if (arg[0] == 'c' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
 			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_CELLS, value);
+		} else if (!strcasecmp("ga", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR1);
+		} else if (!strcasecmp("ya", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR2);
+		} else if (!strcasecmp("ra", arg)) {
+			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR3);
 		} else if (!strcasecmp("quad", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_QUAD);
 		} else if (!strcasecmp("ring", arg)) {
