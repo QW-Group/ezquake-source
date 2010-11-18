@@ -1087,9 +1087,9 @@ void Config_TroubleShoot_f(void)
 #ifdef GLQUAKE
 	extern cvar_t r_novis;
 #endif
-	extern cvar_t cl_maxfps, hud_planmode;
+	extern cvar_t m_filter, sys_yieldcpu, cl_maxfps, hud_planmode;
 #ifdef WIN32
-	extern cvar_t m_filter, in_mouse, sys_yieldcpu;
+	extern cvar_t in_mouse;
 #endif
 
 #ifdef GLQUAKE
@@ -1101,7 +1101,6 @@ void Config_TroubleShoot_f(void)
 		problems++;
 	}
 #endif
-#ifdef WIN32
 	if (m_filter.value) {
 		Config_TroubleShoot_Tip("m_filter is enabled",
 			"m_filter causes a serious delay in processing of the mouse input data",
@@ -1115,6 +1114,7 @@ void Config_TroubleShoot_f(void)
 			"enable sys_yieldcpu or limit your FPS", 1);
 		problems++;
 	}
+#ifdef WIN32
 	if (in_mouse.integer != 3) {
 		Config_TroubleShoot_Tip("in_mouse is not set to 3",
 			"in_mouse 3 enables Raw Input, probably the most troublefree mouse input method "
