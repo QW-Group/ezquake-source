@@ -790,7 +790,7 @@ void CL_Connect_f (void)
 	// in this part proxy means QWFWD proxy
 	if (cl_proxyaddr.string[0]) {
 		char *secondproxy;
-		if (secondproxy = strchr(cl_proxyaddr.string, '@')) {
+		if ((secondproxy = strchr(cl_proxyaddr.string, '@'))) {
 			size_t prx_buf_len = strlen(cl_proxyaddr.string) + strlen(Cmd_Argv(1)) + 2;
 			char *prx_buf = (char *) Q_malloc(prx_buf_len);
 			server_buf = (char *) Q_malloc(strlen(cl_proxyaddr.string) + 1); // much more than needed

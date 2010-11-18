@@ -1087,9 +1087,9 @@ void Config_TroubleShoot_f(void)
 #ifdef GLQUAKE
 	extern cvar_t r_novis;
 #endif
-	extern cvar_t cl_maxfps, in_mouse, hud_planmode;
+	extern cvar_t cl_maxfps, hud_planmode;
 #ifdef WIN32
-	extern cvar_t m_filter, sys_yieldcpu;
+	extern cvar_t m_filter, in_mouse, sys_yieldcpu;
 #endif
 
 #ifdef GLQUAKE
