@@ -83,6 +83,7 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
+#include <math.h> // for NAN
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
