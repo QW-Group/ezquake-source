@@ -216,7 +216,7 @@ void SV_LoadGame_f (void) {
 	// load the light styles
 	for (i = 0; i < MAX_LIGHTSTYLES; i++) {
 		if (fscanf (f, "%s\n", str) != 1) {
-			Com_Printf("Couldn't read lightstyles");
+			Com_Printf("Couldn't read lightstyles\n");
 			fclose (f);
 			return;
 		}
