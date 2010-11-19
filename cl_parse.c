@@ -1215,7 +1215,11 @@ void CL_NextUpload(void)
 
 	if (cls.is_file)
 	{
-		fread(buffer, 1, r, cls.upload);
+		if (!fread(buffer, 1, r, cls.upload) != r) {
+			Com_Printf("Error reading the upload file\n");
+			CL_StopUpload();
+			return;
+		}
 	} 
 	else 
 	{

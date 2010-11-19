@@ -686,7 +686,10 @@ byte *Image_LoadPNG (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
 		return NULL;
 
-	fread(header, 1, 8, fin);
+	if (fread(header, 1, 8, fin) != 8) {
+		VFS_CLOSE(fin);
+		return NULL;
+	}
 
 	if (qpng_sig_cmp(header, 0, 8)) {
 		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));

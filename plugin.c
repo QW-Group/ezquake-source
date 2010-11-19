@@ -1564,7 +1564,7 @@ qintptr_t VARGS Plug_FS_Open(void *offset, quintptr_t mask, const qintptr_t *arg
 
 	int handle;
 	int *ret;
-	char *data;
+	byte *data;
 
 	if (VM_OOB(arg[1], sizeof(int)))
 		return -2;

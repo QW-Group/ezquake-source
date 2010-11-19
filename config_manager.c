@@ -958,7 +958,11 @@ qbool LoadCfg(FILE *f)
 
 	size = FS_FileLength(f);
 	fileBuffer = Q_malloc(size + 1); // +1 for null terminator
-	fread(fileBuffer, 1, size, f);
+	if (fread(fileBuffer, 1, size, f) != size) {
+		Com_Printf("Error reading config file\n");
+		Q_free(fileBuffer);
+		return false;
+	}
 	fileBuffer[size] = 0;
 
 	Cbuf_AddText (fileBuffer);

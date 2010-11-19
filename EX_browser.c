@@ -2800,25 +2800,25 @@ int SB_Serverlist_Unserialize(FILE *f)
 	int version;
 	int serversn_buffer, serversn_passed_buffer;
 
-	fread(&version, sizeof(int), 1, f);
-	if (version != SERIALIZE_FILE_VERSION) {
+	if (fread(&version, sizeof(int), 1, f) != 1)
+		return -3;
+	if (version != SERIALIZE_FILE_VERSION)
 		return -1;
-	}
 
-	fread(&server_data_size, sizeof(size_t), 1, f);
-	if (server_data_size != sizeof(server_data)) {
+	if (fread(&server_data_size, sizeof(size_t), 1, f) != 1)
+		return -3;
+	if (server_data_size != sizeof(server_data))
 		return -1;
-	}
 
-	fread(&serversn_buffer, sizeof(int), 1, f);
-	if (serversn_buffer > MAX_SERVERS) {
+	if (fread(&serversn_buffer, sizeof(int), 1, f) != 1)
+		return -3;
+	if (serversn_buffer > MAX_SERVERS)
 		return -2;
-	}
 
-	fread(&serversn_passed_buffer, sizeof(int), 1, f);
-	if (serversn_passed_buffer > MAX_SERVERS) {
+	if (fread(&serversn_passed_buffer, sizeof(int), 1, f) != 1)
+		return -3;
+	if (serversn_passed_buffer > MAX_SERVERS)
 		return -2;
-	}
 
 	serversn = serversn_buffer;
 	serversn_passed = serversn_passed_buffer;
