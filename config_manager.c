@@ -979,7 +979,7 @@ qbool LoadCfg(FILE *f)
 */
 void LoadConfig_f(void)
 {
-	FILE	*f;
+	FILE	*f = NULL;
 	char	filename[MAX_PATH] = {0},
 			fullname[MAX_PATH] = {0},
 			fullname_moddefault[MAX_PATH] = {0},

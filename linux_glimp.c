@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <X11/Xatom.h>
 #include <X11/xpm.h>
 
-#include <X11/extensions/xf86dga.h>
+#include <X11/extensions/Xxf86dga.h>
 #include <X11/extensions/xf86vmode.h>
 
 #ifdef WITH_EVDEV

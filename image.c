@@ -2000,13 +2000,13 @@ typedef my_source_mgr * my_src_ptr;
 
 #define INPUT_BUF_SIZE  4096	// Choose an efficiently fread'able size.
 
-METHODDEF(void)
+/*METHODDEF(void)
 init_source (j_decompress_ptr cinfo)
 {
   my_src_ptr src = (my_src_ptr) cinfo->src;
 
   src->start_of_file = TRUE;
-}
+}*/
 
 METHODDEF(boolean)
 fill_input_buffer (j_decompress_ptr cinfo)
@@ -2041,7 +2041,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
 }
 
 
-METHODDEF(void)
+/*METHODDEF(void)
 skip_input_data (j_decompress_ptr cinfo, long num_bytes)
 {
 	my_source_mgr *src = (my_source_mgr*) cinfo->src;
@@ -2063,7 +2063,6 @@ term_source (j_decompress_ptr cinfo)
 {
 }
 
-/*
 GLOBAL(void)
 jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 {
