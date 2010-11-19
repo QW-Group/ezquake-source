@@ -308,7 +308,8 @@ again:
 	    }
 	    Sys_Error("Poll call on RTC timer failed!\n");
 	}
-	read(rtc_fd, &curticks, sizeof(curticks));
+	if (read(rtc_fd, &curticks, sizeof(curticks)) != sizeof(curticks))
+		Sys_Error("Error reading the RTC timer");
 	curticks = curticks >> 8; /* knock out info byte */
 	totalticks += curticks;
 	return totalticks / RTC_RATE;

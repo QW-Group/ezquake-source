@@ -1965,7 +1965,7 @@ void Plug_Init(void)
 
 	Plug_Client_Init();
 
-	/*
+#if 0
 	TODO
 	if (plug_loaddefault.value)
 	{
@@ -1976,7 +1976,7 @@ void Plug_Init(void)
 #endif
 		COM_EnumerateFiles("plugins/*.qvm",		Plug_Emumerated, ".qvm");
 	}
-	*/
+#endif
 }
 
 void Plug_Tick(void)

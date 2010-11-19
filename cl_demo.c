@@ -4260,7 +4260,10 @@ void CL_QTVPlay_f (void)
 		//
 		while (!feof(f))
 		{
-			fgets(buffer, sizeof(buffer) - 1, f);
+			if (fgets(buffer, sizeof(buffer) - 1, f) == NULL) {
+				Com_Printf("Error reading the QTV file.\n");
+				break;
+			}
 
 			if (!strncmp(buffer, "Stream=", 7) || !strncmp(buffer, "Stream:", 7))
 			{

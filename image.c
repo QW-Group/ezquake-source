@@ -2009,7 +2009,7 @@ init_source (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
 
   src->start_of_file = TRUE;
-}*/
+}
 
 METHODDEF(boolean)
 fill_input_buffer (j_decompress_ptr cinfo)
@@ -2044,7 +2044,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
 }
 
 
-/*METHODDEF(void)
+METHODDEF(void)
 skip_input_data (j_decompress_ptr cinfo, long num_bytes)
 {
 	my_source_mgr *src = (my_source_mgr*) cinfo->src;
