@@ -1345,7 +1345,7 @@ void CL_Reconnect_f (void)
 
 extern double qstat_senttime;
 extern void CL_PrintQStatReply (char *s);
-int Plug_ConnectionlessClientPacket(char *buffer, int size);
+int Plug_ConnectionlessClientPacket(byte *buffer, int size);
 
 // Responses to broadcasts, etc
 void CL_ConnectionlessPacket (void) 

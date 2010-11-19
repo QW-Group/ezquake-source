@@ -2070,7 +2070,7 @@ qboolean Plug_Menu_Event(int eventtype, int param)	//eventtype = draw/keydown/ke
 	return ret;
 }
 
-int Plug_ConnectionlessClientPacket(char *buffer, int size)
+int Plug_ConnectionlessClientPacket(byte *buffer, int size)
 {
 	for (currentplug = plugs; currentplug; currentplug = currentplug->next)
 	{
