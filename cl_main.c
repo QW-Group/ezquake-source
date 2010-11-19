@@ -83,7 +83,6 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
-#include <math.h> // for NAN
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
@@ -2525,7 +2524,11 @@ void CL_Frame (double time)
 				S_Update (r_origin, vpn, vright, vup);
 			} else {
 				// do not play loop sounds (lifts etc.) when paused
+#ifndef NAN
+				vec3_t hax = { 0/0, 0/0, 0/0 };
+#else
 				vec3_t hax = { NAN, NAN, NAN };
+#endif
 				S_Update(hax, vec3_origin, vec3_origin, vec3_origin);
 			}
 			CL_DecayLights ();
