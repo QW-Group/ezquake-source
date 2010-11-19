@@ -2524,10 +2524,12 @@ void CL_Frame (double time)
 				S_Update (r_origin, vpn, vright, vup);
 			} else {
 				// do not play loop sounds (lifts etc.) when paused
-#ifndef NAN
-				vec3_t hax = { 0/0, 0/0, 0/0 };
+#ifndef INFINITY
+				float temp = 1.0;
+				float infinity = temp / (temp - 1.0);
+				vec3_t hax = { infinity, infinity, infinity };
 #else
-				vec3_t hax = { NAN, NAN, NAN };
+				vec3_t hax = { INFINITY, INFINITY, INFINITY };
 #endif
 				S_Update(hax, vec3_origin, vec3_origin, vec3_origin);
 			}
