@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include <time.h>
-#include <stdlib.h>
 #include "quakedef.h"
 #include "winquake.h"
 #include "movie.h"
@@ -4683,7 +4682,7 @@ static int CL_Demo_Jump_Status_Parse_Constraint (const char *arg, int *value)
 	if (strlen(arg) < 2)
 		return -1;
 
-	*value = strtoll(arg+1, NULL, 10);
+	*value = Q_atoi(arg+1);
 
 	switch (arg[0]) {
 		case '=':
