@@ -146,19 +146,37 @@ void SV_LoadGame_f (void) {
 		return;
 	}
 
-	fscanf (f, "%i\n", &version);
+	if (fscanf (f, "%i\n", &version) != 1) {
+		fclose (f);
+		Com_Printf ("Error reading savegame data\n");
+		return;
+	}
+
 	if (version != SAVEGAME_VERSION) {
 		fclose (f);
 		Com_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
 		return;
 	}
 
-	fscanf (f, "%s\n", str);
-	for (i = 0; i < NUM_SPAWN_PARMS; i++)
-		fscanf (f, "%f\n", &spawn_parms[i]);
+	if (fscanf (f, "%s\n", str) != 1) {
+		fclose (f);
+		Com_Printf ("Error reading savegame data\n");
+		return;
+	}
+	for (i = 0; i < NUM_SPAWN_PARMS; i++) {
+		if (fscanf (f, "%f\n", &spawn_parms[i]) != 1) {
+			fclose (f);
+			Com_Printf ("Error reading savegame data\n");
+			return;
+		}
+	}
 
 	// this silliness is so we can load 1.06 save files, which have float skill values
-	fscanf (f, "%f\n", &tfloat);
+	if (fscanf (f, "%f\n", &tfloat) != 1) {
+		fclose (f);
+		Com_Printf ("Error reading savegame data\n");
+		return;
+	}
 	current_skill = (int)(tfloat + 0.1);
 	Cvar_Set (&skill, va("%i", current_skill));
 
@@ -172,8 +190,16 @@ void SV_LoadGame_f (void) {
 	Cvar_Set (&sv_progtype, "0"); // force .dat
 #endif
 
-	fscanf (f, "%s\n", mapname);
-	fscanf (f, "%f\n", &time);
+	if (fscanf (f, "%s\n", mapname) != 1) {
+		fclose (f);
+		Com_Printf ("Error reading savegame data\n");
+		return;
+	}
+	if (fscanf (f, "%f\n", &time) != 1) {
+		fclose (f);
+		Com_Printf ("Error reading savegame data\n");
+		return;
+	}
 
 	Host_EndGame();
 
@@ -183,7 +209,19 @@ void SV_LoadGame_f (void) {
 
 	if (sv.state != ss_active) {
 		Com_Printf ("Couldn't load map\n");
+		fclose (f);
 		return;
+	}
+
+	// load the light styles
+	for (i = 0; i < MAX_LIGHTSTYLES; i++) {
+		if (fscanf (f, "%s\n", str) != 1) {
+			Com_Printf("Couldn't read lightstyles");
+			fclose (f);
+			return;
+		}
+		sv.lightstyles[i] = (char *) Hunk_Alloc (strlen(str) + 1);
+		strlcpy (sv.lightstyles[i], str, strlen(str) + 1);
 	}
 
 	// pause until all clients connect
@@ -191,13 +229,6 @@ void SV_LoadGame_f (void) {
 		SV_TogglePause (NULL, 1);
 
 	sv.loadgame = true;
-
-	// load the light styles
-	for (i = 0; i < MAX_LIGHTSTYLES; i++) {
-		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = (char *) Hunk_Alloc (strlen(str) + 1);
-		strlcpy (sv.lightstyles[i], str, strlen(str) + 1);
-	}
 
 	// load the edicts out of the savegame file
 	entnum = -1;		// -1 is the globals

@@ -195,11 +195,15 @@ void SYSINFO_Init(void)
 	// MEM
 	f = fopen("/proc/meminfo", "r");
 	if (f) {
-		fscanf (f, "%*s %llu %*s\n", &SYSINFO_memory);
+		if (fscanf (f, "%*s %llu %*s\n", &SYSINFO_memory) != 1) {
+			Com_Printf ("could not read /proc/meminfo!\n");
+		} else {
+			SYSINFO_memory /= 1024;
+		}
 		fclose (f);
-		SYSINFO_memory /= 1024;
 	} else {
 		Com_Printf ("could not open /proc/meminfo!\n");
+		SYSINFO_memory = 0;
 	}
 
 	//CPU-MHZ
@@ -217,7 +221,10 @@ void SYSINFO_Init(void)
 	f = fopen("/proc/cpuinfo", "r");
 	if (f) {
 		while (!feof(f)) {
-			fgets (buffer, sizeof(buffer), f); // disconnect: sizeof(buffer) - 1 ?
+			if (fgets (buffer, sizeof(buffer), f) == NULL) {	// disconnect: sizeof(buffer) - 1 ?
+				Com_Printf("Error reading /proc/cpuinfo\n");
+				break;
+			}
 			if (!strncmp( buffer, "model name", 10)) {
 				match = strchr( buffer, ':' );
 				match++;
