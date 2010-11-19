@@ -326,6 +326,7 @@ DWORD WINAPI SB_PingTree_SendQueryThread(void *thread_arg)
 	proxy_request_queue *queue = (proxy_request_queue *) thread_arg;
 	int i, ret;
 	double interval_ms = (1.0 / sb_proxinfopersec.value) * 1000.0;
+	timerresolution_session_t timersession = {0, 0};
 
 	Sys_TimerResolution_InitSession(&timersession);
 	Sys_TimerResolution_RequestMinimum(&timersession);
