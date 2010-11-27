@@ -2520,7 +2520,7 @@ void CL_Frame (double time)
 	{
 		if (cls.state == ca_active)
 		{
-			if (cl_demospeed.value) {
+			if (!ISPAUSED) {
 				S_Update (r_origin, vpn, vright, vup);
 			} else {
 				// do not play loop sounds (lifts etc.) when paused
