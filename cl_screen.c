@@ -1321,7 +1321,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 				Draw_SColoredString(
 					x - (bar_length + 16 + AUTOID_WEAPON_OFFSET_X) * scale,
 					y - (AUTOID_HEALTHBAR_OFFSET_Y + 4) * scale,
-					str2wcs(weapon_name), NULL, 0, 0, scale);
+					str2wcs(weapon_name), NULL, 0, 1, scale);
 			}
 		}
 	}
