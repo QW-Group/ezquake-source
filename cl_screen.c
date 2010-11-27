@@ -1030,12 +1030,6 @@ void SCR_DrawConsole (void) {
 
 /*********************************** AUTOID ***********************************/
 
-#define AUTOID_NAME			1
-#define AUTOID_HEALTH		2
-#define AUTOID_ARMOR		4
-#define AUTOID_WEAPON		8
-#define AUTOID_ARMOR_NAME	16
-
 #define AUTOID_HEALTHBAR_BG_COLOR			180, 115, 115
 #define AUTOID_HEALTHBAR_NORMAL_COLOR		80, 0, 0
 #define AUTOID_HEALTHBAR_MEGA_COLOR			255, 0, 0
@@ -1182,7 +1176,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 	}
 
 	// Draw health above the name.
-	if (scr_autoid.integer & AUTOID_HEALTH)
+	if (scr_autoid.integer >= 2)
 	{
 		int health;
 		int health_length;
@@ -1219,7 +1213,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 	}
 
 	// Draw armor.
-	if (scr_autoid.integer & AUTOID_ARMOR)
+	if (scr_autoid.integer >= 2)
 	{
 		int armor;
 		int armor_length;
@@ -1251,7 +1245,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 	}
 
 	// Draw the name of the armor type.
-	if((scr_autoid.integer & AUTOID_ARMOR_NAME) && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
+	if(scr_autoid.integer >= 3 && scr_autoid.integer < 6 && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
 	{
 		if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1) {
 			strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
@@ -1267,7 +1261,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 			str2wcs(armor_name), NULL, 0, 0, scale);
 	}
 
-	if(scr_autoid_weapons.integer > 0 && (scr_autoid.integer & AUTOID_WEAPON))
+	if(scr_autoid_weapons.integer > 0 && (scr_autoid.integer >= 4))
 	{
 		// Draw the players weapon.
 		int best_weapon = -1;
@@ -1311,7 +1305,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 				break;
 		}
 
-		if(weapon_pic != NULL && best_weapon > 0 && best_weapon >= scr_autoid_weapons.integer)
+		if(weapon_pic != NULL && best_weapon > 0 && ((scr_autoid.integer == 4 && best_weapon == 7) || (scr_autoid.integer > 4 && best_weapon >= scr_autoid_weapons.integer)))
 		{
 			if (scr_autoid_weaponicon.value) {
 				Draw_SSubPic (
@@ -1347,7 +1341,7 @@ void SCR_DrawAutoID (void)
 		y =  (glheight - autoids[i].y) * vid.height / glheight;
 		scale = (scr_autoid_scale.value > 0 ? scr_autoid_scale.value : 1.0);
 
-		if(scr_autoid.integer & AUTOID_NAME) {
+		if(scr_autoid.integer) {
 			if (scr_autoid_namelength.integer >= 1 && scr_autoid_namelength.integer < MAX_SCOREBOARDNAME) {
 				char name[MAX_SCOREBOARDNAME];
 
