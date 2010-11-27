@@ -158,7 +158,7 @@ cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 #ifdef GLQUAKE
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
-cvar_t	scr_autoid				= {"scr_autoid", "15"};
+cvar_t	scr_autoid				= {"scr_autoid", "5"};
 cvar_t	scr_autoid_weapons		= {"scr_autoid_weapons", "2"};
 cvar_t	scr_autoid_namelength	= {"scr_autoid_namelength", "0"};
 cvar_t	scr_autoid_barlength	= {"scr_autoid_barlength", "16"};
