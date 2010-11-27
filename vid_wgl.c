@@ -1052,8 +1052,8 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 void GL_EndRendering (void) {
 	static qbool old_hwgamma_enabled;
 
-	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks && ActiveApp && !Minimized;
-	vid_hwgamma_enabled = vid_hwgamma_enabled && (modestate == MS_FULLDIB || vid_hwgammacontrol.value == 2);
+	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks && (ActiveApp || vid_hwgammacontrol.value == 3) && !Minimized;
+	vid_hwgamma_enabled = vid_hwgamma_enabled && (modestate == MS_FULLDIB || vid_hwgammacontrol.value >= 2);
 	if (vid_hwgamma_enabled != old_hwgamma_enabled) {
 		old_hwgamma_enabled = vid_hwgamma_enabled;
 		if (vid_hwgamma_enabled && currentgammaramp)
