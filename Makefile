@@ -42,7 +42,7 @@ ifeq ($(OS),darwin)
 endif
 ifeq ($(OS),freebsd)
 	DEFAULT_TARGET = glx
-	OS_GL_CFLAGS = -DWITH_DGA -DWITH_VMODE
+	OS_GL_CFLAGS = -DWITH_DGA -DWITH_VMODE -DWITH_KEYMAP
 endif
 
 LIB_PREFIX=$(OS)-$(ARCH)
