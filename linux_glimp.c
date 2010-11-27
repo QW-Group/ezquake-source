@@ -763,12 +763,14 @@ static char *XLateKey(XKeyEvent *ev, int *key) {
 	static char buf[64];
 	int kp;
 	KeySym keysym;
+	memset(buf, 0, sizeof(buf));
 
 	*key = 0;
 	kp = (int) cl_keypad.value;
 
 	keysym = XLookupKeysym (ev, 0);
 	XLookupString(ev, buf, sizeof (buf), &keysym, 0);
+	Com_DPrintf ("[XLateKey] len %i: {%i %i %i}: [%s]\n", strlen(buf), (byte)buf[0], (byte)buf[1], (byte)buf[2], buf);
 
 	// keysym without modifiers
 	ev->state = 0;
@@ -949,6 +951,7 @@ static qbool repeated_press( XEvent *event )
 	return repeated;
 }
 
+extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
 static void HandleEvents(void)
 {
   extern int ctrlDown, shiftDown, altDown;
@@ -992,6 +995,10 @@ static void HandleEvents(void)
 
 		  if (strlen(text) == 1) {
 			  Key_EventEx(key, text[0], event.type == KeyPress);
+		  } else if (strlen(text) == 2 &&
+			     ((byte)text[0] & 0xE0) == 0xC0 && ((byte)text[1] & 0xC0) == 0x80
+			    ) { // valid 2-byte UTF-8 sequence?
+				Key_EventEx(key, (((byte)text[0] & 0x1F) << 6) | ((byte)text[1] & 0x3F), event.type == KeyPress);
 		  } else {
 			  Key_EventEx(key, 0, event.type == KeyPress);
 		  }
