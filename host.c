@@ -221,7 +221,7 @@ void SYSINFO_Init(void)
 	f = fopen("/proc/cpuinfo", "r");
 	if (f) {
 		while (!feof(f)) {
-			if (fgets (buffer, sizeof(buffer), f) == NULL) {	// disconnect: sizeof(buffer) - 1 ?
+			if (fgets (buffer, sizeof(buffer), f) == NULL && !feof(f)) {	// disconnect: sizeof(buffer) - 1 ?
 				Com_Printf("Error reading /proc/cpuinfo\n");
 				break;
 			}
@@ -232,6 +232,7 @@ void SYSINFO_Init(void)
 				memcpy(cpu_model, match, sizeof(cpu_model));
 				cpu_model[strlen(cpu_model) - 1] = '\0';
 				SYSINFO_processor_description= Q_strdup (cpu_model);
+				break;
 			}
 		}
 		fclose(f);	
