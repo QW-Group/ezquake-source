@@ -2001,7 +2001,7 @@ void CL_S_ExtraUpdate()
 {
 #ifndef WIN32
 	float tmpvolume = 0;
-	if (!sys_inactivesound.value && (!ActiveApp || Minimized)) {
+	if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized)) {
 		tmpvolume = Cvar_Value("volume");
 		Cvar_SetValueByName("volume", 0);
 	}
@@ -2010,7 +2010,7 @@ void CL_S_ExtraUpdate()
 	S_ExtraUpdate();
 
 #ifndef WIN32
-	if (!sys_inactivesound.value && (!ActiveApp || Minimized))
+	if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized))
 		Cvar_SetValueByName("volume", tmpvolume);
 #endif
 }
@@ -2544,7 +2544,7 @@ void CL_Frame (double time)
 	{
 #ifndef WIN32
 		float tmpvolume = 0;
-		if (!sys_inactivesound.value && (!ActiveApp || Minimized)) {
+		if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized)) {
 			tmpvolume = Cvar_Value("volume");
 			Cvar_SetValueByName("volume", 0);
 		}
@@ -2575,7 +2575,7 @@ void CL_Frame (double time)
 		CDAudio_Update();
 
 #ifndef WIN32
-		if (!sys_inactivesound.value && (!ActiveApp || Minimized))
+		if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized))
 			Cvar_SetValueByName("volume", tmpvolume);
 #endif
 	}
