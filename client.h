@@ -816,6 +816,8 @@ void	CL_SendChunkDownloadReq(void);
 
 #endif // FTE_PEXT_CHUNKEDDOWNLOADS
 
+void CL_S_ExtraUpdate (void);
+
 // cl_tent.c
 void CL_InitTEnts (void);
 void CL_ClearTEnts (void);

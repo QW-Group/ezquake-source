@@ -223,6 +223,10 @@ cvar_t cl_onload				= {"cl_onload", "menu"};
 cvar_t cl_verify_qwprotocol		= {"cl_verify_qwprotocol", "1"};
 #endif // WIN32
 
+#ifndef WIN32
+cvar_t sys_inactivesound = {"sys_inactiveSound", "0"};
+#endif
+
 cvar_t demo_autotrack			= {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 /// persistent client state
@@ -1751,6 +1755,7 @@ void CL_InitLocal (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register (&cl_staticsounds);
+	Cvar_Register (&sys_inactivesound);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_USERINFO);
 	Cvar_Register (&team);
@@ -1990,6 +1995,25 @@ void CL_Init (void)
 }
 
 //============================================================================
+
+// wrapper function to deal with inactivesound
+void CL_S_ExtraUpdate()
+{
+#ifndef WIN32
+	float tmpvolume = 0;
+	if (!sys_inactivesound.value && (!ActiveApp || Minimized)) {
+		tmpvolume = Cvar_Value("volume");
+		Cvar_SetValueByName("volume", 0);
+	}
+#endif
+
+	S_ExtraUpdate();
+
+#ifndef WIN32
+	if (!sys_inactivesound.value && (!ActiveApp || Minimized))
+		Cvar_SetValueByName("volume", tmpvolume);
+#endif
+}
 
 void CL_BeginLocalConnection (void) 
 {
@@ -2518,6 +2542,14 @@ void CL_Frame (double time)
 	// update audio
 	if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
 	{
+#ifndef WIN32
+		float tmpvolume = 0;
+		if (!sys_inactivesound.value && (!ActiveApp || Minimized)) {
+			tmpvolume = Cvar_Value("volume");
+			Cvar_SetValueByName("volume", 0);
+		}
+#endif
+
 		if (cls.state == ca_active)
 		{
 			if (!ISPAUSED) {
@@ -2541,6 +2573,11 @@ void CL_Frame (double time)
 		}
 
 		CDAudio_Update();
+
+#ifndef WIN32
+		if (!sys_inactivesound.value && (!ActiveApp || Minimized))
+			Cvar_SetValueByName("volume", tmpvolume);
+#endif
 	}
 
 	MT_Frame();

@@ -1345,7 +1345,7 @@ void M_Draw (void) {
 #if (!defined GLQUAKE && defined _WIN32)
 			VID_UnlockBuffer ();
 #endif
-			S_ExtraUpdate ();
+			CL_S_ExtraUpdate ();
 #if (!defined GLQUAKE && defined _WIN32)
 			VID_LockBuffer ();
 #endif
@@ -1416,7 +1416,7 @@ void M_Draw (void) {
 #if (!defined GLQUAKE && defined _WIN32)
 	VID_UnlockBuffer ();
 #endif
-	S_ExtraUpdate ();
+	CL_S_ExtraUpdate ();
 #if (!defined GLQUAKE && defined _WIN32)
 	VID_LockBuffer ();
 #endif

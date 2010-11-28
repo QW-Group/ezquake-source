@@ -183,10 +183,10 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
 	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
 	enemyforceskins, teamforceskins, cl_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
-	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, vid_wideaspect, menu_ingame 
+	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, vid_wideaspect, menu_ingame, sys_inactivesound
 ;
 #ifdef _WIN32
-extern cvar_t demo_format, sys_highpriority, cl_window_caption, sys_inactivesound, vid_flashonactivity;
+extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
 void CL_RegisterQWURLProtocol_f(void);
 #endif
 #ifdef GLQUAKE
@@ -1342,9 +1342,7 @@ setting settsystem_arr[] = {
 	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
 	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
-#ifdef _WIN32
 	ADDSET_BOOL		("Sounds When Minimized", sys_inactivesound),
-#endif
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
 
