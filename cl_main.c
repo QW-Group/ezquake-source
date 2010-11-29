@@ -1755,7 +1755,9 @@ void CL_InitLocal (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register (&cl_staticsounds);
+#ifndef _WIN32
 	Cvar_Register (&sys_inactivesound);
+#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_USERINFO);
 	Cvar_Register (&team);
