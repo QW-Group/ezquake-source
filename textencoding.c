@@ -32,12 +32,14 @@ char *encode_say (wchar *in)
 	char *out;
 
 	for (p = in; *p; p++)
-		if (*p > 256)
+		if (*p > 255)
 			goto encode;
 	strlcpy (buf, wcs2str(in), sizeof(buf));
 	return buf;
 encode:
-	strlcpy (buf, "=`k8:", sizeof (buf));
+	strlcpy (buf, wcs2str(in), min(p - in + 1, sizeof(buf)));
+	in = p;
+	strlcat (buf, "=`k8:", sizeof(buf));
 	out = buf + strlen(buf);
 	while (*in && (out - buf < sizeof(buf)/sizeof(buf[0])))
 	{
