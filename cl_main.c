@@ -224,7 +224,7 @@ cvar_t cl_verify_qwprotocol		= {"cl_verify_qwprotocol", "1"};
 #endif // WIN32
 
 #ifndef WIN32
-cvar_t sys_inactivesound = {"sys_inactiveSound", "0"};
+cvar_t sys_inactivesound		= {"sys_inactiveSound", "1"};
 #endif
 
 cvar_t demo_autotrack			= {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
