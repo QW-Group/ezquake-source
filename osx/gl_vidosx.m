@@ -196,6 +196,8 @@ extern cvar_t	gl_strings;
 
 #pragma mark -
 
+qbool ActiveApp = true, Minimized = false;
+
 //_________________________________________________________________________________________________________fUNCTION_pROTOTYPES
 
 #pragma mark =Function ProtoTypes =
@@ -866,7 +868,7 @@ void	VID_Shutdown (void)
         }
     }
 	
-	qglGetString = NULL;
+    qglGetString = NULL;
 }
 
 //______________________________________________________________________________________________________________VID_MenuDraw()

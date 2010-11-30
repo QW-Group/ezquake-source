@@ -92,10 +92,10 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #ifdef _DEBUG
 #include "parser.h"
 #endif
-#if defined (_WIN32) || defined (__linux__)
+#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
 #include "mumble.h"
 #endif
-#if defined (__linux__) || defined (__FreeBSD__)
+#if defined (__linux__) || defined (__FreeBSD__) || defined (__APPLE__)
 extern qbool ActiveApp, Minimized;
 #endif
 

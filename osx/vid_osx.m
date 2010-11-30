@@ -188,6 +188,8 @@ static void	VID_InsertMode (UInt16 *, UInt16, UInt16, BOOL);
 
 #pragma mark -
 
+qbool ActiveApp = true, Minimized = false;
+
 //____________________________________________________________________________________________________________VID_GetBuffers()
 
 void	VID_GetBuffers (void)
