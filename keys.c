@@ -1842,7 +1842,7 @@ void History_Init (void)
 
 	if (cl_savehistory.value)
 	{
-		if ((hf = fopen(HISTORY_FILE_NAME, "rt")))
+		if ((hf = fopen(va("%s/" HISTORY_FILE_NAME, com_basedir), "rt")))
 		{
 			do
 			{
@@ -1870,7 +1870,8 @@ void History_Shutdown (void)
 	FILE *hf;
 
 	if (cl_savehistory.value)
-		if ((hf = fopen(HISTORY_FILE_NAME, "wt")))
+	{
+		if ((hf = fopen(va("%s/" HISTORY_FILE_NAME, com_basedir), "wt")))
 		{
 			i = edit_line;
 			do
@@ -1880,11 +1881,12 @@ void History_Shutdown (void)
 
 			do
 			{
-				fprintf(hf, "%s\n", wcs2str(key_lines[i] + 1));
+				fprintf(hf, "%s\n", /*wcs2str*/encode_say(key_lines[i] + 1));
 				i = (i + 1) & (CMDLINES - 1);
 			} while (i != edit_line && key_lines[i][1]);
 			fclose(hf);
 		}
+	}
 }
 // } Added by VVD
 
