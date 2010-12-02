@@ -2830,6 +2830,11 @@ void Frags_DrawColors(int x, int y, int width, int height,
 				Draw_STransPic(char_x, char_y, sb_nums[0][*t - '0'], bignum);
 				char_x += char_size;
 			}
+			else if (*t == '-')
+			{
+				Draw_STransPic(char_x, char_y, sb_nums[0][STAT_MINUS], bignum);
+				char_x += char_size;
+			}
 
 			t++;
 		}
