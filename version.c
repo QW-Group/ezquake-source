@@ -160,7 +160,11 @@ char *VersionString (void)
 {
 	static char str[64];
 
+#ifdef BUILD_NUMBER
+	snprintf (str, sizeof(str), "%s (build %s)", VERSION_NUMBER, BUILD_NUMBER);
+#else
 	snprintf (str, sizeof(str), "%s (build %i)", VERSION_NUMBER, build_number());
+#endif
 
 	return str;
 }
