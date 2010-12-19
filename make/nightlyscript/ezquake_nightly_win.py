@@ -2,6 +2,8 @@
 import datetime
 import os
 import sys
+import subprocess
+
 
 # USAGE:
 # --------------------------------
@@ -36,13 +38,15 @@ import sys
 #
 
 # Program paths
-SVNBIN		= r'C:\Program Files\svn-1.4.5\bin\svn.exe'
+GITBIN		= r'C:\Program Files\Git\bin\git.exe'
 DEVENV		= r'C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\devenv.exe'
 SEVENZIP 	= r'C:\Program Files\7-Zip\7z.exe'
 PSCP		= r'C:\Program Files\putty\pscp.exe'
+GREPBIN         = r'C:\Program Files\Git\bin\grep.exe'
+CUTBIN          = r'C:\Program Files\Git\bin\cut.exe'
 
 # Local paths
-TRUNK		= r'H:\DEV\ezquake.NIGHTLY'
+TRUNK		= r'C:\ezquake-source'
 OUTPUTDIR	= r'%s\make' % (TRUNK, )
 SOLUTIONFILE	= r'%s\msvs2008\ezquake_msvs_90.sln' % (OUTPUTDIR, )
 
@@ -50,73 +54,64 @@ SOLUTIONFILE	= r'%s\msvs2008\ezquake_msvs_90.sln' % (OUTPUTDIR, )
 KEYLOCATION	= r''
 
 # Server settings
-LOGIN		= r'nightly'
-REMOTEPATH 	= r'nightlybuilds/win32'
-SERVERHOST	= r'uttergrottan.localghost.net'
+LOGIN		= r''
+REMOTEPATH 	= r''
+SERVERHOST	= r''
 
 # ---------------------------------------------------------------------------------
 
-def load_file_as_dict(filename = None):
-	if (filename is None):
-		return None
-
-	f = open(filename)
-	dict = {}
-
-	for line in f:
-		if (line.count(":") > 0):
-			(key, val) = line.split(":", 1)
-			dict[key] = val.strip("\r\n")
-
-	f.close()
-
-	return dict
+def getRevision():
+        rev = subprocess.check_output( [GITBIN, 'show'] )
+        rev = rev.split('\n')[0].split()[1]
+        return rev
+        
 
 def main(argv = None):
 	# Change dir
 	os.chdir(TRUNK)
 	
 	# Get old revision
-	os.system(r'"%s" info > %s/revision.txt' % (SVNBIN, OUTPUTDIR))
-	revision = load_file_as_dict("%s/revision.txt" % (OUTPUTDIR, ))
-	oldrevnum = revision["Revision"].strip()
+        oldrevnum = getRevision()
 
-	# Update from SVN
-	print "Updating from SVN..."
-	os.system(r'"%s" update' % (SVNBIN, ))
+	# Update from GIT
+	print "Updating from GIT..."
+	os.system(r'"%s" pull' % GITBIN )
 	
 	# Get the new revision number
 	print "Getting revision information..."
-	os.system(r'"%s" info > %s/revision.txt' % (SVNBIN, OUTPUTDIR))
-	revision = load_file_as_dict("%s/revision.txt" % (OUTPUTDIR, ))
-	revnum = revision["Revision"].strip()
+	revnum = getRevision()
 	
-	print "Old revision: %s" % (oldrevnum, )
-	print "New revision: %s" % (revnum, )
+	print "Old revision: %s" % oldrevnum
+	print "New revision: %s" % revnum
+
+        shortrevnum = revnum[:7]
 	
-	if int(revnum) == int(oldrevnum):
+	if revnum == oldrevnum:
 		print "Same revision as last time, no need to build!!!"
 		return 0
 	
 	# Get the revision log since last time we built
-	os.system(r'"%s" log -r %s:%s > %s/changes.txt' % (SVNBIN, int(oldrevnum) + 1, revnum, OUTPUTDIR))
+        os.system(r'"%s" whatchanged %s..%s > %s/changes.txt' % (GITBIN, oldrevnum, revnum, OUTPUTDIR))
+
+        # Set BUILD_NUMBER
+        os.environ['CL'] = r'/DBUILD_NUMBER#\"%s\"' % shortrevnum
 
 	# Compile ezquake-gl
 	print "Compiling ezquake-gl..."
-	os.system(r'"%s" %s /rebuild GLRelease /project ezquake' % (DEVENV, SOLUTIONFILE))
+	os.system(r'"%s" %s /rebuild GLRelease /project ezquake /out glLog.txt' % (DEVENV, SOLUTIONFILE))
 
 	# Compile ezquake
 	print "Compiling ezquake software..."
-	os.system(r'"%s" %s /rebuild Release /project ezquake' % (DEVENV, SOLUTIONFILE))
+	os.system(r'"%s" %s /rebuild Release /project ezquake /out swLog.txt' % (DEVENV, SOLUTIONFILE))
 
 	# Set the names of the compiled files
-	softwarename = "ezquake-r%s.exe" % revnum
-	glname = "ezquake-gl-r%s.exe" % revnum
-	softwarepdbname = "ezquake-r%s.pdb" % revnum
-	glpdbname = "ezquake-gl-r%s.pdb" % revnum
+	softwarename = "ezquake-%s.exe" % shortrevnum
+	glname = "ezquake-gl-%s.exe" % shortrevnum
+	softwarepdbname = "ezquake-%s.pdb" % shortrevnum
+	glpdbname = "ezquake-gl-%s.pdb" % shortrevnum
 
 	# Set name
-	zipname = "%s-r%s-ezquake.7z" % (datetime.date.today().strftime("%Y-%m-%d"), revnum)
+	zipname = "%s-%s-ezquake.7z" % (datetime.date.today().strftime("%Y-%m-%d"), shortrevnum)
 	print zipname
 
 	# Zip it!
@@ -125,14 +120,14 @@ def main(argv = None):
 	os.system(r'move ezquake-gl.exe %s' % glname)
 	os.system(r'move ezquake.pdb %s' % softwarepdbname)
 	os.system(r'move ezquake-gl.pdb %s' % glpdbname)
-	os.system(r'"%s" a %s %s %s %s %s README.TXT revision.txt changes.txt' % (SEVENZIP, zipname, softwarename, glname, softwarepdbname, glpdbname))
+	os.system(r'"%s" a %s %s %s %s %s README.TXT changes.txt' % (SEVENZIP, zipname, softwarename, glname, softwarepdbname, glpdbname))
 	
 	# If no key location is supplied, use pageant instead.
 	keyuse = ""
 	if (KEYLOCATION == ""):
 		keyuse = "-pageant"
 	else:
-		keyuse = "-i %s" % (KEYLOCATION, )
+		keyuse = "-i %s" % KEYLOCATION
 	
 	# SCP the file to the server.
 	os.system(r'"%s" -scp %s -v -l %s %s\%s %s:%s' % (PSCP, keyuse, LOGIN, OUTPUTDIR, zipname, SERVERHOST, REMOTEPATH))
