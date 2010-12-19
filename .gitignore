@@ -1,4 +1,4 @@
-
+# Windows/MSVS created files and directories
 /make/*.exe
 /make/*.ilk
 /make/*.map
@@ -12,8 +12,14 @@
 /make/msvs2008/*.suo
 /make/msvs2008/*.user
 
+# ?
 /release-*/
 /debug-*/
+
+# Downloaded library files
 /libs/linux-x86/*.a
 /libs/linux-x86_64/*.a
 /libs/windows-x86/*.lib
+
+# Vi/Vim backup files
+*~
