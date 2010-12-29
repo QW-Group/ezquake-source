@@ -7,14 +7,12 @@ Compiling ezQuake sources on Windows: (updated 2008-08-12)
 
 Instructions:
 --------------------
-1) Grab sources from ezquake SVN (most devs use http://tortoisesvn.tigris.org/ for this since it integrates with explorer):
-  - SVN root path (includes trunk+branches): https://ezquake.svn.sourceforge.net/svnroot/ezquake/
-  - To check only the HEAD branch and ezquake itself you do:
-    - TortoiseSVN
-      1. right-click inside of some directory, select "SVN Checkout..."
-      2. as "URL of repository" use https://ezquake.svn.sourceforge.net/svnroot/ezquake/trunk
-    - Command-line Subversion:
-      svn co https://ezquake.svn.sourceforge.net/svnroot/ezquake/trunk ezquake
+1) Grab sources from the ezQuake git repository
+  - direct zip archive download link:
+	  https://github.com/ezQuake/ezquake-source/zipball/master
+	- alternatively, use a git client, for Windows we recommend "msysgit" - http://code.google.com/p/msysgit/
+	  - it's a command-line tool, use this command to obtain ezquake source code:
+	  - git clone git://github.com/ezQuake/ezquake-source.git
 
 2) Get Microsoft Visual Studio 8 and install it. 
    Instead of the expensive MSVS8 you can install Visual C++ 2008 Express Edition which is free.
@@ -22,10 +20,10 @@ Instructions:
   - Just follow the instructions (you don't need SQL server).
 
 3) Download all dependancies and tools needed for the build process (ml.exe and gas2masm.exe):
-  - Run ezquake/make/download_dependencies.bat
-  - Or download them manually from http://ezquake.svn.sourceforge.net/viewvc/ezquake/trunk/libs/windows-x86/
+  - Run ezquake/make/download_dependencies_x32.bat
+    - this downloads both the ml.exe and gas2mas.exe tools, and also all the libraries required for building
 
-4) Open open ezquake_msvs_90.sln located in ezquake/make/msvs2008
+4) Open ezquake_msvs_90.sln located in ezquake-source/make/msvs2008
 
 5) Select GLDebug configuration and press "Build".
   - Note, to use the game files in your normal quake dir do the following in Visual studio:
@@ -38,15 +36,15 @@ Instructions:
 Microsoft Visual Studio 8 and .s (asm) files:
 ---------------------------------------------------------------------
  - Requirements:
-   There are no special requirements, we include everything in CVS, you just need cl.exe
+   There are no special requirements, we include everything in the git repository, you just need cl.exe
    which is a part of MS VS 8 package
  - We use Custom Build Tool to compile asm .s files in MS VS 8.
  - Visual Studio reads all instructions from qasm.rules
  - That file is included in the project file (ezquake_msvs_80.vcproj)
  - Instructions are named 'qasm' and are applied on *.s files
- - Visual Studio 8 doesn't have ml.exe (known as masm32) so we have ml.exe in masm32 dir (binary in SVN)
+ - Visual Studio 8 doesn't have ml.exe (known as masm32) so we have ml.exe in masm32 dir (binary in git)
  - We dont include gas2masm in ezquake solution
- - gas2masm.exe is stored in our SVN
+ - gas2masm.exe is stored in our git repository
  - How custom build works:
    1) cl (optimizer), input is .s file, output is .spp (optimized) file
    2) gas2masm, input is .spp file, output is .asm file
