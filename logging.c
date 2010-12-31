@@ -42,6 +42,14 @@ static char       logfilename[LOG_FILENAME_MAXSIZE];
 
 static qbool autologging = false;
 
+typedef struct log_upload_job_s {
+	char *player_name;
+	char *token;
+	char *hostname;
+	char *filename;
+	char *url;
+} log_upload_job_t;
+
 qbool Log_IsLogging(void) {
 	return logfile ? true : false;
 }
@@ -289,14 +297,44 @@ qbool Log_AutoLogging_Status(void) {
 	return temp_log_ready ? 2 : autologging ? 1 : 0;
 }
 
-DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vfilename)
+size_t Log_Curl_Write_Void( void *ptr, size_t size, size_t nmemb, void *userdata)
 {
-	const char *filename = (const char *) vfilename;
+	return size*nmemb;
+}
+
+static log_upload_job_t* Log_Upload_Job_Prepare(const char *filename, const char *hostname, const char* player_name,
+                                                const char *token, const char *url)
+{
+	log_upload_job_t *job = (log_upload_job_t *) Q_malloc(sizeof(log_upload_job_t));
+
+	job->filename = Q_strdup(filename);
+	job->hostname = Q_strdup(hostname);
+	job->player_name = Q_strdup(player_name);
+	job->token = Q_strdup(token);
+	job->url = Q_strdup(url);
+
+	return job;
+}
+
+static void Log_Upload_Job_Free(log_upload_job_t *job)
+{
+	Q_free(job->filename);
+	Q_free(job->hostname);
+	Q_free(job->player_name);
+	Q_free(job->token);
+	Q_free(job->url);
+	Q_free(job);
+}
+
+DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vjob)
+{
+	log_upload_job_t *job = (log_upload_job_t *) vjob;
 	CURL *curl;
 	CURLcode res;
 	struct curl_httppost *post=NULL;
 	struct curl_httppost *last=NULL;
 	struct curl_slist *headers=NULL;
+	char errorbuffer[CURL_ERROR_SIZE] = "";
 
 	curl = curl_easy_init();
 
@@ -304,18 +342,26 @@ DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vfilename)
 
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "name",
-		CURLFORM_COPYCONTENTS, cl.players[cl.playernum].name, CURLFORM_END);
+		CURLFORM_COPYCONTENTS, job->player_name,
+		CURLFORM_END);
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "token",
-		CURLFORM_COPYCONTENTS, match_auto_logupload_token.string, CURLFORM_END);
+		CURLFORM_COPYCONTENTS, job->token,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "host",
+		CURLFORM_COPYCONTENTS, job->hostname,
+		CURLFORM_END);
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "log",
-		CURLFORM_FILE, filename,
+		CURLFORM_FILE, job->filename,
 		CURLFORM_CONTENTHEADER, headers,
 		CURLFORM_END);
 
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
-	curl_easy_setopt(curl, CURLOPT_URL, match_auto_logurl.string);
+	curl_easy_setopt(curl, CURLOPT_URL, job->url);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Log_Curl_Write_Void);
 
 	res = curl_easy_perform(curl); /* post away! */
 
@@ -324,19 +370,25 @@ DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vfilename)
 
 	if (res != CURLE_OK) {
 		Com_Printf("Uploading of log failed:\n%s\n", curl_easy_strerror(res));
+		Com_Printf("%s\n", errorbuffer);
 	}
 	else {
 		Com_Printf("Match log uplaoded\n");
 	}
 
-	Q_free(vfilename);
+	Log_Upload_Job_Free(job);
 	return 0;
 }
 
 void Log_AutoLogging_Upload(const char *filename)
 {
+	log_upload_job_t *job = Log_Upload_Job_Prepare(filename, Info_ValueForKey(cl.serverinfo, "hostname"),
+		cl.players[cl.playernum].name,
+		match_auto_logupload_token.string,
+		match_auto_logurl.string);
+
 	Com_Printf("Uploading match log...\n");
-	Sys_CreateThread(Log_AutoLogging_Upload_Thread, (void *) Q_strdup(filename));
+	Sys_CreateThread(Log_AutoLogging_Upload_Thread, (void *) job);
 }
 
 void Log_AutoLogging_SaveMatch(void) {
