@@ -361,6 +361,9 @@ float MSG_ReadAngle (void);
 float MSG_ReadAngle16 (void);
 void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int protoversion);
 
+void MSG_ReadData (void *data, int len);
+void MSG_ReadSkip(int bytes);
+
 //============================================================================
 
 extern qbool	dedicated;

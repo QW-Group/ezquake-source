@@ -24,51 +24,566 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod.h"
 #include "qsound.h"
 
+#define LINEARUPSCALE(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = inrate / (double)outrate; \
+		infrac = floor(scale * 65536); \
+		outsamps = insamps / scale; \
+		inaccum = 0; \
+		outnlsamps = floor(1.0 / scale); \
+		outsamps -= outnlsamps; \
+	\
+		while (outsamps) \
+		{ \
+			*out = ((0xFFFF - inaccum)*in[0] + inaccum*in[1]) >> (16 - outlshift + outrshift); \
+			inaccum += infrac; \
+			in += (inaccum >> 16); \
+			inaccum &= 0xFFFF; \
+			out++; \
+			outsamps--; \
+		} \
+		while (outnlsamps) \
+		{ \
+			*out = (*in >> outrshift) << outlshift; \
+			out++; \
+			outnlsamps--; \
+		} \
+	}
 
-static void ResampleSfx (sfx_t *sfx, unsigned char *in_data, size_t in_length, const snd_format_t* in_format, unsigned char *out_data)
+#define LINEARUPSCALESTEREO(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = inrate / (double)outrate; \
+		infrac = floor(scale * 65536); \
+		outsamps = insamps / scale; \
+		inaccum = 0; \
+		outnlsamps = floor(1.0 / scale); \
+		outsamps -= outnlsamps; \
+	\
+		while (outsamps) \
+		{ \
+			out[0] = ((0xFFFF - inaccum)*in[0] + inaccum*in[2]) >> (16 - outlshift + outrshift); \
+			out[1] = ((0xFFFF - inaccum)*in[1] + inaccum*in[3]) >> (16 - outlshift + outrshift); \
+			inaccum += infrac; \
+			in += (inaccum >> 16) * 2; \
+			inaccum &= 0xFFFF; \
+			out += 2; \
+			outsamps--; \
+		} \
+		while (outnlsamps) \
+		{ \
+			out[0] = (in[0] >> outrshift) << outlshift; \
+			out[1] = (in[1] >> outrshift) << outlshift; \
+			out += 2; \
+			outnlsamps--; \
+		} \
+	}
+
+#define LINEARUPSCALESTEREOTOMONO(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = inrate / (double)outrate; \
+		infrac = floor(scale * 65536); \
+		outsamps = insamps / scale; \
+		inaccum = 0; \
+		outnlsamps = floor(1.0 / scale); \
+		outsamps -= outnlsamps; \
+	\
+		while (outsamps) \
+		{ \
+			*out = ((((0xFFFF - inaccum)*in[0] + inaccum*in[2]) >> (16 - outlshift + outrshift)) + \
+				(((0xFFFF - inaccum)*in[1] + inaccum*in[3]) >> (16 - outlshift + outrshift))) >> 1; \
+			inaccum += infrac; \
+			in += (inaccum >> 16) * 2; \
+			inaccum &= 0xFFFF; \
+			out++; \
+			outsamps--; \
+		} \
+		while (outnlsamps) \
+		{ \
+			out[0] = (((in[0] >> outrshift) << outlshift) + ((in[1] >> outrshift) << outlshift)) >> 1; \
+			out++; \
+			outnlsamps--; \
+		} \
+	}
+
+#define LINEARDOWNSCALE(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = outrate / (double)inrate; \
+		infrac = floor(scale * 65536); \
+		inaccum = 0; \
+		insamps--; \
+		outsampleft = 0; \
+	\
+		while (insamps) \
+		{ \
+			inaccum += infrac; \
+			if (inaccum >> 16) \
+			{ \
+				inaccum &= 0xFFFF; \
+				outsampleft += (infrac - inaccum) * (*in); \
+				*out = outsampleft >> (16 - outlshift + outrshift); \
+				out++; \
+				outsampleft = inaccum * (*in); \
+			} \
+			else \
+				outsampleft += infrac * (*in); \
+			in++; \
+			insamps--; \
+		} \
+		outsampleft += (0xFFFF - inaccum) * (*in);\
+		*out = outsampleft >> (16 - outlshift + outrshift); \
+	}
+
+#define LINEARDOWNSCALESTEREO(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = outrate / (double)inrate; \
+		infrac = floor(scale * 65536); \
+		inaccum = 0; \
+		insamps--; \
+		outsampleft = 0; \
+		outsampright = 0; \
+	\
+		while (insamps) \
+		{ \
+			inaccum += infrac; \
+			if (inaccum >> 16) \
+			{ \
+				inaccum &= 0xFFFF; \
+				outsampleft += (infrac - inaccum) * in[0]; \
+				outsampright += (infrac - inaccum) * in[1]; \
+				out[0] = outsampleft >> (16 - outlshift + outrshift); \
+				out[1] = outsampright >> (16 - outlshift + outrshift); \
+				out += 2; \
+				outsampleft = inaccum * in[0]; \
+				outsampright = inaccum * in[1]; \
+			} \
+			else \
+			{ \
+				outsampleft += infrac * in[0]; \
+				outsampright += infrac * in[1]; \
+			} \
+			in += 2; \
+			insamps--; \
+		} \
+		outsampleft += (0xFFFF - inaccum) * in[0];\
+		outsampright += (0xFFFF - inaccum) * in[1];\
+		out[0] = outsampleft >> (16 - outlshift + outrshift); \
+		out[1] = outsampright >> (16 - outlshift + outrshift); \
+	}
+
+#define LINEARDOWNSCALESTEREOTOMONO(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = outrate / (double)inrate; \
+		infrac = floor(scale * 65536); \
+		inaccum = 0; \
+		insamps--; \
+		outsampleft = 0; \
+	\
+		while (insamps) \
+		{ \
+			inaccum += infrac; \
+			if (inaccum >> 16) \
+			{ \
+				inaccum &= 0xFFFF; \
+				outsampleft += (infrac - inaccum) * ((in[0] + in[1]) >> 1); \
+				*out = outsampleft >> (16 - outlshift + outrshift); \
+				out++; \
+				outsampleft = inaccum * ((in[0] + in[1]) >> 1); \
+			} \
+			else \
+				outsampleft += infrac * ((in[0] + in[1]) >> 1); \
+			in += 2; \
+			insamps--; \
+		} \
+		outsampleft += (0xFFFF - inaccum) * ((in[0] + in[1]) >> 1);\
+		*out = outsampleft >> (16 - outlshift + outrshift); \
+	}
+
+#define STANDARDRESCALE(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = inrate / (double)outrate; \
+		infrac = floor(scale * 65536); \
+		outsamps = insamps / scale; \
+		inaccum = 0; \
+	\
+		while (outsamps) \
+		{ \
+			*out = (*in >> outrshift) << outlshift; \
+			inaccum += infrac; \
+			in += (inaccum >> 16); \
+			inaccum &= 0xFFFF; \
+			out++; \
+			outsamps--; \
+		} \
+	}
+
+#define STANDARDRESCALESTEREO(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = inrate / (double)outrate; \
+		infrac = floor(scale * 65536); \
+		outsamps = insamps / scale; \
+		inaccum = 0; \
+	\
+		while (outsamps) \
+		{ \
+			out[0] = (in[0] >> outrshift) << outlshift; \
+			out[1] = (in[1] >> outrshift) << outlshift; \
+			inaccum += infrac; \
+			in += (inaccum >> 16) * 2; \
+			inaccum &= 0xFFFF; \
+			out += 2; \
+			outsamps--; \
+		} \
+	}
+
+#define STANDARDRESCALESTEREOTOMONO(in, inrate, insamps, out, outrate, outlshift, outrshift) \
+	{ \
+		scale = inrate / (double)outrate; \
+		infrac = floor(scale * 65536); \
+		outsamps = insamps / scale; \
+		inaccum = 0; \
+	\
+		while (outsamps) \
+		{ \
+			out[0] = (((in[0] >> outrshift) << outlshift) + ((in[1] >> outrshift) << outlshift)) >> 1; \
+			inaccum += infrac; \
+			in += (inaccum >> 16) * 2; \
+			inaccum &= 0xFFFF; \
+			out++; \
+			outsamps--; \
+		} \
+	}
+
+#define QUICKCONVERT(in, insamps, out, outlshift, outrshift) \
+	{ \
+		while (insamps) \
+		{ \
+			*out = (*in >> outrshift) << outlshift; \
+			out++; \
+			in++; \
+			insamps--; \
+		} \
+	}
+
+#define QUICKCONVERTSTEREOTOMONO(in, insamps, out, outlshift, outrshift) \
+	{ \
+		while (insamps) \
+		{ \
+			*out = (((in[0] >> outrshift) << outlshift) + ((in[1] >> outrshift) << outlshift)) >> 1; \
+			out++; \
+			in += 2; \
+			insamps--; \
+		} \
+	}
+
+// SND_ResampleStream: takes a sound stream and converts with given parameters. Limited to
+// 8-16-bit signed conversions and mono-to-mono/stereo-to-stereo conversions.
+// Not an in-place algorithm.
+void SND_ResampleStream (void *in, int inrate, int inwidth, int inchannels, int insamps, void *out, int outrate, int outwidth, int outchannels, int resampstyle)
 {
-	int sample, samplefrac, fracstep, srcsample;
-	unsigned int outcount, i;
-	float stepscale;
-	sfxcache_t *sc;
+	double scale;
+	signed char *in8 = (signed char *)in;
+	short *in16 = (short *)in;
+	signed char *out8 = (signed char *)out;
+	short *out16 = (short *)out;
+	int outsamps, outnlsamps, outsampleft, outsampright;
+	int infrac, inaccum;
 
-	if (!(sc = (sfxcache_t *) Cache_Check (&sfx->cache)))
+	if (insamps <= 0)
 		return;
 
-	stepscale = (float) in_format->speed / shm->format.speed; // this is usually 0.5, 1, or 2
+	if (inchannels == outchannels && inwidth == outwidth && inrate == outrate)
+	{
+		memcpy(out, in, inwidth*insamps*inchannels);
+		return;
+	}
 
-	outcount = (int) ((double) sc->total_length * (double) shm->format.speed / (double) in_format->speed);
-	sc->total_length = outcount;
-
-	sc->format.speed = shm->format.speed;
-	sc->format.width = (s_loadas8bit.value) ? 1 : in_format->width;
-	sc->format.channels = 1;
-
-	// resample / decimate to the current source rate
-
-	if (stepscale == 1 && in_format->width == 1 && sc->format.width == 1) {
-		// fast special case
-		for (i = 0; i < outcount; i++)
-			((signed char *)sc->data)[i] = in_data[i] - 128;
-	} else {
-		// general case
-		samplefrac = 0;
-		fracstep = (int) (stepscale * 256);
-		for (i = 0 ;i < outcount ;i++) {
-			srcsample = samplefrac >> 8;
-			samplefrac += fracstep;
-
-			if (in_format->width == 2)
-				sample = LittleShort(((short *)in_data)[srcsample]);
+	if (inchannels == 1 && outchannels == 1)
+	{
+		if (inwidth == 1)
+		{
+			if (outwidth == 1)
+			{
+				if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALE(in8, inrate, insamps, out8, outrate, 0, 0)
+					else
+						STANDARDRESCALE(in8, inrate, insamps, out8, outrate, 0, 0)
+				}
+				else // downsample
+				{
+					if (resampstyle > 1)
+						LINEARDOWNSCALE(in8, inrate, insamps, out8, outrate, 0, 0)
+					else
+						STANDARDRESCALE(in8, inrate, insamps, out8, outrate, 0, 0)
+				}
+				return;
+			}
 			else
-				sample = (int)((unsigned char)(in_data[srcsample]) - 128) << 8;
-
-			if (sc->format.width == 2)
-				((short *)sc->data)[i] = sample;
+			{
+				if (inrate == outrate) // quick convert
+					QUICKCONVERT(in8, insamps, out16, 8, 0)
+				else if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALE(in8, inrate, insamps, out16, outrate, 8, 0)
+					else
+						STANDARDRESCALE(in8, inrate, insamps, out16, outrate, 8, 0)
+				}
+				else // downsample
+				{
+					if (resampstyle > 1)
+						LINEARDOWNSCALE(in8, inrate, insamps, out16, outrate, 8, 0)
+					else
+						STANDARDRESCALE(in8, inrate, insamps, out16, outrate, 8, 0)
+				}
+				return;
+			}
+		}
+		else // 16-bit
+		{
+			if (outwidth == 2)
+			{
+				if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALE(in16, inrate, insamps, out16, outrate, 0, 0)
+					else
+						STANDARDRESCALE(in16, inrate, insamps, out16, outrate, 0, 0)
+				}
+				else // downsample
+				{
+					if (resampstyle > 1)
+						LINEARDOWNSCALE(in16, inrate, insamps, out16, outrate, 0, 0)
+					else
+						STANDARDRESCALE(in16, inrate, insamps, out16, outrate, 0, 0)
+				}
+				return;
+			}
 			else
-				((signed char *)sc->data)[i] = sample >> 8;
+			{
+				if (inrate == outrate) // quick convert
+					QUICKCONVERT(in16, insamps, out8, 0, 8)
+				else if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALE(in16, inrate, insamps, out8, outrate, 0, 8)
+					else
+						STANDARDRESCALE(in16, inrate, insamps, out8, outrate, 0, 8)
+				}
+				else // downsample
+				{
+					if (resampstyle > 1)
+						LINEARDOWNSCALE(in16, inrate, insamps, out8, outrate, 0, 8)
+					else
+						STANDARDRESCALE(in16, inrate, insamps, out8, outrate, 0, 8)
+				}
+				return;
+			}
 		}
 	}
+	else if (outchannels == 2 && inchannels == 2)
+	{
+		if (inwidth == 1)
+		{
+			if (outwidth == 1)
+			{
+				if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALESTEREO(in8, inrate, insamps, out8, outrate, 0, 0)
+					else
+						STANDARDRESCALESTEREO(in8, inrate, insamps, out8, outrate, 0, 0)
+				}
+				else // downsample
+				{
+					if (resampstyle > 1)
+						LINEARDOWNSCALESTEREO(in8, inrate, insamps, out8, outrate, 0, 0)
+					else
+						STANDARDRESCALESTEREO(in8, inrate, insamps, out8, outrate, 0, 0)
+				}
+			}
+			else
+			{
+				if (inrate == outrate) // quick convert
+				{
+					insamps *= 2;
+					QUICKCONVERT(in8, insamps, out16, 8, 0)
+				}
+				else if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALESTEREO(in8, inrate, insamps, out16, outrate, 8, 0)
+					else
+						STANDARDRESCALESTEREO(in8, inrate, insamps, out16, outrate, 8, 0)
+				}
+				else // downsample
+				{
+					if (resampstyle > 1)
+						LINEARDOWNSCALESTEREO(in8, inrate, insamps, out16, outrate, 8, 0)
+					else
+						STANDARDRESCALESTEREO(in8, inrate, insamps, out16, outrate, 8, 0)
+				}
+			}
+		}
+		else // 16-bit
+		{
+			if (outwidth == 2)
+			{
+				if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALESTEREO(in16, inrate, insamps, out16, outrate, 0, 0)
+					else
+						STANDARDRESCALESTEREO(in16, inrate, insamps, out16, outrate, 0, 0)
+				}
+				else // downsample
+				{
+					if (resampstyle > 1)
+						LINEARDOWNSCALESTEREO(in16, inrate, insamps, out16, outrate, 0, 0)
+					else
+						STANDARDRESCALESTEREO(in16, inrate, insamps, out16, outrate, 0, 0)
+				}
+			}
+			else 
+			{
+				if (inrate == outrate) // quick convert
+				{
+					insamps *= 2;
+					QUICKCONVERT(in16, insamps, out8, 0, 8)
+				}
+				else if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALESTEREO(in16, inrate, insamps, out8, outrate, 0, 8)
+					else
+						STANDARDRESCALESTEREO(in16, inrate, insamps, out8, outrate, 0, 8)
+				}
+				else // downsample
+				{
+					if (resampstyle > 1)
+						LINEARDOWNSCALESTEREO(in16, inrate, insamps, out8, outrate, 0, 8)
+					else
+						STANDARDRESCALESTEREO(in16, inrate, insamps, out8, outrate, 0, 8)
+				}
+			}
+		}
+	}
+#if 0
+	else if (outchannels == 1 && inchannels == 2)
+	{
+		if (inwidth == 1)
+		{
+			if (outwidth == 1)
+			{
+				if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALESTEREOTOMONO(in8, inrate, insamps, out8, outrate, 0, 0)
+					else
+						STANDARDRESCALESTEREOTOMONO(in8, inrate, insamps, out8, outrate, 0, 0)
+				}
+				else // downsample
+					STANDARDRESCALESTEREOTOMONO(in8, inrate, insamps, out8, outrate, 0, 0)
+			}
+			else
+			{
+				if (inrate == outrate) // quick convert
+					QUICKCONVERTSTEREOTOMONO(in8, insamps, out16, 8, 0)
+				else if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALESTEREOTOMONO(in8, inrate, insamps, out16, outrate, 8, 0)
+					else
+						STANDARDRESCALESTEREOTOMONO(in8, inrate, insamps, out16, outrate, 8, 0)
+				}
+				else // downsample
+					STANDARDRESCALESTEREOTOMONO(in8, inrate, insamps, out16, outrate, 8, 0)
+			}
+		}
+		else // 16-bit
+		{
+			if (outwidth == 2)
+			{
+				if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALESTEREOTOMONO(in16, inrate, insamps, out16, outrate, 0, 0)
+					else
+						STANDARDRESCALESTEREOTOMONO(in16, inrate, insamps, out16, outrate, 0, 0)
+				}
+				else // downsample
+					STANDARDRESCALESTEREOTOMONO(in16, inrate, insamps, out16, outrate, 0, 0)
+			}
+			else 
+			{
+				if (inrate == outrate) // quick convert
+					QUICKCONVERTSTEREOTOMONO(in16, insamps, out8, 0, 8)
+				else if (inrate < outrate) // upsample
+				{
+					if (resampstyle)
+						LINEARUPSCALESTEREOTOMONO(in16, inrate, insamps, out8, outrate, 0, 8)
+					else
+						STANDARDRESCALESTEREOTOMONO(in16, inrate, insamps, out8, outrate, 0, 8)
+				}
+				else // downsample
+					STANDARDRESCALESTEREOTOMONO(in16, inrate, insamps, out8, outrate, 0, 8)
+			}
+		}
+	}
+#endif
+}
+
+/*
+================
+ResampleSfx
+================
+*/
+void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insamps, int inloopstart, byte *data)
+{
+	extern cvar_t s_linearresample;
+	double scale;
+	sfxcache_t	*sc;
+	int len;
+	int outsamps;
+	int outwidth;
+	int outchannels = 1; // inchannels;
+
+	scale = shm->format.speed / (double)inrate;
+	outsamps = insamps * scale;
+	if (s_loadas8bit.integer < 0)
+		outwidth = 2;
+	else if (s_loadas8bit.integer)
+		outwidth = 1;
+	else
+		outwidth = inwidth;
+	len = outsamps * outwidth * outchannels;
+
+	sc = Cache_Alloc (&sfx->cache, len + sizeof(sfxcache_t), sfx->name);
+	if (!sc)
+	{
+		return;
+	}
+
+	sc->format.channels = outchannels;
+	sc->format.width = outwidth;
+	sc->format.speed = shm->format.speed;
+	sc->total_length = outsamps;
+	if (inloopstart == -1)
+		sc->loopstart = inloopstart;
+	else
+		sc->loopstart = inloopstart * scale;
+
+	SND_ResampleStream (data, 
+		inrate, 
+		inwidth, 
+		inchannels, 
+		insamps, 
+		sc->data, 
+		sc->format.speed, 
+		sc->format.width, 
+		sc->format.channels, 
+		s_linearresample.integer);
 }
 
 /*
@@ -215,6 +730,40 @@ static wavinfo_t GetWavinfo (char *name, unsigned char *wav, int wavlength)
 
 
 //=============================================================================
+
+static void COM_SwapLittleShortBlock (short *s, int size)
+{
+//FIXME: qqshka: I have no idea that we have to do for PDP endian.
+
+#if defined __BIG_ENDIAN__
+//	if (!bigendian)
+//		return;
+
+	if (size <= 0)
+		return;
+
+	while (size)
+	{
+		*s = ShortSwap(*s);
+		s++;
+		size--;
+	}
+#endif
+}
+
+static void COM_CharBias (signed char *c, int size)
+{
+	if (size <= 0)
+		return;
+
+	while (size)
+	{
+		*c = (*(unsigned char *)c) - 128;
+		c++;
+		size--;
+	}
+}
+
 #ifndef WITH_OGG_VORBIS
 sfxcache_t *S_LoadSound (sfx_t *s)
 {
@@ -222,7 +771,6 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	unsigned char *data;
 	sfxcache_t *sc;
 	wavinfo_t info;
-	int len;
 	int filesize;
 
 	// see if still in memory
@@ -247,24 +795,14 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	len = (int) ((double) info.samples * (double) shm->format.speed / (double) info.rate);
-	len = len * info.width * info.channels;
+	if (info.width == 1)
+		COM_CharBias((signed char*)data + info.dataofs, info.samples * info.channels);
+	else if (info.width == 2)
+		COM_SwapLittleShortBlock((short *)(data + info.dataofs), info.samples * info.channels);
 
-	if (!(sc = (sfxcache_t *) Cache_Alloc (&s->cache, len + sizeof(sfxcache_t), s->name)))
-		return NULL;
+	ResampleSfx (s, info.rate, info.channels, info.width, info.samples, info.loopstart, data + info.dataofs);
 
-	sc->total_length = (unsigned int) info.samples;
-	sc->format.speed = info.rate;
-	sc->format.width = info.width;
-	sc->format.channels = info.channels;
-	if (info.loopstart < 0)
-		sc->loopstart = -1;
-	else
-		sc->loopstart = (int)((double)info.loopstart * (double)shm->format.speed / (double)sc->format.speed);
-
-	ResampleSfx (s, data + info.dataofs, info.samples, &sc->format, sc->data);
-
-	return sc;
+	return Cache_Check(&s->cache);
 }
 #endif // WITH_OGG_VORBIS
 

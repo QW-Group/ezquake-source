@@ -603,13 +603,39 @@ unsigned int CL_SupportedFTEExtensions (void)
 
 	return fteprotextsupported;
 }
+#endif // PROTOCOL_VERSION_FTE
+
+#ifdef PROTOCOL_VERSION_FTE2
+unsigned int CL_SupportedFTEExtensions2 (void)
+{
+	unsigned int fteprotextsupported2 = 0;
+
+#ifdef FTE_PEXT2_VOICECHAT
+	fteprotextsupported2 |= FTE_PEXT2_VOICECHAT;
 #endif
+
+#if 0 // qqshka: nah, I disagree with such policy.
+	if (!cl_pext_other.value)
+		fteprotextsupported2 &= FTE_PEXT2_VOICECHAT;
+#endif
+
+	return fteprotextsupported2;
+}
+#endif // PROTOCOL_VERSION_FTE2
+
 
 // Called by CL_Connect_f and CL_CheckResend
 static void CL_SendConnectPacket(
 #ifdef PROTOCOL_VERSION_FTE
 							unsigned int ftepext
-#endif
+#ifdef PROTOCOL_VERSION_FTE2
+							,
+#endif // PROTOCOL_VERSION_FTE2
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE2
+							unsigned int ftepext2
+#endif // PROTOCOL_VERSION_FTE2
+
 								) 
 {
 	char data[2048];
@@ -622,6 +648,9 @@ static void CL_SendConnectPacket(
 
 	#ifdef PROTOCOL_VERSION_FTE
 	cls.fteprotocolextensions  = (ftepext & CL_SupportedFTEExtensions());
+	#endif // PROTOCOL_VERSION_FTE
+	#ifdef PROTOCOL_VERSION_FTE2
+	cls.fteprotocolextensions2  = (ftepext2 & CL_SupportedFTEExtensions2());
 	#endif // PROTOCOL_VERSION_FTE
 
 	connect_time = cls.realtime; // For retransmit requests
@@ -644,6 +673,17 @@ static void CL_SendConnectPacket(
 	}
 	#endif // PROTOCOL_VERSION_FTE 
 
+	#ifdef PROTOCOL_VERSION_FTE2
+	if (cls.fteprotocolextensions2) 
+	{
+		char tmp[128];
+		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
+		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
+		strlcat(data, tmp, sizeof(data));
+	}
+	#endif // PROTOCOL_VERSION_FTE2 
+
+
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
@@ -658,12 +698,19 @@ void CL_CheckForResend (void)
 		// if the local server is running and we are not, then connect
 		strlcpy (cls.servername, "local", sizeof(cls.servername));
 		NET_StringToAdr("local", &cls.server_adr);
-		
-		#ifdef PROTOCOL_VERSION_FTE
-		CL_SendConnectPacket (svs.fteprotocolextensions);	// We don't need a challenge on the local server.
-		#else
-		CL_SendConnectPacket (); // We don't need a challenge on the local server.
-		#endif // PROTOCOL_VERSION_FTE
+
+		// We don't need a challenge on the local server.
+		CL_SendConnectPacket(
+#ifdef PROTOCOL_VERSION_FTE
+				svs.fteprotocolextensions
+	#ifdef PROTOCOL_VERSION_FTE2
+				,
+	#endif // PROTOCOL_VERSION_FTE2
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE2
+				svs.fteprotocolextensions2
+#endif // PROTOCOL_VERSION_FTE
+				);
 		
 		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
 		return;
@@ -1358,7 +1405,10 @@ void CL_ConnectionlessPacket (void)
 	
 	#ifdef PROTOCOL_VERSION_FTE
 	unsigned int pext = 0;
-	#endif
+	#endif // PROTOCOL_VERSION_FTE
+	#ifdef PROTOCOL_VERSION_FTE2
+	unsigned int pext2 = 0;
+	#endif // PROTOCOL_VERSION_FTE2
 
     MSG_BeginReading();
     MSG_ReadLong();	// Skip the -1
@@ -1385,23 +1435,36 @@ void CL_ConnectionlessPacket (void)
 			Com_Printf("%s: challenge\n", NET_AdrToString(net_from));
 			cls.challenge = atoi(MSG_ReadString());
 
-			#ifdef PROTOCOL_VERSION_FTE
 			for(;;)
 			{
 				c = MSG_ReadLong();
 				if (msg_badread)
 					break;
+
+#ifdef PROTOCOL_VERSION_FTE
 				if (c == PROTOCOL_VERSION_FTE)
 					pext = MSG_ReadLong();
 				else
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE2
+				if (c == PROTOCOL_VERSION_FTE2)
+					pext2 = MSG_ReadLong();
+				else
+#endif // PROTOCOL_VERSION_FTE2
 					MSG_ReadLong();
 			}
 
-			CL_SendConnectPacket(pext);
-			#else
-			CL_SendConnectPacket();
-			#endif // PROTOCOL_VERSION_FTE
-			break;
+			CL_SendConnectPacket(
+#ifdef PROTOCOL_VERSION_FTE
+				pext
+	#ifdef PROTOCOL_VERSION_FTE2
+				,
+	#endif // PROTOCOL_VERSION_FTE2
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE2
+				pext2
+#endif // PROTOCOL_VERSION_FTE
+				);
 		}
 		case S2C_CONNECTION :
 		{
@@ -1788,7 +1851,7 @@ void CL_InitLocal (void)
 
 #ifdef PROTOCOL_VERSION_FTE
 	Cvar_Register (&cl_pext_other);
-#endif
+#endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
 	Cvar_Register (&cl_pext_256packetentities);
 #endif

@@ -131,6 +131,8 @@ qbool Cvar_Delete (const char *name);
 
 void Cvar_Init (void);
 
+// call OnChange callback.
+qbool Cvar_ForceCallback(cvar_t *var);
 void Cvar_ResetVar (cvar_t *var);
 
 void Cvar_SetCurrentGroup(char *name);

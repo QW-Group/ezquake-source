@@ -850,6 +850,10 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 	// possibly a nails update
 	SV_WriteEntitiesToClient (client, &msg, false);
 
+#ifdef FTE_PEXT2_VOICECHAT
+	SV_VoiceSendPacket(client, &msg);
+#endif
+
 	// copy the accumulated multicast datagram
 	// for this client out to the message
 	if (client->datagram.overflowed)

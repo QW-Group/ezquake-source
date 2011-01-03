@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // fte protocol extensions.
 #define PROTOCOL_VERSION_FTE	(('F'<<0) + ('T'<<8) + ('E'<<16) + ('X' << 24)) //fte extensions.
+#define PROTOCOL_VERSION_FTE2	(('F'<<0) + ('T'<<8) + ('E'<<16) + ('2' << 24))	//fte extensions.
 
 #ifdef PROTOCOL_VERSION_FTE 
 
@@ -42,7 +43,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define FTE_PEXT_256PACKETENTITIES	0x01000000	//Client can recieve 256 packet entities.
 #define FTE_PEXT_CHUNKEDDOWNLOADS	0x20000000	//alternate file download method. Hopefully it'll give quadroupled download speed, especially on higher pings.
 
+#endif // PROTOCOL_VERSION_FTE
+
+#ifdef PROTOCOL_VERSION_FTE2
+
+// well, ATM there sound capture code for windows only, feature itself is OS independant (libspeex).
+#if _WIN32
+#define FTE_PEXT2_VOICECHAT			0x00000002
 #endif
+
+#endif // PROTOCOL_VERSION_FTE2
+
 
 //=========================================
 
@@ -182,6 +193,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define svc_fte_spawnbaseline2	66
 #define svc_qizmovoice			83
 
+#ifdef FTE_PEXT2_VOICECHAT
+#define svc_fte_voicechat	    84
+#endif
+
 //==============================================
 
 // client to server
@@ -193,6 +208,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	clc_delta		5		// [byte] sequence number, requests delta compression of message
 #define clc_tmove		6		// teleport request, spectator only
 #define clc_upload		7		// teleport request, spectator only
+
+#ifdef FTE_PEXT2_VOICECHAT
+#define clc_voicechat	83		// FTE voice chat.
+#endif
 
 //==============================================
 

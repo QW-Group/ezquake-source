@@ -29,6 +29,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "movie.h" //joe: capturing audio
 #endif
 
+#ifdef FTE_PEXT2_VOICECHAT
+#include "input.h"
+#endif
+
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
 static void S_Play_f (void);
 static void S_PlayVol_f (void);
@@ -37,6 +41,9 @@ static void S_Update_ ();
 static void S_StopAllSounds_f (void);
 
 void IN_Accumulate (void); // S_ExtraUpdate use it
+void S_RawClear(void);
+void S_RawAudio(int sourceid, byte *data, 
+				unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
 
 // =======================================================================
 // Internal sound data & structures
@@ -90,6 +97,9 @@ cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1"};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 
+cvar_t s_linearresample = {"s_linearresample", "1"};
+cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
+
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
 #ifdef __FreeBSD__
 cvar_t s_stereo = {"s_stereo", "1"};
@@ -104,6 +114,28 @@ cvar_t s_device = {"s_device", "plug:hw"};
 cvar_t s_noalsa = {"s_noalsa", "0"};
 #endif
 
+#ifdef FTE_PEXT2_VOICECHAT
+
+static void S_Voip_Enable_f(void);
+static void S_Voip_Disable_f(void);
+static void S_Voip_f(void);
+
+static void S_Voip_Play_Callback(cvar_t *var, char *string, qbool *cancel);
+// Sends voice-over-ip data to the server whenever it is set.
+cvar_t cl_voip_send = {"cl_voip_send", "0"};
+// This is the threshhold for voice-activation-detection when sending voip data.
+cvar_t cl_voip_vad_threshhold = {"cl_voip_vad_threshhold", "15"};
+// Keeps sending voice data for this many seconds after voice activation would normally stop.
+cvar_t cl_voip_vad_delay = {"cl_voip_vad_delay", "0.3"};
+// Volume multiplier applied while capturing, to avoid your audio from being heard by others.
+cvar_t cl_voip_capturingvol = {"cl_voip_capturingvol", "0.5"};
+// Shows your speach volume above the hud. 0=hide, 1=show when transmitting, 2=ignore voice-activation disable.
+cvar_t cl_voip_showmeter = {"cl_voip_showmeter", "1"};
+// Enables voip playback.
+cvar_t cl_voip_play = {"cl_voip_play", "1", CVAR_NONE, S_Voip_Play_Callback};
+// Amplifies your microphone when using voip.
+cvar_t cl_voip_micamp = {"cl_voip_micamp", "2"};
+#endif
 
 static void S_SoundInfo_f (void)
 {
@@ -129,6 +161,8 @@ static qbool S_Startup (void)
 
 	shm = &sn;
 	memset((void *)shm, 0, sizeof(*shm));
+
+	S_RawClear();
 
 	if (!SNDDMA_Init()) {
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
@@ -200,6 +234,10 @@ void S_Init (void)
 	Cvar_Register(&s_show);
 	Cvar_Register(&s_mixahead);
 	Cvar_Register(&s_swapstereo);
+
+	Cvar_Register(&s_linearresample);
+	Cvar_Register(&s_linearresample_stream);
+
 #if (defined(__linux__) || defined(__FreeBSD__))
 	Cvar_Register(&s_stereo);
 	Cvar_Register(&s_device);
@@ -207,6 +245,20 @@ void S_Init (void)
 #endif
 #ifdef __linux__
 	Cvar_Register(&s_noalsa);
+#endif
+
+#ifdef FTE_PEXT2_VOICECHAT
+	Cvar_Register(&cl_voip_send);
+	Cvar_Register(&cl_voip_vad_threshhold);
+	Cvar_Register(&cl_voip_vad_delay);
+	Cvar_Register(&cl_voip_capturingvol);
+	Cvar_Register(&cl_voip_showmeter);
+	Cvar_Register(&cl_voip_play);
+	Cvar_Register(&cl_voip_micamp);
+
+	Cmd_AddCommand("+voip", S_Voip_Enable_f);
+	Cmd_AddCommand("-voip", S_Voip_Disable_f);
+	Cmd_AddCommand("voip", S_Voip_f);
 #endif
 
 	Cvar_ResetCurrentGroup();
@@ -889,4 +941,798 @@ void S_LocalSoundWithVol(char *sound, float volume)
 	}
 
 	S_StartSound (cl.playernum+1, -1, sfx, vec3_origin, volume, 1);
+}
+
+#ifdef FTE_PEXT2_VOICECHAT
+
+// FTEQW type and naming compatibility
+// it's not really necessary, simple find & replace would do the job too
+#ifdef _MSC_VER
+#define VARGS __cdecl
+#endif
+#ifndef VARGS
+#define VARGS
+#endif
+
+#define qboolean qbool
+#define qbyte byte
+
+typedef struct {
+	void **funcptr;
+	char *name;
+} dllfunction_t;
+
+typedef void *dllhandle_t;
+
+#define ival integer // for cvars compatibility
+#define realtime cls.realtime
+
+#ifdef _WIN32
+
+// well, its windows specific and should be in sys_win.c but ATM voicechat is windows only anyway, so...
+
+static void Sys_CloseLibrary(dllhandle_t *lib)
+{
+	FreeLibrary((HMODULE)lib);
+}
+
+static dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs)
+{
+	int i;
+	HMODULE lib;
+
+	lib = LoadLibrary(name);
+	if (!lib)
+		return NULL;
+
+	for (i = 0; funcs[i].name; i++)
+	{
+		*funcs[i].funcptr = GetProcAddress(lib, funcs[i].name);
+		if (!*funcs[i].funcptr)
+			break;
+	}
+	if (funcs[i].name)
+	{
+		Sys_CloseLibrary((dllhandle_t*)lib);
+		lib = NULL;
+	}
+
+	return (dllhandle_t*)lib;
+}
+
+#endif // _WIN32
+
+//=========================================================================
+
+#include <speex/speex.h>
+#include <speex/speex_preprocess.h>
+
+static struct
+{
+	qboolean inited;
+	qboolean loaded;
+	dllhandle_t *speexlib;
+	dllhandle_t *speexdsplib;
+
+	SpeexBits encbits;
+	void *encoder;
+	SpeexPreprocessState *preproc;
+	unsigned int framesize;
+	unsigned int samplerate;
+
+	SpeexBits decbits[MAX_CLIENTS];
+	void *decoder[MAX_CLIENTS];
+	unsigned char decseq[MAX_CLIENTS];	/*sender's sequence, to detect+cover minor packetloss*/
+	unsigned char decgen[MAX_CLIENTS];	/*last generation. if it changes, we flush speex to reset packet loss*/
+	float decamp[MAX_CLIENTS];	/*amplify them by this*/
+	float lastspoke[MAX_CLIENTS];	/*time when they're no longer considered talking. if future, they're talking*/
+
+	unsigned char capturebuf[32768]; /*pending data*/
+	unsigned int capturepos;/*amount of pending data*/
+	unsigned int encsequence;/*the outgoing sequence count*/
+	unsigned int generation;/*incremented whenever capture is restarted*/
+	qboolean wantsend;	/*set if we're capturing data to send*/
+	float voiplevel;	/*your own voice level*/
+	unsigned int dumps;	/*trigger a new generation thing after a bit*/
+	unsigned int keeps;	/*for vad_delay*/
+
+	snd_capture_driver_t *driver;/*capture driver's functions*/
+	void *driverctx;	/*capture driver context*/
+} s_speex;
+
+static const SpeexMode *(VARGS *qspeex_lib_get_mode)(int mode);
+static void (VARGS *qspeex_bits_init)(SpeexBits *bits);
+static void (VARGS *qspeex_bits_reset)(SpeexBits *bits);
+static int (VARGS *qspeex_bits_write)(SpeexBits *bits, char *bytes, int max_len);
+
+static SpeexPreprocessState *(VARGS *qspeex_preprocess_state_init)(int frame_size, int sampling_rate);
+static int (VARGS *qspeex_preprocess_ctl)(SpeexPreprocessState *st, int request, void *ptr);
+static int (VARGS *qspeex_preprocess_run)(SpeexPreprocessState *st, spx_int16_t *x);
+
+static void * (VARGS *qspeex_encoder_init)(const SpeexMode *mode);
+static int (VARGS *qspeex_encoder_ctl)(void *state, int request, void *ptr);
+static int (VARGS *qspeex_encode_int)(void *state, spx_int16_t *in, SpeexBits *bits);
+
+static void *(VARGS *qspeex_decoder_init)(const SpeexMode *mode);
+static int (VARGS *qspeex_decode_int)(void *state, SpeexBits *bits, spx_int16_t *out);
+static void (VARGS *qspeex_bits_read_from)(SpeexBits *bits, char *bytes, int len);
+
+static dllfunction_t qspeexfuncs[] =
+{
+	{(void*)&qspeex_lib_get_mode, "speex_lib_get_mode"},
+	{(void*)&qspeex_bits_init, "speex_bits_init"},
+	{(void*)&qspeex_bits_reset, "speex_bits_reset"},
+	{(void*)&qspeex_bits_write, "speex_bits_write"},
+
+	{(void*)&qspeex_encoder_init, "speex_encoder_init"},
+	{(void*)&qspeex_encoder_ctl, "speex_encoder_ctl"},
+	{(void*)&qspeex_encode_int, "speex_encode_int"},
+
+	{(void*)&qspeex_decoder_init, "speex_decoder_init"},
+	{(void*)&qspeex_decode_int, "speex_decode_int"},
+	{(void*)&qspeex_bits_read_from, "speex_bits_read_from"},
+
+	{NULL}
+};
+
+static dllfunction_t qspeexdspfuncs[] =
+{
+	{(void*)&qspeex_preprocess_state_init, "speex_preprocess_state_init"},
+	{(void*)&qspeex_preprocess_ctl, "speex_preprocess_ctl"},
+	{(void*)&qspeex_preprocess_run, "speex_preprocess_run"},
+
+	{NULL}
+};
+
+extern snd_capture_driver_t DSOUND_Capture;
+
+static qboolean S_Speex_Init(void)
+{
+	int i;
+	const SpeexMode *mode;
+	if (s_speex.inited)
+		return s_speex.loaded;
+	s_speex.inited = true;
+
+	s_speex.speexlib = Sys_LoadLibrary("libspeex", qspeexfuncs);
+	if (!s_speex.speexlib)
+	{
+		Con_Printf("libspeex not found. Voice chat not available.\n");
+		return false;
+	}
+
+	s_speex.speexdsplib = Sys_LoadLibrary("libspeexdsp", qspeexdspfuncs);
+	if (!s_speex.speexdsplib)
+	{
+		Con_Printf("libspeexdsp not found. Voice chat not available.\n");
+		return false;
+	}
+
+	mode = qspeex_lib_get_mode(SPEEX_MODEID_NB);
+
+
+	qspeex_bits_init(&s_speex.encbits);
+	qspeex_bits_reset(&s_speex.encbits);
+
+	s_speex.encoder = qspeex_encoder_init(mode);
+
+	qspeex_encoder_ctl(s_speex.encoder, SPEEX_GET_FRAME_SIZE, &s_speex.framesize);
+	qspeex_encoder_ctl(s_speex.encoder, SPEEX_GET_SAMPLING_RATE, &s_speex.samplerate);
+	s_speex.samplerate = 11025;
+	qspeex_encoder_ctl(s_speex.encoder, SPEEX_SET_SAMPLING_RATE, &s_speex.samplerate);
+
+	s_speex.preproc = qspeex_preprocess_state_init(s_speex.framesize, s_speex.samplerate);
+
+	i = 1;
+	qspeex_preprocess_ctl(s_speex.preproc, SPEEX_PREPROCESS_SET_DENOISE, &i);
+
+	i = 1;
+	qspeex_preprocess_ctl(s_speex.preproc, SPEEX_PREPROCESS_SET_AGC, &i);
+
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		qspeex_bits_init(&s_speex.decbits[i]);
+		qspeex_bits_reset(&s_speex.decbits[i]);
+		s_speex.decoder[i] = qspeex_decoder_init(mode);
+		s_speex.decamp[i] = 1;
+	}
+	s_speex.loaded = true;
+	return s_speex.loaded;
+}
+
+void S_Voip_Parse(void)
+{
+	unsigned int sender;
+	int bytes;
+	unsigned char data[1024], *start;
+	short decodebuf[1024];
+	unsigned int decodesamps, len, newseq, drops;
+	unsigned char seq, gen;
+	float amp = 1;
+	unsigned int i;
+
+	sender = MSG_ReadByte();
+	gen = MSG_ReadByte();
+	seq = MSG_ReadByte();
+	bytes = MSG_ReadShort();
+
+//	Com_DPrintf("data in: %d\n", bytes);
+
+	if (bytes > sizeof(data) || !cl_voip_play.ival || !S_Speex_Init() || (gen & 0xf0))
+	{
+		Com_DPrintf("skip data: %d\n", bytes);
+		MSG_ReadSkip(bytes);
+		return;
+	}
+	MSG_ReadData(data, bytes);
+
+	sender &= MAX_CLIENTS-1;
+
+	amp = s_speex.decamp[sender];
+
+	decodesamps = 0;
+	newseq = 0;
+	drops = 0;
+	start = data;
+
+	s_speex.lastspoke[sender] = realtime + 0.5;
+	if (s_speex.decgen[sender] != gen)
+	{
+		qspeex_bits_reset(&s_speex.decbits[sender]);
+		s_speex.decgen[sender] = gen;
+		s_speex.decseq[sender] = seq;
+	}
+
+	while (bytes > 0)
+	{
+		if (decodesamps + s_speex.framesize > sizeof(decodebuf)/sizeof(decodebuf[0]))
+		{
+			S_RawAudio(sender, (qbyte*)decodebuf, s_speex.samplerate, decodesamps, 1, 2);
+			decodesamps = 0;
+		}
+
+		if (s_speex.decseq[sender] != seq)
+		{
+			qspeex_decode_int(s_speex.decoder[sender], NULL, decodebuf + decodesamps);
+			s_speex.decseq[sender]++;
+			drops++;
+		}
+		else
+		{
+			bytes--;
+			len = *start++;
+			qspeex_bits_read_from(&s_speex.decbits[sender], start, len);
+			bytes -= len;
+			start += len;
+			qspeex_decode_int(s_speex.decoder[sender], &s_speex.decbits[sender], decodebuf + decodesamps);
+			newseq++;
+		}
+		if (amp != 1)
+		{
+			for (i = decodesamps; i < decodesamps+s_speex.framesize; i++)
+				decodebuf[i] *= amp;
+		}
+		decodesamps += s_speex.framesize;
+	}
+	s_speex.decseq[sender] += newseq;
+
+	if (drops)
+		Con_DPrintf("%i dropped audio frames\n", drops);
+
+	if (decodesamps > 0)
+		S_RawAudio(sender, (qbyte*)decodebuf, s_speex.samplerate, decodesamps, 1, 2);
+}
+
+void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf)
+{
+	unsigned char outbuf[1024];
+	unsigned int outpos;//in bytes
+	unsigned int encpos;//in bytes
+	short *start;
+	unsigned char initseq;//in frames
+	unsigned int i;
+	unsigned int samps;
+	float level, f;
+	float micamp = cl_voip_micamp.value;
+	qboolean voipsendenable = true;
+
+	/*if you're sending sound, you should be prepared to accept others yelling at you to shut up*/
+	if (!cl_voip_play.ival)
+		voipsendenable = false;
+	if (!(cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT))
+		voipsendenable = false;
+
+	if (!voipsendenable)
+	{
+		if (s_speex.driver)
+		{
+			if (s_speex.wantsend)
+				s_speex.driver->Stop(s_speex.driverctx);
+			s_speex.driver->Shutdown(s_speex.driverctx);
+			s_speex.driverctx = NULL;
+			s_speex.driver = NULL;
+		}
+		return;
+	}
+
+	voipsendenable = cl_voip_send.ival>0;
+
+	if (!s_speex.driver)
+	{
+		s_speex.voiplevel = -1;
+		/*only init the first time capturing is requested*/
+		if (!voipsendenable)
+			return;
+
+		/*Add new drivers in order of priority*/
+		if (!s_speex.driver)
+			s_speex.driver = &DSOUND_Capture;
+
+		/*no way to capture audio, give up*/
+		if (!s_speex.driver)
+			return;
+
+		/*see if we can init speex...*/
+		if (!S_Speex_Init())
+			return;
+
+		s_speex.driverctx = s_speex.driver->Init(s_speex.samplerate);
+	}
+
+	/*couldn't init a driver?*/
+	if (!s_speex.driverctx)
+	{
+		return;
+	}
+
+	if (!voipsendenable && s_speex.wantsend)
+	{
+		s_speex.wantsend = false;
+		s_speex.capturepos += s_speex.driver->Update(s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, 1, sizeof(s_speex.capturebuf) - s_speex.capturepos);
+		s_speex.driver->Stop(s_speex.driverctx);
+		/*note: we still grab audio to flush everything that was captured while it was active*/
+	}
+	else if (voipsendenable && !s_speex.wantsend)
+	{
+		s_speex.wantsend = true;
+		if (!s_speex.capturepos)
+		{	/*if we were actually still sending, it was probably only off for a single frame, in which case don't reset it*/
+			s_speex.dumps = 0;
+			s_speex.generation++;
+			s_speex.encsequence = 0;
+			qspeex_bits_reset(&s_speex.encbits);
+		}
+		else
+		{
+			s_speex.capturepos += s_speex.driver->Update(s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, 1, sizeof(s_speex.capturebuf) - s_speex.capturepos);
+		}
+		s_speex.driver->Start(s_speex.driverctx);
+
+		voicevolumemod = cl_voip_capturingvol.value;
+	}
+
+	s_speex.capturepos += s_speex.driver->Update(s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, s_speex.framesize*2, sizeof(s_speex.capturebuf) - s_speex.capturepos);
+
+	if (!s_speex.wantsend && s_speex.capturepos < s_speex.framesize*2)
+	{
+		s_speex.voiplevel = -1;
+		s_speex.capturepos = 0;
+		voicevolumemod = 1;
+		return;
+	}
+
+	initseq = s_speex.encsequence;
+	level = 0;
+	samps=0;
+	for (encpos = 0, outpos = 0; s_speex.capturepos-encpos >= s_speex.framesize*2 && sizeof(outbuf)-outpos > 64; s_speex.encsequence++)
+	{
+		start = (short*)(s_speex.capturebuf + encpos);
+
+		qspeex_preprocess_run(s_speex.preproc, start);
+
+		for (i = 0; i < s_speex.framesize; i++)
+		{
+			f = start[i] * micamp;
+			start[i] = f;
+			f = fabs(start[i]);
+			level += f*f;
+		}
+		samps+=s_speex.framesize;
+
+		qspeex_bits_reset(&s_speex.encbits);
+		qspeex_encode_int(s_speex.encoder, start, &s_speex.encbits);
+		outbuf[outpos] = qspeex_bits_write(&s_speex.encbits, outbuf+outpos+1, sizeof(outbuf) - (outpos+1));
+		outpos += 1+outbuf[outpos];
+		encpos += s_speex.framesize*2;
+	}
+	if (samps)
+	{
+		float nl;
+		nl = (3000*level) / (32767.0f*32767*samps);
+		s_speex.voiplevel = (s_speex.voiplevel*7 + nl)/8;
+		if (s_speex.voiplevel < cl_voip_vad_threshhold.ival && !(cl_voip_send.ival & 2))
+		{
+			/*try and dump it, it was too quiet, and they're not pressing +voip*/
+			if (s_speex.keeps > samps)
+			{
+				/*but not instantly*/
+				s_speex.keeps -= samps;
+			}
+			else
+			{
+				outpos = 0;
+				s_speex.dumps += samps;
+				s_speex.keeps = 0;
+			}
+		}
+		else
+			s_speex.keeps = s_speex.samplerate * cl_voip_vad_delay.value;
+		if (outpos)
+		{
+			if (s_speex.dumps > s_speex.samplerate/4)
+				s_speex.generation++;
+			s_speex.dumps = 0;
+		}
+	}
+
+	if (outpos && buf->maxsize - buf->cursize >= outpos+4)
+	{
+		MSG_WriteByte(buf, clc);
+		MSG_WriteByte(buf, (s_speex.generation & 0x0f)); /*gonna leave that nibble clear here... in this version, the client will ignore packets with those bits set. can use them for codec or something*/
+		MSG_WriteByte(buf, initseq);
+		MSG_WriteShort(buf, outpos);
+		SZ_Write(buf, outbuf, outpos);
+
+//		Com_DPrintf("data out: %d\n", outpos);
+	}
+
+	/*remove sent data*/
+	memmove(s_speex.capturebuf, s_speex.capturebuf + encpos, s_speex.capturepos-encpos);
+	s_speex.capturepos -= encpos;
+}
+
+void S_Voip_Ignore(unsigned int slot, qboolean ignore)
+{
+	CL_SendClientCommand(true, "vignore %i %i", slot, ignore);
+}
+
+static void S_Voip_Enable_f(void)
+{
+	Cvar_SetValue(&cl_voip_send, cl_voip_send.ival | 2);
+}
+
+static void S_Voip_Disable_f(void)
+{
+	Cvar_SetValue(&cl_voip_send, cl_voip_send.ival & ~2);
+}
+
+static void S_Voip_f(void)
+{
+	int i;
+	if (!strcmp(Cmd_Argv(1), "maxgain"))
+	{
+		i = atoi(Cmd_Argv(2));
+		qspeex_preprocess_ctl(s_speex.preproc, SPEEX_PREPROCESS_SET_AGC_MAX_GAIN, &i);
+	}
+}
+
+static void S_Voip_Play_Callback(cvar_t *var, char *string, qbool *cancel)
+{
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT)
+	{
+		if (var->ival)
+			CL_SendClientCommand(true, "unmuteall");
+		else
+			CL_SendClientCommand(true, "muteall");
+	}
+}
+
+void S_Voip_MapChange(void)
+{
+	Cvar_ForceCallback(&cl_voip_play);
+}
+
+int S_Voip_Loudness(qboolean ignorevad)
+{
+	if (s_speex.voiplevel > 100)
+		return 100;
+	if (!s_speex.driverctx || (!ignorevad && s_speex.dumps))
+		return -1;
+	return s_speex.voiplevel;
+}
+
+qboolean S_Voip_Speaking(unsigned int plno)
+{
+	if (plno >= MAX_CLIENTS)
+		return false;
+	return s_speex.lastspoke[plno] > realtime;
+}
+
+#endif
+
+//===================================================================
+// Streaming audio.
+// This is useful when there is one source, and the sound is to be played with no attenuation.
+//===================================================================
+
+#define MAX_RAW_CACHE (1024 * 32) // have no idea which size it actually should be.
+
+typedef struct
+{
+	qbool			inuse;
+	int				id;
+	sfx_t			sfx;
+} streaming_t;
+
+static void S_RawClearStream(streaming_t *s);
+
+#define MAX_RAW_SOURCES (MAX_CLIENTS+1)
+
+streaming_t s_streamers[MAX_RAW_SOURCES] = {0};
+
+void S_RawClear(void)
+{
+	int i;
+	streaming_t *s;
+
+	for (s = s_streamers, i = 0; i < MAX_RAW_SOURCES; i++, s++)
+	{
+		S_RawClearStream(s);
+	}
+
+	memset(s_streamers, 0, sizeof(s_streamers));
+}
+
+// Stop playing particular stream and make it free.
+static void S_RawClearStream(streaming_t *s)
+{
+	int i;
+	sfxcache_t * currentcache;
+
+	if (!s)
+		return;
+
+	// get current cache if any.
+	currentcache = (sfxcache_t *)Cache_Check(&s->sfx.cache);
+	if (currentcache)
+	{
+		currentcache->loopstart = -1;	//stop mixing it
+	}
+
+	// remove link on sfx from the channels array.
+	for (i = 0; i < total_channels; i++)
+	{
+		if (channels[i].sfx == &s->sfx)
+		{
+			channels[i].sfx = NULL;
+			break;
+		}
+	}
+
+	// free cache.
+	if (s->sfx.cache.data)
+		Cache_Free(&s->sfx.cache);
+
+	// clear whole struct.
+	memset(s, 0, sizeof(*s));
+}
+
+// Searching for free slot or re-use previous one with the same sourceid.
+static streaming_t * S_RawGetFreeStream(int sourceid)
+{
+	int i;
+	streaming_t *s, *free = NULL;
+
+	for (s = s_streamers, i = 0; i < MAX_RAW_SOURCES; i++, s++)
+	{
+		if (!s->inuse)
+		{
+			if (!free)
+			{
+				free = s;	// found free stream slot.
+			}
+
+			continue;
+		}
+
+		if (s->id == sourceid)
+		{
+			return s; // re-using slot.
+		}
+	}
+
+	return free;
+}
+
+// Streaming audio.
+// This is useful when there is one source, and the sound is to be played with no attenuation.
+void S_RawAudio(int sourceid, byte *data, 
+				unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width)
+{
+	unsigned int	i;
+	int				newsize;
+	int				prepadl;
+	int				spare;
+	int				outsamples;
+	double			speedfactor;
+	sfxcache_t *	currentcache;
+	streaming_t *	s;
+
+	// search for free slot or re-use previous one with the same sourceid.
+	s = S_RawGetFreeStream(sourceid);
+
+	if (!s)
+	{
+		Com_DPrintf("No free audio streams or stream not found\n");
+		return;
+	}
+
+	// empty data mean someone tell us to shut up particular slot.
+	if (!data)
+	{
+		S_RawClearStream(s);
+		return;
+	}
+
+	// attempting to add new stream
+	if (!s->inuse)
+	{
+		sfxcache_t * newcache;
+
+		// clear whole struct.
+		memset(s, 0, sizeof(*s));
+		// allocate cache.
+		newsize = MAX_RAW_CACHE; //sizeof(sfxcache_t)
+
+		if (newsize < sizeof(sfxcache_t))
+			Sys_Error("MAX_RAW_CACHE too small %d", newsize);
+
+		newcache = Cache_Alloc(&s->sfx.cache, newsize, "rawaudio");
+		if (!newcache)
+		{
+			Com_DPrintf("Cache_Alloc failed\n");
+			return;
+		}
+
+		s->inuse = true;
+		s->id = sourceid;
+//		strcpy(s->sfx.name, ""); // FIXME: probably we should put some specific tag name here?
+		s->sfx.cache.data = newcache;
+		newcache->format.speed = shm->format.speed;
+		newcache->format.channels = channelsnum;
+		newcache->format.width = width;
+		newcache->loopstart = -1;
+		newcache->total_length = 0;
+		newcache = NULL;
+
+//		Com_Printf("Added new raw stream\n");
+	}
+
+	// get current cache if any.
+	currentcache = (sfxcache_t *)Cache_Check(&s->sfx.cache);
+	if (!currentcache)
+	{
+		Com_DPrintf("Cache_Check failed\n");
+		S_RawClearStream(s);
+		return;
+	}
+
+	if (   currentcache->format.speed != shm->format.speed
+		|| currentcache->format.channels != channelsnum
+		|| currentcache->format.width != width)
+	{
+		currentcache->format.speed = shm->format.speed;
+		currentcache->format.channels = channelsnum;
+		currentcache->format.width = width;
+//		newcache->loopstart = -1;
+		currentcache->total_length = 0;
+//		Com_Printf("Restarting raw stream\n");
+	}
+
+	speedfactor	= (double)speed/shm->format.speed;
+	outsamples = samples/speedfactor;
+
+	prepadl = 0x7fffffff;
+	// FIXME: qqshka: I have no idea that spike is doing here, really. WTF is prepadl??? PITCHSHIFT ???
+	// spike: make sure that we have a prepad.
+	for (i = 0; i < total_channels; i++)
+	{
+		if (channels[i].sfx == &s->sfx)
+		{
+			if (prepadl > (channels[i].pos/*>>PITCHSHIFT*/))
+				prepadl = (channels[i].pos/*>>PITCHSHIFT*/);
+			break;
+		}
+	}
+
+	if (prepadl == 0x7fffffff)
+	{
+		if (s_show.integer)
+			Com_Printf("Wasn't playing\n");
+		prepadl = 0;
+		spare = 0;
+		if (spare > shm->format.speed)
+		{
+			Com_DPrintf("Sacrificed raw sound stream\n");
+			spare = 0;	//too far out. sacrifice it all
+		}
+	}
+	else
+	{
+		if (prepadl < 0)
+			prepadl = 0;
+		spare = currentcache->total_length - prepadl;
+		if (spare < 0)	//remaining samples since last time
+			spare = 0;
+
+		if (spare > shm->format.speed * 2) // more than 2 seconds of sound
+		{
+			Com_DPrintf("Sacrificed raw sound stream\n");
+			spare = 0;	//too far out. sacrifice it all
+		}
+	}
+
+	newsize = sizeof(sfxcache_t) + (spare + outsamples) * currentcache->format.channels * currentcache->format.width;
+	if (newsize >= MAX_RAW_CACHE)
+	{
+		Com_DPrintf("Cache buffer overflowed\n");
+		S_RawClearStream(s);
+		return;
+	}
+	// move along spare/remaning samples in the begging of the buffer.
+	memmove(currentcache->data, 
+		currentcache->data + prepadl * currentcache->format.channels * currentcache->format.width,
+							   spare * currentcache->format.channels * currentcache->format.width);
+
+	currentcache->total_length = spare + outsamples;
+
+	// resample.
+	{
+		extern cvar_t s_linearresample_stream;
+		short *outpos = (short *)(currentcache->data + spare * currentcache->format.channels * currentcache->format.width);
+		SND_ResampleStream(data,
+			speed,
+			width,
+			channelsnum,
+			samples,
+			outpos,
+			shm->format.speed,
+			currentcache->format.width,
+			currentcache->format.channels,
+			s_linearresample_stream.integer
+			);
+	}
+
+	currentcache->loopstart = -1;//currentcache->total_length;
+
+	for (i = 0; i < total_channels; i++)
+	{
+		if (channels[i].sfx == &s->sfx)
+		{
+#if 0
+			// FIXME: qqshka: hrm, should it be just like this all the time??? I think it should.
+			channels[i].pos = 0;
+			channels[i].end = paintedtime + currentcache->total_length;
+#else
+			channels[i].pos -= prepadl; // * channels[i].rate;
+			channels[i].end += outsamples;
+
+			if (channels[i].end < paintedtime)
+			{
+				channels[i].pos = 0;
+				channels[i].end = paintedtime + currentcache->total_length;
+			}
+#endif
+			break;
+		}
+	}
+
+	//this one wasn't playing, lets start it then.
+	if (i == total_channels)
+	{
+//		Com_DPrintf("start sound\n");
+		/*slight delay to try to avoid frame rate/etc stops/starts*/
+//		S_StartSoundCard(si, -1, 0, &s->sfx, r_origin, 1, 32767, -shm->format.speed*0.02, 0);
+		S_StartSound(SELF_SOUND, 0, &s->sfx, r_origin, 1, 0);
+	}
 }

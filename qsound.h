@@ -109,6 +109,9 @@ void SND_InitScaletable (void);
 void SNDDMA_Submit(void);
 int SND_Rate(int rate);
 
+void SND_ResampleStream(void *in, int inrate, int inwidth, int inchannels, int insamps,
+						void *out, int outrate, int outwidth, int outchannels, int resampstyle);
+
 // ====================================================================
 // User-setable variables
 // ====================================================================
@@ -139,5 +142,34 @@ extern cvar_t		s_stereo;
 extern cvar_t		s_volume;
 extern cvar_t		s_swapstereo;
 extern cvar_t		bgmvolume;
+
+extern float voicevolumemod;
+
+#ifdef FTE_PEXT2_VOICECHAT
+
+extern cvar_t cl_voip_showmeter;
+void S_Voip_Parse(void);
+void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf);
+void S_Voip_MapChange(void);
+int S_Voip_Loudness(qbool ignorevad);	//-1 for not capturing, otherwise between 0 and 100
+qbool S_Voip_Speaking(unsigned int plno);
+void S_Voip_Ignore(unsigned int plno, qbool ignore);
+
+typedef struct
+{
+	void *(*Init) (int samplerate);			/*create a new context*/
+	void (*Start) (void *ctx);		/*begin grabbing new data, old data is potentially flushed*/
+	unsigned int (*Update) (void *ctx, unsigned char *buffer, unsigned int minbytes, unsigned int maxbytes);	/*grab the data into a different buffer*/
+	void (*Stop) (void *ctx);		/*stop grabbing new data, old data may remain*/
+	void (*Shutdown) (void *ctx);	/*destroy everything*/
+} snd_capture_driver_t;
+
+#else // FTE_PEXT2_VOICECHAT
+
+#define S_Voip_Loudness() -1
+#define S_Voip_Speaking(p) false
+#define S_Voip_Ignore(p,s)
+
+#endif // FTE_PEXT2_VOICECHAT
 
 #endif

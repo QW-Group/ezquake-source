@@ -70,6 +70,17 @@ cvar_t *Cvar_Find (const char *var_name)
 	return NULL;
 }
 
+qbool Cvar_ForceCallback(cvar_t *var)
+{
+	qbool cancel = false;
+	
+	if (!var || !var->OnChange)
+		return cancel;
+
+	var->OnChange(var, var->string, &cancel);
+	return cancel;
+}
+
 void Cvar_ResetVar (cvar_t *var)
 {
 	if (var && strcmp(var->string, var->defaultvalue))
@@ -218,7 +229,8 @@ void Cvar_Set (cvar_t *var, char *value)
 	extern cvar_t cl_warncmd;
 	extern cvar_t re_subi[10];
 	static qbool changing = false;
-	float test ;
+	float test;
+	char *new_val;
 
 	if (!var)
 		return;
@@ -301,9 +313,12 @@ void Cvar_Set (cvar_t *var, char *value)
 			return;
 	}
 
-	Z_Free (var->string); // free the old value string
+	// dup string first (before free) since 'value' and 'var->string' can point at the same memory area.
+	new_val = Z_Strdup (value);
+	// free the old value string.
+	Z_Free (var->string);
 
-	var->string = Z_Strdup (value);
+	var->string = new_val;
 	var->value = Q_atof (var->string);
 	var->integer = Q_atoi (var->string);
 	StringToRGB_W(var->string, var->color);

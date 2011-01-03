@@ -39,6 +39,7 @@ int snd_scaletable[32][256];
 int snd_vol, *snd_p;
 short *snd_out;
 
+float voicevolumemod = 1; // voice volume modifier.
 
 int snd_linear_count;
 
@@ -163,7 +164,7 @@ static void S_TransferPaintBuffer(int endtime)
 	out_mask = shm->samples - 1;
 	out_idx = paintedtime * shm->format.channels & out_mask;
 	step = 3 - shm->format.channels;
-	snd_vol = s_volume.value * 256;
+	snd_vol = (s_volume.value * voicevolumemod) * 256;
 
 #ifdef _WIN32
 	if (pDSBuf) {

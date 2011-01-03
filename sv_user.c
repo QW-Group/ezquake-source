@@ -43,6 +43,15 @@ cvar_t	sv_maxuploadsize = {"sv_maxuploadsize", "1048576"};
 cvar_t  sv_downloadchunksperframe = {"sv_downloadchunksperframe", "2"};
 #endif
 
+#ifdef FTE_PEXT2_VOICECHAT
+// Enable reception of voice packets.
+cvar_t sv_voip = {"sv_voip", "1"};
+// Record voicechat into mvds. Requires player support. 0=noone, 1=everyone, 2=spectators only.
+cvar_t sv_voip_record = {"sv_voip_record", "0"};
+// Echo voice packets back to their sender, a debug/test setting.
+cvar_t sv_voip_echo = {"sv_voip_echo", "0"};
+#endif
+
 extern	vec3_t	player_mins;
 
 extern int	fp_messages, fp_persecond, fp_secondsdead;
@@ -215,6 +224,13 @@ static void Cmd_New_f (void)
 	{
 		MSG_WriteLong (&sv_client->netchan.message, PROTOCOL_VERSION_FTE);
 		MSG_WriteLong (&sv_client->netchan.message, sv_client->fteprotocolextensions);
+	}
+#endif
+#ifdef PROTOCOL_VERSION_FTE2
+	if (sv_client->fteprotocolextensions2) // let the client know
+	{
+		MSG_WriteLong (&sv_client->netchan.message, PROTOCOL_VERSION_FTE2);
+		MSG_WriteLong (&sv_client->netchan.message, sv_client->fteprotocolextensions2);
 	}
 #endif
 	MSG_WriteLong  (&sv_client->netchan.message, PROTOCOL_VERSION);
@@ -2673,6 +2689,279 @@ static void Cmd_Observe_f (void)
 	sv_client->sendinfo = true;
 }
 
+#ifdef FTE_PEXT2_VOICECHAT
+/*
+Pivicy issues:
+By sending voice chat to a server, you are unsure who might be listening.
+Voice can be recorded to an mvd, potentially including voice.
+Spectators tracvking you are able to hear team chat of your team.
+You're never quite sure if anyone might join the server and your team before you finish saying a sentance.
+You run the risk of sounds around you being recorded by quake, including but not limited to: TV channels, loved ones, phones, YouTube videos featuring certain moans.
+Default on non-team games is to broadcast.
+*/
+
+// FTEQW type and naming compatibility
+// it's not really necessary, simple find & replace would do the job too
+
+#define qboolean qbool
+#define host_client sv_client
+#define ival integer // for cvars compatibility
+
+#define VOICE_RING_SIZE 512 /*POT*/
+struct
+{
+	struct voice_ring_s
+	{
+			unsigned int sender;
+			unsigned char receiver[MAX_CLIENTS/8];
+			unsigned char gen;
+			unsigned char seq;
+			unsigned int datalen;
+			unsigned char data[1024];
+	} ring[VOICE_RING_SIZE];
+	unsigned int write;
+} voice;
+
+void SV_VoiceReadPacket(void)
+{
+	unsigned int vt = host_client->voice_target;
+	unsigned int j;
+	struct voice_ring_s *ring;
+	unsigned short bytes;
+	client_t *cl;
+	unsigned char gen = MSG_ReadByte();
+	unsigned char seq = MSG_ReadByte();
+	/*read the data from the client*/
+	bytes = MSG_ReadShort();
+	ring = &voice.ring[voice.write & (VOICE_RING_SIZE-1)];
+	if (bytes > sizeof(ring->data) || realtime < host_client->lockedtill || !sv_voip.ival)
+	{
+		MSG_ReadSkip(bytes);
+		return;
+	}
+	else
+	{
+		voice.write++;
+		MSG_ReadData(ring->data, bytes);
+	}
+
+	ring->datalen = bytes;
+	ring->sender = host_client - svs.clients;
+	ring->gen = gen;
+	ring->seq = seq;
+
+	/*broadcast it its to their team, and its not teamplay*/
+	if (vt == VT_TEAM && !teamplay.ival)
+		vt = VT_ALL;
+
+	/*figure out which team members are meant to receive it*/
+	for (j = 0; j < MAX_CLIENTS/8; j++)
+		ring->receiver[j] = 0;
+	for (j = 0, cl = svs.clients; j < MAX_CLIENTS; j++, cl++)
+	{
+		if (cl->state != cs_spawned && cl->state != cs_connected)
+			continue;
+		/*spectators may only talk to spectators*/
+		if (host_client->spectator && !sv_spectalk.ival)
+			if (!cl->spectator)
+				continue;
+
+		if (vt == VT_TEAM)
+		{
+			// the spectator team
+			if (host_client->spectator)
+			{
+				if (!cl->spectator)
+					continue;
+			}
+			else
+			{
+				if (strcmp(cl->team, host_client->team) || cl->spectator)
+					continue;	// on different teams
+			}
+		}
+		else if (vt == VT_NONMUTED)
+		{
+			if (host_client->voice_mute[j>>3] & (1<<(j&3)))
+				continue;
+		}
+		else if (vt >= VT_PLAYERSLOT0)
+		{
+			if (j != vt - VT_PLAYERSLOT0)
+				continue;
+		}
+
+		ring->receiver[j>>3] |= 1<<(j&3);
+	}
+
+	if (sv.mvdrecording && sv_voip_record.ival && !(sv_voip_record.ival == 2 && !host_client->spectator))
+	{
+		// non-team messages should be seen always, even if not tracking any player
+		if (vt == VT_ALL && (!host_client->spectator || sv_spectalk.ival))
+		{
+			MVDWrite_Begin (dem_all, 0, ring->datalen+6);
+		}
+		else
+		{
+			unsigned int cls;
+			cls = ring->receiver[0] |
+				(ring->receiver[1]<<8) |
+				(ring->receiver[2]<<16) |
+				(ring->receiver[3]<<24);
+			MVDWrite_Begin (dem_multiple, cls, ring->datalen+6);
+		}
+
+		MVD_MSG_WriteByte( svc_fte_voicechat);
+		MVD_MSG_WriteByte( ring->sender);
+		MVD_MSG_WriteByte( ring->gen);
+		MVD_MSG_WriteByte( ring->seq);
+		MVD_MSG_WriteShort( ring->datalen);
+		MVD_SZ_Write(       ring->data, ring->datalen);
+	}
+}
+
+void SV_VoiceInitClient(client_t *client)
+{
+	client->voice_target = VT_TEAM;
+	client->voice_active = false;
+	client->voice_read = voice.write;
+	memset(client->voice_mute, 0, sizeof(client->voice_mute));
+}
+
+void SV_VoiceSendPacket(client_t *client, sizebuf_t *buf)
+{
+	unsigned int clno;
+	qboolean send;
+	struct voice_ring_s *ring;
+//	client_t *split;
+
+//	if (client->controller)
+//		client = client->controller;
+	clno = client - svs.clients;
+
+	if (!(client->fteprotocolextensions2 & FTE_PEXT2_VOICECHAT))
+		return;
+	if (!client->voice_active || client->num_backbuf)
+	{
+		client->voice_read = voice.write;
+		return;
+	}
+
+	while(client->voice_read < voice.write)
+	{
+		/*they might be too far behind*/
+		if (client->voice_read+VOICE_RING_SIZE < voice.write)
+			client->voice_read = voice.write - VOICE_RING_SIZE;
+
+		ring = &voice.ring[(client->voice_read) & (VOICE_RING_SIZE-1)];
+
+		/*figure out if it was for us*/
+		send = false;
+		if (ring->receiver[clno>>3] & (1<<(clno&3)))
+			send = true;
+
+		// FIXME: qqshka: well, is it RIGHTWAY at all???
+		/*if you're spectating, you can hear whatever your tracked player can hear*/
+		if (client->spectator && client->spec_track)
+			if (ring->receiver[(client->spec_track-1)>>3] & (1<<((client->spec_track-1)&3)))
+				send = true;
+
+		if (client->voice_mute[ring->sender>>3] & (1<<(ring->sender&3)))
+			send = false;
+
+		if (ring->sender == clno && !sv_voip_echo.ival)
+			send = false;
+
+		/*additional ways to block voice*/
+		if (client->download)
+			send = false;
+
+		if (send)
+		{
+			if (buf->maxsize - buf->cursize < ring->datalen+5)
+				break;
+			MSG_WriteByte(buf, svc_fte_voicechat);
+			MSG_WriteByte(buf, ring->sender);
+			MSG_WriteByte(buf, ring->gen);
+			MSG_WriteByte(buf, ring->seq);
+			MSG_WriteShort(buf, ring->datalen);
+			SZ_Write(buf, ring->data, ring->datalen);
+		}
+		client->voice_read++;
+	}
+}
+
+void SV_Voice_Ignore_f(void)
+{
+	unsigned int other;
+	int type = 0;
+
+	if (Cmd_Argc() < 2)
+	{
+		/*only a name = toggle*/
+		type = 0;
+	}
+	else
+	{
+		/*mute if 1, unmute if 0*/
+		if (atoi(Cmd_Argv(2)))
+			type = 1;
+		else
+			type = -1;
+	}
+	other = atoi(Cmd_Argv(1));
+	if (other >= MAX_CLIENTS)
+		return;
+
+	switch(type)
+	{
+	case -1:
+		host_client->voice_mute[other>>3] &= ~(1<<(other&3));
+		break;
+	case 0:	
+		host_client->voice_mute[other>>3] ^= (1<<(other&3));
+		break;
+	case 1:
+		host_client->voice_mute[other>>3] |= (1<<(other&3));
+	}
+}
+
+void SV_Voice_Target_f(void)
+{
+	unsigned int other;
+	char *t = Cmd_Argv(1);
+	if (!strcmp(t, "team"))
+		host_client->voice_target = VT_TEAM;
+	else if (!strcmp(t, "all"))
+		host_client->voice_target = VT_ALL;
+	else if (!strcmp(t, "nonmuted"))
+		host_client->voice_target = VT_NONMUTED;
+	else if (*t >= '0' && *t <= '9')
+	{
+		other = atoi(t);
+		if (other >= MAX_CLIENTS)
+			return;
+		host_client->voice_target = VT_PLAYERSLOT0 + other;
+	}
+	else
+	{
+		/*don't know who you mean, futureproofing*/
+		host_client->voice_target = VT_TEAM;
+	}
+}
+
+void SV_Voice_MuteAll_f(void)
+{
+	host_client->voice_active = false;
+}
+
+void SV_Voice_UnmuteAll_f(void)
+{
+	host_client->voice_active = true;
+}
+
+#endif // FTE_PEXT2_VOICECHAT
+
 void SV_DemoList_f(void);
 void SV_DemoListRegex_f(void);
 void SV_MVDInfo_f(void);
@@ -2768,6 +3057,12 @@ static ucmd_t ucmds[] =
 	{"noclip", SV_Noclip_f, true},
 	{"fly", SV_Fly_f, true},
 
+#ifdef FTE_PEXT2_VOICECHAT
+	{"voicetarg", SV_Voice_Target_f, false},
+	{"vignore", SV_Voice_Ignore_f, false},	/*ignore/mute specific player*/
+	{"muteall", SV_Voice_MuteAll_f, false},	/*disables*/
+	{"unmuteall", SV_Voice_UnmuteAll_f, false}, /*reenables*/
+#endif
 
 	{NULL, NULL}
 
@@ -3455,6 +3750,11 @@ void SV_ExecuteClientMessage (client_t *cl)
 			SV_NextUpload();
 			break;
 
+#ifdef FTE_PEXT2_VOICECHAT
+		case clc_voicechat:
+			SV_VoiceReadPacket();
+			break;
+#endif
 		}
 	}
 }
@@ -3477,5 +3777,11 @@ void SV_UserInit (void)
 	Cvar_Register (&sv_maxuploadsize);
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	Cvar_Register (&sv_downloadchunksperframe);
+#endif
+
+#ifdef FTE_PEXT2_VOICECHAT
+	Cvar_Register (&sv_voip);
+	Cvar_Register (&sv_voip_echo);
+	Cvar_Register (&sv_voip_record);
 #endif
 }

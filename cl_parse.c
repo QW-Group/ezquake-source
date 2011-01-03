@@ -898,14 +898,6 @@ void CL_Parse_OOB_ChunkedDownload(void)
 	CL_ParseDownload ();
 }
 
-static void MSG_ReadData (void *data, int len)
-{
-	int	i;
-
-	for (i = 0 ; i < len ; i++)
-		((byte *)data)[i] = MSG_ReadByte ();
-}
-
 void CL_ParseChunkedDownload(void)
 {
 	char *svname;
@@ -1401,29 +1393,41 @@ void CL_ParseServerData (void)
 
 	// parse protocol version number
 	// allow 2.2 and 2.29 demos to play
-	#ifdef PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE
 	cls.fteprotocolextensions = 0;
+#endif // PROTOCOL_VERSION_FTE
+
+#ifdef PROTOCOL_VERSION_FTE2
+	cls.fteprotocolextensions2 = 0;
+#endif // PROTOCOL_VERSION_FTE2
 
 	for(;;)
 	{
 		protover = MSG_ReadLong ();
+#ifdef PROTOCOL_VERSION_FTE
 		if (protover == PROTOCOL_VERSION_FTE)
 		{
-			cls.fteprotocolextensions =  MSG_ReadLong();
+			cls.fteprotocolextensions = MSG_ReadLong();
 			Com_DPrintf ("Using FTE extensions 0x%x\n", cls.fteprotocolextensions);
 			continue;
 		}
+#endif
+
+#ifdef PROTOCOL_VERSION_FTE2
+		if (protover == PROTOCOL_VERSION_FTE2)
+		{
+			cls.fteprotocolextensions2 = MSG_ReadLong();
+			Com_DPrintf ("Using FTE extensions2 0x%x\n", cls.fteprotocolextensions2);
+			continue;
+		}
+#endif
+
 		if (protover == PROTOCOL_VERSION) //this ends the version info
 			break;
 		if (cls.demoplayback && (protover == 26 || protover == 27 || protover == 28))	//older versions, maintain demo compatability.
 			break;
 		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.quakeworld.net/", protover, PROTOCOL_VERSION);
 	}
-	#else
-	protover = MSG_ReadLong ();
-	if (protover != PROTOCOL_VERSION &&	!(cls.demoplayback && (protover == 26 || protover == 27 || protover == 28)))
-		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.quakeworld.net,\nhttp://ezquake.sourceforge.net,\nhttp://mvdsv.sourceforge.net", protover, PROTOCOL_VERSION);
-	#endif // PROTOCOL_VERSION_FTE
 
 	cl.protoversion = protover;
 	cl.servercount = MSG_ReadLong ();
@@ -1555,6 +1559,10 @@ void CL_ParseServerData (void)
 
 	// now waiting for downloads, etc
 	cls.state = ca_onserver;
+
+#ifdef FTE_PEXT2_VOICECHAT
+	S_Voip_MapChange();
+#endif
 }
 
 void CL_ParseSoundlist (void)
@@ -3315,6 +3323,15 @@ void CL_ParseServerMessage (void)
 				S_StopSound(i >> 3, i & 7);
 				break;
 			}
+
+#ifdef FTE_PEXT2_VOICECHAT
+			case svc_fte_voicechat:
+			{
+				S_Voip_Parse();
+				break;
+			}
+#endif
+
 			case svc_updatefrags:
 			{
 				Sbar_Changed();

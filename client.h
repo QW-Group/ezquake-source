@@ -384,6 +384,9 @@ typedef struct
 #ifdef PROTOCOL_VERSION_FTE
 	unsigned int fteprotocolextensions; ///< the extensions we told the server that we support.
 #endif
+#ifdef PROTOCOL_VERSION_FTE2
+	unsigned int fteprotocolextensions2; ///< the extensions we told the server that we support.
+#endif
 
 	//
 	// Upload vars.

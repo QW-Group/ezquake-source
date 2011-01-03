@@ -404,7 +404,14 @@ void CL_WriteServerdata (sizebuf_t *msg)
 		MSG_WriteLong (msg, cls.fteprotocolextensions);
 	}
 	#endif // PROTOCOL_VERSION_FTE
-	
+	#ifdef PROTOCOL_VERSION_FTE2
+	if (cls.fteprotocolextensions2)	// Maintain demo compatibility.
+	{
+		MSG_WriteLong (msg, PROTOCOL_VERSION_FTE2);
+		MSG_WriteLong (msg, cls.fteprotocolextensions2);
+	}
+	#endif // PROTOCOL_VERSION_FTE2
+
 	MSG_WriteLong (msg, PROTOCOL_VERSION);
 	MSG_WriteLong (msg, cl.servercount);
 	MSG_WriteString (msg, cls.gamedirfile);

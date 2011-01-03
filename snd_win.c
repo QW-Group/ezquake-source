@@ -596,3 +596,165 @@ void SNDDMA_Shutdown(void)
 {
 	FreeSound ();
 }
+
+
+//========================================================================
+// SOUND CAPTURING
+//========================================================================
+
+#ifdef FTE_PEXT2_VOICECHAT
+
+typedef struct
+{
+	LPDIRECTSOUNDCAPTURE DSCapture;
+	LPDIRECTSOUNDCAPTUREBUFFER DSCaptureBuffer;
+	long lastreadpos;
+} dsndcapture_t;
+
+const long bufferbytes = 1024*1024;
+const long inputwidth = 2;
+
+void *DSOUND_Capture_Init (int rate)
+{
+	dsndcapture_t *result;
+	DSCBUFFERDESC bufdesc = {0};
+	WAVEFORMATEX  wfxFormat = {0};
+
+	Com_DPrintf("DSOUND_Capture_Init: rate %d\n", rate);
+
+	wfxFormat.wFormatTag = WAVE_FORMAT_PCM;
+    wfxFormat.nChannels = 1;
+    wfxFormat.nSamplesPerSec = rate;
+	wfxFormat.wBitsPerSample = 8*inputwidth;
+    wfxFormat.nBlockAlign = wfxFormat.nChannels * (wfxFormat.wBitsPerSample / 8);
+	wfxFormat.nAvgBytesPerSec = wfxFormat.nSamplesPerSec * wfxFormat.nBlockAlign;
+    wfxFormat.cbSize = 0;
+
+	bufdesc.dwSize = sizeof(bufdesc);
+	bufdesc.dwBufferBytes = bufferbytes;
+	bufdesc.dwFlags = 0;
+	bufdesc.dwReserved = 0;
+	bufdesc.lpwfxFormat = &wfxFormat;
+
+	result = Z_Malloc(sizeof(*result));
+	if (FAILED(DirectSoundCaptureCreate(NULL, &result->DSCapture, NULL)))
+	{
+		Com_Printf_State (PRINT_FAIL, "DirectSound: Couldn't create a capture device\n");
+	}
+	else if (FAILED(IDirectSoundCapture_CreateCaptureBuffer(result->DSCapture, &bufdesc, &result->DSCaptureBuffer, NULL)))
+	{
+		Com_Printf_State (PRINT_FAIL, "DirectSound: Couldn't create a capture buffer\n");	
+	}
+	else
+	{
+		Com_DPrintf("DSOUND_Capture_Init: OK\n");
+		return result;	
+	}
+
+	// failure, lets clean up.
+
+	if (result->DSCapture)
+	{
+		IDirectSoundCapture_Release(result->DSCapture);	
+	}
+
+	Z_Free(result);
+
+	return NULL;
+}
+
+void DSOUND_Capture_Start(void *ctx)
+{
+	DWORD capturePos;
+	dsndcapture_t *c = ctx;
+	IDirectSoundCaptureBuffer_Start(c->DSCaptureBuffer, DSBPLAY_LOOPING);
+
+	c->lastreadpos = 0;
+	IDirectSoundCaptureBuffer_GetCurrentPosition(c->DSCaptureBuffer, &capturePos, &c->lastreadpos);
+}
+
+void DSOUND_Capture_Stop(void *ctx)
+{
+	dsndcapture_t *c = ctx;
+	IDirectSoundCaptureBuffer_Stop(c->DSCaptureBuffer);
+}
+
+void DSOUND_Capture_Shutdown(void *ctx)
+{
+	dsndcapture_t *c = ctx;
+	if (c->DSCaptureBuffer)
+	{
+		IDirectSoundCaptureBuffer_Stop(c->DSCaptureBuffer);
+		IDirectSoundCaptureBuffer_Release(c->DSCaptureBuffer);
+	}
+	if (c->DSCapture)
+	{
+		IDirectSoundCapture_Release(c->DSCapture);
+	}
+	Z_Free(ctx);
+}
+
+/*minsamples is a hint*/
+unsigned int DSOUND_Capture_Update(void *ctx, unsigned char *buffer, unsigned int minbytes, unsigned int maxbytes)
+{
+	dsndcapture_t *c = ctx;
+	HRESULT hr;
+	LPBYTE lpbuf1 = NULL;
+	LPBYTE lpbuf2 = NULL;
+	DWORD dwsize1 = 0;
+	DWORD dwsize2 = 0;
+
+	DWORD capturePos;
+	DWORD readPos;
+	long  filled;
+
+// Query to see how much data is in buffer.
+	hr = IDirectSoundCaptureBuffer_GetCurrentPosition(c->DSCaptureBuffer, &capturePos, &readPos);
+	if (hr != DS_OK)
+	{
+		return 0;
+	}
+	filled = readPos - c->lastreadpos;
+	if (filled < 0)
+		filled += bufferbytes; // unwrap offset
+
+	if (filled > maxbytes)	//figure out how much we need to empty it by, and if that's enough to be worthwhile.
+		filled = maxbytes;
+	else if (filled < minbytes)
+		return 0;
+
+//	filled /= inputwidth;
+//	filled *= inputwidth;
+
+	// Lock free space in the DS
+	hr = IDirectSoundCaptureBuffer_Lock(c->DSCaptureBuffer, c->lastreadpos, filled, (void **) &lpbuf1, &dwsize1, (void **) &lpbuf2, &dwsize2, 0);
+	if (hr == DS_OK)
+	{
+		// Copy from DS to the buffer
+		memcpy(buffer, lpbuf1, dwsize1);
+		if(lpbuf2 != NULL)
+		{
+			memcpy(buffer+dwsize1, lpbuf2, dwsize2);
+		}
+		// Update our buffer offset and unlock sound buffer
+ 		c->lastreadpos = (c->lastreadpos + dwsize1 + dwsize2) % bufferbytes;
+		IDirectSoundCaptureBuffer_Unlock(c->DSCaptureBuffer, lpbuf1, dwsize1, lpbuf2, dwsize2);
+	}
+	else
+	{
+		return 0;
+	}
+	return filled;
+}
+
+snd_capture_driver_t DSOUND_Capture =
+{
+	DSOUND_Capture_Init,
+	DSOUND_Capture_Start,
+	DSOUND_Capture_Update,
+	DSOUND_Capture_Stop,
+	DSOUND_Capture_Shutdown
+};
+
+#endif // FTE_PEXT2_VOICECHAT
+
