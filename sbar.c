@@ -39,6 +39,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sbar.h"
 #include "keys.h"
 
+#ifdef FTE_PEXT2_VOICECHAT
+#include "qsound.h"
+#endif
+
 int sb_updates;		// if >= vid.numpages, no update needed
 extern cvar_t show_fps2;
 
@@ -1248,6 +1252,12 @@ static void Sbar_DeathmatchOverlay (int start) {
 	}
 
 	for (i = 0; i < scoreboardlines && y <= SCOREBOARD_LASTROW; i++) {
+#ifdef GLQUAKE
+		color_t background;
+		float alpha;
+		byte c;
+#endif
+
 		k = fragsort[i];
 		s = &cl.players[k];
 
@@ -1259,101 +1269,96 @@ static void Sbar_DeathmatchOverlay (int start) {
 		bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
 
 #ifdef GLQUAKE
+		if (k == mynum)
+		{
+			alpha = 1.7 * SCOREBOARD_ALPHA;
+			alpha = min(alpha, 0.75);
+		}
+		else
+		{
+			alpha = SCOREBOARD_ALPHA;
+		}
+
 		if (
-			!cl.teamplay || s->spectator ||
-			!scr_scoreboard_fillcolored.value || (scr_scoreboard_fillcolored.value == 2 && !scr_scoreboard_teamsort.value)
-			) {
-				Draw_AlphaFill (xofs, y, rank_width, skip, 2, SCOREBOARD_ALPHA);
-			} else {
-				strlcpy (team, s->team, sizeof(team));
-				if (k == mynum) {
-					float alpha;
-					alpha = 1.7 * SCOREBOARD_ALPHA;
-					alpha = min(alpha, 0.75);
-					Draw_AlphaFill (xofs, y, rank_width, skip, Sbar_ColorForMap(bottom), alpha);
-				} else {
-					Draw_AlphaFill (xofs, y, rank_width, skip, Sbar_ColorForMap(bottom), SCOREBOARD_ALPHA);
-				}
-			}
+			!cl.teamplay || s->spectator ||	!scr_scoreboard_fillcolored.value
+			|| (scr_scoreboard_fillcolored.value == 2 && !scr_scoreboard_teamsort.value)
+			)
+		{
+			c = 2;
+		}
+		else
+		{
+			c = Sbar_ColorForMap(bottom);
+		}
+
+		if (S_Voip_Speaking(k))
+			background = RGBA_TO_COLOR(0, 255, 0, (byte)(alpha * 255));
+		else
+			background = RGBA_TO_COLOR(host_basepal[c * 3],
+									host_basepal[c * 3 + 1],
+									host_basepal[c * 3 + 2], (byte)(alpha * 255));
+
+		Draw_AlphaFillRGB (xofs, y, rank_width, skip, background);
 #endif
 
-			if (!scr_scoreboard_borderless.value) {
-				Draw_Fill (xofs - 1, y, 1, skip, 0);					//Border - Left
-				Draw_Fill (xofs - 1 + rank_width + 1, y, 1, skip, 0);	//Border - Right
-			}
+		if (!scr_scoreboard_borderless.value) {
+			Draw_Fill (xofs - 1, y, 1, skip, 0);					//Border - Left
+			Draw_Fill (xofs - 1 + rank_width + 1, y, 1, skip, 0);	//Border - Right
+		}
 
-			// draw ping
-			p = s->ping;
-			if (p < 0 || p > 999)
-				p = 999;
+		// draw ping
+		p = s->ping;
+		if (p < 0 || p > 999)
+			p = 999;
 
-			snprintf (num, sizeof(num), "&cAAD%4i", p);
-			Draw_ColoredString(x, y, num, 0);
-			x += 32; // move it forward, ready to print next column
+		snprintf (num, sizeof(num), "&cAAD%4i", p);
+		Draw_ColoredString(x, y, num, 0);
+		x += 32; // move it forward, ready to print next column
 
-			// draw pl
-			p = s->pl;
+		// draw pl
+		p = s->pl;
 
-			if (p > 25) {
-				snprintf (num, sizeof(num), "&cD33%3i", p);
-				Draw_ColoredString (x, y, num, 1);
-			} else {
-				snprintf (num, sizeof(num), "&cDB0%3i", p);
-				Draw_ColoredString (x, y, num, 0);
-			}
+		if (p > 25) {
+			snprintf (num, sizeof(num), "&cD33%3i", p);
+			Draw_ColoredString (x, y, num, 1);
+		} else {
+			snprintf (num, sizeof(num), "&cDB0%3i", p);
+			Draw_ColoredString (x, y, num, 0);
+		}
 
-			x += 32;
+		x += 32;
 
-			// draw time
-			total = (cl.intermission ? cl.completed_time : cls.demoplayback ? cls.demotime : cls.realtime) - s->entertime;
-			total = (int) total / 60;
-			total = bound(0, total, 999); // limit to 3 symbols int
-			snprintf (myminutes, sizeof (myminutes), "%3i", total);
+		// draw time
+		total = (cl.intermission ? cl.completed_time : cls.demoplayback ? cls.demotime : cls.realtime) - s->entertime;
+		total = (int) total / 60;
+		total = bound(0, total, 999); // limit to 3 symbols int
+		snprintf (myminutes, sizeof (myminutes), "%3i", total);
 
-			if (scr_scoreboard_drawfps) {
-				if (s->last_fps > 0 && !s->spectator) {
-					snprintf (myminutes, sizeof (myminutes), "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
-					if (s->last_fps < 70) {
-						for (d=0; d < strlen(myminutes); d++)
-							myminutes[d] ^= 128;
-					}
-				}
-				else {
-					snprintf (myminutes, sizeof (myminutes), "   ");
+		if (scr_scoreboard_drawfps) {
+			if (s->last_fps > 0 && !s->spectator) {
+				snprintf (myminutes, sizeof (myminutes), "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
+				if (s->last_fps < 70) {
+					for (d=0; d < strlen(myminutes); d++)
+						myminutes[d] ^= 128;
 				}
 			}
-
-			if (s->spectator) {
-				snprintf (scorerow, sizeof(scorerow), " %s", myminutes);
-				Draw_String (x, y, scorerow); // draw time
-
-				x += 8*5; // move "spectator" 5 symbols right, so time column is not occupied
-				if (cl.teamplay) // use columns frags and team
-					Draw_ColoredString (x, y, "&cF20s&cF50p&cF80e&c883c&cA85t&c668a&c55At&c33Bo&c22Dr", 0);
-				else // use only frags column
-					Draw_ColoredString (x, y, "&cF20s&cF80p&c668e&c22Dc", 0);
-
-				x += cl.teamplay ? 88 : 48; // move across to print the name
-
-				strlcpy(name, s->name, sizeof(name));
-				if (leftover > 0) {
-					int truncate = (leftover / 8) + (leftover % 8 ? 1 : 0);
-
-					truncate = bound(0, truncate, sizeof(name) - 1);
-					name[sizeof(name) - 1 - truncate] = 0;
-				}
-				Draw_String (x, y, name);	// draw name
-
-				y += skip;
-				x = startx;
-				continue;
+			else {
+				snprintf (myminutes, sizeof (myminutes), "   ");
 			}
+		}
 
-			// print the shirt/pants colour bars
-			Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_ColorForMap (top));
-			Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_ColorForMap (bottom));
+		if (s->spectator) {
+			snprintf (scorerow, sizeof(scorerow), " %s", myminutes);
+			Draw_String (x, y, scorerow); // draw time
 
-			// name
+			x += 8*5; // move "spectator" 5 symbols right, so time column is not occupied
+			if (cl.teamplay) // use columns frags and team
+				Draw_ColoredString (x, y, "&cF20s&cF50p&cF80e&c883c&cA85t&c668a&c55At&c33Bo&c22Dr", 0);
+			else // use only frags column
+				Draw_ColoredString (x, y, "&cF20s&cF80p&c668e&c22Dc", 0);
+
+			x += cl.teamplay ? 88 : 48; // move across to print the name
+
 			strlcpy(name, s->name, sizeof(name));
 			if (leftover > 0) {
 				int truncate = (leftover / 8) + (leftover % 8 ? 1 : 0);
@@ -1361,51 +1366,69 @@ static void Sbar_DeathmatchOverlay (int start) {
 				truncate = bound(0, truncate, sizeof(name) - 1);
 				name[sizeof(name) - 1 - truncate] = 0;
 			}
-
-			// frags
-			fragsint = bound(-999, s->frags, 9999); // limit to 4 symbols int
-			snprintf (fragsstr, sizeof(fragsstr), "%s%3i", (fragsint < 1000 && fragsint > -100) ? " " : "", fragsint);
-
-			// team
-			if (cl.teamplay) {
-				strlcpy  (team, s->team, sizeof(team));
-				snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %-4s %s", myminutes, fragsstr, team, name);
-			} else {
-				snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %s", myminutes, fragsstr, name);
-			}
-			Draw_String (x, y, scorerow);
-
-
-			if (statswidth) {
-				Stats_GetBasicStats(s - cl.players, playerstats);
-				if (stats_touches || stats_caps)
-					Stats_GetFlagStats(s - cl.players, playerstats + 4);
-
-				scorerow[0] = 0;
-
-				if (stats_team)
-					snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF60%3i &cF00%3i ", playerstats[0], playerstats[2], playerstats[1]);
-				else
-					snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF00%3i ", playerstats[0], playerstats[1]);
-
-				if (stats_touches)
-					strlcat (scorerow, va("  &cFD0%2i ", playerstats[4]), sizeof (scorerow));
-				if (stats_caps)
-					strlcat (scorerow, va("  &c24F%2i ", playerstats[6]), sizeof (scorerow));
-
-				Draw_ColoredString(x + stats_xoffset - 9 * 8, y, scorerow, 0);
-			}
-
-
-			if (!cls.mvdplayback || !cl_multiview.value) {
-				if (k == mynum) {
-					Draw_Character (x + 40 - ((fragsint < 1000 && fragsint > -100) ? 0 : 8), y, 16);
-					Draw_Character (x + 40 + 32, y, 17);
-				}
-			}
+			Draw_String (x, y, name);	// draw name
 
 			y += skip;
 			x = startx;
+			continue;
+		}
+
+		// print the shirt/pants colour bars
+		Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_ColorForMap (top));
+		Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_ColorForMap (bottom));
+
+		// name
+		strlcpy(name, s->name, sizeof(name));
+		if (leftover > 0) {
+			int truncate = (leftover / 8) + (leftover % 8 ? 1 : 0);
+
+			truncate = bound(0, truncate, sizeof(name) - 1);
+			name[sizeof(name) - 1 - truncate] = 0;
+		}
+
+		// frags
+		fragsint = bound(-999, s->frags, 9999); // limit to 4 symbols int
+		snprintf (fragsstr, sizeof(fragsstr), "%s%3i", (fragsint < 1000 && fragsint > -100) ? " " : "", fragsint);
+
+		// team
+		if (cl.teamplay) {
+			strlcpy  (team, s->team, sizeof(team));
+			snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %-4s %s", myminutes, fragsstr, team, name);
+		} else {
+			snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %s", myminutes, fragsstr, name);
+		}
+		Draw_String (x, y, scorerow);
+
+
+		if (statswidth) {
+			Stats_GetBasicStats(s - cl.players, playerstats);
+			if (stats_touches || stats_caps)
+				Stats_GetFlagStats(s - cl.players, playerstats + 4);
+
+			scorerow[0] = 0;
+
+			if (stats_team)
+				snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF60%3i &cF00%3i ", playerstats[0], playerstats[2], playerstats[1]);
+			else
+				snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF00%3i ", playerstats[0], playerstats[1]);
+
+			if (stats_touches)
+				strlcat (scorerow, va("  &cFD0%2i ", playerstats[4]), sizeof (scorerow));
+			if (stats_caps)
+				strlcat (scorerow, va("  &c24F%2i ", playerstats[6]), sizeof (scorerow));
+
+			Draw_ColoredString(x + stats_xoffset - 9 * 8, y, scorerow, 0);
+		}
+
+		if (!cls.mvdplayback || !cl_multiview.value) {
+			if (k == mynum) {
+				Draw_Character (x + 40 - ((fragsint < 1000 && fragsint > -100) ? 0 : 8), y, 16);
+				Draw_Character (x + 40 + 32, y, 17);
+			}
+		}
+
+		y += skip;
+		x = startx;
 	}
 
 	if (!scr_scoreboard_borderless.value)
