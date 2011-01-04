@@ -63,6 +63,10 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "server.h"
 #endif
 
+#ifdef FTE_PEXT2_VOICECHAT
+#include "qsound.h"
+#endif
+
 #ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
 #endif
@@ -3357,6 +3361,43 @@ static void SCR_DrawCursor(void)
 	scr_pointer_state.y_old = scr_pointer_state.y;
 }
 
+static void SCR_VoiceMeter(void)
+{
+#ifdef FTE_PEXT2_VOICECHAT
+
+	extern cvar_t cl_voip_showmeter;
+	extern cvar_t cl_voip_showmeter_x;
+	extern cvar_t cl_voip_showmeter_y;
+
+	float	range;
+	int		loudness;
+	int		w1, w2;
+	int		w = 100;												// random.
+	int		h = 8;													// char size.
+	int		x = cl_voip_showmeter_x.integer + 10;					// random.
+	int		y = cl_voip_showmeter_y.integer + vid.height - h - 10;	// random.
+	
+	if (!cl_voip_showmeter.integer)
+		return;
+
+	loudness = S_Voip_Loudness(cl_voip_showmeter.integer == 2);
+
+	if (loudness < 0)
+		return;
+
+	range = loudness / 100.0f;
+	range = bound(0.0f, range, 1.0f);
+	w1 = range * w;
+	w2 = w - w1;
+	Draw_String (x, y, "mic ");
+	x += 8 * (sizeof("mic ")-1);
+	Draw_AlphaRectangleRGB(x, y, w1, h, 1, true, RGBA_TO_COLOR(255, 0, 0, 255));
+	x += w1;
+	Draw_AlphaRectangleRGB(x, y, w2, h, 1, true, RGBA_TO_COLOR(0, 255, 0, 255));
+
+#endif // FTE_PEXT2_VOICECHAT
+}
+
 void Plug_SBar(void);
 
 void SCR_DrawElements(void) 
@@ -3404,6 +3445,8 @@ void SCR_DrawElements(void)
 					#ifdef GLQUAKE
 					SCR_DrawAutoID ();
 					#endif
+
+					SCR_VoiceMeter();
 				}
 
 				if (!cl.intermission) 

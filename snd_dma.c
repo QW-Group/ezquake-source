@@ -131,6 +131,8 @@ cvar_t cl_voip_vad_delay = {"cl_voip_vad_delay", "0.3"};
 cvar_t cl_voip_capturingvol = {"cl_voip_capturingvol", "0.5"};
 // Shows your speach volume above the hud. 0=hide, 1=show when transmitting, 2=ignore voice-activation disable.
 cvar_t cl_voip_showmeter = {"cl_voip_showmeter", "1"};
+cvar_t cl_voip_showmeter_x = {"cl_voip_showmeter_x", "0"};
+cvar_t cl_voip_showmeter_y = {"cl_voip_showmeter_y", "0"};
 // Enables voip playback.
 cvar_t cl_voip_play = {"cl_voip_play", "1", CVAR_NONE, S_Voip_Play_Callback};
 // Amplifies your microphone when using voip.
@@ -253,6 +255,8 @@ void S_Init (void)
 	Cvar_Register(&cl_voip_vad_delay);
 	Cvar_Register(&cl_voip_capturingvol);
 	Cvar_Register(&cl_voip_showmeter);
+	Cvar_Register(&cl_voip_showmeter_x);
+	Cvar_Register(&cl_voip_showmeter_y);
 	Cvar_Register(&cl_voip_play);
 	Cvar_Register(&cl_voip_micamp);
 

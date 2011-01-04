@@ -147,7 +147,6 @@ extern float voicevolumemod;
 
 #ifdef FTE_PEXT2_VOICECHAT
 
-extern cvar_t cl_voip_showmeter;
 void S_Voip_Parse(void);
 void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf);
 void S_Voip_MapChange(void);
