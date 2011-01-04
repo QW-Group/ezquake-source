@@ -1343,7 +1343,7 @@ int Cmd_CommandCompare (const void *p1, const void *p2)
 
 void Cmd_CmdList (qbool use_regex)
 {
-	static cmd_function_t *sorted_cmds[512];
+	static cmd_function_t *sorted_cmds[1024];
 	int i, c, m = 0, count;
 	cmd_function_t *cmd;
 	char *pattern;
