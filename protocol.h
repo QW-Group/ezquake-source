@@ -47,10 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef PROTOCOL_VERSION_FTE2
 
-// well, ATM there sound capture code for windows only, feature itself is OS independant (libspeex).
-#if _WIN32
 #define FTE_PEXT2_VOICECHAT			0x00000002
-#endif
 
 #endif // PROTOCOL_VERSION_FTE2
 
