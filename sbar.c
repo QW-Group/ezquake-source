@@ -39,9 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sbar.h"
 #include "keys.h"
 
-#ifdef FTE_PEXT2_VOICECHAT
 #include "qsound.h"
-#endif
 
 int sb_updates;		// if >= vid.numpages, no update needed
 extern cvar_t show_fps2;
