@@ -48,6 +48,7 @@ typedef struct log_upload_job_s {
 	char *hostname;
 	char *filename;
 	char *url;
+	char *mapname;
 } log_upload_job_t;
 
 qbool Log_IsLogging(void) {
@@ -303,7 +304,7 @@ size_t Log_Curl_Write_Void( void *ptr, size_t size, size_t nmemb, void *userdata
 }
 
 static log_upload_job_t* Log_Upload_Job_Prepare(const char *filename, const char *hostname, const char* player_name,
-                                                const char *token, const char *url)
+                                                const char *token, const char *url, const char *mapname)
 {
 	log_upload_job_t *job = (log_upload_job_t *) Q_malloc(sizeof(log_upload_job_t));
 
@@ -312,6 +313,7 @@ static log_upload_job_t* Log_Upload_Job_Prepare(const char *filename, const char
 	job->player_name = Q_strdup(player_name);
 	job->token = Q_strdup(token);
 	job->url = Q_strdup(url);
+	job->mapname = Q_strdup(mapname);
 
 	return job;
 }
@@ -323,6 +325,7 @@ static void Log_Upload_Job_Free(log_upload_job_t *job)
 	Q_free(job->player_name);
 	Q_free(job->token);
 	Q_free(job->url);
+	Q_free(job->mapname);
 	Q_free(job);
 }
 
@@ -351,6 +354,10 @@ DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vjob)
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "host",
 		CURLFORM_COPYCONTENTS, job->hostname,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "map",
+		CURLFORM_COPYCONTENTS, job->mapname,
 		CURLFORM_END);
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "log",
@@ -385,7 +392,8 @@ void Log_AutoLogging_Upload(const char *filename)
 	log_upload_job_t *job = Log_Upload_Job_Prepare(filename, Info_ValueForKey(cl.serverinfo, "hostname"),
 		cl.players[cl.playernum].name,
 		match_auto_logupload_token.string,
-		match_auto_logurl.string);
+		match_auto_logurl.string,
+		host_mapname.string);
 
 	Com_Printf("Uploading match log...\n");
 	Sys_CreateThread(Log_AutoLogging_Upload_Thread, (void *) job);
