@@ -255,3 +255,57 @@ int	SNDDMA_GetDMAPos (void)
 }
 
 //_________________________________________________________________________________________________________________________eOF
+
+//========================================================================
+// SOUND CAPTURING	
+//========================================================================
+
+#ifdef FTE_PEXT2_VOICECHAT
+
+typedef struct
+{
+ 	char  dummy; // just so its not empty.
+} dsndcapture_t;
+
+void *DSOUND_Capture_Init (int rate)
+{
+	dsndcapture_t *result;
+
+	Com_DPrintf("DSOUND_Capture_Init: rate %d\n", rate);
+	result = Z_Malloc(sizeof(*result));
+	Com_DPrintf("DSOUND_Capture_Init: OK\n");
+	return result;  
+}
+
+void DSOUND_Capture_Start(void *ctx)
+{
+	dsndcapture_t *c = ctx;
+}
+
+void DSOUND_Capture_Stop(void *ctx)
+{
+	dsndcapture_t *c = ctx;
+}
+
+void DSOUND_Capture_Shutdown(void *ctx)
+{
+	dsndcapture_t *c = ctx;
+	Z_Free(ctx);
+}
+
+unsigned int DSOUND_Capture_Update(void *ctx, unsigned char *buffer, unsigned int minbytes, unsigned int maxbytes)
+{
+	dsndcapture_t *c = ctx;
+	return 0; // how much data is in buffer.
+}
+	
+snd_capture_driver_t DSOUND_Capture =
+{
+	DSOUND_Capture_Init,
+	DSOUND_Capture_Start,
+	DSOUND_Capture_Update,
+	DSOUND_Capture_Stop,
+	DSOUND_Capture_Shutdown
+};
+	
+#endif // FTE_PEXT2_VOICECHAT

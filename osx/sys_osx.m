@@ -82,6 +82,13 @@
 #import "vid_osx.h"
 #include <dlfcn.h>
 
+typedef void *dllhandle_t;
+
+typedef struct {
+	void **funcptr;
+	char *name;
+} dllfunction_t;
+
 #pragma mark -
 
 //_____________________________________________________________________________________________________________________dEFINES
@@ -831,10 +838,13 @@ int	Sys_CheckSpecialKeys (int theKey)
     {
 #ifdef GLQUAKE
 	case 'F':
+	    con_suppress = true;
 	    VID_Shutdown();
 	    gVidDisplayFullscreen = (gVidDisplayFullscreen == YES) ? NO : YES;
 	    VID_Init(host_basepal);
 	    GFX_Init();
+	    R_NewMap(true);
+	    con_suppress = false;
 
 	    return (1);
 	    break;
@@ -861,7 +871,7 @@ int	Sys_CheckSpecialKeys (int theKey)
 #endif /* !GLQUAKE */            
             break;
         case 'M':
-            // minimize window [CMD-M]:
+            // minimize window [CMD-M]:b
             if (gVidDisplayFullscreen == NO && gVidIsMinimized == NO && gVidWindow != NULL)
             {
                 [gVidWindow miniaturize: NULL];
@@ -1429,3 +1439,36 @@ void *Sys_DLProc(DL_t dl, const char *name)
 {
 	return dlsym(dl, name);
 }
+
+#ifdef FTE_PEXT2_VOICECHAT
+
+void Sys_CloseLibrary(dllhandle_t *lib)
+{
+	dlclose(lib);
+}
+
+dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs)
+{
+	int i;
+	void *lib;
+	
+	lib = dlopen(name, RTLD_NOW);
+	if (!lib)
+		return NULL;
+	
+	for (i = 0; funcs[i].name; i++)
+	{
+		*funcs[i].funcptr = dlsym(lib, funcs[i].name);
+		if (!*funcs[i].funcptr)
+			break;
+	}
+	if (funcs[i].name)
+	{
+		Sys_CloseLibrary((dllhandle_t*)lib);
+		lib = NULL;
+	}
+	
+	return (dllhandle_t*)lib;
+}
+
+#endif
