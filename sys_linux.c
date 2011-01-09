@@ -827,3 +827,41 @@ void *Sys_DLProc(DL_t dl, const char *name)
 {
 	return dlsym(dl, name);
 }
+
+/*********************************************************************************/
+
+void Sys_CloseLibrary(dllhandle_t *lib)
+{
+	dlclose((void*)lib);
+}
+
+dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs)
+{
+	int i;
+	dllhandle_t lib;
+
+	lib = dlopen (name, RTLD_LAZY);
+	if (!lib)
+		return NULL;
+
+	for (i = 0; funcs[i].name; i++)
+	{
+		*funcs[i].funcptr = dlsym(lib, funcs[i].name);
+		if (!*funcs[i].funcptr)
+			break;
+	}
+	if (funcs[i].name)
+	{
+		Sys_CloseLibrary((dllhandle_t*)lib);
+		lib = NULL;
+	}
+
+	return (dllhandle_t*)lib;
+}
+
+void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname)
+{
+	if (!module)
+		return NULL;
+	return dlsym(module, exportname);
+}

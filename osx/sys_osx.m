@@ -82,13 +82,6 @@
 #import "vid_osx.h"
 #include <dlfcn.h>
 
-typedef void *dllhandle_t;
-
-typedef struct {
-	void **funcptr;
-	char *name;
-} dllfunction_t;
-
 #pragma mark -
 
 //_____________________________________________________________________________________________________________________dEFINES
@@ -1440,7 +1433,7 @@ void *Sys_DLProc(DL_t dl, const char *name)
 	return dlsym(dl, name);
 }
 
-#ifdef FTE_PEXT2_VOICECHAT
+/*********************************************************************************/
 
 void Sys_CloseLibrary(dllhandle_t *lib)
 {
@@ -1452,7 +1445,7 @@ dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs)
 	int i;
 	void *lib;
 	
-	lib = dlopen(name, RTLD_NOW);
+	lib = dlopen(name, RTLD_LAZY);
 	if (!lib)
 		return NULL;
 	
@@ -1471,4 +1464,9 @@ dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs)
 	return (dllhandle_t*)lib;
 }
 
-#endif
+void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname)
+{
+	if (!module)
+		return NULL;
+	return dlsym(module, exportname);
+}

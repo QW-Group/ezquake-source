@@ -187,3 +187,18 @@ int		Sys_compare_by_name (const void *a, const void *b);
 #else
 	extern struct timeval  select_timeout;
 #endif
+
+
+// library loading.
+
+typedef struct
+{
+	void **funcptr;
+	char *name;
+} dllfunction_t;
+
+typedef void *dllhandle_t;
+
+dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs);
+void Sys_CloseLibrary(dllhandle_t *lib);
+void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname);

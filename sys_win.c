@@ -1556,3 +1556,41 @@ void *Sys_DLProc (DL_t dl, const char *name)
 {
 	return (void *) GetProcAddress (dl, name);
 }
+
+//===========================================================================
+
+void Sys_CloseLibrary(dllhandle_t *lib)
+{
+	FreeLibrary((HMODULE)lib);
+}
+
+dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs)
+{
+	int i;
+	HMODULE lib;
+
+	lib = LoadLibrary(name);
+	if (!lib)
+		return NULL;
+
+	for (i = 0; funcs[i].name; i++)
+	{
+		*funcs[i].funcptr = GetProcAddress(lib, funcs[i].name);
+		if (!*funcs[i].funcptr)
+			break;
+	}
+	if (funcs[i].name)
+	{
+		Sys_CloseLibrary((dllhandle_t*)lib);
+		lib = NULL;
+	}
+
+	return (dllhandle_t*)lib;
+}
+
+void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname)
+{
+	if (!module)
+		return NULL;
+	return GetProcAddress((HINSTANCE)module, exportname);
+}

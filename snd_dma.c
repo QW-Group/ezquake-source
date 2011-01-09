@@ -961,82 +961,8 @@ void S_LocalSoundWithVol(char *sound, float volume)
 #define qboolean qbool
 #define qbyte byte
 
-typedef struct {
-	void **funcptr;
-	char *name;
-} dllfunction_t;
-
-typedef void *dllhandle_t;
-
 #define ival integer // for cvars compatibility
 #define realtime cls.realtime
-
-#ifdef _WIN32
-
-// well, its OS specific and should be in sys_xxx.c but...
-
-static void Sys_CloseLibrary(dllhandle_t *lib)
-{
-	FreeLibrary((HMODULE)lib);
-}
-
-static dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs)
-{
-	int i;
-	HMODULE lib;
-
-	lib = LoadLibrary(name);
-	if (!lib)
-		return NULL;
-
-	for (i = 0; funcs[i].name; i++)
-	{
-		*funcs[i].funcptr = GetProcAddress(lib, funcs[i].name);
-		if (!*funcs[i].funcptr)
-			break;
-	}
-	if (funcs[i].name)
-	{
-		Sys_CloseLibrary((dllhandle_t*)lib);
-		lib = NULL;
-	}
-
-	return (dllhandle_t*)lib;
-}
-#else // _WIN32
-
-#include <dlfcn.h>
-
-static void Sys_CloseLibrary(dllhandle_t *lib)
-{
-	dlclose((void*)lib);
-}
-
-static dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs)
-{
-	int i;
-	dllhandle_t lib;
-
-	lib = dlopen (name, RTLD_LAZY);
-	if (!lib)
-		return NULL;
-
-	for (i = 0; funcs[i].name; i++)
-	{
-		*funcs[i].funcptr = dlsym(lib, funcs[i].name);
-		if (!*funcs[i].funcptr)
-			break;
-	}
-	if (funcs[i].name)
-	{
-		Sys_CloseLibrary((dllhandle_t*)lib);
-		lib = NULL;
-	}
-
-	return (dllhandle_t*)lib;
-}
-
-#endif // _WIN32
 
 //=========================================================================
 
