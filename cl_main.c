@@ -1465,6 +1465,8 @@ void CL_ConnectionlessPacket (void)
 				pext2
 #endif // PROTOCOL_VERSION_FTE
 				);
+
+			break;
 		}
 		case S2C_CONNECTION :
 		{
