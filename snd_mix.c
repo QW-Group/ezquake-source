@@ -85,7 +85,7 @@ static void S_TransferStereo16 (int endtime)
 	HRESULT hresult;
 #endif
 
-	snd_vol = s_volume.value * 256;
+	snd_vol = (s_volume.value * voicevolumemod) * 256;
 
 	snd_p = (int *) paintbuffer;
 	lpaintedtime = paintedtime;

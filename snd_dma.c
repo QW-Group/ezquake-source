@@ -87,6 +87,7 @@ static sfx_t	*ambient_sfx[NUM_AMBIENTS];
 
 cvar_t bgmvolume = {"bgmvolume", "1"};
 cvar_t s_volume = {"volume", "0.7"};
+cvar_t s_raw_volume = {"s_raw_volume", "1"};
 cvar_t s_nosound = {"s_nosound", "0"};
 cvar_t s_precache = {"s_precache", "1"};
 cvar_t s_loadas8bit = {"s_loadas8bit", "0"};
@@ -226,6 +227,7 @@ void S_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register(&bgmvolume);
 	Cvar_Register(&s_volume);
+	Cvar_Register(&s_raw_volume);
 	Cvar_Register(&s_nosound);
 	Cvar_Register(&s_precache);
 	Cvar_Register(&s_loadas8bit);
@@ -1678,6 +1680,7 @@ void S_RawAudio(int sourceid, byte *data,
 #else
 			channels[i].pos -= prepadl; // * channels[i].rate;
 			channels[i].end += outsamples;
+			channels[i].master_vol = (int) (s_raw_volume.value * 255); // this should changed volume on alredy playing sound.
 
 			if (channels[i].end < paintedtime)
 			{
@@ -1695,6 +1698,6 @@ void S_RawAudio(int sourceid, byte *data,
 //		Com_DPrintf("start sound\n");
 		/*slight delay to try to avoid frame rate/etc stops/starts*/
 //		S_StartSoundCard(si, -1, 0, &s->sfx, r_origin, 1, 32767, -shm->format.speed*0.02, 0);
-		S_StartSound(SELF_SOUND, 0, &s->sfx, r_origin, 1, 0);
+		S_StartSound(SELF_SOUND, 0, &s->sfx, r_origin, s_raw_volume.value, 0);
 	}
 }
