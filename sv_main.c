@@ -1256,6 +1256,18 @@ static void SVC_DirectConnect (void)
 	newcl->_userinfoshort_ctx_.max = MAX_CLIENT_INFOS;
 	Info_Convert(&newcl->_userinfo_ctx_, userinfo);
 
+	// request protocol extensions.
+	if (*Info_Get(&newcl->_userinfo_ctx_, "Qizmo")
+		|| *Info_Get(&newcl->_userinfo_ctx_, "*qtv")
+	)
+	{
+		newcl->process_pext = false; // this whould not work over such proxies.
+	}
+	else
+	{
+		newcl->process_pext = true;
+	}
+
 	//for (i = 0; i < UPDATE_BACKUP; i++)
 	//	newcl->frames[i].entities.entities = cl_state_entities[newcl-svs.clients][i];
 

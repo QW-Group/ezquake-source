@@ -2846,6 +2846,37 @@ void CL_ParseStufftext (void)
 		if (cls.demoseeking == DST_SEEKING_DEMOMARK)
 			cls.demoseeking = DST_SEEKING_FOUND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
 	}
+	else if (!strcmp(s, "cmd pext\n"))
+	{
+		// If someone requested protocol extensions we support - reply.
+
+#ifdef PROTOCOL_VERSION_FTE
+extern unsigned int CL_SupportedFTEExtensions (void);
+#endif // PROTOCOL_VERSION_FTE
+#ifdef PROTOCOL_VERSION_FTE2
+extern unsigned int CL_SupportedFTEExtensions2 (void);
+#endif // PROTOCOL_VERSION_FTE2
+
+		char tmp[128];
+		char data[1024] = "cmd pext";
+		int ext;
+
+		#ifdef PROTOCOL_VERSION_FTE
+		ext = cls.fteprotocolextensions ? cls.fteprotocolextensions : CL_SupportedFTEExtensions();
+		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE, ext);
+		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, ext);
+		strlcat(data, tmp, sizeof(data));
+		#endif // PROTOCOL_VERSION_FTE 
+
+		#ifdef PROTOCOL_VERSION_FTE2
+		ext = cls.fteprotocolextensions2 ? cls.fteprotocolextensions2 : CL_SupportedFTEExtensions2();
+		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE2, ext);
+		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, ext);
+		strlcat(data, tmp, sizeof(data));
+		#endif // PROTOCOL_VERSION_FTE2 
+
+		Cbuf_AddTextEx(&cbuf_svc, data);
+	}
 	else
 	{
 		Cbuf_AddTextEx(&cbuf_svc, s);

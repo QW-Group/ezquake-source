@@ -306,6 +306,7 @@ typedef struct client_s
 #endif
 
 //===== NETWORK ============
+	qbool			process_pext;		// true if we wait for reply from client on "cmd pext" command.
 	int				chokecount;
 	int				delta_sequence;			// -1 = no compression
 	netchan_t		netchan;

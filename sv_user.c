@@ -112,6 +112,15 @@ static void Cmd_New_f (void)
 		sv_client->connection_started = realtime;
 
 	sv_client->spawncount = svs.spawncount;
+
+	// request protocol extensions.
+	if (sv_client->process_pext)
+	{
+		MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
+		MSG_WriteString (&sv_client->netchan.message, "cmd pext\n");
+		return;	
+	}
+
 	// do not proceed if realip is unknown
     if (sv_client->state == cs_preconnected && !sv_client->realip.ip[0] && (int)sv_getrealip.value)
 	{
@@ -2962,6 +2971,56 @@ void SV_Voice_UnmuteAll_f(void)
 
 #endif // FTE_PEXT2_VOICECHAT
 
+/*
+ * Parse protocol extensions which supported by client.
+ * This is workaround for the proxy case, like: qwfwd. We can't use it in case of qizmo thought.
+ */
+void Cmd_PEXT_f(void)
+{
+	int idx;
+	int proto_ver, proto_value;
+
+	if (!sv_client->process_pext)
+		return; // sorry, we do not expect it right now.
+
+	sv_client->process_pext = false;
+
+	for ( idx = 1; idx < Cmd_Argc(); )
+	{
+		proto_ver   = Q_atoi(Cmd_Argv(idx++));
+		proto_value = Q_atoi(Cmd_Argv(idx++));
+
+		switch( proto_ver )
+		{
+#ifdef PROTOCOL_VERSION_FTE
+		case PROTOCOL_VERSION_FTE:
+			// do not reset it.
+			if (!sv_client->fteprotocolextensions)
+			{
+				sv_client->fteprotocolextensions = proto_value;
+				Con_DPrintf("PEXT: Client supports 0x%x fte extensions\n", proto_value);
+			}
+			break;
+#endif // PROTOCOL_VERSION_FTE
+
+#ifdef PROTOCOL_VERSION_FTE2
+		case PROTOCOL_VERSION_FTE2:
+			// do not reset it.
+			if (!sv_client->fteprotocolextensions2)
+			{
+				sv_client->fteprotocolextensions2 = proto_value;
+				Con_DPrintf("PEXT: Client supports 0x%x fte extensions2\n", proto_value);
+			}
+			break;
+#endif // PROTOCOL_VERSION_FTE2
+		}
+	}
+
+	// we are ready for new command now.
+	MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
+	MSG_WriteString (&sv_client->netchan.message, "cmd new\n");
+}
+
 void SV_DemoList_f(void);
 void SV_DemoListRegex_f(void);
 void SV_MVDInfo_f(void);
@@ -3063,6 +3122,8 @@ static ucmd_t ucmds[] =
 	{"muteall", SV_Voice_MuteAll_f, false},	/*disables*/
 	{"unmuteall", SV_Voice_UnmuteAll_f, false}, /*reenables*/
 #endif
+
+	{"pext", Cmd_PEXT_f, false}, // user reply with supported protocol extensions.
 
 	{NULL, NULL}
 
