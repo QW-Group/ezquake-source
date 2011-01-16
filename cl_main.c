@@ -207,6 +207,8 @@ cvar_t	topcolor				= {"topcolor","", CVAR_USERINFO};
 cvar_t	bottomcolor				= {"bottomcolor","", CVAR_USERINFO};
 cvar_t	skin					= {"skin", "", CVAR_USERINFO};
 cvar_t	rate					= {"rate", "5760", CVAR_USERINFO};
+void OnChange_AppliedAfterReconnect (cvar_t *var, char *value, qbool *cancel);
+cvar_t	mtu						= {"mtu", "", CVAR_USERINFO, OnChange_AppliedAfterReconnect};
 cvar_t	msg						= {"msg", "1", CVAR_USERINFO};
 cvar_t  noaim					= {"noaim", "1", CVAR_USERINFO};
 cvar_t	w_switch				= {"w_switch", "", CVAR_USERINFO};
@@ -275,6 +277,15 @@ static void CL_FixupModelNames (void) {
 	simple_crypt (emodel_name, sizeof(emodel_name) - 1);
 	simple_crypt (pmodel_name, sizeof(pmodel_name) - 1);
 }
+
+void OnChange_AppliedAfterReconnect (cvar_t *var, char *value, qbool *cancel)
+{
+	if (cls.state != ca_disconnected)
+	{
+		Com_Printf ("%s change will be applied after reconnect!\n", var->name);
+	}
+}
+
 
 #ifdef WIN32
 
@@ -1829,6 +1840,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&spectator);
 	Cvar_Register (&skin);
 	Cvar_Register (&rate);
+	Cvar_Register (&mtu);
 	Cvar_Register (&name);
 	Cvar_Register (&msg);
 	Cvar_Register (&noaim);
