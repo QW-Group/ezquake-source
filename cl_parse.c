@@ -2875,6 +2875,7 @@ extern unsigned int CL_SupportedFTEExtensions2 (void);
 		strlcat(data, tmp, sizeof(data));
 		#endif // PROTOCOL_VERSION_FTE2 
 
+		strlcat(data, "\n", sizeof(data));
 		Cbuf_AddTextEx(&cbuf_svc, data);
 	}
 	else
