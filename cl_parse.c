@@ -1201,13 +1201,14 @@ void CL_NextUpload(void)
 	if ((!cls.is_file && !cls.mem_upload) || (cls.is_file && !cls.upload))
 		return;
 
-	r = min(cls.upload_size - cls.upload_pos, sizeof(buffer));
+	r = min(cls.upload_size - cls.upload_pos, (int)sizeof(buffer));
 	MSG_WriteByte (&cls.netchan.message, clc_upload);
 	MSG_WriteShort (&cls.netchan.message, r);
 
 	if (cls.is_file)
 	{
-		if (!fread(buffer, 1, r, cls.upload) != r) {
+		if ((int)fread(buffer, 1, r, cls.upload) != r)
+		{
 			Com_Printf("Error reading the upload file\n");
 			CL_StopUpload();
 			return;
