@@ -16,36 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_linux.c,v 1.13 2007-09-26 13:53:42 tonik Exp $
 */
 
 #include "quakedef.h"
 #include "qsound.h"
-
-
-// Note: The functions here keep track of if the sound system is inited.
-// They perform checks so that the real functions are only called if appropriate.
-
-// Prototypes
-//FIXME
-/*qbool SNDDMA_Init_ALSA(sounddriver_t *sd);
-int SNDDMA_GetDMAPos_ALSA(void);
-void SNDDMA_Shutdown_ALSA(void);
-void SNDDMA_Submit_ALSA(unsigned int count);*/
-
-//qbool SNDDMA_Init_OSS(void);
-//int SNDDMA_GetDMAPos_OSS(void);
-//void SNDDMA_Shutdown_OSS(void);
-
-////////////////////////////
-// external cvars
-///////////////////////////
-
-//FIXME
-/*
-extern cvar_t s_oss_device;
-extern cvar_t s_alsa_device;*/
-
 
 //========================================================================
 // SOUND CAPTURING
@@ -65,7 +39,7 @@ void *DSOUND_Capture_Init (int rate)
 	Com_DPrintf("DSOUND_Capture_Init: rate %d\n", rate);
 	result = Z_Malloc(sizeof(*result));
 	Com_DPrintf("DSOUND_Capture_Init: OK\n");
-	return result;	
+	return result;
 }
 
 void DSOUND_Capture_Start(void *ctx)
