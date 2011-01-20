@@ -160,7 +160,7 @@ cvar_t cl_voip_micamp = {"cl_voip_micamp", "2"};
 
 static void S_SoundInfo_f (void)
 {
-	if (!shm || !sounddriver) {
+	if (!shm) {
 		Com_Printf ("sound system not started\n");
 		return;
 	}
