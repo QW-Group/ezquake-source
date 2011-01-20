@@ -59,7 +59,7 @@ qbool SNDDMA_Init(void)
 		return SNDDMA_Init_OSS;
 	} else {
 		Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver));
-		return 0; // Init failed
+		return 0; // Init failed 
 	}
 }
 
