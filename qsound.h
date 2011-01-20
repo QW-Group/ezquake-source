@@ -114,11 +114,14 @@ int SNDDMA_GetDMAPos(void);
 void SNDDMA_Shutdown(void);
 
 #ifdef __linux__
-void SNDDMA_Submit(unsigned int count);
+void SNDDMA_Submit(unsigned int count); //OSS doesnt use Submit
 qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //FIXME Make it cleaner
-qbool SNDDMA_Init_OSS(struct sounddriver_t *sd); //FIXME
 #else
 void SNDDMA_Submit(void);
+#endif
+
+#if defined(__linux__) || (__FreeBSD__)
+qbool SNDDMA_Init_OSS(struct sounddriver_t *sd); //FIXME
 #endif
 
 ///////////////////////////////
