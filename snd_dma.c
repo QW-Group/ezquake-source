@@ -928,7 +928,7 @@ static void S_Update_ (void)
 
 	S_PaintChannels (endtime);
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 	if(sounddriver->Submit)
 		sounddriver->Submit(paintedtime - soundtime);
 #else
