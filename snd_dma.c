@@ -115,13 +115,13 @@ cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
 #if defined(__FreeBSD__) || defined(__linux__)
 cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_bits = {"s_bits", "16"};
-cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"}; //FIXME
+cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"};
 #endif
 
 #ifdef __linux__
 cvar_t s_driver = {"s_driver", "alsa"};
-cvar_t s_alsa_device = {"s_alsa_device", "default"}; //FIXME
-cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"}; //FIXME
+cvar_t s_alsa_device = {"s_alsa_device", "default"};
+cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"};
 #endif
 
 #ifdef __FreeBSD__
@@ -164,8 +164,8 @@ static void S_SoundInfo_f (void)
 		Com_Printf ("sound system not started\n");
 		return;
 	}
-#ifdef __linux__
-	Com_Printf("driver: %s\n", s_driver.string); //FIXME
+#if defined(__linux__) || defined(__FreeBSD__)
+	Com_Printf("driver: %s\n", s_driver.string);
 #endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 	Com_Printf("%5d frames\n", shm->sampleframes);
@@ -194,7 +194,8 @@ static qbool S_Startup (void)
 	qbool retval = 0;
 
 	if(sounddriver)	{
-	//FIXME make it in a cleaner way...
+	//FIXME UGLY UGLY, make this in a cleaner way...
+
 		if(strcmp(audio_driver, "alsa")==0) {
 			retval = SNDDMA_Init_ALSA(sounddriver);
 		} else if(strcmp(audio_driver, "oss")==0) {
@@ -211,6 +212,15 @@ static qbool S_Startup (void)
 		return false;
 	}
 
+#elif defined(__FreeBSD__)
+	//FIXME UGLY UGLY UGLY
+	retval = SNDDMA_Init_OSS(sounddriver);
+	if(!retval) {
+		shm = NULL;
+		sound_spatialized = false;
+		free(sounddriver);
+		return false;
+	}
 #else
 	if (!SNDDMA_Init()) {
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
