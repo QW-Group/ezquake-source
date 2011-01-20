@@ -79,6 +79,21 @@ typedef struct wavinfo_s {
 	int		dataofs;		// chunk starts this many bytes from file start
 } wavinfo_t;
 
+#ifdef __linux__
+
+typedef enum soundsystem_t soundsystem_t;
+enum soundsystem_t {SND_ALSA=1, SND_OSS=2, NONE=0};
+
+typedef struct sounddriver_t {
+	soundsystem_t ss;
+	int (*GetAvail)(void);
+	int (*GetDMAPos)(void);
+	void (*Submit)(unsigned int count);
+	void (*Shutdown)(void);
+} sounddriver_t;
+
+#endif
+
 void S_Init (void);
 void S_Shutdown (void);
 void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol,  float attenuation);
@@ -92,21 +107,26 @@ void S_ExtraUpdate (void);
 sfx_t *S_PrecacheSound (char *sample);
 void S_PaintChannels(int endtime);
 
-// initializes cycling through a DMA buffer and returns information on it
+/////////////////////////////////
+
 qbool SNDDMA_Init(void);
-
-// gets the current DMA position
 int SNDDMA_GetDMAPos(void);
-
-// shutdown the DMA xfer.
 void SNDDMA_Shutdown(void);
+
+#ifdef __linux__
+void SNDDMA_Submit(unsigned int count);
+#else
+void SNDDMA_Submit(void);
+#endif
+
+///////////////////////////////
+
 
 void S_LocalSound (char *s);
 void S_LocalSoundWithVol(char *sound, float volume);
 sfxcache_t *S_LoadSound (sfx_t *s);
 
 void SND_InitScaletable (void);
-void SNDDMA_Submit(void);
 int SND_Rate(int rate);
 
 void SND_ResampleStream(void *in, int inrate, int inwidth, int inchannels, int insamps,

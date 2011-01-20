@@ -33,6 +33,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "input.h"
 #endif
 
+//dimman
+#ifdef __linux__
+sounddriver_t *sounddriver;
+#endif
+
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
 static void S_Play_f (void);
 static void S_PlayVol_f (void);
@@ -102,18 +107,31 @@ cvar_t s_linearresample = {"s_linearresample", "1"};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
-#ifdef __FreeBSD__
+
+/////////////////////////////////
+// Specific os cvar/defaults
+////////////////////////////////
+
+#if defined(__FreeBSD__) || defined(__linux__)
 cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_bits = {"s_bits", "16"};
-cvar_t s_device = {"s_device", "/dev/dsp"};
+cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"}; //FIXME
 #endif
 
 #ifdef __linux__
-cvar_t s_stereo = {"s_stereo", "1"};
-cvar_t s_bits = {"s_bits", "16"};
-cvar_t s_device = {"s_device", "plug:hw"};
-cvar_t s_noalsa = {"s_noalsa", "0"};
+cvar_t s_driver = {"s_driver", "alsa"};
+cvar_t s_alsa_device = {"s_alsa_device", "default"}; //FIXME
+cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"}; //FIXME
 #endif
+
+#ifdef __FreeBSD__
+cvar_t s_driver = {"s_driver", "oss"};
+#endif
+
+
+///////////////////////////////
+// voice communication
+//////////////////////////////
 
 #ifdef FTE_PEXT2_VOICECHAT
 
@@ -146,7 +164,9 @@ static void S_SoundInfo_f (void)
 		Com_Printf ("sound system not started\n");
 		return;
 	}
-
+#ifdef __linux__
+	Com_Printf("driver: %s\n", s_driver.string); //FIXME
+#endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 	Com_Printf("%5d frames\n", shm->sampleframes);
 	Com_Printf("%5d samples\n", shm->samples);
@@ -212,7 +232,7 @@ static void S_Restart_f (void)
 }
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel) {
-	Cbuf_AddText("snd_restart\n");
+	Cbuf_AddText("s_restart\n");
 }
 
 void S_Init (void)
@@ -244,11 +264,13 @@ void S_Init (void)
 
 #if (defined(__linux__) || defined(__FreeBSD__))
 	Cvar_Register(&s_stereo);
-	Cvar_Register(&s_device);
+	Cvar_Register(&s_oss_device);
+	Cvar_Register(&s_driver);
 	Cvar_Register(&s_bits);
 #endif
 #ifdef __linux__
-	Cvar_Register(&s_noalsa);
+	Cvar_Register(&s_alsa_device);
+	Cvar_Register(&s_alsa_latency);
 #endif
 
 #ifdef FTE_PEXT2_VOICECHAT
@@ -284,8 +306,8 @@ void S_Init (void)
 		return;
 	}
 
-	Cmd_AddCommand("snd_restart", S_Restart_f);
-	Cmd_AddLegacyCommand("s_restart", "snd_restart");	// exclusively for Disconnect
+	Cmd_AddCommand("s_restart", S_Restart_f);
+	Cmd_AddLegacyCommand("snd_restart", "s_restart");	// exclusively for Disconnect
 	Cmd_AddCommand("play", S_Play_f);
 	Cmd_AddCommand("playvol", S_PlayVol_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
@@ -848,7 +870,12 @@ static void S_Update_ (void)
 
 	S_PaintChannels (endtime);
 
+#ifdef __linux__
+	SNDDMA_Submit (paintedtime - soundtime);
+#else
 	SNDDMA_Submit ();
+#endif
+
 }
 
 /*

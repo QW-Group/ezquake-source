@@ -23,7 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 
 #ifndef __FreeBSD__
-static qbool SNDDMA_ALSA = true;
+
+static qbool SNDDMA_ALSA = true; //FIXME REMOVE
+
 // Note: The functions here keep track of if the sound system is inited.
 // They perform checks so that the real functions are only called if appropriate.
 
@@ -31,46 +33,34 @@ static qbool SNDDMA_ALSA = true;
 qbool SNDDMA_Init_ALSA(void);
 int SNDDMA_GetDMAPos_ALSA(void);
 void SNDDMA_Shutdown_ALSA(void);
-void SNDDMA_Submit_ALSA(void);
+void SNDDMA_Submit_ALSA(unsigned int count);
 #endif
 
 qbool SNDDMA_Init_OSS(void);
 int SNDDMA_GetDMAPos_OSS(void);
 void SNDDMA_Shutdown_OSS(void);
 
-extern cvar_t s_device;
+////////////////////////////
+// external cvars
+///////////////////////////
+extern cvar_t s_oss_device;
+extern cvar_t s_alsa_device;
 
-// Main functions
+///////////////////////////
+// main functions
+//////////////////////////
 qbool SNDDMA_Init(void)
 {
-	int retval;
+	char *audio_driver = Cvar_String("s_driver");
 
-#ifdef __FreeBSD__
-	Com_Printf("sound: Initializing OSS...\n");
-	retval = SNDDMA_Init_OSS();
-#else
-	// Give user the option to force OSS...
-	if (Cvar_Value("s_noalsa")) {
-		// User wants us to use OSS...
-		SNDDMA_ALSA = false;
-		Com_Printf("sound: Using OSS at user's request...\n");
-		retval = SNDDMA_Init_OSS();
+	if(strcmp(audio_driver, "alsa") == 0) {
+		return SNDDMA_Init_ALSA;
+	} else if(strcmp(audio_driver, "oss") == 0) {
+		return SNDDMA_Init_OSS;
 	} else {
-		// Try ALSA first...
-		Com_Printf("sound: Attempting to initialise ALSA...\n");
-		retval = SNDDMA_Init_ALSA();
-		if (retval) {
-			SNDDMA_ALSA = true;
-		} else {
-			// Fall back to OSS...
-			SNDDMA_ALSA = false;
-			Com_Printf("sound: Falling back to OSS...\n");
-			Cvar_Set(&s_device, "/dev/dsp");
-			retval = SNDDMA_Init_OSS();
-		}
+		Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver));
+		return 0; // Init failed
 	}
-#endif
-	return retval;
 }
 
 int SNDDMA_GetDMAPos(void)
