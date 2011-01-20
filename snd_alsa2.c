@@ -270,7 +270,7 @@ qbool SNDDMA_Init_ALSA (struct sounddriver_t *sd)
 	const char *prevattempt;
 	int channels, bits, rate;
 	channels = Cvar_Value("s_stereo") ? 2 : 1;
-
+	bits = 16; // made it default to 16
 	if(Cvar_Value("s_bits")) {
 		bits = Cvar_Value("s_bits");
 		if(bits != 8 && bits != 16) {
