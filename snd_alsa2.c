@@ -59,12 +59,21 @@ static struct alsa_private *driver;
 /////////////
 //
 ////////////
+//qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd);
+int SNDDMA_GetDMAPos_ALSA(void);
+void SNDDMA_Shutdown_ALSA(void);
+void SNDDMA_Submit_ALSA(unsigned int count);
+
+
 static qbool alsa_initso(struct alsa_private *p);
 static int alsa_getavail(void);
-static qbool alsa_init_internal(const char *device, int rate, int channels, int bits);
+static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, int rate, int channels, int bits);
 static void alsa_tryrestart(unsigned int ret, int dorestart);
 static void alsa_writestuff(unsigned int max);
 
+
+extern cvar_t s_oss_device;
+extern cvar_t s_alsa_device;
 
 ////////////////////////////////////////////////////
 //	 private functions
@@ -83,7 +92,7 @@ static void alsa_tryrestart(unsigned int ret, int dorestart)
                 driver->snd_pcm_start(driver->pcmhandle);
 }
 
-static qbool alsa_init_internal(const char *device, int rate, int channels, int bits)
+static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, int rate, int channels, int bits)
 {
 	struct alsa_private *drive;
 	if(!*device)
@@ -105,7 +114,7 @@ static qbool alsa_init_internal(const char *device, int rate, int channels, int 
 
                                         shm->format.channels = channels;
 
-					shm->format.width = 2; //FIXME
+					shm->format.width = (bits==16) ? 2 : 1;
 
                                         shm->samples = drive->buffersamples;
                                         shm->samplepos = 0;
@@ -116,6 +125,13 @@ static qbool alsa_init_internal(const char *device, int rate, int channels, int 
 
                                         alsa_writestuff(drive->buffersamples);
                                         drive->snd_pcm_start(drive->pcmhandle);
+
+					sd->GetDMAPos = SNDDMA_GetDMAPos_ALSA;
+					sd->GetAvail = alsa_getavail;
+					sd->Submit = SNDDMA_Submit_ALSA;
+					sd->Shutdown = SNDDMA_Shutdown_ALSA;
+					sd->type = SND_ALSA;
+
                                         return true;
                                 }
                         }
@@ -248,17 +264,39 @@ void SNDDMA_Shutdown_ALSA (void)
 	}
 }
 //void SNDDMA_Init_ALSA (int rate, int channels, int bits)
-qbool SNDDMA_Init_ALSA (void)
+qbool SNDDMA_Init_ALSA (struct sounddriver_t *sd)
 {
-// FIXME
 	qbool ret;
+	const char *prevattempt;
 	int channels, bits, rate;
-	channels = 2;
-	bits = 16;
-	rate = 11025;
+	channels = Cvar_Value("s_stereo") ? 2 : 1;
 
-	ret = alsa_init_internal("default", rate, channels, bits);
-	// do some fallback to default/plughw etc
+	if(Cvar_Value("s_bits")) {
+		bits = Cvar_Value("s_bits");
+		if(bits != 8 && bits != 16) {
+			Com_Printf("Error: invalid s_bits value \"%d\". Valid (8 or 16)", bits);
+			return false;
+		}
+	}
+	rate = SND_Rate((int)s_khz.value);
+
+	ret = alsa_init_internal(sd, s_alsa_device.string, rate, channels, bits);
+
+	prevattempt = s_alsa_device.string;
+	if (ret == 0 && strcmp(s_alsa_device.string, "default") != 0)
+        {
+                Com_Printf("Opening \"%s\" failed, trying \"default\"\n", s_alsa_device.string);
+
+                prevattempt = "default";
+                ret = alsa_init_internal(sd, "default", rate, channels, bits);
+        }
+        if (ret == 0 && strcmp(s_alsa_device.string, "hw") != 0)
+        {
+                Com_Printf("Opening \"%s\" failed, trying \"hw\"\n", prevattempt);
+
+                ret = alsa_init_internal(sd, "hw", rate, channels, bits);
+        }
+
 	return ret;
 }
 

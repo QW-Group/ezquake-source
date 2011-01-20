@@ -24,16 +24,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef __FreeBSD__
 
-static qbool SNDDMA_ALSA = true; //FIXME REMOVE
-
 // Note: The functions here keep track of if the sound system is inited.
 // They perform checks so that the real functions are only called if appropriate.
 
 // Prototypes
-qbool SNDDMA_Init_ALSA(void);
+//FIXME
+/*qbool SNDDMA_Init_ALSA(sounddriver_t *sd);
 int SNDDMA_GetDMAPos_ALSA(void);
 void SNDDMA_Shutdown_ALSA(void);
-void SNDDMA_Submit_ALSA(unsigned int count);
+void SNDDMA_Submit_ALSA(unsigned int count);*/
 #endif
 
 qbool SNDDMA_Init_OSS(void);
@@ -43,54 +42,12 @@ void SNDDMA_Shutdown_OSS(void);
 ////////////////////////////
 // external cvars
 ///////////////////////////
+
+//FIXME
+/*
 extern cvar_t s_oss_device;
-extern cvar_t s_alsa_device;
+extern cvar_t s_alsa_device;*/
 
-///////////////////////////
-// main functions
-//////////////////////////
-qbool SNDDMA_Init(void)
-{
-	char *audio_driver = Cvar_String("s_driver");
-
-	if(strcmp(audio_driver, "alsa") == 0) {
-		return SNDDMA_Init_ALSA;
-	} else if(strcmp(audio_driver, "oss") == 0) {
-		return SNDDMA_Init_OSS;
-	} else {
-		Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver));
-		return 0; // Init failed 
-	}
-}
-
-int SNDDMA_GetDMAPos(void)
-{
-	return
-#ifndef __FreeBSD__
-		SNDDMA_ALSA ? SNDDMA_GetDMAPos_ALSA() :
-#endif
-			SNDDMA_GetDMAPos_OSS();
-}
-
-void SNDDMA_Shutdown(void)
-{
-#ifndef __FreeBSD__
-	if (SNDDMA_ALSA)
-		SNDDMA_Shutdown_ALSA();
-	else
-#endif
-		SNDDMA_Shutdown_OSS();
-}
-
-//Send sound to device if buffer isn't really the dma buffer
-void SNDDMA_Submit(void)
-{
-#ifndef __FreeBSD__
-	if (SNDDMA_ALSA)
-		SNDDMA_Submit_ALSA();
-#endif
-		// OSS doesn't use this so no need to call it.
-}
 
 //========================================================================
 // SOUND CAPTURING

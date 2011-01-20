@@ -160,7 +160,7 @@ cvar_t cl_voip_micamp = {"cl_voip_micamp", "2"};
 
 static void S_SoundInfo_f (void)
 {
-	if (!shm) {
+	if (!shm || !sounddriver) {
 		Com_Printf ("sound system not started\n");
 		return;
 	}
@@ -187,12 +187,38 @@ static qbool S_Startup (void)
 
 	S_RawClear();
 
+///////////////////////////////////////////////
+#ifdef __linux__
+	sounddriver = malloc(sizeof(*sounddriver));
+	char *audio_driver = Cvar_String("s_driver");
+	qbool retval = 0;
+
+	if(sounddriver)	{
+		if(strcmp(audio_driver, "alsa")==0) {
+			retval = SNDDMA_Init_ALSA(sounddriver); //FIXME
+		} else if(strcmp(audio_driver, "oss")==0) {
+			retval = SNDDMA_Init_OSS(); //FIXME
+		}
+		else {
+			Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
+		}
+	}
+	if(retval == 0) {
+		shm = NULL;
+		sound_spatialized = false;
+		free(sounddriver);
+		return false;
+	}
+
+#else
 	if (!SNDDMA_Init()) {
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
 		shm = NULL;
 		sound_spatialized = false;
 		return false;
 	}
+#endif
+//////////////////////////////////////////////
 
 	return true;
 }
@@ -202,7 +228,13 @@ void S_Shutdown (void)
 	if (!shm)
 		return;
 
+#ifdef __linux__
+	sounddriver->Shutdown();
+	free(sounddriver);
+	sounddriver = NULL;
+#else
 	SNDDMA_Shutdown();
+#endif
 
 	shm = NULL;
 	sound_spatialized = false;
@@ -793,7 +825,11 @@ static void GetSoundtime (void)
 	fullsamples = shm->sampleframes;
 
 	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
+#ifdef __linux__
+	samplepos = sounddriver->GetDMAPos();
+#else
 	samplepos = SNDDMA_GetDMAPos();
+#endif
 
 	if (samplepos < oldsamplepos) {
 		buffers++; // buffer wrapped
@@ -852,6 +888,17 @@ static void S_Update_ (void)
 	// mix ahead of current position
 	endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
 	endtime = min(endtime, (unsigned int)(soundtime + shm->sampleframes));
+#ifdef __linux__
+	int avail;
+	//mix ahead of current position
+	if(sounddriver->GetAvail) {
+		avail = sounddriver->GetAvail();
+		if(avail <= 0)
+			return;
+		endtime = soundtime + avail;
+	}
+	//FIXME Look at fodquake source, some more stuff to do later
+#endif
 
 #ifdef _WIN32
 	// if the buffer was lost or stopped, restore it and/or restart it
@@ -871,7 +918,7 @@ static void S_Update_ (void)
 	S_PaintChannels (endtime);
 
 #ifdef __linux__
-	SNDDMA_Submit (paintedtime - soundtime);
+	sounddriver->Submit(paintedtime - soundtime);
 #else
 	SNDDMA_Submit ();
 #endif
