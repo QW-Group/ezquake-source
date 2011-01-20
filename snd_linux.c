@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "qsound.h"
 
-#ifndef __FreeBSD__
 
 // Note: The functions here keep track of if the sound system is inited.
 // They perform checks so that the real functions are only called if appropriate.
@@ -33,11 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int SNDDMA_GetDMAPos_ALSA(void);
 void SNDDMA_Shutdown_ALSA(void);
 void SNDDMA_Submit_ALSA(unsigned int count);*/
-#endif
 
-qbool SNDDMA_Init_OSS(void);
-int SNDDMA_GetDMAPos_OSS(void);
-void SNDDMA_Shutdown_OSS(void);
+//qbool SNDDMA_Init_OSS(void);
+//int SNDDMA_GetDMAPos_OSS(void);
+//void SNDDMA_Shutdown_OSS(void);
 
 ////////////////////////////
 // external cvars

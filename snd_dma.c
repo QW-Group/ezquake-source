@@ -194,10 +194,11 @@ static qbool S_Startup (void)
 	qbool retval = 0;
 
 	if(sounddriver)	{
+	//FIXME make it in a cleaner way...
 		if(strcmp(audio_driver, "alsa")==0) {
-			retval = SNDDMA_Init_ALSA(sounddriver); //FIXME
+			retval = SNDDMA_Init_ALSA(sounddriver);
 		} else if(strcmp(audio_driver, "oss")==0) {
-			retval = SNDDMA_Init_OSS(); //FIXME
+			retval = SNDDMA_Init_OSS(sounddriver);
 		}
 		else {
 			Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
@@ -918,7 +919,8 @@ static void S_Update_ (void)
 	S_PaintChannels (endtime);
 
 #ifdef __linux__
-	sounddriver->Submit(paintedtime - soundtime);
+	if(sounddriver->Submit)
+		sounddriver->Submit(paintedtime - soundtime);
 #else
 	SNDDMA_Submit ();
 #endif

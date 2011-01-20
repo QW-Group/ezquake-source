@@ -115,8 +115,8 @@ void SNDDMA_Shutdown(void);
 
 #ifdef __linux__
 void SNDDMA_Submit(unsigned int count);
-qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //FIXME
-qbool SNDDMA_Init_OSS(void); //FIXME
+qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //FIXME Make it cleaner
+qbool SNDDMA_Init_OSS(struct sounddriver_t *sd); //FIXME
 #else
 void SNDDMA_Submit(void);
 #endif

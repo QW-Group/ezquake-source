@@ -40,14 +40,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Global Variables
 static int audio_fd;
 
+// Prototypes (that are not in qshound.h)
+int SNDDMA_GetDMAPos_OSS(void); //FIXME
+void SNDDMA_Shutdown_OSS(void); //FIXME
+
 // Main functions
-qbool SNDDMA_Init_OSS(void)
+qbool SNDDMA_Init_OSS(struct sounddriver_t *sd)
 {
 	int rc, fmt, tmp, caps;
 	char *snd_dev = NULL;
 	struct audio_buf_info info;
 
-	snd_dev = Cvar_String("s_device");
+	snd_dev = Cvar_String("s_oss_device");
 
 	if ((audio_fd = open(snd_dev, O_RDWR | O_NONBLOCK)) < 0) {
 		perror(snd_dev);
@@ -170,6 +174,11 @@ qbool SNDDMA_Init_OSS(void)
 
 	shm->samplepos = 0;
 
+	sd->GetDMAPos = SNDDMA_GetDMAPos_OSS;
+	sd->GetAvail = NULL;
+	sd->Submit = NULL;
+	sd->Shutdown = SNDDMA_Shutdown_OSS;
+
 	return 1;
 
 }
@@ -182,7 +191,7 @@ int SNDDMA_GetDMAPos_OSS(void)
 	if (!shm)
 		return 0;
 
-	snd_dev = Cvar_String("s_device");
+	snd_dev = Cvar_String("s_oss_device");
 
 	if (ioctl(audio_fd, SNDCTL_DSP_GETOPTR, &count) == -1) {
 		perror(snd_dev);
