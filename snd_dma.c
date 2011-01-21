@@ -119,9 +119,10 @@ cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"};
 #endif
 
 #ifdef __linux__
-cvar_t s_driver = {"s_driver", "alsa"};
+cvar_t s_driver = {"s_driver", "pulseaudio"};
 cvar_t s_alsa_device = {"s_alsa_device", "default"};
 cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"};
+cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04"};
 #endif
 
 #ifdef __FreeBSD__
@@ -198,6 +199,8 @@ static qbool S_Startup (void)
 
 		if(strcmp(audio_driver, "alsa")==0) {
 			retval = SNDDMA_Init_ALSA(sounddriver);
+		} else if(strcmp(audio_driver, "pulseaudio")==0) {
+			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
 		} else if(strcmp(audio_driver, "oss")==0) {
 			retval = SNDDMA_Init_OSS(sounddriver);
 		}
@@ -312,8 +315,9 @@ void S_Init (void)
 	Cvar_Register(&s_bits);
 #endif
 #ifdef __linux__
-	Cvar_Register(&s_alsa_device);
-	Cvar_Register(&s_alsa_latency);
+	Cvar_Register(&s_alsa_device); //FIXME Put these in resp snd_alsa/pulse etc and init there
+	Cvar_Register(&s_alsa_latency); //To not have pulseaudio vars while using alsa etc.. Not high prio imo
+	Cvar_Register(&s_pulseaudio_latency);
 #endif
 
 #ifdef FTE_PEXT2_VOICECHAT
@@ -901,6 +905,7 @@ static void S_Update_ (void)
 	endtime = min(endtime, (unsigned int)(soundtime + shm->sampleframes));
 #ifdef __linux__
 	int avail;
+	int samps; //rev2 addon
 	//mix ahead of current position
 	if(sounddriver->GetAvail) {
 		avail = sounddriver->GetAvail();
@@ -908,7 +913,10 @@ static void S_Update_ (void)
 			return;
 		endtime = soundtime + avail;
 	}
-	//FIXME Look at fodquake source, some more stuff to do later
+
+	samps = (shm->samples) >> (shm->format.channels - 1);
+	if(endtime - soundtime > samps)
+		endtime = soundtime + samps;
 #endif
 
 #ifdef _WIN32

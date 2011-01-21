@@ -59,7 +59,7 @@ static struct alsa_private *driver;
 /////////////
 //
 ////////////
-//qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd);
+//qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //Currently located in qsounds.h .. fix
 int SNDDMA_GetDMAPos_ALSA(void);
 void SNDDMA_Shutdown_ALSA(void);
 void SNDDMA_Submit_ALSA(unsigned int count);

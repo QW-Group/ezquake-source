@@ -82,7 +82,7 @@ typedef struct wavinfo_s {
 #ifdef __linux__
 
 
-typedef enum soundsystem_t {SND_ALSA=1, SND_OSS=2, NONE=0} soundsystem_t;
+typedef enum soundsystem_t {SND_PULSEAUDIO, SND_ALSA, SND_OSS, SND_NONE} soundsystem_t;
 
 typedef struct sounddriver_t {
 	soundsystem_t type;
@@ -116,6 +116,7 @@ void SNDDMA_Shutdown(void);
 #ifdef __linux__
 void SNDDMA_Submit(unsigned int count); //OSS doesnt use Submit
 qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //FIXME Make it cleaner
+qbool SNDDMA_Init_PULSEAUDIO(struct sounddriver_t *sd); //FIXME
 #else
 void SNDDMA_Submit(void);
 #endif

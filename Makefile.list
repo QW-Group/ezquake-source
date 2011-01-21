@@ -209,6 +209,7 @@ LINUX_C_FILES := \
 	localtime_linux \
 	mumble \
 	snd_alsa2 \
+	snd_pulseaudio \
 	snd_linux \
 	snd_oss \
 	sys_linux
