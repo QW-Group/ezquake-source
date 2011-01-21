@@ -119,7 +119,7 @@ cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"};
 #endif
 
 #ifdef __linux__
-cvar_t s_driver = {"s_driver", "pulseaudio"};
+cvar_t s_driver = {"s_driver", "alsa"};
 cvar_t s_alsa_device = {"s_alsa_device", "default"};
 cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"};
 cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04"};
