@@ -918,6 +918,8 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 
         UI_Print(x, y, "name", true);
 
+		if (Servers_disp < 0)
+			Servers_disp = 0;
         if (Servers_pos > Servers_disp + listsize - 1)
             Servers_disp = Servers_pos - listsize + 1;
         if (Servers_disp > serversn_passed - listsize)
@@ -1904,11 +1906,13 @@ int SB_Servers_Key(int key)
                 GetServerInfo(servers[Servers_pos]);
                 break;
             case K_UPARROW:
-			case K_MWHEELUP:
                 Servers_pos--; break;
+			case K_MWHEELUP:
+				Servers_disp--; break;
             case K_DOWNARROW:
-			case K_MWHEELDOWN:
                 Servers_pos++; break;
+			case K_MWHEELDOWN:
+				Servers_disp++; break;
             case K_HOME:
                 Servers_pos = 0; break;
             case K_END:
