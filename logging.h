@@ -31,7 +31,8 @@ void Log_AutoLogging_StopMatch(void);
 void Log_AutoLogging_CancelMatch(void);
 void Log_AutoLogging_StartMatch(char *logname);
 qbool Log_AutoLogging_Status(void);
-void Log_AutoLogging_SaveMatch(void);
+void Log_AutoLogging_SaveMatch(qbool allow_upload);
+qbool Log_TempLogUploadPending(void);
 
 extern cvar_t log_readable;
 extern cvar_t log_dir;
