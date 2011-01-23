@@ -1,5 +1,21 @@
 /*
+Copyright (C) 2011 ezQuake team
 
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/*
 	Demo Menu module
 
 	Stands between menu.c and Ctrl_Tab.c
@@ -15,9 +31,6 @@
 
 	made by:
 		johnnycz, Dec 2006
-	last edit:
-		$Id: menu_demo.c,v 1.33 2007-10-13 16:14:59 dkure Exp $
-
 */
 
 #include "quakedef.h"
