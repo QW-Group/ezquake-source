@@ -1050,14 +1050,29 @@ static dllfunction_t qspeexdspfuncs[] =
 
 extern snd_capture_driver_t DSOUND_Capture;
 
-static qboolean S_Speex_Init(void)
+#ifdef LIBSPEEX_STATIC
+static void S_Speex_LoadStatic(void)
 {
-	int i;
-	const SpeexMode *mode;
-	if (s_speex.inited)
-		return s_speex.loaded;
-	s_speex.inited = true;
+	qspeex_lib_get_mode = speex_lib_get_mode;
+	qspeex_bits_init = speex_bits_init;
+	qspeex_bits_reset = speex_bits_reset;
+	qspeex_bits_write = speex_bits_write;
 
+	qspeex_encoder_init = speex_encoder_init;
+	qspeex_encoder_ctl = speex_encoder_ctl;
+	qspeex_encode_int = speex_encode_int;
+
+	qspeex_decoder_init = speex_decoder_init;
+	qspeex_decode_int = speex_decode_int;
+	qspeex_bits_read_from = speex_bits_read_from;
+
+	qspeex_preprocess_state_init = speex_preprocess_state_init;
+	qspeex_preprocess_ctl = speex_preprocess_ctl;
+	qspeex_preprocess_run = speex_preprocess_run;
+}
+#else
+static qbool S_Speex_LoadDynamic(void)
+{
 	s_speex.speexlib = Sys_LoadLibrary("libspeex", qspeexfuncs);
 	if (!s_speex.speexlib)
 	{
@@ -1071,6 +1086,26 @@ static qboolean S_Speex_Init(void)
 		Con_Printf("libspeexdsp not found. Voice chat not available.\n");
 		return false;
 	}
+
+	return true;
+}
+#endif
+
+static qboolean S_Speex_Init(void)
+{
+	int i;
+	const SpeexMode *mode;
+	if (s_speex.inited)
+		return s_speex.loaded;
+	s_speex.inited = true;
+
+#ifdef LIBSPEEX_STATIC
+	S_Speex_LoadStatic();
+#else
+	if (!S_Speex_LoadDynamic()) {
+		return false;
+	}
+#endif
 
 	mode = qspeex_lib_get_mode(SPEEX_MODEID_NB);
 
