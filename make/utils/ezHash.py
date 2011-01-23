@@ -1,36 +1,38 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 """
     check_models_hashes_entry_t generator
-    AAS 2009
+    AAS 2009 - 2011
 """
 
 import hashlib, optparse, os, sys
 
 ALLOWED_EXTENSIONS = ["bsp", "lmp", "md3", "mdl", "spr", "wav"]
-VERSION = "1.1"
+VERSION = "1.2"
     
 def print_error(n = None):
     """Bad input"""
     if n == 1:
         text = "Directory must exist and be readable"
     elif n == 2:
-        text = "Groupname must be alphanumerical value and contain at least one character"
+        text = "Groupname must be an alphanumeric value and contain at least one character"
+    elif n == 3:
+        text = "Program takes 2 arguments, specify correct input"
         
     print("Error:%d: %s" % (n, text))
     sys.exit()
 
 def main():
     """Main action"""
-    desc = "check_models_hashes_entry_t generator by AAS / 2009"
+    desc = "check_models_hashes_entry_t generator by AAS"
     usage = "Usage: %prog [options] <directory> <groupname>\n" \
-        "Examples: 'c:\>python %prog d:\ ruohis' or '$ ./%prog ~/dirtocache/ unknown'"
+        "Examples: 'c:\>python %prog d:\ ruohis' or '$ ./%prog ~/dirtohash/ unknown'"
     
     parser = optparse.OptionParser(description = desc, usage = usage, version = VERSION)
-    parser.add_option("-v", "--verbose", help="print additional messages", dest="verbose", default=False, action="store_true")
+    parser.add_option("-v", "--verbose", help = "print additional messages", dest = "verbose", default = False, action = "store_true")
     (opts, args) = parser.parse_args()
 
     if len(args) < 2:
-        parser.print_help()
+        print_error(3)
     else:
         path = os.path.abspath(os.path.realpath(args[0] + os.path.sep))
         groupname = args[1]
@@ -53,9 +55,9 @@ def main():
                 
                 line = "static check_models_hashes_entry_t mdlhash_%s_%s = { {" % (groupname.lower(), name.lower())
                 
-                for i in xrange(0, 5):
+                for i in range(0, 5):
                     uint = sha1[i*8 : (i+1)*8]
-                    uint = [uint[k-2:k] for k in xrange(len(uint), 0, -2)]
+                    uint = [uint[k-2:k] for k in range(8, 0, -2)]
                     line += "0x" + "".join(uint)
                     
                     if i < 4:
