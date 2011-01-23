@@ -112,8 +112,14 @@ static void S_TransferStereo16 (int endtime)
 		pbuf = (DWORD *)shm->buffer;
 
 	while (lpaintedtime < endtime) {
+
 		// handle recirculating buffer issues
-		lpos = lpaintedtime & ((shm->samples>>1) - 1);
+#if defined(__linux__) || defined(__FreeBSD__)
+		//modified, taken from fodquake, works like a charm with alsa/pulseaudio
+		lpos = lpaintedtime % ((shm->samples>>1));
+#else
+		lpos = lpaintedtime & ((shm->samples>>1) - 1); //original
+#endif
 
 		snd_out = (short *) pbuf + (lpos << 1);
 

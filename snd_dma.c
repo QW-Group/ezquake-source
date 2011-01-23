@@ -195,7 +195,7 @@ static qbool S_Startup (void)
 #if defined(__linux__) || defined(__FreeBSD__)
 	sounddriver = malloc(sizeof(*sounddriver));
 	char *audio_driver = Cvar_String("s_driver");
-	qbool retval = 0;
+	qbool retval = false;
 
 	if(sounddriver)	{
 	//FIXME UGLY UGLY, make this in a cleaner way...
@@ -211,7 +211,7 @@ static qbool S_Startup (void)
 			Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
 		}
 	}
-	if(retval == 0) {
+	if(retval == false) {
 		shm = NULL;
 		sound_spatialized = false;
 		free(sounddriver);
@@ -258,7 +258,8 @@ static void S_Restart_f (void)
 	Com_DPrintf("sound: Shutdown OK\n");
 
 	if (!S_Startup()) {
-		snd_initialized = false;
+		snd_initialized = false; // I think this is the failing part? DONT set snd_initialized to false, it will never be set to true again since S_Init is the only to do that and its called ONCE
+					 // I think we need a new var to check if sound is STARTED, it might be initialized (cvars etc..) but not started?
 		return;
 	}
 
@@ -364,7 +365,7 @@ void S_Init (void)
 	SND_InitScaletable ();
 
 	if (!S_Startup ()) {
-		snd_initialized = false;
+		snd_initialized = false; //FIXME So if i choose wrong when i start, snd_initialized=true never gets called again?
 		 return;
 	}
 
