@@ -79,8 +79,7 @@ typedef struct wavinfo_s {
 	int		dataofs;		// chunk starts this many bytes from file start
 } wavinfo_t;
 
-#ifdef __linux__
-
+#if defined(__linux__) || defined(__FreeBSD__)
 
 typedef enum soundsystem_t {SND_PULSEAUDIO, SND_ALSA, SND_OSS, SND_NONE} soundsystem_t;
 
@@ -113,16 +112,14 @@ qbool SNDDMA_Init(void);
 int SNDDMA_GetDMAPos(void);
 void SNDDMA_Shutdown(void);
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 void SNDDMA_Submit(unsigned int count); //OSS doesnt use Submit
-qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //FIXME Make it cleaner
 qbool SNDDMA_Init_PULSEAUDIO(struct sounddriver_t *sd); //FIXME
+qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //FIXME Make it cleaner
+qbool SNDDMA_Init_OSS(struct sounddriver_t *sd); //FIXME
+
 #else
 void SNDDMA_Submit(void);
-#endif
-
-#if defined(__linux__) || (__FreeBSD__)
-qbool SNDDMA_Init_OSS(struct sounddriver_t *sd); //FIXME
 #endif
 
 ///////////////////////////////

@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+#if defined(__linux__) || defined(__FreeBSD__)
 
 #include "quakedef.h"
 #include "qsound.h"
@@ -168,8 +169,10 @@ static qbool pulseaudio_init(struct sounddriver_t *sd, int rate, int channels, i
 	memset(p->buffer, 0, p->buffersize);
 
 	shm->samplepos = 0;
-	shm->samples = p->buffersize / p->samplesize;
-	shm->sampleframes = (p->buffersize/p->samplesize)/2;
+	shm->samples = (p->buffersize / p->samplesize);
+//	shm->sampleframes = (p->buffersize/p->samplesize)/2; 
+//	Sampleframes aint used anymore in linux/freebsd
+
 	shm->format.speed = rate;
 	shm->format.channels = channels;
 	shm->format.width = (bits == 16) ? 2 : 1;
@@ -199,7 +202,7 @@ static int pulseaudio_getavail(void)
 	if (avail < 0)
 		avail = 0;
 
-	return avail / p->samplesize;
+	return (avail / p->samplesize);
 }
 
 static void pulseaudio_submit(unsigned int count)
@@ -338,7 +341,7 @@ static qbool pulseaudio_internal_initpulse(int rate, int channels, int bits)
 	p->buffer_attr.maxlength = (uint32_t)-1;
 	p->buffer_attr.minreq = (uint32_t)-1;
 	p->buffer_attr.prebuf = (uint32_t)-1;
-	p->buffer_attr.tlength = p->pa_usec_to_bytes(s_pulseaudio_latency.value * 1e6, &p->sample_spec);
+	p->buffer_attr.tlength = p->pa_usec_to_bytes(s_pulseaudio_latency.value * 1000000, &p->sample_spec);
 
 	if (!(p->loop = p->pa_threaded_mainloop_new()))
 	{
@@ -444,9 +447,12 @@ static void pulseaudio_internal_submit(unsigned int max)
 
 		max -= count;
 		p->bufferpos += count;
+		shm->samplepos += count; //test :)
 
-		if (p->bufferpos == p->buffersize)
+		if (p->bufferpos == p->buffersize) {
 			p->bufferpos = 0;
+			shm->samplepos = 0; //test :)
+		}
 	}
 
 	p->pa_threaded_mainloop_unlock(p->loop);
@@ -497,3 +503,4 @@ static void pulseaudio_stream_state_callback(pa_stream *stream, void *userdata)
 }
 
 
+#endif //defined(__linux__) || defined(__FreeBSD__)

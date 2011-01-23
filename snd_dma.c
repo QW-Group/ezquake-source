@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 //dimman
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 sounddriver_t *sounddriver;
 #endif
 
@@ -47,8 +47,7 @@ static void S_StopAllSounds_f (void);
 
 void IN_Accumulate (void); // S_ExtraUpdate use it
 void S_RawClear(void);
-void S_RawAudio(int sourceid, byte *data, 
-				unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
+void S_RawAudio(int sourceid, byte *data, unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
 
 // =======================================================================
 // Internal sound data & structures
@@ -116,13 +115,13 @@ cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
 cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_bits = {"s_bits", "16"};
 cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"};
+cvar_t s_alsa_device = {"s_alsa_device", "default"};
+cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"};
+cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04"};
 #endif
 
 #ifdef __linux__
 cvar_t s_driver = {"s_driver", "alsa"};
-cvar_t s_alsa_device = {"s_alsa_device", "default"};
-cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"};
-cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04"};
 #endif
 
 #ifdef __FreeBSD__
@@ -169,7 +168,11 @@ static void S_SoundInfo_f (void)
 	Com_Printf("driver: %s\n", s_driver.string);
 #endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
+#if defined(__linux__) || defined(__FreeBSD__)
+	//
+#else
 	Com_Printf("%5d frames\n", shm->sampleframes);
+#endif
 	Com_Printf("%5d samples\n", shm->samples);
 	Com_Printf("%5d samplepos\n", shm->samplepos);
 	Com_Printf("%5d samplebits\n", shm->format.width * 8);
@@ -189,7 +192,7 @@ static qbool S_Startup (void)
 	S_RawClear();
 
 ///////////////////////////////////////////////
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 	sounddriver = malloc(sizeof(*sounddriver));
 	char *audio_driver = Cvar_String("s_driver");
 	qbool retval = 0;
@@ -199,7 +202,7 @@ static qbool S_Startup (void)
 
 		if(strcmp(audio_driver, "alsa")==0) {
 			retval = SNDDMA_Init_ALSA(sounddriver);
-		} else if(strcmp(audio_driver, "pulseaudio")==0) {
+		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
 			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
 		} else if(strcmp(audio_driver, "oss")==0) {
 			retval = SNDDMA_Init_OSS(sounddriver);
@@ -215,15 +218,6 @@ static qbool S_Startup (void)
 		return false;
 	}
 
-#elif defined(__FreeBSD__)
-	//FIXME UGLY UGLY UGLY
-	retval = SNDDMA_Init_OSS(sounddriver);
-	if(!retval) {
-		shm = NULL;
-		sound_spatialized = false;
-		free(sounddriver);
-		return false;
-	}
 #else
 	if (!SNDDMA_Init()) {
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
@@ -242,7 +236,7 @@ void S_Shutdown (void)
 	if (!shm)
 		return;
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 	sounddriver->Shutdown();
 	free(sounddriver);
 	sounddriver = NULL;
@@ -308,16 +302,15 @@ void S_Init (void)
 	Cvar_Register(&s_linearresample);
 	Cvar_Register(&s_linearresample_stream);
 
-#if (defined(__linux__) || defined(__FreeBSD__))
+#if defined(__linux__) || defined(__FreeBSD__)
 	Cvar_Register(&s_stereo);
 	Cvar_Register(&s_oss_device);
 	Cvar_Register(&s_driver);
 	Cvar_Register(&s_bits);
-#endif
-#ifdef __linux__
-	Cvar_Register(&s_alsa_device); //FIXME Put these in resp snd_alsa/pulse etc and init there
-	Cvar_Register(&s_alsa_latency); //To not have pulseaudio vars while using alsa etc.. Not high prio imo
 	Cvar_Register(&s_pulseaudio_latency);
+	Cvar_Register(&s_alsa_device); //FIXME Move these to resp. snd_alsa/pulse?
+	Cvar_Register(&s_alsa_latency);
+
 #endif
 
 #ifdef FTE_PEXT2_VOICECHAT
@@ -837,12 +830,13 @@ static void GetSoundtime (void)
 		return;
 #endif
 
-	fullsamples = shm->sampleframes;
-
+#if defined(__linux__) || defined(__FreeBSD__)
+	fullsamples = shm->samples / shm->format.channels;
 	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
-#ifdef __linux__
+
 	samplepos = sounddriver->GetDMAPos();
 #else
+	fullsamples = shm->sampleframes;
 	samplepos = SNDDMA_GetDMAPos();
 #endif
 
@@ -900,10 +894,14 @@ static void S_Update_ (void)
 		paintedtime = soundtime;
 	}
 
-	// mix ahead of current position
 	endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
+
+#if !defined(__linux__) && !defined(__FreeBSD__)
+	// mix ahead of current position
 	endtime = min(endtime, (unsigned int)(soundtime + shm->sampleframes));
-#ifdef __linux__
+#endif
+
+#if defined(__linux__) || defined(__FreeBSD__)
 	int avail;
 	int samps; //rev2 addon
 	//mix ahead of current position
@@ -913,11 +911,15 @@ static void S_Update_ (void)
 			return;
 		endtime = soundtime + avail;
 	}
+	else {
+		endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
+	}
 
 	samps = (shm->samples) >> (shm->format.channels - 1);
 	if(endtime - soundtime > samps)
 		endtime = soundtime + samps;
 #endif
+
 
 #ifdef _WIN32
 	// if the buffer was lost or stopped, restore it and/or restart it
@@ -1526,7 +1528,7 @@ static void S_RawClearStream(streaming_t *s);
 
 #define MAX_RAW_SOURCES (MAX_CLIENTS+1)
 
-streaming_t s_streamers[MAX_RAW_SOURCES] = {0};
+streaming_t s_streamers[MAX_RAW_SOURCES] = {{0}};
 
 void S_RawClear(void)
 {
