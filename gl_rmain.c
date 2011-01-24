@@ -957,6 +957,9 @@ void R_DrawAliasModel (entity_t *ent) {
 		}
 	}
 
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
+
 	//get lighting information
 	R_AliasSetupLighting(ent);
 
@@ -1187,6 +1190,9 @@ void R_DrawAliasModel (entity_t *ent) {
 	}
 
 	glColor3ubv (color_white);
+
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
 }
 
 static qbool R_DrawTrySimpleItem(void)

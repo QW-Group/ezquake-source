@@ -95,6 +95,9 @@ void R_DrawAlias3Model (entity_t *ent)
 	glScalef(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
 	glColor4f(1, 1, 1, r_modelalpha);
 
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
+
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
@@ -252,6 +255,9 @@ wtf: where else{ }
 
 	glPopMatrix();
 	glEnable(GL_TEXTURE_2D);
+
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
 }
 
 int Mod_ReadFlagsFromMD1(char *name, int md3version)
