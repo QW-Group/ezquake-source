@@ -178,6 +178,7 @@ qbool SNDDMA_Init_OSS(struct sounddriver_t *sd)
 	sd->GetAvail = NULL;
 	sd->Submit = NULL;
 	sd->Shutdown = SNDDMA_Shutdown_OSS;
+	sd->name = "SND_OSS";
 
 	return 1;
 

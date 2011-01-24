@@ -169,7 +169,8 @@ static void S_SoundInfo_f (void)
 		return;
 	}
 #if defined(__linux__) || defined(__FreeBSD__)
-	Com_Printf("driver: %s\n", s_driver.string);
+	if(sounddriver)
+	Com_Printf("driver: %s\n", sounddriver->name);
 #endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -214,6 +215,7 @@ static qbool S_Startup (void)
 		else {
 			Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
 		}
+		snd_started = retval;
 	}
 	if(retval == false) {
 		shm = NULL;
@@ -221,9 +223,6 @@ static qbool S_Startup (void)
 		snd_started = false;
 		free(sounddriver);
 		return false;
-	}
-	else {
-		snd_started = true;
 	}
 
 #else

@@ -131,7 +131,7 @@ static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, in
 					sd->GetAvail = alsa_getavail;
 					sd->Submit = SNDDMA_Submit_ALSA;
 					sd->Shutdown = SNDDMA_Shutdown_ALSA;
-					sd->type = SND_ALSA;
+					sd->name = "SND_ALSA2";
 
                                         return true;
                                 }

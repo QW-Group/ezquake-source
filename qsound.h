@@ -81,10 +81,8 @@ typedef struct wavinfo_s {
 
 #if defined(__linux__) || defined(__FreeBSD__)
 
-typedef enum soundsystem_t {SND_PULSEAUDIO, SND_ALSA, SND_OSS, SND_NONE} soundsystem_t;
-
 typedef struct sounddriver_t {
-	soundsystem_t type;
+	char* name;
 	int (*GetAvail)(void);
 	int (*GetDMAPos)(void);
 	void (*Submit)(unsigned int count);

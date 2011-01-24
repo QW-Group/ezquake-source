@@ -182,7 +182,7 @@ static qbool pulseaudio_init(struct sounddriver_t *sd, int rate, int channels, i
 	sd->GetAvail = pulseaudio_getavail;
 	sd->Submit = pulseaudio_submit;
 	sd->Shutdown = pulseaudio_shutdown;
-	sd->type = SND_PULSEAUDIO;
+	sd->name = "SND_PULSEAUDIO";
 
 	return true;
 }
