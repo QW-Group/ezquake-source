@@ -298,8 +298,11 @@ void SND_InitScaletable (void)
 
 	for (i = 0 ; i < 32; i++)
 		for (j = 0; j < 256; j++)
-//			snd_scaletable[i][j] = ((j < 128) ? j : j - 0xff) * i * 8; //wtf? //dimman
-			 snd_scaletable[i][j] = ((signed char) j) * i * 8;
+#if defined(__linux) || defined(__FreeBSD__)
+			snd_scaletable[i][j] = ((signed char) j) * i * 8; // fodquake/original
+#else
+			snd_scaletable[i][j] = ((j < 128) ? j : j - 0xff) * i * 8; //not sure what it does //dimman
+#endif
 }
 
 void S_PaintChannels (int endtime)
@@ -346,7 +349,12 @@ void S_PaintChannels (int endtime)
 				// if at end of loop, restart
 				if (ltime >= ch->end) {
 					if (sc->loopstart >= 0) {
+						// dimman Look this up, taken from fodquake, unsure about it
+						#if defined(__linux__) || defined(__FreeBSD__)
+						ch->pos = sc->loopstart;
+						#else
 						ch->pos = bound(0, sc->loopstart, (int) sc->total_length - 1);
+						#endif
 						ch->end = ltime + (int) sc->total_length - ch->pos;
 					} else { // channel just stopped
 						ch->sfx = NULL;
