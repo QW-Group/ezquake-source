@@ -601,7 +601,7 @@ void MT_TakeScreenshot(void);
 
 cvar_t match_auto_record = {"match_auto_record", "0"};
 cvar_t match_auto_logconsole = {"match_auto_logconsole", "1"};
-cvar_t match_auto_logupload = {"match_auto_logupload", "0"};
+cvar_t match_auto_logupload = {"match_auto_logupload", "1"};
 cvar_t match_auto_logupload_token = {"match_auto_logupload_token", ""};
 cvar_t match_auto_logurl = {"match_auto_logurl", "http://stats.quakeworld.nu/logupload"};
 cvar_t match_auto_sshot = {"match_auto_sshot", "0"};
@@ -750,10 +750,15 @@ void MT_SaveMatch_f(void) {
 	demo_status = CL_AutoRecord_Status();
 	log_status = Log_AutoLogging_Status();
 
-	if ((demo_status & 2)|| (log_status & 2)) {
+	if (Log_TempLogUploadPending()) {
+		Com_Printf("Log upload is still in progress\n");
+		return;
+	}
+
+	if ((demo_status & 2) || (log_status & 2)) {
 		Com_Printf("\x02Saving match...\n");
 		CL_AutoRecord_SaveMatch();
-		Log_AutoLogging_SaveMatch();
+		Log_AutoLogging_SaveMatch(false);
 	} else {
 		if ((demo_status & 1) || (log_status & 1)) {
 			if ((demo_status & 1) && (log_status & 1))

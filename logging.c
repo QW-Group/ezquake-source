@@ -199,6 +199,7 @@ void Log_Write(char *s) {
 
 static char	auto_matchname[2 * MAX_OSPATH];
 static qbool temp_log_ready = false;
+static qbool temp_log_upload_pending = false;
 static float auto_starttime;
 
 char *MT_TempDirectory(void);
@@ -208,6 +209,24 @@ extern cvar_t match_auto_logconsole, match_auto_minlength,
 
 #define TEMP_LOG_NAME "_!_temp_!_.log"
 
+void Log_AutoLogging_Upload(const char *filename);
+
+qbool Log_TempLogUploadPending(void) {
+	return temp_log_upload_pending;
+}
+
+static qbool Log_IsUploadAllowed(void) {
+	return match_auto_logupload.integer
+		&& match_auto_logconsole.integer
+		&& cls.demoplayback == DT_NONE
+		&& cls.server_adr.type != NA_LOOPBACK;
+}
+
+static void Log_UploadTemp(void) {
+	char *tempname = va("%s/%s", MT_TempDirectory(), TEMP_LOG_NAME);
+	temp_log_upload_pending = true;
+	Log_AutoLogging_Upload(tempname);
+}
 
 void Log_AutoLogging_StopMatch(void) {
 	if (!autologging)
@@ -218,9 +237,13 @@ void Log_AutoLogging_StopMatch(void) {
 	temp_log_ready = true;
 
 	if (match_auto_logconsole.value == 2)
-		Log_AutoLogging_SaveMatch();
-	else
+		Log_AutoLogging_SaveMatch(true);
+	else {
 		Com_Printf ("Auto console logging completed\n");
+		if (Log_IsUploadAllowed()) {
+			Log_UploadTemp();
+		}
+	}
 }
 
 
@@ -234,9 +257,14 @@ void Log_AutoLogging_CancelMatch(void) {
 
 	if (match_auto_logconsole.value == 2) {
 		if (cls.realtime - auto_starttime > match_auto_minlength.value)
-			Log_AutoLogging_SaveMatch();
+			Log_AutoLogging_SaveMatch(true);
 		else
 			Com_Printf("Auto console logging cancelled\n");
+	} else if (match_auto_logconsole.integer == 1) {
+		Com_Printf ("Auto console logging completed\n");
+		if (Log_IsUploadAllowed()) {
+			Log_UploadTemp();
+		}
 	} else {
 		Com_Printf ("Auto console logging completed\n");
 	}
@@ -384,6 +412,7 @@ DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vjob)
 	}
 
 	Log_Upload_Job_Free(job);
+	temp_log_upload_pending = false;
 	return 0;
 }
 
@@ -399,13 +428,18 @@ void Log_AutoLogging_Upload(const char *filename)
 	Sys_CreateThread(Log_AutoLogging_Upload_Thread, (void *) job);
 }
 
-void Log_AutoLogging_SaveMatch(void) {
+void Log_AutoLogging_SaveMatch(qbool allow_upload) {
 	int error, num;
 	FILE *f;
 	char *dir, *tempname, savedname[2 * MAX_OSPATH], *fullsavedname, *exts[] = {"log", NULL};
 
 	if (!temp_log_ready)
 		return;
+
+	if (temp_log_upload_pending) {
+		Com_Printf("Error: Can't save the log. Log upload is still pending.\n");
+		return;
+	}
 
 	temp_log_ready = false;
 
@@ -433,9 +467,7 @@ void Log_AutoLogging_SaveMatch(void) {
 
 	if (!error) {
 		Com_Printf("Match console log saved to %s\n", savedname);
-		if (match_auto_logupload.integer
-			&& cls.demoplayback == DT_NONE
-			&& cls.server_adr.type != NA_LOOPBACK) {
+		if (allow_upload && Log_IsUploadAllowed()) {
 			// note: we allow the client to be a spectator, so that spectators
 			// can submit logs for matches they spec in case players don't do it
 			Log_AutoLogging_Upload(fullsavedname);

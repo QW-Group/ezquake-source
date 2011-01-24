@@ -2251,7 +2251,7 @@ qbool VSyncLagFix (void)
 		if (time_left > 0) {
 			extern cvar_t sys_yieldcpu;
 			if (time_left > 0.001 && sys_yieldcpu.integer)
-				Sys_MSleep(Cvar_Value("zerosleep") ? 0 : time_left * 1000);
+				Sys_MSleep(Cvar_Value("zerosleep") ? 0 : min(time_left * 1000, 500));
 			return true;	// don't run a frame yet
 		}
 	}

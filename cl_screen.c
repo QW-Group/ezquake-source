@@ -3534,6 +3534,12 @@ void SCR_DrawElements(void)
 
 #ifdef GLQUAKE
 
+static void SCR_RenderFrameEnd(void)
+{
+	extern double render_frame_end;
+	render_frame_end = Sys_DoubleTime();
+}
+
 // This is called every frame, and can also be called explicitly to flush text to the screen.
 // WARNING: be very careful calling this from elsewhere, because the refresh needs almost the entire 256k of stack space!
 void SCR_UpdateScreen (void) 
@@ -3543,17 +3549,24 @@ void SCR_UpdateScreen (void)
 	if (hud_netstats == NULL) // first time
 		hud_netstats = HUD_Find("net");
 
-	if (!scr_initialized)
-		return;                         // not initialized yet
-
-	if (scr_skipupdate || block_drawing)
+	if (!scr_initialized) {
+		SCR_RenderFrameEnd();
 		return;
+	}
+
+	if (scr_skipupdate || block_drawing) {
+		SCR_RenderFrameEnd();
+		return;
+	}
 
 	if (scr_disabled_for_loading) {
-		if (cls.realtime - scr_disabled_time > 20)
+		if (cls.realtime - scr_disabled_time > 20) {
 			scr_disabled_for_loading = false;
-		else
+		}
+		else {
+			SCR_RenderFrameEnd();
 			return;
+		}
 	}
 
 	#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
@@ -3561,8 +3574,10 @@ void SCR_UpdateScreen (void)
 		// Don't suck up any cpu if minimized.
 		extern int Minimized;
 
-		if (Minimized)
+		if (Minimized) {
+			SCR_RenderFrameEnd();
 			return;
+		}
 	}
 	#endif // _WIN32 or __linux__ or __FreeBSD__
 
@@ -3670,8 +3685,7 @@ void SCR_UpdateScreen (void)
 		SCR_CheckMVScreenshot();
 	}
 
-	{extern double render_frame_end;
-	render_frame_end = Sys_DoubleTime();}
+	SCR_RenderFrameEnd();
 
 	GL_EndRendering ();
 }
