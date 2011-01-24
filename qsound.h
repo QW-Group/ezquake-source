@@ -151,6 +151,11 @@ extern channel_t	channels[MAX_CHANNELS];
 extern unsigned int	total_channels;
 
 extern qbool		snd_initialized;
+
+#if defined(__linux__) || defined(__FreeBSD__) //FIXME make it work for all OS:s perhaps.. only linux that changes soundsystems though
+extern qbool		snd_started;
+#endif
+
 extern int		snd_blocked;
 
 extern int		paintedtime;

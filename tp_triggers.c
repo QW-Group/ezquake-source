@@ -183,6 +183,12 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
  
 				if (!snd_initialized)
 					return false;
+			
+			#if defined(__linux__) || defined(__FreeBSD__)
+			        if(!snd_started)
+		                return false;
+			#endif
+
  
 				COM_DefaultExtension (soundname, ".wav");
  

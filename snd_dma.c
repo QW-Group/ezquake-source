@@ -59,6 +59,10 @@ unsigned int	total_channels;
 int		snd_blocked = 0;
 qbool		snd_initialized = false;
 
+#if defined(__linux__) || defined(__FreeBSD__)
+qbool		snd_started = false; //dimman
+#endif
+
 int		soundtime;
 int		paintedtime;
 
@@ -169,7 +173,7 @@ static void S_SoundInfo_f (void)
 #endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
-	//
+	Com_Printf("%5d frames\n", shm->samples / shm->format.channels); //sampleframes not set/used in linux/freebsd
 #else
 	Com_Printf("%5d frames\n", shm->sampleframes);
 #endif
@@ -214,8 +218,12 @@ static qbool S_Startup (void)
 	if(retval == false) {
 		shm = NULL;
 		sound_spatialized = false;
+		snd_started = false;
 		free(sounddriver);
 		return false;
+	}
+	else {
+		snd_started = true;
 	}
 
 #else
@@ -240,6 +248,7 @@ void S_Shutdown (void)
 	sounddriver->Shutdown();
 	free(sounddriver);
 	sounddriver = NULL;
+	snd_started = false;
 #else
 	SNDDMA_Shutdown();
 #endif
@@ -258,8 +267,12 @@ static void S_Restart_f (void)
 	Com_DPrintf("sound: Shutdown OK\n");
 
 	if (!S_Startup()) {
+#if defined(__linux__) || defined(__FreeBSD__)
+		snd_started = false;
+#else
 		snd_initialized = false; // I think this is the failing part? DONT set snd_initialized to false, it will never be set to true again since S_Init is the only to do that and its called ONCE
 					 // I think we need a new var to check if sound is STARTED, it might be initialized (cvars etc..) but not started?
+#endif
 		return;
 	}
 
@@ -365,7 +378,11 @@ void S_Init (void)
 	SND_InitScaletable ();
 
 	if (!S_Startup ()) {
-		snd_initialized = false; //FIXME So if i choose wrong when i start, snd_initialized=true never gets called again?
+#if defined(__linux__) || defined(__FreeBSD__)
+		snd_started = false;
+#else
+		snd_initialized = false;
+#endif
 		 return;
 	}
 
@@ -388,6 +405,10 @@ static sfx_t *S_FindName (char *name)
 	int i;
 	sfx_t *sfx;
 
+#if defined(__linux__) || defined(__FreeBSD__)
+	if(!snd_started)
+		return NULL;
+#endif
 	if (!snd_initialized)
 		return NULL;
 
@@ -420,6 +441,10 @@ sfx_t *S_PrecacheSound (char *name)
 {
 	sfx_t *sfx;
 
+#if defined(__linux__) || defined(__FreeBSD__)
+        if(!snd_started)
+                return NULL;
+#endif
 	if (!snd_initialized || s_nosound.value)
 		return NULL;
 
@@ -749,6 +774,12 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	if (!snd_initialized || (snd_blocked > 0) || !shm)
 		return;
 
+#if defined(__linux__) || defined(__FreeBSD__)
+        if(!snd_started)
+                return;
+#endif
+
+
 	VectorCopy(origin, listener_origin);
 	VectorCopy(forward, listener_forward);
 	VectorCopy(right, listener_right);
@@ -962,6 +993,11 @@ static void S_Play_f (void)
 
 	if (!snd_initialized || s_nosound.value)
 		return;
+#if defined(__linux__) || defined(__FreeBSD__)
+        if(!snd_started)
+                return;
+#endif
+
 
 	for (i = 1; i < Cmd_Argc(); i++) {
 		strlcpy (name, Cmd_Argv(i), sizeof (name));
@@ -980,6 +1016,12 @@ static void S_PlayVol_f (void)
 
 	if (!snd_initialized || s_nosound.value)
 		return;
+
+#if defined(__linux__) || defined(__FreeBSD__)
+        if(!snd_started)
+                return;
+#endif
+
 
 	for (i = 1; i < Cmd_Argc(); i += 2) {
 		strlcpy (name, Cmd_Argv(i), sizeof (name));
@@ -1021,6 +1063,12 @@ void S_LocalSound (char *sound)
 	if (!snd_initialized || s_nosound.value)
 		return;
 
+#if defined(__linux__) || defined(__FreeBSD__)
+        if(!snd_started)
+                return;
+#endif
+
+
 	if (!(sfx = S_PrecacheSound (sound))) {
 		Com_Printf ("S_LocalSound: can't cache %s\n", sound);
 		return;
@@ -1037,6 +1085,11 @@ void S_LocalSoundWithVol(char *sound, float volume)
 
 	if (!snd_initialized || s_nosound.value)
 		return;
+
+#if defined(__linux__) || defined(__FreeBSD__)
+        if(!snd_started)
+                return;
+#endif
 
 	if (!(sfx = S_PrecacheSound (sound))) {
 		Com_Printf ("S_LocalSound: can't cache %s\n", sound);
