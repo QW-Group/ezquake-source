@@ -213,16 +213,20 @@ static qbool S_Startup (void)
 			retval = SNDDMA_Init_OSS(sounddriver);
 		}
 		else {
-			Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
+			Com_DPrintf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
 		}
 		snd_started = retval;
 	}
 	if(retval == false) {
+		Com_Printf("[sound] Failed to startup (s_driver %s)\n", s_driver.string);
 		shm = NULL;
 		sound_spatialized = false;
 		snd_started = false;
 		free(sounddriver);
 		return false;
+	}
+	else {
+		Com_Printf("[sound] %s started....\n", sounddriver->name);
 	}
 
 #else
@@ -244,6 +248,7 @@ void S_Shutdown (void)
 		return;
 
 #if defined(__linux__) || defined(__FreeBSD__)
+	Com_Printf("[sound] %s shutdown...\n", sounddriver->name);
 	sounddriver->Shutdown();
 	free(sounddriver);
 	sounddriver = NULL;

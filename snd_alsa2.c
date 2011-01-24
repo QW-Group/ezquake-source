@@ -40,7 +40,7 @@ struct alsa_private
 	void *alsasharedobject;
 	void *buffer;
 	unsigned int buffersamples;
-	unsigned int bufferpos; //samplepos i guess?
+	unsigned int bufferpos;
 	unsigned int samplesize;
 	snd_pcm_t *pcmhandle;
 
@@ -131,7 +131,7 @@ static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, in
 					sd->GetAvail = alsa_getavail;
 					sd->Submit = SNDDMA_Submit_ALSA;
 					sd->Shutdown = SNDDMA_Shutdown_ALSA;
-					sd->name = "SND_ALSA2";
+					sd->name = "snd_alsa2";
 
                                         return true;
                                 }
@@ -198,8 +198,11 @@ static void alsa_writestuff(unsigned int max)
 
                 max -= ret * 2;
                 driver->bufferpos += ret * 2;
-                if (driver->bufferpos == driver->buffersamples)
+		shm->samplepos += ret * 2; //only to show samplepos info @ soundinfo
+                if (driver->bufferpos == driver->buffersamples) {
                         driver->bufferpos = 0;
+			shm->samplepos = 0; //only to show samplepos info @ soundinfo
+		}
         }
 }
 

@@ -182,7 +182,7 @@ static qbool pulseaudio_init(struct sounddriver_t *sd, int rate, int channels, i
 	sd->GetAvail = pulseaudio_getavail;
 	sd->Submit = pulseaudio_submit;
 	sd->Shutdown = pulseaudio_shutdown;
-	sd->name = "SND_PULSEAUDIO";
+	sd->name = "snd_pulseaudio";
 
 	return true;
 }
@@ -447,11 +447,11 @@ static void pulseaudio_internal_submit(unsigned int max)
 
 		max -= count;
 		p->bufferpos += count;
-		shm->samplepos += count; //test :)
+		shm->samplepos += count; //setting it to show bufferpos @ soundinfo
 
 		if (p->bufferpos == p->buffersize) {
 			p->bufferpos = 0;
-			shm->samplepos = 0; //test :)
+			shm->samplepos = 0; //setting it to show bufferpos @ soundinfo
 		}
 	}
 
