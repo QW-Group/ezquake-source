@@ -1,5 +1,19 @@
 /*
-	$Id: EX_browser.c,v 1.57 2007-10-11 07:02:37 dkure Exp $
+Copyright (C) 2011 azazello and ezQuake team
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "quakedef.h"
@@ -918,6 +932,8 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 
         UI_Print(x, y, "name", true);
 
+		if (Servers_disp < 0)
+			Servers_disp = 0;
         if (Servers_pos > Servers_disp + listsize - 1)
             Servers_disp = Servers_pos - listsize + 1;
         if (Servers_disp > serversn_passed - listsize)
@@ -1904,11 +1920,13 @@ int SB_Servers_Key(int key)
                 GetServerInfo(servers[Servers_pos]);
                 break;
             case K_UPARROW:
-			case K_MWHEELUP:
                 Servers_pos--; break;
+			case K_MWHEELUP:
+				Servers_disp--; break;
             case K_DOWNARROW:
-			case K_MWHEELDOWN:
                 Servers_pos++; break;
+			case K_MWHEELDOWN:
+				Servers_disp++; break;
             case K_HOME:
                 Servers_pos = 0; break;
             case K_END:

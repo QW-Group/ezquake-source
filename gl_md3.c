@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2011 fuh and ezQuake team
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -76,6 +94,9 @@ void R_DrawAlias3Model (entity_t *ent)
 	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
 	glScalef(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
 	glColor4f(1, 1, 1, r_modelalpha);
+
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
 
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
@@ -234,6 +255,9 @@ wtf: where else{ }
 
 	glPopMatrix();
 	glEnable(GL_TEXTURE_2D);
+
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
 }
 
 int Mod_ReadFlagsFromMD1(char *name, int md3version)
