@@ -341,7 +341,7 @@ static qbool pulseaudio_internal_initpulse(int rate, int channels, int bits)
 	p->buffer_attr.maxlength = (uint32_t)-1;
 	p->buffer_attr.minreq = (uint32_t)-1;
 	p->buffer_attr.prebuf = (uint32_t)-1;
-	p->buffer_attr.tlength = p->pa_usec_to_bytes(s_pulseaudio_latency.value * 1000000, &p->sample_spec);
+	p->buffer_attr.tlength = p->pa_usec_to_bytes(s_pulseaudio_latency.value * 1e6, &p->sample_spec); //FIXME dimman: i think this might be faulty
 
 	if (!(p->loop = p->pa_threaded_mainloop_new()))
 	{

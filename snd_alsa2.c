@@ -75,6 +75,7 @@ static void alsa_writestuff(unsigned int max);
 
 extern cvar_t s_oss_device;
 extern cvar_t s_alsa_device;
+extern cvar_t s_alsa_latency;
 
 ////////////////////////////////////////////////////
 //	 private functions
@@ -103,7 +104,7 @@ static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, in
 		return 0;
 	if(alsa_initso(drive)) {
 		if (drive->snd_pcm_open(&drive->pcmhandle, device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) >= 0) {
-			if (drive->snd_pcm_set_params(drive->pcmhandle, bits==8?SND_PCM_FORMAT_S8:SND_PCM_FORMAT_S16, SND_PCM_ACCESS_RW_INTERLEAVED, channels, rate, 1, 0.04 * 1000000) >= 0) {
+			if (drive->snd_pcm_set_params(drive->pcmhandle, bits==8?SND_PCM_FORMAT_S8:SND_PCM_FORMAT_S16, SND_PCM_ACCESS_RW_INTERLEAVED, channels, rate, 1, s_alsa_latency.value * 1000000) >= 0) {
 				drive->buffer = malloc(65536);
 				if (drive->buffer) {
 				      	memset(drive->buffer, 0, 65536);
@@ -120,7 +121,6 @@ static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, in
                                         shm->samples = drive->buffersamples;
                                         shm->samplepos = 0;
 					shm->sampleframes = drive->buffersamples/2;
-//                                      shm->samplebits = bits; // not necessary?
                                         shm->format.speed = rate;
                                         shm->buffer = drive->buffer;
 
@@ -155,7 +155,7 @@ static int alsa_getavail(void)
 		if(ret < 0)
 			return 0;
 	}
-	ret *= 2; // ?
+	ret *= 2;
 	return ret;
 }
 
