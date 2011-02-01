@@ -662,14 +662,15 @@ static int Load_LMP_Charset (char *name, int flags)
 */
 static int Load_Locale_Charset (const char *name, const char *locale, unsigned int num, int range, int flags)
 {
-	char texture[1024], id[256], lmp[256];
+	char texture[1024], id[256], lmp[256], basename[MAX_QPATH];
 
 	if (num >= MAX_CHARSETS)
 		return 0;
 
 	char_range[num] = 0;
 
-	snprintf(texture, sizeof(texture), "textures/charsets/%s-%s", name, locale);
+	COM_StripExtension(name, basename);
+	snprintf(texture, sizeof(texture), "textures/charsets/%s-%s", basename, locale);
 	snprintf(id, sizeof(id), "pic:charset-%s", locale);
 	snprintf(lmp, sizeof(lmp), "conchars-%s", locale);
 
