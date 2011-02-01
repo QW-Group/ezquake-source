@@ -345,12 +345,7 @@ void S_PaintChannels (int endtime)
 				// if at end of loop, restart
 				if (ltime >= ch->end) {
 					if (sc->loopstart >= 0) {
-						// dimman Look this up, taken from fodquake, unsure about it
-						#if defined(__linux__) || defined(__FreeBSD__)
-						ch->pos = sc->loopstart;
-						#else
 						ch->pos = bound(0, sc->loopstart, (int) sc->total_length - 1);
-						#endif
 						ch->end = ltime + (int) sc->total_length - ch->pos;
 					} else { // channel just stopped
 						ch->sfx = NULL;
