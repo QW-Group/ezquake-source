@@ -111,10 +111,10 @@ int SNDDMA_GetDMAPos(void);
 void SNDDMA_Shutdown(void);
 
 #if defined(__linux__) || defined(__FreeBSD__)
-void SNDDMA_Submit(unsigned int count); //OSS doesnt use Submit
-qbool SNDDMA_Init_PULSEAUDIO(struct sounddriver_t *sd); //FIXME
-qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //FIXME Make it cleaner
-qbool SNDDMA_Init_OSS(struct sounddriver_t *sd); //FIXME
+void SNDDMA_Submit(unsigned int count); // OSS doesnt use Submit
+//qbool SNDDMA_Init_PULSEAUDIO(struct sounddriver_t *sd); // Pulseaudio not enabled atm...
+qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd);
+qbool SNDDMA_Init_OSS(struct sounddriver_t *sd);
 
 #else
 void SNDDMA_Submit(void);

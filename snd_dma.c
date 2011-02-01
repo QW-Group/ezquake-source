@@ -121,7 +121,7 @@ cvar_t s_bits = {"s_bits", "16"};
 cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"};
 cvar_t s_alsa_device = {"s_alsa_device", "default"};
 cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"};
-cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04"};
+//cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04"};
 #endif
 
 #ifdef __linux__
@@ -207,8 +207,8 @@ static qbool S_Startup (void)
 
 		if(strcmp(audio_driver, "alsa")==0) {
 			retval = SNDDMA_Init_ALSA(sounddriver);
-		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
-			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
+//		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
+//			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
 		} else if(strcmp(audio_driver, "oss")==0) {
 			retval = SNDDMA_Init_OSS(sounddriver);
 		}
@@ -325,8 +325,8 @@ void S_Init (void)
 	Cvar_Register(&s_oss_device);
 	Cvar_Register(&s_driver);
 	Cvar_Register(&s_bits);
-	Cvar_Register(&s_pulseaudio_latency);
-	Cvar_Register(&s_alsa_device); //FIXME Move these to resp. snd_alsa/pulse?
+//	Cvar_Register(&s_pulseaudio_latency);
+	Cvar_Register(&s_alsa_device);
 	Cvar_Register(&s_alsa_latency);
 
 #endif
