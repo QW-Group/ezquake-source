@@ -1281,7 +1281,13 @@ void Key_Console (int key, int unichar)
 		}
 	}
 
-	if (((key == 'V' || key == 'v') && keydown[K_CTRL] && !keydown[K_ALT])
+	if (((key == 'V' || key == 'v') && 
+#ifndef __APPLE__
+		 keydown[K_CTRL]
+#else
+		 keydown[K_CMD]
+#endif
+		 && !keydown[K_ALT])
 		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
 	{
 		wchar *clipText;
