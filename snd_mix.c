@@ -115,7 +115,7 @@ static void S_TransferStereo16 (int endtime)
 
 		// handle recirculating buffer issues
 #if defined(__linux__) || defined(__FreeBSD__)
-		//modified, taken from fodquake, works like a charm with alsa/pulseaudio
+		// dimman modified, taken from fodquake, accept buffers that arent a power of 2
 		lpos = lpaintedtime % ((shm->samples>>1));
 #else
 		lpos = lpaintedtime & ((shm->samples>>1) - 1); //original
@@ -298,11 +298,7 @@ void SND_InitScaletable (void)
 
 	for (i = 0 ; i < 32; i++)
 		for (j = 0; j < 256; j++)
-#if defined(__linux) || defined(__FreeBSD__)
-			snd_scaletable[i][j] = ((signed char) j) * i * 8; // fodquake/original
-#else
-			snd_scaletable[i][j] = ((j < 128) ? j : j - 0xff) * i * 8; //not sure what it does //dimman
-#endif
+			snd_scaletable[i][j] = ((j < 128) ? j : j - 0xff) * i * 8;
 }
 
 void S_PaintChannels (int endtime)
