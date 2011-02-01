@@ -106,7 +106,7 @@ cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1"};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 
-cvar_t s_linearresample = {"s_linearresample", "1"};
+cvar_t s_linearresample = {"s_linearresample", "0"};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
