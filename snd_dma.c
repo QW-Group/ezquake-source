@@ -295,10 +295,10 @@ static void S_Restart_f (void)
 	Cache_Flush();
 	S_StopAllSounds (true);
 
-	S_RegisterLatchCvars();
-
 	S_Shutdown();
 	Com_DPrintf("sound: Shutdown OK\n");
+
+	S_RegisterLatchCvars();
 
 	if (!S_Startup()) {
 #if defined(__linux__) || defined(__FreeBSD__)
