@@ -39,6 +39,8 @@ sounddriver_t *sounddriver;
 #endif
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
+static void S_RegisterLatchCvars(void);
+
 static void S_Play_f (void);
 static void S_PlayVol_f (void);
 static void S_SoundList_f (void);
@@ -115,7 +117,7 @@ cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1"};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 
-cvar_t s_linearresample = {"s_linearresample", "0"};
+cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
@@ -125,23 +127,23 @@ cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
 // ====================================================================
 
 #if defined(__FreeBSD__) || defined(__linux__)
-cvar_t s_stereo = {"s_stereo", "1"};
-cvar_t s_bits = {"s_bits", "16"};
-cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"};
-cvar_t s_alsa_device = {"s_alsa_device", "default"};
-cvar_t s_alsa_latency = {"s_alsa_latency", "0.01"};
+cvar_t s_stereo = {"s_stereo", "1", CVAR_LATCH};
+cvar_t s_bits = {"s_bits", "16", CVAR_LATCH};
+cvar_t s_oss_device = {"s_oss_device", "/dev/dsp", CVAR_LATCH};
+cvar_t s_alsa_device = {"s_alsa_device", "default", CVAR_LATCH};
+cvar_t s_alsa_latency = {"s_alsa_latency", "0.01", CVAR_LATCH};
 
 /* Pulseaudio is currently disabled
-cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.01"};
+cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.01", CVAR_LATCH};
 */
 #endif
 
 #ifdef __linux__
-cvar_t s_driver = {"s_driver", "alsa"};
+cvar_t s_driver = {"s_driver", "alsa", CVAR_LATCH};
 #endif
 
 #ifdef __FreeBSD__
-cvar_t s_driver = {"s_driver", "oss"};
+cvar_t s_driver = {"s_driver", "oss", CVAR_LATCH};
 #endif
 
 
@@ -199,6 +201,17 @@ static void S_SoundInfo_f (void)
 	Com_Printf("%5d speed\n", shm->format.speed);
 	Com_Printf("%p dma buffer\n", shm->buffer);
 	Com_Printf("%5u total_channels\n", total_channels);
+}
+
+static void S_RegisterLatchCvars(void)
+{
+	Cvar_Register(&s_linearresample);
+	Cvar_Register(&s_stereo);
+	Cvar_Register(&s_bits);
+	Cvar_Register(&s_oss_device);
+	Cvar_Register(&s_alsa_device);
+	Cvar_Register(&s_alsa_latency);
+	Cvar_Register(&s_driver);
 }
 
 static qbool S_Startup (void)
@@ -281,6 +294,8 @@ static void S_Restart_f (void)
 	Com_DPrintf("Restarting sound system....\n");
 	Cache_Flush();
 	S_StopAllSounds (true);
+
+	S_RegisterLatchCvars();
 
 	S_Shutdown();
 	Com_DPrintf("sound: Shutdown OK\n");

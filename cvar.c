@@ -295,7 +295,7 @@ void Cvar_Set (cvar_t *var, char *value)
 				restartcmd = "in_restart (input)";
 			}
 			else if (strncmp(var->name, "s_", 2) == 0) {
-				restartcmd = "snd_restart (sound)";
+				restartcmd = "s_restart (sound)";
 			}
 			Com_Printf ("%s needs %s to take effect.\n", var->name, restartcmd);
 		}
