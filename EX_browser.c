@@ -141,10 +141,34 @@ int ping_phase = 0;
 double ping_pos;
 int abort_ping;
 
+// mouse and server list columns
+static qbool mouse_in_header_row = false;
+static int mouse_header_pos_y = 0;
+static unsigned int mouse_hovered_column;
+
 extern cvar_t cl_proxyaddr;
 
 sem_t serverlist_semaphore;
 sem_t serverinfo_semaphore;
+
+typedef struct sb_column_t {
+	const char *name;
+	unsigned int width;
+	cvar_t *showvar;
+} sb_column_t;
+
+sb_column_t sb_columns[] = {
+	{ "name", COL_NAME, NULL },
+	{ "address", COL_IP, &sb_showaddress },
+	{ "png", COL_PING, &sb_showping },
+	{ "gamedir", COL_GAMEDIR, &sb_showgamedir },
+	{ "map", COL_MAP, &sb_showmap },
+	{ "plyrs", COL_PLAYERS, &sb_showplayers },
+	{ "fl", COL_FRAGLIMIT, &sb_showfraglimit },
+	{ "tl", COL_TIMELIMIT, &sb_showtimelimit }
+};
+
+static const unsigned int sb_columns_size = sizeof(sb_columns) / sizeof(sb_column_t);
 
 void Serverinfo_Stop(void);
 
@@ -886,6 +910,59 @@ static const char *SB_Ping_Color(int ping)
 	}
 }
 
+static unsigned int SB_Servers_Hovered_Column(int w)
+{
+	int w_from = w, w_to = w;
+	int col;
+
+	for (col = sb_columns_size - 1; col > 0; col--) {
+		if (sb_columns[col].showvar->integer) {
+			w_to = w_from;
+			w_from -= sb_columns[col].width * LETTERWIDTH + LETTERWIDTH;
+			if (w_from <= mouse_header_pos_y && mouse_header_pos_y < w_to) {
+				return col;
+			}
+		}
+	}
+	return 0;
+}
+
+// returns the horizontal offset of the second shown column in characters
+int SB_Servers_Draw_ColumnHeaders(int x, int y, int w)
+{
+	int pos = w/8;
+	char line[1024];
+	unsigned int colidx;
+	qbool hovered;
+
+	mouse_hovered_column = SB_Servers_Hovered_Column(w);
+	memset(line, ' ', pos);
+	line[pos] = 0;
+
+    UI_DrawColoredAlphaBox(x, y, w, 8, RGBA_TO_COLOR(10, 10, 10, 200));
+
+    for (colidx = sb_columns_size - 1; colidx > 0; colidx--) {
+		sb_column_t *col = &sb_columns[colidx];
+		hovered = mouse_in_header_row && mouse_hovered_column == colidx;
+
+		if (col->showvar->integer) {
+			if (mouse_in_header_row && hovered) {
+				UI_DrawColoredAlphaBox(x + pos * LETTERWIDTH - col->width * LETTERWIDTH - LETTERWIDTH,
+						y, col->width * LETTERWIDTH + LETTERWIDTH, 8, RGBA_TO_COLOR(30, 30, 30, 200));
+			}
+			Add_Column2(x, y, &pos, col->name, col->width, !hovered);
+		}
+    }
+	// name is always displayed
+    hovered = mouse_in_header_row && mouse_hovered_column == colidx;
+	if (hovered) {
+		UI_DrawColoredAlphaBox(x, y, pos * LETTERWIDTH + LETTERWIDTH, 8, RGBA_TO_COLOR(30, 30, 30, 200));
+	}
+	UI_Print(x, y, "name", !(mouse_in_header_row && mouse_hovered_column == 0));
+
+	return pos;
+}
+
 void SB_Servers_Draw (int x, int y, int w, int h)
 {
 	char line[1024];
@@ -911,28 +988,10 @@ void SB_Servers_Draw (int x, int y, int w, int h)
         Servers_pos = min(Servers_pos, serversn_passed-1);
 
         listsize = (int)(h/8) - (sb_status.value ? 3 : 0);
-        pos = w/8;
-        memset(line, ' ', pos);
-        line[pos] = 0;
 
         listsize--;     // column titles
 
-        if (sb_showtimelimit.value)
-            Add_Column2(x, y, &pos, "tl", COL_TIMELIMIT, true);
-        if (sb_showfraglimit.value)
-            Add_Column2(x, y, &pos, "fl", COL_FRAGLIMIT, true);
-        if (sb_showplayers.value)
-            Add_Column2(x, y, &pos, "plyrs", COL_PLAYERS, true);
-        if (sb_showmap.value)
-            Add_Column2(x, y, &pos, "map", COL_MAP, true);
-        if (sb_showgamedir.value)
-            Add_Column2(x, y, &pos, "gamedir", COL_GAMEDIR, true);
-        if (sb_showping.value)
-            Add_Column2(x, y, &pos, "png", COL_PING, true);
-        if (sb_showaddress.value)
-            Add_Column2(x, y, &pos, "address", COL_IP, true);
-
-        UI_Print(x, y, "name", true);
+		pos = SB_Servers_Draw_ColumnHeaders(x, y, w);
 
 		if (Servers_disp < 0)
 			Servers_disp = 0;
@@ -1864,6 +1923,39 @@ qbool SearchNextServer (int pos)
 	return false;
 }
 
+static void SB_Servers_Toggle_Column_Show(int colidx)
+{
+	if (colidx > 0 && colidx < sb_columns_size) {
+		Cvar_Toggle(sb_columns[colidx].showvar);
+	}
+}
+
+static void SB_Servers_Toggle_Column_Sort(char key)
+{
+	char buf[32];
+	if ((sb_sortservers.string[0] == '-' && sb_sortservers.string[1] == key)
+		|| sb_sortservers.string[0] == key)
+    {
+		if (sb_sortservers.string[0] == '-')
+		{
+			strlcpy (buf, sb_sortservers.string + 1, sizeof (buf));
+		}
+		else
+		{
+			buf[0] = '-';
+			strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
+		}
+    }
+	else
+	{
+		buf[0] = key;
+		strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
+    }
+
+	Cvar_Set(&sb_sortservers, buf);
+	resort_servers = 1;
+}
+
 int SB_Servers_Key(int key)
 {
     if (serversn_passed <= 0  &&  (key != K_SPACE || isAltDown())
@@ -1960,41 +2052,11 @@ int SB_Servers_Key(int key)
             case '8':   // sorting mode
 				if (isAltDown()) // fixme
 				{
-					char buf[32];
-					if ((sb_sortservers.string[0] == '-' && sb_sortservers.string[1] == key)
-						|| sb_sortservers.string[0] == key)
-                    {
-						if (sb_sortservers.string[0] == '-')
-						{
-							strlcpy (buf, sb_sortservers.string + 1, sizeof (buf));
-						}
-						else
-						{
-							buf[0] = '-';
-							strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
-						}
-                    }
-					else
-					{
-						buf[0] = key;
-						strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
-                    }
-
-					Cvar_Set(&sb_sortservers, buf);
-					resort_servers = 1;
+					SB_Servers_Toggle_Column_Sort(key);
 				}
 				else if (isCtrlDown())
 				{
-					switch (key)
-					{
-					case '2': Cvar_Toggle(&sb_showaddress);    break;
-					case '3': Cvar_Toggle(&sb_showping);       break;
-					case '4': Cvar_Toggle(&sb_showgamedir);    break;
-					case '5': Cvar_Toggle(&sb_showmap);        break;
-					case '6': Cvar_Toggle(&sb_showplayers);    break;
-					case '7': Cvar_Toggle(&sb_showfraglimit);  break;
-					case '8': Cvar_Toggle(&sb_showtimelimit);  break;
-					}
+					SB_Servers_Toggle_Column_Show(key - '1');
 				}
 				break;
 			case 'c':	// copy server to clipboard
@@ -2453,15 +2515,27 @@ int SB_Players_Key(int key)
 qbool SB_Servers_Mouse_Event(const mouse_state_t *ms)
 {
     if (show_serverinfo) {
-		return true;
     }
-    if (ms->button_up == 1)
-    {
-        SB_Servers_Key(K_MOUSE1);
-        return true;
+    else if (ms->button_up == 1) {
+		if (mouse_in_header_row) {
+			SB_Servers_Toggle_Column_Sort('0' + mouse_hovered_column + 1);
+		}
+		else {
+			SB_Servers_Key(K_MOUSE1);
+		}
     }
-	Servers_pos = Servers_disp + ms->y / 8 - 1;
-    Servers_pos = bound(0, Servers_pos, serversn - 1);
+    else {
+		double mouse_row = ms->y / 8.0 - 1.0;
+		if (mouse_row < 0.0) {
+			mouse_in_header_row = true;
+			mouse_header_pos_y = ms->x;
+		}
+		else {
+			mouse_in_header_row = false;
+			Servers_pos = Servers_disp + (int) mouse_row;
+			Servers_pos = bound(0, Servers_pos, serversn - 1);
+		}
+    }
 	return true;
 }
 
