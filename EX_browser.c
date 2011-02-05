@@ -50,6 +50,8 @@ int source_unique = 0;
 #define SEARCH_TIME 3
 double searchtime = -10;
 
+#define MWHEEL_SCROLL_STEP 4
+
 enum {
 	search_none = 0,
 	search_server,
@@ -1922,11 +1924,18 @@ int SB_Servers_Key(int key)
             case K_UPARROW:
                 Servers_pos--; break;
 			case K_MWHEELUP:
-				Servers_disp--; break;
+				Servers_disp -= MWHEEL_SCROLL_STEP;
+				Servers_pos -= MWHEEL_SCROLL_STEP;
+				break;
+
             case K_DOWNARROW:
-                Servers_pos++; break;
+                Servers_pos++;
+				break;
 			case K_MWHEELDOWN:
-				Servers_disp++; break;
+				Servers_disp += MWHEEL_SCROLL_STEP;
+				Servers_pos += MWHEEL_SCROLL_STEP;
+				break;
+
             case K_HOME:
                 Servers_pos = 0; break;
             case K_END:
