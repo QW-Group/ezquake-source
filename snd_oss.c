@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_oss.c,v 1.24 2006/04/28 23:38:29 disconn3ct Exp $
 */
 
 #include <unistd.h>
@@ -41,8 +40,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static int audio_fd;
 
 // Prototypes (that are not in qshound.h)
-int SNDDMA_GetDMAPos_OSS(void); //FIXME
-void SNDDMA_Shutdown_OSS(void); //FIXME
+int SNDDMA_GetDMAPos_OSS(void);
+void SNDDMA_Shutdown_OSS(void);
 
 // Main functions
 qbool SNDDMA_Init_OSS(struct sounddriver_t *sd)
@@ -51,7 +50,7 @@ qbool SNDDMA_Init_OSS(struct sounddriver_t *sd)
 	char *snd_dev = NULL;
 	struct audio_buf_info info;
 
-	snd_dev = Cvar_String("s_oss_device");
+	snd_dev = s_oss_device.string;
 
 	if ((audio_fd = open(snd_dev, O_RDWR | O_NONBLOCK)) < 0) {
 		perror(snd_dev);
@@ -192,7 +191,7 @@ int SNDDMA_GetDMAPos_OSS(void)
 	if (!shm)
 		return 0;
 
-	snd_dev = Cvar_String("s_oss_device");
+	snd_dev = s_oss_device.string;
 
 	if (ioctl(audio_fd, SNDCTL_DSP_GETOPTR, &count) == -1) {
 		perror(snd_dev);

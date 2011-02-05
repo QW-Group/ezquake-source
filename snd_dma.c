@@ -60,7 +60,15 @@ int		snd_blocked = 0;
 qbool		snd_initialized = false;
 
 #if defined(__linux__) || defined(__FreeBSD__)
-qbool		snd_started = false; //dimman
+/* dimman:
+Sound might be initialized but not started, we cant set
+snd_initialized to false, it will never be set to true again,
+without restarting client. So i created a new var, only to keep
+track of if a driver is started or not. Makes it possible to
+do s_restart after a S_Startup() failure.
+*/
+qbool		snd_started = false;
+
 #endif
 
 int		soundtime;
@@ -80,6 +88,7 @@ static vec3_t	listener_up;
 // than could actually be referenced during gameplay,
 // because we don't want to free anything until we are
 // sure we won't need it.
+
 #define MAX_SFX (MAX_SOUNDS*2) // 256 * 2 = 512
 
 static sfx_t	*known_sfx = NULL; // hunk allocated [MAX_SFX]
@@ -111,17 +120,20 @@ cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
 
-/////////////////////////////////
+// ====================================================================
 // Specific os cvar/defaults
-////////////////////////////////
+// ====================================================================
 
 #if defined(__FreeBSD__) || defined(__linux__)
 cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_bits = {"s_bits", "16"};
 cvar_t s_oss_device = {"s_oss_device", "/dev/dsp"};
 cvar_t s_alsa_device = {"s_alsa_device", "default"};
-cvar_t s_alsa_latency = {"s_alsa_latency", "0.04"};
-//cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04"};
+cvar_t s_alsa_latency = {"s_alsa_latency", "0.01"};
+
+/* Pulseaudio is currently disabled
+cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.01"};
+*/
 #endif
 
 #ifdef __linux__
@@ -133,9 +145,9 @@ cvar_t s_driver = {"s_driver", "oss"};
 #endif
 
 
-///////////////////////////////
-// voice communication
-//////////////////////////////
+// ====================================================================
+// Voice communication
+// ====================================================================
 
 #ifdef FTE_PEXT2_VOICECHAT
 
@@ -174,7 +186,10 @@ static void S_SoundInfo_f (void)
 #endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
-	Com_Printf("%5d frames\n", shm->samples / shm->format.channels); //sampleframes not set/used in linux/freebsd
+	// shm->sampleframes not set/used in ALSA/Pulseaudio
+	// OSS still sets it, but it isn't used outside of OSS.
+	// So don't read sampleframes from shm, but calculate it instead.
+	Com_Printf("%5d frames\n", shm->samples / shm->format.channels); 
 #else
 	Com_Printf("%5d frames\n", shm->sampleframes);
 #endif
@@ -197,18 +212,20 @@ static qbool S_Startup (void)
 	S_RawClear();
 
 ///////////////////////////////////////////////
+// Sound driver choosing. Linux/FreeBSD only
+
 #if defined(__linux__) || defined(__FreeBSD__)
 	sounddriver = malloc(sizeof(*sounddriver));
 	char *audio_driver = Cvar_String("s_driver");
 	qbool retval = false;
 
 	if(sounddriver)	{
-	//FIXME UGLY UGLY, make this in a cleaner way...
-
 		if(strcmp(audio_driver, "alsa")==0) {
 			retval = SNDDMA_Init_ALSA(sounddriver);
-//		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
-//			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
+/*
+		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
+			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
+*/
 		} else if(strcmp(audio_driver, "oss")==0) {
 			retval = SNDDMA_Init_OSS(sounddriver);
 		}
@@ -228,7 +245,7 @@ static qbool S_Startup (void)
 	else {
 		Com_Printf("[sound] %s started....\n", sounddriver->name);
 	}
-
+////////////////////////////////////////////////////
 #else
 	if (!SNDDMA_Init()) {
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
@@ -237,8 +254,6 @@ static qbool S_Startup (void)
 		return false;
 	}
 #endif
-//////////////////////////////////////////////
-
 	return true;
 }
 
@@ -274,8 +289,7 @@ static void S_Restart_f (void)
 #if defined(__linux__) || defined(__FreeBSD__)
 		snd_started = false;
 #else
-		snd_initialized = false; // I think this is the failing part? DONT set snd_initialized to false, it will never be set to true again since S_Init is the only to do that and its called ONCE
-					 // I think we need a new var to check if sound is STARTED, it might be initialized (cvars etc..) but not started?
+		snd_initialized = false; 
 #endif
 		return;
 	}
@@ -364,8 +378,8 @@ void S_Init (void)
 		return;
 	}
 
-	Cmd_AddCommand("s_restart", S_Restart_f);
-	Cmd_AddLegacyCommand("snd_restart", "s_restart");	// exclusively for Disconnect
+	Cmd_AddCommand("s_restart", S_Restart_f); // dimman: made s_restart the actual command
+	Cmd_AddLegacyCommand("snd_restart", "s_restart"); // and snd_restart a legacy command
 	Cmd_AddCommand("play", S_Play_f);
 	Cmd_AddCommand("playvol", S_PlayVol_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
@@ -930,16 +944,11 @@ static void S_Update_ (void)
 		paintedtime = soundtime;
 	}
 
-	endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
-
-#if !defined(__linux__) && !defined(__FreeBSD__)
-	// mix ahead of current position
-	endtime = min(endtime, (unsigned int)(soundtime + shm->sampleframes));
-#endif
 
 #if defined(__linux__) || defined(__FreeBSD__)
 	int avail;
-	int samps; //rev2 addon
+	int samps;
+
 	//mix ahead of current position
 	if(sounddriver->GetAvail) {
 		avail = sounddriver->GetAvail();
@@ -950,10 +959,14 @@ static void S_Update_ (void)
 	else {
 		endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
 	}
-
 	samps = (shm->samples) >> (shm->format.channels - 1);
 	if(endtime - soundtime > samps)
 		endtime = soundtime + samps;
+
+#else
+	// mix ahead of current position
+	endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
+	endtime = min(endtime, (unsigned int)(soundtime + shm->sampleframes));
 #endif
 
 

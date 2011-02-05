@@ -82,7 +82,7 @@ typedef struct wavinfo_s {
 #if defined(__linux__) || defined(__FreeBSD__)
 
 typedef struct sounddriver_t {
-	char* name;
+	char *name;
 	int (*GetAvail)(void);
 	int (*GetDMAPos)(void);
 	void (*Submit)(unsigned int count);
@@ -112,7 +112,7 @@ void SNDDMA_Shutdown(void);
 
 #if defined(__linux__) || defined(__FreeBSD__)
 void SNDDMA_Submit(unsigned int count); // OSS doesnt use Submit
-//qbool SNDDMA_Init_PULSEAUDIO(struct sounddriver_t *sd); // Pulseaudio not enabled atm...
+//qbool SNDDMA_Init_PULSEAUDIO(struct sounddriver_t *sd); // Pulseaudio disabled atm...
 qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd);
 qbool SNDDMA_Init_OSS(struct sounddriver_t *sd);
 
@@ -150,7 +150,7 @@ extern unsigned int	total_channels;
 
 extern qbool		snd_initialized;
 
-#if defined(__linux__) || defined(__FreeBSD__) //FIXME make it work for all OS:s perhaps.. only linux that changes soundsystems though
+#if defined(__linux__) || defined(__FreeBSD__) 
 extern qbool		snd_started;
 #endif
 

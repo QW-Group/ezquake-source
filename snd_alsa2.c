@@ -60,7 +60,6 @@ static struct alsa_private *driver;
 /////////////
 //
 ////////////
-//qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd); //Currently located in qsounds.h .. fix
 int SNDDMA_GetDMAPos_ALSA(void);
 void SNDDMA_Shutdown_ALSA(void);
 void SNDDMA_Submit_ALSA(unsigned int count);
@@ -273,16 +272,16 @@ qbool SNDDMA_Init_ALSA (struct sounddriver_t *sd)
 	qbool ret;
 	const char *prevattempt;
 	int channels, bits, rate;
-	channels = Cvar_Value("s_stereo") ? 2 : 1;
+	channels = s_stereo.integer ? 2 : 1;
 	bits = 16; // made it default to 16
-	if(Cvar_Value("s_bits")) {
-		bits = Cvar_Value("s_bits");
+	if(s_bits.value) {
+		bits = s_bits.integer;
 		if(bits != 8 && bits != 16) {
 			Com_Printf("Error: invalid s_bits value \"%d\". Valid (8 or 16)", bits);
 			return false;
 		}
 	}
-	rate = SND_Rate((int)s_khz.value);
+	rate = SND_Rate(s_khz.integer);
 
 	ret = alsa_init_internal(sd, s_alsa_device.string, rate, channels, bits);
 
