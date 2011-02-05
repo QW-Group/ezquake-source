@@ -50,7 +50,7 @@ qbool SNDDMA_Init_OSS(struct sounddriver_t *sd)
 	char *snd_dev = NULL;
 	struct audio_buf_info info;
 
-	snd_dev = s_oss_device.string;
+	snd_dev = Cvar_String("s_oss_device");
 
 	if ((audio_fd = open(snd_dev, O_RDWR | O_NONBLOCK)) < 0) {
 		perror(snd_dev);
@@ -191,7 +191,7 @@ int SNDDMA_GetDMAPos_OSS(void)
 	if (!shm)
 		return 0;
 
-	snd_dev = s_oss_device.string;
+	snd_dev = Cvar_String("s_oss_device");
 
 	if (ioctl(audio_fd, SNDCTL_DSP_GETOPTR, &count) == -1) {
 		perror(snd_dev);
