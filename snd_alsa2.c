@@ -87,7 +87,7 @@ static void alsa_tryrestart(unsigned int ret, int dorestart)
 
         ret = driver->snd_pcm_recover(driver->pcmhandle, ret, !PCM_RECOVER_VERBOSE);
         if (ret < 0)
-                fprintf(stderr, "ALSA made a boo-boo: %d (%s)\n", (int)ret, driver->snd_strerror(ret));
+                Com_Printf("ALSA made a boo-boo: %d (%s)\n", (int)ret, driver->snd_strerror(ret));
 
         if (dorestart)
                 driver->snd_pcm_start(driver->pcmhandle);
@@ -263,7 +263,7 @@ void SNDDMA_Shutdown_ALSA (void)
 		dlclose(driver->alsasharedobject);
 		free(driver);
 	} else {
-		fprintf(stderr, "SNDDMA_Shutdown_ALSA: Error, tried to shut down sound but sound not initialized");
+		Com_Printf("SNDDMA_Shutdown_ALSA: Error, tried to shut down sound but sound not initialized");
 	}
 }
 //void SNDDMA_Init_ALSA (int rate, int channels, int bits)
