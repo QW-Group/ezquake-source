@@ -46,7 +46,7 @@ void TP_ExecTrigger (const char *s);
 
 extern sem_t serverinfo_semaphore;
 // To prevent several Serverinfo threads to be started at the same time
-int serverinfo_lock;
+static int serverinfo_lock;
 
 typedef struct infohost_s
 {
@@ -612,9 +612,10 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 
 void GetServerPingsAndInfos(int full)
 {
-	// To prevent several threads to exist simultaneously
-	while(serverinfo_lock)
-		Sys_MSleep(50);
+	if (serverinfo_lock) {
+		Com_Printf("Server list refresh is still pending\n");
+		return;
+	}
 
 	serverinfo_lock = 1;
 	
@@ -638,7 +639,11 @@ void GetServerPingsAndInfos(int full)
 
 void GetServerPingsAndInfos_f()
 {
-	GetServerPingsAndInfos(true);
+	qbool full = true;
+	if (Cmd_Argc() > 0 && strcmp(Cmd_Argv(1), "info") == 0) {
+		full = false;
+	}
+	GetServerPingsAndInfos(full);
 }
 
 //
