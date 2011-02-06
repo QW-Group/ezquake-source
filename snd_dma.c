@@ -260,6 +260,8 @@ static qbool S_Startup (void)
 	}
 	if(retval == false) {
 		Com_Printf("[sound] Failed to startup (s_driver %s)\n", s_driver.string);
+		if((!s_uselegacydrivers.value) && ((strcmp(audio_driver, "alsa")==0) || (strcmp(audio_driver, "oss")==0)))
+			Com_Printf("Try s_uselegacydriver 1 to use legacy %s driver.\n", audio_driver);
 		shm = NULL;
 		sound_spatialized = false;
 		snd_started = false;
