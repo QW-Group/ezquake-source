@@ -210,6 +210,7 @@ LINUX_C_FILES := \
 	mumble \
 	snd_alsa \
 	snd_alsa_legacy \
+	snd_pulseaudio \
 	snd_linux \
 	snd_oss \
 	snd_oss_legacy \

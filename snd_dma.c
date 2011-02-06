@@ -132,10 +132,8 @@ cvar_t s_oss_device = {"s_oss_device", "/dev/dsp", CVAR_LATCH};
 cvar_t s_alsa_device = {"s_alsa_device", "default", CVAR_LATCH};
 cvar_t s_alsa_latency = {"s_alsa_latency", "0.02", CVAR_LATCH};
 cvar_t s_uselegacydrivers = {"s_uselegacydrivers", "0", CVAR_LATCH};
-
-/* Pulseaudio is currently disabled
 cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.01", CVAR_LATCH};
-*/
+
 #endif
 
 #ifdef __linux__
@@ -243,10 +241,10 @@ static qbool S_Startup (void)
 				retval = SNDDMA_Init_ALSA(sounddriver);
 			}
 
-/*
+
 		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
 			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
-*/
+
 		} else if(strcmp(audio_driver, "oss")==0) {
 			if(s_uselegacydrivers.value) {
 				retval = SNDDMA_Init_OSS_Legacy(sounddriver);
@@ -367,7 +365,7 @@ void S_Init (void)
 	Cvar_Register(&s_oss_device);
 	Cvar_Register(&s_driver);
 	Cvar_Register(&s_bits);
-//	Cvar_Register(&s_pulseaudio_latency);
+	Cvar_Register(&s_pulseaudio_latency);
 	Cvar_Register(&s_alsa_device);
 	Cvar_Register(&s_alsa_latency);
 
