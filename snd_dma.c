@@ -212,6 +212,7 @@ static void S_RegisterLatchCvars(void)
 	Cvar_Register(&s_driver);
 	Cvar_Register(&s_alsa_device);
 	Cvar_Register(&s_alsa_latency);
+	Cvar_Register(&s_pulseaudio_latency);
 
 }
 #endif
