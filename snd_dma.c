@@ -964,7 +964,7 @@ static void S_Update_ (void)
 
 #if defined(__linux__) || defined(__FreeBSD__)
 	int avail;
-//	int samps;
+	int samps;
 
 	//mix ahead of current position
 	if(sounddriver->GetAvail) {
@@ -977,9 +977,9 @@ static void S_Update_ (void)
 		endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
 		endtime = min(endtime, (unsigned int)(soundtime +  shm->samples * shm->format.channels));
 	}
-//	samps = (shm->samples) >> (shm->format.channels - 1);
-//	if(endtime - soundtime > samps)
-//		endtime = soundtime + samps;
+	samps = (shm->samples) >> (shm->format.channels - 1);
+	if(endtime - soundtime > samps)
+		endtime = soundtime + samps;
 
 #else
 	// mix ahead of current position
