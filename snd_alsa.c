@@ -296,8 +296,15 @@ qbool SNDDMA_Init_ALSA (struct sounddriver_t *sd)
         if (ret == 0 && strcmp(s_alsa_device.string, "hw") != 0)
         {
                 Com_Printf("Opening \"%s\" failed, trying \"hw\"\n", prevattempt);
-
+		prevattempt = "hw";
                 ret = alsa_init_internal(sd, "hw", rate, channels, bits);
+        }
+
+	if (ret == 0 && strcmp(s_alsa_device.string, "plug:hw") != 0)
+        {
+                Com_Printf("Opening \"%s\" failed, trying \"plug:hw\"\n", prevattempt);
+                prevattempt = "plug:hw";
+                ret = alsa_init_internal(sd, "plug:hw", rate, channels, bits);
         }
 
 	return ret;
