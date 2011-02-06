@@ -36,11 +36,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //dimman
 #if defined(__linux__) || defined(__FreeBSD__)
 sounddriver_t *sounddriver;
+static void S_RegisterLatchCvars(void);
 #endif
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
-static void S_RegisterLatchCvars(void);
-
 static void S_Play_f (void);
 static void S_PlayVol_f (void);
 static void S_SoundList_f (void);
@@ -131,7 +130,7 @@ cvar_t s_stereo = {"s_stereo", "1", CVAR_LATCH};
 cvar_t s_bits = {"s_bits", "16", CVAR_LATCH};
 cvar_t s_oss_device = {"s_oss_device", "/dev/dsp", CVAR_LATCH};
 cvar_t s_alsa_device = {"s_alsa_device", "default", CVAR_LATCH};
-cvar_t s_alsa_latency = {"s_alsa_latency", "0.01", CVAR_LATCH};
+cvar_t s_alsa_latency = {"s_alsa_latency", "0.02", CVAR_LATCH};
 
 /* Pulseaudio is currently disabled
 cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.01", CVAR_LATCH};
@@ -203,17 +202,19 @@ static void S_SoundInfo_f (void)
 	Com_Printf("%5u total_channels\n", total_channels);
 }
 
+#if defined(__linux__) || defined(__FreeBSD__)
 static void S_RegisterLatchCvars(void)
 {
 	Cvar_Register(&s_linearresample);
 	Cvar_Register(&s_stereo);
 	Cvar_Register(&s_bits);
 	Cvar_Register(&s_oss_device);
+	Cvar_Register(&s_driver);
 	Cvar_Register(&s_alsa_device);
 	Cvar_Register(&s_alsa_latency);
-	Cvar_Register(&s_driver);
-}
 
+}
+#endif
 static qbool S_Startup (void)
 {
 	if (!snd_initialized)
@@ -297,8 +298,9 @@ static void S_Restart_f (void)
 
 	S_Shutdown();
 	Com_DPrintf("sound: Shutdown OK\n");
-
+#if defined(__linux__) || defined(__FreeBSD__)
 	S_RegisterLatchCvars();
+#endif
 
 	if (!S_Startup()) {
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -962,7 +964,7 @@ static void S_Update_ (void)
 
 #if defined(__linux__) || defined(__FreeBSD__)
 	int avail;
-	int samps;
+//	int samps;
 
 	//mix ahead of current position
 	if(sounddriver->GetAvail) {
@@ -973,10 +975,11 @@ static void S_Update_ (void)
 	}
 	else {
 		endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
+		endtime = min(endtime, (unsigned int)(soundtime +  shm->samples * shm->format.channels));
 	}
-	samps = (shm->samples) >> (shm->format.channels - 1);
-	if(endtime - soundtime > samps)
-		endtime = soundtime + samps;
+//	samps = (shm->samples) >> (shm->format.channels - 1);
+//	if(endtime - soundtime > samps)
+//		endtime = soundtime + samps;
 
 #else
 	// mix ahead of current position
