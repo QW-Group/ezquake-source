@@ -1,5 +1,5 @@
 /*
-Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2006-2007 Mark Olsen (ported to ezQuake by dimman)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -8,220 +8,193 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 
 See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
 */
 
-#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
+#include <sys/soundcard.h>
+
 #include <fcntl.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/shm.h>
-#include <sys/wait.h>
-#ifdef __linux__
-#include <linux/soundcard.h>
-#else
-#include <sys/soundcard.h>
-#endif
-#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "quakedef.h"
 #include "qsound.h"
 
-// Global Variables
-static int audio_fd;
+static const int rates[] = { 11025, 22050, 44100, 8000 };
 
-// Prototypes (that are not in qshound.h)
-int SNDDMA_GetDMAPos_OSS(void);
-void SNDDMA_Shutdown_OSS(void);
+#define NUMRATES (sizeof(rates)/sizeof(*rates))
 
-// Main functions
-qbool SNDDMA_Init_OSS(struct sounddriver_t *sd)
+extern cvar_t s_oss_device;
+
+struct oss_private
 {
-	int rc, fmt, tmp, caps;
-	char *snd_dev = NULL;
-	struct audio_buf_info info;
+	int fd;
+};
 
-	snd_dev = Cvar_String("s_oss_device");
+static struct oss_private *pdriver;
 
-	if ((audio_fd = open(snd_dev, O_RDWR | O_NONBLOCK)) < 0) {
-		perror(snd_dev);
-		Com_Printf("Could not open %s\n", snd_dev);
-		return 0;
-	}
-
-	if ((rc = ioctl(audio_fd, SNDCTL_DSP_RESET, 0)) < 0) {
-		perror(snd_dev);
-		Com_Printf("Could not reset %s\n", snd_dev);
-		close(audio_fd);
-		return 0;
-	}
-
-	if (ioctl(audio_fd, SNDCTL_DSP_GETCAPS, &caps) == -1) {
-		perror(snd_dev);
-		Com_Printf("Sound driver too old\n");
-		close(audio_fd);
-		return 0;
-	}
-
-	if (!(caps & DSP_CAP_TRIGGER) || !(caps & DSP_CAP_MMAP)) {
-		Com_Printf("Sorry but your soundcard can't do this\n");
-		close(audio_fd);
-		return 0;
-	}
-
-	// set sample bits & speed
-	shm->format.width  = (int) (s_bits.value / 8);
-	shm->format.speed = SND_Rate((int)s_khz.value);
-	shm->format.channels = ((int) s_stereo.value == 0) ? 1 : 2;
-
-	if (shm->format.width != 2 && shm->format.width != 1) {
-		ioctl(audio_fd, SNDCTL_DSP_GETFMTS, &fmt);
-		if (fmt & AFMT_S16_LE) // disconnect: FIXME: what if bigendian?
-			shm->format.width = 2;
-		else if (fmt & AFMT_U8)
-			shm->format.width = 1;
-	}
-
-
-	tmp = (shm->format.channels == 2);
-	if ((rc = ioctl(audio_fd, SNDCTL_DSP_STEREO, &tmp)) < 0) {
-		perror(snd_dev);
-		Com_Printf ("Could not set %s to stereo", snd_dev);
-		close(audio_fd);
-		return 0;
-	}
-
-	if ((rc = ioctl(audio_fd, SNDCTL_DSP_SPEED, &shm->format.speed)) < 0) {
-		perror(snd_dev);
-		Com_Printf("Could not set %s speed to %d", snd_dev, shm->format.speed);
-		close(audio_fd);
-		return 0;
-	}
-
-	if (shm->format.width == 2) {
-		rc = AFMT_S16_LE;
-		rc = ioctl(audio_fd, SNDCTL_DSP_SETFMT, &rc);
-		if (rc < 0) {
-			perror(snd_dev);
-			Com_Printf("Could not support 16-bit data.  Try 8-bit.\n");
-			close(audio_fd);
-			return 0;
-		}
-	} else if (shm->format.width == 1) {
-		rc = AFMT_U8;
-		rc = ioctl(audio_fd, SNDCTL_DSP_SETFMT, &rc);
-		if (rc < 0) {
-			perror(snd_dev);
-			Com_Printf("Could not support 8-bit data.\n");
-			close(audio_fd);
-			return 0;
-		}
-	} else {
-		perror(snd_dev);
-		Com_Printf("%d-bit sound not supported.", shm->format.width * 8);
- 		close(audio_fd);
- 		return 0;
- 	}
-
-	if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {
-		perror("GETOSPACE");
-		Com_Printf ("Um, can't do GETOSPACE?\n");
-		close(audio_fd);
-		return 0;
-     }
-
-	shm->sampleframes = info.fragstotal * info.fragsize / shm->format.width / shm->format.channels;
-	shm->samples = shm->sampleframes * shm->format.channels;
-
-	// memory map the dma buffer
-	shm->bufferlength = info.fragstotal * info.fragsize;
-	shm->buffer = (unsigned char *) mmap(NULL, shm->bufferlength, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
-	if (!shm->buffer || shm->buffer == (unsigned char *)-1) {
-		perror(snd_dev);
-		Com_Printf ("Could not mmap %s\n", snd_dev);
-		close(audio_fd);
-		return 0;
-	}
-
-	// toggle the trigger & start her up
-	tmp = 0;
-	rc  = ioctl(audio_fd, SNDCTL_DSP_SETTRIGGER, &tmp);
-	if (rc < 0) {
-		perror(snd_dev);
-		Com_Printf("Could not toggle.\n");
-		close(audio_fd);
-		return 0;
-	}
-
-	tmp = PCM_ENABLE_OUTPUT;
-	rc = ioctl(audio_fd, SNDCTL_DSP_SETTRIGGER, &tmp);
-	if (rc < 0) {
-		perror(snd_dev);
-		Com_Printf("Could not toggle.\n");
-		close(audio_fd);
-		return 0;
-	}
-
-	shm->samplepos = 0;
-
-	sd->GetDMAPos = SNDDMA_GetDMAPos_OSS;
-	sd->GetAvail = NULL;
-	sd->Submit = NULL;
-	sd->Shutdown = SNDDMA_Shutdown_OSS;
-	sd->name = "snd_oss";
-
-	return 1;
-
-}
-
-int SNDDMA_GetDMAPos_OSS(void)
+static int oss_getdmapos(void)
 {
 	struct count_info count;
-	char *snd_dev = NULL;
 
-	if (!shm)
-		return 0;
-
-	snd_dev = Cvar_String("s_oss_device");
-
-	if (ioctl(audio_fd, SNDCTL_DSP_GETOPTR, &count) == -1) {
-		perror(snd_dev);
-		Com_Printf("Uh, sound dead.\n");
-		close(audio_fd);
-		return 0;
-	}
-
-	shm->samplepos = count.ptr / shm->format.width;
+	if (ioctl(pdriver->fd, SNDCTL_DSP_GETOPTR, &count) != -1)
+		shm->samplepos = count.ptr/(shm->format.width);
+	else
+		shm->samplepos = 0;
 
 	return shm->samplepos;
-
 }
 
-void SNDDMA_Shutdown_OSS(void)
+static void oss_submit(unsigned int count)
 {
-	int tmp = 0;
+}
 
-	// unmap the memory
-	if (shm->buffer)
-		munmap(shm->buffer, shm->bufferlength);
+static void oss_shutdown(void)
+{
 
-	if (audio_fd) {
-		// stop the sound
-		ioctl(audio_fd, SNDCTL_DSP_SETTRIGGER, &tmp);
-		ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
+	munmap(shm->buffer, shm->samples*(shm->format.width));
+	close(pdriver->fd);
 
-		// close the device
-		close(audio_fd);
+	free(pdriver);
+}
+
+static qbool oss_init_internal(struct sounddriver_t *sd, const char *device, int rate, int channels, int bits)
+{
+	int i;
+
+	int capabilities;
+	int dspformats;
+	struct audio_buf_info info;
+	struct oss_private *p;
+
+	p = malloc(sizeof(*p));
+	if (p)
+	{
+		p->fd = open(device, O_RDWR|O_NONBLOCK);
+		if (p->fd != -1)
+		{
+			if ((ioctl(p->fd, SNDCTL_DSP_RESET, 0) >= 0)
+			&& (ioctl(p->fd, SNDCTL_DSP_GETCAPS, &capabilities) != -1 && (capabilities&(DSP_CAP_TRIGGER|DSP_CAP_MMAP)) == (DSP_CAP_TRIGGER|DSP_CAP_MMAP))
+			&& (ioctl(p->fd, SNDCTL_DSP_GETOSPACE, &info) != -1))
+			{
+				if ((shm->buffer = mmap(0, info.fragstotal * info.fragsize, PROT_WRITE, MAP_SHARED, p->fd, 0)) != MAP_FAILED)
+				{
+					ioctl(p->fd, SNDCTL_DSP_GETFMTS, &dspformats);
+
+					if ((!(dspformats&AFMT_S16_LE) && (dspformats&AFMT_U8)) || bits == 8)
+						shm->format.width = 1;
+					else if ((dspformats&AFMT_S16_LE))
+						shm->format.width = 2;
+					else
+						shm->format.width = 0;
+
+					if (shm->format.width)
+					{
+						i = 0;
+						do
+						{
+							if (ioctl(p->fd, SNDCTL_DSP_SPEED, &rate) == 0)
+								break;
+
+							rate = rates[i];
+						} while(i++ != NUMRATES);
+
+						if (i != NUMRATES+1)
+						{
+							if (channels == 1)
+							{
+								shm->format.channels = 1;
+								i = 0;
+							}
+							else
+							{
+								shm->format.channels = 2;
+								i = 1;
+							}
+
+							if (ioctl(p->fd, SNDCTL_DSP_STEREO, &i) >= 0)
+							{
+								if (shm->format.width == 2)
+									i = AFMT_S16_LE;
+								else
+									i = AFMT_S8;
+
+								if (ioctl(p->fd, SNDCTL_DSP_SETFMT, &i) >= 0)
+								{
+									i = 0;
+									if (ioctl(p->fd, SNDCTL_DSP_SETTRIGGER, &i) >= 0)
+									{
+										i = PCM_ENABLE_OUTPUT;
+										if (ioctl(p->fd, SNDCTL_DSP_SETTRIGGER, &i) >= 0)
+										{
+											shm->samples = info.fragstotal * info.fragsize / (shm->format.width);
+											shm->samplepos = 0;
+											shm->format.speed = rate;
+
+											pdriver = p;
+
+											sd->GetDMAPos = oss_getdmapos;
+											sd->GetAvail = NULL;
+											sd->Submit = oss_submit;
+											sd->Shutdown = oss_shutdown;
+
+											return 1;
+										}
+									}
+								}
+							}
+						}
+					}
+
+					munmap(shm->buffer, info.fragstotal * info.fragsize);
+				}
+			}
+
+			close(p->fd);
+		}
+
+		free(p);
 	}
 
-	audio_fd = -1;
+	return 0;
+}
+
+static qbool oss_init(struct sounddriver_t *sd, int rate, int channels, int bits)
+{
+	qbool ret;
+
+	ret = oss_init_internal(sd, s_oss_device.string, rate, channels, bits);
+	if (ret == 0 && strcmp(s_oss_device.string, "/dev/dsp") != 0)
+	{
+		Com_Printf("Opening \"%s\" failed, trying \"/dev/dsp\"\n", s_oss_device.string);
+
+		ret = oss_init_internal(sd, "/dev/dsp", rate, channels, bits);
+	}
+
+	return ret;
+}
+
+qbool SNDDMA_Init_OSS(struct sounddriver_t *sd) {
+	int rate, channels, bits;
+	channels = s_stereo.integer ? 2 : 1;
+	bits = 16;
+	if(s_bits.value) {
+                bits = s_bits.integer;
+                if(bits != 8 && bits != 16) {
+                        Com_Printf("Error: invalid s_bits value \"%d\". Valid (8 or 16)", bits);
+                        return false;
+                }
+        }
+        rate = SND_Rate(s_khz.integer);
+
+	return oss_init(sd, rate, channels, bits);
 }

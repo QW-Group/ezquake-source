@@ -131,6 +131,7 @@ cvar_t s_bits = {"s_bits", "16", CVAR_LATCH};
 cvar_t s_oss_device = {"s_oss_device", "/dev/dsp", CVAR_LATCH};
 cvar_t s_alsa_device = {"s_alsa_device", "default", CVAR_LATCH};
 cvar_t s_alsa_latency = {"s_alsa_latency", "0.02", CVAR_LATCH};
+cvar_t s_uselegacydrivers = {"s_uselegacydrivers", "0", CVAR_LATCH};
 
 /* Pulseaudio is currently disabled
 cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.01", CVAR_LATCH};
@@ -183,7 +184,7 @@ static void S_SoundInfo_f (void)
 	}
 #if defined(__linux__) || defined(__FreeBSD__)
 	if(sounddriver)
-	Com_Printf("driver: %s\n", sounddriver->name);
+		Com_Printf("driver: %s\n", sounddriver->name);
 #endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -206,6 +207,7 @@ static void S_SoundInfo_f (void)
 static void S_RegisterLatchCvars(void)
 {
 	Cvar_Register(&s_linearresample);
+	Cvar_Register(&s_uselegacydrivers);
 	Cvar_Register(&s_stereo);
 	Cvar_Register(&s_bits);
 	Cvar_Register(&s_oss_device);
@@ -235,13 +237,22 @@ static qbool S_Startup (void)
 
 	if(sounddriver)	{
 		if(strcmp(audio_driver, "alsa")==0) {
-			retval = SNDDMA_Init_ALSA(sounddriver);
+			if(s_uselegacydrivers.value) {
+				retval = SNDDMA_Init_ALSA_Legacy(sounddriver);
+			} else {
+				retval = SNDDMA_Init_ALSA(sounddriver);
+			}
+
 /*
 		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
 			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
 */
 		} else if(strcmp(audio_driver, "oss")==0) {
-			retval = SNDDMA_Init_OSS(sounddriver);
+			if(s_uselegacydrivers.value) {
+				retval = SNDDMA_Init_OSS_Legacy(sounddriver);
+			} else {
+				retval = SNDDMA_Init_OSS(sounddriver);
+			}
 		}
 		else {
 			Com_DPrintf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
