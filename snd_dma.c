@@ -130,10 +130,10 @@ cvar_t s_stereo = {"s_stereo", "1", CVAR_LATCH};
 cvar_t s_bits = {"s_bits", "16", CVAR_LATCH};
 cvar_t s_oss_device = {"s_oss_device", "/dev/dsp", CVAR_LATCH};
 cvar_t s_alsa_device = {"s_alsa_device", "default", CVAR_LATCH};
-cvar_t s_alsa_latency = {"s_alsa_latency", "0.02", CVAR_LATCH};
+cvar_t s_alsa_latency = {"s_alsa_latency", "0.04", CVAR_LATCH};
 cvar_t s_alsa_noworkaround = {"s_alsa_noworkaround", "0", CVAR_LATCH};
 cvar_t s_uselegacydrivers = {"s_uselegacydrivers", "0", CVAR_LATCH};
-cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.02", CVAR_LATCH};
+cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04", CVAR_LATCH};
 
 #endif
 
