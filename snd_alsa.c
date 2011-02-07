@@ -72,10 +72,9 @@ static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, in
 static void alsa_tryrestart(unsigned int ret, int dorestart);
 static void alsa_writestuff(unsigned int max);
 
-
-extern cvar_t s_oss_device;
 extern cvar_t s_alsa_device;
 extern cvar_t s_alsa_latency;
+extern cvar_t s_alsa_noworkaround;
 
 ////////////////////////////////////////////////////
 //	 private functions
@@ -174,7 +173,7 @@ static void alsa_writestuff(unsigned int max)
                 avail = alsa_getavail();
 
 		// Test if we are using ALSA direct or through like pulseaudio ...
-		if((driver->snd_pcm_type(driver->pcmhandle)==SND_PCM_TYPE_IOPLUG)) {
+		if((driver->snd_pcm_type(driver->pcmhandle)==SND_PCM_TYPE_IOPLUG) && !(s_alsa_noworkaround.value)) {
 	                /* This workaround is required to keep sound working on Ubuntu 10.04 and 10.10 (Yay for Ubuntu) */
         	        if (avail < 64)
                 	        break;
