@@ -771,6 +771,11 @@ void SB_Proxylist_Unserialize_f(void)
 	fclose(f);
 }
 
+qbool SB_PingTree_IsBuilding(void)
+{
+	return building_pingtree;
+}
+
 void SB_PingTree_Init(void)
 {
 	Sys_SemInit(&phase2thread_lock, 1, 1);

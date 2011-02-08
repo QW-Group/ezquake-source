@@ -612,7 +612,7 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 
 void GetServerPingsAndInfos(int full)
 {
-	if (serverinfo_lock) {
+	if (serverinfo_lock || SB_PingTree_IsBuilding()) {
 		Com_Printf("Server list refresh is still pending\n");
 		return;
 	}
