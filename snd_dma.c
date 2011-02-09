@@ -313,7 +313,10 @@ static void S_Restart_f (void)
 	S_Shutdown();
 	Com_DPrintf("sound: Shutdown OK\n");
 #if defined(__linux__) || defined(__FreeBSD__)
+	//dimman: Temporary, will refactor it
 	S_RegisterLatchCvars();
+#else
+	Cvar_Register(&s_linearresample);
 #endif
 
 	if (!S_Startup()) {
