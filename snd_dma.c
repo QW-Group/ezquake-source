@@ -434,13 +434,13 @@ static sfx_t *S_FindName (char *name)
 
 sfx_t *S_PrecacheSound (char *name)
 {
+	sfx_t *sfx;
 	if (!snd_initialized || !snd_started || s_nosound.value)
 		return NULL;
 
 	if (name == NULL || name[0] == 0)
 		return NULL;
 
-	sfx_t *sfx;
 	sfx = S_FindName (name);
 	if (sfx == NULL)
 		return NULL;
@@ -498,7 +498,7 @@ static void SND_Spatialize (channel_t *ch)
 	sfx_t *snd;
 
 	// anything coming from the view entity will always be full volume
-	if ((ch->entnum == cl.playernum + 1)) || (ch->entnum == SELF_SOUND)) {
+	if ((ch->entnum == cl.playernum + 1) || (ch->entnum == SELF_SOUND)) {
 		ch->leftvol = ch->master_vol;
 		ch->rightvol = ch->master_vol;
 		return;
