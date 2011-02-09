@@ -47,7 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef PROTOCOL_VERSION_FTE2
 
-//#define FTE_PEXT2_VOICECHAT			0x00000002
+#define FTE_PEXT2_VOICECHAT			0x00000002
 
 #endif // PROTOCOL_VERSION_FTE2
 
