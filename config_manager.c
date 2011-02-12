@@ -280,7 +280,7 @@ void DumpVariablesDefaults_f(void)
 	    fprintf(f, "\n//%s\n", group->name);
 
         for (var = group->head; var; var = var->next_in_group) {
-		    fprintf(f, "%s \"%s\"\n", var->name, var->string);
+			fprintf(f, "%s \"%s\"\n", var->name, var->defaultvalue);
 		}
 	}
 
