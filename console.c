@@ -1050,6 +1050,8 @@ void Con_DrawConsole (int lines) {
 	// draw the download bar
 	// figure out width
 	if (cls.download || cls.upload) {
+		int	slider_box_position = -1;
+
 		if (cls.download) {
 			if ((text = strrchr(cls.downloadname, '/')) != NULL)
 				text++;
@@ -1090,10 +1092,14 @@ void Con_DrawConsole (int lines) {
 		}
 
 		for (j = 0; j < y; j++)
+		{
 			if (j == n)
-				dlbar[i++] = '\x83';
-			else
-				dlbar[i++] = '\x81';
+				slider_box_position = i;
+
+			dlbar[i++] = '\x81';
+		}
+		if (slider_box_position >= 0)
+			dlbar[slider_box_position] = '\x83';
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
 
