@@ -1303,10 +1303,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\gl_fakegl.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\gl_md3.c"
 					>
 					<FileConfiguration
