@@ -1372,6 +1372,15 @@ void IN_Init (void)
 		if (COM_CheckParm("-dinput"))
 			Cvar_LatchedSetValue (&in_mouse, mt_dinput);
 
+		if (COM_CheckParm("-rawinput"))
+		{
+			if (COM_CheckParm("-dinput"))
+			{
+				Com_Printf ("Option -dinput will be ignored with -rawinput.\n");
+			}
+			Cvar_LatchedSetValue (&in_mouse, mt_raw);
+		}
+
 		if (COM_CheckParm ("-nomouse"))
 			Cvar_LatchedSetValue (&in_mouse, mt_none);
 
