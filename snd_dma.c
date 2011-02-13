@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //dimman
 #if defined(__linux__) || defined(__FreeBSD__)
-sounddriver_t *sounddriver;
+qsoundhandler_t *qsoundhandler;
 #endif
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
@@ -165,8 +165,8 @@ static void S_SoundInfo_f (void)
 		return;
 	}
 #if defined(__linux__) || defined(__FreeBSD__)
-	if(sounddriver)
-		Com_Printf("driver: %s\n", sounddriver->name);
+	if(qsoundhandler)
+		Com_Printf("driver: %s\n", qsoundhandler->name);
 #endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -201,27 +201,27 @@ static qbool S_Startup (void)
 // Sound driver choosing. Linux/FreeBSD only
 
 #if defined(__linux__) || defined(__FreeBSD__)
-	sounddriver = malloc(sizeof(*sounddriver));
+	qsoundhandler = malloc(sizeof(*qsoundhandler));
 	char *audio_driver = Cvar_String("s_driver");
 	qbool retval = false;
 
-	if(sounddriver)	{
+	if(qsoundhandler)	{
 		if(strcmp(audio_driver, "alsa")==0) {
 			if(s_uselegacydrivers.value) {
-				retval = SNDDMA_Init_ALSA_Legacy(sounddriver);
+				retval = SNDDMA_Init_ALSA_Legacy(qsoundhandler);
 			} else {
-				retval = SNDDMA_Init_ALSA(sounddriver);
+				retval = SNDDMA_Init_ALSA(qsoundhandler);
 			}
 
 
 		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
-			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
+			retval = SNDDMA_Init_PULSEAUDIO(qsoundhandler);
 
 		} else if(strcmp(audio_driver, "oss")==0) {
 			if(s_uselegacydrivers.value) {
-				retval = SNDDMA_Init_OSS_Legacy(sounddriver);
+				retval = SNDDMA_Init_OSS_Legacy(qsoundhandler);
 			} else {
-				retval = SNDDMA_Init_OSS(sounddriver);
+				retval = SNDDMA_Init_OSS(qsoundhandler);
 			}
 		}
 		else {
@@ -235,10 +235,10 @@ static qbool S_Startup (void)
 		shm = NULL;
 		sound_spatialized = false;
 		snd_started = false;
-		free(sounddriver);
+		free(qsoundhandler);
 		return false;
 	} else {
-		Com_Printf("[sound] %s started....\n", sounddriver->name);
+		Com_Printf("[sound] %s started....\n", qsoundhandler->name);
 	}
 ////////////////////////////////////////////////////
 #else
@@ -268,10 +268,10 @@ void S_Shutdown (void)
 	S_StopAllSounds (true);
 
 #if defined(__linux__) || defined(__FreeBSD__)
-	Com_Printf("[sound] %s shutdown...\n", sounddriver->name);
-	sounddriver->Shutdown();
-	free(sounddriver);
-	sounddriver = NULL;
+	Com_Printf("[sound] %s shutdown...\n", qsoundhandler->name);
+	qsoundhandler->Shutdown();
+	free(qsoundhandler);
+	qsoundhandler = NULL;
 #else
 	SNDDMA_Shutdown();
 #endif
@@ -850,7 +850,7 @@ static void GetSoundtime (void)
 	fullsamples = shm->samples / shm->format.channels;
 	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
 
-	samplepos = sounddriver->GetDMAPos();
+	samplepos = qsoundhandler->GetDMAPos();
 #else
 	fullsamples = shm->sampleframes;
 	samplepos = SNDDMA_GetDMAPos();
@@ -916,8 +916,8 @@ static void S_Update_ (void)
 	int samps;
 
 	//mix ahead of current position
-	if(sounddriver->GetAvail) {
-		avail = sounddriver->GetAvail();
+	if(qsoundhandler->GetAvail) {
+		avail = qsoundhandler->GetAvail();
 		if(avail <= 0)
 			return;
 		endtime = soundtime + avail;
@@ -955,8 +955,8 @@ static void S_Update_ (void)
 	S_PaintChannels (endtime);
 
 #if defined(__linux__) || defined(__FreeBSD__)
-	if(sounddriver->Submit)
-		sounddriver->Submit(paintedtime - soundtime);
+	if(qsoundhandler->Submit)
+		qsoundhandler->Submit(paintedtime - soundtime);
 #else
 	SNDDMA_Submit ();
 #endif

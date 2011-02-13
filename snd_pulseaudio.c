@@ -92,7 +92,7 @@ static struct pulseaudio_private *p;
 /////////////////////////////////////////////////////////////////////
 
 //static void pulseaudio_cvarinit();
-static qbool pulseaudio_init(struct sounddriver_t *sd, int rate, int channels, int bits);
+static qbool pulseaudio_init(qsoundhandler_t *sd, int rate, int channels, int bits);
 static int pulseaudio_getdmapos(void);
 static int pulseaudio_getavail(void);
 static void pulseaudio_submit(unsigned int count);
@@ -111,7 +111,7 @@ static void pulseaudio_stream_state_callback(pa_stream *stream, void *userdata);
 // public fuctions
 /////////////////////////////////////////////////////////////////////
 
-qbool SNDDMA_Init_PULSEAUDIO (struct sounddriver_t *sd)
+qbool SNDDMA_Init_PULSEAUDIO (qsoundhandler_t *sd)
 {
 	qbool ret;
 	int channels, rate;
@@ -128,7 +128,7 @@ qbool SNDDMA_Init_PULSEAUDIO (struct sounddriver_t *sd)
 	ret = pulseaudio_init(sd, rate, channels, bits);
 	return ret;
 }
-static qbool pulseaudio_init(struct sounddriver_t *sd, int rate, int channels, int bits)
+static qbool pulseaudio_init(qsoundhandler_t *sd, int rate, int channels, int bits)
 {
 	struct pulseaudio_private *tmp;
 
