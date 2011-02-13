@@ -462,7 +462,7 @@
 				AdditionalDependencies="comctl32.lib libexpat.lib libtcl.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib libircclient-static.lib libcurl.lib"
 				OutputFile="..\ezquake-debug.exe"
 				Version=""
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="&quot;..\..\libs\windows-x86&quot;;&quot;$(DXSDK_DIR)\Lib\x86&quot;;&quot;$(DXSDK_DIR)\Lib&quot;;&quot;..\..\..\libs\windows-x86&quot;;&quot;..\..\..\ezquake-libs\windows-x86&quot;"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT"
