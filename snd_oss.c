@@ -67,7 +67,7 @@ static void oss_shutdown(void)
 	free(pdriver);
 }
 
-static qbool oss_init_internal(struct sounddriver_t *sd, const char *device, int rate, int channels, int bits)
+static qbool oss_init_internal(qsoundhandler_t *sd, const char *device, int rate, int channels, int bits)
 {
 	int i;
 
@@ -168,7 +168,7 @@ static qbool oss_init_internal(struct sounddriver_t *sd, const char *device, int
 	return 0;
 }
 
-static qbool oss_init(struct sounddriver_t *sd, int rate, int channels, int bits)
+static qbool oss_init(qsoundhandler_t *sd, int rate, int channels, int bits)
 {
 	qbool ret;
 
@@ -183,7 +183,7 @@ static qbool oss_init(struct sounddriver_t *sd, int rate, int channels, int bits
 	return ret;
 }
 
-qbool SNDDMA_Init_OSS(struct sounddriver_t *sd) {
+qbool SNDDMA_Init_OSS(qsoundhandler_t *sd) {
 	int rate, channels, bits;
 	channels = s_stereo.integer ? 2 : 1;
 	bits = 16;

@@ -74,7 +74,7 @@ cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1"};
 cvar_t	cfg_backup			=	{"cfg_backup", "0"};
 cvar_t	cfg_legacy_exec		=	{"cfg_legacy_exec", "1"};
 cvar_t  cfg_use_home		=	{"cfg_use_home", "0"};
-cvar_t  cfg_use_gamedir		=	{"cfg_use_gamedir", "1"};
+cvar_t  cfg_use_gamedir		=	{"cfg_use_gamedir", "0"};
 
 /************************************ DUMP FUNCTIONS ************************************/
 
@@ -280,7 +280,7 @@ void DumpVariablesDefaults_f(void)
 	    fprintf(f, "\n//%s\n", group->name);
 
         for (var = group->head; var; var = var->next_in_group) {
-		    fprintf(f, "%s \"%s\"\n", var->name, var->string);
+			fprintf(f, "%s \"%s\"\n", var->name, var->defaultvalue);
 		}
 	}
 

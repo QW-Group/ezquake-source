@@ -181,14 +181,8 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 				Q_strcpy (str + j, str + i);
 				qwcscpy (wstr + j, wstr + i);
  
-				if (!snd_initialized)
+				if (!snd_initialized || !snd_started)
 					return false;
-			
-			#if defined(__linux__) || defined(__FreeBSD__)
-			        if(!snd_started)
-		                return false;
-			#endif
-
  
 				COM_DefaultExtension (soundname, ".wav");
  

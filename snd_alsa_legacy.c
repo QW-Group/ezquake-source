@@ -95,7 +95,7 @@ void SNDDMA_Submit_ALSA_Legacy (unsigned int count)
 	}
 }
 
-qbool SNDDMA_Init_ALSA_Legacy (struct sounddriver_t *sd)
+qbool SNDDMA_Init_ALSA_Legacy (qsoundhandler_t *sd)
 {
 	char *pcmname = NULL;
 	int bps = -1, stereo = -1;

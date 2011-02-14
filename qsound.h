@@ -81,13 +81,13 @@ typedef struct wavinfo_s {
 
 #if defined(__linux__) || defined(__FreeBSD__)
 
-typedef struct sounddriver_t {
+typedef struct qsoundhandler_s {
 	char *name;
 	int (*GetAvail)(void);
 	int (*GetDMAPos)(void);
 	void (*Submit)(unsigned int count);
 	void (*Shutdown)(void);
-} sounddriver_t;
+} qsoundhandler_t;
 
 #endif
 
@@ -112,11 +112,11 @@ void SNDDMA_Shutdown(void);
 
 #if defined(__linux__) || defined(__FreeBSD__)
 void SNDDMA_Submit(unsigned int count); // Legacy OSS doesnt use Submit
-qbool SNDDMA_Init_PULSEAUDIO(struct sounddriver_t *sd); // Pulseaudio disabled atm...
-qbool SNDDMA_Init_ALSA(struct sounddriver_t *sd);
-qbool SNDDMA_Init_ALSA_Legacy(struct sounddriver_t *sd);
-qbool SNDDMA_Init_OSS(struct sounddriver_t *sd);
-qbool SNDDMA_Init_OSS_Legacy(struct sounddriver_t *sd);
+qbool SNDDMA_Init_PULSEAUDIO(qsoundhandler_t *sd); // Pulseaudio disabled atm...
+qbool SNDDMA_Init_ALSA(qsoundhandler_t *sd);
+qbool SNDDMA_Init_ALSA_Legacy(qsoundhandler_t *sd);
+qbool SNDDMA_Init_OSS(qsoundhandler_t *sd);
+qbool SNDDMA_Init_OSS_Legacy(qsoundhandler_t *sd);
 
 
 #else
@@ -152,10 +152,7 @@ extern channel_t	channels[MAX_CHANNELS];
 extern unsigned int	total_channels;
 
 extern qbool		snd_initialized;
-
-#if defined(__linux__) || defined(__FreeBSD__) 
 extern qbool		snd_started;
-#endif
 
 extern int		snd_blocked;
 

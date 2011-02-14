@@ -68,7 +68,7 @@ void SNDDMA_Submit_ALSA(unsigned int count);
 
 static qbool alsa_initso(struct alsa_private *p);
 static int alsa_getavail(void);
-static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, int rate, int channels, int bits);
+static qbool alsa_init_internal(qsoundhandler_t *sd, const char *device, int rate, int channels, int bits);
 static void alsa_tryrestart(unsigned int ret, int dorestart);
 static void alsa_writestuff(unsigned int max);
 
@@ -93,7 +93,7 @@ static void alsa_tryrestart(unsigned int ret, int dorestart)
                 driver->snd_pcm_start(driver->pcmhandle);
 }
 
-static qbool alsa_init_internal(struct sounddriver_t *sd, const char *device, int rate, int channels, int bits)
+static qbool alsa_init_internal(qsoundhandler_t *sd, const char *device, int rate, int channels, int bits)
 {
 	struct alsa_private *drive;
 	if(!*device)
@@ -268,11 +268,11 @@ void SNDDMA_Shutdown_ALSA (void)
 		dlclose(driver->alsasharedobject);
 		free(driver);
 	} else {
-		Com_Printf("SNDDMA_Shutdown_ALSA: Error, tried to shut down sound but sound not initialized");
+		Com_Printf("SNDDMA_Shutdown_ALSA: Error, tried to shut down sound but sound not initialized\n");
 	}
 }
 //void SNDDMA_Init_ALSA (int rate, int channels, int bits)
-qbool SNDDMA_Init_ALSA (struct sounddriver_t *sd)
+qbool SNDDMA_Init_ALSA (qsoundhandler_t *sd)
 {
 	qbool ret;
 	const char *prevattempt;
@@ -282,7 +282,7 @@ qbool SNDDMA_Init_ALSA (struct sounddriver_t *sd)
 	if(s_bits.value) {
 		bits = s_bits.integer;
 		if(bits != 8 && bits != 16) {
-			Com_Printf("Error: invalid s_bits value \"%d\". Valid (8 or 16)", bits);
+			Com_Printf("Error: invalid s_bits value \"%d\". Valid (8 or 16)\n", bits);
 			return false;
 		}
 	}

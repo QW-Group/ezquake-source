@@ -35,8 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //dimman
 #if defined(__linux__) || defined(__FreeBSD__)
-sounddriver_t *sounddriver;
-static void S_RegisterLatchCvars(void);
+qsoundhandler_t *qsoundhandler;
 #endif
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
@@ -45,6 +44,7 @@ static void S_PlayVol_f (void);
 static void S_SoundList_f (void);
 static void S_Update_ ();
 static void S_StopAllSounds_f (void);
+static void S_Register_LatchCvars(void);
 
 void IN_Accumulate (void); // S_ExtraUpdate use it
 void S_RawClear(void);
@@ -58,19 +58,9 @@ channel_t	channels[MAX_CHANNELS];
 unsigned int	total_channels;
 
 int		snd_blocked = 0;
+
 qbool		snd_initialized = false;
-
-#if defined(__linux__) || defined(__FreeBSD__)
-/* dimman:
-Sound might be initialized but not started, we cant set
-snd_initialized to false, it will never be set to true again,
-without restarting client. So i created a new var, only to keep
-track of if a driver is started or not. Makes it possible to
-do s_restart after a S_Startup() failure.
-*/
 qbool		snd_started = false;
-
-#endif
 
 int		soundtime;
 int		paintedtime;
@@ -103,6 +93,7 @@ static sfx_t	*ambient_sfx[NUM_AMBIENTS];
 // User-setable variables
 // ====================================================================
 
+
 cvar_t bgmvolume = {"bgmvolume", "1"};
 cvar_t s_volume = {"volume", "0.7"};
 cvar_t s_raw_volume = {"s_raw_volume", "1"};
@@ -115,15 +106,9 @@ cvar_t s_noextraupdate = {"s_noextraupdate", "0"};
 cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1"};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
-
 cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
-
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
-
-// ====================================================================
-// Specific os cvar/defaults
-// ====================================================================
 
 #if defined(__FreeBSD__) || defined(__linux__)
 cvar_t s_stereo = {"s_stereo", "1", CVAR_LATCH};
@@ -134,7 +119,6 @@ cvar_t s_alsa_latency = {"s_alsa_latency", "0.04", CVAR_LATCH};
 cvar_t s_alsa_noworkaround = {"s_alsa_noworkaround", "0", CVAR_LATCH};
 cvar_t s_uselegacydrivers = {"s_uselegacydrivers", "0", CVAR_LATCH};
 cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04", CVAR_LATCH};
-
 #endif
 
 #ifdef __linux__
@@ -144,7 +128,6 @@ cvar_t s_driver = {"s_driver", "alsa", CVAR_LATCH};
 #ifdef __FreeBSD__
 cvar_t s_driver = {"s_driver", "oss", CVAR_LATCH};
 #endif
-
 
 // ====================================================================
 // Voice communication
@@ -182,8 +165,8 @@ static void S_SoundInfo_f (void)
 		return;
 	}
 #if defined(__linux__) || defined(__FreeBSD__)
-	if(sounddriver)
-		Com_Printf("driver: %s\n", sounddriver->name);
+	if(qsoundhandler)
+		Com_Printf("driver: %s\n", qsoundhandler->name);
 #endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -202,22 +185,7 @@ static void S_SoundInfo_f (void)
 	Com_Printf("%5u total_channels\n", total_channels);
 }
 
-#if defined(__linux__) || defined(__FreeBSD__)
-static void S_RegisterLatchCvars(void)
-{
-	Cvar_Register(&s_linearresample);
-	Cvar_Register(&s_uselegacydrivers);
-	Cvar_Register(&s_stereo);
-	Cvar_Register(&s_bits);
-	Cvar_Register(&s_oss_device);
-	Cvar_Register(&s_driver);
-	Cvar_Register(&s_alsa_device);
-	Cvar_Register(&s_alsa_latency);
-	Cvar_Register(&s_alsa_noworkaround);
-	Cvar_Register(&s_pulseaudio_latency);
 
-}
-#endif
 static qbool S_Startup (void)
 {
 	if (!snd_initialized)
@@ -227,61 +195,67 @@ static qbool S_Startup (void)
 	memset((void *)shm, 0, sizeof(*shm));
 
 	S_RawClear();
+	S_Register_LatchCvars();
 
 ///////////////////////////////////////////////
 // Sound driver choosing. Linux/FreeBSD only
 
 #if defined(__linux__) || defined(__FreeBSD__)
-	sounddriver = malloc(sizeof(*sounddriver));
+	qsoundhandler = malloc(sizeof(*qsoundhandler));
 	char *audio_driver = Cvar_String("s_driver");
 	qbool retval = false;
 
-	if(sounddriver)	{
+	if(qsoundhandler)	{
 		if(strcmp(audio_driver, "alsa")==0) {
 			if(s_uselegacydrivers.value) {
-				retval = SNDDMA_Init_ALSA_Legacy(sounddriver);
+				retval = SNDDMA_Init_ALSA_Legacy(qsoundhandler);
 			} else {
-				retval = SNDDMA_Init_ALSA(sounddriver);
+				retval = SNDDMA_Init_ALSA(qsoundhandler);
 			}
 
 
 		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
-			retval = SNDDMA_Init_PULSEAUDIO(sounddriver);
+			retval = SNDDMA_Init_PULSEAUDIO(qsoundhandler);
 
 		} else if(strcmp(audio_driver, "oss")==0) {
 			if(s_uselegacydrivers.value) {
-				retval = SNDDMA_Init_OSS_Legacy(sounddriver);
+				retval = SNDDMA_Init_OSS_Legacy(qsoundhandler);
 			} else {
-				retval = SNDDMA_Init_OSS(sounddriver);
+				retval = SNDDMA_Init_OSS(qsoundhandler);
 			}
 		}
 		else {
 			Com_DPrintf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
 		}
-		snd_started = retval;
 	}
-	if(retval == false) {
+	if(!retval) {
 		Com_Printf("[sound] Failed to startup (s_driver %s)\n", s_driver.string);
 		if((!s_uselegacydrivers.value) && ((strcmp(audio_driver, "alsa")==0) || (strcmp(audio_driver, "oss")==0)))
 			Com_Printf("Try s_uselegacydriver 1 to use legacy %s driver.\n", audio_driver);
 		shm = NULL;
 		sound_spatialized = false;
 		snd_started = false;
-		free(sounddriver);
+		free(qsoundhandler);
 		return false;
-	}
-	else {
-		Com_Printf("[sound] %s started....\n", sounddriver->name);
+	} else {
+		Com_Printf("[sound] %s started....\n", qsoundhandler->name);
 	}
 ////////////////////////////////////////////////////
 #else
 	if (!SNDDMA_Init()) {
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
 		shm = NULL;
+		snd_started = false;
 		sound_spatialized = false;
 		return false;
 	}
 #endif
+
+	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
+	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
+	S_StopAllSounds (true);
+
+	snd_started = true;
 	return true;
 }
 
@@ -290,63 +264,36 @@ void S_Shutdown (void)
 	if (!shm)
 		return;
 
+	Cache_Flush(); // dimman: Moved this line and next here from S_Restart_f
+	S_StopAllSounds (true);
+
 #if defined(__linux__) || defined(__FreeBSD__)
-	Com_Printf("[sound] %s shutdown...\n", sounddriver->name);
-	sounddriver->Shutdown();
-	free(sounddriver);
-	sounddriver = NULL;
-	snd_started = false;
+	Com_Printf("[sound] %s shutdown...\n", qsoundhandler->name);
+	qsoundhandler->Shutdown();
+	free(qsoundhandler);
+	qsoundhandler = NULL;
 #else
 	SNDDMA_Shutdown();
 #endif
 
 	shm = NULL;
+	snd_started = false;
 	sound_spatialized = false;
 }
 
 static void S_Restart_f (void)
 {
 	Com_DPrintf("Restarting sound system....\n");
-	Cache_Flush();
-	S_StopAllSounds (true);
-
 	S_Shutdown();
-	Com_DPrintf("sound: Shutdown OK\n");
-#if defined(__linux__) || defined(__FreeBSD__)
-	S_RegisterLatchCvars();
-#endif
-
-	if (!S_Startup()) {
-#if defined(__linux__) || defined(__FreeBSD__)
-		snd_started = false;
-#else
-		snd_initialized = false; 
-#endif
-		return;
-	}
-
-	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
-	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
-
-	S_StopAllSounds (true);
-
-	if (developer.value)
-		S_SoundInfo_f();
+	S_Startup();
 }
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel) {
 	Cbuf_AddText("s_restart\n");
 }
 
-void S_Init (void)
+static void S_Register_RegularCvarsAndCommands(void)
 {
-	if (snd_initialized) { //whoops
-		Com_Printf_State (PRINT_INFO, "Sound is already initialized\n");
-		return;
-	}
-
-	Com_DPrintf("\nSound Initialization\n");
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register(&bgmvolume);
 	Cvar_Register(&s_volume);
@@ -361,21 +308,7 @@ void S_Init (void)
 	Cvar_Register(&s_show);
 	Cvar_Register(&s_mixahead);
 	Cvar_Register(&s_swapstereo);
-
-	Cvar_Register(&s_linearresample);
 	Cvar_Register(&s_linearresample_stream);
-
-#if defined(__linux__) || defined(__FreeBSD__)
-	Cvar_Register(&s_stereo);
-	Cvar_Register(&s_oss_device);
-	Cvar_Register(&s_driver);
-	Cvar_Register(&s_bits);
-	Cvar_Register(&s_pulseaudio_latency);
-	Cvar_Register(&s_alsa_device);
-	Cvar_Register(&s_alsa_latency);
-	Cvar_Register(&s_alsa_noworkaround);
-
-#endif
 
 #ifdef FTE_PEXT2_VOICECHAT
 	Cvar_Register(&cl_voip_send);
@@ -392,58 +325,74 @@ void S_Init (void)
 	Cmd_AddCommand("-voip", S_Voip_Disable_f);
 	Cmd_AddCommand("voip", S_Voip_f);
 #endif
-
 	Cvar_ResetCurrentGroup();
 
 	// compatibility with old configs
-	Cmd_AddLegacyCommand ("nosound", "s_nosound");
-	Cmd_AddLegacyCommand ("precache", "s_precache");
-	Cmd_AddLegacyCommand ("loadas8bit", "s_loadas8bit");
-	Cmd_AddLegacyCommand ("ambient_level", "s_ambientlevel");
-	Cmd_AddLegacyCommand ("ambient_fade", "s_ambientfade");
-	Cmd_AddLegacyCommand ("snd_noextraupdate", "s_noextraupdate");
-	Cmd_AddLegacyCommand ("snd_show", "s_show");
-	Cmd_AddLegacyCommand ("_snd_mixahead", "s_mixahead");
-
-	if (COM_CheckParm("-nosound")) {
-		Cmd_AddLegacyCommand ("play", ""); // just suppress warnings
-		return;
-	}
+	Cmd_AddLegacyCommand("nosound", "s_nosound");
+	Cmd_AddLegacyCommand("precache", "s_precache");
+	Cmd_AddLegacyCommand("loadas8bit", "s_loadas8bit");
+	Cmd_AddLegacyCommand("ambient_level", "s_ambientlevel");
+	Cmd_AddLegacyCommand("ambient_fade", "s_ambientfade");
+	Cmd_AddLegacyCommand("snd_noextraupdate", "s_noextraupdate");
+	Cmd_AddLegacyCommand("snd_show", "s_show");
+	Cmd_AddLegacyCommand("_snd_mixahead", "s_mixahead");
+	Cmd_AddLegacyCommand("snd_restart", "s_restart"); // and snd_restart a legacy command
 
 	Cmd_AddCommand("s_restart", S_Restart_f); // dimman: made s_restart the actual command
-	Cmd_AddLegacyCommand("snd_restart", "s_restart"); // and snd_restart a legacy command
 	Cmd_AddCommand("play", S_Play_f);
 	Cmd_AddCommand("playvol", S_PlayVol_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
 	Cmd_AddCommand("soundlist", S_SoundList_f);
 	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
+}
 
-	if (!snd_initialized && host_memsize < 0x800000) {
-		Cvar_Set (&s_loadas8bit, "1");
-		Com_Printf ("loading all sounds as 8bit\n");
-	}
+static void S_Register_LatchCvars(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 
-	snd_initialized = true;
+	Cvar_Register(&s_linearresample);
 
-	SND_InitScaletable ();
-
-	if (!S_Startup ()) {
 #if defined(__linux__) || defined(__FreeBSD__)
-		snd_started = false;
-#else
-		snd_initialized = false;
+	Cvar_Register(&s_uselegacydrivers);
+	Cvar_Register(&s_stereo);
+	Cvar_Register(&s_bits);
+	Cvar_Register(&s_oss_device);
+	Cvar_Register(&s_driver);
+	Cvar_Register(&s_alsa_device);
+	Cvar_Register(&s_alsa_latency);
+	Cvar_Register(&s_alsa_noworkaround);
+	Cvar_Register(&s_pulseaudio_latency);
 #endif
-		 return;
+
+	Cvar_ResetCurrentGroup();
+}
+
+void S_Init (void)
+{
+	Com_DPrintf("\n[sound] Initialization\n");
+	if (snd_initialized) { //whoops
+		Com_Printf_State (PRINT_INFO, "[sound] Sound is already initialized!\n");
+		return;
 	}
+	if (COM_CheckParm("-nosound")) {
+		Cmd_AddLegacyCommand ("play", ""); // just suppress warnings
+		return;
+	}	
+	if (host_memsize < 0x800000) {
+		Cvar_Set (&s_loadas8bit, "1");
+		Com_Printf ("[sound] Not enough memory. Loading all sounds as 8bit\n");
+	}
+
+	S_Register_RegularCvarsAndCommands();
+	S_Register_LatchCvars();
+	SND_InitScaletable ();
 
 	known_sfx = (sfx_t *) Hunk_AllocName (MAX_SFX * sizeof(sfx_t), "sfx_t");
 	num_sfx = 0;
 
-	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
-	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
+	snd_initialized = true;
 
-	S_StopAllSounds (true);
-
+	S_Startup();
 }
 
 // =======================================================================
@@ -455,11 +404,7 @@ static sfx_t *S_FindName (char *name)
 	int i;
 	sfx_t *sfx;
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	if(!snd_started)
-		return NULL;
-#endif
-	if (!snd_initialized)
+	if (!snd_initialized || !snd_started)
 		return NULL;
 
 	if (!name)
@@ -490,12 +435,7 @@ static sfx_t *S_FindName (char *name)
 sfx_t *S_PrecacheSound (char *name)
 {
 	sfx_t *sfx;
-
-#if defined(__linux__) || defined(__FreeBSD__)
-        if(!snd_started)
-                return NULL;
-#endif
-	if (!snd_initialized || s_nosound.value)
+	if (!snd_initialized || !snd_started || s_nosound.value)
 		return NULL;
 
 	if (name == NULL || name[0] == 0)
@@ -821,14 +761,8 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	unsigned int i, j, total;
 	channel_t *ch, *combine;
 
-	if (!snd_initialized || (snd_blocked > 0) || !shm)
+	if (!snd_initialized || !snd_started || (snd_blocked > 0) || !shm)
 		return;
-
-#if defined(__linux__) || defined(__FreeBSD__)
-        if(!snd_started)
-                return;
-#endif
-
 
 	VectorCopy(origin, listener_origin);
 	VectorCopy(forward, listener_forward);
@@ -916,7 +850,7 @@ static void GetSoundtime (void)
 	fullsamples = shm->samples / shm->format.channels;
 	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
 
-	samplepos = sounddriver->GetDMAPos();
+	samplepos = qsoundhandler->GetDMAPos();
 #else
 	fullsamples = shm->sampleframes;
 	samplepos = SNDDMA_GetDMAPos();
@@ -982,8 +916,8 @@ static void S_Update_ (void)
 	int samps;
 
 	//mix ahead of current position
-	if(sounddriver->GetAvail) {
-		avail = sounddriver->GetAvail();
+	if(qsoundhandler->GetAvail) {
+		avail = qsoundhandler->GetAvail();
 		if(avail <= 0)
 			return;
 		endtime = soundtime + avail;
@@ -1021,8 +955,8 @@ static void S_Update_ (void)
 	S_PaintChannels (endtime);
 
 #if defined(__linux__) || defined(__FreeBSD__)
-	if(sounddriver->Submit)
-		sounddriver->Submit(paintedtime - soundtime);
+	if(qsoundhandler->Submit)
+		qsoundhandler->Submit(paintedtime - soundtime);
 #else
 	SNDDMA_Submit ();
 #endif
@@ -1041,13 +975,8 @@ static void S_Play_f (void)
 	char name[256];
 	sfx_t *sfx;
 
-	if (!snd_initialized || s_nosound.value)
+	if (!snd_initialized || !snd_started || s_nosound.value)
 		return;
-#if defined(__linux__) || defined(__FreeBSD__)
-        if(!snd_started)
-                return;
-#endif
-
 
 	for (i = 1; i < Cmd_Argc(); i++) {
 		strlcpy (name, Cmd_Argv(i), sizeof (name));
@@ -1064,14 +993,8 @@ static void S_PlayVol_f (void)
 	char name[256];
 	sfx_t *sfx;
 
-	if (!snd_initialized || s_nosound.value)
+	if (!snd_initialized || !snd_started || s_nosound.value)
 		return;
-
-#if defined(__linux__) || defined(__FreeBSD__)
-        if(!snd_started)
-                return;
-#endif
-
 
 	for (i = 1; i < Cmd_Argc(); i += 2) {
 		strlcpy (name, Cmd_Argv(i), sizeof (name));
@@ -1110,14 +1033,8 @@ void S_LocalSound (char *sound)
 {
 	sfx_t *sfx;
 
-	if (!snd_initialized || s_nosound.value)
+	if (!snd_initialized || !snd_started || s_nosound.value)
 		return;
-
-#if defined(__linux__) || defined(__FreeBSD__)
-        if(!snd_started)
-                return;
-#endif
-
 
 	if (!(sfx = S_PrecacheSound (sound))) {
 		Com_Printf ("S_LocalSound: can't cache %s\n", sound);
@@ -1133,13 +1050,8 @@ void S_LocalSoundWithVol(char *sound, float volume)
 
 	clamp(volume, 0, 1.0);
 
-	if (!snd_initialized || s_nosound.value)
+	if (!snd_initialized || !snd_started || s_nosound.value)
 		return;
-
-#if defined(__linux__) || defined(__FreeBSD__)
-        if(!snd_started)
-                return;
-#endif
 
 	if (!(sfx = S_PrecacheSound (sound))) {
 		Com_Printf ("S_LocalSound: can't cache %s\n", sound);

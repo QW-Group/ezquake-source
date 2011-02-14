@@ -44,7 +44,7 @@ int SNDDMA_GetDMAPos_OSS_Legacy(void);
 void SNDDMA_Shutdown_OSS_Legacy(void);
 
 // Main functions
-qbool SNDDMA_Init_OSS_Legacy(struct sounddriver_t *sd)
+qbool SNDDMA_Init_OSS_Legacy(qsoundhandler_t *sd)
 {
 	int rc, fmt, tmp, caps;
 	char *snd_dev = NULL;
