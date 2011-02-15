@@ -1899,9 +1899,6 @@ void History_Shutdown (void)
 void Key_Init (void) {
 	int i;
 
-	if (dedicated)
-		return;
-
 	// init ascii characters in console mode
 	for (i = 32; i < 128; i++)
 		consolekeys[i] = true;

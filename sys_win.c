@@ -435,10 +435,7 @@ void Sys_Error (char *error, ...)
 	vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
-	if (dedicated)
-		Sys_Printf("ERROR: %s\n", text);
-	else
-		MessageBox(NULL, text, "Error", 0);
+	MessageBox(NULL, text, "Error", 0);
 
 	if (qwclsemaphore)
 		CloseHandle (qwclsemaphore);
@@ -455,8 +452,7 @@ void Sys_Printf (char *fmt, ...)
 	DWORD dummy;
 
 #ifdef NDEBUG
-	if (!dedicated)
-		return;
+	return;
 #endif
 
 	va_start (argptr,fmt);
@@ -474,8 +470,6 @@ void Sys_Quit (void)
 	if (qwclsemaphore)
 		CloseHandle (qwclsemaphore);
 
-	if (dedicated)
-		FreeConsole ();
 #ifndef WITHOUT_WINKEYHOOK
 	if (WinKeyHook_isActive)
 		UnhookWindowsHookEx(WinKeyHook);
@@ -692,11 +686,11 @@ void WinCheckOSInfo(void)
 void Sys_Init_ (void) 
 {
 	// Allocate a named semaphore on the client so the front end can tell if it is alive.
-	if (!dedicated
-		#ifdef _DEBUG
-		&& !COM_CheckParm("-allowmultiple")
-		#endif // Enabled for development purposes, but disabled for official builds.
-		)
+	// Enabled for development purposes, but disabled for official builds.
+
+#ifdef _DEBUG
+	if (!COM_CheckParm("-allowmultiple"))
+#endif
 	{
 		// Mutex will fail if semaphore already exists.
 		qwclsemaphore = CreateMutex(
@@ -1208,23 +1202,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			qconsole_log = fopen(s, "a");
 	}
 
-#if !defined(CLIENTONLY)
-	dedicated = COM_CheckParm ("-dedicated");
-#endif
-
-	if (dedicated) 
-	{
-		if (!AllocConsole())
-			Sys_Error ("Couldn't allocate dedicated server console");
-		SetConsoleCtrlHandler (HandlerRoutine, TRUE);
-		SetConsoleTitle ("ezqds");
-		hinput = GetStdHandle (STD_INPUT_HANDLE);
-		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
-	}
-	else 
-	{
-		Sys_DisableScreenSaving();
-	}
+	Sys_DisableScreenSaving();
 
 	// Take the greater of all the available memory or half the total memory,
 	// but at least 8 Mb and no more than 32 Mb, unless they explicitly request otherwise
@@ -1263,11 +1241,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     // Main window message loop.
 	while (1) 
 	{
-		if (dedicated) 
-		{
-			NET_Sleep(1);
-		} 
-		else if (sys_inactivesleep.value) 
+		if (sys_inactivesleep.value) 
 		{
 			// Yield the CPU for a little while when paused, minimized, or not the focus
 			if ((ISPAUSED && (!ActiveApp && !DDActive)) || Minimized || block_drawing)

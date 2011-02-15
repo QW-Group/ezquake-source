@@ -3192,15 +3192,6 @@ void SV_Frame (double time1)
 
 	SV_MVDStream_Poll();
 
-	if (dedicated)
-	{
-		// check for commands typed to the host
-		SV_GetConsoleCommands ();
-
-		// process console commands
-		Cbuf_Execute ();
-	}
-
 	// check for map change;
 	SV_Map(true);
 
@@ -3286,12 +3277,6 @@ void SV_InitLocal (void)
 
 //	Cvar_Register (&rcon_password);
 //	Cvar_Register (&password);
-
-	if (dedicated)
-	{
-		Cvar_Register (&rcon_password);
-		Cvar_Register (&password);
-	}
 
 	Cvar_Register (&sv_hashpasswords);
 	//Added by VVD {

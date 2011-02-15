@@ -817,22 +817,13 @@ void CL_UserInfo_f (void) {
 	Info_Print (cls.userinfo);
 }
 
-void SV_Quit_f (void);
-
 void CL_Quit_f (void) {
 	extern cvar_t cl_confirmquit;
 
-#ifndef CLIENTONLY
-	if (dedicated)
-		SV_Quit_f ();
+	if (cl_confirmquit.value)
+		M_Menu_Quit_f ();
 	else
-#endif
-	{
-		if (cl_confirmquit.value)
-			M_Menu_Quit_f ();
-		else
-			Host_Quit ();
-	}
+		Host_Quit ();
 }
 
 // QW262 -->
