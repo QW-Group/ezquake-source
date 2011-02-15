@@ -73,6 +73,8 @@ void WG_CheckHardwareGamma( void );
 void WG_RestoreGamma( void );
 void WG_CheckNeedSetDeviceGammaRamp (void);
 
+void VID_UpdateWindowStatus(void);
+
 typedef enum {
 	RSERR_OK,
 
@@ -1120,6 +1122,8 @@ static rserr_t GLW_SetMode( const char *drivername,
 		rc = monInfo.rcMonitor;
 
 		MoveWindow(mainwindow, rc.left, rc.top, glConfig.vidWidth, glConfig.vidHeight, false);
+
+		VID_UpdateWindowStatus(); // dimman: test for dualmonitors, move cursor inside window (multimonitors?)
 	}
 
 	//
