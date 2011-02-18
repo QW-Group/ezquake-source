@@ -3004,28 +3004,6 @@ static void SV_CheckTimeouts (void)
 
 /*
 ===================
-SV_GetConsoleCommands
-
-Add them exactly as if they had been typed at the console
-===================
-*/
-static void SV_GetConsoleCommands (void)
-{
-	char	*cmd;
-
-	while (1)
-	{
-		cmd = Sys_ConsoleInput ();
-		if (!cmd)
-			break;
-		Cbuf_AddText (cmd);
-		Cbuf_AddText ("\n");
-	}
-}
-
-
-/*
-===================
 SV_BoundRate
 ===================
 */

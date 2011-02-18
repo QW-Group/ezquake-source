@@ -77,7 +77,6 @@ cvar_t sys_nostdout = {"sys_nostdout", "0"};
 cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
 
 
-//dimman: remove completely?
 void Sys_Printf (char *fmt, ...) {
 	va_list argptr;
 	char text[2048];
@@ -85,7 +84,6 @@ void Sys_Printf (char *fmt, ...) {
 
 
 #ifdef NDEBUG
-//	if (!dedicated)
 		return;
 #endif
 
@@ -323,30 +321,6 @@ again:
 
 void floating_point_exception_handler (int whatever) {
 	signal(SIGFPE, floating_point_exception_handler);
-}
-
-//dimman: remove completely? Returning null now always..
-char *Sys_ConsoleInput (void) {
-	static char text[256];
-	int len;
-
-//	if (!dedicated)
-	return NULL;
-
-	if (!stdin_ready || !do_stdin)
-		return NULL; // the select didn't say it was ready
-	stdin_ready = false;
-
-	len = read (0, text, sizeof(text));
-	if (len == 0) { // end of file
-		do_stdin = 0;
-		return NULL;
-	}
-	if (len < 1)
-		return NULL;
-	text[len - 1] = 0; // rip off the /n and terminate
-
-	return text;
 }
 
 /* 0 is the highest. -1 may be a better setting. */

@@ -424,29 +424,6 @@ void Sys_DebugLog(char *file, char *fmt, ...)
     close(fd);
 }
 
-char *Sys_ConsoleInput (void) {
-	static char text[256];
-	int len;
-
-	if (!dedicated)
-		return NULL;
-
-	if (!stdin_ready || !do_stdin)
-		return NULL; // the select didn't say it was ready
-	stdin_ready = false;
-
-	len = read (0, text, sizeof(text));
-	if (len == 0) { // end of file
-		do_stdin = 0;
-		return NULL;
-	}
-	if (len < 1)
-		return NULL;
-	text[len - 1] = 0; // rip off the /n and terminate
-
-	return text;
-}
-
 void Sys_Sleep (void){}
 
 /*	pOx - We always poll keys, even in carbon because:

@@ -86,7 +86,6 @@ void Sys_Quit (void);
 
 double Sys_DoubleTime (void);
 
-char *Sys_ConsoleInput (void);
 
 // Perform Key_Event () callbacks until the input que is empty
 void Sys_SendKeyEvents (void);
