@@ -476,15 +476,6 @@ double	Sys_FloatTime (void)
     return ((myTimeValue.tv_sec - myStartSeconds) + (myTimeValue.tv_usec / 1000000.0));
 }
 
-//__________________________________________________________________________________________________________Sys_ConsoleInput()
-
-char *	Sys_ConsoleInput (void)
-{
-    // only required by "qwsv", since it's the only app that runs from the command line:
-
-    return (NULL);
-}
-
 //_______________________________________________________________________________________________________Sys_HighFPPrecision()
 
 #ifndef id386
