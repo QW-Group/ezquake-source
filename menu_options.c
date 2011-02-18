@@ -521,48 +521,6 @@ const char* BitDepthRead(void) { return mss_selected.bpp == 32 ? "32 bit" : mss_
 const char* ResolutionRead(void) { return glmodes[bound(0, mss_selected.res, glmodes_size-1)]; }
 const char* FullScreenRead(void) { return mss_selected.fullscreen ? "on" : "off"; }
 
-#if defined(__linux__) || defined(__FreeBSD__)
-extern cvar_t s_driver;
-extern cvar_t s_uselegacydrivers;
-
-static void RestartSound(void)
-{
-        Cbuf_AddText("s_restart\n");
-}
-
-const char* SoundDriverRead(void)
-{
-	if(strcmp(s_driver.string, "oss")==0)
-		return "oss";
-	else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
-		return "pulseaudio";
-	else
-		return "alsa";
-}
-void SoundDriverToggle(qbool back) 
-{
-	int val = 0;
-	if(strcmp(s_driver.string, "oss")==0)
-                val = 1;
-        else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
-                val = 2;
-        else
-             	val = 0;
-	if(back)
-		if(val==0)
-			val = 2;
-		else
-			val--;
-	else
-		val = (val +1) % 3;
-	switch(val) {
-		case 1: s_driver.string = "oss"; break;
-		case 2:	s_driver.string = "pulseaudio";	break;
-		default: s_driver.string = "alsa"; break;
-	}
-}
-#endif
-
 void ResolutionToggle(qbool back) {
 	if (back) mss_selected.res--; else mss_selected.res++;
 	mss_selected.res = (mss_selected.res + glmodes_size) % glmodes_size;
@@ -685,6 +643,48 @@ qbool CT_Opt_System_Mouse_Event(const mouse_state_t *ms)
 {
 	return Settings_Mouse_Event(&settsystem, ms);
 }
+
+#if defined(__linux__) || defined(__FreeBSD__)
+extern cvar_t s_driver;
+extern cvar_t s_uselegacydrivers;
+
+static void RestartSound(void)
+{
+        Cbuf_AddText("s_restart\n");
+}
+
+const char* SoundDriverRead(void)
+{
+	if(strcmp(s_driver.string, "oss")==0)
+		return "oss";
+	else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
+		return "pulseaudio";
+	else
+		return "alsa";
+}
+void SoundDriverToggle(qbool back) 
+{
+	int val = 0;
+	if(strcmp(s_driver.string, "oss")==0)
+                val = 1;
+        else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
+                val = 2;
+        else
+             	val = 0;
+	if(back)
+		if(val==0)
+			val = 2;
+		else
+			val--;
+	else
+		val = (val +1) % 3;
+	switch(val) {
+		case 1: s_driver.string = "oss"; break;
+		case 2:	s_driver.string = "pulseaudio";	break;
+		default: s_driver.string = "alsa"; break;
+	}
+}
+#endif
 
 
 // </SYSTEM>
