@@ -131,10 +131,6 @@ SInt 		main (SInt, const char **);
 
 void	Sys_Init (void)
 {
-    if(dedicated) {
-	Cvar_Register (&sys_nostdout);
-	Cvar_Register (&sys_extrasleep);
-    }
 }
 
 //____________________________________________________________________________________________________________Sys_SwitchCase()
