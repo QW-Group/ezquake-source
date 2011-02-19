@@ -679,9 +679,9 @@ void SoundDriverToggle(qbool back)
 	else
 		val = (val +1) % 3;
 	switch(val) {
-		case 1: s_driver.string = "oss"; break;
-		case 2:	s_driver.string = "pulseaudio";	break;
-		default: s_driver.string = "alsa"; break;
+		case 1: Cvar_LatchedSet(&s_driver, "oss"); break;
+		case 2:	Cvar_LatchedSet(&s_driver, "pulseaudio"); break;
+		default: Cvar_LatchedSet(&s_driver, "alsa"); break;
 	}
 }
 #endif
