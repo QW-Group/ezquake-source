@@ -658,7 +658,7 @@ const char* SoundDriverRead(void)
 	if(strcmp(s_driver.string, "oss")==0)
 		return "oss";
 	else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
-		return "pulseaudio";
+		return "pulseaudio (experimental)";
 	else
 		return "alsa";
 }
