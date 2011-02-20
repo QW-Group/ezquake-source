@@ -183,11 +183,66 @@ static void CL_ParseBeam(int type)
         }
         color = colors[cnum];
 
-		#ifdef GLQUAKE
-		QMB_ParticleRailTrail(start, end, color);
-		#else
-		Classic_ParticleRailTrail(start, end, color);
-		#endif // GLQUAKE
+		//color is ignored by most of trails
+		switch(r_instagibtrail.integer)
+		{
+			case 1:
+			R_ParticleTrail(start, end, &start, GRENADE_TRAIL);
+			break;
+
+			case 2:
+			R_ParticleTrail(start, end, &start, ROCKET_TRAIL);
+			break;
+
+			case 3:
+			R_ParticleTrail(start, end, &start, ALT_ROCKET_TRAIL);
+			break;
+
+			case 4:
+			R_ParticleTrail(start, end, &start, BLOOD_TRAIL);
+			break;
+
+			case 5:
+			R_ParticleTrail(start, end, &start, BIG_BLOOD_TRAIL);
+			break;
+
+			case 6:
+			R_ParticleTrail(start, end, &start, TRACER1_TRAIL);
+			break;
+
+			case 7:
+			R_ParticleTrail(start, end, &start, TRACER2_TRAIL);
+			break;
+
+			case 8:
+			R_ParticleTrail(start, end, &start, VOOR_TRAIL);
+			break;
+
+			case 9:
+			Classic_ParticleRailTrail(start, end, color);
+			break;
+
+#ifdef GLQUAKE
+			case 10:
+			R_ParticleTrail(start, end, &start, RAIL_TRAIL);
+			break;
+
+			case 11:
+			QMB_ParticleRailTrail(start, end, color);
+			break;
+
+			case 12:
+			R_ParticleTrail(start, end, &start, LAVA_TRAIL);
+			break;
+
+			case 13:
+			R_ParticleTrail(start, end, &start, AMF_ROCKET_TRAIL);
+			break;
+
+#endif
+
+			default: break;
+		}
 
         return;
     }

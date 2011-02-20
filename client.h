@@ -661,6 +661,7 @@ extern	cvar_t	cl_fakeshaft_extra_updates;
 extern cvar_t r_rockettrail;
 extern cvar_t r_grenadetrail;
 extern cvar_t r_railtrail;
+extern cvar_t r_instagibtrail;
 
 extern cvar_t r_powerupglow;
 
