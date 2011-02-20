@@ -131,10 +131,6 @@ SInt 		main (SInt, const char **);
 
 void	Sys_Init (void)
 {
-    if(dedicated) {
-	Cvar_Register (&sys_nostdout);
-	Cvar_Register (&sys_extrasleep);
-    }
 }
 
 //____________________________________________________________________________________________________________Sys_SwitchCase()
@@ -478,15 +474,6 @@ double	Sys_FloatTime (void)
     }
     
     return ((myTimeValue.tv_sec - myStartSeconds) + (myTimeValue.tv_usec / 1000000.0));
-}
-
-//__________________________________________________________________________________________________________Sys_ConsoleInput()
-
-char *	Sys_ConsoleInput (void)
-{
-    // only required by "qwsv", since it's the only app that runs from the command line:
-
-    return (NULL);
 }
 
 //_______________________________________________________________________________________________________Sys_HighFPPrecision()

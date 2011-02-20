@@ -366,8 +366,6 @@ void MSG_ReadSkip(int bytes);
 
 //============================================================================
 
-extern qbool	dedicated;
-
 extern cvar_t	developer;
 extern cvar_t	host_mapname;
 

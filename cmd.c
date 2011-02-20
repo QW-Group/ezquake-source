@@ -1530,26 +1530,14 @@ void Cmd_ExpandString (const char *data, char *dest)
 					break; // there no more space in buf
 			}
 
-			if (!dedicated) {
-				str = Cmd_MacroString (buf, &macro_length);
-				name_length = macro_length;
+			str = Cmd_MacroString (buf, &macro_length);
+			name_length = macro_length;
 
-				if (bestvar && (!str || (strlen (bestvar->name) > macro_length))) {
-					str = bestvar->string;
-					name_length = strlen(bestvar->name);
-                    if (bestvar->teamplay)
-                        cbuf_current = &cbuf_formatted_comms;
-				}
-			} else
-			{
-				if (bestvar) {
-					str = bestvar->string;
-					name_length = strlen (bestvar->name);
-                    if (bestvar->teamplay)
-                        cbuf_current = &cbuf_formatted_comms;
-                } else {
-					str = NULL;
-				}
+			if (bestvar && (!str || (strlen (bestvar->name) > macro_length))) {
+				str = bestvar->string;
+				name_length = strlen(bestvar->name);
+                if (bestvar->teamplay)
+                    cbuf_current = &cbuf_formatted_comms;
 			}
 
 			if (str) {

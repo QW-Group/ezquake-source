@@ -82,8 +82,8 @@ void Sys_Printf (char *fmt, ...) {
 	char text[2048];
 	unsigned char *p;
 
+
 #ifdef NDEBUG
-	if (!dedicated)
 		return;
 #endif
 
@@ -111,15 +111,9 @@ void Sys_Quit (void) {
 }
 
 void Sys_Init(void) {
-	if (dedicated) {
-		Cvar_Register (&sys_nostdout);
-		Cvar_Register (&sys_extrasleep);
-	}
-	else {
     Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
     Cvar_Register (&sys_yieldcpu);
     Cvar_ResetCurrentGroup();
-	}
 }
 
 void Sys_Error (char *error, ...) {
@@ -329,29 +323,6 @@ void floating_point_exception_handler (int whatever) {
 	signal(SIGFPE, floating_point_exception_handler);
 }
 
-char *Sys_ConsoleInput (void) {
-	static char text[256];
-	int len;
-
-	if (!dedicated)
-		return NULL;
-
-	if (!stdin_ready || !do_stdin)
-		return NULL; // the select didn't say it was ready
-	stdin_ready = false;
-
-	len = read (0, text, sizeof(text));
-	if (len == 0) { // end of file
-		do_stdin = 0;
-		return NULL;
-	}
-	if (len < 1)
-		return NULL;
-	text[len - 1] = 0; // rip off the /n and terminate
-
-	return text;
-}
-
 /* 0 is the highest. -1 may be a better setting. */
 #define PRIORITYLEVEL -1
 
@@ -388,69 +359,62 @@ int main (int argc, char **argv) {
 			qconsole_log = fopen(s, "a");
 	}
 
-#if !defined(CLIENTONLY)
-	dedicated = COM_CheckParm ("-dedicated");
-#endif
+	signal(SIGFPE, SIG_IGN);
 
-	if (!dedicated) {
-		signal(SIGFPE, SIG_IGN);
+	// we need to check for -noconinput and -nostdout before Host_Init is called
+	if (!(noconinput = COM_CheckParm("-noconinput")))
+		fcntl(0, F_SETFL, fcntl (0, F_GETFL, 0) | FNDELAY);
 
-		// we need to check for -noconinput and -nostdout before Host_Init is called
-		if (!(noconinput = COM_CheckParm("-noconinput")))
-			fcntl(0, F_SETFL, fcntl (0, F_GETFL, 0) | FNDELAY);
-
-		if (COM_CheckParm("-nostdout"))
-			sys_nostdout.value = 1;
+	if (COM_CheckParm("-nostdout"))
+		sys_nostdout.value = 1;
 
 #ifndef __FreeBSD__
-		/* also check for -rtctimer before Host_Init is called */
-		if (COM_CheckParm("-rtctimer")) {
-		    int retval;
-		    unsigned long tmpread;
+	/* also check for -rtctimer before Host_Init is called */
+	if (COM_CheckParm("-rtctimer")) {
+	    int retval;
+	    unsigned long tmpread;
 
-		    /* try accessing rtc */
-		    rtc_fd = open("/dev/rtc", O_RDONLY);
-		    if (rtc_fd < 0)
-			Sys_Error("Cannot open /dev/rtc! Exiting..\n");
+	    /* try accessing rtc */
+	    rtc_fd = open("/dev/rtc", O_RDONLY);
+	    if (rtc_fd < 0)
+		Sys_Error("Cannot open /dev/rtc! Exiting..\n");
 
-		    /* make sure RTC is set to RTC_RATE (1024Hz) */
-		    retval = ioctl(rtc_fd, RTC_IRQP_READ, &tmpread);
-		    if (retval < 0)
-			Sys_Error("Error with ioctl!\n");
-		    if (tmpread != RTC_RATE)
-			Sys_Error("RTC is not set to 1024Hz! Please use the command 'echo 1024 > /proc/sys/dev/rtc/max-user-freq' as root, or 'echo dev.rtc.max-user-freq=1024 >> /etc/sysctl.conf' as root to keep the change through reboots.\n");
+	    /* make sure RTC is set to RTC_RATE (1024Hz) */
+	    retval = ioctl(rtc_fd, RTC_IRQP_READ, &tmpread);
+	    if (retval < 0)
+		Sys_Error("Error with ioctl!\n");
+	    if (tmpread != RTC_RATE)
+		Sys_Error("RTC is not set to 1024Hz! Please use the command 'echo 1024 > /proc/sys/dev/rtc/max-user-freq' as root, or 'echo dev.rtc.max-user-freq=1024 >> /etc/sysctl.conf' as root to keep the change through reboots.\n");
 
-		    /* take ownership of rtc */
-		    retval = fcntl(rtc_fd, F_SETOWN, getpid());
-		    if (retval < 0)
-			Sys_Error("Cannot set ownership of /dev/rtc!\n");
+	    /* take ownership of rtc */
+	    retval = fcntl(rtc_fd, F_SETOWN, getpid());
+	    if (retval < 0)
+		Sys_Error("Cannot set ownership of /dev/rtc!\n");
 
-		    /* everything is nice - now turn on the RTC's periodic timer */
-		    retval = ioctl(rtc_fd, RTC_PIE_ON, 0);
-		    if (retval == -1)
-			Sys_Error("Error activating RTC timer!\n");
+	    /* everything is nice - now turn on the RTC's periodic timer */
+	    retval = ioctl(rtc_fd, RTC_PIE_ON, 0);
+	    if (retval == -1)
+		Sys_Error("Error activating RTC timer!\n");
 
-		    /* to make the most of the timer, want real time priority */
-		    /* will probably only work if run q as root */
-		    if (!set_realtime())
-			Com_Printf("Realtime Priority not enabled..\n");
-		    else
-			Com_Printf("Realtime Priority enabled!\n");
+	    /* to make the most of the timer, want real time priority */
+	    /* will probably only work if run q as root */
+	    if (!set_realtime())
+		Com_Printf("Realtime Priority not enabled..\n");
+	    else
+		Com_Printf("Realtime Priority enabled!\n");
 
-		    Com_Printf("RTC Timer Enabled.\n");
-		}
-#endif
-		#ifdef id386
-			Sys_SetFPCW();
-		#endif
+	    Com_Printf("RTC Timer Enabled.\n");
 	}
+#endif
+	#ifdef id386
+		Sys_SetFPCW();
+	#endif
+
 
     Host_Init (argc, argv, 32 * 1024 * 1024);
 
 	oldtime = Sys_DoubleTime ();
 	while (1) {
-		if (dedicated)
-			NET_Sleep (10);
 
 		// find time spent rendering last frame
 		newtime = Sys_DoubleTime ();
@@ -459,10 +423,6 @@ int main (int argc, char **argv) {
 
 		Host_Frame(time);
 
-		if (dedicated) {
-			if (sys_extrasleep.value)
-				usleep (sys_extrasleep.value);
-		}
     }
 }
 

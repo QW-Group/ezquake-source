@@ -435,10 +435,7 @@ void Sys_Error (char *error, ...)
 	vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
-	if (dedicated)
-		Sys_Printf("ERROR: %s\n", text);
-	else
-		MessageBox(NULL, text, "Error", 0);
+	MessageBox(NULL, text, "Error", 0);
 
 	if (qwclsemaphore)
 		CloseHandle (qwclsemaphore);
@@ -455,8 +452,7 @@ void Sys_Printf (char *fmt, ...)
 	DWORD dummy;
 
 #ifdef NDEBUG
-	if (!dedicated)
-		return;
+	return;
 #endif
 
 	va_start (argptr,fmt);
@@ -474,8 +470,6 @@ void Sys_Quit (void)
 	if (qwclsemaphore)
 		CloseHandle (qwclsemaphore);
 
-	if (dedicated)
-		FreeConsole ();
 #ifndef WITHOUT_WINKEYHOOK
 	if (WinKeyHook_isActive)
 		UnhookWindowsHookEx(WinKeyHook);
@@ -542,86 +536,6 @@ double Sys_DoubleTime (void)
 		return 0.0;
 
 	return (now - starttime) / 1000.0;
-}
-
-char *Sys_ConsoleInput (void)
-{
-	static char	text[256];
-	static int len;
-	INPUT_RECORD rec;
-	int i, ch;
-	unsigned long dummy, numread, numevents;
-	char *textCopied;
-
-	while (1) 
-	{
-		if (!GetNumberOfConsoleInputEvents (hinput, &numevents))
-			Sys_Error ("Error getting # of console events");
-
-		if (numevents <= 0)
-			break;
-
-		if (!ReadConsoleInput(hinput, &rec, 1, &numread))
-			Sys_Error ("Error reading console input");
-
-		if (numread != 1)
-			Sys_Error ("Couldn't read console input");
-
-		if (rec.EventType == KEY_EVENT) 
-		{
-			if (rec.Event.KeyEvent.bKeyDown) 
-			{
-				ch = rec.Event.KeyEvent.uChar.AsciiChar;
-				switch (ch) 
-				{
-					case '\r':
-						WriteFile(houtput, "\r\n", 2, &dummy, NULL);
-						if (len) {
-							text[len] = 0;
-							len = 0;
-							return text;
-						}
-						break;
-
-					case '\b':
-						WriteFile(houtput, "\b \b", 3, &dummy, NULL);
-						if (len)
-							len--;
-						break;
-
-					default:
-						if ((ch == ('V' & 31)) || // Ctrl + v
-							((rec.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) && (rec.Event.KeyEvent.wVirtualKeyCode == VK_INSERT))) 
-						{
-							if ((textCopied = wcs2str(Sys_GetClipboardTextW()))) 
-							{
-								i = strlen(textCopied);
-								if (i + len >= sizeof(text))
-									i = sizeof(text) - len - 1;
-								
-								if (i > 0) 
-								{
-									textCopied[i] = 0;
-									text[len] = 0;
-									strlcat (text, textCopied, sizeof (text));
-									WriteFile(houtput, textCopied, i, &dummy, NULL);
-									len += dummy;
-								}
-							}
-						} 
-						else if (ch >= ' ') 
-						{
-							WriteFile(houtput, &ch, 1, &dummy, NULL);	
-							text[len] = ch;
-							len = (len + 1) & 0xff;
-						}
-						break;
-				}
-			}
-		}
-	}
-
-	return NULL;
 }
 
 void Sys_SendKeyEvents (void) 
@@ -692,11 +606,11 @@ void WinCheckOSInfo(void)
 void Sys_Init_ (void) 
 {
 	// Allocate a named semaphore on the client so the front end can tell if it is alive.
-	if (!dedicated
-		#ifdef _DEBUG
-		&& !COM_CheckParm("-allowmultiple")
-		#endif // Enabled for development purposes, but disabled for official builds.
-		)
+	// Enabled for development purposes, but disabled for official builds.
+
+#ifdef _DEBUG
+	if (!COM_CheckParm("-allowmultiple"))
+#endif
 	{
 		// Mutex will fail if semaphore already exists.
 		qwclsemaphore = CreateMutex(
@@ -1208,23 +1122,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			qconsole_log = fopen(s, "a");
 	}
 
-#if !defined(CLIENTONLY)
-	dedicated = COM_CheckParm ("-dedicated");
-#endif
-
-	if (dedicated) 
-	{
-		if (!AllocConsole())
-			Sys_Error ("Couldn't allocate dedicated server console");
-		SetConsoleCtrlHandler (HandlerRoutine, TRUE);
-		SetConsoleTitle ("ezqds");
-		hinput = GetStdHandle (STD_INPUT_HANDLE);
-		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
-	}
-	else 
-	{
-		Sys_DisableScreenSaving();
-	}
+	Sys_DisableScreenSaving();
 
 	// Take the greater of all the available memory or half the total memory,
 	// but at least 8 Mb and no more than 32 Mb, unless they explicitly request otherwise
@@ -1263,11 +1161,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     // Main window message loop.
 	while (1) 
 	{
-		if (dedicated) 
-		{
-			NET_Sleep(1);
-		} 
-		else if (sys_inactivesleep.value) 
+		if (sys_inactivesleep.value) 
 		{
 			// Yield the CPU for a little while when paused, minimized, or not the focus
 			if ((ISPAUSED && (!ActiveApp && !DDActive)) || Minimized || block_drawing)

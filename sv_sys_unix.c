@@ -142,35 +142,6 @@ void Sys_Quit (void)
 	exit (0);		// appkit isn't running
 }
 
-/*
-================
-Sys_ConsoleInput
-
-Checks for a complete line of text typed in at the console, then forwards
-it to the host command processor
-================
-*/
-char *Sys_ConsoleInput (void)
-{
-	static char text[256];
-	int len;
-
-	if (!stdin_ready || !do_stdin)
-		return NULL; // the select didn't say it was ready
-	stdin_ready = false;
-
-	len = read (0, text, sizeof(text));
-	if (len == 0) { // end of file
-		do_stdin = 0;
-		return NULL;
-	}
-	if (len < 1)
-		return NULL;
-	text[len - 1] = 0; // rip off the /n and terminate
-	
-	return text;
-}
-
 
 /*
 =============

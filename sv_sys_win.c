@@ -83,64 +83,6 @@ double Sys_DoubleTime (void)
 	return (now - starttime) / 1000.0;
 }
 
-/*
-================
-Sys_ConsoleInput
-================
-*/
-char *Sys_ConsoleInput (void)
-{
-	static char	text[256];
-	static int		len;
-	int		c;
-
-	// read a line out
-	while (_kbhit())
-	{
-		c = _getch();
-
-		if (c == 224) {
-			if (_kbhit()) {
-				// assume escape sequence (arrows etc), skip
-				_getch();
-				continue;
-			}
-			// assume character
-		}
-
-		if (c < 32 && c != '\r' && c != 8)
-			continue;
-
-		putch (c);
-		if (c == '\r')
-		{
-			text[len] = 0;
-			putch ('\n');
-			len = 0;
-			return text;
-		}
-		if (c == 8)
-		{
-			if (len)
-			{
-				putch (' ');
-				putch (c);
-				len--;
-				text[len] = 0;
-			}
-			continue;
-		}
-
-		text[len] = c;
-		len++;
-		text[len] = 0;
-		if (len == sizeof(text))
-			len = 0;
-	}
-
-	return NULL;
-}
-
 
 /*
 ================

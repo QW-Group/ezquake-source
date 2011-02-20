@@ -247,7 +247,6 @@ const char* s_khz_enum[] = {
 	,"48 kHz", "48"
 #endif
 };
-
 const char* cl_nolerp_enum[] = {"on", "off"};
 const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smackdown", "Moscow TF League", "mtfl" };
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
@@ -644,6 +643,48 @@ qbool CT_Opt_System_Mouse_Event(const mouse_state_t *ms)
 {
 	return Settings_Mouse_Event(&settsystem, ms);
 }
+
+#if defined(__linux__) || defined(__FreeBSD__)
+extern cvar_t s_driver;
+extern cvar_t s_uselegacydrivers;
+
+static void RestartSound(void)
+{
+        Cbuf_AddText("s_restart\n");
+}
+
+const char* SoundDriverRead(void)
+{
+	if(strcmp(s_driver.string, "oss")==0)
+		return "oss";
+	else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
+		return "pulseaudio (experimental)";
+	else
+		return "alsa";
+}
+void SoundDriverToggle(qbool back) 
+{
+	int val = 0;
+	if(strcmp(s_driver.string, "oss")==0)
+                val = 1;
+        else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
+                val = 2;
+        else
+             	val = 0;
+	if(back)
+		if(val==0)
+			val = 2;
+		else
+			val--;
+	else
+		val = (val +1) % 3;
+	switch(val) {
+		case 1: Cvar_LatchedSet(&s_driver, "oss"); break;
+		case 2:	Cvar_LatchedSet(&s_driver, "pulseaudio"); break;
+		default: Cvar_LatchedSet(&s_driver, "alsa"); break;
+	}
+}
+#endif
 
 
 // </SYSTEM>
@@ -1362,6 +1403,11 @@ setting settsystem_arr[] = {
 	ADDSET_BOOL		("Sounds When Minimized", sys_inactivesound),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
+#if defined(__linux__) || defined(__FreeBSD__)
+	ADDSET_CUSTOM	("Sound driver", SoundDriverRead, SoundDriverToggle, "Choose sounddriver"),
+	ADDSET_BOOL	("Use legacy drivers", s_uselegacydrivers),
+	ADDSET_ACTION	("Apply Changes", RestartSound, "Restarts sound system."),
+#endif
 
 	//Connection
 	ADDSET_SEPARATOR("Connection"),

@@ -290,10 +290,6 @@ SYSTEM IO
 
 void Sys_Init(void)
 {
-	if (dedicated) {
-		Cvar_Register (&sys_nostdout);
-		Cvar_Register (&sys_extrasleep);
-	}
 }
 
 void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length){}
@@ -308,32 +304,25 @@ void Sys_Error (char *error, ...)
 	va_end (argptr);
 	Host_Shutdown ();
 #ifdef NDEBUG
-	if (!dedicated)
-	{
-		AlertStdAlertParamRec param;
-		short itemHit;
-		Str255 briefMsg;
+	AlertStdAlertParamRec param;
+	short itemHit;
+	Str255 briefMsg;
 
-		param.movable 		= 0;
-		param.filterProc 	= nil;
-		param.defaultText	= nil;
-		param.cancelText 	= nil;
-		param.otherText 	= nil;
-		param.helpButton 	= false;
-		param.defaultButton	= kAlertStdAlertOKButton;
-		param.cancelButton	= 0;
-		param.position		= kWindowDefaultPosition;
+	param.movable 		= 0;
+	param.filterProc 	= nil;
+	param.defaultText	= nil;
+	param.cancelText 	= nil;
+	param.otherText 	= nil;
+	param.helpButton 	= false;
+	param.defaultButton	= kAlertStdAlertOKButton;
+	param.cancelButton	= 0;
+	param.position		= kWindowDefaultPosition;
 
-		sprintf ((char *)briefMsg, "%s has encountered an error.", kAppName);
-		c2pstrcpy (briefMsg, (char *)briefMsg);
+	sprintf ((char *)briefMsg, "%s has encountered an error.", kAppName);
+	c2pstrcpy (briefMsg, (char *)briefMsg);
 
-		StandardAlert (kAlertStopAlert, briefMsg, (StringPtr) outTxt, &param, &itemHit);
-	}
-	else
+	StandardAlert (kAlertStopAlert, briefMsg, (StringPtr) outTxt, &param, &itemHit);
 #endif
-	{
-	printf ("Fatal error: %s\n",outTxt);
-	}
 	exit (1);
 }
 
@@ -372,8 +361,7 @@ void Sys_Printf (char *fmt, ...)
 	va_list         argptr;
 
 #ifdef NDEBUG
-	if (!dedicated)
-		return;
+	return;
 #endif
 
 	va_start (argptr,fmt);
@@ -422,29 +410,6 @@ void Sys_DebugLog(char *file, char *fmt, ...)
     fd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
     write(fd, data, strlen(data));
     close(fd);
-}
-
-char *Sys_ConsoleInput (void) {
-	static char text[256];
-	int len;
-
-	if (!dedicated)
-		return NULL;
-
-	if (!stdin_ready || !do_stdin)
-		return NULL; // the select didn't say it was ready
-	stdin_ready = false;
-
-	len = read (0, text, sizeof(text));
-	if (len == 0) { // end of file
-		do_stdin = 0;
-		return NULL;
-	}
-	if (len < 1)
-		return NULL;
-	text[len - 1] = 0; // rip off the /n and terminate
-
-	return text;
 }
 
 void Sys_Sleep (void){}
@@ -1241,126 +1206,110 @@ int main (int argc, char *argv[])
 	double	now, then = 0.0;
 
 	COM_InitArgv (argc, argv);
-#if !defined(CLIENTONLY)
-	dedicated = COM_CheckParm ("-dedicated");
-#endif
-	if (!dedicated) {
-		Str255 cleanCommandLine;
-		char *ptr;
+	Str255 cleanCommandLine;
+	char *ptr;
 
-		Initialize();
+	Initialize();
 
-		InitCursor();
+	InitCursor();
 
-		DoOptions();
+	DoOptions();
 
-		// If the user wanted to quit from the options dialog, we oblige
-		if (action == QUIT)
-			return (0);
+	// If the user wanted to quit from the options dialog, we oblige
+	if (action == QUIT)
+		return (0);
 
-		// Copy the ini pref to the command line if there's no drag'n drop overide, but only if 'use' is checked.
-		if (macPrefs.command_line[0])
+	// Copy the ini pref to the command line if there's no drag'n drop overide, but only if 'use' is checked.
+	if (macPrefs.command_line[0])
+	{
+		commandLine = malloc(strlen(macPrefs.command_line)+2);
+		commandLine[0] = ' ';
+		commandLine[1] = 0;
+		strcat(commandLine, macPrefs.command_line);
+	}
+
+	cleanCommandLine[0] = ' ';
+	cleanCommandLine[1] = '\0';
+
+	// OSX is touchy...
+	// Clear white space from the command line (but leave a single space between each arg)
+	if (commandLine && action != FAILED)
+	{
+		int		count = 1;// leave an initial leading space in cleanCommandLine
+		qbool 	white = false;
+
+		// First char is a space (this was a leftover from the old code - FIXME I guess)
+		ptr = &commandLine[1];
+
+		while (ptr[0])
 		{
-			commandLine = malloc(strlen(macPrefs.command_line)+2);
-			commandLine[0] = ' ';
-			commandLine[1] = 0;
-			strcat(commandLine, macPrefs.command_line);
-		}
+			// convert tabs to spaces
+			if (ptr[0] == '\t') ptr[0] = ' ';
 
-		cleanCommandLine[0] = ' ';
-		cleanCommandLine[1] = '\0';
+			// skip any extra leading spaces
+			if (count == 1 && ptr[0] == ' ') ptr++;
 
-		// OSX is touchy...
-		// Clear white space from the command line (but leave a single space between each arg)
-		if (commandLine && action != FAILED)
-		{
-			int		count = 1;// leave an initial leading space in cleanCommandLine
-			qbool 	white = false;
-
-			// First char is a space (this was a leftover from the old code - FIXME I guess)
-			ptr = &commandLine[1];
-
-			while (ptr[0])
+			// clean up white space
+			else if (ptr[0] == ' ')
 			{
-				// convert tabs to spaces
-				if (ptr[0] == '\t') ptr[0] = ' ';
-
-				// skip any extra leading spaces
-				if (count == 1 && ptr[0] == ' ') ptr++;
-
-				// clean up white space
-				else if (ptr[0] == ' ')
-				{
-					if (white)
-						ptr++;
-					else
-					{
-						white = true;
-						cleanCommandLine[count++] = ptr[0];// single space
-						if (count == 255) break;
-						ptr++;
-					}
-				}
+				if (white)
+					ptr++;
 				else
 				{
-					white = false;
-					cleanCommandLine[count++] = ptr[0];
+					white = true;
+					cleanCommandLine[count++] = ptr[0];// single space
 					if (count == 255) break;
 					ptr++;
 				}
 			}
-
-			cleanCommandLine[count] = '\0';
-		}
-
-		if (cleanCommandLine[1])
-		{
-			char maxArgs = 2; // this gets sized up quickly
-
-			argv = malloc(sizeof(char*) * maxArgs);
-			argv[0] = cleanCommandLine;
-			Sys_Printf("Active Command Line: \"%s\"\n",argv[0]);
-
-			argc = 1;
-			argv[1]=strtok(argv[0]," ");
-			argv[0] = kAppName; // program name is always argv[0].
-			do
+			else
 			{
-				if (++argc == maxArgs)
-				argv = realloc(argv,sizeof(char*) * (maxArgs*=2));
-				argv[argc] = strtok(NULL," ");
-			} while (argv[argc]);
+				white = false;
+				cleanCommandLine[count++] = ptr[0];
+				if (count == 255) break;
+				ptr++;
+			}
 		}
 
-		if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
-			forcewindowed = true;
-
-		// Set up the system state based on what the preferences say
-		SetGlobalsFromPrefs ();
-
+		cleanCommandLine[count] = '\0';
 	}
+
+	if (cleanCommandLine[1])
+	{
+		char maxArgs = 2; // this gets sized up quickly
+
+		argv = malloc(sizeof(char*) * maxArgs);
+		argv[0] = cleanCommandLine;
+		Sys_Printf("Active Command Line: \"%s\"\n",argv[0]);
+
+		argc = 1;
+		argv[1]=strtok(argv[0]," ");
+		argv[0] = kAppName; // program name is always argv[0].
+		do
+		{
+			if (++argc == maxArgs)
+			argv = realloc(argv,sizeof(char*) * (maxArgs*=2));
+			argv[argc] = strtok(NULL," ");
+		} while (argv[argc]);
+	}
+
+	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
+		forcewindowed = true;
+
+	// Set up the system state based on what the preferences say
+	SetGlobalsFromPrefs ();
 
 	Sys_Printf ("Host_Init\n");
 	Host_Init (argc, argv, 16 * 1024 * 1024);
 
-	if (!dedicated) {
 	// Stupid! - Override video cvars with the pref values
-		SetVideoCvarsForPrefs();
-	}
+	SetVideoCvarsForPrefs();
 
 	while (1) {
-		if (dedicated)
-			NET_Sleep (10);
-
 		now = Sys_DoubleTime ();
 		HandleEvents ();
 		Host_Frame (now-then);
 		then = now;
-
-		if (dedicated) {
-			if (sys_extrasleep.value)
-				usleep (sys_extrasleep.value);
-		}
 	}
 }
 
