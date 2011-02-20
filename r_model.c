@@ -1093,6 +1093,17 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize) {
 		mod->modhint = MOD_BACKPACK;
 	else if (!strcmp(mod->name, "progs/e_spike1.mdl"))
 		mod->modhint = MOD_RAIL;
+	else if (!strcmp(mod->name, "progs/dgib.mdl") ||
+		!strcmp(mod->name, "progs/dgib2.mdl") ||
+		!strcmp(mod->name, "progs/dgib3.mdl") ||
+		!strcmp(mod->name, "progs/tesgib1.mdl") ||
+		!strcmp(mod->name, "progs/tesgib2.mdl") ||
+		!strcmp(mod->name, "progs/tesgib3.mdl") ||
+		!strcmp(mod->name, "progs/tesgib4.mdl") ||
+		!strcmp(mod->name, "progs/tgib1.mdl") ||
+		!strcmp(mod->name, "progs/tgib2.mdl") ||
+		!strcmp(mod->name, "progs/tgib3.mdl"))
+		mod->modhint = MOD_BUILDINGGIBS;
 
 	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES)
 		mod->crc = CRC_Block (buffer, filesize);
