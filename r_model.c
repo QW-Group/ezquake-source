@@ -1091,6 +1091,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer, int filesize) {
 		mod->modhint = MOD_FLAME;
 	else if (!strcmp(mod->name, "progs/backpack.mdl"))
 		mod->modhint = MOD_BACKPACK;
+	else if (!strcmp(mod->name, "progs/e_spike1.mdl"))
+		mod->modhint = MOD_RAIL;
 
 	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES)
 		mod->crc = CRC_Block (buffer, filesize);
