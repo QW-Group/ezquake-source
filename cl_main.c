@@ -194,6 +194,7 @@ cvar_t r_drawvweps				= {"r_drawvweps", "1"};
 cvar_t r_rockettrail			= {"r_rocketTrail", "1"}; // 9
 cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"}; // 3
 cvar_t r_railtrail				= {"r_railTrail", "1"};
+cvar_t r_instagibtrail				= {"r_instagibTrail", "1"};
 cvar_t r_explosiontype			= {"r_explosionType", "1"}; // 7
 cvar_t r_telesplash				= {"r_telesplash", "1"}; // disconnect
 cvar_t r_shaftalpha				= {"r_shaftalpha", "1"};
@@ -1802,6 +1803,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&r_rockettrail);
 	Cvar_Register (&r_grenadetrail);
 	Cvar_Register (&r_railtrail);
+	Cvar_Register (&r_instagibtrail);
 	Cvar_Register (&r_powerupglow);
 	Cvar_Register (&cl_novweps);
 	Cvar_Register (&r_drawvweps);
