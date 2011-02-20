@@ -1098,12 +1098,7 @@ void CL_LinkPacketEntities(void)
 #endif
 
 		// Add trails
-		if (model->flags & ~EF_ROTATE
-                         #ifdef GLQUAKE
-                          // TODO: Why only GL?
-					|| model->modhint
-                         #endif
-		   ) 
+		if (model->flags & ~EF_ROTATE || model->modhint) 
 		{
 			if (!(cent->flags & CENT_TRAILDRAWN) || !VectorL2Compare(cent->trail_origin, ent.origin, 140)) 
 			{
@@ -1167,15 +1162,11 @@ void CL_LinkPacketEntities(void)
 			}
 			else if (model->flags & EF_GRENADE)
 			{
-#ifdef GLQUAKE
-				// VULT TRAILS
 				if (model->modhint == MOD_BUILDINGGIBS)
 				{
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, GRENADE_TRAIL);
 				}
-				else
-#endif
-				if (r_grenadetrail.value && model->modhint != MOD_RAIL) 
+				else if (r_grenadetrail.value && model->modhint != MOD_RAIL) 
 				{
 					missile_trail(fix_trail_num_for_grens(r_grenadetrail.integer),
 						model, old_origin, &ent, cent);

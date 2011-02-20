@@ -250,7 +250,7 @@ typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
 
 // some models are special
 typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_BACKPACK,
-				MOD_RAIL} modhint_t;
+				MOD_RAIL, MOD_BUILDINGGIBS} modhint_t;
 
 #define	EF_ROCKET	1			// leave a trail
 #define	EF_GRENADE	2			// leave a trail
