@@ -62,6 +62,7 @@ cvar_t		amf_tracker_string_teammate = {"r_tracker_string_teammate", "teammate"};
 cvar_t		amf_tracker_string_enemy    = {"r_tracker_string_enemy",    "enemy"};
 cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",      "0"};
 cvar_t		amf_tracker_name_skip_prefix = {"r_tracker_name_skip_prefix", "0"};
+cvar_t		amf_tracker_name_prefixes = {"r_tracker_name_prefixes", ""};
 cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
 cvar_t		amf_tracker_positive_enemy_suicide = {"r_tracker_postive_enemy_suicide", "0"};	// Medar wanted it to be customizable
 
@@ -114,6 +115,7 @@ void InitTracker(void)
 
 	Cvar_Register (&amf_tracker_name_width);
 	Cvar_Register (&amf_tracker_name_skip_prefix);
+	Cvar_Register (&amf_tracker_name_prefixes);
 	Cvar_Register (&amf_tracker_own_frag_prefix);
 	Cvar_Register (&amf_tracker_positive_enemy_suicide);
 }
@@ -205,30 +207,52 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 
 static char *VX_SkipCommonPrefix(int player)
 {
-	unsigned players_left;
-	size_t i;
-	int j;
+	size_t skip;
+	char *prefixes, *prefix, *name;
 
-	players_left = 0xFFFF;
-	players_left &= ~(1 << player);
+	skip = 0;
+	prefixes = Q_normalizetext(Q_strdup(amf_tracker_name_prefixes.string));
+	prefix = strtok(prefixes, " ");
+	name = Q_normalizetext(Q_strdup(cl.players[player].name));
 
-	for (i = 0; i < strlen(cl.players[player].name); i++) {
-		for (j = 0; j < MAX_CLIENTS; j++) {
-			if ((players_left & (1 << j)) == 0)
-				continue;
-			if (cl.players[j].spectator)
-				players_left &= ~(1 << j);
-			if (strlen(cl.players[j].name) < i + 1 || cl.players[j].name[i] != cl.players[player].name[i])
-				players_left &= ~(1 << j);
+	if (prefix == NULL)  {
+		// no prefixes defined by the user, search all players and remove the commont prefix
+		size_t i;
+		int j;
+		unsigned players_left;
+
+		players_left = 0xFFFF;
+		players_left &= ~(1 << player);
+
+		for (i = 0; i < strlen(cl.players[player].name); i++) {
+			for (j = 0; j < MAX_CLIENTS; j++) {
+				if ((players_left & (1 << j)) == 0)
+					continue;
+				if (cl.players[j].spectator)
+					players_left &= ~(1 << j);
+				if (strlen(cl.players[j].name) < i + 1 || cl.players[j].name[i] != cl.players[player].name[i])
+					players_left &= ~(1 << j);
+			}
+			if (players_left == 0)
+				break;
 		}
-		if (players_left == 0)
-			break;
+
+		if (i == strlen(cl.players[player].name))
+			return cl.players[player].name;
+
+		return cl.players[player].name + i;
 	}
 
-	if (i == strlen(cl.players[player].name))
-		return cl.players[player].name;
+	while (prefix != NULL) {
+		if (strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
+			if (strlen(prefix) > skip)
+				skip = strlen(prefix);
+		}
+		prefix = strtok(NULL, " ");
+	}
 
-	return cl.players[player].name + i;
+
+	return cl.players[player].name + skip;
 }
 
 static char *VX_Name(int player)
