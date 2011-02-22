@@ -237,20 +237,22 @@ static char *VX_SkipCommonPrefix(int player)
 				break;
 		}
 
-		if (i == strlen(cl.players[player].name))
-			return cl.players[player].name;
+		skip = i;
 
-		return cl.players[player].name + i;
-	}
-
-	while (prefix != NULL) {
-		if (strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
-			if (strlen(prefix) > skip)
-				skip = strlen(prefix);
+		if (skip == strlen(cl.players[player].name))
+			skip = 0;
+	} else {
+		while (prefix != NULL) {
+			if (strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
+				if (strlen(prefix) > skip)
+					skip = strlen(prefix);
+			}
+			prefix = strtok(NULL, " ");
 		}
-		prefix = strtok(NULL, " ");
 	}
 
+	Q_free(prefixes);
+	Q_free(name);
 
 	return cl.players[player].name + skip;
 }
