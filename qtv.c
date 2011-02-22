@@ -47,8 +47,8 @@ void Qtvusers_f (void);
 
 void QTV_Init(void)
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_MVD); // FIXME: add qtv group instead
-	
+	Cvar_SetCurrentGroup(CVAR_GROUP_QTV);
+
 	Cvar_Register(&qtv_buffertime);
 	Cvar_Register(&qtv_chatprefix);
 	Cvar_Register(&qtv_gamechatprefix);
@@ -62,11 +62,11 @@ void QTV_Init(void)
 	Cvar_Register(&qtv_event_join);
 	Cvar_Register(&qtv_event_leave);
 	Cvar_Register(&qtv_event_changename);
-	
+
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("qtvusers", Qtvusers_f);
-}   
+}
 
 //=================================================
 
