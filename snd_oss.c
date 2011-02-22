@@ -54,10 +54,6 @@ static int oss_getdmapos(void)
 	return shm->samplepos;
 }
 
-static void oss_submit(unsigned int count)
-{
-}
-
 static void oss_shutdown(void)
 {
 
@@ -144,7 +140,7 @@ static qbool oss_init_internal(qsoundhandler_t *sd, const char *device, int rate
 
 											sd->GetDMAPos = oss_getdmapos;
 											sd->GetAvail = NULL;
-											sd->Submit = oss_submit;
+											sd->Submit = NULL;
 											sd->Shutdown = oss_shutdown;
 
 											return 1;
