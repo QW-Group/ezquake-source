@@ -3,34 +3,35 @@
 #
 # made by johnnycz
 #
-# usage: make SVN_EXPORT_URL=https://ezquake.svn.sourceforge.net/svnroot/ezquake/branches/...
+# usage: make TARBALL_BRANCH=ezquake_XX
 #
 # fixme: only "make clean; make" succeeds, attempts to assembly only some parts
 # (e.g. archive with source codes) typically fail, in overall this should have been made just
 # as a shell script, makefile is not suitable (or I just lack appropriate skills)
-# typically svn export creates files with old dates, which probably makes
+# typically sources are obtained with old dates, which probably makes
 # the make algorithm useless, also the way dirs are created/checked is wrong
 #
 
 # --- SETTINGS ---
 
 # Typically no reason to change this
-SVN_BASE_URL="https://ezquake.svn.sourceforge.net/svnroot/ezquake"
+TARBALL_BASE_URL="https://github.com/ezQuake/ezquake-source/tarball/"
 
 #
 # You can (and typically want to) add this via make parameter
-# e.g. make clean; make SVN_EXPORT_URL=https://ezquake.svn.sourceforge.net/svnroot/ezquake/branches/ezquake_20
+# e.g. make clean; make TARBALL_BRANCH=ezquake_21
 # otherwise this default will be used
 #
-SVN_EXPORT_URL="$(SVN_BASE_URL)/trunk/ezquake"
+TARBALL_BRANCH=master
 
 #
 # Typically you do not want to change this, it is used to download game graphics
 # and other files, which do not change across versions.
 #
-SVN_MEDIA_URL="$(SVN_BASE_URL)/trunk/media"
-SVN_DOCUMENTATION_URL="$(SVN_BASE_URL)/trunk/documentation"
-SVN_LIBS_URL="$(SVN_BASE_URL)/trunk/libs"
+TARBALL_SOURCES="$(TARBALL_BASE_URL)$(TARBALL_BRANCH)"
+TARBALL_MEDIA="https://github.com/ezQuake/ezquake-media/tarball/master"
+TARBALL_DOCUMENTATION="https://github.com/ezQuake/ezquake-documentation/tarball/master"
+TARBALL_LIBS="https://github.com/ezQuake/ezquake-libs/tarball/master"
 #
 # version - only useful for final file names
 # 
@@ -60,14 +61,33 @@ endif
 intro:
 	@echo "ezQuake distro package creator"
 	@echo "usage:"
-	@echo " - make SVN_EXPORT_URL=https://ezquake.svn.sourceforge.net/svnroot/ezquake/branches/..."
+	@echo " - make TARBALL_BRANCH=branchname"
 	@echo "prerequisities:"
 	@echo " - go to docs/admin web interface and perform "release commands", "release variables" (only docs admin can do that)"
 	@echo
 	@echo "Press any key when ready or Ctrl+C to abort."
 	@read
 
+initdownload: tmp/dl/sources.tar.gz tmp/dl/libs.tar.gz tmp/dl/media.tar.gz tmp/dl/docs.tar.gz
+
+tmp/dl/sources.tar.gz: tmp tmp/dl
+	cd tmp/dl ; mkdir -p sources_outer ; tar zxfv sources.tar.gz -C sources_outer ; cd sources_outer ; mv `ls` ../../$(SOURCE_DIR)
+
+tmp/dl/media.tar.gz: tmp tmp/dl
+	curl -L -k -o tmp/dl/media.tar.gz $(TARBALL_MEDIA)
+	cd tmp/dl ; tar zxfv media.tar.gz
+
+tmp/dl/libs.tar.gz: tmp tmp/dl
+	curl -L -k -o tmp/dl/libs.tar.gz $(TARBALL_LIBS)
+	cd tmp/dl ; tar zxfv libs.tar.gz
+
+tmp/dl/docs.tar.gz: tmp tmp/dl
+	curl -L -k -o tmp/dl/docs.tar.gz $(TARBALL_DOCUMENTATION)
+	cd tmp/dl ; tar zxfv docs.tar.gz
+
 tmp: ; mkdir -p tmp
+
+tmp/dl: ; mkdir -p tmp/dl
 
 tmp/help: ; mkdir -p tmp/help
 
@@ -75,23 +95,22 @@ tmp/help/commands: ; mkdir -p tmp/help/commands
 
 tmp/help/variables: ; mkdir -p tmp/help/variables
 
-tmp/commands.zip: tmp
-	wget http://ezquake.sourceforge.net/docs/admin/index.php?download=commands -O tmp/commands.zip
+tmp/commands.tar.gz: tmp
+	wget http://ezquake.sourceforge.net/docs/admin/index.php?download=commands -O tmp/commands.tar.gz
 
-tmp/variables.zip: tmp
-	wget http://ezquake.sourceforge.net/docs/admin/index.php?download=variables -O tmp/variables.zip
+tmp/variables.tar.gz: tmp
+	wget http://ezquake.sourceforge.net/docs/admin/index.php?download=variables -O tmp/variables.tar.gz
 
 dist: ; mkdir -p dist
 
 dist/ezquake: dist ; mkdir -p dist/ezquake
 
-dist/ezquake/help.pk3: dist/ezquake tmp/help/commands tmp/help/variables tmp/variables.zip tmp/commands.zip
-	unzip -d tmp/help/commands/ tmp/commands.zip
-	unzip -d tmp/help/variables/ tmp/variables.zip
+dist/ezquake/help.pk3: dist/ezquake tmp/help/commands tmp/help/variables tmp/variables.tar.gz tmp/commands.tar.gz
+	tar zxfv tmp/commands.tar.gz -C tmp/help/
+	tar zxfv tmp/variables.tar.gz -C tmp/help/
 	cd tmp ; find help | zip -9 -@ -q ../dist/ezquake/help.pk3
 
-$(SOURCE_FILE): tmp
-	svn export $(SVN_EXPORT_URL) $(SOURCE_DIR)
+$(SOURCE_FILE): tmp tmp/dl/sources.tar.gz
 
 $(DEPENDENCY_FILE1): $(SOURCE_FILE)
 	svn export $(SVN_LIBS_URL)/windows-x86/ tmp/libs
