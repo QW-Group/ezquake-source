@@ -536,7 +536,7 @@ void QTVList_Observeqtv_f(void)
 		return;
 	}
 	
-	if (Cmd_Argc() < 1) {
+	if (Cmd_Argc() < 2) {
 		addr = QTVList_Current_IP();
 	}
 	else {
