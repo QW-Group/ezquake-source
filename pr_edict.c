@@ -1075,8 +1075,11 @@ qbool PR_UserCmd(void)
 
 	if (mod_UserCmd)
 	{
+		static char cmd_copy[128];
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
+		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
 
 		PR_ExecuteProgram (mod_UserCmd);
 		return G_FLOAT(OFS_RETURN) ? true : false;
