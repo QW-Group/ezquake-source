@@ -92,8 +92,8 @@ static qbool oss_init_internal(qsoundhandler_t *sd, const char *device, int rate
 					if (shm->format.width)
 					{
 						i = 0;
-						if (ioctl(p->fd, SNDCTL_DSP_SPEED, &rate) != 0) {
-							Com_Printf("[sound] error: tried %d Hz but failed.\n", rate);
+						if (ioctl(p->fd, SNDCTL_DSP_SPEED, &rate) < 0) {
+							Com_Printf("[sound] oss error: tried %d Hz but failed.\n", rate);
 							return false;
 						}
 
@@ -133,6 +133,7 @@ static qbool oss_init_internal(qsoundhandler_t *sd, const char *device, int rate
 										sd->GetAvail = NULL;
 										sd->Submit = NULL;
 										sd->Shutdown = oss_shutdown;
+										sd->name = "snd_oss";
 
 										return 1;
 									}

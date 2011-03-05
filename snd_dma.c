@@ -171,7 +171,7 @@ static void S_SoundInfo_f (void)
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
 	// shm->sampleframes not set/used in ALSA/Pulseaudio
-	// OSS still sets it, but it isn't used outside of OSS.
+	// OSS(legacy) still sets it, but it isn't used outside of OSS(legacy).
 	// So don't read sampleframes from shm, but calculate it instead.
 	Com_Printf("%5d frames\n", shm->samples / shm->format.channels); 
 #else
