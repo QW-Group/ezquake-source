@@ -218,7 +218,7 @@ qbool Log_TempLogUploadPending(void) {
 static qbool Log_IsUploadAllowed(void) {
 	return match_auto_logupload.integer
 		&& match_auto_logconsole.integer
-		&& cls.demoplayback == DT_NONE
+		&& !cls.demoplayback
 		&& cls.server_adr.type != NA_LOOPBACK;
 }
 

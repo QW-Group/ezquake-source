@@ -273,14 +273,6 @@ typedef enum
 	dl_single
 } dltype_t;		// download type
 
-typedef enum demotype_e
-{
-	DT_NONE,
-	DT_MVD,
-	DT_QWD,
-	DT_NQDEMO
-} demotype_t;
-
 typedef enum demoseekingtype_e
 {
 	DST_SEEKING_NONE = 0, ///< seeking nothing
@@ -405,7 +397,7 @@ typedef struct
 	// is started before entering a map (and clearing clientState_t)
 	//
 	qbool		demorecording;
-	demotype_t	demoplayback;
+	qbool		demoplayback;
 	demoseekingtype_t demoseeking;
 	demoseekingstatus_t demoseekingstatus;
 	qbool		demorewinding;

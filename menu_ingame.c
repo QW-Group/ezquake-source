@@ -141,9 +141,7 @@ setting botmatch_menu_entries[] = {
 	ADDSET_ACTION("Return To Game", MIng_Back, ""),
 };
 
-#define DEMOPLAYBACK() (cls.demoplayback == DT_QWD \
-	|| (cls.demoplayback == DT_MVD && cls.mvdplayback == 1) \
-	|| cls.demoplayback == DT_NQDEMO)
+#define DEMOPLAYBACK() (cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK)
 #define BOTMATCH() (!strcmp(cls.gamedirfile, "fbca"))
 #define SINGLEPLAYER() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
 #define QTVPLAYBACK() (cls.mvdplayback == 2)
