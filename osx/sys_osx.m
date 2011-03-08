@@ -313,15 +313,11 @@ int	Sys_FileTime (char *thePath)
 
 void	Sys_mkdir (const char *path)
 {
-    if (mkdir (path, 0777) != -1)
-    {
-        return;
-    }
-    
-    if (errno != EEXIST)
-    {
-        Sys_Error ("\"mkdir %s\" failed, reason: \"%s\".", path, strerror(errno));
-    }
+	mkdir (path, 0777);
+	if (errno)
+    	{
+        	Com_Printf ("\"Sys_mkdir %s\" failed, reason: \"%s\".\n", path, strerror(errno));
+	}
 }
 
 //_____________________________________________________________________________________________________Sys_MakeCodeWriteable()
