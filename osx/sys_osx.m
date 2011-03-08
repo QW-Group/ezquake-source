@@ -316,7 +316,7 @@ void	Sys_mkdir (const char *path)
 	mkdir (path, 0777);
 	if (errno)
     	{
-        	Com_Printf ("\"Sys_mkdir %s\" failed, reason: \"%s\".\n", path, strerror(errno));
+        	Com_DPrintf ("\"Sys_mkdir %s\" failed, reason: \"%s\".\n", path, strerror(errno));
 	}
 }
 
