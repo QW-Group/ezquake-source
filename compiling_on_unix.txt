@@ -1,6 +1,15 @@
 UNIX ezQuake build guide
 ------------------------
 
+NOTE:
+If you are compiling 32bit binaries you _must_ use a GCC version older
+than gcc-4.4 or put -O as optimization flag (remove -O2).
+gcc-4.3 has been tested to work fine. Easiest way is to install gcc-4.3
+then edit Makefile, change the line: 'CC=gcc' to 'CC=gcc-4.3'.
+This is due to a currently unknown optimization bug in newer gcc versions.
+64bit builds are not affected.
+
+
 1) Install build dependencies
 
 1.1) Ubuntu
