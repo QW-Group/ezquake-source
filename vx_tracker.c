@@ -64,7 +64,7 @@ cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",      "0"};
 cvar_t		amf_tracker_name_skip_prefix = {"r_tracker_name_skip_prefix", "0"};
 cvar_t		amf_tracker_name_prefixes = {"r_tracker_name_prefixes", ""};
 cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
-cvar_t		amf_tracker_positive_enemy_suicide = {"r_tracker_postive_enemy_suicide", "0"};	// Medar wanted it to be customizable
+cvar_t		amf_tracker_positive_enemy_suicide = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
 
 
 #define MAX_TRACKERMESSAGES 30
