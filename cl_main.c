@@ -109,8 +109,10 @@ cvar_t	cl_timeout = {"cl_timeout", "60"};
 cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
-#ifdef PROTOCOL_VERSION_FTE
-cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// will break demos!
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
+cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
+													// some extensions can be explicitly controlled.
+cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
 cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
@@ -118,6 +120,10 @@ cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
 cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "5"};
+#endif
+
+#ifdef FTE_PEXT2_VOICECHAT
+cvar_t  cl_pext_voicechat  = {"cl_pext_voicechat", "1"};
 #endif
 
 cvar_t	cl_sbar		= {"cl_sbar", "0"};
@@ -579,38 +585,43 @@ unsigned int CL_SupportedFTEExtensions (void)
 {
 	unsigned int fteprotextsupported = 0;
 
-#ifdef FTE_PEXT_ACCURATETIMINGS
-	fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
-#endif
-#ifdef FTE_PEXT_TRANS
-	fteprotextsupported |= FTE_PEXT_TRANS;
-#endif
-#ifdef FTE_PEXT_256PACKETENTITIES
-	if (cl_pext_256packetentities.value)
-		fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
-#endif
+	if (!cl_pext.value)
+		return 0;
+
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (cl_pext_chunkeddownloads.value)
 		fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif
-#ifdef FTE_PEXT_HLBSP
-	fteprotextsupported |= FTE_PEXT_HLBSP;
-#endif
-#ifdef FTE_PEXT_MODELDBL
-	fteprotextsupported |= FTE_PEXT_MODELDBL;
-#endif
-#ifdef FTE_PEXT_ENTITYDBL
-	fteprotextsupported |= FTE_PEXT_ENTITYDBL;
-#endif
-#ifdef FTE_PEXT_ENTITYDBL2
-	fteprotextsupported |= FTE_PEXT_ENTITYDBL2;
-#endif
-#ifdef FTE_PEXT_SPAWNSTATIC2
-	fteprotextsupported |= FTE_PEXT_SPAWNSTATIC2;
+
+#ifdef FTE_PEXT_256PACKETENTITIES
+	if (cl_pext_256packetentities.value)
+		fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
 #endif
 
-	if (!cl_pext_other.value)
-		fteprotextsupported &= (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES);
+	if (cl_pext_other.value)
+	{
+#ifdef FTE_PEXT_ACCURATETIMINGS
+		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
+#endif
+#ifdef FTE_PEXT_TRANS
+		fteprotextsupported |= FTE_PEXT_TRANS;
+#endif
+#ifdef FTE_PEXT_HLBSP
+		fteprotextsupported |= FTE_PEXT_HLBSP;
+#endif
+#ifdef FTE_PEXT_MODELDBL
+		fteprotextsupported |= FTE_PEXT_MODELDBL;
+#endif
+#ifdef FTE_PEXT_ENTITYDBL
+		fteprotextsupported |= FTE_PEXT_ENTITYDBL;
+#endif
+#ifdef FTE_PEXT_ENTITYDBL2
+		fteprotextsupported |= FTE_PEXT_ENTITYDBL2;
+#endif
+#ifdef FTE_PEXT_SPAWNSTATIC2
+		fteprotextsupported |= FTE_PEXT_SPAWNSTATIC2;
+#endif
+	}
 
 	return fteprotextsupported;
 }
@@ -621,13 +632,12 @@ unsigned int CL_SupportedFTEExtensions2 (void)
 {
 	unsigned int fteprotextsupported2 = 0;
 
-#ifdef FTE_PEXT2_VOICECHAT
-	fteprotextsupported2 |= FTE_PEXT2_VOICECHAT;
-#endif
+	if (!cl_pext.value)
+		return 0;
 
-#if 0 // qqshka: nah, I disagree with such policy.
-	if (!cl_pext_other.value)
-		fteprotextsupported2 &= FTE_PEXT2_VOICECHAT;
+#ifdef FTE_PEXT2_VOICECHAT
+	if (cl_pext_voicechat.value)
+		fteprotextsupported2 |= FTE_PEXT2_VOICECHAT;
 #endif
 
 	return fteprotextsupported2;
@@ -1863,7 +1873,8 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_delay_packet);
 	Cvar_Register (&cl_earlypackets);
 
-#ifdef PROTOCOL_VERSION_FTE
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
+	Cvar_Register (&cl_pext);
 	Cvar_Register (&cl_pext_other);
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
@@ -1872,6 +1883,10 @@ void CL_InitLocal (void)
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	Cvar_Register (&cl_pext_chunkeddownloads);
 	Cvar_Register (&cl_chunksperframe);
+#endif
+
+#ifdef FTE_PEXT2_VOICECHAT
+	Cvar_Register (&cl_pext_voicechat);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
