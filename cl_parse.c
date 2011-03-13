@@ -3627,6 +3627,9 @@ void CL_ParseServerMessage (void)
 
 		if (cls.demorecording)
 		{
+#ifdef FTE_PEXT2_VOICECHAT
+			extern cvar_t cl_voip_demorecord;
+#endif
 			// Init the demo message buffer if it hasn't been done.
 			if (!cls.demomessage.cursize)
 			{
@@ -3641,6 +3644,12 @@ void CL_ParseServerMessage (void)
 			else if (cmd == svc_download) {
 				// there's no point in writing it to the demo
 			}
+#ifdef FTE_PEXT2_VOICECHAT
+			else if(cmd == svc_fte_voicechat && !cl_voip_demorecord.integer)
+			{
+				// user does not want it to be recorded
+			}
+#endif
 			else if (cmd == svc_serverdata)
 				CL_WriteServerdata(&cls.demomessage);
 			else

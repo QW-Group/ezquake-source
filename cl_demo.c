@@ -394,17 +394,38 @@ static char *TrimModelName (const char *full)
 
 void CL_WriteServerdata (sizebuf_t *msg)
 {
+	int ignore_extensions;
+
 	MSG_WriteByte (msg, svc_serverdata);
-	
+
+	// Maintain demo compatibility.
+	ignore_extensions = 0;
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	// this is OK, since download data skipped anyway
+	ignore_extensions |= FTE_PEXT_CHUNKEDDOWNLOADS;
+#endif
+#ifdef FTE_PEXT_256PACKETENTITIES
+	// this is probably OK, since engine should ignore more than 64 entities if not supported.
+	ignore_extensions |= FTE_PEXT_256PACKETENTITIES;
+#endif
+
 	#ifdef PROTOCOL_VERSION_FTE
-	if (cls.fteprotocolextensions)
+	if (cls.fteprotocolextensions &~ ignore_extensions)
 	{
 		MSG_WriteLong (msg, PROTOCOL_VERSION_FTE);
 		MSG_WriteLong (msg, cls.fteprotocolextensions);
 	}
 	#endif // PROTOCOL_VERSION_FTE
+
+	// Maintain demo pseudo-compatibility,
+	ignore_extensions = 0;
+#ifdef FTE_PEXT2_VOICECHAT
+	// not really OK, if you receive voice packet then this demo will not be playable by older clients anyway.
+	ignore_extensions |= FTE_PEXT2_VOICECHAT;
+#endif
+
 	#ifdef PROTOCOL_VERSION_FTE2
-	if (cls.fteprotocolextensions2)
+	if (cls.fteprotocolextensions2 & ~ignore_extensions)
 	{
 		MSG_WriteLong (msg, PROTOCOL_VERSION_FTE2);
 		MSG_WriteLong (msg, cls.fteprotocolextensions2);
@@ -2291,10 +2312,12 @@ void CL_Record_f (void)
 		return;
 	}
 
-	if (cls.fteprotocolextensions || cls.fteprotocolextensions2)
+	if (	(cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)) // that OK.
+		||  (cls.fteprotocolextensions2 & ~FTE_PEXT2_VOICECHAT) // that not OK since if you receive VOIP packet demo will be non compatible, but this warning is annoying.
+	)
 	{
-		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo may not be playable in older clients. "
-			"Use cl_pext 0 for 100% compatible demos. But do NOT forget set it to 1 later or you will lack useful features!\n");
+		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo most likely will be unplayable in older clients. "
+			"Use cl_pext 0 for 100%% compatible demos. But do NOT forget set it to 1 later or you will lack useful features!\n");
 	}
 
 	switch(Cmd_Argc())
