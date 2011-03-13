@@ -198,6 +198,12 @@ static check_models_hashes_entry_t mdlhash_unknown_end4 = { {0xe3a1b910, 0x28c4e
 // megaheath converted from Generations Arena
 static check_models_hashes_entry_t mdlhash_generations_b_bh100 = { {0xc6b455ff, 0xad7cb845, 0xa7356729, 0x35375fcf, 0x10adb479}, NULL };
 
+// megahealth alternatives
+// this one is said to be used in the US
+static check_models_hashes_entry_t sound_items_r_item2_wav_us = {{0xf62a00d2, 0x5fceaaca, 0x25f91692, 0xf7602cb7, 0x230da525}, NULL};
+// this is just 11kHz version of the US one, but resampled to 11 kHz
+// this one might be used widely in russia
+static check_models_hashes_entry_t sound_items_r_item2_wav_ru = {{0x83a8e646, 0xbc4cc313, 0xa07aa96e, 0x9d81eada, 0xf619bd10}, NULL};
 
 #define MAX_CHECK_MODELS 128
 #define	FMOD_DM 1
@@ -462,7 +468,11 @@ void FMod_Init (void)
 	FMod_AddModel ("sound/items/protect2.wav",	FMOD_DM | FMOD_TF,	sound_items_protect2_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/items/protect3.wav",	FMOD_DM | FMOD_TF,	sound_items_protect3_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/items/r_item1.wav",	FMOD_DM | FMOD_TF,	sound_items_r_item1_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/r_item2.wav",	FMOD_DM | FMOD_TF,	sound_items_r_item2_wav_FMOD_DM_FMOD_TF);
+
+	lastid = FMod_AddModel ("sound/items/r_item2.wav",	FMOD_DM | FMOD_TF,	sound_items_r_item2_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModelAlt(lastid, &sound_items_r_item2_wav_us);
+	FMod_AddModelAlt(lastid, &sound_items_r_item2_wav_ru);
+
 	FMod_AddModel ("sound/misc/water1.wav",		FMOD_DM | FMOD_TF,	sound_misc_water1_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/misc/water2.wav",		FMOD_DM | FMOD_TF,	sound_misc_water2_wav_FMOD_DM_FMOD_TF);
 
