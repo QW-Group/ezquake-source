@@ -1421,12 +1421,17 @@ do {																					\
 	ci_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / FONT_SIZE;					\
 } while(0);
 
-void CI_Init (void) {
+void CI_Init (void)
+{
 	int ci_font;
+	int texmode = TEX_ALPHA | TEX_COMPLAIN | TEX_MIPMAP;
 
 	ci_initialized = false;
 
-	if (!(ci_font = GL_LoadTextureImage ("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN | TEX_MIPMAP)))
+	if (!gl_scaleModelTextures.value)
+		texmode |= TEX_NOSCALE;
+
+	if (!(ci_font = GL_LoadTextureImage ("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, texmode)))
 		return;
 
 	ADD_CICON_TEXTURE(citex_chat,     ci_font, 0, 1,  0, 0,  64, 64); // get chat part from font
