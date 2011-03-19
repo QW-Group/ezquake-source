@@ -1,5 +1,5 @@
 /*
-Copyright (C) 1996-1997 Id Software
+Copyright (C) 1996-1997 Id Software, Inc.
 Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 
 This program is free software; you can redistribute it and/or
