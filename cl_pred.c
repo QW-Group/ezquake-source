@@ -156,7 +156,7 @@ void CL_CalcCrouch (void) {
 
 extern qbool physframe; // for fps-independent physics
 
-static void CL_LerpMove (void)
+static void CL_LerpMove (qbool angles_lerp)
 {	
 	static int		lastsequence = 0;
 	static vec3_t	lerp_angles[3];
@@ -263,7 +263,7 @@ static void CL_LerpMove (void)
     frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
     frac = bound (0, frac, 1);
 
-	if (cl.spectator && cl.viewplayernum != cl.playernum)
+	if (cl.spectator && cl.viewplayernum != cl.playernum || angles_lerp)
 	{
 		// we track someone, so lerp angles
 		AngleInterpolate(lerp_angles[from], frac, lerp_angles[to], cl.simangles);
@@ -294,6 +294,7 @@ void CL_PredictMove (void) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
 	double playertime;
+	qbool angles_lerp = false;
 
 	playertime = cls.realtime - cls.latency;
 	if (playertime > cls.realtime)
@@ -341,6 +342,8 @@ void CL_PredictMove (void) {
 	}
 	else if (to->playerstate[cl.playernum].pm_type == PM_LOCK)
 	{
+		angles_lerp = true;
+
 		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 		VectorCopy (to->playerstate[cl.playernum].command.angles, cl.simangles);
@@ -375,7 +378,7 @@ void CL_PredictMove (void) {
 	}
 
 	if (!cls.demoplayback && cl_independentPhysics.value != 0)
-		CL_LerpMove ();
+		CL_LerpMove (angles_lerp);
     CL_CalcCrouch ();
 
 #ifdef JSS_CAM
