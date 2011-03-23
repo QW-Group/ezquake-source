@@ -408,7 +408,7 @@ DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vjob)
 		Com_Printf("%s\n", errorbuffer);
 	}
 	else {
-		Com_Printf("Match log uplaoded\n");
+		Com_Printf("Match log uploaded\n");
 	}
 
 	Log_Upload_Job_Free(job);
