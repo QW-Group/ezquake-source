@@ -111,7 +111,7 @@ endif # WITH_OGG_VORBIS
 
 ########################
 
-RELEASE_CFLAGS = -O2 -fno-strict-aliasing -ffast-math -funroll-loops
+RELEASE_CFLAGS = -O2 -fno-strict-aliasing
 DEBUG_CFLAGS = -ggdb
 
 # opengl builds
