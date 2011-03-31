@@ -280,10 +280,12 @@ void IN_JumpDown(void)
 	qbool up;
 	int pmt;
 
-	if (cls.state != ca_active || !cl_smartjump.value || cls.demoplayback)
+	if (cls.state != ca_active || !cl_smartjump.value)
 		up = false;
+	else if (cls.demoplayback && !cls.mvdplayback)
+		up = false; // use jump instead of up in demos unless its MVD and I have no idea why QWD have this restriction.
 	else if (cl.spectator)
-		up = (Cam_TrackNum() == -1);
+		up = (Cam_TrackNum() == -1); // NOTE: cl.spectator is non false during MVD playback, so this code executed.
 	else if (cl.stats[STAT_HEALTH] <= 0)
 		up = false;
 	else if (cl.validsequence && (
