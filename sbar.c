@@ -1029,45 +1029,31 @@ static void Sbar_DrawCompact_Bare (void) {
 
 /******************************** SCOREBOARD ********************************/
 
-static void Sbar_SoloScoreboard (void) {
-	char str[80];
-	double time;
-	int minutes, seconds, tens, units;
+/*
+===============
+Sbar_SoloScoreboard -- johnfitz -- new layout
+===============
+*/
+void Sbar_SoloScoreboard (void)
+{
+	char	str[256];
+	int		len;
 
-	sb_updates = 0;         // because time display changes every second
+	sprintf (str,"Kills: %i/%i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+	Sbar_DrawString (8, 12, str);
 
-	Sbar_DrawPic (0, 0, sb_scorebar);
+	sprintf (str,"Secrets: %i/%i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+	Sbar_DrawString (312 - strlen(str)*8, 12, str);
 
-	if (cl.gametype == GAME_COOP) {
-		snprintf(str, sizeof(str), "Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
-		Sbar_DrawString (8, 4, str);
+	sprintf (str,"skill %i", (int)(skill.value + 0.5));
+	Sbar_DrawString (160 - strlen(str)*4, 12, str);
 
-		snprintf(str, sizeof(str), "Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
-		Sbar_DrawString (8, 12, str);
-	}
-
-	// time
-	if (cl.servertime_works) {
-		time = cl.servertime;	// good, we know real time spent on level
-	} else {
-		time = cls.demoplayback ? cls.demotime : cls.realtime;
-		if (cl.gametype == GAME_COOP)
-			time -= cl.players[cl.playernum].entertime;
-	}
-
-	minutes = time / 60;
-	seconds = time - 60 * minutes;
-	tens = seconds / 10;
-	units = seconds - 10 * tens;
-	snprintf (str, sizeof(str), "Time :%3i:%i%i", minutes, tens, units);
-	Sbar_DrawString (184, 4, str);
-
-	if (cl.gametype == GAME_COOP) {
-		// draw level name
-		int l = strlen (cl.levelname);
-		if (l < 22 && !strstr(cl.levelname, "\n"))
-			Sbar_DrawString (232 - l*4, 12, cl.levelname);
-	}
+	strlcpy(str, cl.levelname, sizeof(str));
+	strlcat(str, " (", sizeof(str));
+	strlcat(str, host_mapname.string, sizeof(str));
+	strlcat(str, ")", sizeof(str));
+	len = strlen (str);
+	Sbar_DrawString (160 - len*4, 4, str);
 }
 
 #define SCOREBOARD_LASTROW		(vid.height - 34)
@@ -1858,6 +1844,10 @@ void Sbar_Draw(void) {
 		} else {
 			Sbar_DrawNormal();
 		}
+	}
+	if (sb_lines > 0 && scr_newHud.value == 1
+		&& (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0)) {
+			Sbar_SoloScoreboard();
 	}
 
 #ifdef GLQUAKE
