@@ -38,6 +38,7 @@ cvar_t  qtv_adjustminspeed	 = {"qtv_adjustminspeed",	"0"};
 cvar_t  qtv_adjustmaxspeed	 = {"qtv_adjustmaxspeed",	"999"};
 cvar_t  qtv_adjustlowstart   = {"qtv_adjustlowstart",	"0.3"};
 cvar_t  qtv_adjusthighstart  = {"qtv_adjusthighstart",	"1"};
+cvar_t  qtv_say_team         = {"qtv_say_team",         "0"};
 
 cvar_t  qtv_event_join       = {"qtv_event_join", 		" &c2F2joined&r"};
 cvar_t  qtv_event_leave      = {"qtv_event_leave", 		" &cF22left&r"};
@@ -58,6 +59,7 @@ void QTV_Init(void)
 	Cvar_Register(&qtv_adjustmaxspeed);
 	Cvar_Register(&qtv_adjustlowstart);
 	Cvar_Register(&qtv_adjusthighstart);
+	Cvar_Register(&qtv_say_team);
 
 	Cvar_Register(&qtv_event_join);
 	Cvar_Register(&qtv_event_leave);
@@ -175,6 +177,11 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 
 	if (cls.state == ca_disconnected) {
 		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (strcmp(Cmd_Argv(0), "say_team") == 0 && !qtv_say_team.integer) {
+		Com_Printf("Cannot send team messages. Use qtv_sayteam 1 to override.\n");
 		return;
 	}
 
