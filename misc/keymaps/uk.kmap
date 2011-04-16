@@ -143,7 +143,8 @@ keycode      026  [             {
 keycode      027  ]             }
 keycode      028  ENTER
 keycode	ext  028  KP_ENTER
-keycode      029  CTRL
+keycode      029  LCTRL
+keycode  ext 029  RCTRL
 keycode      030  a
 keycode      031  s
 keycode      032  d
