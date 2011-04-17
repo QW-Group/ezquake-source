@@ -220,6 +220,7 @@ cvar_t	scr_cursor_alpha		= {"scr_cursor_alpha", "1"};
 #endif
 
 cvar_t  scr_showcrosshair       = {"scr_showcrosshair", "1"}; // so crosshair does't affected by +showscores, or vice versa
+cvar_t  scr_notifyalways        = {"scr_notifyalways", "0"}; // don't hide notification messages in intermission
 
 qbool	scr_initialized;	// Ready to draw.
 
@@ -3424,13 +3425,19 @@ void SCR_DrawElements(void)
 			if (cl.intermission == 1)
 			{
 				Sbar_IntermissionOverlay ();
-				Con_ClearNotify ();
+				if (!scr_notifyalways.integer)
+				{
+					Con_ClearNotify ();
+				}
 			} 
 			else if (cl.intermission == 2)
 			{
 				Sbar_FinaleOverlay ();
 				SCR_CheckDrawCenterString ();
-				Con_ClearNotify ();
+				if (!scr_notifyalways.integer)
+				{
+					Con_ClearNotify ();
+				}
 			}
 
 			if (cls.state == ca_active)
@@ -4529,6 +4536,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_tracking);
 	Cvar_Register (&scr_spectatorMessage);
 	Cvar_Register (&scr_showcrosshair);
+	Cvar_Register (&scr_notifyalways);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
