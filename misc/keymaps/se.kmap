@@ -65,8 +65,8 @@ keycode      053  -             _
 keycode	ext  053  KP_SLASH
 keycode      054  RSHIFT
 keycode      055  KP_STAR
-keycode      056  ALT
-keycode ext  056  ALTGR
+keycode      056 LALT                  // left ALT-key
+keycode ext  056 RALT                  // right ALT-key; use ALTGR if a third level is needed
 keycode      057  SPACE
 keycode      058  CAPSLOCK
 keycode      059  F1
