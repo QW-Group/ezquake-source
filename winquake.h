@@ -23,12 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <windows.h>
 
+#ifndef WM_MOUSEWHEEL // necessary for mingw build
 #define WM_MOUSEWHEEL		0x020A
 #define WM_XBUTTONDOWN		0x020B
 #define WM_XBUTTONUP		0x020C
 
 #define MK_XBUTTON1         0x0020
 #define MK_XBUTTON2         0x0040
+#endif
 
 #if !defined(WITHOUT_WINKEYHOOK) && ( !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0400 )
 

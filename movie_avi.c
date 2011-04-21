@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <windows.h>
 #include <vfw.h>
+#include <msacm.h>
+#include <mmreg.h>
+#include <mmsystem.h>
 #include "quakedef.h"
 #include "movie_avi.h"
 #include "qsound.h"
@@ -29,6 +32,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #endif
 
+#ifndef ACMAPI // mingw hax
+#define ACMAPI WINAPI
+#endif
 
 static void (CALLBACK *qAVIFileInit)(void);
 static HRESULT (CALLBACK *qAVIFileOpen)(PAVIFILE *, LPCTSTR, UINT, LPCLSID);
@@ -167,6 +173,30 @@ PAVISTREAM Capture_VideoStream (void)
 {
 	return m_codec_fourcc ? m_compressed_video_stream : m_uncompressed_video_stream;
 }
+
+#ifndef ACMDRIVERDETAILS_SUPPORTF_CODEC
+#define ACMDRIVERDETAILS_SUPPORTF_CODEC 0x00000001L
+#endif
+#ifndef ACM_FORMATTAGDETAILSF_INDEX
+#define ACM_FORMATTAGDETAILSF_INDEX         0x00000000L
+#endif
+#ifndef MPEGLAYER3_WFX_EXTRA_BYTES
+#define MPEGLAYER3_WFX_EXTRA_BYTES   12
+#define MPEGLAYER3_ID_UNKNOWN            0
+#define MPEGLAYER3_ID_MPEG               1
+#define MPEGLAYER3_ID_CONSTANTFRAMESIZE  2
+
+#define MPEGLAYER3_FLAG_PADDING_ISO      0x00000000
+#define MPEGLAYER3_FLAG_PADDING_ON       0x00000001
+#define MPEGLAYER3_FLAG_PADDING_OFF      0x00000002
+#endif
+#ifndef ACMERR_BASE
+#define ACMERR_BASE         (512)
+#define ACMERR_NOTPOSSIBLE  (ACMERR_BASE + 0)
+#define ACMERR_BUSY         (ACMERR_BASE + 1)
+#define ACMERR_UNPREPARED   (ACMERR_BASE + 2)
+#define ACMERR_CANCELED     (ACMERR_BASE + 3)
+#endif
 
 BOOL CALLBACK acmDriverEnumCallback (HACMDRIVERID hadid, DWORD_PTR dwInstance, DWORD fdwSupport)
 {
@@ -422,6 +452,15 @@ void Capture_WriteVideo (byte *pixel_buffer, int size)
 		return;
 	}
 }
+
+#ifndef ACM_STREAMSIZEF_SOURCE
+#define ACM_STREAMSIZEF_SOURCE          0x00000000L
+#endif
+#ifndef ACM_STREAMCONVERTF_BLOCKALIGN
+#define ACM_STREAMCONVERTF_BLOCKALIGN   0x00000004
+#define ACM_STREAMCONVERTF_START        0x00000010
+#define ACM_STREAMCONVERTF_END          0x00000020
+#endif
 
 void Capture_WriteAudio (int samples, byte *sample_buffer)
 {

@@ -1896,7 +1896,9 @@ DECLARE_INTERFACE_(IDirectSoundCaptureFXNoiseSuppress, IUnknown)
 struct IDirectSoundFullDuplex;
 #endif // __cplusplus
 
+#if DIRECTSOUND_VERSION < 0x0800
 typedef struct IDirectSoundFullDuplex *LPDIRECTSOUNDFULLDUPLEX;
+#endif
 
 DEFINE_GUID(IID_IDirectSoundFullDuplex, 0xedcb4c7a, 0xdaab, 0x4216, 0xa4, 0x2e, 0x6c, 0x50, 0x59, 0x6d, 0xdc, 0x1d);
 

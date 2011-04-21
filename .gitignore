@@ -20,6 +20,7 @@
 /libs/linux-x86/*.a
 /libs/linux-x86_64/*.a
 /libs/windows-x86/*.lib
+/libs/mingw-x86/*.a
 
 # Vi/Vim backup files
 *~

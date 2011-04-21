@@ -216,6 +216,19 @@ LINUX_C_FILES := \
 	snd_oss_legacy \
 	sys_linux
 
+WIN_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILES) \
+	localtime_win \
+	sys_win \
+	win_glimp \
+	tr_init \
+	win_wndproc \
+	cd_win \
+	snd_win \
+	in_win \
+	mumble \
+	movie_avi \
+	keymap
+
 GLX_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILES) $(LINUX_C_FILES) \
 	linux_glimp \
 	tr_init \
@@ -268,3 +281,4 @@ GLX_S_FILES := $(COMMON_S_FILES) $(GL_S_FILES)
 X11_S_FILES := $(COMMON_S_FILES) $(SW_S_FILES)
 SVGA_S_FILES := $(COMMON_S_FILES) $(SW_S_FILES)
 MAC_S_FILES :=
+WIN_S_FILES := $(COMMON_S_FILES) $(GL_S_FILES)

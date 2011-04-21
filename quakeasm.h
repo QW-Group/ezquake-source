@@ -30,7 +30,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // 1) remove/add the definition from VS Project file
 // 2) remove/add the extre definition of id386 here:
 #ifdef _WIN32
+#ifndef DISABLE_ASM
 #define id386
+#endif
 #endif
 // ---
 

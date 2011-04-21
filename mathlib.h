@@ -198,7 +198,7 @@ extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 #define sgn(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))
 
 #define Q_rint(x) ((x) > 0 ? (int) ((x) + 0.5) : (int) ((x) - 0.5))
-#define INT(x) (int(x))
+//#define INT(x) (int(x))
 
 #define MinI(a,b) min(a,b)
 #define MinD(a,b) min(a,b)

@@ -1269,7 +1269,7 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
     return _fullpath(absPath, relPath, maxLength);
 } 
 
-void Sys_GetFullExePath(char *path, unsigned int path_length, qbool long_name)
+void Sys_GetFullExePath(char *path, unsigned int path_length, int long_name)
 {
 	GetModuleFileName(GetModuleHandle(NULL), path, path_length);
 
