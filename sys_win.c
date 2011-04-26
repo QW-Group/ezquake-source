@@ -292,7 +292,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	qbool all;
 
 	int	r;
-	pcre	*preg;
+	pcre	*preg = NULL;
 	const char	*errbuf;
 
 	memset(list, 0, sizeof(list));
@@ -1431,7 +1431,7 @@ int Sys_Script (const char *path, const char *args)
 	strlcat(curdir, va("\\%s", fs_gamedir+2), MAX_OSPATH);
 
 	return CreateProcess (NULL, cmdline, NULL, NULL,
-	                      FALSE, 0/*DETACHED_PROCESS /*CREATE_NEW_CONSOLE*/ , NULL, curdir, &si, &pi);
+	                      FALSE, 0/*DETACHED_PROCESS CREATE_NEW_CONSOLE*/ , NULL, curdir, &si, &pi);
 }
 
 //=========================================================================

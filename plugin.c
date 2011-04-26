@@ -271,11 +271,11 @@ static qintptr_t VARGS VM_CallEx(vm_t *vm, qintptr_t instruction, ...)
 		return QVM_Exec(vm->hInst, instruction, arg0, arg1, arg2, arg3,
 			arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
 	*/
-
+	case VM_BYTECODE:
 	case VM_NONE:
+	default:
 		return 0;
 	}
-	return 0;
 }
 
 // following code is client-only code

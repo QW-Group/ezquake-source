@@ -35,7 +35,6 @@ static qbool	enabled = false;
 static qbool playLooping = false;
 static float	cdvolume;
 static byte 	remap[100];
-static byte		cdrom;
 static byte		playTrack;
 static byte		maxTrack;
 
@@ -44,18 +43,18 @@ UINT	wDeviceID;
 
 static void CDAudio_Eject(void)
 {
-	DWORD	dwReturn;
+	DWORD	dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, (DWORD)NULL);
 
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, (DWORD)NULL))
+    if (dwReturn)
 		Com_DPrintf ("MCI_SET_DOOR_OPEN failed (%i)\n", dwReturn);
 }
 
 
 static void CDAudio_CloseDoor(void)
 {
-	DWORD	dwReturn;
+	DWORD	dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, (DWORD)NULL);
 
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, (DWORD)NULL))
+    if (dwReturn)
 		Com_DPrintf ("MCI_SET_DOOR_CLOSED failed (%i)\n", dwReturn);
 }
 
@@ -186,7 +185,8 @@ void CDAudio_Stop(void)
 	if (!playing)
 		return;
 
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_STOP, 0, (DWORD)NULL))
+	dwReturn = mciSendCommand(wDeviceID, MCI_STOP, 0, (DWORD)NULL);
+    if (dwReturn)
 		Com_DPrintf ("MCI_STOP failed (%i)", dwReturn);
 
 	wasPlaying = false;
@@ -206,7 +206,7 @@ void CDAudio_Pause(void)
 		return;
 
 	mciGenericParms.dwCallback = (DWORD)mainwindow;
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_PAUSE, 0, (DWORD)(LPVOID) &mciGenericParms))
+    if ((dwReturn = mciSendCommand(wDeviceID, MCI_PAUSE, 0, (DWORD)(LPVOID) &mciGenericParms)))
 		Com_DPrintf ("MCI_PAUSE failed (%i)", dwReturn);
 
 	wasPlaying = playing;
@@ -401,7 +401,8 @@ int CDAudio_Init(void)
 		return -1;
 
 	mciOpenParms.lpstrDeviceType = "cdaudio";
-	if (dwReturn = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_SHAREABLE, (DWORD) (LPVOID) &mciOpenParms))
+	dwReturn = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_SHAREABLE, (DWORD) (LPVOID) &mciOpenParms);
+	if (dwReturn)
 	{
 		Com_Printf ("CDAudio_Init: MCI_OPEN failed (%i)\n", dwReturn);
 		return -1;
@@ -410,7 +411,8 @@ int CDAudio_Init(void)
 
     // Set the time format to track/minute/second/frame (TMSF).
     mciSetParms.dwTimeFormat = MCI_FORMAT_TMSF;
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID) &mciSetParms))
+    dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID) &mciSetParms);
+    if (dwReturn)
     {
 		Com_Printf ("MCI_SET_TIME_FORMAT failed (%i)\n", dwReturn);
         mciSendCommand(wDeviceID, MCI_CLOSE, 0, (DWORD)NULL);

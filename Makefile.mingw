@@ -39,6 +39,8 @@ LIB_PREFIX=$(OS)-$(ARCH)
 
 default_target: $(DEFAULT_TARGET)
 
+all: default_target
+
 ################################
 # Directories for object files #
 ################################

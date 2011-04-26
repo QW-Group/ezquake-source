@@ -26,7 +26,7 @@ $Id: ez_controls.c,v 1.78 2007/10/27 14:51:15 cokeman1982 Exp $
 #include "common_draw.h"
 #include "ez_controls.h"
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning( disable : 4189 )
 #endif
 
