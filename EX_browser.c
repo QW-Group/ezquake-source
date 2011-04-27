@@ -2636,6 +2636,43 @@ static int Servers_Compare_Ping_Func(const server_data *s1, const server_data *s
 	return diff;
 }
 
+static int Servers_Occupancy_Sort_Rating(server_occupancy oc) {
+	if (oc == SERVER_EMPTY) {
+		return 0;
+	}
+	else if (oc == SERVER_FULL) {
+		return 1;
+	}
+	else if (oc == SERVER_NONEMPTY) {
+		return 2;
+	}
+	else {
+		Com_DPrintf("Illegal server occupancy %d\n", oc);
+		return -1;
+	}
+}
+
+static int Servers_Compare_Natural(const server_data *s1, const server_data *s2) {
+	if (s1->occupancy != s2->occupancy) {
+		int o1 = Servers_Occupancy_Sort_Rating(s1->occupancy);
+		int o2 = Servers_Occupancy_Sort_Rating(s2->occupancy);
+		return o2 - o1;
+	}
+	else {
+		server_occupancy oc = s1->occupancy;
+		switch (oc) {
+		case SERVER_NONEMPTY:
+			return Servers_Compare_Ping_Func(s1, s2);
+		case SERVER_FULL:
+			return s2->playersn - s1->playersn;
+		case SERVER_EMPTY:
+			return Servers_Compare_Ping_Func(s1, s2);
+		default:
+			return 0;
+		}
+	}
+}
+
 int Servers_Compare_Func(const void * p_s1, const void * p_s2)
 {
     int reverse = 0;
@@ -2654,6 +2691,10 @@ int Servers_Compare_Func(const void * p_s1, const void * p_s2)
         return -1;
     if (!s1->passed_filters  &&  !s2->passed_filters)
         return s1 - s2;
+
+    if (sort_string[0] == '\0') {
+		return Servers_Compare_Natural(s1, s2);
+    }
 
     while (true)
     {
