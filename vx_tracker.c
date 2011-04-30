@@ -61,8 +61,7 @@ cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)"};
 cvar_t		amf_tracker_string_teammate = {"r_tracker_string_teammate", "teammate"};
 cvar_t		amf_tracker_string_enemy    = {"r_tracker_string_enemy",    "enemy"};
 cvar_t		amf_tracker_name_width      = {"r_tracker_name_width",      "0"};
-cvar_t		amf_tracker_name_skip_prefix = {"r_tracker_name_skip_prefix", "0"};
-cvar_t		amf_tracker_name_prefixes = {"r_tracker_name_prefixes", ""};
+cvar_t		amf_tracker_name_remove_prefixes = {"r_tracker_name_remove_prefixes", ""};
 cvar_t		amf_tracker_own_frag_prefix = {"r_tracker_own_frag_prefix", "You fragged "};
 cvar_t		amf_tracker_positive_enemy_suicide = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
 
@@ -114,8 +113,7 @@ void InitTracker(void)
 	Cvar_Register (&amf_tracker_string_enemy);
 
 	Cvar_Register (&amf_tracker_name_width);
-	Cvar_Register (&amf_tracker_name_skip_prefix);
-	Cvar_Register (&amf_tracker_name_prefixes);
+	Cvar_Register (&amf_tracker_name_remove_prefixes);
 	Cvar_Register (&amf_tracker_own_frag_prefix);
 	Cvar_Register (&amf_tracker_positive_enemy_suicide);
 }
@@ -205,50 +203,32 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	active_track += 1;
 }
 
-static char *VX_SkipCommonPrefix(int player)
+static char *VX_RemovePrefix(int player)
 {
 	size_t skip;
 	char *prefixes, *prefix, *name;
 
+	if (amf_tracker_name_remove_prefixes.string[0] == 0)
+		return cl.players[player].name;
+
 	skip = 0;
-	prefixes = Q_normalizetext(Q_strdup(amf_tracker_name_prefixes.string));
+	prefixes = Q_normalizetext(Q_strdup(amf_tracker_name_remove_prefixes.string));
 	prefix = strtok(prefixes, " ");
 	name = Q_normalizetext(Q_strdup(cl.players[player].name));
 
-	if (prefix == NULL)  {
-		// no prefixes defined by the user, search all players and remove the commont prefix
-		size_t i;
-		int j;
-		unsigned players_left;
-
-		players_left = 0xFFFF;
-		players_left &= ~(1 << player);
-
-		for (i = 0; i < strlen(cl.players[player].name); i++) {
-			for (j = 0; j < MAX_CLIENTS; j++) {
-				if ((players_left & (1 << j)) == 0)
-					continue;
-				if (cl.players[j].spectator)
-					players_left &= ~(1 << j);
-				if (strlen(cl.players[j].name) < i + 1 || cl.players[j].name[i] != cl.players[player].name[i])
-					players_left &= ~(1 << j);
-			}
-			if (players_left == 0)
+	while (prefix != NULL) {
+		if (strlen(prefix) > skip && strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
+			skip = strlen(prefix);
+			// remove spaces from the new start of the name
+			while (name[skip] == ' ')
+				skip++;
+			// if it would skip the whole name, just use the whole name
+			if (name[skip] == 0) {
+				skip = 0;
 				break;
-		}
-
-		skip = i;
-
-		if (skip == strlen(cl.players[player].name))
-			skip = 0;
-	} else {
-		while (prefix != NULL) {
-			if (strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
-				if (strlen(prefix) > skip)
-					skip = strlen(prefix);
 			}
-			prefix = strtok(NULL, " ");
 		}
+		prefix = strtok(NULL, " ");
 	}
 
 	Q_free(prefixes);
@@ -266,8 +246,7 @@ static char *VX_Name(int player)
 
 	length = bound(amf_tracker_name_width.integer, 0, MAX_SCOREBOARDNAME - 1);
 
-	strlcpy (string[++idx % 2], (amf_tracker_name_skip_prefix.integer ?
-		VX_SkipCommonPrefix(player) : cl.players[player].name), MAX_SCOREBOARDNAME);
+	strlcpy (string[++idx % 2], VX_RemovePrefix(player), MAX_SCOREBOARDNAME);
 
 	if (length > 0) {
 		// align by adding spaces
