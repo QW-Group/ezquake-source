@@ -1845,7 +1845,7 @@ void Sbar_Draw(void) {
 			Sbar_DrawNormal();
 		}
 	}
-	if (sb_lines > 0 && scr_newHud.value == 1
+	if (sb_lines > 0 && scr_newHud.value == 1 && cl.deathmatch == 0
 		&& (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0)) {
 			Sbar_SoloScoreboard();
 	}
