@@ -1312,8 +1312,8 @@ void CL_StartFileUpload (void)
 		|| ((i = strlen(name)) < 4 ? 0 : !strncasecmp(name+i-4,".log",4)) // no logs
 #ifdef _WIN32
 		// no leading X:
-		|| ( name[1] == ':' && (*name >= 'a' && *name <= 'z' ||
-			*name >= 'A' && *name <= 'Z') )
+		|| ( name[1] == ':' && ((*name >= 'a' && *name <= 'z') ||
+			(*name >= 'A' && *name <= 'Z')) )
 #endif //_WIN32
 	) 
 	{

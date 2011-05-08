@@ -301,7 +301,7 @@ _select:
 		}
 
 		inaddrlen = sizeof(struct sockaddr_in);
-		ret = recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr_from, &inaddrlen);
+		ret = recvfrom(sock, (char *) buf, sizeof(buf), 0, (struct sockaddr *)&addr_from, &inaddrlen);
 
 		if (ret == -1) // failure, try again
 			continue;
@@ -453,7 +453,7 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue, FILE *f)
 				struct sockaddr_storage addr_from;
 				socklen_t addr_from_len = sizeof(struct sockaddr_in);
 
-				ret = recvfrom(queue->data[i].sock, buf, PROXY_REPLY_BUFFER_SIZE, 0, (struct sockaddr *) &addr_from, &addr_from_len);
+				ret = recvfrom(queue->data[i].sock, (char *) buf, PROXY_REPLY_BUFFER_SIZE, 0, (struct sockaddr *) &addr_from, &addr_from_len);
 				if (ret == -1) {
 					Com_DPrintf("SB_PingTree_RecvQuery recvfrom failed\n");
 					continue;

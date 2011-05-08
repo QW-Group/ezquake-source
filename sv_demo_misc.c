@@ -367,7 +367,7 @@ void SV_DemoList (qbool use_regex)
 		{
 			if (use_regex)
 			{
-				if (!(preg = pcre_compile((char *)Q_normalizetext((unsigned char*)Cmd_Argv(j)),
+				if (!(preg = pcre_compile(Q_normalizetext(Cmd_Argv(j)),
 											PCRE_CASELESS, &errbuf, &r, NULL)))
 				{
 					Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",

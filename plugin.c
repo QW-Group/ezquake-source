@@ -87,6 +87,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef _MSC_VER
 #define VARGS __cdecl
 #endif
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Waddress"
+#endif
 #ifndef VARGS
 #define VARGS
 #endif
@@ -111,7 +114,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // 4550: if (Draw_Image) { ... }
 // 4057: ioctlsocket u_long* vs int*
+#ifdef _MSC_VER
 #pragma warning( disable : 4550 4057 )
+#endif
 
 //custom plugin builtins.
 typedef qintptr_t (EXPORT_FN *Plug_Builtin_t)(void *offset, quintptr_t mask, const qintptr_t *arg);
@@ -945,7 +950,7 @@ static qintptr_t EXPORT_FN Plug_SystemCalls(qintptr_t arg, ...)
 plugin_t *Plug_Load(char *file)
 {
 	plugin_t *newplug;
-	int argarray;
+	qintptr_t argarray;
 
 	for (newplug = plugs; newplug; newplug = newplug->next)
 	{
@@ -969,7 +974,7 @@ plugin_t *Plug_Load(char *file)
 		plugs = newplug;
 
 		argarray = 4;
-		if (!VM_CallEx(newplug->vm, 0, Plug_FindBuiltin("Plug_GetEngineFunction"-4, ~ (unsigned) 0, &argarray)))
+		if (!VM_CallEx(newplug->vm, 0, Plug_FindBuiltin(((void *) "Plug_GetEngineFunction")-4, ~ (unsigned) 0, &argarray)))
 		{
 			Plug_Close(newplug);
 			return NULL;
@@ -1422,7 +1427,7 @@ qintptr_t VARGS Plug_Net_TCPListen(void *offset, quintptr_t mask, const qintptr_
 	int handle;
 	int sock;
 	struct sockaddr_storage address;
-	int _true = 1;
+	u_long _true = 1;
 
 	char *localip = VM_POINTERQ(arg[0]);
 	unsigned short localport = VM_LONG(arg[1]);
@@ -1482,7 +1487,7 @@ qintptr_t VARGS Plug_Net_Accept(void *offset, quintptr_t mask, const qintptr_t *
 	struct sockaddr_in address;
 	int addrlen;
 	int sock;
-	int _true = 1;
+	u_long _true = 1;
 
 	if (handle < 0 || handle >= pluginstreamarraylen || pluginstreamarray[handle].plugin != currentplug || pluginstreamarray[handle].type != STREAM_SOCKET)
 		return -2;
@@ -1523,7 +1528,7 @@ qintptr_t VARGS Plug_Net_TCPConnect(void *offset, quintptr_t mask, const qintptr
 	int handle;
 	struct sockaddr_qstorage to, from;
 	int sock;
-	int _true = 1;
+	u_long _true = 1;
 
 	netadr_t a;
 

@@ -2118,8 +2118,8 @@ static void draw_velocity_3d(void)
   extern cvar_t show_velocity_3d_offset_down;
   extern cvar_t show_velocity_3d;
 
-  const vec3_t *origin = &r_refdef.vieworg;
-  const vec3_t *angles = &r_refdef.viewangles;
+  vec3_t *origin = &r_refdef.vieworg;
+  vec3_t *angles = &r_refdef.viewangles;
 
   const float vx = cl.simvel[0];
   const float vy = cl.simvel[1];

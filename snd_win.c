@@ -318,7 +318,7 @@ static sndinitstat SNDDMA_InitDirect (void)
 	// initialize the buffer
 	reps = 0;
 
-	while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, &lpData, &dwSize, NULL, NULL, 0)) != DS_OK) {
+	while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, (void **) &lpData, &dwSize, NULL, NULL, 0)) != DS_OK) {
 		if (hresult != DSERR_BUFFERLOST) {
 			Com_Printf_State (PRINT_FAIL, "SNDDMA_InitDirect: DS::Lock Sound Buffer Failed\n");
 			FreeSound ();
@@ -670,7 +670,7 @@ void DSOUND_Capture_Start(void *ctx)
 	IDirectSoundCaptureBuffer_Start(c->DSCaptureBuffer, DSBPLAY_LOOPING);
 
 	c->lastreadpos = 0;
-	IDirectSoundCaptureBuffer_GetCurrentPosition(c->DSCaptureBuffer, &capturePos, &c->lastreadpos);
+	IDirectSoundCaptureBuffer_GetCurrentPosition(c->DSCaptureBuffer, &capturePos, (LPDWORD) &c->lastreadpos);
 }
 
 void DSOUND_Capture_Stop(void *ctx)

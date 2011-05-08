@@ -263,7 +263,7 @@ static void CL_LerpMove (qbool angles_lerp)
     frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
     frac = bound (0, frac, 1);
 
-	if (cl.spectator && cl.viewplayernum != cl.playernum || angles_lerp)
+	if ((cl.spectator && cl.viewplayernum != cl.playernum) || angles_lerp)
 	{
 		// we track someone, so lerp angles
 		AngleInterpolate(lerp_angles[from], frac, lerp_angles[to], cl.simangles);

@@ -332,7 +332,7 @@ qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 // TCPCONNECT -->
 	if (netsrc == NS_CLIENT) {
 		if (cls.sockettcp != INVALID_SOCKET) { //client receiving only via tcp
-			ret = recv(cls.sockettcp, cls.tcpinbuffer+cls.tcpinlen, sizeof(cls.tcpinbuffer)-cls.tcpinlen, 0);
+			ret = recv(cls.sockettcp, (char *) cls.tcpinbuffer+cls.tcpinlen, sizeof(cls.tcpinbuffer)-cls.tcpinlen, 0);
 			if (ret == -1) {
 				err = qerrno;
 	

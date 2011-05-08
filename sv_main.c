@@ -1663,7 +1663,7 @@ static void SVC_RemoteCommand (char *remote_command)
 			continue;
 
 		strlcpy(plain, cl->name, sizeof(plain));
-		Q_normalizetext((unsigned char*)plain);
+		Q_normalizetext(plain);
 
 		// we found what we need
 		break;
@@ -3937,13 +3937,13 @@ Q_normalizetext
 returns readable extended quake names
 ==================
 */
-unsigned char *Q_normalizetext (unsigned char *str)
+char *Q_normalizetext (char *str)
 {
 	extern char chartbl2[];
-	unsigned char	*i;
+	char	*i;
 
 	for (i = str; *i; i++)
-		*i = chartbl2[*i];
+		*i = chartbl2[(unsigned char) *i];
 	return str;
 }
 

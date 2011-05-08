@@ -1556,10 +1556,10 @@ void GLimp_Init( void )
 	GLW_StartOpenGL();
 
 	// get our config strings
-	strlcpy( glConfig.vendor_string, qglGetString (GL_VENDOR), sizeof( glConfig.vendor_string ) );
-	strlcpy( glConfig.renderer_string, qglGetString (GL_RENDERER), sizeof( glConfig.renderer_string ) );
-	strlcpy( glConfig.version_string, qglGetString (GL_VERSION), sizeof( glConfig.version_string ) );
-	strlcpy( glConfig.extensions_string, qglGetString (GL_EXTENSIONS), sizeof( glConfig.extensions_string ) );
+	strlcpy( glConfig.vendor_string, (const char *) qglGetString (GL_VENDOR), sizeof( glConfig.vendor_string ) );
+	strlcpy( glConfig.renderer_string, (const char *) qglGetString (GL_RENDERER), sizeof( glConfig.renderer_string ) );
+	strlcpy( glConfig.version_string, (const char *) qglGetString (GL_VERSION), sizeof( glConfig.version_string ) );
+	strlcpy( glConfig.extensions_string, (const char *) qglGetString (GL_EXTENSIONS), sizeof( glConfig.extensions_string ) );
 
 	//
 	// chipset specific configuration

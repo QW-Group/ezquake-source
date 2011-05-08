@@ -320,7 +320,7 @@ void Update_Source(source_data *s)
 
 			// get answer
 			if (ret > 0)
-				ret = recvfrom (newsocket, answer, 10000, 0, NULL, NULL);
+				ret = recvfrom (newsocket, (char *) answer, 10000, 0, NULL, NULL);
 
 			if (ret > 0  &&  ret < 10000)
 			{
@@ -499,7 +499,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
             // get answer
             i = sizeof(hostaddr);
             if (ret > 0)
-                ret = recvfrom (newsocket, answer, 10000, 0,
+                ret = recvfrom (newsocket, (char *) answer, 10000, 0,
 				(struct sockaddr *)&hostaddr, (socklen_t *)&i);
 
             if (ret > 0  &&  ret < 10000)

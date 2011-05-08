@@ -219,15 +219,6 @@ static DIOBJECTDATAFORMAT rgodf[] = {
 
 #define NUM_OBJECTS (sizeof(rgodf) / sizeof(rgodf[0]))
 
-static DIDATAFORMAT	df = {
-	sizeof(DIDATAFORMAT),       // this structure
-	sizeof(DIOBJECTDATAFORMAT), // size of object data format
-	DIDF_RELAXIS,               // absolute axis coordinates
-	sizeof(MYDATA),             // device data size
-	NUM_OBJECTS,                // number of objects
-	rgodf,                      // and here they are
-};
-
 #else
 #define dinput false
 #endif

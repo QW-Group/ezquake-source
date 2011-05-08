@@ -658,7 +658,7 @@ void S_ClearBuffer (void)
 
 		reps = 0;
 
-		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, &pData, &dwSize, NULL, NULL, 0)) != DS_OK) {
+		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, (void **) &pData, &dwSize, NULL, NULL, 0)) != DS_OK) {
 			if (hresult != DSERR_BUFFERLOST) {
 				Com_Printf ("S_ClearBuffer: Lock failed with error '%s'\n", DSoundError(hresult));
 				S_Shutdown ();
@@ -1280,7 +1280,7 @@ void S_Voip_Parse(void)
 		{
 			bytes--;
 			len = *start++;
-			qspeex_bits_read_from(&s_speex.decbits[sender], start, len);
+			qspeex_bits_read_from(&s_speex.decbits[sender], (char *) start, len);
 			bytes -= len;
 			start += len;
 			qspeex_decode_int(s_speex.decoder[sender], &s_speex.decbits[sender], decodebuf + decodesamps);
@@ -1420,7 +1420,7 @@ void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf)
 
 		qspeex_bits_reset(&s_speex.encbits);
 		qspeex_encode_int(s_speex.encoder, start, &s_speex.encbits);
-		outbuf[outpos] = qspeex_bits_write(&s_speex.encbits, outbuf+outpos+1, sizeof(outbuf) - (outpos+1));
+		outbuf[outpos] = qspeex_bits_write(&s_speex.encbits, (char *) outbuf+outpos+1, sizeof(outbuf) - (outpos+1));
 		outpos += 1+outbuf[outpos];
 		encpos += s_speex.framesize*2;
 	}

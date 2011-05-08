@@ -322,11 +322,11 @@ void IN_Keymap_Load_f (void)
 	COM_DefaultExtension (filename, ".kmap");
 
 	// first check in subdirectory "keymaps":
-	data = FS_LoadTempFile (va("keymaps/%s",filename), NULL);
+	data = (char *) FS_LoadTempFile (va("keymaps/%s",filename), NULL);
 
 	// if not found check in main directory:
 	if ( data == NULL )
-		data = FS_LoadTempFile (filename, NULL);
+		data = (char *) FS_LoadTempFile (filename, (int *) NULL);
 	if (data != NULL) {
 		// Initialize the arrays with the default values:
 		IN_Keymap_Init_f();

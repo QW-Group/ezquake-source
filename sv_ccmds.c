@@ -532,8 +532,8 @@ void SV_ListFiles_f (void)
 	        ||	( (i = strlen(dirname)) < 3 ? 0 : !strncmp(dirname + i - 3, "/..", 4) )
 	        ||	!strncmp(dirname, "..", 3)
 #ifdef _WIN32
-	        ||	( dirname[1] == ':' && (*dirname >= 'a' && *dirname <= 'z' ||
-	                                   *dirname >= 'A' && *dirname <= 'Z')
+	        ||	( dirname[1] == ':' && ((*dirname >= 'a' && *dirname <= 'z') ||
+	                                   (*dirname >= 'A' && *dirname <= 'Z'))
 	           )
 #endif //_WIN32
 	   )
@@ -597,8 +597,8 @@ void SV_RemoveDirectory_f (void)
 
 	if (	!strncmp(dirname, "../", 3) || strstr(dirname, "/../") || *dirname == '/'
 #ifdef _WIN32
-	        ||	( dirname[1] == ':' && (*dirname >= 'a' && *dirname <= 'z' ||
-	                                   *dirname >= 'A' && *dirname <= 'Z')
+	        ||	( dirname[1] == ':' && ((*dirname >= 'a' && *dirname <= 'z') ||
+	                                   (*dirname >= 'A' && *dirname <= 'Z'))
 	           )
 #endif //_WIN32
 	   )
@@ -638,8 +638,8 @@ void SV_RemoveFile_f (void)
 	        ||	*dirname == '/'             || strchr(filename, '/')
 	        ||	( (i = strlen(filename)) < 3 ? 0 : !strncmp(filename + i - 3, "/..", 4) )
 #ifdef _WIN32
-	        ||	( dirname[1] == ':' && (*dirname >= 'a' && *dirname <= 'z' ||
-	                                   *dirname >= 'A' && *dirname <= 'Z')
+	        ||	( dirname[1] == ':' && ((*dirname >= 'a' && *dirname <= 'z') ||
+	                                   (*dirname >= 'A' && *dirname <= 'Z'))
 	           )
 #endif //_WIN32
 	   )

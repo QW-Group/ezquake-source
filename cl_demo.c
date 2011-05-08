@@ -2907,7 +2907,7 @@ static void PlayQWZDemo (void)
 			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name), sizeof(qwz_name));
 	}
 
-	if (playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS))
+	if ((playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS)))
 	{
 		// either we got full system path
 		strlcpy(qwz_name, name, sizeof(qwz_name));

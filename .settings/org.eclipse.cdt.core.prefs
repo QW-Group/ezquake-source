@@ -1,4 +1,4 @@
-#Tue Apr 26 11:47:10 CEST 2011
+#Sun May 08 00:38:58 CEST 2011
 eclipse.preferences.version=1
 org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=16
 org.eclipse.cdt.core.formatter.alignment_for_base_clause_in_type_declaration=80
@@ -144,9 +144,9 @@ org.eclipse.cdt.core.formatter.keep_else_statement_on_same_line=false
 org.eclipse.cdt.core.formatter.keep_empty_array_initializer_on_one_line=false
 org.eclipse.cdt.core.formatter.keep_imple_if_on_one_line=false
 org.eclipse.cdt.core.formatter.keep_then_statement_on_same_line=false
-org.eclipse.cdt.core.formatter.lineSplit=100
+org.eclipse.cdt.core.formatter.lineSplit=80
 org.eclipse.cdt.core.formatter.number_of_empty_lines_to_preserve=1
 org.eclipse.cdt.core.formatter.put_empty_statement_on_new_line=true
 org.eclipse.cdt.core.formatter.tabulation.char=tab
 org.eclipse.cdt.core.formatter.tabulation.size=4
-org.eclipse.cdt.core.formatter.use_tabs_only_for_leading_indentations=true
+org.eclipse.cdt.core.formatter.use_tabs_only_for_leading_indentations=false

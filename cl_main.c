@@ -316,7 +316,7 @@ qbool CL_CheckIfQWProtocolHandler()
 	}
 
 	// Get the size we need to read.
-	if (RegQueryValueEx(hk, NULL, 0, &type, reg_path, &len) == ERROR_SUCCESS)
+	if (RegQueryValueEx(hk, NULL, 0, &type, (BYTE *) reg_path, &len) == ERROR_SUCCESS)
 	{
 		char expanded_reg_path[MAX_PATH];
 
@@ -398,7 +398,7 @@ void CL_RegisterQWURLProtocol_f(void)
 		}
 
 		// Set the key value.
-		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, open_cmd,  strlen(open_cmd) * sizeof(char)))
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) open_cmd,  strlen(open_cmd) * sizeof(char)))
 		{
 			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
 			RegCloseKey(keyhandle);
@@ -424,7 +424,7 @@ void CL_RegisterQWURLProtocol_f(void)
 		}
 
 		// Set the key value.
-		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, default_icon, strlen(default_icon) * sizeof(char)))
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) default_icon, strlen(default_icon) * sizeof(char)))
 		{
 			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"QW_URL_OPEN_CMD_REGKEY"\\@\n");
 			RegCloseKey(keyhandle);
@@ -449,14 +449,14 @@ void CL_RegisterQWURLProtocol_f(void)
 		}
 
 		// Set the protocol name.
-		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, protocol_name, strlen(protocol_name) * sizeof(char)))
+		if (RegSetValueEx(keyhandle, NULL, 0, REG_SZ, (BYTE *) protocol_name, strlen(protocol_name) * sizeof(char)))
 		{
 			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\@\n");
 			RegCloseKey(keyhandle);
 			return;
 		}
 
-		if (RegSetValueEx(keyhandle, "URL Protocol", 0, REG_SZ, "", sizeof(char)))
+		if (RegSetValueEx(keyhandle, "URL Protocol", 0, REG_SZ, (BYTE *) "", sizeof(char)))
 		{
 			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\qw\\URL Protocol\n");
 			RegCloseKey(keyhandle);

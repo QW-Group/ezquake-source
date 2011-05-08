@@ -769,7 +769,7 @@ qbool GameStarted(void);
 void SV_Script_f (void);
 int SV_GenerateUserID (void);
 
-unsigned char *Q_normalizetext (unsigned char *name); //bliP: red to white text
+char *Q_normalizetext (char *name); //bliP: red to white text
 unsigned char *Q_redtext (unsigned char *str); //bliP: white to red text
 unsigned char *Q_yelltext (unsigned char *str); //VVD: white to red text and yellow numbers
 

@@ -454,7 +454,7 @@ int oldPingHost(char *host_to_ping, int count)
             continue;
 
 		/* Send ping request */
-        bwrote = sendto(sock,icmp_packet.data,datasize,0,
+        bwrote = sendto(sock, (char *) icmp_packet.data,datasize,0,
 				(struct sockaddr*)&dest, sizeof(dest));
         if (bwrote <= 0 || bwrote < datasize)
             continue;
@@ -468,7 +468,7 @@ int oldPingHost(char *host_to_ping, int count)
         if (ret <= 0)
             continue;
 
-        bread = recvfrom(sock, ip_recv_packet.data, MAX_PACKET, 0, 
+        bread = recvfrom(sock, (char *) ip_recv_packet.data, MAX_PACKET, 0,
 				(struct sockaddr*)&from, (socklen_t *)&fromlen);
         if (bread <= 0)
             continue;
@@ -569,7 +569,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
                 dest.sin_family = AF_INET;
                 dest_ip = inet_ntoa(dest.sin_addr);
 
-                bwrote = sendto(sock, icmp_packet.data, datasize, 0, 
+                bwrote = sendto(sock, (char *) icmp_packet.data, datasize, 0,
 								(struct sockaddr*)&dest, sizeof(dest));
 
                 if (bwrote <= 0 || bwrote < datasize)
@@ -599,7 +599,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
                 break;
 
             // there's an answer - get it!
-            bread = recvfrom(sock, ip_packet.data, sizeof(ip_packet.data), 0, 
+            bread = recvfrom(sock, (char *) ip_packet.data, sizeof(ip_packet.data), 0,
 							(struct sockaddr *)&from, (socklen_t *)&fromlen);
            
 			if (bread <= 0)
@@ -902,7 +902,7 @@ void SB_Test_GetPackets(void)
         ICMP_header_t *icmp_answer;
         int seq;
 
-        bread = recvfrom(sock, ip_packet.data, sizeof(ip_packet.data), 0, 
+        bread = recvfrom(sock, (char *) ip_packet.data, sizeof(ip_packet.data), 0,
 						(struct sockaddr*)&from, (socklen_t *) &fromlen);
         if (bread <= 0)
             break;
@@ -973,7 +973,7 @@ void SB_Test_SendPacket(void)
     icmp_packet.hdr.i_seq = sb_test_outgoing_sequence++;
     icmp_packet.hdr.i_cksum = ICMP_Checksum(&icmp_packet, datasize);
 
-    bwrote = sendto(sock,icmp_packet.data,datasize,0,(struct sockaddr*)&dest,
+    bwrote = sendto(sock, (char *) icmp_packet.data,datasize,0,(struct sockaddr*)&dest,
                     sizeof(dest));
 }
 
