@@ -1157,6 +1157,28 @@ void UpdatingSources_Draw(void)
     }
 }
 
+void Serverinfo_Help_Draw(int x, int y, int wPixels)
+{
+	int wLetters = wPixels / 8;
+
+	if (vid.conheight < 384 || vid.conwidth < 512) {
+		return;
+	}
+
+	// make it wider
+	x -= LETTERWIDTH * 4;
+	wLetters += 8;
+
+	Draw_TextBox (x, y, wLetters, 3);
+	x += LETTERWIDTH * 2;
+	y += LETTERWIDTH;
+	UI_Print(x, y,  "\xDBj\xDD join \xDBo\xDD observe \xDBq\xDD QuakeTV obs.", false);
+	y += LETTERWIDTH;
+	UI_Print(x, y, "\xDB" "c\xDD copy to clipboard \xDBv\xDD say in chat", false);
+	y += LETTERWIDTH;
+	UI_Print(x, y, "\xDB" "ctrl+c\xDD copy addr. \xDB" "ctrl+v\xDD say team", false);
+}
+
 void Serverinfo_Draw ()
 {
     extern int server_during_update;
@@ -1224,6 +1246,8 @@ void Serverinfo_Draw ()
             ;
     }
 	Sys_SemPost(&serverinfo_semaphore);
+
+	Serverinfo_Help_Draw(x - 16, y + h + LETTERWIDTH, w);
 
     if (testing_connection)
         SB_Test_Frame();
