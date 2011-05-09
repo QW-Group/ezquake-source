@@ -851,7 +851,7 @@ void SCR_DrawDemoClock (void) {
 	int x, y;
 	char str[80];
 
-	if (!cls.demoplayback || !scr_democlock.value || scr_newHud.value == 1) // newHud has its own democlock
+	if (!cls.demoplayback || cls.mvdplayback == 2 || !scr_democlock.value || scr_newHud.value == 1) // newHud has its own democlock
 		return;
 
 	if (scr_democlock.value == 2)
