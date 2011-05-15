@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#include <sys/types.h>
 //#include <sys/timeb.h>
 #include "qwsvdef.h"
-#include <winsock.h>
+#include <winsock2.h>
 #include <conio.h>
 #include <limits.h>
 #include <direct.h>		// _mkdir

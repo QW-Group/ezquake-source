@@ -12,9 +12,10 @@
 /make/msvs2008/*.suo
 /make/msvs2008/*.user
 
-# ?
+# MinGW & Eclipse build dir
 /release-*/
 /debug-*/
+/Win32 - GL - */
 
 # Downloaded library files
 /libs/linux-x86/*.a
