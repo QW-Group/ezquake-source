@@ -974,7 +974,7 @@ plugin_t *Plug_Load(char *file)
 		plugs = newplug;
 
 		argarray = 4;
-		if (!VM_CallEx(newplug->vm, 0, Plug_FindBuiltin(((void *) "Plug_GetEngineFunction")-4, ~ (unsigned) 0, &argarray)))
+		if (!VM_CallEx(newplug->vm, 0, Plug_FindBuiltin((void *) ("Plug_GetEngineFunction"-4), ~ (unsigned) 0, &argarray)))
 		{
 			Plug_Close(newplug);
 			return NULL;
