@@ -269,15 +269,10 @@ void IN_FireDown(void)
 		return;
 	}
 
-	Com_DPrintf("argc=%i argv[0..2] = { %s %s %s }\n", Cmd_Argc(), Cmd_Argv(0), Cmd_Argv(1), Cmd_Argv(2));
-
 	if (IN_IsLastArgKeyCode()) {
 		key_code = Q_atoi(Cmd_Argv(last_arg_idx));
 		last_arg_idx--;
 	}
-
-	Com_DPrintf("key_code=%i\n", key_code);
-	Com_DPrintf("last_arg_idx=%i\n", last_arg_idx);
 
 	for (i = 1; i <= last_arg_idx && i <= MAXWEAPONS; i++) {
 		int desired_impulse = Q_atoi(Cmd_Argv(i));
@@ -289,7 +284,6 @@ void IN_FireDown(void)
 	}
 
 	in_impulse = IN_BestWeapon();
-	Com_DPrintf("bestWeapon=%i\n", in_impulse);
 
 	KeyDown_common(&in_attack, key_code);
 }
