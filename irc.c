@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libircclient.h"
 #include "libirc_rfcnumeric.h"
 #include "version.h"
+#include "textencoding.h"
 
 // because of MAX_MACRO_STRING
 #include "teamplay.h"
@@ -56,6 +57,128 @@ static irc_session_t * irc_singlesession;
 static irc_ctx_t irc_ctx;
 static fd_set irc_fd_in, irc_fd_out;
 static int irc_maxfd = 0;
+
+#define MAXPRINTMSG     4096 // should be moved from common.c to common.h
+
+int utf8ToWc(char* str, wchar* c) {
+        int i, n;
+		unsigned char c1, c2;
+        unsigned char c0 = (unsigned char)str[0];
+        *c = '_';
+        if (c0 & 0x80) {                                                                 // 1xxx xxxx
+                if(c0 & 0x40) {                                                         // 11xx xxxx
+                        if(c0 & 0x20) {                                                 // 111x xxxx
+                                if(c0 & 0x10) {                                         // 1111 xxxx
+                                        n = 4;
+                                        if(c0 & 0x08) {                                 // 1111 1xxx
+                                                n = 5;
+                                                if(c0 & 0x04) {                         // 1111 11xx
+                                                        if(c0 & 0x02) {                 // 1111 111x
+                                                                return 1;
+                                                        }
+                                                        n = 6;
+                                                }
+                                        }
+                                        i = 1;
+                                        while(i < n && (str[i] & 0x80) == 0x80)
+                                                ++i;
+                                        return i;
+                                } else {                // 1110xxxx
+                                        c1 = (unsigned char)str[1];
+                                        if((c1 & (0x80 | 0x40)) != 0x80)
+                                                return 1;
+
+                                        c2 = (unsigned char)str[2];
+                                        if((c2 & (0x80 | 0x40)) != 0x80)
+                                                return 2;
+
+                                        *c = (((wchar)c0 & 0x0f) << 12) |
+                                                (((wchar)c1 & 0x3f) << 6) |
+                                                ((wchar)c2 & 0x3f);
+
+                                        // Ugly utf-16 surrogate catch (D800-DFFF)
+                                        if ((unsigned short)(c - 0xD800) < 0x800) {
+                                                *c = '_';
+                                        }
+
+                                        return 3;
+                                }
+                        } else {                                // 110xxxxx
+                                c1 = (unsigned char)str[1];
+                                if((c1 & (0x80 | 0x40)) != 0x80)
+                                        return 1;
+
+                                *c = (((wchar)c0 & 0x1f) << 6) |
+                                        ((wchar)c1 & 0x3f);
+                                return 2;
+                        }
+                } else {                                        // 10xxxxxx
+                        return 1;
+                }
+        } else {                                                // 0xxxxxxx
+                *c = c0;
+                return 1;
+        }
+}
+
+int wcToUtf8(wchar c, char *dst) {
+        if(c >= 0x0800) {
+                dst[0] = (char)(0x80 | 0x40 | 0x20  | (c >> 12));
+                dst[1] = (char)(0x80 | ((c >> 6) & 0x3f));
+                dst[2] = (char)(0x80 | (c & 0x3f));
+				return 3;
+        } else if(c >= 0x0080) {
+                dst[0] = (char)(0x80 | 0x40 | (c >> 6));
+                dst[1] = (char)(0x80 | (c & 0x3f));
+				return 2;
+        } else {
+                dst[0] = (char)c;
+				return 1;
+        }
+}
+
+char* encode_utf8(wchar *wmsg)
+{
+	static char buffer[MAXPRINTMSG];
+	int src, dst;
+	for (src = dst = 0; wmsg[src]; src++) {
+		dst += wcToUtf8(wmsg[src], &(buffer[dst]));
+	}
+	buffer[dst] = 0;
+	return buffer;
+}
+
+void IRC_Printf(char *fmt, ...)
+{
+	wchar *wmsg;
+	char utf8_ok = 1;
+	size_t dst, src, len;
+
+	va_list argptr;
+	char msg[MAXPRINTMSG];
+
+	va_start (argptr, fmt);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	va_end (argptr);
+	
+	len = strlen(msg);
+	wmsg = (wchar*) Q_malloc((len+1) * sizeof(wchar));
+	for (src = dst = 0; src < len; dst++) {
+		int numc = utf8ToWc(&(msg[src]), &(wmsg[dst]));
+		if (wmsg[dst] == '_' && msg[src] != '_') utf8_ok = 0;
+		src += numc;
+	}
+	wmsg[dst] = 0;
+
+#ifdef _WIN32 // todo: fixme. don't know to convert from single-byte system codepage. sorry, *nix: you will read only utf-8
+	if (!utf8_ok) {
+		// fix some cp1251/etc bastard
+		MultiByteToWideChar(CP_ACP, 0, msg, len, wmsg, len);
+	}
+#endif
+	Con_PrintW(wmsg);
+	Q_free(wmsg);
+}
 
 void IRC_Chanlist_Add(irc_chanlist *list, const char* chan)
 {
@@ -168,7 +291,7 @@ char* IRC_mask_to_nick(const char* mask)
 
 void IRC_event_ctcp_req(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	Com_Printf("IRC: CTCP Request %s from %s\n", params[0], IRC_mask_to_nick(origin));
+	IRC_Printf("IRC: CTCP Request %s from %s\n", params[0], IRC_mask_to_nick(origin));
 
 	if (strcmp(params[0], "VERSION") == 0) {
 		irc_cmd_ctcp_reply(session, IRC_mask_to_nick(origin), "VERSION ezQuake " VERSION_NUMBER);
@@ -179,28 +302,28 @@ void IRC_event_ctcp_req(irc_session_t * session, const char * event, const char 
 
 void IRC_event_notice(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	Com_Printf("IRC: *%s* (%s): %s\n", origin, params[0], count > 1 ? params[1] : "");
+	IRC_Printf("IRC: *%s* (%s): %s\n", origin, params[0], count > 1 ? params[1] : "");
 }
 
 void IRC_event_topic(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
 	if (count > 1) {
-		Com_Printf("IRC: %s changes topic on %s to %s\n", origin, params[0], params[1]);
+		IRC_Printf("IRC: %s changes topic on %s to %s\n", origin, params[0], params[1]);
 	}
 	else {
-		Com_Printf("IRC: %s changes topic on %s\n", origin, params[0]);
+		IRC_Printf("IRC: %s changes topic on %s\n", origin, params[0]);
 	}
 }
 
 void IRC_event_mode(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	Com_Printf("IRC: %s (%s) sets mode %s%s%s\n", IRC_mask_to_nick(origin), params[0], params[1],
+	IRC_Printf("IRC: %s (%s) sets mode %s%s%s\n", IRC_mask_to_nick(origin), params[0], params[1],
 		(count > 2 ? " " : ""), (count > 2 ? params[3] : ""));
 }
 
 void IRC_event_kick(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	Com_Printf("IRC: %s has been kicked from %s by %s (%s)\n", params[1], params[0], IRC_mask_to_nick(origin), params[2]);
+	IRC_Printf("IRC: %s has been kicked from %s by %s (%s)\n", params[1], params[0], IRC_mask_to_nick(origin), params[2]);
 }
 
 void IRC_event_privmsg(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
@@ -208,7 +331,7 @@ void IRC_event_privmsg(irc_session_t * session, const char * event, const char *
 	irc_ctx_t *ctx = (irc_ctx_t *) irc_get_ctx(session);
 
 	if (count > 1) {
-		Com_Printf("IRC: (Privmsg) <%s> %s\n", IRC_mask_to_nick(origin), params[1]);
+		IRC_Printf("IRC: (Privmsg) <%s> %s\n", IRC_mask_to_nick(origin), params[1]);
 		IRC_Chanlist_Add(&ctx->chanlist, IRC_mask_to_nick(origin));
 	}
 }
@@ -216,7 +339,7 @@ void IRC_event_privmsg(irc_session_t * session, const char * event, const char *
 void IRC_event_channel (irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
 	if (count > 1) {
-		Com_Printf("IRC: (%s) <%s> %s\n", params[0], IRC_mask_to_nick(origin), params[1]);
+		IRC_Printf("IRC: (%s) <%s> %s\n", params[0], IRC_mask_to_nick(origin), params[1]);
 	}
 }
 
@@ -231,11 +354,11 @@ void IRC_event_join (irc_session_t * session, const char * event, const char * o
 	// To do this, we compare the origin with our nick.
     // Note that we have set LIBIRC_OPTION_STRIPNICKS to obtain 'parsed' nicks.
 	if ( !strcmp(IRC_mask_to_nick(origin), ctx->nick)) {
-		Com_Printf("IRC: You've joined %s\n", params[0]);
+		IRC_Printf("IRC: You've joined %s\n", params[0]);
 		IRC_Chanlist_Add(&ctx->chanlist, params[0]);		
 	}
 	else {
-		Com_Printf("IRC: %s &c0f0joined&cfff %s\n", IRC_mask_to_nick(origin), params[0]);
+		IRC_Printf("IRC: %s &c0f0joined&cfff %s\n", IRC_mask_to_nick(origin), params[0]);
 	}
 }
 
@@ -245,16 +368,16 @@ void IRC_event_part (irc_session_t * session, const char * event, const char * o
 
 	if (strcmp(IRC_mask_to_nick(origin), ctx->nick) == 0) {
 		IRC_Chanlist_Remove(&ctx->chanlist, params[0]);
-		Com_Printf("IRC: You have left %s\n", params[0]);
+		IRC_Printf("IRC: You have left %s\n", params[0]);
 	}
 	else {
-		Com_Printf("IRC: %s has &c888left&cfff %s\n", IRC_mask_to_nick(origin), params[0]);
+		IRC_Printf("IRC: %s has &c888left&cfff %s\n", IRC_mask_to_nick(origin), params[0]);
 	}
 }
 
 void IRC_event_quit (irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	Com_Printf("IRC: %s Quit: %s\n", IRC_mask_to_nick(origin), count > 1 ? params[0] : "-");
+	IRC_Printf("IRC: %s Quit: %s\n", IRC_mask_to_nick(origin), count > 1 ? params[0] : "-");
 }
 
 void IRC_event_nick (irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
@@ -271,7 +394,7 @@ void IRC_event_numeric (irc_session_t * session, unsigned int event, const char 
 {
 	if ( event > 400 )
 	{
-		Com_Printf ("IRC ERROR %d: %s: %s %s %s %s\n", 
+		IRC_Printf ("IRC ERROR %d: %s: %s %s %s %s\n", 
 				event,
 				origin ? origin : "unknown",
 				params[0],
@@ -284,7 +407,7 @@ void IRC_event_numeric (irc_session_t * session, unsigned int event, const char 
 
 		switch (event) {
 			case LIBIRC_RFC_RPL_WELCOME:
-				Com_Printf("IRC: Welcome to the Internet Relay Network %s\n", params[0]);
+				IRC_Printf("IRC: Welcome to the Internet Relay Network %s\n", params[0]);
 				break;
 
 			case LIBIRC_RFC_RPL_MOTDSTART:
@@ -292,7 +415,7 @@ void IRC_event_numeric (irc_session_t * session, unsigned int event, const char 
 				break;
 
 			case LIBIRC_RFC_RPL_MOTD:
-				Com_Printf("IRC: %s\n", params[1]);
+				IRC_Printf("IRC: %s\n", params[1]);
 				break;
 
 			case LIBIRC_RFC_RPL_ENDOFMOTD:
@@ -302,7 +425,7 @@ void IRC_event_numeric (irc_session_t * session, unsigned int event, const char 
 			case LIBIRC_RFC_RPL_NAMREPLY:
 				Com_Printf("IRC: Names:\n");
 				for (i = 2; i < count; ++i) {
-					Com_Printf(" %s", params[i]);
+					IRC_Printf(" %s", params[i]);
 				}
 				Com_Printf("\n");
 				break;
@@ -310,7 +433,7 @@ void IRC_event_numeric (irc_session_t * session, unsigned int event, const char 
 			case LIBIRC_RFC_RPL_TOPIC:
 				Com_Printf("IRC: Topic:\n");
 				for (i = 2; i < count; ++i) {
-					Com_Printf(" %s", params[i]);
+					IRC_Printf(" %s", params[i]);
 				}
 				Com_Printf("\n");
 				break;
@@ -338,7 +461,7 @@ void IRC_event_universal (irc_session_t * session, const char * event, const cha
 	}
 
 
-	Com_Printf ("Event \"%s\", origin: \"%s\", params: %d [%s]\n", event, origin ? origin : "NULL", cnt, buf);
+	IRC_Printf ("Event \"%s\", origin: \"%s\", params: %d [%s]\n", event, origin ? origin : "NULL", cnt, buf);
 }
 
 static void IRC_irc_f(void)
@@ -358,7 +481,7 @@ static void IRC_irc_f(void)
 			irc_server_password.string[0] ? irc_server_password.string : NULL,
 			nick, irc_user_username.string, irc_user_realname.string)
 		) {
-			Com_Printf ("IRC: Could not connect: %s\n", irc_strerror (irc_errno(irc_singlesession)));
+			IRC_Printf ("IRC: Could not connect: %s\n", irc_strerror (irc_errno(irc_singlesession)));
 		}
 		else {
 			strlcpy(ctx->nick, nick, MAX_TARGET_LEN);
@@ -377,8 +500,11 @@ static void IRC_irc_f(void)
 		char *chan = IRC_Chanlist_GetCurrent(&ctx->chanlist);
 		if (chan) {
 			char *msg = Cmd_ArgLine(2);
-			irc_cmd_msg(irc_singlesession, chan, msg);
-			Com_Printf("IRC: (%s) <%s> %s\n", chan, ctx->nick, msg);
+			wchar *wmsg = decode_string(msg);
+			irc_cmd_msg(irc_singlesession, chan, encode_utf8(wmsg));
+			Com_Printf("IRC: (%s) <%s> ", chan, ctx->nick);
+			Con_PrintW(wmsg);
+			Com_Printf("\n");
 		}
 		else {
 			Com_Printf("No current channel selected\n");
@@ -414,7 +540,7 @@ static void IRC_irc_f(void)
 				Com_Printf("Uknown argument. Valid arguments: next, prev, close\n");
 			}
 		}
-		Com_Printf("IRC: Current window: %s\n", IRC_GetCurrentChan());
+		IRC_Printf("IRC: Current window: %s\n", IRC_GetCurrentChan());
 	}
 	else if (strcmp(Cmd_Argv(1), "nick") == 0) {
 		if (Cmd_Argc() >= 3) {
@@ -428,8 +554,11 @@ static void IRC_irc_f(void)
 	}
 	else {
 		char *cmd = Cmd_ArgLine(1);
-		irc_send_raw(irc_singlesession, "%s", cmd);
-		Com_Printf("IRC: %s\n", cmd);
+		wchar *wcmd = decode_string(cmd);
+		irc_send_raw(irc_singlesession, "%s", encode_utf8(wcmd));
+		Com_Printf("IRC: ");
+		Con_PrintW(wcmd);
+		Com_Printf("\n");
 	}
 }
 
@@ -444,7 +573,7 @@ void IRC_Update(void)
 		r = irc_add_select_descriptors(irc_singlesession, &irc_fd_in, &irc_fd_out, &irc_maxfd);
 		if (r != 0) {
 			Com_Printf("Could not set IRC socket descriptors:\n");
-			Com_Printf("- %s\n", irc_strerror(r));
+			IRC_Printf("- %s\n", irc_strerror(r));
 		}
 
 		r = select(irc_maxfd+1, &irc_fd_in, &irc_fd_out, 0, &timeout);
@@ -457,7 +586,7 @@ void IRC_Update(void)
 			r = irc_process_select_descriptors(irc_singlesession, &irc_fd_in, &irc_fd_out);
 			if (r) {
 				Com_Printf("IRC: Error processing select descriptors:\n");
-				Com_Printf("- %s\n", irc_strerror(r));
+				IRC_Printf("- %s\n", irc_strerror(r));
 			}
 		}
 	}
