@@ -313,8 +313,8 @@ void IN_FireUp(void)
 	if (IN_IsLastArgKeyCode()) {
 		key_code = Q_atoi(Cmd_Argv(Cmd_Argc() - 1));
 	}
-	qbool up = KeyUp_common(&in_attack, key_code);
-	if (up) {
+
+	if (KeyUp_common(&in_attack, key_code)) {
 		IN_AttackUp_CommonHide();
 	}
 }
