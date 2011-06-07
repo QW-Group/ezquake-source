@@ -90,6 +90,8 @@ int			in_impulse;
 #define MAXWEAPONS 10
 int weapon_order[MAXWEAPONS] = {2, 1};
 
+#define VOID_KEY (-1)
+
 int IN_BestWeapon (void);
 
 void KeyDown_common (kbutton_t *b, int k)
@@ -119,7 +121,7 @@ void KeyDown_common (kbutton_t *b, int k)
 
 qbool KeyUp_common (kbutton_t *b, int k)
 {
-	if (k == -1) { // typed manually at the console, assume for unsticking, so clear all
+	if (k == VOID_KEY) { // typed manually at the console, assume for unsticking, so clear all
 		b->down[0] = b->down[1] = 0;
 		b->state &= ~1;		// now up
 		b->state |= 4; 		// impulse up
@@ -147,7 +149,7 @@ qbool KeyUp_common (kbutton_t *b, int k)
 
 void KeyDown(kbutton_t *b)
 {
-	int k = -1;
+	int k = VOID_KEY;
 	char *c = Cmd_Argv(1);
 	if (*c) {
 		k = atoi(c);
@@ -159,7 +161,7 @@ void KeyDown(kbutton_t *b)
 // returns whether the button is now up, will not be if other key is holding it down
 qbool KeyUp(kbutton_t *b)
 {
-	int k = -1;
+	int k = VOID_KEY;
 	char *c = Cmd_Argv(1);
 	if (*c) {
 		k = atoi(c);
@@ -249,11 +251,46 @@ void IN_AttackDown(void)
 	KeyDown(&in_attack);
 }
 
-void IN_AttackUp(void)
+// Checks if we have a keycode at the end, e.g. +fire 8 5 3 120
+// if it's >= 32, treat is as keycodes, otherwise an impulse
+static qbool IN_IsLastArgKeyCode(void)
 {
-	qbool up = KeyUp(&in_attack);
+	return atoi(Cmd_Argv(Cmd_Argc() - 1)) >= 32;
+}
 
-	if (up && CL_INPUT_WEAPONHIDE())
+void IN_FireDown(void)
+{
+	int key_code = VOID_KEY;
+	int last_arg_idx = Cmd_Argc() - 1;
+	int i;
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf("Usage: %s <weapon number>\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (IN_IsLastArgKeyCode()) {
+		key_code = Q_atoi(Cmd_Argv(last_arg_idx));
+		last_arg_idx--;
+	}
+
+	for (i = 1; i <= last_arg_idx && i <= MAXWEAPONS; i++) {
+		int desired_impulse = Q_atoi(Cmd_Argv(i));
+		weapon_order[i - 1] = desired_impulse;
+	}
+
+	for (; i <= MAXWEAPONS; i++) {
+		weapon_order[i - 1] = 0;
+	}
+
+	in_impulse = IN_BestWeapon();
+
+	KeyDown_common(&in_attack, key_code);
+}
+
+void IN_AttackUp_CommonHide(void)
+{
+	if (CL_INPUT_WEAPONHIDE())
 	{
 		if (cl_weaponhide_axe.integer)
 		{
@@ -264,8 +301,30 @@ void IN_AttackUp(void)
 		{
 			// performs "weapon 2 1"
 			// that means: if player has shotgun and shells, select shotgun, otherwise select axe
-			in_impulse = (cl.stats[STAT_ITEMS] & IT_SHOTGUN && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1;
+			in_impulse = ((cl.stats[STAT_ITEMS] & IT_SHOTGUN) && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1;
 		}
+	}
+}
+
+void IN_FireUp(void)
+{
+	int key_code = VOID_KEY;
+
+	if (IN_IsLastArgKeyCode()) {
+		key_code = Q_atoi(Cmd_Argv(Cmd_Argc() - 1));
+	}
+
+	if (KeyUp_common(&in_attack, key_code)) {
+		IN_AttackUp_CommonHide();
+	}
+}
+
+
+void IN_AttackUp(void)
+{
+	qbool up = KeyUp(&in_attack);
+	if (up) {
+		IN_AttackUp_CommonHide();
 	}
 }
 
@@ -1032,6 +1091,8 @@ void CL_InitInput (void)
 	Cmd_AddCommand ("-speed", IN_SpeedUp);
 	Cmd_AddCommand ("+attack", IN_AttackDown);
 	Cmd_AddCommand ("-attack", IN_AttackUp);
+	Cmd_AddCommand ("+fire", IN_FireDown);
+	Cmd_AddCommand ("-fire", IN_FireUp);
 	Cmd_AddCommand ("+attack2", IN_Attack2Down);
 	Cmd_AddCommand ("-attack2", IN_Attack2Up);
 	Cmd_AddCommand ("+use", IN_UseDown);

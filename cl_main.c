@@ -2283,6 +2283,9 @@ void Plug_Tick(void);
 qbool physframe;
 double physframetime;
 
+#pragma warning( push )                    // Save the current warning state.
+#pragma warning( disable : 4723 )          // C4723: potential divide by 0
+
 void CL_Frame (double time) 
 {
 	static double extratime = 0.001;
@@ -2703,6 +2706,8 @@ void CL_Frame (double time)
 
 	CL_UpdateCaption(false);
 }
+
+#pragma warning( pop )
 
 //============================================================================
 
