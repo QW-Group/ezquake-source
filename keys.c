@@ -2088,7 +2088,7 @@ void Mouse_MoveEvent(void)
 static qbool Key_ConsoleKey(int key)
 {
     // This makes it possible to type chars under tilde key into the console.
-    qbool con_key = (con_tilde_mode.integer && (key == '`' || key == '~') && (con_tilde_mode.integer == 1 || !CONSOLE_LINE_EMPTY)) ? true : consolekeys[key];
+    qbool con_key = (con_tilde_mode.integer && (key == '`' || key == '~') && (con_tilde_mode.integer == 1 || !CONSOLE_LINE_EMPTY())) ? true : consolekeys[key];
     qbool hud_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : hudeditorkeys[key];
 	qbool demo_controls_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : democontrolskey[key];
 

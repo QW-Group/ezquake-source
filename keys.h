@@ -280,7 +280,7 @@ extern int		key_linepos;
 extern int		edit_line;
 extern qbool	con_redchars;
 
-#define CONSOLE_LINE_EMPTY (!key_lines[edit_line][1])
+#define CONSOLE_LINE_EMPTY() (!key_lines[edit_line][1])
 
 // }
 
