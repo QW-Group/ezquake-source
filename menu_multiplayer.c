@@ -292,7 +292,7 @@ void Menu_CG_Coop_StartGame(void)
 	int tp = (cg_teamdamage_var == TD_OFF) ? 1 : 2;
 	int skill = game_skill_var;
 
-	Cbuf_AddText("disconnect; sv_progstype qwprogs; gamedir qw; coop 1; deathmatch 0\n");
+	Cbuf_AddText("disconnect; sv_progsname spprogs; gamedir qw; coop 1; deathmatch 0\n");
 	Cbuf_AddText(va("teamplay %d; skill %d;maxclients %d;map start",
 					tp,skill,coopmaxplayers));
 	M_LeaveMenus();
