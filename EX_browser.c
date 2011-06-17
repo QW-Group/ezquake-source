@@ -1702,9 +1702,9 @@ void SB_Players_Draw (int x, int y, int w, int h)
         if (num >= all_players_n)
             break;
 
-        snprintf(line, sizeof (line), "%-15.15s%c%-*.*s %3s",
+        snprintf(line, sizeof (line), "%-15s%c%-*.*s %3s",
                 s->name, num==Players_pos ? 141 : ' ',
-                hw, hw, s->serv->display.name, s->serv->display.ping);
+                hw, hw, strlen(s->serv->display.name) > 0 ? s->serv->display.name : s->serv->display.ip, s->serv->display.ping);
 
         UI_Print_Center(x, y+8*(i+1), w, line, num == Players_pos);
     }
