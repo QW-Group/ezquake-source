@@ -45,7 +45,7 @@ static int pr_globaloffsetpatch_nq[62] = {0,0,0,0,0,666,-4,-4,8,8,
 8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8, 8,8};
 #endif
 
-int		type_size[8] = {1,sizeof(void *)/4,1,3,1,1,sizeof(void *)/4,sizeof(void *)/4};
+int		type_size[8] = {1,1,1,3,1,1,1,1};
 
 ddef_t *ED_FieldAtOfs (int ofs);
 qbool ED_ParseEpair (void *base, ddef_t *key, char *s);
