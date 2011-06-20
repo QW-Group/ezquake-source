@@ -240,6 +240,8 @@ cvar_t  in_m_os_parameters	= {"in_m_os_parameters", "0",   CVAR_LATCH};
 
 cvar_t  in_di_bufsize		= {"in_di_bufsize",      "16",  CVAR_LATCH}; // if you change default, then change DI_BufSize() too
 cvar_t  in_di_buffered      = {"in_di_buffered",     "1", CVAR_LATCH};
+cvar_t  in_raw_custom_device = {"in_raw_custom_device", "0", CVAR_LATCH};
+cvar_t  in_raw_custom_device_enable = {"in_raw_custom_device_enable", "0", CVAR_LATCH};
 
 qbool use_m_smooth = false;
 HANDLE m_event;
@@ -952,12 +954,25 @@ void IN_RawInput_Init(void)
 			}
 			Com_Printf("Raw input: [%i] %s\n", i, dname);
 
-			// set handle
-			rawmice[rawmicecount].rawinputhandle = pRawInputDeviceList[i].hDevice;
+			// set handle for All devices only if user hasn't specified a custom device to use
+			if(!(int)Cvar_Value("in_raw_custom_device_enable")) {
+				rawmice[rawmicecount].rawinputhandle = pRawInputDeviceList[i].hDevice;
+				rawmice[rawmicecount].numbuttons = 10;
+				rawmice[rawmicecount].pos[0] = RI_INVALID_POS;
+				rawmicecount++;
+			}
+		}
+	}
+	// if user wants to specify a specific mouse to init, then only 
+	// set that handle. which device is determined by the in_raw_custom_device cvar (nbr)
+	// note: its still possible to click mouse buttons on other devices, that is due to
+	// in_raw_allbuttons cvar which needs to be set to 0 to disable input from the other
+	// devices.
+	if((int)Cvar_Value("in_raw_custom_device_enable")) {
+			rawmice[rawmicecount].rawinputhandle = pRawInputDeviceList[(int)Cvar_Value("in_raw_custom_device")].hDevice;
 			rawmice[rawmicecount].numbuttons = 10;
 			rawmice[rawmicecount].pos[0] = RI_INVALID_POS;
 			rawmicecount++;
-		}
 	}
 
    
@@ -1355,6 +1370,8 @@ void IN_Init (void)
     Cvar_Register (&in_m_os_parameters);
     Cvar_Register (&in_di_bufsize);
 	Cvar_Register (&in_di_buffered);
+	Cvar_Register (&in_raw_custom_device);
+	Cvar_Register (&in_raw_custom_device_enable);
 
     if (!host_initialized)
     {
