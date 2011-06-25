@@ -63,15 +63,15 @@
 //This defines a death message.
 //msg1 and msg2 cannot be longer than 255 characters
 //TYPE is one of:
-//              PLAYER_DEATH
-//				PLAYER_SUICIDE
-//              X_FRAGS_Y
-//              X_FRAGGED_BY_Y
-//              X_FRAGS_UNKNOWN
-//              X_TEAMKILLS_Y
-//              X_TEAMKILLED_BY_Y
-//              X_TEAMKILLS_UNKNOWN
-//              X_TEAMKILLED_UNKNOWN // appear in fragfile version "ezquake-1.0"
+//		PLAYER_DEATH
+//		PLAYER_SUICIDE
+//		X_FRAGS_Y
+//		X_FRAGGED_BY_Y
+//		X_FRAGS_UNKNOWN
+//		X_TEAMKILLS_Y
+//		X_TEAMKILLED_BY_Y
+//		X_TEAMKILLS_UNKNOWN
+//		X_TEAMKILLED_UNKNOWN // appear in fragfile version "ezquake-1.0"
 //WEAPON is one of the weapon classes defined with #DEFINE WEAPON_CLASS
 //msg1 and msg2 are strings.
 //msg2 is optional but can only be used when type is one of:
@@ -118,9 +118,9 @@
 //#DEFINE <FLAG_ALERT | FLAG_MSG> <TYPE> <msg1>
 //this defines a flag message.
 //TYPE can be one of (things on the same line are interchangeable keywords)
-//          X_TOUCHES_FLAG      X_GETS_FLAG     X_TAKES_FLAG
-//          X_DROPS_FLAG        X_FUMBLES_FLAG  X_LOSES_FLAG
-//          X_CAPTURES_FLAG     X_CAPS_FLAG     X_SCORES
+//	X_TOUCHES_FLAG		X_GETS_FLAG	X_TAKES_FLAG
+//	X_DROPS_FLAG		X_FUMBLES_FLAG	X_LOSES_FLAG
+//	X_CAPTURES_FLAG		X_CAPS_FLAG	X_SCORES
 //
 //#DEFINE FLAG_ALERT X_TOUCHES_FLAG <msg1>:
 //this means a string of the form "playername msg1 *" is interpreted as
@@ -134,22 +134,22 @@
 //
 //WEAPON CLASSES
 //
-#DEFINE WEAPON_CLASS	AXE					"axe"				"axe"			"\axe\"
-#DEFINE WEAPON_CLASS    SHOTGUN				"shotgun"			"sg"			"\sg\"
-#DEFINE WEAPON_CLASS    Q_SHOTGUN			"q shotgun"			"sg &c06fQ&r"	"\sg\ \q\"
-#DEFINE WEAPON_CLASS    SUPER_SHOTGUN		"super shotgun"		"ssg"			"\ssg\"
+#DEFINE WEAPON_CLASS	AXE			"axe"			"axe"		"\axe\"
+#DEFINE WEAPON_CLASS    SHOTGUN			"shotgun"		"sg"		"\sg\"
+#DEFINE WEAPON_CLASS    Q_SHOTGUN		"q shotgun"		"sg &c06fQ&r"	"\sg\ \q\"
+#DEFINE WEAPON_CLASS    SUPER_SHOTGUN		"super shotgun"		"ssg"		"\ssg\"
 #DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN		"q super shotgun"	"ssg &c06fQ&r"	"\ssg\ \q\"
-#DEFINE WEAPON_CLASS    NAILGUN				"nailgun"			"ng"			"\ng\"
-#DEFINE WEAPON_CLASS    SUPER_NAILGUN		"super nailgun"		"sng"			"\sng\"
+#DEFINE WEAPON_CLASS    NAILGUN			"nailgun"		"ng"		"\ng\"
+#DEFINE WEAPON_CLASS    SUPER_NAILGUN		"super nailgun"		"sng"		"\sng\"
 #DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN		"q super nailgun"	"sng &c06fQ&r"	"\sng\ \q\"
-#DEFINE WEAPON_CLASS    GRENADE_LAUNCHER    "grenade launcher"  "gl"			"\gl\"
-#DEFINE WEAPON_CLASS    ROCKET_LAUNCHER		"rocket launcher"	"rl"			"\rl\"
+#DEFINE WEAPON_CLASS    GRENADE_LAUNCHER	"grenade launcher"	"gl"		"\gl\"
+#DEFINE WEAPON_CLASS    ROCKET_LAUNCHER		"rocket launcher"	"rl"		"\rl\"
 #DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER	"q rocket launcher"	"rl &c06fQ&r"	"\rl\ \q\"
-#DEFINE WEAPON_CLASS    LIGHTNING_GUN		"lightning gun"		"lg"			"\lg\"
+#DEFINE WEAPON_CLASS    LIGHTNING_GUN		"lightning gun"		"lg"		"\lg\"
 #DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN		"q lightning gun"	"lg &c06fQ&r"	"\lg\ \q\"
 
-#DEFINE WEAPON_CLASS    RAIL_GUN		"rail gun"		"rail"		"\rail\" //for dmm8
-#DEFINE WEAPON_CLASS    COIL_GUN		"coil gun"		"coil"		"\coil\" //for KTX instagib
+#DEFINE WEAPON_CLASS    RAIL_GUN		"rail gun"		"rail"		"\rail\"	//for dmm8 and TF engineer
+#DEFINE WEAPON_CLASS    COIL_GUN		"coil gun"		"coil"		"\coil\"	//for KTX instagib
 
 #DEFINE WEAPON_CLASS    DROWN			"drown"			"drown"		"\drown\"
 #DEFINE WEAPON_CLASS    LAVA			"lava"			"lava"		"\lava\"
@@ -169,75 +169,75 @@
 
 // FIXME: afaik one (and only one?) msg still unsupported: Satan's power deflects qqshka's telefrag
 
-#DEFINE OBITUARY	PLAYER_DEATH	DROWN				" sleeps with the fishes"
-#DEFINE OBITUARY	PLAYER_DEATH	DROWN				" sucks it down"
-#DEFINE OBITUARY	PLAYER_DEATH	SLIME				" gulped a load of slime"
-#DEFINE OBITUARY	PLAYER_DEATH	SLIME				" can't exist on slime alone"
-#DEFINE OBITUARY	PLAYER_DEATH	LAVA				" burst into flames"
-#DEFINE OBITUARY	PLAYER_DEATH	LAVA				" turned into hot slag"
-#DEFINE OBITUARY	PLAYER_DEATH	LAVA				" visits the Volcano God"
+#DEFINE OBITUARY	PLAYER_DEATH	DROWN			" sleeps with the fishes"
+#DEFINE OBITUARY	PLAYER_DEATH	DROWN			" sucks it down"
+#DEFINE OBITUARY	PLAYER_DEATH	SLIME			" gulped a load of slime"
+#DEFINE OBITUARY	PLAYER_DEATH	SLIME			" can't exist on slime alone"
+#DEFINE OBITUARY	PLAYER_DEATH	LAVA			" burst into flames"
+#DEFINE OBITUARY	PLAYER_DEATH	LAVA			" turned into hot slag"
+#DEFINE OBITUARY	PLAYER_DEATH	LAVA			" visits the Volcano God"
 
-#DEFINE OBITUARY	PLAYER_DEATH	FALL				" cratered"
-#DEFINE OBITUARY	PLAYER_DEATH	FALL				" fell to his death"
-#DEFINE OBITUARY	PLAYER_DEATH	FALL				" fell to her death"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" blew up"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was spiked"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was zapped"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" ate a lavaball"
+#DEFINE OBITUARY	PLAYER_DEATH	FALL			" cratered"
+#DEFINE OBITUARY	PLAYER_DEATH	FALL			" fell to his death"
+#DEFINE OBITUARY	PLAYER_DEATH	FALL			" fell to her death"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" blew up"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" was spiked"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" was zapped"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" ate a lavaball"
 
 #DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN TELEFRAG		" was telefragged by his teammate"
 #DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN TELEFRAG		" was telefragged by her teammate"
 
 
-#DEFINE OBITUARY	PLAYER_DEATH	NOWEAPON			" died"
-#DEFINE OBITUARY	PLAYER_DEATH	NOWEAPON			" tried to leave"
-#DEFINE OBITUARY	PLAYER_DEATH	SQUISH				" was squished"
+#DEFINE OBITUARY	PLAYER_DEATH	NOWEAPON		" died"
+#DEFINE OBITUARY	PLAYER_DEATH	NOWEAPON		" tried to leave"
+#DEFINE OBITUARY	PLAYER_DEATH	SQUISH			" was squished"
 
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" suicides"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" suicides"
 
 #DEFINE OBITUARY	PLAYER_SUICIDE	GRENADE_LAUNCHER	" tries to put the pin back in"
 #DEFINE OBITUARY	PLAYER_SUICIDE	ROCKET_LAUNCHER		" becomes bored with life"
 #DEFINE OBITUARY	PLAYER_SUICIDE	ROCKET_LAUNCHER		" discovers blast radius"
 
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE			" electrocutes himself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE			" electrocutes herself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE			" railcutes himself" // rail dis
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE			" railcutes herself" // rail dis
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE			" discharges into the slime"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE			" discharges into the lava"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE			" discharges into the water"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE			" heats up the water"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE		" electrocutes himself"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE		" electrocutes herself"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE		" railcutes himself"	// rail dis
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE		" railcutes herself"	// rail dis
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE		" discharges into the slime"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE		" discharges into the lava"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE		" discharges into the water"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISCHARGE		" heats up the water"
 
-#DEFINE OBITUARY	X_TEAMKILLS_UNKNOWN SQUISH			" squished a teammate"
+#DEFINE OBITUARY	X_TEAMKILLS_UNKNOWN SQUISH		" squished a teammate"
 #DEFINE OBITUARY	X_TEAMKILLS_UNKNOWN TEAMKILL		" mows down a teammate"
 #DEFINE OBITUARY	X_TEAMKILLS_UNKNOWN TEAMKILL		" checks his glasses"
 #DEFINE OBITUARY	X_TEAMKILLS_UNKNOWN TEAMKILL		" checks her glasses"
 #DEFINE OBITUARY	X_TEAMKILLS_UNKNOWN TEAMKILL		" gets a frag for the other team"
 #DEFINE OBITUARY	X_TEAMKILLS_UNKNOWN TEAMKILL		" loses another friend"
 
-#DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP			" was crushed by his teammate" // ktpro stomp tk
-#DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP			" was crushed by her teammate" // ktpro stomp tk
-#DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP			" was jumped by his teammate"  // ktx addon for ktpro stomp tk
-#DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP			" was jumped by her teammate"  // ktx addon for ktpro stomp tk
+#DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP		" was crushed by his teammate"	// ktpro stomp tk
+#DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP		" was crushed by her teammate"	// ktpro stomp tk
+#DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP		" was jumped by his teammate" 	// ktx addon for ktpro stomp tk
+#DEFINE OBITUARY	X_TEAMKILLED_UNKNOWN STOMP		" was jumped by her teammate" 	// ktx addon for ktpro stomp tk
 
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" softens "   "'s fall" // ktpro stomp kill
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" softens "   "' fall" // ktpro stomp kill
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" tried to catch "      // ktpro stomp kill
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" was crushed by "      // ktpro stomp kill
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" was jumped by "       // ktpro stomp kill
-#DEFINE OBITUARY	X_FRAGS_Y		STOMP				" stomps "              // ktpro stomp kill
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP				" was literally stomped into particles by " // KTX instagib
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP			" softens "   "'s fall"	// ktpro stomp kill
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP			" softens "   "' fall"	// ktpro stomp kill
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP			" tried to catch "      // ktpro stomp kill
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP			" was crushed by "      // ktpro stomp kill
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP			" was jumped by "       // ktpro stomp kill
+#DEFINE OBITUARY	X_FRAGS_Y	STOMP			" stomps "              // ktpro stomp kill
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	STOMP			" was literally stomped into particles by " // KTX instagib
 
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was ax-murdered by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SHOTGUN			" was lead poisoned by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" chewed on " "'s boomstick"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" chewed on " "' boomstick"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			" was ax-murdered by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SHOTGUN		" was lead poisoned by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" chewed on " "'s boomstick"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" chewed on " "' boomstick"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SUPER_SHOTGUN		" ate 8 loads of "   "'s buckshot"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_SUPER_SHOTGUN		" ate 8 loads of "   "' buckshot"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		" ate 2 loads of "   "'s buckshot"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		" ate 2 loads of "   "' buckshot"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" was body pierced by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" was nailed by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN			" was body pierced by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN			" was nailed by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_NAILGUN		" was perforated by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_NAILGUN		" was punctured by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_NAILGUN		" was ventilated by "
@@ -250,7 +250,7 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_ROCKET_LAUNCHER	" was smeared by "   "' quad rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_ROCKET_LAUNCHER	" was brutalized by " "'s quad rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_ROCKET_LAUNCHER	" was brutalized by " "' quad rocket"
-#DEFINE OBITUARY	X_FRAGS_Y		Q_ROCKET_LAUNCHER	" rips " " a new one"
+#DEFINE OBITUARY	X_FRAGS_Y	Q_ROCKET_LAUNCHER	" rips " " a new one"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" was gibbed by " "'s rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" was gibbed by " "' rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" rides " "'s rocket"
@@ -258,17 +258,17 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	LIGHTNING_GUN		" accepts "  "'s shaft"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	LIGHTNING_GUN		" accepts "  "' shaft"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	Q_LIGHTNING_GUN		" gets a natural disaster from "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was axed to pieces by " // KTX instagib
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	COIL_GUN			" was instagibbed by " // KTX instagib
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			" was axed to pieces by " // KTX instagib
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	COIL_GUN		" was instagibbed by " // KTX instagib
 
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	RAIL_GUN			" was railed by "		//for dmm8
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	RAIL_GUN		" was railed by "	//for dmm8 and TF engineer
 
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	TELEFRAG			" was telefragged by "
-#DEFINE OBITUARY	X_FRAGS_Y		SQUISH				" squishes "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE			" accepts "  "'s discharge"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE			" accepts "  "' discharge"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE			" drains "   "'s batteries"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE			" drains "   "' batteries"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	TELEFRAG		" was telefragged by "
+#DEFINE OBITUARY	X_FRAGS_Y	SQUISH			" squishes "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE		" accepts "  "'s discharge"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE		" accepts "  "' discharge"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE		" drains "   "'s batteries"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISCHARGE		" drains "   "' batteries"
 
 
 
@@ -276,7 +276,7 @@
 // TeamFortress and MegaTeamFortress
 //
 
-// these three are still unsupported because there's no way to write out a sentrygun was destroyed (do we want to even do this?)
+// these three are still unsupported because there's no way to write out a sentrygun was destroyed (do we even want to do this?)
 // "player1's sentrygun was destroyed by player2"
 // #DEFINE OBITUARY	PLAYER_DEATH   SENTRYGUN	"'s sentrygun was no match for "
 // "up2 destroys his sentrygun"
@@ -306,10 +306,9 @@
 // Mega TeamFortress
 #DEFINE WEAPON_CLASS    20MM                "20mm"
 #DEFINE WEAPON_CLASS    AIRSTRIKE           "airstrke"
-#DEFINE WEAPON_CLASS    DISEASE             "ill"  //as in illness
+#DEFINE WEAPON_CLASS    DISEASE             "ill"	//as in illness
 #DEFINE WEAPON_CLASS    DRONE               "drone"
 #DEFINE WEAPON_CLASS    KNIFE               "knife"
-#DEFINE WEAPON_CLASS    LUDE                "spy"
 #DEFINE WEAPON_CLASS    PROXI               "proxi"
 #DEFINE WEAPON_CLASS    SENTRYGUN           "sent"
 #DEFINE WEAPON_CLASS    SPANNER             "span"
@@ -318,13 +317,13 @@
 
 
 // Scout
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	CALTROP				" stepped on too many of "  "'s caltrops"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	FLASHGREN			" is charred by " "'s flash grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	FLASHGREN			"'s brain is fried by " "'s flash grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" was capped by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	CALTROP			" stepped on too many of "  "'s caltrops"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	FLASHGREN		" is charred by " "'s flash grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	FLASHGREN		"'s brain is fried by " "'s flash grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN			" was capped by "
 
 // Sniper
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AIRSTRIKE			" was bombed by " "'s AirStrike call"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AIRSTRIKE		" was bombed by " "'s AirStrike call"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" takes a bullet in the chest from "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" succumbs to sniperfire from "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" gets a third eye from "
@@ -339,41 +338,41 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" is neutered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		"'s legs explode open from " "'s shot"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_SPRAY		" collects "  "'s bullet spray."
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_SPRAY			" enjoys " "'s machinegun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_SPRAY		" enjoys " "'s machinegun"
 
 // Soldier
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGREN			" gets flayed by "  "'s nail grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGREN			" gets perforated by " "'s nail grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	PROXI				" gets too friendly with " "'s Proxi grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGREN		" gets flayed by "  "'s nail grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGREN		" gets perforated by " "'s nail grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	PROXI			" gets too friendly with " "'s Proxi grenade"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		" is reamed by " "'s rocket"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ROCKET_LAUNCHER		"'s bunghole was ripped by " "'s rocket"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" was swiss-cheesed by " "'s bird gun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" was swiss-cheesed by " "'s bird gun"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		"'s head is popped by " "'s shotgun"
 
 // Demoman
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DETPACK				" reaches orbit via " "'s detpack"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DETPACK				" cut the red wire of " "'s detpack"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DETPACK				" is nuked by " "'s detpack"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DETPACK			" reaches orbit via " "'s detpack"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DETPACK			" cut the red wire of " "'s detpack"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DETPACK			" is nuked by " "'s detpack"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	GRENADE_LAUNCHER	" swallows " "'s grenade"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	GRENADE_LAUNCHER	" was split in half by " "'s grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	MIRVGREN			" gets spammed by " "'s Mirv grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	MIRVGREN			" does a dance on " "'s Mirv grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	MIRVGREN			" gets juiced by " "'s Mirv grenad"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	MIRVGREN			" is shreaded by " "'s AirMirv"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	PIPEBOMB			" is caught by "  "'s pipebomb trap"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	PIPEBOMB			" fell victim to "  "'s fireworks"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	PIPEBOMB			" is shreaded by " "'s pipebomb trap"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	MIRVGREN		" gets spammed by " "'s Mirv grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	MIRVGREN		" does a dance on " "'s Mirv grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	MIRVGREN		" gets juiced by " "'s Mirv grenad"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	MIRVGREN		" is shreaded by " "'s AirMirv"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	PIPEBOMB		" is caught by "  "'s pipebomb trap"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	PIPEBOMB		" fell victim to "  "'s fireworks"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	PIPEBOMB		" is shreaded by " "'s pipebomb trap"
 
 // Medic
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	BIOWEAPON			" dies from " "'s mysterious tropical disease"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	BIOWEAPON			" escapes infection from "  "  by dying first"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	BIOWEAPON			" escapes infection from " " by dying first"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISEASE				" dies from " "'s social disease"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	BIOWEAPON		" dies from " "'s mysterious tropical disease"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	BIOWEAPON		" escapes infection from "  "  by dying first"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	BIOWEAPON		" escapes infection from " " by dying first"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISEASE			" dies from " "'s social disease"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_NAILGUN		" was perforated by " "'s nailgun"
 
 // Hwguy
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	20MM				" gets shredded by " "'s 20mm cannon"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	20MM				" torso is removed by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	20MM			" gets shredded by " "'s 20mm cannon"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	20MM			" torso is removed by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	ASSAULT_CANNON		" gets sawn in half by "
 
 // Pyro
@@ -390,180 +389,183 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	INCENDIARY_ROCKET	" gets well done by " "'s incendiary rocket"
 
 // Spy
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	GASGREN				" gags on " "'s noxious gasses"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	GASGREN				" sniffs to much of " "'s glue"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	GRAPPLE				" grappled with "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE				" gets knifed from behind by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE				" was stabbed by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE				" is ass-knifed by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	LUDE				" is over-dosed by " "'s ludes"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	GASGREN			" gags on " "'s noxious gasses"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	GASGREN			" sniffs to much of " "'s glue"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	GRAPPLE			" grappled with "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE			" gets knifed from behind by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE			" was stabbed by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE			" is ass-knifed by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	TRANQUILIZER		" is over-dosed by " "'s ludes"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	TRANQUILIZER		" is put to sleep by "
 
 // Engineer
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISPENSER			" didn't insert the correct change into " "'s dispenser"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISPENSER			" thought " "'s dispenser was a mechanical bull"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DRONE				" was killed by " "'s Laser Drone"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	DRONE				" was vaporized by " "'s Laser Drone"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	EMPGREN				" stands near some ammo as " "'s EMP nukes it"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	EMPGREN				"'s ammo detonates him as "  "'s EMP fries it"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	EMPGREN				"'s gets vaporized by " "'s EMP grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	RAIL_GUN			" gets a hole in his heart from " "'s railgun"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	RAIL_GUN			" spews juice thru holes from " "'s railgun"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN			" gets destroyed by " "'s exploding sentrygun"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN			" hates " "'s sentry gun"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN			" is creamed by " "'s sentry gun"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN			" is mown down by " "'s sentry gun"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN			"'s spine is extracted by " "'s sentry gun"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SPANNER				" was spanner-murdered by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SPANNER				" was spanner-wacked by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISPENSER		" didn't insert the correct change into " "'s dispenser"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DISPENSER		" thought " "'s dispenser was a mechanical bull"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DRONE			" was killed by " "'s Laser Drone"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	DRONE			" was vaporized by " "'s Laser Drone"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	EMPGREN			" stands near some ammo as " "'s EMP nukes it"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	EMPGREN			"'s ammo detonates him as "  "'s EMP fries it"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	EMPGREN			"'s gets vaporized by " "'s EMP grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	RAIL_GUN		" gets a hole in his heart from " "'s railgun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	RAIL_GUN		" spews juice thru holes from " "'s railgun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN		" gets destroyed by " "'s exploding sentrygun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN		" hates " "'s sentry gun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN		" is creamed by " "'s sentry gun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN		" is mown down by " "'s sentry gun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN		"'s spine is extracted by " "'s sentry gun"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SPANNER			" was spanner-murdered by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SPANNER			" was spanner-wacked by "
 
 // General Kills
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" is split from crotch to sternum by "		 "'s axe swing"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" is split in two with a powerful axe blow from "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was put on the chop block by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was sliced and diced by " "'s blade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					"'s death put another notch on "  "'s axe"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					"'s mellon was split by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was slit open by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" caught too much shrapnel from " "'s grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" fetched " "'s pineapple"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" got up-close and personal with "  "'s grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" played catch with " "'s grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" received a pineapple enema from "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" stops to ponder the technical details of "  "'s grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" surfs on a grenade from "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" thought " " was tossing him a spare grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" tried to pick up "  "'s hot potato"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN			" tries to hatch " "'s grenade"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE				" was knife-murdered by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" caught one too many nails from "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" ran into "  "'s nails"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN				" was turned into " "'s pin-cushion"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" got blasted by "  "'s last resort"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" got more than a powderburn from " "'s shotgun blast"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" got too close to "  "'s muzzleflash"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" practices being " "'s clay pigeon"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" was fed a lead diet by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN				" was on the receiving end of "		"'s shotgun barrel"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SPIKE				"'s leg was amputated by " "'s spike"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			" is split from crotch to sternum by " "'s axe swing"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			" is split in two with a powerful axe blow from "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			" was put on the chop block by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			" was sliced and diced by " "'s blade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			"'s death put another notch on "  "'s axe"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			"'s mellon was split by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			" was slit open by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" caught too much shrapnel from " "'s grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" fetched " "'s pineapple"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" got up-close and personal with "  "'s grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" played catch with " "'s grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" received a pineapple enema from "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" stops to ponder the technical details of "  "'s grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" surfs on a grenade from "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" thought " " was tossing him a spare grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" tried to pick up "  "'s hot potato"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	HANDGREN		" tries to hatch " "'s grenade"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE			" was knife-murdered by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN			" caught one too many nails from "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN			" ran into "  "'s nails"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGUN			" was turned into " "'s pin-cushion"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" got blasted by "  "'s last resort"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" got more than a powderburn from " "'s shotgun blast"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" got too close to "  "'s muzzleflash"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" practices being " "'s clay pigeon"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" was fed a lead diet by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SHOTGUN			" was on the receiving end of " "'s shotgun barrel"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SPIKE			"'s leg was amputated by " "'s spike"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		" gets ventilated by "  "'s super-shotgun blast"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		" got a double-dose of "  "'s buckshot"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		" unfortunately forgot "  " carried a super-shotgun"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		" was turned into swiss cheese by " "'s buckshot"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SUPER_SHOTGUN		"'s body got chuck full of " "'s lead pellets"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	TELEFRAG			" got in the way of "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	TOASTER				" swims with " "'s toaster"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	TELEFRAG		" got in the way of "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	TOASTER			" swims with " "'s toaster"
 
 // Player Deaths
-#DEFINE OBITUARY	PLAYER_DEATH	BIOWEAPON			" died impossibly!"
-#DEFINE OBITUARY	PLAYER_DEATH	DISPENSER			" dispenses with himself."
-#DEFINE OBITUARY	PLAYER_DEATH	EMPGREN				" detonates an ammo box too close to him"
-#DEFINE OBITUARY	PLAYER_DEATH	FALL				" makes a crater"
-#DEFINE OBITUARY	PLAYER_DEATH	NOWEAPON			" shoots his teammate one too many times"
-#DEFINE OBITUARY	PLAYER_DEATH	SENTRYGUN			" obstructs his team's sentry gun"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" tried to use the "
+#DEFINE OBITUARY	PLAYER_DEATH	BIOWEAPON		" died impossibly!"
+#DEFINE OBITUARY	PLAYER_DEATH	DISPENSER		" dispenses with himself."
+#DEFINE OBITUARY	PLAYER_DEATH	EMPGREN			" detonates an ammo box too close to him"
+#DEFINE OBITUARY	PLAYER_DEATH	FALL			" makes a crater"
+#DEFINE OBITUARY	PLAYER_DEATH	NOWEAPON		" shoots his teammate one too many times"
+#DEFINE OBITUARY	PLAYER_DEATH	SENTRYGUN		" obstructs his team's sentry gun"	// check this, its a atk
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" tried to use the "
 
 
 // Suicides
-#DEFINE OBITUARY	PLAYER_SUICIDE	CALTROP				" stepped on too many of his own caltrops"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DETPACK				" detpacks himself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DETPACK				" set the detpack and forgot to run"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DISPENSER			" used his dispenser for all the wrong reasons"
-#DEFINE OBITUARY	PLAYER_SUICIDE	DRONE				"'s Laser Drone malfunctioned"
-#DEFINE OBITUARY	PLAYER_SUICIDE	EMPGREN				" detonates an ammo box too close to him"
-#DEFINE OBITUARY	PLAYER_SUICIDE	EMPGREN				" nukes his own ammo"
-#DEFINE OBITUARY	PLAYER_SUICIDE	EMPGREN				" explodes his ammo and body"
+#DEFINE OBITUARY	PLAYER_SUICIDE	CALTROP			" stepped on too many of his own caltrops"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DETPACK			" detpacks himself"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DETPACK			" set the detpack and forgot to run"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DISPENSER		" used his dispenser for all the wrong reasons"
+#DEFINE OBITUARY	PLAYER_SUICIDE	DRONE			"'s Laser Drone malfunctioned"
+#DEFINE OBITUARY	PLAYER_SUICIDE	EMPGREN			" detonates an ammo box too close to him"
+#DEFINE OBITUARY	PLAYER_SUICIDE	EMPGREN			" nukes his own ammo"
+#DEFINE OBITUARY	PLAYER_SUICIDE	EMPGREN			" explodes his ammo and body"
 #DEFINE OBITUARY	PLAYER_SUICIDE	FLAME_THROWER		" torches himself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	FLASHGREN			" flash grenade himself to death"
-#DEFINE OBITUARY	PLAYER_SUICIDE	FLASHGREN			" is charred by his own flash grenade"
-#DEFINE OBITUARY	PLAYER_SUICIDE	GASGREN				" gags on his own gas... pew!"
-#DEFINE OBITUARY	PLAYER_SUICIDE	GASGREN				" chokes on his own gas"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" grenades himself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" caught the end of his own grenade"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" got splattered by his own grenade"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" got to know his grenade too well"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" got too close to his own grenade"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" let his own grenade get the best of him"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" sat on his own grenade"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" stared at his grenade too long"
-#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN			" tiptoed over his own grenade"
+#DEFINE OBITUARY	PLAYER_SUICIDE	FLASHGREN		" flash grenade himself to death"
+#DEFINE OBITUARY	PLAYER_SUICIDE	FLASHGREN		" is charred by his own flash grenade"
+#DEFINE OBITUARY	PLAYER_SUICIDE	GASGREN			" gags on his own gas... pew!"
+#DEFINE OBITUARY	PLAYER_SUICIDE	GASGREN			" chokes on his own gas"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" grenades himself"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" caught the end of his own grenade"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" got splattered by his own grenade"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" got to know his grenade too well"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" got too close to his own grenade"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" let his own grenade get the best of him"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" sat on his own grenade"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" stared at his grenade too long"
+#DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" tiptoed over his own grenade"
 #DEFINE OBITUARY	PLAYER_SUICIDE	INCENDIARY_ROCKET	" chars himself with an incendiary rocket"
-#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN			" allowed his Mirv to turn against him"
-#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN			" goes to pieces"
-#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN			" practiced his own Mirv dance"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NAILGREN			" hammers himself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" bakes himself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" couldn't outrun his airspam"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" died impossibly!"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" has himself bombed"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" hates himself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" is blown to bits"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" nails himself"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" shocks himself to death."
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			"'s JetPack malfunctions"
-#DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB			" pipebombs himself..."
-#DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB			" ambushes himself with his own pipebombs"
-#DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB			" tried to juggle his own pipebombs"
-#DEFINE OBITUARY	PLAYER_SUICIDE	PROXI				" hugs his proximity grenade"
+#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" allowed his Mirv to turn against him"
+#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" goes to pieces"
+#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" practiced his own Mirv dance"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NAILGREN		" hammers himself"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" bakes himself"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" couldn't outrun his airspam"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" died impossibly!"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" has himself bombed"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" hates himself"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" is blown to bits"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" nails himself"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" shocks himself to death."
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		"'s JetPack malfunctions"
+#DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB		" pipebombs himself..."
+#DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB		" ambushes himself with his own pipebombs"
+#DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB		" tried to juggle his own pipebombs"
+#DEFINE OBITUARY	PLAYER_SUICIDE	PROXI			" hugs his proximity grenade"
 #DEFINE OBITUARY	PLAYER_SUICIDE	ROCKET_LAUNCHER		" checks if his weapon is loaded"
-#DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN			" gets wasted by his sentry gun"
-#DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN			" intercepts his sentry gun's rocket"
-#DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN			" gets too friendly with his sentrygun"
-#DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN			" crossed his sentry gun's line of fire"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" shoots his teammate one too many times."
-//#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			"It's " "'s party and he'll cry if he wants to!"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" gets too selfish with his gifts"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON			" wasn't born so beautiful after all"
+#DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN		" gets wasted by his sentry gun"
+#DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN		" intercepts his sentry gun's rocket"
+#DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN		" gets too friendly with his sentrygun"
+#DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN		" crossed his sentry gun's line of fire"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" shoots his teammate one too many times."
+//#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		"It's " "'s party and he'll cry if he wants to!"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" gets too selfish with his gifts"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" wasn't born so beautiful after all"
 
 // Team Kills
-#DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" mows down teammate "
-#DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" checks his glasses after killing "
-#DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" gets a frag for the other team with " "'s death"
-#DEFINE OBITUARY	X_TEAMKILLS_Y	NOWEAPON			" killed his supposed friend "
-#DEFINE OBITUARY	X_TEAMKILLED_BY_Y	NOWEAPON		" didn't survive the operation by "
+#DEFINE OBITUARY	X_TEAMKILLS_Y	TEAMKILL		" mows down teammate "
+#DEFINE OBITUARY	X_TEAMKILLS_Y	TEAMKILL		" checks his glasses after killing "
+#DEFINE OBITUARY	X_TEAMKILLS_Y	TEAMKILL		" gets a frag for the other team with " "'s death"
+#DEFINE OBITUARY	X_TEAMKILLS_Y	TEAMKILL		" killed his supposed friend "
+#DEFINE OBITUARY	X_TEAMKILLED_BY_Y	NOWEAPON	" didn't survive the operation by " //Is this teamkill or not?
 
 // Death messages (natural causes)
-#DEFINE OBITUARY	PLAYER_DEATH	DROWN				" can't swim worth a crap!"
-#DEFINE OBITUARY	PLAYER_DEATH	DROWN				" can't breathe water"
-#DEFINE OBITUARY	PLAYER_DEATH	DROWN				" visits the Hell fires"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was mauled by a Rottweiler"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" blew up"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was crushed"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was shot"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was torn up by an enemy Rottweiler"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" was stopped by an enemy autoturret"
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" didn't survive the operation."
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP				" tripped off the worldmap."
+#DEFINE OBITUARY	PLAYER_DEATH	DROWN			" can't swim worth a crap!"
+#DEFINE OBITUARY	PLAYER_DEATH	DROWN			" can't breathe water"
+#DEFINE OBITUARY	PLAYER_DEATH	DROWN			" visits the Hell fires"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" was mauled by a Rottweiler"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" blew up"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" was crushed"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" was shot"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" was torn up by an enemy Rottweiler"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" was stopped by an enemy autoturret"
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" didn't survive the operation."
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" tripped off the worldmap."
 
 //FLAG ALERTS
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" «œ‘ the ≈Œ≈ÕŸ flag!"					//2fort5 .br
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" «œ‘ the “≈ƒ flag!"					//2fort5 .br
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" «œ‘ the ≈Œ≈ÕŸ flag!"		//2fort5 .br
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" «œ‘ the “≈ƒ flag!"		//2fort5 .br
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ‘œœÀ Ÿœ’“ key!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ‘œœÀ the ≈Œ≈ÕŸ key!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ÁÔÙ ‚ÏıÂßÛ ÊÏ·ÁÆ"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ÁÔÙ ÚÂ‰ßÛ ÊÏ·ÁÆ"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Ë·Û ÙËÂ “Â‰ ∆Ï·Á" 					//Dissect
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Ë·Û ÙËÂ “Â‰ ∆Ï·Á"		//Dissect
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" GOT the BLUE flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" GOT the RED flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got the red flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Has the Blue Flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" Has the Red Flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE ¬Ã’≈ FlaG!"					//Fcast
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE “≈ƒ FlaG!"					//Fcast
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE ¬Ã’≈ FlaG!"		//Fcast
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" StolE ThE “≈ƒ FlaG!"		//Fcast
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" TOOK the ENEMY key"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got blue's flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got red's flag"
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got your control key!"				//nmtrees
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" got your control key!"	//nmtrees
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy Key."
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" grabbed the enemy key."
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ¡⁄’“≈ flag!"			//Excel
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the √“…Õ”œŒ flag"			//Excel
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the ¡⁄’“≈ flag!"	//Excel
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the √“…Õ”œŒ flag"	//Excel
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the “≈ƒ flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the red flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken your Key."
-#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the Blue Flag" 					//Dissect
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the Blue Flag"		//Dissect
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the blue key!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the enemy flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the red flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the red key!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has your flag"
@@ -582,6 +584,8 @@
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ‘œœÀ Ÿœ’“ flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" ‘œœÀ the ≈Œ≈ÕŸ flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" √¡–‘’“≈ƒ the ≈Œ≈ÕŸ flag!"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the blue flag"
 
 
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped red's flag"
@@ -595,49 +599,52 @@
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" was incinerated by the flag's heat"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" Ãœ”‘ the"
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" ‰ÚÔÂ‰"
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		"Dropped the flag"						//mbasesr.bsp on au servers forget the space
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" Ãœ”‘ the ¬Ã’≈ flag!"					//2fort5 .br
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" Ãœ”‘ the “≈ƒ flag!"					//2fort5 .br
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ‰ÚÔÂ‰ ÙËÂ ¬ÏıÂ ∆Ï·Á"				//Dissect
-#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ‰ÚÔÂ‰ ÙËÂ “Â‰ ∆Ï·Á"					//Dissect
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		"Dropped the flag"		//mbasesr.bsp on au servers forget the space
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" Ãœ”‘ the ¬Ã’≈ flag!"		//2fort5 .br
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" Ãœ”‘ the “≈ƒ flag!"		//2fort5 .br
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ‰ÚÔÂ‰ ÙËÂ ¬ÏıÂ ∆Ï·Á"	//Dissect
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" ‰ÚÔÂ‰ ÙËÂ “Â‰ ∆Ï·Á"		//Dissect
 
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" has captured"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" capped the red flag"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" capped the blue flag"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" captured"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"captured"								//h4rdcore.bsp on au servers forget the space
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" cap's the flag for the"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"captured"			//h4rdcore.bsp on au servers forget the space
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Cap's the flag for the Blue team."
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Cap's the flag for the Red team."
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" „·ÙıÚÂ‰"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ·„ÙÈˆ·ÙÂ‰"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" slams the Spaz-Ball on BLUE!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shows RED How It's Done!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Decides YELLOW Must Lose!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shoves It Up GREENS Backside!"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the ≈Œ≈ÕŸ flag!"				//2fort5 .br
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" brought back a ¬ÈÛ„ıÈÙ"				//Biscuit Flag Capture
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the ≈Œ≈ÕŸ flag!"				//2fort5 .br
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Lava CP cap"						//Dissect 1
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Bridge CPî cap"						//Dissect 2
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Water CPï cap"						//Dissect 3
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Circles CPñ cap"						//Dissect 4
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Rook CPó cap"							//Dissect 5
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Attic CPò cap"						//Dissect 6
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the ≈Œ≈ÕŸ flag!"	//2fort5 .br
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" brought back a ¬ÈÛ„ıÈÙ"	//Biscuit Flag Capture
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the ≈Œ≈ÕŸ flag!"	//2fort5 .br
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Lava CP cap"			//Dissect 1
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Bridge CPî cap"		//Dissect 2
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Water CPï cap"		//Dissect 3
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Circles CPñ cap"		//Dissect 4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Rook CPó cap"			//Dissect 5
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Attic CPò cap"		//Dissect 6
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ¬ÏıÂ ◊·ÚÂËÔıÛÂ ≠ √–±"		//Canalzon 1 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ¡Ú„Ë “ÔÔÌ ≠ √–≤"			//Canalzon 2 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ÃÈ‚Ú·Ú˘ ≠ √–≥"			//Canalzon 3 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ¡Ú„Ë “ÔÔÌ ≠ √–≤"		//Canalzon 2 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ÃÈ‚Ú·Ú˘ ≠ √–≥"		//Canalzon 3 blue team
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ”Ì·ÏÏ ◊·ÚÂËÔıÛÂ ≠ √–¥"	//Canalzon 4 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ∆ÔıÓÙ·ÈÓ ≠ √–µ"			//Canalzon 5 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ¬·Ï„ÔÓ˘ ≠ √–∂"			//Canalzon 6 blue team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ¬Ô·ÙËÔıÛÂ ≠ √–∑"			//Canalzon 7 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ∆ÔıÓÙ·ÈÓ ≠ √–µ"		//Canalzon 5 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ¬·Ï„ÔÓ˘ ≠ √–∂"		//Canalzon 6 blue team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the ¬Ô·ÙËÔıÛÂ ≠ √–∑"		//Canalzon 7 blue team
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€¬ÏıÂ ÙÂ·Ì› captures the “Â‰ ◊·ÚÂËÔıÛÂ ≠ √–∏"		//Canalzon 8 blue team
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ¬ÏıÂ ◊·ÚÂËÔıÛÂ ≠ √–±"		//Canalzon 1 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ¡Ú„Ë “ÔÔÌ ≠ √–≤"			//Canalzon 2 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ÃÈ‚Ú·Ú˘ ≠ √–≥"				//Canalzon 3 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ¡Ú„Ë “ÔÔÌ ≠ √–≤"		//Canalzon 2 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ÃÈ‚Ú·Ú˘ ≠ √–≥"			//Canalzon 3 red team
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ”Ì·ÏÏ ◊·ÚÂËÔıÛÂ ≠ √–¥"		//Canalzon 4 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ∆ÔıÓÙ·ÈÓ ≠ √–µ"			//Canalzon 5 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ¬·Ï„ÔÓ˘ ≠ √–∂"				//Canalzon 6 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ¬Ô·ÙËÔıÛÂ ≠ √–∑"			//Canalzon 7 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ∆ÔıÓÙ·ÈÓ ≠ √–µ"		//Canalzon 5 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ¬·Ï„ÔÓ˘ ≠ √–∂"			//Canalzon 6 red team
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the ¬Ô·ÙËÔıÛÂ ≠ √–∑"		//Canalzon 7 red team
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› captures the “Â‰ ◊·ÚÂËÔıÛÂ ≠ √–∏"		//Canalzon 8 red team
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› √¡–‘’“≈ƒ the “≈ƒ flag!"					//kw4
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› √¡–‘’“≈ƒ the ¬Ã’≈ flag!"				//kw4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› √¡–‘’“≈ƒ the “≈ƒ flag!"			//kw4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		"€“Â‰ ÙÂ·Ì› √¡–‘’“≈ƒ the ¬Ã’≈ flag!"			//kw4
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the ¬Ã’≈ flag!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the “≈ƒ flag!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ Ÿœ’“ flag!"
