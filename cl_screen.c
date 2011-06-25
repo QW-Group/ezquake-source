@@ -182,7 +182,7 @@ cvar_t  scr_teaminfo_loc_width	 = {"scr_teaminfo_loc_width",   "5"};
 cvar_t  scr_teaminfo_name_width	 = {"scr_teaminfo_name_width",  "6"};
 cvar_t	scr_teaminfo_low_health	 = {"scr_teaminfo_low_health",  "25"};
 cvar_t	scr_teaminfo_armor_style = {"scr_teaminfo_armor_style", "3"};
-cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","0"};
+cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","1"};
 cvar_t  scr_teaminfo_show_enemies= {"scr_teaminfo_show_enemies","0"};
 cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2"};
 cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1"};
@@ -1666,6 +1666,8 @@ char *SCR_GetWeaponShortNameByFlag (int flag)
 	return "";
 }
 
+qbool Has_Both_RL_and_LG (int flags) { return (flags & IT_ROCKET_LAUNCHER) && (flags & IT_LIGHTNING); }
+
 static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, qbool its_shownick)
 {
 	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr;
@@ -1717,10 +1719,15 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 				switch (scr_teaminfo_weapon_style.integer) {
 				case 1:
-					if(!width_only)
+					if(!width_only) {
+						if (Has_Both_RL_and_LG(ti_cl->items)) {
+							Draw_ColoredString (x, y, "rlg", false);
+						}
+						else {
 						Draw_ColoredString (x, y, SCR_GetWeaponShortNameByFlag(BestWeaponFromStatItems( ti_cl->items )), false);
+						}
+					}
 					x += 3 * FONTWIDTH;
-
 					break;
 				default: // draw image by default
 					if(!width_only)

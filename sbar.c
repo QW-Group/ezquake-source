@@ -106,7 +106,7 @@ cvar_t	scr_scoreboard_teamsort = {"scr_scoreboard_teamsort", "1"};
 cvar_t	scr_scoreboard_forcecolors = {"scr_scoreboard_forcecolors", "1"};
 cvar_t	scr_scoreboard_showfrags = {"scr_scoreboard_showfrags", "1"};
 cvar_t	scr_scoreboard_drawtitle = {"scr_scoreboard_drawtitle", "1"};
-cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "0"};
+cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "1"};
 
 #ifdef GLQUAKE
 cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
