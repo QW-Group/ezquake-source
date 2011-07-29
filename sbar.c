@@ -1076,7 +1076,7 @@ void Sbar_SoloScoreboard (void)
 static qbool Sbar_ShowTeamKills(void)
 {
 	if (cl.teamfortress) {
-		return ((cl.teamplay & 21) != 21);
+		return ((cl.teamplay & 21) != 21); // 21 = (1)Teamplay On + (4)Team-members take No damage from direct fire + (16)Team-members take No damage from area-affect weaponry, so its like teamplay is off??
 	}
 	else {
 		// in teamplay 3 it's not possible to make teamkills
@@ -1091,6 +1091,8 @@ static void Sbar_DeathmatchOverlay (int start) {
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
 	char myminutes[4], fragsstr[10];
+	char *color;
+	char *tkscolor;
 	int             scr_scoreboard_drawfps;
     int             offset;
     player_info_t *s;
@@ -1301,13 +1303,21 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 		// draw pl
 		p = s->pl;
-
-		if (p > 25) {
-			snprintf (num, sizeof(num), "&cD33%3i", p);
-			Draw_ColoredString (x, y, num, 1);
-		} else {
-			snprintf (num, sizeof(num), "&cDB0%3i", p);
+		if (p < 2) {	// pl of 0-1 white
+			snprintf (num, sizeof(num), "%3i", p);
 			Draw_ColoredString (x, y, num, 0);
+		}
+		else if (p < 11) {	// pl of 2-10 yellow
+			snprintf (num, sizeof(num), "&cdd2%3i", p);
+			Draw_ColoredString (x, y, num, 1);
+		}
+		else if (p < 21) {	// pl of 11-20 orange
+			snprintf (num, sizeof(num), "&cf50%3i", p);
+			Draw_ColoredString (x, y, num, 1);
+		}
+		else {	// pl >20 red
+			snprintf (num, sizeof(num), "&cf00%3i", p);
+			Draw_ColoredString (x, y, num, 1);
 		}
 
 		x += 32;
@@ -1330,7 +1340,8 @@ static void Sbar_DeathmatchOverlay (int start) {
 				snprintf (myminutes, sizeof (myminutes), "   ");
 			}
 		}
-
+		
+		// draw spectator
 		if (s->spectator) {
 			snprintf (scorerow, sizeof(scorerow), " %s", myminutes);
 			Draw_String (x, y, scorerow); // draw time
@@ -1383,7 +1394,6 @@ static void Sbar_DeathmatchOverlay (int start) {
 		}
 		Draw_String (x, y, scorerow);
 
-
 		if (statswidth) {
 			Stats_GetBasicStats(s - cl.players, playerstats);
 			if (stats_touches || stats_caps)
@@ -1392,14 +1402,35 @@ static void Sbar_DeathmatchOverlay (int start) {
 			scorerow[0] = 0;
 
 			if (stats_team)
-				snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF60%3i &cF00%3i ", playerstats[0], playerstats[2], playerstats[1]);
+				//snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF60%3i &cF00%3i ", playerstats[0], playerstats[2], playerstats[1]);
+			{			
+				if (playerstats[2] < 1) { tkscolor = "FFF"; }	// if 0 teamkills, display "0" in white
+				else { tkscolor = "FF0"; }	// if >0 teamkills, display yellow
+				snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &c%s%3i &cF00%3i ", playerstats[0], tkscolor, playerstats[2], playerstats[1]);
+			}
 			else
 				snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF00%3i ", playerstats[0], playerstats[1]);
 
-			if (stats_touches)
-				strlcat (scorerow, va("  &cFD0%2i ", playerstats[4]), sizeof (scorerow));
-			if (stats_caps)
-				strlcat (scorerow, va("  &c24F%2i ", playerstats[6]), sizeof (scorerow));
+			
+			if (stats_touches) // flag touches
+			{
+				if (playerstats[4] < 1) { color = "FFF"; }		// 0 flag touches white
+				else if (playerstats[4] < 2) { color = "FF0"; } // 1 flag touches yellow
+				else if (playerstats[4] < 5) { color = "F50"; } // 2-4 flag touches orange
+				else if (playerstats[4] < 10) { color = "B3B"; }// 5-9 flag touches pink
+				else { color = "0F0"; }							// >9 flag touches green
+			strlcat (scorerow, va("  &c%s%2i ", color, playerstats[4]), sizeof (scorerow));
+			}
+
+			if (stats_caps) // flag captures
+			{
+				if (playerstats[6] < 1) { color = "FFF"; }		// 0 caps white
+				else if (playerstats[6] < 2) { color = "FF0"; } // 1 cap yellow
+				else if (playerstats[6] < 5) { color = "F50"; } // 2-4 caps orange
+				else if (playerstats[6] < 10) { color = "B3B"; }// 5-9 caps pink
+				else { color = "0F0"; }							// >9 caps green
+			strlcat (scorerow, va("  &c%s%2i ", color, playerstats[6]), sizeof (scorerow));
+			}
 
 			Draw_ColoredString(x + stats_xoffset - 9 * 8, y, scorerow, 0);
 		}

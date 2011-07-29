@@ -496,16 +496,17 @@ void GfxInfo_f( void )
 		ST_Printf( PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string );
 //	ST_Printf( PRINT_ALL, "GL_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
 //	ST_Printf( PRINT_ALL, "GL_MAX_ACTIVE_TEXTURES_ARB: %d\n", glConfig.maxActiveTextures );
-	ST_Printf( PRINT_ALL, "\nPIXELFORMAT: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
-	ST_Printf( PRINT_ALL, "MODE: %d, %d x %d %s hz:", r_mode.integer, glConfig.vidWidth, glConfig.vidHeight, fsstrings[r_fullscreen.integer == 1] );
+	ST_Printf( PRINT_ALL, "\nPIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
+	ST_Printf( PRINT_ALL, "MODE: %d, %d x %d ", r_mode.integer, glConfig.vidWidth, glConfig.vidHeight);
 	if ( glConfig.displayFrequency )
 	{
-		ST_Printf( PRINT_ALL, "%d\n", glConfig.displayFrequency );
+		ST_Printf( PRINT_ALL, "%d", glConfig.displayFrequency );
 	}
 	else
 	{
-		ST_Printf( PRINT_ALL, "N/A\n" );
+		ST_Printf( PRINT_ALL, "N/A" );
 	}
+	Com_Printf ("hz %s\n", fsstrings[r_fullscreen.integer == 1]);
 	ST_Printf( PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 
 #if 0

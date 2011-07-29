@@ -2165,6 +2165,7 @@ void FS_Dir_f (void)
 FS_Locate_f
 ============
 */
+char * FS_Locate_GetPath (const char *file);
 void FS_Locate_f (void)
 {
 	flocation_t loc;
@@ -2190,7 +2191,18 @@ void FS_Locate_f (void)
 		Com_Printf("Not found\n");
 }
 
-
+char * FS_Locate_GetPath (const char *file)
+{
+	flocation_t loc;
+	if (FS_FLocateFile(file, FSLFRT_LENGTH, &loc)>=0)
+	{	//loc.search->funcs->PrintPath(loc.search->handle);
+		return (char *) loc.search->handle;
+	}
+	else
+	{
+		return "";
+	}
+}
 
 int fs_hash_dups;
 int fs_hash_files;

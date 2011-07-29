@@ -494,7 +494,7 @@ GLOBAL void TP_Msg_Point_f (void)
 			else if (INPOINT(mh))		point = tp_ib_name_mh;
 			
 			//TF
-			else if (INPOINT(flag))		point = tp_ib_name_flag; // note we cannot tell if it's enemy or team flag
+			else if (INPOINT(flag))		point = tp_ib_name_flag; // note we cannot tell if it's enemy or team flag (needs fix!)
 			else if (INPOINT(disp))		point = "{$point}";	// note we cannot tell if it's enemy or team disp
 			else if (INPOINT(sentry))	point = "{$point}"; // note we cannot tell if it's enemy or team sent
 			
@@ -507,11 +507,13 @@ GLOBAL void TP_Msg_Point_f (void)
 		else point = "{$point}"; // this should never happen
 	}
 	
+	/* I think it is confusing to include this in the message, it will look like this for example: "Up2: Q pack at [loc]". Not sure if letting teammates know we have quad is important!
 		if (HAVE_POWERUP())
 			powerup = "$colored_short_powerups ";
 		else
 			powerup = "";
-	
+	*/
+
 	//led(1) item(2) at loc(3)
 	TP_Send_TeamSay("%s%s %s", powerup, point, at_location);
 }

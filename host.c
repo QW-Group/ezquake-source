@@ -657,17 +657,16 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	
 	Hud_262LoadOnFirstStart();
 
-	Com_Printf_State (PRINT_INFO, "Exe: "__TIME__" "__DATE__"\n");
-	Com_Printf_State (PRINT_INFO, "Hunk allocation: %4.1f MB.\n", (float) host_memsize / (1024 * 1024));
+	Com_Printf_State (PRINT_INFO, "Exe: "__DATE__" "__TIME__"\n");
+	Com_Printf_State (PRINT_INFO, "Hunk allocation: %4.1f MB\n", (float) host_memsize / (1024 * 1024));
 
 	Com_Printf ("\nezQuake %s\n\n", VersionString());
 	Com_Printf(Host_PrintBars("ezQuake\x9c" "SourceForge\x9c" "net", 38));
-	Com_Printf(Host_PrintBars("ezQuake Initialized", 38));
-	Com_Printf("\n");
-	Com_Printf ("\nType /help to access the manual.\nUse /describe to learn about commands.\n", VersionString());
+	Com_Printf(Host_PrintBars("εϊΡυαλε Ιξιτιαμιϊεδ", 38)); // brown "ezQuake Initialized"
+	Com_Printf ("Type /help to access the manual.\nUse /describe for help on commands.\n\n", VersionString());
 
 	if ((vf = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
-		Cbuf_AddText ("exec autoexec.cfg\n");
+		Cbuf_AddText ("exec autoexec.cfg\n\n");
 		VFS_CLOSE(vf);
 	}
 
@@ -679,6 +678,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	// Verify that ezQuake is associated with the QW:// protocl handler.
 	//
 	{
+		#define INITIAL_CON_WIDTH 35
 		extern qbool CL_CheckIfQWProtocolHandler();
 		extern cvar_t cl_verify_qwprotocol;
 
@@ -690,18 +690,17 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		else if (cl_verify_qwprotocol.integer == 1 && !CL_CheckIfQWProtocolHandler())
 		{
 			// Check if the running exe is the one associated with the qw:// protocol.
-
-			Com_PrintVerticalBar(0.8 * vid.conwidth / 8);
+			Com_PrintVerticalBar(INITIAL_CON_WIDTH);
 			Com_Printf("\n");
-			Com_Printf("This ezQuake is not associated with the "); 
-			Com_Printf("\x02QW:// protocol.\n");
-			Com_Printf("Register it using "); 
+			Com_Printf("ezQuake is not associated with the ");
+			Com_Printf("\x02QW:// protocol. ");
+			Com_Printf("Register it using"); 
 			Com_Printf("\x02/register_qwurl_protocol\n");
 			Com_Printf("(set ");
 			Com_Printf("\x02 cl_verify_qwprotocol ");
 			Com_Printf("to 0 to hide this warning)\n");
-			Com_PrintVerticalBar(0.8 * vid.conwidth / 8);
-			Com_Printf("\n");
+			Com_PrintVerticalBar(INITIAL_CON_WIDTH);
+			Com_Printf("\n\n");
 		}
 	}
 	#endif // WIN32

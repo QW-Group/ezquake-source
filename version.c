@@ -73,7 +73,7 @@ CL_Version_f
 void CL_Version_f (void)
 {
 	Com_Printf ("ezQuake %s\n", VersionString());
-	Com_Printf ("Exe: "__TIME__" "__DATE__"\n");
+	Com_Printf ("Exe: "__DATE__" "__TIME__"\n");
 
 #ifdef _DEBUG
 	Con_Printf("debug build\n");

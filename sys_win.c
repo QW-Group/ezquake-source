@@ -1059,9 +1059,9 @@ qbool WinCheckQWURL(void)
 	// Instead of creating a completly custom messagebox (which is a major pain)
 	// just show a normal one, but replace the text on the buttons using event hooking.
 	retval = MsgBoxEx(mainwindow, 
-					"The current ezQuake client is not registered as the default qw:// protocol handler!\n"
-					"This lets you launch ezQuake by clicking qw://server:port URLs like a normal URL.\n\n"
-					"Do you want to set ezQuake as the default qw:// protocol handler?", 
+					"The current ezQuake client is not associated with the qw:// protocol,\n"
+					"which lets you launch ezQuake by opening qw:// URLs (.qtv files).\n\n"
+					"Do you want to associate ezQuake with the qw:// protocol?",
 					"QW URL Protocol", QWURLProtocolButtonsHookProc, MB_YESNOCANCEL | MB_ICONWARNING);
 
 	switch (retval)

@@ -476,8 +476,9 @@ void Cmd_Exec_f (void)
 			return;
 		}
 	}
-	if (cl_warnexec.integer || developer.integer)
-		Com_Printf ("execing %s\n", name);
+	if (cl_warnexec.integer || developer.integer) {
+		Com_Printf("execing %s/%s\n", FS_Locate_GetPath(name), name);
+	}
 
 	if (cbuf_current == &cbuf_svc) {
 		Cbuf_AddTextEx (&cbuf_main, f);

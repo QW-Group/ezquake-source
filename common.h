@@ -234,6 +234,8 @@ char *FS_LegacyDir (char *media_dir);
 int FS_FileLength (FILE *f);
 int FS_FileOpenRead (char *path, FILE **hndl);
 
+char * FS_Locate_GetPath (const char *file);
+
 //============================================================
 // Alternative variant manipulation with info strings
 //============================================================
