@@ -796,7 +796,6 @@ void IN_RawInput_DeInit(void)
 		return;
 
 	IN_RawInput_DeRegister();
-
 	Q_free(rawmice);
 	Q_free(raw);
 
@@ -851,6 +850,7 @@ void IN_RawInput_Init(void)
 	PRAWINPUTDEVICELIST pRawInputDeviceList;
 	int inputdevices, i, j, mtemp;
 	char dname[MAX_RI_DEVICE_SIZE];
+	qbool validcustomdevice = false;
 
 	// Return 0 if rawinput is not available
 	HMODULE user32 = LoadLibrary("user32.dll");
@@ -927,8 +927,9 @@ void IN_RawInput_Init(void)
 		return;
 	}
 
-	// Loop again and bind devices
-	rawmice = Q_malloc(sizeof(rawmouse_t) * mtemp);
+	// Loop again and bind devices, malloc only for 1 mouse if we have specified a custom device
+	// otherwise malloc for all devices
+	rawmice = Q_malloc(sizeof(rawmouse_t) * (in_raw_custom_device_enable.integer ? 1 : mtemp));
 	for (i = 0; i < inputdevices; i++)
 	{
 		if (pRawInputDeviceList[i].dwType == RIM_TYPEMOUSE)
@@ -955,24 +956,32 @@ void IN_RawInput_Init(void)
 			Com_Printf("Raw input: [%i] %s\n", i, dname);
 
 			// set handle for All devices only if user hasn't specified a custom device to use
-			if(!(int)Cvar_Value("in_raw_custom_device_enable")) {
+			if(!in_raw_custom_device_enable.integer) {
 				rawmice[rawmicecount].rawinputhandle = pRawInputDeviceList[i].hDevice;
 				rawmice[rawmicecount].numbuttons = 10;
 				rawmice[rawmicecount].pos[0] = RI_INVALID_POS;
 				rawmicecount++;
 			}
+			// if a custom device is specified: check if its a valid one
+			else {
+				if(in_raw_custom_device.integer == i)
+					validcustomdevice = true;
+			}
+
 		}
 	}
-	// if user wants to specify a specific mouse to init, then only 
-	// set that handle. which device is determined by the in_raw_custom_device cvar (nbr)
-	// note: its still possible to click mouse buttons on other devices, that is due to
-	// in_raw_allbuttons cvar which needs to be set to 0 to disable input from the other
-	// devices.
-	if((int)Cvar_Value("in_raw_custom_device_enable")) {
-			rawmice[rawmicecount].rawinputhandle = pRawInputDeviceList[(int)Cvar_Value("in_raw_custom_device")].hDevice;
+	// if user wants to specify a specific mouse to init, then only set that handle. 
+	// which device is determined by the in_raw_custom_device cvar.
+	// note: its still possible to click mouse buttons on other devices if in_raw_allbuttons cvar
+	// is set to 1, it needs to be set to 0 to disable button input from other devices.
+	if(in_raw_custom_device_enable.integer && validcustomdevice) {
+			rawmice[rawmicecount].rawinputhandle = pRawInputDeviceList[in_raw_custom_device.integer].hDevice;
 			rawmice[rawmicecount].numbuttons = 10;
 			rawmice[rawmicecount].pos[0] = RI_INVALID_POS;
 			rawmicecount++;
+	}
+	else if(in_raw_custom_device_enable.integer && !validcustomdevice){
+		Com_Printf("Raw input: ERROR, invalid device number [%d]\n",in_raw_custom_device.integer);
 	}
 
    
