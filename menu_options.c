@@ -657,8 +657,10 @@ const char* SoundDriverRead(void)
 {
 	if(strcmp(s_driver.string, "oss")==0)
 		return "oss";
+	#ifdef WITH_PULSEAUDIO
 	else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
 		return "pulseaudio (experimental)";
+	#endif
 	else
 		return "alsa";
 }
@@ -667,20 +669,32 @@ void SoundDriverToggle(qbool back)
 	int val = 0;
 	if(strcmp(s_driver.string, "oss")==0)
                 val = 1;
+	#ifdef WITH_PULSEAUDIO
         else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
                 val = 2;
+	#endif
         else
              	val = 0;
 	if(back)
 		if(val==0)
+			#ifdef WITH_PULSEAUDIO
 			val = 2;
+			#else
+			val = 1;
+			#endif
 		else
 			val--;
 	else
+		#ifdef WITH_PULSEAUDIO
 		val = (val +1) % 3;
+		#else
+		val = (val+1)%2;
+		#endif
 	switch(val) {
 		case 1: Cvar_LatchedSet(&s_driver, "oss"); break;
+		#ifdef WITH_PULSEAUDIO
 		case 2:	Cvar_LatchedSet(&s_driver, "pulseaudio"); break;
+		#endif
 		default: Cvar_LatchedSet(&s_driver, "alsa"); break;
 	}
 }

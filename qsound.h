@@ -112,7 +112,9 @@ void SNDDMA_Shutdown(void);
 
 #if defined(__linux__) || defined(__FreeBSD__)
 void SNDDMA_Submit(unsigned int count); // Legacy OSS doesnt use Submit
+#ifdef WITH_PULSEAUDIO
 qbool SNDDMA_Init_PULSEAUDIO(qsoundhandler_t *sd); // Pulseaudio disabled atm...
+#endif
 qbool SNDDMA_Init_ALSA(qsoundhandler_t *sd);
 qbool SNDDMA_Init_ALSA_Legacy(qsoundhandler_t *sd);
 qbool SNDDMA_Init_OSS(qsoundhandler_t *sd);

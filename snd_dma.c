@@ -118,7 +118,9 @@ cvar_t s_alsa_device = {"s_alsa_device", "default", CVAR_LATCH};
 cvar_t s_alsa_latency = {"s_alsa_latency", "0.04", CVAR_LATCH};
 cvar_t s_alsa_noworkaround = {"s_alsa_noworkaround", "0", CVAR_LATCH};
 cvar_t s_uselegacydrivers = {"s_uselegacydrivers", "0", CVAR_LATCH};
+#ifdef WITH_PULSEAUDIO
 cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04", CVAR_LATCH};
+#endif
 #endif
 
 #ifdef __linux__
@@ -215,10 +217,10 @@ static qbool S_Startup (void)
 				retval = SNDDMA_Init_ALSA(qsoundhandler);
 			}
 
-
+		#ifdef WITH_PULSEAUDIO
 		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
 			retval = SNDDMA_Init_PULSEAUDIO(qsoundhandler);
-
+		#endif
 		} else if(strcmp(audio_driver, "oss")==0) {
 			if(s_uselegacydrivers.value) {
 				retval = SNDDMA_Init_OSS_Legacy(qsoundhandler);
@@ -364,7 +366,9 @@ static void S_Register_LatchCvars(void)
 	Cvar_Register(&s_alsa_device);
 	Cvar_Register(&s_alsa_latency);
 	Cvar_Register(&s_alsa_noworkaround);
+	#ifdef WITH_PULSEAUDIO
 	Cvar_Register(&s_pulseaudio_latency);
+	#endif
 #endif
 
 	Cvar_ResetCurrentGroup();
