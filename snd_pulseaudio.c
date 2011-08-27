@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+#ifdef WITH_PULSEAUDIO
 #if defined(__linux__) || defined(__FreeBSD__)
 
 #include "quakedef.h"
@@ -504,3 +505,4 @@ static void pulseaudio_stream_state_callback(pa_stream *stream, void *userdata)
 
 
 #endif //defined(__linux__) || defined(__FreeBSD__)
+#endif //WITH_PULSEAUDIO
