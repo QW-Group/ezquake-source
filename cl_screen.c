@@ -209,7 +209,7 @@ cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "", CVAR_NONE, OnC
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 
 // Tracking text.
-cvar_t	scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
+cvar_t	scr_tracking			= {"scr_tracking", "‘Ú·„ÎÈÓÁ∫ ê%të %n,  ’Õ– for next"}; //"Tracking: [team] name, JUMP for next", "Tracking:" and "JUMP" are brown with gold [] around team. default: "Tracking %t %n, [JUMP] for next"
 cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
 
 cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.

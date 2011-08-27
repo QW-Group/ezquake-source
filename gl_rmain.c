@@ -121,7 +121,7 @@ cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", CVAR_COLOR, OnChange_r_draw
 cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t	gl_textureless = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
 
-cvar_t	r_farclip			= {"r_farclip", "8192"}; // previous default was 4092. 8192 helps some TF players in big maps
+cvar_t	r_farclip			= {"r_farclip", "8192"}; // previous default was 4096. 8192 helps some TF players in big maps
 void OnChange_r_skyname(cvar_t *v, char *s, qbool *cancel);
 cvar_t	r_skyname			= {"r_skyname", "", 0, OnChange_r_skyname};
 cvar_t	gl_detail			= {"gl_detail","0"};			
