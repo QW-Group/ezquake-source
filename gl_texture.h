@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_NO_PCX			(1<<8) // do not load pcx images
 #define TEX_NO_TEXTUREMODE  (1<<9) // ignore gl_texturemode* changes for texture
 
-#define MAX_GLTEXTURES 1024
+#define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 
 
 void GL_Bind (int texnum);
