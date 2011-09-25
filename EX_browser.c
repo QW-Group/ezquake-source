@@ -107,6 +107,7 @@ cvar_t  sb_sortsources   = {"sb_sortsources",      "3"}; // not in new menu
 
 cvar_t  sb_autohide      = {"sb_autohide",         "1"}; // not in menu
 cvar_t  sb_findroutes    = {"sb_findroutes",       "0"};
+cvar_t  sb_ignore_proxy  = {"sb_ignore_proxy",     ""};
 
 // filters
 cvar_t  sb_hideempty     = {"sb_hideempty",        "1"};
@@ -3149,6 +3150,7 @@ void Browser_Init (void)
 	Cvar_Register(&sb_autoupdate);
 	Cvar_Register(&sb_listcache);
 	Cvar_Register(&sb_findroutes);
+	Cvar_Register(&sb_ignore_proxy);
 	Cvar_ResetCurrentGroup();
 
     Cmd_AddCommand("addserver", AddServer_f);

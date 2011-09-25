@@ -206,13 +206,35 @@ static ipaddr_t SB_Netaddr2Ipaddr(const netadr_t *netadr)
 	return retval;
 }
 
+static qbool SB_PingTree_IsServerDead(const server_data *data)
+{
+	return data->ping < 0;
+}
+
+static qbool SB_PingTree_IsProxyFiltered(const server_data *data)
+{
+	if (!data->qwfwd) {
+		return false;
+	}
+	else if (sb_ignore_proxy.string[0] == '\0') {
+		return false;
+	}
+	else {
+		const byte *ip = data->address.ip;
+		int port = (int) ntohs(data->address.port);
+		const char *ip_str = va("%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], port);
+
+		return strstr(sb_ignore_proxy.string, ip_str) != NULL;
+	}
+}
+
 static nodeid_t SB_PingTree_AddServer(const server_data *data)
 {
 	nodeid_t node_id = INVALID_NODE;
 
-	if (data->ping >= 0) {
-		node_id = SB_PingTree_AddNode(SB_Netaddr2Ipaddr(&data->address), 
-			data->qwfwd ? data->address.port : 0);
+	if (!SB_PingTree_IsServerDead(data) && !SB_PingTree_IsProxyFiltered(data)) {
+			node_id = SB_PingTree_AddNode(SB_Netaddr2Ipaddr(&data->address),
+				data->qwfwd ? data->address.port : 0);
 
 		SB_PingTree_AddNeighbour(node_id, data->ping);
 	}

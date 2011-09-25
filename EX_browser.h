@@ -70,6 +70,7 @@ extern cvar_t  sb_sortservers;      // sorting mode in servers list
 extern cvar_t  sb_autohide;         // hide browser after connect
 
 extern cvar_t  sb_findroutes;       // look for best available route automatically
+extern cvar_t  sb_ignore_proxy;     // list of proxies excluded from the best route lookup
 
 extern cvar_t  sb_sourcevalidity;   // source validity in minutes
 extern cvar_t  sb_mastercache;      // if cache master query results
