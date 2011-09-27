@@ -205,6 +205,25 @@ static check_models_hashes_entry_t sound_items_r_item2_wav_us = {{0xf62a00d2, 0x
 // this one might be used widely in russia
 static check_models_hashes_entry_t sound_items_r_item2_wav_ru = {{0x83a8e646, 0xbc4cc313, 0xa07aa96e, 0x9d81eada, 0xf619bd10}, NULL};
 
+// Mindgrid Audio sound files
+static check_models_hashes_entry_t sound_items_mindgrid_armor1 = { {0x1b47daed, 0x5a60cd6a, 0x83940499, 0x65eb651b, 0x4441f6cf}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_damage = { {0x3da087a3, 0x1799d4c7, 0x8ddabf31, 0x42e2de6f, 0x5bfdabec}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_damage2 = { {0xd0eb779c, 0x0bf1d83c, 0x120e1c7e, 0x50fa449b, 0x2cd4655b}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_damage3 = { {0x2e0c3b71, 0xdd52cfc9, 0x8e5fe1e5, 0x0ac48fd9, 0xa2d8b970}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_inv1 = { {0x787708ba, 0x63f52c51, 0x55835932, 0x7db46d86, 0xccc830cc}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_inv2 = { {0xb2a3bc8c, 0x7eb56b5f, 0x675e4d67, 0x24054040, 0x3b2ecd0b}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_inv3 = { {0xa1945433, 0x7f3e2c52, 0x9144528a, 0x02891cf0, 0xd95eb255}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_itembk2 = { {0x41dd6dad, 0x45a8c24b, 0xef56b75e, 0x5ab3915a, 0x2901a70f}, NULL };
+static check_models_hashes_entry_t sound_misc_mindgrid_outwater = { {0x6be98515, 0xfeab0126, 0x80edc811, 0xe7cf7012, 0x1def4980}, NULL };
+static check_models_hashes_entry_t sound_weapons_mindgrid_pkup = { {0xda261fbc, 0x12f47c68, 0x9e91e794, 0xce0a434d, 0xc4e35e77}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_protect = { {0x5948333f, 0xa28e882a, 0xb4b82964, 0xe10679c5, 0x191f8cb1}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_protect2 = { {0x29e977b0, 0x0d9378fe, 0xb4489037, 0x02d83d62, 0xce0b718d}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_protect3 = { {0x7619314c, 0x07b6901c, 0x000601e2, 0xc358367e, 0x999f90b1}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_r_item1 = { {0x0f5754d4, 0xa8b84c5f, 0x0001903a, 0xd3ab289c, 0xa93bc848}, NULL };
+static check_models_hashes_entry_t sound_items_mindgrid_r_item2 = { {0xd2d0de39, 0x2bb78d33, 0x09ef3081, 0xbe90bacf, 0xbf71ecce}, NULL };
+static check_models_hashes_entry_t sound_misc_mindgrid_water1 = { {0x838a0318, 0x0805e53e, 0x6ebf4065, 0xaa5fb9a0, 0xe1cad807}, NULL };
+static check_models_hashes_entry_t sound_misc_mindgrid_water2 = { {0xfb0a6b17, 0x065fbc33, 0x5fab7cc5, 0x110c01aa, 0x278b612e}, NULL };
+
 #define MAX_CHECK_MODELS 128
 #define	FMOD_DM 1
 #define FMOD_TF 2
@@ -449,32 +468,50 @@ void FMod_Init (void)
 	FMod_AddModelAlt(lastid, &mdlhash_ruohis_b_bh100_other);
 	FMod_AddModelAlt(lastid, &mdlhash_generations_b_bh100);
 
+	//Wav files
 	FMod_AddModel ("sound/buttons/airbut1.wav",	FMOD_DM | FMOD_TF,	sound_buttons_airbut1_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/armor1.wav",	FMOD_DM | FMOD_TF,	sound_items_armor1_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/damage.wav",	FMOD_DM | FMOD_TF,	sound_items_damage_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/damage2.wav",	FMOD_DM | FMOD_TF,	sound_items_damage2_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/damage3.wav",	FMOD_DM | FMOD_TF,	sound_items_damage3_wav_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("sound/items/armor1.wav",	FMOD_DM | FMOD_TF,	sound_items_armor1_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_armor1);
+	lastid = FMod_AddModel ("sound/items/damage.wav",	FMOD_DM | FMOD_TF,	sound_items_damage_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_damage);
+	lastid = FMod_AddModel ("sound/items/damage2.wav",	FMOD_DM | FMOD_TF,	sound_items_damage2_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_damage2);
+	lastid = FMod_AddModel ("sound/items/damage3.wav",	FMOD_DM | FMOD_TF,	sound_items_damage3_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_damage3);
 	FMod_AddModel ("sound/items/health1.wav",	FMOD_DM | FMOD_TF,	sound_items_health1_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/inv1.wav",		FMOD_DM | FMOD_TF,	sound_items_inv1_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/inv2.wav",		FMOD_DM | FMOD_TF,	sound_items_inv2_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/inv3.wav",		FMOD_DM | FMOD_TF,	sound_items_inv3_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/itembk2.wav",	FMOD_DM | FMOD_TF,	sound_items_itembk2_wav_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("sound/items/inv1.wav",		FMOD_DM | FMOD_TF,	sound_items_inv1_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_inv1);
+	lastid = FMod_AddModel ("sound/items/inv2.wav",		FMOD_DM | FMOD_TF,	sound_items_inv2_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_inv2);
+	lastid = FMod_AddModel ("sound/items/inv3.wav",		FMOD_DM | FMOD_TF,	sound_items_inv3_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_inv3);
+	lastid = FMod_AddModel ("sound/items/itembk2.wav",	FMOD_DM | FMOD_TF,	sound_items_itembk2_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_itembk2);
 	FMod_AddModel ("sound/player/land.wav",		FMOD_DM | FMOD_TF,	sound_player_land_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("sound/player/land2.wav",	FMOD_DM | FMOD_TF,	sound_player_land2_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/misc/outwater.wav",	FMOD_DM | FMOD_TF,	sound_misc_outwater_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/weapons/pkup.wav",	FMOD_DM | FMOD_TF,	sound_weapons_pkup_wav_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("sound/misc/outwater.wav",	FMOD_DM | FMOD_TF,	sound_misc_outwater_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_misc_mindgrid_outwater);
+	lastid = FMod_AddModel ("sound/weapons/pkup.wav",	FMOD_DM | FMOD_TF,	sound_weapons_pkup_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_weapons_mindgrid_pkup);
 	FMod_AddModel ("sound/player/plyrjmp8.wav",	FMOD_DM | FMOD_TF,	sound_player_plyrjmp8_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/protect.wav",	FMOD_DM | FMOD_TF,	sound_items_protect_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/protect2.wav",	FMOD_DM | FMOD_TF,	sound_items_protect2_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/protect3.wav",	FMOD_DM | FMOD_TF,	sound_items_protect3_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/items/r_item1.wav",	FMOD_DM | FMOD_TF,	sound_items_r_item1_wav_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("sound/items/protect.wav",	FMOD_DM | FMOD_TF,	sound_items_protect_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_protect);
+	lastid = FMod_AddModel ("sound/items/protect2.wav",	FMOD_DM | FMOD_TF,	sound_items_protect2_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_protect2);
+	lastid = FMod_AddModel ("sound/items/protect3.wav",	FMOD_DM | FMOD_TF,	sound_items_protect3_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_protect3);
+	lastid = FMod_AddModel ("sound/items/r_item1.wav",	FMOD_DM | FMOD_TF,	sound_items_r_item1_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_r_item1);
 
 	lastid = FMod_AddModel ("sound/items/r_item2.wav",	FMOD_DM | FMOD_TF,	sound_items_r_item2_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModelAlt(lastid, &sound_items_r_item2_wav_us);
-	FMod_AddModelAlt(lastid, &sound_items_r_item2_wav_ru);
+		FMod_AddModelAlt(lastid, &sound_items_r_item2_wav_us);
+		FMod_AddModelAlt(lastid, &sound_items_r_item2_wav_ru);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_r_item2);
 
-	FMod_AddModel ("sound/misc/water1.wav",		FMOD_DM | FMOD_TF,	sound_misc_water1_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel ("sound/misc/water2.wav",		FMOD_DM | FMOD_TF,	sound_misc_water2_wav_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel ("sound/misc/water1.wav",		FMOD_DM | FMOD_TF,	sound_misc_water1_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_misc_mindgrid_water1);
+	lastid = FMod_AddModel ("sound/misc/water2.wav",		FMOD_DM | FMOD_TF,	sound_misc_water2_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_misc_mindgrid_water2);
 
 	FMod_AddModel ("gfx/colormap.lmp",			FMOD_DM | FMOD_TF,	gfx_colormap_lmp_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("gfx/palette.lmp",			FMOD_DM | FMOD_TF,	gfx_palette_lmp_FMOD_DM_FMOD_TF);

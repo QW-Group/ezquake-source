@@ -108,7 +108,7 @@ cvar_t s_mixahead = {"s_mixahead", "0.1"};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
-cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz};
+cvar_t s_khz = {"s_khz", "44", CVAR_NONE, OnChange_s_khz};
 
 #if defined(__FreeBSD__) || defined(__linux__)
 cvar_t s_stereo = {"s_stereo", "1", CVAR_LATCH};

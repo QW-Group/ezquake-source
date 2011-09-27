@@ -108,7 +108,7 @@ cvar_t	scr_fov					= {"fov", "90", CVAR_NONE, OnFovChange};	// 10 - 140
 cvar_t	default_fov				= {"default_fov", "90", CVAR_NONE, OnDefaultFovChange};
 cvar_t	scr_viewsize			= {"viewsize", "100", CVAR_NONE};
 cvar_t	scr_consize				= {"scr_consize", "0.5"};
-cvar_t	scr_conspeed			= {"scr_conspeed", "1000"};
+cvar_t	scr_conspeed			= {"scr_conspeed", "9999"};
 cvar_t	scr_centertime			= {"scr_centertime", "2"};
 cvar_t	scr_centershift			= {"scr_centershift", "0"};
 cvar_t	scr_showram				= {"showram", "1"};
@@ -182,6 +182,7 @@ cvar_t  scr_teaminfo_loc_width	 = {"scr_teaminfo_loc_width",   "5"};
 cvar_t  scr_teaminfo_name_width	 = {"scr_teaminfo_name_width",  "6"};
 cvar_t	scr_teaminfo_low_health	 = {"scr_teaminfo_low_health",  "25"};
 cvar_t	scr_teaminfo_armor_style = {"scr_teaminfo_armor_style", "3"};
+cvar_t	scr_teaminfo_powerup_style	= {"scr_teaminfo_powerup_style", "1"};
 cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","1"};
 cvar_t  scr_teaminfo_show_enemies= {"scr_teaminfo_show_enemies","0"};
 cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2"};
@@ -209,7 +210,7 @@ cvar_t  scr_weaponstats				 = {"scr_weaponstats",             "", CVAR_NONE, OnC
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 
 // Tracking text.
-cvar_t	scr_tracking			= {"scr_tracking", "Ôòáãëéîçº %t‘ %n, ÊÕÍÐ for next"}; //"Tracking: [team] name, JUMP for next", "Tracking:" and "JUMP" are brown with gold [] around team. default: "Tracking %t %n, [JUMP] for next"
+cvar_t	scr_tracking			= {"scr_tracking", "Ôòáãëéîçº %t %n, ÊÕÍÐ for next"}; //"Tracking: [team] name, JUMP for next", "Tracking:" and "JUMP" are brown. default: "Tracking %t %n, [JUMP] for next"
 cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
 
 cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.
@@ -1634,33 +1635,35 @@ void SCR_ClearTeamInfo(void)
 
 char *SCR_GetWeaponShortNameByFlag (int flag)
 {
+	extern cvar_t tp_name_axe, tp_name_sg, tp_name_ssg, tp_name_ng, tp_name_sng, tp_name_gl, tp_name_rl, tp_name_lg,tp_name_ga,tp_name_ya,tp_name_ra,tp_name_mh;
+
 	if (flag == IT_LIGHTNING || flag == IT_SUPER_LIGHTNING)
 	{
-		return "lg";
+		return tp_name_lg.string;
 	}
 	else if (flag == IT_ROCKET_LAUNCHER)
 	{
-		return "rl";
+		return tp_name_rl.string;
 	}
 	else if (flag == IT_GRENADE_LAUNCHER)
 	{
-		return "gl";
+		return tp_name_gl.string;
 	}
 	else if (flag == IT_SUPER_NAILGUN)
 	{
-		return "sng";
+		return tp_name_sng.string;
 	}
 	else if (flag == IT_NAILGUN)
 	{
-		return "ng";
+		return tp_name_ng.string;
 	}
 	else if (flag == IT_SUPER_SHOTGUN)
 	{
-		return "ssg";
+		return tp_name_ssg.string;
 	}
 	else if (flag == IT_SHOTGUN)
 	{
-		return "sg";
+		return tp_name_sg.string;
 	}
 
 	return "";
@@ -1677,6 +1680,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t  *sb_armor[3];
+	extern mpic_t  *sb_items[5];
 
 	if (!ti_cl)
 		return 0;
@@ -1737,8 +1741,8 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 					break;
 				}
-
 				break;
+
 			case 'h': // draw health, padding with space on left side
 			case 'H': // draw health, padding with space on right side
 
@@ -1819,7 +1823,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 					break;
 				}
 
-				if(!width_only) { // value drawed no matter which style
+				if(!width_only) { // value drawn no matter which style
 					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
 					Draw_ColoredString (x, y, tmp, false);
 				}
@@ -1839,24 +1843,57 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 				x += maxloc * FONTWIDTH;
 
 				break;
-			case 'p': // draw powerups
+			
+				
+			case 'p': // draw powerups	
+			switch (scr_teaminfo_powerup_style.integer) {
+				case 1: // quad/pent/ring image
+					if(!width_only) {
+						if (ti_cl->items & IT_QUAD)
+							Draw_SPic (x, y, sb_items[5], 1.0/2);
+							x += FONTWIDTH;
+						if (ti_cl->items & IT_INVULNERABILITY)
+							Draw_SPic (x, y, sb_items[3], 1.0/2);
+							x += FONTWIDTH;
+						if (ti_cl->items & IT_INVISIBILITY)
+							Draw_SPic (x, y, sb_items[2], 1.0/2);
+							x += FONTWIDTH;
+					}
+					else { x += 3* FONTWIDTH; }
+					break;
 
-				if(!width_only)
-					if ( sb_face_quad && (ti_cl->items & IT_QUAD))
-						Draw_SPic (x, y, sb_face_quad, 1.0/3);
-				x += FONTWIDTH;
+				case 2: // player powerup face
+					if(!width_only) {
+						if ( sb_face_quad && (ti_cl->items & IT_QUAD))
+							Draw_SPic (x, y, sb_face_quad, 1.0/3);
+							x += FONTWIDTH;
+						if ( sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
+							Draw_SPic (x, y, sb_face_invuln, 1.0/3);
+							x += FONTWIDTH;
+						if ( sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
+							Draw_SPic (x, y, sb_face_invis, 1.0/3);
+							x += FONTWIDTH;
+					}
+					else { x += 3* FONTWIDTH; }
+					break;
 
-				if(!width_only)
-					if ( sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
-						Draw_SPic (x, y, sb_face_invuln, 1.0/3);
-				x += FONTWIDTH;
+				case 3: // colored font (QPR) // <@JohnNy_cz> up2: make the x += FONTWIDTH; happen also when width_only is true
+					if(!width_only) {
+						if (ti_cl->items & IT_QUAD)
+							Draw_ColoredString (x, y, "&c03fQ", false);
+							x += FONTWIDTH;
+						if (ti_cl->items & IT_INVULNERABILITY)
+							Draw_ColoredString (x, y, "&cf00P", false);
+							x += FONTWIDTH;
+						if (ti_cl->items & IT_INVISIBILITY)
+							Draw_ColoredString (x, y, "&cff0R", false);
+							x += FONTWIDTH;
+					}
+					else { x += 3* FONTWIDTH; }
+					break;
+			}
+			break;
 
-				if(!width_only)
-					if ( sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
-						Draw_SPic (x, y, sb_face_invis, 1.0/3);
-				x += FONTWIDTH;
-
-				break;
 			case '%': // wow, %% result in one %, how smart
 
 				if(!width_only)
@@ -4511,6 +4548,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_teaminfo_name_width);
 	Cvar_Register (&scr_teaminfo_low_health);
 	Cvar_Register (&scr_teaminfo_armor_style);
+	Cvar_Register (&scr_teaminfo_powerup_style);
 	Cvar_Register (&scr_teaminfo_weapon_style);
 	Cvar_Register (&scr_teaminfo_show_enemies);
 	Cvar_Register (&scr_teaminfo_show_self);

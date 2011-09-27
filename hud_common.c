@@ -7551,7 +7551,7 @@ void CommonDraw_Init(void)
 	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
 		"1", "face", "center", "before", "0", "0", "0", "0 0 0", NULL,
-		"format", "‘Ú·„ÎÈÓÁ∫ ê%të %n,  ’Õ– for next", //"Tracking: [team] name, JUMP for next", "Tracking:" and "JUMP" are brown with gold [] around team. default: "Tracking %t %n, [JUMP] for next"
+		"format", "‘Ú·„ÎÈÓÁ∫ %t %n,  ’Õ– for next", //"Tracking: team name, JUMP for next", "Tracking:" and "JUMP" are brown. default: "Tracking %t %n, [JUMP] for next"
 		"scale", "1",
 		NULL);
 

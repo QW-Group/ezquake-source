@@ -43,7 +43,7 @@ when crossing a water boudnary.
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "0"};
 cvar_t	cl_rollalpha = {"cl_rollalpha", "20"};
-cvar_t	cl_bob = {"cl_bob", "0.00"};
+cvar_t	cl_bob = {"cl_bob", "0"};
 cvar_t	cl_bobcycle = {"cl_bobcycle", "0.0"};
 cvar_t	cl_bobup = {"cl_bobup", "0.0"};
 cvar_t	v_kicktime = {"v_kicktime", "0.0"};
@@ -77,17 +77,17 @@ cvar_t  cl_crossy = {"cl_crossy", "0"};
 // QW262: less flash grenade effect in demos
 cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", ".33"};
 
-cvar_t  v_contentblend = {"v_contentblend", "0.33"};
-cvar_t	v_damagecshift = {"v_damagecshift", "0.33"};
-cvar_t	v_quadcshift = {"v_quadcshift", "0.75"};
-cvar_t	v_suitcshift = {"v_suitcshift", "0.75"};
-cvar_t	v_ringcshift = {"v_ringcshift", "0.75"};
-cvar_t	v_pentcshift = {"v_pentcshift", "0.75"};
+cvar_t  v_contentblend = {"v_contentblend", "0.2"};
+cvar_t	v_damagecshift = {"v_damagecshift", "0.2"};
+cvar_t	v_quadcshift = {"v_quadcshift", "0.5"};
+cvar_t	v_suitcshift = {"v_suitcshift", "0.5"};
+cvar_t	v_ringcshift = {"v_ringcshift", "0.5"};
+cvar_t	v_pentcshift = {"v_pentcshift", "0.5"};
 #ifdef GLQUAKE
 cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
 #endif
 
-cvar_t	v_bonusflash = {"cl_bonusflash", "0"}; // 0
+cvar_t	v_bonusflash = {"cl_bonusflash", "0"};
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 

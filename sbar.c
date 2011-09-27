@@ -1307,15 +1307,15 @@ static void Sbar_DeathmatchOverlay (int start) {
 			snprintf (num, sizeof(num), "%3i", p);
 			Draw_ColoredString (x, y, num, 0);
 		}
-		else if (p < 11) {	// pl of 2-10 yellow
+		else if (p < 10) {	// pl of 2-9 yellow
 			snprintf (num, sizeof(num), "&cdd2%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
-		else if (p < 21) {	// pl of 11-20 orange
+		else if (p < 20) {	// pl of 10-19 orange
 			snprintf (num, sizeof(num), "&cf50%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
-		else {	// pl >20 red
+		else {	// pl >19 red
 			snprintf (num, sizeof(num), "&cf00%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}

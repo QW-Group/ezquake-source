@@ -57,7 +57,7 @@ int			con_totallines;		// total lines in console scrollback
 float		con_cursorspeed = 4;
 
 #ifdef GLQUAKE
-cvar_t		con_particles_alpha  = {"con_particles_alpha",  "1"};
+cvar_t		con_particles_alpha  = {"con_particles_alpha",  "0"};
 cvar_t		con_particles_images = {"con_particles_images", "3"};
 #endif
 
@@ -82,7 +82,7 @@ cvar_t      con_sound_other_volume  = {"s_otherchat_volume",  "1"};
 
 cvar_t      con_timestamps  = {"con_timestamps", "0"};
 
-cvar_t      con_shift  = {"con_shift", "0"};
+cvar_t      con_shift  = {"con_shift", "-10"};
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated

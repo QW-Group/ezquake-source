@@ -977,12 +977,26 @@ void CL_Autotrack_f(void)
 		if (cl.spectator) {
 			if ((at = Cmd_FindAlias("autotrack")) != NULL) {
 				// not very "clean" way to execute an alias, but sufficient for this purpose
-				Cbuf_AddText(va("%s\n", at->value));
-			} else {
+				Cbuf_AddText(va("%s\n", at->value)); // note KTX this is cmd 154, but we want to be compatible with other mods/versions
+
+				/* Bugfix: When setting autotrack ON, make sure to set cl_hightrack 0.
+				If player hits autotrack bind before KTX had a chance to stuff the impulse, then ezQuake would set cl_hightrack to 1.
+				Then, if player hits autotrack again after KTX has finished stuffing, both autotrack and cl_hightrack would be on, creating chaos.
+				
+				HOWEVER, this creates a different, albeit less frustrating bug: if you have autotrack on first, then set cl_hightrack 1, then turn off autotrack, cl_hightrack gets set to 0.
+				Currently there is no better way to solve this as autotrack is simply a command sent to the server.*/				
+				if (cl_hightrack.integer) {
+					Cvar_SetValue(&cl_hightrack, 0);
+					Com_Printf("Hightrack off\n");
+				}		
+
+			}
+			else {
 				if (!cl_hightrack.integer) {
 					Com_Printf("Autotrack not supported here, tracking top fragger (Hightrack on)\n");
 					Cvar_SetValue(&cl_hightrack, 1);
-				} else {
+				}
+				else {
 					Com_Printf("Hightrack off\n");
 					Cvar_SetValue(&cl_hightrack, 0);
 				}

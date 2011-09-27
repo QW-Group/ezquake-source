@@ -181,7 +181,7 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 	}
 
 	if (strcmp(Cmd_Argv(0), "say_team") == 0 && !qtv_say_team.integer) {
-		Com_Printf("Cannot send team messages. Use qtv_sayteam 1 to override.\n");
+		Com_Printf("Cannot send team messages. Use qtv_say_team 1 to override.\n");
 		return;
 	}
 
