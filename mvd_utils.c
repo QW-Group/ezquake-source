@@ -170,7 +170,6 @@ extern int loc_loaded;
 
 extern qbool TP_LoadLocFile (char *path, qbool quiet);
 extern char *TP_LocationName(vec3_t location);
-extern char *Weapon_NumToString(int num);
 
 //matchinfo_t *MT_GetMatchInfo(void);
 
@@ -392,29 +391,6 @@ void MVD_ClockList_RemoveExpired(void)
 	}
 }
 
-char *MVD_ClockList_TPNameStringByItemInt(int item)
-{
-	switch (item)
-	{
-		case IT_AXE: return tp_name_axe.string;
-		case IT_SHOTGUN: return tp_name_sg.string;
-		case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
-		case IT_NAILGUN: return tp_name_ng.string;
-		case IT_SUPER_NAILGUN: return tp_name_sng.string;
-		case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
-		case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
-		case IT_LIGHTNING: return tp_name_lg.string;
-		case IT_INVISIBILITY: return tp_name_ring.string;
-		case IT_QUAD: return tp_name_quad.string;
-		case IT_INVULNERABILITY: return tp_name_pent.string;
-		case IT_ARMOR1: return tp_name_ga.string;
-		case IT_ARMOR2: return tp_name_ya.string;
-		case IT_ARMOR3:	return tp_name_ra.string;
-		case IT_SUPERHEALTH: return tp_name_mh.string;
-		default: return tp_name_none.string;
-	}
-}
-
 int MVD_ClockList_GetLongestName(void)
 {
 	int i, current, longest = 0;	
@@ -426,7 +402,7 @@ int MVD_ClockList_GetLongestName(void)
 
 	for (i = 0; i < sizeof(items); i++){
 #ifdef GLQUAKE
-		current = strlen_color(MVD_ClockList_TPNameStringByItemInt(items[i]));
+		current = strlen_color(TP_ItemName(items[i]));
 #else
 		current = strlen(MVD_ClockList_TPNameStringByItemInt(items[i]));
 #endif
@@ -464,7 +440,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y)
 		int time = (int) ((current->clockval - cls.demotime) + 1);
 
 		if(style == 1){	// tp_name_*
-			clockitem = va("%s", MVD_ClockList_TPNameStringByItemInt(mvd_wp_info[current->itemtype].it));
+			clockitem = va("%s", TP_ItemName(mvd_wp_info[current->itemtype].it));
 		}else if (style == 2){	// brown + white
 			clockitem = va("%s", mvd_wp_info[current->itemtype].name);
 			CharsToBrown(clockitem, clockitem + strlen(mvd_wp_info[current->itemtype].name));
@@ -551,31 +527,7 @@ int MVD_BestWeapon (int i) {
 }
 
 char *MVD_BestWeapon_strings (int i) {
-	switch (MVD_BestWeapon(i)) {
-		case IT_AXE: return tp_name_axe.string;
-		case IT_SHOTGUN: return tp_name_sg.string;
-		case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
-		case IT_NAILGUN: return tp_name_ng.string;
-		case IT_SUPER_NAILGUN: return tp_name_sng.string;
-		case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
-		case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
-		case IT_LIGHTNING: return tp_name_lg.string;
-		default: return tp_name_none.string;
-	}
-}
-
-char *MVD_Weapon_strings (int i) {
-	switch (i) {
-		case IT_AXE: return tp_name_axe.string;
-		case IT_SHOTGUN: return tp_name_sg.string;
-		case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
-		case IT_NAILGUN: return tp_name_ng.string;
-		case IT_SUPER_NAILGUN: return tp_name_sng.string;
-		case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
-		case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
-		case IT_LIGHTNING: return tp_name_lg.string;
-		default: return tp_name_none.string;
-	}
+	return TP_ItemName(MVD_BestWeapon(i));
 }
 
 int MVD_Weapon_LWF (int i) {
@@ -680,7 +632,7 @@ void MVD_Info (void){
 	strlcpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));
     Replace_In_String(mvd_info_final_string,sizeof(mvd_info_final_string),'%',\
 			10,\
-			"w",va("%s:%i",Weapon_NumToString(mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON]),mvd_new_info[i].p_info->stats[STAT_AMMO]),\
+			"w",va("%s:%i",TP_ItemName(mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON]),mvd_new_info[i].p_info->stats[STAT_AMMO]),\
 			"W",va("%s:%s",MVD_BestWeapon_strings(i),MVD_BestAmmo(i)),\
 			"a",va("%i",mvd_new_info[i].p_info->stats[STAT_ARMOR]),\
 			"f",va("%i",mvd_new_info[i].p_info->frags),\
@@ -1246,7 +1198,7 @@ void MVD_Status (void){
 		strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].mvdinfo.runs[p].time,mvd_new_info[id].mvdinfo.runs[p].frags,mvd_new_info[id].mvdinfo.runs[p].teamfrags),sizeof(str));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
 	}
-	strlcpy(str,va("Last Fired Weapon: %s",MVD_Weapon_strings(mvd_new_info[id].mvdinfo.lfw)),sizeof(str));
+	strlcpy(str,va("Last Fired Weapon: %s",TP_ItemName(mvd_new_info[id].mvdinfo.lfw)),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 

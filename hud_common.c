@@ -5169,7 +5169,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				switch (HUD_FindVar(hud, "weapon_style")->integer) {
 				case 1:
 					if(!width_only)
-						Draw_SString (x, y, SCR_GetWeaponShortNameByFlag(BestWeaponFromStatItems( ti_cl->items )), scale);
+						Draw_SString (x, y, TP_ItemName(BestWeaponFromStatItems( ti_cl->items )), scale);
 					x += 3 * FONTWIDTH * scale;
 
 					break;

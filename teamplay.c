@@ -213,24 +213,9 @@ char *Macro_Ammo (void)
 	return macro_buf;
 }
 
-char *Weapon_NumToString(int num)
-{
-	switch (num) {
-			case IT_AXE: return tp_name_axe.string;
-			case IT_SHOTGUN: return tp_name_sg.string;
-			case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
-			case IT_NAILGUN: return tp_name_ng.string;
-			case IT_SUPER_NAILGUN: return tp_name_sng.string;
-			case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
-			case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
-			case IT_LIGHTNING: return tp_name_lg.string;
-			default: return tp_name_none.string;
-	}
-}
-
 char *Macro_Weapon (void)
 {
-	return Weapon_NumToString(cl.stats[STAT_ACTIVEWEAPON]);
+	return TP_ItemName(cl.stats[STAT_ACTIVEWEAPON]);
 }
 
 char *Macro_WeaponAndAmmo (void)
@@ -298,16 +283,40 @@ int BestWeaponFromStatItems (int stat)
 
 char *Macro_BestWeapon (void)
 {
-	switch (BestWeapon()) {
-			case IT_AXE: return tp_name_axe.string;
-			case IT_SHOTGUN: return tp_name_sg.string;
-			case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
-			case IT_NAILGUN: return tp_name_ng.string;
-			case IT_SUPER_NAILGUN: return tp_name_sng.string;
-			case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
-			case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
-			case IT_LIGHTNING: return tp_name_lg.string;
-			default: return tp_name_none.string;
+	return TP_ItemName(BestWeapon());
+}
+
+char *TP_ItemName(int item_flag)
+{
+	switch (item_flag) {
+		case IT_SHOTGUN: return tp_name_sg.string;
+		case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
+		case IT_NAILGUN: return tp_name_ng.string;
+		case IT_SUPER_NAILGUN: return tp_name_sng.string;
+		case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
+		case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
+		case IT_LIGHTNING: return tp_name_lg.string;
+		case IT_SUPER_LIGHTNING: return "slg";
+		case IT_SHELLS: return tp_name_shells.string;
+		case IT_NAILS: return tp_name_nails.string;
+		case IT_ROCKETS: return tp_name_rockets.string;
+		case IT_CELLS: return tp_name_cells.string;
+		case IT_AXE: return tp_name_axe.string;
+		case IT_ARMOR1: return tp_name_ga.string;
+		case IT_ARMOR2: return tp_name_ya.string;
+		case IT_ARMOR3: return tp_name_ra.string;
+		case IT_SUPERHEALTH: return tp_name_mh.string;
+		case IT_KEY1: return "key1";
+		case IT_KEY2: return "key2";
+		case IT_INVISIBILITY: return tp_name_ring.string;
+		case IT_INVULNERABILITY: return tp_name_pent.string;
+		case IT_SUIT: return tp_name_suit.string;
+		case IT_QUAD: return tp_name_quad.string;
+		case IT_SIGIL1: return tp_name_rune1.string;
+		case IT_SIGIL2: return tp_name_rune2.string;
+		case IT_SIGIL3: return tp_name_rune3.string;
+		case IT_SIGIL4: return tp_name_rune4.string;
+		default: return tp_name_none.string;
 	}
 }
 

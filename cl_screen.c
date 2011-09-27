@@ -1633,42 +1633,6 @@ void SCR_ClearTeamInfo(void)
 	memset(ti_clients, 0, sizeof(ti_clients));
 }
 
-char *SCR_GetWeaponShortNameByFlag (int flag)
-{
-	extern cvar_t tp_name_axe, tp_name_sg, tp_name_ssg, tp_name_ng, tp_name_sng, tp_name_gl, tp_name_rl, tp_name_lg,tp_name_ga,tp_name_ya,tp_name_ra,tp_name_mh;
-
-	if (flag == IT_LIGHTNING || flag == IT_SUPER_LIGHTNING)
-	{
-		return tp_name_lg.string;
-	}
-	else if (flag == IT_ROCKET_LAUNCHER)
-	{
-		return tp_name_rl.string;
-	}
-	else if (flag == IT_GRENADE_LAUNCHER)
-	{
-		return tp_name_gl.string;
-	}
-	else if (flag == IT_SUPER_NAILGUN)
-	{
-		return tp_name_sng.string;
-	}
-	else if (flag == IT_NAILGUN)
-	{
-		return tp_name_ng.string;
-	}
-	else if (flag == IT_SUPER_SHOTGUN)
-	{
-		return tp_name_ssg.string;
-	}
-	else if (flag == IT_SHOTGUN)
-	{
-		return tp_name_sg.string;
-	}
-
-	return "";
-}
-
 qbool Has_Both_RL_and_LG (int flags) { return (flags & IT_ROCKET_LAUNCHER) && (flags & IT_LIGHTNING); }
 
 static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, qbool its_shownick)
@@ -1728,7 +1692,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 							Draw_ColoredString (x, y, "rlg", false);
 						}
 						else {
-						Draw_ColoredString (x, y, SCR_GetWeaponShortNameByFlag(BestWeaponFromStatItems( ti_cl->items )), false);
+						Draw_ColoredString (x, y, TP_ItemName(BestWeaponFromStatItems( ti_cl->items )), false);
 						}
 					}
 					x += 3 * FONTWIDTH;

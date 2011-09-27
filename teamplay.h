@@ -232,3 +232,4 @@ char *Macro_PointName (void);
 
 char *TP_LocationName (vec3_t location);
 
+char *TP_ItemName(int item_flag);
