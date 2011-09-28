@@ -404,7 +404,7 @@ int MVD_ClockList_GetLongestName(void)
 #ifdef GLQUAKE
 		current = strlen_color(TP_ItemName(items[i]));
 #else
-		current = strlen(MVD_ClockList_TPNameStringByItemInt(items[i]));
+		current = strlen(TP_ItemName(items[i]));
 #endif
 		if (longest < current)
 			longest = current;
