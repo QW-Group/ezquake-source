@@ -2997,8 +2997,9 @@ void Cmd_PEXT_f(void)
 			// do not reset it.
 			if (!sv_client->fteprotocolextensions)
 			{
-				sv_client->fteprotocolextensions = proto_value;
-				Con_DPrintf("PEXT: Client supports 0x%x fte extensions\n", proto_value);
+				sv_client->fteprotocolextensions = proto_value & svs.fteprotocolextensions;
+				if (sv_client->fteprotocolextensions)
+					Con_DPrintf("PEXT: Client supports 0x%x fte extensions\n", sv_client->fteprotocolextensions);
 			}
 			break;
 #endif // PROTOCOL_VERSION_FTE
@@ -3008,8 +3009,9 @@ void Cmd_PEXT_f(void)
 			// do not reset it.
 			if (!sv_client->fteprotocolextensions2)
 			{
-				sv_client->fteprotocolextensions2 = proto_value;
-				Con_DPrintf("PEXT: Client supports 0x%x fte extensions2\n", proto_value);
+				sv_client->fteprotocolextensions2 = proto_value & svs.fteprotocolextensions2;
+				if (sv_client->fteprotocolextensions2)
+					Con_DPrintf("PEXT: Client supports 0x%x fte extensions2\n", sv_client->fteprotocolextensions2);
 			}
 			break;
 #endif // PROTOCOL_VERSION_FTE2
