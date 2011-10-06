@@ -126,6 +126,10 @@ cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "5"};
 cvar_t  cl_pext_voicechat  = {"cl_pext_voicechat", "1"};
 #endif
 
+#ifdef FTE_PEXT_FLOATCOORDS
+cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
+#endif
+
 cvar_t	cl_sbar		= {"cl_sbar", "0"};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0"};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
@@ -598,6 +602,11 @@ unsigned int CL_SupportedFTEExtensions (void)
 #ifdef FTE_PEXT_256PACKETENTITIES
 	if (cl_pext_256packetentities.value)
 		fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
+#endif
+
+#ifdef FTE_PEXT_FLOATCOORDS
+	if (cl_pext_floatcoords.value)
+		fteprotextsupported |= FTE_PEXT_FLOATCOORDS;
 #endif
 
 	if (cl_pext_other.value)
@@ -1891,6 +1900,10 @@ void CL_InitLocal (void)
 
 #ifdef FTE_PEXT2_VOICECHAT
 	Cvar_Register (&cl_pext_voicechat);
+#endif
+
+#ifdef FTE_PEXT_FLOATCOORDS
+	Cvar_Register (&cl_pext_floatcoords);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);

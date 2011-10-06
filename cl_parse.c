@@ -1430,6 +1430,19 @@ void CL_ParseServerData (void)
 		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.quakeworld.net/", protover, PROTOCOL_VERSION);
 	}
 
+#ifdef FTE_PEXT_FLOATCOORDS
+	if (cls.fteprotocolextensions & FTE_PEXT_FLOATCOORDS)
+	{
+		msg_coordsize = 4;
+		msg_anglesize = 2;
+	}
+	else
+	{
+		msg_coordsize = 2;
+		msg_anglesize = 1;
+	}
+#endif
+
 	cl.protoversion = protover;
 	cl.servercount = MSG_ReadLong ();
 

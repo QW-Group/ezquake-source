@@ -28,6 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 Handles byte ordering and avoids alignment errors
 */
 
+#ifdef FTE_PEXT_FLOATCOORDS
+
+int msg_coordsize = 2; // 2 or 4.
+int msg_anglesize = 1; // 1 or 2.
+
+#endif
 
 // writing functions
 void MSG_WriteChar (sizebuf_t *sb, int c)
@@ -454,20 +460,69 @@ char *MSG_ReadStringLine (void)
 	return string;
 }
 
+#ifdef FTE_PEXT_FLOATCOORDS
+
+static float MSG_FromCoord(coorddata c, int bytes)
+{
+	switch(bytes)
+	{
+	case 2:	//encode 1/8th precision, giving -4096 to 4096 map sizes
+		return LittleShort(c.b2)/8.0f;
+	case 4:
+		return LittleFloat(c.f);
+	default:
+		Host_Error("MSG_ToCoord: not a sane coordsize");
+		return 0;
+	}
+}
+
+float MSG_ReadCoord (void)
+{
+	coorddata c = {0};
+	MSG_ReadData(&c, msg_coordsize);
+	return MSG_FromCoord(c, msg_coordsize);
+}
+
+#else // FTE_PEXT_FLOATCOORDS
+
 float MSG_ReadCoord (void)
 {
 	return MSG_ReadShort() * (1.0 / 8);
 }
+
+#endif // FTE_PEXT_FLOATCOORDS
+
+float MSG_ReadAngle16 (void)
+{
+	return MSG_ReadShort() * (360.0 / 65536);
+}
+
+#ifdef FTE_PEXT_FLOATCOORDS
+
+float MSG_ReadAngle (void)
+{
+	switch(msg_anglesize)
+	{
+	case 1:
+		return MSG_ReadChar() * (360.0/256);
+	case 2:
+		return MSG_ReadAngle16();
+//	case 4:
+//		return MSG_ReadFloat();
+	default:
+		Host_Error("MSG_ReadAngle: Bad angle size\n");
+		return 0;
+	}
+}
+
+#else // FTE_PEXT_FLOATCOORDS
 
 float MSG_ReadAngle (void)
 {
 	return MSG_ReadChar() * (360.0 / 256);
 }
 
-float MSG_ReadAngle16 (void)
-{
-	return MSG_ReadShort() * (360.0 / 65536);
-}
+#endif // FTE_PEXT_FLOATCOORDS
 
 #define CM_MSEC	(1 << 7) // same as CM_ANGLE2
 
