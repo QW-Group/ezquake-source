@@ -2093,12 +2093,65 @@ void CL_SetInfo (void)
 	CL_ProcessUserInfo (slot, player, key);
 }
 
+/*
+ * qqshka: Well, "cmd pext" slightly broken in MVDSV 0.30. I have to fix it somehow.
+ */
+static void CL_PEXT_Fix(void)
+{
+	char version_bugged[] = "MVDSV 0.30";
+	char *version = Info_ValueForKey(cl.serverinfo, "*version");
+
+	if (!strncmp(version, version_bugged, sizeof(version_bugged)-1))
+	{
+		// MVDSV 0.30 support maximum this FTE extensions.
+#ifdef PROTOCOL_VERSION_FTE
+		{
+			unsigned int ext = 0;
+#ifdef FTE_PEXT_ACCURATETIMINGS
+			ext |= FTE_PEXT_ACCURATETIMINGS;
+#endif
+#ifdef FTE_PEXT_256PACKETENTITIES
+			ext |= FTE_PEXT_256PACKETENTITIES;
+#endif
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+			ext |= FTE_PEXT_CHUNKEDDOWNLOADS;
+#endif
+			cls.fteprotocolextensions &= ext;
+		}
+#endif // PROTOCOL_VERSION_FTE
+
+		// MVDSV 0.30 support maximum this FTE extensions2.
+#ifdef PROTOCOL_VERSION_FTE2
+		{
+			unsigned int ext = 0;
+#ifdef FTE_PEXT2_VOICECHAT
+			ext |= FTE_PEXT2_VOICECHAT;
+#endif
+			cls.fteprotocolextensions2 &= ext;
+		}
+#endif // PROTOCOL_VERSION_FTE2
+
+#ifdef FTE_PEXT_FLOATCOORDS
+		if (msg_coordsize != 2 || msg_anglesize != 1)
+		{
+			Com_DPrintf("Fixing FTE_PEXT_FLOATCOORDS!\n");
+
+			msg_coordsize = 2;
+			msg_anglesize = 1;
+		}
+#endif
+	}
+}
+
 // Called by CL_FullServerinfo_f and CL_ParseServerInfoChange
 void CL_ProcessServerInfo (void) 
 {
 	char *p, *minlight;
 	int new_teamplay, newfpd;
 	qbool skin_refresh, standby, countdown;
+
+	// fix broken PEXT.
+	CL_PEXT_Fix(); // must be called once from CL_FullServerinfo_f() but should be ok here too.
 
 	// game type (sbar code checks it) (GAME_DEATHMATCH default)
 	cl.gametype = *(p = Info_ValueForKey(cl.serverinfo, "deathmatch")) ? (atoi(p) ? GAME_DEATHMATCH : GAME_COOP) : GAME_DEATHMATCH;
