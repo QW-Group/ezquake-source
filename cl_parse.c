@@ -810,7 +810,7 @@ void Sound_NextDownload (void)
 
 extern void CL_RequestNextDownload (void);
 
-#define MAXBLOCKS 64	// Must be power of 2
+#define MAXBLOCKS 1024	// Must be power of 2
 #define DLBLOCKSIZE 1024
 
 int chunked_download_number = 0; // Never reset, bumped up.
