@@ -127,7 +127,7 @@ cvar_t  cl_pext_voicechat  = {"cl_pext_voicechat", "1"};
 #endif
 
 #ifdef FTE_PEXT_FLOATCOORDS
-cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
+cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "0"};
 #endif
 
 cvar_t	cl_sbar		= {"cl_sbar", "0"};
