@@ -92,6 +92,11 @@ void MVD_MSG_WriteCoord (const float f)
 	MSG_WriteCoord (&demo.frames[demo.parsecount&UPDATE_MASK]._buf_, f);
 }
 
+void MVD_MSG_WriteAngle (const float f)
+{
+	MSG_WriteAngle (&demo.frames[demo.parsecount&UPDATE_MASK]._buf_, f);
+}
+
 void MVD_SZ_Write (const void *data, int length)
 {
 	SZ_Write (&demo.frames[demo.parsecount&UPDATE_MASK]._buf_, data, length);
@@ -1164,6 +1169,31 @@ void SV_MVD_SendInitialGamestate(mvddest_t *dest)
 		gamedir = "qw";
 
 	MSG_WriteByte (&buf, svc_serverdata);
+
+#ifdef FTE_PEXT_FLOATCOORDS
+	//fix up extensions to match sv_bigcoords correctly. sorry for old clients not working.
+	if (msg_coordsize == 4)
+		demo.recorder.fteprotocolextensions |= FTE_PEXT_FLOATCOORDS;
+	else
+		demo.recorder.fteprotocolextensions &= ~FTE_PEXT_FLOATCOORDS;
+#endif
+
+#ifdef PROTOCOL_VERSION_FTE2
+	if (demo.recorder.fteprotocolextensions)
+	{
+		MSG_WriteLong(&buf, PROTOCOL_VERSION_FTE);
+		MSG_WriteLong(&buf, demo.recorder.fteprotocolextensions);
+	}
+#endif
+
+#ifdef PROTOCOL_VERSION_FTE2
+	if (demo.recorder.fteprotocolextensions2)
+	{
+		MSG_WriteLong(&buf, PROTOCOL_VERSION_FTE2);
+		MSG_WriteLong(&buf, demo.recorder.fteprotocolextensions2);
+	}
+#endif
+
 	MSG_WriteLong (&buf, PROTOCOL_VERSION);
 	MSG_WriteLong (&buf, svs.spawncount);
 	MSG_WriteString (&buf, gamedir);

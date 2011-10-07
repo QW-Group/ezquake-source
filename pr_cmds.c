@@ -2344,14 +2344,19 @@ void PF_WriteAngle (void)
 
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
+#ifdef FTE_PEXT_FLOATCOORDS
+		int size = msg_anglesize;
+#else
+		int size = 1;
+#endif
 		client_t *cl = Write_GetClient();
-		ClientReliableCheckBlock(cl, 1);
+		ClientReliableCheckBlock(cl, size);
 		ClientReliableWrite_Angle(cl, G_FLOAT(OFS_PARM1));
 		if (sv.mvdrecording)
 		{
-			if (MVDWrite_Begin(dem_single, cl - svs.clients, 1))
+			if (MVDWrite_Begin(dem_single, cl - svs.clients, size))
 			{
-				MVD_MSG_WriteByte(G_FLOAT(OFS_PARM1));
+				MVD_MSG_WriteAngle(G_FLOAT(OFS_PARM1));
 			}
 		}
 	}
@@ -2371,12 +2376,17 @@ void PF_WriteCoord (void)
 
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE)
 	{
+#ifdef FTE_PEXT_FLOATCOORDS
+		int size = msg_coordsize;
+#else
+		int size = 2;
+#endif
 		client_t *cl = Write_GetClient();
-		ClientReliableCheckBlock(cl, 2);
+		ClientReliableCheckBlock(cl, size);
 		ClientReliableWrite_Coord(cl, G_FLOAT(OFS_PARM1));
 		if (sv.mvdrecording)
 		{
-			if (MVDWrite_Begin(dem_single, cl - svs.clients, 2))
+			if (MVDWrite_Begin(dem_single, cl - svs.clients, size))
 			{
 				MVD_MSG_WriteCoord(G_FLOAT(OFS_PARM1));
 			}

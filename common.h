@@ -338,6 +338,10 @@ typedef union {	//note: reading from packets can be misaligned
 extern int msg_coordsize; // 2 or 4.
 extern int msg_anglesize; // 1 or 2.
 
+float MSG_FromCoord(coorddata c, int bytes);
+coorddata MSG_ToCoord(float f, int bytes);	//return value should be treated as (char*)&ret;
+coorddata MSG_ToAngle(float f, int bytes);	//return value is NOT byteswapped.
+
 #endif
 
 struct usercmd_s;

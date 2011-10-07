@@ -1493,14 +1493,19 @@ void PF2_WriteAngle(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*ret
 
 	if (to == MSG_ONE)
 	{
+#ifdef FTE_PEXT_FLOATCOORDS
+		int size = msg_anglesize;
+#else
+		int size = 1;
+#endif
 		client_t *cl = Write_GetClient();
-		ClientReliableCheckBlock(cl, 1);
+		ClientReliableCheckBlock(cl, size);
 		ClientReliableWrite_Angle(cl, data);
 		if (sv.mvdrecording)
 		{
-			if (MVDWrite_Begin(dem_single, cl - svs.clients, 1))
+			if (MVDWrite_Begin(dem_single, cl - svs.clients, size))
 			{
-				MVD_MSG_WriteByte(data);
+				MVD_MSG_WriteAngle(data);
 			}
 		}
 	}
@@ -1515,12 +1520,17 @@ void PF2_WriteCoord(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*ret
 
 	if (to == MSG_ONE)
 	{
+#ifdef FTE_PEXT_FLOATCOORDS
+		int size = msg_coordsize;
+#else
+		int size = 2;
+#endif
 		client_t *cl = Write_GetClient();
-		ClientReliableCheckBlock(cl, 2);
+		ClientReliableCheckBlock(cl, size);
 		ClientReliableWrite_Coord(cl, data);
 		if (sv.mvdrecording)
 		{
-			if (MVDWrite_Begin(dem_single, cl - svs.clients, 2))
+			if (MVDWrite_Begin(dem_single, cl - svs.clients, size))
 			{
 				MVD_MSG_WriteCoord(data);
 			}

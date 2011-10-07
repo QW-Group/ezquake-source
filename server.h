@@ -874,6 +874,7 @@ void MVD_MSG_WriteLong   (const int c);
 void MVD_MSG_WriteFloat  (const float f);
 void MVD_MSG_WriteString (const char *s);
 void MVD_MSG_WriteCoord  (const float f);
+void MVD_MSG_WriteAngle  (const float f);
 void MVD_SZ_Write        (const void *data, int length);
 
 qbool MVDWrite_Begin(byte type, int to, int size);

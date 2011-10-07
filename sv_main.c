@@ -184,6 +184,10 @@ cvar_t sv_ktpro_mode = {"sv_ktpro_mode", "auto"};
 
 cvar_t	sv_halflifebsp = {"halflifebsp", "0", CVAR_ROM};
 
+#ifdef FTE_PEXT_FLOATCOORDS
+cvar_t sv_bigcoords = {"sv_bigcoords", "", CVAR_SERVERINFO};
+#endif
+
 qbool sv_error = false;
 qbool server_cfg_done = false;
 
@@ -3376,6 +3380,10 @@ void SV_InitLocal (void)
 
 	Cvar_Register (&sv_halflifebsp);
 
+#ifdef FTE_PEXT_FLOATCOORDS
+	Cvar_Register (&sv_bigcoords);
+#endif
+
 	Cvar_Register (&sv_cullentities);
 
 // QW262 -->
@@ -3403,6 +3411,9 @@ void SV_InitLocal (void)
 #endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	svs.fteprotocolextensions |= FTE_PEXT_CHUNKEDDOWNLOADS;
+#endif
+#ifdef FTE_PEXT_FLOATCOORDS
+	svs.fteprotocolextensions |= FTE_PEXT_FLOATCOORDS;
 #endif
 
 #ifdef FTE_PEXT2_VOICECHAT

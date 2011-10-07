@@ -216,6 +216,16 @@ static void Cmd_New_f (void)
 	if (!gamedir[0])
 		gamedir = "qw";
 
+#ifdef FTE_PEXT_FLOATCOORDS
+	if (msg_coordsize > 2 && !(sv_client->fteprotocolextensions & FTE_PEXT_FLOATCOORDS))
+	{
+		SV_ClientPrintf(sv_client, 2, "\n\n\n\nSorry, but your client does not appear to support FTE's bigcoords\n"
+									 "FTE users will need to set cl_nopext to 0 and then reconnect, or to upgrade\n");
+		Sys_Printf("%s does not support bigcoords\n", sv_client->name);
+		return;
+	}
+#endif
+
 	//NOTE:  This doesn't go through ClientReliableWrite since it's before the user
 	//spawns.  These functions are written to not overflow
 	if (sv_client->num_backbuf)
@@ -231,8 +241,15 @@ static void Cmd_New_f (void)
 #ifdef PROTOCOL_VERSION_FTE
 	if (sv_client->fteprotocolextensions) // let the client know
 	{
+		unsigned int ext = sv_client->fteprotocolextensions;
+
+#ifdef FTE_PEXT_FLOATCOORDS
+		if (msg_coordsize == 2) //we're not using float orgs on this level.
+			ext &= ~FTE_PEXT_FLOATCOORDS;
+#endif
+
 		MSG_WriteLong (&sv_client->netchan.message, PROTOCOL_VERSION_FTE);
-		MSG_WriteLong (&sv_client->netchan.message, sv_client->fteprotocolextensions);
+		MSG_WriteLong (&sv_client->netchan.message, ext);
 	}
 #endif
 #ifdef PROTOCOL_VERSION_FTE2

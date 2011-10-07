@@ -33,6 +33,73 @@ Handles byte ordering and avoids alignment errors
 int msg_coordsize = 2; // 2 or 4.
 int msg_anglesize = 1; // 1 or 2.
 
+float MSG_FromCoord(coorddata c, int bytes)
+{
+	switch(bytes)
+	{
+	case 2:	//encode 1/8th precision, giving -4096 to 4096 map sizes
+		return LittleShort(c.b2)/8.0f;
+	case 4:
+		return LittleFloat(c.f);
+	default:
+		Host_Error("MSG_FromCoord: not a sane size");
+		return 0;
+	}
+}
+
+coorddata MSG_ToCoord(float f, int bytes)	//return value should be treated as (char*)&ret;
+{
+	coorddata r;
+	switch(bytes)
+	{
+	case 2:
+		r.b4 = 0;
+		if (f >= 0)
+			r.b2 = LittleShort((short)(f*8+0.5f));
+		else
+			r.b2 = LittleShort((short)(f*8-0.5f));
+		break;
+	case 4:
+		r.f = LittleFloat(f);
+		break;
+	default:
+		Host_Error("MSG_ToCoord: not a sane size");
+		r.b4 = 0;
+	}
+
+	return r;
+}
+
+coorddata MSG_ToAngle(float f, int bytes)	//return value is NOT byteswapped.
+{
+	coorddata r;
+	switch(bytes)
+	{
+	case 1:
+		r.b4 = 0;
+		if (f >= 0)
+			r.b[0] = (int)(f*(256.0f/360.0f) + 0.5f) & 255;
+		else
+			r.b[0] = (int)(f*(256.0f/360.0f) - 0.5f) & 255;
+		break;
+	case 2:
+		r.b4 = 0;
+		if (f >= 0)
+			r.b2 = LittleShort((int)(f*(65536.0f/360.0f) + 0.5f) & 65535);
+		else
+			r.b2 = LittleShort((int)(f*(65536.0f/360.0f) - 0.5f) & 65535);
+		break;
+//	case 4:
+//		r.f = LittleFloat(f);
+//		break;
+	default:
+		Host_Error("MSG_ToAngle: not a sane size");
+		r.b4 = 0;
+	}
+
+	return r;
+}
+
 #endif
 
 // writing functions
@@ -116,17 +183,29 @@ void MSG_WriteUnterminatedString (sizebuf_t *sb, char *s)
 
 void MSG_WriteCoord (sizebuf_t *sb, float f)
 {
+#ifdef FTE_PEXT_FLOATCOORDS
+	coorddata i = MSG_ToCoord(f, msg_coordsize);
+	SZ_Write (sb, (void*)&i, msg_coordsize);
+#else
 	MSG_WriteShort (sb, (int)(f * 8));
-}
-
-void MSG_WriteAngle (sizebuf_t *sb, float f)
-{
-	MSG_WriteByte (sb, Q_rint(f * 256.0 / 360.0) & 255);
+#endif
 }
 
 void MSG_WriteAngle16 (sizebuf_t *sb, float f)
 {
 	MSG_WriteShort (sb, Q_rint(f * 65536.0 / 360.0) & 65535);
+}
+
+void MSG_WriteAngle (sizebuf_t *sb, float f)
+{
+#ifdef FTE_PEXT_FLOATCOORDS
+	if (msg_anglesize == 2)
+		MSG_WriteAngle16(sb, f);
+//	else if (msg_anglesize==4)
+//		MSG_WriteFloat(sb, f);
+	else
+#endif
+		MSG_WriteByte (sb, Q_rint(f * 256.0 / 360.0) & 255);
 }
 
 void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd)
@@ -460,47 +539,30 @@ char *MSG_ReadStringLine (void)
 	return string;
 }
 
-#ifdef FTE_PEXT_FLOATCOORDS
-
-static float MSG_FromCoord(coorddata c, int bytes)
-{
-	switch(bytes)
-	{
-	case 2:	//encode 1/8th precision, giving -4096 to 4096 map sizes
-		return LittleShort(c.b2)/8.0f;
-	case 4:
-		return LittleFloat(c.f);
-	default:
-		Host_Error("MSG_ToCoord: not a sane coordsize");
-		return 0;
-	}
-}
-
 float MSG_ReadCoord (void)
 {
+#ifdef FTE_PEXT_FLOATCOORDS
+
 	coorddata c = {0};
 	MSG_ReadData(&c, msg_coordsize);
 	return MSG_FromCoord(c, msg_coordsize);
-}
 
 #else // FTE_PEXT_FLOATCOORDS
 
-float MSG_ReadCoord (void)
-{
 	return MSG_ReadShort() * (1.0 / 8);
-}
 
 #endif // FTE_PEXT_FLOATCOORDS
+}
 
 float MSG_ReadAngle16 (void)
 {
 	return MSG_ReadShort() * (360.0 / 65536);
 }
 
-#ifdef FTE_PEXT_FLOATCOORDS
-
 float MSG_ReadAngle (void)
 {
+#ifdef FTE_PEXT_FLOATCOORDS
+
 	switch(msg_anglesize)
 	{
 	case 1:
@@ -513,16 +575,13 @@ float MSG_ReadAngle (void)
 		Host_Error("MSG_ReadAngle: Bad angle size\n");
 		return 0;
 	}
-}
 
 #else // FTE_PEXT_FLOATCOORDS
 
-float MSG_ReadAngle (void)
-{
 	return MSG_ReadChar() * (360.0 / 256);
-}
 
 #endif // FTE_PEXT_FLOATCOORDS
+}
 
 #define CM_MSEC	(1 << 7) // same as CM_ANGLE2
 

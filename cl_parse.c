@@ -1433,13 +1433,19 @@ void CL_ParseServerData (void)
 #ifdef FTE_PEXT_FLOATCOORDS
 	if (cls.fteprotocolextensions & FTE_PEXT_FLOATCOORDS)
 	{
-		msg_coordsize = 4;
-		msg_anglesize = 2;
+		if (!com_serveractive)
+		{
+			msg_coordsize = 4;
+			msg_anglesize = 2;
+		}
 	}
 	else
 	{
-		msg_coordsize = 2;
-		msg_anglesize = 1;
+		if (!com_serveractive)
+		{
+			msg_coordsize = 2;
+			msg_anglesize = 1;
+		}
 	}
 #endif
 
@@ -2132,12 +2138,15 @@ static void CL_PEXT_Fix(void)
 #endif // PROTOCOL_VERSION_FTE2
 
 #ifdef FTE_PEXT_FLOATCOORDS
-		if (msg_coordsize != 2 || msg_anglesize != 1)
+		if (!com_serveractive)
 		{
-			Com_DPrintf("Fixing FTE_PEXT_FLOATCOORDS!\n");
+			if (msg_coordsize != 2 || msg_anglesize != 1)
+			{
+				Com_DPrintf("Fixing FTE_PEXT_FLOATCOORDS!\n");
 
-			msg_coordsize = 2;
-			msg_anglesize = 1;
+				msg_coordsize = 2;
+				msg_anglesize = 1;
+			}
 		}
 #endif
 	}
