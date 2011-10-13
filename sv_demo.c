@@ -1178,7 +1178,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t *dest)
 		demo.recorder.fteprotocolextensions &= ~FTE_PEXT_FLOATCOORDS;
 #endif
 
-#ifdef PROTOCOL_VERSION_FTE2
+#ifdef PROTOCOL_VERSION_FTE
 	if (demo.recorder.fteprotocolextensions)
 	{
 		MSG_WriteLong(&buf, PROTOCOL_VERSION_FTE);
