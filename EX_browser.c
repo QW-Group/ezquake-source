@@ -1983,6 +1983,11 @@ static void SB_Servers_Toggle_Column_Sort(char key)
 
 int SB_Servers_Key(int key)
 {
+	if (serversn_passed <= 0 && key == K_BACKSPACE) {
+		searchstring[0] = '\0';
+		resort_servers = 1;
+	}
+
     if (serversn_passed <= 0  &&  (key != K_SPACE || isAltDown())
         && tolower(key) != 'n'  && key != K_INS)
         return false;
@@ -2008,6 +2013,7 @@ int SB_Servers_Key(int key)
         {
             searchstring[len] = c;
             searchstring[len+1] = 0;
+            resort_servers = 1;
 
             if (!SearchNextServer(Servers_pos))
                 if (!SearchNextServer(0))
@@ -2021,6 +2027,10 @@ int SB_Servers_Key(int key)
         searchtype = search_none;
         switch (key)
         {
+        	case K_BACKSPACE:
+        		searchstring[0] = '\0';
+        		resort_servers = 1;
+        		break;
 			case K_INS:
 			case 'n':	// new server
 				newserver_pos = 0;
@@ -2772,6 +2782,10 @@ void Filter_Servers(void)
         char *tmp;
         server_data *s = servers[i];
         s->passed_filters = 0;
+
+        if (searchstring[0] && !strstri(s->display.name, searchstring)) {
+        	continue;
+        }
 
 		if (sb_showproxies.integer == 0 && (s->qwfwd || s->qizmo))
 			continue; // hide
