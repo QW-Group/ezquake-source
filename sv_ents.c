@@ -41,11 +41,15 @@ static qbool SV_AddNailUpdate (edict_t *ent)
 	if ((int)sv_nailhack.value)
 		return false;
 
-	if (ent->v.modelindex != sv_nailmodel
-	        && ent->v.modelindex != sv_supernailmodel)
+	if (ent->v.modelindex != sv_nailmodel && ent->v.modelindex != sv_supernailmodel)
 		return false;
+
+	if (msg_coordsize != 2)
+		return false; // Do not allow nailhack in case of sv_bigcoords.
+
 	if (numnails == MAX_NAILS)
 		return true;
+
 	nails[numnails] = ent;
 	numnails++;
 	return true;
