@@ -267,6 +267,34 @@ void Util_SkipEZColors(char *dst, const char *src, size_t size)
 	dst[0] = 0;
 }
 
+// strips all @chars chars from the @src string
+void Util_SkipChars(const char *src, const char *chars, char *dst, size_t dstsize) {
+	if (!dst || !src || !dstsize) {
+		Com_Printf("Util_SkipChatWhite: illegal argument\n");
+		return;
+	}
+	else {
+		char *dstlast = dst + dstsize - 1;
+		size_t chars_len = strlen(chars);
+		int i;
+
+		while (*src && dst < dstlast) {
+			char c = *src++;
+			qbool skipped = false;
+			for (i = 0; i < chars_len; i++) {
+				if (c == chars[i]) {
+					skipped = true;
+					break;
+				}
+			}
+			if (!skipped) {
+				*dst++ = c;
+			}
+		}
+		*dst = '\0';
+	}
+}
+
 char *str_trim(char *str)
 {
 	char *start; // points at first non-whitespace

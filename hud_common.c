@@ -5168,8 +5168,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 				switch (HUD_FindVar(hud, "weapon_style")->integer) {
 				case 1:
-					if(!width_only)
-						Draw_SString (x, y, TP_ItemName(BestWeaponFromStatItems( ti_cl->items )), scale);
+					if(!width_only) {
+						char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
+						size_t buf_size = strlen(weap_str) + 1;
+						char weap_white_stripped[buf_size];
+						Util_SkipChars(weap_str, "{}", weap_white_stripped, buf_size);
+						Draw_SString (x, y, weap_white_stripped, scale);
+					}
 					x += 3 * FONTWIDTH * scale;
 
 					break;
