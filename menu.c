@@ -680,7 +680,7 @@ void M_Quit_Key (int key) {
 	}
 }
 
-void M_Quit_Draw (void) {
+void M_Quit_Draw (void) { // Quit screen text.
 	M_DrawTextBox (0, 0, 38, 26);
 	M_PrintWhite (16, 12,  "  Quake version 1.09 by id Software\n\n");
 	M_PrintWhite (16, 28,  "Programming        Art \n");

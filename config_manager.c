@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "fs.h"
 #include "config_manager.h"
+#include "version.h"
+
 
 #ifdef WITH_KEYMAP
 char *Key_KeynumToString (int keynum, char *buffer);
@@ -725,6 +727,9 @@ static void Config_PrintHeading(FILE *f, char *title)
 
 static void Config_PrintPreamble(FILE *f)
 {
+	extern cvar_t name;
+	char	*newlines = "\n";
+
 	Config_PrintBorder(f);
 	Config_PrintBorder(f);
 	Config_PrintLine(f, "", 3);
@@ -734,7 +739,13 @@ static void Config_PrintPreamble(FILE *f)
 	Config_PrintLine(f, "", 3);
 	Config_PrintBorder(f);
 	Config_PrintBorder(f);
-	fprintf(f, "\n\n\n");
+	fprintf(f,"\n// %s's config\n\n", name.string);
+	fprintf(f,"// ezQuake %s " __DATE__ ", " __TIME__"\n", VersionString());
+
+	if (cfg_save_cmdline.value && strlen(cl_cmdline.string) > 1) {
+		DumpCmdLine(f);
+		fprintf(f, "%s", newlines);
+		}
 }
 
 /************************************ MAIN FUCTIONS	************************************/
@@ -783,12 +794,6 @@ void DumpConfig(char *name)
 	Com_Printf("Saving configuration to %s\n", outfile);
 
 	Config_PrintPreamble(f);
-
-	if (cfg_save_cmdline.value && strlen(cl_cmdline.string) > 1) {
-		Config_PrintHeading(f, "C O M M A N D   L I N E");
-		DumpCmdLine(f);
-		fprintf(f, "%s", newlines);
-	}
 
 	if (cfg_save_cvars.value) {
 		Config_PrintHeading(f, "V A R I A B L E S");

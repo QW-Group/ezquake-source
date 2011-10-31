@@ -1645,6 +1645,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t  *sb_armor[3];
 	extern mpic_t  *sb_items[5];
+	extern cvar_t tp_name_rlg;
 
 	if (!ti_cl)
 		return 0;
@@ -1689,7 +1690,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 				case 1:
 					if(!width_only) {
 						if (Has_Both_RL_and_LG(ti_cl->items)) {
-							Draw_ColoredString (x, y, "rlg", false);
+							Draw_ColoredString (x, y, tp_name_rlg.string, false);
 						}
 						else {
 							char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
@@ -1845,7 +1846,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 					else { x += 3* FONTWIDTH; }
 					break;
 
-				case 3: // colored font (QPR) // <@JohnNy_cz> up2: make the x += FONTWIDTH; happen also when width_only is true
+				case 3: // colored font (QPR)
 					if(!width_only) {
 						if (ti_cl->items & IT_QUAD)
 							Draw_ColoredString (x, y, "&c03fQ", false);

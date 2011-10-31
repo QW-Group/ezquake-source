@@ -496,7 +496,7 @@ void GfxInfo_f( void )
 		ST_Printf( PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string );
 //	ST_Printf( PRINT_ALL, "GL_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
 //	ST_Printf( PRINT_ALL, "GL_MAX_ACTIVE_TEXTURES_ARB: %d\n", glConfig.maxActiveTextures );
-	ST_Printf( PRINT_ALL, "\nPIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
+	ST_Printf( PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
 	ST_Printf( PRINT_ALL, "MODE: %d, %d x %d ", r_mode.integer, glConfig.vidWidth, glConfig.vidHeight);
 	if ( glConfig.displayFrequency )
 	{

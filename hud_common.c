@@ -1203,8 +1203,8 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 
     switch (style)
     {
-	case 3:
-    case 1:     // text
+	case 3: // opposite colors of case 1
+    case 1:     // text, gold inactive, white active
         width = 16 * scale;
         height = 8 * scale;
         if (!HUD_PrepareDraw(hud, width, height, &x, &y))
@@ -1231,8 +1231,8 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
                 Draw_SAlt_String(x, y, tmp, scale);
         }
         break;
-	case 4:
-    case 2:     // numbers
+	case 4: // opposite colors of case 2
+    case 2:     // numbers, gold inactive, white active
         width = 8 * scale;
         height = 8 * scale;
         if (!HUD_PrepareDraw(hud, width, height, &x, &y))
@@ -1244,6 +1244,29 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
             else
 				num += '0' + (style == 4 ? 0 : 128);
             Draw_SCharacter(x, y, num, scale);
+        }
+        break;
+	case 5: // opposite colors of case 6
+	case 6: // Draw the value of tp_name_ , white inactive
+        width = 16 * scale;
+        height = 8 * scale;
+       
+		if (!HUD_PrepareDraw(hud, width, height, &x, &y))
+            return;
+
+        if ( HUD_Stats(STAT_ITEMS) & (IT_SHOTGUN<<i) ) {
+			if ( HUD_Stats(STAT_ACTIVEWEAPON) == (IT_SHOTGUN<<i) )
+				Draw_SString(x, y, TP_ItemName((IT_SHOTGUN<<i)), scale);
+			else {
+				//First strip &cRGB if it exists in tp_name_
+				char inactive_weapon_buf[16];
+				Util_SkipEZColors(inactive_weapon_buf, TP_ItemName(IT_SHOTGUN<<i), sizeof(inactive_weapon_buf));
+				
+				if (style==5)
+					Draw_SAlt_String(x, y, inactive_weapon_buf, scale);
+				else if (style==6)
+					Draw_SString(x, y, inactive_weapon_buf, scale);
+			}
         }
         break;
     default:    // classic - pictures

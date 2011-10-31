@@ -73,6 +73,7 @@ cvar_t	tp_name_sng = {"tp_name_sng", "sng"};
 cvar_t	tp_name_gl = {"tp_name_gl", "gl"};
 cvar_t	tp_name_rl = {"tp_name_rl", "rl"};
 cvar_t	tp_name_lg = {"tp_name_lg", "lg"};
+cvar_t	tp_name_rlg = {"tp_name_rlg", "rlg"};
 cvar_t	tp_name_armortype_ra = {"tp_name_armortype_ra", "r"};
 cvar_t	tp_name_armortype_ya = {"tp_name_armortype_ya", "y"};
 cvar_t	tp_name_armortype_ga = {"tp_name_armortype_ga", "g"};
@@ -3523,6 +3524,7 @@ void TP_Init (void)
 	Cvar_Register (&tp_name_ga);
 	Cvar_Register (&tp_name_lg);
 	Cvar_Register (&tp_name_rl);
+	Cvar_Register (&tp_name_rlg);
 	Cvar_Register (&tp_name_gl);
 	Cvar_Register (&tp_name_sng);
 	Cvar_Register (&tp_name_ng);
