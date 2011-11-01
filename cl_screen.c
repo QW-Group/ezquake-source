@@ -1694,7 +1694,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 						}
 						else {
 							char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
-							size_t buf_size = strlen(weap_str) + 1;
+							size_t buf_size = 32;
 							char weap_white_stripped[buf_size];
 							Util_SkipChars(weap_str, "{}", weap_white_stripped, buf_size);
 							Draw_ColoredString (x, y, weap_white_stripped, false);
