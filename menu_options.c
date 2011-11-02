@@ -375,7 +375,7 @@ const char* simpleitemsorientation_enum[] =
 {"Parallel upright", "Facing upright", "Parallel", "Oriented"};
 
 const char* deadbodyfilter_enum[] =
-{ "off", "decent", "instant" };
+{ "off", "fast", "instant", "DM off, TF on" };
 
 const char* rocketmodel_enum[] =
 { "rocket", "grenade" };

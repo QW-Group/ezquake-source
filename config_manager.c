@@ -742,7 +742,7 @@ static void Config_PrintPreamble(FILE *f)
 	fprintf(f,"\n// %s's config\n\n", name.string);
 	fprintf(f,"// ezQuake %s " __DATE__ ", " __TIME__"\n", VersionString());
 
-	if (cfg_save_cmdline.value && strlen(cl_cmdline.string) > 1) {
+	if (cfg_save_cmdline.value) {
 		DumpCmdLine(f);
 		fprintf(f, "%s", newlines);
 		}

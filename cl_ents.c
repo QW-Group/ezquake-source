@@ -954,12 +954,17 @@ void CL_LinkPacketEntities(void)
 		{
 			i = state->frame;
 
+			if ((cl_deadbodyfilter.value == 3) & !cl.teamfortress)
+			{ // will instantly filter dead bodies unless gamedir is fortress (because in TF you probably want to see dead bodies as they may be feigned spies)
+					if (ISDEAD(i))
+						continue;
+			}
 			if (cl_deadbodyfilter.value == 2)
 			{
 				if (ISDEAD(i))
 					continue;
 			}
-			else if (cl_deadbodyfilter.value) 
+			else if (cl_deadbodyfilter.value == 1) 
 			{
 				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
 					continue;
@@ -1955,12 +1960,18 @@ void CL_LinkPlayers (void)
 		{
 			i = state->frame;
 
+
+			if ((cl_deadbodyfilter.value == 3) & !cl.teamfortress)
+			{ // will instantly filter dead bodies unless gamedir is fortress (because in TF you probably want to see dead bodies as they may be feigned spies)
+					if (ISDEAD(i))
+						continue;
+			}
 			if (cl_deadbodyfilter.value == 2) 
 			{
 				if (ISDEAD(i))
 					continue;
 			} 
-			else if (cl_deadbodyfilter.value) 
+			else if (cl_deadbodyfilter.value == 1) 
 			{
 				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
 					continue;
