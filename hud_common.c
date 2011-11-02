@@ -5193,9 +5193,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				case 1:
 					if(!width_only) {
 						char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
-						size_t buf_size = strlen(weap_str) + 1;
-						char weap_white_stripped[buf_size];
-						Util_SkipChars(weap_str, "{}", weap_white_stripped, buf_size);
+						char weap_white_stripped[32];
+						Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
 						Draw_SString (x, y, weap_white_stripped, scale);
 					}
 					x += 3 * FONTWIDTH * scale;
