@@ -45,7 +45,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QW_PLATFORM			"DragonFly"
 
 #elif defined(__linux__)
-#define QW_PLATFORM			"Linux"
+	#ifdef __x86_64__
+		#define QW_PLATFORM	"Linux64"
+	#else
+		#define QW_PLATFORM	"Linux32"
+	#endif
 
 #elif defined(__sun__)
 #define QW_PLATFORM			"SunOS"
