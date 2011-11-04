@@ -684,24 +684,50 @@ static void QMB_UpdateParticles(void)
 	}
 }
 
+__inline static void DRAW_PARTICLE_BILLBOARD(particle_texture_t * ptex, particle_t * p, vec3_t coord[4])
+{
+	vec3_t verts[4];
+	float scale = p->size;
 
-#define DRAW_PARTICLE_BILLBOARD(_ptex, _p, _coord)			\
-	glPushMatrix();											\
-	glTranslatef(_p->org[0], _p->org[1], _p->org[2]);		\
-	glScalef(_p->size, _p->size, _p->size);					\
-	if (_p->rotspeed)										\
-		glRotatef(_p->rotangle, vpn[0], vpn[1], vpn[2]);	\
-															\
-	glColor4ubv(_p->color);									\
-															\
-	glBegin(GL_QUADS);										\
-	glTexCoord2f(_ptex->coords[_p->texindex][0], ptex->coords[_p->texindex][3]); glVertex3fv(_coord[0]);	\
-	glTexCoord2f(_ptex->coords[_p->texindex][0], ptex->coords[_p->texindex][1]); glVertex3fv(_coord[1]);	\
-	glTexCoord2f(_ptex->coords[_p->texindex][2], ptex->coords[_p->texindex][1]); glVertex3fv(_coord[2]);	\
-	glTexCoord2f(_ptex->coords[_p->texindex][2], ptex->coords[_p->texindex][3]); glVertex3fv(_coord[3]);	\
-	glEnd();			\
-						\
-	glPopMatrix();
+	if (p->rotspeed)
+	{
+		matrix3x3_t rotate_matrix;
+		Matrix3x3_CreateRotate(rotate_matrix, DEG2RAD(p->rotangle), vpn);
+
+		Matrix3x3_MultiplyByVector(verts[0], rotate_matrix, coord[0]);
+		Matrix3x3_MultiplyByVector(verts[1], rotate_matrix, coord[1]);
+		// do some fast math for verts[2] and verts[3].
+		VectorNegate(verts[0], verts[2]);
+		VectorNegate(verts[1], verts[3]);
+
+		VectorMA(p->org, scale, verts[0], verts[0]);
+		VectorMA(p->org, scale, verts[1], verts[1]);
+		VectorMA(p->org, scale, verts[2], verts[2]);
+		VectorMA(p->org, scale, verts[3], verts[3]);
+	}
+	else
+	{
+		VectorMA(p->org, scale, coord[0], verts[0]);
+		VectorMA(p->org, scale, coord[1], verts[1]);
+		VectorMA(p->org, scale, coord[2], verts[2]);
+		VectorMA(p->org, scale, coord[3], verts[3]);
+	}
+
+	glColor4ubv(p->color);
+
+	glBegin(GL_QUADS);
+
+	glTexCoord2f(ptex->coords[p->texindex][0], ptex->coords[p->texindex][3]);
+	glVertex3fv(verts[0]);
+	glTexCoord2f(ptex->coords[p->texindex][0], ptex->coords[p->texindex][1]);
+	glVertex3fv(verts[1]);
+	glTexCoord2f(ptex->coords[p->texindex][2], ptex->coords[p->texindex][1]);
+	glVertex3fv(verts[2]);
+	glTexCoord2f(ptex->coords[p->texindex][2], ptex->coords[p->texindex][3]);
+	glVertex3fv(verts[3]);
+
+	glEnd();
+}
 
 void QMB_DrawParticles (void) {
 	int	i, j, k, drawncount;

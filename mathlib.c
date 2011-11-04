@@ -405,3 +405,35 @@ fixed16_t Invert24To16(fixed16_t val) {
 }
 
 #endif
+
+/*
+	Init rotation matrix 'out', 'angle' in radians, 'v' should be normilized vector.
+*/
+void Matrix3x3_CreateRotate (matrix3x3_t out, float angle, const vec3_t v)
+{
+	float c = cos(angle);
+	float s = sin(angle);
+
+	out[0][0] = v[0] * v[0] + c * (1 - v[0] * v[0]);
+	out[1][0] = v[0] * v[1] * (1 - c) + v[2] * s;
+	out[2][0] = v[2] * v[0] * (1 - c) - v[1] * s;
+
+	out[0][1] = v[0] * v[1] * (1 - c) - v[2] * s;
+	out[1][1] = v[1] * v[1] + c * (1 - v[1] * v[1]);
+	out[2][1] = v[1] * v[2] * (1 - c) + v[0] * s;
+
+	out[0][2] = v[2] * v[0] * (1 - c) + v[1] * s;
+	out[1][2] = v[1] * v[2] * (1 - c) - v[0] * s;
+	out[2][2] = v[2] * v[2] + c * (1 - v[2] * v[2]);
+}
+
+/*
+	Multiply matrix 'in' by vector 'v', note what 'out' is vector.
+*/
+void Matrix3x3_MultiplyByVector (vec3_t out, const matrix3x3_t in, const vec3_t v)
+{
+	out[0] = in[0][0] * v[0] + in[0][1] * v[1] + in[0][2] * v[2];
+	out[1] = in[1][0] * v[0] + in[1][1] * v[1] + in[1][2] * v[2];
+	out[2] = in[2][0] * v[0] + in[2][1] * v[1] + in[2][2] * v[2];
+}
+

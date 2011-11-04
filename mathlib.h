@@ -26,6 +26,8 @@ typedef float vec_t;
 typedef vec_t vec3_t[3];
 typedef vec_t vec5_t[5];
 
+typedef vec_t matrix3x3_t[3][3];
+
 typedef	int	fixed4_t;
 typedef	int	fixed8_t;
 typedef	int	fixed16_t;
@@ -204,5 +206,18 @@ extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 #define MinD(a,b) min(a,b)
 #define MaxI(a,b) max(a,b)
 #define MaxD(a,b) max(a,b)
+
+// Minimal matrix math for rotating point around vector.
+// We have RotatePointAroundVector(), but matrix math allow me rotate few points faster than this function.
+
+/*
+	Init rotation matrix 'out', 'angle' in radians, 'v' should be normilized vector.
+*/
+void Matrix3x3_CreateRotate(matrix3x3_t out, float angle, const vec3_t v);
+
+/*
+	Multiply matrix 'in' by vector 'v', note what 'out' is vector.
+*/
+void Matrix3x3_MultiplyByVector(vec3_t out, const matrix3x3_t in, const vec3_t v);
 
 #endif	/* __MATHLIB_H__ */
