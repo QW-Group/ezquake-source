@@ -680,6 +680,29 @@ void SB_PingTree_DumpPath(const netadr_t *addr)
 	}
 }
 
+int SB_PingTree_GetPathLen(const netadr_t *addr)
+{
+	nodeid_t target = SB_PingTree_FindIp(SB_Netaddr2Ipaddr(addr));
+
+	if (target == INVALID_NODE || ping_nodes[target].prev == INVALID_NODE) {
+		return -1;
+	}
+	else if (ping_nodes[target].prev == startnode_id) {
+		return 0;
+	}
+	else {
+		nodeid_t current = ping_nodes[target].prev;
+		int proxies = 0;
+
+		while (current != startnode_id && current != INVALID_NODE) {
+			proxies++;
+			current = ping_nodes[current].prev;
+		}
+
+		return proxies;
+	}
+}
+
 /// Connects to given QW server using the best available route
 void SB_PingTree_ConnectBestPath(const netadr_t *addr)
 {

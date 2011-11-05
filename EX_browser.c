@@ -291,6 +291,15 @@ static void Join_Server (server_data *s)
 	SB_Browser_Hide(s);
 }
 
+static void Join_Server_Direct(server_data *s)
+{
+	Cvar_Set(&cl_proxyaddr, "");
+	Cbuf_AddText ("join ");
+	Cbuf_AddText (s->display.ip);
+	Cbuf_AddText ("\n");
+	SB_Browser_Hide(s);
+}
+
 static void Observe_Server (server_data *s)
 {
 	if (sb_findroutes.integer) {
@@ -1170,7 +1179,7 @@ void Serverinfo_Help_Draw(int x, int y, int wPixels)
 	x -= LETTERWIDTH * 4;
 	wLetters += 8;
 
-	Draw_TextBox (x, y, wLetters, 3);
+	Draw_TextBox (x, y, wLetters, sb_findroutes.integer > 0 ? 4 : 3);
 	x += LETTERWIDTH * 2;
 	y += LETTERWIDTH;
 	UI_Print(x, y,  "\xDBj\xDD join \xDBo\xDD observe \xDBq\xDD QuakeTV obs.", false);
@@ -1178,6 +1187,23 @@ void Serverinfo_Help_Draw(int x, int y, int wPixels)
 	UI_Print(x, y, "\xDB" "c\xDD copy to clipboard \xDBv\xDD say in chat", false);
 	y += LETTERWIDTH;
 	UI_Print(x, y, "\xDB" "ctrl+c\xDD copy addr. \xDB" "ctrl+v\xDD say team", false);
+
+	if (sb_findroutes.integer > 0) {
+		int pathlen = SB_PingTree_GetPathLen(&show_serverinfo->address);
+		y += LETTERWIDTH;
+		if (pathlen < 0) {
+			UI_Print(x, y, "Route: No route found", false);
+		}
+		else if (pathlen == 0) {
+			UI_Print(x, y, "Route: Direct route is best", false);
+		}
+		else if (pathlen == 1) {
+			UI_Print(x, y, "Route: 1 hop " "\xDB" "n\xDD direct connect", false);
+		}
+		else if (pathlen > 1) {
+			UI_Print(x, y, va("Route: %d hops, " "\xDB" "n\xDD direct connect", pathlen), false);
+		}
+	}
 }
 
 void Serverinfo_Draw ()
@@ -2183,6 +2209,9 @@ void Serverinfo_Key(int key)
         case 'j':
         case 'p':
             Join_Server(show_serverinfo);
+            break;
+        case 'n':
+            Join_Server_Direct(show_serverinfo);
             break;
         case 'o':
         case 's':
