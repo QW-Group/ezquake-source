@@ -1690,7 +1690,10 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 				case 1:
 					if(!width_only) {
 						if (Has_Both_RL_and_LG(ti_cl->items)) {
-							Draw_ColoredString (x, y, tp_name_rlg.string, false);
+							char *weap_str = tp_name_rlg.string;
+							char weap_white_stripped[32];
+							Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
+							Draw_ColoredString (x, y, weap_white_stripped, false);
 						}
 						else {
 							char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));

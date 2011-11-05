@@ -1255,17 +1255,23 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
             return;
 
         if ( HUD_Stats(STAT_ITEMS) & (IT_SHOTGUN<<i) ) {
-			if ( HUD_Stats(STAT_ACTIVEWEAPON) == (IT_SHOTGUN<<i) )
-				Draw_SString(x, y, TP_ItemName((IT_SHOTGUN<<i)), scale);
+			if ( HUD_Stats(STAT_ACTIVEWEAPON) == (IT_SHOTGUN<<i) ) {
+				char *weap_str = TP_ItemName((IT_SHOTGUN<<i));
+				char weap_white_stripped[32];
+				Util_SkipChars(weap_str, "{}", weap_white_stripped, 32); // strip {}
+				Draw_SString(x, y, weap_white_stripped, scale);
+			}
 			else {
-				//First strip &cRGB if it exists in tp_name_
+				//Strip both &cRGB and {}
 				char inactive_weapon_buf[16];
+				char inactive_weapon_buf_nowhite[16];
 				Util_SkipEZColors(inactive_weapon_buf, TP_ItemName(IT_SHOTGUN<<i), sizeof(inactive_weapon_buf));
+				Util_SkipChars(inactive_weapon_buf, "{}", inactive_weapon_buf_nowhite, sizeof(inactive_weapon_buf_nowhite));
 				
 				if (style==5)
-					Draw_SAlt_String(x, y, inactive_weapon_buf, scale);
+					Draw_SAlt_String(x, y, inactive_weapon_buf_nowhite, scale);
 				else if (style==6)
-					Draw_SString(x, y, inactive_weapon_buf, scale);
+					Draw_SString(x, y, inactive_weapon_buf_nowhite, scale);
 			}
         }
         break;

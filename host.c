@@ -696,9 +696,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			Com_Printf("\x02QW:// protocol. ");
 			Com_Printf("Register it using"); 
 			Com_Printf("\x02/register_qwurl_protocol\n");
-			Com_Printf("(set ");
-			Com_Printf("\x02 cl_verify_qwprotocol ");
-			Com_Printf("to 0 to hide this warning)\n");
+			Com_Printf("(set");
+			Com_Printf("\x02 cl_verify_qwprotocol 0 ");
+			Com_Printf("to hide this warning)\n");
 			Com_PrintVerticalBar(INITIAL_CON_WIDTH);
 			Com_Printf("\n\n");
 		}
