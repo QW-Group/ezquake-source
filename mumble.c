@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
+
 #include "quakedef.h"
 #include "mumble.h"
 #ifdef __linux__
@@ -28,7 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/mman.h>
 #endif
 
-#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
 
 cvar_t mumble_enabled = {"mumble_enabled", "1", CVAR_NONE, OnChange_mumble_enabled};
 cvar_t mumble_distance_ratio = {"mumble_distance_ratio", "0.0254"};
