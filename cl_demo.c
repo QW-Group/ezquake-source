@@ -3255,6 +3255,10 @@ void CL_StopPlayback (void)
 		mvd_demo_track_run = 0;
 	}
 
+	// Reset demoseeking and such.
+	cls.demoseeking = DST_SEEKING_NONE;
+	cls.demorewinding = false;
+
 	TP_ExecTrigger("f_demoend");
 }
 
