@@ -254,7 +254,8 @@ void SCR_HUD_DrawFPS(hud_t *hud)
         *hud_fps_show_min = NULL,
 		*hud_fps_style,
         *hud_fps_title,
-		*hud_fps_decimals;
+		*hud_fps_decimals,
+		*hud_fps_drop;
 
     if (hud_fps_show_min == NULL)   // first time called
     {
@@ -262,8 +263,8 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 		hud_fps_style    = HUD_FindVar(hud, "style");
         hud_fps_title    = HUD_FindVar(hud, "title");
 		hud_fps_decimals = HUD_FindVar(hud, "decimals");
+		hud_fps_drop = HUD_FindVar(hud, "drop");
     }
-
 
     if (hud_fps_show_min->value)
         snprintf (st, sizeof (st), "%3.*f\xf%3.*f", (int) hud_fps_decimals->value, cls.min_fps + 0.05, (int) hud_fps_decimals->value, cls.fps + 0.05);
@@ -278,14 +279,18 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
-		if (hud_fps_style->value)
-		{
+		if ((hud_fps_style->value) == 1)
 			Draw_Alt_String(x, y, st);
+		else if ((hud_fps_style->value) == 2) {
+			if ((hud_fps_drop->value) >= cls.fps) // if fps is less than a user-set value, then show it
+				Draw_String(x, y, st);
 		}
-		else
-		{
+		else if ((hud_fps_style->value) == 3) {
+			if ((hud_fps_drop->value) >= cls.fps) // if fps is less than a user-set value, then show it
+				Draw_Alt_String(x, y, st);
+		}
+		else // hud_fps_style is anything other than 1,2,3
 			Draw_String(x, y, st);
-		}
     }
 }
 
@@ -7266,14 +7271,15 @@ void CommonDraw_Init(void)
 
 	// fps
 	HUD_Register("fps", NULL,
-        "Shows your current framerate in frames per second (fps). "
-        "Can also show minimum framerate, that occured in last measure period.",
+        "Shows your current framerate in frames per second (fps)."
+        "This can also show the minimum framerate that occured in the last measured period.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
         "1", "gameclock", "center", "after", "0", "0", "0", "0 0 0", NULL,
         "show_min", "0",
 		"style",	"0",
         "title",    "1",
-		"decimals", "1",
+		"decimals", "0",
+		"drop", "70",
         NULL);
 
 	HUD_Register("vidlag", NULL,
