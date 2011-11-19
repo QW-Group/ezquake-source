@@ -830,12 +830,12 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 			if (ch->sfx && (ch->leftvol || ch->rightvol)) {
 #if defined(DEBUG) || defined(_DEBUG)
 				if (s_show.value == 2)
-					Com_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name);
+					Com_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name); // s_show 2
 #endif
 				total++;
 			}
 		Print_flags[Print_current] |= PR_TR_SKIP;
-		Com_Printf ("----(%i)----\n", total);
+		Com_Printf ("%i sound(s) playing\n", total); // s_show 1
 	}
 
 	// mix some sound

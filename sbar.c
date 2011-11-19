@@ -1,6 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
-
+ 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
@@ -60,7 +60,8 @@ cvar_t  sbar_drawarmor      = {"scr_sbar_drawarmor",  "1"};;
 cvar_t  sbar_drawammo       = {"scr_sbar_drawammo",   "1"};;
 
 cvar_t  hud_centerranking   = {"scr_scoreboard_centered",   "1"};
-cvar_t  hud_rankingpos      = {"scr_scoreboard_posy",       "0"};
+cvar_t  hud_rankingpos_y      = {"scr_scoreboard_posy",       "0"};
+cvar_t  hud_rankingpos_x      = {"scr_scoreboard_posx",       "0"};
 cvar_t  hud_faderankings    = {"scr_scoreboard_fadescreen", "0"};
 //cvar_t  hud_ranks_separate  = {"scr_ranks_separate",   "1"};
 // <-- mqwcl 0.96 oldhud customisation
@@ -258,7 +259,8 @@ void Sbar_Init (void) {
     Cvar_Register (&sbar_drawarmor);
     Cvar_Register (&sbar_drawammo);
     Cvar_Register (&hud_centerranking);
-    Cvar_Register (&hud_rankingpos);
+    Cvar_Register (&hud_rankingpos_y);
+	Cvar_Register (&hud_rankingpos_x);
     Cvar_Register (&hud_faderankings);
     //Cvar_Register (&hud_ranks_separate);
 // <-- mqwcl 0.96 oldhud customisation
@@ -1161,14 +1163,14 @@ static void Sbar_DeathmatchOverlay (int start) {
 	rank_width = bound(0, rank_width, vid.width - 16);
 	leftover = max(0, leftover - rank_width);
 	if (hud_centerranking.value)
-		xofs = ((vid.width - rank_width) >> 1);
+		xofs = ((vid.width - rank_width) >> 1) + hud_rankingpos_x.value;
 	else
-		xofs = 0;
+		xofs = hud_rankingpos_x.value;
 
     if (start)
         y = start;
 	else {
-		y = hud_rankingpos.value;
+		y = hud_rankingpos_y.value;
 		if (y < 0  ||  y > vid.height/2)
 			y = 0;
 		}
@@ -1177,9 +1179,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 		if (scr_scoreboard_drawtitle.value) {
 			pic = Draw_CachePic ("gfx/ranking.lmp");
 			Draw_Pic (xofs + (rank_width - pic->width) / 2, y, pic);
-			start = 36 + hud_rankingpos.value;
+			start = 36 + hud_rankingpos_y.value;
 		} else {
-			start = 12 + hud_rankingpos.value;
+			start = 12 + hud_rankingpos_y.value;
 		}
 	}
 
@@ -1480,22 +1482,22 @@ static void Sbar_TeamOverlay (void) {
 	rank_width = cl.teamplay ? RANK_WIDTH_TEAM : RANK_WIDTH_DM;
 	rank_width = bound(0, rank_width, vid.width - 16);
 
-    y = hud_rankingpos.value;
+    y = hud_rankingpos_y.value;
     if (y < 0  ||  y > vid.height/2)
 		y = 0;
 
 
 	if (hud_centerranking.value)
-		xofs = (vid.width - rank_width) >> 1;
+		xofs = ((vid.width - rank_width) >> 1) + hud_rankingpos_x.value;
 	else
-		xofs = 0;
+		xofs = hud_rankingpos_x.value;
 
 	if (scr_scoreboard_drawtitle.value) {
 		pic = Draw_CachePic ("gfx/ranking.lmp");
 		Draw_Pic (xofs + (rank_width - pic->width) / 2, y, pic);
-		y = 26 + hud_rankingpos.value;
+		y = 26 + hud_rankingpos_y.value;
 	} else {
-		y = 2 + hud_rankingpos.value;
+		y = 2 + hud_rankingpos_y.value;
 	}
 
 	if (!scr_scoreboard_borderless.value)
