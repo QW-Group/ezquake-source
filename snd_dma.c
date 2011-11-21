@@ -108,7 +108,7 @@ cvar_t s_mixahead = {"s_mixahead", "0.1"};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
-cvar_t s_khz = {"s_khz", "44", CVAR_NONE, OnChange_s_khz};
+cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
 
 #if defined(__FreeBSD__) || defined(__linux__)
 cvar_t s_stereo = {"s_stereo", "1", CVAR_LATCH};
@@ -766,6 +766,7 @@ static void S_UpdateAmbientSounds (void)
 void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 {
 	unsigned int i, j, total;
+	static unsigned int printed_total = 0;
 	channel_t *ch, *combine;
 
 	if (!snd_initialized || !snd_started || (snd_blocked > 0) || !shm)
@@ -826,6 +827,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	if (s_show.value) {
 		total = 0;
 		ch = channels;
+
 		for (i = 0; i < total_channels; i++, ch++)
 			if (ch->sfx && (ch->leftvol || ch->rightvol)) {
 #if defined(DEBUG) || defined(_DEBUG)
@@ -834,8 +836,13 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 #endif
 				total++;
 			}
+
 		Print_flags[Print_current] |= PR_TR_SKIP;
-		Com_Printf ("%i sound(s) playing\n", total); // s_show 1
+		
+		if (total != printed_total) { // This if statement is needed so we don't get spammed by the message
+			Com_Printf ("%i sound(s) playing\n", total); // s_show 1
+			printed_total = total;
+		}
 	}
 
 	// mix some sound
