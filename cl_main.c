@@ -99,6 +99,8 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 extern qbool ActiveApp, Minimized;
 #endif
 
+static void Cl_Reset_Min_fps_f(void);
+
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
@@ -144,6 +146,7 @@ cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
 cvar_t  show_fps2 = {"scr_scoreboard_drawfps","0"};
+cvar_t	hud_fps_min_reset_interval = {"hud_fps_min_reset_interval", "60"};
 
 cvar_t  localid = {"localid", ""};
 
@@ -1735,7 +1738,6 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 		}
 	} while (clrpart);
 }
-
 //=============================================================================
 
 void CL_InitCommands (void);
@@ -1808,6 +1810,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_lerp_monsters);
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_physfps);
+	Cvar_Register (&hud_fps_min_reset_interval);
 	Cvar_Register (&cl_physfps_spectator);
 	Cvar_Register (&cl_independentPhysics);
 	Cvar_Register (&cl_vsync_lag_fix);
@@ -1950,6 +1953,8 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("join", CL_Join_f);
 	Cmd_AddCommand ("observe", CL_Observe_f);
 	Cmd_AddCommand ("togglespec", Cl_ToggleSpec_f);
+
+	Cmd_AddCommand ("hud_fps_min_reset", Cl_Reset_Min_fps_f);
 
 	#ifdef WIN32
 	Cmd_AddCommand ("register_qwurl_protocol", CL_RegisterQWURLProtocol_f);
@@ -2226,20 +2231,30 @@ static double MinPhysFrameTime (void)
 void CL_CalcFPS(void)
 {
 	double t;
-	static double lastframetime;
+	static double last_frame_time;
+	static double time_of_last_minfps_update;
 
 	t = Sys_DoubleTime();
-	if ((t - lastframetime) >= 1.0)
+
+	if ((t - last_frame_time) >= 1.0)
 	{
-		lastfps = (double)fps_count / (t - lastframetime);
+		lastfps = (double)fps_count / (t - last_frame_time);
 		fps_count = 0;
-		lastframetime = t;
+		last_frame_time = t;
 	}
 
 	cls.fps = lastfps;
-
-	if (lastfps > 10.0 && lastfps < cls.min_fps)
+	// update min_fps if last fps is less than our lowest accepted minfps (10.0) or greater than min_reset_interval
+	if ((lastfps > 10.0 && lastfps < cls.min_fps) || ((t - time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) { 
 		cls.min_fps = lastfps;
+		time_of_last_minfps_update = t;
+	}
+}
+
+void Cl_Reset_Min_fps_f(void)
+{
+	cls.min_fps = 9999;
+	CL_CalcFPS();
 }
 
 #define NUMTIMINGS 5
