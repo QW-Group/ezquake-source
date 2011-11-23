@@ -223,7 +223,7 @@ int qvsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
 }
 #endif
 
-#if defined(__linux__) || defined(_WIN32)
+#if defined(__linux__) || defined(_WIN32) || defined(__APPLE__)
 size_t strlcpy(char *dst, const char *src, size_t siz)
 {
 	register char *d = dst;
