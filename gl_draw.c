@@ -1984,8 +1984,10 @@ void Draw_ConsoleBackground (int lines)
 		lvlshot = last_lvlshot;
 	}
 
-	if (alpha)
-		Draw_AlphaPic(0, (lines - vid.height) + (int)con_shift.value, lvlshot ? lvlshot : &conback, alpha);
+	if (alpha) {
+		int con_shift_value = cls.state == ca_active ? con_shift.value : 0;
+		Draw_AlphaPic(0, (lines - vid.height) + con_shift_value, lvlshot ? lvlshot : &conback, alpha);
+	}
 }
 
 void Draw_FadeScreen (float alpha)
