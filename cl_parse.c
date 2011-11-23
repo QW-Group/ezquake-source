@@ -2804,8 +2804,14 @@ void CL_ParsePrint ()
 				SYSTEMTIME lt;
 				char tmpbuf[16];
 				GetLocalTime (&lt);
-				snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
-				Com_Printf(tmpbuf);
+				if (con_timestamps.value == 1) {
+					snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
+					Com_Printf(tmpbuf);
+				}
+				else {
+					snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
+					Com_Printf(tmpbuf);
+				}
 			}
 		}
 

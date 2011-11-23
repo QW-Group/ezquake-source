@@ -1,4 +1,4 @@
-EzQuake EzHash - version 1.2
+ezQuake ezHash - version 1.2
 Created by AAS, 2009-2011
 
 
