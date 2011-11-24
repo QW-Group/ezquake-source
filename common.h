@@ -291,6 +291,13 @@ void Info_SetValueForKey (char *s, char *key, char *value, int maxsize);
 void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize);
 void Info_Print (char *s);
 
+// Same as Info_SetValueForStarKey() but allow do not check for key and value length is less than MAX_INFO_KEY.
+// Please do NOT use it unless you sure.
+void Info_SetValueForStarKeyEx (char *s, char *key, char *value, int maxsize, qbool max_info_key_check);
+// Same as Info_SetValueForKey() but allow do not check for key and value length is less than MAX_INFO_KEY.
+// Please do NOT use it unless you sure.
+void Info_SetValueForKeyEx (char *s, char *key, char *value, int maxsize, qbool max_info_key_check);
+
 unsigned Com_BlockChecksum (void *buffer, int length);
 void Com_BlockFullChecksum (void *buffer, int len, unsigned char *outbuf);
 byte COM_BlockSequenceCRCByte (byte *base, int length, int sequence);

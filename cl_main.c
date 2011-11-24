@@ -886,14 +886,16 @@ void CL_Connect_f (void)
 			strlcpy(prx_buf, secondproxy + 1, prx_buf_len);
 			strlcat(prx_buf, "@", prx_buf_len);
 			strlcat(prx_buf, Cmd_Argv(1), prx_buf_len);
-			Info_SetValueForKey(cls.userinfo, "prx", prx_buf, MAX_INFO_STRING);
+			Info_SetValueForKeyEx(cls.userinfo, "prx", prx_buf, MAX_INFO_STRING, false);
 			Q_free(prx_buf);
 		}
 		else {
 			Info_SetValueForKey (cls.userinfo, "prx", Cmd_Argv(1), MAX_INFO_STRING);
+#if 0 // FIXME: qqshka: disabled untill one explain that it does and why.
 			if (cls.state >= ca_connected) {
 				Cmd_ForwardToServer ();
 			}
+#endif
 			connect_addr = cl_proxyaddr.string;
 		}
 		connected_via_proxy = true;

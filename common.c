@@ -832,7 +832,8 @@ void Info_RemovePrefixedKeys (char *start, char prefix) {
 
 }
 
-void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize) {
+void Info_SetValueForStarKeyEx (char *s, char *key, char *value, int maxsize, qbool max_info_key_check)
+{
 	char new[1024], *v;
 	int c;
 #ifndef CLIENTONLY
@@ -849,9 +850,13 @@ void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize) {
 		return;
 	}
 
-	if (strlen(key) >= MAX_INFO_KEY || strlen(value) >= MAX_INFO_KEY) {
-		Com_Printf ("Keys and values must be < %i characters.\n", MAX_INFO_KEY);
-		return;
+	if (max_info_key_check)
+	{
+		if (strlen(key) >= MAX_INFO_KEY || strlen(value) >= MAX_INFO_KEY)
+		{
+			Com_Printf ("Keys and values must be < %i characters.\n", MAX_INFO_KEY);
+			return;
+		}
 	}
 
 	// this next line is kinda trippy
@@ -899,13 +904,25 @@ void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize) {
 	}
 }
 
-void Info_SetValueForKey (char *s, char *key, char *value, int maxsize) {
-	if (key[0] == '*') {
+void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize)
+{
+	Info_SetValueForStarKeyEx(s, key, value, maxsize, true);
+}
+
+void Info_SetValueForKeyEx (char *s, char *key, char *value, int maxsize, qbool max_info_key_check)
+{
+	if (key[0] == '*')
+	{
 		Com_Printf ("Can't set * keys\n");
 		return;
 	}
 
-	Info_SetValueForStarKey (s, key, value, maxsize);
+	Info_SetValueForStarKeyEx (s, key, value, maxsize, max_info_key_check);
+}
+
+void Info_SetValueForKey (char *s, char *key, char *value, int maxsize)
+{
+	Info_SetValueForKeyEx (s, key, value, maxsize, true);
 }
 
 #define INFO_PRINT_FIRST_COLUMN_WIDTH 20
