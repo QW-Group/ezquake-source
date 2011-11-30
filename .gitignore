@@ -11,6 +11,8 @@
 /make/msvs2008/*.ncb
 /make/msvs2008/*.suo
 /make/msvs2008/*.user
+/make/msvs2010/*.user
+/make/msvs2010/*.sdf
 
 # ?
 /release-*/
