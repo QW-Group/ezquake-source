@@ -23,12 +23,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __NET_H__
 #define __NET_H__
 
+#include <errno.h>
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 typedef int socklen_t;
 typedef SOCKET socket_t;
 
+#ifndef EADDRNOTAVAIL
 #define EWOULDBLOCK	WSAEWOULDBLOCK
 #define EMSGSIZE	WSAEMSGSIZE
 #define ECONNRESET	WSAECONNRESET
@@ -36,6 +39,7 @@ typedef SOCKET socket_t;
 #define ECONNREFUSED	WSAECONNREFUSED
 #define EADDRNOTAVAIL	WSAEADDRNOTAVAIL
 #define EAFNOSUPPORT	WSAEAFNOSUPPORT
+#endif
 #define qerrno WSAGetLastError()
 #else //_WIN32
 #define qerrno errno
@@ -58,8 +62,6 @@ typedef SOCKET socket_t;
 #define ioctlsocket ioctl
 typedef int socket_t;
 #endif //_WIN32
-
-#include <errno.h>
 
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET -1

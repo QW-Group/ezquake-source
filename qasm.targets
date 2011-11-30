@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <PropertyPageSchema
+      Include="$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml" />
+    <AvailableItemName
+      Include="qasm">
+      <Targets>_qasm</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+  <UsingTask
+    TaskName="qasm"
+    TaskFactory="XamlTaskFactory"
+    AssemblyName="Microsoft.Build.Tasks.v4.0">
+    <Task>$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml</Task>
+  </UsingTask>
+  <Target
+    Name="_qasm"
+    BeforeTargets="$(qasmBeforeTargets)"
+    AfterTargets="$(qasmAfterTargets)"
+    Condition="'@(qasm)' != ''"
+    DependsOnTargets="$(qasmDependsOn);ComputeqasmOutput"
+    Outputs="%(qasm.Outputs)"
+    Inputs="%(qasm.Identity);%(qasm.AdditionalDependencies);$(MSBuildProjectFile)">
+    <ItemGroup
+      Condition="'@(SelectedFiles)' != ''">
+      <qasm
+        Remove="@(qasm)"
+        Condition="'%(Identity)' != '@(SelectedFiles)'" />
+    </ItemGroup>
+    <ItemGroup>
+      <qasm_tlog
+        Include="%(qasm.Outputs)"
+        Condition="'%(qasm.Outputs)' != '' and '%(qasm.ExcludedFromBuild)' != 'true'">
+        <Source>@(qasm, '|')</Source>
+      </qasm_tlog>
+    </ItemGroup>
+    <Message
+      Importance="High"
+      Text="%(qasm.ExecutionDescription)" />
+    <WriteLinesToFile
+      Condition="'@(qasm_tlog)' != '' and '%(qasm_tlog.ExcludedFromBuild)' != 'true'"
+      File="$(IntDir)$(ProjectName).write.1.tlog"
+      Lines="^%(qasm_tlog.Source);@(qasm_tlog-&gt;'%(Fullpath)')" />
+    <qasm
+      Condition="'@(qasm)' != '' and '%(qasm.ExcludedFromBuild)' != 'true'"
+      CommandLineTemplate="%(qasm.CommandLineTemplate)"
+      AdditionalOptions="%(qasm.AdditionalOptions)"
+      Inputs="%(qasm.Identity)" />
+  </Target>
+  <PropertyGroup>
+    <ComputeLinkInputsTargets>
+            $(ComputeLinkInputsTargets);
+            ComputeqasmOutput;
+          </ComputeLinkInputsTargets>
+    <ComputeLibInputsTargets>
+            $(ComputeLibInputsTargets);
+            ComputeqasmOutput;
+          </ComputeLibInputsTargets>
+  </PropertyGroup>
+  <Target
+    Name="ComputeqasmOutput"
+    Condition="'@(qasm)' != ''">
+    <ItemGroup>
+      <qasmDirsToMake
+        Condition="'@(qasm)' != '' and '%(qasm.ExcludedFromBuild)' != 'true'"
+        Include="%(qasm.Outputs)" />
+      <Link
+        Include="%(qasmDirsToMake.Identity)"
+        Condition="'%(Extension)'=='.obj' or '%(Extension)'=='.res' or '%(Extension)'=='.rsc' or '%(Extension)'=='.lib'" />
+      <Lib
+        Include="%(qasmDirsToMake.Identity)"
+        Condition="'%(Extension)'=='.obj' or '%(Extension)'=='.res' or '%(Extension)'=='.rsc' or '%(Extension)'=='.lib'" />
+      <ImpLib
+        Include="%(qasmDirsToMake.Identity)"
+        Condition="'%(Extension)'=='.obj' or '%(Extension)'=='.res' or '%(Extension)'=='.rsc' or '%(Extension)'=='.lib'" />
+    </ItemGroup>
+    <MakeDir
+      Directories="@(qasmDirsToMake-&gt;'%(RootDir)%(Directory)')" />
+  </Target>
+</Project>
