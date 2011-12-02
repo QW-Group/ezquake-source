@@ -109,6 +109,10 @@ cvar_t	scr_scoreboard_showfrags = {"scr_scoreboard_showfrags", "1"};
 cvar_t	scr_scoreboard_drawtitle = {"scr_scoreboard_drawtitle", "1"};
 cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "1"};
 
+cvar_t	scr_scoreboard_fragcolor = {"scr_scoreboard_fragcolor", "0B4"};
+cvar_t	scr_scoreboard_deathcolor = {"scr_scoreboard_deathcolor", "F00"};
+cvar_t	scr_scoreboard_tkcolor = {"scr_scoreboard_tkcolor", "F60"};
+
 #ifdef GLQUAKE
 cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
 cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};
@@ -272,6 +276,9 @@ void Sbar_Init (void) {
 	Cvar_Register (&scr_scoreboard_showfrags);
 	Cvar_Register (&scr_scoreboard_drawtitle);
 	Cvar_Register (&scr_scoreboard_borderless);
+	Cvar_Register (&scr_scoreboard_fragcolor);
+	Cvar_Register (&scr_scoreboard_deathcolor);
+	Cvar_Register (&scr_scoreboard_tkcolor);
 #ifdef GLQUAKE
 	Cvar_Register (&scr_scoreboard_fillalpha);
 	Cvar_Register (&scr_scoreboard_fillcolored);
@@ -1094,7 +1101,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
 	char myminutes[4], fragsstr[10];
 	char *color;
-	char *tkscolor;
+	char *fragcolor, *deathcolor, *tkcolor;
 	int             scr_scoreboard_drawfps;
     int             offset;
     player_info_t *s;
@@ -1350,9 +1357,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 			x += 8*5; // move "spectator" 5 symbols right, so time column is not occupied
 			if (cl.teamplay) // use columns frags and team
-				Draw_ColoredString (x, y, "&cF20s&cF50p&cF80e&c883c&cA85t&c668a&c55At&c33Bo&c22Dr", 0);
+				Draw_ColoredString (x, y, "σπεγτατος", 0); // brown "spectator". old: &cF20s&cF50p&cF80e&c883c&cA85t&c668a&c55At&c33Bo&c22Dr
 			else // use only frags column
-				Draw_ColoredString (x, y, "&cF20s&cF80p&c668e&c22Dc", 0);
+				Draw_ColoredString (x, y, "σπεγ", 0); // brown "spec". old: &cF20s&cF80p&c668e&c22Dc
 
 			x += cl.teamplay ? 88 : 48; // move across to print the name
 
@@ -1404,15 +1411,18 @@ static void Sbar_DeathmatchOverlay (int start) {
 			scorerow[0] = 0;
 
 			if (stats_team)
-				//snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF60%3i &cF00%3i ", playerstats[0], playerstats[2], playerstats[1]);
 			{			
-				if (playerstats[2] < 1) { tkscolor = "FFF"; }	// if 0 teamkills, display "0" in white
-				else { tkscolor = "FF0"; }	// if >0 teamkills, display yellow
-				snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &c%s%3i &cF00%3i ", playerstats[0], tkscolor, playerstats[2], playerstats[1]);
+				if (playerstats[0] < 1) { fragcolor = "FFF"; }	// if 0 frags, display "0" in white
+					else { fragcolor = scr_scoreboard_fragcolor.string; }
+				if (playerstats[1] < 1) { deathcolor = "FFF"; }	// if 0 deaths, display "0" in white
+					else { deathcolor = scr_scoreboard_deathcolor.string; }
+				if (playerstats[2] < 1) { tkcolor = "FFF"; }	// if 0 teamkills, display "0" in white
+					else { tkcolor = scr_scoreboard_tkcolor.string; }
+
+				snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i &c%s%3i ", fragcolor, playerstats[0], tkcolor, playerstats[2], deathcolor, playerstats[1]);//up2_score
 			}
 			else
-				snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF00%3i ", playerstats[0], playerstats[1]);
-
+				snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i ", fragcolor, playerstats[0], deathcolor, playerstats[1]);
 			
 			if (stats_touches) // flag touches
 			{
