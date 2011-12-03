@@ -652,8 +652,12 @@ foundmatch:
 			victim = (fragmsg->type == mt_tkilled) ? i : j;
 			CL_Cam_SetKiller(killer,victim);
 
+			fragstats[killer].teamkills[victim]++;
+			fragstats[killer].totalteamkills++;
+
 			fragstats[victim].teamdeaths[killer]++;
 			fragstats[victim].totaldeaths++;
+
 			VX_TrackerTK_XvsY(victim, killer, fragmsg->wclass_index,
 						fragstats[killer].totalteamkills, fragstats[victim].teamdeaths[killer],
 						fragstats[killer].totalteamkills, fragstats[killer].teamkills[victim]);
