@@ -1086,7 +1086,7 @@ void Config_TroubleShoot_Tip(const char* problem, const char* description,
 	con_ormask = 0;
 
 	con_margin = 2;
-	Com_Printf("%s\n", solution);
+	Com_Printf("%s\n\n", solution);
 	con_margin = 0;
 }
 
@@ -1094,7 +1094,7 @@ void Config_TroubleShoot_f(void)
 {
 	unsigned problems = 0;
 #ifdef GLQUAKE
-	extern cvar_t r_novis;
+	extern cvar_t r_novis, r_swapInterval;
 #endif
 	extern cvar_t m_filter, sys_yieldcpu, cl_maxfps, hud_planmode;
 #ifdef WIN32
@@ -1116,18 +1116,30 @@ void Config_TroubleShoot_f(void)
 			"set m_filter to 0", 1);
 		problems++;
 	}
-	if (cl_maxfps.integer == 0 && sys_yieldcpu.integer == 0) {
-		Config_TroubleShoot_Tip("cl_maxfps is 0 and sys_yieldcpu is 0",
-			"unlimited FPS with CPU yielding disabled typically leads to interrputs "
-			"in reading the input devices (keyboard, mouse)",
-			"enable sys_yieldcpu or limit your FPS", 1);
+
+#ifdef GLQUAKE
+	if (cl_maxfps.integer == 0 && sys_yieldcpu.value == 0 && r_swapInterval.value == 0) {
+		Config_TroubleShoot_Tip("cl_maxfps, sys_yieldcpu, and vid_vsync are all 0",
+			"unlimited FPS with CPU yielding disabled typically leads to interruptions "
+			"in reading input devices (keyboard, mouse)",
+			"either set sys_yieldcpu 1, vid_vsync 1, or or limit your FPS with cl_maxfps", 1);
 		problems++;
 	}
+#else
+	if (cl_maxfps.integer == 0 && sys_yieldcpu.value == 0) {
+		Config_TroubleShoot_Tip("cl_maxfps and sys_yieldcpu are 0",
+			"unlimited FPS with CPU yielding disabled typically leads to interruptions "
+			"in reading input devices (keyboard, mouse)",
+			"either set sys_yieldcpu 1 or or limit your FPS with cl_maxfps", 1);
+		problems++;
+	}
+#endif
+
 #ifdef WIN32
 	if (in_mouse.integer != 3) {
 		Config_TroubleShoot_Tip("in_mouse is not set to 3",
-			"in_mouse 3 enables Raw Input, probably the most troublefree mouse input method "
-			"It is the currently most recommended setting for mouse input",
+			"in_mouse 3 enables Raw Input, the most trouble-free mouse input method. "
+			"It is the recommended setting for mouse input",
 			"set in_mouse to 3", 0);
 		problems++;
 	}
@@ -1138,9 +1150,8 @@ void Config_TroubleShoot_f(void)
 			"so that you can fine-tune your head up display settings",
 			"set hud_planmode to 0", 1);
 	}
-	//if (
 	if (!problems) {
-		Com_Printf("No problems found\n");
+		Com_Printf("No problems detected. Please visit the forum in ÷÷÷®Ñõáëå×ïòìä®îõ for more help.\n"); //brown "www.QuakeWorld.nu"
 	}
 }
 
