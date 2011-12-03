@@ -111,7 +111,7 @@ cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "1"};
 
 cvar_t	scr_scoreboard_fragcolor = {"scr_scoreboard_fragcolor", "0B4"};
 cvar_t	scr_scoreboard_deathcolor = {"scr_scoreboard_deathcolor", "F00"};
-cvar_t	scr_scoreboard_tkcolor = {"scr_scoreboard_tkcolor", "F60"};
+cvar_t	scr_scoreboard_tkcolor = {"scr_scoreboard_tkcolor", "FF0"};
 
 #ifdef GLQUAKE
 cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
@@ -1409,18 +1409,13 @@ static void Sbar_DeathmatchOverlay (int start) {
 				Stats_GetFlagStats(s - cl.players, playerstats + 4);
 
 			scorerow[0] = 0;
-
+			
+			fragcolor = playerstats[0] == 0 ? "FFF" : scr_scoreboard_fragcolor.string;
+			deathcolor = playerstats[1] == 0 ? "FFF" : scr_scoreboard_deathcolor.string;
+			tkcolor = playerstats[2] == 0 ? "FFF" : scr_scoreboard_tkcolor.string;
+			
 			if (stats_team)
-			{			
-				if (playerstats[0] < 1) { fragcolor = "FFF"; }	// if 0 frags, display "0" in white
-					else { fragcolor = scr_scoreboard_fragcolor.string; }
-				if (playerstats[1] < 1) { deathcolor = "FFF"; }	// if 0 deaths, display "0" in white
-					else { deathcolor = scr_scoreboard_deathcolor.string; }
-				if (playerstats[2] < 1) { tkcolor = "FFF"; }	// if 0 teamkills, display "0" in white
-					else { tkcolor = scr_scoreboard_tkcolor.string; }
-
-				snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i &c%s%3i ", fragcolor, playerstats[0], tkcolor, playerstats[2], deathcolor, playerstats[1]);//up2_score
-			}
+				snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i &c%s%3i ", fragcolor, playerstats[0], tkcolor, playerstats[2], deathcolor, playerstats[1]);
 			else
 				snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i ", fragcolor, playerstats[0], deathcolor, playerstats[1]);
 			
