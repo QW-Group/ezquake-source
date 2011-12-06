@@ -314,15 +314,6 @@ qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 				continue;
 			}
 
-#ifdef _WIN32
-#if (_MSC_VER == 1600)
-			if (err == WSAEWOULDBLOCK) {
-				// no data available, apparently speciality of ms vs 2010 libraries
-				continue;
-			}
-#endif
-#endif
-
 			Com_Printf ("NET_GetPacket: recvfrom: (%i): %s\n", err, strerror(err));
 			continue;
 		}

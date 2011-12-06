@@ -31,7 +31,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef int socklen_t;
 typedef SOCKET socket_t;
 
-#ifndef EADDRNOTAVAIL
+#ifdef EWOULDBLOCK
+#undef EWOULDBLOCK
+#endif
+#ifdef EMSGSIZE
+#undef EMSGSIZE
+#endif
+#ifdef ECONNRESET
+#undef ECONNRESET
+#endif
+#ifdef ECONNABORTED
+#undef ECONNABORTED
+#endif
+#ifdef ECONNREFUSED
+#undef ECONNREFUSED
+#endif
+#ifdef EADDRNOTAVAIL
+#undef EADDRNOTAVAIL
+#endif
+#ifdef EAFNOSUPPORT
+#undef EAFNOSUPPORT
+#endif
+
 #define EWOULDBLOCK	WSAEWOULDBLOCK
 #define EMSGSIZE	WSAEMSGSIZE
 #define ECONNRESET	WSAECONNRESET
@@ -39,7 +60,6 @@ typedef SOCKET socket_t;
 #define ECONNREFUSED	WSAECONNREFUSED
 #define EADDRNOTAVAIL	WSAEADDRNOTAVAIL
 #define EAFNOSUPPORT	WSAEAFNOSUPPORT
-#endif
 #define qerrno WSAGetLastError()
 #else //_WIN32
 #define qerrno errno
