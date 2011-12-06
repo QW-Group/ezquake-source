@@ -368,9 +368,10 @@ void QTVList_Refresh_Cache(qbool force_redownload)
 		sb_qtvlist_cache.status = QTVLIST_DOWNLOADING;
 		QTVList_Cache_File_Download();
 
-		cache_file = QTVList_Cache_File_Open("rb");
+			cache_file = QTVList_Cache_File_Open("rb");
 		if (!cache_file) {
 			Com_Printf("Can't open QTV cache file\n");
+			return;
 			sb_qtvlist_cache.status = QTVLIST_INIT;
 		}
 	}
