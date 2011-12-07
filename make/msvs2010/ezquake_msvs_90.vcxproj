@@ -118,7 +118,7 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='FakeGLRelease|Win32'">$(Configuration)\</IntDir>
     <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='FakeGLRelease|Win32'">*.asm%3b*.bsc%3b*.cod%3b*.dep%3b*.idb%3b*.ilk%3b*.obj%3b*.pgc%3b*.pgd%3b*.res%3b*.rsp%3b*.sbr%3b*.tlb%3b*.tlh%3b*.tli%3b*.tmp%3b*.manifest*%3b$(TargetPath)</ExtensionsToDeleteOnClean>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='FakeGLRelease|Win32'">false</LinkIncremental>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='GLDebug|Win32'">..\..\ezquake-gl-debug.exe</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='GLDebug|Win32'">..\..\ezquake-gl-debug</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GLDebug|Win32'">
     <Midl>
