@@ -34,6 +34,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "teamplay.h"
 #include "utils.h"
+#include <curl/curl.h>
+#include "sha1.h"
+#include <time.h>
 
 
 #define MAX_STATIC_STRING 1024
@@ -569,6 +572,7 @@ static char *MT_NameForMatchInfo(matchinfo_t *matchinfo) {
 		} else {
 			Sys_Error("Macro_Matchdesc : Unknown match type %d", matchinfo->matchtype);
 		}
+		break;
 	}
 	if (!format)
 		Sys_Error("MT_NameForMatchInfo: NULL format");
@@ -595,6 +599,266 @@ char *MT_ShortStatus(void)
 	return va("%d/%d - %s", TP_CountPlayers(), maxclients, mapname);
 }
 
+void MT_ChallengeMode_Change(cvar_t *cvar, char *value, qbool *cancel)
+{
+	if (cls.state != ca_disconnected && !cl.standby && !cl.spectator) {
+		*cancel = true;
+		Com_Printf("Challenge mode cannot be toggled during the match\n");
+		return;
+	}
+}
+
+extern cvar_t match_auto_logupload_token;
+cvar_t match_challenge = {"match_challenge", "0", 0, MT_ChallengeMode_Change};
+cvar_t match_challenge_url = {"match_challenge_url", "http://stats.quakeworld.nu/post-challenge", 0, MT_ChallengeMode_Change};
+cvar_t match_ladder_id = {"match_ladder_id", "1"};
+
+typedef enum challenge_status_e {
+	challenge_start,
+	challenge_end
+} challenge_status_e;
+
+typedef struct challenge_data_s {
+	challenge_status_e status;
+	char *ladderid;
+	int players_count;
+	char *token;
+	char *player1;
+	char *player2;
+	char *server;
+	char *map;
+	char *url;
+	char *hash;
+} challenge_data_t;
+
+static challenge_data_t *last_challenge = NULL;
+
+qbool MT_Challenge_IsOn()
+{
+	return last_challenge != NULL;
+}
+
+const char *MT_Challenge_GetLadderId()
+{
+	if (last_challenge == NULL) {
+		return "";
+	}
+
+	return last_challenge->ladderid;
+}
+
+const char *MT_Challenge_GetHash()
+{
+	if (last_challenge == NULL) {
+		return "";
+	}
+
+	return last_challenge->hash;
+}
+
+const char *MT_Challenge_GetToken()
+{
+	if (last_challenge == NULL) {
+		return "";
+	}
+
+	return last_challenge->token;
+}
+
+const char* MT_Challenge_StatusName(challenge_status_e status)
+{
+	switch (status) {
+	case challenge_start: return "start";
+	case challenge_end: return "end";
+	default:
+		Com_Printf("ERROR: MT_Challenge_StatusName: Unknown challenge status");
+		return "";
+	}
+}
+
+size_t MT_Curl_Write_Void( void *ptr, size_t size, size_t nmemb, void *userdata)
+{
+	return size*nmemb;
+}
+
+static const char *MT_Challenge_GenerateHash(void)
+{
+	static unsigned char hash[DIGEST_SIZE];
+	SHA1_CTX context;
+	char* hostname = Info_ValueForKey(cl.serverinfo, "hostname");
+	double curtime = Sys_DoubleTime();
+
+	SHA1Init(&context);
+
+	SHA1Update(&context, (unsigned char *) match_ladder_id.string, strlen(match_ladder_id.string));
+	SHA1Update(&context, (unsigned char *) match_auto_logupload_token.string, strlen(match_auto_logupload_token.string));
+	SHA1Update(&context, (unsigned char *) MT_PlayerName(), strlen(MT_PlayerName()));
+	SHA1Update(&context, (unsigned char *) MT_EnemyName(), strlen(MT_EnemyName()));
+	SHA1Update(&context, (unsigned char *) hostname, strlen(hostname));
+	SHA1Update(&context, (unsigned char *) host_mapname.string, strlen(host_mapname.string));
+	SHA1Update(&context, (unsigned char *) match_challenge_url.string, strlen(match_challenge_url.string));
+	SHA1Update(&context, (unsigned char *) &curtime, sizeof(double));
+
+	SHA1Final(hash, &context);
+
+	return bin2hex(hash);
+}
+
+challenge_data_t *MT_Challenge_Create(challenge_status_e status, int players_count,
+		const char *ladderid, const char *token, const char *player1, const char *player2,
+		const char *server, const char *map, const char *url, const char *hash)
+{
+	challenge_data_t *retval = (challenge_data_t *)Q_malloc(sizeof(challenge_data_t));
+	retval->status = status;
+	retval->players_count = players_count;
+	retval->ladderid = Q_strdup(ladderid);
+	retval->token = Q_strdup(token);
+	retval->player1 = Q_strdup(player1);
+	retval->player2 = Q_strdup(player2);
+	retval->server = Q_strdup(server);
+	retval->map = Q_strdup(map);
+	retval->url = Q_strdup(url);
+	retval->hash = Q_strdup(hash);
+
+	return retval;
+}
+
+void MT_Challenge_Destroy(challenge_data_t *challenge)
+{
+	Q_free(challenge->ladderid);
+	Q_free(challenge->token);
+	Q_free(challenge->player1);
+	Q_free(challenge->player2);
+	Q_free(challenge->server);
+	Q_free(challenge->map);
+	Q_free(challenge->url);
+	Q_free(challenge->hash);
+	Q_free(challenge);
+}
+
+challenge_data_t *MT_Challenge_Init(challenge_status_e status)
+{
+	return MT_Challenge_Create(status, MT_CountPlayers(), match_ladder_id.string, match_auto_logupload_token.string,
+			MT_PlayerName(), MT_EnemyName(), Info_ValueForKey(cl.serverinfo, "hostname"), host_mapname.string,
+			match_challenge_url.string, MT_Challenge_GenerateHash());
+}
+
+challenge_data_t *MT_Challenge_Copy(const challenge_data_t *orig)
+{
+	return MT_Challenge_Create(orig->status, orig->players_count, orig->ladderid, orig->token, orig->player1, orig->player2,
+			orig->server, orig->map, orig->url, orig->hash);
+}
+
+DWORD WINAPI MT_Challenge_StartSend_Thread(void *arg)
+{
+	challenge_data_t *challenge_data = (challenge_data_t *) arg;
+
+	CURL *curl;
+	CURLcode res;
+	struct curl_httppost *post=NULL;
+	struct curl_httppost *last=NULL;
+	struct curl_slist *headers=NULL;
+	char errorbuffer[CURL_ERROR_SIZE] = "";
+
+	curl = curl_easy_init();
+
+	headers = curl_slist_append(headers, "Content-Type: text/plain");
+
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "status",
+		CURLFORM_COPYCONTENTS, MT_Challenge_StatusName(challenge_data->status),
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "ladderid",
+		CURLFORM_COPYCONTENTS, challenge_data->ladderid,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "hash",
+		CURLFORM_COPYCONTENTS, challenge_data->hash,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "token",
+		CURLFORM_COPYCONTENTS, challenge_data->token,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "players_count",
+		CURLFORM_COPYCONTENTS, va("%d", challenge_data->players_count),
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "player1",
+		CURLFORM_COPYCONTENTS, challenge_data->player1,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "player2",
+		CURLFORM_COPYCONTENTS, challenge_data->player2,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "server",
+		CURLFORM_COPYCONTENTS, challenge_data->server,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "map",
+		CURLFORM_COPYCONTENTS, challenge_data->map,
+		CURLFORM_END);
+
+	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+	curl_easy_setopt(curl, CURLOPT_URL, challenge_data->url);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, MT_Curl_Write_Void);
+
+	res = curl_easy_perform(curl); /* post away! */
+
+	curl_formfree(post);
+	curl_easy_cleanup(curl);
+
+	if (res != CURLE_OK) {
+		Com_Printf("Challenge announcement upload failed:\n%s\n", curl_easy_strerror(res));
+		Com_Printf("%s\n", errorbuffer);
+	}
+	else {
+		Com_Printf("Challenge %s announced\n", MT_Challenge_StatusName(challenge_data->status));
+	}
+
+	MT_Challenge_Destroy(challenge_data);
+
+	return 0;
+}
+
+static void MT_Challenge_BreakSend()
+{
+	challenge_data_t *thread_data;
+
+	if (last_challenge != NULL) {
+		// normal situation - reuse the challenge we announced on start
+		thread_data = MT_Challenge_Copy(last_challenge);
+		thread_data->status = challenge_end;
+		thread_data->players_count = MT_CountPlayers();
+
+		MT_Challenge_Destroy(last_challenge);
+		last_challenge = NULL;
+	}
+	else {
+		// weird situation, we didn't send the start of the challenge (perhaps late-join of the match)
+		// but we now want to send the break of the challenge.. we will do our best-effort here
+		// - simply generate new challenge and say we break it; it is up to the challenge server
+		// what it will do with this message
+		thread_data = MT_Challenge_Init(challenge_end);
+	}
+
+	Sys_CreateThread(MT_Challenge_StartSend_Thread, thread_data);
+}
+
+static void MT_Challenge_StartSend()
+{
+	challenge_data_t *thread_data;
+
+	last_challenge = MT_Challenge_Init(challenge_start);
+
+	thread_data = MT_Challenge_Copy(last_challenge);
+
+	Sys_CreateThread(MT_Challenge_StartSend_Thread, thread_data);
+}
+
 #define MT_SCOREBOARD_SHOWIME	4
 
 void MT_TakeScreenshot(void);
@@ -602,7 +866,7 @@ void MT_TakeScreenshot(void);
 cvar_t match_auto_record = {"match_auto_record", "0"};
 cvar_t match_auto_logconsole = {"match_auto_logconsole", "1"};
 cvar_t match_auto_logupload = {"match_auto_logupload", "0"};
-cvar_t match_auto_logupload_token = {"match_auto_logupload_token", ""};
+cvar_t match_auto_logupload_token = {"match_auto_logupload_token", "", 0, MT_ChallengeMode_Change};
 cvar_t match_auto_logurl = {"match_auto_logurl", "http://stats.quakeworld.nu/logupload"};
 cvar_t match_auto_sshot = {"match_auto_sshot", "0"};
 cvar_t match_auto_minlength = {"match_auto_minlength", "30"};
@@ -655,6 +919,9 @@ static void MT_CancelMatch(void) {
 
 	Log_AutoLogging_CancelMatch();
 	CL_AutoRecord_CancelMatch();
+	if (match_challenge.integer) {
+		MT_Challenge_BreakSend();
+	}
 }
 
 static void MT_StartMatch(void) {
@@ -684,8 +951,18 @@ static void MT_StartMatch(void) {
 		strlcpy(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
 	}
 
+	if (last_challenge != NULL) {
+		MT_Challenge_Destroy(last_challenge);
+		last_challenge = NULL;
+	}
+
 	CL_AutoRecord_StartMatch(matchstate.matchname);
 	Log_AutoLogging_StartMatch(matchstate.matchname);
+	if (match_challenge.integer) {
+		Cbuf_AddText("play items/protect.wav\n");
+		Cbuf_AddText("say Challenge mode: on\n");
+		MT_Challenge_StartSend();
+	}
 
 	Stats_Reset();
 }
@@ -1403,6 +1680,9 @@ void MT_Init(void) {
 #ifdef _WIN32
 	Cvar_Register(&match_auto_unminimize);
 #endif
+	Cvar_Register(&match_challenge);
+	Cvar_Register(&match_challenge_url);
+	Cvar_Register(&match_ladder_id);
 
 	Cvar_ResetCurrentGroup();
 }

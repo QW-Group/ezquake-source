@@ -1553,6 +1553,10 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
 			{
 				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
 			}
+			else if (!strncasecmp(ext, "qw", sizeof("qw")))
+			{
+				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
+			}
 			else if (CL_IsDemoExtension(infile))
 			{
 				snprintf(commandbuf_out, commandbuf_size, "playdemo \"%s\"\n", infile);

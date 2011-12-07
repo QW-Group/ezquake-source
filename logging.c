@@ -42,13 +42,22 @@ static char       logfilename[LOG_FILENAME_MAXSIZE];
 
 static qbool autologging = false;
 
+extern cvar_t match_challenge;
+const char *MT_Challenge_GetToken();
+const char *MT_Challenge_GetLadderId();
+const char *MT_Challenge_GetHash();
+qbool MT_Challenge_IsOn();
+
 typedef struct log_upload_job_s {
+	qbool challenge_mode;
+	char *challenge_hash;
 	char *player_name;
 	char *token;
 	char *hostname;
 	char *filename;
 	char *url;
 	char *mapname;
+	char *ladderid;
 } log_upload_job_t;
 
 qbool Log_IsLogging(void) {
@@ -217,8 +226,7 @@ qbool Log_TempLogUploadPending(void) {
 }
 
 static qbool Log_IsUploadAllowed(void) {
-	return match_auto_logupload.integer
-		&& match_auto_logconsole.integer
+	return (match_challenge.integer || (match_auto_logupload.integer && match_auto_logconsole.integer))
 		&& !cls.demoplayback
 		&& cls.server_adr.type != NA_LOOPBACK;
 }
@@ -261,7 +269,7 @@ void Log_AutoLogging_CancelMatch(void) {
 			Log_AutoLogging_SaveMatch(true);
 		else
 			Com_Printf("Auto console logging cancelled\n");
-	} else if (match_auto_logconsole.integer == 1) {
+	} else if (match_auto_logconsole.integer == 1 || match_challenge.integer) {
 		Com_Printf ("Auto console logging completed\n");
 		if (Log_IsUploadAllowed()) {
 			Log_UploadTemp();
@@ -279,7 +287,7 @@ void Log_AutoLogging_StartMatch(char *logname) {
 
 	temp_log_ready = false;
 
-	if (!match_auto_logconsole.value)
+	if (!match_auto_logconsole.value && !match_challenge.integer)
 		return;
 
 	if (Log_IsLogging()) {
@@ -333,17 +341,22 @@ size_t Log_Curl_Write_Void( void *ptr, size_t size, size_t nmemb, void *userdata
 	return size*nmemb;
 }
 
-static log_upload_job_t* Log_Upload_Job_Prepare(const char *filename, const char *hostname, const char* player_name,
-                                                const char *token, const char *url, const char *mapname)
+static log_upload_job_t* Log_Upload_Job_Prepare(qbool challenge_mode, const char *challenge_hash,
+                                                const char *filename, const char *hostname,
+                                                const char* player_name, const char *token, const char *url,
+                                                const char *mapname, const char *ladderid)
 {
 	log_upload_job_t *job = (log_upload_job_t *) Q_malloc(sizeof(log_upload_job_t));
 
+	job->challenge_mode = challenge_mode;
+	job->challenge_hash = Q_strdup(challenge_hash);
 	job->filename = Q_strdup(filename);
 	job->hostname = Q_strdup(hostname);
 	job->player_name = Q_strdup(player_name);
 	job->token = Q_strdup(token);
 	job->url = Q_strdup(url);
 	job->mapname = Q_strdup(mapname);
+	job->ladderid = Q_strdup(ladderid);
 
 	return job;
 }
@@ -352,6 +365,7 @@ static void Log_Upload_Job_Free(log_upload_job_t *job)
 {
 	Q_free(job->filename);
 	Q_free(job->hostname);
+	Q_free(job->challenge_hash);
 	Q_free(job->player_name);
 	Q_free(job->token);
 	Q_free(job->url);
@@ -376,6 +390,14 @@ DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vjob)
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "name",
 		CURLFORM_COPYCONTENTS, job->player_name,
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "challenge",
+		CURLFORM_COPYCONTENTS, job->challenge_mode ? "1" : "0",
+		CURLFORM_END);
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "challenge_hash",
+		CURLFORM_COPYCONTENTS, job->challenge_hash,
 		CURLFORM_END);
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "token",
@@ -420,11 +442,16 @@ DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vjob)
 
 void Log_AutoLogging_Upload(const char *filename)
 {
-	log_upload_job_t *job = Log_Upload_Job_Prepare(filename, Info_ValueForKey(cl.serverinfo, "hostname"),
+	log_upload_job_t *job = Log_Upload_Job_Prepare(
+		MT_Challenge_IsOn(),
+		MT_Challenge_GetHash(),
+		filename,
+		Info_ValueForKey(cl.serverinfo, "hostname"),
 		cl.players[cl.playernum].name,
-		match_auto_logupload_token.string,
+		MT_Challenge_GetToken(),
 		match_auto_logurl.string,
-		host_mapname.string);
+		host_mapname.string,
+		MT_Challenge_GetLadderId());
 
 	Com_Printf("Uploading match log...\n");
 	Sys_CreateThread(Log_AutoLogging_Upload_Thread, (void *) job);

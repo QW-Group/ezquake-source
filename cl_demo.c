@@ -4287,9 +4287,10 @@ void CL_QTVPlay_f (void)
 	//
 	if (*connrequest == '#')
 	{
-		#define QTV_FILE_STREAM		1
-		#define QTV_FILE_JOIN		2
-		#define QTV_FILE_OBSERVE	3
+		#define QTV_FILE_STREAM     1
+		#define QTV_FILE_JOIN       2
+		#define QTV_FILE_OBSERVE    3
+		#define QTV_FILE_CHALLENGE  4
 		int match = 0;
 
 		char buffer[1024];
@@ -4330,6 +4331,11 @@ void CL_QTVPlay_f (void)
 				match = QTV_FILE_OBSERVE;
 			}
 
+			if (!strncmp(buffer, "Challenge=", 10) || !strncmp(buffer, "Challenge:", 10))
+			{
+				match = QTV_FILE_CHALLENGE;
+			}
+
 			// We found a match in the .qtv file.
 			if (match)
 			{
@@ -4347,7 +4353,13 @@ void CL_QTVPlay_f (void)
 				}
 
 				// Skip the title part.
-				s = buffer + 8;
+				s = buffer;
+				while(*s && *s != ':' && *s != '=') {
+					s++;
+				}
+				if (*s) {
+					s++;
+				}
 
 				// Remove any leading white spaces.
 				while(*s && *s <= ' ')
@@ -4366,6 +4378,10 @@ void CL_QTVPlay_f (void)
 						break;
 					case QTV_FILE_OBSERVE :
 						Cbuf_AddText(va("observe \"%s\"\n", s));
+						break;
+					case QTV_FILE_CHALLENGE:
+						// URL is passed in, it needs to be further processed by the qwurl command
+						Cbuf_AddText(va("qwurl \"%s\"\n", s));
 						break;
 				}
 

@@ -781,6 +781,55 @@ void CL_BeginServerConnect(void)
 	CL_CheckForResend();
 }
 
+static void CL_QWURL_ProcessChallenge(const char *parameters)
+{
+	extern cvar_t match_auto_logupload_token;
+	extern cvar_t match_challenge;
+
+	// parameters is expected to be of the format "?token=<string>&otherparam=<string>&..."
+	char info_buf[1024];
+	char *wp = info_buf;
+	const char *rp = parameters;
+	size_t write_len = 0;
+	ctxinfo_t ctx;
+	char *token;
+	memset(&ctx, 0, sizeof(ctxinfo_t));
+	ctx.max = 20;
+
+	while (*rp && write_len < 1022) {
+		char c = *rp++;
+		if (c == '?') {
+			c = '\\';
+		}
+		else if (c == '&') {
+			c = '\\';
+		}
+		else if (c == '=') {
+			c = '\\';
+		}
+
+		*wp++ = c;
+		write_len++;
+	}
+
+	*wp++ = '\0';
+
+	Info_Convert(&ctx, info_buf);
+
+	token = Info_Get(&ctx, "token");
+
+	Info_RemoveAll(&ctx);
+
+	if (*token) {
+		Cvar_Set(&match_auto_logupload_token, token);
+		Cvar_Set(&match_challenge, "1");
+		Com_Printf("Joining challenge ...\n");
+	}
+	else {
+		Com_Printf("Challenge token not found in the URL\n");
+	}
+}
+
 //
 // Parses a QW-URL of the following format 
 // (this can be associated with ezquake in windows by setting some reg info):
@@ -842,6 +891,11 @@ void CL_QWURL_f (void)
 	// Default to connecting.
 	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
 	{
+		Cbuf_AddText(va("connect %s\n", connection_str));
+	}
+	else if (!strncmp(command, "challenge?", 10))
+	{
+		CL_QWURL_ProcessChallenge(command + 9);
 		Cbuf_AddText(va("connect %s\n", connection_str));
 	}
 	else if (!strncasecmp(command, "spectate", 8) || !strncasecmp(command, "observe", 7))

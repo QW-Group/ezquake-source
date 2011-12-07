@@ -118,7 +118,7 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='FakeGLRelease|Win32'">$(Configuration)\</IntDir>
     <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='FakeGLRelease|Win32'">*.asm%3b*.bsc%3b*.cod%3b*.dep%3b*.idb%3b*.ilk%3b*.obj%3b*.pgc%3b*.pgd%3b*.res%3b*.rsp%3b*.sbr%3b*.tlb%3b*.tlh%3b*.tli%3b*.tmp%3b*.manifest*%3b$(TargetPath)</ExtensionsToDeleteOnClean>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='FakeGLRelease|Win32'">false</LinkIncremental>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='GLDebug|Win32'">..\..\ezquake-gl-debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='GLDebug|Win32'">ezquake-gl-debug</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ezquake-debug</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ezquake</TargetName>
   </PropertyGroup>
@@ -173,7 +173,7 @@
     <Link>
       <AdditionalDependencies>comctl32.lib;libexpat.lib;libtcl.lib;dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;dsound.lib;libjpeg.lib;libpng.lib;libz.lib;libpcre.lib;minizip.lib;libircclient-static.lib;libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <OutputFile>..\ezquake-gl-debug.exe</OutputFile>
+      <OutputFile>Debug-gl\ezquake-gl-debug.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
