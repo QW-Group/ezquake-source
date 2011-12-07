@@ -72,7 +72,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 
-#define VERSION_NUMBER "2.1 stable"
+#define VERSION_NUMBER "2.1.1 stable"
 
 int build_number (void);
 void CL_Version_f (void);
