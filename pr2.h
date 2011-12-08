@@ -17,7 +17,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- *  $Id: pr2.h 695 2007-09-30 14:43:34Z tonik $
  */
 
 #ifndef __PR2_H__

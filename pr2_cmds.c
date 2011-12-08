@@ -17,7 +17,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- *  $Id: pr2_cmds.c 783 2008-06-26 23:15:19Z qqshka $
+ *  
  */
 
 #ifdef USE_PR2
