@@ -2160,10 +2160,6 @@ void CL_SetUpPlayerPrediction(qbool dopred)
 	frame_t *frame;
 	struct predicted_player *pplayer;
 
-#ifdef EXPERIMENTAL_SHOW_ACCELERATION
-	extern qbool flag_player_pmove;
-#endif
-
 	playertime = cls.realtime - cls.latency + 0.02;
 	if (playertime > cls.realtime)
 		playertime = cls.realtime;
@@ -2186,9 +2182,6 @@ void CL_SetUpPlayerPrediction(qbool dopred)
 		pplayer->active = true;
 		pplayer->flags = state->flags;
 
-#ifdef EXPERIMENTAL_SHOW_ACCELERATION
-		flag_player_pmove = (j == cl.playernum);
-#endif
 		// note that the local player is special, since he moves locally we use his last predicted postition
 		if (j == cl.playernum) 
 		{
