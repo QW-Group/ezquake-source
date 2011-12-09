@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //===========================================================================
 
 /*
+
 Any number of commands can be added in a frame, from several different sources.
 Most commands come from either keybindings or console line input, but remote
 servers can also send across commands and entire text files can be execed.
@@ -30,6 +31,7 @@ servers can also send across commands and entire text files can be execed.
 The + command line options are also added to the command buffer.
 
 The game starts with a Cbuf_AddText ("exec quake.rc\n"); Cbuf_Execute ();
+
 */
 
 typedef struct cbuf_s {

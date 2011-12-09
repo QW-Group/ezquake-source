@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __ASM_I386__
-#define __ASM_I386__
+#ifndef __ASM_I386_H__
+#define __ASM_I386_H__
 
 #ifdef ELF
 #define C(label) label
@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
 // plane_t structure
-// !!! if this is changed, it must be changed in model.h too !!!
+// !!! if this is changed, it must be changed in cmodel.h too !!!
 // !!! if the size of this is changed, the array lookup in SV_HullPointContents
 //     must be changed too !!!
 #define pl_normal	0
@@ -44,7 +44,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define pl_size		20
 
 // hull_t structure
-// !!! if this is changed, it must be changed in model.h too !!!
+// !!! if this is changed, it must be changed in cmodel.h too !!!
 #define	hu_clipnodes		0
 #define	hu_planes			4
 #define	hu_firstclipnode	8
@@ -93,5 +93,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define psp_right		4
 #define psp_size		8
 
-#endif
-
+#endif /* !__ASM_I386_H__ */

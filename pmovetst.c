@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 	
 */
-#include "quakedef.h"
-#include "pmove.h"
+
+#include "qwsvdef.h"
 
 extern	vec3_t player_mins;
 extern	vec3_t player_maxs;
@@ -102,19 +102,23 @@ Returns false if the given player position is not valid (in solid)
 */
 qbool PM_TestPlayerPosition (vec3_t pos)
 {
-	int i;
-	physent_t *pe;
-	vec3_t mins, maxs, offset, test;
-	hull_t *hull;
+	int			i;
+	physent_t	*pe;
+	vec3_t		mins, maxs, offset, test;
+	hull_t		*hull;
 
-	for (i = 0; i < pmove.numphysent; i++) {
+	for (i=0 ; i< pmove.numphysent; i++)
+	{
 		pe = &pmove.physents[i];
 		// get the clipping hull
-		if (pe->model) {
+		if (pe->model)
+		{
 			hull = &pmove.physents[i].model->hulls[1];
 			VectorSubtract (hull->clip_mins, player_mins, offset);
 			VectorAdd (offset, pe->origin, offset);
-		} else{
+		}
+		else
+		{
 			VectorSubtract (pe->mins, player_maxs, mins);
 			VectorSubtract (pe->maxs, player_mins, maxs);
 			hull = CM_HullForBox (mins, maxs);
@@ -137,11 +141,13 @@ PM_PlayerTrace
 */
 trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 {
-	int i;
-	hull_t *hull;
-	physent_t *pe;
-	vec3_t offset, start_l, end_l, mins, maxs, tracemins, tracemaxs;
-	trace_t trace, total;
+	trace_t		trace, total;
+	vec3_t		offset;
+	vec3_t		start_l, end_l;
+	hull_t		*hull;
+	int			i;
+	physent_t	*pe;
+	vec3_t		mins, maxs, tracemins, tracemaxs;
 
 	// fill in a default trace
 	memset (&total, 0, sizeof(trace_t));
@@ -149,24 +155,29 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 	total.e.entnum = -1;
 	VectorCopy (end, total.endpos);
 
-	PM_TraceBounds (start, end, tracemins, tracemaxs);
+	PM_TraceBounds(start, end, tracemins, tracemaxs);
 
-	for (i = 0; i < pmove.numphysent; i++) {
+	for (i=0; i< pmove.numphysent; i++)
+	{
 		pe = &pmove.physents[i];
+
 		// get the clipping hull
-		if (pe->model) {
+		if (pe->model)
+		{
 			hull = &pmove.physents[i].model->hulls[1];
 
-			if (i > 0 && PM_CullTraceBox (tracemins, tracemaxs, pe->origin, pe->model->mins, pe->model->maxs, hull->clip_mins, hull->clip_maxs))
+			if (i > 0 && PM_CullTraceBox(tracemins, tracemaxs, pe->origin, pe->model->mins, pe->model->maxs, hull->clip_mins, hull->clip_maxs))
 				continue;
 
 			VectorSubtract (hull->clip_mins, player_mins, offset);
 			VectorAdd (offset, pe->origin, offset);
-		} else {
+		}
+		else
+		{
 			VectorSubtract (pe->mins, player_maxs, mins);
 			VectorSubtract (pe->maxs, player_mins, maxs);
 
-			if (PM_CullTraceBox (tracemins, tracemaxs, pe->origin, mins, maxs, vec3_origin, vec3_origin))
+			if (PM_CullTraceBox(tracemins, tracemaxs, pe->origin, mins, maxs, vec3_origin, vec3_origin))
 				continue;
 
 			hull = CM_HullForBox (mins, maxs);
@@ -176,7 +187,7 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 		VectorSubtract (start, offset, start_l);
 		VectorSubtract (end, offset, end_l);
 
-		// trace a line through the appropriate clipping hull
+		// trace a line through the apropriate clipping hull
 		trace = CM_HullTrace (hull, start_l, end_l);
 
 		// fix trace up by the offset
@@ -188,7 +199,8 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 			trace.fraction = 0;
 
 		// did we clip the move?
-		if (trace.fraction < total.fraction) {
+		if (trace.fraction < total.fraction)
+		{
 			total = trace;
 			total.e.entnum = i;
 		}
@@ -217,7 +229,8 @@ trace_t PM_TraceLine (vec3_t start, vec3_t end)
 	total.e.entnum = -1;
 	VectorCopy (end, total.endpos);
 
-	for (i = 0; i < pmove.numphysent; i++) {
+	for (i = 0; i < pmove.numphysent; i++)
+	{
 		pe = &pmove.physents[i];
 		// get the clipping hull
 		hull = (pe->model) ? (&pmove.physents[i].model->hulls[0]) : (CM_HullForBox (pe->mins, pe->maxs));
@@ -240,11 +253,11 @@ trace_t PM_TraceLine (vec3_t start, vec3_t end)
 			trace.fraction = 0;
 
 		// did we clip the move?
-		if (trace.fraction < total.fraction) {
+		if (trace.fraction < total.fraction)
+		{
 			total = trace;
 			total.e.entnum = i;
 		}
-
 	}
 
 	return total;

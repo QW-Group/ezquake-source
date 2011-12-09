@@ -90,7 +90,7 @@ typedef struct
 
 typedef struct
 {
-	int			version;	
+	int			version;
 	lump_t		lumps[HEADER_LUMPS];
 } dheader_t;
 
@@ -196,7 +196,7 @@ typedef struct
 #define	AMBIENT_SLIME	2
 #define	AMBIENT_LAVA	3
 
-#define	NUM_AMBIENTS			4		// automatic ambient sounds
+#define	NUM_AMBIENTS	4		// automatic ambient sounds
 
 // leaf 0 is the generic CONTENTS_SOLID leaf, used for all solid areas
 // all other leafs need visibility info
