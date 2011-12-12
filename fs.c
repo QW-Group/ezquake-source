@@ -1103,10 +1103,13 @@ archive_fail:
 
 	case FS_GAME_OS:	//OS access only, no paks
 		//sss: check userdir first
-		snprintf(fullname, sizeof(fullname), "%s/%s", com_userdir, filename);
-		vfs = VFSOS_Open(fullname, mode);
-		if (vfs) {
-				return vfs;
+		if (*com_userdir)
+		{
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_userdir, filename);
+			vfs = VFSOS_Open(fullname, mode);
+			if (vfs) {
+					return vfs;
+			}
 		}
 
 		if (*com_homedir)
