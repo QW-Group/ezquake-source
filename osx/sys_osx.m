@@ -971,7 +971,7 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
             for (i = 0; i < myKeyboardBufferSize; i++)
             {
                 myCharacter = [myKeyboardBuffer characterAtIndex: i];
-				
+
                 if ((myCharacter & 0xFF00) ==  0xF700)
                 {
                     myCharacter -= 0xF700;
@@ -991,7 +991,7 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
                     if (myFlags & NSNumericPadKeyMask)
                     {
                         myKeyPad = [myEvent keyCode];
-            
+
                         if (myKeyPad < 0x5D && gInNumPadKey[myKeyPad] != 0x00)
                         {
                             Key_Event (gInNumPadKey[myKeyPad], (myType == NSKeyDown));
@@ -1002,7 +1002,10 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
                     {
                       if (Sys_CheckSpecialKeys (myCharacter) == 0)
                       {
-                        Key_Event (myCharacter, (myType == NSKeyDown));
+                        if (myCharacter >= 'A' && myCharacter <= 'Z')
+                          Key_EventEx (tolower(myCharacter), myCharacter, (myType == NSKeyDown));
+                        else
+                          Key_Event (myCharacter, (myType == NSKeyDown));
                       }
                     }
                 }
