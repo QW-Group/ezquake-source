@@ -1000,17 +1000,14 @@ void	Sys_DoEvents (NSEvent *myEvent, NSEventType myType)
                     }
                     if (myCharacter < 0x80)
                     {
-						if (Sys_CheckSpecialKeys (myCharacter) == 0)
-						{
-							if (myCharacter >= 'A' && myCharacter <= 'Z')
-								myCharacter += 'a' - 'A';
-							
-							Key_Event (myCharacter, (myType == NSKeyDown));
-						}
+                      if (Sys_CheckSpecialKeys (myCharacter) == 0)
+                      {
+                        Key_Event (myCharacter, (myType == NSKeyDown));
+                      }
                     }
                 }
             }
-            
+
             break;
         
         // special keys:
