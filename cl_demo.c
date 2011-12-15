@@ -899,6 +899,23 @@ void CL_WriteMVDStartupData(void)
 	// send the serverdata
 
 	MSG_WriteByte (&buf, svc_serverdata);
+
+	#ifdef PROTOCOL_VERSION_FTE
+	if (cls.fteprotocolextensions)
+	{
+		MSG_WriteLong (&buf, PROTOCOL_VERSION_FTE);
+		MSG_WriteLong (&buf, cls.fteprotocolextensions);
+	}
+	#endif // PROTOCOL_VERSION_FTE
+
+	#ifdef PROTOCOL_VERSION_FTE2
+	if (cls.fteprotocolextensions2)
+	{
+		MSG_WriteLong (&buf, PROTOCOL_VERSION_FTE2);
+		MSG_WriteLong (&buf, cls.fteprotocolextensions2);
+	}
+	#endif // PROTOCOL_VERSION_FTE2
+
 	MSG_WriteLong (&buf, PROTOCOL_VERSION);
 	MSG_WriteLong (&buf, cl.servercount);
 
