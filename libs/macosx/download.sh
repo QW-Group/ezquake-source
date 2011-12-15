@@ -1,1 +1,11 @@
-#!/bin/shcurl -O -L 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/macosx/libexpat.a'curl -O -L 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/macosx/libglew.a'curl -O -L 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/macosx/libircclient.a'curl -O -L 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/macosx/libjpeg.a'curl -O -L 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/macosx/libpcre.a'curl -O -L 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/macosx/libpng.a'curl -O -L 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/macosx/libz.a'curl -O -L 'http://ezquake.svn.sourceforge.net/viewvc/*checkout*/ezquake/trunk/libs/macosx/minizip.a'
+#!/bin/sh
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libexpat.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libglew.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libircclient.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libjpeg.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libpcre.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libpng.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libz.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/minizip.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libtcl8.5.a'
+curl -O -L 'https://github.com/ezQuake/ezquake-libs/raw/master/macosx/libcurl.a'
