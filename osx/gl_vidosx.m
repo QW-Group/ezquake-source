@@ -121,7 +121,7 @@ const char						*gl_renderer,
 
 cvar_t							vid_mode = { "vid_mode", "0", 0 },
 								vid_redrawfull = { "vid_redrawfull", "0", 0 },
-								vid_vsync = { "vid_vsync", "0", 0 },
+								r_swapInterval = { "vid_vsync", "0", 0 },
 								vid_overbright = { "gamma_overbright", "1", 1 },
 								_vid_default_mode = { "_vid_default_mode", "0", 1 },
 								_vid_default_blit_mode = { "_vid_default_blit_mode", "0", 1 },
@@ -550,7 +550,7 @@ void VID_SetWait (UInt32 theState)
     [gGLContext makeCurrentContext];
     if(CGLSetParameter (CGLGetCurrentContext (), kCGLCPSwapInterval, &params) == CGDisplayNoErr)
     {
-        gGLVideoWait = vid_vsync.value;
+        gGLVideoWait = r_swapInterval.value;
         if (theState == 0)
         {
             Com_Printf ("video wait successfully disabled!\n");
@@ -562,7 +562,7 @@ void VID_SetWait (UInt32 theState)
     }
     else
     {
-        vid_vsync.value = gGLVideoWait;
+        r_swapInterval.value = gGLVideoWait;
         Com_Printf ("Error while trying to change video wait!\n");
     }    
 }
@@ -685,7 +685,7 @@ BOOL	VID_SetDisplayMode (void)
     }
     
     // Lock the OpenGL context to the refresh rate of the display [for clean rendering], if desired:
-    VID_SetWait((UInt32) vid_vsync.value);
+    VID_SetWait((UInt32) r_swapInterval.value);
     
     return (YES);
 }
@@ -703,7 +703,7 @@ void	VID_Init (unsigned char *thePalette)
     Cvar_Register (&vid_mode);
     Cvar_Register (&_vid_default_mode);
     Cvar_Register (&_vid_default_blit_mode);
-    Cvar_Register (&vid_vsync);
+    Cvar_Register (&r_swapInterval);
     Cvar_Register (&vid_redrawfull);
     Cvar_Register (&vid_overbright);
 	Cvar_Register(&vid_hwgammacontrol);
@@ -884,7 +884,7 @@ void	VID_MenuDraw (void)
     
     // draw vid_vsync option:
     M_Print (VID_FONT_WIDTH, myRow, "Video Sync:");
-    if (vid_vsync.value) M_Print ((39 - 2) * VID_FONT_WIDTH, myRow, "On");
+    if (r_swapInterval.value) M_Print ((39 - 2) * VID_FONT_WIDTH, myRow, "On");
         else M_Print ((39 - 3) * VID_FONT_WIDTH, myRow, "Off");
     if (gGLMenuLine == myRow) gGLMenuItem = VID_MENUITEM_WAIT;
     myRow += VID_FONT_HEIGHT;
@@ -1015,7 +1015,7 @@ void	VID_MenuKey (int theKey)
             switch (gGLMenuItem)
             {
                 case VID_MENUITEM_WAIT:
-                    Cvar_SetValue (&vid_vsync, (vid_vsync.value == 0.0f) ? 1.0f : 0.0f);
+                    Cvar_SetValue (&r_swapInterval, (r_swapInterval.value == 0.0f) ? 1.0f : 0.0f);
                     break;
                 case VID_MENUITEM_OVERBRIGHT:
                     Cvar_SetValue (&vid_overbright, (vid_overbright.value == 0.0f) ? 1.0f : 0.0f);
@@ -1041,7 +1041,7 @@ void	VID_MenuKey (int theKey)
             switch (gGLMenuItem)
             {
                 case VID_MENUITEM_WAIT:
-                    Cvar_SetValue (&vid_vsync, (vid_vsync.value == 0.0f) ? 1.0f : 0.0f);
+                    Cvar_SetValue (&r_swapInterval, (r_swapInterval.value == 0.0f) ? 1.0f : 0.0f);
                     break;
                 case VID_MENUITEM_OVERBRIGHT:
                     Cvar_SetValue (&vid_overbright, (vid_overbright.value == 0.0f) ? 1.0f : 0.0f);
@@ -1798,9 +1798,9 @@ void	GL_EndRendering (void)
     }
 
     // check if video_wait changed:
-    if(vid_vsync.value != gGLVideoWait)
+    if(r_swapInterval.value != gGLVideoWait)
     {
-        VID_SetWait ((UInt32) vid_vsync.value);
+        VID_SetWait ((UInt32) r_swapInterval.value);
     }
 
     // check if anisotropic texture filtering changed:
