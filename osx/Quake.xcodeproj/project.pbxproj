@@ -2893,7 +2893,6 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					WITH_NQPROGS,
-					WITH_KEYMAP,
 					WITH_ZLIB,
 					WITH_PNG,
 					USE_PR2,
@@ -2942,7 +2941,6 @@
 					JSS_CAM,
 					QUAKE_WORLD,
 					WITH_PNG,
-					WITH_KEYMAP,
 					WITH_ZLIB,
 					USE_PR2,
 					WITH_TCL,
@@ -2982,7 +2980,6 @@
 					GLQUAKE,
 					JSS_CAM,
 					QUAKE_WORLD,
-					WITH_KEYMAP,
 					WITH_PNG,
 					WITH_ZIP,
 					WITH_ZLIB,
@@ -3036,7 +3033,6 @@
 					GLQUAKE,
 					JSS_CAM,
 					QUAKE_WORLD,
-					WITH_KEYMAP,
 					WITH_PNG,
 					WITH_ZIP,
 					WITH_ZLIB,
