@@ -684,6 +684,7 @@ void FS_ShutDown( void ) {
 
 void FS_InitFilesystemEx( qbool guess_cwd ) {
 	int i;
+	char *s;
 #ifndef _WIN32
 	char *ev;
 #endif
@@ -726,10 +727,11 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 //#endif
 	}
 
-	for (i = 0; i < (int) strlen(com_basedir); i++)
-		if (com_basedir[i] == '\\')
-			com_basedir[i] = '/';
+	// replace backslahes with slashes.
+	for (s = com_basedir; (s = strchr(s, '\\')); s++)
+		*s = '/';
 
+	// remove terminating slash if any.
 	i = strlen(com_basedir) - 1;
 	if (i >= 0 && com_basedir[i] == '/')
 		com_basedir[i] = 0;
@@ -766,6 +768,11 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #else
 		strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
 #endif
+
+		// replace backslahes with slashes.
+		for (s = com_homedir; (s = strchr(s, '\\')); s++)
+			*s = '/';
+
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
 	}
 
