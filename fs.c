@@ -39,8 +39,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 
-char *com_filesearchpath;
-
 /*
 =============================================================================
                         QUAKE FILESYSTEM
@@ -1133,7 +1131,11 @@ archive_fail:
 		break;
  */
 
-	case FS_BASE:
+	case FS_GAME:
+		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
+		break;
+
+	case FS_BASE_OS:	//OS access only, no paks
 //		if (*com_homedir)
 //		{
 //			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
@@ -1156,31 +1158,28 @@ archive_fail:
 		snprintf(fullname, sizeof(fullname), "%s/ezquake/%s", com_basedir, filename);
 		return VFSOS_Open(fullname, mode);
  */
-	case FS_HOME:
+	case FS_HOME_OS:	//OS access only, no paks
 		if (*com_homedir)
 			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
 		else
 			return NULL;
 		return VFSOS_Open(fullname, mode);
 
-	case FS_PAK:
-		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
-		break;
-
 	case FS_ANY:
 		vfs = FS_OpenVFS(filename, mode, FS_NONE_OS);
 		if (vfs)
 			return vfs;
 
-		vfs = FS_OpenVFS(filename, mode, FS_HOME);
-		if (vfs)
-			return vfs;
+// Pointless, since FS_NONE_OS do all that FS_HOME_OS does.
+//		vfs = FS_OpenVFS(filename, mode, FS_HOME_OS);
+//		if (vfs)
+//			return vfs;
 
 		vfs = FS_OpenVFS(filename, mode, FS_GAME_OS);
 		if (vfs)
 			return vfs;
 
-		return FS_OpenVFS(filename, mode, FS_PAK);
+		return FS_OpenVFS(filename, mode, FS_GAME);
 
 	default:
 		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
@@ -2599,7 +2598,7 @@ int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t 
 		break;
  */
 
-	case FS_BASE:
+	case FS_BASE_OS:
 		if (*com_homedir)
 			snprintf(oldfullname, sizeof(oldfullname), "%s", com_homedir);
 		else
@@ -2625,7 +2624,7 @@ int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t 
 			snprintf(newfullname, sizeof(newfullname), "%sqw/skins/", com_basedir);
 		break;
  */
-	case FS_BASE:
+	case FS_BASE_OS:
 		if (*com_homedir)
 			snprintf(newfullname, sizeof(newfullname), "%s", com_homedir);
 		else
@@ -2663,7 +2662,7 @@ int FS_Rename(char *oldf, char *newf, relativeto_t relativeto)
 		break;
  */
 
-	case FS_BASE:
+	case FS_BASE_OS:
 		if (*com_homedir)
 			snprintf(oldfullname, sizeof(oldfullname), "%s", com_homedir);
 		else
@@ -2701,7 +2700,7 @@ int FS_Remove(char *fname, int relativeto)
 			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_basedir, fname);
 		break;
  */
-	case FS_BASE:
+	case FS_BASE_OS:
 		if (*com_homedir)
 			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, fname);
 		else
@@ -2730,7 +2729,7 @@ void FS_CreatePathRelative(char *pname, int relativeto)
 		snprintf(fullname, sizeof(fullname), "%s/%s", com_gamedir, pname);
 		break;
 
-	case FS_BASE:
+	case FS_BASE_OS:
 	case FS_ANY:
 		if (*com_homedir)
 			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, pname);

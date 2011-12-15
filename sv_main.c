@@ -40,9 +40,6 @@ client_t	*sv_client;			// current client
 
 char		master_rcon_password[128] = "";	//bliP: password for remote server commands
 
-cvar_t	sv_cpserver = {"sv_cpserver", "0"};	// some cp servers couse lags on map changes
-
-
 cvar_t	sv_mintic = {"sv_mintic","0.013"};	// bound the size of the
 cvar_t	sv_maxtic = {"sv_maxtic","0.1"};	// physics time tic
 
@@ -3255,7 +3252,6 @@ void SV_InitLocal (void)
 	Cvar_Register (&sv_maxdownloadrate);
 	Cvar_Register (&sv_serverip);
 	Cvar_Register (&sv_forcespec_onfull);
-	Cvar_Register (&sv_cpserver);
 
 //	Cvar_Register (&rcon_password);
 //	Cvar_Register (&password);

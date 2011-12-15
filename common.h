@@ -207,7 +207,6 @@ char *va(char *format, ...); // does a varargs printf into a temp buffer
 // for more File System control, include fs.h in your sources
 
 extern int fs_filepos;
-extern char *com_filesearchpath;
 extern char	fs_netpath[MAX_OSPATH];
 struct cache_user_s;
 
@@ -220,7 +219,6 @@ extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir 
 
 void FS_InitFilesystem (void);
 void FS_SetGamedir (char *dir);
-int FS_FOpenFile (const char *filename, FILE **file);
 int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);

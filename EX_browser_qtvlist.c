@@ -307,7 +307,7 @@ void QTVList_Cache_File_Download(void)
 
 static vfsfile_t *QTVList_Cache_File_Open(char *mode)
 {
-	return FS_OpenVFS(QTVLIST_CACHE_FILE_DIR "/" QTVLIST_CACHE_FILE, mode, FS_BASE);
+	return FS_OpenVFS(QTVLIST_CACHE_FILE_DIR "/" QTVLIST_CACHE_FILE, mode, FS_BASE_OS);
 }
 
 static void QTVList_Resolve_Hostnames(void)

@@ -64,14 +64,28 @@ typedef struct vfsfile_s {
 
 // VFS-FIXME: D-Kure Clean up this structure
 typedef enum {
-	FS_NONE_OS, // file name used as is, opened with OS functions (no paks)
-	FS_GAME_OS, // file used as com_basedir/filename, opened with OS functions 
-				// (no paks)
-	FS_BASE,	// file is relative to the com_basedir/com_homedir
-	FS_HOME,
-	FS_PAK,
-	FS_ANY      // file searched on quake file system even in paks, u may use
-				// only "rb" mode for file since u can't write to pak
+	FS_NONE_OS, // Opened with OS functions (no paks).
+				// 1) com_homedir/filename.
+				// 2) filename.
+				
+	FS_GAME_OS, // Opened with OS functions (no paks).
+				// 1) com_userdir/filename.
+				// 2) com_homedir/com_gamedirfile/filename.
+				// 3) com_basedir/com_gamedirfile/filename.
+
+	FS_GAME,	// 1) Searched on path as filename, including packs.
+				// 2) Opened with OS functions as com_basedir/com_gamedirfile/filename.
+
+	FS_BASE_OS,	// Opened with OS functions (no paks).
+				// 1) com_basedir/filename.
+
+	FS_HOME_OS,	// Opened with OS functions (no paks).
+				// 1) com_homedir/filename.
+
+
+	FS_ANY      // 1) FS_NONE_OS.
+				// 2) FS_GAME_OS.
+				// 3) FS_GAME.
 } relativeto_t;
 
 // mostly analogs for stdio functions
