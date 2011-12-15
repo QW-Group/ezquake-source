@@ -24,6 +24,11 @@
 /libs/linux-x86_64/*.a
 /libs/windows-x86/*.lib
 /libs/mingw-x86/*.a
+/libs/macosx/*.a
 
 # Vi/Vim backup files
 *~
+
+# Xcode created files and directories
+/osx/Quake.xcodeproj/project.xcworkspace/
+/osx/Quake.xcodeproj/xcuserdata/
