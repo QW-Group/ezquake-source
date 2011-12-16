@@ -836,13 +836,18 @@ CL_Userdir_f
 void CL_Userdir_f (void)
 {
 	if (cls.state > ca_disconnected || Cmd_Argc() == 1) {
-		Com_Printf("Current userdir: %s\n", userdirfile);
+		Com_Printf("Current userdir: %s\n", com_userdirfile);
 	} else {
 		int u = Q_atoi(Cmd_Argv(2));
 		if (u < 0 || u > 5)
+		{
 			Com_Printf("Invalid userdir type\n");
+		}
 		else
+		{
 			FS_SetUserDirectory (Cmd_Argv(1), Cmd_Argv(2));
+			FS_SetGamedir(va("%s", com_gamedirfile), true);
+		}
 	}
 }
 // <-- QW262

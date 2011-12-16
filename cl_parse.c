@@ -1479,7 +1479,7 @@ void CL_ParseServerData (void)
 	}
 
 	if (!com_serveractive)
-		FS_SetGamedir (str);
+		FS_SetGamedir (str, false);
 
 	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
 	{

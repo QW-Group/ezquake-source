@@ -36,9 +36,9 @@ void FS_InitModuleFS (void);
 // original common FS functions are declared in common.h
 
 // QW262 -->
-#define UserdirSet (userdirfile[0] != '\0')
-extern	char userdirfile[MAX_OSPATH];
+extern	char com_userdirfile[MAX_OSPATH];
 extern	char com_userdir[MAX_OSPATH];
+extern	char com_userdirtype[32];
 void FS_SetUserDirectory (char *dir, char *type);
 // <-- QW262
 
@@ -121,7 +121,7 @@ typedef enum {
 		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD | FS_LOAD_FROM_PAKLST,
 } FS_Load_File_Types;
 
-void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
+void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff, qbool keep_gamedir);
 
 char *FS_NextPath (char *prevpath);
 
