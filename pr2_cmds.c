@@ -2067,7 +2067,7 @@ void PF2_FS_OpenFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 		retval->_int = ftell(pr2_fopen_files[i].handle);
 		fseek(pr2_fopen_files[i].handle,0,0);
 #else
-		pr2_fopen_files[i].handle = FS_OpenVFS(name, cmodes[fmode], FS_ANY);
+		pr2_fopen_files[i].handle = FS_OpenVFS(name, cmodes[fmode], FS_GAME);
 
 		if( !pr2_fopen_files[i].handle )
 		{
