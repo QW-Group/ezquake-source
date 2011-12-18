@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "qsound.h"
+#include "utils.h"
 #define SELF_SOUND 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
 
 #ifdef _WIN32
@@ -41,6 +42,7 @@ qsoundhandler_t *qsoundhandler;
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
 static void S_Play_f (void);
 static void S_PlayVol_f (void);
+static void S_MuteSound_f (void);
 static void S_SoundList_f (void);
 static void S_Update_ ();
 static void S_StopAllSounds_f (void);
@@ -94,7 +96,7 @@ static sfx_t	*ambient_sfx[NUM_AMBIENTS];
 // ====================================================================
 
 
-cvar_t bgmvolume = {"bgmvolume", "1"};
+cvar_t bgmvolume = {"bgmvolume", "1"}; // CD music volume
 cvar_t s_volume = {"volume", "0.7"};
 cvar_t s_raw_volume = {"s_raw_volume", "1"};
 cvar_t s_nosound = {"s_nosound", "0"};
@@ -344,6 +346,7 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cmd_AddLegacyCommand("snd_restart", "s_restart"); // and snd_restart a legacy command
 
 	Cmd_AddCommand("s_restart", S_Restart_f); // dimman: made s_restart the actual command
+	Cmd_AddCommand("mutesound", S_MuteSound_f);
 	Cmd_AddCommand("play", S_Play_f);
 	Cmd_AddCommand("playvol", S_PlayVol_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
@@ -1018,6 +1021,24 @@ static void S_PlayVol_f (void)
 		// ezhfan:
 		// pnum+1 changed to SELF_SOUND to make sound not to disappear
 		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, vol, 0.0);
+	}
+}
+
+static void S_MuteSound_f(void)
+{
+	static float old_volume;
+	static int is_muted;
+
+	if (is_muted == 0) {
+		old_volume = s_volume.value;
+		Cvar_SetValue(&s_volume, 0);
+		Com_Printf("%s\n", CharsToBrownStatic("Mute"));
+		is_muted = 1;
+	}
+	else if (is_muted == 1) {
+		Cvar_SetValue(&s_volume, old_volume);
+		Com_Printf("%s %.2f\n", CharsToBrownStatic("Volume is now"), s_volume.value);
+		is_muted = 0;
 	}
 }
 
