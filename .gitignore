@@ -5,14 +5,16 @@
 /make/*.pdb
 /masm32/gas2masm.exe
 /masm32/ml.exe
-/make/msvs2008/Debug-gl
-/make/msvs2008/Debug
-/make/msvs2008/Release-gl
+/make/msvs20*/Debug-gl
+/make/msvs20*/Debug
+/make/msvs20*/Release-gl
+/make/msvs20*/Release
 /make/msvs2008/*.ncb
-/make/msvs2008/*.suo
-/make/msvs2008/*.user
+/make/msvs20*/*.suo
+/make/msvs20*/*.user
 /make/msvs2010/*.user
 /make/msvs2010/*.sdf
+/make/*.intermediate.*
 
 # MinGW & Eclipse build dir
 /release-*/
