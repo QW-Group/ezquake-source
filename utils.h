@@ -119,6 +119,7 @@ unsigned char CharToBrown(unsigned char ch);
 unsigned char CharToWhite(unsigned char ch);
 #endif
 void CharsToBrown(char* start, char* end);
+char *CharsToBrownStatic(char *in);
 void CharsToWhite(char* start, char* end);
 
 ///
