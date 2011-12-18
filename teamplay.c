@@ -73,7 +73,7 @@ cvar_t	tp_name_sng = {"tp_name_sng", "sng"};
 cvar_t	tp_name_gl = {"tp_name_gl", "gl"};
 cvar_t	tp_name_rl = {"tp_name_rl", "{&cf13rl&cfff}"};
 cvar_t	tp_name_lg = {"tp_name_lg", "{&c2aalg&cfff}"};
-cvar_t	tp_name_rlg = {"tp_name_rlg", "{&cf0frlg&cfff}"};
+cvar_t	tp_name_rlg = {"tp_name_rlg", "{&cf13rl&cfff}{&c2aag&cfff}"};
 cvar_t	tp_name_armortype_ra = {"tp_name_armortype_ra", "{&cf00r&cfff}"};
 cvar_t	tp_name_armortype_ya = {"tp_name_armortype_ya", "{&cff0y&cfff}"};
 cvar_t	tp_name_armortype_ga = {"tp_name_armortype_ga", "{&c0b0g&cfff}"};
@@ -102,9 +102,9 @@ cvar_t	tp_name_rune3 = {"tp_name_rune3", "haste"};
 cvar_t	tp_name_rune4 = {"tp_name_rune4", "regeneration"};
 cvar_t	tp_name_teammate = {"tp_name_teammate", ""};
 cvar_t	tp_name_enemy = {"tp_name_enemy", "{&cf00enemy&cfff}"};
-cvar_t	tp_name_eyes = {"tp_name_eyes", "eyes"};
-cvar_t	tp_name_quaded = {"tp_name_quaded", "quaded"};
-cvar_t	tp_name_pented = {"tp_name_pented", "pented"};
+cvar_t	tp_name_eyes = {"tp_name_eyes", "{&cff0eyes&cfff}"};
+cvar_t	tp_name_quaded = {"tp_name_quaded", "{&c05fquaded&cfff}"};
+cvar_t	tp_name_pented = {"tp_name_pented", "{&cf00pented&cfff}"};
 cvar_t	tp_name_nothing = {"tp_name_nothing", "nothing"};
 cvar_t	tp_name_someplace = {"tp_name_someplace", "someplace"};
 cvar_t	tp_name_at = {"tp_name_at", "at"};
@@ -604,7 +604,7 @@ char *Macro_Weapons (void)
 	return macro_buf;
 }
 
-static char *Skin_To_TFSkin (char *myskin)
+static char *Skin_To_TFSkin (char *myskin) // These four TF classes don't have their full names as the skin (i.e. they have tf_snipe instead of tf_sniper)
 {
 	if (!cl.teamfortress || cl.spectator || strncasecmp(myskin, "tf_", 3)) {
 		strlcpy(macro_buf, myskin, sizeof(macro_buf));
@@ -3557,10 +3557,10 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_msgreport", TP_Msg_Report_f);
 	Cmd_AddCommand ("tp_msgcoming", TP_Msg_Coming_f);
     Cmd_AddCommand ("tp_msglost", TP_Msg_Lost_f);
-    Cmd_AddCommand ("tp_msgpack", TP_Msg_Pack_f);
     Cmd_AddCommand ("tp_msgenemypwr", TP_Msg_EnemyPowerup_f);
 	Cmd_AddCommand ("tp_msgquaddead", TP_Msg_QuadDead_f);
     Cmd_AddCommand ("tp_msgsafe", TP_Msg_Safe_f);
+	Cmd_AddCommand ("tp_msgkillme", TP_Msg_KillMe_f);
     Cmd_AddCommand ("tp_msghelp", TP_Msg_Help_f);
 	Cmd_AddCommand ("tp_msggetquad", TP_Msg_GetQuad_f);
 	Cmd_AddCommand ("tp_msggetpent", TP_Msg_GetPent_f);
@@ -3569,12 +3569,13 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_msgtrick", TP_Msg_Trick_f);
 	Cmd_AddCommand ("tp_msgreplace", TP_Msg_Replace_f);
 	Cmd_AddCommand ("tp_msgneed", TP_Msg_Need_f);
-
 	Cmd_AddCommand ("tp_msgyesok", TP_Msg_YesOk_f);
 	Cmd_AddCommand ("tp_msgnocancel", TP_Msg_NoCancel_f);
 	Cmd_AddCommand ("tp_msgutake", TP_Msg_YouTake_f);
 	Cmd_AddCommand ("tp_msgitemsoon", TP_Msg_ItemSoon_f);
 	Cmd_AddCommand ("tp_msgwaiting", TP_Msg_Waiting_f);
 	Cmd_AddCommand ("tp_msgslipped", TP_Msg_Slipped_f);
+	//TF messages
+	Cmd_AddCommand ("tp_msgtfconced", TP_TFConced_f);
 	
 }
