@@ -1151,7 +1151,7 @@ void Config_TroubleShoot_f(void)
 			"set hud_planmode to 0", 1);
 	}
 	if (!problems) {
-		Com_Printf("No problems detected. Please visit the forum in χχχ®ΡυαλεΧοςμδ®ξυ for more help.\n"); //brown "www.QuakeWorld.nu"
+		Com_Printf("No problems detected. For more help, please visit the forum in %s\n\n", CharsToBrownStatic("www.QuakeWorld.nu"));
 	}
 }
 
