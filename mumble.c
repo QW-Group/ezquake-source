@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "mumble.h"
+#include "utils.h"
 #ifdef __linux__
 #include <sys/time.h>
 #include <sys/mman.h>
@@ -70,14 +71,13 @@ void Mumble_CreateLink()
 #ifdef _WIN32
 	if (hMapObject != NULL)
 	{
-		ST_Printf(PRINT_FAIL,"Mumble Link already initialized.\n");
+		ST_Printf(PRINT_FAIL,"Mumble link already initialized.\n");
 		return;
 	}
 	hMapObject = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, L"MumbleLink");
 	if (hMapObject == NULL)
 	{
-		//ST_Printf(PRINT_INFO,"Mumble initialization skipped. Mumble not running.\n");
-		Com_Printf("Mumble is not running\n");
+		//Com_Printf("Mumble is not running\n");
 		return;
 	}
 
@@ -85,7 +85,7 @@ void Mumble_CreateLink()
 	if (lm == NULL) {
 		CloseHandle(hMapObject);
 		hMapObject = NULL;
-		ST_Printf(PRINT_FAIL,"Mumble Link initialization failed.\n");
+		ST_Printf(PRINT_FAIL,"Mumble link initialization failed.\n");
 		return;
 	}
 #else // Linux && Mac
@@ -93,7 +93,7 @@ void Mumble_CreateLink()
 	
 	if (lm != NULL)
 	{
-		ST_Printf(PRINT_FAIL,"Mumble Link already initialized.\n");
+		ST_Printf(PRINT_FAIL,"Mumble link already initialized.\n");
 		return;
 	}
 	
@@ -116,13 +116,14 @@ void Mumble_CreateLink()
 		close(shmfd);
 		shmfd = -1;
 		
-		ST_Printf(PRINT_FAIL,"Mumble Link initialization failed.\n");
+		ST_Printf(PRINT_FAIL,"Mumble link initialization failed.\n");
 		return;
 	}
 #endif
 
 	mbstowcs(lm->name, "ezQuake", sizeof(lm->name));
-	ST_Printf(PRINT_INFO,"Mumble Link initialization successful.\n");
+	Com_Printf(CharsToBrownStatic("Mumble link initialized."));
+	Com_Printf("\n");
 }
 
 void Mumble_DestroyLink()
@@ -141,13 +142,13 @@ void Mumble_DestroyLink()
 		close(shmfd);
 		shmfd = -1;
 #endif
-		ST_Printf(PRINT_INFO,"Mumble Link shut down.\n");
+		ST_Printf(PRINT_INFO,"Mumble link shut down.\n");
 		return;
 	}
 	else
 	{
 		if (mumble_debug.integer)
-			ST_Printf(PRINT_FAIL,"Mumble Link not established, unable to shut down.\n");
+			ST_Printf(PRINT_FAIL,"Mumble link not established, unable to shut down.\n");
 	}
 }
 
