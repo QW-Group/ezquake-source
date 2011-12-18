@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libirc_rfcnumeric.h"
 #include "version.h"
 #include "textencoding.h"
+#include "irc_filter.h"
 
 // because of MAX_MACRO_STRING
 #include "teamplay.h"
@@ -302,11 +303,17 @@ void IRC_event_ctcp_req(irc_session_t * session, const char * event, const char 
 
 void IRC_event_notice(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
+    if (!IRC_filter_show_notice_messages())
+        return;
+    
 	IRC_Printf("IRC: *%s* (%s): %s\n", origin, params[0], count > 1 ? params[1] : "");
 }
 
 void IRC_event_topic(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
+    if (!IRC_filter_show_chanop_messages())
+        return;
+    
 	if (count > 1) {
 		IRC_Printf("IRC: %s changes topic on %s to %s\n", origin, params[0], params[1]);
 	}
@@ -317,13 +324,19 @@ void IRC_event_topic(irc_session_t * session, const char * event, const char * o
 
 void IRC_event_mode(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	IRC_Printf("IRC: %s (%s) sets mode %s%s%s\n", IRC_mask_to_nick(origin), params[0], params[1],
-		(count > 2 ? " " : ""), (count > 2 ? params[3] : ""));
+    if (!IRC_filter_show_chanop_messages())
+        return;
+    
+    IRC_Printf("IRC: %s (%s) sets mode %s%s%s\n", IRC_mask_to_nick(origin), params[0], params[1],
+               (count > 2 ? " " : ""), (count > 2 ? params[3] : ""));
 }
 
 void IRC_event_kick(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	IRC_Printf("IRC: %s has been kicked from %s by %s (%s)\n", params[1], params[0], IRC_mask_to_nick(origin), params[2]);
+    if (!IRC_filter_show_chanop_messages())
+        return;
+    
+    IRC_Printf("IRC: %s has been kicked from %s by %s (%s)\n", params[1], params[0], IRC_mask_to_nick(origin), params[2]);
 }
 
 void IRC_event_privmsg(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
@@ -331,13 +344,18 @@ void IRC_event_privmsg(irc_session_t * session, const char * event, const char *
 	irc_ctx_t *ctx = (irc_ctx_t *) irc_get_ctx(session);
 
 	if (count > 1) {
-		IRC_Printf("IRC: (Privmsg) <%s> %s\n", IRC_mask_to_nick(origin), params[1]);
+        if (IRC_filter_show_private_messages()) {
+            IRC_Printf("IRC: (Privmsg) <%s> %s\n", IRC_mask_to_nick(origin), params[1]);
+        }
 		IRC_Chanlist_Add(&ctx->chanlist, IRC_mask_to_nick(origin));
 	}
 }
 
 void IRC_event_channel (irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
+    if (!IRC_filter_show_chanop_messages())
+        return;
+        
 	if (count > 1) {
 		IRC_Printf("IRC: (%s) <%s> %s\n", params[0], IRC_mask_to_nick(origin), params[1]);
 	}
@@ -358,7 +376,9 @@ void IRC_event_join (irc_session_t * session, const char * event, const char * o
 		IRC_Chanlist_Add(&ctx->chanlist, params[0]);		
 	}
 	else {
-		IRC_Printf("IRC: %s &c0f0joined&cfff %s\n", IRC_mask_to_nick(origin), params[0]);
+        if (IRC_filter_show_chanop_messages()) {
+            IRC_Printf("IRC: %s &c0f0joined&cfff %s\n", IRC_mask_to_nick(origin), params[0]);
+        }
 	}
 }
 
@@ -371,18 +391,26 @@ void IRC_event_part (irc_session_t * session, const char * event, const char * o
 		IRC_Printf("IRC: You have left %s\n", params[0]);
 	}
 	else {
-		IRC_Printf("IRC: %s has &c888left&cfff %s\n", IRC_mask_to_nick(origin), params[0]);
+    if (IRC_filter_show_chanop_messages()) {
+      IRC_Printf("IRC: %s has &c888left&cfff %s\n", IRC_mask_to_nick(origin), params[0]);
+    }
 	}
 }
 
 void IRC_event_quit (irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	IRC_Printf("IRC: %s Quit: %s\n", IRC_mask_to_nick(origin), count > 1 ? params[0] : "-");
+    if (!IRC_filter_show_connection_messages())
+        return;
+    
+    IRC_Printf("IRC: %s Quit: %s\n", IRC_mask_to_nick(origin), count > 1 ? params[0] : "-");
 }
 
 void IRC_event_nick (irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
-	Com_Printf("IRC: Nick event\n");
+    if (!IRC_filter_show_connection_messages())
+        return;
+
+    Com_Printf("IRC: Nick event\n");
 }
 
 void IRC_event_connect (irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
@@ -462,6 +490,16 @@ void IRC_event_universal (irc_session_t * session, const char * event, const cha
 
 
 	IRC_Printf ("Event \"%s\", origin: \"%s\", params: %d [%s]\n", event, origin ? origin : "NULL", cnt, buf);
+}
+
+void normalise_channel_name(char * channel, char * output)
+{
+    if (channel[0] == '#') {
+        strcpy(output, channel);
+    } else {
+        strcpy(output, "#");
+        strcat(output, channel);
+    }
 }
 
 static void IRC_irc_f(void)
@@ -552,6 +590,19 @@ static void IRC_irc_f(void)
 			strlcpy(ctx->nick, Cmd_Argv(2), MAX_TARGET_LEN);
 		}
 	}
+    else if ((strcmp(Cmd_Argv(1), "join") == 0) ||
+             (strcmp(Cmd_Argv(1), "part") == 0)) {
+        char *normalised_channel = malloc(strlen(Cmd_Argv(2) + 1));
+        normalise_channel_name(Cmd_Argv(2), normalised_channel);
+        
+        if (strcmp(Cmd_Argv(1), "join") == 0) {
+            irc_cmd_join(irc_singlesession, normalised_channel, Cmd_Argv(3));
+        } else {
+            irc_cmd_part(irc_singlesession, normalised_channel);
+        }
+        
+        free(normalised_channel);
+    }
 	else {
 		char *cmd = Cmd_ArgLine(1);
 		wchar *wcmd = decode_string(cmd);
@@ -634,6 +685,8 @@ void IRC_Init(void)
 	Cvar_Register(&irc_user_nick);
 	Cvar_Register(&irc_user_username);
 	Cvar_Register(&irc_user_realname);
+  IRC_filter_register_cvars();
+
 	Cvar_ResetCurrentGroup();
 }
 
