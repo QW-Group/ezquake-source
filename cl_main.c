@@ -146,7 +146,7 @@ cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
 cvar_t  show_fps2 = {"scr_scoreboard_drawfps","0"};
-cvar_t	hud_fps_min_reset_interval = {"hud_fps_min_reset_interval", "60"};
+cvar_t	hud_fps_min_reset_interval = {"hud_fps_min_reset_interval", "30"};
 
 cvar_t  localid = {"localid", ""};
 
