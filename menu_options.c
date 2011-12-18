@@ -1407,6 +1407,7 @@ setting settsystem_arr[] = {
 	//Sound & Volume
 	ADDSET_SEPARATOR("Sound & Volume"),
 	ADDSET_NUMBER	("Primary Volume", s_volume, 0, 1, 0.05),
+	ADDSET_BIND("Mute/Unmute", "mutesound"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
 	ADDSET_NUMBER	("Chat Volume", con_sound_mm1_volume, 0, 1, 0.1),
