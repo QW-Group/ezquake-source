@@ -1076,6 +1076,24 @@ void CharsToBrown(char* start, char* end)
 	}
 }
 
+char *CharsToBrownStatic(char *in) // Print brown characters to console
+{
+	static char string[8][1024];
+	static int idx = 0;
+	int write_pos = 0;
+
+	idx++;
+	if (idx == 8)
+		idx = 0;
+
+	for (; *in; in++ && write_pos < 1023) {
+		string[idx][write_pos++] = 128 + *in;
+	}
+	string[idx][write_pos] = '\0';
+
+	return string[idx];
+}
+
 void CharsToWhite(char* start, char* end)
 {
 	char *p = start;
