@@ -966,6 +966,8 @@ void CL_LinkPacketEntities(void)
 			}
 			else if (cl_deadbodyfilter.value == 1) 
 			{
+				// These indices are the last animation of a death sequence in the player.mdl
+				//49=axdeth9, 60=deatha11, 69=deathb9, 84=deathc15, 93=deathd9, 102=deathe9
 				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
 					continue;
 			}
@@ -1973,6 +1975,8 @@ void CL_LinkPlayers (void)
 			} 
 			else if (cl_deadbodyfilter.value == 1) 
 			{
+				// These indices are the last animation of a death sequence in the player.mdl
+				//49=axdeth9, 60=deatha11, 69=deathb9, 84=deathc15, 93=deathd9, 102=deathe9
 				if (i == 49 || i == 60 || i == 69 || i == 84 || i == 93 || i == 102)
 					continue;
 			}
