@@ -799,6 +799,10 @@ void MT_TakeScreenshot(void) {
 	if (!matchcvars[matchstate.matchtype].autosshot)
 		return;
 
+  // don't bother screen-shotting if we've only just joined
+  if (cl.time < 10)
+    return;
+
 	//make sure there are actually some frags on the board, and somebody besides us
 	have_opponent = false;
 	for (i = 0; i < MAX_CLIENTS; i++) {
