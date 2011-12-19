@@ -72,38 +72,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // call TP_GetNeed() before using this!
 #define NEED(x) (vars.needflags & it_##x)
 
-/*
-Should we enforce special colors this way below or we just should make
-these values new default?
-In my opinion with new defaults we should wait for different color syntax. - johnnycz
-However this brings a problem - you always have to use these and cannot
-use the %-macros nor the $-macros.
-*/
-#define tp_ib_name_rl	    COLORED(f0f,rl)	    // purple rl
-#define tp_ib_name_lg	    COLORED(f0f,lg)	    // purple lg
-#define tp_ib_name_gl	    COLORED(f0f,gl)	    // purple gl
-#define tp_ib_name_sng	    COLORED(f0f,sng)	// purple sng
-#define tp_ib_name_ssg	    COLORED(f0f,ssg)	// purple ssg
-#define tp_ib_name_ga	    COLORED(0b0,ga)	    // green ga
-#define tp_ib_name_ya	    COLORED(ff0,ya)	    // yellow ya
-#define tp_ib_name_ra	    COLORED(e00,ra)	    // red ra
-#define tp_ib_name_mh	    COLORED(0b0,mega)	// green mega
-#define tp_ib_name_backpack	COLORED(F0F,pack)	// purple backpack
-#define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
-#define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
-#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow ring
-#define tp_ib_name_q	    COLORED(03F,q)		// blue q for quad
-#define tp_ib_name_p	    COLORED(e00,p)		// red p for pent
-#define tp_ib_name_r	    COLORED(ff0,r)		// yellow r for ring
-#define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
-#define tp_ib_name_flag	    COLORED(f50,flag)	// orange flag
-#define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
-#define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
-#define tp_ib_name_teammate	COLORED(0b0,teammate)// green "teamate"
-#define tp_ib_name_quaded	COLORED(03F,quaded)	// blue "quaded"
-#define tp_ib_name_pented	COLORED(e00,pented)	// red "pented"
-#define tp_ib_name_rlg      COLORED(f0f,rlg)    // purple rlg
- 
 typedef const char * MSGPART;
  
 extern cvar_t cl_fakename;
@@ -573,7 +541,7 @@ GLOBAL void TP_Msg_KillMe_f (void)
 
 	TP_FindPoint();
 	if (INPOINT(teammate))
-			point = va ("{&c0b0%s&cfff} ", Macro_PointName()); // Saying teammate kill me isn't much help. Only report if you can say e.g. Up2 Kill Me!
+		point = va ("{&c0b0%s&cfff} ", Macro_PointName()); // Saying teammate kill me isn't much help. Only report if you can say e.g. Up2 Kill Me!
 
 	if (HOLD_RL()) {
 		weapon = tp_name_rl.string;
@@ -701,6 +669,10 @@ GLOBAL const char * TP_MSG_Colored_Powerup(void)
 
     return va("%s%s%s", quad, pent, ring);
 }
+
+#define tp_ib_name_q	    COLORED(03F,q)		// blue q for quad
+#define tp_ib_name_p	    COLORED(e00,p)		// red p for pent
+#define tp_ib_name_r	    COLORED(ff0,r)		// yellow r for ring
 
 GLOBAL const char * TP_MSG_Colored_Short_Powerups(void) // this displays "qrp" instead of "quad ring pent", some people prefer this!
 {
