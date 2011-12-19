@@ -3902,6 +3902,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\irc_filter.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\irc.c"
 					>
 				</File>
@@ -4510,6 +4514,9 @@
 					RelativePath="..\..\ignore.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\irc_filter.h"
+					>
 				<File
 					RelativePath="..\..\irc.h"
 					>

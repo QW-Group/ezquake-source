@@ -879,6 +879,7 @@
     <ClCompile Include="..\..\fmod.c" />
     <ClCompile Include="..\..\fragstats.c" />
     <ClCompile Include="..\..\ignore.c" />
+    <ClCompile Include="..\..\irc_filter.c" />
     <ClCompile Include="..\..\irc.c" />
     <ClCompile Include="..\..\keymap.c" />
     <ClCompile Include="..\..\logging.c" />
@@ -1012,6 +1013,7 @@
     <ClInclude Include="..\..\fchecks.h" />
     <ClInclude Include="..\..\fmod.h" />
     <ClInclude Include="..\..\ignore.h" />
+    <ClInclude Include="..\..\irc_filter.h" />
     <ClInclude Include="..\..\irc.h" />
     <ClInclude Include="..\..\keymap.h" />
     <ClInclude Include="..\..\logging.h" />
