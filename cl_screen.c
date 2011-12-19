@@ -1633,8 +1633,7 @@ void SCR_ClearTeamInfo(void)
 	memset(ti_clients, 0, sizeof(ti_clients));
 }
 
-qbool Has_Both_RL_and_LG (int flags) { return (flags & IT_ROCKET_LAUNCHER) && (flags & IT_LIGHTNING); }
-
+qbool Has_Both_RL_and_LG (int flags);
 static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, qbool its_shownick)
 {
 	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr;

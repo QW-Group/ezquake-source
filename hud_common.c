@@ -5067,7 +5067,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		*hud_teaminfo_armor_style,
 		*hud_teaminfo_show_enemies,
 		*hud_teaminfo_show_self,
-		*hud_teaminfo_scale;
+		*hud_teaminfo_scale,
+		*hud_teaminfo_powerup_style;
 
 	if (hud_teaminfo_weapon_style == NULL)    // first time
 	{
@@ -5081,6 +5082,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_show_enemies			= HUD_FindVar(hud, "show_enemies");
 		hud_teaminfo_show_self				= HUD_FindVar(hud, "show_self");
 		hud_teaminfo_scale					= HUD_FindVar(hud, "scale");
+		hud_teaminfo_powerup_style			= HUD_FindVar(hud, "powerup_style");
 	}
 
 	// Don't update hud item unless first view is beeing displayed
@@ -5171,9 +5173,11 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	}
 }
 
+qbool Has_Both_RL_and_LG (int flags) { return (flags & IT_ROCKET_LAUNCHER) && (flags & IT_LIGHTNING); }
 static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, hud_t *hud)
 {
 	extern mpic_t * SCR_GetWeaponIconByFlag (int flag);
+	extern cvar_t tp_name_rlg;
 
 	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr;
 	int x_in = x; // save x
@@ -5183,6 +5187,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t  *sb_armor[3];
+	extern mpic_t *sb_items[5];
 
 	if (!ti_cl)
 		return 0;
@@ -5226,10 +5231,18 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				switch (HUD_FindVar(hud, "weapon_style")->integer) {
 				case 1:
 					if(!width_only) {
-						char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
-						char weap_white_stripped[32];
-						Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-						Draw_SString (x, y, weap_white_stripped, scale);
+						if (Has_Both_RL_and_LG(ti_cl->items)) {
+							char *weap_str = tp_name_rlg.string;
+							char weap_white_stripped[32];
+							Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
+							Draw_ColoredString (x, y, weap_white_stripped, false);
+						}
+						else {
+							char *weap_str = TP_ItemName(BestWeaponFromStatItems( ti_cl->items ));
+							char weap_white_stripped[32];
+							Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
+							Draw_ColoredString (x, y, weap_white_stripped, false);
+						}
 					}
 					x += 3 * FONTWIDTH * scale;
 
@@ -5337,23 +5350,53 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 				break;
 			case 'p': // draw powerups
+			switch (HUD_FindVar(hud, "powerup_style")->integer) {
+				case 1: // quad/pent/ring image
+					if(!width_only) {
+						if (ti_cl->items & IT_QUAD)
+							Draw_SPic (x, y, sb_items[5], 1.0/2);
+							x += FONTWIDTH;
+						if (ti_cl->items & IT_INVULNERABILITY)
+							Draw_SPic (x, y, sb_items[3], 1.0/2);
+							x += FONTWIDTH;
+						if (ti_cl->items & IT_INVISIBILITY)
+							Draw_SPic (x, y, sb_items[2], 1.0/2);
+							x += FONTWIDTH;
+					}
+					else { x += 3* FONTWIDTH; }
+					break;
 
-				if(!width_only)
-					if ( sb_face_quad && (ti_cl->items & IT_QUAD))
-						Draw_SPic (x, y, sb_face_quad, 1.0/3*scale);
-				x += FONTWIDTH * scale;
+				case 2: // player powerup face
+					if(!width_only) {
+						if ( sb_face_quad && (ti_cl->items & IT_QUAD))
+							Draw_SPic (x, y, sb_face_quad, 1.0/3);
+							x += FONTWIDTH;
+						if ( sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
+							Draw_SPic (x, y, sb_face_invuln, 1.0/3);
+							x += FONTWIDTH;
+						if ( sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
+							Draw_SPic (x, y, sb_face_invis, 1.0/3);
+							x += FONTWIDTH;
+					}
+					else { x += 3* FONTWIDTH; }
+					break;
 
-				if(!width_only)
-					if ( sb_face_invuln && (ti_cl->items & IT_INVULNERABILITY))
-						Draw_SPic (x, y, sb_face_invuln, 1.0/3*scale);
-				x += FONTWIDTH * scale;
-
-				if(!width_only)
-					if ( sb_face_invis && (ti_cl->items & IT_INVISIBILITY))
-						Draw_SPic (x, y, sb_face_invis, 1.0/3*scale);
-				x += FONTWIDTH * scale;
-
-				break;
+				case 3: // colored font (QPR)
+					if(!width_only) {
+						if (ti_cl->items & IT_QUAD)
+							Draw_ColoredString (x, y, "&c03fQ", false);
+							x += FONTWIDTH;
+						if (ti_cl->items & IT_INVULNERABILITY)
+							Draw_ColoredString (x, y, "&cf00P", false);
+							x += FONTWIDTH;
+						if (ti_cl->items & IT_INVISIBILITY)
+							Draw_ColoredString (x, y, "&cff0R", false);
+							x += FONTWIDTH;
+					}
+					else { x += 3* FONTWIDTH; }
+					break;
+			}
+			break;
 
 			case 't':
 				if(!width_only)
@@ -7793,6 +7836,7 @@ void CommonDraw_Init(void)
 		"show_enemies","0",
 		"show_self","1",
 		"scale","1",
+		"powerup_style","1",
 		NULL);
 
 	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
