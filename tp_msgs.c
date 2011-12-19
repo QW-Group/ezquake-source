@@ -122,15 +122,14 @@ GLOBAL void TP_Msg_Lost_f (void)
 	MSGPART location_enemy = "{&cf00[&cfff}{%d}{&cf00]&cfff} {%E}";
 	extern cvar_t tp_name_quad;
 
-	if (!DEAD()) // if alive, wrong button!
-		return;
-	
-	if (HAVE_QUAD()) {
-		quad = tp_name_quad.string;			
-		over = " over ";
+	if (DEAD()) {
+		if (HAVE_QUAD()) {
+			quad = tp_name_quad.string;			
+			over = " over ";
+		}
+		if (HOLD_RL() || HOLD_LG())
+			dropped_or_lost = "{&cf00DROPPED} $weapon";
 	}
-	if (HOLD_RL() || HOLD_LG())
-		dropped_or_lost = "{&cf00DROPPED} $weapon";
 	else
 		dropped_or_lost = "{&cf00lost&cfff}";
 
