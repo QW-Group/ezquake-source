@@ -154,18 +154,19 @@ GLOBAL void TP_Msg_Lost_f (void)
 	MSGPART location_enemy = "{&cf00[&cfff}{%d}{&cf00]&cfff} {%E}";
 	extern cvar_t tp_name_quad;
 
-	if (DEAD())	{
-		if (HAVE_QUAD()) {
-			quad = tp_name_quad.string;			
-			over = " over ";
-		}
-		if (HOLD_RL() || HOLD_LG())
-			dropped_or_lost = "{&cf00DROPPED} $weapon";
-		else
-			dropped_or_lost = "{&cf00lost&cfff}";
-
-		TP_Send_TeamSay("%s%s%s %s", quad, over, dropped_or_lost, location_enemy);
+	if (!DEAD()) // if alive, wrong button!
+		return;
+	
+	if (HAVE_QUAD()) {
+		quad = tp_name_quad.string;			
+		over = " over ";
 	}
+	if (HOLD_RL() || HOLD_LG())
+		dropped_or_lost = "{&cf00DROPPED} $weapon";
+	else
+		dropped_or_lost = "{&cf00lost&cfff}";
+
+	TP_Send_TeamSay("%s%s%s %s", quad, over, dropped_or_lost, location_enemy);
 }
 
 GLOBAL void TP_Msg_Report_f (void)
@@ -583,9 +584,9 @@ GLOBAL void TP_Msg_KillMe_f (void)
 		weapon_ammo = ":$cells ";
 	}
 
-	if (!HAVE_RL() && HAVE_ROCKETS())
+	if (!HOLD_RL() && HAVE_ROCKETS())
 		extra_rockets = "{&cf13r&cfff}:$rockets "; // see below comment
-	if (!HAVE_LG() && HAVE_CELLS())
+	if (!HOLD_LG() && HAVE_CELLS())
 		extra_cells = "{&c2aac&cfff}:$cells"; //the "r" and "c" are hard-coded to have the same colors as tp_name_rl and tp_name_lg. Not sure if this is a good idea
 											  //since the user can change those colors and then it won't match up
 
