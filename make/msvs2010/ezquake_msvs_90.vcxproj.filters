@@ -518,6 +518,9 @@
     <ClCompile Include="..\..\ignore.c">
       <Filter>Source Files\Addons</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\irc_filter.c">
+      <Filter>Source Files\Addons</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\irc.c">
       <Filter>Source Files\Addons</Filter>
     </ClCompile>
@@ -863,6 +866,9 @@
       <Filter>Header Files\Addons_h</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ignore.h">
+      <Filter>Header Files\Addons_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\irc_filter.h">
       <Filter>Header Files\Addons_h</Filter>
     </ClInclude>
     <ClInclude Include="..\..\irc.h">
