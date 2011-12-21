@@ -1643,7 +1643,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t  *sb_armor[3];
-	extern mpic_t  *sb_items[5];
+	extern mpic_t  *sb_items[32];
 	extern cvar_t tp_name_rlg;
 
 	if (!ti_cl)

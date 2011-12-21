@@ -5187,7 +5187,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t  *sb_armor[3];
-	extern mpic_t *sb_items[5];
+	extern mpic_t *sb_items[32];
 
 	if (!ti_cl)
 		return 0;
