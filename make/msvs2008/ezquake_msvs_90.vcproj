@@ -4517,6 +4517,7 @@
 				<File
 					RelativePath="..\..\irc_filter.h"
 					>
+				</File>
 				<File
 					RelativePath="..\..\irc.h"
 					>
