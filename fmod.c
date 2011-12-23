@@ -206,6 +206,7 @@ static check_models_hashes_entry_t sound_items_r_item2_wav_us = {{0xf62a00d2, 0x
 static check_models_hashes_entry_t sound_items_r_item2_wav_ru = {{0x83a8e646, 0xbc4cc313, 0xa07aa96e, 0x9d81eada, 0xf619bd10}, NULL};
 
 // Mindgrid Audio sound files
+static check_models_hashes_entry_t sound_items_mindgrid_airbut1 = { {0xd5fbbce0, 0x2083e431, 0xaa11c54d, 0x089ce053, 0xdf03ce11}, NULL };
 static check_models_hashes_entry_t sound_items_mindgrid_armor1 = { {0x1b47daed, 0x5a60cd6a, 0x83940499, 0x65eb651b, 0x4441f6cf}, NULL };
 static check_models_hashes_entry_t sound_items_mindgrid_damage = { {0x3da087a3, 0x1799d4c7, 0x8ddabf31, 0x42e2de6f, 0x5bfdabec}, NULL };
 static check_models_hashes_entry_t sound_items_mindgrid_damage2 = { {0xd0eb779c, 0x0bf1d83c, 0x120e1c7e, 0x50fa449b, 0x2cd4655b}, NULL };
@@ -216,6 +217,7 @@ static check_models_hashes_entry_t sound_items_mindgrid_inv3 = { {0xa1945433, 0x
 static check_models_hashes_entry_t sound_items_mindgrid_itembk2 = { {0x41dd6dad, 0x45a8c24b, 0xef56b75e, 0x5ab3915a, 0x2901a70f}, NULL };
 static check_models_hashes_entry_t sound_misc_mindgrid_outwater = { {0x6be98515, 0xfeab0126, 0x80edc811, 0xe7cf7012, 0x1def4980}, NULL };
 static check_models_hashes_entry_t sound_weapons_mindgrid_pkup = { {0xda261fbc, 0x12f47c68, 0x9e91e794, 0xce0a434d, 0xc4e35e77}, NULL };
+static check_models_hashes_entry_t sound_weapons_mindgrid_plyrjmp8 = { {0x5a9e8263, 0xb9b3f06e, 0x8a047de1, 0x72c18bec, 0x547df977}, NULL };
 static check_models_hashes_entry_t sound_items_mindgrid_protect = { {0x5948333f, 0xa28e882a, 0xb4b82964, 0xe10679c5, 0x191f8cb1}, NULL };
 static check_models_hashes_entry_t sound_items_mindgrid_protect2 = { {0x29e977b0, 0x0d9378fe, 0xb4489037, 0x02d83d62, 0xce0b718d}, NULL };
 static check_models_hashes_entry_t sound_items_mindgrid_protect3 = { {0x7619314c, 0x07b6901c, 0x000601e2, 0xc358367e, 0x999f90b1}, NULL };
@@ -470,6 +472,7 @@ void FMod_Init (void)
 
 	//Wav files
 	FMod_AddModel ("sound/buttons/airbut1.wav",	FMOD_DM | FMOD_TF,	sound_buttons_airbut1_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_items_mindgrid_airbut1);
 	lastid = FMod_AddModel ("sound/items/armor1.wav",	FMOD_DM | FMOD_TF,	sound_items_armor1_wav_FMOD_DM_FMOD_TF);
 		FMod_AddModelAlt(lastid, &sound_items_mindgrid_armor1);
 	lastid = FMod_AddModel ("sound/items/damage.wav",	FMOD_DM | FMOD_TF,	sound_items_damage_wav_FMOD_DM_FMOD_TF);
@@ -494,6 +497,7 @@ void FMod_Init (void)
 	lastid = FMod_AddModel ("sound/weapons/pkup.wav",	FMOD_DM | FMOD_TF,	sound_weapons_pkup_wav_FMOD_DM_FMOD_TF);
 		FMod_AddModelAlt(lastid, &sound_weapons_mindgrid_pkup);
 	FMod_AddModel ("sound/player/plyrjmp8.wav",	FMOD_DM | FMOD_TF,	sound_player_plyrjmp8_wav_FMOD_DM_FMOD_TF);
+		FMod_AddModelAlt(lastid, &sound_weapons_mindgrid_plyrjmp8);
 	lastid = FMod_AddModel ("sound/items/protect.wav",	FMOD_DM | FMOD_TF,	sound_items_protect_wav_FMOD_DM_FMOD_TF);
 		FMod_AddModelAlt(lastid, &sound_items_mindgrid_protect);
 	lastid = FMod_AddModel ("sound/items/protect2.wav",	FMOD_DM | FMOD_TF,	sound_items_protect2_wav_FMOD_DM_FMOD_TF);
