@@ -125,13 +125,13 @@ GLOBAL void TP_Msg_Lost_f (void)
 	if (DEAD()) {
 		if (HAVE_QUAD()) {
 			quad = tp_name_quad.string;			
-			over = " over ";
+			over = " over";
 		}
 		if (HOLD_RL() || HOLD_LG())
-			dropped_or_lost = "{&cf00DROPPED} $weapon";
+			dropped_or_lost = " {&cf00DROPPED} $weapon";
 	}
 	else
-		dropped_or_lost = "{&cf00lost&cfff}";
+		dropped_or_lost = " {&cf00lost&cfff}";
 
 	TP_Send_TeamSay("%s%s%s %s", quad, over, dropped_or_lost, location_enemy);
 }
@@ -330,7 +330,11 @@ GLOBAL void TP_Msg_QuadDead_f (void)
 	MSGPART dead = "dead/over";
 
 	TP_FindPoint();
-	if (HAVE_QUAD() || INPOINT(quaded)) { // This check is to make sure the button is not pressed accidentally. Will also take care of the case when you're dead and have quad
+	if (HAVE_QUAD() && DEAD()) {
+		TP_Msg_Lost_f(); // we use this function because it checks for dropped RL's, etc
+		return;
+	}
+	else if (INPOINT(quaded)) { // This check is to make sure the button is not pressed accidentally.
 		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this & all cases regarding players/powerups
 		return;
 	}
