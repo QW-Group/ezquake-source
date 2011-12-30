@@ -1219,7 +1219,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 	}
 
 
-	Draw_Fill (xofs -1, y + 1, rank_width + 2, 1, 0);	//Border - Top (under header)
+	Draw_Fill (xofs, y + 1, rank_width, 1, 0);	//Border - Top (under header)
 	y += 2;												//dont go over the black border, move the rest down
 	if (!scr_scoreboard_borderless.value) {
 		Draw_Fill (xofs - 1, y - 10, 1, 10, 0);						//Border - Left
