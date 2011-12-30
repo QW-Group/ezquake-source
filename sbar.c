@@ -1513,7 +1513,7 @@ static void Sbar_TeamOverlay (void) {
 	if (!scr_scoreboard_borderless.value)
 		Draw_Fill (xofs - 1, y + 1, rank_width + 2, 1, 0);							//Border - Top
 	Draw_AlphaFill (xofs, y + 2, rank_width, skip, 1, SCOREBOARD_HEADINGALPHA);	//draw heading row
-	Draw_Fill (xofs - 1, y + 11, rank_width + 2, 1, 0);							//Border - Top (under header)
+	Draw_Fill (xofs, y + 11, rank_width, 1, 0);							//Border - Top (under header)
 	y += 2;																		//dont go over the black border, move the rest down
 	if (!scr_scoreboard_borderless.value) {
 		Draw_Fill (xofs - 1, y, 1, skip, 0);										//Border - Left
