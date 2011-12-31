@@ -598,7 +598,9 @@ GLOBAL void TP_Msg_Coming_f (void)		{ TP_MSG_GENERIC("coming"); } // coming
 //TF binds
 GLOBAL void TP_TFConced_f (void)
 {
+	extern cvar_t tp_name_filter;
 	MSGPART conced = "";
+	MSGPART filter = tp_name_filter.string;
 
 	TP_FindPoint();
 	if (INPOINT(enemy))
@@ -606,7 +608,7 @@ GLOBAL void TP_TFConced_f (void)
 	else
 		conced = "{Enemy conced}";
 
-	TP_Send_TeamSay("%s %s", conced);
+	TP_Send_TeamSay("%s %s", conced, filter);
 }
 
 ///////////////////////////////////
