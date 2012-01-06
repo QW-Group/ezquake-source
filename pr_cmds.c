@@ -125,6 +125,7 @@ void PF_setorigin (void)
 	e = G_EDICT(OFS_PARM0);
 	org = G_VECTOR(OFS_PARM1);
 	VectorCopy (org, e->v.origin);
+	SV_AntilagReset (e);
 	SV_LinkEdict (e, false);
 }
 
@@ -178,23 +179,28 @@ static void PF_setmodel (void)
 	PR_RunError ("PF_setmodel: no precache: %s\n", m);
 ok:
 
-		e->v.model = G_INT(OFS_PARM1);
+	e->v.model = G_INT(OFS_PARM1);
 	e->v.modelindex = i;
 
 // if it is an inline model, get the size information for it
-	if (m[0] == '*') {
+	if (m[0] == '*')
+	{
 		mod = CM_InlineModel (m);
 		VectorCopy (mod->mins, e->v.mins);
 		VectorCopy (mod->maxs, e->v.maxs);
 		VectorSubtract (mod->maxs, mod->mins, e->v.size);
 		SV_LinkEdict (e, false);
 	}
-	else if (pr_nqprogs) {
+	else if (pr_nqprogs)
+	{
 		// hacks to make NQ progs happy
-		if (!strcmp(PR_GetString(e->v.model), "maps/b_explob.bsp")) {
+		if (!strcmp(PR_GetString(e->v.model), "maps/b_explob.bsp"))
+		{
 			VectorClear (e->v.mins);
 			VectorSet (e->v.maxs, 32, 32, 64);
-		} else {
+		}
+		else
+		{
 			// FTE does this, so we do, too; I'm not sure if it makes a difference
 			VectorSet (e->v.mins, -16, -16, -16);
 			VectorSet (e->v.maxs, 16, 16, 16);
@@ -218,10 +224,13 @@ void PF_bprint (void)
 	char		*s;
 	int			level;
 
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		level = PRINT_HIGH;
 		s = PF_VarString(0);
-	} else {
+	}
+	else
+	{
 		level = G_FLOAT(OFS_PARM0);
 		s = PF_VarString(1);
 	}
@@ -250,10 +259,13 @@ void PF_sprint (void)
 	int			i;
 
 	entnum = G_EDICTNUM(OFS_PARM0);
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		level = PRINT_HIGH;
 		s = PF_VarString(1);
-	} else {
+	}
+	else
+	{
 		level = G_FLOAT(OFS_PARM1);
 		s = PF_VarString(2);
 	}
@@ -412,7 +424,7 @@ void PF_vectoyaw (void)
 		yaw = 0;
 	else
 	{
-		yaw = (int) (atan2(value1[1], value1[0]) * 180 / M_PI);
+		yaw = /*(int)*/ (atan2(value1[1], value1[0]) * 180 / M_PI);
 		if (yaw < 0)
 			yaw += 360;
 	}
@@ -502,20 +514,30 @@ static void PF_particle (void)
 
 	// Progs should provide a tempentity code and particle count for the case
 	// when a client doesn't support svc_particle
-	if (pr_argc >= 5) {
+	if (pr_argc >= 5)
+	{
 		replacement_te = G_FLOAT(OFS_PARM4);
 		replacement_count = (pr_argc >= 6) ? G_FLOAT(OFS_PARM5) : 1;
-	} else {
+	}
+	else
+	{
 		// To aid porting of NQ mods, if the extra arguments are not provided, try
 		// to figure out what progs want by inspecting color and count
-		if (count == 255) {
+		if (count == 255)
+		{
 			replacement_te = TE_EXPLOSION;		// count is not used
-		} else if (color == 73) {
+		}
+		else if (color == 73)
+		{
 			replacement_te = TE_BLOOD;
 			replacement_count = 1;	// FIXME: use count / <some value>?
-		} else if (color == 225) {
+		}
+		else if (color == 225)
+		{
 			replacement_te = TE_LIGHTNINGBLOOD;	// count is not used
-		} else {
+		}
+		else
+		{
 			replacement_te = 0;		// don't send anything
 		}
 	}
@@ -634,6 +656,9 @@ void PF_traceline (void)
 	v2 = G_VECTOR(OFS_PARM1);
 	nomonsters = G_FLOAT(OFS_PARM2);
 	ent = G_EDICT(OFS_PARM3);
+
+	if (sv_antilag.value == 2)
+		nomonsters |= MOVE_LAGGED;
 
 	trace = SV_Trace (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
 
@@ -856,8 +881,9 @@ void PF_localcmd (void)
 
 	str = G_STRING(OFS_PARM0);
 
-	if (pr_nqprogs && !strcmp(str, "restart\n")) {
-		Cbuf_AddText (va("map %s\n", host_mapname.string));
+	if (pr_nqprogs && !strcmp(str, "restart\n"))
+	{
+		Cbuf_AddText (va("map %s\n", sv.mapname));
 		return;
 	}
 
@@ -1302,58 +1328,6 @@ void PF_strstr (void)
 }
 
 /*
-====================
-SV_CleanName_Init
- 
-sets chararcter table to translate quake texts to more friendly texts
-====================
-*/
-
-char chartbl2[256];
-
-void PR_CleanLogText_Init (void)
-{
-	int i;
-
-	for (i = 0; i < 32; i++)
-		chartbl2[i] = chartbl2[i + 128] = '#';
-	for (i = 32; i < 128; i++)
-		chartbl2[i] = chartbl2[i + 128] = i;
-
-	// special cases
-	chartbl2[10] = 10;
-	chartbl2[13] = 13;
-
-	// dot
-	chartbl2[5      ] = chartbl2[14      ] = chartbl2[15      ] = chartbl2[28      ] = chartbl2[46      ] = '.';
-	chartbl2[5 + 128] = chartbl2[14 + 128] = chartbl2[15 + 128] = chartbl2[28 + 128] = chartbl2[46 + 128] = '.';
-
-	// numbers
-	for (i = 18; i < 28; i++)
-		chartbl2[i] = chartbl2[i + 128] = i + 30;
-
-	// brackets
-	chartbl2[16] = chartbl2[16 + 128]= '[';
-	chartbl2[17] = chartbl2[17 + 128] = ']';
-	chartbl2[29] = chartbl2[29 + 128] = chartbl2[128] = '(';
-	chartbl2[31] = chartbl2[31 + 128] = chartbl2[130] = ')';
-
-	// left arrow
-	chartbl2[127] = '>';
-	// right arrow
-	chartbl2[141] = '<';
-
-	// '='
-	chartbl2[30] = chartbl2[129] = chartbl2[30 + 128] = '=';
-}
-
-void PR_CleanText(unsigned char *text)
-{
-	for ( ; *text; text++)
-		*text = chartbl2[*text];
-}
-
-/*
 ================
 PF_log
  
@@ -1368,7 +1342,7 @@ void PF_log(void)
 
 	snprintf(name, MAX_OSPATH, "%s/%s.log", fs_gamedir, G_STRING(OFS_PARM0));
 	text = PF_VarString(2);
-	PR_CleanText((unsigned char*)text);
+	Q_normalizetext(text);
 
 	if ((file = fopen(name, "a")) == NULL)
 	{
@@ -1383,7 +1357,6 @@ void PF_log(void)
 
 	if (G_FLOAT(OFS_PARM1))
 		Sys_Printf("%s", text);
-
 }
 
 /*
@@ -1406,7 +1379,9 @@ void PF_cvar (void)
 	}
 
 	if (pr_nqprogs && !pr_globals[35]/* deathmatch */
-	&& (!strcmp(str, "timelimit") || !strcmp(str, "samelevel"))) {
+		&& (!strcmp(str, "timelimit") || !strcmp(str, "samelevel"))
+	)
+	{
 		// workaround for NQ progs bug: timelimit and samelevel are checked in SP/coop
 		G_FLOAT(OFS_RETURN) = 0.0;
 		return;
@@ -2203,13 +2178,13 @@ switch (nqp_buf_data[1]) {
 		nqp_expect = 10;
 		break;
   default:
-		Com_Printf ("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
+		Con_Printf ("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
 	    goto ignore;
 }
 
 		}
 		else {
-			Com_Printf ("WARNING: progs.dat sent an unsupported svc: %i\n", cmd);
+			Con_Printf ("WARNING: progs.dat sent an unsupported svc: %i\n", cmd);
 ignore:
 			nqp_ignore_this_frame = true;
 			break;
@@ -2226,7 +2201,8 @@ sizebuf_t nqp_buf;	// dummy
 
 void PF_WriteByte (void)
 {
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
 			return;	// we don't support this
 		MSG_WriteByte (&nqp_buf, G_FLOAT(OFS_PARM1));
@@ -2253,7 +2229,8 @@ void PF_WriteByte (void)
 
 void PF_WriteChar (void)
 {
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
 			return;	// we don't support this
 		MSG_WriteByte (&nqp_buf, G_FLOAT(OFS_PARM1));
@@ -2280,7 +2257,8 @@ void PF_WriteChar (void)
 
 void PF_WriteShort (void)
 {
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
 			return;	// we don't support this
 		MSG_WriteShort (&nqp_buf, G_FLOAT(OFS_PARM1));
@@ -2307,7 +2285,8 @@ void PF_WriteShort (void)
 
 void PF_WriteLong (void)
 {
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
 			return;	// we don't support this
 		MSG_WriteLong (&nqp_buf, G_FLOAT(OFS_PARM1));
@@ -2334,7 +2313,8 @@ void PF_WriteLong (void)
 
 void PF_WriteAngle (void)
 {
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
 			return;	// we don't support this
 		MSG_WriteAngle (&nqp_buf, G_FLOAT(OFS_PARM1));
@@ -2366,7 +2346,8 @@ void PF_WriteAngle (void)
 
 void PF_WriteCoord (void)
 {
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
 			return;	// we don't support this
 		MSG_WriteCoord (&nqp_buf, G_FLOAT(OFS_PARM1));
@@ -2398,7 +2379,8 @@ void PF_WriteCoord (void)
 
 void PF_WriteString (void)
 {
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
 			return;	// we don't support this
 		MSG_WriteString (&nqp_buf, G_STRING(OFS_PARM1));
@@ -2426,7 +2408,8 @@ void PF_WriteString (void)
 
 void PF_WriteEntity (void)
 {
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		if (G_FLOAT(OFS_PARM0) == MSG_ONE || G_FLOAT(OFS_PARM0) == MSG_INIT)
 			return;	// we don't support this
 		MSG_WriteShort (&nqp_buf, G_EDICTNUM(OFS_PARM1));
@@ -2839,7 +2822,7 @@ void PF_infokey (void)
 		if (is_ktpro && !strncmp(key, "*version", 9))
 			value = QW_VERSION;
 		else if (is_ktpro && !strncmp(key, "*qwe_version", 13))
-			value = QWE_VERSION;
+			value = VERSION_NUMBER;
 		else if ((value = Info_ValueForKey (svs.info, key)) == NULL || !*value)
 			value = Info_Get(&_localinfo_, key);
 	}

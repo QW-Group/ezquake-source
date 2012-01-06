@@ -40,7 +40,7 @@ char	outputbuf[OUTPUTBUF_SIZE];
 redirect_t	sv_redirected;
 static int	sv_redirectbufcount;
 
-extern cvar_t sv_phs;
+extern cvar_t sv_phs, sv_reliable_sound;
 
 /*
 ==================
@@ -115,7 +115,21 @@ void SV_EndRedirect (void)
 	sv_redirected = RD_NONE;
 }
 
-#if 0
+qbool SV_AddToRedirect(char *msg)
+{
+	if (!sv_redirected)
+		return false;
+
+	// FIXME: probably we should check client's MTU instead of fixed MIN_MTU.
+	if (strlen(msg) + strlen(outputbuf) > /* MAX_MSGLEN */ MIN_MTU - 10)
+		SV_FlushRedirect ();
+
+	strlcat(outputbuf, msg, sizeof(outputbuf));
+
+	return true;
+}
+
+#ifdef SERVERONLY
 
 /*
 ================
@@ -133,14 +147,10 @@ void Con_Printf (char *fmt, ...)
 	va_start (argptr,fmt);
 	vsnprintf (msg, MAXPRINTMSG, fmt, argptr);
 	va_end (argptr);
+
 	// add to redirected message
-	if (sv_redirected)
-	{
-		if (strlen (msg) + strlen(outputbuf) > /*sizeof(outputbuf) - 1*/ MAX_MSGLEN - 10)
-			SV_FlushRedirect ();
-		strlcat (outputbuf, msg, sizeof(outputbuf));
-		return;
-	}
+	if (SV_AddToRedirect(msg))
+		return; // added.
 
 	Sys_Printf ("%s", msg);	// also echo to debugging console
 	SV_Write_Log(CONSOLE_LOG, 0, msg);
@@ -172,7 +182,7 @@ void Con_DPrintf (char *fmt, ...)
 	Con_Printf ("%s", msg);
 }
 
-#endif
+#endif // SERVERONLY
 
 /*
 =============================================================================
@@ -184,6 +194,12 @@ EVENT MESSAGES
 
 static void SV_PrintToClient(client_t *cl, int level, char *string)
 {
+	if (cl->state < cs_preconnected)
+	{
+		Sys_Printf("SV_PrintToClient: client not ready.");
+		return;
+	}
+
 	ClientReliableWrite_Begin (cl, svc_print, strlen(string)+3);
 	ClientReliableWrite_Byte (cl, level);
 	ClientReliableWrite_String (cl, string);
@@ -381,7 +397,7 @@ MULTICAST_PVS	send to clients potentially visible from org
 MULTICAST_PHS	send to clients potentially hearable from org
 =================
 */
-void SV_Multicast (vec3_t origin, int to)
+void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 {
 	client_t	*client;
 	byte		*mask;
@@ -420,13 +436,30 @@ void SV_Multicast (vec3_t origin, int to)
 	// send the data to all relevent clients
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
 	{
+		int trackent = 0;
+
 		if (client->state != cs_spawned)
 			continue;
 
 		if (!mask)
 			goto inrange; // multicast to all
 
-		VectorAdd (client->edict->v.origin, client->edict->v.view_ofs, vieworg);
+		// in case of trackent we have to reflect his origin so PHS work right.
+		if (fofs_trackent)
+		{
+			trackent = ((eval_t *)((byte *)&(client->edict)->v + fofs_trackent))->_int;
+			if (trackent < 1 || trackent > MAX_CLIENTS || svs.clients[trackent - 1].state != cs_spawned)
+				trackent = 0;
+		}
+
+		if (trackent)
+		{
+			VectorAdd (svs.clients[trackent - 1].edict->v.origin, svs.clients[trackent - 1].edict->v.view_ofs, vieworg);
+		}
+		else
+		{
+			VectorAdd (client->edict->v.origin, client->edict->v.view_ofs, vieworg);
+		}
 
 		if (to == MULTICAST_PHS_R || to == MULTICAST_PHS)
 		{
@@ -449,7 +482,7 @@ void SV_Multicast (vec3_t origin, int to)
 		}
 
 inrange:
-		if (reliable)
+		if (reliable || (cl_reliable_key && *cl_reliable_key && strcmp("0", Info_Get(&client->_userinfo_ctx_, cl_reliable_key))))
 		{
 			ClientReliableCheckBlock(client, sv.multicast.cursize);
 			ClientReliableWrite_SZ(client, sv.multicast.data, sv.multicast.cursize);
@@ -475,6 +508,10 @@ inrange:
 	SZ_Clear (&sv.multicast);
 }
 
+void SV_Multicast (vec3_t origin, int to)
+{
+	SV_MulticastEx(origin, to, NULL);
+}
 
 void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
 					   int replacement_te, int replacement_count)
@@ -615,9 +652,9 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
 		MSG_WriteCoord (&sv.multicast, origin[i]);
 
 	if (use_phs)
-		SV_Multicast (origin, reliable ? MULTICAST_PHS_R : MULTICAST_PHS);
+		SV_MulticastEx (origin, reliable ? MULTICAST_PHS_R : MULTICAST_PHS, sv_reliable_sound.value ? "rsnd" : NULL);
 	else
-		SV_Multicast (origin, reliable ? MULTICAST_ALL_R : MULTICAST_ALL);
+		SV_MulticastEx (origin, reliable ? MULTICAST_ALL_R : MULTICAST_ALL, sv_reliable_sound.value ? "rsnd" : NULL);
 }
 
 
@@ -762,13 +799,25 @@ void SV_UpdateClientStats (client_t *client)
 	edict_t *ent;
 	int stats[MAX_CL_STATS], i;
 
-	ent = client->edict;
 	memset (stats, 0, sizeof(stats));
+
+	ent = client->edict;
 
 	// if we are a spectator and we are tracking a player, we get his stats
 	// so our status bar reflects his
 	if (client->spectator && client->spec_track > 0)
 		ent = svs.clients[client->spec_track - 1].edict;
+
+	// in case of trackent we have to reflect his stats like for spectator.
+	if (fofs_trackent)
+	{
+		int trackent = ((eval_t *)((byte *)&(client->edict)->v + fofs_trackent))->_int;
+		if (trackent < 1 || trackent > MAX_CLIENTS || svs.clients[trackent - 1].state != cs_spawned)
+			trackent = 0;
+
+		if (trackent)
+			ent = svs.clients[trackent - 1].edict;
+	}
 
 	stats[STAT_HEALTH] = ent->v.health;
 	stats[STAT_WEAPON] = SV_ModelIndex(
@@ -1055,7 +1104,7 @@ void SV_SendClientMessages (void)
 					memset(&c->backbuf, 0, sizeof(c->backbuf));
 					c->backbuf.data = c->backbuf_data[c->num_backbuf - 1];
 					c->backbuf.cursize = c->backbuf_size[c->num_backbuf - 1];
-					c->backbuf.maxsize = sizeof(c->backbuf_data[c->num_backbuf - 1]);
+					c->backbuf.maxsize = c->netchan.message.maxsize;
 				}
 			}
 		}

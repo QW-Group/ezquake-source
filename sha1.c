@@ -168,9 +168,9 @@ void SHA1_Init(void)
 {
 	SHA1Init(&context);
 }
-void SHA1_Update(unsigned char *string)
+void SHA1_Update(char *string)
 {
-	SHA1Update(&context, string, strlen((char *)string));
+	SHA1Update(&context, (unsigned char*) string, strlen((char *)string));
 }
 char *SHA1_Final(void)
 {

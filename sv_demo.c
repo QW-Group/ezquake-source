@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qwsvdef.h"
 
-
 // minimal chache which can be used for demos, must be few times greater than DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS
 #define DEMO_CACHE_MIN_SIZE 0x1000000
 
@@ -39,7 +38,6 @@ cvar_t	sv_demoDir			= {"sv_demoDir",		"demos", 0, sv_demoDir_OnChange};
 cvar_t	sv_demofps			= {"sv_demofps",		"30"};
 cvar_t	sv_demoIdlefps		= {"sv_demoIdlefps",	"10"};
 cvar_t	sv_demoPings		= {"sv_demopings",		"3"};
-cvar_t	sv_demoNoVis		= {"sv_demonovis",		"1"};
 cvar_t	sv_demoMaxSize		= {"sv_demoMaxSize",	"20480"};
 cvar_t	sv_demoExtraNames	= {"sv_demoExtraNames", "0"};
 
@@ -51,9 +49,11 @@ cvar_t	sv_onrecordfinish	= {"sv_onRecordFinish", ""};
 cvar_t	sv_ondemoremove		= {"sv_onDemoRemove",	""};
 cvar_t	sv_demoRegexp		= {"sv_demoRegexp",		"\\.mvd(\\.(gz|bz2|rar|zip))?$"};
 
-mvddest_t			*singledest;
+cvar_t	sv_silentrecord		= {"sv_silentrecord",   "0"};
 
-//static entity_state_t		demo_entities[UPDATE_BACKUP][MAX_MVD_PACKET_ENTITIES]; // used for pseudo client aka 'demo.recorder' during demo recording
+cvar_t	extralogname		= {"extralogname",		"unset"}; // no sv_ prefix? WTF!
+
+mvddest_t			*singledest;
 
 // { MVD writing functions, just wrappers
 
@@ -519,28 +519,6 @@ static qbool MVD_WriteMessage (sizebuf_t *msg, byte msec)
 	return (sv.mvdrecording ? true : false);
 }
 
-static float adjustangle (const float current, const float ideal, const float fraction)
-{
-	float move;
-
-	move = ideal - current;
-	if (ideal > current)
-	{
-
-		if (move >= 180)
-			move = move - 360;
-	}
-	else
-	{
-		if (move <= -180)
-			move = move + 360;
-	}
-
-	move *= fraction;
-
-	return (current + move);
-}
-
 /*
 ====================
 SV_MVDWritePackets
@@ -627,7 +605,7 @@ static qbool SV_MVDWritePacketsEx (int num)
 
 				for (j = 0; j < 3; j++)
 				{
-					angles[j] = adjustangle(cl->angles[j], nextcl->angles[j], 1.0 + f);
+					angles[j] = AdjustAngle(cl->angles[j], nextcl->angles[j], 1.0 + f);
 					origin[j] = nextcl->origin[j] + f * (nextcl->origin[j] - cl->origin[j]);
 				}
 			}
@@ -806,7 +784,8 @@ static mvddest_t *SV_InitRecordFile (char *name)
 	strlcpy(dst->name, s+1, sizeof(dst->name));
 	strlcpy(dst->path, sv_demoDir.string, sizeof(dst->path));
 
-	SV_BroadcastPrintf (PRINT_CHAT, "Server starts recording (%s):\n%s\n",
+	if ( !sv_silentrecord.value )
+		SV_BroadcastPrintf (PRINT_CHAT, "Server starts recording (%s):\n%s\n",
 						(dst->desttype == DEST_BUFFEREDFILE) ? "memory" : "disk", s+1);
 	Cvar_SetROM(&serverdemo, dst->name);
 
@@ -906,7 +885,10 @@ void SV_MVDStop (int reason, qbool mvdonly)
 		else if (reason == 3)
 			SV_BroadcastPrintf (PRINT_CHAT, "QTV disconnected\n");
 		else
-			SV_BroadcastPrintf (PRINT_CHAT, "Server recording canceled, demo removed\n");
+		{
+			if ( !sv_silentrecord.value )
+				SV_BroadcastPrintf (PRINT_CHAT, "Server recording canceled, demo removed\n");
+		}
 
 		Cvar_SetROM(&serverdemo, "");
 
@@ -938,7 +920,10 @@ void SV_MVDStop (int reason, qbool mvdonly)
 	if (numclosed)
 	{
 		if (!reason)
-			SV_BroadcastPrintf (PRINT_CHAT, "Server recording completed\n");
+		{
+			if ( !sv_silentrecord.value )
+				SV_BroadcastPrintf (PRINT_CHAT, "Server recording completed\n");
+		}
 		else
 			SV_BroadcastPrintf (PRINT_CHAT, "Server recording stoped\nMax demo size exceeded\n");
 	}
@@ -1094,13 +1079,8 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
     	// so demo.dest and demo.pendingdest is not overwriten
 		memset(&demo, 0, ((int)&(((demo_t *)0)->mem_set_point)));
 
-		//memset(demo_entities, 0, sizeof(demo_entities));
-
 		for (i = 0; i < UPDATE_BACKUP; i++)
 		{
-			// set up recorder packet enitities in each frame
-			//demo.recorder.frames[i].entities.entities = demo_entities[i];
-
 			// set up buffer for record in each frame
 			SZ_InitEx(&demo.frames[i]._buf_, demo.frames[i]._buf__data, sizeof(demo.frames[0]._buf__data), true);
 		}
@@ -1594,7 +1574,8 @@ void SV_MVDEasyRecord_f (void)
 	int		c;
 	char	name[MAX_DEMO_NAME];
 	char	name2[MAX_OSPATH*7]; // scream
-	//char	name2[MAX_OSPATH*2];
+	char	name4[MAX_OSPATH*7]; // scream
+
 	int		i;
 	dir_t	dir;
 	char	*name3;
@@ -1670,7 +1651,10 @@ void SV_MVDEasyRecord_f (void)
 		Q_free(name3);
 	}
 
+	strlcpy(name4, name2, sizeof(name4));
 	snprintf(name2, sizeof(name2), "%s", va("%s/%s/%s.mvd", fs_gamedir, sv_demoDir.string, name2));
+	snprintf(name4, sizeof(name4), "%s", va("%s/%s.xml", sv_demoDir.string, name4));
+	Cvar_Set(&extralogname, name4);
 
 	SV_MVD_Record (SV_InitRecordFile(name2), false);
 }
@@ -1686,7 +1670,6 @@ static void MVD_Init (void)
 	Cvar_Register (&sv_demofps);
 	Cvar_Register (&sv_demoIdlefps);
 	Cvar_Register (&sv_demoPings);
-	Cvar_Register (&sv_demoNoVis);
 	Cvar_Register (&sv_demoUseCache);
 	Cvar_Register (&sv_demoCacheSize);
 	Cvar_Register (&sv_demoMaxSize);
@@ -1700,6 +1683,9 @@ static void MVD_Init (void)
 	Cvar_Register (&sv_demotxt);
 	Cvar_Register (&sv_demoExtraNames);
 	Cvar_Register (&sv_demoRegexp);
+	Cvar_Register (&sv_silentrecord);
+
+	Cvar_Register (&extralogname);
 
 	p = COM_CheckParm ("-democache");
 	if (p)
@@ -1724,20 +1710,34 @@ void SV_MVDInit (void)
 {
 	MVD_Init();
 
+#ifdef SERVERONLY
+	// name clashes with client.
+	// would be nice to prefix it with sv_demo*,
+	// but mods use it like that already, so we keep it for backward compatibility.
+	Cmd_AddCommand ("record",			SV_MVD_Record_f);
+	Cmd_AddCommand ("easyrecord",		SV_MVDEasyRecord_f);
+	Cmd_AddCommand ("stop",				SV_MVDStop_f);
+#endif
+	// that how thouse commands should be called.
+	Cmd_AddCommand ("sv_demorecord",	SV_MVD_Record_f);
+	Cmd_AddCommand ("sv_demoeasyrecord",SV_MVDEasyRecord_f);
+	Cmd_AddCommand ("sv_demostop",		SV_MVDStop_f);
+
+	// that one does not clashes with client, but keep name for backward compatibility.
 	Cmd_AddCommand ("cancel",			SV_MVD_Cancel_f);
+	// that how thouse commands should be called.
+	Cmd_AddCommand ("sv_democancel",	SV_MVD_Cancel_f);
+	// this ones prefixed OK.
 	Cmd_AddCommand ("sv_lastscores",	SV_LastScores_f);
-	Cmd_AddCommand ("sv_dlist",			SV_DemoList_f);
-	Cmd_AddCommand ("sv_dlistr",		SV_DemoListRegex_f);
-	Cmd_AddCommand ("sv_dlistregex",	SV_DemoListRegex_f);
 	Cmd_AddCommand ("sv_demolist",		SV_DemoList_f);
 	Cmd_AddCommand ("sv_demolistr",		SV_DemoListRegex_f);
-	Cmd_AddCommand ("sv_demolistregex",	SV_DemoListRegex_f);
-	Cmd_AddCommand ("rmdemo",			SV_MVDRemove_f);
-	Cmd_AddCommand ("rmdemonum",		SV_MVDRemoveNum_f);
+	Cmd_AddCommand ("sv_demoremove",	SV_MVDRemove_f);
+	Cmd_AddCommand ("sv_demonumremove",	SV_MVDRemoveNum_f);
+	Cmd_AddCommand ("sv_demoinfoadd",	SV_MVDInfoAdd_f);
+	Cmd_AddCommand ("sv_demoinforemove",SV_MVDInfoRemove_f);
+	Cmd_AddCommand ("sv_demoinfo",		SV_MVDInfo_f);
+	// not prefixed.
 	Cmd_AddCommand ("script",			SV_Script_f);
-	Cmd_AddCommand ("demoInfoAdd",		SV_MVDInfoAdd_f);
-	Cmd_AddCommand ("demoInfoRemove",	SV_MVDInfoRemove_f);
-	Cmd_AddCommand ("demoInfo",			SV_MVDInfo_f);
 
 	SV_QTV_Init();
 }

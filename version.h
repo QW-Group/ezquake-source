@@ -76,17 +76,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 
-#define VERSION_NUMBER "2.2 alpha"
+#define VERSION_NUMBER		"2.2 alpha"
+#define VERSION_NUM			2.2
 
 int build_number (void);
 void CL_Version_f (void);
 char *VersionString (void);
+char *VersionStringFull (void);
 
 #define SERVER_NAME			"EZQUAKE"
 
-// MVDSV compatibility
-#define QWE_VERSION			"0.28"
-#define QWE_VERNUM			0.28
-#define QWE_SERVER_NAME		"MVDSV"
+#define BUILD_DATE			"Build date: " __DATE__ ", " __TIME__
 
 #endif /* !__VERSION_H__ */

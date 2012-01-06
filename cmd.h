@@ -141,7 +141,7 @@ char *Cmd_ArgsEx (tokenizecontext_t *ctx);
 char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start);
 
 //Parses the given string into command line tokens.
-void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text);
+void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text, int curlybraces);
 
 int	Cmd_Argc (void);
 char *Cmd_Argv (int arg);

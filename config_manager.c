@@ -955,7 +955,7 @@ void ResetConfigs_f(void)
 qbool LoadCfg(FILE *f)
 {
 	char *fileBuffer;
-    int size;
+    size_t size;
 
 	if (!f) {
 		return false;

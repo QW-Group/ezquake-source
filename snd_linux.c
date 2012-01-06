@@ -44,23 +44,23 @@ void *DSOUND_Capture_Init (int rate)
 
 void DSOUND_Capture_Start(void *ctx)
 {
-	dsndcapture_t *c = ctx;
+//	dsndcapture_t *c = ctx;
 }
 
 void DSOUND_Capture_Stop(void *ctx)
 {
-	dsndcapture_t *c = ctx;
+//	dsndcapture_t *c = ctx;
 }
 
 void DSOUND_Capture_Shutdown(void *ctx)
 {
-	dsndcapture_t *c = ctx;
+//	dsndcapture_t *c = ctx;
 	Z_Free(ctx);
 }
 
 unsigned int DSOUND_Capture_Update(void *ctx, unsigned char *buffer, unsigned int minbytes, unsigned int maxbytes)
 {
-	dsndcapture_t *c = ctx;
+//	dsndcapture_t *c = ctx;
 	return 0; // how much data is in buffer.
 }
 

@@ -38,43 +38,19 @@
 #define MAX_vmMain_Call	100
 #define MAX_CYCLES		100000
 
-// for syscall users
-#define VM_LONG(x)		(*(int*)&(x))	//note: on 64bit platforms, the later bits can contain junk
-#define VM_FLOAT(x)		(*(float*)&(x))	//note: on 64bit platforms, the later bits can contain junk
-#define VM_POINTERQ(x)	((x)?(void*)((char *)offset+((x)%mask)):NULL)
-#define VM_OOB(p,l)		((p) + (l) >= mask || VM_POINTERQ(p) < offset)
-
-#define VM_POINTER(base,mask,x)	 ((void*)((char *)base+((x)&mask)))
-#define POINTER_TO_VM(base,mask,x)	 ((x)?(int)((char *)(x) - (char*)base)&mask:0)
-
-// <qintptr_t>
-#if defined(_WIN64)
-	#define qintptr_t __int64
-	#define FTE_WORDSIZE 64
-#elif defined(_WIN32)
-	#define qintptr_t __int32
-	#define FTE_WORDSIZE 32
-#else
-	#if __WORDSIZE == 64
-		#define qintptr_t long long
-		#define FTE_WORDSIZE 64
-	#else
-		#define qintptr_t long
-		#define FTE_WORDSIZE 32
-	#endif
-#endif
-#define quintptr_t unsigned qintptr_t
-// </qintptr_t>
+// this gives gcc warnings unfortunatelly
+//#define VM_POINTER(base,mask,x)		((x)?(void*)((char *)base+((x)&mask)):NULL)
+#define VM_POINTER(base,mask,x)			((void*)((char *)base+((x)&mask)))
+#define POINTER_TO_VM(base,mask,x)		((x)?(intptr_t)((char *)(x) - (char*)base)&mask:0)
 
 typedef union pr2val_s
 {
 	string_t	string;
 	float		_float;
-	int			_int;
-	int			edict;
+	intptr_t	_int;
 } pr2val_t;	
 
-typedef int (EXPORT_FN *sys_call_t) (int arg, ...);
+typedef intptr_t (EXPORT_FN *sys_call_t) (intptr_t arg, ...);
 typedef int (*sys_callex_t) (byte *data, unsigned int mask, int fn,  pr2val_t* arg);
 
 typedef enum vm_type_e
@@ -94,7 +70,7 @@ typedef struct vm_s {
 	sys_call_t syscall;
 
 	// native
-	int (*vmMain) (int command, int arg0, int arg1, int arg2, int arg3,
+	intptr_t (*vmMain) (int command, int arg0, int arg1, int arg2, int arg3,
 		int arg4, int arg5, int arg6, int arg7, int arg8, int arg9,
 		int arg10, int arg11);
 } vm_t ;
@@ -267,7 +243,7 @@ typedef enum
 extern char* opcode_names[];
 extern void VM_Unload(vm_t *vm);
 vm_t* VM_Load(vm_t *vm, vm_type_t type, char *name,sys_call_t syscall,sys_callex_t syscallex);
-extern int VM_Call(vm_t *vm, int /*command*/, int /*arg0*/, int , int , int , int , int , 
+extern intptr_t VM_Call(vm_t *vm, int /*command*/, int /*arg0*/, int , int , int , int , int , 
 				int , int , int , int , int , int /*arg11*/);
 void  QVM_StackTrace( qvm_t * qvm );
 void VM_PrintInfo( vm_t * vm);

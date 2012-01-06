@@ -614,6 +614,8 @@ extern cvar_t cl_showkeycodes;
 extern cvar_t b_switch;		// added for the sake of menu.c
 extern cvar_t w_switch;		// added for the sake of menu.c
 
+extern cvar_t mtu;			// added for Netchan_Setup()
+
 extern cvar_t  cl_mediaroot;
 
 // Multiview cvars
@@ -995,7 +997,29 @@ typedef struct cl_delayed_packet_s
 
 } cl_delayed_packet_t;
 
-qbool CL_QueInputPacket(void);
+void CL_QueInputPacket(void);
 void CL_UnqueOutputPacket(qbool sendall);
 
 // ===================================================================================
+//
+// Used for saving a temporary list of temp entities.
+// 
+
+#define	MAX_TEMP_ENTITIES 32
+typedef struct temp_entity_s
+{
+	vec3_t	pos;	// Position of temp entity.
+	float	time;	// Time of temp entity.
+	int		type;	// Type of temp entity.
+} temp_entity_t;
+
+typedef struct temp_entity_list_s
+{
+	temp_entity_t	list[MAX_TEMP_ENTITIES];
+	int				count;
+} temp_entity_list_t;
+
+extern temp_entity_list_t	temp_entities;
+
+// ===================================================================================
+

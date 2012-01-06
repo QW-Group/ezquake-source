@@ -117,7 +117,7 @@ SERVER_C_FILES := \
 	sv_save \
 	sv_send \
 	sv_user \
-	sv_world \
+	world \
 	sv_demo \
 	sv_demo_misc \
 	sv_demo_qtv \

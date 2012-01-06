@@ -1923,6 +1923,9 @@ void Draw_InitConback (void)
 	qpic_t *cb;
 	int start;
 	mpic_t *pic_24bit;
+	
+	if (!qglGetIntegerv)
+	    return; // video does not initialized yet.
 
 	start = Hunk_LowMark ();
 

@@ -29,14 +29,6 @@ extern int fs_hash_dups;
 extern int fs_hash_files;		
 
 typedef struct {
-	struct searchpath_s *search;
-	int             index;
-	char            rawname[MAX_OSPATH];
-	int             offset;
-	int             len;
-} flocation_t;
-
-typedef struct {
 	void	(*PrintPath)(void *handle);
 	void	(*ClosePath)(void *handle);
 	void	(*BuildHash)(void *handle);

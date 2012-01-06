@@ -128,6 +128,23 @@ char *FS_NextPath (char *prevpath);
 extern cvar_t fs_cache;
 extern qbool filesystemchanged;
 
+typedef struct {
+	struct searchpath_s *search;
+	int             index;
+	char            rawname[MAX_OSPATH];
+	int             offset;
+	int             len;
+} flocation_t;
+
+typedef enum {
+	FSLFRT_IFFOUND,
+	FSLFRT_LENGTH,
+	FSLFRT_DEPTH_OSONLY,
+	FSLFRT_DEPTH_ANYPATH
+} FSLF_ReturnType_e;
+
+int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
+
 // ====================================================================
 // GZIP & ZIP De/compression
 

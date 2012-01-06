@@ -235,13 +235,20 @@ void Cvar_Set (cvar_t *var, char *value)
 	if (!var)
 		return;
 
-	// C code may wrongly use Cvar_Set on non registered variable, some 99.99% accurate check
-	// variables for internal triggers are not registered intentionally
-	if (var < re_subi || var > re_subi + 9 ) 
-		if (!var->next /* this is fast, but a bit flawed logic */ && !Cvar_Find(var->name)) {
+	// force serverinfo "0" vars to be "".
+	if ((var->flags & CVAR_SERVERINFO) && !strcmp(value, "0"))
+		value = "";
+
+	// Check that C code use Cvar_Set on registered vars, however,
+	// variables for internal triggers are not registered intentionally.
+	if (var < re_subi || var > re_subi + 9 )
+	{
+		if (!var->next /* fast path */ && !Cvar_Find(var->name))
+		{
 			Com_Printf("Cvar_Set: on non linked var %s\n", var->name);
 			return;
 		}
+	}
 
 	if (var->flags & CVAR_ROM) {
 		Com_Printf ("\"%s\" is write protected\n", var->name);
@@ -560,6 +567,11 @@ void Cvar_Register (cvar_t *var)
 		// allocate the string on zone because future sets will Z_Free it
 		var->string = Z_Strdup (var->string);
 	}
+
+	// force serverinfo "0" vars to be "".
+	if ((var->flags & CVAR_SERVERINFO) && !strcmp(var->string, "0"))
+		var->string[0] = 0;
+
 	var->value = Q_atof (var->string);
 	var->integer = Q_atoi (var->string);
 	StringToRGB_W(var->string, var->color);

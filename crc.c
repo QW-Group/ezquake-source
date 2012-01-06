@@ -19,7 +19,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /* crc.c */
 
+#ifdef SERVERONLY
+#include "qwsvdef.h"
+#else
 #include "common.h"
+#endif
 #include "crc.h"
 
 // this is a 16 bit, non-reflected CRC using the polynomial 0x1021

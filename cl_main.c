@@ -1518,7 +1518,7 @@ void CL_ConnectionlessPacket (void)
 					Com_Printf("Dup connect received.  Ignored.\n");
 				break;
 			}
-			Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, cls.qport);
+			Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, cls.qport, mtu.integer);
 			MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
@@ -2313,8 +2313,10 @@ void Plug_Tick(void);
 qbool physframe;
 double physframetime;
 
+#ifdef WIN32
 #pragma warning( push )                    // Save the current warning state.
 #pragma warning( disable : 4723 )          // C4723: potential divide by 0
+#endif
 
 void CL_Frame (double time) 
 {
@@ -2737,7 +2739,9 @@ void CL_Frame (double time)
 	CL_UpdateCaption(false);
 }
 
+#ifdef WIN32
 #pragma warning( pop )
+#endif
 
 //============================================================================
 

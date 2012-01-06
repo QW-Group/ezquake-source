@@ -306,6 +306,7 @@ char *Q_strdup (const char *src);
 #define	MAX_DATAGRAM		1450		// max length of unreliable message
 #define	MSG_BUF_SIZE		8192		// max length of msg buf; MVD demo need it
 #define	FILE_TRANSFER_BUF_SIZE	(MAX_MSGLEN - 100)
+#define MIN_MTU					1350	// since user can specifie MTU it is a good idea to limit it at some "sane" value.
 
 // qqshka: Its all messy.
 // For example ezquake (and FTE?) expect maximum message is MSG_BUF_SIZE == 8192 with mvd header which have not fixed size,

@@ -57,7 +57,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "config_manager.h"
 
-double		curtime;
+double		curtime;			// not bounded or scaled, shared by local client and server.
+double		realtime;			// affected by pause, you should not use it unless it something like physics and such.
 
 static int	host_hunklevel;
 static void	*host_membase;
@@ -374,7 +375,7 @@ void Host_Abort (void)
 
 void Host_EndGame (void)
 {
-	SV_Shutdown ("Server was killed");
+	SV_Shutdown ("Server shutdown.\n");
 	CL_Disconnect ();
 	// clear disconnect messages from loopback
 	NET_ClearLoopback ();
@@ -399,7 +400,7 @@ void Host_Error (char *error, ...)
 	Com_Printf ("Host_Error: %s\n",string);
 	Com_Printf ("===========================\n\n");
 
-	SV_Shutdown (va("server crashed: %s\n", string));
+	SV_Shutdown (va("Host_Error: %s\n", string));
 	CL_Disconnect ();
 
 	if (!host_initialized)
@@ -414,6 +415,10 @@ void Host_Error (char *error, ...)
 void Host_InitMemory (int memsize)
 {
 	int t;
+
+#ifdef WITH_DP_MEM
+	Memory2_Init ();
+#endif
 
 	if (COM_CheckParm ("-minmemory"))
 		memsize = MINIMUM_MEMORY;
@@ -436,6 +441,9 @@ void Host_InitMemory (int memsize)
 //Can only be called when changing levels!
 void Host_ClearMemory (void)
 {
+	if (!host_initialized)
+		Sys_Error ("Host_ClearMemory before host initialized");
+
 	// FIXME, move to CL_ClearState
 	D_FlushCaches ();
 
@@ -562,12 +570,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	int i;
 	char *cfg_name;
 
+	srand((unsigned)time(NULL));
+
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
-#ifdef WITH_DP_MEM
-	Memory2_Init ();
-#endif
 	Host_InitMemory (default_memsize);
 
 #ifdef WITH_TCL
@@ -582,9 +589,10 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Key_Init ();
 
 #ifdef WITH_DP_MEM
+	// If DP mem is used then we can't add commands untill Cmd_Init() executed.
 	Memory2_Init_Commands ();
+	Cache_Init_Commands();
 #endif
-	Cache_Init_Commands ();
 
 	FS_InitFilesystem ();
 	NET_Init ();
@@ -744,7 +752,7 @@ void Host_Shutdown (void)
 	S_StopAllSounds (true);
 	S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 
-	SV_Shutdown ("Server quit\n");
+	SV_Shutdown ("Server shutdown.\n");
 
 #if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC)
 	QLib_Shutdown();

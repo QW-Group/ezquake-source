@@ -116,7 +116,7 @@ void *Cache_Alloc (cache_user_t *c, int size, char *name);
 // wasn't enough room.
 
 void Cache_Report (void);
+
 void Cache_Init_Commands (void);
 
-#endif /* __ZONE_H__ */
-
+#endif /* !__ZONE_H__ */

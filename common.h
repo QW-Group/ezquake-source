@@ -25,6 +25,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //============================================================================
 
+//for msvc #pragma message lines
+#define MY_STRINGIFY2(s) #s
+#define MY_STRINGIFY(s) MY_STRINGIFY2(s)
+
+#if defined(_MSC_VER)
+#define MSVC_LINE   __FILE__"("MY_STRINGIFY(__LINE__)") : warning : "
+#define msg(s) message(MSVC_LINE s)
+#elif __GNUC__ >=4
+#define msg(s) message(s)
+#else
+#define msg(...)
+#endif
+
+//============================================================================
+
 // include frequently used headers
 //#define WITH_DP_MEM
 
@@ -162,6 +177,7 @@ extern	char	com_token[MAX_COM_TOKEN];
 extern	qbool	com_eof;
 typedef enum {TTP_UNKNOWN, TTP_STRING} com_tokentype_t;
 
+char *COM_ParseEx (char *data, int curlybraces);
 char *COM_Parse (char *data);
 char *COM_ParseToken (const char *data, const char *punctuation);
 
@@ -199,6 +215,8 @@ qbool COM_FileExists (char *path);
 void COM_StoreOriginalCmdline(int argc, char **argv);
 
 extern char *SYSINFO_GetString(void);
+
+#define MAX_STRINGS 32 // well, this used not only for va, anyway, static buffers is evil...
 
 char *va(char *format, ...); // does a varargs printf into a temp buffer
 
@@ -384,10 +402,43 @@ char *MSG_ReadStringLine (void);
 float MSG_ReadCoord (void);
 float MSG_ReadAngle (void);
 float MSG_ReadAngle16 (void);
-void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int protoversion);
+void MSG_ReadDeltaUsercmdEx (usercmd_t *from, usercmd_t *move, int protoversion);
+void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move);
 
 void MSG_ReadData (void *data, int len);
 void MSG_ReadSkip(int bytes);
+
+//============================================================================
+
+char *Q_normalizetext (char *name); //bliP: red to white text
+unsigned char *Q_redtext (unsigned char *str); //bliP: white to red text
+unsigned char *Q_yelltext (unsigned char *str); //VVD: white to red text and yellow numbers
+
+
+//============================================================================
+//
+// QTV shared defs between client and server.
+//
+
+typedef enum
+{
+
+	QUL_NONE = 0,	//
+	QUL_ADD,		// user joined
+	QUL_CHANGE,		// user changed something like name or something
+	QUL_DEL			// user dropped
+
+} qtvuserlist_t;
+
+typedef struct qtvuser_s
+{
+
+	int					id;								// unique user id
+	char				name[MAX_KEY_STRING];			// client name, well must be unique too
+
+	struct qtvuser_s	*next;							// next qtvuser_s struct in our list
+
+} qtvuser_t;
 
 //============================================================================
 

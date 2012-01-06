@@ -159,6 +159,8 @@ do {																		\
 	(((plane)->type < 3) ? (point)[(plane)->type] - (plane)->dist: DotProduct((point), (plane)->normal) - (plane)->dist) 	\
 )
 
+float AdjustAngle(float current, float ideal, float fraction);
+
 void VectorVectors(vec3_t forward, vec3_t right, vec3_t up);
 void MakeNormalVectors (vec3_t forward, vec3_t right, vec3_t up);
 vec_t VectorLength (vec3_t v);
@@ -218,6 +220,6 @@ void Matrix3x3_CreateRotate(matrix3x3_t out, float angle, const vec3_t v);
 /*
 	Multiply matrix 'in' by vector 'v', note what 'out' is vector.
 */
-void Matrix3x3_MultiplyByVector(vec3_t out, const matrix3x3_t in, const vec3_t v);
+void Matrix3x3_MultiplyByVector(vec3_t out, matrix3x3_t in, const vec3_t v);
 
 #endif	/* __MATHLIB_H__ */

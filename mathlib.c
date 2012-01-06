@@ -29,6 +29,18 @@ int  _mathlib_temp_int1, _mathlib_temp_int2, _mathlib_temp_int3;
 float _mathlib_temp_float1, _mathlib_temp_float2, _mathlib_temp_float3;
 vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 
+float AdjustAngle(float current, float ideal, float fraction)
+{
+	float move = ideal - current;
+
+	if (move >= 180)
+		move -= 360;
+	else if (move <= -180)
+		move += 360;
+
+	return current + fraction * move;
+}
+
 void ProjectPointOnPlane(vec3_t dst, const vec3_t p, const vec3_t normal) {
 	float d, inv_denom;
 	vec3_t n;
@@ -430,7 +442,7 @@ void Matrix3x3_CreateRotate (matrix3x3_t out, float angle, const vec3_t v)
 /*
 	Multiply matrix 'in' by vector 'v', note what 'out' is vector.
 */
-void Matrix3x3_MultiplyByVector (vec3_t out, const matrix3x3_t in, const vec3_t v)
+void Matrix3x3_MultiplyByVector (vec3_t out, matrix3x3_t in, const vec3_t v)
 {
 	out[0] = in[0][0] * v[0] + in[0][1] * v[1] + in[0][2] * v[2];
 	out[1] = in[1][0] * v[0] + in[1][1] * v[1] + in[1][2] * v[2];

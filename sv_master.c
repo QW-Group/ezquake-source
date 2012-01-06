@@ -69,7 +69,7 @@ SV_Heartbeat_f
 */
 void SV_Heartbeat_f (void)
 {
-	svs.last_heartbeat = -9999;
+	svs.last_heartbeat = -99999;
 }
 
 /*

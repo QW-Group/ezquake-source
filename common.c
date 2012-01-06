@@ -44,6 +44,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stats_grid.h"
 #include "tp_triggers.h"
 #include "fs.h"
+#include "version.h"
 
 void Draw_BeginDisc ();
 void Draw_EndDisc ();
@@ -56,6 +57,7 @@ static char	*largv[MAX_NUM_ARGVS + 1];
 
 cvar_t	developer = {"developer", "0"};
 cvar_t	host_mapname = {"mapname", "", CVAR_ROM};
+cvar_t	version = {"version", "", CVAR_ROM};
 
 qbool com_serveractive = false;
 
@@ -412,8 +414,7 @@ char 		*com_args_original;
 com_tokentype_t com_tokentype;
 
 //Parse a token out of a string
-extern cvar_t cl_curlybraces;
-char *COM_Parse (char *data)
+char *COM_ParseEx (char *data, int curlybraces)
 {
 	unsigned char c;
 	int len;
@@ -442,7 +443,7 @@ char *COM_Parse (char *data)
 	}
 
 	// handle quoted strings specially
-	if (c == '\"' || (c == '{' && cl_curlybraces.integer) ) {
+	if (c == '\"' || (c == '{' && curlybraces) ) {
 		if (c == '{')
 			quotes = 1;
 		else
@@ -455,9 +456,9 @@ char *COM_Parse (char *data)
 				if (c == '\"')
 					quotes++;
 			} else {
-				if (c == '}' && cl_curlybraces.integer)
+				if (c == '}' && curlybraces)
 					quotes--;
-				else if (c == '{' && cl_curlybraces.integer)
+				else if (c == '{' && curlybraces)
 					quotes++;
 			}
 
@@ -482,6 +483,11 @@ char *COM_Parse (char *data)
 
 	com_token[len] = 0;
 	return data;
+}
+
+char *COM_Parse (char *data)
+{
+	return COM_ParseEx(data, 0);
 }
 
 #define DEFAULT_PUNCTUATION "(,{})(\':;=!><&|+"
@@ -673,6 +679,9 @@ void COM_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&developer);
 	Cvar_Register (&host_mapname);
+	Cvar_Register (&version);
+
+	Cvar_ForceSet(&version, VersionStringFull());
 
 	Cvar_ResetCurrentGroup();
 }
@@ -681,18 +690,16 @@ void COM_Init (void)
 char *va (char *format, ...)
 {
 	va_list argptr;
-	static char string[32][2048];
+	static char string[MAX_STRINGS][2048];
 	static int idx = 0;
 
-	idx++;
-	if (idx == 32)
-		idx = 0;
+	idx %= MAX_STRINGS;
 
 	va_start (argptr, format);
 	vsnprintf (string[idx], sizeof(string[idx]), format, argptr);
 	va_end (argptr);
 
-	return string[idx];
+	return string[idx++];
 }
 
 // equals to consecutive calls of strtok(s, " ") that assign values to array
@@ -1396,16 +1403,6 @@ byte COM_BlockSequenceCRCByte (byte *base, int length, int sequence) {
 
 #define	MAXPRINTMSG	4096
 
-void (*rd_print) (char *) = NULL;
-
-void Com_BeginRedirect (void (*RedirectedPrint) (char *)) {
-	rd_print = RedirectedPrint;
-}
-
-void Com_EndRedirect (void) {
-	rd_print = NULL;
-}
-
 // All console printing must go through this in order to be logged to disk
 unsigned Print_flags[16];
 int Print_current = 0;
@@ -1419,11 +1416,14 @@ void Com_Printf (char *fmt, ...)
 	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
-	if (rd_print) {
-		// add to redirected message
-		rd_print (msg);
-		return;
+#ifndef CLIENTONLY
+	// add to redirected message
+	{
+		extern qbool SV_AddToRedirect(char *msg);
+		if (SV_AddToRedirect(msg))
+			return; // added.
 	}
+#endif
 
 	// also echo to debugging console
 	Sys_Printf ("%s", msg);
@@ -1565,6 +1565,103 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
     return false;
 }
 
+//============================================================================
+
+static char q_normalize_chartbl[256];
+static qbool q_normalize_chartbl_init;
+
+static void Q_normalizetext_Init (void)
+{
+	int i;
+
+	for (i = 0; i < 32; i++)
+		q_normalize_chartbl[i] = q_normalize_chartbl[i + 128] = '#';
+	for (i = 32; i < 128; i++)
+		q_normalize_chartbl[i] = q_normalize_chartbl[i + 128] = i;
+
+	// special cases
+	q_normalize_chartbl[10] = 10;
+	q_normalize_chartbl[13] = 13;
+
+	// dot
+	q_normalize_chartbl[5      ] = q_normalize_chartbl[14      ] = q_normalize_chartbl[15      ] = q_normalize_chartbl[28      ] = q_normalize_chartbl[46      ] = '.';
+	q_normalize_chartbl[5 + 128] = q_normalize_chartbl[14 + 128] = q_normalize_chartbl[15 + 128] = q_normalize_chartbl[28 + 128] = q_normalize_chartbl[46 + 128] = '.';
+
+	// numbers
+	for (i = 18; i < 28; i++)
+		q_normalize_chartbl[i] = q_normalize_chartbl[i + 128] = i + 30;
+
+	// brackets
+	q_normalize_chartbl[16] = q_normalize_chartbl[16 + 128]= '[';
+	q_normalize_chartbl[17] = q_normalize_chartbl[17 + 128] = ']';
+	q_normalize_chartbl[29] = q_normalize_chartbl[29 + 128] = q_normalize_chartbl[128] = '(';
+	q_normalize_chartbl[31] = q_normalize_chartbl[31 + 128] = q_normalize_chartbl[130] = ')';
+
+	// left arrow
+	q_normalize_chartbl[127] = '>';
+	// right arrow
+	q_normalize_chartbl[141] = '<';
+
+	// '='
+	q_normalize_chartbl[30] = q_normalize_chartbl[129] = q_normalize_chartbl[30 + 128] = '=';
+
+	q_normalize_chartbl_init = true;
+}
+
+/*
+==================
+Q_normalizetext
+returns readable extended quake names
+==================
+*/
+char *Q_normalizetext (char *str)
+{
+	unsigned char	*i;
+
+	if (!q_normalize_chartbl_init)
+		Q_normalizetext_Init();
+
+	for (i = (unsigned char*)str; *i; i++)
+		*i = q_normalize_chartbl[*i];
+	return str;
+}
+
+/*
+==================
+Q_redtext
+returns extended quake names
+==================
+*/
+unsigned char *Q_redtext (unsigned char *str)
+{
+	unsigned char *i;
+	for (i = str; *i; i++)
+		if (*i > 32 && *i < 128)
+			*i |= 128;
+	return str;
+}
+//<-
+
+/*
+==================
+Q_yelltext
+returns extended quake names (yellow numbers)
+==================
+*/
+unsigned char *Q_yelltext (unsigned char *str)
+{
+	unsigned char *i;
+	for (i = str; *i; i++)
+	{
+		if (*i >= '0' && *i <= '9')
+			*i -= '0' - 18;
+		else if (*i > 32 && *i < 128)
+			*i |= 128;
+		else if (*i == 13)
+			*i = ' ';
+	}
+	return str;
+}
 
 //=====================================================================
 

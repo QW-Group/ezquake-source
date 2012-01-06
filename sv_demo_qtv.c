@@ -72,7 +72,7 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	return dst;
 }
 
-static void SV_MVD_InitPendingStream (int socket1, netadr_t na)
+static void SV_MVD_InitPendingStream (int socket1, netadr_t na, qbool must_be_qizmo_tcp_connect)
 {
 	mvdpendingdest_t *dst;
 	unsigned int i;
@@ -80,6 +80,7 @@ static void SV_MVD_InitPendingStream (int socket1, netadr_t na)
 	dst->socket = socket1;
 	dst->io_time = Sys_DoubleTime();
 	dst->na = na;
+	dst->must_be_qizmo_tcp_connect = must_be_qizmo_tcp_connect;
 
 	strlcpy(dst->challenge, NET_AdrToString(dst->na), sizeof(dst->challenge));
 	for (i = strlen(dst->challenge); i < sizeof(dst->challenge)-1; i++)
@@ -87,73 +88,6 @@ static void SV_MVD_InitPendingStream (int socket1, netadr_t na)
 
 	dst->nextdest = demo.pendingdest;
 	demo.pendingdest = dst;
-}
-
-static int MVD_StreamStartListening (int port)
-{
-	int sock;
-
-	struct sockaddr_in	address;
-#ifdef SOCKET_CLOSE_TIME
-	struct linger lingeropt;
-#endif
-	//	int fromlen;
-
-	unsigned long nonblocking = true;
-
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons((short)port);
-
-	if ((sock = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
-	{
-		Con_Printf ("MVD_StreamStartListening: socket: (%i): %s\n", qerrno, strerror(qerrno));
-		return INVALID_SOCKET;
-	}
-
-#ifdef SOCKET_CLOSE_TIME
-	// hard close: in case of closesocket(), socket will be closen after SOCKET_CLOSE_TIME or earlier
-	memset(&lingeropt, 0, sizeof(lingeropt));
-	lingeropt.l_onoff  = 1;
-	lingeropt.l_linger = SOCKET_CLOSE_TIME;
-
-	if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void*)&lingeropt, sizeof(lingeropt)) == -1)
-	{
-		Con_Printf ("MVD_StreamStartListening: setsockopt SO_LINGER: (%i): %s\n", qerrno, strerror (qerrno));
-		closesocket(sock);
-		return INVALID_SOCKET;
-    }
-#endif
-
-	if (ioctlsocket(sock, FIONBIO, &nonblocking) == -1)
-	{
-		Con_Printf ("MVD_StreamStartListening: ioctl FIONBIO: (%i): %s\n", qerrno, strerror(qerrno));
-		closesocket(sock);
-		return INVALID_SOCKET;
-	}
-
-	if(bind(sock, (struct sockaddr *)&address, sizeof(address)) == -1)
-	{
-		Con_Printf ("MVD_StreamStartListening: bind: (%i): %s\n", qerrno, strerror(qerrno));
-		closesocket(sock);
-		return INVALID_SOCKET;
-	}
-
-	if(listen(sock, 2) == -1)
-	{
-		Con_Printf ("MVD_StreamStartListening: listen: (%i): %s\n", qerrno, strerror(qerrno));
-		closesocket(sock);
-		return INVALID_SOCKET;
-	}
-
-	if (!TCP_Set_KEEPALIVE(sock))
-	{
-		Con_Printf ("MVD_StreamStartListening: TCP_Set_KEEPALIVE: failed\n");
-		closesocket(sock);
-		return INVALID_SOCKET;
-	}
-
-	return sock;
 }
 
 void SV_MVDCloseStreams(void)
@@ -170,18 +104,20 @@ void SV_MVDCloseStreams(void)
 			p->error = true; // mark pending dest to close later
 }
 
-
-static int		listensocket	= INVALID_SOCKET;
-static int		listenport		= 0;
-static double	warned_time		= 0;
+static unsigned short int	listenport		= 0;
+static double				warned_time		= 0;
 
 static void SV_CheckQTVPort(void)
 {
 	qbool changed;
-	int streamport = bound(0, (int)qtv_streamport.value, 64000); // so user can't specifie something stupid
+	// so user can't specify something stupid
+	unsigned short int streamport = bound(0, (unsigned short int)qtv_streamport.value, 65534);
 
 	// if we have non zero stream port, but fail to open listen socket, repeat open listen socket after some time
-	changed = ( streamport != listenport || (streamport && listensocket == INVALID_SOCKET && warned_time + 10 < Sys_DoubleTime()) );
+	changed = ( streamport != listenport // port changed.
+				|| (streamport  && NET_GetSocket(NS_SERVER, true) == INVALID_SOCKET && warned_time + 10 < Sys_DoubleTime()) // stream port non zero but socket still not open, lets open socket then.
+				|| (!streamport && NET_GetSocket(NS_SERVER, true) != INVALID_SOCKET) // stream port is zero but socket still open, lets close socket then.
+		);
 
 	// port not changed
 	if (!changed)
@@ -191,34 +127,20 @@ static void SV_CheckQTVPort(void)
 
 	warned_time = Sys_DoubleTime(); // so we repeat warning time to time
 
-	if (listensocket != INVALID_SOCKET)
-	{
-		Con_Printf("Closing TCP port %d for QTV\n", listenport);
-		closesocket(listensocket); // so we close socket
-		listensocket = INVALID_SOCKET; // and mark as closed
-	}
-
 	// port was changed, lets remember
 	listenport = streamport;
 
-	if (!listenport)
-		return; // they just wanna turn it off
-
-	if ((listensocket = MVD_StreamStartListening(listenport)) == INVALID_SOCKET)
-		Con_Printf("WARNING: Cannot open TCP port %d for QTV\n", listenport);
-	else
-		Con_Printf("Opening TCP port %d for QTV\n", listenport);
+	// open/close/reopen TCP port.
+	NET_InitServer_TCP(listenport);
 }
 
 void SV_MVDStream_Poll (void)
 {
 	int client;
+	qbool must_be_qizmo_tcp_connect = false;
 	netadr_t na;
 	struct sockaddr_storage addr;
 	socklen_t addrlen;
-#ifdef SOCKET_CLOSE_TIME
-	struct linger lingeropt;
-#endif
 	int count;
 	mvddest_t *dest;
 	unsigned long _true = true;
@@ -228,31 +150,17 @@ void SV_MVDStream_Poll (void)
 
 	SV_CheckQTVPort(); // open/close/switch qtv port
 
-	if (listensocket == INVALID_SOCKET) // we can't accept connection from QTV
+	if (NET_GetSocket(NS_SERVER, true) == INVALID_SOCKET) // we can't accept connection from QTV
 	{
 		SV_MVDCloseStreams(); // also close ative connects if any, this will help actually close listen socket, so later we can bind to port again
 		return;
 	}
 
 	addrlen = sizeof(addr);
-	client = accept (listensocket, (struct sockaddr *)&addr, &addrlen);
+	client = accept (NET_GetSocket(NS_SERVER, true), (struct sockaddr *)&addr, &addrlen);
 
 	if (client == INVALID_SOCKET)
 		return;
-
-#ifdef SOCKET_CLOSE_TIME
-	// hard close: in case of closesocket(), socket will be closen after SOCKET_CLOSE_TIME or earlier
-	memset(&lingeropt, 0, sizeof(lingeropt));
-	lingeropt.l_onoff  = 1;
-	lingeropt.l_linger = SOCKET_CLOSE_TIME;
-
-	if (setsockopt(client, SOL_SOCKET, SO_LINGER, (void*)&lingeropt, sizeof(lingeropt)) == -1)
-	{
-		Con_Printf ("SV_MVDStream_Poll: setsockopt SO_LINGER: (%i): %s\n", qerrno, strerror (qerrno));
-		closesocket(client);
-		return;
-    }
-#endif
 
 	if (ioctlsocket (client, FIONBIO, &_true) == SOCKET_ERROR) {
 		Con_Printf ("SV_MVDStream_Poll: ioctl FIONBIO: (%i): %s\n", qerrno, strerror (qerrno));
@@ -279,19 +187,29 @@ void SV_MVDStream_Poll (void)
 		}
 
 		if (count >= (int)qtv_maxstreams.value)
-		{	//sorry
-			char *goawaymessage = "QTVSV 1\nERROR: This server enforces a limit on the number of proxies connected at any one time. Please try again later\n\n";
+		{
+			// we use + 3 so there qizmo tcp connection have chance...
+			if (count >= (int)qtv_maxstreams.value + 3)
+			{
+				//sorry, there really way too much connections
+				char *goawaymessage = "QTVSV 1\nERROR: This server enforces a limit on the number of proxies connected at any one time. Please try again later\n\n";
 
-			send(client, goawaymessage, strlen(goawaymessage), 0);
-			closesocket(client);
-			return;
+				send(client, goawaymessage, strlen(goawaymessage), 0);
+				closesocket(client);
+				return;
+			}
+			else
+			{
+				// ok, give qizmo tcp connect a chance, but only and only for tcp connect
+				must_be_qizmo_tcp_connect = true;
+			}
 		}
 	}
 
 	SockadrToNetadr(&addr, &na);
 	Con_Printf("MVD streaming client connected from %s\n", NET_AdrToString(na));
 
-	SV_MVD_InitPendingStream(client, na);
+	SV_MVD_InitPendingStream(client, na, must_be_qizmo_tcp_connect);
 }
 
 void SV_MVD_RunPendingConnections (void)
@@ -375,6 +293,59 @@ void SV_MVD_RunPendingConnections (void)
 
 				p->insize += len;
 				p->inbuffer[p->insize] = 0;
+
+// TCPCONNECT -->
+// kinda hack to allow both qtv and qizmo tcp connection work on the same server port
+
+				// check for qizmo tcp connection
+				if (p->insize >=6)
+				{
+					if (strncmp(p->inbuffer, "qizmo\n", 6))
+					{
+						// no. seems it like QTV client... but if we expect qizmo so we better drop it ASAP
+						if (p->must_be_qizmo_tcp_connect)
+						{
+							p->error = true;
+							continue;
+						}
+					}
+					else
+					{
+						// new qizmo tcpconnection
+
+						extern svtcpstream_t *sv_tcp_connection_new(int sock, netadr_t from, char *buf, int buf_len, qbool link);
+						extern int sv_tcp_connection_count(void);
+
+						svtcpstream_t *st = sv_tcp_connection_new(p->socket, p->na, p->inbuffer, p->insize, true);
+						int _true = true;
+
+						// set some timeout
+						st->timeouttime = Sys_DoubleTime() + 10;
+						// send protocol confirmation
+						if (send(st->socketnum, "qizmo\n", 6, 0) != 6)
+						{
+							st->drop = true; // failed miserable to send some chunk of data				
+						}
+
+						if (sv_tcp_connection_count() >= MAX_CLIENTS)
+						{
+							st->drop = true;
+						}
+
+						if (setsockopt(st->socketnum, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true)) == -1)
+						{
+							Con_DPrintf ("SV_MVD_RunPendingConnections: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
+						}
+
+						p->error = true;
+						p->socket = -1;	//so it's not cleared wrongly.
+						continue;
+					}
+				}
+
+				if (p->must_be_qizmo_tcp_connect)
+					continue; // HACK, this stream should not be allowed but just checked ONLY AND ONLY for qizmo tcp connection
+// <--TCPCONNECT
 
 				for (end = p->inbuffer; ; end++)
 				{
@@ -1034,14 +1005,13 @@ void Cmd_Qtvusers_f (void)
 
 	if (!found)
 	{
-		Con_Printf ("no single qtv connected\n");
+		Con_Printf ("no QTVs connected\n");
 		return;
 	}
 }
 
 
 // }
-
 
 char QTV_cmd[MAX_PROXY_INBUFFER]; // global so it does't allocated on stack, this save some CPU I think
 
@@ -1394,7 +1364,7 @@ void Qtv_Status_f(void)
 	mvdpendingdest_t *p;
 
 	Con_Printf ("QTV status\n");
-	Con_Printf ("Listen socket  : %s\n", listensocket == INVALID_SOCKET ? "invalid" : "listen");
+	Con_Printf ("Listen socket  : %s\n", NET_GetSocket(NS_SERVER, true) == INVALID_SOCKET ? "invalid" : "listen");
 	Con_Printf ("Port           : %d\n", listenport);
 
 	for (cnt = 0, d = demo.dest; d; d = d->nextdest)

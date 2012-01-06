@@ -49,6 +49,11 @@ cvar_t	sv_spectatormaxspeed 	= { "sv_spectatormaxspeed", "500"};
 cvar_t	sv_accelerate		= { "sv_accelerate", "10"};
 cvar_t	sv_airaccelerate	= { "sv_airaccelerate", "10"};
 
+cvar_t	sv_antilag		= { "sv_antilag", "", CVAR_SERVERINFO};
+cvar_t	sv_antilag_frac	= { "sv_antilag_frac", "1", CVAR_SERVERINFO};
+cvar_t	sv_antilag_no_pred	= { "sv_antilag_no_pred", "", CVAR_SERVERINFO}; // "negative" cvar so it doesn't show on serverinfo for no reason
+cvar_t	sv_antilag_projectiles	= { "sv_antilag_projectiles", "", CVAR_SERVERINFO};
+
 cvar_t	sv_wateraccelerate	= { "sv_wateraccelerate", "10"};
 cvar_t	sv_friction		= { "sv_friction", "4"};
 cvar_t	sv_waterfriction	= { "sv_waterfriction", "4"};
@@ -414,20 +419,23 @@ SV_PushEntity
 Does not change the entities velocity at all
 ============
 */
-trace_t SV_PushEntity (edict_t *ent, vec3_t push)
+trace_t SV_PushEntity (edict_t *ent, vec3_t push, unsigned int traceflags)
 {
 	trace_t	trace;
 	vec3_t	end;
 
 	VectorAdd (ent->v.origin, push, end);
 
+	if ((int)ent->v.flags&FL_LAGGEDMOVE)
+		traceflags |= MOVE_LAGGED;
+
 	if (ent->v.movetype == MOVETYPE_FLYMISSILE)
-		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_MISSILE, ent);
+		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_MISSILE|traceflags, ent);
 	else if (ent->v.solid == SOLID_TRIGGER || ent->v.solid == SOLID_NOT)
 		// only clip against bmodels
-		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NOMONSTERS, ent);
+		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NOMONSTERS|traceflags, ent);
 	else
-		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NORMAL, ent);
+		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NORMAL|traceflags, ent);
 
 	VectorCopy (trace.endpos, ent->v.origin);
 	SV_LinkEdict (ent, true);
@@ -781,7 +789,7 @@ void SV_Physics_Toss (edict_t *ent)
 
 	// move origin
 	VectorScale (ent->v.velocity, sv_frametime, move);
-	trace = SV_PushEntity (ent, move);
+	trace = SV_PushEntity (ent, move, (sv_antilag.value == 2 && sv_antilag_projectiles.value) ? MOVE_LAGGED:0);
 	if (trace.fraction == 1)
 		return;
 	if (ent->e->free)
@@ -1088,6 +1096,20 @@ void SV_Physics (void)
 
 		cl->localtime = sv.time;
 		cl->delta_sequence = -1;	// no delta unless requested
+
+		if (sv_antilag.value)
+		{
+			if (cl->antilag_position_next == 0 || cl->antilag_positions[(cl->antilag_position_next - 1) % MAX_ANTILAG_POSITIONS].localtime < cl->localtime)
+			{
+				cl->antilag_positions[cl->antilag_position_next % MAX_ANTILAG_POSITIONS].localtime = cl->localtime;
+				VectorCopy(cl->edict->v.origin, cl->antilag_positions[cl->antilag_position_next % MAX_ANTILAG_POSITIONS].origin);
+				cl->antilag_position_next++;
+			}
+		}
+		else
+		{
+			cl->antilag_position_next = 0;
+		}
 	}
 	sv_player = savesvpl;
 	sv_client = savehc;

@@ -20,12 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "qwsvdef.h"
-//#include "crc.c"
 
 server_static_t	svs;				// persistent server info
 server_t		sv;					// local server
 demo_t			demo;				// server demo struct
-//entity_state_t	cl_state_entities[MAX_CLIENTS][UPDATE_BACKUP][MAX_PACKET_ENTITIES]; // client entities
 
 char	localmodels[MAX_MODELS][5];	// inline model names for precache
 
@@ -42,6 +40,7 @@ int fofs_maxspeed, fofs_gravity;
 int fofs_movement;
 int fofs_vw_index;
 int fofs_hideentity;
+int fofs_trackent;
 
 /*
 ================
@@ -196,7 +195,6 @@ static void SV_SaveSpawnparms (void)
 			PR_ExecuteProgram (PR_GLOBAL(SetChangeParms));
 		for (j=0 ; j<NUM_SPAWN_PARMS ; j++)
 			sv_client->spawn_parms[j] = (&PR_GLOBAL(parm1))[j];
-
 	}
 }
 
@@ -245,22 +243,24 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	char savenames[MAX_CLIENTS][CLIENT_NAME_LEN];
 #endif
 
-//	extern cvar_t version;
-
 	dfunction_t *f;
-	extern cvar_t sv_loadentfiles;
+	extern cvar_t sv_loadentfiles, sv_loadentfiles_dir;
 	char *entitystring;
 	char oldmap[MAP_NAME_LEN];
 	extern qbool	sv_allow_cheats;
 	extern cvar_t	sv_cheats, sv_paused, sv_bigcoords;
+#ifndef SERVERONLY
 	extern void CL_ClearState (void);
+#endif
 
 	// store old map name
 	snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
 
 	Con_DPrintf ("SpawnServer: %s\n",mapname);
 
+//#ifndef SERVERONLY
 	NET_InitServer();
+//#endif
 
 	SV_SaveSpawnparms ();
 	SV_LoadAccounts();
@@ -289,15 +289,14 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	svs.spawncount++; // any partially connected client will be restarted
 
-	sv.state = ss_dead;
+#ifndef SERVERONLY
 	com_serveractive = false;
+#endif
+	sv.state = ss_dead;
 	sv.paused = false;
 	Cvar_SetROM(&sv_paused, "0");
 
 	Host_ClearMemory();
-
-//	CM_InvalidateMap ();
-//	Hunk_FreeToLowMark (host_hunklevel);
 
 #ifdef FTE_PEXT_FLOATCOORDS
 	if (sv_bigcoords.value)
@@ -355,6 +354,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// load progs to get entity field count
 	// which determines how big each edict is
 	// and allocate edicts
+
 #ifdef USE_PR2
 	sv_vm = (vm_t *) VM_Load(sv_vm, (vm_type_t) (int) sv_progtype.value, sv_progsname.string, sv_syscall, sv_sys_callex);
 	if ( sv_vm )
@@ -371,6 +371,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	{
 		ent = EDICT_NUM(i);
 		ent->e = &sv.sv_edicts[i]; // assigning ->e field in each edict_t
+		ent->e->entnum = i;
 		ent->e->area.ed = ent; // yeah, pretty funny, but this help to find which edict_t own this area (link_t)
 	}
 
@@ -381,6 +382,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	fofs_movement = ED2_FindFieldOffset ("movement");
 	fofs_vw_index = ED2_FindFieldOffset ("vw_index");
 	fofs_hideentity = ED2_FindFieldOffset ("hideentity");
+	fofs_trackent = ED2_FindFieldOffset ("trackent");
 #else
 	fofs_items2 = ED_FindFieldOffset ("items2"); // ZQ_ITEMS2 extension
 	fofs_maxspeed = ED_FindFieldOffset ("maxspeed");
@@ -388,6 +390,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	fofs_movement = 0;
 	fofs_vw_index = ED_FindFieldOffset ("vw_index");
 	fofs_hideentity = ED_FindFieldOffset ("hideentity");
+	fofs_trackent = ED_FindFieldOffset ("trackent");
 #endif
 
 	// leave slots at start for clients only
@@ -413,8 +416,10 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// fill sv.mapname and sv.modelname with new map name
 	strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
 	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
+#ifndef SERVERONLY
 	// set cvar
 	Cvar_ForceSet (&host_mapname, mapname);
+#endif
 
 	if (!(sv.worldmodel = CM_LoadMap (sv.modelname, false, &sv.map_checksum, &sv.map_checksum2))) // true if bad map
 	{
@@ -469,7 +474,9 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// precache and static commands can be issued during
 	// map initialization
 	sv.state = ss_loading;
+#ifndef SERVERONLY
 	com_serveractive = true;
+#endif
 
 	ent = EDICT_NUM(0);
 	ent->e->free = false;
@@ -484,13 +491,10 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	ent->v.movetype = MOVETYPE_PUSH;
 
 	// information about the server
-//	ent->v.netname = PR_SetString(version.string);
-
-//	Com_Printf("KTPRO: %s\n", is_ktpro ? "yes" : "no");
-
-	ent->v.netname = PR_SetString(is_ktpro ? QWE_SERVER_NAME " " QWE_VERSION : VersionString());
-	ent->v.targetname = PR_SetString(is_ktpro ? QWE_SERVER_NAME : SERVER_NAME);
-	ent->v.impulse = QWE_VERNUM;
+	// VM-FIXME: Should it be PR2_SetString() ???
+	ent->v.netname = PR_SetString(VersionStringFull());
+	ent->v.targetname = PR_SetString(SERVER_NAME);
+	ent->v.impulse = VERSION_NUM;
 	ent->v.items = pr_numbuiltins - 1;
 
 #ifdef USE_PR2
@@ -501,19 +505,21 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	PR_GLOBAL(mapname) = PR_SetString(sv.mapname);
 	// serverflags are for cross level information (sigils)
 	PR_GLOBAL(serverflags) = svs.serverflags;
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		pr_globals[35] = deathmatch.value;
 		pr_globals[36] = coop.value;
 		pr_globals[37] = teamplay.value;
 		NQP_Reset ();
 	}
 
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		// register the cvars that NetQuake provides for mod use
 		const char **var, *nqcvars[] = {"gamecfg", "scratch1", "scratch2", "scratch3", "scratch4",
 			"saved1", "saved2", "saved3", "saved4", "savedgamecfg", "temp1", NULL};
 		for (var = nqcvars; *var; var++)
-			Cvar_Create((char *)/*stupid const warning*/*var, "0", 0);
+			Cvar_Create((char *)/*stupid const warning*/ *var, "0", 0);
 	}
 
 	// run the frame start qc function to let progs check cvars
@@ -523,15 +529,29 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// ********* External Entity support (.ent file(s) in gamedir/maps) pinched from ZQuake *********
 	// load and spawn all other entities
 	entitystring = NULL;
-	if ((int)sv_loadentfiles.value) {
-		entitystring = (char *) FS_LoadHunkFile (va ("maps/%s.ent", sv.mapname), NULL);
+	if ((int)sv_loadentfiles.value)
+	{
+		char ent_path[1024] = {0};
+		// first try maps/sv_loadentfiles_dir/
+		if (sv_loadentfiles_dir.string[0])
+		{
+			snprintf(ent_path, sizeof(ent_path), "maps/%s/%s.ent", sv_loadentfiles_dir.string, sv.mapname);
+			entitystring = (char *) FS_LoadHunkFile(ent_path, NULL);
+		}
+
+		// try maps/ if not loaded yet.
+		if (!entitystring)
+		{
+			snprintf(ent_path, sizeof(ent_path), "maps/%s.ent", sv.mapname);
+			entitystring = (char *) FS_LoadHunkFile(ent_path, NULL);
+		}
+
 		if (entitystring) {
-			Con_DPrintf ("Using entfile maps/%s.ent\n", sv.mapname);
+			Con_DPrintf ("Using entfile %s\n", ent_path);
 		}
 	}
 
 	if (!entitystring) {
-		Info_SetValueForStarKey (svs.info,  "*entfile", "", MAX_SERVERINFO_STRING);
 		entitystring = CM_EntityString();
 	}
 	
@@ -593,6 +613,9 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	// we change map - clear whole demo struct and sent initial state to all dest if any (for QTV only I thought)
 	SV_MVD_Record(NULL, true);
+
+#ifndef SERVERONLY
 	CL_ClearState ();
+#endif
 }
 

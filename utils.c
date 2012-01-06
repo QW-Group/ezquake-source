@@ -188,7 +188,7 @@ int ParseFloats(char *s, float *f, int *f_size) {
 	if (f_size[0] <= 0)
 		return (f_size[0] = 0); // array have no size, unusual but no crime
 
-	Cmd_TokenizeStringEx(&ctx, s);
+	Cmd_TokenizeStringEx(&ctx, s, 0);
 
 	argc = min(Cmd_ArgcEx(&ctx), f_size[0]);
 	

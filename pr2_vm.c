@@ -30,7 +30,6 @@
 #ifdef USE_PR2
 
 #include "qwsvdef.h"
-//#include "crc.c"
 
 #ifdef QVM_PROFILE
 cvar_t	sv_enableprofile = {"sv_enableprofile","0"};
@@ -184,7 +183,7 @@ qbool VM_LoadNative( vm_t * vm )
 		return false;
 
 	dllEntry = (void (EXPORT_FN *)(void *)) Sys_DLProc( (DL_t) vm->hInst, "dllEntry" );
-	vm->vmMain = (int (EXPORT_FN *)(int,int,int,int,int,int,int,int,int,int,int,int,int)) Sys_DLProc( (DL_t) vm->hInst, "vmMain" );
+	vm->vmMain = (intptr_t (EXPORT_FN *)(int,int,int,int,int,int,int,int,int,int,int,int,int)) Sys_DLProc( (DL_t) vm->hInst, "vmMain" );
 	if ( !dllEntry || !vm->vmMain )
 	{
 		VM_Unload( vm );
@@ -493,7 +492,7 @@ vm_t   *VM_Load( vm_t * vm, vm_type_t type, char *name, sys_call_t syscall1, sys
 int     QVM_Exec( register qvm_t * qvm, int command, int arg0, int arg1, int arg2, int arg3,
                   int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11 );
 
-int VM_Call( vm_t * vm, int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5,
+intptr_t VM_Call( vm_t * vm, int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5,
              int arg6, int arg7, int arg8, int arg9, int arg10, int arg11 )
 {
 	if ( !vm )

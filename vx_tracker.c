@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quakedef.h"
 #include "utils.h"
 #include "vx_tracker.h"
-#include "server.h"
+
 //#include "gl_model.h"
 //#include "gl_local.h"
 

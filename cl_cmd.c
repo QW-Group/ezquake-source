@@ -149,15 +149,15 @@ void CL_ForwardToServer_f (void) {
 			server_string = (char *) Q_malloc(server_string_len);
 
 			SHA1_Init();
-			SHA1_Update((unsigned char *)Cmd_Argv(1));
-			SHA1_Update((unsigned char *)" ");
-			SHA1_Update((unsigned char *)Cmd_Argv(2));
-			SHA1_Update((unsigned char *)client_time_str);
-			SHA1_Update((unsigned char *)" ");
+			SHA1_Update(Cmd_Argv(1));
+			SHA1_Update(" ");
+			SHA1_Update(Cmd_Argv(2));
+			SHA1_Update(client_time_str);
+			SHA1_Update(" ");
 			for (i = 3; i < Cmd_Argc(); ++i)
 			{
-				SHA1_Update((unsigned char *)Cmd_Argv(i));
-				SHA1_Update((unsigned char *)" ");
+				SHA1_Update(Cmd_Argv(i));
+				SHA1_Update(" ");
 			}
 
 			snprintf(server_string, server_string_len, "%s %s%s ",
@@ -578,24 +578,24 @@ void CL_Rcon_f (void) {
 		}
 		
 		SHA1_Init();
-		SHA1_Update((unsigned char *)"rcon ");
+		SHA1_Update("rcon ");
 		if (rcon_password.string[0])
 		{
-			SHA1_Update((unsigned char *)rcon_password.string);
-			SHA1_Update((unsigned char *)client_time_str);
+			SHA1_Update(rcon_password.string);
+			SHA1_Update(client_time_str);
 			i_from = 1;
 		}
 		else // first arg must be pass in such case, so handle this
 		{
-			SHA1_Update((unsigned char *)Cmd_Argv(1));
-			SHA1_Update((unsigned char *)client_time_str);
+			SHA1_Update(Cmd_Argv(1));
+			SHA1_Update(client_time_str);
 			i_from = 2;
 		}
-		SHA1_Update((unsigned char *)" ");
+		SHA1_Update(" ");
 		for (i = i_from; i < Cmd_Argc(); i++)
 		{
-			SHA1_Update((unsigned char *)Cmd_Argv(i));
-			SHA1_Update((unsigned char *)" ");
+			SHA1_Update(Cmd_Argv(i));
+			SHA1_Update(" ");
 		}
 		strlcat (message, SHA1_Final(), sizeof(message));
 		strlcat (message, client_time_str, sizeof(message));

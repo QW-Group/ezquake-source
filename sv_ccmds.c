@@ -45,11 +45,12 @@ SV_Quit
 */
 void SV_Quit (qbool restart)
 {
-//	SV_FinalMessage ("server shutdown\n");
-	Con_Printf ("Shutting down.\n");
-//	SV_Shutdown ("quit\n");
-//	Sys_Quit (restart);
-	Host_Quit();
+	SV_Shutdown ("Server shutdown.\n");
+#ifdef SERVERONLY
+	Sys_Quit (restart);
+#else
+	Host_Quit(); // will also call SV_Shutdown(), but it is not an issue.
+#endif
 }
 
 /*
@@ -107,10 +108,12 @@ void SV_Logfile (int sv_log, qbool newlog)
 
 	for (i = 0; i < 1000; i++)
 	{
+		FILE *f;
 		snprintf (name, sizeof(name), "%s/%s%d_%04d.log", sv_logdir.string, logs[sv_log].file_name, sv_port, i);
 
-		if (!COM_FileExists(name))
+		if (!(f = fopen(name, "r")))
 			break; // file doesn't exist
+		fclose(f);
 	}
 
 	if (!newlog) //use last log if possible
@@ -137,7 +140,6 @@ void SV_Logfile (int sv_log, qbool newlog)
 		logs[sv_log].log_level = 1;
 	}
 }
-
 
 /*
 ============
@@ -391,7 +393,6 @@ void SV_Fly_f (void)
 	}
 }
 
-
 /*
 ======================
 SV_Map_f
@@ -406,14 +407,8 @@ void SV_Map (qbool now)
 	static char	level[MAX_QPATH];
 	static char	expanded[MAX_QPATH];
 	static qbool changed = false;
-	// -> scream
-	vfsfile_t *f;
+
 	char	*s;
-	//bliP: date check
-	/*time_t	t;
-	struct tm	*tblock;*/
-	date_t date;
-	// <-
 
 	// if now, change it
 	if (now)
@@ -423,19 +418,18 @@ void SV_Map (qbool now)
 
 		changed = false;
 
-		// uh, is it possible ?
-
-		if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
+		if (!FS_FLocateFile(expanded, FSLFRT_IFFOUND, NULL))
 		{
-			Con_Printf ("Can't find %s\n", expanded);
+			Sys_Printf ("Can't find %s\n", expanded);
 			return;
 		}
-		VFS_CLOSE(f);
 
 		if (sv.mvdrecording)
 			SV_MVDStop_f();
 
+#ifndef SERVERONLY
 		CL_BeginLocalConnection ();
+#endif
 		SV_BroadcastCommand ("changing\n");
 		SV_SendMessagesToAll ();
 
@@ -443,6 +437,7 @@ void SV_Map (qbool now)
 		if ((int)frag_log_type.value)
 		{
 			//bliP: date check ->
+			date_t date;
 			SV_TimeOfDay(&date);
 			s = va("\\newmap\\%s\\\\\\\\%d-%d-%d %d:%d:%d\\\n",
 			       level,
@@ -480,18 +475,17 @@ void SV_Map (qbool now)
 	// check to make sure the level exists
 	snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
 
-	if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
+	if (!FS_FLocateFile(expanded, FSLFRT_IFFOUND, NULL))
 	{
 		Con_Printf ("Can't find %s\n", expanded);
 		return;
 	}
-	VFS_CLOSE(f);
+
 	changed = true;
 }
 
 void SV_Map_f (void)
 {
-
 	SV_Map(false);
 }
 
@@ -794,11 +788,14 @@ void SV_Kick_f (void)
 	c = Cmd_Argc ();
 	if (c < 2)
 	{
+#ifndef SERVERONLY
 		// some mods use a "kick" alias for their own needs, sigh
-		if (CL_ClientState() && Cmd_FindAlias("kick")) {
+		if (CL_ClientState() && Cmd_FindAlias("kick"))
+		{
 			Cmd_ExecuteString (Cmd_AliasString("kick"));
 			return;
 		}
+#endif
 		Con_Printf ("kick <userid> [reason]\n");
 		return;
 	}
@@ -1107,7 +1104,7 @@ resolve IP via DNS lookup
 char *SV_Resolve(char *addr)
 {
 #if defined (__linux__) || defined (_WIN32)
-	unsigned int ip;
+	unsigned long ip;
 #else
 	in_addr_t ip;
 #endif
@@ -1451,16 +1448,14 @@ void SV_SendServerInfoChange(char *key, char *value)
 }
 
 //Cvar system calls this when a CVAR_SERVERINFO cvar changes
-void SV_ServerinfoChanged (char *key, char *string) {
-	if ( (!strcmp(key, "pm_bunnyspeedcap") || !strcmp(key, "pm_slidefix")
-		|| !strcmp(key, "pm_airstep") || !strcmp(key, "pm_pground")
-		|| !strcmp(key, "samelevel") || !strcmp(key, "watervis") || !strcmp(key, "coop") )
-		&& !strcmp(string, "0") ) {
-		// don't add default values to serverinfo to keep it cleaner
+void SV_ServerinfoChanged (char *key, char *string)
+{
+	// force serverinfo "0" vars to be "".
+	if (!strcmp(string, "0"))
 		string = "";
-	}
 
-	if (strcmp(string, Info_ValueForKey (svs.info, key))) {
+	if (strcmp(string, Info_ValueForKey (svs.info, key)))
+	{
 		Info_SetValueForKey (svs.info, key, string, MAX_SERVERINFO_STRING);
 		SV_SendServerInfoChange (key, string);
 	}
@@ -1514,21 +1509,20 @@ void SV_Serverinfo_f (void)
 		return;
 	}
 
-	Info_SetValueForKey (svs.info, key, value, MAX_SERVERINFO_STRING);
+	// force serverinfo "0" vars to be "".
+	if (!strcmp(value, "0"))
+		value = "";
 
 	// if the key is also a serverinfo cvar, change it too
 	var = Cvar_Find(key);
 	if (var && (var->flags & CVAR_SERVERINFO))
 	{
-		// a hack - strip the serverinfo flag so that the Cvar_Set
-		// doesn't trigger SV_SendServerInfoChange
-		var->flags &= ~CVAR_SERVERINFO;
-		Cvar_Set (var, value);
-		var->flags |= CVAR_SERVERINFO; // put it back
+		Cvar_Set (var, value); // this call SV_ServerinfoChanged() as well.
 	}
-
-	// FIXME, don't send if the key hasn't changed
-	SV_SendServerInfoChange(key, value);
+	else
+	{
+		SV_ServerinfoChanged(key, value);
+	}
 }
 
 
@@ -1752,10 +1746,13 @@ void SV_Gamedir_f (void)
 		return;
 	}
 
-	if (CL_ClientState()) {
-		Com_Printf ("you must disconnect before changing gamedir\n");
+#ifndef SERVERONLY
+	if (CL_ClientState())
+	{
+		Con_Printf ("you must disconnect before changing gamedir\n");
 		return;
 	}
+#endif
 
 	FS_SetGamedir (dir, false);
 	Info_SetValueForStarKey (svs.info, "*gamedir", dir, MAX_SERVERINFO_STRING);
@@ -1864,25 +1861,12 @@ SV_MasterPassword
 */
 void SV_MasterPassword_f (void)
 {
-	if (!server_cfg_done)
+	if (!host_everything_loaded)
 		strlcpy(master_rcon_password, Cmd_Argv(1), sizeof(master_rcon_password));
 	else
-		Con_Printf("master_rcon_password can be set only in server.cfg\n");
+		Con_DPrintf("master_rcon_password can be set only in server.cfg\n");
 }
 // <-- QW262
-
-/*
-==================
-SV_ShowTime_f
-For development purposes only
-//VVD
-==================
-*/
-/*void SV_ShowTime_f (void)
-{
-	Con_Printf("realtime = %f,\nsv.time = %f,\nsv.old_time = %f\n",
-			realtime, sv.time, sv.old_time);
-}*/
 
 /*
 ==================
@@ -1933,23 +1917,38 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("map", SV_Map_f);
 	Cmd_AddCommand ("devmap", SV_Map_f);
 	Cmd_AddCommand ("setmaster", SV_SetMaster_f);
+
 	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f);
 	Cmd_AddCommand ("save", SV_SaveGame_f); 
 	Cmd_AddCommand ("load", SV_LoadGame_f); 
-	//Cmd_AddCommand ("restart", SV_Restart_f);
+
+#ifdef SERVERONLY
+	Cmd_AddCommand ("say", SV_ConSay_f);
+	Cmd_AddCommand ("quit", SV_Quit_f);
+	Cmd_AddCommand ("restart", SV_Restart_f);
+#endif
+
+#ifdef SERVERONLY
+	Cmd_AddCommand ("god", SV_God_f);
+	Cmd_AddCommand ("give", SV_Give_f);
+	Cmd_AddCommand ("noclip", SV_Noclip_f);
+#endif
 
 	Cmd_AddCommand ("localinfo", SV_Localinfo_f);
+
+#ifdef SERVERONLY
+	Cmd_AddCommand ("serverinfo", SV_Serverinfo_f);
+	Cmd_AddCommand ("user", SV_User_f); // FIXME: probably should be done like CL_Serverinfo_f().
+#endif
+
 	Cmd_AddCommand ("gamedir", SV_Gamedir_f);
 	Cmd_AddCommand ("sv_gamedir", SV_Gamedir);
 
-// qqshka: alredy registered at host.c
-//	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
-//	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
+// I wonder why it registered in host.c in ezquake...
+#ifdef SERVERONLY
+	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
+	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
+#endif
 
 	Cmd_AddCommand ("master_rcon_password", SV_MasterPassword_f);
-/*
-	Cmd_AddCommand ("showtime", SV_ShowTime_f);
-For development purposes only
-//VVD
-*/
 }

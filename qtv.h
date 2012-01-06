@@ -46,32 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // this just can't be done as macro, so I wrote function
 char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext);
 
-// qqshka: Its all messy.
-// For example ezquake (and FTE?) expect maximum message is MSG_BUF_SIZE == 8192 with mvd header which have not fixed size,
-// however fuhquake uses less msg size as I recall.
-// mvd header max size is 10 bytes.
-// 
-// MAX_MVD_SIZE - max size of single mvd message _WITHOUT_ header
-#define	MAX_MVD_SIZE			(MSG_BUF_SIZE - 100)
 //======================================
-
-typedef enum {
-
-	QUL_NONE = 0,	//
-	QUL_ADD,		// user joined
-	QUL_CHANGE,		// user changed something like name or something
-	QUL_DEL			// user dropped
-
-} qtvuserlist_t;
-
-typedef struct qtvuser_s {
-
-	int					id;								// unique user id
-	char				name[MAX_INFO_KEY];				// client name, well must be unique too
-
-	struct qtvuser_s	*next;							// next qtvuser_s struct in our list
-
-} qtvuser_t;
 
 void		QTV_FreeUserList(void);
 void		Parse_QtvUserList(char *s);
@@ -107,7 +82,7 @@ int			ConsistantMVDData(unsigned char *buffer, int remaining);
 // qtv clc list
 //
 
-#define qtv_clc_stringcmd    1
+#define		qtv_clc_stringcmd    1
 
 //======================================
 

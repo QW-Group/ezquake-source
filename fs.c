@@ -69,10 +69,6 @@ static qbool FS_RemovePak (const char *pakfile);
 //============================================================================
 #include "q_shared.h"
 
-#ifndef CLIENTONLY
-#include "server.h"
-#endif // CLIENTONLY
-
 // To include pak3 support add this define
 //#define WITH_PK3
 
@@ -83,16 +79,8 @@ int fs_hash_files;
 
 cvar_t fs_cache = {"fs_cache", "1"};
 
-typedef enum {
-	FSLFRT_IFFOUND,
-	FSLFRT_LENGTH,
-	FSLFRT_DEPTH_OSONLY,
-	FSLFRT_DEPTH_ANYPATH
-} FSLF_ReturnType_e;
-
 void FS_CreatePathRelative(char *pname, int relativeto);
 void FS_ForceToPure(char *str, char *crcs, int seed);
-int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
 void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int FS_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);

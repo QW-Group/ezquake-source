@@ -133,7 +133,7 @@ void SV_LoadAccounts(void)
 		memset(acc, 0, sizeof(account_t));
 		// Is realy safe to use 'fscanf(f, "%s", s)'? FIXME!
 		if (fscanf(f, "%s", acc->login) != 1) {
-			Com_Printf("Error reading account data\n");
+			Con_Printf("Error reading account data\n");
 			break;
 		}
 		if (StringToFilter(acc->login, &acc->adress))
@@ -141,13 +141,13 @@ void SV_LoadAccounts(void)
 			strlcpy(acc->pass, acc->login, MAX_LOGINNAME);
 			acc->use = use_ip;
 			if (fscanf(f, "%s %d\n", acc->pass, (int *)&acc->state) != 2) {
-				Com_Printf("Error reading account data\n");
+				Con_Printf("Error reading account data\n");
 				break;
 			}
 		}
 		else {
 			if (fscanf(f, "%s %d %d\n", acc->pass,  (int *)&acc->state, &acc->failures) != 3) {
-				Com_Printf("Error reading account data\n");
+				Con_Printf("Error reading account data\n");
 				break;
 			}
 		}

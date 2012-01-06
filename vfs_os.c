@@ -243,7 +243,8 @@ void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer)
 	if (!f)	//err...
 		return;
 	fseek(f, loc->offset, SEEK_SET);
-	fread(buffer, 1, loc->len, f);
+	if (fread(buffer, 1, loc->len, f) != (size_t)loc->len)
+	    Com_DPrintf("FSOS_ReadFile: read error in %s\n", loc->rawname);
 	fclose(f);
 }
 

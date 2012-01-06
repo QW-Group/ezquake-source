@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sv_edict.c -- entity dictionary
 
 #include "qwsvdef.h"
-//#include "crc.c"
 
 dprograms_t		*progs;
 dfunction_t		*pr_functions;
@@ -45,7 +44,17 @@ static int pr_globaloffsetpatch_nq[62] = {0,0,0,0,0,666,-4,-4,8,8,
 8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8, 8,8};
 #endif
 
-int		type_size[8] = {1,1,1,3,1,1,1,1};
+int		type_size[8] =
+{
+	1,					// void
+	sizeof(void *)/4,	// string_t
+	1,					// float
+	3,					// vector
+	1,					// entity
+	1,					// field
+	sizeof(void *)/4, 	// func_t
+	sizeof(void *)/4 	// pointer (its an int index)
+};
 
 ddef_t *ED_FieldAtOfs (int ofs);
 qbool ED_ParseEpair (void *base, ddef_t *key, char *s);
@@ -70,7 +79,9 @@ func_t UserInfo_Changed, localinfoChanged;
 func_t ChatMessage;
 
 cvar_t	sv_progsname = {"sv_progsname", "qwprogs"};
+#ifdef WITH_NQPROGS
 cvar_t  sv_forcenqprogs = {"sv_forcenqprogs", "0"};
+#endif
 
 /*
 =================
@@ -596,20 +607,19 @@ For debugging, prints a single edicy
 void ED_PrintEdict_f (void)
 {
 	int		i;
+
 	if (Cmd_Argc () != 2)
 	{
-		Com_Printf ("\nUsage:\nedict [num]\n");
+		Con_Printf ("\nUsage:\nedict [num]\n");
 		return;
 	}
-
 
 	i = Q_atoi (Cmd_Argv(1));
 	if(i < 0 || i >= sv.num_edicts)
 	{
-		Com_Printf ("\nNo such edict: %i\n", i);
+		Con_Printf ("\nNo such edict: %i\n", i);
 		return;
 	}
-
 	
 	Con_Printf ("\n EDICT %i:\n",i);
 	ED_PrintNum (i);
@@ -947,15 +957,10 @@ to call ED_CallSpawnFunctions () to let the objects initialize themselves.
 */
 void ED_LoadFromFile (char *data)
 {
-	extern cvar_t cl_curlybraces;
 	edict_t		*ent;
 	int			inhibit;
 	dfunction_t	*func;
-	float curlybraces_oldvalue = cl_curlybraces.value;
 
-	if (curlybraces_oldvalue) {
-		Cvar_SetValue(&cl_curlybraces, 0);
-	}
 	ent = NULL;
 	inhibit = 0;
 	pr_global_struct->time = sv.time;
@@ -1023,9 +1028,6 @@ void ED_LoadFromFile (char *data)
 	}
 
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
-	if (curlybraces_oldvalue) {
-		Cvar_SetValue(&cl_curlybraces, curlybraces_oldvalue);
-	}
 }
 extern redirect_t	sv_redirected;
 qbool PR_ConsoleCmd(void)
@@ -1133,9 +1135,11 @@ void PR_InitPatchTables (void)
 {
 	int i;
 
-	if (pr_nqprogs) {
+	if (pr_nqprogs)
+	{
 		memcpy (pr_globaloffsetpatch, pr_globaloffsetpatch_nq, sizeof(pr_globaloffsetpatch));
-		for (i = 0; i < 106; i++) {
+		for (i = 0; i < 106; i++)
+		{
 			pr_fieldoffsetpatch[i] = (i < 8) ? i : (i < 25) ? i + 1 :
 				(i < 28) ? i + (102 - 25) : (i < 73) ? i - 2 :
 				(i < 74) ? i + (105 - 73) : (i < 105) ? i - 3 : /* (i == 105) */ 8;
@@ -1158,7 +1162,6 @@ void PR_LoadProgs (void)
 {
 	int	i;
 	char num[32];
-	char name[MAX_OSPATH];
 	int filesize;
 
 	// flush the non-C variable lookup cache
@@ -1168,23 +1171,39 @@ void PR_LoadProgs (void)
 	// clear pr_newstrtbl
 	PF_clear_strtbl();
 
-	snprintf(name, sizeof(name), "%s.dat", sv_progsname.string);
-	progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+	progs = NULL;
+#ifdef WITH_NQPROGS
+	pr_nqprogs = false;
+
+	// forced load of NQ progs.
+	if (!progs && Cvar_Value("sv_forcenqprogs") && (progs = (dprograms_t *)FS_LoadHunkFile ("progs.dat", &filesize)))
+		pr_nqprogs = true;
+#endif
+
+	if (!progs)
+	{
+		char name[MAX_OSPATH];
+		snprintf(name, sizeof(name), "%s.dat", sv_progsname.string);
+		progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+	}
 	if (!progs)
 		progs = (dprograms_t *)FS_LoadHunkFile ("qwprogs.dat", &filesize);
 	if (!progs)
 		progs = (dprograms_t *)FS_LoadHunkFile ("spprogs.dat", &filesize);
 #ifdef WITH_NQPROGS
-	pr_nqprogs = false;
-	if (!progs || Cvar_Value("sv_forcenqprogs")) {
-		progs = (dprograms_t *)FS_LoadHunkFile ("progs.dat", &filesize);
-		if (progs)
-			pr_nqprogs = true;
-	}
+	// low priority load of NQ progs.
+	if (!progs && (progs = (dprograms_t *)FS_LoadHunkFile ("progs.dat", &filesize)))
+		pr_nqprogs = true;
 #endif
+
 	if (!progs)
 		SV_Error ("PR_LoadProgs: couldn't load progs.dat");
 	Con_DPrintf ("Programs occupy %iK.\n", filesize/1024);
+
+#ifdef WITH_NQPROGS
+	if (pr_nqprogs)
+		Con_DPrintf ("NQ progs.\n");
+#endif
 
 	// add prog crc to the serverinfo
 	snprintf (num, sizeof(num), "%i", CRC_Block ((byte *)progs, filesize));
@@ -1280,11 +1299,12 @@ void PR_LoadProgs (void)
 PR_Init
 ===============
 */
-//void PR_CleanLogText_Init();
 void PR_Init (void)
 {
 	Cvar_Register(&sv_progsname);
+#ifdef WITH_NQPROGS
 	Cvar_Register(&sv_forcenqprogs);
+#endif
 
 	Cmd_AddCommand ("edict", ED_PrintEdict_f);
 	Cmd_AddCommand ("edicts", ED_PrintEdicts);
@@ -1292,9 +1312,7 @@ void PR_Init (void)
 	Cmd_AddCommand ("profile", PR_Profile_f);
 
 	memset(pr_newstrtbl, 0, sizeof(pr_newstrtbl));
-	//	PR_CleanLogText_Init();
 }
-
 
 edict_t *EDICT_NUM(int n)
 {
@@ -1315,4 +1333,3 @@ int NUM_FOR_EDICT(edict_t *e)
 
 	return b;
 }
-

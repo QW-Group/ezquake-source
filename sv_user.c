@@ -258,7 +258,7 @@ static void Cmd_New_f (void)
 		MSG_WriteLong (&sv_client->netchan.message, PROTOCOL_VERSION_FTE2);
 		MSG_WriteLong (&sv_client->netchan.message, sv_client->fteprotocolextensions2);
 	}
-#endif
+#endif // PROTOCOL_VERSION_FTE2
 	MSG_WriteLong  (&sv_client->netchan.message, PROTOCOL_VERSION);
 	MSG_WriteLong  (&sv_client->netchan.message, svs.spawncount);
 	MSG_WriteString(&sv_client->netchan.message, gamedir);
@@ -632,14 +632,14 @@ static void Cmd_Spawn_f (void)
 			savenetname = ent->v.netname;
 			memset(&ent->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
 			ent->v.netname = savenetname;
-    
+
 			// so spec will have right goalentity - if speccing someone
 			// qqshka {
 			if(sv_client->spectator && sv_client->spec_track > 0)
 				ent->v.goalentity = EDICT_TO_PROG(svs.clients[sv_client->spec_track-1].edict);
-    
+
 			// }
-    
+
 			//sv_client->name = PR2_GetString(ent->v.netname);
 			//strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
 		}
@@ -946,7 +946,7 @@ void SV_CompleteDownoload(void)
 	if (!sv_client->download)
 		return;
 
-	VFS_CLOSE (sv_client->download);
+	VFS_CLOSE(sv_client->download);
 	sv_client->download = NULL;
 	sv_client->file_percent = 0; //bliP: file percent
 	// qqshka: set normal rate
@@ -1007,6 +1007,7 @@ void SV_NextChunkedDownload(int chunknum, int percent, int chunked_download_numb
 
 	if (VFS_SEEK(sv_client->download, chunknum*CHUNKSIZE, SEEK_SET))
 		return; // FIXME: ERROR of some kind
+
 	i = VFS_READ(sv_client->download, buffer, CHUNKSIZE, NULL);
 
 	if (i > 0)
@@ -1052,7 +1053,7 @@ static void Cmd_NextDownload_f (void)
 	int		r, tmp;
 	int		percent;
 	int		size;
-	double	clear, frametime;
+	double	frametime;
 
 	if (!sv_client->download)
 		return;
@@ -1067,13 +1068,10 @@ static void Cmd_NextDownload_f (void)
 
 	tmp = sv_client->downloadsize - sv_client->downloadcount;
 
-	if ((clear = sv_client->netchan.cleartime) < realtime)
-		clear = realtime;
-
 	frametime = max(0.05, min(0, sv_client->netchan.frame_rate));
 	//Sys_Printf("rate:%f\n", sv_client->netchan.frame_rate);
 
-	r = (int)((realtime + frametime - sv_client->netchan.cleartime)/sv_client->netchan.rate);
+	r = (int)((curtime + frametime - sv_client->netchan.cleartime)/sv_client->netchan.rate);
 	if (r <= 10)
 		r = 10;
 	if (r > FILE_TRANSFER_BUF_SIZE)
@@ -1088,7 +1086,6 @@ static void Cmd_NextDownload_f (void)
 
 	Con_DPrintf("Downloading: %d", r);
 	r = VFS_READ(sv_client->download, buffer, r, NULL);
-
 	Con_DPrintf(" => %d, total: %d => %d", r, sv_client->downloadsize, sv_client->downloadcount);
 	ClientReliableWrite_Begin (sv_client, svc_download, 6 + r);
 	ClientReliableWrite_Short (sv_client, r);
@@ -1331,7 +1328,7 @@ static void Cmd_Download_f(void)
 			for (num = 0; num < num_s_len; num++)
 				if (num_s[num] != '.')
 				{
-					Con_Printf("usage: download demonum/nun\n"
+					Con_Printf("usage: download demonum/num\n"
 					           "if num is negative then download the Nth to last recorded demo, "
 					           "also can type any quantity of dots and "
 					           "where N dots is the Nth to last recorded demo\n");
@@ -1367,21 +1364,19 @@ static void Cmd_Download_f(void)
 	sv_client->downloadcount = 0;
 
 	// techlogin download uses simple path from quake folder
-#if 0 // FIXME
 	if (sv_client->special)
 	{
-		sv_client->download = fopen (name, "rb");
+		sv_client->download = FS_OpenVFS(name, "rb", FS_GAME); // FIXME: Should we use FS_BASE ???
 		if (sv_client->download)
 		{
 			if ((int) developer.value)
 				Sys_Printf ("FindFile: %s\n", name);
-			sv_client->downloadsize = FS_FileLength (sv_client->download);
+			sv_client->downloadsize = VFS_GETLEN(sv_client->download);
 		}
 	}
 	else
-#endif
 	{
-		sv_client->download = FS_OpenVFS(name, "rb", FS_ANY);
+		sv_client->download = FS_OpenVFS(name, "rb", FS_GAME);
 		if (sv_client->download)
 			sv_client->downloadsize = VFS_GETLEN(sv_client->download);
 
@@ -1473,6 +1468,8 @@ Cmd_DemoDownload_f
 ==================
 */
 qbool SV_ExecutePRCommand (void);
+static void Cmd_StopDownload_f(void);
+
 static void Cmd_DemoDownload_f(void)
 {
 	int		i, num, cmd_argv_i_len;
@@ -1480,6 +1477,13 @@ static void Cmd_DemoDownload_f(void)
 	unsigned char	download_queue_cleared[] = "Download queue cleared.\n";
 	unsigned char	download_queue_empty[] = "Download queue empty.\n";
 	unsigned char	download_queue_already_exists[]	= "Download queue already exists.\n";
+	unsigned char	cmdhelp_dldesc[] = "Download a demo from the server your are connected to";
+	unsigned char	cmdhelp_dl[] = "cmd dl";
+	unsigned char	cmdhelp_pound[] = "#";
+	unsigned char	cmdhelp_dot[] = ".";
+	unsigned char	cmdhelp_bs[] = "\\";
+	unsigned char	cmdhelp_stop[] = "stop";
+	unsigned char	cmdhelp_cancel[] = "cancel";
 
 	if (!(int)sv_use_internal_cmd_dl.value)
 		if (SV_ExecutePRCommand())
@@ -1487,13 +1491,27 @@ static void Cmd_DemoDownload_f(void)
 
 	if (Cmd_Argc() < 2)
 	{
-		Con_Printf("usage: cmd dl [\\] # [# [#]]\n"
-		           "where \"#\" is demonum from demo list and "
-		           "\"\\\" clear download queue\n"
-		           "you can also use cmd dl ., .. or any quantity of dots "
-		           "where . is the last recorded demo, "
-		           ".. is the second to last recorded demo"
-		           "and where N dots is the Nth to last recorded demo\n");
+		Con_Printf("\n%s\n"
+			   "Usage:\n"
+			   "  %s %s [%s [%s]]\n"
+		           "    \"#\" is one or several numbers from the demo list\n"
+			   "  %s %s [%s%s [%s%s%s]]\n"
+		           "    Each number of dots represents the Nth last recorded demo\n"
+			   "    (Note that you can mix numbers and groups of dots)\n"
+			   "  %s [%s|%s|%s]\n"
+			   "     \"\\\", \"stop\" or \"cancel\" clear the download queue\n\n",
+			   Q_redtext(cmdhelp_dldesc),
+			   Q_redtext(cmdhelp_dl), Q_redtext(cmdhelp_pound), Q_redtext(cmdhelp_pound), Q_redtext(cmdhelp_pound),
+			   Q_redtext(cmdhelp_dl), Q_redtext(cmdhelp_dot), Q_redtext(cmdhelp_dot), Q_redtext(cmdhelp_dot),
+			   Q_redtext(cmdhelp_dot), Q_redtext(cmdhelp_dot), Q_redtext(cmdhelp_dot),
+			   Q_redtext(cmdhelp_dl), Q_redtext(cmdhelp_bs), Q_redtext(cmdhelp_stop), Q_redtext(cmdhelp_cancel)
+		           );
+		return;
+	}
+
+	if (!strcmp(Cmd_Argv(1), "cancel") || !strcmp(Cmd_Argv(1), "stop"))
+	{
+		Cmd_StopDownload_f(); // should not have any arguments, so it's OK
 		return;
 	}
 
@@ -1716,10 +1734,9 @@ static void SV_Say (qbool team)
 
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
 	{
-		//bliP: everyone sees all ->
-		//if (client->state != cs_spawned)
-		//	continue;
-		//<-
+		if (client->state < cs_preconnected)
+			continue;
+
 		if (sv_client->spectator && !(int)sv_spectalk.value)
 			if (!client->spectator)
 				continue;
@@ -2035,8 +2052,12 @@ static void Cmd_TechLogin_f (void)
 
 	if (Cmd_Argc() < 2)
 	{
-		sv_client->special = false;
-		sv_client->logincount = 0;
+		if (sv_client->special)
+		{
+			sv_client->special = false;
+			sv_client->logincount = 0;
+			SV_ClientPrintf (sv_client, PRINT_HIGH, "Logged out.\n");
+		}
 		return;
 	}
 
@@ -2057,6 +2078,7 @@ Cmd_Upload_f
 */
 static void Cmd_Upload_f (void)
 {
+	FILE *f;
 	char str[MAX_OSPATH];
 
 	if (sv_client->state != cs_spawned)
@@ -2082,9 +2104,10 @@ static void Cmd_Upload_f (void)
 		return;
 	}
 
-	if (COM_FileExists(sv_client->uploadfn))
+	if ((f = fopen(sv_client->uploadfn, "rb")))
 	{
 		Con_Printf ("File already exists.\n");
+		fclose(f);
 		return;
 	}
 
@@ -2186,6 +2209,9 @@ static void Cmd_SetInfo_f (void)
 
 	if (strstr(Cmd_Argv(1), "\\") || strstr(Cmd_Argv(2), "\\"))
 		return;		// illegal char
+
+	if (strstr(Cmd_Argv(1), "&c") || strstr(Cmd_Argv(1), "&r") || strstr(Cmd_Argv(2), "&c") || strstr(Cmd_Argv(2), "&r"))
+		return;
 
 	strlcpy(oldval, Info_Get(&sv_client->_userinfo_ctx_, Cmd_Argv(1)), sizeof(oldval));
 
@@ -2476,8 +2502,11 @@ static void SetUpClientEdict (client_t *cl, edict_t *ent)
 		EdictFieldFloat(ent, fofs_maxspeed) = (int)sv_maxspeed.value;
 }
 
-extern cvar_t maxclients, maxspectators;
+extern cvar_t spectator_password, password;
 extern void MVD_PlayerReset(int player);
+extern void CountPlayersSpecsVips(int *clients_ptr, int *spectators_ptr, int *vips_ptr, client_t **newcl_ptr);
+extern qbool SpectatorCanConnect(int vip, int spass, int spectators, int vips);
+extern qbool PlayerCanConnect(int clients);
 
 /*
 ==================
@@ -2489,9 +2518,7 @@ Set client to player mode without reconnecting
 static void Cmd_Join_f (void)
 {
 	int i;
-	client_t *cl;
-	int numclients;
-	extern cvar_t password;
+	int clients;
 
 	if (sv_client->state != cs_spawned)
 		return;
@@ -2516,12 +2543,9 @@ static void Cmd_Join_f (void)
 	}
 
 	// count players already on server
-	numclients = 0;
-	for (i=0,cl=svs.clients ; i<MAX_CLIENTS ; i++,cl++) {
-		if (cl->state != cs_free && !cl->spectator)
-			numclients++;
-	}
-	if (numclients >= (int)maxclients.value) {
+	CountPlayersSpecsVips(&clients, NULL, NULL, NULL);
+	if (!PlayerCanConnect(clients))
+	{
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "Can't join, all player slots full\n");
 		return;
 	}
@@ -2606,9 +2630,7 @@ Set client to spectator mode without reconnecting
 static void Cmd_Observe_f (void)
 {
 	int i;
-	client_t *cl;
-	int numspectators;
-	extern cvar_t maxspectators, spectator_password;
+	int spectators, vips;
 
 	if (sv_client->state != cs_spawned)
 		return;
@@ -2632,13 +2654,11 @@ static void Cmd_Observe_f (void)
 	}
 
 	// count spectators already on server
-	numspectators = 0;
-	for (i=0,cl=svs.clients ; i<MAX_CLIENTS ; i++,cl++) {
-		if (cl->state != cs_free && cl->spectator)
-			numspectators++;
-	}
-	if (numspectators >= (int)maxspectators.value) {
-		SV_ClientPrintf (sv_client, PRINT_HIGH, "Can't join, all spectator slots full\n");
+	CountPlayersSpecsVips(NULL, &spectators, &vips, NULL);
+
+	if (!SpectatorCanConnect(sv_client->vip, true/*kinda HACK*/, spectators, vips))
+	{
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "Can't join, all spectator/vip slots full\n");
 		return;
 	}
 
@@ -2731,7 +2751,7 @@ Default on non-team games is to broadcast.
 
 #define qboolean qbool
 #define host_client sv_client
-#define ival integer // for cvars compatibility
+#define ival value // for cvars compatibility
 
 #define VOICE_RING_SIZE 512 /*POT*/
 struct
@@ -2887,10 +2907,12 @@ void SV_VoiceSendPacket(client_t *client, sizebuf_t *buf)
 			send = true;
 
 		// FIXME: qqshka: well, is it RIGHTWAY at all???
+#if 0  // qqshka: I am turned it off.
 		/*if you're spectating, you can hear whatever your tracked player can hear*/
 		if (client->spectator && client->spec_track)
 			if (ring->receiver[(client->spec_track-1)>>3] & (1<<((client->spec_track-1)&3)))
 				send = true;
+#endif
 
 		if (client->voice_mute[ring->sender>>3] & (1<<(ring->sender&3)))
 			send = false;
@@ -3458,7 +3480,8 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside) //bliP: 24/9
 #endif
 			PR_ExecuteProgram (PR_GLOBAL(PlayerPreThink));
 
-		if (pr_nqprogs) {
+		if (pr_nqprogs)
+		{
 			sv_player->v.teleport_time = old_teleport_time;
 			VectorCopy (oldvelocity, sv_player->v.velocity);
 		}
@@ -3662,7 +3685,7 @@ The current net_message is parsed for the given client
 */
 void SV_ExecuteClientMessage (client_t *cl)
 {
-	int		c;
+	int		c, i;
 	char		*s;
 	usercmd_t	oldest, oldcmd, newcmd;
 	client_frame_t	*frame;
@@ -3697,6 +3720,78 @@ void SV_ExecuteClientMessage (client_t *cl)
 			cl->delay += 0.001;
 
 		cl->delay = bound(0, cl->delay, 1);
+	}
+
+	cl->laggedents_count = 0; // init at least this
+	cl->laggedents_frac = sv_antilag_frac.value;
+
+	if (sv_antilag.value)
+	{
+//#pragma msg("FIXME: make antilag optionally support non-player ents too")
+
+#define MAX_PREDICTION 0.02
+#define MAX_EXTRAPOLATE 0.02
+//#define CENTER_OF_FRAME
+
+		double target_time, max_physfps = sv_maxfps.value;
+
+		if (max_physfps < 20 || max_physfps > 1000)
+			max_physfps = 77.0;
+
+		if (sv_antilag_no_pred.value) {
+			target_time = frame->sv_time;
+		} else {
+			// try to figure out what time client is currently predicting, basically this is just 6.5ms with 13ms ping and 13.5ms with higher
+			// might be off with different max_physfps values
+#ifdef CENTER_OF_FRAME
+			target_time = min(frame->sv_time + (frame->ping_time < MAX_PREDICTION ? 1/max_physfps : MAX_PREDICTION) - 1/max_physfps/2.0, sv.time);
+#else
+			target_time = min(frame->sv_time + (frame->ping_time < MAX_PREDICTION ? 1/max_physfps : MAX_PREDICTION), sv.time);
+#endif
+		}
+
+		for (i = 0; i < MAX_CLIENTS; i++)
+		{
+			client_t *target_cl = &svs.clients[i];
+			antilag_position_t *base, *interpolate = NULL;
+			double factor;
+			int j;
+
+			// don't hit dead players
+			if (target_cl->state != cs_spawned || target_cl->antilag_position_next == 0 || (target_cl->spectator == 0 && target_cl->edict->v.health <= 0)) {
+				cl->laggedents[i].present = false;
+				continue;
+			}
+
+			cl->laggedents[i].present = true;
+
+			// target player's movement commands are late, extrapolate his position based on velocity
+			if (target_time > target_cl->localtime) {
+				VectorMA(target_cl->edict->v.origin, min(target_time - target_cl->localtime, MAX_EXTRAPOLATE), target_cl->edict->v.velocity, cl->laggedents[i].laggedpos);
+				continue;
+			}
+
+			// we have only one antilagged position, use that
+			if (target_cl->antilag_position_next == 1) {
+				VectorCopy(target_cl->antilag_positions[0].origin, cl->laggedents[i].laggedpos);
+				continue;
+			}
+
+			// find the position before target time (base) and the one after that (interpolate)
+			for (j = target_cl->antilag_position_next - 2; j > target_cl->antilag_position_next - 1 - MAX_ANTILAG_POSITIONS && j >= 0; j--) {
+				if (target_cl->antilag_positions[j % MAX_ANTILAG_POSITIONS].localtime < target_time)
+					break;
+			}
+
+			base = &target_cl->antilag_positions[j % MAX_ANTILAG_POSITIONS];
+			interpolate = &target_cl->antilag_positions[(j + 1) % MAX_ANTILAG_POSITIONS];
+
+			// we have two positions, just interpolate between them
+			factor = (target_time - base->localtime) / (interpolate->localtime - base->localtime);
+			VectorInterpolate(base->origin, factor, interpolate->origin, cl->laggedents[i].laggedpos);
+		}
+
+		cl->laggedents_count = MAX_CLIENTS; // FIXME: well, FTE do it a bit different way...
 	}
 
 	// make sure the reply sequence number matches the incoming
@@ -3769,9 +3864,9 @@ void SV_ExecuteClientMessage (client_t *cl)
 			}*/
 			//<-
 
-			MSG_ReadDeltaUsercmd (&nullcmd, &oldest, PROTOCOL_VERSION);
-			MSG_ReadDeltaUsercmd (&oldest, &oldcmd, PROTOCOL_VERSION);
-			MSG_ReadDeltaUsercmd (&oldcmd, &newcmd, PROTOCOL_VERSION);
+			MSG_ReadDeltaUsercmd (&nullcmd, &oldest);
+			MSG_ReadDeltaUsercmd (&oldest, &oldcmd);
+			MSG_ReadDeltaUsercmd (&oldcmd, &newcmd);
 
 			if ( cl->state != cs_spawned )
 				break;
@@ -3805,6 +3900,16 @@ void SV_ExecuteClientMessage (client_t *cl)
 
 			cl->lastcmd = newcmd;
 			cl->lastcmd.buttons = 0; // avoid multiple fires on lag
+
+			if (sv_antilag.value) {
+				if (cl->antilag_position_next == 0 || cl->antilag_positions[(cl->antilag_position_next - 1) % MAX_ANTILAG_POSITIONS].localtime < cl->localtime) {
+					cl->antilag_positions[cl->antilag_position_next % MAX_ANTILAG_POSITIONS].localtime = cl->localtime;
+					VectorCopy(cl->edict->v.origin, cl->antilag_positions[cl->antilag_position_next % MAX_ANTILAG_POSITIONS].origin);
+					cl->antilag_position_next++;
+				}
+			} else {
+				cl->antilag_position_next = 0;
+			}
 			break;
 
 

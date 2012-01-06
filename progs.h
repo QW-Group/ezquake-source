@@ -52,6 +52,8 @@ typedef struct sv_edict_s
 	qbool		free;
 	link_t		area;			// linked to a division node or leaf
 
+	int			entnum;
+
 	int			num_leafs;
 	short		leafnums[MAX_ENT_LEAFS];
 
@@ -82,10 +84,12 @@ extern	dstatement_t	*pr_statements;
 extern	globalvars_t	*pr_global_struct;
 extern	float		*pr_globals;	// same as pr_global_struct
 
-extern	int		pr_edict_size;	// in bytes
-extern	int		pr_teamfield;
+extern	int			pr_edict_size;	// in bytes
+extern	int			pr_teamfield;
 extern	cvar_t		sv_progsname; 
-extern	cvar_t		sv_forcenqprogs; 
+#ifdef WITH_NQPROGS
+extern	cvar_t		sv_forcenqprogs;
+#endif
 
 //============================================================================
 
@@ -182,6 +186,7 @@ extern int fofs_vw_index;	// ZQ_VWEP
 extern int fofs_movement;
 extern int fofs_gravity, fofs_maxspeed;
 extern int fofs_hideentity;
+extern int fofs_trackent;
 
 #define EdictFieldFloat(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->_float
 #define EdictFieldVector(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->vector

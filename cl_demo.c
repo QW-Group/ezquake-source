@@ -2329,7 +2329,7 @@ void CL_Record_f (void)
 		return;
 	}
 
-	if (	(cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)) // that OK.
+	if (	(cls.fteprotocolextensions & ~(FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)) // that OK.
 		||  (cls.fteprotocolextensions2 & ~FTE_PEXT2_VOICECHAT) // that not OK since if you receive VOIP packet demo will be non compatible, but this warning is annoying.
 	)
 	{
@@ -3543,7 +3543,7 @@ static void CL_DemoPlaybackInit(void)
 	}
 
 	// Setup the netchan and state.
-	Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, 0);
+	Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, 0, mtu.integer);
 	cls.state		= ca_demostart;
 	cls.demotime	= 0;
 	demostarttime	= -1.0;
@@ -4193,7 +4193,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 
 	// Setup demo playback for the netchan.
 	cls.state = ca_demostart;
-	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
+	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0, mtu.integer);
 	cls.demotime = 0;
 	demostarttime = -1.0;
 	olddemotime = nextdemotime = 0;

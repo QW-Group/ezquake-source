@@ -168,3 +168,17 @@ char *VersionString (void)
 
 	return str;
 }
+
+/*
+=======================
+VersionStringFull
+======================
+*/
+char *VersionStringFull (void)
+{
+	static char str[256];
+
+	snprintf (str, sizeof(str), SERVER_NAME " %s " "(" QW_PLATFORM ")" "\n" BUILD_DATE "\n", VersionString());
+
+	return str;
+}

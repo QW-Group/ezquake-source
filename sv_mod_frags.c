@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "qwsvdef.h"
-#include "pcre.h"
 #include "sv_mod_frags.h"
 
 qwmsg_t *qwmsg[MOD_MSG_MAX + 1];
@@ -37,12 +36,15 @@ static qbool qwm_static = true;
 void free_qwmsg_t(qwmsg_t **qwmsg1)
 {
 	int i;
-	if (!qwm_static)
-		for (i = 0; qwmsg1[i]; i++)
-		{
-			Q_free(qwmsg1[i]->str);
-			Q_free(qwmsg1[i]);
-		}
+
+	if (qwm_static)
+		return;
+
+	for (i = 0; qwmsg1[i]; i++)
+	{
+		Q_free(qwmsg1[i]->str);
+		Q_free(qwmsg1[i]);
+	}
 }
 
 void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
@@ -59,17 +61,16 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 	if (fp == NULL)
 	{
 		if (value[0])
-			Sys_Printf("WARNING: sv_mod_msg_file_OnChange: can't open file %s.\n", value);
+			Con_Printf("WARNING: sv_mod_msg_file_OnChange: can't open file %s.\n", value);
 
 		for (i = 0; i < MOD_MSG_MAX && qwmsg_def[i].str; i++)
 		{
-			qwmsg[i] = (qwmsg_t *) Q_malloc (sizeof(qwmsg_t));
 			qwmsg[i] = &qwmsg_def[i];
-			//            Sys_Printf("msg_type = %d, id = %d, pl_count = %d, str = %s, reverse = %d\n",
-			//	qwmsg[i]->msg_type, qwmsg[i]->id, qwmsg[i]->pl_count, qwmsg[i]->str, qwmsg[i]->reverse);
+//			Sys_Printf("msg_type = %d, id = %d, pl_count = %d, str = %s, reverse = %d\n",
+//			qwmsg[i]->msg_type, qwmsg[i]->id, qwmsg[i]->pl_count, qwmsg[i]->str, qwmsg[i]->reverse);
 		}
 		qwm_static = true;
-		Sys_Printf("Initialized default mod messages.\nTotal: %d messages.\n", i);
+		Con_DPrintf("Initialized default mod messages.\nTotal: %d messages.\n", i);
 	}
 	else
 	{
@@ -101,7 +102,7 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 			//	qwmsg[i]->msg_type, qwmsg[i]->id, qwmsg[i]->pl_count, qwmsg[i]->str, qwmsg[i]->reverse);
 		}
 		qwm_static = false;
-		Sys_Printf("Initialized mod messages from file %s.\nTotal: %d messages.\n", value, i);
+		Con_DPrintf("Initialized mod messages from file %s.\nTotal: %d messages.\n", value, i);
 		fclose(fp);
 	}
 	qwmsg[i] = NULL;

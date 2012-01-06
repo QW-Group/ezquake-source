@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Ctrl.h"
 #include "settings.h"
 #include "settings_page.h"
-#include "server.h"
+#include "qtv.h"
 
 #define TOPMARGIN (6*LETTERWIDTH)
 
@@ -143,8 +143,9 @@ setting botmatch_menu_entries[] = {
 
 #define DEMOPLAYBACK() (cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK)
 #define BOTMATCH() (!strcmp(cls.gamedirfile, "fbca"))
+extern cvar_t maxclients; // FIXME: CLIENTONLY
 #define SINGLEPLAYER() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
-#define QTVPLAYBACK() (cls.mvdplayback == 2)
+#define QTVPLAYBACK() (cls.mvdplayback == QTV_PLAYBACK)
 
 static settings_page *M_Ingame_Current(void) {
 	if (DEMOPLAYBACK()) {

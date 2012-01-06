@@ -188,6 +188,23 @@ int		Sys_compare_by_name (const void *a, const void *b);
 	extern struct timeval  select_timeout;
 #endif
 
+#ifdef _WIN32
+
+typedef HMODULE DL_t;
+
+#define DLEXT "dll"
+
+#else
+
+typedef void *DL_t;
+
+#define DLEXT "so"
+
+#endif /* _WIN32 */
+
+DL_t Sys_DLOpen (const char *path);
+qbool Sys_DLClose( DL_t dl);
+void *Sys_DLProc (DL_t dl, const char *name);
 
 // library loading.
 

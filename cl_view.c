@@ -839,13 +839,6 @@ void V_TF_ClearGrenadeEffects ()
 ============================================================================== 
 */
 
-float angledelta (float a) {
-	a = anglemod(a);
-	if (a > 180)
-		a -= 360;
-	return a;
-}
-
 void V_BoundOffsets (void) {
 	// absolutely bound refresh relative to entity clipping hull
 	// so the view can never be inside a solid wall

@@ -23,9 +23,9 @@
 #define __PR2_H__
 
 
-extern int sv_syscall(int arg, ...);
+extern intptr_t sv_syscall(intptr_t arg, ...);
 extern int sv_sys_callex(byte *data, unsigned int len, int fn, pr2val_t*arg);
-typedef void (*pr2_trapcall_t)(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval);
+typedef void (*pr2_trapcall_t)(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval);
 
 //extern int usedll;
 extern cvar_t sv_progtype;
@@ -54,8 +54,8 @@ void 		PR2_GameShutDown();
 void 		PR2_GameConsoleCommand(void);
 void		PR2_PausedTic(float duration);
 
-char*		PR2_GetString(int);
-int			PR2_SetString(char*s);
+char*		PR2_GetString(intptr_t);
+intptr_t	PR2_SetString(char*s);
 void		PR2_RunError(char *error, ...);
 void		ED2_Free(edict_t *ed);
 edict_t*	ED2_Alloc();

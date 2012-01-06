@@ -585,7 +585,7 @@ float MSG_ReadAngle (void)
 
 #define CM_MSEC	(1 << 7) // same as CM_ANGLE2
 
-void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
+void MSG_ReadDeltaUsercmdEx (usercmd_t *from, usercmd_t *move, int protoversion)
 {
 	int bits;
 
@@ -640,6 +640,11 @@ void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
 	} else {
 		move->msec = MSG_ReadByte (); // always sent
 	}
+}
+
+void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move)
+{
+	MSG_ReadDeltaUsercmdEx (from, move, PROTOCOL_VERSION);
 }
 
 void MSG_ReadData (void *data, int len)

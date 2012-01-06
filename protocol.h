@@ -18,22 +18,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // protocol.h -- communications protocols
+#ifndef __PROTOCOL_H__
+#define __PROTOCOL_H__
 
 #define	PROTOCOL_VERSION	28
 
-//=========================================
+//===============================================
+
+#define	PORT_CLIENT	27001
+#define	PORT_MASTER	27000
+#define	PORT_SERVER	27500
+#define PORT_QUAKETV 27900
+
+//===============================================
 
 // fte protocol extensions.
-#define PROTOCOL_VERSION_FTE	(('F'<<0) + ('T'<<8) + ('E'<<16) + ('X' << 24)) //fte extensions.
-#define PROTOCOL_VERSION_FTE2	(('F'<<0) + ('T'<<8) + ('E'<<16) + ('2' << 24))	//fte extensions.
 
-#ifdef PROTOCOL_VERSION_FTE 
+#define PROTOCOL_VERSION_FTE			(('F'<<0) + ('T'<<8) + ('E'<<16) + ('X' << 24))
+#define PROTOCOL_VERSION_FTE2			(('F'<<0) + ('T'<<8) + ('E'<<16) + ('2' << 24))
 
-// qqshka: FTE_PEXT_ACCURATETIMINGS - not actually used in ezquake.
-//			I added it to ezquake in hope what someone made some rockets(enitities) smoothing code...
-//			But it not happens, so better turn it off.
+//
+// Not all of that really supported.
+// Some supported by client only.
+//
+
+#ifdef PROTOCOL_VERSION_FTE
+
 #define	FTE_PEXT_TRANS				0x00000008	// .alpha support
-//#define FTE_PEXT_ACCURATETIMINGS	0x00000040
+#define FTE_PEXT_ACCURATETIMINGS	0x00000040
 #define FTE_PEXT_HLBSP				0x00000200	//stops fte servers from complaining
 #define FTE_PEXT_MODELDBL			0x00001000
 #define FTE_PEXT_ENTITYDBL			0x00002000	//max of 1024 ents instead of 512
@@ -51,10 +63,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #endif // PROTOCOL_VERSION_FTE2
 
+//==============================================
 
-//=========================================
-
+//
 // ZQuake protocol extensions (*z_ext serverinfo key)
+//
 #define Z_EXT_PM_TYPE		(1<<0)	// basic PM_TYPE functionality (reliable jump_held)
 #define Z_EXT_PM_TYPE_NEW	(1<<1)	// adds PM_FLY, PM_SPECTATOR
 #define Z_EXT_VIEWHEIGHT	(1<<2)	// STAT_VIEWHEIGHT
@@ -67,28 +80,38 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define Z_EXT_PF_SOLID		(1<<8)
 
 // what our client supports
-#define CLIENT_EXTENSIONS (Z_EXT_PM_TYPE|Z_EXT_PM_TYPE_NEW| \
-		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS| \
-		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND|Z_EXT_VWEP|Z_EXT_PF_SOLID)
+#define CLIENT_EXTENSIONS ( \
+		Z_EXT_PM_TYPE | \
+		Z_EXT_PM_TYPE_NEW | \
+		Z_EXT_VIEWHEIGHT | \
+		Z_EXT_SERVERTIME | \
+		Z_EXT_PITCHLIMITS | \
+		Z_EXT_JOIN_OBSERVE | \
+		Z_EXT_PF_ONGROUND | \
+		Z_EXT_VWEP | \
+		Z_EXT_PF_SOLID \
+)
 
 // what our server supports
-#define SERVER_EXTENSIONS (Z_EXT_PM_TYPE|Z_EXT_PM_TYPE_NEW| \
-		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS| \
-		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND|Z_EXT_VWEP|Z_EXT_PF_SOLID)
-
-//=========================================
-
-#define	PORT_CLIENT	27001
-#define	PORT_MASTER	27000
-#define	PORT_SERVER	27500
-#define PORT_QUAKETV 27900
+#define SERVER_EXTENSIONS ( \
+		Z_EXT_PM_TYPE | \
+		Z_EXT_PM_TYPE_NEW | \
+		Z_EXT_VIEWHEIGHT | \
+		Z_EXT_SERVERTIME | \
+		Z_EXT_PITCHLIMITS | \
+		Z_EXT_JOIN_OBSERVE | \
+		Z_EXT_PF_ONGROUND | \
+		Z_EXT_VWEP | \
+		Z_EXT_PF_SOLID \
+)
 
 //=========================================
 
 // out of band message id bytes
 
 // M = master, S = server, C = client, A = any
-// the second character will always be \n if the message isn't a single byte long (?? not true anymore?)
+// the second character will always be \n if the message isn't a single
+// byte long (?? not true anymore?)
 
 #define	S2C_CHALLENGE		'c'
 #define	S2C_CONNECTION		'j'
@@ -108,6 +131,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // also related to svc_strings[] in cl_parse
 //==================
 
+//
 // server to client
 #define	svc_bad					0
 #define	svc_nop					1
@@ -191,12 +215,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define svc_qizmovoice			83
 
 #ifdef FTE_PEXT2_VOICECHAT
-#define svc_fte_voicechat	    84
+#define svc_fte_voicechat	    84 		// FTE voice chat.
 #endif
 
 //==============================================
 
+//
 // client to server
+//
 #define	clc_bad			0
 #define	clc_nop 		1
 //define	clc_doublemove	2
@@ -204,7 +230,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	clc_stringcmd	4		// [string] message
 #define	clc_delta		5		// [byte] sequence number, requests delta compression of message
 #define clc_tmove		6		// teleport request, spectator only
-#define clc_upload		7		// teleport request, spectator only
+#define clc_upload		7		//
 
 #ifdef FTE_PEXT2_VOICECHAT
 #define clc_voicechat	83		// FTE voice chat.
@@ -258,6 +284,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //==============================================
 
+//
+// Player flags in mvd demos.
+// Should be in server.h but unfortunately shared with cl_demo.c.
+//
 
 #define DF_ORIGIN		1
 #define DF_ANGLES		(1 << 3)
@@ -271,7 +301,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //==============================================
 
-// the first 16 bits of a packetentities update holds 9 bits of entity number and 7 bits of flags
+// the first 16 bits of a packetentities update holds 9 bits
+// of entity number and 7 bits of flags
 #define	U_ORIGIN1	(1 << 9)
 #define	U_ORIGIN2	(1 << 10)
 #define	U_ORIGIN3	(1 << 11)
@@ -350,7 +381,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	PRINT_HIGH			2
 #define	PRINT_CHAT			3	// also go to chat buffer
 
+//
 // temp entity events
+//
 #define	TE_SPIKE			0
 #define	TE_SUPERSPIKE		1
 #define	TE_GUNSHOT			2
@@ -373,7 +406,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 /*
 ==========================================================
+
   ELEMENTS COMMUNICATED ACROSS THE NET
+
 ==========================================================
 */
 
@@ -384,9 +419,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // entity_state_t is the information conveyed from the server
 // in an update message
-typedef struct entity_state_s {
+typedef struct entity_state_s
+{
 	int		number;			// edict index
 	int		flags;			// nolerp, etc
+
 	vec3_t	origin;
 	vec3_t	angles;
 	int		modelindex;
@@ -394,18 +431,24 @@ typedef struct entity_state_s {
 	int		colormap;
 	int		skinnum;
 	int		effects;
+#ifndef SERVERONLY
+// Our server does not use it.
 	byte	trans;
+#endif
 } entity_state_t;
 
-#define	MAX_MVD_PACKET_ENTITIES	300		
-#define	MAX_PACKET_ENTITIES	64
+#define	MAX_PACKET_ENTITIES	64	// doesn't count nails
+#define MAX_PEXT256_PACKET_ENTITIES 256 // up to 256 ents, look FTE_PEXT_256PACKETENTITIES
+#define MAX_MVD_PACKET_ENTITIES 300 // !!! MUST not be less than any of above values!!!
 
-typedef struct packet_entities_s {
+typedef struct packet_entities_s
+{
 	int		num_entities;
 	entity_state_t	entities[MAX_MVD_PACKET_ENTITIES];
 } packet_entities_t;
 
-typedef struct usercmd_s {
+typedef struct usercmd_s
+{
 	byte	msec;
 	vec3_t	angles;
 	short	forwardmove, sidemove, upmove;
@@ -419,6 +462,10 @@ typedef struct usercmd_s {
 #define BUTTON_USE		(1 << 2)
 #define BUTTON_ATTACK2	(1 << 3)
 
+//
+// demo recording
+//
+
 // TODO: Make into an enum.
 #define dem_cmd			0 // A user cmd movement message.
 #define dem_read		1 // A net message.
@@ -429,23 +476,4 @@ typedef struct usercmd_s {
 #define dem_stats		5 // MVD ONLY. Stats update for a player.
 #define dem_all			6 // MVD ONLY. This message is directed to all clients.
 
-//
-// Used for saving a temporary list of temp entities.
-// 
-
-#define	MAX_TEMP_ENTITIES 32
-typedef struct temp_entity_s
-{
-	vec3_t	pos;	// Position of temp entity.
-	float	time;	// Time of temp entity.
-	int		type;	// Type of temp entity.
-} temp_entity_t;
-
-typedef struct temp_entity_list_s
-{
-	temp_entity_t	list[MAX_TEMP_ENTITIES];
-	int				count;
-} temp_entity_list_t;
-
-temp_entity_list_t	temp_entities;
-
+#endif /* !__PROTOCOL_H__ */

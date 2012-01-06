@@ -96,6 +96,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // FTEQW type and naming compatibility
 // it's not really necessary, simple find & replace would do the job too
+
+// for syscall users
+#define VM_LONG(x)		(*(int*)&(x))	//note: on 64bit platforms, the later bits can contain junk
+#define VM_FLOAT(x)		(*(float*)&(x))	//note: on 64bit platforms, the later bits can contain junk
+#define VM_POINTERQ(x)	((x)?(void*)((char *)offset+((x)%mask)):NULL)
+#define VM_OOB(p,l)		((p) + (l) >= mask || VM_POINTERQ(p) < offset)
+
+#define qintptr_t intptr_t
+#define quintptr_t uintptr_t
+
 #define qboolean qbool
 #ifdef GLQUAKE
 #define RGLQUAKE
@@ -1485,7 +1495,7 @@ qintptr_t VARGS Plug_Net_Accept(void *offset, quintptr_t mask, const qintptr_t *
 {
 	int handle = VM_LONG(arg[0]);
 	struct sockaddr_in address;
-	int addrlen;
+	socklen_t addrlen;
 	int sock;
 	u_long _true = 1;
 

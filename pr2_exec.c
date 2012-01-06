@@ -36,14 +36,15 @@ void ED2_PrintEdicts (void);
 void PR2_Profile_f (void);
 void ED2_PrintEdict_f (void);
 void ED_Count (void);
-void PR_CleanLogText_Init();
 void PR2_Init(void)
 {
 	int p;
 	int usedll;
 	Cvar_Register(&sv_progtype);
 	Cvar_Register(&sv_progsname);
+#ifdef WITH_NQPROGS
 	Cvar_Register(&sv_forcenqprogs);
+#endif
 #ifdef QVM_PROFILE
 	Cvar_Register(&sv_enableprofile);
 #endif
@@ -65,14 +66,12 @@ void PR2_Init(void)
 	Cmd_AddCommand ("edictcount", ED_Count);
 	Cmd_AddCommand ("profile", PR2_Profile_f);
 	Cmd_AddCommand ("mod", PR2_GameConsoleCommand);
-
-	PR_CleanLogText_Init();
 }
 
 //===========================================================================
 // PR2_GetString
 //===========================================================================
-char *PR2_GetString(int num)
+char *PR2_GetString(intptr_t num)
 {
 	qvm_t *qvm;
 
@@ -109,10 +108,10 @@ char *PR2_GetString(int num)
 // PR2_SetString
 // FIXME for VM
 //===========================================================================
-int PR2_SetString(char *s)
+intptr_t PR2_SetString(char *s)
 {
 	qvm_t *qvm;
-	int off;
+	intptr_t off;
 	if(!sv_vm)
 		return PR_SetString(s);
 
@@ -122,7 +121,7 @@ int PR2_SetString(char *s)
 		return PR_SetString(s);
 
 	case VM_NATIVE:
-		return (int) s;
+		return (intptr_t) s;
 
 	case VM_BYTECODE:
 		qvm = (qvm_t*)(sv_vm->hInst);

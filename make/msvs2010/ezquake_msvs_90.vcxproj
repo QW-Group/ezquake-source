@@ -662,7 +662,7 @@
     <ClCompile Include="..\..\sv_save.c" />
     <ClCompile Include="..\..\sv_send.c" />
     <ClCompile Include="..\..\sv_user.c" />
-    <ClCompile Include="..\..\sv_world.c" />
+    <ClCompile Include="..\..\world.c" />
     <ClCompile Include="..\..\pr2_cmds.c" />
     <ClCompile Include="..\..\pr2_edict.c" />
     <ClCompile Include="..\..\pr2_exec.c" />
@@ -1069,7 +1069,7 @@
     <ClInclude Include="..\..\menu.h" />
     <ClInclude Include="..\..\pmove.h" />
     <ClInclude Include="..\..\server.h" />
-    <ClInclude Include="..\..\sv_world.h" />
+    <ClInclude Include="..\..\world.h" />
     <ClInclude Include="..\..\cdaudio.h" />
     <ClInclude Include="..\..\qsound.h" />
     <ClInclude Include="..\..\common_draw.h" />

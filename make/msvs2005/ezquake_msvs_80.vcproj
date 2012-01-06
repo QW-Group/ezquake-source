@@ -1113,7 +1113,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\sv_world.c"
+					RelativePath="..\..\world.c"
 					>
 				</File>
 			</Filter>
@@ -2707,7 +2707,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\sv_world.h"
+					RelativePath="..\..\world.h"
 					>
 				</File>
 			</Filter>

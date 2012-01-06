@@ -22,29 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __SERVER_H__
 
 #include "progs.h"
-#include "qtv.h"
-
-// { !!! FIXME: MOVE ME TO SYS.H !!!
-
-#ifdef _WIN32
-
-typedef HMODULE DL_t;
-
-#define DLEXT "dll"
-
-#else
-
-typedef void *DL_t;
-
-#define DLEXT "so"
-
-#endif /* _WIN32 */
-
-DL_t Sys_DLOpen (const char *path);
-qbool Sys_DLClose( DL_t dl);
-void *Sys_DLProc (DL_t dl, const char *name);
-
-// }
+#ifdef USE_PR2
+#include "pr2_vm.h"
+#include "pr2.h"
+#include "g_public.h"
+#endif
 
 #define CHAT_ICON_EXPERIMENTAL 1
 
@@ -141,6 +123,14 @@ typedef struct
 
 #define	NUM_SPAWN_PARMS 16
 
+// { sv_antilag related
+typedef struct
+{
+	qbool present;
+	vec3_t laggedpos;
+} laggedentinfo_t;
+// }
+
 typedef enum
 {
 	cs_free,		// can be reused for a new connection
@@ -158,9 +148,21 @@ typedef struct
 	// reply
 	double			senttime;
 	float			ping_time;
+
+// { sv_antilag
+	double				sv_time;
+// }
+
 	packet_entities_t	entities;
 } client_frame_t;
 
+typedef struct
+{
+	double			localtime;
+	vec3_t			origin;
+} antilag_position_t;
+
+#define MAX_ANTILAG_POSITIONS	128
 #define MAX_BACK_BUFFERS	128
 #define MAX_STUFFTEXT		256
 #define	CLIENT_LOGIN_LEN	16
@@ -184,6 +186,9 @@ typedef struct client_s
 	int				userid;				// identifying number
 	ctxinfo_t		_userinfo_ctx_;			// infostring
 	ctxinfo_t		_userinfoshort_ctx_;	// infostring
+
+	antilag_position_t	antilag_positions[MAX_ANTILAG_POSITIONS];
+	int				antilag_position_next;
 
 	usercmd_t		lastcmd;			// for filling in big drops and partial predictions
 	double			localtime;			// of last message
@@ -220,6 +225,12 @@ typedef struct client_s
 	double			connection_started;		// or time of disconnect for zombies
 	qbool			send_message;			// set on frames a datagram arived on
 
+// { sv_antilag related
+	laggedentinfo_t	laggedents[MAX_CLIENTS];
+	unsigned int	laggedents_count;
+	float			laggedents_frac;
+// }
+
 // spawn parms are carried from level to level
 	float			spawn_parms[NUM_SPAWN_PARMS];
 
@@ -233,12 +244,9 @@ typedef struct client_s
 	client_frame_t	frames[UPDATE_BACKUP];		// updates can be deltad from here
 
 	vfsfile_t		*download;			// file being downloaded
-
-#ifdef PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	int				download_chunks_perframe;
-#endif
-#endif
+#endif // FTE_PEXT_CHUNKEDDOWNLOADS
 	int				downloadsize;			// total bytes
 	int				downloadcount;			// bytes sent
 // demo download list for internal cmd dl function
@@ -269,7 +277,6 @@ typedef struct client_s
 	int				logincount;
 	float			lasttoptime;			// time of last topcolor change
 	int				lasttopcount;			// count of last topcolor change
-	int				lastconnect;
 	int				spec_print;
 	double			cuff_time;
 //bliP: 24/9 anti speed ->
@@ -282,12 +289,12 @@ typedef struct client_s
 
 #ifdef PROTOCOL_VERSION_FTE
 	unsigned int	fteprotocolextensions;
-#endif
+#endif // PROTOCOL_VERSION_FTE
 
 #ifdef PROTOCOL_VERSION_FTE2
 	unsigned int	fteprotocolextensions2;
-#endif
-
+#endif // PROTOCOL_VERSION_FTE2
+ 
 #ifdef FTE_PEXT2_VOICECHAT
 	unsigned int voice_read;	/*place in ring*/
 	unsigned char voice_mute[MAX_CLIENTS/8];
@@ -340,7 +347,6 @@ typedef struct
 
 	qbool			fixangle;
 
-	float			cmdtime;
 	float			sec;
 
 } demo_client_t;
@@ -381,6 +387,8 @@ typedef struct mvdpendingdest_s
 	int insize;
 	int outsize;
 
+	qbool			must_be_qizmo_tcp_connect; // HACK, this stream should not be allowed but just checked ONLY AND ONLY for qizmo tcp connection
+
 	double			io_time; // when last IO occur on socket, so we can timeout this dest
 	netadr_t		na;
 
@@ -418,6 +426,7 @@ typedef struct mvddest_s
 	int				inbuffersize;
 
 	char			qtvname[64];
+
 	qtvuser_t		*qtvuserlist;
 // }
 
@@ -432,7 +441,7 @@ typedef struct
 	double			time;
 	double			pingtime;
 
-	// SOmething like time of last mvd message, so we can guess delta milliseconds for next message.
+	// Something like time of last mvd message, so we can guess delta milliseconds for next message.
 	// you better not relay on this variable...
 	double			prevtime;
 
@@ -493,27 +502,32 @@ typedef struct
 } challenge_t;
 
 // TCPCONNECT -->
-typedef struct svtcpstream_s {
-	int socketnum;
-	int inlen;
-	qbool waitingforprotocolconfirmation;
-	char inbuffer[1500];
-	float timeouttime;
-	netadr_t remoteaddr;
-	struct svtcpstream_s *next;
+typedef struct svtcpstream_s
+{
+	int				socketnum; // socket
+	qbool			waitingforprotocolconfirmation; // wait for "qizmo\n", first 6 bytes before confirming that is tcpconnection
+	int				inlen; // how much bytes we have in inbuffer
+	char			inbuffer[1500]; // recv buffer
+	int				outlen; // how much bytes we have in outbuffer
+	char			outbuffer[1500 * 5]; // send buffer
+	qbool			drop; // do we need drop that connection ASAP
+	float			timeouttime; // I/O timeout
+	netadr_t		remoteaddr; // peer remoter addr
+	struct svtcpstream_s *next; // next tcpconnection in list
 } svtcpstream_t;
 // <-- TCPCONNECT
 
 typedef struct
 {
 	int				spawncount;		// number of servers spawned since start,
-						// used to check late spawns
+									// used to check late spawns
 	int				lastuserid;		// userid of last spawned client
-	socket_t socketip;
+
+	socket_t		socketip;		// main server UDP socket.
 
 // TCPCONNECT -->
-	int sockettcp;
-	svtcpstream_t *tcpstreams;
+	int				sockettcp;		// server TCP socket, used for QTV/TCPCONNECT.
+	svtcpstream_t *	tcpstreams;
 // <-- TCPCONNECT
 
 	client_t		clients[MAX_CLIENTS];
@@ -523,15 +537,15 @@ typedef struct
 	int				heartbeat_sequence;
 	svstats_t		stats;
 
-	char				info[MAX_SERVERINFO_STRING];
+	char			info[MAX_SERVERINFO_STRING];
 
 #ifdef PROTOCOL_VERSION_FTE
 	unsigned int fteprotocolextensions;
-#endif
+#endif // PROTOCOL_VERSION_FTE
 
 #ifdef PROTOCOL_VERSION_FTE2
 	unsigned int fteprotocolextensions2;
-#endif
+#endif // PROTOCOL_VERSION_FTE2
 
 	// log messages are used so that fraglog processes can get stats
 	int				logsequence;		// the message currently being filled
@@ -586,6 +600,10 @@ typedef struct
 #define	FL_PARTIALGROUND		1024	// not all corners are valid
 #define	FL_WATERJUMP			2048	// player jumping out of water
 
+// { sv_antilag
+#define FL_LAGGEDMOVE			(1<<16)
+// }
+
 #define	SPAWNFLAG_NOT_EASY		256
 #define	SPAWNFLAG_NOT_MEDIUM		512
 #define	SPAWNFLAG_NOT_HARD		1024
@@ -628,15 +646,14 @@ typedef struct
 // do not join server as spectator if server full and sv_forcespec_onfull == 1
 #define SVF_NO_SPEC_ONFULL		(1<<1)
 
-
 // } server flags
 
 //============================================================================
 
 extern	cvar_t	sv_paused; // 1 - normal, 2 - auto (single player), 3 - both
-
-extern	cvar_t	sv_mintic, sv_maxtic, sv_ticrate;
 extern	cvar_t	sv_maxspeed;
+extern	cvar_t	sv_mintic, sv_maxtic, sv_maxfps;
+extern	cvar_t	sv_antilag, sv_antilag_frac, sv_antilag_no_pred, sv_antilag_projectiles;
 
 extern	int current_skill;
 
@@ -655,7 +672,6 @@ extern	cvar_t	sv_specprint;	//bliP: spectator print
 extern	server_static_t	svs;	// persistant server info
 extern	server_t	sv;	// local server
 extern	demo_t		demo;	// server demo struct
-//extern	entity_state_t	cl_state_entities[MAX_CLIENTS][UPDATE_BACKUP][MAX_PACKET_ENTITIES]; // client entities
 
 extern	client_t	*sv_client;
 extern	edict_t		*sv_player;
@@ -665,14 +681,11 @@ extern	char		localmodels[MAX_MODELS][MODEL_NAME_LEN]; // inline model names for 
 //extern	char		localinfo[MAX_LOCALINFO_STRING+1];
 extern  ctxinfo_t _localinfo_;
 
-extern	int		host_hunklevel;
-
 extern	qbool		sv_error;
 
-extern qbool		server_cfg_done;
-extern char		master_rcon_password[128];
+extern char			master_rcon_password[128];
 
-extern qbool is_ktpro;
+extern qbool		is_ktpro;
 
 //===========================================================
 
@@ -710,7 +723,6 @@ typedef struct
 } penfilter_t;
 //<-
 
-//void SV_Shutdown (void);
 void SV_Frame (double time);
 void SV_FinalMessage (const char *message);
 void SV_DropClient (client_t *drop);
@@ -769,10 +781,6 @@ qbool GameStarted(void);
 void SV_Script_f (void);
 int SV_GenerateUserID (void);
 
-char *Q_normalizetext (char *name); //bliP: red to white text
-unsigned char *Q_redtext (unsigned char *str); //bliP: white to red text
-unsigned char *Q_yelltext (unsigned char *str); //VVD: white to red text and yellow numbers
-
 //
 // sv_init.c
 //
@@ -801,8 +809,10 @@ void SV_SetMoveVars(void);
 typedef enum {RD_NONE, RD_CLIENT, RD_PACKET, RD_MOD} redirect_t;
 void SV_BeginRedirect (redirect_t rd);
 void SV_EndRedirect (void);
+qbool SV_AddToRedirect(char *msg);
 
 void SV_Multicast (vec3_t origin, int to);
+void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key);
 void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
 					   int replacement_te, int replacement_count);
 void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
@@ -902,7 +912,6 @@ extern cvar_t	sv_demoClearOld;
 extern cvar_t	sv_demoDir;
 extern cvar_t	sv_demofps;
 extern cvar_t	sv_demoPings;
-extern cvar_t	sv_demoNoVis;
 extern cvar_t	sv_demoMaxSize;
 extern cvar_t	sv_demoExtraNames;
 
@@ -913,6 +922,8 @@ extern cvar_t	sv_onrecordfinish;
 
 extern cvar_t	sv_ondemoremove;
 extern cvar_t	sv_demoRegexp;
+
+extern cvar_t	sv_silentrecord;
 
 void SV_MVDInit (void);
 char *SV_MVDNum(int num);

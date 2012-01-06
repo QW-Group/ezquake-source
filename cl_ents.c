@@ -1627,7 +1627,7 @@ void CL_ParsePlayerinfo (void)
 
 		if (flags & PF_COMMAND) 
 		{
-			MSG_ReadDeltaUsercmd (&nullcmd, &state->command, cl.protoversion);
+			MSG_ReadDeltaUsercmdEx (&nullcmd, &state->command, cl.protoversion);
 			CL_CalcPlayerFPS(info, state->command.msec);
 		}
 		else
@@ -1669,7 +1669,7 @@ void CL_ParsePlayerinfo (void)
 			state->weaponframe = 0;
 
 
-	state->alpha = 255;
+		state->alpha = 255;
 #ifdef FTE_PEXT_TRANS
 		if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
 			state->alpha = MSG_ReadByte();
@@ -2298,18 +2298,6 @@ static int MVD_TranslateFlags(int src)
 	return dst;
 }
 
-static float MVD_AdjustAngle(float current, float ideal, float fraction) {
-	float move;
-
-	move = ideal - current;
-	if (move >= 180)
-		move -= 360;
-	else if (move <= -180)
-		move += 360;
-
-	return current + fraction * move;
-}
-
 static void MVD_InitInterpolation(void) {
 	player_state_t *state, *oldstate;
 	int i, tracknum;
@@ -2441,17 +2429,17 @@ void MVD_Interpolate(void) {
 	}
 
 	// interpolate clients
-	for (i = 0; i < MAX_CLIENTS; i++) {
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
 		pplayer = &predicted_players[i];
 		state = &frame->playerstate[i];
 		oldstate = &oldframe->playerstate[i];
 
-		if (pplayer->predict) {
-			for (j = 0; j < 3; j++) {
-				state->viewangles[j] = MVD_AdjustAngle(oldstate->command.angles[j], pplayer->olda[j], f);
-				state->origin[j] = oldstate->origin[j] + f * (pplayer->oldo[j] - oldstate->origin[j]);
-				state->velocity[j] = oldstate->velocity[j] + f * (pplayer->oldv[j] - oldstate->velocity[j]);
-			}
+		if (pplayer->predict)
+		{
+			AngleInterpolate(oldstate->command.angles, f, pplayer->olda, state->viewangles);
+			VectorInterpolate(oldstate->origin, f, pplayer->oldo, state->origin);
+			VectorInterpolate(oldstate->velocity, f, pplayer->oldv, state->velocity);
 		}
 	}
 }
