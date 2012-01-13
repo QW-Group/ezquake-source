@@ -2923,6 +2923,34 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="VM"
+				>
+				<File
+					RelativePath="..\..\g_public.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\pr2.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\pr2_vm.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\pr_comp.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\progdefs.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\progs.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
