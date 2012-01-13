@@ -124,13 +124,7 @@ static void SV_CreateBaseline (void)
 		else
 		{
 			svent->e->baseline.colormap = 0;
-			svent->e->baseline.modelindex = SV_ModelIndex(
-#ifdef USE_PR2
-				PR2_GetString(svent->v.model)
-#else
-				PR_GetString(svent->v.model)
-#endif
-			                             );
+			svent->e->baseline.modelindex = SV_ModelIndex(PR_GetString(svent->v.model));
 		}
 
 		//
@@ -187,12 +181,7 @@ static void SV_SaveSpawnparms (void)
 
 		// call the progs to get default spawn parms for the new client
 		pr_global_struct->self = EDICT_TO_PROG(sv_client->edict);
-#ifdef USE_PR2
-		if (sv_vm)
-			PR2_GameSetChangeParms();
-		else
-#endif
-			PR_ExecuteProgram (PR_GLOBAL(SetChangeParms));
+		PR_GameSetChangeParms();
 		for (j=0 ; j<NUM_SPAWN_PARMS ; j++)
 			sv_client->spawn_parms[j] = (&PR_GLOBAL(parm1))[j];
 	}
@@ -243,7 +232,6 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	char savenames[MAX_CLIENTS][CLIENT_NAME_LEN];
 #endif
 
-	dfunction_t *f;
 	extern cvar_t sv_loadentfiles, sv_loadentfiles_dir;
 	char *entitystring;
 	char oldmap[MAP_NAME_LEN];
@@ -286,6 +274,8 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	if ( sv_vm )
 		PR2_GameShutDown();
 #endif
+
+	progs = NULL;
 
 	svs.spawncount++; // any partially connected client will be restarted
 
@@ -375,23 +365,13 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		ent->e->area.ed = ent; // yeah, pretty funny, but this help to find which edict_t own this area (link_t)
 	}
 
-#ifdef USE_PR2
-	fofs_items2 = ED2_FindFieldOffset ("items2"); // ZQ_ITEMS2 extension
-	fofs_maxspeed = ED2_FindFieldOffset ("maxspeed");
-	fofs_gravity = ED2_FindFieldOffset ("gravity");
-	fofs_movement = ED2_FindFieldOffset ("movement");
-	fofs_vw_index = ED2_FindFieldOffset ("vw_index");
-	fofs_hideentity = ED2_FindFieldOffset ("hideentity");
-	fofs_trackent = ED2_FindFieldOffset ("trackent");
-#else
 	fofs_items2 = ED_FindFieldOffset ("items2"); // ZQ_ITEMS2 extension
 	fofs_maxspeed = ED_FindFieldOffset ("maxspeed");
 	fofs_gravity = ED_FindFieldOffset ("gravity");
-	fofs_movement = 0;
+	fofs_movement = ED_FindFieldOffset ("movement");
 	fofs_vw_index = ED_FindFieldOffset ("vw_index");
 	fofs_hideentity = ED_FindFieldOffset ("hideentity");
 	fofs_trackent = ED_FindFieldOffset ("trackent");
-#endif
 
 	// leave slots at start for clients only
 	sv.num_edicts = MAX_CLIENTS+1;
@@ -499,7 +479,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 #ifdef USE_PR2
 	if(sv_vm)
-		strlcpy((char*)PR2_GetString(pr_global_struct->mapname) , sv.mapname, 64);
+		strlcpy((char*)PR2_GetString(pr_global_struct->mapname), sv.mapname, 64);
 	else
 #endif
 	PR_GLOBAL(mapname) = PR_SetString(sv.mapname);
@@ -555,12 +535,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		entitystring = CM_EntityString();
 	}
 	
-#ifdef USE_PR2
-	if ( sv_vm )
-		PR2_LoadEnts(entitystring);
-	else
-#endif
-		ED_LoadFromFile (entitystring);
+	PR_LoadEnts(entitystring);
 	// ********* End of External Entity support code *********
 
 	// look up some model indexes for specialized message compression
@@ -586,28 +561,14 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	Info_SetValueForKey (svs.info, "map", sv.mapname, MAX_SERVERINFO_STRING);
 
-#ifdef USE_PR2
-	if ( !sv_vm )
-#endif
-		if ((f = ED_FindFunction ("timeofday")) != NULL)
-		{
-			date_t date;
+	// calltimeofday.
+	{
+		extern void PF_calltimeofday (void);
+		pr_global_struct->time = sv.time;
+		pr_global_struct->self = 0;
 
-			SV_TimeOfDay(&date);
-
-			G_FLOAT(OFS_PARM0) = (float)date.sec;
-			G_FLOAT(OFS_PARM1) = (float)date.min;
-			G_FLOAT(OFS_PARM2) = (float)date.hour;
-			G_FLOAT(OFS_PARM3) = (float)date.day;
-			G_FLOAT(OFS_PARM4) = (float)date.mon;
-			G_FLOAT(OFS_PARM5) = (float)date.year;
-			G_INT(OFS_PARM6) = PR_SetTmpString(date.str);
-
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = 0;
-
-			PR_ExecuteProgram((func_t)(f - pr_functions));
-		}
+		PF_calltimeofday();
+	}
 
 	Con_DPrintf ("Server spawned.\n");
 

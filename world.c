@@ -317,12 +317,7 @@ static void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 		pr_global_struct->self = EDICT_TO_PROG(touch);
 		pr_global_struct->other = EDICT_TO_PROG(ent);
 		pr_global_struct->time = sv.time;
-#ifdef USE_PR2
-		if ( sv_vm )
-			PR2_EdictTouch();
-		else
-#endif
-			PR_ExecuteProgram (touch->v.touch);
+		PR_EdictTouch (touch->v.touch);
 
 		pr_global_struct->self = old_self;
 		pr_global_struct->other = old_other;
@@ -676,7 +671,7 @@ void SV_AntilagClipCheck ( areanode_t *node, moveclip_t *clip )
 		if (touch == clip->passedict)
 			continue;
 		if (touch->v.solid == SOLID_TRIGGER)
-			SV_Error ("Trigger (%s) in clipping list", PR2_GetString(touch->v.classname));
+			SV_Error ("Trigger (%s) in clipping list", PR_GetString(touch->v.classname));
 
 		if ((clip->type & MOVE_NOMONSTERS) && touch->v.solid != SOLID_BSP)
 			continue;

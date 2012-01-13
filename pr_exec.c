@@ -205,7 +205,7 @@ void PR_StackTrace (void)
 		if (!f)
 			Con_Printf ("<NO FUNCTION>\n");
 		else
-			Con_Printf ("%12s : %s\n", PR_GetString(f->s_file), PR_GetString(f->s_name));
+			Con_Printf ("%12s : %s\n", PR1_GetString(f->s_file), PR1_GetString(f->s_name));
 	}
 }
 
@@ -243,7 +243,7 @@ void PR_Profile_f (void)
 		if (best)
 		{
 			if (num < 10)
-				Con_Printf ("%7i %s\n", best->profile, PR_GetString(best->s_name));
+				Con_Printf ("%7i %s\n", best->profile, PR1_GetString(best->s_name));
 			num++;
 			best->profile = 0;
 		}
@@ -480,7 +480,7 @@ void PR_ExecuteProgram (func_t fnum)
 			c->_float = !a->vector[0] && !a->vector[1] && !a->vector[2];
 			break;
 		case OP_NOT_S:
-			c->_float = !a->string || !*PR_GetString(a->string);
+			c->_float = !a->string || !*PR1_GetString(a->string);
 			break;
 		case OP_NOT_FNC:
 			c->_float = !a->function;
@@ -498,7 +498,7 @@ void PR_ExecuteProgram (func_t fnum)
 			            (a->vector[2] == b->vector[2]);
 			break;
 		case OP_EQ_S:
-			c->_float = !strcmp(PR_GetString(a->string), PR_GetString(b->string));
+			c->_float = !strcmp(PR1_GetString(a->string), PR1_GetString(b->string));
 			break;
 		case OP_EQ_E:
 			c->_float = a->_int == b->_int;
@@ -517,7 +517,7 @@ void PR_ExecuteProgram (func_t fnum)
 			            (a->vector[2] != b->vector[2]);
 			break;
 		case OP_NE_S:
-			c->_float = strcmp(PR_GetString(a->string), PR_GetString(b->string));
+			c->_float = strcmp(PR1_GetString(a->string), PR1_GetString(b->string));
 			break;
 		case OP_NE_E:
 			c->_float = a->_int != b->_int;
@@ -667,13 +667,13 @@ void PR_ExecuteProgram (func_t fnum)
 
 }
 
-/*----------------------*/
+//=============================================================================
 
 char *pr_newstrtbl[MAX_PRSTR];
 char *pr_strtbl[MAX_PRSTR];
 int num_prstr;
 
-char *PR_GetString(int num)
+char *PR1_GetString(int num)
 {
 	if (num < 0)
 	{
@@ -681,7 +681,7 @@ char *PR_GetString(int num)
 		num = -num;
 		if (num >= 2 * MAX_PRSTR)
 		{
-			Con_Printf("PR_GetString: num = %d\n", num);// May be will be better to generate PR_RunError?
+			Con_Printf("PR1_GetString: num = %d\n", num);// May be will be better to generate PR_RunError?
 			return NULL;
 		}
 		if (num >= MAX_PRSTR)
@@ -731,4 +731,30 @@ int PR_SetTmpString(char *s)
 
 	strlcpy(tmp[index1], s, sizeof(tmp[index1]));
 	return PR_SetString(tmp[index1]);
+}
+
+//=============================================================================
+
+void PR1_GameClientDisconnect(int spec)
+{
+	if (spec)
+	{
+		if (SpectatorDisconnect)
+			PR_ExecuteProgram(SpectatorDisconnect);
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(ClientDisconnect));
+	}
+}
+
+//=============================================================================
+
+void PR1_PausedTic(float duration)
+{
+	if (GE_PausedTic)
+	{
+		G_FLOAT(OFS_PARM0) = duration;
+		PR_ExecuteProgram (GE_PausedTic);
+	}
 }

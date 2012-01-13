@@ -60,12 +60,13 @@ void PR2_Init(void)
 		Cvar_SetValue(&sv_progtype,usedll);
 	}
 
-
 	Cmd_AddCommand ("edict", ED2_PrintEdict_f);
 	Cmd_AddCommand ("edicts", ED2_PrintEdicts);
 	Cmd_AddCommand ("edictcount", ED_Count);
 	Cmd_AddCommand ("profile", PR2_Profile_f);
 	Cmd_AddCommand ("mod", PR2_GameConsoleCommand);
+
+	memset(pr_newstrtbl, 0, sizeof(pr_newstrtbl));
 }
 
 //===========================================================================
@@ -76,12 +77,12 @@ char *PR2_GetString(intptr_t num)
 	qvm_t *qvm;
 
 	if(!sv_vm)
-		return PR_GetString(num);
+		return PR1_GetString(num);
 
 	switch (sv_vm->type)
 	{
 	case VM_NONE:
-		return PR_GetString(num);
+		return PR1_GetString(num);
 
 	case VM_NATIVE:
 		if (num)
@@ -145,10 +146,17 @@ extern char *pr2_ent_data_ptr;
 
 void PR2_LoadEnts(char *data)
 {
-	pr2_ent_data_ptr = data;
+	if (sv_vm)
+	{
+		pr2_ent_data_ptr = data;
 
-	//Init parse
-	VM_Call(sv_vm, GAME_LOADENTS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		//Init parse
+		VM_Call(sv_vm, GAME_LOADENTS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	}
+	else
+	{
+		PR1_LoadEnts(data);
+	}
 }
 
 //===========================================================================
@@ -156,8 +164,10 @@ void PR2_LoadEnts(char *data)
 //===========================================================================
 void PR2_GameStartFrame()
 {
-	VM_Call(sv_vm, GAME_START_FRAME, (int) (sv.time * 1000), 0, 0, 0, 0, 0, 0, 0, 0,
-	        0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_START_FRAME, (int) (sv.time * 1000), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_GameStartFrame();
 }
 
 //===========================================================================
@@ -181,7 +191,10 @@ void PR2_GamePutClientInServer(int spec)
 //===========================================================================
 void PR2_GameClientDisconnect(int spec)
 {
-	VM_Call(sv_vm, GAME_CLIENT_DISCONNECT, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_CLIENT_DISCONNECT, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_GameClientDisconnect(spec);
 }
 
 //===========================================================================
@@ -222,7 +235,10 @@ qbool PR2_ClientSay(int isTeamSay)
 //===========================================================================
 void PR2_GameSetNewParms()
 {
-	VM_Call(sv_vm, GAME_SETNEWPARMS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_SETNEWPARMS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_GameSetNewParms();
 }
 
 //===========================================================================
@@ -230,32 +246,45 @@ void PR2_GameSetNewParms()
 //===========================================================================
 void PR2_GameSetChangeParms()
 {
-	VM_Call(sv_vm, GAME_SETCHANGEPARMS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_SETCHANGEPARMS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+	{
+		PR1_GameSetChangeParms();
+	}
 }
-
 
 //===========================================================================
 // EdictTouch
 //===========================================================================
-void PR2_EdictTouch()
+void PR2_EdictTouch(func_t f)
 {
-	VM_Call(sv_vm, GAME_EDICT_TOUCH, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_EDICT_TOUCH, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_EdictTouch(f);
 }
 
 //===========================================================================
 // EdictThink
 //===========================================================================
-void PR2_EdictThink()
+void PR2_EdictThink(func_t f)
 {
-	VM_Call(sv_vm, GAME_EDICT_THINK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_EDICT_THINK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_EdictThink(f);
 }
 
 //===========================================================================
 // EdictBlocked
 //===========================================================================
-void PR2_EdictBlocked()
+void PR2_EdictBlocked(func_t f)
 {
-	VM_Call(sv_vm, GAME_EDICT_BLOCKED, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_EDICT_BLOCKED, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_EdictBlocked(f);
 }
 
 //===========================================================================
@@ -314,7 +343,10 @@ void PR2_GameConsoleCommand(void)
 //===========================================================================
 void PR2_PausedTic(float duration)
 {
-	VM_Call(sv_vm, GAME_PAUSED_TIC, duration*1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_PAUSED_TIC, duration*1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_PausedTic(duration);
 }
 
 

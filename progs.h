@@ -117,7 +117,7 @@ void NQP_Reset (void);
 
 //============================================================================
 
-void PR_Init (void);
+void PR1_Init (void);
 
 void PR_ExecuteProgram (func_t fnum);
 void PR_LoadProgs (void);
@@ -158,13 +158,13 @@ int NUM_FOR_EDICT(edict_t *e);
 #define	G_EDICT(o) ((edict_t *)((byte *)sv.edicts+ *(int *)&pr_globals[o]))
 #define G_EDICTNUM(o) NUM_FOR_EDICT(G_EDICT(o))
 #define	G_VECTOR(o) (&pr_globals[o])
-#define	G_STRING(o) (PR_GetString(*(string_t *)&pr_globals[o]))
+#define	G_STRING(o) (PR1_GetString(*(string_t *)&pr_globals[o]))
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
 
 #define	E_FLOAT(e,o) (((float*)&e->v)[o])
 #define	E_INT(e,o) (*(int *)&((float*)&e->v)[o])
 #define	E_VECTOR(e,o) (&((float*)&e->v)[o])
-#define	E_STRING(e,o) (PR_GetString(*(string_t *)&((float*)&e->v)[PR_FIELDOFS(o)]))
+#define	E_STRING(e,o) (PR1_GetString(*(string_t *)&((float*)&e->v)[PR_FIELDOFS(o)]))
 
 extern	int		type_size[8];
 
@@ -196,12 +196,12 @@ void PR_RunError (char *error, ...);
 void ED_PrintEdicts (void);
 void ED_PrintNum (int ent);
 
-eval_t *GetEdictFieldValue(edict_t *ed, char *field);
+eval_t *PR1_GetEdictFieldValue(edict_t *ed, char *field);
 
-int ED_FindFieldOffset (char *field);
+int ED1_FindFieldOffset (char *field);
 
 //
-// PR STrings stuff
+// PR Strings stuff
 //
 #define MAX_PRSTR 1024
 
@@ -209,9 +209,38 @@ extern char *pr_strtbl[MAX_PRSTR];
 extern char *pr_newstrtbl[MAX_PRSTR];
 extern int num_prstr;
 
-char *PR_GetString(int num);
+char *PR1_GetString(int num);
 int PR_SetString(char *s);
 int PR_SetTmpString(char *s);
+
+void PR1_GameClientDisconnect(int spec);
+void PR1_PausedTic(float duration);
+
+#define PR1_GameSetChangeParms() PR_ExecuteProgram(PR_GLOBAL(SetChangeParms))
+#define PR1_GameSetNewParms() PR_ExecuteProgram(PR_GLOBAL(SetNewParms))
+#define PR1_GameStartFrame() PR_ExecuteProgram (PR_GLOBAL(StartFrame))
+#define PR1_LoadEnts ED_LoadFromFile
+#define PR1_EdictThink PR_ExecuteProgram
+#define PR1_EdictTouch PR_ExecuteProgram
+#define PR1_EdictBlocked PR_ExecuteProgram
+
+#ifndef USE_PR2
+	#define PR_Init PR1_Init
+	#define PR_GetString PR1_GetString
+	#define ED_FindFieldOffset ED1_FindFieldOffset
+	#define PR_GetEdictFieldValue PR1_GetEdictFieldValue
+
+	#define PR_GameClientDisconnect PR1_GameClientDisconnect
+	#define PR_PausedTic PR1_PausedTic
+
+	#define PR_GameSetChangeParms PR1_GameSetChangeParms
+	#define PR_GameSetNewParms PR1_GameSetNewParms
+	#define PR_GameStartFrame PR1_GameStartFrame
+	#define PR_LoadEnts PR1_LoadEnts
+	#define PR_EdictThink PR1_EdictThink
+	#define PR_EdictTouch PR1_EdictTouch
+	#define PR_EdictBlocked PR1_EdictBlocked
+#endif
 
 // pr_cmds.c
 void PR_InitBuiltins (void);

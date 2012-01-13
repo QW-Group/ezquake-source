@@ -62,7 +62,7 @@ void PF_error (void)
 	edict_t	*ed;
 
 	s = PF_VarString(0);
-	Con_Printf ("======SERVER ERROR in %s:\n%s\n", PR_GetString(pr_xfunction->s_name) ,s);
+	Con_Printf ("======SERVER ERROR in %s:\n%s\n", PR1_GetString(pr_xfunction->s_name) ,s);
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 
@@ -85,7 +85,7 @@ void PF_objerror (void)
 	edict_t	*ed;
 
 	s = PF_VarString(0);
-	Con_Printf ("======OBJECT ERROR in %s:\n%s\n", PR_GetString(pr_xfunction->s_name),s);
+	Con_Printf ("======OBJECT ERROR in %s:\n%s\n", PR1_GetString(pr_xfunction->s_name),s);
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 	ED_Free (ed);
@@ -194,7 +194,7 @@ ok:
 	else if (pr_nqprogs)
 	{
 		// hacks to make NQ progs happy
-		if (!strcmp(PR_GetString(e->v.model), "maps/b_explob.bsp"))
+		if (!strcmp(PR1_GetString(e->v.model), "maps/b_explob.bsp"))
 		{
 			VectorClear (e->v.mins);
 			VectorSet (e->v.maxs, 32, 32, 64);
@@ -1240,7 +1240,6 @@ void PF_calltimeofday (void)
 
 	if ((f = ED_FindFunction ("timeofday")) != NULL)
 	{
-
 		SV_TimeOfDay(&date);
 
 		G_FLOAT(OFS_PARM0) = (float)date.sec;
@@ -1253,7 +1252,6 @@ void PF_calltimeofday (void)
 
 		PR_ExecuteProgram((func_t)(f - pr_functions));
 	}
-
 }
 
 /*
@@ -2445,13 +2443,13 @@ void PF_makestatic (void)
 
 	ent = G_EDICT(OFS_PARM0);
 	//bliP: for maps with null models which crash clients (nmtrees.bsp) ->
-	if (!SV_ModelIndex(PR_GetString(ent->v.model)))
+	if (!SV_ModelIndex(PR1_GetString(ent->v.model)))
 		return;
 	//<-
 
 	MSG_WriteByte (&sv.signon,svc_spawnstatic);
 
-	MSG_WriteByte (&sv.signon, SV_ModelIndex(PR_GetString(ent->v.model)));
+	MSG_WriteByte (&sv.signon, SV_ModelIndex(PR1_GetString(ent->v.model)));
 
 	MSG_WriteByte (&sv.signon, ent->v.frame);
 	MSG_WriteByte (&sv.signon, ent->v.colormap);

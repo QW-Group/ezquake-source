@@ -70,6 +70,8 @@ extern cvar_t	sv_kicktop;
 extern cvar_t	sv_speedcheck; //bliP: 24/9
 //<-
 
+static void SetUpClientEdict (client_t *cl, edict_t *ent);
+
 static qbool IsLocalIP(netadr_t a)
 {
 	return a.ip[0] == 10 || (a.ip[0] == 172 && (a.ip[1] & 0xF0) == 16)
@@ -272,13 +274,7 @@ static void Cmd_New_f (void)
 	if (sv_client->rip_vip)
 		MSG_WriteString (&sv_client->netchan.message, "");
 	else
-		MSG_WriteString (&sv_client->netchan.message,
-#ifdef USE_PR2
-		                 PR2_GetString(sv.edicts->v.message)
-#else
-						 PR_GetString(sv.edicts->v.message)
-#endif
-		                );
+		MSG_WriteString (&sv_client->netchan.message, PR_GetString(sv.edicts->v.message));
 
 	// send the movevars
 	MSG_WriteFloat(&sv_client->netchan.message, movevars.gravity);
@@ -555,12 +551,7 @@ static void Cmd_Spawn_f (void)
 {
 	int		i;
 	client_t	*client;
-	edict_t	*ent;
-	eval_t *val;
 	unsigned n;
-#ifdef USE_PR2
-	string_t	savenetname;
-#endif
 
 	if (sv_client->state != cs_connected)
 	{
@@ -613,66 +604,23 @@ static void Cmd_Spawn_f (void)
 		ClientReliableWrite_String (sv_client, sv.lightstyles[i]);
 	}
 
-	// set up the edict
-	ent = sv_client->edict;
-
 	if (sv.loadgame)
 	{
 		// loaded games are already fully initialized 
 		// if this is the last client to be connected, unpause
+
+		// gravity and maxspeed are optional, set it if save file omited it.
+		edict_t	*ent = sv_client->edict;
+		sv_client->entgravity = fofs_gravity ? EdictFieldFloat(ent, fofs_gravity) : 1.0;
+		sv_client->maxspeed = fofs_maxspeed? EdictFieldFloat(ent, fofs_maxspeed) : (int)sv_maxspeed.value;
 
 		if (sv.paused & 1)
 			SV_TogglePause (NULL, 1);
 	}
 	else
 	{
-#ifdef USE_PR2
-		if ( sv_vm )
-		{
-			savenetname = ent->v.netname;
-			memset(&ent->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
-			ent->v.netname = savenetname;
-
-			// so spec will have right goalentity - if speccing someone
-			// qqshka {
-			if(sv_client->spectator && sv_client->spec_track > 0)
-				ent->v.goalentity = EDICT_TO_PROG(svs.clients[sv_client->spec_track-1].edict);
-
-			// }
-
-			//sv_client->name = PR2_GetString(ent->v.netname);
-			//strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
-		}
-		else
-#endif
-		{
-			memset (&ent->v, 0, progs->entityfields * 4);
-			ent->v.netname = PR_SetString(sv_client->name);
-		}
-		ent->v.colormap = NUM_FOR_EDICT(ent);
-		ent->v.team = 0;	// FIXME
-		if (pr_teamfield)
-			E_INT(ent, pr_teamfield) = PR_SetString(sv_client->team);
+		SetUpClientEdict(sv_client, sv_client->edict);
 	}
-
-	sv_client->entgravity = 1.0;
-	val =
-#ifdef USE_PR2
-	    PR2_GetEdictFieldValue(ent, "gravity");
-#else
-	    GetEdictFieldValue(ent, "gravity");
-#endif
-	if (val)
-		val->_float = 1.0;
-	sv_client->maxspeed = sv_maxspeed.value;
-	val =
-#ifdef USE_PR2
-	    PR2_GetEdictFieldValue(ent, "maxspeed");
-#else
-		GetEdictFieldValue(ent, "maxspeed");
-#endif
-	if (val)
-		val->_float = sv_maxspeed.value;
 
 	//
 	// force stats to be updated
@@ -699,7 +647,6 @@ static void Cmd_Spawn_f (void)
 	// when that is completed, a begin command will be issued
 	ClientReliableWrite_Begin (sv_client, svc_stufftext, 8);
 	ClientReliableWrite_String (sv_client, "skins\n" );
-
 }
 
 /*
@@ -722,13 +669,7 @@ static void SV_SpawnSpectator (void)
 	for (i=MAX_CLIENTS-1 ; i<sv.num_edicts ; i++)
 	{
 		e = EDICT_NUM(i);
-		if (
-#ifdef USE_PR2 /* phucking Linux implements strcmp as a macro */
-		    !strcmp(PR2_GetString(e->v.classname), "info_player_start")
-#else
-		    !strcmp(PR_GetString(e->v.classname), "info_player_start")
-#endif
-		)
+		if (!strcmp(PR_GetString(e->v.classname), "info_player_start"))
 		{
 			VectorCopy (e->v.origin, sv_player->v.origin);
 			VectorCopy (e->v.angles, sv_player->v.angles);
@@ -2474,24 +2415,22 @@ static void SetUpClientEdict (client_t *cl, edict_t *ent)
 		savenetname = ent->v.netname;
 		memset(&ent->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
 		ent->v.netname = savenetname;
-
-		// so spec will have right goalentity - if speccing someone
-		// qqshka {
-		if(sv_client->spectator && sv_client->spec_track > 0)
-			ent->v.goalentity = EDICT_TO_PROG(svs.clients[sv_client->spec_track-1].edict);
-		// }
-
-		//sv_client->name = PR2_GetString(ent->v.netname);
-		//strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
 	}
 	else
 #endif
 	{
 		memset (&ent->v, 0, progs->entityfields * 4);
-		ent->v.netname = PR_SetString(sv_client->name);
+		ent->v.netname = PR_SetString(cl->name);
 	}
-	
+	// so spec will have right goalentity - if speccing someone
+	if(cl->spectator && cl->spec_track > 0)
+		ent->v.goalentity = EDICT_TO_PROG(svs.clients[cl->spec_track-1].edict);
+
 	ent->v.colormap = NUM_FOR_EDICT(ent);
+
+	ent->v.team = 0;	// FIXME
+	if (pr_teamfield)
+		E_INT(ent, pr_teamfield) = PR_SetString(cl->team);
 
 	cl->entgravity = 1.0;
 	if (fofs_gravity)
@@ -2580,12 +2519,7 @@ static void Cmd_Join_f (void)
 	SetUpClientEdict (sv_client, sv_client->edict);
 
 	// call the progs to get default spawn parms for the new client
-#ifdef USE_PR2
-	if (sv_vm)
-		PR2_GameSetNewParms();
-	else
-#endif
-		PR_ExecuteProgram (PR_GLOBAL(SetNewParms));
+	PR_GameSetNewParms();
 
 	// copy spawn parms out of the client_t
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
@@ -2686,12 +2620,7 @@ static void Cmd_Observe_f (void)
 	SetUpClientEdict (sv_client, sv_client->edict);
 
 	// call the progs to get default spawn parms for the new client
-#ifdef USE_PR2
-	if (sv_vm)
-		PR2_GameSetNewParms();
-	else
-#endif
-		PR_ExecuteProgram (PR_GLOBAL(SetNewParms));
+	PR_GameSetNewParms();
 
 	SV_SpawnSpectator ();
 	
@@ -3512,11 +3441,7 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside) //bliP: 24/9
 	if (
 #if 0
 FIXME
-#ifdef USE_PR2
-	PR2_GetEdictFieldValue(sv_player, "brokenankle")
-#else
-	GetEdictFieldValue(sv_player, "brokenankle")
-#endif
+	PR_GetEdictFieldValue(sv_player, "brokenankle")
 	&&
 #endif
 	(pmove.velocity[2] == -270) && (pmove.cmd.buttons & BUTTON_JUMP))
@@ -3573,12 +3498,7 @@ FIXME
 				continue;
 			pr_global_struct->self = EDICT_TO_PROG(ent);
 			pr_global_struct->other = EDICT_TO_PROG(sv_player);
-#ifdef USE_PR2
-			if ( sv_vm )
-				PR2_EdictTouch();
-			else
-#endif
-				PR_ExecuteProgram (ent->v.touch);
+			PR_EdictTouch (ent->v.touch);
 			playertouch[n/8] |= 1 << (n%8);
 		}
 	}

@@ -250,6 +250,8 @@ void SV_Shutdown (char *finalmsg)
 	}
 #endif
 
+	progs = NULL;
+
 	memset (&sv, 0, sizeof(sv));
 	sv.state = ss_dead;
 #ifndef SERVERONLY
@@ -344,9 +346,6 @@ or unwillingly.  This is NOT called if the entire server is quiting
 or crashing.
 =====================
 */
-#ifdef USE_PR2
-void RemoveBot(client_t *cl);
-#endif
 void SV_DropClient (client_t *drop)
 {
 	//bliP: cuff, mute ->
@@ -363,6 +362,7 @@ void SV_DropClient (client_t *drop)
 #ifdef USE_PR2
 	if( drop->isBot )
 	{
+		extern void RemoveBot(client_t *cl);
 		RemoveBot(drop);
 		return;
 	}
@@ -371,34 +371,10 @@ void SV_DropClient (client_t *drop)
 
 	if (drop->state == cs_spawned)
 	{
-		if (!drop->spectator)
-		{
-			// call the prog function for removing a client
-			// this will set the body to a dead frame, among other things
-			pr_global_struct->self = EDICT_TO_PROG(drop->edict);
-#ifdef USE_PR2
-			if ( sv_vm )
-				PR2_GameClientDisconnect(0);
-			else
-#endif
-				PR_ExecuteProgram (PR_GLOBAL(ClientDisconnect));
-		}
-		else if (SpectatorDisconnect
-#ifdef USE_PR2
-			|| ( sv_vm )
-#endif
-			)
-		{
-			// call the prog function for removing a client
-			// this will set the body to a dead frame, among other things
-			pr_global_struct->self = EDICT_TO_PROG(drop->edict);
-#ifdef USE_PR2
-			if ( sv_vm )
-				PR2_GameClientDisconnect(1);
-			else
-#endif
-				PR_ExecuteProgram (SpectatorDisconnect);
-		}
+		// call the prog function for removing a client
+		// this will set the body to a dead frame, among other things
+		pr_global_struct->self = EDICT_TO_PROG(drop->edict);
+		PR_GameClientDisconnect(drop->spectator);
 	}
 
 	if (drop->spectator)
@@ -1393,12 +1369,7 @@ static void SVC_DirectConnect (void)
 #endif
 
 	// call the progs to get default spawn parms for the new client
-#ifdef USE_PR2
-	if ( sv_vm )
-		PR2_GameSetNewParms();
-	else
-#endif
-		PR_ExecuteProgram (PR_GLOBAL(SetNewParms));
+	PR_GameSetNewParms();
 
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
 		newcl->spawn_parms[i] = (&PR_GLOBAL(parm1))[i];
@@ -2426,12 +2397,7 @@ void SV_Cmd_Ban_f(void)
 // get ADMIN rights from MOD via "mod_admin" field, mod MUST export such field if wanna server ban support
 // ============
 
-	val =
-#ifdef USE_PR2
-	    PR2_GetEdictFieldValue(ent, "mod_admin");
-#else
-	    GetEdictFieldValue(ent, "mod_admin");
-#endif
+	val = PR_GetEdictFieldValue(ent, "mod_admin");
 	if (!val || !(val->_int & AF_REAL_ADMIN) ) {
 		Con_Printf("You are not an admin\n");
 		return;
@@ -2527,12 +2493,7 @@ void SV_Cmd_Banip_f(void)
 // get ADMIN rights from MOD via "mod_admin" field, mod MUST export such field if wanna server ban support
 // ============
 
-	val =
-#ifdef USE_PR2
-	    PR2_GetEdictFieldValue(ent, "mod_admin");
-#else
-	    GetEdictFieldValue(ent, "mod_admin");
-#endif
+	val = PR_GetEdictFieldValue(ent, "mod_admin");
 	if (!val || !(val->_int & AF_REAL_ADMIN) ) {
 		Con_Printf("You are not an admin\n");
 		return;
@@ -2597,12 +2558,7 @@ void SV_Cmd_Banremove_f(void)
 // get ADMIN rights from MOD via "mod_admin" field, mod MUST export such field if wanna server ban support
 // ============
 
-	val =
-#ifdef USE_PR2
-	    PR2_GetEdictFieldValue(ent, "mod_admin");
-#else
-	    GetEdictFieldValue(ent, "mod_admin");
-#endif
+	val = PR_GetEdictFieldValue(ent, "mod_admin");
 	if (!val || !(val->_int & AF_REAL_ADMIN) ) {
 		Con_Printf("You are not an admin\n");
 		return;
@@ -3167,15 +3123,7 @@ static void PausedTic (void)
 	if (sv.state != ss_active)
 		return;
 
-#ifdef USE_PR2
-	if ( sv_vm )
-		PR2_PausedTic(Sys_DoubleTime() - sv.pausedsince);
-	else
-#endif
-	if (GE_PausedTic) {
-		G_FLOAT(OFS_PARM0) = Sys_DoubleTime() - sv.pausedsince;
-		PR_ExecuteProgram (GE_PausedTic);
-	}
+	PR_PausedTic(Sys_DoubleTime() - sv.pausedsince);
 }
 
 static void KtproAirstepFix(void)
@@ -3907,11 +3855,7 @@ void SV_Init (void)
 	memset(&_localinfo_, 0, sizeof(_localinfo_));
 	_localinfo_.max = MAX_LOCALINFOS;
 
-#ifdef USE_PR2
-	PR2_Init();
-#else
 	PR_Init ();
-#endif
 
 	// send immediately
 	svs.last_heartbeat = -99999;
