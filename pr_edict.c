@@ -1207,10 +1207,6 @@ void PR_LoadProgs (void)
 
 	// add prog crc to the serverinfo
 	snprintf (num, sizeof(num), "%i", CRC_Block ((byte *)progs, filesize));
-#ifdef USE_PR2
-	Info_SetStar( &_localinfo_, "*qvm", "DAT" );
-	//	Info_SetValueForStarKey (svs.info, "*qvm", "DAT", MAX_SERVERINFO_STRING);
-#endif
 	Info_SetValueForStarKey (svs.info, "*progs", num, MAX_SERVERINFO_STRING);
 
 	// byte swap the header
