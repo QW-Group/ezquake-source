@@ -25,6 +25,7 @@
 /libs/linux-x86/*.a
 /libs/linux-x86_64/*.a
 /libs/windows-x86/*.lib
+/libs/windows-x86_64/*.lib
 /libs/mingw-x86/*.a
 /libs/macosx/*.a
 
