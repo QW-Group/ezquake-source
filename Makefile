@@ -119,13 +119,9 @@ GLCFLAGS=-DGLQUAKE -DWITH_JPEG $(OS_GL_CFLAGS)
 
 ifeq ($(TYPE),release)
 CFLAGS = $(BASE_CFLAGS) $(RELEASE_CFLAGS) -DNDEBUG
-else
-CFLAGS = $(BASE_CFLAGS) $(DEBUG_CFLAGS) -D_DEBUG
-endif
-
-ifeq ($(TYPE),release)
 LDFLAGS = -lm -lpthread -lrt
 else
+CFLAGS = $(BASE_CFLAGS) $(DEBUG_CFLAGS) -D_DEBUG
 LDFLAGS = -ggdb -lm -lpthread -lrt
 endif
 
@@ -136,6 +132,10 @@ ifeq ($(OS),freebsd)
 LOCALBASE ?= /usr/local
 CFLAGS += -I$(LOCALBASE)/include
 LDFLAGS += -L$(LOCALBASE)/lib
+endif
+
+ifeq ($(OS),linux)
+LDFLAGS += -lX11 -ldl
 endif
 
 include Makefile.list
