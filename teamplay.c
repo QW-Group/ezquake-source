@@ -3578,6 +3578,6 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_msgwaiting", TP_Msg_Waiting_f);
 	Cmd_AddCommand ("tp_msgslipped", TP_Msg_Slipped_f);
 	//TF messages
-	Cmd_AddCommand ("tp_msgtfconced", TP_TFConced_f);
+	Cmd_AddCommand ("tp_msgtfconced", TP_Msg_TFConced_f);
 	
 }

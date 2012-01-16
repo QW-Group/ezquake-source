@@ -50,7 +50,7 @@ extern void TP_Msg_Slipped_f (void);
 extern void TP_Msg_Replace_f (void);
 extern void TP_Msg_Trick_f (void);
 //TF messages
-extern void TP_TFConced_f (void);
+extern void TP_Msg_TFConced_f (void);
 
 extern const char* TP_MSG_Colored_Armor(void);
 extern const char * TP_MSG_Colored_Powerup(void);

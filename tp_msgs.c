@@ -119,21 +119,27 @@ GLOBAL void TP_Msg_Lost_f (void)
     MSGPART quad = "";
 	MSGPART over = "";
 	MSGPART dropped_or_lost = "";
-	MSGPART location_enemy = "{&cf00[&cfff}{%d}{&cf00]&cfff} {%E}";
+	MSGPART location_enemy = " {&cf00[&cfff}{%d}{&cf00]&cfff} {%E}";
 	extern cvar_t tp_name_quad;
 
 	if (DEAD()) {
 		if (HAVE_QUAD()) {
 			quad = tp_name_quad.string;			
-			over = " over";
+			over = " over ";
+			location_enemy = "{&cf00[&cfff}{%d}{&cf00]&cfff} {%E}";
 		}
-		if (HOLD_RL() || HOLD_LG())
-			dropped_or_lost = " {&cf00DROPPED} $weapon";
+		else
+			dropped_or_lost = "{&cf00lost&cfff}";
+
+		if (HOLD_RL() || HOLD_LG()) {
+			dropped_or_lost = "{&cf00DROPPED} $weapon";
+			location_enemy = " {&cf00[&cfff}{%d}{&cf00]&cfff} {%E}";
+		}
 	}
 	else
-		dropped_or_lost = " {&cf00lost&cfff}";
+		dropped_or_lost = "{&cf00lost&cfff}";
 
-	TP_Send_TeamSay("%s%s%s %s", quad, over, dropped_or_lost, location_enemy);
+	TP_Send_TeamSay("%s%s%s%s", quad, over, dropped_or_lost, location_enemy);
 }
 
 GLOBAL void TP_Msg_Report_f (void)
@@ -596,7 +602,7 @@ GLOBAL void TP_Msg_Trick_f (void)		{ TP_MSG_GENERIC("trick"); }
 GLOBAL void TP_Msg_Coming_f (void)		{ TP_MSG_GENERIC("coming"); } // coming
 
 //TF binds
-GLOBAL void TP_TFConced_f (void)
+GLOBAL void TP_Msg_TFConced_f (void)
 {
 	extern cvar_t tp_name_filter;
 	MSGPART conced = "";
