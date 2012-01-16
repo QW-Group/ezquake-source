@@ -750,6 +750,35 @@ void PR1_GameClientDisconnect(int spec)
 
 //=============================================================================
 
+void PR1_GameClientConnect(int spec)
+{
+	if (spec)
+	{
+		if (SpectatorConnect)
+			PR_ExecuteProgram(SpectatorConnect);
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(ClientConnect));
+	}
+}
+
+//=============================================================================
+
+void PR1_GamePutClientInServer(int spec)
+{
+	if (spec)
+	{
+		// none...
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(PutClientInServer));
+	}
+}
+
+//=============================================================================
+
 void PR1_PausedTic(float duration)
 {
 	if (GE_PausedTic)

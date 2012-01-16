@@ -1276,6 +1276,8 @@ void PR_LoadProgs (void)
 	PR_InitPatchTables();
 #endif
 
+#pragma msg("FIXME: init it to NULL in case of PR2??? Also give some nice and same prefix to all of them")
+
 	// find optional QC-exported functions
 	SpectatorConnect = ED_FindFunctionOffset ("SpectatorConnect");
 	SpectatorThink = ED_FindFunctionOffset ("SpectatorThink");

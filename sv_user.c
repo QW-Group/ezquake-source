@@ -676,7 +676,6 @@ static void SV_SpawnSpectator (void)
 			return;
 		}
 	}
-
 }
 
 /*
@@ -706,69 +705,22 @@ static void Cmd_Begin_f (void)
 	if (!sv.loadgame)
 	{
 		if (sv_client->spectator)
-		{
 			SV_SpawnSpectator ();
 
-			if (SpectatorConnect
-#ifdef USE_PR2
-					|| sv_vm
-#endif
-			   )
-			{
-				// copy spawn parms out of the client_t
-				for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
-					(&PR_GLOBAL(parm1))[i] = sv_client->spawn_parms[i];
+		// copy spawn parms out of the client_t
+		for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
+			(&PR_GLOBAL(parm1))[i] = sv_client->spawn_parms[i];
 
-				// call the spawn function
-				pr_global_struct->time = sv.time;
-				pr_global_struct->self = EDICT_TO_PROG(sv_player);
-				G_FLOAT(OFS_PARM0) = (float) sv_client->vip;
-#ifdef USE_PR2
-				if ( sv_vm )
-					PR2_GameClientConnect(1);
-				else
-#endif
-					PR_ExecuteProgram (SpectatorConnect);
+		// call the spawn function
+		pr_global_struct->time = sv.time;
+		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		G_FLOAT(OFS_PARM0) = (float) sv_client->vip;
+		PR_GameClientConnect(sv_client->spectator);
 
-#ifdef USE_PR2
-				// qqshka:	seems spectator is sort of hack in QW
-				//			I let qvm mods serve spectator like we do for normal player
-				if ( sv_vm )
-				{
-					pr_global_struct->time = sv.time;
-					pr_global_struct->self = EDICT_TO_PROG(sv_player);
-					PR2_GamePutClientInServer(1); // let mod know we put spec not player
-				}
-#endif
-			}
-		}
-		else
-		{
-			// copy spawn parms out of the client_t
-			for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
-				(&PR_GLOBAL(parm1))[i] = sv_client->spawn_parms[i];
-
-			// call the spawn function
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = EDICT_TO_PROG(sv_player);
-			G_FLOAT(OFS_PARM0) = (float) sv_client->vip;
-#ifdef USE_PR2
-			if ( sv_vm )
-				PR2_GameClientConnect(0);
-			else
-#endif
-				PR_ExecuteProgram (PR_GLOBAL(ClientConnect));
-
-			// actually spawn the player
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = EDICT_TO_PROG(sv_player);
-#ifdef USE_PR2
-			if ( sv_vm )
-				PR2_GamePutClientInServer(0);
-			else
-#endif
-				PR_ExecuteProgram (PR_GLOBAL(PutClientInServer));
-		}
+		// actually spawn the player
+		pr_global_struct->time = sv.time;
+		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		PR_GamePutClientInServer(sv_client->spectator);
 	}
 
 	// clear the net statistics, because connecting gives a bogus picture
@@ -1579,11 +1531,11 @@ static void SV_Say (qbool team)
 	{ // remove surrounding "
 		p++;
 		strlcat(text, p, sizeof(text));
-		text[max(0,strlen(text)-1)] = 0; // actualy here we remove closing ", but without any check, just in hope...
+		text[max(0,(int)strlen(text)-1)] = 0; // actualy here we remove closing ", but without any check, just in hope...
 #ifdef USE_PR2
 		if ( !sv_vm )
 #endif
-			p[strlen(p)-1] = 0; // here remove closing " only for QC based mods
+			p[max(0,(int)strlen(p)-1)] = 0; // here remove closing " only for QC based mods
 	}
 	else
 		strlcat(text, p, sizeof(text));

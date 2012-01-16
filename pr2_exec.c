@@ -175,7 +175,10 @@ void PR2_GameStartFrame()
 //===========================================================================
 void PR2_GameClientConnect(int spec)
 {
-	VM_Call(sv_vm, GAME_CLIENT_CONNECT, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_CLIENT_CONNECT, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_GameClientConnect(spec);
 }
 
 //===========================================================================
@@ -183,7 +186,10 @@ void PR2_GameClientConnect(int spec)
 //===========================================================================
 void PR2_GamePutClientInServer(int spec)
 {
-	VM_Call(sv_vm, GAME_PUT_CLIENT_IN_SERVER, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_PUT_CLIENT_IN_SERVER, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_GamePutClientInServer(spec);
 }
 
 //===========================================================================

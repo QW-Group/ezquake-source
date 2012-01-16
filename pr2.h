@@ -41,7 +41,9 @@ void		PR2_GameStartFrame();
 void		PR2_LoadEnts(char *data);
 #define PR_LoadEnts PR2_LoadEnts
 void		PR2_GameClientConnect(int spec);
+#define PR_GameClientConnect PR2_GameClientConnect
 void		PR2_GamePutClientInServer(int spec);
+#define PR_GamePutClientInServer PR2_GamePutClientInServer
 void		PR2_GameClientDisconnect(int spec);
 #define PR_GameClientDisconnect PR2_GameClientDisconnect
 void		PR2_GameClientPreThink(int spec);

@@ -214,6 +214,8 @@ int PR_SetString(char *s);
 int PR_SetTmpString(char *s);
 
 void PR1_GameClientDisconnect(int spec);
+void PR1_GameClientConnect(int spec);
+void PR1_GamePutClientInServer(int spec);
 void PR1_PausedTic(float duration);
 
 #define PR1_GameSetChangeParms() PR_ExecuteProgram(PR_GLOBAL(SetChangeParms))
@@ -231,6 +233,8 @@ void PR1_PausedTic(float duration);
 	#define PR_GetEdictFieldValue PR1_GetEdictFieldValue
 
 	#define PR_GameClientDisconnect PR1_GameClientDisconnect
+	#define PR_GameClientConnect PR1_GameClientConnect
+	#define PR_GamePutClientInServer PR1_GamePutClientInServer
 	#define PR_PausedTic PR1_PausedTic
 
 	#define PR_GameSetChangeParms PR1_GameSetChangeParms
