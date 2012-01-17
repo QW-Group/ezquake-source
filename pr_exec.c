@@ -698,15 +698,14 @@ int PR_SetString(char *s)
 
 	if (s - pr_strings < 0)
 	{
-		for (i = 0; i <= num_prstr; i++)
+		for (i = 0; i < num_prstr; i++)
 			if (pr_strtbl[i] == s)
-				break;
-		if (i < num_prstr)
-			return -i;
-		if (num_prstr == MAX_PRSTR - 1)
+				return -i;
+
+		if (num_prstr + 1 >= MAX_PRSTR)
 			Sys_Error("MAX_PRSTR");
-		num_prstr++;
-		pr_strtbl[num_prstr] = s;
+
+		pr_strtbl[++num_prstr] = s;
 		//Con_DPrintf("SET:%d == %s\n", -num_prstr, s);
 		return -num_prstr;
 	}
