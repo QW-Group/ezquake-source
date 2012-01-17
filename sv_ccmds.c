@@ -430,8 +430,6 @@ void SV_Map (qbool now)
 #ifndef SERVERONLY
 		CL_BeginLocalConnection ();
 #endif
-		SV_BroadcastCommand ("changing\n");
-		SV_SendMessagesToAll ();
 
 		// -> scream
 		if ((int)frag_log_type.value)
@@ -457,7 +455,9 @@ void SV_Map (qbool now)
 
 		SV_SpawnServer (level, !strcasecmp(Cmd_Argv(0), "devmap"));
 
-		SV_BroadcastCommand ("reconnect\n");
+		SV_BroadcastCommand ("changing\n"
+							 "reconnect\n");
+		SV_SendMessagesToAll ();
 
 		return;
 	}

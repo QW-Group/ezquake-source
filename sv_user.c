@@ -854,7 +854,8 @@ void SV_CompleteDownoload(void)
 	// if map changed tell the client to reconnect
 	if (sv_client->spawncount != svs.spawncount)
 	{
-		char *str = "changing\nreconnect\n";
+		char *str = "changing\n"
+					"reconnect\n";
 
 		ClientReliableWrite_Begin (sv_client, svc_stufftext, strlen(str)+2);
 		ClientReliableWrite_String (sv_client, str);
