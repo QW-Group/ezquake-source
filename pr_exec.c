@@ -778,6 +778,36 @@ void PR1_GamePutClientInServer(int spec)
 
 //=============================================================================
 
+qbool PR1_ClientSay(int isTeamSay, char *message)
+{
+	extern func_t ChatMessage;
+
+	qbool ret = false;
+
+	if (ChatMessage)
+	{
+		int j;
+
+		// remove surrounding " if any.
+		if (message[0] == '"' && (j = (int)strlen(message)) > 2 && message[j-1] == '"')
+		{
+			message++;  // skip opening ".
+			message[max(0,(int)strlen(message)-1)] = 0;   // truncate closing ".
+		}
+
+		G_INT(OFS_PARM0) = PR_SetTmpString(message);
+		G_FLOAT(OFS_PARM1) = (float)isTeamSay;
+
+		PR_ExecuteProgram(ChatMessage);
+
+		ret = !!G_FLOAT(OFS_RETURN);
+	}
+
+	return ret;
+}
+
+//=============================================================================
+
 void PR1_PausedTic(float duration)
 {
 	if (GE_PausedTic)

@@ -230,11 +230,18 @@ qbool PR2_ClientCmd()
 //===========================================================================
 // ClientSay return false if say unhandled by mod
 //===========================================================================
-qbool PR2_ClientSay(int isTeamSay)
+qbool PR2_ClientSay(int isTeamSay, char *message)
 {
-	return VM_Call(sv_vm, GAME_CLIENT_SAY, isTeamSay, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-}
+	//
+	// message - used for QC based mods only.
+	// PR2 mods get it from Cmd_Args() and such.
+	//
 
+	if (sv_vm)
+		return VM_Call(sv_vm, GAME_CLIENT_SAY, isTeamSay, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		return PR1_ClientSay(isTeamSay, message);
+}
 
 //===========================================================================
 // GameSetNewParms

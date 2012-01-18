@@ -49,7 +49,8 @@ void		PR2_GameClientDisconnect(int spec);
 void		PR2_GameClientPreThink(int spec);
 void		PR2_GameClientPostThink(int spec);
 qbool		PR2_ClientCmd();
-qbool		PR2_ClientSay(int isTeamSay);
+qbool		PR2_ClientSay(int isTeamSay, char *message);
+#define PR_ClientSay PR2_ClientSay
 void		PR2_GameSetNewParms();
 #define PR_GameSetNewParms PR2_GameSetNewParms
 void		PR2_GameSetChangeParms();

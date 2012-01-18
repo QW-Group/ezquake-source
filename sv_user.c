@@ -1505,8 +1505,6 @@ SV_Say
 ==================
 */
 
-extern func_t ChatMessage;
-
 static void SV_Say (qbool team)
 {
 	client_t *client;
@@ -1549,46 +1547,18 @@ static void SV_Say (qbool team)
 		return;
 	}
 
-	if (ChatMessage)
-	{
-		// remove surrounding " if any.
-		if (p[0] == '"' && (j = (int)strlen(p)) > 2 && p[j-1] == '"')
-		{
-			p++;  // skip opening ".
-			p[max(0,(int)strlen(p)-1)] = 0;   // truncate closing ".
-		}
+	// try handle say in the mod.
+	SV_EndRedirect ();
 
-		SV_EndRedirect ();
+	pr_global_struct->time = sv.time;
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
 
-		G_INT(OFS_PARM0) = PR_SetTmpString(p);
-		G_FLOAT(OFS_PARM1) = (float)team;
+	j = PR_ClientSay(team, p);
 
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		PR_ExecuteProgram (ChatMessage);
-		SV_BeginRedirect (RD_CLIENT);
-		if (G_FLOAT(OFS_RETURN))
-			return;
-	}
+	SV_BeginRedirect (RD_CLIENT);
 
-#ifdef USE_PR2
-	if ( sv_vm )
-	{
-		qbool ret;
-
-		SV_EndRedirect ();
-
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-
-		ret = PR2_ClientSay(team);
-
-		SV_BeginRedirect (RD_CLIENT);
-
-		if (ret)
-			return; // say/say_team was handled by mod
-	}
-#endif
+	if (j)
+		return; // say was handled by mod.
 
 	if (sv_client->spectator && (!(int)sv_spectalk.value || team))
 		strlcpy(text, va("[SPEC] %s: %s", sv_client->name, text), sizeof(text));
