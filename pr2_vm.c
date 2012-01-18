@@ -1233,4 +1233,4 @@ void PrintInstruction( qvm_t * qvm )
 
 }
 
-#endif				/* USE_PR2 */
+#endif /* USE_PR2 */

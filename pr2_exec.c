@@ -382,5 +382,4 @@ void PR2_PausedTic(float duration)
 		PR1_PausedTic(duration);
 }
 
-
 #endif /* USE_PR2 */
