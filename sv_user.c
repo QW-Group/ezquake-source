@@ -1507,6 +1507,7 @@ SV_Say
 
 static void SV_Say (qbool team)
 {
+	qbool	fake = false;
 	client_t *client;
 	int		j, tmp, cls = 0;
 	char	*p; // used basically for QC based mods.
@@ -1602,14 +1603,12 @@ static void SV_Say (qbool team)
 	Sys_Printf ("%s", text);
 	SV_Write_Log(CONSOLE_LOG, 1, text);
 
+	fake = ( strchr(text, 13) ? true : false ); // check if string contain "$\"
+
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
 	{
 		if (client->state < cs_preconnected)
 			continue;
-
-		if (sv_client->spectator && !(int)sv_spectalk.value)
-			if (!client->spectator)
-				continue;
 
 		if (team)
 		{
@@ -1617,34 +1616,40 @@ static void SV_Say (qbool team)
 			if (sv_client->spectator)
 			{
 				if (!client->spectator)
-					continue;
+					continue;	// on different teams
 			}
 			else
 			{
-#ifdef USE_PR2
-				if (sv_vm)
+				if (sv_client == client)
+					; // send msg to self anyway
+				else if (client->spectator)
 				{
-					if (client->spectator)
-					{
-						if(   !(int)sv_sayteam_to_spec.value // player can't say_team to spec in this case
-						   || (   client->spec_track <= 0
-							   && strcmp(sv_client->team, client->team)
-							  ) // spec do not track player and on different team
-						   || (   client->spec_track  > 0
-							   && strcmp(sv_client->team, svs.clients[client->spec_track - 1].team)
-							  ) // spec track player on different team
-						  )
-						continue;	// on different teams
-					}
-					else if (   sv_client != client // send msg to self anyway
-							 && (!(int)teamplay.value || strcmp(sv_client->team, client->team))
-							)
-						continue;	// on different teams
+					if(   !sv_sayteam_to_spec.value // player can't say_team to spec in this case
+					   || !fake // self say_team does't contain $\ so this is treat as private message
+					   || (   client->spec_track <= 0
+						   && strcmp(sv_client->team, client->team)
+						  ) // spec do not track player and on different team
+					   || (   client->spec_track  > 0
+						   && strcmp(sv_client->team, svs.clients[client->spec_track - 1].team)
+						  ) // spec track player on different team
+					  )
+					continue;	// on different teams
 				}
-				else
-#endif
- 					if (strcmp(sv_client->team, client->team) || client->spectator)
-						continue;	// on different teams
+				else if (coop.value)
+					; // allow team messages to everyone in coop from players.
+				else if (!teamplay.value)
+					continue; // non team game
+				else if (strcmp(sv_client->team, client->team))
+					continue; // on different teams
+			}
+		}
+		else
+		{
+			if (sv_client->spectator)
+			{
+				// check for spectalk off.
+				if (!client->spectator && !(int)sv_spectalk.value)
+					continue; // off - specs can't talk to players.
 			}
 		}
 
