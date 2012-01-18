@@ -216,6 +216,8 @@ int PR_SetTmpString(char *s);
 void PR1_GameClientDisconnect(int spec);
 void PR1_GameClientConnect(int spec);
 void PR1_GamePutClientInServer(int spec);
+void PR1_GameClientPreThink(int spec);
+void PR1_GameClientPostThink(int spec);
 qbool PR1_ClientSay(int isTeamSay, char *message);
 void PR1_PausedTic(float duration);
 
@@ -239,6 +241,8 @@ void PR1_PausedTic(float duration);
 	#define PR_GameClientDisconnect PR1_GameClientDisconnect
 	#define PR_GameClientConnect PR1_GameClientConnect
 	#define PR_GamePutClientInServer PR1_GamePutClientInServer
+	#define PR_GameClientPreThink PR1_GameClientPreThink
+	#define PR_GameClientPostThink PR1_GameClientPostThink
 	#define PR_ClientSay PR1_ClientSay
 	#define PR_PausedTic PR1_PausedTic
 

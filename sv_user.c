@@ -2329,13 +2329,9 @@ static void Cmd_ShowMapsList_f(void)
 static void SetUpClientEdict (client_t *cl, edict_t *ent)
 {
 #ifdef USE_PR2
-	string_t savenetname;
-#endif
-
-#ifdef USE_PR2
 	if (sv_vm)
 	{
-		savenetname = ent->v.netname;
+		string_t savenetname = ent->v.netname;
 		memset(&ent->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
 		ent->v.netname = savenetname;
 	}
@@ -3278,12 +3274,7 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside) //bliP: 24/9
 		PR_GLOBAL(frametime) = sv_frametime;
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-#ifdef USE_PR2
-		if ( sv_vm )
-			PR2_GameClientPreThink(0);
-		else
-#endif
-			PR_ExecuteProgram (PR_GLOBAL(PlayerPreThink));
+		PR_GameClientPreThink(0);
 
 		if (pr_nqprogs)
 		{
@@ -3398,12 +3389,7 @@ void SV_PostRunCmd(void)
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 		VectorCopy (sv_player->v.velocity, originalvel);
-#ifdef USE_PR2
-		if ( sv_vm )
-			PR2_GameClientPostThink(0);
-		else
-#endif
-			PR_ExecuteProgram (PR_GLOBAL(PlayerPostThink));
+		PR_GameClientPostThink(0);
 
 		if ( onground && originalvel[2] < 0 && sv_player->v.velocity[2] == 0
 		&& originalvel[0] == sv_player->v.velocity[0]
@@ -3420,20 +3406,11 @@ void SV_PostRunCmd(void)
 		else
 			SV_RunNewmis ();
 	}
-	else if (SpectatorThink
-#ifdef USE_PR2
-			 ||  ( sv_vm )
-#endif
-			)
+	else
 	{
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-#ifdef USE_PR2
-		if ( sv_vm )
-			PR2_GameClientPostThink(1);
-		else
-#endif
-			PR_ExecuteProgram (SpectatorThink);
+		PR_GameClientPostThink(1);
 	}
 }
 

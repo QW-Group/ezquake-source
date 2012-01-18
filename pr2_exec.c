@@ -208,7 +208,10 @@ void PR2_GameClientDisconnect(int spec)
 //===========================================================================
 void PR2_GameClientPreThink(int spec)
 {
-	VM_Call(sv_vm, GAME_CLIENT_PRETHINK, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_CLIENT_PRETHINK, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_GameClientPreThink(spec);
 }
 
 //===========================================================================
@@ -216,7 +219,10 @@ void PR2_GameClientPreThink(int spec)
 //===========================================================================
 void PR2_GameClientPostThink(int spec)
 {
-	VM_Call(sv_vm, GAME_CLIENT_POSTTHINK, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_CLIENT_POSTTHINK, spec, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_GameClientPostThink(spec);
 }
 
 //===========================================================================

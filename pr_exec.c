@@ -778,6 +778,35 @@ void PR1_GamePutClientInServer(int spec)
 
 //=============================================================================
 
+void PR1_GameClientPreThink(int spec)
+{
+	if (spec)
+	{
+		// none...
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(PlayerPreThink));
+	}
+}
+
+//=============================================================================
+
+void PR1_GameClientPostThink(int spec)
+{
+	if (spec)
+	{
+		if (SpectatorThink)
+			PR_ExecuteProgram(SpectatorThink);
+	}
+	else
+	{
+		PR_ExecuteProgram(PR_GLOBAL(PlayerPostThink));
+	}
+}
+
+//=============================================================================
+
 qbool PR1_ClientSay(int isTeamSay, char *message)
 {
 	extern func_t ChatMessage;

@@ -47,7 +47,9 @@ void		PR2_GamePutClientInServer(int spec);
 void		PR2_GameClientDisconnect(int spec);
 #define PR_GameClientDisconnect PR2_GameClientDisconnect
 void		PR2_GameClientPreThink(int spec);
+#define PR_GameClientPreThink PR2_GameClientPreThink
 void		PR2_GameClientPostThink(int spec);
+#define PR_GameClientPostThink PR2_GameClientPostThink
 qbool		PR2_ClientCmd();
 void		PR2_ClientKill();
 #define PR_ClientKill PR2_ClientKill
