@@ -1510,10 +1510,9 @@ extern func_t ChatMessage;
 static void SV_Say (qbool team)
 {
 	client_t *client;
-	int	j, tmp, cls = 0;
-	char	*p;
-	char	*i;
-	char	text[2048] = {0};
+	int		j, tmp, cls = 0;
+	char	*p; // used basically for QC based mods.
+	char	text[2048] = ""; // used if mod does not have own support for say/say_team.
 	qbool	write_begin;
 
 	if (Cmd_Argc () < 2)
@@ -1521,26 +1520,28 @@ static void SV_Say (qbool team)
 
 	p = Cmd_Args();
 
-	//bliP: kick fake ->
-	if (!team)
-		for (i = p; *i; i++) //bliP: 24/9 kickfake to unfake ->
-			if (*i == 13 && (int)sv_unfake.value) // ^M
-				*i = '#';
-	//<-
+	// unfake if requested.
+	if (!team && sv_unfake.value)
+	{
+		char *ch;
 
-	if (*p == '"')
-	{ // remove surrounding "
-		p++;
-		strlcat(text, p, sizeof(text));
-		text[max(0,(int)strlen(text)-1)] = 0; // actualy here we remove closing ", but without any check, just in hope...
-#ifdef USE_PR2
-		if ( !sv_vm )
-#endif
-			p[max(0,(int)strlen(p)-1)] = 0; // here remove closing " only for QC based mods
+		for (ch = p; *ch; ch++)
+			if (*ch == 13)
+				*ch = '#';
+	}
+
+	// remove surrounding " if any.
+	if (p[0] == '"' && (j = (int)strlen(p)) > 2 && p[j-1] == '"')
+	{
+		// form text[].
+		snprintf(text, sizeof(text), "%s", p + 1); // skip opening " and copy rest text including closing ".
+		text[max(0,(int)strlen(text)-1)] = '\n';   // replace closing " with new line.
 	}
 	else
-		strlcat(text, p, sizeof(text));
-	strlcat(text, "\n", sizeof(text));
+	{
+		// form text[].
+		snprintf(text, sizeof(text), "%s\n", p);
+	}
 
 	if (!sv_client->logged)
 	{
@@ -1548,9 +1549,15 @@ static void SV_Say (qbool team)
 		return;
 	}
 
-#if 1
 	if (ChatMessage)
 	{
+		// remove surrounding " if any.
+		if (p[0] == '"' && (j = (int)strlen(p)) > 2 && p[j-1] == '"')
+		{
+			p++;  // skip opening ".
+			p[max(0,(int)strlen(p)-1)] = 0;   // truncate closing ".
+		}
+
 		SV_EndRedirect ();
 
 		G_INT(OFS_PARM0) = PR_SetTmpString(p);
@@ -1563,7 +1570,6 @@ static void SV_Say (qbool team)
 		if (G_FLOAT(OFS_RETURN))
 			return;
 	}
-#endif
 
 #ifdef USE_PR2
 	if ( sv_vm )
