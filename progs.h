@@ -222,6 +222,9 @@ void PR1_PausedTic(float duration);
 #define PR1_GameSetChangeParms() PR_ExecuteProgram(PR_GLOBAL(SetChangeParms))
 #define PR1_GameSetNewParms() PR_ExecuteProgram(PR_GLOBAL(SetNewParms))
 #define PR1_GameStartFrame() PR_ExecuteProgram (PR_GLOBAL(StartFrame))
+#define PR1_ClientKill() PR_ExecuteProgram (PR_GLOBAL(ClientKill))
+#define PR1_UserInfoChanged() (0) // PR1 does not really have it,
+								  // we have UserInfo_Changed but it is slightly different.
 #define PR1_LoadEnts ED_LoadFromFile
 #define PR1_EdictThink PR_ExecuteProgram
 #define PR1_EdictTouch PR_ExecuteProgram
@@ -242,6 +245,8 @@ void PR1_PausedTic(float duration);
 	#define PR_GameSetChangeParms PR1_GameSetChangeParms
 	#define PR_GameSetNewParms PR1_GameSetNewParms
 	#define PR_GameStartFrame PR1_GameStartFrame
+	#define PR_ClientKill PR1_ClientKill
+	#define PR_UserInfoChanged PR1_UserInfoChanged
 	#define PR_LoadEnts PR1_LoadEnts
 	#define PR_EdictThink PR1_EdictThink
 	#define PR_EdictTouch PR1_EdictTouch

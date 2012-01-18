@@ -49,6 +49,8 @@ void		PR2_GameClientDisconnect(int spec);
 void		PR2_GameClientPreThink(int spec);
 void		PR2_GameClientPostThink(int spec);
 qbool		PR2_ClientCmd();
+void		PR2_ClientKill();
+#define PR_ClientKill PR2_ClientKill
 qbool		PR2_ClientSay(int isTeamSay, char *message);
 #define PR_ClientSay PR2_ClientSay
 void		PR2_GameSetNewParms();
@@ -62,6 +64,7 @@ void		PR2_EdictThink(func_t f);
 void		PR2_EdictBlocked(func_t f);
 #define PR_EdictBlocked PR2_EdictBlocked
 qbool 		PR2_UserInfoChanged();
+#define PR_UserInfoChanged PR2_UserInfoChanged
 void 		PR2_GameShutDown();
 void 		PR2_GameConsoleCommand(void);
 void		PR2_PausedTic(float duration);

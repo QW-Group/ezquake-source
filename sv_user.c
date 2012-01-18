@@ -1745,12 +1745,7 @@ static void Cmd_Kill_f (void)
 
 	pr_global_struct->time = sv.time;
 	pr_global_struct->self = EDICT_TO_PROG(sv_player);
-#ifdef USE_PR2
-	if ( sv_vm )
-		PR2_ClientCmd();
-	else
-#endif
-		PR_ExecuteProgram (PR_GLOBAL(ClientKill));
+	PR_ClientKill();
 }
 
 /*
@@ -2090,16 +2085,10 @@ static void Cmd_SetInfo_f (void)
 
 	strlcpy(oldval, Info_Get(&sv_client->_userinfo_ctx_, Cmd_Argv(1)), sizeof(oldval));
 
-#ifdef USE_PR2
-	if(sv_vm)
-	{
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-
-		if( PR2_UserInfoChanged() )
-			return;
-	}
-#endif
+	pr_global_struct->time = sv.time;
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	if(PR_UserInfoChanged())
+		return; // does not allowed to be changed by mod.
 
 	Info_Set (&sv_client->_userinfo_ctx_, Cmd_Argv(1), Cmd_Argv(2));
 	// name is extracted below in ExtractFromUserInfo
@@ -2423,22 +2412,10 @@ static void Cmd_Join_f (void)
 		return;
 	}
 
-	if (SpectatorDisconnect
-#ifdef USE_PR2
-			|| sv_vm
-#endif
-	)
-	{
-		// call the prog function for removing a client
-		// this will set the body to a dead frame, among other things
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-#ifdef USE_PR2
-		if (sv_vm)
-			PR2_GameClientDisconnect(1);
-		else
-#endif
-			PR_ExecuteProgram (SpectatorDisconnect);
-	}
+	// call the prog function for removing a client
+	// this will set the body to a dead frame, among other things
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	PR_GameClientDisconnect(1);
 
 	// this is like SVC_DirectConnect.
 	// turn the spectator into a player
@@ -2463,23 +2440,13 @@ static void Cmd_Join_f (void)
 	pr_global_struct->time = sv.time;
 	pr_global_struct->self = EDICT_TO_PROG(sv_player);
 	G_FLOAT(OFS_PARM0) = (float) sv_client->vip;
-#ifdef USE_PR2
-	if ( sv_vm )
-		PR2_GameClientConnect(0);
-	else
-#endif
-		PR_ExecuteProgram (PR_GLOBAL(ClientConnect));
+	PR_GameClientConnect(0);
 	
 	// actually spawn the player
 	pr_global_struct->time = sv.time;
 	pr_global_struct->self = EDICT_TO_PROG(sv_player);
 	G_FLOAT(OFS_PARM0) = (float) sv_client->vip;
-#ifdef USE_PR2
-	if ( sv_vm )
-		PR2_GamePutClientInServer(0);
-	else
-#endif
-		PR_ExecuteProgram (PR_GLOBAL(PutClientInServer));
+	PR_GamePutClientInServer(0);
 
 	// look in SVC_DirectConnect() for for extended comment whats this for
 	MVD_PlayerReset(NUM_FOR_EDICT(sv_player) - 1);
@@ -2533,13 +2500,7 @@ static void Cmd_Observe_f (void)
 	// call the prog function for removing a client
 	// this will set the body to a dead frame, among other things
 	pr_global_struct->self = EDICT_TO_PROG(sv_player);
-
-#ifdef USE_PR2
-	if (sv_vm)
-		PR2_GameClientDisconnect(0);
-	else
-#endif
-		PR_ExecuteProgram (PR_GLOBAL(ClientDisconnect));
+	PR_GameClientDisconnect(0);
 
 	// this is like SVC_DirectConnect.
 	// turn the player into a spectator
@@ -2558,38 +2519,19 @@ static void Cmd_Observe_f (void)
 
 	SV_SpawnSpectator ();
 	
+	// copy spawn parms out of the client_t
+	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
+		sv_client->spawn_parms[i] = (&PR_GLOBAL(parm1))[i];
+
 	// call the spawn function
-	if (SpectatorConnect
-#ifdef USE_PR2
-		        || sv_vm
-#endif
-	   )
-	{
-		// copy spawn parms out of the client_t
-		for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
-			sv_client->spawn_parms[i] = (&PR_GLOBAL(parm1))[i];
+	pr_global_struct->time = sv.time;
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	G_FLOAT(OFS_PARM0) = (float) sv_client->vip;
+	PR_GameClientConnect(1);
 
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		G_FLOAT(OFS_PARM0) = (float) sv_client->vip;
-#ifdef USE_PR2
-		if (sv_vm)
-			PR2_GameClientConnect(1);
-		else
-#endif
-			PR_ExecuteProgram (SpectatorConnect);
-	}
-
-#ifdef USE_PR2
-	// qqshka: seems spectator is sort of hack in QW
-	// I let qvm mods serve spectator like we do for normal player
-	if (sv_vm)
-	{
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		PR2_GamePutClientInServer(1); // let mod know we put spec not player
-	}
-#endif
+	pr_global_struct->time = sv.time;
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	PR_GamePutClientInServer(1); // let mod know we put spec not player
 
 	// look in SVC_DirectConnect() for for extended comment whats this for
 	MVD_PlayerReset(NUM_FOR_EDICT(sv_player) - 1);

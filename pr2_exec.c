@@ -228,6 +228,17 @@ qbool PR2_ClientCmd()
 }
 
 //===========================================================================
+// ClientKill
+//===========================================================================
+void PR2_ClientKill()
+{
+	if (sv_vm)
+		PR2_ClientCmd(); // PR2 have some universal way for command execution unlike QC based mods.
+	else
+		PR1_ClientKill();
+}
+
+//===========================================================================
 // ClientSay return false if say unhandled by mod
 //===========================================================================
 qbool PR2_ClientSay(int isTeamSay, char *message)
@@ -305,7 +316,10 @@ void PR2_EdictBlocked(func_t f)
 //===========================================================================
 qbool PR2_UserInfoChanged()
 {
-	return VM_Call(sv_vm, GAME_CLIENT_USERINFO_CHANGED, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		return VM_Call(sv_vm, GAME_CLIENT_USERINFO_CHANGED, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		return PR1_UserInfoChanged();
 }
 
 //===========================================================================
