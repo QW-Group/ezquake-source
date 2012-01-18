@@ -692,7 +692,7 @@ char *PR1_GetString(int num)
 	return pr_strings + num;
 }
 
-int PR_SetString(char *s)
+int PR1_SetString(char *s)
 {
 	int i;
 
@@ -729,7 +729,7 @@ int PR_SetTmpString(const char *s)
 	index1 = (index1 + 1) & 7;
 
 	strlcpy(tmp[index1], s, sizeof(tmp[index1]));
-	return PR_SetString(tmp[index1]);
+	return PR1_SetString(tmp[index1]);
 }
 
 //=============================================================================

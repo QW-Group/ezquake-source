@@ -465,15 +465,15 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		strlcpy(PR2_GetString(ent->v.model), sv.modelname, 64);
 	else
 #endif
-		ent->v.model = PR_SetString(sv.modelname);
+		ent->v.model = PR1_SetString(sv.modelname);
 	ent->v.modelindex = 1;		// world model
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;
 
 	// information about the server
 	// VM-FIXME: Should it be PR2_SetString() ???
-	ent->v.netname = PR_SetString(VersionStringFull());
-	ent->v.targetname = PR_SetString(SERVER_NAME);
+	ent->v.netname = PR1_SetString(VersionStringFull());
+	ent->v.targetname = PR1_SetString(SERVER_NAME);
 	ent->v.impulse = VERSION_NUM;
 	ent->v.items = pr_numbuiltins - 1;
 
@@ -482,7 +482,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		strlcpy((char*)PR2_GetString(pr_global_struct->mapname), sv.mapname, 64);
 	else
 #endif
-	PR_GLOBAL(mapname) = PR_SetString(sv.mapname);
+	PR_GLOBAL(mapname) = PR1_SetString(sv.mapname);
 	// serverflags are for cross level information (sigils)
 	PR_GLOBAL(serverflags) = svs.serverflags;
 	if (pr_nqprogs)

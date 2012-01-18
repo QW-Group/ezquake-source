@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qwsvdef.h"
 
 #define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
-#define	RETURN_STRING(s) (((int *)pr_globals)[OFS_RETURN] = PR_SetString(s))
+#define	RETURN_STRING(s) (((int *)pr_globals)[OFS_RETURN] = PR1_SetString(s))
 
 /*
 ===============================================================================
@@ -972,7 +972,7 @@ void PF_argv (void)
 	else {
 		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%s", Cmd_Argv(num));
 		RETURN_STRING(pr_string_temp);
-//		G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
+//		G_INT(OFS_RETURN) = PR1_SetString(pr_string_temp);
 		PF_SetTempString();
 	}
 }
@@ -1022,7 +1022,7 @@ void PF_substr (void)
 
 	strlcpy(pr_string_temp, s, len + 1);
 
-	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
+	G_INT(OFS_RETURN) = PR1_SetString(pr_string_temp);
 
 	PF_SetTempString();
 }
@@ -1039,7 +1039,7 @@ void PF_strcat (void)
 {
 	/* FIXME */
 	strcpy(pr_string_temp, PF_VarString(0)/*, MAX_PR_STRING_SIZE*/);
-	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
+	G_INT(OFS_RETURN) = PR1_SetString(pr_string_temp);
 
 	PF_SetTempString();
 }
@@ -1197,7 +1197,7 @@ void PF_readcmd (void)
 		SV_BeginRedirect(old);
 
 
-	G_INT(OFS_RETURN) = PR_SetString(output);
+	G_INT(OFS_RETURN) = PR1_SetString(output);
 }
 
 /*
@@ -1495,7 +1495,7 @@ void PF_ftos (void)
 		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%d",(int)v);
 	else
 		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%5.1f",v);
-	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
+	G_INT(OFS_RETURN) = PR1_SetString(pr_string_temp);
 	PF_SetTempString();
 }
 
@@ -1509,7 +1509,7 @@ void PF_fabs (void)
 void PF_vtos (void)
 {
 	snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
-	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
+	G_INT(OFS_RETURN) = PR1_SetString(pr_string_temp);
 
 	PF_SetTempString();
 }

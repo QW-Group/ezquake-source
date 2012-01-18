@@ -804,7 +804,7 @@ qbool ED_ParseEpair (void *base, ddef_t *key, char *s)
 	switch (key->type & ~DEF_SAVEGLOBAL)
 	{
 	case ev_string:
-		*(string_t *)d = PR_SetString(ED_NewString (s));
+		*(string_t *)d = PR1_SetString(ED_NewString (s));
 		break;
 
 	case ev_float:
@@ -1072,8 +1072,8 @@ qbool PR_UserCmd(void)
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
 		strlcpy (args_copy, Cmd_Args(), sizeof(args_copy));
-		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
-		((int *)pr_globals)[OFS_PARM1] = PR_SetString (args_copy);
+		((int *)pr_globals)[OFS_PARM0] = PR1_SetString (cmd_copy);
+		((int *)pr_globals)[OFS_PARM1] = PR1_SetString (args_copy);
 		PR_ExecuteProgram (GE_ClientCommand);
 		return G_FLOAT(OFS_RETURN) ? true : false;
 	}
@@ -1084,7 +1084,7 @@ qbool PR_UserCmd(void)
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
-		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
+		((int *)pr_globals)[OFS_PARM0] = PR1_SetString (cmd_copy);
 
 		PR_ExecuteProgram (mod_UserCmd);
 		return G_FLOAT(OFS_RETURN) ? true : false;

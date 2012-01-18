@@ -114,12 +114,12 @@ intptr_t PR2_SetString(char *s)
 	qvm_t *qvm;
 	intptr_t off;
 	if(!sv_vm)
-		return PR_SetString(s);
+		return PR1_SetString(s);
 
 	switch (sv_vm->type)
 	{
 	case VM_NONE:
-		return PR_SetString(s);
+		return PR1_SetString(s);
 
 	case VM_NATIVE:
 		return (intptr_t) s;

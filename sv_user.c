@@ -2339,7 +2339,7 @@ static void SetUpClientEdict (client_t *cl, edict_t *ent)
 #endif
 	{
 		memset (&ent->v, 0, progs->entityfields * 4);
-		ent->v.netname = PR_SetString(cl->name);
+		ent->v.netname = PR1_SetString(cl->name);
 	}
 	// so spec will have right goalentity - if speccing someone
 	if(cl->spectator && cl->spec_track > 0)
@@ -2349,7 +2349,7 @@ static void SetUpClientEdict (client_t *cl, edict_t *ent)
 
 	ent->v.team = 0;	// FIXME
 	if (pr_teamfield)
-		E_INT(ent, pr_teamfield) = PR_SetString(cl->team);
+		E_INT(ent, pr_teamfield) = PR1_SetString(cl->team);
 
 	cl->entgravity = 1.0;
 	if (fofs_gravity)
