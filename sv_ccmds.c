@@ -29,6 +29,8 @@ char fp_msg[255] = { 0 };
 extern	cvar_t		sv_logdir; //bliP: 24/7 logdir
 extern	redirect_t	sv_redirected;
 
+void SV_Localinfo_Set (const char *name, const char *value);
+
 /*
 ===============================================================================
 
@@ -1316,77 +1318,41 @@ void SV_Check_maps_f(void)
 	dir_t d;
 	file_t *list;
 	int i, j, maps_id1;
-	char *s=NULL, *key;
 
 	SV_Check_localinfo_maps_support();
 
 	d = Sys_listdir("id1/maps", ".bsp$", SORT_BY_NAME);
 	list = d.files;
-	for (i = LOCALINFO_MAPS_LIST_START; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++)
+	for (i = LOCALINFO_MAPS_LIST_START; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++, i++)
 	{
 		list->name[strlen(list->name) - 4] = 0;
-		if (!list->name[0]) continue;
+		if (!list->name[0])
+			continue;
 
-		key = va("%d", i);
-		s = Info_Get(&_localinfo_, key);
-		Info_Set (&_localinfo_, key, list->name);
-
-		if (localinfoChanged)
-		{
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = 0;
-			G_INT(OFS_PARM0) = PR_SetTmpString(key);
-			G_INT(OFS_PARM1) = PR_SetTmpString(s);
-			G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, key));
-			PR_ExecuteProgram (localinfoChanged);
-		}
-		i++;
+		SV_Localinfo_Set(va("%d", i), list->name);
 	}
 	maps_id1 = i - 1;
 
 	d = Sys_listdir("qw/maps", ".bsp$", SORT_BY_NAME);
 	list = d.files;
-	for (; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++)
+	for (; list->name[0] && i <= LOCALINFO_MAPS_LIST_END; list++, i++)
 	{
 		list->name[strlen(list->name) - 4] = 0;
-		if (!list->name[0]) continue;
+		if (!list->name[0])
+			continue;
 
 		for (j = LOCALINFO_MAPS_LIST_START; j <= maps_id1; j++)
 			if (!strncmp(Info_Get(&_localinfo_, va("%d", j)), list->name, MAX_KEY_STRING))
 				break;
-		if (j <= maps_id1) continue;
+		if (j <= maps_id1)
+			continue;
 
-		key = va("%d", i);
-		s = Info_Get(&_localinfo_, key);
-		Info_Set (&_localinfo_, key, list->name);
-
-		if (localinfoChanged)
-		{
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = 0;
-			G_INT(OFS_PARM0) = PR_SetTmpString(key);
-			G_INT(OFS_PARM1) = PR_SetTmpString(s);
-			G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, key));
-			PR_ExecuteProgram (localinfoChanged);
-		}
-		i++;
+		SV_Localinfo_Set(va("%d", i), list->name);
 	}
 
 	for (; i <= LOCALINFO_MAPS_LIST_END; i++)
 	{
-		key = va("%d", i);
-		s = Info_Get(&_localinfo_, key);
-		Info_Set(&_localinfo_, key, "");
-
-		if (localinfoChanged)
-		{
-			pr_global_struct->time = sv.time;
-			pr_global_struct->self = 0;
-			G_INT(OFS_PARM0) = PR_SetTmpString(key);
-			G_INT(OFS_PARM1) = PR_SetTmpString(s);
-			G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, key));
-			PR_ExecuteProgram (localinfoChanged);
-		}
+		SV_Localinfo_Set(va("%d", i), "");
 	}
 }
 
@@ -1525,6 +1491,29 @@ void SV_Serverinfo_f (void)
 	}
 }
 
+void SV_Localinfo_Set (const char *name, const char *value)
+{
+	char *old_value;
+
+	if (!name || !*name)
+		return;
+
+	if (!value)
+		value = "";
+
+	old_value = Info_Get(&_localinfo_, name); // remember old value.
+	Info_Set (&_localinfo_, name, value); // set new value.
+
+	if (localinfoChanged)
+	{
+		pr_global_struct->time = sv.time;
+		pr_global_struct->self = 0;
+		G_INT(OFS_PARM0) = PR_SetTmpString(name);
+		G_INT(OFS_PARM1) = PR_SetTmpString(old_value);
+		G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, name));
+		PR_ExecuteProgram (localinfoChanged);
+	}
+}
 
 /*
 ===========
@@ -1535,8 +1524,6 @@ SV_Localinfo_f
 */
 void SV_Localinfo_f (void)
 {
-	char *s;
-
 	if (Cmd_Argc() == 1)
 	{
 		char info[MAX_LOCALINFO_STRING];
@@ -1551,7 +1538,8 @@ void SV_Localinfo_f (void)
 	//bliP: sane localinfo usage (mercury) ->
 	if (Cmd_Argc() == 2)
 	{
-		s = Info_Get(&_localinfo_, Cmd_Argv(1));
+		char *s = Info_Get(&_localinfo_, Cmd_Argv(1));
+
 		if (*s)
 			Con_Printf ("Localinfo %s: \"%s\"\n", Cmd_Argv(1), s);
 		else
@@ -1572,18 +1560,7 @@ void SV_Localinfo_f (void)
 		return;
 	}
 
-	s = Info_Get(&_localinfo_, Cmd_Argv(1));
-	Info_Set (&_localinfo_, Cmd_Argv(1), Cmd_Argv(2));
-
-	if (localinfoChanged)
-	{
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = 0;
-		G_INT(OFS_PARM0) = PR_SetTmpString(Cmd_Argv(1));
-		G_INT(OFS_PARM1) = PR_SetTmpString(s);
-		G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, Cmd_Argv(1)));
-		PR_ExecuteProgram (localinfoChanged);
-	}
+	SV_Localinfo_Set(Cmd_Argv(1), Cmd_Argv(2));
 }
 
 

@@ -211,7 +211,7 @@ extern int num_prstr;
 
 char *PR1_GetString(int num);
 int PR_SetString(char *s);
-int PR_SetTmpString(char *s);
+int PR_SetTmpString(const char *s);
 
 void PR1_GameClientDisconnect(int spec);
 void PR1_GameClientConnect(int spec);

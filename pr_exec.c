@@ -721,7 +721,7 @@ many calls to function could cause strtbl overflow
 ==============
 */
 
-int PR_SetTmpString(char *s)
+int PR_SetTmpString(const char *s)
 {
 	static int index1;
 	static char tmp[8][2048];
