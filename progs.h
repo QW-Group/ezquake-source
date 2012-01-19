@@ -219,6 +219,7 @@ void PR1_GameClientPreThink(int spec);
 void PR1_GameClientPostThink(int spec);
 qbool PR1_ClientSay(int isTeamSay, char *message);
 void PR1_PausedTic(float duration);
+qbool PR1_ClientCmd(void);
 
 #define PR1_GameSetChangeParms() PR_ExecuteProgram(PR_GLOBAL(SetChangeParms))
 #define PR1_GameSetNewParms() PR_ExecuteProgram(PR_GLOBAL(SetNewParms))
@@ -244,6 +245,7 @@ void PR1_PausedTic(float duration);
 	#define PR_GameClientPostThink PR1_GameClientPostThink
 	#define PR_ClientSay PR1_ClientSay
 	#define PR_PausedTic PR1_PausedTic
+	#define PR_ClientCmd PR1_ClientCmd
 
 	#define PR_GameSetChangeParms PR1_GameSetChangeParms
 	#define PR_GameSetNewParms PR1_GameSetNewParms

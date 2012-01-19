@@ -230,7 +230,10 @@ void PR2_GameClientPostThink(int spec)
 //===========================================================================
 qbool PR2_ClientCmd()
 {
-	return VM_Call(sv_vm, GAME_CLIENT_COMMAND, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		return VM_Call(sv_vm, GAME_CLIENT_COMMAND, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		return PR1_ClientCmd();
 }
 
 //===========================================================================

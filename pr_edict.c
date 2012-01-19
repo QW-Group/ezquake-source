@@ -1048,28 +1048,12 @@ qbool PR_ConsoleCmd(void)
 	return false;
 }
 
-qbool PR_UserCmd(void)
+qbool PR1_ClientCmd(void)
 {
-	/*if (!strcmp(Cmd_Argv(0), "admin") || !strcmp(Cmd_Argv(0), "judge"))
-	{
-		Con_Printf ("user command %s is banned\n", Cmd_Argv(0));
-		return true;
-	}
-	*/
-	/*int i;
-	if (!strcmp(Cmd_Argv(0), "mmode") || !strcmp(Cmd_Argv(0), "cmd"))
-	{
-		for (i = 0; i < Cmd_Argc(); i++)
-			Con_Printf ("PR_UserCmd: [%d] %s | %d\n", i, Cmd_Argv(i), mod_UserCmd);
-		//return true;
-	}*/
-
 	// ZQ_CLIENTCOMMAND extension
 	if (GE_ClientCommand)
 	{
 		static char cmd_copy[128], args_copy[1024] /* Ouch! */;
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
 		strlcpy (args_copy, Cmd_Args(), sizeof(args_copy));
 		((int *)pr_globals)[OFS_PARM0] = PR1_SetString (cmd_copy);
@@ -1081,8 +1065,6 @@ qbool PR_UserCmd(void)
 	if (mod_UserCmd)
 	{
 		static char cmd_copy[128];
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
 		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
 		((int *)pr_globals)[OFS_PARM0] = PR1_SetString (cmd_copy);
 

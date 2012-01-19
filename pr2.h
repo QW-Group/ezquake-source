@@ -51,6 +51,7 @@ void		PR2_GameClientPreThink(int spec);
 void		PR2_GameClientPostThink(int spec);
 #define PR_GameClientPostThink PR2_GameClientPostThink
 qbool		PR2_ClientCmd();
+#define PR_ClientCmd PR2_ClientCmd
 void		PR2_ClientKill();
 #define PR_ClientKill PR2_ClientKill
 qbool		PR2_ClientSay(int isTeamSay, char *message);

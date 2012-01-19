@@ -1359,7 +1359,6 @@ deny_download:
 Cmd_DemoDownload_f
 ==================
 */
-qbool SV_ExecutePRCommand (void);
 static void Cmd_StopDownload_f(void);
 
 static void Cmd_DemoDownload_f(void)
@@ -2958,12 +2957,18 @@ static ucmd_t ucmds[] =
 
 };
 
+static qbool SV_ExecutePRCommand (void)
+{
+	pr_global_struct->time = sv.time;
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	return PR_ClientCmd();
+}
+
 /*
 ==================
 SV_ExecuteUserCommand
 ==================
 */
-qbool PR_UserCmd(void);
 static void SV_ExecuteUserCommand (char *s)
 {
 	ucmd_t *u;
@@ -2993,22 +2998,6 @@ static void SV_ExecuteUserCommand (char *s)
 
 out:
 	SV_EndRedirect ();
-}
-
-qbool SV_ExecutePRCommand (void)
-{
-#ifdef USE_PR2
-	if ( sv_vm )
-	{
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		return PR2_ClientCmd();
-	}
-	else
-#endif
-	{
-		return PR_UserCmd();
-	}
 }
 
 /*
