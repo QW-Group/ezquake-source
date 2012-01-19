@@ -32,8 +32,6 @@ cvar_t	sv_mapcheck = {"sv_mapcheck", "1"};
 cvar_t	sv_minping = {"sv_minping", "0"};
 cvar_t	sv_enable_cmd_minping = {"sv_enable_cmd_minping", "1"};
 
-cvar_t	sv_use_internal_cmd_dl = {"sv_use_internal_cmd_dl", "1"};
-
 cvar_t	sv_kickuserinfospamtime = {"sv_kickuserinfospamtime", "3"};
 cvar_t	sv_kickuserinfospamcount = {"sv_kickuserinfospamcount", "30"};
 
@@ -1378,10 +1376,6 @@ static void Cmd_DemoDownload_f(void)
 	unsigned char	cmdhelp_bs[] = "\\";
 	unsigned char	cmdhelp_stop[] = "stop";
 	unsigned char	cmdhelp_cancel[] = "cancel";
-
-	if (!(int)sv_use_internal_cmd_dl.value)
-		if (SV_ExecutePRCommand())
-			return;
 
 	if (Cmd_Argc() < 2)
 	{
@@ -2913,7 +2907,7 @@ static ucmd_t ucmds[] =
 
 	{"download", Cmd_Download_f, false},
 	{"nextdl", Cmd_NextDownload_f, false},
-	{"dl", Cmd_DemoDownload_f, false /* sic, mod overrides are handles specially */},
+	{"dl", Cmd_DemoDownload_f, false},
 
 	{"ptrack", Cmd_PTrack_f, false}, //ZOID - used with autocam
 
@@ -2925,7 +2919,7 @@ static ucmd_t ucmds[] =
 	{"snap", Cmd_NoSnap_f, false},
 	{"stopdownload", Cmd_StopDownload_f, false},
 	{"stopdl", Cmd_StopDownload_f, false},
-	//	{"dlist", SV_DemoList_f},
+	{"dlist", SV_DemoList_f, false},
 	{"dlistr", SV_DemoListRegex_f, false},
 	{"dlistregex", SV_DemoListRegex_f, false},
 	{"demolist", SV_DemoList_f, false},
@@ -3710,7 +3704,6 @@ void SV_UserInit (void)
 	Cvar_Register (&sv_mapcheck);
 	Cvar_Register (&sv_minping);
 	Cvar_Register (&sv_enable_cmd_minping);
-	Cvar_Register (&sv_use_internal_cmd_dl);
 	Cvar_Register (&sv_kickuserinfospamtime);
 	Cvar_Register (&sv_kickuserinfospamcount);
 	Cvar_Register (&sv_maxuploadsize);
