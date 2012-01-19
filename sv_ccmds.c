@@ -1180,38 +1180,6 @@ void SV_Status_f (void)
 
 	switch (sv_redirected)
 	{
-		case RD_MOD:
-			if (is_ktpro)
-			{
-				Con_Printf ("frags id  address         name            rate ping drop  real ip\n"
-							"----- --- --------------- --------------- ---- ---- ----- ---------------\n");
-				for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
-				{
-					if (!cl->state)
-						continue;
-					s = NET_BaseAdrToString(cl->netchan.remote_address);
-					Con_Printf ("%5i %3i %-15s %-15s ", (int)cl->edict->v.frags, cl->userid,
-								(int)sv_use_dns.value ? SV_Resolve(s) : s, cl->name);
-					switch (cl->state)
-					{
-						case cs_connected:
-						case cs_preconnected:
-							Con_Printf ("CONNECTING\n");
-							continue;
-						case cs_zombie:
-							Con_Printf ("ZOMBIE\n");
-							continue;
-						default:;
-					}
-					Con_Printf ("%4i %4i %5.1f %s %s\n",
-								(int)(1000 * cl->netchan.frame_rate),
-								(int)SV_CalcPing (cl),
-								100.0 * cl->netchan.drop_count / cl->netchan.incoming_sequence,
-								cl->realip.ip[0] ? NET_BaseAdrToString (cl->realip) : "",
-								cl->spectator ? "(s)" : "");
-				}
-				break;
-			} // if
 		case RD_NONE:
 			Con_Printf ("name             ping frags   id   address                real ip\n"
 						"---------------- ---- ----- ------ ---------------------- ---------------\n");
@@ -1240,6 +1208,7 @@ void SV_Status_f (void)
 				}
 			}
 			break;
+		//case RD_MOD:
 		//case RD_CLIENT:
 		//case RD_PACKET:
 		default:
@@ -1278,35 +1247,6 @@ void SV_Status_f (void)
 	Con_Printf ("\n");
 }
 
-void SV_Check_localinfo_maps_support(void)
-{
-	float	k_version;
-	char	*k_version_s;
-	int		k_build;
-	char	*k_build_s;
-
-	char	*x_version;
-	char	*x_build;
-
-	k_version = Q_atof(k_version_s = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_VERSION));
-	k_build   = Q_atoi(k_build_s   = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_BUILD));
-
-	x_version = Info_ValueForKey(svs.info, SERVERINFO_KTX_VERSION);
-	x_build   = Info_ValueForKey(svs.info, SERVERINFO_KTX_BUILD);
-
-	if ((k_version < LOCALINFO_MAPS_KTPRO_VERSION || k_build < LOCALINFO_MAPS_KTPRO_BUILD) &&
-		!(*x_version && *x_build))
-	{
-		Con_DPrintf("WARNING: Storing maps list in LOCALINFO supported only by ktpro version "
-		           LOCALINFO_MAPS_KTPRO_VERSION_S " build %i and newer and by ktx.\n",
-		           LOCALINFO_MAPS_KTPRO_BUILD);
-		if (k_version && k_build)
-			Con_DPrintf("Current running ktpro version %s build %s.\n",
-			           k_version_s, k_build_s);
-		else
-			Con_DPrintf("Current running mod is not ktpro and is not ktx.\n");
-	}
-}
 /*
 ==================
 SV_Check_maps_f
@@ -1318,8 +1258,6 @@ void SV_Check_maps_f(void)
 	dir_t d;
 	file_t *list;
 	int i, j, maps_id1;
-
-	SV_Check_localinfo_maps_support();
 
 	d = Sys_listdir("id1/maps", ".bsp$", SORT_BY_NAME);
 	list = d.files;

@@ -2220,7 +2220,7 @@ static void Cmd_MinPing_f (void)
 	{
 	case 2:
 		if (GameStarted())
-			Con_Printf("Can't change sv_minping value: demo recording in progress or ktpro serverinfo key status not equal 'Standby'.\n");
+			Con_Printf("Can't change sv_minping: demo recording or match in progress.\n");
 		else if (!(int)sv_enable_cmd_minping.value)
 			Con_Printf("Can't change sv_minping: sv_enable_cmd_minping == 0.\n");
 		else
@@ -2257,9 +2257,7 @@ static void Cmd_AirStep_f (void)
 	switch (Cmd_Argc())
 	{
 	case 2:
-		if (is_ktpro)
-			Con_Printf("Can't change pm_airstep: ktpro detected\n");
-		else if (GameStarted())
+		if (GameStarted())
 			Con_Printf("Can't change pm_airstep: demo recording in progress or serverinfo key status is not 'Standby'.\n");
 		else
 		{
@@ -2290,7 +2288,6 @@ static void Cmd_AirStep_f (void)
 Cmd_ShowMapsList_f
 ==============
 */
-void SV_Check_localinfo_maps_support(void);
 static void Cmd_ShowMapsList_f(void)
 {
 	char	*value, *key;
@@ -2298,8 +2295,6 @@ static void Cmd_ShowMapsList_f(void)
 	unsigned char	ztndm3[] = "ztndm3";
 	unsigned char	list_of_custom_maps[] = "list of custom maps";
 	unsigned char	end_of_list[] = "end of list";
-
-	SV_Check_localinfo_maps_support();
 
 	Con_Printf("Vote for maps by typing the mapname, for example \"%s\"\n\n---%s\n",
 	           Q_redtext(ztndm3), Q_redtext(list_of_custom_maps));
@@ -2942,7 +2937,7 @@ static ucmd_t ucmds[] =
 	{"lastscores", SV_LastScores_f, false},
 	{"minping", Cmd_MinPing_f, true},
 	{"airstep", Cmd_AirStep_f, true},
-	{"maps", Cmd_ShowMapsList_f, false},
+	{"maps", Cmd_ShowMapsList_f, true},
 	{"ban", SV_Cmd_Ban_f, true}, // internal server ban support
 	{"banip", SV_Cmd_Banip_f, true}, // internal server ban support
 	{"banrem", SV_Cmd_Banremove_f, true}, // internal server ban support
@@ -3020,18 +3015,6 @@ qbool SV_ExecutePRCommand (void)
 	else
 #endif
 	{
-		if (is_ktpro && Cmd_Argc() > 1)
-		 	if (!((strcmp(Cmd_Argv(0), "admin") && strcmp(Cmd_Argv(0), "judge")) ||
-				strcmp(Cmd_Argv(1), "-0")))
-			{
-				Cbuf_AddText(va("say \"ATTENTION: Attempt to use ktpro bug: id '%d', name '%s', address '%s', realip '%s'!\"\n",
-							sv_client->userid, sv_client->name,
-							NET_BaseAdrToString(sv_client->netchan.remote_address),
-							sv_client->realip.ip[0] ?
-								NET_BaseAdrToString(sv_client->realip) : "not detected"));
-				return true /* suppress bad command warning */;
-			}
-
 		return PR_UserCmd();
 	}
 }
@@ -3304,7 +3287,7 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside) //bliP: 24/9
 	pmove.jump_held = sv_client->jump_held;
 	pmove.jump_msec = 0;
 	
-	// let KTeams'/KTPro's "broken ankle" code work
+	// let KTeams "broken ankle" code work
 	if (
 #if 0
 FIXME

@@ -181,10 +181,8 @@ cvar_t	hostname = {"hostname", "unnamed", CVAR_SERVERINFO};
 cvar_t sv_forcenick = {"sv_forcenick", "0"}; //0 - don't force; 1 - as login;
 cvar_t sv_registrationinfo = {"sv_registrationinfo", ""}; // text shown before "enter login"
 
+// We need this cvar, because some mods didn't allow us to go at some placeses of, for example, start map.
 cvar_t registered = {"registered", "1", CVAR_ROM};
-// We need this cvar, because ktpro didn't allow to go at some placeses of, for example, start map.
-
-cvar_t sv_ktpro_mode = {"sv_ktpro_mode", "auto"};
 
 cvar_t	sv_halflifebsp = {"halflifebsp", "0", CVAR_ROM};
 
@@ -2273,7 +2271,7 @@ qbool SV_FilterPacket (void)
 
 // { server internal BAN support
 
-#define AF_REAL_ADMIN  (1<<1) // pass/vip granted admin (real admin in terms of ktpro)
+#define AF_REAL_ADMIN  (1<<1) // pass/vip granted admin.
 
 void Do_BanList(ipfiltertype_t ipft)
 {
@@ -3126,20 +3124,6 @@ static void PausedTic (void)
 	PR_PausedTic(Sys_DoubleTime() - sv.pausedsince);
 }
 
-static void KtproAirstepFix(void)
-{
-// ktpro is old school, do not allow pm_airstep
-	extern cvar_t	pm_airstep;
-
-	if (sv.state != ss_active)
-		return;
-
-	if (is_ktpro && pm_airstep.value) {
-		Con_Printf("Forcing pm_airstep to 0 in ktpro\n");
-		Cvar_SetValue (&pm_airstep, 0);
-	}
-}
-
 /*
 ==================
 SV_Frame
@@ -3158,9 +3142,6 @@ void SV_Frame (double time1)
 
 	// keep the random time dependent
 	rand ();
-
-	// do not allow pm_airstep it ktpro
-	KtproAirstepFix();
 
 	// decide the simulation time
 	if (!sv.paused)
@@ -3389,7 +3370,6 @@ void SV_InitLocal (void)
 	Cvar_Register (&sv_forcenick);
 	Cvar_Register (&sv_registrationinfo);
 	Cvar_Register (&registered);
-	Cvar_Register (&sv_ktpro_mode);
 
 	Cvar_Register (&sv_halflifebsp);
 
@@ -3469,40 +3449,13 @@ Pull specific info from a newly changed userinfo string
 into a more C freindly form.
 =================
 */
-// Added by VVD {
-// ktpro crash if absolute value of userinfo keys "ls" or/and "lw" is to large
-static void SV_SetUserInfoKeyLimit (char *key, int limit, client_t *cl, qbool warning_msg)
-{
-	if (warning_msg)
-		SV_ClientPrintf (cl, PRINT_HIGH, "WARNING: You can't set setinfo %s %s %i.\n",
-		                 key, limit > 0 ? ">" : "<", limit);
-
-	Info_Set (&cl->_userinfo_ctx_, key, va("%i", limit));
-
-	MSG_WriteByte (&cl->netchan.message, svc_stufftext);
-	MSG_WriteString (&cl->netchan.message, va("setinfo \"%s\" \"%i\"\n", key, limit));
-}
-
-static void SV_CheckUserInfoKeyLimit (char *key, int limit, client_t *cl)
-{
-	char *value_c = Info_Get (&cl->_userinfo_ctx_, key);
-	int value = Q_atoi(value_c);
-
-	if (value > limit)
-		SV_SetUserInfoKeyLimit (key, limit, cl, true);
-	else if (value < -limit)
-		SV_SetUserInfoKeyLimit (key, -limit, cl, true);
-	else if (strcmp(value_c, va("%i", value)) && *value_c)
-		SV_SetUserInfoKeyLimit (key, value, cl, false);
-}
-// } Added by VVD
 
 extern func_t UserInfo_Changed;
 
 void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 {
 	char	*val, *p;
-	int		i, limit;
+	int		i;
 	client_t	*client;
 	int		dupc = 1;
 	char	newname[CLIENT_NAME_LEN];
@@ -3628,17 +3581,10 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 	if (val[0])
 		cl->messagelevel = Q_atoi(val);
 
-	//bliP: spectator print ->
+	//spectator print
 	val = Info_Get(&cl->_userinfo_ctx_, "sp");
 	if (val[0])
 		cl->spec_print = Q_atoi(val);
-	//<-
-	// Added by VVD {
-// ktpro version before 1.67 crash if absolute value of userinfo keys "ls" or/and "lw" is to large
-	limit = 63;
-	SV_CheckUserInfoKeyLimit("lw", limit, cl);
-	SV_CheckUserInfoKeyLimit("ls", limit, cl);
-	// } Added by VVD
 }
 
 

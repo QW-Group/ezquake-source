@@ -1066,7 +1066,8 @@ qbool PR_UserCmd(void)
 	}*/
 
 	// ZQ_CLIENTCOMMAND extension
-	if (!is_ktpro && GE_ClientCommand) {
+	if (GE_ClientCommand)
+	{
 		static char cmd_copy[128], args_copy[1024] /* Ouch! */;
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
@@ -1100,38 +1101,6 @@ PR_LoadProgs
 ===============
 */
 void PF_clear_strtbl(void);
-
-qbool is_ktpro;
-static void CheckKTPro (void)
-{
-	extern cvar_t sv_ktpro_mode;
-	int i, len;
-	char *s;
-
-	if (!strcasecmp(sv_ktpro_mode.string, "auto"))
-	{
-		// attempt automatic detection
-		is_ktpro = false;
-		for (i = 0; i < progs->numstrings; i++)
-		{
-			if ((s = PR1_GetString(i)))
-				if (*s)
-				{
-					if ((len = strlen(s)) >= 23)
-						if (strstr(s, "http://ktpro.does.it/ for") ||
-							strstr(s, "http://qwex.n3.net/ for"))
-						{
-							is_ktpro = true;
-							Con_DPrintf ("Treat mod as ktpro.\n");
-							break;
-						}
-					i += len;
-				}
-		}
-	}
-	else
-		is_ktpro = sv_ktpro_mode.value ? true : false;
-}
 
 #ifdef WITH_NQPROGS
 void PR_InitPatchTables (void)
@@ -1290,8 +1259,6 @@ void PR_LoadProgs (void)
 	GE_ClientCommand = ED_FindFunctionOffset ("GE_ClientCommand");
 	GE_PausedTic = ED_FindFunctionOffset ("GE_PausedTic");
 	GE_ShouldPause = ED_FindFunctionOffset ("GE_ShouldPause");
-
-	CheckKTPro ();
 }
 
 

@@ -1370,7 +1370,7 @@ void PF_cvar (void)
 
 	str = G_STRING(OFS_PARM0);
 
-	if (!strcasecmp(str, "pr_checkextension") && !is_ktpro) {
+	if (!strcasecmp(str, "pr_checkextension")) {
 		// we do support PF_checkextension
 		G_FLOAT(OFS_RETURN) = 1.0;
 		return;
@@ -2817,11 +2817,7 @@ void PF_infokey (void)
 
 	if (e1 == 0)
 	{
-		if (is_ktpro && !strncmp(key, "*version", 9))
-			value = QW_VERSION;
-		else if (is_ktpro && !strncmp(key, "*qwe_version", 13))
-			value = VERSION_NUMBER;
-		else if ((value = Info_ValueForKey (svs.info, key)) == NULL || !*value)
+		if ((value = Info_ValueForKey (svs.info, key)) == NULL || !*value)
 			value = Info_Get(&_localinfo_, key);
 	}
 	else if (e1 <= MAX_CLIENTS)
@@ -3136,138 +3132,138 @@ void PF_Fixme (void)
 
 
 static builtin_t std_builtins[] =
-    {
-        PF_Fixme,		//#0
-        PF_makevectors,	// void(entity e)	makevectors 		= #1;
-        PF_setorigin,	// void(entity e, vector o) setorigin	= #2;
-        PF_setmodel,	// void(entity e, string m) setmodel	= #3;
-        PF_setsize,	// void(entity e, vector min, vector max) setsize = #4;
-        PF_Fixme,	// void(entity e, vector min, vector max) setabssize = #5;
-        PF_break,	// void() break						= #6;
-        PF_random,	// float() random						= #7;
-        PF_sound,	// void(entity e, float chan, string samp) sound = #8;
-        PF_normalize,	// vector(vector v) normalize			= #9;
-        PF_error,	// void(string e) error				= #10;
-        PF_objerror,	// void(string e) objerror				= #11;
-        PF_vlen,	// float(vector v) vlen				= #12;
-        PF_vectoyaw,	// float(vector v) vectoyaw		= #13;
-        PF_Spawn,	// entity() spawn						= #14;
-        PF_Remove,	// void(entity e) remove				= #15;
-        PF_traceline,	// float(vector v1, vector v2, float tryents) traceline = #16;
-        PF_checkclient,	// entity() clientlist					= #17;
-        PF_Find,	// entity(entity start, .string fld, string match) find = #18;
-        PF_precache_sound,	// void(string s) precache_sound		= #19;
-        PF_precache_model,	// void(string s) precache_model		= #20;
-        PF_stuffcmd,	// void(entity client, string s)stuffcmd = #21;
-        PF_findradius,	// entity(vector org, float rad) findradius = #22;
-        PF_bprint,	// void(string s) bprint				= #23;
-        PF_sprint,	// void(entity client, string s) sprint = #24;
-        PF_dprint,	// void(string s) dprint				= #25;
-        PF_ftos,	// void(string s) ftos				= #26;
-        PF_vtos,	// void(string s) vtos				= #27;
-        PF_coredump,
-        PF_traceon,
-        PF_traceoff,		//#30
-        PF_eprint,	// void(entity e) debug print an entire entity
-        PF_walkmove, // float(float yaw, float dist) walkmove
-        PF_Fixme, // float(float yaw, float dist) walkmove
-        PF_droptofloor,
-        PF_lightstyle,
-        PF_rint,
-        PF_floor,
-        PF_ceil,
-        PF_Fixme,
-        PF_checkbottom,		//#40
-        PF_pointcontents,
-        PF_Fixme,
-        PF_fabs,
-        PF_aim,
-        PF_cvar,
-        PF_localcmd,
-        PF_nextent,
-		PF_particle,
-        PF_changeyaw,
-        PF_Fixme,		//#50
-        PF_vectoangles,
+{
+PF_Fixme,		//#0
+PF_makevectors,	// void(entity e)	makevectors 		= #1;
+PF_setorigin,	// void(entity e, vector o) setorigin	= #2;
+PF_setmodel,	// void(entity e, string m) setmodel	= #3;
+PF_setsize,	// void(entity e, vector min, vector max) setsize = #4;
+PF_Fixme,	// void(entity e, vector min, vector max) setabssize = #5;
+PF_break,	// void() break						= #6;
+PF_random,	// float() random						= #7;
+PF_sound,	// void(entity e, float chan, string samp) sound = #8;
+PF_normalize,	// vector(vector v) normalize			= #9;
+PF_error,	// void(string e) error				= #10;
+PF_objerror,	// void(string e) objerror				= #11;
+PF_vlen,	// float(vector v) vlen				= #12;
+PF_vectoyaw,	// float(vector v) vectoyaw		= #13;
+PF_Spawn,	// entity() spawn						= #14;
+PF_Remove,	// void(entity e) remove				= #15;
+PF_traceline,	// float(vector v1, vector v2, float tryents) traceline = #16;
+PF_checkclient,	// entity() clientlist					= #17;
+PF_Find,	// entity(entity start, .string fld, string match) find = #18;
+PF_precache_sound,	// void(string s) precache_sound		= #19;
+PF_precache_model,	// void(string s) precache_model		= #20;
+PF_stuffcmd,	// void(entity client, string s)stuffcmd = #21;
+PF_findradius,	// entity(vector org, float rad) findradius = #22;
+PF_bprint,	// void(string s) bprint				= #23;
+PF_sprint,	// void(entity client, string s) sprint = #24;
+PF_dprint,	// void(string s) dprint				= #25;
+PF_ftos,	// void(string s) ftos				= #26;
+PF_vtos,	// void(string s) vtos				= #27;
+PF_coredump,
+PF_traceon,
+PF_traceoff,		//#30
+PF_eprint,	// void(entity e) debug print an entire entity
+PF_walkmove, // float(float yaw, float dist) walkmove
+PF_Fixme, // float(float yaw, float dist) walkmove
+PF_droptofloor,
+PF_lightstyle,
+PF_rint,
+PF_floor,
+PF_ceil,
+PF_Fixme,
+PF_checkbottom,		//#40
+PF_pointcontents,
+PF_Fixme,
+PF_fabs,
+PF_aim,
+PF_cvar,
+PF_localcmd,
+PF_nextent,
+PF_particle,
+PF_changeyaw,
+PF_Fixme,		//#50
+PF_vectoangles,
 
-        PF_WriteByte,
-        PF_WriteChar,
-        PF_WriteShort,
-        PF_WriteLong,
-        PF_WriteCoord,
-        PF_WriteAngle,
-        PF_WriteString,
-        PF_WriteEntity,		//#59
+PF_WriteByte,
+PF_WriteChar,
+PF_WriteShort,
+PF_WriteLong,
+PF_WriteCoord,
+PF_WriteAngle,
+PF_WriteString,
+PF_WriteEntity,		//#59
 
-        //bliP: added pr as requested ->
-        PF_sin, //float(float f) sin = #60;
-        PF_cos, //float(float f) cos = #61;
-        PF_sqrt, //float(float f) sqrt = #62;
-        PF_min, //float(float val1, float val2) min = #63;
-        PF_max, //float(float val1, float val2) max = #64;
-        //<-
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
+PF_Fixme,
 
-        PF_Fixme,
-        PF_Fixme,
+SV_MoveToGoal,
+PF_precache_file,
+PF_makestatic,
 
-        SV_MoveToGoal,
-        PF_precache_file,
-        PF_makestatic,
+PF_changelevel,		//#70
+PF_Fixme,
 
-        PF_changelevel,		//#70
-        PF_Fixme,
+PF_cvar_set,
+PF_centerprint,
 
-        PF_cvar_set,
-        PF_centerprint,
+PF_ambientsound,
 
-        PF_ambientsound,
+PF_precache_model,
+PF_precache_sound,		// precache_sound2 is different only for qcc
+PF_precache_file,
 
-        PF_precache_model,
-        PF_precache_sound,		// precache_sound2 is different only for qcc
-        PF_precache_file,
+PF_setspawnparms,
 
-        PF_setspawnparms,
+PF_logfrag,
 
-        PF_logfrag,
-
-        PF_infokey,		//#80
-        PF_stof,
-        PF_multicast,
+PF_infokey,		//#80
+PF_stof,
+PF_multicast,
+#pragma msg("remove some of those PF_xxx")
+#if 0
 // MVDSV extensions:
-        PF_executecmd,		//#83
-        PF_tokenize,
-        PF_argc,
-        PF_argv,
-        PF_teamfield,
-        PF_substr,
-        PF_strcat,
-        PF_strlen,		//#90
-        PF_str2byte,
-        PF_str2short,
-        PF_strzone,
-        PF_strunzone,
-        PF_conprint,
-        PF_readcmd,
-        PF_strcpy,
-        PF_strstr,
-        PF_strncpy,
-        PF_log,			//#100
-        PF_redirectcmd,
-        PF_calltimeofday,
-        PF_forcedemoframe,	//#103
-        //bliP: find map ->
-        PF_findmap,		//#104
-        PF_listmaps,		//#105
-        PF_findmapname,		//#106
-    };
+PF_executecmd,		//#83
+PF_tokenize,
+PF_argc,
+PF_argv,
+PF_teamfield,
+PF_substr,
+PF_strcat,
+PF_strlen,		//#90
+PF_str2byte,
+PF_str2short,
+PF_strzone,
+PF_strunzone,
+PF_conprint,
+PF_readcmd,
+PF_strcpy,
+PF_strstr,
+PF_strncpy,
+PF_log,			//#100
+PF_redirectcmd,
+PF_calltimeofday,
+PF_forcedemoframe,	//#103
+//bliP: find map ->
+PF_findmap,		//#104
+PF_listmaps,		//#105
+PF_findmapname,		//#106
+#endif
+};
 
-#define num_mvdsv_builtins (sizeof(std_builtins)/sizeof(std_builtins[0]))
-#define num_id_builtins 83
+#define num_std_builtins (sizeof(std_builtins)/sizeof(std_builtins[0]))
 
 static struct { int num; builtin_t func; } ext_builtins[] =
 {
-{63, PF_Fixme},		// mvdsv min() -- use QSG min() #94 instead
-{64, PF_Fixme},		// mvdsv max() -- use QSG max() #95 instead
+{60, PF_sin},			//float(float f) sin = #60;
+{61, PF_cos},			//float(float f) cos = #61;
+{62, PF_sqrt},			//float(float f) sqrt = #62;
 
 {84, PF_tokenize},		// float(string s) tokenize
 {85, PF_argc},			// float() argc
@@ -3294,49 +3290,39 @@ static struct { int num; builtin_t func; } ext_builtins[] =
 {119, PF_strunzone},	// void(string s) strunzone
 {231, PF_calltimeofday},// void() calltimeofday
 {448, PF_cvar_string},	// string(string varname) cvar_string
-{531,PF_setpause},		//void(float pause) setpause
-{532,PF_precache_vwep_model},	// float(string model) precache_vwep_model = #532;
+{531, PF_setpause},		//void(float pause) setpause
+{532, PF_precache_vwep_model},	// float(string model) precache_vwep_model = #532;
 };
 
 #define num_ext_builtins (sizeof(ext_builtins)/sizeof(ext_builtins[0]))
 
-builtin_t *pr_builtins;
-int pr_numbuiltins;
+builtin_t *pr_builtins = NULL;
+int pr_numbuiltins = 0;
 
 void PR_InitBuiltins (void)
 {
 	int i;
-	enum { UNINITIALIZED, KTPRO, QSG };
-	static int builtin_mode = UNINITIALIZED;
-	int newmode;
 
-	newmode = is_ktpro ? KTPRO : QSG;
-	if (newmode == builtin_mode)
-		return;
+	if (pr_builtins)
+		return; // We don't need reinit it.
 
-	if (builtin_mode == QSG)
-		Q_free (pr_builtins);
-
-	if (newmode == KTPRO) {
-		builtin_mode = KTPRO;
-		pr_builtins = std_builtins;
-		pr_numbuiltins = num_mvdsv_builtins;
-		return;
-	}
-
-	builtin_mode = QSG;
-
-	// find highest builtin number to see how much space we need
-	pr_numbuiltins = num_id_builtins;
+	// Free old array.
+	Q_free (pr_builtins);
+	// We have at least iD builtins.
+	pr_numbuiltins = num_std_builtins;
+	// Find highest builtin number to see how much space we actually need.
 	for (i = 0; i < num_ext_builtins; i++)
-		if (ext_builtins[i].num + 1 > pr_numbuiltins)
-			pr_numbuiltins = ext_builtins[i].num + 1;
-
+		pr_numbuiltins = max(ext_builtins[i].num + 1, pr_numbuiltins);
+	// Allocate builtins array.
 	pr_builtins = (builtin_t *) Q_malloc(pr_numbuiltins * sizeof(builtin_t));
-	memcpy (pr_builtins, std_builtins, num_id_builtins * sizeof(builtin_t));
-	for (i = num_id_builtins; i < pr_numbuiltins; i++)
+	// Init new array to PF_Fixme().
+	for (i = 0; i < pr_numbuiltins; i++)
 		pr_builtins[i] = PF_Fixme;
-	for (i = 0; i < num_ext_builtins; i++) {
+	// Copy iD builtins in new array.
+	memcpy (pr_builtins, std_builtins, num_std_builtins * sizeof(builtin_t));
+	// Add QSG builtins or, probably, overwrite iD ones.
+	for (i = 0; i < num_ext_builtins; i++)
+	{
 		assert (ext_builtins[i].num >= 0);
 		pr_builtins[ext_builtins[i].num] = ext_builtins[i].func;
 	}

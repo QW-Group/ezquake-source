@@ -617,22 +617,10 @@ typedef struct
 #define	MULTICAST_PHS_R			4
 #define	MULTICAST_PVS_R			5
 
-// maps in localinfo supported only by ktpro & ktx mods {
-
-#define MAX_LOCALINFOS 10000
-
-#define LOCALINFO_MAPS_LIST_START		1000
-#define LOCALINFO_MAPS_LIST_END			4999
-
-#define LOCALINFO_MAPS_KTPRO_VERSION	1.63
-#define LOCALINFO_MAPS_KTPRO_VERSION_S	"1.63"
-#define LOCALINFO_MAPS_KTPRO_BUILD		42795
-#define SERVERINFO_KTPRO_VERSION		"kmod"
-#define SERVERINFO_KTPRO_BUILD			"build"
-
-// all versions of ktx with such serverinfo's keys support maps in localinfo
-#define SERVERINFO_KTX_VERSION			"ktxver"
-#define SERVERINFO_KTX_BUILD			"ktxbuild"
+#define MAX_LOCALINFOS			10000
+// maps in localinfo {
+#define LOCALINFO_MAPS_LIST_START	1000
+#define LOCALINFO_MAPS_LIST_END		4999
 // }
 
 #define MAX_REDIRECTMESSAGES	128
@@ -684,8 +672,6 @@ extern  ctxinfo_t _localinfo_;
 extern	qbool		sv_error;
 
 extern char			master_rcon_password[128];
-
-extern qbool		is_ktpro;
 
 //===========================================================
 
