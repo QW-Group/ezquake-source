@@ -890,19 +890,6 @@ void PF_localcmd (void)
 	Cbuf_AddText (str);
 }
 
-void PF_executecmd (void)
-{
-	int old_other, old_self; // mod_consolecmd will be executed, so we need to store this
-
-	old_self = pr_global_struct->self;
-	old_other = pr_global_struct->other;
-
-	Cbuf_Execute();
-
-	pr_global_struct->self = old_self;
-	pr_global_struct->other = old_other;
-}
-
 #define MAX_PR_STRING_SIZE	2048
 #define MAX_PR_STRINGS		64
 
@@ -979,19 +966,6 @@ void PF_argv (void)
 
 /*
 =================
-PF_teamfield
- 
-string teamfield(.string field)
-=================
-*/
-
-void PF_teamfield (void)
-{
-	pr_teamfield = G_INT(OFS_PARM0);
-}
-
-/*
-=================
 PF_substr
  
 string substr(string str, float start, float len)
@@ -1055,32 +1029,6 @@ float strlen(string str)
 void PF_strlen (void)
 {
 	G_FLOAT(OFS_RETURN) = (float) strlen(G_STRING(OFS_PARM0));
-}
-
-/*
-=================
-PF_str2byte
- 
-float str2byte (string str)
-=================
-*/
-
-void PF_str2byte (void)
-{
-	G_FLOAT(OFS_RETURN) = (float) *G_STRING(OFS_PARM0);
-}
-
-/*
-=================
-PF_str2short
- 
-float str2short (string str)
-=================
-*/
-
-void PF_str2short (void)
-{
-	G_FLOAT(OFS_RETURN) = (float) LittleShort(*(short*)G_STRING(OFS_PARM0));
 }
 
 /*
@@ -1163,73 +1111,6 @@ void PF_clear_strtbl(void)
 	}
 }
 
-/*
-=================
-PF_readcmd
- 
-string readmcmd (string str)
-=================
-*/
-
-void PF_readcmd (void)
-{
-	char *s;
-	static char output[OUTPUTBUF_SIZE];
-	extern char outputbuf[];
-	extern redirect_t sv_redirected;
-	redirect_t old;
-
-	s = G_STRING(OFS_PARM0);
-
-	Cbuf_Execute();
-	Cbuf_AddText (s);
-
-	old = sv_redirected;
-	if (old != RD_NONE)
-		SV_EndRedirect();
-
-	SV_BeginRedirect(RD_MOD);
-	Cbuf_Execute();
-	strlcpy(output, outputbuf, sizeof(output));
-	SV_EndRedirect();
-
-	if (old != RD_NONE)
-		SV_BeginRedirect(old);
-
-
-	G_INT(OFS_RETURN) = PR1_SetString(output);
-}
-
-/*
-=================
-PF_redirectcmd
- 
-void redirectcmd (entity to, string str)
-=================
-*/
-
-void PF_redirectcmd (void)
-{
-	char *s;
-	int entnum;
-	extern redirect_t sv_redirected;
-
-	if (sv_redirected)
-		return;
-
-	entnum = G_EDICTNUM(OFS_PARM0);
-	if (entnum < 1 || entnum > MAX_CLIENTS)
-		PR_RunError ("Parm 0 not a client");
-
-	s = G_STRING(OFS_PARM1);
-
-	Cbuf_AddText (s);
-
-	SV_BeginRedirect((redirect_t) (RD_MOD + entnum));
-	Cbuf_Execute();
-	SV_EndRedirect();
-}
-
 dfunction_t *ED_FindFunction (char *name);
 
 //FTE_CALLTIMEOFDAY
@@ -1252,109 +1133,6 @@ void PF_calltimeofday (void)
 
 		PR_ExecuteProgram((func_t)(f - pr_functions));
 	}
-}
-
-/*
-=================
-PF_forcedemoframe
- 
-void PF_forcedemoframe(float now)
-Forces demo frame
-if argument 'now' is set, frame is written instantly
-=================
-*/
-
-void PF_forcedemoframe (void)
-{
-	demo.forceFrame = 1;
-	if (G_FLOAT(OFS_PARM0) == 1)
-		SV_SendDemoMessage();
-}
-
-
-/*
-=================
-PF_strcpy
- 
-void strcpy(string dst, string src)
-FIXME: check for null pointers first?
-=================
-*/
-
-void PF_strcpy (void)
-{
-	strcpy(G_STRING(OFS_PARM0), G_STRING(OFS_PARM1));
-}
-
-/*
-=================
-PF_strncpy
- 
-void strcpy(string dst, string src, float count)
-FIXME: check for null pointers first?
-=================
-*/
-
-void PF_strncpy (void)
-{
-	strncpy(G_STRING(OFS_PARM0), G_STRING(OFS_PARM1), (int) G_FLOAT(OFS_PARM2));
-}
-
-
-/*
-=================
-PF_strstr
- 
-string strstr(string str, string sub)
-=================
-*/
-
-void PF_strstr (void)
-{
-	char *str, *sub, *p;
-
-	str = G_STRING(OFS_PARM0);
-	sub = G_STRING(OFS_PARM1);
-
-	if ((p = strstr(str, sub)) == NULL)
-	{
-		G_INT(OFS_RETURN) = 0;
-		return;
-	}
-
-	RETURN_STRING(p);
-}
-
-/*
-================
-PF_log
- 
-void log(string name, float console, string text)
-=================
-*/
-
-void PF_log(void)
-{
-	char name[MAX_OSPATH], *text;
-	FILE *file;
-
-	snprintf(name, MAX_OSPATH, "%s/%s.log", fs_gamedir, G_STRING(OFS_PARM0));
-	text = PF_VarString(2);
-	Q_normalizetext(text);
-
-	if ((file = fopen(name, "a")) == NULL)
-	{
-		Sys_Printf("coldn't open log file %s\n", name);
-	}
-	else
-	{
-		fprintf (file, "%s", text);
-		fflush (file);
-		fclose(file);
-	}
-
-	if (G_FLOAT(OFS_PARM1))
-		Sys_Printf("%s", text);
 }
 
 /*
@@ -1473,18 +1251,6 @@ void PF_dprint (void)
 {
 	Con_Printf ("%s",PF_VarString(0));
 }
-
-/*
-=========
-PF_conprint
-=========
-*/
-void PF_conprint (void)
-{
-	Sys_Printf ("%s",PF_VarString(0));
-}
-
-//char	pr_string_temp[128];
 
 void PF_ftos (void)
 {
@@ -2559,241 +2325,6 @@ void PF_logfrag (void)
 	//	SV_Write_Log(MOD_FRAG_LOG, 1, "}====================\n");
 }
 
-//bliP: map voting ->
-/*==================
-PF_findmap
-finds maps in sv_gamedir either by id number or name
-returns id for exist, 0 for not
-float(string s) findmap
-==================*/
-void PF_findmap (void)
-{
-	dir_t	dir;
-	file_t *list;
-	char map[MAX_DEMO_NAME];
-	char *s;
-	int id;
-	int i;
-
-	strlcpy(map, G_STRING(OFS_PARM0), sizeof(map));
-	for (i = 0, s = map; *s; s++)
-	{
-		if (*s < '0' || *s > '9')
-		{
-			i = 1;
-			break;
-		}
-	}
-	id = (i) ? 0 : Q_atoi(map);
-
-	if (!strstr(map, ".bsp"))
-		strlcat(map, ".bsp", sizeof(map));
-
-	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
-	                  ".bsp$", SORT_BY_NAME);
-	list = dir.files;
-
-	i = 1;
-	while (list->name[0])
-	{
-		if (((id > 0) && (i == id)) || !strcmp(list->name, map))
-		{
-			G_FLOAT(OFS_RETURN) = i;
-			return;
-		}
-		i++;
-		list++;
-	}
-
-	G_FLOAT(OFS_RETURN) = 0;
-}
-
-/*==================
-PF_findmapname
-returns map name from a map id
-string(float id) findmapname
-==================*/
-void PF_findmapname (void)
-{
-	dir_t	dir;
-	file_t *list;
-	//char *s;
-	int id;
-	int i;
-
-	id = G_FLOAT(OFS_PARM0);
-
-	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
-	                  ".bsp$", SORT_BY_NAME);
-	list = dir.files;
-
-	i = 1;
-	while (list->name[0])
-	{
-		if (i == id)
-		{
-			list->name[strlen(list->name) - 4] = 0; //strip .bsp
-			//if ((s = strchr(list->name, '.')))
-			//  *s = '\0';
-			RETURN_STRING(list->name);
-			return;
-		}
-		i++;
-		list++;
-	}
-	G_FLOAT(OFS_RETURN) = 0;
-}
-
-/*==================
-PF_listmaps
-prints a range of map names from sv_gamedir (because of the likes of thundervote)
-returns position if more maps, 0 if displayed them all
-float(entity client, float level, float range, float start, float style, float footer) listmaps
-==================*/
-void PF_listmaps (void)
-{
-	int entnum, level, start, range, foot, style;
-	client_t	*client;
-	char line[256];
-	char tmp[64];
-	char num[16];
-	dir_t	dir;
-	file_t *list;
-	//char *s;
-	int id, pad;
-	int ti, i, j;
-
-	entnum = G_EDICTNUM(OFS_PARM0);
-	level = G_FLOAT(OFS_PARM1);
-	range = G_FLOAT(OFS_PARM2);
-	start = G_FLOAT(OFS_PARM3);
-	style = G_FLOAT(OFS_PARM4);
-	foot = G_FLOAT(OFS_PARM5);
-
-	if (entnum < 1 || entnum > MAX_CLIENTS)
-	{
-		Con_Printf ("tried to listmap to a non-client\n");
-		G_FLOAT(OFS_RETURN) = 0;
-		return;
-	}
-
-	client = &svs.clients[entnum-1];
-	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
-	                  ".bsp$", SORT_BY_NAME);
-	list = dir.files;
-	snprintf(tmp, sizeof(tmp), "%d", dir.numfiles);
-	pad = strlen(tmp);
-
-	if (!list->name[0])
-	{
-		SV_ClientPrintf(client, level, "No maps.\n");
-		G_FLOAT(OFS_RETURN) = 0;
-		return;
-	}
-
-	//don't go off the end of the world
-	if ((range < 0) || (range > dir.numfiles))
-	{
-		range = dir.numfiles;
-	}
-	start--;
-	if ((start < 0) || (start > dir.numfiles-1))
-	{
-		start = 0;
-	}
-	ti = (range <= 10) ? range : 10;
-
-	//header - progs can do this
-	/*if (!start) {
-	  SV_ClientPrintf(client, level, "Available maps:\n");
-	}*/
-
-	list = dir.files + start;
-	line[0] = '\0';
-	j = 1;
-	for (i = 0, id = start + 1; list->name[0] && i < range && id < dir.numfiles + 1; id++)
-	{
-		list->name[strlen(list->name) - 4] = 0; //strip .bsp
-		//if ((s = strchr(list->name, '.'))) //strip .bsp
-		//	*s = '\0';
-		switch (style)
-		{
-		case 1:
-			if (i % ti == 0)
-			{ //print header
-				snprintf(tmp, sizeof(tmp), "%d-%d", id, id + ti - 1);
-				num[0] = '\0';
-				for (j = strlen(tmp); j < ((pad * 2) + 1); j++) //padding to align
-					strlcat(num, " ", sizeof(num));
-				SV_ClientPrintf(client, level, "%s%s %c ", num, tmp, 133);
-				j = 1;
-			}
-			i++;
-			//print id and name
-			snprintf(tmp, sizeof(tmp), "%d:%s ", j++, list->name);
-			if (i % 2 != 0) //red every second
-				Q_redtext((unsigned char*)tmp);
-			strlcat(line, tmp, sizeof(line));
-			if (i % 10 == 0)
-			{ //print entire line
-				SV_ClientPrintf(client, level, "%s\n", line);
-				line[0] = '\0';
-			}
-			break;
-		case 2:
-			snprintf(tmp, sizeof(tmp), "%d", id);
-			num[0] = '\0';
-			for (j = strlen(tmp); j < pad; j++) //padding to align
-				strlcat(num, " ", sizeof(num));
-			Q_redtext((unsigned char*)tmp);
-			SV_ClientPrintf(client, level, "%s%s%c %s\n", num, tmp, 133, list->name);
-			break;
-		case 3:
-			list->name[13] = 0;
-			snprintf(tmp, sizeof(tmp), "%03d", id);
-			Q_redtext((unsigned char*)tmp);
-			snprintf(line, sizeof(line), "%s\x85%-13s", tmp, list->name);
-			id++;
-			list++;
-			if (!list->name[0])
-				continue;
-			list->name[13] = 0;
-			list->name[strlen(list->name) - 4] = 0;
-			snprintf(tmp, sizeof(tmp), "%03d", id);
-			Q_redtext((unsigned char*)tmp);
-			SV_ClientPrintf(client, level, "%s %s\x85%-13s\n", line, tmp, list->name);
-			line[0] = 0; //bliP: 24/9 bugfix
-			break;
-		default:
-			snprintf(tmp, sizeof(tmp), "%d", id);
-			Q_redtext((unsigned char*)tmp);
-			SV_ClientPrintf(client, level, "%s%c%s%s", tmp, 133, list->name, (i == range) ? "\n" : " ");
-			i++;
-		}
-		list++;
-	}
-	if (((style == 1) || (style == 3)) && line[0]) //still things to print
-		SV_ClientPrintf(client, level, "%s\n", line);
-	else if (style == 0)
-		SV_ClientPrintf(client, level, "\n");
-
-	if (id < dir.numfiles + 1)
-	{ //more to come
-		G_FLOAT(OFS_RETURN) = id;
-		return;
-	}
-
-	if (foot)
-	{ //footer
-		strlcpy(tmp, "Total:", sizeof(tmp));
-		Q_redtext((unsigned char*)tmp);
-		SV_ClientPrintf (client, level,	"%s %d maps %.0fKB (%.2fMB)\n", tmp, dir.numfiles, (float)dir.size/1024, (float)dir.size/1024/1024);
-	}
-
-	G_FLOAT(OFS_RETURN) = 0;
-}
-//<-
-
 /*
 ==============
 PF_infokey
@@ -3042,6 +2573,8 @@ static void PF_cvar_string (void)
 		G_INT(OFS_RETURN) = 0;
 		return;
 	}
+
+#pragma msg("sizeof(pr_string_temp) is wrong here, since it is char *pr_string_temp; and sizeof return 4/8 bytes.")
 	strlcpy (pr_string_temp, var->string, sizeof(pr_string_temp));
 	RETURN_STRING(pr_string_temp);
 }
@@ -3226,35 +2759,6 @@ PF_logfrag,
 PF_infokey,		//#80
 PF_stof,
 PF_multicast,
-#pragma msg("remove some of those PF_xxx")
-#if 0
-// MVDSV extensions:
-PF_executecmd,		//#83
-PF_tokenize,
-PF_argc,
-PF_argv,
-PF_teamfield,
-PF_substr,
-PF_strcat,
-PF_strlen,		//#90
-PF_str2byte,
-PF_str2short,
-PF_strzone,
-PF_strunzone,
-PF_conprint,
-PF_readcmd,
-PF_strcpy,
-PF_strstr,
-PF_strncpy,
-PF_log,			//#100
-PF_redirectcmd,
-PF_calltimeofday,
-PF_forcedemoframe,	//#103
-//bliP: find map ->
-PF_findmap,		//#104
-PF_listmaps,		//#105
-PF_findmapname,		//#106
-#endif
 };
 
 #define num_std_builtins (sizeof(std_builtins)/sizeof(std_builtins[0]))

@@ -31,7 +31,6 @@ dstatement_t	*pr_statements;
 globalvars_t	*pr_global_struct;
 float			*pr_globals;			// same as pr_global_struct
 int				pr_edict_size;	// in bytes
-int				pr_teamfield = 0;	// field for team storage
 
 #define NQ_PROGHEADER_CRC 5927
 

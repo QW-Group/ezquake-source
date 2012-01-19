@@ -457,8 +457,6 @@ typedef struct
 	demo_frame_t	frames[UPDATE_BACKUP]; // here we store all previous frames
 	demo_client_t	clients[MAX_CLIENTS]; // we store here what we wrote last time so we can delta
 
-	int				forceFrame;
-
 	// =====================================
 	char			mem_set_point; // fields below, like ->dest and ->pendingdest must not be memset to 0
 	// =====================================

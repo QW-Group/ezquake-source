@@ -1269,10 +1269,8 @@ void SV_SendDemoMessage(void)
 	else
 		min_fps = bound(4.0, (int)sv_demoIdlefps.value, 30);
 
-	if (!demo.forceFrame && (sv.time - demo.time < 1.0/min_fps))
+	if (sv.time - demo.time < 1.0/min_fps)
 		return;
-
-	demo.forceFrame = 0;
 
 	if ((int)sv_demoPings.value)
 	{

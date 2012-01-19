@@ -2343,8 +2343,6 @@ static void SetUpClientEdict (client_t *cl, edict_t *ent)
 	ent->v.colormap = NUM_FOR_EDICT(ent);
 
 	ent->v.team = 0;	// FIXME
-	if (pr_teamfield)
-		E_INT(ent, pr_teamfield) = PR1_SetString(cl->team);
 
 	cl->entgravity = 1.0;
 	if (fofs_gravity)
