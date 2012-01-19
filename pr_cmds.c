@@ -959,7 +959,6 @@ void PF_argv (void)
 	else {
 		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%s", Cmd_Argv(num));
 		RETURN_STRING(pr_string_temp);
-//		G_INT(OFS_RETURN) = PR1_SetString(pr_string_temp);
 		PF_SetTempString();
 	}
 }
@@ -1011,8 +1010,7 @@ string strcat(string str1, string str2)
 
 void PF_strcat (void)
 {
-	/* FIXME */
-	strcpy(pr_string_temp, PF_VarString(0)/*, MAX_PR_STRING_SIZE*/);
+	strlcpy(pr_string_temp, PF_VarString(0), MAX_PR_STRING_SIZE);
 	G_INT(OFS_RETURN) = PR1_SetString(pr_string_temp);
 
 	PF_SetTempString();
@@ -2574,9 +2572,9 @@ static void PF_cvar_string (void)
 		return;
 	}
 
-#pragma msg("sizeof(pr_string_temp) is wrong here, since it is char *pr_string_temp; and sizeof return 4/8 bytes.")
-	strlcpy (pr_string_temp, var->string, sizeof(pr_string_temp));
+	strlcpy (pr_string_temp, var->string, MAX_PR_STRING_SIZE);
 	RETURN_STRING(pr_string_temp);
+	PF_SetTempString();
 }
 
 // DP_REGISTERCVAR
