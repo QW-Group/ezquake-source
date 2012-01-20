@@ -3450,8 +3450,6 @@ into a more C freindly form.
 =================
 */
 
-extern func_t UserInfo_Changed;
-
 void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 {
 	char	*val, *p;

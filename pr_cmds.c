@@ -1109,16 +1109,16 @@ void PF_clear_strtbl(void)
 	}
 }
 
-dfunction_t *ED_FindFunction (char *name);
-
 //FTE_CALLTIMEOFDAY
 void PF_calltimeofday (void)
 {
-	date_t date;
-	dfunction_t *f;
+	extern func_t ED_FindFunctionOffset (char *name);
+	func_t f;
 
-	if ((f = ED_FindFunction ("timeofday")) != NULL)
+	if ((f = ED_FindFunctionOffset ("timeofday")))
 	{
+		date_t date;
+
 		SV_TimeOfDay(&date);
 
 		G_FLOAT(OFS_PARM0) = (float)date.sec;
@@ -1129,7 +1129,7 @@ void PF_calltimeofday (void)
 		G_FLOAT(OFS_PARM5) = (float)date.year;
 		G_INT(OFS_PARM6) = PR_SetTmpString(date.str);
 
-		PR_ExecuteProgram((func_t)(f - pr_functions));
+		PR_ExecuteProgram(f);
 	}
 }
 

@@ -177,7 +177,10 @@ extern	qbool	pr_trace;
 extern	dfunction_t	*pr_xfunction;
 extern	int		pr_xstatement;
 
-extern func_t SpectatorConnect, SpectatorDisconnect, SpectatorThink;
+extern func_t mod_ConsoleCmd, mod_UserCmd;
+extern func_t mod_UserInfo_Changed, mod_localinfoChanged;
+extern func_t mod_ChatMessage;
+extern func_t mod_SpectatorConnect, mod_SpectatorDisconnect, mod_SpectatorThink;
 extern func_t GE_ClientCommand, GE_PausedTic, GE_ShouldPause;
 
 extern int fofs_items2; // ZQ_ITEMS2 extension
@@ -226,7 +229,7 @@ qbool PR1_ClientCmd(void);
 #define PR1_GameStartFrame() PR_ExecuteProgram (PR_GLOBAL(StartFrame))
 #define PR1_ClientKill() PR_ExecuteProgram (PR_GLOBAL(ClientKill))
 #define PR1_UserInfoChanged() (0) // PR1 does not really have it,
-								  // we have UserInfo_Changed but it is slightly different.
+								  // we have mod_UserInfo_Changed but it is slightly different.
 #define PR1_LoadEnts ED_LoadFromFile
 #define PR1_EdictThink PR_ExecuteProgram
 #define PR1_EdictTouch PR_ExecuteProgram

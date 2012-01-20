@@ -1990,8 +1990,6 @@ Allow clients to change userinfo
 ==================
 */
 
-extern func_t UserInfo_Changed;
-
 char *shortinfotbl[] =
 {
 	"name",
@@ -2152,14 +2150,14 @@ static void Cmd_SetInfo_f (void)
 	// process any changed values
 	SV_ExtractFromUserinfo (sv_client, !strcmp(Cmd_Argv(1), "name"));
 
-	if (UserInfo_Changed)
+	if (mod_UserInfo_Changed)
 	{
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_client->edict);
 		G_INT(OFS_PARM0) = PR_SetTmpString(Cmd_Argv(1));
 		G_INT(OFS_PARM1) = PR_SetTmpString(oldval);
 		G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&sv_client->_userinfo_ctx_, Cmd_Argv(1)));
-		PR_ExecuteProgram (UserInfo_Changed);
+		PR_ExecuteProgram (mod_UserInfo_Changed);
 	}
 
 	for (i = 0; shortinfotbl[i] != NULL; i++)

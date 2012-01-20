@@ -738,8 +738,8 @@ void PR1_GameClientDisconnect(int spec)
 {
 	if (spec)
 	{
-		if (SpectatorDisconnect)
-			PR_ExecuteProgram(SpectatorDisconnect);
+		if (mod_SpectatorDisconnect)
+			PR_ExecuteProgram(mod_SpectatorDisconnect);
 	}
 	else
 	{
@@ -753,8 +753,8 @@ void PR1_GameClientConnect(int spec)
 {
 	if (spec)
 	{
-		if (SpectatorConnect)
-			PR_ExecuteProgram(SpectatorConnect);
+		if (mod_SpectatorConnect)
+			PR_ExecuteProgram(mod_SpectatorConnect);
 	}
 	else
 	{
@@ -796,8 +796,8 @@ void PR1_GameClientPostThink(int spec)
 {
 	if (spec)
 	{
-		if (SpectatorThink)
-			PR_ExecuteProgram(SpectatorThink);
+		if (mod_SpectatorThink)
+			PR_ExecuteProgram(mod_SpectatorThink);
 	}
 	else
 	{
@@ -809,11 +809,9 @@ void PR1_GameClientPostThink(int spec)
 
 qbool PR1_ClientSay(int isTeamSay, char *message)
 {
-	extern func_t ChatMessage;
-
 	qbool ret = false;
 
-	if (ChatMessage)
+	if (mod_ChatMessage)
 	{
 		int j;
 
@@ -827,7 +825,7 @@ qbool PR1_ClientSay(int isTeamSay, char *message)
 		G_INT(OFS_PARM0) = PR_SetTmpString(message);
 		G_FLOAT(OFS_PARM1) = (float)isTeamSay;
 
-		PR_ExecuteProgram(ChatMessage);
+		PR_ExecuteProgram(mod_ChatMessage);
 
 		ret = !!G_FLOAT(OFS_RETURN);
 	}

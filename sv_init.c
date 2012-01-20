@@ -222,10 +222,10 @@ clients along with it.
 This is only called from the SV_Map_f() function.
 ================
 */
-dfunction_t *ED_FindFunction (char *name);
-
 void SV_SpawnServer (char *mapname, qbool devmap)
 {
+	extern func_t ED_FindFunctionOffset (char *name);
+
 	edict_t *ent;
 	int i;
 #ifdef USE_PR2
@@ -353,7 +353,6 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 #endif
 	{
 		PR_LoadProgs ();
-		PR_InitBuiltins ();
 		sv.edicts = (edict_t*) Hunk_AllocName (MAX_EDICTS * pr_edict_size, "edicts");
 	}
 
@@ -372,6 +371,20 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	fofs_vw_index = ED_FindFieldOffset ("vw_index");
 	fofs_hideentity = ED_FindFieldOffset ("hideentity");
 	fofs_trackent = ED_FindFieldOffset ("trackent");
+
+	// find optional QC-exported functions.
+	// we have it here, so we set it to NULL in case of PR2 progs.
+	mod_SpectatorConnect = ED_FindFunctionOffset ("SpectatorConnect");
+	mod_SpectatorThink = ED_FindFunctionOffset ("SpectatorThink");
+	mod_SpectatorDisconnect = ED_FindFunctionOffset ("SpectatorDisconnect");
+	mod_ChatMessage = ED_FindFunctionOffset ("ChatMessage");
+	mod_UserInfo_Changed = ED_FindFunctionOffset ("UserInfo_Changed");
+	mod_ConsoleCmd = ED_FindFunctionOffset ("ConsoleCmd");
+	mod_UserCmd = ED_FindFunctionOffset ("UserCmd");
+	mod_localinfoChanged = ED_FindFunctionOffset ("localinfoChanged");
+	GE_ClientCommand = ED_FindFunctionOffset ("GE_ClientCommand");
+	GE_PausedTic = ED_FindFunctionOffset ("GE_PausedTic");
+	GE_ShouldPause = ED_FindFunctionOffset ("GE_ShouldPause");
 
 	// leave slots at start for clients only
 	sv.num_edicts = MAX_CLIENTS+1;

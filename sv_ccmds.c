@@ -1252,7 +1252,6 @@ void SV_Status_f (void)
 SV_Check_maps_f
 ==================
 */
-extern func_t localinfoChanged;
 void SV_Check_maps_f(void)
 {
 	dir_t d;
@@ -1442,14 +1441,14 @@ void SV_Localinfo_Set (const char *name, const char *value)
 	old_value = Info_Get(&_localinfo_, name); // remember old value.
 	Info_Set (&_localinfo_, name, value); // set new value.
 
-	if (localinfoChanged)
+	if (mod_localinfoChanged)
 	{
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = 0;
 		G_INT(OFS_PARM0) = PR_SetTmpString(name);
 		G_INT(OFS_PARM1) = PR_SetTmpString(old_value);
 		G_INT(OFS_PARM2) = PR_SetTmpString(Info_Get(&_localinfo_, name));
-		PR_ExecuteProgram (localinfoChanged);
+		PR_ExecuteProgram (mod_localinfoChanged);
 	}
 }
 

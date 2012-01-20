@@ -70,12 +70,12 @@ gefv_cache;
 
 static gefv_cache	gefvCache[GEFV_CACHESIZE] = {{NULL, ""}, {NULL, ""}};
 
-func_t SpectatorConnect, SpectatorThink, SpectatorDisconnect;
+func_t mod_SpectatorConnect, mod_SpectatorThink, mod_SpectatorDisconnect;
 func_t GE_ClientCommand, GE_PausedTic, GE_ShouldPause;
 
 func_t mod_ConsoleCmd, mod_UserCmd;
-func_t UserInfo_Changed, localinfoChanged;
-func_t ChatMessage;
+func_t mod_UserInfo_Changed, mod_localinfoChanged;
+func_t mod_ChatMessage;
 
 cvar_t	sv_progsname = {"sv_progsname", "qwprogs"};
 #ifdef WITH_NQPROGS
@@ -1226,20 +1226,7 @@ void PR_LoadProgs (void)
 	PR_InitPatchTables();
 #endif
 
-#pragma msg("FIXME: init it to NULL in case of PR2??? Also give some nice and same prefix to all of them")
-
-	// find optional QC-exported functions
-	SpectatorConnect = ED_FindFunctionOffset ("SpectatorConnect");
-	SpectatorThink = ED_FindFunctionOffset ("SpectatorThink");
-	SpectatorDisconnect = ED_FindFunctionOffset ("SpectatorDisconnect");
-	ChatMessage = ED_FindFunctionOffset ("ChatMessage");
-	UserInfo_Changed = ED_FindFunctionOffset ("UserInfo_Changed");
-	mod_ConsoleCmd = ED_FindFunctionOffset ("ConsoleCmd");
-	mod_UserCmd = ED_FindFunctionOffset ("UserCmd");
-	localinfoChanged = ED_FindFunctionOffset ("localinfoChanged");
-	GE_ClientCommand = ED_FindFunctionOffset ("GE_ClientCommand");
-	GE_PausedTic = ED_FindFunctionOffset ("GE_PausedTic");
-	GE_ShouldPause = ED_FindFunctionOffset ("GE_ShouldPause");
+	PR_InitBuiltins();
 }
 
 
