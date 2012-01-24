@@ -2314,19 +2314,9 @@ static void Cmd_ShowMapsList_f(void)
 
 static void SetUpClientEdict (client_t *cl, edict_t *ent)
 {
-#ifdef USE_PR2
-	if (sv_vm)
-	{
-		string_t savenetname = ent->v.netname;
-		memset(&ent->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
-		ent->v.netname = savenetname;
-	}
-	else
-#endif
-	{
-		memset (&ent->v, 0, progs->entityfields * 4);
-		ent->v.netname = PR1_SetString(cl->name);
-	}
+	memset(&ent->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
+	// restore client name.
+	ent->v.netname = PR_SetString(cl->name);
 	// so spec will have right goalentity - if speccing someone
 	if(cl->spectator && cl->spec_track > 0)
 		ent->v.goalentity = EDICT_TO_PROG(svs.clients[cl->spec_track-1].edict);

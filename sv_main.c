@@ -1130,9 +1130,6 @@ A connection request that did not come from the master
 */
 extern void MVD_PlayerReset(int player);
 
-#ifdef USE_PR2
-extern char clientnames[MAX_CLIENTS][CLIENT_NAME_LEN];
-#endif
 extern char *shortinfotbl[];
 
 static void SVC_DirectConnect (void)
@@ -1316,16 +1313,8 @@ static void SVC_DirectConnect (void)
 	ent = EDICT_NUM(edictnum);
 	ent->e->free = false;
 	newcl->edict = ent;
-#ifdef USE_PR2
-	//restore pointer to client name
-	//for -progtype 0 (VM_NONE) names stored in clientnames array
-	//for -progtype 1 (VM_NATIVE) and -progtype 2 (VM_BYTECODE)  stored in mod memory
-	if(sv_vm)
-		newcl->name = PR2_GetString(ent->v.netname);
-	else
-		newcl->name = clientnames[edictnum - 1];
-	memset(newcl->name, 0, CLIENT_NAME_LEN);
-#endif
+	// restore client name.
+	ent->v.netname = PR_SetString(newcl->name);
 
 	s = ( vip ? va("%d", vip) : "" );
 

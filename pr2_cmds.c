@@ -1600,7 +1600,7 @@ void PF2_makestatic(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval
 	ent = EDICT_NUM(stack[0]._int);
 
 	MSG_WriteByte(&sv.signon, svc_spawnstatic);
-
+#pragma msg("Why it is not just PR_GetString(ent->v.model) instead of VM_POINTER(base,mask,ent->v.model) ???")
 	MSG_WriteByte(&sv.signon, SV_ModelIndex((char *) VM_POINTER(base,mask,ent->v.model)));
 
 	MSG_WriteByte(&sv.signon, ent->v.frame);
@@ -2419,7 +2419,6 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 	char   *s;
 	edict_t *ent;
 	eval_t *val;
-	string_t savenetname;
 	int old_self;
 	char info[MAX_EXT_INFO_STRING];
 
@@ -2485,10 +2484,7 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 
 	edictnum = ( newcl - svs.clients ) + 1;
 	ent = EDICT_NUM( edictnum );
-	savenetname = ent->v.netname;
-
 	memset( &ent->v, 0, pr_edict_size - sizeof( edict_t ) + sizeof( entvars_t ) );
-	ent->v.netname = savenetname;
 	newcl->entgravity = 1.0;
 	val = PR2_GetEdictFieldValue( ent, "gravity" );
 	if ( val )
@@ -2505,8 +2501,10 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 	if( val )
 		val->_int = 1;
 
-	newcl->name = PR2_GetString( ent->v.netname );
-	memset( newcl->stats, 0, sizeof( sv_client->stats ) );
+	// restore client name.
+	ent->v.netname = PR_SetString(newcl->name);
+
+	memset( newcl->stats, 0, sizeof( newcl->stats ) );
 	SZ_Clear( &newcl->netchan.message );
 	newcl->netchan.drop_count = 0;
 	newcl->netchan.incoming_sequence = 1;

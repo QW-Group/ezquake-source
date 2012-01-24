@@ -30,11 +30,6 @@ char	localmodels[MAX_MODELS][5];	// inline model names for precache
 //char localinfo[MAX_LOCALINFO_STRING+1]; // local game info
 ctxinfo_t _localinfo_;
 
-#ifdef USE_PR2
-//storage for client names for -progtype 0 (VM_NONE)
-char clientnames[MAX_CLIENTS][CLIENT_NAME_LEN]; //clientnames for -progtype 0
-#endif
-
 int fofs_items2;
 int fofs_maxspeed, fofs_gravity;
 int fofs_movement;
@@ -228,9 +223,6 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	edict_t *ent;
 	int i;
-#ifdef USE_PR2
-	char savenames[MAX_CLIENTS][CLIENT_NAME_LEN];
-#endif
 
 	extern cvar_t sv_loadentfiles, sv_loadentfiles_dir;
 	char *entitystring;
@@ -252,12 +244,12 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	SV_SaveSpawnparms ();
 	SV_LoadAccounts();
+
 #ifdef USE_PR2
-	//save client names from mod memory before unload mod and clearing VM memory by Hunk_FreeToLowMark
-	memset(savenames, 0, sizeof(savenames));
+	// remove bot clients
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
-		if( sv_vm && svs.clients[i].isBot ) // remove bot clients
+		if( sv_vm && svs.clients[i].isBot )
 		{
 			svs.clients[i].old_frags = 0;
 			svs.clients[i].edict->v.frags = 0.0;
@@ -268,11 +260,12 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 			SV_FullClientUpdate(&svs.clients[i], &sv.reliable_datagram);
 			svs.clients[i].isBot = 0;
 		}
-		if (svs.clients[i].name)
-			strlcpy(savenames[i], svs.clients[i].name, CLIENT_NAME_LEN);
 	}
+
+	// Shutdown game.
 	if ( sv_vm )
 		PR2_GameShutDown();
+
 #endif
 
 	progs = NULL;
@@ -391,16 +384,9 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	for (i=0 ; i<MAX_CLIENTS ; i++)
 	{
 		ent = EDICT_NUM(i+1);
-#ifdef USE_PR2
-		//restore client names
-		//for -progtype 0 (VM_NONE) names stored in clientnames array
-		//for -progtype 1 (VM_NATIVE) and -progtype 2 (VM_BYTECODE)  stored in mod memory
-		if(sv_vm)
-			svs.clients[i].name = PR2_GetString(ent->v.netname);
-		else
-			svs.clients[i].name = clientnames[i];
-		strlcpy(svs.clients[i].name, savenames[i], CLIENT_NAME_LEN);
-#endif
+		// restore client name.
+		ent->v.netname = PR_SetString(svs.clients[i].name);
+		// reserve edict.
 		svs.clients[i].edict = ent;
 		//ZOID - make sure we update frags right
 		svs.clients[i].old_frags = 0;
@@ -473,29 +459,18 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	ent = EDICT_NUM(0);
 	ent->e->free = false;
-#ifdef USE_PR2
-	if ( sv_vm )
-		strlcpy(PR2_GetString(ent->v.model), sv.modelname, 64);
-	else
-#endif
-		ent->v.model = PR1_SetString(sv.modelname);
+	ent->v.model = PR_SetString(sv.modelname);
 	ent->v.modelindex = 1;		// world model
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;
 
 	// information about the server
-	// VM-FIXME: Should it be PR2_SetString() ???
-	ent->v.netname = PR1_SetString(VersionStringFull());
-	ent->v.targetname = PR1_SetString(SERVER_NAME);
+	ent->v.netname = PR_SetString(VersionStringFull());
+	ent->v.targetname = PR_SetString(SERVER_NAME);
 	ent->v.impulse = VERSION_NUM;
 	ent->v.items = pr_numbuiltins - 1;
 
-#ifdef USE_PR2
-	if(sv_vm)
-		strlcpy((char*)PR2_GetString(pr_global_struct->mapname), sv.mapname, 64);
-	else
-#endif
-	PR_GLOBAL(mapname) = PR1_SetString(sv.mapname);
+	PR_GLOBAL(mapname) = PR_SetString(sv.mapname);
 	// serverflags are for cross level information (sigils)
 	PR_GLOBAL(serverflags) = svs.serverflags;
 	if (pr_nqprogs)

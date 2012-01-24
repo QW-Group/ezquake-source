@@ -76,6 +76,7 @@ void		PR2_PausedTic(float duration);
 char*		PR2_GetString(intptr_t);
 #define		PR_GetString PR2_GetString
 intptr_t	PR2_SetString(char*s);
+#define PR_SetString PR2_SetString
 void		PR2_RunError(char *error, ...);
 void		ED2_Free(edict_t *ed);
 edict_t*	ED2_Alloc();

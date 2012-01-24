@@ -238,6 +238,7 @@ qbool PR1_ClientCmd(void);
 #ifndef USE_PR2
 	#define PR_Init PR1_Init
 	#define PR_GetString PR1_GetString
+	#define PR_SetString PR1_SetString
 	#define ED_FindFieldOffset ED1_FindFieldOffset
 	#define PR_GetEdictFieldValue PR1_GetEdictFieldValue
 
