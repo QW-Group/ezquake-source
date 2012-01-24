@@ -1088,6 +1088,8 @@ void PR_InitPatchTables (void)
 {
 	int i;
 
+#pragma msg("This function should be called for PR2 too")
+
 	if (pr_nqprogs)
 	{
 		memcpy (pr_globaloffsetpatch, pr_globaloffsetpatch_nq, sizeof(pr_globaloffsetpatch));
