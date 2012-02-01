@@ -843,3 +843,19 @@ void PR1_PausedTic(float duration)
 		PR_ExecuteProgram (GE_PausedTic);
 	}
 }
+
+//=============================================================================
+
+void PR1_UnLoadProgs()
+{
+	if (progs)
+	{
+		// FIXME: There should be done alot of variables reseting...
+
+#ifdef WITH_NQPROGS
+		pr_nqprogs = false;
+#endif
+		progs = NULL;
+	}
+}
+

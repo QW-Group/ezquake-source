@@ -2969,6 +2969,12 @@ extern field_t *fields;
 
 void PR2_InitProg()
 {
+	if ( !sv_vm )
+	{
+		PR1_InitProg();
+		return;
+	}
+
 	PR2_FS_Restart();
 
 	gamedata = (gameData_t *) VM_Call(sv_vm, GAME_INIT, (int) (sv.time * 1000),

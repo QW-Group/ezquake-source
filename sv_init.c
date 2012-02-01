@@ -262,13 +262,11 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		}
 	}
 
-	// Shutdown game.
-	if ( sv_vm )
-		PR2_GameShutDown();
-
 #endif
 
-	progs = NULL;
+	// Shutdown game.
+	PR_GameShutDown();
+	PR_UnLoadProgs();
 
 	svs.spawncount++; // any partially connected client will be restarted
 
@@ -338,16 +336,11 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	// which determines how big each edict is
 	// and allocate edicts
 
-#ifdef USE_PR2
-	sv_vm = (vm_t *) VM_Load(sv_vm, (vm_type_t) (int) sv_progtype.value, sv_progsname.string, sv_syscall, sv_sys_callex);
-	if ( sv_vm )
-		PR2_InitProg();
-	else
+	PR_LoadProgs ();
+#ifdef WITH_NQPROGS
+	PR_InitPatchTables();
 #endif
-	{
-		PR_LoadProgs ();
-		sv.edicts = (edict_t*) Hunk_AllocName (MAX_EDICTS * pr_edict_size, "edicts");
-	}
+	PR_InitProg();
 
 	for (i = 0; i < MAX_EDICTS; i++)
 	{

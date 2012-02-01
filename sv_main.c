@@ -239,16 +239,9 @@ void SV_Shutdown (char *finalmsg)
 	NET_Shutdown ();
 #endif
 
-#ifdef USE_PR2
-	if ( sv_vm )
-	{
-		PR2_GameShutDown();
-		VM_Unload( sv_vm );
-		sv_vm = NULL;
-	}
-#endif
-
-	progs = NULL;
+	// Shutdown game.
+	PR_GameShutDown();
+	PR_UnLoadProgs();
 
 	memset (&sv, 0, sizeof(sv));
 	sv.state = ss_dead;

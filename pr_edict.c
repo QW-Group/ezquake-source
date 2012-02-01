@@ -1078,7 +1078,7 @@ qbool PR1_ClientCmd(void)
 
 /*
 ===============
-PR_LoadProgs
+PR1_LoadProgs
 ===============
 */
 void PF_clear_strtbl(void);
@@ -1087,8 +1087,6 @@ void PF_clear_strtbl(void);
 void PR_InitPatchTables (void)
 {
 	int i;
-
-#pragma msg("This function should be called for PR2 too")
 
 	if (pr_nqprogs)
 	{
@@ -1113,7 +1111,7 @@ void PR_InitPatchTables (void)
 }
 #endif
 
-void PR_LoadProgs (void)
+void PR1_LoadProgs (void)
 {
 	int	i;
 	char num[32];
@@ -1152,7 +1150,7 @@ void PR_LoadProgs (void)
 #endif
 
 	if (!progs)
-		SV_Error ("PR_LoadProgs: couldn't load progs.dat");
+		SV_Error ("PR1_LoadProgs: couldn't load progs.dat");
 	Con_DPrintf ("Programs occupy %iK.\n", filesize/1024);
 
 #ifdef WITH_NQPROGS
@@ -1216,7 +1214,7 @@ void PR_LoadProgs (void)
 	{
 		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
 		if (pr_fielddefs[i].type & DEF_SAVEGLOBAL)
-			SV_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
+			SV_Error ("PR1_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
 		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
 	}
@@ -1224,13 +1222,13 @@ void PR_LoadProgs (void)
 	for (i = 0; i < progs->numglobals; i++)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 
-#ifdef WITH_NQPROGS
-	PR_InitPatchTables();
-#endif
-
 	PR_InitBuiltins();
 }
 
+void PR1_InitProg()
+{
+	sv.edicts = (edict_t*) Hunk_AllocName (MAX_EDICTS * pr_edict_size, "edicts");
+}
 
 /*
 ===============

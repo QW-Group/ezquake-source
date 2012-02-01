@@ -119,7 +119,6 @@ void NQP_Reset (void);
 void PR1_Init (void);
 
 void PR_ExecuteProgram (func_t fnum);
-void PR_LoadProgs (void);
 void PR_InitPatchTables (void);	// NQ progs support
 
 void PR_Profile_f (void);
@@ -215,6 +214,12 @@ char *PR1_GetString(int num);
 int PR1_SetString(char *s);
 int PR_SetTmpString(const char *s);
 
+void PR1_LoadProgs (void);
+void PR1_InitProg();
+
+#define PR1_GameShutDown()	// PR1 does not really have it.
+void PR1_UnLoadProgs();
+
 void PR1_GameClientDisconnect(int spec);
 void PR1_GameClientConnect(int spec);
 void PR1_GamePutClientInServer(int spec);
@@ -236,6 +241,11 @@ qbool PR1_ClientCmd(void);
 #define PR1_EdictBlocked PR_ExecuteProgram
 
 #ifndef USE_PR2
+	#define PR_LoadProgs PR1_LoadProgs
+	#define PR_InitProg PR1_InitProg
+	#define PR_GameShutDown PR1_GameShutDown
+	#define PR_UnLoadProgs PR1_UnLoadProgs
+
 	#define PR_Init PR1_Init
 	#define PR_GetString PR1_GetString
 	#define PR_SetString PR1_SetString

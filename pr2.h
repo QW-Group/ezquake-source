@@ -35,7 +35,9 @@ extern vm_t* sv_vm;
 void		PR2_Init();
 #define PR_Init PR2_Init
 void		PR2_UnLoadProgs();
+#define PR_UnLoadProgs PR2_UnLoadProgs
 void		PR2_LoadProgs();
+#define PR_LoadProgs PR2_LoadProgs
 void		PR2_GameStartFrame();
 #define PR_GameStartFrame PR2_GameStartFrame
 void		PR2_LoadEnts(char *data);
@@ -69,6 +71,7 @@ void		PR2_EdictBlocked(func_t f);
 qbool 		PR2_UserInfoChanged();
 #define PR_UserInfoChanged PR2_UserInfoChanged
 void 		PR2_GameShutDown();
+#define PR_GameShutDown PR2_GameShutDown
 void 		PR2_GameConsoleCommand(void);
 void		PR2_PausedTic(float duration);
 #define PR_PausedTic PR2_PausedTic
@@ -86,5 +89,6 @@ eval_t*		PR2_GetEdictFieldValue(edict_t *ed, char *field);
 int			ED2_FindFieldOffset(char *field);
 #define ED_FindFieldOffset ED2_FindFieldOffset
 void 		PR2_InitProg();
+#define PR_InitProg PR2_InitProg
 
 #endif /* !__PR2_H__ */

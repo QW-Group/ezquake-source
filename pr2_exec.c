@@ -332,15 +332,51 @@ qbool PR2_UserInfoChanged()
 }
 
 //===========================================================================
-// UserInfoChanged
+// GameShutDown
 //===========================================================================
 void PR2_GameShutDown()
 {
-	VM_Call(sv_vm, GAME_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if (sv_vm)
+		VM_Call(sv_vm, GAME_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else
+		PR1_GameShutDown();
 }
 
 //===========================================================================
-// UserInfoChanged
+// UnLoadProgs
+//===========================================================================
+void PR2_UnLoadProgs()
+{
+	if (sv_vm)
+	{
+		VM_Unload( sv_vm );
+		sv_vm = NULL;
+	}
+	else
+	{
+		PR1_UnLoadProgs();
+	}
+}
+
+//===========================================================================
+// LoadProgs
+//===========================================================================
+void PR2_LoadProgs()
+{
+	sv_vm = (vm_t *) VM_Load(sv_vm, (vm_type_t) (int) sv_progtype.value, sv_progsname.string, sv_syscall, sv_sys_callex);
+
+	if ( sv_vm )
+	{
+		; // nothing.
+	}
+	else
+	{
+		PR1_LoadProgs ();
+	}
+}
+
+//===========================================================================
+// GameConsoleCommand
 //===========================================================================
 void PR2_GameConsoleCommand(void)
 {
