@@ -573,11 +573,11 @@ GLOBAL void TP_Msg_KillMe_f (void)
 GLOBAL void TP_Msg_YouTake_f (void)
 {
 	MSGPART point = "";
-	MSGPART take = "you take $[{%%l}$]";
+	MSGPART take = "you take $[{%l}$]";
 
 	TP_FindPoint();
 	if (INPOINT(teammate)) {
-			point = va ("{&c0b0%s&cfff} ", Macro_PointName()); // Saying teammate kill me isn't much help. Only report if you can say e.g. Up2 Kill Me!
+			point = va ("{&c0b0%s&cfff} ", Macro_PointName()); // Saying teammate take isn't much help. Only report if you can say e.g. Up2 take!
 			take = "take $[{%%l}$]";
 	}
 
@@ -590,7 +590,7 @@ GLOBAL void TP_Msg_Help_f (void)
 }
 
 // The following define allows us to make as many functions as we want and get the message "powerup message location"
-#define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s"type" $[{%%l}$]", (HAVE_POWERUP() ? "$colored_powerups " : ""))
+#define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s"type" $[{%l}$]", (HAVE_POWERUP() ? "$colored_powerups " : ""))
 
 GLOBAL void TP_Msg_YesOk_f (void)		{ TP_MSG_GENERIC("{yes/ok}"); } //cyan yes/ok
 GLOBAL void TP_Msg_NoCancel_f (void)	{ TP_MSG_GENERIC("{&cf00no/cancel&cfff}"); } //red no/cancel
