@@ -1650,7 +1650,7 @@ static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 	return *s != NULL;
 }
 
-qbool Plugin_ExecuteString(void);
+qbool Plug_ExecuteString(void);
 
 //A complete command line has been parsed, so try to execute it
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
@@ -1798,7 +1798,7 @@ checkaliases:
 			goto done;
 	}
 
-	if (Plugin_ExecuteString())
+	if (Plug_ExecuteString())
 		goto done;
 
 	if (cbuf_current != &cbuf_svc)

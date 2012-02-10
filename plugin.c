@@ -73,6 +73,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	Quake variables and commands to the client.
 **/
 
+static void Cmd_Args_Set(char *buffer)
+{
+	// TODO
+}
+
+#ifdef USE_PR2
+
 #include "quakedef.h"
 #include "keys.h"
 #include "qwsvdef.h"
@@ -244,11 +251,6 @@ static void SCR_VRectForPlayer(vrect_t *vrect, int ignored)
 	vrect->height = scr_vrect.height;
 	vrect->x = scr_vrect.x;
 	vrect->y = scr_vrect.y;
-}
-
-static void Cmd_Args_Set(char *buffer)
-{
-	// TODO
 }
 
 /*
@@ -824,7 +826,7 @@ void Plug_Init(void);
 void Plug_Close(plugin_t *plug);
 
 void Plug_Tick(void);
-qboolean Plugin_ExecuteString(void);
+qboolean Plug_ExecuteString(void);
 void Plug_Shutdown(void);
 
 
@@ -2035,7 +2037,7 @@ void Plug_ResChanged(void)
 	currentplug = oldplug;
 }
 
-qboolean Plugin_ExecuteString(void)
+qboolean Plug_ExecuteString(void)
 {
 	plugin_t *oldplug = currentplug;
 	if (Cmd_Argc()>0)
@@ -2362,3 +2364,35 @@ void Plug_Shutdown(void)
 		Plug_Close(plugs);
 	}
 }
+
+#else /* USE_PR2 */
+
+#include "quakedef.h"
+
+#define qboolean qbool
+
+void Plug_Init(void) {}
+void Plug_ResChanged(void) {}
+int Plug_ConnectionlessClientPacket(byte *buffer, int size) { return false; }
+void Plug_Tick(void) {}
+void Plug_SBar(void) {}
+qboolean Plug_ExecuteString(void) {	return false; }
+qboolean Plug_Menu_Event(int eventtype, int param) { return false; }
+
+/*
+ Since it is set globals, lets pretend we have it.
+ */
+static qboolean Plug_FakeMessageHandler(char *buffer)
+{
+	Cmd_TokenizeString(buffer);
+	Cmd_Args_Set(buffer);
+	Cmd_Args_Set(NULL);
+	return true;
+}
+
+qboolean Plug_ServerMessage(char *buffer, int messagelevel) { return Plug_FakeMessageHandler(buffer); }
+qboolean Plug_ChatMessage(char *buffer, int talkernum, int tpflags) { return Plug_FakeMessageHandler(buffer); }
+qboolean Plug_CenterPrintMessage(char *buffer, int clientnum) { return Plug_FakeMessageHandler(buffer); }
+
+#endif /* USE_PR2 */
+
