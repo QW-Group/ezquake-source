@@ -968,7 +968,7 @@ void GL_Texture_Init(void)
 {
 	cvar_t *cv;
 	int i;
-	extern int translate_texture, lightmap_textures;
+	extern int translate_texture, lightmap_textures, sceneblur_texture;
 
 	// Reset some global vars, probably we need here even more...
 
@@ -1003,6 +1003,9 @@ void GL_Texture_Init(void)
 	// Lightmap.
 	lightmap_textures = texture_extension_number;
 	texture_extension_number += MAX_LIGHTMAPS;
+
+	// Motion blur.
+	sceneblur_texture = texture_extension_number++;
 
 	// Powerup shells.
 	shelltexture = 0; // Force reload.

@@ -490,6 +490,7 @@ typedef struct {
 	int			stats[MAX_CL_STATS];///< health, etc
 	float		item_gettime[32];	///< cl.time of acquiring item, for blinking
 	float		faceanimtime;		///< use anim frame if cl.time < this
+	float		hurtblur;			///< blur view caused by damage
 
 	cshift_t	cshifts[NUM_CSHIFTS];	///< color shifts for damage, powerups and content types
 

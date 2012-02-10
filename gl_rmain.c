@@ -49,6 +49,7 @@ mplane_t	frustum[4];
 
 int			c_brush_polys, c_alias_polys;
 
+int			sceneblur_texture;	// motion blur.
 int			particletexture;	// little dot for particles
 int			playertextures;		// up to 16 color translated skins
 int			playernmtextures[MAX_CLIENTS];
@@ -202,6 +203,12 @@ cvar_t  gl_fogsky			= {"gl_fogsky", "1"};
 cvar_t	gl_simpleitems		= {"gl_simpleitems", "0"};
 cvar_t	gl_simpleitems_size		= {"gl_simpleitems_size", "16"};
 cvar_t	gl_simpleitems_orientation = {"gl_simpleitems_orientation", "2"};
+
+cvar_t	gl_motion_blur		= {"gl_motion_blur", "0"};
+cvar_t	gl_motion_blur_fps	= {"gl_motion_blur_fps", "77"};
+cvar_t	gl_motion_blur_norm	= {"gl_motion_blur_norm", "0.5"};
+cvar_t	gl_motion_blur_hurt = {"gl_motion_blur_hurt", "0.5"};
+cvar_t	gl_motion_blur_dead = {"gl_motion_blur_dead", "0.5"};
 
 cvar_t gl_gammacorrection = {"gl_gammacorrection", "0", CVAR_LATCH};
 cvar_t	gl_modulate = {"gl_modulate", "1"};
@@ -1837,6 +1844,12 @@ void R_Init (void) {
 	Cvar_Register (&gl_simpleitems_size);
 	Cvar_Register (&gl_simpleitems_orientation);
 
+	Cvar_Register (&gl_motion_blur);
+	Cvar_Register (&gl_motion_blur_fps);
+	Cvar_Register (&gl_motion_blur_norm);
+	Cvar_Register (&gl_motion_blur_hurt);
+	Cvar_Register (&gl_motion_blur_dead);
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);
 	Cvar_Register (&gl_squareparticles);
@@ -2203,9 +2216,142 @@ static void draw_velocity_3d(void)
   glPopMatrix();
 }
 
-void DrawCI (void);
+/*
+ Motion blur effect.
+ Stolen from FTE engine.
+*/
+static void R_RenderSceneBlurDo (float alpha)
+{
+	static double last_time;
+	double current_time = Sys_DoubleTime(), diff_time = current_time - last_time;
+	double fps = gl_motion_blur_fps.value > 0 ? gl_motion_blur_fps.value : 77;
+	qbool draw = (alpha >= 0); // negative alpha mean we don't draw anything but copy screen only.
 
-void R_RenderView (void) {
+	int vwidth = 1, vheight = 1;
+	float vs, vt, cs, ct;
+
+	// Remember all attributes.
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+	// alpha more than 0.5 are wrong.
+	alpha = bound(0.1, alpha, 0.5);
+
+	if (gl_support_arb_texture_non_power_of_two)
+	{	//we can use any size, supposedly
+		vwidth = glwidth;
+		vheight = glheight;
+	}
+	else
+	{	//limit the texture size to square and use padding.
+		while (vwidth < glwidth)
+			vwidth *= 2;
+		while (vheight < glheight)
+			vheight *= 2;
+	}
+
+	glViewport (0, 0, glwidth, glheight);
+
+	GL_Bind(sceneblur_texture);
+
+	// go 2d
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity ();
+	glOrtho(0, glwidth, 0, glheight, -99999, 99999);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity ();
+
+	//blend the last frame onto the scene
+	//the maths is because our texture is over-sized (must be power of two)
+	cs = vs = (float)glwidth / vwidth * 0.5;
+	ct = vt = (float)glheight / vheight * 0.5;
+	// qqshka: I don't get what is gl_motionblurscale, so simply removed it.
+	vs *= 1;//gl_motionblurscale.value;
+	vt *= 1;//gl_motionblurscale.value;
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable (GL_CULL_FACE);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+
+	glColor4f(1, 1, 1, alpha);
+
+	if (draw)
+	{
+		glBegin(GL_QUADS);
+			glTexCoord2f(cs-vs, ct-vt);
+			glVertex2f(0, 0);
+			glTexCoord2f(cs+vs, ct-vt);
+			glVertex2f(glwidth, 0);
+			glTexCoord2f(cs+vs, ct+vt);
+			glVertex2f(glwidth, glheight);
+			glTexCoord2f(cs-vs, ct+vt);
+			glVertex2f(0, glheight);
+		glEnd();
+	}
+
+	// Restore matrices.
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+	// With high frame rate frames difference is soo smaaaal, so motion blur almost unnoticeable,
+	// so I copy frame not every frame.
+	if (diff_time >= 1.0 / fps)
+	{
+		last_time = current_time;
+
+		//copy the image into the texture so that we can play with it next frame too!
+		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, vwidth, vheight, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+
+	// Restore attributes.
+	glPopAttrib();
+}
+
+static void R_RenderSceneBlur(void)
+{
+	if (!gl_motion_blur.integer)
+	{
+		// Motion blur disabled entirely.
+		return;
+	}
+	
+	// FIXME: Actually here should be some smoothing code for transaction from one case to another,
+	// since for example if we turned off blur for everything but hurt, when we feel pain we use blur, but when
+	// pain is ended we saddenly turning blur off, that does not look natural.
+
+	if (gl_motion_blur_dead.value && cl.stats[STAT_HEALTH] < 1)
+	{
+		// We are dead.
+		R_RenderSceneBlurDo (gl_motion_blur_dead.value);
+	}
+	// We are alive, lets check different cases.
+	else if (gl_motion_blur_hurt.value && cl.hurtblur > cl.time)
+	{
+		// Hurt.
+		R_RenderSceneBlurDo (gl_motion_blur_hurt.value);
+	}
+	else if (gl_motion_blur_norm.value)
+	{
+		// Plain case.
+		R_RenderSceneBlurDo (gl_motion_blur_norm.value);
+	}
+	else
+	{
+		// We do not really blur anything, just copy image, so if we start bluring it will be smooth transaction.
+		R_RenderSceneBlurDo (-1);
+	}
+}
+
+void R_RenderView (void)
+{
+	extern void DrawCI (void);
+
 	double time1 = 0, time2;
 	if (!r_worldentity.model || !cl.worldmodel)
 		Sys_Error ("R_RenderView: NULL worldmodel");
@@ -2248,12 +2394,14 @@ void R_RenderView (void) {
 		// Only bloom when we have drawn all views when in multiview.
 		if (CURRVIEW == 1)
 		{
+			R_RenderSceneBlur();
 			R_BloomBlend();
 		}
 	} 
 	else
 	{
 		// Normal, bloom on each frame.
+		R_RenderSceneBlur();
 		R_BloomBlend();
 	}
 
