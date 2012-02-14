@@ -76,6 +76,11 @@ qbool RuleSets_DisallowExternalTexture (model_t *mod)
 	}
 }
 
+qbool RuleSets_DisallowModelOutline (model_t *mod)
+{
+	return RuleSets_DisallowExternalTexture(mod);
+}
+
 qbool Rulesets_AllowTimerefresh (void)
 {
 	switch(rulesetDef.ruleset) {

@@ -210,8 +210,11 @@ cvar_t	gl_motion_blur_norm	= {"gl_motion_blur_norm", "0.5"};
 cvar_t	gl_motion_blur_hurt = {"gl_motion_blur_hurt", "0.5"};
 cvar_t	gl_motion_blur_dead = {"gl_motion_blur_dead", "0.5"};
 
-cvar_t gl_gammacorrection = {"gl_gammacorrection", "0", CVAR_LATCH};
+cvar_t	gl_gammacorrection = {"gl_gammacorrection", "0", CVAR_LATCH};
 cvar_t	gl_modulate = {"gl_modulate", "1"};
+
+cvar_t	gl_outline = {"gl_outline", "0"};
+cvar_t	gl_outline_width = {"gl_outline_width", "2"};
 
 int		lightmode = 2;
 
@@ -219,6 +222,22 @@ int		lightmode = 2;
 
 void R_MarkLeaves (void);
 void R_InitBubble (void);
+
+void GL_PolygonOffset (float factor, float units)
+{
+	if (factor || units)
+	{
+		glEnable (GL_POLYGON_OFFSET_FILL);
+		glEnable (GL_POLYGON_OFFSET_LINE);
+
+		glPolygonOffset(factor, units);
+	}
+	else
+	{
+		glDisable (GL_POLYGON_OFFSET_FILL);
+		glDisable (GL_POLYGON_OFFSET_LINE);
+	}
+}
 
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox (vec3_t mins, vec3_t maxs) {
@@ -413,6 +432,77 @@ int GL_GenerateShellTexture(void)
 	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
 }
 
+void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2) 
+{
+    int *order, count;
+    vec3_t interpolated_verts;
+    float lerpfrac;
+    trivertx_t *verts1, *verts2;
+
+	GL_PolygonOffset(1, 1);
+
+    glCullFace (GL_BACK);
+    glPolygonMode (GL_FRONT, GL_LINE);
+
+	// limit outline width, since even width == 3 can be considered as cheat.
+    glLineWidth (bound(0.1, gl_outline_width.value, 3.0));
+
+    glColor4f (0.0f, 0.0f, 0.0f, 1.0f);
+    glEnable (GL_LINE_SMOOTH);
+    glDisable (GL_TEXTURE_2D);
+
+    lerpfrac = r_framelerp;
+    lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;    
+
+    verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+
+    verts1 += pose1 * paliashdr->poseverts;
+    verts2 += pose2 * paliashdr->poseverts;
+
+    order = (int *) ((byte *) paliashdr + paliashdr->commands);
+
+    for ( ;; )
+    {
+        count = *order++;
+        
+        if (!count)
+            break;
+
+        if (count < 0)
+        {
+            count = -count;
+            glBegin(GL_TRIANGLE_FAN);
+        }
+        else
+            glBegin(GL_TRIANGLE_STRIP);
+
+        do 
+        {
+                order += 2;
+
+                if ((currententity->renderfx & RF_LIMITLERP))
+                    lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+
+                VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
+                glVertex3fv(interpolated_verts);
+
+                verts1++;
+                verts2++;
+        } 
+        while (--count);
+
+        glEnd();
+    }
+
+    glColor4f (1, 1, 1, 1);    
+    glPolygonMode (GL_FRONT, GL_FILL);
+    glDisable (GL_LINE_SMOOTH);
+    glCullFace (GL_FRONT);
+    glEnable (GL_TEXTURE_2D);    
+
+	GL_PolygonOffset(0, 0);
+}
+
 void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir) {
     int *order, count;
 	vec3_t interpolated_verts;
@@ -583,7 +673,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	}
 }
 
-void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir) {
+void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline) {
 	int oldpose, pose, numposes;
 	float interval;
 
@@ -602,6 +692,9 @@ void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, a
 	}
 
 	GL_DrawAliasFrame (paliashdr, oldpose, pose, mtex, scrolldir);
+
+	if (outline)
+		GL_DrawAliasOutlineFrame (paliashdr, oldpose, pose) ;
 }
 
 extern vec3_t lightspot;
@@ -856,7 +949,7 @@ void R_DrawPowerupShell(int effects, int layer_no, float base_level, float effec
 
 	GL_DisableMultitexture();
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	R_SetupAliasFrame (oldframe, frame, paliashdr, false, layer_no == 1);
+	R_SetupAliasFrame (oldframe, frame, paliashdr, false, layer_no == 1, false);
 }
 
 void R_DrawAliasModel (entity_t *ent) {
@@ -868,11 +961,13 @@ void R_DrawAliasModel (entity_t *ent) {
 	maliasframedesc_t *oldframe, *frame;
 	cvar_t *cv = NULL;
 	byte *color32bit = NULL;
+	qbool outline = false;
 
 	//	entity_t *self;
 	//static sfx_t *step;//foosteps sounds, commented out
 	//static int setstep;
 
+	extern qbool RuleSets_DisallowModelOutline (model_t *mod);
 	extern	cvar_t r_viewmodelsize, cl_drawgun;
 
 	VectorCopy (ent->origin, r_entorigin);
@@ -1042,6 +1137,11 @@ void R_DrawAliasModel (entity_t *ent) {
 
 	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 
+	// Check for outline on models.
+	// We don't support outline for transparent models,
+	// and we also check for ruleset, since we don't want outline on eyes.
+	outline = (gl_outline.integer && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
+
 	if (color32bit) {
 		//
 		// seems we select force some color for such model
@@ -1066,7 +1166,7 @@ void R_DrawAliasModel (entity_t *ent) {
 			default:	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	break;
 		}
    
-		R_SetupAliasFrame (oldframe, frame, paliashdr, false, false);
+		R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, outline);
 		
 		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 	}
@@ -1084,7 +1184,7 @@ void R_DrawAliasModel (entity_t *ent) {
     
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     
-			R_SetupAliasFrame (oldframe, frame, paliashdr, true, false);
+			R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, outline);
     
 			GL_DisableMultitexture ();
 		} 
@@ -1095,15 +1195,15 @@ void R_DrawAliasModel (entity_t *ent) {
 			
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     
-			R_SetupAliasFrame (oldframe, frame, paliashdr, false, false);
-    
+			R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, outline);
+
 			if (fb_texture) {
 				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 				glEnable (GL_ALPHA_TEST);
 				GL_Bind (fb_texture);
-    
-				R_SetupAliasFrame (oldframe, frame, paliashdr, false, false);
-    
+
+				R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, false);
+
 				glDisable (GL_ALPHA_TEST);
 			}
 		}
@@ -1147,7 +1247,7 @@ void R_DrawAliasModel (entity_t *ent) {
 		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 		glEnable (GL_BLEND);
 
-		R_SetupAliasFrame (oldframe, frame, paliashdr, true, false);
+		R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, false);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_BLEND);            
@@ -1396,16 +1496,14 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				// (Only works if gl_ztrick is turned off)
 				if(!gl_ztrick.value)
 				{
-					glEnable(GL_POLYGON_OFFSET_FILL);
-					glEnable(GL_POLYGON_OFFSET_LINE);
+					GL_PolygonOffset(0.05, 25.0);
 				}
 
 				R_DrawBrushModel (currententity);
 				
 				if(!gl_ztrick.value)
 				{
-					glDisable(GL_POLYGON_OFFSET_FILL);
-					glDisable(GL_POLYGON_OFFSET_LINE);
+					GL_PolygonOffset(0, 0);
 				}
 
 				break;
@@ -1949,6 +2047,9 @@ void R_Init (void) {
 	Cvar_Register (&gl_finish);
 	Cvar_Register (&gl_gammacorrection);
 	Cvar_Register (&gl_modulate);
+
+	Cvar_Register (&gl_outline);
+	Cvar_Register (&gl_outline_width);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_speeds);

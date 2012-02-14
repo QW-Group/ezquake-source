@@ -289,6 +289,8 @@ void R_PolyBlend (void);
 void R_BrightenScreen (void);
 void R_DrawEntitiesOnList (visentlist_t *vislist);
 
+void GL_PolygonOffset (float factor, float units);
+
 // gl_rlight.c
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
 void R_AnimateLight (void);
