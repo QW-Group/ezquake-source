@@ -1199,12 +1199,13 @@ void R_DrawAliasModel (entity_t *ent) {
 
 			if (fb_texture) {
 				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-				glEnable (GL_ALPHA_TEST);
 				GL_Bind (fb_texture);
+
+				glEnable (GL_BLEND);
 
 				R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, false);
 
-				glDisable (GL_ALPHA_TEST);
+				glDisable (GL_BLEND);
 			}
 		}
 	}
