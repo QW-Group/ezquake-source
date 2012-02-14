@@ -156,6 +156,7 @@ static void Log_log_f(void) {
 		buf = Q_calloc(1, LOGFILEBUFFER);
 		if (!buf) {
 			Com_Printf("Not enough memory to allocate log buffer\n");
+			fclose(templog);
 			return;
 		}
 		memlogfile = FSMMAP_OpenVFS(buf, LOGFILEBUFFER);
@@ -311,6 +312,7 @@ void Log_AutoLogging_StartMatch(char *logname) {
 	buf = Q_calloc(1, LOGFILEBUFFER);
 	if (!buf) {
 		Com_Printf("Not enough memory to allocate log buffer\n");
+		fclose(templog);
 		return;
 	}
 	memlogfile = FSMMAP_OpenVFS(buf, LOGFILEBUFFER);
