@@ -14,6 +14,8 @@
 /make/msvs20*/*.user
 /make/msvs2010/*.user
 /make/msvs2010/*.sdf
+/make/msvs2010/*.opensdf
+/make/msvs2010/ipch/
 /make/*.intermediate.*
 
 # MinGW & Eclipse build dir

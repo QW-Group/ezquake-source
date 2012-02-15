@@ -1193,9 +1193,6 @@
     <qasm Include="..\..\r_varsa.s">
       <Filter>Asm Files</Filter>
     </qasm>
-    <qasm Include="..\..\snd_mixa.s">
-      <Filter>Asm Files</Filter>
-    </qasm>
     <qasm Include="..\..\surf16.s">
       <Filter>Asm Files</Filter>
     </qasm>
@@ -1203,6 +1200,9 @@
       <Filter>Asm Files</Filter>
     </qasm>
     <qasm Include="..\..\sys_x86.s">
+      <Filter>Asm Files</Filter>
+    </qasm>
+    <qasm Include="..\..\snd_mixa.s">
       <Filter>Asm Files</Filter>
     </qasm>
   </ItemGroup>

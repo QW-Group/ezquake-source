@@ -19,8 +19,8 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|Win32.ActiveCfg = GLDebug|Win32
-		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|Win32.Build.0 = GLDebug|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|Win32.Build.0 = Debug|Win32
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug|x64.ActiveCfg = GLDebug|Win32
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.FakeGLDebug|Win32.ActiveCfg = FakeGLDebug|Win32
 		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.FakeGLDebug|Win32.Build.0 = FakeGLDebug|Win32

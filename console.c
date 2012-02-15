@@ -82,7 +82,11 @@ cvar_t      con_sound_other_volume  = {"s_otherchat_volume",  "1"};
 
 cvar_t      con_timestamps  = {"con_timestamps", "0"};
 
+#ifdef GLQUAKE
 cvar_t      con_shift  = {"con_shift", "-10"};
+#else
+cvar_t      con_shift  = {"con_shift", "0", CVAR_ROM};
+#endif
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated

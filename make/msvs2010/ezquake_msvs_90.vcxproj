@@ -119,6 +119,8 @@
     <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='FakeGLRelease|Win32'">*.asm%3b*.bsc%3b*.cod%3b*.dep%3b*.idb%3b*.ilk%3b*.obj%3b*.pgc%3b*.pgd%3b*.res%3b*.rsp%3b*.sbr%3b*.tlb%3b*.tlh%3b*.tli%3b*.tmp%3b*.manifest*%3b$(TargetPath)</ExtensionsToDeleteOnClean>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='FakeGLRelease|Win32'">false</LinkIncremental>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='GLDebug|Win32'">..\..\ezquake-gl-debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ezquake-debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ezquake</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GLDebug|Win32'">
     <Midl>
@@ -239,7 +241,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;libexpat.lib;libtcl.lib;mgllt.lib;dxguid.lib;wsock32.lib;winmm.lib;libjpeg.lib;libpng.lib;libz.lib;dinput.lib;dsound.lib;libpcre.lib;minizip.lib;libircclient-static.lib;libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>..\ezquake.exe</OutputFile>
+      <OutputFile>Release\ezquake.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -257,6 +259,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SetChecksum>true</SetChecksum>
       <TargetMachine>MachineX86</TargetMachine>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GLRelease|Win32'">
@@ -375,7 +378,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;libexpat.lib;libtcl.lib;mgllt.lib;dxguid.lib;wsock32.lib;winmm.lib;libjpeg.lib;libpng.lib;libz.lib;dinput.lib;dsound.lib;libpcre.lib;minizip.lib;libircclient-static.lib;libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>..\ezquake-debug.exe</OutputFile>
+      <OutputFile>Debug\ezquake-debug.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -390,6 +393,7 @@
       <MapFileName>$(TargetDir)$(TargetName).map</MapFileName>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='FakeGLDebug|Win32'">
