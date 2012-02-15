@@ -28,7 +28,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>ezquake</ProjectName>
-    <ProjectGuid>{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}</ProjectGuid>
+    <ProjectGuid>{9F13046D-7B25-43DD-81DD-2D91EB0ABDA8}</ProjectGuid>
     <RootNamespace>ezquake</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
