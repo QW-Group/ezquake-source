@@ -259,7 +259,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <SetChecksum>true</SetChecksum>
       <TargetMachine>MachineX86</TargetMachine>
-      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GLRelease|Win32'">
@@ -393,7 +393,7 @@
       <MapFileName>$(TargetDir)$(TargetName).map</MapFileName>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='FakeGLDebug|Win32'">
