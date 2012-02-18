@@ -1069,8 +1069,7 @@ void CL_FinishDownload(qbool rename_files)
 	cls.downloadpercent = 0;
 	cls.downloadmethod = DL_NONE;
 
-	// VFS-FIXME: D-Kure: Surely there is somewhere better for this in fs.c
-	filesystemchanged = true;
+	FS_FlushFSHash();
 
 	// get another file if needed
 

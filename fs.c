@@ -85,7 +85,6 @@ void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *par
 int FS_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);
 void FS_ListFiles_f(void);
-void FS_FlushFSHash(void);
 
 static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
 searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);

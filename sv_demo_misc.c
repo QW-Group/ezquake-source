@@ -188,6 +188,9 @@ qbool SV_DirSizeCheck (void)
 				//Con_Printf("Remove %d - %s/%s/%s\n", n, fs_gamedir, sv_demoDir.string, list->name);
 				n--;
 			}
+
+			// force cache rebuild.
+			FS_FlushFSHash();
 		}
 	}
 	return true;
@@ -241,6 +244,9 @@ void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *de
 	
 		sv_redirected = old;
 	}
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 char *SV_PrintTeams (void)
@@ -614,6 +620,9 @@ void SV_MVDRemove_f (void)
 			Con_Printf("no match found\n");
 		}
 
+		// force cache rebuild.
+		FS_FlushFSHash();
+
 		return;
 	}
 
@@ -645,6 +654,9 @@ void SV_MVDRemove_f (void)
 		Con_Printf("unable to remove demo %s\n", name);
 
 	Sys_remove(SV_MVDName2Txt(path));
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 void SV_MVDRemoveNum_f (void)
@@ -693,6 +705,9 @@ void SV_MVDRemoveNum_f (void)
 			Con_Printf("unable to remove demo %s\n", name);
 
 		Sys_remove(SV_MVDName2Txt(path));
+
+		// force cache rebuild.
+		FS_FlushFSHash();
 	}
 	else
 		Con_Printf("invalid demo num\n");
@@ -777,6 +792,9 @@ void SV_MVDInfoAdd_f (void)
 
 	fflush(f);
 	fclose(f);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 void SV_MVDInfoRemove_f (void)
@@ -818,6 +836,9 @@ void SV_MVDInfoRemove_f (void)
 		Con_Printf("failed to remove the file %s\n", path);
 	else
 		Con_Printf("file %s removed\n", path);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 void SV_MVDInfo_f (void)

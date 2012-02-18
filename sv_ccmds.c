@@ -677,6 +677,9 @@ void SV_RemoveFile_f (void)
 		else
 			Con_Printf("Unable to remove file %s\n", filename);
 	}
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 /*==================

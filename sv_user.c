@@ -1090,6 +1090,9 @@ static void SV_NextUpload (void)
 		if (sv_client->remote_snap)
 			OutofBandPrintf(sv_client->snap_from, "Server receiving %s from %d...\n",
 			                name, sv_client->userid);
+
+		// force cache rebuild.
+		FS_FlushFSHash();
 	}
 
 	Sys_Printf("-");

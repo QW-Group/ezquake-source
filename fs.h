@@ -125,8 +125,7 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff, qbool keep_ga
 
 char *FS_NextPath (char *prevpath);
 
-extern cvar_t fs_cache;
-extern qbool filesystemchanged;
+void FS_FlushFSHash(void);
 
 typedef struct {
 	struct searchpath_s *search;

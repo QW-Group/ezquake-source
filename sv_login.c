@@ -97,6 +97,9 @@ static void WriteAccounts()
 	}
 
 	fclose(f);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 /*

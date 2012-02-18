@@ -3081,7 +3081,7 @@ void SB_Serverlist_Serialize_f(void)
 	SB_Serverlist_Serialize(f);
 	Com_Printf("Wrote server list contents to disk\n");
 	fclose(f);
-	filesystemchanged = true;
+	FS_FlushFSHash();
 }
 
 void SB_Serverlist_Unserialize_f(void)

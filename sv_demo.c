@@ -134,6 +134,9 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 		Sys_remove(path);
 		strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
 		Sys_remove(path);
+
+		// force cache rebuild.
+		FS_FlushFSHash();
 	}
 
 	Q_free(d);
@@ -812,6 +815,9 @@ static mvddest_t *SV_InitRecordFile (char *name)
 	}
 	else
 		Sys_remove(path);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 
 	return dst;
 }

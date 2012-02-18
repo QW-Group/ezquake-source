@@ -2046,6 +2046,9 @@ static void SV_WriteIPVIP_f (void)
 	}
 
 	fclose (f);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 
@@ -2213,6 +2216,9 @@ static void SV_WriteIP_f (void)
 	}
 
 	fclose (f);
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 /*

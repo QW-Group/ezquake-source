@@ -886,8 +886,6 @@ void DumpHUD(const char *name)
 }
 /************************************ API ************************************/
 
-extern qbool filesystemchanged; // fix bug 2359900
-
 void SaveConfig(const char *cfgname)
 {
 	char filename[MAX_PATH] = {0}, *filename_ext, *backupname_ext;
@@ -921,7 +919,7 @@ void SaveConfig(const char *cfgname)
 	}
 
 	DumpConfig(filename);
-	filesystemchanged = true; // fix bug 2359900
+	FS_FlushFSHash(); // fix bug 2359900
 }
 
 void SaveConfig_f(void)

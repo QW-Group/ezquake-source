@@ -132,6 +132,9 @@ void SV_SaveGame_f (void) {
 	}
 	fclose (f);
 	Con_Printf ("done.\n");
+
+	// force cache rebuild.
+	FS_FlushFSHash();
 }
 
 void SV_LoadGame_f (void) {
