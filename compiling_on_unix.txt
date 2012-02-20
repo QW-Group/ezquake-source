@@ -15,11 +15,22 @@ $ sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev libasound2-dev \
 $ sudo zypper install freeglut-devel alsa-devel
 
 
-2) Download static libraries
+1.3) Fedora
+============
+$ yum install mesa-libGL-devel mesa-libGLU-devel alsa-lib-devel pulseaudio-libs-devel \
+              libXpm-devel speex-devel libXxf86dga-devel svgalib-devel
 
+
+2) Download static libraries
+============
 $ cd <ezquake-trunk-root>/ezquake/libs/`uname -s|tr A-Z a-z`-`uname -m|sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g' -e 's/amd64/x86_64/g'`/ && ./download.sh
 
 
 3) Build 
+============
 
+3.1) 32bit targets availible
 $ make glx x11 svga
+
+3.2) 64bit targets availible
+$ make glx x11
