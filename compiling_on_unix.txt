@@ -23,7 +23,9 @@ $ yum install mesa-libGL-devel mesa-libGLU-devel alsa-lib-devel pulseaudio-libs-
 
 2) Download static libraries
 ============
-$ cd <ezquake-trunk-root>/ezquake/libs/`uname -s|tr A-Z a-z`-`uname -m|sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g' -e 's/amd64/x86_64/g'`/ && ./download.sh
+Stand in the ezquake folder where you checked out the code and execute the follwoing:
+
+$ cd libs/`uname -s|tr A-Z a-z`-`uname -m|sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g' -e 's/amd64/x86_64/g'`/ && ./download.sh
 
 
 3) Build 
