@@ -34,6 +34,11 @@
 # Vi/Vim backup files
 *~
 
+# OS X junk
+.DS_Store
+
 # Xcode created files and directories
 /osx/Quake.xcodeproj/project.xcworkspace/
 /osx/Quake.xcodeproj/xcuserdata/
+/osx/build/
+/osx/DerivedData/
