@@ -1,4 +1,4 @@
-OX X ezQuake build guide
+OS X ezQuake build guide
 ------------------------
 
 1) Install build dependencies
