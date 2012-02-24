@@ -2317,7 +2317,7 @@ static void Cmd_ShowMapsList_f(void)
 
 static void SetUpClientEdict (client_t *cl, edict_t *ent)
 {
-	memset(&ent->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
+	ED_ClearEdict(ent);
 	// restore client name.
 	ent->v.netname = PR_SetString(cl->name);
 	// so spec will have right goalentity - if speccing someone

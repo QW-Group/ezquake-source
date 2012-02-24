@@ -275,8 +275,7 @@ void SV_LoadGame_f (void) {
 		} else {	
 			// parse an edict
 			ent = EDICT_NUM(entnum);
-			memset (&ent->v, 0, progs->entityfields * 4);
-			ent->e->free = false;
+			ED_ClearEdict (ent); // FIXME: we also clear world edict here, is it OK?
 			ED_ParseEdict (start, ent);
 	
 			// link it into the bsp tree

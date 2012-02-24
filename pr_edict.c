@@ -91,7 +91,7 @@ Sets everything to NULL
 */
 void ED_ClearEdict (edict_t *e)
 {
-	memset (&e->v, 0, progs->entityfields * 4);
+	memset(&e->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
 	e->e->lastruntime = 0;
 	e->e->free = false;
 }
@@ -112,14 +112,14 @@ edict_t *ED_Alloc (void)
 	int			i;
 	edict_t		*e;
 
-	for ( i=MAX_CLIENTS+1 ; i<sv.num_edicts ; i++)
+	for (i = MAX_CLIENTS + 1; i < sv.num_edicts; i++)
 	{
 		e = EDICT_NUM(i);
 		// the first couple seconds of server time can involve a lot of
 		// freeing and allocating, so relax the replacement policy
-		if (e->e->free && ( e->e->freetime < 2 || sv.time - e->e->freetime > 0.5 ) )
+		if (e->e->free && (e->e->freetime < 2 || sv.time - e->e->freetime > 0.5))
 		{
-			ED_ClearEdict (e);
+			ED_ClearEdict(e);
 			return e;
 		}
 	}
@@ -127,14 +127,17 @@ edict_t *ED_Alloc (void)
 	if (i == MAX_EDICTS)
 	{
 		Con_Printf ("WARNING: ED_Alloc: no free edicts\n");
-		// step on whatever is the last edict
-		e = EDICT_NUM(--i);
+		i--;	// step on whatever is the last edict
+		e = EDICT_NUM(i);
 		SV_UnlinkEdict(e);
 	}
 	else
+	{
 		sv.num_edicts++;
-	e = EDICT_NUM(i);
-	ED_ClearEdict (e);
+		e = EDICT_NUM(i);
+	}
+
+	ED_ClearEdict(e);
 
 	return e;
 }
@@ -871,10 +874,6 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 	char		keyname[256];
 
 	init = false;
-
-	// clear it
-	if (ent != sv.edicts)	// hack
-		memset (&ent->v, 0, progs->entityfields * 4);
 
 	// go through all the dictionary pairs
 	while (1)

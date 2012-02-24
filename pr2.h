@@ -81,9 +81,6 @@ char*		PR2_GetString(intptr_t);
 intptr_t	PR2_SetString(char*s);
 #define PR_SetString PR2_SetString
 void		PR2_RunError(char *error, ...);
-void		ED2_Free(edict_t *ed);
-edict_t*	ED2_Alloc();
-void		ED2_ClearEdict(edict_t *e);
 eval_t*		PR2_GetEdictFieldValue(edict_t *ed, char *field);
 #define PR_GetEdictFieldValue PR2_GetEdictFieldValue
 int			ED2_FindFieldOffset(char *field);

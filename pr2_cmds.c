@@ -89,13 +89,12 @@ void PF2_Error(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval)
 
 void PF2_Spawn(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval)
 {
-	retval->_int = NUM_FOR_EDICT( ED2_Alloc() );
+	retval->_int = NUM_FOR_EDICT( ED_Alloc() );
 }
 
 void PF2_Remove(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval)
 {
-
-	ED2_Free(EDICT_NUM(stack[0]._int));
+	ED_Free(EDICT_NUM(stack[0]._int));
 }
 
 void PF2_precache_sound(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval)
@@ -1613,7 +1612,7 @@ void PF2_makestatic(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval
 	}
 
 	// throw the entity away now
-	ED2_Free(ent);
+	ED_Free(ent);
 }
 
 //=============================================================================
@@ -2422,8 +2421,6 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 	int old_self;
 	char info[MAX_EXT_INFO_STRING];
 
-
-
 	// count up the clients and spectators
 	clients = 0;
 	spectators = 0;
@@ -2464,6 +2461,10 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 		return;
 	}
 
+	edictnum = ( newcl - svs.clients ) + 1;
+	ent = EDICT_NUM( edictnum );
+	ED_ClearEdict(ent);
+
 	memset(&newcl->_userinfo_ctx_, 0, sizeof(newcl->_userinfo_ctx_));
 	memset(&newcl->_userinfoshort_ctx_, 0, sizeof(newcl->_userinfoshort_ctx_));
 
@@ -2481,10 +2482,6 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 	newcl->spectator = 0;
 	newcl->isBot = 1;
 
-
-	edictnum = ( newcl - svs.clients ) + 1;
-	ent = EDICT_NUM( edictnum );
-	memset( &ent->v, 0, pr_edict_size - sizeof( edict_t ) + sizeof( entvars_t ) );
 	newcl->entgravity = 1.0;
 	val = PR2_GetEdictFieldValue( ent, "gravity" );
 	if ( val )
