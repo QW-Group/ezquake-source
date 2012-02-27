@@ -590,16 +590,16 @@ GLOBAL void TP_Msg_Help_f (void)
 }
 
 // The following define allows us to make as many functions as we want and get the message "powerup message location"
-#define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s"type" $[{%l}$]", (HAVE_POWERUP() ? "$colored_powerups " : ""))
+#define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s" type " $[{%%l}$]", (HAVE_POWERUP() ? "$colored_powerups " : ""))
 
-GLOBAL void TP_Msg_YesOk_f (void)		{ TP_MSG_GENERIC("{yes/ok}"); } //cyan yes/ok
+GLOBAL void TP_Msg_YesOk_f (void)		{ TP_MSG_GENERIC("{yes/ok}"); }
 GLOBAL void TP_Msg_NoCancel_f (void)	{ TP_MSG_GENERIC("{&cf00no/cancel&cfff}"); } //red no/cancel
 GLOBAL void TP_Msg_ItemSoon_f (void)	{ TP_MSG_GENERIC("item soon"); }
 GLOBAL void TP_Msg_Waiting_f (void)		{ TP_MSG_GENERIC("waiting"); }
 GLOBAL void TP_Msg_Slipped_f (void)		{ TP_MSG_GENERIC("enemy slipped"); }
 GLOBAL void TP_Msg_Replace_f (void)		{ TP_MSG_GENERIC("replace"); }
 GLOBAL void TP_Msg_Trick_f (void)		{ TP_MSG_GENERIC("trick"); }
-GLOBAL void TP_Msg_Coming_f (void)		{ TP_MSG_GENERIC("coming"); } // coming
+GLOBAL void TP_Msg_Coming_f (void)		{ TP_MSG_GENERIC("coming"); }
 
 //TF binds
 GLOBAL void TP_Msg_TFConced_f (void)
