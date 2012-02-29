@@ -544,7 +544,7 @@ static plane_t groundplane;
 
 void PM_CategorizePosition (void)
 {
-	trace_t trace;
+	trace_t trace = {0};
 	vec3_t point;
 	int cont;
 
