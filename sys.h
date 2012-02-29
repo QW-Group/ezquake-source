@@ -182,12 +182,6 @@ int		Sys_compare_by_name (const void *a, const void *b);
 #define SORT_BY_DATE	1
 #define SORT_BY_NAME	2
 
-#if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)) && defined(KQUEUE)
-	extern struct timespec select_timeout;
-#else
-	extern struct timeval  select_timeout;
-#endif
-
 #ifdef _WIN32
 
 typedef HMODULE DL_t;

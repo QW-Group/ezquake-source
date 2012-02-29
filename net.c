@@ -1188,27 +1188,20 @@ int UDP_OpenSocket (unsigned short int port)
 	return newsocket;
 }
 
-#ifndef _WIN32
-extern qbool stdin_ready;
-extern int do_stdin;
-#endif
-
-qbool NET_Sleep(void)
+qbool NET_Sleep(int msec, qbool stdinissocket)
 {
-	struct timeval timeout;
-	fd_set fdset;
-	int maxfd = 0;
+	struct timeval	timeout;
+	fd_set			fdset;
+	qbool			stdin_ready = false;
+	int				maxfd = 0;
 
 	FD_ZERO (&fdset);
 
-#ifndef _WIN32
-	stdin_ready = false;
-	if (do_stdin)
+	if (stdinissocket)
 	{
 		FD_SET (0, &fdset); // stdin is processed too (tends to be socket 0)
 		maxfd = max(0, maxfd);
 	}
-#endif
 
 	if (svs.socketip != INVALID_SOCKET)
 	{
@@ -1216,20 +1209,21 @@ qbool NET_Sleep(void)
 		maxfd = max(svs.socketip, maxfd);
 	}
 
-	timeout.tv_sec  = select_timeout.tv_sec;
-	timeout.tv_usec = select_timeout.tv_usec;
+	timeout.tv_sec = msec/1000;
+	timeout.tv_usec = (msec%1000)*1000;
 	switch (select(maxfd + 1, &fdset, NULL, NULL, &timeout))
 	{
-		case -1: return true;
-		case 0: break;
+		case -1: break;
+		case  0: break;
 		default:
-#ifndef _WIN32
-		if (do_stdin)
+
+		if (stdinissocket)
 			stdin_ready = FD_ISSET (0, &fdset);
-#endif
+
 		break;
 	}
-	return false;
+
+	return stdin_ready;
 }
 
 void NET_GetLocalAddress (int socket, netadr_t *out)

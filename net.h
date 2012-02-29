@@ -181,7 +181,7 @@ void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 void	NET_GetLocalAddress (int socket, netadr_t *out);
 
 void	NET_ClearLoopback (void);
-qbool	NET_Sleep(void);
+qbool	NET_Sleep(int msec, qbool stdinissocket);
 
 // GETER: return port of UDP server socket.
 int		NET_UDPSVPort (void);

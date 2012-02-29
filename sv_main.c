@@ -21,10 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qwsvdef.h"
 
-#ifndef SERVERONLY
-struct timeval select_timeout;
-#endif
-
 #ifdef SERVERONLY
 
 qbool		host_initialized;
@@ -50,16 +46,7 @@ cvar_t	sv_maxfps = {"maxfps", "77", CVAR_SERVERINFO};  // It actually should be 
 														// Sad part is what we can't call it like sv_maxfps since clients relay on its name 'maxfps' already.
 
 void OnChange_sysselecttimeout_var (cvar_t *var, char *value, qbool *cancel);
-cvar_t	sys_select_timeout = {"sys_select_timeout",
-#ifdef _WIN32
-							"10000"
-#else
-							"1000000"
-#endif
-							, 0, OnChange_sysselecttimeout_var};
-// MUST be set to ~ (sv_mintic / 1.3) * 1 000 000 = 10 000
-// (else can occur packets lost if sv_minping > 0)
-// if set too low then occur higher CPU usage
+cvar_t	sys_select_timeout = {"sys_select_timeout", "10000", 0, OnChange_sysselecttimeout_var}; // microseconds.
 
 cvar_t	sys_restart_on_error = {"sys_restart_on_error", "0"};
 
@@ -3579,20 +3566,15 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 void OnChange_sysselecttimeout_var (cvar_t *var, char *value, qbool *cancel)
 {
 	int t = Q_atoi (value);
-	if (t <= 1000000 && t >= 10)
+
+	if (t < 1000 || t > 1000000)
 	{
-		select_timeout.tv_sec  =  t / 1000000;
-#if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)) && defined(KQUEUE)
-		select_timeout.tv_nsec = (t - select_timeout.tv_sec) * 1000;
-#else
-		select_timeout.tv_usec =  t - select_timeout.tv_sec;
-#endif
+		Con_Printf("WARNING: sys_select_timeout can't be less then 1000 (1 millisecond) and more then 1 000 000 (1 second).\n");
+		*cancel = true;
 		return;
 	}
-
-	Con_Printf("WARNING: sys_select_timeout can't be less then 10 (10 microseconds) and more then 1 000 000 (1 second).\n");
-	*cancel = true;
 }
+
 //bliP: 24/9 logdir ->
 void OnChange_logdir_var (cvar_t *var, char *value, qbool *cancel)
 {
@@ -3676,7 +3658,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	extern int		hunk_size;
 	cvar_t			*v;
 
-	char cfg[MAX_PATH] = {0};
+//	char cfg[MAX_PATH] = {0};
 
 	srand((unsigned)time(NULL));
 
