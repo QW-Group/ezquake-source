@@ -1294,6 +1294,12 @@ void NET_Init (void)
 	svs.sockettcp = INVALID_SOCKET;
 // <--TCPCONNECT
 #endif
+
+#ifdef SERVERONLY
+	// As client+server we init it in SV_SpawnServer().
+	// As serveronly we do it here.
+	NET_InitServer();
+#endif
 }
 
 void NET_Shutdown (void)

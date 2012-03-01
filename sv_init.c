@@ -238,9 +238,11 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	Con_DPrintf ("SpawnServer: %s\n",mapname);
 
-//#ifndef SERVERONLY
+#ifndef SERVERONLY
+	// As client+server we do it here.
+	// As serveronly we do it in NET_Init().
 	NET_InitServer();
-//#endif
+#endif
 
 	SV_SaveSpawnparms ();
 	SV_LoadAccounts();
