@@ -1017,7 +1017,7 @@ char *MT_TempDirectory(void) {
 	static char dir[MAX_OSPATH * 2] = {0};
 
 	if (!dir[0])
-		snprintf(dir, sizeof(dir), "%s/ezquake/temp", com_basedir);
+		snprintf(dir, sizeof(dir), "%s/temp", com_homedir);
 	return dir;
 }
 
