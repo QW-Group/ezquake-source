@@ -172,9 +172,9 @@ static void NQD_ParseClientdata (int bits)
 	extern player_state_t view_message;
 
 	if (bits & SU_VIEWHEIGHT)
-		cl.viewheight = MSG_ReadChar ();
+		cl.stats[STAT_VIEWHEIGHT] = MSG_ReadChar ();
 	else
-		cl.viewheight = DEFAULT_VIEWHEIGHT;
+		cl.stats[STAT_VIEWHEIGHT] = DEFAULT_VIEWHEIGHT;
 
 	if (bits & SU_IDEALPITCH)
 		MSG_ReadChar ();		// ignore

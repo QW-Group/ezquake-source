@@ -1271,7 +1271,11 @@ void CL_ClearState (void)
 	memset(cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset(cl_entities, 0, sizeof(cl_entities));
 
-	cl.viewheight = DEFAULT_VIEWHEIGHT;
+	// Set default viewheight for mvd, we copy cl.players[].stats[] to cl_stats[] in Cam_Lock() when pov changes.
+	for (i = 0; i < MAX_CLIENTS; i++)
+		cl.players[i].stats[STAT_VIEWHEIGHT] = DEFAULT_VIEWHEIGHT;
+	// Set default viewheight for normal game/current pov.
+	cl.stats[STAT_VIEWHEIGHT] = DEFAULT_VIEWHEIGHT;
 
 	// Make sure no centerprint messages are left from previous level.
 	scr_centertime_off = 0;

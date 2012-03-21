@@ -522,7 +522,7 @@ typedef struct {
 
 	qbool		onground;
 	float		crouch;				///< local amount for smoothing stepups
-	float		viewheight;
+//	float		viewheight;			///< removed, since it does not work well in case of MVD, search for cl.stats[STAT_VIEWHEIGHT] instead.
 
 	qbool		paused;				///< a combination of PAUSED_SERVER and PAUSED_DEMO flags
 

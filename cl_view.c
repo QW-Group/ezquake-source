@@ -1049,7 +1049,9 @@ void V_CalcRefdef (void) {
 	} else if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {	
 		r_refdef.vieworg[2] -= 16;	// corpse view height
 	} else {
-		r_refdef.vieworg[2] += cl.viewheight;	// normal view height
+		// normal view height
+		// Use STAT_VIEWHEIGHT in case of server support it or NQ demoplayback, if not then use default viewheight.
+		r_refdef.vieworg[2] += ((cl.z_ext & Z_EXT_VIEWHEIGHT) || cls.nqdemoplayback) ? cl.stats[STAT_VIEWHEIGHT] : DEFAULT_VIEWHEIGHT;
 
 		r_refdef.vieworg[2] += height_adjustment;
 
