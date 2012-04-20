@@ -28,11 +28,6 @@
 		920C63620E3657AB0024236F /* sv_mod_frags.c in Sources */ = {isa = PBXBuildFile; fileRef = 920C635D0E3657AB0024236F /* sv_mod_frags.c */; };
 		9226C6CD10728E7500F07127 /* EX_browser_pathfind.c in Sources */ = {isa = PBXBuildFile; fileRef = 9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */; };
 		9226C6CE10728E7500F07127 /* EX_browser_pathfind.c in Sources */ = {isa = PBXBuildFile; fileRef = 9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */; };
-		92434710111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 9243470F111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict */; };
-		92434711111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 9243470F111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict */; };
-		92434736111B68FA004ECAE5 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92434735111B68F9004ECAE5 /* Growl.framework */; };
-		9243479A111B6E85004ECAE5 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 92434735111B68F9004ECAE5 /* Growl.framework */; };
-		924347DD111B70F6004ECAE5 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 92434735111B68F9004ECAE5 /* Growl.framework */; };
 		924527910EE883F500EA8BCA /* libexpat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019930DE7FFCC00F1108A /* libexpat.a */; };
 		924527940EE8841100EA8BCA /* libjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019940DE7FFCC00F1108A /* libjpeg.a */; };
 		924527950EE8841800EA8BCA /* libpcre.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019950DE7FFCC00F1108A /* libpcre.a */; };
@@ -70,7 +65,6 @@
 		92CAD75B0CF082CE00A0767A /* menu_multiplayer.c in Sources */ = {isa = PBXBuildFile; fileRef = 92CAD7580CF082CE00A0767A /* menu_multiplayer.c */; };
 		92DAC3A0110B94DA0072AAC4 /* plugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 92DAC39F110B94DA0072AAC4 /* plugin.c */; };
 		92DAC3A1110B94DA0072AAC4 /* plugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 92DAC39F110B94DA0072AAC4 /* plugin.c */; };
-		92E0309F1159609F002A6FDB /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92434735111B68F9004ECAE5 /* Growl.framework */; };
 		92F019830DE7F9F400F1108A /* libircclient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F0197E0DE7F89800F1108A /* libircclient.a */; };
 		92F0198B0DE7FB0800F1108A /* irc.c in Sources */ = {isa = PBXBuildFile; fileRef = 92F019890DE7FB0800F1108A /* irc.c */; };
 		92F019980DE7FFCC00F1108A /* libexpat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F019930DE7FFCC00F1108A /* libexpat.a */; };
@@ -727,7 +721,6 @@
 			dstPath = ../Frameworks;
 			dstSubfolderSpec = 6;
 			files = (
-				9243479A111B6E85004ECAE5 /* Growl.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1091,7 +1084,6 @@
 			dstPath = ../Frameworks;
 			dstSubfolderSpec = 6;
 			files = (
-				924347DD111B70F6004ECAE5 /* Growl.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1117,8 +1109,6 @@
 		920C635C0E3657AB0024236F /* sv_login.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_login.c; sourceTree = "<group>"; };
 		920C635D0E3657AB0024236F /* sv_mod_frags.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sv_mod_frags.c; sourceTree = "<group>"; };
 		9226C6CC10728E7500F07127 /* EX_browser_pathfind.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = EX_browser_pathfind.c; sourceTree = "<group>"; };
-		9243470F111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "Growl Registration Ticket.growlRegDict"; sourceTree = "<group>"; };
-		92434735111B68F9004ECAE5 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Growl.framework; sourceTree = "<group>"; };
 		925E4A9A10542F6E00A65FB3 /* libtcl8.5.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtcl8.5.a; path = ../libs/macosx/libtcl8.5.a; sourceTree = SOURCE_ROOT; };
 		92B5D0560CE7028A0023B45F /* ez_button.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ez_button.c; sourceTree = "<group>"; };
 		92B5D0570CE7028A0023B45F /* ez_button.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ez_button.h; sourceTree = "<group>"; };
@@ -1547,7 +1537,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				92E0309F1159609F002A6FDB /* Growl.framework in Frameworks */,
 				924527C80EE8887700EA8BCA /* libircclient.a in Frameworks */,
 				924527970EE8842B00EA8BCA /* libz.a in Frameworks */,
 				924527960EE8841E00EA8BCA /* libpng.a in Frameworks */,
@@ -1583,7 +1572,6 @@
 				92F0199B0DE7FFCC00F1108A /* libpng.a in Frameworks */,
 				92F0199C0DE7FFCC00F1108A /* libz.a in Frameworks */,
 				925E4A9B10542F6E00A65FB3 /* libtcl8.5.a in Frameworks */,
-				92434736111B68FA004ECAE5 /* Growl.framework in Frameworks */,
 				92077B461271F6E000068D48 /* libcurl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1637,7 +1625,6 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				9243470F111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict */,
 				D29BE92A09C62F2700EBE023 /* Quake.icns */,
 				D29BE92809C62F2700EBE023 /* GrowBox.tiff */,
 				D29BE92909C62F2700EBE023 /* HandCursor.tiff */,
@@ -1658,7 +1645,6 @@
 			children = (
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
-				92434735111B68F9004ECAE5 /* Growl.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -2286,7 +2272,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				92434711111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict in Resources */,
 				D29BE8D709C62D7700EBE023 /* about.tiff in Resources */,
 				D29BE8D809C62D7700EBE023 /* cli.tiff in Resources */,
 				D29BE8D909C62D7700EBE023 /* displays.tiff in Resources */,
@@ -2309,7 +2294,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				92434710111B6537004ECAE5 /* Growl Registration Ticket.growlRegDict in Resources */,
 				D29BE8E609C62D7700EBE023 /* about.tiff in Resources */,
 				D29BE8E709C62D7700EBE023 /* cli.tiff in Resources */,
 				D29BE8E809C62D7700EBE023 /* displays.tiff in Resources */,
