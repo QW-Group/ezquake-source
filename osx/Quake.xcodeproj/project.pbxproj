@@ -330,7 +330,6 @@
 		F8276FE209DFE12F00AE5EF8 /* keys.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276BC409DFE12D00AE5EF8 /* keys.h */; };
 		F827701309DFE12F00AE5EF8 /* logging.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276BF709DFE12E00AE5EF8 /* logging.c */; };
 		F827701409DFE12F00AE5EF8 /* logging.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276BF809DFE12E00AE5EF8 /* logging.h */; };
-		F827701509DFE12F00AE5EF8 /* mac.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276BF909DFE12E00AE5EF8 /* mac.h */; };
 		F827701709DFE12F00AE5EF8 /* mac_prefs.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276BFB09DFE12E00AE5EF8 /* mac_prefs.c */; };
 		F827701809DFE12F00AE5EF8 /* mac_prefs.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276BFC09DFE12E00AE5EF8 /* mac_prefs.h */; };
 		F827709509DFE12F00AE5EF8 /* match_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CA609DFE12E00AE5EF8 /* match_tools.c */; };
@@ -530,7 +529,6 @@
 		F82773C509DFE13000AE5EF8 /* keys.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276BC409DFE12D00AE5EF8 /* keys.h */; };
 		F82773F609DFE13000AE5EF8 /* logging.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276BF709DFE12E00AE5EF8 /* logging.c */; };
 		F82773F709DFE13000AE5EF8 /* logging.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276BF809DFE12E00AE5EF8 /* logging.h */; };
-		F82773F809DFE13000AE5EF8 /* mac.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276BF909DFE12E00AE5EF8 /* mac.h */; };
 		F82773FA09DFE13000AE5EF8 /* mac_prefs.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276BFB09DFE12E00AE5EF8 /* mac_prefs.c */; };
 		F82773FB09DFE13000AE5EF8 /* mac_prefs.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276BFC09DFE12E00AE5EF8 /* mac_prefs.h */; };
 		F827747809DFE13000AE5EF8 /* match_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CA609DFE12E00AE5EF8 /* match_tools.c */; };
@@ -784,7 +782,6 @@
 				F82773C209DFE13000AE5EF8 /* keymap.h in CopyFiles */,
 				F82773C509DFE13000AE5EF8 /* keys.h in CopyFiles */,
 				F82773F709DFE13000AE5EF8 /* logging.h in CopyFiles */,
-				F82773F809DFE13000AE5EF8 /* mac.h in CopyFiles */,
 				F82773FB09DFE13000AE5EF8 /* mac_prefs.h in CopyFiles */,
 				F827747B09DFE13000AE5EF8 /* mathlib.h in CopyFiles */,
 				F827747F09DFE13000AE5EF8 /* menu.h in CopyFiles */,
@@ -895,7 +892,6 @@
 				F8276FDF09DFE12F00AE5EF8 /* keymap.h in CopyFiles */,
 				F8276FE209DFE12F00AE5EF8 /* keys.h in CopyFiles */,
 				F827701409DFE12F00AE5EF8 /* logging.h in CopyFiles */,
-				F827701509DFE12F00AE5EF8 /* mac.h in CopyFiles */,
 				F827701809DFE12F00AE5EF8 /* mac_prefs.h in CopyFiles */,
 				F827709809DFE12F00AE5EF8 /* mathlib.h in CopyFiles */,
 				F827709C09DFE12F00AE5EF8 /* menu.h in CopyFiles */,
@@ -1379,7 +1375,6 @@
 		F8276BC409DFE12D00AE5EF8 /* keys.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = keys.h; sourceTree = "<group>"; };
 		F8276BF709DFE12E00AE5EF8 /* logging.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = logging.c; sourceTree = "<group>"; };
 		F8276BF809DFE12E00AE5EF8 /* logging.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = logging.h; sourceTree = "<group>"; };
-		F8276BF909DFE12E00AE5EF8 /* mac.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mac.h; sourceTree = "<group>"; };
 		F8276BFB09DFE12E00AE5EF8 /* mac_prefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = mac_prefs.c; sourceTree = "<group>"; };
 		F8276BFC09DFE12E00AE5EF8 /* mac_prefs.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mac_prefs.h; sourceTree = "<group>"; };
 		F8276CA609DFE12E00AE5EF8 /* match_tools.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = match_tools.c; sourceTree = "<group>"; };
@@ -2030,7 +2025,6 @@
 				F827771809DFFA6C00AE5EF8 /* localtime_linux.c */,
 				F8276BF709DFE12E00AE5EF8 /* logging.c */,
 				F8276BF809DFE12E00AE5EF8 /* logging.h */,
-				F8276BF909DFE12E00AE5EF8 /* mac.h */,
 				F8276BFB09DFE12E00AE5EF8 /* mac_prefs.c */,
 				F8276BFC09DFE12E00AE5EF8 /* mac_prefs.h */,
 				F8276CA609DFE12E00AE5EF8 /* match_tools.c */,
