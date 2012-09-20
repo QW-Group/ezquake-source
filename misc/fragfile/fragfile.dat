@@ -134,33 +134,34 @@
 //
 //WEAPON CLASSES
 //
-#DEFINE WEAPON_CLASS	AXE			"axe"			"axe"		"\axe\"
-#DEFINE WEAPON_CLASS    SHOTGUN			"shotgun"		"sg"		"\sg\"
-#DEFINE WEAPON_CLASS    Q_SHOTGUN		"q shotgun"		"sg &c06fQ&r"	"\sg\ \q\"
-#DEFINE WEAPON_CLASS    SUPER_SHOTGUN		"super shotgun"		"ssg"		"\ssg\"
-#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN		"q super shotgun"	"ssg &c06fQ&r"	"\ssg\ \q\"
-#DEFINE WEAPON_CLASS    NAILGUN			"nailgun"		"ng"		"\ng\"
-#DEFINE WEAPON_CLASS    SUPER_NAILGUN		"super nailgun"		"sng"		"\sng\"
-#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN		"q super nailgun"	"sng &c06fQ&r"	"\sng\ \q\"
-#DEFINE WEAPON_CLASS    GRENADE_LAUNCHER	"grenade launcher"	"gl"		"\gl\"
-#DEFINE WEAPON_CLASS    ROCKET_LAUNCHER		"rocket launcher"	"rl"		"\rl\"
-#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER	"q rocket launcher"	"rl &c06fQ&r"	"\rl\ \q\"
-#DEFINE WEAPON_CLASS    LIGHTNING_GUN		"lightning gun"		"lg"		"\lg\"
-#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN		"q lightning gun"	"lg &c06fQ&r"	"\lg\ \q\"
+#DEFINE WEAPON_CLASS	AXE					"axe"				"axe"			"\axe\"
+#DEFINE WEAPON_CLASS    SHOTGUN				"shotgun"			"sg"			"\sg\"
+#DEFINE WEAPON_CLASS    Q_SHOTGUN			"q shotgun"			"&c06fQ&r-sg"	"\sg\ \q\"
+#DEFINE WEAPON_CLASS    SUPER_SHOTGUN		"super shotgun"		"ssg"			"\ssg\"
+#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN		"q super shotgun"	"&c06fQ&r-ssg"	"\ssg\ \q\"
+#DEFINE WEAPON_CLASS    NAILGUN				"nailgun"			"ng"			"\ng\"
+#DEFINE WEAPON_CLASS    SUPER_NAILGUN		"super nailgun"		"sng"			"\sng\"
+#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN		"q super nailgun"	"&c06fQ&r-sng"	"\sng\ \q\"
+#DEFINE WEAPON_CLASS    GRENADE_LAUNCHER	"grenade launcher"	"gl"			"\gl\"
+#DEFINE WEAPON_CLASS    ROCKET_LAUNCHER		"rocket launcher"	"rl"			"\rl\"
+#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER	"q rocket launcher"	"&c06fQ&r-rl"	"\rl\ \q\"
+#DEFINE WEAPON_CLASS    LIGHTNING_GUN		"lightning gun"		"lg"			"\lg\"
+#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN		"q lightning gun"	"&c06fQ&r-lg"	"\lg\ \q\"
 
-#DEFINE WEAPON_CLASS    RAIL_GUN		"rail gun"		"rail"		"\rail\"	//for dmm8 and TF engineer
-#DEFINE WEAPON_CLASS    COIL_GUN		"coil gun"		"coil"		"\coil\"	//for KTX instagib
+#DEFINE WEAPON_CLASS    RAIL_GUN			"rail gun"			"rail"			"\rail\"	//for dmm8 and TF engineer
+#DEFINE WEAPON_CLASS    COIL_GUN			"coil gun"			"coil"			"\coil\"	//for KTX instagib
 
-#DEFINE WEAPON_CLASS    DROWN			"drown"			"drown"		"\drown\"
-#DEFINE WEAPON_CLASS    LAVA			"lava"			"lava"		"\lava\"
-#DEFINE WEAPON_CLASS    SLIME			"slime"			"slime"		"\slime\"
-#DEFINE WEAPON_CLASS    TRAP			"trap"			"trap"		"\trap\"
-#DEFINE WEAPON_CLASS    TELEFRAG		"telefrag"		"telefrag"	"\tele\"
-#DEFINE WEAPON_CLASS    DISCHARGE		"discharge"		"discharge"	"\discharge\"
-#DEFINE WEAPON_CLASS    SQUISH			"squish"		"squish"	"\squish\"
-#DEFINE WEAPON_CLASS    FALL			"fall"			"fall"		"\fall\"
-#DEFINE WEAPON_CLASS    STOMP			"stomp"			"stomp"		"\stomp\"	// ktpro/ktx stomp kills
-#DEFINE WEAPON_CLASS    TEAMKILL		"kills"			"tkills"	"\tkills\"
+#DEFINE WEAPON_CLASS    PENTDEFLECT			"666tele"			"666tele"		"\666tele\"
+#DEFINE WEAPON_CLASS    DROWN				"drown"				"drown"			"\drown\"
+#DEFINE WEAPON_CLASS    LAVA				"lava"				"lava"			"\lava\"
+#DEFINE WEAPON_CLASS    SLIME				"slime"				"slime"			"\slime\"
+#DEFINE WEAPON_CLASS    TRAP				"trap"				"trap"			"\trap\"
+#DEFINE WEAPON_CLASS    TELEFRAG			"tele"				"tele"			"\tele\"
+#DEFINE WEAPON_CLASS    DISCHARGE			"discharge"			"discharge"		"\discharge\"
+#DEFINE WEAPON_CLASS    SQUISH				"squish"			"squish"		"\squish\"
+#DEFINE WEAPON_CLASS    FALL				"fall"				"fall"			"\fall\"
+#DEFINE WEAPON_CLASS    STOMP				"stomp"				"stomp"			"\stomp\"	// ktpro/ktx stomp kills
+#DEFINE WEAPON_CLASS    TEAMKILL			"kills"				"tkills"		"\tkills\"
 
 
 //
@@ -168,6 +169,9 @@
 //
 
 // FIXME: afaik one (and only one?) msg still unsupported: Satan's power deflects qqshka's telefrag
+
+
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP		"Satan's power deflects " "'s telefrag"
 
 #DEFINE OBITUARY	PLAYER_DEATH	DROWN			" sleeps with the fishes"
 #DEFINE OBITUARY	PLAYER_DEATH	DROWN			" sucks it down"
@@ -282,26 +286,28 @@
 // "up2 destroys his sentrygun"
 
 // TeamFortress
-#DEFINE WEAPON_CLASS    GRAPPLE             "grapple"           "grap"
-#DEFINE WEAPON_CLASS    BIOWEAPON           "bioweapon"         "bio"
-#DEFINE WEAPON_CLASS    SNIPER_RIFLE        "sniper rifle"      "snipe"
-#DEFINE WEAPON_CLASS    FLAME_THROWER       "flame thrower"     "flame"
-#DEFINE WEAPON_CLASS    SNIPER_SPRAY        "sniper spray"      "spray"
-#DEFINE WEAPON_CLASS    TRANQUILIZER        "tranquilizer"      "tranq"
 #DEFINE WEAPON_CLASS    ASSAULT_CANNON      "assault cannon"    "cann"
+#DEFINE WEAPON_CLASS    BIOWEAPON           "bioweapon"         "bio"
+#DEFINE WEAPON_CLASS    FLAME_THROWER       "flame thrower"     "flame"
+#DEFINE WEAPON_CLASS    GRAPPLE             "grapple"           "grap"
 #DEFINE WEAPON_CLASS    INCENDIARY_ROCKET   "incendiary rocket" "incnd"
 #DEFINE WEAPON_CLASS    PIPEBOMB            "pipebomb"          "pipe"
+#DEFINE WEAPON_CLASS    SNIPER_RIFLE        "sniper rifle"      "snipe"
+#DEFINE WEAPON_CLASS    SNIPER_SPRAY        "sniper spray"      "spray"
+#DEFINE WEAPON_CLASS    TRANQUILIZER        "tranquilizer"      "tranq"
 
-#DEFINE WEAPON_CLASS    HANDGREN            "hand grenade"      "hgren"
-#DEFINE WEAPON_CLASS    NAILGREN            "nail grenade"      "ngren"
-#DEFINE WEAPON_CLASS    GASGREN             "gas grenade"       "gas"
-#DEFINE WEAPON_CLASS    EMPGREN             "emp grenade"       "emp"
-#DEFINE WEAPON_CLASS    MIRVGREN            "mirv grenade"      "mirv"
-#DEFINE WEAPON_CLASS    FLASHGREN           "flash grenade"     "fgren"
+
 #DEFINE WEAPON_CLASS    CALTROP             "caltrop"           "calt"
+#DEFINE WEAPON_CLASS    EMPGREN             "emp grenade"       "emp"
+#DEFINE WEAPON_CLASS    FLASHGREN           "flash grenade"     "flashg"
+#DEFINE WEAPON_CLASS    GASGREN             "gas grenade"       "gas"
+#DEFINE WEAPON_CLASS    HANDGREN            "hand grenade"      "hgren"
+#DEFINE WEAPON_CLASS    MIRVGREN            "mirv grenade"      "mirv"
+#DEFINE WEAPON_CLASS    NAILGREN            "nail grenade"      "nailg"
 
-#DEFINE WEAPON_CLASS    DISPENSER           "dispenser"         "disp"
 #DEFINE WEAPON_CLASS    DETPACK             "detpack"           "dpack"
+#DEFINE WEAPON_CLASS    DISPENSER           "dispenser"         "disp"
+
 
 // Mega TeamFortress
 #DEFINE WEAPON_CLASS    20MM                "20mm"
@@ -313,6 +319,7 @@
 #DEFINE WEAPON_CLASS    SENTRYGUN           "sent"
 #DEFINE WEAPON_CLASS    SPANNER             "span"
 #DEFINE WEAPON_CLASS    SPIKE               "spike"
+#DEFINE WEAPON_CLASS    TESLACOIL           "tesla"
 #DEFINE WEAPON_CLASS    TOASTER             "toast"
 
 
@@ -415,6 +422,7 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SENTRYGUN		"'s spine is extracted by " "'s sentry gun"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SPANNER			" was spanner-murdered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SPANNER			" was spanner-wacked by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	TESLACOIL		"'s was obliterated by " "'s tesla coil"
 
 // General Kills
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE			" is split from crotch to sternum by " "'s axe swing"
@@ -487,9 +495,6 @@
 #DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" stared at his grenade too long"
 #DEFINE OBITUARY	PLAYER_SUICIDE	HANDGREN		" tiptoed over his own grenade"
 #DEFINE OBITUARY	PLAYER_SUICIDE	INCENDIARY_ROCKET	" chars himself with an incendiary rocket"
-#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" allowed his Mirv to turn against him"
-#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" goes to pieces"
-#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" practiced his own Mirv dance"
 #DEFINE OBITUARY	PLAYER_SUICIDE	NAILGREN		" hammers himself"
 #DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" bakes himself"
 #DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" couldn't outrun his airspam"
@@ -500,6 +505,14 @@
 #DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" nails himself"
 #DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" shocks himself to death."
 #DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		"'s JetPack malfunctions"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" shoots his teammate one too many times."
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" gets too selfish with his gifts"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" wasn't born so beautiful after all"
+#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" suicides  :)" // might be two spaces here
+//#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		"It's " "'s party and he'll cry if he wants to!" //why is this commented out?
+#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" allowed his Mirv to turn against him"
+#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" goes to pieces"
+#DEFINE OBITUARY	PLAYER_SUICIDE	MIRVGREN		" practiced his own Mirv dance"
 #DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB		" pipebombs himself..."
 #DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB		" ambushes himself with his own pipebombs"
 #DEFINE OBITUARY	PLAYER_SUICIDE	PIPEBOMB		" tried to juggle his own pipebombs"
@@ -509,10 +522,7 @@
 #DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN		" intercepts his sentry gun's rocket"
 #DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN		" gets too friendly with his sentrygun"
 #DEFINE OBITUARY	PLAYER_SUICIDE	SENTRYGUN		" crossed his sentry gun's line of fire"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" shoots his teammate one too many times."
-//#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		"It's " "'s party and he'll cry if he wants to!"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" gets too selfish with his gifts"
-#DEFINE OBITUARY	PLAYER_SUICIDE	NOWEAPON		" wasn't born so beautiful after all"
+
 
 // Team Kills
 #DEFINE OBITUARY	X_TEAMKILLS_Y	TEAMKILL		" mows down teammate "
@@ -533,6 +543,7 @@
 #DEFINE OBITUARY	PLAYER_DEATH	TRAP			" was stopped by an enemy autoturret"
 #DEFINE OBITUARY	PLAYER_DEATH	TRAP			" didn't survive the operation."
 #DEFINE OBITUARY	PLAYER_DEATH	TRAP			" tripped off the worldmap."
+#DEFINE OBITUARY	PLAYER_DEATH	TRAP			" got knocked the fuck out!"
 
 //FLAG ALERTS
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" «œ‘ the ≈Œ≈ÕŸ flag!"		//2fort5 .br
@@ -562,6 +573,7 @@
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken the red flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken your Key."
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has taken your flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the Blue Flag"		//Dissect
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the blue flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the blue key!"
@@ -586,6 +598,9 @@
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" √¡–‘’“≈ƒ the ≈Œ≈ÕŸ flag!"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the red flag"
 #DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" took the blue flag"
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" has the SPAZ-BALL!"		// Spaz4
+#DEFINE FLAG_ALERT	X_TOUCHES_FLAG		" droped the hot potatoe"	// Tater. it's a dropped msg, but putting it here since the map has no taken msg
+
 
 
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" dropped red's flag"
@@ -604,6 +619,7 @@
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" Ãœ”‘ the “≈ƒ flag!"		//2fort5 .br
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" ‰ÚÔÂ‰ ÙËÂ ¬ÏıÂ ∆Ï·Á"	//Dissect
 #DEFINE FLAG_ALERT	X_DROPS_FLAG		" ‰ÚÔÂ‰ ÙËÂ “Â‰ ∆Ï·Á"		//Dissect
+#DEFINE FLAG_ALERT	X_DROPS_FLAG		" droped the hot potatoe"	//tater
 
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" has captured"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" capped the red flag"
@@ -614,10 +630,6 @@
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Cap's the flag for the Red team."
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" „·ÙıÚÂ‰"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" ·„ÙÈˆ·ÙÂ‰"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" slams the Spaz-Ball on BLUE!"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shows RED How It's Done!"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Decides YELLOW Must Lose!"
-#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shoves It Up GREENS Backside!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the ≈Œ≈ÕŸ flag!"	//2fort5 .br
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" brought back a ¬ÈÛ„ıÈÙ"	//Biscuit Flag Capture
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the ≈Œ≈ÕŸ flag!"	//2fort5 .br
@@ -648,3 +660,7 @@
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the ¬Ã’≈ flag!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ the “≈ƒ flag!"
 #DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" √¡–‘’“≈ƒ Ÿœ’“ flag!"
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" slams the Spaz-Ball on BLUE!"		// Spaz4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shows RED How It's Done!"		// Spaz4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Decides YELLOW Must Lose!"		// Spaz4
+#DEFINE FLAG_ALERT	X_CAPTURES_FLAG		" Shoves It Up GREENS Backside!"	// Spaz4
