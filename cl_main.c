@@ -882,24 +882,18 @@ void CL_QWURL_f (void)
 		}
 	}
 
-	command = connection_str;
-
 	// Find the first "/" and treat what's after it as the command.	
+	if (command = strchr(connection_str, '/'))
 	{
-		while ((*command) && (*command) != '/')
-		{
-			command++;
-		}
-
-		// Get rid of the leading "/".
-		if ((*command) && (*command) == '/')
-		{
-			command++;
-		}
+		// Null terminate the server name string.
+		*command = 0;
+		command++;
 	}
-
-	// Null terminate the server name string.
-	connection_str[command - connection_str - 1] = 0;
+	else
+	{
+		// No command given.
+		command = "";
+	}
 
 	// Default to connecting.
 	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
