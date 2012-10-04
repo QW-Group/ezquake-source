@@ -304,8 +304,9 @@ void OnChange_AppliedAfterReconnect (cvar_t *var, char *value, qbool *cancel)
 
 #ifdef WIN32
 
-#define QW_URL_OPEN_CMD_REGKEY		"Software\\Classes\\qw\\shell\\Open\\Command"
-#define QW_URL_DEFAULTICON_REGKEY	"Software\\Classes\\qw\\DefaultIcon"
+#define QW_URL_ROOT_REGKEY			"Software\\Classes\\qw"
+#define QW_URL_OPEN_CMD_REGKEY		QW_URL_ROOT_REGKEY"\\shell\\Open\\Command"
+#define QW_URL_DEFAULTICON_REGKEY	QW_URL_ROOT_REGKEY"\\DefaultIcon"
 
 //
 // Checks if this client is the default qw protocol handler.
@@ -377,6 +378,18 @@ qbool CL_CheckIfQWProtocolHandler()
 
 void CL_RegisterQWURLProtocol_f(void)
 {
+	//
+	// Note!
+	// HKEY_CLASSES_ROOT is a "merged view" of both: “HKEY_LOCAL_MACHINE\Software\Classes” 
+	// and “HKEY_CURRENT_USER\Software\Classes”. 
+	// User specific settings has priority over machine settings.
+	//
+	// If you try to write to HKEY_CLASSES_ROOT directly, it will default to
+	// trying to write to the machine specific settings. If the user isn't
+	// admin this will fail. On Vista this requires UAC usage.
+	// Because of this, we always write specifically to "HKEY_CURRENT_USER\Software\Classes"
+	//
+
 	HKEY keyhandle;
 	char exe_path[MAX_PATH];
 
@@ -448,7 +461,7 @@ void CL_RegisterQWURLProtocol_f(void)
 		char protocol_name[] = "URL:QW Protocol";
 
 		// Open / Create the key.
-		if (RegCreateKeyEx(HKEY_CURRENT_USER, "qw", 
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_ROOT_REGKEY, 
 			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
 		{
 			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\qw\n");
