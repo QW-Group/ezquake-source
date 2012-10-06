@@ -92,66 +92,60 @@ static qbool oss_init_internal(qsoundhandler_t *sd, const char *device, int rate
 					if (shm->format.width)
 					{
 						i = 0;
-						if (ioctl(p->fd, SNDCTL_DSP_SPEED, &rate) < 0) {
-							Com_Printf("[sound] oss error: tried %d Hz but failed.\n", rate);
-							return false;
-						}
-
-						if (channels == 1)
+						if (ioctl(p->fd, SNDCTL_DSP_SPEED, &rate) >= 0)
 						{
-							shm->format.channels = 1;
-							i = 0;
-						}
-						else
-						{
-							shm->format.channels = 2;
-							i = 1;
-						}
-
-						if (ioctl(p->fd, SNDCTL_DSP_STEREO, &i) >= 0)
-						{
-							if (shm->format.width == 2)
-								i = AFMT_S16_LE;
-							else
-								i = AFMT_S8;
-
-							if (ioctl(p->fd, SNDCTL_DSP_SETFMT, &i) >= 0)
+							if (channels == 1)
 							{
+								shm->format.channels = 1;
 								i = 0;
-								if (ioctl(p->fd, SNDCTL_DSP_SETTRIGGER, &i) >= 0)
+							}
+							else
+							{
+								shm->format.channels = 2;
+								i = 1;
+							}
+
+							if (ioctl(p->fd, SNDCTL_DSP_STEREO, &i) >= 0)
+							{
+								if (shm->format.width == 2)
+									i = AFMT_S16_LE;
+								else
+									i = AFMT_S8;
+
+								if (ioctl(p->fd, SNDCTL_DSP_SETFMT, &i) >= 0)
 								{
-									i = PCM_ENABLE_OUTPUT;
+									i = 0;
 									if (ioctl(p->fd, SNDCTL_DSP_SETTRIGGER, &i) >= 0)
 									{
-										shm->samples = info.fragstotal * info.fragsize / (shm->format.width);
-										shm->samplepos = 0;
-										shm->format.speed = rate;
+										i = PCM_ENABLE_OUTPUT;
+										if (ioctl(p->fd, SNDCTL_DSP_SETTRIGGER, &i) >= 0)
+										{
+											shm->samples = info.fragstotal * info.fragsize / (shm->format.width);
+											shm->samplepos = 0;
+											shm->format.speed = rate;
 
-										pdriver = p;
+											pdriver = p;
 
-										sd->GetDMAPos = oss_getdmapos;
-										sd->GetAvail = NULL;
-										sd->Submit = NULL;
-										sd->Shutdown = oss_shutdown;
-										sd->name = "snd_oss";
+											sd->GetDMAPos = oss_getdmapos;
+											sd->GetAvail = NULL;
+											sd->Submit = NULL;
+											sd->Shutdown = oss_shutdown;
+											sd->name = "snd_oss";
 
-										return 1;
+											return 1;
+										}
 									}
 								}
 							}
 						}
 					}
-
 					munmap(shm->buffer, info.fragstotal * info.fragsize);
 				}
 			}
-
 			close(p->fd);
 		}
-
 		free(p);
 	}
-
 	return 0;
 }
 
