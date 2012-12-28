@@ -1584,13 +1584,15 @@ typedef struct {
 
 static csentry_t table[] = {
 	// CRCs for AquaShark's "simpletextures" maps
-	{ "dm1", 0xc5c7dab3, 0x7d37618e },
-	{ "dm2", 0x65f63634, 0x7b337440 },
-	{ "dm3", 0x15e20df8, 0x912781ae },
-	{ "dm4", 0x9c6fe4bf, 0xc374df89 },
-	{ "dm5", 0xb02d48fd, 0x77ca7ce5 },
-	{ "dm6", 0x5208da2b, 0x200c8b5d },
-	{ "end", 0xbbd4b4a5, 0xf89b12ae }, // this is the version with the extra room
+	{ "dm1",  0xc5c7dab3, 0x7d37618e },
+	{ "dm2",  0x65f63634, 0x7b337440 },
+	{ "dm3",  0x15e20df8, 0x912781ae },
+	{ "dm4",  0x9c6fe4bf, 0xc374df89 },
+	{ "dm5",  0xb02d48fd, 0x77ca7ce5 },
+	{ "dm6",  0x5208da2b, 0x200c8b5d },
+	{ "end",  0xbbd4b4a5, 0xf89b12ae }, // this is the version with the extra room
+	{ "end",  0xbbd4b4a5, 0x924f4d33 }, // GPL end
+	{ "e2m2", 0xaf961d4d, 0xa23126c5 }, // GPL e2m2
 	{ NULL, 0, 0 },
 };
 
