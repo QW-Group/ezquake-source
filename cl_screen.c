@@ -3948,7 +3948,8 @@ int SCR_Screenshot(char *name) {
 	COM_ForceExtension (name, SShot_ExtForFormat(format));
 	buffersize = glwidth * glheight * 3;
 
-	buffer = (byte *) Q_malloc (buffersize);
+	buffer = Q_malloc (buffersize);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 
 #ifdef WITH_PNG
