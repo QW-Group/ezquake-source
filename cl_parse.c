@@ -849,7 +849,13 @@ int CL_RequestADownloadChunk(void)
 void CL_SendChunkDownloadReq(void)
 {
 	extern cvar_t cl_chunksperframe;
-	int i, j, chunks = bound(1, cl_chunksperframe.integer, 5);
+	int i, j, chunks;
+	
+	// Workaround: Make downloads work on non-mvdsv-chunksperframe-servers
+	if (strstr(Info_ValueForKey(cl.serverinfo, "*version"), "MVDSV"))
+		chunks = bound(1, cl_chunksperframe.integer, 5);
+	else
+		chunks = 1;
 
 	for (j = 0; j < chunks; j++)
 	{
