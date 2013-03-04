@@ -3014,6 +3014,11 @@ void CL_SetStat (int stat, int value)
 		cl.servertime = cl.stats[STAT_TIME] * 0.001;
 	}
 
+	if (cl.stats[STAT_MATCHSTARTTIME])
+	{
+		cl.gamestarttime = Sys_DoubleTime() - cl.servertime + ((double)cl.stats[STAT_MATCHSTARTTIME])/1000 - cl.gamepausetime;
+	}
+
 	TP_StatChanged(stat, value);
 }
 
