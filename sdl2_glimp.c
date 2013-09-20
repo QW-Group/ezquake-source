@@ -66,7 +66,8 @@ typedef enum
 cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_normal
 cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
 cvar_t r_allowSoftwareGL  = { "vid_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
-
+// TODO: implement (SDL_PauseAudio func)
+cvar_t sys_inactivesound  = { "sys_inactivesound", "1", CVAR_ARCHIVE };
 
 glwstate_t glw_state;
 
@@ -135,6 +136,12 @@ void IN_DeactivateMouse(void)
 	if (!in_nograb.value)
 		GrabMouse(false);
 	mouse_active = false;
+}
+
+int IN_GetMouseRate(void)
+{
+    /* can we implement this with SDL? */
+    return -1;
 }
 
 void IN_Frame(void)
@@ -520,7 +527,9 @@ void GLimp_Init( void )
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_ResetCurrentGroup();
 
+#if defined(__linux__)
 	InitSig();
+#endif
 
 	VID_SDL_InitSubSystem();
 
@@ -572,7 +581,9 @@ void GLimp_Init( void )
 	glConfig.version_string        = glGetString(GL_VERSION);
 	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
 	
+#if defined(__linux__)
 	InitSig(); // not clear why this is at begin & end of function
+#endif
 }
 
 
@@ -672,4 +683,20 @@ void Sys_CopyToClipboard(char *text)
 void VID_SetDeviceGammaRamp (unsigned short *ramps)
 {
     /* stub */
+}
+
+void VID_Minimize (void) 
+{
+    if (!sdl_window)
+        return;
+
+    SDL_MinimizeWindow(sdl_window);
+}
+
+void VID_Restore (void)
+{
+    if (!sdl_window)
+        return;
+
+    SDL_RestoreWindow(sdl_window);
 }

@@ -58,6 +58,7 @@ cvar_t	sys_inactivesleep = {"sys_inactiveSleep", "1"};
 static HANDLE	qwclsemaphore;
 static HANDLE	tevent;
 HANDLE	hinput, houtput;
+HINSTANCE	global_hInstance;
 
 void MaskExceptions (void);
 void Sys_PopFPCW (void);
@@ -538,22 +539,6 @@ double Sys_DoubleTime (void)
 	return (now - starttime) / 1000.0;
 }
 
-void Sys_SendKeyEvents (void) 
-{
-    MSG msg;
-
-	while (PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE)) 
-	{
-		// We always update if there are any event, even if we're paused
-		scr_skipupdate = 0;
-
-		if (!GetMessage (&msg, NULL, 0, 0))
-			Host_Quit ();
-      	TranslateMessage (&msg);
-      	DispatchMessage (&msg);
-	}
-}
-
 BOOL WINAPI HandlerRoutine (DWORD dwCtrlType) 
 {
 	switch (dwCtrlType) {
@@ -651,20 +636,6 @@ void Sys_Init_ (void)
 			"qwcl");	// Semaphore name
 	}
 
-	#ifdef GLQUAKE
-	// Get information about the current monitor.
-	{
-		// TODO: Maybe put these in some header instead?
-		extern HMONITOR VID_GetCurrentMonitor();
-		extern MONITORINFOEX VID_GetCurrentMonitorInfo(HMONITOR monitor);
-		extern HMONITOR prevMonitor;
-		extern MONITORINFOEX prevMonInfo;
-
-		prevMonitor = VID_GetCurrentMonitor();
-		prevMonInfo = VID_GetCurrentMonitorInfo(prevMonitor);
-	}
-	#endif // GLQUAKE
-
 	MaskExceptions ();
 	Sys_SetFPCW ();
 
@@ -675,6 +646,7 @@ void Sys_Init_ (void)
 
 #define SYS_CLIPBOARD_SIZE		256
 
+#if 0
 wchar *Sys_GetClipboardTextW(void) 
 {
 	HANDLE th;
@@ -761,6 +733,7 @@ void Sys_CopyToClipboard(char *text)
 
 	CloseClipboard();
 }
+#endif
 
 //==============================================================================
 // WINDOWS CRAP
@@ -931,8 +904,6 @@ int MsgBoxEx(HWND hwnd, TCHAR *szText, TCHAR *szCaption, HOOKPROC hookproc, UINT
 	return retval;
 }
 
-HINSTANCE	global_hInstance;
-
 typedef enum qwurl_regkey_e
 {
 	QWURL_DONT_ASK = 0,
@@ -1058,7 +1029,7 @@ qbool WinCheckQWURL(void)
 	
 	// Instead of creating a completly custom messagebox (which is a major pain)
 	// just show a normal one, but replace the text on the buttons using event hooking.
-	retval = MsgBoxEx(mainwindow, 
+	retval = MsgBoxEx(NULL, 
 					"The current ezQuake client is not associated with the qw:// protocol,\n"
 					"which lets you launch ezQuake by opening qw:// URLs (.qtv files).\n\n"
 					"Do you want to associate ezQuake with the qw:// protocol?",
@@ -1164,12 +1135,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		if (sys_inactivesleep.value) 
 		{
 			// Yield the CPU for a little while when paused, minimized, or not the focus
-			if ((ISPAUSED && (!ActiveApp && !DDActive)) || Minimized || block_drawing)
+			if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing)
 			{
 				SleepUntilInput (PAUSE_SLEEP);
 				scr_skipupdate = 1;		// no point in bothering to draw
 			} 
-			else if (!ActiveApp && !DDActive)
+			else if (!ActiveApp)
 			{
 				SleepUntilInput (NOT_FOCUS_SLEEP);
 			}

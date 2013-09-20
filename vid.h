@@ -95,3 +95,6 @@ int VID_ConsoleX (int x);
 int VID_ConsoleY (int y);
 #endif
 // <-- QW262
+
+void VID_Minimize();
+void VID_Restore();

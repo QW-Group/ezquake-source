@@ -1183,11 +1183,6 @@ setting settbinds_arr[] = {
 #if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(GLQUAKE))
 	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
 #endif
-#ifdef _WIN32
-	ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
-    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
-	ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
-#endif
     ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
     ADDSET_BASIC_SECTION(),
 

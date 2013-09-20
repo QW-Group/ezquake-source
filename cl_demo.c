@@ -2330,7 +2330,9 @@ void CL_Record_f (void)
 	}
 
 	if (	(cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)) // that OK.
+#ifdef FTE_PEXT2_VOICECHAT
 		||  (cls.fteprotocolextensions2 & ~FTE_PEXT2_VOICECHAT) // that not OK since if you receive VOIP packet demo will be non compatible, but this warning is annoying.
+#endif
 	)
 	{
 		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo most likely will be unplayable in older clients. "

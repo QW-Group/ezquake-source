@@ -60,8 +60,11 @@ BUILD_DEFS += -DBUILDSTRING='"$(SYS)"'
 VER_DEFS := -DREVISION=$(REV)
 VER_DEFS += -DVERSION='"$(VER)"'
 
-CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(shell sdl2-config --cflags) -DGLQUAKE -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS -DUSE_SDL2
-LIBS_c += $(shell sdl2-config --libs) -lGL
+SDL2_CFLAGS ?= $(shell sdl2-config --cflags)
+SDL2_LIBS ?= $(shell sdl2-config --libs)
+
+CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(SDL2_CFLAGS) -DGLQUAKE -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS -DUSE_SDL2
+LIBS_c += $(SDL2_LIBS)
 
 # built-in requirements
 ZLIB_CFLAGS ?= -DWITH_ZLIB
@@ -88,11 +91,6 @@ PNG_CFLAGS ?= -DWITH_PNG -D__Q_PNG14__
 PNG_LIBS ?= -lpng
 CFLAGS_c += $(PNG_CFLAGS)
 LIBS_c += $(PNG_LIBS)
-
-SPEEX_CFLAGS ?= $(shell pkg-config speex --cflags)
-SPEEX_LIBS ?= $(shell pkg-config speex --libs)
-CFLAGS_c += $(SPEEX_CFLAGS)
-LIBS_c += $(SPEEX_LIBS)
 
 CURL_CFLAGS ?= 
 CURL_LIBS ?= -lcurl
@@ -290,10 +288,13 @@ OBJS_c := \
 
 ifdef CONFIG_WINDOWS
     OBJS_c += \
-	cd_win.o \
-	in_win.o \
+	movie_avi.o \
+	cd_null.o \
+	in_linux.o \
 	localtime_win.o \
-	sys_win.o
+	sys_win.o \
+	winquake.o
+    LIBS_c += -lopengl32 -lws2_32 -lwinmm
 else
     OBJS_c += \
 	cd_linux.o \
@@ -302,7 +303,14 @@ else
     	localtime_linux.o \
 	sys_linux.o \
     	linux_signals.o
-    LIBS_c += -lm -ldl -lrt -lpthread -lXpm
+    LIBS_c += -lGL -lm -ldl -lrt -lpthread -lXpm
+endif
+
+ifdef CONFIG_SPEEX
+    SPEEX_CFLAGS ?= $(shell pkg-config speex --cflags)
+    SPEEX_LIBS ?= $(shell pkg-config speex --libs)
+    CFLAGS_c += $(SPEEX_CFLAGS)
+    LIBS_c += $(SPEEX_LIBS)
 endif
 
 ### Targets ###

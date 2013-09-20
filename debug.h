@@ -258,7 +258,7 @@ typedef int             ibool;		/* Integer boolean type			*/
 #define STRICT
 #define	WIN32_LEAN_AND_MEAN
 #endif
-#include <windows.h>
+//#include <windows.h>
 #endif
 #endif
 

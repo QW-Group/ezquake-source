@@ -300,27 +300,7 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
     char st[128];
 	static cvar_t *hud_vidlag_style = NULL;
 
-#if defined(GLQUAKE) && defined(_WIN32)
-	extern qbool vid_vsync_on;
-	extern double vid_vsync_lag;
-	static double old_lag;
-
-	if (vid_vsync_on || glConfig.displayFrequency)
-	{
-		// take the average of last two values, otherwise it
-		// changes very fast and is hard to read
-		double current, avg;
-		if (vid_vsync_on)
-			current = vid_vsync_lag;
-		else
-			current = min(cls.trueframetime, 1.0/glConfig.displayFrequency) * 0.5;
-		avg = (current + old_lag) * 0.5;
-		old_lag = current;
-		snprintf (st, sizeof (st), "%2.1f", avg * 1000);
-	}
-	else
-#endif
-		strcpy(st, "?");
+	strcpy(st, "?");
 
 	if (hud_vidlag_style == NULL)  // first time called
 	{
@@ -344,10 +324,6 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 		}
     }
 }
-
-#ifdef WIN32
-int IN_GetMouseRate(void);
-#endif
 
 void SCR_HUD_DrawMouserate(hud_t *hud)
 {

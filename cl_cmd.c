@@ -847,30 +847,6 @@ void CL_Userdir_f (void)
 }
 // <-- QW262
 
-#ifdef _WIN32
-void CL_Windows_f (void) 
-{
-	#ifdef GLQUAKE
-
-	//
-	// WIN OpenGL version
-	//
-	if (!ActiveApp)
-		return; // alredy not active
-
-	ShowWindow(mainwindow, SW_MINIMIZE);
-
-	#else // Software
-
-	//
-	// software version
-	//
-	SendMessage(mainwindow, WM_SYSKEYUP, VK_TAB, 1 | (0x0F << 16) | (1<<29));
-
-	#endif // GLQUAKE else
-}
-#endif // WIN32
-
 void CL_Serverinfo_f (void) 
 {
 	#ifndef CLIENTONLY
@@ -974,9 +950,7 @@ void CL_InitCommands (void) {
 	Cmd_AddCommand ("fly", NULL);
 
 	//  Windows commands
-#ifdef _WIN32
-	Cmd_AddCommand ("windows", CL_Windows_f);
-#endif
+	Cmd_AddCommand ("windows", VID_Minimize);
 
 	Cmd_AddCommand ("z_ext_list", CL_Z_Ext_List_f);
 

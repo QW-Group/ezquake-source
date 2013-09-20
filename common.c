@@ -20,9 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include "common.h"
+
 #ifdef _WIN32
 #include <direct.h>
-#include <Shlobj.h>
+#include <shlobj.h>
 #include <errno.h>
 #else
 #include <stdio.h>

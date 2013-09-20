@@ -240,10 +240,6 @@ cvar_t cl_onload				= {"cl_onload", "menu"};
 cvar_t cl_verify_qwprotocol		= {"cl_verify_qwprotocol", "1"};
 #endif // WIN32
 
-#ifndef WIN32
-cvar_t sys_inactivesound		= {"sys_inactiveSound", "1"};
-#endif
-
 cvar_t demo_autotrack			= {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 /// persistent client state
@@ -1605,10 +1601,7 @@ void CL_ConnectionlessPacket (void)
 				return;
 			}
 
-			#ifdef _WIN32
-			ShowWindow (mainwindow, SW_RESTORE);
-			SetForegroundWindow (mainwindow);
-			#endif // WIN32
+                        VID_Restore();
 			
 			s = MSG_ReadString ();
 			strlcpy (cmdtext, s, sizeof(cmdtext));
@@ -1924,9 +1917,6 @@ void CL_InitLocal (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register (&cl_staticsounds);
-#ifndef _WIN32
-	Cvar_Register (&sys_inactivesound);
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_USERINFO);
 	Cvar_Register (&team);
@@ -2179,20 +2169,7 @@ void CL_Init (void)
 // wrapper function to deal with inactivesound
 void CL_S_ExtraUpdate()
 {
-#ifndef WIN32
-	float tmpvolume = 0;
-	if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized)) {
-		tmpvolume = Cvar_Value("volume");
-		Cvar_SetValueByName("volume", 0);
-	}
-#endif
-
 	S_ExtraUpdate();
-
-#ifndef WIN32
-	if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized))
-		Cvar_SetValueByName("volume", tmpvolume);
-#endif
 }
 
 void CL_BeginLocalConnection (void) 
@@ -2329,49 +2306,6 @@ double timings[NUMTIMINGS];
 double render_frame_start, render_frame_end;
 int timings_idx;
 
-// Returns true if it's not time yet to run a frame
-qbool VSyncLagFix (void)
-{
-#if defined(GLQUAKE) && defined(_WIN32)
-	extern qbool vid_vsync_on;
-	extern double vid_last_swap_time;
-	double avg_rendertime, tmin, tmax;
-	int i;
-
-	// collect statistics so that
-	timings[timings_idx] = render_frame_end - render_frame_start;
-	timings_idx = (timings_idx + 1) % NUMTIMINGS;
-	avg_rendertime = tmin = tmax = 0;
-	for (i = 0; i < NUMTIMINGS; i++) {
-		if (timings[i] == 0)
-			return false;	// not enough statistics yet
-		avg_rendertime += timings[i];
-		if (timings[i] < tmin || !tmin)
-			tmax = timings[i];
-		if (timings[i] > tmax)
-			tmax = timings[i];
-	}
-	avg_rendertime /= NUMTIMINGS;
-	// if (tmax and tmin differ too much) do_something(); ?
-	avg_rendertime = tmax;	// better be on the safe side
-
-	if (cl_vsync_lag_fix.value && vid_vsync_on && glConfig.displayFrequency) {
-		double time_left = vid_last_swap_time + 1.0/glConfig.displayFrequency - Sys_DoubleTime();
-		time_left -= avg_rendertime;
-		time_left -= cl_vsync_lag_tweak.value * 0.001;
-		if (time_left > 0) {
-			extern cvar_t sys_yieldcpu;
-			if (time_left > 0.001 && sys_yieldcpu.integer)
-				Sys_MSleep(Cvar_Value("zerosleep") ? 0 : min(time_left * 1000, 500));
-			return true;	// don't run a frame yet
-		}
-	}
-	return false;
-#else
-	return false;
-#endif
-}
-
 void CL_QTVPoll (void);
 void Plug_Tick(void);
 
@@ -2430,9 +2364,6 @@ void CL_Frame (double time)
 		CL_QueInputPacket();
 		CL_UnqueOutputPacket(false);
 	}
-
-	if (VSyncLagFix())
-		return;
 
 	render_frame_start = Sys_DoubleTime();
 
@@ -2735,14 +2666,6 @@ void CL_Frame (double time)
 	// update audio
 	if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
 	{
-#ifndef WIN32
-		float tmpvolume = 0;
-		if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized)) {
-			tmpvolume = Cvar_Value("volume");
-			Cvar_SetValueByName("volume", 0);
-		}
-#endif
-
 		if (cls.state == ca_active)
 		{
 			if (!ISPAUSED) {
@@ -2766,11 +2689,6 @@ void CL_Frame (double time)
 		}
 
 		CDAudio_Update();
-
-#ifndef WIN32
-		if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized))
-			Cvar_SetValueByName("volume", tmpvolume);
-#endif
 	}
 
 	MT_Frame();

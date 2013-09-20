@@ -25,10 +25,7 @@ void IN_Init (void);
 void IN_Shutdown (void);
 void IN_Commands (void); // oportunity for devices to stick commands on the script buffer
 void IN_Move (usercmd_t *cmd); // add additional movement on top of the keyboard move cmd
-
-#if DIRECTINPUT_VERSION >= 0x700
 int IN_GetMouseRate(void);
-#endif
 
 //
 // cl_input.c

@@ -93,7 +93,6 @@ cvar_t	vid_ref				= { "vid_ref",				"gl",	CVAR_ROM | CVAR_SILENT };
 cvar_t  vid_hwgammacontrol	= { "vid_hwgammacontrol", 	"2",    CVAR_SILENT };
 #ifdef _WIN32
 cvar_t  vid_flashonactivity = { "vid_flashonactivity",	"1",	CVAR_SILENT };
-cvar_t	_windowed_mouse		= { "_windowed_mouse",		"1",	CVAR_SILENT }; // actually that more like input, but input registered after video in windows
 #endif
 
 cvar_t	r_verbose			= { "vid_verbose",			"0",	CVAR_SILENT };
@@ -670,7 +669,6 @@ void R_Register( void )
 	Cvar_Register (&vid_ref);
 #ifdef _WIN32
 	Cvar_Register (&vid_flashonactivity);
-	Cvar_Register (&_windowed_mouse); //that more like an input, but i have serious reason to register it here
 #endif
 
 	Cvar_Register (&r_showextensions);
@@ -679,10 +677,6 @@ void R_Register( void )
 
 	if ( !host_initialized )
 	{
-#ifdef _WIN32
-		void VID_ShowFreq_f(void);
-		Cmd_AddCommand( "vid_showfreq",	VID_ShowFreq_f );
-#endif
 		Cmd_AddCommand( "vid_modelist",		R_ModeList_f );
 		Cmd_AddCommand( "vid_gfxinfo",		GfxInfo_f );
 		Cmd_AddCommand( "vid_restart",	VID_Restart_f );
@@ -734,14 +728,6 @@ void RE_Shutdown( qbool destroyWindow ) {
 /******************************** VID SHUTDOWN ********************************/
 
 void VID_Shutdown (void) {
-#ifdef _WIN32
-
-	extern void AppActivate(BOOL fActive, BOOL minimize);
-
-	AppActivate(false, false);
-
-#endif
-
 #ifdef GLSL
 	SHD_Shutdown();
 #endif
@@ -750,10 +736,6 @@ void VID_Shutdown (void) {
 }
 
 /********************************** VID INIT **********************************/
-
-#ifdef _WIN32
-extern void ClearAllStates (void);
-#endif
 
 void VID_zzz (void) {
 	extern int nonwideconheight;
@@ -768,11 +750,6 @@ void VID_zzz (void) {
 	vid.numpages = 2;
 
 	Draw_AdjustConback ();
-
-#ifdef _WIN32
-	//fix the leftover Alt from any Alt-Tab or the like that switched us away
-	ClearAllStates ();
-#endif
 
 	vid.recalc_refdef = 1;
 }
@@ -873,21 +850,5 @@ void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel)
 
 void OnChange_vid_pos(cvar_t *var, char *string, qbool *cancel)
 {
-#ifdef WIN32
-	if (!r_fullscreen.integer)
-	{
-		extern	HWND	mainwindow;
-		if (mainwindow)
-		{
-			SetWindowPos(	mainwindow,
-							NULL,
-							var == &vid_xpos ? atof(string) : vid_xpos.value,
-							var == &vid_ypos ? atof(string) : vid_ypos.value,
-							0,
-							0,
-							SWP_NOSIZE | SWP_NOZORDER);
-		}
-	}
-#endif
 }
 

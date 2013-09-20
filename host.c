@@ -20,9 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // this should be the only file that includes both server.h and client.h
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include <setjmp.h>
 
 #ifdef __FreeBSD__
@@ -719,11 +716,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			Startup_Place();
 		}
 	}
-
-#ifdef _WIN32
-	SetForegroundWindow(mainwindow);
-	SetActiveWindow(mainwindow);
-#endif
 
 	host_everything_loaded = true;
 }

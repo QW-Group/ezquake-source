@@ -43,7 +43,6 @@ static void S_Update_ ();
 static void S_StopAllSounds_f (void);
 static void S_Register_LatchCvars(void);
 
-void IN_Accumulate (void); // S_ExtraUpdate use it
 void S_RawClear(void);
 void S_RawAudio(int sourceid, byte *data, unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
 
@@ -542,54 +541,15 @@ static void S_StopAllSounds_f (void)
 }
 
 
-#ifdef _WIN32
-extern char *DSoundError (int error);
-#endif
-
 void S_ClearBuffer (void)
 {
 	int clear;
 
-#ifdef _WIN32
-	if (!shm || (!shm->buffer && !pDSBuf))
-#else
 	if (!shm || !shm->buffer)
-#endif
 		return;
 
 	clear = (shm->format.width == 2) ? 0x80 : 0;
-
-#ifdef _WIN32
-	if (pDSBuf) {
-		DWORD dwSize;
-		DWORD *pData;
-		int reps;
-		HRESULT hresult;
-
-		reps = 0;
-
-		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, (void **) &pData, &dwSize, NULL, NULL, 0)) != DS_OK) {
-			if (hresult != DSERR_BUFFERLOST) {
-				Com_Printf ("S_ClearBuffer: Lock failed with error '%s'\n", DSoundError(hresult));
-				S_Shutdown ();
-				return;
-			} else {
-				pDSBuf->lpVtbl->Restore (pDSBuf);
-			}
-
-			if (++reps > 2)
-				return;
-		}
-
-		memset(pData, clear, shm->bufferlength);
-
-		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
-
-	} else
-#endif
-	{
-		memset(shm->buffer, clear, shm->bufferlength);
-	}
+	memset(shm->buffer, clear, shm->bufferlength);
 }
 
 void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
@@ -792,10 +752,6 @@ void S_ExtraUpdate (void)
 #ifdef _WIN32
 	if (Movie_IsCapturing() && movie_is_avi)
 		return;
-#endif
-
-#ifdef _WIN32
-	IN_Accumulate ();
 #endif
 
 	if (s_noextraupdate.value || !sound_spatialized)
