@@ -67,10 +67,16 @@ typedef enum {
 } glHardwareType_t;
 
 typedef struct {
+#if 0
 	char					renderer_string[MAX_STRING_CHARS];
 	char					vendor_string[MAX_STRING_CHARS];
 	char					version_string[MAX_STRING_CHARS];
 	char					extensions_string[BIG_INFO_STRING];
+#endif
+	const char					*renderer_string;
+	const char					*vendor_string;
+	const char					*version_string;
+	const char					*extensions_string;
 
 	int						maxTextureSize;			// queried from GL
 //	int						maxActiveTextures;		// multitexture ability
@@ -293,6 +299,8 @@ extern BOOL ( WINAPI * qwglSwapIntervalEXT)( int interval );
 
 #if ( (defined __linux__ )  || (defined __FreeBSD__ ) ) // rb010123
 
+#ifndef USE_SDL2
+
 //GLX Functions
 extern XVisualInfo * (*qglXChooseVisual)( Display *dpy, int screen, int *attribList );
 extern GLXContext (*qglXCreateContext)( Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct );
@@ -300,6 +308,8 @@ extern void (*qglXDestroyContext)( Display *dpy, GLXContext ctx );
 extern Bool (*qglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
 //extern void (*qglXCopyContext)( Display *dpy, GLXContext src, GLXContext dst, GLuint mask );
 extern void (*qglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
+
+#endif
 
 #endif // __linux__ || __FreeBSD__ // rb010123
 

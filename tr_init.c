@@ -171,7 +171,7 @@ static void InitOpenGL( void )
 		Q_strlwr( renderer_buffer );
 
 		// OpenGL driver constants
-		qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &temp );
+		glGetIntegerv( GL_MAX_TEXTURE_SIZE, &temp );
 		glConfig.maxTextureSize = temp;
 
 		// stubbed or broken drivers may have reported 0...
@@ -198,7 +198,7 @@ void GL_CheckErrors( void ) {
     int		err;
     char	s[64];
 
-    err = qglGetError();
+    err = glGetError();
     if ( err == GL_NO_ERROR ) {
         return;
     }
@@ -703,7 +703,7 @@ void RE_Init( void ) {
 
 	InitOpenGL();
 
-	err = qglGetError();
+	err = glGetError();
 	if ( err != GL_NO_ERROR )
 		ST_Printf ( PRINT_R_VERBOSE, "glGetError() = 0x%x\n", err );
 

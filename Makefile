@@ -63,8 +63,8 @@ BUILD_DEFS += -DBUILDSTRING='"$(SYS)"'
 VER_DEFS := -DREVISION=$(REV)
 VER_DEFS += -DVERSION='"$(VER)"'
 
-CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) -DGLQUAKE -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS
-LIBS_c += -lm -ldl -lGL -lpthread -lXpm -lX11 -lXxf86vm -lrt -lXxf86dga
+CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(shell sdl2-config --cflags) -DGLQUAKE -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS -DUSE_SDL2
+LIBS_c += $(shell sdl2-config --libs) -lm -ldl -lGL -lpthread -lXpm -lrt
 
 # built-in requirements
 ZLIB_CFLAGS ?= -DWITH_ZLIB
@@ -77,8 +77,8 @@ PCRE_LIBS ?= -lpcre
 CFLAGS_c += $(PCRE_CFLAGS)
 LIBS_c += $(PCRE_LIBS)
 
-ZIP_CFLAGS ?= $(pkg-config minizip --cflags)
-ZIP_LIBS ?= $(pkg-config minizip --libs)
+ZIP_CFLAGS ?= $(shell pkg-config minizip --cflags)
+ZIP_LIBS ?= $(shell pkg-config minizip --libs)
 CFLAGS_c += $(ZIP_CFLAGS)
 LIBS_c += $(ZIP_LIBS)
 
@@ -92,8 +92,8 @@ PNG_LIBS ?= -lpng
 CFLAGS_c += $(PNG_CFLAGS)
 LIBS_c += $(PNG_LIBS)
 
-SPEEX_CFLAGS ?= $(pkg-config speex --cflags)
-SPEEX_LIBS ?= $(pkg-config speex --libs)
+SPEEX_CFLAGS ?= $(shell pkg-config speex --cflags)
+SPEEX_LIBS ?= $(shell pkg-config speex --libs)
 CFLAGS_c += $(SPEEX_CFLAGS)
 LIBS_c += $(SPEEX_LIBS)
 
@@ -296,7 +296,7 @@ OBJS_c := \
     snd_oss.o \
     snd_oss_legacy.o \
     sys_linux.o \
-    linux_glimp.o \
+    sdl2_glimp.o \
     tr_init.o \
     linux_signals.o
 

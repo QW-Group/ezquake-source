@@ -94,15 +94,13 @@ cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
 qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
-extern const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
-
 /************************************* EXTENSIONS *************************************/
 
 qbool CheckExtension (const char *extension) {
 	const char *start;
 	char *where, *terminator;
 
-	if (!gl_extensions && !(gl_extensions = (const char*) qglGetString (GL_EXTENSIONS)))
+	if (!gl_extensions && !(gl_extensions = (const char*) glGetString (GL_EXTENSIONS)))
 		return false;
 
 
@@ -192,10 +190,10 @@ void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cance
 /************************************** GL INIT **************************************/
 
 void GL_Init (void) {
-	gl_vendor     = (const char*) qglGetString (GL_VENDOR);
-	gl_renderer   = (const char*) qglGetString (GL_RENDERER);
-	gl_version    = (const char*) qglGetString (GL_VERSION);
-	gl_extensions = (const char*) qglGetString (GL_EXTENSIONS);
+	gl_vendor     = (const char*) glGetString (GL_VENDOR);
+	gl_renderer   = (const char*) glGetString (GL_RENDERER);
+	gl_version    = (const char*) glGetString (GL_VERSION);
+	gl_extensions = (const char*) glGetString (GL_EXTENSIONS);
 
 #if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
 /* FIXME/TODO: FreeBSD too? */
