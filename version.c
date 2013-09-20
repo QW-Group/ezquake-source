@@ -29,42 +29,6 @@
 #include "common.h"
 #include "version.h"
 
-static char *date = __DATE__ ;
-static char *mon[12] =
-{ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-static char mond[12] =
-{ 31,    28,    31,    30,    31,    30,    31,    31,    30,    31,    30,    31 };
-
-//returns days since Dec 21 1999 (the day before q1source release)
-
-int build_number (void) {
-	int m = 0;
-	int d = 0;
-	int y = 0;
-	static int b = 0;
-
-	if (b != 0)
-		return b;
-
-	for (m = 0; m < 11; m++) {
-		if (strncasecmp( &date[0], mon[m], 3 ) == 0)
-			break;
-		d += mond[m];
-	}
-
-	d += atoi( &date[4] ) - 1;
-	y = atoi( &date[7] ) - 1900;
-	b = d + (int)((y - 1) * 365.25);
-
-	if (((y % 4) == 0) && m > 1)
-		b += 1;
-
-	b -= 36148 + 797; // Dec 21 1999 (Feb 25 2002)
-
-	return b;
-}
-
-
 /*
 =======================
 CL_Version_f
@@ -130,25 +94,6 @@ void CL_Version_f (void)
 	}
 #endif
 
-#ifdef _MSC_VER
-	if (_MSC_VER == 600) { Con_Printf("C Compiler version 6.0\n"); }
-	else if (_MSC_VER == 700) { Con_Printf("C/C++ compiler version 7.0\n"); }
-	else if (_MSC_VER == 800) { Con_Printf("Visual C++, Windows, version 1.0 or Visual C++, 32-bit, version 1.0\n"); }
-	else if (_MSC_VER == 900) { Con_Printf("Visual C++, Windows, version 2.0 or Visual C++, 32-bit, version 2.x\n"); }
-	else if (_MSC_VER == 1000) { Con_Printf("Visual C++, 32-bit, version 4.0\n"); }
-	else if (_MSC_VER == 1020) { Con_Printf("Visual C++, 32-bit, version 4.2\n"); }
-	else if (_MSC_VER == 1100) { Con_Printf("Visual C++, 32-bit, version 5.0\n"); }
-	else if (_MSC_VER == 1200) { Con_Printf("Visual C++, 32-bit, version 6.0\n"); }
-	else if (_MSC_VER == 1300) { Con_Printf("Visual C++, version 7.0\n"); }
-	else if (_MSC_VER == 1310) { Con_Printf("Visual C++ 2003, version 7.1\n"); }
-	else if (_MSC_VER == 1400) { Con_Printf("Visual C++ 2005, version 8.0\n"); }
-	else if (_MSC_VER == 1500) { Con_Printf("Visual C++ 2008, version 9.0\n"); }
-	else if (_MSC_VER == 1600) { Con_Printf("Visual C++ 2010, version 10.0\n"); }
-	else
-	{
-		Con_Printf("Unknown Microsoft C++ compiler: %i %i \n",_MSC_VER, _MSC_FULL_VER);
-	}
-#endif
 }
 
 /*
@@ -160,11 +105,7 @@ char *VersionString (void)
 {
 	static char str[64];
 
-#ifdef BUILD_NUMBER
-	snprintf (str, sizeof(str), "%s (build %s)", VERSION_NUMBER, BUILD_NUMBER);
-#else
-	snprintf (str, sizeof(str), "%s (build %i)", VERSION_NUMBER, build_number());
-#endif
+	snprintf (str, sizeof(str), "%s %s", VERSION_NUMBER, VERSION);
 
 	return str;
 }
