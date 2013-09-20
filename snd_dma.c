@@ -34,11 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "input.h"
 #endif
 
-//dimman
-#if defined(__linux__) || defined(__FreeBSD__)
-qsoundhandler_t *qsoundhandler;
-#endif
-
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
 static void S_Play_f (void);
 static void S_PlayVol_f (void);
@@ -112,27 +107,6 @@ cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
 
-#if defined(__FreeBSD__) || defined(__linux__)
-cvar_t s_stereo = {"s_stereo", "1", CVAR_LATCH};
-cvar_t s_bits = {"s_bits", "16", CVAR_LATCH};
-cvar_t s_oss_device = {"s_oss_device", "/dev/dsp", CVAR_LATCH};
-cvar_t s_alsa_device = {"s_alsa_device", "default", CVAR_LATCH};
-cvar_t s_alsa_latency = {"s_alsa_latency", "0.04", CVAR_LATCH};
-cvar_t s_alsa_noworkaround = {"s_alsa_noworkaround", "0", CVAR_LATCH};
-cvar_t s_uselegacydrivers = {"s_uselegacydrivers", "0", CVAR_LATCH};
-#ifdef WITH_PULSEAUDIO
-cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04", CVAR_LATCH};
-#endif
-#endif
-
-#ifdef __linux__
-cvar_t s_driver = {"s_driver", "alsa", CVAR_LATCH};
-#endif
-
-#ifdef __FreeBSD__
-cvar_t s_driver = {"s_driver", "oss", CVAR_LATCH};
-#endif
-
 // ====================================================================
 // Voice communication
 // ====================================================================
@@ -170,10 +144,6 @@ static void S_SoundInfo_f (void)
 		Com_Printf ("sound system not started\n");
 		return;
 	}
-#if defined(__linux__) || defined(__FreeBSD__)
-	if(qsoundhandler)
-		Com_Printf("driver: %s\n", qsoundhandler->name);
-#endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
 	// shm->sampleframes not set/used in ALSA/Pulseaudio
@@ -206,48 +176,6 @@ static qbool S_Startup (void)
 ///////////////////////////////////////////////
 // Sound driver choosing. Linux/FreeBSD only
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	qsoundhandler = malloc(sizeof(*qsoundhandler));
-	char *audio_driver = Cvar_String("s_driver");
-	qbool retval = false;
-
-	if(qsoundhandler)	{
-		if(strcmp(audio_driver, "alsa")==0) {
-			if(s_uselegacydrivers.value) {
-				retval = SNDDMA_Init_ALSA_Legacy(qsoundhandler);
-			} else {
-				retval = SNDDMA_Init_ALSA(qsoundhandler);
-			}
-
-		#ifdef WITH_PULSEAUDIO
-		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
-			retval = SNDDMA_Init_PULSEAUDIO(qsoundhandler);
-		#endif
-		} else if(strcmp(audio_driver, "oss")==0) {
-			if(s_uselegacydrivers.value) {
-				retval = SNDDMA_Init_OSS_Legacy(qsoundhandler);
-			} else {
-				retval = SNDDMA_Init_OSS(qsoundhandler);
-			}
-		}
-		else {
-			Com_DPrintf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
-		}
-	}
-	if(!retval) {
-		Com_Printf("[sound] Failed to startup (s_driver %s)\n", s_driver.string);
-		if((!s_uselegacydrivers.value) && ((strcmp(audio_driver, "alsa")==0) || (strcmp(audio_driver, "oss")==0)))
-			Com_Printf("Try s_uselegacydriver 1 to use legacy %s driver.\n", audio_driver);
-		shm = NULL;
-		sound_spatialized = false;
-		snd_started = false;
-		free(qsoundhandler);
-		return false;
-	} else {
-		Com_Printf("[sound] %s started....\n", qsoundhandler->name);
-	}
-////////////////////////////////////////////////////
-#else
 	if (!SNDDMA_Init()) {
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
 		shm = NULL;
@@ -255,7 +183,6 @@ static qbool S_Startup (void)
 		sound_spatialized = false;
 		return false;
 	}
-#endif
 
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
@@ -273,14 +200,7 @@ void S_Shutdown (void)
 	Cache_Flush(); // dimman: Moved this line and next here from S_Restart_f
 	S_StopAllSounds (true);
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	Com_Printf("[sound] %s shutdown...\n", qsoundhandler->name);
-	qsoundhandler->Shutdown();
-	free(qsoundhandler);
-	qsoundhandler = NULL;
-#else
 	SNDDMA_Shutdown();
-#endif
 
 	shm = NULL;
 	snd_started = false;
@@ -359,20 +279,6 @@ static void S_Register_LatchCvars(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 
 	Cvar_Register(&s_linearresample);
-
-#if defined(__linux__) || defined(__FreeBSD__)
-	Cvar_Register(&s_uselegacydrivers);
-	Cvar_Register(&s_stereo);
-	Cvar_Register(&s_bits);
-	Cvar_Register(&s_oss_device);
-	Cvar_Register(&s_driver);
-	Cvar_Register(&s_alsa_device);
-	Cvar_Register(&s_alsa_latency);
-	Cvar_Register(&s_alsa_noworkaround);
-	#ifdef WITH_PULSEAUDIO
-	Cvar_Register(&s_pulseaudio_latency);
-	#endif
-#endif
 
 	Cvar_ResetCurrentGroup();
 }
@@ -505,7 +411,6 @@ static void SND_Spatialize (channel_t *ch)
 {
 	vec_t dot, dist, lscale, rscale, scale;
 	vec3_t source_vec;
-	sfx_t *snd;
 
 	// anything coming from the view entity will always be full volume
 	if ((ch->entnum == cl.playernum + 1) || (ch->entnum == SELF_SOUND)) {
@@ -515,8 +420,6 @@ static void SND_Spatialize (channel_t *ch)
 	}
 
 	// calculate stereo seperation and distance attenuation
-
-	snd = ch->sfx;
 	VectorSubtract(ch->origin, listener_origin, source_vec);
 
 	dist = VectorNormalize(source_vec) * ch->dist_mult;
@@ -863,15 +766,8 @@ static void GetSoundtime (void)
 		return;
 #endif
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	fullsamples = shm->samples / shm->format.channels;
-	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
-
-	samplepos = qsoundhandler->GetDMAPos();
-#else
 	fullsamples = shm->sampleframes;
 	samplepos = SNDDMA_GetDMAPos();
-#endif
 
 	if (samplepos < oldsamplepos) {
 		buffers++; // buffer wrapped
@@ -911,9 +807,6 @@ void S_ExtraUpdate (void)
 static void S_Update_ (void)
 {
 	unsigned int endtime;
-#ifdef _WIN32
-	DWORD dwStatus;
-#endif
 
 	if (!shm || (snd_blocked > 0))
 		return;
@@ -928,56 +821,15 @@ static void S_Update_ (void)
 	}
 
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	int avail;
-	int samps;
-
-	//mix ahead of current position
-	if(qsoundhandler->GetAvail) {
-		avail = qsoundhandler->GetAvail();
-		if(avail <= 0)
-			return;
-		endtime = soundtime + avail;
-	}
-	else {
-		endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
-		endtime = min(endtime, (unsigned int)(soundtime +  shm->samples * shm->format.channels));
-	}
-	samps = (shm->samples) >> (shm->format.channels - 1);
-	if(endtime - soundtime > samps)
-		endtime = soundtime + samps;
-
-#else
 	// mix ahead of current position
 	endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
 	endtime = min(endtime, (unsigned int)(soundtime + shm->sampleframes));
-#endif
 
-
-#ifdef _WIN32
-	// if the buffer was lost or stopped, restore it and/or restart it
-	if (pDSBuf) {
-		if (pDSBuf->lpVtbl->GetStatus (pDSBuf, &dwStatus) != DS_OK)
-			Com_Printf ("Couldn't get sound buffer status\n");
-
-		if (dwStatus & DSBSTATUS_BUFFERLOST)
-			pDSBuf->lpVtbl->Restore (pDSBuf);
-
-		if (!(dwStatus & DSBSTATUS_PLAYING))
-			pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
-	}
-
-#endif
+        SNDDMA_BeginPainting ();
 
 	S_PaintChannels (endtime);
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	if(qsoundhandler->Submit)
-		qsoundhandler->Submit(paintedtime - soundtime);
-#else
 	SNDDMA_Submit ();
-#endif
-
 }
 
 /*

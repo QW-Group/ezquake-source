@@ -283,6 +283,8 @@ OBJS_c := \
     vid_common_gl.o \
     mumble.o \
     sdl2_glimp.o \
+    snd_sdl2.o \
+    snd_linux.o \
     tr_init.o
 
 ### Configuration Options ###
@@ -292,7 +294,6 @@ ifdef CONFIG_WINDOWS
 	cd_win.o \
 	in_win.o \
 	localtime_win.o \
-	snd_win.o \
 	sys_win.o
 else
     OBJS_c += \
@@ -300,12 +301,6 @@ else
 	in_linux.o \
 	keymap_x11.o \
     	localtime_linux.o \
-	snd_alsa.o \
-	snd_alsa_legacy.o \
-	snd_pulseaudio.o \
-	snd_linux.o \
-	snd_oss.o \
-	snd_oss_legacy.o \
 	sys_linux.o \
     	linux_signals.o
     LIBS_c += -lm -ldl -lrt -lpthread -lXpm

@@ -79,18 +79,6 @@ typedef struct wavinfo_s {
 	int		dataofs;		// chunk starts this many bytes from file start
 } wavinfo_t;
 
-#if defined(__linux__) || defined(__FreeBSD__)
-
-typedef struct qsoundhandler_s {
-	char *name;
-	int (*GetAvail)(void);
-	int (*GetDMAPos)(void);
-	void (*Submit)(unsigned int count);
-	void (*Shutdown)(void);
-} qsoundhandler_t;
-
-#endif
-
 void S_Init (void);
 void S_Shutdown (void);
 void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol,  float attenuation);
@@ -110,20 +98,8 @@ qbool SNDDMA_Init(void);
 int SNDDMA_GetDMAPos(void);
 void SNDDMA_Shutdown(void);
 
-#if defined(__linux__) || defined(__FreeBSD__)
-void SNDDMA_Submit(unsigned int count); // Legacy OSS doesnt use Submit
-#ifdef WITH_PULSEAUDIO
-qbool SNDDMA_Init_PULSEAUDIO(qsoundhandler_t *sd); // Pulseaudio disabled atm...
-#endif
-qbool SNDDMA_Init_ALSA(qsoundhandler_t *sd);
-qbool SNDDMA_Init_ALSA_Legacy(qsoundhandler_t *sd);
-qbool SNDDMA_Init_OSS(qsoundhandler_t *sd);
-qbool SNDDMA_Init_OSS_Legacy(qsoundhandler_t *sd);
-
-
-#else
+void SNDDMA_BeginPainting(void);
 void SNDDMA_Submit(void);
-#endif
 
 ///////////////////////////////
 
