@@ -33,11 +33,8 @@ RCFLAGS ?=
 LDFLAGS ?=
 LIBS ?=
 
-#CFLAGS_c := -iquote./inc
 CFLAGS_c :=
-
 RCFLAGS_c :=
-
 LDFLAGS_c :=
 
 ifdef CONFIG_WINDOWS
@@ -64,7 +61,7 @@ VER_DEFS := -DREVISION=$(REV)
 VER_DEFS += -DVERSION='"$(VER)"'
 
 CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(shell sdl2-config --cflags) -DGLQUAKE -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS -DUSE_SDL2
-LIBS_c += $(shell sdl2-config --libs) -lm -ldl -lGL -lpthread -lXpm -lrt
+LIBS_c += $(shell sdl2-config --libs) -lGL
 
 # built-in requirements
 ZLIB_CFLAGS ?= -DWITH_ZLIB
@@ -284,23 +281,35 @@ OBJS_c := \
     vx_stuff.o \
     vx_vertexlights.o \
     vid_common_gl.o \
-    cd_linux.o \
-    in_linux.o \
-    keymap_x11.o \
-    localtime_linux.o \
     mumble.o \
-    snd_alsa.o \
-    snd_alsa_legacy.o \
-    snd_pulseaudio.o \
-    snd_linux.o \
-    snd_oss.o \
-    snd_oss_legacy.o \
-    sys_linux.o \
     sdl2_glimp.o \
-    tr_init.o \
-    linux_signals.o
+    tr_init.o
 
 ### Configuration Options ###
+
+ifdef CONFIG_WINDOWS
+    OBJS_c += \
+	cd_win.o \
+	in_win.o \
+	localtime_win.o \
+	snd_win.o \
+	sys_win.o
+else
+    OBJS_c += \
+	cd_linux.o \
+	in_linux.o \
+	keymap_x11.o \
+    	localtime_linux.o \
+	snd_alsa.o \
+	snd_alsa_legacy.o \
+	snd_pulseaudio.o \
+	snd_linux.o \
+	snd_oss.o \
+	snd_oss_legacy.o \
+	sys_linux.o \
+    	linux_signals.o
+    LIBS_c += -lm -ldl -lrt -lpthread -lXpm
+endif
 
 ### Targets ###
 
