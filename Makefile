@@ -284,7 +284,6 @@ OBJS_c := \
     mumble.o \
     sdl2_glimp.o \
     snd_sdl2.o \
-    snd_linux.o \
     tr_init.o
 
 ### Configuration Options ###
