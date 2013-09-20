@@ -1002,6 +1002,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 
 	// Set the return adress that PNGLib should return to if
 	// an error occurs during reading.
+#if 0
 	if (setjmp(png_ptr->jmpbuf)) 
 	{
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
@@ -1009,6 +1010,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 		fin = NULL;
 		return NULL;
 	}
+#endif
 
 	// Set the read function that should be used.
     png_set_read_fn(png_ptr, fin, PNG_IO_user_read_data);
@@ -1312,11 +1314,13 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 		return false;
 	}
 
+#if 0
 	if (setjmp(png_ptr->jmpbuf)) {
 		png_destroy_write_struct(&png_ptr, &info_ptr);
 		VFS_CLOSE(fp);
 		return false;
 	}
+#endif
 
     png_set_write_fn(png_ptr, fp, PNG_IO_user_write_data, PNG_IO_user_flush_data);
 	png_set_compression_level(png_ptr, bound(Z_NO_COMPRESSION, compression, Z_BEST_COMPRESSION));
@@ -1376,11 +1380,13 @@ int Image_WritePNGPLTE (char *filename, int compression,
 		return false;
 	}
 
+#if 0
 	if (setjmp(png_ptr->jmpbuf)) {
 		png_destroy_write_struct(&png_ptr, &info_ptr);
 		VFS_CLOSE(fp);
 		return false;
 	}
+#endif
 
     png_set_write_fn(png_ptr, fp, PNG_IO_user_write_data, PNG_IO_user_flush_data);
 	png_set_compression_level(png_ptr, bound(Z_NO_COMPRESSION, compression, Z_BEST_COMPRESSION));

@@ -1,316 +1,362 @@
-#======================================================================
-# ezQuake Makefile
-# based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
-#======================================================================
-#	$Id: Makefile,v 1.83 2007-10-26 07:55:44 dkure Exp $
+### ezQuake Makefile based on Q2PRO ###
 
-# compilation tool and detection of targets/achitecture
-_E = @
-CC = gcc
-CC_BASEVERSION = $(shell $(CC) -dumpversion | sed -e 's/\..*//g')
+-include .config
 
-# TYPE = release debug
-TYPE=release
-STRIP = $(_E)strip
-STRIPFLAGS = --strip-unneeded --remove-section=.comment
-
-# ARCH = x86 ppc
-# OS = linux darwin freebsd
-ARCH = $(shell uname -m | sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g' -e 's/amd64/x86_64/g')
-OS = $(shell uname -s | tr A-Z a-z)
-
-# add special architecture based flags
-ifeq ($(ARCH),x86_64)
-	ARCH_CFLAGS = -march=nocona -m64
-endif
-ifeq ($(ARCH),x86)
-	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
-endif
-ifeq ($(ARCH),ppc)
-	ARCH_CFLAGS = -arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt
-endif
-
-ifeq ($(OS),linux)
-	DEFAULT_TARGET = glx
-	OS_GL_CFLAGS = -DWITH_DGA -DWITH_EVDEV -DWITH_VMODE -DWITH_JOYSTICK -DWITH_PULSEAUDIO
-endif
-ifeq ($(OS),darwin)
-	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
-	STRIPFLAGS =
-	DEFAULT_TARGET = mac
-	OS_GL_CFLAGS = -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -FOpenGL -FAGL
-endif
-ifeq ($(OS),freebsd)
-	DEFAULT_TARGET = glx
-	OS_GL_CFLAGS = -DWITH_DGA -DWITH_VMODE -DWITH_KEYMAP -DWITH_PULSEAUDIO
-endif
-
-LIB_PREFIX=$(OS)-$(ARCH)
-
-default_target: $(DEFAULT_TARGET)
-
-all: glx x11 svga
-
-################################
-# Directories for object files #
-################################
-
-GLX_DIR	= $(TYPE)-$(ARCH)/glx
-X11_DIR	= $(TYPE)-$(ARCH)/x11
-SVGA_DIR = $(TYPE)-$(ARCH)/svga
-MAC_DIR	= $(TYPE)-$(ARCH)/mac
-
-################
-# Binary files #
-################
-
-GLX_TARGET = $(TYPE)-$(ARCH)/ezquake-gl.glx
-X11_TARGET = $(TYPE)-$(ARCH)/ezquake.x11
-SVGA_TARGET = $(TYPE)-$(ARCH)/ezquake.svga
-MAC_TARGET = $(TYPE)-$(ARCH)/ezquake-gl.mac
-QUAKE_DIR="/opt/quake/"
-
-################
-
-C_BUILD = $(_E)$(CC) -MD -c -o $@ $(_CFLAGS) $<
-S_BUILD = $(_E)$(CC) -c -o $@ $(_CFLAGS) -DELF -x assembler-with-cpp $<
-BUILD = $(_E)$(CC) -o $@ $(_OBJS) $(_LDFLAGS)
-MKDIR = $(_E)mkdir -p $@
-
-################
-
-$(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
-	$(MKDIR)
-
-# compiler flags
-# -DWITH_XMMS      for xmms      MP3 player support
-# -DWITH_AUDACIOUS for audacious MP3 player support
-# -DWITH_XMMS2     for xmms2     MP3 player support
-# -DWITH_MPD       for mpd       MP3 player support
-# -DWITH_WINAMP    for winamp    MP3 player support
-PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DJSS_CAM -DWITH_ZIP -DUSE_PR2 -DWITH_IRC -DWITH_TCL -DWITH_NQPROGS
-BASE_CFLAGS = -pipe -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I./libs -I./libs/libircclient
-
-########################
-# pkg-config includes  #
-########################
-# Add support for MP3 Libraries
-ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_XMMS),)
-BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags glib-2.0`
-endif # WITH_XMMS
-ifneq ($(shell echo $(PRJ_CFLAGS) |grep WITH_AUDACIOUS),)
-BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags glib-2.0 dbus-glib-1`
-endif # WITH_AUDACIOUS
-ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_XMMS2),)
-BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags xmms2-client`
-endif # WITH_XMMS2
-
-ifneq ($(shell echo $(PRJ_CFLAGS) | grep WITH_OGG_VORBIS),)
-BASE_CFLAGS += `pkg-config --libs-only-L --libs --cflags vorbisfile`
-endif # WITH_OGG_VORBIS
-
-########################
-
-RELEASE_CFLAGS = -O2 -fno-strict-aliasing
-DEBUG_CFLAGS = -ggdb
-
-# opengl builds
-GLCFLAGS=-DGLQUAKE -DWITH_JPEG $(OS_GL_CFLAGS)
-
-ifeq ($(TYPE),release)
-CFLAGS = $(BASE_CFLAGS) $(RELEASE_CFLAGS) -DNDEBUG
-LDFLAGS = -lm -lpthread -lrt
+ifdef CONFIG_WINDOWS
+    CPU ?= x86
+    SYS ?= Win32
 else
-CFLAGS = $(BASE_CFLAGS) $(DEBUG_CFLAGS) -D_DEBUG
-LDFLAGS = -ggdb -lm -lpthread -lrt
+    ifndef CPU
+        CPU := $(shell uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
+    endif
+    ifndef SYS
+        SYS := $(shell uname -s)
+    endif
 endif
 
-COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl.a libs/$(LIB_PREFIX)/libircclient.a libs/$(LIB_PREFIX)/libcurl.a
-GL_LIBS = libs/$(LIB_PREFIX)/libjpeg.a
-
-ifeq ($(OS),freebsd)
-LOCALBASE ?= /usr/local
-CFLAGS += -I$(LOCALBASE)/include
-LDFLAGS += -L$(LOCALBASE)/lib
+ifndef REV
+    REV := $(shell ./version.sh --revision)
+endif
+ifndef VER
+    VER := $(shell ./version.sh --version)
 endif
 
-ifeq ($(OS),linux)
-LDFLAGS += -lX11 -ldl
+CC ?= gcc
+WINDRES ?= windres
+STRIP ?= strip
+RM ?= rm -f
+RMDIR ?= rm -rf
+MKDIR ?= mkdir -p
+
+CFLAGS ?= -O2 -Wall -g -MMD $(INCLUDES)
+RCFLAGS ?=
+LDFLAGS ?=
+LIBS ?=
+
+#CFLAGS_c := -iquote./inc
+CFLAGS_c :=
+
+RCFLAGS_c :=
+
+LDFLAGS_c :=
+
+ifdef CONFIG_WINDOWS
+    LDFLAGS_c += -mwindows
+
+    # Mark images as DEP and ASLR compatible on x86 Windows
+    ifeq ($(CPU),x86)
+        LDFLAGS_c += -Wl,--nxcompat,--dynamicbase
+    endif
+else
+    # Hide ELF symbols by default
+    CFLAGS_c += -fvisibility=hidden
+
+    # Resolve all symbols at link time
+    ifeq ($(SYS),Linux)
+        LDFLAGS_c += -Wl,--no-undefined
+    endif
 endif
 
-include Makefile.list
+BUILD_DEFS := -DCPUSTRING='"$(CPU)"'
+BUILD_DEFS += -DBUILDSTRING='"$(SYS)"'
 
-#######
-# GLX #
-#######
+VER_DEFS := -DREVISION=$(REV)
+VER_DEFS += -DVERSION='"$(VER)"'
 
-GLX_C_OBJS = $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_C_FILES)))
-GLX_S_OBJS = $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_S_FILES)))
-GLX_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-GLX_LDFLAGS = $(LDFLAGS) -lGL -lXxf86dga -lXxf86vm -lXpm
+CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) -DGLQUAKE -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS
+LIBS_c += -lm -ldl -lGL -lpthread -lXpm -lX11 -lXxf86vm -lrt -lXxf86dga
 
-glx: _DIR = $(GLX_DIR)
-glx: _OBJS = $(GLX_C_OBJS) $(GLX_S_OBJS) $(COMMON_LIBS) $(GL_LIBS)
-glx: _LDFLAGS = $(GLX_LDFLAGS)
-glx: _CFLAGS = $(GLX_CFLAGS)
-glx: $(GLX_TARGET)
+# built-in requirements
+ZLIB_CFLAGS ?= -DWITH_ZLIB
+ZLIB_LIBS ?= -lz
+CFLAGS_c += $(ZLIB_CFLAGS)
+LIBS_c += $(ZLIB_LIBS)
 
-$(GLX_TARGET): $(GLX_DIR) $(GLX_C_OBJS) $(GLX_S_OBJS)
-	@echo [LINK] $@
-	$(BUILD)
-ifeq ($(TYPE),release)
-	@echo [STRIP] $@
-	$(STRIP) $(STRIPFLAGS) $(GLX_TARGET)
+PCRE_CFLAGS ?=
+PCRE_LIBS ?= -lpcre
+CFLAGS_c += $(PCRE_CFLAGS)
+LIBS_c += $(PCRE_LIBS)
+
+ZIP_CFLAGS ?= $(pkg-config minizip --cflags)
+ZIP_LIBS ?= $(pkg-config minizip --libs)
+CFLAGS_c += $(ZIP_CFLAGS)
+LIBS_c += $(ZIP_LIBS)
+
+EXPAT_CFLAGS ?=
+EXPAT_LIBS ?= -lexpat
+CFLAGS_c += $(EXPAT_CFLAGS)
+LIBS_c += $(EXPAT_LIBS)
+
+PNG_CFLAGS ?= -DWITH_PNG -D__Q_PNG14__
+PNG_LIBS ?= -lpng
+CFLAGS_c += $(PNG_CFLAGS)
+LIBS_c += $(PNG_LIBS)
+
+SPEEX_CFLAGS ?= $(pkg-config speex --cflags)
+SPEEX_LIBS ?= $(pkg-config speex --libs)
+CFLAGS_c += $(SPEEX_CFLAGS)
+LIBS_c += $(SPEEX_LIBS)
+
+CURL_CFLAGS ?= 
+CURL_LIBS ?= -lcurl
+CFLAGS_c += $(CURL_CFLAGS)
+LIBS_c += $(CURL_LIBS)
+
+# windres needs special quoting...
+RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
+
+### Object Files ###
+
+COMMON_OBJS := \
+    cmodel.o		\
+    cmd.o		\
+    com_msg.o		\
+    common.o		\
+    crc.o		\
+    cvar.o		\
+    fs.o		\
+    vfs_os.o		\
+    vfs_pak.o		\
+    vfs_zip.o		\
+    vfs_tcp.o		\
+    vfs_gzip.o		\
+    vfs_doomwad.o	\
+    vfs_mmap.o		\
+    vfs_tar.o		\
+    hash.o		\
+    host.o		\
+    mathlib.o		\
+    md4.o		\
+    net.o		\
+    net_chan.o		\
+    q_shared.o		\
+    version.o		\
+    zone.o		\
+    zone2.o
+
+# temporary
+SERVER_OBJS := \
+    pmove.o \
+    pmovetst.o \
+    pr_cmds.o \
+    pr_edict.o \
+    pr_exec.o \
+    pr2_cmds.o \
+    pr2_edict.o \
+    pr2_exec.o \
+    pr2_vm.o \
+    sv_ccmds.o \
+    sv_ents.o \
+    sv_init.o \
+    sv_main.o \
+    sv_master.o \
+    sv_move.o \
+    sv_nchan.o \
+    sv_phys.o \
+    sv_save.o \
+    sv_send.o \
+    sv_user.o \
+    sv_world.o \
+    sv_demo.o \
+    sv_demo_misc.o \
+    sv_demo_qtv.o \
+    sv_login.o \
+    sv_mod_frags.o
+
+OBJS_c := \
+    $(COMMON_OBJS) \
+    $(SERVER_OBJS) \
+    Ctrl.o \
+    Ctrl_EditBox.o \
+    Ctrl_PageViewer.o \
+    Ctrl_ScrollBar.o \
+    Ctrl_Tab.o \
+    EX_FileList.o \
+    EX_browser.o \
+    EX_browser_net.o \
+    EX_browser_pathfind.o \
+    EX_browser_ping.o \
+    EX_browser_qtvlist.o \
+    EX_browser_sources.o \
+    ez_controls.o \
+    ez_scrollbar.o \
+    ez_scrollpane.o \
+    ez_label.o \
+    ez_slider.o \
+    ez_button.o \
+    ez_window.o \
+    auth.o \
+    cl_cam.o \
+    cl_cmd.o \
+    cl_demo.o \
+    cl_nqdemo.o \
+    cl_ents.o \
+    cl_input.o \
+    cl_main.o \
+    cl_parse.o \
+    cl_pred.o \
+    cl_screen.o \
+    cl_slist.o \
+    cl_tcl.o \
+    cl_tent.o \
+    cl_view.o \
+    common_draw.o \
+    console.o \
+    config_manager.o \
+    demo_controls.o \
+    document_rendering.o \
+    fchecks.o \
+    fmod.o \
+    fragstats.o \
+    help.o \
+    help_files.o \
+    hud.o \
+    hud_common.o \
+    hud_editor.o \
+    ignore.o \
+    image.o \
+    irc_filter.o \
+    irc.o \
+    keys.o \
+    logging.o \
+    match_tools.o \
+    menu.o \
+    menu_demo.o \
+    menu_ingame.o \
+    menu_mp3player.o \
+    menu_multiplayer.o \
+    menu_options.o \
+    menu_proxy.o \
+    modules.o \
+    movie.o \
+    mp3_player.o \
+    mp3_audacious.o \
+    mp3_xmms.o \
+    mp3_xmms2.o \
+    mp3_mpd.o \
+    mp3_winamp.o \
+    mvd_autotrack.o \
+    mvd_utils.o \
+    mvd_xmlstats.o \
+    parser.o \
+    plugin.o \
+    qtv.o \
+    r_part.o \
+    rulesets.o \
+    sbar.o \
+    settings_page.o \
+    sha1.o \
+    skin.o \
+    snd_dma.o \
+    snd_mem.o \
+    snd_mix.o \
+    snd_ov.o \
+    stats_grid.o \
+    teamplay.o \
+    tp_msgs.o \
+    tp_triggers.o \
+    textencoding.o \
+    utils.o \
+    vx_tracker.o \
+    wad.o \
+    xsd.o \
+    xsd_command.o \
+    xsd_document.o \
+    xsd_variable.o \
+    collision.o \
+    gl_draw.o \
+    gl_bloom.o \
+    gl_md3.o \
+    gl_mesh.o \
+    gl_model.o \
+    gl_ngraph.o \
+    gl_refrag.o \
+    gl_rlight.o \
+    gl_rmain.o \
+    gl_rmisc.o \
+    gl_rpart.o \
+    gl_rsurf.o \
+    gl_texture.o \
+    gl_warp.o \
+    vx_camera.o \
+    vx_coronas.o \
+    vx_motiontrail.o \
+    vx_stuff.o \
+    vx_vertexlights.o \
+    vid_common_gl.o \
+    cd_linux.o \
+    in_linux.o \
+    keymap_x11.o \
+    localtime_linux.o \
+    mumble.o \
+    snd_alsa.o \
+    snd_alsa_legacy.o \
+    snd_pulseaudio.o \
+    snd_linux.o \
+    snd_oss.o \
+    snd_oss_legacy.o \
+    sys_linux.o \
+    linux_glimp.o \
+    tr_init.o \
+    linux_signals.o
+
+### Configuration Options ###
+
+### Targets ###
+
+ifdef CONFIG_WINDOWS
+    TARG_c := ezquake.exe
+else
+    TARG_c := ezquake
 endif
 
-df_glx = $(GLX_DIR)/$(*F)
+all: $(TARG_c)
 
-$(GLX_C_OBJS): $(GLX_DIR)/%.o: %.c
-	@echo [CC] $<
-	$(C_BUILD); \
-		cp $(df_glx).d $(df_glx).P; \
-		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-			-e '/^$$/ d' -e 's/$$/ :/' < $(df_glx).d >> $(df_glx).P; \
-		rm -f $(df_glx).d
+default: all
 
-$(GLX_S_OBJS): $(GLX_DIR)/%.o: %.s
-	@echo [CC] $<
-	$(S_BUILD)
+.PHONY: all default clean strip
 
--include $(GLX_C_OBJS:.o=.P)
-
-#######
-# X11 #
-#######
-
-X11_C_OBJS = $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_C_FILES)))
-X11_S_OBJS = $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_S_FILES)))
-X11_CFLAGS = $(CFLAGS) -D_Soft_X11
-X11_LDFLAGS = $(LDFLAGS) -lX11 -lXext -lXpm
-
-x11: _DIR = $(X11_DIR)
-x11: _OBJS = $(X11_C_OBJS) $(X11_S_OBJS) $(COMMON_LIBS)
-x11: _LDFLAGS = $(X11_LDFLAGS)
-x11: _CFLAGS = $(X11_CFLAGS)
-x11: $(X11_TARGET)
-
-$(X11_TARGET): $(X11_DIR) $(X11_C_OBJS) $(X11_S_OBJS)
-	@echo [LINK] $@
-	$(BUILD)
-ifeq ($(TYPE),release)
-	@echo [STRIP] $@
-	$(STRIP) $(STRIPFLAGS) $(X11_TARGET)
+# Define V=1 to show command line.
+ifdef V
+    Q :=
+    E := @true
+else
+    Q := @
+    E := @echo
 endif
 
-df_x11 = $(X11_DIR)/$(*F)
+# Temporary build directories
+BUILD_c := .ezquake
 
-$(X11_C_OBJS): $(X11_DIR)/%.o: %.c
-	@echo [CC] $<
-	$(C_BUILD); \
-		cp $(df_x11).d $(df_x11).P; \
-		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-			-e '/^$$/ d' -e 's/$$/ :/' < $(df_x11).d >> $(df_x11).P; \
-		rm -f $(df_x11).d
+# Rewrite paths to build directories
+OBJS_c := $(patsubst %,$(BUILD_c)/%,$(OBJS_c))
 
-$(X11_S_OBJS): $(X11_DIR)/%.o: %.s
-	@echo [CC] $<
-	$(S_BUILD)
+DEPS_c := $(OBJS_c:.o=.d)
 
--include $(X11_C_OBJS:.o=.P)
+-include $(DEPS_c)
 
-########
-# SVGA #
-########
-
-SVGA_C_OBJS = $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_C_FILES)))
-SVGA_S_OBJS = $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_S_FILES)))
-SVGA_CFLAGS = $(CFLAGS) -D_Soft_SVGA
-SVGA_LDFLAGS = $(LDFLAGS) -lvga
-ifeq ($(OS),linux)
-# FreeBSD don't need -ldl, but it need /usr/ports/graphics/svgalib to be installed:
-# > cd /usr/ports/graphics/svgalib
-# > make install clean
-# for compiling and for running.
-SVGA_LDFLAGS += -ldl
-endif
-
-svga: _DIR = $(SVGA_DIR)
-svga: _OBJS = $(SVGA_C_OBJS) $(SVGA_S_OBJS) $(COMMON_LIBS)
-svga: _LDFLAGS = $(SVGA_LDFLAGS)
-svga: _CFLAGS = $(SVGA_CFLAGS)
-svga: $(SVGA_TARGET)
-
-$(SVGA_TARGET): $(SVGA_DIR) $(SVGA_C_OBJS) $(SVGA_S_OBJS)
-	@echo [LINK] $@
-	$(BUILD)
-ifeq ($(TYPE),release)
-	@echo [STRIP] $@
-	$(STRIP) $(STRIPFLAGS) $(SVGA_TARGET)
-endif
-
-df_svga = $(SVGA_DIR)/$(*F)
-
-$(SVGA_C_OBJS): $(SVGA_DIR)/%.o: %.c
-	@echo [CC] $<
-	$(C_BUILD); \
-		cp $(df_svga).d $(df_svga).P; \
-		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-			-e '/^$$/ d' -e 's/$$/ :/' < $(df_svga).d >> $(df_svga).P; \
-		rm -f $(df_svga).d
-
-$(SVGA_S_OBJS): $(SVGA_DIR)/%.o: %.s
-	@echo [CC] $<
-	$(S_BUILD)
-
--include $(SVGA_C_OBJS:.o=.P)
-
-#######
-# MAC #
-#######
-
-MAC_C_OBJS = $(addprefix $(MAC_DIR)/, $(addsuffix .o, $(MAC_C_FILES)))
-MAC_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-MAC_LDFLAGS = $(LDFLAGS) -arch i686 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
-
-mac: _DIR = $(MAC_DIR)
-mac: _OBJS = $(MAC_C_OBJS) $(COMMON_LIBS) $(GL_LIBS)
-mac: _LDFLAGS = $(MAC_LDFLAGS)
-mac: _CFLAGS = $(MAC_CFLAGS)
-mac: $(MAC_TARGET)
-
-$(MAC_TARGET): $(MAC_DIR) $(MAC_C_OBJS) $(MAC_S_OBJS)
-	@echo [LINK] $@
-	$(BUILD)
-ifeq ($(TYPE),release)
-	@echo [STRIP] $@
-	$(STRIP) $(STRIPFLAGS) $(MAC_TARGET)
-endif
-
-$(MAC_C_OBJS): $(MAC_DIR)/%.o: %.c
-	@echo [CC] $<
-	$(C_BUILD)
-
-#################
 clean:
-	@echo [CLEAN]
-	@-rm -rf $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR)
+	$(E) [CLEAN]
+	$(Q)$(RM) $(TARG_c)
+	$(Q)$(RMDIR) $(BUILD_c)
 
-help:
-	@echo "all     - make all the targets possible"
-	@echo "install - Installs all made clients to /opt/quake"
-	@echo "clean   - removes all output"
-	@echo "glx     - GLX GL client"
-	@echo "x11     - X11 software client"
-	@echo "svga    - SVGA software client"
-	@echo "mac     - Mac client"
+strip: $(TARG_c)
+	$(E) [STRIP]
+	$(Q)$(STRIP) $(TARG_c)
 
+# ------
 
-install:
-	@echo [CP] $(GLX_TARGET) 	$(QUAKE_DIR)
-	@cp $(GLX_TARGET) 			$(QUAKE_DIR)
-#	@echo [CP] $(X11_TARGET) 	$(QUAKE_DIR)
-#	@cp $(X11_TARGET)			$(QUAKE_DIR)
-#	@echo [CP] $(SVGA_TARGET) 	$(QUAKE_DIR)
-#	@cp $(SVGA_TARGET)			$(QUAKE_DIR)
-#	@echo [CP] $(MAC_TARGET) 	$(QUAKE_DIR)
-#	@cp $(MAC_TARGET)			$(QUAKE_DIR)
+$(BUILD_c)/%.o: %.c
+	$(E) [CC] $@
+	$(Q)$(MKDIR) $(@D)
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $<
+
+$(BUILD_c)/%.o: %.rc
+	$(E) [RC] $@
+	$(Q)$(MKDIR) $(@D)
+	$(Q)$(WINDRES) $(RCFLAGS) $(RCFLAGS_c) -o $@ $<
+
+$(TARG_c): $(OBJS_c)
+	$(E) [LD] $@
+	$(Q)$(MKDIR) $(@D)
+	$(Q)$(CC) $(LDFLAGS) $(LDFLAGS_c) -o $@ $(OBJS_c) $(LIBS) $(LIBS_c)

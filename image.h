@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _IMAGE_H
 
 #define _IMAGE_H
-#include "png.h"
+#include <png.h>
 
 #if defined(WITH_PNG) && !defined(WITH_ZLIB)
 #error WITH_PNG requires WITH_ZLIB

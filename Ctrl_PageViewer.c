@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "Ctrl.h"
-#include "expat.h"
+#include <expat.h>
 #include "xsd.h"
 #include "document_rendering.h"
 #include "Ctrl_PageViewer.h"

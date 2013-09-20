@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quakedef.h"
 #include "common_draw.h"
 #include "mp3_player.h"
-#include "png.h"
+#include <png.h>
 #include "image.h"
 #include "stats_grid.h"
 #include "vx_stuff.h"
