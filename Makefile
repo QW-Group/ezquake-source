@@ -21,6 +21,7 @@ ifndef VER
     VER := $(shell ./version.sh --version)
 endif
 
+LSYS := $(shell echo $(SYS) | tr A-Z a-z)
 CC ?= gcc
 WINDRES ?= windres
 STRIP ?= strip
@@ -315,7 +316,7 @@ endif
 ifdef CONFIG_WINDOWS
     TARG_c := ezquake.exe
 else
-    TARG_c := ezquake
+    TARG_c := ezquake-$(LSYS)-$(CPU)
 endif
 
 all: $(TARG_c)
