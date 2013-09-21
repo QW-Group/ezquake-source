@@ -280,8 +280,10 @@ OBJS_c := \
     vx_vertexlights.o \
     vid_common_gl.o \
     mumble.o \
+    cd_null.o \
     sdl2_glimp.o \
     snd_sdl2.o \
+    in_sdl2.o \
     tr_init.o
 
 ### Configuration Options ###
@@ -289,19 +291,14 @@ OBJS_c := \
 ifdef CONFIG_WINDOWS
     OBJS_c += \
 	movie_avi.o \
-	cd_null.o \
-	in_linux.o \
 	localtime_win.o \
 	sys_win.o \
 	winquake.o
     LIBS_c += -lopengl32 -lws2_32 -lwinmm
 else
     OBJS_c += \
-	cd_linux.o \
-	in_linux.o \
-	keymap_x11.o \
-    	localtime_linux.o \
-	sys_linux.o \
+    	localtime_posix.o \
+	sys_posix.o \
     	linux_signals.o
     LIBS_c += -lGL -lm -ldl -lrt -lpthread -lXpm
 endif

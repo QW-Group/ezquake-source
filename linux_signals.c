@@ -44,9 +44,6 @@ static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo hu
 //
 // client related things
 //
-#ifdef WITH_EVDEV
-	IN_Shutdown();
-#endif
 	VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown
 
 	Sys_Quit();
