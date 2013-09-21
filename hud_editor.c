@@ -1669,7 +1669,7 @@ static hud_grephandle_t *HUD_Editor_CreateGrep(hud_t *hud_element)
 	hud_grephandle_t *grep = NULL;
 
 	grep			= Q_malloc(sizeof(hud_grephandle_t));
-	memset(grep, 0, sizeof(grep));
+	memset(grep, 0, sizeof(*grep));
 
 	grep->width		= 8 * (4 + strlen(hud_element->name));
 	grep->height	= 8;
@@ -1719,7 +1719,7 @@ static void HUD_Editor_DestroyGrep(hud_grephandle_t *grep)
 		hud_greps = NULL;
 	}
 
-	memset(grep, 0, sizeof(grep));
+	memset(grep, 0, sizeof(*grep));
 
 	Q_free(grep);
 }
