@@ -33,7 +33,6 @@ cvar_t	m_filter        = {"m_filter",       "0", CVAR_SILENT};
 cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
 cvar_t	_windowed_mouse = {"_windowed_mouse", win_mouse, CVAR_ARCHIVE | CVAR_SILENT};
 cvar_t	m_showrate      = {"m_showrate",     "0", CVAR_SILENT};
-typedef enum { mt_none = 0, mt_normal, mt_raw } mousetype_t;
 
 extern int mx, my;
 extern qbool mouseinitialized;

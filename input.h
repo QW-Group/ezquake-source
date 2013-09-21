@@ -27,6 +27,12 @@ void IN_Commands (void); // oportunity for devices to stick commands on the scri
 void IN_Move (usercmd_t *cmd); // add additional movement on top of the keyboard move cmd
 int IN_GetMouseRate(void);
 
+typedef enum {
+	mt_none = 0,
+	mt_normal,
+	mt_raw
+} mousetype_t;
+
 //
 // cl_input.c
 //

@@ -52,12 +52,6 @@ qbool vid_hwgamma_enabled = false;
 
 typedef enum
 {
-	 mt_none = 0,
-	 mt_normal
-} mousetype_t;
-
-typedef enum
-{
 	RSERR_OK,
 	RSERR_INVALID_FULLSCREEN,
 	RSERR_INVALID_MODE,
@@ -74,6 +68,7 @@ glwstate_t glw_state;
 
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
+static int old_x = 0, old_y = 0;
 
 qbool ActiveApp = true;
 qbool Minimized = false;
@@ -98,13 +93,16 @@ void QGL_Shutdown(void)
 
 static void GrabMouse(qbool grab)
 {
-	SDL_bool relative = grab;// && !(Key_GetDest() & KEY_MENU);
-	int cursor = r_fullscreen.integer ? SDL_DISABLE : SDL_ENABLE;
-
+	// set initial position
+	if (in_mouse.integer == mt_normal) {
+		SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+		old_x = glConfig.vidWidth / 2;
+		old_y = glConfig.vidHeight / 2;
+	}
 	SDL_SetWindowGrab(sdl_window, (SDL_bool)grab);
-	SDL_SetRelativeMouseMode(relative);
+	SDL_SetRelativeMouseMode(in_mouse.integer != mt_normal);
 	SDL_GetRelativeMouseState(NULL, NULL);
-	SDL_ShowCursor(cursor);
+	SDL_ShowCursor(!grab);
 }
 
 
@@ -114,8 +112,9 @@ void IN_Commands(void)
 
 void IN_StartupMouse(void)
 {
-	Com_Printf("SDL mouse initialized.\n");
+	Com_Printf("SDL mouse initialized in %s mode.\n", (in_mouse.integer == mt_normal ? "normal" : "raw"));
 	mouseinitialized = true;
+	Cvar_Register (&in_mouse);
 	Cvar_Register (&in_nograb);
 }
 
@@ -329,7 +328,13 @@ static void HandleEvents()
 			key_event(&event.key);
 			break;
 		case SDL_MOUSEMOTION:
-			//UI_MouseEvent(event.motion.x, event.motion.y);
+	                if (mouse_active && !SDL_GetRelativeMouseMode()) {
+                            mx = old_x - event.motion.x;
+                            my = old_y - event.motion.y;
+			    old_x = event.motion.x;
+			    old_y = event.motion.y;
+			    SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+                        }
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
@@ -350,7 +355,7 @@ void Sys_SendKeyEvents (void)
 	IN_Frame();
 	HandleEvents();
 
-	if (SDL_GetRelativeMouseMode()) {
+	if (mouse_active && SDL_GetRelativeMouseMode()) {
 		SDL_GetRelativeMouseState(&mx, &my);
 	}
 }
