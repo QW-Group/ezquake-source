@@ -214,7 +214,9 @@ static void S_Restart_f (void)
 }
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel) {
-	Cbuf_AddText("s_restart\n");
+	if (shm && shm->format.speed / 1000 != Q_atoi(string)) {
+		Cbuf_AddText("s_restart\n");
+	}
 }
 
 static void S_Register_RegularCvarsAndCommands(void)

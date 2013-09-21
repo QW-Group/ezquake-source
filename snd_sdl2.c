@@ -117,7 +117,7 @@ qbool SNDDMA_Init(void)
     shm->samplepos = 0;
     shm->sampleframes = shm->samples / shm->format.channels;
 
-    Com_Printf("Using SDL audio driver: %s\n", SDL_GetCurrentAudioDriver());
+    Com_Printf("Using SDL audio driver: %s @ %d Hz\n", SDL_GetCurrentAudioDriver(), obtained.freq);
 
     SDL_PauseAudio(0);
 
