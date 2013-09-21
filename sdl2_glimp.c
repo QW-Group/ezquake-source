@@ -28,7 +28,7 @@
 #include <SDL.h>
 #include <GL/gl.h>
 
-//#include "ezquake.xpm"
+#include "ezquake-icon.c"
 #include "quakedef.h"
 #include "keys.h"
 #include "tr_types.h"
@@ -516,6 +516,7 @@ static int VID_SDL_InitSubSystem(void)
  */
 void GLimp_Init( void )
 {
+	SDL_Surface *icon_surface;
 	extern void InitSig(void);
 
 	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
@@ -534,6 +535,14 @@ void GLimp_Init( void )
 	VID_SDL_InitSubSystem();
 
 	sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, flags);
+        icon_surface = SDL_CreateRGBSurfaceFrom(ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
+                ezquake_icon.width * ezquake_icon.bytes_per_pixel,
+                0xFF000000,0x00FF0000,0x0000FF00,0x000000FF);
+
+        if (icon_surface) {
+            SDL_SetWindowIcon(sdl_window, icon_surface);
+            SDL_FreeSurface(icon_surface);
+        }
 
 	SDL_SetWindowMinimumSize(sdl_window, 320, 240);
 
