@@ -5405,7 +5405,7 @@ void SCR_DrawMVStatus(void)
 
 void SCR_DrawMVStatusStrings(void)
 {
-	int xb = 0, yb = 0, xc = 0, yc = 0, xd = 0, yd = 0;
+	int xb = 0, yb = 0, xd = 0, yd = 0;
 	char strng[80];
 	char weapons[40];
 	char weapon[3];
@@ -5656,8 +5656,6 @@ void SCR_DrawMVStatusStrings(void)
 	{
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 2;
-			yc = vid.height / 2;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 	}
@@ -5670,8 +5668,6 @@ void SCR_DrawMVStatusStrings(void)
 				// Top
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height / 2 - sb_lines - 16;
-				xc = vid.width / 2;
-				yc = vid.height / 4;
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height / 2 - sb_lines - 8;
 			}
@@ -5680,8 +5676,6 @@ void SCR_DrawMVStatusStrings(void)
 				// Bottom
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height - sb_lines - 16;
-				xc = vid.width / 2;
-				yc = vid.height / 2 + vid.height / 4;
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height - sb_lines - 8;
 			}
@@ -5693,8 +5687,6 @@ void SCR_DrawMVStatusStrings(void)
 				// Main
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height / 2 - sb_lines - 16;
-				xc = -2;
-				yc = -2;
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height / 2 - sb_lines - 8;
 			}
@@ -5703,15 +5695,6 @@ void SCR_DrawMVStatusStrings(void)
 				// Top right
 				xb = vid.width - strlen(strng) * 8; // hud
 				yb = vid.height / 3 - 16;
-				if (cl_mvinsetcrosshair.value)
-				{
-					xc = vid.width - (double)(vid.width / 3) / 2 - 2;
-					yc = (vid.height / 3) / 2;
-				}
-				else
-				{
-					xc = yc = -2;
-				}
 				xd = vid.width - strlen(weapons) * 8 - 70; // weapons
 				yd = vid.height / 3 - 8;
 			}
@@ -5724,8 +5707,6 @@ void SCR_DrawMVStatusStrings(void)
 			// top
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
-			xc = vid.width / 2;
-			yc = vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height / 2 - sb_lines - 8;
 		}
@@ -5734,8 +5715,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Bottom left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 4;
-			yc = vid.height / 2 + vid.height/4;
 			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
@@ -5744,8 +5723,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Bottom right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 2 + vid.width / 4;
-			yc = vid.height / 2 + vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
@@ -5757,8 +5734,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Top left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
-			xc = vid.width / 4;
-			yc = vid.height / 4;
 			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
 			yd = vid.height/2 - sb_lines - 8;
 		}
@@ -5767,8 +5742,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Top right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
-			xc = vid.width / 2 + vid.width / 4;
-			yc = vid.height / 4;
 			xd = vid.width - strlen(weapons) - 25 * 8 - 8;
 			yd = vid.height - sb_lines - (vid.height / 1.9);
 			xd = vid.width - strlen(weapons) * 8 - 84;
@@ -5779,18 +5752,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Bottom left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 4;
-			yc = vid.height / 2 + vid.height / 4;
-			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
-			yd = vid.height - sb_lines - 8;
-		}
-		else if (CURRVIEW == 1)
-		{
-			// Bottom right
-			xb = vid.width - strlen(strng) * 8 - 12;
-			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 2 + vid.width / 4;
-			yc = vid.height / 2 + vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}

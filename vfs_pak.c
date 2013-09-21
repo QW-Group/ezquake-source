@@ -218,7 +218,7 @@ static void FSPAK_BuildHash(void *handle)
 static qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename, void *hashedresult)
 {
 	packfile_t *pf = hashedresult;
-	int i, len;
+	int i;
 	pack_t		*pak = handle;
 
 // look through all the pak file elements
@@ -242,7 +242,6 @@ static qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename,
 
 	if (pf)
 	{
-		len = pf->filelen;
 		if (loc)
 		{
 			loc->index = pf - pak->files;
@@ -291,7 +290,6 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 	pack_t			*pack;
 	vfsfile_t		*packhandle;
 	dpackfile_t		info;
-	int read;
 	vfserrno_t err;
 
 	packhandle = file;
@@ -329,7 +327,7 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 	for (i=0 ; i<numpackfiles ; i++)
 	{
 		*info.name = '\0';
-		read = VFS_READ(packhandle, &info, sizeof(info), &err);
+		VFS_READ(packhandle, &info, sizeof(info), &err);
 /*
 		for (j=0 ; j<sizeof(info) ; j++)
 			CRC_ProcessByte(&crc, ((qbyte *)&info)[j]);

@@ -1384,8 +1384,8 @@ void QMB_ParticleExplosion (vec3_t org) {
 void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count) {
 	col_t color;
 	vec3_t neworg;
-	int i, scale, blastcount, blastsize, sparksize, sparkcount, chunkcount, particlecount, bloodcount, z;
-	float blasttime, sparktime;
+	int i, scale, blastcount, blastsize, chunkcount, particlecount, bloodcount, z;
+	float blasttime;
 
 	count = max(1, count);
 
@@ -1439,17 +1439,14 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count) {
 		if (count > 130) {
 			scale = 2.274;
 			blastcount = 50; blastsize = 50; blasttime = 0.4;
-			sparkcount = 6;	sparksize = 70;	sparktime = 0.6;
 			chunkcount = 14;
 		} else if (count > 20) {
 			scale = 1.516;
 			blastcount = 30; blastsize = 35; blasttime = 0.25;
-			sparkcount = 4;	sparksize = 60;	sparktime = 0.4;
 			chunkcount = 7;
 		} else {
 			scale = 0.758;
 			blastcount = 15; blastsize = 5;	blasttime = 0.15;
-			sparkcount = 2;	sparksize = 50;	sparktime = 0.25;
 			chunkcount = 3;
 		}
 		particlecount = max(1, count >> 1);

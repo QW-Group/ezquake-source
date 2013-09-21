@@ -491,12 +491,10 @@ static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpa
 }
 
 static qbool FS_RemovePak (const char *pakfile) {
-	searchpath_t *prev = NULL;
 	searchpath_t *cur = fs_searchpaths;
 	qbool ret = false;
 
 	while (cur) {
-		prev = cur;
 		cur = cur->next;
 	}
 
@@ -2555,13 +2553,14 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 
 vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
 {
+#ifdef WITH_ZIP
 	vfserrno_t err;
 	char *ext;
 
 	if (!handle || handle->WriteBytes || handle->seekingisabadplan)	//only on readonly files
 		return handle;
+
 	ext = COM_FileExtension(filename);
-#ifdef WITH_ZIP
 	if (!strcasecmp(ext, "gz"))
 	{
 		gzheader_t gzh;

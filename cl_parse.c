@@ -3226,7 +3226,15 @@ void CL_MuzzleFlash (void)
 
 void CL_ParseQizmoVoice (void) 
 {
-	int i, seq, bits, num, unknown;
+	/* hifi: removed unused warnings, kept null logic */
+	int i;
+	MSG_ReadByte();
+	MSG_ReadByte();
+
+	for (i = 0; i < 32; i++)
+		MSG_ReadByte();
+/*
+	int i, seq, bits;
 
 	// Read the two-byte header.
 	seq = MSG_ReadByte();
@@ -3239,6 +3247,7 @@ void CL_ParseQizmoVoice (void)
 	// 32 bytes of voice data follow
 	for (i = 0; i < 32; i++)
 		MSG_ReadByte();
+*/
 }
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}

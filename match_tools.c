@@ -210,7 +210,7 @@ static void MT_GetPlayerNames(char *name1, char *name2) {
 static int MT_GetTeamNames(char teams[][MAX_INFO_STRING], int max) {
 	int i, j, count = 0;
 
-	memset(teams, 0, sizeof(teams));
+	memset(teams, 0, sizeof(*teams));
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (!cl.players[i].name[0] || cl.players[i].spectator)

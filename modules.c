@@ -71,11 +71,8 @@ static void *hSecurity = NULL;
 
 void Modules_Init (void)
 {
-	qbool have_security;
 	char version_string[128], binary_type[32], *renderer;
 	int retval;
-
-	have_security = security_loaded = false;
 
 #ifdef _WIN32
 	if (!(hSecurity = LoadLibrary ("ezquake-security.dll"))) {
@@ -88,7 +85,6 @@ void Modules_Init (void)
 		goto fail;
 	}
 #endif
-	have_security = true;
 
 	SECURITY_GETFUNC (Init);
 	SECURITY_GETFUNC (Verify_Response);

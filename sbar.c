@@ -1104,12 +1104,10 @@ static void Sbar_DeathmatchOverlay (int start) {
 	char *color;
 	char *kill_color, *death_color, *tk_color;
 	int             scr_scoreboard_drawfps;
-    int             offset;
     player_info_t *s;
 	mpic_t *pic;
 
     scr_scoreboard_drawfps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
-    offset = 8 * scr_scoreboard_drawfps;
     if (!start && hud_faderankings.value)
 		Draw_FadeScreen(hud_faderankings.value);
 
@@ -1463,7 +1461,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 }
 
 static void Sbar_TeamOverlay (void) {
-	int i, k, l, x, y, xofs, plow, phigh, pavg, rank_width, skip = 10;
+	int i, k, x, y, xofs, plow, phigh, pavg, rank_width, skip = 10;
 	char num[12], team[5];
 	team_t *tm;
 	mpic_t *pic;
@@ -1527,8 +1525,6 @@ static void Sbar_TeamOverlay (void) {
 	y += 10;
 
 	Sbar_SortTeams();		// sort the teams
-
-	l = scoreboardlines;	// draw the text
 
 	for (i = 0; i < scoreboardteams && y <= SCOREBOARD_LASTROW; i++)	{
 		k = teamsort[i];

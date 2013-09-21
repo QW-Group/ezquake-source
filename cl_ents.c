@@ -2406,7 +2406,6 @@ void MVD_Interpolate(void) {
 	float f;
 	frame_t	*frame, *oldframe;
 	player_state_t *state, *oldstate, *self, *oldself;
-	entity_state_t *oldents;
 	struct predicted_player *pplayer;
 	static float old;
 
@@ -2436,7 +2435,6 @@ void MVD_Interpolate(void) {
 
 	frame = &cl.frames[cl.parsecount & UPDATE_MASK];
 	oldframe = &cl.frames[cl.oldparsecount & UPDATE_MASK];
-	oldents = oldframe->packet_entities.entities;
 
 	f = bound(0, (cls.demotime - olddemotime) / (nextdemotime - olddemotime), 1);
 

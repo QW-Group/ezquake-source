@@ -144,7 +144,7 @@ GLOBAL void TP_Msg_Lost_f (void)
 
 GLOBAL void TP_Msg_Report_f (void)
 {
-	extern cvar_t tp_name_rlg, tp_name_lg, tp_name_rl, tp_name_gl, tp_name_sng, tp_name_ng, tp_name_ssg;
+	extern cvar_t tp_name_lg, tp_name_rl, tp_name_gl, tp_name_sng, tp_name_ssg;
 	MSGPART powerup = "";
 	MSGPART armor_health = "$colored_armor/%h";
 	MSGPART location = "$[{%l}$]";
@@ -643,32 +643,24 @@ GLOBAL const char * TP_MSG_Colored_Powerup(void)
 {
 	extern cvar_t tp_name_pent, tp_name_quad, tp_name_ring, tp_name_separator;
     MSGPART pent = "";
-	MSGPART PQseparator = "";
 	MSGPART quad = "";
-	MSGPART QRseparator = "";
 	MSGPART ring = "";
-	MSGPART PRseparator = "";
 
 	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING()) {
 		pent = tp_name_pent.string;
-		PQseparator = tp_name_separator.string;
 		quad = tp_name_quad.string;
-		QRseparator = tp_name_separator.string;
 		ring = tp_name_ring.string;
 	}
 	else if (HAVE_QUAD() && HAVE_PENT()) {
 		pent = tp_name_pent.string;
-		PQseparator = tp_name_separator.string;
 		quad = tp_name_quad.string;
 	}
 	else if (HAVE_QUAD() && HAVE_RING()) {
 		quad = tp_name_quad.string;
-		QRseparator = tp_name_separator.string;
 		ring = tp_name_ring.string;
 	}
 	else if (HAVE_PENT() && HAVE_RING()) {
 		pent = tp_name_pent.string;
-		PRseparator = tp_name_separator.string;
 		ring = tp_name_ring.string;
 	}
 	else if (HAVE_QUAD())

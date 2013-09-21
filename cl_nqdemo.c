@@ -551,6 +551,15 @@ Back from NetQuake
 */
 static void CL_ParseParticleEffect (void)
 {
+	/* hifi: unused variable warnings cleaned up, kept null parsing */
+	int i;
+	for (i = 0; i < 3; i++)
+		MSG_ReadCoord ();
+	for (i = 0; i < 3; i++)
+		MSG_ReadChar ();
+	MSG_ReadByte ();
+	MSG_ReadByte ();
+/* ##
 	vec3_t		org, dir;
 	int			i, count, color;
 
@@ -561,7 +570,6 @@ static void CL_ParseParticleEffect (void)
 	count = MSG_ReadByte ();
 	color = MSG_ReadByte ();
 
-/* ##
 	// now run the effect
 	if (count == 255)
 		CL_ParticleExplosion (org);

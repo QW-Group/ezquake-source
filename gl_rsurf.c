@@ -1535,7 +1535,7 @@ mvertex_t	*r_pcurrentvertbase;
 model_t		*currentmodel;
 
 void BuildSurfaceDisplayList (msurface_t *fa) {
-	int i, lindex, lnumverts, vertpage;
+	int i, lindex, lnumverts;
 	medge_t *pedges, *r_pedge;
 	float *vec, s, t;
 	glpoly_t *poly;
@@ -1543,7 +1543,6 @@ void BuildSurfaceDisplayList (msurface_t *fa) {
 	// reconstruct the polygon
 	pedges = currentmodel->edges;
 	lnumverts = fa->numedges;
-	vertpage = 0;
 
 	// draw texture
 	if (!fa->polys) { // seems map loaded first time, so light maps loaded first time too

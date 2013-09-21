@@ -19,12 +19,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // movie_avi.c
 
+#include "quakedef.h"
 #include <windows.h>
 #include <vfw.h>
 #include <msacm.h>
 #include <mmreg.h>
 #include <mmsystem.h>
-#include "quakedef.h"
 #include "movie_avi.h"
 #include "qsound.h"
 #ifdef GLQUAKE

@@ -166,7 +166,7 @@ static void InitOpenGL( void )
 		
 		GLimp_Init();
 
-		strlcpy( renderer_buffer, glConfig.renderer_string , sizeof (renderer_buffer) );
+		strlcpy( renderer_buffer, (const char *)glConfig.renderer_string , sizeof (renderer_buffer) );
 		Q_strlwr( renderer_buffer );
 
 		// OpenGL driver constants

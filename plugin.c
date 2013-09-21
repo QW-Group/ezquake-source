@@ -1086,11 +1086,8 @@ qintptr_t VARGS Plug_GetPluginName(void *offset, quintptr_t mask, const qintptr_
 typedef void (*funcptr_t) ();
 qintptr_t VARGS Plug_ExportNative(void *offset, quintptr_t mask, const qintptr_t *arg)
 {
-	funcptr_t func;
 	char *name = (char*)VM_POINTERQ(arg[0]);
 	arg++;
-
-	func = *(funcptr_t*)arg;
 
 	if (!strcmp(name, "UnsafeClose"))
 	{
@@ -1170,7 +1167,6 @@ qintptr_t VARGS Plug_Cvar_Register(void *offset, quintptr_t mask, const qintptr_
 qintptr_t VARGS Plug_Cvar_Update(void *offset, quintptr_t mask, const qintptr_t *arg)
 {
 	int handle;
-	int modcount;
 	char *stringv;	//255 bytes long.
 	float *floatv;
 	cvar_t *var;
@@ -1183,7 +1179,6 @@ qintptr_t VARGS Plug_Cvar_Update(void *offset, quintptr_t mask, const qintptr_t 
 	if (VM_OOB(arg[2], 256) || VM_OOB(arg[3], 4))	//Oi, plugin - you screwed up
 		return 0;
 
-	modcount = VM_LONG(arg[1]);
 	stringv = VM_POINTERQ(arg[2]);
 	floatv = VM_POINTERQ(arg[3]);
 

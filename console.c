@@ -828,7 +828,6 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
-	int notifyWidth;
 
 	if (notifyCols > (con_linewidth))
 		notifyCols = con_linewidth;
@@ -836,7 +835,6 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	if (notifyCols < 10)
 		notifyCols = 10;
 
-	notifyWidth = notifyCols * 8;
 	maxlines = notifyLines;
 
 	if (maxlines > NUM_CON_TIMES)

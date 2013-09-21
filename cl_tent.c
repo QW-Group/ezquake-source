@@ -597,12 +597,11 @@ static void CL_Parse_TE_BLOOD(void)
 	if (cls.nqdemoplayback)
 	{
 		// NQ_TE_EXPLOSION2
-		int colorStart, colorLength;
 		pos[0] = MSG_ReadCoord();
 		pos[1] = MSG_ReadCoord();
 		pos[2] = MSG_ReadCoord();
-		colorStart = MSG_ReadByte();
-		colorLength = MSG_ReadByte();
+		MSG_ReadByte(); // colorStart
+		MSG_ReadByte(); // colorLength
 
 		if (cls.demoseeking)
 			return;

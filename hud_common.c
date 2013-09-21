@@ -247,7 +247,7 @@ int HUD_AmmoLowByWeapon(int weapon)
 // DrawFPS
 void SCR_HUD_DrawFPS(hud_t *hud)
 {
-    int x, y, width, height;
+    int x, y;
     char st[128];
 
     static cvar_t
@@ -274,9 +274,6 @@ void SCR_HUD_DrawFPS(hud_t *hud)
     if (hud_fps_title->value)
         strlcat (st, " fps", sizeof (st));
 
-    width = 8*strlen(st);
-    height = 8;
-
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
 		if ((hud_fps_style->value) == 1)
@@ -296,7 +293,7 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
 void SCR_HUD_DrawVidLag(hud_t *hud)
 {
-    int x, y, width, height;
+    int x, y;
     char st[128];
 	static cvar_t *hud_vidlag_style = NULL;
 
@@ -308,9 +305,6 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 	}
 
 	strlcat (st, " ms", sizeof (st));
-
-    width = 8*strlen(st);
-    height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
@@ -327,7 +321,7 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 
 void SCR_HUD_DrawMouserate(hud_t *hud)
 {
-	int x, y, width, height;
+	int x, y;
 	static int lastresult = 0;
 	int newresult;
 	char st[80];	// string buffer
@@ -337,14 +331,18 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
 #endif
 
     static cvar_t *hud_mouserate_title = NULL,
+#ifdef WIN32
 		*hud_mouserate_interval,
+#endif
 		*hud_mouserate_style;
 
     if (hud_mouserate_title == NULL) // first time called
     {
 		hud_mouserate_style    = HUD_FindVar(hud, "style");
         hud_mouserate_title    = HUD_FindVar(hud, "title");
+#ifdef WIN32
 		hud_mouserate_interval = HUD_FindVar(hud, "interval");
+#endif
     }
 
 #ifdef WIN32
@@ -368,9 +366,6 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
 
     if (hud_mouserate_title->value)
         strlcat(st, " Hz", sizeof (st));
-
-    width = 8*strlen(st);
-    height = 8;
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
@@ -3339,7 +3334,6 @@ void SCR_HUD_DrawFrags(hud_t *hud)
     int x, y;
 	int max_team_length = 0;
 	int max_name_length = 0;
-	float char_size = 8;
 
     int rows, cols, cell_width, cell_height, space_x, space_y;
     int a_rows, a_cols; // actual
@@ -3435,9 +3429,6 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 	sort_teamsort = hud_frags_teamsort->integer;
 
-	// Set character scaling.
-	char_size = (hud_frags_bignum->value > 0) ? 8 * hud_frags_bignum->value : 8;
-
     if (hud_frags_strip->integer)
     {
 		// Auto set the number of rows / cols based on the number of players.
@@ -3498,13 +3489,11 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		if(hud_frags_shownames->value)
 		{
 			width += (a_cols * (max_name_length + 3) * 8) + ((a_cols + 1) * space_x);
-			//width += (a_cols * max_name_length * (int)char_size) + ((a_cols + 1) * space_x);
 		}
 
 		if(cl.teamplay && hud_frags_teams->value)
 		{
 			width += (a_cols * max_team_length * 8) + ((a_cols + 1) * space_x);
-			//width += (a_cols * max_team_length * (int)char_size) + ((a_cols + 1) * space_x);
 		}
 	}
 
@@ -5035,30 +5024,22 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 	static cvar_t
 		*hud_teaminfo_weapon_style = NULL,
-		*hud_teaminfo_layout,
-		*hud_teaminfo_align_right,
+                *hud_teaminfo_align_right,
 		*hud_teaminfo_loc_width,
 		*hud_teaminfo_name_width,
-		*hud_teaminfo_low_health,
-		*hud_teaminfo_armor_style,
 		*hud_teaminfo_show_enemies,
 		*hud_teaminfo_show_self,
-		*hud_teaminfo_scale,
-		*hud_teaminfo_powerup_style;
+		*hud_teaminfo_scale;
 
 	if (hud_teaminfo_weapon_style == NULL)    // first time
 	{
 		hud_teaminfo_weapon_style			= HUD_FindVar(hud, "weapon_style");
-		hud_teaminfo_layout					= HUD_FindVar(hud, "layout");
 		hud_teaminfo_align_right			= HUD_FindVar(hud, "align_right");
 		hud_teaminfo_loc_width				= HUD_FindVar(hud, "loc_width");
 		hud_teaminfo_name_width				= HUD_FindVar(hud, "name_width");
-		hud_teaminfo_low_health				= HUD_FindVar(hud, "low_health");
-		hud_teaminfo_armor_style			= HUD_FindVar(hud, "armor_style");
 		hud_teaminfo_show_enemies			= HUD_FindVar(hud, "show_enemies");
 		hud_teaminfo_show_self				= HUD_FindVar(hud, "show_self");
 		hud_teaminfo_scale					= HUD_FindVar(hud, "scale");
-		hud_teaminfo_powerup_style			= HUD_FindVar(hud, "powerup_style");
 	}
 
 	// Don't update hud item unless first view is beeing displayed
@@ -5265,6 +5246,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 					break;
 				case 2: // colored background of armor value
+                                        /*
 					if(!width_only) {
 						byte col[4] = {255, 255, 255, 0};
 
@@ -5278,6 +5260,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 							col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
 						}
 					}
+                                        */
 
 					break;
 				case 3: // colored armor value

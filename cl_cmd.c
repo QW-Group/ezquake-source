@@ -1063,7 +1063,6 @@ usermainbuttons_t CL_GetLastCmd (void) {
    usermainbuttons_t ret;
    static int last_impulse; 
    static double impulse_time; 
-   int imp; 
 
 //   if (!show_input.value) 
 //      return; 
@@ -1075,13 +1074,9 @@ usermainbuttons_t CL_GetLastCmd (void) {
       last_impulse = cmd.impulse; 
       impulse_time = cls.realtime; 
    } 
-   if (last_impulse && cls.realtime >= impulse_time && 
-      cls.realtime <= impulse_time + 0.2) 
-      imp = last_impulse; 
-   else { 
-      imp = 0; 
+   if (!(last_impulse && cls.realtime >= impulse_time && 
+      cls.realtime <= impulse_time + 0.2)) 
       last_impulse = 0; 
-   } 
 
    ret.attack = cmd.buttons & BUTTON_ATTACK;
    ret.jump = cmd.buttons & BUTTON_JUMP;

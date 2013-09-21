@@ -281,8 +281,6 @@ void SV_Error (char *error, ...)
 	vsnprintf (string, sizeof (string), error, argptr);
 	va_end (argptr);
 
-	assert(!string);
-
 	Con_Printf ("SV_Error: %s\n", string);
 
 //	SV_FinalMessage (va ("server crashed: %s\n", string));

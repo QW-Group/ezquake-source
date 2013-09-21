@@ -603,8 +603,6 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	int col_left;
 	int col_right;
 
-	cell_weight_t *weight_t = NULL;
-
 	// FIXME : Bad hack!
 	// HACK: This is so that I can keep death status of the players
 	// and since all I have to differentiate them is the userid,
@@ -706,9 +704,6 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 
 	// Get the team.
 	team_id = !strcmp(player_info->team, grid->teams[STATS_TEAM1].name) ? STATS_TEAM1 : STATS_TEAM2;
-
-	// Get the weight.
-	weight_t = &grid->cells[row][col].teams[team_id];
 
 	// Raise the death weight for this cell if the player is dead.
 	if((player_info->stats[STAT_HEALTH] > 0) && (player_info->userid < DEAD_SIZE) && isdead[player_info->userid])

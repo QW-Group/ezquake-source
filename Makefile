@@ -28,7 +28,7 @@ RM ?= rm -f
 RMDIR ?= rm -rf
 MKDIR ?= mkdir -p
 
-CFLAGS ?= -O2 -Wall -g -MMD $(INCLUDES)
+CFLAGS ?= -O2 -Wall -Wno-strict-aliasing -g -MMD $(INCLUDES)
 RCFLAGS ?=
 LDFLAGS ?=
 LIBS ?=

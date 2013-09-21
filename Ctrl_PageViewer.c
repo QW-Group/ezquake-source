@@ -198,7 +198,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
     document_rendered_link_t *link;
     int line;
     char buf[512];
-    int sx, sy, sw, sh;
+    int sx, sy, sh;
 
     // change x, y, w, h
     x = x + (w - 8*(w/8)) /2;
@@ -214,7 +214,6 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
 
     sx = x;
     sy = y;
-    sw = w;
     sh = h;
 
     if (viewer->page->width != w)

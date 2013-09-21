@@ -879,7 +879,7 @@ void CL_QWURL_f (void)
 	}
 
 	// Find the first "/" and treat what's after it as the command.	
-	if (command = strchr(connection_str, '/'))
+	if ((command = strchr(connection_str, '/')))
 	{
 		// Null terminate the server name string.
 		*command = 0;
@@ -1003,19 +1003,14 @@ void CL_TCPConnect_f (void)
 {
 	char buffer[6] = {'q', 'i', 'z', 'm', 'o', '\n'};
 	int newsocket;
-	int len;
 	int _true = true;
 
 	float giveuptime;
-
-	char *server;
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("Usage: %s <server>\n", Cmd_Argv(0));
 		return;
 	}
-
-	server = Cmd_Argv (1);
 
 	Host_EndGame (); // CL_Disconnect_f();
 
@@ -1049,7 +1044,7 @@ void CL_TCPConnect_f (void)
 
 	while(giveuptime > Sys_DoubleTime())
 	{
-		len = recv(newsocket, buffer, sizeof(buffer), 0);
+		recv(newsocket, buffer, sizeof(buffer), 0);
 		if (!strncmp(buffer, "qizmo\n", 6))
 		{
 			cls.sockettcp = newsocket;
@@ -2312,9 +2307,6 @@ void Plug_Tick(void);
 qbool physframe;
 double physframetime;
 
-#pragma warning( push )                    // Save the current warning state.
-#pragma warning( disable : 4723 )          // C4723: potential divide by 0
-
 void CL_Frame (double time) 
 {
 	static double extratime = 0.001;
@@ -2719,8 +2711,6 @@ void CL_Frame (double time)
 
 	CL_UpdateCaption(false);
 }
-
-#pragma warning( pop )
 
 //============================================================================
 
