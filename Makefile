@@ -77,7 +77,7 @@ PCRE_LIBS ?= -lpcre
 CFLAGS_c += $(PCRE_CFLAGS)
 LIBS_c += $(PCRE_LIBS)
 
-ZIP_CFLAGS ?= $(shell pkg-config minizip --cflags)
+ZIP_CFLAGS ?= $(shell pkg-config minizip --cflags) -DWITH_ZIP
 ZIP_LIBS ?= $(shell pkg-config minizip --libs)
 CFLAGS_c += $(ZIP_CFLAGS)
 LIBS_c += $(ZIP_LIBS)
