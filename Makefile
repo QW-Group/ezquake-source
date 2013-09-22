@@ -308,6 +308,13 @@ ifdef CONFIG_SPEEX
     LIBS_c += $(SPEEX_LIBS)
 endif
 
+ifdef CONFIG_OGG
+    OGG_CFLAGS ?= $(shell pkg-config vorbisfile --cflags) -DWITH_OGG_VORBIS
+    OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
+    CFLAGS_c += $(OGG_CFLAGS)
+    LIBS_c += $(OGG_LIBS)
+endif
+
 ### Targets ###
 
 ifdef CONFIG_WINDOWS
