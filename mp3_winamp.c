@@ -27,8 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef WITH_WINAMP
 
-#include "windows.h"
-#include "ShlObj.h"
+#include <windows.h>
+#include <shlobj.h>
 
 static HWND mp3_hwnd = 0;
 
