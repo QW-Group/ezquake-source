@@ -64,7 +64,7 @@ VER_DEFS += -DVERSION='"$(VER)"'
 SDL2_CFLAGS ?= $(shell sdl2-config --cflags)
 SDL2_LIBS ?= $(shell sdl2-config --libs)
 
-CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(SDL2_CFLAGS) -DGLQUAKE -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS -DUSE_SDL2
+CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(SDL2_CFLAGS) -DGLQUAKE -DJSS_CAM -DUSE_PR2 -DWITH_NQPROGS -DUSE_SDL2 -DWITH_ZIP
 LIBS_c += $(SDL2_LIBS)
 
 # built-in requirements
@@ -77,11 +77,6 @@ PCRE_CFLAGS ?=
 PCRE_LIBS ?= -lpcre
 CFLAGS_c += $(PCRE_CFLAGS)
 LIBS_c += $(PCRE_LIBS)
-
-ZIP_CFLAGS ?= $(shell pkg-config minizip --cflags) -DWITH_ZIP
-ZIP_LIBS ?= $(shell pkg-config minizip --libs)
-CFLAGS_c += $(ZIP_CFLAGS)
-LIBS_c += $(ZIP_LIBS)
 
 EXPAT_CFLAGS ?=
 EXPAT_LIBS ?= -lexpat
@@ -162,6 +157,8 @@ SERVER_OBJS := \
 OBJS_c := \
     $(COMMON_OBJS) \
     $(SERVER_OBJS) \
+    ioapi.o \
+    unzip.o \
     Ctrl.o \
     Ctrl_EditBox.o \
     Ctrl_PageViewer.o \
