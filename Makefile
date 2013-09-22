@@ -298,7 +298,7 @@ else
     	localtime_posix.o \
 	sys_posix.o \
     	linux_signals.o
-    LIBS_c += -lGL -lm -ldl -lrt -lpthread
+    LIBS_c += -lGL -lm -ldl -lrt
 endif
 
 ifdef CONFIG_SPEEX

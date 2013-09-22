@@ -46,7 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <errno.h>
 #include <dirent.h>
 
-#include <pthread.h>
+#include <SDL.h>
 
 #include <dlfcn.h>
 
@@ -439,15 +439,8 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
 
 int  Sys_CreateThread(DWORD WINAPI (*func)(void *), void *param)
 {
-    pthread_t thread;
-    pthread_attr_t attr;
-
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setschedpolicy(&attr, SCHED_OTHER);   // ale gowno
-
-    pthread_create(&thread, &attr, (void *)func, param);
-    return 1;
+	SDL_CreateThread((SDL_ThreadFunction)func, NULL, param);
+	return 1;
 }
 
 // kazik -->
