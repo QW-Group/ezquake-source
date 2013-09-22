@@ -302,7 +302,7 @@ else
 endif
 
 ifdef CONFIG_SPEEX
-    SPEEX_CFLAGS ?= $(shell pkg-config speex --cflags)
+    SPEEX_CFLAGS ?= $(shell pkg-config speex --cflags) -DWITH_SPEEX
     SPEEX_LIBS ?= $(shell pkg-config speex --libs)
     CFLAGS_c += $(SPEEX_CFLAGS)
     LIBS_c += $(SPEEX_LIBS)
