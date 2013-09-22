@@ -315,6 +315,13 @@ ifdef CONFIG_OGG
     LIBS_c += $(OGG_LIBS)
 endif
 
+ifdef CONFIG_JPEG
+    JPEG_CFLAGS ?= -DWITH_JPEG
+    JPEG_LIBS ?= -ljpeg
+    CFLAGS_c += $(JPEG_CFLAGS)
+    LIBS_c += $(JPEG_LIBS)
+endif
+
 ### Targets ###
 
 ifdef CONFIG_WINDOWS
