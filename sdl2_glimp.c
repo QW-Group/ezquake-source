@@ -189,7 +189,14 @@ static void window_event(SDL_WindowEvent *event)
 			break;
 
 		case SDL_WINDOWEVENT_MOVED:
-			// currently ignoring window position
+			if (!(flags & SDL_WINDOW_FULLSCREEN)) {
+				int w,h;
+				SDL_GetWindowSize(sdl_window, &w, &h);
+				Cvar_LatchedSetValue(&r_customwidth, w);
+				Cvar_LatchedSetValue(&r_customheight, h);
+				Cvar_SetValue(&vid_ypos, event->data2);
+				Cvar_SetValue(&vid_xpos, event->data1);
+			}
 			break;
 
 		case SDL_WINDOWEVENT_RESIZED:
@@ -197,6 +204,8 @@ static void window_event(SDL_WindowEvent *event)
 				glConfig.vidWidth = event->data1;
 				glConfig.vidHeight = event->data2;
 				glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight; 
+				Cvar_SetValue(&r_customwidth, event->data1);
+				Cvar_SetValue(&r_customheight, event->data2);
 			}
 			break;
 	}
@@ -540,7 +549,7 @@ void GLimp_Init( void )
 
 	VID_SDL_InitSubSystem();
 
-	sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, flags);
+	sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, vid_xpos.integer, vid_ypos.integer, r_customwidth.integer, r_customheight.integer, flags);
         icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
                 ezquake_icon.width * ezquake_icon.bytes_per_pixel,
                 0xFF000000,0x00FF0000,0x0000FF00,0x000000FF);
@@ -558,8 +567,8 @@ void GLimp_Init( void )
 		return;
 	}
 
-	glConfig.vidWidth = 640;
-	glConfig.vidHeight = 480;
+	glConfig.vidWidth = r_customwidth.integer;
+	glConfig.vidHeight = r_customheight.integer;
 	glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight; 
 
 	glConfig.colorBits = 24;
