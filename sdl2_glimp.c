@@ -99,10 +99,10 @@ static void GrabMouse(qbool grab)
 		old_x = glConfig.vidWidth / 2;
 		old_y = glConfig.vidHeight / 2;
 	}
-	SDL_SetWindowGrab(sdl_window, (SDL_bool)grab);
+	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
+	SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
 	SDL_SetRelativeMouseMode(in_mouse.integer != mt_normal);
-	SDL_GetRelativeMouseState(NULL, NULL);
-	SDL_ShowCursor(!grab);
+	//SDL_GetRelativeMouseState(NULL, NULL);
 }
 
 
@@ -413,40 +413,6 @@ void GLimp_Shutdown(void)
 /*
  ** GLW_StartDriverAndSetMode
  */
-#if 0
-int GLW_SetMode(const char *drivername, int mode, qbool fullscreen);
-
-static qbool GLW_StartDriverAndSetMode(const char *drivername, int mode, qbool fullscreen)
-{
-	rserr_t err;
-
-	if (fullscreen && in_nograb.value)
-	{
-		ST_Printf(PRINT_ALL, "Fullscreen not allowed with in_nograb 1\n");
-		Cvar_Set(&r_fullscreen, "0");
-		r_fullscreen.modified = false;
-		fullscreen = false;
-	}
-
-	err = GLW_SetMode(drivername, mode, fullscreen);
-
-	switch (err)
-	{
-		case RSERR_INVALID_FULLSCREEN:
-			ST_Printf(PRINT_ALL, "...WARNING: fullscreen unavailable in this mode\n");
-			return false;
-		case RSERR_INVALID_MODE:
-			ST_Printf(PRINT_ALL, "...WARNING: could not set the given mode (%d)\n", mode);
-			return false;
-		case RSERR_UNKNOWN:
-			return false;
-		default:
-			break;
-	}
-	opengl_initialized = 1;
-	return true;
-}
-#endif
 
 /*
  ** GLW_SetMode
@@ -460,50 +426,6 @@ int GLW_SetMode(const char *drivername, int mode, qbool fullscreen)
 	return RSERR_OK;
 }
 
-#if 0
-/*
- ** GLW_LoadOpenGL
- **
- ** GLimp_win.c internal function that that attempts to load and use
- ** a specific OpenGL DLL.
- */
-static qbool GLW_LoadOpenGL( const char *name )
-{
-	qbool fullscreen;
-
-	if ( QGL_Init( name ) )
-	{
-		fullscreen = r_fullscreen.integer;
-
-		// create the window and set up the context
-		if ( !GLW_StartDriverAndSetMode( name, r_mode.integer, fullscreen ) )
-		{
-			if (r_mode.integer != 3)
-			{
-				if ( !GLW_StartDriverAndSetMode( name, 3, fullscreen ) )
-				{
-					goto fail;
-				}
-			}
-			else
-			{
-				goto fail;
-			}
-		}
-
-		return true;
-	}
-	else
-	{
-		ST_Printf( PRINT_ALL, "failed\n" );
-	}
-fail:
-
-	QGL_Shutdown();
-
-	return false;
-}
-#endif
 
 static int VID_SDL_InitSubSystem(void)
 {
@@ -535,10 +457,6 @@ void GLimp_Init( void )
 	extern void InitSig(void);
 
 	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
-#if 0
-	qbool attemptedlibGL = false;
-	qbool success = false;
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_ResetCurrentGroup();
@@ -575,31 +493,6 @@ void GLimp_Init( void )
 	glConfig.depthBits = 8;
 	glConfig.stencilBits = 8;
 
-#if 0
-	//
-	// load and initialize the specific OpenGL driver
-	//
-	if (!GLW_LoadOpenGL(r_glDriver.string))
-	{
-		if (!strcasecmp( r_glDriver.string, OPENGL_DRIVER_NAME))
-			attemptedlibGL = true;
-
-		if (!attemptedlibGL && !success)
-		{
-			attemptedlibGL = true;
-			if (GLW_LoadOpenGL( OPENGL_DRIVER_NAME))
-			{
-				Cvar_Set( &r_glDriver, OPENGL_DRIVER_NAME );
-				r_glDriver.modified = false;
-				success = true;
-			}
-		}
-
-		if (!success)
-			ST_Printf(PRINT_ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem\n");
-	}
-#endif
-
 	glConfig.vendor_string         = glGetString(GL_VENDOR);
 	glConfig.renderer_string       = glGetString(GL_RENDERER);
 	glConfig.version_string        = glGetString(GL_VERSION);
@@ -609,7 +502,6 @@ void GLimp_Init( void )
 	InitSig(); // not clear why this is at begin & end of function
 #endif
 }
-
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
@@ -623,26 +515,19 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 
 void GL_EndRendering (void)
 {
-#if 0
 	if (r_swapInterval.modified) {
-                if (!swapInterval)
-                        Con_Printf("Warning: No vsync handler found...\n");
-                else
-                {
-                        if (r_swapInterval.integer > 0) {
-                                if (swapInterval(1)) {
-                                        Con_Printf("vsync: Failed to enable vsync...\n");
-                                }
-                        }
-                        else if (r_swapInterval.integer <= 0) {
-                                if (swapInterval(0)) {
-                                        Con_Printf("vsync: Failed to disable vsync...\n");
-                                }
-                        }
-                        r_swapInterval.modified = false;
-                }
+		if (r_swapInterval.integer > 0) {
+			if (SDL_GL_SetSwapInterval(1)) {
+				Con_Printf("vsync: Failed to enable vsync...\n");
+			}
+		}
+		else if (r_swapInterval.integer <= 0) {
+			if (SDL_GL_SetSwapInterval(0)) {
+				Con_Printf("vsync: Failed to disable vsync...\n");
+			}
+		}
+		r_swapInterval.modified = false;
         }
-#endif
 
 	if (!scr_skipupdate || block_drawing)
 	{
