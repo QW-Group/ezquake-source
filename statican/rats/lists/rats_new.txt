@@ -1,6 +1,0 @@
-1156,1157c1156,1157
-< Total time 0.609000 seconds
-< 298779 lines per second
----
-> Total time 0.641000 seconds
-> 283864 lines per second
