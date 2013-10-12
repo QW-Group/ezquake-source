@@ -316,8 +316,8 @@ qbool CT_Opt_Player_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 // <BINDS>
 
-extern cvar_t in_mouse, in_m_smooth, m_rate, in_m_os_parameters;
-const char* in_mouse_enum[] = { "off", "system", "Raw Input" };
+extern cvar_t in_raw, in_m_smooth, m_rate, in_m_os_parameters;
+const char* in_raw_enum[] = { "off", "on" };
 const char* in_m_os_parameters_enum[] = { "off", "Keep accel settings", "Keep speed settings", "Keep all settings" };
 
 void Menu_Input_Restart(void) { Cbuf_AddText("in_restart\n"); }
@@ -1170,15 +1170,11 @@ setting settbinds_arr[] = {
 	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
-    ADDSET_ADVANCED_SECTION(),
-    ADDSET_STRING   ("X-axis Sensitivity", m_yaw),
-    ADDSET_STRING   ("Y-axis Sensitivity", m_pitch),
-// maybe its okay for FreeBSD and MAC OS X too
-#if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(GLQUAKE))
-	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
-#endif
-    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
-    ADDSET_BASIC_SECTION(),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_STRING   ("X-axis Sensitivity", m_yaw),
+	ADDSET_STRING   ("Y-axis Sensitivity", m_pitch),
+	ADDSET_NAMED    ("Raw Mouse Input", in_raw, in_raw_enum),
+	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Movement"),
 	ADDSET_BIND("Attack", "+attack"),

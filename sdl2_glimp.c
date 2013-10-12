@@ -58,9 +58,13 @@ typedef enum
 	RSERR_UNKNOWN
 } rserr_t;
 
-cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_normal
-cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
-cvar_t r_allowSoftwareGL  = { "vid_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
+
+static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
+static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
+
+cvar_t in_raw                 = {"in_raw", "1", CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
+cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse", "1", CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
+
 // TODO: implement (SDL_PauseAudio func)
 cvar_t sys_inactivesound  = { "sys_inactivesound", "1", CVAR_ARCHIVE };
 
@@ -77,6 +81,8 @@ qbool Minimized = false;
 // function declaration
 //
 
+static void GrabMouse(qbool grab, qbool raw);
+
 qbool QGL_Init(const char *dllname)
 {
 	qglActiveTextureARB       = 0;
@@ -86,25 +92,42 @@ qbool QGL_Init(const char *dllname)
 	return true;
 }
 
-void QGL_Shutdown(void)
+static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
+	GrabMouse(mouse_active, (atoi(value) > 0 ? true : false));
 }
 
-
-static void GrabMouse(qbool grab)
+static void in_grab_windowed_mouse_callback(cvar_t *val, char *value, qbool *cancel)
 {
+	GrabMouse((atoi(value) > 0 ? true : false), in_raw.integer);
+}
+
+static void GrabMouse(qbool grab, qbool raw)
+{
+	if ((grab && mouse_active && raw == in_raw.integer) || (!grab && !mouse_active) || !mouseinitialized || !sdl_window)
+		return;
+
+	if (!r_fullscreen.integer && in_grab_windowed_mouse.integer == 0)
+	{
+		if (!mouse_active)
+			return;
+		grab = 0;
+	}
 	// set initial position
-	if (in_mouse.integer == mt_normal) {
+	if (raw <= 0 && grab) {
 		SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
 		old_x = glConfig.vidWidth / 2;
 		old_y = glConfig.vidHeight / 2;
 	}
-	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
-	SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
-	SDL_SetRelativeMouseMode(in_mouse.integer != mt_normal);
-	//SDL_GetRelativeMouseState(NULL, NULL);
-}
 
+	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
+	SDL_SetRelativeMouseMode((raw && grab) ? SDL_TRUE : SDL_FALSE);
+	SDL_GetRelativeMouseState(NULL, NULL);
+	SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
+	SDL_SetCursor(NULL); /* Force rewrite of it */
+
+	mouse_active = grab;
+}
 
 void IN_Commands(void)
 {
@@ -112,30 +135,20 @@ void IN_Commands(void)
 
 void IN_StartupMouse(void)
 {
-	Com_Printf("SDL mouse initialized in %s mode.\n", (in_mouse.integer == mt_normal ? "normal" : "raw"));
+	Cvar_Register (&in_raw);
+	Cvar_Register (&in_grab_windowed_mouse);
 	mouseinitialized = true;
-	Cvar_Register (&in_mouse);
-	Cvar_Register (&in_nograb);
+	Com_Printf("SDL mouse initialized\n");
 }
 
 void IN_ActivateMouse(void)
 {
-	if (!mouseinitialized || !sdl_window || mouse_active)
-		return;
-
-	if (!in_nograb.value)
-		GrabMouse(true);
-	mouse_active = true;
+	GrabMouse(true, in_raw.integer);
 }
 
 void IN_DeactivateMouse(void)
 {
-	if (!mouseinitialized || !sdl_window || !mouse_active)
-		return;
-
-	if (!in_nograb.value)
-		GrabMouse(false);
-	mouse_active = false;
+	GrabMouse(false, in_raw.integer);
 }
 
 int IN_GetMouseRate(void)
@@ -406,8 +419,6 @@ void GLimp_Shutdown(void)
 	}
 
 	memset(&glConfig, 0, sizeof(glConfig));
-
-	QGL_Shutdown();
 }
 
 /*
@@ -419,9 +430,7 @@ void GLimp_Shutdown(void)
  */
 int GLW_SetMode(const char *drivername, int mode, qbool fullscreen)
 {
-	GrabMouse(true);
-
-	mouse_active = true; /* ?? */
+	GrabMouse(true, in_raw.integer);
 
 	return RSERR_OK;
 }
@@ -575,9 +584,6 @@ void VID_NotifyActivity(void)
 }
 
 /********************************* CLIPBOARD *********************************/
-
-#define SYS_CLIPBOARD_SIZE		256
-//static wchar clipboard_buffer[SYS_CLIPBOARD_SIZE] = {0};
 
 wchar *Sys_GetClipboardTextW(void)
 {

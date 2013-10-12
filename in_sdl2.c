@@ -13,8 +13,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: in_linux.c,v 1.12 2007-10-04 13:48:11 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -23,24 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <sys/time.h>
 
-#ifdef NDEBUG
-#define win_mouse	"1"
-#else
-#define win_mouse	"0"
-#endif
-
 cvar_t	m_filter        = {"m_filter",       "0", CVAR_SILENT};
 cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
-cvar_t	_windowed_mouse = {"_windowed_mouse", win_mouse, CVAR_ARCHIVE | CVAR_SILENT};
 cvar_t	m_showrate      = {"m_showrate",     "0", CVAR_SILENT};
 
 extern int mx, my;
 extern qbool mouseinitialized;
 
-void IN_StartupMouse( void );
-
-void IN_DeactivateMouse( void );
-void IN_Restart_f(void);
+extern void IN_StartupMouse(void);
+extern void IN_DeactivateMouse(void);
+extern void IN_Restart_f(void);
 
 float mouse_x, mouse_y;
 
@@ -111,17 +101,8 @@ void IN_MouseMove (usercmd_t *cmd)
 
 void IN_Move (usercmd_t *cmd)
 {
-	static struct timeval old_tv = {0, 0};
-	struct timeval tv;
-	static long old_mouserate = 0;
-	long usec, mouserate;
 	if (m_showrate.value && (mx || my)) {
-		gettimeofday(&tv, NULL);
-		usec = (tv.tv_sec - old_tv.tv_sec) * 1000000L + (tv.tv_usec - old_tv.tv_usec);
-		mouserate = usec ? 1000000L / usec : old_mouserate;
-		Com_Printf("mouse rate: %4ld\n", (mouserate + old_mouserate) / 2);
-		old_tv = tv;
-		old_mouserate = mouserate;
+		Com_Printf("Not implemented.\n");
 	}
 
 	IN_MouseMove (cmd);
@@ -139,18 +120,15 @@ void IN_Init (void)
 
 	if (!host_initialized)
 	{
-		extern cvar_t in_mouse;
-
-		if (COM_CheckParm ("-nodga") || COM_CheckParm ("-nomdga"))
-			Cvar_LatchedSetValue (&in_mouse, mt_normal);
-
+		/* FIXME: Decide whether to have nomouse option or not
 		if (COM_CheckParm ("-nomouse"))
-			Cvar_LatchedSetValue (&in_mouse, mt_none);
+			;
+		*/
 
 #ifdef WITH_KEYMAP
 		IN_StartupKeymap();
 #endif // WITH_KEYMAP
-		Cmd_AddCommand ("in_restart", IN_Restart_f);
+		Cmd_AddCommand("in_restart", IN_Restart_f);
 	}
 
 	IN_StartupMouse ();
@@ -162,6 +140,8 @@ void IN_Shutdown(void)
 
 	mouseinitialized = false;
 }
+
+/* FIXME? */
 
 int ctrlDown = 0;
 int shiftDown = 0;

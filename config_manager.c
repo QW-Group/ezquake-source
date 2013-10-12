@@ -1097,9 +1097,7 @@ void Config_TroubleShoot_f(void)
 	extern cvar_t r_novis, r_swapInterval;
 #endif
 	extern cvar_t m_filter, sys_yieldcpu, cl_maxfps, hud_planmode;
-#ifdef WIN32
-	extern cvar_t in_mouse;
-#endif
+	extern cvar_t in_raw;
 
 #ifdef GLQUAKE
 	if (r_novis.value) {
@@ -1135,15 +1133,14 @@ void Config_TroubleShoot_f(void)
 	}
 #endif
 
-#ifdef WIN32
-	if (in_mouse.integer != 3) {
-		Config_TroubleShoot_Tip("in_mouse is not set to 3",
-			"in_mouse 3 enables Raw Input, the most trouble-free mouse input method. "
+	if (in_raw.integer != 1) {
+		Config_TroubleShoot_Tip("in_raw is not set to 1",
+			"in_raw 3 enables Raw Input, the smoothest mouse input method. "
 			"It is the recommended setting for mouse input",
-			"set in_mouse to 3", 0);
+			"set in_raw to 1", 0);
 		problems++;
 	}
-#endif
+
 	if (hud_planmode.value) {
 		Config_TroubleShoot_Tip("hud_planmode is enabled",
 			"hud_planmode turns on the display of all possible head up display elements "
