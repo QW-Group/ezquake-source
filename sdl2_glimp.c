@@ -114,7 +114,7 @@ static void GrabMouse(qbool grab, qbool raw)
 		grab = 0;
 	}
 	// set initial position
-	if (raw <= 0 && grab) {
+	if (!raw && grab) {
 		SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
 		old_x = glConfig.vidWidth / 2;
 		old_y = glConfig.vidHeight / 2;
