@@ -587,11 +587,15 @@ void VID_NotifyActivity(void)
 
 wchar *Sys_GetClipboardTextW(void)
 {
-	return NULL;
+	if (SDL_HasClipboardText())
+		return str2wcs(SDL_GetClipboardText());
+	else
+		return NULL;
 }
 
 void Sys_CopyToClipboard(char *text)
 {
+	SDL_SetClipboardText(text);
 }
 
 
