@@ -851,11 +851,7 @@ void CL_SendChunkDownloadReq(void)
 	extern cvar_t cl_chunksperframe;
 	int i, j, chunks;
 	
-	// Workaround: Make downloads work on non-mvdsv-chunksperframe-servers
-	if (strstr(Info_ValueForKey(cl.serverinfo, "*version"), "MVDSV"))
-		chunks = bound(1, cl_chunksperframe.integer, 5);
-	else
-		chunks = 1;
+	chunks = bound(1, cl_chunksperframe.integer, 5);
 
 	for (j = 0; j < chunks; j++)
 	{
@@ -865,10 +861,19 @@ void CL_SendChunkDownloadReq(void)
 		i = CL_RequestADownloadChunk();
 		// i < 0 mean client complete download, let server know
 		// qqshka: download percent optional, server does't really require it, that my extension, hope does't fuck up something
-		CL_SendClientCommand(i < 0 ? true : false, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
 
 		if (i < 0)
+		{
+			if (strstr(Info_ValueForKey(cl.serverinfo, "*version"), "MVDSV"))
+				CL_SendClientCommand(true, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
+			else
+				CL_SendClientCommand(true, "stopdownload");
 			CL_FinishDownload(true); // this also request next dl
+		}
+		else
+		{
+			CL_SendClientCommand(false, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
+		}
 	}
 }
 
