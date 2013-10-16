@@ -132,6 +132,10 @@ cvar_t  cl_pext_voicechat  = {"cl_pext_voicechat", "1"};
 cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
 #endif
 
+#ifdef FTE_PEXT_TRANS
+cvar_t cl_pext_alpha = {"cl_pext_alpha", "1"};
+#endif
+
 cvar_t	cl_sbar		= {"cl_sbar", "0"};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0"};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
@@ -621,13 +625,15 @@ unsigned int CL_SupportedFTEExtensions (void)
 		fteprotextsupported |= FTE_PEXT_FLOATCOORDS;
 #endif
 
+#ifdef FTE_PEXT_TRANS
+	if (cl_pext_alpha.value)
+		fteprotextsupported |= FTE_PEXT_TRANS;
+#endif
+
 	if (cl_pext_other.value)
 	{
 #ifdef FTE_PEXT_ACCURATETIMINGS
 		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
-#endif
-#ifdef FTE_PEXT_TRANS
-		fteprotextsupported |= FTE_PEXT_TRANS;
 #endif
 #ifdef FTE_PEXT_HLBSP
 		fteprotextsupported |= FTE_PEXT_HLBSP;
@@ -1959,6 +1965,10 @@ void CL_InitLocal (void)
 
 #ifdef FTE_PEXT_FLOATCOORDS
 	Cvar_Register (&cl_pext_floatcoords);
+#endif
+
+#ifdef FTE_PEXT_TRANS
+	Cvar_Register(&cl_pext_alpha);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
