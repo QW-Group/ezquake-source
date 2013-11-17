@@ -473,10 +473,15 @@ int CL_CalcNetStatistics(
 qbool CL_CheckOrDownloadFile (char *filename) 
 {
 	vfsfile_t *f;
+	char *tmp;
 
-	if (strstr (filename, ".."))
-	{
-		Com_Printf ("Refusing to download a path with ..\n");
+	if (strstr(filename, "..") || !strcmp(filename, "") || filename[0] == '/' || strchr(filename, '\\') || strchr(filename, ':') || strstr(filename, "//")) {
+		Com_Printf("Warning: Invalid characters in filename \"%s\"\n", filename);
+		return true;
+	}
+
+	if ((tmp = strrchr(filename, '.')) && (!strcasecmp(tmp, ".dll") || !strcasecmp(tmp, ".so"))) {
+		Com_Printf("Warning: Non-allowed file \"%s\" skipped\n", filename);
 		return true;
 	}
 
@@ -1465,6 +1470,10 @@ void CL_ParseServerData (void)
 
 	// game directory
 	str = MSG_ReadString ();
+
+	if (!strcmp(str, "")  || !strcmp(str, ".") || strstr(str, "..") || strstr(str, "//") || strchr(str, '\\') || strchr(str, ':')  || str[0] == '/') {
+		Host_Error("Server reported invalid gamedir!\n");
+	}
 
 	cl.teamfortress = !strcasecmp(str, "fortress");
 	if (cl.teamfortress) 
