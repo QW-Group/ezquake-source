@@ -178,7 +178,6 @@ OBJS_c := \
     ez_slider.o \
     ez_button.o \
     ez_window.o \
-    auth.o \
     cl_cam.o \
     cl_cmd.o \
     cl_demo.o \

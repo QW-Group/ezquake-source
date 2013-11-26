@@ -47,7 +47,6 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "tp_triggers.h"
 #include "pmove.h"
 #include "stats_grid.h"
-#include "auth.h"
 #include "qsound.h"
 #include "menu.h"
 #include "keys.h"
@@ -2714,9 +2713,8 @@ void CL_ParsePrint ()
 		}
 
 		FChecks_CheckRequest (s0);
-		Auth_CheckResponse (s, flags, offset);
 
-		s0 = wcs2str (s); // Auth_CheckResponse may modify the source string, so s0 should be updated
+		s0 = wcs2str (s);
 
 		if (!Plug_ChatMessage(s0 + offset, -1, flags)) {
 			return;

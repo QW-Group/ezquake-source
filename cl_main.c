@@ -55,7 +55,6 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
-#include "auth.h"
 #include "input.h"
 #ifdef GLQUAKE
 #include "gl_model.h"
@@ -2086,7 +2085,6 @@ void CL_Init (void)
 	strlcpy (cls.gamedirfile, com_gamedirfile, sizeof (cls.gamedirfile));
 	strlcpy (cls.gamedir, com_gamedir, sizeof (cls.gamedir));
 
-	Modules_Init();
 	FChecks_Init();
 
 	ReloadPaletteAndColormap();
@@ -2138,7 +2136,6 @@ void CL_Init (void)
 	MT_Init();
 	CL_Demo_Init();
 	Ignore_Init();
-	Auth_Init();
 	Log_Init();
 	Movie_Init();
 
@@ -2732,7 +2729,6 @@ void CL_Shutdown (void)
 	S_Shutdown();
 	MP3_Shutdown();
 	IN_Shutdown ();
-	Modules_Shutdown();
 	Log_Shutdown();
 	if (host_basepal)
 		VID_Shutdown();

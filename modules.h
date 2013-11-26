@@ -22,8 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __MODULES_H__
 #define __MODULES_H__
 
-#include "security.h"
-
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
@@ -77,13 +75,5 @@ qbool QLib_isModuleLoaded (qlib_id_t module);
 qbool QLib_ProcessProcdef (QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procdefs, int size);
 void QLib_MissingModuleError (int, char *libname, char *cmdline, char *features);
 #endif
-
-qbool Modules_SecurityLoaded (void);
-void Modules_Init (void);
-qbool VerifyData (signed_buffer_t *p);
-void Modules_Shutdown (void);
-
-extern Security_Verify_Response_t Security_Verify_Response;
-extern Security_Generate_Crc_t Security_Generate_Crc;
 
 #endif /* !__MODULES_H__ */
