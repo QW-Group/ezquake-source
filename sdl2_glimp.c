@@ -199,6 +199,12 @@ static void window_event(SDL_WindowEvent *event)
 				ActiveApp = false;
 				Minimized = false;
 			}
+
+			if (r_fullscreen.integer == 0)
+				SDL_SetWindowFullscreen(sdl_window, 0);
+			else
+				SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN);
+
 			break;
 
 		case SDL_WINDOWEVENT_MOVED:
