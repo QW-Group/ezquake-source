@@ -784,7 +784,7 @@ void CL_CheckForResend (void)
 	if (cls.server_adr.port == 0)
 		cls.server_adr.port = BigShort(PORT_SERVER);
 
-	Com_Printf("Connecting to %s...\n", cls.servername);
+	Com_Printf("&cf11connect:&r %s...\n", cls.servername);
 	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
@@ -1530,7 +1530,7 @@ void CL_ConnectionlessPacket (void)
 				Com_DPrintf("cls.server_adr %s\n", NET_AdrToString(cls.server_adr));
 				return;
 			}
-			Com_Printf("%s: challenge\n", NET_AdrToString(net_from));
+			Com_Printf("&cf55challenge:&r %s\n", NET_AdrToString(net_from));
 			cls.challenge = atoi(MSG_ReadString());
 
 			for(;;)
@@ -1571,7 +1571,7 @@ void CL_ConnectionlessPacket (void)
 			if (!NET_CompareAdr(net_from, cls.server_adr))
 				return;
 			if (!com_serveractive || developer.value)
-				Com_Printf("%s: connection\n", NET_AdrToString(net_from));
+				Com_Printf("&cff5connection:&r %s\n", NET_AdrToString(net_from));
 
 			if (cls.state >= ca_connected) 
 			{
@@ -1584,7 +1584,7 @@ void CL_ConnectionlessPacket (void)
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
 			if (!com_serveractive || developer.value)
-				Com_Printf("Connected.\n");
+				Com_Printf("&c1f1connected!&r\n");
 			allowremotecmd = false; // localid required now for remote cmds
 			break;
 		}
