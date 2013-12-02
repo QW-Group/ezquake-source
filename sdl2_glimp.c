@@ -506,6 +506,8 @@ void GLimp_Init( void )
 	glConfig.renderer_string       = glGetString(GL_RENDERER);
 	glConfig.version_string        = glGetString(GL_VERSION);
 	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
+
+	v_gamma.modified = true;
 	
 #if defined(__linux__)
 	InitSig(); // not clear why this is at begin & end of function
@@ -598,7 +600,7 @@ void Sys_CopyToClipboard(char *text)
 
 void VID_SetDeviceGammaRamp (unsigned short *ramps)
 {
-    /* stub */
+	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
 }
 
 void VID_Minimize (void) 
