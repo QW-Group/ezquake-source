@@ -268,7 +268,7 @@ static const byte scantokey[128] = {
     K_LCTRL,        K_LSHIFT,       K_LALT,         K_LWINKEY,      K_RCTRL,        K_RSHIFT,       K_RALT,             K_RWINKEY,      // E
 };
 
-static void key_event(SDL_KeyboardEvent *event)
+static void keyb_event(SDL_KeyboardEvent *event)
 {
 	byte result;
 
@@ -308,9 +308,11 @@ static void mouse_button_event(SDL_MouseButtonEvent *event)
 	case SDL_BUTTON_MIDDLE:
 		key = K_MOUSE3;
 		break;
+	case 8:
 	case SDL_BUTTON_X1:
 		key = K_MOUSE4;
 		break;
+	case 9:
 	case SDL_BUTTON_X2:
 		key = K_MOUSE5;
 		break;
@@ -347,7 +349,7 @@ static void HandleEvents()
 			break;
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
-			key_event(&event.key);
+			keyb_event(&event.key);
 			break;
 		case SDL_MOUSEMOTION:
 	                if (mouse_active && !SDL_GetRelativeMouseMode()) {
@@ -465,7 +467,7 @@ void GLimp_Init( void )
 	SDL_Surface *icon_surface;
 	extern void InitSig(void);
 
-	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL;
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_ResetCurrentGroup();
