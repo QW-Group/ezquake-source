@@ -109,3 +109,12 @@ char *VersionString (void)
 
 	return str;
 }
+
+char *VersionStringColour(void)
+{
+	static char str[64];
+
+	snprintf (str, sizeof(str), "&c1e1%s&r %s", VERSION_NUMBER, VERSION);
+
+	return str;
+}

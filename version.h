@@ -78,9 +78,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define VERSION_NUMBER "3.0 alpha"
 
-int build_number (void);
-void CL_Version_f (void);
-char *VersionString (void);
+int build_number(void);
+void CL_Version_f(void);
+char *VersionString(void);
+char *VersionStringColour(void);
 
 #define SERVER_NAME			"EZQUAKE"
 
