@@ -371,44 +371,22 @@ void SCR_EraseCenterString (void) {
 
 extern	cvar_t		v_idlescale;
 qbool	concussioned = false;
-float	nonwidefov = 0; // Store original fov if vid_wideaspect is used
 
 void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 {
 	float newfov = Q_atof(value);
 
-	if (nonwidefov == 0)
-		nonwidefov = newfov;		// save first fov value to initialize nonwidefov
-
-#ifndef __APPLE__
-#ifdef GLQUAKE
-	if (host_everything_loaded && vid_wideaspect.integer)
-	{
-		newfov = tan((newfov/2)*M_PI/180);
-		newfov = newfov*48/40;				// 3/4 * 16/10
-		newfov = 2 * atan(newfov)*180/M_PI;
-		Com_Printf("vid_wideaspect enabled - fov recalculated to %f\n", newfov);
-	}
-	else if (host_initialized && vid_wideaspect.integer)
-	{
-			nonwidefov = tan((newfov/2)*M_PI/180);
-			nonwidefov = nonwidefov * 40 / 48;
-			nonwidefov = 2 * atan(nonwidefov) * 180 / M_PI;
-	}
-#endif // GLQUAKE
-#endif // __APPLE__
-
 	if (newfov > 140)
-		nonwidefov = newfov = 140;
+		newfov = 140;
 	else if (newfov < 10)
-		nonwidefov = newfov = 10;
+		newfov = 10;
 
 	if (newfov == scr_fov.value) {
 		*cancel = true;
 		return;
 	}
 
-	if ( cbuf_current != &cbuf_svc) {
+	if (cbuf_current != &cbuf_svc) {
 		if (concussioned && !cls.demoplayback) {
 			*cancel = true;
 			return;
@@ -448,16 +426,59 @@ void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel)
 	}
 }
 
-static float CalcFov (float fov_x, float width, float height) {
-	float x;
+static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float height)
+{
+	float t;
+	float fovx;
+	float fovy;
 
-	if (fov_x < 1 || fov_x > 179) {
-		Com_Printf ("CalcFov: Bad fov (%f)", fov_x);
-		Cvar_Set (&scr_fov, "90");
+	if (fov < 10)
+		fov = 10;
+	else if (fov > 140)
+		fov = 140;
+
+	if (width / 4 < height /3)
+	{
+		fovx = fov;
+		t = width / tan(fovx / 360 * M_PI);
+		fovy = atan (height / t) * 360 / M_PI;
+	}
+	else
+	{
+		fovx = fov;
+		t = 4.0 / tan(fovx / 360 * M_PI);
+		fovy = atan (3.0 / t) * 360 / M_PI;
+		t = height / tan(fovy / 360 * M_PI);
+		fovx = atan (width / t) * 360 / M_PI;
 	}
 
-	x = width / tan(fov_x / 360 * M_PI);
-	return atan (height / x) * 360 / M_PI;
+	if (fovx < 10 || fovx > 140)
+	{
+		if (fovx < 10)
+			fovx = 10;
+		else if (fovx > 140)
+			fovx = 140;
+
+		t = width / tan(fovx / 360 * M_PI);
+		fovy = atan (height / t) * 360 / M_PI;
+	}
+
+	if (fovy < 10 || fovy > 140)
+	{
+		if (fovy < 10)
+			fovy = 10;
+		else if (fovy > 140)
+			fovy = 140;
+
+		t = height / tan(fovy / 360 * M_PI);
+		fovx = atan (width / t) * 360 / M_PI;
+	}
+
+	if (fovx < 1 || fovx > 179 || fovy < 1 || fovy > 179)
+		Sys_Error ("CalcFov: Bad fov (%f, %f)", fovx, fovy);
+
+	*fov_x = fovx;
+	*fov_y = fovy;
 }
 
 //Must be called whenever vid changes
@@ -531,8 +552,7 @@ static void SCR_CalcRefdef (void) {
 	else
 		r_refdef.vrect.y = (h - r_refdef.vrect.height) / 2;
 
-	r_refdef.fov_x = scr_fov.value;
-	r_refdef.fov_y = CalcFov (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
+	CalcFov (scr_fov.value, &r_refdef.fov_x, &r_refdef.fov_y, r_refdef.vrect.width, r_refdef.vrect.height);
 
 	scr_vrect = r_refdef.vrect;
 

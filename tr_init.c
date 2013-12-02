@@ -817,7 +817,6 @@ void VID_Restart_f (void)
 
 void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel) 
 {
-	extern float nonwidefov;
 	extern int nonwideconheight;
 	extern cvar_t scr_fov, r_conheight;
 
@@ -831,18 +830,15 @@ void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel)
 
 	if(!host_everything_loaded)
 		return;
-
-	if (nonwidefov != 0 && nonwideconheight != 0)
+/* FIXME: Remove broken wideaspect stuff */
+	if (nonwideconheight != 0)
 	{
 		if (vid_wideaspect.integer == 0)
 		{
-			scr_fov.OnChange(&scr_fov, Q_ftos(nonwidefov), cancel);
 			r_conheight.OnChange(&r_conheight, Q_ftos(nonwideconheight), cancel);
-
 		}
 		else
 		{
-			scr_fov.OnChange(&scr_fov, Q_ftos(scr_fov.value), cancel);
 			r_conheight.OnChange(&r_conheight, Q_ftos(r_conheight.value), cancel);
 		}
 	}
