@@ -2245,7 +2245,7 @@ void FS_RebuildFSHash(void)
 
 	filesystemchanged = false;
 
-	Com_Printf("%i unique files, %i duplicates\n", fs_hash_files, fs_hash_dups);
+	Com_DPrintf("%i unique files, %i duplicates\n", fs_hash_files, fs_hash_dups);
 }
 
 /* ===========

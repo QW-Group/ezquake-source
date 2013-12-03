@@ -320,7 +320,7 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin)
 		}
 		else if (!skin->warned)
 		{
-			Com_Printf ("Couldn't load skin %s\n", name);
+			Com_Printf ("&cf22Couldn't load skin:&r %s\n", name);
 		}
 
 		skin->warned = true;
@@ -371,7 +371,7 @@ void Skin_NextDownload (void) {
 
 	if (cls.downloadnumber == 0)
 		if (!com_serveractive || developer.value)
-			Com_Printf ("Checking skins...\n");
+			Com_DPrintf ("Checking skins...\n");
 
 	cls.downloadtype = dl_skin;
 

@@ -672,7 +672,7 @@ void VWepModel_NextDownload (void)
 	if (cls.downloadnumber == 0)
 	{
 		if (!com_serveractive || developer.value)
-			Com_Printf ("Checking vwep models...\n");
+			Com_DPrintf ("Checking vwep models...\n");
 		//cls.downloadnumber = 0;
 	}
 
@@ -722,7 +722,7 @@ void Model_NextDownload (void)
 	if (cls.downloadnumber == 0) 
 	{
 		if (!com_serveractive || developer.value)
-			Com_Printf ("Checking models...\n");
+			Com_DPrintf ("Checking models...\n");
 		cls.downloadnumber = 1;
 	}
 
@@ -750,7 +750,7 @@ void Model_NextDownload (void)
 
 		if (!cl.model_precache[i]) 
 		{
-			Com_Printf("\nThe required model file '%s' could not be found or downloaded.\n\n", cl.model_name[i]);
+			Com_Printf("\n&cf22Couldn't load model:&r %s\n", cl.model_name[i]);
 			Host_EndGame();
 			return;
 		}
@@ -773,7 +773,7 @@ void Sound_NextDownload (void)
 	if (cls.downloadnumber == 0)
 	{
 		if (!com_serveractive || developer.value)
-			Com_Printf ("Checking sounds...\n");
+			Com_DPrintf ("Checking sounds...\n");
 		cls.downloadnumber = 1;
 	}
 
