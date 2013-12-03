@@ -44,27 +44,26 @@ glconfig_t	glConfig;
 // latched variables that can only change over a restart
 //
 
-cvar_t	r_glDriver 			= { "vid_glDriver", OPENGL_DRIVER_NAME, CVAR_LATCH };
-cvar_t	r_allowExtensions	= { "vid_allowExtensions",	"1", CVAR_LATCH };
+cvar_t r_glDriver               = { "vid_glDriver", OPENGL_DRIVER_NAME, CVAR_LATCH };
 
-//cvar_t r_texturebits		= { "vid_texturebits",		"0", CVAR_LATCH };
-cvar_t	r_colorbits			= { "vid_colorbits",		"0", CVAR_LATCH };
-cvar_t	r_stereo			= { "vid_stereo",			"0", CVAR_LATCH };
+cvar_t r_allowExtensions        = { "vid_allowExtensions",  "1",    CVAR_LATCH };
+cvar_t r_colorbits              = { "vid_colorbits",        "0",    CVAR_LATCH };
+cvar_t r_stereo                 = { "vid_stereo",           "0",    CVAR_LATCH };
 #ifdef __linux__
-cvar_t	r_stencilbits		= { "vid_stencilbits",		"0", CVAR_LATCH };
+cvar_t r_stencilbits            = { "vid_stencilbits",      "0",    CVAR_LATCH };
 #else
-cvar_t	r_stencilbits		= { "vid_stencilbits",		"8", CVAR_LATCH };
+cvar_t r_stencilbits            = { "vid_stencilbits",      "8",    CVAR_LATCH };
 #endif
-cvar_t	r_depthbits			= { "vid_depthbits",		"0", CVAR_LATCH };
-//cvar_t	r_overBrightBits= { "vid_overBrightBits",	"1", CVAR_LATCH };
-cvar_t	r_mode				= { "vid_mode",				"3",	CVAR_LATCH };
-cvar_t	r_fullscreen		= { "vid_fullscreen",		"1",	CVAR_LATCH };
-cvar_t	r_customwidth		= { "vid_customwidth",		"1600",	CVAR_LATCH };
-cvar_t	r_customheight		= { "vid_customheight",		"1024",	CVAR_LATCH };
-cvar_t	r_customaspect		= { "vid_customaspect",		"1",	CVAR_LATCH }; // qqshka: unused even in q3, but I keep cvar, just do not register it
-cvar_t	r_displayRefresh	= { "vid_displayfrequency", "0",	CVAR_LATCH };
-cvar_t	vid_borderless		= { "vid_borderless",		"0",	CVAR_LATCH };
-//cvar_t	r_intensity		= { "vid_intensity",		"1",	CVAR_LATCH };
+cvar_t r_depthbits              = { "vid_depthbits",        "0",    CVAR_LATCH };
+cvar_t r_mode                   = { "vid_mode",             "3",    CVAR_LATCH };
+cvar_t r_fullscreen             = { "vid_fullscreen",       "1",    CVAR_LATCH };
+cvar_t r_width                  = { "vid_width",            "1680", CVAR_LATCH };
+cvar_t r_height                 = { "vid_height",           "1050", CVAR_LATCH };
+cvar_t r_winwidth               = { "vid_win_width",        "800",  CVAR_LATCH };
+cvar_t r_winheight              = { "vid_win_height",       "600",  CVAR_LATCH };
+cvar_t r_customaspect           = { "vid_customaspect",     "1",    CVAR_LATCH }; // qqshka: unused even in q3, but I keep cvar, just do not register it
+cvar_t r_displayRefresh         = { "vid_displayfrequency", "0",    CVAR_LATCH };
+cvar_t vid_borderless		= { "vid_borderless",       "0",    CVAR_LATCH };
 
 //
 // archived variables that can change at any time
@@ -79,6 +78,8 @@ cvar_t	r_swapInterval		= { "vid_vsync",			"0",	CVAR_SILENT };
 #endif
 
 void OnChange_vid_pos(cvar_t *var, char *string, qbool *cancel);
+cvar_t r_win_save_pos                 = { "vid_win_save_pos",                   "1", CVAR_NONE };
+cvar_t r_win_save_size                = { "vid_win_save_size",                  "1", CVAR_NONE };
 cvar_t	vid_xpos			= { "vid_xpos",				"3",	CVAR_SILENT, OnChange_vid_pos};
 cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_SILENT, OnChange_vid_pos};
 cvar_t	vid_minpos  = { "vid_minpos",	"0",	CVAR_SILENT};
@@ -96,7 +97,6 @@ cvar_t  vid_flashonactivity = { "vid_flashonactivity",	"1",	CVAR_SILENT };
 #endif
 
 cvar_t	r_verbose			= { "vid_verbose",			"0",	CVAR_SILENT };
-//cvar_t	r_logFile		= { "vid_logFile",			"0",	CVAR_CHEAT | CVAR_SILENT};
 
 // print gl extension in /gfxinfo
 cvar_t  r_showextensions	= { "vid_showextensions", 	"0",	CVAR_SILENT };
@@ -274,9 +274,10 @@ qbool R_GetModeInfo( int *width, int *height, float *windowAspect, int mode ) {
 		return false;
 	}
 
+/* FIXME: Remove window mode, make it absolute */
 	if ( mode == -1 ) {
-		*width = r_customwidth.integer;
-		*height = r_customheight.integer;
+		*width = r_width.integer;
+		*height = r_height.integer;
 		*windowAspect = r_customaspect.value;
 		return true;
 	}
@@ -559,17 +560,17 @@ void R_Register( void )
 	Cvar_Register (&r_glDriver);
 	Cvar_Register (&r_allowExtensions);
 
-//	Cvar_Register (&r_texturebits);
 	Cvar_Register (&r_colorbits);
-//	Cvar_Register (&r_stereo); // qqshka: unused but saved
 	Cvar_Register (&r_stencilbits);
 	Cvar_Register (&r_depthbits);
-//	Cvar_Register (&r_overBrightBits);
 	Cvar_Register (&r_mode);
 	Cvar_Register (&r_fullscreen);
-	Cvar_Register (&r_customwidth);
-	Cvar_Register (&r_customheight);
-//	Cvar_Register (&r_customaspect); // qqshka: unused even in q3, but I keep cvar, just do not register it
+	Cvar_Register (&r_width);
+	Cvar_Register (&r_height);
+	Cvar_Register (&r_winwidth);
+	Cvar_Register (&r_winheight);
+	Cvar_Register (&r_win_save_pos);
+	Cvar_Register (&r_win_save_size);
 
 	//
 	// temporary latched variables that can only change over a restart
@@ -578,20 +579,15 @@ void R_Register( void )
 	AssertCvarRange( &r_displayRefresh, 0, 300, true ); // useless in most cases thought
 
 	Cvar_Register (&vid_borderless);
-//	Cvar_Register (&r_intensity);
 
 	//
 	// archived variables that can change at any time
 	//
 	Cvar_Register (&r_ignoreGLErrors);
-//	Cvar_Register (&r_textureMode);
 	Cvar_Register (&r_swapInterval);
-//	Cvar_Register (&r_gamma);
 	Cvar_Register (&vid_hwgammacontrol);
 
 	Cvar_Register (&r_verbose);
-//	Cvar_Register (&r_logFile);
-
 	Cvar_Register (&vid_xpos);
 	Cvar_Register (&vid_ypos);
 	Cvar_Register (&vid_minpos);
@@ -600,7 +596,7 @@ void R_Register( void )
 	Cvar_Register (&vid_wideaspect);
 	Cvar_Register (&r_conaspect);
 
-	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons
+	if (!host_initialized) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
 		int w = 0, h = 0;
 
@@ -615,6 +611,17 @@ void R_Register( void )
 
 		w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 		h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+
+		if ( w || h ) 
+		{
+			if (COM_CheckParm("-window")) {
+				Cvar_LatchedSetValue(&r_winwidth,  w);
+				Cvar_LatchedSetValue(&r_winheight, h);
+			} else {
+				Cvar_LatchedSetValue(&r_width, w);
+				Cvar_LatchedSetValue(&r_height, h);
+			}
+		}
 
 		#ifdef _WIN32
 		if (!( // no!
@@ -640,19 +647,6 @@ void R_Register( void )
 		}
 		#endif // _WIN32
 
-		if ( w || h ) 
-		{
-			int m = R_MatchMode( w, h );
-
-			if (m == -1) { // ok, mode not found, trying custom
-				w = w ? w : h * 4 / 3; // guessing width from height may cause some problems thought, because 4/3 uneven
-				h = h ? h : w * 3 / 4;
-				Cvar_LatchedSetValue(&r_customwidth,  w);
-				Cvar_LatchedSetValue(&r_customheight, h);
-			}
-
-			Cvar_LatchedSetValue(&r_mode, m);
-		}
 
 		if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
 			Cvar_SetValue(&r_conwidth, (float)Q_atoi(COM_Argv(i + 1)));

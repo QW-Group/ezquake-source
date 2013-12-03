@@ -187,8 +187,12 @@ extern cvar_t	r_depthbits;
 //extern cvar_t	r_overBrightBits;
 extern cvar_t	r_mode;
 extern cvar_t	r_fullscreen;
-extern cvar_t	r_customwidth;
-extern cvar_t	r_customheight;
+extern cvar_t	r_width;
+extern cvar_t	r_height;
+extern cvar_t	r_winwidth;
+extern cvar_t	r_winheight;
+extern cvar_t	r_win_save_pos;
+extern cvar_t	r_win_save_size;
 extern cvar_t	r_customaspect; // qqshka: unused even in q3, but I keep cvar, just do not register it
 extern cvar_t	r_displayRefresh;
 extern cvar_t	vid_borderless;
