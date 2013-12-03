@@ -267,9 +267,9 @@ void SCR_HUD_DrawFPS(hud_t *hud)
     }
 
     if (hud_fps_show_min->value)
-        snprintf (st, sizeof (st), "%3.*f\xf%3.*f", (int) hud_fps_decimals->value, cls.min_fps + 0.05, (int) hud_fps_decimals->value, cls.fps + 0.05);
+        snprintf (st, sizeof (st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int) (cls.fps + 0.25));
     else
-        snprintf (st, sizeof (st), "%3.*f", (int) hud_fps_decimals->value, cls.fps + 0.05);
+        snprintf (st, sizeof (st), "%3d", (int)(cls.fps + 0.25));
 
     if (hud_fps_title->value)
         strlcat (st, " fps", sizeof (st));
