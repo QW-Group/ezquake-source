@@ -1100,15 +1100,18 @@ static void Sbar_DeathmatchOverlay (int start) {
 	int i, d, k, top, bottom, x, y, xofs, total, p, skip = 10, fragsint;
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
-	char myminutes[4], fragsstr[10];
+	char myminutes[11];
+	char fragsstr[10];
 	char *color;
-	char *kill_color, *death_color, *tk_color;
-	int             scr_scoreboard_drawfps;
-    player_info_t *s;
+	char *kill_color;
+	char *death_color;
+	char *tk_color;
+	int scr_scoreboard_drawfps;
+	player_info_t *s;
 	mpic_t *pic;
 
-    scr_scoreboard_drawfps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
-    if (!start && hud_faderankings.value)
+	scr_scoreboard_drawfps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
+	if (!start && hud_faderankings.value)
 		Draw_FadeScreen(hud_faderankings.value);
 
 #ifndef CLIENTONLY
@@ -1288,9 +1291,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 		if (S_Voip_Speaking(k))
 			background = RGBA_TO_COLOR(0, 255, 0, (byte)(alpha * 255));
 		else
-			background = RGBA_TO_COLOR(host_basepal[c * 3],
-									host_basepal[c * 3 + 1],
-									host_basepal[c * 3 + 2], (byte)(alpha * 255));
+			background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(alpha * 255));
 
 		Draw_AlphaFillRGB (xofs, y, rank_width, skip, background);
 #endif
@@ -1337,7 +1338,11 @@ static void Sbar_DeathmatchOverlay (int start) {
 		total = (cl.intermission ? cl.completed_time : cls.demoplayback ? cls.demotime : cls.realtime) - s->entertime;
 		total = (int) total / 60;
 		total = bound(0, total, 999); // limit to 3 symbols int
-		snprintf (myminutes, sizeof (myminutes), "%3i", total);
+
+		if (Q_atoi(Info_ValueForKey(s->userinfo, "chat")) & CIF_AFK)
+			snprintf(myminutes, sizeof(myminutes), "&cf11afk&r");
+		else
+			snprintf (myminutes, sizeof (myminutes), "%3i", total);
 
 		if (scr_scoreboard_drawfps) {
 			if (s->last_fps > 0 && !s->spectator) {
