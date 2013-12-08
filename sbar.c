@@ -103,6 +103,9 @@ cvar_t	scr_compactHudAlign = {"scr_compactHudAlign", "0"};
 cvar_t	scr_drawHFrags = {"scr_drawHFrags", "1"};
 cvar_t	scr_drawVFrags = {"scr_drawVFrags", "1"};
 
+cvar_t scr_scoreboard_afk = {"scr_scoreboard_afk", "1"};
+cvar_t scr_scoreboard_afk_style = {"scr_scoreboard_afk_style", "1"};
+
 cvar_t	scr_scoreboard_teamsort = {"scr_scoreboard_teamsort", "1"};
 cvar_t	scr_scoreboard_forcecolors = {"scr_scoreboard_forcecolors", "1"};
 cvar_t	scr_scoreboard_showfrags = {"scr_scoreboard_showfrags", "1"};
@@ -268,6 +271,9 @@ void Sbar_Init (void) {
     Cvar_Register (&hud_faderankings);
     //Cvar_Register (&hud_ranks_separate);
 // <-- mqwcl 0.96 oldhud customisation
+
+	Cvar_Register(&scr_scoreboard_afk);
+	Cvar_Register(&scr_scoreboard_afk_style);
 
 	Cvar_Register (&scr_drawHFrags);
 	Cvar_Register (&scr_drawVFrags);
@@ -1339,10 +1345,15 @@ static void Sbar_DeathmatchOverlay (int start) {
 		total = (int) total / 60;
 		total = bound(0, total, 999); // limit to 3 symbols int
 
-		if (Q_atoi(Info_ValueForKey(s->userinfo, "chat")) & CIF_AFK)
-			snprintf(myminutes, sizeof(myminutes), "&cf11afk&r");
-		else
+		if (scr_scoreboard_afk.integer && (Q_atoi(Info_ValueForKey(s->userinfo, "chat")) & CIF_AFK)) {
+			if (scr_scoreboard_afk_style.integer == 2) {
+				snprintf(myminutes, sizeof(myminutes), "&cf11%3i&r", total);
+			} else {
+				snprintf(myminutes, sizeof(myminutes), "&cf11afk&r");
+			}
+		} else {
 			snprintf (myminutes, sizeof (myminutes), "%3i", total);
+		}
 
 		if (scr_scoreboard_drawfps) {
 			if (s->last_fps > 0 && !s->spectator) {
