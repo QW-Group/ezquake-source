@@ -471,6 +471,9 @@ void GLimp_Init( void )
 
 	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 
+	if (r_fullscreen.integer == 1)
+		flags |= SDL_WINDOW_BORDERLESS;
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_ResetCurrentGroup();
 
