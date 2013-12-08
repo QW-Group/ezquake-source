@@ -322,7 +322,6 @@ static void R_ModeList_f( void )
 //============================================================================
 
 int nonwideconheight = 0;  // Store original conheight if vid_wideaspect is used
-void Plug_ResChanged(void);
 
 /// Parses the value vid_conaspect cvar.
 ///
@@ -386,7 +385,8 @@ void OnChange_r_conaspect(cvar_t *var, char *string, qbool *cancel) {
 	}
 }
 
-void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
+void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel)
+{
 	
 	float scale = 1;
 
@@ -452,8 +452,6 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 	Draw_AdjustConback ();
 	vid.recalc_refdef = 1;
 	
-	Plug_ResChanged();
-
 	*cancel = true;
 }
 

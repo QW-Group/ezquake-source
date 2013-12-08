@@ -1493,7 +1493,6 @@ void CL_Reconnect_f (void)
 
 extern double qstat_senttime;
 extern void CL_PrintQStatReply (char *s);
-int Plug_ConnectionlessClientPacket(byte *buffer, int size);
 
 // Responses to broadcasts, etc
 void CL_ConnectionlessPacket (void) 
@@ -1510,9 +1509,6 @@ void CL_ConnectionlessPacket (void)
 
     MSG_BeginReading();
     MSG_ReadLong();	// Skip the -1
-
-	if (Plug_ConnectionlessClientPacket(net_message.data+4, net_message.cursize-4))
-		return;
 
 	c = MSG_ReadByte();
 
@@ -2067,7 +2063,6 @@ void ReloadPaletteAndColormap(void)
 }
 
 void EX_FileList_Init(void);
-void Plug_Init(void);
 
 void CL_Init (void) 
 {
@@ -2163,7 +2158,6 @@ void CL_Init (void)
 	Sys_InitIPC();
 
 	Rulesets_Init();
-	Plug_Init();
 }
 
 //============================================================================
@@ -2309,7 +2303,6 @@ double render_frame_start, render_frame_end;
 int timings_idx;
 
 void CL_QTVPoll (void);
-void Plug_Tick(void);
 
 qbool physframe;
 double physframetime;
@@ -2412,8 +2405,6 @@ void CL_Frame (double time)
 			cls.demotime += cls.frametime;
 		host_skipframe = false;
 	}
-
-	Plug_Tick();
 
 	cls.realtime += cls.frametime;
 

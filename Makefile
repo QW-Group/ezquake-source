@@ -231,7 +231,6 @@ OBJS_c := \
     mvd_utils.o \
     mvd_xmlstats.o \
     parser.o \
-    plugin.o \
     qtv.o \
     r_part.o \
     rulesets.o \

@@ -1649,8 +1649,6 @@ static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 	return *s != NULL;
 }
 
-qbool Plugin_ExecuteString(void);
-
 //A complete command line has been parsed, so try to execute it
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 {
@@ -1796,9 +1794,6 @@ checkaliases:
 		if (Cvar_CreateTempVar())
 			goto done;
 	}
-
-	if (Plugin_ExecuteString())
-		goto done;
 
 	if (cbuf_current != &cbuf_svc)
 	{

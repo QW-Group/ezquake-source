@@ -97,8 +97,6 @@ void M_Main_Key (int key);
 
 void M_Menu_Help_f (void);
 
-qbool Plug_Menu_Event(int eventtype, int param);
-
 #define QUAKE_ID_PLAQUE_PATH	"gfx/qplaque.lmp"
 
 m_state_t m_state;
@@ -1357,7 +1355,7 @@ void M_Draw (void) {
 	}
 
 #ifdef GLQUAKE
-	if (scr_scaleMenu.value && m_state != m_plugin) {
+	if (scr_scaleMenu.value) {
 		menuwidth = 320;
 		menuheight = min (vid.height, 240);
 		glMatrixMode(GL_PROJECTION);
@@ -1390,7 +1388,6 @@ void M_Draw (void) {
 		case m_help:			M_Help_Draw(); break;
 		case m_quit:			M_Quit_Draw(); break;
 		case m_demos:			Menu_Demo_Draw(); break;
-		case m_plugin:			Plug_Menu_Event(0, (int)(realtime*1000)); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control:		M_Menu_MP3_Control_Draw(); break;
 		case m_mp3_playlist:	M_Menu_MP3_Playlist_Draw(); break;
@@ -1435,7 +1432,6 @@ void M_Keydown (int key, wchar unichar) {
 		case m_help:			Menu_Help_Key(key, unichar); return;
 		case m_quit:			M_Quit_Key(key); return;
 		case m_demos:			Menu_Demo_Key(key, unichar); break;
-		case m_plugin:			Plug_Menu_Event(1, key); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control: 	M_Menu_MP3_Control_Key(key); break;
 		case m_mp3_playlist: 	M_Menu_MP3_Playlist_Key(key); break;
