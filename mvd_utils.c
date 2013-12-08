@@ -400,12 +400,8 @@ int MVD_ClockList_GetLongestName(void)
 		IT_QUAD, IT_INVULNERABILITY, IT_ARMOR1, IT_ARMOR2, IT_ARMOR3, IT_SUPERHEALTH
 	};
 
-	for (i = 0; i < sizeof(items); i++){
-#ifdef GLQUAKE
+	for (i = 0; i < (sizeof(items)/sizeof(*items)); i++){
 		current = strlen_color(TP_ItemName(items[i]));
-#else
-		current = strlen(TP_ItemName(items[i]));
-#endif
 		if (longest < current)
 			longest = current;
 	}

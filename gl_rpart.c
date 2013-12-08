@@ -694,8 +694,8 @@ __inline static void DRAW_PARTICLE_BILLBOARD(particle_texture_t * ptex, particle
 		matrix3x3_t rotate_matrix;
 		Matrix3x3_CreateRotate(rotate_matrix, DEG2RAD(p->rotangle), vpn);
 
-		Matrix3x3_MultiplyByVector(verts[0], rotate_matrix, coord[0]);
-		Matrix3x3_MultiplyByVector(verts[1], rotate_matrix, coord[1]);
+		Matrix3x3_MultiplyByVector(verts[0], (const vec_t (*)[3]) rotate_matrix, coord[0]);
+		Matrix3x3_MultiplyByVector(verts[1], (const vec_t (*)[3]) rotate_matrix, coord[1]);
 		// do some fast math for verts[2] and verts[3].
 		VectorNegate(verts[0], verts[2]);
 		VectorNegate(verts[1], verts[3]);

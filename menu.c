@@ -15,9 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: menu.c,v 1.93 2007-10-26 07:55:45 dkure Exp $
-
 */
 
 #ifndef _WIN32
@@ -972,7 +969,7 @@ int        loadable[MAX_SAVEGAMES];
 menu_window_t load_window, save_window;
 
 void M_ScanSaves (char *sp_gamedir) {
-	int i, j, version;
+	int i, j;
 	char name[MAX_OSPATH];
 	vfsfile_t *f;
 
@@ -984,7 +981,6 @@ void M_ScanSaves (char *sp_gamedir) {
 		if (!(f = FS_OpenVFS(name, "rb", FS_GAME_OS)))
 			continue;
 		VFS_GETS(f, name, sizeof(name));
-		version = atoi(name);
 		VFS_GETS(f, name, sizeof(name));
 		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
 

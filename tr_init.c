@@ -812,7 +812,7 @@ void VID_Restart_f (void)
 void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel) 
 {
 	extern int nonwideconheight;
-	extern cvar_t scr_fov, r_conheight;
+	extern cvar_t r_conheight;
 
 	if ( (Q_atoi(string) == vid_wideaspect.value) || (Q_atoi(string) > 1)  || (Q_atoi(string) < 0))
 	{

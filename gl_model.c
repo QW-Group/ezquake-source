@@ -1046,7 +1046,7 @@ void Mod_LoadEdges (lump_t *l) {
 void Mod_LoadTexinfo (lump_t *l) {
 	texinfo_t *in;
 	mtexinfo_t *out;
-	int i, j, count, miptex;
+	int i, j, k, count, miptex;
 
 	in = (void *) (mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -1058,8 +1058,9 @@ void Mod_LoadTexinfo (lump_t *l) {
 	loadmodel->numtexinfo = count;
 
 	for (i = 0; i < count; i++, in++, out++) {
-		for (j = 0; j < 8; j++)
-			out->vecs[0][j] = LittleFloat (in->vecs[0][j]);
+		for (j = 0; j < 2; j++)
+			for (k = 0; k < 4; k++)
+				out->vecs[j][k] = LittleFloat (in->vecs[j][k]);
 
 		miptex = LittleLong (in->miptex);
 		out->flags = LittleLong (in->flags);

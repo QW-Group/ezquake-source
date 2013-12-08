@@ -29,7 +29,7 @@ RM ?= rm -f
 RMDIR ?= rm -rf
 MKDIR ?= mkdir -p
 
-CFLAGS ?= -O2 -Wall -Wno-strict-aliasing -g -MMD $(INCLUDES)
+CFLAGS ?= -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -g -MMD $(INCLUDES)
 RCFLAGS ?=
 LDFLAGS ?=
 LIBS ?=

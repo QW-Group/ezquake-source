@@ -20,11 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/stat.h>
 #include "localtime.h"
 
-//char *tzname[2][128];
-//long int timezone;
-//int daylight;
-
-
 // helper
 void UnixtimeToWintime(SYSTEMTIME *wintime, struct tm* time)
 {
@@ -64,7 +59,7 @@ int  GetFileLocalTime(char *path, SYSTEMTIME *wintime)
     return 1;
 }
 
-int intcmp(int i1, int i2)
+static int intcmp(int i1, int i2)
 {
     if (i1 > i2)
     return 1;

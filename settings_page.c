@@ -784,7 +784,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 {
 	int i;
 	int ch;
-	int nexttop;
+	//int nexttop;
 	int hbh = 0;	// help box height
 	setting *set;
 	qbool active;
@@ -798,7 +798,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 		prev_adv_state = (qbool) menu_advanced.value;
 	}
 
-	nexttop = tab->settings[0].top;
+	//nexttop = tab->settings[0].top;
 
 	if (tab->mode == SPM_CHOOSESKIN)
 	{
@@ -855,8 +855,8 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 				break;
 		}
 		y += ch;
-		if (i < tab->count)
-			nexttop = tab->settings[i+1].top;
+		//if (i < tab->count)
+		//	nexttop = tab->settings[i+1].top;
 	}
 }
 

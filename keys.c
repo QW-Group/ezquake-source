@@ -861,7 +861,7 @@ void Key_ClearTyping (void)
 {
 	//if new input is the same as previous one or the line is empty
 	// do not increment edit_line
-	if((wcscmp (key_lines[edit_line], key_lines[(edit_line - 1) & (CMDLINES - 1)]))
+	if((wcscmp ((wchar_t*)key_lines[edit_line], (wchar_t*)key_lines[(edit_line - 1) & (CMDLINES - 1)]))
 		&& key_lines[edit_line][1])
 		edit_line = (edit_line + 1) & (CMDLINES - 1);
 

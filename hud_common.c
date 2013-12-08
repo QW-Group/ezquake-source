@@ -251,19 +251,17 @@ void SCR_HUD_DrawFPS(hud_t *hud)
     char st[128];
 
     static cvar_t
-        *hud_fps_show_min = NULL,
-		*hud_fps_style,
-        *hud_fps_title,
-		*hud_fps_decimals,
-		*hud_fps_drop;
+	    *hud_fps_show_min = NULL,
+	    *hud_fps_style,
+	    *hud_fps_title,
+	    *hud_fps_drop;
 
     if (hud_fps_show_min == NULL)   // first time called
     {
-        hud_fps_show_min = HUD_FindVar(hud, "show_min");
-		hud_fps_style    = HUD_FindVar(hud, "style");
-        hud_fps_title    = HUD_FindVar(hud, "title");
-		hud_fps_decimals = HUD_FindVar(hud, "decimals");
-		hud_fps_drop = HUD_FindVar(hud, "drop");
+	    hud_fps_show_min = HUD_FindVar(hud, "show_min");
+	    hud_fps_style    = HUD_FindVar(hud, "style");
+	    hud_fps_title    = HUD_FindVar(hud, "title");
+	    hud_fps_drop = HUD_FindVar(hud, "drop");
     }
 
     if (hud_fps_show_min->value)
