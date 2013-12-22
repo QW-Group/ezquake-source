@@ -469,10 +469,10 @@ void GLimp_Init( void )
 	SDL_Surface *icon_surface;
 	extern void InitSig(void);
 
-	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 
 	if (r_fullscreen.integer == 1)
-		flags |= SDL_WINDOW_BORDERLESS;
+		flags |= SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN;
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_ResetCurrentGroup();
@@ -501,10 +501,18 @@ void GLimp_Init( void )
 		return;
 	}
 
-	glConfig.vidWidth = r_width.integer;
-	glConfig.vidHeight = r_height.integer;
-	glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight; 
+	if (r_fullscreen.integer)
+	{
+		glConfig.vidWidth = r_width.integer;
+		glConfig.vidHeight = r_height.integer;
+	}
+	else
+	{
+		glConfig.vidWidth = r_winwidth.integer;
+		glConfig.vidHeight = r_winheight.integer;
+	}
 
+	glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight;
 	glConfig.colorBits = 24;
 	glConfig.depthBits = 8;
 	glConfig.stencilBits = 8;
@@ -623,5 +631,5 @@ void VID_Restore (void)
     if (!sdl_window)
         return;
 
-//    SDL_RestoreWindow(sdl_window);
+    SDL_RestoreWindow(sdl_window);
 }
