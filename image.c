@@ -41,10 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif*/
 #endif
 
-/*#ifdef __APPLE__
-#include <Carbon/Carbon.h>
-#endif*/
-
 #define IMAGE_MAX_DIMENSIONS 4096
 
 #ifndef GLQUAKE

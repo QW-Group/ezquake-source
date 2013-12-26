@@ -138,20 +138,6 @@ float	FloatSwapPDP2Lit (float f);
 #define __LITTLE_ENDIAN__
 #endif
 
-//======================= MAC OS X DEFINES ===================================
-// <DyB|Tuna> for mac the gcc defines __BIG_ENDIAN__ and __LITTLE_ENDIAN__ 
-//            according to which arch type is selected
-//#if defined(MACOS_X)
-//#define __LITTLE_ENDIAN__
-//#endif
-
-//======================= MAC DEFINES ========================================
-// <DyB|Tuna> for mac the gcc defines __BIG_ENDIAN__ and __LITTLE_ENDIAN__ 
-//            according to which arch type is selected
-//#ifdef __MACOS__
-//#define __BIG_ENDIAN__
-//#endif
-
 //======================= LINUX DEFINES ======================================
 #ifdef __linux__
 
