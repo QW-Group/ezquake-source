@@ -1,6 +1,0 @@
-/* Localized versions of Info.plist keys */
-
-CFBundleName = "EZQuake-GL";
-CFBundleShortVersionString = "1517";
-CFBundleGetInfoString = "EZQuake-GL build 1517";
-NSHumanReadableCopyright = "Copyright 2001-2006 EZQuake";
