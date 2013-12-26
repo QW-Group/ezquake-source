@@ -275,7 +275,6 @@ OBJS_c := \
     vx_stuff.o \
     vx_vertexlights.o \
     vid_common_gl.o \
-    mumble.o \
     cd_null.o \
     sdl2_glimp.o \
     snd_sdl2.o \
@@ -296,7 +295,7 @@ else
     	localtime_posix.o \
 	sys_posix.o \
     	linux_signals.o
-    LIBS_c += -lGL -lm -ldl -lrt
+    LIBS_c += -lGL -lm -ldl
 endif
 
 ifdef CONFIG_SPEEX

@@ -15,10 +15,8 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: sys_linux.c,v 1.32 2007-10-16 15:52:17 dkure Exp $
-
 */
+
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -37,9 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <semaphore.h>
-#ifndef __FreeBSD__
-#include <linux/rtc.h>
-#endif
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sched.h>
@@ -47,7 +42,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <dirent.h>
 
 #include <SDL.h>
-
 #include <dlfcn.h>
 
 #include "quakedef.h"
@@ -60,22 +54,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #  define O_NDELAY	FNDELAY
 #endif
 
-
-/* needed for RTC timer */
-#define RTC_RATE 1024.00
-static int rtc_fd;  /* file descriptor for rtc device */
-
 int noconinput = 0;
-
 
 qbool stdin_ready;
 int do_stdin = 1;
 
-
 cvar_t sys_yieldcpu = {"sys_yieldcpu", "0"};
 cvar_t sys_nostdout = {"sys_nostdout", "0"};
 cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
-
 
 void Sys_Printf (char *fmt, ...) {
 	va_list argptr;
@@ -104,9 +90,6 @@ void Sys_Printf (char *fmt, ...) {
 void Sys_Quit (void) {
 	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
 
-	if (rtc_fd)
-	    close(rtc_fd);
-
 	exit(0);
 }
 
@@ -122,9 +105,6 @@ void Sys_Error (char *error, ...) {
 	char string[1024];
 
 	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);	//change stdin to non blocking
-
-	if (rtc_fd)
-		close(rtc_fd);
 
 	va_start (argptr, error);
 	vsnprintf (string, sizeof(string), error, argptr);
@@ -280,64 +260,26 @@ char * Sys_getcwd (char *buf, int bufsize)
 }
 // kazik <--
 
-double Sys_DoubleTime (void) {
-    /* rtc timer vars */
-    unsigned long curticks = 0;
-    struct pollfd pfd;
-    static unsigned long totalticks;
+double Sys_DoubleTime (void)
+{
+	struct timeval tp;
+	struct timezone tzp;
+	static int secbase;
 
-    /* old timer vars */
-    struct timeval tp;
-    struct timezone tzp;
-    static int secbase;
-
-    if (rtc_fd) {  /* rtc timer is enabled */
-	pfd.fd = rtc_fd;
-	pfd.events = POLLIN | POLLERR;
-again:
-	if (poll(&pfd, 1, 100000) < 0) {
-	    if ((errno = EINTR)) {
-		/* happens with gdb or signal exiting */
-		goto again;
-	    }
-	    Sys_Error("Poll call on RTC timer failed!\n");
-	}
-	if (read(rtc_fd, &curticks, sizeof(curticks)) != sizeof(curticks))
-		Sys_Error("Error reading the RTC timer");
-	curticks = curticks >> 8; /* knock out info byte */
-	totalticks += curticks;
-	return totalticks / RTC_RATE;
-    } else { /* old timer */
 	gettimeofday(&tp, &tzp);
 
 	if (!secbase) {
 	    secbase = tp.tv_sec;
-            return tp.tv_usec/1000000.0;
+	    return tp.tv_usec/1000000.0;
 	}
 
 	return (tp.tv_sec - secbase) + tp.tv_usec / 1000000.0;
-    }
 }
 
 void floating_point_exception_handler (int whatever) {
 	signal(SIGFPE, floating_point_exception_handler);
 }
 
-/* 0 is the highest. -1 may be a better setting. */
-#define PRIORITYLEVEL -1
-
-int set_realtime(void)
-{
-    struct sched_param schp;
-
-    memset(&schp, 0, sizeof(schp));
-    schp.sched_priority = sched_get_priority_max(SCHED_FIFO) + PRIORITYLEVEL;
-
-    if (sched_setscheduler(0, SCHED_FIFO, &schp) != 0)
-	return 0;
-
-    return 1;
-}
 
 #ifndef id386
 void Sys_HighFPPrecision (void) {}
@@ -368,62 +310,22 @@ int main (int argc, char **argv) {
 	if (COM_CheckParm("-nostdout"))
 		sys_nostdout.value = 1;
 
-#ifndef __FreeBSD__
-	/* also check for -rtctimer before Host_Init is called */
-	if (COM_CheckParm("-rtctimer")) {
-	    int retval;
-	    unsigned long tmpread;
-
-	    /* try accessing rtc */
-	    rtc_fd = open("/dev/rtc", O_RDONLY);
-	    if (rtc_fd < 0)
-		Sys_Error("Cannot open /dev/rtc! Exiting..\n");
-
-	    /* make sure RTC is set to RTC_RATE (1024Hz) */
-	    retval = ioctl(rtc_fd, RTC_IRQP_READ, &tmpread);
-	    if (retval < 0)
-		Sys_Error("Error with ioctl!\n");
-	    if (tmpread != RTC_RATE)
-		Sys_Error("RTC is not set to 1024Hz! Please use the command 'echo 1024 > /proc/sys/dev/rtc/max-user-freq' as root, or 'echo dev.rtc.max-user-freq=1024 >> /etc/sysctl.conf' as root to keep the change through reboots.\n");
-
-	    /* take ownership of rtc */
-	    retval = fcntl(rtc_fd, F_SETOWN, getpid());
-	    if (retval < 0)
-		Sys_Error("Cannot set ownership of /dev/rtc!\n");
-
-	    /* everything is nice - now turn on the RTC's periodic timer */
-	    retval = ioctl(rtc_fd, RTC_PIE_ON, 0);
-	    if (retval == -1)
-		Sys_Error("Error activating RTC timer!\n");
-
-	    /* to make the most of the timer, want real time priority */
-	    /* will probably only work if run q as root */
-	    if (!set_realtime())
-		Com_Printf("Realtime Priority not enabled..\n");
-	    else
-		Com_Printf("Realtime Priority enabled!\n");
-
-	    Com_Printf("RTC Timer Enabled.\n");
-	}
-#endif
 	#ifdef id386
 		Sys_SetFPCW();
 	#endif
 
 
-    Host_Init (argc, argv, 32 * 1024 * 1024);
+	Host_Init (argc, argv, 32 * 1024 * 1024);
 
 	oldtime = Sys_DoubleTime ();
 	while (1) {
-
 		// find time spent rendering last frame
-		newtime = Sys_DoubleTime ();
+		newtime = Sys_DoubleTime();
 		time = newtime - oldtime;
 		oldtime = newtime;
 
 		Host_Frame(time);
-
-    }
+	}
 }
 
 void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {

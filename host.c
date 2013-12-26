@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <machine/cpufunc.h>
 #endif
 #endif
+#include <SDL.h>
 #include "quakedef.h"
 #include "winquake.h"
 #include "EX_browser.h"
@@ -554,13 +555,19 @@ void Host_Init (int argc, char **argv, int default_memsize)
 {
 	vfsfile_t *vf;
 	cvar_t *v;
-
 	char cfg[MAX_PATH] = {0};
 	int i;
 	char *cfg_name;
 
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
+
+	if (SDL_Init(0) != 0)
+	{
+		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+	}
+	atexit(SDL_Quit);
 
 #ifdef WITH_DP_MEM
 	Memory2_Init ();

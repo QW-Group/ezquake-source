@@ -28,10 +28,18 @@
 #include "quakedef.h"
 
 #include <SDL.h>
+
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 #include "ezquake-icon.c"
 #include "keys.h"
+#ifdef __APPLE__
+#include "gl_local.h"
+#endif
 #include "tr_types.h"
 #include "input.h"
 #include "rulesets.h"
@@ -442,15 +450,10 @@ int GLW_SetMode(const char *drivername, int mode, qbool fullscreen)
 
 static int VID_SDL_InitSubSystem(void)
 {
-	int ret;
+	int ret = 0;
 
-	ret = SDL_WasInit(SDL_INIT_EVERYTHING);
-	if (ret == 0)
-		ret = SDL_Init(SDL_INIT_VIDEO);
-	else if (!(ret & SDL_INIT_VIDEO))
+	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 		ret = SDL_InitSubSystem(SDL_INIT_VIDEO);
-	else
-		ret = 0;
 
 	if (ret == -1) 
 		Sys_Error("Couldn't initialize SDL video: %s\n", SDL_GetError());

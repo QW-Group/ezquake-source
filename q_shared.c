@@ -223,7 +223,8 @@ int qvsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
 }
 #endif
 
-#if defined(__linux__) || defined(_WIN32) || defined(__APPLE__)
+#if defined(__linux__) || defined(_WIN32)
+
 size_t strlcpy(char *dst, const char *src, size_t siz)
 {
 	register char *d = dst;
@@ -241,7 +242,7 @@ size_t strlcpy(char *dst, const char *src, size_t siz)
 	/* Not enough room in dst, add NUL and traverse rest of src */
 	if (n == 0) {
 		if (siz != 0)
-							*d = '\0';		/* NUL-terminate dst */
+			*d = '\0'; /* NUL-terminate dst */
 		while (*s++)
 			;
 	}
@@ -276,32 +277,6 @@ size_t strlcat(char *dst, const char *src, size_t siz)
 	return(dlen + (s - src));       /* count does not include NUL */
 }
 
-// A Case-insensitive strstr.
-char *strstri(const char *text, const char *find)
-{
-	char *s = (char *)text;
-	int findlen = strlen(find);
-
-	// Empty substring, return input (like strstr).
-	if (findlen == 0)
-	{
-		return s;
-	}
-
-	while (*s)
-	{
-		// Check if we can find the substring.
-		if (!strncasecmp(s, find, findlen))
-		{
-			return s;
-		}
-
-		s++;
-	}
-
-	return NULL;
-}
-
 char *strnstr(const char *s, const char *find, size_t slen)
 {
 	char c, sc;
@@ -329,6 +304,32 @@ char *strnstr(const char *s, const char *find, size_t slen)
 	return ((char *)s);
 }
 #endif
+// A Case-insensitive strstr.
+char *strstri(const char *text, const char *find)
+{
+	char *s = (char *)text;
+	int findlen = strlen(find);
+
+	// Empty substring, return input (like strstr).
+	if (findlen == 0)
+	{
+		return s;
+	}
+
+	while (*s)
+	{
+		// Check if we can find the substring.
+		if (!strncasecmp(s, find, findlen))
+		{
+			return s;
+		}
+
+		s++;
+	}
+
+	return NULL;
+}
+
 // Added by VVD }
 
 //

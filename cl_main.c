@@ -1,21 +1,3 @@
-/**
-	\file
-	
-	\brief
-	Main client module - connection-related and other mixed-purpose functions
-**/
-
-/**
-	\mainpage
-	Welcome to the doxygen documentation of the ezQuake QuakeWorld client
-	Majority of the code is not documented with Doxygen markup, therefore
-	you will not find much things in here in the early stages.
-
-	For start this documentation serves as an example how to document the code.
-	See how \link parser.c parser.c \endlink file is documented.
-
-	You may wish to proceed to the <a href="files.html">list of modules</a>
-**/
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -33,8 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-$Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -90,9 +70,6 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include "irc.h"
 #ifdef _DEBUG
 #include "parser.h"
-#endif
-#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
-#include "mumble.h"
 #endif
 #if defined (__linux__) || defined (__FreeBSD__) || defined (__APPLE__)
 extern qbool ActiveApp, Minimized;
@@ -2151,10 +2128,6 @@ void CL_Init (void)
 
 	QTV_Init();
 
-#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
-	Mumble_Init();
-#endif
-
 	Sys_InitIPC();
 
 	Rulesets_Init();
@@ -2701,10 +2674,6 @@ void CL_Frame (double time)
 	CL_QTVPoll();
 #ifdef WITH_IRC
 	IRC_Update();
-#endif
-
-#if defined (_WIN32) || defined (__linux__)
-	updateMumble();
 #endif
 
 	CL_UpdateCaption(false);

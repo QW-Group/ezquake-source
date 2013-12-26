@@ -86,9 +86,6 @@ void R_TranslatePlayerSkin (int playernum) {
 	int	top, bottom, i, j, scaled_width, scaled_height, inwidth, inheight, tinwidth, tinheight, glinternalfmt, glinternalfmt_alpha;
 	unsigned translate32[256], *out, frac, fracstep;
 
-#ifdef __APPLE__
-	static		// OS X 10.2 has too small stack segment to hold this array (512k)
-#endif
 	unsigned pixels[512 * 256];
 
 	player_info_t *player;

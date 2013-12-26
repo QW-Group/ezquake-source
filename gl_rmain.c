@@ -1737,7 +1737,7 @@ void R_SetupFrame (void) {
 	c_alias_polys = 0;
 }
 
-__inline void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar) {
+void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar) {
 	GLdouble xmin, xmax, ymin, ymax;
 	
 	ymax = zNear * tan(fovy * M_PI / 360.0);

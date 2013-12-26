@@ -20,41 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
+#include <SDL.h>
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
-
-
-#ifdef __APPLE__
-void *Sys_GetProcAddress (const char *ExtName);
-#endif
-
-#ifdef __linux__
-# ifndef __GLXextFuncPtr
-  typedef void (*__GLXextFuncPtr)(void);
-# endif
-# ifndef glXGetProcAddressARB
-  extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
-# endif
-#endif
-#ifdef __FreeBSD__
-# ifndef glXGetProcAddressARB
-  extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
-# endif
-#endif
-
-void *GL_GetProcAddress (const char *ExtName)
-{
-#ifdef _WIN32
-			return (void *) wglGetProcAddress(ExtName);
-#else
-#ifdef __APPLE__ // Mac OS X don't have an OpenGL extension fetch function. Isn't that silly?
-			return Sys_GetProcAddress (ExtName);
-#else
-			return (void *) glXGetProcAddressARB((const GLubyte*) ExtName);
-#endif /* __APPLE__ */
-#endif /* _WIN32 */
-}
 
 const char *gl_vendor;
 const char *gl_renderer;
@@ -119,8 +89,8 @@ void CheckMultiTextureExtensions (void) {
 	if (!COM_CheckParm("-nomtex") && CheckExtension("GL_ARB_multitexture")) {
 		if (strstr(gl_renderer, "Savage"))
 			return;
-		qglMultiTexCoord2f = GL_GetProcAddress("glMultiTexCoord2fARB");
-		qglActiveTexture = GL_GetProcAddress("glActiveTextureARB");
+		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
+		qglActiveTexture = SDL_GL_GetProcAddress("glActiveTextureARB");
 		if (!qglMultiTexCoord2f || !qglActiveTexture)
 			return;
 		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");

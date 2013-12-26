@@ -198,7 +198,8 @@ void COM_StripExtension (const char *in, char *out)
 	char *dot;
 
 	if (!(dot = strrchr(in, '.'))) {
-		strlcpy(out, in, strlen(in) + 1);
+		if (in != out)
+			strlcpy(out, in, strlen(in) + 1);
 		return;
 	}
 	while (*in && in != dot)
