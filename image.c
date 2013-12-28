@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 1996-2003 A Nourai, Id Software, Inc.
 
 This program is free software; you can redistribute it and/or
@@ -16,8 +15,6 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-    $Id: image.c,v 1.56 2007-10-11 07:02:37 dkure Exp $
 */
 
 #ifdef __FreeBSD__
@@ -42,12 +39,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #define IMAGE_MAX_DIMENSIONS 4096
-
-#ifndef GLQUAKE
-// Dither from 24-bit pictures to the 8-bit quake palette instead of
-// just getting the nearest color (make a smother transition) when loading a PNG in software.
-cvar_t image_png_dither_onload = {"image_png_dither_onload", "1"}; 
-#endif // !GLQUAKE
 
 cvar_t image_png_compression_level = {"image_png_compression_level", "1"};
 cvar_t image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};

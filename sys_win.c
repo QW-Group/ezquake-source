@@ -15,9 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: sys_win.c,v 1.52 2007/10/27 14:37:07 cokeman1982 Exp $
-
 */
 // sys_win.c
 
@@ -639,98 +636,6 @@ void Sys_Init_ (void)
 	Sys_InitDoubleTime ();
 }
 
-/********************************* CLIPBOARD *********************************/
-
-#define SYS_CLIPBOARD_SIZE		256
-
-#if 0
-wchar *Sys_GetClipboardTextW(void) 
-{
-	HANDLE th;
-	wchar *clipText, *s, *t;
-	static wchar clipboard[SYS_CLIPBOARD_SIZE];
-
-	if (!OpenClipboard(NULL))
-		return NULL;
-
-	if (WinNT) 
-	{
-		if (!(th = GetClipboardData(CF_UNICODETEXT))) 
-		{
-			CloseClipboard();
-			return NULL;
-		}
-
-		if (!(clipText = GlobalLock(th))) 
-		{
-			CloseClipboard();
-			return NULL;
-		}
-	} 
-	else 
-	{
-		char *txt;
-
-		if (!(th = GetClipboardData(CF_TEXT))) 
-		{
-			CloseClipboard();
-			return NULL;
-		}
-
-		if (!(txt = GlobalLock(th))) 
-		{
-			CloseClipboard();
-			return NULL;
-		}
-		clipText = str2wcs(txt);
-	}
-
-	s = clipText;
-	t = clipboard;
-	while (*s && t - clipboard < SYS_CLIPBOARD_SIZE - 1 && *s != '\n' && *s != '\r' && *s != '\b')
-		*t++ = *s++;
-	*t = 0;
-
-	GlobalUnlock(th);
-	CloseClipboard();
-
-	return clipboard;
-}
-
-// Copies given text to clipboard
-void Sys_CopyToClipboard(char *text) 
-{
-	char *clipText;
-	HGLOBAL hglbCopy;
-
-	if (!OpenClipboard(NULL))
-		return;
-
-	if (!EmptyClipboard()) 
-	{
-		CloseClipboard();
-		return;
-	}
-
-	if (!(hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text) + 1))) 
-	{
-		CloseClipboard();
-		return;
-	}
-
-	if (!(clipText = (char *)GlobalLock(hglbCopy))) 
-	{
-		CloseClipboard();
-		return;
-	}
-
-	strcpy(clipText, text);
-	GlobalUnlock(hglbCopy);
-	SetClipboardData(CF_TEXT, hglbCopy);
-
-	CloseClipboard();
-}
-#endif
 
 //==============================================================================
 // WINDOWS CRAP

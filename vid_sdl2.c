@@ -614,6 +614,7 @@ void Sys_CopyToClipboard(char *text)
 void VID_SetDeviceGammaRamp (unsigned short *ramps)
 {
 	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
+	vid_hwgamma_enabled = true;
 }
 
 void VID_Minimize (void) 

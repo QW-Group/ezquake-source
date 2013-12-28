@@ -63,15 +63,14 @@ cvar_t sys_yieldcpu = {"sys_yieldcpu", "0"};
 cvar_t sys_nostdout = {"sys_nostdout", "0"};
 cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
 
-void Sys_Printf (char *fmt, ...) {
+void Sys_Printf (char *fmt, ...)
+{
+#ifdef DEBUG
 	va_list argptr;
 	char text[2048];
 	unsigned char *p;
 
-
-#ifdef NDEBUG
-		return;
-#endif
+	return;
 
 	va_start (argptr,fmt);
 	vsnprintf (text, sizeof(text), fmt, argptr);
@@ -85,22 +84,27 @@ void Sys_Printf (char *fmt, ...) {
 			printf("[%02x]", *p);
 		else
 			putc(*p, stdout);
+#else
+	return;
+#endif
 }
 
-void Sys_Quit (void) {
+void Sys_Quit(void)
+{
 	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
-
 	exit(0);
 }
 
-void Sys_Init(void) {
+void Sys_Init(void)
+{
     Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
     Cvar_Register (&sys_yieldcpu);
     Cvar_ResetCurrentGroup();
 }
 
-void Sys_Error (char *error, ...) {
-        extern FILE *qconsole_log;
+void Sys_Error(char *error, ...)
+{
+	extern FILE *qconsole_log;
 	va_list argptr;
 	char string[1024];
 
@@ -111,14 +115,15 @@ void Sys_Error (char *error, ...) {
 	va_end (argptr);
 	fprintf(stderr, "Error: %s\n", string);
 	if (qconsole_log)
-	    fprintf(qconsole_log, "Error: %s\n", string);
+		fprintf(qconsole_log, "Error: %s\n", string);
 
 	Host_Shutdown ();
-	exit (1);
+	exit(1);
 }
 
-void Sys_mkdir (const char *path) {
-    mkdir (path, 0777);
+void Sys_mkdir (const char *path)
+{
+	mkdir (path, 0777);
 }
 
 /*
@@ -126,17 +131,17 @@ void Sys_mkdir (const char *path) {
 Sys_remove
 ================
 */
-int Sys_remove (char *path)
+int Sys_remove(char *path)
 {
 	return unlink(path);
 }
 
-int Sys_rmdir (const char *path)
+int Sys_rmdir(const char *path)
 {
 	return rmdir(path);
 }
 
-int Sys_FileSizeTime (char *path, int *time1)
+int Sys_FileSizeTime(char *path, int *time1)
 {
 	struct stat buf;
 	if (stat(path, &buf) == -1)
@@ -247,20 +252,17 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	return dir;
 }
 
-
-// kazik -->
-int Sys_chdir (const char *path)
+int Sys_chdir(const char *path)
 {
-    return (chdir(path) == 0);
+	return (chdir(path) == 0);
 }
 
-char * Sys_getcwd (char *buf, int bufsize)
+char *Sys_getcwd(char *buf, int bufsize)
 {
-    return getcwd(buf, bufsize);
+	return getcwd(buf, bufsize);
 }
-// kazik <--
 
-double Sys_DoubleTime (void)
+double Sys_DoubleTime(void)
 {
 	struct timeval tp;
 	struct timezone tzp;
@@ -276,18 +278,19 @@ double Sys_DoubleTime (void)
 	return (tp.tv_sec - secbase) + tp.tv_usec / 1000000.0;
 }
 
-void floating_point_exception_handler (int whatever) {
+void floating_point_exception_handler (int whatever)
+{
 	signal(SIGFPE, floating_point_exception_handler);
 }
 
 
 #ifndef id386
-void Sys_HighFPPrecision (void) {}
-
-void Sys_LowFPPrecision (void) {}
+void Sys_HighFPPrecision(void) {}
+void Sys_LowFPPrecision(void) {}
 #endif
 
-int main (int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	double time, oldtime, newtime;
 	int i;
 
