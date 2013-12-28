@@ -44,13 +44,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
-qbool		ActiveApp, Minimized;
 qbool		WinNT, Win2K, WinXP, Win2K3, WinVISTA, Win7;
-
 
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 cvar_t	sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
-
 
 cvar_t	sys_yieldcpu = {"sys_yieldcpu", "0"};
 cvar_t	sys_inactivesleep = {"sys_inactiveSleep", "1"};

@@ -24,11 +24,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "qsound.h"
 #include <SDL.h>
 
+extern qbool ActiveApp, Minimized;
+
 static void Filler(void *userdata, Uint8 *stream, int len)
 {
     int size = shm->samples << 1;
     int pos = shm->samplepos << 1;
     int wrapped = pos + len - size;
+
+    if (!ActiveApp || Minimized)
+    {
+	    SDL_memset(stream, 0, len);
+	    return;
+    }
 
     if (wrapped < 0) {
         memcpy(stream, shm->buffer + pos, len);
@@ -46,11 +54,9 @@ void SNDDMA_Shutdown(void)
     Con_Printf("Shutting down SDL audio.\n");
 
     SDL_CloseAudio();
-    if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_AUDIO) {
-        SDL_Quit();
-    } else {
+
+    if (SDL_WasInit(SDL_INIT_AUDIO != 0))
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
-    }
 
     if (shm->buffer) {
         Z_Free(shm->buffer);
@@ -61,13 +67,11 @@ void SNDDMA_Shutdown(void)
 qbool SNDDMA_Init(void)
 {
     SDL_AudioSpec desired, obtained;
-    int ret;
+    int ret = 0;
 
-    if (SDL_WasInit(SDL_INIT_EVERYTHING) == 0) {
-        ret = SDL_Init(SDL_INIT_AUDIO);
-    } else {
+    if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
         ret = SDL_InitSubSystem(SDL_INIT_AUDIO);
-    }
+
     if (ret == -1) {
         Con_Printf("Couldn't initialize SDL audio: %s\n", SDL_GetError());
         return false;

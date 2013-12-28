@@ -3587,6 +3587,7 @@ static void SCR_RenderFrameEnd(void)
 void SCR_UpdateScreen (void) 
 {
 	static hud_t *hud_netstats = NULL;
+	extern qbool Minimized;
 
 	if (hud_netstats == NULL) // first time
 		hud_netstats = HUD_Find("net");
@@ -3610,18 +3611,12 @@ void SCR_UpdateScreen (void)
 			return;
 		}
 	}
+	// Don't suck up any cpu if minimized.
 
-	#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
-	{	
-		// Don't suck up any cpu if minimized.
-		extern int Minimized;
-
-		if (Minimized) {
-			SCR_RenderFrameEnd();
-			return;
-		}
+	if (Minimized) {
+		SCR_RenderFrameEnd();
+		return;
 	}
-	#endif // _WIN32 or __linux__ or __FreeBSD__
 
 	vid.numpages = 2 + gl_triplebuffer.value;
 
@@ -3736,6 +3731,7 @@ void SCR_UpdateScreen (void)
 
 void SCR_UpdateScreen (void) 
 {
+	extern qbool Minimized;
 	vrect_t vrect;
 
 	if (!scr_initialized)
@@ -3751,14 +3747,10 @@ void SCR_UpdateScreen (void)
 			return;
 	}
 
-#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
-	{	// don't suck up any cpu if minimized
-		extern int Minimized;
+	// don't suck up any cpu if minimized
 
-		if (Minimized)
-			return;
-	}
-#endif
+	if (Minimized)
+		return;
 
 	scr_copytop = 0;
 	scr_copyeverything = 0;

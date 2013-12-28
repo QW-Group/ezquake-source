@@ -31,15 +31,13 @@
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
+#include "gl_local.h"
 #else
 #include <GL/gl.h>
 #endif
 
 #include "ezquake-icon.c"
 #include "keys.h"
-#ifdef __APPLE__
-#include "gl_local.h"
-#endif
 #include "tr_types.h"
 #include "input.h"
 #include "rulesets.h"
@@ -424,11 +422,7 @@ void GLimp_Shutdown(void)
 		sdl_window = NULL;
 	}
 
-	/*if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_VIDEO) {
-		SDL_Quit();
-	} else */{
-		SDL_QuitSubSystem(SDL_INIT_VIDEO);
-	}
+	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
 	memset(&glConfig, 0, sizeof(glConfig));
 }
