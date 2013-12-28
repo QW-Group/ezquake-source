@@ -7278,7 +7278,6 @@ void CommonDraw_Init(void)
         "show_min", "0",
 		"style",	"0",
         "title",    "1",
-		"decimals", "0",
 		"drop", "70",
         NULL);
 
