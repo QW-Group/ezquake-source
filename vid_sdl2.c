@@ -422,7 +422,8 @@ void GLimp_Shutdown(void)
 		sdl_window = NULL;
 	}
 
-	SDL_QuitSubSystem(SDL_INIT_VIDEO);
+	if (SDL_WasInit(SDL_INIT_VIDEO) != 0)
+		SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
 	memset(&glConfig, 0, sizeof(glConfig));
 }
