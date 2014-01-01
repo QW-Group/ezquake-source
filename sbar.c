@@ -1294,10 +1294,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 			c = Sbar_ColorForMap(bottom);
 		}
 
-		if (S_Voip_Speaking(k))
-			background = RGBA_TO_COLOR(0, 255, 0, (byte)(alpha * 255));
-		else
-			background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(alpha * 255));
+		background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(alpha * 255));
 
 		Draw_AlphaFillRGB (xofs, y, rank_width, skip, background);
 #endif

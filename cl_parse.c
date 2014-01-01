@@ -1598,10 +1598,6 @@ void CL_ParseServerData (void)
 
 	// now waiting for downloads, etc
 	cls.state = ca_onserver;
-
-#ifdef FTE_PEXT2_VOICECHAT
-	S_Voip_MapChange();
-#endif
 }
 
 void CL_ParseSoundlist (void)
@@ -2149,9 +2145,6 @@ static void CL_PEXT_Fix(void)
 #ifdef PROTOCOL_VERSION_FTE2
 		{
 			unsigned int ext = 0;
-#ifdef FTE_PEXT2_VOICECHAT
-			ext |= FTE_PEXT2_VOICECHAT;
-#endif
 			cls.fteprotocolextensions2 &= ext;
 		}
 #endif // PROTOCOL_VERSION_FTE2
@@ -3455,14 +3448,6 @@ void CL_ParseServerMessage (void)
 				break;
 			}
 
-#ifdef FTE_PEXT2_VOICECHAT
-			case svc_fte_voicechat:
-			{
-				S_Voip_Parse();
-				break;
-			}
-#endif
-
 			case svc_updatefrags:
 			{
 				Sbar_Changed();
@@ -3725,9 +3710,6 @@ void CL_ParseServerMessage (void)
 
 		if (cls.demorecording)
 		{
-#ifdef FTE_PEXT2_VOICECHAT
-			extern cvar_t cl_voip_demorecord;
-#endif
 			// Init the demo message buffer if it hasn't been done.
 			if (!cls.demomessage.cursize)
 			{
@@ -3742,12 +3724,6 @@ void CL_ParseServerMessage (void)
 			else if (cmd == svc_download) {
 				// there's no point in writing it to the demo
 			}
-#ifdef FTE_PEXT2_VOICECHAT
-			else if(cmd == svc_fte_voicechat && !cl_voip_demorecord.integer)
-			{
-				// user does not want it to be recorded
-			}
-#endif
 			else if (cmd == svc_serverdata)
 				CL_WriteServerdata(&cls.demomessage);
 			else

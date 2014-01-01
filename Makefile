@@ -298,13 +298,6 @@ else
     LIBS_c += -lGL -lm -ldl
 endif
 
-ifdef CONFIG_SPEEX
-    SPEEX_CFLAGS ?= $(shell pkg-config speex --cflags) -DWITH_SPEEX
-    SPEEX_LIBS ?= $(shell pkg-config speex --libs)
-    CFLAGS_c += $(SPEEX_CFLAGS)
-    LIBS_c += $(SPEEX_LIBS)
-endif
-
 ifdef CONFIG_OGG
     OGG_CFLAGS ?= $(shell pkg-config vorbisfile --cflags) -DWITH_OGG_VORBIS
     OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)

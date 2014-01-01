@@ -418,10 +418,6 @@ void CL_WriteServerdata (sizebuf_t *msg)
 
 	// Maintain demo pseudo-compatibility,
 	ignore_extensions = 0;
-#ifdef FTE_PEXT2_VOICECHAT
-	// not really OK, if you receive voice packet then this demo will not be playable by older clients anyway.
-	ignore_extensions |= FTE_PEXT2_VOICECHAT;
-#endif
 
 	#ifdef PROTOCOL_VERSION_FTE2
 	if (cls.fteprotocolextensions2 & ~ignore_extensions)
@@ -2328,11 +2324,7 @@ void CL_Record_f (void)
 		return;
 	}
 
-	if (	(cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)) // that OK.
-#ifdef FTE_PEXT2_VOICECHAT
-		||  (cls.fteprotocolextensions2 & ~FTE_PEXT2_VOICECHAT) // that not OK since if you receive VOIP packet demo will be non compatible, but this warning is annoying.
-#endif
-	)
+	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)
 	{
 		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo most likely will be unplayable in older clients. "
 			"Use cl_pext 0 for 100%% compatible demos. But do NOT forget set it to 1 later or you will lack useful features!\n");

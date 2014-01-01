@@ -1342,10 +1342,6 @@ static void SVC_DirectConnect (void)
 	newcl->logincount = 0;
 	//<-
 
-#ifdef FTE_PEXT2_VOICECHAT
-	SV_VoiceInitClient(newcl);
-#endif
-
 	// call the progs to get default spawn parms for the new client
 #ifdef USE_PR2
 	if ( sv_vm )
@@ -3412,10 +3408,6 @@ void SV_InitLocal (void)
 #endif
 #ifdef FTE_PEXT_FLOATCOORDS
 	svs.fteprotocolextensions |= FTE_PEXT_FLOATCOORDS;
-#endif
-
-#ifdef FTE_PEXT2_VOICECHAT
-	svs.fteprotocolextensions2 |= FTE_PEXT2_VOICECHAT;
 #endif
 
 //	Info_SetValueForStarKey (svs.info, "*qwe_version", QWE_VERSION, MAX_SERVERINFO_STRING);

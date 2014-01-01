@@ -33,11 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"		// PM_FLY etc
 #include "rulesets.h"
 
-#ifdef FTE_PEXT2_VOICECHAT
-#include "qsound.h"
-#endif
-
-
 cvar_t	cl_nodelta = {"cl_nodelta","0"};
 cvar_t	cl_c2spps = {"cl_c2spps","0"};
 cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
@@ -1050,10 +1045,6 @@ void CL_SendCmd (void)
 		pps_balance = 0;
 		dropcount = 0;
 	}
-
-#ifdef FTE_PEXT2_VOICECHAT
-	S_Voip_Transmit(clc_voicechat, &buf);
-#endif
 
 	cl.frames[cls.netchan.outgoing_sequence&UPDATE_MASK].sentsize = buf.cursize + 8;    // 8 = PACKET_HEADER
 	// network stats table

@@ -97,10 +97,6 @@ cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
 cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "5"};
 #endif
 
-#ifdef FTE_PEXT2_VOICECHAT
-cvar_t  cl_pext_voicechat  = {"cl_pext_voicechat", "1"};
-#endif
-
 #ifdef FTE_PEXT_FLOATCOORDS
 cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
 #endif
@@ -636,11 +632,6 @@ unsigned int CL_SupportedFTEExtensions2 (void)
 
 	if (!cl_pext.value)
 		return 0;
-
-#ifdef FTE_PEXT2_VOICECHAT
-	if (cl_pext_voicechat.value)
-		fteprotextsupported2 |= FTE_PEXT2_VOICECHAT;
-#endif
 
 	return fteprotextsupported2;
 }
@@ -1926,10 +1917,6 @@ void CL_InitLocal (void)
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	Cvar_Register (&cl_pext_chunkeddownloads);
 	Cvar_Register (&cl_chunksperframe);
-#endif
-
-#ifdef FTE_PEXT2_VOICECHAT
-	Cvar_Register (&cl_pext_voicechat);
 #endif
 
 #ifdef FTE_PEXT_FLOATCOORDS
