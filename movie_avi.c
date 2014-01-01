@@ -27,10 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <mmsystem.h>
 #include "movie_avi.h"
 #include "qsound.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#endif
 
 #ifndef ACMAPI // mingw hax
 #define ACMAPI WINAPI
@@ -259,21 +257,12 @@ qbool Capture_Open (char *filename)
 	}
 
 	// initialize video data
-#ifdef GLQUAKE
 	m_video_frame_size = glwidth * glheight * 3;
-#else
-	m_video_frame_size = vid.width * vid.height * 3;
-#endif
 
 	memset (&bitmap_info_header, 0, sizeof(bitmap_info_header));
 	bitmap_info_header.biSize = sizeof(BITMAPINFOHEADER);
-#ifdef GLQUAKE
 	bitmap_info_header.biWidth = glwidth;
 	bitmap_info_header.biHeight = glheight;
-#else
-	bitmap_info_header.biWidth = vid.width;
-	bitmap_info_header.biHeight = vid.height;
-#endif
 	bitmap_info_header.biPlanes = 1;
 	bitmap_info_header.biBitCount = 24;
 	bitmap_info_header.biCompression = BI_RGB;

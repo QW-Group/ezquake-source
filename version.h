@@ -61,13 +61,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QW_PLATFORM			"Unknown"
 #endif
 
-
-#ifdef GLQUAKE
 #define QW_RENDERER			"GL"
-#else
-#define QW_RENDERER			"Soft"
-#endif
-
 
 #ifdef _DEBUG
 #define QW_CONFIGURATION	"Debug"

@@ -24,14 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "movie.h"
 #include "menu_demo.h"
 #include "qtv.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "pmove.h"
 #include "fs.h"
@@ -3159,15 +3154,12 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	time_t t = time(&t);
 	struct tm *ptm = localtime(&t);
 	int width = 0, height = 0; 
-	#ifdef GLQUAKE
 	#ifndef __APPLE__
 	float asp = 0;
 	extern cvar_t r_mode;
 
 	R_GetModeInfo(&width, &height, &asp, r_mode.integer);
 	#endif // __APPLE__
-	#endif // GLQUAKE
-
 
 	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
 	f = fopen(logfile, "a");

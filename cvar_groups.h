@@ -47,13 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_GROUP_SOUND					"Sound Settings"
 #define CVAR_GROUP_VIDEO					"Video Settings"
 #define CVAR_GROUP_SYSTEM_SETTINGS 			"System Settings"
-
-#ifdef GLQUAKE
 #define CVAR_GROUP_OPENGL					"OpenGL Rendering"
-#else
-#define CVAR_GROUP_SOFTWARE					"Software Rendering"
-#endif
-
 #define CVAR_GROUP_TEXTURES					"Texture Settings"
 #define CVAR_GROUP_VIEWMODEL				"Weapon View Model Settings"
 #define CVAR_GROUP_TURB						"Turbulency and Sky Settings"
@@ -102,11 +96,7 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SOUND,
 	CVAR_GROUP_VIDEO,
 	CVAR_GROUP_SYSTEM_SETTINGS,
-#ifdef GLQUAKE
 	CVAR_GROUP_OPENGL,
-#else
-	CVAR_GROUP_SOFTWARE,
-#endif
 	CVAR_GROUP_CONFIG,
 	CVAR_GROUP_TEXTURES,
 	CVAR_GROUP_VIEWMODEL,

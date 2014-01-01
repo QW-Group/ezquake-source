@@ -27,14 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "image.h"
 #include "stats_grid.h"
 #include "vx_stuff.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "rulesets.h"
 #include "utils.h"
 #include "sbar.h"
@@ -430,11 +425,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 				"t", cl.teamplay ? cl.players[tracked[view]].team : "");	// Replace %t with player team if teamplay is on.
 
 			// Set the width.
-#ifdef GLQUAKE
 			new_width = 8 * strlen_color(tracked_strings[view]);
-#else
-			new_width = 8 * strlen(tracked_strings[view]);
-#endif
 			width = (new_width > width) ? new_width : width;
 		}
 	}
@@ -444,11 +435,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 		Replace_In_String(track_string, sizeof(track_string), '%', 2,
 			"n", cl.players[spec_track].name,						// Replace %n with player name.
 			"t", cl.teamplay ? cl.players[spec_track].team : "");	// Replace %t with player team if teamplay is on.
-#ifdef GLQUAKE
 		width = 8 * strlen_color(track_string);
-#else
-		width = 8 * strlen(track_string);
-#endif
 	}
 
 	height = 8 * views;
@@ -889,8 +876,6 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 	}
 }
 
-#ifdef GLQUAKE
-
 #define	HUD_SPEED2_ORIENTATION_UP		0
 #define	HUD_SPEED2_ORIENTATION_DOWN		1
 #define	HUD_SPEED2_ORIENTATION_RIGHT	2
@@ -1152,8 +1137,6 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		Draw_String (text_x, text_y, va("%d", player_speed));
 	}
 }
-
-#endif
 
 // =======================================================
 //
@@ -2002,7 +1985,6 @@ void SCR_HUD_DrawArmor(hud_t *hud)
         scale->value, style->value, digits->value, align->string);
 }
 
-#ifdef GLQUAKE
 void Draw_AMFStatLoss (int stat, hud_t* hud);
 void SCR_HUD_DrawHealthDamage(hud_t *hud)
 {
@@ -2019,7 +2001,6 @@ void SCR_HUD_DrawArmorDamage(hud_t *hud)
 	// TODO: NAUGHTY!! HUD_PrepareDraw(hud, width, height, &x, &y); plz
 	Draw_AMFStatLoss (STAT_ARMOR, hud);
 }
-#endif
 
 void SCR_HUD_DrawAmmo(hud_t *hud, int num,
                       float scale, int style, int digits, char *s_align)
@@ -2996,16 +2977,7 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 		if(style != TEAMFRAGS_EXTRA_SPEC_NOICON && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
 			y_pos = Q_rint(py + (height / 2.0) - (rl_picture.height / 2.0));
-
-			#ifdef GLQUAKE
 			Draw_SSubPic (px, y_pos, &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
-			#else
-			// mpic_t is defined differently for software, so we can't use rl_picture here.
-			{
-				extern mpic_t *sb_weapons[7][8];
-				Draw_SSubPic (px, y_pos, sb_weapons[0][5], 0, 0, sb_weapons[0][5]->width, sb_weapons[0][5]->height, 1);
-			}
-			#endif
 			px += rl_picture.width + 1;
 		}
 
@@ -3136,20 +3108,12 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	{
 		if(!hud_frags_textonly)
 		{
-			#ifdef GLQUAKE
 			// Draw the rl-pic.
 			Draw_SSubPic (px,
 				py + Q_rint((cell_height/2.0)) - (rl_picture->height/2.0),
 				rl_picture, 0, 0,
 				rl_picture->width,
 				rl_picture->height, 1);
-			#else
-			Draw_SSubPic (px,
-				py + Q_rint((cell_height/2.0)) - (rl_picture->height/2.0),
-				rl_picture, 0, 0,
-				rl_picture->width,
-				rl_picture->height, 1);
-			#endif
 		}
 		else
 		{
@@ -4264,7 +4228,6 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 }
 
 #ifdef WITH_PNG
-#ifdef GLQUAKE
 
 // Map picture to draw for the mapoverview hud control.
 mpic_t radar_pic;
@@ -4371,7 +4334,6 @@ void HUD_NewRadarMap()
 	// Free the path string to the radar png.
 	Q_free (radar_filename);
 }
-#endif // OPENGL
 #endif // WITH_PNG
 
 #define TEMPHUD_NAME "_temphud"
@@ -4476,9 +4438,9 @@ void OnAutoHudChange(cvar_t *var, char *value, qbool *cancel) {
 
 // Is run when a new map is loaded.
 void HUD_NewMap() {
-#if defined(WITH_PNG) && defined(GLQUAKE)
+#if defined(WITH_PNG)
 	HUD_NewRadarMap();
-#endif // WITH_PNG & GLQUAKE
+#endif // WITH_PNG
 
 	autohud_loaded = false;
 }
@@ -5871,11 +5833,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 		// Small
 		case 0:
 		default:
-#ifdef GLQUAKE
 			width = 8 * strlen_color(buf) * scale->value;
-#else
-			width = 8 * strlen(buf) * scale->value;
-#endif
 			height = 8 * scale->value;
 
 			if(HUD_PrepareDraw(hud, width, height, &x, &y))
@@ -6067,9 +6025,6 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	Draw_SString(x, y, line1, scale);
 	Draw_SString(x, y + LETTERHEIGHT*scale, line2, scale);
 }
-
-#ifdef GLQUAKE
-
 
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
@@ -7192,7 +7147,6 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	}
 }
 
-#endif // GLQUAKE
 #endif // WITH_PNG
 
 //
@@ -7357,9 +7311,8 @@ void CommonDraw_Init(void)
 		"style", "0",
 		NULL);
 
-#ifdef GLQUAKE
-	// Init speed2 (half circle thingie).
-	HUD_Register("speed2", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
+    // Init speed2 (half circle thingie).
+    HUD_Register("speed2", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed2,
         "0", "top", "center", "bottom", "0", "0", "0", "0 0 0", NULL,
         "xyz",  "0",
@@ -7373,7 +7326,6 @@ void CommonDraw_Init(void)
 		"wrapspeed", "500",
 		"orientation", "0",
 		NULL);
-#endif
 
     // init guns
     HUD_Register("gun", NULL, "Part of your inventory - current weapon.",
@@ -7708,8 +7660,7 @@ void CommonDraw_Init(void)
         "pic_scalemode", "0",
         NULL);
 
-#ifdef GLQUAKE
-	// healthdamage
+    // healthdamage
     HUD_Register("healthdamage", NULL, "Shows amount of damage done to your health.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealthDamage,
         "0", "health", "left", "before", "0", "0", "0", "0 0 0", NULL,
@@ -7730,7 +7681,6 @@ void CommonDraw_Init(void)
         "digits", "3",
 		"duration", "0.8",
         NULL);
-#endif
 
     HUD_Register("frags", NULL, "Show list of player frags in short form.",
         0, ca_active, 0, SCR_HUD_DrawFrags,
@@ -7815,8 +7765,6 @@ void CommonDraw_Init(void)
         NULL);
 
 #ifdef WITH_PNG
-#ifdef GLQUAKE
-
 	HUD_Register("radar", NULL, "Plots the players on a picture of the map. (Only when watching MVD's or QTV).",
         HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawRadar,
         "0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
@@ -7838,7 +7786,6 @@ void CommonDraw_Init(void)
 		"otherfilter", "projectiles gibs explosions shotgun",
 		"onlytp", "0",
         NULL);
-#endif // GLQUAKE
 #endif // WITH_PNG
 
 	HUD_Register("teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
@@ -7939,11 +7886,7 @@ void CommonDraw_Init(void)
         "0", "screen", "center", "console", "0", "0", "0.5", "0 0 0", NULL,
         "style", "0",
         "scale", "1",
-#ifdef GLQUAKE
 		"format_small", "&c69f%T&r:%t &cf10%E&r:%e $[%D$]",
-#else
-		"format_small", "%T:%t %E:%e $[%D$]",
-#endif
 		"format_big", "%t:%e:%Z",
 
         NULL
@@ -7978,7 +7921,6 @@ void CommonDraw_Init(void)
 		);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
-#ifdef GLQUAKE
 #ifdef _DEBUG
     HUD_Register("framegraph", NULL, "Shows different frame times for debug/profiling purposes.",
         HUD_PLUSMINUS | HUD_ON_SCORES, ca_disconnected, 0, SCR_HUD_DrawFrameGraph,
@@ -7990,7 +7932,6 @@ void CommonDraw_Init(void)
         "height",       "64",
         "alpha",        "1",
         NULL);
-#endif
 #endif
 */
 

@@ -24,10 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Ctrl.h"
 #include "Ctrl_Tab.h"
 #include "menu.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#endif
 #include "menu_multiplayer.h"
 
 #define BROWSERPADDING 4
@@ -35,13 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 CTab_t sb_tab;
 
 extern cvar_t scr_scaleMenu;
-#ifdef GLQUAKE
 extern int menuwidth;
 extern int menuheight;
-#else
-#define menuwidth vid.width
-#define menuheight vid.height
-#endif
 
 const char* sb_showproxies_labels[] = { "hide", "show", "exclusively" };
 

@@ -80,21 +80,12 @@ void VID_NotifyActivity(void);
 
 void VID_SetCaption (char *text);
 
-#ifdef GLQUAKE
 void VID_SetDeviceGammaRamp (unsigned short *ramps);
 extern qbool vid_hwgamma_enabled;
-#endif
 
-// QW262 -->
-#ifdef GLQUAKE
 // these macros map "window" coordinates into "console"
 #define VID_ConsoleX(x) ((x) * vid.conwidth / glwidth)
 #define VID_ConsoleY(y) ((y) * vid.conheight / glheight)
-#else // !GLQUAKE
-int VID_ConsoleX (int x);
-int VID_ConsoleY (int y);
-#endif
-// <-- QW262
 
 void VID_Minimize();
 void VID_Restore();

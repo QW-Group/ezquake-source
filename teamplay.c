@@ -24,13 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <limits.h>
 #include "quakedef.h"
 #include "ignore.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "rulesets.h"
 #include "pmove.h"
@@ -2325,14 +2320,12 @@ char *TP_MapName(void)
 	return host_mapname.string;
 }
 
-#ifdef GLQUAKE
 char *MT_GetSkyGroupName(char *mapname, qbool *system);
 
 char *TP_GetSkyGroupName(char *mapname, qbool *system)
 {
 	return MT_GetSkyGroupName(mapname, system);
 }
-#endif
 
 char *MT_GetMapGroupName(char *mapname, qbool *system);
 

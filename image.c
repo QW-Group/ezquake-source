@@ -45,8 +45,6 @@ cvar_t image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};
 
 /***************************** IMAGE RESAMPLING ******************************/
 
-#ifdef GLQUAKE
-
 static void Image_Resample32LerpLine (byte *in, byte *out, int inwidth, int outwidth) 
 {
 	int j, xi, oldx = 0, f, fstep, endx, lerp;
@@ -503,8 +501,6 @@ void Image_MipReduce (const byte *in, byte *out, int *width, int *height, int bp
 	}
 }
 
-#endif
-
 /************************************ PNG ************************************/
 #ifdef WITH_PNG
 
@@ -840,15 +836,9 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 }
 
 int Image_WritePNGPLTE (char *filename, int compression,
-#ifdef GLQUAKE
 	byte *pixels, int width, int height, byte *palette)
-#else
-	byte *pixels, int width, int height, int rowbytes, byte *palette)
-#endif
 {
-#ifdef GLQUAKE
 	int rowbytes = width;
-#endif
 	int i;
 	char name[MAX_PATH];
 	vfsfile_t *fp;
@@ -1085,31 +1075,6 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 			png_set_strip_16(png_ptr);
 		}
 
-		// 
-		// Dither the image using the 8-bit quake pallete for software.
-		// 
-		#ifndef GLQUAKE
-		if (image_png_dither_onload.integer)
-		{
-			png_uint_16p histogram;
-			png_colorp quake_pal = (png_colorp)host_basepal;
-			png_color_16 bg;
-			
-			// Set the background color to the transparent quake color.
-			bg.red		= host_basepal[(255 * 3)];
-			bg.green	= host_basepal[(255 * 3) + 1];
-			bg.blue		= host_basepal[(255 * 3) + 2];
-
-			png_set_background(png_ptr, &bg, PNG_BACKGROUND_GAMMA_SCREEN, 0, 1.0);
-
-			// Check if the image contains a histogram, use it in that case.
-			if (!png_get_hIST(png_ptr, pnginfo, &histogram))
-				histogram = NULL;
-
-			png_set_dither(png_ptr, quake_pal, 256, 256, histogram, true);
-		}
-		#endif // !GLQUAKE
-
 		// Update the pnginfo structure with our transformation changes.
 		png_read_update_info(png_ptr, pnginfo);
 	}
@@ -1208,25 +1173,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 
 	// Gather up the return data.
 	png_return_val = (png_data *)Q_malloc(sizeof(png_data));	
-
-	#ifndef GLQUAKE
-	if (!image_png_dither_onload.integer)
-	{
-		// SOFTWARE - Convert to the 8-bit quake palette by taking the nearest color.
-
-		byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int height, qbool dither);
-		byte *data_8bit = Draw_Convert24bitTo8bit(data, 4, width, height, false);
-		Q_free(data);
-
-		png_return_val->data = data_8bit;
-	}
-	else
-	#endif // !GLQUAKE
-	{
-		// If in GLQuake or dithering is turned on when in software
-		// pnglib has done the palette conversion for us already.
-		png_return_val->data = data;
-	}
+	png_return_val->data = data;
 	png_return_val->textchunks = textchunks;
 	png_return_val->text_count = n_textcount;
 
@@ -1330,15 +1277,9 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 }
 
 int Image_WritePNGPLTE (char *filename, int compression,
-#ifdef GLQUAKE
 	byte *pixels, int width, int height, byte *palette)
-#else // SOFTWARE
-	byte *pixels, int width, int height, int rowbytes, byte *palette)
-#endif // GLQUAKE
 {
-	#ifdef GLQUAKE
 	int rowbytes = width;
-	#endif // GLQUAKE
 
 	int i;
 	char name[MAX_PATH];
@@ -2357,8 +2298,6 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	return data;
 }
 
-#ifdef GLQUAKE
-
 // This does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture.
 byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 {
@@ -2387,17 +2326,9 @@ byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, char *filename, int matchwidth, int
 	return (byte*) out;
 }
 
-#endif
-
-#ifdef GLQUAKE
 int Image_WritePCX (char *filename, byte *data, int width, int height, byte *palette)
-#else // SOFTWARE
-int Image_WritePCX (char *filename, byte *data, int width, int height, int rowbytes, byte *palette)
-#endif // GLQUAKE
 {
-	#ifdef GLQUAKE
 	int rowbytes = width;
-	#endif // GLQUAKE
 	
 	int i, j, length;
 	byte *pack;
@@ -2459,11 +2390,6 @@ void Image_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
 
-	// Software.
-	#ifndef GLQUAKE
-	Cvar_Register (&image_png_dither_onload);
-	#endif // !GLQUAKE
-	
 	#ifdef WITH_PNG
 	#ifndef WITH_PNG_STATIC
 	if (PNG_LoadLibrary())

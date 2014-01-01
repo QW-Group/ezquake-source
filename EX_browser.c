@@ -18,10 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "fs.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#endif
 #ifndef _WIN32
 #include <netinet/in.h>
 #include <unistd.h>

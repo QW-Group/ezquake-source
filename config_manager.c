@@ -34,10 +34,7 @@ char *Key_KeynumToString (int keynum, char *buffer);
 char *Key_KeynumToString (int keynum);
 #endif
 
-#ifdef GLQUAKE
 void DumpSkyGroups(FILE *f);
-#endif
-
 qbool Key_IsLeftRightSameBind(int b);
 void DumpMapGroups(FILE *f);
 void TP_DumpTriggers(FILE *);
@@ -462,10 +459,8 @@ void DumpMisc(FILE *f)
 	DumpMapGroups(f);
 	fprintf(f, "\n");
 
-#ifdef GLQUAKE
 	DumpSkyGroups(f);
 	fprintf(f, "\n");
-#endif
 
 	DumpFloodProtSettings(f);
 	fprintf(f, "\n");
@@ -514,9 +509,7 @@ void DumpHUD262(FILE *f)
 
 		mask = (elem->flags & HUD_BLINK_F) ? 1 : 0 + (elem->flags & HUD_BLINK_B) ? 2 : 0;
 		fprintf(f, "hud262_add %s %s %s\n", elem->name, type, param);
-#ifdef GLQUAKE
 		fprintf(f, "hud262_alpha %s %1.2f\n", elem->name, elem->alpha);
-#endif		
 		fprintf(f, "hud262_bg %s %d\n", elem->name, elem->coords[3]);
 		fprintf(f, "hud262_blink %s %d %d\n", elem->name, (int) ceil(elem->blink * 1000.0), mask);
 		fprintf(f, "hud262_%s %s\n", (elem->flags & HUD_ENABLED) ? "enable" : "disable", elem->name);
@@ -669,10 +662,7 @@ static void ResetTeamplayCommands(void)
 static void ResetMiscCommands(void)
 {
 	Cbuf_AddText("mapgroup clear\n");
-
-#ifdef GLQUAKE
 	Cbuf_AddText("skygroup clear\n");
-#endif
 
 	MarkDefaultSources();
 
@@ -1093,13 +1083,10 @@ void Config_TroubleShoot_Tip(const char* problem, const char* description,
 void Config_TroubleShoot_f(void)
 {
 	unsigned problems = 0;
-#ifdef GLQUAKE
 	extern cvar_t r_novis, r_swapInterval;
-#endif
 	extern cvar_t m_filter, sys_yieldcpu, cl_maxfps, hud_planmode;
 	extern cvar_t in_raw;
 
-#ifdef GLQUAKE
 	if (r_novis.value) {
 		Config_TroubleShoot_Tip("r_novis is enabled",
 			"r_novis causes a major performance hit, it's only useful if you need transparent liquids "
@@ -1107,7 +1094,7 @@ void Config_TroubleShoot_f(void)
 			"set r_novis to 0", 1);
 		problems++;
 	}
-#endif
+
 	if (m_filter.value) {
 		Config_TroubleShoot_Tip("m_filter is enabled",
 			"m_filter causes a serious delay in processing of the mouse input data",
@@ -1115,7 +1102,6 @@ void Config_TroubleShoot_f(void)
 		problems++;
 	}
 
-#ifdef GLQUAKE
 	if (cl_maxfps.integer == 0 && sys_yieldcpu.value == 0 && r_swapInterval.value == 0) {
 		Config_TroubleShoot_Tip("cl_maxfps, sys_yieldcpu, and vid_vsync are all 0",
 			"unlimited FPS with CPU yielding disabled typically leads to interruptions "
@@ -1123,7 +1109,7 @@ void Config_TroubleShoot_f(void)
 			"either set sys_yieldcpu 1, vid_vsync 1, or or limit your FPS with cl_maxfps", 1);
 		problems++;
 	}
-#else
+
 	if (cl_maxfps.integer == 0 && sys_yieldcpu.value == 0) {
 		Config_TroubleShoot_Tip("cl_maxfps and sys_yieldcpu are 0",
 			"unlimited FPS with CPU yielding disabled typically leads to interruptions "
@@ -1131,7 +1117,6 @@ void Config_TroubleShoot_f(void)
 			"either set sys_yieldcpu 1 or or limit your FPS with cl_maxfps", 1);
 		problems++;
 	}
-#endif
 
 	if (in_raw.integer != 1) {
 		Config_TroubleShoot_Tip("in_raw is not set to 1",

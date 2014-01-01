@@ -32,14 +32,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #if defined (__linux__) || defined (__FreeBSD__)
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #endif
 
 #include "hud.h"
@@ -2250,7 +2245,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		return;
 	}
 
-	#if (defined (__linux__) || defined (__FreeBSD__)) && defined(GLQUAKE)
+	#if (defined (__linux__) || defined (__FreeBSD__))
 	// switch windowed<->fullscreen if pressed alt+enter, I succeed only with left alt, dunno why...
 	if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
 	{
@@ -2262,7 +2257,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		con_suppress = false;
 		return;
 	}
-	#endif // (__linux__ or __FreeBSD__) and GLQUAKE
+	#endif // (__linux__ or __FreeBSD__)
 
 	// if not a consolekey, send to the interpreter no matter what mode is
 	if (!Key_ConsoleKey(key)) 

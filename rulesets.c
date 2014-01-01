@@ -20,14 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
-
 
 static void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel);
 
@@ -168,9 +162,6 @@ static void Rulesets_Smackdown (qbool enable)
 	extern cvar_t r_shiftbeam;
 	extern cvar_t allow_scripts;
 	extern cvar_t cl_iDrive;
-#ifndef GLQUAKE
-	extern cvar_t r_aliasstats;
-#endif
 	int i;
 
 	locked_cvar_t disabled_cvars[] = {
@@ -178,10 +169,7 @@ static void Rulesets_Smackdown (qbool enable)
 		{&cl_iDrive, "0"},          // disable strafing aid
 		{&cl_hud, "0"},				// allows you place any text on the screen & filter incoming messages (hud strings)
 		{&cl_rollalpha, "20"},		// allows you to not dodge while seeing enemies dodging
-		{&r_shiftbeam, "0"},		// perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
-#ifndef GLQUAKE
-		{&r_aliasstats, "0"}
-#endif
+		{&r_shiftbeam, "0"}		// perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
 	};
 	
 	if (enable) {
@@ -224,27 +212,22 @@ block all other ways to made textures flat(simple)
 ?disable external textures for detpacks, grenades, sentry, disp, etc?
 */
 	extern cvar_t cl_c2spps, r_fullbrightSkins;
-#ifdef GLQUAKE
 	extern cvar_t amf_detpacklights;
 	extern cvar_t gl_picmip, gl_max_size, r_drawflat;
 	extern cvar_t vid_hwgammacontrol;
 	extern cvar_t gl_textureless;
-#endif
 
 	int i = 0;
 
 	locked_cvar_t disabled_cvars[] = {
-#ifdef GLQUAKE
 		{&r_drawflat, "0"},
 		{&amf_detpacklights, "0"},
 		{&vid_hwgammacontrol, "2"},
 		{&gl_textureless, "0"},
-#endif
 		{&r_fullbrightSkins, "0"},
 		{&cl_c2spps, "0"},
 	};
 
-#ifdef GLQUAKE
 	limited_cvar_max_t limited_max_cvars[] = {
 		{&gl_picmip, "3"},
 	};
@@ -252,7 +235,6 @@ block all other ways to made textures flat(simple)
 	limited_cvar_min_t limited_min_cvars[] = {
 		{&gl_max_size, "512"},
 	};
-#endif
 
 	if (enable) {
 		for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
@@ -261,7 +243,6 @@ block all other ways to made textures flat(simple)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 		}
 
-#ifdef GLQUAKE
 		for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++) {
 			Cvar_RulesetSet(limited_max_cvars[i].var, limited_max_cvars[i].maxrulesetvalue, 1);
 			Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) | CVAR_RULESET_MAX);
@@ -271,19 +252,18 @@ block all other ways to made textures flat(simple)
 			Cvar_RulesetSet(limited_min_cvars[i].var, limited_min_cvars[i].minrulesetvalue, 0);
 			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) | CVAR_RULESET_MIN);
 		}
-#endif
 
 	rulesetDef.ruleset = rs_mtfl;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
-#ifdef GLQUAKE
+
 		for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++)
 			Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) & ~CVAR_RULESET_MAX);
 
 		for (i = 0; i < (sizeof(limited_min_cvars) / sizeof(limited_min_cvars[0])); i++)
 			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) & ~CVAR_RULESET_MIN);
-#endif
+
 		rulesetDef.ruleset = rs_default;
 	}
 }

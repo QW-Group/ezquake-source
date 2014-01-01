@@ -47,11 +47,9 @@ typedef struct
 	char			name[16];
 	qbool			failedload;		// the name isn't a valid skin
 	qbool			warned;			// warning about falied to load was alredy printed
-#ifdef GLQUAKE
 	int				width, height;	// this is valid for pcx too, but used for 32bit skins only
 	int				bpp;			// used in gl,  bpp = 1 for pcx and 4 for 32bit skins
 	int				texnum;			// texture num, used for 32bit skins, speed up
-#endif // GLQUAKE
 	cache_user_t	cache;
 } skin_t;
 
@@ -235,9 +233,7 @@ typedef struct {
 	float			minlight;			// don't add when contributing less
 	int				bubble;				// non zero means no flashblend bubble
 	dlighttype_t	type;
-#ifdef GLQUAKE
 	byte			color[3];			// use such color if type == lt_custom
-#endif
 } dlight_t;
 
 typedef struct customlight_s {
@@ -598,11 +594,7 @@ typedef struct visentlist_s {
 	int			alpha;
 } visentlist_t;
 
-#ifdef GLQUAKE
 extern visentlist_t cl_firstpassents, cl_visents, cl_alphaents;
-#else
-extern visentlist_t cl_visents, cl_visbents;
-#endif
 
 // ezQuake cvars
 extern cvar_t cl_floodprot;

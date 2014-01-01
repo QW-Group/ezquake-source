@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #ifdef GLSL
@@ -35,7 +34,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__)
 #include "tr_types.h"
 #endif // _WIN32 || __linux__ || __FreeBSD__
-#endif
 
 glconfig_t	glConfig;
 //glstate_t	glState;

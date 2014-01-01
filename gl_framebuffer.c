@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+#if defined(FRAMEBUFFERS)
 
 // Loads and does all the framebuffer stuff
 #include "quakedef.h"
@@ -312,5 +312,5 @@ void Framebuffer_Draw (fb_t *fbs)
 	
 	glEnd();
 }
-#endif // FRAMEBUFFERS & GLQUAKE
+#endif // FRAMEBUFFERS
 

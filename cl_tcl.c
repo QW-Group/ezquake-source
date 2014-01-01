@@ -28,13 +28,8 @@
 #endif
 #include "quakedef.h"
 #include "embed_tcl.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "rulesets.h"
 

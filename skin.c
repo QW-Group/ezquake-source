@@ -20,13 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "image.h"
 #include "qtv.h"
@@ -213,7 +208,6 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_wi
 
 	*max_w = *max_h = *bpp = 0;
 
-#ifdef GLQUAKE
 	// PCX skins loads different, so using TEX_NO_PCX
 	if ((pic = GL_LoadImagePixels (name, 0, 0, TEX_NO_PCX, real_width, real_height))) {
 		// No limit in gl.
@@ -223,7 +217,6 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_wi
 
 		return pic;
 	}
-#endif // GLQUAKE
 
 	if ((pic = Image_LoadPCX (NULL, name, 0, 0, real_width, real_height))) 
 	{
@@ -237,8 +230,6 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_wi
 
 	return NULL;
 }
-
-#ifdef GLQUAKE
 
 qbool skins_need_preache = true;
 
@@ -286,8 +277,6 @@ void Skins_PreCache(void)
 		Com_DPrintf("skin precache: %s, texnum %d\n", skins[i].name, skins[i].texnum);
 	}
 }
-
-#endif
 
 // Returns a pointer to the skin bitmap, or NULL to use the default
 byte *Skin_Cache (skin_t *skin, qbool no_baseskin) 
@@ -349,7 +338,6 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin)
 	}
 
 	Q_free (pic);
-#ifdef GLQUAKE
 	skin->bpp 	 = bpp;
 	skin->width	 = real_width;
 	skin->height = real_height;
@@ -359,7 +347,6 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin)
 	// FIXME: Above line does't work, texture loaded wrong, seems I need set some global gl states, but I dunno which,
 	// so moved it to R_TranslatePlayerSkin() and here set texture to 0
 	skin->texnum = 0;
-#endif
 	skin->failedload = false;
 
 	return out;
@@ -423,9 +410,7 @@ void Skin_Skins_f (void) {
 	}
 	numskins = 0;
 
-#ifdef GLQUAKE
 	skins_need_preache = true; // we need precache it ASAP
-#endif
 
 	cls.downloadnumber = 0;
 	cls.downloadtype = dl_skin;

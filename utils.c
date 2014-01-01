@@ -148,7 +148,6 @@ int StringToRGB_W(char *s, byte *rgb)
 		rgb[i] = (byte) Q_atoi(result);
 	}
 	
-	#ifdef GLQUAKE
 	// TODO: Ok to do this in software also?
 	// Use normal quake pallete if not all arguments where given.
 	if (i < 3)
@@ -158,7 +157,6 @@ int StringToRGB_W(char *s, byte *rgb)
 		rgb[1] = col[1];
 		rgb[2] = col[2];
 	}
-	#endif
 
 	return i;
 }

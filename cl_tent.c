@@ -21,13 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_tent.c -- client side temporary entities
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "vx_stuff.h"
 #include "rulesets.h"
 #include "pmove.h"
@@ -222,7 +217,6 @@ static void CL_ParseBeam(int type)
 			Classic_ParticleRailTrail(start, end, color);
 			break;
 
-#ifdef GLQUAKE
 			case 10:
 			R_ParticleTrail(start, end, &start, RAIL_TRAIL);
 			break;
@@ -238,8 +232,6 @@ static void CL_ParseBeam(int type)
 			case 13:
 			R_ParticleTrail(start, end, &start, AMF_ROCKET_TRAIL);
 			break;
-
-#endif
 
 			default: break;
 		}
@@ -319,14 +311,12 @@ void CL_ExplosionSprite(vec3_t pos)
 
 static void CL_Parse_TE_WIZSPIKE(vec3_t pos)
 {
-	#ifdef GLQUAKE
 	if (amf_part_sparks.value && !Rulesets_RestrictParticles())
 	{
 		byte col[3] = {0, 124, 0};
 		SparkGen(pos, col, 20, 90, 1);
 	}
 	else
-	#endif // GLQUAKE
 	{
 		R_RunParticleEffect(pos, vec3_origin, 20, 30);
 	}
@@ -337,14 +327,12 @@ static void CL_Parse_TE_WIZSPIKE(vec3_t pos)
 #if 0
 static void CL_Parse_TE_KNIGHTSPIKE(vec3_t pos)
 {
-	#ifdef GLQUAKE
 	if (amf_part_sparks.value && !Rulesets_RestrictParticles())
 	{
 		byte col[3] = {255, 77, 0};
 		SparkGen(pos, col, 20, 150, 1);
 	}
 	else
-	#endif // GLQUAKE
 	{
 		R_RunParticleEffect(pos, vec3_origin, 226, 20);
 	}
@@ -357,11 +345,9 @@ static void CL_Parse_TE_SPIKE(vec3_t pos)
 {
 	int rnd;
 
-	#ifdef GLQUAKE
 	if (amf_part_spikes.value && !Rulesets_RestrictParticles() && !gl_no24bit.integer)
 		VXNailhit(pos, 10 * amf_part_spikes.value);
 	else
-	#endif // GLQUAKE
 	{
 		R_RunParticleEffect(pos, vec3_origin, 0, 10);
 	}
@@ -386,11 +372,9 @@ static void CL_Parse_TE_SUPERSPIKE(vec3_t pos)
 {
 	int rnd;
 
-	#ifdef GLQUAKE
 	if (amf_part_spikes.value && !Rulesets_RestrictParticles() && !gl_no24bit.integer)
 		VXNailhit(pos, 20 * amf_part_spikes.value);
 	else
-	#endif // GLQUAKE
 	{
 		R_RunParticleEffect(pos, vec3_origin, 0, 20);
 	}
@@ -420,19 +404,15 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 
 	if (r_explosiontype.value == 2) 
 	{
-		#ifdef GLQUAKE
 		if (amf_part_teleport.value)
 			VXTeleport(pos);
 		else
-		#endif // GLQUAKE
 		{
 			R_TeleportSplash(pos); // Teleport splash
 		}
 		
-		#ifdef GLQUAKE
 		if (amf_coronas_tele.value)
 			NewCorona(C_BLUEFLASH, pos);
-		#endif // GLQUAKE
 	}
 	else if (r_explosiontype.value == 3) 
 	{	
@@ -448,22 +428,17 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 	}
 	else if (r_explosiontype.value == 6) 
 	{
-		#ifdef GLQUAKE
 		if (amf_part_blobexplosion.value)
 		{
 			VXBlobExplosion(pos);
 		}
 		else
-		#endif // GLQUAKE
 		{
 			R_BlobExplosion(pos); // Blob explosion
 		}
-		#ifdef GLQUAKE
 		if (amf_coronas.value)
 			NewCorona(C_BLUEFLASH, pos);
-		#endif // GLQUAKE
 	}
-	#ifdef GLQUAKE
 	else if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) 
 	{
 		QMB_DetpackExplosion(pos);	// Detpack explosion
@@ -472,17 +447,14 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 	{
 		FuelRodExplosion(pos);
 	}
-	#endif // GLQUAKE
 	else if (r_explosiontype.value == 10)
 	{ /* Explosions turned off */ }
 	else
 	{	
 		// sprite and particles
-		#ifdef GLQUAKE
 		if (amf_part_explosion.value)
 			VXExplosion(pos);
 		else
-		#endif // GLQUAKE
 		{
 			R_ParticleExplosion(pos); // Normal explosion
 		}
@@ -495,27 +467,21 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
 		dl->die = cl.time + 0.5;
 		dl->decay = 300;
-		#ifdef GLQUAKE
 		if (r_explosiontype.value == 8)
 		{
 			dl->type = lt_green;
 		}
 		else
-		#endif // GLQUAKE
 		{
 			customlight_t cst_lt = {0};
 			dlightColorEx(r_explosionlightcolor.value, r_explosionlightcolor.string, lt_explosion, true, &cst_lt);
 			dl->type = cst_lt.type;
 			
-			#ifdef GLQUAKE
 			if (dl->type == lt_custom)
 				VectorCopy(cst_lt.color, dl->color);
-			#endif // GLQUAKE
 		}
-		#ifdef GLQUAKE
 		if (amf_coronas.value && r_explosiontype.value != 7 && r_explosiontype.value != 2 && r_explosiontype.value != 8)
 			NewCorona(C_FLASH, pos);
-		#endif // GLQUAKE
 	}
 
 	S_StartSound(-1, 0, cl_sfx_r_exp3, pos, 1, 1);
@@ -523,21 +489,17 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 
 static void CL_Parse_TE_TAREXPLOSION(vec3_t pos)
 {
-	#ifdef GLQUAKE
 	if (amf_part_blobexplosion.value)
 	{
 		VXBlobExplosion(pos);
 	}
 	else
-	#endif // GLQUAKE
 	{
 		R_BlobExplosion(pos); // Blob explosion
 	}
 	
-	#ifdef GLQUAKE
 	if (amf_coronas.value)
 		NewCorona (C_BLUEFLASH, pos);
-	#endif // GLQUAKE
 
 	S_StartSound(-1, 0, cl_sfx_r_exp3, pos, 1, 1);
 }
@@ -546,18 +508,14 @@ static void CL_Parse_TE_TELEPORT(vec3_t pos)
 {
 	if (r_telesplash.value)
 	{
-		#ifdef GLQUAKE
 		if (amf_part_teleport.value)
 			VXTeleport(pos);
 		else
-		#endif // GLQUAKE
 		{
 			R_TeleportSplash(pos); // Teleport splash
 		}
-		#ifdef GLQUAKE
 		if (amf_coronas_tele.value)
 			NewCorona(C_BLUEFLASH, pos);
-		#endif // GLQUAKE
 	}
 }
 
@@ -578,11 +536,9 @@ static void CL_Parse_TE_GUNSHOT(void)
 	if (cls.demoseeking)
 		return;
 	
-	#ifdef GLQUAKE
 	if (amf_part_gunshot.value && !Rulesets_RestrictParticles())
 		VXGunshot(pos, 5 * count * amf_part_gunshot.value);
 	else
-	#endif // GLQUAKE
 	{
 		R_RunParticleEffect(pos, vec3_origin, 256 /* magic! */, 20 * count);
 	}
@@ -623,11 +579,9 @@ static void CL_Parse_TE_BLOOD(void)
 	if (cls.demoseeking)
 		return;
 
-	#ifdef GLQUAKE
 	if (amf_part_blood.value)
 		VXBlood(pos, 5 * count * amf_part_blood.value);
 	else
-	#endif // GLQUAKE
 	{
 		R_RunParticleEffect(pos, vec3_origin, 73, 20 * count);
 	}
@@ -650,11 +604,7 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(void)
 
 		if (cls.demoseeking)
 			return;
-#ifdef GLQUAKE
 		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value?225:r_lgblood.value, 50); // 225 default
-#else
-		R_RunParticleEffect(pos, vec3_origin, r_lgblood.value, 50); // 225 default
-#endif //GLQUAKE
 	}
 }
 
@@ -793,13 +743,11 @@ void CL_UpdateBeams(void)
 	float d, yaw, pitch, forward, fakeshaft;
 	extern cvar_t v_viewheight;
 
-	#ifdef GLQUAKE
 	float lg_size = bound(3, amf_lightning_size.value, 30);
 	int beamstodraw, j, k;
 	qbool sparks = false;
 	vec3_t beamstart[MAX_LIGHTNINGBEAMS], beamend[MAX_LIGHTNINGBEAMS];
 	beamstodraw = bound(1, amf_lightning.value, MAX_LIGHTNINGBEAMS);	
-	#endif // GLQUAKE
 
 	memset (&ent, 0, sizeof(entity_t));
 	ent.colormap = vid.colormap;
@@ -890,20 +838,16 @@ void CL_UpdateBeams(void)
 		// Add new entities for the lightning.
 		VectorCopy (b->start, org);
 		
-		#ifdef GLQUAKE
 		for (k = 0; k < beamstodraw; k++)
 			VectorCopy (b->start, beamstart[k]);
-		#endif // GLQUAKE
 		
 		d = VectorNormalize(dist);
 		VectorScale (dist, 30, dist);
 
 		for ( ; d > 0; d -= 30) 
 		{
-#ifdef GLQUAKE
 			if (!amf_lightning.value || Rulesets_RestrictParticles())
 			{
-#endif // GLQUAKE
 				VectorCopy (org, ent.origin);
 				ent.model = b->model;
 				ent.angles[0] = pitch;
@@ -913,7 +857,6 @@ void CL_UpdateBeams(void)
 					ent.alpha = r_shaftalpha.value;
 
 				CL_AddEntity (&ent);
-#ifdef GLQUAKE
 			}
 			else
 			{
@@ -940,9 +883,9 @@ void CL_UpdateBeams(void)
 				else
 					NewCorona (C_LIGHTNING, org);
 			}
-#endif
+
 			VectorAdd (org, dist, org);
-#ifdef GLQUAKE
+
 			// LIGHTNING SPARKS
 			if (amf_lightning_sparks.value && !Rulesets_RestrictParticles() && !sparks && !ISPAUSED && !gl_no24bit.integer)
 			{
@@ -955,7 +898,6 @@ void CL_UpdateBeams(void)
 					sparks = true;
 				}
 			}
-#endif // GLQUAKE
 		}
 	}	
 }
@@ -989,11 +931,9 @@ void CL_UpdateExplosions (void) {
 void CL_UpdateTEnts (void) {
 	CL_UpdateBeams ();
 	CL_UpdateExplosions ();
-#ifdef GLQUAKE
+
 	//VULT MOTION TRAILS
 	if (amf_motiontrails.value || MotionBlurCount) //dont stop removing trails if we have 'em
 		CL_UpdateBlurs();
-#endif
-
 }
 

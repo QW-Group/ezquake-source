@@ -27,13 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include <stdio.h>
 #endif
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
 #endif // _WIN32 || __linux__ || __FreeBSD__
-#endif
 #include "keys.h"
 #include "ignore.h"
 #include "logging.h"
@@ -56,11 +54,8 @@ int 		con_linewidth;		// characters across screen
 int			con_totallines;		// total lines in console scrollback
 float		con_cursorspeed = 4;
 
-#ifdef GLQUAKE
 cvar_t		con_particles_alpha  = {"con_particles_alpha",  "0"};
 cvar_t		con_particles_images = {"con_particles_images", "3"};
-#endif
-
 cvar_t		con_notify = {"con_notify", "1"};
 cvar_t		_con_notifylines = {"con_notifylines","4"};
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
@@ -81,12 +76,7 @@ cvar_t      con_sound_spec_volume   = {"s_spec_volume",   "1"};
 cvar_t      con_sound_other_volume  = {"s_otherchat_volume",  "1"};
 
 cvar_t      con_timestamps  = {"con_timestamps", "0"};
-
-#ifdef GLQUAKE
 cvar_t      con_shift  = {"con_shift", "-10"};
-#else
-cvar_t      con_shift  = {"con_shift", "0", CVAR_ROM};
-#endif
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated
@@ -330,7 +320,7 @@ void Con_CheckResize (void) {
 		return;
 
 	if (width < 1) { // video hasn't been initialized yet
-#if (defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)) && defined(GLQUAKE)
+#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 		cvar_t *cv = Cvar_Find(r_conwidth.name); // r_conwidth not yet registered, but let user specifie it via
 													 // config.cfg or somehow else
 		if ( cv ) {
@@ -452,10 +442,8 @@ void Con_Init (void) {
 	Cvar_Register (&con_notify);
 	//Cvar_Register (&xyzh);
 
-#ifdef GLQUAKE
 	Cvar_Register (&con_particles_alpha);
 	Cvar_Register (&con_particles_images);
-#endif
 
 	// added by jogi start
 	Cvar_Register (&con_highlight);
@@ -816,9 +804,7 @@ void Con_DrawNotify (void) {
 		con_notifylines = v + bound(0, con_shift.value, 8);
 }
 
-#ifdef GLQUAKE
 void DrawCP (int lines);
-#endif
 
 // Draws the last few lines of output as a custom HUD element.
 void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols)
@@ -996,9 +982,7 @@ void Con_DrawConsole (int lines) {
 // draw the background
 	Draw_ConsoleBackground (lines);
 
-#ifdef GLQUAKE
 	DrawCP(lines);
-#endif
 
 	// draw the text
 	con_vislines = lines;
@@ -1118,8 +1102,6 @@ void Con_DrawConsole (int lines) {
 //
 // Below is not a really console related code, just some animation to console in OpenGL version
 //
-
-#ifdef GLQUAKE
 
 #define MAX_CONPART (128)
 
@@ -1368,6 +1350,3 @@ void DrawCP (int lines) {
 
 	AddCP(); // add particle
 }
-
-#endif
-

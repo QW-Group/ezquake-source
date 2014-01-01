@@ -21,13 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // wad.c
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "wad.h"
 #include "crc.h"
 
@@ -238,8 +233,6 @@ WAD3 Texture Loading for BSP 3.0 Support
 =============================================================================
 */
 
-#ifdef GLQUAKE
-
 #define TEXWAD_MAXIMAGES 16384
 typedef struct {
 	char name[MAX_QPATH];
@@ -391,5 +384,3 @@ byte *WAD3_LoadTexture (texture_t *tx)
 	}
 	return NULL;
 }
-
-#endif

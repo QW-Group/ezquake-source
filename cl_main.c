@@ -35,14 +35,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 #include "hud_editor.h"
 #include "input.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "tp_triggers.h"
 #include "rulesets.h"
@@ -228,11 +223,7 @@ lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 dlight_t		cl_dlights[MAX_DLIGHTS];
 
 // refresh list
-#ifdef GLQUAKE
 visentlist_t	cl_firstpassents, cl_visents, cl_alphaents;
-#else
-visentlist_t	cl_visents, cl_visbents;
-#endif
 
 double		connect_time = 0;		// for connection retransmits
 qbool		connected_via_proxy = false;
@@ -1202,10 +1193,7 @@ void CL_DNS_f(void)
 		Com_Printf("Resolved %s to %s\n", address, h->h_name);
 }
 
-#ifdef GLQUAKE
 void SCR_ClearShownick(void);
-#endif // GLQUAKE
-
 void SCR_ClearTeamInfo(void);
 void SCR_ClearWeaponStats(void);
 
@@ -1256,10 +1244,8 @@ void CL_ClearState (void)
 
 	memset(&cshift_empty, 0, sizeof(cshift_empty));
 
-	#ifdef GLQUAKE
 	// Clear shownick structs
 	SCR_ClearShownick();
-	#endif // !GLQUAKE
 
 	// Clear teaminfo structs
 	SCR_ClearTeamInfo();
@@ -1278,14 +1264,7 @@ void CL_ClearState (void)
 void CL_Disconnect (void) 
 {
 	extern cvar_t r_lerpframes, cl_fakeshaft;
-
-	#ifdef GLQUAKE
 	extern cvar_t gl_polyblend, gl_clear;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif // GLQUAKE
 
 	byte final[10];
 
@@ -1302,19 +1281,8 @@ void CL_Disconnect (void)
 	v_contrast.value		= nContrastExit;
 	cl_fakeshaft.value		= nfakeshaft;
 
-	#ifdef GLQUAKE
 	gl_polyblend.value		= nPolyblendExit;
 	gl_clear.value			= nGlClearExit;
-	#else
-	r_waterwarp.value		= nWaterwarp;
-	v_contentblend.value	= nContentblend;
-	v_quadcshift.value		= nQuadshift;
-	v_ringcshift.value		= nRingshift;
-	v_pentcshift.value		= nPentshift;
-	v_damagecshift.value	= nDamageshift;
-	v_suitcshift.value		= nSuitshift;
-	v_bonusflash.value		= nBonusflash;
-	#endif // GLQUAKE
 
 	r_lerpframes.value		= nLerpframesExit;
 	nTrack1duel = nTrack2duel = 0;
@@ -1763,7 +1731,6 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 
 void CL_InitCommands (void);
 
-#ifdef GLQUAKE
 void CL_Fog_f (void) 
 {
 	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
@@ -1778,7 +1745,6 @@ void CL_Fog_f (void)
 	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
 	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
 }
-#endif
 
 void CL_InitLocal (void) 
 {
@@ -2064,7 +2030,7 @@ void CL_Init (void)
 
 	GFX_Init ();
 
-#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+#if defined(FRAMEBUFFERS)
 	Framebuffer_Init();
 #endif
 
@@ -2269,14 +2235,8 @@ void CL_Frame (double time)
 	static double	extraphysframetime;	//#fps
 
 	extern cvar_t r_lerpframes;
-	#ifdef GLQUAKE
 	extern cvar_t gl_clear;
 	extern cvar_t gl_polyblend;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif // GLQUAKE
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -2549,21 +2509,8 @@ void CL_Frame (double time)
 		nContrastExit		= v_contrast.value;
 		nViewsizeExit		= scr_viewsize.value;
 		nfakeshaft			= cl_fakeshaft.value;
-
-		#ifdef GLQUAKE
 		nPolyblendExit		= gl_polyblend.value;
 		nGlClearExit		= gl_clear.value;
-		#else
-		nWaterwarp			= r_waterwarp.value;
-		nContentblend		= v_contentblend.value;
-		nQuadshift			= v_quadcshift.value;
-		nRingshift			= v_ringcshift.value;
-		nPentshift			= v_pentcshift.value;
-		nDamageshift		= v_damagecshift.value;
-		nSuitshift			= v_suitcshift.value;
-		nBonusflash			= v_bonusflash.value;
-		#endif
-
 		nLerpframesExit		= r_lerpframes.value;
 		CURRVIEW = 0;
 	}
@@ -2573,21 +2520,8 @@ void CL_Frame (double time)
 		scr_viewsize.value =  nViewsizeExit;
 		v_contrast.value = nContrastExit;
 		cl_fakeshaft.value = nfakeshaft;
-
-		#ifdef GLQUAKE
 		gl_polyblend.value = nPolyblendExit;
 		gl_clear.value = nGlClearExit;
-		#else
-		r_waterwarp.value = nWaterwarp;
-		v_contentblend.value = nContentblend;
-		v_quadcshift.value = nQuadshift;
-		v_ringcshift.value = nRingshift;
-		v_pentcshift.value = nPentshift;
-		v_damagecshift.value = nDamageshift;
-		v_suitcshift.value = nSuitshift;
-		v_bonusflash.value = nBonusflash;
-		#endif
-
 		r_lerpframes.value = nLerpframesExit;
 		bExitmultiview = false;
 	}
@@ -2771,14 +2705,8 @@ void CL_Multiview(void)
 {
 	static int playernum = 0;
 
-	#ifdef GLQUAKE
 	extern cvar_t gl_polyblend;
 	extern cvar_t gl_clear;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif
 	extern cvar_t r_lerpframes;
 
 	if (!cls.mvdplayback)
@@ -2822,20 +2750,8 @@ void CL_Multiview(void)
 		scr_viewsize.value = 100;
 	}
 
-	#ifdef GLQUAKE
 	gl_polyblend.value = 0;
 	gl_clear.value = 0;
-	#else
-	// disable these because they don't restrict the change to just the new viewport
-	r_waterwarp.value = 0;
-	v_contentblend.value = 0;
-	v_quadcshift.value = 0;
-	v_ringcshift.value = 0;
-	v_pentcshift.value = 0;
-	v_damagecshift.value = 0;
-	v_suitcshift.value = 0;
-	v_bonusflash.value = 0;
-	#endif
 
 	// stop weapon model lerping as it lerps with the other view
 	r_lerpframes.value = 0;

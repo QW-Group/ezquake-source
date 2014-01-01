@@ -533,13 +533,8 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 			}
 			if (len < 5)
 				continue;
-#ifdef GLQUAKE
 			if (!strncasecmp(userpak,"soft",4))
 				continue;
-#else
-			if (!strncasecmp(userpak,"gl", 2))
-				continue;
-#endif // GLQUAKE
 			FS_AddPak(dir, userpak, parent, NULL);
 		}
 		fclose(f);
@@ -628,10 +623,8 @@ void FS_SetGamedir (char *dir)
 		FS_AddHomeDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
 	}
 
-#ifdef GLQUAKE
 	// Reload gamedir specific conback as its not flushed
 	Draw_InitConback();
-#endif // GLQUAKE
 
 	FS_AddUserDirectory(dir);
 }

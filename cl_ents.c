@@ -21,13 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "vx_stuff.h"
 #include "pmove.h"
 #include "utils.h"
@@ -150,7 +145,6 @@ void CL_InitEnts(void) {
 			Sys_Error("cl_modelnames[%d] not initialized", i);
 	}
 
-#ifdef GLQUAKE
 	cl_firstpassents.max = 64;
 	cl_firstpassents.alpha = 0;
 
@@ -164,17 +158,6 @@ void CL_InitEnts(void) {
 	cl_firstpassents.list = (entity_t *) memalloc;
 	cl_visents.list = (entity_t *) memalloc + cl_firstpassents.max;
 	cl_alphaents.list = (entity_t *) memalloc + cl_firstpassents.max + cl_visents.max;
-#else
-	cl_visents.max = 256;
-	cl_visents.alpha = 0;
-
-	cl_visbents.max = 256;
-	cl_visbents.alpha = 0;
-
-	memalloc = (byte *) Hunk_AllocName((cl_visents.max + cl_visbents.max) * sizeof(entity_t), "visents");
-	cl_visents.list = (entity_t *) memalloc;
-	cl_visbents.list = (entity_t *) memalloc + cl_visents.max;
-#endif
 
 	CL_ClearScene();
 }
@@ -191,17 +174,12 @@ static qbool is_monster (int modelindex)
 }
 
 void CL_ClearScene (void) {
-#ifdef GLQUAKE
 	cl_firstpassents.count = cl_visents.count = cl_alphaents.count = 0;
-#else
-	cl_visents.count = cl_visbents.count = 0;
-#endif
 }
 
 void CL_AddEntity (entity_t *ent) {
 	visentlist_t *vislist;
 
-#ifdef GLQUAKE
 	if ((ent->effects & (EF_BLUE | EF_RED | EF_GREEN)) && bound(0, gl_powerupshells.value, 1))
 	{
 		vislist = &cl_visents;
@@ -219,12 +197,6 @@ void CL_AddEntity (entity_t *ent) {
 	{
 		vislist = &cl_visents;
 	}
-#else
-	if (ent->model->type == mod_brush)
-		vislist = &cl_visbents;
-	else
-		vislist = &cl_visents;
-#endif
 
 	if (vislist->count < vislist->max)
 		vislist->list[vislist->count++] = *ent;
@@ -248,7 +220,6 @@ dlighttype_t dlightColor(float f, dlighttype_t def, qbool random) {
 customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random, customlight_t *l) 
 {
 	// TODO : Ok to use this in software also?
-#ifdef GLQUAKE
 	byte color[4];
 	int i;
 
@@ -264,10 +235,6 @@ customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random,
 			l->color[i] = min(128, color[i]); // i've seen color set in float form to 0.5 maximum and to 128 in byte form, so keep this tradition even i'm do not understand why they do so
 
 	return l;
-#else
-	l->type = dlightColor(f, def, random);
-	return l;
-#endif	
 }
 
 dlight_t *CL_AllocDlight (int key) {
@@ -326,11 +293,9 @@ void CL_NewDlightEx (int key, vec3_t origin, float radius, float time, customlig
 	dl->bubble = bubble;
 // }
 
-#ifdef GLQUAKE
 	// and GL addon for custom color
 	if (dl->type == lt_custom)
 		VectorCopy(l->color, dl->color);
-#endif	
 }
 
 void CL_DecayLights (void) {
@@ -788,16 +753,11 @@ static void missile_trail(int trail_num, model_t *model, vec3_t *old_origin, ent
 						R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
 					else if (trail_num == 8)
 					{
-						#ifdef GLQUAKE
 						// VULT PARTICLES
 						byte color[3];
 						color[0] = 0; color[1] = 70; color[2] = 255;
 						FireballTrail (*old_origin, ent->origin, &cent->trail_origin, color, 2, 0.5);
-						#else
-						R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, VOOR_TRAIL);
-						#endif
 					}
-#ifdef GLQUAKE
 					else if (trail_num == 9)
 					{
 						R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, LAVA_TRAIL);
@@ -826,7 +786,6 @@ static void missile_trail(int trail_num, model_t *model, vec3_t *old_origin, ent
 					{
 						R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, RAIL_TRAIL);
 					}
-#endif
 					else
 					{
 						R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
@@ -846,11 +805,7 @@ void CL_LinkPacketEntities(void)
 	double time;
 	float autorotate, lerp, rocketlightsize;
 	int i, pnum, flicker;
-#ifdef GLQUAKE
 	customlight_t cst_lt = {0};
-#else
-	dlighttype_t rocketlightcolor, dimlightcolor;
-#endif
 	extern qbool cl_nolerp_on_entity_flag;
 
 	pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
@@ -907,7 +862,6 @@ void CL_LinkPacketEntities(void)
 			}
 			else if (state->effects & EF_DIMLIGHT)
 			{
-				#ifdef GLQUAKE
 				qbool flagcolor = false;
 
 				if (cl.teamfortress && (state->modelindex == cl_modelindices[mi_tf_flag] || state->modelindex == cl_modelindices[mi_tf_stan]))
@@ -924,24 +878,6 @@ void CL_LinkPacketEntities(void)
 				{
 					CL_NewDlight(state->number, state->origin, 200 + flicker, 0.1, lt_default, 0);
 				}
-				#else
-				if (cl.teamfortress && 
-					((state->modelindex == cl_modelindices[mi_tf_flag]) 
-					|| (state->modelindex == cl_modelindices[mi_tf_stan])))
-				{
-					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
-				}
-				else if (state->modelindex == cl_modelindices[mi_flag])
-				{
-					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
-				}
-				else
-				{
-					dimlightcolor = lt_default;
-				}
-
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, dimlightcolor, 0);
-				#endif
 			}
 		}
 
@@ -991,16 +927,6 @@ void CL_LinkPacketEntities(void)
 		{
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
-		}
-		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
-				&& cl.vw_model_precache[0] && r_drawvweps.value)
-		{
-			#ifndef GLQUAKE
-			// This currently triggers a bug in GL renderer
-			// where world is not drawn, producing a hall of mirrors effect
-			ent.model = cl.vw_model_precache[0];
-			ent.renderfx |= RF_PLAYERMODEL;
-			#endif
 		}
 
 		ent.skinnum = state->skinnum;
@@ -1060,7 +986,7 @@ void CL_LinkPacketEntities(void)
 				VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
 			}
 		}
-#if defined(GLQUAKE) && defined(FTE_PEXT_TRANS)
+#if defined(FTE_PEXT_TRANS)
 		//set trans
 		ent.alpha = state->trans/255.0;
 #endif
@@ -1084,7 +1010,6 @@ void CL_LinkPacketEntities(void)
 			}
 		}
 
-#ifdef GLQUAKE
 		if (qmb_initialized) 
 		{
 			if (state->modelindex == cl_modelindices[mi_explod1] || state->modelindex == cl_modelindices[mi_explod2]) 
@@ -1102,7 +1027,6 @@ void CL_LinkPacketEntities(void)
 				continue;
 			}
 		}
-#endif
 
 		// Add trails
 		if (model->flags & ~EF_ROTATE || model->modhint) 
@@ -1117,11 +1041,9 @@ void CL_LinkPacketEntities(void)
 				old_origin = &cent->trail_origin;
 			}
 
-#ifdef GLQUAKE
 			if (model->modhint == MOD_LAVABALL)
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, LAVA_TRAIL);
 			else 
-#endif
 			if (model->flags & EF_ROCKET)
 			{
 				if (r_rockettrail.value) 
@@ -1137,7 +1059,6 @@ void CL_LinkPacketEntities(void)
 				rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
 				if (rocketlightsize >= 1)
 				{
-#ifdef GLQUAKE
 					int bubble = gl_rl_globe.integer ? 2 : 1;
 
 					if ((r_rockettrail.value < 8 || r_rockettrail.value == 12) && model->modhint != MOD_LAVABALL)
@@ -1161,10 +1082,6 @@ void CL_LinkPacketEntities(void)
 						// FUEL ROD GUN
 						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_green, bubble);
 					}
-#else
-					rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
-					CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, rocketlightcolor, 1);
-#endif
 				}
 			}
 			else if (model->flags & EF_GRENADE)
@@ -1190,62 +1107,50 @@ void CL_LinkPacketEntities(void)
 			}
 			else if (model->flags & EF_GIB)
 			{
-#ifdef GLQUAKE
 				if (amf_part_gibtrails.value)
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLEEDING_TRAIL);
 				else
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
-#else
-				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLOOD_TRAIL);
-#endif
 			}
 			else if (model->flags & EF_ZOMGIB) 
 			{
-#ifdef GLQUAKE
 				if (model->modhint == MOD_RAIL2)
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, RAIL_TRAIL2);
 				else if (amf_part_gibtrails.value)
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BLEEDING_TRAIL);
 				else
 					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
-#else
-					R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
-#endif
 			}
 			else if (model->flags & EF_TRACER) 
 			{
-#ifdef GLQUAKE
 				// VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_green, true);
 				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_WIZLIGHT, ent.origin);
-#endif
+
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
 			}
 			else if (model->flags & EF_TRACER2) 
 			{
-#ifdef GLQUAKE
 				// VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_default, true);
 				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_KNIGHTLIGHT, ent.origin);
-#endif
+
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
 			}
 			else if (model->flags & EF_TRACER3) 
 			{
-#ifdef GLQUAKE
 				// VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_blue, true);
 				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_VORELIGHT, ent.origin);
-#endif
+
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
 			}
-#ifdef GLQUAKE
 			else if (model->modhint == MOD_SPIKE && amf_nailtrail.value && !gl_no24bit.integer)
 			{
 				// VULT NAILTRAIL
@@ -1336,13 +1241,11 @@ void CL_LinkPacketEntities(void)
 				liteorg[2] += 32;
 				VX_TeslaCharge(liteorg);
 			}
-#endif
 		}
 		VectorCopy (ent.origin, cent->lerp_origin);
-#ifdef GLQUAKE
 		if (amf_motiontrails_wtf.value)
 			CL_CreateBlurs (ent.origin, ent.origin, &ent);
-#endif
+
 		CL_AddEntity (&ent);
 	}
 }
@@ -1932,7 +1835,6 @@ void CL_LinkPlayers (void)
 			}
 		}
 
-		#ifdef GLQUAKE
 		// VULT MOTION TRAILS
 		ent.alpha = 0;
 		// The player object never gets added.
@@ -1943,14 +1845,8 @@ void CL_LinkPlayers (void)
 				ent.alpha = -1;
 			else continue;
 		}
-		#endif // GLQUAKE
 
-		if (
-					#if !GLQUAKE       //TODO: why !GLQUAKE ?
-					(j == cl.playernum) ||
-					#endif
-					!Cam_DrawPlayer(j)
-		   )
+		if (!Cam_DrawPlayer(j))
 		{
 			continue;
 		}
@@ -2039,7 +1935,6 @@ void CL_LinkPlayers (void)
 		if (state->effects & (EF_FLAG1|EF_FLAG2))
 			CL_AddFlagModels (&ent, !!(state->effects & EF_FLAG2));
 
-		#ifdef GLQUAKE
 		// VULT CAMERAS
 		if (j == cl.playernum)
 		{
@@ -2053,11 +1948,9 @@ void CL_LinkPlayers (void)
 			ent.angles[0] = state->viewangles[0];
 			VectorCopy (cl.simorg, ent.origin);
 		}
-		#endif // GLQUAKE
 
 		VectorCopy (ent.origin, cent->lerp_origin);
 
-		#ifdef GLQUAKE
 		// VULT MOTION TRAILS
 		if (amf_motiontrails_wtf.value)
 			CL_CreateBlurs (state->origin, ent.origin, &ent);
@@ -2088,7 +1981,6 @@ void CL_LinkPlayers (void)
 				info->dead = false;
 			}
 		}
-		#endif // GLQUAKE
 
 		if ((cl.vwep_enabled && r_drawvweps.value && state->vw_index) && (state->modelindex != cl_modelindices[mi_eyes])) 
 		{
