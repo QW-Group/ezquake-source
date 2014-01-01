@@ -19,9 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quakedef.h"
 #include "fs.h"
 
-#ifdef _WIN32
-#include "winquake.h"
-#else
+#ifndef _WIN32
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>

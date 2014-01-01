@@ -22,9 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "gl_local.h"
 #endif
-#ifdef _WIN32
-#include "winquake.h"
-#else
+#ifndef _WIN32
 #include <netinet/in.h>
 #include <unistd.h>
 #endif

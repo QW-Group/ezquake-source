@@ -28,8 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t	sys_sleep = {"sys_sleep", "8"};
 cvar_t	sys_nostdout = {"sys_nostdout","0"};
 
-qbool WinNT;
-
 /*
 ================
 Sys_mkdir
@@ -157,10 +155,6 @@ void Sys_Init (void)
 			Com_Printf ("SetPriorityClass() failed\n");
 		else
 			Com_Printf ("Process priority class set to HIGH\n");
-
-		// sys_sleep > 0 seems to cause packet loss on WinNT (why?)
-		if (WinNT)
-			Cvar_Set (&sys_sleep, "0");
 	}
 }
 

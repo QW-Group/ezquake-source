@@ -23,7 +23,6 @@ $Id: EX_browser_ping.c,v 1.40 2007-10-27 08:51:12 dkure Exp $
 
 #include <winsock2.h>
 #include "quakedef.h"
-#include "winquake.h"
 
 #else
 
@@ -346,47 +345,7 @@ static void ICMP_FillData(ICMP_packet_t *packet, int datasize)
 void SB_RootInit(void)
 {
     u_int arg;
-
-	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET) {
-		/* disconnect: SOCK_RAW is only avail for root on linux
-		 * and for administrator users on winxp.
-		 * for case of vista it seems raw sockets are forbidden even for administratos
-		 * BTW, NewPing (aka no SOCK_RAW ping) is unstable on linux and very inaccurate :E
-		 */
-		Com_DPrintf ("SB_RootInit: socket: (%i): %s\n", qerrno, strerror(qerrno));
-	}
-
-#ifdef _WIN32
-	if (sock == INVALID_SOCKET || COM_CheckParm("-nosockraw") || sb_nosockraw.integer || WinVISTA || Win7) {
-#else
-	if (sock < 0 || COM_CheckParm("-nosockraw") || sb_nosockraw.integer) {
-#endif
-		useNewPing = true;
-		return;
-	}
-
-#ifndef _WIN32
-	if ((fcntl (sock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
-		Com_Printf ("SB_RootInit: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
-		closesocket(sock);
-	}
-#endif
-
-    arg = 1;
-	if (ioctlsocket (sock, FIONBIO, (u_long *)&arg) == -1) { // make asynchronous
-		Com_Printf ("SB_RootInit: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
-		//closesocket(newsocket);
-	}
-
-    arg = 1;
-	if (setsockopt (sock, SOL_SOCKET, SO_DONTLINGER, (char*)&arg, sizeof(int)) == -1) {
-		// disconnect: always error 10042 @ WinXP inside VMware 
-		Com_DPrintf ("SB_RootInit: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
-	}
-	/*
-	SO_DONTLINGER - razreshaet zakritie bez ojidaniya pri nalichii ne otoslanoi informacii
-	*/
-
+    useNewPing = true;
 } 
 
 /**

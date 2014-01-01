@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <direct.h>		// _mkdir
 #include <conio.h>		// _putch
 #include <tchar.h>
-#include "winquake.h"
 #include "resource.h"
 #include "keys.h"
 #include "server.h"
@@ -40,8 +39,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
-
-qbool		WinNT, Win2K, WinXP, Win2K3, WinVISTA, Win7;
 
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 cvar_t	sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
@@ -75,6 +72,8 @@ void Sys_LowFPPrecision(void) {}
 void Sys_SetFPCW(void) {}
 void MaskExceptions(void) {}
 #endif
+
+extern qbool ActiveApp, Minimized;
 
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
 {
@@ -555,8 +554,7 @@ void Sys_Init (void)
 	Cvar_Register(&sys_yieldcpu);
 	Cvar_Register(&sys_inactivesleep);
 #ifndef WITHOUT_WINKEYHOOK
-	if (WinNT)
-		Cvar_Register(&sys_disableWinKeys);	
+	Cvar_Register(&sys_disableWinKeys);	
 #endif
 	Cvar_ResetCurrentGroup();
 
@@ -571,15 +569,8 @@ void WinCheckOSInfo(void)
 	if (!GetVersionEx(&vinfo))
 		Sys_Error ("Couldn't get OS info");
 
-	if ((vinfo.dwMajorVersion < 4) || (vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
-		Sys_Error ("ezQuake requires at least Win95 or NT 4.0");
-
-	WinNT = (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) ? true : false;			// NT4
-	Win2K = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 0);	// 2000
-	WinXP = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 1);	// XP
-	Win2K3 = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 2);	// 2003 or 2003 R2 or XP Pro 64
-	WinVISTA = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 0); // Vista or 2008 Server
-	Win7 = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 1); // Se7en or 2008 Server R2
+	if (vinfo.dwPlatformId != VER_PLATFORM_WIN32_NT || vinfo.dwMajorVersion < 5 || (vinfo.dwMajorVersion == 5 && vinfo.dwMinorVersion < 1))
+		Sys_Error ("ezQuake requires at least Windows XP.");
 }
 
 void Sys_Init_ (void) 

@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SELF_SOUND 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
 
 #ifdef _WIN32
-#include "winquake.h"
 #include "movie.h" //joe: capturing audio
 #endif
 

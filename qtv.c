@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "quakedef.h"
-#include "winquake.h"
 #include "qtv.h"
 #include "input.h"
 #include "teamplay.h"
