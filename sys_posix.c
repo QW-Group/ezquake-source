@@ -283,12 +283,6 @@ void floating_point_exception_handler (int whatever)
 	signal(SIGFPE, floating_point_exception_handler);
 }
 
-
-#ifndef id386
-void Sys_HighFPPrecision(void) {}
-void Sys_LowFPPrecision(void) {}
-#endif
-
 int main(int argc, char **argv)
 {
 	double time, oldtime, newtime;
@@ -312,11 +306,6 @@ int main(int argc, char **argv)
 
 	if (COM_CheckParm("-nostdout"))
 		sys_nostdout.value = 1;
-
-	#ifdef id386
-		Sys_SetFPCW();
-	#endif
-
 
 	Host_Init (argc, argv, 32 * 1024 * 1024);
 

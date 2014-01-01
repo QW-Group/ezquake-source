@@ -688,8 +688,6 @@ float FloatSwap (float f) {
 	return dat2.f;
 }*/
 
-#ifndef id386
-
 #ifndef ShortSwap
 short ShortSwap (short s)
 {
@@ -736,7 +734,6 @@ float FloatSwap (float f)
 	dat2.b[3] = dat1.b[0];
 	return dat2.f;
 }
-#endif
 
 #ifdef __PDP_ENDIAN
 int LongSwapPDP2Big (int l)

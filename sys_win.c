@@ -66,13 +66,6 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel);
 cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableWinKeys};
 
-#ifndef id386
-void Sys_HighFPPrecision(void) {}
-void Sys_LowFPPrecision(void) {}
-void Sys_SetFPCW(void) {}
-void MaskExceptions(void) {}
-#endif
-
 extern qbool ActiveApp, Minimized;
 
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
@@ -620,9 +613,6 @@ void Sys_Init_ (void)
 			1,			// Maximum count
 			"qwcl");	// Semaphore name
 	}
-
-	MaskExceptions ();
-	Sys_SetFPCW ();
 
 	Sys_InitDoubleTime ();
 }

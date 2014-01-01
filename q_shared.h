@@ -82,14 +82,6 @@ typedef unsigned char byte;
 
 //============================================================================
 
-#ifdef id386
-#define UNALIGNED_OK		1		// set to 0 if unaligned accesses are not supported
-#else
-#define UNALIGNED_OK		0
-#endif
-
-//============================================================================
-
 #define	MINIMUM_MEMORY		0x550000
 
 #define	MAX_QPATH			64		// max length of a quake game pathname

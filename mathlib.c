@@ -109,7 +109,6 @@ void BOPS_Error (void) {
 	Sys_Error ("BoxOnPlaneSide:  Bad signbits");
 }
 
-#ifndef id386
 //Returns 1, 2, or 1 + 2
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *p) {
 	//the following optimisation is performed by BOX_ON_PLANE_SIDE macro
@@ -143,7 +142,6 @@ int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *p) {
 				(((p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2]) < p->dist) << 1));
 	}
 }
-#endif
 
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up) {
 	float angle, sr, sp, sy, cr, cp, cy, temp;
@@ -394,8 +392,6 @@ int GetPolyCentroid(vec3_t *v, int n, float *xCentroid, float *yCentroid, float 
 	return 2;
 }
 
-#ifndef id386
-
 //Inverts an 8.24 value to a 16.16 value
 fixed16_t Invert24To16(fixed16_t val) {
 	if (val < 256)
@@ -403,8 +399,6 @@ fixed16_t Invert24To16(fixed16_t val) {
 
 	return (fixed16_t) (((double) 0x10000 * (double) 0x1000000 / (double) val) + 0.5);
 }
-
-#endif
 
 /*
 	Init rotation matrix 'out', 'angle' in radians, 'v' should be normilized vector.

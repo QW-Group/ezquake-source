@@ -26,10 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <osreldate.h>
-#ifdef id386
 #include <sys/time.h>
 #include <machine/cpufunc.h>
-#endif
 #endif
 #include <SDL.h>
 #include "quakedef.h"
@@ -281,11 +279,8 @@ void SYSINFO_Init(void)
 	int mib[2], val;
 	unsigned long val_ul;
 	size_t len;
-
-#ifdef id386
 	unsigned long long old_tsc, tsc_freq;
 	struct timeval tp, old_tp;
-#endif
 
 	mib[0] = CTL_HW;
 	mib[1] =
@@ -309,7 +304,6 @@ void SYSINFO_Init(void)
 
 	SYSINFO_processor_description = cpu_model;
 
-#ifdef id386
 	gettimeofday(&old_tp, NULL);
 	old_tsc = rdtsc();
 	do {
@@ -321,7 +315,6 @@ void SYSINFO_Init(void)
 						1000000. + .5);
 // VVD: We can use sysctl hw.clockrate, but it don't work on i486 - always 0.
 // Must work on Pentium 1/2/3; tested on Pentium 4. And RELENG_4 have no this sysctl.
-#endif
 
 	{
 		extern const char *gl_renderer;

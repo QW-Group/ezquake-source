@@ -42,7 +42,6 @@ float voicevolumemod = 1; // voice volume modifier.
 
 int snd_linear_count;
 
-#ifndef id386
 static void Snd_WriteLinearBlastStereo16 (void)
 {
 	int val, i;
@@ -54,9 +53,6 @@ static void Snd_WriteLinearBlastStereo16 (void)
 		snd_out[i+1] = bound (-32768, val, 32767);
 	}
 }
-#else
-void Snd_WriteLinearBlastStereo16 (void);
-#endif
 
 static void Snd_WriteLinearBlastStereo16_SwapStereo (void)
 {
@@ -171,7 +167,6 @@ CHANNEL MIXING
 ===============================================================================
 */
 
-#ifndef id386
 static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 {
 	int data, i;
@@ -195,9 +190,6 @@ static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 
 	ch->pos += count;
 }
-#else
-void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int endtime);
-#endif
 
 static void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 {
