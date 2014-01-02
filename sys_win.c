@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <direct.h>		// _mkdir
 #include <conio.h>		// _putch
 #include <tchar.h>
-#include "resource.h"
 #include "keys.h"
 #include "server.h"
 #include "pcre.h"
