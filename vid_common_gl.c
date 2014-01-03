@@ -42,8 +42,6 @@ qbool gl_combine = false;
 
 qbool gl_add_ext = false;
 
-qbool gl_allow_ztrick = true;
-
 float vid_gamma = 1.0;
 byte vid_gamma_table[256];
 
