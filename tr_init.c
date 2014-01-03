@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include <SDL.h>
 #ifdef GLSL
 #include "gl_shader.h"
 #endif // GLSL
@@ -53,7 +54,6 @@ cvar_t r_stencilbits            = { "vid_stencilbits",      "0",    CVAR_LATCH }
 cvar_t r_stencilbits            = { "vid_stencilbits",      "8",    CVAR_LATCH };
 #endif
 cvar_t r_depthbits              = { "vid_depthbits",        "0",    CVAR_LATCH };
-cvar_t r_mode                   = { "vid_mode",             "3",    CVAR_LATCH };
 cvar_t r_fullscreen             = { "vid_fullscreen",       "1",    CVAR_LATCH };
 cvar_t r_width                  = { "vid_width",            "1680", CVAR_LATCH };
 cvar_t r_height                 = { "vid_height",           "1050", CVAR_LATCH };
@@ -152,7 +152,6 @@ static void InitOpenGL( void )
 	// GLimp_Init directly or indirectly references the following cvars:
 	//		- r_fullscreen
 	//		- r_glDriver
-	//		- r_mode
 	//		- r_(color|depth|stencil)bits
 	//		- r_ignorehwgamma
 	//		- r_gamma
@@ -300,21 +299,6 @@ int R_MatchMode( int width, int height )
 			return i; // found
 
 	return -1; // not found
-}
-
-/*
-** R_ModeList_f
-*/
-static void R_ModeList_f( void )
-{
-	int i;
-
-	ST_Printf( PRINT_ALL, "\n" );
-	for ( i = 0; i < s_numVidModes; i++ )
-	{
-		ST_Printf( PRINT_ALL, "%s\n", r_vidModes[i].description );
-	}
-	ST_Printf( PRINT_ALL, "\n" );
 }
 
 //============================================================================
@@ -469,74 +453,27 @@ void GL_SetDefaultState( void )
 GfxInfo_f
 ================
 */
-void GfxInfo_f( void ) 
+void GfxInfo_f(void)
 {
-//	cvar_t *sys_cpustring = Cvar_Get( "sys_cpustring", "", 0 );
-#if 0
-	const char *enablestrings[] =
-	{
-		"disabled",
-		"enabled"
-	};
-#endif
-	const char *fsstrings[] =
-	{
-		"windowed",
-		"fullscreen"
-	};
+	SDL_DisplayMode current;
 
-	ST_Printf( PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
-	ST_Printf( PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
-	ST_Printf( PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
-	if ( r_showextensions.value )
+	ST_Printf(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
+	ST_Printf(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
+	ST_Printf(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
+	if (r_showextensions.value)
 		ST_Printf( PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string );
-//	ST_Printf( PRINT_ALL, "GL_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
-//	ST_Printf( PRINT_ALL, "GL_MAX_ACTIVE_TEXTURES_ARB: %d\n", glConfig.maxActiveTextures );
-	ST_Printf( PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
-	ST_Printf( PRINT_ALL, "MODE: %d, %d x %d ", r_mode.integer, glConfig.vidWidth, glConfig.vidHeight);
-	if ( glConfig.displayFrequency )
-	{
-		ST_Printf( PRINT_ALL, "%d", glConfig.displayFrequency );
-	}
+	ST_Printf(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
+
+	if (SDL_GetCurrentDisplayMode(0, &current) != 0)
+		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
+
+	if (r_fullscreen.integer)
+		ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz [fullscreen]\n", current.w, current.h, current.refresh_rate + 1);
 	else
-	{
-		ST_Printf( PRINT_ALL, "N/A" );
-	}
-	Com_Printf ("hz %s\n", fsstrings[r_fullscreen.integer == 1]);
+		ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz [windowed]\n", glConfig.vidWidth, glConfig.vidHeight, current.refresh_rate + 1);
+
 	ST_Printf( PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 
-#if 0
-	if ( glConfig.deviceSupportsGamma )
-	{
-		ST_Printf( PRINT_ALL, "GAMMA: hardware w/ %d overbright bits\n", tr.overbrightBits );
-	}
-	else
-	{
-		ST_Printf( PRINT_ALL, "GAMMA: software w/ %d overbright bits\n", tr.overbrightBits );
-	}
-	ST_Printf( PRINT_ALL, "CPU: %s\n", sys_cpustring.string );
-
-	ST_Printf( PRINT_ALL, "texturemode: %s\n", r_textureMode.string );
-	ST_Printf( PRINT_ALL, "picmip: %d\n", r_picmip.integer );
-	ST_Printf( PRINT_ALL, "texture bits: %d\n", r_texturebits.integer );
-	ST_Printf( PRINT_ALL, "multitexture: %s\n", enablestrings[qglActiveTextureARB != 0] );
-
-	if ( r_vertexLight.integer || glConfig.hardwareType == GLHW_PERMEDIA2 )
-	{
-		ST_Printf( PRINT_ALL, "HACK: using vertex lightmap approximation\n" );
-	}
-	if ( glConfig.hardwareType == GLHW_RAGEPRO )
-	{
-		ST_Printf( PRINT_ALL, "HACK: ragePro approximations\n" );
-	}
-	if ( glConfig.hardwareType == GLHW_RIVA128 )
-	{
-		ST_Printf( PRINT_ALL, "HACK: riva128 approximations\n" );
-	}
-	if ( r_finish.integer ) {
-		ST_Printf( PRINT_ALL, "Forcing glFinish\n" );
-	}
-#endif
 }
 
 /*
@@ -559,7 +496,6 @@ void R_Register( void )
 	Cvar_Register (&r_colorbits);
 	Cvar_Register (&r_stencilbits);
 	Cvar_Register (&r_depthbits);
-	Cvar_Register (&r_mode);
 	Cvar_Register (&r_fullscreen);
 	Cvar_Register (&r_width);
 	Cvar_Register (&r_height);
@@ -619,11 +555,12 @@ void R_Register( void )
 			}
 		}
 
+		// FIXME FIXME This must be looked at!
 		#ifdef _WIN32
 		if (!( // no!
 			strcmp (r_displayRefresh.defaultvalue, r_displayRefresh.string) || // refresh rate wasnt changed
 			strcmp (r_colorbits.defaultvalue, r_colorbits.string ) || // bpp wasnt changed
-			strcmp (r_mode.defaultvalue, r_mode.string ) || // bpp wasnt changed
+			//strcmp (r_mode.defaultvalue, r_mode.string ) || // bpp wasnt changed
 			w || h) // width and height wasnt changed
 			) 
 		{
@@ -657,6 +594,7 @@ void R_Register( void )
 	}
 
 	Cvar_Register (&vid_ref);
+//FIXME This should go for all platforms!
 #ifdef _WIN32
 	Cvar_Register (&vid_flashonactivity);
 #endif
@@ -667,9 +605,8 @@ void R_Register( void )
 
 	if ( !host_initialized )
 	{
-		Cmd_AddCommand( "vid_modelist",		R_ModeList_f );
-		Cmd_AddCommand( "vid_gfxinfo",		GfxInfo_f );
-		Cmd_AddCommand( "vid_restart",	VID_Restart_f );
+		Cmd_AddCommand( "vid_gfxinfo", GfxInfo_f );
+		Cmd_AddCommand( "vid_restart", VID_Restart_f );
 	}
 }
 

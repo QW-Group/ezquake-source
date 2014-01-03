@@ -432,25 +432,21 @@ menu_system_settings_t mss_selected;
 menu_system_settings_t mss_previous;
 
 // will apply given video settings
-static void ApplyVideoSettings(const menu_system_settings_t *s) {
-#ifndef __APPLE__
-	Cvar_SetValue(&r_mode, s->res);
+static void ApplyVideoSettings(const menu_system_settings_t *s)
+{
 	Cvar_SetValue(&r_colorbits, s->bpp);
 	Cvar_SetValue(&r_displayRefresh, s->freq.value);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
-#endif
 	Cbuf_AddText("vid_restart\n");
-    Com_Printf("askmode: %s\n", mss_askmode ? "on" : "off");
+	Com_Printf("askmode: %s\n", mss_askmode ? "on" : "off");
 }
 
 // will store current video settings into the given structure
-static void StoreCurrentVideoSettings(menu_system_settings_t *out) {
-#ifndef __APPLE__
-	out->res = (int) r_mode.value;
+static void StoreCurrentVideoSettings(menu_system_settings_t *out)
+{
 	out->bpp = (int) r_colorbits.value;
 	Cvar_SetValue(&out->freq, r_displayRefresh.value);
 	out->fullscreen = (int) r_fullscreen.value;
-#endif
 }
 
 // performed when user hits the "apply" button

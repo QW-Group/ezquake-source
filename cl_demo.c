@@ -3154,12 +3154,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	time_t t = time(&t);
 	struct tm *ptm = localtime(&t);
 	int width = 0, height = 0; 
-	#ifndef __APPLE__
 	float asp = 0;
-	extern cvar_t r_mode;
-
-	R_GetModeInfo(&width, &height, &asp, r_mode.integer);
-	#endif // __APPLE__
 
 	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
 	f = fopen(logfile, "a");
@@ -3180,7 +3175,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	fputs(va("\t<client>\n\t\t<name>ezQuake</name><version>%s</version>\n"
 		"\t\t<configuration>%s</configuration><rendering>%s</rendering>\n\t</client>\n",
 		VersionString(), QW_CONFIGURATION, QW_RENDERER), f);
-
+//FIXME width/height doesnt get set, remove vid_mode/r_mode... Is this function used??
 	if (width)
 		fputs(va("\t<screen width=\"%d\" height=\"%d\"/>\n", width, height), f);
 
