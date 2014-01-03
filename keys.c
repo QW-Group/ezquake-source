@@ -31,11 +31,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #endif
 
-#if defined (__linux__) || defined (__FreeBSD__)
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#endif
 
 #include "hud.h"
 #include "hud_common.h"

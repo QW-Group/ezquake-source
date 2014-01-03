@@ -15,9 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: gl_local.h,v 1.35 2007-09-17 20:13:52 qqshka Exp $
-
 */
 // gl_local.h -- private refresh defs
 #ifndef __GL_LOCAL_H__
@@ -32,7 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/glext.h>
-#include "gl_model.h"
 
 #else // __APPLE__
 

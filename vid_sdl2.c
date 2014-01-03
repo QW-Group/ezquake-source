@@ -74,8 +74,6 @@ cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse", "1", CVAR_ARCHIVE | C
 // TODO: implement (SDL_PauseAudio func)
 cvar_t sys_inactivesound  = { "sys_inactivesound", "1", CVAR_ARCHIVE };
 
-glwstate_t glw_state;
-
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
 static int old_x = 0, old_y = 0;
@@ -91,10 +89,6 @@ static void GrabMouse(qbool grab, qbool raw);
 
 qbool QGL_Init(const char *dllname)
 {
-	qglActiveTextureARB       = 0;
-	qglClientActiveTextureARB = 0;
-	qglMultiTexCoord2fARB     = 0;
-
 	return true;
 }
 
