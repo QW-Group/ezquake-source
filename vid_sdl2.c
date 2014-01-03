@@ -225,8 +225,8 @@ static void window_event(SDL_WindowEvent *event)
 				glConfig.vidWidth = event->data1;
 				glConfig.vidHeight = event->data2;
 				glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight; 
-				Cvar_LatchedSetValue(&r_winwidth, event->data1);
-				Cvar_LatchedSetValue(&r_winheight, event->data2);
+				Cvar_LatchedSetValue(&r_win_width, event->data1);
+				Cvar_LatchedSetValue(&r_win_height, event->data2);
 			}
 			break;
 	}
@@ -481,7 +481,7 @@ void GLimp_Init( void )
 
 	VID_SDL_InitSubSystem();
 
-	sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, vid_xpos.integer, vid_ypos.integer, r_fullscreen.integer ? r_width.integer : r_winwidth.integer, r_fullscreen.integer ? r_height.integer : r_winheight.integer, flags);
+	sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, vid_xpos.integer, vid_ypos.integer, r_fullscreen.integer ? r_width.integer : r_win_width.integer, r_fullscreen.integer ? r_height.integer : r_win_height.integer, flags);
         icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
                 ezquake_icon.width * ezquake_icon.bytes_per_pixel,
                 0xFF000000,0x00FF0000,0x0000FF00,0x000000FF);
@@ -506,8 +506,8 @@ void GLimp_Init( void )
 	}
 	else
 	{
-		glConfig.vidWidth = r_winwidth.integer;
-		glConfig.vidHeight = r_winheight.integer;
+		glConfig.vidWidth = r_win_width.integer;
+		glConfig.vidHeight = r_win_height.integer;
 	}
 
 	glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight;

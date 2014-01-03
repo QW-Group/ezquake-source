@@ -57,8 +57,8 @@ cvar_t r_mode                   = { "vid_mode",             "3",    CVAR_LATCH }
 cvar_t r_fullscreen             = { "vid_fullscreen",       "1",    CVAR_LATCH };
 cvar_t r_width                  = { "vid_width",            "1680", CVAR_LATCH };
 cvar_t r_height                 = { "vid_height",           "1050", CVAR_LATCH };
-cvar_t r_winwidth               = { "vid_win_width",        "800",  CVAR_LATCH };
-cvar_t r_winheight              = { "vid_win_height",       "600",  CVAR_LATCH };
+cvar_t r_win_width              = { "vid_win_width",        "800",  CVAR_LATCH };
+cvar_t r_win_height             = { "vid_win_height",       "600",  CVAR_LATCH };
 cvar_t r_customaspect           = { "vid_customaspect",     "1",    CVAR_LATCH }; // qqshka: unused even in q3, but I keep cvar, just do not register it
 cvar_t r_displayRefresh         = { "vid_displayfrequency", "0",    CVAR_LATCH };
 cvar_t vid_borderless		= { "vid_borderless",       "0",    CVAR_LATCH };
@@ -563,8 +563,8 @@ void R_Register( void )
 	Cvar_Register (&r_fullscreen);
 	Cvar_Register (&r_width);
 	Cvar_Register (&r_height);
-	Cvar_Register (&r_winwidth);
-	Cvar_Register (&r_winheight);
+	Cvar_Register (&r_win_width);
+	Cvar_Register (&r_win_height);
 	Cvar_Register (&r_win_save_pos);
 	Cvar_Register (&r_win_save_size);
 
@@ -611,8 +611,8 @@ void R_Register( void )
 		if ( w || h ) 
 		{
 			if (COM_CheckParm("-window")) {
-				Cvar_LatchedSetValue(&r_winwidth,  w);
-				Cvar_LatchedSetValue(&r_winheight, h);
+				Cvar_LatchedSetValue(&r_win_width,  w);
+				Cvar_LatchedSetValue(&r_win_height, h);
 			} else {
 				Cvar_LatchedSetValue(&r_width, w);
 				Cvar_LatchedSetValue(&r_height, h);

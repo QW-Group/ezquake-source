@@ -2319,7 +2319,7 @@ void CL_Record_f (void)
 		return;
 	}
 
-	if (cls.fteprotocolextensions &~ FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)
+	if (cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES))
 	{
 		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo most likely will be unplayable in older clients. "
 			"Use cl_pext 0 for 100%% compatible demos. But do NOT forget set it to 1 later or you will lack useful features!\n");
