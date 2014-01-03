@@ -466,9 +466,9 @@ void GfxInfo_f(void)
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
 
 	if (r_fullscreen.integer)
-		ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz [fullscreen]\n", current.w, current.h, current.refresh_rate + 1);
+		ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz [fullscreen]\n", current.w, current.h, current.refresh_rate);
 	else
-		ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz [windowed]\n", glConfig.vidWidth, glConfig.vidHeight, current.refresh_rate + 1);
+		ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz [windowed]\n", glConfig.vidWidth, glConfig.vidHeight, current.refresh_rate);
 
 	ST_Printf( PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 
