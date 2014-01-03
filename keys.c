@@ -2245,7 +2245,6 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		return;
 	}
 
-	#if (defined (__linux__) || defined (__FreeBSD__))
 	// switch windowed<->fullscreen if pressed alt+enter, I succeed only with left alt, dunno why...
 	if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
 	{
@@ -2257,7 +2256,6 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		con_suppress = false;
 		return;
 	}
-	#endif // (__linux__ or __FreeBSD__)
 
 	// if not a consolekey, send to the interpreter no matter what mode is
 	if (!Key_ConsoleKey(key)) 

@@ -32,9 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef GLSL
 #include "gl_shader.h"
 #endif // GLSL
-#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__)
 #include "tr_types.h"
-#endif // _WIN32 || __linux__ || __FreeBSD__
 
 glconfig_t	glConfig;
 //glstate_t	glState;
