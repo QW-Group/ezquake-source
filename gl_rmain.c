@@ -68,9 +68,9 @@ refdef_t  r_refdef;                           // screen size info
 entity_t  r_worldentity;
 entity_t  *currententity;
 mplane_t  frustum[4];
-mleaf_t	  *r_viewleaf;
+mleaf_t   *r_viewleaf;
 mleaf_t   *r_oldviewleaf;
-mleaf_t	  *r_viewleaf2;                       // for watervis hack
+mleaf_t   *r_viewleaf2;                       // for watervis hack
 mleaf_t   *r_oldviewleaf2;                    // for watervis hack
 vec3_t    dlight_color;
 vec3_t    modelorg, r_entorigin;
@@ -134,8 +134,8 @@ cvar_t r_netgraph                          = {"r_netgraph", "0"};
 cvar_t r_netstats                          = {"r_netstats", "0"};
 cvar_t r_fullbrightSkins                   = {"r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins};
 cvar_t r_enemyskincolor                    = {"r_enemyskincolor", "", CVAR_COLOR};
-cvar_t r_teamskincolor	                   = {"r_teamskincolor",  "", CVAR_COLOR};
-cvar_t r_skincolormode	                   = {"r_skincolormode",  "0"};
+cvar_t r_teamskincolor                     = {"r_teamskincolor",  "", CVAR_COLOR};
+cvar_t r_skincolormode                     = {"r_skincolormode",  "0"};
 cvar_t r_fastsky                           = {"r_fastsky", "0"};
 cvar_t r_fastturb                          = {"r_fastturb", "0"};
 cvar_t r_skycolor                          = {"r_skycolor", "40 80 150", CVAR_COLOR};
@@ -147,12 +147,12 @@ cvar_t r_drawflat                          = {"r_drawflat", "0", 0, OnChange_r_d
 cvar_t r_wallcolor                         = {"r_wallcolor", "255 255 255", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t r_floorcolor                        = {"r_floorcolor", "50 100 150", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t gl_textureless                      = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
-cvar_t r_farclip		           = {"r_farclip", "8192"}; // previous default was 4096. 8192 helps some TF players in big maps
-cvar_t r_skyname		           = {"r_skyname", "", 0, OnChange_r_skyname};
-cvar_t gl_detail		           = {"gl_detail","0"};
+cvar_t r_farclip                           = {"r_farclip", "8192"}; // previous default was 4096. 8192 helps some TF players in big maps
+cvar_t r_skyname                           = {"r_skyname", "", 0, OnChange_r_skyname};
+cvar_t gl_detail                           = {"gl_detail","0"};
 cvar_t gl_brush_polygonoffset              = {"gl_brush_polygonoffset", "2.0"}; // This is the one to adjust if you notice flicker on lift @ e1m1 for instance, for z-fighting
 cvar_t gl_caustics                         = {"gl_caustics", "0"}; // 1
-cvar_t gl_waterfog		           = {"gl_turbfog", "0"}; // 2
+cvar_t gl_waterfog                         = {"gl_turbfog", "0"}; // 2
 cvar_t gl_waterfog_density                 = {"gl_turbfogDensity", "1"};
 cvar_t gl_waterfog_color_water             = {"gl_turbfog_color_water", "32 64 128", CVAR_COLOR};
 cvar_t gl_waterfog_color_lava              = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR};
