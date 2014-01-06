@@ -20,14 +20,15 @@
    ===========================================================================
 
  */
-/*
- * This file contains ALL Linux specific stuff having to do with the
- * OpenGL refresh.
- */
 
 #include "quakedef.h"
 
 #include <SDL.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <SDL_syswm.h>
+#endif
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -70,7 +71,8 @@ static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *can
 cvar_t in_raw                 = {"in_raw", "1", CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse", "1", CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 
-// TODO: implement (SDL_PauseAudio func)
+// TODO: implement (SDL_PauseAudio func) and move this
+// I currently just clear the ringbuffer when inactive - dimman
 cvar_t sys_inactivesound  = { "sys_inactivesound", "1", CVAR_ARCHIVE };
 
 qbool mouseinitialized = false; // unfortunately non static, lame...
@@ -461,6 +463,9 @@ void GLimp_Init( void )
 	extern void InitSig(void);
 
 	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+#ifdef SDL_WINDOW_ALLOW_HIGHDPI
+	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
+#endif
 
 	if (r_fullscreen.integer == 1)
 		flags |= SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN;
@@ -589,6 +594,21 @@ void VID_SetCaption (char *text)
 
 void VID_NotifyActivity(void)
 {
+#ifdef _WIN32
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+
+	if (ActiveApp || !vid_flashonactivity.value)
+		return;
+
+	if (SDL_GetWindowWMInfo(sdl_window, &info) == SDL_TRUE)
+	{
+		if (info.subsystem == SDL_SYSWM_WINDOWS)
+			FlashWindow(info.info.win.window, TRUE);
+	}
+	else
+		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
+#endif
 }
 
 /********************************* CLIPBOARD *********************************/
@@ -624,4 +644,5 @@ void VID_Restore (void)
         return;
 
     SDL_RestoreWindow(sdl_window);
+    SDL_RaiseWindow(sdl_window);
 }
