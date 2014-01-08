@@ -74,8 +74,8 @@ cvar_t	r_swapInterval		= { "vid_vsync",			"0",	CVAR_SILENT };
 #endif
 
 void OnChange_vid_pos(cvar_t *var, char *string, qbool *cancel);
-cvar_t r_win_save_pos                 = { "vid_win_save_pos",                   "1", CVAR_NONE };
-cvar_t r_win_save_size                = { "vid_win_save_size",                  "1", CVAR_NONE };
+cvar_t r_win_save_pos                 = { "vid_win_save_pos",                   "1", CVAR_SILENT };
+cvar_t r_win_save_size                = { "vid_win_save_size",                  "1", CVAR_SILENT };
 cvar_t	vid_xpos			= { "vid_xpos",				"3",	CVAR_SILENT, OnChange_vid_pos};
 cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_SILENT, OnChange_vid_pos};
 cvar_t	vid_minpos  = { "vid_minpos",	"0",	CVAR_SILENT};

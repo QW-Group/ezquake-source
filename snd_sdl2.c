@@ -25,6 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <SDL.h>
 
 extern qbool ActiveApp, Minimized;
+extern cvar_t sys_inactivesound;
 
 static void Filler(void *userdata, Uint8 *stream, int len)
 {
@@ -32,7 +33,7 @@ static void Filler(void *userdata, Uint8 *stream, int len)
     int pos = shm->samplepos << 1;
     int wrapped = pos + len - size;
 
-    if (!ActiveApp || Minimized)
+    if (!sys_inactivesound.integer && (!ActiveApp || Minimized))
     {
 	    SDL_memset(stream, 0, len);
 	    return;

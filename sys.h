@@ -197,3 +197,5 @@ typedef void *dllhandle_t;
 dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs);
 void Sys_CloseLibrary(dllhandle_t *lib);
 void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname);
+
+void Sys_CvarInit(void);

@@ -597,6 +597,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 #endif
 
 	Sys_Init ();
+	Sys_CvarInit();
 	CM_Init ();
 	PM_Init ();
 	Mod_Init ();

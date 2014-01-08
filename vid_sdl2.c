@@ -71,10 +71,6 @@ static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *can
 cvar_t in_raw                 = {"in_raw", "1", CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse", "1", CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 
-// TODO: implement (SDL_PauseAudio func) and move this
-// I currently just clear the ringbuffer when inactive - dimman
-cvar_t sys_inactivesound  = { "sys_inactivesound", "1", CVAR_ARCHIVE };
-
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
 static int old_x = 0, old_y = 0;
@@ -87,11 +83,6 @@ qbool Minimized = false;
 //
 
 static void GrabMouse(qbool grab, qbool raw);
-
-qbool QGL_Init(const char *dllname)
-{
-	return true;
-}
 
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
@@ -160,7 +151,7 @@ int IN_GetMouseRate(void)
 
 void IN_Frame(void)
 {
-	if (!r_fullscreen.integer && (key_dest != key_game || cls.state != ca_active))
+	if (!ActiveApp || Minimized || (!r_fullscreen.integer && (key_dest != key_game || cls.state != ca_active)))
 		IN_DeactivateMouse ();
 	else
 		IN_ActivateMouse();
@@ -190,7 +181,7 @@ static void window_event(SDL_WindowEvent *event)
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 
-			if (flags & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS)) {
+			if (flags & SDL_WINDOW_INPUT_FOCUS) {
 				ActiveApp = true;
 				Minimized = false;
 			} else if (flags & SDL_WINDOW_MINIMIZED) {
@@ -216,12 +207,14 @@ static void window_event(SDL_WindowEvent *event)
 			break;
 
 		case SDL_WINDOWEVENT_RESIZED:
-			if (!(flags & SDL_WINDOW_FULLSCREEN) && r_win_save_size.integer) {
+			if (!(flags & SDL_WINDOW_FULLSCREEN)) {
 				glConfig.vidWidth = event->data1;
 				glConfig.vidHeight = event->data2;
-				glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight; 
-				Cvar_LatchedSetValue(&r_win_width, event->data1);
-				Cvar_LatchedSetValue(&r_win_height, event->data2);
+				glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight;
+				if (r_win_save_size.integer) {
+					Cvar_LatchedSetValue(&r_win_width, event->data1);
+					Cvar_LatchedSetValue(&r_win_height, event->data2);
+				}
 			}
 			break;
 	}
@@ -423,21 +416,6 @@ void GLimp_Shutdown(void)
 	memset(&glConfig, 0, sizeof(glConfig));
 }
 
-/*
- ** GLW_StartDriverAndSetMode
- */
-
-/*
- ** GLW_SetMode
- */
-int GLW_SetMode(const char *drivername, int mode, qbool fullscreen)
-{
-	GrabMouse(true, in_raw.integer);
-
-	return RSERR_OK;
-}
-
-
 static int VID_SDL_InitSubSystem(void)
 {
 	int ret = 0;
@@ -479,10 +457,17 @@ void GLimp_Init( void )
 
 	VID_SDL_InitSubSystem();
 
-	sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, vid_xpos.integer, vid_ypos.integer, r_fullscreen.integer ? r_width.integer : r_win_width.integer, r_fullscreen.integer ? r_height.integer : r_win_height.integer, flags);
+	sdl_window = SDL_CreateWindow(
+			WINDOW_CLASS_NAME,
+			vid_xpos.integer,
+			vid_ypos.integer,
+			r_fullscreen.integer ? r_width.integer : r_win_width.integer,
+			r_fullscreen.integer ? r_height.integer : r_win_height.integer,
+			flags);
+
         icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
                 ezquake_icon.width * ezquake_icon.bytes_per_pixel,
-                0xFF000000,0x00FF0000,0x0000FF00,0x000000FF);
+                0x000000FF,0x0000FF00,0x00FF0000,0xFF000000);
 
         if (icon_surface) {
             SDL_SetWindowIcon(sdl_window, icon_surface);
@@ -519,6 +504,7 @@ void GLimp_Init( void )
 	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
 
 	v_gamma.modified = true;
+	r_swapInterval.modified = true;
 	
 #if defined(__linux__)
 	InitSig(); // not clear why this is at begin & end of function
