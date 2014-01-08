@@ -130,6 +130,8 @@ keyname_t keynames[] = {
 
 	{"CAPSLOCK",K_CAPSLOCK},
 	{"PRINTSCR", K_PRINTSCR},
+	{"PRINTSCRN", K_PRINTSCR},
+	{"PRINTSCREEN", K_PRINTSCR},
 	{"SCRLCK", K_SCRLCK},
 	{"SCROLLLOCK", K_SCRLCK},
 	{"SCROLLOCK", K_SCRLCK},	// misspelled; kept for compatibility
@@ -154,10 +156,8 @@ keyname_t keynames[] = {
 	{"LALT", K_LALT},
 	{"RALT", K_RALT},
 
-#ifdef WITH_KEYMAP
 	{"ALTGR", K_RALT},
 	{"ALTCHAR", K_RALT},
-#endif // WITH_KEYMAP
 
 	{"CTRL", K_CTRL},
 	{"LCTRL", K_LCTRL},
@@ -169,15 +169,16 @@ keyname_t keynames[] = {
 	{"WINKEY", K_WIN},
 	{"LWINKEY", K_LWIN},
 	{"RWINKEY", K_RWIN},
-	{"POPUPMENU", K_MENU},
+	{"POPUPMENU", K_MENU}, //???
 
-#ifdef WITH_KEYMAP
 	// special keys
 	{"WIN", K_WIN},
 	{"LWIN", K_LWIN},
 	{"RWIN", K_RWIN},
+	{"SUPER", K_WIN},
+	{"LSUPER", K_LWIN},
+	{"RSUPER", K_RWIN},
 	{"MENU", K_MENU},
-#endif // WITH_KEYMAP
 
 	// Keypad stuff..
 
@@ -245,44 +246,6 @@ keyname_t keynames[] = {
 	{"MOUSE6", K_MOUSE6},
 	{"MOUSE7", K_MOUSE7},
 	{"MOUSE8", K_MOUSE8},
-
-	{"JOY1", K_JOY1},
-	{"JOY2", K_JOY2},
-	{"JOY3", K_JOY3},
-	{"JOY4", K_JOY4},
-
-	{"AUX1", K_AUX1},
-	{"AUX2", K_AUX2},
-	{"AUX3", K_AUX3},
-	{"AUX4", K_AUX4},
-	{"AUX5", K_AUX5},
-	{"AUX6", K_AUX6},
-	{"AUX7", K_AUX7},
-	{"AUX8", K_AUX8},
-	{"AUX9", K_AUX9},
-	{"AUX10", K_AUX10},
-	{"AUX11", K_AUX11},
-	{"AUX12", K_AUX12},
-	{"AUX13", K_AUX13},
-	{"AUX14", K_AUX14},
-	{"AUX15", K_AUX15},
-	{"AUX16", K_AUX16},
-	{"AUX17", K_AUX17},
-	{"AUX18", K_AUX18},
-	{"AUX19", K_AUX19},
-	{"AUX20", K_AUX20},
-	{"AUX21", K_AUX21},
-	{"AUX22", K_AUX22},
-	{"AUX23", K_AUX23},
-	{"AUX24", K_AUX24},
-	{"AUX25", K_AUX25},
-	{"AUX26", K_AUX26},
-	{"AUX27", K_AUX27},
-	{"AUX28", K_AUX28},
-	{"AUX29", K_AUX29},
-	{"AUX30", K_AUX30},
-	{"AUX31", K_AUX31},
-	{"AUX32", K_AUX32},
 
 	{"MWHEELUP", K_MWHEELUP},
 	{"MWHEELDOWN", K_MWHEELDOWN},
@@ -1923,16 +1886,13 @@ void Key_Init (void) {
 #endif
 	consolekeys[K_MWHEELUP] = true;
 	consolekeys[K_MWHEELDOWN] = true;
-#ifdef WITH_KEYMAP
 	consolekeys[K_WIN] = true;
 	consolekeys[K_LWIN] = true;
 	consolekeys[K_RWIN] = true;
 	consolekeys[K_MENU] = true;
-#endif // WITH_KEYMAP
 	consolekeys['`'] = false;
 	consolekeys['~'] = false;
 
-#ifndef WITH_KEYMAP
 	for (i = 0; i < sizeof(keyshift) / sizeof(*keyshift); i++)
 		keyshift[i] = i;
 	for (i = 'a'; i <= 'z'; i++)
@@ -1958,7 +1918,6 @@ void Key_Init (void) {
 	keyshift[']'] = '}';
 	keyshift['`'] = '~';
 	keyshift['\\'] = '|';
-#endif // WITH_KEYMAP
 
 	memset(hudeditorkeys, true, 512 * sizeof(qbool));
     hudeditorkeys[K_ALT] = true;

@@ -16,58 +16,56 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
 */
 
 #ifndef CVAR_GROUPS_DEFINE_VARIABLES
 
-#define CVAR_GROUP_NO_GROUP 				"#No Group#"
-#define CVAR_GROUP_SERVER_PERMISSIONS 		"Serverside Permissions"
-#define CVAR_GROUP_SERVER_PHYSICS			"Serverside Physics"
-#define CVAR_GROUP_SERVERINFO				"Serverinfo Keys"
-#define CVAR_GROUP_SERVER_MAIN				"Server Settings"
-#define CVAR_GROUP_ITEM_NEED				"Item Need Amounts"
-#define CVAR_GROUP_ITEM_NAMES				"Item Names"
-#define CVAR_GROUP_SPECTATOR				"Spectator Tracking"
-#define CVAR_GROUP_SCREENSHOTS				"Screenshot Settings"
-#define CVAR_GROUP_DEMO						"Demo Handling"
-#define CVAR_GROUP_MATCH_TOOLS				"Match Tools"
-#define CVAR_GROUP_VIEW						"View Settings"
-#define CVAR_GROUP_BLEND					"Screen & Powerup Blends"
-#define CVAR_GROUP_SCREEN					"Screen Settings"
-#define CVAR_GROUP_CROSSHAIR				"Crosshair Settings"
-#define CVAR_GROUP_SBAR						"Status Bar and Scoreboard"
-#define CVAR_GROUP_SERVER_BROWSER			"Server Browser"
-#define CVAR_GROUP_NETWORK					"Network Settings"
-#define CVAR_GROUP_INPUT_MISC				"Input - Misc"
-#define CVAR_GROUP_INPUT_JOY				"Input - Joystick"
-#define CVAR_GROUP_INPUT_MOUSE				"Input - Mouse"
-#define CVAR_GROUP_INPUT_KEYBOARD			"Input - Keyboard"
-#define CVAR_GROUP_MP3						"MP3 Settings"
-#define CVAR_GROUP_SOUND					"Sound Settings"
-#define CVAR_GROUP_VIDEO					"Video Settings"
-#define CVAR_GROUP_SYSTEM_SETTINGS 			"System Settings"
-#define CVAR_GROUP_OPENGL					"OpenGL Rendering"
-#define CVAR_GROUP_TEXTURES					"Texture Settings"
-#define CVAR_GROUP_VIEWMODEL				"Weapon View Model Settings"
-#define CVAR_GROUP_TURB						"Turbulency and Sky Settings"
-#define CVAR_GROUP_LIGHTING					"Lighting"
-#define CVAR_GROUP_PARTICLES				"Particle Effects"
-#define CVAR_GROUP_EYECANDY					"FPS and EyeCandy Settings"
-#define CVAR_GROUP_CHAT						"Chat Settings"
-#define CVAR_GROUP_CONSOLE					"Console Settings"
-#define CVAR_GROUP_SKIN						"Skin Settings"
-#define CVAR_GROUP_COMMUNICATION			"Teamplay Communications"
+#define CVAR_GROUP_NO_GROUP                 "#No Group#"
+#define CVAR_GROUP_SERVER_PERMISSIONS       "Serverside Permissions"
+#define CVAR_GROUP_SERVER_PHYSICS           "Serverside Physics"
+#define CVAR_GROUP_SERVERINFO               "Serverinfo Keys"
+#define CVAR_GROUP_SERVER_MAIN              "Server Settings"
+#define CVAR_GROUP_ITEM_NEED                "Item Need Amounts"
+#define CVAR_GROUP_ITEM_NAMES               "Item Names"
+#define CVAR_GROUP_SPECTATOR                "Spectator Tracking"
+#define CVAR_GROUP_SCREENSHOTS              "Screenshot Settings"
+#define CVAR_GROUP_DEMO                     "Demo Handling"
+#define CVAR_GROUP_MATCH_TOOLS              "Match Tools"
+#define CVAR_GROUP_VIEW                     "View Settings"
+#define CVAR_GROUP_BLEND                    "Screen & Powerup Blends"
+#define CVAR_GROUP_SCREEN                   "Screen Settings"
+#define CVAR_GROUP_CROSSHAIR                "Crosshair Settings"
+#define CVAR_GROUP_SBAR                     "Status Bar and Scoreboard"
+#define CVAR_GROUP_SERVER_BROWSER           "Server Browser"
+#define CVAR_GROUP_NETWORK                  "Network Settings"
+#define CVAR_GROUP_INPUT_MISC               "Input - Misc"
+#define CVAR_GROUP_INPUT_MOUSE              "Input - Mouse"
+#define CVAR_GROUP_INPUT_KEYBOARD           "Input - Keyboard"
+#define CVAR_GROUP_MP3                      "MP3 Settings"
+#define CVAR_GROUP_SOUND                    "Sound Settings"
+#define CVAR_GROUP_VIDEO                    "Video Settings"
+#define CVAR_GROUP_SYSTEM_SETTINGS          "System Settings"
+#define CVAR_GROUP_OPENGL                   "OpenGL Rendering"
+#define CVAR_GROUP_TEXTURES                 "Texture Settings"
+#define CVAR_GROUP_VIEWMODEL                "Weapon View Model Settings"
+#define CVAR_GROUP_TURB                     "Turbulency and Sky Settings"
+#define CVAR_GROUP_LIGHTING                 "Lighting"
+#define CVAR_GROUP_PARTICLES                "Particle Effects"
+#define CVAR_GROUP_EYECANDY                 "FPS and EyeCandy Settings"
+#define CVAR_GROUP_CHAT                     "Chat Settings"
+#define CVAR_GROUP_CONSOLE                  "Console Settings"
+#define CVAR_GROUP_SKIN                     "Skin Settings"
+#define CVAR_GROUP_COMMUNICATION            "Teamplay Communications"
 
-#define CVAR_GROUP_USERINFO					"Player Settings"
-#define CVAR_GROUP_CONFIG					"Config Management"
-#define CVAR_GROUP_HUD						"MQWCL HUD" // HUD -> hexum
+#define CVAR_GROUP_USERINFO                 "Player Settings"
+#define CVAR_GROUP_CONFIG                   "Config Management"
+#define CVAR_GROUP_HUD                      "MQWCL HUD" // HUD -> hexum
 
-#define CVAR_GROUP_MVD						"MultiView Demos"
-#define CVAR_GROUP_QTV						"QTV Settings"
+#define CVAR_GROUP_MVD                      "MultiView Demos"
+#define CVAR_GROUP_QTV                      "QTV Settings"
 #define CVAR_GROUP_MENU                     "Menu"
 
-#else		// CVAR_GROUPS_DEFINE_VARIABLES
+#else   // CVAR_GROUPS_DEFINE_VARIABLES
 
 char *cvar_groups_list[] = {
 	CVAR_GROUP_NO_GROUP,
@@ -89,7 +87,6 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SERVER_BROWSER,
 	CVAR_GROUP_NETWORK,
 	CVAR_GROUP_INPUT_MISC,
-	CVAR_GROUP_INPUT_JOY,
 	CVAR_GROUP_INPUT_MOUSE,
 	CVAR_GROUP_INPUT_KEYBOARD,
 	CVAR_GROUP_MP3,
@@ -109,7 +106,7 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SKIN,
 	CVAR_GROUP_COMMUNICATION,
 	CVAR_GROUP_USERINFO,
-	CVAR_GROUP_HUD,		// HUD -> hexum
+	CVAR_GROUP_HUD,        // HUD -> hexum
 	CVAR_GROUP_MVD,
 	CVAR_GROUP_QTV,
 	CVAR_GROUP_MENU,

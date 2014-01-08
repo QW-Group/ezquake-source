@@ -220,28 +220,7 @@ static void window_event(SDL_WindowEvent *event)
 	}
 }
 
-#define K_PRINTSCREEN 0
-#define K_SCROLLOCK 0
-#define K_NUMLOCK 0
-#define K_KP_ENTER 0
-#define K_KP_END 0
-#define K_KP_SLASH 0
-#define K_KP_MULTIPLY 0
-#define K_KP_DOWNARROW 0
-#define K_KP_MINUS 0
-#define K_KP_PLUS 0
-#define K_KP_PGDN 0
-#define K_KP_LEFTARROW 0
-#define K_KP_RIGHTARROW 0
-#define K_KP_HOME 0
-#define K_KP_UPARROW 0
-#define K_KP_5 0
-#define K_KP_INS  0
-#define K_KP_DEL 0
-#define K_KP_PGUP 0
-#define K_102ND 0
-#define K_LWINKEY 0
-#define K_RWINKEY 0
+// FIXME: APPLE K_CMD, K_F13-15 etc...
 
 static const byte scantokey[128] = {
 //  0               1               2               3               4               5               6                   7
@@ -254,14 +233,14 @@ static const byte scantokey[128] = {
     K_ENTER,        K_ESCAPE,       K_BACKSPACE,    K_TAB,          K_SPACE,        '-',            '=',                '[',
     ']',            '\\',           0,              ';',            '\'',           '`',            ',',                '.',            // 3
     '/' ,           K_CAPSLOCK,     K_F1,           K_F2,           K_F3,           K_F4,           K_F5,               K_F6,
-    K_F7,           K_F8,           K_F9,           K_F10,          K_F11,          K_F12,          K_PRINTSCREEN,      K_SCROLLOCK,    // 4
+    K_F7,           K_F8,           K_F9,           K_F10,          K_F11,          K_F12,          K_PRINTSCR,         K_SCRLCK,    // 4
     K_PAUSE,        K_INS,          K_HOME,         K_PGUP,         K_DEL,          K_END,          K_PGDN,             K_RIGHTARROW,
-    K_LEFTARROW,    K_DOWNARROW,    K_UPARROW,      K_NUMLOCK,      K_KP_SLASH,     K_KP_MULTIPLY,  K_KP_MINUS,         K_KP_PLUS,      // 5
-    K_KP_ENTER,     K_KP_END,       K_KP_DOWNARROW, K_KP_PGDN,      K_KP_LEFTARROW, K_KP_5,         K_KP_RIGHTARROW,    K_KP_HOME,
-    K_KP_UPARROW,   K_KP_PGUP,      K_KP_INS,       K_KP_DEL,       K_102ND,        0,              0,                  0,              // 6
+    K_LEFTARROW,    K_DOWNARROW,    K_UPARROW,      KP_NUMLOCK,     KP_SLASH,       KP_STAR,        KP_MINUS,           KP_PLUS,        // 5
+    KP_ENTER,       KP_END,         KP_DOWNARROW,   KP_PGDN,        KP_LEFTARROW,   KP_5,           KP_RIGHTARROW,      KP_HOME,
+    KP_UPARROW,     KP_PGUP,        KP_INS,         KP_DEL,         0,              K_MENU,         0,                  0,              // 6
     0,              0,              0,              0,              0,              0,              0,                  0,
     0,              0,              0,              0,              0,              0,              K_MENU,             0,              // 7
-    K_LCTRL,        K_LSHIFT,       K_LALT,         K_LWINKEY,      K_RCTRL,        K_RSHIFT,       K_RALT,             K_RWINKEY,      // E
+    K_LCTRL,        K_LSHIFT,       K_LALT,         K_LWIN,         K_RCTRL,        K_RSHIFT,       K_RALT,             K_RWIN,         // E
 };
 
 static void keyb_event(SDL_KeyboardEvent *event)
