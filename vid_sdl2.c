@@ -181,7 +181,16 @@ static void window_event(SDL_WindowEvent *event)
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 
+// FIXME ActiveApp doesn't get set properly in the 'else' version, with the _WIN32 version below
+// 	alt-tab works but sounds keeps playing when alt-tabbing out, effectivly means ActiveApp is
+// 	still set to true... Reason for 'else' version is so that sound doesn't play if window is
+// 	inactive (another window partially in front of it) but mouse cursor is on ezquake window
+// FIXME!!!
+#ifdef _WIN32
+			if (flags & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS)) {
+#else
 			if (flags & SDL_WINDOW_INPUT_FOCUS) {
+#endif
 				ActiveApp = true;
 				Minimized = false;
 			} else if (flags & SDL_WINDOW_MINIMIZED) {
