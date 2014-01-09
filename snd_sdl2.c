@@ -33,7 +33,8 @@ static void Filler(void *userdata, Uint8 *stream, int len)
     int pos = shm->samplepos << 1;
     int wrapped = pos + len - size;
 
-    if (!sys_inactivesound.integer && (!ActiveApp || Minimized))
+    // Implicit Minimized in first case
+    if ((!sys_inactivesound.integer == 1 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized))
     {
 	    SDL_memset(stream, 0, len);
 	    return;
