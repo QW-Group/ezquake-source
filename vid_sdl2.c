@@ -56,20 +56,13 @@ int opengl_initialized = 0;
 static qbool mouse_active = false;
 qbool vid_hwgamma_enabled = false;
 
-typedef enum
-{
-	RSERR_OK,
-	RSERR_INVALID_FULLSCREEN,
-	RSERR_INVALID_MODE,
-	RSERR_UNKNOWN
-} rserr_t;
-
-
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 
 cvar_t in_raw                 = {"in_raw", "1", CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse", "1", CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
+
+extern cvar_t sys_inactivesleep;
 
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
@@ -172,40 +165,21 @@ void IN_Restart_f(void)
 static void window_event(SDL_WindowEvent *event)
 {
 	int flags = SDL_GetWindowFlags(sdl_window);
+	extern qbool scr_skipupdate;
 
 	switch (event->event) {
 		case SDL_WINDOWEVENT_MINIMIZED:
-		case SDL_WINDOWEVENT_RESTORED:
-		case SDL_WINDOWEVENT_ENTER:
-		case SDL_WINDOWEVENT_LEAVE:
-		case SDL_WINDOWEVENT_FOCUS_GAINED:
+			Minimized = true;
+
 		case SDL_WINDOWEVENT_FOCUS_LOST:
+			ActiveApp = false;
+			break;
 
-// FIXME ActiveApp doesn't get set properly in the 'else' version, with the _WIN32 version below
-// 	alt-tab works but sounds keeps playing when alt-tabbing out, effectivly means ActiveApp is
-// 	still set to true... Reason for 'else' version is so that sound doesn't play if window is
-// 	inactive (another window partially in front of it) but mouse cursor is on ezquake window
-// FIXME!!!
-#ifdef _WIN32
-			if (flags & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS)) {
-#else
-			if (flags & SDL_WINDOW_INPUT_FOCUS) {
-#endif
-				ActiveApp = true;
-				Minimized = false;
-			} else if (flags & SDL_WINDOW_MINIMIZED) {
-				ActiveApp = false;
-				Minimized = true;
-			} else {
-				ActiveApp = false;
-				Minimized = false;
-			}
-
-			if (r_fullscreen.integer == 0)
-				SDL_SetWindowFullscreen(sdl_window, 0);
-			else
-				SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN);
-
+		case SDL_WINDOWEVENT_RESTORED:
+		case SDL_WINDOWEVENT_FOCUS_GAINED:
+			Minimized = false;
+			ActiveApp = true;
+			scr_skipupdate = 0;
 			break;
 
 		case SDL_WINDOWEVENT_MOVED:
@@ -362,6 +336,20 @@ void Sys_SendKeyEvents (void)
 
 	IN_Frame();
 	HandleEvents();
+
+	if (sys_inactivesleep.integer > 0) 
+	{
+		// Yield the CPU a little
+		if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing)
+		{
+			SDL_Delay(50);
+			scr_skipupdate = 1; // no point to draw anything
+		} 
+		else if (!ActiveApp) // Delay a bit less if just not active window
+		{
+			SDL_Delay(20);
+		}
+	}
 
 	if (mouse_active && SDL_GetRelativeMouseMode()) {
 		SDL_GetRelativeMouseState(&mx, &my);

@@ -41,9 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 cvar_t	sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
-
 cvar_t	sys_yieldcpu = {"sys_yieldcpu", "0"};
-cvar_t	sys_inactivesleep = {"sys_inactiveSleep", "1"};
 
 static HANDLE	qwclsemaphore;
 static HANDLE	tevent;
@@ -544,7 +542,6 @@ void Sys_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
 	Cvar_Register(&sys_highpriority);
 	Cvar_Register(&sys_yieldcpu);
-	Cvar_Register(&sys_inactivesleep);
 #ifndef WITHOUT_WINKEYHOOK
 	Cvar_Register(&sys_disableWinKeys);	
 #endif
@@ -674,11 +671,6 @@ void ParseCommandLine (char *lpCmdLine)
 			}
 		}
 	}
-}
-
-void SleepUntilInput (int time) 
-{
-	MsgWaitForMultipleObjects (1, &tevent, FALSE, time, QS_ALLINPUT);
 }
 
 HHOOK hMsgBoxHook;
@@ -1014,20 +1006,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     // Main window message loop.
 	while (1) 
 	{
-		if (sys_inactivesleep.value) 
-		{
-			// Yield the CPU for a little while when paused, minimized, or not the focus
-			if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing)
-			{
-				SleepUntilInput (PAUSE_SLEEP);
-				scr_skipupdate = 1;		// no point in bothering to draw
-			} 
-			else if (!ActiveApp)
-			{
-				SleepUntilInput (NOT_FOCUS_SLEEP);
-			}
-		}
-
 		newtime = Sys_DoubleTime ();
 		time = newtime - oldtime;
 		Host_Frame (time);
