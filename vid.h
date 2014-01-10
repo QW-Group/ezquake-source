@@ -89,3 +89,7 @@ extern qbool vid_hwgamma_enabled;
 
 void VID_Minimize();
 void VID_Restore();
+
+qbool VID_VSyncIsOn();
+qbool VID_VSyncLagFix();
+void VID_CvarInit();

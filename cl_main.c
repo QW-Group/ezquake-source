@@ -106,8 +106,6 @@ cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
 cvar_t	cl_physfps_spectator = {"cl_physfps_spectator", "30"};
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnChange_indphys};
-cvar_t	cl_vsync_lag_fix = {"cl_vsync_lag_fix", "0"};
-cvar_t	cl_vsync_lag_tweak = {"cl_vsync_lag_tweak", "1.0"};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
@@ -1800,8 +1798,6 @@ void CL_InitLocal (void)
 	Cvar_Register (&hud_fps_min_reset_interval);
 	Cvar_Register (&cl_physfps_spectator);
 	Cvar_Register (&cl_independentPhysics);
-	Cvar_Register (&cl_vsync_lag_fix);
-	Cvar_Register (&cl_vsync_lag_tweak);
 	Cvar_Register (&cl_deadbodyfilter);
 	Cvar_Register (&cl_gibfilter);
 	Cvar_Register (&cl_backpackfilter);
@@ -2025,6 +2021,7 @@ void CL_Init (void)
 	VID_Init (host_basepal);
 	IN_Init ();
 #endif
+	VID_CvarInit();
 
 	Image_Init();
 
@@ -2218,11 +2215,6 @@ void Cl_Reset_Min_fps_f(void)
 	CL_CalcFPS();
 }
 
-#define NUMTIMINGS 5
-double timings[NUMTIMINGS];
-double render_frame_start, render_frame_end;
-int timings_idx;
-
 void CL_QTVPoll (void);
 
 qbool physframe;
@@ -2237,6 +2229,7 @@ void CL_Frame (double time)
 	extern cvar_t r_lerpframes;
 	extern cvar_t gl_clear;
 	extern cvar_t gl_polyblend;
+	extern double render_frame_start;
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -2267,6 +2260,9 @@ void CL_Frame (double time)
 		CL_QueInputPacket();
 		CL_UnqueOutputPacket(false);
 	}
+
+	if (VID_VSyncLagFix())
+		return;
 
 	render_frame_start = Sys_DoubleTime();
 

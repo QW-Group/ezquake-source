@@ -61,6 +61,8 @@ static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *can
 
 cvar_t in_raw                 = {"in_raw", "1", CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse", "1", CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
+cvar_t vid_vsync_lag_fix      = {"vid_vsync_lag_fix", "0"};
+cvar_t vid_vsync_lag_tweak    = {"vid_vsync_lag_tweak", "1.0"};
 
 extern cvar_t sys_inactivesleep;
 
@@ -70,6 +72,9 @@ static int old_x = 0, old_y = 0;
 
 qbool ActiveApp = true;
 qbool Minimized = false;
+
+double vid_vsync_lag;
+double vid_last_swap_time;
 
 //
 // function declaration
@@ -405,6 +410,15 @@ static int VID_SDL_InitSubSystem(void)
 	return ret;
 }
 
+// FIXME This is a big mess design wise...
+void VID_CvarInit(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
+	Cvar_Register(&vid_vsync_lag_fix);
+	Cvar_Register(&vid_vsync_lag_tweak);
+	Cvar_ResetCurrentGroup();
+}
+
 /*
  ** GLimp_Init
  **
@@ -416,6 +430,8 @@ void GLimp_Init( void )
 	SDL_Surface *icon_surface;
 	extern void InitSig(void);
 
+	SDL_DisplayMode display_mode;
+
 	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 #ifdef SDL_WINDOW_ALLOW_HIGHDPI
 	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
@@ -423,9 +439,6 @@ void GLimp_Init( void )
 
 	if (r_fullscreen.integer == 1)
 		flags |= SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN;
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
-	Cvar_ResetCurrentGroup();
 
 #if defined(__linux__)
 	InitSig();
@@ -458,16 +471,18 @@ void GLimp_Init( void )
 		return;
 	}
 
-	if (r_fullscreen.integer)
-	{
+	if (r_fullscreen.integer) {
 		glConfig.vidWidth = r_width.integer;
 		glConfig.vidHeight = r_height.integer;
-	}
-	else
-	{
+	} else {
 		glConfig.vidWidth = r_win_width.integer;
 		glConfig.vidHeight = r_win_height.integer;
 	}
+
+	if (!SDL_GetWindowDisplayMode(sdl_window, &display_mode))
+		glConfig.displayFrequency = display_mode.refresh_rate;
+	else
+		glConfig.displayFrequency = 0;
 
 	glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight;
 	glConfig.colorBits = 24;
@@ -500,16 +515,23 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 void GL_EndRendering (void)
 {
 	if (r_swapInterval.modified) {
-		if (r_swapInterval.integer > 0) {
+		if (r_swapInterval.integer == 0) {
+			if (SDL_GL_SetSwapInterval(0)) {
+				Con_Printf("vsync: Failed to disable vsync...\n");
+			}
+		} else if (r_swapInterval.integer == -1) {
+			if (SDL_GL_SetSwapInterval(-1)) {
+				Con_Printf("vsync: Failed to enable late swap tearing (vid_vsync -1), setting vid_vsync 1 instead...\n");
+				Cvar_SetValueByName("vid_vsync", 1);
+			}
+		}
+
+		if (r_swapInterval.integer == 1) {
 			if (SDL_GL_SetSwapInterval(1)) {
 				Con_Printf("vsync: Failed to enable vsync...\n");
 			}
 		}
-		else if (r_swapInterval.integer <= 0) {
-			if (SDL_GL_SetSwapInterval(0)) {
-				Con_Printf("vsync: Failed to disable vsync...\n");
-			}
-		}
+
 		r_swapInterval.modified = false;
         }
 
@@ -517,17 +539,11 @@ void GL_EndRendering (void)
 	{
 		// Multiview - Only swap the back buffer to front when all views have been drawn in multiview.
 		if (cl_multiview.value && cls.mvdplayback) 
-		{
-			if (CURRVIEW == 1)
-			{
-				GLimp_EndFrame();
-			}
-		}
-		else 
-		{
-			// Normal, swap on each frame.
-			GLimp_EndFrame(); 
-		}
+			if (CURRVIEW != 1)
+				return;
+
+		// Normal, swap on each frame.
+		GLimp_EndFrame(); 
 	}
 }
 
@@ -541,7 +557,11 @@ void GL_EndRendering (void)
  */
 void GLimp_EndFrame (void)
 {
+	double time_before_swap;
+	time_before_swap = Sys_DoubleTime();
 	SDL_GL_SwapWindow(sdl_window);
+	vid_last_swap_time = Sys_DoubleTime();
+	vid_vsync_lag = vid_last_swap_time - time_before_swap;
 }
 
 /************************************* Window related *******************************/
@@ -608,3 +628,59 @@ void VID_Restore (void)
     SDL_RestoreWindow(sdl_window);
     SDL_RaiseWindow(sdl_window);
 }
+
+qbool VID_VSyncIsOn(void)
+{
+	return SDL_GL_GetSwapInterval() == 1;
+}
+
+#define NUMTIMINGS 5
+double timings[NUMTIMINGS];
+double render_frame_start, render_frame_end;
+
+// Returns true if it's not time yet to run a frame
+qbool VID_VSyncLagFix(void)
+{
+        extern double vid_last_swap_time;
+        double avg_rendertime, tmin, tmax;
+
+	static int timings_idx;
+        int i;
+
+	if (!VID_VSyncIsOn() || !vid_vsync_lag_fix.integer)
+		return false;
+
+	if (!glConfig.displayFrequency) {
+		Com_Printf("VID_VSyncLagFix: displayFrequency isn't set, can't enable vsync lag fix\n");
+		return false;
+	}
+
+        // collect statistics so that
+        timings[timings_idx] = render_frame_end - render_frame_start;
+        timings_idx = (timings_idx + 1) % NUMTIMINGS;
+        avg_rendertime = tmin = tmax = 0;
+        for (i = 0; i < NUMTIMINGS; i++) {
+                if (timings[i] == 0)
+                        return false;   // not enough statistics yet
+                avg_rendertime += timings[i];
+                if (timings[i] < tmin || !tmin)
+                        tmax = timings[i];
+                if (timings[i] > tmax)
+                        tmax = timings[i];
+        }
+        avg_rendertime /= NUMTIMINGS;
+        // if (tmax and tmin differ too much) do_something(); ?
+        avg_rendertime = tmax;  // better be on the safe side
+
+	double time_left = vid_last_swap_time + 1.0/glConfig.displayFrequency - Sys_DoubleTime();
+	time_left -= avg_rendertime;
+	time_left -= vid_vsync_lag_tweak.value * 0.001;
+	if (time_left > 0) {
+		extern cvar_t sys_yieldcpu;
+		if (time_left > 0.001 && sys_yieldcpu.integer)
+			Sys_MSleep(min(time_left * 1000, 500));
+		return true;    // don't run a frame yet
+	}
+        return false;
+}
+

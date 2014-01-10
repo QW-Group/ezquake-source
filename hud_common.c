@@ -286,9 +286,28 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
 void SCR_HUD_DrawVidLag(hud_t *hud)
 {
-    int x, y;
-    char st[128];
+	int x, y;
+	char st[128];
 	static cvar_t *hud_vidlag_style = NULL;
+
+	extern qbool VID_VSyncIsOn(void);
+	extern double vid_vsync_lag;
+	static double old_lag;
+
+        if (VID_VSyncIsOn() || glConfig.displayFrequency)
+        {
+                // take the average of last two values, otherwise it
+                // changes very fast and is hard to read
+                double current, avg;
+                if (VID_VSyncIsOn())
+                        current = vid_vsync_lag;
+                else
+                        current = min(cls.trueframetime, 1.0/glConfig.displayFrequency) * 0.5;
+                avg = (current + old_lag) * 0.5;
+                old_lag = current;
+                snprintf (st, sizeof (st), "%2.1f", avg * 1000);
+        }
+        else
 
 	strcpy(st, "?");
 
