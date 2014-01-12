@@ -125,9 +125,6 @@ void IN_Init (void)
 			;
 		*/
 
-#ifdef WITH_KEYMAP
-		IN_StartupKeymap();
-#endif // WITH_KEYMAP
 		Cmd_AddCommand("in_restart", IN_Restart_f);
 	}
 

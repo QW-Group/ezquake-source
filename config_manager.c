@@ -28,11 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 
 
-#ifdef WITH_KEYMAP
-char *Key_KeynumToString (int keynum, char *buffer);
-#else
 char *Key_KeynumToString (int keynum);
-#endif
 
 void DumpSkyGroups(FILE *f);
 qbool Key_IsLeftRightSameBind(int b);
@@ -90,11 +86,7 @@ void DumpBindings (FILE *f)
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
 		if (keybindings[i] || leftright) {
 			printed = true;
-#ifdef WITH_KEYMAP
-			string = Key_KeynumToString(i, NULL);
-#else
 			string = Key_KeynumToString(i);
-#endif
 			spaces = CreateSpaces(BIND_ALIGN_COL - strlen(string) - 6);
 			if (i == ';')
 				fprintf (f, "bind  \";\"%s\"%s\"\n", spaces, keybindings[i]);
