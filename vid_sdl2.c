@@ -42,30 +42,25 @@
 #include "input.h"
 #include "rulesets.h"
 #include "utils.h"
+#include "gl_model.h"
+#include "gl_local.h"
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
+
+static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
+static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
+static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
+static void GrabMouse(qbool grab, qbool raw);
+static void GfxInfo_f(void);
+static void HandleEvents();
+static void VID_UpdateConRes(void);
 
 static SDL_Window       *sdl_window;
 static SDL_GLContext    *sdl_context;
 
-//
-// cvars
-//
-
-int opengl_initialized = 0;
-static qbool mouse_active = false;
+glconfig_t glConfig;
 qbool vid_hwgamma_enabled = false;
-
-static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
-static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
-
-cvar_t in_raw                 = {"in_raw", "1", CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
-cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse", "1", CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
-cvar_t vid_vsync_lag_fix      = {"vid_vsync_lag_fix", "0"};
-cvar_t vid_vsync_lag_tweak    = {"vid_vsync_lag_tweak", "1.0"};
-
-extern cvar_t sys_inactivesleep;
-
+static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
 static int old_x = 0, old_y = 0;
@@ -76,11 +71,47 @@ qbool Minimized = false;
 double vid_vsync_lag;
 double vid_last_swap_time;
 
+
+//
+// cvars
+//
+
+extern cvar_t sys_inactivesleep;
+
+// latched variables that can only change over a restart
+cvar_t r_glDriver             = {"vid_glDriver", OPENGL_DRIVER_NAME, CVAR_LATCH };
+cvar_t r_allowExtensions      = {"vid_allowExtensions",   "1",   CVAR_LATCH };
+cvar_t r_colorbits            = {"vid_colorbits",         "0",   CVAR_LATCH };
+cvar_t r_stereo               = {"vid_stereo",            "0",   CVAR_LATCH };
+cvar_t r_stencilbits          = {"vid_stencilbits",       "8",   CVAR_LATCH };
+cvar_t r_depthbits            = {"vid_depthbits",         "0",   CVAR_LATCH };
+cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
+cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH };
+cvar_t vid_borderless         = {"vid_borderless",        "0",   CVAR_LATCH };
+cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH };
+cvar_t vid_height             = {"vid_height",            "0",   CVAR_LATCH };
+cvar_t vid_win_width          = {"vid_win_width",         "640", CVAR_LATCH };
+cvar_t vid_win_height         = {"vid_win_height",        "480", CVAR_LATCH };
+
+// TODO: Move the in_* cvars
+cvar_t in_raw                 = {"in_raw",                "1",   CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
+cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse","1",   CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
+cvar_t vid_vsync_lag_fix      = {"vid_vsync_lag_fix",     "0"};
+cvar_t vid_vsync_lag_tweak    = {"vid_vsync_lag_tweak",   "1.0"};
+cvar_t r_swapInterval         = {"vid_vsync",             "0",   CVAR_SILENT };
+cvar_t r_win_save_pos         = {"vid_win_save_pos",      "1",   CVAR_SILENT };
+cvar_t r_win_save_size        = {"vid_win_save_size",     "1",   CVAR_SILENT };
+cvar_t vid_xpos               = {"vid_xpos",              "3",   CVAR_SILENT };
+cvar_t vid_ypos               = {"vid_ypos",              "22",  CVAR_SILENT };
+cvar_t r_conwidth             = {"vid_conwidth",          "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
+cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
+cvar_t vid_flashonactivity    = {"vid_flashonactivity",   "1",   CVAR_SILENT };
+cvar_t r_verbose              = {"vid_verbose",           "0",   CVAR_SILENT };
+cvar_t r_showextensions       = {"vid_showextensions",    "0",   CVAR_SILENT };
+
 //
 // function declaration
 //
-
-static void GrabMouse(qbool grab, qbool raw);
 
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
@@ -149,10 +180,42 @@ int IN_GetMouseRate(void)
 
 void IN_Frame(void)
 {
-	if (!ActiveApp || Minimized || (!r_fullscreen.integer && (key_dest != key_game || cls.state != ca_active)))
-		IN_DeactivateMouse ();
-	else
+	if (!sdl_window)
+		return;
+
+	HandleEvents();
+
+	if (!ActiveApp || Minimized || (!r_fullscreen.integer && (key_dest != key_game || cls.state != ca_active))) {
+		IN_DeactivateMouse();
+		return;
+	} else {
 		IN_ActivateMouse();
+	}
+
+	if (mouse_active && SDL_GetRelativeMouseMode()) {
+		SDL_GetRelativeMouseState(&mx, &my);
+	}
+	
+}
+
+void Sys_SendKeyEvents(void)
+{
+        IN_Frame();
+
+        if (sys_inactivesleep.integer > 0) 
+        {
+                // Yield the CPU a little
+                if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing)
+                {
+                        SDL_Delay(50);
+                        scr_skipupdate = 1; // no point to draw anything
+                } 
+                else if (!ActiveApp) // Delay a bit less if just not active window
+                {
+                        SDL_Delay(20);
+                }
+        }
+
 }
 
 void IN_Restart_f(void)
@@ -198,11 +261,12 @@ static void window_event(SDL_WindowEvent *event)
 			if (!(flags & SDL_WINDOW_FULLSCREEN)) {
 				glConfig.vidWidth = event->data1;
 				glConfig.vidHeight = event->data2;
-				glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight;
 				if (r_win_save_size.integer) {
-					Cvar_LatchedSetValue(&r_win_width, event->data1);
-					Cvar_LatchedSetValue(&r_win_height, event->data2);
+					Cvar_LatchedSetValue(&vid_win_width, event->data1);
+					Cvar_LatchedSetValue(&vid_win_height, event->data2);
 				}
+				if (!r_conwidth.integer || !r_conheight.integer)
+					VID_UpdateConRes();
 			}
 			break;
 	}
@@ -334,52 +398,11 @@ static void HandleEvents()
 	} 
 }
 
-void Sys_SendKeyEvents (void)
-{
-	if (!sdl_window)
-		return;
-
-	IN_Frame();
-	HandleEvents();
-
-	if (sys_inactivesleep.integer > 0) 
-	{
-		// Yield the CPU a little
-		if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing)
-		{
-			SDL_Delay(50);
-			scr_skipupdate = 1; // no point to draw anything
-		} 
-		else if (!ActiveApp) // Delay a bit less if just not active window
-		{
-			SDL_Delay(20);
-		}
-	}
-
-	if (mouse_active && SDL_GetRelativeMouseMode()) {
-		SDL_GetRelativeMouseState(&mx, &my);
-	}
-}
-
-
 /*****************************************************************************/
 
-/*
- ** GLimp_Shutdown
- **
- ** This routine does all OS specific shutdown procedures for the OpenGL
- ** subsystem.  Under OpenGL this means NULLing out the current DC and
- ** HGLRC, deleting the rendering context, and releasing the DC acquired
- ** for the window.  The state structure is also nulled out.
- **
- */
-void GLimp_Shutdown(void)
+void VID_Shutdown(void)
 {
-	if (!sdl_context || !sdl_window)
-		return;
-
 	IN_DeactivateMouse();
-	opengl_initialized = 0;
 
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
@@ -410,33 +433,92 @@ static int VID_SDL_InitSubSystem(void)
 	return ret;
 }
 
-// FIXME This is a big mess design wise...
-void VID_CvarInit(void)
+void VID_RegisterLatchCvars(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
-	Cvar_Register(&vid_vsync_lag_fix);
-	Cvar_Register(&vid_vsync_lag_tweak);
+
+	Cvar_Register(&vid_width);
+	Cvar_Register(&vid_height);
+	Cvar_Register(&vid_win_width);
+	Cvar_Register(&vid_win_height);
+	Cvar_Register(&r_glDriver);
+	Cvar_Register(&r_allowExtensions);
+	Cvar_Register(&r_colorbits);
+	Cvar_Register(&r_stencilbits);
+	Cvar_Register(&r_depthbits);
+	Cvar_Register(&r_fullscreen);
+	Cvar_Register(&r_displayRefresh);
+	Cvar_Register(&vid_borderless);
+
 	Cvar_ResetCurrentGroup();
 }
 
-/*
- ** GLimp_Init
- **
- ** This routine is responsible for initializing the OS specific portions
- ** of OpenGL.
- */
-void GLimp_Init( void )
+void VID_RegisterCvars(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
+
+	Cvar_Register(&vid_vsync_lag_fix);
+	Cvar_Register(&vid_vsync_lag_tweak);
+	Cvar_Register(&r_win_save_pos);
+	Cvar_Register(&r_win_save_size);
+	Cvar_Register(&r_swapInterval);
+	Cvar_Register(&r_verbose);
+	Cvar_Register(&vid_xpos);
+	Cvar_Register(&vid_ypos);
+	Cvar_Register(&r_conwidth);
+	Cvar_Register(&r_conheight);
+	Cvar_Register(&vid_flashonactivity);
+	Cvar_Register(&r_showextensions);
+
+	Cvar_ResetCurrentGroup();
+}
+
+static void VID_SetupResolution(void)
+{
+	SDL_DisplayMode display_mode;
+
+	if (r_fullscreen.integer == 1) {
+		if ((!vid_width.integer || !vid_height.integer)) {
+			if (!SDL_GetDesktopDisplayMode(0, &display_mode)) {
+				glConfig.vidWidth = display_mode.w;
+				glConfig.vidHeight = display_mode.h;
+			} else {
+				glConfig.vidWidth = 1024;
+				glConfig.vidHeight = 768;
+				Cvar_LatchedSetValue(&vid_width, 1024); // Try some default if nothing is set and we failed
+				Cvar_LatchedSetValue(&vid_height, 768); // to get desktop resolution
+			}
+		} else {
+			glConfig.vidWidth = bound(320, vid_width.integer, vid_width.integer);
+			glConfig.vidHeight = bound(200, vid_height.integer, vid_height.integer);
+		}
+	} else {
+		if (!vid_win_width.integer || !vid_win_height.integer) {
+			Cvar_LatchedSetValue(&vid_win_width, 640);
+			Cvar_LatchedSetValue(&vid_win_height, 480);
+		}
+
+		glConfig.vidWidth = bound(320, vid_win_width.integer, vid_win_width.integer);
+		glConfig.vidHeight = bound(200, vid_win_height.integer, vid_win_height.integer);
+
+	}
+}
+
+
+void VID_SDL_Init(void)
 {
 	SDL_Surface *icon_surface;
 	extern void InitSig(void);
-
 	SDL_DisplayMode display_mode;
+	int flags;
+	
+	if (glConfig.initialized == true)
+		return;
 
-	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 #ifdef SDL_WINDOW_ALLOW_HIGHDPI
 	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
-
 	if (r_fullscreen.integer == 1)
 		flags |= SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN;
 
@@ -446,13 +528,9 @@ void GLimp_Init( void )
 
 	VID_SDL_InitSubSystem();
 
-	sdl_window = SDL_CreateWindow(
-			WINDOW_CLASS_NAME,
-			vid_xpos.integer,
-			vid_ypos.integer,
-			r_fullscreen.integer ? r_width.integer : r_win_width.integer,
-			r_fullscreen.integer ? r_height.integer : r_win_height.integer,
-			flags);
+	VID_SetupResolution();
+
+	sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, vid_xpos.integer, vid_ypos.integer, glConfig.vidWidth, glConfig.vidHeight, flags);
 
         icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
                 ezquake_icon.width * ezquake_icon.bytes_per_pixel,
@@ -471,20 +549,15 @@ void GLimp_Init( void )
 		return;
 	}
 
-	if (r_fullscreen.integer) {
-		glConfig.vidWidth = r_width.integer;
-		glConfig.vidHeight = r_height.integer;
-	} else {
-		glConfig.vidWidth = r_win_width.integer;
-		glConfig.vidHeight = r_win_height.integer;
-	}
-
+	v_gamma.modified = true;
+	r_swapInterval.modified = true;
+	
 	if (!SDL_GetWindowDisplayMode(sdl_window, &display_mode))
 		glConfig.displayFrequency = display_mode.refresh_rate;
 	else
 		glConfig.displayFrequency = 0;
 
-	glConfig.windowAspect = (float)glConfig.vidWidth / glConfig.vidHeight;
+	// FIXME Fix this.. Although SDL only supports specifying MINIMUM supported values, not exact values to ask for
 	glConfig.colorBits = 24;
 	glConfig.depthBits = 8;
 	glConfig.stencilBits = 8;
@@ -494,12 +567,20 @@ void GLimp_Init( void )
 	glConfig.version_string        = glGetString(GL_VERSION);
 	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
 
-	v_gamma.modified = true;
-	r_swapInterval.modified = true;
-	
+	glConfig.initialized = true;
+
 #if defined(__linux__)
 	InitSig(); // not clear why this is at begin & end of function
 #endif
+}
+
+static void GL_SwapBuffers (void)
+{
+	double time_before_swap;
+	time_before_swap = Sys_DoubleTime();
+	SDL_GL_SwapWindow(sdl_window);
+	vid_last_swap_time = Sys_DoubleTime();
+	vid_vsync_lag = vid_last_swap_time - time_before_swap;
 }
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
@@ -543,28 +624,9 @@ void GL_EndRendering (void)
 				return;
 
 		// Normal, swap on each frame.
-		GLimp_EndFrame(); 
+		GL_SwapBuffers(); 
 	}
 }
-
-
-/*
- ** GLimp_EndFrame
- **
- ** Responsible for doing a swapbuffers and possibly for other stuff
- ** as yet to be determined.  Probably better not to make this a GLimp
- ** function and instead do a call to GLimp_SwapBuffers.
- */
-void GLimp_EndFrame (void)
-{
-	double time_before_swap;
-	time_before_swap = Sys_DoubleTime();
-	SDL_GL_SwapWindow(sdl_window);
-	vid_last_swap_time = Sys_DoubleTime();
-	vid_vsync_lag = vid_last_swap_time - time_before_swap;
-}
-
-/************************************* Window related *******************************/
 
 void VID_SetCaption (char *text)
 {
@@ -593,19 +655,6 @@ void VID_NotifyActivity(void)
 #endif
 }
 
-/********************************* CLIPBOARD *********************************/
-
-wchar *Sys_GetClipboardTextW(void)
-{
-	return SDL_HasClipboardText() ? str2wcs(SDL_GetClipboardText()) : NULL;
-}
-
-void Sys_CopyToClipboard(char *text)
-{
-	SDL_SetClipboardText(text);
-}
-
-
 void VID_SetDeviceGammaRamp (unsigned short *ramps)
 {
 	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
@@ -631,7 +680,7 @@ void VID_Restore (void)
 
 qbool VID_VSyncIsOn(void)
 {
-	return SDL_GL_GetSwapInterval() == 1;
+	return r_swapInterval.integer != 0;
 }
 
 #define NUMTIMINGS 5
@@ -682,5 +731,176 @@ qbool VID_VSyncLagFix(void)
 		return true;    // don't run a frame yet
 	}
         return false;
+}
+
+void GfxInfo_f(void)
+{
+	SDL_DisplayMode current;
+
+	ST_Printf(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
+	ST_Printf(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
+	ST_Printf(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
+
+	if (r_showextensions.value)
+		ST_Printf(PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string);
+
+	ST_Printf(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
+
+	if (SDL_GetCurrentDisplayMode(0, &current) != 0)
+		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
+
+	ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz ", glConfig.vidWidth, glConfig.vidHeight, current.refresh_rate);
+	
+	if (r_fullscreen.integer)
+		ST_Printf(PRINT_ALL, "[fullscreen]\n");
+	else
+		ST_Printf(PRINT_ALL, "[windowed]\n");
+
+	ST_Printf(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
+
+}
+
+void VID_ParseCmdLine(void)
+{
+	int i, w = 0, h = 0;
+
+	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
+		Cvar_LatchedSetValue(&r_fullscreen, 0);
+
+// TODO: Decide what to do with displayFrequency.. Support setting modes with different Hz than desktop or not??
+#if 0
+	if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc())
+		Cvar_LatchedSetValue(&r_displayRefresh, Q_atoi(COM_Argv(i + 1)));
+#endif
+
+	if ((i = COM_CheckParm("-bpp")) && i + 1 < COM_Argc())
+		Cvar_LatchedSetValue(&r_colorbits, Q_atoi(COM_Argv(i + 1)));
+
+	w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+	h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+
+	if ( w && h ) 
+	{
+		if (COM_CheckParm("-window")) {
+			Cvar_LatchedSetValue(&vid_win_width,  w);
+			Cvar_LatchedSetValue(&vid_win_height, h);
+		} else {
+			Cvar_LatchedSetValue(&vid_width, w);
+			Cvar_LatchedSetValue(&vid_height, h);
+		}
+	} // else if (w || h) { Sys_Error("Must specify both -width and -height\n"); }
+
+	if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
+		Cvar_SetValue(&r_conwidth, (float)Q_atoi(COM_Argv(i + 1)));
+
+	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc())
+		Cvar_SetValue(&r_conheight, (float)Q_atoi(COM_Argv(i + 1)));
+}
+
+static void VID_Restart_f(void)
+{
+	extern void GFX_Init(void);
+	extern void ReloadPaletteAndColormap(void);
+	qbool old_con_suppress;
+
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_Shutdown();
+
+	ReloadPaletteAndColormap();
+
+	VID_Init(host_basepal);
+
+	// force models to reload (just flush, no actual loading code here)
+	Cache_Flush();
+
+	// shut up warnings during GFX_Init();
+	old_con_suppress = con_suppress;
+	con_suppress = (developer.value ? false : true);
+	// reload 2D textures, particles textures, some other textures and gfx.wad
+	GFX_Init();
+
+	// reload skins
+	Skin_Skins_f();
+
+	con_suppress = old_con_suppress;
+
+	// we need done something like for map reloading, for example reload textures for brush models
+	R_NewMap(true);
+
+	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
+	Mod_TouchModels();
+
+	// window may be re-created, so caption need to be forced to update
+	CL_UpdateCaption(true);
+
+}
+
+void VID_RegisterCommands(void) 
+{
+	if (!host_initialized) {
+		Cmd_AddCommand( "vid_gfxinfo", GfxInfo_f );
+		Cmd_AddCommand( "vid_restart", VID_Restart_f );
+	}
+}
+
+static void VID_UpdateConRes(void)
+{
+	// Default
+	if (!r_conwidth.integer || !r_conheight.integer) {
+		vid.width = vid.conwidth = glConfig.vidWidth/2;
+		vid.height = vid.conheight = glConfig.vidHeight/2;
+	} else {
+		// User specified, use that but check boundaries
+		vid.width  = vid.conwidth  = bound(320, r_conwidth.integer, glConfig.vidWidth);
+		vid.height = vid.conheight = bound(200, r_conheight.integer, glConfig.vidHeight);
+		Cvar_SetValue(&r_conwidth, vid.conwidth);
+		Cvar_SetValue(&r_conheight, vid.conheight);
+	}
+
+	vid.numpages = 2; // ??
+	Draw_AdjustConback ();
+	vid.recalc_refdef = 1;
+}
+
+static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
+{
+	if (var == &r_conwidth)
+		Cvar_SetValue(&r_conwidth, Q_atoi(string));
+	else
+		Cvar_SetValue(&r_conheight, Q_atoi(string));
+
+	VID_UpdateConRes();
+	*cancel = true;
+}
+
+
+void VID_Init(unsigned char *palette) {
+
+	vid.colormap = host_colormap;
+
+	Check_Gamma(palette);
+	VID_SetPalette(palette);
+
+	if (!host_initialized) {
+		VID_ParseCmdLine();
+		VID_RegisterCvars();
+		VID_RegisterCommands();
+	}
+
+	VID_RegisterLatchCvars();
+
+	VID_SDL_Init();
+
+	// print info
+	if (!host_initialized || r_verbose.integer)
+		GfxInfo_f();
+
+	VID_UpdateConRes();
+
+	GL_Init(); // Real OpenGL stuff, vid_common_gl.c
 }
 

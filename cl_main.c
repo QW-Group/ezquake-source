@@ -2014,14 +2014,8 @@ void CL_Init (void)
 	V_Init ();
 	MVD_Utils_Init ();
 
-#ifdef __linux__
-	IN_Init ();
-	VID_Init (host_basepal);
-#else
-	VID_Init (host_basepal);
-	IN_Init ();
-#endif
-	VID_CvarInit();
+	VID_Init(host_basepal);
+	IN_Init();
 
 	Image_Init();
 

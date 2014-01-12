@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
+#include <SDL.h>
 
 // TODO: implement (SDL_PauseAudio func)
 // I currently just clear the ringbuffer when inactive - dimman
@@ -31,3 +32,14 @@ void Sys_CvarInit(void)
 	Cvar_Register(&sys_inactivesleep);
 	Cvar_ResetCurrentGroup();
 }
+
+wchar *Sys_GetClipboardTextW(void)
+{
+	return SDL_HasClipboardText() ? str2wcs(SDL_GetClipboardText()) : NULL;
+}
+
+void Sys_CopyToClipboard(char *text)
+{
+	SDL_SetClipboardText(text);
+}
+

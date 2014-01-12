@@ -34,6 +34,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ** subsystem is initialized.
 */
 
+// FIXME: CLEAN THIS UP BIG TIME
+
 
 #define	MAX_STRING_CHARS	1024
 #define	BIG_INFO_STRING		8192
@@ -64,26 +66,14 @@ typedef struct {
 	const unsigned char                     *version_string;
 	const unsigned char                     *extensions_string;
 
-	int						maxTextureSize;			// queried from GL
+	int					colorBits, depthBits, stencilBits;
+	int					vidWidth, vidHeight;
+	int					displayFrequency;
 
-	int						colorBits, depthBits, stencilBits;
+	glDriverType_t				driverType;
+	glHardwareType_t			hardwareType;
 
-	glDriverType_t			driverType;
-	glHardwareType_t		hardwareType;
-
-	int						vidWidth, vidHeight;
-	// aspect is the screen's physical width / height, which may be different
-	// than scrWidth / scrHeight if the pixels are non-square
-	// normal screens should be 4/3, but wide aspect monitors may be 16/9
-	float					windowAspect;
-
-	int						displayFrequency;
-
-	// synonymous with "does rendering consume the entire screen?", therefore
-	// a Voodoo or Voodoo2 will have this set to TRUE, as will a Win32 ICD that
-	// used CDS.
-	qbool				isFullscreen;
-	qbool				stereoEnabled;
+	qbool					initialized;
 } glconfig_t;
 
 extern glconfig_t	glConfig;
@@ -121,10 +111,10 @@ extern cvar_t	r_depthbits;
 //extern cvar_t	r_overBrightBits;
 extern cvar_t	r_mode;
 extern cvar_t	r_fullscreen;
-extern cvar_t	r_width;
-extern cvar_t	r_height;
-extern cvar_t	r_win_width;
-extern cvar_t	r_win_height;
+extern cvar_t	vid_width;
+extern cvar_t	vid_height;
+extern cvar_t	vid_win_width;
+extern cvar_t	vid_win_height;
 extern cvar_t	r_win_save_pos;
 extern cvar_t	r_win_save_size;
 extern cvar_t	r_customaspect; // qqshka: unused even in q3, but I keep cvar, just do not register it
@@ -136,9 +126,7 @@ extern cvar_t	vid_borderless;
 // archived variables that can change at any time
 //
 extern cvar_t	r_ignoreGLErrors;
-//extern cvar_t	r_textureMode;
 extern cvar_t	r_swapInterval;
-//extern cvar_t	r_gamma;
 
 extern cvar_t	vid_xpos;
 extern cvar_t	vid_ypos;
@@ -147,18 +135,12 @@ extern cvar_t	r_conwidth;
 extern cvar_t	r_conheight;
 extern cvar_t	vid_ref;
 extern cvar_t	vid_hwgammacontrol;
-#ifdef _WIN32
 extern cvar_t	vid_flashonactivity;
-#endif
 
 extern cvar_t	r_verbose;
 
 extern cvar_t r_showextensions;
 
-void GL_SetDefaultState( void );
-qbool R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
-void RE_Init( void );
-void RE_Shutdown( qbool destroyWindow );
 
 /*
 ====================================================================
