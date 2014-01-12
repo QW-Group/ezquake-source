@@ -726,7 +726,7 @@ qbool VID_VSyncLagFix(void)
         return false;
 }
 
-void GfxInfo_f(void)
+static void GfxInfo_f(void)
 {
 	SDL_DisplayMode current;
 
