@@ -170,6 +170,7 @@ keyname_t keynames[] = {
 	{"LSUPER", K_LWIN},
 	{"RSUPER", K_RWIN},
 	{"MENU", K_MENU},
+	{"ISO", K_ISO},
 
 	// Keypad stuff..
 

@@ -87,6 +87,7 @@ typedef enum {
 	K_LWIN,
 	K_RWIN,
 	K_MENU,
+	K_ISO,
 
 //
 // Keypad stuff..

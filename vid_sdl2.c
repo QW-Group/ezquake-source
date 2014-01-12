@@ -289,7 +289,7 @@ static const byte scantokey[128] = {
     K_PAUSE,        K_INS,          K_HOME,         K_PGUP,         K_DEL,          K_END,          K_PGDN,             K_RIGHTARROW,
     K_LEFTARROW,    K_DOWNARROW,    K_UPARROW,      KP_NUMLOCK,     KP_SLASH,       KP_STAR,        KP_MINUS,           KP_PLUS,        // 5
     KP_ENTER,       KP_END,         KP_DOWNARROW,   KP_PGDN,        KP_LEFTARROW,   KP_5,           KP_RIGHTARROW,      KP_HOME,
-    KP_UPARROW,     KP_PGUP,        KP_INS,         KP_DEL,         0,              K_MENU,         0,                  0,              // 6
+    KP_UPARROW,     KP_PGUP,        KP_INS,         KP_DEL,         K_ISO,          K_MENU,         0,                  0,              // 6
     0,              0,              0,              0,              0,              0,              0,                  0,
     0,              0,              0,              0,              0,              0,              K_MENU,             0,              // 7
     K_LCTRL,        K_LSHIFT,       K_LALT,         K_LWIN,         K_RCTRL,        K_RSHIFT,       K_RALT,             K_RWIN,         // E
