@@ -88,7 +88,7 @@ PNG_LIBS ?= -lpng
 CFLAGS_c += $(PNG_CFLAGS)
 LIBS_c += $(PNG_LIBS)
 
-CURL_CFLAGS ?= 
+CURL_CFLAGS ?=
 CURL_LIBS ?= -lcurl
 CFLAGS_c += $(CURL_CFLAGS)
 LIBS_c += $(CURL_LIBS)
@@ -285,17 +285,22 @@ OBJS_c := \
 
 ifdef CONFIG_WINDOWS
     OBJS_c += \
-	movie_avi.o \
-	localtime_win.o \
-	sys_win.o \
-	winquake.o
+		movie_avi.o \
+		localtime_win.o \
+		sys_win.o \
+		winquake.o
     LIBS_c += -lopengl32 -lws2_32 -lwinmm
 else
     OBJS_c += \
-    	localtime_posix.o \
-	sys_posix.o \
-    	linux_signals.o
-    LIBS_c += -lGL -lm -ldl
+		localtime_posix.o \
+		sys_posix.o \
+		linux_signals.o
+
+    ifeq ($(SYS),Darwin)
+		LIBS_c += -framework OpenGL -lm -ldl
+    else
+		LIBS_c += -lGL -lm -ldl
+    endif
 endif
 
 ifdef CONFIG_OGG
