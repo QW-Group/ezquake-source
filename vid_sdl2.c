@@ -311,13 +311,6 @@ static void keyb_event(SDL_KeyboardEvent *event)
 		return;
 	}
 
-	if (result == K_LALT || result == K_RALT)
-		Key_Event(K_ALT, event->state);
-	else if (result == K_LCTRL || result == K_RCTRL)
-		Key_Event(K_CTRL, event->state);
-	else if (result == K_LSHIFT || result == K_RSHIFT)
-		Key_Event(K_SHIFT, event->state);
-
 	Key_Event(result, event->state);
 }
 
