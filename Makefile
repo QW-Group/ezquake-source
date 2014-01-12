@@ -68,28 +68,28 @@ CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(SDL2_CFLAGS) -DJSS_CAM -DUS
 LIBS_c += $(SDL2_LIBS)
 
 # built-in requirements
-ZLIB_CFLAGS ?= -DWITH_ZLIB
-ZLIB_LIBS ?= -lz
+ZLIB_CFLAGS ?= $(shell pkg-config zlib --cflags) -DWITH_ZLIB
+ZLIB_LIBS ?= $(shell pkg-config zlib --libs)
 CFLAGS_c += $(ZLIB_CFLAGS)
 LIBS_c += $(ZLIB_LIBS)
 
-PCRE_CFLAGS ?=
-PCRE_LIBS ?= -lpcre
+PCRE_CFLAGS ?= $(shell pkg-config libpcre --cflags)
+PCRE_LIBS ?= $(shell pkg-config libpcre --libs)
 CFLAGS_c += $(PCRE_CFLAGS)
 LIBS_c += $(PCRE_LIBS)
 
-EXPAT_CFLAGS ?=
-EXPAT_LIBS ?= -lexpat
+EXPAT_CFLAGS ?= $(shell pkg-config expat --cflags)
+EXPAT_LIBS ?= $(shell pkg-config expat --libs)
 CFLAGS_c += $(EXPAT_CFLAGS)
 LIBS_c += $(EXPAT_LIBS)
 
-PNG_CFLAGS ?= -DWITH_PNG -D__Q_PNG14__
-PNG_LIBS ?= -lpng
+PNG_CFLAGS ?= $(shell pkg-config libpng --cflags) -DWITH_PNG -D__Q_PNG14__
+PNG_LIBS ?= $(shell pkg-config libpng --libs)
 CFLAGS_c += $(PNG_CFLAGS)
 LIBS_c += $(PNG_LIBS)
 
-CURL_CFLAGS ?= 
-CURL_LIBS ?= -lcurl
+CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
+CURL_LIBS ?= $(shell pkg-config libcurl --libs)
 CFLAGS_c += $(CURL_CFLAGS)
 LIBS_c += $(CURL_LIBS)
 
@@ -295,7 +295,11 @@ else
     	localtime_posix.o \
 	sys_posix.o \
     	linux_signals.o
-    LIBS_c += -lGL -lm -ldl
+    ifeq ($(SYS),Darwin)
+        LIBS_c += -framework OpenGL -lm -ldl
+    else
+        LIBS_c += -lGL -lm -ldl
+    endif
 endif
 
 ifdef CONFIG_OGG
