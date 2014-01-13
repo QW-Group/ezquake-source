@@ -108,6 +108,7 @@ cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET |
 cvar_t vid_flashonactivity    = {"vid_flashonactivity",   "1",   CVAR_SILENT };
 cvar_t r_verbose              = {"vid_verbose",           "0",   CVAR_SILENT };
 cvar_t r_showextensions       = {"vid_showextensions",    "0",   CVAR_SILENT };
+cvar_t gl_multisamples        = {"gl_multisamples",       "0",   CVAR_LATCH }; // It's here because it needs to be registered before window creation
 
 //
 // function declaration
@@ -442,6 +443,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&r_fullscreen);
 	Cvar_Register(&r_displayRefresh);
 	Cvar_Register(&vid_borderless);
+	Cvar_Register(&gl_multisamples);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -497,6 +499,13 @@ static void VID_SetupResolution(void)
 	}
 }
 
+static void VID_SDL_GL_SetupAttributes(void)
+{
+	if (gl_multisamples.integer > 0) {
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, bound(0, gl_multisamples.integer, 16));
+	}
+}
 
 void VID_SDL_Init(void)
 {
@@ -520,6 +529,7 @@ void VID_SDL_Init(void)
 #endif
 
 	VID_SDL_InitSubSystem();
+	VID_SDL_GL_SetupAttributes();
 
 	VID_SetupResolution();
 
@@ -550,10 +560,9 @@ void VID_SDL_Init(void)
 	else
 		glConfig.displayFrequency = 0;
 
-	// FIXME Fix this.. Although SDL only supports specifying MINIMUM supported values, not exact values to ask for
-	glConfig.colorBits = 24;
-	glConfig.depthBits = 8;
-	glConfig.stencilBits = 8;
+	glConfig.colorBits = 24; // FIXME
+	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &glConfig.depthBits);
+	SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &glConfig.stencilBits);
 
 	glConfig.vendor_string         = glGetString(GL_VENDOR);
 	glConfig.renderer_string       = glGetString(GL_RENDERER);
