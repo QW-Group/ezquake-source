@@ -68,8 +68,8 @@ CFLAGS_c += $(BUILD_DEFS) $(VER_DEFS) $(PATH_DEFS) $(SDL2_CFLAGS) -DJSS_CAM -DUS
 LIBS_c += $(SDL2_LIBS)
 
 # built-in requirements
-ZLIB_CFLAGS ?= $(shell pkg-config zlib --cflags) -DWITH_ZLIB
-ZLIB_LIBS ?= $(shell pkg-config zlib --libs)
+ZLIB_CFLAGS ?= -DWITH_ZLIB
+ZLIB_LIBS ?= -lz
 CFLAGS_c += $(ZLIB_CFLAGS)
 LIBS_c += $(ZLIB_LIBS)
 
@@ -295,10 +295,17 @@ else
     	localtime_posix.o \
 	sys_posix.o \
     	linux_signals.o
+
+    LIBS_c += -lm
+
     ifeq ($(SYS),Darwin)
-        LIBS_c += -framework OpenGL -lm -ldl
+        LIBS_c += -framework OpenGL -ldl
     else
-        LIBS_c += -lGL -lm -ldl
+        LIBS_c += -lGL
+    endif
+
+    ifneq ($(SYS),FreeBSD)
+        LIBS_c += -ldl
     endif
 endif
 
