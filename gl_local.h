@@ -20,10 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __GL_LOCAL_H__
 #define __GL_LOCAL_H__
 
-#ifdef GLSL
-#include "glew.h"
-#endif // GLSL
-
 #ifdef __APPLE__
 
 #include <OpenGL/gl.h>
@@ -45,15 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <GL/glx.h>
 #endif // _WIN32
 #endif // __APPLE__
-
-#ifdef GLSL
-#ifdef  _WIN32
-    #include    "wglew.h"
-#else
-    #include    "glxew.h"
-#endif
-#endif // GLSL
-
 
 #include "gl_texture.h"
 #ifdef FRAMEBUFFERS
