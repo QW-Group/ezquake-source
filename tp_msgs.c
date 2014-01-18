@@ -610,7 +610,7 @@ GLOBAL void TP_Msg_TFConced_f (void)
 
 	TP_FindPoint();
 	if (INPOINT(enemy))
-		conced = "{$point} conced at $[{%y}$]";
+		conced = "$point conced at $[{%y}$]";
 	else
 		conced = "{Enemy conced}";
 
