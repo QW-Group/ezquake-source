@@ -79,7 +79,6 @@ double vid_last_swap_time;
 extern cvar_t sys_inactivesleep;
 
 // latched variables that can only change over a restart
-cvar_t r_glDriver             = {"vid_glDriver", OPENGL_DRIVER_NAME, CVAR_LATCH };
 cvar_t r_allowExtensions      = {"vid_allowExtensions",   "1",   CVAR_LATCH };
 cvar_t r_colorbits            = {"vid_colorbits",         "0",   CVAR_LATCH };
 cvar_t r_stereo               = {"vid_stereo",            "0",   CVAR_LATCH };
@@ -435,7 +434,6 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_height);
 	Cvar_Register(&vid_win_width);
 	Cvar_Register(&vid_win_height);
-	Cvar_Register(&r_glDriver);
 	Cvar_Register(&r_allowExtensions);
 	Cvar_Register(&r_colorbits);
 	Cvar_Register(&r_stencilbits);
