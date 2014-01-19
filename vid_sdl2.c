@@ -54,6 +54,7 @@ static void GrabMouse(qbool grab, qbool raw);
 static void GfxInfo_f(void);
 static void HandleEvents();
 static void VID_UpdateConRes(void);
+static void VID_Reload(void);
 
 static SDL_Window       *sdl_window;
 static SDL_GLContext    *sdl_context;
@@ -86,7 +87,7 @@ cvar_t r_stencilbits          = {"vid_stencilbits",       "8",   CVAR_LATCH };
 cvar_t r_depthbits            = {"vid_depthbits",         "0",   CVAR_LATCH };
 cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
 cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH };
-cvar_t vid_borderless         = {"vid_borderless",        "0",   CVAR_LATCH };
+cvar_t vid_win_borderless     = {"vid_win_borderless",    "0",   CVAR_LATCH };
 cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH };
 cvar_t vid_height             = {"vid_height",            "0",   CVAR_LATCH };
 cvar_t vid_win_width          = {"vid_win_width",         "640", CVAR_LATCH };
@@ -440,9 +441,21 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&r_depthbits);
 	Cvar_Register(&r_fullscreen);
 	Cvar_Register(&r_displayRefresh);
-	Cvar_Register(&vid_borderless);
+	Cvar_Register(&vid_win_borderless);
 	Cvar_Register(&gl_multisamples);
 
+	Cvar_ResetCurrentGroup();
+}
+
+static void VID_Reload_RegisterLatchCvars(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
+	Cvar_Register(&vid_width);
+	Cvar_Register(&vid_height);
+	Cvar_Register(&vid_win_width);
+	Cvar_Register(&vid_win_height);
+	Cvar_Register(&r_fullscreen);
+	Cvar_Register(&vid_win_borderless);
 	Cvar_ResetCurrentGroup();
 }
 
@@ -515,12 +528,15 @@ void VID_SDL_Init(void)
 	if (glConfig.initialized == true)
 		return;
 
-	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 #ifdef SDL_WINDOW_ALLOW_HIGHDPI
 	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
-	if (r_fullscreen.integer == 1)
-		flags |= SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN;
+	if (r_fullscreen.integer <= 0) {
+		flags &= ~SDL_WINDOW_FULLSCREEN;
+		if (vid_win_borderless.integer <= 0)
+			flags &= ~SDL_WINDOW_BORDERLESS;
+	}
 
 #if defined(__linux__)
 	InitSig();
@@ -842,8 +858,9 @@ static void VID_Restart_f(void)
 void VID_RegisterCommands(void) 
 {
 	if (!host_initialized) {
-		Cmd_AddCommand( "vid_gfxinfo", GfxInfo_f );
-		Cmd_AddCommand( "vid_restart", VID_Restart_f );
+		Cmd_AddCommand("vid_gfxinfo", GfxInfo_f);
+		Cmd_AddCommand("vid_restart", VID_Restart_f);
+		Cmd_AddCommand("vid_reload", VID_Reload);
 	}
 }
 
@@ -902,5 +919,24 @@ void VID_Init(unsigned char *palette) {
 	VID_UpdateConRes();
 
 	GL_Init(); // Real OpenGL stuff, vid_common_gl.c
+}
+
+static void VID_Reload(void)
+{
+	if (glConfig.initialized == false)
+		return;
+
+	VID_Reload_RegisterLatchCvars(); // Avoid registering variables like gl_multisamples since that one needs a full restart
+
+	VID_SetupResolution();
+
+	SDL_SetWindowFullscreen(sdl_window, r_fullscreen.integer > 0 ? SDL_WINDOW_FULLSCREEN : 0);
+	SDL_SetWindowBordered(sdl_window, (r_fullscreen.integer <= 0 && vid_win_borderless.integer <= 0) ? SDL_TRUE : SDL_FALSE);
+	SDL_SetWindowSize(sdl_window, glConfig.vidWidth, glConfig.vidHeight);
+
+	v_gamma.modified = true;
+	r_swapInterval.modified = true; // Needed?
+
+	VID_UpdateConRes();
 }
 
