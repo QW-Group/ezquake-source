@@ -21,10 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __GL_LOCAL_H__
 
 #ifdef __APPLE__
-
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
-
 #else // __APPLE__
 
 #include <GL/gl.h>
@@ -135,6 +133,7 @@ extern	int	skyboxtextures[MAX_SKYBOXTEXTURES];
 extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	int underwatertexture, detailtexture;
 extern	int shelltexture;
+extern  int whitetexture;
 
 // Tomaz - Fog Begin
 extern  cvar_t  gl_fogenable;
@@ -304,49 +303,6 @@ void R_InitOtherTextures(void);
 
 //vid_common_gl.c
 
-//anisotropic filtering
-#ifndef GL_EXT_texture_filter_anisotropic
-#define GL_EXT_texture_filter_anisotropic 1
-#define GL_TEXTURE_MAX_ANISOTROPY_EXT				0x84FE
-#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT			0x84FF
-#endif
-
-//multitexturing
-#define	GL_TEXTURE0_ARB 			0x84C0
-#define	GL_TEXTURE1_ARB 			0x84C1
-#define	GL_TEXTURE2_ARB 			0x84C2
-#define	GL_TEXTURE3_ARB 			0x84C3
-#define GL_MAX_TEXTURE_UNITS_ARB	0x84E2
-
-//texture compression
-#define GL_COMPRESSED_ALPHA_ARB					0x84E9
-#define GL_COMPRESSED_LUMINANCE_ARB				0x84EA
-#define GL_COMPRESSED_LUMINANCE_ALPHA_ARB		0x84EB
-#define GL_COMPRESSED_INTENSITY_ARB				0x84EC
-#define GL_COMPRESSED_RGB_ARB					0x84ED
-#define GL_COMPRESSED_RGBA_ARB					0x84EE
-#define GL_TEXTURE_COMPRESSION_HINT_ARB			0x84EF
-#define GL_TEXTURE_IMAGE_SIZE_ARB				0x86A0
-#define GL_TEXTURE_COMPRESSED_ARB				0x86A1
-#define GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB	0x86A2
-#define GL_COMPRESSED_TEXTURE_FORMATS_ARB		0x86A3
-
-//sRGB gamma correction
-#define GL_SRGB8 0x8C41
-#define GL_SRGB8_ALPHA8 0x8C43
-#define GL_FRAMEBUFFER_SRGB 0x8DB9
-
-//combine extension
-#define GL_COMBINE_EXT				0x8570
-#define GL_COMBINE_RGB_EXT			0x8571
-#define GL_RGB_SCALE_EXT			0x8573
-
-typedef void (APIENTRY *lpMTexFUNC) (GLenum, GLfloat, GLfloat);
-typedef void (APIENTRY *lpSelTexFUNC) (GLenum);
-
-extern lpMTexFUNC qglMultiTexCoord2f;
-extern lpSelTexFUNC qglActiveTexture;
-
 extern float gldepthmin, gldepthmax;
 extern byte color_white[4], color_black[4];
 extern qbool gl_mtexable;
@@ -359,4 +315,58 @@ void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
 
+enum {
+	SHADER_WORLD,
+	SHADER_MODEL,
+	SHADER_TURB,
+	SHADER_HUD,
+	SHADER_LAST
+};
+
+typedef struct {
+	int shader;
+	const char *name;
+} glsl_shader_t;
+
+extern glsl_shader_t glsl_shaders[SHADER_LAST];
+
+
+
+
+// OPENGL STUFF
+
+typedef void  (APIENTRY * PFNGLUSEPROGRAMPROC) (GLuint program);
+typedef GLint (APIENTRY * PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar* name);
+typedef void  (APIENTRY * PFNGLUNIFORM1FPROC) (GLint location, GLfloat v0);
+typedef void  (APIENTRY * PFNGLMULTITEXCOORD2FPROC) (GLenum target, GLfloat s, GLfloat t);
+typedef void  (APIENTRY * PFNGLUNIFORM1IPROC) (GLint location, GLint v0);
+
+typedef void (APIENTRY * PFNGLACTIVETEXTUREPROC) (GLenum texture);
+typedef void (APIENTRY * PFNGLGETINFOLOGARBPROC) (GLhandleARB obj, GLsizei maxLength, GLsizei* length, GLcharARB *infoLog);
+typedef GLuint (APIENTRY * PFNGLCREATESHADERPROC) (GLenum type);
+//typedef void (APIENTRY * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar** strings, const GLint* lengths);
+typedef void (APIENTRY * PFNGLCOMPILESHADERPROC) (GLuint shader);
+typedef GLuint (APIENTRY * PFNGLCREATEPROGRAMPROC) (void);
+typedef void (APIENTRY * PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
+typedef void (APIENTRY * PFNGLDELETESHADERPROC) (GLuint shader);
+typedef void (APIENTRY * PFNGLLINKPROGRAMPROC) (GLuint program);
+
+
+extern PFNGLUSEPROGRAMPROC qglUseProgram;
+extern PFNGLGETUNIFORMLOCATIONPROC qglGetUniformLocation;
+extern PFNGLUNIFORM1FPROC qglUniform1f;
+extern PFNGLMULTITEXCOORD2FPROC qglMultiTexCoord2f;
+extern PFNGLUNIFORM1IPROC qglUniform1i;
+
+extern PFNGLACTIVETEXTUREPROC qglActiveTexture;
+extern PFNGLGETINFOLOGARBPROC qglGetInfoLogARB;
+extern PFNGLCREATESHADERPROC qglCreateShader;
+extern PFNGLSHADERSOURCEPROC qglShaderSource;
+extern PFNGLCOMPILESHADERPROC qglCompileShader;
+extern PFNGLCREATEPROGRAMPROC qglCreateProgram;
+extern PFNGLATTACHSHADERPROC qglAttachShader;
+extern PFNGLDELETESHADERPROC qglDeleteShader;
+extern PFNGLLINKPROGRAMPROC qglLinkProgram;
+
 #endif /* !__GL_LOCAL_H__ */
+

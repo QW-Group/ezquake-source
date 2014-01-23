@@ -563,7 +563,8 @@ void SCR_DrawRam (void) {
 static void draw_accel_bar(int x, int y, int length, int charsize, int pos)
 {
 	glPushAttrib(GL_TEXTURE_BIT);
-	glDisable(GL_TEXTURE_2D);
+//	glDisable(GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 
 	// draw the coloured indicator strip
 	//Draw_Fill(x, y, length, charsize, 184);
@@ -1669,10 +1670,11 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 							col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
 						}
 
-						glDisable (GL_TEXTURE_2D);
+						//glDisable (GL_TEXTURE_2D);
+						GL_Bind(whitetexture);
 						glColor4ub(col[0], col[1], col[2], col[3]);
 						glRectf(x, y, x + 3 * FONTWIDTH, y + 1 * FONTWIDTH);
-						glEnable (GL_TEXTURE_2D);
+						//glEnable (GL_TEXTURE_2D);
 						glColor4f(1, 1, 1, 1);
 					}
 
@@ -1883,10 +1885,11 @@ static void SCR_Draw_TeamInfo(void)
 
 		if ( !j ) { // draw frame
 			byte	*col = scr_teaminfo_frame_color.color;
-			glDisable (GL_TEXTURE_2D);
+			//glDisable (GL_TEXTURE_2D);
+			GL_Bind(whitetexture);
 			glColor4ub(col[0], col[1], col[2], col[3]);
 			glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-			glEnable (GL_TEXTURE_2D);
+			//glEnable (GL_TEXTURE_2D);
 			glColor4f(1, 1, 1, 1);
 		}
 
@@ -2061,10 +2064,11 @@ static void SCR_Draw_ShowNick(void)
 
 	// draw frame
 	col = scr_shownick_frame_color.color;
-	glDisable (GL_TEXTURE_2D);
+	//glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 	glColor4ub(col[0], col[1], col[2], col[3]);
 	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-	glEnable (GL_TEXTURE_2D);
+	//glEnable (GL_TEXTURE_2D);
 	glColor4f(1, 1, 1, 1);
 
 	// draw shownick
@@ -2308,10 +2312,11 @@ static void SCR_Draw_WeaponStats(void)
 	x += scr_weaponstats_x.value;
 
 	// draw frame
-	glDisable (GL_TEXTURE_2D);
+//	glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 	glColor4ub(col[0], col[1], col[2], col[3]);
 	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-	glEnable (GL_TEXTURE_2D);
+//	glEnable (GL_TEXTURE_2D);
 	glColor4f(1, 1, 1, 1);
 
 	SCR_Draw_WeaponStatsPlayer(&ws_clients[i], x, y, false);
@@ -3208,8 +3213,17 @@ static void SCR_DrawCursor(void)
 
 void SCR_DrawElements(void) 
 {
-  extern qbool  sb_showscores,  sb_showteamscores;
-  extern cvar_t	scr_menudrawhud;
+	extern qbool  sb_showscores,  sb_showteamscores;
+	extern cvar_t	scr_menudrawhud;
+	GLint u_gamma, u_contrast;
+
+	GLint shader = glsl_shaders[SHADER_HUD].shader;
+	qglUseProgram(shader);
+
+	u_gamma    = qglGetUniformLocation(shader, "gamma");
+	u_contrast = qglGetUniformLocation(shader, "contrast");
+	qglUniform1f(u_gamma, v_gamma.value);
+	qglUniform1f(u_contrast, v_contrast.value);
 
 	if (scr_drawloading) 
 	{
@@ -3252,7 +3266,7 @@ void SCR_DrawElements(void)
 				{ 
 					// Do not show if +showscores
 					SCR_DrawPause ();
-					
+
 					SCR_DrawAutoID ();
 				}
 
@@ -3263,7 +3277,7 @@ void SCR_DrawElements(void)
 						Draw_Crosshair ();
 					}
 
-     				if (!sb_showscores && !sb_showteamscores)
+					if (!sb_showscores && !sb_showteamscores)
 					{ 
 						// Do not show if +showscores
 						SCR_Draw_TeamInfo();
@@ -3287,7 +3301,7 @@ void SCR_DrawElements(void)
 
 					// VULT STATS
 					SCR_DrawAMFstats();
-					
+
 					// VULT DISPLAY KILLS
 					if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
 						VX_TrackerThink();
@@ -3328,8 +3342,9 @@ void SCR_DrawElements(void)
 			M_Draw ();
 		}
 
-        SCR_DrawCursor();
-    }
+		SCR_DrawCursor();
+	}
+	qglUseProgram(0);
 }
 
 /******************************* UPDATE SCREEN *******************************/
@@ -3405,8 +3420,7 @@ void SCR_UpdateScreen (void)
 	if (vid.recalc_refdef)
 		SCR_CalcRefdef ();
 
-	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value)
-		Sbar_Changed ();
+	Sbar_Changed();
 
 	// Multiview
 	if (cl_multiview.value && cls.mvdplayback)
@@ -3469,8 +3483,6 @@ void SCR_UpdateScreen (void)
 		// Default, apply brightness at every update.
 		R_BrightenScreen ();
 	}
-
-	V_UpdatePalette ();
 
 	if (scr_autosshot_countdown)
 		SCR_CheckAutoScreenshot();
@@ -3548,21 +3560,6 @@ static char *Sshot_SshotDirectory(void) {
 	return dir;
 }
 
-
-extern unsigned short ramps[3][256];
-//applies hwgamma to RGB data
-static void applyHWGamma(byte *buffer, int size) {
-	int i;
-
-	if (vid_hwgamma_enabled) {
-		for (i = 0; i < size; i += 3) {
-			buffer[i + 0] = ramps[0][buffer[i + 0]] >> 8;
-			buffer[i + 1] = ramps[1][buffer[i + 1]] >> 8;
-			buffer[i + 2] = ramps[2][buffer[i + 2]] >> 8;
-		}
-	}
-}
-
 int SCR_Screenshot(char *name) {
 	int i, temp, buffersize;
 	int success = SSHOT_FAILED;
@@ -3585,7 +3582,6 @@ int SCR_Screenshot(char *name) {
 #ifndef WITH_PNG_STATIC
 		if (QLib_isModuleLoaded(qlib_libpng)) {
 #endif
-			applyHWGamma(buffer, buffersize);
 			success = Image_WritePNG(name, image_png_compression_level.value,
 					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
 				? SSHOT_SUCCESS : SSHOT_FAILED;
@@ -3606,7 +3602,6 @@ int SCR_Screenshot(char *name) {
 #ifndef WITH_JPEG_STATIC
 		if (QLib_isModuleLoaded(qlib_libjpeg)) {
 #endif
-			applyHWGamma(buffer, buffersize);
 			success = Image_WriteJPEG(name, image_jpeg_quality_level.value,
 					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
 				? SSHOT_SUCCESS : SSHOT_FAILED;;
@@ -3629,7 +3624,6 @@ int SCR_Screenshot(char *name) {
 			buffer[i] = buffer[i + 2];
 			buffer[i + 2] = temp;
 		}
-		applyHWGamma(buffer, buffersize);
 		success = Image_WriteTGA(name, buffer, glwidth, glheight)
 					? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
@@ -3904,7 +3898,6 @@ void SCR_Movieshot(char *name)
 		// Allocate the RGB buffer, get the pixels from GL and apply the gamma.
 		buffer = (byte *) Q_malloc (size);
 		glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-		applyHWGamma (buffer, size);
 
 		// We now have a byte buffer with RGB values, but
 		// before we write it to the file, we need to swap

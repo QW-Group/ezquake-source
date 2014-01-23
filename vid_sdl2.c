@@ -47,6 +47,7 @@
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
+// Reorder so we can get rid of most of these atleast
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
@@ -60,7 +61,6 @@ static SDL_Window       *sdl_window;
 static SDL_GLContext    *sdl_context;
 
 glconfig_t glConfig;
-qbool vid_hwgamma_enabled = false;
 static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
@@ -102,7 +102,7 @@ cvar_t r_swapInterval         = {"vid_vsync",             "0",   CVAR_SILENT };
 cvar_t r_win_save_pos         = {"vid_win_save_pos",      "1",   CVAR_SILENT };
 cvar_t r_win_save_size        = {"vid_win_save_size",     "1",   CVAR_SILENT };
 cvar_t vid_xpos               = {"vid_xpos",              "3",   CVAR_SILENT };
-cvar_t vid_ypos               = {"vid_ypos",              "22",  CVAR_SILENT };
+cvar_t vid_ypos               = {"vid_ypos",              "39",  CVAR_SILENT };
 cvar_t r_conwidth             = {"vid_conwidth",          "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t vid_flashonactivity    = {"vid_flashonactivity",   "1",   CVAR_SILENT };
@@ -263,9 +263,10 @@ static void window_event(SDL_WindowEvent *event)
 				glConfig.vidWidth = event->data1;
 				glConfig.vidHeight = event->data2;
 				if (r_win_save_size.integer) {
-					Cvar_LatchedSetValue(&vid_win_width, event->data1);
-					Cvar_LatchedSetValue(&vid_win_height, event->data2);
+					Cvar_LatchedSetValue(&vid_win_width, glConfig.vidWidth);
+					Cvar_LatchedSetValue(&vid_win_height, glConfig.vidHeight);
 				}
+
 				if (!r_conwidth.integer || !r_conheight.integer)
 					VID_UpdateConRes();
 			}
@@ -518,7 +519,7 @@ static void VID_SDL_GL_SetupAttributes(void)
 	}
 }
 
-void VID_SDL_Init(void)
+static void VID_SDL_Init(void)
 {
 	SDL_Surface *icon_surface;
 	extern void InitSig(void);
@@ -566,7 +567,6 @@ void VID_SDL_Init(void)
 		return;
 	}
 
-	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 	
 	if (!SDL_GetWindowDisplayMode(sdl_window, &display_mode))
@@ -591,6 +591,11 @@ void VID_SDL_Init(void)
 }
 
 static void GL_SwapBuffers (void)
+{
+	SDL_GL_SwapWindow(sdl_window);
+}
+
+static void GL_SwapBuffersWithVsyncFix (void)
 {
 	double time_before_swap;
 	time_before_swap = Sys_DoubleTime();
@@ -639,8 +644,10 @@ void GL_EndRendering (void)
 			if (CURRVIEW != 1)
 				return;
 
-		// Normal, swap on each frame.
-		GL_SwapBuffers(); 
+		if (vid_vsync_lag_fix.integer > 0)
+			GL_SwapBuffersWithVsyncFix();
+		else
+			GL_SwapBuffers();
 	}
 }
 
@@ -669,12 +676,6 @@ void VID_NotifyActivity(void)
 	else
 		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
 #endif
-}
-
-void VID_SetDeviceGammaRamp (unsigned short *ramps)
-{
-	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
-	vid_hwgamma_enabled = true;
 }
 
 void VID_Minimize (void) 
@@ -776,7 +777,7 @@ static void GfxInfo_f(void)
 
 }
 
-void VID_ParseCmdLine(void)
+static void VID_ParseCmdLine(void)
 {
 	int i, w = 0, h = 0;
 
@@ -855,7 +856,7 @@ static void VID_Restart_f(void)
 
 }
 
-void VID_RegisterCommands(void) 
+static void VID_RegisterCommands(void) 
 {
 	if (!host_initialized) {
 		Cmd_AddCommand("vid_gfxinfo", GfxInfo_f);
@@ -899,7 +900,6 @@ void VID_Init(unsigned char *palette) {
 
 	vid.colormap = host_colormap;
 
-	Check_Gamma(palette);
 	VID_SetPalette(palette);
 
 	if (!host_initialized) {
@@ -923,6 +923,8 @@ void VID_Init(unsigned char *palette) {
 
 static void VID_Reload(void)
 {
+#ifdef __linux__
+	// Currently this is only tested OK on Linux, Windows doesn't work properly. Might ditch it completely if it isn't stable
 	if (glConfig.initialized == false)
 		return;
 
@@ -934,9 +936,16 @@ static void VID_Reload(void)
 	SDL_SetWindowBordered(sdl_window, (r_fullscreen.integer <= 0 && vid_win_borderless.integer <= 0) ? SDL_TRUE : SDL_FALSE);
 	SDL_SetWindowSize(sdl_window, glConfig.vidWidth, glConfig.vidHeight);
 
-	v_gamma.modified = true;
 	r_swapInterval.modified = true; // Needed?
 
 	VID_UpdateConRes();
+#else
+	// Unfortunately window handling seems to suck on Windows so that
+	// 1) We get window resize event(s) from SDL_SetWindowXXX call(s)
+	// 2) Have to do things in order to set fullscreen, and then do the calls
+	//    reverse order to go to windowed mode ... It's painfully slow too on windows
+	//    so we VID_Restart here
+	VID_Restart_f();
+#endif
 }
 
