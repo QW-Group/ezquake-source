@@ -55,7 +55,6 @@ static void GrabMouse(qbool grab, qbool raw);
 static void GfxInfo_f(void);
 static void HandleEvents();
 static void VID_UpdateConRes(void);
-static void VID_Reload(void);
 
 static SDL_Window       *sdl_window;
 static SDL_GLContext    *sdl_context;
@@ -445,18 +444,6 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_win_borderless);
 	Cvar_Register(&gl_multisamples);
 
-	Cvar_ResetCurrentGroup();
-}
-
-static void VID_Reload_RegisterLatchCvars(void)
-{
-	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
-	Cvar_Register(&vid_width);
-	Cvar_Register(&vid_height);
-	Cvar_Register(&vid_win_width);
-	Cvar_Register(&vid_win_height);
-	Cvar_Register(&r_fullscreen);
-	Cvar_Register(&vid_win_borderless);
 	Cvar_ResetCurrentGroup();
 }
 
@@ -861,7 +848,6 @@ static void VID_RegisterCommands(void)
 	if (!host_initialized) {
 		Cmd_AddCommand("vid_gfxinfo", GfxInfo_f);
 		Cmd_AddCommand("vid_restart", VID_Restart_f);
-		Cmd_AddCommand("vid_reload", VID_Reload);
 	}
 }
 
@@ -919,33 +905,5 @@ void VID_Init(unsigned char *palette) {
 	VID_UpdateConRes();
 
 	GL_Init(); // Real OpenGL stuff, vid_common_gl.c
-}
-
-static void VID_Reload(void)
-{
-#ifdef __linux__
-	// Currently this is only tested OK on Linux, Windows doesn't work properly. Might ditch it completely if it isn't stable
-	if (glConfig.initialized == false)
-		return;
-
-	VID_Reload_RegisterLatchCvars(); // Avoid registering variables like gl_multisamples since that one needs a full restart
-
-	VID_SetupResolution();
-
-	SDL_SetWindowFullscreen(sdl_window, r_fullscreen.integer > 0 ? SDL_WINDOW_FULLSCREEN : 0);
-	SDL_SetWindowBordered(sdl_window, (r_fullscreen.integer <= 0 && vid_win_borderless.integer <= 0) ? SDL_TRUE : SDL_FALSE);
-	SDL_SetWindowSize(sdl_window, glConfig.vidWidth, glConfig.vidHeight);
-
-	r_swapInterval.modified = true; // Needed?
-
-	VID_UpdateConRes();
-#else
-	// Unfortunately window handling seems to suck on Windows so that
-	// 1) We get window resize event(s) from SDL_SetWindowXXX call(s)
-	// 2) Have to do things in order to set fullscreen, and then do the calls
-	//    reverse order to go to windowed mode ... It's painfully slow too on windows
-	//    so we VID_Restart here
-	VID_Restart_f();
-#endif
 }
 

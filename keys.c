@@ -2095,7 +2095,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		Key_ClearStates(); // Zzzz
 		con_suppress = true;
 		Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );
-		Cbuf_AddText( "vid_reload\n" );
+		Cbuf_AddText( "vid_restart\n" );
 		Cbuf_Execute();
 		con_suppress = false;
 		return;
