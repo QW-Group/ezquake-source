@@ -481,6 +481,7 @@ static void VID_SetupResolution(void)
 				glConfig.vidHeight = 768;
 				Cvar_LatchedSetValue(&vid_width, 1024); // Try some default if nothing is set and we failed
 				Cvar_LatchedSetValue(&vid_height, 768); // to get desktop resolution
+				Com_Printf("warning: failed to get desktop resolution, using 1024x768 failsafe\n");
 			}
 		} else {
 			glConfig.vidWidth = bound(320, vid_width.integer, vid_width.integer);
