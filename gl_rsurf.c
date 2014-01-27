@@ -804,19 +804,14 @@ void DrawTextureChains (model_t *model, int contents)
 	msurface_t *s;
 	texture_t *t;
 	float *v;
-
 	qbool render_lightmaps = false;
 	qbool doMtex1, doMtex2;
-
 	qbool isLumaTexture;
-
 	qbool draw_fbs, draw_caustics, draw_details;
-
 	qbool can_mtex_lightmaps, can_mtex_fbs;
-
 	qbool draw_mtex_fbs;
-
 	qbool mtex_lightmaps, mtex_fbs;
+	GLint shader, u_world_tex, u_lightmap_tex, u_gamma, u_contrast;
 
 	draw_caustics = underwatertexture && gl_caustics.value;
 	draw_details  = detailtexture && gl_detail.value;
@@ -837,6 +832,19 @@ void DrawTextureChains (model_t *model, int contents)
 		glEnable(GL_FOG);
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	shader = glsl_shaders[SHADER_WORLD].shader;
+	qglUseProgram(shader);
+
+	u_world_tex    = qglGetUniformLocation(shader, "world_tex");
+	u_lightmap_tex = qglGetUniformLocation(shader, "lightmap_tex");
+	u_gamma        = qglGetUniformLocation(shader, "gamma");
+	u_contrast     = qglGetUniformLocation(shader, "contrast");
+
+	qglUniform1i(u_world_tex, 0);
+	qglUniform1i(u_lightmap_tex, 1);
+	qglUniform1f(u_gamma, v_gamma.value);
+	qglUniform1f(u_contrast, v_contrast.value);
 
 	for (i = 0; i < model->numtextures; i++)
 	{
@@ -1034,6 +1042,7 @@ void DrawTextureChains (model_t *model, int contents)
 		if (doMtex2)
 			GL_DisableTMU(GL_TEXTURE2_ARB);
 	}
+	qglUseProgram(0);
 
 	if (gl_mtexable)
 		GL_SelectTexture(GL_TEXTURE0_ARB);

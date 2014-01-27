@@ -105,6 +105,7 @@ int       playernmtextures[MAX_CLIENTS];
 int       playerfbtextures[MAX_CLIENTS];
 int       skyboxtextures[MAX_SKYBOXTEXTURES];
 int       underwatertexture, detailtexture;
+int       whitetexture;
 
 
 cvar_t cl_multiview                        = {"cl_multiview", "0" };
@@ -471,23 +472,31 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 
 void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir)
 {
-    int *order, count;
+	int *order, count;
 	vec3_t interpolated_verts;
-    float l, lerpfrac;
-    trivertx_t *verts1, *verts2;
+	float l, lerpfrac;
+	trivertx_t *verts1, *verts2;
 	//VULT COLOURED MODEL LIGHTS
 	int i;
 	vec3_t lc;
+	GLint shader, u_gamma, u_contrast;
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;	
 
-    verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
 
-    verts1 += pose1 * paliashdr->poseverts;
-    verts2 += pose2 * paliashdr->poseverts;
+	verts1 += pose1 * paliashdr->poseverts;
+	verts2 += pose2 * paliashdr->poseverts;
 
-    order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+
+	shader = glsl_shaders[SHADER_MODEL].shader;
+	qglUseProgram(shader);
+	u_gamma = qglGetUniformLocation(shader, "gamma");
+	u_contrast = qglGetUniformLocation(shader, "contrast");
+	qglUniform1f(u_gamma, v_gamma.value);
+	qglUniform1f(u_contrast, v_contrast.value);
 
 	if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && bound(0, gl_powerupshells.value, 1) */ )
 	{
@@ -626,7 +635,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 
 				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 				glVertex3fv(interpolated_verts);
-				
+
 
 				verts1++;
 				verts2++;
@@ -638,6 +647,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 		if (r_modelalpha < 1)
 			glDisable(GL_BLEND);
 	}
+	qglUseProgram(0);
 }
 
 void R_SetupAliasFrame(maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline)
@@ -1518,7 +1528,7 @@ void R_PolyBlend(void)
 {
 	extern cvar_t gl_hwblend;
 
-	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress)
+	if (!cl.teamfortress)
 		return;
 	if (!v_blend[3])
 		return;
@@ -1545,6 +1555,8 @@ void R_PolyBlend(void)
 
 void R_BrightenScreen(void)
 {
+	return; // FIXME gamma mess
+
 	extern float vid_gamma;
 	float f;
 
@@ -2107,7 +2119,7 @@ void R_Clear(void)
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
-	if (!cl_multiview.value && (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1)))
+	if (!cl_multiview.value && gl_clear.value)
 	{
 		clearbits |= GL_COLOR_BUFFER_BIT;
 	}

@@ -47,6 +47,7 @@
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
+// Reorder so we can get rid of most of these atleast
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
@@ -59,7 +60,6 @@ static SDL_Window       *sdl_window;
 static SDL_GLContext    *sdl_context;
 
 glconfig_t glConfig;
-qbool vid_hwgamma_enabled = false;
 static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
@@ -86,7 +86,7 @@ cvar_t r_stencilbits          = {"vid_stencilbits",       "8",   CVAR_LATCH };
 cvar_t r_depthbits            = {"vid_depthbits",         "0",   CVAR_LATCH };
 cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
 cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH };
-cvar_t vid_borderless         = {"vid_borderless",        "0",   CVAR_LATCH };
+cvar_t vid_win_borderless     = {"vid_win_borderless",    "0",   CVAR_LATCH };
 cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH };
 cvar_t vid_height             = {"vid_height",            "0",   CVAR_LATCH };
 cvar_t vid_win_width          = {"vid_win_width",         "640", CVAR_LATCH };
@@ -101,7 +101,7 @@ cvar_t r_swapInterval         = {"vid_vsync",             "0",   CVAR_SILENT };
 cvar_t r_win_save_pos         = {"vid_win_save_pos",      "1",   CVAR_SILENT };
 cvar_t r_win_save_size        = {"vid_win_save_size",     "1",   CVAR_SILENT };
 cvar_t vid_xpos               = {"vid_xpos",              "3",   CVAR_SILENT };
-cvar_t vid_ypos               = {"vid_ypos",              "22",  CVAR_SILENT };
+cvar_t vid_ypos               = {"vid_ypos",              "39",  CVAR_SILENT };
 cvar_t r_conwidth             = {"vid_conwidth",          "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t vid_flashonactivity    = {"vid_flashonactivity",   "1",   CVAR_SILENT };
@@ -262,9 +262,10 @@ static void window_event(SDL_WindowEvent *event)
 				glConfig.vidWidth = event->data1;
 				glConfig.vidHeight = event->data2;
 				if (r_win_save_size.integer) {
-					Cvar_LatchedSetValue(&vid_win_width, event->data1);
-					Cvar_LatchedSetValue(&vid_win_height, event->data2);
+					Cvar_LatchedSetValue(&vid_win_width, glConfig.vidWidth);
+					Cvar_LatchedSetValue(&vid_win_height, glConfig.vidHeight);
 				}
+
 				if (!r_conwidth.integer || !r_conheight.integer)
 					VID_UpdateConRes();
 			}
@@ -440,7 +441,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&r_depthbits);
 	Cvar_Register(&r_fullscreen);
 	Cvar_Register(&r_displayRefresh);
-	Cvar_Register(&vid_borderless);
+	Cvar_Register(&vid_win_borderless);
 	Cvar_Register(&gl_multisamples);
 
 	Cvar_ResetCurrentGroup();
@@ -480,6 +481,7 @@ static void VID_SetupResolution(void)
 				glConfig.vidHeight = 768;
 				Cvar_LatchedSetValue(&vid_width, 1024); // Try some default if nothing is set and we failed
 				Cvar_LatchedSetValue(&vid_height, 768); // to get desktop resolution
+				Com_Printf("warning: failed to get desktop resolution, using 1024x768 failsafe\n");
 			}
 		} else {
 			glConfig.vidWidth = bound(320, vid_width.integer, vid_width.integer);
@@ -505,7 +507,7 @@ static void VID_SDL_GL_SetupAttributes(void)
 	}
 }
 
-void VID_SDL_Init(void)
+static void VID_SDL_Init(void)
 {
 	SDL_Surface *icon_surface;
 	extern void InitSig(void);
@@ -515,12 +517,15 @@ void VID_SDL_Init(void)
 	if (glConfig.initialized == true)
 		return;
 
-	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 #ifdef SDL_WINDOW_ALLOW_HIGHDPI
 	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
-	if (r_fullscreen.integer == 1)
-		flags |= SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN;
+	if (r_fullscreen.integer <= 0) {
+		flags &= ~SDL_WINDOW_FULLSCREEN;
+		if (vid_win_borderless.integer <= 0)
+			flags &= ~SDL_WINDOW_BORDERLESS;
+	}
 
 #if defined(__linux__)
 	InitSig();
@@ -550,7 +555,6 @@ void VID_SDL_Init(void)
 		return;
 	}
 
-	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 	
 	if (!SDL_GetWindowDisplayMode(sdl_window, &display_mode))
@@ -575,6 +579,11 @@ void VID_SDL_Init(void)
 }
 
 static void GL_SwapBuffers (void)
+{
+	SDL_GL_SwapWindow(sdl_window);
+}
+
+static void GL_SwapBuffersWithVsyncFix (void)
 {
 	double time_before_swap;
 	time_before_swap = Sys_DoubleTime();
@@ -623,8 +632,10 @@ void GL_EndRendering (void)
 			if (CURRVIEW != 1)
 				return;
 
-		// Normal, swap on each frame.
-		GL_SwapBuffers(); 
+		if (vid_vsync_lag_fix.integer > 0)
+			GL_SwapBuffersWithVsyncFix();
+		else
+			GL_SwapBuffers();
 	}
 }
 
@@ -653,12 +664,6 @@ void VID_NotifyActivity(void)
 	else
 		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
 #endif
-}
-
-void VID_SetDeviceGammaRamp (unsigned short *ramps)
-{
-	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
-	vid_hwgamma_enabled = true;
 }
 
 void VID_Minimize (void) 
@@ -760,7 +765,7 @@ static void GfxInfo_f(void)
 
 }
 
-void VID_ParseCmdLine(void)
+static void VID_ParseCmdLine(void)
 {
 	int i, w = 0, h = 0;
 
@@ -839,11 +844,11 @@ static void VID_Restart_f(void)
 
 }
 
-void VID_RegisterCommands(void) 
+static void VID_RegisterCommands(void) 
 {
 	if (!host_initialized) {
-		Cmd_AddCommand( "vid_gfxinfo", GfxInfo_f );
-		Cmd_AddCommand( "vid_restart", VID_Restart_f );
+		Cmd_AddCommand("vid_gfxinfo", GfxInfo_f);
+		Cmd_AddCommand("vid_restart", VID_Restart_f);
 	}
 }
 
@@ -882,7 +887,6 @@ void VID_Init(unsigned char *palette) {
 
 	vid.colormap = host_colormap;
 
-	Check_Gamma(palette);
 	VID_SetPalette(palette);
 
 	if (!host_initialized) {
