@@ -1793,7 +1793,7 @@ checkaliases:
 	if (cbuf_current != &cbuf_svc)
 	{
 		if (cl_warncmd.integer || developer.integer)
-			Com_Printf ("Unknown command \"%s\"\n", Cmd_Argv(0));
+			Com_Printf ("&cf22Unknown command&r \"%s\"\n", Cmd_Argv(0));
 	}
 
 done:
