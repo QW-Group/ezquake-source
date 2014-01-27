@@ -27,13 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef WITH_TCL
 #include "embed_tcl.h"
 #endif
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif /* !GLQUAKE */
 #include "teamplay.h"
 #include "rulesets.h"
 #include "tp_triggers.h"
@@ -1649,8 +1644,6 @@ static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 	return *s != NULL;
 }
 
-qbool Plugin_ExecuteString(void);
-
 //A complete command line has been parsed, so try to execute it
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 {
@@ -1797,13 +1790,10 @@ checkaliases:
 			goto done;
 	}
 
-	if (Plugin_ExecuteString())
-		goto done;
-
 	if (cbuf_current != &cbuf_svc)
 	{
 		if (cl_warncmd.integer || developer.integer)
-			Com_Printf ("Unknown command \"%s\"\n", Cmd_Argv(0));
+			Com_Printf ("&cf22Unknown command&r \"%s\"\n", Cmd_Argv(0));
 	}
 
 done:

@@ -26,17 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SELF_SOUND 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
 
 #ifdef _WIN32
-#include "winquake.h"
 #include "movie.h" //joe: capturing audio
-#endif
-
-#ifdef FTE_PEXT2_VOICECHAT
-#include "input.h"
-#endif
-
-//dimman
-#if defined(__linux__) || defined(__FreeBSD__)
-qsoundhandler_t *qsoundhandler;
 #endif
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
@@ -48,7 +38,6 @@ static void S_Update_ ();
 static void S_StopAllSounds_f (void);
 static void S_Register_LatchCvars(void);
 
-void IN_Accumulate (void); // S_ExtraUpdate use it
 void S_RawClear(void);
 void S_RawAudio(int sourceid, byte *data, unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
 
@@ -112,68 +101,12 @@ cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
 
-#if defined(__FreeBSD__) || defined(__linux__)
-cvar_t s_stereo = {"s_stereo", "1", CVAR_LATCH};
-cvar_t s_bits = {"s_bits", "16", CVAR_LATCH};
-cvar_t s_oss_device = {"s_oss_device", "/dev/dsp", CVAR_LATCH};
-cvar_t s_alsa_device = {"s_alsa_device", "default", CVAR_LATCH};
-cvar_t s_alsa_latency = {"s_alsa_latency", "0.04", CVAR_LATCH};
-cvar_t s_alsa_noworkaround = {"s_alsa_noworkaround", "0", CVAR_LATCH};
-cvar_t s_uselegacydrivers = {"s_uselegacydrivers", "0", CVAR_LATCH};
-#ifdef WITH_PULSEAUDIO
-cvar_t s_pulseaudio_latency = {"s_pulseaudio_latency", "0.04", CVAR_LATCH};
-#endif
-#endif
-
-#ifdef __linux__
-cvar_t s_driver = {"s_driver", "alsa", CVAR_LATCH};
-#endif
-
-#ifdef __FreeBSD__
-cvar_t s_driver = {"s_driver", "oss", CVAR_LATCH};
-#endif
-
-// ====================================================================
-// Voice communication
-// ====================================================================
-
-#ifdef FTE_PEXT2_VOICECHAT
-
-static void S_Voip_Enable_f(void);
-static void S_Voip_Disable_f(void);
-static void S_Voip_f(void);
-
-static void S_Voip_Play_Callback(cvar_t *var, char *string, qbool *cancel);
-// Sends voice-over-ip data to the server whenever it is set.
-cvar_t cl_voip_send = {"cl_voip_send", "0"};
-// This is the threshhold for voice-activation-detection when sending voip data.
-cvar_t cl_voip_vad_threshhold = {"cl_voip_vad_threshhold", "15"};
-// Keeps sending voice data for this many seconds after voice activation would normally stop.
-cvar_t cl_voip_vad_delay = {"cl_voip_vad_delay", "0.3"};
-// Volume multiplier applied while capturing, to avoid your audio from being heard by others.
-cvar_t cl_voip_capturingvol = {"cl_voip_capturingvol", "0.5"};
-// Shows your speach volume above the hud. 0=hide, 1=show when transmitting, 2=ignore voice-activation disable.
-cvar_t cl_voip_showmeter = {"cl_voip_showmeter", "1"};
-cvar_t cl_voip_showmeter_x = {"cl_voip_showmeter_x", "0"};
-cvar_t cl_voip_showmeter_y = {"cl_voip_showmeter_y", "0"};
-// Enables voip playback.
-cvar_t cl_voip_play = {"cl_voip_play", "1", CVAR_NONE, S_Voip_Play_Callback};
-// Amplifies your microphone when using voip.
-cvar_t cl_voip_micamp = {"cl_voip_micamp", "2"};
-// Record VOIP in demo.
-cvar_t cl_voip_demorecord = {"cl_voip_demorecord", "1"};
-#endif
-
 static void S_SoundInfo_f (void)
 {
 	if (!shm) {
 		Com_Printf ("sound system not started\n");
 		return;
 	}
-#if defined(__linux__) || defined(__FreeBSD__)
-	if(qsoundhandler)
-		Com_Printf("driver: %s\n", qsoundhandler->name);
-#endif
 	Com_Printf("%5d speakers\n", shm->format.channels);
 #if defined(__linux__) || defined(__FreeBSD__)
 	// shm->sampleframes not set/used in ALSA/Pulseaudio
@@ -206,48 +139,6 @@ static qbool S_Startup (void)
 ///////////////////////////////////////////////
 // Sound driver choosing. Linux/FreeBSD only
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	qsoundhandler = malloc(sizeof(*qsoundhandler));
-	char *audio_driver = Cvar_String("s_driver");
-	qbool retval = false;
-
-	if(qsoundhandler)	{
-		if(strcmp(audio_driver, "alsa")==0) {
-			if(s_uselegacydrivers.value) {
-				retval = SNDDMA_Init_ALSA_Legacy(qsoundhandler);
-			} else {
-				retval = SNDDMA_Init_ALSA(qsoundhandler);
-			}
-
-		#ifdef WITH_PULSEAUDIO
-		} else if(strcmp(audio_driver, "pulseaudio")==0 || strcmp(audio_driver, "pulse")==0) {
-			retval = SNDDMA_Init_PULSEAUDIO(qsoundhandler);
-		#endif
-		} else if(strcmp(audio_driver, "oss")==0) {
-			if(s_uselegacydrivers.value) {
-				retval = SNDDMA_Init_OSS_Legacy(qsoundhandler);
-			} else {
-				retval = SNDDMA_Init_OSS(qsoundhandler);
-			}
-		}
-		else {
-			Com_DPrintf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
-		}
-	}
-	if(!retval) {
-		Com_Printf("[sound] Failed to startup (s_driver %s)\n", s_driver.string);
-		if((!s_uselegacydrivers.value) && ((strcmp(audio_driver, "alsa")==0) || (strcmp(audio_driver, "oss")==0)))
-			Com_Printf("Try s_uselegacydriver 1 to use legacy %s driver.\n", audio_driver);
-		shm = NULL;
-		sound_spatialized = false;
-		snd_started = false;
-		free(qsoundhandler);
-		return false;
-	} else {
-		Com_Printf("[sound] %s started....\n", qsoundhandler->name);
-	}
-////////////////////////////////////////////////////
-#else
 	if (!SNDDMA_Init()) {
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
 		shm = NULL;
@@ -255,7 +146,6 @@ static qbool S_Startup (void)
 		sound_spatialized = false;
 		return false;
 	}
-#endif
 
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
@@ -273,14 +163,7 @@ void S_Shutdown (void)
 	Cache_Flush(); // dimman: Moved this line and next here from S_Restart_f
 	S_StopAllSounds (true);
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	Com_Printf("[sound] %s shutdown...\n", qsoundhandler->name);
-	qsoundhandler->Shutdown();
-	free(qsoundhandler);
-	qsoundhandler = NULL;
-#else
 	SNDDMA_Shutdown();
-#endif
 
 	shm = NULL;
 	snd_started = false;
@@ -295,7 +178,9 @@ static void S_Restart_f (void)
 }
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel) {
-	Cbuf_AddText("s_restart\n");
+	if (shm && shm->format.speed / 1000 != Q_atoi(string)) {
+		Cbuf_AddText("s_restart\n");
+	}
 }
 
 static void S_Register_RegularCvarsAndCommands(void)
@@ -316,22 +201,6 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cvar_Register(&s_swapstereo);
 	Cvar_Register(&s_linearresample_stream);
 
-#ifdef FTE_PEXT2_VOICECHAT
-	Cvar_Register(&cl_voip_send);
-	Cvar_Register(&cl_voip_vad_threshhold);
-	Cvar_Register(&cl_voip_vad_delay);
-	Cvar_Register(&cl_voip_capturingvol);
-	Cvar_Register(&cl_voip_showmeter);
-	Cvar_Register(&cl_voip_showmeter_x);
-	Cvar_Register(&cl_voip_showmeter_y);
-	Cvar_Register(&cl_voip_play);
-	Cvar_Register(&cl_voip_micamp);
-	Cvar_Register(&cl_voip_demorecord);
-
-	Cmd_AddCommand("+voip", S_Voip_Enable_f);
-	Cmd_AddCommand("-voip", S_Voip_Disable_f);
-	Cmd_AddCommand("voip", S_Voip_f);
-#endif
 	Cvar_ResetCurrentGroup();
 
 	// compatibility with old configs
@@ -359,20 +228,6 @@ static void S_Register_LatchCvars(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 
 	Cvar_Register(&s_linearresample);
-
-#if defined(__linux__) || defined(__FreeBSD__)
-	Cvar_Register(&s_uselegacydrivers);
-	Cvar_Register(&s_stereo);
-	Cvar_Register(&s_bits);
-	Cvar_Register(&s_oss_device);
-	Cvar_Register(&s_driver);
-	Cvar_Register(&s_alsa_device);
-	Cvar_Register(&s_alsa_latency);
-	Cvar_Register(&s_alsa_noworkaround);
-	#ifdef WITH_PULSEAUDIO
-	Cvar_Register(&s_pulseaudio_latency);
-	#endif
-#endif
 
 	Cvar_ResetCurrentGroup();
 }
@@ -505,7 +360,6 @@ static void SND_Spatialize (channel_t *ch)
 {
 	vec_t dot, dist, lscale, rscale, scale;
 	vec3_t source_vec;
-	sfx_t *snd;
 
 	// anything coming from the view entity will always be full volume
 	if ((ch->entnum == cl.playernum + 1) || (ch->entnum == SELF_SOUND)) {
@@ -515,8 +369,6 @@ static void SND_Spatialize (channel_t *ch)
 	}
 
 	// calculate stereo seperation and distance attenuation
-
-	snd = ch->sfx;
 	VectorSubtract(ch->origin, listener_origin, source_vec);
 
 	dist = VectorNormalize(source_vec) * ch->dist_mult;
@@ -639,54 +491,15 @@ static void S_StopAllSounds_f (void)
 }
 
 
-#ifdef _WIN32
-extern char *DSoundError (int error);
-#endif
-
 void S_ClearBuffer (void)
 {
 	int clear;
 
-#ifdef _WIN32
-	if (!shm || (!shm->buffer && !pDSBuf))
-#else
 	if (!shm || !shm->buffer)
-#endif
 		return;
 
 	clear = (shm->format.width == 2) ? 0x80 : 0;
-
-#ifdef _WIN32
-	if (pDSBuf) {
-		DWORD dwSize;
-		DWORD *pData;
-		int reps;
-		HRESULT hresult;
-
-		reps = 0;
-
-		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, (void **) &pData, &dwSize, NULL, NULL, 0)) != DS_OK) {
-			if (hresult != DSERR_BUFFERLOST) {
-				Com_Printf ("S_ClearBuffer: Lock failed with error '%s'\n", DSoundError(hresult));
-				S_Shutdown ();
-				return;
-			} else {
-				pDSBuf->lpVtbl->Restore (pDSBuf);
-			}
-
-			if (++reps > 2)
-				return;
-		}
-
-		memset(pData, clear, shm->bufferlength);
-
-		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
-
-	} else
-#endif
-	{
-		memset(shm->buffer, clear, shm->bufferlength);
-	}
+	memset(shm->buffer, clear, shm->bufferlength);
 }
 
 void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
@@ -863,15 +676,8 @@ static void GetSoundtime (void)
 		return;
 #endif
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	fullsamples = shm->samples / shm->format.channels;
-	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
-
-	samplepos = qsoundhandler->GetDMAPos();
-#else
 	fullsamples = shm->sampleframes;
 	samplepos = SNDDMA_GetDMAPos();
-#endif
 
 	if (samplepos < oldsamplepos) {
 		buffers++; // buffer wrapped
@@ -898,10 +704,6 @@ void S_ExtraUpdate (void)
 		return;
 #endif
 
-#ifdef _WIN32
-	IN_Accumulate ();
-#endif
-
 	if (s_noextraupdate.value || !sound_spatialized)
 		return; // don't pollute timings
 
@@ -911,9 +713,6 @@ void S_ExtraUpdate (void)
 static void S_Update_ (void)
 {
 	unsigned int endtime;
-#ifdef _WIN32
-	DWORD dwStatus;
-#endif
 
 	if (!shm || (snd_blocked > 0))
 		return;
@@ -928,56 +727,15 @@ static void S_Update_ (void)
 	}
 
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	int avail;
-	int samps;
-
-	//mix ahead of current position
-	if(qsoundhandler->GetAvail) {
-		avail = qsoundhandler->GetAvail();
-		if(avail <= 0)
-			return;
-		endtime = soundtime + avail;
-	}
-	else {
-		endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
-		endtime = min(endtime, (unsigned int)(soundtime +  shm->samples * shm->format.channels));
-	}
-	samps = (shm->samples) >> (shm->format.channels - 1);
-	if(endtime - soundtime > samps)
-		endtime = soundtime + samps;
-
-#else
 	// mix ahead of current position
 	endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
 	endtime = min(endtime, (unsigned int)(soundtime + shm->sampleframes));
-#endif
 
-
-#ifdef _WIN32
-	// if the buffer was lost or stopped, restore it and/or restart it
-	if (pDSBuf) {
-		if (pDSBuf->lpVtbl->GetStatus (pDSBuf, &dwStatus) != DS_OK)
-			Com_Printf ("Couldn't get sound buffer status\n");
-
-		if (dwStatus & DSBSTATUS_BUFFERLOST)
-			pDSBuf->lpVtbl->Restore (pDSBuf);
-
-		if (!(dwStatus & DSBSTATUS_PLAYING))
-			pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
-	}
-
-#endif
+        SNDDMA_BeginPainting ();
 
 	S_PaintChannels (endtime);
 
-#if defined(__linux__) || defined(__FreeBSD__)
-	if(qsoundhandler->Submit)
-		qsoundhandler->Submit(paintedtime - soundtime);
-#else
 	SNDDMA_Submit ();
-#endif
-
 }
 
 /*
@@ -1095,471 +853,6 @@ void S_LocalSoundWithVol(char *sound, float volume)
 
 	S_StartSound (cl.playernum+1, -1, sfx, vec3_origin, volume, 1);
 }
-
-#ifdef FTE_PEXT2_VOICECHAT
-
-// FTEQW type and naming compatibility
-// it's not really necessary, simple find & replace would do the job too
-#ifdef _MSC_VER
-#define VARGS __cdecl
-#endif
-#ifndef VARGS
-#define VARGS
-#endif
-
-#define qboolean qbool
-#define qbyte byte
-
-#define ival integer // for cvars compatibility
-#define realtime cls.realtime
-
-//=========================================================================
-
-#include <speex/speex.h>
-#include <speex/speex_preprocess.h>
-
-static struct
-{
-	qboolean inited;
-	qboolean loaded;
-	dllhandle_t *speexlib;
-	dllhandle_t *speexdsplib;
-
-	SpeexBits encbits;
-	void *encoder;
-	SpeexPreprocessState *preproc;
-	unsigned int framesize;
-	unsigned int samplerate;
-
-	SpeexBits decbits[MAX_CLIENTS];
-	void *decoder[MAX_CLIENTS];
-	unsigned char decseq[MAX_CLIENTS];	/*sender's sequence, to detect+cover minor packetloss*/
-	unsigned char decgen[MAX_CLIENTS];	/*last generation. if it changes, we flush speex to reset packet loss*/
-	float decamp[MAX_CLIENTS];	/*amplify them by this*/
-	float lastspoke[MAX_CLIENTS];	/*time when they're no longer considered talking. if future, they're talking*/
-
-	unsigned char capturebuf[32768]; /*pending data*/
-	unsigned int capturepos;/*amount of pending data*/
-	unsigned int encsequence;/*the outgoing sequence count*/
-	unsigned int generation;/*incremented whenever capture is restarted*/
-	qboolean wantsend;	/*set if we're capturing data to send*/
-	float voiplevel;	/*your own voice level*/
-	unsigned int dumps;	/*trigger a new generation thing after a bit*/
-	unsigned int keeps;	/*for vad_delay*/
-
-	snd_capture_driver_t *driver;/*capture driver's functions*/
-	void *driverctx;	/*capture driver context*/
-} s_speex;
-
-static const SpeexMode *(VARGS *qspeex_lib_get_mode)(int mode);
-static void (VARGS *qspeex_bits_init)(SpeexBits *bits);
-static void (VARGS *qspeex_bits_reset)(SpeexBits *bits);
-static int (VARGS *qspeex_bits_write)(SpeexBits *bits, char *bytes, int max_len);
-
-static SpeexPreprocessState *(VARGS *qspeex_preprocess_state_init)(int frame_size, int sampling_rate);
-static int (VARGS *qspeex_preprocess_ctl)(SpeexPreprocessState *st, int request, void *ptr);
-static int (VARGS *qspeex_preprocess_run)(SpeexPreprocessState *st, spx_int16_t *x);
-
-static void * (VARGS *qspeex_encoder_init)(const SpeexMode *mode);
-static int (VARGS *qspeex_encoder_ctl)(void *state, int request, void *ptr);
-static int (VARGS *qspeex_encode_int)(void *state, spx_int16_t *in, SpeexBits *bits);
-
-static void *(VARGS *qspeex_decoder_init)(const SpeexMode *mode);
-static int (VARGS *qspeex_decode_int)(void *state, SpeexBits *bits, spx_int16_t *out);
-static void (VARGS *qspeex_bits_read_from)(SpeexBits *bits, char *bytes, int len);
-
-static dllfunction_t qspeexfuncs[] =
-{
-	{(void*)&qspeex_lib_get_mode, "speex_lib_get_mode"},
-	{(void*)&qspeex_bits_init, "speex_bits_init"},
-	{(void*)&qspeex_bits_reset, "speex_bits_reset"},
-	{(void*)&qspeex_bits_write, "speex_bits_write"},
-
-	{(void*)&qspeex_encoder_init, "speex_encoder_init"},
-	{(void*)&qspeex_encoder_ctl, "speex_encoder_ctl"},
-	{(void*)&qspeex_encode_int, "speex_encode_int"},
-
-	{(void*)&qspeex_decoder_init, "speex_decoder_init"},
-	{(void*)&qspeex_decode_int, "speex_decode_int"},
-	{(void*)&qspeex_bits_read_from, "speex_bits_read_from"},
-
-	{NULL}
-};
-
-static dllfunction_t qspeexdspfuncs[] =
-{
-	{(void*)&qspeex_preprocess_state_init, "speex_preprocess_state_init"},
-	{(void*)&qspeex_preprocess_ctl, "speex_preprocess_ctl"},
-	{(void*)&qspeex_preprocess_run, "speex_preprocess_run"},
-
-	{NULL}
-};
-
-extern snd_capture_driver_t DSOUND_Capture;
-
-static qboolean S_Speex_Init(void)
-{
-	int i;
-	const SpeexMode *mode;
-	if (s_speex.inited)
-		return s_speex.loaded;
-	s_speex.inited = true;
-
-	s_speex.speexlib = Sys_LoadLibrary("libspeex", qspeexfuncs);
-	if (!s_speex.speexlib)
-	{
-		Con_Printf("libspeex not found. Voice chat not available.\n");
-		return false;
-	}
-
-	s_speex.speexdsplib = Sys_LoadLibrary("libspeexdsp", qspeexdspfuncs);
-	if (!s_speex.speexdsplib)
-	{
-		Con_Printf("libspeexdsp not found. Voice chat not available.\n");
-		return false;
-	}
-
-	mode = qspeex_lib_get_mode(SPEEX_MODEID_NB);
-
-
-	qspeex_bits_init(&s_speex.encbits);
-	qspeex_bits_reset(&s_speex.encbits);
-
-	s_speex.encoder = qspeex_encoder_init(mode);
-
-	qspeex_encoder_ctl(s_speex.encoder, SPEEX_GET_FRAME_SIZE, &s_speex.framesize);
-	qspeex_encoder_ctl(s_speex.encoder, SPEEX_GET_SAMPLING_RATE, &s_speex.samplerate);
-	s_speex.samplerate = 11025;
-	qspeex_encoder_ctl(s_speex.encoder, SPEEX_SET_SAMPLING_RATE, &s_speex.samplerate);
-
-	s_speex.preproc = qspeex_preprocess_state_init(s_speex.framesize, s_speex.samplerate);
-
-	i = 1;
-	qspeex_preprocess_ctl(s_speex.preproc, SPEEX_PREPROCESS_SET_DENOISE, &i);
-
-	i = 1;
-	qspeex_preprocess_ctl(s_speex.preproc, SPEEX_PREPROCESS_SET_AGC, &i);
-
-	for (i = 0; i < MAX_CLIENTS; i++)
-	{
-		qspeex_bits_init(&s_speex.decbits[i]);
-		qspeex_bits_reset(&s_speex.decbits[i]);
-		s_speex.decoder[i] = qspeex_decoder_init(mode);
-		s_speex.decamp[i] = 1;
-	}
-	s_speex.loaded = true;
-	return s_speex.loaded;
-}
-
-void S_Voip_Parse(void)
-{
-	unsigned int sender;
-	int bytes;
-	unsigned char data[1024], *start;
-	short decodebuf[1024];
-	unsigned int decodesamps, len, newseq, drops;
-	unsigned char seq, gen;
-	float amp = 1;
-	unsigned int i;
-
-	sender = MSG_ReadByte();
-	gen = MSG_ReadByte();
-	seq = MSG_ReadByte();
-	bytes = MSG_ReadShort();
-
-//	Com_DPrintf("data in: %d\n", bytes);
-
-	if (bytes > sizeof(data) || !cl_voip_play.ival || !S_Speex_Init() || (gen & 0xf0))
-	{
-		Com_DPrintf("skip data: %d\n", bytes);
-		MSG_ReadSkip(bytes);
-		return;
-	}
-	MSG_ReadData(data, bytes);
-
-	sender &= MAX_CLIENTS-1;
-
-	amp = s_speex.decamp[sender];
-
-	decodesamps = 0;
-	newseq = 0;
-	drops = 0;
-	start = data;
-
-	s_speex.lastspoke[sender] = realtime + 0.5;
-	if (s_speex.decgen[sender] != gen)
-	{
-		qspeex_bits_reset(&s_speex.decbits[sender]);
-		s_speex.decgen[sender] = gen;
-		s_speex.decseq[sender] = seq;
-	}
-
-	while (bytes > 0)
-	{
-		if (decodesamps + s_speex.framesize > sizeof(decodebuf)/sizeof(decodebuf[0]))
-		{
-			S_RawAudio(sender, (qbyte*)decodebuf, s_speex.samplerate, decodesamps, 1, 2);
-			decodesamps = 0;
-		}
-
-		if (s_speex.decseq[sender] != seq)
-		{
-			qspeex_decode_int(s_speex.decoder[sender], NULL, decodebuf + decodesamps);
-			s_speex.decseq[sender]++;
-			drops++;
-		}
-		else
-		{
-			bytes--;
-			len = *start++;
-			qspeex_bits_read_from(&s_speex.decbits[sender], (char *) start, len);
-			bytes -= len;
-			start += len;
-			qspeex_decode_int(s_speex.decoder[sender], &s_speex.decbits[sender], decodebuf + decodesamps);
-			newseq++;
-		}
-		if (amp != 1)
-		{
-			for (i = decodesamps; i < decodesamps+s_speex.framesize; i++)
-				decodebuf[i] *= amp;
-		}
-		decodesamps += s_speex.framesize;
-	}
-	s_speex.decseq[sender] += newseq;
-
-	if (drops)
-		Con_DPrintf("%i dropped audio frames\n", drops);
-
-	if (decodesamps > 0)
-		S_RawAudio(sender, (qbyte*)decodebuf, s_speex.samplerate, decodesamps, 1, 2);
-}
-
-void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf)
-{
-	unsigned char outbuf[1024];
-	unsigned int outpos;//in bytes
-	unsigned int encpos;//in bytes
-	short *start;
-	unsigned char initseq;//in frames
-	unsigned int i;
-	unsigned int samps;
-	float level, f;
-	float micamp = cl_voip_micamp.value;
-	qboolean voipsendenable = true;
-
-	/*if you're sending sound, you should be prepared to accept others yelling at you to shut up*/
-	if (!cl_voip_play.ival)
-		voipsendenable = false;
-	if (!(cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT))
-		voipsendenable = false;
-
-	if (!voipsendenable)
-	{
-		if (s_speex.driver)
-		{
-			if (s_speex.wantsend)
-				s_speex.driver->Stop(s_speex.driverctx);
-			s_speex.driver->Shutdown(s_speex.driverctx);
-			s_speex.driverctx = NULL;
-			s_speex.driver = NULL;
-		}
-		return;
-	}
-
-	voipsendenable = cl_voip_send.ival>0;
-
-	if (!s_speex.driver)
-	{
-		s_speex.voiplevel = -1;
-		/*only init the first time capturing is requested*/
-		if (!voipsendenable)
-			return;
-
-		/*Add new drivers in order of priority*/
-		if (!s_speex.driver)
-			s_speex.driver = &DSOUND_Capture;
-
-		/*no way to capture audio, give up*/
-		if (!s_speex.driver)
-			return;
-
-		/*see if we can init speex...*/
-		if (!S_Speex_Init())
-			return;
-
-		s_speex.driverctx = s_speex.driver->Init(s_speex.samplerate);
-	}
-
-	/*couldn't init a driver?*/
-	if (!s_speex.driverctx)
-	{
-		return;
-	}
-
-	if (!voipsendenable && s_speex.wantsend)
-	{
-		s_speex.wantsend = false;
-		s_speex.capturepos += s_speex.driver->Update(s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, 1, sizeof(s_speex.capturebuf) - s_speex.capturepos);
-		s_speex.driver->Stop(s_speex.driverctx);
-		/*note: we still grab audio to flush everything that was captured while it was active*/
-	}
-	else if (voipsendenable && !s_speex.wantsend)
-	{
-		s_speex.wantsend = true;
-		if (!s_speex.capturepos)
-		{	/*if we were actually still sending, it was probably only off for a single frame, in which case don't reset it*/
-			s_speex.dumps = 0;
-			s_speex.generation++;
-			s_speex.encsequence = 0;
-			qspeex_bits_reset(&s_speex.encbits);
-		}
-		else
-		{
-			s_speex.capturepos += s_speex.driver->Update(s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, 1, sizeof(s_speex.capturebuf) - s_speex.capturepos);
-		}
-		s_speex.driver->Start(s_speex.driverctx);
-
-		voicevolumemod = cl_voip_capturingvol.value;
-	}
-
-	s_speex.capturepos += s_speex.driver->Update(s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, s_speex.framesize*2, sizeof(s_speex.capturebuf) - s_speex.capturepos);
-
-	if (!s_speex.wantsend && s_speex.capturepos < s_speex.framesize*2)
-	{
-		s_speex.voiplevel = -1;
-		s_speex.capturepos = 0;
-		voicevolumemod = 1;
-		return;
-	}
-
-	initseq = s_speex.encsequence;
-	level = 0;
-	samps=0;
-	for (encpos = 0, outpos = 0; s_speex.capturepos-encpos >= s_speex.framesize*2 && sizeof(outbuf)-outpos > 64; s_speex.encsequence++)
-	{
-		start = (short*)(s_speex.capturebuf + encpos);
-
-		qspeex_preprocess_run(s_speex.preproc, start);
-
-		for (i = 0; i < s_speex.framesize; i++)
-		{
-			f = start[i] * micamp;
-			start[i] = f;
-			f = fabs(start[i]);
-			level += f*f;
-		}
-		samps+=s_speex.framesize;
-
-		qspeex_bits_reset(&s_speex.encbits);
-		qspeex_encode_int(s_speex.encoder, start, &s_speex.encbits);
-		outbuf[outpos] = qspeex_bits_write(&s_speex.encbits, (char *) outbuf+outpos+1, sizeof(outbuf) - (outpos+1));
-		outpos += 1+outbuf[outpos];
-		encpos += s_speex.framesize*2;
-	}
-	if (samps)
-	{
-		float nl;
-		nl = (3000*level) / (32767.0f*32767*samps);
-		s_speex.voiplevel = (s_speex.voiplevel*7 + nl)/8;
-		if (s_speex.voiplevel < cl_voip_vad_threshhold.ival && !(cl_voip_send.ival & 2))
-		{
-			/*try and dump it, it was too quiet, and they're not pressing +voip*/
-			if (s_speex.keeps > samps)
-			{
-				/*but not instantly*/
-				s_speex.keeps -= samps;
-			}
-			else
-			{
-				outpos = 0;
-				s_speex.dumps += samps;
-				s_speex.keeps = 0;
-			}
-		}
-		else
-			s_speex.keeps = s_speex.samplerate * cl_voip_vad_delay.value;
-		if (outpos)
-		{
-			if (s_speex.dumps > s_speex.samplerate/4)
-				s_speex.generation++;
-			s_speex.dumps = 0;
-		}
-	}
-
-	if (outpos && buf->maxsize - buf->cursize >= outpos+4)
-	{
-		MSG_WriteByte(buf, clc);
-		MSG_WriteByte(buf, (s_speex.generation & 0x0f)); /*gonna leave that nibble clear here... in this version, the client will ignore packets with those bits set. can use them for codec or something*/
-		MSG_WriteByte(buf, initseq);
-		MSG_WriteShort(buf, outpos);
-		SZ_Write(buf, outbuf, outpos);
-
-//		Com_DPrintf("data out: %d\n", outpos);
-	}
-
-	/*remove sent data*/
-	memmove(s_speex.capturebuf, s_speex.capturebuf + encpos, s_speex.capturepos-encpos);
-	s_speex.capturepos -= encpos;
-}
-
-void S_Voip_Ignore(unsigned int slot, qboolean ignore)
-{
-	CL_SendClientCommand(true, "vignore %i %i", slot, ignore);
-}
-
-static void S_Voip_Enable_f(void)
-{
-	Cvar_SetValue(&cl_voip_send, cl_voip_send.ival | 2);
-}
-
-static void S_Voip_Disable_f(void)
-{
-	Cvar_SetValue(&cl_voip_send, cl_voip_send.ival & ~2);
-}
-
-static void S_Voip_f(void)
-{
-	int i;
-	if (!strcmp(Cmd_Argv(1), "maxgain"))
-	{
-		i = atoi(Cmd_Argv(2));
-		qspeex_preprocess_ctl(s_speex.preproc, SPEEX_PREPROCESS_SET_AGC_MAX_GAIN, &i);
-	}
-}
-
-static void S_Voip_Play_Callback(cvar_t *var, char *string, qbool *cancel)
-{
-	if (cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT)
-	{
-		if (var->ival)
-			CL_SendClientCommand(true, "unmuteall");
-		else
-			CL_SendClientCommand(true, "muteall");
-	}
-}
-
-void S_Voip_MapChange(void)
-{
-	Cvar_ForceCallback(&cl_voip_play);
-}
-
-int S_Voip_Loudness(qboolean ignorevad)
-{
-	if (s_speex.voiplevel > 100)
-		return 100;
-	if (!s_speex.driverctx || (!ignorevad && s_speex.dumps))
-		return -1;
-	return s_speex.voiplevel;
-}
-
-qboolean S_Voip_Speaking(unsigned int plno)
-{
-	if (plno >= MAX_CLIENTS)
-		return false;
-	return s_speex.lastspoke[plno] > realtime;
-}
-
-#endif
 
 //===================================================================
 // Streaming audio.

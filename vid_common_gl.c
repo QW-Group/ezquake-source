@@ -20,59 +20,48 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
+#include <SDL.h>
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "fs.h"
 
+#define SHADER_ENTRY(a) [SHADER_##a] = { 0, #a }
+glsl_shader_t glsl_shaders[SHADER_LAST] = {
+	SHADER_ENTRY(WORLD),
+	SHADER_ENTRY(MODEL),
+	SHADER_ENTRY(TURB),
+	SHADER_ENTRY(HUD)
+};
 
-#ifdef __APPLE__
-void *Sys_GetProcAddress (const char *ExtName);
-#endif
-
-#ifdef __linux__
-# ifndef __GLXextFuncPtr
-  typedef void (*__GLXextFuncPtr)(void);
-# endif
-# ifndef glXGetProcAddressARB
-  extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
-# endif
-#endif
-#ifdef __FreeBSD__
-# ifndef glXGetProcAddressARB
-  extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
-# endif
-#endif
-
-void *GL_GetProcAddress (const char *ExtName)
-{
-#ifdef _WIN32
-			return (void *) wglGetProcAddress(ExtName);
-#else
-#ifdef __APPLE__ // Mac OS X don't have an OpenGL extension fetch function. Isn't that silly?
-			return Sys_GetProcAddress (ExtName);
-#else
-			return (void *) glXGetProcAddressARB((const GLubyte*) ExtName);
-#endif /* __APPLE__ */
-#endif /* _WIN32 */
-}
 
 const char *gl_vendor;
 const char *gl_renderer;
 const char *gl_version;
 const char *gl_extensions;
 
+PFNGLUSEPROGRAMPROC qglUseProgram;
+PFNGLGETUNIFORMLOCATIONPROC qglGetUniformLocation;
+PFNGLUNIFORM1FPROC qglUniform1f;
+PFNGLMULTITEXCOORD2FPROC qglMultiTexCoord2f;
+PFNGLUNIFORM1IPROC qglUniform1i;
+PFNGLACTIVETEXTUREPROC qglActiveTexture;
+PFNGLGETINFOLOGARBPROC qglGetInfoLogARB;
+PFNGLCREATESHADERPROC qglCreateShader;
+PFNGLSHADERSOURCEPROC qglShaderSource;
+PFNGLCOMPILESHADERPROC qglCompileShader;
+PFNGLCREATEPROGRAMPROC qglCreateProgram;
+PFNGLATTACHSHADERPROC qglAttachShader;
+PFNGLDELETESHADERPROC qglDeleteShader;
+PFNGLLINKPROGRAMPROC qglLinkProgram;
+
 int anisotropy_ext = 0;
-
-qbool gl_mtexable = false;
 int gl_textureunits = 1;
-lpMTexFUNC qglMultiTexCoord2f = NULL;
-lpSelTexFUNC qglActiveTexture = NULL;
 
+qbool gl_mtexable = true;
 qbool gl_combine = false;
-
 qbool gl_add_ext = false;
-
-qbool gl_allow_ztrick = true;
 
 float vid_gamma = 1.0;
 byte vid_gamma_table[256];
@@ -90,11 +79,8 @@ cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
 cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
 cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
 
-// GL_ARB_texture_non_power_of_two
 qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
-
-extern const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
 
 /************************************* EXTENSIONS *************************************/
 
@@ -102,12 +88,11 @@ qbool CheckExtension (const char *extension) {
 	const char *start;
 	char *where, *terminator;
 
-	if (!gl_extensions && !(gl_extensions = (const char*) qglGetString (GL_EXTENSIONS)))
+	if (!gl_extensions && !(gl_extensions = (const char*) glGetString (GL_EXTENSIONS)))
 		return false;
-
 
 	if (!extension || *extension == 0 || strchr (extension, ' '))
-		return false;
+ 		return false;
 
 	for (start = gl_extensions; (where = strstr(start, extension)); start = terminator) {
 		terminator = where + strlen (extension);
@@ -117,31 +102,20 @@ qbool CheckExtension (const char *extension) {
 	return false;
 }
 
-void CheckMultiTextureExtensions (void) {
-	if (!COM_CheckParm("-nomtex") && CheckExtension("GL_ARB_multitexture")) {
-		if (strstr(gl_renderer, "Savage"))
-			return;
-		qglMultiTexCoord2f = GL_GetProcAddress("glMultiTexCoord2fARB");
-		qglActiveTexture = GL_GetProcAddress("glActiveTextureARB");
-		if (!qglMultiTexCoord2f || !qglActiveTexture)
-			return;
-		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
-		gl_mtexable = true;
-	}
-
+void CheckMultiTextureExtensions (void)
+{
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&gl_textureunits);
 	gl_textureunits = min(gl_textureunits, 4);
 
-	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value)
+	if (COM_CheckParm("-maxtmu2") || gl_maxtmu2.value)
 		gl_textureunits = min(gl_textureunits, 2);
 
-	if (gl_textureunits < 2)
+	if (gl_textureunits < 2) {
 		gl_mtexable = false;
-
-	if (!gl_mtexable)
 		gl_textureunits = 1;
-	else
+	} else {
 		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
+	}
 }
 
 void GL_CheckExtensions (void) {
@@ -149,7 +123,6 @@ void GL_CheckExtensions (void) {
 
 	gl_combine = CheckExtension("GL_ARB_texture_env_combine");
 	gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
-
 
 	if (CheckExtension("GL_EXT_texture_filter_anisotropic")) {
 		int gl_anisotropy_factor_max;
@@ -191,18 +164,239 @@ void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cance
 
 /************************************** GL INIT **************************************/
 
-void GL_Init (void) {
-	gl_vendor     = (const char*) qglGetString (GL_VENDOR);
-	gl_renderer   = (const char*) qglGetString (GL_RENDERER);
-	gl_version    = (const char*) qglGetString (GL_VERSION);
-	gl_extensions = (const char*) qglGetString (GL_EXTENSIONS);
+static void print_infolog(GLuint program)
+{
+    char info[1 << 12];
+    info[0] = 0;
+    qglGetInfoLogARB(program, sizeof info, NULL, info);
+	const char *p = info;
+	while(*p && *p == ' ')
+		p++;
+    Con_Printf("%s", p);
+}
 
-#if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
-/* FIXME/TODO: FreeBSD too? */
-	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n",   gl_vendor);
-	Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", gl_renderer);
-	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n",  gl_version);
-#endif
+static unsigned int setup_shader(const char *src, unsigned int type)
+{
+	GLuint shader = qglCreateShader(type);
+	qglShaderSource(shader, 1, &src, NULL);
+	qglCompileShader(shader);
+	print_infolog(shader);
+	return shader;
+}
+
+static unsigned int setup_program(const char *vertex_shader, const char *fragment_shader)
+{
+	GLuint prog, shader;;
+
+	prog = qglCreateProgram();
+	qglAttachShader(prog, shader = setup_shader(vertex_shader, GL_VERTEX_SHADER));
+	qglDeleteShader(shader);
+	qglAttachShader(prog, shader = setup_shader(fragment_shader, GL_FRAGMENT_SHADER));
+	qglDeleteShader(shader);
+	qglLinkProgram(prog);
+	print_infolog(prog);
+
+	return prog;
+}
+
+// FIXME: Move these..
+static const char *fragshader[] = {
+	/* WORLD.FRAG */
+	"varying vec2 tex_coord;\
+	varying vec2 lightmap_coord;\
+	uniform sampler2D world_tex;\
+	uniform sampler2D lightmap_tex;\
+	uniform float gamma;\
+	uniform float contrast;\
+	void\
+	main()\
+	{\
+		vec3 world = texture2D(world_tex, tex_coord).rgb;\
+		vec3 lightmap = vec3(1.0) - 0.999 * texture2D(lightmap_tex, lightmap_coord).rgb;\
+		gl_FragColor.rgb = pow(contrast * world * lightmap, vec3(gamma));\
+		gl_FragColor.a = 1.0;\
+	}\
+	",
+	/* MODEL.FRAG */
+	"uniform sampler2D model_tex;\
+	varying vec2 tex_coord;\
+	uniform float gamma;\
+	uniform float contrast;\
+	void\
+	main()\
+	{\
+		vec3 color = texture2D(model_tex, tex_coord).rgb;\
+		gl_FragColor.rgb = pow(vec3(gl_Color) * contrast * color, vec3(gamma));\
+		gl_FragColor.a = 1.0;\
+	}\
+	",
+	/* TURB.FRAG */
+	"uniform sampler2D turb_tex;\
+	varying vec2 tex_coord;\
+	uniform float gamma;\
+	uniform float contrast;\
+	void\
+	main()\
+	{\
+		vec4 color = texture2D(turb_tex, tex_coord);\
+		gl_FragColor.rgb = pow(vec3(gl_Color) * contrast * vec3(color), vec3(gamma));\
+		gl_FragColor.a = color.a;\
+	}\
+	",
+	/* HUD.FRAG */
+	"uniform sampler2D hud_tex;\
+	varying vec2 tex_coord;\
+	uniform float gamma;\
+	uniform float contrast;\
+	void\
+	main()\
+	{\
+		vec4 color = texture2D(hud_tex, tex_coord);\
+		gl_FragColor.rgb = pow(vec3(gl_Color) * contrast * vec3(color), vec3(gamma));\
+		gl_FragColor.a = color.a * gl_Color.a;\
+	}\
+	"
+};
+
+static const char *vertshader[] = {
+	/* MODEL.VERT */
+	"varying vec2 tex_coord;\
+	varying vec2 lightmap_coord;\
+	void\
+	main()\
+	{\
+	        gl_Position = ftransform();\
+	        tex_coord = vec2(gl_MultiTexCoord0);\
+	        lightmap_coord = vec2(gl_MultiTexCoord1);\
+	}\
+	",
+	/* WORLD.VERT */
+	"varying vec2 tex_coord;\
+	void\
+	main()\
+	{\
+		gl_Position = ftransform();\
+		tex_coord = vec2(gl_MultiTexCoord0);\
+		gl_FrontColor = gl_Color;\
+	}\
+	",
+	/* TURB.VERT */
+	"varying vec2 tex_coord;\
+	void\
+	main()\
+	{\
+		gl_Position = ftransform();\
+		tex_coord = vec2(gl_MultiTexCoord0);\
+		gl_FrontColor = gl_Color;\
+	}\
+	",
+	/* HUD.VERT */
+	"varying vec2 tex_coord;\
+	void\
+	main()\
+	{\
+		gl_Position = ftransform();\
+		tex_coord = vec2(gl_MultiTexCoord0);\
+		gl_FrontColor = gl_Color;\
+	}\
+	"
+};
+
+
+static void load_shader()
+{
+	int i, j;
+	char filename[256], shadername[128];
+	unsigned long len_vert, len_frag;
+	char *src_vert, *src_frag;
+	vfsfile_t *vert, *frag;
+	for(i = 0; i < SHADER_LAST; i++) {
+		for(j = 0; glsl_shaders[i].name[j] && j < sizeof shadername - 1; j++)
+			shadername[j] = tolower(glsl_shaders[i].name[j]);
+		shadername[j] = 0;
+		glsl_shaders[i].shader = 0;
+		if(0) // Load shaders from file - disabled
+		{	
+			src_vert = src_frag = NULL;
+			vert = frag = NULL;
+			Con_Printf("loading shader: %s\n", shadername);
+			snprintf(filename, sizeof filename, "shader/%s.vert", shadername);
+			vert = FS_OpenVFS(filename, "rb", FS_ANY);
+			if(!vert) {
+				Con_Printf("could not open \"%s\", skipping shader\n", filename);
+				goto out;
+			}
+			snprintf(filename, sizeof filename, "shader/%s.frag", shadername);
+			frag = FS_OpenVFS(filename, "rb", FS_ANY);
+			if(!frag) {
+				Con_Printf("could not open \"%s\", skipping shader\n", filename);
+				goto out;
+			}
+
+			len_vert = VFS_GETLEN(vert);
+			len_frag = VFS_GETLEN(frag);
+			src_vert = malloc(len_vert + 1);
+			src_frag = malloc(len_frag + 1);
+
+
+			VFS_READ(vert, src_vert, len_vert, NULL);
+			src_vert[len_vert] = 0;
+			VFS_READ(frag, src_frag, len_frag, NULL);
+			src_frag[len_frag] = 0;
+
+			glsl_shaders[i].shader = setup_program(src_vert, src_frag);
+	out:
+			if(vert)
+				VFS_CLOSE(vert);
+			if(frag)
+				VFS_CLOSE(frag);
+
+			free(src_vert);
+			free(src_frag);
+		}
+		else
+		{
+			Con_Printf("loading builtin shader: %s\n", shadername);
+			glsl_shaders[i].shader = setup_program(vertshader[i], fragshader[i]);
+		}
+	}
+}
+
+
+void GL_Init (void)
+{
+	gl_vendor     = (const char*) glGetString (GL_VENDOR);
+	gl_renderer   = (const char*) glGetString (GL_RENDERER);
+	gl_version    = (const char*) glGetString (GL_VERSION);
+	gl_extensions = (const char*) glGetString (GL_EXTENSIONS);
+
+	qglUseProgram         = SDL_GL_GetProcAddress("glUseProgram");
+	qglGetUniformLocation = SDL_GL_GetProcAddress("glGetUniformLocation");
+	qglUniform1f          = SDL_GL_GetProcAddress("glUniform1f");
+	qglUniform1i          = SDL_GL_GetProcAddress("glUniform1i");
+	qglMultiTexCoord2f    = SDL_GL_GetProcAddress("glMultiTexCoord2f");
+	qglActiveTexture      = SDL_GL_GetProcAddress("glActiveTexture");
+	qglGetInfoLogARB      = SDL_GL_GetProcAddress("glGetInfoLogARB");
+	qglCreateShader       = SDL_GL_GetProcAddress("glCreateShader");
+	qglShaderSource       = SDL_GL_GetProcAddress("glShaderSource");
+	qglCompileShader      = SDL_GL_GetProcAddress("glCompileShader");
+	qglCreateProgram      = SDL_GL_GetProcAddress("glCreateProgram");
+	qglAttachShader       = SDL_GL_GetProcAddress("glAttachShader");
+	qglDeleteShader       = SDL_GL_GetProcAddress("glDeleteShader");
+	qglLinkProgram        = SDL_GL_GetProcAddress("glLinkProgram");
+
+	// Yeah, we require atleast OpenGL 2.0 and some extension support..
+	// This isn't super pretty since some of the functions require that
+	// extensions are available and we just assume that they are present
+	// for now. AFAIK it works on most cards from this century but should
+	// preferably be handled by GLEW or something similar.
+
+	if (!qglUseProgram || !qglGetUniformLocation || !qglUniform1f ||
+	    !qglUniform1i || !qglMultiTexCoord2f || !qglActiveTexture ||
+	    !qglGetInfoLogARB || !qglCreateShader || !qglShaderSource ||
+	    !qglCompileShader || !qglCreateProgram || !qglAttachShader ||
+	    !qglDeleteShader || !qglLinkProgram)
+			Sys_Error("Failed to find necessary OpenGL support...");
 
 	if (COM_CheckParm("-gl_ext"))
 		Com_Printf_State(PRINT_INFO, "GL_EXTENSIONS: %s\n", gl_extensions);
@@ -210,7 +404,7 @@ void GL_Init (void) {
 	Cvar_Register (&gl_strings);
 	Cvar_ForceSet (&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
 		"GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
-    Cvar_Register (&gl_maxtmu2);
+	Cvar_Register (&gl_maxtmu2);
 #ifndef __APPLE__
 	glClearColor (1,0,0,0);
 #else
@@ -236,6 +430,8 @@ void GL_Init (void) {
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	GL_CheckExtensions();
+
+	load_shader();
 }
 
 /************************************* VID GAMMA *************************************/

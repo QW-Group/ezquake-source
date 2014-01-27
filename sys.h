@@ -90,10 +90,6 @@ double Sys_DoubleTime (void);
 // Perform Key_Event () callbacks until the input que is empty
 void Sys_SendKeyEvents (void);
 
-void Sys_LowFPPrecision (void);
-void Sys_HighFPPrecision (void);
-void Sys_SetFPCW (void);
-
 void Sys_Init (void);
 
 wchar *Sys_GetClipboardTextW(void);
@@ -201,3 +197,5 @@ typedef void *dllhandle_t;
 dllhandle_t *Sys_LoadLibrary(const char *name, dllfunction_t *funcs);
 void Sys_CloseLibrary(dllhandle_t *lib);
 void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname);
+
+void Sys_CvarInit(void);

@@ -23,13 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // models are the only shared resource between a client and server running on the same machine.
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "rulesets.h"
 #include "wad.h"
@@ -1046,7 +1041,7 @@ void Mod_LoadEdges (lump_t *l) {
 void Mod_LoadTexinfo (lump_t *l) {
 	texinfo_t *in;
 	mtexinfo_t *out;
-	int i, j, count, miptex;
+	int i, j, k, count, miptex;
 
 	in = (void *) (mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -1058,8 +1053,9 @@ void Mod_LoadTexinfo (lump_t *l) {
 	loadmodel->numtexinfo = count;
 
 	for (i = 0; i < count; i++, in++, out++) {
-		for (j = 0; j < 8; j++)
-			out->vecs[0][j] = LittleFloat (in->vecs[0][j]);
+		for (j = 0; j < 2; j++)
+			for (k = 0; k < 4; k++)
+				out->vecs[j][k] = LittleFloat (in->vecs[j][k]);
 
 		miptex = LittleLong (in->miptex);
 		out->flags = LittleLong (in->flags);

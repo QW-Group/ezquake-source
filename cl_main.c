@@ -1,21 +1,3 @@
-/**
-	\file
-	
-	\brief
-	Main client module - connection-related and other mixed-purpose functions
-**/
-
-/**
-	\mainpage
-	Welcome to the doxygen documentation of the ezQuake QuakeWorld client
-	Majority of the code is not documented with Doxygen markup, therefore
-	you will not find much things in here in the early stages.
-
-	For start this documentation serves as an example how to document the code.
-	See how \link parser.c parser.c \endlink file is documented.
-
-	You may wish to proceed to the <a href="files.html">list of modules</a>
-**/
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -33,13 +15,10 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-$Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
 #include "quakedef.h"
-#include "winquake.h"
 #include "cdaudio.h"
 #include "cl_slist.h"
 #include "movie.h"
@@ -55,16 +34,10 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
-#include "auth.h"
 #include "input.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "tp_triggers.h"
 #include "rulesets.h"
@@ -92,12 +65,7 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #ifdef _DEBUG
 #include "parser.h"
 #endif
-#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
-#include "mumble.h"
-#endif
-#if defined (__linux__) || defined (__FreeBSD__) || defined (__APPLE__)
 extern qbool ActiveApp, Minimized;
-#endif
 
 static void Cl_Reset_Min_fps_f(void);
 
@@ -124,12 +92,12 @@ cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
 cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "5"};
 #endif
 
-#ifdef FTE_PEXT2_VOICECHAT
-cvar_t  cl_pext_voicechat  = {"cl_pext_voicechat", "1"};
-#endif
-
 #ifdef FTE_PEXT_FLOATCOORDS
 cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
+#endif
+
+#ifdef FTE_PEXT_TRANS
+cvar_t cl_pext_alpha = {"cl_pext_alpha", "1"};
 #endif
 
 cvar_t	cl_sbar		= {"cl_sbar", "0"};
@@ -138,8 +106,6 @@ cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
 cvar_t	cl_physfps_spectator = {"cl_physfps_spectator", "30"};
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnChange_indphys};
-cvar_t	cl_vsync_lag_fix = {"cl_vsync_lag_fix", "0"};
-cvar_t	cl_vsync_lag_tweak = {"cl_vsync_lag_tweak", "1.0"};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
@@ -240,10 +206,6 @@ cvar_t cl_onload				= {"cl_onload", "menu"};
 cvar_t cl_verify_qwprotocol		= {"cl_verify_qwprotocol", "1"};
 #endif // WIN32
 
-#ifndef WIN32
-cvar_t sys_inactivesound		= {"sys_inactiveSound", "1"};
-#endif
-
 cvar_t demo_autotrack			= {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 /// persistent client state
@@ -259,11 +221,7 @@ lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 dlight_t		cl_dlights[MAX_DLIGHTS];
 
 // refresh list
-#ifdef GLQUAKE
 visentlist_t	cl_firstpassents, cl_visents, cl_alphaents;
-#else
-visentlist_t	cl_visents, cl_visbents;
-#endif
 
 double		connect_time = 0;		// for connection retransmits
 qbool		connected_via_proxy = false;
@@ -625,13 +583,15 @@ unsigned int CL_SupportedFTEExtensions (void)
 		fteprotextsupported |= FTE_PEXT_FLOATCOORDS;
 #endif
 
+#ifdef FTE_PEXT_TRANS
+	if (cl_pext_alpha.value)
+		fteprotextsupported |= FTE_PEXT_TRANS;
+#endif
+
 	if (cl_pext_other.value)
 	{
 #ifdef FTE_PEXT_ACCURATETIMINGS
 		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
-#endif
-#ifdef FTE_PEXT_TRANS
-		fteprotextsupported |= FTE_PEXT_TRANS;
 #endif
 #ifdef FTE_PEXT_HLBSP
 		fteprotextsupported |= FTE_PEXT_HLBSP;
@@ -661,11 +621,6 @@ unsigned int CL_SupportedFTEExtensions2 (void)
 
 	if (!cl_pext.value)
 		return 0;
-
-#ifdef FTE_PEXT2_VOICECHAT
-	if (cl_pext_voicechat.value)
-		fteprotextsupported2 |= FTE_PEXT2_VOICECHAT;
-#endif
 
 	return fteprotextsupported2;
 }
@@ -783,7 +738,7 @@ void CL_CheckForResend (void)
 	if (cls.server_adr.port == 0)
 		cls.server_adr.port = BigShort(PORT_SERVER);
 
-	Com_Printf("Connecting to %s...\n", cls.servername);
+	Com_Printf("&cf11connect:&r %s...\n", cls.servername);
 	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
@@ -883,7 +838,7 @@ void CL_QWURL_f (void)
 	}
 
 	// Find the first "/" and treat what's after it as the command.	
-	if (command = strchr(connection_str, '/'))
+	if ((command = strchr(connection_str, '/')))
 	{
 		// Null terminate the server name string.
 		*command = 0;
@@ -1007,19 +962,14 @@ void CL_TCPConnect_f (void)
 {
 	char buffer[6] = {'q', 'i', 'z', 'm', 'o', '\n'};
 	int newsocket;
-	int len;
 	int _true = true;
 
 	float giveuptime;
-
-	char *server;
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("Usage: %s <server>\n", Cmd_Argv(0));
 		return;
 	}
-
-	server = Cmd_Argv (1);
 
 	Host_EndGame (); // CL_Disconnect_f();
 
@@ -1053,7 +1003,7 @@ void CL_TCPConnect_f (void)
 
 	while(giveuptime > Sys_DoubleTime())
 	{
-		len = recv(newsocket, buffer, sizeof(buffer), 0);
+		recv(newsocket, buffer, sizeof(buffer), 0);
 		if (!strncmp(buffer, "qizmo\n", 6))
 		{
 			cls.sockettcp = newsocket;
@@ -1241,10 +1191,7 @@ void CL_DNS_f(void)
 		Com_Printf("Resolved %s to %s\n", address, h->h_name);
 }
 
-#ifdef GLQUAKE
 void SCR_ClearShownick(void);
-#endif // GLQUAKE
-
 void SCR_ClearTeamInfo(void);
 void SCR_ClearWeaponStats(void);
 
@@ -1295,10 +1242,8 @@ void CL_ClearState (void)
 
 	memset(&cshift_empty, 0, sizeof(cshift_empty));
 
-	#ifdef GLQUAKE
 	// Clear shownick structs
 	SCR_ClearShownick();
-	#endif // !GLQUAKE
 
 	// Clear teaminfo structs
 	SCR_ClearTeamInfo();
@@ -1317,14 +1262,7 @@ void CL_ClearState (void)
 void CL_Disconnect (void) 
 {
 	extern cvar_t r_lerpframes, cl_fakeshaft;
-
-	#ifdef GLQUAKE
 	extern cvar_t gl_polyblend, gl_clear;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif // GLQUAKE
 
 	byte final[10];
 
@@ -1341,19 +1279,8 @@ void CL_Disconnect (void)
 	v_contrast.value		= nContrastExit;
 	cl_fakeshaft.value		= nfakeshaft;
 
-	#ifdef GLQUAKE
 	gl_polyblend.value		= nPolyblendExit;
 	gl_clear.value			= nGlClearExit;
-	#else
-	r_waterwarp.value		= nWaterwarp;
-	v_contentblend.value	= nContentblend;
-	v_quadcshift.value		= nQuadshift;
-	v_ringcshift.value		= nRingshift;
-	v_pentcshift.value		= nPentshift;
-	v_damagecshift.value	= nDamageshift;
-	v_suitcshift.value		= nSuitshift;
-	v_bonusflash.value		= nBonusflash;
-	#endif // GLQUAKE
 
 	r_lerpframes.value		= nLerpframesExit;
 	nTrack1duel = nTrack2duel = 0;
@@ -1497,7 +1424,6 @@ void CL_Reconnect_f (void)
 
 extern double qstat_senttime;
 extern void CL_PrintQStatReply (char *s);
-int Plug_ConnectionlessClientPacket(byte *buffer, int size);
 
 // Responses to broadcasts, etc
 void CL_ConnectionlessPacket (void) 
@@ -1515,9 +1441,6 @@ void CL_ConnectionlessPacket (void)
     MSG_BeginReading();
     MSG_ReadLong();	// Skip the -1
 
-	if (Plug_ConnectionlessClientPacket(net_message.data+4, net_message.cursize-4))
-		return;
-
 	c = MSG_ReadByte();
 
 	if (msg_badread)
@@ -1534,7 +1457,7 @@ void CL_ConnectionlessPacket (void)
 				Com_DPrintf("cls.server_adr %s\n", NET_AdrToString(cls.server_adr));
 				return;
 			}
-			Com_Printf("%s: challenge\n", NET_AdrToString(net_from));
+			Com_Printf("&cf55challenge:&r %s\n", NET_AdrToString(net_from));
 			cls.challenge = atoi(MSG_ReadString());
 
 			for(;;)
@@ -1575,7 +1498,7 @@ void CL_ConnectionlessPacket (void)
 			if (!NET_CompareAdr(net_from, cls.server_adr))
 				return;
 			if (!com_serveractive || developer.value)
-				Com_Printf("%s: connection\n", NET_AdrToString(net_from));
+				Com_Printf("&cff5connection:&r %s\n", NET_AdrToString(net_from));
 
 			if (cls.state >= ca_connected) 
 			{
@@ -1588,7 +1511,7 @@ void CL_ConnectionlessPacket (void)
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
 			if (!com_serveractive || developer.value)
-				Com_Printf("Connected.\n");
+				Com_Printf("&c1f1connected!&r\n");
 			allowremotecmd = false; // localid required now for remote cmds
 			break;
 		}
@@ -1605,10 +1528,7 @@ void CL_ConnectionlessPacket (void)
 				return;
 			}
 
-			#ifdef _WIN32
-			ShowWindow (mainwindow, SW_RESTORE);
-			SetForegroundWindow (mainwindow);
-			#endif // WIN32
+                        VID_Restore();
 			
 			s = MSG_ReadString ();
 			strlcpy (cmdtext, s, sizeof(cmdtext));
@@ -1809,7 +1729,6 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 
 void CL_InitCommands (void);
 
-#ifdef GLQUAKE
 void CL_Fog_f (void) 
 {
 	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
@@ -1824,7 +1743,6 @@ void CL_Fog_f (void)
 	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
 	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
 }
-#endif
 
 void CL_InitLocal (void) 
 {
@@ -1880,8 +1798,6 @@ void CL_InitLocal (void)
 	Cvar_Register (&hud_fps_min_reset_interval);
 	Cvar_Register (&cl_physfps_spectator);
 	Cvar_Register (&cl_independentPhysics);
-	Cvar_Register (&cl_vsync_lag_fix);
-	Cvar_Register (&cl_vsync_lag_tweak);
 	Cvar_Register (&cl_deadbodyfilter);
 	Cvar_Register (&cl_gibfilter);
 	Cvar_Register (&cl_backpackfilter);
@@ -1924,9 +1840,6 @@ void CL_InitLocal (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register (&cl_staticsounds);
-#ifndef _WIN32
-	Cvar_Register (&sys_inactivesound);
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_USERINFO);
 	Cvar_Register (&team);
@@ -1968,12 +1881,12 @@ void CL_InitLocal (void)
 	Cvar_Register (&cl_chunksperframe);
 #endif
 
-#ifdef FTE_PEXT2_VOICECHAT
-	Cvar_Register (&cl_pext_voicechat);
-#endif
-
 #ifdef FTE_PEXT_FLOATCOORDS
 	Cvar_Register (&cl_pext_floatcoords);
+#endif
+
+#ifdef FTE_PEXT_TRANS
+	Cvar_Register(&cl_pext_alpha);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
@@ -1992,7 +1905,7 @@ void CL_InitLocal (void)
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
 	Cvar_ResetCurrentGroup();
 
-	snprintf(st, sizeof(st), "ezQuake %i", build_number());
+	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
 	if (COM_CheckParm ("-norjscripts") || COM_CheckParm ("-noscripts"))
 		Cvar_SetValue (&allow_scripts, 0);
@@ -2073,7 +1986,6 @@ void ReloadPaletteAndColormap(void)
 }
 
 void EX_FileList_Init(void);
-void Plug_Init(void);
 
 void CL_Init (void) 
 {
@@ -2091,7 +2003,6 @@ void CL_Init (void)
 	strlcpy (cls.gamedirfile, com_gamedirfile, sizeof (cls.gamedirfile));
 	strlcpy (cls.gamedir, com_gamedir, sizeof (cls.gamedir));
 
-	Modules_Init();
 	FChecks_Init();
 
 	ReloadPaletteAndColormap();
@@ -2103,19 +2014,14 @@ void CL_Init (void)
 	V_Init ();
 	MVD_Utils_Init ();
 
-#ifdef __linux__
-	IN_Init ();
-	VID_Init (host_basepal);
-#else
-	VID_Init (host_basepal);
-	IN_Init ();
-#endif
+	VID_Init(host_basepal);
+	IN_Init();
 
 	Image_Init();
 
 	GFX_Init ();
 
-#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+#if defined(FRAMEBUFFERS)
 	Framebuffer_Init();
 #endif
 
@@ -2143,7 +2049,6 @@ void CL_Init (void)
 	MT_Init();
 	CL_Demo_Init();
 	Ignore_Init();
-	Auth_Init();
 	Log_Init();
 	Movie_Init();
 
@@ -2164,14 +2069,9 @@ void CL_Init (void)
 
 	QTV_Init();
 
-#if defined (_WIN32) || defined (__linux__) || defined (__APPLE__)
-	Mumble_Init();
-#endif
-
 	Sys_InitIPC();
 
 	Rulesets_Init();
-	Plug_Init();
 }
 
 //============================================================================
@@ -2179,20 +2079,7 @@ void CL_Init (void)
 // wrapper function to deal with inactivesound
 void CL_S_ExtraUpdate()
 {
-#ifndef WIN32
-	float tmpvolume = 0;
-	if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized)) {
-		tmpvolume = Cvar_Value("volume");
-		Cvar_SetValueByName("volume", 0);
-	}
-#endif
-
 	S_ExtraUpdate();
-
-#ifndef WIN32
-	if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized))
-		Cvar_SetValueByName("volume", tmpvolume);
-#endif
 }
 
 void CL_BeginLocalConnection (void) 
@@ -2239,10 +2126,8 @@ static double CL_MinFrameTime (void)
 	if (cls.timedemo || Movie_IsCapturing())
 		return 0;
 
-#if defined (_WIN32) || defined (__linux__) || defined (__FreeBSD__)
 	if (Minimized)
 		return 1 / 30.0;
-#endif
 
 	if (cls.demoplayback)
 	{
@@ -2324,62 +2209,10 @@ void Cl_Reset_Min_fps_f(void)
 	CL_CalcFPS();
 }
 
-#define NUMTIMINGS 5
-double timings[NUMTIMINGS];
-double render_frame_start, render_frame_end;
-int timings_idx;
-
-// Returns true if it's not time yet to run a frame
-qbool VSyncLagFix (void)
-{
-#if defined(GLQUAKE) && defined(_WIN32)
-	extern qbool vid_vsync_on;
-	extern double vid_last_swap_time;
-	double avg_rendertime, tmin, tmax;
-	int i;
-
-	// collect statistics so that
-	timings[timings_idx] = render_frame_end - render_frame_start;
-	timings_idx = (timings_idx + 1) % NUMTIMINGS;
-	avg_rendertime = tmin = tmax = 0;
-	for (i = 0; i < NUMTIMINGS; i++) {
-		if (timings[i] == 0)
-			return false;	// not enough statistics yet
-		avg_rendertime += timings[i];
-		if (timings[i] < tmin || !tmin)
-			tmax = timings[i];
-		if (timings[i] > tmax)
-			tmax = timings[i];
-	}
-	avg_rendertime /= NUMTIMINGS;
-	// if (tmax and tmin differ too much) do_something(); ?
-	avg_rendertime = tmax;	// better be on the safe side
-
-	if (cl_vsync_lag_fix.value && vid_vsync_on && glConfig.displayFrequency) {
-		double time_left = vid_last_swap_time + 1.0/glConfig.displayFrequency - Sys_DoubleTime();
-		time_left -= avg_rendertime;
-		time_left -= cl_vsync_lag_tweak.value * 0.001;
-		if (time_left > 0) {
-			extern cvar_t sys_yieldcpu;
-			if (time_left > 0.001 && sys_yieldcpu.integer)
-				Sys_MSleep(Cvar_Value("zerosleep") ? 0 : min(time_left * 1000, 500));
-			return true;	// don't run a frame yet
-		}
-	}
-	return false;
-#else
-	return false;
-#endif
-}
-
 void CL_QTVPoll (void);
-void Plug_Tick(void);
 
 qbool physframe;
 double physframetime;
-
-#pragma warning( push )                    // Save the current warning state.
-#pragma warning( disable : 4723 )          // C4723: potential divide by 0
 
 void CL_Frame (double time) 
 {
@@ -2388,14 +2221,9 @@ void CL_Frame (double time)
 	static double	extraphysframetime;	//#fps
 
 	extern cvar_t r_lerpframes;
-	#ifdef GLQUAKE
 	extern cvar_t gl_clear;
 	extern cvar_t gl_polyblend;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif // GLQUAKE
+	extern double render_frame_start;
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -2403,11 +2231,7 @@ void CL_Frame (double time)
 	if (extratime < minframetime) 
 	{
 		extern cvar_t sys_yieldcpu;
-		if (sys_yieldcpu.integer
-		#if defined (_WIN32) || defined (__linux__) || defined (__FreeBSD__)
-			|| Minimized
-		#endif
-			)
+		if (sys_yieldcpu.integer || Minimized)
 		{
 			#ifdef _WIN32
 			Sys_MSleep(0);
@@ -2431,7 +2255,7 @@ void CL_Frame (double time)
 		CL_UnqueOutputPacket(false);
 	}
 
-	if (VSyncLagFix())
+	if (VID_VSyncLagFix())
 		return;
 
 	render_frame_start = Sys_DoubleTime();
@@ -2482,8 +2306,6 @@ void CL_Frame (double time)
 			cls.demotime += cls.frametime;
 		host_skipframe = false;
 	}
-
-	Plug_Tick();
 
 	cls.realtime += cls.frametime;
 
@@ -2621,12 +2443,10 @@ void CL_Frame (double time)
 		if (key_dest != key_game) // add chat flag if in console, menus, mm1, mm2 etc...
 			cif_flags |= CIF_CHAT;
 
-		#if defined (_WIN32) || defined (__linux__) || defined (__FreeBSD__)
 		// add AFK flag if app minimized, or not the focus
 		// TODO: may be add afk flag on idle? if no user input in 45 seconds for example?
 		if (!ActiveApp || Minimized)
 			cif_flags |= CIF_AFK;
-		#endif // WIN32 or linux or FreeBSD
 
 		if (cif_flags && cls.state >= ca_connected) // put key in userinfo only then we are connected, remove key if we not connected yet
 			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
@@ -2679,21 +2499,8 @@ void CL_Frame (double time)
 		nContrastExit		= v_contrast.value;
 		nViewsizeExit		= scr_viewsize.value;
 		nfakeshaft			= cl_fakeshaft.value;
-
-		#ifdef GLQUAKE
 		nPolyblendExit		= gl_polyblend.value;
 		nGlClearExit		= gl_clear.value;
-		#else
-		nWaterwarp			= r_waterwarp.value;
-		nContentblend		= v_contentblend.value;
-		nQuadshift			= v_quadcshift.value;
-		nRingshift			= v_ringcshift.value;
-		nPentshift			= v_pentcshift.value;
-		nDamageshift		= v_damagecshift.value;
-		nSuitshift			= v_suitcshift.value;
-		nBonusflash			= v_bonusflash.value;
-		#endif
-
 		nLerpframesExit		= r_lerpframes.value;
 		CURRVIEW = 0;
 	}
@@ -2703,21 +2510,8 @@ void CL_Frame (double time)
 		scr_viewsize.value =  nViewsizeExit;
 		v_contrast.value = nContrastExit;
 		cl_fakeshaft.value = nfakeshaft;
-
-		#ifdef GLQUAKE
 		gl_polyblend.value = nPolyblendExit;
 		gl_clear.value = nGlClearExit;
-		#else
-		r_waterwarp.value = nWaterwarp;
-		v_contentblend.value = nContentblend;
-		v_quadcshift.value = nQuadshift;
-		v_ringcshift.value = nRingshift;
-		v_pentcshift.value = nPentshift;
-		v_damagecshift.value = nDamageshift;
-		v_suitcshift.value = nSuitshift;
-		v_bonusflash.value = nBonusflash;
-		#endif
-
 		r_lerpframes.value = nLerpframesExit;
 		bExitmultiview = false;
 	}
@@ -2735,14 +2529,6 @@ void CL_Frame (double time)
 	// update audio
 	if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
 	{
-#ifndef WIN32
-		float tmpvolume = 0;
-		if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized)) {
-			tmpvolume = Cvar_Value("volume");
-			Cvar_SetValueByName("volume", 0);
-		}
-#endif
-
 		if (cls.state == ca_active)
 		{
 			if (!ISPAUSED) {
@@ -2766,11 +2552,6 @@ void CL_Frame (double time)
 		}
 
 		CDAudio_Update();
-
-#ifndef WIN32
-		if ((!sys_inactivesound.value && (!ActiveApp || Minimized)) || (sys_inactivesound.integer == 2 && Minimized))
-			Cvar_SetValueByName("volume", tmpvolume);
-#endif
 	}
 
 	MT_Frame();
@@ -2795,14 +2576,8 @@ void CL_Frame (double time)
 	IRC_Update();
 #endif
 
-#if defined (_WIN32) || defined (__linux__)
-	updateMumble();
-#endif
-
 	CL_UpdateCaption(false);
 }
-
-#pragma warning( pop )
 
 //============================================================================
 
@@ -2814,7 +2589,6 @@ void CL_Shutdown (void)
 	S_Shutdown();
 	MP3_Shutdown();
 	IN_Shutdown ();
-	Modules_Shutdown();
 	Log_Shutdown();
 	if (host_basepal)
 		VID_Shutdown();
@@ -2921,14 +2695,8 @@ void CL_Multiview(void)
 {
 	static int playernum = 0;
 
-	#ifdef GLQUAKE
 	extern cvar_t gl_polyblend;
 	extern cvar_t gl_clear;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif
 	extern cvar_t r_lerpframes;
 
 	if (!cls.mvdplayback)
@@ -2972,20 +2740,8 @@ void CL_Multiview(void)
 		scr_viewsize.value = 100;
 	}
 
-	#ifdef GLQUAKE
 	gl_polyblend.value = 0;
 	gl_clear.value = 0;
-	#else
-	// disable these because they don't restrict the change to just the new viewport
-	r_waterwarp.value = 0;
-	v_contentblend.value = 0;
-	v_quadcshift.value = 0;
-	v_ringcshift.value = 0;
-	v_pentcshift.value = 0;
-	v_damagecshift.value = 0;
-	v_suitcshift.value = 0;
-	v_bonusflash.value = 0;
-	#endif
 
 	// stop weapon model lerping as it lerps with the other view
 	r_lerpframes.value = 0;

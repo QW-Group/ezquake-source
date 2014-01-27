@@ -20,9 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include <wchar.h>
 #include "quakedef.h"
 #include "textencoding.h"
@@ -30,17 +27,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "input.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
-#if defined (__linux__) || defined (__FreeBSD__)
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
-#endif
 
 #include "hud.h"
 #include "hud_common.h"
@@ -74,19 +67,12 @@ cvar_t con_completion_color_title			= {"con_completion_color_title", "ff3", CVAR
 cvar_t con_completion_color_changed_mark	= {"con_completion_color_changed_mark", "f30", CVAR_NONE, OnChange_con_completion_color};
 cvar_t con_completion_padding				= {"con_completion_padding", "2"};
 
-#ifdef WITH_KEYMAP
-// variable to enable/disable key informations (e.g. scancode) to the consoloe:
-cvar_t	cl_showkeycodes = {"cl_showkeycodes", "0"};
-#endif // WITH_KEYMAP
-
 cvar_t	cl_savehistory = {"cl_savehistory", "1"};
 #define		HISTORY_FILE_NAME	"ezquake/.ezquake_history"
 
 wchar	key_lines[CMDLINES][MAXCMDLINE];
 int		key_linepos;
-#ifndef WITH_KEYMAP
 int		key_lastpress;
-#endif // WITH_KEYMAP
 
 int		edit_line=0;
 int		history_line=0;
@@ -109,9 +95,7 @@ qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
 qbool	hudeditorkeys[UNKNOWN + 256];	// if true, can't be rebound while in hud editor
 qbool	democontrolskey[UNKNOWN + 256];
 qbool	menubound[UNKNOWN + 256];		// if true, can't be rebound while in menu
-#ifndef WITH_KEYMAP
 int		keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
-#endif // WITH_KEYMAP
 int		key_repeats[UNKNOWN + 256];	// if > 1, it is autorepeating
 qbool	keydown[UNKNOWN + 256];
 qbool	keyactive[UNKNOWN + 256];
@@ -137,6 +121,8 @@ keyname_t keynames[] = {
 
 	{"CAPSLOCK",K_CAPSLOCK},
 	{"PRINTSCR", K_PRINTSCR},
+	{"PRINTSCRN", K_PRINTSCR},
+	{"PRINTSCREEN", K_PRINTSCR},
 	{"SCRLCK", K_SCRLCK},
 	{"SCROLLLOCK", K_SCRLCK},
 	{"SCROLLOCK", K_SCRLCK},	// misspelled; kept for compatibility
@@ -161,10 +147,8 @@ keyname_t keynames[] = {
 	{"LALT", K_LALT},
 	{"RALT", K_RALT},
 
-#ifdef WITH_KEYMAP
 	{"ALTGR", K_RALT},
 	{"ALTCHAR", K_RALT},
-#endif // WITH_KEYMAP
 
 	{"CTRL", K_CTRL},
 	{"LCTRL", K_LCTRL},
@@ -176,15 +160,17 @@ keyname_t keynames[] = {
 	{"WINKEY", K_WIN},
 	{"LWINKEY", K_LWIN},
 	{"RWINKEY", K_RWIN},
-	{"POPUPMENU", K_MENU},
+	{"POPUPMENU", K_MENU}, //???
 
-#ifdef WITH_KEYMAP
 	// special keys
 	{"WIN", K_WIN},
 	{"LWIN", K_LWIN},
 	{"RWIN", K_RWIN},
+	{"SUPER", K_WIN},
+	{"LSUPER", K_LWIN},
+	{"RSUPER", K_RWIN},
 	{"MENU", K_MENU},
-#endif // WITH_KEYMAP
+	{"ISO", K_ISO},
 
 	// Keypad stuff..
 
@@ -252,44 +238,6 @@ keyname_t keynames[] = {
 	{"MOUSE6", K_MOUSE6},
 	{"MOUSE7", K_MOUSE7},
 	{"MOUSE8", K_MOUSE8},
-
-	{"JOY1", K_JOY1},
-	{"JOY2", K_JOY2},
-	{"JOY3", K_JOY3},
-	{"JOY4", K_JOY4},
-
-	{"AUX1", K_AUX1},
-	{"AUX2", K_AUX2},
-	{"AUX3", K_AUX3},
-	{"AUX4", K_AUX4},
-	{"AUX5", K_AUX5},
-	{"AUX6", K_AUX6},
-	{"AUX7", K_AUX7},
-	{"AUX8", K_AUX8},
-	{"AUX9", K_AUX9},
-	{"AUX10", K_AUX10},
-	{"AUX11", K_AUX11},
-	{"AUX12", K_AUX12},
-	{"AUX13", K_AUX13},
-	{"AUX14", K_AUX14},
-	{"AUX15", K_AUX15},
-	{"AUX16", K_AUX16},
-	{"AUX17", K_AUX17},
-	{"AUX18", K_AUX18},
-	{"AUX19", K_AUX19},
-	{"AUX20", K_AUX20},
-	{"AUX21", K_AUX21},
-	{"AUX22", K_AUX22},
-	{"AUX23", K_AUX23},
-	{"AUX24", K_AUX24},
-	{"AUX25", K_AUX25},
-	{"AUX26", K_AUX26},
-	{"AUX27", K_AUX27},
-	{"AUX28", K_AUX28},
-	{"AUX29", K_AUX29},
-	{"AUX30", K_AUX30},
-	{"AUX31", K_AUX31},
-	{"AUX32", K_AUX32},
 
 	{"MWHEELUP", K_MWHEELUP},
 	{"MWHEELDOWN", K_MWHEELDOWN},
@@ -861,7 +809,7 @@ void Key_ClearTyping (void)
 {
 	//if new input is the same as previous one or the line is empty
 	// do not increment edit_line
-	if((wcscmp (key_lines[edit_line], key_lines[(edit_line - 1) & (CMDLINES - 1)]))
+	if((wcscmp ((wchar_t*)key_lines[edit_line], (wchar_t*)key_lines[(edit_line - 1) & (CMDLINES - 1)]))
 		&& key_lines[edit_line][1])
 		edit_line = (edit_line + 1) & (CMDLINES - 1);
 
@@ -1561,11 +1509,6 @@ void Key_Message (int key, wchar unichar) {
 int Key_StringToKeynum (const char *str)
 {
 	keyname_t *kn;
-#ifdef WITH_KEYMAP
-	int i;
-	int keynum;
-	char ret[11];
-#endif // WITH_KEYMAP
 
 	if (!str || !str[0])
 		return -1;
@@ -1573,94 +1516,14 @@ int Key_StringToKeynum (const char *str)
 	if (!str[1])
 		return (int)(unsigned char)str[0];
 
-#ifdef WITH_KEYMAP
-	if (str[0] == '#') {
-		keynum = Q_atoi (str + 1);
-/*
-		if (keynum < 32 || keynum > 127)
-			return -1;
-*/
-	return keynum;
-	}
-#endif // WITH_KEYMAP else
-
 	for (kn = keynames; kn->name; kn++) {
 		if (!strcasecmp (str,kn->name))
 		return kn->keynum;
 	}
 
-#ifdef WITH_KEYMAP
-	for (i = 0; i < 255; i++) {
-		snprintf(ret, sizeof (ret), UNKNOWN_S "%d", i);
-		if (!strcasecmp (str, ret))
-			return UNKNOWN + i;
-	}
-#endif // WITH_KEYMAP
-
 	return -1;
 }
 
-//Returns a string (either a single ascii char, or a K_* name) for the given keynum.
-//FIXME: handle quote special (general escape sequence?)
-#ifdef WITH_KEYMAP
-/*
-===================
-Key_KeynumToString
-
-Returns a string (either a single ascii char, or a K_* name) for the
-given keynum.
-===================
-*/
-char *Key_KeynumToString (int keynum, char *buffer)
-{
-	static char	*retval;
-	static char	tinystr[5] = {"\0"};
-	static char	ret[11];
-	keyname_t *kn = NULL;
-
-	retval = NULL;
-
-	if (keynum < 0) {
-		retval = "<KEY NOT FOUND>";
-	} else {
-		if (keynum == 0) {
-			retval = "<NO KEY>";
-		} else {
-			if (keynum > 32 && keynum < 127) {
-				// printable ascii
-				if (keynum == 34) { // treat " special
-					snprintf (tinystr, sizeof (tinystr), "#%u", keynum);
-				} else {
-					tinystr[0] = keynum;
-					tinystr[1] = '\0';
-				}
-
-				retval = tinystr;
-			} else {
-				for (kn = keynames; kn->name != NULL; kn++) {
-					if (keynum == kn->keynum) {
-						retval = kn->name;
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	if (retval == NULL) {
-		snprintf (ret, sizeof (ret), UNKNOWN_S "%d", keynum - UNKNOWN);
-		retval = ret;
-	}
-
-	// use the buffer if given
-	if (buffer != NULL) {
-		strcpy (buffer, retval);
-		return (buffer);
-	}
-
-	return (retval);
-}
-#else // WITH_KEYMAP
 //FIXME: handle quote special (general escape sequence?)
 char *Key_KeynumToString (int keynum) {
 	keyname_t *kn;
@@ -1680,7 +1543,6 @@ char *Key_KeynumToString (int keynum) {
 
 	return "<UNKNOWN KEYNUM>";
 }
-#endif // WITH_KEYMAP else
 
 void Key_SetBinding (int keynum, const char *binding) {
 	if (keynum == -1)
@@ -1741,11 +1603,7 @@ void Key_Unbindall_f (void) {
 
 static void Key_PrintBindInfo(int keynum, char *keyname) {
 	if (!keyname)
-#ifdef WITH_KEYMAP
-		keyname = Key_KeynumToString(keynum, NULL);
-#else // WITH_KEYMAP
 		keyname = Key_KeynumToString(keynum);
-#endif // WITH_KEYMAP else
 
 	if (keynum == -1) {
 		Com_Printf ("\"%s\" isn't a valid key\n", keyname);
@@ -1807,25 +1665,14 @@ void Key_Bind_f (void) {
 
 void Key_BindList_f (void) {
 	int i;
-#ifdef WITH_KEYMAP
-	char str[ 256 ];
-#endif // WITH_KEYMAP
 
 	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
 		if (Key_IsLeftRightSameBind(i)) {
-#ifdef WITH_KEYMAP
-			Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i, str), keybindings[i + 1]);
-#else // WITH_KEYMAP
 			Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i), keybindings[i + 1]);
-#endif // WITH_KEYMAP else
 			i += 2;
 		} else {
 			if (keybindings[i])
-#ifdef WITH_KEYMAP
-				Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i, str), keybindings[i]);
-#else // WITH_KEYMAP
 				Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i), keybindings[i]);
-#endif // WITH_KEYMAP else
 		}
 	}
 }
@@ -1930,16 +1777,13 @@ void Key_Init (void) {
 #endif
 	consolekeys[K_MWHEELUP] = true;
 	consolekeys[K_MWHEELDOWN] = true;
-#ifdef WITH_KEYMAP
 	consolekeys[K_WIN] = true;
 	consolekeys[K_LWIN] = true;
 	consolekeys[K_RWIN] = true;
 	consolekeys[K_MENU] = true;
-#endif // WITH_KEYMAP
 	consolekeys['`'] = false;
 	consolekeys['~'] = false;
 
-#ifndef WITH_KEYMAP
 	for (i = 0; i < sizeof(keyshift) / sizeof(*keyshift); i++)
 		keyshift[i] = i;
 	for (i = 'a'; i <= 'z'; i++)
@@ -1965,7 +1809,6 @@ void Key_Init (void) {
 	keyshift[']'] = '}';
 	keyshift['`'] = '~';
 	keyshift['\\'] = '|';
-#endif // WITH_KEYMAP
 
 	memset(hudeditorkeys, true, 512 * sizeof(qbool));
     hudeditorkeys[K_ALT] = true;
@@ -2133,9 +1976,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	if (!down)
 		key_repeats[key] = 0;
 
-	#ifndef WITH_KEYMAP
 	key_lastpress = key;
-	#endif // WITH_KEYMAP
 
 	// update auto-repeat status
 	if (down) 
@@ -2233,7 +2074,6 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 					keyactive[key] = false;
 				}
 			}
-			#ifndef WITH_KEYMAP
 			if (keyshift[key] != key) 
 			{
 				kb = keybindings[keyshift[key]];
@@ -2244,13 +2084,11 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 					keyactive[keyshift[key]] = false;
 				}
 			}
-			#endif // WITH_KEYMAP
 		}
 		
 		return;
 	}
 
-	#if (defined (__linux__) || defined (__FreeBSD__)) && defined(GLQUAKE)
 	// switch windowed<->fullscreen if pressed alt+enter, I succeed only with left alt, dunno why...
 	if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
 	{
@@ -2262,7 +2100,6 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		con_suppress = false;
 		return;
 	}
-	#endif // (__linux__ or __FreeBSD__) and GLQUAKE
 
 	// if not a consolekey, send to the interpreter no matter what mode is
 	if (!Key_ConsoleKey(key)) 
@@ -2298,10 +2135,8 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		return;	 // Other systems only care about key down events.
 	}
 
-	#ifndef WITH_KEYMAP
 	if (keydown[K_SHIFT])
 		key = keyshift[key];
-	#endif // WITH_KEYMAP
 
 	// Key down event.
 	switch (key_dest) 
@@ -2355,9 +2190,6 @@ void Key_Event (int key, qbool down)
 			return;
 	}
 
-	#ifdef WITH_KEYMAP
-	Key_EventEx (key, key, down);
-	#else
 	{
 		wchar unichar;
 		unichar = keydown[K_SHIFT] ? keyshift[key] : key;
@@ -2365,7 +2197,6 @@ void Key_Event (int key, qbool down)
 			unichar = 0;
 		Key_EventEx (key, unichar, down);
 	}
-	#endif // WITH_KEYMAP
 }
 
 void Key_ClearStates (void) 

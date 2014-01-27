@@ -20,9 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include "common.h"
+
 #ifdef _WIN32
 #include <direct.h>
-#include <Shlobj.h>
+#include <shlobj.h>
 #include <errno.h>
 #else
 #include <stdio.h>
@@ -32,13 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 #include "utils.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "crc.h"
 #include "stats_grid.h"
@@ -196,7 +193,8 @@ void COM_StripExtension (const char *in, char *out)
 	char *dot;
 
 	if (!(dot = strrchr(in, '.'))) {
-		strlcpy(out, in, strlen(in) + 1);
+		if (in != out)
+			strlcpy(out, in, strlen(in) + 1);
 		return;
 	}
 	while (*in && in != dot)

@@ -1038,8 +1038,6 @@ void FL_ChangeArchive(filelist_t *fl, char *archive)
 //
 void FL_ChangeDirUp(filelist_t *fl)
 {
-	int current_len = 0;
-
 	// No point doing anything.
 	if (strlen(fl->current_dir) < 2)
 	{
@@ -1049,8 +1047,6 @@ void FL_ChangeDirUp(filelist_t *fl)
 	// Get the name of the directory we're leaving, so that we can highlight it
 	// in the file list of it's parent. (makes it easier keep track of where you are)
 	{
-		current_len = strlen(fl->current_dir);
-
 		fl->cdup_find = true;
 
 		#ifdef WITH_ZIP

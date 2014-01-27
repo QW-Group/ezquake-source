@@ -20,35 +20,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // this should be the only file that includes both server.h and client.h
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include <setjmp.h>
 
 #ifdef __FreeBSD__
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <osreldate.h>
-#ifdef id386
 #include <sys/time.h>
 #include <machine/cpufunc.h>
 #endif
-#endif
+#include <SDL.h>
 #include "quakedef.h"
-#include "winquake.h"
 #include "EX_browser.h"
 #include "fs.h"
 #ifdef WITH_TCL
 #include "embed_tcl.h"
 #endif
 #include "modules.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "rulesets.h"
 #include "teamplay.h"
 #include "pmove.h"
@@ -146,14 +136,12 @@ void SYSINFO_Init(void)
 		RegCloseKey(hKey);
 	}
 
-	#ifdef GLQUAKE
 	{
 		extern const char *gl_renderer;
 
 		if (gl_renderer  &&  gl_renderer[0])
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
-	#endif // GLQUAKE
 
 	//
 	// Create the f_system string.
@@ -236,14 +224,12 @@ void SYSINFO_Init(void)
 		Com_Printf("could not open /proc/cpuinfo!\n");
 	}
 
-#ifdef GLQUAKE
 	{
 		extern const char *gl_renderer;
 
 		if (gl_renderer  &&  gl_renderer[0])
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
-#endif
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
 
@@ -264,14 +250,12 @@ void SYSINFO_Init(void)
 {
 	// TODO: disconnect --> f_system for MacOSX (man sysctl)
 	// VVD: Look at code for FreeBSD: 30 lines down. :-)
-#ifdef GLQUAKE
 	{
 		extern const char *gl_renderer;
 
 		if (gl_renderer  &&  gl_renderer[0])
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
-#endif
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
@@ -295,11 +279,8 @@ void SYSINFO_Init(void)
 	int mib[2], val;
 	unsigned long val_ul;
 	size_t len;
-
-#ifdef id386
 	unsigned long long old_tsc, tsc_freq;
 	struct timeval tp, old_tp;
-#endif
 
 	mib[0] = CTL_HW;
 	mib[1] =
@@ -323,7 +304,6 @@ void SYSINFO_Init(void)
 
 	SYSINFO_processor_description = cpu_model;
 
-#ifdef id386
 	gettimeofday(&old_tp, NULL);
 	old_tsc = rdtsc();
 	do {
@@ -335,16 +315,13 @@ void SYSINFO_Init(void)
 						1000000. + .5);
 // VVD: We can use sysctl hw.clockrate, but it don't work on i486 - always 0.
 // Must work on Pentium 1/2/3; tested on Pentium 4. And RELENG_4 have no this sysctl.
-#endif
 
-#ifdef GLQUAKE
 	{
 		extern const char *gl_renderer;
 
 		if (gl_renderer  &&  gl_renderer[0])
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
-#endif
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
@@ -498,11 +475,9 @@ extern void TP_Pickup_f (void);
 extern void TP_Point_f (void);
 extern void MT_AddMapGroups (void);
 extern void MT_MapGroup_f (void);
-#ifdef GLQUAKE
 extern void MT_AddSkyGroups (void);
 extern void MT_SkyGroup_f (void);
 extern void CL_Fog_f (void);
-#endif
 extern void SB_SourceUnmarkAll(void);
 extern void SB_SourceMark(void);
 extern void LoadConfig_f(void);
@@ -520,11 +495,9 @@ extern void LoadConfig_f(void);
 	MT_AddMapGroups ();
 	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
 
-#ifdef GLQUAKE
 	MT_AddSkyGroups ();
 	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
 	Cmd_AddCommand ("fog", CL_Fog_f);
-#endif
 	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
 
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
@@ -557,13 +530,19 @@ void Host_Init (int argc, char **argv, int default_memsize)
 {
 	vfsfile_t *vf;
 	cvar_t *v;
-
 	char cfg[MAX_PATH] = {0};
 	int i;
 	char *cfg_name;
 
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
+
+	if (SDL_Init(0) != 0)
+	{
+		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+	}
+	atexit(SDL_Quit);
 
 #ifdef WITH_DP_MEM
 	Memory2_Init ();
@@ -618,6 +597,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 #endif
 
 	Sys_Init ();
+	Sys_CvarInit();
 	CM_Init ();
 	PM_Init ();
 	Mod_Init ();
@@ -659,11 +639,15 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Com_Printf_State (PRINT_INFO, "Exe: "__DATE__" "__TIME__"\n");
 	Com_Printf_State (PRINT_INFO, "Hunk allocation: %4.1f MB\n", (float) host_memsize / (1024 * 1024));
-
-	Com_Printf ("\nezQuake %s\n\n", VersionString());
-	Com_Printf(Host_PrintBars("ezQuake\x9c" "SourceForge\x9c" "net", 38));
-	Com_Printf(Host_PrintBars("εϊΡυαλε Ιξιτιαμιϊεδ", 38)); // brown "ezQuake Initialized"
-	Com_Printf ("Type /help to access the manual.\nUse /describe for help on commands.\n\n", VersionString());
+	Com_Printf("\n");
+	Com_Printf("http://ezquake.sourceforge.net\n");
+	Com_Printf("\n");
+//	Com_Printf(Host_PrintBars("ezQuake\x9c" "SourceForge\x9c" "net", 38));
+	Com_Printf("ezQuake %s\n", VersionStringColour());
+	Com_Printf("\n");
+	Com_Printf(Host_PrintBars("&c1e1ezQuake Initialized&r", 38));
+	Com_Printf("\n");
+	Com_Printf("Type /help to access the manual.\nUse /describe for help on commands.\n\n", VersionString());
 
 	if ((vf = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
 		Cbuf_AddText ("exec autoexec.cfg\n\n");
@@ -719,11 +703,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			Startup_Place();
 		}
 	}
-
-#ifdef _WIN32
-	SetForegroundWindow(mainwindow);
-	SetActiveWindow(mainwindow);
-#endif
 
 	host_everything_loaded = true;
 }

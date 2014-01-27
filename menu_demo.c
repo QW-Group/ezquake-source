@@ -34,10 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#endif
 #include "settings.h"
 #include "settings_page.h"
 #include "EX_FileList.h"
@@ -90,13 +88,8 @@ typedef struct demo_playlist_s
 } demo_playlist_t;
 
 extern cvar_t     scr_scaleMenu;
-#ifdef GLQUAKE
 extern int        menuwidth;
 extern int        menuheight;
-#else
-#define menuwidth vid.width
-#define menuheight vid.height
-#endif
 
 // Demo browser container
 filelist_t demo_filelist;

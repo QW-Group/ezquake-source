@@ -152,7 +152,7 @@ $Id: ez_controls.h,v 1.55 2007-10-27 14:51:15 cokeman1982 Exp $
 // -- Cokeman 2007
 //
 
-#define POINT_IN_RECTANGLE(p_x, p_y, r_x, r_y, r_width, r_height) ((p_x >= r_x) && (p_y >= r_y) && (p_x <= (r_x + r_width)) && (p_y <= (r_y + r_height)))
+#define POINT_IN_RECTANGLE(p_x, p_y, r_x, r_y, vid_width, vid_height) ((p_x >= r_x) && (p_y >= r_y) && (p_x <= (r_x + vid_width)) && (p_y <= (r_y + vid_height)))
 #define POINT_X_IN_BOUNDS(p_x, left, right)	((p_x >= left) && (p_x <= right))
 #define POINT_Y_IN_BOUNDS(p_y, top, bottom)	((p_y >= top)  && (p_y <= bottom))
 #define POINT_IN_BOUNDS(p_x, p_y, left, right, top, bottom)	(POINT_X_IN_BOUNDS(p_x, left, right) && POINT_Y_IN_BOUNDS(p_y, top, bottom))

@@ -20,13 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "vx_stuff.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "rulesets.h"
 #include "utils.h"
@@ -83,9 +78,7 @@ cvar_t	v_quadcshift = {"v_quadcshift", "0.5"};
 cvar_t	v_suitcshift = {"v_suitcshift", "0.5"};
 cvar_t	v_ringcshift = {"v_ringcshift", "0.5"};
 cvar_t	v_pentcshift = {"v_pentcshift", "0.5"};
-#ifdef GLQUAKE
 cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
-#endif
 
 cvar_t	v_bonusflash = {"cl_bonusflash", "0"};
 
@@ -243,8 +236,6 @@ cshift_t	cshift_water = { {130,80,50}, 128 };
 cshift_t	cshift_slime = { {0,25,5}, 150 };
 cshift_t	cshift_lava = { {255,80,0}, 150 };
 
-#ifdef	GLQUAKE
-
 cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
 cvar_t		gl_hwblend = {"gl_hwblend", "1"};
 float		v_blend[4];		// rgba 0.0 - 1.0
@@ -256,51 +247,6 @@ cvar_t		v_gamma = {"gl_gamma", "1.0"};
 cvar_t		v_contrast = {"gl_contrast", "1.0"};
 #endif
 unsigned short	ramps[3][256];
-
-#else
-
-byte		gammatable[256];	// palette is sent through this
-byte		current_pal[768];	// Tonik: used for screenshots
-cvar_t		v_gamma = {"sw_gamma", "1"};
-cvar_t		v_contrast = {"sw_contrast", "1"};
-
-#endif
-
-#ifndef GLQUAKE
-void BuildGammaTable (float g, float c) {
-	int i, inf;
-
-	g = bound (0.1, g, 3);
-	c = bound (1, c, 3);
-
-	if (g == 1 && c == 1) {
-		for (i = 0; i < 256; i++)
-			gammatable[i] = i;
-		return;
-	}
-
-	for (i = 0; i < 256; i++) {
-		inf = 255 * pow ((i + 0.5) / 255.5 * c, g) + 0.5;
-		inf = bound (0, inf, 255);
-		gammatable[i] = inf;
-	}
-}
-
-qbool V_CheckGamma (void) {
-	static float old_gamma;
-	static float old_contrast;
-	
-	if (v_gamma.value == old_gamma && v_contrast.value == old_contrast)
-		return false;
-	old_gamma = v_gamma.value;
-	old_contrast = v_contrast.value;
-	
-	BuildGammaTable (v_gamma.value, v_contrast.value);
-	vid.recalc_refdef = 1;				// force a surface cache flush
-	
-	return true;
-}
-#endif	// !GLQUAKE
 
 void V_ParseDamage (void)
 {
@@ -474,9 +420,7 @@ void V_SetContentsColor (int contents) {
 
 	if (!v_contentblend.value) {
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
-#ifdef GLQUAKE
 		cl.cshifts[CSHIFT_CONTENTS].percent *= 100;
-#endif
 		return;
 	}
 
@@ -499,7 +443,6 @@ void V_SetContentsColor (int contents) {
 	if (v_contentblend.value > 0 && v_contentblend.value < 1 && contents != CONTENTS_EMPTY)
 		cl.cshifts[CSHIFT_CONTENTS].percent *= v_contentblend.value;
 
-#ifdef GLQUAKE
 	if (!gl_polyblend.value && !cl.teamfortress) {
 		cl.cshifts[CSHIFT_CONTENTS].percent = 0;
 	} else {
@@ -515,10 +458,8 @@ void V_SetContentsColor (int contents) {
 			cl.cshifts[CSHIFT_CONTENTS].percent *= 100;
 		}
 	}
-#endif
 }
 
-#ifdef GLQUAKE
 void V_AddWaterfog (int contents) {
 	extern cvar_t gl_waterfog_color_water;
 	extern cvar_t gl_waterfog_color_lava;
@@ -563,7 +504,6 @@ void V_AddWaterfog (int contents) {
 	}
 	glEnable(GL_FOG);
 }
-#endif 
 
 void V_CalcPowerupCshift (void) {
 	float fraction;
@@ -597,7 +537,6 @@ void V_CalcPowerupCshift (void) {
 	}
 }
 
-#ifdef	GLQUAKE
 void V_CalcBlend (void) {
 	float r, g, b, a, a2;
 	int j;
@@ -666,148 +605,6 @@ void V_AddLightBlend (float r, float g, float b, float a2) {
 	v_blend[1] = v_blend[1] * (1 - a2) + g * a2;
 	v_blend[2] = v_blend[2] * (1 - a2) + b * a2;
 }
-#endif
-
-#ifdef	GLQUAKE
-
-void V_UpdatePalette (void) {
-	int i, j, c;
-	qbool new;
-	float current_gamma, current_contrast, a, rgb[3];
-	static float prev_blend[4];
-	static float old_gamma, old_contrast, old_hwblend;
-	extern float vid_gamma;
-
-	new = false;
-
-	for (i = 0; i < 4; i++) {
-		if (v_blend[i] != prev_blend[i]) {
-			new = true;
-			prev_blend[i] = v_blend[i];
-		}
-	}
-
-	current_gamma = bound (0.3, v_gamma.value, 3);
-	if (current_gamma != old_gamma || v_gamma.modified) {
-		v_gamma.modified = false;
-		old_gamma = current_gamma;
-		new = true;
-	}
-
-	current_contrast = bound (1, v_contrast.value, 3);
-	if (current_contrast != old_contrast) {
-		old_contrast = current_contrast;
-		new = true;
-	}
-
-	if (gl_hwblend.value != old_hwblend) {
-		new = true;
-		old_hwblend = gl_hwblend.value;
-	}
-
-	if (!new)
-		return;
-
-	a = v_blend[3];
-
-	if (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress)
-		a = 0;
-
-	rgb[0] = 255 * v_blend[0] * a;
-	rgb[1] = 255 * v_blend[1] * a;
-	rgb[2] = 255 * v_blend[2] * a;
-
-	a = 1 - a;
-
-	if (vid_gamma != 1.0) {
-		current_contrast = pow (current_contrast, vid_gamma);
-		current_gamma = current_gamma/vid_gamma;
-	}
-
-	for (i = 0; i < 256; i++) {
-		for (j = 0; j < 3; j++) {
-			// apply blend and contrast
-			c = (i * a + rgb[j]) * current_contrast;
-			if (c > 255)
-				c = 255;
-			// apply gamma
-			c = 255 * pow((c + 0.5) / 255.5, current_gamma) + 0.5;
-			c = bound (0, c, 255);
-			ramps[j][i] = c << 8;
-		}
-	}
-	VID_SetDeviceGammaRamp ((unsigned short *) ramps);
-}
-
-#else	// !GLQUAKE
-
-void V_UpdatePalette (void) {
-	int i, j, r,g,b;
-	qbool new, force;
-	byte *basepal, *newpal;
-	static cshift_t	prev_cshifts[NUM_CSHIFTS];
-
-	if (cls.state != ca_active) {
-		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
-		cl.cshifts[CSHIFT_POWERUP].percent = 0;
-	} else {
-		V_CalcPowerupCshift ();
-	}
-	
-	new = false;
-	
-	for (i = 0; i < NUM_CSHIFTS; i++)	{
-		if (cl.cshifts[i].percent != prev_cshifts[i].percent) {
-			new = true;
-			prev_cshifts[i].percent = cl.cshifts[i].percent;
-		}
-		for (j = 0; j < 3; j++) {
-			if (cl.cshifts[i].destcolor[j] != prev_cshifts[i].destcolor[j]) {
-				new = true;
-				prev_cshifts[i].destcolor[j] = cl.cshifts[i].destcolor[j];
-			}
-		}
-	}
-
-	// drop the damage value
-	cl.cshifts[CSHIFT_DAMAGE].percent -= cls.frametime*150;
-	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0)
-		cl.cshifts[CSHIFT_DAMAGE].percent = 0;
-
-	// drop the bonus value
-	cl.cshifts[CSHIFT_BONUS].percent -= cls.frametime*100;
-	if (cl.cshifts[CSHIFT_BONUS].percent <= 0)
-		cl.cshifts[CSHIFT_BONUS].percent = 0;
-
-	force = V_CheckGamma ();
-	if (!new && !force)
-		return;
-			
-	basepal = host_basepal;
-	newpal = current_pal;	// Tonik: so we can use current_pal for screenshots
-
-	for (i = 0; i < 256; i++) {
-		r = basepal[0];
-		g = basepal[1];
-		b = basepal[2];
-		basepal += 3;
-
-		for (j = 0; j < NUM_CSHIFTS; j++) {
-			r += (cl.cshifts[j].percent * (cl.cshifts[j].destcolor[0] - r)) >> 8;
-			g += (cl.cshifts[j].percent * (cl.cshifts[j].destcolor[1] - g)) >> 8;
-			b += (cl.cshifts[j].percent * (cl.cshifts[j].destcolor[2] - b)) >> 8;
-		}
-
-		newpal[0] = gammatable[r];
-		newpal[1] = gammatable[g];
-		newpal[2] = gammatable[b];
-		newpal += 3;
-	}
-
-	VID_ShiftPalette (current_pal);	
-}
-
-#endif	// !GLQUAKE
 
 // BorisU -->
 void V_TF_ClearGrenadeEffects ()
@@ -1078,10 +875,8 @@ void V_CalcRefdef (void) {
 	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0))
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
 
-#ifdef GLQUAKE
 	//VULT CAMERAS
 	CameraUpdate(view_message.flags & PF_DEAD);
-#endif
 	V_AddViewWeapon (height_adjustment);
 	
 }
@@ -1114,9 +909,7 @@ void V_RenderView (void) {
 	cl.simangles[ROLL] = 0;	// FIXME @@@ 
 
 	if (cls.state != ca_active) {
-#ifdef GLQUAKE
 		V_CalcBlend ();
-#endif
 		return;
 	}
 
@@ -1220,11 +1013,9 @@ void V_Init (void) {
 	Cvar_Register (&v_pentcshift);
 	Cvar_Register (&cl_demoplay_flash); // from QW262
 
-#ifdef GLQUAKE
 	Cvar_Register (&v_dlightcshift);
 	Cvar_Register (&gl_cshiftpercent);
 	Cvar_Register (&gl_hwblend);
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&v_gamma);
@@ -1234,8 +1025,4 @@ void V_Init (void) {
 
 	Cmd_AddLegacyCommand ("gamma", v_gamma.name);
 	Cmd_AddLegacyCommand ("contrast", v_contrast.name);
-
-#ifndef GLQUAKE
-	BuildGammaTable (v_gamma.value, v_contrast.value);
-#endif
 }

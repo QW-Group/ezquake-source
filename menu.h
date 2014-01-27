@@ -65,7 +65,6 @@ typedef enum {
     m_options,
 	m_help,
 	m_quit, m_ingame, 
-	m_plugin,
 #ifdef WITH_MP3_PLAYER
     m_mp3_control, m_mp3_playlist
 #endif

@@ -87,6 +87,7 @@ typedef enum {
 	K_LWIN,
 	K_RWIN,
 	K_MENU,
+	K_ISO,
 
 //
 // Keypad stuff..
@@ -153,54 +154,9 @@ typedef enum {
 	K_MOUSE7,
 	K_MOUSE8,
 
-//
-// joystick buttons
-//
-	K_JOY1,
-	K_JOY2,
-	K_JOY3,			//210
-	K_JOY4,
-
-//
-// aux keys are for multi-buttoned joysticks to generate so they can use
-// the normal binding process
-//
-	K_AUX1,
-	K_AUX2,
-	K_AUX3,
-	K_AUX4,
-	K_AUX5,
-	K_AUX6,
-	K_AUX7,
-	K_AUX8,
-	K_AUX9,			//220
-	K_AUX10,
-	K_AUX11,
-	K_AUX12,
-	K_AUX13,
-	K_AUX14,
-	K_AUX15,
-	K_AUX16,
-	K_AUX17,
-	K_AUX18,
-	K_AUX19,		//230
-	K_AUX20,
-	K_AUX21,
-	K_AUX22,
-	K_AUX23,
-	K_AUX24,
-	K_AUX25,
-	K_AUX26,
-	K_AUX27,
-	K_AUX28,
-	K_AUX29,		//240
-	K_AUX30,
-	K_AUX31,
-	K_AUX32,
-
 // JACK: Intellimouse(c) Mouse Wheel Support
 
-	K_MWHEELUP,
+	K_MWHEELUP = 244,
 	K_MWHEELDOWN,	//245
 
 	UNKNOWN = 256
@@ -258,12 +214,7 @@ void Key_SetBinding (int keynum, const char *binding);
 void Key_Unbind (int keynum);
 void Key_ClearStates (void);
 int	 Key_StringToKeynum (const char *str);
-#ifdef WITH_KEYMAP
-char	*Key_KeynumToString (int keynum, char *buffer);
-int	IN_Key_Clean(int key);
-#else // WITH_KEYMAP
 char *Key_KeynumToString (int keynum);
-#endif // WITH_KEYMAP 
 void Key_Unbindall_f (void);
 
 int isShiftDown(void);                                                                       

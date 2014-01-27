@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "rulesets.h"
 #include "version.h"
-#include "auth.h"
 #include "fmod.h"
 #include "utils.h"
 #include "modules.h"
@@ -54,10 +53,7 @@ extern cvar_t cl_iDrive;
 
 static void FChecks_VersionResponse (void)
 {
-	if (Modules_SecurityLoaded())
-		Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "  crc: %s\n", VersionString(), Auth_Generate_Crc()));
-	else
-		Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
+	Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
 }
 
 static char *FChecks_FServerResponse_Text(void)
@@ -80,10 +76,7 @@ static void FChecks_FServerResponse (void)
 	if (!text)
 		return;
 
-	if (Modules_SecurityLoaded())
-		Cbuf_AddText(va("say ezQuake f_server response: %s  crc: %s\n", text, Auth_Generate_Crc()));
-	else
-		Cbuf_AddText(va("say ezQuake f_server response: %s\n", text));
+	Cbuf_AddText(va("say ezQuake f_server response: %s\n", text));
 }
 
 static void FChecks_SkinsResponse (float fbskins)

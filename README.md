@@ -19,7 +19,7 @@ gameplay.
  * Recorded Games Browser
  * Customization of all possible graphics elements of the game including Head Up Display
  * All sorts of scripting possibilities
- * MAC OS X and FreeBSD platforms supported. Software version for computers without 3D graphics accelerators.
+ * Windows, Linux, MacOSX and FreeBSD platforms supported (SDL2).
 
 Note: To play QuakeWorld you need files from original Quake game. Check
 Installation manual page for further info.

@@ -75,7 +75,7 @@ static int VFSGZIP_ReadBytes(vfsfile_t *file, void *buffer, int bytestoread, vfs
 	if (bytestoread < 0)
 		        Sys_Error("VFSGZIP_ReadBytes: bytestoread < 0");
 	
-	r = gzread(vfsgz->parent->handle, buffer, bytestoread);
+	r = gzread((gzFile)vfsgz->parent->handle, buffer, bytestoread);
 	// r == -1 on error
 
 	if (err) // if bytestoread <= 0 it will be treated as non error even we read zero bytes
@@ -90,7 +90,7 @@ static int VFSGZIP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowr
 	int r;
 	vfsgzipfile_t *vfsgz = (vfsgzipfile_t *)file;
 
-	r = gzwrite(vfsgz->parent->handle, buffer, bytestowrite);
+	r = gzwrite((gzFile)vfsgz->parent->handle, buffer, bytestowrite);
 
 	// r == 0 on error
 	
@@ -102,7 +102,7 @@ static int VFSGZIP_Seek(vfsfile_t *file, unsigned long offset, int whence)
 	int r;
 	vfsgzipfile_t *vfsgz = (vfsgzipfile_t *)file;
 
-	r = gzseek(vfsgz->parent->handle, offset, whence);
+	r = gzseek((gzFile)vfsgz->parent->handle, offset, whence);
 
 	if (r == -1)
 		return -1;
@@ -115,7 +115,7 @@ static unsigned long VFSGZIP_Tell(vfsfile_t *file)
 	int r;
 	vfsgzipfile_t *vfsgz = (vfsgzipfile_t *)file;
 
-	r = gztell(vfsgz->parent->handle);
+	r = gztell((gzFile)vfsgz->parent->handle);
 	return r;
 }
 
@@ -125,9 +125,9 @@ static unsigned long VFSGZIP_GetLen(vfsfile_t *file)
 	vfsgzipfile_t *vfsgz = (vfsgzipfile_t *)file;
 	
 	// VFS-FIXME: Error handling
-	currentpos = gztell(vfsgz->parent->handle);
-	r = gzseek(vfsgz->parent->handle, 0, SEEK_END);
-	gzseek(vfsgz->parent->handle, currentpos, SEEK_SET);
+	currentpos = gztell((gzFile)vfsgz->parent->handle);
+	r = gzseek((gzFile)vfsgz->parent->handle, 0, SEEK_END);
+	gzseek((gzFile)vfsgz->parent->handle, currentpos, SEEK_SET);
 
 	return r;
 }
@@ -142,11 +142,10 @@ static void VFSGZIP_Close(vfsfile_t *file)
 
 static void VFSGZIP_Flush(vfsfile_t *file) 
 {
-	int r;
 	vfsgzipfile_t *vfsgz = (vfsgzipfile_t *)file;
 
-	//r = gzflush(vfsgz->parent->handle, Z_NO_FLUSH); 	// <-- Allows better compression
-	r = gzflush(vfsgz->parent->handle, Z_SYNC_FLUSH); 	// <-- All pending output is flushed
+	// gzflush((gzFile)vfsgz->parent->handle, Z_NO_FLUSH); 	// <-- Allows better compression
+	(void) gzflush((gzFile)vfsgz->parent->handle, Z_SYNC_FLUSH); 	// <-- All pending output is flushed
 }
 
 static vfsfile_t *FSGZIP_OpenVFS(void *handle, flocation_t *loc, char *mode) 
@@ -200,7 +199,7 @@ static void FSGZIP_ClosePath(void *handle)
 		return; //not yet time
 
 
-	gzclose(gzip->handle);
+	gzclose((gzFile)gzip->handle);
 	VFS_CLOSE(gzip->raw);
 	Q_free(gzip);
 }
@@ -299,7 +298,7 @@ static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, const char *desc)
 	gzip->raw = gziphandle;
 
 	fd = fileno(((vfsosfile_t *)gziphandle)->handle); // <-- ASSUMPTION! that file is OS
-	gzip->handle = gzdopen(dup(fd), "r");
+	gzip->handle = (vfsfile_t *)gzdopen(dup(fd), "r");
 	gzip->references = 1;
 
 	/* Remove the .gz from the file.name */

@@ -281,8 +281,6 @@ void SV_Error (char *error, ...)
 	vsnprintf (string, sizeof (string), error, argptr);
 	va_end (argptr);
 
-	assert(!string);
-
 	Con_Printf ("SV_Error: %s\n", string);
 
 //	SV_FinalMessage (va ("server crashed: %s\n", string));
@@ -1343,10 +1341,6 @@ static void SVC_DirectConnect (void)
 	newcl->spec_print = (int)sv_specprint.value;
 	newcl->logincount = 0;
 	//<-
-
-#ifdef FTE_PEXT2_VOICECHAT
-	SV_VoiceInitClient(newcl);
-#endif
 
 	// call the progs to get default spawn parms for the new client
 #ifdef USE_PR2
@@ -3414,10 +3408,6 @@ void SV_InitLocal (void)
 #endif
 #ifdef FTE_PEXT_FLOATCOORDS
 	svs.fteprotocolextensions |= FTE_PEXT_FLOATCOORDS;
-#endif
-
-#ifdef FTE_PEXT2_VOICECHAT
-	svs.fteprotocolextensions2 |= FTE_PEXT2_VOICECHAT;
 #endif
 
 //	Info_SetValueForStarKey (svs.info, "*qwe_version", QWE_VERSION, MAX_SERVERINFO_STRING);

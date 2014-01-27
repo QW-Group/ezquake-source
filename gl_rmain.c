@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
-#ifdef GLSL
-#include "gl_shader.h"
-#endif // GLSL
 #include "vx_stuff.h"
 #include "vx_vertexlights.h"
 #include "utils.h"
@@ -35,195 +32,196 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 
 
-entity_t	r_worldentity;
-
-qbool	r_cache_thrash;		// compatability
-
-vec3_t		modelorg, r_entorigin;
-entity_t	*currententity;
-
-int			r_visframecount;	// bumped when going to a new PVS
-int			r_framecount;		// used for dlight push checking
-
-mplane_t	frustum[4];
-
-int			c_brush_polys, c_alias_polys;
-
-int			sceneblur_texture;	// motion blur.
-int			particletexture;	// little dot for particles
-int			playertextures;		// up to 16 color translated skins
-int			playernmtextures[MAX_CLIENTS];
-int			playerfbtextures[MAX_CLIENTS];
-int			skyboxtextures[MAX_SKYBOXTEXTURES];
-int			underwatertexture, detailtexture;	
-
-float		gldepthmin, gldepthmax;	// for gl_ztrick
-
-// view origin
-vec3_t		vup, vpn, vright;
-vec3_t		r_origin;
-
-float	r_world_matrix[16];
-float	r_base_world_matrix[16];
-
-// screen size info
-refdef_t	r_refdef;
-refdef2_t	r_refdef2;
-
-mleaf_t		*r_viewleaf, *r_oldviewleaf;
-mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
-
-texture_t	*r_notexture_mip = NULL;
-
-int			d_lightstylevalue[256];	// 8.8 fraction of base light value
-
-cvar_t cl_multiview = {"cl_multiview", "0" };
-cvar_t cl_mvdisplayhud = {"cl_mvdisplayhud", "1"};
-cvar_t cl_mvhudvertical = {"cl_mvhudvertical", "0"};
-cvar_t cl_mvhudflip = {"cl_mvhudflip", "0"};
-
-cvar_t cl_mvhudpos = {"cl_mvhudpos", "bottom center"};
-void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
-
-cvar_t cl_mvinset = {"cl_mvinset", "0"};
-cvar_t cl_mvinsetcrosshair = {"cl_mvinsetcrosshair", "1"};
-cvar_t cl_mvinsethud = {"cl_mvinsethud", "1"};
-
-cvar_t	r_drawentities = {"r_drawentities", "1"};
-cvar_t	r_lerpframes = {"r_lerpframes", "1"};
-cvar_t	r_lerpmuzzlehack = {"r_lerpmuzzlehack", "1"};
-cvar_t	r_drawflame = {"r_drawflame", "1"};
-cvar_t	r_speeds = {"r_speeds", "0"};
-cvar_t	r_fullbright = {"r_fullbright", "0"};
-cvar_t	r_lightmap = {"r_lightmap", "0"};
-cvar_t	gl_shaftlight = {"gl_shaftlight", "1"};
-cvar_t	r_shadows = {"r_shadows", "0"};
-cvar_t	r_wateralpha = {"gl_turbalpha", "1"};
-cvar_t	r_dynamic = {"r_dynamic", "1"};
-cvar_t	r_novis = {"r_novis", "0"};
-cvar_t	r_netgraph = {"r_netgraph", "0"};
-cvar_t	r_netstats = {"r_netstats", "0"};
-cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins};
-cvar_t	r_enemyskincolor	= {"r_enemyskincolor", "", CVAR_COLOR};
-cvar_t	r_teamskincolor		= {"r_teamskincolor",  "", CVAR_COLOR};
-cvar_t	r_skincolormode		= {"r_skincolormode",  "0"};
-cvar_t	r_fastsky = {"r_fastsky", "0"};
-cvar_t  r_fastturb = {"r_fastturb", "0"};
-
-cvar_t	r_skycolor   = {"r_skycolor", "40 80 150", CVAR_COLOR};
-cvar_t  r_telecolor  = {"r_telecolor", "255 60 60", CVAR_COLOR};
-cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0", CVAR_COLOR};
-cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10", CVAR_COLOR};
-cvar_t  r_watercolor = {"r_watercolor", "10 50 80", CVAR_COLOR};
-
-void OnChange_r_drawflat(cvar_t *v, char *skyname, qbool *cancel);
-cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
-cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", CVAR_COLOR, OnChange_r_drawflat};
-cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150", CVAR_COLOR, OnChange_r_drawflat};
-cvar_t	gl_textureless = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
-
-cvar_t	r_farclip			= {"r_farclip", "8192"}; // previous default was 4096. 8192 helps some TF players in big maps
-void OnChange_r_skyname(cvar_t *v, char *s, qbool *cancel);
-cvar_t	r_skyname			= {"r_skyname", "", 0, OnChange_r_skyname};
-cvar_t	gl_detail			= {"gl_detail","0"};			
-
-cvar_t	gl_caustics			= {"gl_caustics", "0"}; // 1		
-cvar_t  gl_waterfog			= {"gl_turbfog", "0"}; // 2			
-cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};	
-cvar_t	gl_waterfog_color_water = {"gl_turbfog_color_water", "32 64 128", CVAR_COLOR};
-cvar_t	gl_waterfog_color_lava = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR};
-cvar_t	gl_waterfog_color_slime = {"gl_turbfog_color_slime", "128 255 0", CVAR_COLOR};
-
-cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
-cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64"};
-cvar_t	gl_clear = {"gl_clear", "0"};
+void CI_Init(void);
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel);
-cvar_t	gl_clearColor = {"gl_clearColor", "0 0 0", CVAR_COLOR, OnChange_gl_clearColor};
-cvar_t	gl_cull = {"gl_cull", "1"};
+void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
+void OnChange_r_drawflat(cvar_t *v, char *skyname, qbool *cancel);
+void OnChange_r_skyname(cvar_t *v, char *s, qbool *cancel);
+void R_MarkLeaves(void);
+void R_InitBubble(void);
 
-cvar_t	gl_ztrick = {"gl_ztrick", "0"};
+extern msurface_t *alphachain;
+extern cvar_t     maxclients;
+extern vec3_t     lightcolor;
+extern vec3_t     lightspot;
+extern float      bubblecolor[NUM_DLIGHTTYPES][4];
 
-cvar_t	gl_smoothmodels = {"gl_smoothmodels", "1"};
-cvar_t	gl_affinemodels = {"gl_affinemodels", "0"};
+#define NUMVERTEXNORMALS 162
+#define SHADEDOT_QUANT   64
 
-cvar_t	gl_polyblend = {"gl_polyblend", "1"}; // 0
+// precalculated dot products for quantized angles
+byte      r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS] =
+#include "anorm_dots.h"
+;
+float     r_avertexnormals[NUMVERTEXNORMALS][3] = {
+#include "anorms.h"
+};
+byte      *shadedots = r_avertexnormal_dots[0];
 
-cvar_t	gl_flashblend = {"gl_flashblend", "0"};
-cvar_t	gl_rl_globe = {"gl_rl_globe", "0"};
-cvar_t	gl_playermip = {"gl_playermip", "0"};
-cvar_t	gl_nocolors = {"gl_nocolors", "0"};
-cvar_t	gl_finish = {"gl_finish", "0"};
-cvar_t	gl_fb_bmodels = {"gl_fb_bmodels", "1"};
-cvar_t	gl_fb_models = {"gl_fb_models", "1"};
-cvar_t	gl_lightmode = {"gl_lightmode", "2"};
-cvar_t	gl_loadlitfiles = {"gl_loadlitfiles", "1"};
-cvar_t	gl_colorlights = {"gl_colorlights", "1"};
 
-cvar_t gl_solidparticles = {"gl_solidparticles", "0"}; // 1
-cvar_t gl_squareparticles = {"gl_squareparticles", "0", CVAR_LATCH};
-cvar_t gl_part_explosions = {"gl_part_explosions", "0"}; // 1
-cvar_t gl_part_trails = {"gl_part_trails", "0"}; // 1
-cvar_t gl_part_tracer1_color = {"gl_part_tracer1_color", "0 124 0", CVAR_COLOR};
-cvar_t gl_part_tracer2_color = {"gl_part_tracer2_color", "255 77 0", CVAR_COLOR};
-cvar_t gl_part_tracer1_size = {"gl_part_tracer1_size", "3.75", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 3.75f, 10.f, 0.f};
-cvar_t gl_part_tracer1_time = {"gl_part_tracer1_time", "0.5", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 0.5f, 3.f, 0.f};
-cvar_t gl_part_tracer2_size = {"gl_part_tracer2_size", "3.75", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 3.75f, 10.f, 0.f};
-cvar_t gl_part_tracer2_time = {"gl_part_tracer2_time", "0.5", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 0.5f, 3.f, 0.f};
-cvar_t gl_part_spikes = {"gl_part_spikes", "0"}; // 1
-cvar_t gl_part_gunshots = {"gl_part_gunshots", "0"}; // 1
-cvar_t gl_part_blood = {"gl_part_blood", "0"}; // 1
-cvar_t gl_part_telesplash = {"gl_part_telesplash", "0"}; // 1
-cvar_t gl_part_blobs = {"gl_part_blobs", "0"}; // 1
-cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"}; // 1
-cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
+texture_t *r_notexture_mip = NULL;
+refdef2_t r_refdef2;                          // screen size info
+refdef_t  r_refdef;                           // screen size info
+entity_t  r_worldentity;
+entity_t  *currententity;
+mplane_t  frustum[4];
+mleaf_t   *r_viewleaf;
+mleaf_t   *r_oldviewleaf;
+mleaf_t   *r_viewleaf2;                       // for watervis hack
+mleaf_t   *r_oldviewleaf2;                    // for watervis hack
+vec3_t    dlight_color;
+vec3_t    modelorg, r_entorigin;
+vec3_t    vup, vpn, vright;                   // view origin
+vec3_t    r_origin; // view origin
+vec3_t    vertexlight;
+vec3_t    shadevector;
+float     gldepthmin, gldepthmax;
+float     r_world_matrix[16];
+float     r_base_world_matrix[16];
+float     r_framelerp;
+float     r_modelalpha;
+float     r_lerpdistance;
+float     r_modelcolor[3];
+float     r_shellcolor[3];
+float     shadelight;
+float     ambientlight;
+float     apitch;
+float     ayaw;
+float     clearColor[3] = {0, 0, 0};
+qbool     r_cache_thrash;                     // compatability
+qbool     full_light;
+int       lastposenum;
+int       shelltexture = 0;
+int       r_visframecount;                    // bumped when going to a new PVS
+int       r_framecount;                       // used for dlight push checking
+int       c_brush_polys;
+int       c_alias_polys;
+int       lightmode = 2;
+int       sceneblur_texture;                  // motion blur.
+int       d_lightstylevalue[256];             // 8.8 fraction of base light value
+int       particletexture;                    // little dot for particles
+int       playertextures;                     // up to 16 color translated skins
+int       playernmtextures[MAX_CLIENTS];
+int       playerfbtextures[MAX_CLIENTS];
+int       skyboxtextures[MAX_SKYBOXTEXTURES];
+int       underwatertexture, detailtexture;
+int       whitetexture;
 
-cvar_t gl_particle_style = {"gl_particle_style", "0"}; // 0 - round, 1 - square (sw style)
 
+cvar_t cl_multiview                        = {"cl_multiview", "0" };
+cvar_t cl_mvdisplayhud                     = {"cl_mvdisplayhud", "1"};
+cvar_t cl_mvhudvertical                    = {"cl_mvhudvertical", "0"};
+cvar_t cl_mvhudflip                        = {"cl_mvhudflip", "0"};
+cvar_t cl_mvhudpos                         = {"cl_mvhudpos", "bottom center"};
+cvar_t cl_mvinset                          = {"cl_mvinset", "0"};
+cvar_t cl_mvinsetcrosshair                 = {"cl_mvinsetcrosshair", "1"};
+cvar_t cl_mvinsethud                       = {"cl_mvinsethud", "1"};
+cvar_t r_drawentities                      = {"r_drawentities", "1"};
+cvar_t r_lerpframes                        = {"r_lerpframes", "1"};
+cvar_t r_lerpmuzzlehack                    = {"r_lerpmuzzlehack", "1"};
+cvar_t r_drawflame                         = {"r_drawflame", "1"};
+cvar_t r_speeds                            = {"r_speeds", "0"};
+cvar_t r_fullbright                        = {"r_fullbright", "0"};
+cvar_t r_lightmap                          = {"r_lightmap", "0"};
+cvar_t gl_shaftlight                       = {"gl_shaftlight", "1"};
+cvar_t r_shadows                           = {"r_shadows", "0"};
+cvar_t r_wateralpha                        = {"gl_turbalpha", "1"};
+cvar_t r_dynamic                           = {"r_dynamic", "1"};
+cvar_t r_novis                             = {"r_novis", "0"};
+cvar_t r_netgraph                          = {"r_netgraph", "0"};
+cvar_t r_netstats                          = {"r_netstats", "0"};
+cvar_t r_fullbrightSkins                   = {"r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins};
+cvar_t r_enemyskincolor                    = {"r_enemyskincolor", "", CVAR_COLOR};
+cvar_t r_teamskincolor                     = {"r_teamskincolor",  "", CVAR_COLOR};
+cvar_t r_skincolormode                     = {"r_skincolormode",  "0"};
+cvar_t r_fastsky                           = {"r_fastsky", "0"};
+cvar_t r_fastturb                          = {"r_fastturb", "0"};
+cvar_t r_skycolor                          = {"r_skycolor", "40 80 150", CVAR_COLOR};
+cvar_t r_telecolor                         = {"r_telecolor", "255 60 60", CVAR_COLOR};
+cvar_t r_lavacolor                         = {"r_lavacolor", "80 0 0", CVAR_COLOR};
+cvar_t r_slimecolor                        = {"r_slimecolor", "10 60 10", CVAR_COLOR};
+cvar_t r_watercolor                        = {"r_watercolor", "10 50 80", CVAR_COLOR};
+cvar_t r_drawflat                          = {"r_drawflat", "0", 0, OnChange_r_drawflat};
+cvar_t r_wallcolor                         = {"r_wallcolor", "255 255 255", CVAR_COLOR, OnChange_r_drawflat};
+cvar_t r_floorcolor                        = {"r_floorcolor", "50 100 150", CVAR_COLOR, OnChange_r_drawflat};
+cvar_t gl_textureless                      = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
+cvar_t r_farclip                           = {"r_farclip", "8192"}; // previous default was 4096. 8192 helps some TF players in big maps
+cvar_t r_skyname                           = {"r_skyname", "", 0, OnChange_r_skyname};
+cvar_t gl_detail                           = {"gl_detail","0"};
+cvar_t gl_brush_polygonoffset              = {"gl_brush_polygonoffset", "2.0"}; // This is the one to adjust if you notice flicker on lift @ e1m1 for instance, for z-fighting
+cvar_t gl_caustics                         = {"gl_caustics", "0"}; // 1
+cvar_t gl_waterfog                         = {"gl_turbfog", "0"}; // 2
+cvar_t gl_waterfog_density                 = {"gl_turbfogDensity", "1"};
+cvar_t gl_waterfog_color_water             = {"gl_turbfog_color_water", "32 64 128", CVAR_COLOR};
+cvar_t gl_waterfog_color_lava              = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR};
+cvar_t gl_waterfog_color_slime             = {"gl_turbfog_color_slime", "128 255 0", CVAR_COLOR};
+cvar_t gl_lumaTextures                     = {"gl_lumaTextures", "1"};
+cvar_t gl_subdivide_size                   = {"gl_subdivide_size", "64"};
+cvar_t gl_clear                            = {"gl_clear", "0"};
+cvar_t gl_clearColor                       = {"gl_clearColor", "0 0 0", CVAR_COLOR, OnChange_gl_clearColor};
+cvar_t gl_cull                             = {"gl_cull", "1"};
+cvar_t gl_smoothmodels                     = {"gl_smoothmodels", "1"};
+cvar_t gl_affinemodels                     = {"gl_affinemodels", "0"};
+cvar_t gl_polyblend                        = {"gl_polyblend", "1"}; // 0
+cvar_t gl_flashblend                       = {"gl_flashblend", "0"};
+cvar_t gl_rl_globe                         = {"gl_rl_globe", "0"};
+cvar_t gl_playermip                        = {"gl_playermip", "0"};
+cvar_t gl_nocolors                         = {"gl_nocolors", "0"};
+cvar_t gl_finish                           = {"gl_finish", "0"};
+cvar_t gl_fb_bmodels                       = {"gl_fb_bmodels", "1"};
+cvar_t gl_fb_models                        = {"gl_fb_models", "1"};
+cvar_t gl_lightmode                        = {"gl_lightmode", "2"};
+cvar_t gl_loadlitfiles                     = {"gl_loadlitfiles", "1"};
+cvar_t gl_colorlights                      = {"gl_colorlights", "1"};
+cvar_t gl_solidparticles                   = {"gl_solidparticles", "0"}; // 1
+cvar_t gl_squareparticles                  = {"gl_squareparticles", "0", CVAR_LATCH};
+cvar_t gl_part_explosions                  = {"gl_part_explosions", "0"}; // 1
+cvar_t gl_part_trails                      = {"gl_part_trails", "0"}; // 1
+cvar_t gl_part_tracer1_color               = {"gl_part_tracer1_color", "0 124 0", CVAR_COLOR};
+cvar_t gl_part_tracer2_color               = {"gl_part_tracer2_color", "255 77 0", CVAR_COLOR};
+cvar_t gl_part_tracer1_size                = {"gl_part_tracer1_size", "3.75", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 3.75f, 10.f, 0.f};
+cvar_t gl_part_tracer1_time                = {"gl_part_tracer1_time", "0.5", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 0.5f, 3.f, 0.f};
+cvar_t gl_part_tracer2_size                = {"gl_part_tracer2_size", "3.75", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 3.75f, 10.f, 0.f};
+cvar_t gl_part_tracer2_time                = {"gl_part_tracer2_time", "0.5", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 0.5f, 3.f, 0.f};
+cvar_t gl_part_spikes                      = {"gl_part_spikes", "0"}; // 1
+cvar_t gl_part_gunshots                    = {"gl_part_gunshots", "0"}; // 1
+cvar_t gl_part_blood                       = {"gl_part_blood", "0"}; // 1
+cvar_t gl_part_telesplash                  = {"gl_part_telesplash", "0"}; // 1
+cvar_t gl_part_blobs                       = {"gl_part_blobs", "0"}; // 1
+cvar_t gl_part_lavasplash                  = {"gl_part_lavasplash", "0"}; // 1
+cvar_t gl_part_inferno                     = {"gl_part_inferno", "0"}; // 1
+cvar_t gl_particle_style                   = {"gl_particle_style", "0"}; // 0 - round, 1 - square (sw style)
 cvar_t gl_part_detpackexplosion_fire_color = {"gl_part_detpackexplosion_fire_color", "", CVAR_COLOR};
-cvar_t gl_part_detpackexplosion_ray_color = {"gl_part_detpackexplosion_ray_color", "", CVAR_COLOR};
+cvar_t gl_part_detpackexplosion_ray_color  = {"gl_part_detpackexplosion_ray_color", "", CVAR_COLOR};
+cvar_t gl_powerupshells                    = {"gl_powerupshells", "1"};
+cvar_t gl_powerupshells_style              = {"gl_powerupshells_style", "0"};
+cvar_t gl_powerupshells_size               = {"gl_powerupshells_size", "5"};
+cvar_t gl_powerupshells_effect1level       = {"gl_powerupshells_effect1level", "0.75"};
+cvar_t gl_powerupshells_base1level         = {"gl_powerupshells_base1level", "0.05"};
+cvar_t gl_powerupshells_effect2level       = {"gl_powerupshells_effect2level", "0.4"};
+cvar_t gl_powerupshells_base2level         = {"gl_powerupshells_base2level", "0.1"};
+cvar_t gl_fogenable                        = {"gl_fog", "0"};
+cvar_t gl_fogstart                         = {"gl_fogstart", "50.0"};
+cvar_t gl_fogend                           = {"gl_fogend", "800.0"};
+cvar_t gl_fogred                           = {"gl_fogred", "0.6"};
+cvar_t gl_foggreen                         = {"gl_foggreen", "0.5"};
+cvar_t gl_fogblue                          = {"gl_fogblue", "0.4"};
+cvar_t gl_fogsky                           = {"gl_fogsky", "1"};
+cvar_t gl_simpleitems                      = {"gl_simpleitems", "0"};
+cvar_t gl_simpleitems_size                 = {"gl_simpleitems_size", "16"};
+cvar_t gl_simpleitems_orientation          = {"gl_simpleitems_orientation", "2"};
+cvar_t gl_motion_blur                      = {"gl_motion_blur", "0"};
+cvar_t gl_motion_blur_fps                  = {"gl_motion_blur_fps", "77"};
+cvar_t gl_motion_blur_norm                 = {"gl_motion_blur_norm", "0.5"};
+cvar_t gl_motion_blur_hurt                 = {"gl_motion_blur_hurt", "0.5"};
+cvar_t gl_motion_blur_dead                 = {"gl_motion_blur_dead", "0.5"};
+cvar_t gl_gammacorrection                  = {"gl_gammacorrection", "0", CVAR_LATCH};
+cvar_t gl_modulate                         = {"gl_modulate", "1"};
+cvar_t gl_outline                          = {"gl_outline", "0"};
+cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
 
-cvar_t gl_powerupshells = {"gl_powerupshells", "1"};
-cvar_t gl_powerupshells_style = {"gl_powerupshells_style", "0"};
-cvar_t gl_powerupshells_size = {"gl_powerupshells_size", "5"};
-cvar_t gl_powerupshells_effect1level = {"gl_powerupshells_effect1level", "0.75"};
-cvar_t gl_powerupshells_base1level = {"gl_powerupshells_base1level", "0.05"};
-cvar_t gl_powerupshells_effect2level = {"gl_powerupshells_effect2level", "0.4"};
-cvar_t gl_powerupshells_base2level = {"gl_powerupshells_base2level", "0.1"};
-
-cvar_t  gl_fogenable		= {"gl_fog", "0"};
-
-cvar_t  gl_fogstart			= {"gl_fogstart", "50.0"};
-cvar_t  gl_fogend			= {"gl_fogend", "800.0"};
-cvar_t  gl_fogred			= {"gl_fogred", "0.6"};
-cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
-cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
-cvar_t  gl_fogsky			= {"gl_fogsky", "1"}; 
-
-cvar_t	gl_simpleitems		= {"gl_simpleitems", "0"};
-cvar_t	gl_simpleitems_size		= {"gl_simpleitems_size", "16"};
-cvar_t	gl_simpleitems_orientation = {"gl_simpleitems_orientation", "2"};
-
-cvar_t	gl_motion_blur		= {"gl_motion_blur", "0"};
-cvar_t	gl_motion_blur_fps	= {"gl_motion_blur_fps", "77"};
-cvar_t	gl_motion_blur_norm	= {"gl_motion_blur_norm", "0.5"};
-cvar_t	gl_motion_blur_hurt = {"gl_motion_blur_hurt", "0.5"};
-cvar_t	gl_motion_blur_dead = {"gl_motion_blur_dead", "0.5"};
-
-cvar_t	gl_gammacorrection = {"gl_gammacorrection", "0", CVAR_LATCH};
-cvar_t	gl_modulate = {"gl_modulate", "1"};
-
-cvar_t	gl_outline = {"gl_outline", "0"};
-cvar_t	gl_outline_width = {"gl_outline_width", "2"};
-
-int		lightmode = 2;
-
-//static int deathframes[] = { 49, 60, 69, 77, 84, 93, 102, 0 };
-
-void R_MarkLeaves (void);
-void R_InitBubble (void);
-
-void GL_PolygonOffset (float factor, float units)
+void GL_PolygonOffset(float factor, float units)
 {
 	if (factor || units)
 	{
@@ -240,7 +238,8 @@ void GL_PolygonOffset (float factor, float units)
 }
 
 //Returns true if the box is completely outside the frustom
-qbool R_CullBox (vec3_t mins, vec3_t maxs) {
+qbool R_CullBox(vec3_t mins, vec3_t maxs)
+{
 	int i;
 
 	for (i = 0; i < 4; i++) {
@@ -251,7 +250,8 @@ qbool R_CullBox (vec3_t mins, vec3_t maxs) {
 }
 
 //Returns true if the sphere is completely outside the frustum
-qbool R_CullSphere (vec3_t centre, float radius) {
+qbool R_CullSphere(vec3_t centre, float radius)
+{
 	int i;
 	mplane_t *p;
 
@@ -263,7 +263,8 @@ qbool R_CullSphere (vec3_t centre, float radius) {
 	return false;
 }
 
-void R_RotateForEntity (entity_t *e) {
+void R_RotateForEntity(entity_t *e)
+{
 	glTranslatef (e->origin[0],  e->origin[1],  e->origin[2]);
 
 	glRotatef (e->angles[1], 0, 0, 1);
@@ -272,7 +273,8 @@ void R_RotateForEntity (entity_t *e) {
 }
 
 
-mspriteframe_t *R_GetSpriteFrame (entity_t *e, msprite2_t *psprite) {
+mspriteframe_t *R_GetSpriteFrame(entity_t *e, msprite2_t *psprite)
+{
 	mspriteframe_t  *pspriteframe;
 	mspriteframe2_t *pspriteframe2;
 	int i, numframes, frame, offset;
@@ -317,7 +319,8 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *e, msprite2_t *psprite) {
 	return pspriteframe;
 }
 
-void R_DrawSpriteModel (entity_t *e) {
+void R_DrawSpriteModel (entity_t *e)
+{
 	vec3_t point, right, up;
 	mspriteframe_t *frame;
 	msprite2_t *psprite;
@@ -347,7 +350,7 @@ void R_DrawSpriteModel (entity_t *e) {
 		VectorCopy (vright, right);
 	}
 
-    GL_Bind(frame->gl_texturenum);
+	GL_Bind(frame->gl_texturenum);
 
 	glBegin (GL_QUADS);
 
@@ -374,42 +377,6 @@ void R_DrawSpriteModel (entity_t *e) {
 	glEnd ();
 }
 
-
-#define NUMVERTEXNORMALS	162
-
-vec3_t	shadevector;
-
-qbool	full_light;
-float		shadelight, ambientlight;
-
-#define NUMVERTEXNORMALS	162
-
-float	r_avertexnormals[NUMVERTEXNORMALS][3] = {
-#include "anorms.h"
-};
-
-// precalculated dot products for quantized angles
-#define SHADEDOT_QUANT 64
-byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS] =
-#include "anorm_dots.h"
-;
-
-byte	*shadedots = r_avertexnormal_dots[0];
-
-int		lastposenum;
-
-float	r_framelerp;
-float	r_modelalpha;
-float	r_lerpdistance;
-float   r_modelcolor[3];
-float	r_shellcolor[3];
-
-//VULT COLOURED MODEL LIGHTS
-extern vec3_t lightcolor;
-float apitch, ayaw;
-vec3_t vertexlight;
-
-int shelltexture = 0;
 
 int GL_GenerateShellTexture(void)
 {
@@ -503,24 +470,33 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 	GL_PolygonOffset(0, 0);
 }
 
-void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir) {
-    int *order, count;
+void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir)
+{
+	int *order, count;
 	vec3_t interpolated_verts;
-    float l, lerpfrac;
-    trivertx_t *verts1, *verts2;
+	float l, lerpfrac;
+	trivertx_t *verts1, *verts2;
 	//VULT COLOURED MODEL LIGHTS
 	int i;
 	vec3_t lc;
+	GLint shader, u_gamma, u_contrast;
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;	
 
-    verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
 
-    verts1 += pose1 * paliashdr->poseverts;
-    verts2 += pose2 * paliashdr->poseverts;
+	verts1 += pose1 * paliashdr->poseverts;
+	verts2 += pose2 * paliashdr->poseverts;
 
-    order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+
+	shader = glsl_shaders[SHADER_MODEL].shader;
+	qglUseProgram(shader);
+	u_gamma = qglGetUniformLocation(shader, "gamma");
+	u_contrast = qglGetUniformLocation(shader, "contrast");
+	qglUniform1f(u_gamma, v_gamma.value);
+	qglUniform1f(u_contrast, v_contrast.value);
 
 	if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && bound(0, gl_powerupshells.value, 1) */ )
 	{
@@ -659,7 +635,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 
 				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 				glVertex3fv(interpolated_verts);
-				
+
 
 				verts1++;
 				verts2++;
@@ -671,9 +647,11 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 		if (r_modelalpha < 1)
 			glDisable(GL_BLEND);
 	}
+	qglUseProgram(0);
 }
 
-void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline) {
+void R_SetupAliasFrame(maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline)
+{
 	int oldpose, pose, numposes;
 	float interval;
 
@@ -697,9 +675,8 @@ void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, a
 		GL_DrawAliasOutlineFrame (paliashdr, oldpose, pose) ;
 }
 
-extern vec3_t lightspot;
-
-void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum) {
+void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
+{
 	int *order, count;
 	vec3_t point;
 	float lheight = currententity->origin[2] - lightspot[2], height = 1 - lheight;
@@ -740,11 +717,8 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum) {
 	}	
 }
 
-//VULT COLOURED MODEL LIGHTING
-vec3_t dlight_color;
-extern float bubblecolor[NUM_DLIGHTTYPES][4];
-extern cvar_t maxclients;
-void R_AliasSetupLighting(entity_t *ent) {
+void R_AliasSetupLighting(entity_t *ent)
+{
 	int minlight, lnum;
 	float add, fbskins;
 	vec3_t dist;
@@ -952,7 +926,8 @@ void R_DrawPowerupShell(int effects, int layer_no, float base_level, float effec
 	R_SetupAliasFrame (oldframe, frame, paliashdr, false, layer_no == 1, false);
 }
 
-void R_DrawAliasModel (entity_t *ent) {
+void R_DrawAliasModel(entity_t *ent)
+{
 	int i, anim, skinnum, texture, fb_texture, playernum = -1;
 	float scale;
 	vec3_t mins, maxs;
@@ -1008,30 +983,6 @@ void R_DrawAliasModel (entity_t *ent) {
 
 	frame = &paliashdr->frames[ent->frame];
 	oldframe = &paliashdr->frames[ent->oldframe];
-
-#if 0
-//TODO:
-// cheat protection
-// limit footsteps sounds to self 
-// add self footsteps :D
-// State: crap	
-	self = ent;
-	if(ent->stepframe != ent->frame && ent->model->modhint == MOD_PLAYER && (self->frame == 1||self->frame == 4||self->frame == 7 || self->frame ==10))
-	{
-		//Com_Printf("foot..\n");
-			//va("footsteps/step%d.wav",(int)(rand()%3+1)));
-
-		if (!setstep)
-		{
-			step = S_PrecacheSound ("footsteps/step1.wav");
-			setstep=true;
-		}
-
-		S_StartSound (-1, 0, step , ent->origin, 1, 1);
-
-		ent->stepframe = ent->frame;
-	}
-#endif
 
 	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame)
 		r_framelerp = 1.0;
@@ -1402,7 +1353,8 @@ static qbool R_DrawTrySimpleItem(void)
 	return true;
 }
 
-void R_DrawEntitiesOnList (visentlist_t *vislist) {
+void R_DrawEntitiesOnList(visentlist_t *vislist)
+{
 	int i;
 
 	if (!r_drawentities.value || !vislist->count)
@@ -1470,21 +1422,7 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 					}
 				}
 
-// I am apologise, but can't imagine a better way for example
-#ifdef GLSLEXAMPLE
-				{
-					extern qbool SHD_EXAMPLE_StartShader(void);
-
-					qbool shader_ok = SHD_EXAMPLE_StartShader();
-
-					R_DrawAliasModel (currententity);
-
-					if (shader_ok)
-						SHD_Unbind();
-				}
-#else
 				R_DrawAliasModel (currententity);
-#endif
 
 				break;
 			case mod_alias3:
@@ -1494,17 +1432,12 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 
 				// Get rid of Z-fighting for textures by offsetting the
 				// drawing of entity models compared to normal polygons.
-				// (Only works if gl_ztrick is turned off)
-				if(!gl_ztrick.value)
-				{
-					GL_PolygonOffset(0.05, 25.0);
-				}
-
-				R_DrawBrushModel (currententity);
-				
-				if(!gl_ztrick.value)
-				{
+				if(gl_brush_polygonoffset.value > 0) {
+					GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
+					R_DrawBrushModel(currententity);
 					GL_PolygonOffset(0, 0);
+				} else {
+					R_DrawBrushModel(currententity);
 				}
 
 				break;
@@ -1521,7 +1454,8 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 		glDisable (GL_ALPHA_TEST);
 }
 
-void R_DrawViewModel (void) {
+void R_DrawViewModel(void)
+{
 	centity_t *cent;
 	static entity_t gun;
 
@@ -1573,7 +1507,7 @@ void R_DrawViewModel (void) {
 
 	// hack the depth range to prevent view model from poking into walls
 	glDepthRange (gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
-	//R_DrawAliasModel (currententity);
+
 	switch(currententity->model->type)
 	{
 	case mod_alias:
@@ -1590,10 +1524,11 @@ void R_DrawViewModel (void) {
 }
 
 
-void R_PolyBlend (void) {
+void R_PolyBlend(void)
+{
 	extern cvar_t gl_hwblend;
 
-	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress)
+	if (!cl.teamfortress)
 		return;
 	if (!v_blend[3])
 		return;
@@ -1618,7 +1553,10 @@ void R_PolyBlend (void) {
 	glColor3ubv (color_white);
 }
 
-void R_BrightenScreen (void) {
+void R_BrightenScreen(void)
+{
+	return; // FIXME gamma mess
+
 	extern float vid_gamma;
 	float f;
 
@@ -1659,7 +1597,8 @@ void R_BrightenScreen (void) {
 	glColor3ubv (color_white);
 }
 
-int SignbitsForPlane (mplane_t *out) {
+int SignbitsForPlane(mplane_t *out)
+{
 	int	bits, j;
 
 	// for fast box on planeside test
@@ -1672,7 +1611,8 @@ int SignbitsForPlane (mplane_t *out) {
 }
 
 
-void R_SetFrustum (void) {
+void R_SetFrustum(void)
+{
 	int i;
 
 	// rotate VPN right by FOV_X/2 degrees
@@ -1691,7 +1631,8 @@ void R_SetFrustum (void) {
 	}
 }
 
-void R_SetupFrame (void) {
+void R_SetupFrame(void)
+{
 	vec3_t testorigin;
 	mleaf_t	*leaf;
 
@@ -1737,7 +1678,8 @@ void R_SetupFrame (void) {
 	c_alias_polys = 0;
 }
 
-__inline void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar) {
+void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
+{
 	GLdouble xmin, xmax, ymin, ymax;
 	
 	ymax = zNear * tan(fovy * M_PI / 360.0);
@@ -1819,14 +1761,15 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	return;
 } 
 
-void R_SetupGL (void) {
+void R_SetupGL(void)
+{
 	float screenaspect;
 	extern int glwidth, glheight;
 	int x, x2, y2, y, w, h, farclip;
 
 	// set up viewpoint
 	glMatrixMode(GL_PROJECTION);
-    glLoadIdentity ();
+	glLoadIdentity ();
 	x = r_refdef.vrect.x * glwidth / vid.width;
 	x2 = (r_refdef.vrect.x + r_refdef.vrect.width) * glwidth / vid.width;
 	y = (vid.height-r_refdef.vrect.y) * glheight / vid.height;
@@ -1865,14 +1808,14 @@ void R_SetupGL (void) {
 	glCullFace(GL_FRONT);
 
 	glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity ();
+	glLoadIdentity ();
 
-    glRotatef (-90, 1, 0, 0);	    // put Z going up
-    glRotatef (90,  0, 0, 1);	    // put Z going up
-    glRotatef (-r_refdef.viewangles[2], 1, 0, 0);
-    glRotatef (-r_refdef.viewangles[0], 0, 1, 0);
-    glRotatef (-r_refdef.viewangles[1], 0, 0, 1);
-    glTranslatef (-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
+	glRotatef (-90, 1, 0, 0);	    // put Z going up
+	glRotatef (90,  0, 0, 1);	    // put Z going up
+	glRotatef (-r_refdef.viewangles[2], 1, 0, 0);
+	glRotatef (-r_refdef.viewangles[0], 0, 1, 0);
+	glRotatef (-r_refdef.viewangles[1], 0, 0, 1);
+	glTranslatef (-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
 
 	glGetFloatv (GL_MODELVIEW_MATRIX, r_world_matrix);
 
@@ -1909,9 +1852,8 @@ void R_SetupGL (void) {
 	}
 }
 
-void CI_Init (void);
-
-void R_Init (void) {
+void R_Init(void)
+{
 	Cmd_AddCommand ("loadsky", R_LoadSky_f);
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);
 #ifndef CLIENTONLY
@@ -2042,7 +1984,7 @@ void R_Init (void) {
 	Cvar_Register (&gl_clearColor);
 	Cvar_Register (&gl_cull);
 
-	Cvar_Register (&gl_ztrick);
+	Cvar_Register(&gl_brush_polygonoffset);
 
 	Cvar_Register (&gl_nocolors);
 	Cvar_Register (&gl_finish);
@@ -2089,9 +2031,6 @@ void R_Init (void) {
 	if (!strcmp(gl_vendor, "METABYTE/WICKED3D")) 
 		Cvar_SetDefault(&gl_solidparticles, 1); 
 
-	if (!gl_allow_ztrick)
-		Cvar_SetDefault(&gl_ztrick, 0); 
-
 	R_InitTextures ();	// FIXME: not sure is this safe re-init
 	R_InitBubble ();	// safe re-init
 	R_InitParticles (); // safe re-init imo
@@ -2112,9 +2051,8 @@ void R_Init (void) {
 	R_InitBloomTextures();
 }
 
-
-extern msurface_t	*alphachain;
-void R_RenderScene (void) {
+void R_RenderScene(void)
+{
 	extern void Skins_PreCache(void);
 
 	vec3_t		colors;
@@ -2160,9 +2098,6 @@ void R_RenderScene (void) {
 	}
 }
 
-int gl_ztrickframe = 0;
-float clearColor[3] = {0, 0, 0};
-
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	byte *color;
 	char buf[MAX_COM_TOKEN];
@@ -2177,13 +2112,14 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
 }
 
-void R_Clear (void) {
+void R_Clear(void)
+{
 	int clearbits = 0;
 	
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
-	if (!cl_multiview.value && (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1)))
+	if (!cl_multiview.value && gl_clear.value)
 	{
 		clearbits |= GL_COLOR_BUFFER_BIT;
 	}
@@ -2196,31 +2132,11 @@ void R_Clear (void) {
 			glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
 	}
 
-	// This variables toggles the use of a trick to prevent the clearning of the 
-	// z-buffer between frames. When this variable is set to "1", the game will not 
-	// clear the z-buffer between frames. This will result in increased performance 
-	// but might cause problems for some display hardware.
-	if (gl_ztrick.value) {
-		if (clearbits)
-			glClear (clearbits);
-
-		gl_ztrickframe = !gl_ztrickframe;
-		if (gl_ztrickframe) {
-			gldepthmin = 0;
-			gldepthmax = 0.49999;
-			glDepthFunc (GL_LEQUAL);
-		} else {
-			gldepthmin = 1;
-			gldepthmax = 0.5;
-			glDepthFunc (GL_GEQUAL);
-		}
-	} else {
-		clearbits |= GL_DEPTH_BUFFER_BIT;
-		glClear (clearbits);
-		gldepthmin = 0;
-		gldepthmax = 1;
-		glDepthFunc (GL_LEQUAL);
-	}
+	clearbits |= GL_DEPTH_BUFFER_BIT;
+	glClear (clearbits);
+	gldepthmin = 0;
+	gldepthmax = 1;
+	glDepthFunc (GL_LEQUAL);
 
 	glDepthRange (gldepthmin, gldepthmax);
 }
@@ -2229,100 +2145,100 @@ void R_Clear (void) {
 // as 3d vector and its projections
 static void draw_velocity_3d(void)
 {
-  extern cvar_t show_velocity_3d_offset_forward;
-  extern cvar_t show_velocity_3d_offset_down;
-  extern cvar_t show_velocity_3d;
+	extern cvar_t show_velocity_3d_offset_forward;
+	extern cvar_t show_velocity_3d_offset_down;
+	extern cvar_t show_velocity_3d;
 
-  vec3_t *origin = &r_refdef.vieworg;
-  vec3_t *angles = &r_refdef.viewangles;
+	vec3_t *origin = &r_refdef.vieworg;
+	vec3_t *angles = &r_refdef.viewangles;
 
-  const float vx = cl.simvel[0];
-  const float vy = cl.simvel[1];
-  const float vz = cl.simvel[2];
+	const float vx = cl.simvel[0];
+	const float vy = cl.simvel[1];
+	const float vz = cl.simvel[2];
 
-  const float yaw_degrees = (*angles)[YAW];
-  const float yaw = DEG2RAD(yaw_degrees);
+	const float yaw_degrees = (*angles)[YAW];
+	const float yaw = DEG2RAD(yaw_degrees);
 
-  const double c = cos(yaw);
-  const double s = sin(yaw);
+	const double c = cos(yaw);
+	const double s = sin(yaw);
 
-  const double scale_factor = 0.04;
-  const float v_side = (float) (scale_factor * (-vx * s + vy * c));
-  const float v_forward = (float) (scale_factor * (vx * c + vy * s));
-  const float v_up = (float) (scale_factor * vz);
+	const double scale_factor = 0.04;
+	const float v_side = (float) (scale_factor * (-vx * s + vy * c));
+	const float v_forward = (float) (scale_factor * (vx * c + vy * s));
+	const float v_up = (float) (scale_factor * vz);
 
-  const float line_width = 10.f;
-  const float stipple_line_width = 5.f;
-  const float stipple_line_colour[3] = { 0.5f, 0.5f, 0.5f };
-  const vec3_t v3_zero = {0.f, 0.f, 0.f };
+	const float line_width = 10.f;
+	const float stipple_line_width = 5.f;
+	const float stipple_line_colour[3] = { 0.5f, 0.5f, 0.5f };
+	const vec3_t v3_zero = {0.f, 0.f, 0.f };
 
-  glPushMatrix();
+	glPushMatrix();
 
-  glTranslatef((*origin)[0], (*origin)[1], (*origin)[2]);
-  glRotatef(yaw_degrees, 0.f, 0.f, 1.f);
-  glTranslatef(show_velocity_3d_offset_forward.value,
-               0.f, -show_velocity_3d_offset_down.value);
+	glTranslatef((*origin)[0], (*origin)[1], (*origin)[2]);
+	glRotatef(yaw_degrees, 0.f, 0.f, 1.f);
+	glTranslatef(show_velocity_3d_offset_forward.value,
+			0.f, -show_velocity_3d_offset_down.value);
 
-  glPushAttrib(GL_LINE_BIT | GL_TEXTURE_BIT);
+	glPushAttrib(GL_LINE_BIT | GL_TEXTURE_BIT);
 
-  glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D);
 
-  switch (show_velocity_3d.integer)
-  {
-    case 1:                    //show vertical
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0xFF00);
-      glLineWidth(stipple_line_width);
+	switch (show_velocity_3d.integer)
+	{
+		case 1:                    //show vertical
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1, 0xFF00);
+			glLineWidth(stipple_line_width);
 
-      glColor3fv(stipple_line_colour);
-      glBegin(GL_LINES);
-      glVertex3f(v_forward, v_side, 0.f);
-      glVertex3f(v_forward, v_side, v_up);
-      glEnd();
+			glColor3fv(stipple_line_colour);
+			glBegin(GL_LINES);
+			glVertex3f(v_forward, v_side, 0.f);
+			glVertex3f(v_forward, v_side, v_up);
+			glEnd();
 
-      glDisable(GL_LINE_STIPPLE);
-      glLineWidth(line_width);
-      glColor3f(0.f, 1.f, 0.f);
+			glDisable(GL_LINE_STIPPLE);
+			glLineWidth(line_width);
+			glColor3f(0.f, 1.f, 0.f);
 
-      glBegin(GL_LINES);
-      glVertex3fv(v3_zero);
-      glVertex3f(v_forward, v_side, v_up);
-      glEnd();
-      //no break here
+			glBegin(GL_LINES);
+			glVertex3fv(v3_zero);
+			glVertex3f(v_forward, v_side, v_up);
+			glEnd();
+			//no break here
 
-    case 2:                    //show horizontal velocity only
-      glColor3f(1.f, 0.f, 0.f);
-      glLineWidth(line_width);
-      glBegin(GL_LINES);
-      glVertex3fv(v3_zero);
-      glVertex3f(v_forward, v_side, 0.f);
-      glEnd();
+		case 2:                    //show horizontal velocity only
+			glColor3f(1.f, 0.f, 0.f);
+			glLineWidth(line_width);
+			glBegin(GL_LINES);
+			glVertex3fv(v3_zero);
+			glVertex3f(v_forward, v_side, 0.f);
+			glEnd();
 
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0xFF00);
-      glColor3fv(stipple_line_colour);
-      glLineWidth(stipple_line_width);
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1, 0xFF00);
+			glColor3fv(stipple_line_colour);
+			glLineWidth(stipple_line_width);
 
-      glBegin(GL_LINE_LOOP);
-      glVertex3fv(v3_zero);
-      glVertex3f(0.f, v_side, 0.f);
-      glVertex3f(v_forward, v_side, 0.f);
-      glVertex3f(v_forward, 0.f, 0.f);
-      glEnd();
+			glBegin(GL_LINE_LOOP);
+			glVertex3fv(v3_zero);
+			glVertex3f(0.f, v_side, 0.f);
+			glVertex3f(v_forward, v_side, 0.f);
+			glVertex3f(v_forward, 0.f, 0.f);
+			glEnd();
 
-    default:
-      break;
-  }
+		default:
+			break;
+	}
 
-  glPopAttrib();
-  glPopMatrix();
+	glPopAttrib();
+	glPopMatrix();
 }
 
 /*
  Motion blur effect.
  Stolen from FTE engine.
 */
-static void R_RenderSceneBlurDo (float alpha)
+static void R_RenderSceneBlurDo(float alpha)
 {
 	static double last_time;
 	double current_time = Sys_DoubleTime(), diff_time = current_time - last_time;
@@ -2450,7 +2366,7 @@ static void R_RenderSceneBlur(void)
 	}
 }
 
-void R_RenderView (void)
+void R_RenderView(void)
 {
 	extern void DrawCI (void);
 

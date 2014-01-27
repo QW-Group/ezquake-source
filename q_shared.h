@@ -82,14 +82,6 @@ typedef unsigned char byte;
 
 //============================================================================
 
-#ifdef id386
-#define UNALIGNED_OK		1		// set to 0 if unaligned accesses are not supported
-#else
-#define UNALIGNED_OK		0
-#endif
-
-//============================================================================
-
 #define	MINIMUM_MEMORY		0x550000
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
@@ -137,20 +129,6 @@ float	FloatSwapPDP2Lit (float f);
 #ifdef _WIN32
 #define __LITTLE_ENDIAN__
 #endif
-
-//======================= MAC OS X DEFINES ===================================
-// <DyB|Tuna> for mac the gcc defines __BIG_ENDIAN__ and __LITTLE_ENDIAN__ 
-//            according to which arch type is selected
-//#if defined(MACOS_X)
-//#define __LITTLE_ENDIAN__
-//#endif
-
-//======================= MAC DEFINES ========================================
-// <DyB|Tuna> for mac the gcc defines __BIG_ENDIAN__ and __LITTLE_ENDIAN__ 
-//            according to which arch type is selected
-//#ifdef __MACOS__
-//#define __BIG_ENDIAN__
-//#endif
 
 //======================= LINUX DEFINES ======================================
 #ifdef __linux__

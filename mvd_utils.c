@@ -24,13 +24,8 @@ $Id: mvd_utils.c,v 1.57 2007-10-11 17:56:47 johnnycz Exp $
 #include "quakedef.h"
 #include "parser.h"
 #include "localtime.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "utils.h"
 #include "mvd_utils_common.h"
@@ -400,12 +395,8 @@ int MVD_ClockList_GetLongestName(void)
 		IT_QUAD, IT_INVULNERABILITY, IT_ARMOR1, IT_ARMOR2, IT_ARMOR3, IT_SUPERHEALTH
 	};
 
-	for (i = 0; i < sizeof(items); i++){
-#ifdef GLQUAKE
+	for (i = 0; i < (sizeof(items)/sizeof(*items)); i++){
 		current = strlen_color(TP_ItemName(items[i]));
-#else
-		current = strlen(TP_ItemName(items[i]));
-#endif
 		if (longest < current)
 			longest = current;
 	}
@@ -445,11 +436,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y)
 			clockitem = va("%s", mvd_wp_info[current->itemtype].name);
 			CharsToBrown(clockitem, clockitem + strlen(mvd_wp_info[current->itemtype].name));
 		}else{	// built-in color(GL) or simple white (software)
-#ifdef GLQUAKE
 			clockitem = va("%s", mvd_wp_info[current->itemtype].colored_name);
-#else
-			clockitem = va("%s", mvd_wp_info[current->itemtype].name);
-#endif
 		}
 
 		if(time > 0)

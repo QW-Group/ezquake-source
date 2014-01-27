@@ -38,14 +38,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Ctrl_EditBox.h"
 #include "vx_stuff.h"
 #include "vx_tracker.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "EX_FileList.h"
 #include "Ctrl.h"
@@ -71,14 +66,9 @@ typedef enum {
 CTab_t options_tab;
 int options_unichar;	// variable local to this module
 
-#ifdef GLQUAKE
 extern cvar_t     scr_scaleMenu;
 extern int        menuwidth;
 extern int        menuheight;
-#else
-#define menuwidth vid.width
-#define menuheight vid.height
-#endif
 
 extern qbool    m_entersound; // todo - put into menu.h
 void M_Menu_Help_f (void);	// todo - put into menu.h
@@ -89,11 +79,7 @@ cvar_t menu_advanced = {"menu_advanced", "0"};
 //=============================================================================
 // <SETTINGS>
 
-#ifdef GLQUAKE
 enum {mode_fastest, mode_faithful, mode_higheyecandy, mode_eyecandy, mode_undef} fps_mode = mode_undef;
-#else
-enum {mode_fastest, mode_default, mode_undef} fps_mode = mode_default;
-#endif
 
 extern cvar_t scr_fov, scr_newHud, cl_staticsounds, r_fullbrightSkins, cl_deadbodyfilter, cl_muzzleflash, r_fullbright;
 extern cvar_t scr_sshot_format;
@@ -132,14 +118,9 @@ void AutoSWToggle(qbool back) {
 static int GFXPreset(void) {
 	if (fps_mode == mode_undef) {
 		switch ((int) cl_deadbodyfilter.value) {
-#ifdef GLQUAKE
 		case 0: fps_mode = mode_eyecandy; break;
 		case 1: fps_mode = cl_muzzleflash.value ? mode_faithful : mode_eyecandy; break;
 		default: fps_mode = mode_fastest; break;
-#else
-		case 0: fps_mode = mode_default; break;
-		default: fps_mode = mode_fastest; break;
-#endif
 		}
 	}
 	return fps_mode;
@@ -147,13 +128,9 @@ static int GFXPreset(void) {
 const char* GFXPresetRead(void) {
 	switch (GFXPreset()) {
 	case mode_fastest: return "fastest";
-#ifdef GLQUAKE
 	case mode_higheyecandy: return "high eyecandy";
 	case mode_faithful: return "faithful";
 	default: return "eyecandy";
-#else
-	default: return "default";
-#endif
 	}
 }
 void GFXPresetToggle(qbool back) {
@@ -162,15 +139,10 @@ void GFXPresetToggle(qbool back) {
 	if (fps_mode >= mode_undef) fps_mode = 0;
 
 	switch (GFXPreset()) {
-#ifdef GLQUAKE
 	case mode_fastest: Cbuf_AddText ("exec cfg/gfx_gl_fast.cfg\n"); return;
 	case mode_higheyecandy: Cbuf_AddText ("exec cfg/gfx_gl_higheyecandy.cfg\n"); return;
 	case mode_faithful: Cbuf_AddText ("exec cfg/gfx_gl_faithful.cfg\n"); return;
 	case mode_eyecandy: Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n"); return;
-#else
-	case mode_fastest: Cbuf_AddText ("exec cfg/gfx_sw_fast.cfg\n"); return;
-	case mode_default: Cbuf_AddText ("exec cfg/gfx_sw_default.cfg\n"); return;
-#endif
 	}
 }
 
@@ -199,18 +171,16 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename, cl_fakename_suffix,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
 	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
-	enemyforceskins, teamforceskins, cl_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
-	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, vid_wideaspect, menu_ingame, sys_inactivesound
+	enemyforceskins, teamforceskins, vid_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
+	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, menu_ingame, sys_inactivesound
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
 void CL_RegisterQWURLProtocol_f(void);
 #endif
-#ifdef GLQUAKE
 extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights, scr_conalpha, scr_conback, gl_clear, gl_powerupshells, gl_powerupshells_size,
 	scr_teaminfo
 ;
-#endif
 
 void CL_Autotrack_f(void);
 
@@ -316,14 +286,8 @@ qbool CT_Opt_Player_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 // <BINDS>
 
-extern cvar_t in_mouse, in_m_smooth, m_rate, in_m_os_parameters;
-#ifdef _WIN32
-const char* in_mouse_enum[] = { "off", "system", "Direct Input", "Raw Input" };
-#elif defined __linux__
-const char* in_mouse_enum[] = { "off", "DGA Mouse", "X Mouse", "EVDEV Mouse" };
-#else
-const char* in_mouse_enum[] = { "off", "DGA Mouse", "X Mouse" };
-#endif
+extern cvar_t in_raw, in_m_smooth, m_rate, in_m_os_parameters;
+const char* in_raw_enum[] = { "off", "on" };
 const char* in_m_os_parameters_enum[] = { "off", "Keep accel settings", "Keep speed settings", "Keep all settings" };
 
 void Menu_Input_Restart(void) { Cbuf_AddText("in_restart\n"); }
@@ -357,12 +321,10 @@ extern cvar_t cl_rocket2grenade;
 extern cvar_t v_damagecshift;
 extern cvar_t r_fastsky;
 extern cvar_t r_drawflame;
-#ifdef GLQUAKE
 extern cvar_t gl_simpleitems;
 extern cvar_t gl_simpleitems_orientation;
 extern cvar_t gl_part_inferno;
 extern cvar_t amf_lightning;
-#endif
 extern cvar_t r_drawflat;
 
 const char* explosiontype_enum[] =
@@ -414,7 +376,6 @@ void FpslimitToggle(qbool back) {
 	}
 }
 
-#ifdef GLQUAKE
 const char* gl_max_size_enum[] = {
 	"low", "1", "medium", "8", "high", "256", "max", "2048"
 };
@@ -427,8 +388,6 @@ const char* gl_texturemode_enum[] = {
 	"high", "GL_LINEAR_MIPMAP_LINEAR",
 	"very high", "GL_NEAREST"
 };
-#endif
-
 
 settings_page settfps;
 
@@ -456,8 +415,6 @@ qbool CT_Opt_FPS_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 // <SYSTEM>
 
-#ifdef GLQUAKE
-
 // these variables serve as a temporary storage for user selected settings
 // they get initialized with current settings when the page is showed
 typedef struct menu_video_settings_s {
@@ -475,25 +432,21 @@ menu_system_settings_t mss_selected;
 menu_system_settings_t mss_previous;
 
 // will apply given video settings
-static void ApplyVideoSettings(const menu_system_settings_t *s) {
-#ifndef __APPLE__
-	Cvar_SetValue(&r_mode, s->res);
+static void ApplyVideoSettings(const menu_system_settings_t *s)
+{
 	Cvar_SetValue(&r_colorbits, s->bpp);
 	Cvar_SetValue(&r_displayRefresh, s->freq.value);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
-#endif
 	Cbuf_AddText("vid_restart\n");
-    Com_Printf("askmode: %s\n", mss_askmode ? "on" : "off");
+	Com_Printf("askmode: %s\n", mss_askmode ? "on" : "off");
 }
 
 // will store current video settings into the given structure
-static void StoreCurrentVideoSettings(menu_system_settings_t *out) {
-#ifndef __APPLE__
-	out->res = (int) r_mode.value;
+static void StoreCurrentVideoSettings(menu_system_settings_t *out)
+{
 	out->bpp = (int) r_colorbits.value;
 	Cvar_SetValue(&out->freq, r_displayRefresh.value);
 	out->fullscreen = (int) r_fullscreen.value;
-#endif
 }
 
 // performed when user hits the "apply" button
@@ -542,36 +495,10 @@ void BitDepthToggle(qbool back) {
 }
 void FullScreenToggle(qbool back) { mss_selected.fullscreen = mss_selected.fullscreen ? 0 : 1; }
 
-#else
-#ifdef _WIN32
-
-qbool mss_software_change_resolution_mode = false;
-
-static void System_ChangeResolution(void)
-{
-	mss_software_change_resolution_mode = true;
-}
-#endif
-#endif
-
 settings_page settsystem;
 
 void CT_Opt_System_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
-#ifndef GLQUAKE	// SOFT
-#ifdef _WIN32
-	if(mss_software_change_resolution_mode)
-	{
-		(*vid_menudrawfn) ();
-	}
-	else
-	{
-		Settings_Draw(x,y,w,h, &settsystem);
-	}
-#else
-	Settings_Draw(x,y,w,h, &settsystem);
-#endif
-#else	// GL
 	#define ASKBOXWIDTH 300
 	if(mss_askmode)
 	{
@@ -583,34 +510,10 @@ void CT_Opt_System_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pa
 	{
 		Settings_Draw(x,y,w,h, &settsystem);
 	}
-#endif
 }
 
 int CT_Opt_System_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
-#ifndef GLQUAKE	// SOFT
-#ifdef _WIN32
-	if(mss_software_change_resolution_mode)
-	{
-
-		if(key == K_ESCAPE || key == K_MOUSE2)
-		{
-			mss_software_change_resolution_mode = false;
-		}
-
-		(*vid_menukeyfn) (key);
-		// i was too lazy&scared to change vid_menukeyfn functions out there
-		// so because i know what keys have some function in there, i list them here:
-		return key == K_ESCAPE || key == K_MOUSE2 || key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER || key == 'd';
-	}
-	else
-	{
-		return Settings_Key(&settsystem, key, unichar);
-	}
-#else
-	return Settings_Key(&settsystem, key, unichar);
-#endif
-#else	// GL
 	if (mss_askmode)
 	{
 
@@ -628,14 +531,11 @@ int CT_Opt_System_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 	{
 		return Settings_Key(&settsystem, key, unichar);
 	}
-#endif
 }
 
 void OnShow_SettSystem(void)
 {
-#ifdef GLQUAKE
 	StoreCurrentVideoSettings(&mss_selected);
-#endif
 	Settings_OnShow(&settsystem);
 }
 
@@ -643,63 +543,6 @@ qbool CT_Opt_System_Mouse_Event(const mouse_state_t *ms)
 {
 	return Settings_Mouse_Event(&settsystem, ms);
 }
-
-#if defined(__linux__) || defined(__FreeBSD__)
-extern cvar_t s_driver;
-extern cvar_t s_uselegacydrivers;
-
-static void RestartSound(void)
-{
-        Cbuf_AddText("s_restart\n");
-}
-
-const char* SoundDriverRead(void)
-{
-	if(strcmp(s_driver.string, "oss")==0)
-		return "oss";
-	#ifdef WITH_PULSEAUDIO
-	else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
-		return "pulseaudio (experimental)";
-	#endif
-	else
-		return "alsa";
-}
-void SoundDriverToggle(qbool back) 
-{
-	int val = 0;
-	if(strcmp(s_driver.string, "oss")==0)
-                val = 1;
-	#ifdef WITH_PULSEAUDIO
-        else if((strcmp(s_driver.string, "pulseaudio")==0) || (strcmp(s_driver.string, "pulse")==0))
-                val = 2;
-	#endif
-        else
-             	val = 0;
-	if(back)
-		if(val==0)
-			#ifdef WITH_PULSEAUDIO
-			val = 2;
-			#else
-			val = 1;
-			#endif
-		else
-			val--;
-	else
-		#ifdef WITH_PULSEAUDIO
-		val = (val +1) % 3;
-		#else
-		val = (val+1)%2;
-		#endif
-	switch(val) {
-		case 1: Cvar_LatchedSet(&s_driver, "oss"); break;
-		#ifdef WITH_PULSEAUDIO
-		case 2:	Cvar_LatchedSet(&s_driver, "pulseaudio"); break;
-		#endif
-		default: Cvar_LatchedSet(&s_driver, "alsa"); break;
-	}
-}
-#endif
-
 
 // </SYSTEM>
 
@@ -1003,9 +846,7 @@ setting settfps_arr[] = {
 
 	ADDSET_SEPARATOR("Field Of View"),
 	ADDSET_ADVANCED_SECTION(),
-#ifdef GLQUAKE
 	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
-#endif
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
@@ -1019,7 +860,6 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
 	ADDSET_BASIC_SECTION(),
 
-#ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),	
 	ADDSET_SEPARATOR("Textures"),
 	ADDSET_BOOL		("Luma", gl_lumaTextures),
@@ -1027,17 +867,12 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
 	ADDSET_BASIC_SECTION(),
-#endif	
 	
 	ADDSET_SEPARATOR("Player & Weapon Model"),
 	ADDSET_ADVANCED_SECTION(),
-#ifdef GLQUAKE
 	ADDSET_BOOL		("Powerup Luma", gl_powerupshells),
 	ADDSET_NUMBER	("Powerup Luma Size", gl_powerupshells_size, 0, 10, 1),
 	ADDSET_NUMBER	("Weapon Opacity", cl_drawgun, 0, 1, 0.05),
-#else
-	ADDSET_BOOL		("Weapon Show", cl_drawgun),
-#endif
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Weapon Size", r_viewmodelsize, 0.1, 1, 0.05),
 	ADDSET_ADVANCED_SECTION(),
@@ -1051,10 +886,8 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
 	ADDSET_BOOL		("Simple Walls", r_drawflat),
 	ADDSET_BOOL		("Simple Turbs", r_fastturb),
-#ifdef GLQUAKE
 	ADDSET_BOOL		("Simple Items", gl_simpleitems),
 	ADDSET_NAMED	("Simple Items Orientation", gl_simpleitems_orientation, simpleitemsorientation_enum),
-#endif
 	ADDSET_BOOL		("Draw Flame", r_drawflame),
 	ADDSET_BOOL		("Backpack Filter", cl_backpackfilter),
 	ADDSET_BASIC_SECTION(),
@@ -1074,23 +907,18 @@ setting settfps_arr[] = {
 	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
-#ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Hide Nails", amf_hidenails),
 	ADDSET_BOOL		("Hide Rockets", amf_hiderockets),
 	ADDSET_BASIC_SECTION(),
-#endif
 
 	ADDSET_SEPARATOR("Lighting"),
-#ifdef GLQUAKE
 	ADDSET_BOOL		("GL Bloom", r_bloom),
-#endif
 	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Pickup Flash", v_bonusflash),
 	ADDSET_BASIC_SECTION(),
-#ifdef GLQUAKE
 	ADDSET_BOOL		("Colored Lights", gl_colorlights),
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
 	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
@@ -1098,7 +926,6 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Light Mode", gl_lightmode, 0, 2, 1),
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 	ADDSET_BASIC_SECTION(),
-#endif
 };
 
 // VIEW TAB
@@ -1108,35 +935,27 @@ setting settview_arr[] = {
 	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
 	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
 	ADDSET_NUMBER	("Crosshair Size", crosshairsize, 0.2, 3, 0.2),
-#ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Crosshair Alpha", gl_crosshairalpha, 0.1, 1, 0.1),
 	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
 	ADDSET_BASIC_SECTION(),
-#endif
 
 	ADDSET_SEPARATOR("New HUD"),
 	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
 	ADDSET_BASIC_SECTION(),
-#ifdef GLQUAKE
 	ADDSET_BOOL		("Teaminfo Table", scr_teaminfo),
-#endif
 	ADDSET_ADVANCED_SECTION(),
-#ifdef GLQUAKE
 	ADDSET_BOOLLATE ("Own Frags Announcer", hud_ownfrags_show),
-#endif
 	ADDSET_BOOLLATE ("Teamholdbar", hud_teamholdbar_show),
 	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
 	ADDSET_BOOLLATE ("Clock", hud_clock_show),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOLLATE ("FPS", hud_fps_show),
-#ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOLLATE ("Radar", hud_radar_show),
 	ADDSET_BASIC_SECTION(),
-#endif
 
 	ADDSET_SEPARATOR("Quake Classic HUD"),
 	ADDSET_BOOL		("Status Bar", cl_sbar),
@@ -1147,7 +966,6 @@ setting settview_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
 
-#ifdef GLQUAKE
 	ADDSET_SEPARATOR("Tracker Messages"),
 	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
 	ADDSET_ADVANCED_SECTION(),
@@ -1159,7 +977,6 @@ setting settview_arr[] = {
 	ADDSET_BOOL		("Use Images", cl_useimagesinfraglog),
 	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
 	ADDSET_BASIC_SECTION(),
-#endif
 
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Message Filtering"),
@@ -1180,10 +997,8 @@ setting settview_arr[] = {
 	ADDSET_NAMED	("Completion Format", con_completion_format, con_completion_format_enum),
 	ADDSET_NUMBER	("Size", scr_consize, 0, 1, 0.1),
 	ADDSET_NUMBER	("Speed", scr_conspeed, 1000, 9999, 1000),
-#ifdef GLQUAKE
 	ADDSET_NUMBER	("Alpha", scr_conalpha, 0, 1, 0.1),
 	ADDSET_NAMED	("Map Preview", scr_conback, scr_conback_enum),
-#endif
 	ADDSET_NAMED	("Fun Chars Mode", con_funchars_mode, funcharsmode_enum),
 	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
 	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
@@ -1233,20 +1048,11 @@ setting settbinds_arr[] = {
 	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverts the Y axis."),
-    ADDSET_ADVANCED_SECTION(),
-    ADDSET_STRING   ("X-axis Sensitivity", m_yaw),
-    ADDSET_STRING   ("Y-axis Sensitivity", m_pitch),
-// maybe its okay for FreeBSD and MAC OS X too
-#if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(GLQUAKE))
-	ADDSET_NAMED    ("Mouse Input", in_mouse, in_mouse_enum),
-#endif
-#ifdef _WIN32
-	ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
-    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
-	ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
-#endif
-    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
-    ADDSET_BASIC_SECTION(),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_STRING   ("X-axis Sensitivity", m_yaw),
+	ADDSET_STRING   ("Y-axis Sensitivity", m_pitch),
+	ADDSET_NAMED    ("Raw Mouse Input", in_raw, in_raw_enum),
+	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Movement"),
 	ADDSET_BIND("Attack", "+attack"),
@@ -1364,36 +1170,26 @@ setting settsystem_arr[] = {
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
-#ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Clear Video Buffer", gl_clear),
 	ADDSET_NUMBER	("Anisotropy Filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 	ADDSET_BASIC_SECTION(),
-#endif
 
 #if !defined(__APPLE__) && !defined(_Soft_X11) && !defined(_Soft_SVGA)
 	ADDSET_SEPARATOR("Screen Settings"),
-#ifdef GLQUAKE
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
-	ADDSET_BOOL("Wide Aspect", vid_wideaspect),
 	ADDSET_BOOL("Vertical Sync", r_swapInterval),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL("Vsync Lag Fix", cl_vsync_lag_fix),
+	ADDSET_BOOL("Vsync Lag Fix", vid_vsync_lag_fix),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh Frequency", mss_selected.freq),
 	ADDSET_ACTION("Apply Changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
-#else
-#ifdef _WIN32
-	ADDSET_ACTION("Change Resolution", System_ChangeResolution, "Change Display Resolution"),
-#endif
-#endif
 #endif
 
 	//Font
-#ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Font"),
 #ifndef __APPLE__
@@ -1402,7 +1198,6 @@ setting settsystem_arr[] = {
 #endif
 	ADDSET_BOOL("Font Smoothing", gl_smoothfont),
 	ADDSET_BASIC_SECTION(),
-#endif
 
 	//Sound & Volume
 	ADDSET_SEPARATOR("Sound & Volume"),
@@ -1418,11 +1213,6 @@ setting settsystem_arr[] = {
 	ADDSET_BOOL		("Sounds When Minimized", sys_inactivesound),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
-#if defined(__linux__) || defined(__FreeBSD__)
-	ADDSET_CUSTOM	("Sound driver", SoundDriverRead, SoundDriverToggle, "Choose sounddriver"),
-	ADDSET_BOOL	("Use legacy drivers", s_uselegacydrivers),
-	ADDSET_ACTION	("Apply Changes", RestartSound, "Restarts sound system."),
-#endif
 
 	//Connection
 	ADDSET_SEPARATOR("Connection"),
@@ -1513,15 +1303,13 @@ void Menu_Options_Init(void) {
 	Cvar_Register(&menu_advanced);
 	Cvar_ResetCurrentGroup();
 
-#ifdef GLQUAKE
 	// this is here just to not get a crash in Cvar_Set
-    mss_selected.freq.name = "menu_tempval_video_freq";
+	mss_selected.freq.name = "menu_tempval_video_freq";
 	mss_previous.freq.name = mss_selected.freq.name;
-    mss_selected.freq.string = NULL;
-    mss_previous.freq.string = NULL;
-    mss_selected.freq.next = &mss_selected.freq;
-    mss_previous.freq.next = &mss_previous.freq;
-#endif
+	mss_selected.freq.string = NULL;
+	mss_previous.freq.string = NULL;
+	mss_selected.freq.next = &mss_selected.freq;
+	mss_previous.freq.next = &mss_previous.freq;
 
 	FL_Init(&configs_filelist, "./ezquake/configs");
 	FL_SetDirUpOption(&configs_filelist, false);

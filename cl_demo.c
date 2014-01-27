@@ -21,18 +21,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <time.h>
 #include "quakedef.h"
-#include "winquake.h"
 #include "movie.h"
 #include "menu_demo.h"
 #include "qtv.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "pmove.h"
 #include "fs.h"
@@ -419,10 +413,6 @@ void CL_WriteServerdata (sizebuf_t *msg)
 
 	// Maintain demo pseudo-compatibility,
 	ignore_extensions = 0;
-#ifdef FTE_PEXT2_VOICECHAT
-	// not really OK, if you receive voice packet then this demo will not be playable by older clients anyway.
-	ignore_extensions |= FTE_PEXT2_VOICECHAT;
-#endif
 
 	#ifdef PROTOCOL_VERSION_FTE2
 	if (cls.fteprotocolextensions2 & ~ignore_extensions)
@@ -2329,9 +2319,7 @@ void CL_Record_f (void)
 		return;
 	}
 
-	if (	(cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)) // that OK.
-		||  (cls.fteprotocolextensions2 & ~FTE_PEXT2_VOICECHAT) // that not OK since if you receive VOIP packet demo will be non compatible, but this warning is annoying.
-	)
+	if (cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES))
 	{
 		Com_Printf ("WARNING: FTE protocol extensions enabled; this demo most likely will be unplayable in older clients. "
 			"Use cl_pext 0 for 100%% compatible demos. But do NOT forget set it to 1 later or you will lack useful features!\n");
@@ -3166,15 +3154,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	time_t t = time(&t);
 	struct tm *ptm = localtime(&t);
 	int width = 0, height = 0; 
-	#ifdef GLQUAKE
-	#ifndef __APPLE__
 	float asp = 0;
-	extern cvar_t r_mode;
-
-	R_GetModeInfo(&width, &height, &asp, r_mode.integer);
-	#endif // __APPLE__
-	#endif // GLQUAKE
-
 
 	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
 	f = fopen(logfile, "a");
@@ -3195,7 +3175,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	fputs(va("\t<client>\n\t\t<name>ezQuake</name><version>%s</version>\n"
 		"\t\t<configuration>%s</configuration><rendering>%s</rendering>\n\t</client>\n",
 		VersionString(), QW_CONFIGURATION, QW_RENDERER), f);
-
+//FIXME width/height doesnt get set, remove vid_mode/r_mode... Is this function used??
 	if (width)
 		fputs(va("\t<screen width=\"%d\" height=\"%d\"/>\n", width, height), f);
 

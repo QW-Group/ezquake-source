@@ -542,7 +542,6 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
                     float attenuation)
 {
 	int	sound_num;
-	int	field_mask;
 	int	i;
 	int	ent;
 	vec3_t	origin;
@@ -587,7 +586,6 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
 
 	channel = (ent<<3) | channel;
 
-	field_mask = 0;
 	if (volume != DEFAULT_SOUND_PACKET_VOLUME)
 		channel |= SND_VOLUME;
 	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION)
@@ -849,10 +847,6 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 	// this will include clients, a packetentities, and
 	// possibly a nails update
 	SV_WriteEntitiesToClient (client, &msg, false);
-
-#ifdef FTE_PEXT2_VOICECHAT
-	SV_VoiceSendPacket(client, &msg);
-#endif
 
 	// copy the accumulated multicast datagram
 	// for this client out to the message

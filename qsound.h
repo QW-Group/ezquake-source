@@ -79,18 +79,6 @@ typedef struct wavinfo_s {
 	int		dataofs;		// chunk starts this many bytes from file start
 } wavinfo_t;
 
-#if defined(__linux__) || defined(__FreeBSD__)
-
-typedef struct qsoundhandler_s {
-	char *name;
-	int (*GetAvail)(void);
-	int (*GetDMAPos)(void);
-	void (*Submit)(unsigned int count);
-	void (*Shutdown)(void);
-} qsoundhandler_t;
-
-#endif
-
 void S_Init (void);
 void S_Shutdown (void);
 void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol,  float attenuation);
@@ -110,20 +98,8 @@ qbool SNDDMA_Init(void);
 int SNDDMA_GetDMAPos(void);
 void SNDDMA_Shutdown(void);
 
-#if defined(__linux__) || defined(__FreeBSD__)
-void SNDDMA_Submit(unsigned int count); // Legacy OSS doesnt use Submit
-#ifdef WITH_PULSEAUDIO
-qbool SNDDMA_Init_PULSEAUDIO(qsoundhandler_t *sd); // Pulseaudio disabled atm...
-#endif
-qbool SNDDMA_Init_ALSA(qsoundhandler_t *sd);
-qbool SNDDMA_Init_ALSA_Legacy(qsoundhandler_t *sd);
-qbool SNDDMA_Init_OSS(qsoundhandler_t *sd);
-qbool SNDDMA_Init_OSS_Legacy(qsoundhandler_t *sd);
-
-
-#else
+void SNDDMA_BeginPainting(void);
 void SNDDMA_Submit(void);
-#endif
 
 ///////////////////////////////
 
@@ -170,33 +146,5 @@ extern cvar_t		s_stereo;
 extern cvar_t		s_volume;
 extern cvar_t		s_swapstereo;
 extern cvar_t		bgmvolume;
-
-extern float voicevolumemod;
-
-#ifdef FTE_PEXT2_VOICECHAT
-
-void S_Voip_Parse(void);
-void S_Voip_Transmit(unsigned char clc, sizebuf_t *buf);
-void S_Voip_MapChange(void);
-int S_Voip_Loudness(qbool ignorevad);	//-1 for not capturing, otherwise between 0 and 100
-qbool S_Voip_Speaking(unsigned int plno);
-void S_Voip_Ignore(unsigned int plno, qbool ignore);
-
-typedef struct
-{
-	void *(*Init) (int samplerate);			/*create a new context*/
-	void (*Start) (void *ctx);		/*begin grabbing new data, old data is potentially flushed*/
-	unsigned int (*Update) (void *ctx, unsigned char *buffer, unsigned int minbytes, unsigned int maxbytes);	/*grab the data into a different buffer*/
-	void (*Stop) (void *ctx);		/*stop grabbing new data, old data may remain*/
-	void (*Shutdown) (void *ctx);	/*destroy everything*/
-} snd_capture_driver_t;
-
-#else // FTE_PEXT2_VOICECHAT
-
-#define S_Voip_Loudness() -1
-#define S_Voip_Speaking(p) false
-#define S_Voip_Ignore(p,s)
-
-#endif // FTE_PEXT2_VOICECHAT
 
 #endif

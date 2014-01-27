@@ -18,11 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifdef GLQUAKE
 extern float v_blend[4];
 void V_AddLightBlend (float r, float g, float b, float a2);
 void V_AddWaterfog (int contents);		 
-#endif
 
 extern cvar_t v_gamma;
 extern cvar_t v_contrast;

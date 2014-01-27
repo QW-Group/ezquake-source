@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _IMAGE_H
 
 #define _IMAGE_H
-#include "png.h"
+#include <png.h>
 
 #if defined(WITH_PNG) && !defined(WITH_ZLIB)
 #error WITH_PNG requires WITH_ZLIB
@@ -46,27 +46,15 @@ byte *Image_LoadTGA (vfsfile_t *v, const char *path, int matchwidth, int matchhe
 byte *Image_LoadPCX (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 byte *Image_LoadJPEG(vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 png_data *Image_LoadPNG_All (vfsfile_t *vin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height);
-#ifdef GLQUAKE
 // this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
 byte *Image_LoadPCX_As32Bit (vfsfile_t *v, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
-#endif
-
 
 int Image_WritePNG(char *filename, int compression, byte *pixels, int width, int height);
-#ifdef GLQUAKE
 int Image_WritePNGPLTE (char *filename, int compression, byte *pixels,
 						int width, int height, byte *palette);
-#else
-int Image_WritePNGPLTE (char *filename, int compression, byte *pixels,
-						int width, int height, int rowbytes, byte *palette);
-#endif
 int Image_WriteTGA(char *filename, byte *pixels, int width, int height);
 int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height);
-#ifdef GLQUAKE
 int Image_WritePCX (char *filename, byte *data, int width, int height, byte *palette);
-#else
-int Image_WritePCX (char *filename, byte *data, int width, int height, int rowbytes, byte *palette);
-#endif
 
 extern cvar_t image_jpeg_quality_level, image_png_compression_level;
 

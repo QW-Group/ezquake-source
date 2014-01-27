@@ -20,13 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_surf.c: surface-related refresh code
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "rulesets.h"
 #include "utils.h"
 
@@ -809,19 +804,14 @@ void DrawTextureChains (model_t *model, int contents)
 	msurface_t *s;
 	texture_t *t;
 	float *v;
-
 	qbool render_lightmaps = false;
 	qbool doMtex1, doMtex2;
-
 	qbool isLumaTexture;
-
 	qbool draw_fbs, draw_caustics, draw_details;
-
 	qbool can_mtex_lightmaps, can_mtex_fbs;
-
 	qbool draw_mtex_fbs;
-
 	qbool mtex_lightmaps, mtex_fbs;
+	GLint shader, u_world_tex, u_lightmap_tex, u_gamma, u_contrast;
 
 	draw_caustics = underwatertexture && gl_caustics.value;
 	draw_details  = detailtexture && gl_detail.value;
@@ -842,6 +832,19 @@ void DrawTextureChains (model_t *model, int contents)
 		glEnable(GL_FOG);
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	shader = glsl_shaders[SHADER_WORLD].shader;
+	qglUseProgram(shader);
+
+	u_world_tex    = qglGetUniformLocation(shader, "world_tex");
+	u_lightmap_tex = qglGetUniformLocation(shader, "lightmap_tex");
+	u_gamma        = qglGetUniformLocation(shader, "gamma");
+	u_contrast     = qglGetUniformLocation(shader, "contrast");
+
+	qglUniform1i(u_world_tex, 0);
+	qglUniform1i(u_lightmap_tex, 1);
+	qglUniform1f(u_gamma, v_gamma.value);
+	qglUniform1f(u_contrast, v_contrast.value);
 
 	for (i = 0; i < model->numtextures; i++)
 	{
@@ -1039,6 +1042,7 @@ void DrawTextureChains (model_t *model, int contents)
 		if (doMtex2)
 			GL_DisableTMU(GL_TEXTURE2_ARB);
 	}
+	qglUseProgram(0);
 
 	if (gl_mtexable)
 		GL_SelectTexture(GL_TEXTURE0_ARB);
@@ -1535,7 +1539,7 @@ mvertex_t	*r_pcurrentvertbase;
 model_t		*currentmodel;
 
 void BuildSurfaceDisplayList (msurface_t *fa) {
-	int i, lindex, lnumverts, vertpage;
+	int i, lindex, lnumverts;
 	medge_t *pedges, *r_pedge;
 	float *vec, s, t;
 	glpoly_t *poly;
@@ -1543,7 +1547,6 @@ void BuildSurfaceDisplayList (msurface_t *fa) {
 	// reconstruct the polygon
 	pedges = currentmodel->edges;
 	lnumverts = fa->numedges;
-	vertpage = 0;
 
 	// draw texture
 	if (!fa->polys) { // seems map loaded first time, so light maps loaded first time too

@@ -20,14 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "Ctrl.h"
 
-
-#ifdef GLQUAKE
 cvar_t     menu_marked_bgcolor = {"menu_marked_bgcolor", "20 20 20 128", CVAR_COLOR};
 cvar_t     menu_marked_fade = {"menu_marked_fade", "4"};
-#else
-cvar_t     menu_marked_bgcolor = {"menu_marked_bgcolor", "0"};
-#endif
-
 
 #define SLIDER_RANGE 12
 
@@ -130,14 +124,12 @@ void UI_DrawGrayBox(int x, int y, int w, int h)
 	float fade = 1;
 
 	memcpy(c, menu_marked_bgcolor.color, sizeof(byte) * 4);
-#ifdef GLQUAKE
 	if (menu_marked_fade.value) 
 	{
 		fade = 0.5 * (1.0 + sin(menu_marked_fade.value * Sys_DoubleTime())); // this give us sinusoid from 0 to 1
 		fade = 0.5 + (1.0 - 0.5) * fade ; // this give us sinusoid from 0.5 to 1, so no zero alpha
 		fade = bound(0, fade, 1); // guarantee sanity if we mess somewhere
 	}
-#endif
 
 	UI_DrawColoredAlphaBox(x, y, w, h, RGBA_TO_COLOR((fade * c[0]), (fade * c[1]), (fade * c[2]), c[3]));
 }

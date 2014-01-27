@@ -24,7 +24,7 @@
 		Boston, MA  02111-1307, USA
 */
 
-#include "pcre.h"
+#include <pcre.h>
 
 extern cvar_t cl_parsesay;
 extern cvar_t cl_nofake;
@@ -65,10 +65,7 @@ int TP_PlayersNumber(int userid, const char* team);
 // teamcolor & enemycolor
 extern cvar_t cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
 
-#ifdef GLQUAKE
 char *TP_GetSkyGroupName(char *mapname, qbool *system);
-#endif
-
 char *TP_GetMapGroupName(char *mapname, qbool *system);
 char *TP_ParseMacroString (char *s);
 char *TP_ParseFunChars (char *s, qbool chat);

@@ -28,6 +28,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // include frequently used headers
 //#define WITH_DP_MEM
 
+// fixes mingw warning about winsock2.h
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+
 #include "q_shared.h"
 #include "zone.h"
 #ifdef WITH_DP_MEM

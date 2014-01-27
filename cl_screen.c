@@ -24,13 +24,8 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "quakedef.h"
 #include <time.h>
 #include "vx_tracker.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "mvd_utils.h"
 #include "keys.h"
 #include "hud.h"
@@ -38,13 +33,8 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "hud_editor.h"
 #include "utils.h"
 #include "vx_stuff.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "input.h"
 #include "utils.h"
@@ -63,21 +53,8 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "server.h"
 #endif
 
-#ifdef FTE_PEXT2_VOICECHAT
-#include "qsound.h"
-#endif
-
-#ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
-#endif
 
-/*
-#ifdef GLQUAKE
-#define			DEFAULT_SSHOT_FORMAT		"tga"
-#else
-#define			DEFAULT_SSHOT_FORMAT		"pcx"
-#endif
-*/
 #define			DEFAULT_SSHOT_FORMAT		"png"
 
 extern byte	current_pal[768];	// Tonik
@@ -143,11 +120,9 @@ cvar_t	show_speed			= {"show_speed", "0"};
 cvar_t	show_speed_x			= {"show_speed_x", "-1"};
 cvar_t	show_speed_y			= {"show_speed_y", "1"};
 
-#ifdef GLQUAKE
 cvar_t	show_velocity_3d		= {"show_velocity_3d", "0"};
 cvar_t	show_velocity_3d_offset_forward	= {"show_velocity_3d_offset_forward", "2.5"};
 cvar_t	show_velocity_3d_offset_down	= {"show_velocity_3d_offset_down", "5"};
-#endif
 
 cvar_t	show_fps				= {"show_fps", "0"};
 cvar_t	show_fps_x				= {"show_fps_x", "-5"};
@@ -159,7 +134,6 @@ cvar_t	scr_sshot_dir			= {"sshot_dir", ""};
 
 cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 
-#ifdef GLQUAKE
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_autoid				= {"scr_autoid", "5"};
@@ -169,8 +143,6 @@ cvar_t	scr_autoid_barlength	= {"scr_autoid_barlength", "16"};
 cvar_t	scr_autoid_weaponicon	= {"scr_autoid_weaponicon", "1"};
 cvar_t	scr_autoid_scale		= {"scr_autoid_scale", "1"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
-#endif
-
 
 cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n $x10%l$x11 %a/%H %w", CVAR_NONE, OnChange_scr_clock_format};
 cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1"};
@@ -189,14 +161,12 @@ cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2"};
 cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1"};
 
 cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_NONE, OnChange_scr_clock_format};
-#ifdef GLQUAKE
 cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR};
 cvar_t	scr_shownick_scale		 = {"scr_shownick_scale",		"1"};
 cvar_t	scr_shownick_y			 = {"scr_shownick_y",			"0"};
 cvar_t	scr_shownick_x			 = {"scr_shownick_x",			"0"};
 cvar_t  scr_shownick_name_width	 = {"scr_shownick_name_width",	"6"};
 cvar_t  scr_shownick_time		 = {"scr_shownick_time",		"0.8"};
-#endif
 
 void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel);
 cvar_t  scr_weaponstats_order        = {"scr_weaponstats_order",       "&c990sg&r:%2 &c099ssg&r:%3 &c900rl&r:#7 &c009lg&r:%8", CVAR_NONE, OnChange_scr_clock_format};
@@ -216,9 +186,7 @@ cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
 cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.
 cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "10"};	// How much the cursor icon should be offseted from the cursor.
 cvar_t	scr_cursor_iconoffset_y	= {"scr_cursor_iconoffset_y", "0"};
-#ifdef GLQUAKE
 cvar_t	scr_cursor_alpha		= {"scr_cursor_alpha", "1"};
-#endif
 
 cvar_t  scr_showcrosshair       = {"scr_showcrosshair", "1"}; // so crosshair does't affected by +showscores, or vice versa
 cvar_t  scr_notifyalways        = {"scr_notifyalways", "0"}; // don't hide notification messages in intermission
@@ -371,44 +339,22 @@ void SCR_EraseCenterString (void) {
 
 extern	cvar_t		v_idlescale;
 qbool	concussioned = false;
-float	nonwidefov = 0; // Store original fov if vid_wideaspect is used
 
 void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 {
 	float newfov = Q_atof(value);
 
-	if (nonwidefov == 0)
-		nonwidefov = newfov;		// save first fov value to initialize nonwidefov
-
-#ifndef __APPLE__
-#ifdef GLQUAKE
-	if (host_everything_loaded && vid_wideaspect.integer)
-	{
-		newfov = tan((newfov/2)*M_PI/180);
-		newfov = newfov*48/40;				// 3/4 * 16/10
-		newfov = 2 * atan(newfov)*180/M_PI;
-		Com_Printf("vid_wideaspect enabled - fov recalculated to %f\n", newfov);
-	}
-	else if (host_initialized && vid_wideaspect.integer)
-	{
-			nonwidefov = tan((newfov/2)*M_PI/180);
-			nonwidefov = nonwidefov * 40 / 48;
-			nonwidefov = 2 * atan(nonwidefov) * 180 / M_PI;
-	}
-#endif // GLQUAKE
-#endif // __APPLE__
-
 	if (newfov > 140)
-		nonwidefov = newfov = 140;
+		newfov = 140;
 	else if (newfov < 10)
-		nonwidefov = newfov = 10;
+		newfov = 10;
 
 	if (newfov == scr_fov.value) {
 		*cancel = true;
 		return;
 	}
 
-	if ( cbuf_current != &cbuf_svc) {
+	if (cbuf_current != &cbuf_svc) {
 		if (concussioned && !cls.demoplayback) {
 			*cancel = true;
 			return;
@@ -448,27 +394,66 @@ void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel)
 	}
 }
 
-static float CalcFov (float fov_x, float width, float height) {
-	float x;
+static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float height)
+{
+	float t;
+	float fovx;
+	float fovy;
 
-	if (fov_x < 1 || fov_x > 179) {
-		Com_Printf ("CalcFov: Bad fov (%f)", fov_x);
-		Cvar_Set (&scr_fov, "90");
+	if (fov < 10)
+		fov = 10;
+	else if (fov > 140)
+		fov = 140;
+
+	if (width / 4 < height /3)
+	{
+		fovx = fov;
+		t = width / tan(fovx / 360 * M_PI);
+		fovy = atan (height / t) * 360 / M_PI;
+	}
+	else
+	{
+		fovx = fov;
+		t = 4.0 / tan(fovx / 360 * M_PI);
+		fovy = atan (3.0 / t) * 360 / M_PI;
+		t = height / tan(fovy / 360 * M_PI);
+		fovx = atan (width / t) * 360 / M_PI;
 	}
 
-	x = width / tan(fov_x / 360 * M_PI);
-	return atan (height / x) * 360 / M_PI;
+	if (fovx < 10 || fovx > 140)
+	{
+		if (fovx < 10)
+			fovx = 10;
+		else if (fovx > 140)
+			fovx = 140;
+
+		t = width / tan(fovx / 360 * M_PI);
+		fovy = atan (height / t) * 360 / M_PI;
+	}
+
+	if (fovy < 10 || fovy > 140)
+	{
+		if (fovy < 10)
+			fovy = 10;
+		else if (fovy > 140)
+			fovy = 140;
+
+		t = height / tan(fovy / 360 * M_PI);
+		fovx = atan (width / t) * 360 / M_PI;
+	}
+
+	if (fovx < 1 || fovx > 179 || fovy < 1 || fovy > 179)
+		Sys_Error ("CalcFov: Bad fov (%f, %f)", fovx, fovy);
+
+	*fov_x = fovx;
+	*fov_y = fovy;
 }
 
 //Must be called whenever vid changes
 static void SCR_CalcRefdef (void) {
 	float  size;
-#ifdef GLQUAKE
 	int h;
 	qbool full = false;
-#else
-	vrect_t vrect;
-#endif
 
 	scr_fullupdate = 0;             // force a background redraw
 	vid.recalc_refdef = 0;
@@ -491,8 +476,6 @@ static void SCR_CalcRefdef (void) {
 		sb_lines = 24;          // no inventory
 	else
 		sb_lines = 24 + 16 + 8;
-
-#ifdef GLQUAKE
 
 	if (scr_viewsize.value >= 100.0) {
 		full = true;
@@ -531,31 +514,9 @@ static void SCR_CalcRefdef (void) {
 	else
 		r_refdef.vrect.y = (h - r_refdef.vrect.height) / 2;
 
-	r_refdef.fov_x = scr_fov.value;
-	r_refdef.fov_y = CalcFov (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
+	CalcFov (scr_fov.value, &r_refdef.fov_x, &r_refdef.fov_y, r_refdef.vrect.width, r_refdef.vrect.height);
 
 	scr_vrect = r_refdef.vrect;
-
-#else
-
-	r_refdef.fov_x = scr_fov.value;
-	r_refdef.fov_y = CalcFov (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
-
-	// these calculations mirror those in R_Init() for r_refdef, but take noaccount of water warping
-	vrect.x = 0;
-	vrect.y = 0;
-	vrect.width = vid.width;
-	vrect.height = vid.height;
-
-	R_SetVrect (&vrect, &scr_vrect, sb_lines);
-
-	// guard against going from one mode to another that's less than half the vertical resolution
-	scr_con_current = min(scr_con_current, vid.height);
-
-	// notify the refresh of the change
-	R_ViewChanged (&vrect, sb_lines, vid.aspect);
-
-#endif
 }
 
 //Keybinding command
@@ -601,9 +562,9 @@ void SCR_DrawRam (void) {
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 static void draw_accel_bar(int x, int y, int length, int charsize, int pos)
 {
-#ifdef GLQUAKE
 	glPushAttrib(GL_TEXTURE_BIT);
-	glDisable(GL_TEXTURE_2D);
+//	glDisable(GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 
 	// draw the coloured indicator strip
 	//Draw_Fill(x, y, length, charsize, 184);
@@ -637,13 +598,6 @@ static void draw_accel_bar(int x, int y, int length, int charsize, int pos)
 
 
 	glPopAttrib();
-
-#else
-	// draw the coloured indicator strip
-	Draw_Fill(x, y, length, charsize, 184);
-	Draw_Fill(x + length/2 - 2, y, 5, charsize, 152);
-	Draw_Fill(x + pos - 1, y, 3, charsize, 192);
-#endif
 }
 
 void SCR_DrawAccel (void) {
@@ -655,11 +609,7 @@ void SCR_DrawAccel (void) {
 	char cosinus_str[10];
 	if(!player_in_air) return;
 
-#ifdef GLQUAKE
 	charsize = (int) (8.f * vid.height / vid.conheight);
-#else
-	charsize = 8;
-#endif
 	length = vid.width / 3;
 	x = (vid.width - length) / 2;
 	y = vid.height - sb_lines - charsize - 1;
@@ -985,42 +935,14 @@ void SCR_SetUpToDrawConsole (void) {
 
 	if (clearconsole++ < vid.numpages)
 	{
-#ifndef GLQUAKE
-		scr_copytop = 1;
-
-		// Multiview (software)
-		if (!(cl_multiview.value && cls.mvdplayback))
-		{
-			Draw_TileClear (0, (int) scr_con_current, vid.width, vid.height - (int) scr_con_current);
-		}
-#endif
 		Sbar_Changed ();
-	}
-	else if (clearnotify++ < vid.numpages)
-	{
-#ifndef GLQUAKE
-		scr_copytop = 1;
-
-		// Multiview (software)
-		if (!(cl_multiview.value && cls.mvdplayback))
-		{
-			Draw_TileClear (0, 0, vid.width, con_notifylines);
-		}
-#endif
 	}
 	else
 	{
 		con_notifylines = 0;
 	}
 
-#ifndef GLQUAKE
-	{
-		extern cvar_t scr_conalpha;
-		if (!scr_conalpha.value && scr_con_current) {
-			Draw_TileClear(0, 0, vid.width, scr_con_current);
-		}
-	}
-#endif
+	clearnotify++;
 }
 
 void SCR_DrawConsole (void) {
@@ -1054,9 +976,6 @@ void SCR_DrawConsole (void) {
 
 #define AUTOID_WEAPON_OFFSET_Y				AUTOID_HEALTHBAR_OFFSET_Y
 #define AUTOID_WEAPON_OFFSET_X				2
-
-#ifdef GLQUAKE
-
 
 int qglProject (float objx, float objy, float objz, float *model, float *proj, int *view, float* winx, float* winy, float* winz) {
 	float in[4], out[4];
@@ -1367,12 +1286,7 @@ void SCR_DrawAutoID (void)
 	}
 }
 
-
-#endif
-
 /**************************************** chat icon *****************************/
-
-#ifdef GLQUAKE
 
 // qqshka: code is a mixture of autoid and particle engine
 
@@ -1620,8 +1534,6 @@ void DrawCI (void) {
 	}
 }
 
-#endif
-
 // scr_teaminfo 
 // Variable ti_clients and related functions also used by hud_teaminfo in hud_common.c
 ti_player_t ti_clients[MAX_CLIENTS];
@@ -1758,13 +1670,12 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 							col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
 						}
 
-#ifdef GLQUAKE
-						glDisable (GL_TEXTURE_2D);
+						//glDisable (GL_TEXTURE_2D);
+						GL_Bind(whitetexture);
 						glColor4ub(col[0], col[1], col[2], col[3]);
 						glRectf(x, y, x + 3 * FONTWIDTH, y + 1 * FONTWIDTH);
-						glEnable (GL_TEXTURE_2D);
+						//glEnable (GL_TEXTURE_2D);
 						glColor4f(1, 1, 1, 1);
-#endif
 					}
 
 					break;
@@ -1950,7 +1861,6 @@ static void SCR_Draw_TeamInfo(void)
 	if ( !slots_num )
 		return;
 
-#ifdef GLQUAKE
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glColor4f(1, 1, 1, 1);
 	glDisable(GL_ALPHA_TEST);
@@ -1960,7 +1870,6 @@ static void SCR_Draw_TeamInfo(void)
 		glPushMatrix ();
 		glScalef(scale, scale, 1);
 	}
-#endif
 
 	y = vid.height*0.6/scale + scr_teaminfo_y.value;
 
@@ -1975,14 +1884,13 @@ static void SCR_Draw_TeamInfo(void)
 		x += scr_teaminfo_x.value;
 
 		if ( !j ) { // draw frame
-#ifdef GLQUAKE
 			byte	*col = scr_teaminfo_frame_color.color;
-			glDisable (GL_TEXTURE_2D);
+			//glDisable (GL_TEXTURE_2D);
+			GL_Bind(whitetexture);
 			glColor4ub(col[0], col[1], col[2], col[3]);
 			glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-			glEnable (GL_TEXTURE_2D);
+			//glEnable (GL_TEXTURE_2D);
 			glColor4f(1, 1, 1, 1);
-#endif
 		}
 
 		SCR_Draw_TeamInfoPlayer(&ti_clients[i], x, y, maxname, maxloc, false, false);
@@ -1990,7 +1898,6 @@ static void SCR_Draw_TeamInfo(void)
 		y += FONTWIDTH;
 	}
 
-#ifdef GLQUAKE
 	if (scale != 1)
 		glPopMatrix();
 
@@ -1998,7 +1905,6 @@ static void SCR_Draw_TeamInfo(void)
 	glDisable(GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
-#endif
 }
 
 void Parse_TeamInfo(char *s)
@@ -2065,8 +1971,6 @@ void Update_TeamInfo()
 }
 
 /***************************** customizeable shownick *************************/
-
-#ifdef GLQUAKE
 
 static ti_player_t shownick;
 
@@ -2160,10 +2064,11 @@ static void SCR_Draw_ShowNick(void)
 
 	// draw frame
 	col = scr_shownick_frame_color.color;
-	glDisable (GL_TEXTURE_2D);
+	//glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 	glColor4ub(col[0], col[1], col[2], col[3]);
 	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-	glEnable (GL_TEXTURE_2D);
+	//glEnable (GL_TEXTURE_2D);
 	glColor4f(1, 1, 1, 1);
 
 	// draw shownick
@@ -2177,8 +2082,6 @@ static void SCR_Draw_ShowNick(void)
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
 }
-
-#endif
 
 /***************************** weapon stats *************************/
 
@@ -2377,9 +2280,7 @@ static void SCR_Draw_WeaponStats(void)
 	int x, y, w, h;
 	int i;
 
-#ifdef GLQUAKE
 	byte	*col = scr_weaponstats_frame_color.color;
-#endif
 	float	scale = bound(0.1, scr_weaponstats_scale.value, 10);
 
 	if ( !scr_weaponstats.integer || CURRVIEW > 1 )
@@ -2390,7 +2291,6 @@ static void SCR_Draw_WeaponStats(void)
 	if ( i < 0 || i >= MAX_CLIENTS )
 		return;
 
-#ifdef GLQUAKE
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glColor4f(1, 1, 1, 1);
 	glDisable(GL_ALPHA_TEST);
@@ -2401,7 +2301,6 @@ static void SCR_Draw_WeaponStats(void)
 		glPushMatrix ();
 		glScalef(scale, scale, 1);
 	}
-#endif
 
 	y = vid.height*0.6/scale + scr_weaponstats_y.value;
 
@@ -2413,17 +2312,15 @@ static void SCR_Draw_WeaponStats(void)
 	x += scr_weaponstats_x.value;
 
 	// draw frame
-#ifdef GLQUAKE
-	glDisable (GL_TEXTURE_2D);
+//	glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 	glColor4ub(col[0], col[1], col[2], col[3]);
 	glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
-	glEnable (GL_TEXTURE_2D);
+//	glEnable (GL_TEXTURE_2D);
 	glColor4f(1, 1, 1, 1);
-#endif
 
 	SCR_Draw_WeaponStatsPlayer(&ws_clients[i], x, y, false);
 
-#ifdef GLQUAKE
 	if (scale != 1)
 		glPopMatrix();
 
@@ -2431,7 +2328,6 @@ static void SCR_Draw_WeaponStats(void)
 	glDisable(GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor4f(1, 1, 1, 1);
-#endif
 }
 
 void OnChange_scr_weaponstats (cvar_t *var, char *value, qbool *cancel)
@@ -2575,7 +2471,6 @@ void Hud_Add_f(void)
 			elem->contents = func;
 			elem->flags = HUD_FUNC | HUD_ENABLED;
 		} else if (!strcasecmp(a2, "img")) {
-#ifdef GLQUAKE
 			mpic_t *hud_image;
 			int texnum = loadtexture_24bit(a3, LOADTEX_GFX);
 			if (!texnum) {
@@ -2599,10 +2494,6 @@ void Hud_Add_f(void)
 			elem = Hud_NewElement();
 			elem->contents = hud_image;
 			elem->flags = HUD_IMAGE | HUD_ENABLED;
-#else
-			Com_Printf("Hud images not available in software version\n");
-			return;
-#endif
 		*/} else {
 			Com_Printf("\"%s\" is not a valid hud type\n", a2);
 			return;
@@ -2767,8 +2658,6 @@ void Hud_Width_f(void)
 	}
 }
 
-#ifdef GLQUAKE
-
 /*
 void Hud_Elem_Font(hud_element_t *elem)
 {
@@ -2827,7 +2716,6 @@ void Hud_Alpha_f(void)
 			Com_Printf("HudElement \"%s\" not found\n", name);
 	}
 }
-#endif
 
 void Hud_Elem_Blink(hud_element_t *elem)
 {
@@ -3124,25 +3012,19 @@ void SCR_DrawHud (void)
 			{
 				if (!(elem->flags & HUD_IMAGE))
 				{
-#ifdef GLQUAKE
 					int std_charset = char_textures[0];
 					if (elem->charset)
 						char_textures[0] = elem->charset;
 					if (elem->alpha < 1)
 						Draw_AlphaString (x, y, st, elem->alpha);
 					else
-#endif
 						Draw_String (x, y, st);
-#ifdef GLQUAKE
 					char_textures[0] = std_charset;
-#endif
 				}
 				else
-#ifdef GLQUAKE
 					if (elem->alpha < 1)
 						Draw_AlphaPic (x, y, img, elem->alpha);
 					else
-#endif
 						Draw_Pic (x, y, img);
 			}
 		}
@@ -3239,8 +3121,6 @@ qbool Hud_CheckBounds (hud_element_t *elem, int x, int y)
 }*/
 /********************************* TILE CLEAR *********************************/
 
-#ifdef GLQUAKE
-
 void SCR_TileClear (void) {
 	int sb_lines_cleared = (scr_newHud.integer && scr_newHudClear.integer)
 		? 0 : sb_lines; // newhud does not (typically) have solid status bar, so clear the bottom of the screen
@@ -3270,39 +3150,6 @@ void SCR_TileClear (void) {
 	}
 }
 
-#else // GLQUAKE
-
-void SCR_TileClear (void) {
-	if (scr_fullupdate++ < vid.numpages) {	// clear the entire screen
-		scr_copyeverything = 1;
-		Draw_TileClear (0, 0, vid.width, vid.height);
-		Sbar_Changed ();
-	} else {
-		char str[11] = "xxxxxxxxxx";
-		if (scr_viewsize.value < 100) {
-			if (scr_newHud.integer && scr_newHudClear.integer) {
-				Draw_TileClear (0, 0, vid.width, vid.height);
-			}
-			else {
-				// clear background for counters
-				if (show_speed.value)
-					Draw_TileClear(ELEMENT_X_COORD(show_speed), ELEMENT_Y_COORD(show_speed), 10 * 8, 8);
-				if (show_fps.value)
-					Draw_TileClear(ELEMENT_X_COORD(show_fps), ELEMENT_Y_COORD(show_fps), 10 * 8, 8);
-				if (scr_clock.value)
-					Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
-				if (scr_gameclock.value)
-					Draw_TileClear(ELEMENT_X_COORD(scr_gameclock), ELEMENT_Y_COORD(scr_gameclock), 10 * 8, 8);
-				if (scr_democlock.value)
-					Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
-			}
-		}
-	}
-}
-
-#endif // GLQUAKE else
-
-#ifdef GLQUAKE
 //
 // Calculates the cursor scale based on the current screen/text size
 //
@@ -3310,15 +3157,12 @@ static double SCR_GetCursorScale(void)
 {
 	return (double) scr_cursor_scale.value * ((double) vid.width / (double)vid.conwidth);
 }
-#endif // GLQUAKE
 
 static void SCR_DrawCursor(void) 
 {
 	// from in_*.c
 	extern float mouse_x, mouse_y;
-	#ifdef GLQUAKE
     double scale = SCR_GetCursorScale();
-	#endif 
 
 	// Updating cursor location
 	scr_pointer_state.x += mouse_x;
@@ -3339,7 +3183,6 @@ static void SCR_DrawCursor(void)
 	}
 
 	// Always draw the cursor.
-	#ifdef GLQUAKE
 	if (scr_cursor && scr_cursor->texnum)
 	{
 		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, scale);
@@ -3357,19 +3200,6 @@ static void SCR_DrawCursor(void)
 		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20*scale, 10 * scale, c);
         Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y, cursor_x, cursor_y + (20 * scale), 10 * scale, c);
 	}
-	#else // GLQUAKE
-	/*
-	// FIXME: When the cursor is loaded in software, width and height are fine, but when reaching this point it's fucked up!!!
-	if (scr_cursor && scr_cursor->width)
-	{
-		Draw_SPic(cursor_x, cursor_y, scr_cursor, scale);
-	}
-	else
-	*/
-	{
-		Draw_Character(cursor_x - LETTERWIDTH/2, cursor_y - LETTERHEIGHT/2, '+');
-	}
-	#endif // GLQUAKE else
 
 	if (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)
 	{
@@ -3381,54 +3211,23 @@ static void SCR_DrawCursor(void)
 	scr_pointer_state.y_old = scr_pointer_state.y;
 }
 
-static void SCR_VoiceMeter(void)
-{
-#ifdef FTE_PEXT2_VOICECHAT
-
-	extern cvar_t cl_voip_showmeter;
-	extern cvar_t cl_voip_showmeter_x;
-	extern cvar_t cl_voip_showmeter_y;
-
-	float	range;
-	int		loudness;
-	int		w1, w2;
-	int		w = 100;												// random.
-	int		h = 8;													// char size.
-	int		x = cl_voip_showmeter_x.integer + 10;					// random.
-	int		y = cl_voip_showmeter_y.integer + vid.height - h - 10;	// random.
-	
-	if (!cl_voip_showmeter.integer)
-		return;
-
-	loudness = S_Voip_Loudness(cl_voip_showmeter.integer == 2);
-
-	if (loudness < 0)
-		return;
-
-	range = loudness / 100.0f;
-	range = bound(0.0f, range, 1.0f);
-	w1 = range * w;
-	w2 = w - w1;
-	Draw_String (x, y, "mic ");
-	x += 8 * (sizeof("mic ")-1);
-	Draw_AlphaRectangleRGB(x, y, w1, h, 1, true, RGBA_TO_COLOR(255, 0, 0, 255));
-	x += w1;
-	Draw_AlphaRectangleRGB(x, y, w2, h, 1, true, RGBA_TO_COLOR(0, 255, 0, 255));
-
-#endif // FTE_PEXT2_VOICECHAT
-}
-
-void Plug_SBar(void);
-
 void SCR_DrawElements(void) 
 {
-  extern qbool  sb_showscores,  sb_showteamscores;
-  extern cvar_t	scr_menudrawhud;
+	extern qbool  sb_showscores,  sb_showteamscores;
+	extern cvar_t	scr_menudrawhud;
+	GLint u_gamma, u_contrast;
+
+	GLint shader = glsl_shaders[SHADER_HUD].shader;
+	qglUseProgram(shader);
+
+	u_gamma    = qglGetUniformLocation(shader, "gamma");
+	u_contrast = qglGetUniformLocation(shader, "contrast");
+	qglUniform1f(u_gamma, v_gamma.value);
+	qglUniform1f(u_contrast, v_contrast.value);
 
 	if (scr_drawloading) 
 	{
 		SCR_DrawLoading ();
-		Plug_SBar();
 		Sbar_Draw ();
 		HUD_Draw ();		// HUD -> hexum
 	}
@@ -3467,12 +3266,8 @@ void SCR_DrawElements(void)
 				{ 
 					// Do not show if +showscores
 					SCR_DrawPause ();
-					
-					#ifdef GLQUAKE
-					SCR_DrawAutoID ();
-					#endif
 
-					SCR_VoiceMeter();
+					SCR_DrawAutoID ();
 				}
 
 				if (!cl.intermission) 
@@ -3482,15 +3277,13 @@ void SCR_DrawElements(void)
 						Draw_Crosshair ();
 					}
 
-     				if (!sb_showscores && !sb_showteamscores)
+					if (!sb_showscores && !sb_showteamscores)
 					{ 
 						// Do not show if +showscores
 						SCR_Draw_TeamInfo();
 						SCR_Draw_WeaponStats();
 
-						#ifdef GLQUAKE
 						SCR_Draw_ShowNick();
-						#endif
 
 						SCR_CheckDrawCenterString ();
 						SCR_DrawSpeed ();
@@ -3506,11 +3299,9 @@ void SCR_DrawElements(void)
 
 					MVD_Screen ();
 
-					#ifdef GLQUAKE
 					// VULT STATS
 					SCR_DrawAMFstats();
-					#endif
-					
+
 					// VULT DISPLAY KILLS
 					if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
 						VX_TrackerThink();
@@ -3537,7 +3328,6 @@ void SCR_DrawElements(void)
 						SCR_DrawMultiviewBorders();
 					}
 
-					Plug_SBar();
 					Sbar_Draw();
 					HUD_Draw();
 					HUD_Editor_Draw();
@@ -3552,13 +3342,12 @@ void SCR_DrawElements(void)
 			M_Draw ();
 		}
 
-        SCR_DrawCursor();
-    }
+		SCR_DrawCursor();
+	}
+	qglUseProgram(0);
 }
 
 /******************************* UPDATE SCREEN *******************************/
-
-#ifdef GLQUAKE
 
 static void SCR_RenderFrameEnd(void)
 {
@@ -3571,6 +3360,7 @@ static void SCR_RenderFrameEnd(void)
 void SCR_UpdateScreen (void) 
 {
 	static hud_t *hud_netstats = NULL;
+	extern qbool Minimized;
 
 	if (hud_netstats == NULL) // first time
 		hud_netstats = HUD_Find("net");
@@ -3594,18 +3384,12 @@ void SCR_UpdateScreen (void)
 			return;
 		}
 	}
+	// Don't suck up any cpu if minimized.
 
-	#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
-	{	
-		// Don't suck up any cpu if minimized.
-		extern int Minimized;
-
-		if (Minimized) {
-			SCR_RenderFrameEnd();
-			return;
-		}
+	if (Minimized) {
+		SCR_RenderFrameEnd();
+		return;
 	}
-	#endif // _WIN32 or __linux__ or __FreeBSD__
 
 	vid.numpages = 2 + gl_triplebuffer.value;
 
@@ -3636,8 +3420,7 @@ void SCR_UpdateScreen (void)
 	if (vid.recalc_refdef)
 		SCR_CalcRefdef ();
 
-	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value)
-		Sbar_Changed ();
+	Sbar_Changed();
 
 	// Multiview
 	if (cl_multiview.value && cls.mvdplayback)
@@ -3701,8 +3484,6 @@ void SCR_UpdateScreen (void)
 		R_BrightenScreen ();
 	}
 
-	V_UpdatePalette ();
-
 	if (scr_autosshot_countdown)
 		SCR_CheckAutoScreenshot();
 
@@ -3715,136 +3496,6 @@ void SCR_UpdateScreen (void)
 
 	GL_EndRendering ();
 }
-
-#else
-
-void SCR_UpdateScreen (void) 
-{
-	vrect_t vrect;
-
-	if (!scr_initialized)
-		return;                         // not initialized yet
-
-	if (scr_skipupdate || block_drawing)
-		return;
-
-	if (scr_disabled_for_loading) {
-		if (cls.realtime - scr_disabled_time > 20)
-			scr_disabled_for_loading = false;
-		else
-			return;
-	}
-
-#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
-	{	// don't suck up any cpu if minimized
-		extern int Minimized;
-
-		if (Minimized)
-			return;
-	}
-#endif
-
-	scr_copytop = 0;
-	scr_copyeverything = 0;
-
-	host_screenupdatecount ++;  // kazik - HUD -> hexum
-
-	// check for vid changes
-	if (oldfov != scr_fov.value) {
-		oldfov = scr_fov.value;
-		vid.recalc_refdef = true;
-	}
-
-	if (oldscreensize != scr_viewsize.value) {
-		oldscreensize = scr_viewsize.value;
-		vid.recalc_refdef = true;
-	}
-
-	if (oldsbar != cl_sbar.value) {
-		oldsbar = cl_sbar.value;
-		vid.recalc_refdef = true;
-	}
-
-	if (vid.recalc_refdef) {
-		// something changed, so reorder the screen
-		SCR_CalcRefdef ();
-	}
-
-
-	// do 3D refresh drawing, and then update the screen
-	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
-
-	 // Multiview - dont tile over the first view
-	if (!(cl_multiview.value && cls.mvdplayback) ||
-		(cl_multiview.value && cls.mvdplayback && CURRVIEW == 2))
-	{
-		SCR_TileClear ();
-	}
-
-	SCR_SetUpToDrawConsole ();
-
-	// Multiview
-	if (!(cl_multiview.value && cls.mvdplayback))
-	{
-		SCR_EraseCenterString ();
-	}
-
-	// Multiview - Only calculate Refdef once for all the views.
-	if (cl_multiview.value && cls.mvdplayback && CURRVIEW == 1)
-	{
-		SCR_CalcRefdef();
-	}
-
-	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in for linear writes all the time
-
-	VID_LockBuffer ();
-
-	V_RenderView ();
-	VID_UnlockBuffer ();
-
-	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
-
-	SCR_DrawElements();
-
-	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in for linear writes all the time
-	V_UpdatePalette ();
-
-	// update one of three areas
-	if (scr_copyeverything) {
-		vrect.x = 0;
-		vrect.y = 0;
-		vrect.width = vid.width;
-		vrect.height = vid.height;
-		vrect.pnext = 0;
-
-		VID_Update (&vrect);
-	} else if (scr_copytop) {
-		vrect.x = 0;
-		vrect.y = 0;
-		vrect.width = vid.width;
-		vrect.height = vid.height - sb_lines;
-		vrect.pnext = 0;
-
-		VID_Update (&vrect);
-	} else {
-		vrect.x = scr_vrect.x;
-		vrect.y = scr_vrect.y;
-		vrect.width = scr_vrect.width;
-		vrect.height = scr_vrect.height;
-		vrect.pnext = 0;
-
-		VID_Update (&vrect);
-	}
-
-	if (scr_autosshot_countdown)
-		SCR_CheckAutoScreenshot();
-
-	// Multiview
-	if (cls.mvdplayback && cl_multiview.value)
-		SCR_CheckMVScreenshot();
-}
-
-#endif
 
 void SCR_UpdateWholeScreen (void) {
 	scr_fullupdate = 0;
@@ -3875,13 +3526,8 @@ static image_format_t SShot_FormatForName(char *name) {
 
 	ext = COM_FileExtension(name);
 
-#ifdef GLQUAKE
 	if (!strcasecmp(ext, "tga"))
 		return IMAGE_TGA;
-#else
-	if (!strcasecmp(ext, "pcx"))
-		return IMAGE_PCX;
-#endif
 
 #ifdef WITH_PNG
 	else if (!strcasecmp(ext, "png"))
@@ -3904,11 +3550,7 @@ static image_format_t SShot_FormatForName(char *name) {
 #endif
 
 	else
-#ifdef GLQUAKE
 		return IMAGE_TGA;
-#else
-		return IMAGE_PCX;
-#endif
 }
 
 static char *Sshot_SshotDirectory(void) {
@@ -3916,23 +3558,6 @@ static char *Sshot_SshotDirectory(void) {
 
 	strlcpy(dir, FS_LegacyDir(scr_sshot_dir.string), sizeof(dir));
 	return dir;
-}
-
-
-#ifdef GLQUAKE
-
-extern unsigned short ramps[3][256];
-//applies hwgamma to RGB data
-static void applyHWGamma(byte *buffer, int size) {
-	int i;
-
-	if (vid_hwgamma_enabled) {
-		for (i = 0; i < size; i += 3) {
-			buffer[i + 0] = ramps[0][buffer[i + 0]] >> 8;
-			buffer[i + 1] = ramps[1][buffer[i + 1]] >> 8;
-			buffer[i + 2] = ramps[2][buffer[i + 2]] >> 8;
-		}
-	}
 }
 
 int SCR_Screenshot(char *name) {
@@ -3957,7 +3582,6 @@ int SCR_Screenshot(char *name) {
 #ifndef WITH_PNG_STATIC
 		if (QLib_isModuleLoaded(qlib_libpng)) {
 #endif
-			applyHWGamma(buffer, buffersize);
 			success = Image_WritePNG(name, image_png_compression_level.value,
 					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
 				? SSHOT_SUCCESS : SSHOT_FAILED;
@@ -3978,7 +3602,6 @@ int SCR_Screenshot(char *name) {
 #ifndef WITH_JPEG_STATIC
 		if (QLib_isModuleLoaded(qlib_libjpeg)) {
 #endif
-			applyHWGamma(buffer, buffersize);
 			success = Image_WriteJPEG(name, image_jpeg_quality_level.value,
 					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
 				? SSHOT_SUCCESS : SSHOT_FAILED;;
@@ -4001,7 +3624,6 @@ int SCR_Screenshot(char *name) {
 			buffer[i] = buffer[i + 2];
 			buffer[i + 2] = temp;
 		}
-		applyHWGamma(buffer, buffersize);
 		success = Image_WriteTGA(name, buffer, glwidth, glheight)
 					? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
@@ -4009,52 +3631,6 @@ int SCR_Screenshot(char *name) {
 	Q_free(buffer);
 	return success;
 }
-
-#else
-
-int SCR_Screenshot(char *name) {
-	int success = -1;
-	image_format_t format;
-
-// name is fullpath now
-//	name = (*name == '/') ? name + 1 : name;
-
-	format = SShot_FormatForName(name);
-	COM_ForceExtension (name, SShot_ExtForFormat(format));
-
-	D_EnableBackBufferAccess ();	// enable direct drawing of console to back buffer
-
-#ifdef WITH_PNG
-	if (format == IMAGE_PNG) {
-#ifndef WITH_PNG_STATIC
-		if (QLib_isModuleLoaded(qlib_libpng)) {
-#endif
-			success = Image_WritePNGPLTE(name, image_png_compression_level.value,
-					vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
-					? SSHOT_SUCCESS : SSHOT_FAILED;
-#ifndef WITH_PNG_STATIC
-		} else {
-			Com_Printf("Can't take a PNG screenshot without libpng.");
-			if (SShot_FormatForName("noext") == IMAGE_PNG)
-				Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
-			Com_Printf("\n");
-			success = SSHOT_FAILED_QUIET;
-		}
-#endif
-	}
-#endif
-
-	if (format == IMAGE_PCX) {
-		success = Image_WritePCX (name, vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
-					? SSHOT_SUCCESS : SSHOT_FAILED;
-	}
-
-	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in for linear writes all the time
-
-	return success;
-}
-
-#endif
 
 #define MAX_SCREENSHOT_COUNT	1000
 
@@ -4136,10 +3712,8 @@ void SCR_ScreenShot_f (void)
 		{
 			scr_mvsshot_in_progress = false;
 
-			#ifdef GLQUAKE
 			// Make sure all gl calls have been drawn.
 			glFinish();
-			#endif
 		}
 		else
 		{
@@ -4182,10 +3756,8 @@ void SCR_ScreenShot_f (void)
 void SCR_RSShot_f (void) {
 	int success = SSHOT_FAILED;
 	char filename[MAX_PATH];
-#ifdef GLQUAKE
 	int width, height;
 	byte *base, *pixels;
-#endif
 
 	if (CL_IsUploading())
 		return;		// already one pending
@@ -4203,8 +3775,6 @@ void SCR_RSShot_f (void) {
 	Com_Printf ("Remote screenshot requested.\n");
 
 	snprintf(filename, sizeof(filename), "%s/temp/__rsshot__", Sshot_SshotDirectory());
-
-#ifdef GLQUAKE
 
 	width = 400; height = 300;
 	base = (byte *) Q_malloc ((width * height + glwidth * glheight) * 3);
@@ -4226,27 +3796,6 @@ void SCR_RSShot_f (void) {
 		? SSHOT_SUCCESS : SSHOT_FAILED;
 
 	Q_free(base);
-
-#else		//GLQUAKE
-
-	D_EnableBackBufferAccess ();
-
-#ifdef WITH_PNG
-#ifndef WITH_PNG_STATIC
-	if (QLib_isModuleLoaded(qlib_libpng)) {
-#endif
-		success = Image_WritePNGPLTE(filename, 9, vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
-			? SSHOT_SUCCESS : SSHOT_FAILED;
-#ifndef WITH_PNG_STATIC
-	} else
-#endif
-#endif
-	success = Image_WritePCX (filename, vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
-		? SSHOT_SUCCESS : SSHOT_FAILED;
-
-	D_DisableBackBufferAccess();
-
-#endif		//GLQUAKE
 
 	if (success == SSHOT_SUCCESS)
 	{
@@ -4317,9 +3866,7 @@ static void SCR_CheckAutoScreenshot(void) {
 	snprintf (savedname, sizeof(savedname), "%s_%03i%s", filename, num, ext);
 	fullsavedname = va("%s/%s", sshot_dir, savedname);
 
-#ifdef GLQUAKE
 	glFinish();
-#endif
 
 	if ((SCR_Screenshot(fullsavedname)) == SSHOT_SUCCESS)
 		Com_Printf("Match scoreboard saved to %s\n", savedname);
@@ -4342,7 +3889,6 @@ void SCR_Movieshot(char *name)
 	{
 		int size = 0;
 		// Capturing a movie.
-		#ifdef GLQUAKE
 		int i;
 		byte *buffer, temp;
 
@@ -4352,7 +3898,6 @@ void SCR_Movieshot(char *name)
 		// Allocate the RGB buffer, get the pixels from GL and apply the gamma.
 		buffer = (byte *) Q_malloc (size);
 		glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-		applyHWGamma (buffer, size);
 
 		// We now have a byte buffer with RGB values, but
 		// before we write it to the file, we need to swap
@@ -4367,32 +3912,6 @@ void SCR_Movieshot(char *name)
 			buffer[i] = buffer[i+2];
 			buffer[i+2] = temp;
 		}
-
-		#else // GLQUAKE
-
-		int i, j, rowp;
-		byte *buffer, *p;
-
-		size = vid.width * vid.height * 3;
-		buffer = (byte *) Q_malloc (size);
-
-		D_EnableBackBufferAccess ();
-
-		p = buffer;
-		for (i = vid.height - 1; i >= 0; i--)
-		{
-			rowp = i * vid.rowbytes;
-			for (j = 0; j < vid.width; j++)
-			{
-				*p++ = current_pal[vid.buffer[rowp]*3+2];
-				*p++ = current_pal[vid.buffer[rowp]*3+1];
-				*p++ = current_pal[vid.buffer[rowp]*3+0];
-				rowp++;
-			}
-		}
-
-		D_DisableBackBufferAccess ();
-		#endif // GLQUAKE
 
 		// Write the buffer to video.
 		Capture_WriteVideo (buffer, size);
@@ -4453,13 +3972,11 @@ void SCR_Init (void)
 	Cvar_Register (&scr_conspeed);
 	Cvar_Register (&scr_printspeed);
 
-#ifdef GLQUAKE
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 	Cvar_Register (&gl_triplebuffer);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&r_chaticons_alpha);
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_showram);
@@ -4490,17 +4007,14 @@ void SCR_Init (void)
 	Cvar_Register (&show_speed_x);
 	Cvar_Register (&show_speed_y);
 
-#ifdef GLQUAKE
 	Cvar_Register (&show_velocity_3d);
 	Cvar_Register (&show_velocity_3d_offset_forward);
 	Cvar_Register (&show_velocity_3d_offset_down);
-#endif
 
 	Cvar_Register (&show_fps);
 	Cvar_Register (&show_fps_x);
 	Cvar_Register (&show_fps_y);
 
-#ifdef GLQUAKE
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_autoid_weapons);
 	Cvar_Register (&scr_autoid_namelength);
@@ -4508,7 +4022,6 @@ void SCR_Init (void)
 	Cvar_Register (&scr_autoid_weaponicon);
 	Cvar_Register (&scr_autoid_scale);
 	Cvar_Register (&scr_coloredfrags);
-#endif
 	Cvar_Register (&scr_teaminfo_order);
 	Cvar_Register (&scr_teaminfo_align_right);
 	Cvar_Register (&scr_teaminfo_frame_color);
@@ -4525,14 +4038,12 @@ void SCR_Init (void)
 	Cvar_Register (&scr_teaminfo_show_self);
 	Cvar_Register (&scr_teaminfo);
 	Cvar_Register (&scr_shownick_order);
-#ifdef GLQUAKE
 	Cvar_Register (&scr_shownick_frame_color);
 	Cvar_Register (&scr_shownick_scale);
 	Cvar_Register (&scr_shownick_y);
 	Cvar_Register (&scr_shownick_x);
 	Cvar_Register (&scr_shownick_name_width);
 	Cvar_Register (&scr_shownick_time);
-#endif
 	Cvar_Register (&scr_weaponstats_order);
 	Cvar_Register (&scr_weaponstats_align_right);
 	Cvar_Register (&scr_weaponstats_frame_color);
@@ -4559,9 +4070,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_cursor_scale);
 	Cvar_Register (&scr_cursor_iconoffset_x);
 	Cvar_Register (&scr_cursor_iconoffset_y);
-#ifdef GLQUAKE
 	Cvar_Register (&scr_cursor_alpha);
-#endif
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
@@ -4988,55 +4497,31 @@ void SCR_MV_DrawPowerups (int x, int y)
 		&& cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
 	{
 		// Pentagram + Ring.
-		#ifdef GLQUAKE
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis_invuln->width) / 2,
 			y - sb_face_invis_invuln->height / 2,
 			sb_face_invis_invuln, 0.4);
-		#else
-		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-			y - sb_face_invuln->height / 2,
-			sb_face_invis_invuln);
-		#endif
 	}
 	else if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
 	{
 		// Pentagram.
-		#ifdef GLQUAKE
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
 			y - sb_face_invuln->height / 2,
 			sb_face_invuln, 0.4);
-		#else
-		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-			y - sb_face_invuln->height / 2,
-			sb_face_invuln);
-		#endif
 	}
 	else if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
 	{
 		// Ring.
-		#ifdef GLQUAKE
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis->width) / 2,
 			y - sb_face_invis->height / 2,
 			sb_face_invis, 0.4);
-		#else
-		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-			y - sb_face_invuln->height / 2,
-			sb_face_invis);
-		#endif
 	}
 
 	if (cl.stats[STAT_ITEMS] & IT_QUAD)
 	{
 		// Ring.
-		#ifdef GLQUAKE
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_quad->width) / 2,
 			y - sb_face_quad->height / 2,
 			sb_face_quad, 0.4);
-		#else
-		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_quad->width) / 2,
-			y - sb_face_quad->height / 2,
-			sb_face_quad);
-		#endif
 	}
 }
 
@@ -5405,7 +4890,7 @@ void SCR_DrawMVStatus(void)
 
 void SCR_DrawMVStatusStrings(void)
 {
-	int xb = 0, yb = 0, xc = 0, yc = 0, xd = 0, yd = 0;
+	int xb = 0, yb = 0, xd = 0, yd = 0;
 	char strng[80];
 	char weapons[40];
 	char weapon[3];
@@ -5656,8 +5141,6 @@ void SCR_DrawMVStatusStrings(void)
 	{
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 2;
-			yc = vid.height / 2;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 	}
@@ -5670,8 +5153,6 @@ void SCR_DrawMVStatusStrings(void)
 				// Top
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height / 2 - sb_lines - 16;
-				xc = vid.width / 2;
-				yc = vid.height / 4;
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height / 2 - sb_lines - 8;
 			}
@@ -5680,8 +5161,6 @@ void SCR_DrawMVStatusStrings(void)
 				// Bottom
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height - sb_lines - 16;
-				xc = vid.width / 2;
-				yc = vid.height / 2 + vid.height / 4;
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height - sb_lines - 8;
 			}
@@ -5693,8 +5172,6 @@ void SCR_DrawMVStatusStrings(void)
 				// Main
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height / 2 - sb_lines - 16;
-				xc = -2;
-				yc = -2;
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height / 2 - sb_lines - 8;
 			}
@@ -5703,15 +5180,6 @@ void SCR_DrawMVStatusStrings(void)
 				// Top right
 				xb = vid.width - strlen(strng) * 8; // hud
 				yb = vid.height / 3 - 16;
-				if (cl_mvinsetcrosshair.value)
-				{
-					xc = vid.width - (double)(vid.width / 3) / 2 - 2;
-					yc = (vid.height / 3) / 2;
-				}
-				else
-				{
-					xc = yc = -2;
-				}
 				xd = vid.width - strlen(weapons) * 8 - 70; // weapons
 				yd = vid.height / 3 - 8;
 			}
@@ -5724,8 +5192,6 @@ void SCR_DrawMVStatusStrings(void)
 			// top
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
-			xc = vid.width / 2;
-			yc = vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height / 2 - sb_lines - 8;
 		}
@@ -5734,8 +5200,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Bottom left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 4;
-			yc = vid.height / 2 + vid.height/4;
 			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
@@ -5744,8 +5208,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Bottom right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 2 + vid.width / 4;
-			yc = vid.height / 2 + vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
@@ -5757,8 +5219,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Top left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
-			xc = vid.width / 4;
-			yc = vid.height / 4;
 			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
 			yd = vid.height/2 - sb_lines - 8;
 		}
@@ -5767,8 +5227,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Top right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
-			xc = vid.width / 2 + vid.width / 4;
-			yc = vid.height / 4;
 			xd = vid.width - strlen(weapons) - 25 * 8 - 8;
 			yd = vid.height - sb_lines - (vid.height / 1.9);
 			xd = vid.width - strlen(weapons) * 8 - 84;
@@ -5779,18 +5237,6 @@ void SCR_DrawMVStatusStrings(void)
 			// Bottom left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 4;
-			yc = vid.height / 2 + vid.height / 4;
-			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
-			yd = vid.height - sb_lines - 8;
-		}
-		else if (CURRVIEW == 1)
-		{
-			// Bottom right
-			xb = vid.width - strlen(strng) * 8 - 12;
-			yb = vid.height - sb_lines - 16;
-			xc = vid.width / 2 + vid.width / 4;
-			yc = vid.height / 2 + vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
@@ -5879,10 +5325,8 @@ void Hud_262Init (void)
 	Cmd_AddCommand ("hud262_bg",Hud_Bg_f);
 	Cmd_AddCommand ("hud262_move",Hud262_Move_f);
 	Cmd_AddCommand ("hud262_width",Hud_Width_f);
-#ifdef GLQUAKE
 	//Cmd_AddCommandTrig ("hud_262font",Hud_Font_f);
 	Cmd_AddCommand ("hud262_alpha",Hud_Alpha_f);
-#endif
 	Cmd_AddCommand ("hud262_blink",Hud_Blink_f);
 	Cmd_AddCommand ("hud262_disable",Hud_Disable_f);
 	Cmd_AddCommand ("hud262_enable",Hud_Enable_f);

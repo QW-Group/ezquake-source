@@ -23,7 +23,6 @@ $Id: EX_browser_ping.c,v 1.40 2007-10-27 08:51:12 dkure Exp $
 
 #include <winsock2.h>
 #include "quakedef.h"
-#include "winquake.h"
 
 #else
 
@@ -346,47 +345,7 @@ static void ICMP_FillData(ICMP_packet_t *packet, int datasize)
 void SB_RootInit(void)
 {
     u_int arg;
-
-	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET) {
-		/* disconnect: SOCK_RAW is only avail for root on linux
-		 * and for administrator users on winxp.
-		 * for case of vista it seems raw sockets are forbidden even for administratos
-		 * BTW, NewPing (aka no SOCK_RAW ping) is unstable on linux and very inaccurate :E
-		 */
-		Com_DPrintf ("SB_RootInit: socket: (%i): %s\n", qerrno, strerror(qerrno));
-	}
-
-#ifdef _WIN32
-	if (sock == INVALID_SOCKET || COM_CheckParm("-nosockraw") || sb_nosockraw.integer || WinVISTA || Win7) {
-#else
-	if (sock < 0 || COM_CheckParm("-nosockraw") || sb_nosockraw.integer) {
-#endif
-		useNewPing = true;
-		return;
-	}
-
-#ifndef _WIN32
-	if ((fcntl (sock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
-		Com_Printf ("SB_RootInit: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
-		closesocket(sock);
-	}
-#endif
-
-    arg = 1;
-	if (ioctlsocket (sock, FIONBIO, (u_long *)&arg) == -1) { // make asynchronous
-		Com_Printf ("SB_RootInit: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
-		//closesocket(newsocket);
-	}
-
-    arg = 1;
-	if (setsockopt (sock, SOL_SOCKET, SO_DONTLINGER, (char*)&arg, sizeof(int)) == -1) {
-		// disconnect: always error 10042 @ WinXP inside VMware 
-		Com_DPrintf ("SB_RootInit: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
-	}
-	/*
-	SO_DONTLINGER - razreshaet zakritie bez ojidaniya pri nalichii ne otoslanoi informacii
-	*/
-
+    useNewPing = true;
 } 
 
 /**
@@ -501,7 +460,6 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     struct sockaddr_in dest,from;
     int bread,datasize;
     int fromlen = sizeof(from);
-	char *dest_ip;
     ICMP_packet_t icmp_packet;
 	IP_packet_t   ip_packet;
 
@@ -567,7 +525,6 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
                 memset(&dest, 0, sizeof(dest));
                 dest.sin_addr.s_addr = host->ip;
                 dest.sin_family = AF_INET;
-                dest_ip = inet_ntoa(dest.sin_addr);
 
                 bwrote = sendto(sock, (char *) icmp_packet.data, datasize, 0,
 								(struct sockaddr*)&dest, sizeof(dest));
@@ -610,12 +567,11 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 			// Make sure the reply is ok.
             if (icmp_answer && (randomizer == icmp_answer->randomizer))
             {
-                int index, phase;
+                int index;
                 int fromhost;
 
                 fromhost = icmp_answer->id;
                 index    = icmp_answer->index;
-                phase    = icmp_answer->phase;
                 if ((host_list.hosts[index].ip == fromhost)
 						&& (host_list.hosts[index].ping >= 0))
                 {
@@ -870,7 +826,6 @@ void SB_Test_GetPackets(void)
     struct sockaddr_in dest,from;
     int bread;
     int fromlen = sizeof(from);
-    char *dest_ip;
     IP_packet_t ip_packet;
 //    int bwrote;
 
@@ -894,7 +849,6 @@ void SB_Test_GetPackets(void)
 
     dest.sin_addr.s_addr = addr;
     dest.sin_family = AF_INET;
-    dest_ip = inet_ntoa(dest.sin_addr);
 
     while (1)
     {
@@ -929,9 +883,7 @@ void SB_Test_SendPacket(void)
 //    int bread,
     int datasize;
 //   int fromlen = sizeof(from);
-    char *dest_ip;
 	ICMP_packet_t icmp_packet;
-    int bwrote;
 //    int ret;
 
     //u_long arg;
@@ -957,7 +909,6 @@ void SB_Test_SendPacket(void)
 
     dest.sin_addr.s_addr = addr;
     dest.sin_family = AF_INET;
-    dest_ip = inet_ntoa(dest.sin_addr);
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(icmp_packet.hdr);  
 
@@ -973,7 +924,7 @@ void SB_Test_SendPacket(void)
     icmp_packet.hdr.i_seq = sb_test_outgoing_sequence++;
     icmp_packet.hdr.i_cksum = ICMP_Checksum(&icmp_packet, datasize);
 
-    bwrote = sendto(sock, (char *) icmp_packet.data,datasize,0,(struct sockaddr*)&dest,
+    sendto(sock, (char *) icmp_packet.data,datasize,0,(struct sockaddr*)&dest,
                     sizeof(dest));
 }
 

@@ -24,8 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __DRAW_H__
 #define __DRAW_H__
 
-#ifdef GLQUAKE
-
 #define MAX_CHARSETS 16
 extern int		char_textures[MAX_CHARSETS];
 
@@ -37,17 +35,6 @@ typedef struct
 } mpic_t;
 
 void Draw_AdjustConback (void);
-
-#else
-typedef struct
-{
-	int			width;
-	short		height;
-	byte		alpha;
-	byte		pad;
-	byte		data[4];	// variable sized
-} mpic_t;
-#endif // GLQUAKE
 
 extern	mpic_t		*draw_disc;	// also used on sbar
 

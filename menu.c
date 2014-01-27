@@ -15,9 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: menu.c,v 1.93 2007-10-26 07:55:45 dkure Exp $
-
 */
 
 #ifndef _WIN32
@@ -25,10 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/stat.h>
 #endif
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#endif
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
@@ -100,8 +95,6 @@ void M_Main_Key (int key);
 
 void M_Menu_Help_f (void);
 
-qbool Plug_Menu_Event(int eventtype, int param);
-
 #define QUAKE_ID_PLAQUE_PATH	"gfx/qplaque.lmp"
 
 m_state_t m_state;
@@ -123,14 +116,9 @@ typedef struct menu_window_s {
 //=============================================================================
 /* Support Routines */
 
-#ifdef GLQUAKE
 cvar_t     scr_scaleMenu = {"scr_scaleMenu","1"};
 int        menuwidth = 320;
 int        menuheight = 240;
-#else
-#define menuwidth vid.width
-#define menuheight vid.height
-#endif
 
 cvar_t     scr_centerMenu = {"scr_centerMenu","1"};
 cvar_t     menu_ingame = {"menu_ingame", "1"};
@@ -228,7 +216,6 @@ void M_FindKeysForCommand (const char *command, int *twokeys) {
 
 void M_Unscale_Menu(void)
 {
-#ifdef GLQUAKE
 	// do not scale this menu
 	if (scr_scaleMenu.value) 
 	{
@@ -238,14 +225,12 @@ void M_Unscale_Menu(void)
 		glLoadIdentity ();
 		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
 	}
-#endif
 }
 
 // will apply menu scaling effect for given window region
 // scr_scaleMenu 1 uses glOrtho function and we use the same algorithm in here
 static void M_Window_Adjust(const menu_window_t *original, menu_window_t *scaled)
 {
-#ifdef GLQUAKE
 	double sc_x, sc_y; // scale factors
 
 	if (scr_scaleMenu.value)
@@ -261,9 +246,6 @@ static void M_Window_Adjust(const menu_window_t *original, menu_window_t *scaled
 	{
 		memcpy(scaled, original, sizeof(menu_window_t));
 	}
-#else
-	memcpy(scaled, original, sizeof(menu_window_t));
-#endif
 }
 
 // this function will look at window borders and current mouse cursor position
@@ -972,7 +954,7 @@ int        loadable[MAX_SAVEGAMES];
 menu_window_t load_window, save_window;
 
 void M_ScanSaves (char *sp_gamedir) {
-	int i, j, version;
+	int i, j;
 	char name[MAX_OSPATH];
 	vfsfile_t *f;
 
@@ -984,7 +966,6 @@ void M_ScanSaves (char *sp_gamedir) {
 		if (!(f = FS_OpenVFS(name, "rb", FS_GAME_OS)))
 			continue;
 		VFS_GETS(f, name, sizeof(name));
-		version = atoi(name);
 		VFS_GETS(f, name, sizeof(name));
 		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
 
@@ -1290,17 +1271,13 @@ void M_Menu_Demos_f (void)
 
 void M_Init (void) {
 	extern cvar_t menu_marked_bgcolor;
-#ifdef GLQUAKE
 	extern cvar_t menu_marked_fade;
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
 	Cvar_Register (&scr_centerMenu);
 	Cvar_Register (&menu_ingame);
-#ifdef GLQUAKE
 	Cvar_Register (&scr_scaleMenu);
 	Cvar_Register (&menu_marked_fade);
-#endif
 
 	Cvar_Register (&menu_marked_bgcolor);
 	Browser_Init();
@@ -1342,13 +1319,7 @@ void M_Draw (void) {
 
 		if (SCR_NEED_CONSOLE_BACKGROUND) {
 			Draw_ConsoleBackground (scr_con_current);
-#if (!defined GLQUAKE && defined _WIN32)
-			VID_UnlockBuffer ();
-#endif
 			CL_S_ExtraUpdate ();
-#if (!defined GLQUAKE && defined _WIN32)
-			VID_LockBuffer ();
-#endif
 		} else {
 			// if you don't like fade in ingame menu, uncomment this
 			// if (m_state != m_ingame && m_state != m_democtrl)
@@ -1360,8 +1331,7 @@ void M_Draw (void) {
 		m_recursiveDraw = false;
 	}
 
-#ifdef GLQUAKE
-	if (scr_scaleMenu.value && m_state != m_plugin) {
+	if (scr_scaleMenu.value) {
 		menuwidth = 320;
 		menuheight = min (vid.height, 240);
 		glMatrixMode(GL_PROJECTION);
@@ -1371,7 +1341,6 @@ void M_Draw (void) {
 		menuwidth = vid.width;
 		menuheight = vid.height;
 	}
-#endif
 
 	if (scr_centerMenu.value)
 		m_yofs = (menuheight - 200) / 2;
@@ -1394,32 +1363,23 @@ void M_Draw (void) {
 		case m_help:			M_Help_Draw(); break;
 		case m_quit:			M_Quit_Draw(); break;
 		case m_demos:			Menu_Demo_Draw(); break;
-		case m_plugin:			Plug_Menu_Event(0, (int)(realtime*1000)); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control:		M_Menu_MP3_Control_Draw(); break;
 		case m_mp3_playlist:	M_Menu_MP3_Playlist_Draw(); break;
 #endif
 	}
 
-#ifdef GLQUAKE
 	if (scr_scaleMenu.value) {
 		glMatrixMode (GL_PROJECTION);
 		glLoadIdentity ();
 		glOrtho  (0, vid.width, vid.height, 0, -99999, 99999);
 	}
-#endif
 
 	if (m_entersound) {
 		S_LocalSound ("misc/menu2.wav");
 		m_entersound = false;
 	}
-#if (!defined GLQUAKE && defined _WIN32)
-	VID_UnlockBuffer ();
-#endif
 	CL_S_ExtraUpdate ();
-#if (!defined GLQUAKE && defined _WIN32)
-	VID_LockBuffer ();
-#endif
 }
 
 void M_Keydown (int key, wchar unichar) {
@@ -1439,7 +1399,6 @@ void M_Keydown (int key, wchar unichar) {
 		case m_help:			Menu_Help_Key(key, unichar); return;
 		case m_quit:			M_Quit_Key(key); return;
 		case m_demos:			Menu_Demo_Key(key, unichar); break;
-		case m_plugin:			Plug_Menu_Event(1, key); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control: 	M_Menu_MP3_Control_Key(key); break;
 		case m_mp3_playlist: 	M_Menu_MP3_Playlist_Key(key); break;

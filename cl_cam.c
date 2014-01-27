@@ -26,13 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "pmove.h"
 #include "utils.h"
@@ -1011,11 +1006,7 @@ void CL_Autotrack_f(void)
 int Cam_TrackNum(void) 
 {
 	// What does this do?!?! mvlatch... /Cokeman 
-	if (cl_multiview.value && !locked 
-#ifndef GLQUAKE
-		&& CURRVIEW == 2
-#endif
-		) 
+	if (cl_multiview.value && !locked) 
 	{
 		mvlatch = cl_multiview.value;
 		cl_multiview.value = 0;

@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "qsound.h"
 #ifdef _WIN32
-#include "winquake.h"
 #include "movie.h" //joe: capturing audio
 #endif
 
@@ -43,11 +42,6 @@ float voicevolumemod = 1; // voice volume modifier.
 
 int snd_linear_count;
 
-#ifdef _WIN32
-extern char *DSoundError (int error);
-#endif
-
-#ifndef id386
 static void Snd_WriteLinearBlastStereo16 (void)
 {
 	int val, i;
@@ -59,9 +53,6 @@ static void Snd_WriteLinearBlastStereo16 (void)
 		snd_out[i+1] = bound (-32768, val, 32767);
 	}
 }
-#else
-void Snd_WriteLinearBlastStereo16 (void);
-#endif
 
 static void Snd_WriteLinearBlastStereo16_SwapStereo (void)
 {
@@ -79,37 +70,13 @@ static void S_TransferStereo16 (int endtime)
 {
 	int lpaintedtime, lpos;
 	DWORD *pbuf;
-#ifdef _WIN32
-	int reps;
-	DWORD dwSize = 0,dwSize2 = 0, *pbuf2;
-	HRESULT hresult;
-#endif
 
 	snd_vol = (s_volume.value * voicevolumemod) * 256;
 
 	snd_p = (int *) paintbuffer;
 	lpaintedtime = paintedtime;
 
-#ifdef _WIN32
-	if (pDSBuf) {
-		reps = 0;
-
-		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, (void **) &pbuf, &dwSize,
-					(void **) &pbuf2, &dwSize2, 0)) != DS_OK) {
-			if (hresult != DSERR_BUFFERLOST) {
-				Com_Printf ("S_TransferStereo16: Lock failed with error '%s'\n", DSoundError(hresult));
-				S_Shutdown ();
-				return;
-			} else {
-				pDSBuf->lpVtbl->Restore (pDSBuf);
-			}
-
-			if (++reps > 2)
-				return;
-		}
-	} else
-#endif
-		pbuf = (DWORD *)shm->buffer;
+	pbuf = (DWORD *)shm->buffer;
 
 	while (lpaintedtime < endtime) {
 
@@ -144,21 +111,12 @@ static void S_TransferStereo16 (int endtime)
 #endif
 	}
 
-#ifdef _WIN32
-	if (pDSBuf)
-		pDSBuf->lpVtbl->Unlock(pDSBuf, pbuf, dwSize, NULL, 0);
-#endif
 }
 
 static void S_TransferPaintBuffer(int endtime)
 {
 	int out_idx, out_mask, count, step, val, snd_vol, *p;
 	DWORD *pbuf;
-#ifdef _WIN32
-	int reps;
-	DWORD dwSize = 0, dwSize2, *pbuf2;
-	HRESULT hresult;
-#endif
 
 	if (shm->format.width == 2 && shm->format.channels == 2) {
 		S_TransferStereo16 (endtime);
@@ -172,26 +130,7 @@ static void S_TransferPaintBuffer(int endtime)
 	step = 3 - shm->format.channels;
 	snd_vol = (s_volume.value * voicevolumemod) * 256;
 
-#ifdef _WIN32
-	if (pDSBuf) {
-		reps = 0;
-
-		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, (void **) &pbuf, &dwSize,
-					(void **) &pbuf2,&dwSize2, 0)) != DS_OK) {
-			if (hresult != DSERR_BUFFERLOST) {
-				Com_Printf ("S_TransferPaintBuffer: Lock failed with error '%s'\n", DSoundError(hresult));
-				S_Shutdown ();
-				return;
-			} else {
-				pDSBuf->lpVtbl->Restore (pDSBuf);
-			}
-
-			if (++reps > 2)
-				return;
-		}
-	} else
-#endif
-		pbuf = (DWORD *)shm->buffer;
+	pbuf = (DWORD *)shm->buffer;
 
 	if (shm->format.width == 2) {
 		short *out = (short *) pbuf;
@@ -219,22 +158,6 @@ static void S_TransferPaintBuffer(int endtime)
 		}
 	}
 
-#ifdef _WIN32
-	if (pDSBuf) {
-		DWORD dwNewpos, dwWrite;
-		int il = paintedtime;
-		int ir = endtime - paintedtime;
-
-		ir += il;
-
-		pDSBuf->lpVtbl->Unlock(pDSBuf, pbuf, dwSize, NULL, 0);
-
-		pDSBuf->lpVtbl->GetCurrentPosition(pDSBuf, &dwNewpos, &dwWrite);
-
-//		if ((dwNewpos >= il) && (dwNewpos <= ir))
-//			Com_Printf ("%d-%d p %d c\n", il, ir, dwNewpos);
-	}
-#endif
 }
 
 
@@ -244,7 +167,6 @@ CHANNEL MIXING
 ===============================================================================
 */
 
-#ifndef id386
 static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 {
 	int data, i;
@@ -268,9 +190,6 @@ static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 
 	ch->pos += count;
 }
-#else
-void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int endtime);
-#endif
 
 static void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 {

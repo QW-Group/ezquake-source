@@ -21,15 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <time.h>
 #include "quakedef.h"
-#include "winquake.h"
 #include "sha1.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "config_manager.h"
 #include "rulesets.h"
@@ -847,30 +841,6 @@ void CL_Userdir_f (void)
 }
 // <-- QW262
 
-#ifdef _WIN32
-void CL_Windows_f (void) 
-{
-	#ifdef GLQUAKE
-
-	//
-	// WIN OpenGL version
-	//
-	if (!ActiveApp)
-		return; // alredy not active
-
-	ShowWindow(mainwindow, SW_MINIMIZE);
-
-	#else // Software
-
-	//
-	// software version
-	//
-	SendMessage(mainwindow, WM_SYSKEYUP, VK_TAB, 1 | (0x0F << 16) | (1<<29));
-
-	#endif // GLQUAKE else
-}
-#endif // WIN32
-
 void CL_Serverinfo_f (void) 
 {
 	#ifndef CLIENTONLY
@@ -974,9 +944,7 @@ void CL_InitCommands (void) {
 	Cmd_AddCommand ("fly", NULL);
 
 	//  Windows commands
-#ifdef _WIN32
-	Cmd_AddCommand ("windows", CL_Windows_f);
-#endif
+	Cmd_AddCommand ("windows", VID_Minimize);
 
 	Cmd_AddCommand ("z_ext_list", CL_Z_Ext_List_f);
 
@@ -1089,7 +1057,6 @@ usermainbuttons_t CL_GetLastCmd (void) {
    usermainbuttons_t ret;
    static int last_impulse; 
    static double impulse_time; 
-   int imp; 
 
 //   if (!show_input.value) 
 //      return; 
@@ -1101,13 +1068,9 @@ usermainbuttons_t CL_GetLastCmd (void) {
       last_impulse = cmd.impulse; 
       impulse_time = cls.realtime; 
    } 
-   if (last_impulse && cls.realtime >= impulse_time && 
-      cls.realtime <= impulse_time + 0.2) 
-      imp = last_impulse; 
-   else { 
-      imp = 0; 
+   if (!(last_impulse && cls.realtime >= impulse_time && 
+      cls.realtime <= impulse_time + 0.2)) 
       last_impulse = 0; 
-   } 
 
    ret.attack = cmd.buttons & BUTTON_ATTACK;
    ret.jump = cmd.buttons & BUTTON_JUMP;

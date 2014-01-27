@@ -17,13 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "cdaudio.h"
 #include "stats_grid.h"
 #include "sbar.h"
@@ -473,11 +468,7 @@ static void NQD_ParseServerData (void)
 
 //	CL_ClearParticles (); @ZQ@
 	CL_FindModelNumbers ();
-#ifdef GLQUAKE
 	R_NewMap (false);
-#else
-	R_NewMap ();
-#endif
 	TP_NewMap ();
 	MT_NewMap ();
 	Stats_NewMap ();
@@ -485,9 +476,7 @@ static void NQD_ParseServerData (void)
 	// Reset the status grid.
 	StatsGrid_Remove (&stats_grid);
 	StatsGrid_ResetHoldItems ();
-#ifdef GLQUAKE
 	HUD_NewMap ();
-#endif
 
 	Hunk_Check (); // make sure nothing is hurt
 
@@ -551,6 +540,15 @@ Back from NetQuake
 */
 static void CL_ParseParticleEffect (void)
 {
+	/* hifi: unused variable warnings cleaned up, kept null parsing */
+	int i;
+	for (i = 0; i < 3; i++)
+		MSG_ReadCoord ();
+	for (i = 0; i < 3; i++)
+		MSG_ReadChar ();
+	MSG_ReadByte ();
+	MSG_ReadByte ();
+/* ##
 	vec3_t		org, dir;
 	int			i, count, color;
 
@@ -561,7 +559,6 @@ static void CL_ParseParticleEffect (void)
 	count = MSG_ReadByte ();
 	color = MSG_ReadByte ();
 
-/* ##
 	// now run the effect
 	if (count == 255)
 		CL_ParticleExplosion (org);

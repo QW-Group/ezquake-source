@@ -22,16 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include "quakedef.h"
-#include "winquake.h"
 #include <time.h>
 #include "logging.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "utils.h"
 #include <curl/curl.h>
@@ -210,7 +204,7 @@ static void MT_GetPlayerNames(char *name1, char *name2) {
 static int MT_GetTeamNames(char teams[][MAX_INFO_STRING], int max) {
 	int i, j, count = 0;
 
-	memset(teams, 0, sizeof(teams));
+	memset(teams, 0, sizeof(*teams));
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (!cl.players[i].name[0] || cl.players[i].spectator)
@@ -888,9 +882,7 @@ cvar_t match_auto_logurl = {"match_auto_logurl", "http://stats.quakeworld.nu/log
 cvar_t match_auto_sshot = {"match_auto_sshot", "0"};
 cvar_t match_auto_minlength = {"match_auto_minlength", "30"};
 cvar_t match_auto_spectating = {"match_auto_spectating", "0"};
-#ifdef _WIN32
 cvar_t match_auto_unminimize = {"match_auto_unminimize", "1"};
-#endif
 
 typedef struct mt_matchtstate_s {
 	qbool standby;
@@ -1001,13 +993,11 @@ void MT_Frame(void) {
 		if (!cl.spectator || match_auto_spectating.value)
 			MT_StartMatch();
 
-#ifdef _WIN32
 		if (match_auto_unminimize.integer == 2 ||
 			(match_auto_unminimize.integer == 1 && !cl.spectator))
 		{
-			SetForegroundWindow(mainwindow);
+			VID_Restore();
 		}
-#endif
 	}
 
 	if (!matchstate.intermission && cl.intermission)
@@ -1380,8 +1370,6 @@ void DumpMapGroups(FILE *f) {
 }
 
 
-#ifdef GLQUAKE
-
 #define MAX_SKYGROUP_MEMBERS	36
 
 typedef struct skygroup_s {
@@ -1639,9 +1627,6 @@ void DumpSkyGroups(FILE *f) {
 	}
 }
 
-#endif
-
-
 char *Macro_MatchType(void) {
 	matchinfo_t *matchinfo;
 
@@ -1694,9 +1679,7 @@ void MT_Init(void) {
 	Cvar_Register(&match_auto_sshot);
 	Cvar_Register(&match_auto_minlength);
 	Cvar_Register(&match_auto_spectating);
-#ifdef _WIN32
 	Cvar_Register(&match_auto_unminimize);
-#endif
 	Cvar_Register(&match_challenge);
 	Cvar_Register(&match_challenge_url);
 	Cvar_Register(&match_ladder_id);

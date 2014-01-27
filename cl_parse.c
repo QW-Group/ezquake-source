@@ -20,13 +20,8 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 */
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "cdaudio.h"
 #include "ignore.h"
 #include "fchecks.h"
@@ -36,18 +31,12 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "sbar.h"
 #include "textencoding.h"
 #include "vx_stuff.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "tp_triggers.h"
 #include "pmove.h"
 #include "stats_grid.h"
-#include "auth.h"
 #include "qsound.h"
 #include "menu.h"
 #include "keys.h"
@@ -473,10 +462,15 @@ int CL_CalcNetStatistics(
 qbool CL_CheckOrDownloadFile (char *filename) 
 {
 	vfsfile_t *f;
+	char *tmp;
 
-	if (strstr (filename, ".."))
-	{
-		Com_Printf ("Refusing to download a path with ..\n");
+	if (strstr(filename, "..") || !strcmp(filename, "") || filename[0] == '/' || strchr(filename, '\\') || strchr(filename, ':') || strstr(filename, "//")) {
+		Com_Printf("Warning: Invalid characters in filename \"%s\"\n", filename);
+		return true;
+	}
+
+	if ((tmp = strrchr(filename, '.')) && (!strcasecmp(tmp, ".dll") || !strcasecmp(tmp, ".so"))) {
+		Com_Printf("Warning: Non-allowed file \"%s\" skipped\n", filename);
 		return true;
 	}
 
@@ -597,11 +591,7 @@ void CL_Prespawn (void)
 		Host_Error ("Model_NextDownload: NULL worldmodel");
 
 	CL_FindModelNumbers ();
-#ifdef GLQUAKE
 	R_NewMap (false);
-#else
-	R_NewMap ();
-#endif
 	TP_NewMap();
 	MT_NewMap();
 	Stats_NewMap();
@@ -611,9 +601,7 @@ void CL_Prespawn (void)
 	// Reset the status grid.
 	StatsGrid_Remove(&stats_grid);
 	StatsGrid_ResetHoldItems();
-#ifdef GLQUAKE
 	HUD_NewMap();
-#endif
 	Hunk_Check(); // make sure nothing is hurt
 
 	CL_TransmitModelCrc (cl_modelindices[mi_player], "pmodel");
@@ -668,7 +656,7 @@ void VWepModel_NextDownload (void)
 	if (cls.downloadnumber == 0)
 	{
 		if (!com_serveractive || developer.value)
-			Com_Printf ("Checking vwep models...\n");
+			Com_DPrintf ("Checking vwep models...\n");
 		//cls.downloadnumber = 0;
 	}
 
@@ -718,7 +706,7 @@ void Model_NextDownload (void)
 	if (cls.downloadnumber == 0) 
 	{
 		if (!com_serveractive || developer.value)
-			Com_Printf ("Checking models...\n");
+			Com_DPrintf ("Checking models...\n");
 		cls.downloadnumber = 1;
 	}
 
@@ -746,7 +734,7 @@ void Model_NextDownload (void)
 
 		if (!cl.model_precache[i]) 
 		{
-			Com_Printf("\nThe required model file '%s' could not be found or downloaded.\n\n", cl.model_name[i]);
+			Com_Printf("\n&cf22Couldn't load model:&r %s\n", cl.model_name[i]);
 			Host_EndGame();
 			return;
 		}
@@ -769,7 +757,7 @@ void Sound_NextDownload (void)
 	if (cls.downloadnumber == 0)
 	{
 		if (!com_serveractive || developer.value)
-			Com_Printf ("Checking sounds...\n");
+			Com_DPrintf ("Checking sounds...\n");
 		cls.downloadnumber = 1;
 	}
 
@@ -851,11 +839,7 @@ void CL_SendChunkDownloadReq(void)
 	extern cvar_t cl_chunksperframe;
 	int i, j, chunks;
 	
-	// Workaround: Make downloads work on non-mvdsv-chunksperframe-servers
-	if (strstr(Info_ValueForKey(cl.serverinfo, "*version"), "MVDSV"))
-		chunks = bound(1, cl_chunksperframe.integer, 5);
-	else
-		chunks = 1;
+	chunks = bound(1, cl_chunksperframe.integer, 5);
 
 	for (j = 0; j < chunks; j++)
 	{
@@ -865,10 +849,19 @@ void CL_SendChunkDownloadReq(void)
 		i = CL_RequestADownloadChunk();
 		// i < 0 mean client complete download, let server know
 		// qqshka: download percent optional, server does't really require it, that my extension, hope does't fuck up something
-		CL_SendClientCommand(i < 0 ? true : false, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
 
 		if (i < 0)
+		{
+			if (strstr(Info_ValueForKey(cl.serverinfo, "*version"), "MVDSV"))
+				CL_SendClientCommand(true, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
+			else
+				CL_SendClientCommand(true, "stopdownload");
 			CL_FinishDownload(true); // this also request next dl
+		}
+		else
+		{
+			CL_SendClientCommand(false, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
+		}
 	}
 }
 
@@ -1461,6 +1454,10 @@ void CL_ParseServerData (void)
 	// game directory
 	str = MSG_ReadString ();
 
+	if (!strcmp(str, "")  || !strcmp(str, ".") || strstr(str, "..") || strstr(str, "//") || strchr(str, '\\') || strchr(str, ':')  || str[0] == '/') {
+		Host_Error("Server reported invalid gamedir!\n");
+	}
+
 	cl.teamfortress = !strcasecmp(str, "fortress");
 	if (cl.teamfortress) 
 	{
@@ -1585,10 +1582,6 @@ void CL_ParseServerData (void)
 
 	// now waiting for downloads, etc
 	cls.state = ca_onserver;
-
-#ifdef FTE_PEXT2_VOICECHAT
-	S_Voip_MapChange();
-#endif
 }
 
 void CL_ParseSoundlist (void)
@@ -2136,9 +2129,6 @@ static void CL_PEXT_Fix(void)
 #ifdef PROTOCOL_VERSION_FTE2
 		{
 			unsigned int ext = 0;
-#ifdef FTE_PEXT2_VOICECHAT
-			ext |= FTE_PEXT2_VOICECHAT;
-#endif
 			cls.fteprotocolextensions2 &= ext;
 		}
 #endif // PROTOCOL_VERSION_FTE2
@@ -2327,7 +2317,6 @@ char *CL_Color2ConColor(int color)
 	return buf;
 }
 
-#ifdef GLQUAKE
 // Will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
 // source - source frag message, dest - destination buffer, destlen - length of buffer
 // cff - see the cfrags_format definition 
@@ -2393,13 +2382,10 @@ static wchar* CL_ColorizeFragMessage (const wchar *source, cfrags_format *cff)
 
 	return dest_buf;
 }
-#endif
 
 extern cvar_t con_highlight, con_highlight_mark, name;
 extern cvar_t cl_showFragsMessages;
-#ifdef GLQUAKE
 extern cvar_t scr_coloredfrags;
-#endif
 
 // For CL_ParsePrint
 static void FlushString (const wchar *s, int level, qbool team, int offset) 
@@ -2449,10 +2435,8 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 	Stats_ParsePrint (s0, level, &cff);
 
 	// Colorize player names here
-#ifdef GLQUAKE
 	if (scr_coloredfrags.value && cff.p1len)
 		text = CL_ColorizeFragMessage (text, &cff);
-#endif
 
 	/* FIXME
 	 * disconnect: There should be something like Com_PrintfW...
@@ -2628,8 +2612,6 @@ static char *SkipQTVLeadingProxies(char *s)
 extern qbool TP_SuppressMessage (wchar *);
 extern cvar_t cl_chatsound, msg_filter;
 extern cvar_t ignore_qizmo_spec;
-qbool Plug_ChatMessage(char *buffer, int talkernum, int tpflags);
-qbool Plug_ServerMessage(char *buffer, int messagelevel);
 
 void CL_ParsePrint ()
 {
@@ -2700,13 +2682,8 @@ void CL_ParsePrint ()
 		}
 
 		FChecks_CheckRequest (s0);
-		Auth_CheckResponse (s, flags, offset);
 
-		s0 = wcs2str (s); // Auth_CheckResponse may modify the source string, so s0 should be updated
-
-		if (!Plug_ChatMessage(s0 + offset, -1, flags)) {
-			return;
-		}
+		s0 = wcs2str (s);
 
 		if (Ignore_Message(s0, flags, offset)) {
 			Com_DPrintf("Ignoring message: %s\n", s0);
@@ -2831,9 +2808,6 @@ void CL_ParsePrint ()
 		}
 	}
 
-	if (!Plug_ServerMessage(s0, level))
-		return;
-
 	if (cl.sprint_buf[0] && (level != cl.sprint_level || s[0] == 1 || s[0] == 2)) 
 	{
 		FlushString (cl.sprint_buf, cl.sprint_level, false, 0);
@@ -2912,10 +2886,8 @@ void CL_ParseStufftext (void)
 	else if (!strncmp(s, "//sn ", sizeof("//sn ") - 1))
 	{
 		// TODO : Don't require GL for this.
-		#ifdef GLQUAKE
 		extern void Parse_Shownick(char *s)	;
 		Parse_Shownick( s + 2 );
-		#endif // GLQUAKE
 	}
 	else if (!strncmp(s, "//qul ", sizeof("//qul ") - 1))
 	{
@@ -3028,7 +3000,6 @@ void CL_SetStat (int stat, int value)
 	TP_StatChanged(stat, value);
 }
 
-#ifdef GLQUAKE
 void CL_MuzzleFlash (void) 
 {
 	vec3_t forward, right, up, org, angles;
@@ -3167,66 +3138,18 @@ void CL_MuzzleFlash (void)
 		}
 	}
 }
-#else // GLQUAKE
-void CL_MuzzleFlash (void) 
-{
-	vec3_t forward;
-	dlight_t *dl;
-	int i, j, num_ent;
-	entity_state_t *ent;
-	player_state_t *state;
-
-	i = MSG_ReadShort ();
-
-	if (cls.demoseeking)
-		return;
-
-	if (!cl_muzzleflash.value)
-		return;
-
-	if (!cl.validsequence)
-		return;
-
-	if ((unsigned) (i - 1) >= MAX_CLIENTS) 
-	{
-		// a monster firing
-		num_ent = cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.num_entities;
-	
-		for (j = 0; j < num_ent; j++) 
-		{
-			ent = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.entities[j];
-		
-			if (ent->number == i) 
-			{
-				dl = CL_AllocDlight (-i);
-				AngleVectors (ent->angles, forward, NULL, NULL);
-				VectorMA (ent->origin, 18, forward, dl->origin);
-				dl->radius = 200 + (rand() & 31);
-				dl->minlight = 32;
-				dl->die = cl.time + 0.1;
-				dl->type = lt_muzzleflash;
-				break;
-			}
-		}
-		return;
-	}
-	if (cl_muzzleflash.value == 2 && i - 1 == cl.viewplayernum)
-		return;
-
-	dl = CL_AllocDlight (-i);
-	state = &cl.frames[cls.mvdplayback ? oldparsecountmod : parsecountmod].playerstate[i - 1];
-	AngleVectors (state->viewangles, forward, NULL, NULL);
-	VectorMA (state->origin, 18, forward, dl->origin);
-	dl->radius = 200 + (rand()&31);
-	dl->minlight = 32;
-	dl->die = cl.time + 0.1;
-	dl->type = lt_muzzleflash;
-}
-#endif // GLQUAKE else
 
 void CL_ParseQizmoVoice (void) 
 {
-	int i, seq, bits, num, unknown;
+	/* hifi: removed unused warnings, kept null logic */
+	int i;
+	MSG_ReadByte();
+	MSG_ReadByte();
+
+	for (i = 0; i < 32; i++)
+		MSG_ReadByte();
+/*
+	int i, seq, bits;
 
 	// Read the two-byte header.
 	seq = MSG_ReadByte();
@@ -3239,10 +3162,10 @@ void CL_ParseQizmoVoice (void)
 	// 32 bytes of voice data follow
 	for (i = 0; i < 32; i++)
 		MSG_ReadByte();
+*/
 }
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
-qbool Plug_CenterPrintMessage(char *buffer, int clientnum);
 
 void CL_ParseServerMessage (void) 
 {
@@ -3369,11 +3292,9 @@ void CL_ParseServerMessage (void)
 				
 				if (!cls.demoseeking)
 				{
-					if (Plug_CenterPrintMessage(s, 0)) {
-						if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
-							SCR_CenterPrint(s);
-						Print_flags[Print_current] = 0;
-					}
+					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
+						SCR_CenterPrint(s);
+					Print_flags[Print_current] = 0;
 				}
 				break;
 			}
@@ -3445,14 +3366,6 @@ void CL_ParseServerMessage (void)
 				S_StopSound(i >> 3, i & 7);
 				break;
 			}
-
-#ifdef FTE_PEXT2_VOICECHAT
-			case svc_fte_voicechat:
-			{
-				S_Voip_Parse();
-				break;
-			}
-#endif
 
 			case svc_updatefrags:
 			{
@@ -3716,9 +3629,6 @@ void CL_ParseServerMessage (void)
 
 		if (cls.demorecording)
 		{
-#ifdef FTE_PEXT2_VOICECHAT
-			extern cvar_t cl_voip_demorecord;
-#endif
 			// Init the demo message buffer if it hasn't been done.
 			if (!cls.demomessage.cursize)
 			{
@@ -3733,12 +3643,6 @@ void CL_ParseServerMessage (void)
 			else if (cmd == svc_download) {
 				// there's no point in writing it to the demo
 			}
-#ifdef FTE_PEXT2_VOICECHAT
-			else if(cmd == svc_fte_voicechat && !cl_voip_demorecord.integer)
-			{
-				// user does not want it to be recorded
-			}
-#endif
 			else if (cmd == svc_serverdata)
 				CL_WriteServerdata(&cls.demomessage);
 			else

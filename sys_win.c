@@ -15,12 +15,10 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: sys_win.c,v 1.52 2007/10/27 14:37:07 cokeman1982 Exp $
-
 */
 // sys_win.c
 
+#include "quakedef.h"
 #include <windows.h>
 #include <commctrl.h>
 #include <errno.h>
@@ -30,9 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <direct.h>		// _mkdir
 #include <conio.h>		// _putch
 #include <tchar.h>
-#include "quakedef.h"
-#include "winquake.h"
-#include "resource.h"
 #include "keys.h"
 #include "server.h"
 #include "pcre.h"
@@ -44,20 +39,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
-qbool		ActiveApp, Minimized;
-qbool		WinNT, Win2K, WinXP, Win2K3, WinVISTA, Win7;
-
-
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 cvar_t	sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
-
-
 cvar_t	sys_yieldcpu = {"sys_yieldcpu", "0"};
-cvar_t	sys_inactivesleep = {"sys_inactiveSleep", "1"};
 
 static HANDLE	qwclsemaphore;
 static HANDLE	tevent;
 HANDLE	hinput, houtput;
+HINSTANCE	global_hInstance;
 
 void MaskExceptions (void);
 void Sys_PopFPCW (void);
@@ -74,12 +63,7 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel);
 cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableWinKeys};
 
-#ifndef id386
-void Sys_HighFPPrecision(void) {}
-void Sys_LowFPPrecision(void) {}
-void Sys_SetFPCW(void) {}
-void MaskExceptions(void) {}
-#endif
+extern qbool ActiveApp, Minimized;
 
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
 {
@@ -538,22 +522,6 @@ double Sys_DoubleTime (void)
 	return (now - starttime) / 1000.0;
 }
 
-void Sys_SendKeyEvents (void) 
-{
-    MSG msg;
-
-	while (PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE)) 
-	{
-		// We always update if there are any event, even if we're paused
-		scr_skipupdate = 0;
-
-		if (!GetMessage (&msg, NULL, 0, 0))
-			Host_Quit ();
-      	TranslateMessage (&msg);
-      	DispatchMessage (&msg);
-	}
-}
-
 BOOL WINAPI HandlerRoutine (DWORD dwCtrlType) 
 {
 	switch (dwCtrlType) {
@@ -574,10 +542,8 @@ void Sys_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
 	Cvar_Register(&sys_highpriority);
 	Cvar_Register(&sys_yieldcpu);
-	Cvar_Register(&sys_inactivesleep);
 #ifndef WITHOUT_WINKEYHOOK
-	if (WinNT)
-		Cvar_Register(&sys_disableWinKeys);	
+	Cvar_Register(&sys_disableWinKeys);	
 #endif
 	Cvar_ResetCurrentGroup();
 
@@ -592,15 +558,8 @@ void WinCheckOSInfo(void)
 	if (!GetVersionEx(&vinfo))
 		Sys_Error ("Couldn't get OS info");
 
-	if ((vinfo.dwMajorVersion < 4) || (vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
-		Sys_Error ("ezQuake requires at least Win95 or NT 4.0");
-
-	WinNT = (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) ? true : false;			// NT4
-	Win2K = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 0);	// 2000
-	WinXP = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 1);	// XP
-	Win2K3 = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 2);	// 2003 or 2003 R2 or XP Pro 64
-	WinVISTA = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 0); // Vista or 2008 Server
-	Win7 = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 1); // Se7en or 2008 Server R2
+	if (vinfo.dwPlatformId != VER_PLATFORM_WIN32_NT || vinfo.dwMajorVersion < 5 || (vinfo.dwMajorVersion == 5 && vinfo.dwMinorVersion < 1))
+		Sys_Error ("ezQuake requires at least Windows XP.");
 }
 
 void Sys_Init_ (void) 
@@ -651,116 +610,9 @@ void Sys_Init_ (void)
 			"qwcl");	// Semaphore name
 	}
 
-	#ifdef GLQUAKE
-	// Get information about the current monitor.
-	{
-		// TODO: Maybe put these in some header instead?
-		extern HMONITOR VID_GetCurrentMonitor();
-		extern MONITORINFOEX VID_GetCurrentMonitorInfo(HMONITOR monitor);
-		extern HMONITOR prevMonitor;
-		extern MONITORINFOEX prevMonInfo;
-
-		prevMonitor = VID_GetCurrentMonitor();
-		prevMonInfo = VID_GetCurrentMonitorInfo(prevMonitor);
-	}
-	#endif // GLQUAKE
-
-	MaskExceptions ();
-	Sys_SetFPCW ();
-
 	Sys_InitDoubleTime ();
 }
 
-/********************************* CLIPBOARD *********************************/
-
-#define SYS_CLIPBOARD_SIZE		256
-
-wchar *Sys_GetClipboardTextW(void) 
-{
-	HANDLE th;
-	wchar *clipText, *s, *t;
-	static wchar clipboard[SYS_CLIPBOARD_SIZE];
-
-	if (!OpenClipboard(NULL))
-		return NULL;
-
-	if (WinNT) 
-	{
-		if (!(th = GetClipboardData(CF_UNICODETEXT))) 
-		{
-			CloseClipboard();
-			return NULL;
-		}
-
-		if (!(clipText = GlobalLock(th))) 
-		{
-			CloseClipboard();
-			return NULL;
-		}
-	} 
-	else 
-	{
-		char *txt;
-
-		if (!(th = GetClipboardData(CF_TEXT))) 
-		{
-			CloseClipboard();
-			return NULL;
-		}
-
-		if (!(txt = GlobalLock(th))) 
-		{
-			CloseClipboard();
-			return NULL;
-		}
-		clipText = str2wcs(txt);
-	}
-
-	s = clipText;
-	t = clipboard;
-	while (*s && t - clipboard < SYS_CLIPBOARD_SIZE - 1 && *s != '\n' && *s != '\r' && *s != '\b')
-		*t++ = *s++;
-	*t = 0;
-
-	GlobalUnlock(th);
-	CloseClipboard();
-
-	return clipboard;
-}
-
-// Copies given text to clipboard
-void Sys_CopyToClipboard(char *text) 
-{
-	char *clipText;
-	HGLOBAL hglbCopy;
-
-	if (!OpenClipboard(NULL))
-		return;
-
-	if (!EmptyClipboard()) 
-	{
-		CloseClipboard();
-		return;
-	}
-
-	if (!(hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text) + 1))) 
-	{
-		CloseClipboard();
-		return;
-	}
-
-	if (!(clipText = (char *)GlobalLock(hglbCopy))) 
-	{
-		CloseClipboard();
-		return;
-	}
-
-	strcpy(clipText, text);
-	GlobalUnlock(hglbCopy);
-	SetClipboardData(CF_TEXT, hglbCopy);
-
-	CloseClipboard();
-}
 
 //==============================================================================
 // WINDOWS CRAP
@@ -819,11 +671,6 @@ void ParseCommandLine (char *lpCmdLine)
 			}
 		}
 	}
-}
-
-void SleepUntilInput (int time) 
-{
-	MsgWaitForMultipleObjects (1, &tevent, FALSE, time, QS_ALLINPUT);
 }
 
 HHOOK hMsgBoxHook;
@@ -930,8 +777,6 @@ int MsgBoxEx(HWND hwnd, TCHAR *szText, TCHAR *szCaption, HOOKPROC hookproc, UINT
 
 	return retval;
 }
-
-HINSTANCE	global_hInstance;
 
 typedef enum qwurl_regkey_e
 {
@@ -1058,7 +903,7 @@ qbool WinCheckQWURL(void)
 	
 	// Instead of creating a completly custom messagebox (which is a major pain)
 	// just show a normal one, but replace the text on the buttons using event hooking.
-	retval = MsgBoxEx(mainwindow, 
+	retval = MsgBoxEx(NULL, 
 					"The current ezQuake client is not associated with the qw:// protocol,\n"
 					"which lets you launch ezQuake by opening qw:// URLs (.qtv files).\n\n"
 					"Do you want to associate ezQuake with the qw:// protocol?",
@@ -1161,20 +1006,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     // Main window message loop.
 	while (1) 
 	{
-		if (sys_inactivesleep.value) 
-		{
-			// Yield the CPU for a little while when paused, minimized, or not the focus
-			if ((ISPAUSED && (!ActiveApp && !DDActive)) || Minimized || block_drawing)
-			{
-				SleepUntilInput (PAUSE_SLEEP);
-				scr_skipupdate = 1;		// no point in bothering to draw
-			} 
-			else if (!ActiveApp && !DDActive)
-			{
-				SleepUntilInput (NOT_FOCUS_SLEEP);
-			}
-		}
-
 		newtime = Sys_DoubleTime ();
 		time = newtime - oldtime;
 		Host_Frame (time);

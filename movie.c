@@ -44,9 +44,7 @@ short capture_audio_samples[44100];	// big enough buffer for 1fps at 44100Hz
 int captured_audio_samples;
 #endif
 
-#ifdef GLQUAKE
-	extern cvar_t scr_sshot_type;
-#endif
+extern cvar_t scr_sshot_type;
 
 cvar_t   movie_fps			=  {"demo_capture_fps", "30.0"};
 cvar_t   movie_dir			=  {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
@@ -82,9 +80,7 @@ qbool Movie_IsCapturing(void) {
 
 static void Movie_Start(double _time) 
 {
-	#ifdef GLQUAKE
 	extern cvar_t scr_sshot_format;
-	#endif
 
 	#ifndef _WIN32
 	time_t t;
@@ -110,7 +106,6 @@ static void Movie_Start(double _time)
 	else
 	#endif
 	{
-		#ifdef GLQUAKE
 		// DEFAULT_SSHOT_FORMAT
 		if (!strcmp(scr_sshot_format.string, "tga")
 		 || !strcmp(scr_sshot_format.string, "jpeg")
@@ -123,9 +118,6 @@ static void Movie_Start(double _time)
 		{
 			strlcpy (image_ext, "tga", sizeof (image_ext));
 		}
-		#else
-		strlcpy (image_ext, "pcx", sizeof (image_ext));
-		#endif
 	}
 }
 

@@ -161,66 +161,15 @@ void R_DrawAlias3Model (entity_t *ent)
 			v1 = verts + *tris + pose1;
 			v2 = verts + *tris + pose2;
 
-/*    
-			if (poweruptexture && !surface_transparent)
-			{
-				float	adjustedScrollS, adjustedScrollT, timeScale = cl.time; // some refdef time here
-				float	degs, sinValue, cosValue;
-    
-				degs = -30 * timeScale;
-				sinValue = sin(DEG2RAD(degs));
-				cosValue = cos(DEG2RAD(degs));
-    
-				s = tc[*tris].s * cosValue + tc[*tris].t * -sinValue + (0.5 - 0.5 * cosValue + 0.5 * sinValue);
-				t = tc[*tris].s * sinValue + tc[*tris].t *  cosValue + (0.5 - 0.5 * sinValue - 0.5 * cosValue);
-    
-				s *= 2;
-				t *= 2;
-    
-				adjustedScrollS = 0.1 * timeScale;
-				adjustedScrollT = 0.01 * timeScale;
-    
-				// clamp so coordinates don't continuously get larger, causing problems
-				// with hardware limits
-				adjustedScrollS = adjustedScrollS - floor(adjustedScrollS);
-				adjustedScrollT = adjustedScrollT - floor(adjustedScrollT);
-    
-				s += adjustedScrollS;
-				t += adjustedScrollT;
-			}
-
-wtf: where else{ }
-
-*/
 
 			s = tc[*tris].s, t = tc[*tris].t;
 
-/*    
-			if (gl_mtexable)
-			{
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, s, t);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, s, t);
-			}
-			else
-*/
 			{
 				glTexCoord2f (s, t);
 			}
     
 			lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
 
-/*    
-			if (gl_vertexlights.value && !full_light)
-			{
-				l = R_LerpVertexLight (v1->anorm_pitch, v1->anorm_yaw, v2->anorm_pitch, v2->anorm_yaw, lerpfrac, apitch, ayaw);
-				l = min(l, 1);
-    
-				for (j=0 ; j<3 ; j++)
-					lightvec[j] = lightcolor[j] / 256 + l;
-				glColor4f (lightvec[0], lightvec[1], lightvec[2], ent->transparency);
-			}
-			else
-*/
 			{
 				l = FloatInterpolate (shadedots[v1->normal>>8], lerpfrac, shadedots[v2->normal>>8]);
 				l = (l * shadelight + ambientlight) / 256;
@@ -245,7 +194,6 @@ wtf: where else{ }
 		glDisable (GL_BLEND);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-//	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1, 1, 1, 1);
 
 	glShadeModel(GL_FLAT);

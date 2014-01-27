@@ -26,9 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include <limits.h>
-#ifdef _WIN32
-#include "winquake.h"
-#else
+#ifndef _WIN32
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -365,7 +363,9 @@ DWORD WINAPI SB_PingTree_SendQueryThread(void *thread_arg)
 	proxy_request_queue *queue = (proxy_request_queue *) thread_arg;
 	int i, ret;
 	double interval_ms = (1.0 / sb_proxinfopersec.value) * 1000.0;
+#ifdef _WIN32
 	timerresolution_session_t timersession = {0, 0};
+#endif
 
 	Sys_TimerResolution_InitSession(&timersession);
 	Sys_TimerResolution_RequestMinimum(&timersession);

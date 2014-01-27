@@ -288,23 +288,6 @@ typedef struct client_s
 	unsigned int	fteprotocolextensions2;
 #endif
 
-#ifdef FTE_PEXT2_VOICECHAT
-	unsigned int voice_read;	/*place in ring*/
-	unsigned char voice_mute[MAX_CLIENTS/8];
-	qbool voice_active;
-	enum
-	{
-		/*note - when recording an mvd, only 'all' will be received by non-spectating viewers. all other chat will only be heard when spectating the receiver(or sender) of said chat*/
-
-		/*should we add one to respond to the last speaker? or should that be an automagic +voip_reply instead?*/
-		VT_TEAM,
-		VT_ALL,
-		VT_NONMUTED,	/*cheap, but allows custom private channels with no external pesters*/
-		VT_PLAYERSLOT0
-		/*player0+...*/
-	} voice_target;
-#endif
-
 //===== NETWORK ============
 	qbool			process_pext;		// true if we wait for reply from client on "cmd pext" command.
 	int				chokecount;
@@ -828,11 +811,6 @@ void SV_FindModelNumbers (void);
 void SV_ExecuteClientMessage (client_t *cl);
 void SV_UserInit (void);
 void SV_TogglePause (const char *msg, int bit);
-
-#ifdef FTE_PEXT2_VOICECHAT
-void SV_VoiceInitClient(client_t *client);
-void SV_VoiceSendPacket(client_t *client, sizebuf_t *buf);
-#endif
 
 //
 // sv_ccmds.c

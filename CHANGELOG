@@ -1,0 +1,46 @@
+=======================
+Changelog ezQuake 3.0 
+=======================
+
+- VERY INCOMPLETE - FIXME
+
+
+* SDL2 backend for video, audio, input, OpenGL context creation
+* New Makefile (used to compile all platforms)
+* Much improved OSX and Linux versions
+
+
+INGAME:
+* Fixed: fov value is constant no matter screen resolution/aspect ratio (Use your old 4:3 fov)
+* Added AFK notification on scoreboard (scr_scoreboard_afk)
+
+INPUT:
+* Removed: in_mouse
+* Added: in_raw 0/1 (instant change)
+
+VIDEO:
+* Removed: vid_mode
+* Removed: vid_customwidth/vid_customheight
+* Removed: vid_wideaspect
+* Added: vid_width/vid_height, defaults to 0, uses desktop resolution by default
+* Added: vid_win_width/vid_win_height to specify windowed size
+* Added: vid_win_save_pos to toggle saving of window position (windowed mode only)
+* Added: vid_win_save_size to toggle saving of window size (windowed mode only)
+* Added: alt-enter toggles fullscreen on all platforms
+
+GFX:
+* Removed: gl_ztrick
+* Added: OpenGL gamma
+* Added: multisample (antialiasing support) - gl_multisamples
+* Added: gl_brush_polygonoffset (0-25) to prevent glitches/z-fighting
+
+GENERIC:
+* Added: cl_pext_alpha cvar to toggle FTE protocol extension (FTE_PEXT_TRANS)
+* Added: Disallow download of .dll/.so
+* Fixed: sys_inactivesleep works on all platforms
+* Fixed: Teamplay message bugs (patch from up2)
+* Removed: Plugin system
+* Removed: Software renderer
+* Removed: Assembly code
+* Removed: Security module
+

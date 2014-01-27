@@ -1,72 +1,27 @@
-// Microsoft Visual C++ generated resource script.
-//
-#include "resource.h"
+#include <windows.h>
+#include "version.h"
 
-#define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
-#include "winresrc.h"
+1 VERSIONINFO
+{
+	BLOCK "StringFileInfo"
+	{
+		BLOCK "040904B0"
+		{
+			VALUE "ProductName", "ezQuake"
+			VALUE "ProductVersion", VERSION_NUMBER " Build " VERSION
+			VALUE "FileDescription", "ezQuake v" VERSION_NUMBER " - QuakeWorld(r) Today"
+			VALUE "FileVersion", VERSION_NUMBER
+			VALUE "CompanyName", "The ezQuake Developers"
+			VALUE "OriginalFileName", "ezquake.exe"
+			VALUE "InternalName", "ezquake"
+		}
+	}
 
-/////////////////////////////////////////////////////////////////////////////
-#undef APSTUDIO_READONLY_SYMBOLS
+	BLOCK "VarFileInfo"
+	{
+		VALUE "Translation",  0x0409, 0x04B0
+	}
+}
 
-/////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(1252)
-#endif //_WIN32
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE 
-BEGIN
-    "#include ""winresrc.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_APPICON             ICON                    "ezquake.ico"
-#endif    // English (U.S.) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-
-#ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED
-
+1 ICON "ezquake.ico"
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "ezquake.exe.manifest"

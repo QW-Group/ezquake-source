@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #ifdef _WIN32
 #include <errno.h>
-#include <Shlobj.h>
+#include <shlobj.h>
 #else
 #include <unistd.h>
 #include <strings.h>
@@ -491,12 +491,10 @@ static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpa
 }
 
 static qbool FS_RemovePak (const char *pakfile) {
-	searchpath_t *prev = NULL;
 	searchpath_t *cur = fs_searchpaths;
 	qbool ret = false;
 
 	while (cur) {
-		prev = cur;
 		cur = cur->next;
 	}
 
@@ -535,13 +533,8 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 			}
 			if (len < 5)
 				continue;
-#ifdef GLQUAKE
 			if (!strncasecmp(userpak,"soft",4))
 				continue;
-#else
-			if (!strncasecmp(userpak,"gl", 2))
-				continue;
-#endif // GLQUAKE
 			FS_AddPak(dir, userpak, parent, NULL);
 		}
 		fclose(f);
@@ -630,10 +623,8 @@ void FS_SetGamedir (char *dir)
 		FS_AddHomeDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
 	}
 
-#ifdef GLQUAKE
 	// Reload gamedir specific conback as its not flushed
 	Draw_InitConback();
-#endif // GLQUAKE
 
 	FS_AddUserDirectory(dir);
 }
@@ -2247,7 +2238,7 @@ void FS_RebuildFSHash(void)
 
 	filesystemchanged = false;
 
-	Com_Printf("%i unique files, %i duplicates\n", fs_hash_files, fs_hash_dups);
+	Com_DPrintf("%i unique files, %i duplicates\n", fs_hash_files, fs_hash_dups);
 }
 
 /* ===========
@@ -2555,13 +2546,14 @@ vfsfile_t *FS_DecompressGZip(vfsfile_t *infile, gzheader_t *header)
 
 vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
 {
+#ifdef WITH_ZIP
 	vfserrno_t err;
 	char *ext;
 
 	if (!handle || handle->WriteBytes || handle->seekingisabadplan)	//only on readonly files
 		return handle;
+
 	ext = COM_FileExtension(filename);
-#ifdef WITH_ZIP
 	if (!strcasecmp(ext, "gz"))
 	{
 		gzheader_t gzh;

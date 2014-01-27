@@ -228,21 +228,12 @@ static void Setting_DrawBind(int x, int y, int w, setting* set, qbool active, qb
 	if (keys[0] == -1) {
 		UI_Print (x, y, "???", active);
 	} else {
-#ifdef WITH_KEYMAP
-		char    str[256];
-		name = Key_KeynumToString (keys[0], str);
-#else // WITH_KEYMAP
 		name = Key_KeynumToString (keys[0]);
-#endif // WITH_KEYMAP else
 		UI_Print (x, y, name, active);
 		x += strlen(name)*8;
 		if (keys[1] != -1) {
 			UI_Print (x + 8, y, "or", active);
-#ifdef WITH_KEYMAP
-			UI_Print (x + 4*8, y, Key_KeynumToString (keys[1], str), active);
-#else // WITH_KEYMAP
 			UI_Print (x + 4*8, y, Key_KeynumToString (keys[1]), active);
-#endif // WITH_KEYMAP else
 		}
 	}
 
@@ -784,7 +775,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 {
 	int i;
 	int ch;
-	int nexttop;
+	//int nexttop;
 	int hbh = 0;	// help box height
 	setting *set;
 	qbool active;
@@ -798,7 +789,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 		prev_adv_state = (qbool) menu_advanced.value;
 	}
 
-	nexttop = tab->settings[0].top;
+	//nexttop = tab->settings[0].top;
 
 	if (tab->mode == SPM_CHOOSESKIN)
 	{
@@ -855,8 +846,8 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 				break;
 		}
 		y += ch;
-		if (i < tab->count)
-			nexttop = tab->settings[i+1].top;
+		//if (i < tab->count)
+		//	nexttop = tab->settings[i+1].top;
 	}
 }
 

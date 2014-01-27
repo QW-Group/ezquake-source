@@ -27,13 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 #include "vx_stuff.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "utils.h"
 #include "sbar.h"
@@ -103,6 +98,9 @@ cvar_t	scr_compactHudAlign = {"scr_compactHudAlign", "0"};
 cvar_t	scr_drawHFrags = {"scr_drawHFrags", "1"};
 cvar_t	scr_drawVFrags = {"scr_drawVFrags", "1"};
 
+cvar_t scr_scoreboard_afk = {"scr_scoreboard_afk", "1"};
+cvar_t scr_scoreboard_afk_style = {"scr_scoreboard_afk_style", "1"};
+
 cvar_t	scr_scoreboard_teamsort = {"scr_scoreboard_teamsort", "1"};
 cvar_t	scr_scoreboard_forcecolors = {"scr_scoreboard_forcecolors", "1"};
 cvar_t	scr_scoreboard_showfrags = {"scr_scoreboard_showfrags", "1"};
@@ -112,11 +110,8 @@ cvar_t	scr_scoreboard_spectator_name = {"scr_scoreboard_spectator_name", "σπεγτα
 cvar_t	scr_scoreboard_kill_color = {"scr_scoreboard_kill_color", "0B4"};
 cvar_t	scr_scoreboard_death_color = {"scr_scoreboard_death_color", "F00"};
 cvar_t	scr_scoreboard_tk_color = {"scr_scoreboard_tk_color", "FF0"};
-
-#ifdef GLQUAKE
 cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
 cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};
-#endif
 
 
 // VFrags: only draw the frags for the first player when using mvinset
@@ -269,6 +264,9 @@ void Sbar_Init (void) {
     //Cvar_Register (&hud_ranks_separate);
 // <-- mqwcl 0.96 oldhud customisation
 
+	Cvar_Register(&scr_scoreboard_afk);
+	Cvar_Register(&scr_scoreboard_afk_style);
+
 	Cvar_Register (&scr_drawHFrags);
 	Cvar_Register (&scr_drawVFrags);
 	Cvar_Register (&scr_scoreboard_teamsort);
@@ -280,10 +278,8 @@ void Sbar_Init (void) {
 	Cvar_Register (&scr_scoreboard_kill_color);
 	Cvar_Register (&scr_scoreboard_death_color);
 	Cvar_Register (&scr_scoreboard_tk_color);
-#ifdef GLQUAKE
 	Cvar_Register (&scr_scoreboard_fillalpha);
 	Cvar_Register (&scr_scoreboard_fillcolored);
-#endif
 
 	Cvar_ResetCurrentGroup();
 
@@ -895,9 +891,8 @@ static void Sbar_DrawFace (void) {
 }
 
 
-#ifdef GLQUAKE
 void Draw_AMFStatLoss (int stat, hud_t* hud);
-#endif
+
 static void Sbar_DrawNormal (void) {
 	if (cl_sbar.value || scr_viewsize.value < 100)
 		Sbar_DrawPic (0, 0, sb_sbar);
@@ -920,10 +915,9 @@ static void Sbar_DrawNormal (void) {
 			else if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
 				Sbar_DrawPic (0, 0, sb_armor[0]);
 		}
-#ifdef GLQUAKE
-			if (amf_stat_loss.value)
-				Draw_AMFStatLoss (STAT_ARMOR, NULL);
-#endif
+
+		if (amf_stat_loss.value)
+			Draw_AMFStatLoss (STAT_ARMOR, NULL);
 	}
 
 	// face
@@ -934,10 +928,8 @@ static void Sbar_DrawNormal (void) {
 	if (sbar_drawhealth.value)
 	{
 		Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
-#ifdef GLQUAKE
 		if (amf_stat_loss.value)
 			Draw_AMFStatLoss (STAT_HEALTH, NULL);
-#endif
 	}
 
 	// ammo icon
@@ -1076,12 +1068,8 @@ void Sbar_SoloScoreboard (void)
 #define RANK_WIDTH_DM				(-8 + 168 + (MAX_SCOREBOARDNAME * 8))
 #define RANK_WIDTH_TEAM				(-8 + 208 + (MAX_SCOREBOARDNAME * 8))
 
-#ifdef GLQUAKE
 #define SCOREBOARD_ALPHA			(0.5 * bound(0, scr_scoreboard_fillalpha.value, 1))
 #define SCOREBOARD_HEADINGALPHA		(bound(0, scr_scoreboard_fillalpha.value, 1))
-#else
-#define Draw_AlphaFill(a, b, c, d, e, f)
-#endif
 
 static qbool Sbar_ShowTeamKills(void)
 {
@@ -1100,17 +1088,18 @@ static void Sbar_DeathmatchOverlay (int start) {
 	int i, d, k, top, bottom, x, y, xofs, total, p, skip = 10, fragsint;
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
-	char myminutes[4], fragsstr[10];
+	char myminutes[11];
+	char fragsstr[10];
 	char *color;
-	char *kill_color, *death_color, *tk_color;
-	int             scr_scoreboard_drawfps;
-    int             offset;
-    player_info_t *s;
+	char *kill_color;
+	char *death_color;
+	char *tk_color;
+	int scr_scoreboard_drawfps;
+	player_info_t *s;
 	mpic_t *pic;
 
-    scr_scoreboard_drawfps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
-    offset = 8 * scr_scoreboard_drawfps;
-    if (!start && hud_faderankings.value)
+	scr_scoreboard_drawfps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
+	if (!start && hud_faderankings.value)
 		Draw_FadeScreen(hud_faderankings.value);
 
 #ifndef CLIENTONLY
@@ -1248,11 +1237,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 	}
 
 	for (i = 0; i < scoreboardlines && y <= SCOREBOARD_LASTROW; i++) {
-#ifdef GLQUAKE
 		color_t background;
 		float alpha;
 		byte c;
-#endif
 
 		k = fragsort[i];
 		s = &cl.players[k];
@@ -1264,7 +1251,6 @@ static void Sbar_DeathmatchOverlay (int start) {
 		top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
 		bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
 
-#ifdef GLQUAKE
 		if (k == mynum)
 		{
 			alpha = 1.7 * SCOREBOARD_ALPHA;
@@ -1287,15 +1273,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 			c = Sbar_ColorForMap(bottom);
 		}
 
-		if (S_Voip_Speaking(k))
-			background = RGBA_TO_COLOR(0, 255, 0, (byte)(alpha * 255));
-		else
-			background = RGBA_TO_COLOR(host_basepal[c * 3],
-									host_basepal[c * 3 + 1],
-									host_basepal[c * 3 + 2], (byte)(alpha * 255));
+		background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(alpha * 255));
 
 		Draw_AlphaFillRGB (xofs, y, rank_width, skip, background);
-#endif
 
 		if (!scr_scoreboard_borderless.value) {
 			Draw_Fill (xofs - 1, y, 1, skip, 0);					//Border - Left
@@ -1313,19 +1293,22 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 		// draw pl
 		p = s->pl;
-		if (p < 2) {	// pl of 0-1 white
+		if (p == 0) {
+			// 0 - white
 			snprintf (num, sizeof(num), "%3i", p);
 			Draw_ColoredString (x, y, num, 0);
 		}
-		else if (p < 10) {	// pl of 2-9 yellow
+		else if (p < 3) {
+			// 1-2 - yellow
 			snprintf (num, sizeof(num), "&cdd2%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
-		else if (p < 20) {	// pl of 10-19 orange
+		else if (p < 6) {
+			// 3-5 orange
 			snprintf (num, sizeof(num), "&cf50%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
-		else {	// pl >19 red
+		else {	// 6+ - red
 			snprintf (num, sizeof(num), "&cf00%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
@@ -1336,7 +1319,16 @@ static void Sbar_DeathmatchOverlay (int start) {
 		total = (cl.intermission ? cl.completed_time : cls.demoplayback ? cls.demotime : cls.realtime) - s->entertime;
 		total = (int) total / 60;
 		total = bound(0, total, 999); // limit to 3 symbols int
-		snprintf (myminutes, sizeof (myminutes), "%3i", total);
+
+		if (scr_scoreboard_afk.integer && (Q_atoi(Info_ValueForKey(s->userinfo, "chat")) & CIF_AFK)) {
+			if (scr_scoreboard_afk_style.integer == 2) {
+				snprintf(myminutes, sizeof(myminutes), "&cf11%3i&r", total);
+			} else {
+				snprintf(myminutes, sizeof(myminutes), "&cf11afk&r");
+			}
+		} else {
+			snprintf (myminutes, sizeof (myminutes), "%3i", total);
+		}
 
 		if (scr_scoreboard_drawfps) {
 			if (s->last_fps > 0 && !s->spectator) {
@@ -1463,7 +1455,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 }
 
 static void Sbar_TeamOverlay (void) {
-	int i, k, l, x, y, xofs, plow, phigh, pavg, rank_width, skip = 10;
+	int i, k, x, y, xofs, plow, phigh, pavg, rank_width, skip = 10;
 	char num[12], team[5];
 	team_t *tm;
 	mpic_t *pic;
@@ -1527,8 +1519,6 @@ static void Sbar_TeamOverlay (void) {
 	y += 10;
 
 	Sbar_SortTeams();		// sort the teams
-
-	l = scoreboardlines;	// draw the text
 
 	for (i = 0; i < scoreboardteams && y <= SCOREBOARD_LASTROW; i++)	{
 		k = teamsort[i];
@@ -1893,13 +1883,11 @@ void Sbar_Draw(void) {
 			Sbar_SoloScoreboard();
 	}
 
-#ifdef GLQUAKE
 	//VULT STAT LOSS
 	if (amf_stat_loss.value && cl.stats[STAT_HEALTH] <= 0)
 	{
 		Amf_Reset_DamageStats();
 	}
-#endif
 
 	// main screen deathmatch rankings
 	// if we're dead show team scores in team games
@@ -1914,7 +1902,6 @@ void Sbar_Draw(void) {
 		Sbar_TeamOverlay();
 	}
 
-#ifdef GLQUAKE
 	if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0)
 		sb_updates = 0;
 
@@ -1929,10 +1916,6 @@ void Sbar_Draw(void) {
 	}
 	if (!headsup && cl.spectator && autocam != CAM_TRACK && sb_lines > SBAR_HEIGHT)
 		Draw_TileClear (sbar_xofs, vid.height - sb_lines, 320, sb_lines - SBAR_HEIGHT);
-#else // HUD -> hexum
-	if (scr_newHud.value == 1)
-		return;
-#endif
 
 	if (vid.width >= 512 && sb_lines > 0 
 		&& cl.gametype == GAME_DEATHMATCH && !scr_centerSbar.value 
