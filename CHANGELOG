@@ -1,9 +1,8 @@
-=======================
-Changelog ezQuake 3.0 
-=======================
-
-- VERY INCOMPLETE - FIXME
-
+===========================
+Changelog ezQuake 3.0 ALPHA
+===========================
+PLEASE NOTE: Version 3.0 is in development so expect bugs...
+This CHANGELOG is INCOMPLETE
 
 * SDL2 backend for video, audio, input, OpenGL context creation
 * New Makefile (used to compile all platforms)
