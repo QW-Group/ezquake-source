@@ -1135,8 +1135,8 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
 	// Set name.
 	var->name = Q_strdup(buf);
 
-    // Default.
-	var->string = Q_strdup(value);
+    // Default. Cvar_Register will dup this string so we don't need to.
+	var->string = value;
 
     Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
     Cvar_Register(var);
