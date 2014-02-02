@@ -3172,7 +3172,7 @@ static void FS_DiffFile_f(void)
 		}
 
 		/* Check the bytes read */
-		for (i = 0; i < bytes_read1; i++, bytes_total) {
+		for (i = 0; i < bytes_read1; i++, bytes_total++) {
 			if (buf1[i] != buf2[i]) {
 				differences = 1;
 				goto end;

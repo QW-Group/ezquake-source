@@ -1526,8 +1526,6 @@ void R_DrawViewModel(void)
 
 void R_PolyBlend(void)
 {
-	extern cvar_t gl_hwblend;
-
 	if (!cl.teamfortress)
 		return;
 	if (!v_blend[3])
