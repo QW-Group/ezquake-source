@@ -270,6 +270,8 @@ void QTVList_Process_Full_List(vfsfile_t *f, sb_qtvlist_parse_state_t *sb_qtvpar
 			break;
 		}
     }
+
+    XML_ParserFree(parser);
 }
 
 void QTVList_Cache_File_Download(void)
