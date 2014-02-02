@@ -227,7 +227,7 @@ static const char *fragshader[] = {
 	{\
 		vec3 color = texture2D(model_tex, tex_coord).rgb;\
 		gl_FragColor.rgb = pow(vec3(gl_Color) * contrast * color, vec3(gamma));\
-		gl_FragColor.a = 1.0;\
+		gl_FragColor.a = gl_Color.a;\
 	}\
 	",
 	/* TURB.FRAG */
