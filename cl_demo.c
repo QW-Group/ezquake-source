@@ -3154,7 +3154,6 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	time_t t = time(&t);
 	struct tm *ptm = localtime(&t);
 	int width = 0, height = 0; 
-	float asp = 0;
 
 	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
 	f = fopen(logfile, "a");

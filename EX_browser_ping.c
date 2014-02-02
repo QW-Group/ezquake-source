@@ -344,7 +344,6 @@ static void ICMP_FillData(ICMP_packet_t *packet, int datasize)
 // =============================================================================
 void SB_RootInit(void)
 {
-    u_int arg;
     useNewPing = true;
 } 
 
