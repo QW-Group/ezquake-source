@@ -63,7 +63,6 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 
 		for (i = 0; i < MOD_MSG_MAX && qwmsg_def[i].str; i++)
 		{
-			qwmsg[i] = (qwmsg_t *) Q_malloc (sizeof(qwmsg_t));
 			qwmsg[i] = &qwmsg_def[i];
 			//            Sys_Printf("msg_type = %d, id = %d, pl_count = %d, str = %s, reverse = %d\n",
 			//	qwmsg[i]->msg_type, qwmsg[i]->id, qwmsg[i]->pl_count, qwmsg[i]->str, qwmsg[i]->reverse);
