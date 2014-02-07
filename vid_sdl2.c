@@ -517,12 +517,17 @@ static void VID_SDL_Init(void)
 	if (glConfig.initialized == true)
 		return;
 
-	flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+
 #ifdef SDL_WINDOW_ALLOW_HIGHDPI
 	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
-	if (r_fullscreen.integer <= 0) {
-		flags &= ~SDL_WINDOW_FULLSCREEN;
+	if (r_fullscreen.integer > 0) {
+		if (!vid_width.integer || !vid_height.integer)
+			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		else
+			flags |= SDL_WINDOW_FULLSCREEN;
+	} else {
 		if (vid_win_borderless.integer <= 0)
 			flags &= ~SDL_WINDOW_BORDERLESS;
 	}
