@@ -886,16 +886,15 @@ static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 void VID_Init(unsigned char *palette) {
 
 	vid.colormap = host_colormap;
-
 	VID_SetPalette(palette);
 
+	VID_RegisterLatchCvars();
+
 	if (!host_initialized) {
-		VID_ParseCmdLine();
 		VID_RegisterCvars();
 		VID_RegisterCommands();
+		VID_ParseCmdLine();
 	}
-
-	VID_RegisterLatchCvars();
 
 	VID_SDL_Init();
 
