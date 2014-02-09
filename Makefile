@@ -299,7 +299,8 @@ else
     LIBS_c += -lm
 
     ifeq ($(SYS),Darwin)
-        LIBS_c += -framework OpenGL -ldl
+        LIBS_c += -framework OpenGL -framework IOKit -framework CoreServices -ldl
+	OBJS_c += in_osx.o
     else
         LIBS_c += -lGL
     endif

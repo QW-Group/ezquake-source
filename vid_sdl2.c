@@ -32,6 +32,7 @@
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
+#include "in_osx.h"
 #else
 #include <GL/gl.h>
 #endif
@@ -191,9 +192,12 @@ void IN_Frame(void)
 	} else {
 		IN_ActivateMouse();
 	}
-
 	if (mouse_active && SDL_GetRelativeMouseMode()) {
+#ifdef __APPLE__
+		OSX_Mouse_GetMouseMovement(&mx, &my);
+#else
 		SDL_GetRelativeMouseState(&mx, &my);
+#endif
 	}
 	
 }

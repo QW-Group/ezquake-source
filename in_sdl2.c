@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <sys/time.h>
 
+#ifdef __APPLE__
+#include "in_osx.h"
+#endif
+
 cvar_t	m_filter        = {"m_filter",       "0", CVAR_SILENT};
 cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
 cvar_t	m_showrate      = {"m_showrate",     "0", CVAR_SILENT};
@@ -128,12 +132,21 @@ void IN_Init (void)
 		Cmd_AddCommand("in_restart", IN_Restart_f);
 	}
 
+#ifdef __APPLE__
+	if (OSX_Mouse_Init() != 0)
+		fprintf(stderr, "Failed to initialize raw input mouse thread...\n");
+#endif
+
 	IN_StartupMouse ();
 }
 
 void IN_Shutdown(void)
 {
 	IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
+
+#ifdef __APPLE__
+	OSX_Mouse_Shutdown();
+#endif
 
 	mouseinitialized = false;
 }
