@@ -277,7 +277,7 @@ static void window_event(SDL_WindowEvent *event)
 	}
 }
 
-// FIXME: APPLE K_CMD, K_F13-15 etc...
+// FIXME: APPLE K_F13-15 etc...
 
 static const byte scantokey[128] = {
 //  0               1               2               3               4               5               6                   7
@@ -297,7 +297,11 @@ static const byte scantokey[128] = {
     KP_UPARROW,     KP_PGUP,        KP_INS,         KP_DEL,         K_ISO,          K_MENU,         0,                  0,              // 6
     0,              0,              0,              0,              0,              0,              0,                  0,
     0,              0,              0,              0,              0,              0,              K_MENU,             0,              // 7
+#ifdef __APPLE__
+    K_LCTRL,        K_LSHIFT,       K_LALT,         K_CMD,          K_RCTRL,        K_RSHIFT,       K_RALT,             K_CMD,         // E
+#else
     K_LCTRL,        K_LSHIFT,       K_LALT,         K_LWIN,         K_RCTRL,        K_RSHIFT,       K_RALT,             K_RWIN,         // E
+#endif
 };
 
 static void keyb_event(SDL_KeyboardEvent *event)
