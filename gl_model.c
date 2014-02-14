@@ -1506,7 +1506,8 @@ mtriangle_t	triangles[MAXALIASTRIS];
 trivertx_t	*poseverts[MAXALIASFRAMES];
 int			posenum;
 
-byte		player_8bit_texels[320 * 200];
+//byte player_8bit_texels[320 * 200];
+byte player_8bit_texels[256*256]; // Workaround for new player model, isn't proper for "real" quake skins
 
 void *Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame) {
 	trivertx_t *pinframe;
