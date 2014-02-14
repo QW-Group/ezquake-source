@@ -105,6 +105,7 @@ cvar_t vid_xpos               = {"vid_xpos",              "3",   CVAR_SILENT };
 cvar_t vid_ypos               = {"vid_ypos",              "39",  CVAR_SILENT };
 cvar_t r_conwidth             = {"vid_conwidth",          "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
+cvar_t r_conscale             = {"vid_conscale",          "2.0", CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t vid_flashonactivity    = {"vid_flashonactivity",   "1",   CVAR_SILENT };
 cvar_t r_verbose              = {"vid_verbose",           "0",   CVAR_SILENT };
 cvar_t r_showextensions       = {"vid_showextensions",    "0",   CVAR_SILENT };
@@ -469,6 +470,7 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_ypos);
 	Cvar_Register(&r_conwidth);
 	Cvar_Register(&r_conheight);
+	Cvar_Register(&r_conscale);
 	Cvar_Register(&vid_flashonactivity);
 	Cvar_Register(&r_showextensions);
 
@@ -869,8 +871,8 @@ static void VID_UpdateConRes(void)
 {
 	// Default
 	if (!r_conwidth.integer || !r_conheight.integer) {
-		vid.width = vid.conwidth = glConfig.vidWidth/2;
-		vid.height = vid.conheight = glConfig.vidHeight/2;
+		vid.width = vid.conwidth = bound(320, (int)(glConfig.vidWidth/r_conscale.value), glConfig.vidWidth);
+		vid.height = vid.conheight = bound(200, (int)(glConfig.vidHeight/r_conscale.value), glConfig.vidHeight);;
 	} else {
 		// User specified, use that but check boundaries
 		vid.width  = vid.conwidth  = bound(320, r_conwidth.integer, glConfig.vidWidth);
@@ -888,8 +890,10 @@ static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 {
 	if (var == &r_conwidth)
 		Cvar_SetValue(&r_conwidth, Q_atoi(string));
-	else
+	else if (var == &r_conheight)
 		Cvar_SetValue(&r_conheight, Q_atoi(string));
+	else
+		Cvar_SetValue(&r_conscale, Q_atof(string));
 
 	VID_UpdateConRes();
 	*cancel = true;
