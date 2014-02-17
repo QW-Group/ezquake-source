@@ -334,23 +334,22 @@ extern glsl_shader_t glsl_shaders[SHADER_LAST];
 
 
 // OPENGL STUFF
-#ifdef __APPLE__
-typedef void (APIENTRY * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar** strings, const GLint* lengths);
-#endif
 
-typedef void (APIENTRY * PFNGLUSEPROGRAMPROC) (GLuint program);
-typedef void (APIENTRY * PFNGLUNIFORM1FPROC) (GLint location, GLfloat v0);
-typedef void (APIENTRY * PFNGLMULTITEXCOORD2FPROC) (GLenum target, GLfloat s, GLfloat t);
-typedef void (APIENTRY * PFNGLUNIFORM1IPROC) (GLint location, GLint v0);
+typedef void  (APIENTRY * PFNGLUSEPROGRAMPROC) (GLuint program);
+typedef GLint (APIENTRY * PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar* name);
+typedef void  (APIENTRY * PFNGLUNIFORM1FPROC) (GLint location, GLfloat v0);
+typedef void  (APIENTRY * PFNGLMULTITEXCOORD2FPROC) (GLenum target, GLfloat s, GLfloat t);
+typedef void  (APIENTRY * PFNGLUNIFORM1IPROC) (GLint location, GLint v0);
+
 typedef void (APIENTRY * PFNGLACTIVETEXTUREPROC) (GLenum texture);
 typedef void (APIENTRY * PFNGLGETINFOLOGARBPROC) (GLhandleARB obj, GLsizei maxLength, GLsizei* length, GLcharARB *infoLog);
+typedef GLuint (APIENTRY * PFNGLCREATESHADERPROC) (GLenum type);
+//typedef void (APIENTRY * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar** strings, const GLint* lengths);
 typedef void (APIENTRY * PFNGLCOMPILESHADERPROC) (GLuint shader);
+typedef GLuint (APIENTRY * PFNGLCREATEPROGRAMPROC) (void);
 typedef void (APIENTRY * PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
 typedef void (APIENTRY * PFNGLDELETESHADERPROC) (GLuint shader);
 typedef void (APIENTRY * PFNGLLINKPROGRAMPROC) (GLuint program);
-typedef GLint (APIENTRY * PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar* name);
-typedef GLuint (APIENTRY * PFNGLCREATESHADERPROC) (GLenum type);
-typedef GLuint (APIENTRY * PFNGLCREATEPROGRAMPROC) (void);
 
 
 extern PFNGLUSEPROGRAMPROC qglUseProgram;
@@ -358,6 +357,7 @@ extern PFNGLGETUNIFORMLOCATIONPROC qglGetUniformLocation;
 extern PFNGLUNIFORM1FPROC qglUniform1f;
 extern PFNGLMULTITEXCOORD2FPROC qglMultiTexCoord2f;
 extern PFNGLUNIFORM1IPROC qglUniform1i;
+
 extern PFNGLACTIVETEXTUREPROC qglActiveTexture;
 extern PFNGLGETINFOLOGARBPROC qglGetInfoLogARB;
 extern PFNGLCREATESHADERPROC qglCreateShader;
