@@ -263,61 +263,71 @@ void EmitWaterPolys (msurface_t *fa) {
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
 
 	vec3_t nv;
-	GLint shader, u_gamma, u_contrast;
 
 	GL_DisableMultitexture();
 
 	if (gl_fogenable.value)
 		glEnable(GL_FOG);
 
-	GL_Bind (fa->texinfo->texture->gl_texturenum);
-
-	/* FIXME: do the uniforms somewhere else */
-	shader = glsl_shaders[SHADER_TURB].shader;
-	qglUseProgram(shader);
-	u_gamma    = qglGetUniformLocation(shader, "gamma");
-	u_contrast = qglGetUniformLocation(shader, "contrast");
-	qglUniform1f(u_gamma, v_gamma.value);
-	qglUniform1f(u_contrast, v_contrast.value);
-
 	if (r_fastturb.value)
 	{
-		GL_Bind(whitetexture);
+		glDisable (GL_TEXTURE_2D);
 
-		if (strstr (fa->texinfo->texture->name, "water") || strstr (fa->texinfo->texture->name, "mwat"))
+		if (strstr (fa->texinfo->texture->name, "water") || strstr (fa->texinfo->texture->name, "mwat")) {
 			col = r_watercolor.color;
-		else if (strstr (fa->texinfo->texture->name, "slime"))
+		}
+		else if (strstr (fa->texinfo->texture->name, "slime")) {
 			col = r_slimecolor.color;
-		else if (strstr (fa->texinfo->texture->name, "lava"))
+		}
+		else if (strstr (fa->texinfo->texture->name, "lava")) {
 			col = r_lavacolor.color;
-		else if (strstr (fa->texinfo->texture->name, "tele"))
+		}
+		else if (strstr (fa->texinfo->texture->name, "tele")) {
 			col = r_telecolor.color;
-		else
+		}
+		else {
 			col = (byte *) &fa->texinfo->texture->flatcolor3ub;
-
+		}
 		glColor3ubv (col);
 
-		if (wateralpha < 1.0 && wateralpha >= 0) {
-			glEnable (GL_BLEND);
-			col[3] = wateralpha*255;
-			glColor4ubv (col); // 1, 1, 1, wateralpha
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			if (wateralpha < 0.9)
-				glDepthMask (GL_FALSE);
-		}
+ // START shaman FIX /gl_turbalpha + /r_fastturb {
+	if (wateralpha < 1.0 && wateralpha >= 0) {
+		glEnable (GL_BLEND);
+		col[3] = wateralpha*255;
+		glColor4ubv (col); // 1, 1, 1, wateralpha
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		if (wateralpha < 0.9)
+			glDepthMask (GL_FALSE);
+	}
+ // END shaman FIX /gl_turbalpha + /r_fastturb {
 
 		EmitFlatWaterPoly (fa);
 
-		if (wateralpha < 1.0 && wateralpha >= 0) {
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-			glColor3ubv (color_white);
-			glDisable (GL_BLEND);
-			if (wateralpha < 0.9)
-				glDepthMask (GL_TRUE);
-		}
-
+ // START shaman FIX /gl_turbalpha + /r_fastturb {
+	if (wateralpha < 1.0 && wateralpha >= 0) {
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		glColor3ubv (color_white);
+		glDisable (GL_BLEND);
+		if (wateralpha < 0.9)
+			glDepthMask (GL_TRUE);
+	}
+ // END shaman FIX /gl_turbalpha + /r_fastturb {
+
+		glEnable (GL_TEXTURE_2D);
+		glColor3ubv (color_white);
+		// END shaman RFE 1022504
 	} else {
+		GLint shader, u_gamma, u_contrast;
+		GL_Bind (fa->texinfo->texture->gl_texturenum);
+
+		/* FIXME: do the uniforms somewhere else */
+		shader = glsl_shaders[SHADER_TURB].shader;
+		qglUseProgram(shader);
+		u_gamma    = qglGetUniformLocation(shader, "gamma");
+		u_contrast = qglGetUniformLocation(shader, "contrast");
+		qglUniform1f(u_gamma, v_gamma.value);
+		qglUniform1f(u_contrast, v_contrast.value);
+
 		for (p = fa->polys; p; p = p->next) {
 			glBegin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
@@ -343,8 +353,8 @@ void EmitWaterPolys (msurface_t *fa) {
 			}
 			glEnd();
 		}
+		qglUseProgram(0);
 	}
-	qglUseProgram(0);
 
 	if (gl_fogenable.value)
 		glDisable(GL_FOG);
