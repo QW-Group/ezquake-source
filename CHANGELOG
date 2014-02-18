@@ -16,6 +16,7 @@ INGAME:
 INPUT:
 * Removed: in_mouse
 * Added: in_raw 0/1 (instant change)
+* Fixed: No mouse acceleration on OSX
 
 VIDEO:
 * Removed: vid_mode
@@ -29,9 +30,10 @@ VIDEO:
 
 GFX:
 * Removed: gl_ztrick
-* Added: OpenGL gamma
+* Removed: console particles
 * Added: multisample (antialiasing support) - gl_multisamples
 * Added: gl_brush_polygonoffset (0-25) to prevent glitches/z-fighting
+* Fixed: Black color is shown as black instead of washed out grey
 
 GENERIC:
 * Added: cl_pext_alpha cvar to toggle FTE protocol extension (FTE_PEXT_TRANS)

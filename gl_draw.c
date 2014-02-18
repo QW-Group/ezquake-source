@@ -768,7 +768,6 @@ void Draw_InitCharset(void)
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
 }
 
-void CP_Init (void);
 void Draw_InitConback (void);
 
 void Draw_Init (void)
@@ -808,7 +807,6 @@ void Draw_Init (void)
 	// string into the background before turning it into a texture.
 	Draw_InitCharset(); // Safe re-init.
 	Draw_InitConback(); // Safe re-init.
-	CP_Init();			// Safe re-init.
 
 	// Load the crosshair pics
 	Draw_InitCrosshairs();

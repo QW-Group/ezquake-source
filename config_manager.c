@@ -1168,8 +1168,6 @@ void Config_LegacyQuake_f(void)
 			"frags extra_spec_info 0;echo disabling extra spec info for frags hud element (undo: frags extra_spec_info 1);"
 			"teamfrags extra_spec_info 0;echo disabling extra spec info for teamfrags hud element (undo: teamfrags extra_spec_info 1);"
 			"hide radar;echo hiding the radar hud element (undo: show rader);"
-			"in_builtinkeymap 1;echo disabling os-keyboard layout (undo: in_builtinkeymap 0);"
-			"con_particles_images 0;echo disabling console particles (undo: con_particles_images 3);"
 			"\n"
 		// "r_chaticons_alpha 0;echo chaticon drawing disabled;"
 		);

@@ -54,8 +54,6 @@ int 		con_linewidth;		// characters across screen
 int			con_totallines;		// total lines in console scrollback
 float		con_cursorspeed = 4;
 
-cvar_t		con_particles_alpha  = {"con_particles_alpha",  "0"};
-cvar_t		con_particles_images = {"con_particles_images", "3"};
 cvar_t		con_notify = {"con_notify", "1"};
 cvar_t		_con_notifylines = {"con_notifylines","4"};
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
@@ -442,9 +440,6 @@ void Con_Init (void) {
 	Cvar_Register (&con_notify);
 	//Cvar_Register (&xyzh);
 
-	Cvar_Register (&con_particles_alpha);
-	Cvar_Register (&con_particles_images);
-
 	// added by jogi start
 	Cvar_Register (&con_highlight);
 	Cvar_Register (&con_highlight_mark);
@@ -804,8 +799,6 @@ void Con_DrawNotify (void) {
 		con_notifylines = v + bound(0, con_shift.value, 8);
 }
 
-void DrawCP (int lines);
-
 // Draws the last few lines of output as a custom HUD element.
 void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols)
 {
@@ -982,8 +975,6 @@ void Con_DrawConsole (int lines) {
 // draw the background
 	Draw_ConsoleBackground (lines);
 
-	DrawCP(lines);
-
 	// draw the text
 	con_vislines = lines;
 
@@ -1098,255 +1089,3 @@ void Con_DrawConsole (int lines) {
 	Con_DrawInput ();
 }
 
-//************************************************************
-//
-// Below is not a really console related code, just some animation to console in OpenGL version
-//
-
-#define MAX_CONPART (128)
-
-typedef struct conpart_s {
-
-	double		die, start;
-
-	vec3_t		org;
-	float		color[4];
-	float		startalpha;
-	float		rotangle, rotspeed;
-	float		size, growth;
-	float		accel, grav;
-	vec3_t		vel;
-
-	byte		texindex;
-
-} conpart_t;
-
-static conpart_t conpart[MAX_CONPART];
-//static int conpart_count;
-
-typedef enum {
-	cptex_drop,
-	num_cptextures,
-} conpart_tex_t;
-
-#define HARD_CODED (16)
-#define	MAX_CPTEX_COMPONENTS 	(HARD_CODED)
-
-typedef struct cp_texture_s {
-	int			texnum;
-	int			components;
-	float		coords[MAX_CPTEX_COMPONENTS][4];
-} cp_texture_t;
-
-static cp_texture_t cp_textures[num_cptextures];
-
-qbool cp_initialized = false;
-
-#define FONT_SIZE (256.0)
-
-#define ADD_CP_TEXTURE(_ptex, _texnum, _texindex, _components, _s1, _t1, _s2, _t2)	\
-do {																					\
-	cp_textures[_ptex].texnum = _texnum;												\
-	cp_textures[_ptex].components = _components;										\
-	cp_textures[_ptex].coords[_texindex][0] = (_s1 + 1) / FONT_SIZE;					\
-	cp_textures[_ptex].coords[_texindex][1] = (_t1 + 1) / FONT_SIZE;					\
-	cp_textures[_ptex].coords[_texindex][2] = (_s2 - 1) / FONT_SIZE;					\
-	cp_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / FONT_SIZE;					\
-} while(0);
-
-void CP_Init (void) {
-	int cp_font, i, j;
-
-	cp_initialized = false;
-
-	if (!(cp_font = GL_LoadTextureImage ("textures/conpart", "cp:conpart", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN))) 
-		return;		
-
-// 
-// WARNING: !!! HERE WE REALLY ASSUME WHAT FONT_SIZE IS 256x256 !!!
-//
-	if (HARD_CODED != 16)
-		return; // something wrong, this is hard coded
-
-	for (i = 0; i < 4; i++)
-	for (j = 0; j < 4; j++) // 4 * 4 == HARD_CODED
-		ADD_CP_TEXTURE(cptex_drop, cp_font, (j * 4 + i), HARD_CODED, i * 64, j * 64, (i + 1) * 64, (j + 1) * 64);
-
-	cp_initialized = true;
-}
-
-// probably may be made as macros, but i hate macros cos macroses is unsafe
-static void CP_Bind(cp_texture_t *cptex, int *texture)
-{
-	//VULT PARTICLES - I gather this speeds it up, but I haven't really checked
-	if (*texture != cptex->texnum)
-	{
-		GL_Bind(cptex->texnum);
-		*texture = cptex->texnum;
-	}
-}
-
-double cp_time;
-
-void AddCP(void) {
-	conpart_t *p = NULL;
-	int i;
-
-	static double last_time = 0;
-
-//	if (cp_time - last_time < 0.05)
-	if (cp_time - last_time < 0.1)
-		return; // set some sane generate speed
-
-	last_time = cp_time;
-
-	for (i = 0; i < MAX_CONPART; i++) {
-		p = &conpart[i];
-
-		if (p->die < cp_time)
-			break;
-	}
-
-	if (i >= MAX_CONPART)
-		return; // no free space
-
-	p->texindex = i_rnd(1, bound(1, con_particles_images.value, HARD_CODED)) - 1;
-	p->texindex = min(p->texindex, HARD_CODED-1);
-
-	p->die = p->start = cp_time;
-	p->die += 7;
-
-	p->size = 10 + 12 * ((float) rand() / RAND_MAX);
-	p->org[0] = rand() % vid.width;
-	p->org[1] = -(rand() % 8) - 0.71 * p->size ; // spawn out of screen
-	p->org[2] = 0; // 2d
-	p->color[0] = 1;
-	p->color[1] = 1;
-	p->color[2] = 1;
-	p->color[3] = 1;
-	p->startalpha = bound(0, con_particles_alpha.value, 1);
-	p->rotangle = 360 * ((float) rand() / RAND_MAX);
-	p->rotspeed = 5 * (1.0-2*((float) rand() / RAND_MAX));
-	p->rotspeed = (p->rotspeed > 0 ? 15 + p->rotspeed : -15 + p->rotspeed);
-	p->growth = 0;
-	p->accel = 0.4;
-	p->grav = 9.8;
-	p->vel[0] = 5 * (1.0-2*((float) rand() / RAND_MAX));
-	p->vel[1] = 20 + 10 * ((float) rand() / RAND_MAX);
-	p->vel[2] = 0;
-}
-
-int UpdateCP (int lines) {
-	int i, cp_count;
-	conpart_t *p;
-
-	for (cp_count = i = 0; i < MAX_CONPART; i++) {
-		p = &conpart[i];
-
-		if (p->die < cp_time || p->die - p->start <= 0)
-			continue;
-
-		p->size += p->growth * cls.trueframetime;
-		
-		if (p->size <= 0 /*|| p->org[1] + p->size >*/) {
-			p->die = 0;
-			continue; // zero size, ignore
-		}
-		
-//		p->color[3] = ((p->die - cp_time) / (p->die - p->start)) * p->startalpha;
-		p->color[3] = (((float)lines - bound(0, p->org[1] + 0.71 * p->size, lines)) / lines) * p->startalpha;
-		p->color[3] *= p->color[3];
-		if (p->color[3] <= 0) {
-			p->die = 0;
-			continue; //fully transparent, ignore
-		}
-//		Com_Printf ("alpha: %d\n", p->color[3]);
-		p->rotangle += p->rotspeed * cls.trueframetime;
-		p->vel[1] += p->grav * cls.trueframetime; // [1] is y axis, we are in 2d, z axis is unused
-		
-		VectorScale(p->vel, 1 + p->accel * cls.trueframetime, p->vel)
-		VectorMA(p->org, cls.trueframetime, p->vel, p->org);
-
-		cp_count++;
-	}
-
-	return cp_count;
-}
-
-void DRAW_CP_BILLBOARD(cp_texture_t *_ptex, conpart_t *_p) {
-
-//	Com_Printf ("x %3f y %3f r %3d g %3d b %3d a %3d\n", _p->org[0], _p->org[1]
-//						,_p->color[0], _p->color[1], _p->color[2], _p->color[3]);
-
-	glPushMatrix();
-
-	glTranslatef(_p->org[0], _p->org[1], 0 /* 2D :) _p->org[2] */);
-	if (_p->rotspeed)
-		glRotatef(_p->rotangle, 0, 0, 1);
-
-	glTranslatef(-_p->size / 2, -_p->size / 2, 0 /* 2D :) _p->org[2] */);
-
-	glColor4fv(_p->color);
-
-	glBegin(GL_QUADS);
-
-	glTexCoord2f (_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]);
-	glVertex2f (0, 0); // left top
-	glTexCoord2f (_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]);
-	glVertex2f (0 + _p->size, 0); // right top
-	glTexCoord2f (_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]);
-	glVertex2f (0 + _p->size, 0 + _p->size); // right bottom
-	glTexCoord2f (_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]);
-	glVertex2f (0, 0 + _p->size); // left bottom
-
-	glEnd();
-
-	glPopMatrix();
-}
-
-void DrawCP (int lines) {
-	int	i, texture = 0;
-	conpart_t *p;
-	cp_texture_t *cptex;
-
-	if (!cp_initialized || lines <= 0)
-		return;
-
-	if (!bound(0, con_particles_alpha.value, 1) || con_particles_images.integer < 1)
-		return;
-
-	cp_time = Sys_DoubleTime();
-
-	if (!UpdateCP(lines)) {
-		AddCP(); // add particle
-		return;
-	}
-
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glShadeModel(GL_SMOOTH);
-
-	for (i = 0; i < MAX_CONPART; i++) 
-	{
-		p = &conpart[i];
-
-		if (p->die < cp_time)
-			continue;
-
-		CP_Bind(cptex = &cp_textures[cptex_drop], &texture); // select of texture is hardcoded
-		DRAW_CP_BILLBOARD(cptex, p);
-	}
-
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glShadeModel(GL_FLAT);
-    glColor4f (1,1,1,1);
-
-	AddCP(); // add particle
-}
