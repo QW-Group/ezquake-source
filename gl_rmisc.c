@@ -15,6 +15,8 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: gl_rmisc.c,v 1.27 2007-09-17 19:37:55 qqshka Exp $
 */
 // gl_rmisc.c
 
@@ -29,14 +31,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 void R_InitOtherTextures (void) {
+/*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
+
+	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags );	
+	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags);	
+*/
 	int flags = TEX_MIPMAP | TEX_ALPHA;
-	int white_pixel = -1;
 
 	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags | (gl_waterfog.value ? TEX_COMPLAIN : 0));	
 	detailtexture = GL_LoadTextureImage ("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
 
 	shelltexture = GL_LoadTextureImage ("textures/shellmap", NULL, 0, 0,  flags | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
-	whitetexture = GL_LoadTexture("white_texture", 1, 1, (byte*) &white_pixel, TEX_NOSCALE | TEX_ALPHA, 4);
 }
 
 void R_InitTextures (void) {

@@ -606,6 +606,75 @@ void V_AddLightBlend (float r, float g, float b, float a2) {
 	v_blend[2] = v_blend[2] * (1 - a2) + b * a2;
 }
 
+void V_UpdatePalette (void) {
+	int i, j, c;
+	qbool new;
+	float current_gamma, current_contrast, a, rgb[3];
+	static float prev_blend[4];
+	static float old_gamma, old_contrast, old_hwblend;
+	extern float vid_gamma;
+
+	new = false;
+
+	for (i = 0; i < 4; i++) {
+		if (v_blend[i] != prev_blend[i]) {
+			new = true;
+			prev_blend[i] = v_blend[i];
+		}
+	}
+
+	current_gamma = bound (0.3, v_gamma.value, 3);
+	if (current_gamma != old_gamma || v_gamma.modified) {
+		v_gamma.modified = false;
+		old_gamma = current_gamma;
+		new = true;
+	}
+
+	current_contrast = bound (1, v_contrast.value, 3);
+	if (current_contrast != old_contrast) {
+		old_contrast = current_contrast;
+		new = true;
+	}
+
+	if (gl_hwblend.value != old_hwblend) {
+		new = true;
+		old_hwblend = gl_hwblend.value;
+	}
+
+	if (!new)
+		return;
+
+	a = v_blend[3];
+
+	if (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress)
+		a = 0;
+
+	rgb[0] = 255 * v_blend[0] * a;
+	rgb[1] = 255 * v_blend[1] * a;
+	rgb[2] = 255 * v_blend[2] * a;
+
+	a = 1 - a;
+
+	if (vid_gamma != 1.0) {
+		current_contrast = pow (current_contrast, vid_gamma);
+		current_gamma = current_gamma/vid_gamma;
+	}
+
+	for (i = 0; i < 256; i++) {
+		for (j = 0; j < 3; j++) {
+			// apply blend and contrast
+			c = (i * a + rgb[j]) * current_contrast;
+			if (c > 255)
+				c = 255;
+			// apply gamma
+			c = 255 * pow((c + 0.5) / 255.5, current_gamma) + 0.5;
+			c = bound (0, c, 255);
+			ramps[j][i] = c << 8;
+		}
+	}
+	VID_SetDeviceGammaRamp ((unsigned short *) ramps);
+}
+
 // BorisU -->
 void V_TF_ClearGrenadeEffects ()
 {

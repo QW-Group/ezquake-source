@@ -48,7 +48,6 @@
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
-// Reorder so we can get rid of most of these atleast
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
@@ -61,6 +60,7 @@ static SDL_Window       *sdl_window;
 static SDL_GLContext    *sdl_context;
 
 glconfig_t glConfig;
+qbool vid_hwgamma_enabled = false;
 static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
@@ -267,10 +267,9 @@ static void window_event(SDL_WindowEvent *event)
 				glConfig.vidWidth = event->data1;
 				glConfig.vidHeight = event->data2;
 				if (r_win_save_size.integer) {
-					Cvar_LatchedSetValue(&vid_win_width, glConfig.vidWidth);
-					Cvar_LatchedSetValue(&vid_win_height, glConfig.vidHeight);
+					Cvar_LatchedSetValue(&vid_win_width, event->data1);
+					Cvar_LatchedSetValue(&vid_win_height, event->data2);
 				}
-
 				if (!r_conwidth.integer || !r_conheight.integer)
 					VID_UpdateConRes();
 			}
@@ -570,6 +569,7 @@ static void VID_SDL_Init(void)
 		return;
 	}
 
+	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 	
 	if (!SDL_GetWindowDisplayMode(sdl_window, &display_mode))
@@ -597,8 +597,7 @@ static void GL_SwapBuffers (void)
 {
 	SDL_GL_SwapWindow(sdl_window);
 }
-
-static void GL_SwapBuffersWithVsyncFix (void)
+static void GL_SwapBuffersWithVsyncFix(void)
 {
 	double time_before_swap;
 	time_before_swap = Sys_DoubleTime();
@@ -650,7 +649,7 @@ void GL_EndRendering (void)
 		if (vid_vsync_lag_fix.integer > 0)
 			GL_SwapBuffersWithVsyncFix();
 		else
-			GL_SwapBuffers();
+			GL_SwapBuffers(); 
 	}
 }
 
@@ -679,6 +678,12 @@ void VID_NotifyActivity(void)
 	else
 		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
 #endif
+}
+
+void VID_SetDeviceGammaRamp (unsigned short *ramps)
+{
+	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
+	vid_hwgamma_enabled = true;
 }
 
 void VID_Minimize (void) 
@@ -859,7 +864,7 @@ static void VID_Restart_f(void)
 
 }
 
-static void VID_RegisterCommands(void) 
+void VID_RegisterCommands(void) 
 {
 	if (!host_initialized) {
 		Cmd_AddCommand("vid_gfxinfo", GfxInfo_f);
@@ -903,6 +908,8 @@ static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 void VID_Init(unsigned char *palette) {
 
 	vid.colormap = host_colormap;
+
+	Check_Gamma(palette);
 	VID_SetPalette(palette);
 
 	VID_RegisterLatchCvars();

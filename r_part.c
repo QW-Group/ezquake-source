@@ -627,8 +627,7 @@ void Classic_DrawParticles (void) {
 			theAlpha = 255 * (6 - p->ramp) / 6;
 		else
 			theAlpha = 255;
-		// FIXME Darn ugly way of just lightning up the particles a bit :D
-		glColor4ub (*at > 210 ? *at : *at+45, *(at + 1) > 210 ? *(at+1) : *(at+1)+45, *(at + 2) > 210 ? *(at+2) : *(at+2)+45, theAlpha);
+		glColor4ub (*at, *(at + 1), *(at + 2), theAlpha);
 		glTexCoord2f (0, 0); glVertex3fv (p->org);
 		glTexCoord2f (1, 0); glVertex3f (p->org[0] + up[0] * scale, p->org[1] + up[1] * scale, p->org[2] + up[2] * scale);
 

@@ -1529,8 +1529,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	if ((byte)(color >> 24 & 0xFF) == 0)
 		return;
 
-//	glDisable (GL_TEXTURE_2D);
-	GL_Bind(whitetexture);
+	glDisable (GL_TEXTURE_2D);
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	COLOR_TO_RGBA(color, bytecolor);
@@ -1550,7 +1549,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 		glRectf(x, y + h, x + w, y + h - thickness);
 	}
 
-//	glEnable (GL_TEXTURE_2D);
+	glEnable (GL_TEXTURE_2D);
 	glEnable (GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
 
@@ -1581,8 +1580,7 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
 {
 	byte bytecolor[4];
-//	glDisable (GL_TEXTURE_2D);
-	GL_Bind(whitetexture);
+	glDisable (GL_TEXTURE_2D);
 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
@@ -1599,7 +1597,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	glVertex2f (x_end, y_end);
 	glEnd ();
 
-//	glEnable (GL_TEXTURE_2D);
+	glEnable (GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
 
@@ -1625,8 +1623,7 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, 
 	COLOR_TO_RGBA(color, bytecolor);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
-//	glDisable (GL_TEXTURE_2D);
-	GL_Bind(whitetexture);
+	glDisable (GL_TEXTURE_2D);
 
 	if(fill)
 	{
@@ -1659,8 +1656,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
-//	glDisable (GL_TEXTURE_2D);
-	GL_Bind(whitetexture);
+	glDisable (GL_TEXTURE_2D);
 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
@@ -1720,7 +1716,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 	glEnd ();
 
-//	glEnable (GL_TEXTURE_2D);
+	glEnable (GL_TEXTURE_2D);
 
 	glEnable (GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
@@ -1897,20 +1893,19 @@ void Draw_TransPic (int x, int y, mpic_t *pic)
 
 void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 {
-	//glDisable(GL_TEXTURE_2D);
-	GL_Bind(whitetexture);
-	glColor4ub(host_basepal[c * 3], host_basepal[(c * 3) + 1], host_basepal[(c * 3) + 2 ], overall_alpha);
+    glDisable(GL_TEXTURE_2D);
+    glColor4ub(host_basepal[c * 3], host_basepal[(c * 3) + 1], host_basepal[(c * 3) + 2 ], overall_alpha);
 
-	glBegin(GL_QUADS);
+    glBegin(GL_QUADS);
 
-	glVertex2f(x, y);
-	glVertex2f(x + (w * scale), y);
-	glVertex2f(x + (w * scale), y + (h * scale));
-	glVertex2f(x, y + (h * scale));
+    glVertex2f(x, y);
+    glVertex2f(x + (w * scale), y);
+    glVertex2f(x + (w * scale), y + (h * scale));
+    glVertex2f(x, y + (h * scale));
 
-	glEnd();
-	glColor4ubv(color_white);
-//	glEnable(GL_TEXTURE_2D);
+    glEnd();
+    glColor4ubv(color_white);
+    glEnable(GL_TEXTURE_2D);
 }
 
 static char last_mapname[MAX_QPATH] = {0};
@@ -1928,7 +1923,6 @@ void Draw_InitConback (void)
 	qpic_t *cb;
 	int start;
 	mpic_t *pic_24bit;
-	//FIXME dimman opengl_initialized, return if !opengl_initialized
 
 	start = Hunk_LowMark ();
 
@@ -2013,8 +2007,7 @@ void Draw_FadeScreen (float alpha)
 		glColor3f (0, 0, 0);
 	}
 
-//	glDisable (GL_TEXTURE_2D);
-	GL_Bind(whitetexture);
+	glDisable (GL_TEXTURE_2D);
 
 	glBegin (GL_QUADS);
 	glVertex2f (0, 0);
@@ -2029,7 +2022,7 @@ void Draw_FadeScreen (float alpha)
 		glEnable (GL_ALPHA_TEST);
 	}
 	glColor3ubv (color_white);
-//	glEnable (GL_TEXTURE_2D);
+	glEnable (GL_TEXTURE_2D);
 
 	Sbar_Changed();
 }
