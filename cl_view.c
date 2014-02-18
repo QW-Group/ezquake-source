@@ -667,7 +667,7 @@ void V_UpdatePalette (void) {
 			if (c > 255)
 				c = 255;
 			// apply gamma
-			c = 255 * pow((c + 0.5) / 255.5, current_gamma) + 0.5;
+			c = 255 * pow(c / 255.5, current_gamma) + 0.5;
 			c = bound (0, c, 255);
 			ramps[j][i] = c << 8;
 		}
