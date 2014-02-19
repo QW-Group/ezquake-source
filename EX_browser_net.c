@@ -201,6 +201,7 @@ void Parse_Serverinfo(server_data *s, char *info)
         qbool spec;
         int id, frags, time, ping, slen;
         char name[100], skin[100], team[100];
+        char *nameptr = name;
         int top, bottom;
         int pos;
 
@@ -233,8 +234,8 @@ void Parse_Serverinfo(server_data *s, char *info)
             ping = -ping;
 
             if (name[0] == '\\' && name[1] == 's' && name[2] == '\\')
-                strlcpy(name, name+3, sizeof(name)); // strip \s\<name>
-            if (slen > 3 && name[slen-3] == '(' && name[slen-2] == 's' && name[slen-1] == ')')
+                nameptr = name+3; // strip \s\<name>
+            else if (slen > 3 && name[slen-3] == '(' && name[slen-2] == 's' && name[slen-1] == ')')
                 name[slen-3] = 0; // strip <name>(s) for old servers
         }
 
@@ -248,7 +249,7 @@ void Parse_Serverinfo(server_data *s, char *info)
         s->players[i]->top = Sbar_ColorForMap(top);
         s->players[i]->bottom = Sbar_ColorForMap(bottom);
 
-        strlcpy(s->players[i]->name, name, sizeof(s->players[0]->name));
+        strlcpy(s->players[i]->name, nameptr, sizeof(s->players[0]->name));
         strlcpy(s->players[i]->skin, skin, sizeof(s->players[0]->skin));
         strlcpy(s->players[i]->team, team, sizeof(s->players[0]->team));
 
