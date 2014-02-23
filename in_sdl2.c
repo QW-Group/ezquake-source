@@ -133,8 +133,12 @@ void IN_Init (void)
 	}
 
 #ifdef __APPLE__
-	if (OSX_Mouse_Init() != 0)
-		fprintf(stderr, "Failed to initialize raw input mouse thread...\n");
+	if (in_raw.integer > 0) {
+		if (OSX_Mouse_Init() != 0) {
+			Com_Printf("warning: failed to initialize raw input mouse thread...\n");
+			Cvar_SetValue(&in_raw, 0);
+		}
+	}
 #endif
 
 	IN_StartupMouse ();
@@ -145,7 +149,7 @@ void IN_Shutdown(void)
 	IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
 
 #ifdef __APPLE__
-	OSX_Mouse_Shutdown();
+	OSX_Mouse_Shutdown(); // Safe to call, will just return if it's not running
 #endif
 
 	mouseinitialized = false;

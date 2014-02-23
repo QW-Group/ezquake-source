@@ -55,6 +55,7 @@ static void GrabMouse(qbool grab, qbool raw);
 static void GfxInfo_f(void);
 static void HandleEvents();
 static void VID_UpdateConRes(void);
+void IN_Restart_f(void);
 
 static SDL_Window       *sdl_window;
 static SDL_GLContext    *sdl_context;
@@ -117,7 +118,10 @@ cvar_t gl_multisamples        = {"gl_multisamples",       "0",   CVAR_LATCH }; /
 
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
-	GrabMouse(mouse_active, (atoi(value) > 0 ? true : false));
+	if (var == &in_raw)
+		Cvar_SetValue(&in_raw, atoi(value));
+
+	IN_Restart_f();
 }
 
 static void in_grab_windowed_mouse_callback(cvar_t *val, char *value, qbool *cancel)
@@ -161,7 +165,10 @@ void IN_StartupMouse(void)
 	Cvar_Register (&in_raw);
 	Cvar_Register (&in_grab_windowed_mouse);
 	mouseinitialized = true;
-	Com_Printf("SDL mouse initialized\n");
+	if (in_raw.integer > 0)
+		Com_Printf("RAW mouse initialized\n");
+	else
+		Com_Printf("SDL mouse initialized\n");
 }
 
 void IN_ActivateMouse(void)
