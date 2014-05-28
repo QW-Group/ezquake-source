@@ -133,6 +133,7 @@ void IN_Init (void)
 	}
 
 #ifdef __APPLE__
+	extern cvar_t in_raw;
 	if (in_raw.integer > 0) {
 		if (OSX_Mouse_Init() != 0) {
 			Com_Printf("warning: failed to initialize raw input mouse thread...\n");
