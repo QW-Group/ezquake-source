@@ -245,6 +245,18 @@ int			scr_center_lines;
 int			scr_erase_lines;
 int			scr_erase_center;
 
+void SCR_CenterPrint_f ()
+{
+	// clear if no args
+	if (Cmd_Argc() < 2)
+	{
+		SCR_CenterPrint("");
+		return;
+	}
+
+	SCR_CenterPrint(Cmd_Args());
+}
+
 // Called for important messages that should stay in the center of the screen for a few moments
 void SCR_CenterPrint (char *str)
 {
@@ -4094,6 +4106,7 @@ void SCR_Init (void)
 	Cmd_AddCommand ("sizedown", SCR_SizeDown_f);
 	Cmd_AddCommand ("+zoom", SCR_ZoomIn_f);
 	Cmd_AddCommand ("-zoom", SCR_ZoomOut_f);
+	Cmd_AddCommand ("centerprint", SCR_CenterPrint_f);
 
 	scr_initialized = true;
 
