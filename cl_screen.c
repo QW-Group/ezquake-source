@@ -3161,19 +3161,12 @@ static void SCR_DrawCursor(void)
 {
 	// from in_*.c
 	extern float mouse_x, mouse_y;
-    double scale = SCR_GetCursorScale();
+	extern cvar_t r_fullscreen;
+	double scale = SCR_GetCursorScale();
 
-	// Updating cursor location
-	scr_pointer_state.x += mouse_x;
-	scr_pointer_state.y += mouse_y;
-
-	// Bound the cursor to displayed area
-	clamp(scr_pointer_state.x, 0, vid.width);
-	clamp(scr_pointer_state.y, 0, vid.height);
-
-	// write the global variables which are used only by HUD Editor at the moment
-	cursor_x = scr_pointer_state.x;
-	cursor_y = scr_pointer_state.y;
+	// vid_sdl2 updates absolute cursor position when not locked
+	scr_pointer_state.x = cursor_x;
+	scr_pointer_state.y = cursor_y;
 
 	// Disable the cursor in all but following client parts.
 	if (key_dest != key_hudeditor && key_dest != key_menu && key_dest != key_demo_controls)
@@ -3181,29 +3174,32 @@ static void SCR_DrawCursor(void)
 		return;
 	}
 
-	// Always draw the cursor.
-	if (scr_cursor && scr_cursor->texnum)
+	// Always draw the cursor if fullscreen
+	if (r_fullscreen.integer)
 	{
-		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, scale);
-
-		if (scr_cursor_icon && scr_cursor_icon->texnum)
+		if (scr_cursor && scr_cursor->texnum)
 		{
-			Draw_SAlphaPic(cursor_x + scr_cursor_iconoffset_x.value, cursor_y + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, scale);
+			Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, scale);
+
+			if (scr_cursor_icon && scr_cursor_icon->texnum)
+			{
+				Draw_SAlphaPic(cursor_x + scr_cursor_iconoffset_x.value, cursor_y + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, scale);
+			}
 		}
-	}
-	else
-	{
-		color_t c = RGBA_TO_COLOR(0, 255, 0, 255);
-		Draw_AlphaLineRGB(cursor_x + (10 * scale), cursor_y + (10 * scale), cursor_x + (40 * scale), cursor_y + (40 * scale), 10 * scale, c);
-        Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (20 * scale), cursor_y, 10 * scale, c);
-		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20*scale, 10 * scale, c);
-        Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y, cursor_x, cursor_y + (20 * scale), 10 * scale, c);
+		else
+		{
+			color_t c = RGBA_TO_COLOR(0, 255, 0, 255);
+			Draw_AlphaLineRGB(cursor_x + (10 * scale), cursor_y + (10 * scale), cursor_x + (40 * scale), cursor_y + (40 * scale), 10 * scale, c);
+			Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (20 * scale), cursor_y, 10 * scale, c);
+			Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20*scale, 10 * scale, c);
+			Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y, cursor_x, cursor_y + (20 * scale), 10 * scale, c);
+		}
 	}
 
 	if (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)
 	{
-        Mouse_MoveEvent();
-    }
+		Mouse_MoveEvent();
+	}
 
 	// remember the position for future
 	scr_pointer_state.x_old = scr_pointer_state.x;
