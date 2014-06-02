@@ -3289,7 +3289,10 @@ void CL_ParseServerMessage (void)
 				// SCR_CenterPrint (MSG_ReadString ());
 				// Centerprint re-triggers
 				s = MSG_ReadString();
-				
+
+				if (cl.teamfortress && SCR_TF_Sbar(s))
+					break;
+
 				if (!cls.demoseeking)
 				{
 					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))

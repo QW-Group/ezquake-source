@@ -549,6 +549,67 @@ void SCR_ZoomOut_f (void) {
 
 /********************************** ELEMENTS **********************************/
 
+static char	scr_tf_sbar[1024];
+static float	scr_tf_sbar_updated;
+
+qbool SCR_TF_Sbar(const char *s)
+{
+	int i, len = strlen(s);
+	char *p = NULL;
+
+	// do quick check if this is a TF status bar line (min 200 height)
+	if (strncmp(s, "\n\n\n\n\n\n\n\n\n\n\n", 11))
+		return false;
+
+	// find first line with actual text
+	for (i = 0; i < len - 1; i++)
+	{
+		if (s[i] == '\n' && s[i+1] != '\n')
+		{
+			p = (char *)&s[i+1];
+			break;
+		}
+	}
+
+	if (p == NULL)
+		return;
+
+	strlcpy(scr_tf_sbar, p, sizeof(scr_tf_sbar));
+	str_trim(scr_tf_sbar);
+	scr_tf_sbar_updated = cl.time;
+
+	return true;
+}
+
+void SCR_TF_DrawSbar (void)
+{
+	int i, x, y, lines = 1, len = strlen(scr_tf_sbar);
+	char *tmp, *p;
+	extern qbool	sb_showscores;
+	extern qbool	sb_showteamscores;
+
+	if (scr_tf_sbar_updated == 0 || scr_tf_sbar_updated + 5 < cl.time)
+		return;
+
+	for (i = 0; i < len; i++)
+		if (scr_tf_sbar[i] == '\n') lines++;
+
+	y = vid.height - 33 - (lines - 1) * 8;
+
+	if (sb_lines > 24 && scr_newHud.value != 1 && !sb_showscores && !sb_showteamscores)
+		y -= 25;
+
+	tmp = Q_strdup(scr_tf_sbar);
+	p = strtok(tmp, "\n");
+
+	do {
+		Draw_String(vid.width / 2 - ((strlen(p) / 2) * 8), y, p);
+		y += 8;
+	} while ((p = strtok(NULL, "\n")));
+
+	Q_free(tmp);
+}
+
 void SCR_DrawRam (void) {
 	if (!scr_showram.value)
 		return;
@@ -3278,6 +3339,7 @@ void SCR_DrawElements(void)
 						SCR_DrawDemoClock ();
 						SCR_DrawQTVBuffer ();
 						SCR_DrawFPS ();
+						SCR_TF_DrawSbar ();
 					}
 
 					// QW262
