@@ -66,6 +66,7 @@ static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
 static int old_x = 0, old_y = 0;
+extern double cursor_x, cursor_y;
 
 qbool ActiveApp = true;
 qbool Minimized = false;
@@ -150,7 +151,14 @@ static void GrabMouse(qbool grab, qbool raw)
 	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
 	SDL_SetRelativeMouseMode((raw && grab) ? SDL_TRUE : SDL_FALSE);
 	SDL_GetRelativeMouseState(NULL, NULL);
-	SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
+
+	// never show real cursor in fullscreen
+	if (r_fullscreen.integer) {
+		SDL_ShowCursor(SDL_DISABLE);
+	} else {
+		SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
+	}
+
 	SDL_SetCursor(NULL); /* Force rewrite of it */
 
 	mouse_active = grab;
@@ -194,7 +202,7 @@ void IN_Frame(void)
 
 	HandleEvents();
 
-	if (!ActiveApp || Minimized || (!r_fullscreen.integer && (key_dest != key_game || cls.state != ca_active))) {
+	if (!ActiveApp || Minimized || (key_dest != key_game || cls.state != ca_active)) {
 		IN_DeactivateMouse();
 		return;
 	} else {
@@ -388,13 +396,16 @@ static void HandleEvents()
 			keyb_event(&event.key);
 			break;
 		case SDL_MOUSEMOTION:
-	                if (mouse_active && !SDL_GetRelativeMouseMode()) {
-                            mx = old_x - event.motion.x;
-                            my = old_y - event.motion.y;
-			    old_x = event.motion.x;
-			    old_y = event.motion.y;
-			    SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-                        }
+			if (mouse_active && !SDL_GetRelativeMouseMode()) {
+				mx = old_x - event.motion.x;
+				my = old_y - event.motion.y;
+				old_x = event.motion.x;
+				old_y = event.motion.y;
+				SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+			} else {
+				cursor_x = event.motion.x * ((double)vid.width / glConfig.vidWidth);
+				cursor_y = event.motion.y * ((double)vid.height / glConfig.vidHeight);
+			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
