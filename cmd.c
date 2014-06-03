@@ -1586,7 +1586,7 @@ char *msgtrigger_commands[] = {
                                   "hud262_move","hud262_width","hud262_alpha","hud262_blink",
                                   "hud262_disable","hud262_enable","hud262_list","hud262_bringtofront",
                                   "hud_262font","hud262_hover","hud262_button",
-								  "alias_in", "alias_out", "cvar_in", "cvar_out"
+				  "alias_in", "alias_out", "cvar_in", "cvar_out", "timerstart"
                                   //               ,NULL
                               };
 

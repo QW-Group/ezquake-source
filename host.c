@@ -503,6 +503,8 @@ extern void LoadConfig_f(void);
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
 	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
 	Browser_Init2();
+
+	Timer_Init();
 }
 
 void Startup_Place(void)
