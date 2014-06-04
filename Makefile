@@ -192,6 +192,7 @@ OBJS_c := \
     cl_tcl.o \
     cl_tent.o \
     cl_view.o \
+    cl_timer.o \
     common_draw.o \
     console.o \
     config_manager.o \
