@@ -35,7 +35,7 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	char name[sizeof(dst->qtvname)];
 
 	// extract name
-	strlcpy(name, Info_ValueForKey(userinfo, "name"), sizeof(name));
+	SDL_strlcpy(name, Info_ValueForKey(userinfo, "name"), sizeof(name));
 
 	count = 0;
 	for (dst = demo.dest; dst; dst = dst->nextdest)
@@ -62,7 +62,7 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	dst->id = ++lastdest;
 	dst->na = na;
 
-	strlcpy(dst->qtvname, name, sizeof(dst->qtvname));
+	SDL_strlcpy(dst->qtvname, name, sizeof(dst->qtvname));
 
 	if (dst->qtvname[0])
 		Con_Printf ("Connected to QTV(%s)\n", dst->qtvname);
@@ -81,7 +81,7 @@ static void SV_MVD_InitPendingStream (int socket1, netadr_t na)
 	dst->io_time = Sys_DoubleTime();
 	dst->na = na;
 
-	strlcpy(dst->challenge, NET_AdrToString(dst->na), sizeof(dst->challenge));
+	SDL_strlcpy(dst->challenge, NET_AdrToString(dst->na), sizeof(dst->challenge));
 	for (i = strlen(dst->challenge); i < sizeof(dst->challenge)-1; i++)
 		dst->challenge[i] = rand()%(127-33) + 33;	//generate a random challenge
 
@@ -463,7 +463,7 @@ void SV_MVD_RunPendingConnections (void)
 							else if (!strcmp(com_token, "PASSWORD"))
 							{
 								start = COM_ParseToken(start, NULL);
-								strlcpy(password, com_token, sizeof(password));
+								SDL_strlcpy(password, com_token, sizeof(password));
 							}
 							else if (!strcmp(com_token, "AUTH"))
 							{
@@ -498,7 +498,7 @@ void SV_MVD_RunPendingConnections (void)
 							else if (!strcmp(com_token, "USERINFO"))
 							{
 								start = COM_ParseToken(start, NULL);
-								strlcpy(userinfo, com_token, sizeof(userinfo));
+								SDL_strlcpy(userinfo, com_token, sizeof(userinfo));
 							}
 							else
 							{
@@ -973,7 +973,7 @@ static void QTVcmd_QtvUserList_f(mvddest_t *d)
 
 	action 		= atoi( Cmd_Argv( cnt++ ) );
 	tmpuser.id	= atoi( Cmd_Argv( cnt++ ) );
-	strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
+	SDL_strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
 
 	switch ( action )
 	{

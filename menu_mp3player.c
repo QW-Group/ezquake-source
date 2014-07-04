@@ -98,7 +98,7 @@ void M_Menu_MP3_Control_Draw (void) {
 		scroll_index = scroll_index % last_length;
 	} else {
 		SDL_snprintf(lastsonginfo, sizeof(lastsonginfo), "%s  ***  ", s);
-		strlcpy(last_title, s, sizeof(last_title));
+		SDL_strlcpy(last_title, s, sizeof(last_title));
 		last_length = strlen(lastsonginfo);
 		initial_time = realtime;
 		frac = scroll_index = 0;
@@ -106,7 +106,7 @@ void M_Menu_MP3_Control_Draw (void) {
 
 	if ((!mp3_scrolltitle.value || last_length <= 38 + 7) && mp3_scrolltitle.value != 2) {
 		char name[38 + 1];
-		strlcpy(name, last_title, sizeof(name));
+		SDL_strlcpy(name, last_title, sizeof(name));
 		M_PrintWhite(max(8, (320 - (last_length - 7) * 8) >> 1), M_MP3_CONTROL_HEADINGROW + 32, name);
 		initial_time = realtime;
 	} else {
@@ -505,7 +505,7 @@ menu_items:
 			spaces = "";
 
 		/* Limit the title to PLAYLIST_MAXTITLE */
-		strlcpy(name, playlist_entries[index % PLAYLIST_MAXLINES],sizeof(name));
+		SDL_strlcpy(name, playlist_entries[index % PLAYLIST_MAXLINES],sizeof(name));
 
 		/* Print the current playing song in white */
 		if (last_current == index)

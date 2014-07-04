@@ -411,7 +411,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 		hud_tracking_scale = HUD_FindVar(hud, "scale");
 	}
 
-	strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
+	SDL_strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
 
 	if(cls.mvdplayback && cl_multiview.value && CURRVIEW > 0)
 	{
@@ -436,7 +436,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 				continue;
 			}
 
-			strlcpy(tracked_strings[view], hud_tracking_format->string, sizeof(tracked_strings[view]));
+			SDL_strlcpy(tracked_strings[view], hud_tracking_format->string, sizeof(tracked_strings[view]));
 
 			Replace_In_String(tracked_strings[view], sizeof(tracked_strings[view]), '%', 3,
 				"v", cl_multiview.value ? va("%d", view+1) : "",			// Replace %v with the current view (in multiview)
@@ -3253,7 +3253,7 @@ int Frags_DrawText(int px, int py,
 	// Draw team
 	if(showteams && cl.teamplay)
 	{
-		strlcpy(_team, team, clamp(max_team_length, 0, sizeof(_team)));
+		SDL_strlcpy(_team, team, clamp(max_team_length, 0, sizeof(_team)));
 		team_length = strlen(_team);
 
 		if(!flip)
@@ -3283,7 +3283,7 @@ int Frags_DrawText(int px, int py,
 	if(shownames)
 	{
 		// Draw name
-		strlcpy(_name, name, clamp(max_name_length, 0, sizeof(_name)));
+		SDL_strlcpy(_name, name, clamp(max_name_length, 0, sizeof(_name)));
 		name_length = strlen(_name);
 
 		if(flip && pad)
@@ -3372,7 +3372,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 		// Set the OnChange function for extra spec info.
 		hud_frags_extra_spec->OnChange = Frags_OnChangeExtraSpecInfo;
-		strlcpy(specval, hud_frags_extra_spec->string, sizeof(specval));
+		SDL_strlcpy(specval, hud_frags_extra_spec->string, sizeof(specval));
 		Cvar_Set(hud_frags_extra_spec, specval);
     }
 
@@ -4051,15 +4051,15 @@ char *Get_MP3_HUD_style(float style, char *st)
 	static char HUD_style[32];
 	if(style == 1.0)
 	{
-		strlcpy(HUD_style, va("%s:", st), sizeof(HUD_style));
+		SDL_strlcpy(HUD_style, va("%s:", st), sizeof(HUD_style));
 	}
 	else if(style == 2.0)
 	{
-		strlcpy(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
+		SDL_strlcpy(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
 	}
 	else
 	{
-		strlcpy(HUD_style, "", sizeof(HUD_style));
+		SDL_strlcpy(HUD_style, "", sizeof(HUD_style));
 	}
 	return HUD_style;
 }
@@ -4194,7 +4194,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 			{
 				case 1 :
 					remain = total - elapsed;
-					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
+					SDL_strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
 					SDL_snprintf (time_string, sizeof (time_string), "\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 2 :
@@ -4206,11 +4206,11 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 					break;
 				case 4 :
 					remain = total - elapsed;
-					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
+					SDL_strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
 					SDL_snprintf (time_string, sizeof (time_string), "%s/%s", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 5 :
-					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
+					SDL_strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
 					SDL_snprintf (time_string, sizeof (time_string), "-%s/%s", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 6 :
@@ -4222,7 +4222,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 					break;
 				case 0 :
 				default :
-					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
+					SDL_strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
 					SDL_snprintf (time_string, sizeof (time_string), "\x10%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
 					break;
 			}
@@ -4814,7 +4814,7 @@ void TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s, qbool *cancel)
 			// Try matching the current word with a hold item
 			// and set it's ordering according to it's placement
 			// in the string.
-			strlcpy (temp, start, min(end - start, sizeof(temp)));
+			SDL_strlcpy (temp, start, min(end - start, sizeof(temp)));
 			StatsGrid_SetHoldItemOrder(temp, order);
 			order++;
 
@@ -4866,7 +4866,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
 
 		// Parse the item filter the first time (trigger the OnChange function above).
-		strlcpy (val, hud_teamholdinfo_itemfilter->string, sizeof(val));
+		SDL_strlcpy (val, hud_teamholdinfo_itemfilter->string, sizeof(val));
 		Cvar_Set (hud_teamholdinfo_itemfilter, val);
     }
 
@@ -5047,7 +5047,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name); // we use nick or name
 		maxname = max(maxname, strlen(TP_ParseFunChars(nick, false)));
 
-		strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
+		SDL_strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
 		maxloc  = max(maxloc,  strlen(TP_ParseFunChars(tmp,  false)));
 
 		slots[slots_num++] = i;
@@ -5137,8 +5137,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	strlcpy(tmp2, HUD_FindVar(hud, "layout")->string , sizeof(tmp2));
-	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
+	SDL_strlcpy(tmp2, HUD_FindVar(hud, "layout")->string , sizeof(tmp2));
+	SDL_strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
 	//
@@ -5770,7 +5770,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 					
 					if(temp != NULL)
 					{
-						strlcpy(out, temp, sizeof(buf) - (out - buf));
+						SDL_strlcpy(out, temp, sizeof(buf) - (out - buf));
 						out += strlen(temp);
 					}
 				}
@@ -5824,7 +5824,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 							temp = va("%%%c", c);
 							break;
 					}
-					strlcpy(out, temp, sizeof(buf) - (out - buf));
+					SDL_strlcpy(out, temp, sizeof(buf) - (out - buf));
 					out += strlen(temp);
 				}
 				else
@@ -6261,7 +6261,7 @@ void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 
 	// Parse the colors.
 	//color = StringToRGB(new_color);
-	strlcpy(buf,new_color,sizeof(buf));
+	SDL_strlcpy(buf,new_color,sizeof(buf));
 	memcpy(hud_radar_highlight_color, StringToRGB(buf), sizeof(byte) * 4);
 
 	// Set the cvar to contain the new color string
@@ -7011,22 +7011,22 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 		// Weapon filter.
 		hud_radar_weaponfilter->OnChange = Radar_OnChangeWeaponFilter;
-		strlcpy(checkval, hud_radar_weaponfilter->string, sizeof(checkval));
+		SDL_strlcpy(checkval, hud_radar_weaponfilter->string, sizeof(checkval));
 		Cvar_Set(hud_radar_weaponfilter, checkval);
 
 		// Item filter.
 		hud_radar_itemfilter->OnChange = Radar_OnChangeItemFilter;
-		strlcpy(checkval, hud_radar_itemfilter->string, sizeof(checkval));
+		SDL_strlcpy(checkval, hud_radar_itemfilter->string, sizeof(checkval));
 		Cvar_Set(hud_radar_itemfilter, checkval);
 
 		// Other filter.
 		hud_radar_otherfilter->OnChange = Radar_OnChangeOtherFilter;
-		strlcpy(checkval, hud_radar_otherfilter->string, sizeof(checkval));
+		SDL_strlcpy(checkval, hud_radar_otherfilter->string, sizeof(checkval));
 		Cvar_Set(hud_radar_otherfilter, checkval);
 
 		// Highlight color.
 		hud_radar_highlight_color->OnChange = Radar_OnChangeHighlightColor;
-		strlcpy(checkval, hud_radar_highlight_color->string, sizeof(checkval));
+		SDL_strlcpy(checkval, hud_radar_highlight_color->string, sizeof(checkval));
 		Cvar_Set(hud_radar_highlight_color, checkval);
     }
 

@@ -112,11 +112,11 @@ static void Movie_Start(double _time)
 		 || !strcmp(scr_sshot_format.string, "jpg")
 		 || !strcmp(scr_sshot_format.string, "png"))
 		{
-			strlcpy(image_ext, scr_sshot_format.string, sizeof(image_ext));		
+			SDL_strlcpy(image_ext, scr_sshot_format.string, sizeof(image_ext));		
 		}
 		else
 		{
-			strlcpy (image_ext, "tga", sizeof (image_ext));
+			SDL_strlcpy (image_ext, "tga", sizeof (image_ext));
 		}
 	}
 }
@@ -181,7 +181,7 @@ void Movie_Demo_Capture_f(void) {
 			Com_Printf_State (PRINT_FAIL, "Avi capturing not initialized\n");
 			return;
 		}
-		strlcpy (aviname, Cmd_Argv(3), sizeof(aviname));
+		SDL_strlcpy (aviname, Cmd_Argv(3), sizeof(aviname));
 		if (!(Util_Is_Valid_Filename(aviname))) {
 			Com_Printf(Util_Invalid_Filename_Msg(aviname));
 			return;

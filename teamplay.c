@@ -219,7 +219,7 @@ char *Macro_WeaponAndAmmo (void)
 {
 	char buf[MAX_MACRO_VALUE];
 	SDL_snprintf (buf, sizeof(buf), "%s:%s", Macro_Weapon(), Macro_Ammo());
-	strlcpy (macro_buf, buf, sizeof(macro_buf));
+	SDL_strlcpy (macro_buf, buf, sizeof(macro_buf));
 	return macro_buf;
 }
 
@@ -232,7 +232,7 @@ char *Macro_WeaponNum (void)
 	if (cl_weaponpreselect.integer && (best = IN_BestWeapon())) {
 		char buf[4];
 		SDL_snprintf(buf, sizeof(buf), "%d", best);
-		strlcpy(macro_buf, buf, sizeof(macro_buf));
+		SDL_strlcpy(macro_buf, buf, sizeof(macro_buf));
 		return macro_buf;
 	}
 	else {
@@ -346,7 +346,7 @@ char *Macro_BestWeaponAndAmmo (void)
 	char buf[MAX_MACRO_VALUE];
 
 	SDL_snprintf (buf, sizeof(buf), "%s:%s", Macro_BestWeapon(), Macro_BestAmmo());
-	strlcpy (macro_buf, buf, sizeof(buf));
+	SDL_strlcpy (macro_buf, buf, sizeof(buf));
 	return macro_buf;
 }
 
@@ -387,7 +387,7 @@ char *Macro_Powerups (void)
 	macro_buf[0] = 0;
 
 	if (cl.stats[STAT_ITEMS] & IT_QUAD)
-		strlcpy(macro_buf, tp_name_quad.string, sizeof(macro_buf));
+		SDL_strlcpy(macro_buf, tp_name_quad.string, sizeof(macro_buf));
 
 	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) {
 		if (macro_buf[0])
@@ -410,14 +410,14 @@ char *Macro_Powerups (void)
 	}
 
 	if (!macro_buf[0])
-		strlcpy(macro_buf, tp_name_none.string, sizeof(macro_buf));
+		SDL_strlcpy(macro_buf, tp_name_none.string, sizeof(macro_buf));
 
 	return macro_buf;
 }
 
 char *Macro_Location (void)
 {
-	strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
+	SDL_strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
 	return vars.lastreportedloc;
 }
 
@@ -429,9 +429,9 @@ char *Macro_LastDeath (void)
 char *Macro_Last_Location (void)
 {
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5)
-		strlcpy(vars.lastreportedloc, vars.lastdeathloc, sizeof(vars.lastreportedloc));
+		SDL_strlcpy(vars.lastreportedloc, vars.lastdeathloc, sizeof(vars.lastreportedloc));
 	else
-		strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
+		SDL_strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
 	return vars.lastreportedloc;
 }
 
@@ -486,9 +486,9 @@ char *Macro_Date (void)
 char *Macro_Took (void)
 {
 	if (TOOK_EMPTY())
-		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
-		strlcpy (macro_buf, vars.tookname, sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, vars.tookname, sizeof(macro_buf));
 	return macro_buf;
 }
 
@@ -496,9 +496,9 @@ char *Macro_Took (void)
 char *Macro_TookLoc (void)
 {
 	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
-		strlcpy (macro_buf, tp_name_someplace.string, sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, tp_name_someplace.string, sizeof(macro_buf));
 	else
-		strlcpy (macro_buf, vars.tookloc, sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, vars.tookloc, sizeof(macro_buf));
 	return macro_buf;
 }
 
@@ -506,9 +506,9 @@ char *Macro_TookLoc (void)
 char *Macro_TookAtLoc (void)
 {
 	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
-		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else {
-		strlcpy (macro_buf, va("%s %s %s", vars.tookname, tp_name_at.string, vars.tookloc), sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, va("%s %s %s", vars.tookname, tp_name_at.string, vars.tookloc), sizeof(macro_buf));
 	}
 	return macro_buf;
 }
@@ -536,7 +536,7 @@ char *Macro_PointLocation (void)
 char *Macro_LastPointAtLoc (void)
 {
 	if (!vars.pointtime || cls.realtime - vars.pointtime > TP_POINT_EXPIRE_TIME)
-		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
 		SDL_snprintf (macro_buf, sizeof(macro_buf), "%s %s %s", vars.pointname, tp_name_at.string, vars.pointloc[0] ? vars.pointloc : Macro_Location());
 	return macro_buf;
@@ -556,7 +556,7 @@ char *Macro_Weapons (void)
 	macro_buf[0] = 0;
 
 	if (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
-		strlcpy(macro_buf, tp_name_lg.string, sizeof(macro_buf));
+		SDL_strlcpy(macro_buf, tp_name_lg.string, sizeof(macro_buf));
 
 	if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) {
 		if (macro_buf[0])
@@ -595,7 +595,7 @@ char *Macro_Weapons (void)
 	}
 
 	if (!macro_buf[0])
-		strlcpy(macro_buf, tp_name_none.string, sizeof(macro_buf));
+		SDL_strlcpy(macro_buf, tp_name_none.string, sizeof(macro_buf));
 
 	return macro_buf;
 }
@@ -603,18 +603,18 @@ char *Macro_Weapons (void)
 static char *Skin_To_TFSkin (char *myskin) // These four TF classes don't have their full names as the skin (i.e. they have tf_snipe instead of tf_sniper)
 {
 	if (!cl.teamfortress || cl.spectator || SDL_strncasecmp(myskin, "tf_", 3)) {
-		strlcpy(macro_buf, myskin, sizeof(macro_buf));
+		SDL_strlcpy(macro_buf, myskin, sizeof(macro_buf));
 	} else {
 		if (!SDL_strcasecmp(myskin, "tf_demo"))
-			strlcpy(macro_buf, "demoman", sizeof(macro_buf));
+			SDL_strlcpy(macro_buf, "demoman", sizeof(macro_buf));
 		else if (!SDL_strcasecmp(myskin, "tf_eng"))
-			strlcpy(macro_buf, "engineer", sizeof(macro_buf));
+			SDL_strlcpy(macro_buf, "engineer", sizeof(macro_buf));
 		else if (!SDL_strcasecmp(myskin, "tf_snipe"))
-			strlcpy(macro_buf, "sniper", sizeof(macro_buf));
+			SDL_strlcpy(macro_buf, "sniper", sizeof(macro_buf));
 		else if (!SDL_strcasecmp(myskin, "tf_sold"))
-			strlcpy(macro_buf, "soldier", sizeof(macro_buf));
+			SDL_strlcpy(macro_buf, "soldier", sizeof(macro_buf));
 		else
-			strlcpy(macro_buf, myskin + 3, sizeof(macro_buf));
+			SDL_strlcpy(macro_buf, myskin + 3, sizeof(macro_buf));
 	}
 	return macro_buf;
 }
@@ -671,7 +671,7 @@ char *Macro_Need (void)
 		&& (tp_need_ga.value || tp_need_ya.value || tp_need_ra.value))
 	   )
 	{
-		strlcpy (macro_buf, tp_name_armor.string, sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, tp_name_armor.string, sizeof(macro_buf));
 		vars.needflags |= it_armor;
 	}
 
@@ -770,7 +770,7 @@ char *Macro_Need (void)
 
 done:
 	if (!macro_buf[0])
-		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
+		SDL_strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 
 	return macro_buf;
 }
@@ -851,7 +851,7 @@ char *Macro_EnemyStatus_LED(void)
 char *Macro_LastSeenPowerup(void)
 {
 	if (!vars.enemy_powerups_time || cls.realtime - vars.enemy_powerups_time > 5) {
-		strlcpy(macro_buf, tp_name_quad.string, sizeof(macro_buf));
+		SDL_strlcpy(macro_buf, tp_name_quad.string, sizeof(macro_buf));
 	} else {
 		macro_buf[0] = 0;
 		if (vars.enemy_powerups & TP_QUAD)
@@ -941,8 +941,8 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
         if (cl_fakename.string[0])
         {
         	char c_fn[1024], c_fna[1024];
-        	strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
-        	strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
+        	SDL_strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
+        	SDL_strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
 
 			SDL_snprintf(msg, sizeof(msg), "%s\n", TP_ParseFunChars(strcat(strcat(c_fn, c_fna), dest) , true));
         }
@@ -1234,7 +1234,7 @@ char *TP_ParseMacroString (char *s)
 			}
 			if (i + strlen(macro_string) >= MAX_MACRO_STRING - 1)
 				Sys_Error("TP_ParseMacroString: macro string length > MAX_MACRO_STRING)");
-			strlcpy (&buf[i], macro_string, MAX_MACRO_STRING - i);
+			SDL_strlcpy (&buf[i], macro_string, MAX_MACRO_STRING - i);
 			i += strlen(macro_string);
 			s += 4;	// skip %[<char>]
 			continue;
@@ -1285,7 +1285,7 @@ char *TP_ParseMacroString (char *s)
 			}
 			if (i + strlen(macro_string) >= MAX_MACRO_STRING - 1)
 				Sys_Error("TP_ParseMacroString: macro string length > MAX_MACRO_STRING)");
-			strlcpy (&buf[i], macro_string, MAX_MACRO_STRING - i);
+			SDL_strlcpy (&buf[i], macro_string, MAX_MACRO_STRING - i);
 			i += strlen(macro_string);
 			s += 2;	// skip % and letter
 			continue;
@@ -1490,7 +1490,7 @@ void MV_UpdateSkins()
 	//
 	{
 		// Get the team of the first slot.
-		strlcpy(tracked_team, cl.players[mv_trackslots[0]].team, sizeof(tracked_team));
+		SDL_strlcpy(tracked_team, cl.players[mv_trackslots[0]].team, sizeof(tracked_team));
 
 		for(i = 0; i < 4; i++)
 		{
@@ -1529,7 +1529,7 @@ void MV_UpdateSkins()
 		// Pick the first team as the "team"-team. (uses teamcolor).
 		while(!friendlyteam[0] && cl.players[i].team[0])
 		{
-			strlcpy(friendlyteam, cl.players[i].team, sizeof(friendlyteam));
+			SDL_strlcpy(friendlyteam, cl.players[i].team, sizeof(friendlyteam));
 			i++;
 		}
 
@@ -1808,7 +1808,7 @@ qbool TP_LoadLocFile (char *path, qbool quiet)
 	if (!*path)
 		return false;
 
-	strlcpy (locname, "locs/", sizeof (locname));
+	SDL_strlcpy (locname, "locs/", sizeof (locname));
 	if (strlen (path) + strlen(locname) + 2 + 4 > MAX_OSPATH) {
 		Com_Printf ("TP_LoadLocFile: path name > MAX_OSPATH\n");
 		return false;
@@ -1954,7 +1954,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 
 	// Get the default path for loc-files and make sure the path
 	// won't be too long.
-	strlcpy (locname, "locs/", sizeof (locname));
+	SDL_strlcpy (locname, "locs/", sizeof (locname));
 	if (strlen(path) + strlen(locname) + 2 + 4 > MAX_OSPATH) {
 		Com_Printf ("TP_SaveLocFile: path name > MAX_OSPATH\n");
 		return false;
@@ -2238,7 +2238,7 @@ char *TP_PlayerName (void)
 {
 	static char myname[MAX_INFO_STRING];
 
-	strlcpy (myname, Info_ValueForKey(cl.players[cl.playernum].userinfo, "name"), MAX_INFO_STRING);
+	SDL_strlcpy (myname, Info_ValueForKey(cl.players[cl.playernum].userinfo, "name"), MAX_INFO_STRING);
 	return myname;
 }
 
@@ -2246,7 +2246,7 @@ char *TP_PlayerTeam (void)
 {
 	static char myteam[MAX_INFO_STRING];
 
-	strlcpy (myteam, cl.players[cl.playernum].team, MAX_INFO_STRING);
+	SDL_strlcpy (myteam, cl.players[cl.playernum].team, MAX_INFO_STRING);
 	return myteam;
 }
 
@@ -2353,7 +2353,7 @@ void TP_NewMap (void)
 				if ((groupname = TP_GetMapGroupName(mapname, &system)) && !system)
 					TP_LoadLocFile (va("%s.loc", groupname), true);
 			}
-			strlcpy (last_map, mapname, sizeof(last_map));
+			SDL_strlcpy (last_map, mapname, sizeof(last_map));
 		} else {
 			last_map[0] = 0;
 		}
@@ -2514,7 +2514,7 @@ static void FlagCommand (unsigned int *flags, unsigned int defaultflags)
 	if (c == 1)	{
 		qbool notfirst = false;
 		if (!*flags)
-			strlcpy (str, "none", sizeof (str));
+			SDL_strlcpy (str, "none", sizeof (str));
 		for (i = 0 ; i < NUM_ITEMFLAGS ; i++)
 			if (*flags & (1 << i)) {
 				if (notfirst)
@@ -2790,7 +2790,7 @@ static int FindNearestItem (int flags, item_t **pitem)
 	}
 
 	if (bestent)
-		strlcpy(vars.nearestitemloc, TP_LocationName(bestent->origin), sizeof(vars.nearestitemloc));
+		SDL_strlcpy(vars.nearestitemloc, TP_LocationName(bestent->origin), sizeof(vars.nearestitemloc));
 	else
 		vars.nearestitemloc[0] = 0;
 
@@ -2855,8 +2855,8 @@ static void ExecTookTrigger (char *s, int flag, vec3_t org)
 
 	vars.tooktime = cls.realtime;
     vars.tookflag = flag;
-	strlcpy (vars.tookname, s, sizeof (vars.tookname));
-	strlcpy (vars.tookloc, TP_LocationName (org), sizeof (vars.tookloc));
+	SDL_strlcpy (vars.tookname, s, sizeof (vars.tookname));
+	SDL_strlcpy (vars.tookloc, TP_LocationName (org), sizeof (vars.tookloc));
 
 	if ((tookflags_dmm & flag) && CheckTrigger())
 		TP_ExecTrigger ("f_took");
@@ -2891,7 +2891,7 @@ void TP_ParsePlayerInfo(player_state_t *oldstate, player_state_t *state, player_
 			ExecTookTrigger (tp_name_flag.string, it_flag, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
 		} else if (!(state->effects & (EF_FLAG1|EF_FLAG2)) && (oldstate->effects & (EF_FLAG1|EF_FLAG2))) {
 			vars.lastdrop_time = cls.realtime;
-			strlcpy (vars.lastdroploc, Macro_Location(), sizeof (vars.lastdroploc));
+			SDL_strlcpy (vars.lastdroploc, Macro_Location(), sizeof (vars.lastdroploc));
 		}
 	}
 }
@@ -3221,9 +3221,9 @@ void TP_FindPoint (void)
             flag |= it_pented;
         }
 		strlcat (buf, va("%s%s", buf[0] ? " " : "", name), sizeof (buf) - strlen (buf));
-		strlcpy (vars.pointname, buf, sizeof (vars.pointname));
+		SDL_strlcpy (vars.pointname, buf, sizeof (vars.pointname));
         vars.pointflag = flag;
-		strlcpy (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));
+		SDL_strlcpy (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));
 
 		vars.pointtype = (teammate && !eyes) ? POINT_TYPE_TEAMMATE : POINT_TYPE_ENEMY;
 	} else if (best >= 0) {
@@ -3243,11 +3243,11 @@ void TP_FindPoint (void)
 		}
 
 		vars.pointtype = (bestitem->itemflag & (it_powerups|it_flag)) ? POINT_TYPE_POWERUP : POINT_TYPE_ITEM;
-		strlcpy (vars.pointname, p, sizeof(vars.pointname));
-		strlcpy (vars.pointloc, TP_LocationName (bestent->origin), sizeof(vars.pointloc));
+		SDL_strlcpy (vars.pointname, p, sizeof(vars.pointname));
+		SDL_strlcpy (vars.pointloc, TP_LocationName (bestent->origin), sizeof(vars.pointloc));
 	} else {
 	nothing:
-		strlcpy (vars.pointname, tp_name_nothing.string, sizeof(vars.pointname));
+		SDL_strlcpy (vars.pointname, tp_name_nothing.string, sizeof(vars.pointname));
 		vars.pointloc[0] = 0;
 		vars.pointtype = POINT_TYPE_ITEM;
         vars.pointflag = 0;
@@ -3289,7 +3289,7 @@ void TP_StatChanged (int stat, int value)
 			}
 			if (vars.health > 0) {		// We have just died
 				vars.deathtrigger_time = cls.realtime;
-				strlcpy (vars.lastdeathloc, Macro_Location(), sizeof (vars.lastdeathloc));
+				SDL_strlcpy (vars.lastdeathloc, Macro_Location(), sizeof (vars.lastdeathloc));
 
 				CountNearbyPlayers(true);
 				vars.last_numenemies = vars.numenemies;
@@ -3313,7 +3313,7 @@ void TP_StatChanged (int stat, int value)
 			}
 			if (!cl.spectator && cl.teamfortress && ~value & vars.items & (IT_KEY1|IT_KEY2)) {
 				vars.lastdrop_time = cls.realtime;
-				strlcpy (vars.lastdroploc, Macro_Location(), sizeof (vars.lastdroploc));
+				SDL_strlcpy (vars.lastdroploc, Macro_Location(), sizeof (vars.lastdroploc));
 			}
 			vars.olditems = vars.items;
 			vars.items = value;
@@ -3418,7 +3418,7 @@ void TP_MsgFilter_f (void)
 			Com_Printf ("A filter may not contain spaces\n");
 			return;
 		}
-		strlcpy (filter_strings[num_filters], s + 1, sizeof(filter_strings[0]));
+		SDL_strlcpy (filter_strings[num_filters], s + 1, sizeof(filter_strings[0]));
 		num_filters++;
 		if (num_filters >= 8)
 			break;

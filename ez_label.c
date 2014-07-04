@@ -436,7 +436,7 @@ void EZ_label_SetText(ez_label_t *label, const char *text)
 	if (text)
 	{
 		label->text = Q_calloc(text_len, sizeof(char));
-		strlcpy(label->text, text, text_len);
+		SDL_strlcpy(label->text, text, text_len);
 	}
 
 	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged, NULL);

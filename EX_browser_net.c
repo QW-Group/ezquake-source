@@ -105,7 +105,7 @@ char *ValueForKey(server_data *s, char *k)
 void SetPing(server_data *s, int ping)
 {
     if (ping < 0)
-        strlcpy (s->display.ping, "n/a", sizeof (s->display.ping));
+        SDL_strlcpy (s->display.ping, "n/a", sizeof (s->display.ping));
     else
         SDL_snprintf (s->display.ping, sizeof (s->display.ping), "%3d", ping > 999 ? 999 : ping);
 
@@ -117,7 +117,7 @@ void SetPing(server_data *s, int ping)
 void SB_Server_SetBestPing(server_data *s, int bestping)
 {
     if (bestping < 0)
-        strlcpy (s->display.bestping, "n/a", sizeof (s->display.bestping));
+        SDL_strlcpy (s->display.bestping, "n/a", sizeof (s->display.bestping));
     else
         SDL_snprintf (s->display.bestping, sizeof (s->display.bestping), "%3d", bestping > 999 ? 999 : bestping);
 
@@ -184,10 +184,10 @@ void Parse_Serverinfo(server_data *s, char *info)
             i3 = info + strlen(info);
 
         s->keys[s->keysn] = (char *) Q_malloc(i2-info);
-        strlcpy(s->keys[s->keysn], info+1, i2-info);
+        SDL_strlcpy(s->keys[s->keysn], info+1, i2-info);
 
         s->values[s->keysn] = (char *) Q_malloc(i3-i2);
-        strlcpy(s->values[s->keysn], i2+1, i3-i2);
+        SDL_strlcpy(s->values[s->keysn], i2+1, i3-i2);
 
         s->keysn++;
 
@@ -249,9 +249,9 @@ void Parse_Serverinfo(server_data *s, char *info)
         s->players[i]->top = Sbar_ColorForMap(top);
         s->players[i]->bottom = Sbar_ColorForMap(bottom);
 
-        strlcpy(s->players[i]->name, nameptr, sizeof(s->players[0]->name));
-        strlcpy(s->players[i]->skin, skin, sizeof(s->players[0]->skin));
-        strlcpy(s->players[i]->team, team, sizeof(s->players[0]->team));
+        SDL_strlcpy(s->players[i]->name, nameptr, sizeof(s->players[0]->name));
+        SDL_strlcpy(s->players[i]->skin, skin, sizeof(s->players[0]->skin));
+        SDL_strlcpy(s->players[i]->team, team, sizeof(s->players[0]->team));
 
         pinfo = strchr(pinfo, '\n') + 1;
     }

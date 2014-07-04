@@ -282,7 +282,7 @@ qbool CheckForCommand (void)
 {
 	char command[256], *s;
 
-	strlcpy(command, wcs2str(key_lines[edit_line] + 1), sizeof(command));
+	SDL_strlcpy(command, wcs2str(key_lines[edit_line] + 1), sizeof(command));
 	for (s = command; *s > ' '; s++)
 		;
 	*s = 0;
@@ -419,7 +419,7 @@ static void FindCommonSubString (char *s)
 {
 	if (!compl_clen)
 	{
-		strlcpy (compl_common, s, sizeof(compl_common));
+		SDL_strlcpy (compl_common, s, sizeof(compl_common));
 		compl_clen = strlen (compl_common);
 	} 
 	else

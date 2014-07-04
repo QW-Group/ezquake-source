@@ -161,7 +161,7 @@ void VX_TrackerThink()
 		if (trackermsg[i-1].die < r_refdef2.time && trackermsg[i].die >= r_refdef2.time) // free slot above
 		{
 			trackermsg[i-1].die = trackermsg[i].die;
-			strlcpy(trackermsg[i-1].msg, trackermsg[i].msg, sizeof(trackermsg[0].msg));
+			SDL_strlcpy(trackermsg[i-1].msg, trackermsg[i].msg, sizeof(trackermsg[0].msg));
 			trackermsg[i-1].tt = trackermsg[i].tt;
 
 			trackermsg[i].msg[0] = 0;
@@ -199,13 +199,13 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 
 		for (i = 1; i < max_active_tracks; i++) {
 			trackermsg[i-1].die = trackermsg[i].die;
-			strlcpy(trackermsg[i-1].msg, trackermsg[i].msg, sizeof(trackermsg[0].msg));
+			SDL_strlcpy(trackermsg[i-1].msg, trackermsg[i].msg, sizeof(trackermsg[0].msg));
 			trackermsg[i-1].tt = trackermsg[i].tt;
 		}
 		active_track--;
 	}
 
-	strlcpy(trackermsg[active_track].msg, msg, sizeof(trackermsg[0].msg));
+	SDL_strlcpy(trackermsg[active_track].msg, msg, sizeof(trackermsg[0].msg));
 	trackermsg[active_track].die = r_refdef2.time + max(0, amf_tracker_time.value);
 	trackermsg[active_track].tt = tt;
 	active_track += 1;
@@ -254,7 +254,7 @@ static char *VX_Name(int player)
 
 	length = bound(amf_tracker_name_width.integer, 0, MAX_SCOREBOARDNAME - 1);
 
-	strlcpy (string[++idx % 2], VX_RemovePrefix(player), MAX_SCOREBOARDNAME);
+	SDL_strlcpy (string[++idx % 2], VX_RemovePrefix(player), MAX_SCOREBOARDNAME);
 
 	if (length > 0) {
 		// align by adding spaces

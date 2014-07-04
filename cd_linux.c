@@ -458,7 +458,7 @@ int CDAudio_Init(void)
 		return -1;
 
 	if ((i = COM_CheckParm("-cddev")) != 0 && i < COM_Argc() - 1)
-		strlcpy (cd_dev, COM_Argv(i + 1), sizeof(cd_dev));
+		SDL_strlcpy (cd_dev, COM_Argv(i + 1), sizeof(cd_dev));
 
 	if ((cdfile = open(cd_dev, O_RDONLY)) == -1) {
 		Com_Printf ("CDAudio_Init: open of \"%s\" failed (%i)\n", cd_dev, errno);

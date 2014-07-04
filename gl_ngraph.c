@@ -214,10 +214,10 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
             if (lost > 99)
                 lost = 99;
 
-            strlcpy(st, "\x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1F", sizeof (st));
+            SDL_strlcpy(st, "\x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1F", sizeof (st));
             //SDL_snprintf(st, sizeof (st), "%3i%% packet loss, %3i ms ping", lost, avgping);
             SDL_snprintf (buf, sizeof (buf), " %i \xf %i%% ", avgping, lost);
-            strlcpy (st + strlen(st) - strlen(buf) - 3, buf, sizeof (st) - strlen (st) + strlen (buf) + 3);
+            SDL_strlcpy (st + strlen(st) - strlen(buf) - 3, buf, sizeof (st) - strlen (st) + strlen (buf) + 3);
             Draw_String(x+4, y, st);
         }
 

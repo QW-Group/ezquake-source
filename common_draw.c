@@ -86,7 +86,7 @@ int SCR_DrawDemoStatus(void)
     Draw_Character((int)(x + 8*((cls.demopos / cls.demolength)*(w-3)+1)), y-24, '\x83');
 
     // demo name
-    strlcpy (st, cls.demoname, sizeof (st));
+    SDL_strlcpy (st, cls.demoname, sizeof (st));
     st[vid.width/8] = 0;
     Draw_Alt_String(vid.width/2 - 4*strlen(st), y-4, st);
 
@@ -396,7 +396,7 @@ void SCR_DrawClients(void)
 	y = max (y, 0);
 	x = (vid.width - 320) / 2 + 4;
 
-	strlcpy (line, " # ", sizeof (line));
+	SDL_strlcpy (line, " # ", sizeof (line));
 	SDL_snprintf (buf, sizeof (buf), "%*.*s ", uid_w, uid_w, "uid");
 	strlcat (line, buf, sizeof (line));
 	SDL_snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, "name");
@@ -406,7 +406,7 @@ void SCR_DrawClients(void)
 	Draw_String (x, y, line);
 	y += 8;
 
-	strlcpy (line, "\x1D\x1F \x1D", sizeof (line));
+	SDL_strlcpy (line, "\x1D\x1F \x1D", sizeof (line));
 	SDL_snprintf (buf, sizeof (buf), "%*.*s", uid_w-2, uid_w-2, "\x1E\x1E\x1E\x1E");
 	strlcat (line, buf, sizeof (line));
 	strlcat (line, "\x1F \x1D", sizeof (line));
@@ -440,7 +440,7 @@ void SCR_DrawClients(void)
 		strlcat (line, buf, sizeof (line));
 
 		if (cl.players[i].spectator)
-			strlcpy (buf, "<spec>   ", sizeof (buf));
+			SDL_strlcpy (buf, "<spec>   ", sizeof (buf));
 		else
 			SDL_snprintf (buf, sizeof (buf), "%-8.8s ", Info_ValueForKey(cl.players[i].userinfo, "skin"));
 
@@ -490,7 +490,7 @@ mpic_t* CachePic_Add(const char *path, mpic_t *pic)
 	
 	searchpos->data.pic = pic;
 
-	strlcpy(searchpos->data.name, path, sizeof(searchpos->data.name));
+	SDL_strlcpy(searchpos->data.name, path, sizeof(searchpos->data.name));
 	searchpos->next = NULL; // Terminate the list.
 	*nextp = searchpos;		// Connect to the list.
 
@@ -710,7 +710,7 @@ void SCR_NetStats(int x, int y, float period)
     if (with_delta)
         SDL_snprintf(line, sizeof (line), "bad delta  %3d %%", lost_delta);
     else
-        strlcpy (line, "no delta compr", sizeof (line));
+        SDL_strlcpy (line, "no delta compr", sizeof (line));
     Draw_String(x, y, line);
     y+=8;
 
@@ -757,9 +757,9 @@ char* SCR_GetGameTime(int t)
 	timelimit = (t == TIMETYPE_GAMECLOCKINV) ? 60 * SDL_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1: 0;
 
 	if (cl.countdown || cl.standby)
-		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));
+		SDL_strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));
 	else
-		strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime + *gameclockoffset)), sizeof(str));
+		SDL_strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime + *gameclockoffset)), sizeof(str));
 
 	return str;
 }
@@ -767,7 +767,7 @@ char* SCR_GetGameTime(int t)
 char* SCR_GetDemoTime()
 {
 	static char str[9]; // '01:02:03\0'
-	strlcpy (str, SecondsToMinutesString((int) (cls.demotime - demostarttime)), sizeof(str));
+	SDL_strlcpy (str, SecondsToMinutesString((int) (cls.demotime - demostarttime)), sizeof(str));
 	return str;
 }
 

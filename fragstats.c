@@ -198,13 +198,13 @@ static void LoadFragFile(char *filename, qbool quiet) {
 	InitFragDefs();
 
 	lowmark = Hunk_LowMark();
-	strlcpy(fragfilename, filename, sizeof(fragfilename));
+	SDL_strlcpy(fragfilename, filename, sizeof(fragfilename));
 	COM_ForceExtensionEx(fragfilename, ".dat", sizeof(fragfilename));
 
 	// if it fragfile.dat then try to load from ezquake dir first,
 	// because we have a bit different fragfile format comparing to fuhquake
 	if (!SDL_strcasecmp(fragfilename, "fragfile.dat") && (buffer = (char *) FS_LoadHunkFile("../ezquake/fragfile.dat", NULL)))
-		strlcpy(fragfilename, "ezquake/fragfile.dat", sizeof(fragfilename));
+		SDL_strlcpy(fragfilename, "ezquake/fragfile.dat", sizeof(fragfilename));
 
 	if (!buffer && !(buffer = (char *) FS_LoadHunkFile(fragfilename, NULL))) {
 		if (!quiet)
@@ -751,7 +751,7 @@ void Stats_NewMap(void) {
 
 	if (!last_gamedir[0] || SDL_strcasecmp(last_gamedir, cls.gamedirfile)) {
 		if (cl_loadFragfiles.value) {
-			strlcpy(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
+			SDL_strlcpy(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
 			LoadFragFile("fragfile", true);
 		} else {
 			InitFragDefs();

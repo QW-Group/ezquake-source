@@ -208,7 +208,6 @@ char *Q_strlwr( char *s1 );
 char *strstri(const char *text, const char *find); // Case insensitive strstr.
 
 #if defined(__linux__) || defined(_WIN32)
-size_t strlcpy (char *dst, const char *src, size_t siz);
 size_t strlcat (char *dst, const char *src, size_t siz);
 char  *strnstr (const char *s, const char *find, size_t slen);
 #endif

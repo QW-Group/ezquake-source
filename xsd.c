@@ -71,7 +71,7 @@ char *XSD_AddText(char *dst, const char *src, int src_len)
     {
 		len = 1 + src_len + strlen(dst);
         buf = (char *) Q_malloc(len);
-        strlcpy (buf, dst, len);
+        SDL_strlcpy (buf, dst, len);
         memcpy(buf+strlen(buf), src, src_len);
         buf[src_len+strlen(dst)] = 0;
         Q_free(dst);

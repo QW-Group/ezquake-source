@@ -1146,8 +1146,8 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 				textchunks[i].key = (char *)Q_calloc(len + 1, sizeof(char));
 				textchunks[i].text = (char *)Q_calloc(png_text_ptr[i].text_length + 1, sizeof(char));
 
-				strlcpy (textchunks[i].key, png_text_ptr[i].key, len + 1);
-				strlcpy (textchunks[i].text, png_text_ptr[i].text, png_text_ptr[i].text_length + 1);
+				SDL_strlcpy (textchunks[i].key, png_text_ptr[i].key, len + 1);
+				SDL_strlcpy (textchunks[i].text, png_text_ptr[i].text, png_text_ptr[i].text_length + 1);
 				
 				textchunks[i].text_length = png_text_ptr[i].text_length;
 				textchunks[i].compression = png_text_ptr[i].compression;

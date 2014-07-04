@@ -248,7 +248,7 @@ int			scr_erase_center;
 // Called for important messages that should stay in the center of the screen for a few moments
 void SCR_CenterPrint (char *str)
 {
-	strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
+	SDL_strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
 	scr_centertime_off = scr_centertime.value;
 	scr_centertime_start = cl.time;
 
@@ -757,11 +757,11 @@ void SCR_DrawClock (void) {
 		if ((ptm = localtime (&t))) {
 			strftime (str, sizeof (str) - 1, scr_clock_format.string[0] ? scr_clock_format.string : "%H:%M:%S", ptm);
 		} else {
-			strlcpy (str, "#bad date#", sizeof (str));
+			SDL_strlcpy (str, "#bad date#", sizeof (str));
 		}
 	} else {
 		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
-		strlcpy (str, SecondsToHourString((int) time), sizeof (str));
+		SDL_strlcpy (str, SecondsToHourString((int) time), sizeof (str));
 	}
 
 	x = ELEMENT_X_COORD(scr_clock);
@@ -783,9 +783,9 @@ void SCR_DrawGameClock (void) {
 		timelimit = 0;
 
 	if (cl.countdown || cl.standby)
-		strlcpy (str, SecondsToHourString(timelimit), sizeof(str));
+		SDL_strlcpy (str, SecondsToHourString(timelimit), sizeof(str));
 	else
-		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
+		SDL_strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
 
 	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strstr(str, ":")))
 		s++;		// or just use SecondsToMinutesString() ...
@@ -805,9 +805,9 @@ void SCR_DrawDemoClock (void) {
 		return;
 
 	if (scr_democlock.value == 2)
-		strlcpy (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
+		SDL_strlcpy (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
 	else
-		strlcpy (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
+		SDL_strlcpy (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
 
 	x = ELEMENT_X_COORD(scr_democlock);
 	y = ELEMENT_Y_COORD(scr_democlock);
@@ -1172,11 +1172,11 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 	if(scr_autoid.integer >= 3 && scr_autoid.integer < 6 && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
 	{
 		if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1) {
-			strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
+			SDL_strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
 		} else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2) {
-			strlcpy(armor_name, "&cff0YA", sizeof(armor_name));
+			SDL_strlcpy(armor_name, "&cff0YA", sizeof(armor_name));
 		} else {
-			strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
+			SDL_strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
 		}
 
 		Draw_SColoredString(
@@ -1198,31 +1198,31 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 		{
 			case IT_SHOTGUN:
 				weapon_pic = sb_weapons[0][0];
-				strlcpy(weapon_name, "SG", sizeof(weapon_name));
+				SDL_strlcpy(weapon_name, "SG", sizeof(weapon_name));
 				break;
 			case IT_SUPER_SHOTGUN:
 				weapon_pic = sb_weapons[0][1];
-				strlcpy(weapon_name, "BS", sizeof(weapon_name));
+				SDL_strlcpy(weapon_name, "BS", sizeof(weapon_name));
 				break;
 			case IT_NAILGUN:
 				weapon_pic = sb_weapons[0][2];
-				strlcpy(weapon_name, "NG", sizeof(weapon_name));
+				SDL_strlcpy(weapon_name, "NG", sizeof(weapon_name));
 				break;
 			case IT_SUPER_NAILGUN:
 				weapon_pic = sb_weapons[0][3];
-				strlcpy(weapon_name, "SN", sizeof(weapon_name));
+				SDL_strlcpy(weapon_name, "SN", sizeof(weapon_name));
 				break;
 			case IT_GRENADE_LAUNCHER:
 				weapon_pic = sb_weapons[0][4];
-				strlcpy(weapon_name, "GL", sizeof(weapon_name));
+				SDL_strlcpy(weapon_name, "GL", sizeof(weapon_name));
 				break;
 			case IT_ROCKET_LAUNCHER:
 				weapon_pic = sb_weapons[0][5];
-				strlcpy(weapon_name, "RL", sizeof(weapon_name));
+				SDL_strlcpy(weapon_name, "RL", sizeof(weapon_name));
 				break;
 			case IT_LIGHTNING:
 				weapon_pic = sb_weapons[0][6];
-				strlcpy(weapon_name, "LG", sizeof(weapon_name));
+				SDL_strlcpy(weapon_name, "LG", sizeof(weapon_name));
 				break;
 			default :
 				// No weapon.
@@ -1269,7 +1269,7 @@ void SCR_DrawAutoID (void)
 			if (scr_autoid_namelength.integer >= 1 && scr_autoid_namelength.integer < MAX_SCOREBOARDNAME) {
 				char name[MAX_SCOREBOARDNAME];
 
-				strlcpy(name, autoids[i].player->name, sizeof(name));
+				SDL_strlcpy(name, autoids[i].player->name, sizeof(name));
 				name[scr_autoid_namelength.integer] = 0;
 				Draw_SString(x - strlen(name) * 4 * scale, y - 8 * scale, name, scale);
 			} else {
@@ -1569,8 +1569,8 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	strlcpy(tmp2, its_shownick ? scr_shownick_order.string : scr_teaminfo_order.string , sizeof(tmp2));
-	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
+	SDL_strlcpy(tmp2, its_shownick ? scr_shownick_order.string : scr_teaminfo_order.string , sizeof(tmp2));
+	SDL_strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
 	//
@@ -1845,7 +1845,7 @@ static void SCR_Draw_TeamInfo(void)
 		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name); // we use nick or name
 		maxname = max(maxname, strlen(TP_ParseFunChars(nick, false)));
 
-		strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
+		SDL_strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
 		maxloc  = max(maxloc,  strlen(TP_ParseFunChars(tmp,  false)));
 
 		slots[slots_num++] = i;
@@ -1928,7 +1928,7 @@ void Parse_TeamInfo(char *s)
 	ti_clients[ client ].health = atoi( Cmd_Argv( 5 ) );
 	ti_clients[ client ].armor  = atoi( Cmd_Argv( 6 ) );
 	ti_clients[ client ].items  = atoi( Cmd_Argv( 7 ) );
-	strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), TEAMINFO_NICKLEN); // nick is optional
+	SDL_strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), TEAMINFO_NICKLEN); // nick is optional
 }
 
 void Update_TeamInfo()
@@ -2008,7 +2008,7 @@ void Parse_Shownick(char *s)
 			shownick.health = atoi( Cmd_Argv( arg++ ) );
 			shownick.armor  = atoi( Cmd_Argv( arg++ ) );
 			shownick.items  = atoi( Cmd_Argv( arg++ ) );
-			strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
+			SDL_strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
 
 			return;
 		}
@@ -2214,8 +2214,8 @@ static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool wi
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	strlcpy(tmp2, scr_weaponstats_order.string , sizeof(tmp2));
-	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
+	SDL_strlcpy(tmp2, scr_weaponstats_order.string , sizeof(tmp2));
+	SDL_strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
 	//
@@ -2242,7 +2242,7 @@ static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool wi
 
 		if ( (int)(end - start) > 0 )
 		{
-			strlcpy(tmp, start, bound(1, (int)(end - start + 1), (int)sizeof(tmp)));
+			SDL_strlcpy(tmp, start, bound(1, (int)(end - start + 1), (int)sizeof(tmp)));
 
 			if( !width_only )
 				Draw_ColoredString (x, y, tmp, false);
@@ -2957,7 +2957,7 @@ void SCR_DrawHud (void)
 
 			if (elem->flags & HUD_CVAR) {
 				st = ((cvar_t*)elem->contents)->string;
-				strlcpy (buf, st, sizeof(buf));
+				SDL_strlcpy (buf, st, sizeof(buf));
 				st = buf;
 				l = strlen_color(st);
 			} else if (elem->flags & HUD_STRING) {
@@ -3544,7 +3544,7 @@ static image_format_t SShot_FormatForName(char *name) {
 static char *Sshot_SshotDirectory(void) {
 	static char dir[MAX_PATH];
 
-	strlcpy(dir, FS_LegacyDir(scr_sshot_dir.string), sizeof(dir));
+	SDL_strlcpy(dir, FS_LegacyDir(scr_sshot_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -3652,30 +3652,30 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 	#ifdef WITH_PNG
 	if (!SDL_strcasecmp(scr_sshot_format.string, "png"))
 	{
-		strlcpy(ext, "png", 4);
+		SDL_strlcpy(ext, "png", 4);
 	}
 	#endif
 
 	#ifdef WITH_JPEG
 	if (!SDL_strcasecmp(scr_sshot_format.string, "jpeg") || !SDL_strcasecmp(scr_sshot_format.string, "jpg"))
 	{
-		strlcpy(ext, "jpg", 4);
+		SDL_strlcpy(ext, "jpg", 4);
 	}
 	#endif
 
 	if (!SDL_strcasecmp(scr_sshot_format.string, "tga"))
 	{
-		strlcpy(ext, "tga", 4);
+		SDL_strlcpy(ext, "tga", 4);
 	}
 
 	if (!SDL_strcasecmp(scr_sshot_format.string, "pcx"))
 	{
-		strlcpy(ext, "pcx", 4);
+		SDL_strlcpy(ext, "pcx", 4);
 	}
 
 	if (!ext[0])
 	{
-		strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
+		SDL_strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
 	}
 
 	if(fabsf(scr_sshot_autoname.value - 1.0f) < 0.0001f) {
@@ -3733,7 +3733,7 @@ void SCR_ScreenShot_f (void)
 
 	if (Cmd_Argc() == 2)
 	{
-		strlcpy (name, Cmd_Argv(1), sizeof(name));
+		SDL_strlcpy (name, Cmd_Argv(1), sizeof(name));
 	}
 	else if (Cmd_Argc() == 1)
 	{
@@ -3883,7 +3883,7 @@ void SCR_AutoScreenshot(char *matchname)
 	if (cl.intermission == 1)
 	{
 		scr_autosshot_countdown = vid.numpages;
-		strlcpy(auto_matchname, matchname, sizeof(auto_matchname));
+		SDL_strlcpy(auto_matchname, matchname, sizeof(auto_matchname));
 	}
 }
 
@@ -4398,7 +4398,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
 	{
 		// Green armor.
-		strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
+		SDL_strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
 
 		armor_color[0] = 80;
@@ -4408,7 +4408,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
 	{
 		// Yellow armor.
-		strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
+		SDL_strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
 
 		armor_color[0] = 250;
@@ -4418,7 +4418,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
 	{
 		// Red armor.
-		strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
+		SDL_strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
 
 		armor_color[0] = 190;
@@ -4922,39 +4922,39 @@ void SCR_DrawMVStatusStrings(void)
 	//
 	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING)
 	{
-		strlcpy(weapon, "lg", sizeof(weapon));
+		SDL_strlcpy(weapon, "lg", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER)
 	{
-		strlcpy(weapon, "rl", sizeof(weapon));
+		SDL_strlcpy(weapon, "rl", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER)
 	{
-		strlcpy(weapon, "gl", sizeof(weapon));
+		SDL_strlcpy(weapon, "gl", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN)
 	{
-		strlcpy(weapon, "sn", sizeof(weapon));
+		SDL_strlcpy(weapon, "sn", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN)
 	{
-		strlcpy(weapon, "ng", sizeof(weapon));
+		SDL_strlcpy(weapon, "ng", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN)
 	{
-		strlcpy(weapon, "ss", sizeof(weapon));
+		SDL_strlcpy(weapon, "ss", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN)
 	{
-		strlcpy(weapon, "sg", sizeof(weapon));
+		SDL_strlcpy(weapon, "sg", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_AXE)
 	{
-		strlcpy(weapon, "ax", sizeof(weapon));
+		SDL_strlcpy(weapon, "ax", sizeof(weapon));
 	}
 	else
 	{
-		strlcpy(weapon, "??", sizeof(weapon));
+		SDL_strlcpy(weapon, "??", sizeof(weapon));
 	}
 	weapon[0] |= 128;
 	weapon[1] |= 128;
@@ -5044,7 +5044,7 @@ void SCR_DrawMVStatusStrings(void)
 	//
 	// Get the player's name.
 	//
-	strlcpy(name, cl.players[nPlayernum].name, sizeof(name));
+	SDL_strlcpy(name, cl.players[nPlayernum].name, sizeof(name));
 
 	if (strcmp(cl.players[nPlayernum].name, "") && !cl.players[nPlayernum].spectator)
 	{
@@ -5295,7 +5295,7 @@ void SCR_DrawMVStatusStrings(void)
 			var++;
 
 			limit = ceil(7.0 / 192 * vid.width + 4 / 3); // linearly limit length of name for 320->512 conwidth to fit in inset
-			strlcpy(namestr, name, limit);
+			SDL_strlcpy(namestr, name, limit);
 
 			if (cl_sbar.value)
 			{

@@ -495,7 +495,7 @@ static void Sbar_SortTeams (void) {
 			continue;
 
 		// find his team in the list
-		strlcpy (t, s->team, sizeof(t));
+		SDL_strlcpy (t, s->team, sizeof(t));
 		if (!t[0])
 			continue; // not on team
 
@@ -524,7 +524,7 @@ static void Sbar_SortTeams (void) {
 				teams[j].bottomcolor = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
 				teams[j].topcolor = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
 			}
-			strlcpy(teams[j].team, t, sizeof(teams[j].team));
+			SDL_strlcpy(teams[j].team, t, sizeof(teams[j].team));
 
 			if (!Sbar_IsSpectator(mynum) && !strncmp(cl.players[mynum].team, t, sizeof(t) - 1))
 				teams[j].myteam = true;
@@ -1050,7 +1050,7 @@ void Sbar_SoloScoreboard (void)
 	sprintf (str,"skill %i", (int)(skill.value + 0.5));
 	Sbar_DrawString (160 - strlen(str)*4, 12, str);
 
-	strlcpy(str, cl.levelname, sizeof(str));
+	SDL_strlcpy(str, cl.levelname, sizeof(str));
 	strlcat(str, " (", sizeof(str));
 	strlcat(str, host_mapname.string, sizeof(str));
 	strlcat(str, ")", sizeof(str));
@@ -1354,13 +1354,13 @@ static void Sbar_DeathmatchOverlay (int start) {
 			else {// use only frags column
 				#define SHORT_SPECTATOR_NAME_LEN 5 // if it's not teamplay, there is only room for 4 characters here
 				char short_spectator_name[SHORT_SPECTATOR_NAME_LEN];
-				strlcpy(short_spectator_name, scr_scoreboard_spectator_name.string, SHORT_SPECTATOR_NAME_LEN);
+				SDL_strlcpy(short_spectator_name, scr_scoreboard_spectator_name.string, SHORT_SPECTATOR_NAME_LEN);
 				Draw_ColoredString (x, y, short_spectator_name, 0);
 			}
 
 			x += cl.teamplay ? 88 : 48; // move across to print the name
 
-			strlcpy(name, s->name, sizeof(name));
+			SDL_strlcpy(name, s->name, sizeof(name));
 			if (leftover > 0) {
 				int truncate = (leftover / 8) + (leftover % 8 ? 1 : 0);
 
@@ -1379,7 +1379,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 		Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_ColorForMap (bottom));
 
 		// name
-		strlcpy(name, s->name, sizeof(name));
+		SDL_strlcpy(name, s->name, sizeof(name));
 		if (leftover > 0) {
 			int truncate = (leftover / 8) + (leftover % 8 ? 1 : 0);
 
@@ -1393,7 +1393,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 		// team
 		if (cl.teamplay) {
-			strlcpy  (team, s->team, sizeof(team));
+			SDL_strlcpy  (team, s->team, sizeof(team));
 			SDL_snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %-4s %s", myminutes, fragsstr, team, name);
 		} else {
 			SDL_snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %s", myminutes, fragsstr, name);
@@ -1548,7 +1548,7 @@ static void Sbar_TeamOverlay (void) {
 		Draw_String (x, y, num);
 
 		// draw team
-		strlcpy (team, tm->team, sizeof(team));
+		SDL_strlcpy (team, tm->team, sizeof(team));
 		Draw_String (x + 104, y, team);
 
 		// draw total
@@ -1655,12 +1655,12 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 
 		// team
 		if (cl.teamplay) {
-			strlcpy (team, s->team, sizeof(team));
+			SDL_strlcpy (team, s->team, sizeof(team));
 			Draw_String (x + 48, y, team);
 		}
 
 		// draw name
-		strlcpy (name, s->name, sizeof(name));
+		SDL_strlcpy (name, s->name, sizeof(name));
 		if (cl.teamplay)
 			Draw_String (x + 48 + 40, y, name);
 		else
@@ -1693,7 +1693,7 @@ drawteams:
 		tm = teams + k;
 
 		//draw name
-		strlcpy (team, tm->team, sizeof(team));
+		SDL_strlcpy (team, tm->team, sizeof(team));
 		Draw_String (x, y, team);
 
 		// draw total
@@ -1844,7 +1844,7 @@ void Sbar_Draw(void) {
 				else
 					Sbar_DrawNormal();
 
-				strlcpy(st, scr_tracking.string, sizeof(st));
+				SDL_strlcpy(st, scr_tracking.string, sizeof(st));
 
 				Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
 

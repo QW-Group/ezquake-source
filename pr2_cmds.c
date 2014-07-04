@@ -76,7 +76,7 @@ void PF2_GetEntityToken(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t
 {
 
 	pr2_ent_data_ptr = COM_Parse(pr2_ent_data_ptr);
-	strlcpy((char*)VM_POINTER(base,mask,stack[0].string), com_token,  stack[1]._int);
+	SDL_strlcpy((char*)VM_POINTER(base,mask,stack[0].string), com_token,  stack[1]._int);
 
 	retval->_int= pr2_ent_data_ptr != NULL;
 }
@@ -855,7 +855,7 @@ void PF2_readcmd (byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retva
 	SV_BeginRedirect(RD_MOD);
 	Cbuf_Execute();
 
-	strlcpy(buf, outputbuf, sizebuff);
+	SDL_strlcpy(buf, outputbuf, sizebuff);
 
 	SV_EndRedirect();
 
@@ -932,7 +932,7 @@ void PF2_cvar_string(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 	if( ( buff_off + buffsize ) &(~mask))
 		return;
 
-	strlcpy((char *)VM_POINTER(base,mask,buff_off),
+	SDL_strlcpy((char *)VM_POINTER(base,mask,buff_off),
 	        Cvar_String((char *)VM_POINTER(base,mask,stack[0].string)), buffsize);
 }
 
@@ -1785,9 +1785,9 @@ void PF2_infokey(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 		client_t *cl = &svs.clients[e1-1];
 
 		if (!strcmp(key, "ip"))
-			strlcpy(ov, NET_BaseAdrToString(cl->netchan.remote_address), sizeof(ov));
+			SDL_strlcpy(ov, NET_BaseAdrToString(cl->netchan.remote_address), sizeof(ov));
 		else if (!strncmp(key, "realip", 7))
-			strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
+			SDL_strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
 		else if (!strncmp(key, "download", 9))
 			SDL_snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
 		else if (!strcmp(key, "ping"))
@@ -1820,7 +1820,7 @@ void PF2_infokey(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 	if ((int) strlen(value) > sizebuff)
 		Con_DPrintf("PR2_infokey: buffer size too small\n");
 
-	strlcpy(valbuff, value, sizebuff);
+	SDL_strlcpy(valbuff, value, sizebuff);
 	//	RETURN_STRING(value);
 }
 
@@ -1900,7 +1900,7 @@ PF2_cmdargv
 void PF2_cmdargv(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 //(int arg, char *valbuff, int sizebuff)
 {
-	strlcpy((char *) VM_POINTER(base,mask,stack[1].string), Cmd_Argv(stack[0]._int), stack[2]._int);
+	SDL_strlcpy((char *) VM_POINTER(base,mask,stack[1].string), Cmd_Argv(stack[0]._int), stack[2]._int);
 }
 
 /*
@@ -1911,7 +1911,7 @@ PF2_cmdargs
 void PF2_cmdargs(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 //(char *valbuff, int sizebuff)
 {
-	strlcpy((char *) VM_POINTER(base,mask,stack[0].string), Cmd_Args(), stack[1]._int);
+	SDL_strlcpy((char *) VM_POINTER(base,mask,stack[0].string), Cmd_Args(), stack[1]._int);
 }
 
 /*
@@ -2038,7 +2038,7 @@ void PF2_FS_OpenFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 		retval->_int = -1;
 		return ;
 	}
-	strlcpy(pr2_fopen_files[i].name, name, sizeof(pr2_fopen_files[i].name));
+	SDL_strlcpy(pr2_fopen_files[i].name, name, sizeof(pr2_fopen_files[i].name));
 	pr2_fopen_files[i].accessmode = fmode;
 	switch(fmode)
 	{
@@ -2411,7 +2411,7 @@ void PF2_FS_GetFileList(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t
 
 //		Con_Printf("%4d %s\n", i, list[i]);
 
-		strlcpy(dirptr, list[i], namelen);
+		SDL_strlcpy(dirptr, list[i], namelen);
 		dirptr += namelen;
 
 		numfiles++;
@@ -2474,9 +2474,9 @@ void PF2_strnicmp(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retva
 	                            (char *) VM_POINTER(base,mask,stack[1].string),stack[2]._int);
 }
 
-void PF2_strlcpy(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
+void PF2_SDL_strlcpy(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 { // (char *dst, char *src, size_t siz)
-	retval->_int = strlcpy( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
+	retval->_int = SDL_strlcpy( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
 }
 
 void PF2_strlcat(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
@@ -2849,8 +2849,8 @@ void PF2_SetUserInfo( byte * base, unsigned int mask, pr2val_t * stack, pr2val_t
 	Cmd_TokenizeString( s );
 
 	// well, PR2_UserInfoChanged() may call PF2_SetUserInfo() again, so we better save thouse
-	strlcpy( key, Cmd_Argv(1), sizeof(key) );
-	strlcpy( value, Cmd_Argv(2), sizeof(value) );
+	SDL_strlcpy( key, Cmd_Argv(1), sizeof(key) );
+	SDL_strlcpy( value, Cmd_Argv(2), sizeof(value) );
 
 	if( sv_vm )
 	{
@@ -2983,7 +2983,7 @@ pr2_trapcall_t pr2_API[]=
 		PF2_QVMstrftime,	//G_QVMstrftime
 		PF2_cmdargs,		//G_CMD_ARGS
 		PF2_tokenize,		//G_CMD_TOKENIZE
-		PF2_strlcpy,		//g_strlcpy
+		PF2_SDL_strlcpy,		//g_SDL_strlcpy
 		PF2_strlcat,		//g_strlcat
 		PF2_makevectors,	//G_MAKEVECTORS
 		PF2_nextclient,		//G_NEXTCLIENT

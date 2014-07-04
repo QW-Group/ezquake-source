@@ -368,9 +368,9 @@ static char *TrimModelName (const char *full)
 	int len;
 
 	if (!strncmp(full, "progs/", 6) && !strchr(full + 6, '/'))
-		strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
+		SDL_strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
 	else
-		strlcpy (shortn, full, sizeof(shortn));
+		SDL_strlcpy (shortn, full, sizeof(shortn));
 
 	len = strlen(shortn);
 	if (len > 4 && !strcmp(shortn + len - 4, ".mdl")
@@ -632,7 +632,7 @@ static void Cmd_Spawn_f (void)
 			// }
     
 			//sv_client->name = PR2_GetString(ent->v.netname);
-			//strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
+			//SDL_strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
 		}
 		else
 #endif
@@ -1664,12 +1664,12 @@ static void SV_Say (qbool team)
 #endif
 
 	if (sv_client->spectator && (!(int)sv_spectalk.value || team))
-		strlcpy(text, va("[SPEC] %s: %s", sv_client->name, text), sizeof(text));
+		SDL_strlcpy(text, va("[SPEC] %s: %s", sv_client->name, text), sizeof(text));
 	else if (team)
-		strlcpy(text, va("(%s): %s", sv_client->name, text), sizeof(text));
+		SDL_strlcpy(text, va("(%s): %s", sv_client->name, text), sizeof(text));
 	else
 	{
-		strlcpy(text, va("%s: %s", sv_client->name, text), sizeof(text));
+		SDL_strlcpy(text, va("%s: %s", sv_client->name, text), sizeof(text));
 	}
 
 	if (fp_messages)
@@ -2178,7 +2178,7 @@ static void Cmd_SetInfo_f (void)
 	if (strstr(Cmd_Argv(1), "\\") || strstr(Cmd_Argv(2), "\\"))
 		return;		// illegal char
 
-	strlcpy(oldval, Info_Get(&sv_client->_userinfo_ctx_, Cmd_Argv(1)), sizeof(oldval));
+	SDL_strlcpy(oldval, Info_Get(&sv_client->_userinfo_ctx_, Cmd_Argv(1)), sizeof(oldval));
 
 #ifdef USE_PR2
 	if(sv_vm)
@@ -2193,7 +2193,7 @@ static void Cmd_SetInfo_f (void)
 
 	Info_Set (&sv_client->_userinfo_ctx_, Cmd_Argv(1), Cmd_Argv(2));
 	// name is extracted below in ExtractFromUserInfo
-	//	strlcpy (sv_client->name, Info_ValueForKey (sv_client->userinfo, "name")
+	//	SDL_strlcpy (sv_client->name, Info_ValueForKey (sv_client->userinfo, "name")
 	//		, CLIENT_NAME_LEN);
 	//	SV_FullClientUpdate (sv_client, &sv.reliable_datagram);
 	//	sv_client->sendinfo = true;
@@ -2218,7 +2218,7 @@ static void Cmd_SetInfo_f (void)
 			SV_ClientPrintf(sv_client, PRINT_CHAT,
 			                "You can't change your name while logged in on this server.\n");
 			Info_Set (&sv_client->_userinfo_ctx_, "name", sv_client->login);
-			strlcpy (sv_client->name, sv_client->login, CLIENT_NAME_LEN);
+			SDL_strlcpy (sv_client->name, sv_client->login, CLIENT_NAME_LEN);
 			MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
 			MSG_WriteString (&sv_client->netchan.message,
 			                 va("name %s\n", sv_client->login));
@@ -2447,7 +2447,7 @@ static void SetUpClientEdict (client_t *cl, edict_t *ent)
 		// }
 
 		//sv_client->name = PR2_GetString(ent->v.netname);
-		//strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
+		//SDL_strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
 	}
 	else
 #endif

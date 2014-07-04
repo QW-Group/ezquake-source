@@ -456,7 +456,7 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
+	SDL_strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	mark = Hunk_LowMark();
 	if (!(f = (char *) FS_LoadHunkFile (name, NULL)))	{
 		const char *p;
@@ -515,7 +515,7 @@ void Cmd_Echo_f (void)
 	str = TP_ParseMacroString(args);
 	str = TP_ParseFunChars(str, false);
 
-	strlcpy (buf, str, MAX_MACRO_STRING);
+	SDL_strlcpy (buf, str, MAX_MACRO_STRING);
 
 	CL_SearchForReTriggers (buf, RE_PRINT_ECHO); 	// BorisU
 	Print_flags[Print_current] |= PR_TR_SKIP;
@@ -711,7 +711,7 @@ static cmd_alias_t* Cmd_AliasCreate (char* name)
 	a->hash_next = cmd_alias_hash[key];
 	cmd_alias_hash[key] = a;
 
-	strlcpy (a->name, name, sizeof (a->name));
+	SDL_strlcpy (a->name, name, sizeof (a->name));
 	return a;
 }
 
@@ -753,7 +753,7 @@ void Cmd_Alias_f (void)
 		cmd_alias_hash[key] = a;
 	}
 
-	strlcpy (a->name, s, sizeof (a->name));
+	SDL_strlcpy (a->name, s, sizeof (a->name));
 
 	a->flags = 0;
 	// QW262 -->
@@ -956,7 +956,7 @@ static qbool Cmd_LegacyCommand (void)
 		return true;		// just ignore this command
 
 	// build new command string
-	strlcpy (text, cmd->newname, sizeof(text));
+	SDL_strlcpy (text, cmd->newname, sizeof(text));
 	strlcat (text, " ", sizeof(text));
 	strlcat (text, Cmd_Args(), sizeof(text));
 
@@ -1042,7 +1042,7 @@ void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text)
 			return;
 
 		if (ctx->cmd_argc == 1)
-			strlcpy(ctx->cmd_args, text, sizeof(ctx->cmd_args));
+			SDL_strlcpy(ctx->cmd_args, text, sizeof(ctx->cmd_args));
 
 		text = COM_Parse (text);
 		if (!text)
@@ -2099,10 +2099,10 @@ static qbool do_in(char *buf, char *orig, char *str, int options)
 		return false;
 
 	if (options & 1) { // buf size is 1024 both in Cmd_Alias_In_f and Cmd_Cvar_In_f
-		strlcpy(buf, orig, 1024);
+		SDL_strlcpy(buf, orig, 1024);
 		strlcat(buf, str, 1024);
 	} else {
-		strlcpy(buf, str, 1024);
+		SDL_strlcpy(buf, str, 1024);
 		strlcat(buf, orig, 1024);
 	}
 	return true;

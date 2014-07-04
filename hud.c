@@ -625,7 +625,7 @@ void HUD_Place_f (void)
     }
 
     // Place with helper.
-    strlcpy(temp, hud->place->string, sizeof(temp));
+    SDL_strlcpy(temp, hud->place->string, sizeof(temp));
     Cvar_Set(hud->place, Cmd_Argv(2));
     if (!HUD_FindPlace(hud))
     {
@@ -873,10 +873,10 @@ void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 	byte* b_colors;
 
 	hudname_len = min (sizeof (buf), strlen (var->name) - strlen ("_frame_color") - strlen ("hud_") + 1);
-	strlcpy (buf, var->name + 4, hudname_len);
+	SDL_strlcpy (buf, var->name + 4, hudname_len);
 	hud_elem = HUD_Find (buf);
 
-	strlcpy(buf2,new_color,sizeof(buf2));
+	SDL_strlcpy(buf2,new_color,sizeof(buf2));
 	b_colors = StringToRGB (buf2);
 
 	memcpy (hud_elem->frame_color_cache, b_colors, sizeof (byte) * 3);

@@ -80,7 +80,7 @@ void CTab_AddPage(CTab_t *tab, const char *name, int id, const CTabPage_Handlers
     page = &tab->pages[tab->nPages++];
 
     // set name
-    strlcpy (page->name, name, sizeof (page->name));
+    SDL_strlcpy (page->name, name, sizeof (page->name));
 
     // set id
     page->id = id;

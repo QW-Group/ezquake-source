@@ -235,7 +235,7 @@ static void Ignoreteam_f(void) {
 			}
 			if (j == MAX_TEAMIGNORELIST)
 				Com_Printf("You cannot ignore more than %d teams\n", MAX_TEAMIGNORELIST);
-			strlcpy(ignoreteamlist[j], arg, sizeof(ignoreteamlist[j]));
+			SDL_strlcpy(ignoreteamlist[j], arg, sizeof(ignoreteamlist[j]));
 			if (j + 1 < MAX_TEAMIGNORELIST)
 				ignoreteamlist[j + 1][0] = 0;			
 			Com_Printf("Added team %s to ignore list\n", arg);
@@ -263,7 +263,7 @@ static void Unignoreteam_f(void) {
 			for (j = i; j < MAX_TEAMIGNORELIST && ignoreteamlist[j][0]; j++) 
 				;
 			if ( --j >  i)
-				strlcpy(ignoreteamlist[i], ignoreteamlist[j], sizeof(ignoreteamlist[i]));
+				SDL_strlcpy(ignoreteamlist[i], ignoreteamlist[j], sizeof(ignoreteamlist[i]));
 			ignoreteamlist[j][0] = 0;			
 			Com_Printf("Removed team %s from ignore list\n", arg);
 			return;
@@ -317,7 +317,7 @@ char Ignore_Check_Flood(char *s, int flags, int offset) {
 
 	len = bound (0, q - p + 1, MAX_INFO_STRING - 1);
 
-	strlcpy(name, s + p, len + 1);
+	SDL_strlcpy(name, s + p, len + 1);
 	if (!cls.demoplayback && !strcmp(name, Player_MyName())) {
 		return NO_IGNORE_NO_ADD;
 	}
@@ -333,7 +333,7 @@ char Ignore_Check_Flood(char *s, int flags, int offset) {
 void Ignore_Flood_Add(char *s) {
 
 	floodlist[floodindex].data[0] = 0;
-	strlcpy(floodlist[floodindex].data, s, sizeof(floodlist[floodindex].data));
+	SDL_strlcpy(floodlist[floodindex].data, s, sizeof(floodlist[floodindex].data));
 	floodlist[floodindex].time = cls.realtime;
 	floodindex++;
 	if (floodindex == FLOODLIST_SIZE)
@@ -370,7 +370,7 @@ qbool Ignore_Message(char *s, int flags, int offset) {
 	}
 
 	len = bound (0, q - p + 1, sizeof(name) - 1);
-	strlcpy(name, s + p, len + 1);
+	SDL_strlcpy(name, s + p, len + 1);
 
 	if ((slot = Player_NametoSlot(name)) == PLAYER_NAME_NOMATCH)
 		return false;	

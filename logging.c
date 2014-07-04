@@ -67,7 +67,7 @@ qbool Log_IsLogging(void) {
 static char *Log_LogDirectory(void) {
 	static char dir[LOG_FILENAME_MAXSIZE];
 
-	strlcpy(dir, FS_LegacyDir(log_dir.string), sizeof(dir));
+	SDL_strlcpy(dir, FS_LegacyDir(log_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -147,7 +147,7 @@ static void Log_log_f(void) {
 			Com_Printf("Stopped logging to %s\n", logfilename);
 		}
 
-		strlcpy(logfilename, Cmd_Argv(1), sizeof(logfilename) - 4);
+		SDL_strlcpy(logfilename, Cmd_Argv(1), sizeof(logfilename) - 4);
 		Util_Process_Filename(logfilename);
 		if (!Util_Is_Valid_Filename(logfilename)) {
 			Com_Printf(Util_Invalid_Filename_Msg("filename"));
@@ -302,9 +302,9 @@ void Log_AutoLogging_StartMatch(char *logname) {
 	}
 
 
-	strlcpy(auto_matchname, logname, sizeof(auto_matchname));
+	SDL_strlcpy(auto_matchname, logname, sizeof(auto_matchname));
 
-	strlcpy (extendedname, TEMP_LOG_NAME, sizeof(extendedname));
+	SDL_strlcpy (extendedname, TEMP_LOG_NAME, sizeof(extendedname));
 	COM_ForceExtensionEx (extendedname, ".log", sizeof (extendedname));
 	fullname = va("%s/%s", MT_TempDirectory(), extendedname);
 

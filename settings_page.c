@@ -453,7 +453,7 @@ static void StringEntryLeave(setting* set) {
 
 static void StringEntryEnter(setting* set) {
 	CEditBox_Init(&editbox, EDITBOXWIDTH, EDITBOXMAXLENGTH);
-	strlcpy(editbox.text, set->cvar->string, EDITBOXMAXLENGTH);
+	SDL_strlcpy(editbox.text, set->cvar->string, EDITBOXMAXLENGTH);
 }
 
 static void EditBoxCheck(settings_page* tab, int oldm, int newm)
@@ -571,7 +571,7 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
         COM_StripExtension(c, buf);
 
         curpic = Draw_CachePicSafe(buf, false, true);
-        strlcpy(lastpicname, skinfile, sizeof(lastpicname));
+        SDL_strlcpy(lastpicname, skinfile, sizeof(lastpicname));
     }
 
     if (curpic)

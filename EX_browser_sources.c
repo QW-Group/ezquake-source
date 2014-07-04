@@ -732,14 +732,14 @@ int SB_Source_Add(const char* name, const char* address, sb_source_type_t type)
 	// create new source
 	s = Create_Source();
 	s->type = type;
-	strlcpy (s->name, name, sizeof (s->name));
-	strlcpy (addr, address, sizeof (addr));
+	SDL_strlcpy (s->name, name, sizeof (s->name));
+	SDL_strlcpy (addr, address, sizeof (addr));
 
 	if (s->type == type_file) {
-		strlcpy (s->address.filename, address, sizeof (s->address.filename));
+		SDL_strlcpy (s->address.filename, address, sizeof (s->address.filename));
 	}
 	else if (s->type == type_url) {
-		strlcpy(s->address.url, address, sizeof(s->address.url));
+		SDL_strlcpy(s->address.url, address, sizeof(s->address.url));
 	}
 	else {
 		if (!strchr(addr, ':')) {
@@ -800,7 +800,7 @@ void Reload_Sources(void)
     // create dummy unbound source
     sources[0] = Create_Source();
     sources[0]->type = type_dummy;
-    strlcpy (sources[0]->name, "Unbound", sizeof (sources[0]->name));
+    SDL_strlcpy (sources[0]->name, "Unbound", sizeof (sources[0]->name));
     sources[0]->servers = (server_data **) Q_malloc(MAX_UNBOUND*sizeof(server_data *));
 
 	sourcesn = 1;
@@ -846,7 +846,7 @@ void Reload_Sources(void)
         if (q-p <= 0)
             continue;
 
-        strlcpy (s->name, p, min(q-p+1, MAX_SOURCE_NAME+1));
+        SDL_strlcpy (s->name, p, min(q-p+1, MAX_SOURCE_NAME+1));
 
         p = next_nonspace(q+1);
         q = next_space(p);
@@ -856,9 +856,9 @@ void Reload_Sources(void)
             continue;
 
         if (s->type == type_file)
-            strlcpy (s->address.filename, p, sizeof (s->address.filename));
+            SDL_strlcpy (s->address.filename, p, sizeof (s->address.filename));
 		else if (s->type == type_url)
-			strlcpy (s->address.url, p, sizeof (s->address.url));
+			SDL_strlcpy (s->address.url, p, sizeof (s->address.url));
         else
             if (!NET_StringToAdr(p, &(s->address.address)))
                 continue;

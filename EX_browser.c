@@ -338,7 +338,7 @@ static void CopyServerToClipboard (server_data *s)
 	char buf[2048];
 
 	if (isCtrlDown() || s->display.name[0] == 0)
-		strlcpy (buf, s->display.ip, sizeof(buf));
+		SDL_strlcpy (buf, s->display.ip, sizeof(buf));
 	else
 		SDL_snprintf (buf, sizeof (buf), "%s (%s)",
 			s->display.name,
@@ -399,7 +399,7 @@ server_data * Create_Server2 (netadr_t n)
 	memset (s, 0, sizeof(server_data));
 
 	memcpy (&(s->address), &n, sizeof (netadr_t));
-	strlcpy (s->display.ip, NET_AdrToString(n), sizeof (s->display.ip));
+	SDL_strlcpy (s->display.ip, NET_AdrToString(n), sizeof (s->display.ip));
 
 	s->ping = -1;
 
@@ -444,7 +444,7 @@ void (*confirm_func)(void);
 
 void SB_Confirmation (const char *text, void (*func)(void))
 {
-	strlcpy (confirm_text, text, sizeof (confirm_text));
+	SDL_strlcpy (confirm_text, text, sizeof (confirm_text));
 	confirm_func = func;
 	confirmation = 1;
 }
@@ -756,7 +756,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         UI_Print(x+w-8*(3+strlen(buf))+4, y+h-24, buf, true);
 
     // line 1
-    strlcpy (line, s->display.name[1] ? s->display.name : s->display.ip, sizeof (line));
+    SDL_strlcpy (line, s->display.name[1] ? s->display.name : s->display.ip, sizeof (line));
     line[w/8] = 0;
     UI_Print_Center(x, y+h-16, w, line, false);
 
@@ -783,7 +783,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         if (d_gamedir)
         {
             memset(buf, 0, 10);
-            strlcpy(buf, ValueForKey(s, "*gamedir"), sizeof(buf));
+            SDL_strlcpy(buf, ValueForKey(s, "*gamedir"), sizeof(buf));
             buf[8] = 0;
             strlcat (line, buf, sizeof (line));
             strlcat (line, "\xa0 ", sizeof (line));
@@ -792,7 +792,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         if (d_map)
         {
             memset(buf, 0, 10);
-            strlcpy(buf, ValueForKey(s, "map"), sizeof(buf));
+            SDL_strlcpy(buf, ValueForKey(s, "map"), sizeof(buf));
             buf[8] = 0;
             strlcat (line, buf, sizeof (line));
             strlcat (line, "\xa0 ", sizeof (line));
@@ -1230,14 +1230,14 @@ void Serverinfo_Draw ()
     while (server_during_update)
         Sys_MSleep(5);
 
-    strlcpy(buf, show_serverinfo->display.name, sizeof(buf));
+    SDL_strlcpy(buf, show_serverinfo->display.name, sizeof(buf));
     buf[w/8] = 0;
     UI_Print_Center(x, y, w, buf, false);
-    strlcpy(buf, show_serverinfo->display.ip, sizeof(buf));
+    SDL_strlcpy(buf, show_serverinfo->display.ip, sizeof(buf));
     buf[w/8] = 0;
     UI_Print_Center(x, y+10, w, buf, false);
 
-    strlcpy(buf, " players serverinfo sources ", sizeof(buf));
+    SDL_strlcpy(buf, " players serverinfo sources ", sizeof(buf));
     if (serverinfo_pos == 0)
         memcpy (buf, "\x10ðìáùåòó\x11", 9); // FIXME: non-ascii chars
     if (serverinfo_pos == 1)
@@ -1498,7 +1498,7 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
         if (serverinfo_sources_disp + i >= sourcesn_updated)
             break;
 
-		strlcpy(buf2, SB_Source_Type_Name(sources[serverinfo_sources_disp+i]->type), sizeof (buf2));
+		SDL_strlcpy(buf2, SB_Source_Type_Name(sources[serverinfo_sources_disp+i]->type), sizeof (buf2));
 
         SDL_snprintf(buf, sizeof (buf), "%s   %s", buf2, sources[serverinfo_sources_disp+i]->name);
         buf[w/8] = 0;
@@ -1607,10 +1607,10 @@ void SB_Sources_Draw (int x, int y, int w, int h)
         if (sourcenum >= sourcesn)
             break;
 
-		strlcpy(type, SB_Source_Type_Name(s->type), sizeof (type));
+		SDL_strlcpy(type, SB_Source_Type_Name(s->type), sizeof (type));
 
         if (s->type == type_dummy)
-            strlcpy (time, " n/a ", sizeof (time));
+            SDL_strlcpy (time, " n/a ", sizeof (time));
         else
             if (s->last_update.wYear)
             {
@@ -1625,7 +1625,7 @@ void SB_Sources_Draw (int x, int y, int w, int h)
                         s->last_update.wMinute);
             }
             else
-                strlcpy (time, "never", sizeof (time));
+                SDL_strlcpy (time, "never", sizeof (time));
 
         SDL_snprintf(line, sizeof (line), "%s %c%-17.17s %4d  %s ", type,
             sourcenum==Sources_pos ? 141 : ' ',
@@ -1958,7 +1958,7 @@ qbool SearchNextServer (int pos)
 	char tmp[1024];
 
 	for (i = pos; i < serversn_passed; i++) {
-		strlcpy (tmp, servers[i]->display.name, sizeof (tmp));
+		SDL_strlcpy (tmp, servers[i]->display.name, sizeof (tmp));
 		FunToSort (tmp);
 
 		if (strstr (tmp, searchstring)) {
@@ -1985,18 +1985,18 @@ static void SB_Servers_Toggle_Column_Sort(char key)
     {
 		if (sb_sortservers.string[0] == '-')
 		{
-			strlcpy (buf, sb_sortservers.string + 1, sizeof (buf));
+			SDL_strlcpy (buf, sb_sortservers.string + 1, sizeof (buf));
 		}
 		else
 		{
 			buf[0] = '-';
-			strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
+			SDL_strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
 		}
     }
 	else
 	{
 		buf[0] = key;
-		strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
+		SDL_strlcpy (buf + 1, sb_sortservers.string, sizeof (buf) - 1);
     }
 
 	Cvar_Set(&sb_sortservers, buf);
@@ -2040,7 +2040,7 @@ int SB_Servers_Key(int key)
             if (!SearchNextServer(Servers_pos))
                 if (!SearchNextServer(0))
 					// FIXME: non-ascii chars
-					strlcpy (searchstring, "îïô æïõîä", sizeof (searchstring));  // not found
+					SDL_strlcpy (searchstring, "îïô æïõîä", sizeof (searchstring));  // not found
         }
 		return true;
     }
@@ -2405,11 +2405,11 @@ int SB_Sources_Key(int key)
             {
                 char buf[32];
                 if (sb_sortsources.string[0] == '-')
-                    strlcpy(buf, sb_sortsources.string+1, sizeof (buf));
+                    SDL_strlcpy(buf, sb_sortsources.string+1, sizeof (buf));
                 else
                 {
 					buf[0] = '-';
-                    strlcpy(buf+1, sb_sortsources.string, sizeof (buf));
+                    SDL_strlcpy(buf+1, sb_sortsources.string, sizeof (buf));
                 }
                 Cvar_Set(&sb_sortsources, buf);
             }
@@ -2417,7 +2417,7 @@ int SB_Sources_Key(int key)
             {
                 char buf[32];
 				buf[0] = key;
-                strlcpy(buf+1, sb_sortsources.string, sizeof (buf));
+                SDL_strlcpy(buf+1, sb_sortsources.string, sizeof (buf));
                 Cvar_Set(&sb_sortsources, buf);
             }
             resort_sources = 1;
@@ -2436,7 +2436,7 @@ qbool SearchNextPlayer(int pos)
 	char tmp[1024];
 
 	for (i = pos; i < all_players_n; i++) {
-		strlcpy (tmp, all_players[i]->name, sizeof (tmp));
+		SDL_strlcpy (tmp, all_players[i]->name, sizeof (tmp));
 		FunToSort (tmp);
 
 		if (strstr (tmp, searchstring)) {
@@ -2475,7 +2475,7 @@ int SB_Players_Key(int key)
 
             if (!SearchNextPlayer(Players_pos))
                 if (!SearchNextPlayer(0))
-                    strlcpy (searchstring, "not found", sizeof (searchstring));  // not found
+                    SDL_strlcpy (searchstring, "not found", sizeof (searchstring));  // not found
         }
 		return true;
     }
@@ -2540,11 +2540,11 @@ int SB_Players_Key(int key)
                 {
                     char buf[32];
                     if (sb_sortplayers.string[0] == '-')
-                        strlcpy(buf, sb_sortplayers.string+1, sizeof (buf));
+                        SDL_strlcpy(buf, sb_sortplayers.string+1, sizeof (buf));
                     else
                     {
 						buf[0] = '-';
-                        strlcpy(buf+1, sb_sortplayers.string, sizeof (buf));
+                        SDL_strlcpy(buf+1, sb_sortplayers.string, sizeof (buf));
                     }
                     Cvar_Set(&sb_sortplayers, buf);
                 }
@@ -2552,7 +2552,7 @@ int SB_Players_Key(int key)
                 {
                     char buf[32];
 					buf[0] = key;
-                    strlcpy(buf+1, sb_sortplayers.string, sizeof (buf));
+                    SDL_strlcpy(buf+1, sb_sortplayers.string, sizeof (buf));
                     Cvar_Set(&sb_sortplayers, buf);
                 }
                 resort_all_players = 1;
@@ -2949,7 +2949,7 @@ void Rebuild_All_Players(void)
 		for (j = 0; j < servers[i]->playersn + servers[i]->spectatorsn; j++)
 		{
 			all_players[all_players_n] = (player_host *) Q_malloc (sizeof (player_host));
-			strlcpy (all_players[all_players_n]->name,
+			SDL_strlcpy (all_players[all_players_n]->name,
 					servers[i]->players[j]->name,
 					sizeof (all_players[all_players_n]->name));
 			all_players[all_players_n]->serv = servers[i];

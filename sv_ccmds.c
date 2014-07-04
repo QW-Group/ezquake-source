@@ -475,7 +475,7 @@ void SV_Map (qbool now)
 		return;
 	}
 
-	strlcpy (level, Cmd_Argv(1), MAX_QPATH);
+	SDL_strlcpy (level, Cmd_Argv(1), MAX_QPATH);
 
 	// check to make sure the level exists
 	SDL_snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
@@ -813,7 +813,7 @@ void SV_Kick_f (void)
 		{
 			if (c > 2)
 			{
-				strlcpy (reason, " (", sizeof(reason));
+				SDL_strlcpy (reason, " (", sizeof(reason));
 				for (j=2 ; j<c; j++)
 				{
 					strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
@@ -1083,9 +1083,9 @@ void SV_ListPenalty_f (void)
 	{
 		switch (penfilters[i].type)
 		{
-		case ft_mute: strlcpy(s, "Mute", sizeof(s)); break;
-		case ft_cuff: strlcpy(s, "Cuff", sizeof(s)); break;
-		default: strlcpy(s, "Unknown", sizeof(s)); break;
+		case ft_mute: SDL_strlcpy(s, "Mute", sizeof(s)); break;
+		case ft_cuff: SDL_strlcpy(s, "Cuff", sizeof(s)); break;
+		default: SDL_strlcpy(s, "Unknown", sizeof(s)); break;
 		}
 		Con_Printf ("%i: %s for %i.%i.%i.%i (remaining: %d)\n", i, s,
 		            penfilters[i].ip[0],
@@ -1805,7 +1805,7 @@ void SV_Snap (int uid)
 		Con_Printf ("Snap: Couldn't create a file, clean some out.\n");
 		return;
 	}
-	strlcpy(cl->uploadfn, checkname, MAX_QPATH);
+	SDL_strlcpy(cl->uploadfn, checkname, MAX_QPATH);
 
 	memcpy(&cl->snap_from, &net_from, sizeof(net_from));
 	if (sv_redirected != RD_NONE)
@@ -1865,7 +1865,7 @@ SV_MasterPassword
 void SV_MasterPassword_f (void)
 {
 	if (!server_cfg_done)
-		strlcpy(master_rcon_password, Cmd_Argv(1), sizeof(master_rcon_password));
+		SDL_strlcpy(master_rcon_password, Cmd_Argv(1), sizeof(master_rcon_password));
 	else
 		Con_Printf("master_rcon_password can be set only in server.cfg\n");
 }

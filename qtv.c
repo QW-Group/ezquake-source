@@ -446,7 +446,7 @@ void Parse_QtvUserList(char *s)
 
 	action 		= atoi( Cmd_Argv( cnt++ ) );
 	tmpuser.id	= atoi( Cmd_Argv( cnt++ ) );
-	strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
+	SDL_strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
 
 	switch ( action )
 	{
@@ -520,7 +520,7 @@ qbool QTV_FindBestNick (const char *nick, char *result, size_t result_len)
 		if (!current->name[0])
 			continue;
 
-		strlcpy(name, current->name, sizeof(name));
+		SDL_strlcpy(name, current->name, sizeof(name));
 		RemoveColors(name, sizeof (name));
 		for (match = name; match[0]; match++)
 			match[0] = tolower(match[0]);
@@ -537,7 +537,7 @@ qbool QTV_FindBestNick (const char *nick, char *result, size_t result_len)
 
 	if (bestplayer)
 	{
-		strlcpy(result, bestplayer->name, result_len);
+		SDL_strlcpy(result, bestplayer->name, result_len);
 		return true;
 	}
 

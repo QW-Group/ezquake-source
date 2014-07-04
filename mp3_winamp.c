@@ -139,7 +139,7 @@ long WINAMP_GetPlaylist(char **buf)
 	SendMessage(mp3_hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 
 	SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_WRITEPLAYLIST);
-	strlcpy(path, mp3_dir.string, sizeof(path));
+	SDL_strlcpy(path, mp3_dir.string, sizeof(path));
 	pathlength = strlen(path);
 	
 	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
@@ -208,7 +208,7 @@ void MP3_WINAMP_Execute_f(void)
 	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
-	strlcpy(path, mp3_dir.string, sizeof(path) - strlen("/winamp.exe"));
+	SDL_strlcpy(path, mp3_dir.string, sizeof(path) - strlen("/winamp.exe"));
 	length = strlen(path);
 
 	if (length && (path[length - 1] == '\\' || path[length - 1] == '/'))
@@ -426,7 +426,7 @@ void MP3_WINAMP_LoadPlaylist_f(void)
 		return;
 	}
 
-	strlcpy(playlist, Cmd_Args(), sizeof(playlist));
+	SDL_strlcpy(playlist, Cmd_Args(), sizeof(playlist));
 
 	if (!strcmp(COM_FileExtension(playlist), "pls"))
 	{
@@ -492,7 +492,7 @@ int MP3_WINAMP_CachePlaylist(void) {
 
 
 void MP3_WINAMP_GetSongTitle(int track_num, char *song, size_t song_len) {
-	strlcpy(song, "", song_len);
+	SDL_strlcpy(song, "", song_len);
 
 	if (!MP3_WINAMP_IsPlayerRunning()) 
 		return;
@@ -505,7 +505,7 @@ void MP3_WINAMP_GetSongTitle(int track_num, char *song, size_t song_len) {
 	if (track_num < 0 || track_num >= WINAMP_Playlist_nelms)
 		return;
 	
-	strlcpy(song, WINAMP_Playlist[track_num], song_len);
+	SDL_strlcpy(song, WINAMP_Playlist[track_num], song_len);
 }
 
 void MP3_WINAMP_PrintPlaylist_f(void) 

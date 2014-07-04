@@ -416,11 +416,11 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 			ll(sshad->shaderIndex);
 
 			*specifiedskinname = *skinfileskinname = *tenebraeskinname = '\0';
-			strlcpy (specifiedskinname, sshad->name, sizeof (specifiedskinname));
+			SDL_strlcpy (specifiedskinname, sshad->name, sizeof (specifiedskinname));
 
 			if (*sshad->name)
 			{		
-				strlcpy (tenebraeskinname, mod->name, sizeof (tenebraeskinname)); //backup
+				SDL_strlcpy (tenebraeskinname, mod->name, sizeof (tenebraeskinname)); //backup
 				strcpy (COM_SkipPathWritable(tenebraeskinname), sshad->name);
 			}
 			else
@@ -429,13 +429,13 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 				int len;
 
 				//hmm. Look in skin file.
-				strlcpy (sinf->name, mod->name, sizeof (sinf->name));
+				SDL_strlcpy (sinf->name, mod->name, sizeof (sinf->name));
 				COM_StripExtension(sinf->name, sinf->name);
 				strlcat (sinf->name, "_default.skin", sizeof (sinf->name));
 
 				sfile = sfilestart = (char *) FS_LoadHunkFile(sinf->name, NULL);
 
-				strlcpy (sinf->name, mod->name, sizeof (sinf->name)); //backup
+				SDL_strlcpy (sinf->name, mod->name, sizeof (sinf->name)); //backup
 				COM_StripExtension(sinf->name, sinf->name);
 				strlcat (sinf->name, "_skin.tga", sizeof (sinf->name));
 
@@ -450,7 +450,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 							nl = sfile + strlen(sfile);
 						if (sfile[len] == ',' && !SDL_strncasecmp(surf->name, sfile, len))
 						{
-							strlcpy(skinfileskinname, sfile+len+1, nl - (sfile + len) -2);
+							SDL_strlcpy(skinfileskinname, sfile+len+1, nl - (sfile + len) -2);
 							break;
 						}
 						sfile = nl+1;
@@ -462,23 +462,23 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 
 			//now work out which alternative is best, and load it.
 			if (*skinfileskinname && (sinf->texnum=GL_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0)))
-				strlcpy (sinf->name, skinfileskinname, sizeof (sinf->name));
+				SDL_strlcpy (sinf->name, skinfileskinname, sizeof (sinf->name));
 			else if (*specifiedskinname && (sinf->texnum=GL_LoadTextureImage(specifiedskinname, specifiedskinname, 0, 0, 0)))
-				strlcpy (sinf->name, specifiedskinname, sizeof (sinf->name));
+				SDL_strlcpy (sinf->name, specifiedskinname, sizeof (sinf->name));
 			else if (*tenebraeskinname)
 			{
 				sinf->texnum=GL_LoadTextureImage(tenebraeskinname, tenebraeskinname, 0, 0, 0);
-				strlcpy (sinf->name, tenebraeskinname, sizeof (sinf->name));
+				SDL_strlcpy (sinf->name, tenebraeskinname, sizeof (sinf->name));
 			}
 			else if (*skinfileskinname)
 			{
 				sinf->texnum=GL_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0);
-				strlcpy (sinf->name, skinfileskinname, sizeof (sinf->name));
+				SDL_strlcpy (sinf->name, skinfileskinname, sizeof (sinf->name));
 			}
 			else
 			{
 				sinf->texnum=GL_LoadTextureImage("dummy", "dummy", 0, 0, 0);
-				strlcpy (sinf->name, "dummy", sizeof (sinf->name));
+				SDL_strlcpy (sinf->name, "dummy", sizeof (sinf->name));
 			}
 
 			surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);

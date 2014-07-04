@@ -2090,7 +2090,7 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	byte *color;
 	char buf[MAX_COM_TOKEN];
 	
-	strlcpy(buf,s,sizeof(buf));
+	SDL_strlcpy(buf,s,sizeof(buf));
 	color = StringToRGB(buf);
 
 	clearColor[0] = color[0] / 255.0;

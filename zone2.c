@@ -235,7 +235,7 @@ mempool_t *_Mem_AllocPool(const char *name, int flags, mempool_t *parent, const 
 	pool->chain = NULL;
 	pool->totalsize = 0;
 	pool->realsize = sizeof(mempool_t);
-	strlcpy (pool->name, name, sizeof (pool->name));
+	SDL_strlcpy (pool->name, name, sizeof (pool->name));
 	pool->parent = parent;
 	pool->next = poolchain;
 	poolchain = pool;

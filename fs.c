@@ -423,10 +423,10 @@ void FS_SetUserDirectory (char *dir, char *type) {
 		Com_Printf ("Userdir should be a single filename, not a path\n");
 		return;
 	}
-	strlcpy(userdirfile, dir, sizeof(userdirfile));
+	SDL_strlcpy(userdirfile, dir, sizeof(userdirfile));
 	userdir_type = SDL_atoi(type);
 
-	strlcpy(tmp, com_gamedirfile, sizeof(tmp)); // save
+	SDL_strlcpy(tmp, com_gamedirfile, sizeof(tmp)); // save
 	com_gamedirfile[0]='\0'; // force reread
 	FS_SetGamedir(tmp); // restore
 }
@@ -597,7 +597,7 @@ void FS_SetGamedir (char *dir)
 	if (!strcmp(com_gamedirfile, dir))
 		return;		// Still the same.
 	
-	strlcpy (com_gamedirfile, dir, sizeof(com_gamedirfile));
+	SDL_strlcpy (com_gamedirfile, dir, sizeof(com_gamedirfile));
 
 	// Free up any current game dir info.
 	FS_FlushFSHash();
@@ -711,14 +711,14 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	else if ((i = COM_CheckParm ("-basedir")) && i < COM_Argc() - 1) {
 		// -basedir <path>
 		// Overrides the system supplied base directory (under id1)
-		strlcpy (com_basedir, COM_Argv(i + 1), sizeof(com_basedir));
+		SDL_strlcpy (com_basedir, COM_Argv(i + 1), sizeof(com_basedir));
 	}
  	else { // made com_basedir equa to cwd
 //#ifdef __FreeBSD__
-//		strlcpy(com_basedir, DATADIR, sizeof(com_basedir) - 1);
+//		SDL_strlcpy(com_basedir, DATADIR, sizeof(com_basedir) - 1);
 //#else
 
-		Sys_getcwd(com_basedir, sizeof(com_basedir) - 1); // FIXME strlcpy (com_basedir, ".", sizeof(com_basedir)); ?
+		Sys_getcwd(com_basedir, sizeof(com_basedir) - 1); // FIXME SDL_strlcpy (com_basedir, ".", sizeof(com_basedir)); ?
 //#endif
 	}
 
@@ -747,7 +747,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #else
 	ev = getenv("HOME");
 	if (ev)
-		strlcpy(com_homedir, ev, sizeof(com_homedir));
+		SDL_strlcpy(com_homedir, ev, sizeof(com_homedir));
 	else
 		com_homedir[0] = 0;
 #endif
@@ -824,7 +824,7 @@ char *FS_LegacyDir(char *media_dir)
 
 	// dir empty, return gamedir
 	if (!media_dir || !media_dir[0]) {
-		strlcpy(dir, cls.gamedir, sizeof(dir));
+		SDL_strlcpy(dir, cls.gamedir, sizeof(dir));
 		return dir;
 	}
 
@@ -1010,8 +1010,8 @@ int FS_BreakUpArchivePath(const char *filename,
 	if (i == -1)
 		return 0;
 
-	strlcpy(inside, filename+first_slash+1, inside_len);
-	strlcpy(archive, filename, min(first_slash+1, archive_len)); // +1 room for \0
+	SDL_strlcpy(inside, filename+first_slash+1, inside_len);
+	SDL_strlcpy(archive, filename, min(first_slash+1, archive_len)); // +1 room for \0
 	return 1;
 }
 
@@ -1389,7 +1389,7 @@ int FS_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 	// Append the extension if any.
 	if (append_extension != NULL)
 	{
-		strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
+		SDL_strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
 	}
 
 	// Unpack the file.
@@ -1554,7 +1554,7 @@ int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 	// Append the extension if any.
 	if (append_extension != NULL)
 	{
-		strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
+		SDL_strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
 	}
 
 	// Unpack the file.
@@ -1616,7 +1616,7 @@ int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 
 	if (retval == UNZ_OK)
 	{
-		strlcpy (unpack_path, va("%s%s", unpack_path, filename_inzip), unpack_path_size);
+		SDL_strlcpy (unpack_path, va("%s%s", unpack_path, filename_inzip), unpack_path_size);
 	}
 	else
 	{
@@ -1638,17 +1638,17 @@ int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the
 	char regexp[MAX_PATH];
 	int result_length = 0;
 
-	strlcpy (regexp, va("(.*?\\.%s)(\\\\|/)(.*)", archive_extension), sizeof(regexp));
+	SDL_strlcpy (regexp, va("(.*?\\.%s)(\\\\|/)(.*)", archive_extension), sizeof(regexp));
 
 	// Get the archive path.
 	if (Utils_RegExpGetGroup (regexp, path, (const char **) &archive_path_found, &result_length, 1))
 	{
-		strlcpy (archive_path, archive_path_found, archive_path_size);
+		SDL_strlcpy (archive_path, archive_path_found, archive_path_size);
 
 		// Get the path of the demo in the zip.
 		if (Utils_RegExpGetGroup (regexp, path, (const char **) &inzip_path_found, &result_length, 3))
 		{
-			strlcpy (inzip_path, inzip_path_found, inzip_path_size);
+			SDL_strlcpy (inzip_path, inzip_path_found, inzip_path_size);
 			Q_free (archive_path_found);
 			Q_free (inzip_path_found);
 			return 1;
@@ -1709,7 +1709,7 @@ int FS_ZipUnpackCloseFile (unzFile zip_file)
 static void FS_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_info *unzip_fileinfo)
 {
 	// Save the name.
-    strlcpy(ent->fname, filename_inzip, sizeof(ent->fname));
+    SDL_strlcpy(ent->fname, filename_inzip, sizeof(ent->fname));
     ent->fname[MAX_PATH_LENGTH-1] = 0;
 
 	// TODO : Zip size is unsigned long, dir entry unsigned int, data loss possible for really large files.
@@ -1870,7 +1870,7 @@ int FS_ZipUnpackCurrentFile (unzFile zip_file,
 	if (!keep_path)
 	{
 		// Only keep the filename.
-		strlcpy (filename, COM_SkipPath (filename), sizeof(filename));
+		SDL_strlcpy (filename, COM_SkipPath (filename), sizeof(filename));
 	}
 
 	//
@@ -2139,7 +2139,7 @@ void FS_Dir_f (void)
 		return;
 	}
 
-	strlcpy (match, Cmd_Argv(1), sizeof (match));
+	SDL_strlcpy (match, Cmd_Argv(1), sizeof (match));
 
 	if (Cmd_Argc() > 2) {
 		strlcat (match, "/*.", sizeof (match));
@@ -2666,7 +2666,7 @@ int FS_Rename(char *oldf, char *newf, relativeto_t relativeto)
 		Sys_Error("FS_Rename case not handled\n");
 	}
 
-	strlcpy(newfullname, oldfullname, sizeof(newfullname));
+	SDL_strlcpy(newfullname, oldfullname, sizeof(newfullname));
 	strlcat(oldfullname, oldf, sizeof(oldfullname));
 	strlcat(newfullname, newf, sizeof(newfullname));
 
@@ -2847,11 +2847,11 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 	char *p;
 
 	if ((p = strrchr(dir, '/')) != NULL)
-		strlcpy (com_gamedirfile, ++p, sizeof (com_gamedirfile));
+		SDL_strlcpy (com_gamedirfile, ++p, sizeof (com_gamedirfile));
 	else
-		strlcpy (com_gamedirfile, dir, sizeof (com_gamedirfile));
+		SDL_strlcpy (com_gamedirfile, dir, sizeof (com_gamedirfile));
 
-	strlcpy (com_gamedir, dir, sizeof (com_gamedir));
+	SDL_strlcpy (com_gamedir, dir, sizeof (com_gamedir));
 
 	for (search = fs_searchpaths; search; search = search->next)
 	{
@@ -2865,7 +2865,7 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 	// add the directory to the search path
 	size = strlen (dir) + 1;
 	p = Q_malloc (size);
-	strlcpy (p, dir, size);
+	SDL_strlcpy (p, dir, size);
 	FS_AddPathHandle (va ("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
 }
 
@@ -2895,7 +2895,7 @@ void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
 	// add the directory to the search path
 	size = strlen (dir) + 1;
 	p = Q_malloc (size);
-	strlcpy (p, dir, size);
+	SDL_strlcpy (p, dir, size);
 
 	FS_AddPathHandle (va ("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
 }

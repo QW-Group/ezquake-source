@@ -455,7 +455,7 @@ char *CL_Macro_ConnectionType(void)
 	static char macrobuf[16];
 
 	s = (cls.state < ca_connected) ? "disconnected" : cl.spectator ? "spectator" : "player";
-	strlcpy(macrobuf, s, sizeof(macrobuf));
+	SDL_strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -465,7 +465,7 @@ char *CL_Macro_Demoplayback(void)
 	static char macrobuf[16];
 
 	s = cls.mvdplayback ? "mvdplayback" : cls.demoplayback ? "qwdplayback" : "0";
-	strlcpy(macrobuf, s, sizeof(macrobuf));
+	SDL_strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -493,7 +493,7 @@ char *CL_Macro_Serverstatus(void)
 	static char macrobuf[16];
 
 	s = (cls.state < ca_connected) ? "disconnected" : cl.standby ? "standby" : "normal";
-	strlcpy(macrobuf, s, sizeof(macrobuf));
+	SDL_strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -660,7 +660,7 @@ static void CL_SendConnectPacket(
 	cls.qport = Cvar_Value("qport");
 
 	// Let the server know what extensions we support.
-	strlcpy (biguserinfo, cls.userinfo, sizeof (biguserinfo));
+	SDL_strlcpy (biguserinfo, cls.userinfo, sizeof (biguserinfo));
 	extensions = CLIENT_EXTENSIONS &~ (cl_novweps.value ? Z_EXT_VWEP : 0);
 	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", extensions), sizeof(biguserinfo));
 
@@ -699,7 +699,7 @@ void CL_CheckForResend (void)
 	if (cls.state == ca_disconnected && com_serveractive) 
 	{
 		// if the local server is running and we are not, then connect
-		strlcpy (cls.servername, "local", sizeof(cls.servername));
+		SDL_strlcpy (cls.servername, "local", sizeof(cls.servername));
 		NET_StringToAdr("local", &cls.server_adr);
 
 		// We don't need a challenge on the local server.
@@ -896,10 +896,10 @@ void CL_Connect_f (void)
 			char *prx_buf = (char *) Q_malloc(prx_buf_len);
 			server_buf = (char *) Q_malloc(strlen(cl_proxyaddr.string) + 1); // much more than needed
 
-			strlcpy(server_buf, cl_proxyaddr.string, secondproxy - cl_proxyaddr.string + 1);
+			SDL_strlcpy(server_buf, cl_proxyaddr.string, secondproxy - cl_proxyaddr.string + 1);
 			connect_addr = server_buf;
 			
-			strlcpy(prx_buf, secondproxy + 1, prx_buf_len);
+			SDL_strlcpy(prx_buf, secondproxy + 1, prx_buf_len);
 			strlcat(prx_buf, "@", prx_buf_len);
 			strlcat(prx_buf, Cmd_Argv(1), prx_buf_len);
 			Info_SetValueForKeyEx(cls.userinfo, "prx", prx_buf, MAX_INFO_STRING, false);
@@ -932,7 +932,7 @@ void CL_Connect_f (void)
 	else
 	{
 		Host_EndGame();
-		strlcpy(cls.servername, connect_addr, sizeof(cls.servername));
+		SDL_strlcpy(cls.servername, connect_addr, sizeof(cls.servername));
 		CL_BeginServerConnect();
 	}
 
@@ -973,7 +973,7 @@ void CL_TCPConnect_f (void)
 
 	Host_EndGame (); // CL_Disconnect_f();
 
-	strlcpy(cls.servername, Cmd_Argv (1), sizeof(cls.servername));
+	SDL_strlcpy(cls.servername, Cmd_Argv (1), sizeof(cls.servername));
 
 	NET_StringToAdr(cls.servername, &cls.sockettcpdest);
 
@@ -1164,7 +1164,7 @@ void CL_DNS_f(void)
 		return;
 	}
 	
-	strlcpy(address, Cmd_Argv(1), sizeof(address));
+	SDL_strlcpy(address, Cmd_Argv(1), sizeof(address));
 	if ((s = strchr(address, ':')))
 		*s = 0;
 	addr.s_addr = inet_addr(address);
@@ -1308,7 +1308,7 @@ void CL_Disconnect (void)
 	else if (cls.state != ca_disconnected) 
 	{
 		final[0] = clc_stringcmd;
-		strlcpy ((char *)(final + 1), "drop", sizeof (final) - 1);
+		SDL_strlcpy ((char *)(final + 1), "drop", sizeof (final) - 1);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
@@ -1531,7 +1531,7 @@ void CL_ConnectionlessPacket (void)
                         VID_Restore();
 			
 			s = MSG_ReadString ();
-			strlcpy (cmdtext, s, sizeof(cmdtext));
+			SDL_strlcpy (cmdtext, s, sizeof(cmdtext));
 			s = MSG_ReadString ();
 
 			while (*s && isspace(*s))
@@ -2000,8 +2000,8 @@ void CL_Init (void)
 	SZ_Init(&cls.cmdmsg, cls.cmdmsg_data, sizeof(cls.cmdmsg_data));
 	cls.cmdmsg.allowoverflow = true;
 
-	strlcpy (cls.gamedirfile, com_gamedirfile, sizeof (cls.gamedirfile));
-	strlcpy (cls.gamedir, com_gamedir, sizeof (cls.gamedir));
+	SDL_strlcpy (cls.gamedirfile, com_gamedirfile, sizeof (cls.gamedirfile));
+	SDL_strlcpy (cls.gamedir, com_gamedir, sizeof (cls.gamedir));
 
 	FChecks_Init();
 
@@ -2827,7 +2827,7 @@ void CL_Multiview(void)
 					// Find the opposite team from the one we are tracking now.
 					if(!currteam[0] || strcmp(currteam, cl.players[j].team))
 					{
-						strlcpy(currteam, cl.players[j].team, sizeof(currteam));
+						SDL_strlcpy(currteam, cl.players[j].team, sizeof(currteam));
 						break;
 					}
 				}
@@ -2935,7 +2935,7 @@ void CL_UpdateCaption(qbool force)
 	if (force || strcmp(str, caption))
 	{
 		VID_SetCaption(str);
-		strlcpy(caption, str, sizeof(caption));
+		SDL_strlcpy(caption, str, sizeof(caption));
 	}
 }
 

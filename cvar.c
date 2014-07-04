@@ -453,7 +453,7 @@ static cvar_group_t *Cvar_AddGroup(char *name)
 			return newgroup;
 
 	newgroup = (cvar_group_t *) Q_malloc(sizeof(cvar_group_t));
-	strlcpy(newgroup->name, name, sizeof(newgroup->name));
+	SDL_strlcpy(newgroup->name, name, sizeof(newgroup->name));
 	newgroup->count = 0;
 	newgroup->head = NULL;
 	newgroup->next = cvar_groups;
@@ -551,7 +551,7 @@ void Cvar_Register (cvar_t *var)
 	if (old)
 	{
 		var->flags |= old->flags & ~(CVAR_USER_CREATED|CVAR_TEMP);
-		strlcpy (string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
+		SDL_strlcpy (string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
 		Cvar_Delete (old->name);
 		var->string = Z_Strdup (string);
 	}
@@ -1114,7 +1114,7 @@ void Cvar_Set_Calc_f(void)
 		}
 
 		len = min (var2len - pos, len);
-		strlcpy (buf, var2->string + pos, len);
+		SDL_strlcpy (buf, var2->string + pos, len);
 		Cvar_Set (var, buf);
 		return;
 
@@ -1131,7 +1131,7 @@ void Cvar_Set_Calc_f(void)
 		var2len = strlen (var2->string);
 		pos = atoi (Cmd_Argv (4));
 
-		strlcpy (buf, var->string, sizeof (buf));
+		SDL_strlcpy (buf, var->string, sizeof (buf));
 
 		if (pos + var2len > var1len) { // need to expand
 			int i;
@@ -1140,7 +1140,7 @@ void Cvar_Set_Calc_f(void)
 			buf[pos+var2len] = 0;
 		}
 
-		strlcpy (buf + pos, var2->string, sizeof (buf) - pos);
+		SDL_strlcpy (buf + pos, var2->string, sizeof (buf) - pos);
 		Cvar_Set (var, buf);
 
 		return;
@@ -1156,12 +1156,12 @@ void Cvar_Set_Calc_f(void)
 		Cvar_SetValue (var, op ? op - var2->string : -1);
 		return;
 	} else if (!strcmp (a2, "tobrown")) {
-		strlcpy (buf, var->string, sizeof (buf));
+		SDL_strlcpy (buf, var->string, sizeof (buf));
 		CharsToBrown (buf, buf + strlen (buf));
 		Cvar_Set (var, buf);
 		return;
 	} else if (!strcmp (a2, "towhite")) {
-		strlcpy (buf, var->string, sizeof (buf));
+		SDL_strlcpy (buf, var->string, sizeof (buf));
 		CharsToWhite (buf, buf + strlen (buf));
 		Cvar_Set (var, buf);
 		return;

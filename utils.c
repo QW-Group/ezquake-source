@@ -37,7 +37,7 @@ void str_align_right (char *target, size_t size, const char *source, size_t leng
 		length = size - 1;
 
 	if (strlen(source) >= length) {
-		strlcpy(target, source, size);
+		SDL_strlcpy(target, source, size);
 		target[length] = 0;
 	} else {
 		int i;
@@ -46,7 +46,7 @@ void str_align_right (char *target, size_t size, const char *source, size_t leng
 			target[i] = ' ';
 		}
 
-		strlcpy(target + i, source, size - i);
+		SDL_strlcpy(target + i, source, size - i);
 	}
 }
 
@@ -140,7 +140,7 @@ int StringToRGB_W(char *s, byte *rgb)
 	char *result;
 	rgb[0] = rgb[1] = rgb[2] = rgb[3] = 255;
 
-	strlcpy(buf, s, sizeof(buf));
+	SDL_strlcpy(buf, s, sizeof(buf));
 	result = strtok(buf, " ");
 
 	for (i = 0; i < 4 && result; i++, result = strtok(NULL, " "))
@@ -348,7 +348,7 @@ int Util_Extend_Filename(char *filename, char **ext) {
 	int i, offset;
 	FILE *f;
 
-	strlcpy(extendedname, filename, sizeof(extendedname));
+	SDL_strlcpy(extendedname, filename, sizeof(extendedname));
 	offset = strlen(extendedname);
 
 	i = -1;
@@ -696,7 +696,7 @@ void RemoveColors (char *name, size_t len)
 	*s = 0;
 
 	if (!name[0])
-		strlcpy (name, "_", len);
+		SDL_strlcpy (name, "_", len);
 }
 
 qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len)
@@ -718,7 +718,7 @@ qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len
 		if (!cl.players[i].name[0])
 			continue;
 
-		strlcpy(name, cl.players[i].name, sizeof(name));
+		SDL_strlcpy(name, cl.players[i].name, sizeof(name));
 		RemoveColors (name, sizeof (name));
 		for (match = name; match[0]; match++)
 			match[0] = tolower(match[0]);
@@ -735,7 +735,7 @@ qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len
 
 	if (bestplayer != -1)
 	{
-		strlcpy(result, cl.players[bestplayer].name, result_len);
+		SDL_strlcpy(result, cl.players[bestplayer].name, result_len);
 		return true;
 	}
 
@@ -772,7 +772,7 @@ void CopyToClipboard(const char *text)
         CloseClipboard();
     }
 #else
-    strlcpy (clipboard, text, CLIPBOARDSIZE);
+    SDL_strlcpy (clipboard, text, CLIPBOARDSIZE);
 #endif
 }
 
@@ -795,7 +795,7 @@ char *ReadFromClipboard(void)
             clipText = GlobalLock(th);
             if (clipText)
             {
-                strlcpy(clipbuf, clipText, sizeof (clipbuf));
+                SDL_strlcpy(clipbuf, clipText, sizeof (clipbuf));
                 for (i=0; i < strlen(clipbuf); i++)
                     if (clipbuf[i]=='\n' || clipbuf[i]=='\t' || clipbuf[i]=='\b')
                         clipbuf[i] = ' ';
@@ -857,7 +857,7 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
 	char *arg1, *arg2;
 	
     // we will write the result back to src in code that follows
-	strlcpy(msg,src,sizeof(msg));
+	SDL_strlcpy(msg,src,sizeof(msg));
     msgp = msg;
     *src = '\0';
 
@@ -905,7 +905,7 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
                     }
                     else
                     {
-                        strlcpy(buf, arg2, sizeof(buf));
+                        SDL_strlcpy(buf, arg2, sizeof(buf));
 					}
                     
                     strlcat(src, buf, n);

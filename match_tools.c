@@ -110,7 +110,7 @@ static char *MT_EnemyName(void) {
 		if (cl.players[i].name[0] && !cl.players[i].spectator) {
 			name = Info_ValueForKey(cl.players[i].userinfo, "name");
 			if (strcmp(name, myname)) {
-				strlcpy(enemyname, name, sizeof (enemyname));
+				SDL_strlcpy(enemyname, name, sizeof (enemyname));
 				return enemyname;
 			}
 		}
@@ -130,7 +130,7 @@ static char *MT_EnemyTeam(void) {
 		if (cl.players[i].name[0] && !cl.players[i].spectator) {
 			team = cl.players[i].team;
 			if (team[0] && strcmp(team, myteam)) {
-				strlcpy (enemyteam, team, sizeof (enemyteam));
+				SDL_strlcpy (enemyteam, team, sizeof (enemyteam));
 				return enemyteam;
 			}
 		}
@@ -175,7 +175,7 @@ static char *MT_NameAndClean_TeamMembers(char *team) {
 static char *MT_MapName(void) {
 	static char buf[MAX_OSPATH];
 
-	strlcpy(buf, TP_MapName(), sizeof(buf));
+	SDL_strlcpy(buf, TP_MapName(), sizeof(buf));
 	return buf;
 }
 
@@ -218,7 +218,7 @@ static int MT_GetTeamNames(char teams[][MAX_INFO_STRING], int max) {
 				break;
 		}
 		if (j == i) {
-			strlcpy (teams[count], cl.players[i].team, MAX_INFO_STRING);
+			SDL_strlcpy (teams[count], cl.players[i].team, MAX_INFO_STRING);
 			count++;
 		}
 		if (count == max)
@@ -230,7 +230,7 @@ static int MT_GetTeamNames(char teams[][MAX_INFO_STRING], int max) {
 static char *MT_Serverinfo_Race(void) {
 	static char buf[MAX_OSPATH];
 
-	strlcpy(buf, Info_ValueForKey(cl.serverinfo, "race"), sizeof(buf));
+	SDL_strlcpy(buf, Info_ValueForKey(cl.serverinfo, "race"), sizeof(buf));
 	return buf;
 }
 
@@ -364,28 +364,28 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 	numteams = MT_GetTeamNames(teamnames, MAX_CLIENTS);
 
 	matchinfo.spectator = cl.spectator;
-	strlcpy(matchinfo.myname, MT_PlayerName(), sizeof(matchinfo.myname));
+	SDL_strlcpy(matchinfo.myname, MT_PlayerName(), sizeof(matchinfo.myname));
 
 	if (cl.spectator) {
 		MT_GetPlayerNames(matchinfo.player1, matchinfo.player2);
-		strlcpy(matchinfo.team1, teamnames[0], sizeof(matchinfo.team1));
-		strlcpy(matchinfo.team2, teamnames[1], sizeof(matchinfo.team2));
+		SDL_strlcpy(matchinfo.team1, teamnames[0], sizeof(matchinfo.team1));
+		SDL_strlcpy(matchinfo.team2, teamnames[1], sizeof(matchinfo.team2));
 	} else {
-		strlcpy(matchinfo.player1, MT_PlayerName(), sizeof(matchinfo.player1));
-		strlcpy(matchinfo.player2, MT_EnemyName(), sizeof(matchinfo.player2));
-		strlcpy(matchinfo.team1, MT_PlayerTeam(), sizeof(matchinfo.team1));
-		strlcpy(matchinfo.team2, MT_EnemyTeam(), sizeof(matchinfo.team2));
+		SDL_strlcpy(matchinfo.player1, MT_PlayerName(), sizeof(matchinfo.player1));
+		SDL_strlcpy(matchinfo.player2, MT_EnemyName(), sizeof(matchinfo.player2));
+		SDL_strlcpy(matchinfo.team1, MT_PlayerTeam(), sizeof(matchinfo.team1));
+		SDL_strlcpy(matchinfo.team2, MT_EnemyTeam(), sizeof(matchinfo.team2));
 	}
 
 
 	matchinfo.team1count = MT_CountTeamMembers(matchinfo.team1);
 	matchinfo.team2count = MT_CountTeamMembers(matchinfo.team2);
 	matchinfo.numteams = numteams;
-	strlcpy(matchinfo.team1names, MT_NameAndClean_TeamMembers(matchinfo.team1), sizeof(matchinfo.team1names));
-	strlcpy(matchinfo.team2names, MT_NameAndClean_TeamMembers(matchinfo.team2), sizeof(matchinfo.team2names));
+	SDL_strlcpy(matchinfo.team1names, MT_NameAndClean_TeamMembers(matchinfo.team1), sizeof(matchinfo.team1names));
+	SDL_strlcpy(matchinfo.team2names, MT_NameAndClean_TeamMembers(matchinfo.team2), sizeof(matchinfo.team2names));
 
 
-#define CLEANFIELD(x) strlcpy(matchinfo.x, MT_CleanString(matchinfo.x, false), sizeof(matchinfo.x));	
+#define CLEANFIELD(x) SDL_strlcpy(matchinfo.x, MT_CleanString(matchinfo.x, false), sizeof(matchinfo.x));	
 	CLEANFIELD(myname);
 	CLEANFIELD(player1);
 	CLEANFIELD(player2);
@@ -422,8 +422,8 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 	matchinfo.maxclients = SDL_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
 	matchinfo.deathmatch = cl.deathmatch;
 
-	strlcpy(matchinfo.mapname, MT_MapName(), sizeof(matchinfo.mapname));
-	strlcpy(matchinfo.gamedir, cls.gamedirfile, sizeof(matchinfo.gamedir));
+	SDL_strlcpy(matchinfo.mapname, MT_MapName(), sizeof(matchinfo.mapname));
+	SDL_strlcpy(matchinfo.gamedir, cls.gamedirfile, sizeof(matchinfo.gamedir));
 
 	matchinfo.matchtype = MT_GetMatchType(&matchinfo);
 
@@ -556,7 +556,7 @@ static char *MT_ParseFormat(char *format, matchinfo_t *matchinfo) {
 				default:
 					temp = va("%%%c", c); break;
 			}
-			strlcpy(out, temp, sizeof(buf) - (out - buf));
+			SDL_strlcpy(out, temp, sizeof(buf) - (out - buf));
 			out += strlen(temp);
 		} else {
 			*out++ = c;
@@ -598,7 +598,7 @@ char *Macro_MatchName(void) {
 char *MT_MatchName(void) {
 	static char buf[MAX_STATIC_STRING];
 
-	strlcpy(buf, Macro_MatchName(), sizeof(buf));
+	SDL_strlcpy(buf, Macro_MatchName(), sizeof(buf));
 	return buf;
 }
 
@@ -953,11 +953,11 @@ static void MT_StartMatch(void) {
 
 	if (cls.state < ca_active) {
 		matchstate.matchtype = mt_empty;
-		strlcpy(matchstate.matchname, "No match in progress", sizeof(matchstate.matchname));
+		SDL_strlcpy(matchstate.matchname, "No match in progress", sizeof(matchstate.matchname));
 	} else {
 		matchinfo_t *matchinfo = MT_GetMatchInfo();
 		matchstate.matchtype = matchinfo->matchtype;
-		strlcpy(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
+		SDL_strlcpy(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
 	}
 
 	if (last_challenge != NULL) {
@@ -1099,7 +1099,7 @@ void MT_TakeScreenshot(void) {
 	if (!matchstate.status) {
 		matchinfo_t *matchinfo = MT_GetMatchInfo();
 		matchstate.matchtype = matchinfo->matchtype;
-		strlcpy(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
+		SDL_strlcpy(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
 	}
 	SCR_AutoScreenshot(matchstate.matchname);
 }
@@ -1207,7 +1207,7 @@ static void AddGroupMember(mapgroup_t *group, char *member) {
 			return;
 	}
 
-	strlcpy(group->members[group->nummembers], member, sizeof(group->members[group->nummembers]));
+	SDL_strlcpy(group->members[group->nummembers], member, sizeof(group->members[group->nummembers]));
 	group->nummembers++;
 }
 
@@ -1277,7 +1277,7 @@ void MT_MapGroup_f(void) {
 
 	if (!group) {	
 		group = (mapgroup_t *) Q_calloc(1, sizeof(mapgroup_t));
-		strlcpy(group->groupname, groupname, sizeof(group->groupname));
+		SDL_strlcpy(group->groupname, groupname, sizeof(group->groupname));
 		group->system = !mapgroups_init;
 		if (mapgroups) {	
 			for (tempnode = mapgroups; tempnode->next; tempnode = tempnode->next)
@@ -1473,7 +1473,7 @@ static void AddSkyGroupMember(skygroup_t *group, char *member) {
 			return;
 	}
 
-	strlcpy(group->members[group->nummembers], member, sizeof(group->members[group->nummembers]));
+	SDL_strlcpy(group->members[group->nummembers], member, sizeof(group->members[group->nummembers]));
 	group->nummembers++;
 }
 
@@ -1545,7 +1545,7 @@ void MT_SkyGroup_f(void) {
 
 	if (!group) {	
 		group = (skygroup_t *) Q_calloc(1, sizeof(skygroup_t));
-		strlcpy(group->groupname, groupname, sizeof(group->groupname));
+		SDL_strlcpy(group->groupname, groupname, sizeof(group->groupname));
 		group->system = !skygroups_init;
 		if (skygroups) {	
 			for (tempnode = skygroups; tempnode->next; tempnode = tempnode->next)

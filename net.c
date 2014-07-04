@@ -130,7 +130,7 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_storage *sadr)
 	if (strlen(s) >= sizeof(copy) - 1)
 		return false;
 
-	strlcpy (copy, s, sizeof (copy));
+	SDL_strlcpy (copy, s, sizeof (copy));
 	// strip off a trailing :port if present
 	for (colon = copy ; *colon ; colon++)
 	{
@@ -920,7 +920,7 @@ void NET_GetLocalAddress (int socket, netadr_t *out)
 	netadr_t adr = {0};
 	qbool notvalid = false;
 
-	strlcpy (buff, "localhost", sizeof (buff));
+	SDL_strlcpy (buff, "localhost", sizeof (buff));
 	gethostname (buff, sizeof (buff));
 
 	if (!NET_StringToAdr (buff, &adr))	//urm

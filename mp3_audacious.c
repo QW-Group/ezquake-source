@@ -162,7 +162,7 @@ void MP3_AUDACIOUS_Execute_f(void) {
 		Com_Printf("Audacious is already running\n");
 		return;
 	}
-	strlcpy(exec_name, argv[0], sizeof(exec_name));
+	SDL_strlcpy(exec_name, argv[0], sizeof(exec_name));
 
 	if (!(AUDACIOUS_pid = fork())) { // Child
 		execvp(exec_name, argv);
@@ -302,7 +302,7 @@ char *MP3_AUDACIOUS_Macro_MP3Info(void) {
 	}
 	playlist_pos = qaud_remote_get_playlist_pos(audacious_proxy);
 	s = qaud_remote_get_playlist_title(audacious_proxy, playlist_pos);
-	strlcpy(title, s ? s : "", sizeof(title));
+	SDL_strlcpy(title, s ? s : "", sizeof(title));
 	//g_free(s);
 	qg_free(s);
 	return title;
@@ -357,7 +357,7 @@ void MP3_AUDACIOUS_GetSongTitle(int track_num, char *song, size_t song_len) {
 	int playlist_len;
 	char *playlist_title;
 
-	strlcpy(song, "", song_len);
+	SDL_strlcpy(song, "", song_len);
 
 	if (!MP3_AUDACIOUS_IsPlayerRunning()) 
 		return;
@@ -368,7 +368,7 @@ void MP3_AUDACIOUS_GetSongTitle(int track_num, char *song, size_t song_len) {
 		return;
 
 	playlist_title = qaud_remote_get_playlist_title(audacious_proxy, track_num);
-	strlcpy(song, playlist_title, song_len);
+	SDL_strlcpy(song, playlist_title, song_len);
 }
 
 void MP3_AUDACIOUS_PrintPlaylist_f(void) {

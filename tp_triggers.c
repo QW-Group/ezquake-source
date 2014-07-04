@@ -173,7 +173,7 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 				if (length >= MAX_QPATH)
 					break;
  
-				strlcpy (soundname, str + start, length + 1);
+				SDL_strlcpy (soundname, str + start, length + 1);
 				if (strstr(soundname, ".."))
 					break;	// no thank you
  
@@ -299,11 +299,11 @@ void TP_MsgTrigger_f (void)
 			trig = (msg_trigger_t *) Z_Malloc (sizeof(msg_trigger_t));
 			trig->next = msg_triggers;
 			msg_triggers = trig;
-			strlcpy (trig->name, name, sizeof (trig->name));
+			SDL_strlcpy (trig->name, name, sizeof (trig->name));
 			trig->level = PRINT_HIGH;
 		}
  
-		strlcpy (trig->string, Cmd_Argv(2), sizeof(trig->string));
+		SDL_strlcpy (trig->string, Cmd_Argv(2), sizeof(trig->string));
 		if (c == 5 && !SDL_strcasecmp (Cmd_Argv(3), "-l")) {
 			if (!strcmp(Cmd_Argv(4), "t")) {
 				trig->level = 4;
@@ -362,7 +362,7 @@ void TP_SearchForMsgTriggers (const char *s, int level)
 				continue;
  
 			if ((string = Cmd_AliasString (t->name))) {
-				strlcpy(vars.lasttrigger_match, s, sizeof (vars.lasttrigger_match));
+				SDL_strlcpy(vars.lasttrigger_match, s, sizeof (vars.lasttrigger_match));
 				Cbuf_AddTextEx (&cbuf_safe, va("%s\n", string));
 			} else {
 				Com_Printf ("trigger \"%s\" has no matching alias\n", t->name);

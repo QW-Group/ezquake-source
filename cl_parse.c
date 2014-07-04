@@ -1329,7 +1329,7 @@ void CL_StartFileUpload (void)
 		cls.upload = NULL;
 	}
 
-	strlcpy(cls.uploadname, Cmd_Argv(2), sizeof(cls.uploadname));
+	SDL_strlcpy(cls.uploadname, Cmd_Argv(2), sizeof(cls.uploadname));
 	cls.upload = fopen(cls.uploadname, "rb"); // BINARY
 
 	if (!cls.upload)
@@ -1475,7 +1475,7 @@ void CL_ParseServerData (void)
 
 	if (SDL_strcasecmp(cls.gamedirfile, str)) 
 	{
-		strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
+		SDL_strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
 		SDL_snprintf (cls.gamedir, sizeof(cls.gamedir),
 			"%s/%s", com_basedir, cls.gamedirfile);
 		cflag = true;
@@ -1548,7 +1548,7 @@ void CL_ParseServerData (void)
 
 	// get the full level name
 	str = MSG_ReadString ();
-	strlcpy (cl.levelname, str, sizeof(cl.levelname));
+	SDL_strlcpy (cl.levelname, str, sizeof(cl.levelname));
 
 	// get the movevars
 	movevars.gravity			= MSG_ReadFloat();
@@ -1604,7 +1604,7 @@ void CL_ParseSoundlist (void)
 			Host_Error ("Server sent too many sound_precache");
 		if (str[0] == '/')
 			str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
-		strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
+		SDL_strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
 	}
 
 	n = MSG_ReadByte();
@@ -1658,7 +1658,7 @@ void CL_ParseModellist (qbool extended)
 
 		if (str[0] == '/')
 			str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
-		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
+		SDL_strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
 
 		if (nummodels == 1)
 			if (!com_serveractive) 
@@ -1974,15 +1974,15 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 	qbool update_skin;
 	int mynum;
 
-	strlcpy (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
+	SDL_strlcpy (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
 	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) 
 	{
 		// Somebody's trying to hide himself by overloading userinfo.
-		strlcpy (player->name, " ", sizeof (player->name));
+		SDL_strlcpy (player->name, " ", sizeof (player->name));
 	}
 	player->real_topcolor = atoi(Info_ValueForKey (player->userinfo, "topcolor"));
 	player->real_bottomcolor = atoi(Info_ValueForKey (player->userinfo, "bottomcolor"));
-	strlcpy (player->team, Info_ValueForKey (player->userinfo, "team"), sizeof (player->team));
+	SDL_strlcpy (player->team, Info_ValueForKey (player->userinfo, "team"), sizeof (player->team));
 
 	player->spectator = (Info_ValueForKey (player->userinfo, "*spectator")[0]) ? true : false;
 
@@ -2008,7 +2008,7 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 	else if (update_skin)
 		TP_RefreshSkin(slot);
 
-	strlcpy(player->_team, player->team, sizeof (player->_team));
+	SDL_strlcpy(player->_team, player->team, sizeof (player->_team));
 }
 
 void CL_NotifyOnFull(void)
@@ -2061,7 +2061,7 @@ void CL_UpdateUserinfo (void)
 	was_empty_slot = player->name[0] ? false : true;
 
 	player->userid = MSG_ReadLong();
-	strlcpy (player->userinfo, MSG_ReadString(), sizeof(player->userinfo));
+	SDL_strlcpy (player->userinfo, MSG_ReadString(), sizeof(player->userinfo));
 
 	CL_ProcessUserInfo(slot, player, NULL);
 
@@ -2087,8 +2087,8 @@ void CL_SetInfo (void)
 
 	player = &cl.players[slot];
 
-	strlcpy(key, MSG_ReadString(), sizeof(key));
-	strlcpy(value, MSG_ReadString(), sizeof(value));
+	SDL_strlcpy(key, MSG_ReadString(), sizeof(key));
+	SDL_strlcpy(value, MSG_ReadString(), sizeof(value));
 
 	if (!cl.teamfortress)	// don't allow cheating in TF
 		Com_DPrintf ("SETINFO %s: %s=%s\n", player->name, key, value);
@@ -2245,7 +2245,7 @@ void CL_ParseVWepPrecache (char *str)
 		if (!strcmp(p, "-")) 
 		{
 			// empty model
-			strlcpy (cl.vw_model_name[i], "-", MAX_QPATH);
+			SDL_strlcpy (cl.vw_model_name[i], "-", MAX_QPATH);
 		}
 		else 
 		{
@@ -2255,12 +2255,12 @@ void CL_ParseVWepPrecache (char *str)
 			if (strstr(p, "/"))
 			{
 				// A full path was specified.
-				strlcpy(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
+				SDL_strlcpy(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
 			}
 			else 
 			{
 				// Use default path.
-				strlcpy(cl.vw_model_name[i], "progs/", sizeof(cl.vw_model_name[0]));
+				SDL_strlcpy(cl.vw_model_name[i], "progs/", sizeof(cl.vw_model_name[0]));
 				strlcat(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
 			}
 
@@ -2277,8 +2277,8 @@ void CL_ParseServerInfoChange (void)
 {
 	char key[MAX_INFO_STRING], value[MAX_INFO_STRING];
 
-	strlcpy (key, MSG_ReadString(), sizeof(key));
-	strlcpy (value, MSG_ReadString(), sizeof(value));
+	SDL_strlcpy (key, MSG_ReadString(), sizeof(key));
+	SDL_strlcpy (value, MSG_ReadString(), sizeof(value));
 
 	Com_DPrintf ("SERVERINFO: %s=%s\n", key, value);
 	if (!cl.standby && !cl.countdown && !strncmp(key, "status", 6)) 
@@ -2478,7 +2478,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
 
         if (i == MAX_CLIENTS)
         {
-            strlcpy (buf, "console: ", sizeof (buf));
+            SDL_strlcpy (buf, "console: ", sizeof (buf));
 
 			if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2648,7 +2648,7 @@ void CL_ParsePrint ()
 		}
 		else
 		{
-			strlcpy(name, qtvtmp, bound(1, column - qtvtmp + 1, (int)sizeof(name)));
+			SDL_strlcpy(name, qtvtmp, bound(1, column - qtvtmp + 1, (int)sizeof(name)));
 		}
 
 		if      (!strncmp(s0, "#0:qtv_say_game:",      sizeof("#0:qtv_say_game:")-1))
@@ -3351,7 +3351,7 @@ void CL_ParseServerMessage (void)
 				i = MSG_ReadByte ();
 				if (i >= MAX_LIGHTSTYLES)
 					Host_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
-				strlcpy(cl_lightstyle[i].map, MSG_ReadString(), sizeof(cl_lightstyle[i].map));
+				SDL_strlcpy(cl_lightstyle[i].map, MSG_ReadString(), sizeof(cl_lightstyle[i].map));
 				cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
 				break;
 			}

@@ -221,7 +221,7 @@ void SV_LoadGame_f (void) {
 			return;
 		}
 		sv.lightstyles[i] = (char *) Hunk_Alloc (strlen(str) + 1);
-		strlcpy (sv.lightstyles[i], str, strlen(str) + 1);
+		SDL_strlcpy (sv.lightstyles[i], str, strlen(str) + 1);
 	}
 
 	// pause until all clients connect

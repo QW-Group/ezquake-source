@@ -153,7 +153,7 @@ model_t *Mod_FindName (char *name) {
 	if (i == mod_numknown) {
 		if (mod_numknown == MAX_MOD_KNOWN)
 			Sys_Error ("mod_numknown == MAX_MOD_KNOWN");
-		strlcpy (mod->name, name, sizeof (mod->name));
+		SDL_strlcpy (mod->name, name, sizeof (mod->name));
 		mod->needload = true;
 		mod_numknown++;
 	}
@@ -929,7 +929,7 @@ static void Mod_ParseWadsFromEntityLump (lump_t *l)
 		if (com_token[0] == '}')
 			break; // end of worldspawn
 
-		strlcpy(key, (com_token[0] == '_') ? com_token + 1 : com_token, sizeof(key));
+		SDL_strlcpy(key, (com_token[0] == '_') ? com_token + 1 : com_token, sizeof(key));
 
 		for (s = key + strlen(key) - 1; s >= key && *s == ' '; s--)		// remove trailing spaces
 			*s = 0;
@@ -937,7 +937,7 @@ static void Mod_ParseWadsFromEntityLump (lump_t *l)
 		if (!(data = COM_Parse(data)))
 			return; // error
 
-		strlcpy(value, com_token, sizeof(value));
+		SDL_strlcpy(value, com_token, sizeof(value));
 
 		if (!strcmp("sky", key) || !strcmp("skyname", key))
 			Cvar_Set(&r_skyname, value);
@@ -1484,7 +1484,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 			SDL_snprintf (name, sizeof (name), "*%i", i+1);
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
-			strlcpy (loadmodel->name, name, sizeof (loadmodel->name));
+			SDL_strlcpy (loadmodel->name, name, sizeof (loadmodel->name));
 			mod = loadmodel;
 		}
 	}
@@ -1516,7 +1516,7 @@ void *Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame) {
 
 	pdaliasframe = (daliasframe_t *)pin;
 
-	strlcpy (frame->name, pdaliasframe->name, sizeof (frame->name));
+	SDL_strlcpy (frame->name, pdaliasframe->name, sizeof (frame->name));
 	frame->firstpose = posenum;
 	frame->numposes = 1;
 

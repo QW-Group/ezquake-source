@@ -994,7 +994,7 @@ void PF_substr (void)
 	if (len > l + 1)
 		len = l + 1;
 
-	strlcpy(pr_string_temp, s, len + 1);
+	SDL_strlcpy(pr_string_temp, s, len + 1);
 
 	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
 
@@ -1089,7 +1089,7 @@ void PF_strzone (void)
 		size = (int) G_FLOAT(OFS_PARM1);
 
 	pr_newstrtbl[i] = (char *) Q_malloc(size);
-	strlcpy(pr_newstrtbl[i], s, size);
+	SDL_strlcpy(pr_newstrtbl[i], s, size);
 
 	G_INT(OFS_RETURN) = -(i+MAX_PRSTR);
 }
@@ -1164,7 +1164,7 @@ void PF_readcmd (void)
 
 	SV_BeginRedirect(RD_MOD);
 	Cbuf_Execute();
-	strlcpy(output, outputbuf, sizeof(output));
+	SDL_strlcpy(output, outputbuf, sizeof(output));
 	SV_EndRedirect();
 
 	if (old != RD_NONE)
@@ -2594,7 +2594,7 @@ void PF_findmap (void)
 	int id;
 	int i;
 
-	strlcpy(map, G_STRING(OFS_PARM0), sizeof(map));
+	SDL_strlcpy(map, G_STRING(OFS_PARM0), sizeof(map));
 	for (i = 0, s = map; *s; s++)
 	{
 		if (*s < '0' || *s > '9')
@@ -2804,7 +2804,7 @@ void PF_listmaps (void)
 
 	if (foot)
 	{ //footer
-		strlcpy(tmp, "Total:", sizeof(tmp));
+		SDL_strlcpy(tmp, "Total:", sizeof(tmp));
 		Q_redtext((unsigned char*)tmp);
 		SV_ClientPrintf (client, level,	"%s %d maps %.0fKB (%.2fMB)\n", tmp, dir.numfiles, (float)dir.size/1024, (float)dir.size/1024/1024);
 	}
@@ -2847,9 +2847,9 @@ void PF_infokey (void)
 	{
 		value = ov;
 		if (!strncmp(key, "ip", 3))
-			strlcpy(ov, NET_BaseAdrToString (cl->netchan.remote_address), sizeof(ov));
+			SDL_strlcpy(ov, NET_BaseAdrToString (cl->netchan.remote_address), sizeof(ov));
 		else if (!strncmp(key, "realip", 7))
-			strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
+			SDL_strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
 		else if (!strncmp(key, "download", 9))
 			//SDL_snprintf(ov, sizeof(ov), "%d", cl->download != NULL ? (int)(100*cl->downloadcount/cl->downloadsize) : -1);
 			SDL_snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
@@ -2865,7 +2865,7 @@ void PF_infokey (void)
 	else
 		value = "";
 
-	strlcpy(pr_string_temp, value, MAX_PR_STRING_SIZE);
+	SDL_strlcpy(pr_string_temp, value, MAX_PR_STRING_SIZE);
 	RETURN_STRING(pr_string_temp);
 	PF_SetTempString();
 }
@@ -3065,7 +3065,7 @@ static void PF_cvar_string (void)
 		G_INT(OFS_RETURN) = 0;
 		return;
 	}
-	strlcpy (pr_string_temp, var->string, sizeof(pr_string_temp));
+	SDL_strlcpy (pr_string_temp, var->string, sizeof(pr_string_temp));
 	RETURN_STRING(pr_string_temp);
 }
 

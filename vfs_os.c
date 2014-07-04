@@ -230,7 +230,7 @@ static qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, 
 		loc->len = len;
 		loc->offset = 0;
 		loc->index = 0;
-		strlcpy (loc->rawname, filename, sizeof (loc->rawname));
+		SDL_strlcpy (loc->rawname, filename, sizeof (loc->rawname));
 	}
 
 	return true;

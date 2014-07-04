@@ -119,12 +119,12 @@ void CL_ForwardToServer_f (void) {
 /* johnnycz: disabled due to security reasons -- fixme
 		if (strcasecmp(Cmd_Argv(1), "download") == 0 && Cmd_Argc() > 2)
 		{
-			strlcpy(cls.downloadname, Cmd_Argv(2), sizeof(cls.downloadname));
+			SDL_strlcpy(cls.downloadname, Cmd_Argv(2), sizeof(cls.downloadname));
 			COM_StripExtension(cls.downloadname, cls.downloadtempname);
 			strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 			cls.downloadtype = dl_single;
 			//SDL_snprintf (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
-			//strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
+			//SDL_strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
 		}
 */
 // Added by VVD {
@@ -359,12 +359,12 @@ void CL_Say_f (void) {
         len = bound(0, len, sizeof(c_fn));
 
 		// TP_ParseFunChars wants a string < 1024 chars (fix it?)
-        strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
-        strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
+        SDL_strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
+        SDL_strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
 		
         // 1) save the message text, because TP_ParseFunChars will overwrite the temp memory
         // 2) cut the leading quote (+1) and also the trailing quote (len is 1 char shorter)
-        strlcpy (c_msg, s+1, len);
+        SDL_strlcpy (c_msg, s+1, len);
 
 		SDL_snprintf (msg, sizeof(msg), "\x0d%s%s", TP_ParseFunChars(strcat(c_fn, c_fna), true), c_msg);
 
@@ -636,7 +636,7 @@ void CL_Download_f (void){
 	}
 
 	filename = Cmd_Argv(1);
-	strlcpy(ondiskname, filename, sizeof(ondiskname)); // in most cases this is same as filename
+	SDL_strlcpy(ondiskname, filename, sizeof(ondiskname)); // in most cases this is same as filename
 
 	if (Cmd_Argc() != 2 || !filename[0]) {
 		Com_Printf ("Usage: %s <datafile>\n", Cmd_Argv(0));
@@ -650,7 +650,7 @@ void CL_Download_f (void){
 			) {
 		dir = CL_DemoDirectory(); // seems filename is a demo
 		// so, we save file in /dir/<demo_dir> instead of /dir/<demo_dir>/demos
-		strlcpy(ondiskname, COM_SkipPath(filename), sizeof(ondiskname));
+		SDL_strlcpy(ondiskname, COM_SkipPath(filename), sizeof(ondiskname));
 	}
 	else
 		dir = cls.gamedir; // not a demo
@@ -1002,7 +1002,7 @@ void CL_FullServerinfo_f (void) {
 	if (Cmd_Argc() != 2)
 		return;
 
-	strlcpy (cl.serverinfo, Cmd_Argv(1), sizeof(cl.serverinfo));
+	SDL_strlcpy (cl.serverinfo, Cmd_Argv(1), sizeof(cl.serverinfo));
 
 	p = Info_ValueForKey (cl.serverinfo, "*cheats");
 	if (*p)

@@ -340,7 +340,7 @@ void SYSINFO_Init(void)
 #else
 void SYSINFO_Init(void)
 {
-	strlcpy(f_system_string, "Unknown system.", sizeof(f_system_string));
+	SDL_strlcpy(f_system_string, "Unknown system.", sizeof(f_system_string));
 }
 #endif
 

@@ -291,7 +291,7 @@ static int FMod_AddModel (const char *name, const qbool flags, const void *hash)
 	if (check_models_num >= MAX_CHECK_MODELS)
 		return -1;
 
-	strlcpy (check_models[check_models_num].name, name, sizeof (check_models[check_models_num].name));	
+	SDL_strlcpy (check_models[check_models_num].name, name, sizeof (check_models[check_models_num].name));	
 	check_models[check_models_num].checked = check_models[check_models_num].modified = false;
 	check_models[check_models_num].flags = flags;
 	check_models[check_models_num].hash = hash;
@@ -527,7 +527,7 @@ char *FMod_Response_Text(void)
 	int i, count;
 	qbool relevent;
 
-	strlcpy(buf, "modified:", sizeof(buf));
+	SDL_strlcpy(buf, "modified:", sizeof(buf));
 
 	for (i = count = 0; i < check_models_num; i++) {
 		relevent = (cl.teamfortress && (check_models[i].flags & FMOD_TF)) || 
@@ -545,7 +545,7 @@ char *FMod_Response_Text(void)
 	}
 
 	if (!count)
-		strlcpy (buf, "all models ok", sizeof (buf));
+		SDL_strlcpy (buf, "all models ok", sizeof (buf));
 	
 	return buf;
 }

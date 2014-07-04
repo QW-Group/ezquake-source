@@ -156,7 +156,7 @@ static int ParseServerIp(char *server_port, int *addr, unsigned short *port)
 	char server_ip[50];
 	char *port_divide;
 
-	strlcpy (server_ip, server_port, sizeof(server_ip));
+	SDL_strlcpy (server_ip, server_port, sizeof(server_ip));
 
 	/* Break the ip at the port */
 	if ((port_divide = strchr(server_ip, ':')))

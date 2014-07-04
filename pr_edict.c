@@ -298,7 +298,7 @@ eval_t *GetEdictFieldValue(edict_t *ed, char *field)
 	if (strlen(field) < MAX_FIELD_LEN)
 	{
 		gefvCache[rep].pcache = def;
-		strlcpy (gefvCache[rep].field, field, MAX_FIELD_LEN);
+		SDL_strlcpy (gefvCache[rep].field, field, MAX_FIELD_LEN);
 		rep ^= 1;
 	}
 
@@ -712,7 +712,7 @@ void ED_ParseGlobals (char *data)
 		if (!data)
 			SV_Error ("ED_ParseEntity: EOF without closing brace");
 
-		strlcpy (keyname, com_token, sizeof(keyname));
+		SDL_strlcpy (keyname, com_token, sizeof(keyname));
 
 		// parse value
 		data = COM_Parse (data);
@@ -799,7 +799,7 @@ qbool ED_ParseEpair (void *base, ddef_t *key, char *s)
 		break;
 
 	case ev_vector:
-		strlcpy (string, s, sizeof(string));
+		SDL_strlcpy (string, s, sizeof(string));
 		v = string;
 		w = string;
 		for (i=0 ; i<3 ; i++)
@@ -878,7 +878,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		// and allow them to be turned into vectors. (FIXME...)
 		if (!strcmp(com_token, "angle"))
 		{
-			strlcpy (com_token, "angles", MAX_COM_TOKEN);
+			SDL_strlcpy (com_token, "angles", MAX_COM_TOKEN);
 			anglehack = true;
 		}
 		else
@@ -886,9 +886,9 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 
 		// FIXME: change light to _light to get rid of this hack
 		if (!strcmp(com_token, "light"))
-			strlcpy (com_token, "light_lev", MAX_COM_TOKEN);	// hack for single light def
+			SDL_strlcpy (com_token, "light_lev", MAX_COM_TOKEN);	// hack for single light def
 
-		strlcpy (keyname, com_token, sizeof(keyname));
+		SDL_strlcpy (keyname, com_token, sizeof(keyname));
 
 		// parse value
 		data = COM_Parse (data);
@@ -915,7 +915,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		if (anglehack)
 		{
 			char	temp[32];
-			strlcpy (temp, com_token, sizeof(temp));
+			SDL_strlcpy (temp, com_token, sizeof(temp));
 			SDL_snprintf (com_token, MAX_COM_TOKEN, "0 %s 0", temp);
 		}
 
@@ -1065,8 +1065,8 @@ qbool PR_UserCmd(void)
 		static char cmd_copy[128], args_copy[1024] /* Ouch! */;
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
-		strlcpy (args_copy, Cmd_Args(), sizeof(args_copy));
+		SDL_strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
+		SDL_strlcpy (args_copy, Cmd_Args(), sizeof(args_copy));
 		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
 		((int *)pr_globals)[OFS_PARM1] = PR_SetString (args_copy);
 		PR_ExecuteProgram (GE_ClientCommand);
@@ -1078,7 +1078,7 @@ qbool PR_UserCmd(void)
 		static char cmd_copy[128];
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
+		SDL_strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
 		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
 
 		PR_ExecuteProgram (mod_UserCmd);

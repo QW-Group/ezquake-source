@@ -293,7 +293,7 @@ static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, const char *desc)
 	int fd;
 
 	gzip = Q_calloc(1, sizeof(*gzip));
-	strlcpy(gzip->filename, desc, sizeof(gzip->filename));
+	SDL_strlcpy(gzip->filename, desc, sizeof(gzip->filename));
 	if (gziphandle == NULL) goto fail;
 	gzip->raw = gziphandle;
 
@@ -307,7 +307,7 @@ static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, const char *desc)
 	if (strcmp(ext, "gz") == 0) {
 		COM_StripExtension(base, gzip->file.name);
 	} else {
-		strlcpy(gzip->file.name, base, sizeof(gzip->file.name));
+		SDL_strlcpy(gzip->file.name, base, sizeof(gzip->file.name));
 	}
 
 	return gzip;

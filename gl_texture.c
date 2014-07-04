@@ -534,7 +534,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 		glt = &gltextures[numgltextures];
 		numgltextures++;
 
-		strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
+		SDL_strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
 		glt->texnum = texture_extension_number;
 		texture_extension_number++;
 	}
@@ -589,7 +589,7 @@ int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data)
 		Q_ROUND_POWER2(pic->height, glheight);
 	}
 
-	strlcpy (fullname + 4, name, sizeof(fullname) - 4);
+	SDL_strlcpy (fullname + 4, name, sizeof(fullname) - 4);
 	if (glwidth == pic->width && glheight == pic->height)
 	{
 		pic->texnum = GL_LoadTexture (fullname, glwidth, glheight, data, TEX_ALPHA, 1);
@@ -889,7 +889,7 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 		Q_ROUND_POWER2(pic.height, height);
 	}
 
-	strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
+	SDL_strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
 
 	// Upload the texture to OpenGL.
 	if (width == pic.width && height == pic.height) 

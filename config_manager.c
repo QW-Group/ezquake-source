@@ -1055,7 +1055,7 @@ void DumpHUD_f(void)
 		return;
 	}
 	filename = COM_SkipPathWritable(Cmd_Argv(1));
-	strlcpy(buf, filename, sizeof(buf));
+	SDL_strlcpy(buf, filename, sizeof(buf));
 	COM_ForceExtensionEx (buf, ".cfg", sizeof(buf));
 	DumpHUD(buf);
 	Com_Printf("HUD variables exported to %s\n",buf);

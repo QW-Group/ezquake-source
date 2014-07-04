@@ -54,7 +54,7 @@ void R_InitTextures (void) {
 	// create a simple checkerboard texture for the default
 	r_notexture_mip = (texture_t *) Hunk_AllocName (sizeof(texture_t) + 16 * 16 + 8 * 8+4 * 4 + 2 * 2, "notexture");
 	
-	strlcpy(r_notexture_mip->name, "notexture", sizeof (r_notexture_mip->name));
+	SDL_strlcpy(r_notexture_mip->name, "notexture", sizeof (r_notexture_mip->name));
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);
 	r_notexture_mip->offsets[1] = r_notexture_mip->offsets[0] + 16 * 16;
@@ -103,7 +103,7 @@ void R_TranslatePlayerSkin (int playernum) {
 	if (!player->name[0])
 		return;
 
-	strlcpy(s, Skin_FindName(player), sizeof(s));
+	SDL_strlcpy(s, Skin_FindName(player), sizeof(s));
 	COM_StripExtension(s, s);
 
 	if (player->skin && SDL_strcasecmp(s, player->skin->name))

@@ -92,7 +92,7 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 				// fill str
 				str_tok = (char *)strtok(NULL, "#");
 				qwmsg[i]->str =  (char *) Q_malloc (strlen(str_tok) + 1);
-				strlcpy(qwmsg[i]->str, str_tok, strlen(str_tok) + 1);
+				SDL_strlcpy(qwmsg[i]->str, str_tok, strlen(str_tok) + 1);
 			}
 			else
 				break;

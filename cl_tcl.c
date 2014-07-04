@@ -133,7 +133,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 		cmd_alias_hash[h] = a;
 	}
 
-	strlcpy (a->name, s, MAX_ALIAS_NAME);
+	SDL_strlcpy (a->name, s, MAX_ALIAS_NAME);
 
 	a->flags = ALIAS_TCL;
 
@@ -328,7 +328,7 @@ static void TCL_Exec_f (void)
 		Com_Printf ("%s <filename> : execute file as Tcl script\n", Cmd_Argv(0));
 		return;
 	}
-	strlcpy (filename, Cmd_Argv(1), sizeof(filename));
+	SDL_strlcpy (filename, Cmd_Argv(1), sizeof(filename));
 	COM_DefaultExtension (filename, ".tcl");
 
 	mark = Hunk_LowMark();

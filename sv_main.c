@@ -928,7 +928,7 @@ qbool CheckProtocol( int ver )
 
 qbool CheckUserinfo( char *userinfobuf, unsigned int bufsize, char *userinfo )
 {
-	strlcpy (userinfobuf, userinfo, bufsize);
+	SDL_strlcpy (userinfobuf, userinfo, bufsize);
 
 	// and now validate userinfo
 	if ( !ValidateUserInfo( userinfobuf ) )
@@ -1660,7 +1660,7 @@ static void SVC_RemoteCommand (char *remote_command)
 		if (cl->netchan.remote_address.port != net_from.port)
 			continue;
 
-		strlcpy(plain, cl->name, sizeof(plain));
+		SDL_strlcpy(plain, cl->name, sizeof(plain));
 		Q_normalizetext(plain);
 
 		// we found what we need
@@ -2398,7 +2398,7 @@ void SV_Cmd_Ban_f(void)
 
 	uid = SDL_atoi(Cmd_Argv(1));
 
-	strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
+	SDL_strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
 
 	// sscanf safe here since sizeof(arg2) == sizeof(arg2c), right?
 	if (sscanf(arg2, "%d%s", &t, arg2c) != 2 || strlen(arg2c) != 1) {
@@ -2425,7 +2425,7 @@ void SV_Cmd_Ban_f(void)
 		{
 			if (c > 3) // serve reason arguments
 			{
-				strlcpy (reason, " (", sizeof(reason));
+				SDL_strlcpy (reason, " (", sizeof(reason));
 				for (j=3 ; j<c; j++)
 				{
 					strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
@@ -2509,7 +2509,7 @@ void SV_Cmd_Banip_f(void)
 		return;
 	}
 
-	strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
+	SDL_strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
 
 	// sscanf safe here since sizeof(arg2) == sizeof(arg2c), right?
 	if (sscanf(arg2, "%d%s", &t, arg2c) != 2 || strlen(arg2c) != 1) {
@@ -3050,9 +3050,9 @@ static void SV_CheckVars (void)
 	if (strcmp(password.string, pw) ||
 		strcmp(spectator_password.string, spw) || strcmp(vip_password.string, vspw))
 	{
-		strlcpy (pw, password.string, sizeof(pw));
-		strlcpy (spw, spectator_password.string, sizeof(spw));
-		strlcpy (vspw, vip_password.string, sizeof(vspw));
+		SDL_strlcpy (pw, password.string, sizeof(pw));
+		SDL_strlcpy (spw, spectator_password.string, sizeof(spw));
+		SDL_strlcpy (vspw, vip_password.string, sizeof(vspw));
 		Cvar_Set (&password, pw);
 		Cvar_Set (&spectator_password, spw);
 		Cvar_Set (&vip_password, vspw);
@@ -3493,13 +3493,13 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 		val = Info_Get (&cl->_userinfo_ctx_, "name");
 
 		// trim user name
-		strlcpy (newname, val, sizeof(newname));
+		SDL_strlcpy (newname, val, sizeof(newname));
 
 		for (p = val; *p; p++)
 		{
 			if ((*p & 127) == '\\' || *p == '\r' || *p == '\n' || *p == '$' || *p == '#' || *p == '"' || *p == ';')
 			{ // illegal characters in name, set some default
-				strlcpy(newname, sv_default_name.string, sizeof(newname));
+				SDL_strlcpy(newname, sv_default_name.string, sizeof(newname));
 				break;
 			}
 		}
@@ -3508,7 +3508,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 			; // empty operator
 
 		if (p != newname) // skip prefixed spaces, if any, even whole string of spaces
-			strlcpy(newname, p, sizeof(newname));
+			SDL_strlcpy(newname, p, sizeof(newname));
 
 		for (p = newname + strlen(newname) - 1; p >= newname; p--)
 		{
@@ -3587,14 +3587,14 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 				SV_BroadcastPrintf (PRINT_HIGH, "%s changed name to %s\n", cl->name, val);
 		}
 
-		strlcpy (cl->name, val, CLIENT_NAME_LEN);
+		SDL_strlcpy (cl->name, val, CLIENT_NAME_LEN);
 
 		if (cl->state >= cs_spawned) //bliP: player logging
 			SV_LogPlayer(cl, "name change", 1);
 	}
 
 	// team
-	strlcpy (cl->team, Info_Get (&cl->_userinfo_ctx_, "team"), sizeof(cl->team));
+	SDL_strlcpy (cl->team, Info_Get (&cl->_userinfo_ctx_, "team"), sizeof(cl->team));
 
 	// rate
 	val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
@@ -3783,7 +3783,7 @@ void SV_TimeOfDay(date_t *date)
 		date->hour = 0;
 		date->min = 0;
 		date->sec = 0;
-		strlcpy(date->str, "#bad date#", sizeof(date->str));
+		SDL_strlcpy(date->str, "#bad date#", sizeof(date->str));
 		return;
 	}
 	//<-

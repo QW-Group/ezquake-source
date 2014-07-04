@@ -1082,7 +1082,7 @@ void CL_TrackTeam_f(void)
 		for(i = 0; i < MAX_CLIENTS; i++)
 		{
 			if(VALID_PLAYER(i) && strcmp(currteam, cl.players[i].team) != 0) {
-				strlcpy(currteam, cl.players[i].team, sizeof(currteam));
+				SDL_strlcpy(currteam, cl.players[i].team, sizeof(currteam));
 				break;
 			}
 		}

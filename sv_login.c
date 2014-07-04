@@ -138,7 +138,7 @@ void SV_LoadAccounts(void)
 		}
 		if (StringToFilter(acc->login, &acc->adress))
 		{
-			strlcpy(acc->pass, acc->login, MAX_LOGINNAME);
+			SDL_strlcpy(acc->pass, acc->login, MAX_LOGINNAME);
 			acc->use = use_ip;
 			if (fscanf(f, "%s %d\n", acc->pass, (int *)&acc->state) != 2) {
 				Com_Printf("Error reading account data\n");
@@ -181,7 +181,7 @@ void SV_LoadAccounts(void)
 			{
 				cl->logged = i+1;
 				if (acc->use == use_ip)
-					strlcpy(cl->login, acc->pass, CLIENT_LOGIN_LEN);
+					SDL_strlcpy(cl->login, acc->pass, CLIENT_LOGIN_LEN);
 
 				acc->inuse++;
 				continue;
@@ -278,12 +278,12 @@ void SV_CreateAccount_f(void)
 
 	// create an account
 	num_accounts++;
-	strlcpy(accounts[spot].login, Cmd_Argv(1), MAX_LOGINNAME);
+	SDL_strlcpy(accounts[spot].login, Cmd_Argv(1), MAX_LOGINNAME);
 	if (Cmd_Argc() == 3)
 		i = 2;
 	else
 		i = 1;
-	strlcpy(accounts[spot].pass, (int)sv_hashpasswords.value && use == use_log ?
+	SDL_strlcpy(accounts[spot].pass, (int)sv_hashpasswords.value && use == use_log ?
 	        SHA1(Cmd_Argv(i)) : Cmd_Argv(i), MAX_LOGINNAME);
 
 	accounts[spot].state = a_ok;
@@ -540,7 +540,7 @@ qbool SV_Login(client_t *cl)
 	ip = va("%d.%d.%d.%d", cl->realip.ip[0], cl->realip.ip[1], cl->realip.ip[2], cl->realip.ip[3]);
 	if ((cl->logged = checklogin(ip, ip, cl - svs.clients + 1, use_ip)) > 0)
 	{
-		strlcpy(cl->login, accounts[cl->logged-1].pass, CLIENT_LOGIN_LEN);
+		SDL_strlcpy(cl->login, accounts[cl->logged-1].pass, CLIENT_LOGIN_LEN);
 		return true;
 	}
 
@@ -550,7 +550,7 @@ qbool SV_Login(client_t *cl)
 
 	if (sv_registrationinfo.string[0])
 	{
-		strlcpy (info, sv_registrationinfo.string, 254);
+		SDL_strlcpy (info, sv_registrationinfo.string, 254);
 		strlcat (info, "\n", 255);
 		MSG_WriteByte (&cl->netchan.message, svc_print);
 		MSG_WriteByte (&cl->netchan.message, PRINT_HIGH);
@@ -604,12 +604,12 @@ void SV_ParseLogin(client_t *cl)
 	}
 	else
 	{
-		strlcpy(cl->login, log1, CLIENT_LOGIN_LEN);
+		SDL_strlcpy(cl->login, log1, CLIENT_LOGIN_LEN);
 	}
 
 	if (!*pass)
 	{
-		strlcpy(cl->login, log1, CLIENT_LOGIN_LEN);
+		SDL_strlcpy(cl->login, log1, CLIENT_LOGIN_LEN);
 		MSG_WriteByte (&cl->netchan.message, svc_print);
 		MSG_WriteByte (&cl->netchan.message, PRINT_HIGH);
 		MSG_WriteString (&cl->netchan.message, va("Password for %s:\n", cl->login));
@@ -650,7 +650,7 @@ void SV_ParseLogin(client_t *cl)
 		if ((int)sv_forcenick.value && cl->login)
 		{
 			Info_Set (&cl->_userinfo_ctx_, "name", cl->login);
-			strlcpy (cl->name, cl->login, CLIENT_NAME_LEN);
+			SDL_strlcpy (cl->name, cl->login, CLIENT_NAME_LEN);
 			MSG_WriteByte (&cl->netchan.message, svc_stufftext);
 			MSG_WriteString (&cl->netchan.message, va("name %s\n", cl->login));
 			MSG_WriteByte (&cl->netchan.message, svc_stufftext);

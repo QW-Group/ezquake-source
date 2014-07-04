@@ -140,7 +140,7 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 	if (strlen(src) <= size_to_fit)
 	{
 		// Entire path fits in the destination.
-		strlcpy(dest, src, destination_size);
+		SDL_strlcpy(dest, src, destination_size);
 	}
 	else
 	{
@@ -174,12 +174,12 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 
 		if (left_size < destination_size)
 		{
-			strlcpy (dest, src, destination_size);
-			strlcpy (dest + left_size, "...", destination_size);
+			SDL_strlcpy (dest, src, destination_size);
+			SDL_strlcpy (dest + left_size, "...", destination_size);
 
 			if (left_size + DOT_SIZE + right_size < destination_size)
 			{
-				strlcpy (dest + left_size + DOT_SIZE, src + strlen(src) - right_size, right_size + 1);
+				SDL_strlcpy (dest + left_size + DOT_SIZE, src + strlen(src) - right_size, right_size + 1);
 			}
 		}
 	}
@@ -194,7 +194,7 @@ void COM_StripExtension (const char *in, char *out)
 
 	if (!(dot = strrchr(in, '.'))) {
 		if (in != out)
-			strlcpy(out, in, strlen(in) + 1);
+			SDL_strlcpy(out, in, strlen(in) + 1);
 		return;
 	}
 	while (*in && in != dot)
@@ -326,7 +326,7 @@ int COM_GetTempDir(char *buf, int bufsize)
 		return -1;
 	}
 
-	strlcpy (buf, tmp, bufsize);
+	SDL_strlcpy (buf, tmp, bufsize);
 	#endif // WIN32
 
 	return returnval;
@@ -366,7 +366,7 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 		return -1;
 	}
 
-	strlcpy (filename, tmp, filename_size);
+	SDL_strlcpy (filename, tmp, filename_size);
 	#else
 	char *tmp = Q_malloc (MAX_PATH);
 
@@ -375,7 +375,7 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 	if (!tmp)
 		return -1;
 
-	strlcpy (filename, tmp, filename_size);
+	SDL_strlcpy (filename, tmp, filename_size);
 	Q_free (tmp);
 	retval = strlen(filename);
 	#endif
@@ -1010,7 +1010,7 @@ char *Info_Get(ctxinfo_t *ctx, const char *name)
 	{
 		valueindex = (valueindex + 1) % 4;
 
-		strlcpy(value[valueindex], a->value, sizeof(value[0]));
+		SDL_strlcpy(value[valueindex], a->value, sizeof(value[0]));
 
 		return value[valueindex];
 	}
@@ -1234,13 +1234,13 @@ qbool Info_Convert(ctxinfo_t *ctx, char *str)
 		if (!(str = strchr(start + 1, '\\')))  // end of name
 			break;
 
-		strlcpy(name, start + 1, min(str - start, (int)sizeof(name)));
+		SDL_strlcpy(name, start + 1, min(str - start, (int)sizeof(name)));
 
 		start = str; // start of value
 
 		str = strchr(start + 1, '\\'); // end of value
 
-		strlcpy(value, start + 1, str ? min(str - start, (int)sizeof(value)) : (int)sizeof(value));
+		SDL_strlcpy(value, start + 1, str ? min(str - start, (int)sizeof(value)) : (int)sizeof(value));
 
 		Info_SetStar(ctx, name, value);
 	}

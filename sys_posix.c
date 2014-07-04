@@ -229,7 +229,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			dir.size +=
 				(list[dir.numfiles].size = Sys_FileSizeTime(pathname, &list[dir.numfiles].time));
 		}
-		strlcpy (list[dir.numfiles].name, oneentry->d_name, MAX_DEMO_NAME);
+		SDL_strlcpy (list[dir.numfiles].name, oneentry->d_name, MAX_DEMO_NAME);
 
 		if (++dir.numfiles == MAX_DIRFILES - 1)
 			break;
@@ -451,7 +451,7 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
     if (maxLength-1 < PATH_MAX)	{
 			 char tmp[PATH_MAX+1];
 			 if (realpath(relPath, tmp) && absPath && strlen(tmp) < maxLength+1) {
-					strlcpy(absPath, tmp, maxLength+1);
+					SDL_strlcpy(absPath, tmp, maxLength+1);
           return absPath;
 			 }
 

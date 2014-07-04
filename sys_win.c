@@ -218,7 +218,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	SDL_snprintf(file, sizeof(file), "%s/*.*", apath);
 
 	// We need to make apath contain the path in match but not gpath
-	strlcpy(apath2, match, sizeof(apath));
+	SDL_strlcpy(apath2, match, sizeof(apath));
 	match = s+1;
 	for (s = apath2+strlen(apath2)-1; s> apath2; s--)
 	{
@@ -334,7 +334,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			list[dir.numfiles].time = 0; //Sys_FileTime(pathname);
 			dir.size += (list[dir.numfiles].size = fd.nFileSizeLow);
 		}
-		strlcpy (list[dir.numfiles].name, fd.cFileName, sizeof(list[0].name));
+		SDL_strlcpy (list[dir.numfiles].name, fd.cFileName, sizeof(list[0].name));
 
 		if (++dir.numfiles == MAX_DIRFILES - 1)
 			break;
@@ -635,7 +635,7 @@ void ParseCommandLine (char *lpCmdLine)
 	else 
 	{
 		exename[i] = 0; // ensure null terminator
-		strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
+		SDL_strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
 	}
 
 	while (*lpCmdLine && (argc < MAX_NUM_ARGVS))
@@ -1038,7 +1038,7 @@ void MakeDirent(sys_dirent *ent, WIN32_FIND_DATA *data)
 {
     FILETIME ft1;
 
-    strlcpy (ent->fname, data->cFileName, min(strlen(data->cFileName)+1, MAX_PATH_LENGTH));
+    SDL_strlcpy (ent->fname, data->cFileName, min(strlen(data->cFileName)+1, MAX_PATH_LENGTH));
 
 	ent->size = (data->nFileSizeHigh > 0) ? 0xffffffff : data->nFileSizeLow;
 

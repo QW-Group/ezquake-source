@@ -258,14 +258,14 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
         {
             if (strlen (link->tag->href) > w)
             {
-                strlcpy (buf, link->tag->href, min (sizeof (buf), w-3));
+                SDL_strlcpy (buf, link->tag->href, min (sizeof (buf), w-3));
                 strlcat (buf, "...", sizeof (buf));
             }
             else
             {
                 int offset = (w - strlen(link->tag->href)) / 2;
                 memset(buf, ' ', offset);
-                strlcpy (buf + offset, link->tag->href, sizeof (buf) - offset);
+                SDL_strlcpy (buf + offset, link->tag->href, sizeof (buf) - offset);
             }
             UI_Print(x, y + (h-1)*8, buf, false);
         }
@@ -295,7 +295,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
                 }
                 else
                 {
-                    strlcpy(buf, viewer->page->doc->title, min (sizeof (buf), l-3));
+                    SDL_strlcpy(buf, viewer->page->doc->title, min (sizeof (buf), l-3));
                     strlcat(buf, "...", sizeof (buf));
                     UI_Print(x+8, y + (h-1)*8, buf, false);
                 }

@@ -125,7 +125,7 @@ void MP3_SongInfo_f(void) {
 		Com_Printf(va("%s %s\n", status_string, title));
 		return;
 	}
-	strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+	SDL_strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
 	Com_Printf(va("%s %s \x10%s/%s\x11\n", status_string, title, elapsed_string, SecondsToMinutesString(total)));
 }
 
@@ -141,9 +141,9 @@ char *MP3_Menu_SongtTitle(void) {
 	macrotitle = MP3_Macro_MP3Info();
 	MP3_GetPlaylistInfo(&current, NULL);
 	if (*macrotitle)
-		strlcpy(title, va("%d. %s", current + 1, macrotitle), sizeof(title));
+		SDL_strlcpy(title, va("%d. %s", current + 1, macrotitle), sizeof(title));
 	else
-		strlcpy(title, mp3_player->PlayerName_AllCaps, sizeof(title));
+		SDL_strlcpy(title, mp3_player->PlayerName_AllCaps, sizeof(title));
 	return title;
 }
 

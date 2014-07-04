@@ -91,7 +91,7 @@ void *FSPAK_LoadDoomWadFile (vfsfile_t *packhandle, char *desc)
 	{
 		VFS_READ (packhandle, &info, sizeof(info), NULL);
 
-		strlcpy (filename, info.name, sizeof (filename));
+		SDL_strlcpy (filename, info.name, sizeof (filename));
 		filename[8] = '\0';
 		Q_strlwr(filename);
 
@@ -126,7 +126,7 @@ newsection:
 				if ((filename[0] == 'e' && filename[2] == 'm') || !strncmp(filename, "map", 3))
 				{	//this is the start of a beutiful new map
 					section = 1;
-					strlcpy (sectionname, filename, sizeof (sectionname));
+					SDL_strlcpy (sectionname, filename, sizeof (sectionname));
 					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
 					newfiles[i].filepos = 0;
 					newfiles[i].filelen = 4;
@@ -135,7 +135,7 @@ newsection:
 				if (!strncmp(filename, "gl_", 3) && ((filename[4] == 'e' && filename[5] == 'm') || !strncmp(filename+3, "map", 3)))
 				{	//this is the start of a beutiful new map
 					section = 5;
-					strlcpy (sectionname, filename+3, sizeof (sectionname));
+					SDL_strlcpy (sectionname, filename+3, sizeof (sectionname));
 					break;
 				}
 			}
@@ -199,7 +199,7 @@ newsection:
 	}
 
 	pack = (pack_t*)Q_malloc (sizeof (pack_t));
-	strlcpy (pack->filename, desc, sizeof (pack->filename));
+	SDL_strlcpy (pack->filename, desc, sizeof (pack->filename));
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;

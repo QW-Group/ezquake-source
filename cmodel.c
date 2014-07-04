@@ -1025,7 +1025,7 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 	if (!clientload) // client doesn't need PHS
 		CM_BuildPHS ();
 
-	strlcpy (map_name, name, sizeof(map_name));
+	SDL_strlcpy (map_name, name, sizeof(map_name));
 
 	return &map_cmodels[0];
 }

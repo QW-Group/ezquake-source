@@ -1976,7 +1976,7 @@ void Draw_ConsoleBackground (int lines)
 				last_lvlshot->height = conback.height;
 			}
 
-			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
+			SDL_strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
 		}
 
 		lvlshot = last_lvlshot;

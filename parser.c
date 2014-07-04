@@ -264,7 +264,7 @@ LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 		FreeIfStr(&e2);
 		return Get_Expr_Dummy();
 	}
-	strlcpy(ret.s_val, e1.s_val, len);
+	SDL_strlcpy(ret.s_val, e1.s_val, len);
 	strlcat(ret.s_val, e2.s_val, len);
 	free(e1.s_val);
 	free(e2.s_val);
@@ -473,7 +473,7 @@ LOCAL expr_val operator_substr(EParser p, const expr_val arg1, const expr_val ar
 				buf = (char *) malloc(len + 1);
 
 				if (buf) {
-					strlcpy(buf, str + pos, len + 1);
+					SDL_strlcpy(buf, str + pos, len + 1);
 					ret.type = ET_STR;
 					ret.s_val = buf;
 				}
@@ -994,7 +994,7 @@ LOCAL expr_val Match_String(EParser p)
 		SetError(p, ERR_OUT_OF_MEM);
 		return Get_Expr_Dummy();
 	}
-	strlcpy(ret.s_val, p->string + startpos, len+1);
+	SDL_strlcpy(ret.s_val, p->string + startpos, len+1);
 
 	Next_Token(p);
 

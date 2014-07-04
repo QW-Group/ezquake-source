@@ -199,7 +199,7 @@ void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *de
 	char path[MAX_OSPATH];
 
 	SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, dest_path, dest_name);
-	strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
+	SDL_strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
 
 	if ((int)sv_demotxt.value && !destroyfiles) // dont keep txt's for deleted demos
 	{
@@ -229,8 +229,8 @@ void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *de
 		if ((p = strstr(sv_onrecordfinish.string, " ")) != NULL)
 			*p = 0; // strip parameters
 	
-		strlcpy(path, dest_name, MAX_OSPATH);
-		strlcpy(path + strlen(dest_name) - 3, "txt", MAX_OSPATH - strlen(dest_name) + 3);
+		SDL_strlcpy(path, dest_name, MAX_OSPATH);
+		SDL_strlcpy(path + strlen(dest_name) - 3, "txt", MAX_OSPATH - strlen(dest_name) + 3);
 	
 		sv_redirected = RD_NONE; // onrecord script is called always from the console
 		Cmd_TokenizeString(va("script %s \"%s\" \"%s\" \"%s\" %s", sv_onrecordfinish.string, dest_path, dest_name, path, p != NULL ? p+1 : ""));
@@ -519,7 +519,7 @@ static char *SV_MVDName2Txt (char *name)
 	if (!*name)
 		return NULL;
 
-	strlcpy(s, name, MAX_OSPATH);
+	SDL_strlcpy(s, name, MAX_OSPATH);
 	len = strlen(s);
 
 	if (!(preg = pcre_compile(sv_demoRegexp.string, PCRE_CASELESS, &errbuf, &r, NULL)))
@@ -620,7 +620,7 @@ void SV_MVDRemove_f (void)
 		return;
 	}
 
-	strlcpy(name, Cmd_Argv(1), MAX_DEMO_NAME);
+	SDL_strlcpy(name, Cmd_Argv(1), MAX_DEMO_NAME);
 	COM_DefaultExtension(name, ".mvd");
 
 	SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);

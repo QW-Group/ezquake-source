@@ -332,7 +332,7 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 		for (j=0 ; j<sizeof(info) ; j++)
 			CRC_ProcessByte(&crc, ((qbyte *)&info)[j]);
 */
-		strlcpy (newfiles[i].name, info.name, MAX_QPATH);
+		SDL_strlcpy (newfiles[i].name, info.name, MAX_QPATH);
 		newfiles[i].filepos = LittleLong(info.filepos);
 		newfiles[i].filelen = LittleLong(info.filelen);
 	}
@@ -340,7 +340,7 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 	if (crc != PAK0_CRC)
 		com_modified = true;
 */
-	strlcpy (pack->filename, desc, sizeof (pack->filename));
+	SDL_strlcpy (pack->filename, desc, sizeof (pack->filename));
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;

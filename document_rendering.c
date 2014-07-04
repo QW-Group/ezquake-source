@@ -571,7 +571,7 @@ static void Render_List(document_rendering_context_t *cx, document_tag_list_t *l
     while (item)
     {
         // make separator
-        strlcpy (separator, " ", sizeof (separator));
+        SDL_strlcpy (separator, " ", sizeof (separator));
         switch (list->bullet)
         {
         case list_bullet_none:
@@ -667,7 +667,7 @@ static void Render_Dict(document_rendering_context_t *cx, document_tag_dict_t *d
         int old_do_color;
 
         // make separator
-        strlcpy(separator, " ", sizeof (separator));
+        SDL_strlcpy(separator, " ", sizeof (separator));
         switch (dict->bullet)
         {
         case list_bullet_none:
@@ -726,7 +726,7 @@ char *Add_Inline_String (char *text, char *string)
 {
 	size_t size = strlen (text) + strlen (string) + 1;
     char *buf = (char *) Q_malloc (size);
-    strlcpy (buf, text, size);
+    SDL_strlcpy (buf, text, size);
     Q_free(text);
     strlcat (buf, string, size);
     return buf;
@@ -741,7 +741,7 @@ char *Add_Inline_Text (document_rendering_context_t *cx, char *text, document_ta
 
 	size = strlen (text) + strlen (tag->text) + 1;
 	buf = (char *) Q_malloc (size);
-	strlcpy (buf, text, size);
+	SDL_strlcpy (buf, text, size);
 	Q_free (text);
 
 	d = buf + strlen(buf);

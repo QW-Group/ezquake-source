@@ -303,7 +303,7 @@ void LoadMapFile( qvm_t*qvm, char* fname )
 		sym->off = off;
 		sym->next= NULL;
 		num_symbols++;
-		strlcpy(sym->name, symname, len + 1);
+		SDL_strlcpy(sym->name, symname, len + 1);
 	}
 	Con_DPrintf("%i symbols loaded from %s\n",num_symbols,name);
 }
@@ -465,7 +465,7 @@ vm_t   *VM_Load( vm_t * vm, vm_type_t type, char *name, sys_call_t syscall1, sys
 
 	// prepare vm struct
 	memset( vm, 0, sizeof( vm_t ) );
-	strlcpy( vm->name, name, sizeof( vm->name ) );
+	SDL_strlcpy( vm->name, name, sizeof( vm->name ) );
 	vm->syscall = syscall1;
 #ifdef QVM_PROFILE
 	num_profile_func = 0;

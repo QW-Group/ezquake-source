@@ -103,7 +103,7 @@ char *Skin_FindName (player_info_t *sc) {
 	static char name[MAX_OSPATH];
 
 	if (allskins[0]) {
-		strlcpy(name, allskins, sizeof(name));
+		SDL_strlcpy(name, allskins, sizeof(name));
 	} else {
 		char *s = Skin_AsNameOrId(sc);
 
@@ -111,9 +111,9 @@ char *Skin_FindName (player_info_t *sc) {
 			s = Info_ValueForKey(sc->userinfo, "skin");
 
 		if (s && s[0])
-			strlcpy(name, s, sizeof(name));
+			SDL_strlcpy(name, s, sizeof(name));
 		else
-			strlcpy(name, baseskin.string, sizeof(name));
+			SDL_strlcpy(name, baseskin.string, sizeof(name));
 	}
 
 	skinforcing_team = TP_SkinForcingTeam();
@@ -144,11 +144,11 @@ char *Skin_FindName (player_info_t *sc) {
 		if (!skinname || !skinname[0])
 			skinname = teammate ? cl_teamskin.string : cl_enemyskin.string;
 		if (skinname[0])
-			strlcpy(name, skinname, sizeof(name));
+			SDL_strlcpy(name, skinname, sizeof(name));
 	}
 
 	if (strstr(name, "..") || *name == '.')
-		strlcpy(name, baseskin.string, sizeof(name));
+		SDL_strlcpy(name, baseskin.string, sizeof(name));
 
 	return name;
 }
@@ -167,7 +167,7 @@ void Skin_Find_Ex (player_info_t *sc, char *skin_name) {
 			skin_name = "base";
 	}
 
-	strlcpy(name, skin_name, sizeof(name));
+	SDL_strlcpy(name, skin_name, sizeof(name));
 	COM_StripExtension(name, name);
 
 	for (i = 0; i < numskins; i++)
@@ -193,7 +193,7 @@ void Skin_Find_Ex (player_info_t *sc, char *skin_name) {
 	numskins++;
 
 	memset (skin, 0, sizeof(*skin));
-	strlcpy(skin->name, name, sizeof(skin->name));
+	SDL_strlcpy(skin->name, name, sizeof(skin->name));
 }
 
 void Skin_Find (player_info_t *sc)
@@ -432,7 +432,7 @@ void Skin_AllSkins_f (void) {
 		Com_Printf("Usage: %s [skin]\n", Cmd_Argv(0));
 		return;
 	}
-	strlcpy (allskins, Cmd_Argv(1), sizeof(allskins));
+	SDL_strlcpy (allskins, Cmd_Argv(1), sizeof(allskins));
 	Skin_Skins_f();
 }
 

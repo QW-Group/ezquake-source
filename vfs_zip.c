@@ -418,7 +418,7 @@ static qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename,
 		if (loc)
 		{
 			loc->index = pf - zip->files;
-			strlcpy (loc->rawname, zip->filename, sizeof (loc->rawname));
+			SDL_strlcpy (loc->rawname, zip->filename, sizeof (loc->rawname));
 			loc->offset = pf->filepos;
 			loc->len = pf->filelen;
 			loc->search = NULL;
@@ -495,7 +495,7 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 	unz_global_info info;
 	
 	zip   = (zipfile_t *) Q_calloc(1, sizeof(*zip));
-	strlcpy (zip->filename, desc, sizeof (zip->filename));
+	SDL_strlcpy (zip->filename, desc, sizeof (zip->filename));
 	FSZIP_CreteFileFuncs(&(zip->zlib_funcs));
 	zip->raw = packhandle;
 	zip->handle = unzOpen2(desc, funcs);

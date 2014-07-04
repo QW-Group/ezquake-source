@@ -766,7 +766,7 @@ void Con_DrawNotify (void) {
 		else if (chat_team == chat_irc) {
 			char dest[256];
 			
-			strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
+			SDL_strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
 			strlcat(dest, ":", sizeof(dest));
 			skip = strlen(dest) + 1; // is this correct? not sure
 
@@ -1045,10 +1045,10 @@ void Con_DrawConsole (int lines) {
 		i = con_linewidth/3;
 		if (strlen(text) > i) {
 			y = x - i - 11;
-			strlcpy (dlbar, text, i);
+			SDL_strlcpy (dlbar, text, i);
 			strlcat (dlbar, "...", sizeof (dlbar));
 		} else {
-			strlcpy (dlbar, text, sizeof (dlbar));
+			SDL_strlcpy (dlbar, text, sizeof (dlbar));
 		}
 		strlcat (dlbar, ": ", sizeof (dlbar));
 		i = strlen (dlbar);
