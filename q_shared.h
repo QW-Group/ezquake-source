@@ -208,11 +208,9 @@ char *Q_strlwr( char *s1 );
 #ifdef _WIN32
 #define strcasecmp(s1, s2)	_stricmp  ((s1),   (s2))
 #define strncasecmp(s1, s2, n)	_strnicmp ((s1),   (s2),   (n))
-// vc++ snprintf and vsnprintf are non-standard and not compatible with C99.
+// vc++ snprintf is non-standard and not compatible with C99.
 int qsnprintf(char *str, size_t n, char const *fmt, ...);
-int qvsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
 #define snprintf qsnprintf
-#define vsnprintf qvsnprintf
 #endif
 
 char *strstri(const char *text, const char *find); // Case insensitive strstr.

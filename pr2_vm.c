@@ -581,7 +581,7 @@ void QVM_RunError( qvm_t * qvm, char *error, ... )
 	char    string[1024];
 
 	va_start( argptr, error );
-	vsnprintf( string, sizeof(string), error, argptr );
+	SDL_vsnprintf( string, sizeof(string), error, argptr );
 	va_end( argptr );
 
 	sv_error = true;

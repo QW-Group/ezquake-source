@@ -265,7 +265,7 @@ void PR_RunError (char *error, ...)
 	char string[1024];
 
 	va_start (argptr,error);
-	vsnprintf (string, sizeof(string), error, argptr);
+	SDL_vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 
 

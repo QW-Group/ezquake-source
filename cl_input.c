@@ -865,7 +865,7 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 		return;	// no point.
 
 	va_start (argptr, format);
-	vsnprintf (string, sizeof(string), format, argptr);
+	SDL_vsnprintf (string, sizeof(string), format, argptr);
 	va_end (argptr);
 
 	if (reliable)

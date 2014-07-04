@@ -100,7 +100,7 @@ LOCAL void TP_Send_TeamSay(char *format, ...)
     snprintf(tp_msg_head, sizeof(tp_msg_head), "say_team %s", TP_ShortNick());
  
 	va_start (argptr, format);
-    vsnprintf(tp_msg_body, sizeof(tp_msg_body), format, argptr);
+    SDL_vsnprintf(tp_msg_body, sizeof(tp_msg_body), format, argptr);
 	va_end (argptr);
  
     snprintf(tp_msg, sizeof(tp_msg), "%s%s\n", tp_msg_head, tp_msg_body);

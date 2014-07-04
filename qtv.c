@@ -258,7 +258,7 @@ void QTV_Cmd_Printf(int qtv_ext, char *fmt, ...)
 		return; // no point for this, since it not qtv playback or qtv server do not support it
 
 	va_start (argptr, fmt);
-	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	// save context, so we can later restore it

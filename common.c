@@ -687,7 +687,7 @@ char *va (char *format, ...)
 		idx = 0;
 
 	va_start (argptr, format);
-	vsnprintf (string[idx], sizeof(string[idx]), format, argptr);
+	SDL_vsnprintf (string[idx], sizeof(string[idx]), format, argptr);
 	va_end (argptr);
 
 	return string[idx];
@@ -1414,7 +1414,7 @@ void Com_Printf (char *fmt, ...)
 	char msg[MAXPRINTMSG];
 
 	va_start (argptr, fmt);
-	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	if (rd_print) {
@@ -1445,7 +1445,7 @@ void Com_DPrintf (char *fmt, ...)
 
 	Print_flags[Print_current] |= PR_TR_SKIP;
 	va_start (argptr,fmt);
-	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	Com_Printf ("%s", msg);
@@ -1496,7 +1496,7 @@ void Com_Printf_State(int state, const char *fmt, ...)
 	}
 
 	va_start (argptr, fmt);
-	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end(argptr);
 	Com_Printf ("%s%s", prefix, msg);
 

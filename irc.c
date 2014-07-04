@@ -159,7 +159,7 @@ void IRC_Printf(char *fmt, ...)
 	char msg[MAXPRINTMSG];
 
 	va_start (argptr, fmt);
-	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 	
 	len = strlen(msg);

@@ -131,7 +131,7 @@ void Con_Printf (char *fmt, ...)
 	char msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsnprintf (msg, MAXPRINTMSG, fmt, argptr);
+	SDL_vsnprintf (msg, MAXPRINTMSG, fmt, argptr);
 	va_end (argptr);
 	// add to redirected message
 	if (sv_redirected)
@@ -166,7 +166,7 @@ void Con_DPrintf (char *fmt, ...)
 		return;
 
 	va_start (argptr,fmt);
-	vsnprintf (msg, MAXPRINTMSG, fmt, argptr);
+	SDL_vsnprintf (msg, MAXPRINTMSG, fmt, argptr);
 	va_end (argptr);
 
 	Con_Printf ("%s", msg);
@@ -206,7 +206,7 @@ void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...)
 		return;
 
 	va_start (argptr,fmt);
-	vsnprintf (string, sizeof(string), fmt, argptr);
+	SDL_vsnprintf (string, sizeof(string), fmt, argptr);
 	va_end (argptr);
 
 	if (sv.mvdrecording)
@@ -231,7 +231,7 @@ void SV_ClientPrintf2 (client_t *cl, int level, char *fmt, ...)
 		return;
 
 	va_start (argptr,fmt);
-	vsnprintf (string, sizeof(string), fmt, argptr);
+	SDL_vsnprintf (string, sizeof(string), fmt, argptr);
 	va_end (argptr);
 
 	SV_PrintToClient(cl, level, string);
@@ -328,7 +328,7 @@ void SV_BroadcastPrintf (int level, char *fmt, ...)
 	char		string[1024];
 
 	va_start (argptr,fmt);
-	vsnprintf (string, sizeof(string), fmt, argptr);
+	SDL_vsnprintf (string, sizeof(string), fmt, argptr);
 	va_end (argptr);
 
 	SV_DoBroadcastPrintf (level, 0, string);
@@ -340,7 +340,7 @@ void SV_BroadcastPrintfEx (int level, int flags, char *fmt, ...)
 	char		string[1024];
 
 	va_start (argptr,fmt);
-	vsnprintf (string, sizeof(string), fmt, argptr);
+	SDL_vsnprintf (string, sizeof(string), fmt, argptr);
 	va_end (argptr);
 
 	SV_DoBroadcastPrintf (level, flags, string);
@@ -361,7 +361,7 @@ void SV_BroadcastCommand (char *fmt, ...)
 	if (!sv.state)
 		return;
 	va_start (argptr,fmt);
-	vsnprintf (string, sizeof(string), fmt, argptr);
+	SDL_vsnprintf (string, sizeof(string), fmt, argptr);
 	va_end (argptr);
 
 	MSG_WriteByte (&sv.reliable_datagram, svc_stufftext);

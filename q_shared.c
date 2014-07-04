@@ -89,14 +89,6 @@ int qsnprintf(char *buffer, size_t count, char const *format, ...)
 	va_end(argptr);
 	return ret;
 }
-int qvsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
-{
-	int ret;
-	if (!count) return 0;
-	ret = _vsnprintf(buffer, count, format, argptr);
-	buffer[count - 1] = 0;
-	return ret;
-}
 #endif
 
 #if defined(__linux__) || defined(_WIN32)

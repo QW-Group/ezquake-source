@@ -416,7 +416,7 @@ void Sys_Error (char *error, ...)
 
 	va_start (argptr, error);
 
-	vsnprintf (text, sizeof(text), error, argptr);
+	SDL_vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
 	MessageBox(NULL, text, "Error", 0);
@@ -440,7 +440,7 @@ void Sys_Printf (char *fmt, ...)
 #endif
 
 	va_start (argptr,fmt);
-	vsnprintf (text, sizeof(text), fmt, argptr);
+	SDL_vsnprintf (text, sizeof(text), fmt, argptr);
 	va_end (argptr);
 
 	WriteFile (houtput, text, strlen(text), &dummy, NULL);

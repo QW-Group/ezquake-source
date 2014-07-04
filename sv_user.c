@@ -1111,7 +1111,7 @@ static void OutofBandPrintf(netadr_t where, char *fmt, ...)
 	send1[3] = 0xff;
 	send1[4] = A2C_PRINT;
 	va_start (argptr, fmt);
-	vsnprintf (send1 + 5, sizeof(send1) - 5, fmt, argptr);
+	SDL_vsnprintf (send1 + 5, sizeof(send1) - 5, fmt, argptr);
 	va_end (argptr);
 
 	NET_SendPacket (NS_SERVER, strlen(send1) + 1, send1, where);
