@@ -513,7 +513,7 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 		unz_file_info file_info;
 		if (unzGetCurrentFileInfo(zip->handle, &file_info, newfiles[i].name, sizeof(newfiles[i].name), NULL, 0, NULL, 0) != UNZ_OK) goto fail;
 
-		Q_strlwr(newfiles[i].name);
+		SDL_strlwr(newfiles[i].name);
 		newfiles[i].filelen = file_info.uncompressed_size;
 		newfiles[i].filepos = unzGetOffset(zip->handle); // VFS-FIXME: Need to verify this
 		r = unzGoToNextFile (zip->handle);

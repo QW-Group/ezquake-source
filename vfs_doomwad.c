@@ -93,7 +93,7 @@ void *FSPAK_LoadDoomWadFile (vfsfile_t *packhandle, char *desc)
 
 		SDL_strlcpy (filename, info.name, sizeof (filename));
 		filename[8] = '\0';
-		Q_strlwr(filename);
+		SDL_strlwr(filename);
 
 		newfiles[i].filepos = LittleLong(info.filepos);
 		newfiles[i].filelen = LittleLong(info.filelen);

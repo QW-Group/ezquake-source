@@ -193,7 +193,6 @@ VVD: fixed by changing from "int" to "short" in 2nd string - stupid copy&paste b
 //============================================================================
 
 char *Q_strcpy( char *to, char *from );
-char *Q_strlwr( char *s1 );
 
 // Added by VVD {
 char *strstri(const char *text, const char *find); // Case insensitive strstr.
