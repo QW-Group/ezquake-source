@@ -135,7 +135,7 @@ char *MP3_Menu_SongtTitle(void) {
 
 	if (!MP3_IsPlayerRunning()) {
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
-		snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		SDL_snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 	    return title;
 	}
 	macrotitle = MP3_Macro_MP3Info();
@@ -184,7 +184,7 @@ void MP3_Init(void) {
 
 char* Media_GetVolume_f(void) {
 	static char macrobuf[16];
-	snprintf(macrobuf, sizeof(macrobuf), "%f", Media_GetVolume());
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%f", Media_GetVolume());
 	return macrobuf;
 }
 

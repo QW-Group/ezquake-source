@@ -400,7 +400,7 @@ void MP3_MPD_GetSongTitle(int track_num, char *song, size_t song_len) {
 		if (entity->type==MPD_INFO_ENTITY_TYPE_SONG) {
 			mpd_Song *mpd_song = entity->info.song;
 
-			snprintf(song, song_len,"%s - %s",mpd_song->artist,mpd_song->title);
+			SDL_snprintf(song, song_len,"%s - %s",mpd_song->artist,mpd_song->title);
 
 			return;
 		}

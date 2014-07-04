@@ -272,7 +272,7 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 	if (!f->is_directory)
 	{
 		// Get extension.
-		snprintf (extbuf, sizeof(extbuf), ".%s", COM_FileExtension (namebuf));
+		SDL_snprintf (extbuf, sizeof(extbuf), ".%s", COM_FileExtension (namebuf));
 
 		// If the extension is only a . it means we have no extension.
 		if (strlen (extbuf) == 1)
@@ -477,7 +477,7 @@ static int FL_FindRegisteredType(filelist_t *fl, sys_dirent *ent)
         {
             char ext[_MAX_EXT];
 
-			snprintf (ext, sizeof(ext), ".%s", COM_FileExtension (ent->fname));
+			SDL_snprintf (ext, sizeof(ext), ".%s", COM_FileExtension (ent->fname));
 
             if (!strcasecmp(fl->filetypes[i].extension, ext))
             {
@@ -584,7 +584,7 @@ void FL_ReadArchive (filelist_t *fl)
 		// Populate the file descriptor
 		f->type_index = -1;
 		f->is_directory = true;
-		snprintf(f->name, sizeof(f->name), "..");
+		SDL_snprintf(f->name, sizeof(f->name), "..");
 		f->size = 0;
 		f->time = archive_time;
 
@@ -625,7 +625,7 @@ void FL_ReadArchive (filelist_t *fl)
 		f->is_directory = ent.directory;
 
 		// Get the full path for the file.
-		snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, ent.fname);
+		SDL_snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, ent.fname);
 
 		f->size = ent.size;
 		memcpy(&f->time, &ent.time, sizeof(f->time));
@@ -713,7 +713,7 @@ int FL_EnumerateArchive(char *desc, int size, void *param)
 	f->is_directory = 0; //ent.directory;
 
 	// Get the full path for the file.
-	snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, desc);
+	SDL_snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, desc);
 
 	f->size = size;
 	//memcpy(&f->time, &ent.time, sizeof(f->time));
@@ -776,7 +776,7 @@ void FL_ReadArchive (filelist_t *fl)
 		// Populate the file descriptor
 		f->type_index = -1;
 		f->is_directory = true;
-		snprintf(f->name, sizeof(f->name), "..");
+		SDL_snprintf(f->name, sizeof(f->name), "..");
 		f->size = 0;
 		f->time = archive_time;
 
@@ -1349,7 +1349,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
         char newdir[MAX_PATH+1];
         char olddir[MAX_PATH+1];
 
-        snprintf(newdir, sizeof (newdir), "%c:\\", tolower(key));
+        SDL_snprintf(newdir, sizeof (newdir), "%c:\\", tolower(key));
 
         // validate
         if (Sys_getcwd(olddir, MAX_PATH+1) == 0)
@@ -1733,8 +1733,8 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         entry = &fl->entries[filenum];
 
         // Extract date & time.
-        snprintf(date, sizeof(date), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
-        snprintf(time, sizeof(time), "%2d:%02d", entry->time.wHour, entry->time.wMinute);
+        SDL_snprintf(date, sizeof(date), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
+        SDL_snprintf(time, sizeof(time), "%2d:%02d", entry->time.wHour, entry->time.wMinute);
 
         // Extract size.
         if (entry->is_directory)
@@ -1750,15 +1750,15 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
             {
                 dwsize /= 1024;
                 dwsize = min(dwsize, 999);
-                snprintf(size, sizeof(size), "%3dm", dwsize);
+                SDL_snprintf(size, sizeof(size), "%3dm", dwsize);
                 if (filenum == fl->current_entry)
-                    snprintf(ssize, sizeof(ssize), "%d mb", dwsize);
+                    SDL_snprintf(ssize, sizeof(ssize), "%d mb", dwsize);
             }
             else
             {
-                snprintf(size, sizeof(size), "%4d", dwsize);
+                SDL_snprintf(size, sizeof(size), "%4d", dwsize);
                 if (filenum == fl->current_entry)
-                    snprintf(ssize, sizeof(ssize), "%d kb", dwsize);
+                    SDL_snprintf(ssize, sizeof(ssize), "%d kb", dwsize);
             }
         }
 
@@ -1784,7 +1784,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		// Set the name.
 		// (Add a space infront so that the cursor for the currently
 		// selected file can fit infront)
-		snprintf (name, sizeof(name) - 1, " %s", entry->display);
+		SDL_snprintf (name, sizeof(name) - 1, " %s", entry->display);
 
 		//
 		// Copy the display name of the entry into the space that's left on the row.
@@ -1913,7 +1913,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         {
 			strlcpy (sname, line + 1, min(pos, sizeof(sname)));
             strlcpy (stime, time, sizeof(stime));
-            snprintf (sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
+            SDL_snprintf (sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
         }
     }
 
@@ -1947,7 +1947,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         }
         else
         {
-            snprintf(line, sizeof(line), "%s \x8f modified: %s %s", ssize, sdate, stime);
+            SDL_snprintf(line, sizeof(line), "%s \x8f modified: %s %s", ssize, sdate, stime);
             UI_Print_Center(x, y + h - rowh - inter_up, w, line, false);
         }
     }

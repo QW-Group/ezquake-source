@@ -340,7 +340,7 @@ static void CopyServerToClipboard (server_data *s)
 	if (isCtrlDown() || s->display.name[0] == 0)
 		strlcpy (buf, s->display.ip, sizeof(buf));
 	else
-		snprintf (buf, sizeof (buf), "%s (%s)",
+		SDL_snprintf (buf, sizeof (buf), "%s (%s)",
 			s->display.name,
 			s->display.ip);
 
@@ -351,7 +351,7 @@ static void PasteServerToConsole (server_data *s)
 {
 	char buf[2048];
 
-	snprintf(buf, sizeof (buf), "%s (%s)",
+	SDL_snprintf(buf, sizeof (buf), "%s (%s)",
 			s->display.name,
 			s->display.ip);
 
@@ -384,7 +384,7 @@ server_data * Create_Server (char *ip)
 	if (!strchr(ip, ':'))
 		s->address.port = htons(27500);
 
-	snprintf (s->display.ip, sizeof (s->display.ip), "%d.%d.%d.%d:%d",
+	SDL_snprintf (s->display.ip, sizeof (s->display.ip), "%d.%d.%d.%d:%d",
 			s->address.ip[0], s->address.ip[1], s->address.ip[2], s->address.ip[3],
 			ntohs(s->address.port));
 
@@ -608,7 +608,7 @@ void Serverinfo_Start (server_data *s)
 	if (testing_connection)
     {
 		char buf[256];
-		snprintf(buf, sizeof (buf), "%d.%d.%d.%d",
+		SDL_snprintf(buf, sizeof (buf), "%d.%d.%d.%d",
 				show_serverinfo->address.ip[0],
 				show_serverinfo->address.ip[1],
 				show_serverinfo->address.ip[2],
@@ -627,7 +627,7 @@ void Serverinfo_Change (server_data *s)
 	if (testing_connection)
     {
         char buf[256];
-        snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
+        SDL_snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
             show_serverinfo->address.ip[0],
             show_serverinfo->address.ip[1],
             show_serverinfo->address.ip[2],
@@ -719,7 +719,7 @@ void Add_ColumnColored(int x, int y, int *pos, const char *t, int w, const char*
     if ((*pos) - w - 1  <=  5)
         return;
 
-	snprintf (buf, sizeof(buf), "&c%s%s", color, t);
+	SDL_snprintf (buf, sizeof(buf), "&c%s%s", color, t);
 	
     (*pos) -= w;
 	UI_Print_Center(x + (*pos)*8, y, 8*(w+5), buf, false);
@@ -748,7 +748,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
     line[0] = '\x1D';
     if (total > 0)
     {
-        snprintf(buf, sizeof (buf), "%d/%d", count+1, total);
+        SDL_snprintf(buf, sizeof (buf), "%d/%d", count+1, total);
         memset(line+w/8-3-strlen(buf), ' ', strlen(buf)+1);
     }
     UI_Print(x, y+h-24, line, false);
@@ -764,7 +764,7 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
     if (searchtype)
     {
         int i;
-        snprintf(line, sizeof (line), "search for: %-7s", searchstring);
+        SDL_snprintf(line, sizeof (line), "search for: %-7s", searchstring);
         line[w/8] = 0;
         for (i=0; i < strlen(line); i++)
             line[i] ^= 128;
@@ -802,10 +802,10 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         {
             char buf[10], *max;
             max =  ValueForKey(s, "maxclients");
-            snprintf(buf, sizeof(buf), "%d/%s", s->playersn, max==NULL ? "??" : max);
+            SDL_snprintf(buf, sizeof(buf), "%d/%s", s->playersn, max==NULL ? "??" : max);
             strlcat (line, buf, sizeof (line));
             max =  ValueForKey(s, "maxspectators");
-            snprintf(buf, sizeof(buf), "-%d/%s", s->spectatorsn, max==NULL ? "??" : max);
+            SDL_snprintf(buf, sizeof(buf), "-%d/%s", s->spectatorsn, max==NULL ? "??" : max);
             strlcat (line, buf, sizeof(line));
         }
 
@@ -819,26 +819,26 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
 
             if (dm  &&  strlen(line) + 7 <= w/8)
             {
-                snprintf(buf, sizeof(buf), "\xa0 dmm%s", dm);
+                SDL_snprintf(buf, sizeof(buf), "\xa0 dmm%s", dm);
                 strlcat(line, buf, sizeof(line));
             }
 
             if (fl  &&  strlen(line) + 8 <= w/8)
             {
-                snprintf(buf, sizeof(buf), "\xa0 fl:%s", fl);
+                SDL_snprintf(buf, sizeof(buf), "\xa0 fl:%s", fl);
                 strlcat(line, buf, sizeof(line));
             }
 
             if (tl  &&  strlen(line) + 7 <= w/8)
             {
-                snprintf(buf, sizeof(buf), "\xa0 tl:%s", tl);
+                SDL_snprintf(buf, sizeof(buf), "\xa0 tl:%s", tl);
                 strlcat(line, buf, sizeof(line));
             }
         }
         else
         {
             char buf[200];
-            snprintf(buf, sizeof(buf), "\xa0 %s", ValueForKey(s, "status"));
+            SDL_snprintf(buf, sizeof(buf), "\xa0 %s", ValueForKey(s, "status"));
             strlcat(line, buf, sizeof(line));
         }
 
@@ -1062,17 +1062,17 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 			// 'name' column
 			if (servers[servnum]->qwfwd) {
 				if (servers[servnum]->display.name[0]) {
-					snprintf(line, sizeof(line), "proxy %s", servers[servnum]->display.name);
+					SDL_snprintf(line, sizeof(line), "proxy %s", servers[servnum]->display.name);
 				}
 				else {
-					snprintf(line, sizeof(line), "proxy %s", servers[servnum]->display.ip);
+					SDL_snprintf(line, sizeof(line), "proxy %s", servers[servnum]->display.ip);
 				}
 			}
 			else if (servers[servnum]->display.name[0]) {
-				snprintf(line, sizeof(line), "%s", servers[servnum]->display.name);
+				SDL_snprintf(line, sizeof(line), "%s", servers[servnum]->display.name);
 			}
 			else {
-				snprintf(line, sizeof(line), "%s", servers[servnum]->display.ip);
+				SDL_snprintf(line, sizeof(line), "%s", servers[servnum]->display.ip);
 			}
 			
 			// display only as much as fits into the column
@@ -1375,18 +1375,18 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
 
 		if (!s->players[serverinfo_players_pos+i]->spec) {
 			int frags_tmp = bound(-99, s->players[serverinfo_players_pos+i]->frags, 9999);
-        	snprintf(fragsbuf, sizeof(fragsbuf), "%3d%s", frags_tmp, frags_tmp < 1000 ? " " : ""); // "centering" frags as much as possible
+        	SDL_snprintf(fragsbuf, sizeof(fragsbuf), "%3d%s", frags_tmp, frags_tmp < 1000 ? " " : ""); // "centering" frags as much as possible
 		}
 
 		if (support_tp)
-        	snprintf(buf, sizeof(buf), "%3d %2d %4.4s %4.4s %s", // frags column fixed to 4 symbols
+        	SDL_snprintf(buf, sizeof(buf), "%3d %2d %4.4s %4.4s %s", // frags column fixed to 4 symbols
             	max(min(s->players[serverinfo_players_pos+i]->ping, 999), 0),
             	max(min(s->players[serverinfo_players_pos+i]->time, 99), 0),
             	s->players[serverinfo_players_pos+i]->spec ? "spec" : fragsbuf,
 				s->players[serverinfo_players_pos+i]->team,
             	s->players[serverinfo_players_pos+i]->name);
 		else
-        	snprintf(buf, sizeof(buf), "%3d %2d %4.4s %s", // frags column fixed to 4 symbols
+        	SDL_snprintf(buf, sizeof(buf), "%3d %2d %4.4s %s", // frags column fixed to 4 symbols
             	max(min(s->players[serverinfo_players_pos+i]->ping, 999), 0),
             	max(min(s->players[serverinfo_players_pos+i]->time, 99), 0),
             	s->players[serverinfo_players_pos+i]->spec ? "spec" : fragsbuf,
@@ -1427,7 +1427,7 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
         Draw_Fill (x+21*8, y+listsize*8+8   +1, 40, 4, top2);
         Draw_Fill (x+21*8, y+listsize*8+8+4 +1, 40, 4, bottom2);
 
-        snprintf(buf, sizeof (buf), "      score:  %3d  -  %3d", frags1, frags2);
+        SDL_snprintf(buf, sizeof (buf), "      score:  %3d  -  %3d", frags1, frags2);
         UI_Print(x, y+listsize*8+8, buf, false);
     }
 }
@@ -1451,7 +1451,7 @@ void Serverinfo_Rules_Draw(int x, int y, int w, int h)
 
         if (serverinfo_rules_pos + i >= s->keysn)
             break;
-        snprintf(buf, sizeof (buf), "%-13.13s %-*s",
+        SDL_snprintf(buf, sizeof (buf), "%-13.13s %-*s",
             s->keys[serverinfo_rules_pos+i],
             w/8-1-13,
             s->values[serverinfo_rules_pos+i]);
@@ -1500,7 +1500,7 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
 
 		strlcpy(buf2, SB_Source_Type_Name(sources[serverinfo_sources_disp+i]->type), sizeof (buf2));
 
-        snprintf(buf, sizeof (buf), "%s   %s", buf2, sources[serverinfo_sources_disp+i]->name);
+        SDL_snprintf(buf, sizeof (buf), "%s   %s", buf2, sources[serverinfo_sources_disp+i]->name);
         buf[w/8] = 0;
 
         UI_Print(x, y+i*8+8, buf,
@@ -1615,19 +1615,19 @@ void SB_Sources_Draw (int x, int y, int w, int h)
             if (s->last_update.wYear)
             {
                 if (s->last_update.wYear != curtime.wYear)
-                    snprintf(time, sizeof (time), "%4dy", s->last_update.wYear);
+                    SDL_snprintf(time, sizeof (time), "%4dy", s->last_update.wYear);
                 else if (s->last_update.wMonth != curtime.wMonth ||
                          s->last_update.wDay != curtime.wDay)
-                    snprintf(time, sizeof (time),  "%02d-%02d", s->last_update.wMonth, s->last_update.wDay);
+                    SDL_snprintf(time, sizeof (time),  "%02d-%02d", s->last_update.wMonth, s->last_update.wDay);
                 else
-                    snprintf(time, sizeof (time),  "%2d:%02d",
+                    SDL_snprintf(time, sizeof (time),  "%2d:%02d",
                         s->last_update.wHour,
                         s->last_update.wMinute);
             }
             else
                 strlcpy (time, "never", sizeof (time));
 
-        snprintf(line, sizeof (line), "%s %c%-17.17s %4d  %s ", type,
+        SDL_snprintf(line, sizeof (line), "%s %c%-17.17s %4d  %s ", type,
             sourcenum==Sources_pos ? 141 : ' ',
             s->name, s->serversn, time);
 
@@ -1659,10 +1659,10 @@ void SB_Sources_Draw (int x, int y, int w, int h)
             }
         }
 
-        snprintf(line, sizeof (line), "%d sources selected (%d servers)", sel_sources, sel_servers);
+        SDL_snprintf(line, sizeof (line), "%d sources selected (%d servers)", sel_sources, sel_servers);
         UI_Print_Center(x, y+h-16, w, line, false);
 
-        snprintf(line, sizeof (line), "of %d total (%d servers)", sourcesn, total_servers);
+        SDL_snprintf(line, sizeof (line), "of %d total (%d servers)", sourcesn, total_servers);
         UI_Print_Center(x, y+h-8, w, line, false);
     }
 
@@ -1705,7 +1705,7 @@ void SB_Players_Draw (int x, int y, int w, int h)
     listsize = (int)(h/8) - (sb_status.value ? 3 : 0);
 
     //UI_Print_Center(x, y, w, "name            server              ", true);
-    snprintf(line, sizeof (line), "name            %-*s png", hw, "server");
+    SDL_snprintf(line, sizeof (line), "name            %-*s png", hw, "server");
     UI_Print_Center(x, y, w, line, true);
 
     listsize--;     // subtract one line (column titles)
@@ -1725,7 +1725,7 @@ void SB_Players_Draw (int x, int y, int w, int h)
         if (num >= all_players_n)
             break;
 
-        snprintf(line, sizeof (line), "%-15s%c%-*.*s %3s",
+        SDL_snprintf(line, sizeof (line), "%-15s%c%-*.*s %3s",
                 s->name, num==Players_pos ? 141 : ' ',
                 hw, hw, strlen(s->serv->display.name) > 0 ? s->serv->display.name : s->serv->display.ip, s->serv->display.ping);
 
@@ -2218,7 +2218,7 @@ void Serverinfo_Key(int key)
             if (!testing_connection)
             {
                 char buf[256];
-                snprintf(buf, sizeof (buf), "%d.%d.%d.%d",
+                SDL_snprintf(buf, sizeof (buf), "%d.%d.%d.%d",
                         show_serverinfo->address.ip[0],
                         show_serverinfo->address.ip[1],
                         show_serverinfo->address.ip[2],

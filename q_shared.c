@@ -77,20 +77,6 @@ char *Q_strlwr( char *s1 ) {
 }
 
 // Added by VVD {
-#ifdef _WIN32
-int qsnprintf(char *buffer, size_t count, char const *format, ...)
-{
-	int ret;
-	va_list argptr;
-	if (!count) return 0;
-	va_start(argptr, format);
-	ret = _vsnprintf(buffer, count, format, argptr);
-	buffer[count - 1] = 0;
-	va_end(argptr);
-	return ret;
-}
-#endif
-
 #if defined(__linux__) || defined(_WIN32)
 
 size_t strlcpy(char *dst, const char *src, size_t siz)

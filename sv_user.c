@@ -912,7 +912,7 @@ static qbool SV_DownloadNextFile (void)
 		return SV_DownloadNextFile();
 	}
 	//Con_Printf("downloading demos/%s\n",name);
-	snprintf(n, sizeof(n), "download demos/%s\n", name);
+	SDL_snprintf(n, sizeof(n), "download demos/%s\n", name);
 
 	ClientReliableWrite_Begin (sv_client, svc_stufftext, strlen(n) + 2);
 	ClientReliableWrite_String (sv_client, n);
@@ -1309,7 +1309,7 @@ static void Cmd_Download_f(void)
 
 	if ( !strncmp(name, "demos/", 6) && sv_demoDir.string[0])
 	{
-		snprintf(n,sizeof(n), "%s/%s", sv_demoDir.string, name + 6);
+		SDL_snprintf(n,sizeof(n), "%s/%s", sv_demoDir.string, name + 6);
 		name = n;
 	}
 	else if (!strncmp(name, "demonum/", 8))
@@ -1342,7 +1342,7 @@ static void Cmd_Download_f(void)
 			goto deny_download;
 		}
 		//Con_Printf("downloading demos/%s\n",name);
-		snprintf(n, sizeof(n), "download demos/%s\n", name);
+		SDL_snprintf(n, sizeof(n), "download demos/%s\n", name);
 
 		ClientReliableWrite_Begin (sv_client, svc_stufftext,strlen(n) + 2);
 		ClientReliableWrite_String (sv_client, n);
@@ -1920,9 +1920,9 @@ static void Cmd_Pause_f (void)
 	}
 
 	if (newstate & 1)
-		snprintf (st, sizeof(st), "%s paused the game\n", sv_client->name);
+		SDL_snprintf (st, sizeof(st), "%s paused the game\n", sv_client->name);
 	else
-		snprintf (st, sizeof(st), "%s unpaused the game\n", sv_client->name);
+		SDL_snprintf (st, sizeof(st), "%s unpaused the game\n", sv_client->name);
 
 	SV_TogglePause(st, 1);
 }
@@ -2065,7 +2065,7 @@ static void Cmd_Upload_f (void)
 		return;
 	}
 
-	snprintf(sv_client->uploadfn, sizeof(sv_client->uploadfn), "%s", Cmd_Argv(2));
+	SDL_snprintf(sv_client->uploadfn, sizeof(sv_client->uploadfn), "%s", Cmd_Argv(2));
 
 	if (!sv_client->uploadfn[0])
 	{ //just in case..
@@ -2081,7 +2081,7 @@ static void Cmd_Upload_f (void)
 
 	sv_client->remote_snap = false;
 	FS_CreatePath (sv_client->uploadfn); //fixed, need to create path
-	snprintf (str, sizeof (str), "cmd fileul \"%s\"\n", Cmd_Argv(1));
+	SDL_snprintf (str, sizeof (str), "cmd fileul \"%s\"\n", Cmd_Argv(1));
 	ClientReliableWrite_Begin (sv_client, svc_stufftext, strlen(str) + 2);
 	ClientReliableWrite_String (sv_client, str);
 }

@@ -480,7 +480,7 @@ void Log_AutoLogging_SaveMatch(qbool allow_upload) {
 		Com_Printf("Error: no available filenames\n");
 		return;
 	}
-	snprintf (savedname, sizeof(savedname), "%s_%03i.log", auto_matchname, num);
+	SDL_snprintf (savedname, sizeof(savedname), "%s_%03i.log", auto_matchname, num);
 
 	fullsavedname = va("%s/%s", dir, savedname);
 

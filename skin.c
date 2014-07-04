@@ -82,7 +82,7 @@ char *Skin_AsNameOrId (player_info_t *sc) {
 	break;
 
 	case 2: // get skin as id
-		snprintf(name, sizeof(name), "%d", sc->userid);
+		SDL_snprintf(name, sizeof(name), "%d", sc->userid);
 		return name;
 	break;
 
@@ -90,7 +90,7 @@ char *Skin_AsNameOrId (player_info_t *sc) {
 		pn = TP_PlayersNumber(sc->userid, sc->team);
 		if (pn) {
 			mask = TP_ThisPOV_IsHisTeam(sc->team) ? "t%d" : "e%d";
-			snprintf(name, sizeof(name), mask, pn);
+			SDL_snprintf(name, sizeof(name), mask, pn);
 			return name;
 		}
 	break;
@@ -296,7 +296,7 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin)
 
 	// not cached, load from HDD
 
-	snprintf (name, sizeof(name), "skins/%s.pcx", skin->name);
+	SDL_snprintf (name, sizeof(name), "skins/%s.pcx", skin->name);
 
 	if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp, &real_width, &real_height)) || real_width > max_w || real_height > max_h) 
 	{
@@ -318,7 +318,7 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin)
 	if (!pic) 
 	{ 
 		// Attempt load at least default/base.
-		snprintf (name, sizeof(name), "skins/%s.pcx", baseskin.string);
+		SDL_snprintf (name, sizeof(name), "skins/%s.pcx", baseskin.string);
 
 		if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp, &real_width, &real_height)) || real_width > max_w || real_height > max_h) 
 		{

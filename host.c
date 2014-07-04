@@ -147,7 +147,7 @@ void SYSINFO_Init(void)
 	// Create the f_system string.
 	//
 	
-	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
+	SDL_snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
 
 	if (SYSINFO_processor_description) 
 	{
@@ -231,7 +231,7 @@ void SYSINFO_Init(void)
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
-	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
+	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
 
 	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
@@ -257,7 +257,7 @@ void SYSINFO_Init(void)
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
-	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
+	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
 	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
@@ -323,7 +323,7 @@ void SYSINFO_Init(void)
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
-	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
+	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
 	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
@@ -580,7 +580,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	else {
 		cfg_name = MAIN_CONFIG_FILENAME;
 	}
-	snprintf(cfg, sizeof(cfg), "%s", cfg_name);
+	SDL_snprintf(cfg, sizeof(cfg), "%s", cfg_name);
 	COM_ForceExtensionEx (cfg, ".cfg", sizeof (cfg));
 	Cbuf_AddText(va("cfg_load %s\n", cfg));
 	Cbuf_Execute();
@@ -631,7 +631,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		if ( Cvar_GetFlags( v ) & (CVAR_ROM | CVAR_INIT) )
 			continue;
 
-		snprintf(val, sizeof(val), "%s", v->string);
+		SDL_snprintf(val, sizeof(val), "%s", v->string);
 		Cvar_Set(v, val);
 	}
 	

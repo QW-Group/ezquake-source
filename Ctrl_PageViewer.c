@@ -271,7 +271,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
         }
         else
         {
-            snprintf(buf, sizeof (buf), "%d lines  ", viewer->page->rendered.text_lines);
+            SDL_snprintf(buf, sizeof (buf), "%d lines  ", viewer->page->rendered.text_lines);
             if (sh >= viewer->page->rendered.text_lines)
                 strlcat(buf, "[full]", sizeof (buf));
             else if (viewer->page->current_line == 0)

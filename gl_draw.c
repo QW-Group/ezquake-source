@@ -281,12 +281,12 @@ void Draw_InitCrosshairs(void)
 
 	for (i = 0; i < NUMCROSSHAIRS; i++)
 	{
-		snprintf(str, sizeof(str), "cross:hardcoded%d", i);
+		SDL_snprintf(str, sizeof(str), "cross:hardcoded%d", i);
 		crosshairtextures[i] = GL_LoadTexture (str, 8, 8, crosshairdata[i], TEX_ALPHA, 1);
 	}
 	customCrosshair_Init(); // safe re-init
 
-	snprintf(str, sizeof(str), "%s", gl_crosshairimage.string);
+	SDL_snprintf(str, sizeof(str), "%s", gl_crosshairimage.string);
 	Cvar_Set(&gl_crosshairimage, str);
 }
 
@@ -392,7 +392,7 @@ static void Scrap_Upload (void)
 		{
 			char id[64];
 			// generate id
-			snprintf(id, sizeof(id), "scrap:%d", i);
+			SDL_snprintf(id, sizeof(id), "scrap:%d", i);
 			// upload it
 			scrap_texnum[i] = GL_LoadTexture(id, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], TEX_ALPHA | TEX_NOSCALE, 1);
 		}
@@ -505,8 +505,8 @@ mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
 
 	// Get the filename without extension.
 	COM_StripExtension(path, stripped_path);
-	snprintf(lmp_path, MAX_PATH, "%s.lmp", stripped_path);
-	snprintf(png_path, MAX_PATH, "%s.png", stripped_path);
+	SDL_snprintf(lmp_path, MAX_PATH, "%s.lmp", stripped_path);
+	SDL_snprintf(png_path, MAX_PATH, "%s.png", stripped_path);
 
 	// Try loading the pic from disk.
 
@@ -670,9 +670,9 @@ static int Load_Locale_Charset (const char *name, const char *locale, unsigned i
 	char_range[num] = 0;
 
 	COM_StripExtension(name, basename);
-	snprintf(texture, sizeof(texture), "textures/charsets/%s-%s", basename, locale);
-	snprintf(id, sizeof(id), "pic:charset-%s", locale);
-	snprintf(lmp, sizeof(lmp), "conchars-%s", locale);
+	SDL_snprintf(texture, sizeof(texture), "textures/charsets/%s-%s", basename, locale);
+	SDL_snprintf(id, sizeof(id), "pic:charset-%s", locale);
+	SDL_snprintf(lmp, sizeof(lmp), "conchars-%s", locale);
 
 	// try first 24 bit
 	char_textures[num] = GL_LoadCharsetImage (texture, id, flags);
@@ -1968,7 +1968,7 @@ void Draw_ConsoleBackground (int lines)
 		{
 			char name[MAX_QPATH];
 
-			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
+			SDL_snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
 			if ((last_lvlshot = Draw_CachePicSafe(name, false, true)))
 			{
 				// Resize.

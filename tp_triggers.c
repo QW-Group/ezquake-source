@@ -685,7 +685,7 @@ void Re_Trigger_Copy_Subpatterns (const char *s, int* offsets, int num, cvar_t *
 	for (i = 0; i < 2 * num; i += 2) {
 		len = offsets[i + 1] - offsets[i] + 1;
 		tmp = (char *) Z_Malloc (len);
-		snprintf (tmp, len, "%s", s + offsets[i]);
+		SDL_snprintf (tmp, len, "%s", s + offsets[i]);
 		Cvar_ForceSet(&re_sub[i / 2], tmp);
 		Z_Free (tmp);
 	}
@@ -853,14 +853,14 @@ static void INTRIG_Lastip_port (const char *s)
 	memset (lastip, 0, sizeof (lastip));
  
 	if ( strlen(re_subi[1].string) <= 3 ) {
-		snprintf (lastip, sizeof (lastip), "%d.%d.%d.%d:%d",
+		SDL_snprintf (lastip, sizeof (lastip), "%d.%d.%d.%d:%d",
 						re_subi[1].integer,
 						re_subi[2].integer,
 						re_subi[3].integer,
 						re_subi[4].integer,
 						re_subi[5].integer);
 	} else {
-		snprintf (lastip, sizeof (lastip), "%s", re_subi[1].string);
+		SDL_snprintf (lastip, sizeof (lastip), "%s", re_subi[1].string);
 	}
 }
  

@@ -406,12 +406,12 @@ static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
 
 	altname = TranslateTextureName (tx);
 	mapname = Cvar_String("mapname");
-	snprintf (solidname, sizeof(solidname), "%s_solid", tx->name);
-	snprintf (alphaname, sizeof(alphaname), "%s_alpha", tx->name);
+	SDL_snprintf (solidname, sizeof(solidname), "%s_solid", tx->name);
+	SDL_snprintf (alphaname, sizeof(alphaname), "%s_alpha", tx->name);
 
 	solidskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, solidname), solidname, 0, 0, 0);
 	if (!solidskytexture && altname) {
-		snprintf (altsolidname, sizeof(altsolidname), "%s_solid", altname);
+		SDL_snprintf (altsolidname, sizeof(altsolidname), "%s_solid", altname);
 		solidskytexture = GL_LoadTextureImage (va("textures/%s", altsolidname), altsolidname, 0, 0, 0);
 	}
 	if (!solidskytexture)
@@ -421,7 +421,7 @@ static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
 
 	alphaskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA);
 	if (!alphaskytexture && altname) {
-		snprintf (altalphaname, sizeof(altalphaname), "%s_alpha", altname);
+		SDL_snprintf (altalphaname, sizeof(altalphaname), "%s_alpha", altname);
 		alphaskytexture = GL_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA);
 	}
 	if (!alphaskytexture)
@@ -559,7 +559,7 @@ void Mod_LoadTextures (lump_t *l) {
 		memcpy (tx->name, mt->name, sizeof(tx->name));
 
 		if (!tx->name[0]) {
-			snprintf(tx->name, sizeof(tx->name), "unnamed%d", i);
+			SDL_snprintf(tx->name, sizeof(tx->name), "unnamed%d", i);
 			Com_DPrintf("Warning: unnamed texture in %s, renaming to %s\n", loadmodel->name, tx->name);
 		}
 
@@ -1481,7 +1481,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer, int filesize) {
 			// duplicate the basic information
 			char name[16];
 
-			snprintf (name, sizeof (name), "*%i", i+1);
+			SDL_snprintf (name, sizeof (name), "*%i", i+1);
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
 			strlcpy (loadmodel->name, name, sizeof (loadmodel->name));
@@ -1679,12 +1679,12 @@ static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
 
 	// try "textures/models/..." path
 
-	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
+	SDL_snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	if (texnum)
 	{
 		// not a luma actually, but which suffix use then? _fb or what?
-		snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
+		SDL_snprintf (loadpath, sizeof(loadpath), "textures/models/%s_luma", identifier);
 		if (luma_allowed)
 			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
 
@@ -1693,12 +1693,12 @@ static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum)
 
 	// try "textures/..." path
 
-	snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
+	SDL_snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	if (texnum)
 	{
 		// not a luma actually, but which suffix use then? _fb or what?
-		snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
+		SDL_snprintf (loadpath, sizeof(loadpath), "textures/%s_luma", identifier);
 		if (luma_allowed)
 			*fb_texnum = GL_LoadTextureImage (loadpath, va("@fb_%s", identifier), 0, 0, texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA);
 
@@ -1739,7 +1739,7 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
 				memcpy (player_8bit_texels, (byte *) (pskintype + 1), s);
 			}
 
-			snprintf (identifier, sizeof(identifier), "%s_%i", basename, i);
+			SDL_snprintf (identifier, sizeof(identifier), "%s_%i", basename, i);
 
 			gl_texnum = fb_texnum = 0;
 			if (!(gl_texnum = Mod_LoadExternalSkin(identifier, &fb_texnum))) {
@@ -1770,7 +1770,7 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
 			for (j = 0; j < groupskins; j++) {
 				Mod_FloodFillSkin (skin, pheader->skinwidth, pheader->skinheight);
 
-				snprintf (identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
+				SDL_snprintf (identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
 
 				gl_texnum = fb_texnum = 0;
 				if (!(gl_texnum = Mod_LoadExternalSkin(identifier, &fb_texnum))) {
@@ -1969,11 +1969,11 @@ int Mod_LoadExternalSpriteSkin(char *identifier, int framenum) {
 	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel)
 		texmode |= TEX_NOSCALE;
 
-	snprintf (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
+	SDL_snprintf (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 
 	if (!texnum) {
-		snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
+		SDL_snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 		texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	}
 
@@ -2014,7 +2014,7 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 	pspriteframe->left = origin[0];
 	pspriteframe->right = width + origin[0];
 
-	snprintf (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
+	SDL_snprintf (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
 	if (!(texnum = Mod_LoadExternalSpriteSkin(identifier, framenum)))
 		texnum = GL_LoadTexture (identifier, width, height, (byte *) (pinframe + 1), texmode, 1);
 
@@ -2320,7 +2320,7 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	if (!gl_scaleModelTextures.value)
 		texmode |= TEX_NOSCALE;
 
-	snprintf(indentifier, sizeof(indentifier), "simple_%s_%d", basename, skinnum);
+	SDL_snprintf(indentifier, sizeof(indentifier), "simple_%s_%d", basename, skinnum);
 
 	if (developer.value > 1)
 		Com_DPrintf("Mod_LoadSimpleTexture: %s ", indentifier);

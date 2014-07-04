@@ -668,11 +668,11 @@ void SCR_DrawFPS (void) {
 	// Multiview
 	if (cl_multiview.value && cls.mvdplayback)
 	{
-		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/nNumViews);
+		SDL_snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/nNumViews);
 	}
 	else
 	{
-		snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
+		SDL_snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
 	}
 
 	x = ELEMENT_X_COORD(show_fps);
@@ -719,7 +719,7 @@ void SCR_DrawSpeed (void) {
 	maxspeed = max(maxspeed, speed);
 
 	if (display_speed >= 0) {
-		snprintf(str, sizeof(str), "%3d%s", (int) display_speed, show_speed.value == 2 ? " SPD" : "");
+		SDL_snprintf(str, sizeof(str), "%3d%s", (int) display_speed, show_speed.value == 2 ? " SPD" : "");
 		x = ELEMENT_X_COORD(show_speed);
 		y = ELEMENT_Y_COORD(show_speed);
 		Draw_String (x, y, str);
@@ -845,7 +845,7 @@ void SCR_DrawQTVBuffer (void)
 
 	len = ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
 
-	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Demo_GetSpeed());
+	SDL_snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Demo_GetSpeed());
 
 	x = ELEMENT_X_COORD(scr_qtvbuffer);
 	y = ELEMENT_Y_COORD(scr_qtvbuffer);
@@ -1628,7 +1628,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 			case 'H': // draw health, padding with space on right side
 
 				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_cl->health);
+					SDL_snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_cl->health);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += 3 * FONTWIDTH;
@@ -1703,7 +1703,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 				}
 
 				if(!width_only) { // value drawn no matter which style
-					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
+					SDL_snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += 3 * FONTWIDTH;
@@ -1784,7 +1784,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 			default: // print %x - that mean sequence unknown
 
 				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
+					SDL_snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += (s[0] ? 2 : 1) * FONTWIDTH;
@@ -1796,7 +1796,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 		default: // print x
 			if(!width_only) {
-				snprintf(tmp, sizeof(tmp), "%c", s[0]);
+				SDL_snprintf(tmp, sizeof(tmp), "%c", s[0]);
 				if (s[0] != ' ') // inhuman smart optimization, do not print space!
 					Draw_ColoredString (x, y, tmp, false);
 			}
@@ -2255,11 +2255,11 @@ static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool wi
 		if ( percentage )
 		{
 			float	accuracy = (ws_cl->wpn[wp].attacks ? 100.0f * ws_cl->wpn[wp].hits / ws_cl->wpn[wp].attacks : 0 );
-			snprintf(tmp, sizeof(tmp), "%.1f", accuracy);
+			SDL_snprintf(tmp, sizeof(tmp), "%.1f", accuracy);
 		}
 		else
 		{
-			snprintf(tmp, sizeof(tmp), "%d", ws_cl->wpn[wp].hits);
+			SDL_snprintf(tmp, sizeof(tmp), "%d", ws_cl->wpn[wp].hits);
 		}
 
 		if(!width_only)
@@ -3680,7 +3680,7 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 
 	if(fabsf(scr_sshot_autoname.value - 1.0f) < 0.0001f) {
 		// if sshot_autoname is 1, prefix with map name.
-		snprintf(basename, sizeof(basename), "%s_", host_mapname.string);
+		SDL_snprintf(basename, sizeof(basename), "%s_", host_mapname.string);
 	}
 	else {
 		// otherwise prefix with ezquake.
@@ -3689,7 +3689,7 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 
 	for (i = 0; i < MAX_SCREENSHOT_COUNT; i++)
 	{
-		snprintf(name, name_size, "%s%03i.%s", basename, i, ext);
+		SDL_snprintf(name, name_size, "%s%03i.%s", basename, i, ext);
 		if (!(f = fopen (va("%s/%s", sshot_dir, name), "rb")))
 		{
 			break;  // file doesn't exist
@@ -3780,7 +3780,7 @@ void SCR_RSShot_f (void) {
 
 	Com_Printf ("Remote screenshot requested.\n");
 
-	snprintf(filename, sizeof(filename), "%s/temp/__rsshot__", Sshot_SshotDirectory());
+	SDL_snprintf(filename, sizeof(filename), "%s/temp/__rsshot__", Sshot_SshotDirectory());
 
 	width = 400; height = 300;
 	base = (byte *) Q_malloc ((width * height + glwidth * glheight) * 3);
@@ -3869,7 +3869,7 @@ static void SCR_CheckAutoScreenshot(void) {
 		return;
 	}
 
-	snprintf (savedname, sizeof(savedname), "%s_%03i%s", filename, num, ext);
+	SDL_snprintf (savedname, sizeof(savedname), "%s_%03i%s", filename, num, ext);
 	fullsavedname = va("%s/%s", sshot_dir, savedname);
 
 	glFinish();
@@ -5051,8 +5051,8 @@ void SCR_DrawMVStatusStrings(void)
 		if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (cl_multiview.value == 2) && cl_mvinset.integer)
 		{
 			// mvinset and dead
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng), "%.5s   %s %s:%-3s",name,
+			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			SDL_snprintf(strng, sizeof (strng), "%.5s   %s %s:%-3s",name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -5060,8 +5060,8 @@ void SCR_DrawMVStatusStrings(void)
 		else if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (vid.width <= 400))
 		{
 			// Resolution width <= 400 and dead
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng), "%.4s  %s %s:%-3s",name,
+			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			SDL_snprintf(strng, sizeof (strng), "%.4s  %s %s:%-3s",name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -5069,8 +5069,8 @@ void SCR_DrawMVStatusStrings(void)
 		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0)
 		{
 			// > 512 and dead
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng),"%s   %s %s:%-3s", name,
+			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			SDL_snprintf(strng, sizeof (strng),"%s   %s %s:%-3s", name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -5079,8 +5079,8 @@ void SCR_DrawMVStatusStrings(void)
 		else if ((cl_multiview.integer == 2) && cl_mvinset.integer && (CURRVIEW == 1))
 		{
 			// mvinset
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng),"%s %.5s  %c%03d %03d %s:%-3s", pups,
+			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			SDL_snprintf(strng, sizeof (strng),"%s %.5s  %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
@@ -5091,8 +5091,8 @@ void SCR_DrawMVStatusStrings(void)
 		else if (cl_multiview.value && vid.width <= 400)
 		{
 			// <= 400 and alive
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			snprintf(strng, sizeof (strng),"%s %.4s %c%03d %03d %s:%-3s", pups,
+			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			SDL_snprintf(strng, sizeof (strng),"%s %.4s %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
@@ -5102,8 +5102,8 @@ void SCR_DrawMVStatusStrings(void)
 		}
 		else
 		{
-			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
-			snprintf(strng, sizeof (strng),"%s %s  %c%03d %03d %s:%-3s", pups,
+			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
+			SDL_snprintf(strng, sizeof (strng),"%s %s  %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],

@@ -389,7 +389,7 @@ static qbool FSTAR_FLocate(void *handle, flocation_t *loc, const char *filename,
 		if (loc)
 		{
 			loc->index = pf - tar->files;
-			snprintf(loc->rawname, sizeof(loc->rawname), "%s/%s", tar->filename, filename);
+			SDL_snprintf(loc->rawname, sizeof(loc->rawname), "%s/%s", tar->filename, filename);
 			loc->offset = pf->filepos;
 			loc->len = pf->filelen;
 		}

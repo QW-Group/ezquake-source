@@ -187,7 +187,7 @@ void Movie_Demo_Capture_f(void) {
 			return;
 		}
 		COM_ForceExtensionEx (aviname, ".avi", sizeof (aviname));
-		snprintf (avipath, sizeof(avipath), "%s/%s/%s", com_basedir, movie_dir.string, aviname);
+		SDL_snprintf (avipath, sizeof(avipath), "%s/%s/%s", com_basedir, movie_dir.string, aviname);
 		if (!(avifile = fopen(avipath, "wb"))) {
 			FS_CreatePath (avipath);
 			if (!(avifile = fopen(avipath, "wb"))) {
@@ -262,14 +262,14 @@ void Movie_FinishFrame(void)
 	#ifdef _WIN32
 	if (!movie_is_avi) 
 	{
-		snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
+		SDL_snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
 			movie_dir.string, movie_start_date.wDay, movie_start_date.wMonth, movie_start_date.wYear,
 			movie_start_date.wHour,	movie_start_date.wMinute, movie_start_date.wSecond, movie_frame_count, image_ext);
 
 		con_suppress = true;
 	}
 	#else
-	snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
+	SDL_snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
 		movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
 		movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec, movie_frame_count, image_ext);
 

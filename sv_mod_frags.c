@@ -154,7 +154,7 @@ char *parse_mod_string(char *str)
 				case 1:
 					str_len = strlen(buf[pl1]) + strlen(buf[pl2]) + strlen(qw_weapon[qwmsg[i]->id]) + 5 + 10;
 					ret = (char *) Q_malloc (str_len);
-					snprintf(ret, str_len, "%s\\%s\\%s\\%d\n", buf[pl1], buf[pl2], qw_weapon[qwmsg[i]->id], (int)time(NULL));
+					SDL_snprintf(ret, str_len, "%s\\%s\\%s\\%d\n", buf[pl1], buf[pl2], qw_weapon[qwmsg[i]->id], (int)time(NULL));
 					break;
 				default: ret = NULL;
 				}
@@ -162,7 +162,7 @@ char *parse_mod_string(char *str)
 			case SYSTEM:
 				str_len = strlen(buf[1]) * 2 + strlen(qw_system[qwmsg[i]->id]) + 4 + 10;
 				ret = (char *) Q_malloc (str_len);
-				snprintf(ret, str_len, "%s\\%s\\%d\n", buf[1], qw_system[qwmsg[i]->id], (int)time(NULL));
+				SDL_snprintf(ret, str_len, "%s\\%s\\%d\n", buf[1], qw_system[qwmsg[i]->id], (int)time(NULL));
 				break;
 			default: ret = NULL;
 			}

@@ -673,7 +673,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 			*c = '#';
 	}
 
-	snprintf (name, sizeof(name), "%s.link", basename);
+	SDL_snprintf (name, sizeof(name), "%s.link", basename);
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 	{
 		char link[128];
@@ -695,7 +695,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 			--len;
 		}
 
-		snprintf (name, sizeof(name), "textures/%s", link);
+		SDL_snprintf (name, sizeof(name), "textures/%s", link);
 		if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 		{
        		CHECK_TEXTURE_ALREADY_LOADED;
@@ -729,7 +729,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 		}
 	}
 
-	snprintf (name, sizeof(name), "%s.tga", basename);
+	SDL_snprintf (name, sizeof(name), "%s.tga", basename);
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
@@ -738,7 +738,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	}
 
 	#ifdef WITH_PNG
-	snprintf (name, sizeof(name), "%s.png", basename);
+	SDL_snprintf (name, sizeof(name), "%s.png", basename);
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
@@ -748,7 +748,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	#endif // WITH_PNG
 
 	#ifdef WITH_JPEG
-	snprintf (name, sizeof(name), "%s.jpg", basename);
+	SDL_snprintf (name, sizeof(name), "%s.jpg", basename);
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
@@ -757,7 +757,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	}
 	#endif // WITH_JPEG
 
-	snprintf (name, sizeof(name), "%s.pcx", basename);
+	SDL_snprintf (name, sizeof(name), "%s.pcx", basename);
 	
 	// TEX_NO_PCX - preventing loading skins here.
 	if (!(mode & TEX_NO_PCX) && (f = FS_OpenVFS(name, "rb", FS_ANY))) 

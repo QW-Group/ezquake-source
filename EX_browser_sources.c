@@ -159,11 +159,11 @@ void Precache_Source(source_data *s)
 
 		filename = Q_malloc(filename_size);
 		SB_URL_to_FileName(s->address.url, filename, filename_size);
-		snprintf(name, sizeof (name), "sb/cache/%s", filename);
+		SDL_snprintf(name, sizeof (name), "sb/cache/%s", filename);
 		Q_free(filename);
 	}
 	else if (s->type == type_master) {
-		snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
+		SDL_snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
 				s->address.address.ip[0], s->address.address.ip[1],
 				s->address.address.ip[2], s->address.address.ip[3],
 				ntohs(s->address.address.port));
@@ -268,7 +268,7 @@ void Update_Source(source_data *s)
     {
         // read servers from file
         char name[1024];
-        snprintf(name, sizeof (name), "sb/%s", s->address.filename);
+        SDL_snprintf(name, sizeof (name), "sb/%s", s->address.filename);
         should_dump = Update_Source_From_File(s, name, servers, &serversn);
         GetLocalTime(&(s->last_update));
     }
@@ -338,7 +338,7 @@ void Update_Source(source_data *s)
 					qbool exists = false;
 					int j;
 
-					snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
+					SDL_snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
 						(int)answer[i+0], (int)answer[i+1],
 						(int)answer[i+2], (int)answer[i+3],
 						256 * (int)answer[i+4] + (int)answer[i+5]);
@@ -525,7 +525,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 						qbool exists = false;
 						int j;
 
-						snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
+						SDL_snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
 							(int)answer[i+0], (int)answer[i+1],
 							(int)answer[i+2], (int)answer[i+3],
 							256 * (int)answer[i+4] + (int)answer[i+5]);
@@ -927,11 +927,11 @@ void DumpSource(source_data *s)
     char buf[1024];
 
     if (s->type == type_file)
-        snprintf(buf, sizeof (buf), "sb/%s", s->address.filename);
+        SDL_snprintf(buf, sizeof (buf), "sb/%s", s->address.filename);
     else if (s->type == type_master)
     {
         Sys_mkdir("sb/cache");
-        snprintf(buf, sizeof (buf), "sb/cache/%d_%d_%d_%d_[%d].txt",
+        SDL_snprintf(buf, sizeof (buf), "sb/cache/%d_%d_%d_%d_[%d].txt",
                 s->address.address.ip[0], s->address.address.ip[1],
                 s->address.address.ip[2], s->address.address.ip[3],
                 ntohs(s->address.address.port));

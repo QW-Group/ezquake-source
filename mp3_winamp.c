@@ -352,7 +352,7 @@ char *MP3_WINAMP_Macro_MP3Info(void)
 	if (!MP3_WINAMP_IsPlayerRunning()) 
 	{
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
-		snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		SDL_snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 		return title;
 	}
 	

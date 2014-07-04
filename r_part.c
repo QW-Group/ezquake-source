@@ -137,7 +137,7 @@ void R_ReadPointFile_f (void) {
 	if (!com_serveractive)
 		return;
 
-	snprintf (name, sizeof(name), "maps/%s.pts", host_mapname.string);
+	SDL_snprintf (name, sizeof(name), "maps/%s.pts", host_mapname.string);
 
 	if (!(v = FS_OpenVFS(name, "rb", FS_ANY))) {
 		Com_Printf ("couldn't open %s\n", name);

@@ -139,7 +139,7 @@ void Cvar_SetDefault(cvar_t *var, float value)
 	char val[128];
 	int i;
 
-	snprintf (val, sizeof(val), "%f", value);
+	SDL_snprintf (val, sizeof(val), "%f", value);
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
 		val[i] = 0;
 	if (val[i] == '.')
@@ -364,7 +364,7 @@ void Cvar_SetValueByName (char *var_name, float value)
 {
 	char val[32];
 
-	snprintf (val, sizeof (val), "%.8g", value);
+	SDL_snprintf (val, sizeof (val), "%.8g", value);
 	Cvar_SetByName (var_name, val);
 }
 
@@ -373,7 +373,7 @@ void Cvar_SetValue (cvar_t *var, float value)
 	char val[128];
 	int	i;
 
-	snprintf (val, sizeof(val), "%f", value);
+	SDL_snprintf (val, sizeof(val), "%f", value);
 
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
 		val[i] = 0;

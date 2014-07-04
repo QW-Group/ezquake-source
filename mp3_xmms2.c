@@ -223,7 +223,7 @@ static int XMMS2_GetMediaInfo(unsigned int id, char *name, size_t name_len)
 		title = "No Title";
 	}
 
-	snprintf(name, name_len, "%s - %s", artist, title);
+	SDL_snprintf(name, name_len, "%s - %s", artist, title);
 
 	qxmmsc_result_unref (result);
 	return 0;

@@ -107,14 +107,14 @@ void SV_Logfile (int sv_log, qbool newlog)
 
 	for (i = 0; i < 1000; i++)
 	{
-		snprintf (name, sizeof(name), "%s/%s%d_%04d.log", sv_logdir.string, logs[sv_log].file_name, sv_port, i);
+		SDL_snprintf (name, sizeof(name), "%s/%s%d_%04d.log", sv_logdir.string, logs[sv_log].file_name, sv_port, i);
 
 		if (!COM_FileExists(name))
 			break; // file doesn't exist
 	}
 
 	if (!newlog) //use last log if possible
-		snprintf (name, sizeof(name), "%s/%s%d_%04d.log",  sv_logdir.string, logs[sv_log].file_name, sv_port, (int)max(0, i - 1));
+		SDL_snprintf (name, sizeof(name), "%s/%s%d_%04d.log",  sv_logdir.string, logs[sv_log].file_name, sv_port, (int)max(0, i - 1));
 
 	Con_Printf ("Logging %s to %s\n", logs[sv_log].message_on, name);
 
@@ -478,7 +478,7 @@ void SV_Map (qbool now)
 	strlcpy (level, Cmd_Argv(1), MAX_QPATH);
 
 	// check to make sure the level exists
-	snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
+	SDL_snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
 
 	if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
 	{
@@ -923,7 +923,7 @@ void SV_Cuff_f (void)
 		{
 			SV_BroadcastPrintf (PRINT_CHAT, "%s cuffed for %.1f minutes%s%s\n", cl->name, mins, reason[0] ? ": " : "", reason[0] ? reason : "");
 
-			snprintf(text, sizeof(text), "You are cuffed for %.1f minutes%s%s\n", mins, reason[0] ? "\n\n" : "", reason[0] ? reason : "");
+			SDL_snprintf(text, sizeof(text), "You are cuffed for %.1f minutes%s%s\n", mins, reason[0] ? "\n\n" : "", reason[0] ? reason : "");
 			ClientReliableWrite_Begin(cl,svc_centerprint, 2+strlen(text));
 			ClientReliableWrite_String (cl, text);
 		}
@@ -1010,7 +1010,7 @@ void SV_Mute_f (void)
 		{
 			if (print)
 				SV_BroadcastPrintf (PRINT_CHAT, "%s muted for %.1f minutes%s%s\n", cl->name, mins, reason[0] ? ": " : "", reason[0] ? reason : "");
-			snprintf(text, sizeof(text), "You are muted for %.1f minutes%s%s\n", mins, reason[0] ? "\n\n" : "", reason[0] ? reason : "");
+			SDL_snprintf(text, sizeof(text), "You are muted for %.1f minutes%s%s\n", mins, reason[0] ? "\n\n" : "", reason[0] ? reason : "");
 			ClientReliableWrite_Begin(cl, svc_centerprint, 2+strlen(text));
 			ClientReliableWrite_String (cl, text);
 		}
@@ -1717,7 +1717,7 @@ void SV_Floodprotmsg_f (void)
 		Con_Printf("Usage: floodprotmsg \"<message>\"\n");
 		return;
 	}
-	snprintf(fp_msg, sizeof(fp_msg), "%s", Cmd_Argv(1));
+	SDL_snprintf(fp_msg, sizeof(fp_msg), "%s", Cmd_Argv(1));
 }
 
 /*
@@ -1788,13 +1788,13 @@ void SV_Snap (int uid)
 	}
 
 	FS_CreatePath (va ("%s/snap/", fs_gamedir));
-	snprintf (pcxname, sizeof (pcxname), "%d-00.pcx", uid);
+	SDL_snprintf (pcxname, sizeof (pcxname), "%d-00.pcx", uid);
 
 	for (i=0 ; i<=99 ; i++)
 	{
 		pcxname[strlen(pcxname) - 6] = i/10 + '0';
 		pcxname[strlen(pcxname) - 5] = i%10 + '0';
-		snprintf (checkname, MAX_OSPATH, "%s/snap/%s", fs_gamedir, pcxname);
+		SDL_snprintf (checkname, MAX_OSPATH, "%s/snap/%s", fs_gamedir, pcxname);
 		f = fopen (checkname, "rb");
 		if (!f)
 			break; // file doesn't exist

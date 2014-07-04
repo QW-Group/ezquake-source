@@ -153,7 +153,7 @@ static char	macro_buf[MAX_MACRO_VALUE] = "";
 
 char *Macro_Lastip_f (void)
 {
-	snprintf (macro_buf, sizeof(macro_buf), "%s", lastip);
+	SDL_snprintf (macro_buf, sizeof(macro_buf), "%s", lastip);
 	return macro_buf;
 }
 
@@ -164,49 +164,49 @@ char *Macro_Quote_f (void)
 
 char *Macro_Latency (void)
 {
-	snprintf(macro_buf, sizeof(macro_buf), "%i", Q_rint(cls.latency * 1000));
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", Q_rint(cls.latency * 1000));
 	return macro_buf;
 }
 
 char *Macro_Health (void)
 {
-	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
 	return macro_buf;
 }
 
 char *Macro_Armor (void)
 {
-	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ARMOR]);
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ARMOR]);
 	return macro_buf;
 }
 
 char *Macro_Shells (void)
 {
-	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
 	return macro_buf;
 }
 
 char *Macro_Nails (void)
 {
-	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
 	return macro_buf;
 }
 
 char *Macro_Rockets (void)
 {
-	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
 	return macro_buf;
 }
 
 char *Macro_Cells (void)
 {
-	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
 	return macro_buf;
 }
 
 char *Macro_Ammo (void)
 {
-	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_AMMO]);
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_AMMO]);
 	return macro_buf;
 }
 
@@ -218,7 +218,7 @@ char *Macro_Weapon (void)
 char *Macro_WeaponAndAmmo (void)
 {
 	char buf[MAX_MACRO_VALUE];
-	snprintf (buf, sizeof(buf), "%s:%s", Macro_Weapon(), Macro_Ammo());
+	SDL_snprintf (buf, sizeof(buf), "%s:%s", Macro_Weapon(), Macro_Ammo());
 	strlcpy (macro_buf, buf, sizeof(macro_buf));
 	return macro_buf;
 }
@@ -231,7 +231,7 @@ char *Macro_WeaponNum (void)
 
 	if (cl_weaponpreselect.integer && (best = IN_BestWeapon())) {
 		char buf[4];
-		snprintf(buf, sizeof(buf), "%d", best);
+		SDL_snprintf(buf, sizeof(buf), "%d", best);
 		strlcpy(macro_buf, buf, sizeof(macro_buf));
 		return macro_buf;
 	}
@@ -321,19 +321,19 @@ char *Macro_BestAmmo (void)
 {
 	switch (BestWeapon()) {
 			case IT_SHOTGUN: case IT_SUPER_SHOTGUN:
-			snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
+			SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
 			return macro_buf;
 
 			case IT_NAILGUN: case IT_SUPER_NAILGUN:
-			snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
+			SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
 			return macro_buf;
 
 			case IT_GRENADE_LAUNCHER: case IT_ROCKET_LAUNCHER:
-			snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
+			SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
 			return macro_buf;
 
 			case IT_LIGHTNING:
-			snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
+			SDL_snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
 			return macro_buf;
 
 			default: return "0";
@@ -345,26 +345,26 @@ char *Macro_BestWeaponAndAmmo (void)
 {
 	char buf[MAX_MACRO_VALUE];
 
-	snprintf (buf, sizeof(buf), "%s:%s", Macro_BestWeapon(), Macro_BestAmmo());
+	SDL_snprintf (buf, sizeof(buf), "%s:%s", Macro_BestWeapon(), Macro_BestAmmo());
 	strlcpy (macro_buf, buf, sizeof(buf));
 	return macro_buf;
 }
 
 char *Macro_Colored_Armor_f (void)
 {
-    snprintf(macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Armor());
+    SDL_snprintf(macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Armor());
     return macro_buf;
 }
 
 char *Macro_Colored_Powerups_f (void)
 {
-	snprintf (macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Powerup());
+	SDL_snprintf (macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Powerup());
 	return macro_buf;
 }
 
 char *Macro_Colored_Short_Powerups_f (void) // same as above, but displays "qrp" instead of "quad ring pent"
 {
-	snprintf (macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Short_Powerups());
+	SDL_snprintf (macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Short_Powerups());
 	return macro_buf;
 }
 
@@ -538,7 +538,7 @@ char *Macro_LastPointAtLoc (void)
 	if (!vars.pointtime || cls.realtime - vars.pointtime > TP_POINT_EXPIRE_TIME)
 		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
-		snprintf (macro_buf, sizeof(macro_buf), "%s %s %s", vars.pointname, tp_name_at.string, vars.pointloc[0] ? vars.pointloc : Macro_Location());
+		SDL_snprintf (macro_buf, sizeof(macro_buf), "%s %s %s", vars.pointname, tp_name_at.string, vars.pointloc[0] ? vars.pointloc : Macro_Location());
 	return macro_buf;
 }
 
@@ -634,7 +634,7 @@ char *Macro_LastDrop (void)
 
 char *Macro_GameDir(void)
 {
-	snprintf(macro_buf, sizeof (macro_buf), "%s", cls.gamedirfile);
+	SDL_snprintf(macro_buf, sizeof (macro_buf), "%s", cls.gamedirfile);
 	return macro_buf;
 }
 
@@ -646,9 +646,9 @@ char *Macro_LastTrigger_Match(void)
 char *Macro_LastDropTime (void)
 {
 	if (vars.lastdrop_time)
-		snprintf (macro_buf, sizeof (macro_buf), "%d", (int) (cls.realtime - vars.lastdrop_time));
+		SDL_snprintf (macro_buf, sizeof (macro_buf), "%d", (int) (cls.realtime - vars.lastdrop_time));
 	else
-		snprintf (macro_buf, sizeof (macro_buf), "%d", -1);
+		SDL_snprintf (macro_buf, sizeof (macro_buf), "%d", -1);
 	return macro_buf;
 }
 
@@ -820,11 +820,11 @@ char *Macro_MyStatus_LED(void)
 	}
 
 	if (count == 0)
-		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_green.string);
+		SDL_snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_green.string);
 	else if (count <= 1)
-		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_yellow.string);
+		SDL_snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_yellow.string);
 	else
-		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_red.string);
+		SDL_snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_red.string);
 
 	return macro_buf;
 }
@@ -833,11 +833,11 @@ char *Macro_EnemyStatus_LED(void)
 {
 	CountNearbyPlayers(false);
 	if (vars.numenemies == 0)
-		snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_green.string);
+		SDL_snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_green.string);
 	else if (vars.numenemies <= vars.numfriendlies)
-		snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_yellow.string);
+		SDL_snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_yellow.string);
 	else
-		snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_red.string);
+		SDL_snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_red.string);
 
 	suppress = true;
 	return macro_buf;
@@ -944,16 +944,16 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
         	strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
         	strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
 
-			snprintf(msg, sizeof(msg), "%s\n", TP_ParseFunChars(strcat(strcat(c_fn, c_fna), dest) , true));
+			SDL_snprintf(msg, sizeof(msg), "%s\n", TP_ParseFunChars(strcat(strcat(c_fn, c_fna), dest) , true));
         }
         else
         {
-            snprintf(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
+            SDL_snprintf(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
         }
     }
 	else
 	{
-		snprintf(msg, sizeof(msg), "%s: %s\n", name, TP_ParseFunChars(dest, true));
+		SDL_snprintf(msg, sizeof(msg), "%s: %s\n", name, TP_ParseFunChars(dest, true));
 	}
 
 	flags = TP_CategorizeMessage (msg, &offset);
@@ -1013,7 +1013,7 @@ static void CountNearbyPlayers(qbool dead)
 static int check_mtfl_ruleset (void)
 {
 	if (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)) {
-		snprintf(macro_buf, sizeof (macro_buf),"\xffz%s\xff", BANNED_BY_MTFL);
+		SDL_snprintf(macro_buf, sizeof (macro_buf),"\xffz%s\xff", BANNED_BY_MTFL);
 		return 1;
 	}
 	return 0;
@@ -1025,7 +1025,7 @@ char *Macro_CountNearbyEnemyPlayers (void)
 		return macro_buf; // there should be more smart way to do it
 
 	CountNearbyPlayers(false);
-	snprintf(macro_buf, sizeof (macro_buf),"\xffz%d\xff", vars.numenemies);
+	SDL_snprintf(macro_buf, sizeof (macro_buf),"\xffz%d\xff", vars.numenemies);
 	suppress = true;
 	return macro_buf;
 }
@@ -1037,10 +1037,10 @@ char *Macro_Count_Last_NearbyEnemyPlayers (void)
 		return macro_buf; // there should be more smart way to do it
 
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
-		snprintf (macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.last_numenemies);
+		SDL_snprintf (macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.last_numenemies);
 	} else {
 		CountNearbyPlayers(false);
-		snprintf (macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numenemies);
+		SDL_snprintf (macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numenemies);
 	}
 	suppress = true;
 	return macro_buf;
@@ -1053,7 +1053,7 @@ char *Macro_CountNearbyFriendlyPlayers (void)
 		return BANNED_BY_MTFL; // there should be more smart way to do it
 
 	CountNearbyPlayers(false);
-	snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numfriendlies);
+	SDL_snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numfriendlies);
 	suppress = true;
 	return macro_buf;
 }
@@ -1065,10 +1065,10 @@ char *Macro_Count_Last_NearbyFriendlyPlayers (void)
 		return macro_buf; // there should be more smart way to do it
 
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
-		snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.last_numfriendlies);
+		SDL_snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.last_numfriendlies);
 	} else {
 		CountNearbyPlayers(false);
-		snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numfriendlies);
+		SDL_snprintf(macro_buf, sizeof (macro_buf), "\xffz%d\xff", vars.numfriendlies);
 	}
 	suppress = true;
 	return macro_buf;
@@ -1204,17 +1204,17 @@ char *TP_ParseMacroString (char *s)
 					if (!strcmp(macro_string, tp_name_none.string))
 						macro_string = "a";
 					if (cl.stats[STAT_ARMOR] < 30)
-						snprintf (mbuf, sizeof(mbuf), "\x10%s:%i\x11", macro_string, cl.stats[STAT_ARMOR]);
+						SDL_snprintf (mbuf, sizeof(mbuf), "\x10%s:%i\x11", macro_string, cl.stats[STAT_ARMOR]);
 					else
-						snprintf (mbuf, sizeof(mbuf), "%s:%i", macro_string, cl.stats[STAT_ARMOR]);
+						SDL_snprintf (mbuf, sizeof(mbuf), "%s:%i", macro_string, cl.stats[STAT_ARMOR]);
 					macro_string = mbuf;
 					break;
 
 					case 'h':
 					if (cl.stats[STAT_HEALTH] >= 50)
-						snprintf (macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
+						SDL_snprintf (macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
 					else
-						snprintf (macro_buf, sizeof(macro_buf), "\x10%i\x11", cl.stats[STAT_HEALTH]);
+						SDL_snprintf (macro_buf, sizeof(macro_buf), "\x10%i\x11", cl.stats[STAT_HEALTH]);
 					macro_string = macro_buf;
 					break;
 
@@ -1222,7 +1222,7 @@ char *TP_ParseMacroString (char *s)
 					case 'P':
 					macro_string = Macro_Powerups();
 					if (strcmp(macro_string, tp_name_none.string))
-						snprintf (mbuf, sizeof(mbuf), "\x10%s\x11", macro_string);
+						SDL_snprintf (mbuf, sizeof(mbuf), "\x10%s\x11", macro_string);
 					else
 						mbuf[0] = 0;
 					macro_string = mbuf;
@@ -1978,7 +1978,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	while (node) {
 		char row[2*MAX_LOC_NAME];
 
-		snprintf(row, sizeof (row),"%4d %4d %4d %s\n", Q_rint(8*node->coord[0]), Q_rint(8*node->coord[1]), Q_rint(8*node->coord[2]), node->name);
+		SDL_snprintf(row, sizeof (row),"%4d %4d %4d %s\n", Q_rint(8*node->coord[0]), Q_rint(8*node->coord[1]), Q_rint(8*node->coord[2]), node->name);
 		strlcat (buf, row, (loc_count * (MAX_LOC_NAME + 24)));
 		node = node->next;
 	}
@@ -2807,7 +2807,7 @@ char *Macro_LastTookOrPointed (void)
 	else if (vars.pointtime && vars.tooktime <= vars.pointtime && cls.realtime - vars.pointtime < 5)
 		return Macro_LastPointAtLoc();
 
-	snprintf(macro_buf, sizeof(macro_buf), "%s %s %s", tp_name_nothing.string, tp_name_at.string, tp_name_someplace.string);
+	SDL_snprintf(macro_buf, sizeof(macro_buf), "%s %s %s", tp_name_nothing.string, tp_name_at.string, tp_name_someplace.string);
 	return macro_buf;
 }
 

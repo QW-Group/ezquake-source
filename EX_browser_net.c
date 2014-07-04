@@ -107,7 +107,7 @@ void SetPing(server_data *s, int ping)
     if (ping < 0)
         strlcpy (s->display.ping, "n/a", sizeof (s->display.ping));
     else
-        snprintf (s->display.ping, sizeof (s->display.ping), "%3d", ping > 999 ? 999 : ping);
+        SDL_snprintf (s->display.ping, sizeof (s->display.ping), "%3d", ping > 999 ? 999 : ping);
 
     s->ping = ping;
 	
@@ -119,7 +119,7 @@ void SB_Server_SetBestPing(server_data *s, int bestping)
     if (bestping < 0)
         strlcpy (s->display.bestping, "n/a", sizeof (s->display.bestping));
     else
-        snprintf (s->display.bestping, sizeof (s->display.bestping), "%3d", bestping > 999 ? 999 : bestping);
+        SDL_snprintf (s->display.bestping, sizeof (s->display.bestping), "%3d", bestping > 999 ? 999 : bestping);
 
     s->bestping = bestping;
 }
@@ -289,35 +289,35 @@ void Parse_Serverinfo(server_data *s, char *info)
 
     tmp = ValueForKey(s, "hostname");
     if (tmp != NULL)
-        snprintf (s->display.name, sizeof (s->display.name),"%-.*s", COL_NAME, tmp);
+        SDL_snprintf (s->display.name, sizeof (s->display.name),"%-.*s", COL_NAME, tmp);
     else
         return;
 
     tmp = ValueForKey(s, "fraglimit");
     if (tmp != NULL)
-        snprintf(s->display.fraglimit, sizeof (s->display.fraglimit), "%*.*s", COL_FRAGLIMIT, COL_FRAGLIMIT, strlen(tmp) > COL_FRAGLIMIT ? "999" : tmp);
+        SDL_snprintf(s->display.fraglimit, sizeof (s->display.fraglimit), "%*.*s", COL_FRAGLIMIT, COL_FRAGLIMIT, strlen(tmp) > COL_FRAGLIMIT ? "999" : tmp);
 
     tmp = ValueForKey(s, "timelimit");
     if (tmp != NULL)
-        snprintf(s->display.timelimit, sizeof (s->display.timelimit), "%*.*s", COL_TIMELIMIT, COL_TIMELIMIT, strlen(tmp) > COL_TIMELIMIT ? "99" : tmp);
+        SDL_snprintf(s->display.timelimit, sizeof (s->display.timelimit), "%*.*s", COL_TIMELIMIT, COL_TIMELIMIT, strlen(tmp) > COL_TIMELIMIT ? "99" : tmp);
 
     tmp = ValueForKey(s, "*gamedir");
     s->qizmo = false;
     if (tmp != NULL)
-        snprintf(s->display.gamedir, sizeof (s->display.gamedir) ,"%.*s", COL_GAMEDIR, tmp==NULL ? "" : tmp);
+        SDL_snprintf(s->display.gamedir, sizeof (s->display.gamedir) ,"%.*s", COL_GAMEDIR, tmp==NULL ? "" : tmp);
     else
     {
         tmp = ValueForKey(s, "*progs");
         if (tmp != NULL  &&  !strcmp(tmp, "666"))
         {
-            snprintf(s->display.gamedir, sizeof (s->display.gamedir), "qizmo");
+            SDL_snprintf(s->display.gamedir, sizeof (s->display.gamedir), "qizmo");
             s->qizmo = true;
         }
     }
 
     tmp = ValueForKey(s, "map");
     if (tmp != NULL)
-        snprintf(s->display.map, sizeof (s->display.map), "%-.*s", COL_MAP, tmp==NULL ? "" : tmp);
+        SDL_snprintf(s->display.map, sizeof (s->display.map), "%-.*s", COL_MAP, tmp==NULL ? "" : tmp);
 
     tmp = ValueForKey(s, "maxclients");
     if (!tmp || strlen(tmp) > 2)
@@ -327,7 +327,7 @@ void Parse_Serverinfo(server_data *s, char *info)
     else if (i > 0 && i < atoi(tmp)) { s->occupancy = SERVER_NONEMPTY; }
     else { s->occupancy = SERVER_FULL; }
     if (tmp != NULL)
-        snprintf(s->display.players, sizeof (s->display.players), "%2d/%-2s", i, tmp==NULL ? "" : tmp);
+        SDL_snprintf(s->display.players, sizeof (s->display.players), "%2d/%-2s", i, tmp==NULL ? "" : tmp);
 }
 
 void GetServerInfo(server_data *serv)
@@ -536,7 +536,7 @@ void GetServerPing(server_data *serv)
 {
     int p;
     char buf[32];
-    snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
+    SDL_snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
         serv->address.ip[0],
         serv->address.ip[1],
         serv->address.ip[2],

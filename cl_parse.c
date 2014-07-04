@@ -502,7 +502,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-	snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, filename);
+	SDL_snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, filename);
 	Com_Printf ("Downloading %s...\n", filename);
 
 	// download to a temp name, and only rename
@@ -1476,7 +1476,7 @@ void CL_ParseServerData (void)
 	if (strcasecmp(cls.gamedirfile, str)) 
 	{
 		strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
-		snprintf (cls.gamedir, sizeof(cls.gamedir),
+		SDL_snprintf (cls.gamedir, sizeof(cls.gamedir),
 			"%s/%s", com_basedir, cls.gamedirfile);
 		cflag = true;
 	}
@@ -1486,7 +1486,7 @@ void CL_ParseServerData (void)
 
 	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
 	{
-		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");
+		SDL_snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");
 		Cbuf_AddText ("cl_warncmd 0\n");
 		if ((f = fopen(fn, "r")) != NULL) 
 		{
@@ -1498,14 +1498,14 @@ void CL_ParseServerData (void)
 		} 
 		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{
-			snprintf (fn, sizeof(fn), "qw/%s", "config.cfg");
+			SDL_snprintf (fn, sizeof(fn), "qw/%s", "config.cfg");
 			if ((f = fopen(fn, "r")) != NULL) 
 			{
 				fclose(f);
 				Cbuf_AddText ("exec config.cfg\n");
 			}
 		}
-		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
+		SDL_snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
 		if ((f = fopen(fn, "r")) != NULL) 
 		{
 			fclose(f);
@@ -1516,7 +1516,7 @@ void CL_ParseServerData (void)
 		} 
 		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{
-			snprintf (fn, sizeof(fn), "qw/%s", "frontend.cfg");
+			SDL_snprintf (fn, sizeof(fn), "qw/%s", "frontend.cfg");
 			if ((f = fopen(fn, "r")) != NULL) 
 			{
 				fclose(f);
@@ -2492,7 +2492,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
             if (!cl.players[i].name[0])
                 continue;
 
-            snprintf(buf,  sizeof (buf), "%.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            SDL_snprintf(buf,  sizeof (buf), "%.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
 
 			if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2501,7 +2501,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
                 msg = chat + strlen(buf);
             }
 
-            snprintf(buf,  sizeof (buf), "(%.*s): ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            SDL_snprintf(buf,  sizeof (buf), "(%.*s): ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
 
 			if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2510,7 +2510,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
                 msg = chat + strlen(buf);
             }
 
-            snprintf(buf,  sizeof (buf), "[SPEC] %.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            SDL_snprintf(buf,  sizeof (buf), "[SPEC] %.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
 
 			if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2652,11 +2652,11 @@ void CL_ParsePrint ()
 		}
 
 		if      (!strncmp(s0, "#0:qtv_say_game:",      sizeof("#0:qtv_say_game:")-1))
-			snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
+			SDL_snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
 		else if (!strncmp(s0, "#0:qtv_say_team_game:", sizeof("#0:qtv_say_team_game:")-1))
-			snprintf(qtvstr, sizeof(qtvstr), "%s(%s)%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
+			SDL_snprintf(qtvstr, sizeof(qtvstr), "%s(%s)%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
 		else
-			snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_chatprefix.string, false), name, column);
+			SDL_snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_chatprefix.string, false), name, column);
 
 		s0 = qtvstr;
 	}
@@ -2788,11 +2788,11 @@ void CL_ParsePrint ()
 				char tmpbuf[16];
 				GetLocalTime (&lt);
 				if (con_timestamps.value == 1) {
-					snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
+					SDL_snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
 					Com_Printf(tmpbuf);
 				}
 				else {
-					snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
+					SDL_snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
 					Com_Printf(tmpbuf);
 				}
 			}
@@ -2923,14 +2923,14 @@ extern unsigned int CL_SupportedFTEExtensions2 (void);
 
 		#ifdef PROTOCOL_VERSION_FTE
 		ext = cls.fteprotocolextensions ? cls.fteprotocolextensions : CL_SupportedFTEExtensions();
-		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE, ext);
+		SDL_snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE, ext);
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, ext);
 		strlcat(data, tmp, sizeof(data));
 		#endif // PROTOCOL_VERSION_FTE 
 
 		#ifdef PROTOCOL_VERSION_FTE2
 		ext = cls.fteprotocolextensions2 ? cls.fteprotocolextensions2 : CL_SupportedFTEExtensions2();
-		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE2, ext);
+		SDL_snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE2, ext);
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, ext);
 		strlcat(data, tmp, sizeof(data));
 		#endif // PROTOCOL_VERSION_FTE2 

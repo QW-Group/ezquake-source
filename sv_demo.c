@@ -130,7 +130,7 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 
 	if (destroyfiles)
 	{
-		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, d->path, d->name);
+		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, d->path, d->name);
 		Sys_remove(path);
 		strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
 		Sys_remove(path);
@@ -1569,7 +1569,7 @@ void SV_MVD_Record_f (void)
 
 	Sys_mkdir(va("%s/%s", fs_gamedir, sv_demoDir.string));
 
-	snprintf (name, sizeof(name), "%s/%s/%s", fs_gamedir, sv_demoDir.string, newname);
+	SDL_snprintf (name, sizeof(name), "%s/%s/%s", fs_gamedir, sv_demoDir.string, newname);
 
 	if ((c = strlen(name)) > 3)
 		if (strcmp(name + c - 4, ".mvd"))
@@ -1617,7 +1617,7 @@ void SV_MVDEasyRecord_f (void)
 		if ((int)teamplay.value >= 1 && i > 2)
 		{
 			// Teamplay
-			snprintf (name, sizeof(name), "%don%d_", Dem_CountTeamPlayers(Dem_Team(1)), Dem_CountTeamPlayers(Dem_Team(2)));
+			SDL_snprintf (name, sizeof(name), "%don%d_", Dem_CountTeamPlayers(Dem_Team(1)), Dem_CountTeamPlayers(Dem_Team(2)));
 			if ((int)sv_demoExtraNames.value > 0)
 			{
 				strlcat (name, va("[%s]_%s_vs_[%s]_%s_%s",
@@ -1633,7 +1633,7 @@ void SV_MVDEasyRecord_f (void)
 			if (i == 2)
 			{
 				// Duel
-				snprintf (name, sizeof(name), "duel_%s_vs_%s_%s",
+				SDL_snprintf (name, sizeof(name), "duel_%s_vs_%s_%s",
 				          Dem_PlayerName(1),
 				          Dem_PlayerName(2),
 				          sv.mapname);
@@ -1641,7 +1641,7 @@ void SV_MVDEasyRecord_f (void)
 			else
 			{
 				// FFA
-				snprintf (name, sizeof(name), "ffa_%s(%d)", sv.mapname, i);
+				SDL_snprintf (name, sizeof(name), "ffa_%s(%d)", sv.mapname, i);
 			}
 		}
 	}
@@ -1662,7 +1662,7 @@ void SV_MVDEasyRecord_f (void)
 	Q_free(name3);
 	for (i = 1; dir.numfiles; )
 	{
-		snprintf(name2, sizeof(name2), "%s_%02i", name, i++);
+		SDL_snprintf(name2, sizeof(name2), "%s_%02i", name, i++);
 		if (!(name3 = quote(name2)))
 			return;
 		dir = Sys_listdir(va("%s/%s", fs_gamedir, sv_demoDir.string),
@@ -1670,7 +1670,7 @@ void SV_MVDEasyRecord_f (void)
 		Q_free(name3);
 	}
 
-	snprintf(name2, sizeof(name2), "%s", va("%s/%s/%s.mvd", fs_gamedir, sv_demoDir.string, name2));
+	SDL_snprintf(name2, sizeof(name2), "%s", va("%s/%s/%s.mvd", fs_gamedir, sv_demoDir.string, name2));
 
 	SV_MVD_Record (SV_InitRecordFile(name2), false);
 }

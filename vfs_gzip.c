@@ -237,7 +237,7 @@ static qbool FSGZIP_FLocate(void *handle, flocation_t *loc, const char *filename
 		if (loc)
 		{
 			loc->index = 0;
-			snprintf(loc->rawname, sizeof(loc->rawname), "%s/%s", gzip->filename, filename);
+			SDL_snprintf(loc->rawname, sizeof(loc->rawname), "%s/%s", gzip->filename, filename);
 			loc->offset = pf->filepos;
 			loc->len = pf->filelen;
 		}

@@ -75,7 +75,7 @@ char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext)
 {
 	static char header[1024];
 
-	snprintf(header, sizeof(header), "QTV\n" "VERSION: %g\n" QTV_EZQUAKE_EXT ": %d\n", qtv_ver, qtv_ezquake_ext);
+	SDL_snprintf(header, sizeof(header), "QTV\n" "VERSION: %g\n" QTV_EZQUAKE_EXT ": %d\n", qtv_ver, qtv_ezquake_ext);
 
 	return header;
 }
@@ -224,7 +224,7 @@ void QTV_Say_f (void)
 	{
 		int len;
 		char text[1024] = {0};
-		snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s + 1);
+		SDL_snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s + 1);
 		if ((len = strlen(text)))
 			text[len - 1] = 0;
 		Cmd_TokenizeString(text);

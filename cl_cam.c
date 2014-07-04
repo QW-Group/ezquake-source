@@ -174,7 +174,7 @@ void Cam_Lock(int playernum)
 	if (cl_multiview.value && cls.mvdplayback)
 		return; 
 
-	snprintf(st, sizeof (st), "ptrack %i", playernum);
+	SDL_snprintf(st, sizeof (st), "ptrack %i", playernum);
 
 	if (cls.mvdplayback) {
 		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
@@ -682,7 +682,7 @@ static char *myftos (float f)
 
 	val = buf[(idx++) & 3];
 
-	snprintf (val, MAX_VAL, "%f", f);
+	SDL_snprintf (val, MAX_VAL, "%f", f);
 
 	// strip trailing zeroes
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
@@ -924,7 +924,7 @@ void CL_Trackkiller_f(void)
 {
 	if (killer >= 0 && killer < MAX_CLIENTS) {
 		char buf[16];
-		snprintf(buf, sizeof(buf), "track %d\n", cl.players[killer].userid);
+		SDL_snprintf(buf, sizeof(buf), "track %d\n", cl.players[killer].userid);
 		Cbuf_AddText(buf);
 	}
 }

@@ -468,8 +468,8 @@ void Demo_AddDemoToPlaylist (char *display_name, char *path)
 		return;
 	}
 
-	snprintf (demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
-	snprintf (demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
+	SDL_snprintf (demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
+	SDL_snprintf (demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
 	demo_playlist_num++;
 }
 

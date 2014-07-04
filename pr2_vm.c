@@ -171,7 +171,7 @@ qbool VM_LoadNative( vm_t * vm )
 
 	while ( ( gpath = FS_NextPath( gpath ) ) )
 	{
-		snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, vm->name);
+		SDL_snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, vm->name);
 		vm->hInst = Sys_DLOpen( name );
 		if ( vm->hInst )
 		{
@@ -248,7 +248,7 @@ void LoadMapFile( qvm_t*qvm, char* fname )
 	byte   *p;
 
 	Con_DPrintf("Loading symbol information\n");
-	snprintf( name, sizeof( name ), "%s.map", fname );
+	SDL_snprintf( name, sizeof( name ), "%s.map", fname );
 	buff = FS_LoadTempFile( name , NULL );
 	qvm->sym_info = NULL;
 	if ( !buff )
@@ -317,7 +317,7 @@ qbool VM_LoadBytecode( vm_t * vm, sys_callex_t syscall1 )
 	char num[32];
 	int filesize;
 
-	snprintf( name, sizeof( name ), "%s.qvm", vm->name );
+	SDL_snprintf( name, sizeof( name ), "%s.qvm", vm->name );
 
 	Con_DPrintf( "VM_LoadBytecode: load %s\n", name );
 	buff = FS_LoadTempFile( name , &filesize );
@@ -329,7 +329,7 @@ qbool VM_LoadBytecode( vm_t * vm, sys_callex_t syscall1 )
 	Info_SetStar( &_localinfo_, "*qvm", "QVM" );
 	//	Info_SetValueForStarKey( svs.info, "*qvm", "QVM", MAX_SERVERINFO_STRING );
 
-	snprintf( num, sizeof(num), "%i", CRC_Block( ( byte * ) buff, filesize ) );
+	SDL_snprintf( num, sizeof(num), "%i", CRC_Block( ( byte * ) buff, filesize ) );
 	Info_SetValueForStarKey( svs.info, "*progs", num, MAX_SERVERINFO_STRING );
 
 	header = ( vmHeader_t * ) buff;

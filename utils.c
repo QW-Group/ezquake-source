@@ -88,7 +88,7 @@ char *SecondsToMinutesString(int print_time) {
 	minutes = fmod (print_time / 60, 10);
 	tens_seconds = fmod (print_time / 10, 6);
 	seconds = fmod (print_time, 10);
-	snprintf (time, sizeof(time), "%i%i:%i%i", tens_minutes, minutes, tens_seconds, seconds);
+	SDL_snprintf (time, sizeof(time), "%i%i:%i%i", tens_minutes, minutes, tens_seconds, seconds);
 	return time;
 }
 
@@ -102,7 +102,7 @@ char *SecondsToHourString(int print_time) {
 	minutes = fmod (print_time / 60, 10);
 	tens_seconds = fmod (print_time / 10, 6);
 	seconds = fmod (print_time, 10);
-	snprintf (time, sizeof(time), "%i%i:%i%i:%i%i", tens_hours, hours, tens_minutes, minutes, tens_seconds, seconds);
+	SDL_snprintf (time, sizeof(time), "%i%i:%i%i:%i%i", tens_hours, hours, tens_minutes, minutes, tens_seconds, seconds);
 	return time;
 }
 
@@ -356,7 +356,7 @@ int Util_Extend_Filename(char *filename, char **ext) {
 		if (++i == 1000)
 			break;
 		for (s = ext; *s; s++) { 
-			snprintf (extendedname + offset, sizeof(extendedname) - offset, "_%03i.%s", i, *s);
+			SDL_snprintf (extendedname + offset, sizeof(extendedname) - offset, "_%03i.%s", i, *s);
 			if ((f = fopen(extendedname, "rb"))) {
 				fclose(f);
 				break;
@@ -436,7 +436,7 @@ char *Util_Invalid_Filename_Msg(char *s) {
 	if (!s)
 		return NULL;
 
-	snprintf(err, sizeof(err), "%s is not a valid filename (?*:<>\" are illegal characters)\n", s);
+	SDL_snprintf(err, sizeof(err), "%s is not a valid filename (?*:<>\" are illegal characters)\n", s);
 	return err;
 }
 
@@ -900,8 +900,8 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
                 {
                     if (pad)
                     {
-					    if (right)  snprintf(buf, sizeof(buf)-1, "%-*s", pad, arg2);
-                        else        snprintf(buf, sizeof(buf)-1, "%*s", pad, arg2);
+					    if (right)  SDL_snprintf(buf, sizeof(buf)-1, "%-*s", pad, arg2);
+                        else        SDL_snprintf(buf, sizeof(buf)-1, "%*s", pad, arg2);
                     }
                     else
                     {
@@ -1442,7 +1442,7 @@ qbool Util_GetNextWordwrapString(const char *input, char *target, int start_inde
 	// Copy the wrap string to the target buffer.
 	if (target)
 	{
-		snprintf(target, min(target_max_size, max_width), "%s", input + start_index);
+		SDL_snprintf(target, min(target_max_size, max_width), "%s", input + start_index);
 	}
 
 	return retval;

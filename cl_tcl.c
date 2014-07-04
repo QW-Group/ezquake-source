@@ -206,7 +206,7 @@ static int TCL_DenyProc (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj 
 	char result[80];
 	const char* command = Tcl_GetString (objv[0]);
 
-	snprintf (result, 80, "Tcl command \"%s\" not allowed in Quakeworld", command);
+	SDL_snprintf (result, 80, "Tcl command \"%s\" not allowed in Quakeworld", command);
 	Tcl_SetResult (interp, result, TCL_VOLATILE);
 	return (TCL_ERROR);
 }

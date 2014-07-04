@@ -358,7 +358,7 @@ void CL_RegisterQWURLProtocol_f(void)
 	//
 	{
 		char open_cmd[1024];
-		snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
+		SDL_snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
 
 		// Open / Create the key.
 		if (RegCreateKeyEx(HKEY_CURRENT_USER,		// A handle to an open subkey.
@@ -391,7 +391,7 @@ void CL_RegisterQWURLProtocol_f(void)
 	//
 	{
 		char default_icon[1024];
-		snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
+		SDL_snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
 
 		// Open / Create the key.
 		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_DEFAULTICON_REGKEY, 
@@ -474,7 +474,7 @@ char *CL_Macro_Demotime(void)
 	// Intended for scripted & timed camera movement
 	static char macrobuf[16];
 
-	snprintf(macrobuf, sizeof(macrobuf), "%f", (float) cls.demotime);
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%f", (float) cls.demotime);
 	return macrobuf;
 }
 
@@ -483,7 +483,7 @@ char *CL_Macro_Rand(void)
 	// Returns a number in range <0..1)
 	static char macrobuf[16];
 
-	snprintf(macrobuf, sizeof(macrobuf), "%f", (double) rand() / RAND_MAX);
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%f", (double) rand() / RAND_MAX);
 	return macrobuf;
 }
 
@@ -505,14 +505,14 @@ char *CL_Macro_ServerIp(void)
 char *CL_Macro_Conwidth(void) 
 {
 	static char macrobuf[16];
-	snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conwidth);
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conwidth);
 	return macrobuf;
 }
 
 char *CL_Macro_Conheight(void)
 {
 	static char macrobuf[16];
-	snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conheight);
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conheight);
 	return macrobuf;
 }
 
@@ -664,13 +664,13 @@ static void CL_SendConnectPacket(
 	extensions = CLIENT_EXTENSIONS &~ (cl_novweps.value ? Z_EXT_VWEP : 0);
 	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", extensions), sizeof(biguserinfo));
 
-	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
+	SDL_snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
 
 	#ifdef PROTOCOL_VERSION_FTE
 	if (cls.fteprotocolextensions) 
 	{
 		char tmp[128];
-		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
+		SDL_snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
 		strlcat(data, tmp, sizeof(data));
 	}
@@ -680,7 +680,7 @@ static void CL_SendConnectPacket(
 	if (cls.fteprotocolextensions2) 
 	{
 		char tmp[128];
-		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
+		SDL_snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
 		strlcat(data, tmp, sizeof(data));
 	}
@@ -739,7 +739,7 @@ void CL_CheckForResend (void)
 		cls.server_adr.port = BigShort(PORT_SERVER);
 
 	Com_Printf("&cf11connect:&r %s...\n", cls.servername);
-	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
+	SDL_snprintf(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
@@ -1905,7 +1905,7 @@ void CL_InitLocal (void)
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
 	Cvar_ResetCurrentGroup();
 
-	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
+	SDL_snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
 	if (COM_CheckParm ("-norjscripts") || COM_CheckParm ("-noscripts"))
 		Cvar_SetValue (&allow_scripts, 0);
@@ -2449,7 +2449,7 @@ void CL_Frame (double time)
 			cif_flags |= CIF_AFK;
 
 		if (cif_flags && cls.state >= ca_connected) // put key in userinfo only then we are connected, remove key if we not connected yet
-			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
+			SDL_snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
 
 		CL_UserinfoChanged ("chat", char_flags);
 	}
@@ -2923,13 +2923,13 @@ void CL_UpdateCaption(qbool force)
 	if (!cl_window_caption.value)
 	{
 		if (!cls.demoplayback && (cls.state == ca_active))
-			snprintf(str, sizeof(str), "ezQuake: %s", cls.servername);
+			SDL_snprintf(str, sizeof(str), "ezQuake: %s", cls.servername);
 		else
-			snprintf(str, sizeof(str), "ezQuake");
+			SDL_snprintf(str, sizeof(str), "ezQuake");
 	}
 	else
 	{
-		snprintf(str, sizeof(str), "%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus());
+		SDL_snprintf(str, sizeof(str), "%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus());
 	}
 
 	if (force || strcmp(str, caption))

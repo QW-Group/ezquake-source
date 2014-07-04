@@ -944,7 +944,7 @@ void PF_argv (void)
 	if (num < 0 || num >= Cmd_Argc())
 		RETURN_STRING("");
 	else {
-		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%s", Cmd_Argv(num));
+		SDL_snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%s", Cmd_Argv(num));
 		RETURN_STRING(pr_string_temp);
 //		G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
 		PF_SetTempString();
@@ -1366,7 +1366,7 @@ void PF_log(void)
 	char name[MAX_OSPATH], *text;
 	FILE *file;
 
-	snprintf(name, MAX_OSPATH, "%s/%s.log", fs_gamedir, G_STRING(OFS_PARM0));
+	SDL_snprintf(name, MAX_OSPATH, "%s/%s.log", fs_gamedir, G_STRING(OFS_PARM0));
 	text = PF_VarString(2);
 	PR_CleanText((unsigned char*)text);
 
@@ -1519,9 +1519,9 @@ void PF_ftos (void)
 	v = G_FLOAT(OFS_PARM0);
 
 	if (v == (int)v)
-		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%d",(int)v);
+		SDL_snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%d",(int)v);
 	else
-		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%5.1f",v);
+		SDL_snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%5.1f",v);
 	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
 	PF_SetTempString();
 }
@@ -1535,7 +1535,7 @@ void PF_fabs (void)
 
 void PF_vtos (void)
 {
-	snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+	SDL_snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
 	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
 
 	PF_SetTempString();
@@ -2700,7 +2700,7 @@ void PF_listmaps (void)
 	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
 	                  ".bsp$", SORT_BY_NAME);
 	list = dir.files;
-	snprintf(tmp, sizeof(tmp), "%d", dir.numfiles);
+	SDL_snprintf(tmp, sizeof(tmp), "%d", dir.numfiles);
 	pad = strlen(tmp);
 
 	if (!list->name[0])
@@ -2740,7 +2740,7 @@ void PF_listmaps (void)
 		case 1:
 			if (i % ti == 0)
 			{ //print header
-				snprintf(tmp, sizeof(tmp), "%d-%d", id, id + ti - 1);
+				SDL_snprintf(tmp, sizeof(tmp), "%d-%d", id, id + ti - 1);
 				num[0] = '\0';
 				for (j = strlen(tmp); j < ((pad * 2) + 1); j++) //padding to align
 					strlcat(num, " ", sizeof(num));
@@ -2749,7 +2749,7 @@ void PF_listmaps (void)
 			}
 			i++;
 			//print id and name
-			snprintf(tmp, sizeof(tmp), "%d:%s ", j++, list->name);
+			SDL_snprintf(tmp, sizeof(tmp), "%d:%s ", j++, list->name);
 			if (i % 2 != 0) //red every second
 				Q_redtext((unsigned char*)tmp);
 			strlcat(line, tmp, sizeof(line));
@@ -2760,7 +2760,7 @@ void PF_listmaps (void)
 			}
 			break;
 		case 2:
-			snprintf(tmp, sizeof(tmp), "%d", id);
+			SDL_snprintf(tmp, sizeof(tmp), "%d", id);
 			num[0] = '\0';
 			for (j = strlen(tmp); j < pad; j++) //padding to align
 				strlcat(num, " ", sizeof(num));
@@ -2769,22 +2769,22 @@ void PF_listmaps (void)
 			break;
 		case 3:
 			list->name[13] = 0;
-			snprintf(tmp, sizeof(tmp), "%03d", id);
+			SDL_snprintf(tmp, sizeof(tmp), "%03d", id);
 			Q_redtext((unsigned char*)tmp);
-			snprintf(line, sizeof(line), "%s\x85%-13s", tmp, list->name);
+			SDL_snprintf(line, sizeof(line), "%s\x85%-13s", tmp, list->name);
 			id++;
 			list++;
 			if (!list->name[0])
 				continue;
 			list->name[13] = 0;
 			list->name[strlen(list->name) - 4] = 0;
-			snprintf(tmp, sizeof(tmp), "%03d", id);
+			SDL_snprintf(tmp, sizeof(tmp), "%03d", id);
 			Q_redtext((unsigned char*)tmp);
 			SV_ClientPrintf(client, level, "%s %s\x85%-13s\n", line, tmp, list->name);
 			line[0] = 0; //bliP: 24/9 bugfix
 			break;
 		default:
-			snprintf(tmp, sizeof(tmp), "%d", id);
+			SDL_snprintf(tmp, sizeof(tmp), "%d", id);
 			Q_redtext((unsigned char*)tmp);
 			SV_ClientPrintf(client, level, "%s%c%s%s", tmp, 133, list->name, (i == range) ? "\n" : " ");
 			i++;
@@ -2851,12 +2851,12 @@ void PF_infokey (void)
 		else if (!strncmp(key, "realip", 7))
 			strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
 		else if (!strncmp(key, "download", 9))
-			//snprintf(ov, sizeof(ov), "%d", cl->download != NULL ? (int)(100*cl->downloadcount/cl->downloadsize) : -1);
-			snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
+			//SDL_snprintf(ov, sizeof(ov), "%d", cl->download != NULL ? (int)(100*cl->downloadcount/cl->downloadsize) : -1);
+			SDL_snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
 		else if (!strncmp(key, "ping", 5))
-			snprintf(ov, sizeof(ov), "%d", SV_CalcPing (cl));
+			SDL_snprintf(ov, sizeof(ov), "%d", SV_CalcPing (cl));
 		else if (!strncmp(key, "*userid", 8))
-			snprintf(ov, sizeof(ov), "%d", svs.clients[e1 - 1].userid);
+			SDL_snprintf(ov, sizeof(ov), "%d", svs.clients[e1 - 1].userid);
 		else if (!strncmp(key, "login", 6))
 			value = cl->login;
 		else

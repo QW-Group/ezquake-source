@@ -84,14 +84,14 @@ void Hud262_CatchStringsOnLoad(char *line)
 		if (hud262_load_buff == NULL)
 		{
 			hud262_load_buff = (char*) Q_malloc( (strlen(line) + 2) * sizeof(char));
-			snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
+			SDL_snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
 		}
 		else
 		{
 			tmpbuff = (char *) Q_malloc(strlen(hud262_load_buff) + 1);
 			strcpy(tmpbuff, hud262_load_buff);
 			hud262_load_buff = (char *) Q_realloc(hud262_load_buff, (strlen(tmpbuff) + strlen(line) + 2) * sizeof(char));
-			snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
+			SDL_snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
 			Q_free(tmpbuff);
 		}
 	}
@@ -503,7 +503,7 @@ void Cmd_Echo_f (void)
 
 	memset (args, 0, MAX_MACRO_STRING);
 
-	snprintf (args, MAX_MACRO_STRING, "%s", Cmd_Argv(1));
+	SDL_snprintf (args, MAX_MACRO_STRING, "%s", Cmd_Argv(1));
 
 	for (i = 2; i < Cmd_Argc(); i++) {
 		strlcat (args, " ", MAX_MACRO_STRING);
@@ -692,7 +692,7 @@ void Cmd_EditAlias_f (void)
 		s = Z_Strdup(a->value);
 	}
 
-	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
+	SDL_snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, str2wcs(final_string), strlen(final_string)*sizeof(wchar));
 	Z_Free(s);
@@ -1412,7 +1412,7 @@ void Cmd_AddMacroEx (const char *s, char *(*f) (void), int teamplay)
 	if (macro_count == MAX_MACROS)
 		Sys_Error ("Cmd_AddMacro: macro_count == MAX_MACROS");
 
-	snprintf (macro_commands[macro_count].name, sizeof (macro_commands[macro_count].name), "%s", s);
+	SDL_snprintf (macro_commands[macro_count].name, sizeof (macro_commands[macro_count].name), "%s", s);
 	macro_commands[macro_count].func = f;
 	macro_commands[macro_count].teamplay = teamplay;
 

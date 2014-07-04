@@ -123,7 +123,7 @@ void CL_ForwardToServer_f (void) {
 			COM_StripExtension(cls.downloadname, cls.downloadtempname);
 			strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 			cls.downloadtype = dl_single;
-			//snprintf (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
+			//SDL_snprintf (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
 			//strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
 		}
 */
@@ -133,7 +133,7 @@ void CL_ForwardToServer_f (void) {
 			time(&client_time);
 			for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
 				char tmp[3];
-				snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
+				SDL_snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
 				strlcat(client_time_str, tmp, sizeof(client_time_str));
 			}
 
@@ -154,7 +154,7 @@ void CL_ForwardToServer_f (void) {
 				SHA1_Update((unsigned char *)" ");
 			}
 
-			snprintf(server_string, server_string_len, "%s %s%s ",
+			SDL_snprintf(server_string, server_string_len, "%s %s%s ",
 				Cmd_Argv(1), SHA1_Final(), client_time_str);
 			for (i = 3; i < Cmd_Argc(); ++i)
 			{
@@ -346,7 +346,7 @@ void CL_Say_f (void) {
     // first char isn't quote, last char isn't quote or string is shorter then 2 chars
     if (s[0] != '\"' || s[strlen(s)-1] != '\"' || s[1] == '\0')
     {
-        snprintf(qmsg, sizeof(qmsg), "\"%s\"", s);
+        SDL_snprintf(qmsg, sizeof(qmsg), "\"%s\"", s);
         s = qmsg;
     }
 
@@ -366,7 +366,7 @@ void CL_Say_f (void) {
         // 2) cut the leading quote (+1) and also the trailing quote (len is 1 char shorter)
         strlcpy (c_msg, s+1, len);
 
-		snprintf (msg, sizeof(msg), "\x0d%s%s", TP_ParseFunChars(strcat(c_fn, c_fna), true), c_msg);
+		SDL_snprintf (msg, sizeof(msg), "\x0d%s%s", TP_ParseFunChars(strcat(c_fn, c_fna), true), c_msg);
 
 		s = msg;
 	}
@@ -567,7 +567,7 @@ void CL_Rcon_f (void) {
 		time(&client_time);
 		for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
 			char tmp[3];
-			snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
+			SDL_snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
 			strlcat(client_time_str, tmp, sizeof(client_time_str));
 		}
 		
@@ -663,7 +663,7 @@ void CL_Download_f (void){
 	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 	cls.downloadstarttime = Sys_DoubleTime();
 
-	snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
+	SDL_snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
 	COM_StripExtension(cls.downloadname, cls.downloadtempname);
 	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
@@ -1084,7 +1084,7 @@ usermainbuttons_t CL_GetLastCmd (void) {
    return ret;
 
    /*
-   snprintf(str, sizeof(str), "%s %s%s%s %s %s %s", 
+   SDL_snprintf(str, sizeof(str), "%s %s%s%s %s %s %s", 
       cmd.upmove > 0 ? "up" : cmd.upmove < 0 ? "dn" : "  ", 
       cmd.sidemove < 0 ? "<-" : "  ", 
       cmd.forwardmove > 0 ? "^" : cmd.forwardmove < 0 ? "v" : " ", 

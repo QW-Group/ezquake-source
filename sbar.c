@@ -694,7 +694,7 @@ static void Sbar_DrawInventory (void) {
 	if (sbar_drawammocounts.value)  // kazik
     {
 		for (i = 0; i < 4; i++) {
-			snprintf (num, sizeof(num), "%3i", cl.stats[STAT_SHELLS + i]);
+			SDL_snprintf (num, sizeof(num), "%3i", cl.stats[STAT_SHELLS + i]);
 			if (headsup) {
 				Sbar_DrawSubPic(hudswap ? 0 : vid.width - 42, -24 - (4 - i) * 11, sb_ibar, 3 + (i * 48), 0, 42, 11);
 				if (num[0] != ' ')
@@ -761,7 +761,7 @@ static void Sbar_DrawFrags_DrawCell(int x, int y, int topcolor, int bottomcolor,
 	Draw_Fill (sbar_xofs + x * 8 + 10, y + 4, 28, 3, Sbar_ColorForMap (bottomcolor));
 
 	// draw number
-	snprintf (num, sizeof(num), "%3i", frags);
+	SDL_snprintf (num, sizeof(num), "%3i", frags);
 
 	Sbar_DrawCharacter ((x + 1) * 8 , -24, num[0]);
 	Sbar_DrawCharacter ((x + 2) * 8 , -24, num[1]);
@@ -969,7 +969,7 @@ static void Sbar_DrawCompact(void) {
 
 	align = scr_compactHudAlign.value ? 1 : 0;
 	for (i = 0; i < 4; i++) {
-		snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
+		SDL_snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
 		if (cl.stats[STAT_SHELLS + i] < 5)
 			Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 174 + 32 * i, 3, str);
 		else
@@ -1003,7 +1003,7 @@ static void Sbar_DrawCompact_TF(void) {
 		Sbar_DrawNum (2, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
 	Sbar_DrawNum (86, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
 	for (i = 0; i < 4; i++) {
-			snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
+			SDL_snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
 			if (cl.stats[STAT_SHELLS + i] < 5)
 				Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 166 + 32 * (i % 2), i >= 2 ? 14 : 3, str);
 			else
@@ -1287,7 +1287,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 		if (p < 0 || p > 999)
 			p = 999;
 
-		snprintf (num, sizeof(num), "&cAAD%4i", p);
+		SDL_snprintf (num, sizeof(num), "&cAAD%4i", p);
 		Draw_ColoredString(x, y, num, 0);
 		x += 32; // move it forward, ready to print next column
 
@@ -1295,21 +1295,21 @@ static void Sbar_DeathmatchOverlay (int start) {
 		p = s->pl;
 		if (p == 0) {
 			// 0 - white
-			snprintf (num, sizeof(num), "%3i", p);
+			SDL_snprintf (num, sizeof(num), "%3i", p);
 			Draw_ColoredString (x, y, num, 0);
 		}
 		else if (p < 3) {
 			// 1-2 - yellow
-			snprintf (num, sizeof(num), "&cdd2%3i", p);
+			SDL_snprintf (num, sizeof(num), "&cdd2%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
 		else if (p < 6) {
 			// 3-5 orange
-			snprintf (num, sizeof(num), "&cf50%3i", p);
+			SDL_snprintf (num, sizeof(num), "&cf50%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
 		else {	// 6+ - red
-			snprintf (num, sizeof(num), "&cf00%3i", p);
+			SDL_snprintf (num, sizeof(num), "&cf00%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
 
@@ -1322,30 +1322,30 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 		if (scr_scoreboard_afk.integer && (SDL_atoi(Info_ValueForKey(s->userinfo, "chat")) & CIF_AFK)) {
 			if (scr_scoreboard_afk_style.integer == 2) {
-				snprintf(myminutes, sizeof(myminutes), "&cf11%3i&r", total);
+				SDL_snprintf(myminutes, sizeof(myminutes), "&cf11%3i&r", total);
 			} else {
-				snprintf(myminutes, sizeof(myminutes), "&cf11afk&r");
+				SDL_snprintf(myminutes, sizeof(myminutes), "&cf11afk&r");
 			}
 		} else {
-			snprintf (myminutes, sizeof (myminutes), "%3i", total);
+			SDL_snprintf (myminutes, sizeof (myminutes), "%3i", total);
 		}
 
 		if (scr_scoreboard_drawfps) {
 			if (s->last_fps > 0 && !s->spectator) {
-				snprintf (myminutes, sizeof (myminutes), "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
+				SDL_snprintf (myminutes, sizeof (myminutes), "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
 				if (s->last_fps < 70) {
 					for (d=0; d < strlen(myminutes); d++)
 						myminutes[d] ^= 128;
 				}
 			}
 			else {
-				snprintf (myminutes, sizeof (myminutes), "   ");
+				SDL_snprintf (myminutes, sizeof (myminutes), "   ");
 			}
 		}
 		
 		// draw spectator
 		if (s->spectator) {
-			snprintf (scorerow, sizeof(scorerow), " %s", myminutes);
+			SDL_snprintf (scorerow, sizeof(scorerow), " %s", myminutes);
 			Draw_String (x, y, scorerow); // draw time
 
 			x += 8*5; // move "spectator" 5 symbols right, so time column is not occupied
@@ -1389,14 +1389,14 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 		// frags
 		fragsint = bound(-999, s->frags, 9999); // limit to 4 symbols int
-		snprintf (fragsstr, sizeof(fragsstr), "%s%3i", (fragsint < 1000 && fragsint > -100) ? " " : "", fragsint);
+		SDL_snprintf (fragsstr, sizeof(fragsstr), "%s%3i", (fragsint < 1000 && fragsint > -100) ? " " : "", fragsint);
 
 		// team
 		if (cl.teamplay) {
 			strlcpy  (team, s->team, sizeof(team));
-			snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %-4s %s", myminutes, fragsstr, team, name);
+			SDL_snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %-4s %s", myminutes, fragsstr, team, name);
 		} else {
-			snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %s", myminutes, fragsstr, name);
+			SDL_snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %s", myminutes, fragsstr, name);
 		}
 		Draw_String (x, y, scorerow);
 
@@ -1412,9 +1412,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 			tk_color = playerstats[2] == 0 ? "FFF" : scr_scoreboard_tk_color.string;
 			
 			if (stats_team)
-				snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i &c%s%3i ", kill_color, playerstats[0], tk_color, playerstats[2], death_color, playerstats[1]);
+				SDL_snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i &c%s%3i ", kill_color, playerstats[0], tk_color, playerstats[2], death_color, playerstats[1]);
 			else
-				snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i ", kill_color, playerstats[0], death_color, playerstats[1]);
+				SDL_snprintf (scorerow, sizeof(scorerow), " &c%s%3i  &c%s%3i ", kill_color, playerstats[0], death_color, playerstats[1]);
 			
 			if (stats_touches) // flag touches
 			{
@@ -1544,7 +1544,7 @@ static void Sbar_TeamOverlay (void) {
 		if (pavg < 0 || pavg > 999)
 			pavg = 999;
 
-		snprintf (num, sizeof(num), "%3i/%3i/%3i", plow, pavg, phigh);
+		SDL_snprintf (num, sizeof(num), "%3i/%3i/%3i", plow, pavg, phigh);
 		Draw_String (x, y, num);
 
 		// draw team
@@ -1552,11 +1552,11 @@ static void Sbar_TeamOverlay (void) {
 		Draw_String (x + 104, y, team);
 
 		// draw total
-		snprintf (num, sizeof(num), "%5i", tm->frags);
+		SDL_snprintf (num, sizeof(num), "%5i", tm->frags);
 		Draw_String (x + 104 + 40, y, num);
 
 		// draw players
-		snprintf (num, sizeof(num), "%5i", tm->players);
+		SDL_snprintf (num, sizeof(num), "%5i", tm->players);
 		Draw_String (x + 104 + 88, y, num);
 
 		if (!cls.mvdplayback || !cl_multiview.value) {
@@ -1638,7 +1638,7 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 		Draw_Fill (x, y + 4, 40, 4, Sbar_ColorForMap (bottom));
 
 		// draw number
-		snprintf (num, sizeof(num), "%3i", s->frags);
+		SDL_snprintf (num, sizeof(num), "%3i", s->frags);
 
 		Draw_Character (x + 8 , y, num[0]);
 		Draw_Character (x + 16, y, num[1]);
@@ -1699,7 +1699,7 @@ drawteams:
 		// draw total
 		Draw_Fill (x + 40, y + 1, 48, 3, Sbar_ColorForMap (tm->topcolor));
 		Draw_Fill (x + 40, y + 4, 48, 4, Sbar_ColorForMap (tm->bottomcolor));
-		snprintf (num, sizeof(num), "%4i", tm->frags);
+		SDL_snprintf (num, sizeof(num), "%4i", tm->frags);
 		Draw_Character (x + 40 + 8 , y, num[0]);
 		Draw_Character (x + 40 + 16, y, num[1]);
 		Draw_Character (x + 40 + 24, y, num[2]);

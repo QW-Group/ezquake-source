@@ -151,7 +151,7 @@ void HUD_Func_f(void)
     {
         char buf[512];
 
-        snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, Cmd_Argv(1));
+        SDL_snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, Cmd_Argv(1));
         if (Cvar_Find(buf) != NULL)
         {
             Cbuf_AddText(buf);
@@ -1128,7 +1128,7 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     cvar_t *var;
     char buf[128];
 
-    snprintf (buf, sizeof (buf), "hud_%s_%s", hud_name, subvar);
+    SDL_snprintf (buf, sizeof (buf), "hud_%s_%s", hud_name, subvar);
     var = (cvar_t *)Q_malloc(sizeof(cvar_t));
     memset(var, 0, sizeof(cvar_t));
 
@@ -1220,7 +1220,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	//
 	{
 		char order[18];
-		snprintf (order, sizeof(order), "%d", draw_order);
+		SDL_snprintf (order, sizeof(order), "%d", draw_order);
 		hud->order = HUD_CreateVar(name, "order", order);
 		hud->order->OnChange = HUD_OnChangeOrder;
 	}
@@ -1379,7 +1379,7 @@ cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
     int i;
     char buf[128];
 
-    snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, subvar);
+    SDL_snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, subvar);
 
     for (i=0; i < hud->num_params; i++)
 	{

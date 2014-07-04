@@ -68,13 +68,13 @@ int SCR_DrawDemoStatus(void)
         Draw_String(vid.width/2-4*6, y-16, "paused");
 
     // speed
-    snprintf (st, sizeof (st), "%d%%", cls.demospeed);
+    SDL_snprintf (st, sizeof (st), "%d%%", cls.demospeed);
     Draw_String(x+8, y-16, st);
 
     // status - time
     mins = ((int)(hosttime-cls.demostarttime)) / 60;
     secs = ((int)(hosttime-cls.demostarttime)) % 60;
-    snprintf (st, sizeof (st), "%d:%02d", mins, secs);
+    SDL_snprintf (st, sizeof (st), "%d:%02d", mins, secs);
     Draw_String(x+8*(w-strlen(st)-1), y-16, st);
 
     // progress bar
@@ -397,9 +397,9 @@ void SCR_DrawClients(void)
 	x = (vid.width - 320) / 2 + 4;
 
 	strlcpy (line, " # ", sizeof (line));
-	snprintf (buf, sizeof (buf), "%*.*s ", uid_w, uid_w, "uid");
+	SDL_snprintf (buf, sizeof (buf), "%*.*s ", uid_w, uid_w, "uid");
 	strlcat (line, buf, sizeof (line));
-	snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, "name");
+	SDL_snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, "name");
 	strlcat (line, buf, sizeof (line));
 	strlcat (line, "team skin     rate", sizeof (line));
 
@@ -407,10 +407,10 @@ void SCR_DrawClients(void)
 	y += 8;
 
 	strlcpy (line, "\x1D\x1F \x1D", sizeof (line));
-	snprintf (buf, sizeof (buf), "%*.*s", uid_w-2, uid_w-2, "\x1E\x1E\x1E\x1E");
+	SDL_snprintf (buf, sizeof (buf), "%*.*s", uid_w-2, uid_w-2, "\x1E\x1E\x1E\x1E");
 	strlcat (line, buf, sizeof (line));
 	strlcat (line, "\x1F \x1D", sizeof (line));
-	snprintf (buf, sizeof (buf), "%*.*s", 16-uid_w-2, 16-uid_w-2, "\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E");
+	SDL_snprintf (buf, sizeof (buf), "%*.*s", 16-uid_w-2, 16-uid_w-2, "\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E");
 	strlcat (line, buf, sizeof (line));
     strlcat (line, "\x1F \x1D\x1E\x1E\x1F \x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1F \x1D\x1E\x1E\x1F", sizeof (line));
 
@@ -427,26 +427,26 @@ void SCR_DrawClients(void)
 
 		line[0] = 0;
 
-		snprintf (buf, sizeof (buf), "%2d ", i);
+		SDL_snprintf (buf, sizeof (buf), "%2d ", i);
 		strlcat (line, buf, sizeof (line));
 
-		snprintf (buf, sizeof (buf), "%*d ", uid_w, cl.players[i].userid);
+		SDL_snprintf (buf, sizeof (buf), "%*d ", uid_w, cl.players[i].userid);
         strlcat(line, buf, sizeof (line));
 
-		snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, cl.players[i].name);
+		SDL_snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, cl.players[i].name);
 		strlcat (line, buf, sizeof (line));
 
-		snprintf(buf, sizeof (buf), "%-4.4s ", Info_ValueForKey(cl.players[i].userinfo, "team"));
+		SDL_snprintf(buf, sizeof (buf), "%-4.4s ", Info_ValueForKey(cl.players[i].userinfo, "team"));
 		strlcat (line, buf, sizeof (line));
 
 		if (cl.players[i].spectator)
 			strlcpy (buf, "<spec>   ", sizeof (buf));
 		else
-			snprintf (buf, sizeof (buf), "%-8.8s ", Info_ValueForKey(cl.players[i].userinfo, "skin"));
+			SDL_snprintf (buf, sizeof (buf), "%-8.8s ", Info_ValueForKey(cl.players[i].userinfo, "skin"));
 
 		strlcat (line, buf, sizeof (line));
 
-		snprintf (buf, sizeof (buf), "%4d", min(9999, atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
+		SDL_snprintf (buf, sizeof (buf), "%4d", min(9999, atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
 		strlcat (line, buf, sizeof (line));
 
 		Draw_String (x, y, line);
@@ -680,41 +680,41 @@ void SCR_NetStats(int x, int y, float period)
     Draw_Alt_String(x+36, y, "latency");
     y+=12;
 
-    snprintf (line, sizeof (line), "min  %4.1f %3d ms", f_min, ping_min);
+    SDL_snprintf (line, sizeof (line), "min  %4.1f %3d ms", f_min, ping_min);
     Draw_String(x, y, line);
     y+=8;
 
-    snprintf(line, sizeof (line), "avg  %4.1f %3d ms", f_avg, ping_avg);
+    SDL_snprintf(line, sizeof (line), "avg  %4.1f %3d ms", f_avg, ping_avg);
     Draw_String(x, y, line);
     y+=8;
 
-    snprintf(line, sizeof (line), "max  %4.1f %3d ms", f_max, ping_max);
+    SDL_snprintf(line, sizeof (line), "max  %4.1f %3d ms", f_max, ping_max);
     Draw_String(x, y, line);
     y+=8;
 
-    snprintf(line, sizeof (line), "dev     %5.2f ms", ping_dev);
+    SDL_snprintf(line, sizeof (line), "dev     %5.2f ms", ping_dev);
     Draw_String(x, y, line);
     y+=12;
 
     Draw_Alt_String(x+20, y, "packet loss");
     y+=12;
 
-    snprintf(line, sizeof (line), "lost       %3d %%", lost_lost);
+    SDL_snprintf(line, sizeof (line), "lost       %3d %%", lost_lost);
     Draw_String(x, y, line);
     y+=8;
 
-    snprintf(line, sizeof (line), "rate cut   %3d %%", lost_rate);
+    SDL_snprintf(line, sizeof (line), "rate cut   %3d %%", lost_rate);
     Draw_String(x, y, line);
     y+=8;
 
     if (with_delta)
-        snprintf(line, sizeof (line), "bad delta  %3d %%", lost_delta);
+        SDL_snprintf(line, sizeof (line), "bad delta  %3d %%", lost_delta);
     else
         strlcpy (line, "no delta compr", sizeof (line));
     Draw_String(x, y, line);
     y+=8;
 
-    snprintf(line, sizeof (line), "total      %3d %%", lost_total);
+    SDL_snprintf(line, sizeof (line), "total      %3d %%", lost_total);
     Draw_String(x, y, line);
     y+=12;
 
@@ -722,15 +722,15 @@ void SCR_NetStats(int x, int y, float period)
     Draw_Alt_String(x+4, y, "packet size/BPS");
     y+=12;
 
-    snprintf(line, sizeof (line), "out    %3d %5d", size_out, bandwidth_out);
+    SDL_snprintf(line, sizeof (line), "out    %3d %5d", size_out, bandwidth_out);
     Draw_String(x, y, line);
     y+=8;
 
-    snprintf(line, sizeof (line), "in     %3d %5d", size_in, bandwidth_in);
+    SDL_snprintf(line, sizeof (line), "in     %3d %5d", size_in, bandwidth_in);
     Draw_String(x, y, line);
     y+=8;
 
-    snprintf(line, sizeof (line), "total  %3d %5d", size_all, bandwidth_all);
+    SDL_snprintf(line, sizeof (line), "total  %3d %5d", size_all, bandwidth_all);
     Draw_String(x, y, line);
     y+=8;
 }
@@ -745,7 +745,7 @@ const char* SCR_GetTime (const char *format)
 	ptm = localtime (&t);
 	if (!ptm) return "-:-";
 	if (!strftime(buf, sizeof(buf)-1, format, ptm)) return "-:-";
-	//snprintf(buf, sizeof (buf), "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
+	//SDL_snprintf(buf, sizeof (buf), "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
 	return buf;
 }
 

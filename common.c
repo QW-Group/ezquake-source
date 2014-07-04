@@ -870,7 +870,7 @@ void Info_SetValueForStarKeyEx (char *s, char *key, char *value, int maxsize, qb
 	if (!value || !strlen(value))
 		return;
 
-	snprintf (new, sizeof (new), "\\%s\\%s", key, value);
+	SDL_snprintf (new, sizeof (new), "\\%s\\%s", key, value);
 
 	if ((int) (strlen(new) + strlen(s)) >= maxsize) {
 		Com_Printf ("Info string length exceeded\n");
@@ -1270,11 +1270,11 @@ qbool Info_ReverseConvert(ctxinfo_t *ctx, char *str, int size)
 
 		if (next_size < 1)
 		{
-			// sigh, next snprintf will not fit
+			// sigh, next SDL_snprintf will not fit
 			return false;
 		}
 
-		snprintf(str, size, "\\%s\\%s", a->name, a->value);
+		SDL_snprintf(str, size, "\\%s\\%s", a->name, a->value);
 		str += (size - next_size);
 		size = next_size;
 	}

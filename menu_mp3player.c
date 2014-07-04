@@ -97,7 +97,7 @@ void M_Menu_MP3_Control_Draw (void) {
 		frac = bound(0, elapsed - scroll_index, 1);
 		scroll_index = scroll_index % last_length;
 	} else {
-		snprintf(lastsonginfo, sizeof(lastsonginfo), "%s  ***  ", s);
+		SDL_snprintf(lastsonginfo, sizeof(lastsonginfo), "%s  ***  ", s);
 		strlcpy(last_title, s, sizeof(last_title));
 		last_length = strlen(lastsonginfo);
 		initial_time = realtime;

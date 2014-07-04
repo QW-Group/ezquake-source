@@ -193,7 +193,7 @@ void Calendar_f(void)
         if (day > 0)
         {
             char buf[8];
-            snprintf(buf, sizeof (buf), "%3d", day);
+            SDL_snprintf(buf, sizeof (buf), "%3d", day);
             if (day == tm.wDay)
                 ; // MakeStringYellow(buf);
             else
@@ -1080,9 +1080,9 @@ void Con_DrawConsole (int lines) {
 
 		i = strlen (dlbar);
 		if (cls.download)
-			snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
+			SDL_snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
 		else if (cls.upload)
-			snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
+			SDL_snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
 		else
 			return;
 

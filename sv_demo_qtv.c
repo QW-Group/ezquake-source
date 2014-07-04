@@ -544,9 +544,9 @@ void SV_MVD_RunPendingConnections (void)
 								char hash[512];
 								int md4sum[4];
 								
-								snprintf (hash, sizeof(hash), "%s%s", p->challenge, qtv_password.string);
+								SDL_snprintf (hash, sizeof(hash), "%s%s", p->challenge, qtv_password.string);
 								Com_BlockFullChecksum (hash, strlen(hash), (unsigned char*)md4sum);
-								snprintf (hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
+								SDL_snprintf (hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
 								p->hasauthed = !strcmp(password, hash);
 							}
 							break;
@@ -751,9 +751,9 @@ void QTVcmd_Say_f(mvddest_t *d)
 		cmd = "say_team"; // we can accept only this command, since we will send to specs only
 
 	// for clients and demo
-	snprintf(text, sizeof(text), "#0:qtv_%s_game:#%d:%s: %s\n", cmd, d->id, d->qtvname, p);
+	SDL_snprintf(text, sizeof(text), "#0:qtv_%s_game:#%d:%s: %s\n", cmd, d->id, d->qtvname, p);
 	// for server console and logs
-	snprintf(text2, sizeof(text2), "qtv: #0:qtv_%s_game:#%d:%s: %s\n", cmd, d->id, d->qtvname, p);
+	SDL_snprintf(text2, sizeof(text2), "qtv: #0:qtv_%s_game:#%d:%s: %s\n", cmd, d->id, d->qtvname, p);
 
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
 	{

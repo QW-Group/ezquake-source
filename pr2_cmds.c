@@ -1662,7 +1662,7 @@ void PF2_changelevel(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 	// check to make sure the level exists.
 	// this is work around for bellow check about two changelevels,
 	// which lock server in one map if we trying switch to map which does't exist
-	snprintf(expanded, MAX_QPATH, "maps/%s.bsp", s);
+	SDL_snprintf(expanded, MAX_QPATH, "maps/%s.bsp", s);
 
 //	FS_FOpenFile (expanded, &f);
 	f = FS_OpenVFS(expanded, "rb", FS_ANY);
@@ -1775,7 +1775,7 @@ void PF2_infokey(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 			date_t date;
 
 			SV_TimeOfDay(&date);
-			snprintf(ov, sizeof(ov), "%s", date.str);
+			SDL_snprintf(ov, sizeof(ov), "%s", date.str);
 		}
 		else if ((value = Info_ValueForKey(svs.info, key)) == NULL || !*value)
 			value = Info_Get(&_localinfo_, key);
@@ -1789,15 +1789,15 @@ void PF2_infokey(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 		else if (!strncmp(key, "realip", 7))
 			strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
 		else if (!strncmp(key, "download", 9))
-			snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
+			SDL_snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
 		else if (!strcmp(key, "ping"))
-			snprintf(ov, sizeof(ov), "%d", (int)SV_CalcPing(cl));
+			SDL_snprintf(ov, sizeof(ov), "%d", (int)SV_CalcPing(cl));
 		else if (!strcmp(key, "*userid"))
-			snprintf(ov, sizeof(ov), "%d", cl->userid);
+			SDL_snprintf(ov, sizeof(ov), "%d", cl->userid);
 		else if (!strncmp(key, "login", 6))
 			value = cl->login;
 		else if (!strcmp(key, "*VIP")) // qqshka: also located in userinfo, but this is more safe/secure way, imo
-			snprintf(ov, sizeof(ov), "%d", cl->vip);
+			SDL_snprintf(ov, sizeof(ov), "%d", cl->vip);
 		else if (!strcmp(key, "*state"))
 		{
 			switch (cl->state)
@@ -2048,7 +2048,7 @@ void PF2_FS_OpenFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 #if 0
 		while ( ( gpath = FS_NextPath( gpath ) ) )
 		{
-			snprintf( fname, sizeof( fname ), "%s/%s" , gpath, name );
+			SDL_snprintf( fname, sizeof( fname ), "%s/%s" , gpath, name );
 			pr2_fopen_files[i].handle = fopen(fname, cmodes[fmode]);
 			if ( pr2_fopen_files[i].handle )
 			{
@@ -2090,7 +2090,7 @@ void PF2_FS_OpenFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 #if 0
 		gamedir = fs_gamedir;
 
-		snprintf( fname, sizeof( fname ), "%s/%s" , gamedir, name );
+		SDL_snprintf( fname, sizeof( fname ), "%s/%s" , gamedir, name );
 		pr2_fopen_files[i].handle = fopen(fname, cmodes[fmode]);
 		if ( !pr2_fopen_files[i].handle )
 		{
@@ -2360,7 +2360,7 @@ void PF2_FS_GetFileList(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t
 		if ((flags & FILELIST_GAMEDIR_ONLY) && strcmp(gpath, fs_gamedir))
 			continue;
 
-		snprintf (netpath, sizeof (netpath), "%s/%s", gpath, path);
+		SDL_snprintf (netpath, sizeof (netpath), "%s/%s", gpath, path);
 
 		// reg exp search...
 		dir = Sys_listdir(netpath, ext, SORT_NO);
@@ -2370,7 +2370,7 @@ void PF2_FS_GetFileList(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t
 			if (flags & FILELIST_WITH_PATH)
 			{
 				// with path
-				snprintf (netpath, sizeof (netpath), "%s/%s", gpath, dir.files[j].name);
+				SDL_snprintf (netpath, sizeof (netpath), "%s/%s", gpath, dir.files[j].name);
 				fullname = netpath;
 
 				// skip "./" prefix
@@ -2548,7 +2548,7 @@ void PF2_Add_Bot( byte * base, unsigned int mask, pr2val_t * stack, pr2val_t * r
 	memset(&newcl->_userinfo_ctx_, 0, sizeof(newcl->_userinfo_ctx_));
 	memset(&newcl->_userinfoshort_ctx_, 0, sizeof(newcl->_userinfoshort_ctx_));
 
-	snprintf( info, sizeof( info ),
+	SDL_snprintf( info, sizeof( info ),
 	          "\\name\\%s\\topcolor\\%d\\bottomcolor\\%d\\emodel\\6967\\pmodel\\13845\\skin\\%s\\*bot\\1",
 	          name, topcolor, bottomcolor, skin );
 
@@ -2844,7 +2844,7 @@ void PF2_SetUserInfo( byte * base, unsigned int mask, pr2val_t * stack, pr2val_t
 
 	// tokenize
 
-	snprintf( s, sizeof(s), "PF2_SetUserInfo \"%-.*s\" \"%-.*s\"", sizeof(key), k, sizeof(value), v );
+	SDL_snprintf( s, sizeof(s), "PF2_SetUserInfo \"%-.*s\" \"%-.*s\"", sizeof(key), k, sizeof(value), v );
 
 	Cmd_TokenizeString( s );
 

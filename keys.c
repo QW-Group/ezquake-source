@@ -524,7 +524,7 @@ void CompleteCommandNew (void)
 					sorted_cmds[s_count] = s_c;
 
 				qsort(sorted_cmds, s_count, sizeof (cmd_function_t *), Cmd_CommandCompare);
-				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
+				SDL_snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_cmds[i]->name))
@@ -553,7 +553,7 @@ void CompleteCommandNew (void)
 					sorted_cvars[s_count] = s_v;
 
 				qsort(sorted_cvars, s_count, sizeof (cvar_t *), Cvar_CvarCompare);
-				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
+				SDL_snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_cvars[i]->name))
@@ -582,7 +582,7 @@ void CompleteCommandNew (void)
 					sorted_aliases[s_count] = s_a;
 
 				qsort(sorted_aliases, s_count, sizeof (cmd_alias_t *), Cmd_AliasCompare);				
-				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));				
+				SDL_snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));				
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_aliases[i]->name))
@@ -2069,7 +2069,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 
 				if (kb[0] == '+' && keyactive[key]) 
 				{
-					snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
+					SDL_snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
 					Cbuf_AddText (cmd);
 					keyactive[key] = false;
 				}
@@ -2079,7 +2079,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 				kb = keybindings[keyshift[key]];
 				if (kb && kb[0] == '+' && keyactive[keyshift[key]]) 
 				{
-					snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
+					SDL_snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
 					Cbuf_AddText (cmd);
 					keyactive[keyshift[key]] = false;
 				}
@@ -2116,7 +2116,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			if (kb[0] == '+')
 			{	
 				// Button commands add keynum as a parm.
-				snprintf (cmd, sizeof (cmd), "%s %i\n", kb, key);
+				SDL_snprintf (cmd, sizeof (cmd), "%s %i\n", kb, key);
 				Cbuf_AddText (cmd);
 				keyactive[key] = true;
 			} 

@@ -101,7 +101,7 @@ static void Setting_DrawIntNum(int x, int y, int w, setting* setting, qbool acti
 	char buf[16];
 	x = Setting_PrintLabel(x,y,w, setting->label, active);
 	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, *((int *) setting->cvar)));
-	snprintf(buf, sizeof(buf), "%3d", *((int *) setting->cvar));
+	SDL_snprintf(buf, sizeof(buf), "%3d", *((int *) setting->cvar));
 
 	UI_Print(x + LETW, y, buf, active);
 }
@@ -112,9 +112,9 @@ static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)
 	x = Setting_PrintLabel(x,y,w, setting->label, active);
 	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, VARFVAL(setting->cvar)));
 	if (setting->step > 0.99)
-		snprintf(buf, sizeof(buf), "%3d", (int) VARFVAL(setting->cvar));
+		SDL_snprintf(buf, sizeof(buf), "%3d", (int) VARFVAL(setting->cvar));
 	else
-		snprintf(buf, sizeof(buf), "%3.1f", VARFVAL(setting->cvar));
+		SDL_snprintf(buf, sizeof(buf), "%3.1f", VARFVAL(setting->cvar));
 
 	UI_Print(x + LETW, y, buf, active);
 }
@@ -136,7 +136,7 @@ static void Setting_DrawBoolAdv(int x, int y, int w, setting* setting, qbool act
 static void Setting_DrawSeparator(int x, int y, int w, setting* set)
 {
 	char buf[32];
-	snprintf(buf, sizeof(buf), "\x1d %s \x1f", set->label);
+	SDL_snprintf(buf, sizeof(buf), "\x1d %s \x1f", set->label);
 	UI_Print_Center(x, y+LINEHEIGHT+LINEHEIGHT/2, w, buf, true);
 }
 

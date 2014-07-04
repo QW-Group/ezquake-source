@@ -742,7 +742,7 @@ static void SVC_Log (void)
 
 	Con_DPrintf ("sending log %i to %s\n", svs.logsequence-1, NET_AdrToString(net_from));
 
-	snprintf (data, MAX_DATAGRAM + 64, "stdlog %i\n", svs.logsequence-1);
+	SDL_snprintf (data, MAX_DATAGRAM + 64, "stdlog %i\n", svs.logsequence-1);
 	strlcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)], MAX_DATAGRAM + 64);
 
 	NET_SendPacket (NS_SERVER, strlen(data)+1, data, net_from);
@@ -804,7 +804,7 @@ static void SVC_GetChallenge (void)
 	}
 
 	// send it back
-	snprintf(buf, sizeof(buf), "%c%i", S2C_CHALLENGE, svs.challenges[i].challenge);
+	SDL_snprintf(buf, sizeof(buf), "%c%i", S2C_CHALLENGE, svs.challenges[i].challenge);
 	over = buf + strlen(buf) + 1;
 
 #ifdef PROTOCOL_VERSION_FTE
@@ -2029,7 +2029,7 @@ static void SV_WriteIPVIP_f (void)
 	byte	b[4];
 	int		i;
 
-	snprintf (name, MAX_OSPATH, "%s/vip_ip.cfg", fs_gamedir);
+	SDL_snprintf (name, MAX_OSPATH, "%s/vip_ip.cfg", fs_gamedir);
 
 	Con_Printf ("Writing %s.\n", name);
 
@@ -2178,7 +2178,7 @@ static void SV_WriteIP_f (void)
 	byte	b[4];
 	int		i;
 
-	snprintf (name, MAX_OSPATH, "%s/listip.cfg", fs_gamedir);
+	SDL_snprintf (name, MAX_OSPATH, "%s/listip.cfg", fs_gamedir);
 
 	Con_Printf ("Writing %s.\n", name);
 
@@ -3281,7 +3281,7 @@ void SV_InitLocal (void)
 #endif
 	Cvar_Register (&sys_command_line);
 
-//	snprintf(full_version, SIZEOF_FULL_VERSION, FULL_VERSION "\n" BUILD_DATE "\n", build_number());
+//	SDL_snprintf(full_version, SIZEOF_FULL_VERSION, FULL_VERSION "\n" BUILD_DATE "\n", build_number());
 //	Cvar_Register (&version);
 	//Added by VVD }
 	Cvar_Register (&spectator_password);
@@ -3395,7 +3395,7 @@ void SV_InitLocal (void)
 
 
 	for (i=0 ; i<MAX_MODELS ; i++)
-		snprintf (localmodels[i], MODEL_NAME_LEN, "*%i", i);
+		SDL_snprintf (localmodels[i], MODEL_NAME_LEN, "*%i", i);
 
 #ifdef FTE_PEXT_ACCURATETIMINGS
 	svs.fteprotocolextensions |= FTE_PEXT_ACCURATETIMINGS;
@@ -3556,7 +3556,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 						p = val + 4;
 				}
 
-				snprintf(newname, sizeof(newname), "(%d)%-.10s", dupc++, p);
+				SDL_snprintf(newname, sizeof(newname), "(%d)%-.10s", dupc++, p);
 				Info_Set (&cl->_userinfo_ctx_, "name", newname);
 				val = Info_Get (&cl->_userinfo_ctx_, "name");
 			}
@@ -4011,7 +4011,7 @@ qbool FWD_proxy_load(void)
 
 	while ( ( gpath = FS_NextPath( gpath ) ) )
 	{
-		snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, "qwfwd");
+		SDL_snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, "qwfwd");
 		hInst = Sys_DLOpen( name );
 
 		if ( hInst )

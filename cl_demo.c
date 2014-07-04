@@ -1402,7 +1402,7 @@ void CL_StopMvd_f(void)
 		SZ_Init (&buf, buf_data, sizeof(buf_data));
 
 		// Print offensive message.
-		snprintf(str, sizeof(str),
+		SDL_snprintf(str, sizeof(str),
 				"\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n"
 		        "%s"
 				"\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n",
@@ -1476,7 +1476,7 @@ void CL_RecordMvd_f(void)
 			COM_ForceExtensionEx (nameext, ".mvd", sizeof (nameext));
 
 			// Get the path for the demo and try opening the file for writing.
-			snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
+			SDL_snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
 
 			mvdrecordfile = fopen(name, "wb");
 
@@ -2221,7 +2221,7 @@ static void CL_WriteDemoPimpMessage(void)
 
 	strlcat (border, "\x1f", sizeof (border));
 
-	snprintf (pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
+	SDL_snprintf (pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
 		border,
 		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
 		border
@@ -2379,7 +2379,7 @@ void CL_Record_f (void)
 			COM_ForceExtensionEx (nameext, ".qwd", sizeof (nameext));
 
 			// Get the path for the demo and try opening the file for writing.
-			snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
+			SDL_snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
 			if (!CL_Demo_Open(name))
 			{
 				Com_Printf ("Error: Couldn't record to %s. Make sure path exists.\n", name);
@@ -2475,7 +2475,7 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 		}
 
 		// Save the demo name..
-		snprintf (extendedname, sizeof(extendedname), "%s_%03i.qwd", strippedname, num);
+		SDL_snprintf (extendedname, sizeof(extendedname), "%s_%03i.qwd", strippedname, num);
 	}
 
 	// Get dir + final demo name.
@@ -2714,7 +2714,7 @@ void CL_AutoRecord_SaveMatch(void)
 	}
 
 	// Get the final full path where we'll save the demo. (This is the final name for real now)
-	snprintf (savedname, sizeof(savedname), "%s_%03i.qwd", auto_matchname, num);
+	SDL_snprintf (savedname, sizeof(savedname), "%s_%03i.qwd", auto_matchname, num);
 	fullsavedname = va("%s/%s", dir, savedname);
 
 	// Try opening the temp file to make sure we can read it.
@@ -3155,7 +3155,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	struct tm *ptm = localtime(&t);
 	int width = 0, height = 0; 
 
-	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
+	SDL_snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
 	f = fopen(logfile, "a");
 	if (!f) {
 		Com_Printf("Can't open %s to dump timedemo result\n", logfile);
@@ -4003,7 +4003,7 @@ void CL_QTVPoll (void)
 
 		if (!strcmp(authmethod, "PLAIN"))
 		{
-			snprintf(connrequest, sizeof(connrequest), 
+			SDL_snprintf(connrequest, sizeof(connrequest), 
 					"%s" "AUTH: PLAIN\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), qtvpassword);
 
 			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
@@ -4016,10 +4016,10 @@ void CL_QTVPoll (void)
 			{
 				unsigned short crcvalue;
 
-				snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
+				SDL_snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
 				crcvalue = CRC_Block((byte *)hash, strlen(hash));
-				snprintf(hash, sizeof(hash), "0x%X", (unsigned int)CRC_Value(crcvalue));
-				snprintf(connrequest, sizeof(connrequest), 
+				SDL_snprintf(hash, sizeof(hash), "0x%X", (unsigned int)CRC_Value(crcvalue));
+				SDL_snprintf(connrequest, sizeof(connrequest), 
 					"%s" "AUTH: CCITT\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), hash);
 
 				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
@@ -4035,10 +4035,10 @@ void CL_QTVPoll (void)
 			{
 				unsigned int md4sum[4];
 
-				snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
+				SDL_snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
 				Com_BlockFullChecksum (hash, strlen(hash), (unsigned char*)md4sum);
-				snprintf(hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
-				snprintf(connrequest, sizeof(connrequest), 
+				SDL_snprintf(hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
+				SDL_snprintf(connrequest, sizeof(connrequest), 
 					"%s" "AUTH: MD4\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), hash);
 
 				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
@@ -4050,7 +4050,7 @@ void CL_QTVPoll (void)
 		}
 		else if (!strcmp(authmethod, "NONE"))
 		{
-			snprintf(connrequest, sizeof(connrequest),
+			SDL_snprintf(connrequest, sizeof(connrequest),
 					"%s" "AUTH: NONE\nPASSWORD: \n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM));
 
 			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));

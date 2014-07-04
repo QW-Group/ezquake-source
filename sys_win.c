@@ -206,7 +206,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	if (!gpath)
 		return 0;
 
-	snprintf(apath, sizeof(apath), "%s/%s", gpath, match);
+	SDL_snprintf(apath, sizeof(apath), "%s/%s", gpath, match);
 	for (s = apath+strlen(apath)-1; s> apath; s--)
 	{
 		if (*s == '/') 
@@ -215,7 +215,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	*s = '\0';
 
 	// This is what we ask windows for.
-	snprintf(file, sizeof(file), "%s/*.*", apath);
+	SDL_snprintf(file, sizeof(file), "%s/*.*", apath);
 
 	// We need to make apath contain the path in match but not gpath
 	strlcpy(apath2, match, sizeof(apath));
@@ -240,7 +240,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		{
 			if (wildcmp(match, fd.cFileName))
 			{
-				snprintf(file, sizeof(file), "%s%s/", apath2, fd.cFileName);
+				SDL_snprintf(file, sizeof(file), "%s%s/", apath2, fd.cFileName);
 				go = func(file, fd.nFileSizeLow, parm);
 			}
 		}
@@ -248,7 +248,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		{
 			if (wildcmp(match, fd.cFileName))
 			{
-				snprintf(file, sizeof(file), "%s%s", apath2, fd.cFileName);
+				SDL_snprintf(file, sizeof(file), "%s%s", apath2, fd.cFileName);
 				go = func(file, fd.nFileSizeLow, parm);
 			}
 		}
@@ -293,7 +293,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			return dir;
 		}
 
-	snprintf(pathname, sizeof(pathname), "%s/*.*", path);
+	SDL_snprintf(pathname, sizeof(pathname), "%s/*.*", path);
 	if ((h = FindFirstFile (pathname , &fd)) == INVALID_HANDLE_VALUE)
 	{
 		if (!all)
@@ -330,7 +330,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 		else
 		{
 			list[dir.numfiles].isdir = false;
-			snprintf(pathname, sizeof(pathname), "%s/%s", path, fd.cFileName);
+			SDL_snprintf(pathname, sizeof(pathname), "%s/%s", path, fd.cFileName);
 			list[dir.numfiles].time = 0; //Sys_FileTime(pathname);
 			dir.size += (list[dir.numfiles].size = fd.nFileSizeLow);
 		}
@@ -1258,7 +1258,7 @@ int Sys_Script (const char *path, const char *args)
 	GetCurrentDirectory(sizeof(curdir), curdir);
 
 
-	snprintf(cmdline, sizeof(cmdline), "%s\\sh.exe %s.qws %s", curdir, path, args);
+	SDL_snprintf(cmdline, sizeof(cmdline), "%s\\sh.exe %s.qws %s", curdir, path, args);
 	strlcat(curdir, va("\\%s", fs_gamedir+2), MAX_OSPATH);
 
 	return CreateProcess (NULL, cmdline, NULL, NULL,

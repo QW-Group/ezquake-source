@@ -108,26 +108,26 @@ newsection:
 				if (!strcmp(filename, "s_start"))
 				{
 					section = 2;
-					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);	//the model loader has a hack to recognise .dsp
+					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);	//the model loader has a hack to recognise .dsp
 					break;
 				}
 				if (!strcmp(filename, "p_start"))
 				{
 					section = 3;
-					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename); //the map loader will find these.
+					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename); //the map loader will find these.
 					break;
 				}
 				if (!strcmp(filename, "f_start"))
 				{
 					section = 4;
-					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);	//the map loader will find these
+					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);	//the map loader will find these
 					break;
 				}
 				if ((filename[0] == 'e' && filename[2] == 'm') || !strncmp(filename, "map", 3))
 				{	//this is the start of a beutiful new map
 					section = 1;
 					strlcpy (sectionname, filename, sizeof (sectionname));
-					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
+					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
 					newfiles[i].filepos = 0;
 					newfiles[i].filelen = 4;
 					break;
@@ -140,7 +140,7 @@ newsection:
 				}
 			}
 
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "wad/%s", filename);	//but there are many files that we don't recognise/know about. archive them off to keep the vfs moderatly clean.
+			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "wad/%s", filename);	//but there are many files that we don't recognise/know about. archive them off to keep the vfs moderatly clean.
 			break;
 		case 1:	//map section
 			if (strcmp(filename, "things") &&
@@ -157,7 +157,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
+			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
 			break;
 		case 5:	//glbsp output section
 			if (strcmp(filename, "gl_vert") &&
@@ -169,7 +169,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
+			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
 			break;
 		case 2:	//sprite section
 			if (!strcmp(filename, "s_end"))
@@ -177,7 +177,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);
+			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);
 			break;
 		case 3:	//patches section
 			if (!strcmp(filename, "p_end"))
@@ -185,7 +185,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename);
+			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename);
 			break;
 		case 4:	//flats section
 			if (!strcmp(filename, "f_end"))
@@ -193,7 +193,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);
+			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);
 			break;
 		}
 	}

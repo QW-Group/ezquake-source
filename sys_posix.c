@@ -214,7 +214,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 				return dir;
 			}
 		}
-		snprintf(pathname, sizeof(pathname), "%s/%s", path, oneentry->d_name);
+		SDL_snprintf(pathname, sizeof(pathname), "%s/%s", path, oneentry->d_name);
 		if ((testdir = opendir(pathname)))
 		{
 			dir.numdirs++;
@@ -491,7 +491,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	if (s < apath)  //didn't find a '/'
 		*apath = '\0';
 
-	snprintf(truepath, sizeof(truepath), "%s/%s", gpath, apath);
+	SDL_snprintf(truepath, sizeof(truepath), "%s/%s", gpath, apath);
 
 
 	//printf("truepath = %s\n", truepath);
@@ -512,18 +512,18 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		if (*ent->d_name != '.')
 			if (wildcmp(match, ent->d_name))
 			{
-				snprintf(file, sizeof(file), "%s/%s", truepath, ent->d_name);
+				SDL_snprintf(file, sizeof(file), "%s/%s", truepath, ent->d_name);
 				//would use stat, but it breaks on fat32.
 
 				if ((dir2 = opendir(file)))
 				{
 					closedir(dir2);
-					snprintf(file, sizeof(file), "%s%s/", apath, ent->d_name);
+					SDL_snprintf(file, sizeof(file), "%s%s/", apath, ent->d_name);
 					//printf("is directory = %s\n", file);
 				}
 				else
 				{
-					snprintf(file, sizeof(file), "%s%s", apath, ent->d_name);
+					SDL_snprintf(file, sizeof(file), "%s%s", apath, ent->d_name);
 					//printf("file = %s\n", file);
 				}
 
@@ -550,7 +550,7 @@ static char *Sys_PipeFile(void) {
 	if (*pipe)
 		return pipe;
 
-	snprintf(pipe, sizeof(pipe), "/tmp/ezquake_fifo_%s", getlogin());
+	SDL_snprintf(pipe, sizeof(pipe), "/tmp/ezquake_fifo_%s", getlogin());
 	return pipe;
 }
 
@@ -646,7 +646,7 @@ int Sys_Script (const char *path, const char *args)
 {
 	char str[1024];
 
-	snprintf(str, sizeof(str), "cd %s\n./%s.qws %s &\ncd ..", fs_gamedir, path, args);
+	SDL_snprintf(str, sizeof(str), "cd %s\n./%s.qws %s &\ncd ..", fs_gamedir, path, args);
 
 	if (system(str) == -1)
 		return 0;

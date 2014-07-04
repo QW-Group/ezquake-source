@@ -260,7 +260,7 @@ void DumpVariablesDefaults_f(void)
     char filepath[MAX_PATH];
     FILE *f;
 
-    snprintf(filepath, sizeof(filepath), "%s/ezquake/configs/cvar_defaults.cfg", com_basedir);
+    SDL_snprintf(filepath, sizeof(filepath), "%s/ezquake/configs/cvar_defaults.cfg", com_basedir);
 
     f = fopen(filepath, "w");
     if (!f)
@@ -878,7 +878,7 @@ void SaveConfig(const char *cfgname)
 	size_t len;
 	FILE *f;
 
-	snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
+	SDL_snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
 
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 
@@ -892,7 +892,7 @@ void SaveConfig(const char *cfgname)
 			fclose(f);
 			len = strlen(filename_ext) + 5;
 			backupname_ext = (char *) Q_malloc(len);
-			snprintf (backupname_ext, len, "%s.bak", filename_ext);
+			SDL_snprintf (backupname_ext, len, "%s.bak", filename_ext);
 
 			if ((f = fopen(backupname_ext, "r"))) {
 				fclose(f);
@@ -985,14 +985,14 @@ void LoadConfig_f(void)
 	int		use_home;
 
 	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
-	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
+	SDL_snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
 
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 	use_home = cfg_use_home.integer || !host_everything_loaded;
 
 	// home
-	snprintf(fullname, sizeof(fullname), "%s/%s%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/", com_gamedirfile), filename);
-	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
+	SDL_snprintf(fullname, sizeof(fullname), "%s/%s%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/", com_gamedirfile), filename);
+	SDL_snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
 
 	if(use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
 	{
@@ -1000,8 +1000,8 @@ void LoadConfig_f(void)
 	}
 
 	// basedir
-	snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
-	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
+	SDL_snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
+	SDL_snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
 
 	if(!use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
 	{
