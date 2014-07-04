@@ -99,8 +99,6 @@ void IN_MouseMove (usercmd_t *cmd)
 			cmd->forwardmove -= m_forward.value * mouse_y;
 		}
 	}
-
-	mx = my = 0; // clear for next update
 }
 
 void IN_Move (usercmd_t *cmd)

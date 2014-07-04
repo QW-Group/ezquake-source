@@ -65,7 +65,6 @@ qbool vid_hwgamma_enabled = false;
 static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
-static int old_x = 0, old_y = 0;
 
 qbool ActiveApp = true;
 qbool Minimized = false;
@@ -140,16 +139,10 @@ static void GrabMouse(qbool grab, qbool raw)
 			return;
 		grab = 0;
 	}
-	// set initial position
-	if (!raw && grab) {
-		SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-		old_x = glConfig.vidWidth / 2;
-		old_y = glConfig.vidHeight / 2;
-	}
 
 	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
-	SDL_SetRelativeMouseMode((raw && grab) ? SDL_TRUE : SDL_FALSE);
-	SDL_GetRelativeMouseState(NULL, NULL);
+	SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, (raw && grab) ? "1" : "0");
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 	SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
 	SDL_SetCursor(NULL); /* Force rewrite of it */
 
@@ -200,14 +193,13 @@ void IN_Frame(void)
 	} else {
 		IN_ActivateMouse();
 	}
-	if (mouse_active && SDL_GetRelativeMouseMode()) {
+	if (mouse_active) {
 #ifdef __APPLE__
 		OSX_Mouse_GetMouseMovement(&mx, &my);
 #else
 		SDL_GetRelativeMouseState(&mx, &my);
 #endif
 	}
-	
 }
 
 void Sys_SendKeyEvents(void)
@@ -388,13 +380,6 @@ static void HandleEvents()
 			keyb_event(&event.key);
 			break;
 		case SDL_MOUSEMOTION:
-	                if (mouse_active && !SDL_GetRelativeMouseMode()) {
-                            mx = old_x - event.motion.x;
-                            my = old_y - event.motion.y;
-			    old_x = event.motion.x;
-			    old_y = event.motion.y;
-			    SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-                        }
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
