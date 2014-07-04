@@ -536,7 +536,7 @@ void SV_MVD_RunPendingConnections (void)
 							CRC_Init(&ushort_result);
 							CRC_AddBlock(&ushort_result, (byte *) p->challenge, strlen(p->challenge));
 							CRC_AddBlock(&ushort_result, (byte *) qtv_password.string, strlen(qtv_password.string));
-							p->hasauthed = (ushort_result == Q_atoi(password));
+							p->hasauthed = (ushort_result == SDL_atoi(password));
 							break;
 
 						case QTVAM_MD4:

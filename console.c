@@ -417,7 +417,7 @@ void Con_Init (void) {
 		qconsole_log = fopen(va("%s/qw/qconsole.log",com_basedir), "a");
 
 	if ((i = COM_CheckParm("-conbufsize")) && i + 1 < COM_Argc()) {
-		conbufsize = Q_atoi(COM_Argv(i + 1)) << 10;
+		conbufsize = SDL_atoi(COM_Argv(i + 1)) << 10;
 		conbufsize = bound (MINIMUM_CONBUFSIZE , conbufsize, MAXIMUM_CONBUFSIZE);
 	} else {
 		conbufsize = DEFAULT_CONBUFSIZE;

@@ -171,7 +171,7 @@ static void Apply_OnChange_gl_smoothfont(int value)
 
 void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 {
-	Apply_OnChange_gl_smoothfont( Q_atoi(string) );
+	Apply_OnChange_gl_smoothfont( SDL_atoi(string) );
 }
 
 /*

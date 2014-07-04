@@ -596,7 +596,7 @@ static void SVC_Status (void)
 
 
 	if (Cmd_Argc() > 1)
-		opt = Q_atoi(Cmd_Argv(1));
+		opt = SDL_atoi(Cmd_Argv(1));
 
 	SV_BeginRedirect (RD_PACKET);
 	if (opt == STATUS_OLDSTYLE || (opt & STATUS_SERVERINFO))
@@ -609,8 +609,8 @@ static void SVC_Status (void)
 			        ( (!cl->spectator && ((opt & STATUS_PLAYERS) || opt == STATUS_OLDSTYLE)) ||
 			          ( cl->spectator && ( opt & STATUS_SPECTATORS)) ) )
 			{
-				top    = Q_atoi(Info_Get (&cl->_userinfo_ctx_, "topcolor"));
-				bottom = Q_atoi(Info_Get (&cl->_userinfo_ctx_, "bottomcolor"));
+				top    = SDL_atoi(Info_Get (&cl->_userinfo_ctx_, "topcolor"));
+				bottom = SDL_atoi(Info_Get (&cl->_userinfo_ctx_, "bottomcolor"));
 				top    = (top    < 0) ? 0 : ((top    > 13) ? 13 : top);
 				bottom = (bottom < 0) ? 0 : ((bottom > 13) ? 13 : bottom);
 				ping   = SV_CalcPing (cl);
@@ -729,7 +729,7 @@ static void SVC_Log (void)
 
 
 	if (Cmd_Argc() == 2)
-		seq = Q_atoi(Cmd_Argv(1));
+		seq = SDL_atoi(Cmd_Argv(1));
 	else
 		seq = -1;
 
@@ -986,7 +986,7 @@ qbool CheckPasswords( char *userinfo, int userinfo_size, qbool *spass_ptr, qbool
 		Info_RemoveKey (userinfo, "spectator"); // remove passwd
 		Info_SetValueForStarKey (userinfo, "*spectator", "1", userinfo_size);
 
-		spectator = Q_atoi(s);
+		spectator = SDL_atoi(s);
 
 		if (!spectator)
 			spectator = true;
@@ -1112,14 +1112,14 @@ static void SVC_DirectConnect (void)
 #endif // PROTOCOL_VERSION_FTE2
 
 	// check version/protocol
-	if ( !CheckProtocol( Q_atoi( Cmd_Argv( 1 ) ) ) )
+	if ( !CheckProtocol( SDL_atoi( Cmd_Argv( 1 ) ) ) )
 		return; // wrong protocol number
 
 	// get qport
-	qport = Q_atoi( Cmd_Argv( 2 ) );
+	qport = SDL_atoi( Cmd_Argv( 2 ) );
 
 	// see if the challenge is valid
-	if ( !CheckChallange( Q_atoi( Cmd_Argv( 3 ) ) ) )
+	if ( !CheckChallange( SDL_atoi( Cmd_Argv( 3 ) ) ) )
 		return; // wrong challange
 
 	// and now validate userinfo
@@ -1134,18 +1134,18 @@ static void SVC_DirectConnect (void)
 	{
 		Cmd_TokenizeString( MSG_ReadStringLine() );
 
-		switch( Q_atoi( Cmd_Argv( 0 ) ) )
+		switch( SDL_atoi( Cmd_Argv( 0 ) ) )
 		{
 #ifdef PROTOCOL_VERSION_FTE
 		case PROTOCOL_VERSION_FTE:
-			protextsupported = Q_atoi( Cmd_Argv( 1 ) );
+			protextsupported = SDL_atoi( Cmd_Argv( 1 ) );
 			Con_DPrintf("Client supports 0x%x fte extensions\n", protextsupported);
 			break;
 #endif // PROTOCOL_VERSION_FTE
 
 #ifdef PROTOCOL_VERSION_FTE2
 		case PROTOCOL_VERSION_FTE2:
-			protextsupported2 = Q_atoi( Cmd_Argv( 1 ) );
+			protextsupported2 = SDL_atoi( Cmd_Argv( 1 ) );
 			Con_DPrintf("Client supports 0x%x fte extensions2\n", protextsupported2);
 			break;
 #endif // PROTOCOL_VERSION_FTE2
@@ -1219,11 +1219,11 @@ static void SVC_DirectConnect (void)
 		else if (    !spectator && spectators < (int)maxspectators.value
 				  && (
 				  	      ( (int)sv_forcespec_onfull.value == 2
-							&&   (Q_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_SPEC_ONFULL)
+							&&   (SDL_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_SPEC_ONFULL)
 				  	      ) 
 				   	   		||
 						  ( (int)sv_forcespec_onfull.value == 1
-							&&   !(Q_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_NO_SPEC_ONFULL)
+							&&   !(SDL_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_NO_SPEC_ONFULL)
 						  )
 				   	 )
 				)
@@ -1289,7 +1289,7 @@ static void SVC_DirectConnect (void)
 	newcl->rip_vip = rip_vip;
 
 	// extract extensions mask
-	newcl->extensions = Q_atoi(Info_Get(&newcl->_userinfo_ctx_, "*z_ext"));
+	newcl->extensions = SDL_atoi(Info_Get(&newcl->_userinfo_ctx_, "*z_ext"));
 	Info_Remove (&newcl->_userinfo_ctx_, "*z_ext");
 
 	edictnum = (newcl-svs.clients)+1;
@@ -1745,7 +1745,7 @@ static void SVC_IP(void)
 	if (Cmd_Argc() < 3)
 		return;
 
-	num = Q_atoi(Cmd_Argv(1));
+	num = SDL_atoi(Cmd_Argv(1));
 
 	if (num < 0 || num >= MAX_CLIENTS)
 		return;
@@ -1755,7 +1755,7 @@ static void SVC_IP(void)
 		return;
 
 	// prevent cheating
-	if (client->realip_num != Q_atoi(Cmd_Argv(2)))
+	if (client->realip_num != SDL_atoi(Cmd_Argv(2)))
 		return;
 
 	// don't override previously set ip
@@ -1918,7 +1918,7 @@ qbool StringToFilter (char *s, ipfilter_t *f)
 			num[j++] = *s++;
 		}
 		num[j] = 0;
-		b[i] = Q_atoi(num);
+		b[i] = SDL_atoi(num);
 		if (b[i] != 0)
 			m[i] = 255;
 
@@ -1949,7 +1949,7 @@ static void SV_AddIPVIP_f (void)
 		return;
 	}
 
-	l = Q_atoi(Cmd_Argv(2));
+	l = SDL_atoi(Cmd_Argv(2));
 
 	if (l < 1) l = 1;
 
@@ -2396,7 +2396,7 @@ void SV_Cmd_Ban_f(void)
 		return;
 	}
 
-	uid = Q_atoi(Cmd_Argv(1));
+	uid = SDL_atoi(Cmd_Argv(1));
 
 	strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
 
@@ -2567,7 +2567,7 @@ void SV_Cmd_Banremove_f(void)
 		return;
 	}
 
-	id = Q_atoi(Cmd_Argv(1));
+	id = SDL_atoi(Cmd_Argv(1));
 
 	if (id < 0 || id >= numipfilters) {
 		Con_Printf ("Wrong ban id: %d\n", id);
@@ -3088,7 +3088,7 @@ static void SV_CheckVars (void)
 				continue;
 
 			val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
-			cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, Q_atoi(*val ? val : "99999"));
+			cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, SDL_atoi(*val ? val : "99999"));
 		}
 	}
 }
@@ -3466,7 +3466,7 @@ static void SV_SetUserInfoKeyLimit (char *key, int limit, client_t *cl, qbool wa
 static void SV_CheckUserInfoKeyLimit (char *key, int limit, client_t *cl)
 {
 	char *value_c = Info_Get (&cl->_userinfo_ctx_, key);
-	int value = Q_atoi(value_c);
+	int value = SDL_atoi(value_c);
 
 	if (value > limit)
 		SV_SetUserInfoKeyLimit (key, limit, cl, true);
@@ -3598,17 +3598,17 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 
 	// rate
 	val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
-	cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, Q_atoi(*val ? val : "99999"));
+	cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, SDL_atoi(*val ? val : "99999"));
 
 	// message level
 	val = Info_Get (&cl->_userinfo_ctx_, "msg");
 	if (val[0])
-		cl->messagelevel = Q_atoi(val);
+		cl->messagelevel = SDL_atoi(val);
 
 	//bliP: spectator print ->
 	val = Info_Get(&cl->_userinfo_ctx_, "sp");
 	if (val[0])
-		cl->spec_print = Q_atoi(val);
+		cl->spec_print = SDL_atoi(val);
 	//<-
 	// Added by VVD {
 // ktpro version before 1.67 crash if absolute value of userinfo keys "ls" or/and "lw" is to large
@@ -3623,7 +3623,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 
 void OnChange_sysselecttimeout_var (cvar_t *var, char *value, qbool *cancel)
 {
-	int t = Q_atoi (value);
+	int t = SDL_atoi (value);
 	if (t <= 1000000 && t >= 10)
 	{
 		select_timeout.tv_sec  =  t / 1000000;
@@ -3665,12 +3665,12 @@ void OnChange_admininfo_var (cvar_t *var, char *value, qbool *cancel)
 //bliP: telnet log level ->
 void OnChange_telnetloglevel_var (cvar_t *var, char *value, qbool *cancel)
 {
-	logs[TELNET_LOG].log_level = Q_atoi(value);
+	logs[TELNET_LOG].log_level = SDL_atoi(value);
 }
 //<-
 void OnChange_qconsolelogsay_var (cvar_t *var, char *value, qbool *cancel)
 {
-	logs[CONSOLE_LOG].log_level = Q_atoi(value);
+	logs[CONSOLE_LOG].log_level = SDL_atoi(value);
 }
 
 /*

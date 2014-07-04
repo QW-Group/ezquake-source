@@ -478,12 +478,12 @@ void CL_PrintQStatReply (char *s) {
 		Com_Printf ("teamplay   %s\n", Info_ValueForKey(s, "teamplay"));
 		Com_Printf ("timelimit  %s\n", Info_ValueForKey(s, "timelimit"));
 		Com_Printf ("fraglimit  %s\n", Info_ValueForKey(s, "fraglimit"));
-	if ((n = Q_atoi(Info_ValueForKey(s, "needpass")) & 3) != 0)
+	if ((n = SDL_atoi(Info_ValueForKey(s, "needpass")) & 3) != 0)
 		Com_Printf ("needpass   %s%s%s\n", n & 1 ? "player" : "",
 			n == 3 ? ", " : "", n & 2 ? "spectator" : "");
-	if (Q_atoi(Info_ValueForKey(s, "needpass")) & 1)
+	if (SDL_atoi(Info_ValueForKey(s, "needpass")) & 1)
 		Com_Printf ("player password required\n");
-	if (Q_atoi(Info_ValueForKey(s, "needpass")) & 2)
+	if (SDL_atoi(Info_ValueForKey(s, "needpass")) & 2)
 		Com_Printf ("spectator password required\n");
 
 	Com_Printf ("players    %i/%s\n", numplayers, Info_ValueForKey(s, "maxclients"));
@@ -728,11 +728,11 @@ void CL_Color_f (void) {
 			Com_Printf ("color <0-13> [0-13]\n");
 			return;
 		case 2:
-			top = bottom = Q_atoi(Cmd_Argv(1));
+			top = bottom = SDL_atoi(Cmd_Argv(1));
 			break;
 		default:
-			top = Q_atoi(Cmd_Argv(1));
-			bottom = Q_atoi(Cmd_Argv(2));
+			top = SDL_atoi(Cmd_Argv(1));
+			bottom = SDL_atoi(Cmd_Argv(2));
 	}
 
 	top &= 15;
@@ -832,7 +832,7 @@ void CL_Userdir_f (void)
 	if (cls.state > ca_disconnected || Cmd_Argc() == 1) {
 		Com_Printf("Current userdir: %s\n", userdirfile);
 	} else {
-		int u = Q_atoi(Cmd_Argv(2));
+		int u = SDL_atoi(Cmd_Argv(2));
 		if (u < 0 || u > 5)
 			Com_Printf("Invalid userdir type\n");
 		else

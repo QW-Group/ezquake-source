@@ -663,7 +663,7 @@ void SV_MVDRemoveNum_f (void)
 	}
 
 	val = Cmd_Argv(1);
-	if ((num = Q_atoi(val)) == 0 && val[0] != '0')
+	if ((num = SDL_atoi(val)) == 0 && val[0] != '0')
 	{
 		Con_Printf("rmdemonum <#>\n");
 		return;
@@ -726,7 +726,7 @@ void SV_MVDInfoAdd_f (void)
 	}
 	else
 	{
-		name = SV_MVDTxTNum(Q_atoi(Cmd_Argv(1)));
+		name = SV_MVDTxTNum(SDL_atoi(Cmd_Argv(1)));
 
 		if (!name)
 		{
@@ -806,7 +806,7 @@ void SV_MVDInfoRemove_f (void)
 	}
 	else
 	{
-		name = SV_MVDTxTNum(Q_atoi(Cmd_Argv(1)));
+		name = SV_MVDTxTNum(SDL_atoi(Cmd_Argv(1)));
 
 		if (!name)
 		{
@@ -848,7 +848,7 @@ void SV_MVDInfo_f (void)
 	}
 	else
 	{
-		name = SV_MVDTxTNum(Q_atoi(Cmd_Argv(1)));
+		name = SV_MVDTxTNum(SDL_atoi(Cmd_Argv(1)));
 
 		if (!name)
 		{
@@ -892,7 +892,7 @@ void SV_LastScores_f (void)
 	}
 
 	if (Cmd_Argc() == 2)
-		if ((demos = Q_atoi(Cmd_Argv(1))) <= 0)
+		if ((demos = SDL_atoi(Cmd_Argv(1))) <= 0)
 			demos = MAXDEMOS;
 
 	dir = Sys_listdir(va("%s/%s", fs_gamedir, sv_demoDir.string),

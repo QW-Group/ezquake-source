@@ -2603,7 +2603,7 @@ void PF_findmap (void)
 			break;
 		}
 	}
-	id = (i) ? 0 : Q_atoi(map);
+	id = (i) ? 0 : SDL_atoi(map);
 
 	if (!strstr(map, ".bsp"))
 		strlcat(map, ".bsp", sizeof(map));

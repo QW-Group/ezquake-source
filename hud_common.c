@@ -4452,7 +4452,7 @@ void HUD_AutoLoad_MVD(int autoload) {
 }
 
 void OnAutoHudChange(cvar_t *var, char *value, qbool *cancel) {
-	HUD_AutoLoad_MVD(Q_atoi(value));
+	HUD_AutoLoad_MVD(SDL_atoi(value));
 }
 
 // Is run when a new map is loaded.

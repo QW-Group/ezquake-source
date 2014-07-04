@@ -690,7 +690,7 @@ void MP3_XMMS2_PlayTrackNum_f(void) {
 		return;
 	}
 
-	track_num = Q_atoi(Cmd_Argv(1)) - 1;	// Count from zero
+	track_num = SDL_atoi(Cmd_Argv(1)) - 1;	// Count from zero
 	XMMS2_PlayList_SetNext(track_num);
 }
 

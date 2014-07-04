@@ -319,7 +319,7 @@ static void Cmd_Soundlist_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_Soundlist_f from different level\n");
@@ -327,7 +327,7 @@ static void Cmd_Soundlist_f (void)
 		return;
 	}
 
-	n = Q_atoi(Cmd_Argv(2));
+	n = SDL_atoi(Cmd_Argv(2));
 	if (n >= MAX_SOUNDS)
 	{
 		SV_ClearReliable (sv_client);
@@ -399,7 +399,7 @@ static void Cmd_Modellist_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_Modellist_f from different level\n");
@@ -407,7 +407,7 @@ static void Cmd_Modellist_f (void)
 		return;
 	}
 
-	n = Q_atoi(Cmd_Argv(2));
+	n = SDL_atoi(Cmd_Argv(2));
 	if (n >= MAX_MODELS)
 	{
 		SV_ClearReliable (sv_client);
@@ -478,7 +478,7 @@ static void Cmd_PreSpawn_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_PreSpawn_f from different level\n");
@@ -486,14 +486,14 @@ static void Cmd_PreSpawn_f (void)
 		return;
 	}
 
-	buf = Q_atoi(Cmd_Argv(2));
+	buf = SDL_atoi(Cmd_Argv(2));
 	if (buf >= sv.num_signon_buffers)
 		buf = 0;
 
 	if (!buf)
 	{
 		// should be three numbers following containing checksums
-		check = Q_atoi(Cmd_Argv(3));
+		check = SDL_atoi(Cmd_Argv(3));
 
 		//		Con_DPrintf("Client check = %d\n", check);
 
@@ -560,7 +560,7 @@ static void Cmd_Spawn_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_Spawn_f from different level\n");
@@ -568,7 +568,7 @@ static void Cmd_Spawn_f (void)
 		return;
 	}
 
-	n = Q_atoi(Cmd_Argv(2));
+	n = SDL_atoi(Cmd_Argv(2));
 	if (n >= MAX_CLIENTS)
 	{
 		SV_ClientPrintf (sv_client, PRINT_HIGH,
@@ -743,7 +743,7 @@ static void Cmd_Begin_f (void)
 		return; // don't begin again
 
 	// handle the case of a level changing while a client was connecting
-	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_Begin_f from different level\n");
@@ -835,8 +835,8 @@ static void Cmd_Begin_f (void)
 			SV_BroadcastPrintf (PRINT_HIGH, "%s WARNING: missing player/eyes model checksum\n", sv_client->name);
 		else
 		{
-			pmodel = Q_atoi(Info_Get (&sv_client->_userinfo_ctx_, "pmodel"));
-			emodel = Q_atoi(Info_Get (&sv_client->_userinfo_ctx_, "emodel"));
+			pmodel = SDL_atoi(Info_Get (&sv_client->_userinfo_ctx_, "pmodel"));
+			emodel = SDL_atoi(Info_Get (&sv_client->_userinfo_ctx_, "emodel"));
 
 			if (pmodel != sv.model_player_checksum || emodel != sv.eyes_player_checksum)
 				SV_BroadcastPrintf (PRINT_HIGH, "%s WARNING: non standard player/eyes model detected\n", sv_client->name);
@@ -942,7 +942,7 @@ void SV_CompleteDownoload(void)
 	sv_client->file_percent = 0; //bliP: file percent
 	// qqshka: set normal rate
 	val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-	sv_client->netchan.rate = 1. / SV_BoundRate(false,	Q_atoi(*val ? val : "99999"));
+	sv_client->netchan.rate = 1. / SV_BoundRate(false,	SDL_atoi(*val ? val : "99999"));
 
 	Con_Printf((char *)Q_redtext(download_completed));
 
@@ -1304,7 +1304,7 @@ static void Cmd_Download_f(void)
 		sv_client->download = NULL;
 		// set normal rate
 		val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-		sv_client->netchan.rate = 1.0 / SV_BoundRate(false, Q_atoi(*val ? val : "99999"));
+		sv_client->netchan.rate = 1.0 / SV_BoundRate(false, SDL_atoi(*val ? val : "99999"));
 	}
 
 	if ( !strncmp(name, "demos/", 6) && sv_demoDir.string[0])
@@ -1314,7 +1314,7 @@ static void Cmd_Download_f(void)
 	}
 	else if (!strncmp(name, "demonum/", 8))
 	{
-		int num = Q_atoi(name + 8);
+		int num = SDL_atoi(name + 8);
 		if (num == 0 && name[8] != '0')
 		{
 			char *num_s = name + 8;
@@ -1393,7 +1393,7 @@ static void Cmd_Download_f(void)
 
 	// set donwload rate
 	val = Info_Get (&sv_client->_userinfo_ctx_, "drate");
-	sv_client->netchan.rate = 1. / SV_BoundRate(true, Q_atoi(*val ? val : "99999"));
+	sv_client->netchan.rate = 1. / SV_BoundRate(true, SDL_atoi(*val ? val : "99999"));
 
 	// all checks passed, start downloading
 
@@ -1511,7 +1511,7 @@ static void Cmd_DemoDownload_f(void)
 	{
 		cmd_argv_i = Cmd_Argv(i);
 		cmd_argv_i_len = strlen(cmd_argv_i);
-		num = Q_atoi(cmd_argv_i);
+		num = SDL_atoi(cmd_argv_i);
 		if (num == 0 && cmd_argv_i[0] != '0')
 		{
 			for (num = 0; num < cmd_argv_i_len; num++)
@@ -1552,7 +1552,7 @@ static void Cmd_StopDownload_f(void)
 	sv_client->file_percent = 0; //bliP: file percent
 	// qqshka: set normal rate
 	val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-	sv_client->netchan.rate = 1. / SV_BoundRate(false, Q_atoi(*val ? val : "99999"));
+	sv_client->netchan.rate = 1. / SV_BoundRate(false, SDL_atoi(*val ? val : "99999"));
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
@@ -1970,7 +1970,7 @@ static void Cmd_PTrack_f (void)
 		return;
 	}
 
-	i = Q_atoi(Cmd_Argv(1));
+	i = SDL_atoi(Cmd_Argv(1));
 	if (i < 0 || i >= MAX_CLIENTS || svs.clients[i].state != cs_spawned || svs.clients[i].spectator)
 	{
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "Invalid client to track\n");
@@ -2005,7 +2005,7 @@ static void Cmd_Rate_f (void)
 		return;
 	}
 
-	rate = SV_BoundRate (sv_client->download != NULL, Q_atoi(Cmd_Argv(1)));
+	rate = SV_BoundRate (sv_client->download != NULL, SDL_atoi(Cmd_Argv(1)));
 
 	SV_ClientPrintf (sv_client, PRINT_HIGH, "Net rate set to %i\n", rate);
 	sv_client->netchan.rate = 1.0/rate;
@@ -2364,7 +2364,7 @@ static void Cmd_AirStep_f (void)
 			Con_Printf("Can't change pm_airstep: demo recording in progress or serverinfo key status is not 'Standby'.\n");
 		else
 		{
-			val = Q_atoi(Cmd_Argv(1));
+			val = SDL_atoi(Cmd_Argv(1));
 			if (val != 0 && val != 1)
 				Con_Printf("Value must be 0 or 1.\n");
 			else {
@@ -2722,8 +2722,8 @@ void Cmd_PEXT_f(void)
 
 	for ( idx = 1; idx < Cmd_Argc(); )
 	{
-		proto_ver   = Q_atoi(Cmd_Argv(idx++));
-		proto_value = Q_atoi(Cmd_Argv(idx++));
+		proto_ver   = SDL_atoi(Cmd_Argv(idx++));
+		proto_value = SDL_atoi(Cmd_Argv(idx++));
 
 		switch( proto_ver )
 		{

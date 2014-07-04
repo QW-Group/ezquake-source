@@ -802,14 +802,14 @@ static void VID_ParseCmdLine(void)
 // TODO: Decide what to do with displayFrequency.. Support setting modes with different Hz than desktop or not??
 #if 0
 	if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc())
-		Cvar_LatchedSetValue(&r_displayRefresh, Q_atoi(COM_Argv(i + 1)));
+		Cvar_LatchedSetValue(&r_displayRefresh, SDL_atoi(COM_Argv(i + 1)));
 #endif
 
 	if ((i = COM_CheckParm("-bpp")) && i + 1 < COM_Argc())
-		Cvar_LatchedSetValue(&r_colorbits, Q_atoi(COM_Argv(i + 1)));
+		Cvar_LatchedSetValue(&r_colorbits, SDL_atoi(COM_Argv(i + 1)));
 
-	w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
-	h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+	w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? SDL_atoi(COM_Argv(i + 1)) : 0;
+	h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? SDL_atoi(COM_Argv(i + 1)) : 0;
 
 	if ( w && h ) 
 	{
@@ -823,10 +823,10 @@ static void VID_ParseCmdLine(void)
 	} // else if (w || h) { Sys_Error("Must specify both -width and -height\n"); }
 
 	if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
-		Cvar_SetValue(&r_conwidth, (float)Q_atoi(COM_Argv(i + 1)));
+		Cvar_SetValue(&r_conwidth, (float)SDL_atoi(COM_Argv(i + 1)));
 
 	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc())
-		Cvar_SetValue(&r_conheight, (float)Q_atoi(COM_Argv(i + 1)));
+		Cvar_SetValue(&r_conheight, (float)SDL_atoi(COM_Argv(i + 1)));
 }
 
 static void VID_Restart_f(void)
@@ -901,9 +901,9 @@ static void VID_UpdateConRes(void)
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 {
 	if (var == &r_conwidth)
-		Cvar_SetValue(&r_conwidth, Q_atoi(string));
+		Cvar_SetValue(&r_conwidth, SDL_atoi(string));
 	else if (var == &r_conheight)
-		Cvar_SetValue(&r_conheight, Q_atoi(string));
+		Cvar_SetValue(&r_conheight, SDL_atoi(string));
 	else
 		Cvar_SetValue(&r_conscale, Q_atof(string));
 

@@ -404,7 +404,7 @@ void MP3_AUDACIOUS_PlayTrackNum_f(void) {
 		return;
 	}
 	MP3_AUDACIOUS_GetPlaylistInfo(NULL, &length);
-	pos = Q_atoi(Cmd_Argv(1)) - 1;
+	pos = SDL_atoi(Cmd_Argv(1)) - 1;
 	if (pos < 0 || pos >= length)
 		return;
 	qaud_remote_set_playlist_pos(audacious_proxy, pos);

@@ -2212,7 +2212,7 @@ void Key_ClearStates (void)
 
 void OnChange_con_prompt_charcode (cvar_t *var, char *string, qbool *cancel)
 {	
-	int i, charcode = Q_atoi(string);
+	int i, charcode = SDL_atoi(string);
 	*cancel = true;
 
 	if ((charcode > 31) && (charcode <= 255) && (charcode != con_prompt_charcode.integer))

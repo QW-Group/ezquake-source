@@ -171,7 +171,7 @@ static int ParseServerIp(char *server_port, int *addr, unsigned short *port)
 	if (port) 
 	{
 		if (port_divide != NULL)
-			*port = (unsigned short) Q_atoi(port_divide+1);
+			*port = (unsigned short) SDL_atoi(port_divide+1);
 		else
 			*port = 27500;
 	}

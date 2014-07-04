@@ -180,7 +180,7 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel)
 	int i;
 	gltexture_t *glt;
 
-	int newvalue = Q_atoi(string);
+	int newvalue = SDL_atoi(string);
 
 	anisotropy_tap = max(1, newvalue); // 0 is bad, 1 is off, 2 and higher are valid modes
 

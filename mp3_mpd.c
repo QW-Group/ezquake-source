@@ -446,7 +446,7 @@ void MP3_MPD_PlayTrackNum_f(void) {
 		return;
 	}
 
-	track_num = Q_atoi(Cmd_Argv(1)) - 1;	// Count from zero
+	track_num = SDL_atoi(Cmd_Argv(1)) - 1;	// Count from zero
 	qmpd_sendPlayCommand(connection, track_num);
 	qmpd_finishCommand(connection);
 }

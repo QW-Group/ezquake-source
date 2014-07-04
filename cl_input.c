@@ -260,12 +260,12 @@ void IN_FireDown(void)
 	}
 
 	if (IN_IsLastArgKeyCode()) {
-		key_code = Q_atoi(Cmd_Argv(last_arg_idx));
+		key_code = SDL_atoi(Cmd_Argv(last_arg_idx));
 		last_arg_idx--;
 	}
 
 	for (i = 1; i <= last_arg_idx && i <= MAXWEAPONS; i++) {
-		int desired_impulse = Q_atoi(Cmd_Argv(i));
+		int desired_impulse = SDL_atoi(Cmd_Argv(i));
 		weapon_order[i - 1] = desired_impulse;
 	}
 
@@ -301,7 +301,7 @@ void IN_FireUp(void)
 	int key_code = VOID_KEY;
 
 	if (IN_IsLastArgKeyCode()) {
-		key_code = Q_atoi(Cmd_Argv(Cmd_Argc() - 1));
+		key_code = SDL_atoi(Cmd_Argv(Cmd_Argc() - 1));
 	}
 
 	if (KeyUp_common(&in_attack, key_code)) {
@@ -362,7 +362,7 @@ void IN_RememberWpOrder (void)
 	c = Cmd_Argc() - 1;
 
 	for (i = 0; i < MAXWEAPONS; i++)
-		weapon_order[i] = (i < c) ? Q_atoi(Cmd_Argv(i+1)) : 0;
+		weapon_order[i] = (i < c) ? SDL_atoi(Cmd_Argv(i+1)) : 0;
 }
 
 static int IN_BestWeapon_Common(int best);
@@ -440,7 +440,7 @@ void IN_Impulse (void)
 {
 	int best;
 
-	in_impulse = Q_atoi(Cmd_Argv(1));
+	in_impulse = SDL_atoi(Cmd_Argv(1));
 
 	if (Cmd_Argc() <= 2)
 		return;

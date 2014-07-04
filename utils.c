@@ -145,7 +145,7 @@ int StringToRGB_W(char *s, byte *rgb)
 
 	for (i = 0; i < 4 && result; i++, result = strtok(NULL, " "))
 	{
-		rgb[i] = (byte) Q_atoi(result);
+		rgb[i] = (byte) SDL_atoi(result);
 	}
 	
 	// TODO: Ok to do this in software also?
@@ -583,7 +583,7 @@ int Player_StringtoSlot(char *arg)
 	}
 
 	// Get player ID.
-	slot = Player_IdtoSlot(Q_atoi(arg));
+	slot = Player_IdtoSlot(SDL_atoi(arg));
 
 	return (slot >= 0) ? slot : PLAYER_ID_NOMATCH;
 }
@@ -654,7 +654,7 @@ int Player_GetSlot(char *arg)
 		return response;
 	}
 	
-	if ((response = Player_NumtoSlot(Q_atoi(arg + 1))) >= 0)
+	if ((response = Player_NumtoSlot(SDL_atoi(arg + 1))) >= 0)
 	{
 		return response;
 	}

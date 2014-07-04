@@ -416,10 +416,10 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 
 	matchinfo.numplayers = MT_CountPlayers();
 
-	matchinfo.timelimit = Q_atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
-	matchinfo.fraglimit = Q_atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
-	matchinfo.teamplay = Q_atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
-	matchinfo.maxclients = Q_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
+	matchinfo.timelimit = SDL_atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
+	matchinfo.fraglimit = SDL_atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
+	matchinfo.teamplay = SDL_atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
+	matchinfo.maxclients = SDL_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
 	matchinfo.deathmatch = cl.deathmatch;
 
 	strlcpy(matchinfo.mapname, MT_MapName(), sizeof(matchinfo.mapname));
@@ -604,7 +604,7 @@ char *MT_MatchName(void) {
 
 char *MT_ShortStatus(void)
 {
-	int maxclients = Q_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
+	int maxclients = SDL_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
 	char *mapname = TP_MapName();
 
 	return va("%d/%d - %s", TP_CountPlayers(), maxclients, mapname);

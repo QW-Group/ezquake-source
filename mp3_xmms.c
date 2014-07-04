@@ -377,7 +377,7 @@ void MP3_XMMS_PlayTrackNum_f(void) {
 		return;
 	}
 	MP3_XMMS_GetPlaylistInfo(NULL, &length);
-	pos = Q_atoi(Cmd_Argv(1)) - 1;
+	pos = SDL_atoi(Cmd_Argv(1)) - 1;
 	if (pos < 0 || pos >= length)
 		return;
 	qxmms_remote_set_playlist_pos(XMMS_SESSION, pos);

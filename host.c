@@ -396,10 +396,10 @@ void Host_InitMemory (int memsize)
 		memsize = MINIMUM_MEMORY;
 
 	if ((t = COM_CheckParm ("-heapsize")) != 0 && t + 1 < COM_Argc())
-		memsize = Q_atoi (COM_Argv(t + 1)) * 1024;
+		memsize = SDL_atoi (COM_Argv(t + 1)) * 1024;
 
 	if ((t = COM_CheckParm ("-mem")) != 0 && t + 1 < COM_Argc())
-		memsize = Q_atoi (COM_Argv(t + 1)) * 1024 * 1024;
+		memsize = SDL_atoi (COM_Argv(t + 1)) * 1024 * 1024;
 
 	if (memsize < MINIMUM_MEMORY)
 		Sys_Error ("Only %4.1f megs of memory reported, can't execute game", memsize / (float)0x100000);

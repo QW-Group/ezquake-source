@@ -320,7 +320,7 @@ void Cvar_Set (cvar_t *var, char *value)
 
 	var->string = new_val;
 	var->value = Q_atof (var->string);
-	var->integer = Q_atoi (var->string);
+	var->integer = SDL_atoi (var->string);
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
 
@@ -520,7 +520,7 @@ void Cvar_Register (cvar_t *var)
 				old->string  = old->latchedString;
 				old->latchedString = NULL;
 				old->value   = Q_atof (old->string);
-				old->integer = Q_atoi (old->string);
+				old->integer = SDL_atoi (old->string);
 				StringToRGB_W(old->string, old->color);
 				old->modified = true;
 			}
@@ -561,7 +561,7 @@ void Cvar_Register (cvar_t *var)
 		var->string = Z_Strdup (var->string);
 	}
 	var->value = Q_atof (var->string);
-	var->integer = Q_atoi (var->string);
+	var->integer = SDL_atoi (var->string);
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
 
@@ -763,7 +763,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->defaultvalue = Z_Strdup (string);
 	v->flags = cvarflags | CVAR_USER_CREATED;
 	v->value = Q_atof (v->string);
-	v->integer = Q_atoi (v->string);
+	v->integer = SDL_atoi (v->string);
 	StringToRGB_W(v->string, v->color);
 	v->modified = true;
 #ifdef WITH_TCL

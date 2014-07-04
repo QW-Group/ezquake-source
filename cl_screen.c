@@ -1420,7 +1420,7 @@ void SCR_SetupCI (void) {
 		id->color[1] = 255; // g
 		id->color[2] = 255; // b
 		id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1); // alpha
-		id->flags = Q_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
+		id->flags = SDL_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
 		id->flags = (id->flags ? id->flags : CIF_CHAT); // use chat as default if we got some unknown "chat" value
 
 		ci_count++;

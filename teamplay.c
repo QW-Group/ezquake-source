@@ -1672,7 +1672,7 @@ void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel)
 		return; // allow in demos or for specs
 
 	if (var == &enemyforceskins && (!cl.spectator && cls.state != ca_disconnected)) {
-		if (Q_atoi(string))
+		if (SDL_atoi(string))
 			Cbuf_AddText("say Forcing enemy skins\n");
 		else
 			Cbuf_AddText("say Not forcing enemy skins\n");

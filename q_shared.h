@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <ctype.h>
 #include <assert.h>
+#include "SDL.h"
 
 #define wchar unsigned short	// 16-bit Unicode char
 
@@ -198,7 +199,6 @@ VVD: fixed by changing from "int" to "short" in 2nd string - stupid copy&paste b
 
 //============================================================================
 
-int Q_atoi (const char *str);
 float Q_atof (const char *str);
 char *Q_ftos (float value); // removes trailing zero chars
 

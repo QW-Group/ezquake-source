@@ -424,7 +424,7 @@ void FS_SetUserDirectory (char *dir, char *type) {
 		return;
 	}
 	strlcpy(userdirfile, dir, sizeof(userdirfile));
-	userdir_type = Q_atoi(type);
+	userdir_type = SDL_atoi(type);
 
 	strlcpy(tmp, com_gamedirfile, sizeof(tmp)); // save
 	com_gamedirfile[0]='\0'; // force reread

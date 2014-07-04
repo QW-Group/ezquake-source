@@ -79,16 +79,16 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 				qwmsg[i] = (qwmsg_t *) Q_malloc (sizeof(qwmsg_t));
 				// fill system_id
 				str_tok = (char *)strtok(buf, "#");
-				qwmsg[i]->msg_type = Q_atoi(str_tok);
+				qwmsg[i]->msg_type = SDL_atoi(str_tok);
 				// fill weapon_id
 				str_tok = (char *)strtok(NULL, "#");
-				qwmsg[i]->id = Q_atoi(str_tok);
+				qwmsg[i]->id = SDL_atoi(str_tok);
 				// fill pl_count
 				str_tok = (char *)strtok(NULL, "#");
-				qwmsg[i]->pl_count = Q_atoi(str_tok) == 1 ? 1 : 2;
+				qwmsg[i]->pl_count = SDL_atoi(str_tok) == 1 ? 1 : 2;
 				// fill reverse
 				str_tok = (char *)strtok(NULL, "#");
-				qwmsg[i]->reverse = Q_atoi(str_tok) ? true : false;
+				qwmsg[i]->reverse = SDL_atoi(str_tok) ? true : false;
 				// fill str
 				str_tok = (char *)strtok(NULL, "#");
 				qwmsg[i]->str =  (char *) Q_malloc (strlen(str_tok) + 1);

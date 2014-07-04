@@ -308,7 +308,7 @@ void TP_MsgTrigger_f (void)
 			if (!strcmp(Cmd_Argv(4), "t")) {
 				trig->level = 4;
 			} else {
-				trig->level = Q_atoi (Cmd_Argv(4));
+				trig->level = SDL_atoi (Cmd_Argv(4));
 				if ((unsigned) trig->level > PRINT_CHAT)
 					trig->level = PRINT_HIGH;
 			}

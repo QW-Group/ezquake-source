@@ -328,7 +328,7 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 
 	p = Info_ValueForKey (cl.serverinfo, "status");
 	progress = (strstr (p, "left")) ? true : false;
-	val = Q_atoi (value);;
+	val = SDL_atoi (value);;
 
 	if (cls.state >= ca_connected && progress && !cl.spectator) {
 		Com_Printf ("%s changes are not allowed during the match.\n", var->name);
@@ -348,7 +348,7 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 
 void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 {
-	int ival = Q_atoi(value);	// this is used in the code
+	int ival = SDL_atoi(value);	// this is used in the code
 	float fval = Q_atof(value); // this is used to check value validity
 
 	if (ival == var->integer && fval == var->value) {
@@ -381,7 +381,7 @@ void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 
 void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 {
-	int ival = Q_atoi(value);	// this is used in the code
+	int ival = SDL_atoi(value);	// this is used in the code
 	float fval = Q_atof(value); // this is used to check value validity
 
 	if (ival == var->integer && fval == var->value) {

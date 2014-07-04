@@ -1320,7 +1320,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 		total = (int) total / 60;
 		total = bound(0, total, 999); // limit to 3 symbols int
 
-		if (scr_scoreboard_afk.integer && (Q_atoi(Info_ValueForKey(s->userinfo, "chat")) & CIF_AFK)) {
+		if (scr_scoreboard_afk.integer && (SDL_atoi(Info_ValueForKey(s->userinfo, "chat")) & CIF_AFK)) {
 			if (scr_scoreboard_afk_style.integer == 2) {
 				snprintf(myminutes, sizeof(myminutes), "&cf11%3i&r", total);
 			} else {

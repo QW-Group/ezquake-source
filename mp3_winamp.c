@@ -537,7 +537,7 @@ void MP3_WINAMP_PlayTrackNum_f(void)
 		return;
 	}
 	MP3_WINAMP_GetPlaylistInfo(NULL, &length);
-	pos = Q_atoi(Cmd_Argv(1)) - 1;
+	pos = SDL_atoi(Cmd_Argv(1)) - 1;
 	if (pos < 0 || pos >= length)
 		return;
 	SendMessage(mp3_hwnd, WM_WA_IPC, pos, IPC_SETPLAYLISTPOS);

@@ -2014,7 +2014,7 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 void CL_NotifyOnFull(void)
 {
 	if (!cl.spectator && !cls.demoplayback) {
-		int limit = Q_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
+		int limit = SDL_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
 		int players = 0;
 		int i;
 
@@ -2179,7 +2179,7 @@ void CL_ProcessServerInfo (void)
 	cl.standby = standby;
 	cl.countdown = countdown;
 
-	cl.minlight = (strlen(minlight = Info_ValueForKey(cl.serverinfo, "minlight")) ? bound(0, Q_atoi(minlight), 255) : 4);
+	cl.minlight = (strlen(minlight = Info_ValueForKey(cl.serverinfo, "minlight")) ? bound(0, SDL_atoi(minlight), 255) : 4);
 
 	// Get the server's ZQuake extension bits
 	cl.z_ext = atoi(Info_ValueForKey(cl.serverinfo, "*z_ext"));

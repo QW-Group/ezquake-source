@@ -113,7 +113,7 @@ static void Ignore_f(void) {
 	}
 
 	if ((slot = Player_StringtoSlot(Cmd_Argv(1))) == PLAYER_ID_NOMATCH) {
-		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(Cmd_Argv(1)));
+		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), SDL_atoi(Cmd_Argv(1)));
 	} else if (slot == PLAYER_NAME_NOMATCH) {
 		Com_Printf("%s : no player with name %s\n", Cmd_Argv(0), Cmd_Argv(1));
 	} else {
@@ -149,7 +149,7 @@ static void Ignore_ID_f(void) {
 			return;
 		}
 	}
-	userid = Q_atoi(arg);
+	userid = SDL_atoi(arg);
 	if ((slot = Player_IdtoSlot(userid)) == PLAYER_ID_NOMATCH) {
 		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), userid);
 		return;
@@ -172,7 +172,7 @@ static void Unignore_f(void) {
 	}
 
 	if ((slot = Player_StringtoSlot(Cmd_Argv(1))) == PLAYER_ID_NOMATCH) {
-		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(Cmd_Argv(1)));
+		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), SDL_atoi(Cmd_Argv(1)));
 	} else if (slot == PLAYER_NAME_NOMATCH) {
 		Com_Printf("%s : no player with name %s\n", Cmd_Argv(0), Cmd_Argv(1));
 	} else {		
@@ -201,7 +201,7 @@ static void Unignore_ID_f(void) {
 			return;
 		}
 	}
-	userid = Q_atoi(arg);
+	userid = SDL_atoi(arg);
 	if ((slot = Player_IdtoSlot(userid)) == PLAYER_ID_NOMATCH) {
 		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), userid);
 		return;

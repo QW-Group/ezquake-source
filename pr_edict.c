@@ -603,7 +603,7 @@ void ED_PrintEdict_f (void)
 	}
 
 
-	i = Q_atoi (Cmd_Argv(1));
+	i = SDL_atoi (Cmd_Argv(1));
 	if(i < 0 || i >= sv.num_edicts)
 	{
 		Com_Printf ("\nNo such edict: %i\n", i);
@@ -813,7 +813,7 @@ qbool ED_ParseEpair (void *base, ddef_t *key, char *s)
 		break;
 
 	case ev_entity:
-		*(int *)d = EDICT_TO_PROG(EDICT_NUM(Q_atoi (s)));
+		*(int *)d = EDICT_TO_PROG(EDICT_NUM(SDL_atoi (s)));
 		break;
 
 	case ev_field:

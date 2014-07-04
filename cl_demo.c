@@ -4223,7 +4223,7 @@ static qbool CL_QTVPlay_URL_format(void)
 	const char *docpart = strstr(Cmd_Argv(1), "/watch.qtv?sid=");
 
 	if (prefix && docpart && prefix == Cmd_Argv(1) && prefix < docpart) {
-		int streamid = Q_atoi(docpart + strlen("/watch.qtv?sid="));
+		int streamid = SDL_atoi(docpart + strlen("/watch.qtv?sid="));
 		int hostnamelen = docpart - prefix - strlen("http://");
 		Cbuf_AddText(va("qtvplay %d@%.*s\n", streamid, hostnamelen, Cmd_Argv(1) + strlen("http://")));
 		return true;
@@ -4728,7 +4728,7 @@ static int CL_Demo_Jump_Status_Parse_Constraint (const char *arg, int *value)
 	if (strlen(arg) < 2)
 		return -1;
 
-	*value = Q_atoi(arg+1);
+	*value = SDL_atoi(arg+1);
 
 	switch (arg[0]) {
 		case '=':
@@ -4929,7 +4929,7 @@ void CL_Demo_Init(void)
 	democache_available = false;
 	if ((parm = COM_CheckParm("-democache")) && parm + 1 < COM_Argc())
 	{
-		democache_size = Q_atoi(COM_Argv(parm + 1)) * 1024;
+		democache_size = SDL_atoi(COM_Argv(parm + 1)) * 1024;
 		democache_size = max(democache_size, DEMOCACHE_MINSIZE);
 		if ((democache_buffer = (byte *) malloc (democache_size)))
 		{

@@ -875,7 +875,7 @@ void CL_Track (int trackview)
 	} 
 	else if (slot == PLAYER_ID_NOMATCH) 
 	{
-		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(arg));
+		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), SDL_atoi(arg));
 		return;
 	} 
 	else if (slot < 0 || slot >= MAX_CLIENTS) 

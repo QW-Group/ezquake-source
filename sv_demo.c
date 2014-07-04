@@ -1705,7 +1705,7 @@ static void MVD_Init (void)
 	if (p)
 	{
 		if (p < COM_Argc()-1)
-			size = Q_atoi (COM_Argv(p+1)) * 1024;
+			size = SDL_atoi (COM_Argv(p+1)) * 1024;
 		else
 			Sys_Error ("MVD_Init: you must specify a size in KB after -democache");
 	}

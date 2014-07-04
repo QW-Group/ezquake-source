@@ -235,7 +235,7 @@ qbool SV_SetPlayer (void)
 	int			i;
 	int			idnum;
 
-	idnum = Q_atoi(Cmd_Argv(1));
+	idnum = SDL_atoi(Cmd_Argv(1));
 
 	// HACK: for cheat commands which comes from client rather than from server console
 	if (sv_client && sv_redirected == RD_CLIENT)
@@ -332,7 +332,7 @@ void SV_Give_f (void)
 	cnt = (sv_redirected == RD_CLIENT ? 1 : 2);
 
 	t = Cmd_Argv(cnt++);
-	v = Q_atoi (Cmd_Argv(cnt++));
+	v = SDL_atoi (Cmd_Argv(cnt++));
 
 	switch (t[0])
 	{
@@ -803,7 +803,7 @@ void SV_Kick_f (void)
 		return;
 	}
 
-	uid = Q_atoi(Cmd_Argv(1));
+	uid = SDL_atoi(Cmd_Argv(1));
 
 	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
 	{
@@ -853,7 +853,7 @@ int SV_MatchUser (char *s)
 		if (!strcmp (cl->name, s))
 			return cl->userid;
 	}
-	i = Q_atoi(s);
+	i = SDL_atoi(s);
 	return i;
 }
 
@@ -1040,7 +1040,7 @@ void SV_RemovePenalty_f (void)
 		return;
 	}
 
-	num = Q_atoi(Cmd_Argv(1));
+	num = SDL_atoi(Cmd_Argv(1));
 
 	for (i = 0; i < numpenfilters; i++)
 	{
@@ -1290,7 +1290,7 @@ void SV_Check_localinfo_maps_support(void)
 	char	*x_build;
 
 	k_version = Q_atof(k_version_s = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_VERSION));
-	k_build   = Q_atoi(k_build_s   = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_BUILD));
+	k_build   = SDL_atoi(k_build_s   = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_BUILD));
 
 	x_version = Info_ValueForKey(svs.info, SERVERINFO_KTX_VERSION);
 	x_build   = Info_ValueForKey(svs.info, SERVERINFO_KTX_BUILD);
@@ -1684,9 +1684,9 @@ void SV_Floodprot_f (void)
 		return;
 	}
 
-	arg1 = Q_atoi(Cmd_Argv(1));
-	arg2 = Q_atoi(Cmd_Argv(2));
-	arg3 = Q_atoi(Cmd_Argv(3));
+	arg1 = SDL_atoi(Cmd_Argv(1));
+	arg2 = SDL_atoi(Cmd_Argv(2));
+	arg3 = SDL_atoi(Cmd_Argv(3));
 
 	if (arg1<=0 || arg2 <= 0 || arg3<=0)
 	{
@@ -1833,7 +1833,7 @@ void SV_Snap_f (void)
 		return;
 	}
 
-	uid = Q_atoi(Cmd_Argv(1));
+	uid = SDL_atoi(Cmd_Argv(1));
 
 	SV_Snap(uid);
 }

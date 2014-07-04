@@ -337,7 +337,7 @@ void CD_f (void) {
 					Com_Printf ("  %u -> %u\n", n, remap[n]);
 		} else {
 			for (n = 1; n <= ret; n++)
-				remap[n] = Q_atoi(Cmd_Argv (n + 1));
+				remap[n] = SDL_atoi(Cmd_Argv (n + 1));
 		}
 		return;
 	} else if (!strcasecmp(command, "close")) {
@@ -356,10 +356,10 @@ void CD_f (void) {
 
 	if (!strcasecmp(command, "play"))	{
 		CHECK_CD_ARGS(3);
-		CDAudio_Play((byte) Q_atoi(Cmd_Argv(2)), false);
+		CDAudio_Play((byte) SDL_atoi(Cmd_Argv(2)), false);
 	} else if (!strcasecmp(command, "loop"))	{
 		CHECK_CD_ARGS(3);
-		CDAudio_Play((byte) Q_atoi(Cmd_Argv(2)), true);
+		CDAudio_Play((byte) SDL_atoi(Cmd_Argv(2)), true);
 	} else if (!strcasecmp(command, "stop"))	{
 		CHECK_CD_ARGS(2);
 		CDAudio_Stop();

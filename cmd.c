@@ -1628,7 +1628,7 @@ qbool AllowedImpulse(int imp)
 static qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
 {
 	if( !strcasecmp( command, "impulse") )
-		return AllowedImpulse(Q_atoi(Cmd_Argv(1)));
+		return AllowedImpulse(SDL_atoi(Cmd_Argv(1)));
 
 	return 	  bsearch( &(command), msgtrigger_commands,
 	                   sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
