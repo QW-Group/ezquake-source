@@ -123,7 +123,7 @@ static void Log_log_f(void) {
 			Com_Printf("Not logging\n");
 		return;
 	case 2:
-		if (!strcasecmp(Cmd_Argv(1), "stop")) {
+		if (!SDL_strcasecmp(Cmd_Argv(1), "stop")) {
 			if (autologging) {
 				Log_AutoLogging_StopMatch();
 			} else {

@@ -279,13 +279,13 @@ void Rulesets_Init (void)
 	Cvar_Register (&ruleset);
 
 	if ((temp = COM_CheckParm ("-ruleset")) && temp + 1 < COM_Argc()) {
-		if (!strcasecmp (COM_Argv(temp + 1), "smackdown")) {
+		if (!SDL_strcasecmp (COM_Argv(temp + 1), "smackdown")) {
 			Cvar_Set (&ruleset, "smackdown");
 			return;
-		} else if (!strcasecmp (COM_Argv(temp + 1), "mtfl")) {
+		} else if (!SDL_strcasecmp (COM_Argv(temp + 1), "mtfl")) {
 			Cvar_Set (&ruleset, "mtfl");
 			return;
-		} else if (strcasecmp (COM_Argv(temp + 1), "default")){
+		} else if (SDL_strcasecmp (COM_Argv(temp + 1), "default")){
 			Cvar_Set (&ruleset, "default");
 			return;
 		} else {

@@ -2464,7 +2464,7 @@ void PF2_strncmp(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 
 void PF2_stricmp(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 {
-	retval->_int=  strcasecmp( (char *) VM_POINTER(base,mask,stack[0].string),
+	retval->_int=  SDL_strcasecmp( (char *) VM_POINTER(base,mask,stack[0].string),
 	                           (char *) VM_POINTER(base,mask,stack[1].string));
 }
 

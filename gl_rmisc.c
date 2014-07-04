@@ -106,7 +106,7 @@ void R_TranslatePlayerSkin (int playernum) {
 	strlcpy(s, Skin_FindName(player), sizeof(s));
 	COM_StripExtension(s, s);
 
-	if (player->skin && strcasecmp(s, player->skin->name))
+	if (player->skin && SDL_strcasecmp(s, player->skin->name))
 		player->skin = NULL;
 
 	if (player->_topcolor == player->topcolor && player->_bottomcolor == player->bottomcolor && player->skin)

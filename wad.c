@@ -356,7 +356,7 @@ byte *WAD3_LoadTexture (texture_t *tx)
 		return ConvertWad3ToRGBA(tx->width, tx->height, (byte *)(tx + 1), (tx->name[0] == '{'));
 
 	for (i = 0; i < wad3_numlumps; i++) {
-		if (strcasecmp(tx->name, texwadlump[i].name))
+		if (SDL_strcasecmp(tx->name, texwadlump[i].name))
 			continue;
 		
 		file = texwadlump[i].file;

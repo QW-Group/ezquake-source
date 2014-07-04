@@ -319,7 +319,7 @@ void FMod_CheckModel (const char *name, const void *buf, const size_t len)
 		relevent = (cl.teamfortress && (check_models[i].flags & FMOD_TF)) ||
 			(!cl.teamfortress && (check_models[i].flags & FMOD_DM));
 
-		if (relevent && !strcasecmp (name, check_models[i].name))
+		if (relevent && !SDL_strcasecmp (name, check_models[i].name))
 			break;
 	}
 

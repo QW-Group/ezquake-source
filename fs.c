@@ -449,16 +449,16 @@ static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpa
 
 	ext = COM_FileExtension(pakname);
 	if (!funcs) {
-		if (strcasecmp(ext, "pak") == 0) 
+		if (SDL_strcasecmp(ext, "pak") == 0) 
 			funcs = &packfilefuncs;
 #ifdef WITH_ZIP
-		else if (strcasecmp(ext, "pk3") == 0) 
+		else if (SDL_strcasecmp(ext, "pk3") == 0) 
 			funcs = &zipfilefuncs;
-		else if (strcasecmp(ext, "pk4") == 0) 
+		else if (SDL_strcasecmp(ext, "pk4") == 0) 
 			funcs = &zipfilefuncs;
 #endif	// WITH_ZIP
 #ifdef DOOMWADS
-		else if (strcasecmp(ext, "wad") == 0)
+		else if (SDL_strcasecmp(ext, "wad") == 0)
 			funcs = &doomwadfilefuncs;
 #endif
 		else 
@@ -2554,7 +2554,7 @@ vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
 		return handle;
 
 	ext = COM_FileExtension(filename);
-	if (!strcasecmp(ext, "gz"))
+	if (!SDL_strcasecmp(ext, "gz"))
 	{
 		gzheader_t gzh;
 		if (VFS_READ(handle, &gzh, sizeofgzheader_t, &err) == sizeofgzheader_t)
@@ -2773,7 +2773,7 @@ static int FS_AddWildDataFiles (char *descriptor, int size, void *vparam)
 	{
 		if (search->funcs != funcs)
 			continue;
-		if (!strcasecmp((char*)search->handle, pakfile))	//assumption: first member of structure is a char array
+		if (!SDL_strcasecmp((char*)search->handle, pakfile))	//assumption: first member of structure is a char array
 			return true; //already loaded (base paths?)
 	}
 
@@ -2858,7 +2858,7 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 		if (search->funcs != &osfilefuncs)
 			continue;
 
-		if (!strcasecmp(search->handle, com_gamedir))
+		if (!SDL_strcasecmp(search->handle, com_gamedir))
 			return; //already loaded (base paths?)
 	}
 
@@ -2888,7 +2888,7 @@ void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
 		if (search->funcs != &osfilefuncs)
 			continue;
 
-		if (!strcasecmp(search->handle, com_homedir))
+		if (!SDL_strcasecmp(search->handle, com_homedir))
 			return; //already loaded (base paths?)
 	}
 

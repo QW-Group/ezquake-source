@@ -42,7 +42,7 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	{
 		if (dst->desttype == DEST_STREAM)
 		{
-			if (name[0] && !strcasecmp(name, dst->qtvname))
+			if (name[0] && !SDL_strcasecmp(name, dst->qtvname))
 				return NULL; // duplicate name, well empty names may still duplicates...
 
 			count++;
@@ -720,7 +720,7 @@ void QTVcmd_Say_f(mvddest_t *d)
 	if (Cmd_Argc () < 2)
 		return;
 
-	if (!strcasecmp(Info_ValueForKey(svs.info, "status"), "Countdown"))
+	if (!SDL_strcasecmp(Info_ValueForKey(svs.info, "status"), "Countdown"))
 		gameStarted	= false; // if status is "Countdown" then game is not started yet
 	else
 		gameStarted = GameStarted();
@@ -1368,7 +1368,7 @@ void Qtv_Close_f(void)
 	}
 
 	id  = atoi(Cmd_Argv(1));
-	all = !strcasecmp(Cmd_Argv(1), "all");
+	all = !SDL_strcasecmp(Cmd_Argv(1), "all");
 	cnt = 0;
 
 	for (d = demo.dest; d; d = d->nextdest)

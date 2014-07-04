@@ -405,7 +405,7 @@ static qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename,
 	{
 		for (i=0 ; i<zip->numfiles ; i++)	//look for the file
 		{
-			if (!strcasecmp (zip->files[i].name, filename))
+			if (!SDL_strcasecmp (zip->files[i].name, filename))
 			{
 				pf = &zip->files[i];
 				break;

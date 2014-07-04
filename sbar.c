@@ -586,7 +586,7 @@ static int Sbar_SortTeamsAndFrags_Compare(int a, int b) {
 	p2 = &cl.players[b];
 
 	if (p1->spectator)
-		return p2->spectator ? strcasecmp(p1->name, p2->name) : 1;
+		return p2->spectator ? SDL_strcasecmp(p1->name, p2->name) : 1;
     else if (p2->spectator)
         return -1;
 
@@ -611,7 +611,7 @@ static int Sbar_SortTeamsAndFrags_Compare(int a, int b) {
 		}
 		return (t1 && t2 && t1->frags != t2->frags) ? (t2->frags - t1->frags) : team_comp;
     } else {
-		return (frag_comp = p2->frags - p1->frags) ? frag_comp : strcasecmp(p1->name, p2->name);
+		return (frag_comp = p2->frags - p1->frags) ? frag_comp : SDL_strcasecmp(p1->name, p2->name);
     }
 }
 

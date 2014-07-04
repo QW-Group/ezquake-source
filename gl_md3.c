@@ -530,7 +530,7 @@ int GetTag(model_t *mod, char *tagname, int frame, float **org, m3by3_t **ang)	/
 	
 	for(tnum=0;tnum<mhead->numtags; tnum++)
 	{
-		if (!strcasecmp(tag->name, tagname))
+		if (!SDL_strcasecmp(tag->name, tagname))
 		{
 			*org = tag->org;
 			*ang = &tag->ang;

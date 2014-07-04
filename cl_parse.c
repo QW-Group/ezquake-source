@@ -469,7 +469,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-	if ((tmp = strrchr(filename, '.')) && (!strcasecmp(tmp, ".dll") || !strcasecmp(tmp, ".so"))) {
+	if ((tmp = strrchr(filename, '.')) && (!SDL_strcasecmp(tmp, ".dll") || !SDL_strcasecmp(tmp, ".so"))) {
 		Com_Printf("Warning: Non-allowed file \"%s\" skipped\n", filename);
 		return true;
 	}
@@ -941,7 +941,7 @@ void CL_ParseChunkedDownload(void)
 			Host_Error("Received second download - \"%s\"\n", svname);
 
 // FIXME: damn, fixme!!!!!
-//		if (strcasecmp(cls.downloadname, svname))
+//		if (SDL_strcasecmp(cls.downloadname, svname))
 //			Host_Error("Server sent the wrong download - \"%s\" instead of \"%s\"\n", svname, cls.downloadname);
 
 		// Start the new download
@@ -1458,7 +1458,7 @@ void CL_ParseServerData (void)
 		Host_Error("Server reported invalid gamedir!\n");
 	}
 
-	cl.teamfortress = !strcasecmp(str, "fortress");
+	cl.teamfortress = !SDL_strcasecmp(str, "fortress");
 	if (cl.teamfortress) 
 	{
 		extern cvar_t	v_iyaw_cycle, v_iroll_cycle, v_ipitch_cycle,
@@ -1473,7 +1473,7 @@ void CL_ParseServerData (void)
 		Cvar_SetValue (&v_idlescale, 0);
 	}
 
-	if (strcasecmp(cls.gamedirfile, str)) 
+	if (SDL_strcasecmp(cls.gamedirfile, str)) 
 	{
 		strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
 		SDL_snprintf (cls.gamedir, sizeof(cls.gamedir),
@@ -2167,8 +2167,8 @@ void CL_ProcessServerInfo (void)
 	newfpd = cls.demoplayback ? 0 : atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
-	standby = !strcasecmp(p, "standby");
-	countdown = !strcasecmp(p, "countdown");
+	standby = !SDL_strcasecmp(p, "standby");
+	countdown = !SDL_strcasecmp(p, "countdown");
 
 	if ((cl.standby || cl.countdown) && !(standby || countdown)) 
 	{

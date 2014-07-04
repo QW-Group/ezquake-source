@@ -970,7 +970,7 @@ qbool CheckPasswords( char *userinfo, int userinfo_size, qbool *spass_ptr, qbool
 
 		pwd = spectator_password.string;
 
-		if (pwd[0] && strcasecmp(pwd, "none") && strcmp(pwd, s))
+		if (pwd[0] && SDL_strcasecmp(pwd, "none") && strcmp(pwd, s))
 		{
 			spass = false; // failed
 		}
@@ -1003,7 +1003,7 @@ qbool CheckPasswords( char *userinfo, int userinfo_size, qbool *spass_ptr, qbool
 
 		pwd = password.string;
 
-		if (!vip && pwd[0] && strcasecmp(pwd, "none") && strcmp(pwd, s))
+		if (!vip && pwd[0] && SDL_strcasecmp(pwd, "none") && strcmp(pwd, s))
 		{
 			Con_Printf ("%s:password failed\n", NET_AdrToString (net_from));
 			Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nserver requires a password\n\n", A2C_PRINT);
@@ -1600,7 +1600,7 @@ static void SVC_RemoteCommand (char *remote_command)
 			// must check not only for chmod, but also CHMOD, ChmoD, etc.
 			// so we lowercase the whole temporary line before checking
 
-			// VVD: strcmp => strcasecmp and we don't need to do this (yes?)
+			// VVD: strcmp => SDL_strcasecmp and we don't need to do this (yes?)
 			//for(i = 0; str[i]; i++)
 			//	str[i] = (char)tolower(str[i]);
 
@@ -1622,17 +1622,17 @@ static void SVC_RemoteCommand (char *remote_command)
 				if(!tstr[0]) // skip leading empty tokens
 					continue;
 
-				if (!strcasecmp(tstr, "rm") ||
-					!strcasecmp(tstr, "rmdir") ||
-					!strcasecmp(tstr, "ls") ||
-					!strcasecmp(tstr, "chmod") ||
-					!strcasecmp(tstr, "sv_admininfo") ||
-					!strcasecmp(tstr, "if") ||
-					!strcasecmp(tstr, "localcommand") ||
-					!strcasecmp(tstr, "sv_crypt_rcon") ||
-					!strcasecmp(tstr, "sv_timestamplen") ||
+				if (!SDL_strcasecmp(tstr, "rm") ||
+					!SDL_strcasecmp(tstr, "rmdir") ||
+					!SDL_strcasecmp(tstr, "ls") ||
+					!SDL_strcasecmp(tstr, "chmod") ||
+					!SDL_strcasecmp(tstr, "sv_admininfo") ||
+					!SDL_strcasecmp(tstr, "if") ||
+					!SDL_strcasecmp(tstr, "localcommand") ||
+					!SDL_strcasecmp(tstr, "sv_crypt_rcon") ||
+					!SDL_strcasecmp(tstr, "sv_timestamplen") ||
 					!strncasecmp(tstr, "log", 3) ||
-					!strcasecmp(tstr, "sys_command_line")
+					!SDL_strcasecmp(tstr, "sys_command_line")
 					)
 				{
 					bad_cmd = true;
@@ -2618,7 +2618,7 @@ int SV_VIPbyPass (char *pass)
 	int vip_value[MAX_ARGS];
 	int i;
 
-	if (!vip_password.string[0] || !strcasecmp(vip_password.string, "none"))
+	if (!vip_password.string[0] || !SDL_strcasecmp(vip_password.string, "none"))
 		return 0;
 
 	if (vip_values.string[0]) {
@@ -2633,7 +2633,7 @@ int SV_VIPbyPass (char *pass)
 	Cmd_TokenizeString(vip_password.string);
 
 	for (i = 0; i < Cmd_Argc(); i++)
-		if (!strcmp(Cmd_Argv(i), pass) && strcasecmp(Cmd_Argv(i), "none"))
+		if (!strcmp(Cmd_Argv(i), pass) && SDL_strcasecmp(Cmd_Argv(i), "none"))
 			return (use_value ? vip_value[i] : i+1);
 
 	return 0;
@@ -3525,7 +3525,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 			val = Info_Get (&cl->_userinfo_ctx_, "name");
 		}
 
-		if (!val[0] || !strcasecmp(val, "console"))
+		if (!val[0] || !SDL_strcasecmp(val, "console"))
 		{
 			Info_Set (&cl->_userinfo_ctx_, "name", sv_default_name.string);
 			val = Info_Get (&cl->_userinfo_ctx_, "name");
@@ -3539,7 +3539,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 				if (client->state != cs_spawned || client == cl)
 					continue;
 
-				if (!strcasecmp(client->name, val))
+				if (!SDL_strcasecmp(client->name, val))
 					break;
 			}
 			if (i != MAX_CLIENTS)

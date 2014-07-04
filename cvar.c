@@ -62,7 +62,7 @@ cvar_t *Cvar_Find (const char *var_name)
 	int key = Com_HashKey (var_name) % VAR_HASHPOOL_SIZE;
 
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
-		if (!strcasecmp (var_name, var->name)) {
+		if (!SDL_strcasecmp (var_name, var->name)) {
 			return var;
 		}
 	}
@@ -177,7 +177,7 @@ char *Cvar_CompleteVariable (char *partial)
 
 	// check exact match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!strcasecmp (partial,cvar->name))
+		if (!SDL_strcasecmp (partial,cvar->name))
 			return cvar->name;
 
 	// check partial match
@@ -449,7 +449,7 @@ static cvar_group_t *Cvar_AddGroup(char *name)
 	}
 
 	for (newgroup = cvar_groups; newgroup; newgroup = newgroup->next)
-		if (!strcasecmp(newgroup->name, name))
+		if (!SDL_strcasecmp(newgroup->name, name))
 			return newgroup;
 
 	newgroup = (cvar_group_t *) Q_malloc(sizeof(cvar_group_t));
@@ -780,7 +780,7 @@ qbool Cvar_Delete (const char *name)
 	int key = Com_HashKey (name) % VAR_HASHPOOL_SIZE;
 
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
-		if (!strcasecmp(var->name, name)) {
+		if (!SDL_strcasecmp(var->name, name)) {
 			// unlink from hash
 			if (prev)
 				prev->hash_next = var->hash_next;
@@ -796,7 +796,7 @@ qbool Cvar_Delete (const char *name)
 
 	prev = NULL;
 	for (var = cvar_vars; var; var=var->next)	{
-		if (!strcasecmp(var->name, name)) {
+		if (!SDL_strcasecmp(var->name, name)) {
 			// unlink from cvar list
 			if (prev)
 				prev->next = var->next;

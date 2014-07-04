@@ -117,7 +117,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	s = name;
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[h] ; a ; a=a->hash_next) {
-		if (!strcasecmp(s, a->name)) {
+		if (!SDL_strcasecmp(s, a->name)) {
 			Q_free (a->value);
 			a->flags = 0;
 			break;

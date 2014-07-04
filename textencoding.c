@@ -220,7 +220,7 @@ wchar *decode_string (const char *s)
 		strlcpy (enc_str, q, min(r - q + 1, sizeof(enc_str)));
 
 		for (i = 0; decode_table[i].name; i++) {
-			if (!strcasecmp(encoding, decode_table[i].name))
+			if (!SDL_strcasecmp(encoding, decode_table[i].name))
 				break;	// found it
 		}
 

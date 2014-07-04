@@ -111,7 +111,7 @@ void *Hash_GetInsensitive(hashtable_t *table, const char *name)
 
 	while(buck)
 	{
-		if (!strcasecmp(name, buck->keystring))
+		if (!SDL_strcasecmp(name, buck->keystring))
 			return buck->data;
 
 		buck = buck->next;

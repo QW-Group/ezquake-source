@@ -3501,8 +3501,8 @@ static void CL_DemoPlaybackInit(void)
 	// CL_GetIsMVD(playbackfile); 
 	// TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also
 	// TODO : Make a working check if a demo really is an mvd by its contents that also works on short demos.
-	cls.mvdplayback		= !strcasecmp(COM_FileExtension(cls.demoname), "mvd"); 
-	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(cls.demoname), "dem");
+	cls.mvdplayback		= !SDL_strcasecmp(COM_FileExtension(cls.demoname), "mvd"); 
+	cls.nqdemoplayback	= !SDL_strcasecmp(COM_FileExtension(cls.demoname), "dem");
 
 	 // Init some buffers for reading.
 	CL_Demo_PB_Init(NULL, 0);
@@ -3593,7 +3593,7 @@ void CL_Play_f (void)
 	//
 	strlcpy (name, real_name, sizeof(name) - 4);
 
-	if (strlen(name) > 4 && !strcasecmp(COM_FileExtension(name), "qwz"))
+	if (strlen(name) > 4 && !SDL_strcasecmp(COM_FileExtension(name), "qwz"))
 	{
 		PlayQWZDemo();
 
@@ -4702,21 +4702,21 @@ static void CL_Demo_Jump_Status_Check (void)
 
 static int CL_Demo_Jump_Status_Parse_Weapon (const char *arg)
 {
-	if (!strcasecmp("axe", arg)) {
+	if (!SDL_strcasecmp("axe", arg)) {
 		return IT_AXE;
-	} else if (!strcasecmp("sg", arg)) {
+	} else if (!SDL_strcasecmp("sg", arg)) {
 		return IT_SHOTGUN;
-	} else if (!strcasecmp("ssg", arg)) {
+	} else if (!SDL_strcasecmp("ssg", arg)) {
 		return IT_SUPER_SHOTGUN;
-	} else if (!strcasecmp("ng", arg)) {
+	} else if (!SDL_strcasecmp("ng", arg)) {
 		return IT_NAILGUN;
-	} else if (!strcasecmp("sng", arg)) {
+	} else if (!SDL_strcasecmp("sng", arg)) {
 		return IT_SUPER_NAILGUN;
-	} else if (!strcasecmp("gl", arg)) {
+	} else if (!SDL_strcasecmp("gl", arg)) {
 		return IT_GRENADE_LAUNCHER;
-	} else if (!strcasecmp("rl", arg)) {
+	} else if (!SDL_strcasecmp("rl", arg)) {
 		return IT_ROCKET_LAUNCHER;
-	} else if (!strcasecmp("lg", arg)) {
+	} else if (!SDL_strcasecmp("lg", arg)) {
 		return IT_LIGHTNING;
 	} else {
 		return 0;
@@ -4792,7 +4792,7 @@ static void CL_Demo_Jump_Status_f (void)
 		int weapon, value;
 		int type;
 
-		if (!strcasecmp("or", arg)) {
+		if (!SDL_strcasecmp("or", arg)) {
 			if (cls.demoseekingstatus.conditions == NULL) {
 				Com_Printf("Error: or can't be the first argument\n");
 				return;
@@ -4822,17 +4822,17 @@ static void CL_Demo_Jump_Status_f (void)
 			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_ROCKETS, value);
 		} else if (arg[0] == 'c' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
 			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_CELLS, value);
-		} else if (!strcasecmp("ga", arg)) {
+		} else if (!SDL_strcasecmp("ga", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR1);
-		} else if (!strcasecmp("ya", arg)) {
+		} else if (!SDL_strcasecmp("ya", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR2);
-		} else if (!strcasecmp("ra", arg)) {
+		} else if (!SDL_strcasecmp("ra", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR3);
-		} else if (!strcasecmp("quad", arg)) {
+		} else if (!SDL_strcasecmp("quad", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_QUAD);
-		} else if (!strcasecmp("ring", arg)) {
+		} else if (!SDL_strcasecmp("ring", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVISIBILITY);
-		} else if (!strcasecmp("pent", arg)) {
+		} else if (!SDL_strcasecmp("pent", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVULNERABILITY);
 		} else {
 			Com_Printf("Error: unknown condition: %s\n", Cmd_Argv(i));

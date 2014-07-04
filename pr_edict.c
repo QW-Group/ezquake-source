@@ -1103,7 +1103,7 @@ static void CheckKTPro (void)
 	int i, len;
 	char *s;
 
-	if (!strcasecmp(sv_ktpro_mode.string, "auto"))
+	if (!SDL_strcasecmp(sv_ktpro_mode.string, "auto"))
 	{
 		// attempt automatic detection
 		is_ktpro = false;

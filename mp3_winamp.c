@@ -288,15 +288,15 @@ static void WINAMP_Set_ToggleFn(char *name, int setparam, int getparam)
 		return;
 	}
 	
-	if (!strcasecmp(Cmd_Argv(1), "on")) 
+	if (!SDL_strcasecmp(Cmd_Argv(1), "on")) 
 	{
 		set = 1;
 	} 
-	else if (!strcasecmp(Cmd_Argv(1), "off")) 
+	else if (!SDL_strcasecmp(Cmd_Argv(1), "off")) 
 	{
 		set = 0;
 	} 
-	else if (!strcasecmp(Cmd_Argv(1), "toggle")) 
+	else if (!SDL_strcasecmp(Cmd_Argv(1), "toggle")) 
 	{
 		set = ret ? 0 : 1;
 	} 

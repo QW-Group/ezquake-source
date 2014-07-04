@@ -244,7 +244,7 @@ int HUD_FindPlace(hud_t *hud)
     // First try standard strings.
     for (i=0; i < num_snap_strings; i++)
 	{
-        if (!strcasecmp(hud->place->string, snap_strings[i]))
+        if (!SDL_strcasecmp(hud->place->string, snap_strings[i]))
 		{
             break;
 		}
@@ -298,7 +298,7 @@ int HUD_FindAlignX(hud_t *hud)
     // First try standard strings.
     for (i=0; i < num_align_strings_x; i++)
 	{
-        if (!strcasecmp(hud->align_x->string, align_strings_x[i]))
+        if (!SDL_strcasecmp(hud->align_x->string, align_strings_x[i]))
 		{
             break;
 		}
@@ -328,7 +328,7 @@ int HUD_FindAlignY(hud_t *hud)
     // First try standard strings.
     for (i=0; i < num_align_strings_y; i++)
 	{
-        if (!strcasecmp(hud->align_y->string, align_strings_y[i]))
+        if (!SDL_strcasecmp(hud->align_y->string, align_strings_y[i]))
 		{
             break;
 		}
@@ -397,7 +397,7 @@ void HUD_Show_f (void)
         return;
     }
 
-    if (!strcasecmp(Cmd_Argv(1), "all"))
+    if (!SDL_strcasecmp(Cmd_Argv(1), "all"))
     {
         hud = hud_huds;
         while (hud)
@@ -438,7 +438,7 @@ void HUD_Hide_f (void)
         return;
     }
 
-    if (!strcasecmp(Cmd_Argv(1), "all"))
+    if (!SDL_strcasecmp(Cmd_Argv(1), "all"))
     {
         hud = hud_huds;
         while (hud)
@@ -1361,7 +1361,7 @@ hud_t * HUD_Find(char *name)
 
     while (hud)
     {
-        if (!strcasecmp(hud->name, name))
+        if (!SDL_strcasecmp(hud->name, name))
 		{
             return hud;
 		}

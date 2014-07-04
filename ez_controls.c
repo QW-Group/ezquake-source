@@ -365,7 +365,7 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 				payload->absolute_virtual_x, payload->absolute_virtual_y, payload->virtual_x, payload->virtual_y));
 		}
 
-		if (!strcasecmp(payload->name, "Child 1"))
+		if (!SDL_strcasecmp(payload->name, "Child 1"))
 		{
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
 				va("vw: %i vh: %i w: %i h %i", 
@@ -374,7 +374,7 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 		*/
 
 		/*
-		if (!strcasecmp(payload->name, "button"))
+		if (!SDL_strcasecmp(payload->name, "button"))
 		{
 			Draw_AlphaLineRGB(payload->bound_left, 0, payload->bound_left, vid.conheight, 1, RGBA_TO_COLOR(255, 0, 0, 255));
 			Draw_AlphaLineRGB(payload->bound_right, 0, payload->bound_right, vid.conheight, 1, RGBA_TO_COLOR(255, 0, 0, 255));
@@ -382,7 +382,7 @@ static void EZ_tree_Draw(ez_tree_t *tree)
 		*/
 
 		/*
-		if (!strcasecmp(payload->name, "Vertical scrollbar"))
+		if (!SDL_strcasecmp(payload->name, "Vertical scrollbar"))
 		{
 			Draw_String(payload->absolute_virtual_x, payload->absolute_virtual_y - 10, 
 				va("b: %i r: %i", payload->bottom_edge_gap, payload->right_edge_gap));

@@ -257,16 +257,16 @@ void CD_f (void) {
 
 	command = Cmd_Argv (1);
 
-	if (!strcasecmp(command, "on")) {
+	if (!SDL_strcasecmp(command, "on")) {
 		CHECK_CD_ARGS(2);
 		enabled = true;
 		return;
-	} else if (!strcasecmp(command, "off")) {
+	} else if (!SDL_strcasecmp(command, "off")) {
 		CHECK_CD_ARGS(2);
 		CDAudio_Stop();
 		enabled = false;
 		return;
-	} else if (!strcasecmp(command, "reset")) {
+	} else if (!SDL_strcasecmp(command, "reset")) {
 		CHECK_CD_ARGS(2);
 		enabled = true;
 		CDAudio_Stop();
@@ -274,7 +274,7 @@ void CD_f (void) {
 			remap[n] = n;
 		CDAudio_GetAudioDiskInfo();
 		return;
-	} else if (!strcasecmp(command, "remap")) {
+	} else if (!SDL_strcasecmp(command, "remap")) {
 		ret = Cmd_Argc() - 2;
 		if (!ret) {
 			for (n = 1; n < 100; n++)
@@ -285,7 +285,7 @@ void CD_f (void) {
 				remap[n] = SDL_atoi(Cmd_Argv (n + 1));
 		}
 		return;
-	} else if (!strcasecmp(command, "close")) {
+	} else if (!SDL_strcasecmp(command, "close")) {
 		CHECK_CD_ARGS(2);
 		CDAudio_CloseDoor();
 		return;
@@ -299,27 +299,27 @@ void CD_f (void) {
 		}
 	}
 
-	if (!strcasecmp(command, "play"))	{
+	if (!SDL_strcasecmp(command, "play"))	{
 		CHECK_CD_ARGS(3);
 		CDAudio_Play((byte) SDL_atoi(Cmd_Argv(2)), false);
-	} else if (!strcasecmp(command, "loop"))	{
+	} else if (!SDL_strcasecmp(command, "loop"))	{
 		CHECK_CD_ARGS(3);
 		CDAudio_Play((byte) SDL_atoi(Cmd_Argv(2)), true);
-	} else if (!strcasecmp(command, "stop"))	{
+	} else if (!SDL_strcasecmp(command, "stop"))	{
 		CHECK_CD_ARGS(2);
 		CDAudio_Stop();
-	} else if (!strcasecmp(command, "pause")) {
+	} else if (!SDL_strcasecmp(command, "pause")) {
 		CHECK_CD_ARGS(2);
 		CDAudio_Pause();
-	} else if (!strcasecmp(command, "resume")) {
+	} else if (!SDL_strcasecmp(command, "resume")) {
 		CHECK_CD_ARGS(2);
 		CDAudio_Resume();
-	} else if (!strcasecmp(command, "eject")) {
+	} else if (!SDL_strcasecmp(command, "eject")) {
 		CHECK_CD_ARGS(2);
 		CDAudio_Stop();
 		CDAudio_Eject();
 		cdValid = false;
-	} else if (!strcasecmp(command, "info"))	{
+	} else if (!SDL_strcasecmp(command, "info"))	{
 		CHECK_CD_ARGS(2);
 		Com_Printf ("%u tracks\n", maxTrack);
 		if (playing)

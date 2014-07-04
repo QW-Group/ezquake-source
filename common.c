@@ -993,7 +993,7 @@ static info_t *_Info_Get (ctxinfo_t *ctx, const char *name)
 	key = Info_HashKey (name) % INFO_HASHPOOL_SIZE;
 
 	for (a = ctx->info_hash[key]; a; a = a->hash_next)
-		if (!strcasecmp(name, a->name))
+		if (!SDL_strcasecmp(name, a->name))
 			return a;
 
 	return NULL;
@@ -1059,7 +1059,7 @@ qbool Info_SetStar (ctxinfo_t *ctx, const char *name, const char *value)
 
 	// if already exists, reuse it
 	for (a = ctx->info_hash[key]; a; a = a->hash_next)
-		if (!strcasecmp(name, a->name))
+		if (!SDL_strcasecmp(name, a->name))
 		{
 			Q_free (a->value);
 			break;
@@ -1156,7 +1156,7 @@ qbool Info_Remove (ctxinfo_t *ctx, const char *name)
 	prev = NULL;
 	for (a = ctx->info_hash[key]; a; a = a->hash_next)
 	{
-		if (!strcasecmp(name, a->name))
+		if (!SDL_strcasecmp(name, a->name))
 		{
 			// unlink from hash
 			if (prev)
@@ -1174,7 +1174,7 @@ qbool Info_Remove (ctxinfo_t *ctx, const char *name)
 	prev = NULL;
 	for (a = ctx->info_list; a; a = a->next)
 	{
-		if (!strcasecmp(name, a->name))
+		if (!SDL_strcasecmp(name, a->name))
 		{
 			// unlink from info list
 			if (prev)

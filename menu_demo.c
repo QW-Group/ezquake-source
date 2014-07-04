@@ -415,7 +415,7 @@ void CT_Demo_Entry_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 		M_Print (24, y + 96, "No demo in playlist");
 	}
 
-	if (strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd"))
+	if (SDL_strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd"))
 	{
 		M_Print (24, y + 120, "Tracking only available with mvds");
 	}

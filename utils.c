@@ -1163,13 +1163,13 @@ char *Utils_TF_ColorToTeam(int color) {
 }
 
 int Utils_TF_TeamToColor(char *team) {
-	if (!strcasecmp(team, Utils_TF_ColorToTeam(13)))
+	if (!SDL_strcasecmp(team, Utils_TF_ColorToTeam(13)))
 		return 13;
-	if (!strcasecmp(team, Utils_TF_ColorToTeam(4)))
+	if (!SDL_strcasecmp(team, Utils_TF_ColorToTeam(4)))
 		return 4;
-	if (!strcasecmp(team, Utils_TF_ColorToTeam(12)))
+	if (!SDL_strcasecmp(team, Utils_TF_ColorToTeam(12)))
 		return 12;
-	if (!strcasecmp(team, Utils_TF_ColorToTeam(11)))
+	if (!SDL_strcasecmp(team, Utils_TF_ColorToTeam(11)))
 		return 11;
 	return 0;
 }

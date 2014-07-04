@@ -2354,7 +2354,7 @@ hud_element_t *Hud_FindElement(const char *name)
 
 	prev=NULL;
 	for(elem=hud_list; elem; elem = elem->next) {
-		if (!strcasecmp(name, elem->name))
+		if (!SDL_strcasecmp(name, elem->name))
 			return elem;
 		prev = elem;
 	}
@@ -2436,7 +2436,7 @@ void Hud_Add_f(void)
 		a2 = Cmd_Argv(2);
 		a3 = Cmd_Argv(3);
 
-		if (!strcasecmp(a2, "cvar")) {
+		if (!SDL_strcasecmp(a2, "cvar")) {
 			if( (var = Cvar_Find(a3)) ) {
 				elem = Hud_NewElement();
 				elem->contents = var;
@@ -2445,18 +2445,18 @@ void Hud_Add_f(void)
 				Com_Printf("cvar \"%s\" not found\n", a3);
 				return;
 			}
-		} else if (!strcasecmp(a2, "str")) {
+		} else if (!SDL_strcasecmp(a2, "str")) {
 			elem = Hud_NewElement();
 			elem->contents = Q_strdup( a3 );
 			elem->flags = HUD_STRING | HUD_ENABLED;
-		/*} else if (!strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
-			if (!strcasecmp(a3, "lag"))
+		/*} else if (!SDL_strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
+			if (!SDL_strcasecmp(a3, "lag"))
 				func = &Hud_LagmeterStr;
-			else if (!strcasecmp(a3, "fps"))
+			else if (!SDL_strcasecmp(a3, "fps"))
 				func = &Hud_FpsStr;
-			else if (!strcasecmp(a3, "clock"))
+			else if (!SDL_strcasecmp(a3, "clock"))
 				func = &Hud_ClockStr;
-			else if (!strcasecmp(a3, "speed"))
+			else if (!SDL_strcasecmp(a3, "speed"))
 				func = &Hud_SpeedStr;
 			else {
 				Com_Printf("\"%s\" is not a standard hud function\n", a3);
@@ -2465,7 +2465,7 @@ void Hud_Add_f(void)
 			elem = Hud_NewElement();
 			elem->contents = func;
 			elem->flags = HUD_FUNC | HUD_ENABLED;
-		} else if (!strcasecmp(a2, "img")) {
+		} else if (!SDL_strcasecmp(a2, "img")) {
 			mpic_t *hud_image;
 			int texnum = loadtexture_24bit(a3, LOADTEX_GFX);
 			if (!texnum) {
@@ -3514,26 +3514,26 @@ static image_format_t SShot_FormatForName(char *name) {
 
 	ext = COM_FileExtension(name);
 
-	if (!strcasecmp(ext, "tga"))
+	if (!SDL_strcasecmp(ext, "tga"))
 		return IMAGE_TGA;
 
 #ifdef WITH_PNG
-	else if (!strcasecmp(ext, "png"))
+	else if (!SDL_strcasecmp(ext, "png"))
 		return IMAGE_PNG;
 #endif
 
 #ifdef WITH_JPEG
-	else if (!strcasecmp(ext, "jpg"))
+	else if (!SDL_strcasecmp(ext, "jpg"))
 		return IMAGE_JPEG;
 #endif
 
 #ifdef WITH_PNG
-	else if (!strcasecmp(scr_sshot_format.string, "png"))
+	else if (!SDL_strcasecmp(scr_sshot_format.string, "png"))
 		return IMAGE_PNG;
 #endif
 
 #ifdef WITH_JPEG
-	else if (!strcasecmp(scr_sshot_format.string, "jpg") || !strcasecmp(scr_sshot_format.string, "jpeg"))
+	else if (!SDL_strcasecmp(scr_sshot_format.string, "jpg") || !SDL_strcasecmp(scr_sshot_format.string, "jpeg"))
 		return IMAGE_JPEG;
 #endif
 
@@ -3650,25 +3650,25 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 
 	// Find a file name to save it to
 	#ifdef WITH_PNG
-	if (!strcasecmp(scr_sshot_format.string, "png"))
+	if (!SDL_strcasecmp(scr_sshot_format.string, "png"))
 	{
 		strlcpy(ext, "png", 4);
 	}
 	#endif
 
 	#ifdef WITH_JPEG
-	if (!strcasecmp(scr_sshot_format.string, "jpeg") || !strcasecmp(scr_sshot_format.string, "jpg"))
+	if (!SDL_strcasecmp(scr_sshot_format.string, "jpeg") || !SDL_strcasecmp(scr_sshot_format.string, "jpg"))
 	{
 		strlcpy(ext, "jpg", 4);
 	}
 	#endif
 
-	if (!strcasecmp(scr_sshot_format.string, "tga"))
+	if (!SDL_strcasecmp(scr_sshot_format.string, "tga"))
 	{
 		strlcpy(ext, "tga", 4);
 	}
 
-	if (!strcasecmp(scr_sshot_format.string, "pcx"))
+	if (!SDL_strcasecmp(scr_sshot_format.string, "pcx"))
 	{
 		strlcpy(ext, "pcx", 4);
 	}

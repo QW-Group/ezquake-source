@@ -601,7 +601,7 @@ static int Load_LMP_Charset (char *name, int flags)
 	int filesize;
 
 	// We expect an .lmp to be in QPIC format, but it's ok if it's just raw data.
-	if (!strcasecmp(name, "charset"))
+	if (!SDL_strcasecmp(name, "charset"))
 	{
 		// work around for original charset
 		data = draw_chars;
@@ -696,7 +696,7 @@ static int Draw_LoadCharset(const char *name)
 	//		This way user still have some charset and can fix issue.
 	//
 
-	if (!strcasecmp(name, "original"))
+	if (!SDL_strcasecmp(name, "original"))
 	{
 		if ((texnum = Load_LMP_Charset("charset", flags)))
 		{

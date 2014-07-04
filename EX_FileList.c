@@ -390,7 +390,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 
     // Directories sorted always by name, ascending
     if (d1->is_directory && d2->is_directory)
-        return strcasecmp(d1->name, d2->name);
+        return SDL_strcasecmp(d1->name, d2->name);
 
 #ifdef WITH_ZIP
 	// Zips after directories.
@@ -399,7 +399,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 	if (d2->is_archive  && !d1->is_archive)
 		return 1;
 	if (d1->is_archive && d2->is_archive)
-		return strcasecmp(d1->name, d2->name);
+		return SDL_strcasecmp(d1->name, d2->name);
 #endif // WITH_ZIP
 
     while (true)
@@ -416,7 +416,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
         switch (c)
         {
             case '1':   // name
-                d = strcasecmp(d1->name, d2->name); break;
+                d = SDL_strcasecmp(d1->name, d2->name); break;
             case '2':   // size
 		        d = d1->size - d2->size;
                 break;
@@ -427,7 +427,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
             {
                 char *ext1 = fl->filetypes[d1->type_index].extension;
                 char *ext2 = fl->filetypes[d2->type_index].extension;
-                d = strcasecmp(ext1, ext2);
+                d = SDL_strcasecmp(ext1, ext2);
                 break;
             }
             default:
@@ -479,7 +479,7 @@ static int FL_FindRegisteredType(filelist_t *fl, sys_dirent *ent)
 
 			SDL_snprintf (ext, sizeof(ext), ".%s", COM_FileExtension (ent->fname));
 
-            if (!strcasecmp(fl->filetypes[i].extension, ext))
+            if (!SDL_strcasecmp(fl->filetypes[i].extension, ext))
             {
                 result = i;
                 break;

@@ -460,7 +460,7 @@ void SV_Map (qbool now)
 		}
 		// <-
 
-		SV_SpawnServer (level, !strcasecmp(Cmd_Argv(0), "devmap"));
+		SV_SpawnServer (level, !SDL_strcasecmp(Cmd_Argv(0), "devmap"));
 
 		SV_BroadcastCommand ("reconnect\n");
 

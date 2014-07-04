@@ -128,7 +128,7 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel)
 
 	for (i = 0; i < GLMODE_NUMODES; i++) 
 	{
-		if (!strcasecmp (modes[i].name, string))
+		if (!SDL_strcasecmp (modes[i].name, string))
 			break;
 	}
 
@@ -699,27 +699,27 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 		if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 		{
        		CHECK_TEXTURE_ALREADY_LOADED;
-       		if( !data && !strcasecmp(link + len - 3, "tga") )
+       		if( !data && !SDL_strcasecmp(link + len - 3, "tga") )
 			{
 				data = Image_LoadTGA (f, name, matchwidth, matchheight, real_width, real_height);
 			}
 
 			#ifdef WITH_PNG
-       		if( !data && !strcasecmp(link + len - 3, "png") )
+       		if( !data && !SDL_strcasecmp(link + len - 3, "png") )
 			{
        			data = Image_LoadPNG (f, name, matchwidth, matchheight, real_width, real_height);
 			}
 			#endif // WITH_PNG
 			
 			#ifdef WITH_JPEG
-       		if( !data && !strcasecmp(link + len - 3, "jpg") )
+       		if( !data && !SDL_strcasecmp(link + len - 3, "jpg") )
 			{
 				data = Image_LoadJPEG (f, name, matchwidth, matchheight, real_width, real_height);
 			}
 			#endif // WITH_JPEG
 
 			// TEX_NO_PCX - preventing loading skins here
-       		if( !(mode & TEX_NO_PCX) && !data && !strcasecmp(link + len - 3, "pcx") )
+       		if( !(mode & TEX_NO_PCX) && !data && !SDL_strcasecmp(link + len - 3, "pcx") )
 			{
 				data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight, real_width, real_height);
 			}

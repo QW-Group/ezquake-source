@@ -273,7 +273,7 @@ void Parse_Serverinfo(server_data *s, char *info)
     n = s->keysn - 2;
     for (i = 0; i <= n; i++)
         for (j = n; j >= i; j--)
-            if (strcasecmp(s->keys[j], s->keys[j+1]) > 0)
+            if (SDL_strcasecmp(s->keys[j], s->keys[j+1]) > 0)
             {
                 swap = (void*)s->keys[j];
                 s->keys[j] = s->keys[j+1];

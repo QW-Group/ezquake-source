@@ -315,7 +315,7 @@ static matchtype_t MT_GetMatchType(matchinfo_t *matchinfo) {
 		return mt_empty;
 
 
-	if (!strcasecmp(matchinfo->gamedir, "qw") && !strcmp(MT_Serverinfo_Race(), matchinfo->mapname))
+	if (!SDL_strcasecmp(matchinfo->gamedir, "qw") && !strcmp(MT_Serverinfo_Race(), matchinfo->mapname))
 		return mt_race;
 
 
@@ -1124,7 +1124,7 @@ static mapgroup_t *GetGroupWithName(char *groupname) {
 	mapgroup_t *node;
 
 	for (node = mapgroups; node; node = node->next) {
-		if (!strcasecmp(node->groupname, groupname))
+		if (!SDL_strcasecmp(node->groupname, groupname))
 			return node;
 	}
 	return NULL;
@@ -1136,7 +1136,7 @@ static mapgroup_t *GetGroupWithMember(char *member) {
 
 	for (node = mapgroups; node; node = node->next) {
 		for (j = 0; j < node->nummembers; j++) {
-			if (!strcasecmp(node->members[j], member))
+			if (!SDL_strcasecmp(node->members[j], member))
 				return node;
 		}
 	}
@@ -1183,7 +1183,7 @@ static void DeleteGroupMember(mapgroup_t *group, char *member) {
 		return;
 
 	for (i = 0; i < group->nummembers; i++) {
-		if (!strcasecmp(member, group->members[i]))
+		if (!SDL_strcasecmp(member, group->members[i]))
 			break;
 	}
 
@@ -1203,7 +1203,7 @@ static void AddGroupMember(mapgroup_t *group, char *member) {
 		return;
 
 	for (i = 0; i < group->nummembers; i++) {		
-		if (!strcasecmp(member, group->members[i]))
+		if (!SDL_strcasecmp(member, group->members[i]))
 			return;
 	}
 
@@ -1233,7 +1233,7 @@ void MT_MapGroup_f(void) {
 
 	groupname = Cmd_Argv(1);
 
-	if (c == 2 && !strcasecmp(groupname, "clear")) {	
+	if (c == 2 && !SDL_strcasecmp(groupname, "clear")) {	
 		for (node = FIRSTUSERGROUP; node; node = tempnode) {
 			tempnode = node->next;
 			DeleteMapGroup(node);
@@ -1265,7 +1265,7 @@ void MT_MapGroup_f(void) {
 		return;
 	}
 
-	if (c == 3 && !strcasecmp(Cmd_Argv(2), "clear")) {	
+	if (c == 3 && !SDL_strcasecmp(Cmd_Argv(2), "clear")) {	
 		if (!group)
 			Com_Printf("\"%s\" is not a map group name\n", groupname);
 		else
@@ -1390,7 +1390,7 @@ static skygroup_t *GetSkyGroupWithName(char *groupname) {
 	skygroup_t *node;
 
 	for (node = skygroups; node; node = node->next) {
-		if (!strcasecmp(node->groupname, groupname))
+		if (!SDL_strcasecmp(node->groupname, groupname))
 			return node;
 	}
 	return NULL;
@@ -1402,7 +1402,7 @@ static skygroup_t *GetSkyGroupWithMember(char *member) {
 
 	for (node = skygroups; node; node = node->next) {
 		for (j = 0; j < node->nummembers; j++) {
-			if (!strcasecmp(node->members[j], member))
+			if (!SDL_strcasecmp(node->members[j], member))
 				return node;
 		}
 	}
@@ -1449,7 +1449,7 @@ static void DeleteSkyGroupMember(skygroup_t *group, char *member) {
 		return;
 
 	for (i = 0; i < group->nummembers; i++) {
-		if (!strcasecmp(member, group->members[i]))
+		if (!SDL_strcasecmp(member, group->members[i]))
 			break;
 	}
 
@@ -1469,7 +1469,7 @@ static void AddSkyGroupMember(skygroup_t *group, char *member) {
 		return;
 
 	for (i = 0; i < group->nummembers; i++) {		
-		if (!strcasecmp(member, group->members[i]))
+		if (!SDL_strcasecmp(member, group->members[i]))
 			return;
 	}
 
@@ -1501,7 +1501,7 @@ void MT_SkyGroup_f(void) {
 
 	groupname = Cmd_Argv(1);
 
-	if (c == 2 && !strcasecmp(groupname, "clear")) {	
+	if (c == 2 && !SDL_strcasecmp(groupname, "clear")) {	
 		for (node = FIRSTUSERSKYGROUP; node; node = tempnode) {
 			tempnode = node->next;
 			DeleteSkyGroup(node);
@@ -1533,7 +1533,7 @@ void MT_SkyGroup_f(void) {
 		return;
 	}
 
-	if (c == 3 && !strcasecmp(Cmd_Argv(2), "clear")) {	
+	if (c == 3 && !SDL_strcasecmp(Cmd_Argv(2), "clear")) {	
 		if (!group && !strcmp("exmx", groupname))
 			Com_Printf("\"%s\" is not a sky group name\n", groupname);
 		else

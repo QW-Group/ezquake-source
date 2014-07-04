@@ -605,13 +605,13 @@ static char *Skin_To_TFSkin (char *myskin) // These four TF classes don't have t
 	if (!cl.teamfortress || cl.spectator || strncasecmp(myskin, "tf_", 3)) {
 		strlcpy(macro_buf, myskin, sizeof(macro_buf));
 	} else {
-		if (!strcasecmp(myskin, "tf_demo"))
+		if (!SDL_strcasecmp(myskin, "tf_demo"))
 			strlcpy(macro_buf, "demoman", sizeof(macro_buf));
-		else if (!strcasecmp(myskin, "tf_eng"))
+		else if (!SDL_strcasecmp(myskin, "tf_eng"))
 			strlcpy(macro_buf, "engineer", sizeof(macro_buf));
-		else if (!strcasecmp(myskin, "tf_snipe"))
+		else if (!SDL_strcasecmp(myskin, "tf_snipe"))
 			strlcpy(macro_buf, "sniper", sizeof(macro_buf));
-		else if (!strcasecmp(myskin, "tf_sold"))
+		else if (!SDL_strcasecmp(myskin, "tf_sold"))
 			strlcpy(macro_buf, "soldier", sizeof(macro_buf));
 		else
 			strlcpy(macro_buf, myskin + 3, sizeof(macro_buf));
@@ -902,7 +902,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 	if (!buf || !(length = strlen(buf)))
 		return;
 
-	team = !strcasecmp("say_team", Cmd_Argv(0));
+	team = !SDL_strcasecmp("say_team", Cmd_Argv(0));
 
 	if (length >= 2 && buf[0] == '\"' && buf[length - 1] == '\"') {
 		memmove(buf, buf + 1, length - 2);
@@ -1705,7 +1705,7 @@ void TP_ColorForcing (cvar_t *topcolor, cvar_t *bottomcolor)
 		return;
 	}
 
-	if (!strcasecmp(Cmd_Argv(1), "off") || !strcasecmp(Cmd_Argv(1), "")) {
+	if (!SDL_strcasecmp(Cmd_Argv(1), "off") || !SDL_strcasecmp(Cmd_Argv(1), "")) {
 		Cvar_SetValue(topcolor, -1);
 		Cvar_SetValue(bottomcolor, -1);
 		TP_RefreshSkins();
@@ -2529,7 +2529,7 @@ static void FlagCommand (unsigned int *flags, unsigned int defaultflags)
 		return;
 	}
 
-	if (c == 2 && !strcasecmp(Cmd_Argv(1), "none")) {
+	if (c == 2 && !SDL_strcasecmp(Cmd_Argv(1), "none")) {
 		*flags = 0;
 		return;
 	}
@@ -2549,28 +2549,28 @@ static void FlagCommand (unsigned int *flags, unsigned int defaultflags)
 
 		flag = 0;
 		for (j=0 ; j<NUM_ITEMFLAGS ; j++) {
-			if (!strcasecmp (p, pknames[j])) {
+			if (!SDL_strcasecmp (p, pknames[j])) {
 				flag = 1<<j;
 				break;
 			}
 		}
 
 		if (!flag) {
-			if (!strcasecmp (p, "armor"))
+			if (!SDL_strcasecmp (p, "armor"))
 				flag = it_armor;
-			else if (!strcasecmp (p, "weapons"))
+			else if (!SDL_strcasecmp (p, "weapons"))
 				flag = it_weapons;
-			else if (!strcasecmp (p, "powerups"))
+			else if (!SDL_strcasecmp (p, "powerups"))
 				flag = it_powerups;
-			else if (!strcasecmp (p, "ammo"))
+			else if (!SDL_strcasecmp (p, "ammo"))
 				flag = it_ammo;
-			else if (!strcasecmp (p, "players"))
+			else if (!SDL_strcasecmp (p, "players"))
 				flag = it_players;
-			else if (!strcasecmp (p, "default"))
+			else if (!SDL_strcasecmp (p, "default"))
 				flag = defaultflags;
-			else if (!strcasecmp (p, "runes"))
+			else if (!SDL_strcasecmp (p, "runes"))
 				flag = it_runes;
-			else if (!strcasecmp (p, "all"))
+			else if (!SDL_strcasecmp (p, "all"))
 				flag = UINT_MAX; //(1 << NUM_ITEMFLAGS); //-1;
 		}
 
@@ -3367,7 +3367,7 @@ qbool TP_FilterMessage (wchar *source)
 #ifdef _WIN32
 		if (!wcscasecmp(source + i + 1, str2wcs(filter_strings[j]))) {
 #else
-		if (!strcasecmp(wcs2str(source + i + 1), filter_strings[j])) {
+		if (!SDL_strcasecmp(wcs2str(source + i + 1), filter_strings[j])) {
 #endif
 			// strip the filter from message
 			if (i && source[i - 1] == ' ')	{
@@ -3402,7 +3402,7 @@ void TP_MsgFilter_f (void)
 		return;
 	}
 
-	if (c == 2 && (Cmd_Argv(1)[0] == 0 || !strcasecmp(Cmd_Argv(1), "clear"))) {
+	if (c == 2 && (Cmd_Argv(1)[0] == 0 || !SDL_strcasecmp(Cmd_Argv(1), "clear"))) {
 		num_filters = 0;
 		return;
 	}

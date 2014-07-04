@@ -223,11 +223,11 @@ static void XMMS_Set_ToggleFn(char *name, void *togglefunc, void *getfunc) {
 		Com_Printf("%s is %s\n", name, (ret == 1) ? "on" : "off");
 		return;
 	}
-	if (!strcasecmp(Cmd_Argv(1), "on")) {
+	if (!SDL_strcasecmp(Cmd_Argv(1), "on")) {
 		set = 1;
-	} else if (!strcasecmp(Cmd_Argv(1), "off")) {
+	} else if (!SDL_strcasecmp(Cmd_Argv(1), "off")) {
 		set = 0;
-	} else if (!strcasecmp(Cmd_Argv(1), "toggle")) {
+	} else if (!SDL_strcasecmp(Cmd_Argv(1), "toggle")) {
 		set = ret ? 0 : 1;
 	} else {
 		Com_Printf("Usage: %s [on|off|toggle]\n", Cmd_Argv(0));

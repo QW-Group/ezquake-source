@@ -335,7 +335,7 @@ static void DumpAliases(FILE *f)
 		for (partner = false, j = minus_index; j >= 0 && j < minus_index + minus_count; j++) {
 			b = sorted_aliases[j];
 
-			if (!strcasecmp(b->name + 1, a->name + 1)) {
+			if (!SDL_strcasecmp(b->name + 1, a->name + 1)) {
 
 				spaces = CreateSpaces(maxlen + 3 - strlen(a->name));
 				fprintf	(f, "alias %s%s\"%s\"\n", a->name, spaces, a->value);
@@ -366,7 +366,7 @@ static void DumpAliases(FILE *f)
 		for (partner = false, j = 0; j < minus_index; j++) {
 			b = sorted_aliases[j];
 
-			if (!strcasecmp(b->name + 1, a->name + 1)) {
+			if (!SDL_strcasecmp(b->name + 1, a->name + 1)) {
 
 				partner = true;
 				break;
@@ -462,13 +462,13 @@ void DumpMisc(FILE *f)
 	fprintf(f, "hud_recalculate\n\n");
 
 	if (cl.teamfortress) {
-		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") ||
-		        !strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
+		if (!SDL_strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") ||
+		        !SDL_strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
 		   ) {
 			fprintf(f, "setinfo ec on\n");
 		}
-		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "em"), "on") ||
-		        !strcasecmp(Info_ValueForKey (cls.userinfo, "exec_map"), "on")
+		if (!SDL_strcasecmp(Info_ValueForKey (cls.userinfo, "em"), "on") ||
+		        !SDL_strcasecmp(Info_ValueForKey (cls.userinfo, "exec_map"), "on")
 		   ) {
 			fprintf(f, "setinfo em on\n");
 		}

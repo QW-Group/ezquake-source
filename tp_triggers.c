@@ -304,7 +304,7 @@ void TP_MsgTrigger_f (void)
 		}
  
 		strlcpy (trig->string, Cmd_Argv(2), sizeof(trig->string));
-		if (c == 5 && !strcasecmp (Cmd_Argv(3), "-l")) {
+		if (c == 5 && !SDL_strcasecmp (Cmd_Argv(3), "-l")) {
 			if (!strcmp(Cmd_Argv(4), "t")) {
 				trig->level = 4;
 			} else {

@@ -345,7 +345,7 @@ local int unz64local_getLong64 (const zlib_filefunc64_32_def* pzlib_filefunc_def
     return err;
 }
 
-/* My own strcmpi / strcasecmp */
+/* My own strcmpi / SDL_strcasecmp */
 local int strcmpcasenosensitive_internal (const char* fileName1, const char* fileName2)
 {
     for (;;)
@@ -382,7 +382,7 @@ local int strcmpcasenosensitive_internal (const char* fileName1, const char* fil
    Compare two filename (fileName1,fileName2).
    If iCaseSenisivity = 1, comparision is case sensitivity (like strcmp)
    If iCaseSenisivity = 2, comparision is not case sensitivity (like strcmpi
-                                                                or strcasecmp)
+                                                                or SDL_strcasecmp)
    If iCaseSenisivity = 0, case sensitivity is defaut of your operating system
         (like 1 on Unix, 2 on Windows)
 

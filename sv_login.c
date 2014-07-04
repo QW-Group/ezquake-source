@@ -260,8 +260,8 @@ void SV_CreateAccount_f(void)
 			continue;
 		}
 
-		if (!strcasecmp(accounts[i].login, Cmd_Argv(1)) ||
-			(use == use_ip && !strcasecmp(accounts[i].login, Cmd_Argv(2))))
+		if (!SDL_strcasecmp(accounts[i].login, Cmd_Argv(1)) ||
+			(use == use_ip && !SDL_strcasecmp(accounts[i].login, Cmd_Argv(2))))
 			break;
 
 		c++;
@@ -317,7 +317,7 @@ void SV_RemoveAccount_f(void)
 		if (accounts[i].state == a_free)
 			continue;
 
-		if (!strcasecmp(accounts[i].login, Cmd_Argv(1)))
+		if (!SDL_strcasecmp(accounts[i].login, Cmd_Argv(1)))
 		{
 			if (accounts[i].inuse)
 				SV_Logout(&svs.clients[accounts[i].inuse -1]);
@@ -384,7 +384,7 @@ void SV_blockAccount(qbool block)
 		if (accounts[i].state == a_free)
 			continue;
 
-		if (!strcasecmp(accounts[i].login, Cmd_Argv(1)))
+		if (!SDL_strcasecmp(accounts[i].login, Cmd_Argv(1)))
 		{
 			if (block)
 			{
@@ -454,7 +454,7 @@ static int checklogin(char *log1, char *pass, int num, quse_t use)
 
 		if (use == accounts[i].use &&
 		        /*use == use_log && accounts[i].use == use_log && */
-			!strcasecmp(log1, accounts[i].login))
+			!SDL_strcasecmp(log1, accounts[i].login))
 		{
 			if (accounts[i].inuse && accounts[i].use == use_log)
 				return -1;
@@ -463,8 +463,8 @@ static int checklogin(char *log1, char *pass, int num, quse_t use)
 				return -2;
 
 			if (use == use_ip ||
-			        (!(int)sv_hashpasswords.value && !strcasecmp(pass,       accounts[i].pass)) ||
-			        ( (int)sv_hashpasswords.value && !strcasecmp(SHA1(pass), accounts[i].pass)))
+			        (!(int)sv_hashpasswords.value && !SDL_strcasecmp(pass,       accounts[i].pass)) ||
+			        ( (int)sv_hashpasswords.value && !SDL_strcasecmp(SHA1(pass), accounts[i].pass)))
 			{
 				accounts[i].failures = 0;
 				accounts[i].inuse++;

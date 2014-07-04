@@ -1399,7 +1399,7 @@ void PF_cvar (void)
 
 	str = G_STRING(OFS_PARM0);
 
-	if (!strcasecmp(str, "pr_checkextension") && !is_ktpro) {
+	if (!SDL_strcasecmp(str, "pr_checkextension") && !is_ktpro) {
 		// we do support PF_checkextension
 		G_FLOAT(OFS_RETURN) = 1.0;
 		return;
@@ -3136,7 +3136,7 @@ static void PF_checkextension (void)
 	extension = G_STRING(OFS_PARM0);
 
 	for (pstr = supported_extensions; *pstr; pstr++) {
-		if (!strcasecmp(*pstr, extension)) {
+		if (!SDL_strcasecmp(*pstr, extension)) {
 			G_FLOAT(OFS_RETURN) = 1.0;	// supported
 			return;
 		}
