@@ -2883,7 +2883,7 @@ void PF_stof (void)
 
 	s = G_STRING(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = Q_atof(s);
+	G_FLOAT(OFS_RETURN) = SDL_atof(s);
 }
 
 

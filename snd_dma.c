@@ -775,7 +775,7 @@ static void S_PlayVol_f (void)
 		strlcpy (name, Cmd_Argv(i), sizeof (name));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
-		vol = Q_atof(Cmd_Argv(i + 1));
+		vol = SDL_atof(Cmd_Argv(i + 1));
 		// ezhfan:
 		// pnum+1 changed to SELF_SOUND to make sound not to disappear
 		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, vol, 0.0);

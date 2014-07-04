@@ -196,11 +196,11 @@ void Media_SetVolume_f(void) {
 	} else {
 		char *v = Cmd_Argv(1);
 		if (v[0] == '+') {
-			Media_SetVolume(Media_GetVolume() + Q_atof(v + 1));
+			Media_SetVolume(Media_GetVolume() + SDL_atof(v + 1));
 		} else if (v[0] == '-') {
-			Media_SetVolume(Media_GetVolume() - Q_atof(v + 1));
+			Media_SetVolume(Media_GetVolume() - SDL_atof(v + 1));
 		} else {
-			Media_SetVolume(Q_atof(v));
+			Media_SetVolume(SDL_atof(v));
 		}
 	}
 }

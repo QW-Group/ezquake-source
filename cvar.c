@@ -155,7 +155,7 @@ float Cvar_Value (char *var_name)
 
 	if (!var)
 		return 0;
-	return Q_atof (var->string);
+	return SDL_atof (var->string);
 }
 
 char *Cvar_String (char *var_name)
@@ -206,7 +206,7 @@ int Cvar_CompleteCountPossible (char *partial)
 
 void Cvar_RulesetSet(cvar_t *var, char *val, int m)
 {
-	float rulesetval_f = Q_atof (val);
+	float rulesetval_f = SDL_atof (val);
 
 	switch (m) {
 		case 0:
@@ -249,7 +249,7 @@ void Cvar_Set (cvar_t *var, char *value)
 	}
 
 	if (var->flags & CVAR_RULESET_MIN) {
-		test  = Q_atof (value);
+		test  = SDL_atof (value);
 		if (test < var->minrulesetvalue) {
 			Com_Printf ("min \"%s\" is limited to %0.2f\n", var->name,var->minrulesetvalue);
 			return;
@@ -257,7 +257,7 @@ void Cvar_Set (cvar_t *var, char *value)
 	}
 
 	if (var->flags & CVAR_RULESET_MAX) {
-		test  = Q_atof (value);
+		test  = SDL_atof (value);
 		if (test > var->maxrulesetvalue) {
 			Com_Printf ("max \"%s\" is limited to %0.2f\n", var->name,var->maxrulesetvalue);
 			return;
@@ -319,7 +319,7 @@ void Cvar_Set (cvar_t *var, char *value)
 	Z_Free (var->string);
 
 	var->string = new_val;
-	var->value = Q_atof (var->string);
+	var->value = SDL_atof (var->string);
 	var->integer = SDL_atoi (var->string);
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
@@ -519,7 +519,7 @@ void Cvar_Register (cvar_t *var)
 				Z_Free (old->string);
 				old->string  = old->latchedString;
 				old->latchedString = NULL;
-				old->value   = Q_atof (old->string);
+				old->value   = SDL_atof (old->string);
 				old->integer = SDL_atoi (old->string);
 				StringToRGB_W(old->string, old->color);
 				old->modified = true;
@@ -560,7 +560,7 @@ void Cvar_Register (cvar_t *var)
 		// allocate the string on zone because future sets will Z_Free it
 		var->string = Z_Strdup (var->string);
 	}
-	var->value = Q_atof (var->string);
+	var->value = SDL_atof (var->string);
 	var->integer = SDL_atoi (var->string);
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
@@ -762,7 +762,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->string = Z_Strdup (string);
 	v->defaultvalue = Z_Strdup (string);
 	v->flags = cvarflags | CVAR_USER_CREATED;
-	v->value = Q_atof (v->string);
+	v->value = SDL_atof (v->string);
 	v->integer = SDL_atoi (v->string);
 	StringToRGB_W(v->string, v->color);
 	v->modified = true;
@@ -1082,7 +1082,7 @@ void Cvar_Set_Calc_f(void)
 		Cvar_SetValue (var, strlen (a3));
 		return;
 	} else if (!strcmp (a2, "int")) {
-		Cvar_SetValue (var, (int) Q_atof (a3));
+		Cvar_SetValue (var, (int) SDL_atof (a3));
 		return;
 	} else if (!strcmp (a2, "substr")) {
 		int var2len;
@@ -1167,9 +1167,9 @@ void Cvar_Set_Calc_f(void)
 		return;
 	}
 
-	num1 = Q_atof (a2);
+	num1 = SDL_atof (a2);
 	op = a3;
-	num2 = Q_atof (Cmd_Argv (4));
+	num2 = SDL_atof (Cmd_Argv (4));
 
 	if (!strcmp (op, "+"))
 		result = num1 + num2;

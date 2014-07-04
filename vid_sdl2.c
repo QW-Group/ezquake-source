@@ -905,7 +905,7 @@ static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 	else if (var == &r_conheight)
 		Cvar_SetValue(&r_conheight, SDL_atoi(string));
 	else
-		Cvar_SetValue(&r_conscale, Q_atof(string));
+		Cvar_SetValue(&r_conscale, SDL_atof(string));
 
 	VID_UpdateConRes();
 	*cancel = true;

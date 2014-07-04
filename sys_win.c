@@ -67,7 +67,7 @@ extern qbool ActiveApp, Minimized;
 
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
 {
-	if (Q_atof(string)) 
+	if (SDL_atof(string)) 
 	{
 		if (!WinKeyHook_isActive) 
 		{
@@ -147,7 +147,7 @@ void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
 	char *desc;
 	float priority;
 
-	priority = Q_atof(s);
+	priority = SDL_atof(s);
 	if (priority == 1) 
 	{
 		q_priority = 2;

@@ -2326,7 +2326,7 @@ static void Cmd_MinPing_f (void)
 			Con_Printf("Can't change sv_minping: sv_enable_cmd_minping == 0.\n");
 		else
 		{
-			minping = Q_atof(Cmd_Argv(1));
+			minping = SDL_atof(Cmd_Argv(1));
 			if (minping < 0 || minping > 300)
 				Con_Printf("Value must be >= 0 and <= 300.\n");
 			else

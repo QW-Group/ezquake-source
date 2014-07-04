@@ -240,7 +240,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 
 				if (!strcasecmp(token, FRAGFILE_VERSION_1_00) && (token = strchr(token, '-'))) {
 					token++; // find float component of string like this "ezquake-x.yz"
-					fragdefs.version = (int) (100 * Q_atof(token));
+					fragdefs.version = (int) (100 * SDL_atof(token));
 					gotversion = true;
 				} else {
 					Com_Printf("Error: fragfile version (\"%s\") unsupported \n", Cmd_Argv(2));

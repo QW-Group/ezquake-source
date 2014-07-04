@@ -718,9 +718,9 @@ static void Cam_Pos_f (void)
 	if (!cls.demoplayback && !cl.spectator)
 		return;
 		
-	cl.simorg[0] = Q_atof(Cmd_Argv(1));
-	cl.simorg[1] = Q_atof(Cmd_Argv(2));
-	cl.simorg[2] = Q_atof(Cmd_Argv(3));
+	cl.simorg[0] = SDL_atof(Cmd_Argv(1));
+	cl.simorg[1] = SDL_atof(Cmd_Argv(2));
+	cl.simorg[2] = SDL_atof(Cmd_Argv(3));
 	clpred_newpos = true;
 	
 	VectorCopy (cl.simorg, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
@@ -756,9 +756,9 @@ static void Cam_Angles_f (void)
 	if (!cls.demoplayback && !cl.spectator)
 		return;
 		
-	cl.simangles[0] = Q_atof(Cmd_Argv(1));
-	cl.simangles[1] = Q_atof(Cmd_Argv(2));
-	cl.simangles[2] = Q_atof(Cmd_Argv(3));
+	cl.simangles[0] = SDL_atof(Cmd_Argv(1));
+	cl.simangles[1] = SDL_atof(Cmd_Argv(2));
+	cl.simangles[2] = SDL_atof(Cmd_Argv(3));
 	VectorCopy (cl.simangles, cl.viewangles);
 }
 

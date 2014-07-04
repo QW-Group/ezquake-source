@@ -754,7 +754,7 @@ char* SCR_GetGameTime(int t)
 	static char str[9];
 	float timelimit;
 
-	timelimit = (t == TIMETYPE_GAMECLOCKINV) ? 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1: 0;
+	timelimit = (t == TIMETYPE_GAMECLOCKINV) ? 60 * SDL_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1: 0;
 
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));

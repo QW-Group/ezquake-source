@@ -888,7 +888,7 @@ void SV_Cuff_f (void)
 
 	if (c >= 3)
 	{
-		mins = Q_atof(Cmd_Argv(2));
+		mins = SDL_atof(Cmd_Argv(2));
 		if (mins < 0.0 || mins > MAXPENALTY)
 		{
 			mins = MAXPENALTY;
@@ -978,7 +978,7 @@ void SV_Mute_f (void)
 			ptr++;
 			print = false;
 		}
-		mins = Q_atof(ptr);
+		mins = SDL_atof(ptr);
 		if (mins < 0.0 || mins > MAXPENALTY)
 			mins = MAXPENALTY;
 	}
@@ -1289,7 +1289,7 @@ void SV_Check_localinfo_maps_support(void)
 	char	*x_version;
 	char	*x_build;
 
-	k_version = Q_atof(k_version_s = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_VERSION));
+	k_version = SDL_atof(k_version_s = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_VERSION));
 	k_build   = SDL_atoi(k_build_s   = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_BUILD));
 
 	x_version = Info_ValueForKey(svs.info, SERVERINFO_KTX_VERSION);

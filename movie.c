@@ -168,7 +168,7 @@ void Movie_Demo_Capture_f(void) {
 		Com_Printf("%s : Must be playing a demo to capture\n", Cmd_Argv(0));
 		return;
 	}
-	if ((time = Q_atof(Cmd_Argv(2))) <= 0) {
+	if ((time = SDL_atof(Cmd_Argv(2))) <= 0) {
 		Com_Printf("%s : Time argument must be positive\n", Cmd_Argv(0));
 		return;
 	}

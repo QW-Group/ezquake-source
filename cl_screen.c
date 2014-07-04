@@ -342,7 +342,7 @@ qbool	concussioned = false;
 
 void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 {
-	float newfov = Q_atof(value);
+	float newfov = SDL_atof(value);
 
 	if (newfov > 140)
 		newfov = 140;
@@ -386,7 +386,7 @@ void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 
 void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel)
 {
-	float newfov = Q_atof(value);
+	float newfov = SDL_atof(value);
 
 	if (newfov < 10.0 || newfov > 140.0){
 		Com_Printf("Invalid default_fov\n");
@@ -778,7 +778,7 @@ void SCR_DrawGameClock (void) {
 		return;
 
 	if (scr_gameclock.value == 2 || scr_gameclock.value == 4)
-		timelimit = 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1;
+		timelimit = 60 * SDL_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1;
 	else
 		timelimit = 0;
 

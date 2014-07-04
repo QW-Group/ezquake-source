@@ -1934,20 +1934,20 @@ void Cmd_If_Old (void)
 	op = Cmd_Argv(2);
 	if (!strcmp(op, "==") || !strcmp(op, "=") || !strcmp(op, "!=") || !strcmp(op, "<>")) {
 		if (is_numeric(Cmd_Argv(1)) && is_numeric(Cmd_Argv(3)))
-			result = Q_atof(Cmd_Argv(1)) == Q_atof(Cmd_Argv(3));
+			result = SDL_atof(Cmd_Argv(1)) == SDL_atof(Cmd_Argv(3));
 		else
 			result = !strcmp(Cmd_Argv(1), Cmd_Argv(3));
 
 		if (op[0] != '=')
 			result = !result;
 	} else if (!strcmp(op, ">")) {
-		result = Q_atof(Cmd_Argv(1)) > Q_atof(Cmd_Argv(3));
+		result = SDL_atof(Cmd_Argv(1)) > SDL_atof(Cmd_Argv(3));
 	} else if (!strcmp(op, "<")) {
-		result = Q_atof(Cmd_Argv(1)) < Q_atof(Cmd_Argv(3));
+		result = SDL_atof(Cmd_Argv(1)) < SDL_atof(Cmd_Argv(3));
 	} else if (!strcmp(op, ">=")) {
-		result = Q_atof(Cmd_Argv(1)) >= Q_atof(Cmd_Argv(3));
+		result = SDL_atof(Cmd_Argv(1)) >= SDL_atof(Cmd_Argv(3));
 	} else if (!strcmp(op, "<=")) {
-		result = Q_atof(Cmd_Argv(1)) <= Q_atof(Cmd_Argv(3));
+		result = SDL_atof(Cmd_Argv(1)) <= SDL_atof(Cmd_Argv(3));
 
 	} else if (!strcmp(op, "isin")) {
 		result = (strstr(Cmd_Argv(3), Cmd_Argv(1)) ? 1 : 0);

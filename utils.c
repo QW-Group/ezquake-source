@@ -191,7 +191,7 @@ int ParseFloats(char *s, float *f, int *f_size) {
 	argc = min(Cmd_ArgcEx(&ctx), f_size[0]);
 	
 	for(i = 0; i < argc; i++)
-		f[i] = Q_atof(Cmd_ArgvEx(&ctx, i));
+		f[i] = SDL_atof(Cmd_ArgvEx(&ctx, i));
 
 	for( ; i < f_size[0]; i++)
 		f[i] = 0; // zeroing unused elements

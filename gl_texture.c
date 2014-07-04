@@ -80,7 +80,7 @@ static int			numgltextures = 0;
 void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) 
 {
 	int i;
-	float newvalue = Q_atof(string);
+	float newvalue = SDL_atof(string);
 
 	if (newvalue > gl_max_size_default) 
 	{
@@ -203,7 +203,7 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel)
 
 void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel)
 {
-	float newval = Q_atof(string);
+	float newval = SDL_atof(string);
 
 	if (newval != 0 && newval != 1 && newval != 2 && newval != 3) 
 	{

@@ -2162,7 +2162,7 @@ void CL_ProcessServerInfo (void)
 	cl.gametype = *(p = Info_ValueForKey(cl.serverinfo, "deathmatch")) ? (atoi(p) ? GAME_DEATHMATCH : GAME_COOP) : GAME_DEATHMATCH;
 
 	// server side fps restriction
-	cl.maxfps = Q_atof(Info_ValueForKey(cl.serverinfo, "maxfps"));
+	cl.maxfps = SDL_atof(Info_ValueForKey(cl.serverinfo, "maxfps"));
 
 	newfpd = cls.demoplayback ? 0 : atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
 
@@ -2186,18 +2186,18 @@ void CL_ProcessServerInfo (void)
 
 	// Initialize cl.maxpitch & cl.minpitch
 	p = (cl.z_ext & Z_EXT_PITCHLIMITS) ? Info_ValueForKey (cl.serverinfo, "maxpitch") : "";
-	cl.maxpitch = *p ? Q_atof(p) : 80.0f;
+	cl.maxpitch = *p ? SDL_atof(p) : 80.0f;
 	p = (cl.z_ext & Z_EXT_PITCHLIMITS) ? Info_ValueForKey (cl.serverinfo, "minpitch") : "";
-	cl.minpitch = *p ? Q_atof(p) : -70.0f;
+	cl.minpitch = *p ? SDL_atof(p) : -70.0f;
 
 	// movement vars for prediction
-	cl.bunnyspeedcap = Q_atof(Info_ValueForKey(cl.serverinfo, "pm_bunnyspeedcap"));
-	movevars.slidefix = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_slidefix")) != 0);
-	movevars.airstep = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_airstep")) != 0);
-	movevars.pground = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_pground")) != 0)
+	cl.bunnyspeedcap = SDL_atof(Info_ValueForKey(cl.serverinfo, "pm_bunnyspeedcap"));
+	movevars.slidefix = (SDL_atof(Info_ValueForKey(cl.serverinfo, "pm_slidefix")) != 0);
+	movevars.airstep = (SDL_atof(Info_ValueForKey(cl.serverinfo, "pm_airstep")) != 0);
+	movevars.pground = (SDL_atof(Info_ValueForKey(cl.serverinfo, "pm_pground")) != 0)
 		&& (cl.z_ext & Z_EXT_PF_ONGROUND) /* pground doesn't make sense without this */;
 	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ?
-		Q_atof(p) : cl.teamfortress ? 0 : 1;
+		SDL_atof(p) : cl.teamfortress ? 0 : 1;
 
 	// Deathmatch and teamplay.
 	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));

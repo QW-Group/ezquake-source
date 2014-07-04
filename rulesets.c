@@ -308,9 +308,9 @@ void Rulesets_OnChange_r_fullbrightSkins (cvar_t *var, char *value, qbool *cance
 {
 	char *fbs;
 	qbool fbskins_policy = (cls.demoplayback || cl.spectator) ? 1 :
-		*(fbs = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbs), 1) :
+		*(fbs = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, SDL_atof(fbs), 1) :
 		cl.teamfortress ? 0 : 1;
-	float fbskins = bound (0.0, Q_atof (value), fbskins_policy);
+	float fbskins = bound (0.0, SDL_atof (value), fbskins_policy);
 
 	if (!cl.spectator && cls.state != ca_disconnected) {
 		if (fbskins > 0.0)
@@ -349,7 +349,7 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 {
 	int ival = SDL_atoi(value);	// this is used in the code
-	float fval = Q_atof(value); // this is used to check value validity
+	float fval = SDL_atof(value); // this is used to check value validity
 
 	if (ival == var->integer && fval == var->value) {
 		// no change
@@ -382,7 +382,7 @@ void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 {
 	int ival = SDL_atoi(value);	// this is used in the code
-	float fval = Q_atof(value); // this is used to check value validity
+	float fval = SDL_atof(value); // this is used to check value validity
 
 	if (ival == var->integer && fval == var->value) {
 		// no change
@@ -413,7 +413,7 @@ void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 
 void Rulesets_OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel)
 {
-	float fakeshaft = Q_atof (value);
+	float fakeshaft = SDL_atof (value);
 
 
  	if (!cl.spectator && cls.state != ca_disconnected) {
