@@ -225,7 +225,7 @@ static char *VX_RemovePrefix(int player)
 	name = Q_normalizetext(Q_strdup(cl.players[player].name));
 
 	while (prefix != NULL) {
-		if (strlen(prefix) > skip && strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
+		if (strlen(prefix) > skip && strlen(name) > strlen(prefix) && SDL_strncasecmp(prefix, name, strlen(prefix)) == 0) {
 			skip = strlen(prefix);
 			// remove spaces from the new start of the name
 			while (name[skip] == ' ')

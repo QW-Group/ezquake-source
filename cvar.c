@@ -182,7 +182,7 @@ char *Cvar_CompleteVariable (char *partial)
 
 	// check partial match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!strncasecmp (partial,cvar->name, len))
+		if (!SDL_strncasecmp (partial,cvar->name, len))
 			return cvar->name;
 
 	return NULL;
@@ -198,7 +198,7 @@ int Cvar_CompleteCountPossible (char *partial)
 
 	// check partial match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!strncasecmp (partial, cvar->name, len))
+		if (!SDL_strncasecmp (partial, cvar->name, len))
 			c++;
 
 	return c;

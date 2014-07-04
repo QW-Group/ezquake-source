@@ -381,10 +381,10 @@ qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 
 	while(*banned_cmd)
 	{
-		if(strncasecmp(str, *banned_cmd, strlen(*banned_cmd)) == 0)
+		if(SDL_strncasecmp(str, *banned_cmd, strlen(*banned_cmd)) == 0)
 		{
 			//+set is processed in Cbuf_AddEarlyCommands(), +cfg_load allowed only once in Host_Init()
-			if((strncasecmp(str, "set ", 4) != 0) && (strncasecmp(str, "cfg_load ", 9) != 0))
+			if((SDL_strncasecmp(str, "set ", 4) != 0) && (SDL_strncasecmp(str, "cfg_load ", 9) != 0))
 			{
 				Com_Printf("+%s is not allowed in cmdline or obsolete.\n", *banned_cmd);
 			}
@@ -1291,10 +1291,10 @@ char *Cmd_CompleteCommand (char *partial)
 
 	// check for partial match
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strncasecmp (partial, cmd->name, len))
+		if (!SDL_strncasecmp (partial, cmd->name, len))
 			return cmd->name;
 	for (alias = cmd_alias; alias; alias = alias->next)
-		if (!strncasecmp (partial, alias->name, len))
+		if (!SDL_strncasecmp (partial, alias->name, len))
 			return alias->name;
 
 	return NULL;
@@ -1310,7 +1310,7 @@ int Cmd_CompleteCountPossible (char *partial)
 		return 0;
 
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strncasecmp (partial, cmd->name, len))
+		if (!SDL_strncasecmp (partial, cmd->name, len))
 			c++;
 
 	return c;
@@ -1326,7 +1326,7 @@ int Cmd_AliasCompleteCountPossible (char *partial)
 		return 0;
 
 	for (alias = cmd_alias; alias; alias = alias->next)
-		if (!strncasecmp (partial, alias->name, len))
+		if (!SDL_strncasecmp (partial, alias->name, len))
 			c++;
 
 	return c;
@@ -1437,7 +1437,7 @@ char *Cmd_MacroString (const char *s, int *macro_length)
 
 	for (i = 0; i < macro_count; i++) {
 		macro = &macro_commands[i];
-		if (!strncasecmp (s, macro->name, strlen (macro->name))) {
+		if (!SDL_strncasecmp (s, macro->name, strlen (macro->name))) {
 			if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED))
 				cbuf_current = &cbuf_formatted_comms;
 			*macro_length = strlen (macro->name);

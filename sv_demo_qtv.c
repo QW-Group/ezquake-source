@@ -736,7 +736,7 @@ void QTVcmd_Say_f(mvddest_t *d)
 	cmd = Cmd_Argv(0);
 
 	// strip leading say_game but not in case of "cmd say_game say_game"
-	if (strcmp(cmd, "say_game") && !strncasecmp(p, "say_game ", sizeof("say_game ") - 1))
+	if (strcmp(cmd, "say_game") && !SDL_strncasecmp(p, "say_game ", sizeof("say_game ") - 1))
 	{
 		p += sizeof("say_game ") - 1;
 	}

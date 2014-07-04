@@ -173,7 +173,7 @@ char *strstri(const char *text, const char *find)
 	while (*s)
 	{
 		// Check if we can find the substring.
-		if (!strncasecmp(s, find, findlen))
+		if (!SDL_strncasecmp(s, find, findlen))
 		{
 			return s;
 		}

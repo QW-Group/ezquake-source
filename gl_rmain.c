@@ -884,7 +884,7 @@ if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
 	}
 }
 else if (
-	!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
+	!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && SDL_strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
 	(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !(com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1))
 ) {
 	ambientlight = shadelight = 4096;

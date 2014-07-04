@@ -175,7 +175,7 @@ void StatsGrid_SetHoldItemOrder(const char *item_name, int order)
 
 	for (i = 0; i < stats_important_ents->count; i++)
 	{
-		if (!strncasecmp(stats_important_ents->list[i].name, item_name, len))
+		if (!SDL_strncasecmp(stats_important_ents->list[i].name, item_name, len))
 		{
 			stats_important_ents->list[i].order = order;
 		}

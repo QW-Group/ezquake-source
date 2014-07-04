@@ -1268,7 +1268,7 @@ static void Cmd_Download_f(void)
 		|| strstr(name, "/../") // no /../
 		|| ((i = strlen(name)) < 3 ? 0 : !strncmp(name + i - 3, "/..", 4)) // no /.. at end
 		|| *name == '.' //relative is pointless
-		|| ((i = strlen(name)) < 4 ? 0 : !strncasecmp(name + i - 4, ".log", 5)) // no logs
+		|| ((i = strlen(name)) < 4 ? 0 : !SDL_strncasecmp(name + i - 4, ".log", 5)) // no logs
 #ifdef _WIN32
 		// no leading X:
 	   	|| ( name[0] && name[1] == ':' && ((*name >= 'a' && *name <= 'z') || (*name >= 'A' && *name <= 'Z')))

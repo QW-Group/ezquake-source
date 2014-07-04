@@ -438,7 +438,7 @@ static void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel)
 		return;
 	}
 
-	if (strncasecmp (value, "smackdown", 9) && strncasecmp (value, "mtfl", 4) && strncasecmp (value, "default", 7)) {
+	if (SDL_strncasecmp (value, "smackdown", 9) && SDL_strncasecmp (value, "mtfl", 4) && SDL_strncasecmp (value, "default", 7)) {
 		Com_Printf_State (PRINT_INFO, "Unknown ruleset \"%s\"\n", value);
 		*cancel = true;
 		return;
@@ -461,13 +461,13 @@ static void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel)
 	// we need to mark custom textures in the memory (like for backpack and eyes) to be reloaded again
 	Cache_Flush ();
 
-	if (!strncasecmp (value, "smackdown", 9)) {
+	if (!SDL_strncasecmp (value, "smackdown", 9)) {
 		Rulesets_Smackdown (true);
 		Com_Printf_State (PRINT_OK, "Ruleset Smackdown initialized\n");
-	} else if (!strncasecmp (value, "mtfl", 4)) {
+	} else if (!SDL_strncasecmp (value, "mtfl", 4)) {
 		Rulesets_MTFL (true);
 		Com_Printf_State (PRINT_OK, "Ruleset MTFL initialized\n");
-	} else if (!strncasecmp (value, "default", 7)) {
+	} else if (!SDL_strncasecmp (value, "default", 7)) {
 		Rulesets_Default ();
 		Com_Printf_State (PRINT_OK, "Ruleset default initialized\n");
 	} else {

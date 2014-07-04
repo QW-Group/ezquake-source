@@ -533,7 +533,7 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 			}
 			if (len < 5)
 				continue;
-			if (!strncasecmp(userpak,"soft",4))
+			if (!SDL_strncasecmp(userpak,"soft",4))
 				continue;
 			FS_AddPak(dir, userpak, parent, NULL);
 		}

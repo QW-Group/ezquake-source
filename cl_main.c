@@ -826,7 +826,7 @@ void CL_QWURL_f (void)
 
 		connection_str = Cmd_Argv(1);
 
-		if (!strncasecmp(qws_str, connection_str, qws_len))
+		if (!SDL_strncasecmp(qws_str, connection_str, qws_len))
 		{
 			connection_str += qws_len;
 		}
@@ -851,7 +851,7 @@ void CL_QWURL_f (void)
 	}
 
 	// Default to connecting.
-	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
+	if (!strcmp(command, "") || !SDL_strncasecmp(command, "join", 4) || !SDL_strncasecmp(command, "connect", 7))
 	{
 		Cbuf_AddText(va("connect %s\n", connection_str));
 	}
@@ -860,11 +860,11 @@ void CL_QWURL_f (void)
 		CL_QWURL_ProcessChallenge(command + 9);
 		Cbuf_AddText(va("connect %s\n", connection_str));
 	}
-	else if (!strncasecmp(command, "spectate", 8) || !strncasecmp(command, "observe", 7))
+	else if (!SDL_strncasecmp(command, "spectate", 8) || !SDL_strncasecmp(command, "observe", 7))
 	{
 		Cbuf_AddText(va("observe %s\n", connection_str));
 	}
-	else if (!strncasecmp(command, "qtv", 3))
+	else if (!SDL_strncasecmp(command, "qtv", 3))
 	{
 		char *password = command + 4;
 

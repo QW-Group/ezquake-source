@@ -205,7 +205,7 @@ qbool GameStarted(void)
 		if (d->desttype != DEST_STREAM) // oh, its not stream, treat as "game is started"
 			break;
 
-	return (d || strncasecmp(Info_ValueForKey(svs.info, "status"), "Standby", 8));
+	return (d || SDL_strncasecmp(Info_ValueForKey(svs.info, "status"), "Standby", 8));
 }
 /*
 ================
@@ -1631,7 +1631,7 @@ static void SVC_RemoteCommand (char *remote_command)
 					!SDL_strcasecmp(tstr, "localcommand") ||
 					!SDL_strcasecmp(tstr, "sv_crypt_rcon") ||
 					!SDL_strcasecmp(tstr, "sv_timestamplen") ||
-					!strncasecmp(tstr, "log", 3) ||
+					!SDL_strncasecmp(tstr, "log", 3) ||
 					!SDL_strcasecmp(tstr, "sys_command_line")
 					)
 				{

@@ -205,10 +205,6 @@ char *Q_strcpy( char *to, char *from );
 char *Q_strlwr( char *s1 );
 
 // Added by VVD {
-#ifdef _WIN32
-#define strncasecmp(s1, s2, n)	_strnicmp ((s1),   (s2),   (n))
-#endif
-
 char *strstri(const char *text, const char *find); // Case insensitive strstr.
 
 #if defined(__linux__) || defined(_WIN32)

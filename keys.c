@@ -424,7 +424,7 @@ static void FindCommonSubString (char *s)
 	} 
 	else
 	{
-		while (compl_clen > compl_len && strncasecmp(s, compl_common, compl_clen))
+		while (compl_clen > compl_len && SDL_strncasecmp(s, compl_common, compl_clen))
 			compl_clen--;
 	}
 }

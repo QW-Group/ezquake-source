@@ -149,7 +149,7 @@ void Movie_Demo_Capture_f(void) {
 		return;
 	}
 	if (argc == 2) {
-		if (strncasecmp("stop", Cmd_Argv(1), 4))
+		if (SDL_strncasecmp("stop", Cmd_Argv(1), 4))
 			Com_Printf(error);
 		else if (Movie_IsCapturing())
 			Movie_Stop();
@@ -157,7 +157,7 @@ void Movie_Demo_Capture_f(void) {
 			Com_Printf("%s : Not capturing\n", Cmd_Argv(0));
 		return;
 	}
-	if (strncasecmp("start", Cmd_Argv(1), 5)) {
+	if (SDL_strncasecmp("start", Cmd_Argv(1), 5)) {
 		Com_Printf(error);
 		return;
 	} else if (Movie_IsCapturing()) {

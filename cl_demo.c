@@ -3484,10 +3484,10 @@ qbool CL_IsDemoExtension(const char *filename)
 {
 	char *ext = COM_FileExtension(filename);
 
-	return (!strncasecmp(ext, "mvd", sizeof("mvd"))
-		 || !strncasecmp(ext, "qwd", sizeof("qwd"))
-		 || !strncasecmp(ext, "dem", sizeof("dem"))
-		 || !strncasecmp(ext, "qwz", sizeof("qwz")));
+	return (!SDL_strncasecmp(ext, "mvd", sizeof("mvd"))
+		 || !SDL_strncasecmp(ext, "qwd", sizeof("qwd"))
+		 || !SDL_strncasecmp(ext, "dem", sizeof("dem"))
+		 || !SDL_strncasecmp(ext, "qwz", sizeof("qwz")));
 }
 
 //

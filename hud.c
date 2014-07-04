@@ -680,22 +680,22 @@ void HUD_Order_f (void)
 
 	HUD_FindMaxMinOrder (&max, &min);
 
-	if (!strncasecmp (option, "backward", 8))
+	if (!SDL_strncasecmp (option, "backward", 8))
 	{
 		// Send backward one step.
 		Cvar_SetValue(hud->order, (int)hud->order->value - 1);
 	}
-	else if (!strncasecmp (option, "forward", 7))
+	else if (!SDL_strncasecmp (option, "forward", 7))
 	{
 		// Move forward one step.
 		Cvar_SetValue(hud->order, (int)hud->order->value + 1);
 	}
-	else if (!strncasecmp (option, "front", 5))
+	else if (!SDL_strncasecmp (option, "front", 5))
 	{
 		// Bring to front.
 		Cvar_SetValue(hud->order, max + 1);
 	}
-	else if (!strncasecmp (option, "back", 8))
+	else if (!SDL_strncasecmp (option, "back", 8))
 	{
 		// Send to far back.
 		Cvar_SetValue(hud->order, min - 1);

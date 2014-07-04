@@ -988,7 +988,7 @@ search :
 			s++;
 		}
 
-		if (!strncasecmp (s, fl->search_string, strlen (fl->search_string)))
+		if (!SDL_strncasecmp (s, fl->search_string, strlen (fl->search_string)))
 		{
 			fl->current_entry = i;
 			return true;

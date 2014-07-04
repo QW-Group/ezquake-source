@@ -1522,7 +1522,7 @@ void COM_ParseIPCData(const char *buf, unsigned int bufsize)
 	if (bufsize > 0)
 	{
 		// TODO : Expect some more fancy commands and stuff here instead.. if we want to use it for more than qw:// urls...
-		if (!strncasecmp(buf, "qw://", 5))
+		if (!SDL_strncasecmp(buf, "qw://", 5))
 		{
 			Cbuf_AddText(va("qwurl %s\n", buf));
 		}
@@ -1547,11 +1547,11 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
 		{
 			char *ext = COM_FileExtension(infile);
 
-			if (!strncasecmp(ext, "qtv", sizeof("qtv")))
+			if (!SDL_strncasecmp(ext, "qtv", sizeof("qtv")))
 			{
 				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
 			}
-			else if (!strncasecmp(ext, "qw", sizeof("qw")))
+			else if (!SDL_strncasecmp(ext, "qw", sizeof("qw")))
 			{
 				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
 			}

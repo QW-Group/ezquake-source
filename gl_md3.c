@@ -448,7 +448,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 						nl = strchr(sfile, '\n');
 						if (!nl)
 							nl = sfile + strlen(sfile);
-						if (sfile[len] == ',' && !strncasecmp(surf->name, sfile, len))
+						if (sfile[len] == ',' && !SDL_strncasecmp(surf->name, sfile, len))
 						{
 							strlcpy(skinfileskinname, sfile+len+1, nl - (sfile + len) -2);
 							break;

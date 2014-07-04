@@ -551,7 +551,7 @@ int Player_StringtoSlot(char *arg)
 	// (We loop once more so that if the correct case is given, that match will get precedence).
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (cl.players[i].name[0] && !strncasecmp(arg, cl.players[i].name, arg_length))
+		if (cl.players[i].name[0] && !SDL_strncasecmp(arg, cl.players[i].name, arg_length))
 		{
 			return i;
 		}
@@ -563,7 +563,7 @@ int Player_StringtoSlot(char *arg)
 	{
 		char *stripped = Player_StripNameColor(cl.players[i].name);
 
-		if (cl.players[i].name[0] && !strncasecmp(arg, stripped, arg_length))
+		if (cl.players[i].name[0] && !SDL_strncasecmp(arg, stripped, arg_length))
 		{
 			Q_free(stripped);
 			return i;

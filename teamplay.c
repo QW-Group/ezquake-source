@@ -602,7 +602,7 @@ char *Macro_Weapons (void)
 
 static char *Skin_To_TFSkin (char *myskin) // These four TF classes don't have their full names as the skin (i.e. they have tf_snipe instead of tf_sniper)
 {
-	if (!cl.teamfortress || cl.spectator || strncasecmp(myskin, "tf_", 3)) {
+	if (!cl.teamfortress || cl.spectator || SDL_strncasecmp(myskin, "tf_", 3)) {
 		strlcpy(macro_buf, myskin, sizeof(macro_buf));
 	} else {
 		if (!SDL_strcasecmp(myskin, "tf_demo"))
@@ -1012,7 +1012,7 @@ static void CountNearbyPlayers(qbool dead)
 
 static int check_mtfl_ruleset (void)
 {
-	if (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)) {
+	if (!SDL_strncasecmp(Rulesets_Ruleset(), "MTFL", 4)) {
 		SDL_snprintf(macro_buf, sizeof (macro_buf),"\xffz%s\xff", BANNED_BY_MTFL);
 		return 1;
 	}
@@ -2195,10 +2195,10 @@ char *TP_LocationName(vec3_t location)
 	out = newbuf;
 	in = best->name;
 	while (*in && out - newbuf < sizeof(newbuf) - 1) {
-		if (!strncasecmp(in, "$loc_name_", 10)) {
+		if (!SDL_strncasecmp(in, "$loc_name_", 10)) {
 			in += 10;
 			for (i = 0; i < NUM_LOCMACROS; i++) {
-				if (!strncasecmp(in, locmacros[i].macro, strlen(locmacros[i].macro))) {
+				if (!SDL_strncasecmp(in, locmacros[i].macro, strlen(locmacros[i].macro))) {
 					if ((cvar = Cvar_Find(va("loc_name_%s", locmacros[i].macro))))
 						value = cvar->string;
 					else

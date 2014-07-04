@@ -1308,7 +1308,7 @@ void CL_StartFileUpload (void)
 		|| strstr (name, "/../") // no /../
 		|| ((i = strlen(name)) < 3 ? 0 : !strncmp(name + i - 3, "/..", 4)) // no /.. at end
 		|| *name == '.' //relative is pointless
-		|| ((i = strlen(name)) < 4 ? 0 : !strncasecmp(name+i-4,".log",4)) // no logs
+		|| ((i = strlen(name)) < 4 ? 0 : !SDL_strncasecmp(name+i-4,".log",4)) // no logs
 #ifdef _WIN32
 		// no leading X:
 		|| ( name[1] == ':' && ((*name >= 'a' && *name <= 'z') ||
