@@ -201,7 +201,6 @@ char *Q_strlwr( char *s1 );
 char *strstri(const char *text, const char *find); // Case insensitive strstr.
 // Added by VVD }
 
-char *strchrrev(char *str, char chr);
 int wildcmp(char *wild, char *string);
 
 wchar char2wc (char c);

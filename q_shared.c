@@ -104,19 +104,6 @@ char *strstri(const char *text, const char *find)
 
 // Added by VVD }
 
-//
-// Finds the first occurance of a char in a string starting from the end.
-// 
-char *strchrrev(char *str, char chr)
-{
-	char *firstchar = str;
-	for (str = str + strlen(str)-1; str >= firstchar; str--)
-		if (*str == chr)
-			return str;
-
-	return NULL;
-}
-
 // D-Kure: added for fte vfs
 int wildcmp(char *wild, char *string)
 {

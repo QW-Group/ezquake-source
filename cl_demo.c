@@ -4385,7 +4385,7 @@ void CL_QTVPlay_f (void)
 
 	SDL_strlcpy(stream_host, connrequest, sizeof(stream_host));
 
-	connrequest = strchrrev(stream_host, '@');
+	connrequest = SDL_strrchr(stream_host, '@');
 	if (connrequest)
 	{
 		stream = stream_host;		// Stream part.
