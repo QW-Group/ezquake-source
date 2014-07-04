@@ -1910,7 +1910,7 @@ void Parse_TeamInfo(char *s)
 
 	Cmd_TokenizeString( s );
 
-	client = atoi( Cmd_Argv( 1 ) );
+	client = SDL_atoi( Cmd_Argv( 1 ) );
 
 	if (client < 0 || client >= MAX_CLIENTS)
 	{
@@ -1922,12 +1922,12 @@ void Parse_TeamInfo(char *s)
 
 	ti_clients[ client ].time   = r_refdef2.time;
 
-	ti_clients[ client ].org[0] = atoi( Cmd_Argv( 2 ) );
-	ti_clients[ client ].org[1] = atoi( Cmd_Argv( 3 ) );
-	ti_clients[ client ].org[2] = atoi( Cmd_Argv( 4 ) );
-	ti_clients[ client ].health = atoi( Cmd_Argv( 5 ) );
-	ti_clients[ client ].armor  = atoi( Cmd_Argv( 6 ) );
-	ti_clients[ client ].items  = atoi( Cmd_Argv( 7 ) );
+	ti_clients[ client ].org[0] = SDL_atoi( Cmd_Argv( 2 ) );
+	ti_clients[ client ].org[1] = SDL_atoi( Cmd_Argv( 3 ) );
+	ti_clients[ client ].org[2] = SDL_atoi( Cmd_Argv( 4 ) );
+	ti_clients[ client ].health = SDL_atoi( Cmd_Argv( 5 ) );
+	ti_clients[ client ].armor  = SDL_atoi( Cmd_Argv( 6 ) );
+	ti_clients[ client ].items  = SDL_atoi( Cmd_Argv( 7 ) );
 	SDL_strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), TEAMINFO_NICKLEN); // nick is optional
 }
 
@@ -1984,13 +1984,13 @@ void Parse_Shownick(char *s)
 
 	arg = 1;
 
-	version  = atoi( Cmd_Argv( arg++ ) );
+	version  = SDL_atoi( Cmd_Argv( arg++ ) );
 
 	switch ( version )
 	{
 		case 1:
 		{
-			client = atoi( Cmd_Argv( arg++ ) );
+			client = SDL_atoi( Cmd_Argv( arg++ ) );
         
 			if (client < 0 || client >= MAX_CLIENTS)
 			{
@@ -2002,12 +2002,12 @@ void Parse_Shownick(char *s)
 	        
 			shownick.time   = r_refdef2.time;
         
-			shownick.org[0] = atoi( Cmd_Argv( arg++ ) );
-			shownick.org[1] = atoi( Cmd_Argv( arg++ ) );
-			shownick.org[2] = atoi( Cmd_Argv( arg++ ) );
-			shownick.health = atoi( Cmd_Argv( arg++ ) );
-			shownick.armor  = atoi( Cmd_Argv( arg++ ) );
-			shownick.items  = atoi( Cmd_Argv( arg++ ) );
+			shownick.org[0] = SDL_atoi( Cmd_Argv( arg++ ) );
+			shownick.org[1] = SDL_atoi( Cmd_Argv( arg++ ) );
+			shownick.org[2] = SDL_atoi( Cmd_Argv( arg++ ) );
+			shownick.health = SDL_atoi( Cmd_Argv( arg++ ) );
+			shownick.armor  = SDL_atoi( Cmd_Argv( arg++ ) );
+			shownick.items  = SDL_atoi( Cmd_Argv( arg++ ) );
 			SDL_strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
 
 			return;
@@ -2172,7 +2172,7 @@ void Parse_WeaponStats(char *s)
 
 	arg = 1;
 
-	client = atoi( Cmd_Argv( arg++ ) );
+	client = SDL_atoi( Cmd_Argv( arg++ ) );
         
 	if (client < 0 || client >= MAX_CLIENTS)
 	{
@@ -2190,8 +2190,8 @@ void Parse_WeaponStats(char *s)
 		return;
 	}
 
-	ws_clients[ client ].wpn[wp].attacks = atoi( Cmd_Argv( arg++ ) );
-	ws_clients[ client ].wpn[wp].hits    = atoi( Cmd_Argv( arg++ ) );
+	ws_clients[ client ].wpn[wp].attacks = SDL_atoi( Cmd_Argv( arg++ ) );
+	ws_clients[ client ].wpn[wp].hits    = SDL_atoi( Cmd_Argv( arg++ ) );
 }
 
 static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool width_only)
@@ -2565,14 +2565,14 @@ void Hud_Position_f(void)
 		return;
 	}
 
-	elem->coords[0] = atoi(Cmd_Argv(2));
-	elem->coords[1] = atoi(Cmd_Argv(3));
-	elem->coords[2] = atoi(Cmd_Argv(4));
+	elem->coords[0] = SDL_atoi(Cmd_Argv(2));
+	elem->coords[1] = SDL_atoi(Cmd_Argv(3));
+	elem->coords[2] = SDL_atoi(Cmd_Argv(4));
 }
 
 void Hud_Elem_Bg(hud_element_t *elem)
 {
-	elem->coords[3] = atoi(Cmd_Argv(2));
+	elem->coords[3] = SDL_atoi(Cmd_Argv(2));
 }
 
 void Hud_Bg_f(void)
@@ -2597,8 +2597,8 @@ void Hud_Bg_f(void)
 
 void Hud_Elem_Move(hud_element_t *elem)
 {
-	elem->coords[1] += atoi(Cmd_Argv(2));
-	elem->coords[2] += atoi(Cmd_Argv(3));
+	elem->coords[1] += SDL_atoi(Cmd_Argv(2));
+	elem->coords[2] += SDL_atoi(Cmd_Argv(3));
 }
 
 void Hud262_Move_f(void)
@@ -2625,12 +2625,12 @@ void Hud_Elem_Width(hud_element_t *elem)
 {
 	if (elem->flags & HUD_IMAGE) {
 		mpic_t *pic = elem->contents;
-		int width = atoi(Cmd_Argv(2))*8;
+		int width = SDL_atoi(Cmd_Argv(2))*8;
 		int height = width * pic->height / pic->width;
 		pic->height = height;
 		pic->width = width;
 	}
-	elem->width = max(min(atoi(Cmd_Argv(2)), 128), 0);
+	elem->width = max(min(SDL_atoi(Cmd_Argv(2)), 128), 0);
 }
 
 void Hud_Width_f(void)
@@ -2718,7 +2718,7 @@ void Hud_Elem_Blink(hud_element_t *elem)
 	unsigned	mask;
 
 	blinktime = atof(Cmd_Argv(2))/1000.0;
-	mask = atoi(Cmd_Argv(3));
+	mask = SDL_atoi(Cmd_Argv(3));
 
 	if (mask > 3) return; // bad mask
 	if (blinktime < 0.0 || blinktime > 5.0) return;

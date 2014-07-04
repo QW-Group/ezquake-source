@@ -136,7 +136,7 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_storage *sadr)
 	{
 		if (*colon == ':') {
 			*colon = 0;
-			((struct sockaddr_in *)sadr)->sin_port = htons((short)atoi(colon+1));
+			((struct sockaddr_in *)sadr)->sin_port = htons((short)SDL_atoi(colon+1));
 		}
 	}
 
@@ -977,7 +977,7 @@ void NET_InitClient(void)
 
 	p = COM_CheckParm ("-clientport");
 	if (p && p < COM_Argc()) {
-		port = atoi(COM_Argv(p+1));
+		port = SDL_atoi(COM_Argv(p+1));
 	}
 
 	if (cls.socketip == INVALID_SOCKET)
@@ -1024,7 +1024,7 @@ void NET_InitServer (void)
 
 	p = COM_CheckParm ("-port");
 	if (p && p < COM_Argc()) {
-		port = atoi(COM_Argv(p+1));
+		port = SDL_atoi(COM_Argv(p+1));
 	}
 
 	if (svs.socketip == INVALID_SOCKET) {
@@ -1036,7 +1036,7 @@ void NET_InitServer (void)
 // TCPCONNECT -->
 	p = COM_CheckParm ("-tcpport");
 	if (p && p < COM_Argc()) {
-		tcpport = atoi(COM_Argv(p+1));
+		tcpport = SDL_atoi(COM_Argv(p+1));
 	}
 
 	if (svs.sockettcp == INVALID_SOCKET && tcpport) {

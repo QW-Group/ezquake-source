@@ -1037,7 +1037,7 @@ cmodel_t *CM_InlineModel (char *name)
 	if (!name || name[0] != '*')
 		Host_Error ("CM_InlineModel: bad name");
 
-	num = atoi (name+1);
+	num = SDL_atoi (name+1);
 	if (num < 1 || num >= numcmodels)
 		Host_Error ("CM_InlineModel: bad number");
 

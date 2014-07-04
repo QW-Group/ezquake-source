@@ -3945,7 +3945,7 @@ void CL_QTVPoll (void)
 				}
 				else if (!strcmp(start, QTV_EZQUAKE_EXT))
 				{
-					qtv_ezquake_ext = atoi(colon);
+					qtv_ezquake_ext = SDL_atoi(colon);
 				}
 			}
 			else
@@ -4558,12 +4558,12 @@ void CL_Demo_Jump_f (void)
 	// before it is minutes, so add it them to our jump time.
     if (strchr(text, ':'))
 	{
-        seconds += 60 * atoi(text);
+        seconds += 60 * SDL_atoi(text);
         text = strchr(text, ':') + 1;
     }
 
 	// The numbers after the first colon will be seconds.
-    seconds += atoi(text);
+    seconds += SDL_atoi(text);
 
 	CL_Demo_Jump(seconds, relative, DST_SEEKING_NORMAL);
 }

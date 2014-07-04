@@ -446,7 +446,7 @@ void SCR_DrawClients(void)
 
 		SDL_strlcat (line, buf, sizeof (line));
 
-		SDL_snprintf (buf, sizeof (buf), "%4d", min(9999, atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
+		SDL_snprintf (buf, sizeof (buf), "%4d", min(9999, SDL_atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
 		SDL_strlcat (line, buf, sizeof (line));
 
 		Draw_String (x, y, line);

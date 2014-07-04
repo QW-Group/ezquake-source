@@ -1458,7 +1458,7 @@ void CL_ConnectionlessPacket (void)
 				return;
 			}
 			Com_Printf("&cf55challenge:&r %s\n", NET_AdrToString(net_from));
-			cls.challenge = atoi(MSG_ReadString());
+			cls.challenge = SDL_atoi(MSG_ReadString());
 
 			for(;;)
 			{

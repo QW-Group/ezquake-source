@@ -1074,7 +1074,7 @@ void CL_TrackTeam_f(void)
 	}
 
 	// Get the team.
-	teamchoice = atoi(Cmd_Args());
+	teamchoice = SDL_atoi(Cmd_Args());
 
 	if(!currteam[0])
 	{

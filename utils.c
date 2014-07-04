@@ -881,7 +881,7 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
             if (!*msgp) break;
 
             // process the number
-            pad = atoi(msgp);
+            pad = SDL_atoi(msgp);
             while (isdigit(*msgp)) msgp++;
             if (!*msgp) break;
 

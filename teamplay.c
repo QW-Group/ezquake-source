@@ -1713,10 +1713,10 @@ void TP_ColorForcing (cvar_t *topcolor, cvar_t *bottomcolor)
 	}
 
 	if (Cmd_Argc() == 2) {
-		top = bottom = atoi(Cmd_Argv(1));
+		top = bottom = SDL_atoi(Cmd_Argv(1));
 	} else {
-		top = atoi(Cmd_Argv(1));
-		bottom = atoi(Cmd_Argv(2));
+		top = SDL_atoi(Cmd_Argv(1));
+		bottom = SDL_atoi(Cmd_Argv(2));
 	}
 
 	top &= 15;

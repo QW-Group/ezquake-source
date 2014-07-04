@@ -542,7 +542,7 @@ LOCAL expr_val operator_int(EParser p, const expr_val arg1)
 			ret.i_val = (int) arg1.d_val;
 			break;
 		case ET_STR:
-			ret.i_val = atoi(arg1.s_val);
+			ret.i_val = SDL_atoi(arg1.s_val);
 			free(arg1.s_val);
 			break;
 		case ET_BOOL:
@@ -1022,7 +1022,7 @@ LOCAL expr_val Match(EParser p, int token)
 
 	case TK_INTEGER:
 		ret.type = ET_INT;
-		ret.i_val = atoi(p->string + p->pos);
+		ret.i_val = SDL_atoi(p->string + p->pos);
 		while (c = CURCHAR(p), c && isdigit(c)) p->pos++;
 		Next_Token(p);
 		break;

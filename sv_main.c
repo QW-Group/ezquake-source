@@ -2627,7 +2627,7 @@ int SV_VIPbyPass (char *pass)
 		memset((void*)vip_value, 0, sizeof(vip_value));
 		Cmd_TokenizeString(vip_values.string);
 		for (i = 0; i < Cmd_Argc(); i++)
-			vip_value[i] = atoi(Cmd_Argv(i));
+			vip_value[i] = SDL_atoi(Cmd_Argv(i));
 	}
 
 	Cmd_TokenizeString(vip_password.string);

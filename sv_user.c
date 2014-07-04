@@ -1051,7 +1051,7 @@ static void Cmd_NextDownload_f (void)
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
-		SV_NextChunkedDownload(atoi(Cmd_Argv(1)), atoi(Cmd_Argv(2)), atoi(Cmd_Argv(3)));
+		SV_NextChunkedDownload(SDL_atoi(Cmd_Argv(1)), SDL_atoi(Cmd_Argv(2)), SDL_atoi(Cmd_Argv(3)));
 		return;
 	}
 #endif

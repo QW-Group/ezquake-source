@@ -703,7 +703,7 @@ void HUD_Order_f (void)
 	else
 	{
 		// Order #
-		Cvar_SetValue (hud->order, atoi(Cmd_Argv(2)));
+		Cvar_SetValue (hud->order, SDL_atoi(Cmd_Argv(2)));
 	}
 }
 
@@ -1149,7 +1149,7 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
 //
 void HUD_OnChangeOrder(cvar_t *var, char *val, qbool *cancel)
 {
-	Cvar_SetValue (var, atoi(val));
+	Cvar_SetValue (var, SDL_atoi(val));
 
 	HUD_ReorderChildren();
 

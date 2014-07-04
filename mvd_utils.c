@@ -263,7 +263,7 @@ void MVD_Init_Info (int player_slot) {
 		mvd_cg_info.gametype=4;
 
 	SDL_strlcpy(mvd_cg_info.hostname,Info_ValueForKey(cl.serverinfo,"hostname"),sizeof(mvd_cg_info.hostname));
-	mvd_cg_info.deathmatch=atoi(Info_ValueForKey(cl.serverinfo,"deathmatch"));
+	mvd_cg_info.deathmatch=SDL_atoi(Info_ValueForKey(cl.serverinfo,"deathmatch"));
 
 	mvd_cg_info.pcount = z;
 

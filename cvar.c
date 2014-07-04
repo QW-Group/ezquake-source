@@ -1093,8 +1093,8 @@ void Cvar_Set_Calc_f(void)
 			return;
 		}
 
-		pos = atoi (Cmd_Argv (4));
-		len = (Cmd_Argc () < 6)? 1 : atoi (Cmd_Argv (5));
+		pos = SDL_atoi (Cmd_Argv (4));
+		len = (Cmd_Argc () < 6)? 1 : SDL_atoi (Cmd_Argv (5));
 
 		if (len == 0) {
 			Cvar_Set (var, "");
@@ -1129,7 +1129,7 @@ void Cvar_Set_Calc_f(void)
 
 		var1len = strlen (var->string);
 		var2len = strlen (var2->string);
-		pos = atoi (Cmd_Argv (4));
+		pos = SDL_atoi (Cmd_Argv (4));
 
 		SDL_strlcpy (buf, var->string, sizeof (buf));
 

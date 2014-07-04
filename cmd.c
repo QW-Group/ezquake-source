@@ -2136,7 +2136,7 @@ void Cmd_Alias_In_f (void)
 
 	alias_name = Cmd_Argv(1);
 	alias = Cmd_FindAlias(alias_name);
-	options = atoi(Cmd_Argv(3));
+	options = SDL_atoi(Cmd_Argv(3));
 
 	if (!alias) {
 		if ((options & 8)) {
@@ -2179,7 +2179,7 @@ void Cmd_Alias_Out_f (void)
 		return;
 	}
 
-	options = atoi(Cmd_Argv(3));
+	options = SDL_atoi(Cmd_Argv(3));
 
 	alias = Cmd_FindAlias(Cmd_Argv(1));
 	if (!alias) {
@@ -2214,7 +2214,7 @@ void Cmd_Cvar_In_f (void)
 	}
 
 	var_name = Cmd_Argv(1);
-	options = atoi(Cmd_Argv(3));
+	options = SDL_atoi(Cmd_Argv(3));
 
 	var1 = Cvar_Find(var_name);
 	if (!var1) {
@@ -2253,7 +2253,7 @@ void Cmd_Cvar_Out_f (void)
 		return;
 	}
 
-	options = atoi(Cmd_Argv(3));
+	options = SDL_atoi(Cmd_Argv(3));
 	var1 = Cvar_Find(Cmd_Argv(1));
 	if (!var1) {
 		Com_Printf ("cvar_out: unknown cvar \"%s\"\n", Cmd_Argv(1));

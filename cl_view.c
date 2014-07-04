@@ -387,10 +387,10 @@ void V_cshift_f (void) {
 	if (cls.state >= ca_connected && cl.teamfortress && cbuf_current != &cbuf_svc)
 		return;
 
-	cshift_empty.destcolor[0] = atoi(Cmd_Argv(1));
-	cshift_empty.destcolor[1] = atoi(Cmd_Argv(2));
-	cshift_empty.destcolor[2] = atoi(Cmd_Argv(3));
-	cshift_empty.percent = atoi(Cmd_Argv(4));
+	cshift_empty.destcolor[0] = SDL_atoi(Cmd_Argv(1));
+	cshift_empty.destcolor[1] = SDL_atoi(Cmd_Argv(2));
+	cshift_empty.destcolor[2] = SDL_atoi(Cmd_Argv(3));
+	cshift_empty.percent = SDL_atoi(Cmd_Argv(4));
 
 	// TF flash grenades stuff
 	if (cl.teamfortress)

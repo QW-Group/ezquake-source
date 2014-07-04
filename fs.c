@@ -2935,7 +2935,7 @@ void FS_ForceToPure(char *str, char *crcs, int seed)
 	while(crcs)
 	{
 		crcs = COM_Parse(crcs);
-		crc = atoi(com_token);
+		crc = SDL_atoi(com_token);
 
 		if (!crc)
 			continue;
@@ -3081,8 +3081,8 @@ void FS_ReloadPackFiles_f(void)
 		Com_Printf("Usage: %s [reload flags]\n", Cmd_Argv(0));
 		return;
 	}
-	if (atoi(Cmd_Argv(1)))
-		FS_ReloadPackFilesFlags(atoi(Cmd_Argv(1)));
+	if (SDL_atoi(Cmd_Argv(1)))
+		FS_ReloadPackFilesFlags(SDL_atoi(Cmd_Argv(1)));
 	else
 		FS_ReloadPackFilesFlags(FS_LOAD_FILE_ALL);
 

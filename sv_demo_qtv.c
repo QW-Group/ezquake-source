@@ -452,13 +452,13 @@ void SV_MVD_RunPendingConnections (void)
 							if (!strcmp(com_token, "VERSION"))
 							{
 								start = COM_ParseToken(start, NULL);
-								if (atoi(com_token) == 1)
+								if (SDL_atoi(com_token) == 1)
 									versiontouse = 1;
 							}
 							else if (!strcmp(com_token, "RAW"))
 							{
 								start = COM_ParseToken(start, NULL);
-								raw = atoi(com_token);
+								raw = SDL_atoi(com_token);
 							}
 							else if (!strcmp(com_token, "PASSWORD"))
 							{
@@ -971,8 +971,8 @@ static void QTVcmd_QtvUserList_f(mvddest_t *d)
 
 //	Cmd_TokenizeString( s );
 
-	action 		= atoi( Cmd_Argv( cnt++ ) );
-	tmpuser.id	= atoi( Cmd_Argv( cnt++ ) );
+	action 		= SDL_atoi( Cmd_Argv( cnt++ ) );
+	tmpuser.id	= SDL_atoi( Cmd_Argv( cnt++ ) );
 	SDL_strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
 
 	switch ( action )
@@ -1367,7 +1367,7 @@ void Qtv_Close_f(void)
 		return;
 	}
 
-	id  = atoi(Cmd_Argv(1));
+	id  = SDL_atoi(Cmd_Argv(1));
 	all = !SDL_strcasecmp(Cmd_Argv(1), "all");
 	cnt = 0;
 

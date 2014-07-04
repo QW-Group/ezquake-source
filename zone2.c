@@ -543,7 +543,7 @@ void MemList_f(void)
 		Mem_PrintStats();
 		break;
 	case 2:
-		Mem_PrintList(atoi(Cmd_Argv(1)) * 1024);
+		Mem_PrintList(SDL_atoi(Cmd_Argv(1)) * 1024);
 		Mem_PrintStats();
 		break;
 	default:

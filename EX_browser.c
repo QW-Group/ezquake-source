@@ -2833,7 +2833,7 @@ void Filter_Servers(void)
 			continue;
 
         tmp = ValueForKey(s, "maxclients");
-        if (sb_hidefull.value  &&  s->playersn >= (tmp ? atoi(tmp) : 255))
+        if (sb_hidefull.value  &&  s->playersn >= (tmp ? SDL_atoi(tmp) : 255))
             continue;
 
 		s->passed_filters = 1;  // passed

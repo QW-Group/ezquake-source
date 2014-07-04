@@ -686,7 +686,7 @@ void CL_User_f (void) {
 		return;
 	}
 
-	uid = atoi(Cmd_Argv(1));
+	uid = SDL_atoi(Cmd_Argv(1));
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (!cl.players[i].name[0])

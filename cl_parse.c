@@ -1980,8 +1980,8 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 		// Somebody's trying to hide himself by overloading userinfo.
 		SDL_strlcpy (player->name, " ", sizeof (player->name));
 	}
-	player->real_topcolor = atoi(Info_ValueForKey (player->userinfo, "topcolor"));
-	player->real_bottomcolor = atoi(Info_ValueForKey (player->userinfo, "bottomcolor"));
+	player->real_topcolor = SDL_atoi(Info_ValueForKey (player->userinfo, "topcolor"));
+	player->real_bottomcolor = SDL_atoi(Info_ValueForKey (player->userinfo, "bottomcolor"));
 	SDL_strlcpy (player->team, Info_ValueForKey (player->userinfo, "team"), sizeof (player->team));
 
 	player->spectator = (Info_ValueForKey (player->userinfo, "*spectator")[0]) ? true : false;
@@ -2159,12 +2159,12 @@ void CL_ProcessServerInfo (void)
 	CL_PEXT_Fix(); // must be called once from CL_FullServerinfo_f() but should be ok here too.
 
 	// game type (sbar code checks it) (GAME_DEATHMATCH default)
-	cl.gametype = *(p = Info_ValueForKey(cl.serverinfo, "deathmatch")) ? (atoi(p) ? GAME_DEATHMATCH : GAME_COOP) : GAME_DEATHMATCH;
+	cl.gametype = *(p = Info_ValueForKey(cl.serverinfo, "deathmatch")) ? (SDL_atoi(p) ? GAME_DEATHMATCH : GAME_COOP) : GAME_DEATHMATCH;
 
 	// server side fps restriction
 	cl.maxfps = SDL_atof(Info_ValueForKey(cl.serverinfo, "maxfps"));
 
-	newfpd = cls.demoplayback ? 0 : atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
+	newfpd = cls.demoplayback ? 0 : SDL_atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
 	standby = !SDL_strcasecmp(p, "standby");
@@ -2182,7 +2182,7 @@ void CL_ProcessServerInfo (void)
 	cl.minlight = (strlen(minlight = Info_ValueForKey(cl.serverinfo, "minlight")) ? bound(0, SDL_atoi(minlight), 255) : 4);
 
 	// Get the server's ZQuake extension bits
-	cl.z_ext = atoi(Info_ValueForKey(cl.serverinfo, "*z_ext"));
+	cl.z_ext = SDL_atoi(Info_ValueForKey(cl.serverinfo, "*z_ext"));
 
 	// Initialize cl.maxpitch & cl.minpitch
 	p = (cl.z_ext & Z_EXT_PITCHLIMITS) ? Info_ValueForKey (cl.serverinfo, "maxpitch") : "";
@@ -2200,12 +2200,12 @@ void CL_ProcessServerInfo (void)
 		SDL_atof(p) : cl.teamfortress ? 0 : 1;
 
 	// Deathmatch and teamplay.
-	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
-	new_teamplay = atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
+	cl.deathmatch = SDL_atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
+	new_teamplay = SDL_atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
 
 	// Timelimit and fraglimit.
-	cl.timelimit = atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
-	cl.fraglimit = atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
+	cl.timelimit = SDL_atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
+	cl.fraglimit = SDL_atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 
 	// Update skins if needed.
 	skin_refresh = ( !new_teamplay != !cl.teamplay || ( (newfpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
@@ -2283,7 +2283,7 @@ void CL_ParseServerInfoChange (void)
 	Com_DPrintf ("SERVERINFO: %s=%s\n", key, value);
 	if (!cl.standby && !cl.countdown && !strncmp(key, "status", 6)) 
 	{
-		int timeleft = atoi(value) * 60;
+		int timeleft = SDL_atoi(value) * 60;
 		if (timeleft) 
 		{
 			if (cls.demoplayback) 
@@ -2293,7 +2293,7 @@ void CL_ParseServerInfoChange (void)
 			else 
 			{
 				cl.gamestarttime = Sys_DoubleTime() - (cl.timelimit * 60) + timeleft - cl.gamepausetime;
-				Com_DPrintf("Clock sync, match started %i seconds ago\n", (cl.timelimit*60) + atoi(value)*60);
+				Com_DPrintf("Clock sync, match started %i seconds ago\n", (cl.timelimit*60) + SDL_atoi(value)*60);
 			}
 		}
 	}

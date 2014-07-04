@@ -444,8 +444,8 @@ void Parse_QtvUserList(char *s)
 
 	Cmd_TokenizeString( s );
 
-	action 		= atoi( Cmd_Argv( cnt++ ) );
-	tmpuser.id	= atoi( Cmd_Argv( cnt++ ) );
+	action 		= SDL_atoi( Cmd_Argv( cnt++ ) );
+	tmpuser.id	= SDL_atoi( Cmd_Argv( cnt++ ) );
 	SDL_strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
 
 	switch ( action )

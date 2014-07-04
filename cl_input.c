@@ -142,7 +142,7 @@ void KeyDown(kbutton_t *b)
 	int k = VOID_KEY;
 	char *c = Cmd_Argv(1);
 	if (*c) {
-		k = atoi(c);
+		k = SDL_atoi(c);
 	}
 
 	KeyDown_common(b, k);
@@ -154,7 +154,7 @@ qbool KeyUp(kbutton_t *b)
 	int k = VOID_KEY;
 	char *c = Cmd_Argv(1);
 	if (*c) {
-		k = atoi(c);
+		k = SDL_atoi(c);
 	}
 
 	return KeyUp_common(b, k);
@@ -245,7 +245,7 @@ void IN_AttackDown(void)
 // if it's >= 32, treat is as keycodes, otherwise an impulse
 static qbool IN_IsLastArgKeyCode(void)
 {
-	return atoi(Cmd_Argv(Cmd_Argc() - 1)) >= 32;
+	return SDL_atoi(Cmd_Argv(Cmd_Argc() - 1)) >= 32;
 }
 
 void IN_FireDown(void)

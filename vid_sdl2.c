@@ -119,14 +119,14 @@ cvar_t gl_multisamples        = {"gl_multisamples",       "0",   CVAR_LATCH }; /
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
 	if (var == &in_raw)
-		Cvar_SetValue(&in_raw, atoi(value));
+		Cvar_SetValue(&in_raw, SDL_atoi(value));
 
 	IN_Restart_f();
 }
 
 static void in_grab_windowed_mouse_callback(cvar_t *val, char *value, qbool *cancel)
 {
-	GrabMouse((atoi(value) > 0 ? true : false), in_raw.integer);
+	GrabMouse((SDL_atoi(value) > 0 ? true : false), in_raw.integer);
 }
 
 static void GrabMouse(qbool grab, qbool raw)

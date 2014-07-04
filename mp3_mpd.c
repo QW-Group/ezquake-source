@@ -126,7 +126,7 @@ static void MPD_Connect(void) {
 		port     = "6600";
 
 	/* Timeout of 10 seconds */
-	connection = qmpd_newConnection(hostname, atoi(port), 1);
+	connection = qmpd_newConnection(hostname, SDL_atoi(port), 1);
 	if (connection->error) {
 		fprintf(stderr,"%s\n",connection->errorStr);
 		qmpd_closeConnection(connection);
