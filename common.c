@@ -1549,15 +1549,15 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
 
 			if (!SDL_strncasecmp(ext, "qtv", sizeof("qtv")))
 			{
-				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
+				SDL_snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
 			}
 			else if (!SDL_strncasecmp(ext, "qw", sizeof("qw")))
 			{
-				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
+				SDL_snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
 			}
 			else if (CL_IsDemoExtension(infile))
 			{
-				snprintf(commandbuf_out, commandbuf_size, "playdemo \"%s\"\n", infile);
+				SDL_snprintf(commandbuf_out, commandbuf_size, "playdemo \"%s\"\n", infile);
 			}
 
 			return true;

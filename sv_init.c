@@ -256,7 +256,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	extern void CL_ClearState (void);
 
 	// store old map name
-	snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
+	SDL_snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
 
 	Con_DPrintf ("SpawnServer: %s\n",mapname);
 
@@ -412,7 +412,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	// fill sv.mapname and sv.modelname with new map name
 	SDL_strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
-	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
+	SDL_snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
 	// set cvar
 	Cvar_ForceSet (&host_mapname, mapname);
 
@@ -422,7 +422,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 		// fill mapname, sv.mapname and sv.modelname with old map name
 		SDL_strlcpy (sv.mapname, oldmap, sizeof(sv.mapname)); 
-		snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
+		SDL_snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
 		mapname = oldmap;
 
 		// and re-load old map
