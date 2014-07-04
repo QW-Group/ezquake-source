@@ -1739,9 +1739,9 @@ void CL_Fog_f (void)
 		return;
 	}
 	Cvar_SetValue (&gl_fogenable, 1);
-	Cvar_SetValue (&gl_fogred, atof(Cmd_Argv(1)));
-	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
-	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
+	Cvar_SetValue (&gl_fogred, SDL_atof(Cmd_Argv(1)));
+	Cvar_SetValue (&gl_foggreen, SDL_atof(Cmd_Argv(2)));
+	Cvar_SetValue (&gl_fogblue, SDL_atof(Cmd_Argv(3)));
 }
 
 void CL_InitLocal (void) 

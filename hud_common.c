@@ -4312,22 +4312,22 @@ void HUD_NewRadarMap()
 			{
 				if(!strcmp(txt[i].key, "QWLMConversionSlopeX"))
 				{
-					map_x_slope = atof(txt[i].text);
+					map_x_slope = SDL_atof(txt[i].text);
 					found_count++;
 				}
 				else if(!strcmp(txt[i].key, "QWLMConversionInterceptX"))
 				{
-					map_x_intercept = atof(txt[i].text);
+					map_x_intercept = SDL_atof(txt[i].text);
 					found_count++;
 				}
 				else if(!strcmp(txt[i].key, "QWLMConversionSlopeY"))
 				{
-					map_y_slope = atof(txt[i].text);
+					map_y_slope = SDL_atof(txt[i].text);
 					found_count++;
 				}
 				else if(!strcmp(txt[i].key, "QWLMConversionInterceptY"))
 				{
-					map_y_intercept = atof(txt[i].text);
+					map_y_intercept = SDL_atof(txt[i].text);
 					found_count++;
 				}
 

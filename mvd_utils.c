@@ -1281,51 +1281,51 @@ void MVD_PC_Get_Coords (void){
 	//cvar_t *p;
 
 	SDL_strlcpy (val, mvd_pc_quad_1.string, sizeof (val));
-	cam_id[0].cam.org[0]=(float)atof(strtok(val, " "));
-	cam_id[0].cam.org[1]=(float)atof(strtok(NULL, " "));
-	cam_id[0].cam.org[2]=(float)atof(strtok(NULL, " "));
-	cam_id[0].cam.angles[0]=(float)atof(strtok(NULL, " "));
-	cam_id[0].cam.angles[1]=(float)atof(strtok(NULL, " "));
+	cam_id[0].cam.org[0]=(float)SDL_atof(strtok(val, " "));
+	cam_id[0].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[0].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[0].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[0].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
 	cam_id[0].tag="q1";
 
 	SDL_strlcpy (val,mvd_pc_quad_2.string, sizeof (val));
-	cam_id[1].cam.org[0]=(float)atof(strtok(val, " "));
-	cam_id[1].cam.org[1]=(float)atof(strtok(NULL, " "));
-	cam_id[1].cam.org[2]=(float)atof(strtok(NULL, " "));
-	cam_id[1].cam.angles[0]=(float)atof(strtok(NULL, " "));
-	cam_id[1].cam.angles[1]=(float)atof(strtok(NULL, " "));
+	cam_id[1].cam.org[0]=(float)SDL_atof(strtok(val, " "));
+	cam_id[1].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[1].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[1].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[1].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
 	cam_id[1].tag="q2";
 
 	SDL_strlcpy (val,mvd_pc_quad_3.string, sizeof (val));
-	cam_id[2].cam.org[0]	=(float)atof(strtok(val, " "));
-	cam_id[2].cam.org[1]=(float)atof(strtok(NULL, " "));
-	cam_id[2].cam.org[2]=(float)atof(strtok(NULL, " "));
-	cam_id[2].cam.angles[0]=(float)atof(strtok(NULL, " "));
-	cam_id[2].cam.angles[1]=(float)atof(strtok(NULL, " "));
+	cam_id[2].cam.org[0]	=(float)SDL_atof(strtok(val, " "));
+	cam_id[2].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[2].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[2].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[2].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
 	cam_id[2].tag="q3";
 
 	SDL_strlcpy (val,mvd_pc_pent_1.string, sizeof (val));
-	cam_id[3].cam.org[0]=(float)atof(strtok(val, " "));
-	cam_id[3].cam.org[1]=(float)atof(strtok(NULL, " "));
-	cam_id[3].cam.org[2]=(float)atof(strtok(NULL, " "));
-	cam_id[3].cam.angles[0]=(float)atof(strtok(NULL, " "));
-	cam_id[3].cam.angles[1]=(float)atof(strtok(NULL, " "));
+	cam_id[3].cam.org[0]=(float)SDL_atof(strtok(val, " "));
+	cam_id[3].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[3].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[3].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[3].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
 	cam_id[3].tag="p1";
 
 	SDL_strlcpy (val,mvd_pc_pent_2.string, sizeof (val));
-	cam_id[4].cam.org[0]=(float)atof(strtok(val, " "));
-	cam_id[4].cam.org[1]=(float)atof(strtok(NULL, " "));
-	cam_id[4].cam.org[2]=(float)atof(strtok(NULL, " "));
-	cam_id[4].cam.angles[0]=(float)atof(strtok(NULL, " "));
-	cam_id[4].cam.angles[1]=(float)atof(strtok(NULL, " "));
+	cam_id[4].cam.org[0]=(float)SDL_atof(strtok(val, " "));
+	cam_id[4].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[4].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[4].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[4].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
 	cam_id[4].tag="p2";
 
 	SDL_strlcpy (val,mvd_pc_pent_3.string, sizeof (val));
-	cam_id[5].cam.org[0]=(float)atof(strtok(val, " "));
-	cam_id[5].cam.org[1]=(float)atof(strtok(NULL, " "));
-	cam_id[5].cam.org[2]=(float)atof(strtok(NULL, " "));
-	cam_id[5].cam.angles[0]=(float)atof(strtok(NULL, " "));
-	cam_id[5].cam.angles[1]=(float)atof(strtok(NULL, " "));
+	cam_id[5].cam.org[0]=(float)SDL_atof(strtok(val, " "));
+	cam_id[5].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[5].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[5].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
+	cam_id[5].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
 	cam_id[5].tag="p3";
 }
 

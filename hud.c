@@ -524,8 +524,8 @@ void HUD_Move_f (void)
         return;
     }
 
-    Cvar_SetValue(hud->pos_x, atof(Cmd_Argv(2)));
-    Cvar_SetValue(hud->pos_y, atof(Cmd_Argv(3)));
+    Cvar_SetValue(hud->pos_x, SDL_atof(Cmd_Argv(2)));
+    Cvar_SetValue(hud->pos_y, SDL_atof(Cmd_Argv(3)));
 }
 
 //

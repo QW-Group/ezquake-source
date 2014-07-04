@@ -1015,7 +1015,7 @@ LOCAL expr_val Match(EParser p, int token)
     case TK_DOUBLE:
         // add error check here
 		ret.type = ET_DBL;
-		ret.d_val = atof(p->string + p->pos);
+		ret.d_val = SDL_atof(p->string + p->pos);
         while (c = CURCHAR(p), c && (isdigit(c) || c == '.')) p->pos++;
         Next_Token(p);
         break;

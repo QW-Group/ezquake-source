@@ -2685,7 +2685,7 @@ void Hud_Font_f(void)
 
 void Hud_Elem_Alpha(hud_element_t *elem)
 {
-	float alpha = atof (Cmd_Argv(2));
+	float alpha = SDL_atof (Cmd_Argv(2));
 	elem->alpha = bound (0, alpha, 1);
 }
 
@@ -2717,7 +2717,7 @@ void Hud_Elem_Blink(hud_element_t *elem)
 	double		blinktime;
 	unsigned	mask;
 
-	blinktime = atof(Cmd_Argv(2))/1000.0;
+	blinktime = SDL_atof(Cmd_Argv(2))/1000.0;
 	mask = SDL_atoi(Cmd_Argv(3));
 
 	if (mask > 3) return; // bad mask

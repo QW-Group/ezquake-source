@@ -63,7 +63,7 @@ static const char* colors[14] = { "White", "Brown", "Lavender", "Khaki", "Red", 
 float VARFVAL(const cvar_t *v)
 {
     if ((v->flags & CVAR_LATCH) && v->latchedString)
-        return atof(v->latchedString);
+        return SDL_atof(v->latchedString);
     else return v->value;
 }
 

@@ -565,7 +565,7 @@ static void CL_RE_Trigger_Options_f (void)
 			trig->flags |= 0xFF & SDL_atoi(Cmd_Argv(i+1));
 			i++;
 		} else if (!strcmp(Cmd_Argv(i), "interval") ) {
-			trig->min_interval = atof(Cmd_Argv(i+1));
+			trig->min_interval = SDL_atof(Cmd_Argv(i+1));
 			i++;
 		} else if (!strcmp(Cmd_Argv(i), "enable")) {
 			trig->flags |= RE_ENABLED;

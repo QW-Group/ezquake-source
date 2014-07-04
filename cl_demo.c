@@ -3853,7 +3853,7 @@ void CL_QTVPoll (void)
 	if (!*start)
 		return;
 
-	svversion = atof(qtvrequestbuffer + QTVSVLEN);
+	svversion = SDL_atof(qtvrequestbuffer + QTVSVLEN);
 
 	// server sent float version, but we compare only major version number here
 	if ((int)svversion != (int)QTV_VERSION)
@@ -4472,7 +4472,7 @@ void CL_Demo_SetSpeed_f (void)
 		return;
 	}
 
-	Cvar_SetValue(&cl_demospeed, atof(Cmd_Argv(1)) / 100.0);
+	Cvar_SetValue(&cl_demospeed, SDL_atof(Cmd_Argv(1)) / 100.0);
 }
 
 //

@@ -581,7 +581,7 @@ void CL_Rotate_f (void)
 
 	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2)
 		return;
-	cl.viewangles[YAW] += atof(Cmd_Argv(1));
+	cl.viewangles[YAW] += SDL_atof(Cmd_Argv(1));
 	cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
 }
 

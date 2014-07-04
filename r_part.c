@@ -149,17 +149,17 @@ void R_ReadPointFile_f (void) {
 	while (1) {
 		VFS_GETS(v, line, sizeof(line));
 		s = COM_Parse(line);
-		org[0] = atof(com_token);
+		org[0] = SDL_atof(com_token);
 
 		s = COM_Parse(s);
 		if (!s) 
 			break;
-		org[1] = atof(com_token);
+		org[1] = SDL_atof(com_token);
 
 		s = COM_Parse(s);
 		if (!s)
 			break;
-		org[2] = atof(com_token);
+		org[2] = SDL_atof(com_token);
 		if (COM_Parse(s))
 			break;
 

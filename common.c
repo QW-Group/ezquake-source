@@ -701,7 +701,7 @@ int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size)
 
     for(i = 0; *s && i < fl_array_size; i++)
     {
-        fl_array[i] = atof(s);
+        fl_array[i] = SDL_atof(s);
         while(*s && *s != ' ') s++; // skips the number
         while(*s && *s == ' ') s++; // skips the spaces
     }

@@ -1281,7 +1281,7 @@ void Cvar_Inc_f (void)
 		Com_Printf ("Unknown variable \"%s\"\n", Cmd_Argv(1));
 		return;
 	}
-	delta = (c == 3) ? atof (Cmd_Argv(2)) : 1;
+	delta = (c == 3) ? SDL_atof (Cmd_Argv(2)) : 1;
 
 	Cvar_SetValue (var, var->value + delta);
 }
