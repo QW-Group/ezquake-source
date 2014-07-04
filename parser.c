@@ -31,9 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctype.h>
 #include <string.h>
 #include <wctype.h>
-#ifndef snprintf
 #include "q_shared.h"
-#endif
 #include "utils.h"
 #include "pcre.h"
 #include "parser.h"
@@ -227,19 +225,19 @@ LOCAL expr_val ToString(EParser p, const expr_val e)
 	case ET_INT:
 		r.s_val = (char *) malloc(MAX_NUMBER_LENGTH);
 		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
-		snprintf(r.s_val, MAX_NUMBER_LENGTH, "%i", e.i_val);
+		SDL_snprintf(r.s_val, MAX_NUMBER_LENGTH, "%i", e.i_val);
 		break;
 
 	case ET_DBL:
 		r.s_val = (char *) malloc(MAX_NUMBER_LENGTH);
 		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
-		snprintf(r.s_val, MAX_NUMBER_LENGTH, "%f", e.d_val);
+		SDL_snprintf(r.s_val, MAX_NUMBER_LENGTH, "%f", e.d_val);
 		break;
 
 	case ET_BOOL:
 		r.s_val = (char *) malloc(6);
 		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
-		snprintf(r.s_val, 6, "%s", e.b_val ? "true" : "false");
+		SDL_snprintf(r.s_val, 6, "%s", e.b_val ? "true" : "false");
 		break;
 	}
 
