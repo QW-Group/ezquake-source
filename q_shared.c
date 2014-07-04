@@ -30,22 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ============================================================================
 */
 
-// removes trailing zeros
-char *Q_ftos (float value)
-{
-	static char str[128];
-	int	i;
-
-	snprintf (str, sizeof(str), "%f", value);
-
-	for (i=strlen(str)-1 ; i>0 && str[i]=='0' ; i--)
-		str[i] = 0;
-	if (str[i] == '.')
-		str[i] = 0;
-
-	return str;
-}
-
 // like strcpy, but allow overlapping strings
 char *Q_strcpy( char *to, char *from )
 {

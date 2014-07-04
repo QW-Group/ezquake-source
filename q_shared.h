@@ -192,8 +192,6 @@ VVD: fixed by changing from "int" to "short" in 2nd string - stupid copy&paste b
 
 //============================================================================
 
-char *Q_ftos (float value); // removes trailing zero chars
-
 char *Q_strcpy( char *to, char *from );
 char *Q_strlwr( char *s1 );
 
