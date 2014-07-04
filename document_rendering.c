@@ -577,16 +577,16 @@ static void Render_List(document_rendering_context_t *cx, document_tag_list_t *l
         case list_bullet_none:
             break;
         case list_bullet_dot:
-            strlcat (separator, va("%c", (cx->list_count%2) ? 143 : 15), sizeof (separator));
+            SDL_strlcat (separator, va("%c", (cx->list_count%2) ? 143 : 15), sizeof (separator));
             break;
         case list_bullet_letter:
-            strlcat(separator, va("%c", (item_num % ('z'-'a'+1)) + 'a'), sizeof (separator));
+            SDL_strlcat(separator, va("%c", (item_num % ('z'-'a'+1)) + 'a'), sizeof (separator));
             break;
         case list_bullet_bigletter:
-            strlcat(separator, va("%c", (item_num % ('Z'-'A'+1)) + 'A'), sizeof (separator));
+            SDL_strlcat(separator, va("%c", (item_num % ('Z'-'A'+1)) + 'A'), sizeof (separator));
             break;
         case list_bullet_number:
-            strlcat(separator, va("%*d", num_width, item_num), sizeof (separator));
+            SDL_strlcat(separator, va("%*d", num_width, item_num), sizeof (separator));
             break;
         }
         switch (list->separator)
@@ -594,13 +594,13 @@ static void Render_List(document_rendering_context_t *cx, document_tag_list_t *l
         case list_separator_none:
             break;
         case list_separator_dot:
-            strlcat(separator, ".", sizeof (separator));
+            SDL_strlcat(separator, ".", sizeof (separator));
             break;
         case list_separator_par:
-            strlcat(separator, ")", sizeof (separator));
+            SDL_strlcat(separator, ")", sizeof (separator));
             break;
         }
-        strlcat(separator, " ", sizeof (separator));
+        SDL_strlcat(separator, " ", sizeof (separator));
 
         memcpy(cx->line_buf + (cx->l_margin - indent), separator, strlen(separator));
         RenderBlockChain(cx, item->tags);
@@ -673,16 +673,16 @@ static void Render_Dict(document_rendering_context_t *cx, document_tag_dict_t *d
         case list_bullet_none:
             break;
         case list_bullet_dot:
-            strlcat(separator, va("%c", (cx->list_count%2) ? 143 : 15), sizeof (separator));
+            SDL_strlcat(separator, va("%c", (cx->list_count%2) ? 143 : 15), sizeof (separator));
             break;
         case list_bullet_letter:
-            strlcat(separator, va("%c", (item_num % ('z'-'a'+1)) + 'a'), sizeof (separator));
+            SDL_strlcat(separator, va("%c", (item_num % ('z'-'a'+1)) + 'a'), sizeof (separator));
             break;
         case list_bullet_bigletter:
-            strlcat(separator, va("%c", (item_num % ('Z'-'A'+1)) + 'A'), sizeof (separator));
+            SDL_strlcat(separator, va("%c", (item_num % ('Z'-'A'+1)) + 'A'), sizeof (separator));
             break;
         case list_bullet_number:
-            strlcat(separator, va("%*d", num_width, item_num), sizeof (separator));
+            SDL_strlcat(separator, va("%*d", num_width, item_num), sizeof (separator));
             break;
         }
         switch (dict->separator)
@@ -690,13 +690,13 @@ static void Render_Dict(document_rendering_context_t *cx, document_tag_dict_t *d
         case list_separator_none:
             break;
         case list_separator_dot:
-            strlcat(separator, ".", sizeof (separator));
+            SDL_strlcat(separator, ".", sizeof (separator));
             break;
         case list_separator_par:
-            strlcat(separator, ")", sizeof (separator));
+            SDL_strlcat(separator, ")", sizeof (separator));
             break;
         }
-        strlcat(separator, " ", sizeof (separator));
+        SDL_strlcat(separator, " ", sizeof (separator));
 
         memcpy(cx->line_buf + (cx->l_margin - indent), separator, strlen(separator));
         old_do_color = cx->do_color;
@@ -728,7 +728,7 @@ char *Add_Inline_String (char *text, char *string)
     char *buf = (char *) Q_malloc (size);
     SDL_strlcpy (buf, text, size);
     Q_free(text);
-    strlcat (buf, string, size);
+    SDL_strlcat (buf, string, size);
     return buf;
 }
 

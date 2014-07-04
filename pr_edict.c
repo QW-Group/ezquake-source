@@ -439,8 +439,8 @@ char *PR_GlobalString (int ofs)
 
 	i = strlen(line);
 	for ( ; i<20 ; i++)
-		strlcat (line, " ", sizeof(line));
-	strlcat (line, " ", sizeof(line));
+		SDL_strlcat (line, " ", sizeof(line));
+	SDL_strlcat (line, " ", sizeof(line));
 
 	return line;
 }
@@ -459,8 +459,8 @@ char *PR_GlobalStringNoContents (int ofs)
 
 	i = strlen(line);
 	for ( ; i<20 ; i++)
-		strlcat (line, " ", sizeof(line));
-	strlcat (line, " ", sizeof(line));
+		SDL_strlcat (line, " ", sizeof(line));
+	SDL_strlcat (line, " ", sizeof(line));
 
 	return line;
 }

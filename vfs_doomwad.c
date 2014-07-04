@@ -70,7 +70,7 @@ void *FSPAK_LoadDoomWadFile (vfsfile_t *packhandle, char *desc)
 	else if (header.id[0] == 'P')
 	{
 		COM_FileBase(desc, neatwadname);
-		strlcat (neatwadname, "#", sizeof (neatwadname));
+		SDL_strlcat (neatwadname, "#", sizeof (neatwadname));
 	}
 	else
 		return NULL;

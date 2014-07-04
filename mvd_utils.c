@@ -606,14 +606,14 @@ void MVD_Info (void){
 
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVULNERABILITY) {
 		//if (mvd_info_powerups[0])
-		//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
-		//strlcat(mvd_info_powerups, tp_name_pent.string, sizeof(mvd_info_powerups));
+		//	SDL_strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+		//SDL_strlcat(mvd_info_powerups, tp_name_pent.string, sizeof(mvd_info_powerups));
 	}
 
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVISIBILITY) {
 		//if (mvd_info_powerups[0])
-		//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
-		//strlcat(mvd_info_powerups, tp_name_ring.string, sizeof(mvd_info_powerups));
+		//	SDL_strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+		//SDL_strlcat(mvd_info_powerups, tp_name_ring.string, sizeof(mvd_info_powerups));
 	}
 
 	SDL_strlcpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));

@@ -1051,9 +1051,9 @@ void Sbar_SoloScoreboard (void)
 	Sbar_DrawString (160 - strlen(str)*4, 12, str);
 
 	SDL_strlcpy(str, cl.levelname, sizeof(str));
-	strlcat(str, " (", sizeof(str));
-	strlcat(str, host_mapname.string, sizeof(str));
-	strlcat(str, ")", sizeof(str));
+	SDL_strlcat(str, " (", sizeof(str));
+	SDL_strlcat(str, host_mapname.string, sizeof(str));
+	SDL_strlcat(str, ")", sizeof(str));
 	len = strlen (str);
 	Sbar_DrawString (160 - len*4, 4, str);
 }
@@ -1195,13 +1195,13 @@ static void Sbar_DeathmatchOverlay (int start) {
 		char temp[32] = {0};
 
 		if (stats_team)
-			strlcat (temp, "kills tks dths", sizeof (temp));
+			SDL_strlcat (temp, "kills tks dths", sizeof (temp));
 		else
-			strlcat(temp, "kills dths", sizeof (temp));
+			SDL_strlcat(temp, "kills dths", sizeof (temp));
 		if (stats_touches)
-			strlcat(temp, " tchs", sizeof (temp));
+			SDL_strlcat(temp, " tchs", sizeof (temp));
 		if (stats_caps)
-			strlcat(temp, " caps", sizeof (temp));
+			SDL_strlcat(temp, " caps", sizeof (temp));
 
 		stats_xoffset = (cl.teamplay ? 41 * 8 : 36 * 8);
 		Draw_String(xofs + 1 + stats_xoffset, y - 8, temp);
@@ -1423,7 +1423,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 				else if (playerstats[4] < 5) { color = "F50"; } // 2-4 flag touches orange
 				else if (playerstats[4] < 10) { color = "B3B"; }// 5-9 flag touches pink
 				else { color = "0F0"; }							// >9 flag touches green
-			strlcat (scorerow, va("  &c%s%2i ", color, playerstats[4]), sizeof (scorerow));
+			SDL_strlcat (scorerow, va("  &c%s%2i ", color, playerstats[4]), sizeof (scorerow));
 			}
 
 			if (stats_caps) // flag captures
@@ -1433,7 +1433,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 				else if (playerstats[6] < 5) { color = "F50"; } // 2-4 caps orange
 				else if (playerstats[6] < 10) { color = "B3B"; }// 5-9 caps pink
 				else { color = "0F0"; }							// >9 caps green
-			strlcat (scorerow, va("  &c%s%2i ", color, playerstats[6]), sizeof (scorerow));
+			SDL_strlcat (scorerow, va("  &c%s%2i ", color, playerstats[6]), sizeof (scorerow));
 			}
 
 			Draw_ColoredString(x + stats_xoffset - 9 * 8, y, scorerow, 0);

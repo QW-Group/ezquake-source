@@ -164,9 +164,9 @@ static char *MT_NameAndClean_TeamMembers(char *team) {
 			continue;
 		if (!strcmp(cl.players[i].team, team)) {
 			if (namebuf[0])
-				strlcat(namebuf, match_name_and.string, sizeof (namebuf) - strlen (namebuf));
+				SDL_strlcat(namebuf, match_name_and.string, sizeof (namebuf) - strlen (namebuf));
 
-			strlcat(namebuf, MT_CleanString(cl.players[i].name, false), sizeof (namebuf) - strlen (namebuf));
+			SDL_strlcat(namebuf, MT_CleanString(cl.players[i].name, false), sizeof (namebuf) - strlen (namebuf));
 		}
 	}
 	return namebuf;
@@ -395,9 +395,9 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 
 #define BUF matchinfo.multiteamnames
 	for (i = 0; i < numteams; i++) {
-		strlcat (BUF, MT_CleanString(teamnames[i], false), sizeof (BUF) - strlen (BUF));
+		SDL_strlcat (BUF, MT_CleanString(teamnames[i], false), sizeof (BUF) - strlen (BUF));
 		if (i < numteams - 1)
-			strlcat (BUF, match_name_versus.string, sizeof (BUF) - strlen (BUF));
+			SDL_strlcat (BUF, match_name_versus.string, sizeof (BUF) - strlen (BUF));
 	}
 #undef BUF
 
@@ -407,9 +407,9 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 		teamsize = MT_CountTeamMembers(teamnames[i]);
 		if (*teamnames[i])
 			maxteamsize = max(maxteamsize, teamsize);
-		strlcat (BUF, va("%d", teamsize), sizeof (BUF) - strlen (BUF));
+		SDL_strlcat (BUF, va("%d", teamsize), sizeof (BUF) - strlen (BUF));
 		if (i < numteams - 1)
-			strlcat(BUF, match_name_on.string, sizeof (BUF) - strlen (BUF));
+			SDL_strlcat(BUF, match_name_on.string, sizeof (BUF) - strlen (BUF));
 	}
 	matchinfo.maxteamsize = maxteamsize;
 #undef BUF
@@ -1324,12 +1324,12 @@ void MT_AddMapGroups(void) {
 	int i, j;
 	mapgroup_t *tempnode;
 
-	strlcat (exmy_group, "mapgroup exmy start ", sizeof (exmy_group));
+	SDL_strlcat (exmy_group, "mapgroup exmy start ", sizeof (exmy_group));
 	for (i = 1; i <= 4; i++) {
 		for (j = 1; j <= 8; j++) {		
 			exmy_map[1] = i + '0';
 			exmy_map[3] = j + '0';
-			strlcat(exmy_group, exmy_map, sizeof (exmy_group));
+			SDL_strlcat(exmy_group, exmy_map, sizeof (exmy_group));
 		}
 	}
 	Cmd_TokenizeString(exmy_group);
@@ -1593,7 +1593,7 @@ void MT_SkyGroup_f(void) {
 void MT_AddSkyGroups (void) {
 	char clear[256] = {0};
 
-	strlcat (clear, "skygroup exmy clear", sizeof (clear));
+	SDL_strlcat (clear, "skygroup exmy clear", sizeof (clear));
 	Cmd_TokenizeString(clear);
 	MT_SkyGroup_f();
 	skygroups_init = true;

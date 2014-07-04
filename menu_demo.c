@@ -873,8 +873,8 @@ void Menu_Demo_NewHome(const char *homedir)
     char buf[MAX_OSPATH];
 
     SDL_strlcpy(buf, com_basedir, sizeof(buf)); 
-    strlcat(buf, "/", sizeof(buf));
-    strlcat(buf, homedir, sizeof(buf));
+    SDL_strlcat(buf, "/", sizeof(buf));
+    SDL_strlcat(buf, homedir, sizeof(buf));
 	FL_SetCurrentDir(&demo_filelist, buf);
 }
 

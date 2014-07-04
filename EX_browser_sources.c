@@ -95,7 +95,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 			netadr_t addr;
 
 			if (!strchr(line, ':'))
-				strlcat (line, ":27000", sizeof (line));
+				SDL_strlcat (line, ":27000", sizeof (line));
 			if (!NET_StringToAdr(line, &addr))
 				continue;
 
@@ -743,7 +743,7 @@ int SB_Source_Add(const char* name, const char* address, sb_source_type_t type)
 	}
 	else {
 		if (!strchr(addr, ':')) {
-			strlcat (addr, ":27000", sizeof (addr));
+			SDL_strlcat (addr, ":27000", sizeof (addr));
 		}
 		if (!NET_StringToAdr(addr, &(s->address.address))) {
 			return -1;

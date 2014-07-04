@@ -259,7 +259,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
             if (strlen (link->tag->href) > w)
             {
                 SDL_strlcpy (buf, link->tag->href, min (sizeof (buf), w-3));
-                strlcat (buf, "...", sizeof (buf));
+                SDL_strlcat (buf, "...", sizeof (buf));
             }
             else
             {
@@ -273,15 +273,15 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
         {
             SDL_snprintf(buf, sizeof (buf), "%d lines  ", viewer->page->rendered.text_lines);
             if (sh >= viewer->page->rendered.text_lines)
-                strlcat(buf, "[full]", sizeof (buf));
+                SDL_strlcat(buf, "[full]", sizeof (buf));
             else if (viewer->page->current_line == 0)
-                strlcat(buf, "[top]", sizeof (buf));
+                SDL_strlcat(buf, "[top]", sizeof (buf));
             else if (viewer->page->current_line + sh == viewer->page->rendered.text_lines)
-                strlcat(buf, "[bottom]", sizeof (buf));
+                SDL_strlcat(buf, "[bottom]", sizeof (buf));
             else
             {
                 int percent = (100*(viewer->page->current_line + sh)) / viewer->page->rendered.text_lines;
-                strlcat(buf, va("[%d%%]", percent), sizeof (buf));
+                SDL_strlcat(buf, va("[%d%%]", percent), sizeof (buf));
             }
 
             UI_Print(x+8*(w-strlen(buf)-1), y + (h-1)*8, buf, false);
@@ -296,7 +296,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
                 else
                 {
                     SDL_strlcpy(buf, viewer->page->doc->title, min (sizeof (buf), l-3));
-                    strlcat(buf, "...", sizeof (buf));
+                    SDL_strlcat(buf, "...", sizeof (buf));
                     UI_Print(x+8, y + (h-1)*8, buf, false);
                 }
             }

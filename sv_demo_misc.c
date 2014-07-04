@@ -333,7 +333,7 @@ char *SV_PrintTeams (void)
 
 	for (p = buf; *p; p++) *p = chartbl2[(byte)*p];
 	for (p = lastscores; *p; p++) *p = chartbl2[(byte)*p];
-	strlcat(lastscores, buf, sizeof(lastscores));
+	SDL_strlcat(lastscores, buf, sizeof(lastscores));
 	return lastscores;
 }
 
@@ -1023,9 +1023,9 @@ char *Dem_PlayerNameTeam (char *t)
 		if (strcmp(t, client->team)==0)
 		{
 			if (sep >= 1)
-				strlcat (n, "_", sizeof(n));
+				SDL_strlcat (n, "_", sizeof(n));
 			//				SDL_snprintf (n, sizeof(n), "%s_", n);
-			strlcat (n, client->name, sizeof(n));
+			SDL_strlcat (n, client->name, sizeof(n));
 			//			SDL_snprintf (n, sizeof(n),"%s%s", n, client->name);
 			sep++;
 		}

@@ -672,7 +672,7 @@ static void CL_SendConnectPacket(
 		char tmp[128];
 		SDL_snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
-		strlcat(data, tmp, sizeof(data));
+		SDL_strlcat(data, tmp, sizeof(data));
 	}
 	#endif // PROTOCOL_VERSION_FTE 
 
@@ -682,7 +682,7 @@ static void CL_SendConnectPacket(
 		char tmp[128];
 		SDL_snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
-		strlcat(data, tmp, sizeof(data));
+		SDL_strlcat(data, tmp, sizeof(data));
 	}
 	#endif // PROTOCOL_VERSION_FTE2 
 
@@ -900,8 +900,8 @@ void CL_Connect_f (void)
 			connect_addr = server_buf;
 			
 			SDL_strlcpy(prx_buf, secondproxy + 1, prx_buf_len);
-			strlcat(prx_buf, "@", prx_buf_len);
-			strlcat(prx_buf, Cmd_Argv(1), prx_buf_len);
+			SDL_strlcat(prx_buf, "@", prx_buf_len);
+			SDL_strlcat(prx_buf, Cmd_Argv(1), prx_buf_len);
 			Info_SetValueForKeyEx(cls.userinfo, "prx", prx_buf, MAX_INFO_STRING, false);
 			Q_free(prx_buf);
 		}

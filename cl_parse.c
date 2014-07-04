@@ -513,7 +513,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 	cls.downloadstarttime = Sys_DoubleTime();
 
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
-	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+	SDL_strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK) 
 	{
@@ -2261,12 +2261,12 @@ void CL_ParseVWepPrecache (char *str)
 			{
 				// Use default path.
 				SDL_strlcpy(cl.vw_model_name[i], "progs/", sizeof(cl.vw_model_name[0]));
-				strlcat(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
+				SDL_strlcat(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
 			}
 
 			// Use default extension if not specified.
 			if (!strstr(p, "."))
-				strlcat(cl.vw_model_name[i], ".mdl", sizeof(cl.vw_model_name[0]));
+				SDL_strlcat(cl.vw_model_name[i], ".mdl", sizeof(cl.vw_model_name[0]));
 		}
 	}
 
@@ -2925,17 +2925,17 @@ extern unsigned int CL_SupportedFTEExtensions2 (void);
 		ext = cls.fteprotocolextensions ? cls.fteprotocolextensions : CL_SupportedFTEExtensions();
 		SDL_snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE, ext);
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, ext);
-		strlcat(data, tmp, sizeof(data));
+		SDL_strlcat(data, tmp, sizeof(data));
 		#endif // PROTOCOL_VERSION_FTE 
 
 		#ifdef PROTOCOL_VERSION_FTE2
 		ext = cls.fteprotocolextensions2 ? cls.fteprotocolextensions2 : CL_SupportedFTEExtensions2();
 		SDL_snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE2, ext);
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, ext);
-		strlcat(data, tmp, sizeof(data));
+		SDL_strlcat(data, tmp, sizeof(data));
 		#endif // PROTOCOL_VERSION_FTE2 
 
-		strlcat(data, "\n", sizeof(data));
+		SDL_strlcat(data, "\n", sizeof(data));
 		Cbuf_AddTextEx(&cbuf_svc, data);
 	}
 	else

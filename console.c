@@ -767,7 +767,7 @@ void Con_DrawNotify (void) {
 			char dest[256];
 			
 			SDL_strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
-			strlcat(dest, ":", sizeof(dest));
+			SDL_strlcat(dest, ":", sizeof(dest));
 			skip = strlen(dest) + 1; // is this correct? not sure
 
 			Draw_String (8, v + bound(0, con_shift.value, 8), dest);
@@ -1046,11 +1046,11 @@ void Con_DrawConsole (int lines) {
 		if (strlen(text) > i) {
 			y = x - i - 11;
 			SDL_strlcpy (dlbar, text, i);
-			strlcat (dlbar, "...", sizeof (dlbar));
+			SDL_strlcat (dlbar, "...", sizeof (dlbar));
 		} else {
 			SDL_strlcpy (dlbar, text, sizeof (dlbar));
 		}
-		strlcat (dlbar, ": ", sizeof (dlbar));
+		SDL_strlcat (dlbar, ": ", sizeof (dlbar));
 		i = strlen (dlbar);
 		dlbar[i++] = '\x80';
 		// where's the dot go?

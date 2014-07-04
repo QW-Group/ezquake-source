@@ -1936,12 +1936,12 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 			SDL_strlcpy(line, "search for: ", sizeof(line));   // seach for:
             if (fl->search_error)
             {
-                strlcat(line, "not found", sizeof(line));
+                SDL_strlcat(line, "not found", sizeof(line));
                 UI_Print_Center(x, y + h - rowh - inter_up, w, line, false);
             }
             else
             {
-                strlcat(line, fl->search_string, sizeof(line));
+                SDL_strlcat(line, fl->search_string, sizeof(line));
                 UI_Print_Center(x, y + h - rowh - inter_up, w, line, true);
             }
         }

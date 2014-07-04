@@ -206,10 +206,10 @@ void FChecks_RulesetFeatureAppend(qbool on, const char *code, char *feat_on_buf,
 								  size_t feat_on_size, char *feat_off_buf, size_t feat_off_size)
 {
 	if (on) {
-		strlcat(feat_on_buf, code, feat_on_size);
+		SDL_strlcat(feat_on_buf, code, feat_on_size);
 	}
 	else {
-		strlcat(feat_off_buf, code, feat_off_size);
+		SDL_strlcat(feat_off_buf, code, feat_off_size);
 	}
 }
 
@@ -239,10 +239,10 @@ const char* FChecks_RulesetAdditionString()
 	#undef APPENDFEATURE
 
 	if (strlen(feat_on_buf) > 1) {
-		strlcat(features, feat_on_buf, sizeof (features));
+		SDL_strlcat(features, feat_on_buf, sizeof (features));
 	}
 	if (strlen(feat_off_buf) > 1) {
-		strlcat(features, feat_off_buf, sizeof (features));
+		SDL_strlcat(features, feat_off_buf, sizeof (features));
 	}
 
 	return features;

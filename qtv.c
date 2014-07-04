@@ -192,12 +192,12 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 	text[0] = 0; // *cat is dangerous, ensure we empty buffer before use it
 
 	if (use_first_argument)
-		strlcat(text, Cmd_Argv(0), sizeof(text));
+		SDL_strlcat(text, Cmd_Argv(0), sizeof(text));
 
 	if (s[0])
 	{
-		strlcat(text, " ", sizeof(text));
-		strlcat(text, s,   sizeof(text));
+		SDL_strlcat(text, " ", sizeof(text));
+		SDL_strlcat(text, s,   sizeof(text));
 	}
 
 	MSG_WriteShort  (&buf, 2 + 1 + strlen(text) + 1); // short + byte + null terminated string

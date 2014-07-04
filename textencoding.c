@@ -56,7 +56,7 @@ char *encode_say (wchar *in)
 encode:
 	SDL_strlcpy (buf, wcs2str(in), min(p - in + 1, sizeof(buf)));
 	in = p;
-	strlcat (buf, "=`k8:", sizeof(buf));
+	SDL_strlcat (buf, "=`k8:", sizeof(buf));
 	out = buf + strlen(buf);
 	while (*in && (out - buf < sizeof(buf)/sizeof(buf[0])))
 	{

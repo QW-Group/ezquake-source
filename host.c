@@ -151,19 +151,19 @@ void SYSINFO_Init(void)
 
 	if (SYSINFO_processor_description) 
 	{
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 
 	if (SYSINFO_MHz) 
 	{
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		SDL_strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 
 	if (SYSINFO_3D_description) 
 	{
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__linux__)
@@ -234,15 +234,15 @@ void SYSINFO_Init(void)
 	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
 
 	if (SYSINFO_processor_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		SDL_strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__APPLE__)
@@ -260,15 +260,15 @@ void SYSINFO_Init(void)
 	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
 	if (SYSINFO_processor_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		SDL_strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__FreeBSD__)
@@ -326,15 +326,15 @@ void SYSINFO_Init(void)
 	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
 	if (SYSINFO_processor_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string));
+		SDL_strlcat(f_system_string, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #else
@@ -446,20 +446,20 @@ char *Host_PrintBars(char *s, int len)
 	if (count > sizeof (temp) / 2 - 8)
 		return temp;
 
-	strlcat (temp, "\x1d", sizeof (temp));
+	SDL_strlcat (temp, "\x1d", sizeof (temp));
 
 	for (i = 0; i < count; i++)
-		strlcat(temp, "\x1e", sizeof (temp));
+		SDL_strlcat(temp, "\x1e", sizeof (temp));
 
-	strlcat (temp, " ", sizeof (temp));
-	strlcat (temp, s, sizeof (temp));
-	strlcat (temp, " ", sizeof (temp));
+	SDL_strlcat (temp, " ", sizeof (temp));
+	SDL_strlcat (temp, s, sizeof (temp));
+	SDL_strlcat (temp, " ", sizeof (temp));
 
 	for (i = 0; i < count; i++)
-		strlcat(temp, "\x1e", sizeof (temp));
+		SDL_strlcat(temp, "\x1e", sizeof (temp));
 
-	strlcat(temp, "\x1f", sizeof (temp));
-	strlcat(temp, "\n\n", sizeof (temp));
+	SDL_strlcat(temp, "\x1f", sizeof (temp));
+	SDL_strlcat(temp, "\n\n", sizeof (temp));
 
 	return temp;
 }

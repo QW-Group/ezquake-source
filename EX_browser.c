@@ -224,11 +224,11 @@ static void SB_Proxy_Select(const server_data *s)
 	char *buf = (char *) Q_malloc(len);
 	
 	*buf = '\0';
-	strlcat(buf, cl_proxyaddr.string, len);
+	SDL_strlcat(buf, cl_proxyaddr.string, len);
 	if (*buf) {
-		strlcat(buf, "@", len);
+		SDL_strlcat(buf, "@", len);
 	}
-	strlcat(buf, s->display.ip, len);
+	SDL_strlcat(buf, s->display.ip, len);
 
 	Cvar_Set(&cl_proxyaddr, buf);
 
@@ -785,8 +785,8 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
             memset(buf, 0, 10);
             SDL_strlcpy(buf, ValueForKey(s, "*gamedir"), sizeof(buf));
             buf[8] = 0;
-            strlcat (line, buf, sizeof (line));
-            strlcat (line, "\xa0 ", sizeof (line));
+            SDL_strlcat (line, buf, sizeof (line));
+            SDL_strlcat (line, "\xa0 ", sizeof (line));
         }
 
         if (d_map)
@@ -794,8 +794,8 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
             memset(buf, 0, 10);
             SDL_strlcpy(buf, ValueForKey(s, "map"), sizeof(buf));
             buf[8] = 0;
-            strlcat (line, buf, sizeof (line));
-            strlcat (line, "\xa0 ", sizeof (line));
+            SDL_strlcat (line, buf, sizeof (line));
+            SDL_strlcat (line, "\xa0 ", sizeof (line));
         }
 
         //if (d_players)
@@ -803,10 +803,10 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
             char buf[10], *max;
             max =  ValueForKey(s, "maxclients");
             SDL_snprintf(buf, sizeof(buf), "%d/%s", s->playersn, max==NULL ? "??" : max);
-            strlcat (line, buf, sizeof (line));
+            SDL_strlcat (line, buf, sizeof (line));
             max =  ValueForKey(s, "maxspectators");
             SDL_snprintf(buf, sizeof(buf), "-%d/%s", s->spectatorsn, max==NULL ? "??" : max);
-            strlcat (line, buf, sizeof(line));
+            SDL_strlcat (line, buf, sizeof(line));
         }
 
         if (ValueForKey(s, "status") == NULL)
@@ -820,26 +820,26 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
             if (dm  &&  strlen(line) + 7 <= w/8)
             {
                 SDL_snprintf(buf, sizeof(buf), "\xa0 dmm%s", dm);
-                strlcat(line, buf, sizeof(line));
+                SDL_strlcat(line, buf, sizeof(line));
             }
 
             if (fl  &&  strlen(line) + 8 <= w/8)
             {
                 SDL_snprintf(buf, sizeof(buf), "\xa0 fl:%s", fl);
-                strlcat(line, buf, sizeof(line));
+                SDL_strlcat(line, buf, sizeof(line));
             }
 
             if (tl  &&  strlen(line) + 7 <= w/8)
             {
                 SDL_snprintf(buf, sizeof(buf), "\xa0 tl:%s", tl);
-                strlcat(line, buf, sizeof(line));
+                SDL_strlcat(line, buf, sizeof(line));
             }
         }
         else
         {
             char buf[200];
             SDL_snprintf(buf, sizeof(buf), "\xa0 %s", ValueForKey(s, "status"));
-            strlcat(line, buf, sizeof(line));
+            SDL_strlcat(line, buf, sizeof(line));
         }
 
         // draw line

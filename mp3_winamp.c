@@ -145,7 +145,7 @@ long WINAMP_GetPlaylist(char **buf)
 	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
 		path[pathlength - 1] = 0;
 	
-	strlcat (path, "/winamp.m3u", sizeof (path));
+	SDL_strlcat (path, "/winamp.m3u", sizeof (path));
 	filelength = (size_t) FS_FileOpenRead(path, &f);
 	
 	if (!f)
@@ -154,7 +154,7 @@ long WINAMP_GetPlaylist(char **buf)
 		// so we should try to find it there too
 		if (SHGetSpecialFolderPath(0, path, CSIDL_APPDATA, false))
 		{
-			strlcat (path, "/winamp/winamp.m3u", sizeof (path));
+			SDL_strlcat (path, "/winamp/winamp.m3u", sizeof (path));
 			filelength = (size_t) FS_FileOpenRead(path, &f);
 		}
 		
@@ -214,7 +214,7 @@ void MP3_WINAMP_Execute_f(void)
 	if (length && (path[length - 1] == '\\' || path[length - 1] == '/'))
 		path[length - 1] = 0;
 
-	strlcat (path, "/winamp.exe", sizeof (path));
+	SDL_strlcat (path, "/winamp.exe", sizeof (path));
 
 	if (!CreateProcess (NULL, va("%s /CLASS=\"ezQuake Winamp\"", path), 
 		NULL, NULL, FALSE, GetPriorityClass(GetCurrentProcess()), NULL, NULL, &si, &pi))

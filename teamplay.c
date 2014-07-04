@@ -391,22 +391,22 @@ char *Macro_Powerups (void)
 
 	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_pent.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_pent.string, sizeof(macro_buf));
 	}
 
 	if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_ring.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_ring.string, sizeof(macro_buf));
 	}
 
 	effects = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[cl.playernum].effects;
 	if ( (effects & (EF_FLAG1|EF_FLAG2)) /* CTF */ ||
 	        (cl.teamfortress && cl.stats[STAT_ITEMS] & (IT_KEY1|IT_KEY2)) /* TF */ ) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_flag.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_flag.string, sizeof(macro_buf));
 	}
 
 	if (!macro_buf[0])
@@ -560,38 +560,38 @@ char *Macro_Weapons (void)
 
 	if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_rl.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_rl.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_gl.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_gl.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_sng.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_sng.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_NAILGUN) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_ng.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_ng.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_ssg.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_ssg.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_SHOTGUN) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_sg.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_sg.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_AXE) {
 		if (macro_buf[0])
-			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat(macro_buf, tp_name_axe.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat(macro_buf, tp_name_axe.string, sizeof(macro_buf));
 	}
 
 	if (!macro_buf[0])
@@ -678,34 +678,34 @@ char *Macro_Need (void)
 	// check health
 	if (tp_need_health.value && cl.stats[STAT_HEALTH] < tp_need_health.value) {
 		if (macro_buf[0])
-			strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat (macro_buf, tp_name_health.string, sizeof(macro_buf));
+			SDL_strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat (macro_buf, tp_name_health.string, sizeof(macro_buf));
 		vars.needflags |= it_health;
 	}
 
 	if (cl.teamfortress) {
 		if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value)	{
 			if (macro_buf[0])
-				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
-			strlcat (macro_buf, tp_name_rockets.string, sizeof(macro_buf));
+				SDL_strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			SDL_strlcat (macro_buf, tp_name_rockets.string, sizeof(macro_buf));
 			vars.needflags |= it_rockets;
 		}
 		if (cl.stats[STAT_SHELLS] < tp_need_shells.value) {
 			if (macro_buf[0])
-				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
-			strlcat (macro_buf, tp_name_shells.string, sizeof(macro_buf));
+				SDL_strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			SDL_strlcat (macro_buf, tp_name_shells.string, sizeof(macro_buf));
 			vars.needflags |= it_shells;
 		}
 		if (cl.stats[STAT_NAILS] < tp_need_nails.value)	{
 			if (macro_buf[0])
-				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
-			strlcat (macro_buf, tp_name_nails.string, sizeof(macro_buf));
+				SDL_strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			SDL_strlcat (macro_buf, tp_name_nails.string, sizeof(macro_buf));
 			vars.needflags |= it_shells;
 		}
 		if (cl.stats[STAT_CELLS] < tp_need_cells.value)	{
 			if (macro_buf[0])
-				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
-			strlcat (macro_buf, tp_name_cells.string, sizeof(macro_buf));
+				SDL_strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			SDL_strlcat (macro_buf, tp_name_cells.string, sizeof(macro_buf));
 			vars.needflags |= it_cells;
 		}
 		goto done;
@@ -728,14 +728,14 @@ char *Macro_Need (void)
 
 	if (!weapon) {
 		if (macro_buf[0])
-			strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
-		strlcat (macro_buf, tp_name_weapon.string, sizeof(macro_buf));
+			SDL_strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		SDL_strlcat (macro_buf, tp_name_weapon.string, sizeof(macro_buf));
 		vars.needflags |= it_weapons;
 	} else {
 		if (tp_need_rl.value && !(cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)) {
 			if (macro_buf[0])
-				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
-			strlcat (macro_buf, tp_name_rl.string, sizeof(macro_buf));
+				SDL_strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			SDL_strlcat (macro_buf, tp_name_rl.string, sizeof(macro_buf));
 			vars.needflags |= it_rl;
 		}
 
@@ -762,8 +762,8 @@ char *Macro_Need (void)
 
 		if (needammo) {
 			if (macro_buf[0])
-				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
-			strlcat (macro_buf, needammo, sizeof(macro_buf));
+				SDL_strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			SDL_strlcat (macro_buf, needammo, sizeof(macro_buf));
 			vars.needflags |= it_ammo;
 		}
 	}
@@ -855,16 +855,16 @@ char *Macro_LastSeenPowerup(void)
 	} else {
 		macro_buf[0] = 0;
 		if (vars.enemy_powerups & TP_QUAD)
-			strlcat(macro_buf, tp_name_quad.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_quad.string, sizeof(macro_buf));
 		if (vars.enemy_powerups & TP_PENT) {
 			if (macro_buf[0])
-				strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-			strlcat(macro_buf, tp_name_pent.string, sizeof(macro_buf));
+				SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_pent.string, sizeof(macro_buf));
 		}
 		if (vars.enemy_powerups & TP_RING) {
 			if (macro_buf[0])
-				strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
-			strlcat(macro_buf, tp_name_ring.string, sizeof(macro_buf));
+				SDL_strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			SDL_strlcat(macro_buf, tp_name_ring.string, sizeof(macro_buf));
 		}
 	}
 	return macro_buf;
@@ -1814,7 +1814,7 @@ qbool TP_LoadLocFile (char *path, qbool quiet)
 		return false;
 	}
 
-	strlcat (locname, path, sizeof (locname) - strlen (locname));
+	SDL_strlcat (locname, path, sizeof (locname) - strlen (locname));
 	COM_DefaultExtension(locname, ".loc");
 
 	mark = Hunk_LowMark ();
@@ -1961,7 +1961,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	}
 
 	// Add an extension if it doesn't exist already.
-	strlcat (locname, path, sizeof (locname) - strlen (locname));
+	SDL_strlcat (locname, path, sizeof (locname) - strlen (locname));
 	COM_DefaultExtension(locname, ".loc");
 
 	// Allocate a buffer to hold the file contents.
@@ -1979,7 +1979,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 		char row[2*MAX_LOC_NAME];
 
 		SDL_snprintf(row, sizeof (row),"%4d %4d %4d %s\n", Q_rint(8*node->coord[0]), Q_rint(8*node->coord[1]), Q_rint(8*node->coord[2]), node->name);
-		strlcat (buf, row, (loc_count * (MAX_LOC_NAME + 24)));
+		SDL_strlcat (buf, row, (loc_count * (MAX_LOC_NAME + 24)));
 		node = node->next;
 	}
 
@@ -2519,11 +2519,11 @@ static void FlagCommand (unsigned int *flags, unsigned int defaultflags)
 			if (*flags & (1 << i)) {
 				if (notfirst)
 					Com_Printf(" ");
-					//strlcat (str, " ", sizeof (str) - strlen (str));
+					//SDL_strlcat (str, " ", sizeof (str) - strlen (str));
 
 				notfirst = true;
 				Com_Printf("%s", pknames[i]);
-				//strlcat (str, pknames[i], sizeof (str) - strlen (str));
+				//SDL_strlcat (str, pknames[i], sizeof (str) - strlen (str));
 			}
 		Com_Printf ("\n");
 		return;
@@ -3212,15 +3212,15 @@ void TP_FindPoint (void)
 		}
 		if (beststate->effects & EF_BLUE)
         {
-			strlcat (buf, tp_name_quaded.string, sizeof (buf) - strlen (buf));
+			SDL_strlcat (buf, tp_name_quaded.string, sizeof (buf) - strlen (buf));
             flag |= it_quaded;
         }
 		if (beststate->effects & EF_RED)
         {
-			strlcat (buf, va("%s%s", buf[0] ? " " : "", tp_name_pented.string), sizeof (buf) - strlen (buf));
+			SDL_strlcat (buf, va("%s%s", buf[0] ? " " : "", tp_name_pented.string), sizeof (buf) - strlen (buf));
             flag |= it_pented;
         }
-		strlcat (buf, va("%s%s", buf[0] ? " " : "", name), sizeof (buf) - strlen (buf));
+		SDL_strlcat (buf, va("%s%s", buf[0] ? " " : "", name), sizeof (buf) - strlen (buf));
 		SDL_strlcpy (vars.pointname, buf, sizeof (vars.pointname));
         vars.pointflag = flag;
 		SDL_strlcpy (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));

@@ -535,10 +535,10 @@ char *FMod_Response_Text(void)
 
 		if (check_models[i].checked && check_models[i].modified && relevent ) {
 			if (strlen (buf) < 240) {
-				strlcat (buf, va(" %s", COM_SkipPath (check_models[i].name)), sizeof (buf));
+				SDL_strlcat (buf, va(" %s", COM_SkipPath (check_models[i].name)), sizeof (buf));
 				count++;
 			} else {
-				strlcat (buf, " & more...", sizeof (buf));
+				SDL_strlcat (buf, " & more...", sizeof (buf));
 				break;
 			}
 		}

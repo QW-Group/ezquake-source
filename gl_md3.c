@@ -431,13 +431,13 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 				//hmm. Look in skin file.
 				SDL_strlcpy (sinf->name, mod->name, sizeof (sinf->name));
 				COM_StripExtension(sinf->name, sinf->name);
-				strlcat (sinf->name, "_default.skin", sizeof (sinf->name));
+				SDL_strlcat (sinf->name, "_default.skin", sizeof (sinf->name));
 
 				sfile = sfilestart = (char *) FS_LoadHunkFile(sinf->name, NULL);
 
 				SDL_strlcpy (sinf->name, mod->name, sizeof (sinf->name)); //backup
 				COM_StripExtension(sinf->name, sinf->name);
-				strlcat (sinf->name, "_skin.tga", sizeof (sinf->name));
+				SDL_strlcat (sinf->name, "_skin.tga", sizeof (sinf->name));
 
 				len = strlen(surf->name);
 

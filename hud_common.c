@@ -265,7 +265,7 @@ void SCR_HUD_DrawFPS(hud_t *hud)
         SDL_snprintf (st, sizeof (st), "%3d", (int)(cls.fps + 0.25));
 
     if (hud_fps_title->value)
-        strlcat (st, " fps", sizeof (st));
+        SDL_strlcat (st, " fps", sizeof (st));
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
@@ -316,7 +316,7 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 		hud_vidlag_style = HUD_FindVar(hud, "style");
 	}
 
-	strlcat (st, " ms", sizeof (st));
+	SDL_strlcat (st, " ms", sizeof (st));
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
@@ -377,7 +377,7 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
 		SDL_snprintf(st, sizeof(st), "n/a");
 
     if (hud_mouserate_title->value)
-        strlcat(st, " Hz", sizeof (st));
+        SDL_strlcat(st, " Hz", sizeof (st));
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
@@ -585,29 +585,29 @@ void SCR_HUD_DrawPing(hud_t *hud)
 
     // blink
     if (hud_ping_blink->value)   // add dot
-        strlcat (buf, (last_calculated + hud_ping_period->value/2 > cls.realtime) ? "\x8f" : " ", sizeof (buf));
+        SDL_strlcat (buf, (last_calculated + hud_ping_period->value/2 > cls.realtime) ? "\x8f" : " ", sizeof (buf));
 
     // min ping
     if (hud_ping_show_min->value)
-        strlcat (buf, va("%d\xf", ping_min), sizeof (buf));
+        SDL_strlcat (buf, va("%d\xf", ping_min), sizeof (buf));
 
     // ping
-    strlcat (buf, va("%d", ping_avg), sizeof (buf));
+    SDL_strlcat (buf, va("%d", ping_avg), sizeof (buf));
 
     // max ping
     if (hud_ping_show_max->value)
-        strlcat (buf, va("\xf%d", ping_max), sizeof (buf));
+        SDL_strlcat (buf, va("\xf%d", ping_max), sizeof (buf));
 
     // unit
-    strlcat (buf, " ms", sizeof (buf));
+    SDL_strlcat (buf, " ms", sizeof (buf));
 
     // standard deviation
     if (hud_ping_show_dev->value)
-        strlcat (buf, va(" (%.1f)", ping_dev), sizeof (buf));
+        SDL_strlcat (buf, va(" (%.1f)", ping_dev), sizeof (buf));
 
     // pl
     if (hud_ping_show_pl->value)
-        strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
+        SDL_strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
 
     // display that on screen
     width = strlen(buf) * 8;

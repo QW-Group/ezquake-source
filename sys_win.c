@@ -227,7 +227,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	}
 	*s = '\0';
 	if (s != apath2)
-		strlcat (apath2, "/", sizeof (apath2));
+		SDL_strlcat (apath2, "/", sizeof (apath2));
 
 	r = FindFirstFile(file, &fd);
 	if (r==(HANDLE)-1)
@@ -1259,7 +1259,7 @@ int Sys_Script (const char *path, const char *args)
 
 
 	SDL_snprintf(cmdline, sizeof(cmdline), "%s\\sh.exe %s.qws %s", curdir, path, args);
-	strlcat(curdir, va("\\%s", fs_gamedir+2), MAX_OSPATH);
+	SDL_strlcat(curdir, va("\\%s", fs_gamedir+2), MAX_OSPATH);
 
 	return CreateProcess (NULL, cmdline, NULL, NULL,
 	                      FALSE, 0/*DETACHED_PROCESS CREATE_NEW_CONSOLE*/ , NULL, curdir, &si, &pi);

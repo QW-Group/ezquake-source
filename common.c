@@ -74,10 +74,10 @@ void COM_StoreOriginalCmdline (int argc, char **argv)
 	int i;
 
 	buf[0] = 0;
-	strlcat (buf, " ", sizeof (buf));
+	SDL_strlcat (buf, " ", sizeof (buf));
 
 	for (i=0; i < argc; i++)
-		strlcat (buf, argv[i], sizeof (buf));
+		SDL_strlcat (buf, argv[i], sizeof (buf));
 
 	com_args_original = Q_strdup (buf);
 }
@@ -261,7 +261,7 @@ void COM_DefaultExtension (char *path, char *extension)
 		src--;
 	}
 
-	strlcat (path, extension, MAX_OSPATH);
+	SDL_strlcat (path, extension, MAX_OSPATH);
 }
 
 // If path doesn't have an extension or has a different extension, append(!) specified extension
@@ -275,7 +275,7 @@ void COM_ForceExtension (char *path, char *extension)
 	if (src >= path && !strcmp(src, extension))
 		return;
 
-	strlcat (path, extension, MAX_OSPATH);
+	SDL_strlcat (path, extension, MAX_OSPATH);
 }
 
 // If path doesn't have an extension or has a different extension, append(!) specified extension
@@ -291,7 +291,7 @@ void COM_ForceExtensionEx (char *path, char *extension, size_t path_size)
 	if (src >= path && !strcmp (src, extension))
 		return; // seems we alredy have this extension
 
-	strlcat (path, extension, path_size);
+	SDL_strlcat (path, extension, path_size);
 
 	src = path + strlen (path) - strlen (extension);
 	if (src >= path && !strcmp (src, extension))

@@ -758,9 +758,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	if (com_homedir[0])
 	{
 #ifdef _WIN32
-		strlcat(com_homedir, "/ezQuake", sizeof(com_homedir));
+		SDL_strlcat(com_homedir, "/ezQuake", sizeof(com_homedir));
 #else
-		strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
+		SDL_strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
 #endif
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
 	}
@@ -1606,9 +1606,9 @@ int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 
 	// Make sure we create a directory for the destination path.
 	#ifdef WIN32
-	strlcat (unpack_path, "\\", unpack_path_size);
+	SDL_strlcat (unpack_path, "\\", unpack_path_size);
 	#else
-	strlcat (unpack_path, "/", unpack_path_size);
+	SDL_strlcat (unpack_path, "/", unpack_path_size);
 	#endif
 
 	// Unpack the file
@@ -1794,9 +1794,9 @@ int FS_ZipUnpackToTemp (unzFile zip_file,
 
 	// Make sure we create a directory for the destination path since we're unpacking an entire zip.
 	#ifdef WIN32
-	strlcat (unpack_path, "\\", unpack_path_size);
+	SDL_strlcat (unpack_path, "\\", unpack_path_size);
 	#else
-	strlcat (unpack_path, "/", unpack_path_size);
+	SDL_strlcat (unpack_path, "/", unpack_path_size);
 	#endif
 
 	// Unpack the file.
@@ -2142,10 +2142,10 @@ void FS_Dir_f (void)
 	SDL_strlcpy (match, Cmd_Argv(1), sizeof (match));
 
 	if (Cmd_Argc() > 2) {
-		strlcat (match, "/*.", sizeof (match));
-		strlcat (match, Cmd_Argv(2), sizeof (match));
+		SDL_strlcat (match, "/*.", sizeof (match));
+		SDL_strlcat (match, Cmd_Argv(2), sizeof (match));
 	} else {
-		strlcat (match, "/*", sizeof (match));
+		SDL_strlcat (match, "/*", sizeof (match));
 	}
 
 	FS_EnumerateFiles (match, FS_Dir_List, NULL);
@@ -2343,7 +2343,7 @@ char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 	{
 		for (search = fs_purepaths ; search ; search = search->nextpure)
 		{
-			strlcat (buffer, va("%i ", search->crc_check), buffersize);
+			SDL_strlcat (buffer, va("%i ", search->crc_check), buffersize);
 		}
 		return buffer;
 	}
@@ -2355,7 +2355,7 @@ char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 				search->crc_check = search->funcs->GeneratePureCRC(search->handle, 0, 0);
 			if (search->crc_check)
 			{
-				strlcat (buffer, va("%i ", search->crc_check), buffersize);
+				SDL_strlcat (buffer, va("%i ", search->crc_check), buffersize);
 			}
 		}
 		return buffer;
@@ -2627,8 +2627,8 @@ int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t 
 		Sys_Error("FS_Rename case not handled\n");
 	}
 
-	strlcat(oldfullname, oldf, sizeof(oldfullname));
-	strlcat(newfullname, newf, sizeof(newfullname));
+	SDL_strlcat(oldfullname, oldf, sizeof(oldfullname));
+	SDL_strlcat(newfullname, newf, sizeof(newfullname));
 
 	FS_CreatePathRelative(newf, newrelativeto);
 	return rename(oldfullname, newfullname);
@@ -2667,8 +2667,8 @@ int FS_Rename(char *oldf, char *newf, relativeto_t relativeto)
 	}
 
 	SDL_strlcpy(newfullname, oldfullname, sizeof(newfullname));
-	strlcat(oldfullname, oldf, sizeof(oldfullname));
-	strlcat(newfullname, newf, sizeof(newfullname));
+	SDL_strlcat(oldfullname, oldf, sizeof(oldfullname));
+	SDL_strlcat(newfullname, newf, sizeof(newfullname));
 
 	return rename(oldfullname, newfullname);
 }
@@ -2981,27 +2981,27 @@ char *FS_GenerateClientPacksList(char *buffer, int maxlen, int basechecksum)
 	searchpath_t *sp;
 
 	FS_FLocateFile("vm/cgame.qvm", FSLFRT_LENGTH, &loc);
-	strlcat(buffer, va("%i ", loc.search->crc_reply), maxlen);
+	SDL_strlcat(buffer, va("%i ", loc.search->crc_reply), maxlen);
 	basechecksum ^= loc.search->crc_reply;
 
 	FS_FLocateFile("vm/ui.qvm", FSLFRT_LENGTH, &loc);
-	strlcat(buffer, va("%i ", loc.search->crc_reply), maxlen);
+	SDL_strlcat(buffer, va("%i ", loc.search->crc_reply), maxlen);
 	basechecksum ^= loc.search->crc_reply;
 
-	strlcat(buffer, "@ ", maxlen);
+	SDL_strlcat(buffer, "@ ", maxlen);
 
 	for (sp = fs_purepaths; sp; sp = sp->nextpure)
 	{
 		if (sp->crc_reply)
 		{
-			strlcat(buffer, va("%i ", sp->crc_reply), maxlen);
+			SDL_strlcat(buffer, va("%i ", sp->crc_reply), maxlen);
 			basechecksum ^= sp->crc_reply;
 			numpaks++;
 		}
 	}
 
 	basechecksum ^= numpaks;
-	strlcat (buffer, va("%i ", basechecksum), maxlen);
+	SDL_strlcat (buffer, va("%i ", basechecksum), maxlen);
 
 	return buffer;
 }

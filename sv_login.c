@@ -551,7 +551,7 @@ qbool SV_Login(client_t *cl)
 	if (sv_registrationinfo.string[0])
 	{
 		SDL_strlcpy (info, sv_registrationinfo.string, 254);
-		strlcat (info, "\n", 255);
+		SDL_strlcat (info, "\n", 255);
 		MSG_WriteByte (&cl->netchan.message, svc_print);
 		MSG_WriteByte (&cl->netchan.message, PRINT_HIGH);
 		MSG_WriteString (&cl->netchan.message, info);

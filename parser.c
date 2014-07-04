@@ -265,7 +265,7 @@ LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 		return Get_Expr_Dummy();
 	}
 	SDL_strlcpy(ret.s_val, e1.s_val, len);
-	strlcat(ret.s_val, e2.s_val, len);
+	SDL_strlcat(ret.s_val, e2.s_val, len);
 	free(e1.s_val);
 	free(e2.s_val);
 

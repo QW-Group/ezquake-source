@@ -867,7 +867,7 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
         {
             buf[0] = *msgp++;
             buf[1] = '\0';
-            strlcat(src, buf, n);
+            SDL_strlcat(src, buf, n);
         }
 		else
         {
@@ -908,7 +908,7 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
                         SDL_strlcpy(buf, arg2, sizeof(buf));
 					}
                     
-                    strlcat(src, buf, n);
+                    SDL_strlcat(src, buf, n);
                     break;
 				}
 			}

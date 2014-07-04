@@ -40,7 +40,7 @@ char *PF_VarString (int	first)
 	out[0] = 0;
 	for (i=first ; i<pr_argc ; i++)
 	{
-		strlcat (out, G_STRING((OFS_PARM0+i*3)), sizeof(out));
+		SDL_strlcat (out, G_STRING((OFS_PARM0+i*3)), sizeof(out));
 	}
 	return out;
 }
@@ -805,7 +805,7 @@ void PF_stuffcmd (void)
 	buf = cl->stufftext_buf;
 	if (strlen(buf) + strlen(str) >= MAX_STUFFTEXT)
 		PR_RunError ("stufftext buffer overflow");
-	strlcat (buf, str, MAX_STUFFTEXT);
+	SDL_strlcat (buf, str, MAX_STUFFTEXT);
 
 	if( strchr( buf, '\n' ) )
 	{
@@ -2606,7 +2606,7 @@ void PF_findmap (void)
 	id = (i) ? 0 : SDL_atoi(map);
 
 	if (!strstr(map, ".bsp"))
-		strlcat(map, ".bsp", sizeof(map));
+		SDL_strlcat(map, ".bsp", sizeof(map));
 
 	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
 	                  ".bsp$", SORT_BY_NAME);
@@ -2743,7 +2743,7 @@ void PF_listmaps (void)
 				SDL_snprintf(tmp, sizeof(tmp), "%d-%d", id, id + ti - 1);
 				num[0] = '\0';
 				for (j = strlen(tmp); j < ((pad * 2) + 1); j++) //padding to align
-					strlcat(num, " ", sizeof(num));
+					SDL_strlcat(num, " ", sizeof(num));
 				SV_ClientPrintf(client, level, "%s%s %c ", num, tmp, 133);
 				j = 1;
 			}
@@ -2752,7 +2752,7 @@ void PF_listmaps (void)
 			SDL_snprintf(tmp, sizeof(tmp), "%d:%s ", j++, list->name);
 			if (i % 2 != 0) //red every second
 				Q_redtext((unsigned char*)tmp);
-			strlcat(line, tmp, sizeof(line));
+			SDL_strlcat(line, tmp, sizeof(line));
 			if (i % 10 == 0)
 			{ //print entire line
 				SV_ClientPrintf(client, level, "%s\n", line);
@@ -2763,7 +2763,7 @@ void PF_listmaps (void)
 			SDL_snprintf(tmp, sizeof(tmp), "%d", id);
 			num[0] = '\0';
 			for (j = strlen(tmp); j < pad; j++) //padding to align
-				strlcat(num, " ", sizeof(num));
+				SDL_strlcat(num, " ", sizeof(num));
 			Q_redtext((unsigned char*)tmp);
 			SV_ClientPrintf(client, level, "%s%s%c %s\n", num, tmp, 133, list->name);
 			break;

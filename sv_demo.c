@@ -1573,7 +1573,7 @@ void SV_MVD_Record_f (void)
 
 	if ((c = strlen(name)) > 3)
 		if (strcmp(name + c - 4, ".mvd"))
-			strlcat(name, ".mvd", sizeof(name));
+			SDL_strlcat(name, ".mvd", sizeof(name));
 
 	//
 	// open the demo file and start recording
@@ -1620,13 +1620,13 @@ void SV_MVDEasyRecord_f (void)
 			SDL_snprintf (name, sizeof(name), "%don%d_", Dem_CountTeamPlayers(Dem_Team(1)), Dem_CountTeamPlayers(Dem_Team(2)));
 			if ((int)sv_demoExtraNames.value > 0)
 			{
-				strlcat (name, va("[%s]_%s_vs_[%s]_%s_%s",
+				SDL_strlcat (name, va("[%s]_%s_vs_[%s]_%s_%s",
 				                  Dem_Team(1), Dem_PlayerNameTeam(Dem_Team(1)),
 				                  Dem_Team(2), Dem_PlayerNameTeam(Dem_Team(2)),
 				                  sv.mapname), sizeof(name));
 			}
 			else
-				strlcat (name, va("%s_vs_%s_%s", Dem_Team(1), Dem_Team(2), sv.mapname), sizeof(name));
+				SDL_strlcat (name, va("%s_vs_%s_%s", Dem_Team(1), Dem_Team(2), sv.mapname), sizeof(name));
 		}
 		else
 		{

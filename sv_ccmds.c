@@ -746,10 +746,10 @@ void SV_LocalCommand_f (void)
 	str[0] = 0;
 	for (i = 1; i < c; i++)
 	{
-		strlcat (str, Cmd_Argv(i), sizeof(str));
-		strlcat (str, " ", sizeof(str));
+		SDL_strlcat (str, Cmd_Argv(i), sizeof(str));
+		SDL_strlcat (str, " ", sizeof(str));
 	}
-	strlcat (str, va("> %s 2>&1\n", temp_file), sizeof(str));
+	SDL_strlcat (str, va("> %s 2>&1\n", temp_file), sizeof(str));
 
 	if (system(str) == -1)
 		Con_Printf("command failed\n");
@@ -816,14 +816,14 @@ void SV_Kick_f (void)
 				SDL_strlcpy (reason, " (", sizeof(reason));
 				for (j=2 ; j<c; j++)
 				{
-					strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
+					SDL_strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
 					if (j < c-1)
-						strlcat (reason, " ", sizeof(reason)-4);
+						SDL_strlcat (reason, " ", sizeof(reason)-4);
 				}
 				if (strlen(reason) < 3)
 					reason[0] = '\0';
 				else
-					strlcat (reason, ")", sizeof(reason));
+					SDL_strlcat (reason, ")", sizeof(reason));
 			}
 
 			saved_state = cl->state;
@@ -913,9 +913,9 @@ void SV_Cuff_f (void)
 		{
 			for (i = 3; i < c; i++)
 			{
-				strlcat (reason, Cmd_Argv(i), sizeof(reason) - 1 - strlen(reason));
+				SDL_strlcat (reason, Cmd_Argv(i), sizeof(reason) - 1 - strlen(reason));
 				if (i < c - 1)
-					strlcat (reason, " ", sizeof(reason) - strlen(reason));
+					SDL_strlcat (reason, " ", sizeof(reason) - strlen(reason));
 			}
 		}
 
@@ -1000,9 +1000,9 @@ void SV_Mute_f (void)
 		{
 			for (i = 3; i < c; i++)
 			{
-				strlcat (reason, Cmd_Argv(i), sizeof(reason) - 1 - strlen(reason));
+				SDL_strlcat (reason, Cmd_Argv(i), sizeof(reason) - 1 - strlen(reason));
 				if (i < c - 1)
-					strlcat (reason, " ", sizeof(reason) - strlen(reason));
+					SDL_strlcat (reason, " ", sizeof(reason) - strlen(reason));
 			}
 		}
 
@@ -1416,8 +1416,8 @@ void SV_ConSay_f(void)
 		p[strlen(p)-1] = 0;
 	}
 
-	strlcat(text,    p, sizeof(text));
-	strlcat(text, "\n", sizeof(text));
+	SDL_strlcat(text,    p, sizeof(text));
+	SDL_strlcat(text, "\n", sizeof(text));
 
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
 	{

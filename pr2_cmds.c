@@ -757,7 +757,7 @@ void PF2_stuffcmd(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retva
 	buf = cl->stufftext_buf;
 	if (strlen(buf) + strlen(str) >= MAX_STUFFTEXT)
 		PR2_RunError("stufftext buffer overflow");
-	strlcat (buf, str, MAX_STUFFTEXT);
+	SDL_strlcat (buf, str, MAX_STUFFTEXT);
 
 	if( strchr( buf, '\n' ) )
 	{
@@ -2479,9 +2479,9 @@ void PF2_SDL_strlcpy(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 	retval->_int = SDL_strlcpy( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
 }
 
-void PF2_strlcat(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
+void PF2_SDL_strlcat(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 { // (char *dst, char *src, size_t siz)
-	retval->_int = strlcat( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
+	retval->_int = SDL_strlcat( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
 }
 
 /////////Bot Functions
@@ -2984,7 +2984,7 @@ pr2_trapcall_t pr2_API[]=
 		PF2_cmdargs,		//G_CMD_ARGS
 		PF2_tokenize,		//G_CMD_TOKENIZE
 		PF2_SDL_strlcpy,		//g_SDL_strlcpy
-		PF2_strlcat,		//g_strlcat
+		PF2_SDL_strlcat,		//g_SDL_strlcat
 		PF2_makevectors,	//G_MAKEVECTORS
 		PF2_nextclient,		//G_NEXTCLIENT
 		PF2_precache_vwep_model,//G_PRECACHE_VWEP_MODEL

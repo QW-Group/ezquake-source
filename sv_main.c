@@ -743,7 +743,7 @@ static void SVC_Log (void)
 	Con_DPrintf ("sending log %i to %s\n", svs.logsequence-1, NET_AdrToString(net_from));
 
 	SDL_snprintf (data, MAX_DATAGRAM + 64, "stdlog %i\n", svs.logsequence-1);
-	strlcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)], MAX_DATAGRAM + 64);
+	SDL_strlcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)], MAX_DATAGRAM + 64);
 
 	NET_SendPacket (NS_SERVER, strlen(data)+1, data, net_from);
 }
@@ -1497,8 +1497,8 @@ int Master_Rcon_Validate (void)
 	*client_string = 0;
 	for (i = 0; i < Cmd_Argc(); ++i)
 	{
-		strlcat(client_string, Cmd_Argv(i), client_string_len);
-		strlcat(client_string, " ", client_string_len);
+		SDL_strlcat(client_string, Cmd_Argv(i), client_string_len);
+		SDL_strlcat(client_string, " ", client_string_len);
 	}
 	//	Sys_Printf("client_string = %s\nclient_string_len = %d, strlen(client_string) = %d\n",
 	//		client_string, client_string_len, strlen(client_string));
@@ -1692,8 +1692,8 @@ static void SVC_RemoteCommand (char *remote_command)
 		str[0] = '\0';
 		for (i = 2; i < Cmd_Argc(); i++)
 		{
-			strlcat(str, Cmd_Argv(i), sizeof(str));
-			strlcat(str, " ", sizeof(str));
+			SDL_strlcat(str, Cmd_Argv(i), sizeof(str));
+			SDL_strlcat(str, " ", sizeof(str));
 		}
 
 		Cmd_ExecuteString(str);
@@ -2228,7 +2228,7 @@ void SV_SendBan (void)
 	data[0] = data[1] = data[2] = data[3] = 0xff;
 	data[4] = A2C_PRINT;
 	data[5] = 0;
-	strlcat (data, "\nbanned.\n", sizeof(data));
+	SDL_strlcat (data, "\nbanned.\n", sizeof(data));
 
 	NET_SendPacket (NS_SERVER, strlen(data), data, net_from);
 }
@@ -2428,14 +2428,14 @@ void SV_Cmd_Ban_f(void)
 				SDL_strlcpy (reason, " (", sizeof(reason));
 				for (j=3 ; j<c; j++)
 				{
-					strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
+					SDL_strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
 					if (j < c-1)
-						strlcat (reason, " ", sizeof(reason)-4);
+						SDL_strlcat (reason, " ", sizeof(reason)-4);
 				}
 				if (strlen(reason) < 3)
 					reason[0] = '\0';
 				else
-					strlcat (reason, ")", sizeof(reason));
+					SDL_strlcat (reason, ")", sizeof(reason));
 			}
 
 			s = NET_BaseAdrToString(cl->netchan.remote_address);
@@ -3275,8 +3275,8 @@ void SV_InitLocal (void)
 	sys_command_line.string[0] = 0;
 	for (i = 0; i < com_argc; i++)
 	{
-		strlcat(sys_command_line.string, com_argv[i], len);
-		strlcat(sys_command_line.string, " ", len);
+		SDL_strlcat(sys_command_line.string, com_argv[i], len);
+		SDL_strlcat(sys_command_line.string, " ", len);
 	}
 #endif
 	Cvar_Register (&sys_command_line);

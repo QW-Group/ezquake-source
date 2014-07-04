@@ -542,10 +542,10 @@ static void CL_WriteStartupData (void)
 			if (!*s)
 				break;
 			if (i > 0)
-				strlcat (ss, " ", sizeof(ss));
-			strlcat (ss, TrimModelName(s), sizeof(ss));
+				SDL_strlcat (ss, " ", sizeof(ss));
+			SDL_strlcat (ss, TrimModelName(s), sizeof(ss));
 		}
-		strlcat (ss, "\n", sizeof(ss));
+		SDL_strlcat (ss, "\n", sizeof(ss));
 		if (strlen(ss) < sizeof(ss)-1)		// Didn't overflow?
 		{
 			MSG_WriteByte (&buf, svc_stufftext);
@@ -2217,9 +2217,9 @@ static void CL_WriteDemoPimpMessage(void)
 	SDL_strlcpy (border, "\x1d", sizeof (border));
 
 	for (i = 0; i < 34; i++)
-		strlcat (border, "\x1e", sizeof (border));
+		SDL_strlcat (border, "\x1e", sizeof (border));
 
-	strlcat (border, "\x1f", sizeof (border));
+	SDL_strlcat (border, "\x1f", sizeof (border));
 
 	SDL_snprintf (pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
 		border,

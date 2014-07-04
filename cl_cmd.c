@@ -121,7 +121,7 @@ void CL_ForwardToServer_f (void) {
 		{
 			SDL_strlcpy(cls.downloadname, Cmd_Argv(2), sizeof(cls.downloadname));
 			COM_StripExtension(cls.downloadname, cls.downloadtempname);
-			strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+			SDL_strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 			cls.downloadtype = dl_single;
 			//SDL_snprintf (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
 			//SDL_strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
@@ -134,7 +134,7 @@ void CL_ForwardToServer_f (void) {
 			for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
 				char tmp[3];
 				SDL_snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
-				strlcat(client_time_str, tmp, sizeof(client_time_str));
+				SDL_strlcat(client_time_str, tmp, sizeof(client_time_str));
 			}
 
 			server_string_len = Cmd_Argc() + strlen(Cmd_Argv(1)) + DIGEST_SIZE * 2 + 16;
@@ -158,8 +158,8 @@ void CL_ForwardToServer_f (void) {
 				Cmd_Argv(1), SHA1_Final(), client_time_str);
 			for (i = 3; i < Cmd_Argc(); ++i)
 			{
-				strlcat(server_string, Cmd_Argv(i), server_string_len);
-				strlcat(server_string, " ", server_string_len);
+				SDL_strlcat(server_string, Cmd_Argv(i), server_string_len);
+				SDL_strlcat(server_string, " ", server_string_len);
 			}
 			SZ_Print (&cls.netchan.message, server_string);
 			Q_free(server_string);
@@ -559,7 +559,7 @@ void CL_Rcon_f (void) {
 	message[2] = 255;
 	message[3] = 255;
 	message[4] = 0;
-	strlcat (message, "rcon ", sizeof(message));
+	SDL_strlcat (message, "rcon ", sizeof(message));
 
 // Added by VVD {
 	if (cl_crypt_rcon.value)
@@ -568,7 +568,7 @@ void CL_Rcon_f (void) {
 		for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
 			char tmp[3];
 			SDL_snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
-			strlcat(client_time_str, tmp, sizeof(client_time_str));
+			SDL_strlcat(client_time_str, tmp, sizeof(client_time_str));
 		}
 		
 		SHA1_Init();
@@ -591,21 +591,21 @@ void CL_Rcon_f (void) {
 			SHA1_Update((unsigned char *)Cmd_Argv(i));
 			SHA1_Update((unsigned char *)" ");
 		}
-		strlcat (message, SHA1_Final(), sizeof(message));
-		strlcat (message, client_time_str, sizeof(message));
-		strlcat (message, " ", sizeof(message));
+		SDL_strlcat (message, SHA1_Final(), sizeof(message));
+		SDL_strlcat (message, client_time_str, sizeof(message));
+		SDL_strlcat (message, " ", sizeof(message));
 	}
 	else {
 		i_from = 1;
  		if (rcon_password.string[0]) {
-			strlcat (message, rcon_password.string, sizeof(message));
-			strlcat (message, " ", sizeof(message));
+			SDL_strlcat (message, rcon_password.string, sizeof(message));
+			SDL_strlcat (message, " ", sizeof(message));
 		}
 	}
 	for (i = i_from; i < Cmd_Argc(); i++)
 	{
-		strlcat (message, Cmd_Argv(i), sizeof(message));
-		strlcat (message, " ", sizeof(message));
+		SDL_strlcat (message, Cmd_Argv(i), sizeof(message));
+		SDL_strlcat (message, " ", sizeof(message));
 	}
 // } Added by VVD
 
@@ -665,7 +665,7 @@ void CL_Download_f (void){
 
 	SDL_snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
 	COM_StripExtension(cls.downloadname, cls.downloadtempname);
-	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+	SDL_strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
@@ -892,8 +892,8 @@ int get_z_ext_list(int bits, char *buf, int bufsize)
 			continue; // not match
 
 		if (cnt)
-			strlcat(buf, " ", bufsize);
-		strlcat(buf, z_map[i].name, bufsize);
+			SDL_strlcat(buf, " ", bufsize);
+		SDL_strlcat(buf, z_map[i].name, bufsize);
 		cnt++;
 	}
 

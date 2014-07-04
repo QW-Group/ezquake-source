@@ -425,10 +425,10 @@ static void Cmd_Modellist_f (void)
 			if (!*s || !**s)
 				break;
 			if (i > 0)
-				strlcat (ss, " ", sizeof(ss));
-			strlcat (ss, TrimModelName(*s), sizeof(ss));
+				SDL_strlcat (ss, " ", sizeof(ss));
+			SDL_strlcat (ss, TrimModelName(*s), sizeof(ss));
 		}
-		strlcat (ss, "\n", sizeof(ss));
+		SDL_strlcat (ss, "\n", sizeof(ss));
 		if (ss[strlen(ss)-1] == '\n')		// didn't overflow?
 		{
 			ClientReliableWrite_Begin (sv_client, svc_stufftext, 2 + strlen(ss));
@@ -1610,7 +1610,7 @@ static void SV_Say (qbool team)
 	if (*p == '"')
 	{ // remove surrounding "
 		p++;
-		strlcat(text, p, sizeof(text));
+		SDL_strlcat(text, p, sizeof(text));
 		text[max(0,strlen(text)-1)] = 0; // actualy here we remove closing ", but without any check, just in hope...
 #ifdef USE_PR2
 		if ( !sv_vm )
@@ -1618,8 +1618,8 @@ static void SV_Say (qbool team)
 			p[strlen(p)-1] = 0; // here remove closing " only for QC based mods
 	}
 	else
-		strlcat(text, p, sizeof(text));
-	strlcat(text, "\n", sizeof(text));
+		SDL_strlcat(text, p, sizeof(text));
+	SDL_strlcat(text, "\n", sizeof(text));
 
 	if (!sv_client->logged)
 	{
@@ -2417,7 +2417,7 @@ static void Cmd_ShowMapsList_f(void)
 				if ((len = 19 - strlen(value)) < 1)
 					len = 1;
 				for (j = 0; j < len; j++)
-					strlcat(value, " ", MAX_KEY_STRING);
+					SDL_strlcat(value, " ", MAX_KEY_STRING);
 			}
 			Con_Printf("%s%s", value, i_mod_2 ? "\n" : "");
 		}

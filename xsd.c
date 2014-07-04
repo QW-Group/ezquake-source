@@ -160,8 +160,8 @@ void XSD_RestoreStack(xml_parser_stack_t *stack)
 // call when element starts
 void XSD_OnStartElement(xml_parser_stack_t *stack, const XML_Char *name, const XML_Char **atts)
 {
-    strlcat(stack->path, "/", sizeof (stack->path));
-    strlcat(stack->path, name, sizeof (stack->path));
+    SDL_strlcat(stack->path, "/", sizeof (stack->path));
+    SDL_strlcat(stack->path, name, sizeof (stack->path));
 }
 
 // call when element ends

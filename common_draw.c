@@ -398,21 +398,21 @@ void SCR_DrawClients(void)
 
 	SDL_strlcpy (line, " # ", sizeof (line));
 	SDL_snprintf (buf, sizeof (buf), "%*.*s ", uid_w, uid_w, "uid");
-	strlcat (line, buf, sizeof (line));
+	SDL_strlcat (line, buf, sizeof (line));
 	SDL_snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, "name");
-	strlcat (line, buf, sizeof (line));
-	strlcat (line, "team skin     rate", sizeof (line));
+	SDL_strlcat (line, buf, sizeof (line));
+	SDL_strlcat (line, "team skin     rate", sizeof (line));
 
 	Draw_String (x, y, line);
 	y += 8;
 
 	SDL_strlcpy (line, "\x1D\x1F \x1D", sizeof (line));
 	SDL_snprintf (buf, sizeof (buf), "%*.*s", uid_w-2, uid_w-2, "\x1E\x1E\x1E\x1E");
-	strlcat (line, buf, sizeof (line));
-	strlcat (line, "\x1F \x1D", sizeof (line));
+	SDL_strlcat (line, buf, sizeof (line));
+	SDL_strlcat (line, "\x1F \x1D", sizeof (line));
 	SDL_snprintf (buf, sizeof (buf), "%*.*s", 16-uid_w-2, 16-uid_w-2, "\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E");
-	strlcat (line, buf, sizeof (line));
-    strlcat (line, "\x1F \x1D\x1E\x1E\x1F \x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1F \x1D\x1E\x1E\x1F", sizeof (line));
+	SDL_strlcat (line, buf, sizeof (line));
+    SDL_strlcat (line, "\x1F \x1D\x1E\x1E\x1F \x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1F \x1D\x1E\x1E\x1F", sizeof (line));
 
 	Draw_String(x, y, line);
     y += 8;
@@ -428,26 +428,26 @@ void SCR_DrawClients(void)
 		line[0] = 0;
 
 		SDL_snprintf (buf, sizeof (buf), "%2d ", i);
-		strlcat (line, buf, sizeof (line));
+		SDL_strlcat (line, buf, sizeof (line));
 
 		SDL_snprintf (buf, sizeof (buf), "%*d ", uid_w, cl.players[i].userid);
-        strlcat(line, buf, sizeof (line));
+        SDL_strlcat(line, buf, sizeof (line));
 
 		SDL_snprintf (buf, sizeof (buf), "%-*.*s ", 16-uid_w, 16-uid_w, cl.players[i].name);
-		strlcat (line, buf, sizeof (line));
+		SDL_strlcat (line, buf, sizeof (line));
 
 		SDL_snprintf(buf, sizeof (buf), "%-4.4s ", Info_ValueForKey(cl.players[i].userinfo, "team"));
-		strlcat (line, buf, sizeof (line));
+		SDL_strlcat (line, buf, sizeof (line));
 
 		if (cl.players[i].spectator)
 			SDL_strlcpy (buf, "<spec>   ", sizeof (buf));
 		else
 			SDL_snprintf (buf, sizeof (buf), "%-8.8s ", Info_ValueForKey(cl.players[i].userinfo, "skin"));
 
-		strlcat (line, buf, sizeof (line));
+		SDL_strlcat (line, buf, sizeof (line));
 
 		SDL_snprintf (buf, sizeof (buf), "%4d", min(9999, atoi(Info_ValueForKey(cl.players[i].userinfo, "rate"))));
-		strlcat (line, buf, sizeof (line));
+		SDL_strlcat (line, buf, sizeof (line));
 
 		Draw_String (x, y, line);
 		y += 8;

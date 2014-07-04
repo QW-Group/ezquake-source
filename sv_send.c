@@ -138,7 +138,7 @@ void Con_Printf (char *fmt, ...)
 	{
 		if (strlen (msg) + strlen(outputbuf) > /*sizeof(outputbuf) - 1*/ MAX_MSGLEN - 10)
 			SV_FlushRedirect ();
-		strlcat (outputbuf, msg, sizeof(outputbuf));
+		SDL_strlcat (outputbuf, msg, sizeof(outputbuf));
 		return;
 	}
 
@@ -305,7 +305,7 @@ void SV_DoBroadcastPrintf (int level, int flags, char *string)
 	{
 		if (string[strlen(string) - 1] == '\n')
 		{
-			strlcat(string2, string, sizeof(string2));
+			SDL_strlcat(string2, string, sizeof(string2));
 			//			SV_Write_Log(MOD_FRAG_LOG, 1, "=== SV_BroadcastPrintf ==={\n");
 			//			SV_Write_Log(MOD_FRAG_LOG, 1, string2);
 			//			SV_Write_Log(MOD_FRAG_LOG, 1, "}==========================\n");
@@ -317,7 +317,7 @@ void SV_DoBroadcastPrintf (int level, int flags, char *string)
 			string2[0] = 0;
 		}
 		else
-			strlcat(string2, string, sizeof(string2));
+			SDL_strlcat(string2, string, sizeof(string2));
 	}
 	//	SV_Write_Log(MOD_FRAG_LOG, 1, "==========================\n\n");
 }

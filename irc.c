@@ -275,9 +275,9 @@ char *Cmd_ArgLine(unsigned int starting_from_arg)
 
 	for (i = starting_from_arg; i < Cmd_Argc(); i++) {
 		if (i > starting_from_arg)
-			strlcat (args, " ", MAX_MACRO_STRING);
+			SDL_strlcat (args, " ", MAX_MACRO_STRING);
 
-		strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
+		SDL_strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
 	}
 
 	return args;
