@@ -61,13 +61,6 @@ typedef unsigned char byte;
 #define NULL ((void *) 0)
 #endif
 
-
-#ifdef _WIN32
-#define IS_SLASH(c) ((c) == '/' || (c) == '\\')
-#else
-#define IS_SLASH(c) ((c) == '/')
-#endif
-
 #ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
