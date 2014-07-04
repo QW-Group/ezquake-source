@@ -654,7 +654,7 @@ void CL_Download_f (void){
 	}
 	else
 		dir = cls.gamedir; // not a demo
-	
+
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
@@ -669,12 +669,12 @@ void CL_Download_f (void){
 
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
-		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "download %s", filename);
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "download \"%s\"", filename);
 	}
 	else
 	{
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		SZ_Print (&cls.netchan.message, va("download %s", filename));
+		SZ_Print (&cls.netchan.message, va("download \"%s\"", filename));
 	}
 }
 

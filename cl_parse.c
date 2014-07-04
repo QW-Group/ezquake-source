@@ -517,12 +517,12 @@ qbool CL_CheckOrDownloadFile (char *filename)
 
 	if (cls.mvdplayback == QTV_PLAYBACK) 
 	{
-		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "download %s", filename);
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "download \"%s\"", filename);
 	}
 	else 
 	{
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va("download %s", filename));
+		MSG_WriteString (&cls.netchan.message, va("download \"%s\"", filename));
 	}
 
 	cls.downloadnumber++;
