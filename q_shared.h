@@ -206,10 +206,6 @@ char *Q_strlwr( char *s1 );
 
 // Added by VVD {
 char *strstri(const char *text, const char *find); // Case insensitive strstr.
-
-#if defined(__linux__) || defined(_WIN32)
-char  *strnstr (const char *s, const char *find, size_t slen);
-#endif
 // Added by VVD }
 
 char *strchrrev(char *str, char chr);
