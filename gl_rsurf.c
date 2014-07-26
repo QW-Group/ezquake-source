@@ -43,6 +43,7 @@ static qbool	lightmap_modified[MAX_LIGHTMAPS];
 static glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
 
 static int allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
+static int last_lightmap_updated;
 
 // the lightmap texture data needs to be kept in
 // main memory so texsubimage can update properly
@@ -1492,7 +1493,7 @@ int AllocBlock (int w, int h, int *x, int *y) {
 	if (w < 1 || w > BLOCK_WIDTH || h < 1 || h > BLOCK_HEIGHT)
 		Sys_Error ("AllocBlock: Bad dimensions");
 
-	for (texnum = 0; texnum < MAX_LIGHTMAPS; texnum++) {
+	for (texnum = last_lightmap_updated; texnum < MAX_LIGHTMAPS; texnum++, last_lightmap_updated++) {
 		best = BLOCK_HEIGHT + 1;
 
 		for (i = 0; i < BLOCK_WIDTH - w; i++) {
@@ -1630,6 +1631,7 @@ void GL_BuildLightmaps (void) {
 	model_t	*m;
 
 	memset (allocated, 0, sizeof(allocated));
+	last_lightmap_updated = 0;
 
 	gl_invlightmaps = !COM_CheckParm("-noinvlmaps");
 
