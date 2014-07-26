@@ -35,7 +35,16 @@ void Sys_CvarInit(void)
 
 wchar *Sys_GetClipboardTextW(void)
 {
-	return SDL_HasClipboardText() ? str2wcs(SDL_GetClipboardText()) : NULL;
+	char *tmp;
+	wchar *wtmp = NULL;
+
+	if (SDL_HasClipboardText()) {
+		tmp = SDL_GetClipboardText();
+		wtmp = str2wcs(tmp);
+		free(tmp);
+	}
+
+	return wtmp;
 }
 
 void Sys_CopyToClipboard(char *text)
