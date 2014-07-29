@@ -17,6 +17,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	$Id: vid.h,v 1.7 2007-01-07 21:48:47 disconn3ct Exp $
 */
 // vid.h -- video driver defs
+#include <SDL.h>
 
 #define VID_CBITS 6
 #define VID_GRADES (1 << VID_CBITS)
@@ -93,3 +94,5 @@ void VID_Restore();
 qbool VID_VSyncIsOn();
 qbool VID_VSyncLagFix();
 void VID_CvarInit();
+void VID_GetModeList(SDL_DisplayMode **modelist_out, int *count_out);
+int VID_GetCurrentModeIndex();
