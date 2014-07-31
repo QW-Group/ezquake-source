@@ -557,7 +557,11 @@ static void VID_SDL_Init(void)
 
 	VID_SetupResolution();
 
-	sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, vid_xpos.integer, vid_ypos.integer, glConfig.vidWidth, glConfig.vidHeight, flags);
+	if (r_fullscreen.integer == 0) {
+		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, vid_xpos.integer, vid_ypos.integer, glConfig.vidWidth, glConfig.vidHeight, flags);
+	} else {
+		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, glConfig.vidWidth, glConfig.vidHeight, flags);
+	}
 
         icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
                 ezquake_icon.width * ezquake_icon.bytes_per_pixel,
