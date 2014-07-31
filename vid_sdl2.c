@@ -162,13 +162,12 @@ void IN_Commands(void)
 
 void IN_StartupMouse(void)
 {
-	Cvar_Register (&in_raw);
-	Cvar_Register (&in_grab_windowed_mouse);
+	Cvar_Register(&in_raw);
+	Cvar_Register(&in_grab_windowed_mouse);
+
 	mouseinitialized = true;
-	if (in_raw.integer > 0)
-		Com_Printf("RAW mouse initialized\n");
-	else
-		Com_Printf("SDL mouse initialized\n");
+
+	Com_Printf("%s mouse input initialized\n", in_raw.integer > 0 ? "RAW" : "SDL");
 }
 
 void IN_ActivateMouse(void)
@@ -200,6 +199,7 @@ void IN_Frame(void)
 	} else {
 		IN_ActivateMouse();
 	}
+
 	if (mouse_active && SDL_GetRelativeMouseMode()) {
 #ifdef __APPLE__
 		OSX_Mouse_GetMouseMovement(&mx, &my);
@@ -214,20 +214,15 @@ void Sys_SendKeyEvents(void)
 {
         IN_Frame();
 
-        if (sys_inactivesleep.integer > 0) 
-        {
+        if (sys_inactivesleep.integer > 0) {
                 // Yield the CPU a little
-                if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing)
-                {
+                if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing) {
                         SDL_Delay(50);
                         scr_skipupdate = 1; // no point to draw anything
-                } 
-                else if (!ActiveApp) // Delay a bit less if just not active window
-                {
+                } else if (!ActiveApp) { // Delay a bit less if just not active window
                         SDL_Delay(20);
                 }
         }
-
 }
 
 void IN_Restart_f(void)
@@ -238,14 +233,15 @@ void IN_Restart_f(void)
 	IN_Init();
 
 	// if mouse was active before restart, try to re-activate it
-	if (old_mouse_active)
+	if (old_mouse_active) {
 		IN_ActivateMouse();
+	}
 }
 
 static void window_event(SDL_WindowEvent *event)
 {
-	int flags = SDL_GetWindowFlags(sdl_window);
 	extern qbool scr_skipupdate;
+	int flags = SDL_GetWindowFlags(sdl_window);
 
 	switch (event->event) {
 		case SDL_WINDOWEVENT_MINIMIZED:
@@ -373,7 +369,7 @@ static void mouse_wheel_event(SDL_MouseWheelEvent *event)
 
 static void HandleEvents()
 {
-	SDL_Event	event;
+	SDL_Event event;
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
@@ -433,11 +429,13 @@ static int VID_SDL_InitSubSystem(void)
 {
 	int ret = 0;
 
-	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+	if (SDL_WasInit(SDL_INIT_VIDEO) == 0) {
 		ret = SDL_InitSubSystem(SDL_INIT_VIDEO);
+	}
 
-	if (ret == -1) 
+	if (ret == -1) {
 		Sys_Error("Couldn't initialize SDL video: %s\n", SDL_GetError());
+	}
 
 	return ret;
 }
@@ -511,7 +509,6 @@ static void VID_SetupResolution(void)
 
 		glConfig.vidWidth = bound(320, vid_win_width.integer, vid_win_width.integer);
 		glConfig.vidHeight = bound(200, vid_win_height.integer, vid_win_height.integer);
-
 	}
 }
 
@@ -530,8 +527,9 @@ static void VID_SDL_Init(void)
 	SDL_DisplayMode display_mode;
 	int flags;
 	
-	if (glConfig.initialized == true)
+	if (glConfig.initialized == true) {
 		return;
+	}
 
 	flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 
@@ -539,13 +537,15 @@ static void VID_SDL_Init(void)
 	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
 	if (r_fullscreen.integer > 0) {
-		if (!vid_width.integer || !vid_height.integer)
+		if (vid_width.integer == 0 || vid_height.integer == 0) {
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-		else
+		} else {
 			flags |= SDL_WINDOW_FULLSCREEN;
+		}
 	} else {
-		if (vid_win_borderless.integer <= 0)
+		if (vid_win_borderless.integer <= 0) {
 			flags &= ~SDL_WINDOW_BORDERLESS;
+		}
 	}
 
 #if defined(__linux__)
@@ -579,10 +579,11 @@ static void VID_SDL_Init(void)
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 	
-	if (!SDL_GetWindowDisplayMode(sdl_window, &display_mode))
+	if (SDL_GetWindowDisplayMode(sdl_window, &display_mode) < 0) {
 		glConfig.displayFrequency = display_mode.refresh_rate;
-	else
+	} else {
 		glConfig.displayFrequency = 0;
+	}
 
 	glConfig.colorBits = 24; // FIXME
 	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &glConfig.depthBits);
@@ -604,11 +605,15 @@ static void GL_SwapBuffers (void)
 {
 	SDL_GL_SwapWindow(sdl_window);
 }
+
 static void GL_SwapBuffersWithVsyncFix(void)
 {
 	double time_before_swap;
+
 	time_before_swap = Sys_DoubleTime();
+
 	SDL_GL_SwapWindow(sdl_window);
+
 	vid_last_swap_time = Sys_DoubleTime();
 	vid_vsync_lag = vid_last_swap_time - time_before_swap;
 }
@@ -619,8 +624,9 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*width  = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
 
-	if (cls.state != ca_active)
+	if (cls.state != ca_active) {
 		glClear (GL_COLOR_BUFFER_BIT);
+	}
 }
 
 void GL_EndRendering (void)
@@ -646,24 +652,27 @@ void GL_EndRendering (void)
 		r_swapInterval.modified = false;
         }
 
-	if (!scr_skipupdate || block_drawing)
-	{
+	if (!scr_skipupdate || block_drawing) {
 		// Multiview - Only swap the back buffer to front when all views have been drawn in multiview.
-		if (cl_multiview.value && cls.mvdplayback) 
-			if (CURRVIEW != 1)
+		if (cl_multiview.value && cls.mvdplayback) {
+			if (CURRVIEW != 1) {
 				return;
+			}
+		}
 
-		if (vid_vsync_lag_fix.integer > 0)
+		if (vid_vsync_lag_fix.integer > 0) {
 			GL_SwapBuffersWithVsyncFix();
-		else
+		} else {
 			GL_SwapBuffers(); 
+		}
 	}
 }
 
 void VID_SetCaption (char *text)
 {
-	if (!sdl_window)
+	if (!sdl_window) {
 		return;
+	}
 
 	SDL_SetWindowTitle(sdl_window, text);
 }
@@ -674,16 +683,17 @@ void VID_NotifyActivity(void)
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 
-	if (ActiveApp || !vid_flashonactivity.value)
+	if (ActiveApp || !vid_flashonactivity.value) {
 		return;
-
-	if (SDL_GetWindowWMInfo(sdl_window, &info) == SDL_TRUE)
-	{
-		if (info.subsystem == SDL_SYSWM_WINDOWS)
-			FlashWindow(info.info.win.window, TRUE);
 	}
-	else
+
+	if (SDL_GetWindowWMInfo(sdl_window, &info) == SDL_TRUE) {
+		if (info.subsystem == SDL_SYSWM_WINDOWS) {
+			FlashWindow(info.info.win.window, TRUE);
+		}
+	} else {
 		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
+	}
 #endif
 }
 
@@ -695,24 +705,25 @@ void VID_SetDeviceGammaRamp (unsigned short *ramps)
 
 void VID_Minimize (void) 
 {
-    if (!sdl_window)
-        return;
+	if (!sdl_window) {
+		return;
+	}
 
-    SDL_MinimizeWindow(sdl_window);
+	SDL_MinimizeWindow(sdl_window);
 }
 
 void VID_Restore (void)
 {
-    if (!sdl_window)
-        return;
+	if (!sdl_window)
+		return;
 
-    SDL_RestoreWindow(sdl_window);
-    SDL_RaiseWindow(sdl_window);
+	SDL_RestoreWindow(sdl_window);
+	SDL_RaiseWindow(sdl_window);
 }
 
 qbool VID_VSyncIsOn(void)
 {
-	return r_swapInterval.integer != 0;
+	return (r_swapInterval.integer != 0);
 }
 
 #define NUMTIMINGS 5
@@ -728,8 +739,9 @@ qbool VID_VSyncLagFix(void)
 	static int timings_idx;
         int i;
 
-	if (!VID_VSyncIsOn() || !vid_vsync_lag_fix.integer)
+	if (!VID_VSyncIsOn() || !vid_vsync_lag_fix.integer) {
 		return false;
+	}
 
 	if (!glConfig.displayFrequency) {
 		Com_Printf("VID_VSyncLagFix: displayFrequency isn't set, can't enable vsync lag fix\n");
@@ -741,13 +753,19 @@ qbool VID_VSyncLagFix(void)
         timings_idx = (timings_idx + 1) % NUMTIMINGS;
         avg_rendertime = tmin = tmax = 0;
         for (i = 0; i < NUMTIMINGS; i++) {
-                if (timings[i] == 0)
+                if (timings[i] == 0) {
                         return false;   // not enough statistics yet
+		}
+
                 avg_rendertime += timings[i];
-                if (timings[i] < tmin || !tmin)
+
+                if (timings[i] < tmin || !tmin) {
                         tmax = timings[i];
-                if (timings[i] > tmax)
+		}
+
+                if (timings[i] > tmax) {
                         tmax = timings[i];
+		}
         }
         avg_rendertime /= NUMTIMINGS;
         // if (tmax and tmin differ too much) do_something(); ?
@@ -758,8 +776,11 @@ qbool VID_VSyncLagFix(void)
 	time_left -= vid_vsync_lag_tweak.value * 0.001;
 	if (time_left > 0) {
 		extern cvar_t sys_yieldcpu;
-		if (time_left > 0.001 && sys_yieldcpu.integer)
+
+		if (time_left > 0.001 && sys_yieldcpu.integer) {
 			Sys_MSleep(min(time_left * 1000, 500));
+		}
+
 		return true;    // don't run a frame yet
 	}
         return false;
@@ -773,20 +794,23 @@ static void GfxInfo_f(void)
 	ST_Printf(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
 	ST_Printf(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
 
-	if (r_showextensions.value)
+	if (r_showextensions.value) {
 		ST_Printf(PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string);
+	}
 
 	ST_Printf(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
 
-	if (SDL_GetCurrentDisplayMode(0, &current) != 0)
+	if (SDL_GetCurrentDisplayMode(0, &current) != 0) {
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
+	}
 
 	ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz ", glConfig.vidWidth, glConfig.vidHeight, current.refresh_rate);
 	
-	if (r_fullscreen.integer)
+	if (r_fullscreen.integer) {
 		ST_Printf(PRINT_ALL, "[fullscreen]\n");
-	else
+	} else {
 		ST_Printf(PRINT_ALL, "[windowed]\n");
+	}
 
 	ST_Printf(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 
@@ -796,23 +820,25 @@ static void VID_ParseCmdLine(void)
 {
 	int i, w = 0, h = 0;
 
-	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
+	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed")) {
 		Cvar_LatchedSetValue(&r_fullscreen, 0);
+	}
 
 // TODO: Decide what to do with displayFrequency.. Support setting modes with different Hz than desktop or not??
 #if 0
-	if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc())
+	if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc()) {
 		Cvar_LatchedSetValue(&r_displayRefresh, Q_atoi(COM_Argv(i + 1)));
+	}
 #endif
 
-	if ((i = COM_CheckParm("-bpp")) && i + 1 < COM_Argc())
+	if ((i = COM_CheckParm("-bpp")) && i + 1 < COM_Argc()) {
 		Cvar_LatchedSetValue(&r_colorbits, Q_atoi(COM_Argv(i + 1)));
+	}
 
 	w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 	h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 
-	if ( w && h ) 
-	{
+	if (w && h) {
 		if (COM_CheckParm("-window")) {
 			Cvar_LatchedSetValue(&vid_win_width,  w);
 			Cvar_LatchedSetValue(&vid_win_height, h);
@@ -822,11 +848,13 @@ static void VID_ParseCmdLine(void)
 		}
 	} // else if (w || h) { Sys_Error("Must specify both -width and -height\n"); }
 
-	if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc())
+	if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc()) {
 		Cvar_SetValue(&r_conwidth, (float)Q_atoi(COM_Argv(i + 1)));
+	}
 
-	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc())
+	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc()) {
 		Cvar_SetValue(&r_conheight, (float)Q_atoi(COM_Argv(i + 1)));
+	}
 }
 
 static void VID_Restart_f(void)
@@ -902,12 +930,13 @@ static void VID_UpdateConRes(void)
 
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 {
-	if (var == &r_conwidth)
+	if (var == &r_conwidth) {
 		Cvar_SetValue(&r_conwidth, Q_atoi(string));
-	else if (var == &r_conheight)
+	} else if (var == &r_conheight) {
 		Cvar_SetValue(&r_conheight, Q_atoi(string));
-	else
+	} else {
 		Cvar_SetValue(&r_conscale, Q_atof(string));
+	}
 
 	VID_UpdateConRes();
 	*cancel = true;
@@ -932,8 +961,9 @@ void VID_Init(unsigned char *palette) {
 	VID_SDL_Init();
 
 	// print info
-	if (!host_initialized || r_verbose.integer)
+	if (!host_initialized || r_verbose.integer) {
 		GfxInfo_f();
+	}
 
 	VID_UpdateConRes();
 
