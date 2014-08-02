@@ -256,7 +256,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	extern void CL_ClearState (void);
 
 	// store old map name
-	snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
+	SDL_snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
 
 	Con_DPrintf ("SpawnServer: %s\n",mapname);
 
@@ -281,7 +281,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 			svs.clients[i].isBot = 0;
 		}
 		if (svs.clients[i].name)
-			strlcpy(savenames[i], svs.clients[i].name, CLIENT_NAME_LEN);
+			SDL_strlcpy(savenames[i], svs.clients[i].name, CLIENT_NAME_LEN);
 	}
 	if ( sv_vm )
 		PR2_GameShutDown();
@@ -403,7 +403,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 			svs.clients[i].name = PR2_GetString(ent->v.netname);
 		else
 			svs.clients[i].name = clientnames[i];
-		strlcpy(svs.clients[i].name, savenames[i], CLIENT_NAME_LEN);
+		SDL_strlcpy(svs.clients[i].name, savenames[i], CLIENT_NAME_LEN);
 #endif
 		svs.clients[i].edict = ent;
 		//ZOID - make sure we update frags right
@@ -411,8 +411,8 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	}
 
 	// fill sv.mapname and sv.modelname with new map name
-	strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
-	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
+	SDL_strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
+	SDL_snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
 	// set cvar
 	Cvar_ForceSet (&host_mapname, mapname);
 
@@ -421,8 +421,8 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 		Con_Printf ("Cant load map %s, falling back to %s\n", mapname, oldmap);
 
 		// fill mapname, sv.mapname and sv.modelname with old map name
-		strlcpy (sv.mapname, oldmap, sizeof(sv.mapname)); 
-		snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
+		SDL_strlcpy (sv.mapname, oldmap, sizeof(sv.mapname)); 
+		SDL_snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
 		mapname = oldmap;
 
 		// and re-load old map
@@ -475,7 +475,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	ent->e->free = false;
 #ifdef USE_PR2
 	if ( sv_vm )
-		strlcpy(PR2_GetString(ent->v.model), sv.modelname, 64);
+		SDL_strlcpy(PR2_GetString(ent->v.model), sv.modelname, 64);
 	else
 #endif
 		ent->v.model = PR_SetString(sv.modelname);
@@ -495,7 +495,7 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 #ifdef USE_PR2
 	if(sv_vm)
-		strlcpy((char*)PR2_GetString(pr_global_struct->mapname) , sv.mapname, 64);
+		SDL_strlcpy((char*)PR2_GetString(pr_global_struct->mapname) , sv.mapname, 64);
 	else
 #endif
 	PR_GLOBAL(mapname) = PR_SetString(sv.mapname);

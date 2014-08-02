@@ -147,23 +147,23 @@ void SYSINFO_Init(void)
 	// Create the f_system string.
 	//
 	
-	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
+	SDL_snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
 
 	if (SYSINFO_processor_description) 
 	{
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 
 	if (SYSINFO_MHz) 
 	{
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		SDL_strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 
 	if (SYSINFO_3D_description) 
 	{
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__linux__)
@@ -231,18 +231,18 @@ void SYSINFO_Init(void)
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
-	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
+	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
 
 	if (SYSINFO_processor_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		SDL_strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__APPLE__)
@@ -257,18 +257,18 @@ void SYSINFO_Init(void)
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
-	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
+	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
 	if (SYSINFO_processor_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+		SDL_strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__FreeBSD__)
@@ -323,24 +323,24 @@ void SYSINFO_Init(void)
 			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
-	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
+	SDL_snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
 	if (SYSINFO_processor_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz) {
-		strlcat(f_system_string, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string));
+		SDL_strlcat(f_system_string, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description) {
-		strlcat(f_system_string, ", ", sizeof(f_system_string));
-		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+		SDL_strlcat(f_system_string, ", ", sizeof(f_system_string));
+		SDL_strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #else
 void SYSINFO_Init(void)
 {
-	strlcpy(f_system_string, "Unknown system.", sizeof(f_system_string));
+	SDL_strlcpy(f_system_string, "Unknown system.", sizeof(f_system_string));
 }
 #endif
 
@@ -369,7 +369,7 @@ void Host_Error (char *error, ...)
 	inerror = true;
 
 	va_start (argptr,error);
-	vsnprintf (string, sizeof(string), error, argptr);
+	SDL_vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 
 	Com_Printf ("\n===========================\n");
@@ -396,10 +396,10 @@ void Host_InitMemory (int memsize)
 		memsize = MINIMUM_MEMORY;
 
 	if ((t = COM_CheckParm ("-heapsize")) != 0 && t + 1 < COM_Argc())
-		memsize = Q_atoi (COM_Argv(t + 1)) * 1024;
+		memsize = SDL_atoi (COM_Argv(t + 1)) * 1024;
 
 	if ((t = COM_CheckParm ("-mem")) != 0 && t + 1 < COM_Argc())
-		memsize = Q_atoi (COM_Argv(t + 1)) * 1024 * 1024;
+		memsize = SDL_atoi (COM_Argv(t + 1)) * 1024 * 1024;
 
 	if (memsize < MINIMUM_MEMORY)
 		Sys_Error ("Only %4.1f megs of memory reported, can't execute game", memsize / (float)0x100000);
@@ -446,20 +446,20 @@ char *Host_PrintBars(char *s, int len)
 	if (count > sizeof (temp) / 2 - 8)
 		return temp;
 
-	strlcat (temp, "\x1d", sizeof (temp));
+	SDL_strlcat (temp, "\x1d", sizeof (temp));
 
 	for (i = 0; i < count; i++)
-		strlcat(temp, "\x1e", sizeof (temp));
+		SDL_strlcat(temp, "\x1e", sizeof (temp));
 
-	strlcat (temp, " ", sizeof (temp));
-	strlcat (temp, s, sizeof (temp));
-	strlcat (temp, " ", sizeof (temp));
+	SDL_strlcat (temp, " ", sizeof (temp));
+	SDL_strlcat (temp, s, sizeof (temp));
+	SDL_strlcat (temp, " ", sizeof (temp));
 
 	for (i = 0; i < count; i++)
-		strlcat(temp, "\x1e", sizeof (temp));
+		SDL_strlcat(temp, "\x1e", sizeof (temp));
 
-	strlcat(temp, "\x1f", sizeof (temp));
-	strlcat(temp, "\n\n", sizeof (temp));
+	SDL_strlcat(temp, "\x1f", sizeof (temp));
+	SDL_strlcat(temp, "\n\n", sizeof (temp));
 
 	return temp;
 }
@@ -580,7 +580,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	else {
 		cfg_name = MAIN_CONFIG_FILENAME;
 	}
-	snprintf(cfg, sizeof(cfg), "%s", cfg_name);
+	SDL_snprintf(cfg, sizeof(cfg), "%s", cfg_name);
 	COM_ForceExtensionEx (cfg, ".cfg", sizeof (cfg));
 	Cbuf_AddText(va("cfg_load %s\n", cfg));
 	Cbuf_Execute();
@@ -631,7 +631,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		if ( Cvar_GetFlags( v ) & (CVAR_ROM | CVAR_INIT) )
 			continue;
 
-		snprintf(val, sizeof(val), "%s", v->string);
+		SDL_snprintf(val, sizeof(val), "%s", v->string);
 		Cvar_Set(v, val);
 	}
 	

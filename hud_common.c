@@ -165,9 +165,9 @@ int TP_TeamFortressEngineerSpanner(void)
 	char *player_skin=Info_ValueForKey(cl.players[cl.playernum].userinfo,"skin");
 	char *model_name=cl.model_precache[cl.viewent.current.modelindex]->name;
 	if (cl.teamfortress && player_skin
-			&& (strcasecmp(player_skin, "tf_eng") == 0)
+			&& (SDL_strcasecmp(player_skin, "tf_eng") == 0)
 			&& model_name
-			&& (strcasecmp(model_name, "progs/v_span.mdl") == 0))
+			&& (SDL_strcasecmp(model_name, "progs/v_span.mdl") == 0))
 	{
 		return 1;
 	}
@@ -260,12 +260,12 @@ void SCR_HUD_DrawFPS(hud_t *hud)
     }
 
     if (hud_fps_show_min->value)
-        snprintf (st, sizeof (st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int) (cls.fps + 0.25));
+        SDL_snprintf (st, sizeof (st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int) (cls.fps + 0.25));
     else
-        snprintf (st, sizeof (st), "%3d", (int)(cls.fps + 0.25));
+        SDL_snprintf (st, sizeof (st), "%3d", (int)(cls.fps + 0.25));
 
     if (hud_fps_title->value)
-        strlcat (st, " fps", sizeof (st));
+        SDL_strlcat (st, " fps", sizeof (st));
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
@@ -305,7 +305,7 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
                         current = min(cls.trueframetime, 1.0/glConfig.displayFrequency) * 0.5;
                 avg = (current + old_lag) * 0.5;
                 old_lag = current;
-                snprintf (st, sizeof (st), "%2.1f", avg * 1000);
+                SDL_snprintf (st, sizeof (st), "%2.1f", avg * 1000);
         }
         else
 
@@ -316,7 +316,7 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
 		hud_vidlag_style = HUD_FindVar(hud, "style");
 	}
 
-	strlcat (st, " ms", sizeof (st));
+	SDL_strlcat (st, " ms", sizeof (st));
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
@@ -369,15 +369,15 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
 #endif
 
 	if (newresult > 0) {
-		snprintf(st, sizeof(st), "%4d", newresult);
+		SDL_snprintf(st, sizeof(st), "%4d", newresult);
 		lastresult = newresult;
 	} else if (!newresult)
-		snprintf(st, sizeof(st), "%4d", lastresult);
+		SDL_snprintf(st, sizeof(st), "%4d", lastresult);
 	else
-		snprintf(st, sizeof(st), "n/a");
+		SDL_snprintf(st, sizeof(st), "n/a");
 
     if (hud_mouserate_title->value)
-        strlcat(st, " Hz", sizeof (st));
+        SDL_strlcat(st, " Hz", sizeof (st));
 
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
     {
@@ -411,7 +411,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 		hud_tracking_scale = HUD_FindVar(hud, "scale");
 	}
 
-	strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
+	SDL_strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
 
 	if(cls.mvdplayback && cl_multiview.value && CURRVIEW > 0)
 	{
@@ -436,7 +436,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 				continue;
 			}
 
-			strlcpy(tracked_strings[view], hud_tracking_format->string, sizeof(tracked_strings[view]));
+			SDL_strlcpy(tracked_strings[view], hud_tracking_format->string, sizeof(tracked_strings[view]));
 
 			Replace_In_String(tracked_strings[view], sizeof(tracked_strings[view]), '%', 3,
 				"v", cl_multiview.value ? va("%d", view+1) : "",			// Replace %v with the current view (in multiview)
@@ -585,29 +585,29 @@ void SCR_HUD_DrawPing(hud_t *hud)
 
     // blink
     if (hud_ping_blink->value)   // add dot
-        strlcat (buf, (last_calculated + hud_ping_period->value/2 > cls.realtime) ? "\x8f" : " ", sizeof (buf));
+        SDL_strlcat (buf, (last_calculated + hud_ping_period->value/2 > cls.realtime) ? "\x8f" : " ", sizeof (buf));
 
     // min ping
     if (hud_ping_show_min->value)
-        strlcat (buf, va("%d\xf", ping_min), sizeof (buf));
+        SDL_strlcat (buf, va("%d\xf", ping_min), sizeof (buf));
 
     // ping
-    strlcat (buf, va("%d", ping_avg), sizeof (buf));
+    SDL_strlcat (buf, va("%d", ping_avg), sizeof (buf));
 
     // max ping
     if (hud_ping_show_max->value)
-        strlcat (buf, va("\xf%d", ping_max), sizeof (buf));
+        SDL_strlcat (buf, va("\xf%d", ping_max), sizeof (buf));
 
     // unit
-    strlcat (buf, " ms", sizeof (buf));
+    SDL_strlcat (buf, " ms", sizeof (buf));
 
     // standard deviation
     if (hud_ping_show_dev->value)
-        strlcat (buf, va(" (%.1f)", ping_dev), sizeof (buf));
+        SDL_strlcat (buf, va(" (%.1f)", ping_dev), sizeof (buf));
 
     // pl
     if (hud_ping_show_pl->value)
-        strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
+        SDL_strlcat (buf, va(" \x8f %d%%", pl), sizeof (buf));
 
     // display that on screen
     width = strlen(buf) * 8;
@@ -1844,7 +1844,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
         align = 2; break;
     }
 
-	snprintf(buf, sizeof (buf), "%d", (style == 2 || style == 3) ? num : abs(num));
+	SDL_snprintf(buf, sizeof (buf), "%d", (style == 2 || style == 3) ? num : abs(num));
 
 	if(digits)
 	{
@@ -2079,7 +2079,7 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
         if (!HUD_PrepareDraw(hud, 42*scale, 11*scale, &x, &y))
             return;
 
-        snprintf (buf, sizeof (buf), "%3i", value);
+        SDL_snprintf (buf, sizeof (buf), "%3i", value);
         Draw_SSubPic(x, y, sb_ibar, 3+((num-1)*48), 0, 42, 11, scale);
         if (buf[0] != ' ')  Draw_SCharacter (x +  7*scale, y, 18+buf[0]-'0', scale);
         if (buf[1] != ' ')  Draw_SCharacter (x + 15*scale, y, 18+buf[1]-'0', scale);
@@ -2307,7 +2307,7 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t **hud_pic, char *newpic)
 	}
 
 	// Get the path for the pic.
-	snprintf (pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic);
+	SDL_snprintf (pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic);
 
 	// Try loading the pic.
 	if (!(temp_pic = Draw_CachePicSafe(pic_path, false, true)))
@@ -2858,7 +2858,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 		char *t = buf;
 		int char_x;
 		int char_y;
-		snprintf(buf, sizeof (buf), "%d", frags);
+		SDL_snprintf(buf, sizeof (buf), "%d", frags);
 
 		char_x = max(x, x + (width  - (int)strlen(buf) * char_size) / 2);
 		char_y = max(y, posy);
@@ -2882,7 +2882,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 	else
 	{
 		// Normal text size.
-		snprintf(buf, sizeof (buf), "%3d", frags);
+		SDL_snprintf(buf, sizeof (buf), "%3d", frags);
 		Draw_String(x - 2 + (width - char_size * strlen(buf) - 2) / 2, posy, buf);
 	}
 
@@ -3253,7 +3253,7 @@ int Frags_DrawText(int px, int py,
 	// Draw team
 	if(showteams && cl.teamplay)
 	{
-		strlcpy(_team, team, clamp(max_team_length, 0, sizeof(_team)));
+		SDL_strlcpy(_team, team, clamp(max_team_length, 0, sizeof(_team)));
 		team_length = strlen(_team);
 
 		if(!flip)
@@ -3283,7 +3283,7 @@ int Frags_DrawText(int px, int py,
 	if(shownames)
 	{
 		// Draw name
-		strlcpy(_name, name, clamp(max_name_length, 0, sizeof(_name)));
+		SDL_strlcpy(_name, name, clamp(max_name_length, 0, sizeof(_name)));
 		name_length = strlen(_name);
 
 		if(flip && pad)
@@ -3372,7 +3372,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 		// Set the OnChange function for extra spec info.
 		hud_frags_extra_spec->OnChange = Frags_OnChangeExtraSpecInfo;
-		strlcpy(specval, hud_frags_extra_spec->string, sizeof(specval));
+		SDL_strlcpy(specval, hud_frags_extra_spec->string, sizeof(specval));
 		Cvar_Set(hud_frags_extra_spec, specval);
     }
 
@@ -4051,15 +4051,15 @@ char *Get_MP3_HUD_style(float style, char *st)
 	static char HUD_style[32];
 	if(style == 1.0)
 	{
-		strlcpy(HUD_style, va("%s:", st), sizeof(HUD_style));
+		SDL_strlcpy(HUD_style, va("%s:", st), sizeof(HUD_style));
 	}
 	else if(style == 2.0)
 	{
-		strlcpy(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
+		SDL_strlcpy(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
 	}
 	else
 	{
-		strlcpy(HUD_style, "", sizeof(HUD_style));
+		SDL_strlcpy(HUD_style, "", sizeof(HUD_style));
 	}
 	return HUD_style;
 }
@@ -4120,24 +4120,24 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 		switch(status)
 		{
 			case MP3_PLAYING :
-				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
+				title_length = SDL_snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
 				break;
 			case MP3_PAUSED :
-				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
+				title_length = SDL_snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
 				break;
 			case MP3_STOPPED :
-				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
+				title_length = SDL_snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
 				break;
 			case MP3_NOTRUNNING	:
 			default :
 				status = MP3_NOTRUNNING;
-				title_length = snprintf (title, sizeof (title), "%s is not running.", mp3_player->PlayerName_AllCaps);
+				title_length = SDL_snprintf (title, sizeof (title), "%s is not running.", mp3_player->PlayerName_AllCaps);
 				break;
 		}
 
 		if(title_length < 0)
 		{
-			snprintf(title, sizeof (title), "Error retrieving current song.");
+			SDL_snprintf(title, sizeof (title), "Error retrieving current song.");
 		}
 	}
 
@@ -4186,7 +4186,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 
 		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0)
 		{
-			snprintf (time_string, sizeof (time_string), "\x10-:-\x11");
+			SDL_snprintf (time_string, sizeof (time_string), "\x10-:-\x11");
 		}
 		else
 		{
@@ -4194,36 +4194,36 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 			{
 				case 1 :
 					remain = total - elapsed;
-					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
-					snprintf (time_string, sizeof (time_string), "\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
+					SDL_strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
+					SDL_snprintf (time_string, sizeof (time_string), "\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 2 :
 					remain = total - elapsed;
-					snprintf (time_string, sizeof (time_string), "\x10-%s\x11", SecondsToMinutesString (remain));
+					SDL_snprintf (time_string, sizeof (time_string), "\x10-%s\x11", SecondsToMinutesString (remain));
 					break;
 				case 3 :
-					snprintf (time_string, sizeof (time_string), "\x10%s\x11", SecondsToMinutesString (elapsed));
+					SDL_snprintf (time_string, sizeof (time_string), "\x10%s\x11", SecondsToMinutesString (elapsed));
 					break;
 				case 4 :
 					remain = total - elapsed;
-					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
-					snprintf (time_string, sizeof (time_string), "%s/%s", elapsed_string, SecondsToMinutesString (total));
+					SDL_strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
+					SDL_snprintf (time_string, sizeof (time_string), "%s/%s", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 5 :
-					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
-					snprintf (time_string, sizeof (time_string), "-%s/%s", elapsed_string, SecondsToMinutesString (total));
+					SDL_strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
+					SDL_snprintf (time_string, sizeof (time_string), "-%s/%s", elapsed_string, SecondsToMinutesString (total));
 					break;
 				case 6 :
 					remain = total - elapsed;
-					snprintf (time_string, sizeof (time_string), "-%s", SecondsToMinutesString (remain));
+					SDL_snprintf (time_string, sizeof (time_string), "-%s", SecondsToMinutesString (remain));
 					break;
 				case 7 :
-					snprintf (time_string, sizeof (time_string), "%s", SecondsToMinutesString (elapsed));
+					SDL_snprintf (time_string, sizeof (time_string), "%s", SecondsToMinutesString (elapsed));
 					break;
 				case 0 :
 				default :
-					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
-					snprintf (time_string, sizeof (time_string), "\x10%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
+					SDL_strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
+					SDL_snprintf (time_string, sizeof (time_string), "\x10%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
 					break;
 			}
 		}
@@ -4234,7 +4234,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	// It could be used for timing powerups
 	// Use same check that is used for any external communication
 	if(Rulesets_RestrictPacket())
-		snprintf (time_string, sizeof (time_string), "\x10%s\x11", "Not allowed");
+		SDL_snprintf (time_string, sizeof (time_string), "\x10%s\x11", "Not allowed");
 
 	width = strlen (time_string) * 8;
 	height = 8;
@@ -4288,7 +4288,7 @@ void HUD_NewRadarMap()
 	// Allocate a string for the path to the radar image.
 	len = strlen (RADAR_BASE_PATH_FORMAT) +  strlen (host_mapname.string);
 	radar_filename = Q_calloc (len, sizeof(char));
-	snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, host_mapname.string);
+	SDL_snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, host_mapname.string);
 
 	// Load the map picture.
 	if ((radar_pic_p = GL_LoadPicImage (radar_filename, host_mapname.string, 0, 0, TEX_ALPHA)) != NULL)
@@ -4312,22 +4312,22 @@ void HUD_NewRadarMap()
 			{
 				if(!strcmp(txt[i].key, "QWLMConversionSlopeX"))
 				{
-					map_x_slope = atof(txt[i].text);
+					map_x_slope = SDL_atof(txt[i].text);
 					found_count++;
 				}
 				else if(!strcmp(txt[i].key, "QWLMConversionInterceptX"))
 				{
-					map_x_intercept = atof(txt[i].text);
+					map_x_intercept = SDL_atof(txt[i].text);
 					found_count++;
 				}
 				else if(!strcmp(txt[i].key, "QWLMConversionSlopeY"))
 				{
-					map_y_slope = atof(txt[i].text);
+					map_y_slope = SDL_atof(txt[i].text);
 					found_count++;
 				}
 				else if(!strcmp(txt[i].key, "QWLMConversionInterceptY"))
 				{
-					map_y_intercept = atof(txt[i].text);
+					map_y_intercept = SDL_atof(txt[i].text);
 					found_count++;
 				}
 
@@ -4452,7 +4452,7 @@ void HUD_AutoLoad_MVD(int autoload) {
 }
 
 void OnAutoHudChange(cvar_t *var, char *value, qbool *cancel) {
-	HUD_AutoLoad_MVD(Q_atoi(value));
+	HUD_AutoLoad_MVD(SDL_atoi(value));
 }
 
 // Is run when a new map is loaded.
@@ -4814,7 +4814,7 @@ void TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s, qbool *cancel)
 			// Try matching the current word with a hold item
 			// and set it's ordering according to it's placement
 			// in the string.
-			strlcpy (temp, start, min(end - start, sizeof(temp)));
+			SDL_strlcpy (temp, start, min(end - start, sizeof(temp)));
 			StatsGrid_SetHoldItemOrder(temp, order);
 			order++;
 
@@ -4866,7 +4866,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
 
 		// Parse the item filter the first time (trigger the OnChange function above).
-		strlcpy (val, hud_teamholdinfo_itemfilter->string, sizeof(val));
+		SDL_strlcpy (val, hud_teamholdinfo_itemfilter->string, sizeof(val));
 		Cvar_Set (hud_teamholdinfo_itemfilter, val);
     }
 
@@ -5047,7 +5047,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name); // we use nick or name
 		maxname = max(maxname, strlen(TP_ParseFunChars(nick, false)));
 
-		strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
+		SDL_strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
 		maxloc  = max(maxloc,  strlen(TP_ParseFunChars(tmp,  false)));
 
 		slots[slots_num++] = i;
@@ -5137,8 +5137,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	strlcpy(tmp2, HUD_FindVar(hud, "layout")->string , sizeof(tmp2));
-	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
+	SDL_strlcpy(tmp2, HUD_FindVar(hud, "layout")->string , sizeof(tmp2));
+	SDL_strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
 	//
@@ -5197,7 +5197,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 			case 'H': // draw health, padding with space on right side
 
 				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < HUD_FindVar(hud, "low_health")->integer ? "&cf00" : ""), ti_cl->health);
+					SDL_snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < HUD_FindVar(hud, "low_health")->integer ? "&cf00" : ""), ti_cl->health);
 					Draw_SString (x, y, tmp, scale);
 				}
 				x += 3 * FONTWIDTH * scale;
@@ -5268,7 +5268,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 				}
 
 				if(!width_only) { // value drawed no matter which style
-					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
+					SDL_snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
 					Draw_SString (x, y, tmp, scale);
 				}
 				x += 3 * FONTWIDTH * scale;
@@ -5356,7 +5356,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 			default: // print %x - that mean sequence unknown
 
 				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
+					SDL_snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
 					Draw_SString (x, y, tmp, scale);
 				}
 				x += (s[0] ? 2 : 1) * FONTWIDTH * scale;
@@ -5368,7 +5368,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 
 		default: // print x
 			if(!width_only) {
-				snprintf(tmp, sizeof(tmp), "%c", s[0]);
+				SDL_snprintf(tmp, sizeof(tmp), "%c", s[0]);
 				if (s[0] != ' ') // inhuman smart optimization, do not print space!
 					Draw_SString (x, y, tmp, scale);
 			}
@@ -5770,7 +5770,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 					
 					if(temp != NULL)
 					{
-						strlcpy(out, temp, sizeof(buf) - (out - buf));
+						SDL_strlcpy(out, temp, sizeof(buf) - (out - buf));
 						out += strlen(temp);
 					}
 				}
@@ -5824,7 +5824,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 							temp = va("%%%c", c);
 							break;
 					}
-					strlcpy(out, temp, sizeof(buf) - (out - buf));
+					SDL_strlcpy(out, temp, sizeof(buf) - (out - buf));
 					out += strlen(temp);
 				}
 				else
@@ -6261,7 +6261,7 @@ void Radar_OnChangeHighlightColor(cvar_t *var, char *newval, qbool *cancel)
 
 	// Parse the colors.
 	//color = StringToRGB(new_color);
-	strlcpy(buf,new_color,sizeof(buf));
+	SDL_strlcpy(buf,new_color,sizeof(buf));
 	memcpy(hud_radar_highlight_color, StringToRGB(buf), sizeof(byte) * 4);
 
 	// Set the cvar to contain the new color string
@@ -7011,22 +7011,22 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 		// Weapon filter.
 		hud_radar_weaponfilter->OnChange = Radar_OnChangeWeaponFilter;
-		strlcpy(checkval, hud_radar_weaponfilter->string, sizeof(checkval));
+		SDL_strlcpy(checkval, hud_radar_weaponfilter->string, sizeof(checkval));
 		Cvar_Set(hud_radar_weaponfilter, checkval);
 
 		// Item filter.
 		hud_radar_itemfilter->OnChange = Radar_OnChangeItemFilter;
-		strlcpy(checkval, hud_radar_itemfilter->string, sizeof(checkval));
+		SDL_strlcpy(checkval, hud_radar_itemfilter->string, sizeof(checkval));
 		Cvar_Set(hud_radar_itemfilter, checkval);
 
 		// Other filter.
 		hud_radar_otherfilter->OnChange = Radar_OnChangeOtherFilter;
-		strlcpy(checkval, hud_radar_otherfilter->string, sizeof(checkval));
+		SDL_strlcpy(checkval, hud_radar_otherfilter->string, sizeof(checkval));
 		Cvar_Set(hud_radar_otherfilter, checkval);
 
 		// Highlight color.
 		hud_radar_highlight_color->OnChange = Radar_OnChangeHighlightColor;
-		strlcpy(checkval, hud_radar_highlight_color->string, sizeof(checkval));
+		SDL_strlcpy(checkval, hud_radar_highlight_color->string, sizeof(checkval));
 		Cvar_Set(hud_radar_highlight_color, checkval);
     }
 

@@ -729,9 +729,9 @@ static float fakeshaft_policy (void)
 		return 1;
 	else
 		return *(p = Info_ValueForKey(cl.serverinfo, "fakeshaft")) ?
-			bound(0, Q_atof(p), 1) :
+			bound(0, SDL_atof(p), 1) :
 			*(p = Info_ValueForKey(cl.serverinfo, "truelightning")) ?
-			bound(0, Q_atof(p), 1) : 1;
+			bound(0, SDL_atof(p), 1) : 1;
 }
 
 void CL_UpdateBeams(void) 

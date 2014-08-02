@@ -178,7 +178,7 @@ static void S_Restart_f (void)
 }
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel) {
-	if (shm && shm->format.speed / 1000 != Q_atoi(string)) {
+	if (shm && shm->format.speed / 1000 != SDL_atoi(string)) {
 		Cbuf_AddText("s_restart\n");
 	}
 }
@@ -290,7 +290,7 @@ static sfx_t *S_FindName (char *name)
 		Sys_Error ("S_FindName: out of sfx_t");
 
 	sfx = &known_sfx[i];
-	strlcpy (sfx->name, name, sizeof (sfx->name));
+	SDL_strlcpy (sfx->name, name, sizeof (sfx->name));
 
 	num_sfx++;
 
@@ -754,7 +754,7 @@ static void S_Play_f (void)
 		return;
 
 	for (i = 1; i < Cmd_Argc(); i++) {
-		strlcpy (name, Cmd_Argv(i), sizeof (name));
+		SDL_strlcpy (name, Cmd_Argv(i), sizeof (name));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
 		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, 1.0, 0.0);
@@ -772,10 +772,10 @@ static void S_PlayVol_f (void)
 		return;
 
 	for (i = 1; i < Cmd_Argc(); i += 2) {
-		strlcpy (name, Cmd_Argv(i), sizeof (name));
+		SDL_strlcpy (name, Cmd_Argv(i), sizeof (name));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
-		vol = Q_atof(Cmd_Argv(i + 1));
+		vol = SDL_atof(Cmd_Argv(i + 1));
 		// ezhfan:
 		// pnum+1 changed to SELF_SOUND to make sound not to disappear
 		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, vol, 0.0);

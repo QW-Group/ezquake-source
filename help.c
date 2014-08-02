@@ -190,62 +190,62 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 	var = XSD_Variable_Load (va ("help/variables/%s.xml", varname));
 	
 	if(menu_advanced.integer && strlen(varname)){
-		strlcat(buf, "Variable name: ", bufsize);
-		strlcat(buf, varname, bufsize);
+		SDL_strlcat(buf, "Variable name: ", bufsize);
+		SDL_strlcat(buf, varname, bufsize);
 		CharsToBrown(buf, buf + strlen (buf) - strlen(varname));
-		strlcat(buf, "\n", bufsize);
+		SDL_strlcat(buf, "\n", bufsize);
 	}
 	
 	if (!var)
 		return;
 
 	if (var->description && strlen (var->description) > 1) {
-		strlcat (buf, var->description, bufsize);
-		strlcat (buf, "\n", bufsize);
+		SDL_strlcat (buf, var->description, bufsize);
+		SDL_strlcat (buf, "\n", bufsize);
 	}
 
 	if (var->remarks) {
-		strlcat (buf, "remarks: ", bufsize);
-		strlcat (buf, var->remarks, bufsize);
-		strlcat (buf, "\n", bufsize);
+		SDL_strlcat (buf, "remarks: ", bufsize);
+		SDL_strlcat (buf, var->remarks, bufsize);
+		SDL_strlcat (buf, "\n", bufsize);
 	}
 
 	switch (var->value_type) {
 	case t_boolean:
 		if (var->value.boolean_value.false_description) {
-			strlcat (buf, "0: ", bufsize);
-			strlcat (buf, var->value.boolean_value.false_description, bufsize);
-			strlcat (buf, "\n", bufsize);
+			SDL_strlcat (buf, "0: ", bufsize);
+			SDL_strlcat (buf, var->value.boolean_value.false_description, bufsize);
+			SDL_strlcat (buf, "\n", bufsize);
 		}
 
 		if (var->value.boolean_value.true_description) {
-			strlcat (buf, "1: ", bufsize);
-			strlcat (buf, var->value.boolean_value.true_description, bufsize);
-			strlcat (buf, "\n", bufsize);
+			SDL_strlcat (buf, "1: ", bufsize);
+			SDL_strlcat (buf, var->value.boolean_value.true_description, bufsize);
+			SDL_strlcat (buf, "\n", bufsize);
 		}
 
 		break;
 
 	case t_float:
 		if (var->value.float_description) {
-			strlcat (buf, var->value.float_description, bufsize);
-			strlcat (buf, "\n", bufsize);
+			SDL_strlcat (buf, var->value.float_description, bufsize);
+			SDL_strlcat (buf, "\n", bufsize);
 		}
 
 		break;
 
 	case t_integer:
 		if (var->value.integer_description) {
-			strlcat (buf, var->value.integer_description, bufsize);
-			strlcat (buf, "\n", bufsize);
+			SDL_strlcat (buf, var->value.integer_description, bufsize);
+			SDL_strlcat (buf, "\n", bufsize);
 		}
 
 		break;
 
 	case t_string:
 		if (var->value.string_description) {
-			strlcat (buf, var->value.string_description, bufsize);
-			strlcat (buf, "\n", bufsize);
+			SDL_strlcat (buf, var->value.string_description, bufsize);
+			SDL_strlcat (buf, "\n", bufsize);
 		}
 
 		break;
@@ -254,10 +254,10 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 		cv = var->value.enum_value;
 		while(cv) {
 			if (cv->name && cv->description) {
-				strlcat (buf, cv->name, bufsize);
-				strlcat (buf, ":", bufsize);
-				strlcat (buf, cv->description, bufsize);
-				strlcat (buf, "\n", bufsize);
+				SDL_strlcat (buf, cv->name, bufsize);
+				SDL_strlcat (buf, ":", bufsize);
+				SDL_strlcat (buf, cv->description, bufsize);
+				SDL_strlcat (buf, "\n", bufsize);
 			}
 
 			cv = cv->next;

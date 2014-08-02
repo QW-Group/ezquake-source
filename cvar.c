@@ -62,7 +62,7 @@ cvar_t *Cvar_Find (const char *var_name)
 	int key = Com_HashKey (var_name) % VAR_HASHPOOL_SIZE;
 
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
-		if (!strcasecmp (var_name, var->name)) {
+		if (!SDL_strcasecmp (var_name, var->name)) {
 			return var;
 		}
 	}
@@ -139,7 +139,7 @@ void Cvar_SetDefault(cvar_t *var, float value)
 	char val[128];
 	int i;
 
-	snprintf (val, sizeof(val), "%f", value);
+	SDL_snprintf (val, sizeof(val), "%f", value);
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
 		val[i] = 0;
 	if (val[i] == '.')
@@ -155,7 +155,7 @@ float Cvar_Value (char *var_name)
 
 	if (!var)
 		return 0;
-	return Q_atof (var->string);
+	return SDL_atof (var->string);
 }
 
 char *Cvar_String (char *var_name)
@@ -177,12 +177,12 @@ char *Cvar_CompleteVariable (char *partial)
 
 	// check exact match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!strcasecmp (partial,cvar->name))
+		if (!SDL_strcasecmp (partial,cvar->name))
 			return cvar->name;
 
 	// check partial match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!strncasecmp (partial,cvar->name, len))
+		if (!SDL_strncasecmp (partial,cvar->name, len))
 			return cvar->name;
 
 	return NULL;
@@ -198,7 +198,7 @@ int Cvar_CompleteCountPossible (char *partial)
 
 	// check partial match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!strncasecmp (partial, cvar->name, len))
+		if (!SDL_strncasecmp (partial, cvar->name, len))
 			c++;
 
 	return c;
@@ -206,7 +206,7 @@ int Cvar_CompleteCountPossible (char *partial)
 
 void Cvar_RulesetSet(cvar_t *var, char *val, int m)
 {
-	float rulesetval_f = Q_atof (val);
+	float rulesetval_f = SDL_atof (val);
 
 	switch (m) {
 		case 0:
@@ -249,7 +249,7 @@ void Cvar_Set (cvar_t *var, char *value)
 	}
 
 	if (var->flags & CVAR_RULESET_MIN) {
-		test  = Q_atof (value);
+		test  = SDL_atof (value);
 		if (test < var->minrulesetvalue) {
 			Com_Printf ("min \"%s\" is limited to %0.2f\n", var->name,var->minrulesetvalue);
 			return;
@@ -257,7 +257,7 @@ void Cvar_Set (cvar_t *var, char *value)
 	}
 
 	if (var->flags & CVAR_RULESET_MAX) {
-		test  = Q_atof (value);
+		test  = SDL_atof (value);
 		if (test > var->maxrulesetvalue) {
 			Com_Printf ("max \"%s\" is limited to %0.2f\n", var->name,var->maxrulesetvalue);
 			return;
@@ -319,8 +319,8 @@ void Cvar_Set (cvar_t *var, char *value)
 	Z_Free (var->string);
 
 	var->string = new_val;
-	var->value = Q_atof (var->string);
-	var->integer = Q_atoi (var->string);
+	var->value = SDL_atof (var->string);
+	var->integer = SDL_atoi (var->string);
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
 
@@ -364,7 +364,7 @@ void Cvar_SetValueByName (char *var_name, float value)
 {
 	char val[32];
 
-	snprintf (val, sizeof (val), "%.8g", value);
+	SDL_snprintf (val, sizeof (val), "%.8g", value);
 	Cvar_SetByName (var_name, val);
 }
 
@@ -373,7 +373,7 @@ void Cvar_SetValue (cvar_t *var, float value)
 	char val[128];
 	int	i;
 
-	snprintf (val, sizeof(val), "%f", value);
+	SDL_snprintf (val, sizeof(val), "%f", value);
 
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
 		val[i] = 0;
@@ -449,11 +449,11 @@ static cvar_group_t *Cvar_AddGroup(char *name)
 	}
 
 	for (newgroup = cvar_groups; newgroup; newgroup = newgroup->next)
-		if (!strcasecmp(newgroup->name, name))
+		if (!SDL_strcasecmp(newgroup->name, name))
 			return newgroup;
 
 	newgroup = (cvar_group_t *) Q_malloc(sizeof(cvar_group_t));
-	strlcpy(newgroup->name, name, sizeof(newgroup->name));
+	SDL_strlcpy(newgroup->name, name, sizeof(newgroup->name));
 	newgroup->count = 0;
 	newgroup->head = NULL;
 	newgroup->next = cvar_groups;
@@ -519,8 +519,8 @@ void Cvar_Register (cvar_t *var)
 				Z_Free (old->string);
 				old->string  = old->latchedString;
 				old->latchedString = NULL;
-				old->value   = Q_atof (old->string);
-				old->integer = Q_atoi (old->string);
+				old->value   = SDL_atof (old->string);
+				old->integer = SDL_atoi (old->string);
 				StringToRGB_W(old->string, old->color);
 				old->modified = true;
 			}
@@ -551,7 +551,7 @@ void Cvar_Register (cvar_t *var)
 	if (old)
 	{
 		var->flags |= old->flags & ~(CVAR_USER_CREATED|CVAR_TEMP);
-		strlcpy (string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
+		SDL_strlcpy (string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
 		Cvar_Delete (old->name);
 		var->string = Z_Strdup (string);
 	}
@@ -560,8 +560,8 @@ void Cvar_Register (cvar_t *var)
 		// allocate the string on zone because future sets will Z_Free it
 		var->string = Z_Strdup (var->string);
 	}
-	var->value = Q_atof (var->string);
-	var->integer = Q_atoi (var->string);
+	var->value = SDL_atof (var->string);
+	var->integer = SDL_atoi (var->string);
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
 
@@ -762,8 +762,8 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->string = Z_Strdup (string);
 	v->defaultvalue = Z_Strdup (string);
 	v->flags = cvarflags | CVAR_USER_CREATED;
-	v->value = Q_atof (v->string);
-	v->integer = Q_atoi (v->string);
+	v->value = SDL_atof (v->string);
+	v->integer = SDL_atoi (v->string);
 	StringToRGB_W(v->string, v->color);
 	v->modified = true;
 #ifdef WITH_TCL
@@ -780,7 +780,7 @@ qbool Cvar_Delete (const char *name)
 	int key = Com_HashKey (name) % VAR_HASHPOOL_SIZE;
 
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
-		if (!strcasecmp(var->name, name)) {
+		if (!SDL_strcasecmp(var->name, name)) {
 			// unlink from hash
 			if (prev)
 				prev->hash_next = var->hash_next;
@@ -796,7 +796,7 @@ qbool Cvar_Delete (const char *name)
 
 	prev = NULL;
 	for (var = cvar_vars; var; var=var->next)	{
-		if (!strcasecmp(var->name, name)) {
+		if (!SDL_strcasecmp(var->name, name)) {
 			// unlink from cvar list
 			if (prev)
 				prev->next = var->next;
@@ -1082,7 +1082,7 @@ void Cvar_Set_Calc_f(void)
 		Cvar_SetValue (var, strlen (a3));
 		return;
 	} else if (!strcmp (a2, "int")) {
-		Cvar_SetValue (var, (int) Q_atof (a3));
+		Cvar_SetValue (var, (int) SDL_atof (a3));
 		return;
 	} else if (!strcmp (a2, "substr")) {
 		int var2len;
@@ -1093,8 +1093,8 @@ void Cvar_Set_Calc_f(void)
 			return;
 		}
 
-		pos = atoi (Cmd_Argv (4));
-		len = (Cmd_Argc () < 6)? 1 : atoi (Cmd_Argv (5));
+		pos = SDL_atoi (Cmd_Argv (4));
+		len = (Cmd_Argc () < 6)? 1 : SDL_atoi (Cmd_Argv (5));
 
 		if (len == 0) {
 			Cvar_Set (var, "");
@@ -1114,7 +1114,7 @@ void Cvar_Set_Calc_f(void)
 		}
 
 		len = min (var2len - pos, len);
-		strlcpy (buf, var2->string + pos, len);
+		SDL_strlcpy (buf, var2->string + pos, len);
 		Cvar_Set (var, buf);
 		return;
 
@@ -1129,9 +1129,9 @@ void Cvar_Set_Calc_f(void)
 
 		var1len = strlen (var->string);
 		var2len = strlen (var2->string);
-		pos = atoi (Cmd_Argv (4));
+		pos = SDL_atoi (Cmd_Argv (4));
 
-		strlcpy (buf, var->string, sizeof (buf));
+		SDL_strlcpy (buf, var->string, sizeof (buf));
 
 		if (pos + var2len > var1len) { // need to expand
 			int i;
@@ -1140,7 +1140,7 @@ void Cvar_Set_Calc_f(void)
 			buf[pos+var2len] = 0;
 		}
 
-		strlcpy (buf + pos, var2->string, sizeof (buf) - pos);
+		SDL_strlcpy (buf + pos, var2->string, sizeof (buf) - pos);
 		Cvar_Set (var, buf);
 
 		return;
@@ -1156,20 +1156,20 @@ void Cvar_Set_Calc_f(void)
 		Cvar_SetValue (var, op ? op - var2->string : -1);
 		return;
 	} else if (!strcmp (a2, "tobrown")) {
-		strlcpy (buf, var->string, sizeof (buf));
+		SDL_strlcpy (buf, var->string, sizeof (buf));
 		CharsToBrown (buf, buf + strlen (buf));
 		Cvar_Set (var, buf);
 		return;
 	} else if (!strcmp (a2, "towhite")) {
-		strlcpy (buf, var->string, sizeof (buf));
+		SDL_strlcpy (buf, var->string, sizeof (buf));
 		CharsToWhite (buf, buf + strlen (buf));
 		Cvar_Set (var, buf);
 		return;
 	}
 
-	num1 = Q_atof (a2);
+	num1 = SDL_atof (a2);
 	op = a3;
-	num2 = Q_atof (Cmd_Argv (4));
+	num2 = SDL_atof (Cmd_Argv (4));
 
 	if (!strcmp (op, "+"))
 		result = num1 + num2;
@@ -1281,7 +1281,7 @@ void Cvar_Inc_f (void)
 		Com_Printf ("Unknown variable \"%s\"\n", Cmd_Argv(1));
 		return;
 	}
-	delta = (c == 3) ? atof (Cmd_Argv(2)) : 1;
+	delta = (c == 3) ? SDL_atof (Cmd_Argv(2)) : 1;
 
 	Cvar_SetValue (var, var->value + delta);
 }

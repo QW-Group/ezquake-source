@@ -161,19 +161,19 @@ void QTVList_Parse_EndElement(void *userData, const XML_Char *name)
 	}
 	else if (sb_qtvparse->position == QTVLIST_ITEM) {
 		if (strcmp(name, "hostname") == 0) {
-			strlcpy(sb_qtvparse->list->hostname, buf, MAX_QTV_ENTRY_TEXTLEN);
+			SDL_strlcpy(sb_qtvparse->list->hostname, buf, MAX_QTV_ENTRY_TEXTLEN);
 		}
 		else if (strcmp(name, "port") == 0) {
-			sb_qtvparse->list->port = Q_atoi(buf);
+			sb_qtvparse->list->port = SDL_atoi(buf);
 		}
 		else if (strcmp(name, "observercount") == 0) {
-			sb_qtvparse->list->observercount = Q_atoi(buf);
+			sb_qtvparse->list->observercount = SDL_atoi(buf);
 		}
 		else if (strcmp(name, "title") == 0) {
-			strlcpy(sb_qtvparse->list->title, buf, MAX_QTV_ENTRY_TEXTLEN);
+			SDL_strlcpy(sb_qtvparse->list->title, buf, MAX_QTV_ENTRY_TEXTLEN);
 		}
 		else if (strcmp(name, "link") == 0) {
-			strlcpy(sb_qtvparse->list->link, buf, MAX_QTV_ENTRY_TEXTLEN);
+			SDL_strlcpy(sb_qtvparse->list->link, buf, MAX_QTV_ENTRY_TEXTLEN);
 		}
 		else if (strcmp(name, "item") == 0) {
 			sb_qtvparse->position = QTVLIST_INITIAL; // go up
@@ -184,25 +184,25 @@ void QTVList_Parse_EndElement(void *userData, const XML_Char *name)
 	}
 	else if (sb_qtvparse->position == QTVLIST_PLAYER) {
 		if (strcmp(name, "name") == 0) {
-			strlcpy(sb_qtvparse->list->players->name, buf, MAX_SCOREBOARDNAME);
+			SDL_strlcpy(sb_qtvparse->list->players->name, buf, MAX_SCOREBOARDNAME);
 		}
 		else if (strcmp(name, "team") == 0) {
-			strlcpy(sb_qtvparse->list->players->team, buf, MAX_SCOREBOARDNAME);
+			SDL_strlcpy(sb_qtvparse->list->players->team, buf, MAX_SCOREBOARDNAME);
 		}
 		else if (strcmp(name, "frags") == 0) {
-			sb_qtvparse->list->players->frags = Q_atoi(buf);
+			sb_qtvparse->list->players->frags = SDL_atoi(buf);
 		}
 		else if (strcmp(name, "ping") == 0) {
-			sb_qtvparse->list->players->ping = Q_atoi(buf);
+			sb_qtvparse->list->players->ping = SDL_atoi(buf);
 		}
 		else if (strcmp(name, "pl") == 0) {
-			sb_qtvparse->list->players->pl = Q_atoi(buf);
+			sb_qtvparse->list->players->pl = SDL_atoi(buf);
 		}
 		else if (strcmp(name, "topcolor") == 0) {
-			sb_qtvparse->list->players->topcolor = Q_atoi(buf);
+			sb_qtvparse->list->players->topcolor = SDL_atoi(buf);
 		}
 		else if (strcmp(name, "bottomcolor") == 0) {
-			sb_qtvparse->list->players->bottomcolor = Q_atoi(buf);
+			sb_qtvparse->list->players->bottomcolor = SDL_atoi(buf);
 		}
 		else if (strcmp(name, "player") == 0) {
 			sb_qtvparse->position = QTVLIST_ITEM;

@@ -358,7 +358,7 @@ void CL_RegisterQWURLProtocol_f(void)
 	//
 	{
 		char open_cmd[1024];
-		snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
+		SDL_snprintf(open_cmd, sizeof(open_cmd), "\"%s\" +qwurl %%1", exe_path);
 
 		// Open / Create the key.
 		if (RegCreateKeyEx(HKEY_CURRENT_USER,		// A handle to an open subkey.
@@ -391,7 +391,7 @@ void CL_RegisterQWURLProtocol_f(void)
 	//
 	{
 		char default_icon[1024];
-		snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
+		SDL_snprintf(default_icon, sizeof(default_icon), "\"%s\",1", exe_path);
 
 		// Open / Create the key.
 		if (RegCreateKeyEx(HKEY_CURRENT_USER, QW_URL_DEFAULTICON_REGKEY, 
@@ -455,7 +455,7 @@ char *CL_Macro_ConnectionType(void)
 	static char macrobuf[16];
 
 	s = (cls.state < ca_connected) ? "disconnected" : cl.spectator ? "spectator" : "player";
-	strlcpy(macrobuf, s, sizeof(macrobuf));
+	SDL_strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -465,7 +465,7 @@ char *CL_Macro_Demoplayback(void)
 	static char macrobuf[16];
 
 	s = cls.mvdplayback ? "mvdplayback" : cls.demoplayback ? "qwdplayback" : "0";
-	strlcpy(macrobuf, s, sizeof(macrobuf));
+	SDL_strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -474,7 +474,7 @@ char *CL_Macro_Demotime(void)
 	// Intended for scripted & timed camera movement
 	static char macrobuf[16];
 
-	snprintf(macrobuf, sizeof(macrobuf), "%f", (float) cls.demotime);
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%f", (float) cls.demotime);
 	return macrobuf;
 }
 
@@ -483,7 +483,7 @@ char *CL_Macro_Rand(void)
 	// Returns a number in range <0..1)
 	static char macrobuf[16];
 
-	snprintf(macrobuf, sizeof(macrobuf), "%f", (double) rand() / RAND_MAX);
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%f", (double) rand() / RAND_MAX);
 	return macrobuf;
 }
 
@@ -493,7 +493,7 @@ char *CL_Macro_Serverstatus(void)
 	static char macrobuf[16];
 
 	s = (cls.state < ca_connected) ? "disconnected" : cl.standby ? "standby" : "normal";
-	strlcpy(macrobuf, s, sizeof(macrobuf));
+	SDL_strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -505,14 +505,14 @@ char *CL_Macro_ServerIp(void)
 char *CL_Macro_Conwidth(void) 
 {
 	static char macrobuf[16];
-	snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conwidth);
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conwidth);
 	return macrobuf;
 }
 
 char *CL_Macro_Conheight(void)
 {
 	static char macrobuf[16];
-	snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conheight);
+	SDL_snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conheight);
 	return macrobuf;
 }
 
@@ -660,19 +660,19 @@ static void CL_SendConnectPacket(
 	cls.qport = Cvar_Value("qport");
 
 	// Let the server know what extensions we support.
-	strlcpy (biguserinfo, cls.userinfo, sizeof (biguserinfo));
+	SDL_strlcpy (biguserinfo, cls.userinfo, sizeof (biguserinfo));
 	extensions = CLIENT_EXTENSIONS &~ (cl_novweps.value ? Z_EXT_VWEP : 0);
 	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", extensions), sizeof(biguserinfo));
 
-	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
+	SDL_snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
 
 	#ifdef PROTOCOL_VERSION_FTE
 	if (cls.fteprotocolextensions) 
 	{
 		char tmp[128];
-		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
+		SDL_snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
-		strlcat(data, tmp, sizeof(data));
+		SDL_strlcat(data, tmp, sizeof(data));
 	}
 	#endif // PROTOCOL_VERSION_FTE 
 
@@ -680,9 +680,9 @@ static void CL_SendConnectPacket(
 	if (cls.fteprotocolextensions2) 
 	{
 		char tmp[128];
-		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
+		SDL_snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
 		Com_Printf_State(PRINT_DBG, "0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, cls.fteprotocolextensions2);
-		strlcat(data, tmp, sizeof(data));
+		SDL_strlcat(data, tmp, sizeof(data));
 	}
 	#endif // PROTOCOL_VERSION_FTE2 
 
@@ -699,7 +699,7 @@ void CL_CheckForResend (void)
 	if (cls.state == ca_disconnected && com_serveractive) 
 	{
 		// if the local server is running and we are not, then connect
-		strlcpy (cls.servername, "local", sizeof(cls.servername));
+		SDL_strlcpy (cls.servername, "local", sizeof(cls.servername));
 		NET_StringToAdr("local", &cls.server_adr);
 
 		// We don't need a challenge on the local server.
@@ -739,7 +739,7 @@ void CL_CheckForResend (void)
 		cls.server_adr.port = BigShort(PORT_SERVER);
 
 	Com_Printf("&cf11connect:&r %s...\n", cls.servername);
-	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
+	SDL_snprintf(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
@@ -826,7 +826,7 @@ void CL_QWURL_f (void)
 
 		connection_str = Cmd_Argv(1);
 
-		if (!strncasecmp(qws_str, connection_str, qws_len))
+		if (!SDL_strncasecmp(qws_str, connection_str, qws_len))
 		{
 			connection_str += qws_len;
 		}
@@ -851,7 +851,7 @@ void CL_QWURL_f (void)
 	}
 
 	// Default to connecting.
-	if (!strcmp(command, "") || !strncasecmp(command, "join", 4) || !strncasecmp(command, "connect", 7))
+	if (!strcmp(command, "") || !SDL_strncasecmp(command, "join", 4) || !SDL_strncasecmp(command, "connect", 7))
 	{
 		Cbuf_AddText(va("connect %s\n", connection_str));
 	}
@@ -860,11 +860,11 @@ void CL_QWURL_f (void)
 		CL_QWURL_ProcessChallenge(command + 9);
 		Cbuf_AddText(va("connect %s\n", connection_str));
 	}
-	else if (!strncasecmp(command, "spectate", 8) || !strncasecmp(command, "observe", 7))
+	else if (!SDL_strncasecmp(command, "spectate", 8) || !SDL_strncasecmp(command, "observe", 7))
 	{
 		Cbuf_AddText(va("observe %s\n", connection_str));
 	}
-	else if (!strncasecmp(command, "qtv", 3))
+	else if (!SDL_strncasecmp(command, "qtv", 3))
 	{
 		char *password = command + 4;
 
@@ -896,12 +896,12 @@ void CL_Connect_f (void)
 			char *prx_buf = (char *) Q_malloc(prx_buf_len);
 			server_buf = (char *) Q_malloc(strlen(cl_proxyaddr.string) + 1); // much more than needed
 
-			strlcpy(server_buf, cl_proxyaddr.string, secondproxy - cl_proxyaddr.string + 1);
+			SDL_strlcpy(server_buf, cl_proxyaddr.string, secondproxy - cl_proxyaddr.string + 1);
 			connect_addr = server_buf;
 			
-			strlcpy(prx_buf, secondproxy + 1, prx_buf_len);
-			strlcat(prx_buf, "@", prx_buf_len);
-			strlcat(prx_buf, Cmd_Argv(1), prx_buf_len);
+			SDL_strlcpy(prx_buf, secondproxy + 1, prx_buf_len);
+			SDL_strlcat(prx_buf, "@", prx_buf_len);
+			SDL_strlcat(prx_buf, Cmd_Argv(1), prx_buf_len);
 			Info_SetValueForKeyEx(cls.userinfo, "prx", prx_buf, MAX_INFO_STRING, false);
 			Q_free(prx_buf);
 		}
@@ -932,7 +932,7 @@ void CL_Connect_f (void)
 	else
 	{
 		Host_EndGame();
-		strlcpy(cls.servername, connect_addr, sizeof(cls.servername));
+		SDL_strlcpy(cls.servername, connect_addr, sizeof(cls.servername));
 		CL_BeginServerConnect();
 	}
 
@@ -973,7 +973,7 @@ void CL_TCPConnect_f (void)
 
 	Host_EndGame (); // CL_Disconnect_f();
 
-	strlcpy(cls.servername, Cmd_Argv (1), sizeof(cls.servername));
+	SDL_strlcpy(cls.servername, Cmd_Argv (1), sizeof(cls.servername));
 
 	NET_StringToAdr(cls.servername, &cls.sockettcpdest);
 
@@ -1164,7 +1164,7 @@ void CL_DNS_f(void)
 		return;
 	}
 	
-	strlcpy(address, Cmd_Argv(1), sizeof(address));
+	SDL_strlcpy(address, Cmd_Argv(1), sizeof(address));
 	if ((s = strchr(address, ':')))
 		*s = 0;
 	addr.s_addr = inet_addr(address);
@@ -1308,7 +1308,7 @@ void CL_Disconnect (void)
 	else if (cls.state != ca_disconnected) 
 	{
 		final[0] = clc_stringcmd;
-		strlcpy ((char *)(final + 1), "drop", sizeof (final) - 1);
+		SDL_strlcpy ((char *)(final + 1), "drop", sizeof (final) - 1);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
@@ -1458,7 +1458,7 @@ void CL_ConnectionlessPacket (void)
 				return;
 			}
 			Com_Printf("&cf55challenge:&r %s\n", NET_AdrToString(net_from));
-			cls.challenge = atoi(MSG_ReadString());
+			cls.challenge = SDL_atoi(MSG_ReadString());
 
 			for(;;)
 			{
@@ -1531,7 +1531,7 @@ void CL_ConnectionlessPacket (void)
                         VID_Restore();
 			
 			s = MSG_ReadString ();
-			strlcpy (cmdtext, s, sizeof(cmdtext));
+			SDL_strlcpy (cmdtext, s, sizeof(cmdtext));
 			s = MSG_ReadString ();
 
 			while (*s && isspace(*s))
@@ -1739,9 +1739,9 @@ void CL_Fog_f (void)
 		return;
 	}
 	Cvar_SetValue (&gl_fogenable, 1);
-	Cvar_SetValue (&gl_fogred, atof(Cmd_Argv(1)));
-	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
-	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
+	Cvar_SetValue (&gl_fogred, SDL_atof(Cmd_Argv(1)));
+	Cvar_SetValue (&gl_foggreen, SDL_atof(Cmd_Argv(2)));
+	Cvar_SetValue (&gl_fogblue, SDL_atof(Cmd_Argv(3)));
 }
 
 void CL_InitLocal (void) 
@@ -1905,7 +1905,7 @@ void CL_InitLocal (void)
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
 	Cvar_ResetCurrentGroup();
 
-	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
+	SDL_snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
 	if (COM_CheckParm ("-norjscripts") || COM_CheckParm ("-noscripts"))
 		Cvar_SetValue (&allow_scripts, 0);
@@ -2000,8 +2000,8 @@ void CL_Init (void)
 	SZ_Init(&cls.cmdmsg, cls.cmdmsg_data, sizeof(cls.cmdmsg_data));
 	cls.cmdmsg.allowoverflow = true;
 
-	strlcpy (cls.gamedirfile, com_gamedirfile, sizeof (cls.gamedirfile));
-	strlcpy (cls.gamedir, com_gamedir, sizeof (cls.gamedir));
+	SDL_strlcpy (cls.gamedirfile, com_gamedirfile, sizeof (cls.gamedirfile));
+	SDL_strlcpy (cls.gamedir, com_gamedir, sizeof (cls.gamedir));
 
 	FChecks_Init();
 
@@ -2449,7 +2449,7 @@ void CL_Frame (double time)
 			cif_flags |= CIF_AFK;
 
 		if (cif_flags && cls.state >= ca_connected) // put key in userinfo only then we are connected, remove key if we not connected yet
-			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
+			SDL_snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
 
 		CL_UserinfoChanged ("chat", char_flags);
 	}
@@ -2827,7 +2827,7 @@ void CL_Multiview(void)
 					// Find the opposite team from the one we are tracking now.
 					if(!currteam[0] || strcmp(currteam, cl.players[j].team))
 					{
-						strlcpy(currteam, cl.players[j].team, sizeof(currteam));
+						SDL_strlcpy(currteam, cl.players[j].team, sizeof(currteam));
 						break;
 					}
 				}
@@ -2923,19 +2923,19 @@ void CL_UpdateCaption(qbool force)
 	if (!cl_window_caption.value)
 	{
 		if (!cls.demoplayback && (cls.state == ca_active))
-			snprintf(str, sizeof(str), "ezQuake: %s", cls.servername);
+			SDL_snprintf(str, sizeof(str), "ezQuake: %s", cls.servername);
 		else
-			snprintf(str, sizeof(str), "ezQuake");
+			SDL_snprintf(str, sizeof(str), "ezQuake");
 	}
 	else
 	{
-		snprintf(str, sizeof(str), "%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus());
+		SDL_snprintf(str, sizeof(str), "%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus());
 	}
 
 	if (force || strcmp(str, caption))
 	{
 		VID_SetCaption(str);
-		strlcpy(caption, str, sizeof(caption));
+		SDL_strlcpy(caption, str, sizeof(caption));
 	}
 }
 

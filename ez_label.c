@@ -366,7 +366,7 @@ void EZ_label_GetSelectedText(ez_label_t *label, char *target, int target_size)
 		
 		if (sublen > 0)
 		{
-			snprintf(target, min(sublen, target_size), "%s", label->text + min(label->select_start, label->select_end));
+			SDL_snprintf(target, min(sublen, target_size), "%s", label->text + min(label->select_start, label->select_end));
 		}
 	}
 }
@@ -436,7 +436,7 @@ void EZ_label_SetText(ez_label_t *label, const char *text)
 	if (text)
 	{
 		label->text = Q_calloc(text_len, sizeof(char));
-		strlcpy(label->text, text, text_len);
+		SDL_strlcpy(label->text, text, text_len);
 	}
 
 	CONTROL_RAISE_EVENT(NULL, label, ez_label_t, OnTextChanged, NULL);
@@ -572,7 +572,7 @@ int EZ_label_OnDraw(ez_control_t *self, void *ext_event_info)
 		if (i == label->wordwraps[curr_row].index || label->text[i] == '\0')
 		{
 			// We found the end of a line, copy the contents of the line to the line buffer.
-			snprintf(line, min(LABEL_LINE_SIZE, (i - last_index) + 1), "%s", (label->text + last_index + 1));
+			SDL_snprintf(line, min(LABEL_LINE_SIZE, (i - last_index) + 1), "%s", (label->text + last_index + 1));
 			last_index = i;	// Skip the newline character
 
 			if (label->ext_flags & label_largefont)
@@ -600,7 +600,7 @@ int EZ_label_OnDraw(ez_control_t *self, void *ext_event_info)
 		int sublen = abs(label->select_end - label->select_start);
 		if (sublen > 0)
 		{
-			snprintf(tmp, sublen + 1, "%s", label->text + min(label->select_start, label->select_end));
+			SDL_snprintf(tmp, sublen + 1, "%s", label->text + min(label->select_start, label->select_end));
 			Draw_String(x + (self->width / 2), y + (self->height / 2) + 8, tmp);
 		}
 	}
@@ -1143,7 +1143,7 @@ static void EZ_label_InputKeyDown(ez_label_t *label, int key)
 		EZ_label_DeselectText(label);
 
 		// Add the text.
-		snprintf(char_str, 2, "%c", (char)key);
+		SDL_snprintf(char_str, 2, "%c", (char)key);
 		EZ_label_AppendText(label, label->caret_pos.index, char_str);
 		EZ_label_SetCaretPosition(label, label->caret_pos.index + 1);
 	}

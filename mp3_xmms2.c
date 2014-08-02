@@ -173,7 +173,7 @@ void MP3_XMMS2_Execute_f(void) {
 		Com_Printf("XMMS2 is already running\n");
 		return;
 	}
-	strlcpy(exec_name, argv[0], sizeof(exec_name));
+	SDL_strlcpy(exec_name, argv[0], sizeof(exec_name));
 
 	if (!(pid = fork())) { // Child
 		execvp(exec_name, argv);
@@ -200,7 +200,7 @@ static int XMMS2_GetMediaInfo(unsigned int id, char *name, size_t name_len)
 	char *artist, *title;
 
 	if (id == 0) {
-		strlcpy(name, "", name_len);
+		SDL_strlcpy(name, "", name_len);
 		return -1;
 	}
 
@@ -211,7 +211,7 @@ static int XMMS2_GetMediaInfo(unsigned int id, char *name, size_t name_len)
 		Com_DPrintf("medialib get info returns error, %s\n",
 				qxmmsc_result_get_error (result));
 		qxmmsc_result_unref (result);
-		strlcpy(name, "", name_len);
+		SDL_strlcpy(name, "", name_len);
 		return -1;
 	}
 
@@ -223,7 +223,7 @@ static int XMMS2_GetMediaInfo(unsigned int id, char *name, size_t name_len)
 		title = "No Title";
 	}
 
-	snprintf(name, name_len, "%s - %s", artist, title);
+	SDL_snprintf(name, name_len, "%s - %s", artist, title);
 
 	qxmmsc_result_unref (result);
 	return 0;
@@ -599,7 +599,7 @@ void MP3_XMMS2_GetSongTitle(int track_num, char *song, size_t song_len) {
 	xmmsc_result_t *result;
 	int count;
 
-	strlcpy(song, "", song_len);
+	SDL_strlcpy(song, "", song_len);
 
 	if (!MP3_XMMS2_IsPlayerRunning()) 
 		return;
@@ -690,7 +690,7 @@ void MP3_XMMS2_PlayTrackNum_f(void) {
 		return;
 	}
 
-	track_num = Q_atoi(Cmd_Argv(1)) - 1;	// Count from zero
+	track_num = SDL_atoi(Cmd_Argv(1)) - 1;	// Count from zero
 	XMMS2_PlayList_SetNext(track_num);
 }
 

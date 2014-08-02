@@ -49,7 +49,7 @@ void PR2_RunError(char *error, ...)
 	char		string[1024];
 
 	va_start(argptr, error);
-	vsnprintf(string, sizeof(string), error, argptr);
+	SDL_vsnprintf(string, sizeof(string), error, argptr);
 	va_end(argptr);
 
 	sv_error = true;
@@ -76,7 +76,7 @@ void PF2_GetEntityToken(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t
 {
 
 	pr2_ent_data_ptr = COM_Parse(pr2_ent_data_ptr);
-	strlcpy((char*)VM_POINTER(base,mask,stack[0].string), com_token,  stack[1]._int);
+	SDL_strlcpy((char*)VM_POINTER(base,mask,stack[0].string), com_token,  stack[1]._int);
 
 	retval->_int= pr2_ent_data_ptr != NULL;
 }
@@ -757,7 +757,7 @@ void PF2_stuffcmd(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retva
 	buf = cl->stufftext_buf;
 	if (strlen(buf) + strlen(str) >= MAX_STUFFTEXT)
 		PR2_RunError("stufftext buffer overflow");
-	strlcat (buf, str, MAX_STUFFTEXT);
+	SDL_strlcat (buf, str, MAX_STUFFTEXT);
 
 	if( strchr( buf, '\n' ) )
 	{
@@ -855,7 +855,7 @@ void PF2_readcmd (byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retva
 	SV_BeginRedirect(RD_MOD);
 	Cbuf_Execute();
 
-	strlcpy(buf, outputbuf, sizebuff);
+	SDL_strlcpy(buf, outputbuf, sizebuff);
 
 	SV_EndRedirect();
 
@@ -932,7 +932,7 @@ void PF2_cvar_string(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 	if( ( buff_off + buffsize ) &(~mask))
 		return;
 
-	strlcpy((char *)VM_POINTER(base,mask,buff_off),
+	SDL_strlcpy((char *)VM_POINTER(base,mask,buff_off),
 	        Cvar_String((char *)VM_POINTER(base,mask,stack[0].string)), buffsize);
 }
 
@@ -1662,7 +1662,7 @@ void PF2_changelevel(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 	// check to make sure the level exists.
 	// this is work around for bellow check about two changelevels,
 	// which lock server in one map if we trying switch to map which does't exist
-	snprintf(expanded, MAX_QPATH, "maps/%s.bsp", s);
+	SDL_snprintf(expanded, MAX_QPATH, "maps/%s.bsp", s);
 
 //	FS_FOpenFile (expanded, &f);
 	f = FS_OpenVFS(expanded, "rb", FS_ANY);
@@ -1775,7 +1775,7 @@ void PF2_infokey(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 			date_t date;
 
 			SV_TimeOfDay(&date);
-			snprintf(ov, sizeof(ov), "%s", date.str);
+			SDL_snprintf(ov, sizeof(ov), "%s", date.str);
 		}
 		else if ((value = Info_ValueForKey(svs.info, key)) == NULL || !*value)
 			value = Info_Get(&_localinfo_, key);
@@ -1785,19 +1785,19 @@ void PF2_infokey(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 		client_t *cl = &svs.clients[e1-1];
 
 		if (!strcmp(key, "ip"))
-			strlcpy(ov, NET_BaseAdrToString(cl->netchan.remote_address), sizeof(ov));
+			SDL_strlcpy(ov, NET_BaseAdrToString(cl->netchan.remote_address), sizeof(ov));
 		else if (!strncmp(key, "realip", 7))
-			strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
+			SDL_strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
 		else if (!strncmp(key, "download", 9))
-			snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
+			SDL_snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
 		else if (!strcmp(key, "ping"))
-			snprintf(ov, sizeof(ov), "%d", (int)SV_CalcPing(cl));
+			SDL_snprintf(ov, sizeof(ov), "%d", (int)SV_CalcPing(cl));
 		else if (!strcmp(key, "*userid"))
-			snprintf(ov, sizeof(ov), "%d", cl->userid);
+			SDL_snprintf(ov, sizeof(ov), "%d", cl->userid);
 		else if (!strncmp(key, "login", 6))
 			value = cl->login;
 		else if (!strcmp(key, "*VIP")) // qqshka: also located in userinfo, but this is more safe/secure way, imo
-			snprintf(ov, sizeof(ov), "%d", cl->vip);
+			SDL_snprintf(ov, sizeof(ov), "%d", cl->vip);
 		else if (!strcmp(key, "*state"))
 		{
 			switch (cl->state)
@@ -1820,7 +1820,7 @@ void PF2_infokey(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 	if ((int) strlen(value) > sizebuff)
 		Con_DPrintf("PR2_infokey: buffer size too small\n");
 
-	strlcpy(valbuff, value, sizebuff);
+	SDL_strlcpy(valbuff, value, sizebuff);
 	//	RETURN_STRING(value);
 }
 
@@ -1900,7 +1900,7 @@ PF2_cmdargv
 void PF2_cmdargv(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 //(int arg, char *valbuff, int sizebuff)
 {
-	strlcpy((char *) VM_POINTER(base,mask,stack[1].string), Cmd_Argv(stack[0]._int), stack[2]._int);
+	SDL_strlcpy((char *) VM_POINTER(base,mask,stack[1].string), Cmd_Argv(stack[0]._int), stack[2]._int);
 }
 
 /*
@@ -1911,7 +1911,7 @@ PF2_cmdargs
 void PF2_cmdargs(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 //(char *valbuff, int sizebuff)
 {
-	strlcpy((char *) VM_POINTER(base,mask,stack[0].string), Cmd_Args(), stack[1]._int);
+	SDL_strlcpy((char *) VM_POINTER(base,mask,stack[0].string), Cmd_Args(), stack[1]._int);
 }
 
 /*
@@ -2038,7 +2038,7 @@ void PF2_FS_OpenFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 		retval->_int = -1;
 		return ;
 	}
-	strlcpy(pr2_fopen_files[i].name, name, sizeof(pr2_fopen_files[i].name));
+	SDL_strlcpy(pr2_fopen_files[i].name, name, sizeof(pr2_fopen_files[i].name));
 	pr2_fopen_files[i].accessmode = fmode;
 	switch(fmode)
 	{
@@ -2048,7 +2048,7 @@ void PF2_FS_OpenFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 #if 0
 		while ( ( gpath = FS_NextPath( gpath ) ) )
 		{
-			snprintf( fname, sizeof( fname ), "%s/%s" , gpath, name );
+			SDL_snprintf( fname, sizeof( fname ), "%s/%s" , gpath, name );
 			pr2_fopen_files[i].handle = fopen(fname, cmodes[fmode]);
 			if ( pr2_fopen_files[i].handle )
 			{
@@ -2090,7 +2090,7 @@ void PF2_FS_OpenFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 #if 0
 		gamedir = fs_gamedir;
 
-		snprintf( fname, sizeof( fname ), "%s/%s" , gamedir, name );
+		SDL_snprintf( fname, sizeof( fname ), "%s/%s" , gamedir, name );
 		pr2_fopen_files[i].handle = fopen(fname, cmodes[fmode]);
 		if ( !pr2_fopen_files[i].handle )
 		{
@@ -2360,7 +2360,7 @@ void PF2_FS_GetFileList(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t
 		if ((flags & FILELIST_GAMEDIR_ONLY) && strcmp(gpath, fs_gamedir))
 			continue;
 
-		snprintf (netpath, sizeof (netpath), "%s/%s", gpath, path);
+		SDL_snprintf (netpath, sizeof (netpath), "%s/%s", gpath, path);
 
 		// reg exp search...
 		dir = Sys_listdir(netpath, ext, SORT_NO);
@@ -2370,7 +2370,7 @@ void PF2_FS_GetFileList(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t
 			if (flags & FILELIST_WITH_PATH)
 			{
 				// with path
-				snprintf (netpath, sizeof (netpath), "%s/%s", gpath, dir.files[j].name);
+				SDL_snprintf (netpath, sizeof (netpath), "%s/%s", gpath, dir.files[j].name);
 				fullname = netpath;
 
 				// skip "./" prefix
@@ -2411,7 +2411,7 @@ void PF2_FS_GetFileList(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t
 
 //		Con_Printf("%4d %s\n", i, list[i]);
 
-		strlcpy(dirptr, list[i], namelen);
+		SDL_strlcpy(dirptr, list[i], namelen);
 		dirptr += namelen;
 
 		numfiles++;
@@ -2464,24 +2464,24 @@ void PF2_strncmp(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval
 
 void PF2_stricmp(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 {
-	retval->_int=  strcasecmp( (char *) VM_POINTER(base,mask,stack[0].string),
+	retval->_int=  SDL_strcasecmp( (char *) VM_POINTER(base,mask,stack[0].string),
 	                           (char *) VM_POINTER(base,mask,stack[1].string));
 }
 
 void PF2_strnicmp(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 {
-	retval->_int=  strncasecmp( (char *) VM_POINTER(base,mask,stack[0].string),
+	retval->_int=  SDL_strncasecmp( (char *) VM_POINTER(base,mask,stack[0].string),
 	                            (char *) VM_POINTER(base,mask,stack[1].string),stack[2]._int);
 }
 
-void PF2_strlcpy(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
+void PF2_SDL_strlcpy(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 { // (char *dst, char *src, size_t siz)
-	retval->_int = strlcpy( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
+	retval->_int = SDL_strlcpy( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
 }
 
-void PF2_strlcat(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
+void PF2_SDL_strlcat(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*retval)
 { // (char *dst, char *src, size_t siz)
-	retval->_int = strlcat( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
+	retval->_int = SDL_strlcat( (char *) VM_POINTER(base,mask,stack[0].string), (char *) VM_POINTER(base,mask,stack[1].string), stack[2]._int );
 }
 
 /////////Bot Functions
@@ -2548,7 +2548,7 @@ void PF2_Add_Bot( byte * base, unsigned int mask, pr2val_t * stack, pr2val_t * r
 	memset(&newcl->_userinfo_ctx_, 0, sizeof(newcl->_userinfo_ctx_));
 	memset(&newcl->_userinfoshort_ctx_, 0, sizeof(newcl->_userinfoshort_ctx_));
 
-	snprintf( info, sizeof( info ),
+	SDL_snprintf( info, sizeof( info ),
 	          "\\name\\%s\\topcolor\\%d\\bottomcolor\\%d\\emodel\\6967\\pmodel\\13845\\skin\\%s\\*bot\\1",
 	          name, topcolor, bottomcolor, skin );
 
@@ -2844,13 +2844,13 @@ void PF2_SetUserInfo( byte * base, unsigned int mask, pr2val_t * stack, pr2val_t
 
 	// tokenize
 
-	snprintf( s, sizeof(s), "PF2_SetUserInfo \"%-.*s\" \"%-.*s\"", sizeof(key), k, sizeof(value), v );
+	SDL_snprintf( s, sizeof(s), "PF2_SetUserInfo \"%-.*s\" \"%-.*s\"", sizeof(key), k, sizeof(value), v );
 
 	Cmd_TokenizeString( s );
 
 	// well, PR2_UserInfoChanged() may call PF2_SetUserInfo() again, so we better save thouse
-	strlcpy( key, Cmd_Argv(1), sizeof(key) );
-	strlcpy( value, Cmd_Argv(2), sizeof(value) );
+	SDL_strlcpy( key, Cmd_Argv(1), sizeof(key) );
+	SDL_strlcpy( value, Cmd_Argv(2), sizeof(value) );
 
 	if( sv_vm )
 	{
@@ -2983,8 +2983,8 @@ pr2_trapcall_t pr2_API[]=
 		PF2_QVMstrftime,	//G_QVMstrftime
 		PF2_cmdargs,		//G_CMD_ARGS
 		PF2_tokenize,		//G_CMD_TOKENIZE
-		PF2_strlcpy,		//g_strlcpy
-		PF2_strlcat,		//g_strlcat
+		PF2_SDL_strlcpy,		//g_SDL_strlcpy
+		PF2_SDL_strlcat,		//g_SDL_strlcat
 		PF2_makevectors,	//G_MAKEVECTORS
 		PF2_nextclient,		//G_NEXTCLIENT
 		PF2_precache_vwep_model,//G_PRECACHE_VWEP_MODEL

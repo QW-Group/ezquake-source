@@ -132,7 +132,7 @@ void FL_SetCurrentDir(filelist_t *fl, const char *dir)
     if (strlen(buf) > MAX_PATH)    // Should never fail in this
         return;
 
-	strlcpy (fl->current_dir, buf, sizeof(fl->current_dir));
+	SDL_strlcpy (fl->current_dir, buf, sizeof(fl->current_dir));
     fl->need_refresh = true;
 }
 
@@ -157,7 +157,7 @@ void FL_AddFileType(filelist_t *fl, int id, char *ext)
     if (strlen(ext) > MAX_EXTENSION_LENGTH)
         return;
 
-    strlcpy (fl->filetypes[num].extension, ext, sizeof (fl->filetypes[num].extension));
+    SDL_strlcpy (fl->filetypes[num].extension, ext, sizeof (fl->filetypes[num].extension));
     fl->filetypes[num].id = id;
 
     fl->num_filetypes ++;
@@ -261,18 +261,18 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 	// Don't try to strip this.
 	if (!strcmp(f->name, ".."))
 	{
-		strlcpy (f->display, "/..", sizeof(f->display));
+		SDL_strlcpy (f->display, "/..", sizeof(f->display));
 		return;
 	}
 
 	// Common for dir/file, get name without path but with ext
-	strlcpy (namebuf, COM_SkipPath (f->name), sizeof (namebuf));
+	SDL_strlcpy (namebuf, COM_SkipPath (f->name), sizeof (namebuf));
 
 	// File specific.
 	if (!f->is_directory)
 	{
 		// Get extension.
-		snprintf (extbuf, sizeof(extbuf), ".%s", COM_FileExtension (namebuf));
+		SDL_snprintf (extbuf, sizeof(extbuf), ".%s", COM_FileExtension (namebuf));
 
 		// If the extension is only a . it means we have no extension.
 		if (strlen (extbuf) == 1)
@@ -321,7 +321,7 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
         }
 
         if (namebuf[0] == 0)
-            strlcpy (namebuf, "_", sizeof (namebuf));
+            SDL_strlcpy (namebuf, "_", sizeof (namebuf));
     }
 
     // Replace all non-standard characters with '_'
@@ -390,7 +390,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 
     // Directories sorted always by name, ascending
     if (d1->is_directory && d2->is_directory)
-        return strcasecmp(d1->name, d2->name);
+        return SDL_strcasecmp(d1->name, d2->name);
 
 #ifdef WITH_ZIP
 	// Zips after directories.
@@ -399,7 +399,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 	if (d2->is_archive  && !d1->is_archive)
 		return 1;
 	if (d1->is_archive && d2->is_archive)
-		return strcasecmp(d1->name, d2->name);
+		return SDL_strcasecmp(d1->name, d2->name);
 #endif // WITH_ZIP
 
     while (true)
@@ -416,7 +416,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
         switch (c)
         {
             case '1':   // name
-                d = strcasecmp(d1->name, d2->name); break;
+                d = SDL_strcasecmp(d1->name, d2->name); break;
             case '2':   // size
 		        d = d1->size - d2->size;
                 break;
@@ -427,7 +427,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
             {
                 char *ext1 = fl->filetypes[d1->type_index].extension;
                 char *ext2 = fl->filetypes[d2->type_index].extension;
-                d = strcasecmp(ext1, ext2);
+                d = SDL_strcasecmp(ext1, ext2);
                 break;
             }
             default:
@@ -453,7 +453,7 @@ void FL_SortDir (filelist_t *fl)
 
 	FL_CompareFunc_FileList = fl;
 	if (fl->current_entry >= 0 && fl->current_entry < fl->num_entries)
-		strlcpy (name, fl->entries[fl->current_entry].name, sizeof (name));
+		SDL_strlcpy (name, fl->entries[fl->current_entry].name, sizeof (name));
 
 	qsort (fl->entries, fl->num_entries, sizeof(filedesc_t), FL_CompareFunc);
 
@@ -477,9 +477,9 @@ static int FL_FindRegisteredType(filelist_t *fl, sys_dirent *ent)
         {
             char ext[_MAX_EXT];
 
-			snprintf (ext, sizeof(ext), ".%s", COM_FileExtension (ent->fname));
+			SDL_snprintf (ext, sizeof(ext), ".%s", COM_FileExtension (ent->fname));
 
-            if (!strcasecmp(fl->filetypes[i].extension, ext))
+            if (!SDL_strcasecmp(fl->filetypes[i].extension, ext))
             {
                 result = i;
                 break;
@@ -584,7 +584,7 @@ void FL_ReadArchive (filelist_t *fl)
 		// Populate the file descriptor
 		f->type_index = -1;
 		f->is_directory = true;
-		snprintf(f->name, sizeof(f->name), "..");
+		SDL_snprintf(f->name, sizeof(f->name), "..");
 		f->size = 0;
 		f->time = archive_time;
 
@@ -625,7 +625,7 @@ void FL_ReadArchive (filelist_t *fl)
 		f->is_directory = ent.directory;
 
 		// Get the full path for the file.
-		snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, ent.fname);
+		SDL_snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, ent.fname);
 
 		f->size = ent.size;
 		memcpy(&f->time, &ent.time, sizeof(f->time));
@@ -713,7 +713,7 @@ int FL_EnumerateArchive(char *desc, int size, void *param)
 	f->is_directory = 0; //ent.directory;
 
 	// Get the full path for the file.
-	snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, desc);
+	SDL_snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, desc);
 
 	f->size = size;
 	//memcpy(&f->time, &ent.time, sizeof(f->time));
@@ -776,7 +776,7 @@ void FL_ReadArchive (filelist_t *fl)
 		// Populate the file descriptor
 		f->type_index = -1;
 		f->is_directory = true;
-		snprintf(f->name, sizeof(f->name), "..");
+		SDL_snprintf(f->name, sizeof(f->name), "..");
 		f->size = 0;
 		f->time = archive_time;
 
@@ -908,7 +908,7 @@ void FL_ReadDir(filelist_t *fl)
 			if (!strcmp(ent.fname, ".."))
 			{
 				// Don't get the full path for the ".." (parent) dir, that's just confusing.
-				strlcpy (f->name, ent.fname, sizeof (f->name));
+				SDL_strlcpy (f->name, ent.fname, sizeof (f->name));
 			}
 			else
 			{
@@ -979,7 +979,7 @@ search :
 	// First search at the beginning of the string (like when you type in a window in explorer).
 	for (i = start; i < stop; i++)
 	{
-		strlcpy (tmp, fl->entries[i].display, sizeof (tmp));
+		SDL_strlcpy (tmp, fl->entries[i].display, sizeof (tmp));
 		s = tmp;
 
 		// Get rid of slashes for dirs.
@@ -988,7 +988,7 @@ search :
 			s++;
 		}
 
-		if (!strncasecmp (s, fl->search_string, strlen (fl->search_string)))
+		if (!SDL_strncasecmp (s, fl->search_string, strlen (fl->search_string)))
 		{
 			fl->current_entry = i;
 			return true;
@@ -998,7 +998,7 @@ search :
 	// Nothing found, so search in any part of the string.
 	for (i = start; i < stop; i++)
 	{
-		strlcpy (tmp, fl->entries[i].display, sizeof (tmp));
+		SDL_strlcpy (tmp, fl->entries[i].display, sizeof (tmp));
 		FunToSort (tmp);
 
 		if (strstr(tmp, fl->search_string))
@@ -1027,7 +1027,7 @@ search :
 //
 void FL_ChangeArchive(filelist_t *fl, char *archive)
 {
-	strlcpy (fl->current_archive, archive, sizeof(fl->current_archive));
+	SDL_strlcpy (fl->current_archive, archive, sizeof(fl->current_archive));
 	fl->in_archive = true;
 
 	fl->need_refresh = true;
@@ -1052,12 +1052,12 @@ void FL_ChangeDirUp(filelist_t *fl)
 		#ifdef WITH_ZIP
 		if (fl->in_archive)
 		{
-			strlcpy (fl->cdup_name, COM_SkipPath(fl->current_archive), sizeof(fl->cdup_name));
+			SDL_strlcpy (fl->cdup_name, COM_SkipPath(fl->current_archive), sizeof(fl->cdup_name));
 		}
 		else
 		#endif // WITH_ZIP
 		{
-			strlcpy (fl->cdup_name, COM_SkipPath(fl->current_dir), sizeof(fl->cdup_name));
+			SDL_strlcpy (fl->cdup_name, COM_SkipPath(fl->current_dir), sizeof(fl->cdup_name));
 		}
 
 		// fl->cdup_name will be:
@@ -1321,7 +1321,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 		{
 			char buf[128];
 
-			strlcpy(buf, file_browser_sort_mode.string, 32); // WTF?
+			SDL_strlcpy(buf, file_browser_sort_mode.string, 32); // WTF?
 			if (key  ==  buf[0])
 			{
 				// reverse order
@@ -1349,7 +1349,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
         char newdir[MAX_PATH+1];
         char olddir[MAX_PATH+1];
 
-        snprintf(newdir, sizeof (newdir), "%c:\\", tolower(key));
+        SDL_snprintf(newdir, sizeof (newdir), "%c:\\", tolower(key));
 
         // validate
         if (Sys_getcwd(olddir, MAX_PATH+1) == 0)
@@ -1733,15 +1733,15 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         entry = &fl->entries[filenum];
 
         // Extract date & time.
-        snprintf(date, sizeof(date), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
-        snprintf(time, sizeof(time), "%2d:%02d", entry->time.wHour, entry->time.wMinute);
+        SDL_snprintf(date, sizeof(date), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
+        SDL_snprintf(time, sizeof(time), "%2d:%02d", entry->time.wHour, entry->time.wMinute);
 
         // Extract size.
         if (entry->is_directory)
         {
-            strlcpy(size, "<-->", sizeof(size));
+            SDL_strlcpy(size, "<-->", sizeof(size));
             if (filenum == fl->current_entry)
-                strlcpy(ssize, "dir", sizeof(ssize));
+                SDL_strlcpy(ssize, "dir", sizeof(ssize));
         }
         else
         {
@@ -1750,15 +1750,15 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
             {
                 dwsize /= 1024;
                 dwsize = min(dwsize, 999);
-                snprintf(size, sizeof(size), "%3dm", dwsize);
+                SDL_snprintf(size, sizeof(size), "%3dm", dwsize);
                 if (filenum == fl->current_entry)
-                    snprintf(ssize, sizeof(ssize), "%d mb", dwsize);
+                    SDL_snprintf(ssize, sizeof(ssize), "%d mb", dwsize);
             }
             else
             {
-                snprintf(size, sizeof(size), "%4d", dwsize);
+                SDL_snprintf(size, sizeof(size), "%4d", dwsize);
                 if (filenum == fl->current_entry)
-                    snprintf(ssize, sizeof(ssize), "%d kb", dwsize);
+                    SDL_snprintf(ssize, sizeof(ssize), "%d kb", dwsize);
             }
         }
 
@@ -1784,7 +1784,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		// Set the name.
 		// (Add a space infront so that the cursor for the currently
 		// selected file can fit infront)
-		snprintf (name, sizeof(name) - 1, " %s", entry->display);
+		SDL_snprintf (name, sizeof(name) - 1, " %s", entry->display);
 
 		//
 		// Copy the display name of the entry into the space that's left on the row.
@@ -1808,7 +1808,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 			// the scroll data will be invalid so reset it.
 			if (last_text_length != text_length || !last_name[0] || strncmp(name, last_name, sizeof(last_name)))
 			{
-				strlcpy(last_name, name, sizeof(last_name));
+				SDL_strlcpy(last_name, name, sizeof(last_name));
 				scroll_position = 0;
 				scroll_direction = SCROLL_RIGHT;
 				last_text_length = text_length;
@@ -1911,9 +1911,9 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         // Remember the currently selected file for dispalying in the status bar
         if (filenum == fl->current_entry)
         {
-			strlcpy (sname, line + 1, min(pos, sizeof(sname)));
-            strlcpy (stime, time, sizeof(stime));
-            snprintf (sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
+			SDL_strlcpy (sname, line + 1, min(pos, sizeof(sname)));
+            SDL_strlcpy (stime, time, sizeof(stime));
+            SDL_snprintf (sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
         }
     }
 
@@ -1933,21 +1933,21 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         if (fl->search_valid)
         {
 			// Some weird but nice-looking string in Quake font perhaps
-			strlcpy(line, "search for: ", sizeof(line));   // seach for:
+			SDL_strlcpy(line, "search for: ", sizeof(line));   // seach for:
             if (fl->search_error)
             {
-                strlcat(line, "not found", sizeof(line));
+                SDL_strlcat(line, "not found", sizeof(line));
                 UI_Print_Center(x, y + h - rowh - inter_up, w, line, false);
             }
             else
             {
-                strlcat(line, fl->search_string, sizeof(line));
+                SDL_strlcat(line, fl->search_string, sizeof(line));
                 UI_Print_Center(x, y + h - rowh - inter_up, w, line, true);
             }
         }
         else
         {
-            snprintf(line, sizeof(line), "%s \x8f modified: %s %s", ssize, sdate, stime);
+            SDL_snprintf(line, sizeof(line), "%s \x8f modified: %s %s", ssize, sdate, stime);
             UI_Print_Center(x, y + h - rowh - inter_up, w, line, false);
         }
     }

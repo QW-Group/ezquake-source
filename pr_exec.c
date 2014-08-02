@@ -265,7 +265,7 @@ void PR_RunError (char *error, ...)
 	char string[1024];
 
 	va_start (argptr,error);
-	vsnprintf (string, sizeof(string), error, argptr);
+	SDL_vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 
 
@@ -729,6 +729,6 @@ int PR_SetTmpString(char *s)
 
 	index1 = (index1 + 1) & 7;
 
-	strlcpy(tmp[index1], s, sizeof(tmp[index1]));
+	SDL_strlcpy(tmp[index1], s, sizeof(tmp[index1]));
 	return PR_SetString(tmp[index1]);
 }

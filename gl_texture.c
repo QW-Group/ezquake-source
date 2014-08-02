@@ -80,7 +80,7 @@ static int			numgltextures = 0;
 void OnChange_gl_max_size (cvar_t *var, char *string, qbool *cancel) 
 {
 	int i;
-	float newvalue = Q_atof(string);
+	float newvalue = SDL_atof(string);
 
 	if (newvalue > gl_max_size_default) 
 	{
@@ -128,7 +128,7 @@ void OnChange_gl_texturemode (cvar_t *var, char *string, qbool *cancel)
 
 	for (i = 0; i < GLMODE_NUMODES; i++) 
 	{
-		if (!strcasecmp (modes[i].name, string))
+		if (!SDL_strcasecmp (modes[i].name, string))
 			break;
 	}
 
@@ -180,7 +180,7 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel)
 	int i;
 	gltexture_t *glt;
 
-	int newvalue = Q_atoi(string);
+	int newvalue = SDL_atoi(string);
 
 	anisotropy_tap = max(1, newvalue); // 0 is bad, 1 is off, 2 and higher are valid modes
 
@@ -203,7 +203,7 @@ void OnChange_gl_anisotropy (cvar_t *var, char *string, qbool *cancel)
 
 void OnChange_gl_miptexLevel (cvar_t *var, char *string, qbool *cancel)
 {
-	float newval = Q_atof(string);
+	float newval = SDL_atof(string);
 
 	if (newval != 0 && newval != 1 && newval != 2 && newval != 3) 
 	{
@@ -534,7 +534,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 		glt = &gltextures[numgltextures];
 		numgltextures++;
 
-		strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
+		SDL_strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
 		glt->texnum = texture_extension_number;
 		texture_extension_number++;
 	}
@@ -589,7 +589,7 @@ int GL_LoadPicTexture (const char *name, mpic_t *pic, byte *data)
 		Q_ROUND_POWER2(pic->height, glheight);
 	}
 
-	strlcpy (fullname + 4, name, sizeof(fullname) - 4);
+	SDL_strlcpy (fullname + 4, name, sizeof(fullname) - 4);
 	if (glwidth == pic->width && glheight == pic->height)
 	{
 		pic->texnum = GL_LoadTexture (fullname, glwidth, glheight, data, TEX_ALPHA, 1);
@@ -673,7 +673,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 			*c = '#';
 	}
 
-	snprintf (name, sizeof(name), "%s.link", basename);
+	SDL_snprintf (name, sizeof(name), "%s.link", basename);
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 	{
 		char link[128];
@@ -695,31 +695,31 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 			--len;
 		}
 
-		snprintf (name, sizeof(name), "textures/%s", link);
+		SDL_snprintf (name, sizeof(name), "textures/%s", link);
 		if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 		{
        		CHECK_TEXTURE_ALREADY_LOADED;
-       		if( !data && !strcasecmp(link + len - 3, "tga") )
+       		if( !data && !SDL_strcasecmp(link + len - 3, "tga") )
 			{
 				data = Image_LoadTGA (f, name, matchwidth, matchheight, real_width, real_height);
 			}
 
 			#ifdef WITH_PNG
-       		if( !data && !strcasecmp(link + len - 3, "png") )
+       		if( !data && !SDL_strcasecmp(link + len - 3, "png") )
 			{
        			data = Image_LoadPNG (f, name, matchwidth, matchheight, real_width, real_height);
 			}
 			#endif // WITH_PNG
 			
 			#ifdef WITH_JPEG
-       		if( !data && !strcasecmp(link + len - 3, "jpg") )
+       		if( !data && !SDL_strcasecmp(link + len - 3, "jpg") )
 			{
 				data = Image_LoadJPEG (f, name, matchwidth, matchheight, real_width, real_height);
 			}
 			#endif // WITH_JPEG
 
 			// TEX_NO_PCX - preventing loading skins here
-       		if( !(mode & TEX_NO_PCX) && !data && !strcasecmp(link + len - 3, "pcx") )
+       		if( !(mode & TEX_NO_PCX) && !data && !SDL_strcasecmp(link + len - 3, "pcx") )
 			{
 				data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight, real_width, real_height);
 			}
@@ -729,7 +729,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 		}
 	}
 
-	snprintf (name, sizeof(name), "%s.tga", basename);
+	SDL_snprintf (name, sizeof(name), "%s.tga", basename);
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
@@ -738,7 +738,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	}
 
 	#ifdef WITH_PNG
-	snprintf (name, sizeof(name), "%s.png", basename);
+	SDL_snprintf (name, sizeof(name), "%s.png", basename);
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
@@ -748,7 +748,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	#endif // WITH_PNG
 
 	#ifdef WITH_JPEG
-	snprintf (name, sizeof(name), "%s.jpg", basename);
+	SDL_snprintf (name, sizeof(name), "%s.jpg", basename);
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
@@ -757,7 +757,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	}
 	#endif // WITH_JPEG
 
-	snprintf (name, sizeof(name), "%s.pcx", basename);
+	SDL_snprintf (name, sizeof(name), "%s.pcx", basename);
 	
 	// TEX_NO_PCX - preventing loading skins here.
 	if (!(mode & TEX_NO_PCX) && (f = FS_OpenVFS(name, "rb", FS_ANY))) 
@@ -889,7 +889,7 @@ mpic_t *GL_LoadPicImage (const char *filename, char *id, int matchwidth, int mat
 		Q_ROUND_POWER2(pic.height, height);
 	}
 
-	strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
+	SDL_strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
 
 	// Upload the texture to OpenGL.
 	if (width == pic.width && height == pic.height) 

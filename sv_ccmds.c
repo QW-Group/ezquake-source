@@ -107,14 +107,14 @@ void SV_Logfile (int sv_log, qbool newlog)
 
 	for (i = 0; i < 1000; i++)
 	{
-		snprintf (name, sizeof(name), "%s/%s%d_%04d.log", sv_logdir.string, logs[sv_log].file_name, sv_port, i);
+		SDL_snprintf (name, sizeof(name), "%s/%s%d_%04d.log", sv_logdir.string, logs[sv_log].file_name, sv_port, i);
 
 		if (!COM_FileExists(name))
 			break; // file doesn't exist
 	}
 
 	if (!newlog) //use last log if possible
-		snprintf (name, sizeof(name), "%s/%s%d_%04d.log",  sv_logdir.string, logs[sv_log].file_name, sv_port, (int)max(0, i - 1));
+		SDL_snprintf (name, sizeof(name), "%s/%s%d_%04d.log",  sv_logdir.string, logs[sv_log].file_name, sv_port, (int)max(0, i - 1));
 
 	Con_Printf ("Logging %s to %s\n", logs[sv_log].message_on, name);
 
@@ -235,7 +235,7 @@ qbool SV_SetPlayer (void)
 	int			i;
 	int			idnum;
 
-	idnum = Q_atoi(Cmd_Argv(1));
+	idnum = SDL_atoi(Cmd_Argv(1));
 
 	// HACK: for cheat commands which comes from client rather than from server console
 	if (sv_client && sv_redirected == RD_CLIENT)
@@ -332,7 +332,7 @@ void SV_Give_f (void)
 	cnt = (sv_redirected == RD_CLIENT ? 1 : 2);
 
 	t = Cmd_Argv(cnt++);
-	v = Q_atoi (Cmd_Argv(cnt++));
+	v = SDL_atoi (Cmd_Argv(cnt++));
 
 	switch (t[0])
 	{
@@ -460,7 +460,7 @@ void SV_Map (qbool now)
 		}
 		// <-
 
-		SV_SpawnServer (level, !strcasecmp(Cmd_Argv(0), "devmap"));
+		SV_SpawnServer (level, !SDL_strcasecmp(Cmd_Argv(0), "devmap"));
 
 		SV_BroadcastCommand ("reconnect\n");
 
@@ -475,10 +475,10 @@ void SV_Map (qbool now)
 		return;
 	}
 
-	strlcpy (level, Cmd_Argv(1), MAX_QPATH);
+	SDL_strlcpy (level, Cmd_Argv(1), MAX_QPATH);
 
 	// check to make sure the level exists
-	snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
+	SDL_snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
 
 	if (!(f = FS_OpenVFS(expanded, "rb", FS_ANY)))
 	{
@@ -746,10 +746,10 @@ void SV_LocalCommand_f (void)
 	str[0] = 0;
 	for (i = 1; i < c; i++)
 	{
-		strlcat (str, Cmd_Argv(i), sizeof(str));
-		strlcat (str, " ", sizeof(str));
+		SDL_strlcat (str, Cmd_Argv(i), sizeof(str));
+		SDL_strlcat (str, " ", sizeof(str));
 	}
-	strlcat (str, va("> %s 2>&1\n", temp_file), sizeof(str));
+	SDL_strlcat (str, va("> %s 2>&1\n", temp_file), sizeof(str));
 
 	if (system(str) == -1)
 		Con_Printf("command failed\n");
@@ -803,7 +803,7 @@ void SV_Kick_f (void)
 		return;
 	}
 
-	uid = Q_atoi(Cmd_Argv(1));
+	uid = SDL_atoi(Cmd_Argv(1));
 
 	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
 	{
@@ -813,17 +813,17 @@ void SV_Kick_f (void)
 		{
 			if (c > 2)
 			{
-				strlcpy (reason, " (", sizeof(reason));
+				SDL_strlcpy (reason, " (", sizeof(reason));
 				for (j=2 ; j<c; j++)
 				{
-					strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
+					SDL_strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
 					if (j < c-1)
-						strlcat (reason, " ", sizeof(reason)-4);
+						SDL_strlcat (reason, " ", sizeof(reason)-4);
 				}
 				if (strlen(reason) < 3)
 					reason[0] = '\0';
 				else
-					strlcat (reason, ")", sizeof(reason));
+					SDL_strlcat (reason, ")", sizeof(reason));
 			}
 
 			saved_state = cl->state;
@@ -853,7 +853,7 @@ int SV_MatchUser (char *s)
 		if (!strcmp (cl->name, s))
 			return cl->userid;
 	}
-	i = Q_atoi(s);
+	i = SDL_atoi(s);
 	return i;
 }
 
@@ -888,7 +888,7 @@ void SV_Cuff_f (void)
 
 	if (c >= 3)
 	{
-		mins = Q_atof(Cmd_Argv(2));
+		mins = SDL_atof(Cmd_Argv(2));
 		if (mins < 0.0 || mins > MAXPENALTY)
 		{
 			mins = MAXPENALTY;
@@ -913,9 +913,9 @@ void SV_Cuff_f (void)
 		{
 			for (i = 3; i < c; i++)
 			{
-				strlcat (reason, Cmd_Argv(i), sizeof(reason) - 1 - strlen(reason));
+				SDL_strlcat (reason, Cmd_Argv(i), sizeof(reason) - 1 - strlen(reason));
 				if (i < c - 1)
-					strlcat (reason, " ", sizeof(reason) - strlen(reason));
+					SDL_strlcat (reason, " ", sizeof(reason) - strlen(reason));
 			}
 		}
 
@@ -923,7 +923,7 @@ void SV_Cuff_f (void)
 		{
 			SV_BroadcastPrintf (PRINT_CHAT, "%s cuffed for %.1f minutes%s%s\n", cl->name, mins, reason[0] ? ": " : "", reason[0] ? reason : "");
 
-			snprintf(text, sizeof(text), "You are cuffed for %.1f minutes%s%s\n", mins, reason[0] ? "\n\n" : "", reason[0] ? reason : "");
+			SDL_snprintf(text, sizeof(text), "You are cuffed for %.1f minutes%s%s\n", mins, reason[0] ? "\n\n" : "", reason[0] ? reason : "");
 			ClientReliableWrite_Begin(cl,svc_centerprint, 2+strlen(text));
 			ClientReliableWrite_String (cl, text);
 		}
@@ -978,7 +978,7 @@ void SV_Mute_f (void)
 			ptr++;
 			print = false;
 		}
-		mins = Q_atof(ptr);
+		mins = SDL_atof(ptr);
 		if (mins < 0.0 || mins > MAXPENALTY)
 			mins = MAXPENALTY;
 	}
@@ -1000,9 +1000,9 @@ void SV_Mute_f (void)
 		{
 			for (i = 3; i < c; i++)
 			{
-				strlcat (reason, Cmd_Argv(i), sizeof(reason) - 1 - strlen(reason));
+				SDL_strlcat (reason, Cmd_Argv(i), sizeof(reason) - 1 - strlen(reason));
 				if (i < c - 1)
-					strlcat (reason, " ", sizeof(reason) - strlen(reason));
+					SDL_strlcat (reason, " ", sizeof(reason) - strlen(reason));
 			}
 		}
 
@@ -1010,7 +1010,7 @@ void SV_Mute_f (void)
 		{
 			if (print)
 				SV_BroadcastPrintf (PRINT_CHAT, "%s muted for %.1f minutes%s%s\n", cl->name, mins, reason[0] ? ": " : "", reason[0] ? reason : "");
-			snprintf(text, sizeof(text), "You are muted for %.1f minutes%s%s\n", mins, reason[0] ? "\n\n" : "", reason[0] ? reason : "");
+			SDL_snprintf(text, sizeof(text), "You are muted for %.1f minutes%s%s\n", mins, reason[0] ? "\n\n" : "", reason[0] ? reason : "");
 			ClientReliableWrite_Begin(cl, svc_centerprint, 2+strlen(text));
 			ClientReliableWrite_String (cl, text);
 		}
@@ -1040,7 +1040,7 @@ void SV_RemovePenalty_f (void)
 		return;
 	}
 
-	num = Q_atoi(Cmd_Argv(1));
+	num = SDL_atoi(Cmd_Argv(1));
 
 	for (i = 0; i < numpenfilters; i++)
 	{
@@ -1083,9 +1083,9 @@ void SV_ListPenalty_f (void)
 	{
 		switch (penfilters[i].type)
 		{
-		case ft_mute: strlcpy(s, "Mute", sizeof(s)); break;
-		case ft_cuff: strlcpy(s, "Cuff", sizeof(s)); break;
-		default: strlcpy(s, "Unknown", sizeof(s)); break;
+		case ft_mute: SDL_strlcpy(s, "Mute", sizeof(s)); break;
+		case ft_cuff: SDL_strlcpy(s, "Cuff", sizeof(s)); break;
+		default: SDL_strlcpy(s, "Unknown", sizeof(s)); break;
 		}
 		Con_Printf ("%i: %s for %i.%i.%i.%i (remaining: %d)\n", i, s,
 		            penfilters[i].ip[0],
@@ -1289,8 +1289,8 @@ void SV_Check_localinfo_maps_support(void)
 	char	*x_version;
 	char	*x_build;
 
-	k_version = Q_atof(k_version_s = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_VERSION));
-	k_build   = Q_atoi(k_build_s   = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_BUILD));
+	k_version = SDL_atof(k_version_s = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_VERSION));
+	k_build   = SDL_atoi(k_build_s   = Info_ValueForKey(svs.info, SERVERINFO_KTPRO_BUILD));
 
 	x_version = Info_ValueForKey(svs.info, SERVERINFO_KTX_VERSION);
 	x_build   = Info_ValueForKey(svs.info, SERVERINFO_KTX_BUILD);
@@ -1416,8 +1416,8 @@ void SV_ConSay_f(void)
 		p[strlen(p)-1] = 0;
 	}
 
-	strlcat(text,    p, sizeof(text));
-	strlcat(text, "\n", sizeof(text));
+	SDL_strlcat(text,    p, sizeof(text));
+	SDL_strlcat(text, "\n", sizeof(text));
 
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
 	{
@@ -1684,9 +1684,9 @@ void SV_Floodprot_f (void)
 		return;
 	}
 
-	arg1 = Q_atoi(Cmd_Argv(1));
-	arg2 = Q_atoi(Cmd_Argv(2));
-	arg3 = Q_atoi(Cmd_Argv(3));
+	arg1 = SDL_atoi(Cmd_Argv(1));
+	arg2 = SDL_atoi(Cmd_Argv(2));
+	arg3 = SDL_atoi(Cmd_Argv(3));
 
 	if (arg1<=0 || arg2 <= 0 || arg3<=0)
 	{
@@ -1717,7 +1717,7 @@ void SV_Floodprotmsg_f (void)
 		Con_Printf("Usage: floodprotmsg \"<message>\"\n");
 		return;
 	}
-	snprintf(fp_msg, sizeof(fp_msg), "%s", Cmd_Argv(1));
+	SDL_snprintf(fp_msg, sizeof(fp_msg), "%s", Cmd_Argv(1));
 }
 
 /*
@@ -1788,13 +1788,13 @@ void SV_Snap (int uid)
 	}
 
 	FS_CreatePath (va ("%s/snap/", fs_gamedir));
-	snprintf (pcxname, sizeof (pcxname), "%d-00.pcx", uid);
+	SDL_snprintf (pcxname, sizeof (pcxname), "%d-00.pcx", uid);
 
 	for (i=0 ; i<=99 ; i++)
 	{
 		pcxname[strlen(pcxname) - 6] = i/10 + '0';
 		pcxname[strlen(pcxname) - 5] = i%10 + '0';
-		snprintf (checkname, MAX_OSPATH, "%s/snap/%s", fs_gamedir, pcxname);
+		SDL_snprintf (checkname, MAX_OSPATH, "%s/snap/%s", fs_gamedir, pcxname);
 		f = fopen (checkname, "rb");
 		if (!f)
 			break; // file doesn't exist
@@ -1805,7 +1805,7 @@ void SV_Snap (int uid)
 		Con_Printf ("Snap: Couldn't create a file, clean some out.\n");
 		return;
 	}
-	strlcpy(cl->uploadfn, checkname, MAX_QPATH);
+	SDL_strlcpy(cl->uploadfn, checkname, MAX_QPATH);
 
 	memcpy(&cl->snap_from, &net_from, sizeof(net_from));
 	if (sv_redirected != RD_NONE)
@@ -1833,7 +1833,7 @@ void SV_Snap_f (void)
 		return;
 	}
 
-	uid = Q_atoi(Cmd_Argv(1));
+	uid = SDL_atoi(Cmd_Argv(1));
 
 	SV_Snap(uid);
 }
@@ -1865,7 +1865,7 @@ SV_MasterPassword
 void SV_MasterPassword_f (void)
 {
 	if (!server_cfg_done)
-		strlcpy(master_rcon_password, Cmd_Argv(1), sizeof(master_rcon_password));
+		SDL_strlcpy(master_rcon_password, Cmd_Argv(1), sizeof(master_rcon_password));
 	else
 		Con_Printf("master_rcon_password can be set only in server.cfg\n");
 }

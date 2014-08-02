@@ -193,7 +193,7 @@ void Calendar_f(void)
         if (day > 0)
         {
             char buf[8];
-            snprintf(buf, sizeof (buf), "%3d", day);
+            SDL_snprintf(buf, sizeof (buf), "%3d", day);
             if (day == tm.wDay)
                 ; // MakeStringYellow(buf);
             else
@@ -417,7 +417,7 @@ void Con_Init (void) {
 		qconsole_log = fopen(va("%s/qw/qconsole.log",com_basedir), "a");
 
 	if ((i = COM_CheckParm("-conbufsize")) && i + 1 < COM_Argc()) {
-		conbufsize = Q_atoi(COM_Argv(i + 1)) << 10;
+		conbufsize = SDL_atoi(COM_Argv(i + 1)) << 10;
 		conbufsize = bound (MINIMUM_CONBUFSIZE , conbufsize, MAXIMUM_CONBUFSIZE);
 	} else {
 		conbufsize = DEFAULT_CONBUFSIZE;
@@ -526,7 +526,7 @@ void Con_SafePrintf (char *fmt, ...)
     int         temp;
 
     va_start (argptr,fmt);
-    vsnprintf (msg,sizeof(msg),fmt,argptr);
+    SDL_vsnprintf (msg,sizeof(msg),fmt,argptr);
     va_end (argptr);
 
     temp = scr_disabled_for_loading;
@@ -766,8 +766,8 @@ void Con_DrawNotify (void) {
 		else if (chat_team == chat_irc) {
 			char dest[256];
 			
-			strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
-			strlcat(dest, ":", sizeof(dest));
+			SDL_strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
+			SDL_strlcat(dest, ":", sizeof(dest));
 			skip = strlen(dest) + 1; // is this correct? not sure
 
 			Draw_String (8, v + bound(0, con_shift.value, 8), dest);
@@ -1045,12 +1045,12 @@ void Con_DrawConsole (int lines) {
 		i = con_linewidth/3;
 		if (strlen(text) > i) {
 			y = x - i - 11;
-			strlcpy (dlbar, text, i);
-			strlcat (dlbar, "...", sizeof (dlbar));
+			SDL_strlcpy (dlbar, text, i);
+			SDL_strlcat (dlbar, "...", sizeof (dlbar));
 		} else {
-			strlcpy (dlbar, text, sizeof (dlbar));
+			SDL_strlcpy (dlbar, text, sizeof (dlbar));
 		}
-		strlcat (dlbar, ": ", sizeof (dlbar));
+		SDL_strlcat (dlbar, ": ", sizeof (dlbar));
 		i = strlen (dlbar);
 		dlbar[i++] = '\x80';
 		// where's the dot go?
@@ -1080,9 +1080,9 @@ void Con_DrawConsole (int lines) {
 
 		i = strlen (dlbar);
 		if (cls.download)
-			snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
+			SDL_snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
 		else if (cls.upload)
-			snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
+			SDL_snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
 		else
 			return;
 

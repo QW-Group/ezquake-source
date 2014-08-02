@@ -726,7 +726,7 @@ void SB_PingTree_ConnectBestPath(const netadr_t *addr)
 			byte *ip = ping_nodes[current].ipaddr.data;
 			char *newval = va("%d.%d.%d.%d:%d%s%s", (int) ip[0], (int) ip[1], (int) ip[2],
 				(int) ip[3], (int) ntohs(ping_nodes[current].proxport), *proxylist_buf ? "@" : "", proxylist_buf);
-			strlcpy(proxylist_buf, newval, 32*MAX_NONLEAVES);
+			SDL_strlcpy(proxylist_buf, newval, 32*MAX_NONLEAVES);
 
 			proxies++;
 			current = ping_nodes[current].prev;

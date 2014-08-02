@@ -31,9 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctype.h>
 #include <string.h>
 #include <wctype.h>
-#ifndef snprintf
 #include "q_shared.h"
-#endif
 #include "utils.h"
 #include "pcre.h"
 #include "parser.h"
@@ -227,19 +225,19 @@ LOCAL expr_val ToString(EParser p, const expr_val e)
 	case ET_INT:
 		r.s_val = (char *) malloc(MAX_NUMBER_LENGTH);
 		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
-		snprintf(r.s_val, MAX_NUMBER_LENGTH, "%i", e.i_val);
+		SDL_snprintf(r.s_val, MAX_NUMBER_LENGTH, "%i", e.i_val);
 		break;
 
 	case ET_DBL:
 		r.s_val = (char *) malloc(MAX_NUMBER_LENGTH);
 		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
-		snprintf(r.s_val, MAX_NUMBER_LENGTH, "%f", e.d_val);
+		SDL_snprintf(r.s_val, MAX_NUMBER_LENGTH, "%f", e.d_val);
 		break;
 
 	case ET_BOOL:
 		r.s_val = (char *) malloc(6);
 		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
-		snprintf(r.s_val, 6, "%s", e.b_val ? "true" : "false");
+		SDL_snprintf(r.s_val, 6, "%s", e.b_val ? "true" : "false");
 		break;
 	}
 
@@ -264,8 +262,8 @@ LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 		FreeIfStr(&e2);
 		return Get_Expr_Dummy();
 	}
-	strlcpy(ret.s_val, e1.s_val, len);
-	strlcat(ret.s_val, e2.s_val, len);
+	SDL_strlcpy(ret.s_val, e1.s_val, len);
+	SDL_strlcat(ret.s_val, e2.s_val, len);
 	free(e1.s_val);
 	free(e2.s_val);
 
@@ -473,7 +471,7 @@ LOCAL expr_val operator_substr(EParser p, const expr_val arg1, const expr_val ar
 				buf = (char *) malloc(len + 1);
 
 				if (buf) {
-					strlcpy(buf, str + pos, len + 1);
+					SDL_strlcpy(buf, str + pos, len + 1);
 					ret.type = ET_STR;
 					ret.s_val = buf;
 				}
@@ -544,7 +542,7 @@ LOCAL expr_val operator_int(EParser p, const expr_val arg1)
 			ret.i_val = (int) arg1.d_val;
 			break;
 		case ET_STR:
-			ret.i_val = atoi(arg1.s_val);
+			ret.i_val = SDL_atoi(arg1.s_val);
 			free(arg1.s_val);
 			break;
 		case ET_BOOL:
@@ -994,7 +992,7 @@ LOCAL expr_val Match_String(EParser p)
 		SetError(p, ERR_OUT_OF_MEM);
 		return Get_Expr_Dummy();
 	}
-	strlcpy(ret.s_val, p->string + startpos, len+1);
+	SDL_strlcpy(ret.s_val, p->string + startpos, len+1);
 
 	Next_Token(p);
 
@@ -1017,14 +1015,14 @@ LOCAL expr_val Match(EParser p, int token)
     case TK_DOUBLE:
         // add error check here
 		ret.type = ET_DBL;
-		ret.d_val = atof(p->string + p->pos);
+		ret.d_val = SDL_atof(p->string + p->pos);
         while (c = CURCHAR(p), c && (isdigit(c) || c == '.')) p->pos++;
         Next_Token(p);
         break;
 
 	case TK_INTEGER:
 		ret.type = ET_INT;
-		ret.i_val = atoi(p->string + p->pos);
+		ret.i_val = SDL_atoi(p->string + p->pos);
 		while (c = CURCHAR(p), c && isdigit(c)) p->pos++;
 		Next_Token(p);
 		break;

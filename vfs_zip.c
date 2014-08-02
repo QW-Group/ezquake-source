@@ -405,7 +405,7 @@ static qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename,
 	{
 		for (i=0 ; i<zip->numfiles ; i++)	//look for the file
 		{
-			if (!strcasecmp (zip->files[i].name, filename))
+			if (!SDL_strcasecmp (zip->files[i].name, filename))
 			{
 				pf = &zip->files[i];
 				break;
@@ -418,7 +418,7 @@ static qbool FSZIP_FLocate(void *handle, flocation_t *loc, const char *filename,
 		if (loc)
 		{
 			loc->index = pf - zip->files;
-			strlcpy (loc->rawname, zip->filename, sizeof (loc->rawname));
+			SDL_strlcpy (loc->rawname, zip->filename, sizeof (loc->rawname));
 			loc->offset = pf->filepos;
 			loc->len = pf->filelen;
 			loc->search = NULL;
@@ -495,7 +495,7 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 	unz_global_info info;
 	
 	zip   = (zipfile_t *) Q_calloc(1, sizeof(*zip));
-	strlcpy (zip->filename, desc, sizeof (zip->filename));
+	SDL_strlcpy (zip->filename, desc, sizeof (zip->filename));
 	FSZIP_CreteFileFuncs(&(zip->zlib_funcs));
 	zip->raw = packhandle;
 	zip->handle = unzOpen2(desc, funcs);
@@ -513,7 +513,7 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 		unz_file_info file_info;
 		if (unzGetCurrentFileInfo(zip->handle, &file_info, newfiles[i].name, sizeof(newfiles[i].name), NULL, 0, NULL, 0) != UNZ_OK) goto fail;
 
-		Q_strlwr(newfiles[i].name);
+		SDL_strlwr(newfiles[i].name);
 		newfiles[i].filelen = file_info.uncompressed_size;
 		newfiles[i].filepos = unzGetOffset(zip->handle); // VFS-FIXME: Need to verify this
 		r = unzGoToNextFile (zip->handle);

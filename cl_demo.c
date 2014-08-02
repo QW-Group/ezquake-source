@@ -372,9 +372,9 @@ static char *TrimModelName (const char *full)
 	int len;
 
 	if (!strncmp(full, "progs/", 6) && !strchr(full + 6, '/'))
-		strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
+		SDL_strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
 	else
-		strlcpy (shortn, full, sizeof(shortn));
+		SDL_strlcpy (shortn, full, sizeof(shortn));
 
 	len = strlen(shortn);
 	if (len > 4 && !strcmp(shortn + len - 4, ".mdl")
@@ -542,10 +542,10 @@ static void CL_WriteStartupData (void)
 			if (!*s)
 				break;
 			if (i > 0)
-				strlcat (ss, " ", sizeof(ss));
-			strlcat (ss, TrimModelName(s), sizeof(ss));
+				SDL_strlcat (ss, " ", sizeof(ss));
+			SDL_strlcat (ss, TrimModelName(s), sizeof(ss));
 		}
-		strlcat (ss, "\n", sizeof(ss));
+		SDL_strlcat (ss, "\n", sizeof(ss));
 		if (strlen(ss) < sizeof(ss)-1)		// Didn't overflow?
 		{
 			MSG_WriteByte (&buf, svc_stufftext);
@@ -1402,7 +1402,7 @@ void CL_StopMvd_f(void)
 		SZ_Init (&buf, buf_data, sizeof(buf_data));
 
 		// Print offensive message.
-		snprintf(str, sizeof(str),
+		SDL_snprintf(str, sizeof(str),
 				"\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n"
 		        "%s"
 				"\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n",
@@ -1472,11 +1472,11 @@ void CL_RecordMvd_f(void)
 			}
 
 			// Open the demo file for writing.
-			strlcpy(nameext, Cmd_Argv(1), sizeof(nameext));
+			SDL_strlcpy(nameext, Cmd_Argv(1), sizeof(nameext));
 			COM_ForceExtensionEx (nameext, ".mvd", sizeof (nameext));
 
 			// Get the path for the demo and try opening the file for writing.
-			snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
+			SDL_snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
 
 			mvdrecordfile = fopen(name, "wb");
 
@@ -1490,7 +1490,7 @@ void CL_RecordMvd_f(void)
 			cls.mvdrecording = true;
 
 			// Save the demoname for later use.
-			strlcpy(mvddemoname, name, sizeof(mvddemoname));
+			SDL_strlcpy(mvddemoname, name, sizeof(mvddemoname));
 
 			// If we're active, write startup data right away.
 			if (cls.state == ca_active)
@@ -2214,14 +2214,14 @@ static void CL_WriteDemoPimpMessage(void)
 	if (cls.demoplayback)
 		return;
 
-	strlcpy (border, "\x1d", sizeof (border));
+	SDL_strlcpy (border, "\x1d", sizeof (border));
 
 	for (i = 0; i < 34; i++)
-		strlcat (border, "\x1e", sizeof (border));
+		SDL_strlcat (border, "\x1e", sizeof (border));
 
-	strlcat (border, "\x1f", sizeof (border));
+	SDL_strlcat (border, "\x1f", sizeof (border));
 
-	snprintf (pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
+	SDL_snprintf (pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
 		border,
 		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
 		border
@@ -2302,7 +2302,7 @@ char *CL_DemoDirectory(void)
 {
 	static char dir[MAX_PATH];
 
-	strlcpy(dir, FS_LegacyDir(demo_dir.string), sizeof(dir));
+	SDL_strlcpy(dir, FS_LegacyDir(demo_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -2375,11 +2375,11 @@ void CL_Record_f (void)
 			}
 
 			// Open the demo file for writing.
-			strlcpy(nameext, Cmd_Argv(1), sizeof(nameext));
+			SDL_strlcpy(nameext, Cmd_Argv(1), sizeof(nameext));
 			COM_ForceExtensionEx (nameext, ".qwd", sizeof (nameext));
 
 			// Get the path for the demo and try opening the file for writing.
-			snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
+			SDL_snprintf (name, sizeof(name), "%s/%s", CL_DemoDirectory(), nameext);
 			if (!CL_Demo_Open(name))
 			{
 				Com_Printf ("Error: Couldn't record to %s. Make sure path exists.\n", name);
@@ -2394,7 +2394,7 @@ void CL_Record_f (void)
 				CL_WriteStartupData();
 
 			// Save the demoname for later use.
-			strlcpy(demoname, nameext, sizeof(demoname));
+			SDL_strlcpy(demoname, nameext, sizeof(demoname));
 
 			Com_Printf ("Recording to %s\n", nameext);
 
@@ -2455,7 +2455,7 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 	if (autorecord)
 	{
 		// Save the final demo name.
-		strlcpy (extendedname, name, sizeof(extendedname));
+		SDL_strlcpy (extendedname, name, sizeof(extendedname));
 	}
 	else
 	{
@@ -2475,7 +2475,7 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 		}
 
 		// Save the demo name..
-		snprintf (extendedname, sizeof(extendedname), "%s_%03i.qwd", strippedname, num);
+		SDL_snprintf (extendedname, sizeof(extendedname), "%s_%03i.qwd", strippedname, num);
 	}
 
 	// Get dir + final demo name.
@@ -2502,8 +2502,8 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 	if (!autorecord)
 	{
 		Com_Printf ("Recording to %s\n", extendedname);
-		strlcpy(demoname, extendedname, sizeof(demoname));		// Just demo name.
-		strlcpy(fulldemoname, fullname, sizeof(fulldemoname));  // Demo name including path.
+		SDL_strlcpy(demoname, extendedname, sizeof(demoname));		// Just demo name.
+		SDL_strlcpy(fulldemoname, fullname, sizeof(fulldemoname));  // Demo name including path.
 	}
 
 	return true;
@@ -2654,7 +2654,7 @@ void CL_AutoRecord_StartMatch(char *demoname)
 	}
 
 	// Save the name of the auto recorded demo for later.
-	strlcpy(auto_matchname, demoname, sizeof(auto_matchname));
+	SDL_strlcpy(auto_matchname, demoname, sizeof(auto_matchname));
 
 	// Try starting to record the demo.
 	if (!CL_MatchRecordDemo(MT_TempDirectory(), TEMP_DEMO_NAME, true))
@@ -2714,7 +2714,7 @@ void CL_AutoRecord_SaveMatch(void)
 	}
 
 	// Get the final full path where we'll save the demo. (This is the final name for real now)
-	snprintf (savedname, sizeof(savedname), "%s_%03i.qwd", auto_matchname, num);
+	SDL_snprintf (savedname, sizeof(savedname), "%s_%03i.qwd", auto_matchname, num);
 	fullsavedname = va("%s/%s", dir, savedname);
 
 	// Try opening the temp file to make sure we can read it.
@@ -2777,8 +2777,8 @@ void CL_Demo_GetCompressedName (char* cdemo_name)
 
 	if (strlen (demo_format.string) && namelen)
 	{
-		strlcpy (cdemo_name, tempqwd_name, 255);
-		strlcpy (cdemo_name + namelen - 3, demo_format.string, 255 - namelen + 3);
+		SDL_strlcpy (cdemo_name, tempqwd_name, 255);
+		SDL_strlcpy (cdemo_name + namelen - 3, demo_format.string, 255 - namelen + 3);
 	}
 }
 
@@ -2902,20 +2902,20 @@ static void PlayQWZDemo (void)
 
 	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 	{
-		strlcpy (qwz_name, va("%s/%s", com_basedir, name + 3), sizeof(qwz_name));
+		SDL_strlcpy (qwz_name, va("%s/%s", com_basedir, name + 3), sizeof(qwz_name));
 	}
 	else
 	{
 		if (name[0] == '/' || name[0] == '\\')
-			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name + 1), sizeof(qwz_name));
+			SDL_strlcpy (qwz_name, va("%s/%s", cls.gamedir, name + 1), sizeof(qwz_name));
 		else
-			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name), sizeof(qwz_name));
+			SDL_strlcpy (qwz_name, va("%s/%s", cls.gamedir, name), sizeof(qwz_name));
 	}
 
 	if ((playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS)))
 	{
 		// either we got full system path
-		strlcpy(qwz_name, name, sizeof(qwz_name));
+		SDL_strlcpy(qwz_name, name, sizeof(qwz_name));
 	}
 	else
 	{
@@ -2934,7 +2934,7 @@ static void PlayQWZDemo (void)
 	VFS_CLOSE (playbackfile);
 	playbackfile = NULL;
 
-	strlcpy (tempqwd_name, qwz_name, sizeof(tempqwd_name) - 4);
+	SDL_strlcpy (tempqwd_name, qwz_name, sizeof(tempqwd_name) - 4);
 
 	// the way Qizmo does it, sigh
 	if (!(p = strstr (tempqwd_name, ".qwz")))
@@ -2955,7 +2955,7 @@ static void PlayQWZDemo (void)
 	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
-	strlcpy (cmdline, va("%s/%s/qizmo.exe -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, qwz_name), sizeof(cmdline));
+	SDL_strlcpy (cmdline, va("%s/%s/qizmo.exe -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, qwz_name), sizeof(cmdline));
 
 	if (!CreateProcess (NULL, cmdline, NULL, NULL,
 		FALSE, GetPriorityClass(GetCurrentProcess()),
@@ -3013,7 +3013,7 @@ int CL_Demo_Compress(char* qwdname)
 		appname = "qwdtools.exe";
 		parameters = "-c -o * -od";
 		path = qwdtools_dir.string;
-		strlcpy(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
+		SDL_strlcpy(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
 	}
 	else
 	{
@@ -3021,7 +3021,7 @@ int CL_Demo_Compress(char* qwdname)
 		return 0;
 	}
 
-	strlcpy (cmdline, va("\"%s/%s/%s\" %s \"%s\" \"%s\"", com_basedir, path, appname, parameters, outputpath, qwdname), sizeof(cmdline));
+	SDL_strlcpy (cmdline, va("\"%s/%s/%s\" %s \"%s\" \"%s\"", com_basedir, path, appname, parameters, outputpath, qwdname), sizeof(cmdline));
 	Com_DPrintf("Executing ---\n%s\n---\n", cmdline);
 
 	if (!CreateProcess (NULL, cmdline, NULL, NULL,
@@ -3032,7 +3032,7 @@ int CL_Demo_Compress(char* qwdname)
 		return 0;
 	}
 
-	strlcpy(tempqwd_name, qwdname, sizeof(tempqwd_name));
+	SDL_strlcpy(tempqwd_name, qwdname, sizeof(tempqwd_name));
 
 	hQizmoProcess = pi.hProcess;
 	qwz_packing = true;
@@ -3087,12 +3087,12 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 
 			if (ext_len <= 4)
 			{
-				strlcpy (ext, play_path + strlen(play_path) - 4 - ext_len, sizeof(ext));
+				SDL_strlcpy (ext, play_path + strlen(play_path) - 4 - ext_len, sizeof(ext));
 			}
 			else
 			{
 				// Default to MVD.
-				strlcpy (ext, ".mvd", sizeof(ext));
+				SDL_strlcpy (ext, ".mvd", sizeof(ext));
 			}
 		}
 
@@ -3134,7 +3134,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 			retval = 1;
 
 			// Copy the path of the unpacked file to the return string.
-			strlcpy (unpacked_path, temp_path, unpacked_path_size);
+			SDL_strlcpy (unpacked_path, temp_path, unpacked_path_size);
 		}
 
 		// Close the zip file.
@@ -3155,7 +3155,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	struct tm *ptm = localtime(&t);
 	int width = 0, height = 0; 
 
-	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
+	SDL_snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
 	f = fopen(logfile, "a");
 	if (!f) {
 		Com_Printf("Can't open %s to dump timedemo result\n", logfile);
@@ -3484,10 +3484,10 @@ qbool CL_IsDemoExtension(const char *filename)
 {
 	char *ext = COM_FileExtension(filename);
 
-	return (!strncasecmp(ext, "mvd", sizeof("mvd"))
-		 || !strncasecmp(ext, "qwd", sizeof("qwd"))
-		 || !strncasecmp(ext, "dem", sizeof("dem"))
-		 || !strncasecmp(ext, "qwz", sizeof("qwz")));
+	return (!SDL_strncasecmp(ext, "mvd", sizeof("mvd"))
+		 || !SDL_strncasecmp(ext, "qwd", sizeof("qwd"))
+		 || !SDL_strncasecmp(ext, "dem", sizeof("dem"))
+		 || !SDL_strncasecmp(ext, "qwz", sizeof("qwz")));
 }
 
 //
@@ -3501,8 +3501,8 @@ static void CL_DemoPlaybackInit(void)
 	// CL_GetIsMVD(playbackfile); 
 	// TODO : Add a similar check for QWD also (or DEM), so that we can distinguish if it's a DEM or not playing also
 	// TODO : Make a working check if a demo really is an mvd by its contents that also works on short demos.
-	cls.mvdplayback		= !strcasecmp(COM_FileExtension(cls.demoname), "mvd"); 
-	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(cls.demoname), "dem");
+	cls.mvdplayback		= !SDL_strcasecmp(COM_FileExtension(cls.demoname), "mvd"); 
+	cls.nqdemoplayback	= !SDL_strcasecmp(COM_FileExtension(cls.demoname), "dem");
 
 	 // Init some buffers for reading.
 	CL_Demo_PB_Init(NULL, 0);
@@ -3591,9 +3591,9 @@ void CL_Play_f (void)
 	//
 	// Decompress QWZ demos to QWD before playing it (using an external app).
 	//
-	strlcpy (name, real_name, sizeof(name) - 4);
+	SDL_strlcpy (name, real_name, sizeof(name) - 4);
 
-	if (strlen(name) > 4 && !strcasecmp(COM_FileExtension(name), "qwz"))
+	if (strlen(name) > 4 && !SDL_strcasecmp(COM_FileExtension(name), "qwz"))
 	{
 		PlayQWZDemo();
 
@@ -3617,7 +3617,7 @@ void CL_Play_f (void)
 		// Strip the extension from the specified filename and append
 		// the one we're currently checking for.
 		COM_StripExtension(real_name, name);
-		strlcpy(name, va("%s.%s", name, *s), sizeof(name));
+		SDL_strlcpy(name, va("%s.%s", name, *s), sizeof(name));
 
 		// Look for the file in the above directory if it has ../ prepended to the filename.
 		if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
@@ -3656,7 +3656,7 @@ void CL_Play_f (void)
 			}
 			if (*s != NULL)
 			{
-				strlcpy (name, real_name, sizeof(name));
+				SDL_strlcpy (name, real_name, sizeof(name));
 				if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 				{
 					playbackfile = FS_OpenVFS(va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
@@ -3680,7 +3680,7 @@ void CL_Play_f (void)
 				}
 
 				if (playbackfile)
-					strlcpy(name, Cmd_Argv(1), sizeof(name));
+					SDL_strlcpy(name, Cmd_Argv(1), sizeof(name));
 			}
 		}
 	}
@@ -3717,7 +3717,7 @@ void CL_Play_f (void)
 		return;
 	}
 
-	strlcpy(cls.demoname, name, sizeof(cls.demoname));
+	SDL_strlcpy(cls.demoname, name, sizeof(cls.demoname));
 
 	// Reset multiview track slots.
 	memset(mv_trackslots, -1, sizeof(mv_trackslots));
@@ -3853,7 +3853,7 @@ void CL_QTVPoll (void)
 	if (!*start)
 		return;
 
-	svversion = atof(qtvrequestbuffer + QTVSVLEN);
+	svversion = SDL_atof(qtvrequestbuffer + QTVSVLEN);
 
 	// server sent float version, but we compare only major version number here
 	if ((int)svversion != (int)QTV_VERSION)
@@ -3933,11 +3933,11 @@ void CL_QTVPoll (void)
 				}
 				else if (!strcmp(start, "AUTH"))
 				{
-					strlcpy(authmethod, colon, sizeof(authmethod));
+					SDL_strlcpy(authmethod, colon, sizeof(authmethod));
 				}
 				else if (!strcmp(start, "CHALLENGE"))
 				{
-					strlcpy(challenge, colon, sizeof(challenge));
+					SDL_strlcpy(challenge, colon, sizeof(challenge));
 				}
 				else if (!strcmp(start, "BEGIN"))
 				{
@@ -3945,7 +3945,7 @@ void CL_QTVPoll (void)
 				}
 				else if (!strcmp(start, QTV_EZQUAKE_EXT))
 				{
-					qtv_ezquake_ext = atoi(colon);
+					qtv_ezquake_ext = SDL_atoi(colon);
 				}
 			}
 			else
@@ -4003,7 +4003,7 @@ void CL_QTVPoll (void)
 
 		if (!strcmp(authmethod, "PLAIN"))
 		{
-			snprintf(connrequest, sizeof(connrequest), 
+			SDL_snprintf(connrequest, sizeof(connrequest), 
 					"%s" "AUTH: PLAIN\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), qtvpassword);
 
 			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
@@ -4016,10 +4016,10 @@ void CL_QTVPoll (void)
 			{
 				unsigned short crcvalue;
 
-				snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
+				SDL_snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
 				crcvalue = CRC_Block((byte *)hash, strlen(hash));
-				snprintf(hash, sizeof(hash), "0x%X", (unsigned int)CRC_Value(crcvalue));
-				snprintf(connrequest, sizeof(connrequest), 
+				SDL_snprintf(hash, sizeof(hash), "0x%X", (unsigned int)CRC_Value(crcvalue));
+				SDL_snprintf(connrequest, sizeof(connrequest), 
 					"%s" "AUTH: CCITT\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), hash);
 
 				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
@@ -4035,10 +4035,10 @@ void CL_QTVPoll (void)
 			{
 				unsigned int md4sum[4];
 
-				snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
+				SDL_snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
 				Com_BlockFullChecksum (hash, strlen(hash), (unsigned char*)md4sum);
-				snprintf(hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
-				snprintf(connrequest, sizeof(connrequest), 
+				SDL_snprintf(hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
+				SDL_snprintf(connrequest, sizeof(connrequest), 
 					"%s" "AUTH: MD4\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), hash);
 
 				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
@@ -4050,7 +4050,7 @@ void CL_QTVPoll (void)
 		}
 		else if (!strcmp(authmethod, "NONE"))
 		{
-			snprintf(connrequest, sizeof(connrequest),
+			SDL_snprintf(connrequest, sizeof(connrequest),
 					"%s" "AUTH: NONE\nPASSWORD: \n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM));
 
 			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
@@ -4096,7 +4096,7 @@ void CL_QTVList_f (void)
 		return;
 	}
 
-	strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
+	SDL_strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
 
 	// Send the version of QTV the client supports.
 	connrequest = QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM);
@@ -4223,7 +4223,7 @@ static qbool CL_QTVPlay_URL_format(void)
 	const char *docpart = strstr(Cmd_Argv(1), "/watch.qtv?sid=");
 
 	if (prefix && docpart && prefix == Cmd_Argv(1) && prefix < docpart) {
-		int streamid = Q_atoi(docpart + strlen("/watch.qtv?sid="));
+		int streamid = SDL_atoi(docpart + strlen("/watch.qtv?sid="));
 		int hostnamelen = docpart - prefix - strlen("http://");
 		Cbuf_AddText(va("qtvplay %d@%.*s\n", streamid, hostnamelen, Cmd_Argv(1) + strlen("http://")));
 		return true;
@@ -4252,14 +4252,14 @@ void CL_QTVPlay_f (void)
 	if (CL_QTVPlay_URL_format())
 		return;
 
-	strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
+	SDL_strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
 
 	// The stream address.
 	connrequest = Cmd_Argv(1);
 
 	// We've succesfully connected to a QTV proxy, save the connrequest string so we can use it to reconnect.
-	strlcpy(prev_qtv_connrequest, connrequest, sizeof(prev_qtv_connrequest));
-	strlcpy(prev_qtv_password, qtvpassword, sizeof(prev_qtv_password));
+	SDL_strlcpy(prev_qtv_connrequest, connrequest, sizeof(prev_qtv_connrequest));
+	SDL_strlcpy(prev_qtv_password, qtvpassword, sizeof(prev_qtv_password));
 
 	//
 	// If a "#" is at the beginning of the given address it refers to a .qtv file.
@@ -4383,9 +4383,9 @@ void CL_QTVPlay_f (void)
 	// (QTV proxies can be chained, so we must get the last @)
 	// In other words split stream and host part
 
-	strlcpy(stream_host, connrequest, sizeof(stream_host));
+	SDL_strlcpy(stream_host, connrequest, sizeof(stream_host));
 
-	connrequest = strchrrev(stream_host, '@');
+	connrequest = SDL_strrchr(stream_host, '@');
 	if (connrequest)
 	{
 		stream = stream_host;		// Stream part.
@@ -4472,7 +4472,7 @@ void CL_Demo_SetSpeed_f (void)
 		return;
 	}
 
-	Cvar_SetValue(&cl_demospeed, atof(Cmd_Argv(1)) / 100.0);
+	Cvar_SetValue(&cl_demospeed, SDL_atof(Cmd_Argv(1)) / 100.0);
 }
 
 //
@@ -4558,12 +4558,12 @@ void CL_Demo_Jump_f (void)
 	// before it is minutes, so add it them to our jump time.
     if (strchr(text, ':'))
 	{
-        seconds += 60 * atoi(text);
+        seconds += 60 * SDL_atoi(text);
         text = strchr(text, ':') + 1;
     }
 
 	// The numbers after the first colon will be seconds.
-    seconds += atoi(text);
+    seconds += SDL_atoi(text);
 
 	CL_Demo_Jump(seconds, relative, DST_SEEKING_NORMAL);
 }
@@ -4702,21 +4702,21 @@ static void CL_Demo_Jump_Status_Check (void)
 
 static int CL_Demo_Jump_Status_Parse_Weapon (const char *arg)
 {
-	if (!strcasecmp("axe", arg)) {
+	if (!SDL_strcasecmp("axe", arg)) {
 		return IT_AXE;
-	} else if (!strcasecmp("sg", arg)) {
+	} else if (!SDL_strcasecmp("sg", arg)) {
 		return IT_SHOTGUN;
-	} else if (!strcasecmp("ssg", arg)) {
+	} else if (!SDL_strcasecmp("ssg", arg)) {
 		return IT_SUPER_SHOTGUN;
-	} else if (!strcasecmp("ng", arg)) {
+	} else if (!SDL_strcasecmp("ng", arg)) {
 		return IT_NAILGUN;
-	} else if (!strcasecmp("sng", arg)) {
+	} else if (!SDL_strcasecmp("sng", arg)) {
 		return IT_SUPER_NAILGUN;
-	} else if (!strcasecmp("gl", arg)) {
+	} else if (!SDL_strcasecmp("gl", arg)) {
 		return IT_GRENADE_LAUNCHER;
-	} else if (!strcasecmp("rl", arg)) {
+	} else if (!SDL_strcasecmp("rl", arg)) {
 		return IT_ROCKET_LAUNCHER;
-	} else if (!strcasecmp("lg", arg)) {
+	} else if (!SDL_strcasecmp("lg", arg)) {
 		return IT_LIGHTNING;
 	} else {
 		return 0;
@@ -4728,7 +4728,7 @@ static int CL_Demo_Jump_Status_Parse_Constraint (const char *arg, int *value)
 	if (strlen(arg) < 2)
 		return -1;
 
-	*value = Q_atoi(arg+1);
+	*value = SDL_atoi(arg+1);
 
 	switch (arg[0]) {
 		case '=':
@@ -4792,7 +4792,7 @@ static void CL_Demo_Jump_Status_f (void)
 		int weapon, value;
 		int type;
 
-		if (!strcasecmp("or", arg)) {
+		if (!SDL_strcasecmp("or", arg)) {
 			if (cls.demoseekingstatus.conditions == NULL) {
 				Com_Printf("Error: or can't be the first argument\n");
 				return;
@@ -4822,17 +4822,17 @@ static void CL_Demo_Jump_Status_f (void)
 			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_ROCKETS, value);
 		} else if (arg[0] == 'c' && (type = CL_Demo_Jump_Status_Parse_Constraint(arg+1, &value)) >= 0) {
 			condition = CL_Demo_Jump_Status_Condition_New(type, STAT_CELLS, value);
-		} else if (!strcasecmp("ga", arg)) {
+		} else if (!SDL_strcasecmp("ga", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR1);
-		} else if (!strcasecmp("ya", arg)) {
+		} else if (!SDL_strcasecmp("ya", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR2);
-		} else if (!strcasecmp("ra", arg)) {
+		} else if (!SDL_strcasecmp("ra", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_ARMOR3);
-		} else if (!strcasecmp("quad", arg)) {
+		} else if (!SDL_strcasecmp("quad", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_QUAD);
-		} else if (!strcasecmp("ring", arg)) {
+		} else if (!SDL_strcasecmp("ring", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVISIBILITY);
-		} else if (!strcasecmp("pent", arg)) {
+		} else if (!SDL_strcasecmp("pent", arg)) {
 			condition = CL_Demo_Jump_Status_Condition_New(DEMOSEEKINGSTATUS_MATCH_BIT_ON, STAT_ITEMS, IT_INVULNERABILITY);
 		} else {
 			Com_Printf("Error: unknown condition: %s\n", Cmd_Argv(i));
@@ -4929,7 +4929,7 @@ void CL_Demo_Init(void)
 	democache_available = false;
 	if ((parm = COM_CheckParm("-democache")) && parm + 1 < COM_Argc())
 	{
-		democache_size = Q_atoi(COM_Argv(parm + 1)) * 1024;
+		democache_size = SDL_atoi(COM_Argv(parm + 1)) * 1024;
 		democache_size = max(democache_size, DEMOCACHE_MINSIZE);
 		if ((democache_buffer = (byte *) malloc (democache_size)))
 		{

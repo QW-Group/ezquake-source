@@ -784,7 +784,7 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_byte **rowpointers;
-	snprintf (name, sizeof(name), "%s", filename);
+	SDL_snprintf (name, sizeof(name), "%s", filename);
 
 	if (!png_handle)
 		return false;
@@ -849,7 +849,7 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	if (!png_handle)
 		return false;
 
-	snprintf (name, sizeof(name), "%s", filename);
+	SDL_snprintf (name, sizeof(name), "%s", filename);
 	
 	if (!(fp = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
 		COM_CreatePath (name);
@@ -1146,8 +1146,8 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 				textchunks[i].key = (char *)Q_calloc(len + 1, sizeof(char));
 				textchunks[i].text = (char *)Q_calloc(png_text_ptr[i].text_length + 1, sizeof(char));
 
-				strlcpy (textchunks[i].key, png_text_ptr[i].key, len + 1);
-				strlcpy (textchunks[i].text, png_text_ptr[i].text, png_text_ptr[i].text_length + 1);
+				SDL_strlcpy (textchunks[i].key, png_text_ptr[i].key, len + 1);
+				SDL_strlcpy (textchunks[i].text, png_text_ptr[i].text, png_text_ptr[i].text_length + 1);
 				
 				textchunks[i].text_length = png_text_ptr[i].text_length;
 				textchunks[i].compression = png_text_ptr[i].compression;
@@ -1226,7 +1226,7 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_byte **rowpointers;
-	snprintf (name, sizeof(name), "%s", filename);
+	SDL_snprintf (name, sizeof(name), "%s", filename);
 
 	width_sign = (width < 0) ? -1 : 1;
 	width = abs(width);
@@ -1288,7 +1288,7 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	png_infop info_ptr;
 	png_byte **rowpointers;
 
-	snprintf (name, sizeof(name), "%s", filename);
+	SDL_snprintf (name, sizeof(name), "%s", filename);
 	
 
 	if (!(fp = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
@@ -1723,7 +1723,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	if (!jpeg_handle)
 		return false;
 
-	snprintf (name, sizeof(name), "%s", filename);	
+	SDL_snprintf (name, sizeof(name), "%s", filename);	
 	if (!(outfile = fopen (name, "wb"))) {
 		COM_CreatePath (name);
 		if (!(outfile = fopen (name, "wb")))
@@ -1854,7 +1854,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	struct jpeg_compress_struct cinfo;
 	JSAMPROW row_pointer[1];
 
-	snprintf (name, sizeof(name), "%s", filename);	
+	SDL_snprintf (name, sizeof(name), "%s", filename);	
 	if (!(outfile = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
 		FS_CreatePath (name);
 		if (!(outfile = FS_OpenVFS(name, "wb", FS_NONE_OS)))

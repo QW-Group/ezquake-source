@@ -35,14 +35,14 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	char name[sizeof(dst->qtvname)];
 
 	// extract name
-	strlcpy(name, Info_ValueForKey(userinfo, "name"), sizeof(name));
+	SDL_strlcpy(name, Info_ValueForKey(userinfo, "name"), sizeof(name));
 
 	count = 0;
 	for (dst = demo.dest; dst; dst = dst->nextdest)
 	{
 		if (dst->desttype == DEST_STREAM)
 		{
-			if (name[0] && !strcasecmp(name, dst->qtvname))
+			if (name[0] && !SDL_strcasecmp(name, dst->qtvname))
 				return NULL; // duplicate name, well empty names may still duplicates...
 
 			count++;
@@ -62,7 +62,7 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	dst->id = ++lastdest;
 	dst->na = na;
 
-	strlcpy(dst->qtvname, name, sizeof(dst->qtvname));
+	SDL_strlcpy(dst->qtvname, name, sizeof(dst->qtvname));
 
 	if (dst->qtvname[0])
 		Con_Printf ("Connected to QTV(%s)\n", dst->qtvname);
@@ -81,7 +81,7 @@ static void SV_MVD_InitPendingStream (int socket1, netadr_t na)
 	dst->io_time = Sys_DoubleTime();
 	dst->na = na;
 
-	strlcpy(dst->challenge, NET_AdrToString(dst->na), sizeof(dst->challenge));
+	SDL_strlcpy(dst->challenge, NET_AdrToString(dst->na), sizeof(dst->challenge));
 	for (i = strlen(dst->challenge); i < sizeof(dst->challenge)-1; i++)
 		dst->challenge[i] = rand()%(127-33) + 33;	//generate a random challenge
 
@@ -452,18 +452,18 @@ void SV_MVD_RunPendingConnections (void)
 							if (!strcmp(com_token, "VERSION"))
 							{
 								start = COM_ParseToken(start, NULL);
-								if (atoi(com_token) == 1)
+								if (SDL_atoi(com_token) == 1)
 									versiontouse = 1;
 							}
 							else if (!strcmp(com_token, "RAW"))
 							{
 								start = COM_ParseToken(start, NULL);
-								raw = atoi(com_token);
+								raw = SDL_atoi(com_token);
 							}
 							else if (!strcmp(com_token, "PASSWORD"))
 							{
 								start = COM_ParseToken(start, NULL);
-								strlcpy(password, com_token, sizeof(password));
+								SDL_strlcpy(password, com_token, sizeof(password));
 							}
 							else if (!strcmp(com_token, "AUTH"))
 							{
@@ -498,7 +498,7 @@ void SV_MVD_RunPendingConnections (void)
 							else if (!strcmp(com_token, "USERINFO"))
 							{
 								start = COM_ParseToken(start, NULL);
-								strlcpy(userinfo, com_token, sizeof(userinfo));
+								SDL_strlcpy(userinfo, com_token, sizeof(userinfo));
 							}
 							else
 							{
@@ -536,7 +536,7 @@ void SV_MVD_RunPendingConnections (void)
 							CRC_Init(&ushort_result);
 							CRC_AddBlock(&ushort_result, (byte *) p->challenge, strlen(p->challenge));
 							CRC_AddBlock(&ushort_result, (byte *) qtv_password.string, strlen(qtv_password.string));
-							p->hasauthed = (ushort_result == Q_atoi(password));
+							p->hasauthed = (ushort_result == SDL_atoi(password));
 							break;
 
 						case QTVAM_MD4:
@@ -544,9 +544,9 @@ void SV_MVD_RunPendingConnections (void)
 								char hash[512];
 								int md4sum[4];
 								
-								snprintf (hash, sizeof(hash), "%s%s", p->challenge, qtv_password.string);
+								SDL_snprintf (hash, sizeof(hash), "%s%s", p->challenge, qtv_password.string);
 								Com_BlockFullChecksum (hash, strlen(hash), (unsigned char*)md4sum);
-								snprintf (hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
+								SDL_snprintf (hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
 								p->hasauthed = !strcmp(password, hash);
 							}
 							break;
@@ -720,7 +720,7 @@ void QTVcmd_Say_f(mvddest_t *d)
 	if (Cmd_Argc () < 2)
 		return;
 
-	if (!strcasecmp(Info_ValueForKey(svs.info, "status"), "Countdown"))
+	if (!SDL_strcasecmp(Info_ValueForKey(svs.info, "status"), "Countdown"))
 		gameStarted	= false; // if status is "Countdown" then game is not started yet
 	else
 		gameStarted = GameStarted();
@@ -736,7 +736,7 @@ void QTVcmd_Say_f(mvddest_t *d)
 	cmd = Cmd_Argv(0);
 
 	// strip leading say_game but not in case of "cmd say_game say_game"
-	if (strcmp(cmd, "say_game") && !strncasecmp(p, "say_game ", sizeof("say_game ") - 1))
+	if (strcmp(cmd, "say_game") && !SDL_strncasecmp(p, "say_game ", sizeof("say_game ") - 1))
 	{
 		p += sizeof("say_game ") - 1;
 	}
@@ -751,9 +751,9 @@ void QTVcmd_Say_f(mvddest_t *d)
 		cmd = "say_team"; // we can accept only this command, since we will send to specs only
 
 	// for clients and demo
-	snprintf(text, sizeof(text), "#0:qtv_%s_game:#%d:%s: %s\n", cmd, d->id, d->qtvname, p);
+	SDL_snprintf(text, sizeof(text), "#0:qtv_%s_game:#%d:%s: %s\n", cmd, d->id, d->qtvname, p);
 	// for server console and logs
-	snprintf(text2, sizeof(text2), "qtv: #0:qtv_%s_game:#%d:%s: %s\n", cmd, d->id, d->qtvname, p);
+	SDL_snprintf(text2, sizeof(text2), "qtv: #0:qtv_%s_game:#%d:%s: %s\n", cmd, d->id, d->qtvname, p);
 
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
 	{
@@ -971,9 +971,9 @@ static void QTVcmd_QtvUserList_f(mvddest_t *d)
 
 //	Cmd_TokenizeString( s );
 
-	action 		= atoi( Cmd_Argv( cnt++ ) );
-	tmpuser.id	= atoi( Cmd_Argv( cnt++ ) );
-	strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
+	action 		= SDL_atoi( Cmd_Argv( cnt++ ) );
+	tmpuser.id	= SDL_atoi( Cmd_Argv( cnt++ ) );
+	SDL_strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
 
 	switch ( action )
 	{
@@ -1367,8 +1367,8 @@ void Qtv_Close_f(void)
 		return;
 	}
 
-	id  = atoi(Cmd_Argv(1));
-	all = !strcasecmp(Cmd_Argv(1), "all");
+	id  = SDL_atoi(Cmd_Argv(1));
+	all = !SDL_strcasecmp(Cmd_Argv(1), "all");
 	cnt = 0;
 
 	for (d = demo.dest; d; d = d->nextdest)

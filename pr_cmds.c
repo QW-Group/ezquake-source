@@ -40,7 +40,7 @@ char *PF_VarString (int	first)
 	out[0] = 0;
 	for (i=first ; i<pr_argc ; i++)
 	{
-		strlcat (out, G_STRING((OFS_PARM0+i*3)), sizeof(out));
+		SDL_strlcat (out, G_STRING((OFS_PARM0+i*3)), sizeof(out));
 	}
 	return out;
 }
@@ -805,7 +805,7 @@ void PF_stuffcmd (void)
 	buf = cl->stufftext_buf;
 	if (strlen(buf) + strlen(str) >= MAX_STUFFTEXT)
 		PR_RunError ("stufftext buffer overflow");
-	strlcat (buf, str, MAX_STUFFTEXT);
+	SDL_strlcat (buf, str, MAX_STUFFTEXT);
 
 	if( strchr( buf, '\n' ) )
 	{
@@ -944,7 +944,7 @@ void PF_argv (void)
 	if (num < 0 || num >= Cmd_Argc())
 		RETURN_STRING("");
 	else {
-		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%s", Cmd_Argv(num));
+		SDL_snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%s", Cmd_Argv(num));
 		RETURN_STRING(pr_string_temp);
 //		G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
 		PF_SetTempString();
@@ -994,7 +994,7 @@ void PF_substr (void)
 	if (len > l + 1)
 		len = l + 1;
 
-	strlcpy(pr_string_temp, s, len + 1);
+	SDL_strlcpy(pr_string_temp, s, len + 1);
 
 	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
 
@@ -1089,7 +1089,7 @@ void PF_strzone (void)
 		size = (int) G_FLOAT(OFS_PARM1);
 
 	pr_newstrtbl[i] = (char *) Q_malloc(size);
-	strlcpy(pr_newstrtbl[i], s, size);
+	SDL_strlcpy(pr_newstrtbl[i], s, size);
 
 	G_INT(OFS_RETURN) = -(i+MAX_PRSTR);
 }
@@ -1164,7 +1164,7 @@ void PF_readcmd (void)
 
 	SV_BeginRedirect(RD_MOD);
 	Cbuf_Execute();
-	strlcpy(output, outputbuf, sizeof(output));
+	SDL_strlcpy(output, outputbuf, sizeof(output));
 	SV_EndRedirect();
 
 	if (old != RD_NONE)
@@ -1366,7 +1366,7 @@ void PF_log(void)
 	char name[MAX_OSPATH], *text;
 	FILE *file;
 
-	snprintf(name, MAX_OSPATH, "%s/%s.log", fs_gamedir, G_STRING(OFS_PARM0));
+	SDL_snprintf(name, MAX_OSPATH, "%s/%s.log", fs_gamedir, G_STRING(OFS_PARM0));
 	text = PF_VarString(2);
 	PR_CleanText((unsigned char*)text);
 
@@ -1399,7 +1399,7 @@ void PF_cvar (void)
 
 	str = G_STRING(OFS_PARM0);
 
-	if (!strcasecmp(str, "pr_checkextension") && !is_ktpro) {
+	if (!SDL_strcasecmp(str, "pr_checkextension") && !is_ktpro) {
 		// we do support PF_checkextension
 		G_FLOAT(OFS_RETURN) = 1.0;
 		return;
@@ -1519,9 +1519,9 @@ void PF_ftos (void)
 	v = G_FLOAT(OFS_PARM0);
 
 	if (v == (int)v)
-		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%d",(int)v);
+		SDL_snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%d",(int)v);
 	else
-		snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%5.1f",v);
+		SDL_snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "%5.1f",v);
 	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
 	PF_SetTempString();
 }
@@ -1535,7 +1535,7 @@ void PF_fabs (void)
 
 void PF_vtos (void)
 {
-	snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+	SDL_snprintf (pr_string_temp, MAX_PR_STRING_SIZE, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
 	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
 
 	PF_SetTempString();
@@ -2594,7 +2594,7 @@ void PF_findmap (void)
 	int id;
 	int i;
 
-	strlcpy(map, G_STRING(OFS_PARM0), sizeof(map));
+	SDL_strlcpy(map, G_STRING(OFS_PARM0), sizeof(map));
 	for (i = 0, s = map; *s; s++)
 	{
 		if (*s < '0' || *s > '9')
@@ -2603,10 +2603,10 @@ void PF_findmap (void)
 			break;
 		}
 	}
-	id = (i) ? 0 : Q_atoi(map);
+	id = (i) ? 0 : SDL_atoi(map);
 
 	if (!strstr(map, ".bsp"))
-		strlcat(map, ".bsp", sizeof(map));
+		SDL_strlcat(map, ".bsp", sizeof(map));
 
 	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
 	                  ".bsp$", SORT_BY_NAME);
@@ -2700,7 +2700,7 @@ void PF_listmaps (void)
 	dir = Sys_listdir(va("%s/maps", Info_ValueForKey(svs.info, "*gamedir")),
 	                  ".bsp$", SORT_BY_NAME);
 	list = dir.files;
-	snprintf(tmp, sizeof(tmp), "%d", dir.numfiles);
+	SDL_snprintf(tmp, sizeof(tmp), "%d", dir.numfiles);
 	pad = strlen(tmp);
 
 	if (!list->name[0])
@@ -2740,19 +2740,19 @@ void PF_listmaps (void)
 		case 1:
 			if (i % ti == 0)
 			{ //print header
-				snprintf(tmp, sizeof(tmp), "%d-%d", id, id + ti - 1);
+				SDL_snprintf(tmp, sizeof(tmp), "%d-%d", id, id + ti - 1);
 				num[0] = '\0';
 				for (j = strlen(tmp); j < ((pad * 2) + 1); j++) //padding to align
-					strlcat(num, " ", sizeof(num));
+					SDL_strlcat(num, " ", sizeof(num));
 				SV_ClientPrintf(client, level, "%s%s %c ", num, tmp, 133);
 				j = 1;
 			}
 			i++;
 			//print id and name
-			snprintf(tmp, sizeof(tmp), "%d:%s ", j++, list->name);
+			SDL_snprintf(tmp, sizeof(tmp), "%d:%s ", j++, list->name);
 			if (i % 2 != 0) //red every second
 				Q_redtext((unsigned char*)tmp);
-			strlcat(line, tmp, sizeof(line));
+			SDL_strlcat(line, tmp, sizeof(line));
 			if (i % 10 == 0)
 			{ //print entire line
 				SV_ClientPrintf(client, level, "%s\n", line);
@@ -2760,31 +2760,31 @@ void PF_listmaps (void)
 			}
 			break;
 		case 2:
-			snprintf(tmp, sizeof(tmp), "%d", id);
+			SDL_snprintf(tmp, sizeof(tmp), "%d", id);
 			num[0] = '\0';
 			for (j = strlen(tmp); j < pad; j++) //padding to align
-				strlcat(num, " ", sizeof(num));
+				SDL_strlcat(num, " ", sizeof(num));
 			Q_redtext((unsigned char*)tmp);
 			SV_ClientPrintf(client, level, "%s%s%c %s\n", num, tmp, 133, list->name);
 			break;
 		case 3:
 			list->name[13] = 0;
-			snprintf(tmp, sizeof(tmp), "%03d", id);
+			SDL_snprintf(tmp, sizeof(tmp), "%03d", id);
 			Q_redtext((unsigned char*)tmp);
-			snprintf(line, sizeof(line), "%s\x85%-13s", tmp, list->name);
+			SDL_snprintf(line, sizeof(line), "%s\x85%-13s", tmp, list->name);
 			id++;
 			list++;
 			if (!list->name[0])
 				continue;
 			list->name[13] = 0;
 			list->name[strlen(list->name) - 4] = 0;
-			snprintf(tmp, sizeof(tmp), "%03d", id);
+			SDL_snprintf(tmp, sizeof(tmp), "%03d", id);
 			Q_redtext((unsigned char*)tmp);
 			SV_ClientPrintf(client, level, "%s %s\x85%-13s\n", line, tmp, list->name);
 			line[0] = 0; //bliP: 24/9 bugfix
 			break;
 		default:
-			snprintf(tmp, sizeof(tmp), "%d", id);
+			SDL_snprintf(tmp, sizeof(tmp), "%d", id);
 			Q_redtext((unsigned char*)tmp);
 			SV_ClientPrintf(client, level, "%s%c%s%s", tmp, 133, list->name, (i == range) ? "\n" : " ");
 			i++;
@@ -2804,7 +2804,7 @@ void PF_listmaps (void)
 
 	if (foot)
 	{ //footer
-		strlcpy(tmp, "Total:", sizeof(tmp));
+		SDL_strlcpy(tmp, "Total:", sizeof(tmp));
 		Q_redtext((unsigned char*)tmp);
 		SV_ClientPrintf (client, level,	"%s %d maps %.0fKB (%.2fMB)\n", tmp, dir.numfiles, (float)dir.size/1024, (float)dir.size/1024/1024);
 	}
@@ -2847,16 +2847,16 @@ void PF_infokey (void)
 	{
 		value = ov;
 		if (!strncmp(key, "ip", 3))
-			strlcpy(ov, NET_BaseAdrToString (cl->netchan.remote_address), sizeof(ov));
+			SDL_strlcpy(ov, NET_BaseAdrToString (cl->netchan.remote_address), sizeof(ov));
 		else if (!strncmp(key, "realip", 7))
-			strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
+			SDL_strlcpy(ov, NET_BaseAdrToString (cl->realip), sizeof(ov));
 		else if (!strncmp(key, "download", 9))
-			//snprintf(ov, sizeof(ov), "%d", cl->download != NULL ? (int)(100*cl->downloadcount/cl->downloadsize) : -1);
-			snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
+			//SDL_snprintf(ov, sizeof(ov), "%d", cl->download != NULL ? (int)(100*cl->downloadcount/cl->downloadsize) : -1);
+			SDL_snprintf(ov, sizeof(ov), "%d", cl->file_percent ? cl->file_percent : -1); //bliP: file percent
 		else if (!strncmp(key, "ping", 5))
-			snprintf(ov, sizeof(ov), "%d", SV_CalcPing (cl));
+			SDL_snprintf(ov, sizeof(ov), "%d", SV_CalcPing (cl));
 		else if (!strncmp(key, "*userid", 8))
-			snprintf(ov, sizeof(ov), "%d", svs.clients[e1 - 1].userid);
+			SDL_snprintf(ov, sizeof(ov), "%d", svs.clients[e1 - 1].userid);
 		else if (!strncmp(key, "login", 6))
 			value = cl->login;
 		else
@@ -2865,7 +2865,7 @@ void PF_infokey (void)
 	else
 		value = "";
 
-	strlcpy(pr_string_temp, value, MAX_PR_STRING_SIZE);
+	SDL_strlcpy(pr_string_temp, value, MAX_PR_STRING_SIZE);
 	RETURN_STRING(pr_string_temp);
 	PF_SetTempString();
 }
@@ -2883,7 +2883,7 @@ void PF_stof (void)
 
 	s = G_STRING(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = Q_atof(s);
+	G_FLOAT(OFS_RETURN) = SDL_atof(s);
 }
 
 
@@ -3065,7 +3065,7 @@ static void PF_cvar_string (void)
 		G_INT(OFS_RETURN) = 0;
 		return;
 	}
-	strlcpy (pr_string_temp, var->string, sizeof(pr_string_temp));
+	SDL_strlcpy (pr_string_temp, var->string, sizeof(pr_string_temp));
 	RETURN_STRING(pr_string_temp);
 }
 
@@ -3136,7 +3136,7 @@ static void PF_checkextension (void)
 	extension = G_STRING(OFS_PARM0);
 
 	for (pstr = supported_extensions; *pstr; pstr++) {
-		if (!strcasecmp(*pstr, extension)) {
+		if (!SDL_strcasecmp(*pstr, extension)) {
 			G_FLOAT(OFS_RETURN) = 1.0;	// supported
 			return;
 		}

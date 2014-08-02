@@ -117,7 +117,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	s = name;
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[h] ; a ; a=a->hash_next) {
-		if (!strcasecmp(s, a->name)) {
+		if (!SDL_strcasecmp(s, a->name)) {
 			Q_free (a->value);
 			a->flags = 0;
 			break;
@@ -133,7 +133,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 		cmd_alias_hash[h] = a;
 	}
 
-	strlcpy (a->name, s, MAX_ALIAS_NAME);
+	SDL_strlcpy (a->name, s, MAX_ALIAS_NAME);
 
 	a->flags = ALIAS_TCL;
 
@@ -206,7 +206,7 @@ static int TCL_DenyProc (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj 
 	char result[80];
 	const char* command = Tcl_GetString (objv[0]);
 
-	snprintf (result, 80, "Tcl command \"%s\" not allowed in Quakeworld", command);
+	SDL_snprintf (result, 80, "Tcl command \"%s\" not allowed in Quakeworld", command);
 	Tcl_SetResult (interp, result, TCL_VOLATILE);
 	return (TCL_ERROR);
 }
@@ -328,7 +328,7 @@ static void TCL_Exec_f (void)
 		Com_Printf ("%s <filename> : execute file as Tcl script\n", Cmd_Argv(0));
 		return;
 	}
-	strlcpy (filename, Cmd_Argv(1), sizeof(filename));
+	SDL_strlcpy (filename, Cmd_Argv(1), sizeof(filename));
 	COM_DefaultExtension (filename, ".tcl");
 
 	mark = Hunk_LowMark();

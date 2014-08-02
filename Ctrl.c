@@ -214,7 +214,7 @@ qbool UI_PrintTextBlock(int x, int y, int w, int h, const char* text, qbool red)
 			start++;
 		}
 
-		strlcpy(buf, start, end - start + 1);
+		SDL_strlcpy(buf, start, end - start + 1);
 		UI_Print(x, y + (linecount * 8), buf, red);
 		linecount++;
 		start = end;

@@ -49,7 +49,7 @@ void Sys_Error (char *error, ...) {
 	char text[1024];
 
 	va_start (argptr, error);
-	vsnprintf (text, sizeof(text), error, argptr);
+	SDL_vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
 //    MessageBox(NULL, text, "Error", 0 /* MB_OK */ );
