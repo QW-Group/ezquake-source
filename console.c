@@ -75,7 +75,6 @@ cvar_t      con_sound_other_volume  = {"s_otherchat_volume",  "1"};
 
 cvar_t      con_timestamps  = {"con_timestamps", "0"};
 cvar_t      con_shift  = {"con_shift", "0"};
-cvar_t      con_showconfig = {"con_showconfig", "1"};
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated
@@ -446,9 +445,8 @@ void Con_Init (void) {
 	Cvar_Register (&con_highlight_mark);
 	// added by jogi stop
 
-	Cvar_Register(&con_timestamps); 
-	Cvar_Register(&con_shift); 
-	Cvar_Register(&con_showconfig); 
+	Cvar_Register (&con_timestamps); 
+	Cvar_Register (&con_shift); 
 
 	Cvar_ResetCurrentGroup();
 
@@ -698,7 +696,7 @@ static void Con_DrawInput(void) {
 		text += 1 + key_linepos - con_linewidth;
 
 	Draw_StringW (8, con_vislines-22 + bound(0, con_shift.value, 8), text);
-	if (configname && con_showconfig.integer > 0)
+	if (configname)
 		Draw_String (con_linewidth*8-((strlen(configname)-7)*8)+8+8, con_vislines-8 + bound(0, con_shift.value, 8), configname);
 		// right align: string contains 7 non visible chars, every char is 8 units wide, move 2 steps right of con_linewidth
 }
