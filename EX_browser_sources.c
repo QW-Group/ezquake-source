@@ -95,7 +95,7 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 			netadr_t addr;
 
 			if (!strchr(line, ':'))
-				strlcat (line, ":27000", sizeof (line));
+				SDL_strlcat (line, ":27000", sizeof (line));
 			if (!NET_StringToAdr(line, &addr))
 				continue;
 
@@ -159,11 +159,11 @@ void Precache_Source(source_data *s)
 
 		filename = Q_malloc(filename_size);
 		SB_URL_to_FileName(s->address.url, filename, filename_size);
-		snprintf(name, sizeof (name), "sb/cache/%s", filename);
+		SDL_snprintf(name, sizeof (name), "sb/cache/%s", filename);
 		Q_free(filename);
 	}
 	else if (s->type == type_master) {
-		snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
+		SDL_snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
 				s->address.address.ip[0], s->address.address.ip[1],
 				s->address.address.ip[2], s->address.address.ip[3],
 				ntohs(s->address.address.port));
@@ -268,7 +268,7 @@ void Update_Source(source_data *s)
     {
         // read servers from file
         char name[1024];
-        snprintf(name, sizeof (name), "sb/%s", s->address.filename);
+        SDL_snprintf(name, sizeof (name), "sb/%s", s->address.filename);
         should_dump = Update_Source_From_File(s, name, servers, &serversn);
         GetLocalTime(&(s->last_update));
     }
@@ -338,7 +338,7 @@ void Update_Source(source_data *s)
 					qbool exists = false;
 					int j;
 
-					snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
+					SDL_snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
 						(int)answer[i+0], (int)answer[i+1],
 						(int)answer[i+2], (int)answer[i+3],
 						256 * (int)answer[i+4] + (int)answer[i+5]);
@@ -525,7 +525,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 						qbool exists = false;
 						int j;
 
-						snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
+						SDL_snprintf(buf, sizeof (buf), "%u.%u.%u.%u:%u",
 							(int)answer[i+0], (int)answer[i+1],
 							(int)answer[i+2], (int)answer[i+3],
 							256 * (int)answer[i+4] + (int)answer[i+5]);
@@ -732,18 +732,18 @@ int SB_Source_Add(const char* name, const char* address, sb_source_type_t type)
 	// create new source
 	s = Create_Source();
 	s->type = type;
-	strlcpy (s->name, name, sizeof (s->name));
-	strlcpy (addr, address, sizeof (addr));
+	SDL_strlcpy (s->name, name, sizeof (s->name));
+	SDL_strlcpy (addr, address, sizeof (addr));
 
 	if (s->type == type_file) {
-		strlcpy (s->address.filename, address, sizeof (s->address.filename));
+		SDL_strlcpy (s->address.filename, address, sizeof (s->address.filename));
 	}
 	else if (s->type == type_url) {
-		strlcpy(s->address.url, address, sizeof(s->address.url));
+		SDL_strlcpy(s->address.url, address, sizeof(s->address.url));
 	}
 	else {
 		if (!strchr(addr, ':')) {
-			strlcat (addr, ":27000", sizeof (addr));
+			SDL_strlcat (addr, ":27000", sizeof (addr));
 		}
 		if (!NET_StringToAdr(addr, &(s->address.address))) {
 			return -1;
@@ -800,7 +800,7 @@ void Reload_Sources(void)
     // create dummy unbound source
     sources[0] = Create_Source();
     sources[0]->type = type_dummy;
-    strlcpy (sources[0]->name, "Unbound", sizeof (sources[0]->name));
+    SDL_strlcpy (sources[0]->name, "Unbound", sizeof (sources[0]->name));
     sources[0]->servers = (server_data **) Q_malloc(MAX_UNBOUND*sizeof(server_data *));
 
 	sourcesn = 1;
@@ -846,7 +846,7 @@ void Reload_Sources(void)
         if (q-p <= 0)
             continue;
 
-        strlcpy (s->name, p, min(q-p+1, MAX_SOURCE_NAME+1));
+        SDL_strlcpy (s->name, p, min(q-p+1, MAX_SOURCE_NAME+1));
 
         p = next_nonspace(q+1);
         q = next_space(p);
@@ -856,9 +856,9 @@ void Reload_Sources(void)
             continue;
 
         if (s->type == type_file)
-            strlcpy (s->address.filename, p, sizeof (s->address.filename));
+            SDL_strlcpy (s->address.filename, p, sizeof (s->address.filename));
 		else if (s->type == type_url)
-			strlcpy (s->address.url, p, sizeof (s->address.url));
+			SDL_strlcpy (s->address.url, p, sizeof (s->address.url));
         else
             if (!NET_StringToAdr(p, &(s->address.address)))
                 continue;
@@ -927,11 +927,11 @@ void DumpSource(source_data *s)
     char buf[1024];
 
     if (s->type == type_file)
-        snprintf(buf, sizeof (buf), "sb/%s", s->address.filename);
+        SDL_snprintf(buf, sizeof (buf), "sb/%s", s->address.filename);
     else if (s->type == type_master)
     {
         Sys_mkdir("sb/cache");
-        snprintf(buf, sizeof (buf), "sb/cache/%d_%d_%d_%d_[%d].txt",
+        SDL_snprintf(buf, sizeof (buf), "sb/cache/%d_%d_%d_%d_[%d].txt",
                 s->address.address.ip[0], s->address.address.ip[1],
                 s->address.address.ip[2], s->address.address.ip[3],
                 ntohs(s->address.address.port));

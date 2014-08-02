@@ -84,14 +84,14 @@ void Hud262_CatchStringsOnLoad(char *line)
 		if (hud262_load_buff == NULL)
 		{
 			hud262_load_buff = (char*) Q_malloc( (strlen(line) + 2) * sizeof(char));
-			snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
+			SDL_snprintf(hud262_load_buff, strlen(line) + 2, "%s\n", line);
 		}
 		else
 		{
 			tmpbuff = (char *) Q_malloc(strlen(hud262_load_buff) + 1);
 			strcpy(tmpbuff, hud262_load_buff);
 			hud262_load_buff = (char *) Q_realloc(hud262_load_buff, (strlen(tmpbuff) + strlen(line) + 2) * sizeof(char));
-			snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
+			SDL_snprintf(hud262_load_buff, strlen(tmpbuff) + strlen(line) + 2, "%s%s\n", tmpbuff, line);
 			Q_free(tmpbuff);
 		}
 	}
@@ -366,7 +366,7 @@ void Cbuf_AddEarlyCommands (void)
 	int i;
 
 	for (i = 0; i < COM_Argc () - 2; i++) {
-		if (strcasecmp (COM_Argv(i), "+set"))
+		if (SDL_strcasecmp (COM_Argv(i), "+set"))
 			continue;
 
 		Cbuf_AddText (va ("set %s %s\n", COM_Argv (i + 1), COM_Argv (i + 2)));
@@ -381,10 +381,10 @@ qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 
 	while(*banned_cmd)
 	{
-		if(strncasecmp(str, *banned_cmd, strlen(*banned_cmd)) == 0)
+		if(SDL_strncasecmp(str, *banned_cmd, strlen(*banned_cmd)) == 0)
 		{
 			//+set is processed in Cbuf_AddEarlyCommands(), +cfg_load allowed only once in Host_Init()
-			if((strncasecmp(str, "set ", 4) != 0) && (strncasecmp(str, "cfg_load ", 9) != 0))
+			if((SDL_strncasecmp(str, "set ", 4) != 0) && (SDL_strncasecmp(str, "cfg_load ", 9) != 0))
 			{
 				Com_Printf("+%s is not allowed in cmdline or obsolete.\n", *banned_cmd);
 			}
@@ -416,9 +416,9 @@ void Cmd_StuffCmds_f (void)
 	text = (char *) Z_Malloc (len + 1);
 	text[0] = '\0';
 	for (k = 1; k < COM_Argc(); k++) {
-		strlcat (text, COM_Argv(k), len + 1);
+		SDL_strlcat (text, COM_Argv(k), len + 1);
 		if (k != COM_Argc() - 1)
-			strlcat (text, " ", len + 1);
+			SDL_strlcat (text, " ", len + 1);
 	}
 
 	// pull out the commands
@@ -456,14 +456,14 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
+	SDL_strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	mark = Hunk_LowMark();
 	if (!(f = (char *) FS_LoadHunkFile (name, NULL)))	{
 		const char *p;
 		p = COM_SkipPath (name);
 		if (!strchr (p, '.')) {
 			// no extension, so try the default (.cfg)
-			strlcat (name, ".cfg", sizeof (name));
+			SDL_strlcat (name, ".cfg", sizeof (name));
 			f = (char *) FS_LoadHunkFile (name, NULL);
 		}
 		if (!f) {
@@ -503,11 +503,11 @@ void Cmd_Echo_f (void)
 
 	memset (args, 0, MAX_MACRO_STRING);
 
-	snprintf (args, MAX_MACRO_STRING, "%s", Cmd_Argv(1));
+	SDL_snprintf (args, MAX_MACRO_STRING, "%s", Cmd_Argv(1));
 
 	for (i = 2; i < Cmd_Argc(); i++) {
-		strlcat (args, " ", MAX_MACRO_STRING);
-		strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
+		SDL_strlcat (args, " ", MAX_MACRO_STRING);
+		SDL_strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
 	}
 
 	//	str = TP_ParseMacroString(args);
@@ -515,7 +515,7 @@ void Cmd_Echo_f (void)
 	str = TP_ParseMacroString(args);
 	str = TP_ParseFunChars(str, false);
 
-	strlcpy (buf, str, MAX_MACRO_STRING);
+	SDL_strlcpy (buf, str, MAX_MACRO_STRING);
 
 	CL_SearchForReTriggers (buf, RE_PRINT_ECHO); 	// BorisU
 	Print_flags[Print_current] |= PR_TR_SKIP;
@@ -538,7 +538,7 @@ cmd_alias_t *Cmd_FindAlias (const char *name)
 
 	key = Com_HashKey (name) % ALIAS_HASHPOOL_SIZE;
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
-		if (!strcasecmp(name, alias->name))
+		if (!SDL_strcasecmp(name, alias->name))
 			return alias;
 	}
 	return NULL;
@@ -551,7 +551,7 @@ char *Cmd_AliasString (char *name)
 
 	key = Com_HashKey (name) % ALIAS_HASHPOOL_SIZE;
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
-		if (!strcasecmp(name, alias->name))
+		if (!SDL_strcasecmp(name, alias->name))
 #ifdef WITH_TCL
 			if (!(alias->flags & ALIAS_TCL))
 #endif
@@ -619,20 +619,20 @@ int Cmd_AliasCompare (const void *p1, const void *p2)
 
 	if (a1->name[0] == '+') {
 		if (a2->name[0] == '+')
-			return strcasecmp(a1->name + 1, a2->name + 1);
+			return SDL_strcasecmp(a1->name + 1, a2->name + 1);
 		else
 			return -1;
 	} else if (a1->name[0] == '-') {
 		if (a2->name[0] == '+')
 			return 1;
 		else if (a2->name[0] == '-')
-			return strcasecmp(a1->name + 1, a2->name + 1);
+			return SDL_strcasecmp(a1->name + 1, a2->name + 1);
 		else
 			return -1;
 	} else if (a2->name[0] == '+' || a2->name[0] == '-') {
 		return 1;
 	} else {
-		return strcasecmp(a1->name, a2->name);
+		return SDL_strcasecmp(a1->name, a2->name);
 	}
 }
 
@@ -692,7 +692,7 @@ void Cmd_EditAlias_f (void)
 		s = Z_Strdup(a->value);
 	}
 
-	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
+	SDL_snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, str2wcs(final_string), strlen(final_string)*sizeof(wchar));
 	Z_Free(s);
@@ -711,7 +711,7 @@ static cmd_alias_t* Cmd_AliasCreate (char* name)
 	a->hash_next = cmd_alias_hash[key];
 	cmd_alias_hash[key] = a;
 
-	strlcpy (a->name, name, sizeof (a->name));
+	SDL_strlcpy (a->name, name, sizeof (a->name));
 	return a;
 }
 
@@ -739,7 +739,7 @@ void Cmd_Alias_f (void)
 
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
-		if (!strcasecmp(a->name, s)) {
+		if (!SDL_strcasecmp(a->name, s)) {
 			Z_Free (a->value);
 			break;
 		}
@@ -753,7 +753,7 @@ void Cmd_Alias_f (void)
 		cmd_alias_hash[key] = a;
 	}
 
-	strlcpy (a->name, s, sizeof (a->name));
+	SDL_strlcpy (a->name, s, sizeof (a->name));
 
 	a->flags = 0;
 	// QW262 -->
@@ -769,7 +769,7 @@ void Cmd_Alias_f (void)
 
 	if (cbuf_current == &cbuf_svc)
 		a->flags |= ALIAS_SERVER;
-	if (!strcasecmp(Cmd_Argv(0), "tempalias"))
+	if (!SDL_strcasecmp(Cmd_Argv(0), "tempalias"))
 		a->flags |= ALIAS_TEMP;
 
 	// copy the rest of the command line
@@ -785,7 +785,7 @@ qbool Cmd_DeleteAlias (char *name)
 
 	prev = NULL;
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
-		if (!strcasecmp(a->name, name)) {
+		if (!SDL_strcasecmp(a->name, name)) {
 			// unlink from hash
 			if (prev)
 				prev->hash_next = a->hash_next;
@@ -801,7 +801,7 @@ qbool Cmd_DeleteAlias (char *name)
 
 	prev = NULL;
 	for (a = cmd_alias; a; a = a->next) {
-		if (!strcasecmp(a->name, name)) {
+		if (!SDL_strcasecmp(a->name, name)) {
 			// unlink from alias list
 			if (prev)
 				prev->next = a->next;
@@ -933,7 +933,7 @@ qbool Cmd_IsLegacyCommand (char *oldname)
 	legacycmd_t *cmd;
 
 	for (cmd = legacycmds; cmd; cmd = cmd->next) {
-		if (!strcasecmp(cmd->oldname, oldname))
+		if (!SDL_strcasecmp(cmd->oldname, oldname))
 			return true;
 	}
 	return false;
@@ -946,7 +946,7 @@ static qbool Cmd_LegacyCommand (void)
 	char text[1024];
 
 	for (cmd = legacycmds; cmd; cmd = cmd->next) {
-		if (!strcasecmp(cmd->oldname, Cmd_Argv(0)))
+		if (!SDL_strcasecmp(cmd->oldname, Cmd_Argv(0)))
 			break;
 	}
 	if (!cmd)
@@ -956,9 +956,9 @@ static qbool Cmd_LegacyCommand (void)
 		return true;		// just ignore this command
 
 	// build new command string
-	strlcpy (text, cmd->newname, sizeof(text));
-	strlcat (text, " ", sizeof(text));
-	strlcat (text, Cmd_Args(), sizeof(text));
+	SDL_strlcpy (text, cmd->newname, sizeof(text));
+	SDL_strlcat (text, " ", sizeof(text));
+	SDL_strlcat (text, Cmd_Args(), sizeof(text));
 
 	assert (!recursive);
 	recursive = true;
@@ -1013,9 +1013,9 @@ char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start)
 	for (i = start; i < c; i++)
 	{
 		if (i > start)
-			strlcat (ctx->text, " ", sizeof (ctx->text) - strlen (ctx->text));
+			SDL_strlcat (ctx->text, " ", sizeof (ctx->text) - strlen (ctx->text));
 
-		strlcat (ctx->text, Cmd_ArgvEx(ctx, i), sizeof (ctx->text) - strlen (ctx->text));
+		SDL_strlcat (ctx->text, Cmd_ArgvEx(ctx, i), sizeof (ctx->text) - strlen (ctx->text));
 	}
 
 	return ctx->text;
@@ -1042,7 +1042,7 @@ void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text)
 			return;
 
 		if (ctx->cmd_argc == 1)
-			strlcpy(ctx->cmd_args, text, sizeof(ctx->cmd_args));
+			SDL_strlcpy(ctx->cmd_args, text, sizeof(ctx->cmd_args));
 
 		text = COM_Parse (text);
 		if (!text)
@@ -1128,7 +1128,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 
 	// fail if the command already exists
 	for (cmd = cmd_hash_array[key]; cmd; cmd=cmd->hash_next) {
-		if (!strcasecmp (cmd_name, cmd->name)) {
+		if (!SDL_strcasecmp (cmd_name, cmd->name)) {
 			Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
 			return;
 		}
@@ -1157,7 +1157,7 @@ qbool Cmd_AddRemCommand (char *cmd_name, xcommand_t function)
 
 	// fail if the command already exists
 	for (cmd = cmd_hash_array[key]; cmd; cmd=cmd->hash_next) {
-		if (!strcasecmp (cmd_name, cmd->name)) {
+		if (!SDL_strcasecmp (cmd_name, cmd->name)) {
 			Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
 			return false;
 		}
@@ -1184,7 +1184,7 @@ cmd_function_t *Cmd_RemoveCommand_Hash(char *cmd_name)
 	cmd_function_t *prev = NULL;
 	cmd_function_t *retval = NULL;
 
-	if (strcasecmp(cmd_name, cmd->name) == 0) {
+	if (SDL_strcasecmp(cmd_name, cmd->name) == 0) {
 		retval = cmd;
 		cmd_hash_array[key] = cmd_hash_array[key]->hash_next;
 	}
@@ -1192,7 +1192,7 @@ cmd_function_t *Cmd_RemoveCommand_Hash(char *cmd_name)
 	{
 		prev = cmd;
 		for (cmd = cmd->hash_next; cmd; cmd = cmd->hash_next) {
-			if (strcasecmp(cmd_name, cmd->name) == 0) {
+			if (SDL_strcasecmp(cmd_name, cmd->name) == 0) {
 				retval = cmd;
 				prev->hash_next = cmd->hash_next;
 			}
@@ -1251,7 +1251,7 @@ qbool Cmd_Exists (char *cmd_name)
 
 	key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
 	for (cmd=cmd_hash_array[key]; cmd; cmd = cmd->hash_next) {
-		if (!strcasecmp (cmd_name, cmd->name))
+		if (!SDL_strcasecmp (cmd_name, cmd->name))
 			return true;
 	}
 	return false;
@@ -1264,7 +1264,7 @@ cmd_function_t *Cmd_FindCommand (const char *cmd_name)
 
 	key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
 	for (cmd = cmd_hash_array[key]; cmd; cmd = cmd->hash_next) {
-		if (!strcasecmp (cmd_name, cmd->name))
+		if (!SDL_strcasecmp (cmd_name, cmd->name))
 			return cmd;
 	}
 	return NULL;
@@ -1283,18 +1283,18 @@ char *Cmd_CompleteCommand (char *partial)
 
 	// check for exact match
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strcasecmp (partial, cmd->name))
+		if (!SDL_strcasecmp (partial, cmd->name))
 			return cmd->name;
 	for (alias = cmd_alias; alias; alias = alias->next)
-		if (!strcasecmp (partial, alias->name))
+		if (!SDL_strcasecmp (partial, alias->name))
 			return alias->name;
 
 	// check for partial match
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strncasecmp (partial, cmd->name, len))
+		if (!SDL_strncasecmp (partial, cmd->name, len))
 			return cmd->name;
 	for (alias = cmd_alias; alias; alias = alias->next)
-		if (!strncasecmp (partial, alias->name, len))
+		if (!SDL_strncasecmp (partial, alias->name, len))
 			return alias->name;
 
 	return NULL;
@@ -1310,7 +1310,7 @@ int Cmd_CompleteCountPossible (char *partial)
 		return 0;
 
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strncasecmp (partial, cmd->name, len))
+		if (!SDL_strncasecmp (partial, cmd->name, len))
 			c++;
 
 	return c;
@@ -1326,7 +1326,7 @@ int Cmd_AliasCompleteCountPossible (char *partial)
 		return 0;
 
 	for (alias = cmd_alias; alias; alias = alias->next)
-		if (!strncasecmp (partial, alias->name, len))
+		if (!SDL_strncasecmp (partial, alias->name, len))
 			c++;
 
 	return c;
@@ -1412,7 +1412,7 @@ void Cmd_AddMacroEx (const char *s, char *(*f) (void), int teamplay)
 	if (macro_count == MAX_MACROS)
 		Sys_Error ("Cmd_AddMacro: macro_count == MAX_MACROS");
 
-	snprintf (macro_commands[macro_count].name, sizeof (macro_commands[macro_count].name), "%s", s);
+	SDL_snprintf (macro_commands[macro_count].name, sizeof (macro_commands[macro_count].name), "%s", s);
 	macro_commands[macro_count].func = f;
 	macro_commands[macro_count].teamplay = teamplay;
 
@@ -1437,7 +1437,7 @@ char *Cmd_MacroString (const char *s, int *macro_length)
 
 	for (i = 0; i < macro_count; i++) {
 		macro = &macro_commands[i];
-		if (!strncasecmp (s, macro->name, strlen (macro->name))) {
+		if (!SDL_strncasecmp (s, macro->name, strlen (macro->name))) {
 			if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED))
 				cbuf_current = &cbuf_formatted_comms;
 			*macro_length = strlen (macro->name);
@@ -1569,7 +1569,7 @@ void Cmd_ExpandString (const char *data, char *dest)
 
 int Commands_Compare_Func (const void * arg1, const void * arg2)
 {
-	return strcasecmp (*(char**) arg1, *(char**) arg2);
+	return SDL_strcasecmp (*(char**) arg1, *(char**) arg2);
 }
 char *msgtrigger_commands[] = {
                                   "play", "playvol", "stopsound", "set", "echo", "say", "say_team",
@@ -1627,8 +1627,8 @@ qbool AllowedImpulse(int imp)
 
 static qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
 {
-	if( !strcasecmp( command, "impulse") )
-		return AllowedImpulse(Q_atoi(Cmd_Argv(1)));
+	if( !SDL_strcasecmp( command, "impulse") )
+		return AllowedImpulse(SDL_atoi(Cmd_Argv(1)));
 
 	return 	  bsearch( &(command), msgtrigger_commands,
 	                   sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
@@ -1638,7 +1638,7 @@ static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 {
 	char **s;
 	for (s = formatted_comms_commands; *s; s++) {
-		if (!strcasecmp(command, *s))
+		if (!SDL_strcasecmp(command, *s))
 			break;
 	}
 	return *s != NULL;
@@ -1727,33 +1727,33 @@ checkaliases:
 				if(n) {
 					if(*++n >= '1' && *n <= '9') {
 						n[-1] = 0;
-						strlcat(buf, s, sizeof(buf));
+						SDL_strlcat(buf, s, sizeof(buf));
 						n[-1] = '%';
 						// insert numbered parameter
-						strlcat(buf,Cmd_Argv(*n-'0'), sizeof(buf));
+						SDL_strlcat(buf,Cmd_Argv(*n-'0'), sizeof(buf));
 					} else if (*n == '0') {
 						n[-1] = 0;
-						strlcat(buf, s, sizeof(buf));
+						SDL_strlcat(buf, s, sizeof(buf));
 						n[-1] = '%';
 						// insert all parameters
-						strlcat(buf, Cmd_Args(), sizeof(buf));
+						SDL_strlcat(buf, Cmd_Args(), sizeof(buf));
 					} else if (*n == '%') {
 						n[0] = 0;
-						strlcat(buf, s, sizeof(buf));
+						SDL_strlcat(buf, s, sizeof(buf));
 						n[0] = '%';
 					} else {
 						if (*n) {
 							char tmp = n[1];
 							n[1] = 0;
-							strlcat(buf, s, sizeof(buf));
+							SDL_strlcat(buf, s, sizeof(buf));
 							n[1] = tmp;
 						} else
-							strlcat(buf, s, sizeof(buf));
+							SDL_strlcat(buf, s, sizeof(buf));
 					}
 					s=n+1;
 				}
 			} while(n);
-			strlcat(buf, s, sizeof(buf));
+			SDL_strlcat(buf, s, sizeof(buf));
 			p = buf;
 
 		} else  // alias has no parameters
@@ -1870,14 +1870,14 @@ void Cmd_If_New(void)
 
 	for (i = 1; i < then_pos; i++) {
 		if (i > 1)
-			strlcat(expr, " ", expr_len + 1);
+			SDL_strlcat(expr, " ", expr_len + 1);
 
 		curarg = Cmd_Argv(i);
 
 		if (*curarg)
-			strlcat(expr, curarg, expr_len + 1);
+			SDL_strlcat(expr, curarg, expr_len + 1);
 		else
-			strlcat(expr, "''", expr_len + 1);
+			SDL_strlcat(expr, "''", expr_len + 1);
 	}
 
 	error = Expr_Eval_Bool(expr, &pars_ex, &result);
@@ -1899,9 +1899,9 @@ void Cmd_If_New(void)
 				break;
 
 			if (buf[0])
-				strlcat (buf, " ", sizeof(buf));
+				SDL_strlcat (buf, " ", sizeof(buf));
 
-			strlcat (buf, Cmd_Argv(i), sizeof(buf));
+			SDL_strlcat (buf, Cmd_Argv(i), sizeof(buf));
 		}
 	}
 	else // result = false
@@ -1909,14 +1909,14 @@ void Cmd_If_New(void)
 		for (i = then_pos; i < c; i++) {
 			if (else_found) {
 				if (buf[0])
-					strlcat (buf, " ", sizeof(buf));
-				strlcat (buf, Cmd_Argv(i), sizeof(buf));
+					SDL_strlcat (buf, " ", sizeof(buf));
+				SDL_strlcat (buf, Cmd_Argv(i), sizeof(buf));
 			}
 			if (!else_found && !strcmp(Cmd_Argv(i), "else")) else_found = true;
 		}
 	}
 
-	strlcat (buf, "\n", sizeof(buf));
+	SDL_strlcat (buf, "\n", sizeof(buf));
 	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, buf);
 }
 
@@ -1934,20 +1934,20 @@ void Cmd_If_Old (void)
 	op = Cmd_Argv(2);
 	if (!strcmp(op, "==") || !strcmp(op, "=") || !strcmp(op, "!=") || !strcmp(op, "<>")) {
 		if (is_numeric(Cmd_Argv(1)) && is_numeric(Cmd_Argv(3)))
-			result = Q_atof(Cmd_Argv(1)) == Q_atof(Cmd_Argv(3));
+			result = SDL_atof(Cmd_Argv(1)) == SDL_atof(Cmd_Argv(3));
 		else
 			result = !strcmp(Cmd_Argv(1), Cmd_Argv(3));
 
 		if (op[0] != '=')
 			result = !result;
 	} else if (!strcmp(op, ">")) {
-		result = Q_atof(Cmd_Argv(1)) > Q_atof(Cmd_Argv(3));
+		result = SDL_atof(Cmd_Argv(1)) > SDL_atof(Cmd_Argv(3));
 	} else if (!strcmp(op, "<")) {
-		result = Q_atof(Cmd_Argv(1)) < Q_atof(Cmd_Argv(3));
+		result = SDL_atof(Cmd_Argv(1)) < SDL_atof(Cmd_Argv(3));
 	} else if (!strcmp(op, ">=")) {
-		result = Q_atof(Cmd_Argv(1)) >= Q_atof(Cmd_Argv(3));
+		result = SDL_atof(Cmd_Argv(1)) >= SDL_atof(Cmd_Argv(3));
 	} else if (!strcmp(op, "<=")) {
-		result = Q_atof(Cmd_Argv(1)) <= Q_atof(Cmd_Argv(3));
+		result = SDL_atof(Cmd_Argv(1)) <= SDL_atof(Cmd_Argv(3));
 
 	} else if (!strcmp(op, "isin")) {
 		result = (strstr(Cmd_Argv(3), Cmd_Argv(1)) ? 1 : 0);
@@ -1986,31 +1986,31 @@ void Cmd_If_Old (void)
 
 	if (result)	{
 		for (i = 4; i < c; i++) {
-			if ((i == 4) && !strcasecmp(Cmd_Argv(i), "then"))
+			if ((i == 4) && !SDL_strcasecmp(Cmd_Argv(i), "then"))
 				continue;
-			if (!strcasecmp(Cmd_Argv(i), "else"))
+			if (!SDL_strcasecmp(Cmd_Argv(i), "else"))
 				break;
 			if (buf[0])
-				strlcat (buf, " ", sizeof (buf) - strlen (buf) - 1);
+				SDL_strlcat (buf, " ", sizeof (buf) - strlen (buf) - 1);
 
-			strlcat (buf, Cmd_Argv(i), sizeof (buf) - strlen (buf) - 1);
+			SDL_strlcat (buf, Cmd_Argv(i), sizeof (buf) - strlen (buf) - 1);
 		}
 	} else {
 		for (i = 4; i < c ; i++) {
-			if (!strcasecmp(Cmd_Argv(i), "else"))
+			if (!SDL_strcasecmp(Cmd_Argv(i), "else"))
 				break;
 		}
 		if (i == c)
 			return;
 		for (i++; i < c; i++) {
 			if (buf[0])
-				strlcat (buf, " ", sizeof (buf) - strlen (buf) - 1);
+				SDL_strlcat (buf, " ", sizeof (buf) - strlen (buf) - 1);
 
-			strlcat (buf, Cmd_Argv(i), sizeof (buf) - strlen (buf) - 1);
+			SDL_strlcat (buf, Cmd_Argv(i), sizeof (buf) - strlen (buf) - 1);
 		}
 	}
 
-	strlcat (buf, "\n", sizeof (buf) - strlen (buf));
+	SDL_strlcat (buf, "\n", sizeof (buf) - strlen (buf));
 	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, buf);
 }
 
@@ -2099,11 +2099,11 @@ static qbool do_in(char *buf, char *orig, char *str, int options)
 		return false;
 
 	if (options & 1) { // buf size is 1024 both in Cmd_Alias_In_f and Cmd_Cvar_In_f
-		strlcpy(buf, orig, 1024);
-		strlcat(buf, str, 1024);
+		SDL_strlcpy(buf, orig, 1024);
+		SDL_strlcat(buf, str, 1024);
 	} else {
-		strlcpy(buf, str, 1024);
-		strlcat(buf, orig, 1024);
+		SDL_strlcpy(buf, str, 1024);
+		SDL_strlcat(buf, orig, 1024);
 	}
 	return true;
 }
@@ -2136,7 +2136,7 @@ void Cmd_Alias_In_f (void)
 
 	alias_name = Cmd_Argv(1);
 	alias = Cmd_FindAlias(alias_name);
-	options = atoi(Cmd_Argv(3));
+	options = SDL_atoi(Cmd_Argv(3));
 
 	if (!alias) {
 		if ((options & 8)) {
@@ -2179,7 +2179,7 @@ void Cmd_Alias_Out_f (void)
 		return;
 	}
 
-	options = atoi(Cmd_Argv(3));
+	options = SDL_atoi(Cmd_Argv(3));
 
 	alias = Cmd_FindAlias(Cmd_Argv(1));
 	if (!alias) {
@@ -2214,7 +2214,7 @@ void Cmd_Cvar_In_f (void)
 	}
 
 	var_name = Cmd_Argv(1);
-	options = atoi(Cmd_Argv(3));
+	options = SDL_atoi(Cmd_Argv(3));
 
 	var1 = Cvar_Find(var_name);
 	if (!var1) {
@@ -2253,7 +2253,7 @@ void Cmd_Cvar_Out_f (void)
 		return;
 	}
 
-	options = atoi(Cmd_Argv(3));
+	options = SDL_atoi(Cmd_Argv(3));
 	var1 = Cvar_Find(Cmd_Argv(1));
 	if (!var1) {
 		Com_Printf ("cvar_out: unknown cvar \"%s\"\n", Cmd_Argv(1));

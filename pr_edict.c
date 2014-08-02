@@ -298,7 +298,7 @@ eval_t *GetEdictFieldValue(edict_t *ed, char *field)
 	if (strlen(field) < MAX_FIELD_LEN)
 	{
 		gefvCache[rep].pcache = def;
-		strlcpy (gefvCache[rep].field, field, MAX_FIELD_LEN);
+		SDL_strlcpy (gefvCache[rep].field, field, MAX_FIELD_LEN);
 		rep ^= 1;
 	}
 
@@ -327,33 +327,33 @@ char *PR_ValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		snprintf (line, sizeof(line), "%s", PR_GetString(val->string));
+		SDL_snprintf (line, sizeof(line), "%s", PR_GetString(val->string));
 		break;
 	case ev_entity:
-		snprintf (line, sizeof(line), "entity %i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)) );
+		SDL_snprintf (line, sizeof(line), "entity %i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)) );
 		break;
 	case ev_function:
 		f = pr_functions + val->function;
-		snprintf (line, sizeof(line), "%s()", PR_GetString(f->s_name));
+		SDL_snprintf (line, sizeof(line), "%s()", PR_GetString(f->s_name));
 		break;
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		snprintf (line, sizeof(line), ".%s", PR_GetString(def->s_name));
+		SDL_snprintf (line, sizeof(line), ".%s", PR_GetString(def->s_name));
 		break;
 	case ev_void:
-		snprintf (line, sizeof(line), "void");
+		SDL_snprintf (line, sizeof(line), "void");
 		break;
 	case ev_float:
-		snprintf (line, sizeof(line), "%5.1f", val->_float);
+		SDL_snprintf (line, sizeof(line), "%5.1f", val->_float);
 		break;
 	case ev_vector:
-		snprintf (line, sizeof(line), "'%5.1f %5.1f %5.1f'", val->vector[0], val->vector[1], val->vector[2]);
+		SDL_snprintf (line, sizeof(line), "'%5.1f %5.1f %5.1f'", val->vector[0], val->vector[1], val->vector[2]);
 		break;
 	case ev_pointer:
-		snprintf (line, sizeof(line), "pointer");
+		SDL_snprintf (line, sizeof(line), "pointer");
 		break;
 	default:
-		snprintf (line, sizeof(line), "bad type %i", type);
+		SDL_snprintf (line, sizeof(line), "bad type %i", type);
 		break;
 	}
 
@@ -379,30 +379,30 @@ char *PR_UglyValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		snprintf (line, sizeof(line), "%s", PR_GetString(val->string));
+		SDL_snprintf (line, sizeof(line), "%s", PR_GetString(val->string));
 		break;
 	case ev_entity:
-		snprintf (line, sizeof(line), "%i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
+		SDL_snprintf (line, sizeof(line), "%i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
 		break;
 	case ev_function:
 		f = pr_functions + val->function;
-		snprintf (line, sizeof(line), "%s", PR_GetString(f->s_name));
+		SDL_snprintf (line, sizeof(line), "%s", PR_GetString(f->s_name));
 		break;
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		snprintf (line, sizeof(line), "%s", PR_GetString(def->s_name));
+		SDL_snprintf (line, sizeof(line), "%s", PR_GetString(def->s_name));
 		break;
 	case ev_void:
-		snprintf (line, sizeof(line), "void");
+		SDL_snprintf (line, sizeof(line), "void");
 		break;
 	case ev_float:
-		snprintf (line, sizeof(line), "%f", val->_float);
+		SDL_snprintf (line, sizeof(line), "%f", val->_float);
 		break;
 	case ev_vector:
-		snprintf (line, sizeof(line), "%f %f %f", val->vector[0], val->vector[1], val->vector[2]);
+		SDL_snprintf (line, sizeof(line), "%f %f %f", val->vector[0], val->vector[1], val->vector[2]);
 		break;
 	default:
-		snprintf (line, sizeof(line), "bad type %i", type);
+		SDL_snprintf (line, sizeof(line), "bad type %i", type);
 		break;
 	}
 
@@ -429,18 +429,18 @@ char *PR_GlobalString (int ofs)
 	def = ED_GlobalAtOfs(ofs);
 	if (!def)
 	{
-		snprintf (line, sizeof(line), "%i(?""?""?)", ofs); // separate the ?'s to shut up gcc
+		SDL_snprintf (line, sizeof(line), "%i(?""?""?)", ofs); // separate the ?'s to shut up gcc
 	}
 	else
 	{
 		s = PR_ValueString ((etype_t)def->type, (eval_t *) val);
-		snprintf (line, sizeof(line), "%i(%s)%s", ofs, PR_GetString(def->s_name), s);
+		SDL_snprintf (line, sizeof(line), "%i(%s)%s", ofs, PR_GetString(def->s_name), s);
 	}
 
 	i = strlen(line);
 	for ( ; i<20 ; i++)
-		strlcat (line, " ", sizeof(line));
-	strlcat (line, " ", sizeof(line));
+		SDL_strlcat (line, " ", sizeof(line));
+	SDL_strlcat (line, " ", sizeof(line));
 
 	return line;
 }
@@ -453,14 +453,14 @@ char *PR_GlobalStringNoContents (int ofs)
 
 	def = ED_GlobalAtOfs(ofs);
 	if (!def)
-		snprintf (line, sizeof(line), "%i(?""?""?)", ofs); // separate the ?'s to shut up gcc
+		SDL_snprintf (line, sizeof(line), "%i(?""?""?)", ofs); // separate the ?'s to shut up gcc
 	else
-		snprintf (line, sizeof(line), "%i(%s)", ofs, PR_GetString(def->s_name));
+		SDL_snprintf (line, sizeof(line), "%i(%s)", ofs, PR_GetString(def->s_name));
 
 	i = strlen(line);
 	for ( ; i<20 ; i++)
-		strlcat (line, " ", sizeof(line));
-	strlcat (line, " ", sizeof(line));
+		SDL_strlcat (line, " ", sizeof(line));
+	SDL_strlcat (line, " ", sizeof(line));
 
 	return line;
 }
@@ -603,7 +603,7 @@ void ED_PrintEdict_f (void)
 	}
 
 
-	i = Q_atoi (Cmd_Argv(1));
+	i = SDL_atoi (Cmd_Argv(1));
 	if(i < 0 || i >= sv.num_edicts)
 	{
 		Com_Printf ("\nNo such edict: %i\n", i);
@@ -712,7 +712,7 @@ void ED_ParseGlobals (char *data)
 		if (!data)
 			SV_Error ("ED_ParseEntity: EOF without closing brace");
 
-		strlcpy (keyname, com_token, sizeof(keyname));
+		SDL_strlcpy (keyname, com_token, sizeof(keyname));
 
 		// parse value
 		data = COM_Parse (data);
@@ -795,11 +795,11 @@ qbool ED_ParseEpair (void *base, ddef_t *key, char *s)
 		break;
 
 	case ev_float:
-		*(float *)d = Q_atof (s);
+		*(float *)d = SDL_atof (s);
 		break;
 
 	case ev_vector:
-		strlcpy (string, s, sizeof(string));
+		SDL_strlcpy (string, s, sizeof(string));
 		v = string;
 		w = string;
 		for (i=0 ; i<3 ; i++)
@@ -807,13 +807,13 @@ qbool ED_ParseEpair (void *base, ddef_t *key, char *s)
 			while (*v && *v != ' ')
 				v++;
 			*v = 0;
-			((float *)d)[i] = Q_atof (w);
+			((float *)d)[i] = SDL_atof (w);
 			w = v = v+1;
 		}
 		break;
 
 	case ev_entity:
-		*(int *)d = EDICT_TO_PROG(EDICT_NUM(Q_atoi (s)));
+		*(int *)d = EDICT_TO_PROG(EDICT_NUM(SDL_atoi (s)));
 		break;
 
 	case ev_field:
@@ -878,7 +878,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		// and allow them to be turned into vectors. (FIXME...)
 		if (!strcmp(com_token, "angle"))
 		{
-			strlcpy (com_token, "angles", MAX_COM_TOKEN);
+			SDL_strlcpy (com_token, "angles", MAX_COM_TOKEN);
 			anglehack = true;
 		}
 		else
@@ -886,9 +886,9 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 
 		// FIXME: change light to _light to get rid of this hack
 		if (!strcmp(com_token, "light"))
-			strlcpy (com_token, "light_lev", MAX_COM_TOKEN);	// hack for single light def
+			SDL_strlcpy (com_token, "light_lev", MAX_COM_TOKEN);	// hack for single light def
 
-		strlcpy (keyname, com_token, sizeof(keyname));
+		SDL_strlcpy (keyname, com_token, sizeof(keyname));
 
 		// parse value
 		data = COM_Parse (data);
@@ -915,8 +915,8 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		if (anglehack)
 		{
 			char	temp[32];
-			strlcpy (temp, com_token, sizeof(temp));
-			snprintf (com_token, MAX_COM_TOKEN, "0 %s 0", temp);
+			SDL_strlcpy (temp, com_token, sizeof(temp));
+			SDL_snprintf (com_token, MAX_COM_TOKEN, "0 %s 0", temp);
 		}
 
 		if (!ED_ParseEpair ((void *)&ent->v, key, com_token))
@@ -1065,8 +1065,8 @@ qbool PR_UserCmd(void)
 		static char cmd_copy[128], args_copy[1024] /* Ouch! */;
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
-		strlcpy (args_copy, Cmd_Args(), sizeof(args_copy));
+		SDL_strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
+		SDL_strlcpy (args_copy, Cmd_Args(), sizeof(args_copy));
 		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
 		((int *)pr_globals)[OFS_PARM1] = PR_SetString (args_copy);
 		PR_ExecuteProgram (GE_ClientCommand);
@@ -1078,7 +1078,7 @@ qbool PR_UserCmd(void)
 		static char cmd_copy[128];
 		pr_global_struct->time = sv.time;
 		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
+		SDL_strlcpy (cmd_copy, Cmd_Argv(0), sizeof(cmd_copy));
 		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
 
 		PR_ExecuteProgram (mod_UserCmd);
@@ -1103,7 +1103,7 @@ static void CheckKTPro (void)
 	int i, len;
 	char *s;
 
-	if (!strcasecmp(sv_ktpro_mode.string, "auto"))
+	if (!SDL_strcasecmp(sv_ktpro_mode.string, "auto"))
 	{
 		// attempt automatic detection
 		is_ktpro = false;
@@ -1168,7 +1168,7 @@ void PR_LoadProgs (void)
 	// clear pr_newstrtbl
 	PF_clear_strtbl();
 
-	snprintf(name, sizeof(name), "%s.dat", sv_progsname.string);
+	SDL_snprintf(name, sizeof(name), "%s.dat", sv_progsname.string);
 	progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
 	if (!progs)
 		progs = (dprograms_t *)FS_LoadHunkFile ("qwprogs.dat", &filesize);
@@ -1187,7 +1187,7 @@ void PR_LoadProgs (void)
 	Con_DPrintf ("Programs occupy %iK.\n", filesize/1024);
 
 	// add prog crc to the serverinfo
-	snprintf (num, sizeof(num), "%i", CRC_Block ((byte *)progs, filesize));
+	SDL_snprintf (num, sizeof(num), "%i", CRC_Block ((byte *)progs, filesize));
 #ifdef USE_PR2
 	Info_SetStar( &_localinfo_, "*qvm", "DAT" );
 	//	Info_SetValueForStarKey (svs.info, "*qvm", "DAT", MAX_SERVERINFO_STRING);

@@ -126,7 +126,7 @@ static void MPD_Connect(void) {
 		port     = "6600";
 
 	/* Timeout of 10 seconds */
-	connection = qmpd_newConnection(hostname, atoi(port), 1);
+	connection = qmpd_newConnection(hostname, SDL_atoi(port), 1);
 	if (connection->error) {
 		fprintf(stderr,"%s\n",connection->errorStr);
 		qmpd_closeConnection(connection);
@@ -146,7 +146,7 @@ void MP3_MPD_Execute_f(void) {
 		Com_Printf("MPD is already running\n");
 		return;
 	}
-	strlcpy(exec_name, argv[0], sizeof(exec_name));
+	SDL_strlcpy(exec_name, argv[0], sizeof(exec_name));
 
 	if (!(pid = fork())) { // Child
 		execvp(exec_name, argv);
@@ -389,7 +389,7 @@ int MP3_MPD_CachePlaylist(void) {
 
 void MP3_MPD_GetSongTitle(int track_num, char *song, size_t song_len) {
 	mpd_InfoEntity *entity;
-	strlcpy(song, "", song_len);
+	SDL_strlcpy(song, "", song_len);
 
 	if (!MP3_MPD_IsPlayerRunning()) 
 		return;
@@ -400,7 +400,7 @@ void MP3_MPD_GetSongTitle(int track_num, char *song, size_t song_len) {
 		if (entity->type==MPD_INFO_ENTITY_TYPE_SONG) {
 			mpd_Song *mpd_song = entity->info.song;
 
-			snprintf(song, song_len,"%s - %s",mpd_song->artist,mpd_song->title);
+			SDL_snprintf(song, song_len,"%s - %s",mpd_song->artist,mpd_song->title);
 
 			return;
 		}
@@ -446,7 +446,7 @@ void MP3_MPD_PlayTrackNum_f(void) {
 		return;
 	}
 
-	track_num = Q_atoi(Cmd_Argv(1)) - 1;	// Count from zero
+	track_num = SDL_atoi(Cmd_Argv(1)) - 1;	// Count from zero
 	qmpd_sendPlayCommand(connection, track_num);
 	qmpd_finishCommand(connection);
 }

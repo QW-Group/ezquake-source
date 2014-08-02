@@ -66,7 +66,7 @@ double	sv_frametime;
 // airstep works best with pground on
 void OnChange_pm_airstep (cvar_t *var, char *value, qbool *cancel)
 {
-	float val = Q_atoi(value);
+	float val = SDL_atoi(value);
 	Cvar_SetROM (&pm_pground, val ? "1" : "");
 }
 

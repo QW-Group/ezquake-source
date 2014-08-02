@@ -94,7 +94,7 @@ char *NET_AdrToString (netadr_t a)
 	if (a.type == NA_LOOPBACK)
 		return "loopback";
 
-	snprintf (s, sizeof (s), "%i.%i.%i.%i:%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs(a.port));
+	SDL_snprintf (s, sizeof (s), "%i.%i.%i.%i:%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs(a.port));
 	return s;
 }
 
@@ -102,7 +102,7 @@ char *NET_BaseAdrToString (netadr_t a)
 {
 	static char s[64];
 	
-	snprintf (s, sizeof (s), "%i.%i.%i.%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3]);
+	SDL_snprintf (s, sizeof (s), "%i.%i.%i.%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3]);
 	return s;
 }
 
@@ -130,13 +130,13 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_storage *sadr)
 	if (strlen(s) >= sizeof(copy) - 1)
 		return false;
 
-	strlcpy (copy, s, sizeof (copy));
+	SDL_strlcpy (copy, s, sizeof (copy));
 	// strip off a trailing :port if present
 	for (colon = copy ; *colon ; colon++)
 	{
 		if (*colon == ':') {
 			*colon = 0;
-			((struct sockaddr_in *)sadr)->sin_port = htons((short)atoi(colon+1));
+			((struct sockaddr_in *)sadr)->sin_port = htons((short)SDL_atoi(colon+1));
 		}
 	}
 
@@ -920,7 +920,7 @@ void NET_GetLocalAddress (int socket, netadr_t *out)
 	netadr_t adr = {0};
 	qbool notvalid = false;
 
-	strlcpy (buff, "localhost", sizeof (buff));
+	SDL_strlcpy (buff, "localhost", sizeof (buff));
 	gethostname (buff, sizeof (buff));
 
 	if (!NET_StringToAdr (buff, &adr))	//urm
@@ -977,7 +977,7 @@ void NET_InitClient(void)
 
 	p = COM_CheckParm ("-clientport");
 	if (p && p < COM_Argc()) {
-		port = atoi(COM_Argv(p+1));
+		port = SDL_atoi(COM_Argv(p+1));
 	}
 
 	if (cls.socketip == INVALID_SOCKET)
@@ -1024,7 +1024,7 @@ void NET_InitServer (void)
 
 	p = COM_CheckParm ("-port");
 	if (p && p < COM_Argc()) {
-		port = atoi(COM_Argv(p+1));
+		port = SDL_atoi(COM_Argv(p+1));
 	}
 
 	if (svs.socketip == INVALID_SOCKET) {
@@ -1036,7 +1036,7 @@ void NET_InitServer (void)
 // TCPCONNECT -->
 	p = COM_CheckParm ("-tcpport");
 	if (p && p < COM_Argc()) {
-		tcpport = atoi(COM_Argv(p+1));
+		tcpport = SDL_atoi(COM_Argv(p+1));
 	}
 
 	if (svs.sockettcp == INVALID_SOCKET && tcpport) {

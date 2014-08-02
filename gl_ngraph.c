@@ -110,7 +110,7 @@ void R_NetGraph (void) {
 		Draw_TextBox (x, y, NET_TIMINGS / 8, NET_GRAPHHEIGHT / 8 + 1);
 
 	if (r_netgraph.value != 3) {
-		snprintf (st, sizeof (st), "%3i%% packet loss", lost);
+		SDL_snprintf (st, sizeof (st), "%3i%% packet loss", lost);
 		Draw_String (8, y + 8, st);
 	}
 
@@ -204,7 +204,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
     {
         if (avgping < 0)
         {
-            snprintf(st, sizeof (st)," %3i%% packet loss", lost);
+            SDL_snprintf(st, sizeof (st)," %3i%% packet loss", lost);
             st[(width-1)/8] = 0;
             Draw_String(x+3, y, st);
         }
@@ -214,10 +214,10 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
             if (lost > 99)
                 lost = 99;
 
-            strlcpy(st, "\x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1F", sizeof (st));
-            //snprintf(st, sizeof (st), "%3i%% packet loss, %3i ms ping", lost, avgping);
-            snprintf (buf, sizeof (buf), " %i \xf %i%% ", avgping, lost);
-            strlcpy (st + strlen(st) - strlen(buf) - 3, buf, sizeof (st) - strlen (st) + strlen (buf) + 3);
+            SDL_strlcpy(st, "\x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1F", sizeof (st));
+            //SDL_snprintf(st, sizeof (st), "%3i%% packet loss, %3i ms ping", lost, avgping);
+            SDL_snprintf (buf, sizeof (buf), " %i \xf %i%% ", avgping, lost);
+            SDL_strlcpy (st + strlen(st) - strlen(buf) - 3, buf, sizeof (st) - strlen (st) + strlen (buf) + 3);
             Draw_String(x+4, y, st);
         }
 

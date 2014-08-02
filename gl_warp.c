@@ -607,7 +607,7 @@ void R_LoadSky_f(void) {
 			Com_Printf("No skybox has been set\n");
 		break;
 	case 2:
-		if (!strcasecmp(Cmd_Argv(1), "none"))
+		if (!SDL_strcasecmp(Cmd_Argv(1), "none"))
 			Cvar_Set(&r_skyname, "");
 		else
 			Cvar_Set(&r_skyname, Cmd_Argv(1));

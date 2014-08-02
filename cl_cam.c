@@ -174,7 +174,7 @@ void Cam_Lock(int playernum)
 	if (cl_multiview.value && cls.mvdplayback)
 		return; 
 
-	snprintf(st, sizeof (st), "ptrack %i", playernum);
+	SDL_snprintf(st, sizeof (st), "ptrack %i", playernum);
 
 	if (cls.mvdplayback) {
 		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
@@ -682,7 +682,7 @@ static char *myftos (float f)
 
 	val = buf[(idx++) & 3];
 
-	snprintf (val, MAX_VAL, "%f", f);
+	SDL_snprintf (val, MAX_VAL, "%f", f);
 
 	// strip trailing zeroes
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
@@ -718,9 +718,9 @@ static void Cam_Pos_f (void)
 	if (!cls.demoplayback && !cl.spectator)
 		return;
 		
-	cl.simorg[0] = Q_atof(Cmd_Argv(1));
-	cl.simorg[1] = Q_atof(Cmd_Argv(2));
-	cl.simorg[2] = Q_atof(Cmd_Argv(3));
+	cl.simorg[0] = SDL_atof(Cmd_Argv(1));
+	cl.simorg[1] = SDL_atof(Cmd_Argv(2));
+	cl.simorg[2] = SDL_atof(Cmd_Argv(3));
 	clpred_newpos = true;
 	
 	VectorCopy (cl.simorg, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
@@ -756,9 +756,9 @@ static void Cam_Angles_f (void)
 	if (!cls.demoplayback && !cl.spectator)
 		return;
 		
-	cl.simangles[0] = Q_atof(Cmd_Argv(1));
-	cl.simangles[1] = Q_atof(Cmd_Argv(2));
-	cl.simangles[2] = Q_atof(Cmd_Argv(3));
+	cl.simangles[0] = SDL_atof(Cmd_Argv(1));
+	cl.simangles[1] = SDL_atof(Cmd_Argv(2));
+	cl.simangles[2] = SDL_atof(Cmd_Argv(3));
 	VectorCopy (cl.simangles, cl.viewangles);
 }
 
@@ -875,7 +875,7 @@ void CL_Track (int trackview)
 	} 
 	else if (slot == PLAYER_ID_NOMATCH) 
 	{
-		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(arg));
+		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), SDL_atoi(arg));
 		return;
 	} 
 	else if (slot < 0 || slot >= MAX_CLIENTS) 
@@ -924,7 +924,7 @@ void CL_Trackkiller_f(void)
 {
 	if (killer >= 0 && killer < MAX_CLIENTS) {
 		char buf[16];
-		snprintf(buf, sizeof(buf), "track %d\n", cl.players[killer].userid);
+		SDL_snprintf(buf, sizeof(buf), "track %d\n", cl.players[killer].userid);
 		Cbuf_AddText(buf);
 	}
 }
@@ -1074,7 +1074,7 @@ void CL_TrackTeam_f(void)
 	}
 
 	// Get the team.
-	teamchoice = atoi(Cmd_Args());
+	teamchoice = SDL_atoi(Cmd_Args());
 
 	if(!currteam[0])
 	{
@@ -1082,7 +1082,7 @@ void CL_TrackTeam_f(void)
 		for(i = 0; i < MAX_CLIENTS; i++)
 		{
 			if(VALID_PLAYER(i) && strcmp(currteam, cl.players[i].team) != 0) {
-				strlcpy(currteam, cl.players[i].team, sizeof(currteam));
+				SDL_strlcpy(currteam, cl.players[i].team, sizeof(currteam));
 				break;
 			}
 		}

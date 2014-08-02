@@ -67,7 +67,7 @@ extern qbool ActiveApp, Minimized;
 
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
 {
-	if (Q_atof(string)) 
+	if (SDL_atof(string)) 
 	{
 		if (!WinKeyHook_isActive) 
 		{
@@ -147,7 +147,7 @@ void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
 	char *desc;
 	float priority;
 
-	priority = Q_atof(s);
+	priority = SDL_atof(s);
 	if (priority == 1) 
 	{
 		q_priority = 2;
@@ -206,7 +206,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	if (!gpath)
 		return 0;
 
-	snprintf(apath, sizeof(apath), "%s/%s", gpath, match);
+	SDL_snprintf(apath, sizeof(apath), "%s/%s", gpath, match);
 	for (s = apath+strlen(apath)-1; s> apath; s--)
 	{
 		if (*s == '/') 
@@ -215,10 +215,10 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	*s = '\0';
 
 	// This is what we ask windows for.
-	snprintf(file, sizeof(file), "%s/*.*", apath);
+	SDL_snprintf(file, sizeof(file), "%s/*.*", apath);
 
 	// We need to make apath contain the path in match but not gpath
-	strlcpy(apath2, match, sizeof(apath));
+	SDL_strlcpy(apath2, match, sizeof(apath));
 	match = s+1;
 	for (s = apath2+strlen(apath2)-1; s> apath2; s--)
 	{
@@ -227,7 +227,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	}
 	*s = '\0';
 	if (s != apath2)
-		strlcat (apath2, "/", sizeof (apath2));
+		SDL_strlcat (apath2, "/", sizeof (apath2));
 
 	r = FindFirstFile(file, &fd);
 	if (r==(HANDLE)-1)
@@ -240,7 +240,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		{
 			if (wildcmp(match, fd.cFileName))
 			{
-				snprintf(file, sizeof(file), "%s%s/", apath2, fd.cFileName);
+				SDL_snprintf(file, sizeof(file), "%s%s/", apath2, fd.cFileName);
 				go = func(file, fd.nFileSizeLow, parm);
 			}
 		}
@@ -248,7 +248,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		{
 			if (wildcmp(match, fd.cFileName))
 			{
-				snprintf(file, sizeof(file), "%s%s", apath2, fd.cFileName);
+				SDL_snprintf(file, sizeof(file), "%s%s", apath2, fd.cFileName);
 				go = func(file, fd.nFileSizeLow, parm);
 			}
 		}
@@ -293,7 +293,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			return dir;
 		}
 
-	snprintf(pathname, sizeof(pathname), "%s/*.*", path);
+	SDL_snprintf(pathname, sizeof(pathname), "%s/*.*", path);
 	if ((h = FindFirstFile (pathname , &fd)) == INVALID_HANDLE_VALUE)
 	{
 		if (!all)
@@ -330,11 +330,11 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 		else
 		{
 			list[dir.numfiles].isdir = false;
-			snprintf(pathname, sizeof(pathname), "%s/%s", path, fd.cFileName);
+			SDL_snprintf(pathname, sizeof(pathname), "%s/%s", path, fd.cFileName);
 			list[dir.numfiles].time = 0; //Sys_FileTime(pathname);
 			dir.size += (list[dir.numfiles].size = fd.nFileSizeLow);
 		}
-		strlcpy (list[dir.numfiles].name, fd.cFileName, sizeof(list[0].name));
+		SDL_strlcpy (list[dir.numfiles].name, fd.cFileName, sizeof(list[0].name));
 
 		if (++dir.numfiles == MAX_DIRFILES - 1)
 			break;
@@ -416,7 +416,7 @@ void Sys_Error (char *error, ...)
 
 	va_start (argptr, error);
 
-	vsnprintf (text, sizeof(text), error, argptr);
+	SDL_vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
 	MessageBox(NULL, text, "Error", 0);
@@ -440,7 +440,7 @@ void Sys_Printf (char *fmt, ...)
 #endif
 
 	va_start (argptr,fmt);
-	vsnprintf (text, sizeof(text), fmt, argptr);
+	SDL_vsnprintf (text, sizeof(text), fmt, argptr);
 	va_end (argptr);
 
 	WriteFile (houtput, text, strlen(text), &dummy, NULL);
@@ -635,7 +635,7 @@ void ParseCommandLine (char *lpCmdLine)
 	else 
 	{
 		exename[i] = 0; // ensure null terminator
-		strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
+		SDL_strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
 	}
 
 	while (*lpCmdLine && (argc < MAX_NUM_ARGVS))
@@ -1038,7 +1038,7 @@ void MakeDirent(sys_dirent *ent, WIN32_FIND_DATA *data)
 {
     FILETIME ft1;
 
-    strlcpy (ent->fname, data->cFileName, min(strlen(data->cFileName)+1, MAX_PATH_LENGTH));
+    SDL_strlcpy (ent->fname, data->cFileName, min(strlen(data->cFileName)+1, MAX_PATH_LENGTH));
 
 	ent->size = (data->nFileSizeHigh > 0) ? 0xffffffff : data->nFileSizeLow;
 
@@ -1258,8 +1258,8 @@ int Sys_Script (const char *path, const char *args)
 	GetCurrentDirectory(sizeof(curdir), curdir);
 
 
-	snprintf(cmdline, sizeof(cmdline), "%s\\sh.exe %s.qws %s", curdir, path, args);
-	strlcat(curdir, va("\\%s", fs_gamedir+2), MAX_OSPATH);
+	SDL_snprintf(cmdline, sizeof(cmdline), "%s\\sh.exe %s.qws %s", curdir, path, args);
+	SDL_strlcat(curdir, va("\\%s", fs_gamedir+2), MAX_OSPATH);
 
 	return CreateProcess (NULL, cmdline, NULL, NULL,
 	                      FALSE, 0/*DETACHED_PROCESS CREATE_NEW_CONSOLE*/ , NULL, curdir, &si, &pi);

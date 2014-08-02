@@ -139,13 +139,13 @@ long WINAMP_GetPlaylist(char **buf)
 	SendMessage(mp3_hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 
 	SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_WRITEPLAYLIST);
-	strlcpy(path, mp3_dir.string, sizeof(path));
+	SDL_strlcpy(path, mp3_dir.string, sizeof(path));
 	pathlength = strlen(path);
 	
 	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
 		path[pathlength - 1] = 0;
 	
-	strlcat (path, "/winamp.m3u", sizeof (path));
+	SDL_strlcat (path, "/winamp.m3u", sizeof (path));
 	filelength = (size_t) FS_FileOpenRead(path, &f);
 	
 	if (!f)
@@ -154,7 +154,7 @@ long WINAMP_GetPlaylist(char **buf)
 		// so we should try to find it there too
 		if (SHGetSpecialFolderPath(0, path, CSIDL_APPDATA, false))
 		{
-			strlcat (path, "/winamp/winamp.m3u", sizeof (path));
+			SDL_strlcat (path, "/winamp/winamp.m3u", sizeof (path));
 			filelength = (size_t) FS_FileOpenRead(path, &f);
 		}
 		
@@ -208,13 +208,13 @@ void MP3_WINAMP_Execute_f(void)
 	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
-	strlcpy(path, mp3_dir.string, sizeof(path) - strlen("/winamp.exe"));
+	SDL_strlcpy(path, mp3_dir.string, sizeof(path) - strlen("/winamp.exe"));
 	length = strlen(path);
 
 	if (length && (path[length - 1] == '\\' || path[length - 1] == '/'))
 		path[length - 1] = 0;
 
-	strlcat (path, "/winamp.exe", sizeof (path));
+	SDL_strlcat (path, "/winamp.exe", sizeof (path));
 
 	if (!CreateProcess (NULL, va("%s /CLASS=\"ezQuake Winamp\"", path), 
 		NULL, NULL, FALSE, GetPriorityClass(GetCurrentProcess()), NULL, NULL, &si, &pi))
@@ -288,15 +288,15 @@ static void WINAMP_Set_ToggleFn(char *name, int setparam, int getparam)
 		return;
 	}
 	
-	if (!strcasecmp(Cmd_Argv(1), "on")) 
+	if (!SDL_strcasecmp(Cmd_Argv(1), "on")) 
 	{
 		set = 1;
 	} 
-	else if (!strcasecmp(Cmd_Argv(1), "off")) 
+	else if (!SDL_strcasecmp(Cmd_Argv(1), "off")) 
 	{
 		set = 0;
 	} 
-	else if (!strcasecmp(Cmd_Argv(1), "toggle")) 
+	else if (!SDL_strcasecmp(Cmd_Argv(1), "toggle")) 
 	{
 		set = ret ? 0 : 1;
 	} 
@@ -352,7 +352,7 @@ char *MP3_WINAMP_Macro_MP3Info(void)
 	if (!MP3_WINAMP_IsPlayerRunning()) 
 	{
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
-		snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		SDL_snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 		return title;
 	}
 	
@@ -426,7 +426,7 @@ void MP3_WINAMP_LoadPlaylist_f(void)
 		return;
 	}
 
-	strlcpy(playlist, Cmd_Args(), sizeof(playlist));
+	SDL_strlcpy(playlist, Cmd_Args(), sizeof(playlist));
 
 	if (!strcmp(COM_FileExtension(playlist), "pls"))
 	{
@@ -492,7 +492,7 @@ int MP3_WINAMP_CachePlaylist(void) {
 
 
 void MP3_WINAMP_GetSongTitle(int track_num, char *song, size_t song_len) {
-	strlcpy(song, "", song_len);
+	SDL_strlcpy(song, "", song_len);
 
 	if (!MP3_WINAMP_IsPlayerRunning()) 
 		return;
@@ -505,7 +505,7 @@ void MP3_WINAMP_GetSongTitle(int track_num, char *song, size_t song_len) {
 	if (track_num < 0 || track_num >= WINAMP_Playlist_nelms)
 		return;
 	
-	strlcpy(song, WINAMP_Playlist[track_num], song_len);
+	SDL_strlcpy(song, WINAMP_Playlist[track_num], song_len);
 }
 
 void MP3_WINAMP_PrintPlaylist_f(void) 
@@ -537,7 +537,7 @@ void MP3_WINAMP_PlayTrackNum_f(void)
 		return;
 	}
 	MP3_WINAMP_GetPlaylistInfo(NULL, &length);
-	pos = Q_atoi(Cmd_Argv(1)) - 1;
+	pos = SDL_atoi(Cmd_Argv(1)) - 1;
 	if (pos < 0 || pos >= length)
 		return;
 	SendMessage(mp3_hwnd, WM_WA_IPC, pos, IPC_SETPLAYLISTPOS);

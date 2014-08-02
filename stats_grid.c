@@ -175,7 +175,7 @@ void StatsGrid_SetHoldItemOrder(const char *item_name, int order)
 
 	for (i = 0; i < stats_important_ents->count; i++)
 	{
-		if (!strncasecmp(stats_important_ents->list[i].name, item_name, len))
+		if (!SDL_strncasecmp(stats_important_ents->list[i].name, item_name, len))
 		{
 			stats_important_ents->list[i].order = order;
 		}
@@ -361,7 +361,7 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 		// Get the first player's team and set that as team1.
 		if(!grid->teams[STATS_TEAM1].name[0])
 		{
-			strlcpy(grid->teams[STATS_TEAM1].name, cl.players[i].team, MAX_INFO_STRING);
+			SDL_strlcpy(grid->teams[STATS_TEAM1].name, cl.players[i].team, MAX_INFO_STRING);
 			grid->teams[STATS_TEAM1].color = Sbar_BottomColor(&cl.players[i]);
 		}
 
@@ -369,7 +369,7 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 		// set this players team as team 2.
 		if(strcmp(grid->teams[STATS_TEAM1].name, cl.players[i].team))
 		{
-			strlcpy(grid->teams[STATS_TEAM2].name, cl.players[i].team, MAX_INFO_STRING);
+			SDL_strlcpy(grid->teams[STATS_TEAM2].name, cl.players[i].team, MAX_INFO_STRING);
 			grid->teams[STATS_TEAM2].color = Sbar_BottomColor(&cl.players[i]);
 			break;
 		}
@@ -541,7 +541,7 @@ void StatsGrid_CalculateHoldItem(stats_weight_grid_t *grid, int row, int col, fl
 			// If this is the first time, set the name of the team in the entity struct.
 			if(!stats_important_ents->teams[team_id].name[0])
 			{
-				strlcpy(stats_important_ents->teams[team_id].name, grid->teams[team_id].name, MAX_INFO_STRING);
+				SDL_strlcpy(stats_important_ents->teams[team_id].name, grid->teams[team_id].name, MAX_INFO_STRING);
 				stats_important_ents->teams[team_id].color = grid->teams[team_id].color;
 			}
 		}

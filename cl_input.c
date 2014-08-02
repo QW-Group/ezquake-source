@@ -142,7 +142,7 @@ void KeyDown(kbutton_t *b)
 	int k = VOID_KEY;
 	char *c = Cmd_Argv(1);
 	if (*c) {
-		k = atoi(c);
+		k = SDL_atoi(c);
 	}
 
 	KeyDown_common(b, k);
@@ -154,7 +154,7 @@ qbool KeyUp(kbutton_t *b)
 	int k = VOID_KEY;
 	char *c = Cmd_Argv(1);
 	if (*c) {
-		k = atoi(c);
+		k = SDL_atoi(c);
 	}
 
 	return KeyUp_common(b, k);
@@ -245,7 +245,7 @@ void IN_AttackDown(void)
 // if it's >= 32, treat is as keycodes, otherwise an impulse
 static qbool IN_IsLastArgKeyCode(void)
 {
-	return atoi(Cmd_Argv(Cmd_Argc() - 1)) >= 32;
+	return SDL_atoi(Cmd_Argv(Cmd_Argc() - 1)) >= 32;
 }
 
 void IN_FireDown(void)
@@ -260,12 +260,12 @@ void IN_FireDown(void)
 	}
 
 	if (IN_IsLastArgKeyCode()) {
-		key_code = Q_atoi(Cmd_Argv(last_arg_idx));
+		key_code = SDL_atoi(Cmd_Argv(last_arg_idx));
 		last_arg_idx--;
 	}
 
 	for (i = 1; i <= last_arg_idx && i <= MAXWEAPONS; i++) {
-		int desired_impulse = Q_atoi(Cmd_Argv(i));
+		int desired_impulse = SDL_atoi(Cmd_Argv(i));
 		weapon_order[i - 1] = desired_impulse;
 	}
 
@@ -301,7 +301,7 @@ void IN_FireUp(void)
 	int key_code = VOID_KEY;
 
 	if (IN_IsLastArgKeyCode()) {
-		key_code = Q_atoi(Cmd_Argv(Cmd_Argc() - 1));
+		key_code = SDL_atoi(Cmd_Argv(Cmd_Argc() - 1));
 	}
 
 	if (KeyUp_common(&in_attack, key_code)) {
@@ -362,7 +362,7 @@ void IN_RememberWpOrder (void)
 	c = Cmd_Argc() - 1;
 
 	for (i = 0; i < MAXWEAPONS; i++)
-		weapon_order[i] = (i < c) ? Q_atoi(Cmd_Argv(i+1)) : 0;
+		weapon_order[i] = (i < c) ? SDL_atoi(Cmd_Argv(i+1)) : 0;
 }
 
 static int IN_BestWeapon_Common(int best);
@@ -440,7 +440,7 @@ void IN_Impulse (void)
 {
 	int best;
 
-	in_impulse = Q_atoi(Cmd_Argv(1));
+	in_impulse = SDL_atoi(Cmd_Argv(1));
 
 	if (Cmd_Argc() <= 2)
 		return;
@@ -581,7 +581,7 @@ void CL_Rotate_f (void)
 
 	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2)
 		return;
-	cl.viewangles[YAW] += atof(Cmd_Argv(1));
+	cl.viewangles[YAW] += SDL_atof(Cmd_Argv(1));
 	cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
 }
 
@@ -865,7 +865,7 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 		return;	// no point.
 
 	va_start (argptr, format);
-	vsnprintf (string, sizeof(string), format, argptr);
+	SDL_vsnprintf (string, sizeof(string), format, argptr);
 	va_end (argptr);
 
 	if (reliable)

@@ -351,7 +351,7 @@ void V_TF_FlashStuff (void)
 	// 240 = Normal TF || 255 = Angel TF
 	if (cshift_empty.percent == 240 || cshift_empty.percent == 255 ) {
 		TP_ExecTrigger ("f_flash");
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
+		if (!flashed && (!SDL_strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
 			V_TF_FlashSettings (true);
 
 		flashed = true;
@@ -359,7 +359,7 @@ void V_TF_FlashStuff (void)
 	}
 
 	if (cshift_empty.percent == 160) { // flashed by your own flash
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
+		if (!flashed && (!SDL_strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
 			V_TF_FlashSettings (true);
 
 		flashed = true;
@@ -371,7 +371,7 @@ void V_TF_FlashStuff (void)
 	// turn gamma and contrast back if
 	if ((!(cls.realtime - max (last_own_flash_time, last_other_flash_time) < blocktime)) || // flashed for last 10 seconds or 
 	(cshift_empty.percent == 0 && (cbuf_current = &cbuf_svc))) { // death while flashed
-		if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+		if (flashed && (!SDL_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
 			V_TF_FlashSettings (false);
 			flashed = false;
 		}
@@ -387,10 +387,10 @@ void V_cshift_f (void) {
 	if (cls.state >= ca_connected && cl.teamfortress && cbuf_current != &cbuf_svc)
 		return;
 
-	cshift_empty.destcolor[0] = atoi(Cmd_Argv(1));
-	cshift_empty.destcolor[1] = atoi(Cmd_Argv(2));
-	cshift_empty.destcolor[2] = atoi(Cmd_Argv(3));
-	cshift_empty.percent = atoi(Cmd_Argv(4));
+	cshift_empty.destcolor[0] = SDL_atoi(Cmd_Argv(1));
+	cshift_empty.destcolor[1] = SDL_atoi(Cmd_Argv(2));
+	cshift_empty.destcolor[2] = SDL_atoi(Cmd_Argv(3));
+	cshift_empty.percent = SDL_atoi(Cmd_Argv(4));
 
 	// TF flash grenades stuff
 	if (cl.teamfortress)
@@ -689,7 +689,7 @@ void V_TF_ClearGrenadeEffects ()
 	Cvar_SetValue (&v_idlescale, 0.0f);
 
 	// Flash effect off
-	if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+	if (flashed && (!SDL_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
 		V_TF_FlashSettings (false);
 		flashed = false;
 	}
@@ -1008,9 +1008,9 @@ void V_RenderView (void) {
 	else 
 	{
 		r_refdef2.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "0") ? false : true;
-		r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) :
+		r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, SDL_atof(p), 1) :
 			cl.teamfortress ? 0 : 1;
-		r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(p), 1) : 0;
+		r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, SDL_atof(p), 1) : 0;
 	}
 
 //	r_refdef2.viewplayernum = Cam_PlayerNum();

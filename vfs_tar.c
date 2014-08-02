@@ -142,7 +142,7 @@ static int tarOperationIndexFiles(vfsfile_t *in, packfile_t *files) {
 				//Com_Printf(" %9d %s\n",remaining,fname);
 
 				if (files) {
-					strlcpy(files[numfiles].name, fname, sizeof(files[numfiles].name));
+					SDL_strlcpy(files[numfiles].name, fname, sizeof(files[numfiles].name));
 					files[numfiles].filelen = remaining;
 					files[numfiles].filepos = VFS_TELL(in);
 				}
@@ -389,7 +389,7 @@ static qbool FSTAR_FLocate(void *handle, flocation_t *loc, const char *filename,
 		if (loc)
 		{
 			loc->index = pf - tar->files;
-			snprintf(loc->rawname, sizeof(loc->rawname), "%s/%s", tar->filename, filename);
+			SDL_snprintf(loc->rawname, sizeof(loc->rawname), "%s/%s", tar->filename, filename);
 			loc->offset = pf->filepos;
 			loc->len = pf->filelen;
 		}
@@ -446,7 +446,7 @@ static void *FSTAR_LoadTarFile(vfsfile_t *tarhandle, const char *desc)
 	tarfile_t *tar;
 
 	tar = Q_calloc(1, sizeof(*tar));
-	strlcpy (tar->filename, desc, sizeof (tar->filename));
+	SDL_strlcpy (tar->filename, desc, sizeof (tar->filename));
 	tar->raw = tarhandle;
 	if (!tar->raw) goto fail;
 

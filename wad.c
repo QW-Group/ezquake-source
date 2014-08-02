@@ -303,7 +303,7 @@ void WAD3_LoadWadFile (char *filename)
 			if (!strcmp(lump_p->name, texwadlump[j].name))
 				goto skip_duplicate;
 		}
-		strlcpy (texwadlump[j].name, lump_p->name, sizeof(texwadlump[j].name));
+		SDL_strlcpy (texwadlump[j].name, lump_p->name, sizeof(texwadlump[j].name));
 		texwadlump[j].file = file;
 		texwadlump[j].position = LittleLong(lump_p->filepos);
 		texwadlump[j].size = LittleLong(lump_p->disksize);
@@ -356,7 +356,7 @@ byte *WAD3_LoadTexture (texture_t *tx)
 		return ConvertWad3ToRGBA(tx->width, tx->height, (byte *)(tx + 1), (tx->name[0] == '{'));
 
 	for (i = 0; i < wad3_numlumps; i++) {
-		if (strcasecmp(tx->name, texwadlump[i].name))
+		if (SDL_strcasecmp(tx->name, texwadlump[i].name))
 			continue;
 		
 		file = texwadlump[i].file;
