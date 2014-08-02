@@ -71,8 +71,6 @@ cvar_t	cfg_legacy_exec		=	{"cfg_legacy_exec", "1"};
 cvar_t  cfg_use_home		=	{"cfg_use_home", "0"};
 cvar_t  cfg_use_gamedir		=	{"cfg_use_gamedir", "0"};
 
-char *configname;
-
 /************************************ DUMP FUNCTIONS ************************************/
 
 #define BIND_ALIGN_COL 20
@@ -931,11 +929,6 @@ void ResetConfigs_f(void)
 	}
 	Com_Printf("Resetting configuration to default state...\n");
 
-	if (configname) {
-		free(configname);
-		configname = 0;
-	}
-
 	ResetConfigs(true, read_legacy_configs);
 }
 
@@ -986,7 +979,6 @@ void LoadConfig_f(void)
 
 	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
 	SDL_snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
-
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 	use_home = cfg_use_home.integer || !host_everything_loaded;
 
@@ -1008,16 +1000,6 @@ void LoadConfig_f(void)
 		Com_Printf("Couldn't load %s %s\n", filename, (cfg_use_gamedir.integer) ? "(using gamedir search)": "(not using gamedir search)");
 		return;
 	}
-	if (configname) {
-		free(configname);
-	}
-	configname = malloc(strlen(filename)+1+7); // null char + 7 chars for color
-	if (configname) {
-		strcpy(configname, "&c2f2");
-		strcpy(configname+5, filename);
-		strcpy(configname+5+strlen(filename), "&r");
-	}
-
 
 	con_suppress = true;
 	ResetConfigs(false, true);

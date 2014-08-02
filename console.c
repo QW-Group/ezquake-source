@@ -74,7 +74,7 @@ cvar_t      con_sound_spec_volume   = {"s_spec_volume",   "1"};
 cvar_t      con_sound_other_volume  = {"s_otherchat_volume",  "1"};
 
 cvar_t      con_timestamps  = {"con_timestamps", "0"};
-cvar_t      con_shift  = {"con_shift", "0"};
+cvar_t      con_shift  = {"con_shift", "-10"};
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated
@@ -671,7 +671,6 @@ static void Con_DrawInput(void) {
 	int		len, i;
 	wchar	*text;
 	wchar	temp[MAXCMDLINE + 1];       //+ 1 for cursor if stlen(key_lines[edit_line]) == 255
-	extern char* configname;
 
 	if (key_dest != key_console && cls.state == ca_active)
 		return;
@@ -696,9 +695,6 @@ static void Con_DrawInput(void) {
 		text += 1 + key_linepos - con_linewidth;
 
 	Draw_StringW (8, con_vislines-22 + bound(0, con_shift.value, 8), text);
-	if (configname)
-		Draw_String (con_linewidth*8-((strlen(configname)-7)*8)+8+8, con_vislines-8 + bound(0, con_shift.value, 8), configname);
-		// right align: string contains 7 non visible chars, every char is 8 units wide, move 2 steps right of con_linewidth
 }
 
 //Draws the last few lines of output transparently over the game top
