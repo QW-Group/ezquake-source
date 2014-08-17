@@ -35,9 +35,9 @@ static char *mvd_name_to_xml(char *s){
 		if(i<0)
 			i+=256;
 		if (strlen(buf)>0 ){
-			SDL_snprintf(buf, sizeof (buf), "%s",va("%s			<char>%i</char>\n",buf,i));
+			snprintf(buf, sizeof (buf), "%s",va("%s			<char>%i</char>\n",buf,i));
 		}else
-			SDL_snprintf(buf, sizeof (buf), "%s",va("\n			<char>%i</char>\n",i));
+			snprintf(buf, sizeof (buf), "%s",va("\n			<char>%i</char>\n",i));
 	}
 	return buf;
 

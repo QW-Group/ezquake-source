@@ -137,7 +137,7 @@ void R_ReadPointFile_f (void) {
 	if (!com_serveractive)
 		return;
 
-	SDL_snprintf (name, sizeof(name), "maps/%s.pts", host_mapname.string);
+	snprintf (name, sizeof(name), "maps/%s.pts", host_mapname.string);
 
 	if (!(v = FS_OpenVFS(name, "rb", FS_ANY))) {
 		Com_Printf ("couldn't open %s\n", name);
@@ -149,17 +149,17 @@ void R_ReadPointFile_f (void) {
 	while (1) {
 		VFS_GETS(v, line, sizeof(line));
 		s = COM_Parse(line);
-		org[0] = SDL_atof(com_token);
+		org[0] = atof(com_token);
 
 		s = COM_Parse(s);
 		if (!s) 
 			break;
-		org[1] = SDL_atof(com_token);
+		org[1] = atof(com_token);
 
 		s = COM_Parse(s);
 		if (!s)
 			break;
-		org[2] = SDL_atof(com_token);
+		org[2] = atof(com_token);
 		if (COM_Parse(s))
 			break;
 
@@ -710,7 +710,7 @@ void R_InitParticles(void) {
 		Cvar_ResetCurrentGroup();
 
 		if ((i = COM_CheckParm ("-particles")) && i + 1 < COM_Argc())
-			Cvar_SetValue(&r_particles_count, SDL_atoi(COM_Argv(i + 1)));
+			Cvar_SetValue(&r_particles_count, Q_atoi(COM_Argv(i + 1)));
 	}
 
 	Classic_InitParticles();

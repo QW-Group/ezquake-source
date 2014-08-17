@@ -1025,7 +1025,7 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 	if (!clientload) // client doesn't need PHS
 		CM_BuildPHS ();
 
-	SDL_strlcpy (map_name, name, sizeof(map_name));
+	strlcpy (map_name, name, sizeof(map_name));
 
 	return &map_cmodels[0];
 }
@@ -1037,7 +1037,7 @@ cmodel_t *CM_InlineModel (char *name)
 	if (!name || name[0] != '*')
 		Host_Error ("CM_InlineModel: bad name");
 
-	num = SDL_atoi (name+1);
+	num = atoi (name+1);
 	if (num < 1 || num >= numcmodels)
 		Host_Error ("CM_InlineModel: bad number");
 

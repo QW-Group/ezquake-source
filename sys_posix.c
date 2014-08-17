@@ -73,7 +73,7 @@ void Sys_Printf (char *fmt, ...)
 	return;
 
 	va_start (argptr,fmt);
-	SDL_vsnprintf (text, sizeof(text), fmt, argptr);
+	vsnprintf (text, sizeof(text), fmt, argptr);
 	va_end (argptr);
 
 	if (sys_nostdout.value)
@@ -111,7 +111,7 @@ void Sys_Error(char *error, ...)
 	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);	//change stdin to non blocking
 
 	va_start (argptr, error);
-	SDL_vsnprintf (string, sizeof(string), error, argptr);
+	vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 	fprintf(stderr, "Error: %s\n", string);
 	if (qconsole_log)
@@ -214,7 +214,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 				return dir;
 			}
 		}
-		SDL_snprintf(pathname, sizeof(pathname), "%s/%s", path, oneentry->d_name);
+		snprintf(pathname, sizeof(pathname), "%s/%s", path, oneentry->d_name);
 		if ((testdir = opendir(pathname)))
 		{
 			dir.numdirs++;
@@ -229,7 +229,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			dir.size +=
 				(list[dir.numfiles].size = Sys_FileSizeTime(pathname, &list[dir.numfiles].time));
 		}
-		SDL_strlcpy (list[dir.numfiles].name, oneentry->d_name, MAX_DEMO_NAME);
+		strlcpy (list[dir.numfiles].name, oneentry->d_name, MAX_DEMO_NAME);
 
 		if (++dir.numfiles == MAX_DIRFILES - 1)
 			break;
@@ -451,7 +451,7 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
     if (maxLength-1 < PATH_MAX)	{
 			 char tmp[PATH_MAX+1];
 			 if (realpath(relPath, tmp) && absPath && strlen(tmp) < maxLength+1) {
-					SDL_strlcpy(absPath, tmp, maxLength+1);
+					strlcpy(absPath, tmp, maxLength+1);
           return absPath;
 			 }
 
@@ -491,7 +491,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	if (s < apath)  //didn't find a '/'
 		*apath = '\0';
 
-	SDL_snprintf(truepath, sizeof(truepath), "%s/%s", gpath, apath);
+	snprintf(truepath, sizeof(truepath), "%s/%s", gpath, apath);
 
 
 	//printf("truepath = %s\n", truepath);
@@ -512,18 +512,18 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		if (*ent->d_name != '.')
 			if (wildcmp(match, ent->d_name))
 			{
-				SDL_snprintf(file, sizeof(file), "%s/%s", truepath, ent->d_name);
+				snprintf(file, sizeof(file), "%s/%s", truepath, ent->d_name);
 				//would use stat, but it breaks on fat32.
 
 				if ((dir2 = opendir(file)))
 				{
 					closedir(dir2);
-					SDL_snprintf(file, sizeof(file), "%s%s/", apath, ent->d_name);
+					snprintf(file, sizeof(file), "%s%s/", apath, ent->d_name);
 					//printf("is directory = %s\n", file);
 				}
 				else
 				{
-					SDL_snprintf(file, sizeof(file), "%s%s", apath, ent->d_name);
+					snprintf(file, sizeof(file), "%s%s", apath, ent->d_name);
 					//printf("file = %s\n", file);
 				}
 
@@ -550,7 +550,7 @@ static char *Sys_PipeFile(void) {
 	if (*pipe)
 		return pipe;
 
-	SDL_snprintf(pipe, sizeof(pipe), "/tmp/ezquake_fifo_%s", getlogin());
+	snprintf(pipe, sizeof(pipe), "/tmp/ezquake_fifo_%s", getlogin());
 	return pipe;
 }
 
@@ -646,7 +646,7 @@ int Sys_Script (const char *path, const char *args)
 {
 	char str[1024];
 
-	SDL_snprintf(str, sizeof(str), "cd %s\n./%s.qws %s &\ncd ..", fs_gamedir, path, args);
+	snprintf(str, sizeof(str), "cd %s\n./%s.qws %s &\ncd ..", fs_gamedir, path, args);
 
 	if (system(str) == -1)
 		return 0;

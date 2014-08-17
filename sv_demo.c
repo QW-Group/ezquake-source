@@ -130,9 +130,9 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 
 	if (destroyfiles)
 	{
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, d->path, d->name);
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, d->path, d->name);
 		Sys_remove(path);
-		SDL_strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
+		strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
 		Sys_remove(path);
 	}
 
@@ -268,8 +268,8 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 			char dest_name[sizeof(d->name)];
 			char dest_path[sizeof(d->path)];
 
-			SDL_strlcpy(dest_name, d->name, sizeof(dest_name));
-			SDL_strlcpy(dest_path, d->path, sizeof(dest_path));
+			strlcpy(dest_name, d->name, sizeof(dest_name));
+			strlcpy(dest_path, d->path, sizeof(dest_path));
 
 			*prev = d->nextdest;
 			DestClose(d, destroyfiles); // NOTE: this free dest struck, so we can't use 'd' below
@@ -803,15 +803,15 @@ static mvddest_t *SV_InitRecordFile (char *name)
 
 	s = name + strlen(name);
 	while (*s != '/') s--;
-	SDL_strlcpy(dst->name, s+1, sizeof(dst->name));
-	SDL_strlcpy(dst->path, sv_demoDir.string, sizeof(dst->path));
+	strlcpy(dst->name, s+1, sizeof(dst->name));
+	strlcpy(dst->path, sv_demoDir.string, sizeof(dst->path));
 
 	SV_BroadcastPrintf (PRINT_CHAT, "Server starts recording (%s):\n%s\n",
 						(dst->desttype == DEST_BUFFEREDFILE) ? "memory" : "disk", s+1);
 	Cvar_SetROM(&serverdemo, dst->name);
 
-	SDL_strlcpy(path, name, MAX_OSPATH);
-	SDL_strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
+	strlcpy(path, name, MAX_OSPATH);
+	strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
 
 	if ((int)sv_demotxt.value)
 	{
@@ -858,7 +858,7 @@ static void SV_AddLastDemo(void)
 		demo.lastdemospos = (demo.lastdemospos + 1) & 0xF;
 		Q_free(demo.lastdemosname[demo.lastdemospos]);
 		demo.lastdemosname[demo.lastdemospos] = (char *) Q_malloc(name_len);
-		SDL_strlcpy(demo.lastdemosname[demo.lastdemospos], name, name_len);
+		strlcpy(demo.lastdemosname[demo.lastdemospos], name, name_len);
 		Con_DPrintf("SV_MVDStop: Demo name for 'cmd dl .': \"%s\"\n", demo.lastdemosname[demo.lastdemospos]);
 	}
 }
@@ -1564,16 +1564,16 @@ void SV_MVD_Record_f (void)
 	if (!SV_DirSizeCheck())
 		return;
 
-	SDL_strlcpy(newname, va("%s%s%s", sv_demoPrefix.string, SV_CleanName((unsigned char*)Cmd_Argv(1)),
+	strlcpy(newname, va("%s%s%s", sv_demoPrefix.string, SV_CleanName((unsigned char*)Cmd_Argv(1)),
 						sv_demoSuffix.string), sizeof(newname) - 4);
 
 	Sys_mkdir(va("%s/%s", fs_gamedir, sv_demoDir.string));
 
-	SDL_snprintf (name, sizeof(name), "%s/%s/%s", fs_gamedir, sv_demoDir.string, newname);
+	snprintf (name, sizeof(name), "%s/%s/%s", fs_gamedir, sv_demoDir.string, newname);
 
 	if ((c = strlen(name)) > 3)
 		if (strcmp(name + c - 4, ".mvd"))
-			SDL_strlcat(name, ".mvd", sizeof(name));
+			strlcat(name, ".mvd", sizeof(name));
 
 	//
 	// open the demo file and start recording
@@ -1610,30 +1610,30 @@ void SV_MVDEasyRecord_f (void)
 		return;
 
 	if (c == 2)
-		SDL_strlcpy (name, Cmd_Argv(1), sizeof(name));
+		strlcpy (name, Cmd_Argv(1), sizeof(name));
 	else
 	{
 		i = Dem_CountPlayers();
 		if ((int)teamplay.value >= 1 && i > 2)
 		{
 			// Teamplay
-			SDL_snprintf (name, sizeof(name), "%don%d_", Dem_CountTeamPlayers(Dem_Team(1)), Dem_CountTeamPlayers(Dem_Team(2)));
+			snprintf (name, sizeof(name), "%don%d_", Dem_CountTeamPlayers(Dem_Team(1)), Dem_CountTeamPlayers(Dem_Team(2)));
 			if ((int)sv_demoExtraNames.value > 0)
 			{
-				SDL_strlcat (name, va("[%s]_%s_vs_[%s]_%s_%s",
+				strlcat (name, va("[%s]_%s_vs_[%s]_%s_%s",
 				                  Dem_Team(1), Dem_PlayerNameTeam(Dem_Team(1)),
 				                  Dem_Team(2), Dem_PlayerNameTeam(Dem_Team(2)),
 				                  sv.mapname), sizeof(name));
 			}
 			else
-				SDL_strlcat (name, va("%s_vs_%s_%s", Dem_Team(1), Dem_Team(2), sv.mapname), sizeof(name));
+				strlcat (name, va("%s_vs_%s_%s", Dem_Team(1), Dem_Team(2), sv.mapname), sizeof(name));
 		}
 		else
 		{
 			if (i == 2)
 			{
 				// Duel
-				SDL_snprintf (name, sizeof(name), "duel_%s_vs_%s_%s",
+				snprintf (name, sizeof(name), "duel_%s_vs_%s_%s",
 				          Dem_PlayerName(1),
 				          Dem_PlayerName(2),
 				          sv.mapname);
@@ -1641,7 +1641,7 @@ void SV_MVDEasyRecord_f (void)
 			else
 			{
 				// FFA
-				SDL_snprintf (name, sizeof(name), "ffa_%s(%d)", sv.mapname, i);
+				snprintf (name, sizeof(name), "ffa_%s(%d)", sv.mapname, i);
 			}
 		}
 	}
@@ -1649,9 +1649,9 @@ void SV_MVDEasyRecord_f (void)
 	// <-
 
 	// Make sure the filename doesn't contain illegal characters
-	SDL_strlcpy(name, va("%s%s%s", sv_demoPrefix.string,
+	strlcpy(name, va("%s%s%s", sv_demoPrefix.string,
 			 SV_CleanName((unsigned char*)name), sv_demoSuffix.string), MAX_DEMO_NAME);
-	SDL_strlcpy(name2, name, sizeof(name2));
+	strlcpy(name2, name, sizeof(name2));
 	Sys_mkdir(va("%s/%s", fs_gamedir, sv_demoDir.string));
 
 	// FIXME: very SLOW
@@ -1662,7 +1662,7 @@ void SV_MVDEasyRecord_f (void)
 	Q_free(name3);
 	for (i = 1; dir.numfiles; )
 	{
-		SDL_snprintf(name2, sizeof(name2), "%s_%02i", name, i++);
+		snprintf(name2, sizeof(name2), "%s_%02i", name, i++);
 		if (!(name3 = quote(name2)))
 			return;
 		dir = Sys_listdir(va("%s/%s", fs_gamedir, sv_demoDir.string),
@@ -1670,7 +1670,7 @@ void SV_MVDEasyRecord_f (void)
 		Q_free(name3);
 	}
 
-	SDL_snprintf(name2, sizeof(name2), "%s", va("%s/%s/%s.mvd", fs_gamedir, sv_demoDir.string, name2));
+	snprintf(name2, sizeof(name2), "%s", va("%s/%s/%s.mvd", fs_gamedir, sv_demoDir.string, name2));
 
 	SV_MVD_Record (SV_InitRecordFile(name2), false);
 }
@@ -1705,7 +1705,7 @@ static void MVD_Init (void)
 	if (p)
 	{
 		if (p < COM_Argc()-1)
-			size = SDL_atoi (COM_Argv(p+1)) * 1024;
+			size = Q_atoi (COM_Argv(p+1)) * 1024;
 		else
 			Sys_Error ("MVD_Init: you must specify a size in KB after -democache");
 	}

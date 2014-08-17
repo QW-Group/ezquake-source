@@ -63,7 +63,7 @@ static const char* colors[14] = { "White", "Brown", "Lavender", "Khaki", "Red", 
 float VARFVAL(const cvar_t *v)
 {
     if ((v->flags & CVAR_LATCH) && v->latchedString)
-        return SDL_atof(v->latchedString);
+        return atof(v->latchedString);
     else return v->value;
 }
 
@@ -101,7 +101,7 @@ static void Setting_DrawIntNum(int x, int y, int w, setting* setting, qbool acti
 	char buf[16];
 	x = Setting_PrintLabel(x,y,w, setting->label, active);
 	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, *((int *) setting->cvar)));
-	SDL_snprintf(buf, sizeof(buf), "%3d", *((int *) setting->cvar));
+	snprintf(buf, sizeof(buf), "%3d", *((int *) setting->cvar));
 
 	UI_Print(x + LETW, y, buf, active);
 }
@@ -112,9 +112,9 @@ static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)
 	x = Setting_PrintLabel(x,y,w, setting->label, active);
 	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, VARFVAL(setting->cvar)));
 	if (setting->step > 0.99)
-		SDL_snprintf(buf, sizeof(buf), "%3d", (int) VARFVAL(setting->cvar));
+		snprintf(buf, sizeof(buf), "%3d", (int) VARFVAL(setting->cvar));
 	else
-		SDL_snprintf(buf, sizeof(buf), "%3.1f", VARFVAL(setting->cvar));
+		snprintf(buf, sizeof(buf), "%3.1f", VARFVAL(setting->cvar));
 
 	UI_Print(x + LETW, y, buf, active);
 }
@@ -136,7 +136,7 @@ static void Setting_DrawBoolAdv(int x, int y, int w, setting* setting, qbool act
 static void Setting_DrawSeparator(int x, int y, int w, setting* set)
 {
 	char buf[32];
-	SDL_snprintf(buf, sizeof(buf), "\x1d %s \x1f", set->label);
+	snprintf(buf, sizeof(buf), "\x1d %s \x1f", set->label);
 	UI_Print_Center(x, y+LINEHEIGHT+LINEHEIGHT/2, w, buf, true);
 }
 
@@ -453,7 +453,7 @@ static void StringEntryLeave(setting* set) {
 
 static void StringEntryEnter(setting* set) {
 	CEditBox_Init(&editbox, EDITBOXWIDTH, EDITBOXMAXLENGTH);
-	SDL_strlcpy(editbox.text, set->cvar->string, EDITBOXMAXLENGTH);
+	strlcpy(editbox.text, set->cvar->string, EDITBOXMAXLENGTH);
 }
 
 static void EditBoxCheck(settings_page* tab, int oldm, int newm)
@@ -571,7 +571,7 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
         COM_StripExtension(c, buf);
 
         curpic = Draw_CachePicSafe(buf, false, true);
-        SDL_strlcpy(lastpicname, skinfile, sizeof(lastpicname));
+        strlcpy(lastpicname, skinfile, sizeof(lastpicname));
     }
 
     if (curpic)

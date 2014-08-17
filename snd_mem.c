@@ -778,7 +778,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return sc;
 
 	// load it in
-	SDL_snprintf (namebuffer, sizeof (namebuffer), "sound/%s", s->name);
+	snprintf (namebuffer, sizeof (namebuffer), "sound/%s", s->name);
 
 	if (!(data = FS_LoadTempFile (namebuffer, &filesize))) {
 		Com_Printf ("Couldn't load %s\n", namebuffer);

@@ -108,9 +108,9 @@ int Compare_FragMsg (const void *p1, const void *p2) {
 	b = tolower(*s & 127);
 
 	if (MYISLOWER(a) && MYISLOWER(b)) {
-		return (a != b) ? a - b : -1 * SDL_strcasecmp(s1, s2);
+		return (a != b) ? a - b : -1 * strcasecmp(s1, s2);
 	} else {
-		return MYISLOWER(a) ? 1 : MYISLOWER(b) ? -1 : a != b ? a - b : -1 * SDL_strcasecmp(s1, s2);
+		return MYISLOWER(a) ? 1 : MYISLOWER(b) ? -1 : a != b ? a - b : -1 * strcasecmp(s1, s2);
 	}
 }
 
@@ -198,13 +198,13 @@ static void LoadFragFile(char *filename, qbool quiet) {
 	InitFragDefs();
 
 	lowmark = Hunk_LowMark();
-	SDL_strlcpy(fragfilename, filename, sizeof(fragfilename));
+	strlcpy(fragfilename, filename, sizeof(fragfilename));
 	COM_ForceExtensionEx(fragfilename, ".dat", sizeof(fragfilename));
 
 	// if it fragfile.dat then try to load from ezquake dir first,
 	// because we have a bit different fragfile format comparing to fuhquake
-	if (!SDL_strcasecmp(fragfilename, "fragfile.dat") && (buffer = (char *) FS_LoadHunkFile("../ezquake/fragfile.dat", NULL)))
-		SDL_strlcpy(fragfilename, "ezquake/fragfile.dat", sizeof(fragfilename));
+	if (!strcasecmp(fragfilename, "fragfile.dat") && (buffer = (char *) FS_LoadHunkFile("../ezquake/fragfile.dat", NULL)))
+		strlcpy(fragfilename, "ezquake/fragfile.dat", sizeof(fragfilename));
 
 	if (!buffer && !(buffer = (char *) FS_LoadHunkFile(fragfilename, NULL))) {
 		if (!quiet)
@@ -226,29 +226,29 @@ static void LoadFragFile(char *filename, qbool quiet) {
 		if (!(c = Cmd_Argc()))
 			goto nextline;
 
-		if (!SDL_strcasecmp(Cmd_Argv(0), "#FRAGFILE")) {
+		if (!strcasecmp(Cmd_Argv(0), "#FRAGFILE")) {
 
 			_checkargs(3);
-			if (!SDL_strcasecmp(Cmd_Argv(1), "VERSION")) {
+			if (!strcasecmp(Cmd_Argv(1), "VERSION")) {
 				if (gotversion) {
 					Com_Printf("Fragfile error (line %d): VERSION redefined\n", line);
 					goto end;
 				}
 				token = Cmd_Argv(2);
-				if (!SDL_strcasecmp(token, FUH_FRAGFILE_VERSION_1_00))
+				if (!strcasecmp(token, FUH_FRAGFILE_VERSION_1_00))
 					token = FRAGFILE_VERSION_1_00; // so we compatible with old fuh format, because our format include all fuh features + our
 
-				if (!SDL_strcasecmp(token, FRAGFILE_VERSION_1_00) && (token = strchr(token, '-'))) {
+				if (!strcasecmp(token, FRAGFILE_VERSION_1_00) && (token = strchr(token, '-'))) {
 					token++; // find float component of string like this "ezquake-x.yz"
-					fragdefs.version = (int) (100 * SDL_atof(token));
+					fragdefs.version = (int) (100 * Q_atof(token));
 					gotversion = true;
 				} else {
 					Com_Printf("Error: fragfile version (\"%s\") unsupported \n", Cmd_Argv(2));
 					goto end;
 				}
-			} else if (!SDL_strcasecmp(Cmd_Argv(1), "GAMEDIR")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "GAMEDIR")) {
 				_check_version_defined;
-				if (!SDL_strcasecmp(Cmd_Argv(2), "ANY"))
+				if (!strcasecmp(Cmd_Argv(2), "ANY"))
 					fragdefs.gamedir = NULL;
 				else
 					fragdefs.gamedir = Q_strdup(Cmd_Argv(2));
@@ -257,37 +257,37 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(1));
 				goto nextline;
 			}
-		} else if (!SDL_strcasecmp(Cmd_Argv(0), "#META")) {
+		} else if (!strcasecmp(Cmd_Argv(0), "#META")) {
 
 			_check_version_defined;
 			_checkargs(3);
-			if (!SDL_strcasecmp(Cmd_Argv(1), "TITLE")) {
+			if (!strcasecmp(Cmd_Argv(1), "TITLE")) {
 				fragdefs.title = Q_strdup(Cmd_Argv(2));
-			} else if (!SDL_strcasecmp(Cmd_Argv(1), "AUTHOR")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "AUTHOR")) {
 				fragdefs.author = Q_strdup(Cmd_Argv(2));
-			} else if (!SDL_strcasecmp(Cmd_Argv(1), "DESCRIPTION")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "DESCRIPTION")) {
 				fragdefs.description = Q_strdup(Cmd_Argv(2));
-			} else if (!SDL_strcasecmp(Cmd_Argv(1), "EMAIL")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "EMAIL")) {
 				fragdefs.email = Q_strdup(Cmd_Argv(2));
-			} else if (!SDL_strcasecmp(Cmd_Argv(1), "WEBPAGE")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "WEBPAGE")) {
 				fragdefs.webpage = Q_strdup(Cmd_Argv(2));
 			} else {
 				Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(1));
 				goto nextline;
 			}
-		} else if (!SDL_strcasecmp(Cmd_Argv(0), "#DEFINE")) {
+		} else if (!strcasecmp(Cmd_Argv(0), "#DEFINE")) {
 			_check_version_defined;
-			if (!SDL_strcasecmp(Cmd_Argv(1), "WEAPON_CLASS") || !SDL_strcasecmp(Cmd_Argv(1), "WC")) {
+			if (!strcasecmp(Cmd_Argv(1), "WEAPON_CLASS") || !strcasecmp(Cmd_Argv(1), "WC")) {
 
 				_checkargs3(4, 6);
 
 				token = Cmd_Argv(2);
-				if (!SDL_strcasecmp(token, "NOWEAPON") || !SDL_strcasecmp(token, "NONE") || !SDL_strcasecmp(token, "NULL")) {
+				if (!strcasecmp(token, "NOWEAPON") || !strcasecmp(token, "NONE") || !strcasecmp(token, "NULL")) {
 					Com_Printf("Fragfile warning (line %d): \"%s\" is a reserved keyword\n", line, token);
 					goto nextline;
 				}
 				for (i = 1; i < num_wclasses; i++) {
-					if (!SDL_strcasecmp(token, wclasses[i].keyword)) {
+					if (!strcasecmp(token, wclasses[i].keyword)) {
 						Com_Printf("Fragfile warning (line %d): WEAPON_CLASS \"%s\" already defined\n", line, wclasses[i].keyword);
 						goto nextline;
 					}
@@ -301,33 +301,33 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				wclasses[num_wclasses].shortname = Q_strdup(Cmd_Argv(4));
 				wclasses[num_wclasses].imagename = Q_strdup(Cmd_Argv(5));
 				num_wclasses++;
-			} else if (	!SDL_strcasecmp(Cmd_Argv(1), "OBITUARY") || !SDL_strcasecmp(Cmd_Argv(1), "OBIT")) {
+			} else if (	!strcasecmp(Cmd_Argv(1), "OBITUARY") || !strcasecmp(Cmd_Argv(1), "OBIT")) {
 
-				if (!SDL_strcasecmp(Cmd_Argv(2), "PLAYER_DEATH")) {
+				if (!strcasecmp(Cmd_Argv(2), "PLAYER_DEATH")) {
 					_checkargs(5);
 					msgtype = mt_death;
-				} else if (!SDL_strcasecmp(Cmd_Argv(2), "PLAYER_SUICIDE")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "PLAYER_SUICIDE")) {
 					_checkargs(5);
 					msgtype = mt_suicide;
-				} else if (!SDL_strcasecmp(Cmd_Argv(2), "X_FRAGS_UNKNOWN")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_FRAGS_UNKNOWN")) {
 					_checkargs(5);
 					msgtype = mt_frag;
-				} else if (!SDL_strcasecmp(Cmd_Argv(2), "X_TEAMKILLS_UNKNOWN")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLS_UNKNOWN")) {
 					_checkargs(5);
 					msgtype = mt_tkill;
-				} else if (!SDL_strcasecmp(Cmd_Argv(2), "X_FRAGS_Y")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_FRAGS_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_frags;
-				} else if (!SDL_strcasecmp(Cmd_Argv(2), "X_FRAGGED_BY_Y")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_FRAGGED_BY_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_fragged;
-				} else if (!SDL_strcasecmp(Cmd_Argv(2), "X_TEAMKILLS_Y")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLS_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_tkills;
-				} else if (!SDL_strcasecmp(Cmd_Argv(2), "X_TEAMKILLED_BY_Y")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLED_BY_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_tkilled;
-				} else if (!SDL_strcasecmp(Cmd_Argv(2), "X_TEAMKILLED_UNKNOWN")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLED_UNKNOWN")) {
 					_checkargs(5);
 					msgtype = mt_tkilled_unk;
 				} else {
@@ -350,11 +350,11 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				}
 
 				token = Cmd_Argv(3);
-				if (!SDL_strcasecmp(token, "NOWEAPON") || !SDL_strcasecmp(token, "NONE") || !SDL_strcasecmp(token, "NULL")) {
+				if (!strcasecmp(token, "NOWEAPON") || !strcasecmp(token, "NONE") || !strcasecmp(token, "NULL")) {
 					fragdefs.msgdata[fragdefs.num_fragmsgs].wclass_index = 0;
 				} else {
 					for (i = 1; i < num_wclasses; i++) {
-						if (!SDL_strcasecmp(token, wclasses[i].keyword)) {
+						if (!strcasecmp(token, wclasses[i].keyword)) {
 							fragdefs.msgdata[fragdefs.num_fragmsgs].wclass_index = i;
 							break;
 						}
@@ -369,28 +369,28 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				fragdefs.msgdata[fragdefs.num_fragmsgs].msg1 = Q_strdup (Cmd_Argv(4));
 				fragdefs.msgdata[fragdefs.num_fragmsgs].msg2 = (c == 6) ? Q_strdup(Cmd_Argv(5)) : NULL;
 				fragdefs.num_fragmsgs++;
-			} else if (!SDL_strcasecmp(Cmd_Argv(1), "FLAG_ALERT") || !SDL_strcasecmp(Cmd_Argv(1), "FLAG_MSG")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "FLAG_ALERT") || !strcasecmp(Cmd_Argv(1), "FLAG_MSG")) {
 
 				_checkargs(4);
 				if
 				(
-					!SDL_strcasecmp(Cmd_Argv(2), "X_TOUCHES_FLAG") ||
-					!SDL_strcasecmp(Cmd_Argv(2), "X_GETS_FLAG") ||
-					!SDL_strcasecmp(Cmd_Argv(2), "X_TAKES_FLAG")
+					!strcasecmp(Cmd_Argv(2), "X_TOUCHES_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_GETS_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_TAKES_FLAG")
 				) {
 					msgtype = mt_flagtouch;
 				} else if
 				(
-					!SDL_strcasecmp(Cmd_Argv(2), "X_DROPS_FLAG") ||
-					!SDL_strcasecmp(Cmd_Argv(2), "X_FUMBLES_FLAG") ||
-					!SDL_strcasecmp(Cmd_Argv(2), "X_LOSES_FLAG")
+					!strcasecmp(Cmd_Argv(2), "X_DROPS_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_FUMBLES_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_LOSES_FLAG")
 				) {
 					msgtype = mt_flagdrop;
 				} else if
 				(
-					!SDL_strcasecmp(Cmd_Argv(2), "X_CAPTURES_FLAG") ||
-					!SDL_strcasecmp(Cmd_Argv(2), "X_CAPS_FLAG") ||
-					!SDL_strcasecmp(Cmd_Argv(2), "X_SCORES")
+					!strcasecmp(Cmd_Argv(2), "X_CAPTURES_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_CAPS_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_SCORES")
 				) {
 					msgtype = mt_flagcap;
 				} else {
@@ -749,9 +749,9 @@ void Stats_NewMap(void) {
 	static char last_gamedir[MAX_OSPATH] = {0};
 
 
-	if (!last_gamedir[0] || SDL_strcasecmp(last_gamedir, cls.gamedirfile)) {
+	if (!last_gamedir[0] || strcasecmp(last_gamedir, cls.gamedirfile)) {
 		if (cl_loadFragfiles.value) {
-			SDL_strlcpy(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
+			strlcpy(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
 			LoadFragFile("fragfile", true);
 		} else {
 			InitFragDefs();

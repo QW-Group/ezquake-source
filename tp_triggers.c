@@ -173,7 +173,7 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 				if (length >= MAX_QPATH)
 					break;
  
-				SDL_strlcpy (soundname, str + start, length + 1);
+				strlcpy (soundname, str + start, length + 1);
 				if (strstr(soundname, ".."))
 					break;	// no thank you
  
@@ -299,16 +299,16 @@ void TP_MsgTrigger_f (void)
 			trig = (msg_trigger_t *) Z_Malloc (sizeof(msg_trigger_t));
 			trig->next = msg_triggers;
 			msg_triggers = trig;
-			SDL_strlcpy (trig->name, name, sizeof (trig->name));
+			strlcpy (trig->name, name, sizeof (trig->name));
 			trig->level = PRINT_HIGH;
 		}
  
-		SDL_strlcpy (trig->string, Cmd_Argv(2), sizeof(trig->string));
-		if (c == 5 && !SDL_strcasecmp (Cmd_Argv(3), "-l")) {
+		strlcpy (trig->string, Cmd_Argv(2), sizeof(trig->string));
+		if (c == 5 && !strcasecmp (Cmd_Argv(3), "-l")) {
 			if (!strcmp(Cmd_Argv(4), "t")) {
 				trig->level = 4;
 			} else {
-				trig->level = SDL_atoi (Cmd_Argv(4));
+				trig->level = Q_atoi (Cmd_Argv(4));
 				if ((unsigned) trig->level > PRINT_CHAT)
 					trig->level = PRINT_HIGH;
 			}
@@ -362,7 +362,7 @@ void TP_SearchForMsgTriggers (const char *s, int level)
 				continue;
  
 			if ((string = Cmd_AliasString (t->name))) {
-				SDL_strlcpy(vars.lasttrigger_match, s, sizeof (vars.lasttrigger_match));
+				strlcpy(vars.lasttrigger_match, s, sizeof (vars.lasttrigger_match));
 				Cbuf_AddTextEx (&cbuf_safe, va("%s\n", string));
 			} else {
 				Com_Printf ("trigger \"%s\" has no matching alias\n", t->name);
@@ -562,10 +562,10 @@ static void CL_RE_Trigger_Options_f (void)
 			trig->flags &= ~RE_REMOVESTR;
 		} else if (!strcmp(Cmd_Argv(i), "mask")) {
 			trig->flags &= ~0xFF;
-			trig->flags |= 0xFF & SDL_atoi(Cmd_Argv(i+1));
+			trig->flags |= 0xFF & atoi(Cmd_Argv(i+1));
 			i++;
 		} else if (!strcmp(Cmd_Argv(i), "interval") ) {
-			trig->min_interval = SDL_atof(Cmd_Argv(i+1));
+			trig->min_interval = atof(Cmd_Argv(i+1));
 			i++;
 		} else if (!strcmp(Cmd_Argv(i), "enable")) {
 			trig->flags |= RE_ENABLED;
@@ -685,7 +685,7 @@ void Re_Trigger_Copy_Subpatterns (const char *s, int* offsets, int num, cvar_t *
 	for (i = 0; i < 2 * num; i += 2) {
 		len = offsets[i + 1] - offsets[i] + 1;
 		tmp = (char *) Z_Malloc (len);
-		SDL_snprintf (tmp, len, "%s", s + offsets[i]);
+		snprintf (tmp, len, "%s", s + offsets[i]);
 		Cvar_ForceSet(&re_sub[i / 2], tmp);
 		Z_Free (tmp);
 	}
@@ -853,14 +853,14 @@ static void INTRIG_Lastip_port (const char *s)
 	memset (lastip, 0, sizeof (lastip));
  
 	if ( strlen(re_subi[1].string) <= 3 ) {
-		SDL_snprintf (lastip, sizeof (lastip), "%d.%d.%d.%d:%d",
+		snprintf (lastip, sizeof (lastip), "%d.%d.%d.%d:%d",
 						re_subi[1].integer,
 						re_subi[2].integer,
 						re_subi[3].integer,
 						re_subi[4].integer,
 						re_subi[5].integer);
 	} else {
-		SDL_snprintf (lastip, sizeof (lastip), "%s", re_subi[1].string);
+		snprintf (lastip, sizeof (lastip), "%s", re_subi[1].string);
 	}
 }
  

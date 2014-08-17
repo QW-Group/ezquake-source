@@ -149,7 +149,7 @@ void GL_CheckExtensions (void) {
 }
 
 void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
-	float newval = SDL_atof(string);
+	float newval = Q_atof(string);
 
 	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA;
 	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB;
@@ -216,7 +216,7 @@ void Check_Gamma (unsigned char *pal) {
 	{
 		float old = v_gamma.value;
 		if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < COM_Argc())
-			vid_gamma = bound (0.3, SDL_atof(COM_Argv(i + 1)), 1);
+			vid_gamma = bound (0.3, Q_atof(COM_Argv(i + 1)), 1);
 		else
 			vid_gamma = 1;
 

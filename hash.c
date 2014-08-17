@@ -111,7 +111,7 @@ void *Hash_GetInsensitive(hashtable_t *table, const char *name)
 
 	while(buck)
 	{
-		if (!SDL_strcasecmp(name, buck->keystring))
+		if (!strcasecmp(name, buck->keystring))
 			return buck->data;
 
 		buck = buck->next;
@@ -202,7 +202,7 @@ void *Hash_Add(hashtable_t *table, char *name, void *data)
 
 	bucket_t *buck = (bucket_t *) Q_malloc(sizeof(bucket_t));
 	char *keystring = (char *) Q_malloc(sizeof(char)*(strlen(name)+1)); // Allow room for \0
-	SDL_strlcpy(keystring, name, strlen(name) + 1);
+	strlcpy(keystring, name, strlen(name) + 1);
 
 	buck->data = data;
 	buck->keystring = keystring;
@@ -217,7 +217,7 @@ void *Hash_AddInsensitive(hashtable_t *table, char *name, void *data)
 
 	bucket_t *buck = (bucket_t *) Q_malloc(sizeof(bucket_t));
 	char *keystring = (char *) Q_malloc(sizeof(char)*(strlen(name)+1)); // Allow room for \0
-	SDL_strlcpy(keystring, name, strlen(name) + 1);
+	strlcpy(keystring, name, strlen(name) + 1);
 
 	buck->data = data;
 	buck->keystring = keystring;

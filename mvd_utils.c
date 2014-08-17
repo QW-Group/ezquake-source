@@ -240,13 +240,13 @@ void MVD_Init_Info (int player_slot) {
 		mvd_new_info[z++].p_info = &cl.players[i];
 	}
 
-	SDL_strlcpy(mvd_cg_info.mapname,TP_MapName(),sizeof(mvd_cg_info.mapname));
+	strlcpy(mvd_cg_info.mapname,TP_MapName(),sizeof(mvd_cg_info.mapname));
 	mvd_cg_info.timelimit=cl.timelimit;
 
-	SDL_strlcpy(mvd_cg_info.team1, (z ? mvd_new_info[0].p_info->team : ""),sizeof(mvd_cg_info.team1));
+	strlcpy(mvd_cg_info.team1, (z ? mvd_new_info[0].p_info->team : ""),sizeof(mvd_cg_info.team1));
 	for (i = 0; i < z; i++) {
 		if(strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1)){
-			SDL_strlcpy(mvd_cg_info.team2,mvd_new_info[i].p_info->team,sizeof(mvd_cg_info.team2));
+			strlcpy(mvd_cg_info.team2,mvd_new_info[i].p_info->team,sizeof(mvd_cg_info.team2));
 			break;
 		}
 	}
@@ -262,8 +262,8 @@ void MVD_Init_Info (int player_slot) {
 	else
 		mvd_cg_info.gametype=4;
 
-	SDL_strlcpy(mvd_cg_info.hostname,Info_ValueForKey(cl.serverinfo,"hostname"),sizeof(mvd_cg_info.hostname));
-	mvd_cg_info.deathmatch=SDL_atoi(Info_ValueForKey(cl.serverinfo,"deathmatch"));
+	strlcpy(mvd_cg_info.hostname,Info_ValueForKey(cl.serverinfo,"hostname"),sizeof(mvd_cg_info.hostname));
+	mvd_cg_info.deathmatch=atoi(Info_ValueForKey(cl.serverinfo,"deathmatch"));
 
 	mvd_cg_info.pcount = z;
 
@@ -581,7 +581,7 @@ void MVD_Info (void){
 	y = ELEMENT_Y_COORD(mvd_info);
 
 	if (mvd_info_show_header.value){
-		SDL_strlcpy(mvd_info_header_string,mvd_info_setup.string,sizeof(mvd_info_header_string));
+		strlcpy(mvd_info_header_string,mvd_info_setup.string,sizeof(mvd_info_header_string));
 		Replace_In_String(mvd_info_header_string,sizeof(mvd_info_header_string),'%',\
 			10,\
 			"a","Armor",\
@@ -594,7 +594,7 @@ void MVD_Info (void){
 			"v","Value",\
 			"w","Cur.Weap.",\
 			"W","Best Weap.");
-		SDL_strlcpy(mvd_info_header_string,Make_Red(mvd_info_header_string,0),sizeof(mvd_info_header_string));
+		strlcpy(mvd_info_header_string,Make_Red(mvd_info_header_string,0),sizeof(mvd_info_header_string));
 		Draw_String (x, y+((z++)*8), mvd_info_header_string);
 	}
 
@@ -602,21 +602,21 @@ void MVD_Info (void){
 
 	mvd_info_powerups[0]=0;
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_QUAD)
-		//SDL_strlcpy(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
+		//strlcpy(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
 
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVULNERABILITY) {
 		//if (mvd_info_powerups[0])
-		//	SDL_strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
-		//SDL_strlcat(mvd_info_powerups, tp_name_pent.string, sizeof(mvd_info_powerups));
+		//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+		//strlcat(mvd_info_powerups, tp_name_pent.string, sizeof(mvd_info_powerups));
 	}
 
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVISIBILITY) {
 		//if (mvd_info_powerups[0])
-		//	SDL_strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
-		//SDL_strlcat(mvd_info_powerups, tp_name_ring.string, sizeof(mvd_info_powerups));
+		//	strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+		//strlcat(mvd_info_powerups, tp_name_ring.string, sizeof(mvd_info_powerups));
 	}
 
-	SDL_strlcpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));
+	strlcpy(mvd_info_final_string,mvd_info_setup.string,sizeof(mvd_info_final_string));
     Replace_In_String(mvd_info_final_string,sizeof(mvd_info_final_string),'%',\
 			10,\
 			"w",va("%s:%i",TP_ItemName(mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON]),mvd_new_info[i].p_info->stats[STAT_AMMO]),\
@@ -629,7 +629,7 @@ void MVD_Info (void){
 			"P",va("%i",mvd_new_info[i].p_info->ping),\
 			"p",mvd_info_powerups,\
 			"v",va("%f",mvd_new_info[i].value));
-	SDL_strlcpy(str, mvd_info_final_string,sizeof(str));
+	strlcpy(str, mvd_info_final_string,sizeof(str));
 	Draw_String (x, y+((z++)*8), str);
 
 	#ifdef DEBUG
@@ -1113,29 +1113,29 @@ void MVD_Status (void){
 	x = ELEMENT_X_COORD(mvd_status);
 	y = ELEMENT_Y_COORD(mvd_status);
 	if (mvd_new_info[id].p_info)
-		SDL_strlcpy(str,mvd_new_info[id].p_info->name,sizeof(str));
+		strlcpy(str,mvd_new_info[id].p_info->name,sizeof(str));
 	else
 		str[0] = '\0';
 	Draw_ColoredString (x, y+((z++)*8), str,1);
-	SDL_strlcpy(str,"&cf40Took",sizeof(str));
+	strlcpy(str,"&cf40Took",sizeof(str));
 
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
-	SDL_strlcpy(str,va("RL: %i LG: %i GL: %i RA: %i YA: %i GA:%i",\
+	strlcpy(str,va("RL: %i LG: %i GL: %i RA: %i YA: %i GA:%i",\
 		mvd_new_info[id].mvdinfo.itemstats[RL_INFO].count,\
 		mvd_new_info[id].mvdinfo.itemstats[LG_INFO].count,\
 		mvd_new_info[id].mvdinfo.itemstats[GL_INFO].count,\
 		mvd_new_info[id].mvdinfo.itemstats[RA_INFO].count,\
 		mvd_new_info[id].mvdinfo.itemstats[YA_INFO].count,\
 		mvd_new_info[id].mvdinfo.itemstats[RA_INFO].count),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
-    SDL_strlcpy(str,va("Ring: %i Quad: %i Pent: %i MH: %i",\
+    strlcpy(str,va("Ring: %i Quad: %i Pent: %i MH: %i",\
 		mvd_new_info[id].mvdinfo.itemstats[RING_INFO].count,\
 		mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].count,\
 		mvd_new_info[id].mvdinfo.itemstats[PENT_INFO].count,\
 		mvd_new_info[id].mvdinfo.itemstats[MH_INFO].count),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 //	Com_Printf("%f %f %f \n",lasttime,mvd_new_info[id].mvdinfo.das.alivetimestart, mvd_new_info[id].mvdinfo.das.alivetime);
@@ -1144,15 +1144,15 @@ void MVD_Status (void){
 		lasttime1=mvd_new_info[id].mvdinfo.das.alivetime;
 	}
 
-	SDL_strlcpy(str,va("Deaths: %i",mvd_new_info[id].mvdinfo.das.deathcount),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,va("Deaths: %i",mvd_new_info[id].mvdinfo.das.deathcount),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,"Average Run:",sizeof(str));
+	strlcpy(str,"Average Run:",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,"Time      Frags TKS",sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,"Time      Frags TKS",sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 	for (p=0;p<=mvd_new_info[id].mvdinfo.run;p++){
@@ -1166,15 +1166,15 @@ void MVD_Status (void){
 	av_tk = av_tk / (mvd_new_info[id].mvdinfo.run +1);
 	}
 
-	SDL_strlcpy(str,va("%9.3f %3.3f %3.3f",av_t,av_f,av_tk),sizeof(str));
+	strlcpy(str,va("%9.3f %3.3f %3.3f",av_t,av_f,av_tk),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 
-	SDL_strlcpy(str,"Last 3 Runs:",sizeof(str));
+	strlcpy(str,"Last 3 Runs:",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,"No. Time      Frags TKS",sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,"No. Time      Frags TKS",sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 	p=mvd_new_info[id].mvdinfo.run-3;
@@ -1182,28 +1182,28 @@ void MVD_Status (void){
 		p=0;
 	//&& mvd_new_info[id].mvdinfo.runs[p].time
 	for(;p<=mvd_new_info[id].mvdinfo.run ;p++){
-		SDL_strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].mvdinfo.runs[p].time,mvd_new_info[id].mvdinfo.runs[p].frags,mvd_new_info[id].mvdinfo.runs[p].teamfrags),sizeof(str));
+		strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].mvdinfo.runs[p].time,mvd_new_info[id].mvdinfo.runs[p].frags,mvd_new_info[id].mvdinfo.runs[p].teamfrags),sizeof(str));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
 	}
-	SDL_strlcpy(str,va("Last Fired Weapon: %s",TP_ItemName(mvd_new_info[id].mvdinfo.lfw)),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,va("Last Fired Weapon: %s",TP_ItemName(mvd_new_info[id].mvdinfo.lfw)),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,"&cf40Lost",sizeof(str));
+	strlcpy(str,"&cf40Lost",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
-	SDL_strlcpy(str,va("RL: %i LG: %i GL: %i QUAD: %i",\
+	strlcpy(str,va("RL: %i LG: %i GL: %i QUAD: %i",\
 		mvd_new_info[id].mvdinfo.itemstats[RL_INFO].lost,\
 		mvd_new_info[id].mvdinfo.itemstats[LG_INFO].lost,\
 		mvd_new_info[id].mvdinfo.itemstats[GL_INFO].lost,\
 		mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].lost),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,"&cf40Kills",sizeof(str));
+	strlcpy(str,"&cf40Kills",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
-	SDL_strlcpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
+	strlcpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
 		mvd_new_info[id].mvdinfo.killstats.normal[RL_INFO].kills,\
 		mvd_new_info[id].mvdinfo.killstats.normal[LG_INFO].kills,\
 		mvd_new_info[id].mvdinfo.killstats.normal[GL_INFO].kills,\
@@ -1212,18 +1212,18 @@ void MVD_Status (void){
 		mvd_new_info[id].mvdinfo.killstats.normal[SSG_INFO].kills,\
 		mvd_new_info[id].mvdinfo.killstats.normal[SG_INFO].kills,\
 		mvd_new_info[id].mvdinfo.killstats.normal[AXE_INFO].kills),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,va("SPAWN: %i",\
+	strlcpy(str,va("SPAWN: %i",\
 		mvd_new_info[id].mvdinfo.spawntelefrags),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,"&cf40Teamkills",sizeof(str));
+	strlcpy(str,"&cf40Teamkills",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8), str,1);
 
-	SDL_strlcpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
+	strlcpy(str,va("RL: %i LG: %i GL: %i SNG: %i NG: %i SSG: %i SG: %i AXE: %i",\
 		mvd_new_info[id].mvdinfo.killstats.normal[RL_INFO].teamkills,\
 		mvd_new_info[id].mvdinfo.killstats.normal[LG_INFO].teamkills,\
 		mvd_new_info[id].mvdinfo.killstats.normal[GL_INFO].teamkills,\
@@ -1232,25 +1232,25 @@ void MVD_Status (void){
 		mvd_new_info[id].mvdinfo.killstats.normal[SSG_INFO].teamkills,\
 		mvd_new_info[id].mvdinfo.killstats.normal[SG_INFO].teamkills,\
 		mvd_new_info[id].mvdinfo.killstats.normal[AXE_INFO].teamkills),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
-	SDL_strlcpy(str,va("SPAWN: %i",\
+	strlcpy(str,va("SPAWN: %i",\
 		mvd_new_info[id].mvdinfo.teamspawntelefrags),sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,1),sizeof(str));
+	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,"Last 3 Quad Runs:",sizeof(str));
+	strlcpy(str,"Last 3 Quad Runs:",sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
-	SDL_strlcpy(str,"No. Time      Frags TKS",sizeof(str));
-	SDL_strlcpy(str,Make_Red(str,0),sizeof(str));
+	strlcpy(str,"No. Time      Frags TKS",sizeof(str));
+	strlcpy(str,Make_Red(str,0),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 	p=mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].run-3;
 	if (p<0)
 		p=0;
 	for(;p<=mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].run && mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].runs[p].time ;p++){
-		SDL_strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].runs[p].time,mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].runs[p].frags,mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].runs[p].teamfrags),sizeof(str));
+		strlcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].runs[p].time,mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].runs[p].frags,mvd_new_info[id].mvdinfo.itemstats[QUAD_INFO].runs[p].teamfrags),sizeof(str));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
 	}
 }
@@ -1280,52 +1280,52 @@ void MVD_PC_Get_Coords (void){
 	char val[1024];
 	//cvar_t *p;
 
-	SDL_strlcpy (val, mvd_pc_quad_1.string, sizeof (val));
-	cam_id[0].cam.org[0]=(float)SDL_atof(strtok(val, " "));
-	cam_id[0].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[0].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[0].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[0].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
+	strlcpy (val, mvd_pc_quad_1.string, sizeof (val));
+	cam_id[0].cam.org[0]=(float)atof(strtok(val, " "));
+	cam_id[0].cam.org[1]=(float)atof(strtok(NULL, " "));
+	cam_id[0].cam.org[2]=(float)atof(strtok(NULL, " "));
+	cam_id[0].cam.angles[0]=(float)atof(strtok(NULL, " "));
+	cam_id[0].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[0].tag="q1";
 
-	SDL_strlcpy (val,mvd_pc_quad_2.string, sizeof (val));
-	cam_id[1].cam.org[0]=(float)SDL_atof(strtok(val, " "));
-	cam_id[1].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[1].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[1].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[1].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
+	strlcpy (val,mvd_pc_quad_2.string, sizeof (val));
+	cam_id[1].cam.org[0]=(float)atof(strtok(val, " "));
+	cam_id[1].cam.org[1]=(float)atof(strtok(NULL, " "));
+	cam_id[1].cam.org[2]=(float)atof(strtok(NULL, " "));
+	cam_id[1].cam.angles[0]=(float)atof(strtok(NULL, " "));
+	cam_id[1].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[1].tag="q2";
 
-	SDL_strlcpy (val,mvd_pc_quad_3.string, sizeof (val));
-	cam_id[2].cam.org[0]	=(float)SDL_atof(strtok(val, " "));
-	cam_id[2].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[2].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[2].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[2].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
+	strlcpy (val,mvd_pc_quad_3.string, sizeof (val));
+	cam_id[2].cam.org[0]	=(float)atof(strtok(val, " "));
+	cam_id[2].cam.org[1]=(float)atof(strtok(NULL, " "));
+	cam_id[2].cam.org[2]=(float)atof(strtok(NULL, " "));
+	cam_id[2].cam.angles[0]=(float)atof(strtok(NULL, " "));
+	cam_id[2].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[2].tag="q3";
 
-	SDL_strlcpy (val,mvd_pc_pent_1.string, sizeof (val));
-	cam_id[3].cam.org[0]=(float)SDL_atof(strtok(val, " "));
-	cam_id[3].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[3].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[3].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[3].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
+	strlcpy (val,mvd_pc_pent_1.string, sizeof (val));
+	cam_id[3].cam.org[0]=(float)atof(strtok(val, " "));
+	cam_id[3].cam.org[1]=(float)atof(strtok(NULL, " "));
+	cam_id[3].cam.org[2]=(float)atof(strtok(NULL, " "));
+	cam_id[3].cam.angles[0]=(float)atof(strtok(NULL, " "));
+	cam_id[3].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[3].tag="p1";
 
-	SDL_strlcpy (val,mvd_pc_pent_2.string, sizeof (val));
-	cam_id[4].cam.org[0]=(float)SDL_atof(strtok(val, " "));
-	cam_id[4].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[4].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[4].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[4].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
+	strlcpy (val,mvd_pc_pent_2.string, sizeof (val));
+	cam_id[4].cam.org[0]=(float)atof(strtok(val, " "));
+	cam_id[4].cam.org[1]=(float)atof(strtok(NULL, " "));
+	cam_id[4].cam.org[2]=(float)atof(strtok(NULL, " "));
+	cam_id[4].cam.angles[0]=(float)atof(strtok(NULL, " "));
+	cam_id[4].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[4].tag="p2";
 
-	SDL_strlcpy (val,mvd_pc_pent_3.string, sizeof (val));
-	cam_id[5].cam.org[0]=(float)SDL_atof(strtok(val, " "));
-	cam_id[5].cam.org[1]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[5].cam.org[2]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[5].cam.angles[0]=(float)SDL_atof(strtok(NULL, " "));
-	cam_id[5].cam.angles[1]=(float)SDL_atof(strtok(NULL, " "));
+	strlcpy (val,mvd_pc_pent_3.string, sizeof (val));
+	cam_id[5].cam.org[0]=(float)atof(strtok(val, " "));
+	cam_id[5].cam.org[1]=(float)atof(strtok(NULL, " "));
+	cam_id[5].cam.org[2]=(float)atof(strtok(NULL, " "));
+	cam_id[5].cam.angles[0]=(float)atof(strtok(NULL, " "));
+	cam_id[5].cam.angles[1]=(float)atof(strtok(NULL, " "));
 	cam_id[5].tag="p3";
 }
 

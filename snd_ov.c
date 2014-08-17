@@ -144,7 +144,7 @@ sfxcache_t *S_LoadSound(sfx_t *s)
 
 	// load it in
 	COM_StripExtension(s->name, extionless);
-	SDL_snprintf (namebuffer, sizeof (namebuffer), "sound/%s.ogg", extionless);
+	snprintf (namebuffer, sizeof (namebuffer), "sound/%s.ogg", extionless);
 
 /*	if (!(data = FS_LoadTempFile (namebuffer, &filesize))) {
 		Com_Printf ("Couldn't load %s\n", namebuffer);

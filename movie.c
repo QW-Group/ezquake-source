@@ -112,11 +112,11 @@ static void Movie_Start(double _time)
 		 || !strcmp(scr_sshot_format.string, "jpg")
 		 || !strcmp(scr_sshot_format.string, "png"))
 		{
-			SDL_strlcpy(image_ext, scr_sshot_format.string, sizeof(image_ext));		
+			strlcpy(image_ext, scr_sshot_format.string, sizeof(image_ext));		
 		}
 		else
 		{
-			SDL_strlcpy (image_ext, "tga", sizeof (image_ext));
+			strlcpy (image_ext, "tga", sizeof (image_ext));
 		}
 	}
 }
@@ -149,7 +149,7 @@ void Movie_Demo_Capture_f(void) {
 		return;
 	}
 	if (argc == 2) {
-		if (SDL_strncasecmp("stop", Cmd_Argv(1), 4))
+		if (strncasecmp("stop", Cmd_Argv(1), 4))
 			Com_Printf(error);
 		else if (Movie_IsCapturing())
 			Movie_Stop();
@@ -157,7 +157,7 @@ void Movie_Demo_Capture_f(void) {
 			Com_Printf("%s : Not capturing\n", Cmd_Argv(0));
 		return;
 	}
-	if (SDL_strncasecmp("start", Cmd_Argv(1), 5)) {
+	if (strncasecmp("start", Cmd_Argv(1), 5)) {
 		Com_Printf(error);
 		return;
 	} else if (Movie_IsCapturing()) {
@@ -168,7 +168,7 @@ void Movie_Demo_Capture_f(void) {
 		Com_Printf("%s : Must be playing a demo to capture\n", Cmd_Argv(0));
 		return;
 	}
-	if ((time = SDL_atof(Cmd_Argv(2))) <= 0) {
+	if ((time = Q_atof(Cmd_Argv(2))) <= 0) {
 		Com_Printf("%s : Time argument must be positive\n", Cmd_Argv(0));
 		return;
 	}
@@ -181,13 +181,13 @@ void Movie_Demo_Capture_f(void) {
 			Com_Printf_State (PRINT_FAIL, "Avi capturing not initialized\n");
 			return;
 		}
-		SDL_strlcpy (aviname, Cmd_Argv(3), sizeof(aviname));
+		strlcpy (aviname, Cmd_Argv(3), sizeof(aviname));
 		if (!(Util_Is_Valid_Filename(aviname))) {
 			Com_Printf(Util_Invalid_Filename_Msg(aviname));
 			return;
 		}
 		COM_ForceExtensionEx (aviname, ".avi", sizeof (aviname));
-		SDL_snprintf (avipath, sizeof(avipath), "%s/%s/%s", com_basedir, movie_dir.string, aviname);
+		snprintf (avipath, sizeof(avipath), "%s/%s/%s", com_basedir, movie_dir.string, aviname);
 		if (!(avifile = fopen(avipath, "wb"))) {
 			FS_CreatePath (avipath);
 			if (!(avifile = fopen(avipath, "wb"))) {
@@ -262,14 +262,14 @@ void Movie_FinishFrame(void)
 	#ifdef _WIN32
 	if (!movie_is_avi) 
 	{
-		SDL_snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
+		snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
 			movie_dir.string, movie_start_date.wDay, movie_start_date.wMonth, movie_start_date.wYear,
 			movie_start_date.wHour,	movie_start_date.wMinute, movie_start_date.wSecond, movie_frame_count, image_ext);
 
 		con_suppress = true;
 	}
 	#else
-	SDL_snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
+	snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
 		movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
 		movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec, movie_frame_count, image_ext);
 

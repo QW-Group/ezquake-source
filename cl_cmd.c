@@ -119,12 +119,12 @@ void CL_ForwardToServer_f (void) {
 /* johnnycz: disabled due to security reasons -- fixme
 		if (strcasecmp(Cmd_Argv(1), "download") == 0 && Cmd_Argc() > 2)
 		{
-			SDL_strlcpy(cls.downloadname, Cmd_Argv(2), sizeof(cls.downloadname));
+			strlcpy(cls.downloadname, Cmd_Argv(2), sizeof(cls.downloadname));
 			COM_StripExtension(cls.downloadname, cls.downloadtempname);
-			SDL_strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+			strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 			cls.downloadtype = dl_single;
-			//SDL_snprintf (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
-			//SDL_strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
+			//snprintf (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
+			//strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
 		}
 */
 // Added by VVD {
@@ -133,8 +133,8 @@ void CL_ForwardToServer_f (void) {
 			time(&client_time);
 			for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
 				char tmp[3];
-				SDL_snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
-				SDL_strlcat(client_time_str, tmp, sizeof(client_time_str));
+				snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
+				strlcat(client_time_str, tmp, sizeof(client_time_str));
 			}
 
 			server_string_len = Cmd_Argc() + strlen(Cmd_Argv(1)) + DIGEST_SIZE * 2 + 16;
@@ -154,12 +154,12 @@ void CL_ForwardToServer_f (void) {
 				SHA1_Update((unsigned char *)" ");
 			}
 
-			SDL_snprintf(server_string, server_string_len, "%s %s%s ",
+			snprintf(server_string, server_string_len, "%s %s%s ",
 				Cmd_Argv(1), SHA1_Final(), client_time_str);
 			for (i = 3; i < Cmd_Argc(); ++i)
 			{
-				SDL_strlcat(server_string, Cmd_Argv(i), server_string_len);
-				SDL_strlcat(server_string, " ", server_string_len);
+				strlcat(server_string, Cmd_Argv(i), server_string_len);
+				strlcat(server_string, " ", server_string_len);
 			}
 			SZ_Print (&cls.netchan.message, server_string);
 			Q_free(server_string);
@@ -346,7 +346,7 @@ void CL_Say_f (void) {
     // first char isn't quote, last char isn't quote or string is shorter then 2 chars
     if (s[0] != '\"' || s[strlen(s)-1] != '\"' || s[1] == '\0')
     {
-        SDL_snprintf(qmsg, sizeof(qmsg), "\"%s\"", s);
+        snprintf(qmsg, sizeof(qmsg), "\"%s\"", s);
         s = qmsg;
     }
 
@@ -359,14 +359,14 @@ void CL_Say_f (void) {
         len = bound(0, len, sizeof(c_fn));
 
 		// TP_ParseFunChars wants a string < 1024 chars (fix it?)
-        SDL_strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
-        SDL_strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
+        strlcpy (c_fn, cl_fakename.string, sizeof(c_fn));
+        strlcpy (c_fna, cl_fakename_suffix.string, sizeof(c_fna));
 		
         // 1) save the message text, because TP_ParseFunChars will overwrite the temp memory
         // 2) cut the leading quote (+1) and also the trailing quote (len is 1 char shorter)
-        SDL_strlcpy (c_msg, s+1, len);
+        strlcpy (c_msg, s+1, len);
 
-		SDL_snprintf (msg, sizeof(msg), "\x0d%s%s", TP_ParseFunChars(strcat(c_fn, c_fna), true), c_msg);
+		snprintf (msg, sizeof(msg), "\x0d%s%s", TP_ParseFunChars(strcat(c_fn, c_fna), true), c_msg);
 
 		s = msg;
 	}
@@ -478,12 +478,12 @@ void CL_PrintQStatReply (char *s) {
 		Com_Printf ("teamplay   %s\n", Info_ValueForKey(s, "teamplay"));
 		Com_Printf ("timelimit  %s\n", Info_ValueForKey(s, "timelimit"));
 		Com_Printf ("fraglimit  %s\n", Info_ValueForKey(s, "fraglimit"));
-	if ((n = SDL_atoi(Info_ValueForKey(s, "needpass")) & 3) != 0)
+	if ((n = Q_atoi(Info_ValueForKey(s, "needpass")) & 3) != 0)
 		Com_Printf ("needpass   %s%s%s\n", n & 1 ? "player" : "",
 			n == 3 ? ", " : "", n & 2 ? "spectator" : "");
-	if (SDL_atoi(Info_ValueForKey(s, "needpass")) & 1)
+	if (Q_atoi(Info_ValueForKey(s, "needpass")) & 1)
 		Com_Printf ("player password required\n");
-	if (SDL_atoi(Info_ValueForKey(s, "needpass")) & 2)
+	if (Q_atoi(Info_ValueForKey(s, "needpass")) & 2)
 		Com_Printf ("spectator password required\n");
 
 	Com_Printf ("players    %i/%s\n", numplayers, Info_ValueForKey(s, "maxclients"));
@@ -559,7 +559,7 @@ void CL_Rcon_f (void) {
 	message[2] = 255;
 	message[3] = 255;
 	message[4] = 0;
-	SDL_strlcat (message, "rcon ", sizeof(message));
+	strlcat (message, "rcon ", sizeof(message));
 
 // Added by VVD {
 	if (cl_crypt_rcon.value)
@@ -567,8 +567,8 @@ void CL_Rcon_f (void) {
 		time(&client_time);
 		for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
 			char tmp[3];
-			SDL_snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
-			SDL_strlcat(client_time_str, tmp, sizeof(client_time_str));
+			snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
+			strlcat(client_time_str, tmp, sizeof(client_time_str));
 		}
 		
 		SHA1_Init();
@@ -591,21 +591,21 @@ void CL_Rcon_f (void) {
 			SHA1_Update((unsigned char *)Cmd_Argv(i));
 			SHA1_Update((unsigned char *)" ");
 		}
-		SDL_strlcat (message, SHA1_Final(), sizeof(message));
-		SDL_strlcat (message, client_time_str, sizeof(message));
-		SDL_strlcat (message, " ", sizeof(message));
+		strlcat (message, SHA1_Final(), sizeof(message));
+		strlcat (message, client_time_str, sizeof(message));
+		strlcat (message, " ", sizeof(message));
 	}
 	else {
 		i_from = 1;
  		if (rcon_password.string[0]) {
-			SDL_strlcat (message, rcon_password.string, sizeof(message));
-			SDL_strlcat (message, " ", sizeof(message));
+			strlcat (message, rcon_password.string, sizeof(message));
+			strlcat (message, " ", sizeof(message));
 		}
 	}
 	for (i = i_from; i < Cmd_Argc(); i++)
 	{
-		SDL_strlcat (message, Cmd_Argv(i), sizeof(message));
-		SDL_strlcat (message, " ", sizeof(message));
+		strlcat (message, Cmd_Argv(i), sizeof(message));
+		strlcat (message, " ", sizeof(message));
 	}
 // } Added by VVD
 
@@ -636,7 +636,7 @@ void CL_Download_f (void){
 	}
 
 	filename = Cmd_Argv(1);
-	SDL_strlcpy(ondiskname, filename, sizeof(ondiskname)); // in most cases this is same as filename
+	strlcpy(ondiskname, filename, sizeof(ondiskname)); // in most cases this is same as filename
 
 	if (Cmd_Argc() != 2 || !filename[0]) {
 		Com_Printf ("Usage: %s <datafile>\n", Cmd_Argv(0));
@@ -650,7 +650,7 @@ void CL_Download_f (void){
 			) {
 		dir = CL_DemoDirectory(); // seems filename is a demo
 		// so, we save file in /dir/<demo_dir> instead of /dir/<demo_dir>/demos
-		SDL_strlcpy(ondiskname, COM_SkipPath(filename), sizeof(ondiskname));
+		strlcpy(ondiskname, COM_SkipPath(filename), sizeof(ondiskname));
 	}
 	else
 		dir = cls.gamedir; // not a demo
@@ -663,9 +663,9 @@ void CL_Download_f (void){
 	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 	cls.downloadstarttime = Sys_DoubleTime();
 
-	SDL_snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
+	snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
 	COM_StripExtension(cls.downloadname, cls.downloadtempname);
-	SDL_strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
@@ -686,7 +686,7 @@ void CL_User_f (void) {
 		return;
 	}
 
-	uid = SDL_atoi(Cmd_Argv(1));
+	uid = atoi(Cmd_Argv(1));
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (!cl.players[i].name[0])
@@ -728,11 +728,11 @@ void CL_Color_f (void) {
 			Com_Printf ("color <0-13> [0-13]\n");
 			return;
 		case 2:
-			top = bottom = SDL_atoi(Cmd_Argv(1));
+			top = bottom = Q_atoi(Cmd_Argv(1));
 			break;
 		default:
-			top = SDL_atoi(Cmd_Argv(1));
-			bottom = SDL_atoi(Cmd_Argv(2));
+			top = Q_atoi(Cmd_Argv(1));
+			bottom = Q_atoi(Cmd_Argv(2));
 	}
 
 	top &= 15;
@@ -832,7 +832,7 @@ void CL_Userdir_f (void)
 	if (cls.state > ca_disconnected || Cmd_Argc() == 1) {
 		Com_Printf("Current userdir: %s\n", userdirfile);
 	} else {
-		int u = SDL_atoi(Cmd_Argv(2));
+		int u = Q_atoi(Cmd_Argv(2));
 		if (u < 0 || u > 5)
 			Com_Printf("Invalid userdir type\n");
 		else
@@ -892,8 +892,8 @@ int get_z_ext_list(int bits, char *buf, int bufsize)
 			continue; // not match
 
 		if (cnt)
-			SDL_strlcat(buf, " ", bufsize);
-		SDL_strlcat(buf, z_map[i].name, bufsize);
+			strlcat(buf, " ", bufsize);
+		strlcat(buf, z_map[i].name, bufsize);
 		cnt++;
 	}
 
@@ -1002,7 +1002,7 @@ void CL_FullServerinfo_f (void) {
 	if (Cmd_Argc() != 2)
 		return;
 
-	SDL_strlcpy (cl.serverinfo, Cmd_Argv(1), sizeof(cl.serverinfo));
+	strlcpy (cl.serverinfo, Cmd_Argv(1), sizeof(cl.serverinfo));
 
 	p = Info_ValueForKey (cl.serverinfo, "*cheats");
 	if (*p)
@@ -1084,7 +1084,7 @@ usermainbuttons_t CL_GetLastCmd (void) {
    return ret;
 
    /*
-   SDL_snprintf(str, sizeof(str), "%s %s%s%s %s %s %s", 
+   snprintf(str, sizeof(str), "%s %s%s%s %s %s %s", 
       cmd.upmove > 0 ? "up" : cmd.upmove < 0 ? "dn" : "  ", 
       cmd.sidemove < 0 ? "<-" : "  ", 
       cmd.forwardmove > 0 ? "^" : cmd.forwardmove < 0 ? "v" : " ", 

@@ -30,6 +30,146 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ============================================================================
 */
 
+int Q_atoi (const char *str)
+{
+	int val, sign, c;
+
+	if (!str) return 0;
+
+	for (; *str && *str <= ' '; str++);
+
+	if (*str == '-') {
+		sign = -1;
+		str++;
+	} else {
+		if (*str == '+')
+			str++;
+
+		sign = 1;
+	}
+
+	val = 0;
+
+	// check for hex
+	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X') ) {
+		str += 2;
+		while (1) {
+			c = *str++;
+			if (c >= '0' && c <= '9')
+				val = (val << 4) + c - '0';
+			else if (c >= 'a' && c <= 'f')
+				val = (val << 4) + c - 'a' + 10;
+			else if (c >= 'A' && c <= 'F')
+				val = (val << 4) + c - 'A' + 10;
+			else
+				return val*sign;
+		}
+	}
+
+	// check for character
+	if (str[0] == '\'')
+		return sign * str[1];
+
+	// assume decimal
+	while (1) {
+		c = *str++;
+		if (c <'0' || c > '9')
+			return val*sign;
+		val = val * 10 + c - '0';
+	}
+
+	return 0;
+}
+
+float Q_atof (const char *str)
+{
+	double val;
+	int sign, c, decimal, total;
+
+	if (!str) return 0;
+
+	for (; *str && *str <= ' '; str++); // VVD: from MVDSV :-)
+/*
+	//R00k - qbism// 1999-12-27 ATOF problems with leading spaces fix by Maddes
+	while ((*str) && (*str<=' '))
+	{
+		str++;
+	}
+	//R00k - qbism// 1999-12-27 ATOF problems with leading spaces fix by Maddes
+*/
+	if (*str == '-') {
+		sign = -1;
+		str++;
+	} else {
+		if (*str == '+')
+			str++;
+
+		sign = 1;
+	}
+
+	val = 0;
+
+	// check for hex
+	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X') ) {
+		str += 2;
+		while (1) {
+			c = *str++;
+			if (c >= '0' && c <= '9')
+				val = (val * 16) + c - '0';
+			else if (c >= 'a' && c <= 'f')
+				val = (val * 16) + c - 'a' + 10;
+			else if (c >= 'A' && c <= 'F')
+				val = (val * 16) + c - 'A' + 10;
+			else
+				return val*sign;
+		}
+	}
+
+	// check for character
+	if (str[0] == '\'')
+		return sign * str[1];
+
+	// assume decimal
+	decimal = -1;
+	total = 0;
+	while (1) {
+		c = *str++;
+		if (c == '.') {
+			decimal = total;
+			continue;
+		}
+		if (c <'0' || c > '9')
+			break;
+		val = val*10 + c - '0';
+		total++;
+	}
+
+	if (decimal == -1)
+		return val * sign;
+	while (total > decimal) {
+		val /= 10;
+		total--;
+	}
+
+	return val * sign;
+}
+
+// removes trailing zeros
+char *Q_ftos (float value)
+{
+	static char str[128];
+	int	i;
+
+	snprintf (str, sizeof(str), "%f", value);
+
+	for (i=strlen(str)-1 ; i>0 && str[i]=='0' ; i--)
+		str[i] = 0;
+	if (str[i] == '.')
+		str[i] = 0;
+
+	return str;
+}
+
 // like strcpy, but allow overlapping strings
 char *Q_strcpy( char *to, char *from )
 {
@@ -49,6 +189,121 @@ char *Q_strcpy( char *to, char *from )
 	return to;
 }
 
+char *Q_strlwr( char *s1 ) {
+    char	*s;
+
+    s = s1;
+	while ( *s ) {
+		*s = tolower(*s);
+		s++;
+	}
+    return s1;
+}
+
+// Added by VVD {
+#ifdef _WIN32
+int qsnprintf(char *buffer, size_t count, char const *format, ...)
+{
+	int ret;
+	va_list argptr;
+	if (!count) return 0;
+	va_start(argptr, format);
+	ret = _vsnprintf(buffer, count, format, argptr);
+	buffer[count - 1] = 0;
+	va_end(argptr);
+	return ret;
+}
+int qvsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
+{
+	int ret;
+	if (!count) return 0;
+	ret = _vsnprintf(buffer, count, format, argptr);
+	buffer[count - 1] = 0;
+	return ret;
+}
+#endif
+
+#if defined(__linux__) || defined(_WIN32)
+
+size_t strlcpy(char *dst, const char *src, size_t siz)
+{
+	register char *d = dst;
+	register const char *s = src;
+	register size_t n = siz;
+
+	/* Copy as many bytes as will fit */
+	if (n != 0 && --n != 0) {
+		do {
+			if ((*d++ = *s++) == 0)
+				break;
+		} while (--n != 0);
+	}
+
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (siz != 0)
+			*d = '\0'; /* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
+}
+
+size_t strlcat(char *dst, const char *src, size_t siz)
+{
+	register char *d = dst;
+	register const char *s = src;
+	register size_t n = siz;
+	size_t dlen;
+
+	/* Find the end of dst and adjust bytes left but don't go past end */
+	while (n-- != 0 && *d != '\0')
+		d++;
+	dlen = d - dst;
+	n = siz - dlen;
+
+	if (n == 0)
+		return(dlen + strlen(s));
+	while (*s != '\0') {
+		if (n != 1) {
+			*d++ = *s;
+			n--;
+		}
+		s++;
+	}
+	*d = '\0';
+
+	return(dlen + (s - src));       /* count does not include NUL */
+}
+
+char *strnstr(const char *s, const char *find, size_t slen)
+{
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != '\0') 
+	{
+		len = strlen(find);
+
+		do 
+		{
+			do 
+			{
+				if ((sc = *s++) == '\0' || slen-- < 1)
+					return (NULL);
+			} 
+			while (sc != c);
+			
+			if (len > slen)
+				return (NULL);
+
+		} while (strncmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
+}
+#endif
 // A Case-insensitive strstr.
 char *strstri(const char *text, const char *find)
 {
@@ -64,7 +319,7 @@ char *strstri(const char *text, const char *find)
 	while (*s)
 	{
 		// Check if we can find the substring.
-		if (!SDL_strncasecmp(s, find, findlen))
+		if (!strncasecmp(s, find, findlen))
 		{
 			return s;
 		}
@@ -76,6 +331,19 @@ char *strstri(const char *text, const char *find)
 }
 
 // Added by VVD }
+
+//
+// Finds the first occurance of a char in a string starting from the end.
+// 
+char *strchrrev(char *str, char chr)
+{
+	char *firstchar = str;
+	for (str = str + strlen(str)-1; str >= firstchar; str--)
+		if (*str == chr)
+			return str;
+
+	return NULL;
+}
 
 // D-Kure: added for fte vfs
 int wildcmp(char *wild, char *string)

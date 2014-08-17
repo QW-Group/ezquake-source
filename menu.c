@@ -959,15 +959,15 @@ void M_ScanSaves (char *sp_gamedir) {
 	vfsfile_t *f;
 
 	for (i = 0; i < MAX_SAVEGAMES; i++) {
-		SDL_strlcpy (m_filenames[i], "--- UNUSED SLOT ---", SAVEGAME_COMMENT_LENGTH + 1);
+		strlcpy (m_filenames[i], "--- UNUSED SLOT ---", SAVEGAME_COMMENT_LENGTH + 1);
 		loadable[i] = false;
 
-		SDL_snprintf (name, sizeof(name), "save/s%i.sav", i);
+		snprintf (name, sizeof(name), "save/s%i.sav", i);
 		if (!(f = FS_OpenVFS(name, "rb", FS_GAME_OS)))
 			continue;
 		VFS_GETS(f, name, sizeof(name));
 		VFS_GETS(f, name, sizeof(name));
-		SDL_strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
+		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
 
 		// change _ back to space
 		for (j = 0; j < SAVEGAME_COMMENT_LENGTH; j++)

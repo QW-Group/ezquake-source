@@ -95,7 +95,7 @@ void Sys_Error (char *error, ...)
 	char string[1024];
 	
 	va_start (argptr ,error);
-	SDL_vsnprintf (string, sizeof(string), error, argptr);
+	vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 	printf ("Fatal error: %s\n",string);
 	
@@ -115,7 +115,7 @@ void Sys_Printf (char *fmt, ...)
 	unsigned char *p;
 
 	va_start (argptr, fmt);
-	SDL_vsnprintf (text, sizeof(text), fmt, argptr);
+	vsnprintf (text, sizeof(text), fmt, argptr);
 	va_end (argptr);
 
 	if (sys_nostdout.value)

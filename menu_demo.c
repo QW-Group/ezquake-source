@@ -149,7 +149,7 @@ static void Demo_Playlist_Start (int i)
 
 	demo_playlist_started_test = 0 ;
 	demo_playlist_started = true;
-	SDL_strlcpy(track_name, demo_playlist[demo_playlist_current_played].trackname, sizeof(track_name));
+	strlcpy(track_name, demo_playlist[demo_playlist_current_played].trackname, sizeof(track_name));
 	Cbuf_AddText (va("playdemo \"%s\"\n", demo_playlist[demo_playlist_current_played].path));
 }
 
@@ -157,7 +157,7 @@ void CL_Demo_Playlist_f (void)
 {
 	demo_playlist_current_played++;
 
-	SDL_strlcpy (track_name, demo_playlist[demo_playlist_current_played].trackname, sizeof(track_name));
+	strlcpy (track_name, demo_playlist[demo_playlist_current_played].trackname, sizeof(track_name));
 
 	if (demo_playlist_current_played == demo_playlist_num  && demo_playlist_loop.value )
 	{
@@ -235,8 +235,8 @@ void M_Demo_Playlist_Stop_f (void)
 
 static void Demo_Playlist_Setup_f (void)
 {
-	SDL_strlcpy (demo_track, demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname, sizeof(demo_track));
-	SDL_strlcpy (default_track, demo_playlist_track_name.string, min(16, sizeof(default_track)));
+	strlcpy (demo_track, demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname, sizeof(demo_track));
+	strlcpy (default_track, demo_playlist_track_name.string, min(16, sizeof(default_track)));
 }
 
 //
@@ -415,7 +415,7 @@ void CT_Demo_Entry_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 		M_Print (24, y + 96, "No demo in playlist");
 	}
 
-	if (SDL_strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd"))
+	if (strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd"))
 	{
 		M_Print (24, y + 120, "Tracking only available with mvds");
 	}
@@ -468,8 +468,8 @@ void Demo_AddDemoToPlaylist (char *display_name, char *path)
 		return;
 	}
 
-	SDL_snprintf (demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
-	SDL_snprintf (demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
+	snprintf (demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
+	snprintf (demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
 	demo_playlist_num++;
 }
 
@@ -757,7 +757,7 @@ int CT_Demo_Entry_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 			{
 				if (strlen(demo_track))
 					demo_track[strlen(demo_track)-1] = 0;
-				SDL_strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_playlist->trackname));
+				strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_playlist->trackname));
 			}
 			break;
 		}
@@ -773,7 +773,7 @@ int CT_Demo_Entry_Key(int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 				{
 					demo_track[l+1] = 0;
 					demo_track[l] = key;
-					SDL_strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_playlist->trackname));
+					strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_playlist->trackname));
 				}
 				return true;
 			}
@@ -872,9 +872,9 @@ void Menu_Demo_NewHome(const char *homedir)
 {
     char buf[MAX_OSPATH];
 
-    SDL_strlcpy(buf, com_basedir, sizeof(buf)); 
-    SDL_strlcat(buf, "/", sizeof(buf));
-    SDL_strlcat(buf, homedir, sizeof(buf));
+    strlcpy(buf, com_basedir, sizeof(buf)); 
+    strlcat(buf, "/", sizeof(buf));
+    strlcat(buf, homedir, sizeof(buf));
 	FL_SetCurrentDir(&demo_filelist, buf);
 }
 

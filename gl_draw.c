@@ -171,7 +171,7 @@ static void Apply_OnChange_gl_smoothfont(int value)
 
 void OnChange_gl_smoothfont (cvar_t *var, char *string, qbool *cancel)
 {
-	Apply_OnChange_gl_smoothfont( SDL_atoi(string) );
+	Apply_OnChange_gl_smoothfont( Q_atoi(string) );
 }
 
 /*
@@ -281,12 +281,12 @@ void Draw_InitCrosshairs(void)
 
 	for (i = 0; i < NUMCROSSHAIRS; i++)
 	{
-		SDL_snprintf(str, sizeof(str), "cross:hardcoded%d", i);
+		snprintf(str, sizeof(str), "cross:hardcoded%d", i);
 		crosshairtextures[i] = GL_LoadTexture (str, 8, 8, crosshairdata[i], TEX_ALPHA, 1);
 	}
 	customCrosshair_Init(); // safe re-init
 
-	SDL_snprintf(str, sizeof(str), "%s", gl_crosshairimage.string);
+	snprintf(str, sizeof(str), "%s", gl_crosshairimage.string);
 	Cvar_Set(&gl_crosshairimage, str);
 }
 
@@ -392,7 +392,7 @@ static void Scrap_Upload (void)
 		{
 			char id[64];
 			// generate id
-			SDL_snprintf(id, sizeof(id), "scrap:%d", i);
+			snprintf(id, sizeof(id), "scrap:%d", i);
 			// upload it
 			scrap_texnum[i] = GL_LoadTexture(id, BLOCK_WIDTH, BLOCK_HEIGHT, scrap_texels[i], TEX_ALPHA | TEX_NOSCALE, 1);
 		}
@@ -505,8 +505,8 @@ mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
 
 	// Get the filename without extension.
 	COM_StripExtension(path, stripped_path);
-	SDL_snprintf(lmp_path, MAX_PATH, "%s.lmp", stripped_path);
-	SDL_snprintf(png_path, MAX_PATH, "%s.png", stripped_path);
+	snprintf(lmp_path, MAX_PATH, "%s.lmp", stripped_path);
+	snprintf(png_path, MAX_PATH, "%s.png", stripped_path);
 
 	// Try loading the pic from disk.
 
@@ -601,7 +601,7 @@ static int Load_LMP_Charset (char *name, int flags)
 	int filesize;
 
 	// We expect an .lmp to be in QPIC format, but it's ok if it's just raw data.
-	if (!SDL_strcasecmp(name, "charset"))
+	if (!strcasecmp(name, "charset"))
 	{
 		// work around for original charset
 		data = draw_chars;
@@ -670,9 +670,9 @@ static int Load_Locale_Charset (const char *name, const char *locale, unsigned i
 	char_range[num] = 0;
 
 	COM_StripExtension(name, basename);
-	SDL_snprintf(texture, sizeof(texture), "textures/charsets/%s-%s", basename, locale);
-	SDL_snprintf(id, sizeof(id), "pic:charset-%s", locale);
-	SDL_snprintf(lmp, sizeof(lmp), "conchars-%s", locale);
+	snprintf(texture, sizeof(texture), "textures/charsets/%s-%s", basename, locale);
+	snprintf(id, sizeof(id), "pic:charset-%s", locale);
+	snprintf(lmp, sizeof(lmp), "conchars-%s", locale);
 
 	// try first 24 bit
 	char_textures[num] = GL_LoadCharsetImage (texture, id, flags);
@@ -696,7 +696,7 @@ static int Draw_LoadCharset(const char *name)
 	//		This way user still have some charset and can fix issue.
 	//
 
-	if (!SDL_strcasecmp(name, "original"))
+	if (!strcasecmp(name, "original"))
 	{
 		if ((texnum = Load_LMP_Charset("charset", flags)))
 		{
@@ -1968,7 +1968,7 @@ void Draw_ConsoleBackground (int lines)
 		{
 			char name[MAX_QPATH];
 
-			SDL_snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
+			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
 			if ((last_lvlshot = Draw_CachePicSafe(name, false, true)))
 			{
 				// Resize.
@@ -1976,7 +1976,7 @@ void Draw_ConsoleBackground (int lines)
 				last_lvlshot->height = conback.height;
 			}
 
-			SDL_strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
+			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
 		}
 
 		lvlshot = last_lvlshot;

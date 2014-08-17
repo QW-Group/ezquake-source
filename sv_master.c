@@ -104,7 +104,7 @@ void Master_Heartbeat (void)
 			active++;
 
 	svs.heartbeat_sequence++;
-	SDL_snprintf (string, sizeof(string), "%c\n%i\n%i\n", S2M_HEARTBEAT,
+	snprintf (string, sizeof(string), "%c\n%i\n%i\n", S2M_HEARTBEAT,
 		  svs.heartbeat_sequence, active);
 
 
@@ -129,7 +129,7 @@ void Master_Shutdown (void)
 	char string[2048];
 	int i;
 
-	SDL_snprintf (string, sizeof(string), "%c\n", S2M_SHUTDOWN);
+	snprintf (string, sizeof(string), "%c\n", S2M_SHUTDOWN);
 
 	// send to group master
 	for (i=0 ; i<MAX_MASTERS ; i++)

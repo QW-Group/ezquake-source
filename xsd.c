@@ -71,7 +71,7 @@ char *XSD_AddText(char *dst, const char *src, int src_len)
     {
 		len = 1 + src_len + strlen(dst);
         buf = (char *) Q_malloc(len);
-        SDL_strlcpy (buf, dst, len);
+        strlcpy (buf, dst, len);
         memcpy(buf+strlen(buf), src, src_len);
         buf[src_len+strlen(dst)] = 0;
         Q_free(dst);
@@ -160,8 +160,8 @@ void XSD_RestoreStack(xml_parser_stack_t *stack)
 // call when element starts
 void XSD_OnStartElement(xml_parser_stack_t *stack, const XML_Char *name, const XML_Char **atts)
 {
-    SDL_strlcat(stack->path, "/", sizeof (stack->path));
-    SDL_strlcat(stack->path, name, sizeof (stack->path));
+    strlcat(stack->path, "/", sizeof (stack->path));
+    strlcat(stack->path, name, sizeof (stack->path));
 }
 
 // call when element ends

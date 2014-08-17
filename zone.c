@@ -147,7 +147,7 @@ void *Hunk_AllocName (int size, char *name) {
 
 	h->size = size;
 	h->sentinal = HUNK_SENTINEL;
-	SDL_strlcpy (h->name, name, sizeof (h->name));
+	strlcpy (h->name, name, sizeof (h->name));
 
 	return (void *) (h + 1);
 }
@@ -214,7 +214,7 @@ void *Hunk_HighAllocName (int size, char *name) {
 	memset (h, 0, size);
 	h->size = size;
 	h->sentinal = HUNK_SENTINEL;
-	SDL_strlcpy (h->name, name, sizeof (h->name));
+	strlcpy (h->name, name, sizeof (h->name));
 
 	return (void *) (h + 1);
 }
@@ -475,7 +475,7 @@ void *Cache_Alloc (cache_user_t *c, int size, char *name) {
 	// find memory for it
 	while (1) {
 		if ((cs = Cache_TryAlloc (size, false))) {
-			SDL_strlcpy (cs->name, name, sizeof (cs->name));
+			strlcpy (cs->name, name, sizeof (cs->name));
 			c->data = (void *)(cs+1);
 			cs->user = c;
 			break;

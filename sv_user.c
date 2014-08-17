@@ -319,7 +319,7 @@ static void Cmd_Soundlist_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_Soundlist_f from different level\n");
@@ -327,7 +327,7 @@ static void Cmd_Soundlist_f (void)
 		return;
 	}
 
-	n = SDL_atoi(Cmd_Argv(2));
+	n = Q_atoi(Cmd_Argv(2));
 	if (n >= MAX_SOUNDS)
 	{
 		SV_ClearReliable (sv_client);
@@ -368,9 +368,9 @@ static char *TrimModelName (const char *full)
 	int len;
 
 	if (!strncmp(full, "progs/", 6) && !strchr(full + 6, '/'))
-		SDL_strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
+		strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
 	else
-		SDL_strlcpy (shortn, full, sizeof(shortn));
+		strlcpy (shortn, full, sizeof(shortn));
 
 	len = strlen(shortn);
 	if (len > 4 && !strcmp(shortn + len - 4, ".mdl")
@@ -399,7 +399,7 @@ static void Cmd_Modellist_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_Modellist_f from different level\n");
@@ -407,7 +407,7 @@ static void Cmd_Modellist_f (void)
 		return;
 	}
 
-	n = SDL_atoi(Cmd_Argv(2));
+	n = Q_atoi(Cmd_Argv(2));
 	if (n >= MAX_MODELS)
 	{
 		SV_ClearReliable (sv_client);
@@ -425,10 +425,10 @@ static void Cmd_Modellist_f (void)
 			if (!*s || !**s)
 				break;
 			if (i > 0)
-				SDL_strlcat (ss, " ", sizeof(ss));
-			SDL_strlcat (ss, TrimModelName(*s), sizeof(ss));
+				strlcat (ss, " ", sizeof(ss));
+			strlcat (ss, TrimModelName(*s), sizeof(ss));
 		}
-		SDL_strlcat (ss, "\n", sizeof(ss));
+		strlcat (ss, "\n", sizeof(ss));
 		if (ss[strlen(ss)-1] == '\n')		// didn't overflow?
 		{
 			ClientReliableWrite_Begin (sv_client, svc_stufftext, 2 + strlen(ss));
@@ -478,7 +478,7 @@ static void Cmd_PreSpawn_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_PreSpawn_f from different level\n");
@@ -486,14 +486,14 @@ static void Cmd_PreSpawn_f (void)
 		return;
 	}
 
-	buf = SDL_atoi(Cmd_Argv(2));
+	buf = Q_atoi(Cmd_Argv(2));
 	if (buf >= sv.num_signon_buffers)
 		buf = 0;
 
 	if (!buf)
 	{
 		// should be three numbers following containing checksums
-		check = SDL_atoi(Cmd_Argv(3));
+		check = Q_atoi(Cmd_Argv(3));
 
 		//		Con_DPrintf("Client check = %d\n", check);
 
@@ -560,7 +560,7 @@ static void Cmd_Spawn_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_Spawn_f from different level\n");
@@ -568,7 +568,7 @@ static void Cmd_Spawn_f (void)
 		return;
 	}
 
-	n = SDL_atoi(Cmd_Argv(2));
+	n = Q_atoi(Cmd_Argv(2));
 	if (n >= MAX_CLIENTS)
 	{
 		SV_ClientPrintf (sv_client, PRINT_HIGH,
@@ -632,7 +632,7 @@ static void Cmd_Spawn_f (void)
 			// }
     
 			//sv_client->name = PR2_GetString(ent->v.netname);
-			//SDL_strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
+			//strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
 		}
 		else
 #endif
@@ -743,7 +743,7 @@ static void Cmd_Begin_f (void)
 		return; // don't begin again
 
 	// handle the case of a level changing while a client was connecting
-	if (SDL_atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
 		SV_ClearReliable (sv_client);
 		Con_Printf ("SV_Begin_f from different level\n");
@@ -835,8 +835,8 @@ static void Cmd_Begin_f (void)
 			SV_BroadcastPrintf (PRINT_HIGH, "%s WARNING: missing player/eyes model checksum\n", sv_client->name);
 		else
 		{
-			pmodel = SDL_atoi(Info_Get (&sv_client->_userinfo_ctx_, "pmodel"));
-			emodel = SDL_atoi(Info_Get (&sv_client->_userinfo_ctx_, "emodel"));
+			pmodel = Q_atoi(Info_Get (&sv_client->_userinfo_ctx_, "pmodel"));
+			emodel = Q_atoi(Info_Get (&sv_client->_userinfo_ctx_, "emodel"));
 
 			if (pmodel != sv.model_player_checksum || emodel != sv.eyes_player_checksum)
 				SV_BroadcastPrintf (PRINT_HIGH, "%s WARNING: non standard player/eyes model detected\n", sv_client->name);
@@ -912,7 +912,7 @@ static qbool SV_DownloadNextFile (void)
 		return SV_DownloadNextFile();
 	}
 	//Con_Printf("downloading demos/%s\n",name);
-	SDL_snprintf(n, sizeof(n), "download demos/%s\n", name);
+	snprintf(n, sizeof(n), "download demos/%s\n", name);
 
 	ClientReliableWrite_Begin (sv_client, svc_stufftext, strlen(n) + 2);
 	ClientReliableWrite_String (sv_client, n);
@@ -942,7 +942,7 @@ void SV_CompleteDownoload(void)
 	sv_client->file_percent = 0; //bliP: file percent
 	// qqshka: set normal rate
 	val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-	sv_client->netchan.rate = 1. / SV_BoundRate(false,	SDL_atoi(*val ? val : "99999"));
+	sv_client->netchan.rate = 1. / SV_BoundRate(false,	Q_atoi(*val ? val : "99999"));
 
 	Con_Printf((char *)Q_redtext(download_completed));
 
@@ -1051,7 +1051,7 @@ static void Cmd_NextDownload_f (void)
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
-		SV_NextChunkedDownload(SDL_atoi(Cmd_Argv(1)), SDL_atoi(Cmd_Argv(2)), SDL_atoi(Cmd_Argv(3)));
+		SV_NextChunkedDownload(atoi(Cmd_Argv(1)), atoi(Cmd_Argv(2)), atoi(Cmd_Argv(3)));
 		return;
 	}
 #endif
@@ -1111,7 +1111,7 @@ static void OutofBandPrintf(netadr_t where, char *fmt, ...)
 	send1[3] = 0xff;
 	send1[4] = A2C_PRINT;
 	va_start (argptr, fmt);
-	SDL_vsnprintf (send1 + 5, sizeof(send1) - 5, fmt, argptr);
+	vsnprintf (send1 + 5, sizeof(send1) - 5, fmt, argptr);
 	va_end (argptr);
 
 	NET_SendPacket (NS_SERVER, strlen(send1) + 1, send1, where);
@@ -1268,7 +1268,7 @@ static void Cmd_Download_f(void)
 		|| strstr(name, "/../") // no /../
 		|| ((i = strlen(name)) < 3 ? 0 : !strncmp(name + i - 3, "/..", 4)) // no /.. at end
 		|| *name == '.' //relative is pointless
-		|| ((i = strlen(name)) < 4 ? 0 : !SDL_strncasecmp(name + i - 4, ".log", 5)) // no logs
+		|| ((i = strlen(name)) < 4 ? 0 : !strncasecmp(name + i - 4, ".log", 5)) // no logs
 #ifdef _WIN32
 		// no leading X:
 	   	|| ( name[0] && name[1] == ':' && ((*name >= 'a' && *name <= 'z') || (*name >= 'A' && *name <= 'Z')))
@@ -1304,17 +1304,17 @@ static void Cmd_Download_f(void)
 		sv_client->download = NULL;
 		// set normal rate
 		val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-		sv_client->netchan.rate = 1.0 / SV_BoundRate(false, SDL_atoi(*val ? val : "99999"));
+		sv_client->netchan.rate = 1.0 / SV_BoundRate(false, Q_atoi(*val ? val : "99999"));
 	}
 
 	if ( !strncmp(name, "demos/", 6) && sv_demoDir.string[0])
 	{
-		SDL_snprintf(n,sizeof(n), "%s/%s", sv_demoDir.string, name + 6);
+		snprintf(n,sizeof(n), "%s/%s", sv_demoDir.string, name + 6);
 		name = n;
 	}
 	else if (!strncmp(name, "demonum/", 8))
 	{
-		int num = SDL_atoi(name + 8);
+		int num = Q_atoi(name + 8);
 		if (num == 0 && name[8] != '0')
 		{
 			char *num_s = name + 8;
@@ -1342,7 +1342,7 @@ static void Cmd_Download_f(void)
 			goto deny_download;
 		}
 		//Con_Printf("downloading demos/%s\n",name);
-		SDL_snprintf(n, sizeof(n), "download demos/%s\n", name);
+		snprintf(n, sizeof(n), "download demos/%s\n", name);
 
 		ClientReliableWrite_Begin (sv_client, svc_stufftext,strlen(n) + 2);
 		ClientReliableWrite_String (sv_client, n);
@@ -1393,7 +1393,7 @@ static void Cmd_Download_f(void)
 
 	// set donwload rate
 	val = Info_Get (&sv_client->_userinfo_ctx_, "drate");
-	sv_client->netchan.rate = 1. / SV_BoundRate(true, SDL_atoi(*val ? val : "99999"));
+	sv_client->netchan.rate = 1. / SV_BoundRate(true, Q_atoi(*val ? val : "99999"));
 
 	// all checks passed, start downloading
 
@@ -1511,7 +1511,7 @@ static void Cmd_DemoDownload_f(void)
 	{
 		cmd_argv_i = Cmd_Argv(i);
 		cmd_argv_i_len = strlen(cmd_argv_i);
-		num = SDL_atoi(cmd_argv_i);
+		num = Q_atoi(cmd_argv_i);
 		if (num == 0 && cmd_argv_i[0] != '0')
 		{
 			for (num = 0; num < cmd_argv_i_len; num++)
@@ -1552,7 +1552,7 @@ static void Cmd_StopDownload_f(void)
 	sv_client->file_percent = 0; //bliP: file percent
 	// qqshka: set normal rate
 	val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-	sv_client->netchan.rate = 1. / SV_BoundRate(false, SDL_atoi(*val ? val : "99999"));
+	sv_client->netchan.rate = 1. / SV_BoundRate(false, Q_atoi(*val ? val : "99999"));
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
@@ -1610,7 +1610,7 @@ static void SV_Say (qbool team)
 	if (*p == '"')
 	{ // remove surrounding "
 		p++;
-		SDL_strlcat(text, p, sizeof(text));
+		strlcat(text, p, sizeof(text));
 		text[max(0,strlen(text)-1)] = 0; // actualy here we remove closing ", but without any check, just in hope...
 #ifdef USE_PR2
 		if ( !sv_vm )
@@ -1618,8 +1618,8 @@ static void SV_Say (qbool team)
 			p[strlen(p)-1] = 0; // here remove closing " only for QC based mods
 	}
 	else
-		SDL_strlcat(text, p, sizeof(text));
-	SDL_strlcat(text, "\n", sizeof(text));
+		strlcat(text, p, sizeof(text));
+	strlcat(text, "\n", sizeof(text));
 
 	if (!sv_client->logged)
 	{
@@ -1664,12 +1664,12 @@ static void SV_Say (qbool team)
 #endif
 
 	if (sv_client->spectator && (!(int)sv_spectalk.value || team))
-		SDL_strlcpy(text, va("[SPEC] %s: %s", sv_client->name, text), sizeof(text));
+		strlcpy(text, va("[SPEC] %s: %s", sv_client->name, text), sizeof(text));
 	else if (team)
-		SDL_strlcpy(text, va("(%s): %s", sv_client->name, text), sizeof(text));
+		strlcpy(text, va("(%s): %s", sv_client->name, text), sizeof(text));
 	else
 	{
-		SDL_strlcpy(text, va("%s: %s", sv_client->name, text), sizeof(text));
+		strlcpy(text, va("%s: %s", sv_client->name, text), sizeof(text));
 	}
 
 	if (fp_messages)
@@ -1920,9 +1920,9 @@ static void Cmd_Pause_f (void)
 	}
 
 	if (newstate & 1)
-		SDL_snprintf (st, sizeof(st), "%s paused the game\n", sv_client->name);
+		snprintf (st, sizeof(st), "%s paused the game\n", sv_client->name);
 	else
-		SDL_snprintf (st, sizeof(st), "%s unpaused the game\n", sv_client->name);
+		snprintf (st, sizeof(st), "%s unpaused the game\n", sv_client->name);
 
 	SV_TogglePause(st, 1);
 }
@@ -1970,7 +1970,7 @@ static void Cmd_PTrack_f (void)
 		return;
 	}
 
-	i = SDL_atoi(Cmd_Argv(1));
+	i = Q_atoi(Cmd_Argv(1));
 	if (i < 0 || i >= MAX_CLIENTS || svs.clients[i].state != cs_spawned || svs.clients[i].spectator)
 	{
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "Invalid client to track\n");
@@ -2005,7 +2005,7 @@ static void Cmd_Rate_f (void)
 		return;
 	}
 
-	rate = SV_BoundRate (sv_client->download != NULL, SDL_atoi(Cmd_Argv(1)));
+	rate = SV_BoundRate (sv_client->download != NULL, Q_atoi(Cmd_Argv(1)));
 
 	SV_ClientPrintf (sv_client, PRINT_HIGH, "Net rate set to %i\n", rate);
 	sv_client->netchan.rate = 1.0/rate;
@@ -2065,7 +2065,7 @@ static void Cmd_Upload_f (void)
 		return;
 	}
 
-	SDL_snprintf(sv_client->uploadfn, sizeof(sv_client->uploadfn), "%s", Cmd_Argv(2));
+	snprintf(sv_client->uploadfn, sizeof(sv_client->uploadfn), "%s", Cmd_Argv(2));
 
 	if (!sv_client->uploadfn[0])
 	{ //just in case..
@@ -2081,7 +2081,7 @@ static void Cmd_Upload_f (void)
 
 	sv_client->remote_snap = false;
 	FS_CreatePath (sv_client->uploadfn); //fixed, need to create path
-	SDL_snprintf (str, sizeof (str), "cmd fileul \"%s\"\n", Cmd_Argv(1));
+	snprintf (str, sizeof (str), "cmd fileul \"%s\"\n", Cmd_Argv(1));
 	ClientReliableWrite_Begin (sv_client, svc_stufftext, strlen(str) + 2);
 	ClientReliableWrite_String (sv_client, str);
 }
@@ -2178,7 +2178,7 @@ static void Cmd_SetInfo_f (void)
 	if (strstr(Cmd_Argv(1), "\\") || strstr(Cmd_Argv(2), "\\"))
 		return;		// illegal char
 
-	SDL_strlcpy(oldval, Info_Get(&sv_client->_userinfo_ctx_, Cmd_Argv(1)), sizeof(oldval));
+	strlcpy(oldval, Info_Get(&sv_client->_userinfo_ctx_, Cmd_Argv(1)), sizeof(oldval));
 
 #ifdef USE_PR2
 	if(sv_vm)
@@ -2193,7 +2193,7 @@ static void Cmd_SetInfo_f (void)
 
 	Info_Set (&sv_client->_userinfo_ctx_, Cmd_Argv(1), Cmd_Argv(2));
 	// name is extracted below in ExtractFromUserInfo
-	//	SDL_strlcpy (sv_client->name, Info_ValueForKey (sv_client->userinfo, "name")
+	//	strlcpy (sv_client->name, Info_ValueForKey (sv_client->userinfo, "name")
 	//		, CLIENT_NAME_LEN);
 	//	SV_FullClientUpdate (sv_client, &sv.reliable_datagram);
 	//	sv_client->sendinfo = true;
@@ -2218,7 +2218,7 @@ static void Cmd_SetInfo_f (void)
 			SV_ClientPrintf(sv_client, PRINT_CHAT,
 			                "You can't change your name while logged in on this server.\n");
 			Info_Set (&sv_client->_userinfo_ctx_, "name", sv_client->login);
-			SDL_strlcpy (sv_client->name, sv_client->login, CLIENT_NAME_LEN);
+			strlcpy (sv_client->name, sv_client->login, CLIENT_NAME_LEN);
 			MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
 			MSG_WriteString (&sv_client->netchan.message,
 			                 va("name %s\n", sv_client->login));
@@ -2326,7 +2326,7 @@ static void Cmd_MinPing_f (void)
 			Con_Printf("Can't change sv_minping: sv_enable_cmd_minping == 0.\n");
 		else
 		{
-			minping = SDL_atof(Cmd_Argv(1));
+			minping = Q_atof(Cmd_Argv(1));
 			if (minping < 0 || minping > 300)
 				Con_Printf("Value must be >= 0 and <= 300.\n");
 			else
@@ -2364,7 +2364,7 @@ static void Cmd_AirStep_f (void)
 			Con_Printf("Can't change pm_airstep: demo recording in progress or serverinfo key status is not 'Standby'.\n");
 		else
 		{
-			val = SDL_atoi(Cmd_Argv(1));
+			val = Q_atoi(Cmd_Argv(1));
 			if (val != 0 && val != 1)
 				Con_Printf("Value must be 0 or 1.\n");
 			else {
@@ -2417,7 +2417,7 @@ static void Cmd_ShowMapsList_f(void)
 				if ((len = 19 - strlen(value)) < 1)
 					len = 1;
 				for (j = 0; j < len; j++)
-					SDL_strlcat(value, " ", MAX_KEY_STRING);
+					strlcat(value, " ", MAX_KEY_STRING);
 			}
 			Con_Printf("%s%s", value, i_mod_2 ? "\n" : "");
 		}
@@ -2447,7 +2447,7 @@ static void SetUpClientEdict (client_t *cl, edict_t *ent)
 		// }
 
 		//sv_client->name = PR2_GetString(ent->v.netname);
-		//SDL_strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
+		//strlcpy(PR2_GetString(ent->v.netname), sv_client->name, 32);
 	}
 	else
 #endif
@@ -2722,8 +2722,8 @@ void Cmd_PEXT_f(void)
 
 	for ( idx = 1; idx < Cmd_Argc(); )
 	{
-		proto_ver   = SDL_atoi(Cmd_Argv(idx++));
-		proto_value = SDL_atoi(Cmd_Argv(idx++));
+		proto_ver   = Q_atoi(Cmd_Argv(idx++));
+		proto_value = Q_atoi(Cmd_Argv(idx++));
 
 		switch( proto_ver )
 		{

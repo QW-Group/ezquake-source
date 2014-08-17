@@ -52,7 +52,7 @@ void PR2_Init(void)
 
 	if (p && p < COM_Argc())
 	{
-		usedll = SDL_atoi(COM_Argv(p + 1));
+		usedll = Q_atoi(COM_Argv(p + 1));
 
 		if (usedll > 2)
 			usedll = VM_NONE;

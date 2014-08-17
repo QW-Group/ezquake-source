@@ -80,7 +80,7 @@ void Framebuffer_Init (void)
 /* wtf, and a bit later set to use_framebuffer = true;
 	if ((temp = COM_CheckParm("-framebuffer")) && temp + 1 < COM_Argc())
 	{
-		use_framebuffer = SDL_atoi(COM_Argv(temp+1));
+		use_framebuffer = Q_atoi(COM_Argv(temp+1));
 	}
 */
 	

@@ -70,7 +70,7 @@ void *FSPAK_LoadDoomWadFile (vfsfile_t *packhandle, char *desc)
 	else if (header.id[0] == 'P')
 	{
 		COM_FileBase(desc, neatwadname);
-		SDL_strlcat (neatwadname, "#", sizeof (neatwadname));
+		strlcat (neatwadname, "#", sizeof (neatwadname));
 	}
 	else
 		return NULL;
@@ -91,9 +91,9 @@ void *FSPAK_LoadDoomWadFile (vfsfile_t *packhandle, char *desc)
 	{
 		VFS_READ (packhandle, &info, sizeof(info), NULL);
 
-		SDL_strlcpy (filename, info.name, sizeof (filename));
+		strlcpy (filename, info.name, sizeof (filename));
 		filename[8] = '\0';
-		SDL_strlwr(filename);
+		Q_strlwr(filename);
 
 		newfiles[i].filepos = LittleLong(info.filepos);
 		newfiles[i].filelen = LittleLong(info.filelen);
@@ -108,26 +108,26 @@ newsection:
 				if (!strcmp(filename, "s_start"))
 				{
 					section = 2;
-					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);	//the model loader has a hack to recognise .dsp
+					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);	//the model loader has a hack to recognise .dsp
 					break;
 				}
 				if (!strcmp(filename, "p_start"))
 				{
 					section = 3;
-					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename); //the map loader will find these.
+					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename); //the map loader will find these.
 					break;
 				}
 				if (!strcmp(filename, "f_start"))
 				{
 					section = 4;
-					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);	//the map loader will find these
+					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);	//the map loader will find these
 					break;
 				}
 				if ((filename[0] == 'e' && filename[2] == 'm') || !strncmp(filename, "map", 3))
 				{	//this is the start of a beutiful new map
 					section = 1;
-					SDL_strlcpy (sectionname, filename, sizeof (sectionname));
-					SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
+					strlcpy (sectionname, filename, sizeof (sectionname));
+					snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.bsp", neatwadname, filename);	//generate fake bsps to allow the server to find them
 					newfiles[i].filepos = 0;
 					newfiles[i].filelen = 4;
 					break;
@@ -135,12 +135,12 @@ newsection:
 				if (!strncmp(filename, "gl_", 3) && ((filename[4] == 'e' && filename[5] == 'm') || !strncmp(filename+3, "map", 3)))
 				{	//this is the start of a beutiful new map
 					section = 5;
-					SDL_strlcpy (sectionname, filename+3, sizeof (sectionname));
+					strlcpy (sectionname, filename+3, sizeof (sectionname));
 					break;
 				}
 			}
 
-			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "wad/%s", filename);	//but there are many files that we don't recognise/know about. archive them off to keep the vfs moderatly clean.
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "wad/%s", filename);	//but there are many files that we don't recognise/know about. archive them off to keep the vfs moderatly clean.
 			break;
 		case 1:	//map section
 			if (strcmp(filename, "things") &&
@@ -157,7 +157,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
 			break;
 		case 5:	//glbsp output section
 			if (strcmp(filename, "gl_vert") &&
@@ -169,7 +169,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "maps/%s%s.%s", neatwadname, sectionname, filename);
 			break;
 		case 2:	//sprite section
 			if (!strcmp(filename, "s_end"))
@@ -177,7 +177,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "sprites/%s", filename);
 			break;
 		case 3:	//patches section
 			if (!strcmp(filename, "p_end"))
@@ -185,7 +185,7 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "patches/%s", filename);
 			break;
 		case 4:	//flats section
 			if (!strcmp(filename, "f_end"))
@@ -193,13 +193,13 @@ newsection:
 				section = 0;
 				goto newsection;
 			}
-			SDL_snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);
+			snprintf (newfiles[i].name, sizeof (newfiles[i].name), "flats/%s", filename);
 			break;
 		}
 	}
 
 	pack = (pack_t*)Q_malloc (sizeof (pack_t));
-	SDL_strlcpy (pack->filename, desc, sizeof (pack->filename));
+	strlcpy (pack->filename, desc, sizeof (pack->filename));
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;

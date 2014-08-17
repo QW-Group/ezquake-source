@@ -159,7 +159,7 @@ void IRC_Printf(char *fmt, ...)
 	char msg[MAXPRINTMSG];
 
 	va_start (argptr, fmt);
-	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 	
 	len = strlen(msg);
@@ -275,9 +275,9 @@ char *Cmd_ArgLine(unsigned int starting_from_arg)
 
 	for (i = starting_from_arg; i < Cmd_Argc(); i++) {
 		if (i > starting_from_arg)
-			SDL_strlcat (args, " ", MAX_MACRO_STRING);
+			strlcat (args, " ", MAX_MACRO_STRING);
 
-		SDL_strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
+		strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
 	}
 
 	return args;
@@ -522,7 +522,7 @@ static void IRC_irc_f(void)
 			IRC_Printf ("IRC: Could not connect: %s\n", irc_strerror (irc_errno(irc_singlesession)));
 		}
 		else {
-			SDL_strlcpy(ctx->nick, nick, MAX_TARGET_LEN);
+			strlcpy(ctx->nick, nick, MAX_TARGET_LEN);
 			
 			// multithreading is not good for us (lots of things are not thread-safe)
 			// we use single-threaded variant
@@ -587,7 +587,7 @@ static void IRC_irc_f(void)
 			// fixme
 			// we presume here that the change will succeed
 			// that may cause lots of troubles
-			SDL_strlcpy(ctx->nick, Cmd_Argv(2), MAX_TARGET_LEN);
+			strlcpy(ctx->nick, Cmd_Argv(2), MAX_TARGET_LEN);
 		}
 	}
     else if ((strcmp(Cmd_Argv(1), "join") == 0) ||

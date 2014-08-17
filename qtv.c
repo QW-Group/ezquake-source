@@ -75,7 +75,7 @@ char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext)
 {
 	static char header[1024];
 
-	SDL_snprintf(header, sizeof(header), "QTV\n" "VERSION: %g\n" QTV_EZQUAKE_EXT ": %d\n", qtv_ver, qtv_ezquake_ext);
+	snprintf(header, sizeof(header), "QTV\n" "VERSION: %g\n" QTV_EZQUAKE_EXT ": %d\n", qtv_ver, qtv_ezquake_ext);
 
 	return header;
 }
@@ -192,12 +192,12 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 	text[0] = 0; // *cat is dangerous, ensure we empty buffer before use it
 
 	if (use_first_argument)
-		SDL_strlcat(text, Cmd_Argv(0), sizeof(text));
+		strlcat(text, Cmd_Argv(0), sizeof(text));
 
 	if (s[0])
 	{
-		SDL_strlcat(text, " ", sizeof(text));
-		SDL_strlcat(text, s,   sizeof(text));
+		strlcat(text, " ", sizeof(text));
+		strlcat(text, s,   sizeof(text));
 	}
 
 	MSG_WriteShort  (&buf, 2 + 1 + strlen(text) + 1); // short + byte + null terminated string
@@ -224,7 +224,7 @@ void QTV_Say_f (void)
 	{
 		int len;
 		char text[1024] = {0};
-		SDL_snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s + 1);
+		snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s + 1);
 		if ((len = strlen(text)))
 			text[len - 1] = 0;
 		Cmd_TokenizeString(text);
@@ -258,7 +258,7 @@ void QTV_Cmd_Printf(int qtv_ext, char *fmt, ...)
 		return; // no point for this, since it not qtv playback or qtv server do not support it
 
 	va_start (argptr, fmt);
-	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	// save context, so we can later restore it
@@ -444,9 +444,9 @@ void Parse_QtvUserList(char *s)
 
 	Cmd_TokenizeString( s );
 
-	action 		= SDL_atoi( Cmd_Argv( cnt++ ) );
-	tmpuser.id	= SDL_atoi( Cmd_Argv( cnt++ ) );
-	SDL_strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
+	action 		= atoi( Cmd_Argv( cnt++ ) );
+	tmpuser.id	= atoi( Cmd_Argv( cnt++ ) );
+	strlcpy(tmpuser.name, Cmd_Argv( cnt++ ), sizeof(tmpuser.name)); // name is optional in some cases
 
 	switch ( action )
 	{
@@ -520,7 +520,7 @@ qbool QTV_FindBestNick (const char *nick, char *result, size_t result_len)
 		if (!current->name[0])
 			continue;
 
-		SDL_strlcpy(name, current->name, sizeof(name));
+		strlcpy(name, current->name, sizeof(name));
 		RemoveColors(name, sizeof (name));
 		for (match = name; match[0]; match++)
 			match[0] = tolower(match[0]);
@@ -537,7 +537,7 @@ qbool QTV_FindBestNick (const char *nick, char *result, size_t result_len)
 
 	if (bestplayer)
 	{
-		SDL_strlcpy(result, bestplayer->name, result_len);
+		strlcpy(result, bestplayer->name, result_len);
 		return true;
 	}
 

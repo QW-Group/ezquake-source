@@ -149,7 +149,7 @@ char *bin2hex(unsigned char *d)
 	static char	ret[DIGEST_SIZE * 2 + 1];
 	int		i;
 	for (i = 0; i < DIGEST_SIZE * 2; i += 2, d++)
-		SDL_snprintf(ret + i, DIGEST_SIZE * 2 + 1 - i, "%02X", *d);
+		snprintf(ret + i, DIGEST_SIZE * 2 + 1 - i, "%02X", *d);
 	return ret;
 }
 

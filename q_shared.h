@@ -31,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <ctype.h>
 #include <assert.h>
-#include "SDL.h"
 
 #define wchar unsigned short	// 16-bit Unicode char
 
@@ -59,6 +58,13 @@ typedef unsigned char byte;
 
 #ifndef NULL
 #define NULL ((void *) 0)
+#endif
+
+
+#ifdef _WIN32
+#define IS_SLASH(c) ((c) == '/' || (c) == '\\')
+#else
+#define IS_SLASH(c) ((c) == '/')
 #endif
 
 #ifndef min
@@ -192,12 +198,34 @@ VVD: fixed by changing from "int" to "short" in 2nd string - stupid copy&paste b
 
 //============================================================================
 
+int Q_atoi (const char *str);
+float Q_atof (const char *str);
+char *Q_ftos (float value); // removes trailing zero chars
+
 char *Q_strcpy( char *to, char *from );
+char *Q_strlwr( char *s1 );
 
 // Added by VVD {
+#ifdef _WIN32
+#define strcasecmp(s1, s2)	_stricmp  ((s1),   (s2))
+#define strncasecmp(s1, s2, n)	_strnicmp ((s1),   (s2),   (n))
+// vc++ snprintf and vsnprintf are non-standard and not compatible with C99.
+int qsnprintf(char *str, size_t n, char const *fmt, ...);
+int qvsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
+#define snprintf qsnprintf
+#define vsnprintf qvsnprintf
+#endif
+
 char *strstri(const char *text, const char *find); // Case insensitive strstr.
+
+#if defined(__linux__) || defined(_WIN32)
+size_t strlcpy (char *dst, const char *src, size_t siz);
+size_t strlcat (char *dst, const char *src, size_t siz);
+char  *strnstr (const char *s, const char *find, size_t slen);
+#endif
 // Added by VVD }
 
+char *strchrrev(char *str, char chr);
 int wildcmp(char *wild, char *string);
 
 wchar char2wc (char c);

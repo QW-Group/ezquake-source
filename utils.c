@@ -37,7 +37,7 @@ void str_align_right (char *target, size_t size, const char *source, size_t leng
 		length = size - 1;
 
 	if (strlen(source) >= length) {
-		SDL_strlcpy(target, source, size);
+		strlcpy(target, source, size);
 		target[length] = 0;
 	} else {
 		int i;
@@ -46,7 +46,7 @@ void str_align_right (char *target, size_t size, const char *source, size_t leng
 			target[i] = ' ';
 		}
 
-		SDL_strlcpy(target + i, source, size - i);
+		strlcpy(target + i, source, size - i);
 	}
 }
 
@@ -88,7 +88,7 @@ char *SecondsToMinutesString(int print_time) {
 	minutes = fmod (print_time / 60, 10);
 	tens_seconds = fmod (print_time / 10, 6);
 	seconds = fmod (print_time, 10);
-	SDL_snprintf (time, sizeof(time), "%i%i:%i%i", tens_minutes, minutes, tens_seconds, seconds);
+	snprintf (time, sizeof(time), "%i%i:%i%i", tens_minutes, minutes, tens_seconds, seconds);
 	return time;
 }
 
@@ -102,7 +102,7 @@ char *SecondsToHourString(int print_time) {
 	minutes = fmod (print_time / 60, 10);
 	tens_seconds = fmod (print_time / 10, 6);
 	seconds = fmod (print_time, 10);
-	SDL_snprintf (time, sizeof(time), "%i%i:%i%i:%i%i", tens_hours, hours, tens_minutes, minutes, tens_seconds, seconds);
+	snprintf (time, sizeof(time), "%i%i:%i%i:%i%i", tens_hours, hours, tens_minutes, minutes, tens_seconds, seconds);
 	return time;
 }
 
@@ -140,12 +140,12 @@ int StringToRGB_W(char *s, byte *rgb)
 	char *result;
 	rgb[0] = rgb[1] = rgb[2] = rgb[3] = 255;
 
-	SDL_strlcpy(buf, s, sizeof(buf));
+	strlcpy(buf, s, sizeof(buf));
 	result = strtok(buf, " ");
 
 	for (i = 0; i < 4 && result; i++, result = strtok(NULL, " "))
 	{
-		rgb[i] = (byte) SDL_atoi(result);
+		rgb[i] = (byte) Q_atoi(result);
 	}
 	
 	// TODO: Ok to do this in software also?
@@ -191,7 +191,7 @@ int ParseFloats(char *s, float *f, int *f_size) {
 	argc = min(Cmd_ArgcEx(&ctx), f_size[0]);
 	
 	for(i = 0; i < argc; i++)
-		f[i] = SDL_atof(Cmd_ArgvEx(&ctx, i));
+		f[i] = Q_atof(Cmd_ArgvEx(&ctx, i));
 
 	for( ; i < f_size[0]; i++)
 		f[i] = 0; // zeroing unused elements
@@ -348,7 +348,7 @@ int Util_Extend_Filename(char *filename, char **ext) {
 	int i, offset;
 	FILE *f;
 
-	SDL_strlcpy(extendedname, filename, sizeof(extendedname));
+	strlcpy(extendedname, filename, sizeof(extendedname));
 	offset = strlen(extendedname);
 
 	i = -1;
@@ -356,7 +356,7 @@ int Util_Extend_Filename(char *filename, char **ext) {
 		if (++i == 1000)
 			break;
 		for (s = ext; *s; s++) { 
-			SDL_snprintf (extendedname + offset, sizeof(extendedname) - offset, "_%03i.%s", i, *s);
+			snprintf (extendedname + offset, sizeof(extendedname) - offset, "_%03i.%s", i, *s);
 			if ((f = fopen(extendedname, "rb"))) {
 				fclose(f);
 				break;
@@ -436,7 +436,7 @@ char *Util_Invalid_Filename_Msg(char *s) {
 	if (!s)
 		return NULL;
 
-	SDL_snprintf(err, sizeof(err), "%s is not a valid filename (?*:<>\" are illegal characters)\n", s);
+	snprintf(err, sizeof(err), "%s is not a valid filename (?*:<>\" are illegal characters)\n", s);
 	return err;
 }
 
@@ -551,7 +551,7 @@ int Player_StringtoSlot(char *arg)
 	// (We loop once more so that if the correct case is given, that match will get precedence).
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (cl.players[i].name[0] && !SDL_strncasecmp(arg, cl.players[i].name, arg_length))
+		if (cl.players[i].name[0] && !strncasecmp(arg, cl.players[i].name, arg_length))
 		{
 			return i;
 		}
@@ -563,7 +563,7 @@ int Player_StringtoSlot(char *arg)
 	{
 		char *stripped = Player_StripNameColor(cl.players[i].name);
 
-		if (cl.players[i].name[0] && !SDL_strncasecmp(arg, stripped, arg_length))
+		if (cl.players[i].name[0] && !strncasecmp(arg, stripped, arg_length))
 		{
 			Q_free(stripped);
 			return i;
@@ -583,7 +583,7 @@ int Player_StringtoSlot(char *arg)
 	}
 
 	// Get player ID.
-	slot = Player_IdtoSlot(SDL_atoi(arg));
+	slot = Player_IdtoSlot(Q_atoi(arg));
 
 	return (slot >= 0) ? slot : PLAYER_ID_NOMATCH;
 }
@@ -654,7 +654,7 @@ int Player_GetSlot(char *arg)
 		return response;
 	}
 	
-	if ((response = Player_NumtoSlot(SDL_atoi(arg + 1))) >= 0)
+	if ((response = Player_NumtoSlot(Q_atoi(arg + 1))) >= 0)
 	{
 		return response;
 	}
@@ -696,7 +696,7 @@ void RemoveColors (char *name, size_t len)
 	*s = 0;
 
 	if (!name[0])
-		SDL_strlcpy (name, "_", len);
+		strlcpy (name, "_", len);
 }
 
 qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len)
@@ -718,7 +718,7 @@ qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len
 		if (!cl.players[i].name[0])
 			continue;
 
-		SDL_strlcpy(name, cl.players[i].name, sizeof(name));
+		strlcpy(name, cl.players[i].name, sizeof(name));
 		RemoveColors (name, sizeof (name));
 		for (match = name; match[0]; match++)
 			match[0] = tolower(match[0]);
@@ -735,7 +735,7 @@ qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len
 
 	if (bestplayer != -1)
 	{
-		SDL_strlcpy(result, cl.players[bestplayer].name, result_len);
+		strlcpy(result, cl.players[bestplayer].name, result_len);
 		return true;
 	}
 
@@ -772,7 +772,7 @@ void CopyToClipboard(const char *text)
         CloseClipboard();
     }
 #else
-    SDL_strlcpy (clipboard, text, CLIPBOARDSIZE);
+    strlcpy (clipboard, text, CLIPBOARDSIZE);
 #endif
 }
 
@@ -795,7 +795,7 @@ char *ReadFromClipboard(void)
             clipText = GlobalLock(th);
             if (clipText)
             {
-                SDL_strlcpy(clipbuf, clipText, sizeof (clipbuf));
+                strlcpy(clipbuf, clipText, sizeof (clipbuf));
                 for (i=0; i < strlen(clipbuf); i++)
                     if (clipbuf[i]=='\n' || clipbuf[i]=='\t' || clipbuf[i]=='\b')
                         clipbuf[i] = ' ';
@@ -857,7 +857,7 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
 	char *arg1, *arg2;
 	
     // we will write the result back to src in code that follows
-	SDL_strlcpy(msg,src,sizeof(msg));
+	strlcpy(msg,src,sizeof(msg));
     msgp = msg;
     *src = '\0';
 
@@ -867,7 +867,7 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
         {
             buf[0] = *msgp++;
             buf[1] = '\0';
-            SDL_strlcat(src, buf, n);
+            strlcat(src, buf, n);
         }
 		else
         {
@@ -881,7 +881,7 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
             if (!*msgp) break;
 
             // process the number
-            pad = SDL_atoi(msgp);
+            pad = atoi(msgp);
             while (isdigit(*msgp)) msgp++;
             if (!*msgp) break;
 
@@ -900,15 +900,15 @@ void Replace_In_String (char *src, int n, char delim, int num_args, ...)
                 {
                     if (pad)
                     {
-					    if (right)  SDL_snprintf(buf, sizeof(buf)-1, "%-*s", pad, arg2);
-                        else        SDL_snprintf(buf, sizeof(buf)-1, "%*s", pad, arg2);
+					    if (right)  snprintf(buf, sizeof(buf)-1, "%-*s", pad, arg2);
+                        else        snprintf(buf, sizeof(buf)-1, "%*s", pad, arg2);
                     }
                     else
                     {
-                        SDL_strlcpy(buf, arg2, sizeof(buf));
+                        strlcpy(buf, arg2, sizeof(buf));
 					}
                     
-                    SDL_strlcat(src, buf, n);
+                    strlcat(src, buf, n);
                     break;
 				}
 			}
@@ -1163,13 +1163,13 @@ char *Utils_TF_ColorToTeam(int color) {
 }
 
 int Utils_TF_TeamToColor(char *team) {
-	if (!SDL_strcasecmp(team, Utils_TF_ColorToTeam(13)))
+	if (!strcasecmp(team, Utils_TF_ColorToTeam(13)))
 		return 13;
-	if (!SDL_strcasecmp(team, Utils_TF_ColorToTeam(4)))
+	if (!strcasecmp(team, Utils_TF_ColorToTeam(4)))
 		return 4;
-	if (!SDL_strcasecmp(team, Utils_TF_ColorToTeam(12)))
+	if (!strcasecmp(team, Utils_TF_ColorToTeam(12)))
 		return 12;
-	if (!SDL_strcasecmp(team, Utils_TF_ColorToTeam(11)))
+	if (!strcasecmp(team, Utils_TF_ColorToTeam(11)))
 		return 11;
 	return 0;
 }
@@ -1442,7 +1442,7 @@ qbool Util_GetNextWordwrapString(const char *input, char *target, int start_inde
 	// Copy the wrap string to the target buffer.
 	if (target)
 	{
-		SDL_snprintf(target, min(target_max_size, max_width), "%s", input + start_index);
+		snprintf(target, min(target_max_size, max_width), "%s", input + start_index);
 	}
 
 	return retval;

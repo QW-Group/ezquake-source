@@ -282,7 +282,7 @@ qbool CheckForCommand (void)
 {
 	char command[256], *s;
 
-	SDL_strlcpy(command, wcs2str(key_lines[edit_line] + 1), sizeof(command));
+	strlcpy(command, wcs2str(key_lines[edit_line] + 1), sizeof(command));
 	for (s = command; *s > ' '; s++)
 		;
 	*s = 0;
@@ -419,12 +419,12 @@ static void FindCommonSubString (char *s)
 {
 	if (!compl_clen)
 	{
-		SDL_strlcpy (compl_common, s, sizeof(compl_common));
+		strlcpy (compl_common, s, sizeof(compl_common));
 		compl_clen = strlen (compl_common);
 	} 
 	else
 	{
-		while (compl_clen > compl_len && SDL_strncasecmp(s, compl_common, compl_clen))
+		while (compl_clen > compl_len && strncasecmp(s, compl_common, compl_clen))
 			compl_clen--;
 	}
 }
@@ -524,7 +524,7 @@ void CompleteCommandNew (void)
 					sorted_cmds[s_count] = s_c;
 
 				qsort(sorted_cmds, s_count, sizeof (cmd_function_t *), Cmd_CommandCompare);
-				SDL_snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_cmds[i]->name))
@@ -553,7 +553,7 @@ void CompleteCommandNew (void)
 					sorted_cvars[s_count] = s_v;
 
 				qsort(sorted_cvars, s_count, sizeof (cvar_t *), Cvar_CvarCompare);
-				SDL_snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_cvars[i]->name))
@@ -582,7 +582,7 @@ void CompleteCommandNew (void)
 					sorted_aliases[s_count] = s_a;
 
 				qsort(sorted_aliases, s_count, sizeof (cmd_alias_t *), Cmd_AliasCompare);				
-				SDL_snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));				
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));				
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_aliases[i]->name))
@@ -2069,7 +2069,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 
 				if (kb[0] == '+' && keyactive[key]) 
 				{
-					SDL_snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
+					snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
 					Cbuf_AddText (cmd);
 					keyactive[key] = false;
 				}
@@ -2079,7 +2079,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 				kb = keybindings[keyshift[key]];
 				if (kb && kb[0] == '+' && keyactive[keyshift[key]]) 
 				{
-					SDL_snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
+					snprintf (cmd, sizeof (cmd), "-%s %i\n", kb+1, key);
 					Cbuf_AddText (cmd);
 					keyactive[keyshift[key]] = false;
 				}
@@ -2116,7 +2116,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			if (kb[0] == '+')
 			{	
 				// Button commands add keynum as a parm.
-				SDL_snprintf (cmd, sizeof (cmd), "%s %i\n", kb, key);
+				snprintf (cmd, sizeof (cmd), "%s %i\n", kb, key);
 				Cbuf_AddText (cmd);
 				keyactive[key] = true;
 			} 
@@ -2212,7 +2212,7 @@ void Key_ClearStates (void)
 
 void OnChange_con_prompt_charcode (cvar_t *var, char *string, qbool *cancel)
 {	
-	int i, charcode = SDL_atoi(string);
+	int i, charcode = Q_atoi(string);
 	*cancel = true;
 
 	if ((charcode > 31) && (charcode <= 255) && (charcode != con_prompt_charcode.integer))

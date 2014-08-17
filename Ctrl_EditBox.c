@@ -44,7 +44,7 @@ void CEditBox_Draw(CEditBox *e, int x, int y, qbool active)
 //	if (e->disp  <  0)
 //		e->disp = 0;
 
-	SDL_snprintf(buf, sizeof (buf), "%-*.*s", e->width, e->width, active ? e->text+e->disp : e->text);
+	snprintf(buf, sizeof (buf), "%-*.*s", e->width, e->width, active ? e->text+e->disp : e->text);
 	Draw_String(x, y, buf);
 
 	if (active)

@@ -135,7 +135,7 @@ void MP3_XMMS_Execute_f(void) {
 		Com_Printf("XMMS is already running\n");
 		return;
 	}
-	SDL_strlcpy(exec_name, argv[0], sizeof(exec_name));
+	strlcpy(exec_name, argv[0], sizeof(exec_name));
 
 	if (!(XMMS_pid = fork())) { // Child
 		execvp(exec_name, argv);
@@ -223,11 +223,11 @@ static void XMMS_Set_ToggleFn(char *name, void *togglefunc, void *getfunc) {
 		Com_Printf("%s is %s\n", name, (ret == 1) ? "on" : "off");
 		return;
 	}
-	if (!SDL_strcasecmp(Cmd_Argv(1), "on")) {
+	if (!strcasecmp(Cmd_Argv(1), "on")) {
 		set = 1;
-	} else if (!SDL_strcasecmp(Cmd_Argv(1), "off")) {
+	} else if (!strcasecmp(Cmd_Argv(1), "off")) {
 		set = 0;
-	} else if (!SDL_strcasecmp(Cmd_Argv(1), "toggle")) {
+	} else if (!strcasecmp(Cmd_Argv(1), "toggle")) {
 		set = ret ? 0 : 1;
 	} else {
 		Com_Printf("Usage: %s [on|off|toggle]\n", Cmd_Argv(0));
@@ -275,7 +275,7 @@ char *MP3_XMMS_Macro_MP3Info(void) {
 	}
 	playlist_pos = qxmms_remote_get_playlist_pos(XMMS_SESSION);
 	s = qxmms_remote_get_playlist_title(XMMS_SESSION, playlist_pos);
-	SDL_strlcpy(title, s ? s : "", sizeof(title));
+	strlcpy(title, s ? s : "", sizeof(title));
 	//g_free(s);
 	qg_free(s);
 	return title;
@@ -330,7 +330,7 @@ void MP3_XMMS_GetSongTitle(int track_num, char *song, size_t song_len) {
 	int playlist_len;
 	char *playlist_title;
 
-	SDL_strlcpy(song, "", song_len);
+	strlcpy(song, "", song_len);
 
 	if (!MP3_XMMS_IsPlayerRunning()) 
 		return;
@@ -341,7 +341,7 @@ void MP3_XMMS_GetSongTitle(int track_num, char *song, size_t song_len) {
 		return;
 
 	playlist_title = qxmms_remote_get_playlist_title(XMMS_SESSION, track_num);
-	SDL_strlcpy(song, playlist_title, song_len);
+	strlcpy(song, playlist_title, song_len);
 }
 
 void MP3_XMMS_PrintPlaylist_f(void) {
@@ -377,7 +377,7 @@ void MP3_XMMS_PlayTrackNum_f(void) {
 		return;
 	}
 	MP3_XMMS_GetPlaylistInfo(NULL, &length);
-	pos = SDL_atoi(Cmd_Argv(1)) - 1;
+	pos = Q_atoi(Cmd_Argv(1)) - 1;
 	if (pos < 0 || pos >= length)
 		return;
 	qxmms_remote_set_playlist_pos(XMMS_SESSION, pos);

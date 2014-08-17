@@ -235,7 +235,7 @@ mempool_t *_Mem_AllocPool(const char *name, int flags, mempool_t *parent, const 
 	pool->chain = NULL;
 	pool->totalsize = 0;
 	pool->realsize = sizeof(mempool_t);
-	SDL_strlcpy (pool->name, name, sizeof (pool->name));
+	strlcpy (pool->name, name, sizeof (pool->name));
 	pool->parent = parent;
 	pool->next = poolchain;
 	poolchain = pool;
@@ -543,7 +543,7 @@ void MemList_f(void)
 		Mem_PrintStats();
 		break;
 	case 2:
-		Mem_PrintList(SDL_atoi(Cmd_Argv(1)) * 1024);
+		Mem_PrintList(atoi(Cmd_Argv(1)) * 1024);
 		Mem_PrintStats();
 		break;
 	default:

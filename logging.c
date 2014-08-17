@@ -67,7 +67,7 @@ qbool Log_IsLogging(void) {
 static char *Log_LogDirectory(void) {
 	static char dir[LOG_FILENAME_MAXSIZE];
 
-	SDL_strlcpy(dir, FS_LegacyDir(log_dir.string), sizeof(dir));
+	strlcpy(dir, FS_LegacyDir(log_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -123,7 +123,7 @@ static void Log_log_f(void) {
 			Com_Printf("Not logging\n");
 		return;
 	case 2:
-		if (!SDL_strcasecmp(Cmd_Argv(1), "stop")) {
+		if (!strcasecmp(Cmd_Argv(1), "stop")) {
 			if (autologging) {
 				Log_AutoLogging_StopMatch();
 			} else {
@@ -147,7 +147,7 @@ static void Log_log_f(void) {
 			Com_Printf("Stopped logging to %s\n", logfilename);
 		}
 
-		SDL_strlcpy(logfilename, Cmd_Argv(1), sizeof(logfilename) - 4);
+		strlcpy(logfilename, Cmd_Argv(1), sizeof(logfilename) - 4);
 		Util_Process_Filename(logfilename);
 		if (!Util_Is_Valid_Filename(logfilename)) {
 			Com_Printf(Util_Invalid_Filename_Msg("filename"));
@@ -302,9 +302,9 @@ void Log_AutoLogging_StartMatch(char *logname) {
 	}
 
 
-	SDL_strlcpy(auto_matchname, logname, sizeof(auto_matchname));
+	strlcpy(auto_matchname, logname, sizeof(auto_matchname));
 
-	SDL_strlcpy (extendedname, TEMP_LOG_NAME, sizeof(extendedname));
+	strlcpy (extendedname, TEMP_LOG_NAME, sizeof(extendedname));
 	COM_ForceExtensionEx (extendedname, ".log", sizeof (extendedname));
 	fullname = va("%s/%s", MT_TempDirectory(), extendedname);
 
@@ -480,7 +480,7 @@ void Log_AutoLogging_SaveMatch(qbool allow_upload) {
 		Com_Printf("Error: no available filenames\n");
 		return;
 	}
-	SDL_snprintf (savedname, sizeof(savedname), "%s_%03i.log", auto_matchname, num);
+	snprintf (savedname, sizeof(savedname), "%s_%03i.log", auto_matchname, num);
 
 	fullsavedname = va("%s/%s", dir, savedname);
 

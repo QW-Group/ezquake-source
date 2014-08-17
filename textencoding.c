@@ -51,12 +51,12 @@ char *encode_say (wchar *in)
 	for (p = in; *p; p++)
 		if (*p > 255)
 			goto encode;
-	SDL_strlcpy (buf, wcs2str(in), sizeof(buf));
+	strlcpy (buf, wcs2str(in), sizeof(buf));
 	return buf;
 encode:
-	SDL_strlcpy (buf, wcs2str(in), min(p - in + 1, sizeof(buf)));
+	strlcpy (buf, wcs2str(in), min(p - in + 1, sizeof(buf)));
 	in = p;
-	SDL_strlcat (buf, "=`k8:", sizeof(buf));
+	strlcat (buf, "=`k8:", sizeof(buf));
 	out = buf + strlen(buf);
 	while (*in && (out - buf < sizeof(buf)/sizeof(buf[0])))
 	{
@@ -209,7 +209,7 @@ wchar *decode_string (const char *s)
 
 		q++;	// skip the :
 		assert (q - p <= sizeof(encoding));
-		SDL_strlcpy (encoding, p, q - p);
+		strlcpy (encoding, p, q - p);
 		
 		r = strstr(q, "`=");
 		if (!r) {
@@ -217,10 +217,10 @@ wchar *decode_string (const char *s)
 			continue;
 		}
 
-		SDL_strlcpy (enc_str, q, min(r - q + 1, sizeof(enc_str)));
+		strlcpy (enc_str, q, min(r - q + 1, sizeof(enc_str)));
 
 		for (i = 0; decode_table[i].name; i++) {
-			if (!SDL_strcasecmp(encoding, decode_table[i].name))
+			if (!strcasecmp(encoding, decode_table[i].name))
 				break;	// found it
 		}
 

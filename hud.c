@@ -151,7 +151,7 @@ void HUD_Func_f(void)
     {
         char buf[512];
 
-        SDL_snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, Cmd_Argv(1));
+        snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, Cmd_Argv(1));
         if (Cvar_Find(buf) != NULL)
         {
             Cbuf_AddText(buf);
@@ -244,7 +244,7 @@ int HUD_FindPlace(hud_t *hud)
     // First try standard strings.
     for (i=0; i < num_snap_strings; i++)
 	{
-        if (!SDL_strcasecmp(hud->place->string, snap_strings[i]))
+        if (!strcasecmp(hud->place->string, snap_strings[i]))
 		{
             break;
 		}
@@ -298,7 +298,7 @@ int HUD_FindAlignX(hud_t *hud)
     // First try standard strings.
     for (i=0; i < num_align_strings_x; i++)
 	{
-        if (!SDL_strcasecmp(hud->align_x->string, align_strings_x[i]))
+        if (!strcasecmp(hud->align_x->string, align_strings_x[i]))
 		{
             break;
 		}
@@ -328,7 +328,7 @@ int HUD_FindAlignY(hud_t *hud)
     // First try standard strings.
     for (i=0; i < num_align_strings_y; i++)
 	{
-        if (!SDL_strcasecmp(hud->align_y->string, align_strings_y[i]))
+        if (!strcasecmp(hud->align_y->string, align_strings_y[i]))
 		{
             break;
 		}
@@ -397,7 +397,7 @@ void HUD_Show_f (void)
         return;
     }
 
-    if (!SDL_strcasecmp(Cmd_Argv(1), "all"))
+    if (!strcasecmp(Cmd_Argv(1), "all"))
     {
         hud = hud_huds;
         while (hud)
@@ -438,7 +438,7 @@ void HUD_Hide_f (void)
         return;
     }
 
-    if (!SDL_strcasecmp(Cmd_Argv(1), "all"))
+    if (!strcasecmp(Cmd_Argv(1), "all"))
     {
         hud = hud_huds;
         while (hud)
@@ -524,8 +524,8 @@ void HUD_Move_f (void)
         return;
     }
 
-    Cvar_SetValue(hud->pos_x, SDL_atof(Cmd_Argv(2)));
-    Cvar_SetValue(hud->pos_y, SDL_atof(Cmd_Argv(3)));
+    Cvar_SetValue(hud->pos_x, atof(Cmd_Argv(2)));
+    Cvar_SetValue(hud->pos_y, atof(Cmd_Argv(3)));
 }
 
 //
@@ -625,7 +625,7 @@ void HUD_Place_f (void)
     }
 
     // Place with helper.
-    SDL_strlcpy(temp, hud->place->string, sizeof(temp));
+    strlcpy(temp, hud->place->string, sizeof(temp));
     Cvar_Set(hud->place, Cmd_Argv(2));
     if (!HUD_FindPlace(hud))
     {
@@ -680,22 +680,22 @@ void HUD_Order_f (void)
 
 	HUD_FindMaxMinOrder (&max, &min);
 
-	if (!SDL_strncasecmp (option, "backward", 8))
+	if (!strncasecmp (option, "backward", 8))
 	{
 		// Send backward one step.
 		Cvar_SetValue(hud->order, (int)hud->order->value - 1);
 	}
-	else if (!SDL_strncasecmp (option, "forward", 7))
+	else if (!strncasecmp (option, "forward", 7))
 	{
 		// Move forward one step.
 		Cvar_SetValue(hud->order, (int)hud->order->value + 1);
 	}
-	else if (!SDL_strncasecmp (option, "front", 5))
+	else if (!strncasecmp (option, "front", 5))
 	{
 		// Bring to front.
 		Cvar_SetValue(hud->order, max + 1);
 	}
-	else if (!SDL_strncasecmp (option, "back", 8))
+	else if (!strncasecmp (option, "back", 8))
 	{
 		// Send to far back.
 		Cvar_SetValue(hud->order, min - 1);
@@ -703,7 +703,7 @@ void HUD_Order_f (void)
 	else
 	{
 		// Order #
-		Cvar_SetValue (hud->order, SDL_atoi(Cmd_Argv(2)));
+		Cvar_SetValue (hud->order, atoi(Cmd_Argv(2)));
 	}
 }
 
@@ -873,10 +873,10 @@ void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 	byte* b_colors;
 
 	hudname_len = min (sizeof (buf), strlen (var->name) - strlen ("_frame_color") - strlen ("hud_") + 1);
-	SDL_strlcpy (buf, var->name + 4, hudname_len);
+	strlcpy (buf, var->name + 4, hudname_len);
 	hud_elem = HUD_Find (buf);
 
-	SDL_strlcpy(buf2,new_color,sizeof(buf2));
+	strlcpy(buf2,new_color,sizeof(buf2));
 	b_colors = StringToRGB (buf2);
 
 	memcpy (hud_elem->frame_color_cache, b_colors, sizeof (byte) * 3);
@@ -1128,7 +1128,7 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     cvar_t *var;
     char buf[128];
 
-    SDL_snprintf (buf, sizeof (buf), "hud_%s_%s", hud_name, subvar);
+    snprintf (buf, sizeof (buf), "hud_%s_%s", hud_name, subvar);
     var = (cvar_t *)Q_malloc(sizeof(cvar_t));
     memset(var, 0, sizeof(cvar_t));
 
@@ -1149,7 +1149,7 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
 //
 void HUD_OnChangeOrder(cvar_t *var, char *val, qbool *cancel)
 {
-	Cvar_SetValue (var, SDL_atoi(val));
+	Cvar_SetValue (var, atoi(val));
 
 	HUD_ReorderChildren();
 
@@ -1220,7 +1220,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	//
 	{
 		char order[18];
-		SDL_snprintf (order, sizeof(order), "%d", draw_order);
+		snprintf (order, sizeof(order), "%d", draw_order);
 		hud->order = HUD_CreateVar(name, "order", order);
 		hud->order->OnChange = HUD_OnChangeOrder;
 	}
@@ -1361,7 +1361,7 @@ hud_t * HUD_Find(char *name)
 
     while (hud)
     {
-        if (!SDL_strcasecmp(hud->name, name))
+        if (!strcasecmp(hud->name, name))
 		{
             return hud;
 		}
@@ -1379,7 +1379,7 @@ cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
     int i;
     char buf[128];
 
-    SDL_snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, subvar);
+    snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, subvar);
 
     for (i=0; i < hud->num_params; i++)
 	{

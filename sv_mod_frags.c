@@ -79,20 +79,20 @@ void sv_mod_msg_file_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 				qwmsg[i] = (qwmsg_t *) Q_malloc (sizeof(qwmsg_t));
 				// fill system_id
 				str_tok = (char *)strtok(buf, "#");
-				qwmsg[i]->msg_type = SDL_atoi(str_tok);
+				qwmsg[i]->msg_type = Q_atoi(str_tok);
 				// fill weapon_id
 				str_tok = (char *)strtok(NULL, "#");
-				qwmsg[i]->id = SDL_atoi(str_tok);
+				qwmsg[i]->id = Q_atoi(str_tok);
 				// fill pl_count
 				str_tok = (char *)strtok(NULL, "#");
-				qwmsg[i]->pl_count = SDL_atoi(str_tok) == 1 ? 1 : 2;
+				qwmsg[i]->pl_count = Q_atoi(str_tok) == 1 ? 1 : 2;
 				// fill reverse
 				str_tok = (char *)strtok(NULL, "#");
-				qwmsg[i]->reverse = SDL_atoi(str_tok) ? true : false;
+				qwmsg[i]->reverse = Q_atoi(str_tok) ? true : false;
 				// fill str
 				str_tok = (char *)strtok(NULL, "#");
 				qwmsg[i]->str =  (char *) Q_malloc (strlen(str_tok) + 1);
-				SDL_strlcpy(qwmsg[i]->str, str_tok, strlen(str_tok) + 1);
+				strlcpy(qwmsg[i]->str, str_tok, strlen(str_tok) + 1);
 			}
 			else
 				break;
@@ -154,7 +154,7 @@ char *parse_mod_string(char *str)
 				case 1:
 					str_len = strlen(buf[pl1]) + strlen(buf[pl2]) + strlen(qw_weapon[qwmsg[i]->id]) + 5 + 10;
 					ret = (char *) Q_malloc (str_len);
-					SDL_snprintf(ret, str_len, "%s\\%s\\%s\\%d\n", buf[pl1], buf[pl2], qw_weapon[qwmsg[i]->id], (int)time(NULL));
+					snprintf(ret, str_len, "%s\\%s\\%s\\%d\n", buf[pl1], buf[pl2], qw_weapon[qwmsg[i]->id], (int)time(NULL));
 					break;
 				default: ret = NULL;
 				}
@@ -162,7 +162,7 @@ char *parse_mod_string(char *str)
 			case SYSTEM:
 				str_len = strlen(buf[1]) * 2 + strlen(qw_system[qwmsg[i]->id]) + 4 + 10;
 				ret = (char *) Q_malloc (str_len);
-				SDL_snprintf(ret, str_len, "%s\\%s\\%d\n", buf[1], qw_system[qwmsg[i]->id], (int)time(NULL));
+				snprintf(ret, str_len, "%s\\%s\\%d\n", buf[1], qw_system[qwmsg[i]->id], (int)time(NULL));
 				break;
 			default: ret = NULL;
 			}

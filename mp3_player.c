@@ -125,7 +125,7 @@ void MP3_SongInfo_f(void) {
 		Com_Printf(va("%s %s\n", status_string, title));
 		return;
 	}
-	SDL_strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+	strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
 	Com_Printf(va("%s %s \x10%s/%s\x11\n", status_string, title, elapsed_string, SecondsToMinutesString(total)));
 }
 
@@ -135,15 +135,15 @@ char *MP3_Menu_SongtTitle(void) {
 
 	if (!MP3_IsPlayerRunning()) {
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
-		SDL_snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		snprintf(title, sizeof(title), "%s is not running\n", mp3_player->PlayerName_LeadingCaps);
 	    return title;
 	}
 	macrotitle = MP3_Macro_MP3Info();
 	MP3_GetPlaylistInfo(&current, NULL);
 	if (*macrotitle)
-		SDL_strlcpy(title, va("%d. %s", current + 1, macrotitle), sizeof(title));
+		strlcpy(title, va("%d. %s", current + 1, macrotitle), sizeof(title));
 	else
-		SDL_strlcpy(title, mp3_player->PlayerName_AllCaps, sizeof(title));
+		strlcpy(title, mp3_player->PlayerName_AllCaps, sizeof(title));
 	return title;
 }
 
@@ -184,7 +184,7 @@ void MP3_Init(void) {
 
 char* Media_GetVolume_f(void) {
 	static char macrobuf[16];
-	SDL_snprintf(macrobuf, sizeof(macrobuf), "%f", Media_GetVolume());
+	snprintf(macrobuf, sizeof(macrobuf), "%f", Media_GetVolume());
 	return macrobuf;
 }
 
@@ -196,11 +196,11 @@ void Media_SetVolume_f(void) {
 	} else {
 		char *v = Cmd_Argv(1);
 		if (v[0] == '+') {
-			Media_SetVolume(Media_GetVolume() + SDL_atof(v + 1));
+			Media_SetVolume(Media_GetVolume() + Q_atof(v + 1));
 		} else if (v[0] == '-') {
-			Media_SetVolume(Media_GetVolume() - SDL_atof(v + 1));
+			Media_SetVolume(Media_GetVolume() - Q_atof(v + 1));
 		} else {
-			Media_SetVolume(SDL_atof(v));
+			Media_SetVolume(Q_atof(v));
 		}
 	}
 }

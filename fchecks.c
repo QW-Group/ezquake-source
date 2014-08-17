@@ -157,7 +157,7 @@ static qbool FChecks_SkinRequest (const char *s)
 {
 	char *fbs;
 	qbool fbskins_policy = (cls.demoplayback || cl.spectator) ? 1 :
-		*(fbs = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, SDL_atof(fbs), 1) :
+		*(fbs = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbs), 1) :
 		cl.teamfortress ? 0 : 1;
 	float fbskins = bound (0, r_fullbrightSkins.value, fbskins_policy);
 	if (cl.spectator || (f_skins_reply_time && cls.realtime - f_skins_reply_time < 20))
@@ -206,10 +206,10 @@ void FChecks_RulesetFeatureAppend(qbool on, const char *code, char *feat_on_buf,
 								  size_t feat_on_size, char *feat_off_buf, size_t feat_off_size)
 {
 	if (on) {
-		SDL_strlcat(feat_on_buf, code, feat_on_size);
+		strlcat(feat_on_buf, code, feat_on_size);
 	}
 	else {
-		SDL_strlcat(feat_off_buf, code, feat_off_size);
+		strlcat(feat_off_buf, code, feat_off_size);
 	}
 }
 
@@ -239,10 +239,10 @@ const char* FChecks_RulesetAdditionString()
 	#undef APPENDFEATURE
 
 	if (strlen(feat_on_buf) > 1) {
-		SDL_strlcat(features, feat_on_buf, sizeof (features));
+		strlcat(features, feat_on_buf, sizeof (features));
 	}
 	if (strlen(feat_off_buf) > 1) {
-		SDL_strlcat(features, feat_off_buf, sizeof (features));
+		strlcat(features, feat_off_buf, sizeof (features));
 	}
 
 	return features;

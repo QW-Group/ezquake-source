@@ -291,7 +291,7 @@ static int FMod_AddModel (const char *name, const qbool flags, const void *hash)
 	if (check_models_num >= MAX_CHECK_MODELS)
 		return -1;
 
-	SDL_strlcpy (check_models[check_models_num].name, name, sizeof (check_models[check_models_num].name));	
+	strlcpy (check_models[check_models_num].name, name, sizeof (check_models[check_models_num].name));	
 	check_models[check_models_num].checked = check_models[check_models_num].modified = false;
 	check_models[check_models_num].flags = flags;
 	check_models[check_models_num].hash = hash;
@@ -319,7 +319,7 @@ void FMod_CheckModel (const char *name, const void *buf, const size_t len)
 		relevent = (cl.teamfortress && (check_models[i].flags & FMOD_TF)) ||
 			(!cl.teamfortress && (check_models[i].flags & FMOD_DM));
 
-		if (relevent && !SDL_strcasecmp (name, check_models[i].name))
+		if (relevent && !strcasecmp (name, check_models[i].name))
 			break;
 	}
 
@@ -527,7 +527,7 @@ char *FMod_Response_Text(void)
 	int i, count;
 	qbool relevent;
 
-	SDL_strlcpy(buf, "modified:", sizeof(buf));
+	strlcpy(buf, "modified:", sizeof(buf));
 
 	for (i = count = 0; i < check_models_num; i++) {
 		relevent = (cl.teamfortress && (check_models[i].flags & FMOD_TF)) || 
@@ -535,17 +535,17 @@ char *FMod_Response_Text(void)
 
 		if (check_models[i].checked && check_models[i].modified && relevent ) {
 			if (strlen (buf) < 240) {
-				SDL_strlcat (buf, va(" %s", COM_SkipPath (check_models[i].name)), sizeof (buf));
+				strlcat (buf, va(" %s", COM_SkipPath (check_models[i].name)), sizeof (buf));
 				count++;
 			} else {
-				SDL_strlcat (buf, " & more...", sizeof (buf));
+				strlcat (buf, " & more...", sizeof (buf));
 				break;
 			}
 		}
 	}
 
 	if (!count)
-		SDL_strlcpy (buf, "all models ok", sizeof (buf));
+		strlcpy (buf, "all models ok", sizeof (buf));
 	
 	return buf;
 }

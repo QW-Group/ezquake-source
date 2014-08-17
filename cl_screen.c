@@ -248,7 +248,7 @@ int			scr_erase_center;
 // Called for important messages that should stay in the center of the screen for a few moments
 void SCR_CenterPrint (char *str)
 {
-	SDL_strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
+	strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
 	scr_centertime_off = scr_centertime.value;
 	scr_centertime_start = cl.time;
 
@@ -342,7 +342,7 @@ qbool	concussioned = false;
 
 void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 {
-	float newfov = SDL_atof(value);
+	float newfov = Q_atof(value);
 
 	if (newfov > 140)
 		newfov = 140;
@@ -386,7 +386,7 @@ void OnFovChange (cvar_t *var, char *value, qbool *cancel)
 
 void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel)
 {
-	float newfov = SDL_atof(value);
+	float newfov = Q_atof(value);
 
 	if (newfov < 10.0 || newfov > 140.0){
 		Com_Printf("Invalid default_fov\n");
@@ -668,11 +668,11 @@ void SCR_DrawFPS (void) {
 	// Multiview
 	if (cl_multiview.value && cls.mvdplayback)
 	{
-		SDL_snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/nNumViews);
+		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/nNumViews);
 	}
 	else
 	{
-		SDL_snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
+		snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
 	}
 
 	x = ELEMENT_X_COORD(show_fps);
@@ -719,7 +719,7 @@ void SCR_DrawSpeed (void) {
 	maxspeed = max(maxspeed, speed);
 
 	if (display_speed >= 0) {
-		SDL_snprintf(str, sizeof(str), "%3d%s", (int) display_speed, show_speed.value == 2 ? " SPD" : "");
+		snprintf(str, sizeof(str), "%3d%s", (int) display_speed, show_speed.value == 2 ? " SPD" : "");
 		x = ELEMENT_X_COORD(show_speed);
 		y = ELEMENT_Y_COORD(show_speed);
 		Draw_String (x, y, str);
@@ -757,11 +757,11 @@ void SCR_DrawClock (void) {
 		if ((ptm = localtime (&t))) {
 			strftime (str, sizeof (str) - 1, scr_clock_format.string[0] ? scr_clock_format.string : "%H:%M:%S", ptm);
 		} else {
-			SDL_strlcpy (str, "#bad date#", sizeof (str));
+			strlcpy (str, "#bad date#", sizeof (str));
 		}
 	} else {
 		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
-		SDL_strlcpy (str, SecondsToHourString((int) time), sizeof (str));
+		strlcpy (str, SecondsToHourString((int) time), sizeof (str));
 	}
 
 	x = ELEMENT_X_COORD(scr_clock);
@@ -778,14 +778,14 @@ void SCR_DrawGameClock (void) {
 		return;
 
 	if (scr_gameclock.value == 2 || scr_gameclock.value == 4)
-		timelimit = 60 * SDL_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1;
+		timelimit = 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1;
 	else
 		timelimit = 0;
 
 	if (cl.countdown || cl.standby)
-		SDL_strlcpy (str, SecondsToHourString(timelimit), sizeof(str));
+		strlcpy (str, SecondsToHourString(timelimit), sizeof(str));
 	else
-		SDL_strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
 
 	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strstr(str, ":")))
 		s++;		// or just use SecondsToMinutesString() ...
@@ -805,9 +805,9 @@ void SCR_DrawDemoClock (void) {
 		return;
 
 	if (scr_democlock.value == 2)
-		SDL_strlcpy (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
 	else
-		SDL_strlcpy (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
 
 	x = ELEMENT_X_COORD(scr_democlock);
 	y = ELEMENT_Y_COORD(scr_democlock);
@@ -845,7 +845,7 @@ void SCR_DrawQTVBuffer (void)
 
 	len = ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
 
-	SDL_snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Demo_GetSpeed());
+	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Demo_GetSpeed());
 
 	x = ELEMENT_X_COORD(scr_qtvbuffer);
 	y = ELEMENT_Y_COORD(scr_qtvbuffer);
@@ -1172,11 +1172,11 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 	if(scr_autoid.integer >= 3 && scr_autoid.integer < 6 && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
 	{
 		if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1) {
-			SDL_strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
+			strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
 		} else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2) {
-			SDL_strlcpy(armor_name, "&cff0YA", sizeof(armor_name));
+			strlcpy(armor_name, "&cff0YA", sizeof(armor_name));
 		} else {
-			SDL_strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
+			strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
 		}
 
 		Draw_SColoredString(
@@ -1198,31 +1198,31 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y, float scale)
 		{
 			case IT_SHOTGUN:
 				weapon_pic = sb_weapons[0][0];
-				SDL_strlcpy(weapon_name, "SG", sizeof(weapon_name));
+				strlcpy(weapon_name, "SG", sizeof(weapon_name));
 				break;
 			case IT_SUPER_SHOTGUN:
 				weapon_pic = sb_weapons[0][1];
-				SDL_strlcpy(weapon_name, "BS", sizeof(weapon_name));
+				strlcpy(weapon_name, "BS", sizeof(weapon_name));
 				break;
 			case IT_NAILGUN:
 				weapon_pic = sb_weapons[0][2];
-				SDL_strlcpy(weapon_name, "NG", sizeof(weapon_name));
+				strlcpy(weapon_name, "NG", sizeof(weapon_name));
 				break;
 			case IT_SUPER_NAILGUN:
 				weapon_pic = sb_weapons[0][3];
-				SDL_strlcpy(weapon_name, "SN", sizeof(weapon_name));
+				strlcpy(weapon_name, "SN", sizeof(weapon_name));
 				break;
 			case IT_GRENADE_LAUNCHER:
 				weapon_pic = sb_weapons[0][4];
-				SDL_strlcpy(weapon_name, "GL", sizeof(weapon_name));
+				strlcpy(weapon_name, "GL", sizeof(weapon_name));
 				break;
 			case IT_ROCKET_LAUNCHER:
 				weapon_pic = sb_weapons[0][5];
-				SDL_strlcpy(weapon_name, "RL", sizeof(weapon_name));
+				strlcpy(weapon_name, "RL", sizeof(weapon_name));
 				break;
 			case IT_LIGHTNING:
 				weapon_pic = sb_weapons[0][6];
-				SDL_strlcpy(weapon_name, "LG", sizeof(weapon_name));
+				strlcpy(weapon_name, "LG", sizeof(weapon_name));
 				break;
 			default :
 				// No weapon.
@@ -1269,7 +1269,7 @@ void SCR_DrawAutoID (void)
 			if (scr_autoid_namelength.integer >= 1 && scr_autoid_namelength.integer < MAX_SCOREBOARDNAME) {
 				char name[MAX_SCOREBOARDNAME];
 
-				SDL_strlcpy(name, autoids[i].player->name, sizeof(name));
+				strlcpy(name, autoids[i].player->name, sizeof(name));
 				name[scr_autoid_namelength.integer] = 0;
 				Draw_SString(x - strlen(name) * 4 * scale, y - 8 * scale, name, scale);
 			} else {
@@ -1420,7 +1420,7 @@ void SCR_SetupCI (void) {
 		id->color[1] = 255; // g
 		id->color[2] = 255; // b
 		id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1); // alpha
-		id->flags = SDL_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
+		id->flags = Q_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
 		id->flags = (id->flags ? id->flags : CIF_CHAT); // use chat as default if we got some unknown "chat" value
 
 		ci_count++;
@@ -1569,8 +1569,8 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	SDL_strlcpy(tmp2, its_shownick ? scr_shownick_order.string : scr_teaminfo_order.string , sizeof(tmp2));
-	SDL_strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
+	strlcpy(tmp2, its_shownick ? scr_shownick_order.string : scr_teaminfo_order.string , sizeof(tmp2));
+	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
 	//
@@ -1628,7 +1628,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 			case 'H': // draw health, padding with space on right side
 
 				if(!width_only) {
-					SDL_snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_cl->health);
+					snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_cl->health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_cl->health);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += 3 * FONTWIDTH;
@@ -1703,7 +1703,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 				}
 
 				if(!width_only) { // value drawn no matter which style
-					SDL_snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
+					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_cl->armor);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += 3 * FONTWIDTH;
@@ -1784,7 +1784,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 			default: // print %x - that mean sequence unknown
 
 				if(!width_only) {
-					SDL_snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
+					snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += (s[0] ? 2 : 1) * FONTWIDTH;
@@ -1796,7 +1796,7 @@ static int SCR_Draw_TeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname
 
 		default: // print x
 			if(!width_only) {
-				SDL_snprintf(tmp, sizeof(tmp), "%c", s[0]);
+				snprintf(tmp, sizeof(tmp), "%c", s[0]);
 				if (s[0] != ' ') // inhuman smart optimization, do not print space!
 					Draw_ColoredString (x, y, tmp, false);
 			}
@@ -1845,7 +1845,7 @@ static void SCR_Draw_TeamInfo(void)
 		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name); // we use nick or name
 		maxname = max(maxname, strlen(TP_ParseFunChars(nick, false)));
 
-		SDL_strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
+		strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
 		maxloc  = max(maxloc,  strlen(TP_ParseFunChars(tmp,  false)));
 
 		slots[slots_num++] = i;
@@ -1910,7 +1910,7 @@ void Parse_TeamInfo(char *s)
 
 	Cmd_TokenizeString( s );
 
-	client = SDL_atoi( Cmd_Argv( 1 ) );
+	client = atoi( Cmd_Argv( 1 ) );
 
 	if (client < 0 || client >= MAX_CLIENTS)
 	{
@@ -1922,13 +1922,13 @@ void Parse_TeamInfo(char *s)
 
 	ti_clients[ client ].time   = r_refdef2.time;
 
-	ti_clients[ client ].org[0] = SDL_atoi( Cmd_Argv( 2 ) );
-	ti_clients[ client ].org[1] = SDL_atoi( Cmd_Argv( 3 ) );
-	ti_clients[ client ].org[2] = SDL_atoi( Cmd_Argv( 4 ) );
-	ti_clients[ client ].health = SDL_atoi( Cmd_Argv( 5 ) );
-	ti_clients[ client ].armor  = SDL_atoi( Cmd_Argv( 6 ) );
-	ti_clients[ client ].items  = SDL_atoi( Cmd_Argv( 7 ) );
-	SDL_strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), TEAMINFO_NICKLEN); // nick is optional
+	ti_clients[ client ].org[0] = atoi( Cmd_Argv( 2 ) );
+	ti_clients[ client ].org[1] = atoi( Cmd_Argv( 3 ) );
+	ti_clients[ client ].org[2] = atoi( Cmd_Argv( 4 ) );
+	ti_clients[ client ].health = atoi( Cmd_Argv( 5 ) );
+	ti_clients[ client ].armor  = atoi( Cmd_Argv( 6 ) );
+	ti_clients[ client ].items  = atoi( Cmd_Argv( 7 ) );
+	strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), TEAMINFO_NICKLEN); // nick is optional
 }
 
 void Update_TeamInfo()
@@ -1984,13 +1984,13 @@ void Parse_Shownick(char *s)
 
 	arg = 1;
 
-	version  = SDL_atoi( Cmd_Argv( arg++ ) );
+	version  = atoi( Cmd_Argv( arg++ ) );
 
 	switch ( version )
 	{
 		case 1:
 		{
-			client = SDL_atoi( Cmd_Argv( arg++ ) );
+			client = atoi( Cmd_Argv( arg++ ) );
         
 			if (client < 0 || client >= MAX_CLIENTS)
 			{
@@ -2002,13 +2002,13 @@ void Parse_Shownick(char *s)
 	        
 			shownick.time   = r_refdef2.time;
         
-			shownick.org[0] = SDL_atoi( Cmd_Argv( arg++ ) );
-			shownick.org[1] = SDL_atoi( Cmd_Argv( arg++ ) );
-			shownick.org[2] = SDL_atoi( Cmd_Argv( arg++ ) );
-			shownick.health = SDL_atoi( Cmd_Argv( arg++ ) );
-			shownick.armor  = SDL_atoi( Cmd_Argv( arg++ ) );
-			shownick.items  = SDL_atoi( Cmd_Argv( arg++ ) );
-			SDL_strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
+			shownick.org[0] = atoi( Cmd_Argv( arg++ ) );
+			shownick.org[1] = atoi( Cmd_Argv( arg++ ) );
+			shownick.org[2] = atoi( Cmd_Argv( arg++ ) );
+			shownick.health = atoi( Cmd_Argv( arg++ ) );
+			shownick.armor  = atoi( Cmd_Argv( arg++ ) );
+			shownick.items  = atoi( Cmd_Argv( arg++ ) );
+			strlcpy(shownick.nick, Cmd_Argv( arg++ ), TEAMINFO_NICKLEN); // nick is optional
 
 			return;
 		}
@@ -2172,7 +2172,7 @@ void Parse_WeaponStats(char *s)
 
 	arg = 1;
 
-	client = SDL_atoi( Cmd_Argv( arg++ ) );
+	client = atoi( Cmd_Argv( arg++ ) );
         
 	if (client < 0 || client >= MAX_CLIENTS)
 	{
@@ -2190,8 +2190,8 @@ void Parse_WeaponStats(char *s)
 		return;
 	}
 
-	ws_clients[ client ].wpn[wp].attacks = SDL_atoi( Cmd_Argv( arg++ ) );
-	ws_clients[ client ].wpn[wp].hits    = SDL_atoi( Cmd_Argv( arg++ ) );
+	ws_clients[ client ].wpn[wp].attacks = atoi( Cmd_Argv( arg++ ) );
+	ws_clients[ client ].wpn[wp].hits    = atoi( Cmd_Argv( arg++ ) );
 }
 
 static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool width_only)
@@ -2214,8 +2214,8 @@ static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool wi
 	}
 
 	// this limit len of string because TP_ParseFunChars() do not check overflow
-	SDL_strlcpy(tmp2, scr_weaponstats_order.string , sizeof(tmp2));
-	SDL_strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
+	strlcpy(tmp2, scr_weaponstats_order.string , sizeof(tmp2));
+	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
 	s = tmp2;
 
 	//
@@ -2242,7 +2242,7 @@ static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool wi
 
 		if ( (int)(end - start) > 0 )
 		{
-			SDL_strlcpy(tmp, start, bound(1, (int)(end - start + 1), (int)sizeof(tmp)));
+			strlcpy(tmp, start, bound(1, (int)(end - start + 1), (int)sizeof(tmp)));
 
 			if( !width_only )
 				Draw_ColoredString (x, y, tmp, false);
@@ -2255,11 +2255,11 @@ static int SCR_Draw_WeaponStatsPlayer(ws_player_t *ws_cl, int x, int y, qbool wi
 		if ( percentage )
 		{
 			float	accuracy = (ws_cl->wpn[wp].attacks ? 100.0f * ws_cl->wpn[wp].hits / ws_cl->wpn[wp].attacks : 0 );
-			SDL_snprintf(tmp, sizeof(tmp), "%.1f", accuracy);
+			snprintf(tmp, sizeof(tmp), "%.1f", accuracy);
 		}
 		else
 		{
-			SDL_snprintf(tmp, sizeof(tmp), "%d", ws_cl->wpn[wp].hits);
+			snprintf(tmp, sizeof(tmp), "%d", ws_cl->wpn[wp].hits);
 		}
 
 		if(!width_only)
@@ -2354,7 +2354,7 @@ hud_element_t *Hud_FindElement(const char *name)
 
 	prev=NULL;
 	for(elem=hud_list; elem; elem = elem->next) {
-		if (!SDL_strcasecmp(name, elem->name))
+		if (!strcasecmp(name, elem->name))
 			return elem;
 		prev = elem;
 	}
@@ -2436,7 +2436,7 @@ void Hud_Add_f(void)
 		a2 = Cmd_Argv(2);
 		a3 = Cmd_Argv(3);
 
-		if (!SDL_strcasecmp(a2, "cvar")) {
+		if (!strcasecmp(a2, "cvar")) {
 			if( (var = Cvar_Find(a3)) ) {
 				elem = Hud_NewElement();
 				elem->contents = var;
@@ -2445,18 +2445,18 @@ void Hud_Add_f(void)
 				Com_Printf("cvar \"%s\" not found\n", a3);
 				return;
 			}
-		} else if (!SDL_strcasecmp(a2, "str")) {
+		} else if (!strcasecmp(a2, "str")) {
 			elem = Hud_NewElement();
 			elem->contents = Q_strdup( a3 );
 			elem->flags = HUD_STRING | HUD_ENABLED;
-		/*} else if (!SDL_strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
-			if (!SDL_strcasecmp(a3, "lag"))
+		/*} else if (!strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
+			if (!strcasecmp(a3, "lag"))
 				func = &Hud_LagmeterStr;
-			else if (!SDL_strcasecmp(a3, "fps"))
+			else if (!strcasecmp(a3, "fps"))
 				func = &Hud_FpsStr;
-			else if (!SDL_strcasecmp(a3, "clock"))
+			else if (!strcasecmp(a3, "clock"))
 				func = &Hud_ClockStr;
-			else if (!SDL_strcasecmp(a3, "speed"))
+			else if (!strcasecmp(a3, "speed"))
 				func = &Hud_SpeedStr;
 			else {
 				Com_Printf("\"%s\" is not a standard hud function\n", a3);
@@ -2465,7 +2465,7 @@ void Hud_Add_f(void)
 			elem = Hud_NewElement();
 			elem->contents = func;
 			elem->flags = HUD_FUNC | HUD_ENABLED;
-		} else if (!SDL_strcasecmp(a2, "img")) {
+		} else if (!strcasecmp(a2, "img")) {
 			mpic_t *hud_image;
 			int texnum = loadtexture_24bit(a3, LOADTEX_GFX);
 			if (!texnum) {
@@ -2565,14 +2565,14 @@ void Hud_Position_f(void)
 		return;
 	}
 
-	elem->coords[0] = SDL_atoi(Cmd_Argv(2));
-	elem->coords[1] = SDL_atoi(Cmd_Argv(3));
-	elem->coords[2] = SDL_atoi(Cmd_Argv(4));
+	elem->coords[0] = atoi(Cmd_Argv(2));
+	elem->coords[1] = atoi(Cmd_Argv(3));
+	elem->coords[2] = atoi(Cmd_Argv(4));
 }
 
 void Hud_Elem_Bg(hud_element_t *elem)
 {
-	elem->coords[3] = SDL_atoi(Cmd_Argv(2));
+	elem->coords[3] = atoi(Cmd_Argv(2));
 }
 
 void Hud_Bg_f(void)
@@ -2597,8 +2597,8 @@ void Hud_Bg_f(void)
 
 void Hud_Elem_Move(hud_element_t *elem)
 {
-	elem->coords[1] += SDL_atoi(Cmd_Argv(2));
-	elem->coords[2] += SDL_atoi(Cmd_Argv(3));
+	elem->coords[1] += atoi(Cmd_Argv(2));
+	elem->coords[2] += atoi(Cmd_Argv(3));
 }
 
 void Hud262_Move_f(void)
@@ -2625,12 +2625,12 @@ void Hud_Elem_Width(hud_element_t *elem)
 {
 	if (elem->flags & HUD_IMAGE) {
 		mpic_t *pic = elem->contents;
-		int width = SDL_atoi(Cmd_Argv(2))*8;
+		int width = atoi(Cmd_Argv(2))*8;
 		int height = width * pic->height / pic->width;
 		pic->height = height;
 		pic->width = width;
 	}
-	elem->width = max(min(SDL_atoi(Cmd_Argv(2)), 128), 0);
+	elem->width = max(min(atoi(Cmd_Argv(2)), 128), 0);
 }
 
 void Hud_Width_f(void)
@@ -2685,7 +2685,7 @@ void Hud_Font_f(void)
 
 void Hud_Elem_Alpha(hud_element_t *elem)
 {
-	float alpha = SDL_atof (Cmd_Argv(2));
+	float alpha = atof (Cmd_Argv(2));
 	elem->alpha = bound (0, alpha, 1);
 }
 
@@ -2717,8 +2717,8 @@ void Hud_Elem_Blink(hud_element_t *elem)
 	double		blinktime;
 	unsigned	mask;
 
-	blinktime = SDL_atof(Cmd_Argv(2))/1000.0;
-	mask = SDL_atoi(Cmd_Argv(3));
+	blinktime = atof(Cmd_Argv(2))/1000.0;
+	mask = atoi(Cmd_Argv(3));
 
 	if (mask > 3) return; // bad mask
 	if (blinktime < 0.0 || blinktime > 5.0) return;
@@ -2957,7 +2957,7 @@ void SCR_DrawHud (void)
 
 			if (elem->flags & HUD_CVAR) {
 				st = ((cvar_t*)elem->contents)->string;
-				SDL_strlcpy (buf, st, sizeof(buf));
+				strlcpy (buf, st, sizeof(buf));
 				st = buf;
 				l = strlen_color(st);
 			} else if (elem->flags & HUD_STRING) {
@@ -3514,26 +3514,26 @@ static image_format_t SShot_FormatForName(char *name) {
 
 	ext = COM_FileExtension(name);
 
-	if (!SDL_strcasecmp(ext, "tga"))
+	if (!strcasecmp(ext, "tga"))
 		return IMAGE_TGA;
 
 #ifdef WITH_PNG
-	else if (!SDL_strcasecmp(ext, "png"))
+	else if (!strcasecmp(ext, "png"))
 		return IMAGE_PNG;
 #endif
 
 #ifdef WITH_JPEG
-	else if (!SDL_strcasecmp(ext, "jpg"))
+	else if (!strcasecmp(ext, "jpg"))
 		return IMAGE_JPEG;
 #endif
 
 #ifdef WITH_PNG
-	else if (!SDL_strcasecmp(scr_sshot_format.string, "png"))
+	else if (!strcasecmp(scr_sshot_format.string, "png"))
 		return IMAGE_PNG;
 #endif
 
 #ifdef WITH_JPEG
-	else if (!SDL_strcasecmp(scr_sshot_format.string, "jpg") || !SDL_strcasecmp(scr_sshot_format.string, "jpeg"))
+	else if (!strcasecmp(scr_sshot_format.string, "jpg") || !strcasecmp(scr_sshot_format.string, "jpeg"))
 		return IMAGE_JPEG;
 #endif
 
@@ -3544,7 +3544,7 @@ static image_format_t SShot_FormatForName(char *name) {
 static char *Sshot_SshotDirectory(void) {
 	static char dir[MAX_PATH];
 
-	SDL_strlcpy(dir, FS_LegacyDir(scr_sshot_dir.string), sizeof(dir));
+	strlcpy(dir, FS_LegacyDir(scr_sshot_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -3650,37 +3650,37 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 
 	// Find a file name to save it to
 	#ifdef WITH_PNG
-	if (!SDL_strcasecmp(scr_sshot_format.string, "png"))
+	if (!strcasecmp(scr_sshot_format.string, "png"))
 	{
-		SDL_strlcpy(ext, "png", 4);
+		strlcpy(ext, "png", 4);
 	}
 	#endif
 
 	#ifdef WITH_JPEG
-	if (!SDL_strcasecmp(scr_sshot_format.string, "jpeg") || !SDL_strcasecmp(scr_sshot_format.string, "jpg"))
+	if (!strcasecmp(scr_sshot_format.string, "jpeg") || !strcasecmp(scr_sshot_format.string, "jpg"))
 	{
-		SDL_strlcpy(ext, "jpg", 4);
+		strlcpy(ext, "jpg", 4);
 	}
 	#endif
 
-	if (!SDL_strcasecmp(scr_sshot_format.string, "tga"))
+	if (!strcasecmp(scr_sshot_format.string, "tga"))
 	{
-		SDL_strlcpy(ext, "tga", 4);
+		strlcpy(ext, "tga", 4);
 	}
 
-	if (!SDL_strcasecmp(scr_sshot_format.string, "pcx"))
+	if (!strcasecmp(scr_sshot_format.string, "pcx"))
 	{
-		SDL_strlcpy(ext, "pcx", 4);
+		strlcpy(ext, "pcx", 4);
 	}
 
 	if (!ext[0])
 	{
-		SDL_strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
+		strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
 	}
 
 	if(fabsf(scr_sshot_autoname.value - 1.0f) < 0.0001f) {
 		// if sshot_autoname is 1, prefix with map name.
-		SDL_snprintf(basename, sizeof(basename), "%s_", host_mapname.string);
+		snprintf(basename, sizeof(basename), "%s_", host_mapname.string);
 	}
 	else {
 		// otherwise prefix with ezquake.
@@ -3689,7 +3689,7 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 
 	for (i = 0; i < MAX_SCREENSHOT_COUNT; i++)
 	{
-		SDL_snprintf(name, name_size, "%s%03i.%s", basename, i, ext);
+		snprintf(name, name_size, "%s%03i.%s", basename, i, ext);
 		if (!(f = fopen (va("%s/%s", sshot_dir, name), "rb")))
 		{
 			break;  // file doesn't exist
@@ -3733,7 +3733,7 @@ void SCR_ScreenShot_f (void)
 
 	if (Cmd_Argc() == 2)
 	{
-		SDL_strlcpy (name, Cmd_Argv(1), sizeof(name));
+		strlcpy (name, Cmd_Argv(1), sizeof(name));
 	}
 	else if (Cmd_Argc() == 1)
 	{
@@ -3780,7 +3780,7 @@ void SCR_RSShot_f (void) {
 
 	Com_Printf ("Remote screenshot requested.\n");
 
-	SDL_snprintf(filename, sizeof(filename), "%s/temp/__rsshot__", Sshot_SshotDirectory());
+	snprintf(filename, sizeof(filename), "%s/temp/__rsshot__", Sshot_SshotDirectory());
 
 	width = 400; height = 300;
 	base = (byte *) Q_malloc ((width * height + glwidth * glheight) * 3);
@@ -3869,7 +3869,7 @@ static void SCR_CheckAutoScreenshot(void) {
 		return;
 	}
 
-	SDL_snprintf (savedname, sizeof(savedname), "%s_%03i%s", filename, num, ext);
+	snprintf (savedname, sizeof(savedname), "%s_%03i%s", filename, num, ext);
 	fullsavedname = va("%s/%s", sshot_dir, savedname);
 
 	glFinish();
@@ -3883,7 +3883,7 @@ void SCR_AutoScreenshot(char *matchname)
 	if (cl.intermission == 1)
 	{
 		scr_autosshot_countdown = vid.numpages;
-		SDL_strlcpy(auto_matchname, matchname, sizeof(auto_matchname));
+		strlcpy(auto_matchname, matchname, sizeof(auto_matchname));
 	}
 }
 
@@ -4398,7 +4398,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
 	{
 		// Green armor.
-		SDL_strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
+		strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
 
 		armor_color[0] = 80;
@@ -4408,7 +4408,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
 	{
 		// Yellow armor.
-		SDL_strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
+		strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
 
 		armor_color[0] = 250;
@@ -4418,7 +4418,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
 	{
 		// Red armor.
-		SDL_strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
+		strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
 
 		armor_color[0] = 190;
@@ -4922,39 +4922,39 @@ void SCR_DrawMVStatusStrings(void)
 	//
 	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING)
 	{
-		SDL_strlcpy(weapon, "lg", sizeof(weapon));
+		strlcpy(weapon, "lg", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER)
 	{
-		SDL_strlcpy(weapon, "rl", sizeof(weapon));
+		strlcpy(weapon, "rl", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER)
 	{
-		SDL_strlcpy(weapon, "gl", sizeof(weapon));
+		strlcpy(weapon, "gl", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN)
 	{
-		SDL_strlcpy(weapon, "sn", sizeof(weapon));
+		strlcpy(weapon, "sn", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN)
 	{
-		SDL_strlcpy(weapon, "ng", sizeof(weapon));
+		strlcpy(weapon, "ng", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN)
 	{
-		SDL_strlcpy(weapon, "ss", sizeof(weapon));
+		strlcpy(weapon, "ss", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN)
 	{
-		SDL_strlcpy(weapon, "sg", sizeof(weapon));
+		strlcpy(weapon, "sg", sizeof(weapon));
 	}
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_AXE)
 	{
-		SDL_strlcpy(weapon, "ax", sizeof(weapon));
+		strlcpy(weapon, "ax", sizeof(weapon));
 	}
 	else
 	{
-		SDL_strlcpy(weapon, "??", sizeof(weapon));
+		strlcpy(weapon, "??", sizeof(weapon));
 	}
 	weapon[0] |= 128;
 	weapon[1] |= 128;
@@ -5044,15 +5044,15 @@ void SCR_DrawMVStatusStrings(void)
 	//
 	// Get the player's name.
 	//
-	SDL_strlcpy(name, cl.players[nPlayernum].name, sizeof(name));
+	strlcpy(name, cl.players[nPlayernum].name, sizeof(name));
 
 	if (strcmp(cl.players[nPlayernum].name, "") && !cl.players[nPlayernum].spectator)
 	{
 		if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (cl_multiview.value == 2) && cl_mvinset.integer)
 		{
 			// mvinset and dead
-			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			SDL_snprintf(strng, sizeof (strng), "%.5s   %s %s:%-3s",name,
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(strng, sizeof (strng), "%.5s   %s %s:%-3s",name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -5060,8 +5060,8 @@ void SCR_DrawMVStatusStrings(void)
 		else if ((cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) && (vid.width <= 400))
 		{
 			// Resolution width <= 400 and dead
-			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			SDL_snprintf(strng, sizeof (strng), "%.4s  %s %s:%-3s",name,
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(strng, sizeof (strng), "%.4s  %s %s:%-3s",name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -5069,8 +5069,8 @@ void SCR_DrawMVStatusStrings(void)
 		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0)
 		{
 			// > 512 and dead
-			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			SDL_snprintf(strng, sizeof (strng),"%s   %s %s:%-3s", name,
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(strng, sizeof (strng),"%s   %s %s:%-3s", name,
 										"dead   ",
 										weapon,
 										sAmmo);
@@ -5079,8 +5079,8 @@ void SCR_DrawMVStatusStrings(void)
 		else if ((cl_multiview.integer == 2) && cl_mvinset.integer && (CURRVIEW == 1))
 		{
 			// mvinset
-			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			SDL_snprintf(strng, sizeof (strng),"%s %.5s  %c%03d %03d %s:%-3s", pups,
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(strng, sizeof (strng),"%s %.5s  %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
@@ -5091,8 +5091,8 @@ void SCR_DrawMVStatusStrings(void)
 		else if (cl_multiview.value && vid.width <= 400)
 		{
 			// <= 400 and alive
-			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			SDL_snprintf(strng, sizeof (strng),"%s %.4s %c%03d %03d %s:%-3s", pups,
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(strng, sizeof (strng),"%s %.4s %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
@@ -5102,8 +5102,8 @@ void SCR_DrawMVStatusStrings(void)
 		}
 		else
 		{
-			SDL_snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
-			SDL_snprintf(strng, sizeof (strng),"%s %s  %c%03d %03d %s:%-3s", pups,
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
+			snprintf(strng, sizeof (strng),"%s %s  %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
@@ -5295,7 +5295,7 @@ void SCR_DrawMVStatusStrings(void)
 			var++;
 
 			limit = ceil(7.0 / 192 * vid.width + 4 / 3); // linearly limit length of name for 320->512 conwidth to fit in inset
-			SDL_strlcpy(namestr, name, limit);
+			strlcpy(namestr, name, limit);
 
 			if (cl_sbar.value)
 			{

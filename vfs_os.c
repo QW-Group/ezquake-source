@@ -156,7 +156,7 @@ vfsfile_t *FSOS_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
 	char diskname[MAX_OSPATH];
 
-	SDL_snprintf(diskname, sizeof(diskname), "%s/%s", (char*)handle, loc->rawname);
+	snprintf(diskname, sizeof(diskname), "%s/%s", (char*)handle, loc->rawname);
 
 	return VFSOS_Open(diskname, mode);
 }
@@ -177,7 +177,7 @@ static int FSOS_RebuildFSHash(char *filename, int filesize, void *data)
 	{	//this is actually a directory
 
 		char childpath[256];
-		SDL_snprintf(childpath, sizeof (childpath), "%s*", filename);
+		snprintf(childpath, sizeof (childpath), "%s*", filename);
 		Sys_EnumerateFiles((char*)data, childpath, FSOS_RebuildFSHash, data);
 		return true;
 	}
@@ -215,7 +215,7 @@ static qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, 
 */
 
 // check a file in the directory tree
-	SDL_snprintf (netpath, sizeof(netpath)-1, "%s/%s",(char*)handle, filename);
+	snprintf (netpath, sizeof(netpath)-1, "%s/%s",(char*)handle, filename);
 
 	// VFS-FIXME: This could be optimised to only do this once and save the result!
 	f = fopen(netpath, "rb");
@@ -230,7 +230,7 @@ static qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, 
 		loc->len = len;
 		loc->offset = 0;
 		loc->index = 0;
-		SDL_strlcpy (loc->rawname, filename, sizeof (loc->rawname));
+		strlcpy (loc->rawname, filename, sizeof (loc->rawname));
 	}
 
 	return true;

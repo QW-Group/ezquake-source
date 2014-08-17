@@ -80,7 +80,7 @@ void CTab_AddPage(CTab_t *tab, const char *name, int id, const CTabPage_Handlers
     page = &tab->pages[tab->nPages++];
 
     // set name
-    SDL_strlcpy (page->name, name, sizeof (page->name));
+    strlcpy (page->name, name, sizeof (page->name));
 
     // set id
     page->id = id;
@@ -105,13 +105,13 @@ static int CTab_Draw_PageLinks(CTab_t *tab, int x, int y, int w, int h)
         hp = tab->hoveredPage == i;
         
         // add leading space/brace
-        SDL_strlcat (buf, ap ? "\x10" : " ", sizeof (buf));
+        strlcat (buf, ap ? "\x10" : " ", sizeof (buf));
         
         // adds white or red variant of the page name to the buf string
-        SDL_strlcat (buf, tab->pages[i].name, sizeof (buf));
+        strlcat (buf, tab->pages[i].name, sizeof (buf));
 
         // add closing space/brace
-        SDL_strlcat (buf, ap ? "\x11" : " ", sizeof (buf));
+        strlcat (buf, ap ? "\x11" : " ", sizeof (buf));
         
         ww = strlen(buf) * LETTERWIDTH;
         wh = LETTERHEIGHT;

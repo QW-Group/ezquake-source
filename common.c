@@ -74,10 +74,10 @@ void COM_StoreOriginalCmdline (int argc, char **argv)
 	int i;
 
 	buf[0] = 0;
-	SDL_strlcat (buf, " ", sizeof (buf));
+	strlcat (buf, " ", sizeof (buf));
 
 	for (i=0; i < argc; i++)
-		SDL_strlcat (buf, argv[i], sizeof (buf));
+		strlcat (buf, argv[i], sizeof (buf));
 
 	com_args_original = Q_strdup (buf);
 }
@@ -140,7 +140,7 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 	if (strlen(src) <= size_to_fit)
 	{
 		// Entire path fits in the destination.
-		SDL_strlcpy(dest, src, destination_size);
+		strlcpy(dest, src, destination_size);
 	}
 	else
 	{
@@ -174,12 +174,12 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 
 		if (left_size < destination_size)
 		{
-			SDL_strlcpy (dest, src, destination_size);
-			SDL_strlcpy (dest + left_size, "...", destination_size);
+			strlcpy (dest, src, destination_size);
+			strlcpy (dest + left_size, "...", destination_size);
 
 			if (left_size + DOT_SIZE + right_size < destination_size)
 			{
-				SDL_strlcpy (dest + left_size + DOT_SIZE, src + strlen(src) - right_size, right_size + 1);
+				strlcpy (dest + left_size + DOT_SIZE, src + strlen(src) - right_size, right_size + 1);
 			}
 		}
 	}
@@ -194,7 +194,7 @@ void COM_StripExtension (const char *in, char *out)
 
 	if (!(dot = strrchr(in, '.'))) {
 		if (in != out)
-			SDL_strlcpy(out, in, strlen(in) + 1);
+			strlcpy(out, in, strlen(in) + 1);
 		return;
 	}
 	while (*in && in != dot)
@@ -261,7 +261,7 @@ void COM_DefaultExtension (char *path, char *extension)
 		src--;
 	}
 
-	SDL_strlcat (path, extension, MAX_OSPATH);
+	strlcat (path, extension, MAX_OSPATH);
 }
 
 // If path doesn't have an extension or has a different extension, append(!) specified extension
@@ -275,7 +275,7 @@ void COM_ForceExtension (char *path, char *extension)
 	if (src >= path && !strcmp(src, extension))
 		return;
 
-	SDL_strlcat (path, extension, MAX_OSPATH);
+	strlcat (path, extension, MAX_OSPATH);
 }
 
 // If path doesn't have an extension or has a different extension, append(!) specified extension
@@ -291,7 +291,7 @@ void COM_ForceExtensionEx (char *path, char *extension, size_t path_size)
 	if (src >= path && !strcmp (src, extension))
 		return; // seems we alredy have this extension
 
-	SDL_strlcat (path, extension, path_size);
+	strlcat (path, extension, path_size);
 
 	src = path + strlen (path) - strlen (extension);
 	if (src >= path && !strcmp (src, extension))
@@ -326,7 +326,7 @@ int COM_GetTempDir(char *buf, int bufsize)
 		return -1;
 	}
 
-	SDL_strlcpy (buf, tmp, bufsize);
+	strlcpy (buf, tmp, bufsize);
 	#endif // WIN32
 
 	return returnval;
@@ -366,7 +366,7 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 		return -1;
 	}
 
-	SDL_strlcpy (filename, tmp, filename_size);
+	strlcpy (filename, tmp, filename_size);
 	#else
 	char *tmp = Q_malloc (MAX_PATH);
 
@@ -375,7 +375,7 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 	if (!tmp)
 		return -1;
 
-	SDL_strlcpy (filename, tmp, filename_size);
+	strlcpy (filename, tmp, filename_size);
 	Q_free (tmp);
 	retval = strlen(filename);
 	#endif
@@ -687,7 +687,7 @@ char *va (char *format, ...)
 		idx = 0;
 
 	va_start (argptr, format);
-	SDL_vsnprintf (string[idx], sizeof(string[idx]), format, argptr);
+	vsnprintf (string[idx], sizeof(string[idx]), format, argptr);
 	va_end (argptr);
 
 	return string[idx];
@@ -701,7 +701,7 @@ int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size)
 
     for(i = 0; *s && i < fl_array_size; i++)
     {
-        fl_array[i] = SDL_atof(s);
+        fl_array[i] = atof(s);
         while(*s && *s != ' ') s++; // skips the number
         while(*s && *s == ' ') s++; // skips the spaces
     }
@@ -870,7 +870,7 @@ void Info_SetValueForStarKeyEx (char *s, char *key, char *value, int maxsize, qb
 	if (!value || !strlen(value))
 		return;
 
-	SDL_snprintf (new, sizeof (new), "\\%s\\%s", key, value);
+	snprintf (new, sizeof (new), "\\%s\\%s", key, value);
 
 	if ((int) (strlen(new) + strlen(s)) >= maxsize) {
 		Com_Printf ("Info string length exceeded\n");
@@ -993,7 +993,7 @@ static info_t *_Info_Get (ctxinfo_t *ctx, const char *name)
 	key = Info_HashKey (name) % INFO_HASHPOOL_SIZE;
 
 	for (a = ctx->info_hash[key]; a; a = a->hash_next)
-		if (!SDL_strcasecmp(name, a->name))
+		if (!strcasecmp(name, a->name))
 			return a;
 
 	return NULL;
@@ -1010,7 +1010,7 @@ char *Info_Get(ctxinfo_t *ctx, const char *name)
 	{
 		valueindex = (valueindex + 1) % 4;
 
-		SDL_strlcpy(value[valueindex], a->value, sizeof(value[0]));
+		strlcpy(value[valueindex], a->value, sizeof(value[0]));
 
 		return value[valueindex];
 	}
@@ -1059,7 +1059,7 @@ qbool Info_SetStar (ctxinfo_t *ctx, const char *name, const char *value)
 
 	// if already exists, reuse it
 	for (a = ctx->info_hash[key]; a; a = a->hash_next)
-		if (!SDL_strcasecmp(name, a->name))
+		if (!strcasecmp(name, a->name))
 		{
 			Q_free (a->value);
 			break;
@@ -1156,7 +1156,7 @@ qbool Info_Remove (ctxinfo_t *ctx, const char *name)
 	prev = NULL;
 	for (a = ctx->info_hash[key]; a; a = a->hash_next)
 	{
-		if (!SDL_strcasecmp(name, a->name))
+		if (!strcasecmp(name, a->name))
 		{
 			// unlink from hash
 			if (prev)
@@ -1174,7 +1174,7 @@ qbool Info_Remove (ctxinfo_t *ctx, const char *name)
 	prev = NULL;
 	for (a = ctx->info_list; a; a = a->next)
 	{
-		if (!SDL_strcasecmp(name, a->name))
+		if (!strcasecmp(name, a->name))
 		{
 			// unlink from info list
 			if (prev)
@@ -1234,13 +1234,13 @@ qbool Info_Convert(ctxinfo_t *ctx, char *str)
 		if (!(str = strchr(start + 1, '\\')))  // end of name
 			break;
 
-		SDL_strlcpy(name, start + 1, min(str - start, (int)sizeof(name)));
+		strlcpy(name, start + 1, min(str - start, (int)sizeof(name)));
 
 		start = str; // start of value
 
 		str = strchr(start + 1, '\\'); // end of value
 
-		SDL_strlcpy(value, start + 1, str ? min(str - start, (int)sizeof(value)) : (int)sizeof(value));
+		strlcpy(value, start + 1, str ? min(str - start, (int)sizeof(value)) : (int)sizeof(value));
 
 		Info_SetStar(ctx, name, value);
 	}
@@ -1270,11 +1270,11 @@ qbool Info_ReverseConvert(ctxinfo_t *ctx, char *str, int size)
 
 		if (next_size < 1)
 		{
-			// sigh, next SDL_snprintf will not fit
+			// sigh, next snprintf will not fit
 			return false;
 		}
 
-		SDL_snprintf(str, size, "\\%s\\%s", a->name, a->value);
+		snprintf(str, size, "\\%s\\%s", a->name, a->value);
 		str += (size - next_size);
 		size = next_size;
 	}
@@ -1414,7 +1414,7 @@ void Com_Printf (char *fmt, ...)
 	char msg[MAXPRINTMSG];
 
 	va_start (argptr, fmt);
-	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	if (rd_print) {
@@ -1445,7 +1445,7 @@ void Com_DPrintf (char *fmt, ...)
 
 	Print_flags[Print_current] |= PR_TR_SKIP;
 	va_start (argptr,fmt);
-	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	Com_Printf ("%s", msg);
@@ -1496,7 +1496,7 @@ void Com_Printf_State(int state, const char *fmt, ...)
 	}
 
 	va_start (argptr, fmt);
-	SDL_vsnprintf (msg, sizeof(msg), fmt, argptr);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end(argptr);
 	Com_Printf ("%s%s", prefix, msg);
 
@@ -1522,7 +1522,7 @@ void COM_ParseIPCData(const char *buf, unsigned int bufsize)
 	if (bufsize > 0)
 	{
 		// TODO : Expect some more fancy commands and stuff here instead.. if we want to use it for more than qw:// urls...
-		if (!SDL_strncasecmp(buf, "qw://", 5))
+		if (!strncasecmp(buf, "qw://", 5))
 		{
 			Cbuf_AddText(va("qwurl %s\n", buf));
 		}
@@ -1547,17 +1547,17 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
 		{
 			char *ext = COM_FileExtension(infile);
 
-			if (!SDL_strncasecmp(ext, "qtv", sizeof("qtv")))
+			if (!strncasecmp(ext, "qtv", sizeof("qtv")))
 			{
-				SDL_snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
+				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
 			}
-			else if (!SDL_strncasecmp(ext, "qw", sizeof("qw")))
+			else if (!strncasecmp(ext, "qw", sizeof("qw")))
 			{
-				SDL_snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
+				snprintf(commandbuf_out, commandbuf_size, "qtvplay \"#%s\"\n", infile);
 			}
 			else if (CL_IsDemoExtension(infile))
 			{
-				SDL_snprintf(commandbuf_out, commandbuf_size, "playdemo \"%s\"\n", infile);
+				snprintf(commandbuf_out, commandbuf_size, "playdemo \"%s\"\n", infile);
 			}
 
 			return true;

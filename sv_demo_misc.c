@@ -198,8 +198,8 @@ void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *de
 {
 	char path[MAX_OSPATH];
 
-	SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, dest_path, dest_name);
-	SDL_strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
+	snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, dest_path, dest_name);
+	strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
 
 	if ((int)sv_demotxt.value && !destroyfiles) // dont keep txt's for deleted demos
 	{
@@ -229,8 +229,8 @@ void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *de
 		if ((p = strstr(sv_onrecordfinish.string, " ")) != NULL)
 			*p = 0; // strip parameters
 	
-		SDL_strlcpy(path, dest_name, MAX_OSPATH);
-		SDL_strlcpy(path + strlen(dest_name) - 3, "txt", MAX_OSPATH - strlen(dest_name) + 3);
+		strlcpy(path, dest_name, MAX_OSPATH);
+		strlcpy(path + strlen(dest_name) - 3, "txt", MAX_OSPATH - strlen(dest_name) + 3);
 	
 		sv_redirected = RD_NONE; // onrecord script is called always from the console
 		Cmd_TokenizeString(va("script %s \"%s\" \"%s\" \"%s\" %s", sv_onrecordfinish.string, dest_path, dest_name, path, p != NULL ? p+1 : ""));
@@ -276,64 +276,64 @@ char *SV_PrintTeams (void)
 
 	// create output
 	lastscores[0] = 0;
-	SDL_snprintf(buf, sizeof(buf),
+	snprintf(buf, sizeof(buf),
 		"date %s\nmap %s\nteamplay %d\ndeathmatch %d\ntimelimit %d\n",
 		date.str, sv.mapname, (int)teamplay.value, (int)deathmatch.value,
 		(int)timelimit.value);
 	if (numcl == 2) // duel
 	{
-		SDL_snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 			"player1: %s (%i)\nplayer2: %s (%i)\n",
 			clients[0]->name, clients[0]->old_frags,
 			clients[1]->name, clients[1]->old_frags);
-		SDL_snprintf(lastscores, sizeof(lastscores), "duel: %s vs %s @ %s - %i:%i\n",
+		snprintf(lastscores, sizeof(lastscores), "duel: %s vs %s @ %s - %i:%i\n",
 			clients[0]->name, clients[1]->name, sv.mapname,
 			clients[0]->old_frags, clients[1]->old_frags);
 	}
 	else if (!(int)teamplay.value) // ffa
 	{
-		SDL_snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "players:\n");
-		SDL_snprintf(lastscores, sizeof(lastscores), "ffa:");
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "players:\n");
+		snprintf(lastscores, sizeof(lastscores), "ffa:");
 		for (i = 0; i < numcl; i++)
 		{
-			SDL_snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 				"  %s (%i)\n", clients[i]->name, clients[i]->old_frags);
-			SDL_snprintf(lastscores + strlen(lastscores), sizeof(lastscores) - strlen(lastscores),
+			snprintf(lastscores + strlen(lastscores), sizeof(lastscores) - strlen(lastscores),
 				"  %s(%i)", clients[i]->name, clients[i]->old_frags);
 		}
-		SDL_snprintf(lastscores + strlen(lastscores),
+		snprintf(lastscores + strlen(lastscores),
 			sizeof(lastscores) - strlen(lastscores), " @ %s\n", sv.mapname);
 	}
 	else
 	{ // teamplay
-		SDL_snprintf(lastscores, sizeof(lastscores), "tp:");
+		snprintf(lastscores, sizeof(lastscores), "tp:");
 		for (j = 0; j < numt; j++)
 		{
-			SDL_snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 				"team[%i] %s:\n", j, teams[j]);
-			SDL_snprintf(lastscores + strlen(lastscores), sizeof(lastscores) - strlen(lastscores),
+			snprintf(lastscores + strlen(lastscores), sizeof(lastscores) - strlen(lastscores),
 				"%s[", teams[j]);
 			scores = 0;
 			for (i = 0; i < numcl; i++)
 				if (!strcmp(clients[i]->team, teams[j]))
 				{
-					SDL_snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+					snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 						"  %s (%i)\n", clients[i]->name, clients[i]->old_frags);
-					SDL_snprintf(lastscores + strlen(lastscores), sizeof(lastscores) - strlen(lastscores),
+					snprintf(lastscores + strlen(lastscores), sizeof(lastscores) - strlen(lastscores),
 						" %s(%i) ", clients[i]->name, clients[i]->old_frags);
 					scores += clients[i]->old_frags;
 				}
-			SDL_snprintf(lastscores + strlen(lastscores), sizeof(lastscores) - strlen(lastscores),
+			snprintf(lastscores + strlen(lastscores), sizeof(lastscores) - strlen(lastscores),
 				"](%i)  ", scores);
 
 		}
-		SDL_snprintf(lastscores + strlen(lastscores),
+		snprintf(lastscores + strlen(lastscores),
 			sizeof(lastscores) - strlen(lastscores), "@ %s\n", sv.mapname);
 	}
 
 	for (p = buf; *p; p++) *p = chartbl2[(byte)*p];
 	for (p = lastscores; *p; p++) *p = chartbl2[(byte)*p];
-	SDL_strlcat(lastscores, buf, sizeof(lastscores));
+	strlcat(lastscores, buf, sizeof(lastscores));
 	return lastscores;
 }
 
@@ -519,7 +519,7 @@ static char *SV_MVDName2Txt (char *name)
 	if (!*name)
 		return NULL;
 
-	SDL_strlcpy(s, name, MAX_OSPATH);
+	strlcpy(s, name, MAX_OSPATH);
 	len = strlen(s);
 
 	if (!(preg = pcre_compile(sv_demoRegexp.string, PCRE_CASELESS, &errbuf, &r, NULL)))
@@ -597,7 +597,7 @@ void SV_MVDRemove_f (void)
 					SV_MVDStop_f(); // FIXME: probably we must stop not all demos, but only partial dest
 
 				// stop recording first;
-				SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, list->name);
+				snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, list->name);
 				if (!Sys_remove(path))
 				{
 					Con_Printf("removing %s...\n", list->name);
@@ -620,10 +620,10 @@ void SV_MVDRemove_f (void)
 		return;
 	}
 
-	SDL_strlcpy(name, Cmd_Argv(1), MAX_DEMO_NAME);
+	strlcpy(name, Cmd_Argv(1), MAX_DEMO_NAME);
 	COM_DefaultExtension(name, ".mvd");
 
-	SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
+	snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
 
 	if (sv.mvdrecording && DestByName(name) /*!strcmp(name, demo.name)*/)
 		SV_MVDStop_f(); // FIXME: probably we must stop not all demos, but only partial dest
@@ -663,7 +663,7 @@ void SV_MVDRemoveNum_f (void)
 	}
 
 	val = Cmd_Argv(1);
-	if ((num = SDL_atoi(val)) == 0 && val[0] != '0')
+	if ((num = Q_atoi(val)) == 0 && val[0] != '0')
 	{
 		Con_Printf("rmdemonum <#>\n");
 		return;
@@ -676,7 +676,7 @@ void SV_MVDRemoveNum_f (void)
 		if (sv.mvdrecording && DestByName(name)/*!strcmp(name, demo.name)*/)
 			SV_MVDStop_f(); // FIXME: probably we must stop not all demos, but only partial dest
 
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
 		if (!Sys_remove(path))
 		{
 			Con_Printf("demo %s succesfully removed\n", name);
@@ -720,13 +720,13 @@ void SV_MVDInfoAdd_f (void)
 			return;
 		}
 
-//		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
+//		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
 // FIXME: dunno is this right, just using first dest, also may be we must use demo.dest->path instead of sv_demoDir
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
 	}
 	else
 	{
-		name = SV_MVDTxTNum(SDL_atoi(Cmd_Argv(1)));
+		name = SV_MVDTxTNum(Q_atoi(Cmd_Argv(1)));
 
 		if (!name)
 		{
@@ -734,7 +734,7 @@ void SV_MVDInfoAdd_f (void)
 			return;
 		}
 
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
 	}
 
 	if ((f = fopen(path, !strcmp(Cmd_Argv(1), "**") ? "a+b" : "a+t")) == NULL)
@@ -747,7 +747,7 @@ void SV_MVDInfoAdd_f (void)
 	{ // put content of one file to another
 		FILE *src;
 
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s", fs_gamedir, Cmd_Argv(2));
+		snprintf(path, MAX_OSPATH, "%s/%s", fs_gamedir, Cmd_Argv(2));
 
 		if ((src = fopen(path, "rb")) == NULL) // open src
 		{
@@ -800,13 +800,13 @@ void SV_MVDInfoRemove_f (void)
 			return;
 		}
 
-//		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
+//		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
 // FIXME: dunno is this right, just using first dest, also may be we must use demo.dest->path instead of sv_demoDir
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
 	}
 	else
 	{
-		name = SV_MVDTxTNum(SDL_atoi(Cmd_Argv(1)));
+		name = SV_MVDTxTNum(Q_atoi(Cmd_Argv(1)));
 
 		if (!name)
 		{
@@ -814,7 +814,7 @@ void SV_MVDInfoRemove_f (void)
 			return;
 		}
 
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
 	}
 
 	if (Sys_remove(path))
@@ -842,13 +842,13 @@ void SV_MVDInfo_f (void)
 			return;
 		}
 
-//		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
+//		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
 // FIXME: dunno is this right, just using first dest, also may be we must use demo.dest->path instead of sv_demoDir
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
 	}
 	else
 	{
-		name = SV_MVDTxTNum(SDL_atoi(Cmd_Argv(1)));
+		name = SV_MVDTxTNum(Q_atoi(Cmd_Argv(1)));
 
 		if (!name)
 		{
@@ -856,7 +856,7 @@ void SV_MVDInfo_f (void)
 			return;
 		}
 
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
 	}
 
 	if ((f = fopen(path, "rt")) == NULL)
@@ -892,7 +892,7 @@ void SV_LastScores_f (void)
 	}
 
 	if (Cmd_Argc() == 2)
-		if ((demos = SDL_atoi(Cmd_Argv(1))) <= 0)
+		if ((demos = Q_atoi(Cmd_Argv(1))) <= 0)
 			demos = MAXDEMOS;
 
 	dir = Sys_listdir(va("%s/%s", fs_gamedir, sv_demoDir.string),
@@ -918,7 +918,7 @@ void SV_LastScores_f (void)
 
 	for (i = dir.numfiles - demos; i < dir.numfiles; )
 	{
-		SDL_snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string,
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string,
 					SV_MVDName2Txt(dir.files[i].name));
 
 		Con_Printf("%i. ", ++i);
@@ -1023,10 +1023,10 @@ char *Dem_PlayerNameTeam (char *t)
 		if (strcmp(t, client->team)==0)
 		{
 			if (sep >= 1)
-				SDL_strlcat (n, "_", sizeof(n));
-			//				SDL_snprintf (n, sizeof(n), "%s_", n);
-			SDL_strlcat (n, client->name, sizeof(n));
-			//			SDL_snprintf (n, sizeof(n),"%s%s", n, client->name);
+				strlcat (n, "_", sizeof(n));
+			//				snprintf (n, sizeof(n), "%s_", n);
+			strlcat (n, client->name, sizeof(n));
+			//			snprintf (n, sizeof(n),"%s%s", n, client->name);
 			sep++;
 		}
 	}

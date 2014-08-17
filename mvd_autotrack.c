@@ -401,7 +401,7 @@ void MVD_AutoTrack(void) {
 			multitrack_val = mvd_multitrack_1_values.string;
 			id = MVD_FindBestPlayer();
 			if (id != multitrack_id_1){
-				SDL_snprintf(arg, sizeof (arg), "track1 %i \n",id);
+				snprintf(arg, sizeof (arg), "track1 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_1 = id;
 			}
@@ -411,7 +411,7 @@ void MVD_AutoTrack(void) {
 			multitrack_val = mvd_multitrack_2_values.string;
 			id = MVD_FindBestPlayer();
 			if (id != multitrack_id_2){
-				SDL_snprintf(arg, sizeof (arg), "track2 %i \n",id);
+				snprintf(arg, sizeof (arg), "track2 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_2 = id;
 			}
@@ -421,7 +421,7 @@ void MVD_AutoTrack(void) {
 			multitrack_val = mvd_multitrack_3_values.string;
 			id = MVD_FindBestPlayer();
 			if (id != multitrack_id_3){
-				SDL_snprintf(arg, sizeof (arg), "track3 %i \n",id);
+				snprintf(arg, sizeof (arg), "track3 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_3 = id;
 			}
@@ -431,7 +431,7 @@ void MVD_AutoTrack(void) {
 	 		multitrack_val = mvd_multitrack_4_values.string;
 			id = MVD_FindBestPlayer();
 			if (id != multitrack_id_4){
-				SDL_snprintf(arg, sizeof (arg), "track4 %i \n",id);
+				snprintf(arg, sizeof (arg), "track4 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_4 = id;
 			}
@@ -446,7 +446,7 @@ void MVD_AutoTrack(void) {
 			id = MVD_FindBestPlayer();
 
 		if (id != last_track || cl.viewplayernum != id) {
-			SDL_snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
+			snprintf(arg, sizeof (arg), "track \"%s\"\n",cl.players[id].name);
 			Cbuf_AddText(arg);
 			last_track = id;
 		}

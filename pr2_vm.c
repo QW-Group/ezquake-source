@@ -171,7 +171,7 @@ qbool VM_LoadNative( vm_t * vm )
 
 	while ( ( gpath = FS_NextPath( gpath ) ) )
 	{
-		SDL_snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, vm->name);
+		snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, vm->name);
 		vm->hInst = Sys_DLOpen( name );
 		if ( vm->hInst )
 		{
@@ -248,7 +248,7 @@ void LoadMapFile( qvm_t*qvm, char* fname )
 	byte   *p;
 
 	Con_DPrintf("Loading symbol information\n");
-	SDL_snprintf( name, sizeof( name ), "%s.map", fname );
+	snprintf( name, sizeof( name ), "%s.map", fname );
 	buff = FS_LoadTempFile( name , NULL );
 	qvm->sym_info = NULL;
 	if ( !buff )
@@ -303,7 +303,7 @@ void LoadMapFile( qvm_t*qvm, char* fname )
 		sym->off = off;
 		sym->next= NULL;
 		num_symbols++;
-		SDL_strlcpy(sym->name, symname, len + 1);
+		strlcpy(sym->name, symname, len + 1);
 	}
 	Con_DPrintf("%i symbols loaded from %s\n",num_symbols,name);
 }
@@ -317,7 +317,7 @@ qbool VM_LoadBytecode( vm_t * vm, sys_callex_t syscall1 )
 	char num[32];
 	int filesize;
 
-	SDL_snprintf( name, sizeof( name ), "%s.qvm", vm->name );
+	snprintf( name, sizeof( name ), "%s.qvm", vm->name );
 
 	Con_DPrintf( "VM_LoadBytecode: load %s\n", name );
 	buff = FS_LoadTempFile( name , &filesize );
@@ -329,7 +329,7 @@ qbool VM_LoadBytecode( vm_t * vm, sys_callex_t syscall1 )
 	Info_SetStar( &_localinfo_, "*qvm", "QVM" );
 	//	Info_SetValueForStarKey( svs.info, "*qvm", "QVM", MAX_SERVERINFO_STRING );
 
-	SDL_snprintf( num, sizeof(num), "%i", CRC_Block( ( byte * ) buff, filesize ) );
+	snprintf( num, sizeof(num), "%i", CRC_Block( ( byte * ) buff, filesize ) );
 	Info_SetValueForStarKey( svs.info, "*progs", num, MAX_SERVERINFO_STRING );
 
 	header = ( vmHeader_t * ) buff;
@@ -465,7 +465,7 @@ vm_t   *VM_Load( vm_t * vm, vm_type_t type, char *name, sys_call_t syscall1, sys
 
 	// prepare vm struct
 	memset( vm, 0, sizeof( vm_t ) );
-	SDL_strlcpy( vm->name, name, sizeof( vm->name ) );
+	strlcpy( vm->name, name, sizeof( vm->name ) );
 	vm->syscall = syscall1;
 #ifdef QVM_PROFILE
 	num_profile_func = 0;
@@ -581,7 +581,7 @@ void QVM_RunError( qvm_t * qvm, char *error, ... )
 	char    string[1024];
 
 	va_start( argptr, error );
-	SDL_vsnprintf( string, sizeof(string), error, argptr );
+	vsnprintf( string, sizeof(string), error, argptr );
 	va_end( argptr );
 
 	sv_error = true;

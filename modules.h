@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <dlfcn.h>
 #endif
 
-#include "q_shared.h"
-
 #if (!defined WITH_PNG_STATIC || !defined WITH_JPEG_STATIC || defined WITH_MP3_PLAYER)
 extern char _temp_modulename[MAX_OSPATH];
 
@@ -37,7 +35,7 @@ extern char _temp_modulename[MAX_OSPATH];
 #define QLIB_LIBRARY_EXTENSION ".dll"
 #define QLIB_LOADLIBRARY(lib)									\
 	(																\
-	SDL_snprintf(_temp_modulename, MAX_OSPATH, "%s.dll", lib),				\
+	snprintf(_temp_modulename, MAX_OSPATH, "%s.dll", lib),	\
 	LoadLibrary(_temp_modulename)								\
 	)
 #define QLIB_GETPROCADDRESS(lib, func) GetProcAddress(lib, func)
@@ -51,7 +49,7 @@ extern char _temp_modulename[MAX_OSPATH];
 #endif
 #define QLIB_LOADLIBRARY(lib)									\
 	(																\
-	SDL_snprintf(_temp_modulename, MAX_OSPATH, "%s.so", lib),				\
+	snprintf(_temp_modulename, MAX_OSPATH, "%s.so", lib),	\
 	dlopen(_temp_modulename, RTLD_NOW)							\
 	)
 #define QLIB_GETPROCADDRESS(lib, func) dlsym(lib, func)

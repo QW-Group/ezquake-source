@@ -258,7 +258,7 @@ void DumpVariablesDefaults_f(void)
     char filepath[MAX_PATH];
     FILE *f;
 
-    SDL_snprintf(filepath, sizeof(filepath), "%s/ezquake/configs/cvar_defaults.cfg", com_basedir);
+    snprintf(filepath, sizeof(filepath), "%s/ezquake/configs/cvar_defaults.cfg", com_basedir);
 
     f = fopen(filepath, "w");
     if (!f)
@@ -333,7 +333,7 @@ static void DumpAliases(FILE *f)
 		for (partner = false, j = minus_index; j >= 0 && j < minus_index + minus_count; j++) {
 			b = sorted_aliases[j];
 
-			if (!SDL_strcasecmp(b->name + 1, a->name + 1)) {
+			if (!strcasecmp(b->name + 1, a->name + 1)) {
 
 				spaces = CreateSpaces(maxlen + 3 - strlen(a->name));
 				fprintf	(f, "alias %s%s\"%s\"\n", a->name, spaces, a->value);
@@ -364,7 +364,7 @@ static void DumpAliases(FILE *f)
 		for (partner = false, j = 0; j < minus_index; j++) {
 			b = sorted_aliases[j];
 
-			if (!SDL_strcasecmp(b->name + 1, a->name + 1)) {
+			if (!strcasecmp(b->name + 1, a->name + 1)) {
 
 				partner = true;
 				break;
@@ -460,13 +460,13 @@ void DumpMisc(FILE *f)
 	fprintf(f, "hud_recalculate\n\n");
 
 	if (cl.teamfortress) {
-		if (!SDL_strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") ||
-		        !SDL_strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
+		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") ||
+		        !strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
 		   ) {
 			fprintf(f, "setinfo ec on\n");
 		}
-		if (!SDL_strcasecmp(Info_ValueForKey (cls.userinfo, "em"), "on") ||
-		        !SDL_strcasecmp(Info_ValueForKey (cls.userinfo, "exec_map"), "on")
+		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "em"), "on") ||
+		        !strcasecmp(Info_ValueForKey (cls.userinfo, "exec_map"), "on")
 		   ) {
 			fprintf(f, "setinfo em on\n");
 		}
@@ -876,7 +876,7 @@ void SaveConfig(const char *cfgname)
 	size_t len;
 	FILE *f;
 
-	SDL_snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
+	snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
 
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 
@@ -890,7 +890,7 @@ void SaveConfig(const char *cfgname)
 			fclose(f);
 			len = strlen(filename_ext) + 5;
 			backupname_ext = (char *) Q_malloc(len);
-			SDL_snprintf (backupname_ext, len, "%s.bak", filename_ext);
+			snprintf (backupname_ext, len, "%s.bak", filename_ext);
 
 			if ((f = fopen(backupname_ext, "r"))) {
 				fclose(f);
@@ -978,13 +978,15 @@ void LoadConfig_f(void)
 	int		use_home;
 
 	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
-	SDL_snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
+
+	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
+
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 	use_home = cfg_use_home.integer || !host_everything_loaded;
 
 	// home
-	SDL_snprintf(fullname, sizeof(fullname), "%s/%s%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/", com_gamedirfile), filename);
-	SDL_snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
+	snprintf(fullname, sizeof(fullname), "%s/%s%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/", com_gamedirfile), filename);
+	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
 
 	if(use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
 	{
@@ -992,8 +994,8 @@ void LoadConfig_f(void)
 	}
 
 	// basedir
-	SDL_snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
-	SDL_snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
+	snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
+	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
 
 	if(!use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
 	{
@@ -1037,7 +1039,7 @@ void DumpHUD_f(void)
 		return;
 	}
 	filename = COM_SkipPathWritable(Cmd_Argv(1));
-	SDL_strlcpy(buf, filename, sizeof(buf));
+	strlcpy(buf, filename, sizeof(buf));
 	COM_ForceExtensionEx (buf, ".cfg", sizeof(buf));
 	DumpHUD(buf);
 	Com_Printf("HUD variables exported to %s\n",buf);

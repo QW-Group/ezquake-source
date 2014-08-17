@@ -469,7 +469,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-	if ((tmp = strrchr(filename, '.')) && (!SDL_strcasecmp(tmp, ".dll") || !SDL_strcasecmp(tmp, ".so"))) {
+	if ((tmp = strrchr(filename, '.')) && (!strcasecmp(tmp, ".dll") || !strcasecmp(tmp, ".so"))) {
 		Com_Printf("Warning: Non-allowed file \"%s\" skipped\n", filename);
 		return true;
 	}
@@ -502,7 +502,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-	SDL_snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, filename);
+	snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, filename);
 	Com_Printf ("Downloading %s...\n", filename);
 
 	// download to a temp name, and only rename
@@ -513,7 +513,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 	cls.downloadstarttime = Sys_DoubleTime();
 
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
-	SDL_strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK) 
 	{
@@ -941,7 +941,7 @@ void CL_ParseChunkedDownload(void)
 			Host_Error("Received second download - \"%s\"\n", svname);
 
 // FIXME: damn, fixme!!!!!
-//		if (SDL_strcasecmp(cls.downloadname, svname))
+//		if (strcasecmp(cls.downloadname, svname))
 //			Host_Error("Server sent the wrong download - \"%s\" instead of \"%s\"\n", svname, cls.downloadname);
 
 		// Start the new download
@@ -1308,7 +1308,7 @@ void CL_StartFileUpload (void)
 		|| strstr (name, "/../") // no /../
 		|| ((i = strlen(name)) < 3 ? 0 : !strncmp(name + i - 3, "/..", 4)) // no /.. at end
 		|| *name == '.' //relative is pointless
-		|| ((i = strlen(name)) < 4 ? 0 : !SDL_strncasecmp(name+i-4,".log",4)) // no logs
+		|| ((i = strlen(name)) < 4 ? 0 : !strncasecmp(name+i-4,".log",4)) // no logs
 #ifdef _WIN32
 		// no leading X:
 		|| ( name[1] == ':' && ((*name >= 'a' && *name <= 'z') ||
@@ -1329,7 +1329,7 @@ void CL_StartFileUpload (void)
 		cls.upload = NULL;
 	}
 
-	SDL_strlcpy(cls.uploadname, Cmd_Argv(2), sizeof(cls.uploadname));
+	strlcpy(cls.uploadname, Cmd_Argv(2), sizeof(cls.uploadname));
 	cls.upload = fopen(cls.uploadname, "rb"); // BINARY
 
 	if (!cls.upload)
@@ -1458,7 +1458,7 @@ void CL_ParseServerData (void)
 		Host_Error("Server reported invalid gamedir!\n");
 	}
 
-	cl.teamfortress = !SDL_strcasecmp(str, "fortress");
+	cl.teamfortress = !strcasecmp(str, "fortress");
 	if (cl.teamfortress) 
 	{
 		extern cvar_t	v_iyaw_cycle, v_iroll_cycle, v_ipitch_cycle,
@@ -1473,10 +1473,10 @@ void CL_ParseServerData (void)
 		Cvar_SetValue (&v_idlescale, 0);
 	}
 
-	if (SDL_strcasecmp(cls.gamedirfile, str)) 
+	if (strcasecmp(cls.gamedirfile, str)) 
 	{
-		SDL_strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
-		SDL_snprintf (cls.gamedir, sizeof(cls.gamedir),
+		strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
+		snprintf (cls.gamedir, sizeof(cls.gamedir),
 			"%s/%s", com_basedir, cls.gamedirfile);
 		cflag = true;
 	}
@@ -1486,7 +1486,7 @@ void CL_ParseServerData (void)
 
 	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
 	{
-		SDL_snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");
+		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");
 		Cbuf_AddText ("cl_warncmd 0\n");
 		if ((f = fopen(fn, "r")) != NULL) 
 		{
@@ -1498,14 +1498,14 @@ void CL_ParseServerData (void)
 		} 
 		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{
-			SDL_snprintf (fn, sizeof(fn), "qw/%s", "config.cfg");
+			snprintf (fn, sizeof(fn), "qw/%s", "config.cfg");
 			if ((f = fopen(fn, "r")) != NULL) 
 			{
 				fclose(f);
 				Cbuf_AddText ("exec config.cfg\n");
 			}
 		}
-		SDL_snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
+		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
 		if ((f = fopen(fn, "r")) != NULL) 
 		{
 			fclose(f);
@@ -1516,7 +1516,7 @@ void CL_ParseServerData (void)
 		} 
 		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{
-			SDL_snprintf (fn, sizeof(fn), "qw/%s", "frontend.cfg");
+			snprintf (fn, sizeof(fn), "qw/%s", "frontend.cfg");
 			if ((f = fopen(fn, "r")) != NULL) 
 			{
 				fclose(f);
@@ -1548,7 +1548,7 @@ void CL_ParseServerData (void)
 
 	// get the full level name
 	str = MSG_ReadString ();
-	SDL_strlcpy (cl.levelname, str, sizeof(cl.levelname));
+	strlcpy (cl.levelname, str, sizeof(cl.levelname));
 
 	// get the movevars
 	movevars.gravity			= MSG_ReadFloat();
@@ -1604,7 +1604,7 @@ void CL_ParseSoundlist (void)
 			Host_Error ("Server sent too many sound_precache");
 		if (str[0] == '/')
 			str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
-		SDL_strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
+		strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
 	}
 
 	n = MSG_ReadByte();
@@ -1658,7 +1658,7 @@ void CL_ParseModellist (qbool extended)
 
 		if (str[0] == '/')
 			str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
-		SDL_strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
+		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
 
 		if (nummodels == 1)
 			if (!com_serveractive) 
@@ -1974,15 +1974,15 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 	qbool update_skin;
 	int mynum;
 
-	SDL_strlcpy (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
+	strlcpy (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
 	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) 
 	{
 		// Somebody's trying to hide himself by overloading userinfo.
-		SDL_strlcpy (player->name, " ", sizeof (player->name));
+		strlcpy (player->name, " ", sizeof (player->name));
 	}
-	player->real_topcolor = SDL_atoi(Info_ValueForKey (player->userinfo, "topcolor"));
-	player->real_bottomcolor = SDL_atoi(Info_ValueForKey (player->userinfo, "bottomcolor"));
-	SDL_strlcpy (player->team, Info_ValueForKey (player->userinfo, "team"), sizeof (player->team));
+	player->real_topcolor = atoi(Info_ValueForKey (player->userinfo, "topcolor"));
+	player->real_bottomcolor = atoi(Info_ValueForKey (player->userinfo, "bottomcolor"));
+	strlcpy (player->team, Info_ValueForKey (player->userinfo, "team"), sizeof (player->team));
 
 	player->spectator = (Info_ValueForKey (player->userinfo, "*spectator")[0]) ? true : false;
 
@@ -2008,13 +2008,13 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 	else if (update_skin)
 		TP_RefreshSkin(slot);
 
-	SDL_strlcpy(player->_team, player->team, sizeof (player->_team));
+	strlcpy(player->_team, player->team, sizeof (player->_team));
 }
 
 void CL_NotifyOnFull(void)
 {
 	if (!cl.spectator && !cls.demoplayback) {
-		int limit = SDL_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
+		int limit = Q_atoi(Info_ValueForKey(cl.serverinfo, "maxclients"));
 		int players = 0;
 		int i;
 
@@ -2061,7 +2061,7 @@ void CL_UpdateUserinfo (void)
 	was_empty_slot = player->name[0] ? false : true;
 
 	player->userid = MSG_ReadLong();
-	SDL_strlcpy (player->userinfo, MSG_ReadString(), sizeof(player->userinfo));
+	strlcpy (player->userinfo, MSG_ReadString(), sizeof(player->userinfo));
 
 	CL_ProcessUserInfo(slot, player, NULL);
 
@@ -2087,8 +2087,8 @@ void CL_SetInfo (void)
 
 	player = &cl.players[slot];
 
-	SDL_strlcpy(key, MSG_ReadString(), sizeof(key));
-	SDL_strlcpy(value, MSG_ReadString(), sizeof(value));
+	strlcpy(key, MSG_ReadString(), sizeof(key));
+	strlcpy(value, MSG_ReadString(), sizeof(value));
 
 	if (!cl.teamfortress)	// don't allow cheating in TF
 		Com_DPrintf ("SETINFO %s: %s=%s\n", player->name, key, value);
@@ -2159,16 +2159,16 @@ void CL_ProcessServerInfo (void)
 	CL_PEXT_Fix(); // must be called once from CL_FullServerinfo_f() but should be ok here too.
 
 	// game type (sbar code checks it) (GAME_DEATHMATCH default)
-	cl.gametype = *(p = Info_ValueForKey(cl.serverinfo, "deathmatch")) ? (SDL_atoi(p) ? GAME_DEATHMATCH : GAME_COOP) : GAME_DEATHMATCH;
+	cl.gametype = *(p = Info_ValueForKey(cl.serverinfo, "deathmatch")) ? (atoi(p) ? GAME_DEATHMATCH : GAME_COOP) : GAME_DEATHMATCH;
 
 	// server side fps restriction
-	cl.maxfps = SDL_atof(Info_ValueForKey(cl.serverinfo, "maxfps"));
+	cl.maxfps = Q_atof(Info_ValueForKey(cl.serverinfo, "maxfps"));
 
-	newfpd = cls.demoplayback ? 0 : SDL_atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
+	newfpd = cls.demoplayback ? 0 : atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
-	standby = !SDL_strcasecmp(p, "standby");
-	countdown = !SDL_strcasecmp(p, "countdown");
+	standby = !strcasecmp(p, "standby");
+	countdown = !strcasecmp(p, "countdown");
 
 	if ((cl.standby || cl.countdown) && !(standby || countdown)) 
 	{
@@ -2179,33 +2179,33 @@ void CL_ProcessServerInfo (void)
 	cl.standby = standby;
 	cl.countdown = countdown;
 
-	cl.minlight = (strlen(minlight = Info_ValueForKey(cl.serverinfo, "minlight")) ? bound(0, SDL_atoi(minlight), 255) : 4);
+	cl.minlight = (strlen(minlight = Info_ValueForKey(cl.serverinfo, "minlight")) ? bound(0, Q_atoi(minlight), 255) : 4);
 
 	// Get the server's ZQuake extension bits
-	cl.z_ext = SDL_atoi(Info_ValueForKey(cl.serverinfo, "*z_ext"));
+	cl.z_ext = atoi(Info_ValueForKey(cl.serverinfo, "*z_ext"));
 
 	// Initialize cl.maxpitch & cl.minpitch
 	p = (cl.z_ext & Z_EXT_PITCHLIMITS) ? Info_ValueForKey (cl.serverinfo, "maxpitch") : "";
-	cl.maxpitch = *p ? SDL_atof(p) : 80.0f;
+	cl.maxpitch = *p ? Q_atof(p) : 80.0f;
 	p = (cl.z_ext & Z_EXT_PITCHLIMITS) ? Info_ValueForKey (cl.serverinfo, "minpitch") : "";
-	cl.minpitch = *p ? SDL_atof(p) : -70.0f;
+	cl.minpitch = *p ? Q_atof(p) : -70.0f;
 
 	// movement vars for prediction
-	cl.bunnyspeedcap = SDL_atof(Info_ValueForKey(cl.serverinfo, "pm_bunnyspeedcap"));
-	movevars.slidefix = (SDL_atof(Info_ValueForKey(cl.serverinfo, "pm_slidefix")) != 0);
-	movevars.airstep = (SDL_atof(Info_ValueForKey(cl.serverinfo, "pm_airstep")) != 0);
-	movevars.pground = (SDL_atof(Info_ValueForKey(cl.serverinfo, "pm_pground")) != 0)
+	cl.bunnyspeedcap = Q_atof(Info_ValueForKey(cl.serverinfo, "pm_bunnyspeedcap"));
+	movevars.slidefix = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_slidefix")) != 0);
+	movevars.airstep = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_airstep")) != 0);
+	movevars.pground = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_pground")) != 0)
 		&& (cl.z_ext & Z_EXT_PF_ONGROUND) /* pground doesn't make sense without this */;
 	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ?
-		SDL_atof(p) : cl.teamfortress ? 0 : 1;
+		Q_atof(p) : cl.teamfortress ? 0 : 1;
 
 	// Deathmatch and teamplay.
-	cl.deathmatch = SDL_atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
-	new_teamplay = SDL_atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
+	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
+	new_teamplay = atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
 
 	// Timelimit and fraglimit.
-	cl.timelimit = SDL_atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
-	cl.fraglimit = SDL_atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
+	cl.timelimit = atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
+	cl.fraglimit = atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 
 	// Update skins if needed.
 	skin_refresh = ( !new_teamplay != !cl.teamplay || ( (newfpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
@@ -2245,7 +2245,7 @@ void CL_ParseVWepPrecache (char *str)
 		if (!strcmp(p, "-")) 
 		{
 			// empty model
-			SDL_strlcpy (cl.vw_model_name[i], "-", MAX_QPATH);
+			strlcpy (cl.vw_model_name[i], "-", MAX_QPATH);
 		}
 		else 
 		{
@@ -2255,18 +2255,18 @@ void CL_ParseVWepPrecache (char *str)
 			if (strstr(p, "/"))
 			{
 				// A full path was specified.
-				SDL_strlcpy(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
+				strlcpy(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
 			}
 			else 
 			{
 				// Use default path.
-				SDL_strlcpy(cl.vw_model_name[i], "progs/", sizeof(cl.vw_model_name[0]));
-				SDL_strlcat(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
+				strlcpy(cl.vw_model_name[i], "progs/", sizeof(cl.vw_model_name[0]));
+				strlcat(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
 			}
 
 			// Use default extension if not specified.
 			if (!strstr(p, "."))
-				SDL_strlcat(cl.vw_model_name[i], ".mdl", sizeof(cl.vw_model_name[0]));
+				strlcat(cl.vw_model_name[i], ".mdl", sizeof(cl.vw_model_name[0]));
 		}
 	}
 
@@ -2277,13 +2277,13 @@ void CL_ParseServerInfoChange (void)
 {
 	char key[MAX_INFO_STRING], value[MAX_INFO_STRING];
 
-	SDL_strlcpy (key, MSG_ReadString(), sizeof(key));
-	SDL_strlcpy (value, MSG_ReadString(), sizeof(value));
+	strlcpy (key, MSG_ReadString(), sizeof(key));
+	strlcpy (value, MSG_ReadString(), sizeof(value));
 
 	Com_DPrintf ("SERVERINFO: %s=%s\n", key, value);
 	if (!cl.standby && !cl.countdown && !strncmp(key, "status", 6)) 
 	{
-		int timeleft = SDL_atoi(value) * 60;
+		int timeleft = atoi(value) * 60;
 		if (timeleft) 
 		{
 			if (cls.demoplayback) 
@@ -2293,7 +2293,7 @@ void CL_ParseServerInfoChange (void)
 			else 
 			{
 				cl.gamestarttime = Sys_DoubleTime() - (cl.timelimit * 60) + timeleft - cl.gamepausetime;
-				Com_DPrintf("Clock sync, match started %i seconds ago\n", (cl.timelimit*60) + SDL_atoi(value)*60);
+				Com_DPrintf("Clock sync, match started %i seconds ago\n", (cl.timelimit*60) + atoi(value)*60);
 			}
 		}
 	}
@@ -2478,7 +2478,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
 
         if (i == MAX_CLIENTS)
         {
-            SDL_strlcpy (buf, "console: ", sizeof (buf));
+            strlcpy (buf, "console: ", sizeof (buf));
 
 			if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2492,7 +2492,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
             if (!cl.players[i].name[0])
                 continue;
 
-            SDL_snprintf(buf,  sizeof (buf), "%.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            snprintf(buf,  sizeof (buf), "%.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
 
 			if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2501,7 +2501,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
                 msg = chat + strlen(buf);
             }
 
-            SDL_snprintf(buf,  sizeof (buf), "(%.*s): ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            snprintf(buf,  sizeof (buf), "(%.*s): ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
 
 			if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2510,7 +2510,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
                 msg = chat + strlen(buf);
             }
 
-            SDL_snprintf(buf,  sizeof (buf), "[SPEC] %.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
+            snprintf(buf,  sizeof (buf), "[SPEC] %.*s: ", server_cut, Info_ValueForKey(cl.players[i].userinfo, "name"));
 
 			if (!strncmp(chat, buf, strlen(buf)))
             {
@@ -2648,15 +2648,15 @@ void CL_ParsePrint ()
 		}
 		else
 		{
-			SDL_strlcpy(name, qtvtmp, bound(1, column - qtvtmp + 1, (int)sizeof(name)));
+			strlcpy(name, qtvtmp, bound(1, column - qtvtmp + 1, (int)sizeof(name)));
 		}
 
 		if      (!strncmp(s0, "#0:qtv_say_game:",      sizeof("#0:qtv_say_game:")-1))
-			SDL_snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
+			snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
 		else if (!strncmp(s0, "#0:qtv_say_team_game:", sizeof("#0:qtv_say_team_game:")-1))
-			SDL_snprintf(qtvstr, sizeof(qtvstr), "%s(%s)%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
+			snprintf(qtvstr, sizeof(qtvstr), "%s(%s)%s\n", TP_ParseFunChars(qtv_gamechatprefix.string, false), name, column);
 		else
-			SDL_snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_chatprefix.string, false), name, column);
+			snprintf(qtvstr, sizeof(qtvstr), "%s%s%s\n", TP_ParseFunChars(qtv_chatprefix.string, false), name, column);
 
 		s0 = qtvstr;
 	}
@@ -2788,11 +2788,11 @@ void CL_ParsePrint ()
 				char tmpbuf[16];
 				GetLocalTime (&lt);
 				if (con_timestamps.value == 1) {
-					SDL_snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
+					snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
 					Com_Printf(tmpbuf);
 				}
 				else {
-					SDL_snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
+					snprintf(tmpbuf,  sizeof (tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
 					Com_Printf(tmpbuf);
 				}
 			}
@@ -2923,19 +2923,19 @@ extern unsigned int CL_SupportedFTEExtensions2 (void);
 
 		#ifdef PROTOCOL_VERSION_FTE
 		ext = cls.fteprotocolextensions ? cls.fteprotocolextensions : CL_SupportedFTEExtensions();
-		SDL_snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE, ext);
+		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE, ext);
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions\n", PROTOCOL_VERSION_FTE, ext);
-		SDL_strlcat(data, tmp, sizeof(data));
+		strlcat(data, tmp, sizeof(data));
 		#endif // PROTOCOL_VERSION_FTE 
 
 		#ifdef PROTOCOL_VERSION_FTE2
 		ext = cls.fteprotocolextensions2 ? cls.fteprotocolextensions2 : CL_SupportedFTEExtensions2();
-		SDL_snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE2, ext);
+		snprintf(tmp, sizeof(tmp), " 0x%x 0x%x", PROTOCOL_VERSION_FTE2, ext);
 		Com_Printf_State(PRINT_DBG, "PEXT: 0x%x is fte protocol ver and 0x%x is fteprotocolextensions2\n", PROTOCOL_VERSION_FTE2, ext);
-		SDL_strlcat(data, tmp, sizeof(data));
+		strlcat(data, tmp, sizeof(data));
 		#endif // PROTOCOL_VERSION_FTE2 
 
-		SDL_strlcat(data, "\n", sizeof(data));
+		strlcat(data, "\n", sizeof(data));
 		Cbuf_AddTextEx(&cbuf_svc, data);
 	}
 	else
@@ -3351,7 +3351,7 @@ void CL_ParseServerMessage (void)
 				i = MSG_ReadByte ();
 				if (i >= MAX_LIGHTSTYLES)
 					Host_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
-				SDL_strlcpy(cl_lightstyle[i].map, MSG_ReadString(), sizeof(cl_lightstyle[i].map));
+				strlcpy(cl_lightstyle[i].map, MSG_ReadString(), sizeof(cl_lightstyle[i].map));
 				cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
 				break;
 			}

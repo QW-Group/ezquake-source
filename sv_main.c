@@ -205,7 +205,7 @@ qbool GameStarted(void)
 		if (d->desttype != DEST_STREAM) // oh, its not stream, treat as "game is started"
 			break;
 
-	return (d || SDL_strncasecmp(Info_ValueForKey(svs.info, "status"), "Standby", 8));
+	return (d || strncasecmp(Info_ValueForKey(svs.info, "status"), "Standby", 8));
 }
 /*
 ================
@@ -278,7 +278,7 @@ void SV_Error (char *error, ...)
 	inerror = true;
 
 	va_start (argptr, error);
-	SDL_vsnprintf (string, sizeof (string), error, argptr);
+	vsnprintf (string, sizeof (string), error, argptr);
 	va_end (argptr);
 
 	Con_Printf ("SV_Error: %s\n", string);
@@ -596,7 +596,7 @@ static void SVC_Status (void)
 
 
 	if (Cmd_Argc() > 1)
-		opt = SDL_atoi(Cmd_Argv(1));
+		opt = Q_atoi(Cmd_Argv(1));
 
 	SV_BeginRedirect (RD_PACKET);
 	if (opt == STATUS_OLDSTYLE || (opt & STATUS_SERVERINFO))
@@ -609,8 +609,8 @@ static void SVC_Status (void)
 			        ( (!cl->spectator && ((opt & STATUS_PLAYERS) || opt == STATUS_OLDSTYLE)) ||
 			          ( cl->spectator && ( opt & STATUS_SPECTATORS)) ) )
 			{
-				top    = SDL_atoi(Info_Get (&cl->_userinfo_ctx_, "topcolor"));
-				bottom = SDL_atoi(Info_Get (&cl->_userinfo_ctx_, "bottomcolor"));
+				top    = Q_atoi(Info_Get (&cl->_userinfo_ctx_, "topcolor"));
+				bottom = Q_atoi(Info_Get (&cl->_userinfo_ctx_, "bottomcolor"));
 				top    = (top    < 0) ? 0 : ((top    > 13) ? 13 : top);
 				bottom = (bottom < 0) ? 0 : ((bottom > 13) ? 13 : bottom);
 				ping   = SV_CalcPing (cl);
@@ -729,7 +729,7 @@ static void SVC_Log (void)
 
 
 	if (Cmd_Argc() == 2)
-		seq = SDL_atoi(Cmd_Argv(1));
+		seq = Q_atoi(Cmd_Argv(1));
 	else
 		seq = -1;
 
@@ -742,8 +742,8 @@ static void SVC_Log (void)
 
 	Con_DPrintf ("sending log %i to %s\n", svs.logsequence-1, NET_AdrToString(net_from));
 
-	SDL_snprintf (data, MAX_DATAGRAM + 64, "stdlog %i\n", svs.logsequence-1);
-	SDL_strlcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)], MAX_DATAGRAM + 64);
+	snprintf (data, MAX_DATAGRAM + 64, "stdlog %i\n", svs.logsequence-1);
+	strlcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)], MAX_DATAGRAM + 64);
 
 	NET_SendPacket (NS_SERVER, strlen(data)+1, data, net_from);
 }
@@ -804,7 +804,7 @@ static void SVC_GetChallenge (void)
 	}
 
 	// send it back
-	SDL_snprintf(buf, sizeof(buf), "%c%i", S2C_CHALLENGE, svs.challenges[i].challenge);
+	snprintf(buf, sizeof(buf), "%c%i", S2C_CHALLENGE, svs.challenges[i].challenge);
 	over = buf + strlen(buf) + 1;
 
 #ifdef PROTOCOL_VERSION_FTE
@@ -928,7 +928,7 @@ qbool CheckProtocol( int ver )
 
 qbool CheckUserinfo( char *userinfobuf, unsigned int bufsize, char *userinfo )
 {
-	SDL_strlcpy (userinfobuf, userinfo, bufsize);
+	strlcpy (userinfobuf, userinfo, bufsize);
 
 	// and now validate userinfo
 	if ( !ValidateUserInfo( userinfobuf ) )
@@ -970,7 +970,7 @@ qbool CheckPasswords( char *userinfo, int userinfo_size, qbool *spass_ptr, qbool
 
 		pwd = spectator_password.string;
 
-		if (pwd[0] && SDL_strcasecmp(pwd, "none") && strcmp(pwd, s))
+		if (pwd[0] && strcasecmp(pwd, "none") && strcmp(pwd, s))
 		{
 			spass = false; // failed
 		}
@@ -986,7 +986,7 @@ qbool CheckPasswords( char *userinfo, int userinfo_size, qbool *spass_ptr, qbool
 		Info_RemoveKey (userinfo, "spectator"); // remove passwd
 		Info_SetValueForStarKey (userinfo, "*spectator", "1", userinfo_size);
 
-		spectator = SDL_atoi(s);
+		spectator = Q_atoi(s);
 
 		if (!spectator)
 			spectator = true;
@@ -1003,7 +1003,7 @@ qbool CheckPasswords( char *userinfo, int userinfo_size, qbool *spass_ptr, qbool
 
 		pwd = password.string;
 
-		if (!vip && pwd[0] && SDL_strcasecmp(pwd, "none") && strcmp(pwd, s))
+		if (!vip && pwd[0] && strcasecmp(pwd, "none") && strcmp(pwd, s))
 		{
 			Con_Printf ("%s:password failed\n", NET_AdrToString (net_from));
 			Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nserver requires a password\n\n", A2C_PRINT);
@@ -1112,14 +1112,14 @@ static void SVC_DirectConnect (void)
 #endif // PROTOCOL_VERSION_FTE2
 
 	// check version/protocol
-	if ( !CheckProtocol( SDL_atoi( Cmd_Argv( 1 ) ) ) )
+	if ( !CheckProtocol( Q_atoi( Cmd_Argv( 1 ) ) ) )
 		return; // wrong protocol number
 
 	// get qport
-	qport = SDL_atoi( Cmd_Argv( 2 ) );
+	qport = Q_atoi( Cmd_Argv( 2 ) );
 
 	// see if the challenge is valid
-	if ( !CheckChallange( SDL_atoi( Cmd_Argv( 3 ) ) ) )
+	if ( !CheckChallange( Q_atoi( Cmd_Argv( 3 ) ) ) )
 		return; // wrong challange
 
 	// and now validate userinfo
@@ -1134,18 +1134,18 @@ static void SVC_DirectConnect (void)
 	{
 		Cmd_TokenizeString( MSG_ReadStringLine() );
 
-		switch( SDL_atoi( Cmd_Argv( 0 ) ) )
+		switch( Q_atoi( Cmd_Argv( 0 ) ) )
 		{
 #ifdef PROTOCOL_VERSION_FTE
 		case PROTOCOL_VERSION_FTE:
-			protextsupported = SDL_atoi( Cmd_Argv( 1 ) );
+			protextsupported = Q_atoi( Cmd_Argv( 1 ) );
 			Con_DPrintf("Client supports 0x%x fte extensions\n", protextsupported);
 			break;
 #endif // PROTOCOL_VERSION_FTE
 
 #ifdef PROTOCOL_VERSION_FTE2
 		case PROTOCOL_VERSION_FTE2:
-			protextsupported2 = SDL_atoi( Cmd_Argv( 1 ) );
+			protextsupported2 = Q_atoi( Cmd_Argv( 1 ) );
 			Con_DPrintf("Client supports 0x%x fte extensions2\n", protextsupported2);
 			break;
 #endif // PROTOCOL_VERSION_FTE2
@@ -1219,11 +1219,11 @@ static void SVC_DirectConnect (void)
 		else if (    !spectator && spectators < (int)maxspectators.value
 				  && (
 				  	      ( (int)sv_forcespec_onfull.value == 2
-							&&   (SDL_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_SPEC_ONFULL)
+							&&   (Q_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_SPEC_ONFULL)
 				  	      ) 
 				   	   		||
 						  ( (int)sv_forcespec_onfull.value == 1
-							&&   !(SDL_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_NO_SPEC_ONFULL)
+							&&   !(Q_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_NO_SPEC_ONFULL)
 						  )
 				   	 )
 				)
@@ -1289,7 +1289,7 @@ static void SVC_DirectConnect (void)
 	newcl->rip_vip = rip_vip;
 
 	// extract extensions mask
-	newcl->extensions = SDL_atoi(Info_Get(&newcl->_userinfo_ctx_, "*z_ext"));
+	newcl->extensions = Q_atoi(Info_Get(&newcl->_userinfo_ctx_, "*z_ext"));
 	Info_Remove (&newcl->_userinfo_ctx_, "*z_ext");
 
 	edictnum = (newcl-svs.clients)+1;
@@ -1497,8 +1497,8 @@ int Master_Rcon_Validate (void)
 	*client_string = 0;
 	for (i = 0; i < Cmd_Argc(); ++i)
 	{
-		SDL_strlcat(client_string, Cmd_Argv(i), client_string_len);
-		SDL_strlcat(client_string, " ", client_string_len);
+		strlcat(client_string, Cmd_Argv(i), client_string_len);
+		strlcat(client_string, " ", client_string_len);
 	}
 	//	Sys_Printf("client_string = %s\nclient_string_len = %d, strlen(client_string) = %d\n",
 	//		client_string, client_string_len, strlen(client_string));
@@ -1600,7 +1600,7 @@ static void SVC_RemoteCommand (char *remote_command)
 			// must check not only for chmod, but also CHMOD, ChmoD, etc.
 			// so we lowercase the whole temporary line before checking
 
-			// VVD: strcmp => SDL_strcasecmp and we don't need to do this (yes?)
+			// VVD: strcmp => strcasecmp and we don't need to do this (yes?)
 			//for(i = 0; str[i]; i++)
 			//	str[i] = (char)tolower(str[i]);
 
@@ -1622,17 +1622,17 @@ static void SVC_RemoteCommand (char *remote_command)
 				if(!tstr[0]) // skip leading empty tokens
 					continue;
 
-				if (!SDL_strcasecmp(tstr, "rm") ||
-					!SDL_strcasecmp(tstr, "rmdir") ||
-					!SDL_strcasecmp(tstr, "ls") ||
-					!SDL_strcasecmp(tstr, "chmod") ||
-					!SDL_strcasecmp(tstr, "sv_admininfo") ||
-					!SDL_strcasecmp(tstr, "if") ||
-					!SDL_strcasecmp(tstr, "localcommand") ||
-					!SDL_strcasecmp(tstr, "sv_crypt_rcon") ||
-					!SDL_strcasecmp(tstr, "sv_timestamplen") ||
-					!SDL_strncasecmp(tstr, "log", 3) ||
-					!SDL_strcasecmp(tstr, "sys_command_line")
+				if (!strcasecmp(tstr, "rm") ||
+					!strcasecmp(tstr, "rmdir") ||
+					!strcasecmp(tstr, "ls") ||
+					!strcasecmp(tstr, "chmod") ||
+					!strcasecmp(tstr, "sv_admininfo") ||
+					!strcasecmp(tstr, "if") ||
+					!strcasecmp(tstr, "localcommand") ||
+					!strcasecmp(tstr, "sv_crypt_rcon") ||
+					!strcasecmp(tstr, "sv_timestamplen") ||
+					!strncasecmp(tstr, "log", 3) ||
+					!strcasecmp(tstr, "sys_command_line")
 					)
 				{
 					bad_cmd = true;
@@ -1660,7 +1660,7 @@ static void SVC_RemoteCommand (char *remote_command)
 		if (cl->netchan.remote_address.port != net_from.port)
 			continue;
 
-		SDL_strlcpy(plain, cl->name, sizeof(plain));
+		strlcpy(plain, cl->name, sizeof(plain));
 		Q_normalizetext(plain);
 
 		// we found what we need
@@ -1692,8 +1692,8 @@ static void SVC_RemoteCommand (char *remote_command)
 		str[0] = '\0';
 		for (i = 2; i < Cmd_Argc(); i++)
 		{
-			SDL_strlcat(str, Cmd_Argv(i), sizeof(str));
-			SDL_strlcat(str, " ", sizeof(str));
+			strlcat(str, Cmd_Argv(i), sizeof(str));
+			strlcat(str, " ", sizeof(str));
 		}
 
 		Cmd_ExecuteString(str);
@@ -1745,7 +1745,7 @@ static void SVC_IP(void)
 	if (Cmd_Argc() < 3)
 		return;
 
-	num = SDL_atoi(Cmd_Argv(1));
+	num = Q_atoi(Cmd_Argv(1));
 
 	if (num < 0 || num >= MAX_CLIENTS)
 		return;
@@ -1755,7 +1755,7 @@ static void SVC_IP(void)
 		return;
 
 	// prevent cheating
-	if (client->realip_num != SDL_atoi(Cmd_Argv(2)))
+	if (client->realip_num != Q_atoi(Cmd_Argv(2)))
 		return;
 
 	// don't override previously set ip
@@ -1918,7 +1918,7 @@ qbool StringToFilter (char *s, ipfilter_t *f)
 			num[j++] = *s++;
 		}
 		num[j] = 0;
-		b[i] = SDL_atoi(num);
+		b[i] = Q_atoi(num);
 		if (b[i] != 0)
 			m[i] = 255;
 
@@ -1949,7 +1949,7 @@ static void SV_AddIPVIP_f (void)
 		return;
 	}
 
-	l = SDL_atoi(Cmd_Argv(2));
+	l = Q_atoi(Cmd_Argv(2));
 
 	if (l < 1) l = 1;
 
@@ -2029,7 +2029,7 @@ static void SV_WriteIPVIP_f (void)
 	byte	b[4];
 	int		i;
 
-	SDL_snprintf (name, MAX_OSPATH, "%s/vip_ip.cfg", fs_gamedir);
+	snprintf (name, MAX_OSPATH, "%s/vip_ip.cfg", fs_gamedir);
 
 	Con_Printf ("Writing %s.\n", name);
 
@@ -2178,7 +2178,7 @@ static void SV_WriteIP_f (void)
 	byte	b[4];
 	int		i;
 
-	SDL_snprintf (name, MAX_OSPATH, "%s/listip.cfg", fs_gamedir);
+	snprintf (name, MAX_OSPATH, "%s/listip.cfg", fs_gamedir);
 
 	Con_Printf ("Writing %s.\n", name);
 
@@ -2228,7 +2228,7 @@ void SV_SendBan (void)
 	data[0] = data[1] = data[2] = data[3] = 0xff;
 	data[4] = A2C_PRINT;
 	data[5] = 0;
-	SDL_strlcat (data, "\nbanned.\n", sizeof(data));
+	strlcat (data, "\nbanned.\n", sizeof(data));
 
 	NET_SendPacket (NS_SERVER, strlen(data), data, net_from);
 }
@@ -2396,9 +2396,9 @@ void SV_Cmd_Ban_f(void)
 		return;
 	}
 
-	uid = SDL_atoi(Cmd_Argv(1));
+	uid = Q_atoi(Cmd_Argv(1));
 
-	SDL_strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
+	strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
 
 	// sscanf safe here since sizeof(arg2) == sizeof(arg2c), right?
 	if (sscanf(arg2, "%d%s", &t, arg2c) != 2 || strlen(arg2c) != 1) {
@@ -2425,17 +2425,17 @@ void SV_Cmd_Ban_f(void)
 		{
 			if (c > 3) // serve reason arguments
 			{
-				SDL_strlcpy (reason, " (", sizeof(reason));
+				strlcpy (reason, " (", sizeof(reason));
 				for (j=3 ; j<c; j++)
 				{
-					SDL_strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
+					strlcat (reason, Cmd_Argv(j), sizeof(reason)-4);
 					if (j < c-1)
-						SDL_strlcat (reason, " ", sizeof(reason)-4);
+						strlcat (reason, " ", sizeof(reason)-4);
 				}
 				if (strlen(reason) < 3)
 					reason[0] = '\0';
 				else
-					SDL_strlcat (reason, ")", sizeof(reason));
+					strlcat (reason, ")", sizeof(reason));
 			}
 
 			s = NET_BaseAdrToString(cl->netchan.remote_address);
@@ -2509,7 +2509,7 @@ void SV_Cmd_Banip_f(void)
 		return;
 	}
 
-	SDL_strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
+	strlcpy(arg2, Cmd_Argv(2), sizeof(arg2));
 
 	// sscanf safe here since sizeof(arg2) == sizeof(arg2c), right?
 	if (sscanf(arg2, "%d%s", &t, arg2c) != 2 || strlen(arg2c) != 1) {
@@ -2567,7 +2567,7 @@ void SV_Cmd_Banremove_f(void)
 		return;
 	}
 
-	id = SDL_atoi(Cmd_Argv(1));
+	id = Q_atoi(Cmd_Argv(1));
 
 	if (id < 0 || id >= numipfilters) {
 		Con_Printf ("Wrong ban id: %d\n", id);
@@ -2618,7 +2618,7 @@ int SV_VIPbyPass (char *pass)
 	int vip_value[MAX_ARGS];
 	int i;
 
-	if (!vip_password.string[0] || !SDL_strcasecmp(vip_password.string, "none"))
+	if (!vip_password.string[0] || !strcasecmp(vip_password.string, "none"))
 		return 0;
 
 	if (vip_values.string[0]) {
@@ -2627,13 +2627,13 @@ int SV_VIPbyPass (char *pass)
 		memset((void*)vip_value, 0, sizeof(vip_value));
 		Cmd_TokenizeString(vip_values.string);
 		for (i = 0; i < Cmd_Argc(); i++)
-			vip_value[i] = SDL_atoi(Cmd_Argv(i));
+			vip_value[i] = atoi(Cmd_Argv(i));
 	}
 
 	Cmd_TokenizeString(vip_password.string);
 
 	for (i = 0; i < Cmd_Argc(); i++)
-		if (!strcmp(Cmd_Argv(i), pass) && SDL_strcasecmp(Cmd_Argv(i), "none"))
+		if (!strcmp(Cmd_Argv(i), pass) && strcasecmp(Cmd_Argv(i), "none"))
 			return (use_value ? vip_value[i] : i+1);
 
 	return 0;
@@ -3050,9 +3050,9 @@ static void SV_CheckVars (void)
 	if (strcmp(password.string, pw) ||
 		strcmp(spectator_password.string, spw) || strcmp(vip_password.string, vspw))
 	{
-		SDL_strlcpy (pw, password.string, sizeof(pw));
-		SDL_strlcpy (spw, spectator_password.string, sizeof(spw));
-		SDL_strlcpy (vspw, vip_password.string, sizeof(vspw));
+		strlcpy (pw, password.string, sizeof(pw));
+		strlcpy (spw, spectator_password.string, sizeof(spw));
+		strlcpy (vspw, vip_password.string, sizeof(vspw));
 		Cvar_Set (&password, pw);
 		Cvar_Set (&spectator_password, spw);
 		Cvar_Set (&vip_password, vspw);
@@ -3088,7 +3088,7 @@ static void SV_CheckVars (void)
 				continue;
 
 			val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
-			cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, SDL_atoi(*val ? val : "99999"));
+			cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, Q_atoi(*val ? val : "99999"));
 		}
 	}
 }
@@ -3275,13 +3275,13 @@ void SV_InitLocal (void)
 	sys_command_line.string[0] = 0;
 	for (i = 0; i < com_argc; i++)
 	{
-		SDL_strlcat(sys_command_line.string, com_argv[i], len);
-		SDL_strlcat(sys_command_line.string, " ", len);
+		strlcat(sys_command_line.string, com_argv[i], len);
+		strlcat(sys_command_line.string, " ", len);
 	}
 #endif
 	Cvar_Register (&sys_command_line);
 
-//	SDL_snprintf(full_version, SIZEOF_FULL_VERSION, FULL_VERSION "\n" BUILD_DATE "\n", build_number());
+//	snprintf(full_version, SIZEOF_FULL_VERSION, FULL_VERSION "\n" BUILD_DATE "\n", build_number());
 //	Cvar_Register (&version);
 	//Added by VVD }
 	Cvar_Register (&spectator_password);
@@ -3395,7 +3395,7 @@ void SV_InitLocal (void)
 
 
 	for (i=0 ; i<MAX_MODELS ; i++)
-		SDL_snprintf (localmodels[i], MODEL_NAME_LEN, "*%i", i);
+		snprintf (localmodels[i], MODEL_NAME_LEN, "*%i", i);
 
 #ifdef FTE_PEXT_ACCURATETIMINGS
 	svs.fteprotocolextensions |= FTE_PEXT_ACCURATETIMINGS;
@@ -3466,7 +3466,7 @@ static void SV_SetUserInfoKeyLimit (char *key, int limit, client_t *cl, qbool wa
 static void SV_CheckUserInfoKeyLimit (char *key, int limit, client_t *cl)
 {
 	char *value_c = Info_Get (&cl->_userinfo_ctx_, key);
-	int value = SDL_atoi(value_c);
+	int value = Q_atoi(value_c);
 
 	if (value > limit)
 		SV_SetUserInfoKeyLimit (key, limit, cl, true);
@@ -3493,13 +3493,13 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 		val = Info_Get (&cl->_userinfo_ctx_, "name");
 
 		// trim user name
-		SDL_strlcpy (newname, val, sizeof(newname));
+		strlcpy (newname, val, sizeof(newname));
 
 		for (p = val; *p; p++)
 		{
 			if ((*p & 127) == '\\' || *p == '\r' || *p == '\n' || *p == '$' || *p == '#' || *p == '"' || *p == ';')
 			{ // illegal characters in name, set some default
-				SDL_strlcpy(newname, sv_default_name.string, sizeof(newname));
+				strlcpy(newname, sv_default_name.string, sizeof(newname));
 				break;
 			}
 		}
@@ -3508,7 +3508,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 			; // empty operator
 
 		if (p != newname) // skip prefixed spaces, if any, even whole string of spaces
-			SDL_strlcpy(newname, p, sizeof(newname));
+			strlcpy(newname, p, sizeof(newname));
 
 		for (p = newname + strlen(newname) - 1; p >= newname; p--)
 		{
@@ -3525,7 +3525,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 			val = Info_Get (&cl->_userinfo_ctx_, "name");
 		}
 
-		if (!val[0] || !SDL_strcasecmp(val, "console"))
+		if (!val[0] || !strcasecmp(val, "console"))
 		{
 			Info_Set (&cl->_userinfo_ctx_, "name", sv_default_name.string);
 			val = Info_Get (&cl->_userinfo_ctx_, "name");
@@ -3539,7 +3539,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 				if (client->state != cs_spawned || client == cl)
 					continue;
 
-				if (!SDL_strcasecmp(client->name, val))
+				if (!strcasecmp(client->name, val))
 					break;
 			}
 			if (i != MAX_CLIENTS)
@@ -3556,7 +3556,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 						p = val + 4;
 				}
 
-				SDL_snprintf(newname, sizeof(newname), "(%d)%-.10s", dupc++, p);
+				snprintf(newname, sizeof(newname), "(%d)%-.10s", dupc++, p);
 				Info_Set (&cl->_userinfo_ctx_, "name", newname);
 				val = Info_Get (&cl->_userinfo_ctx_, "name");
 			}
@@ -3587,28 +3587,28 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 				SV_BroadcastPrintf (PRINT_HIGH, "%s changed name to %s\n", cl->name, val);
 		}
 
-		SDL_strlcpy (cl->name, val, CLIENT_NAME_LEN);
+		strlcpy (cl->name, val, CLIENT_NAME_LEN);
 
 		if (cl->state >= cs_spawned) //bliP: player logging
 			SV_LogPlayer(cl, "name change", 1);
 	}
 
 	// team
-	SDL_strlcpy (cl->team, Info_Get (&cl->_userinfo_ctx_, "team"), sizeof(cl->team));
+	strlcpy (cl->team, Info_Get (&cl->_userinfo_ctx_, "team"), sizeof(cl->team));
 
 	// rate
 	val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
-	cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, SDL_atoi(*val ? val : "99999"));
+	cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, Q_atoi(*val ? val : "99999"));
 
 	// message level
 	val = Info_Get (&cl->_userinfo_ctx_, "msg");
 	if (val[0])
-		cl->messagelevel = SDL_atoi(val);
+		cl->messagelevel = Q_atoi(val);
 
 	//bliP: spectator print ->
 	val = Info_Get(&cl->_userinfo_ctx_, "sp");
 	if (val[0])
-		cl->spec_print = SDL_atoi(val);
+		cl->spec_print = Q_atoi(val);
 	//<-
 	// Added by VVD {
 // ktpro version before 1.67 crash if absolute value of userinfo keys "ls" or/and "lw" is to large
@@ -3623,7 +3623,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 
 void OnChange_sysselecttimeout_var (cvar_t *var, char *value, qbool *cancel)
 {
-	int t = SDL_atoi (value);
+	int t = Q_atoi (value);
 	if (t <= 1000000 && t >= 10)
 	{
 		select_timeout.tv_sec  =  t / 1000000;
@@ -3665,12 +3665,12 @@ void OnChange_admininfo_var (cvar_t *var, char *value, qbool *cancel)
 //bliP: telnet log level ->
 void OnChange_telnetloglevel_var (cvar_t *var, char *value, qbool *cancel)
 {
-	logs[TELNET_LOG].log_level = SDL_atoi(value);
+	logs[TELNET_LOG].log_level = Q_atoi(value);
 }
 //<-
 void OnChange_qconsolelogsay_var (cvar_t *var, char *value, qbool *cancel)
 {
-	logs[CONSOLE_LOG].log_level = SDL_atoi(value);
+	logs[CONSOLE_LOG].log_level = Q_atoi(value);
 }
 
 /*
@@ -3783,7 +3783,7 @@ void SV_TimeOfDay(date_t *date)
 		date->hour = 0;
 		date->min = 0;
 		date->sec = 0;
-		SDL_strlcpy(date->str, "#bad date#", sizeof(date->str));
+		strlcpy(date->str, "#bad date#", sizeof(date->str));
 		return;
 	}
 	//<-
@@ -4011,7 +4011,7 @@ qbool FWD_proxy_load(void)
 
 	while ( ( gpath = FS_NextPath( gpath ) ) )
 	{
-		SDL_snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, "qwfwd");
+		snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, "qwfwd");
 		hInst = Sys_DLOpen( name );
 
 		if ( hInst )
