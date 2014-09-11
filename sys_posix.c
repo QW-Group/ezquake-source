@@ -97,9 +97,9 @@ void Sys_Quit(void)
 
 void Sys_Init(void)
 {
-    Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
-    Cvar_Register (&sys_yieldcpu);
-    Cvar_ResetCurrentGroup();
+	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
+	Cvar_Register (&sys_yieldcpu);
+	Cvar_ResetCurrentGroup();
 }
 
 void Sys_Error(char *error, ...)
@@ -278,13 +278,9 @@ double Sys_DoubleTime(void)
 	return (tp.tv_sec - secbase) + tp.tv_usec / 1000000.0;
 }
 
-void floating_point_exception_handler (int whatever)
-{
-	signal(SIGFPE, floating_point_exception_handler);
-}
-
 int main(int argc, char **argv)
 {
+	extern void InitSig(void);
 	double time, oldtime, newtime;
 	int i;
 
@@ -297,6 +293,8 @@ int main(int argc, char **argv)
 		if (*s != '-' && *s != '+')
 			qconsole_log = fopen(s, "a");
 	}
+
+	InitSig();
 
 	signal(SIGFPE, SIG_IGN);
 
