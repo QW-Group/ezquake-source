@@ -28,26 +28,43 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"		// PM_FLY etc
 #include "rulesets.h"
 
-cvar_t	cl_nodelta = {"cl_nodelta","0"};
-cvar_t	cl_c2spps = {"cl_c2spps","0"};
-cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
-cvar_t  cl_weaponhide = {"cl_weaponhide", "0"};
-cvar_t  cl_weaponpreselect = {"cl_weaponpreselect", "0"};
+cvar_t cl_anglespeedkey     = {"cl_anglespeedkey","1.5"};
+cvar_t cl_backspeed         = {"cl_backspeed","400"};
+cvar_t cl_c2spps            = {"cl_c2spps","0"};
+cvar_t cl_c2sImpulseBackup  = {"cl_c2sImpulseBackup","3"};
+cvar_t cl_forwardspeed      = {"cl_forwardspeed","400"};
+cvar_t cl_smartjump         = {"cl_smartjump", "1"};
+cvar_t cl_iDrive            = {"cl_iDrive", "0", 0, Rulesets_OnChange_cl_iDrive};
+cvar_t cl_movespeedkey      = {"cl_movespeedkey","2.0"};
+cvar_t cl_nodelta           = {"cl_nodelta","0"};
+cvar_t cl_pitchspeed        = {"cl_pitchspeed","150"};
+cvar_t cl_upspeed           = {"cl_upspeed","400"};
+cvar_t cl_sidespeed         = {"cl_sidespeed","400"};
+cvar_t cl_yawspeed          = {"cl_yawspeed","140"};
+cvar_t cl_weaponhide        = {"cl_weaponhide", "0"};
+cvar_t cl_weaponpreselect   = {"cl_weaponpreselect", "0"};
 cvar_t cl_weaponforgetorder = {"cl_weaponforgetorder", "0"};
-cvar_t	cl_weaponhide_axe = {"cl_weaponhide_axe", "0"};
+cvar_t cl_weaponhide_axe    = {"cl_weaponhide_axe", "0"};
+cvar_t freelook             = {"freelook","1"};
+cvar_t lookspring           = {"lookspring","0"};
+cvar_t lookstrafe           = {"lookstrafe","0"};
 
-cvar_t	cl_smartjump = {"cl_smartjump", "1"};
-
-cvar_t	cl_iDrive = {"cl_iDrive", "0", 0, Rulesets_OnChange_cl_iDrive};
-
-extern cvar_t cl_independentPhysics;
-extern qbool physframe;
-extern double physframetime;
+cvar_t sensitivity          = {"sensitivity","12"};
+cvar_t cursor_sensitivity   = {"scr_cursor_sensitivity", "1"};
+cvar_t m_pitch              = {"m_pitch","0.022"};
+cvar_t m_yaw                = {"m_yaw","0.022"};
+cvar_t m_forward            = {"m_forward","1"};
+cvar_t m_side               = {"m_side","0.8"};
+cvar_t m_accel              = {"m_accel", "0"};
 
 #ifdef JSS_CAM
 cvar_t cam_zoomspeed = {"cam_zoomspeed", "300"};
 cvar_t cam_zoomaccel = {"cam_zoomaccel", "2000"};
 #endif
+
+extern cvar_t cl_independentPhysics;
+extern qbool physframe;
+extern double physframetime;
 
 #define CL_INPUT_WEAPONHIDE() ((cl_weaponhide.integer == 1) \
 	|| ((cl_weaponhide.integer == 2) && (cl.deathmatch == 1)))
@@ -71,13 +88,14 @@ state bit 2 is edge triggered on the down to up transition
 ===============================================================================
 */
 
-kbutton_t	in_mlook, in_klook;
-kbutton_t	in_left, in_right, in_forward, in_back;
-kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
-kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack, in_attack2;
-kbutton_t	in_up, in_down;
+kbutton_t in_mlook, in_klook;
+kbutton_t in_left, in_right, in_forward, in_back;
+kbutton_t in_lookup, in_lookdown, in_moveleft, in_moveright;
+kbutton_t in_strafe, in_speed, in_use, in_jump, in_attack, in_attack2;
+kbutton_t in_up, in_down;
 
-int			in_impulse;
+int in_impulse;
+
 #define MAXWEAPONS 10
 int weapon_order[MAXWEAPONS] = {2, 1};
 
@@ -90,16 +108,11 @@ void KeyDown_common (kbutton_t *b, int k)
 	if (k == b->down[0] || k == b->down[1])
 		return;		// repeating key
 
-	if (!b->down[0])
-	{
+	if (!b->down[0]) {
 		b->down[0] = k;
-	}
-	else if (!b->down[1])
-	{
+	} else if (!b->down[1]) {
 		b->down[1] = k;
-	}
-	else
-	{
+	} else {
 		Com_Printf ("Three keys down for a button!\n");
 		return;
 	}
@@ -162,16 +175,30 @@ qbool KeyUp(kbutton_t *b)
 }
 
 
-void IN_KLookDown (void) {KeyDown(&in_klook);}
-void IN_KLookUp (void) {KeyUp(&in_klook);}
-
-void IN_MLookDown (void) {KeyDown(&in_mlook);}
-void IN_MLookUp (void)
+void IN_KLookDown(void)
 {
-	if (concussioned) return;
+	KeyDown(&in_klook);
+}
+void IN_KLookUp(void)
+{
+	KeyUp(&in_klook);
+}
+
+void IN_MLookDown(void)
+{
+	KeyDown(&in_mlook);
+}
+void IN_MLookUp(void)
+{
+	if (concussioned) {
+		return;
+	}
+
 	KeyUp(&in_mlook);
-	if (!mlook_active && lookspring.value)
+
+	if (!mlook_active && lookspring.value) {
 		V_StartPitchDrift();
+	}
 }
 
 #define PROTECTEDKEY()                                 \
@@ -555,58 +582,35 @@ float CL_KeyState (kbutton_t *key, qbool lookbutton)
 
 //==========================================================================
 
-cvar_t	cl_upspeed = {"cl_upspeed","400"};
-cvar_t	cl_forwardspeed = {"cl_forwardspeed","400"};
-cvar_t	cl_backspeed = {"cl_backspeed","400"};
-cvar_t	cl_sidespeed = {"cl_sidespeed","400"};
-
-cvar_t	cl_movespeedkey = {"cl_movespeedkey","2.0"};
-cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5"};
-
-cvar_t	cl_yawspeed = {"cl_yawspeed","140"};
-cvar_t	cl_pitchspeed = {"cl_pitchspeed","150"};
-
-cvar_t	lookspring = {"lookspring","0"};
-cvar_t	lookstrafe = {"lookstrafe","0"};
-cvar_t	sensitivity = {"sensitivity","12"};
-cvar_t	cursor_sensitivity = {"scr_cursor_sensitivity", "1"};
-cvar_t	freelook = {"freelook","1"};
-
-cvar_t	m_pitch = {"m_pitch","0.022"};
-cvar_t	m_yaw = {"m_yaw","0.022"};
-cvar_t	m_forward = {"m_forward","1"};
-cvar_t	m_side = {"m_side","0.8"};
-cvar_t	m_accel = {"m_accel", "0"};
-
-
-void CL_Rotate_f (void)
+void CL_Rotate_f(void)
 {
-	if (Cmd_Argc() != 2)
-	{
+	if (Cmd_Argc() != 2) {
 		Com_Printf("Usage: %s <degrees>\n", Cmd_Argv(0));
 		return;
 	}
 
-	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2)
+	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2) {
 		return;
+	}
+
 	cl.viewangles[YAW] += atof(Cmd_Argv(1));
 	cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
 }
 
 // Moves the local angle positions.
-void CL_AdjustAngles (void)
+void CL_AdjustAngles(void)
 {
 	float basespeed, speed, up, down, frametime;
 
-	if (Movie_IsCapturing() && movie_steadycam.value)
+	if (Movie_IsCapturing() && movie_steadycam.value) {
 		frametime = movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
-	else
+	} else {
 		frametime = cls.trueframetime;
+	}
 
 	basespeed = ((in_speed.state & 1) ? cl_anglespeedkey.value : 1);
 
-	if (!(in_strafe.state & 1))
-	{
+	if (!(in_strafe.state & 1)) {
 		speed = basespeed * cl_yawspeed.value;
 		if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2)
 			speed = bound(-900, speed, 900);
@@ -645,25 +649,22 @@ void CL_AdjustAngles (void)
 }
 
 // Send the intended movement message to the server.
-void CL_BaseMove (usercmd_t *cmd)
+void CL_BaseMove(usercmd_t *cmd)
 {
-	CL_AdjustAngles ();
+	CL_AdjustAngles();
 
-	memset (cmd, 0, sizeof(*cmd));
+	memset(cmd, 0, sizeof(*cmd));
 
-	VectorCopy (cl.viewangles, cmd->angles);
+	VectorCopy(cl.viewangles, cmd->angles);
 
-	if (cl_iDrive.integer)
-	{
+	if (cl_iDrive.integer) {
 		float s1, s2;
 
-		if (in_strafe.state & 1)
-		{
+		if (in_strafe.state & 1) {
 			s1 = CL_KeyState (&in_right, false);
 			s2 = CL_KeyState (&in_left, false);
 
-			if (s1 && s2)
-			{
+			if (s1 && s2) {
 				if (in_right.downtime > in_left.downtime)
 					s2 = 0;
 				if (in_right.downtime < in_left.downtime)
@@ -677,8 +678,7 @@ void CL_BaseMove (usercmd_t *cmd)
 		s1 = CL_KeyState (&in_moveright, false);
 		s2 = CL_KeyState (&in_moveleft, false);
 
-		if (s1 && s2)
-		{
+		if (s1 && s2) {
 			if (in_moveright.downtime > in_moveleft.downtime)
 				s2 = 0;
 			if (in_moveright.downtime < in_moveleft.downtime)
@@ -691,8 +691,7 @@ void CL_BaseMove (usercmd_t *cmd)
 		s1 = CL_KeyState (&in_up, false);
 		s2 = CL_KeyState (&in_down, false);
 
-		if (s1 && s2)
-		{
+		if (s1 && s2) {
 			if (in_up.downtime > in_down.downtime)
 				s2 = 0;
 			if (in_up.downtime < in_down.downtime)
@@ -702,8 +701,7 @@ void CL_BaseMove (usercmd_t *cmd)
 		cmd->upmove += cl_upspeed.value * s1;
 		cmd->upmove -= cl_upspeed.value * s2;
 
-		if (!(in_klook.state & 1))
-		{
+		if (!(in_klook.state & 1)) {
 			s1 = CL_KeyState (&in_forward, false);
 			s2 = CL_KeyState (&in_back, false);
 
@@ -718,11 +716,8 @@ void CL_BaseMove (usercmd_t *cmd)
 			cmd->forwardmove += cl_forwardspeed.value * s1;
 			cmd->forwardmove -= cl_backspeed.value * s2;
 		}
-	}
-	else
-	{
-		if (in_strafe.state & 1)
-		{
+	} else {
+		if (in_strafe.state & 1) {
 			cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right, false);
 			cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left, false);
 		}
@@ -733,16 +728,14 @@ void CL_BaseMove (usercmd_t *cmd)
 		cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up, false);
 		cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down, false);
 
-		if (!(in_klook.state & 1))
-		{
+		if (!(in_klook.state & 1)) {
 			cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward, false);
 			cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back, false);
 		}
 	}
 
 	// adjust for speed key
-	if (in_speed.state & 1)
-	{
+	if (in_speed.state & 1) {
 		cmd->forwardmove *= cl_movespeedkey.value;
 		cmd->sidemove *= cl_movespeedkey.value;
 		cmd->upmove *= cl_movespeedkey.value;
@@ -752,20 +745,15 @@ void CL_BaseMove (usercmd_t *cmd)
 	{
 		static float zoomspeed = 0;
 
-		if ((cls.demoplayback || cl.spectator) && Cvar_Value("cam_thirdperson") && !Cvar_Value("cam_lockpos"))
-		{
+		if ((cls.demoplayback || cl.spectator) && Cvar_Value("cam_thirdperson") && !Cvar_Value("cam_lockpos")) {
 			zoomspeed -= CL_KeyState(&in_forward, false) * cls.trueframetime * cam_zoomaccel.value;
 			zoomspeed += CL_KeyState(&in_back, false) * cls.trueframetime * cam_zoomaccel.value;
-			if (!CL_KeyState(&in_forward, false) && !CL_KeyState(&in_back, false))
-			{
-				if (zoomspeed > 0)
-				{
+			if (!CL_KeyState(&in_forward, false) && !CL_KeyState(&in_back, false)) {
+				if (zoomspeed > 0) {
 					zoomspeed -= cls.trueframetime * cam_zoomaccel.value;
 					if (zoomspeed < 0)
 						zoomspeed = 0;
-				}
-				else if (zoomspeed < 0)
-				{
+				} else if (zoomspeed < 0) {
 					zoomspeed += cls.trueframetime * cam_zoomaccel.value;
 					if (zoomspeed > 0)
 						zoomspeed = 0;
@@ -773,8 +761,7 @@ void CL_BaseMove (usercmd_t *cmd)
 			}
 			zoomspeed = bound (-cam_zoomspeed.value, zoomspeed, cam_zoomspeed.value);
 
-			if (zoomspeed)
-			{
+			if (zoomspeed) {
 				float dist = Cvar_Value("cam_dist");
 
 				dist += cls.trueframetime * zoomspeed;
@@ -787,7 +774,7 @@ void CL_BaseMove (usercmd_t *cmd)
 	#endif // JSS_CAM
 }
 
-int MakeChar (int i)
+int MakeChar(int i)
 {
 	i &= ~3;
 	if (i < -127 * 4)
@@ -797,17 +784,18 @@ int MakeChar (int i)
 	return i;
 }
 
-void CL_FinishMove (usercmd_t *cmd)
+void CL_FinishMove(usercmd_t *cmd)
 {
 	int i, ms;
 	float frametime;
 	static double extramsec = 0;
 	extern cvar_t allow_scripts;
 
-	if (Movie_IsCapturing() && movie_steadycam.value)
+	if (Movie_IsCapturing() && movie_steadycam.value) {
 		frametime = movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
-	else
+	} else {
 		frametime = cls.trueframetime;
+	}
 
 	// figure button bits
 	if ( in_attack.state & 3 )
@@ -831,8 +819,11 @@ void CL_FinishMove (usercmd_t *cmd)
 	extramsec += (cl_independentPhysics.value == 0 ? frametime : physframetime) * 1000;	//#fps
 	ms = extramsec;
 	extramsec -= ms;
-	if (ms > 250)
+
+	if (ms > 250) {
 		ms = 100;		// time was unreasonable
+	}
+
 	cmd->msec = ms;
 
 	VectorCopy (cl.viewangles, cmd->angles);
@@ -844,12 +835,9 @@ void CL_FinishMove (usercmd_t *cmd)
 		((in_impulse == 156) && (cl.fpd & FPD_LIMIT_YAW || allow_scripts.value < 2)) ||
 		((in_impulse == 164) && (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0))
 		)
-	)
-	{
-			cmd->impulse = 0;
-	}
-	else
-	{
+	) {
+		cmd->impulse = 0;
+	} else {
 		cmd->impulse = in_impulse;
 	}
 	// } shaman RFE 1030281
@@ -860,8 +848,9 @@ void CL_FinishMove (usercmd_t *cmd)
 	cmd->sidemove = MakeChar (cmd->sidemove);
 	cmd->upmove = MakeChar (cmd->upmove);
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++) {
 		cmd->angles[i] = (Q_rint(cmd->angles[i] * 65536.0 / 360.0) & 65535) * (360.0 / 65536.0);
+	}
 }
 
 void CL_SendClientCommand(qbool reliable, char *format, ...)
@@ -869,20 +858,18 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 	va_list		argptr;
 	char		string[2048];
 
-	if (cls.demoplayback)
+	if (cls.demoplayback) {
 		return;	// no point.
+	}
 
 	va_start (argptr, format);
 	vsnprintf (string, sizeof(string), format, argptr);
 	va_end (argptr);
 
-	if (reliable)
-	{
+	if (reliable) {
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, string);
-	}
-	else
-	{
+	} else {
 		MSG_WriteByte (&cls.cmdmsg, clc_stringcmd);
 		MSG_WriteString (&cls.cmdmsg, string);
 	}
@@ -890,7 +877,7 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 
 int cmdtime_msec = 0;
 
-void CL_SendCmd (void)
+void CL_SendCmd(void)
 {
 	sizebuf_t buf;
 	byte data[128];
@@ -900,8 +887,9 @@ void CL_SendCmd (void)
 	static float pps_balance = 0;
 	static int dropcount = 0;
 
-	if (cls.demoplayback && !cls.mvdplayback)
+	if (cls.demoplayback && !cls.mvdplayback) {
 		return; // sendcmds come from the demo
+	}
 
 	#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	CL_SendChunkDownloadReq();
@@ -921,37 +909,39 @@ void CL_SendCmd (void)
 	network_stats[i].receivedtime = -1;
 
 	// get basic movement from keyboard
-	CL_BaseMove (cmd);
+	CL_BaseMove(cmd);
 
 	// allow mice or other external controllers to add to the move
 
-	if (cl_independentPhysics.value == 0 || (physframe && cl_independentPhysics.value != 0))
-	{
+	if (cl_independentPhysics.value == 0 || (physframe && cl_independentPhysics.value != 0)) {
 		IN_Move(cmd);
 	}
 
 	// if we are spectator, try autocam
-	if (cl.spectator)
+	if (cl.spectator) {
 		Cam_Track(cmd);
+	}
 
 	CL_FinishMove(cmd);
 	cmdtime_msec += cmd->msec;
 
 	Cam_FinishMove(cmd);
 
-	if (cls.mvdplayback)
-	{
+	if (cls.mvdplayback) {
 		CL_CalcPlayerFPS(&cl.players[cl.playernum], cmd->msec);
-        cls.netchan.outgoing_sequence++;
+		cls.netchan.outgoing_sequence++;
 		return;
 	}
 
-	SZ_Init (&buf, data, sizeof(data));
+	SZ_Init(&buf, data, sizeof(data));
 
-	SZ_Write (&buf, cls.cmdmsg.data, cls.cmdmsg.cursize);
-	if (cls.cmdmsg.overflowed)
+	SZ_Write(&buf, cls.cmdmsg.data, cls.cmdmsg.cursize);
+
+	if (cls.cmdmsg.overflowed) {
 		Com_DPrintf("cls.cmdmsg overflowed\n");
-	SZ_Clear (&cls.cmdmsg);
+	}
+
+	SZ_Clear(&cls.cmdmsg);
 
 	// begin a client move command
 	MSG_WriteByte (&buf, clc_move);
@@ -969,15 +959,21 @@ void CL_SendCmd (void)
 
 	i = (cls.netchan.outgoing_sequence - 2) & UPDATE_MASK;
 	cmd = &cl.frames[i].cmd;
-	if (cl_c2sImpulseBackup.value >= 2)
+
+	if (cl_c2sImpulseBackup.value >= 2) {
 		dontdrop = dontdrop || cmd->impulse;
+	}
+
 	MSG_WriteDeltaUsercmd (&buf, &nullcmd, cmd);
 	oldcmd = cmd;
 
 	i = (cls.netchan.outgoing_sequence - 1) & UPDATE_MASK;
 	cmd = &cl.frames[i].cmd;
-	if (cl_c2sImpulseBackup.value >= 3)
+
+	if (cl_c2sImpulseBackup.value >= 3) {
 		dontdrop = dontdrop || cmd->impulse;
+	}
+
 	MSG_WriteDeltaUsercmd (&buf, oldcmd, cmd);
 	oldcmd = cmd;
 
@@ -993,36 +989,31 @@ void CL_SendCmd (void)
 		cls.netchan.outgoing_sequence);
 
 	// request delta compression of entities
-	if (cls.netchan.outgoing_sequence - cl.validsequence >= UPDATE_BACKUP - 1)
-	{
+	if (cls.netchan.outgoing_sequence - cl.validsequence >= UPDATE_BACKUP - 1) {
 		cl.validsequence = 0;
 		cl.delta_sequence = 0;
 	}
 
-	if (cl.delta_sequence && !cl_nodelta.value && cls.state == ca_active)
-	{
+	if (cl.delta_sequence && !cl_nodelta.value && cls.state == ca_active) {
 		cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].delta_sequence = cl.delta_sequence;
 		MSG_WriteByte (&buf, clc_delta);
 		MSG_WriteByte (&buf, cl.delta_sequence & 255);
 
 		// network stats table
 		network_stats[cls.netchan.outgoing_sequence&NETWORK_STATS_MASK].delta = 1;
-	}
-	else
-	{
+	} else {
 		cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].delta_sequence = -1;
 	}
 
-	if (cls.demorecording)
+	if (cls.demorecording) {
 		CL_WriteDemoCmd (cmd);
+	}
 
-	if (cl_c2spps.value)
-	{
+	if (cl_c2spps.value) {
 		pps_balance += cls.frametime;
 		// never drop more than 2 messages in a row -- that'll cause PL
 		// and don't drop if one of the last two movemessages have an impulse
-		if (pps_balance > 0 || dropcount >= 2 || dontdrop)
-		{
+		if (pps_balance > 0 || dropcount >= 2 || dontdrop) {
 			float	pps;
 			pps = cl_c2spps.value;
 			if (pps < 10) pps = 10;
@@ -1032,9 +1023,7 @@ void CL_SendCmd (void)
 			if (pps_balance > 0.1) pps_balance = 0.1;
 			if (pps_balance < -0.1) pps_balance = -0.1;
 			dropcount = 0;
-		}
-		else
-		{
+		} else {
 			// don't count this message when calculating PL
 			cl.frames[i].receivedtime = -3;
 			// drop this message
@@ -1042,9 +1031,7 @@ void CL_SendCmd (void)
 			dropcount++;
 			return;
 		}
-	}
-	else
-	{
+	} else {
 		pps_balance = 0;
 		dropcount = 0;
 	}
@@ -1057,98 +1044,94 @@ void CL_SendCmd (void)
 	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);
 }
 
-void CL_InitInput (void)
+void CL_InitInput(void)
 {
-	Cmd_AddCommand ("+moveup",IN_UpDown);
-	Cmd_AddCommand ("-moveup",IN_UpUp);
-	Cmd_AddCommand ("+movedown",IN_DownDown);
-	Cmd_AddCommand ("-movedown",IN_DownUp);
-	Cmd_AddCommand ("+left",IN_LeftDown);
-	Cmd_AddCommand ("-left",IN_LeftUp);
-	Cmd_AddCommand ("+right",IN_RightDown);
-	Cmd_AddCommand ("-right",IN_RightUp);
-	Cmd_AddCommand ("+forward",IN_ForwardDown);
-	Cmd_AddCommand ("-forward",IN_ForwardUp);
-	Cmd_AddCommand ("+back",IN_BackDown);
-	Cmd_AddCommand ("-back",IN_BackUp);
-	Cmd_AddCommand ("+lookup", IN_LookupDown);
-	Cmd_AddCommand ("-lookup", IN_LookupUp);
-	Cmd_AddCommand ("+lookdown", IN_LookdownDown);
-	Cmd_AddCommand ("-lookdown", IN_LookdownUp);
-	Cmd_AddCommand ("+strafe", IN_StrafeDown);
-	Cmd_AddCommand ("-strafe", IN_StrafeUp);
-	Cmd_AddCommand ("+moveleft", IN_MoveleftDown);
-	Cmd_AddCommand ("-moveleft", IN_MoveleftUp);
-	Cmd_AddCommand ("+moveright", IN_MoverightDown);
-	Cmd_AddCommand ("-moveright", IN_MoverightUp);
-	Cmd_AddCommand ("+speed", IN_SpeedDown);
-	Cmd_AddCommand ("-speed", IN_SpeedUp);
-	Cmd_AddCommand ("+attack", IN_AttackDown);
-	Cmd_AddCommand ("-attack", IN_AttackUp);
-	Cmd_AddCommand ("+fire", IN_FireDown);
-	Cmd_AddCommand ("-fire", IN_FireUp);
-	Cmd_AddCommand ("+attack2", IN_Attack2Down);
-	Cmd_AddCommand ("-attack2", IN_Attack2Up);
-	Cmd_AddCommand ("+use", IN_UseDown);
-	Cmd_AddCommand ("-use", IN_UseUp);
-	Cmd_AddCommand ("+jump", IN_JumpDown);
-	Cmd_AddCommand ("-jump", IN_JumpUp);
-	Cmd_AddCommand ("impulse", IN_Impulse);
-	Cmd_AddCommand ("weapon", IN_Weapon);
-	Cmd_AddCommand ("+klook", IN_KLookDown);
-	Cmd_AddCommand ("-klook", IN_KLookUp);
-	Cmd_AddCommand ("+mlook", IN_MLookDown);
-	Cmd_AddCommand ("-mlook", IN_MLookUp);
-
-
+	Cmd_AddCommand("+moveup",IN_UpDown);
+	Cmd_AddCommand("-moveup",IN_UpUp);
+	Cmd_AddCommand("+movedown",IN_DownDown);
+	Cmd_AddCommand("-movedown",IN_DownUp);
+	Cmd_AddCommand("+left",IN_LeftDown);
+	Cmd_AddCommand("-left",IN_LeftUp);
+	Cmd_AddCommand("+right",IN_RightDown);
+	Cmd_AddCommand("-right",IN_RightUp);
+	Cmd_AddCommand("+forward",IN_ForwardDown);
+	Cmd_AddCommand("-forward",IN_ForwardUp);
+	Cmd_AddCommand("+back",IN_BackDown);
+	Cmd_AddCommand("-back",IN_BackUp);
+	Cmd_AddCommand("+lookup", IN_LookupDown);
+	Cmd_AddCommand("-lookup", IN_LookupUp);
+	Cmd_AddCommand("+lookdown", IN_LookdownDown);
+	Cmd_AddCommand("-lookdown", IN_LookdownUp);
+	Cmd_AddCommand("+strafe", IN_StrafeDown);
+	Cmd_AddCommand("-strafe", IN_StrafeUp);
+	Cmd_AddCommand("+moveleft", IN_MoveleftDown);
+	Cmd_AddCommand("-moveleft", IN_MoveleftUp);
+	Cmd_AddCommand("+moveright", IN_MoverightDown);
+	Cmd_AddCommand("-moveright", IN_MoverightUp);
+	Cmd_AddCommand("+speed", IN_SpeedDown);
+	Cmd_AddCommand("-speed", IN_SpeedUp);
+	Cmd_AddCommand("+attack", IN_AttackDown);
+	Cmd_AddCommand("-attack", IN_AttackUp);
+	Cmd_AddCommand("+fire", IN_FireDown);
+	Cmd_AddCommand("-fire", IN_FireUp);
+	Cmd_AddCommand("+attack2", IN_Attack2Down);
+	Cmd_AddCommand("-attack2", IN_Attack2Up);
+	Cmd_AddCommand("+use", IN_UseDown);
+	Cmd_AddCommand("-use", IN_UseUp);
+	Cmd_AddCommand("+jump", IN_JumpDown);
+	Cmd_AddCommand("-jump", IN_JumpUp);
+	Cmd_AddCommand("impulse", IN_Impulse);
+	Cmd_AddCommand("weapon", IN_Weapon);
+	Cmd_AddCommand("+klook", IN_KLookDown);
+	Cmd_AddCommand("-klook", IN_KLookUp);
+	Cmd_AddCommand("+mlook", IN_MLookDown);
+	Cmd_AddCommand("-mlook", IN_MLookUp);
 	Cmd_AddCommand ("rotate",CL_Rotate_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 
-	Cvar_Register (&cl_smartjump);
-	Cvar_Register (&cl_weaponhide);
-	Cvar_Register (&cl_weaponpreselect);
+	Cvar_Register(&cl_smartjump);
+	Cvar_Register(&cl_weaponhide);
+	Cvar_Register(&cl_weaponpreselect);
 	Cvar_Register(&cl_weaponforgetorder);
-	Cvar_Register (&cl_weaponhide_axe);
-
-	Cvar_Register (&cl_upspeed);
-	Cvar_Register (&cl_forwardspeed);
-	Cvar_Register (&cl_backspeed);
-	Cvar_Register (&cl_sidespeed);
-	Cvar_Register (&cl_movespeedkey);
-	Cvar_Register (&cl_yawspeed);
-	Cvar_Register (&cl_pitchspeed);
-	Cvar_Register (&cl_anglespeedkey);
-
-	Cvar_Register (&cl_iDrive);
+	Cvar_Register(&cl_weaponhide_axe);
+	Cvar_Register(&cl_upspeed);
+	Cvar_Register(&cl_forwardspeed);
+	Cvar_Register(&cl_backspeed);
+	Cvar_Register(&cl_sidespeed);
+	Cvar_Register(&cl_movespeedkey);
+	Cvar_Register(&cl_yawspeed);
+	Cvar_Register(&cl_pitchspeed);
+	Cvar_Register(&cl_anglespeedkey);
+	Cvar_Register(&cl_iDrive);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MISC);
-	Cvar_Register (&lookspring);
-	Cvar_Register (&lookstrafe);
-	Cvar_Register (&sensitivity);
-	Cvar_Register (&freelook);
+	Cvar_Register(&lookspring);
+	Cvar_Register(&lookstrafe);
+	Cvar_Register(&sensitivity);
+	Cvar_Register(&freelook);
 	
 	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
-	Cvar_Register (&cursor_sensitivity);
+	Cvar_Register(&cursor_sensitivity);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-	Cvar_Register (&m_pitch);
-	Cvar_Register (&m_yaw);
-	Cvar_Register (&m_forward);
-	Cvar_Register (&m_side);
-	Cvar_Register (&m_accel);
+	Cvar_Register(&m_pitch);
+	Cvar_Register(&m_yaw);
+	Cvar_Register(&m_forward);
+	Cvar_Register(&m_side);
+	Cvar_Register(&m_accel);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
-	Cvar_Register (&cl_nodelta);
-	Cvar_Register (&cl_c2sImpulseBackup);
-	Cvar_Register (&cl_c2spps);
+	Cvar_Register(&cl_nodelta);
+	Cvar_Register(&cl_c2sImpulseBackup);
+	Cvar_Register(&cl_c2spps);
 
 	Cvar_ResetCurrentGroup();
 
 	#ifdef JSS_CAM
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
-	Cvar_Register (&cam_zoomspeed);
-	Cvar_Register (&cam_zoomaccel);
+	Cvar_Register(&cam_zoomspeed);
+	Cvar_Register(&cam_zoomaccel);
 	Cvar_ResetCurrentGroup();
 	#endif // JSS_CAM
 }
