@@ -280,9 +280,13 @@ double Sys_DoubleTime(void)
 
 int main(int argc, char **argv)
 {
-	extern void InitSig(void);
 	double time, oldtime, newtime;
 	int i;
+
+#ifdef __linux__
+	extern void InitSig(void);
+	InitSig();
+#endif
 
 	COM_InitArgv (argc, argv);
 
@@ -293,8 +297,6 @@ int main(int argc, char **argv)
 		if (*s != '-' && *s != '+')
 			qconsole_log = fopen(s, "a");
 	}
-
-	InitSig();
 
 	signal(SIGFPE, SIG_IGN);
 
