@@ -33,6 +33,7 @@ cvar_t	cl_c2spps = {"cl_c2spps","0"};
 cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
 cvar_t  cl_weaponhide = {"cl_weaponhide", "0"};
 cvar_t  cl_weaponpreselect = {"cl_weaponpreselect", "0"};
+cvar_t cl_weaponforgetorder = {"cl_weaponforgetorder", "0"};
 cvar_t	cl_weaponhide_axe = {"cl_weaponhide_axe", "0"};
 
 cvar_t	cl_smartjump = {"cl_smartjump", "1"};
@@ -431,6 +432,13 @@ static int IN_BestWeapon_Common(int implicit)
 				if (items & IT_LIGHTNING && cl.stats[STAT_CELLS] >= 1)
 					best = 8;
 		}
+	}
+
+	/* If weapon order shouldn't persist, set the first element
+	 * of the order to the most recently selected weapon
+	 */
+	if (cl_weaponforgetorder.integer == 1) {
+		weapon_order[0] = best;
 	}
 
 	return best;
@@ -1100,6 +1108,7 @@ void CL_InitInput (void)
 	Cvar_Register (&cl_smartjump);
 	Cvar_Register (&cl_weaponhide);
 	Cvar_Register (&cl_weaponpreselect);
+	Cvar_Register(&cl_weaponforgetorder);
 	Cvar_Register (&cl_weaponhide_axe);
 
 	Cvar_Register (&cl_upspeed);
