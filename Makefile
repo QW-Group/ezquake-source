@@ -53,6 +53,15 @@ else
     ifeq ($(SYS),Linux)
         LDFLAGS_c += -Wl,--no-undefined
     endif
+
+	# Make sure we can relink dynamic libraries
+	ifeq ($(SYS),Darwin)
+		LDFLAGS_c += -headerpad_max_install_names
+
+		# Also on OS X 10.10 at least, expat is a system library
+		EXPAT_CFLAGS =
+		EXPAT_LIBS = -lexpat
+	endif
 endif
 
 BUILD_DEFS := -DCPUSTRING='"$(CPU)"'
