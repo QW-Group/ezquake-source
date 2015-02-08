@@ -29,6 +29,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/time.h>
 #include <machine/cpufunc.h>
 #endif
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
 #include <SDL.h>
 #include "quakedef.h"
 #include "EX_browser.h"
@@ -248,8 +252,26 @@ void SYSINFO_Init(void)
 #elif defined(__APPLE__)
 void SYSINFO_Init(void)
 {
-	// TODO: disconnect --> f_system for MacOSX (man sysctl)
-	// VVD: Look at code for FreeBSD: 30 lines down. :-)
+    int mib[2];
+    mib[0] = CTL_HW;
+    mib[1] = HW_MEMSIZE;
+    int64_t memsize_value;
+    size_t length = sizeof(memsize_value);
+    if (sysctl(mib, 2, &memsize_value, &length, NULL, 0) != -1)
+    	SYSINFO_memory = memsize_value;
+
+    char cpu_brand_string[100];
+    size_t cpu_brand_string_len = 100;
+    if (sysctlbyname("machdep.cpu.brand_string", &cpu_brand_string, &cpu_brand_string_len, NULL, 0) != -1)
+        SYSINFO_processor_description = cpu_brand_string;
+
+    mib[0] = CTL_HW;
+    mib[1] = HW_CPU_FREQ;
+    int cpu_frequency_value;
+    length = sizeof(cpu_frequency_value);
+    if (sysctl(mib, 2, &cpu_frequency_value, &length, NULL, 0) != -1)
+        SYSINFO_MHz = cpu_frequency_value / 1000. / 1000. + .5;
+
 	{
 		extern const char *gl_renderer;
 
