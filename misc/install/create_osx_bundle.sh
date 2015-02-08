@@ -29,7 +29,17 @@ cp $BINARY $BUNDLE_NAME/Contents/MacOS/.
 cp $(dirname $0)/$ICON_FILE $BUNDLE_NAME/Contents/Resources/.
 touch $BUNDLE_NAME/Contents/Resources/id1/Copy\ your\ pak0.pak\ and\ pak1.pak\ files\ here.txt
 
-echo "#!/bin/sh\nif [ ! -f \"\$(dirname \$0)/../Resources/id1/pak1.pak\" ]; then\n\topen \$(dirname \$0)/../Resources/id1/\n\texit\nfi\n\nexec \$(dirname \$0)/$BINARY -basedir \$(dirname \$0)/../Resources" > $BUNDLE_NAME/Contents/MacOS/ezquake
+echo '#!/bin/sh' > $BUNDLE_NAME/Contents/MacOS/ezquake
+echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'DIRNAME=$(dirname "$0")' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'if [ ! -f "$DIRNAME"/../Resources/id1/pak1.pak ]; then' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo '    open "$DIRNAME"/../Resources/id1/' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo '    exit' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'fi' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo "exec \"\$DIRNAME\"/$BINARY -basedir \"\$DIRNAME\"/../Resources" >> $BUNDLE_NAME/Contents/MacOS/ezquake
+
 chmod u+x $BUNDLE_NAME/Contents/MacOS/ezquake
 
 /usr/libexec/PlistBuddy -c "Add :CFBundleName string \"ezQuake\"" $BUNDLE_NAME/Contents/Info.plist > /dev/null
