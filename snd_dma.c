@@ -670,12 +670,6 @@ static void GetSoundtime (void)
 	int samplepos, fullsamples;
 	static int buffers, oldsamplepos;
 
-	//joe: capturing audio
-#ifdef _WIN32
-	if (Movie_GetSoundtime())
-		return;
-#endif
-
 	fullsamples = shm->sampleframes;
 	samplepos = SNDDMA_GetDMAPos();
 
@@ -692,7 +686,11 @@ static void GetSoundtime (void)
 
 	oldsamplepos = samplepos;
 
-	soundtime = buffers * fullsamples + samplepos / shm->format.channels;
+#ifdef _WIN32
+	//joe: capturing audio
+	if (!Movie_GetSoundtime())
+		soundtime = buffers * fullsamples + samplepos / shm->format.channels;
+#endif
 }
 
 void S_ExtraUpdate (void)

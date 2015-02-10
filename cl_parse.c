@@ -150,6 +150,7 @@ typedef struct cl_message_s
 static cl_message_t cl_messages[NUMMSG];
 
 static void CL_Messages_f(void);
+static void CL_InitialiseDemoMessageIfRequired();
 
 void Cl_Messages_Init(void)
 {
@@ -1424,7 +1425,7 @@ void CL_ParseServerData (void)
 
 		if (protover == PROTOCOL_VERSION) //this ends the version info
 			break;
-		if (cls.demoplayback && (protover == 26 || protover == 27 || protover == 28))	//older versions, maintain demo compatability.
+		if (cls.demoplayback && protover >= 24 && protover <= 28)	//older versions, maintain demo compatability.
 			break;
 		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.quakeworld.net/", protover, PROTOCOL_VERSION);
 	}
@@ -1551,16 +1552,35 @@ void CL_ParseServerData (void)
 	strlcpy (cl.levelname, str, sizeof(cl.levelname));
 
 	// get the movevars
-	movevars.gravity			= MSG_ReadFloat();
-	movevars.stopspeed          = MSG_ReadFloat();
-	cl.maxspeed                 = MSG_ReadFloat();
-	movevars.spectatormaxspeed  = MSG_ReadFloat();
-	movevars.accelerate         = MSG_ReadFloat();
-	movevars.airaccelerate      = MSG_ReadFloat();
-	movevars.wateraccelerate    = MSG_ReadFloat();
-	movevars.friction           = MSG_ReadFloat();
-	movevars.waterfriction      = MSG_ReadFloat();
-	cl.entgravity               = MSG_ReadFloat();
+	if (cl.protoversion >= 25) 
+	{
+		movevars.gravity			= MSG_ReadFloat();
+		movevars.stopspeed          = MSG_ReadFloat();
+		cl.maxspeed                 = MSG_ReadFloat();
+		movevars.spectatormaxspeed  = MSG_ReadFloat();
+		movevars.accelerate         = MSG_ReadFloat();
+		movevars.airaccelerate      = MSG_ReadFloat();
+		movevars.wateraccelerate    = MSG_ReadFloat();
+		movevars.friction           = MSG_ReadFloat();
+		movevars.waterfriction      = MSG_ReadFloat();
+		cl.entgravity               = MSG_ReadFloat();
+	}
+	else
+	{
+		// These seem to be the defaults for standard QW... 
+		//   if there are mods with other defaults, we could 
+		//   set accordingly to give best experience?
+		movevars.gravity = 800.0f;
+		movevars.stopspeed = 100.0f;
+		cl.maxspeed = 320.0f;
+		movevars.spectatormaxspeed = 500.0f;
+		movevars.accelerate = 10.0f;
+		movevars.airaccelerate = 0.7f;
+		movevars.wateraccelerate = 10.0f;
+		movevars.friction = 6.0f;
+		movevars.waterfriction = 1.0f;
+		cl.entgravity = 1.0f;
+	}
 
 	// separate the printfs so the server message can have a color
 	Com_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
@@ -1592,36 +1612,50 @@ void CL_ParseSoundlist (void)
 	// precache sounds
 	// memset (cl.sound_precache, 0, sizeof(cl.sound_precache));
 
-	numsounds = MSG_ReadByte();
-
-	while (1) 
+	if (cl.protoversion >= 26) 
 	{
-		str = MSG_ReadString ();
-		if (!str[0])
-			break;
-		numsounds++;
-		if (numsounds == MAX_SOUNDS)
-			Host_Error ("Server sent too many sound_precache");
-		if (str[0] == '/')
-			str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
-		strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
+		numsounds = MSG_ReadByte();
+
+		while (1) 
+		{
+			str = MSG_ReadString ();
+			if (!str[0])
+				break;
+			numsounds++;
+			if (numsounds == MAX_SOUNDS)
+				Host_Error ("Server sent too many sound_precache");
+			if (str[0] == '/')
+				str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
+			strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
+		}
+
+		n = MSG_ReadByte();
+
+		if (n) 
+		{
+			if (cls.mvdplayback == QTV_PLAYBACK) 
+			{
+				// none
+			}
+			else 
+			{
+				MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+				MSG_WriteString(&cls.netchan.message, va("soundlist %i %i", cl.servercount, n));
+			}
+
+			return;
+		}
 	}
-
-	n = MSG_ReadByte();
-
-	if (n) 
+	else 
 	{
-		if (cls.mvdplayback == QTV_PLAYBACK) 
-		{
-			// none
-		}
-		else 
-		{
-			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-			MSG_WriteString(&cls.netchan.message, va("soundlist %i %i", cl.servercount, n));
-		}
-
-		return;
+		// Taken from http://www.quakewiki.net/archives/demospecs/qwd/qwd.html#AEN562
+		numsounds = 0;
+		do {
+			if (++numsounds > 255)
+				Host_Error ("Server sent too many sound_precache");
+			str = MSG_ReadString ();
+			strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
+		} while (*str);
 	}
 
 	cls.downloadnumber = 0;
@@ -1634,61 +1668,83 @@ void CL_ParseModellist (qbool extended)
 	int	nummodels, n;
 	char *str;
 
-	// Precache models and note certain default indexes
-	nummodels = (extended) ? (unsigned) MSG_ReadShort () : MSG_ReadByte ();
-
-	while (1) 
+	if (cl.protoversion >= 26)
 	{
-		str = MSG_ReadString ();
-		if (!str[0])
-			break;
+		// Precache models and note certain default indexes
+		nummodels = (extended) ? (unsigned) MSG_ReadShort () : MSG_ReadByte ();
 
-		#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
-		nummodels++;
-		if (nummodels >= MAX_MODELS) //Spike: tweeked this, we still complain if the server exceeds the standard limit without using extensions.
-			Host_Error ("Server sent too many model_precache");
-		
-		if (nummodels >= 256 && !(cls.fteprotocolextensions & FTE_PEXT_MODELDBL))
-		#else
-		if (++nummodels == MAX_MODELS)
-		#endif // PROTOCOL_VERSION_FTE
+		while (1) 
 		{
-			Host_Error ("Server sent too many model_precache");
-		}
+			str = MSG_ReadString ();
+			if (!str[0])
+				break;
 
-		if (str[0] == '/')
-			str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
-		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
-
-		if (nummodels == 1)
-			if (!com_serveractive) 
-			{
-				char mapname[MAX_QPATH];
-				COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
-				Cvar_ForceSet (&host_mapname, mapname);
-			}
-	}
-
-	if ((n = MSG_ReadByte())) 
-	{
-		if (cls.mvdplayback == QTV_PLAYBACK) 
-		{
-			// none
-		}
-		else 
-		{
-			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-			
 			#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
-			MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, (nummodels&0xff00)+n));
+			nummodels++;
+			if (nummodels >= MAX_MODELS) //Spike: tweeked this, we still complain if the server exceeds the standard limit without using extensions.
+				Host_Error ("Server sent too many model_precache");
+		
+			if (nummodels >= 256 && !(cls.fteprotocolextensions & FTE_PEXT_MODELDBL))
 			#else
-			MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, n));
+			if (++nummodels == MAX_MODELS)
 			#endif // PROTOCOL_VERSION_FTE
+			{
+				Host_Error ("Server sent too many model_precache");
+			}
+
+			if (str[0] == '/')
+				str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
+			strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
+
+			if (nummodels == 1)
+				if (!com_serveractive) 
+				{
+					char mapname[MAX_QPATH];
+					COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+					Cvar_ForceSet (&host_mapname, mapname);
+				}
 		}
 
-		return;
-	}
+		if ((n = MSG_ReadByte())) 
+		{
+			if (cls.mvdplayback == QTV_PLAYBACK) 
+			{
+				// none
+			}
+			else 
+			{
+				MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+			
+				#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
+				MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, (nummodels&0xff00)+n));
+				#else
+				MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, n));
+				#endif // PROTOCOL_VERSION_FTE
+			}
 
+			return;
+		}
+	}
+	else 
+	{
+		// Up to 2.1 (taken from http://www.quakewiki.net/archives/demospecs/qwd/qwd.html#AEN562)
+		nummodels = 0;
+		do 
+		{
+			if (++nummodels > 255)
+				Host_Error ("Server sent too many model_precache\n");
+			str = MSG_ReadString ();
+			strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
+
+			if (nummodels == 1)
+				if (!com_serveractive) 
+				{
+					char mapname[MAX_QPATH];
+					COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+					Cvar_ForceSet (&host_mapname, mapname);
+				}
+		} while (*str);
+	}
 	cls.downloadnumber = 0;
 	cls.downloadtype = dl_model;
 	Model_NextDownload ();
@@ -3227,7 +3283,7 @@ void CL_ParseServerMessage (void)
 		{
 			default:
 			{	
-				Host_Error ("CL_ParseServerMessage: Illegible server message\n");
+				Host_Error ("CL_ParseServerMessage: Illegible server message (%d)\n", cmd);
 				break;
 			}
 			case svc_nop:
@@ -3266,6 +3322,10 @@ void CL_ParseServerMessage (void)
 					Host_Error( "Server disconnected\n"
 								"Server version may not be compatible");
 				} 
+				else if (cls.demoplayback && cls.state == ca_demostart) 
+				{
+					Com_DPrintf("Server disconnect found - hadn't started yet, ignoring.\n");
+				}
 				else 
 				{
 					Com_DPrintf("Server disconnected\n");
@@ -3534,7 +3594,16 @@ void CL_ParseServerMessage (void)
 			}
 			case svc_playerinfo:
 			{
-				CL_ParsePlayerinfo();
+				if (cls.demorecording)
+				{
+					CL_InitialiseDemoMessageIfRequired();
+					MSG_WriteByte(&cls.demomessage, svc_playerinfo);
+					CL_ParsePlayerinfo(&cls.demomessage);
+				}
+				else 
+				{
+					CL_ParsePlayerinfo(NULL);
+				}
 				break;
 			}
 			case svc_nails:
@@ -3630,13 +3699,9 @@ void CL_ParseServerMessage (void)
 		if (cls.demorecording)
 		{
 			// Init the demo message buffer if it hasn't been done.
-			if (!cls.demomessage.cursize)
-			{
-				SZ_Init(&cls.demomessage, cls.demomessage_data, sizeof(cls.demomessage_data));
-				SZ_Write(&cls.demomessage, net_message.data, 8);
-			}
+			CL_InitialiseDemoMessageIfRequired();
 
-			// Write the changei n entities to the demo being recorded
+			// Write the change in entities to the demo being recorded
 			// or the net message we just received.
 			if (cmd == svc_deltapacketentities)
 				CL_WriteDemoEntities();
@@ -3645,7 +3710,7 @@ void CL_ParseServerMessage (void)
 			}
 			else if (cmd == svc_serverdata)
 				CL_WriteServerdata(&cls.demomessage);
-			else
+			else if (cmd != svc_playerinfo)		// We write svc_playerinfo out as we read it in
 				SZ_Write(&cls.demomessage, net_message.data + msg_svc_start, msg_readcount - msg_svc_start);
 		}
 	}
@@ -3658,4 +3723,13 @@ void CL_ParseServerMessage (void)
 	}
 
 	CL_SetSolidEntities ();
+}
+
+static void CL_InitialiseDemoMessageIfRequired()
+{
+	if (!cls.demomessage.cursize)
+	{
+		SZ_Init(&cls.demomessage, cls.demomessage_data, sizeof(cls.demomessage_data));
+		SZ_Write(&cls.demomessage, net_message.data, 8);
+	}
 }

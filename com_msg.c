@@ -593,7 +593,7 @@ void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
 
 	bits = MSG_ReadByte ();
 
-	if (protoversion == 26) {
+	if (protoversion <= 26) {
 		// read current angles
 		if (bits & CM_ANGLE1)
 			move->angles[0] = MSG_ReadAngle16 ();
@@ -634,10 +634,10 @@ void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
 		move->impulse = MSG_ReadByte ();
 
 	// read time to run command
-	if (protoversion == 26) {
-		if (bits & CM_MSEC)
-			move->msec = MSG_ReadByte ();
-	} else {
+	if (protoversion <= 26 && (bits & CM_MSEC)) {
+		move->msec = MSG_ReadByte ();
+	} 
+	else if (protoversion >= 27) {
 		move->msec = MSG_ReadByte (); // always sent
 	}
 }

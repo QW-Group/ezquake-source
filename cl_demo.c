@@ -89,11 +89,19 @@ cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 cvar_t cl_startupdemo = {"cl_startupdemo", ""};
 
+// Used to save track status when rewinding.
+static int rewind_trackslots[4];
+static int rewind_duel_track1 = 0;
+static int rewind_duel_track2 = 0;
+static int rewind_spec_track = 0;
+static vec3_t rewind_angle;
+static vec3_t rewind_pos;
+
 char Demos_Get_Trackname(void);
 static void CL_DemoPlaybackInit(void);
 
 char *CL_DemoDirectory(void);
-static void CL_Demo_Jump_Status_Check (void);
+void CL_Demo_Jump_Status_Check (void);
 
 //=============================================================================
 //								DEMO WRITING
@@ -280,7 +288,7 @@ void CL_WriteDemoEntities (void)
 {
 	int ent_index, ent_total;
 	entity_state_t *ent;
-
+	
 	// Write the ID byte for a delta entity operation to the demo.
 	MSG_WriteByte (&cls.demomessage, svc_packetentities);
 
@@ -1660,13 +1668,20 @@ static float CL_PeekDemoTime(void)
 			nextdemotime = demotime;
 		}
 	}
-	else
+	else 
 	{
 		// Peek inside, but don't read.
 		// (Since it might not be time to continue reading in the demo
 		// we want to be able to check this again later if that's the case).
 		CL_Demo_Read(&demotime, sizeof(demotime), true);
 		demotime = LittleFloat(demotime);
+
+		if (demotime < cls.demotime)
+		{
+			olddemotime = nextdemotime;
+
+			nextdemotime = demotime;
+		}
 	}
 
 	return demotime;
@@ -1907,12 +1922,6 @@ qbool CL_GetDemoMessage (void)
 	byte message_type;
 	//static float prevtime = 0;
 
-	// Used to save track status when rewinding.
-	static int rewind_trackslots[4];
-	static int rewind_duel_track1 = 0;
-	static int rewind_duel_track2 = 0;
-	static int rewind_spec_track = 0;
-
 	// Don't try to play while QWZ is being unpacked.
 	#ifdef _WIN32
 	if (qwz_unpacking)
@@ -1940,43 +1949,9 @@ qbool CL_GetDemoMessage (void)
 	bufferingtime = 0;
 
 	// DEMO REWIND.
-	if (!cls.mvdplayback || cls.mvdplayback != QTV_PLAYBACK) 
+	if (!cls.mvdplayback || cls.mvdplayback != QTV_PLAYBACK)
 	{
-		// If we're seeking and our seek destination is in the past we need to rewind.
-		if (cls.demoseeking && !cls.demorewinding && (cls.demotime < nextdemotime))
-		{
-			// Restart playback from the start of the file and then demo seek to the rewind spot.
-			VFS_SEEK(playbackfile, 0, SEEK_SET);
-
-			// We need to save track information.
-			memcpy(rewind_trackslots, mv_trackslots, sizeof(rewind_trackslots));
-			rewind_duel_track1 = nTrack1duel;
-			rewind_duel_track2 = nTrack2duel;
-			rewind_spec_track = spec_track;
-			cls.findtrack = false;
-
-			// Restart the demo from scratch.
-			CL_DemoPlaybackInit();
-			
-			prevtime			= 0.0;
-			cls.demorewinding	= true;			
-		}
-
-		if (cls.demorewinding)
-		{
-			// If we've reached active state, we can set the new demotime
-			// to trigger the demo seek to the desired location.
-			// Before we're active, cl.demotime will just get overwritten.
-			if (cls.state >= ca_active)
-			{
-				cls.demotime = demostarttime + cls.demo_rewindtime;
-				cls.demoseeking = DST_SEEKING_NORMAL;
-				cls.demorewinding = false;
-
-				// We have now finished restarting the demo and will now seek
-				// to the new demotime just like we do when seeking forward.
-			}
-		}
+		CL_Demo_Check_For_Rewind(nextdemotime);
 	}
 
 	// Adjust the time for MVD playback.
@@ -2019,24 +1994,17 @@ qbool CL_GetDemoMessage (void)
 			CL_Demo_Jump_Status_Check();
 
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
-		if (cls.demoseeking == DST_SEEKING_FOUND)
+		if (cls.demoseeking == DST_SEEKING_FOUND) 
 			cls.demotime = demotime; // this will trigger seeking stop
 
 		// If we've reached our seek goal, stop seeking.
-		if (cls.demoseeking && cls.demotime <= demotime)
+		if (cls.demoseeking && cls.demotime <= demotime && cls.state >= ca_active)
 		{
 			cls.demoseeking = DST_SEEKING_NONE;
 
 			if (cls.demorewinding)
 			{
-				// Make sure we keep our tracked players after rewinding.
-				memcpy(mv_trackslots, rewind_trackslots, sizeof(mv_trackslots));
-				nTrack1duel			= rewind_duel_track1;
-				nTrack2duel			= rewind_duel_track2;
-				Cam_Lock(rewind_spec_track);
-				cls.findtrack		= false;
-
-				R_InitParticles();
+				CL_Demo_Stop_Rewinding();
 			}
 		}
 
@@ -2051,7 +2019,7 @@ qbool CL_GetDemoMessage (void)
 		// Read the time from the packet (we peaked at it earlier),
 		// we're ready to get the next message.
 		CL_ConsumeDemoTime();
-		
+
 		// Save the previous time for MVD playback (for the next message),
 		// it is needed to calculate the demotime since in mvd's the time is
 		// saved as the number of miliseconds since last frame message.
@@ -3557,7 +3525,8 @@ void CL_Play_f (void)
 
 	char *real_name;
 	char name[MAX_OSPATH], **s;
-	static char *ext[] = {"qwd", "mvd", "dem", NULL};
+	static char *ext[] = {NULL, "qwd", "mvd", "dem", NULL};
+	char **first_valid_extension = ext + 1;
 
 	// Show usage.
 	if (Cmd_Argc() != 2)
@@ -3612,7 +3581,17 @@ void CL_Play_f (void)
 	//
 	// Find the demo path, trying different extensions if needed.
 	//
-	for (s = ext; *s && !playbackfile; s++)
+
+	// If they specified a valid extension, use that first
+	for (s = first_valid_extension; *s; ++s)
+		if (!strcasecmp(COM_FileExtension(name), *s)) 
+		{
+			ext[0] = *s;
+			first_valid_extension = ext;
+			break;
+		}
+
+	for (s = first_valid_extension; *s && !playbackfile; s++)
 	{
 		// Strip the extension from the specified filename and append
 		// the one we're currently checking for.
@@ -3649,7 +3628,7 @@ void CL_Play_f (void)
 		if (!playbackfile)
 		{
 			// Check the file extension is valid
-			for (s = ext; *s; s++) 
+			for (s = first_valid_extension; *s; s++) 
 			{
 				if (strcmp(*s, file_ext) == 0)
 					break;
@@ -4476,6 +4455,76 @@ void CL_Demo_SetSpeed_f (void)
 }
 
 //
+// Cleans up after demo has been rewound to the correct point
+//
+void CL_Demo_Stop_Rewinding(void) 
+{
+	// Make sure we keep our tracked players after rewinding.
+	memcpy(mv_trackslots, rewind_trackslots, sizeof(mv_trackslots));
+	nTrack1duel			= rewind_duel_track1;
+	nTrack2duel			= rewind_duel_track2;
+	if (rewind_spec_track >= 0) 
+	{
+		Cam_Lock(rewind_spec_track);
+	}
+	else 
+	{
+		// Switch to free-floating camera and restore view
+		Cam_Unlock();
+		Cam_Pos_Set(rewind_pos[0], rewind_pos[1], rewind_pos[2]);
+		Cam_Angles_Set(rewind_angle[0], rewind_angle[1], rewind_angle[2]);
+	}
+	cls.findtrack		= false;
+
+	R_InitParticles();
+	cls.demorewinding   = false;
+}
+
+// 
+// Checks if demo needs to be rewound to previous point in time
+//
+void CL_Demo_Check_For_Rewind(float nextdemotime)
+{
+	// If we're seeking and our seek destination is in the past we need to rewind.
+	if (cls.demoseeking && !cls.demorewinding && (cls.demotime < nextdemotime))
+	{
+		// Restart playback from the start of the file and then demo seek to the rewind spot.
+		VFS_SEEK(playbackfile, 0, SEEK_SET);
+
+		// We need to save track information.
+		memcpy(rewind_trackslots, mv_trackslots, sizeof(rewind_trackslots));
+		rewind_duel_track1 = nTrack1duel;
+		rewind_duel_track2 = nTrack2duel;
+		rewind_spec_track = WhoIsSpectated(); //spec_track;
+		cls.findtrack = false;
+		VectorCopy(cl.viewangles, rewind_angle);
+		VectorCopy(cl.simorg, rewind_pos);
+
+		// Restart the demo from scratch.
+		CL_DemoPlaybackInit();
+
+		prevtime			= 0.0;
+		cls.demorewinding	= true;			
+	}
+	
+	if (cls.demorewinding)
+	{
+		// If we've reached active state, we can set the new demotime
+		// to trigger the demo seek to the desired location.
+		// Before we're active, cl.demotime will just get overwritten.
+		if (cls.state >= ca_active)
+		{
+			cls.demotime = demostarttime + cls.demo_rewindtime;
+			cls.demoseeking = DST_SEEKING_NORMAL;
+			//cls.demorewinding = false;
+
+			// We have now finished restarting the demo and will now seek
+			// to the new demotime just like we do when seeking forward.
+		}
+	}
+}
+
+//
 // Jumps to a specified time in a demo.
 //
 void CL_Demo_Jump_f (void)
@@ -4687,7 +4736,7 @@ static qbool CL_Demo_Jump_Status_Match (demoseekingstatus_condition_t *condition
 	}
 }
 
-static void CL_Demo_Jump_Status_Check (void)
+void CL_Demo_Jump_Status_Check (void)
 {
 	if (CL_Demo_Jump_Status_Match(cls.demoseekingstatus.conditions)) {
 		if (cls.demoseekingstatus.non_matching_found) {
@@ -4867,10 +4916,11 @@ static void CL_Demo_Jump_Status_f (void)
 void CL_Demo_Jump(double seconds, int relative, demoseekingtype_t seeking)
 {
 	// Calculate the new demo time we want to jump to.
-	double newdemotime = relative ? (cls.demotime + (relative * seconds)) : (demostarttime + seconds);
+	double initialtime = (cls.nqdemoplayback ? cl.servertime : cls.demotime);
+	double newdemotime = relative ? (initialtime + (relative * seconds)) : (demostarttime + seconds);
 
 	// We need to rewind.
-	if (newdemotime < cls.demotime)
+	if (newdemotime < initialtime)
 	{
 		cls.demo_rewindtime = newdemotime - demostarttime;
 	}

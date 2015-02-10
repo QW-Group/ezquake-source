@@ -137,4 +137,6 @@ typedef struct {
 	qbool mini;			// minimalistic version (doesn't display help and has infinite scrolling)
 } settings_page;
 
+char* SettingColorName(int color);
+
 #endif // __SETTINGS_H__

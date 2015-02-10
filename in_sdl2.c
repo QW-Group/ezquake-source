@@ -158,10 +158,6 @@ void IN_Shutdown(void)
 
 /* FIXME? */
 
-int ctrlDown = 0;
-int shiftDown = 0;
-int altDown = 0;
-
-int isAltDown(void) {return altDown;}
-int isCtrlDown(void) {return ctrlDown;}
-int isShiftDown(void) {return shiftDown;}
+int isAltDown(void) { return keydown[K_ALT]; }
+int isCtrlDown(void) { return keydown[K_CTRL]; }
+int isShiftDown(void) { return keydown[K_SHIFT]; }

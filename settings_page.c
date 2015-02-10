@@ -60,6 +60,18 @@ static float SliderPos(float min, float max, float val) { return (val-min)/(max-
 static const char* colors[14] = { "White", "Brown", "Lavender", "Khaki", "Red", "Lt Brown", "Peach", "Lt Peach", "Purple", "Dk Purple", "Tan", "Green", "Yellow", "Blue" };
 #define COLORNAME(x) colors[bound(0, ((int) x), sizeof(colors) / sizeof(char*) - 1)]
 
+char* SettingColorName(int color)
+{
+	static char tempBuffer[64];
+
+	if (color < 0 || color > sizeof(colors) / sizeof(colors[0]))
+		Host_Error("SettingColorName(color %d) out of range.\n", color);
+
+	strlcpy(tempBuffer, colors[color], sizeof(tempBuffer));
+
+	return tempBuffer;
+}
+
 float VARFVAL(const cvar_t *v)
 {
     if ((v->flags & CVAR_LATCH) && v->latchedString)

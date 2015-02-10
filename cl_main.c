@@ -137,6 +137,9 @@ cvar_t	cl_fakename = {"cl_fakename", ""};
 cvar_t	cl_fakename_suffix = {"cl_fakename_suffix", ": "};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
+void OnChangeColorForcing (cvar_t *var, char *value, qbool *cancel);
+void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel);
+cvar_t  cl_demoteamplay = {"cl_demoteamplay", "0", 0, OnChangeDemoTeamplay};	// for NQ demos where we need to say it is teamplay rather than FFA
 
 cvar_t	cl_earlypackets = {"cl_earlypackets", "1"};
 
@@ -1837,6 +1840,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&qwdtools_dir);
 	Cvar_Register (&demo_getpings);
 	Cvar_Register (&demo_autotrack);
+	Cvar_Register (&cl_demoteamplay);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register (&cl_staticsounds);
@@ -2167,7 +2171,7 @@ static double MinPhysFrameTime (void)
 	float physfps = ((cl.spectator && !cls.demoplayback) ? cl_physfps_spectator.value : cl_physfps.value);
 
 	// this makes things smooth in mvd demo play back, since mvd interpolation applied each frame
-	if (cls.demoplayback)
+	if (cls.demoplayback && cls.mvdplayback)
 		return 0;
 
 	// the user can lower it for testing (or really shit connection)
@@ -2268,7 +2272,7 @@ void CL_Frame (double time)
 		cls.frametime = Movie_StartFrame();
 	else
 		cls.frametime = min(0.2, cls.trueframetime);
-
+	
 	if (cl_independentPhysics.value != 0)
 	{
 		double minphysframetime = MinPhysFrameTime();
@@ -2352,7 +2356,7 @@ void CL_Frame (double time)
 		{
 			MVD_Interpolate();
 			MVD_Mainhook();
-			
+
 			if (!cl.standby && physframe)
 			{
 				StatsGrid_Gather();
@@ -2398,7 +2402,7 @@ void CL_Frame (double time)
 			{
 				MVD_Interpolate();
 				MVD_Mainhook();
-			
+
 				if (!cl.standby && physframe)
 				{
 					StatsGrid_Gather();
@@ -2939,3 +2943,22 @@ void CL_UpdateCaption(qbool force)
 	}
 }
 
+void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel)
+{
+	int i = 0;
+
+	cl.teamplay = (*value != '0');
+
+	if (cls.nqdemoplayback) 
+	{
+		for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i)
+		{
+			player_info_t* player = &cl.players[i];
+
+			// All white with <= -99 frags => spectator
+			player->spectator = (*player->name && cl.teamplay && player->real_topcolor == 0 && player->real_bottomcolor == 0 && player->frags <= -99);
+		}
+	}
+
+	OnChangeColorForcing(var, value, cancel);
+}
