@@ -1,0 +1,17 @@
+How to compile on OSX 10.10:
+
+Get Homebrew: http://brew.sh
+
+Run exactly as it says on the front page:
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+Make sure you run the 'brew doctor' as instructed before doing anything else.
+
+Then run:
+
+brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre
+
+When it's done, just hit make and it should compile without errors
+
+TODO:
+Add info on how to create an application bundle with the provided scripts
