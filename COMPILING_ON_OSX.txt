@@ -13,5 +13,11 @@ brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre
 
 When it's done, just hit make and it should compile without errors
 
-TODO:
-Add info on how to create an application bundle with the provided scripts
+TO CREATE AN APP BUNDLE:
+Call from main ezquake-source directory. e.g. you probably do something like this:
+
+ $ make
+ $ sh misc/install/create_osx_bundle.sh
+
+Current directory should have an ezQuake.app folder which is the app.
+There will also be an ezquake.zip which basically just zips up the .app
