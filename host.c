@@ -81,20 +81,19 @@ typedef BOOL (WINAPI *PGMSE)(LPMEMORYSTATUSEX);
 
 void SYSINFO_Init(void)
 {
-	LONG            ret;
-	HKEY            hKey;
-	PGMSE			pGMSE;
+	LONG  ret;
+	HKEY  hKey;
+	PGMSE pGMSE;
+
+	extern const char *gl_renderer;
 
 	// Get memory size.
-	if ((pGMSE = (PGMSE)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GlobalMemoryStatusEx")) != NULL)
-	{
+	if ((pGMSE = (PGMSE)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GlobalMemoryStatusEx")) != NULL) {
 		MEMORYSTATUSEX	memstat;
 		memstat.dwLength = sizeof(memstat);
 		pGMSE(&memstat);
 		SYSINFO_memory = memstat.ullTotalPhys;
-	}
-	else
-	{
+	} else {
 		// Win9x doesn't have GlobalMemoryStatusEx.
 		MEMORYSTATUS memstat;
 		GlobalMemoryStatus(&memstat);
@@ -107,8 +106,7 @@ void SYSINFO_Init(void)
 	          "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
 	          &hKey);
 
-	if (ret == ERROR_SUCCESS) 
-	{
+	if (ret == ERROR_SUCCESS) {
 		DWORD type;
 		byte  data[1024];
 		DWORD datasize;
@@ -140,11 +138,11 @@ void SYSINFO_Init(void)
 		RegCloseKey(hKey);
 	}
 
-	{
-		extern const char *gl_renderer;
-
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	if (gl_renderer && gl_renderer[0]) {
+		if (SYSINFO_3D_description != NULL) {
+			free(SYSINFO_3D_description);
+		}
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
 	//
@@ -153,19 +151,16 @@ void SYSINFO_Init(void)
 	
 	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
 
-	if (SYSINFO_processor_description) 
-	{
+	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 
-	if (SYSINFO_MHz) 
-	{
+	if (SYSINFO_MHz) {
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 
-	if (SYSINFO_3D_description) 
-	{
+	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
@@ -175,10 +170,12 @@ void SYSINFO_Init(void)
 {
 	// disconnect: which way is best(MEM/CPU-MHZ/CPU-MODEL)?
 	f_system_string[0] = 0;
-	char buffer[1024];
-	char cpu_model[255];
+	char buffer[1024] = {0};
+	char cpu_model[255] = {0};
 	char *match;
 	FILE *f;
+
+	extern const char *gl_renderer;
 
 	// MEM
 	f = fopen("/proc/meminfo", "r");
@@ -228,11 +225,12 @@ void SYSINFO_Init(void)
 		Com_Printf("could not open /proc/cpuinfo!\n");
 	}
 
-	{
-		extern const char *gl_renderer;
 
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	if (gl_renderer && gl_renderer[0]) {
+		if (SYSINFO_3D_description != NULL) {
+			free(SYSINFO_3D_description);
+		}
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
@@ -252,31 +250,38 @@ void SYSINFO_Init(void)
 #elif defined(__APPLE__)
 void SYSINFO_Init(void)
 {
-    int mib[2];
-    mib[0] = CTL_HW;
-    mib[1] = HW_MEMSIZE;
-    int64_t memsize_value;
-    size_t length = sizeof(memsize_value);
-    if (sysctl(mib, 2, &memsize_value, &length, NULL, 0) != -1)
-    	SYSINFO_memory = memsize_value;
+	int mib[2];
+	mib[0] = CTL_HW;
+	mib[1] = HW_MEMSIZE;
+	int64_t memsize_value;
+	int cpu_frequency_value;
+	size_t length = sizeof(memsize_value);
+	char cpu_brand_string[100] = {0};
+	size_t cpu_brand_string_len = sizeof(cpu_brand_string) - 1; /* Don't trust Apple, make sure its NULL terminated */
 
-    char cpu_brand_string[100];
-    size_t cpu_brand_string_len = 100;
-    if (sysctlbyname("machdep.cpu.brand_string", &cpu_brand_string, &cpu_brand_string_len, NULL, 0) != -1)
-        SYSINFO_processor_description = cpu_brand_string;
+	extern const char *gl_renderer;
 
-    mib[0] = CTL_HW;
-    mib[1] = HW_CPU_FREQ;
-    int cpu_frequency_value;
-    length = sizeof(cpu_frequency_value);
-    if (sysctl(mib, 2, &cpu_frequency_value, &length, NULL, 0) != -1)
-        SYSINFO_MHz = cpu_frequency_value / 1000. / 1000. + .5;
+	if (sysctl(mib, 2, &memsize_value, &length, NULL, 0) != -1) {
+		SYSINFO_memory = memsize_value;
+	}
 
-	{
-		extern const char *gl_renderer;
+	if (sysctlbyname("machdep.cpu.brand_string", &cpu_brand_string, &cpu_brand_string_len, NULL, 0) != -1) {
+		SYSINFO_processor_description = cpu_brand_string;
+	}
 
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	mib[0] = CTL_HW;
+	mib[1] = HW_CPU_FREQ;
+	length = sizeof(cpu_frequency_value);
+	if (sysctl(mib, 2, &cpu_frequency_value, &length, NULL, 0) != -1) {
+		SYSINFO_MHz = cpu_frequency_value / 1000. / 1000. + .5;
+	}
+
+
+	if (gl_renderer && gl_renderer[0]) {
+		if (SYSINFO_3D_description != NULL) {
+			free(SYSINFO_3D_description);
+		}
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
@@ -303,6 +308,7 @@ void SYSINFO_Init(void)
 	size_t len;
 	unsigned long long old_tsc, tsc_freq;
 	struct timeval tp, old_tp;
+	extern const char *gl_renderer;
 
 	mib[0] = CTL_HW;
 	mib[1] =
@@ -338,11 +344,11 @@ void SYSINFO_Init(void)
 // VVD: We can use sysctl hw.clockrate, but it don't work on i486 - always 0.
 // Must work on Pentium 1/2/3; tested on Pentium 4. And RELENG_4 have no this sysctl.
 
-	{
-		extern const char *gl_renderer;
-
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	if (gl_renderer  &&  gl_renderer[0]) {
+		if (SYSINFO_3D_description != NULL) {
+			free(SYSINFO_3D_description);
+		}
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
