@@ -572,9 +572,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	}
 	atexit(SDL_Quit);
 
-#ifdef WITH_DP_MEM
-	Memory2_Init ();
-#endif
 	Host_InitMemory (default_memsize);
 
 #ifdef WITH_TCL
@@ -588,9 +585,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_Init ();
 	Key_Init ();
 
-#ifdef WITH_DP_MEM
-	Memory2_Init_Commands ();
-#endif
 	Cache_Init_Commands ();
 
 	FS_InitFilesystem ();

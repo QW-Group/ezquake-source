@@ -131,8 +131,7 @@ COMMON_OBJS := \
     net_chan.o		\
     q_shared.o		\
     version.o		\
-    zone.o		\
-    zone2.o
+    zone.o
 
 # temporary
 SERVER_OBJS := \

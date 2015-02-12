@@ -61,7 +61,7 @@ void SNDDMA_Shutdown(void)
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
     if (shm->buffer) {
-        Z_Free(shm->buffer);
+        Q_free(shm->buffer);
         shm->buffer = NULL;
     }
 }
@@ -119,7 +119,7 @@ qbool SNDDMA_Init(void)
     shm->format.channels = obtained.channels;
     shm->format.width = 2;
     shm->samples = 0x8000 * obtained.channels;
-    shm->buffer = Z_Malloc(shm->samples * 2);
+    shm->buffer = Q_malloc(shm->samples * 2);
     shm->samplepos = 0;
     shm->sampleframes = shm->samples / shm->format.channels;
 

@@ -144,8 +144,8 @@ void Cvar_SetDefault(cvar_t *var, float value)
 		val[i] = 0;
 	if (val[i] == '.')
 		val[i] = 0;
-	Z_Free (var->defaultvalue);
-	var->defaultvalue = Z_Strdup (val);
+	Q_free(var->defaultvalue);
+	var->defaultvalue = Q_strdup(val);
 	Cvar_Set(var, val);
 }
 
@@ -277,7 +277,7 @@ void Cvar_Set (cvar_t *var, char *value)
 		{
 			if (strcmp(value, var->latchedString) == 0)
 				return; // latched string alredy has this value
-			Z_Free (var->latchedString); // switching latching string to other, so free it
+			Q_free(var->latchedString); // switching latching string to other, so free it
 		}
 		else
 		{
@@ -314,9 +314,9 @@ void Cvar_Set (cvar_t *var, char *value)
 	}
 
 	// dup string first (before free) since 'value' and 'var->string' can point at the same memory area.
-	new_val = Z_Strdup (value);
+	new_val = Q_strdup(value);
 	// free the old value string.
-	Z_Free (var->string);
+	Q_free(var->string);
 
 	var->string = new_val;
 	var->value = Q_atof (var->string);
@@ -516,7 +516,7 @@ void Cvar_Register (cvar_t *var)
 			if ( old->latchedString )
 			{
 				// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
-				Z_Free (old->string);
+				Q_free(old->string);
 				old->string  = old->latchedString;
 				old->latchedString = NULL;
 				old->value   = Q_atof (old->string);
@@ -547,18 +547,18 @@ void Cvar_Register (cvar_t *var)
 	if (var->defaultvalue)
 		Sys_Error("Cvar_Register: defaultvalue alredy set for %s", var->name);
 
-	var->defaultvalue = Z_Strdup (var->string);
+	var->defaultvalue = Q_strdup(var->string);
 	if (old)
 	{
 		var->flags |= old->flags & ~(CVAR_USER_CREATED|CVAR_TEMP);
 		strlcpy (string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
 		Cvar_Delete (old->name);
-		var->string = Z_Strdup (string);
+		var->string = Q_strdup(string);
 	}
 	else
 	{
-		// allocate the string on zone because future sets will Z_Free it
-		var->string = Z_Strdup (var->string);
+		// allocate the string on zone because future sets will Q_freeit
+		var->string = Q_strdup(var->string);
 	}
 	var->value = Q_atof (var->string);
 	var->integer = Q_atoi (var->string);
@@ -748,7 +748,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 		v->flags |= cvarflags;
 		return v;
 	}
-	v = (cvar_t *) Z_Malloc(sizeof(cvar_t));
+	v = (cvar_t *) Q_malloc(sizeof(cvar_t));
 	memset(v, 0, sizeof(cvar_t));
 	// Cvar doesn't exist, so we create it
 	v->next = cvar_vars;
@@ -758,9 +758,9 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->hash_next = cvar_hash[key];
 	cvar_hash[key] = v;
 
-	v->name = Z_Strdup (name);
-	v->string = Z_Strdup (string);
-	v->defaultvalue = Z_Strdup (string);
+	v->name = Q_strdup(name);
+	v->string = Q_strdup(string);
+	v->defaultvalue = Q_strdup(string);
 	v->flags = cvarflags | CVAR_USER_CREATED;
 	v->value = Q_atof (v->string);
 	v->integer = Q_atoi (v->string);
@@ -806,10 +806,10 @@ qbool Cvar_Delete (const char *name)
 			TCL_UnregisterVariable (name);
 #endif
 			// free
-			Z_Free (var->defaultvalue);
-			Z_Free (var->string);
-			Z_Free (var->name);
-			Z_Free (var);
+			Q_free(var->defaultvalue);
+			Q_free(var->string);
+			Q_free(var->name);
+			Q_free(var);
 			return true;
 		}
 		prev = var;

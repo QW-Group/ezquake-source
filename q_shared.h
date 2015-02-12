@@ -267,11 +267,6 @@ void *Q_realloc (void *p, size_t newsize);
 char *Q_strdup (const char *src);
 // might be turned into a function that makes sure all Q_*alloc calls are matched with Q_free
 #define Q_free(ptr) if(ptr) { free(ptr); ptr = NULL; }
-#ifndef WITH_DP_MEM
-#define Z_Malloc(data) Q_malloc(data)
-#define Z_Free(data) Q_free(data)
-#define Z_Strdup(data) Q_strdup(data)
-#endif
 //============================================================================
 // chat icons flags 
 // used now by client code only, but may be used in future by server code too, so put here
