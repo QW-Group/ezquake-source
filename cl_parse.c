@@ -3598,12 +3598,8 @@ void CL_ParseServerMessage (void)
 				{
 					CL_InitialiseDemoMessageIfRequired();
 					MSG_WriteByte(&cls.demomessage, svc_playerinfo);
-					CL_ParsePlayerinfo(&cls.demomessage);
 				}
-				else 
-				{
-					CL_ParsePlayerinfo(NULL);
-				}
+				CL_ParsePlayerinfo();
 				break;
 			}
 			case svc_nails:

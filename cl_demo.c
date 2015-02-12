@@ -84,6 +84,7 @@ static char tempqwd_name[256] = {0}; // This file must be deleted after playback
 int CL_Demo_Compress(char*);
 #endif
 
+static vfsfile_t *CL_Open_Demo_File(char *name);
 static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
@@ -3525,8 +3526,7 @@ void CL_Play_f (void)
 
 	char *real_name;
 	char name[MAX_OSPATH], **s;
-	static char *ext[] = {NULL, "qwd", "mvd", "dem", NULL};
-	char **first_valid_extension = ext + 1;
+	static char *ext[] = {"qwd", "mvd", "dem", NULL};
 
 	// Show usage.
 	if (Cmd_Argc() != 2)
@@ -3582,44 +3582,19 @@ void CL_Play_f (void)
 	// Find the demo path, trying different extensions if needed.
 	//
 
-	// If they specified a valid extension, use that first
-	for (s = first_valid_extension; *s; ++s)
+	// If they specified a valid extension, try that first
+	for (s = ext; *s && !playbackfile; ++s)
 		if (!strcasecmp(COM_FileExtension(name), *s)) 
-		{
-			ext[0] = *s;
-			first_valid_extension = ext;
-			break;
-		}
+			playbackfile = CL_Open_Demo_File(name);
 
-	for (s = first_valid_extension; *s && !playbackfile; s++)
+	for (s = ext; *s && !playbackfile; s++)
 	{
 		// Strip the extension from the specified filename and append
 		// the one we're currently checking for.
 		COM_StripExtension(real_name, name);
 		strlcpy(name, va("%s.%s", name, *s), sizeof(name));
 
-		// Look for the file in the above directory if it has ../ prepended to the filename.
-		if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
-		{
-			playbackfile = FS_OpenVFS(va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
-		}
-		else
-		{
-			// Search demo on quake file system, even in paks.
-			playbackfile = FS_OpenVFS(name, "rb", FS_ANY);
-		}
-
-		// Look in the demo dir (user specified).
-		if (!playbackfile)
-		{
-			playbackfile = FS_OpenVFS(va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
-		}
-
-		// Check the full system path (Run a demo anywhere on the file system).
-		if (!playbackfile)
-		{
-			playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS);
-		}
+		playbackfile = CL_Open_Demo_File(name);
 	}
 
 	#else // WITH_VFS_ARCHIVE_LOADING
@@ -3628,7 +3603,7 @@ void CL_Play_f (void)
 		if (!playbackfile)
 		{
 			// Check the file extension is valid
-			for (s = first_valid_extension; *s; s++) 
+			for (s = ext; *s; s++) 
 			{
 				if (strcmp(*s, file_ext) == 0)
 					break;
@@ -3712,6 +3687,32 @@ void CL_Play_f (void)
 	CL_DemoPlaybackInit();
 
 	Com_Printf("Playing demo from %s\n", COM_SkipPath(name));
+}
+
+static vfsfile_t * CL_Open_Demo_File(char* name)
+{
+	// Look for the file in the above directory if it has ../ prepended to the filename.
+	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
+	{
+		playbackfile = FS_OpenVFS(va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
+	}
+	else
+	{
+		// Search demo on quake file system, even in paks.
+		playbackfile = FS_OpenVFS(name, "rb", FS_ANY);
+	}
+
+	// Look in the demo dir (user specified).
+	if (!playbackfile)
+	{
+		playbackfile = FS_OpenVFS(va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
+	}
+
+	// Check the full system path (Run a demo anywhere on the file system).
+	if (!playbackfile)
+	{
+		playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS);
+	}
 }
 
 //

@@ -1218,7 +1218,7 @@ static int MVD_WeaponModelNumber (int cweapon)
 	return 0;
 }
 
-void CL_ParsePlayerinfo (sizebuf_t* demo_output) 
+void CL_ParsePlayerinfo (void) 
 {
 	extern cvar_t cl_fix_mvd;
 	int	msec, flags, pm_code;
@@ -1319,25 +1319,12 @@ void CL_ParsePlayerinfo (sizebuf_t* demo_output)
 
 		state->frame = MSG_ReadByte ();
 
-		if (demo_output)
-		{
-			MSG_WriteByte(demo_output, num);
-			MSG_WriteShort(demo_output, flags);
-			MSG_WriteCoord(demo_output, state->origin[0]);
-			MSG_WriteCoord(demo_output, state->origin[1]);
-			MSG_WriteCoord(demo_output, state->origin[2]);
-			MSG_WriteByte(demo_output, state->frame);
-		}
-
 		// the other player's last move was likely some time before the packet was sent out,
 		// so accurately track the exact time it was valid at
 		if (flags & PF_MSEC) 
 		{
 			msec = MSG_ReadByte ();
 			state->state_time = parsecounttime - msec * 0.001;
-
-			if (demo_output)
-				MSG_WriteByte(demo_output, msec);
 		} 
 		else
 		{
@@ -1347,8 +1334,6 @@ void CL_ParsePlayerinfo (sizebuf_t* demo_output)
 		if (flags & PF_COMMAND) 
 		{
 			MSG_ReadDeltaUsercmd (&nullcmd, &state->command, cl.protoversion);
-			if (demo_output)
-				MSG_WriteDeltaUsercmd(demo_output, &nullcmd, &state->command);
 			CL_CalcPlayerFPS(info, state->command.msec);
 		}
 		else
@@ -1365,59 +1350,35 @@ void CL_ParsePlayerinfo (sizebuf_t* demo_output)
 		for (i = 0; i < 3; i++)
 		{
 			if (flags & (PF_VELOCITY1 << i) )
-			{
 				state->velocity[i] = MSG_ReadShort();
-				if (demo_output)
-					MSG_WriteShort(demo_output, state->velocity[i]);
-			}
 			else
 				state->velocity[i] = 0;
 		}
 		if (flags & PF_MODEL)
-		{
 			state->modelindex = MSG_ReadByte ();
-			if (demo_output)
-				MSG_WriteByte(demo_output, state->modelindex);
-		}
 		else
 			state->modelindex = cl_modelindices[mi_player];
 
 		if (flags & PF_SKINNUM)
-		{
 			state->skinnum = MSG_ReadByte ();
-			if (demo_output)
-				MSG_WriteByte(demo_output, state->skinnum);
-		}
 		else
 			state->skinnum = 0;
 
 		if (flags & PF_EFFECTS)
-		{
 			state->effects = MSG_ReadByte ();
-			if (demo_output)
-				MSG_WriteByte(demo_output, state->effects);
-		}
 		else
 			state->effects = 0;
 
 		if (flags & PF_WEAPONFRAME)
-		{
 			state->weaponframe = MSG_ReadByte ();
-			if (demo_output)
-				MSG_WriteByte(demo_output, state->weaponframe);
-		}
 		else
 			state->weaponframe = 0;
 
 
-	state->alpha = 255;
+		state->alpha = 255;
 #ifdef FTE_PEXT_TRANS
 		if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
-		{
 			state->alpha = MSG_ReadByte();
-			if (demo_output)
-				MSG_WriteByte(demo_output, state->alpha);
-		}
 #endif
 
 		if (cl.z_ext & Z_EXT_PM_TYPE)
@@ -1477,6 +1438,38 @@ guess_pm_type:
 				state->pm_type = PM_DEAD;
 			else
 				state->pm_type = PM_NORMAL;
+		}
+
+		if (cls.demorecording)
+		{
+			// Write out here - generally packets are copied, but flags for userdelta were changed
+			//   in protocol 27 - we always write out in new format
+			MSG_WriteByte(&cls.demomessage, num);
+			MSG_WriteShort(&cls.demomessage, flags);
+			MSG_WriteCoord(&cls.demomessage, state->origin[0]);
+			MSG_WriteCoord(&cls.demomessage, state->origin[1]);
+			MSG_WriteCoord(&cls.demomessage, state->origin[2]);
+			MSG_WriteByte(&cls.demomessage, state->frame);
+			if (flags & PF_MSEC)
+				MSG_WriteByte(&cls.demomessage, msec);
+			if (flags & PF_COMMAND)
+				MSG_WriteDeltaUsercmd(&cls.demomessage, &nullcmd, &state->command);
+			for (i = 0; i < 3; i++)
+				if (flags & (PF_VELOCITY1 << i) )
+					MSG_WriteShort(&cls.demomessage, state->velocity[i]);
+			if (flags & PF_MODEL)
+				MSG_WriteByte(&cls.demomessage, state->modelindex);
+			if (flags & PF_SKINNUM)
+				MSG_WriteByte(&cls.demomessage, state->skinnum);
+			if (flags & PF_EFFECTS)
+				MSG_WriteByte(&cls.demomessage, state->effects);
+			if (flags & PF_WEAPONFRAME)
+				MSG_WriteByte(&cls.demomessage, state->weaponframe);
+#ifdef FTE_PEXT_TRANS
+			// Should we ever send this?... 
+			//if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
+			//	MSG_WriteByte(&cls.demomessage, state->alpha);		
+#endif
 		}
 	}
 
