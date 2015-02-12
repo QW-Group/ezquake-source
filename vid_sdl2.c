@@ -545,7 +545,7 @@ static void VID_SDL_Init(void)
 		return;
 	}
 
-	flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
 
 #ifdef SDL_WINDOW_ALLOW_HIGHDPI
 	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
@@ -557,8 +557,8 @@ static void VID_SDL_Init(void)
 			flags |= SDL_WINDOW_FULLSCREEN;
 		}
 	} else {
-		if (vid_win_borderless.integer <= 0) {
-			flags &= ~SDL_WINDOW_BORDERLESS;
+		if (vid_win_borderless.integer > 0) {
+			flags |= SDL_WINDOW_BORDERLESS;
 		}
 	}
 
