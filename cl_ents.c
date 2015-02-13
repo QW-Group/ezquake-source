@@ -1466,9 +1466,8 @@ guess_pm_type:
 			if (flags & PF_WEAPONFRAME)
 				MSG_WriteByte(&cls.demomessage, state->weaponframe);
 #ifdef FTE_PEXT_TRANS
-			// Should we ever send this?... 
-			//if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
-			//	MSG_WriteByte(&cls.demomessage, state->alpha);		
+			if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
+				MSG_WriteByte(&cls.demomessage, state->alpha);		
 #endif
 		}
 	}
