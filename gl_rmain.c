@@ -15,7 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
 */
 
 #include "quakedef.h"
@@ -222,351 +221,215 @@ cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
 void GL_PolygonOffset(float factor, float units)
 {
-if (factor || units)
-{
-	glEnable (GL_POLYGON_OFFSET_FILL);
-	glEnable (GL_POLYGON_OFFSET_LINE);
+	if (factor || units)
+	{
+		glEnable (GL_POLYGON_OFFSET_FILL);
+		glEnable (GL_POLYGON_OFFSET_LINE);
 
-	glPolygonOffset(factor, units);
-}
-else
-{
-	glDisable (GL_POLYGON_OFFSET_FILL);
-	glDisable (GL_POLYGON_OFFSET_LINE);
-}
+		glPolygonOffset(factor, units);
+	}
+	else
+	{
+		glDisable (GL_POLYGON_OFFSET_FILL);
+		glDisable (GL_POLYGON_OFFSET_LINE);
+	}
 }
 
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox(vec3_t mins, vec3_t maxs)
 {
-int i;
+	int i;
 
-for (i = 0; i < 4; i++) {
-	if (BOX_ON_PLANE_SIDE (mins, maxs, &frustum[i]) == 2)
-		return true;
-}
-return false;
+	for (i = 0; i < 4; i++) {
+		if (BOX_ON_PLANE_SIDE (mins, maxs, &frustum[i]) == 2)
+			return true;
+	}
+	return false;
 }
 
 //Returns true if the sphere is completely outside the frustum
 qbool R_CullSphere(vec3_t centre, float radius)
 {
-int i;
-mplane_t *p;
+	int i;
+	mplane_t *p;
 
-for (i = 0, p = frustum; i < 4; i++, p++) {
-	if (PlaneDiff(centre, p) <= -radius)
-		return true;
-}
+	for (i = 0, p = frustum; i < 4; i++, p++) {
+		if (PlaneDiff(centre, p) <= -radius)
+			return true;
+	}
 
-return false;
+	return false;
 }
 
 void R_RotateForEntity(entity_t *e)
 {
-glTranslatef (e->origin[0],  e->origin[1],  e->origin[2]);
+	glTranslatef (e->origin[0],  e->origin[1],  e->origin[2]);
 
-glRotatef (e->angles[1], 0, 0, 1);
-glRotatef (-e->angles[0], 0, 1, 0);
-glRotatef (e->angles[2], 1, 0, 0);
+	glRotatef (e->angles[1], 0, 0, 1);
+	glRotatef (-e->angles[0], 0, 1, 0);
+	glRotatef (e->angles[2], 1, 0, 0);
 }
 
 
 mspriteframe_t *R_GetSpriteFrame(entity_t *e, msprite2_t *psprite)
 {
-mspriteframe_t  *pspriteframe;
-mspriteframe2_t *pspriteframe2;
-int i, numframes, frame, offset;
-float fullinterval, targettime, time;
+	mspriteframe_t  *pspriteframe;
+	mspriteframe2_t *pspriteframe2;
+	int i, numframes, frame, offset;
+	float fullinterval, targettime, time;
 
-frame = e->frame;
+	frame = e->frame;
 
-if (frame >= psprite->numframes || frame < 0) {
-	Com_DPrintf ("R_GetSpriteFrame: no such frame %d (model %s)\n", frame, e->model->name);
-	return NULL;
-}
+	if (frame >= psprite->numframes || frame < 0) {
+		Com_DPrintf ("R_GetSpriteFrame: no such frame %d (model %s)\n", frame, e->model->name);
+		return NULL;
+	}
 
-offset    = psprite->frames[frame].offset;
-numframes = psprite->frames[frame].numframes;
+	offset    = psprite->frames[frame].offset;
+	numframes = psprite->frames[frame].numframes;
 
-if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
-	Com_Printf ("R_GetSpriteFrame: wrong sprite\n");
-	return NULL;
-}
+	if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
+		Com_Printf ("R_GetSpriteFrame: wrong sprite\n");
+		return NULL;
+	}
 
-if (psprite->frames[frame].type == SPR_SINGLE) {
-	pspriteframe  = (mspriteframe_t* )((byte*)psprite + offset);
-}
-else {
-	pspriteframe2 = (mspriteframe2_t*)((byte*)psprite + offset);
+	if (psprite->frames[frame].type == SPR_SINGLE) {
+		pspriteframe  = (mspriteframe_t* )((byte*)psprite + offset);
+	}
+	else {
+		pspriteframe2 = (mspriteframe2_t*)((byte*)psprite + offset);
 
-	fullinterval = pspriteframe2[numframes-1].interval;
+		fullinterval = pspriteframe2[numframes-1].interval;
 
-	time = r_refdef2.time;
+		time = r_refdef2.time;
 
-	// when loading in Mod_LoadSpriteGroup, we guaranteed all interval values
-	// are positive, so we don't have to worry about division by 0
-	targettime = time - ((int) (time / fullinterval)) * fullinterval;
+		// when loading in Mod_LoadSpriteGroup, we guaranteed all interval values
+		// are positive, so we don't have to worry about division by 0
+		targettime = time - ((int) (time / fullinterval)) * fullinterval;
 
-	for (i = 0; i < (numframes - 1); i++)
-		if (pspriteframe2[i].interval > targettime)
-			break;
+		for (i = 0; i < (numframes - 1); i++)
+			if (pspriteframe2[i].interval > targettime)
+				break;
 
-	pspriteframe = &pspriteframe2[i].frame;
-}
+		pspriteframe = &pspriteframe2[i].frame;
+	}
 
-return pspriteframe;
+	return pspriteframe;
 }
 
 void R_DrawSpriteModel (entity_t *e)
 {
-vec3_t point, right, up;
-mspriteframe_t *frame;
-msprite2_t *psprite;
+	vec3_t point, right, up;
+	mspriteframe_t *frame;
+	msprite2_t *psprite;
 
-// don't even bother culling, because it's just a single
-// polygon without a surface cache
-psprite = (msprite2_t*)Mod_Extradata (e->model);	//locate the proper data
-frame = R_GetSpriteFrame (e, psprite);
+	// don't even bother culling, because it's just a single
+	// polygon without a surface cache
+	psprite = (msprite2_t*)Mod_Extradata (e->model);	//locate the proper data
+	frame = R_GetSpriteFrame (e, psprite);
 
-if (!frame)
-	return;
+	if (!frame)
+		return;
 
-if (psprite->type == SPR_ORIENTED) {
-	// bullet marks on walls
-	AngleVectors (e->angles, NULL, right, up);
-} else if (psprite->type == SPR_FACING_UPRIGHT) {
-	VectorSet (up, 0, 0, 1);
-	right[0] = e->origin[1] - r_origin[1];
-	right[1] = -(e->origin[0] - r_origin[0]);
-	right[2] = 0;
-	VectorNormalizeFast (right);
-} else if (psprite->type == SPR_VP_PARALLEL_UPRIGHT) {
-	VectorSet (up, 0, 0, 1);
-	VectorCopy (vright, right);
-} else {	// normal sprite
-	VectorCopy (vup, up);
-	VectorCopy (vright, right);
-}
+	if (psprite->type == SPR_ORIENTED) {
+		// bullet marks on walls
+		AngleVectors (e->angles, NULL, right, up);
+	} else if (psprite->type == SPR_FACING_UPRIGHT) {
+		VectorSet (up, 0, 0, 1);
+		right[0] = e->origin[1] - r_origin[1];
+		right[1] = -(e->origin[0] - r_origin[0]);
+		right[2] = 0;
+		VectorNormalizeFast (right);
+	} else if (psprite->type == SPR_VP_PARALLEL_UPRIGHT) {
+		VectorSet (up, 0, 0, 1);
+		VectorCopy (vright, right);
+	} else {	// normal sprite
+		VectorCopy (vup, up);
+		VectorCopy (vright, right);
+	}
 
-GL_Bind(frame->gl_texturenum);
+	GL_Bind(frame->gl_texturenum);
 
-glBegin (GL_QUADS);
+	glBegin (GL_QUADS);
 
-glTexCoord2f (0, 1);
-VectorMA (e->origin, frame->down, up, point);
-VectorMA (point, frame->left, right, point);
-glVertex3fv (point);
+	glTexCoord2f (0, 1);
+	VectorMA (e->origin, frame->down, up, point);
+	VectorMA (point, frame->left, right, point);
+	glVertex3fv (point);
 
-glTexCoord2f (0, 0);
-VectorMA (e->origin, frame->up, up, point);
-VectorMA (point, frame->left, right, point);
-glVertex3fv (point);
+	glTexCoord2f (0, 0);
+	VectorMA (e->origin, frame->up, up, point);
+	VectorMA (point, frame->left, right, point);
+	glVertex3fv (point);
 
-glTexCoord2f (1, 0);
-VectorMA (e->origin, frame->up, up, point);
-VectorMA (point, frame->right, right, point);
-glVertex3fv (point);
+	glTexCoord2f (1, 0);
+	VectorMA (e->origin, frame->up, up, point);
+	VectorMA (point, frame->right, right, point);
+	glVertex3fv (point);
 
-glTexCoord2f (1, 1);
-VectorMA (e->origin, frame->down, up, point);
-VectorMA (point, frame->right, right, point);
-glVertex3fv (point);
+	glTexCoord2f (1, 1);
+	VectorMA (e->origin, frame->down, up, point);
+	VectorMA (point, frame->right, right, point);
+	glVertex3fv (point);
 
-glEnd ();
+	glEnd ();
 }
 
 
 int GL_GenerateShellTexture(void)
 {
-int x, y, d;
-byte data[32][32][4];
-for (y = 0;y < 32;y++)
-{
-	for (x = 0;x < 32;x++)
+	int x, y, d;
+	byte data[32][32][4];
+	for (y = 0;y < 32;y++)
 	{
-		d = (sin(x * M_PI / 8.0f) + cos(y * M_PI / 8.0f)) * 64 + 64;
-		if (d < 0)
-			d = 0;
-		if (d > 255)
-			d = 255;
-		data[y][x][0] = data[y][x][1] = data[y][x][2] = d;
-		data[y][x][3] = 255;
+		for (x = 0;x < 32;x++)
+		{
+			d = (sin(x * M_PI / 8.0f) + cos(y * M_PI / 8.0f)) * 64 + 64;
+			if (d < 0)
+				d = 0;
+			if (d > 255)
+				d = 255;
+			data[y][x][0] = data[y][x][1] = data[y][x][2] = d;
+			data[y][x][3] = 255;
+		}
 	}
-}
 
-return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
+	return GL_LoadTexture("shelltexture", 32, 32, &data[0][0][0], TEX_MIPMAP, 4);
 }
 
 void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2) 
 {
-int *order, count;
-vec3_t interpolated_verts;
-float lerpfrac;
-trivertx_t *verts1, *verts2;
+	int *order, count;
+	vec3_t interpolated_verts;
+	float lerpfrac;
+	trivertx_t *verts1, *verts2;
 
-GL_PolygonOffset(1, 1);
+	GL_PolygonOffset(1, 1);
 
-glCullFace (GL_BACK);
-glPolygonMode (GL_FRONT, GL_LINE);
+	glCullFace (GL_BACK);
+	glPolygonMode (GL_FRONT, GL_LINE);
 
-// limit outline width, since even width == 3 can be considered as cheat.
-glLineWidth (bound(0.1, gl_outline_width.value, 3.0));
+	// limit outline width, since even width == 3 can be considered as cheat.
+	glLineWidth (bound(0.1, gl_outline_width.value, 3.0));
 
-glColor4f (0.0f, 0.0f, 0.0f, 1.0f);
-glEnable (GL_LINE_SMOOTH);
-glDisable (GL_TEXTURE_2D);
+	glColor4f (0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable (GL_LINE_SMOOTH);
+	glDisable (GL_TEXTURE_2D);
 
-lerpfrac = r_framelerp;
-lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;    
+	lerpfrac = r_framelerp;
+	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;    
 
-verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
 
-verts1 += pose1 * paliashdr->poseverts;
-verts2 += pose2 * paliashdr->poseverts;
+	verts1 += pose1 * paliashdr->poseverts;
+	verts2 += pose2 * paliashdr->poseverts;
 
-order = (int *) ((byte *) paliashdr + paliashdr->commands);
-
-for ( ;; )
-{
-count = *order++;
-
-if (!count)
-    break;
-
-if (count < 0)
-{
-    count = -count;
-    glBegin(GL_TRIANGLE_FAN);
-}
-else
-    glBegin(GL_TRIANGLE_STRIP);
-
-do 
-{
-	order += 2;
-
-	if ((currententity->renderfx & RF_LIMITLERP))
-	    lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
-
-	VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
-	glVertex3fv(interpolated_verts);
-
-	verts1++;
-	verts2++;
-} 
-while (--count);
-
-glEnd();
-}
-
-glColor4f (1, 1, 1, 1);    
-glPolygonMode (GL_FRONT, GL_FILL);
-glDisable (GL_LINE_SMOOTH);
-glCullFace (GL_FRONT);
-glEnable (GL_TEXTURE_2D);    
-
-GL_PolygonOffset(0, 0);
-}
-
-void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir)
-{
-int *order, count;
-vec3_t interpolated_verts;
-float l, lerpfrac;
-trivertx_t *verts1, *verts2;
-//VULT COLOURED MODEL LIGHTS
-int i;
-vec3_t lc;
-
-lerpfrac = r_framelerp;
-lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;	
-
-verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
-
-verts1 += pose1 * paliashdr->poseverts;
-verts2 += pose2 * paliashdr->poseverts;
-
-order = (int *) ((byte *) paliashdr + paliashdr->commands);
-
-if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && bound(0, gl_powerupshells.value, 1) */ )
-{
-	float scroll[2];
-	float v[3];
-	float shell_size = bound(0, gl_powerupshells_size.value, 20);
-
-	// LordHavoc: set the state to what we need for rendering a shell
-	if (!shelltexture)
-		shelltexture = GL_GenerateShellTexture();
-	GL_Bind (shelltexture);
-	glEnable (GL_BLEND);
-
-	if (gl_powerupshells_style.integer)
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	else
-		glBlendFunc(GL_ONE, GL_ONE);
-
-	glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1)); // alpha so we can see colour underneath still
-
-	if (scrolldir)
-	{
-		scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
-		scroll[1] = sin(cl.time * -0.5);
-	}
-	else
-	{
-		scroll[0] = cos(cl.time * 1.5);
-		scroll[1] = sin(cl.time * 1.1);
-	}
-
-	// get the vertex count and primitive type
-	for (;;)
-	{
-		count = *order++;
-		if (!count)
-			break;
-
-		if (count < 0)
-		{
-			count = -count;
-			glBegin(GL_TRIANGLE_FAN);
-		}
-		else
-			glBegin(GL_TRIANGLE_STRIP);
-
-		do
-		{
-			glTexCoord2f (((float *) order)[0] * 2.0f + scroll[0], ((float *) order)[1] * 2.0f + scroll[1]);
-
-			order += 2;
-
-			v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
-			v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
-			v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
-			v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
-			v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
-			v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
-
-			glVertex3f(v[0], v[1], v[2]);
-
-			verts1++;
-			verts2++;
-		} while (--count);
-
-		glEnd();
-	}
-	// LordHavoc: reset the state to what the rest of the renderer expects
-	glDisable (GL_BLEND);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-else
-{
-	if (r_modelalpha < 1)
-		glEnable(GL_BLEND);
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
 	for ( ;; )
 	{
 		count = *order++;
+
 		if (!count)
 			break;
 
@@ -578,939 +441,1075 @@ else
 		else
 			glBegin(GL_TRIANGLE_STRIP);
 
-		do {
-			// texture coordinates come from the draw list
-			if (mtex)
-			{
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, ((float *) order)[0], ((float *) order)[1]);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, ((float *) order)[0], ((float *) order)[1]);
-			}
-			else
-				glTexCoord2f (((float *) order)[0], ((float *) order)[1]);
-
+		do 
+		{
 			order += 2;
 
 			if ((currententity->renderfx & RF_LIMITLERP))
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 
-			// VULT VERTEX LIGHTING
-			if (amf_lighting_vertex.value && !full_light)
-			{
-				l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
-			}
-			else
-			{
-				l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
-				l = (l * shadelight + ambientlight) / 256.0;
-			}
-			l = min(l , 1);
-			//VULT COLOURED MODEL LIGHTS
-			if (amf_lighting_colour.value && !full_light)
-			{
-				for (i=0;i<3;i++)
-					lc[i] = lightcolor[i] / 256 + l;
-
-				//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
-				if (r_modelcolor[0] < 0)
-					glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
-				else
-					glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
-			}
-			else
-			{
-				if (r_modelcolor[0] < 0)
-					glColor4f(l, l, l, r_modelalpha); // normal color
-				else
-					glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
-			}
-
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 			glVertex3fv(interpolated_verts);
-			
 
 			verts1++;
 			verts2++;
-		} while (--count);
+		} 
+		while (--count);
 
 		glEnd();
 	}
 
-	if (r_modelalpha < 1)
-		glDisable(GL_BLEND);
+	glColor4f (1, 1, 1, 1);    
+	glPolygonMode (GL_FRONT, GL_FILL);
+	glDisable (GL_LINE_SMOOTH);
+	glCullFace (GL_FRONT);
+	glEnable (GL_TEXTURE_2D);    
+
+	GL_PolygonOffset(0, 0);
 }
+
+void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir)
+{
+	int *order, count;
+	vec3_t interpolated_verts;
+	float l, lerpfrac;
+	trivertx_t *verts1, *verts2;
+	//VULT COLOURED MODEL LIGHTS
+	int i;
+	vec3_t lc;
+
+	lerpfrac = r_framelerp;
+	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;	
+
+	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+
+	verts1 += pose1 * paliashdr->poseverts;
+	verts2 += pose2 * paliashdr->poseverts;
+
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+
+	if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && bound(0, gl_powerupshells.value, 1) */ )
+	{
+		float scroll[2];
+		float v[3];
+		float shell_size = bound(0, gl_powerupshells_size.value, 20);
+
+		// LordHavoc: set the state to what we need for rendering a shell
+		if (!shelltexture)
+			shelltexture = GL_GenerateShellTexture();
+		GL_Bind (shelltexture);
+		glEnable (GL_BLEND);
+
+		if (gl_powerupshells_style.integer)
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		else
+			glBlendFunc(GL_ONE, GL_ONE);
+
+		glColor4f (r_shellcolor[0], r_shellcolor[1], r_shellcolor[2], bound(0, gl_powerupshells.value, 1)); // alpha so we can see colour underneath still
+
+		if (scrolldir)
+		{
+			scroll[0] = cos(cl.time * -0.5); // FIXME: cl.time ????
+			scroll[1] = sin(cl.time * -0.5);
+		}
+		else
+		{
+			scroll[0] = cos(cl.time * 1.5);
+			scroll[1] = sin(cl.time * 1.1);
+		}
+
+		// get the vertex count and primitive type
+		for (;;)
+		{
+			count = *order++;
+			if (!count)
+				break;
+
+			if (count < 0)
+			{
+				count = -count;
+				glBegin(GL_TRIANGLE_FAN);
+			}
+			else
+				glBegin(GL_TRIANGLE_STRIP);
+
+			do
+			{
+				glTexCoord2f (((float *) order)[0] * 2.0f + scroll[0], ((float *) order)[1] * 2.0f + scroll[1]);
+
+				order += 2;
+
+				v[0] = r_avertexnormals[verts1->lightnormalindex][0] * shell_size + verts1->v[0];
+				v[1] = r_avertexnormals[verts1->lightnormalindex][1] * shell_size + verts1->v[1];
+				v[2] = r_avertexnormals[verts1->lightnormalindex][2] * shell_size + verts1->v[2];
+				v[0] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][0] * shell_size + verts2->v[0] - v[0]);
+				v[1] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][1] * shell_size + verts2->v[1] - v[1]);
+				v[2] += lerpfrac * (r_avertexnormals[verts2->lightnormalindex][2] * shell_size + verts2->v[2] - v[2]);
+
+				glVertex3f(v[0], v[1], v[2]);
+
+				verts1++;
+				verts2++;
+			} while (--count);
+
+			glEnd();
+		}
+		// LordHavoc: reset the state to what the rest of the renderer expects
+		glDisable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	else
+	{
+		if (r_modelalpha < 1)
+			glEnable(GL_BLEND);
+
+		for ( ;; )
+		{
+			count = *order++;
+			if (!count)
+				break;
+
+			if (count < 0)
+			{
+				count = -count;
+				glBegin(GL_TRIANGLE_FAN);
+			}
+			else
+				glBegin(GL_TRIANGLE_STRIP);
+
+			do {
+				// texture coordinates come from the draw list
+				if (mtex)
+				{
+					qglMultiTexCoord2f (GL_TEXTURE0_ARB, ((float *) order)[0], ((float *) order)[1]);
+					qglMultiTexCoord2f (GL_TEXTURE1_ARB, ((float *) order)[0], ((float *) order)[1]);
+				}
+				else
+					glTexCoord2f (((float *) order)[0], ((float *) order)[1]);
+
+				order += 2;
+
+				if ((currententity->renderfx & RF_LIMITLERP))
+					lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+
+				// VULT VERTEX LIGHTING
+				if (amf_lighting_vertex.value && !full_light)
+				{
+					l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
+				}
+				else
+				{
+					l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
+					l = (l * shadelight + ambientlight) / 256.0;
+				}
+				l = min(l , 1);
+				//VULT COLOURED MODEL LIGHTS
+				if (amf_lighting_colour.value && !full_light)
+				{
+					for (i=0;i<3;i++)
+						lc[i] = lightcolor[i] / 256 + l;
+
+					//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
+					if (r_modelcolor[0] < 0)
+						glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
+					else
+						glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
+				}
+				else
+				{
+					if (r_modelcolor[0] < 0)
+						glColor4f(l, l, l, r_modelalpha); // normal color
+					else
+						glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
+				}
+
+				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
+				glVertex3fv(interpolated_verts);
+
+
+				verts1++;
+				verts2++;
+			} while (--count);
+
+			glEnd();
+		}
+
+		if (r_modelalpha < 1)
+			glDisable(GL_BLEND);
+	}
 }
 
 void R_SetupAliasFrame(maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline)
 {
-int oldpose, pose, numposes;
-float interval;
+	int oldpose, pose, numposes;
+	float interval;
 
-oldpose = oldframe->firstpose;
-numposes = oldframe->numposes;
-if (numposes > 1) {
-	interval = oldframe->interval;
-	oldpose += (int) (r_refdef2.time / interval) % numposes;
-}
+	oldpose = oldframe->firstpose;
+	numposes = oldframe->numposes;
+	if (numposes > 1) {
+		interval = oldframe->interval;
+		oldpose += (int) (r_refdef2.time / interval) % numposes;
+	}
 
-pose = frame->firstpose;
-numposes = frame->numposes;
-if (numposes > 1) {
-	interval = frame->interval;
-	pose += (int) (r_refdef2.time / interval) % numposes;
-}
+	pose = frame->firstpose;
+	numposes = frame->numposes;
+	if (numposes > 1) {
+		interval = frame->interval;
+		pose += (int) (r_refdef2.time / interval) % numposes;
+	}
 
-GL_DrawAliasFrame (paliashdr, oldpose, pose, mtex, scrolldir);
+	GL_DrawAliasFrame (paliashdr, oldpose, pose, mtex, scrolldir);
 
-if (outline)
-	GL_DrawAliasOutlineFrame (paliashdr, oldpose, pose) ;
+	if (outline)
+		GL_DrawAliasOutlineFrame (paliashdr, oldpose, pose) ;
 }
 
 void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
 {
-int *order, count;
-vec3_t point;
-float lheight = currententity->origin[2] - lightspot[2], height = 1 - lheight;
-trivertx_t *verts;
+	int *order, count;
+	vec3_t point;
+	float lheight = currententity->origin[2] - lightspot[2], height = 1 - lheight;
+	trivertx_t *verts;
 
-verts = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
-verts += posenum * paliashdr->poseverts;
-order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	verts = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+	verts += posenum * paliashdr->poseverts;
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
-while ((count = *order++)) {
-	// get the vertex count and primitive type
-	if (count < 0) {
-		count = -count;
-		glBegin (GL_TRIANGLE_FAN);
-	} else {
-		glBegin (GL_TRIANGLE_STRIP);
-	}
+	while ((count = *order++)) {
+		// get the vertex count and primitive type
+		if (count < 0) {
+			count = -count;
+			glBegin (GL_TRIANGLE_FAN);
+		} else {
+			glBegin (GL_TRIANGLE_STRIP);
+		}
 
-	do {
-		//no texture for shadows
-		order += 2;
+		do {
+			//no texture for shadows
+			order += 2;
 
-		// normals and vertexes come from the frame list
-		point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
-		point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
-		point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
+			// normals and vertexes come from the frame list
+			point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
+			point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
+			point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
 
-		point[0] -= shadevector[0] * (point[2] +lheight);
-		point[1] -= shadevector[1] * (point[2] + lheight);
-		point[2] = height;
-		//height -= 0.001;
-		glVertex3fv (point);
+			point[0] -= shadevector[0] * (point[2] +lheight);
+			point[1] -= shadevector[1] * (point[2] + lheight);
+			point[2] = height;
+			//height -= 0.001;
+			glVertex3fv (point);
 
-		verts++;
-	} while (--count);
+			verts++;
+		} while (--count);
 
-	glEnd ();
-}	
+		glEnd ();
+	}	
 }
 
 void R_AliasSetupLighting(entity_t *ent)
 {
-int minlight, lnum;
-float add, fbskins;
-vec3_t dist;
-model_t *clmodel;
+	int minlight, lnum;
+	float add, fbskins;
+	vec3_t dist;
+	model_t *clmodel;
 
-//VULT COLOURED MODEL LIGHTING
-int i;
-float radiusmax = 0;
+	//VULT COLOURED MODEL LIGHTING
+	int i;
+	float radiusmax = 0;
 
-clmodel = ent->model;
+	clmodel = ent->model;
 
-// make thunderbolt and torches full light
-if (clmodel->modhint == MOD_THUNDERBOLT) {
-	ambientlight = 60 + 150 * bound(0, gl_shaftlight.value, 1);
-	shadelight = 0;
-	full_light = true;
-	return;
-} else if (clmodel->modhint == MOD_FLAME) {
-	ambientlight = 255;
-	shadelight = 0;
-	full_light = true;
-	return;
-}
+	// make thunderbolt and torches full light
+	if (clmodel->modhint == MOD_THUNDERBOLT) {
+		ambientlight = 60 + 150 * bound(0, gl_shaftlight.value, 1);
+		shadelight = 0;
+		full_light = true;
+		return;
+	} else if (clmodel->modhint == MOD_FLAME) {
+		ambientlight = 255;
+		shadelight = 0;
+		full_light = true;
+		return;
+	}
 
-//normal lighting
-full_light = false;
-ambientlight = shadelight = R_LightPoint (ent->origin);
+	//normal lighting
+	full_light = false;
+	ambientlight = shadelight = R_LightPoint (ent->origin);
 
-//VULT COLOURED MODEL LIGHTS
-if (amf_lighting_colour.value)
-{
-	for (lnum = 0; lnum < MAX_DLIGHTS; lnum++)
+	//VULT COLOURED MODEL LIGHTS
+	if (amf_lighting_colour.value)
 	{
-		if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
-			continue;
-
-		VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
-		add = cl_dlights[lnum].radius - VectorLength(dist);
-
-		if (add > 0)
+		for (lnum = 0; lnum < MAX_DLIGHTS; lnum++)
 		{
-			//VULT VERTEX LIGHTING
-			if (amf_lighting_vertex.value)
-			{
-				if (!radiusmax)
-				{
-					radiusmax = cl_dlights[lnum].radius;
-					VectorCopy(cl_dlights[lnum].origin, vertexlight);
-				}
-				else if (cl_dlights[lnum].radius > radiusmax)
-				{
-					radiusmax = cl_dlights[lnum].radius;
-					VectorCopy(cl_dlights[lnum].origin, vertexlight);
-				}
-			}
+			if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
+				continue;
 
-			if (cl_dlights[lnum].type == lt_custom) {
-				VectorCopy(cl_dlights[lnum].color, dlight_color);
-				VectorScale(dlight_color, (1.0/255), dlight_color); // convert color from byte to float
-			}
-			else
-				VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
+			VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
+			add = cl_dlights[lnum].radius - VectorLength(dist);
 
-			for (i=0;i<3;i++)
+			if (add > 0)
 			{
-				lightcolor[i] = lightcolor[i] + (dlight_color[i]*add)*2;
-				if (lightcolor[i] > 256)
+				//VULT VERTEX LIGHTING
+				if (amf_lighting_vertex.value)
 				{
-					switch (i)
+					if (!radiusmax)
 					{
-					case 0:
-						lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
-						lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
-						break;
-					case 1:
-						lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
-						lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
-						break;
-					case 2:
-						lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
-						lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
-						break;
+						radiusmax = cl_dlights[lnum].radius;
+						VectorCopy(cl_dlights[lnum].origin, vertexlight);
+					}
+					else if (cl_dlights[lnum].radius > radiusmax)
+					{
+						radiusmax = cl_dlights[lnum].radius;
+						VectorCopy(cl_dlights[lnum].origin, vertexlight);
 					}
 				}
-			}
-			//ambientlight += add;
-		}
-	}
-}
-else
-{
-	for (lnum = 0; lnum < MAX_DLIGHTS; lnum++) {
-		if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
-			continue;
 
-		VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
-		add = cl_dlights[lnum].radius - VectorLength(dist);
-
-		if (add > 0)
-		{
-			//VULT VERTEX LIGHTING
-			if (amf_lighting_vertex.value)
-			{
-				if (!radiusmax)
-				{
-					radiusmax = cl_dlights[lnum].radius;
-					VectorCopy(cl_dlights[lnum].origin, vertexlight);
+				if (cl_dlights[lnum].type == lt_custom) {
+					VectorCopy(cl_dlights[lnum].color, dlight_color);
+					VectorScale(dlight_color, (1.0/255), dlight_color); // convert color from byte to float
 				}
-				else if (cl_dlights[lnum].radius > radiusmax)
-				{
-					radiusmax = cl_dlights[lnum].radius;
-					VectorCopy(cl_dlights[lnum].origin, vertexlight);
-				}
-			}
-			ambientlight += add;
-		}
-	}
-}
-//calculate pitch and yaw for vertex lighting
-if (amf_lighting_vertex.value)
-{
-	vec3_t dist, ang;
-	apitch = currententity->angles[0];
-	ayaw = currententity->angles[1];
+				else
+					VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
 
-	if (!radiusmax)
-	{
-		vlight_pitch = 45;
-		vlight_yaw = 45;
+				for (i=0;i<3;i++)
+				{
+					lightcolor[i] = lightcolor[i] + (dlight_color[i]*add)*2;
+					if (lightcolor[i] > 256)
+					{
+						switch (i)
+						{
+							case 0:
+								lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
+								lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
+								break;
+							case 1:
+								lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
+								lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
+								break;
+							case 2:
+								lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
+								lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
+								break;
+						}
+					}
+				}
+				//ambientlight += add;
+			}
+		}
 	}
 	else
 	{
-		VectorSubtract (vertexlight, currententity->origin, dist);
-		vectoangles(dist, ang);
-		vlight_pitch = ang[0];
-		vlight_yaw = ang[1];
+		for (lnum = 0; lnum < MAX_DLIGHTS; lnum++) {
+			if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
+				continue;
+
+			VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
+			add = cl_dlights[lnum].radius - VectorLength(dist);
+
+			if (add > 0)
+			{
+				//VULT VERTEX LIGHTING
+				if (amf_lighting_vertex.value)
+				{
+					if (!radiusmax)
+					{
+						radiusmax = cl_dlights[lnum].radius;
+						VectorCopy(cl_dlights[lnum].origin, vertexlight);
+					}
+					else if (cl_dlights[lnum].radius > radiusmax)
+					{
+						radiusmax = cl_dlights[lnum].radius;
+						VectorCopy(cl_dlights[lnum].origin, vertexlight);
+					}
+				}
+				ambientlight += add;
+			}
+		}
 	}
-}
+	//calculate pitch and yaw for vertex lighting
+	if (amf_lighting_vertex.value)
+	{
+		vec3_t dist, ang;
+		apitch = currententity->angles[0];
+		ayaw = currententity->angles[1];
 
-// clamp lighting so it doesn't overbright as much
-if (ambientlight > 128)
-	ambientlight = 128;
-if (ambientlight + shadelight > 192)
-	shadelight = 192 - ambientlight;
+		if (!radiusmax)
+		{
+			vlight_pitch = 45;
+			vlight_yaw = 45;
+		}
+		else
+		{
+			VectorSubtract (vertexlight, currententity->origin, dist);
+			vectoangles(dist, ang);
+			vlight_pitch = ang[0];
+			vlight_yaw = ang[1];
+		}
+	}
 
-// always give the gun some light
-if ((ent->renderfx & RF_WEAPONMODEL) && ambientlight < 24)
-	ambientlight = shadelight = 24;
+	// clamp lighting so it doesn't overbright as much
+	if (ambientlight > 128)
+		ambientlight = 128;
+	if (ambientlight + shadelight > 192)
+		shadelight = 192 - ambientlight;
 
-// never allow players to go totally black
-if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
-	if (ambientlight < 8)
-		ambientlight = shadelight = 8;
-}
+	// always give the gun some light
+	if ((ent->renderfx & RF_WEAPONMODEL) && ambientlight < 24)
+		ambientlight = shadelight = 24;
+
+	// never allow players to go totally black
+	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
+		if (ambientlight < 8)
+			ambientlight = shadelight = 8;
+	}
 
 
-if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
-	fbskins = bound(0, r_fullbrightSkins.value, r_refdef2.max_fbskins);
-	if (fbskins == 1 && gl_fb_models.value == 1) {
+	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
+		fbskins = bound(0, r_fullbrightSkins.value, r_refdef2.max_fbskins);
+		if (fbskins == 1 && gl_fb_models.value == 1) {
+			ambientlight = shadelight = 4096;
+			full_light = true;
+		}
+		else if (fbskins == 0) {
+			ambientlight = max(ambientlight, 8);
+			shadelight = max(shadelight, 8);
+			full_light = (cl.teamfortress ? true : false); // full_light == true will turn off full bright texture during mdl rendering,
+			// that right in TF, they do not use full bright skins.
+		}
+		else if (fbskins) {
+			ambientlight = max(ambientlight, 8 + fbskins * 120);
+			shadelight = max(shadelight, 8 + fbskins * 120);
+			full_light = true;
+		}
+	}
+	else if (
+			!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
+			(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !(com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1))
+		) {
 		ambientlight = shadelight = 4096;
-		full_light = true;
 	}
-	else if (fbskins == 0) {
-		ambientlight = max(ambientlight, 8);
-		shadelight = max(shadelight, 8);
-		full_light = (cl.teamfortress ? true : false); // full_light == true will turn off full bright texture during mdl rendering,
-													   // that right in TF, they do not use full bright skins.
-	}
-	else if (fbskins) {
-		ambientlight = max(ambientlight, 8 + fbskins * 120);
-		shadelight = max(shadelight, 8 + fbskins * 120);
-		full_light = true;
-	}
-}
-else if (
-	!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
-	(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !(com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1))
-) {
-	ambientlight = shadelight = 4096;
-}
 
-minlight = cl.minlight;
+	minlight = cl.minlight;
 
-if (ambientlight < minlight)
-	ambientlight = shadelight = minlight;
+	if (ambientlight < minlight)
+		ambientlight = shadelight = minlight;
 }
 
 void R_DrawPowerupShell(int effects, int layer_no, float base_level, float effect_level,
-maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr)
+		maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr)
 {
-base_level = bound(0, base_level, 1);
-effect_level = bound(0, effect_level, 1);
+	base_level = bound(0, base_level, 1);
+	effect_level = bound(0, effect_level, 1);
 
-r_shellcolor[0] = r_shellcolor[1] = r_shellcolor[2] = base_level;
+	r_shellcolor[0] = r_shellcolor[1] = r_shellcolor[2] = base_level;
 
-if (effects & EF_RED)
-	r_shellcolor[0] += effect_level;
-if (effects & EF_GREEN)
-	r_shellcolor[1] += effect_level;
-if (effects & EF_BLUE)
-	r_shellcolor[2] += effect_level;
+	if (effects & EF_RED)
+		r_shellcolor[0] += effect_level;
+	if (effects & EF_GREEN)
+		r_shellcolor[1] += effect_level;
+	if (effects & EF_BLUE)
+		r_shellcolor[2] += effect_level;
 
-GL_DisableMultitexture();
-glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-R_SetupAliasFrame (oldframe, frame, paliashdr, false, layer_no == 1, false);
+	GL_DisableMultitexture();
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	R_SetupAliasFrame (oldframe, frame, paliashdr, false, layer_no == 1, false);
 }
 
 void R_DrawAliasModel(entity_t *ent)
 {
-int i, anim, skinnum, texture, fb_texture, playernum = -1;
-float scale;
-vec3_t mins, maxs;
-aliashdr_t *paliashdr;
-model_t *clmodel;
-maliasframedesc_t *oldframe, *frame;
-cvar_t *cv = NULL;
-byte *color32bit = NULL;
-qbool outline = false;
+	int i, anim, skinnum, texture, fb_texture, playernum = -1;
+	float scale;
+	vec3_t mins, maxs;
+	aliashdr_t *paliashdr;
+	model_t *clmodel;
+	maliasframedesc_t *oldframe, *frame;
+	cvar_t *cv = NULL;
+	byte *color32bit = NULL;
+	qbool outline = false;
 
-//	entity_t *self;
-//static sfx_t *step;//foosteps sounds, commented out
-//static int setstep;
+	//	entity_t *self;
+	//static sfx_t *step;//foosteps sounds, commented out
+	//static int setstep;
 
-extern qbool RuleSets_DisallowModelOutline (model_t *mod);
-extern	cvar_t r_viewmodelsize, cl_drawgun;
+	extern qbool RuleSets_DisallowModelOutline (model_t *mod);
+	extern	cvar_t r_viewmodelsize, cl_drawgun;
 
-VectorCopy (ent->origin, r_entorigin);
-VectorSubtract (r_origin, r_entorigin, modelorg);
+	VectorCopy (ent->origin, r_entorigin);
+	VectorSubtract (r_origin, r_entorigin, modelorg);
 
-//TODO: use modhints here? 
-//VULT CORONAS	
-if (		
-	(!strcmp (ent->model->name, "progs/flame.mdl") || 
-	!strcmp (ent->model->name, "progs/flame0.mdl") || 
-	!strcmp (ent->model->name, "progs/flame3.mdl") ) && amf_coronas.value )
-{
-	//FIXME: This is slow and pathetic as hell, really we should just check the entity
-	//alternativley add some kind of permanent client side TE for the torch
-	NewStaticLightCorona (C_FIRE, ent->origin, ent);
-}
-
-if (ent->model->modhint == MOD_TELEPORTDESTINATION && amf_coronas.value)
-{
-	NewStaticLightCorona (C_LIGHTNING, ent->origin, ent);
-}
-
-clmodel = ent->model;
-paliashdr = (aliashdr_t *) Mod_Extradata (ent->model);	//locate the proper data
-
-if (ent->frame >= paliashdr->numframes || ent->frame < 0) {
-	if (ent->model->modhint != MOD_EYES)
-		Com_DPrintf ("R_DrawAliasModel: no such frame %d\n", ent->frame);
-
-	ent->frame = 0;
-}
-if (ent->oldframe >= paliashdr->numframes || ent->oldframe < 0) {
-	if (ent->model->modhint != MOD_EYES)
-		Com_DPrintf ("R_DrawAliasModel: no such oldframe %d\n", ent->oldframe);
-
-	ent->oldframe = 0;
-}
-
-frame = &paliashdr->frames[ent->frame];
-oldframe = &paliashdr->frames[ent->oldframe];
-
-if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame)
-	r_framelerp = 1.0;
-else
-	r_framelerp = min (ent->framelerp, 1);
-
-
-//culling
-if (!(ent->renderfx & RF_WEAPONMODEL)) {
-	if (ent->angles[0] || ent->angles[1] || ent->angles[2]) {
-		if (R_CullSphere (ent->origin, max(oldframe->radius, frame->radius)))
-			return;
-	} else {
-		if (r_framelerp == 1) {	
-			VectorAdd(ent->origin, frame->bboxmin, mins);
-			VectorAdd(ent->origin, frame->bboxmax, maxs);
-		} else {
-			for (i = 0; i < 3; i++) {
-				mins[i] = ent->origin[i] + min (oldframe->bboxmin[i], frame->bboxmin[i]);
-				maxs[i] = ent->origin[i] + max (oldframe->bboxmax[i], frame->bboxmax[i]);
-			}
-		}
-		if (R_CullBox (mins, maxs))
-			return;
-	}
-}
-
-if (gl_fogenable.value)
-	glEnable(GL_FOG);
-
-//get lighting information
-R_AliasSetupLighting(ent);
-
-shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-
-//draw all the triangles
-c_alias_polys += paliashdr->numtris;
-glPushMatrix ();
-R_RotateForEntity (ent);
-
-if (clmodel->modhint == MOD_EYES) {
-	glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
-	// double size of eyes, since they are really hard to see in gl
-	glScalef (paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
-} else if (ent->renderfx & RF_WEAPONMODEL) {	
-	scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
-glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-glScalef (paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
-} else {
-	glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-	glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
-}
-
-
-
-anim = (int) (r_refdef2.time * 10) & 3;
-skinnum = ent->skinnum;
-if (skinnum >= paliashdr->numskins || skinnum < 0) {
-	Com_DPrintf ("R_DrawAliasModel: no such skin # %d\n", skinnum);
-	skinnum = 0;
-}
-
-texture = paliashdr->gl_texturenum[skinnum][anim];
-fb_texture = paliashdr->fb_texturenum[skinnum][anim];
-
-r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
-//VULT MOTION TRAILS
-if (ent->alpha)
-	r_modelalpha = ent->alpha;
-
-if(ent->scoreboard)
-	playernum = ent->scoreboard - cl.players;
-
-// we can't dynamically colormap textures, so they are cached separately for the players.  Heads are just uncolored.
-if (!gl_nocolors.value) {
-	if (playernum >= 0 && playernum < MAX_CLIENTS) {
-		if (!ent->scoreboard->skin)
-			CL_NewTranslation(playernum);
-	    texture    = playernmtextures[playernum];
-		fb_texture = playerfbtextures[playernum];
-	}
-}
-if (full_light || !gl_fb_models.value)
-	fb_texture = 0;
-
-if (gl_smoothmodels.value)
-	glShadeModel (GL_SMOOTH);
-
-if (gl_affinemodels.value)
-	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-
-if ((ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL)
-	&& playernum >= 0 && playernum < MAX_CLIENTS)
-{
-	if (cl.teamplay && strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0)
-		cv = &r_teamskincolor;
-	else 
-		cv = &r_enemyskincolor;
-}
-
-if (cv && cv->string[0])
-    color32bit = cv->color;
-
-r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
-
-// Check for outline on models.
-// We don't support outline for transparent models,
-// and we also check for ruleset, since we don't want outline on eyes.
-outline = (gl_outline.integer && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
-
-if (color32bit) {
-	//
-	// seems we select force some color for such model
-	//
-
-	for (i = 0; i < 3; i++) {
-		r_modelcolor[i] = (float)color32bit[i] / 255.0;
-		r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
-	}
-
-	GL_DisableMultitexture();
-	GL_Bind (r_skincolormode.integer ? texture : particletexture); // particletexture is just solid white texture
-
-	//
-	// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
-	//	
-	switch(r_skincolormode.integer) {
-		case 1:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	break;
-		case 2:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);		break;
-		case 3:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);		break;
-		case 4:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);		break;
-		default:	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	break;
-	}
-
-	R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, outline);
-	
-	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
-}
-else
-{
-	if (fb_texture && gl_mtexable) {
-		
-		GL_DisableMultitexture ();
-
-		GL_Bind (texture);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-		GL_EnableMultitexture ();
-		GL_Bind (fb_texture);
-
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-
-		R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, outline);
-
-		GL_DisableMultitexture ();
-	} 
-	else 
+	//TODO: use modhints here? 
+	//VULT CORONAS	
+	if (		
+			(!strcmp (ent->model->name, "progs/flame.mdl") || 
+			 !strcmp (ent->model->name, "progs/flame0.mdl") || 
+			 !strcmp (ent->model->name, "progs/flame3.mdl") ) && amf_coronas.value )
 	{
+		//FIXME: This is slow and pathetic as hell, really we should just check the entity
+		//alternativley add some kind of permanent client side TE for the torch
+		NewStaticLightCorona (C_FIRE, ent->origin, ent);
+	}
+
+	if (ent->model->modhint == MOD_TELEPORTDESTINATION && amf_coronas.value)
+	{
+		NewStaticLightCorona (C_LIGHTNING, ent->origin, ent);
+	}
+
+	clmodel = ent->model;
+	paliashdr = (aliashdr_t *) Mod_Extradata (ent->model);	//locate the proper data
+
+	if (ent->frame >= paliashdr->numframes || ent->frame < 0) {
+		if (ent->model->modhint != MOD_EYES)
+			Com_DPrintf ("R_DrawAliasModel: no such frame %d\n", ent->frame);
+
+		ent->frame = 0;
+	}
+	if (ent->oldframe >= paliashdr->numframes || ent->oldframe < 0) {
+		if (ent->model->modhint != MOD_EYES)
+			Com_DPrintf ("R_DrawAliasModel: no such oldframe %d\n", ent->oldframe);
+
+		ent->oldframe = 0;
+	}
+
+	frame = &paliashdr->frames[ent->frame];
+	oldframe = &paliashdr->frames[ent->oldframe];
+
+	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame)
+		r_framelerp = 1.0;
+	else
+		r_framelerp = min (ent->framelerp, 1);
+
+
+	//culling
+	if (!(ent->renderfx & RF_WEAPONMODEL)) {
+		if (ent->angles[0] || ent->angles[1] || ent->angles[2]) {
+			if (R_CullSphere (ent->origin, max(oldframe->radius, frame->radius)))
+				return;
+		} else {
+			if (r_framelerp == 1) {	
+				VectorAdd(ent->origin, frame->bboxmin, mins);
+				VectorAdd(ent->origin, frame->bboxmax, maxs);
+			} else {
+				for (i = 0; i < 3; i++) {
+					mins[i] = ent->origin[i] + min (oldframe->bboxmin[i], frame->bboxmin[i]);
+					maxs[i] = ent->origin[i] + max (oldframe->bboxmax[i], frame->bboxmax[i]);
+				}
+			}
+			if (R_CullBox (mins, maxs))
+				return;
+		}
+	}
+
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
+
+	//get lighting information
+	R_AliasSetupLighting(ent);
+
+	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
+
+	//draw all the triangles
+	c_alias_polys += paliashdr->numtris;
+	glPushMatrix ();
+	R_RotateForEntity (ent);
+
+	if (clmodel->modhint == MOD_EYES) {
+		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
+		// double size of eyes, since they are really hard to see in gl
+		glScalef (paliashdr->scale[0] * 2, paliashdr->scale[1] * 2, paliashdr->scale[2] * 2);
+	} else if (ent->renderfx & RF_WEAPONMODEL) {	
+		scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
+		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		glScalef (paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
+	} else {
+		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+	}
+
+
+
+	anim = (int) (r_refdef2.time * 10) & 3;
+	skinnum = ent->skinnum;
+	if (skinnum >= paliashdr->numskins || skinnum < 0) {
+		Com_DPrintf ("R_DrawAliasModel: no such skin # %d\n", skinnum);
+		skinnum = 0;
+	}
+
+	texture = paliashdr->gl_texturenum[skinnum][anim];
+	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
+
+	r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
+	//VULT MOTION TRAILS
+	if (ent->alpha)
+		r_modelalpha = ent->alpha;
+
+	if(ent->scoreboard)
+		playernum = ent->scoreboard - cl.players;
+
+	// we can't dynamically colormap textures, so they are cached separately for the players.  Heads are just uncolored.
+	if (!gl_nocolors.value) {
+		if (playernum >= 0 && playernum < MAX_CLIENTS) {
+			if (!ent->scoreboard->skin)
+				CL_NewTranslation(playernum);
+			texture    = playernmtextures[playernum];
+			fb_texture = playerfbtextures[playernum];
+		}
+	}
+	if (full_light || !gl_fb_models.value)
+		fb_texture = 0;
+
+	if (gl_smoothmodels.value)
+		glShadeModel (GL_SMOOTH);
+
+	if (gl_affinemodels.value)
+		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+
+	if ((ent->model->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL)
+			&& playernum >= 0 && playernum < MAX_CLIENTS)
+	{
+		if (cl.teamplay && strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0)
+			cv = &r_teamskincolor;
+		else 
+			cv = &r_enemyskincolor;
+	}
+
+	if (cv && cv->string[0])
+		color32bit = cv->color;
+
+	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
+
+	// Check for outline on models.
+	// We don't support outline for transparent models,
+	// and we also check for ruleset, since we don't want outline on eyes.
+	outline = (gl_outline.integer && r_modelalpha == 1 && !RuleSets_DisallowModelOutline(clmodel));
+
+	if (color32bit) {
+		//
+		// seems we select force some color for such model
+		//
+
+		for (i = 0; i < 3; i++) {
+			r_modelcolor[i] = (float)color32bit[i] / 255.0;
+			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
+		}
+
 		GL_DisableMultitexture();
-		GL_Bind (texture);
-		
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_Bind (r_skincolormode.integer ? texture : particletexture); // particletexture is just solid white texture
+
+		//
+		// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
+		//	
+		switch(r_skincolormode.integer) {
+			case 1:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	break;
+			case 2:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);		break;
+			case 3:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);		break;
+			case 4:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);		break;
+			default:	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	break;
+		}
 
 		R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, outline);
 
-		if (fb_texture) {
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
+	}
+	else
+	{
+		if (fb_texture && gl_mtexable) {
+
+			GL_DisableMultitexture ();
+
+			GL_Bind (texture);
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+			GL_EnableMultitexture ();
 			GL_Bind (fb_texture);
 
-			glEnable (GL_BLEND);
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 
-			R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, false);
+			R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, outline);
 
-			glDisable (GL_BLEND);
+			GL_DisableMultitexture ();
+		} 
+		else 
+		{
+			GL_DisableMultitexture();
+			GL_Bind (texture);
+
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+			R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, outline);
+
+			if (fb_texture) {
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+				GL_Bind (fb_texture);
+
+				glEnable (GL_BLEND);
+
+				R_SetupAliasFrame (oldframe, frame, paliashdr, false, false, false);
+
+				glDisable (GL_BLEND);
+			}
 		}
 	}
-}
 
-// FIXME: think need put it after caustics
-if (bound(0, gl_powerupshells.value, 1))
-{
-	// always allow powerupshells for specs or demos.
-	// do not allow powerupshells for eyes in other cases
-	if ( ( cls.demoplayback || cl.spectator ) || ent->model->modhint != MOD_EYES )
+	// FIXME: think need put it after caustics
+	if (bound(0, gl_powerupshells.value, 1))
 	{
-		if ((ent->effects & EF_RED) || (ent->effects & EF_GREEN) || (ent->effects & EF_BLUE)) {
-			R_DrawPowerupShell(ent->effects, 0, gl_powerupshells_base1level.value,
-				gl_powerupshells_effect1level.value, oldframe, frame, paliashdr);
-			R_DrawPowerupShell(ent->effects, 1, gl_powerupshells_base2level.value,
-				gl_powerupshells_effect2level.value, oldframe, frame, paliashdr);
+		// always allow powerupshells for specs or demos.
+		// do not allow powerupshells for eyes in other cases
+		if ( ( cls.demoplayback || cl.spectator ) || ent->model->modhint != MOD_EYES )
+		{
+			if ((ent->effects & EF_RED) || (ent->effects & EF_GREEN) || (ent->effects & EF_BLUE)) {
+				R_DrawPowerupShell(ent->effects, 0, gl_powerupshells_base1level.value,
+						gl_powerupshells_effect1level.value, oldframe, frame, paliashdr);
+				R_DrawPowerupShell(ent->effects, 1, gl_powerupshells_base2level.value,
+						gl_powerupshells_effect2level.value, oldframe, frame, paliashdr);
+			}
+
+			memset(r_shellcolor, 0, sizeof(r_shellcolor));
 		}
-
-		memset(r_shellcolor, 0, sizeof(r_shellcolor));
 	}
-}
 
-// Underwater caustics on alias models of QRACK -->
+	// Underwater caustics on alias models of QRACK -->
 #define GL_RGB_SCALE 0x8573
 
-if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin))))
-{
-	GL_EnableMultitexture ();
-	glBindTexture (GL_TEXTURE_2D, underwatertexture);
+	if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin))))
+	{
+		GL_EnableMultitexture ();
+		glBindTexture (GL_TEXTURE_2D, underwatertexture);
 
-	glMatrixMode (GL_TEXTURE);
-	glLoadIdentity ();
-	glScalef (0.5, 0.5, 1);
-	glRotatef (r_refdef2.time * 10, 1, 0, 0);
-	glRotatef (r_refdef2.time * 10, 0, 1, 0);
-	glMatrixMode (GL_MODELVIEW);
+		glMatrixMode (GL_TEXTURE);
+		glLoadIdentity ();
+		glScalef (0.5, 0.5, 1);
+		glRotatef (r_refdef2.time * 10, 1, 0, 0);
+		glRotatef (r_refdef2.time * 10, 0, 1, 0);
+		glMatrixMode (GL_MODELVIEW);
 
-	GL_Bind (underwatertexture);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);        
-	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-	glEnable (GL_BLEND);
+		GL_Bind (underwatertexture);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);        
+		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+		glEnable (GL_BLEND);
 
-	R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, false);
+		R_SetupAliasFrame (oldframe, frame, paliashdr, true, false, false);
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);            
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_BLEND);            
 
-	GL_SelectTexture(GL_TEXTURE1_ARB);
-	glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-	glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glDisable (GL_TEXTURE_2D);
+		GL_SelectTexture(GL_TEXTURE1_ARB);
+		glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+		glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glDisable (GL_TEXTURE_2D);
 
-	glMatrixMode (GL_TEXTURE);
-	glLoadIdentity ();
-	glMatrixMode (GL_MODELVIEW);
+		glMatrixMode (GL_TEXTURE);
+		glLoadIdentity ();
+		glMatrixMode (GL_MODELVIEW);
 
-	GL_DisableMultitexture ();
-}
-// <-- Underwater caustics on alias models of QRACK
+		GL_DisableMultitexture ();
+	}
+	// <-- Underwater caustics on alias models of QRACK
 
-glShadeModel (GL_FLAT);
-if (gl_affinemodels.value)
-	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-glPopMatrix ();
-
-//VULT MOTION TRAILS - No shadows on motion trails
-if ((r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha) {
-	float theta;
-	static float shadescale = 0;
-
-	if (!shadescale)
-		shadescale = 1 / sqrt(2);
-	theta = -ent->angles[1] / 180 * M_PI;
-
-	VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
-
-	glPushMatrix ();
-	glTranslatef (ent->origin[0],  ent->origin[1],  ent->origin[2]);
-	glRotatef (ent->angles[1],  0, 0, 1);
-
-	glDisable (GL_TEXTURE_2D);
-	glEnable (GL_BLEND);
-	glColor4f (0, 0, 0, 0.5);
-	GL_DrawAliasShadow (paliashdr, lastposenum);
-	glEnable (GL_TEXTURE_2D);
-	glDisable (GL_BLEND);
+	glShadeModel (GL_FLAT);
+	if (gl_affinemodels.value)
+		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	glPopMatrix ();
-}
 
-glColor3ubv (color_white);
+	//VULT MOTION TRAILS - No shadows on motion trails
+	if ((r_shadows.value && !full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha) {
+		float theta;
+		static float shadescale = 0;
 
-if (gl_fogenable.value)
-	glDisable(GL_FOG);
+		if (!shadescale)
+			shadescale = 1 / sqrt(2);
+		theta = -ent->angles[1] / 180 * M_PI;
+
+		VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
+
+		glPushMatrix ();
+		glTranslatef (ent->origin[0],  ent->origin[1],  ent->origin[2]);
+		glRotatef (ent->angles[1],  0, 0, 1);
+
+		glDisable (GL_TEXTURE_2D);
+		glEnable (GL_BLEND);
+		glColor4f (0, 0, 0, 0.5);
+		GL_DrawAliasShadow (paliashdr, lastposenum);
+		glEnable (GL_TEXTURE_2D);
+		glDisable (GL_BLEND);
+
+		glPopMatrix ();
+	}
+
+	glColor3ubv (color_white);
+
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
 }
 
 static qbool R_DrawTrySimpleItem(void)
 {
-int sprtype = gl_simpleitems_orientation.integer;
-float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
-int simpletexture;
-vec3_t point, right, up, org, offset;
+	int sprtype = gl_simpleitems_orientation.integer;
+	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
+	int simpletexture;
+	vec3_t point, right, up, org, offset;
 
-if (!currententity || !currententity->model)
-	return false;
+	if (!currententity || !currententity->model)
+		return false;
 
-if (currententity->skinnum < 0 || currententity->skinnum >= MAX_SIMPLE_TEXTURES)
-	simpletexture = currententity->model->simpletexture[0]; // ah...
-else
-	simpletexture = currententity->model->simpletexture[currententity->skinnum];
+	if (currententity->skinnum < 0 || currententity->skinnum >= MAX_SIMPLE_TEXTURES)
+		simpletexture = currententity->model->simpletexture[0]; // ah...
+	else
+		simpletexture = currententity->model->simpletexture[currententity->skinnum];
 
-if (!simpletexture)
-	return false;
+	if (!simpletexture)
+		return false;
 
-autorotate = anglemod(100 * cl.time);
+	autorotate = anglemod(100 * cl.time);
 
-if (sprtype == SPR_ORIENTED)
-{
-	// bullet marks on walls
-	vec3_t angles;
-	angles[0] = angles[2] = 0;
-	angles[1] = autorotate;
-	AngleVectors (angles, NULL, right, up);
-} 
-else if (sprtype == SPR_FACING_UPRIGHT)
-{
-	VectorSet (up, 0, 0, 1);
-	right[0] = currententity->origin[1] - r_origin[1];
-	right[1] = -(currententity->origin[0] - r_origin[0]);
-	right[2] = 0;
-	VectorNormalizeFast (right);
-} 
-else if (sprtype == SPR_VP_PARALLEL_UPRIGHT)
-{
-	VectorSet (up, 0, 0, 1);
-	VectorCopy (vright, right);
-}
-else
-{	// normal sprite
-	VectorCopy (vup, up);
-	VectorCopy (vright, right);
-}
+	if (sprtype == SPR_ORIENTED)
+	{
+		// bullet marks on walls
+		vec3_t angles;
+		angles[0] = angles[2] = 0;
+		angles[1] = autorotate;
+		AngleVectors (angles, NULL, right, up);
+	} 
+	else if (sprtype == SPR_FACING_UPRIGHT)
+	{
+		VectorSet (up, 0, 0, 1);
+		right[0] = currententity->origin[1] - r_origin[1];
+		right[1] = -(currententity->origin[0] - r_origin[0]);
+		right[2] = 0;
+		VectorNormalizeFast (right);
+	} 
+	else if (sprtype == SPR_VP_PARALLEL_UPRIGHT)
+	{
+		VectorSet (up, 0, 0, 1);
+		VectorCopy (vright, right);
+	}
+	else
+	{	// normal sprite
+		VectorCopy (vup, up);
+		VectorCopy (vright, right);
+	}
 
-VectorCopy(currententity->origin, org);
-// brush models require some additional centering
-if (currententity->model->type == mod_brush)
-{
-	extern cvar_t cl_model_bobbing;
+	VectorCopy(currententity->origin, org);
+	// brush models require some additional centering
+	if (currententity->model->type == mod_brush)
+	{
+		extern cvar_t cl_model_bobbing;
 
-	VectorSubtract(currententity->model->maxs, currententity->model->mins, offset);
-	offset[2] = 0;
-	VectorMA(org, 0.5, offset, org);
+		VectorSubtract(currententity->model->maxs, currententity->model->mins, offset);
+		offset[2] = 0;
+		VectorMA(org, 0.5, offset, org);
 
-	if (cl_model_bobbing.value)
-		org[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
-}
-org[2] += sprsize;
+		if (cl_model_bobbing.value)
+			org[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
+	}
+	org[2] += sprsize;
 
-glPushAttrib(GL_ENABLE_BIT);
+	glPushAttrib(GL_ENABLE_BIT);
 
-glDisable(GL_CULL_FACE);
-glEnable(GL_ALPHA_TEST);
-glDisable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
+	glEnable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
 
-GL_Bind(simpletexture);
+	GL_Bind(simpletexture);
 
-glBegin (GL_QUADS);
+	glBegin (GL_QUADS);
 
-glTexCoord2f (0, 1);
-VectorMA (org, -sprsize, up, point);
-VectorMA (point, -sprsize, right, point);
-glVertex3fv (point);
+	glTexCoord2f (0, 1);
+	VectorMA (org, -sprsize, up, point);
+	VectorMA (point, -sprsize, right, point);
+	glVertex3fv (point);
 
-glTexCoord2f (0, 0);
-VectorMA (org, sprsize, up, point);
-VectorMA (point, -sprsize, right, point);
-glVertex3fv (point);
+	glTexCoord2f (0, 0);
+	VectorMA (org, sprsize, up, point);
+	VectorMA (point, -sprsize, right, point);
+	glVertex3fv (point);
 
-glTexCoord2f (1, 0);
-VectorMA (org, sprsize, up, point);
-VectorMA (point, sprsize, right, point);
-glVertex3fv (point);
+	glTexCoord2f (1, 0);
+	VectorMA (org, sprsize, up, point);
+	VectorMA (point, sprsize, right, point);
+	glVertex3fv (point);
 
-glTexCoord2f (1, 1);
-VectorMA (org, -sprsize, up, point);
-VectorMA (point, sprsize, right, point);
-glVertex3fv (point);
+	glTexCoord2f (1, 1);
+	VectorMA (org, -sprsize, up, point);
+	VectorMA (point, sprsize, right, point);
+	glVertex3fv (point);
 
-glEnd ();
+	glEnd ();
 
-glPopAttrib();
+	glPopAttrib();
 
-return true;
+	return true;
 }
 
 void R_DrawEntitiesOnList(visentlist_t *vislist)
 {
-int i;
+	int i;
 
-if (!r_drawentities.value || !vislist->count)
-	return;
+	if (!r_drawentities.value || !vislist->count)
+		return;
 
-if (vislist->alpha)
-	glEnable (GL_ALPHA_TEST);
+	if (vislist->alpha)
+		glEnable (GL_ALPHA_TEST);
 
-// draw sprites separately, because of alpha_test
-for (i = 0; i < vislist->count; i++) 
-{
-	currententity = &vislist->list[i];
-
-	if (gl_simpleitems.value && R_DrawTrySimpleItem())
-		continue;
-
-	switch (currententity->model->type) 
+	// draw sprites separately, because of alpha_test
+	for (i = 0; i < vislist->count; i++) 
 	{
-		case mod_alias:
-			// VULT NAILTRAIL - Hidenails
-			if (amf_hidenails.value && currententity->model->modhint == MOD_SPIKE)
-				break;
-			// VULT ROCKETTRAILS - Hide rockets
-			if (amf_hiderockets.value && currententity->model->flags & EF_ROCKET)
-				break;
-			// VULT CAMERAS - Show/Hide playermodel
-			if (currententity->alpha == -1)
-			{
-				 if (cameratype == C_NORMAL)
+		currententity = &vislist->list[i];
+
+		if (gl_simpleitems.value && R_DrawTrySimpleItem())
+			continue;
+
+		switch (currententity->model->type) 
+		{
+			case mod_alias:
+				// VULT NAILTRAIL - Hidenails
+				if (amf_hidenails.value && currententity->model->modhint == MOD_SPIKE)
 					break;
-				 else
-					currententity->alpha = 1;
-			}
-			// VULT MOTION TRAILS
-			if (currententity->alpha < 0)
+				// VULT ROCKETTRAILS - Hide rockets
+				if (amf_hiderockets.value && currententity->model->flags & EF_ROCKET)
+					break;
+				// VULT CAMERAS - Show/Hide playermodel
+				if (currententity->alpha == -1)
+				{
+					if (cameratype == C_NORMAL)
+						break;
+					else
+						currententity->alpha = 1;
+				}
+				// VULT MOTION TRAILS
+				if (currententity->alpha < 0)
+					break;
+
+				// Handle flame/flame0 model changes
+				if (qmb_initialized)
+				{
+					if (!amf_part_fire.value && !strcmp(currententity->model->name, "progs/flame0.mdl"))
+					{
+						currententity->model = cl.model_precache[cl_modelindices[mi_flame]];
+					}
+					else if (amf_part_fire.value)
+					{
+						if (!strcmp(currententity->model->name, "progs/flame0.mdl"))
+						{
+							if (!ISPAUSED)
+								ParticleFire (currententity->origin);
+						}
+						else if (!strcmp(currententity->model->name, "progs/flame.mdl")
+								&& cl_flame0_model /* do we have progs/flame0.mdl? */)
+						{
+							if (!ISPAUSED)
+								ParticleFire (currententity->origin);
+							currententity->model = cl_flame0_model;
+						}
+						else if (!strcmp(currententity->model->name, "progs/flame2.mdl") || !strcmp(currententity->model->name, "progs/flame3.mdl"))
+						{
+							if (!ISPAUSED)
+								ParticleFire (currententity->origin);
+							continue;
+						}
+					}
+				}
+
+				R_DrawAliasModel (currententity);
+
 				break;
+			case mod_alias3:
+				R_DrawAlias3Model (currententity);
+				break;
+			case mod_brush:
 
-			// Handle flame/flame0 model changes
-			if (qmb_initialized)
-			{
-				if (!amf_part_fire.value && !strcmp(currententity->model->name, "progs/flame0.mdl"))
-				{
-					currententity->model = cl.model_precache[cl_modelindices[mi_flame]];
+				// Get rid of Z-fighting for textures by offsetting the
+				// drawing of entity models compared to normal polygons.
+				if(gl_brush_polygonoffset.value > 0) {
+					GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
+					R_DrawBrushModel(currententity);
+					GL_PolygonOffset(0, 0);
+				} else {
+					R_DrawBrushModel(currententity);
 				}
-				else if (amf_part_fire.value)
-				{
-					if (!strcmp(currententity->model->name, "progs/flame0.mdl"))
-					{
-						if (!ISPAUSED)
-							ParticleFire (currententity->origin);
-					}
-					else if (!strcmp(currententity->model->name, "progs/flame.mdl")
-						&& cl_flame0_model /* do we have progs/flame0.mdl? */)
-					{
-						if (!ISPAUSED)
-							ParticleFire (currententity->origin);
-						currententity->model = cl_flame0_model;
-					}
-					else if (!strcmp(currententity->model->name, "progs/flame2.mdl") || !strcmp(currententity->model->name, "progs/flame3.mdl"))
-					{
-						if (!ISPAUSED)
-							ParticleFire (currententity->origin);
-						continue;
-					}
-				}
-			}
 
-			R_DrawAliasModel (currententity);
-
-			break;
-		case mod_alias3:
-			R_DrawAlias3Model (currententity);
-			break;
-		case mod_brush:
-
-			// Get rid of Z-fighting for textures by offsetting the
-			// drawing of entity models compared to normal polygons.
-			if(gl_brush_polygonoffset.value > 0) {
-				GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
-				R_DrawBrushModel(currententity);
-				GL_PolygonOffset(0, 0);
-			} else {
-				R_DrawBrushModel(currententity);
-			}
-
-			break;
-		case mod_sprite:
-			R_DrawSpriteModel (currententity);
-			break;
-		// not handled
-		case mod_spr32:
-			break;
+				break;
+			case mod_sprite:
+				R_DrawSpriteModel (currententity);
+				break;
+				// not handled
+			case mod_spr32:
+				break;
+		}
 	}
-}
 
-if (vislist->alpha)
-	glDisable (GL_ALPHA_TEST);
+	if (vislist->alpha)
+		glDisable (GL_ALPHA_TEST);
 }
 
 void R_DrawViewModel(void)
 {
-centity_t *cent;
-static entity_t gun;
+	centity_t *cent;
+	static entity_t gun;
 
-//VULT CAMERA - Don't draw gun in external camera
-if (cameratype != C_NORMAL)
-	return;
+	//VULT CAMERA - Don't draw gun in external camera
+	if (cameratype != C_NORMAL)
+		return;
 
-if (!r_drawentities.value || !cl.viewent.current.modelindex)
-	return;
+	if (!r_drawentities.value || !cl.viewent.current.modelindex)
+		return;
 
-memset(&gun, 0, sizeof(gun));
-cent = &cl.viewent;
-currententity = &gun;
+	memset(&gun, 0, sizeof(gun));
+	cent = &cl.viewent;
+	currententity = &gun;
 
-if (!(gun.model = cl.model_precache[cent->current.modelindex]))
-	Host_Error ("R_DrawViewModel: bad modelindex");
+	if (!(gun.model = cl.model_precache[cent->current.modelindex]))
+		Host_Error ("R_DrawViewModel: bad modelindex");
 
-VectorCopy(cent->current.origin, gun.origin);
-VectorCopy(cent->current.angles, gun.angles);
-gun.colormap = vid.colormap;
-gun.renderfx = RF_WEAPONMODEL | RF_NOSHADOW;
-if (r_lerpmuzzlehack.value) {
-	if (cent->current.modelindex != cl_modelindices[mi_vaxe] &&
-		cent->current.modelindex != cl_modelindices[mi_vbio] &&
-		cent->current.modelindex != cl_modelindices[mi_vgrap] &&
-		cent->current.modelindex != cl_modelindices[mi_vknife] &&
-		cent->current.modelindex != cl_modelindices[mi_vknife2] &&
-		cent->current.modelindex != cl_modelindices[mi_vmedi] &&
-		cent->current.modelindex != cl_modelindices[mi_vspan])
-	{
-		gun.renderfx |= RF_LIMITLERP;			
-		r_lerpdistance =  135;
+	VectorCopy(cent->current.origin, gun.origin);
+	VectorCopy(cent->current.angles, gun.angles);
+	gun.colormap = vid.colormap;
+	gun.renderfx = RF_WEAPONMODEL | RF_NOSHADOW;
+	if (r_lerpmuzzlehack.value) {
+		if (cent->current.modelindex != cl_modelindices[mi_vaxe] &&
+				cent->current.modelindex != cl_modelindices[mi_vbio] &&
+				cent->current.modelindex != cl_modelindices[mi_vgrap] &&
+				cent->current.modelindex != cl_modelindices[mi_vknife] &&
+				cent->current.modelindex != cl_modelindices[mi_vknife2] &&
+				cent->current.modelindex != cl_modelindices[mi_vmedi] &&
+				cent->current.modelindex != cl_modelindices[mi_vspan])
+		{
+			gun.renderfx |= RF_LIMITLERP;			
+			r_lerpdistance =  135;
+		}
 	}
-}
 
-gun.effects |= (cl.stats[STAT_ITEMS] & IT_QUAD) ? EF_BLUE : 0;
-gun.effects |= (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) ? EF_RED : 0;
-gun.effects |= (cl.stats[STAT_ITEMS] & IT_SUIT) ? EF_GREEN : 0;
+	gun.effects |= (cl.stats[STAT_ITEMS] & IT_QUAD) ? EF_BLUE : 0;
+	gun.effects |= (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) ? EF_RED : 0;
+	gun.effects |= (cl.stats[STAT_ITEMS] & IT_SUIT) ? EF_GREEN : 0;
 
-gun.frame = cent->current.frame;
-if (cent->frametime >= 0 && cent->frametime <= r_refdef2.time) {
-	gun.oldframe = cent->oldframe;
-	gun.framelerp = (r_refdef2.time - cent->frametime) * 10;
-} else {
-	gun.oldframe = gun.frame;
-	gun.framelerp = -1;
-}
+	gun.frame = cent->current.frame;
+	if (cent->frametime >= 0 && cent->frametime <= r_refdef2.time) {
+		gun.oldframe = cent->oldframe;
+		gun.framelerp = (r_refdef2.time - cent->frametime) * 10;
+	} else {
+		gun.oldframe = gun.frame;
+		gun.framelerp = -1;
+	}
 
 
-// hack the depth range to prevent view model from poking into walls
-glDepthRange (gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
+	// hack the depth range to prevent view model from poking into walls
+	glDepthRange (gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
 
-switch(currententity->model->type)
-{
-case mod_alias:
-	R_DrawAliasModel (currententity);
-	break;
-case mod_alias3:
-	R_DrawAlias3Model (currententity);
-	break;
-default:
-	Com_Printf("Not drawing view model of type %i\n", currententity->model->type);
-	break;
-} 
-glDepthRange (gldepthmin, gldepthmax);
+	switch(currententity->model->type)
+	{
+		case mod_alias:
+			R_DrawAliasModel (currententity);
+			break;
+		case mod_alias3:
+			R_DrawAlias3Model (currententity);
+			break;
+		default:
+			Com_Printf("Not drawing view model of type %i\n", currententity->model->type);
+			break;
+	} 
+	glDepthRange (gldepthmin, gldepthmax);
 }
 
 
@@ -1555,7 +1554,7 @@ void R_BrightenScreen(void)
 
 	f = min (v_contrast.value, 3);
 	f = pow (f, vid_gamma);
-	
+
 	glDisable (GL_TEXTURE_2D);
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_DST_COLOR, GL_ONE);
@@ -1570,12 +1569,12 @@ void R_BrightenScreen(void)
 		{
 			glColor3f (f - 1, f - 1, f - 1);
 		}
-		
+
 		glVertex2f (0, 0);
 		glVertex2f (vid.width, 0);
 		glVertex2f (vid.width, vid.height);
 		glVertex2f (0, vid.height);
-		
+
 		f *= 0.5;
 	}
 	glEnd ();
@@ -1669,7 +1668,7 @@ void R_SetupFrame(void)
 void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
 {
 	GLdouble xmin, xmax, ymin, ymax;
-	
+
 	ymax = zNear * tan(fovy * M_PI / 360.0);
 	ymin = -ymax;
 
@@ -1786,7 +1785,7 @@ void R_SetupGL(void)
 	{
 		glViewport (glx + x, gly + y2, w, h);
 	}
-	
+
 	farclip = max((int) r_farclip.value, 4096);
 
 	screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
@@ -2000,20 +1999,20 @@ void R_Init(void)
 	Cvar_ResetCurrentGroup();
 
 	if (!hud_netgraph)
-    	hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
-                HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
-                "0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-                "swap_x",       "0",
-                "swap_y",       "0",
-                "inframes",     "0",
-                "scale",        "256",
-                "ploss",        "1",
-                "width",        "256",
-                "height",       "32",
-                "lostscale",    "1",
-                "full",         "0",
-                "alpha",        "1",
-                NULL);
+		hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
+				HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
+				"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+				"swap_x",       "0",
+				"swap_y",       "0",
+				"inframes",     "0",
+				"scale",        "256",
+				"ploss",        "1",
+				"width",        "256",
+				"height",       "32",
+				"lostscale",    "1",
+				"full",         "0",
+				"alpha",        "1",
+				NULL);
 
 	// this minigl driver seems to slow us down if the particles are drawn WITHOUT Z buffer bits 
 	if (!strcmp(gl_vendor, "METABYTE/WICKED3D")) 
@@ -2072,9 +2071,9 @@ void R_RenderScene(void)
 	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value)	// } END shaman BUG fog was out of control when fogstart>fogend
 	{
 		glFogi(GL_FOG_MODE, GL_LINEAR);
-			colors[0] = gl_fogred.value;
-			colors[1] = gl_foggreen.value;
-			colors[2] = gl_fogblue.value; 
+		colors[0] = gl_fogred.value;
+		colors[1] = gl_foggreen.value;
+		colors[2] = gl_fogblue.value; 
 		glFogfv(GL_FOG_COLOR, colors); 
 		glFogf(GL_FOG_START, gl_fogstart.value); 
 		glFogf(GL_FOG_END, gl_fogend.value); 
@@ -2089,7 +2088,7 @@ void R_RenderScene(void)
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	byte *color;
 	char buf[MAX_COM_TOKEN];
-	
+
 	strlcpy(buf,s,sizeof(buf));
 	color = StringToRGB(buf);
 
@@ -2103,7 +2102,7 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 void R_Clear(void)
 {
 	int clearbits = 0;
-	
+
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
@@ -2223,9 +2222,9 @@ static void draw_velocity_3d(void)
 }
 
 /*
- Motion blur effect.
- Stolen from FTE engine.
-*/
+   Motion blur effect.
+   Stolen from FTE engine.
+   */
 static void R_RenderSceneBlurDo(float alpha)
 {
 	static double last_time;
@@ -2286,14 +2285,14 @@ static void R_RenderSceneBlurDo(float alpha)
 	if (draw)
 	{
 		glBegin(GL_QUADS);
-			glTexCoord2f(cs-vs, ct-vt);
-			glVertex2f(0, 0);
-			glTexCoord2f(cs+vs, ct-vt);
-			glVertex2f(glwidth, 0);
-			glTexCoord2f(cs+vs, ct+vt);
-			glVertex2f(glwidth, glheight);
-			glTexCoord2f(cs-vs, ct+vt);
-			glVertex2f(0, glheight);
+		glTexCoord2f(cs-vs, ct-vt);
+		glVertex2f(0, 0);
+		glTexCoord2f(cs+vs, ct-vt);
+		glVertex2f(glwidth, 0);
+		glTexCoord2f(cs+vs, ct+vt);
+		glVertex2f(glwidth, glheight);
+		glTexCoord2f(cs-vs, ct+vt);
+		glVertex2f(0, glheight);
 		glEnd();
 	}
 
@@ -2326,7 +2325,7 @@ static void R_RenderSceneBlur(void)
 		// Motion blur disabled entirely.
 		return;
 	}
-	
+
 	// FIXME: Actually here should be some smoothing code for transaction from one case to another,
 	// since for example if we turned off blur for everything but hurt, when we feel pain we use blur, but when
 	// pain is ended we saddenly turning blur off, that does not look natural.
