@@ -2171,7 +2171,7 @@ static double MinPhysFrameTime (void)
 	float physfps = ((cl.spectator && !cls.demoplayback) ? cl_physfps_spectator.value : cl_physfps.value);
 
 	// this makes things smooth in mvd demo play back, since mvd interpolation applied each frame
-	if (cls.demoplayback && cls.mvdplayback)
+	if (cls.demoplayback)
 		return 0;
 
 	// the user can lower it for testing (or really shit connection)
@@ -2945,20 +2945,12 @@ void CL_UpdateCaption(qbool force)
 
 void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel)
 {
-	int i = 0;
-
-	cl.teamplay = (*value != '0');
-
 	if (cls.nqdemoplayback) 
 	{
-		for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i)
-		{
-			player_info_t* player = &cl.players[i];
+		cl.teamplay = (*value != '0');
 
-			// All white with <= -99 frags => spectator
-			player->spectator = (*player->name && cl.teamplay && player->real_topcolor == 0 && player->real_bottomcolor == 0 && player->frags <= -99);
-		}
+		NQD_SetSpectatorFlags();
+
+		OnChangeColorForcing(var, value, cancel);
 	}
-
-	OnChangeColorForcing(var, value, cancel);
 }

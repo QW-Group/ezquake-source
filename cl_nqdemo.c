@@ -305,6 +305,19 @@ static void NQD_ParseClientdata (int bits)
 	}
 }
 
+static void NQD_SetSpectatorFlag(player_info_t* player)
+{
+	player->spectator = (cl.teamplay && player->name[0] && player->real_topcolor == 0 && player->real_bottomcolor == 0 && player->frags <= -99);
+}
+
+void NQD_SetSpectatorFlags(void)
+{
+	int i;
+
+	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i)
+		NQD_SetSpectatorFlag(&cl.players[i]);
+}
+
 /*
 ==================
 NQD_ParseUpdatecolors
@@ -326,32 +339,31 @@ static void NQD_ParseUpdatecolors (void)
 	top = min(colors & 15, 13);
 	bottom = min((colors >> 4) & 15, 13);
 
-	if (cl_demoteamplay.integer)
-		cl.players[i].spectator = (top == 0 && bottom == 0 && cl.players[i].frags <= -99);
-	else 
-		cl.players[i].spectator = 0;
-
 	client_team_changed = (cl.playernum == i && bottom != cl.players[i].real_bottomcolor);
 	player_skin_changed = (top != cl.players[i].real_topcolor || bottom != cl.players[i].real_bottomcolor);
 
 	Info_SetValueForKey (cl.players[i].userinfo, "topcolor", va("%i", top), MAX_INFO_KEY);
 	Info_SetValueForKey (cl.players[i].userinfo, "bottomcolor", va("%i", bottom), MAX_INFO_KEY);
 
+	cl.players[i].real_topcolor = top;
+	cl.players[i].real_bottomcolor = bottom;
+
+	NQD_SetSpectatorFlag(&cl.players[i]);
+
+	// Update team (based on bottom colour)
 	if (cl.players[i].spectator)
 	{
-		Info_SetValueForKey (cl.players[i].userinfo, "team", "", MAX_INFO_KEY);	// In NQ, team = bottom color
+		Info_SetValueForKey (cl.players[i].userinfo, "team", "", MAX_INFO_KEY);
 		strlcpy(cl.players[i].team, "", sizeof(cl.players[i].team));
 	}
 	else 
 	{
 		char* bottom_as_string = SettingColorName(bottom); 
-		Info_SetValueForKey (cl.players[i].userinfo, "team", bottom_as_string, MAX_INFO_KEY);	// In NQ, team = bottom color
+		Info_SetValueForKey (cl.players[i].userinfo, "team", bottom_as_string, MAX_INFO_KEY);
 		strlcpy(cl.players[i].team, bottom_as_string, sizeof(cl.players[i].team));
 	}
 
-	cl.players[i].real_topcolor = top;
-	cl.players[i].real_bottomcolor = bottom;
-
+	// Update skins
 	if (TP_NeedRefreshSkins() && client_team_changed)
 		TP_RefreshSkins();
 	else if (player_skin_changed)
@@ -1056,7 +1068,6 @@ static void NQD_ParseServerMessage (void)
 // parse the message
 //
 	MSG_BeginReading ();
-	
 	while (1)
 	{
 		if (msg_badread)
@@ -1102,10 +1113,12 @@ static void NQD_ParseServerMessage (void)
 		case nq_svc_time:
 			nq_mtime[1] = nq_mtime[0];
 			nq_mtime[0] = MSG_ReadFloat ();
-			if (demostarttime < 0)
-				demostarttime = nq_mtime[0];
 			cl.servertime = nq_mtime[0];
 			CL_CheckForNQDSeekPointFound();
+			if (demostarttime <= 0) 
+				demostarttime = nq_mtime[0];
+			if (cls.demotime < demostarttime) 
+				cls.demotime = demostarttime;
 			message_with_datagram = true;
 			break;
 

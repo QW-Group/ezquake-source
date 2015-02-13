@@ -687,6 +687,7 @@ usermainbuttons_t CL_GetLastCmd (void);
 void NQD_StartPlayback (void);
 void NQD_LinkEntities (void);
 void NQD_ReadPackets (void);
+void NQD_SetSpectatorFlags (void);
 
 // cl_demo.c
 qbool CL_GetDemoMessage (void);
