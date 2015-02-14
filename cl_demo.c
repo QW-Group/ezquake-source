@@ -84,7 +84,7 @@ static char tempqwd_name[256] = {0}; // This file must be deleted after playback
 int CL_Demo_Compress(char*);
 #endif
 
-static vfsfile_t *CL_Open_Demo_File(char *name);
+static vfsfile_t *CL_Open_Demo_File(char *name, qbool searchpaks, char **fullpath);
 static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
@@ -2869,36 +2869,15 @@ static void PlayQWZDemo (void)
 
 	name = Cmd_Argv(1);
 
-	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
+	char* initialName = NULL;
+	if (!(playbackfile = CL_Open_Demo_File(name, false, &initialName)))
 	{
-		strlcpy (qwz_name, va("%s/%s", com_basedir, name + 3), sizeof(qwz_name));
-	}
-	else
-	{
-		if (name[0] == '/' || name[0] == '\\')
-			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name + 1), sizeof(qwz_name));
-		else
-			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name), sizeof(qwz_name));
+		Com_Printf ("Error: Couldn't open %s\n", name);
+		return;
 	}
 
-	if ((playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS)))
-	{
-		// either we got full system path
-		strlcpy(qwz_name, name, sizeof(qwz_name));
-	}
-	else
-	{
-		// or we have to build it because Qizmo needs an absolute file name
-		_fullpath (qwz_name, qwz_name, sizeof(qwz_name) - 1);
-		qwz_name[sizeof(qwz_name) - 1] = 0;
-
-		// check if the file exists
-		if (!(playbackfile = FS_OpenVFS (qwz_name, "rb", FS_NONE_OS)))
-		{
-			Com_Printf ("Error: Couldn't open %s\n", name);
-			return;
-		}
-	}
+	// Convert to system path
+	Sys_fullpath(qwz_name, initialName, MAX_PATH);
 
 	VFS_CLOSE (playbackfile);
 	playbackfile = NULL;
@@ -3578,25 +3557,26 @@ void CL_Play_f (void)
 	#endif // WIN32
 
 	#ifndef WITH_VFS_ARCHIVE_LOADING
-	//
-	// Find the demo path, trying different extensions if needed.
-	//
-
-	// If they specified a valid extension, try that first
-	for (s = ext; *s && !playbackfile; ++s)
-		if (!strcasecmp(COM_FileExtension(name), *s)) 
-			playbackfile = CL_Open_Demo_File(name);
-
-	for (s = ext; *s && !playbackfile; s++)
 	{
-		// Strip the extension from the specified filename and append
-		// the one we're currently checking for.
-		COM_StripExtension(real_name, name);
-		strlcpy(name, va("%s.%s", name, *s), sizeof(name));
+		//
+		// Find the demo path, trying different extensions if needed.
+		//
 
-		playbackfile = CL_Open_Demo_File(name);
+		// If they specified a valid extension, try that first
+		for (s = ext; *s && !playbackfile; ++s)
+			if (!strcasecmp(COM_FileExtension(name), *s)) 
+				playbackfile = CL_Open_Demo_File(name, true, NULL);
+
+		for (s = ext; *s && !playbackfile; s++)
+		{
+			// Strip the extension from the specified filename and append
+			// the one we're currently checking for.
+			COM_StripExtension(real_name, name);
+			strlcpy(name, va("%s.%s", name, *s), sizeof(name));
+
+			playbackfile = CL_Open_Demo_File(name, true, NULL);
+		}
 	}
-
 	#else // WITH_VFS_ARCHIVE_LOADING
 	{
 		char *file_ext = COM_FileExtension(Cmd_Argv(1));
@@ -3689,30 +3669,43 @@ void CL_Play_f (void)
 	Com_Printf("Playing demo from %s\n", COM_SkipPath(name));
 }
 
-static vfsfile_t * CL_Open_Demo_File(char* name)
+static vfsfile_t* CL_Open_Demo_File(char* name, qbool searchpaks, char** fullPath)
 {
+	static char fullname[MAX_OSPATH];
+	vfsfile_t *file = NULL;
+
+	*fullname = '\0';
+	if (fullPath != NULL)
+		*fullPath = fullname;
+
 	// Look for the file in the above directory if it has ../ prepended to the filename.
 	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 	{
-		playbackfile = FS_OpenVFS(va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
+		snprintf(fullname, MAX_OSPATH, "%s/%s", com_basedir, name + 3);
+		file = FS_OpenVFS(fullname, "rb", FS_NONE_OS);
 	}
-	else
+	else if (searchpaks)
 	{
 		// Search demo on quake file system, even in paks.
-		playbackfile = FS_OpenVFS(name, "rb", FS_ANY);
+		strncpy(fullname, name, MAX_OSPATH);
+		file = FS_OpenVFS(name, "rb", FS_ANY);
 	}
 
 	// Look in the demo dir (user specified).
-	if (!playbackfile)
+	if (!file)
 	{
-		playbackfile = FS_OpenVFS(va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
+		snprintf(fullname, MAX_OSPATH, "%s/%s", CL_DemoDirectory(), name);
+		file = FS_OpenVFS(fullname, "rb", FS_NONE_OS);
 	}
 
 	// Check the full system path (Run a demo anywhere on the file system).
-	if (!playbackfile)
+	if (!file)
 	{
-		playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS);
+		strncpy(fullname, name, MAX_OSPATH);
+		file = FS_OpenVFS(name, "rb", FS_NONE_OS);
 	}
+
+	return file;
 }
 
 //
