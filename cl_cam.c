@@ -113,13 +113,13 @@ qbool Cam_DrawViewModel(void) {
 	return false;
 }
 
+static qbool Cam_FirstPersonMode(void) {
+	return cl_chasecam.value && !Cvar_Value("cam_thirdperson") && !Cvar_Value("cl_camera_tpp");
+}
+
 // returns true if we should draw this player, we don't if we are chase camming
 qbool Cam_DrawPlayer(int playernum) {
-	if (cl.spectator && autocam && locked && cl_chasecam.value && 
-#ifdef JSS_CAM
-		!Cvar_Value("cam_thirdperson") &&
-#endif
-		spec_track == playernum)
+	if (cl.spectator && autocam && locked && spec_track == playernum && Cam_FirstPersonMode())
 		return false;
 	return true;
 }
