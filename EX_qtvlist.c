@@ -96,6 +96,11 @@ static void qtvlist_json_load_and_verify_string(const char *input)
 	json_t *observ_count = NULL;
 	json_error_t error;
 
+	if (root != NULL) {
+		json_decref(root);
+		root = NULL;
+	}
+
 	root = json_loads(input, 0, &error);
 	if (root == NULL) {
 		Com_Printf("error: JSON error on line %d: %s\n", error.line, error.text);
