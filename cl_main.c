@@ -1091,6 +1091,11 @@ void CL_Join_f (void)
 		return;
 	}
 
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		qtvlist_joinfromqtv_cmd();
+		return;
+	}
+
 	if (!cls.demoplayback && (cl.z_ext & Z_EXT_JOIN_OBSERVE)) 
 	{
 		// Server supports the 'join' command, good

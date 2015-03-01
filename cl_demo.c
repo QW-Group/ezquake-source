@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 2007-2015 ezQuake team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -16,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.103 2007/10/25 12:09:18 dkure Exp $
 */
 
 #include <time.h>
@@ -42,7 +42,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 #endif
 
-// TODO: Create states for demo_recording, demo_playback, and so on and put all related vars into these. Right now with global vars for everything is a mess. Also renaming some of the time vars to be less confusing is probably good. demotime, olddemotime, nextdemotime, prevtime...
+// TODO: Create states for demo_recording, demo_playback, and so on and put all related vars into these.
+// Right now with global vars for everything is a mess. Also renaming some of the time vars to be less
+// confusing is probably good. demotime, olddemotime, nextdemotime, prevtime...
+
 typedef struct demo_state_s
 {
 	float		olddemotime;
@@ -4066,32 +4069,24 @@ void CL_QTVPoll (void)
 	QTV_CloseRequest(true);
 }
 
-void QTVList_Print_Global(void);
-//
-// Returns a list of available stream sources (or demos) from a QTV proxy.
-//
+/*
+ * Queries a QTV proxy for a list of available stream sources or demos
+ * This function is used for both for qtvlist and qtvdemolist
+ */
 void CL_QTVList_f (void)
 {
 	char *connrequest;
 	vfsfile_t *newf;
 	qbool qtvlist = !strcmp("qtvlist", Cmd_Argv(0));
 
-	// Not enough arguments, show usage.
-	if (Cmd_Argc() < 2)
-	{
-		if (qtvlist) {
-			QTVList_Print_Global();
-			return;
-		}
-		else {
-			Com_Printf("Usage: %s hostname[:port] [password]\n", Cmd_Argv(0));
-			return;
-		}
+	if (Cmd_Argc() < 2) {
+		Com_Printf("Usage: %s hostname[:port] [password]\n", Cmd_Argv(0));
+		return;
 	}
 
 	// Open the TCP connection to the QTV proxy.
-	if (!(newf = FS_OpenTCP(Cmd_Argv(1))))
-	{
+	newf = FS_OpenTCP(Cmd_Argv(1));
+	if (newf == NULL) {
 		Com_Printf("Couldn't connect to proxy\n");
 		return;
 	}
@@ -4109,31 +4104,27 @@ void CL_QTVList_f (void)
 	// Send our userinfo
 	connrequest = "USERINFO: ";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
+
 	connrequest = cls.userinfo;
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
+
 	connrequest =	"\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
-	// if we use pass, then send our supported auth methods
-	if (qtvpassword[0])
-	{
-		connrequest =
-						"AUTH: MD4\n"
-						"AUTH: CCITT\n"
-						"AUTH: PLAIN\n"
-						"AUTH: NONE\n";
-
+	/* if we use pass, then send our supported auth methods */
+	if (qtvpassword[0]) {
+		connrequest = "AUTH: MD4\n" "AUTH: CCITT\n" "AUTH: PLAIN\n" "AUTH: NONE\n";
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
 	}
 
-	// "\n\n" will end the session.
-	connrequest =	"\n";
+	/* "\n\n" will end the session */
+	connrequest = "\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
-	// Close any old request that might still be open.
+	/* Close any old request that might still be open */
 	QTV_CloseRequest(true);
 
-	// Set the current connection to be the QTVRequest to be used later.
+	/* Set the current connection to be the QTVRequest to be used later */
 	qtvrequest = newf;
 }
 
@@ -4198,8 +4189,19 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	Com_Printf("Attempting to stream QTV data, buffer is %.1fs\n", (double)(QTVBUFFERTIME));
 }
 
-static char prev_qtv_connrequest[512];
+static char prev_qtv_connrequest[512]; /* FIXME: Stupid name, it might as well be ACTUAL streaming address */
 static char prev_qtv_password[128];
+
+char *CL_QTV_GetCurrentStream(void)
+{
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		if (prev_qtv_connrequest[0]) {
+			return &prev_qtv_connrequest[0];
+		}
+	}
+	/* Not connected to QTV, no address then */
+	return NULL;
+}
 
 //
 // Reconnects to the previous QTV.
@@ -4970,8 +4972,8 @@ void CL_Demo_Init(void)
 	// QTV commands.
 	//
 	Cmd_AddCommand ("qtvplay", CL_QTVPlay_f);
-	Cmd_AddCommand ("qtvlist", CL_QTVList_f);
-	Cmd_AddCommand ("qtvdemolist", CL_QTVList_f);
+	Cmd_AddCommand ("qtv_query_sourcelist", CL_QTVList_f);
+	Cmd_AddCommand ("qtv_query_demolist", CL_QTVList_f);
 	Cmd_AddCommand ("qtvreconnect", CL_QTVReconnect_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);

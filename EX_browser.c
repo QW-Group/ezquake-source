@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2011 azazello and ezQuake team
+Copyright (C) 2011-2015 azazello and ezQuake team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "keys.h"
 #include "EX_browser.h"
+#include "EX_qtvlist.h"
 #include "Ctrl_EditBox.h"
 #include "settings.h"
 #include "settings_page.h"
@@ -3145,12 +3146,8 @@ void SB_Shutdown(void)
     // Sys_MSleep(150);     // wait for thread to terminate
 }
 
-
-void QTVList_Init(void);
-
 void Browser_Init (void)
 {
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_BROWSER);
     Cvar_Register(&sb_status);
     Cvar_Register(&sb_showping);
@@ -3205,7 +3202,7 @@ void Browser_Init (void)
 		SB_Proxylist_Unserialize_f();
 	}
 
-	QTVList_Init();
+	qtvlist_init();
 }
 
 void Browser_Init2 (void)

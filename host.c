@@ -50,6 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "keys.h"
 #include "config_manager.h"
+#include "EX_qtvlist.h"
 
 double		curtime;
 
@@ -758,6 +759,7 @@ void Host_Shutdown (void)
 #ifdef WITH_TCL
 	TCL_Shutdown ();
 #endif
+	qtvlist_deinit();
 }
 
 void Host_Quit (void)
