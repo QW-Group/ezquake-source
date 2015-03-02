@@ -3674,7 +3674,7 @@ static vfsfile_t* CL_Open_Demo_File(char* name, qbool searchpaks, char** fullPat
 	static char fullname[MAX_OSPATH];
 	vfsfile_t *file = NULL;
 
-	*fullname = '\0';
+	memset(fullname, 0, sizeof(fullname));
 	if (fullPath != NULL)
 		*fullPath = fullname;
 
