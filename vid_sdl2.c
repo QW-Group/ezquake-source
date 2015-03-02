@@ -522,6 +522,11 @@ static void VID_SDL_GL_SetupAttributes(void)
 
 static int VID_SetWindowIcon(SDL_Window *sdl_window)
 {
+#ifdef __APPLE__
+	// on OS X the icon is handled by the app bundle
+	// it actually is higher resolution than the one here.
+	return 0;
+#else
 	SDL_Surface *icon_surface;
         icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
                 ezquake_icon.width * ezquake_icon.bytes_per_pixel,
@@ -534,6 +539,7 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
         }
 
 	return -1;
+#endif
 }
 
 static void VID_SDL_Init(void)
@@ -561,6 +567,11 @@ static void VID_SDL_Init(void)
 			flags |= SDL_WINDOW_BORDERLESS;
 		}
 	}
+
+	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
+#ifdef __APPLE__
+	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+#endif
 
 	VID_SDL_InitSubSystem();
 	VID_SDL_GL_SetupAttributes();
