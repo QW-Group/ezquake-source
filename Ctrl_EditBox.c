@@ -83,7 +83,7 @@ void CEditBox_Key(CEditBox *e, int key, wchar unichar)
 			break;
 			case 'v':
 			case 'V':
-				if (isCtrlDown()) {
+				if (keydown[K_CTRL]) {
 					int len;
 					char *clip = ReadFromClipboard();
 					len = min(strlen(clip), e->max - strlen(e->text));
@@ -102,7 +102,7 @@ void CEditBox_Key(CEditBox *e, int key, wchar unichar)
 	e->pos = max(e->pos, 0);
 	e->pos = min(e->pos, strlen(e->text));
 
-	if (!isCtrlDown() &&
+	if (!keydown[K_CTRL] &&
 		key >= ' '  &&  key <= '}' &&
 		strlen(e->text) < e->max)
 	{

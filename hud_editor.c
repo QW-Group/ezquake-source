@@ -1366,7 +1366,7 @@ static qbool HUD_Editor_Aligning(hud_t *hud_hover)
 			}
 		}
 	}
-	else if(hud_editor_prevmode == hud_editmode_align && isAltDown())
+	else if(hud_editor_prevmode == hud_editmode_align && keydown[K_ALT])
 	{
 		// The user just released the mousebutton but is still holding
 		// down ALT. If the user releases ALT before the mouse button
@@ -1405,7 +1405,7 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 
 	// Show the place icon at the cursor if ctrl is pressed
 	// while hovering a HUD element.
-	if(hud_hover && isCtrlDown())
+	if(hud_hover && keydown[K_CTRL])
 	{
 		// Set the place cursor icon.
 		scr_cursor_icon = hud_editor_place_icon;
@@ -1464,7 +1464,7 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 			}
 		}
 	}
-	else if(hud_editor_prevmode == hud_editmode_place && isCtrlDown())
+	else if(hud_editor_prevmode == hud_editmode_place && keydown[K_CTRL])
 	{
 		// We've just exited placement mode, but control is still pressed,
 		// that means we should place the selected_hud.
@@ -2064,17 +2064,17 @@ static void HUD_Editor_EvaluateState(hud_t *hud_hover)
 		}
 	}
 
-	if (hud_hover && MOUSEDOWN_1_ONLY && isShiftDown())
+	if (hud_hover && MOUSEDOWN_1_ONLY && keydown[K_SHIFT])
 	{
 		// Move (Locked to an axis).
 		HUD_Editor_SetMode(hud_editmode_move_lockedaxis);
 	}
-	else if ((hud_hover || hud_editor_prevmode == hud_editmode_place) && MOUSEDOWN_1_ONLY && isCtrlDown())
+	else if ((hud_hover || hud_editor_prevmode == hud_editmode_place) && MOUSEDOWN_1_ONLY && keydown[K_CTRL])
 	{
 		// Place.
 		HUD_Editor_SetMode(hud_editmode_place);
 	}
-	else if ((hud_hover || hud_editor_prevmode == hud_editmode_align) && MOUSEDOWN_1_ONLY && isAltDown())
+	else if ((hud_hover || hud_editor_prevmode == hud_editmode_align) && MOUSEDOWN_1_ONLY && keydown[K_ALT])
 	{
 		// Align.
 		HUD_Editor_SetMode(hud_editmode_align);

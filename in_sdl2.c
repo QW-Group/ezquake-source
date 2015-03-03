@@ -156,12 +156,3 @@ void IN_Shutdown(void)
 	mouseinitialized = false;
 }
 
-/* FIXME? */
-
-int ctrlDown = 0;
-int shiftDown = 0;
-int altDown = 0;
-
-int isAltDown(void) {return altDown;}
-int isCtrlDown(void) {return ctrlDown;}
-int isShiftDown(void) {return shiftDown;}

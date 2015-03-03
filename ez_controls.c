@@ -644,7 +644,7 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar, qbool down)
 			{
 				// Focus on the next focusable control (TAB)
 				// or the previous (Shift + TAB)
-				EZ_tree_ChangeFocus(tree, !isShiftDown());
+				EZ_tree_ChangeFocus(tree, !keydown[K_SHIFT]);
 				key_handled = true;
 				break;
 			}

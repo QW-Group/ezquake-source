@@ -808,7 +808,7 @@ int EZ_label_OnCaretMoved(ez_control_t *self, void *ext_event_info)
 	}
 
 	// Select while holding down shift.
-	if (isShiftDown() && (label->select_start > -1))
+	if (keydown[K_SHIFT] && (label->select_start > -1))
 	{
 		label->int_flags |= label_selecting;
 		label->select_end = label->caret_pos.index;
@@ -917,7 +917,7 @@ static void EZ_label_ArrowKeyDown(ez_label_t *label, int key)
 	{
 		case K_LEFTARROW :
 		{
-			if (isCtrlDown())
+			if (keydown[K_CTRL])
 			{
 				EZ_label_SetCaretPosition(label, EZ_label_GetNextWordBoundary(label, label->caret_pos.index, false));
 			}
@@ -929,7 +929,7 @@ static void EZ_label_ArrowKeyDown(ez_label_t *label, int key)
 		}
 		case K_RIGHTARROW :
 		{
-			if (isCtrlDown())
+			if (keydown[K_CTRL])
 			{
 				EZ_label_SetCaretPosition(label, EZ_label_GetNextWordBoundary(label, label->caret_pos.index, true));
 			}
@@ -965,7 +965,7 @@ static void EZ_label_EndHomeKeyDown(ez_label_t *label, int key)
 	{
 		case K_HOME :
 		{
-			if (isCtrlDown())
+			if (keydown[K_CTRL])
 			{
 				// Move the caret to the start of the text.
 				EZ_label_SetCaretPosition(label, 0);
@@ -979,7 +979,7 @@ static void EZ_label_EndHomeKeyDown(ez_label_t *label, int key)
 		}
 		case K_END :
 		{
-			if (isCtrlDown())
+			if (keydown[K_CTRL])
 			{
 				// Move the caret to the end of the text.
 				EZ_label_SetCaretPosition(label, label->text_length);
@@ -1219,7 +1219,7 @@ int EZ_label_OnKeyDown(ez_control_t *self, int key, int unichar)
 			}
 			default :
 			{
-				if (isCtrlDown())
+				if (keydown[K_CTRL])
 				{
 					EZ_label_CtrlComboKeyDown(label, key);
 				}

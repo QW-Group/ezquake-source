@@ -225,7 +225,7 @@ int CTab_Key(CTab_t *tab, int key, wchar unichar)
 
 			case K_TAB:
 				S_LocalSound ("misc/menu1.wav");
-				if (isShiftDown()) tab->activePage--; else tab->activePage++;
+				if (keydown[K_SHIFT]) tab->activePage--; else tab->activePage++;
 				handled = true;
 				break;
             }

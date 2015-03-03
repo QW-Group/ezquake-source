@@ -1267,7 +1267,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 	}
 
     // Check for search
-    if ((key >= ' ' && key <= '~') && (fl->search_valid || (!isAltDown() && !isCtrlDown() && !isShiftDown())))
+    if ((key >= ' ' && key <= '~') && (fl->search_valid || (!keydown[K_ALT] && !keydown[K_CTRL] && !keydown[K_SHIFT])))
     {
         int len;
 
@@ -1302,7 +1302,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 
     // sorting mode / displaying columns
 	if (key >= '1' && key <= '4') {
-		if (isCtrlDown() && !isAltDown() && !isShiftDown())
+		if (keydown[K_CTRL] && !keydown[K_ALT] && !keydown[K_SHIFT])
 		{
 			switch (key)
 			{
@@ -1317,7 +1317,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 			}
 			return true;
 		}
-		else if (!isCtrlDown() && isAltDown() && !isShiftDown())
+		else if (!keydown[K_CTRL] && keydown[K_ALT] && !keydown[K_SHIFT])
 		{
 			char buf[128];
 
@@ -1343,7 +1343,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 
     // change drive
 #ifdef _WIN32
-    if (isAltDown()  &&  isCtrlDown()  &&
+    if (keydown[K_ALT]  &&  keydown[K_CTRL]  &&
         tolower(key) >= 'a'  &&  tolower(key) <= 'z')
     {
         char newdir[MAX_PATH+1];
@@ -1445,11 +1445,11 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 	//
 	// Compress the current file.
 	//
-	if ((key == 'c' || key == 'C') && isAltDown())
+	if ((key == 'c' || key == 'C') && keydown[K_ALT])
 	{
 		if (!FL_IsCurrentDir(fl))
 		{
-			if (isShiftDown())
+			if (keydown[K_SHIFT])
 			{
 				// Alt + shift + c == Compress without confirming.
 				FL_CompressFile(fl);
@@ -1466,7 +1466,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 	//
 	// Decompress the current file.
 	//
-	if ((key == 'd' || key == 'D') && isAltDown())
+	if ((key == 'd' || key == 'D') && keydown[K_ALT])
 	{
 		if (!strcmp(COM_FileExtension(FL_GetCurrentPath(fl)), "gz"))
 		{
@@ -1482,7 +1482,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 	{
 		if (!FL_IsCurrentDir(fl)) 
 		{
-			if (isShiftDown())
+			if (keydown[K_SHIFT])
 			{
 				// Shift + del == Delete without confirming.
 				FL_DeleteFile(fl);

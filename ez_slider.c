@@ -441,7 +441,7 @@ int EZ_slider_OnKeyDown(ez_control_t *self, int key, int unichar)
 	qbool key_handled	= false;
 	ez_slider_t *slider = (ez_slider_t *)self;
 	int big_step		= max(1, slider->max_value / 10);
-	int step			= isCtrlDown() ? big_step : 1;
+	int step			= keydown[K_CTRL] ? big_step : 1;
 
 	switch(key)
 	{

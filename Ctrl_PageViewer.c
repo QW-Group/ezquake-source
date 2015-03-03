@@ -83,7 +83,7 @@ static void EnterNavigationMode(CPageViewer_t *viewer)
         from = from->next;
     }
     viewer->navigation_mode = true;
-    if (isShiftDown())
+    if (keydown[K_SHIFT])
         viewer->current_link_index = viewer->current_links_total - 1;
     else
         viewer->current_link_index = 0;
@@ -342,7 +342,7 @@ qbool CPageViewer_Key(CPageViewer_t *viewer, int key, wchar unichar)
         switch (key)
         {
         case K_TAB:
-            viewer->current_link_index += isShiftDown() ? -1 : 1;
+            viewer->current_link_index += keydown[K_SHIFT] ? -1 : 1;
             viewer->current_link_index = (viewer->current_link_index +
                 viewer->current_links_total) % viewer->current_links_total;
             ret = true;

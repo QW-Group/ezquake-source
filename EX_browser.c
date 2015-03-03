@@ -338,7 +338,7 @@ static void CopyServerToClipboard (server_data *s)
 {
 	char buf[2048];
 
-	if (isCtrlDown() || s->display.name[0] == 0)
+	if (keydown[K_CTRL] || s->display.name[0] == 0)
 		strlcpy (buf, s->display.ip, sizeof(buf));
 	else
 		snprintf (buf, sizeof (buf), "%s (%s)",
@@ -356,7 +356,7 @@ static void PasteServerToConsole (server_data *s)
 			s->display.name,
 			s->display.ip);
 
-	Cbuf_AddText (isCtrlDown() ? "say_team " :  "say ");
+	Cbuf_AddText (keydown[K_CTRL] ? "say_team " :  "say ");
 	Cbuf_AddText (buf);
 	Cbuf_AddText ("\n");
 }
@@ -1829,16 +1829,16 @@ void Add_Source_Key(int key, wchar unichar)
     switch (key)
     {
     case K_HOME:
-        if (isCtrlDown())
+        if (keydown[K_CTRL])
             newsource_pos = 0; break;
     case K_END:
-        if (isCtrlDown())
+        if (keydown[K_CTRL])
             newsource_pos = 4; break;
     case K_UPARROW:
 	case K_MWHEELUP:
         newsource_pos--; break;
 	case K_TAB:
-		isShiftDown()?newsource_pos--:newsource_pos++; break;
+		keydown[K_SHIFT]?newsource_pos--:newsource_pos++; break;
     case K_DOWNARROW:
 	case K_MWHEELDOWN:
         newsource_pos++; break;
@@ -1881,7 +1881,7 @@ void Add_Source_Key(int key, wchar unichar)
         break;
     }
 
-    if ((!isCtrlDown() || tolower(key)=='v') && !isAltDown())
+    if ((!keydown[K_CTRL] || tolower(key)=='v') && !keydown[K_ALT])
     {
         if (newsource_pos == 1)
             CEditBox_Key(&edit1, key, unichar);
@@ -1898,16 +1898,16 @@ void Add_Server_Key(int key, wchar unichar)
     switch (key)
     {
     case K_HOME:
-        if (isCtrlDown())
+        if (keydown[K_CTRL])
             newserver_pos = 0; break;
     case K_END:
-        if (isCtrlDown())
+        if (keydown[K_CTRL])
             newserver_pos = 4; break;
     case K_UPARROW:
 	case K_MWHEELUP:
         newserver_pos--; break;
 	case K_TAB:
-		isShiftDown()?newserver_pos--:newserver_pos++; break;
+		keydown[K_SHIFT]?newserver_pos--:newserver_pos++; break;
     case K_DOWNARROW:
 	case K_MWHEELDOWN:
         newserver_pos++; break;
@@ -1943,7 +1943,7 @@ void Add_Server_Key(int key, wchar unichar)
         break;
     }
 
-    if ((!isCtrlDown() || tolower(key)=='v') && !isAltDown())
+    if ((!keydown[K_CTRL] || tolower(key)=='v') && !keydown[K_ALT])
     {
         if (newserver_pos == 0)
             CEditBox_Key(&edit1, key, unichar);
@@ -2011,16 +2011,16 @@ int SB_Servers_Key(int key)
 		resort_servers = 1;
 	}
 
-    if (serversn_passed <= 0  &&  (key != K_SPACE || isAltDown())
+    if (serversn_passed <= 0  &&  (key != K_SPACE || keydown[K_ALT])
         && tolower(key) != 'n'  && key != K_INS)
         return false;
 
 	if (key == K_SPACE) {
-		GetServerPingsAndInfos(isCtrlDown());
+		GetServerPingsAndInfos(keydown[K_CTRL]);
 		return true;
 	}
 
-	if (!isCtrlDown() && !isAltDown() && key > ' ' && key <= '}')  // search
+	if (!keydown[K_CTRL] && !keydown[K_ALT] && key > ' ' && key <= '}')  // search
     {
         int len;
         char c = tolower(key);
@@ -2098,7 +2098,7 @@ int SB_Servers_Key(int key)
             case K_ENTER:
                 Serverinfo_Start(servers[Servers_pos]); break;
             case K_SPACE:
-                GetServerPingsAndInfos(isCtrlDown());
+                GetServerPingsAndInfos(keydown[K_CTRL]);
                 break;
             case '1':
             case '2':
@@ -2108,11 +2108,11 @@ int SB_Servers_Key(int key)
             case '6':
             case '7':
             case '8':   // sorting mode
-				if (isAltDown()) // fixme
+				if (keydown[K_ALT]) // fixme
 				{
 					SB_Servers_Toggle_Column_Sort(key);
 				}
-				else if (isCtrlDown())
+				else if (keydown[K_CTRL])
 				{
 					SB_Servers_Toggle_Column_Show(key - '1');
 				}
@@ -2143,7 +2143,7 @@ void Serverinfo_Key(int key)
             {
 				if (show_serverinfo->qwfwd) {
 					SB_Select_QWfwd(show_serverinfo);
-				} else if (isCtrlDown()) {
+				} else if (keydown[K_CTRL]) {
                     Observe_Server(show_serverinfo);
 				} else {
 					Join_Server(show_serverinfo);
@@ -2159,7 +2159,7 @@ void Serverinfo_Key(int key)
         case K_PGUP:
 			if (CTab_GetCurrentId(&sb_tab) == SBPG_PLAYERS)
             {
-                if (isCtrlDown())
+                if (keydown[K_CTRL])
                     Players_pos = 0;
                 else
                     Players_pos--;
@@ -2168,7 +2168,7 @@ void Serverinfo_Key(int key)
             }
             else
             {
-                if (isCtrlDown())
+                if (keydown[K_CTRL])
                     Servers_pos = 0;
                 else
                     Servers_pos--;
@@ -2179,7 +2179,7 @@ void Serverinfo_Key(int key)
         case K_PGDN:
             if (CTab_GetCurrentId(&sb_tab) == SBPG_PLAYERS)
             {
-                if (isCtrlDown())
+                if (keydown[K_CTRL])
                     Players_pos = all_players_n - 1;
                 else
                     Players_pos++;
@@ -2188,7 +2188,7 @@ void Serverinfo_Key(int key)
             }
             else
             {
-                if (isCtrlDown())
+                if (keydown[K_CTRL])
                     Servers_pos = serversn_passed-1;
                 else
                     Servers_pos++;
@@ -2383,7 +2383,7 @@ int SB_Sources_Key(int key)
         case ']':
             Toggle_Source(sources[Sources_pos]); break;
         case K_SPACE:
-			SB_Sources_Update_Begin(isCtrlDown());
+			SB_Sources_Update_Begin(keydown[K_CTRL]);
             break;
         case '=':
         case '+':   // select all sources
@@ -2456,7 +2456,7 @@ int SB_Players_Key(int key)
     if (all_players_n <= 0  &&  key != K_SPACE)
         return false;
 
-    if ((isAltDown()  ||  searchtype == search_player)  &&
+    if ((keydown[K_ALT]  ||  searchtype == search_player)  &&
         key >= ' '  &&  key <= '}')  // search
     {
         int len;
@@ -2494,7 +2494,7 @@ int SB_Players_Key(int key)
                 Observe_Server(all_players[Players_pos]->serv);
                 break;
             case K_SPACE:
-                GetServerPingsAndInfos(isCtrlDown());
+                GetServerPingsAndInfos(keydown[K_CTRL]);
                 break;
 
 			case K_INS: // go to servers -- locate
