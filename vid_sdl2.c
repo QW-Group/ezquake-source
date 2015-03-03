@@ -807,29 +807,29 @@ static void GfxInfo_f(void)
 {
 	SDL_DisplayMode current;
 
-	ST_Printf(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
-	ST_Printf(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
-	ST_Printf(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
+	Com_Printf_State(PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
+	Com_Printf_State(PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
+	Com_Printf_State(PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
 
 	if (r_showextensions.value) {
-		ST_Printf(PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string);
+		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string);
 	}
 
-	ST_Printf(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
+	Com_Printf_State(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
 
 	if (SDL_GetCurrentDisplayMode(0, &current) != 0) {
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
 	}
 
-	ST_Printf(PRINT_ALL, "MODE: %d x %d @ %d Hz ", glConfig.vidWidth, glConfig.vidHeight, current.refresh_rate);
+	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", glConfig.vidWidth, glConfig.vidHeight, current.refresh_rate);
 	
 	if (r_fullscreen.integer) {
-		ST_Printf(PRINT_ALL, "[fullscreen]\n");
+		Com_Printf_State(PRINT_ALL, "[fullscreen]\n");
 	} else {
-		ST_Printf(PRINT_ALL, "[windowed]\n");
+		Com_Printf_State(PRINT_ALL, "[windowed]\n");
 	}
 
-	ST_Printf(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
+	Com_Printf_State(PRINT_ALL, "CONRES: %d x %d\n", r_conwidth.integer, r_conheight.integer );
 
 }
 
