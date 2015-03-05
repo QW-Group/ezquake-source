@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mp3_player.h"
 #include "mvd_utils.h"
 #include "EX_browser.h"
+#include "EX_qtvlist.h"
 #include "qtv.h"
 #include "keys.h"
 #include "hud.h"
