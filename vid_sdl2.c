@@ -427,17 +427,14 @@ void VID_Shutdown(void)
 
 static int VID_SDL_InitSubSystem(void)
 {
-	int ret = 0;
-
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0) {
-		ret = SDL_InitSubSystem(SDL_INIT_VIDEO);
+		if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
+			Sys_Error("Couldn't initialize SDL video: %s\n", SDL_GetError());
+			return -1;
+		}
 	}
 
-	if (ret == -1) {
-		Sys_Error("Couldn't initialize SDL video: %s\n", SDL_GetError());
-	}
-
-	return ret;
+	return 0;
 }
 
 void VID_RegisterLatchCvars(void)
@@ -486,29 +483,30 @@ static void VID_SetupResolution(void)
 	SDL_DisplayMode display_mode;
 
 	if (r_fullscreen.integer == 1) {
-		if ((!vid_width.integer || !vid_height.integer)) {
-			if (!SDL_GetDesktopDisplayMode(0, &display_mode)) {
+		if ((vid_width.integer == 0 || vid_height.integer == 0)) {
+			if (SDL_GetDesktopDisplayMode(0, &display_mode) == 0) {
 				glConfig.vidWidth = display_mode.w;
 				glConfig.vidHeight = display_mode.h;
 			} else {
+				// Try some default if nothing is set and we failed to get desktop res
 				glConfig.vidWidth = 1024;
 				glConfig.vidHeight = 768;
-				Cvar_LatchedSetValue(&vid_width, 1024); // Try some default if nothing is set and we failed
-				Cvar_LatchedSetValue(&vid_height, 768); // to get desktop resolution
+				Cvar_LatchedSetValue(&vid_width, 1024);
+				Cvar_LatchedSetValue(&vid_height, 768);
 				Com_Printf("warning: failed to get desktop resolution, using 1024x768 failsafe\n");
 			}
 		} else {
 			glConfig.vidWidth = bound(320, vid_width.integer, vid_width.integer);
 			glConfig.vidHeight = bound(200, vid_height.integer, vid_height.integer);
 		}
-	} else {
-		if (!vid_win_width.integer || !vid_win_height.integer) {
+	} else { /* Windowed mode */
+		if (vid_win_width.integer == 0 || vid_win_height.integer == 0) {
 			Cvar_LatchedSetValue(&vid_win_width, 640);
 			Cvar_LatchedSetValue(&vid_win_height, 480);
 		}
 
 		glConfig.vidWidth = bound(320, vid_win_width.integer, vid_win_width.integer);
-		glConfig.vidHeight = bound(200, vid_win_height.integer, vid_win_height.integer);
+		glConfig.vidHeight = bound(240, vid_win_height.integer, vid_win_height.integer);
 	}
 }
 
@@ -568,8 +566,8 @@ static void VID_SDL_Init(void)
 		}
 	}
 
-	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
 #ifdef __APPLE__
+	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
 	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 #endif
 
@@ -615,7 +613,6 @@ static void VID_SDL_Init(void)
 	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
 
 	glConfig.initialized = true;
-
 }
 
 static void GL_SwapBuffers (void)
@@ -642,7 +639,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*height = glConfig.vidHeight;
 
 	if (cls.state != ca_active) {
-		glClear (GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT);
 	}
 }
 
@@ -929,7 +926,7 @@ void VID_RegisterCommands(void)
 static void VID_UpdateConRes(void)
 {
 	// Default
-	if (!r_conwidth.integer || !r_conheight.integer) {
+	if (r_conwidth.integer == 0 || r_conheight.integer == 0) {
 		vid.width = vid.conwidth = bound(320, (int)(glConfig.vidWidth/r_conscale.value), glConfig.vidWidth);
 		vid.height = vid.conheight = bound(200, (int)(glConfig.vidHeight/r_conscale.value), glConfig.vidHeight);;
 	} else {
@@ -941,7 +938,7 @@ static void VID_UpdateConRes(void)
 	}
 
 	vid.numpages = 2; // ??
-	Draw_AdjustConback ();
+	Draw_AdjustConback();
 	vid.recalc_refdef = 1;
 }
 
@@ -951,8 +948,10 @@ static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 		Cvar_SetValue(&r_conwidth, Q_atoi(string));
 	} else if (var == &r_conheight) {
 		Cvar_SetValue(&r_conheight, Q_atoi(string));
-	} else {
+	} else if (var == &r_conscale) {
 		Cvar_SetValue(&r_conscale, Q_atof(string));
+	} else {
+		Com_Printf("Called with unknown variable: %s\n", var->name ? var->name : "unknown");
 	}
 
 	VID_UpdateConRes();
