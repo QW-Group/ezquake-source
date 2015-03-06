@@ -97,7 +97,7 @@ typedef struct ez_label_s
 	ez_label_flags_t		ext_flags;					// External flags for how the text in the label is formatted.
 	ez_label_iflags_t		int_flags;					// Internal flags for the current state of the label.
 
-	ez_label_textpos_t		wordwraps[LABEL_MAX_WRAPS];	// Positions in the text where line breaks are located.
+	ez_label_textpos_t		wordwraps[LABEL_MAX_WRAPS+1];	// Positions in the text where line breaks are located.
 	clrinfo_t				color;						// The text color of the label. // TODO : Make this a pointer?
 	float					scale;						// The scale of the text in the label.
 	int						scaled_char_size;			// The actual size of the characters in the text.
