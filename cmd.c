@@ -868,24 +868,37 @@ void Cmd_UnAlias_re_f (void)
 	Cmd_UnAlias(true);
 }
 
-// remove all aliases
+/* 
+ * Remove all aliases unless connected, then remove
+ * all aliases except the server created aliases
+ */
 void Cmd_UnAliasAll_f (void)
 {
 	cmd_alias_t	*a, *next;
 
-	for (a = cmd_alias; a ; a = next) {
-		next = a->next;
-		Q_free(a->value);
-		Q_free(a);
+/* FIXME: Optimize this, its n^2 slow atm since Cmd_DeleteAlias will loop through
+ * the list again for each entry
+ */
+	if (cls.state >= ca_connected) {
+		Com_Printf("Connected to a server, will not remove server aliases\n");
+		for (a = cmd_alias; a; a = next) {
+			next = a->next;
+			if ((a->flags & ALIAS_SERVER) == 0) {
+				Cmd_DeleteAlias(a->name);
+			}
+		}
+	} else {
+		for (a = cmd_alias; a ; a = next) {
+			next = a->next;
+			Q_free(a->value);
+			Q_free(a);
+		}
+		cmd_alias = NULL;
+
+		// clear hash
+		memset (cmd_alias_hash, 0, sizeof(cmd_alias_t*) * ALIAS_HASHPOOL_SIZE);
 	}
-	cmd_alias = NULL;
-
-	// clear hash
-	memset (cmd_alias_hash, 0, sizeof(cmd_alias_t*) * ALIAS_HASHPOOL_SIZE);
 }
-
-
-
 
 void DeleteServerAliases(void)
 {
