@@ -117,6 +117,10 @@ cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};
 // VFrags: only draw the frags for the first player when using mvinset
 #define MULTIVIEWTHISPOV() ((!cl_multiview.value) || (cl_mvinset.value && CURRVIEW == 1))
 
+static qbool Sbar_IsStandardBar(void) {
+	// Old status bar is turned on, or the screen size is less than full width
+	return cl_sbar.value || scr_viewsize.value < 100;
+}
 
 /********************************** CONTROL **********************************/
 
@@ -658,11 +662,15 @@ static void Sbar_DrawInventory (void) {
 	float time;
 	qbool headsup, hudswap;
 
-	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
+	headsup = !Sbar_IsStandardBar();
 	hudswap = cl_hudswap.value; // Get that nasty float out :)
 
 	if (!headsup)
+	{
+		Draw_TileClear (sbar_xofs, vid.height - sb_lines, sbar_xofs + 320, 24);
 		Sbar_DrawPic (0, -24, sb_ibar);
+	}
+		
 	// weapons
 	if (sbar_drawguns.value)    // kazik
     {
@@ -894,7 +902,7 @@ static void Sbar_DrawFace (void) {
 void Draw_AMFStatLoss (int stat, hud_t* hud);
 
 static void Sbar_DrawNormal (void) {
-	if (cl_sbar.value || scr_viewsize.value < 100)
+	if (Sbar_IsStandardBar())
 		Sbar_DrawPic (0, 0, sb_sbar);
 
 	// armor
@@ -954,7 +962,7 @@ static void Sbar_DrawCompact(void) {
 	static char *weapons[7] = {"sg", "bs", "ng", "sn", "gl", "rl", "lg"};
 	char str[4];
 
-	if (cl_sbar.value || scr_viewsize.value < 100)
+	if (Sbar_IsStandardBar())
 		Sbar_DrawPic (0, 0, sb_sbar);
 
 	old_sbar_xofs = sbar_xofs;
@@ -990,7 +998,7 @@ static void Sbar_DrawCompact_TF(void) {
 	int i, align, old_sbar_xofs;
 	char str[4];
 
-	if (cl_sbar.value || scr_viewsize.value < 100)
+	if (Sbar_IsStandardBar())
 		Sbar_DrawPic (0, 0, sb_sbar);
 
 	old_sbar_xofs = sbar_xofs;
@@ -1015,7 +1023,7 @@ static void Sbar_DrawCompact_TF(void) {
 static void Sbar_DrawCompact_Bare (void) {
 	int old_sbar_xofs;
 
-	if (cl_sbar.value || scr_viewsize.value < 100)
+	if (Sbar_IsStandardBar())
 		Sbar_DrawPic (0, 0, sb_sbar);
 
 	old_sbar_xofs = sbar_xofs;
@@ -1793,15 +1801,44 @@ void Sbar_FinaleOverlay (void) {
 
 /********************************* INTERFACE *********************************/
 
+static void Sbar_DrawTrackingString(void) {
+	char st[512];
+	extern cvar_t scr_tracking, scr_newHud;
+
+	// If showing ammo on top of status, display higher up
+	int y_coordinate = (Sbar_IsStandardBar() ? SBAR_HEIGHT - sb_lines : 0) - 8;
+
+	if (sb_lines > 0 && scr_newHud.value != 1 && cl.spectator && autocam == CAM_TRACK)
+	{
+		strlcpy(st, scr_tracking.string, sizeof(st));
+
+		Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
+
+		// Multiview
+		// Fix displaying "tracking .." for both players with inset on
+		if (cl_multiview.value != 2 || !cls.mvdplayback)
+		{
+			Sbar_DrawString(0, y_coordinate, st);
+		}
+		else if (CURRVIEW == 1 && cl_mvinset.value)
+		{
+			Sbar_DrawString(0, y_coordinate, st);
+		}
+	}
+}
+
 void Sbar_Draw(void) {
 	qbool headsup;
-	char st[512];
-
 	extern cvar_t scr_tracking, scr_spectatorMessage, scr_newHud;
 
-	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
+	headsup = !Sbar_IsStandardBar();
 	if (sb_updates >= vid.numpages && !headsup)
+	{
+		// Always show who we're tracking
+		Sbar_DrawTrackingString();
+
 		return;
+	}
 
 	scr_copyeverything = 1;
 
@@ -1844,27 +1881,7 @@ void Sbar_Draw(void) {
 				else
 					Sbar_DrawNormal();
 
-				strlcpy(st, scr_tracking.string, sizeof(st));
-
-				Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
-
-				/*
-				if (strlen(scr_tracking.string) > 0)
-					Tracking_Format(scr_tracking.string, st, sizeof(st));
-				else
-					st[0]='\0';
-				*/
-
-				// Multiview
-				// Fix displaying "tracking .." for both players with inset on
-				if (cl_multiview.value != 2 || !cls.mvdplayback)
-				{
-					Sbar_DrawString(0, -8, st);
-				}
-				else if (CURRVIEW == 1 && cl_mvinset.value)
-				{
-					Sbar_DrawString(0, -8, st);
-				}
+				Sbar_DrawTrackingString();
 			}
 		} else if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0) {
 			Sbar_SoloScoreboard();

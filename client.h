@@ -39,6 +39,8 @@ typedef struct
 } static_sound_t;
 
 extern cvar_t cl_demospeed;
+extern cvar_t cl_demoteamplay;
+
 #define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback))
 #define	MAX_PROJECTILES	32
 
@@ -685,6 +687,7 @@ usermainbuttons_t CL_GetLastCmd (void);
 void NQD_StartPlayback (void);
 void NQD_LinkEntities (void);
 void NQD_ReadPackets (void);
+void NQD_SetSpectatorFlags (void);
 
 // cl_demo.c
 qbool CL_GetDemoMessage (void);
@@ -697,6 +700,9 @@ void CL_Stop_f (void);
 void CL_CheckQizmoCompletion(void);
 void CL_Demo_Jump(double seconds, int relative, demoseekingtype_t seeking);
 void CL_Demo_Init(void);
+void CL_Demo_Jump_Status_Check (void);
+void CL_Demo_Check_For_Rewind(float nextdemotime);
+void CL_Demo_Stop_Rewinding(void);
 double Demo_GetSpeed(void);
 qbool CL_IsDemoExtension(const char *filename);
 
@@ -832,6 +838,7 @@ extern struct model_s *cl_flame0_model;
 void CL_InitEnts(void);
 void CL_AddEntity (entity_t *ent);
 void CL_ClearScene (void) ;
+void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, customlight_t* cst_lt, entity_state_t *state);
 
 dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
 customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random, customlight_t *l);
@@ -870,6 +877,8 @@ extern int	spec_track; // player# of who we are tracking
 
 int WhoIsSpectated (void);
 void CL_Cam_SetKiller(int killernum, int victimnum);
+void Cam_Angles_Set(float pitch, float yaw, float roll);
+void Cam_Pos_Set(float x, float y, float z);
 
 qbool Cam_DrawViewModel (void);
 qbool Cam_DrawPlayer (int playernum);

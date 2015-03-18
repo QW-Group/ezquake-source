@@ -25,7 +25,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "qsound.h"
 #include "hud.h"
 #include "hud_common.h"
-
+#include "vx_stuff.h"
+#include "settings.h"
+#ifdef _WIN32
+#include "movie.h"
+#endif
 
 #define MAX_BIG_MSGLEN 8000
 int CL_Demo_Read(void *buf, int size, qbool peek);
@@ -106,7 +110,38 @@ static vec3_t	nq_mvelocity[2];
 static vec3_t	nq_mviewangles[2];
 static vec3_t	nq_mviewangles_temp;
 static qbool	standard_quake = true;
+static demoseekingtype_t nq_lastseektype = DST_SEEKING_NONE;
 
+static void CL_CheckForNQDSeekPointFound(void) 
+{
+	float demotime = nq_mtime[0];
+
+	// Check for rewind only the first time we want to seek through the demo 
+	if (cls.demoseeking != nq_lastseektype)
+		CL_Demo_Check_For_Rewind(nq_mtime[0]);
+	nq_lastseektype = cls.demoseeking;
+		
+	if (cls.demoseeking == DST_SEEKING_STATUS)
+		CL_Demo_Jump_Status_Check();
+
+	// If we found demomark, we should stop seeking, so reset time to the proper value.
+	if (cls.demoseeking == DST_SEEKING_FOUND) 
+	{
+		cls.demotime = demotime; // this will trigger seeking stop
+	}
+
+	// If we've reached our seek goal, stop seeking.
+	if (cls.demoseeking && cls.demotime <= demotime && cls.state >= ca_active)
+	{
+		cls.demoseeking = DST_SEEKING_NONE;
+		cls.demotime = demotime; 
+
+		if (cls.demorewinding)
+		{
+			CL_Demo_Stop_Rewinding();
+		}
+	}
+}
 
 static qbool CL_GetNQDemoMessage (void)
 {
@@ -131,12 +166,9 @@ static qbool CL_GetNQDemoMessage (void)
 			if (cls.framecount == cls.td_startframe + 1)
 				cls.td_starttime = Sys_DoubleTime();
 		}
-		else if (cl.time <= nq_mtime[0])
-		{
+		else if (cl.time <= nq_mtime[0] && ! cls.demoseeking)
 			return false;		// don't need another message yet
-		}
 	}
-
 
 	// get the next message
 	CL_Demo_Read(&net_message.cursize, 4, false);
@@ -273,6 +305,19 @@ static void NQD_ParseClientdata (int bits)
 	}
 }
 
+static void NQD_SetSpectatorFlag(player_info_t* player)
+{
+	player->spectator = (cl.teamplay && player->name[0] && player->real_topcolor == 0 && player->real_bottomcolor == 0 && player->frags <= -99);
+}
+
+void NQD_SetSpectatorFlags(void)
+{
+	int i;
+
+	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i)
+		NQD_SetSpectatorFlag(&cl.players[i]);
+}
+
 /*
 ==================
 NQD_ParseUpdatecolors
@@ -282,6 +327,8 @@ static void NQD_ParseUpdatecolors (void)
 {
 	int	i, colors;
 	int top, bottom;
+	qbool client_team_changed = false;
+	qbool player_skin_changed = false;
 
 	i = MSG_ReadByte ();
 	if (i >= nq_maxclients)
@@ -291,10 +338,36 @@ static void NQD_ParseUpdatecolors (void)
 	// fill in userinfo values
 	top = min(colors & 15, 13);
 	bottom = min((colors >> 4) & 15, 13);
+
+	client_team_changed = (cl.playernum == i && bottom != cl.players[i].real_bottomcolor);
+	player_skin_changed = (top != cl.players[i].real_topcolor || bottom != cl.players[i].real_bottomcolor);
+
 	Info_SetValueForKey (cl.players[i].userinfo, "topcolor", va("%i", top), MAX_INFO_KEY);
 	Info_SetValueForKey (cl.players[i].userinfo, "bottomcolor", va("%i", bottom), MAX_INFO_KEY);
 
-	CL_NewTranslation (i);
+	cl.players[i].real_topcolor = top;
+	cl.players[i].real_bottomcolor = bottom;
+
+	NQD_SetSpectatorFlag(&cl.players[i]);
+
+	// Update team (based on bottom colour)
+	if (cl.players[i].spectator)
+	{
+		Info_SetValueForKey (cl.players[i].userinfo, "team", "", MAX_INFO_KEY);
+		strlcpy(cl.players[i].team, "", sizeof(cl.players[i].team));
+	}
+	else 
+	{
+		char* bottom_as_string = SettingColorName(bottom); 
+		Info_SetValueForKey (cl.players[i].userinfo, "team", bottom_as_string, MAX_INFO_KEY);
+		strlcpy(cl.players[i].team, bottom_as_string, sizeof(cl.players[i].team));
+	}
+
+	// Update skins
+	if (TP_NeedRefreshSkins() && client_team_changed)
+		TP_RefreshSkins();
+	else if (player_skin_changed)
+		TP_RefreshSkin(i);
 	Sbar_Changed ();
 }
 
@@ -418,6 +491,7 @@ static void NQD_ParseServerData (void)
 //
 
 	// precache models
+	*mapname = 0;
 	for (nummodels=1 ; ; nummodels++)
 	{
 		str = MSG_ReadString ();
@@ -427,6 +501,9 @@ static void NQD_ParseServerData (void)
 			Host_Error ("Server sent too many model precaches");
 		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[0]));
 		Mod_TouchModel (str);
+
+		if (nummodels == 1)
+			COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
 	}
 
 	// precache sounds
@@ -443,6 +520,8 @@ static void NQD_ParseServerData (void)
 
 	// now we try to load everything else until a cache allocation fails
 	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
+	if (!com_serveractive)
+		Cvar_ForceSet (&host_mapname, mapname);
 	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
 	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
 
@@ -466,7 +545,7 @@ static void NQD_ParseServerData (void)
 	if (!cl.model_precache[1])
 		Host_Error ("NQD_ParseServerData: NULL worldmodel");
 
-//	CL_ClearParticles (); @ZQ@
+	Classic_InitParticles (); 
 	CL_FindModelNumbers ();
 	R_NewMap (false);
 	TP_NewMap ();
@@ -486,6 +565,12 @@ static void NQD_ParseServerData (void)
 	cl.servertime_works = true;
 //	cl.allow_fbskins = true; @ZQ@
 	cls.state = ca_onserver;
+	CL_Demo_Check_For_Rewind(nq_mtime[0]);
+
+	// Demos don't store this so we set from user-defined option
+	cl.teamplay = cl_demoteamplay.integer;
+
+	nq_lastseektype == DST_SEEKING_NONE;
 }
 
 /*
@@ -540,15 +625,6 @@ Back from NetQuake
 */
 static void CL_ParseParticleEffect (void)
 {
-	/* hifi: unused variable warnings cleaned up, kept null parsing */
-	int i;
-	for (i = 0; i < 3; i++)
-		MSG_ReadCoord ();
-	for (i = 0; i < 3; i++)
-		MSG_ReadChar ();
-	MSG_ReadByte ();
-	MSG_ReadByte ();
-/* ##
 	vec3_t		org, dir;
 	int			i, count, color;
 
@@ -561,10 +637,9 @@ static void CL_ParseParticleEffect (void)
 
 	// now run the effect
 	if (count == 255)
-		CL_ParticleExplosion (org);
-	else
-		CL_RunParticleEffect2 (org, dir, color, count, 1);
-*/
+		Classic_ParticleExplosion (org);
+	else 
+		R_RunParticleEffect (org, dir, color, count);
 }
 
 /*
@@ -594,6 +669,7 @@ static void NQD_ParseUpdate (int bits)
 		//TP_ExecTrigger ("f_spawn");
 		SCR_EndLoadingPlaque ();
 		cls.state = ca_active;
+		CL_Demo_Check_For_Rewind(nq_mtime[0]);
 	}
 
 	if (bits & NQ_U_MOREBITS)
@@ -641,8 +717,8 @@ static void NQD_ParseUpdate (int bits)
 	if (modnum != state->modelindex)
 	{
 		state->modelindex = modnum;
-	// automatic animation (torches, etc) can be either all together
-	// or randomized
+		// automatic animation (torches, etc) can be either all together
+		// or randomized
 		if (modnum)
 		{
 			/*if (model->synctype == ST_RAND)
@@ -796,6 +872,7 @@ void NQD_LinkEntities (void)
 	float				autorotate;
 	int					i;
 	int					num;
+	customlight_t		cst_lt = { 0 };
 
 	f = NQD_LerpPoint ();
 
@@ -902,20 +979,27 @@ void NQD_LinkEntities (void)
 		// set colormap
 		if (state->colormap && state->colormap <= MAX_CLIENTS
 			&& state->modelindex == cl_modelindices[mi_player]
-		)
+		) 
+		{
 			ent.colormap = cl.players[state->colormap-1].translations;
+			ent.scoreboard = &cl.players[state->colormap-1];
+		}
 		else
+		{
 			ent.colormap = vid.colormap;
+			ent.scoreboard = NULL;
+		}
 
 		// set skin
 		ent.skinnum = state->skinnum;
-		
+
 		// set frame
 		ent.frame = state->frame;
 		if (cent->frametime >= 0 && cent->frametime <= cl.time) {
 			ent.oldframe = cent->oldframe;
 			ent.framelerp = (cl.time - cent->frametime) * 10;
-if (ent.oldframe != ent.frame) Com_DPrintf ("framelerp %f\n", ent.framelerp); 
+			//if (ent.oldframe != ent.frame) 
+				//Com_DPrintf("framelerp %f\n", ent.framelerp);
 		} else {
 			ent.oldframe = ent.frame;
 			ent.framelerp = -1;
@@ -940,32 +1024,7 @@ if (ent.oldframe != ent.frame) Com_DPrintf ("framelerp %f\n", ent.framelerp);
 					}
 			}
 
-#if 0	//##
-			if (modelflags & EF_ROCKET)
-			{
-				if (r_rockettrail.value) {
-					if (r_rockettrail.value == 2)
-						CL_GrenadeTrail (old_origin, ent.origin);
-					else
-						CL_RocketTrail (old_origin, ent.origin);
-				}
-
-				if (r_rocketlight.value)
-					CL_NewDlight (state->number, ent.origin, 200, 0.1, lt_rocket);
-			}
-			else if (modelflags & EF_GRENADE && r_grenadetrail.value)
-				CL_GrenadeTrail (old_origin, ent.origin);
-			else if (modelflags & EF_GIB)
-				CL_BloodTrail (old_origin, ent.origin);
-			else if (modelflags & EF_ZOMGIB)
-				CL_SlightBloodTrail (old_origin, ent.origin);
-			else if (modelflags & EF_TRACER)
-				CL_TracerTrail (old_origin, ent.origin, 52);
-			else if (modelflags & EF_TRACER2)
-				CL_TracerTrail (old_origin, ent.origin, 230);
-			else if (modelflags & EF_TRACER3)
-				CL_VoorTrail (old_origin, ent.origin);
-#endif
+			CL_AddParticleTrail (&ent, cent, &old_origin, &cst_lt, state);
 		}
 
 		VectorCopy (ent.origin, cent->lerp_origin);
@@ -1009,7 +1068,6 @@ static void NQD_ParseServerMessage (void)
 // parse the message
 //
 	MSG_BeginReading ();
-	
 	while (1)
 	{
 		if (msg_badread)
@@ -1046,7 +1104,7 @@ static void NQD_ParseServerMessage (void)
 		switch (cmd)
 		{
 		default:
-			Host_Error ("CL_ParseServerMessage: Illegible server message");
+			Host_Error ("CL_ParseServerMessage: Illegible server message (cmd %i)\n", cmd);
 			break;
 
 		case svc_nop:
@@ -1056,6 +1114,11 @@ static void NQD_ParseServerMessage (void)
 			nq_mtime[1] = nq_mtime[0];
 			nq_mtime[0] = MSG_ReadFloat ();
 			cl.servertime = nq_mtime[0];
+			CL_CheckForNQDSeekPointFound();
+			if (demostarttime <= 0) 
+				demostarttime = nq_mtime[0];
+			if (cls.demotime < demostarttime) 
+				cls.demotime = demostarttime;
 			message_with_datagram = true;
 			break;
 
@@ -1216,12 +1279,14 @@ static void NQD_ParseServerMessage (void)
 		case svc_intermission:
 			cl.intermission = 1;
 			cl.completed_time = cl.time;
+			cl.solo_completed_time = cl.servertime;
 			VectorCopy (nq_last_fixangle, cl.simangles);
 			break;
 
 		case svc_finale:
 			cl.intermission = 2;
 			cl.completed_time = cl.time;
+			cl.solo_completed_time = cl.servertime;
 			SCR_CenterPrint (MSG_ReadString ());
 			VectorCopy (nq_last_fixangle, cl.simangles);
 			break;
@@ -1229,6 +1294,7 @@ static void NQD_ParseServerMessage (void)
 		case nq_svc_cutscene:
 			cl.intermission = 3;
 			cl.completed_time = cl.time;
+			cl.solo_completed_time = cl.servertime;
 			SCR_CenterPrint (MSG_ReadString ());
 			VectorCopy (nq_last_fixangle, cl.simangles);
 			break;
@@ -1243,9 +1309,15 @@ static void NQD_ParseServerMessage (void)
 
 void NQD_ReadPackets (void)
 {
+	extern qbool	host_skipframe;
+
 	while (CL_GetNQDemoMessage()) {
 		NQD_ParseServerMessage();
 	}
+
+	// If we're seeking, demotime is set to the target time: stop demotime from being advanced as normal
+	if (cls.demoseeking)
+		host_skipframe = true;
 }
 
 

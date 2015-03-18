@@ -113,13 +113,13 @@ qbool Cam_DrawViewModel(void) {
 	return false;
 }
 
+static qbool Cam_FirstPersonMode(void) {
+	return cl_chasecam.value && !Cvar_Value("cam_thirdperson") && !Cvar_Value("cl_camera_tpp");
+}
+
 // returns true if we should draw this player, we don't if we are chase camming
 qbool Cam_DrawPlayer(int playernum) {
-	if (cl.spectator && autocam && locked && cl_chasecam.value && 
-#ifdef JSS_CAM
-		!Cvar_Value("cam_thirdperson") &&
-#endif
-		spec_track == playernum)
+	if (cl.spectator && autocam && locked && spec_track == playernum && Cam_FirstPersonMode())
 		return false;
 	return true;
 }
@@ -693,10 +693,27 @@ static char *myftos (float f)
 	return val;
 }
 
-static void Cam_Pos_f (void)
+void Cam_Pos_Set(float x, float y, float z)
 {
 	extern qbool clpred_newpos;
 
+	cl.simorg[0] = x;
+	cl.simorg[1] = y;
+	cl.simorg[2] = z;
+	clpred_newpos = true;
+	
+	VectorCopy (cl.simorg, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
+	
+	if (cls.state >= ca_active && !cls.demoplayback) {
+		MSG_WriteByte (&cls.netchan.message, clc_tmove);
+		MSG_WriteCoord (&cls.netchan.message, cl.simorg[0]);
+		MSG_WriteCoord (&cls.netchan.message, cl.simorg[1]);
+		MSG_WriteCoord (&cls.netchan.message, cl.simorg[2]);
+	}
+}
+
+static void Cam_Pos_f (void)
+{
 	if (Cmd_Argc() == 1)
 	{
 		Com_Printf ("\"%s %s %s\"\n", myftos(cl.simorg[0]), myftos(cl.simorg[1]), myftos(cl.simorg[2]));
@@ -717,20 +734,17 @@ static void Cam_Pos_f (void)
 
 	if (!cls.demoplayback && !cl.spectator)
 		return;
-		
-	cl.simorg[0] = Q_atof(Cmd_Argv(1));
-	cl.simorg[1] = Q_atof(Cmd_Argv(2));
-	cl.simorg[2] = Q_atof(Cmd_Argv(3));
-	clpred_newpos = true;
-	
-	VectorCopy (cl.simorg, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
-	
-	if (cls.state >= ca_active && !cls.demoplayback) {
-		MSG_WriteByte (&cls.netchan.message, clc_tmove);
-		MSG_WriteCoord (&cls.netchan.message, cl.simorg[0]);
-		MSG_WriteCoord (&cls.netchan.message, cl.simorg[1]);
-		MSG_WriteCoord (&cls.netchan.message, cl.simorg[2]);
-	}
+
+	Cam_Reset();
+	Cam_Pos_Set(Q_atof(Cmd_Argv(1)), Q_atof(Cmd_Argv(2)), Q_atof(Cmd_Argv(3)));
+}
+
+void Cam_Angles_Set(float pitch, float yaw, float roll)
+{
+	cl.simangles[0] = pitch;
+	cl.simangles[1] = yaw;
+	cl.simangles[2] = roll;
+	VectorCopy (cl.simangles, cl.viewangles);
 }
 
 static void Cam_Angles_f (void)
@@ -755,11 +769,8 @@ static void Cam_Angles_f (void)
 	
 	if (!cls.demoplayback && !cl.spectator)
 		return;
-		
-	cl.simangles[0] = Q_atof(Cmd_Argv(1));
-	cl.simangles[1] = Q_atof(Cmd_Argv(2));
-	cl.simangles[2] = Q_atof(Cmd_Argv(3));
-	VectorCopy (cl.simangles, cl.viewangles);
+
+	Cam_Angles_Set(Q_atof(Cmd_Argv(1)), Q_atof(Cmd_Argv(2)), Q_atof(Cmd_Argv(3)));
 }
 
 static char *Macro_Cam_Pos_X (void) { return myftos(cl.simorg[0]); }

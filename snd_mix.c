@@ -42,36 +42,37 @@ float voicevolumemod = 1; // voice volume modifier.
 
 int snd_linear_count;
 
-static void Snd_WriteLinearBlastStereo16 (void)
+static void Snd_WriteLinearBlastStereo16 (int* input_buffer, short* output_buffer, int snd_vol)
 {
 	int val, i;
 
 	for (i = 0; i < snd_linear_count; i += 2) {
-		val = (snd_p[i]*snd_vol)>>8;
-		snd_out[i] = bound (-32768, val, 32767);
-		val = (snd_p[i+1]*snd_vol)>>8;
-		snd_out[i+1] = bound (-32768, val, 32767);
+		val = (input_buffer[i]*snd_vol)>>8;
+		output_buffer[i] = bound (-32768, val, 32767);
+		val = (input_buffer[i+1]*snd_vol)>>8;
+		output_buffer[i+1] = bound (-32768, val, 32767);
 	}
 }
 
-static void Snd_WriteLinearBlastStereo16_SwapStereo (void)
+static void Snd_WriteLinearBlastStereo16_SwapStereo (int* input_buffer, short* output_buffer, int snd_vol)
 {
 	int val, i;
 
 	for (i = 0; i < snd_linear_count; i +=2 ) {
-		val = (snd_p[i+1]*snd_vol)>>8;
-		snd_out[i] = bound (-32768, val, 32767);
-		val = (snd_p[i]*snd_vol)>>8;
-		snd_out[i+1] = bound (-32768, val, 32767);
+		val = (input_buffer[i+1]*snd_vol)>>8;
+		output_buffer[i] = bound (-32768, val, 32767);
+		val = (input_buffer[i]*snd_vol)>>8;
+		output_buffer[i+1] = bound (-32768, val, 32767);
 	}
 }
 
 static void S_TransferStereo16 (int endtime)
 {
-	int lpaintedtime, lpos;
+	int lpaintedtime, lpos, clientVolume;
 	DWORD *pbuf;
+	short* movieBuffer;
 
-	snd_vol = (s_volume.value * voicevolumemod) * 256;
+	clientVolume = snd_vol = (s_volume.value * voicevolumemod) * 256;
 
 	snd_p = (int *) paintbuffer;
 	lpaintedtime = paintedtime;
@@ -97,20 +98,29 @@ static void S_TransferStereo16 (int endtime)
 		snd_linear_count <<= 1;
 
 		// write a linear blast of samples
+#ifdef _WIN32
+		movieBuffer = Movie_SoundBuffer();	
+		if (movieBuffer != NULL) 
+		{
+			if (s_swapstereo.value)	// keeping it consistent, but why would we store it like this in the video?
+				Snd_WriteLinearBlastStereo16_SwapStereo (snd_p, movieBuffer, snd_vol);
+			else
+				Snd_WriteLinearBlastStereo16 (snd_p, movieBuffer, snd_vol);
+			Movie_TransferStereo16();
+
+			if (movie_quietcapture.value)
+				clientVolume = 0;
+		}
+#endif
+
 		if (s_swapstereo.value)
-			Snd_WriteLinearBlastStereo16_SwapStereo ();
+			Snd_WriteLinearBlastStereo16_SwapStereo (snd_p, snd_out, clientVolume);
 		else
-			Snd_WriteLinearBlastStereo16 ();
+			Snd_WriteLinearBlastStereo16 (snd_p, snd_out, clientVolume);
 
 		snd_p += snd_linear_count;
 		lpaintedtime += (snd_linear_count>>1);
-
-		//joe: capturing audio
-#ifdef _WIN32
-		Movie_TransferStereo16 ();
-#endif
 	}
-
 }
 
 static void S_TransferPaintBuffer(int endtime)

@@ -138,6 +138,9 @@ cvar_t	cl_fakename = {"cl_fakename", ""};
 cvar_t	cl_fakename_suffix = {"cl_fakename_suffix", ": "};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
+void OnChangeColorForcing (cvar_t *var, char *value, qbool *cancel);
+void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel);
+cvar_t  cl_demoteamplay = {"cl_demoteamplay", "0", 0, OnChangeDemoTeamplay};	// for NQ demos where we need to say it is teamplay rather than FFA
 
 cvar_t	cl_earlypackets = {"cl_earlypackets", "1"};
 
@@ -1843,6 +1846,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&qwdtools_dir);
 	Cvar_Register (&demo_getpings);
 	Cvar_Register (&demo_autotrack);
+	Cvar_Register (&cl_demoteamplay);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register (&cl_staticsounds);
@@ -2274,7 +2278,7 @@ void CL_Frame (double time)
 		cls.frametime = Movie_StartFrame();
 	else
 		cls.frametime = min(0.2, cls.trueframetime);
-
+	
 	if (cl_independentPhysics.value != 0)
 	{
 		double minphysframetime = MinPhysFrameTime();
@@ -2358,7 +2362,7 @@ void CL_Frame (double time)
 		{
 			MVD_Interpolate();
 			MVD_Mainhook();
-			
+
 			if (!cl.standby && physframe)
 			{
 				StatsGrid_Gather();
@@ -2404,7 +2408,7 @@ void CL_Frame (double time)
 			{
 				MVD_Interpolate();
 				MVD_Mainhook();
-			
+
 				if (!cl.standby && physframe)
 				{
 					StatsGrid_Gather();
@@ -2945,3 +2949,14 @@ void CL_UpdateCaption(qbool force)
 	}
 }
 
+void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel)
+{
+	if (cls.nqdemoplayback) 
+	{
+		cl.teamplay = (*value != '0');
+
+		NQD_SetSpectatorFlags();
+
+		OnChangeColorForcing(var, value, cancel);
+	}
+}
