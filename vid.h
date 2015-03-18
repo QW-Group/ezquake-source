@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // vid.h -- video driver defs
 
+#include <SDL2/SDL.h>
+
 #define VID_CBITS 6
 #define VID_GRADES (1 << VID_CBITS)
 
@@ -93,3 +95,6 @@ void VID_Restore();
 qbool VID_VSyncIsOn();
 qbool VID_VSyncLagFix();
 void VID_CvarInit();
+
+const SDL_DisplayMode *VID_GetDisplayMode(int index);
+int VID_GetModeIndexCount(void);

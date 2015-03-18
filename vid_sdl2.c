@@ -73,6 +73,8 @@ qbool Minimized = false;
 double vid_vsync_lag;
 double vid_last_swap_time;
 
+static SDL_DisplayMode *modelist;
+static int modelist_count;
 
 //
 // cvars
@@ -88,6 +90,7 @@ cvar_t r_stencilbits          = {"vid_stencilbits",       "8",   CVAR_LATCH };
 cvar_t r_depthbits            = {"vid_depthbits",         "0",   CVAR_LATCH };
 cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
 cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH };
+cvar_t vid_usedesktopres      = {"vid_usedesktopres",     "1",   CVAR_LATCH };
 cvar_t vid_win_borderless     = {"vid_win_borderless",    "0",   CVAR_LATCH };
 cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH };
 cvar_t vid_height             = {"vid_height",            "0",   CVAR_LATCH };
@@ -423,6 +426,10 @@ void VID_Shutdown(void)
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
 	memset(&glConfig, 0, sizeof(glConfig));
+
+	Q_free(modelist);
+	modelist_count = 0;
+
 }
 
 static int VID_SDL_InitSubSystem(void)
@@ -451,6 +458,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&r_depthbits);
 	Cvar_Register(&r_fullscreen);
 	Cvar_Register(&r_displayRefresh);
+	Cvar_Register(&vid_usedesktopres);
 	Cvar_Register(&vid_win_borderless);
 	Cvar_Register(&gl_multisamples);
 
@@ -478,36 +486,94 @@ void VID_RegisterCvars(void)
 	Cvar_ResetCurrentGroup();
 }
 
+static void VID_SetupModeList(void)
+{
+	int i;
+
+	Q_free(modelist);
+
+	modelist_count = SDL_GetNumDisplayModes(0);
+	modelist = Q_calloc(modelist_count, sizeof(*modelist));
+
+	for (i = 0; i < modelist_count; i++) {
+		SDL_GetDisplayMode(0, i, &modelist[i]);
+	}
+}
+
 static void VID_SetupResolution(void)
 {
 	SDL_DisplayMode display_mode;
 
 	if (r_fullscreen.integer == 1) {
-		if ((vid_width.integer == 0 || vid_height.integer == 0)) {
+		if (vid_usedesktopres.integer == 1) {
 			if (SDL_GetDesktopDisplayMode(0, &display_mode) == 0) {
 				glConfig.vidWidth = display_mode.w;
 				glConfig.vidHeight = display_mode.h;
+				glConfig.displayFrequency = display_mode.refresh_rate;
+				return;
 			} else {
-				// Try some default if nothing is set and we failed to get desktop res
-				glConfig.vidWidth = 1024;
-				glConfig.vidHeight = 768;
-				Cvar_LatchedSetValue(&vid_width, 1024);
-				Cvar_LatchedSetValue(&vid_height, 768);
-				Com_Printf("warning: failed to get desktop resolution, using 1024x768 failsafe\n");
+				Com_Printf("warning: failed to get desktop resolution\n");
 			}
-		} else {
-			glConfig.vidWidth = bound(320, vid_width.integer, vid_width.integer);
-			glConfig.vidHeight = bound(200, vid_height.integer, vid_height.integer);
 		}
+		/* Note the fall through in case the above fails */
+
+		if (vid_width.integer == 0 || vid_height.integer == 0) {
+			/* Try some default if nothing is set and we failed to get desktop res */
+			glConfig.vidWidth = 1024;
+			glConfig.vidHeight = 768;
+			glConfig.displayFrequency = 0;
+
+			Cvar_LatchedSetValue(&vid_width, 1024);
+			Cvar_LatchedSetValue(&vid_height, 768);
+			Cvar_LatchedSetValue(&r_displayRefresh, 0);
+			return;
+		}
+
+		/* USER specified resolution */
+		glConfig.vidWidth = bound(320, vid_width.integer, vid_width.integer);
+		glConfig.vidHeight = bound(200, vid_height.integer, vid_height.integer);
+		glConfig.displayFrequency = r_displayRefresh.integer;
+
 	} else { /* Windowed mode */
 		if (vid_win_width.integer == 0 || vid_win_height.integer == 0) {
 			Cvar_LatchedSetValue(&vid_win_width, 640);
 			Cvar_LatchedSetValue(&vid_win_height, 480);
+			Cvar_LatchedSetValue(&r_displayRefresh, 0);
 		}
 
 		glConfig.vidWidth = bound(320, vid_win_width.integer, vid_win_width.integer);
 		glConfig.vidHeight = bound(240, vid_win_height.integer, vid_win_height.integer);
+		glConfig.displayFrequency = 0;
 	}
+}
+
+int VID_GetCurrentModeIndex(void)
+{
+	int i;
+
+	for (i = 0; i < modelist_count; i++) {
+		if (modelist[i].w == vid_width.integer &&
+		    modelist[i].h == vid_height.integer &&
+		    modelist[i].refresh_rate == r_displayRefresh.integer) {
+			Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, modelist[i].refresh_rate);
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+int VID_GetModeIndexCount(void) {
+	return modelist_count;
+}
+
+const SDL_DisplayMode *VID_GetDisplayMode(int index)
+{
+	if (index < 0 || index >= modelist_count) {
+		return NULL;
+	}
+
+	return &modelist[index];
 }
 
 static void VID_SDL_GL_SetupAttributes(void)
@@ -555,10 +621,8 @@ static void VID_SDL_Init(void)
 	flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
 	if (r_fullscreen.integer > 0) {
-		if (vid_width.integer == 0 || vid_height.integer == 0) {
+		if (vid_usedesktopres.integer == 1) {
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-		} else {
-			flags |= SDL_WINDOW_FULLSCREEN;
 		}
 	} else {
 		if (vid_win_borderless.integer > 0) {
@@ -574,6 +638,7 @@ static void VID_SDL_Init(void)
 	VID_SDL_InitSubSystem();
 	VID_SDL_GL_SetupAttributes();
 
+	VID_SetupModeList();
 	VID_SetupResolution();
 
 	if (r_fullscreen.integer == 0) {
@@ -581,6 +646,26 @@ static void VID_SDL_Init(void)
 	} else {
 		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, glConfig.vidWidth, glConfig.vidHeight, flags);
 	}
+
+	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
+		int index;
+
+		index = VID_GetCurrentModeIndex();
+
+		/* FIXME: Make a pre-check if the values render a valid video mode before attempting to switch (when vid_usedesktopres != 1) !! */
+		if (index < 0) {
+			Com_Printf("Couldn't find a matching video mode for the selected values, check video settings!\n");
+		} else {
+			if (SDL_SetWindowDisplayMode(sdl_window, &modelist[index]) != 0) {
+				Com_Printf("sdl error: %s\n", SDL_GetError());
+			}
+		}
+
+		if (SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN) < 0) {
+			Com_Printf("Failed to change to fullscreen mode\n");
+		}
+	}
+      
 
 	if (VID_SetWindowIcon(sdl_window) < 0) {
 		Com_Printf("Failed to set window icon");
@@ -597,11 +682,13 @@ static void VID_SDL_Init(void)
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 	
+#if 0
 	if (SDL_GetWindowDisplayMode(sdl_window, &display_mode) < 0) {
 		glConfig.displayFrequency = display_mode.refresh_rate;
 	} else {
 		glConfig.displayFrequency = 0;
 	}
+#endif
 
 	glConfig.colorBits = 24; // FIXME
 	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &glConfig.depthBits);
@@ -818,7 +905,7 @@ static void GfxInfo_f(void)
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
 	}
 
-	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", glConfig.vidWidth, glConfig.vidHeight, current.refresh_rate);
+	Com_Printf_State(PRINT_ALL, "MODE: %d x %d @ %d Hz ", current.w, current.h, current.refresh_rate);
 	
 	if (r_fullscreen.integer) {
 		Com_Printf_State(PRINT_ALL, "[fullscreen]\n");
@@ -838,12 +925,9 @@ static void VID_ParseCmdLine(void)
 		Cvar_LatchedSetValue(&r_fullscreen, 0);
 	}
 
-// TODO: Decide what to do with displayFrequency.. Support setting modes with different Hz than desktop or not??
-#if 0
 	if ((i = COM_CheckParm("-freq")) && i + 1 < COM_Argc()) {
 		Cvar_LatchedSetValue(&r_displayRefresh, Q_atoi(COM_Argv(i + 1)));
 	}
-#endif
 
 	if ((i = COM_CheckParm("-bpp")) && i + 1 < COM_Argc()) {
 		Cvar_LatchedSetValue(&r_colorbits, Q_atoi(COM_Argv(i + 1)));

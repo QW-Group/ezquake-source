@@ -420,8 +420,8 @@ qbool CT_Opt_FPS_Mouse_Event(const mouse_state_t *ms)
 typedef struct menu_video_settings_s {
 	int res;
 	int bpp;
+	qbool usedesktopres;
 	qbool fullscreen;
-	cvar_t freq;	// this is not an int just because we need to fool settings_page module
 } menu_system_settings_t;
 qbool mss_askmode = false;
 
@@ -434,18 +434,28 @@ menu_system_settings_t mss_previous;
 // will apply given video settings
 static void ApplyVideoSettings(const menu_system_settings_t *s)
 {
+	const SDL_DisplayMode *current;
+
+	current = VID_GetDisplayMode(s->res);
+	if (current == NULL) {
+		return;
+	}
+
+	Cvar_SetValue(&vid_width, current->w);
+	Cvar_SetValue(&vid_height, current->h);
+	Cvar_SetValue(&r_displayRefresh,current->refresh_rate);
 	Cvar_SetValue(&r_colorbits, s->bpp);
-	Cvar_SetValue(&r_displayRefresh, s->freq.value);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
 	Cbuf_AddText("vid_restart\n");
-	Com_Printf("askmode: %s\n", mss_askmode ? "on" : "off");
+	Com_DPrintf("askmode: %s\n", mss_askmode ? "on" : "off");
 }
 
 // will store current video settings into the given structure
 static void StoreCurrentVideoSettings(menu_system_settings_t *out)
 {
+	out->usedesktopres = vid_usedesktopres.integer ? true : false;
+	out->res = VID_GetCurrentModeIndex();
 	out->bpp = (int) r_colorbits.value;
-	Cvar_SetValue(&out->freq, r_displayRefresh.value);
 	out->fullscreen = (int) r_fullscreen.value;
 }
 
@@ -466,18 +476,44 @@ static void CancelNewVideoSettings (void) {
 	ApplyVideoSettings(&mss_previous);
 }
 
-// this is a duplicate from tr_init.c!
-const char* glmodes[] = { "320x240", "400x300", "512x384", "640x480", "800x600", "960x720", "1024x768", "1152x864", "1280x1024", "1600x1200", "2048x1536", "1920x1200", "1920x1080", "1680x1050", "1440x900", "1280x800" };
-int glmodes_size = sizeof(glmodes) / sizeof(char*);
 
-const char* BitDepthRead(void) { return mss_selected.bpp == 32 ? "32 bit" : mss_selected.bpp == 16 ? "16 bit" : "use desktop settings"; }
-const char* ResolutionRead(void) { return glmodes[bound(0, mss_selected.res, glmodes_size-1)]; }
-const char* FullScreenRead(void) { return mss_selected.fullscreen ? "on" : "off"; }
-
-void ResolutionToggle(qbool back) {
-	if (back) mss_selected.res--; else mss_selected.res++;
-	mss_selected.res = (mss_selected.res + glmodes_size) % glmodes_size;
+const char* BitDepthRead(void)
+{
+	return mss_selected.bpp == 32 ? "32 bit" : mss_selected.bpp == 16 ? "16 bit" : "use desktop settings";
 }
+
+const char* ResolutionRead(void)
+{
+	static char buf[64];
+	const SDL_DisplayMode *mode;
+
+	mode = VID_GetDisplayMode(mss_selected.res);
+	if (mode == NULL) {
+		return "";
+	}
+
+	snprintf(buf, sizeof(buf), "%dx%d@%dHz", mode->w, mode->h, mode->refresh_rate);
+		
+	return buf;
+}
+
+const char* FullScreenRead(void)
+{
+	return mss_selected.fullscreen ? "on" : "off";
+}
+
+void ResolutionToggle(qbool back)
+{
+	int count = VID_GetModeIndexCount();
+	if (back) {
+		mss_selected.res--;
+	} else {
+		 mss_selected.res++;
+	}
+
+	mss_selected.res = (mss_selected.res + count) % count;
+}
+
 void BitDepthToggle(qbool back) {
 	if (back) {
 		switch (mss_selected.bpp) {
@@ -1178,6 +1214,7 @@ setting settsystem_arr[] = {
 
 #if !defined(__APPLE__) && !defined(_Soft_X11) && !defined(_Soft_SVGA)
 	ADDSET_SEPARATOR("Screen Settings"),
+	ADDSET_BOOL("Use desktop resolution", vid_usedesktopres),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
 	ADDSET_BOOL("Vertical Sync", r_swapInterval),
 	ADDSET_ADVANCED_SECTION(),
@@ -1185,7 +1222,6 @@ setting settsystem_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
-	ADDSET_STRING("Refresh Frequency", mss_selected.freq),
 	ADDSET_ACTION("Apply Changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
 #endif
 
@@ -1302,14 +1338,6 @@ void Menu_Options_Init(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
 	Cvar_Register(&menu_advanced);
 	Cvar_ResetCurrentGroup();
-
-	// this is here just to not get a crash in Cvar_Set
-	mss_selected.freq.name = "menu_tempval_video_freq";
-	mss_previous.freq.name = mss_selected.freq.name;
-	mss_selected.freq.string = NULL;
-	mss_previous.freq.string = NULL;
-	mss_selected.freq.next = &mss_selected.freq;
-	mss_previous.freq.next = &mss_previous.freq;
 
 	FL_Init(&configs_filelist, "./ezquake/configs");
 	FL_SetDirUpOption(&configs_filelist, false);
