@@ -777,18 +777,11 @@ void Sound_NextDownload (void)
 		cl.sound_precache[i] = S_PrecacheSound (cl.sound_name[i]);
 	}
 
-	// done with sounds, request models now
-	memset (cl.model_precache, 0, sizeof(cl.model_precache));
+	// Done with sound downloads, go for models
+	cls.downloadnumber = 0;
+	cls.downloadtype = dl_model;
+	Model_NextDownload ();
 
-	if (cls.mvdplayback == QTV_PLAYBACK)
-	{
-		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "qtvmodellist %i %i", cl.servercount, 0);
-	}
-	else 
-	{
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, 0));
-	}
 }
 
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
@@ -857,7 +850,9 @@ void CL_SendChunkDownloadReq(void)
 				CL_SendClientCommand(true, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
 			else
 				CL_SendClientCommand(true, "stopdownload");
-			CL_FinishDownload(true); // this also request next dl
+
+			cls.downloadpercent = 100;
+			CL_FinishDownload(); // this also request next dl
 		}
 		else
 		{
@@ -920,6 +915,7 @@ void CL_ParseChunkedDownload(void)
 
 			fclose (cls.download);
 			cls.download = NULL;
+			cls.downloadpercent = 0;
 		}
 
 		if (cls.demoplayback)
@@ -934,7 +930,7 @@ void CL_ParseChunkedDownload(void)
 				default: Com_Printf("Couldn't find file %s on the server\n", svname);			break;
 			}
 
-			CL_FinishDownload(false); // this also request next dl
+			CL_FinishDownload(); // this also request next dl
 			return;
 		}
 
@@ -951,7 +947,7 @@ void CL_ParseChunkedDownload(void)
 		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) 
 		{
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
-			CL_FinishDownload(false); // This also requests next dl.
+			CL_FinishDownload(); // This also requests next dl.
 			return;
 		}
 
@@ -1047,22 +1043,22 @@ void CL_RequestNextDownload (void)
 	}
 }
 
-void CL_FinishDownload(qbool rename_files)
+void CL_FinishDownload(void)
 {
-	if (cls.download)
+	if (cls.download) {
 		fclose (cls.download);
 
-	//
-	// if we fail of some kind, do not rename files
-	//
-	if (rename_files) {
+		if (cls.downloadpercent == 100) {
+			Com_DPrintf("Download took %.1f seconds\n", Sys_DoubleTime() - cls.downloadstarttime);
 
-		Com_DPrintf("Download took %.1f seconds\n", Sys_DoubleTime() - cls.downloadstarttime);
-
-		// rename the temp file to its final name
-		if (strcmp(cls.downloadtempname, cls.downloadname))
-			if (rename(cls.downloadtempname, cls.downloadname))
-				Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
+			// rename the temp file to its final name
+			if (strcmp(cls.downloadtempname, cls.downloadname))
+				if (rename(cls.downloadtempname, cls.downloadname))
+					Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
+		} else {
+			/* If download didn't complete, remove the unfinished leftover .tmp file ... */
+			unlink(cls.downloadtempname);
+		}
 	}
 
 	cls.download = NULL;
@@ -1138,7 +1134,7 @@ void CL_ParseDownload (void)
 			fclose (cls.download);
 			cls.download = NULL;
 		}
-		CL_FinishDownload(false); // this also request next dl
+		CL_FinishDownload(); // this also request next dl
 		return;
 	}
 
@@ -1151,7 +1147,7 @@ void CL_ParseDownload (void)
 		{
 			msg_readcount += size;
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
-			CL_FinishDownload(false); // this also request next dl
+			CL_FinishDownload(); // this also request next dl
 			return;
 		}
 	}
@@ -1177,7 +1173,8 @@ void CL_ParseDownload (void)
 	} 
 	else
 	{
-		CL_FinishDownload(true); // this also request next dl
+		cls.downloadpercent = 100;
+		CL_FinishDownload(); // this also request next dl
 	}
 }
 
@@ -1658,9 +1655,19 @@ void CL_ParseSoundlist (void)
 		} while (*str);
 	}
 
-	cls.downloadnumber = 0;
-	cls.downloadtype = dl_sound;
-	Sound_NextDownload();
+	// AFTER we got the soundlist, request the modellist (older FTE servers will send it right away anyway)
+	// done with sounds, request models now
+	memset (cl.model_precache, 0, sizeof(cl.model_precache));
+
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
+		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_DOWNLOAD, "qtvmodellist %i %i", cl.servercount, 0);
+	}
+	else 
+	{
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, 0));
+	}
 }
 
 void CL_ParseModellist (qbool extended)
@@ -1745,9 +1752,13 @@ void CL_ParseModellist (qbool extended)
 				}
 		} while (*str);
 	}
+	// We now get here after having received both soundlist and modellist, but no
+	// sounds have been downloaded yet, we must do that first, when that is finished
+	// it will call for model download 
+	// FIXME Implement a download queue later on and thus break this long chain of events
 	cls.downloadnumber = 0;
-	cls.downloadtype = dl_model;
-	Model_NextDownload ();
+	cls.downloadtype = dl_sound;
+	Sound_NextDownload();
 }
 
 void CL_ParseBaseline (entity_state_t *es)

@@ -1338,7 +1338,16 @@ void CL_Disconnect (void)
 
 	Cam_Reset();
 
-	CL_FinishDownload(false);
+	if (cls.download) {
+		CL_FinishDownload();
+	} else {
+		/* Just to make sure it's not in an ambigious state */
+		cls.downloadmethod = DL_NONE;
+		cls.downloadnumber = 0;
+		cls.downloadpercent = 0;
+		cls.downloadtype = dl_none;
+	}
+		
 
 	CL_StopUpload();
 	DeleteServerAliases();
