@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud_common.h"
 #include "vx_stuff.h"
 #include "settings.h"
+#include "teamplay.h"
 #ifdef _WIN32
 #include "movie.h"
 #endif
@@ -570,7 +571,7 @@ static void NQD_ParseServerData (void)
 	// Demos don't store this so we set from user-defined option
 	cl.teamplay = cl_demoteamplay.integer;
 
-	nq_lastseektype == DST_SEEKING_NONE;
+	nq_lastseektype = DST_SEEKING_NONE;
 }
 
 /*

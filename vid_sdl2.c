@@ -608,7 +608,6 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
 
 static void VID_SDL_Init(void)
 {
-	SDL_DisplayMode display_mode;
 	int flags;
 	
 	if (glConfig.initialized == true) {
@@ -682,14 +681,6 @@ static void VID_SDL_Init(void)
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 	
-#if 0
-	if (SDL_GetWindowDisplayMode(sdl_window, &display_mode) < 0) {
-		glConfig.displayFrequency = display_mode.refresh_rate;
-	} else {
-		glConfig.displayFrequency = 0;
-	}
-#endif
-
 	glConfig.colorBits = 24; // FIXME
 	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &glConfig.depthBits);
 	SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &glConfig.stencilBits);

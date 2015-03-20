@@ -139,10 +139,9 @@ void Movie_Stop (void) {
 	}
 	if (!avi_restarting) {
 		S_StopAllSounds(true);
+		Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
 	}
 #endif
-	if (!avi_restarting)
-		Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
 }
 
 void Movie_Demo_Capture_f(void) {

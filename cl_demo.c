@@ -42,6 +42,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 #endif
 
+/* FIXME Move these to a proper header file and included that */
+void Cam_Unlock(void);
+
 // TODO: Create states for demo_recording, demo_playback, and so on and put all related vars into these.
 // Right now with global vars for everything is a mess. Also renaming some of the time vars to be less
 // confusing is probably good. demotime, olddemotime, nextdemotime, prevtime...
