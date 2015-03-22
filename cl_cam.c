@@ -562,7 +562,7 @@ void Cam_FinishMove(usercmd_t *cmd)
 		Cam_CheckHighTarget();
 		if (Cam_JumpCheck(cmd))
 		{
-			ST_Printf(PRINT_FAIL,"cl_hightrack enabled. Unable to switch POV.\n");
+			Com_Printf_State(PRINT_FAIL,"cl_hightrack enabled. Unable to switch POV.\n");
 		}
 		return;
 	}

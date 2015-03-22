@@ -799,7 +799,7 @@ void CL_StartFileUpload(void);
 
 void CL_ParseClientdata (void);
 
-void CL_FinishDownload(qbool rename_files);
+void CL_FinishDownload(void);
 
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 

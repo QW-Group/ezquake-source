@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mp3_player.h"
 #include "mvd_utils.h"
 #include "EX_browser.h"
+#include "EX_qtvlist.h"
 #include "qtv.h"
 #include "keys.h"
 #include "hud.h"
@@ -1094,6 +1095,11 @@ void CL_Join_f (void)
 		return;
 	}
 
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		qtvlist_joinfromqtv_cmd();
+		return;
+	}
+
 	if (!cls.demoplayback && (cl.z_ext & Z_EXT_JOIN_OBSERVE)) 
 	{
 		// Server supports the 'join' command, good
@@ -1332,7 +1338,16 @@ void CL_Disconnect (void)
 
 	Cam_Reset();
 
-	CL_FinishDownload(false);
+	if (cls.download) {
+		CL_FinishDownload();
+	} else {
+		/* Just to make sure it's not in an ambigious state */
+		cls.downloadmethod = DL_NONE;
+		cls.downloadnumber = 0;
+		cls.downloadpercent = 0;
+		cls.downloadtype = dl_none;
+	}
+		
 
 	CL_StopUpload();
 	DeleteServerAliases();

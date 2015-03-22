@@ -803,7 +803,7 @@ void CL_LinkPacketEntities(void)
 	model_t *model;
 	vec3_t *old_origin;
 	double time;
-	float autorotate, lerp, rocketlightsize;
+	float autorotate, lerp;
 	int i, pnum, flicker;
 	customlight_t cst_lt = {0};
 	extern qbool cl_nolerp_on_entity_flag;
@@ -1221,7 +1221,7 @@ static int MVD_WeaponModelNumber (int cweapon)
 void CL_ParsePlayerinfo (void) 
 {
 	extern cvar_t cl_fix_mvd;
-	int	msec, flags, pm_code;
+	int	msec=0, flags, pm_code;
 	centity_t *cent;
 	player_info_t *info;
 	player_state_t *state;

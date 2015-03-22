@@ -34,11 +34,6 @@ static void Filler(void *userdata, Uint8 *stream, int len)
     int wrapped = pos + len - size;
 
     // Implicit Minimized in first case
-    if ((!sys_inactivesound.integer == 1 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized))
-    {
-	    SDL_memset(stream, 0, len);
-	    return;
-    }
 
     if (wrapped < 0) {
         memcpy(stream, shm->buffer + pos, len);
@@ -48,6 +43,10 @@ static void Filler(void *userdata, Uint8 *stream, int len)
         memcpy(stream, shm->buffer + pos, remaining);
         memcpy(stream + remaining, shm->buffer, wrapped);
         shm->samplepos = wrapped >> 1;
+    }
+    if ((!sys_inactivesound.integer == 1 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized))
+    {
+	    SDL_memset(stream, 0, len);
     }
 }
 
@@ -61,7 +60,7 @@ void SNDDMA_Shutdown(void)
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
     if (shm->buffer) {
-        Z_Free(shm->buffer);
+        Q_free(shm->buffer);
         shm->buffer = NULL;
     }
 }
@@ -96,7 +95,7 @@ qbool SNDDMA_Init(void)
     }
 
     desired.format = AUDIO_S16LSB;
-    desired.samples = 512;
+    desired.samples = 1024;
     desired.channels = 2;
     desired.callback = Filler;
     ret = SDL_OpenAudio(&desired, &obtained);
@@ -118,8 +117,8 @@ qbool SNDDMA_Init(void)
     shm->format.speed = obtained.freq;
     shm->format.channels = obtained.channels;
     shm->format.width = 2;
-    shm->samples = 0x8000 * obtained.channels;
-    shm->buffer = Z_Malloc(shm->samples * 2);
+    shm->samples = 0x4000 * obtained.channels;
+    shm->buffer = Q_malloc(shm->samples * 2);
     shm->samplepos = 0;
     shm->sampleframes = shm->samples / shm->format.channels;
 

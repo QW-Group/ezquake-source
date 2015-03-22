@@ -217,10 +217,6 @@ int	 Key_StringToKeynum (const char *str);
 char *Key_KeynumToString (int keynum);
 void Key_Unbindall_f (void);
 
-int isShiftDown(void);                                                                       
-int isCtrlDown(void);                                                                        
-int isAltDown(void);
-
 // should not be public actually but...
 // {
 #define		CMDLINES	(1<<8)

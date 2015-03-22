@@ -29,6 +29,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/time.h>
 #include <machine/cpufunc.h>
 #endif
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
 #include <SDL.h>
 #include "quakedef.h"
 #include "EX_browser.h"
@@ -46,6 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "keys.h"
 #include "config_manager.h"
+#include "EX_qtvlist.h"
 
 double		curtime;
 
@@ -77,20 +82,19 @@ typedef BOOL (WINAPI *PGMSE)(LPMEMORYSTATUSEX);
 
 void SYSINFO_Init(void)
 {
-	LONG            ret;
-	HKEY            hKey;
-	PGMSE			pGMSE;
+	LONG  ret;
+	HKEY  hKey;
+	PGMSE pGMSE;
+
+	extern const char *gl_renderer;
 
 	// Get memory size.
-	if ((pGMSE = (PGMSE)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GlobalMemoryStatusEx")) != NULL)
-	{
+	if ((pGMSE = (PGMSE)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GlobalMemoryStatusEx")) != NULL) {
 		MEMORYSTATUSEX	memstat;
 		memstat.dwLength = sizeof(memstat);
 		pGMSE(&memstat);
 		SYSINFO_memory = memstat.ullTotalPhys;
-	}
-	else
-	{
+	} else {
 		// Win9x doesn't have GlobalMemoryStatusEx.
 		MEMORYSTATUS memstat;
 		GlobalMemoryStatus(&memstat);
@@ -103,8 +107,7 @@ void SYSINFO_Init(void)
 	          "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
 	          &hKey);
 
-	if (ret == ERROR_SUCCESS) 
-	{
+	if (ret == ERROR_SUCCESS) {
 		DWORD type;
 		byte  data[1024];
 		DWORD datasize;
@@ -136,11 +139,11 @@ void SYSINFO_Init(void)
 		RegCloseKey(hKey);
 	}
 
-	{
-		extern const char *gl_renderer;
-
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	if (gl_renderer && gl_renderer[0]) {
+		if (SYSINFO_3D_description != NULL) {
+			free(SYSINFO_3D_description);
+		}
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
 	//
@@ -149,19 +152,16 @@ void SYSINFO_Init(void)
 	
 	snprintf(f_system_string, sizeof(f_system_string), "%uMiB", (unsigned)((SYSINFO_memory / (double) 1048576u)+0.5));
 
-	if (SYSINFO_processor_description) 
-	{
+	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 
-	if (SYSINFO_MHz) 
-	{
+	if (SYSINFO_MHz) {
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 
-	if (SYSINFO_3D_description) 
-	{
+	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
@@ -171,10 +171,12 @@ void SYSINFO_Init(void)
 {
 	// disconnect: which way is best(MEM/CPU-MHZ/CPU-MODEL)?
 	f_system_string[0] = 0;
-	char buffer[1024];
-	char cpu_model[255];
+	char buffer[1024] = {0};
+	char cpu_model[255] = {0};
 	char *match;
 	FILE *f;
+
+	extern const char *gl_renderer;
 
 	// MEM
 	f = fopen("/proc/meminfo", "r");
@@ -224,11 +226,12 @@ void SYSINFO_Init(void)
 		Com_Printf("could not open /proc/cpuinfo!\n");
 	}
 
-	{
-		extern const char *gl_renderer;
 
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	if (gl_renderer && gl_renderer[0]) {
+		if (SYSINFO_3D_description != NULL) {
+			free(SYSINFO_3D_description);
+		}
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
@@ -248,13 +251,38 @@ void SYSINFO_Init(void)
 #elif defined(__APPLE__)
 void SYSINFO_Init(void)
 {
-	// TODO: disconnect --> f_system for MacOSX (man sysctl)
-	// VVD: Look at code for FreeBSD: 30 lines down. :-)
-	{
-		extern const char *gl_renderer;
+	int mib[2];
+	mib[0] = CTL_HW;
+	mib[1] = HW_MEMSIZE;
+	int64_t memsize_value;
+	int cpu_frequency_value;
+	size_t length = sizeof(memsize_value);
+	char cpu_brand_string[100] = {0};
+	size_t cpu_brand_string_len = sizeof(cpu_brand_string) - 1; /* Don't trust Apple, make sure its NULL terminated */
 
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	extern const char *gl_renderer;
+
+	if (sysctl(mib, 2, &memsize_value, &length, NULL, 0) != -1) {
+		SYSINFO_memory = memsize_value;
+	}
+
+	if (sysctlbyname("machdep.cpu.brand_string", &cpu_brand_string, &cpu_brand_string_len, NULL, 0) != -1) {
+		SYSINFO_processor_description = cpu_brand_string;
+	}
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_CPU_FREQ;
+	length = sizeof(cpu_frequency_value);
+	if (sysctl(mib, 2, &cpu_frequency_value, &length, NULL, 0) != -1) {
+		SYSINFO_MHz = cpu_frequency_value / 1000. / 1000. + .5;
+	}
+
+
+	if (gl_renderer && gl_renderer[0]) {
+		if (SYSINFO_3D_description != NULL) {
+			free(SYSINFO_3D_description);
+		}
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
@@ -281,6 +309,7 @@ void SYSINFO_Init(void)
 	size_t len;
 	unsigned long long old_tsc, tsc_freq;
 	struct timeval tp, old_tp;
+	extern const char *gl_renderer;
 
 	mib[0] = CTL_HW;
 	mib[1] =
@@ -316,11 +345,11 @@ void SYSINFO_Init(void)
 // VVD: We can use sysctl hw.clockrate, but it don't work on i486 - always 0.
 // Must work on Pentium 1/2/3; tested on Pentium 4. And RELENG_4 have no this sysctl.
 
-	{
-		extern const char *gl_renderer;
-
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	if (gl_renderer  &&  gl_renderer[0]) {
+		if (SYSINFO_3D_description != NULL) {
+			free(SYSINFO_3D_description);
+		}
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
@@ -544,9 +573,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	}
 	atexit(SDL_Quit);
 
-#ifdef WITH_DP_MEM
-	Memory2_Init ();
-#endif
 	Host_InitMemory (default_memsize);
 
 #ifdef WITH_TCL
@@ -560,9 +586,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_Init ();
 	Key_Init ();
 
-#ifdef WITH_DP_MEM
-	Memory2_Init_Commands ();
-#endif
 	Cache_Init_Commands ();
 
 	FS_InitFilesystem ();
@@ -736,6 +759,7 @@ void Host_Shutdown (void)
 #ifdef WITH_TCL
 	TCL_Shutdown ();
 #endif
+	qtvlist_deinit();
 }
 
 void Host_Quit (void)

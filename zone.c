@@ -428,7 +428,6 @@ void Cache_Init_Commands (void) {
 }
 
 //Frees the memory and removes it from the LRU list
-#ifndef WITH_DP_MEM
 void Cache_Free (cache_user_t *c) {
 	cache_system_t *cs;
 
@@ -490,7 +489,7 @@ void *Cache_Alloc (cache_user_t *c, int size, char *name) {
 
 	return Cache_Check (c);
 }
-#endif
+
 //============================================================================
 
 void Memory_Init (void *buf, int size) {

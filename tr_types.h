@@ -75,6 +75,7 @@ extern cvar_t	r_win_save_pos;
 extern cvar_t	r_win_save_size;
 extern cvar_t	r_displayRefresh;
 extern cvar_t	vid_borderless;
+extern cvar_t   vid_usedesktopres;
 
 //
 // archived variables that can change at any time

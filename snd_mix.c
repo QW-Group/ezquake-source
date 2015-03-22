@@ -70,7 +70,9 @@ static void S_TransferStereo16 (int endtime)
 {
 	int lpaintedtime, lpos, clientVolume;
 	DWORD *pbuf;
+#ifdef _WIN32
 	short* movieBuffer;
+#endif
 
 	clientVolume = snd_vol = (s_volume.value * voicevolumemod) * 256;
 

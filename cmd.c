@@ -53,10 +53,6 @@ cbuf_t cbuf_safe, cbuf_formatted_comms;
 char *hud262_load_buff = NULL;
 cbuf_t *cbuf_current = NULL;
 
-#ifdef WITH_DP_MEM
-static mempool_t *cmd_mempool;
-#endif
-
 //=============================================================================
 
 //Causes execution of the remainder of the command buffer to be delayed until next frame.
@@ -413,7 +409,7 @@ void Cmd_StuffCmds_f (void)
 	if (!len)
 		return;
 
-	text = (char *) Z_Malloc (len + 1);
+	text = (char *) Q_malloc(len + 1);
 	text[0] = '\0';
 	for (k = 1; k < COM_Argc(); k++) {
 		strlcat (text, COM_Argv(k), len + 1);
@@ -422,7 +418,7 @@ void Cmd_StuffCmds_f (void)
 	}
 
 	// pull out the commands
-	token = (char *) Z_Malloc (len + 1);
+	token = (char *) Q_malloc(len + 1);
 
 	s = text;
 	while (*s) {
@@ -442,8 +438,8 @@ void Cmd_StuffCmds_f (void)
 		}
 	}
 
-	Z_Free (text);
-	Z_Free (token);
+	Q_free(text);
+	Q_free (token);
 }
 
 void Cmd_Exec_f (void)
@@ -687,15 +683,15 @@ void Cmd_EditAlias_f (void)
 
 	a = Cmd_FindAlias(Cmd_Argv(1));
 	if ( a == NULL ) {
-		s = Z_Strdup ("");
+		s = Q_strdup("");
 	} else {
-		s = Z_Strdup(a->value);
+		s = Q_strdup(a->value);
 	}
 
 	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, str2wcs(final_string), strlen(final_string)*sizeof(wchar));
-	Z_Free(s);
+	Q_free(s);
 }
 
 static cmd_alias_t* Cmd_AliasCreate (char* name)
@@ -705,7 +701,7 @@ static cmd_alias_t* Cmd_AliasCreate (char* name)
 
 	key = Com_HashKey(name) % ALIAS_HASHPOOL_SIZE;
 
-	a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
+	a = (cmd_alias_t *) Q_malloc(sizeof(cmd_alias_t));
 	a->next = cmd_alias;
 	cmd_alias = a;
 	a->hash_next = cmd_alias_hash[key];
@@ -740,13 +736,13 @@ void Cmd_Alias_f (void)
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
 		if (!strcasecmp(a->name, s)) {
-			Z_Free (a->value);
+			Q_free(a->value);
 			break;
 		}
 	}
 
 	if (!a)	{
-		a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
+		a = (cmd_alias_t *) Q_malloc(sizeof(cmd_alias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 		a->hash_next = cmd_alias_hash[key];
@@ -773,7 +769,7 @@ void Cmd_Alias_f (void)
 		a->flags |= ALIAS_TEMP;
 
 	// copy the rest of the command line
-	a->value = Z_Strdup (Cmd_MakeArgs(2));
+	a->value = Q_strdup(Cmd_MakeArgs(2));
 }
 
 qbool Cmd_DeleteAlias (char *name)
@@ -809,8 +805,8 @@ qbool Cmd_DeleteAlias (char *name)
 				cmd_alias = a->next;
 
 			// free
-			Z_Free (a->value);
-			Z_Free (a);
+			Q_free(a->value);
+			Q_free(a);
 			return true;
 		}
 		prev = a;
@@ -872,24 +868,37 @@ void Cmd_UnAlias_re_f (void)
 	Cmd_UnAlias(true);
 }
 
-// remove all aliases
+/* 
+ * Remove all aliases unless connected, then remove
+ * all aliases except the server created aliases
+ */
 void Cmd_UnAliasAll_f (void)
 {
 	cmd_alias_t	*a, *next;
 
-	for (a = cmd_alias; a ; a = next) {
-		next = a->next;
-		Z_Free (a->value);
-		Z_Free (a);
+/* FIXME: Optimize this, its n^2 slow atm since Cmd_DeleteAlias will loop through
+ * the list again for each entry
+ */
+	if (cls.state >= ca_connected) {
+		Com_Printf("Connected to a server, will not remove server aliases\n");
+		for (a = cmd_alias; a; a = next) {
+			next = a->next;
+			if ((a->flags & ALIAS_SERVER) == 0) {
+				Cmd_DeleteAlias(a->name);
+			}
+		}
+	} else {
+		for (a = cmd_alias; a ; a = next) {
+			next = a->next;
+			Q_free(a->value);
+			Q_free(a);
+		}
+		cmd_alias = NULL;
+
+		// clear hash
+		memset (cmd_alias_hash, 0, sizeof(cmd_alias_t*) * ALIAS_HASHPOOL_SIZE);
 	}
-	cmd_alias = NULL;
-
-	// clear hash
-	memset (cmd_alias_hash, 0, sizeof(cmd_alias_t*) * ALIAS_HASHPOOL_SIZE);
 }
-
-
-
 
 void DeleteServerAliases(void)
 {
@@ -920,7 +929,7 @@ static legacycmd_t *legacycmds = NULL;
 void Cmd_AddLegacyCommand (char *oldname, char *newname)
 {
 	legacycmd_t *cmd;
-	cmd = (legacycmd_t *) Z_Malloc (sizeof(legacycmd_t));
+	cmd = (legacycmd_t *) Q_malloc(sizeof(legacycmd_t));
 	cmd->next = legacycmds;
 	legacycmds = cmd;
 
@@ -1134,11 +1143,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 		}
 	}
 
-#ifdef WITH_DP_MEM
-	cmd = (cmd_function_t *) Mem_Alloc (cmd_mempool, sizeof (cmd_function_t));
-#else
 	cmd = (cmd_function_t *) Hunk_Alloc (sizeof(cmd_function_t));
-#endif
 	cmd->name = cmd_name;
 	cmd->function = function;
 	cmd->zmalloced = false;
@@ -1163,7 +1168,7 @@ qbool Cmd_AddRemCommand (char *cmd_name, xcommand_t function)
 		}
 	}
 
-	cmd = (cmd_function_t*)Z_Malloc (sizeof(cmd_function_t)+strlen(cmd_name)+1);
+	cmd = (cmd_function_t*)Q_malloc(sizeof(cmd_function_t)+strlen(cmd_name)+1);
 	cmd->name = (char*)(cmd+1); // points to extra space created after the structure
 	strcpy(cmd->name, cmd_name);
 	cmd->function = function;
@@ -1235,7 +1240,7 @@ void Cmd_RemoveCommand (char *cmd_name)
 	if (cmd) {
 		if (cmd->zmalloced)
 		{
-			Z_Free(cmd);
+			Q_free(cmd);
 		}
 		else
 		{
@@ -1865,7 +1870,7 @@ void Cmd_If_New(void)
 		expr_len += clen ? clen + 1 : 3; // we will take '' as a representation of an empty string
 	}
 
-	expr = (char *) Z_Malloc (expr_len + 1);
+	expr = (char *) Q_malloc(expr_len + 1);
 	expr[0] = '\0';
 
 	for (i = 1; i < then_pos; i++) {
@@ -1883,11 +1888,11 @@ void Cmd_If_New(void)
 	error = Expr_Eval_Bool(expr, &pars_ex, &result);
 	if (error != EXPR_EVAL_SUCCESS) {
 		Com_Printf("Error in condition: %s (\"%s\")\n", Parser_Error_Description(error), expr);
-		Z_Free(expr);
+		Q_free(expr);
 		return;
 	}
 
-	Z_Free(expr);
+	Q_free(expr);
 
 	then_pos++;	// skip "then"
 
@@ -2086,7 +2091,7 @@ void Cmd_Eval_f(void)
 		case ET_INT:  Com_Printf("Result: %i (integer)\n", value.i_val); break;
 		case ET_DBL:  Com_Printf("Result: %f (double)\n",  value.d_val); break;
 		case ET_BOOL: Com_Printf("Result: %s (bool)\n", value.b_val ? "true" : "false"); break;
-		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); Z_Free(value.s_val); break;
+		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); Q_free(value.s_val); break;
 		default:      Com_Printf("Error: Unknown value type\n"); break;
 		}
 	}
@@ -2143,7 +2148,7 @@ void Cmd_Alias_In_f (void)
 			alias = Cmd_AliasCreate(alias_name);
 			if (!alias)
 				return;
-			alias->value = Z_Strdup("");
+			alias->value = Q_strdup("");
 		} else {
 			Com_Printf ("alias_in: unknown alias \"%s\"\n", alias_name);
 			return;
@@ -2162,8 +2167,8 @@ void Cmd_Alias_In_f (void)
 		return;
 	}
 
-	Z_Free (alias->value);
-	alias->value = Z_Strdup(buf);
+	Q_free(alias->value);
+	alias->value = Q_strdup(buf);
 	if (strchr(buf, '%'))
 		alias->flags |= ALIAS_HAS_PARAMETERS;
 }
@@ -2286,17 +2291,10 @@ Cmd_Shutdown
 */
 void Cmd_Shutdown(void)
 {
-#ifdef WITH_DP_MEM
-	Mem_FreePool (&cmd_mempool);
-#endif
 }
 
 void Cmd_Init (void)
 {
-#ifdef WITH_DP_MEM
-	cmd_mempool = Mem_AllocPool ("commands", 0, NULL);
-#endif
-
 	// register our commands
 	Cmd_AddCommand ("exec", Cmd_Exec_f);
 	Cmd_AddCommand ("echo", Cmd_Echo_f);

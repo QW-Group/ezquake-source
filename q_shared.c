@@ -499,7 +499,7 @@ size_t qwcslcpy (wchar *dst, const wchar *src, size_t size)
 
 	if (len < size) {
 		// it'll fit
-		memcpy (dst, src, (len + 1) * sizeof(wchar));
+		memmove(dst, src, (len + 1) * sizeof(wchar));
 		return len;
 	}
 

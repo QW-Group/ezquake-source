@@ -156,8 +156,3 @@ void IN_Shutdown(void)
 	mouseinitialized = false;
 }
 
-/* FIXME? */
-
-int isAltDown(void) { return keydown[K_ALT]; }
-int isCtrlDown(void) { return keydown[K_CTRL]; }
-int isShiftDown(void) { return keydown[K_SHIFT]; }

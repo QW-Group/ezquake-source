@@ -102,6 +102,11 @@ CURL_LIBS ?= $(shell pkg-config libcurl --libs)
 CFLAGS_c += $(CURL_CFLAGS)
 LIBS_c += $(CURL_LIBS)
 
+JANSSON_CFLAGS ?= $(shell pkg-config jansson --cflags)
+JANSSON_LIBS ?= $(shell pkg-config jansson --libs)
+CFLAGS += $(JANSSON_CFLAGS)
+LIBS_c += $(JANSSON_LIBS)
+
 # windres needs special quoting...
 RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
 
@@ -131,8 +136,7 @@ COMMON_OBJS := \
     net_chan.o		\
     q_shared.o		\
     version.o		\
-    zone.o		\
-    zone2.o
+    zone.o
 
 # temporary
 SERVER_OBJS := \
@@ -180,6 +184,7 @@ OBJS_c := \
     EX_browser_ping.o \
     EX_browser_qtvlist.o \
     EX_browser_sources.o \
+    EX_qtvlist.o \
     ez_controls.o \
     ez_scrollbar.o \
     ez_scrollpane.o \

@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //============================================================================
 
 // include frequently used headers
-//#define WITH_DP_MEM
 
 // fixes mingw warning about winsock2.h
 #ifdef _WIN32
@@ -35,9 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "q_shared.h"
 #include "zone.h"
-#ifdef WITH_DP_MEM
-#include "zone2.h"
-#endif
 #include "cvar.h"
 #include "cmd.h"
 #include "net.h"
@@ -319,8 +315,6 @@ void Com_PrintVerticalBar(int width);
 #define PRINT_DBG		(1<<6) // do not have prefix, printed only if developer != 0
 
 void Com_Printf_State(int state, const char *fmt, ...);
-// Com_Printf_State is too long name, so use define
-#define ST_Printf Com_Printf_State
 
 extern unsigned	Print_flags[16];
 extern int	Print_current;
