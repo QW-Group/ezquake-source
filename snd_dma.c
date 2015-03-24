@@ -688,9 +688,11 @@ static void GetSoundtime (void)
 
 #ifdef _WIN32
 	//joe: capturing audio
-	if (!Movie_GetSoundtime())
-		soundtime = buffers * fullsamples + samplepos / shm->format.channels;
+	if (Movie_GetSoundtime())
+		return;
 #endif
+
+	soundtime = buffers * fullsamples + samplepos / shm->format.channels;
 }
 
 void S_ExtraUpdate (void)
