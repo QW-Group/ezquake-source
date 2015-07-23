@@ -231,6 +231,10 @@ void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 void Draw_AlphaString (int x, int y, char *str, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
+qbool SCR_TakingAutoScreenshot(void) {
+	return scr_autosshot_countdown > 0;
+}
+
 void OnChange_scr_allowsnap(cvar_t *var, char *s, qbool *cancel) {
 	*cancel = (cls.state >= ca_connected && cbuf_current == &cbuf_svc);
 }
@@ -3322,7 +3326,7 @@ void SCR_DrawElements(void)
 			}
 		}
 
-		if (!scr_autosshot_countdown)
+		if (!SCR_TakingAutoScreenshot())
 		{
 			SCR_DrawConsole ();
 			M_Draw ();
@@ -3472,7 +3476,7 @@ void SCR_UpdateScreen (void)
 
 	V_UpdatePalette ();
 
-	if (scr_autosshot_countdown)
+	if (SCR_TakingAutoScreenshot())
 		SCR_CheckAutoScreenshot();
 
 	if (cls.mvdplayback && cl_multiview.value)
@@ -3843,7 +3847,7 @@ static void SCR_CheckAutoScreenshot(void) {
 	char *exts[5] = {"pcx", "tga", "png", "jpg", NULL};
 	int num;
 
-	if (!scr_autosshot_countdown || --scr_autosshot_countdown)
+	if (!SCR_TakingAutoScreenshot() || --scr_autosshot_countdown)
 		return;
 
 	if (!cl.intermission)
