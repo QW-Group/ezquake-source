@@ -860,6 +860,11 @@ static void NQD_LerpPlayerinfo (float f)
 	VectorCopy (cl.simangles, cl.viewangles);
 }
 
+static int NQD_FirstPersonCamera()
+{
+	return !Cvar_Value("cam_thirdperson") && !Cvar_Value("cl_camera_tpp");
+}
+
 void NQD_LinkEntities (void)
 {
 	entity_t			ent;
@@ -965,7 +970,9 @@ void NQD_LinkEntities (void)
 
 		if (num == nq_viewentity) {
 			VectorCopy (ent.origin, cent->lerp_origin);	// FIXME?
-			continue;			// player entity
+
+			if (!cls.nqdemoplayback || NQD_FirstPersonCamera())
+				continue;			// player entity
 		}
 
 		if (cl_deadbodyfilter.value && state->modelindex == cl_modelindices[mi_player]
