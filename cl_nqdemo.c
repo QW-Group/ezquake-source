@@ -1311,7 +1311,6 @@ static void NQD_ParseServerMessage (void)
 			break;
 		}
 	}
-
 }
 
 
@@ -1322,6 +1321,8 @@ void NQD_ReadPackets (void)
 	while (CL_GetNQDemoMessage()) {
 		NQD_ParseServerMessage();
 	}
+	
+	CL_SetSolidEntities();
 
 	// If we're seeking, demotime is set to the target time: stop demotime from being advanced as normal
 	if (cls.demoseeking)
