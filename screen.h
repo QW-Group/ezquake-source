@@ -33,6 +33,7 @@ void SCR_Init (void);
 void SCR_UpdateScreen (void);
 void SCR_UpdateWholeScreen (void);
 void SCR_AutoScreenshot(char *matchname);
+qbool SCR_TakingAutoScreenshot(void);
 
 void SCR_CenterPrint (char *str);
 

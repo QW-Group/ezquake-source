@@ -860,6 +860,11 @@ static void NQD_LerpPlayerinfo (float f)
 	VectorCopy (cl.simangles, cl.viewangles);
 }
 
+static int NQD_FirstPersonCamera()
+{
+	return !Cvar_Value("cam_thirdperson") && !Cvar_Value("cl_camera_tpp");
+}
+
 void NQD_LinkEntities (void)
 {
 	entity_t			ent;
@@ -965,7 +970,9 @@ void NQD_LinkEntities (void)
 
 		if (num == nq_viewentity) {
 			VectorCopy (ent.origin, cent->lerp_origin);	// FIXME?
-			continue;			// player entity
+
+			if (!cls.nqdemoplayback || NQD_FirstPersonCamera())
+				continue;			// player entity
 		}
 
 		if (cl_deadbodyfilter.value && state->modelindex == cl_modelindices[mi_player]
@@ -1304,7 +1311,6 @@ static void NQD_ParseServerMessage (void)
 			break;
 		}
 	}
-
 }
 
 
@@ -1315,6 +1321,8 @@ void NQD_ReadPackets (void)
 	while (CL_GetNQDemoMessage()) {
 		NQD_ParseServerMessage();
 	}
+	
+	CL_SetSolidEntities();
 
 	// If we're seeking, demotime is set to the target time: stop demotime from being advanced as normal
 	if (cls.demoseeking)
