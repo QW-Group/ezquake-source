@@ -368,9 +368,9 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 
 	strlcpy (filename, tmp, filename_size);
 	#else
-	char *tmp = Q_malloc (MAX_PATH);
+	char *tmp;
 
-	// TODO: I'm no unix person, is this proper?
+	// TODO: I'm no unix person, is this proper? -Nope. Fixme
 	tmp = tempnam(path, "ezq");
 	if (!tmp)
 		return -1;
