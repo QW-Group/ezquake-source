@@ -405,7 +405,7 @@ wchar *str2wcs (const char *s)
 	static wchar buf[65536]; //ouch! ouch!
 	size_t i;
 
-	for (i = 0; i < sizeof(buf) - 1; i++) {
+	for (i = 0; i < (sizeof(buf)/sizeof(buf[0])) - 1; i++) {
 		if (s[i] == 0)
 			break;
 		buf[i] = (short)(unsigned char)s[i];

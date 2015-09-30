@@ -178,7 +178,7 @@ static void mvd_s_t (FILE *f){
 	fprintf(f,"		</lost>\n");
 
 	fprintf(f,"		<kills>\n");
-	for(z=AXE_INFO;z<=PENT_INFO;z++,count=0){
+	for(z=AXE_INFO;z<=LG_INFO;z++,count=0){
 		for (i = 0; i < mvd_cg_info.pcount; i++) {
 			if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1))
 				continue;
@@ -231,7 +231,7 @@ static void mvd_s_t (FILE *f){
 		fprintf(f,"		</lost>\n");
 
 		fprintf(f,"		<kills>\n");
-		for(z=AXE_INFO;z<=PENT_INFO;z++,count=0){
+		for(z=AXE_INFO;z<=LG_INFO;z++,count=0){
 			for (i = 0; i < mvd_cg_info.pcount; i++) {
 				if (strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team2))
 					continue;

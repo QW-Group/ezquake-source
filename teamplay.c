@@ -3106,7 +3106,7 @@ void TP_FindPoint (void)
 				else
 					break;
 
-			rank = pointpriorities[j];
+			rank = pointpriorities[j-1]; /* FIXME: was out of bounds, look up what the intention was, atleast it doesn't crash now */
 		}
 
 		// check if we can actually see the object
