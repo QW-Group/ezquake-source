@@ -4539,6 +4539,12 @@ void CL_Demo_Jump_f (void)
         return;
 	}
 
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
+		Com_Printf("Error: cannot jump during QTV playback.\n");
+		return;
+	}
+
 	// Must be active to jump.
 	if (cls.state < ca_active)
 	{
@@ -4959,8 +4965,11 @@ double Demo_GetSpeed(void)
 
 			return demospeed;
 		}
-	}
 
+		if (!qtv_allow_pause.value)
+			return 1;
+	}
+	
 	return bound(0, cl_demospeed.value, 20);
 }
 

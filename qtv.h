@@ -25,8 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define QTVBUFFERTIME bound(0.1, qtv_buffertime.value, 10)
 
-#define QTV_PLAYBACK		2			// cls.mvdplayback == QTV_PLAYBACK if QTV playback
-
 //======================================
 
 #define QTV_VERSION			1.0f		// we are support up to this QTV version
@@ -89,6 +87,7 @@ extern		cvar_t  qtv_adjustminspeed;
 extern		cvar_t  qtv_adjustmaxspeed;
 extern		cvar_t  qtv_adjustlowstart;
 extern		cvar_t  qtv_adjusthighstart;
+extern      cvar_t  qtv_allow_pause;
 
 extern		cvar_t  qtv_event_join;
 extern		cvar_t  qtv_event_leave;

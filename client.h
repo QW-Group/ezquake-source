@@ -41,7 +41,8 @@ typedef struct
 extern cvar_t cl_demospeed;
 extern cvar_t cl_demoteamplay;
 
-#define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback))
+#define QTV_PLAYBACK		2			// cls.mvdplayback == QTV_PLAYBACK if QTV playback
+#define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK))
 #define	MAX_PROJECTILES	32
 
 typedef struct 
