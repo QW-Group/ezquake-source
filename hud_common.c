@@ -770,7 +770,7 @@ void SCR_HUD_DrawDemoClock(hud_t *hud)
         *hud_democlock_blink,
 		*hud_democlock_scale;
 
-	if (!cls.demoplayback || cls.mvdplayback == 2)
+	if (!cls.demoplayback || cls.mvdplayback == QTV_PLAYBACK)
 	{
 		HUD_PrepareDraw(hud, width, height, &x, &y);
 		return;

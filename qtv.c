@@ -38,6 +38,7 @@ cvar_t  qtv_adjustmaxspeed	 = {"qtv_adjustmaxspeed",	"999"};
 cvar_t  qtv_adjustlowstart   = {"qtv_adjustlowstart",	"0.3"};
 cvar_t  qtv_adjusthighstart  = {"qtv_adjusthighstart",	"1"};
 cvar_t  qtv_say_team         = {"qtv_say_team",         "0"};
+cvar_t  qtv_allow_pause		 = {"qtv_allow_pause",      "0"};	// ignore cl_demospeed during QTV playback by default
 
 cvar_t  qtv_event_join       = {"qtv_event_join", 		" &c2F2joined&r"};
 cvar_t  qtv_event_leave      = {"qtv_event_leave", 		" &cF22left&r"};
@@ -59,6 +60,7 @@ void QTV_Init(void)
 	Cvar_Register(&qtv_adjustlowstart);
 	Cvar_Register(&qtv_adjusthighstart);
 	Cvar_Register(&qtv_say_team);
+	Cvar_Register(&qtv_allow_pause);
 
 	Cvar_Register(&qtv_event_join);
 	Cvar_Register(&qtv_event_leave);

@@ -395,9 +395,9 @@ void Movie_TransferStereo16(void) {
 
 qbool Movie_GetSoundtime(void) {
 	int views = 1;
-	extern cvar_t cl_demospeed;
+	float demospeed = Demo_GetSpeed();
 
-	if (!movie_is_avi || !Movie_IsCapturing() || !cl_demospeed.value)
+	if (!movie_is_avi || !Movie_IsCapturing() || !demospeed)
 		return false;
 
 	if (cl_multiview.value)
@@ -405,7 +405,7 @@ qbool Movie_GetSoundtime(void) {
 		views = cl_multiview.value;
 	}
 
-	soundtime += (int)(0.5 + cls.frametime * shm->format.speed * views * (1.0 / cl_demospeed.value)); //joe: fix for slowmo/fast forward
+	soundtime += (int)(0.5 + cls.frametime * shm->format.speed * views * (1.0 / demospeed)); //joe: fix for slowmo/fast forward
 	return true;
 }
 #endif

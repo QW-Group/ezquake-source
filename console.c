@@ -286,7 +286,7 @@ void Con_MessageMode_f (void) {
 }
 
 void Con_MessageMode2_f (void) {
-	if (cls.mvdplayback == 2)
+	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
 		// mm2 has no meaning in QTV so let's save some keys and make it QTV->game chat
 		Con_MessageMode_Common(chat_qtvtogame);

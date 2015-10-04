@@ -132,7 +132,6 @@ void R_UpdateCoronas(void)
 //R_DrawCoronas
 void R_DrawCoronas(void)
 {
-	extern cvar_t cl_demospeed; // cl_main.c
 	int i;
 	int texture = 0;
 	vec3_t dist, up, right;
