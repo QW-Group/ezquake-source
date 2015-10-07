@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
 void OnChangeColorForcing(cvar_t *var, char *string, qbool *cancel);
+void OnChangeSkinAndColorForcing(cvar_t *var, char *string, qbool *cancel);
 
 cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
@@ -57,7 +58,7 @@ cvar_t	cl_teampentskin = {"teampentskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_enemypentskin = {"enemypentskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_teambothskin = {"teambothskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_enemybothskin = {"enemybothskin", "", 0, OnChangeSkinForcing};
-cvar_t	cl_teamlock = {"teamlock", "0", 0, OnChangeSkinForcing};
+cvar_t	cl_teamlock = {"teamlock", "0", 0, OnChangeSkinAndColorForcing};
 
 
 cvar_t	tp_name_axe = {"tp_name_axe", "axe"};
@@ -1438,6 +1439,12 @@ char *TP_ParseFunChars (char *s, qbool chat)
 }
 
 /************************* SKIN FORCING & REFRESHING *************************/
+qbool TP_TeamLockSpecified()
+{
+	// 1 => return 1st team (doesn't matter which, just locks colours)
+	// non-blank string => use that teamname as the client's team
+	return cl_teamlock.integer != 0 || (cl_teamlock.string[0] && strcmp(cl_teamlock.string, "0"));
+}
 
 char *TP_SkinForcingTeam()
 {
@@ -1452,7 +1459,7 @@ char *TP_SkinForcingTeam()
 			}
 		}
 	}
-	else if (cl_teamlock.string[0] && cl_teamlock.string[0] != '0') {
+	else if (cl_teamlock.string[0] && strcmp(cl_teamlock.string, "0")) {
 		return cl_teamlock.string;
 	}
 	else if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
@@ -1653,6 +1660,13 @@ void TP_RefreshSkins(void)
 
 	for (i = 0; i < MAX_CLIENTS; i++)
 		TP_RefreshSkin(i);
+}
+
+void OnChangeSkinAndColorForcing(cvar_t *var, char *string, qbool *cancel)
+{
+	OnChangeColorForcing(var, string, cancel);
+	OnChangeSkinForcing(var, string, cancel);
+	return;
 }
 
 void OnChangeColorForcing(cvar_t *var, char *string, qbool *cancel)

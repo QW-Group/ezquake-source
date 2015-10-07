@@ -2003,10 +2003,11 @@ void CL_NewTranslation (int slot)
 
 	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR))
 	{
+		qbool lockedTeams = TP_TeamLockSpecified();
 		qbool teammate = false;
 
 		// it's me or it's teamplay and he's my teammate
-		if (cl.spectator && slot == spec_track) {
+		if (cl.spectator && slot == spec_track && !lockedTeams) {
 			teammate = true;
 		}
 		else if (!cl.spectator && slot == cl.playernum) {
