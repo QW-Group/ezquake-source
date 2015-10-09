@@ -73,8 +73,9 @@ cvar_t      con_sound_mm2_volume    = {"s_mm2_volume",    "1"};
 cvar_t      con_sound_spec_volume   = {"s_spec_volume",   "1"};
 cvar_t      con_sound_other_volume  = {"s_otherchat_volume",  "1"};
 
-cvar_t      con_timestamps  = {"con_timestamps", "0"};
-cvar_t      con_shift  = {"con_shift", "-10"};
+cvar_t      con_timestamps          = {"con_timestamps", "0"};
+cvar_t      con_shift               = {"con_shift", "-10"};
+cvar_t      cl_textEncoding         = {"cl_textencoding", "0"};
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated
@@ -472,6 +473,8 @@ void Con_Init (void) {
 
     Cvar_ResetCurrentGroup();
 
+	Cvar_Register(&cl_textEncoding);
+
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
 	Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
@@ -648,7 +651,7 @@ void Con_PrintW (wchar *txt) {
 					Con_Linefeed ();
 				y = con.current % con_totallines;
 				idx = y * con_linewidth + con.x;
-				con.text[idx] = c | mask | con_ormask;
+				con.text[idx] = c | (c <= 0x7F ? mask | con_ormask : 0);	// only apply mask if in 'standard' charset
 				memset(&con.clr[idx], 0, sizeof(clrinfo_t)); // zeroing whole struct
 				con.clr[idx].c = color;
 				con.clr[idx].i = idx; // no, that not stupid :P

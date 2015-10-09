@@ -488,7 +488,10 @@ void M_Main_Key (int key) {
 	switch (key) {
 	case K_ESCAPE:
 	case K_MOUSE2:
-		key_dest = key_game;
+		if (cls.state < ca_active)
+			key_dest = key_console;
+		else 
+			key_dest = key_game;
 		m_state = m_none;
 		break;
 

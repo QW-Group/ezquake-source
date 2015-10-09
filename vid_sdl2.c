@@ -310,17 +310,54 @@ static const byte scantokey[128] = {
 #endif
 };
 
+byte Key_ScancodeToQuakeCode(int scancode)
+{
+	if (scancode < 120)
+		return scantokey[scancode];
+	if (scancode >= 224 && scancode < 224 + 8)
+		return scantokey[scancode - 104];
+	return 0;
+}
+
+byte Key_CharacterToQuakeCode(char ch)
+{
+	// Uses fact that SDLK_a == 'a'... is this okay?
+	
+	// Convert from key-code to scan-code to see what physical button they pressed
+	int scancode = SDL_GetScancodeFromKey(ch);
+
+	return Key_ScancodeToQuakeCode(scancode);
+}
+
+wchar Key_Event_TextInput(wchar unichar);
+
+static void keyb_textinputevent(char* text)
+{
+	int i = 0;
+	int len = 0;
+	wchar unichar = 0;
+
+	// Only process text input messages here
+	if (key_dest != key_console && key_dest != key_message)
+		return;
+
+	if (!*text)
+		return;
+
+	len = strlen(text);
+	for (i = 0; i < len; ++i)
+	{
+		unichar = TextEncodingDecodeUTF8(text, &i);
+
+		if (unichar)
+			Key_Event_TextInput(unichar);
+	}
+}
+
 static void keyb_event(SDL_KeyboardEvent *event)
 {
-	byte result;
-
-	if (event->keysym.scancode < 120)
-		result = scantokey[event->keysym.scancode];
-	else if (event->keysym.scancode >= 224 && event->keysym.scancode < 224 + 8)
-		result = scantokey[event->keysym.scancode - 104];
-	else
-		result = 0;
-
+	byte result = Key_ScancodeToQuakeCode(event->keysym.scancode);
+	
 	if (result == 0) {
 		Com_Printf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
 		return;
@@ -386,6 +423,9 @@ static void HandleEvents()
 		case SDL_KEYUP:
 			keyb_event(&event.key);
 			break;
+		case SDL_TEXTINPUT:
+			keyb_textinputevent(event.text.text);
+			break;
 		case SDL_MOUSEMOTION:
 	                if (mouse_active && !SDL_GetRelativeMouseMode()) {
                             mx = old_x - event.motion.x;
@@ -412,6 +452,8 @@ void VID_Shutdown(void)
 {
 	IN_DeactivateMouse();
 
+	SDL_StopTextInput();
+
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
 		sdl_context = NULL;
@@ -429,7 +471,6 @@ void VID_Shutdown(void)
 
 	Q_free(modelist);
 	modelist_count = 0;
-
 }
 
 static int VID_SDL_InitSubSystem(void)
@@ -440,6 +481,8 @@ static int VID_SDL_InitSubSystem(void)
 			return -1;
 		}
 	}
+
+	SDL_StartTextInput();
 
 	return 0;
 }

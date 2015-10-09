@@ -18,36 +18,118 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include "q_shared.h"
 #include "common.h"		// Com_DPrintf
 #include "textencoding.h"
+#include "utils.h"
 
+#define ENCODED_BUFFER_SIZE 1024
+
+// Each encoding function should return the number of bytes written to the output string
+//   maxCharacters gives the characters before end of string, if function can't generate in given space, output ? instead
+typedef int(*EncodingFunction)(char* output, wchar input, int maxCharacters);
+
+static int koiEncoder(char* output, wchar input, int maxCharacters);
+static int utf8Encoder(char* output, wchar input, int maxCharacters);
+static int fteEncoder(char* output, wchar input, int maxCharacters);
+
+static const char* encodingStrings[] = { "=`k8:", "=`utf8:", "" };
+static const char* encodingSuffixes[] = { "`=", "`=", "" };
+static const EncodingFunction encodingFunctions[] = { koiEncoder, utf8Encoder, fteEncoder };
+
+extern cvar_t cl_textEncoding;
 extern qbool R_CharAvailable (wchar c);
 
 /* KOI8-R encodes Russian capital hard sign as 0xFF, but we can't use it
 because it breaks older clients (qwcl).  We use 0xaf ('/'+ 0x80) instead. */
 static char *wc2koi_table =
-"?3??4?67??" "??" "??" ">?"
-"abwgdevzijklmnop"
-"rstufhc~{}/yx|`q"
-"ABWGDEVZIJKLMNOP"
-"RSTUFHC^[]_YX\\@Q"
-"?#??$?&'??" "??" "??.?";
+	"?3??4?67??" "??" "??" ">?"
+	"abwgdevzijklmnop"
+	"rstufhc~{}/yx|`q"
+	"ABWGDEVZIJKLMNOP"
+	"RSTUFHC^[]_YX\\@Q"
+	"?#??$?&'??" "??" "??.?";
 
-static char wc2koi (wchar wc) {
-	if (wc <= 127)
-		return (char)wc;
-	if (wc >= 0x400 && wc <= 0x45f)
-		return wc2koi_table[wc - 0x400] + 128;
+static int koiEncoder(char* out, wchar in, int maxCharacters) {
+	if (in <= 255)
+		out[0] = in;
+	else if (in >= 0x400 && in <= 0x45f)
+		out[0] = wc2koi_table[in - 0x400] + 128;
 	else
-		return '?';
-		
+		out[0] = '?';
+	return 1;
 }
 
+static int utf8Encoder(char* out, wchar in, int maxCharacters) {
+	if (in <= 0x7F) {
+		// <= 127 is encoded as single byte, no translation
+		out[0] = in;
+		return 1;
+	}
+	else if (in <= 0x7FF && maxCharacters >= 2) {
+		// Two byte characters... 5 bits then 6
+		out[0] = 0xC0 | ((in >> 6) & 0x1F);
+		out[1] = 0x80 | (in & 0x3F);
+		return 2;
+	}
+	else if (in <= 0xFFFF && maxCharacters >= 3) {
+		// Three byte characters... 4 bits then 6 then 6
+		out[0] = 0xE0 | ((in >> 12) & 0x0F);
+		out[1] = 0x80 | ((in >> 6) & 0x3F);
+		out[2] = 0x80 | (in & 0x3F);
+		return 3;
+	}
+	else {
+		// Can't support four characters at the moment - values would be higher than wchar's two bytes
+		// If we're here for a character we could support, we don't have room for it...
+		out[0] = '?';
+		return 1;
+	}
+}
+
+// FIXME: Should we encode ^ as ^^?  FTE interprets ^^ as ^, but doesn't encode that way.
+static int fteEncoder(char* out, wchar in, int maxCharacters) {
+	if (in <= 0x7F) {
+		// <= 127 is encoded as single byte, no translation
+		out[0] = in;
+		return 1;
+	}
+
+	// Otherwise it is ^UXXXX where XXXX is the codepage in hex - so need an extra 5 characters
+	if (maxCharacters < sizeof(wchar) * 2 + 1)
+	{
+		out[0] = '?';
+		return 1;
+	}
+
+	snprintf(out, maxCharacters + 1, "^U%04x", in);
+	return 6;
+}
+
+static int TextEncodingMethod()
+{
+	return bound(0, cl_textEncoding.value, sizeof(encodingFunctions) / sizeof(encodingFunctions[0]));
+}
+
+int TextEncodingEncode(char* out, wchar input, int maxBytes)
+{
+	return (*encodingFunctions[TextEncodingMethod()])(out, input, maxBytes);
+}
+
+const char* TextEncodingPrefix()
+{
+	return encodingStrings[TextEncodingMethod()];
+}
+
+const char* TextEncodingSuffix()
+{
+	return encodingSuffixes[TextEncodingMethod()];
+}
 
 char *encode_say (wchar *in)
 {
-	static char buf[1024];
+	static char buf[ENCODED_BUFFER_SIZE];
 	wchar *p;
 	char *out;
 
+	memset(buf, 0, sizeof(buf));
 	for (p = in; *p; p++)
 		if (*p > 255)
 			goto encode;
@@ -56,32 +138,32 @@ char *encode_say (wchar *in)
 encode:
 	strlcpy (buf, wcs2str(in), min(p - in + 1, sizeof(buf)));
 	in = p;
-	strlcat (buf, "=`k8:", sizeof(buf));
+	strlcat (buf, TextEncodingPrefix(), sizeof(buf));
 	out = buf + strlen(buf);
-	while (*in && (out - buf < sizeof(buf)/sizeof(buf[0])))
+	
+	char* lastValidCharacter = &buf[ENCODED_BUFFER_SIZE - strlen(TextEncodingSuffix()) - 1];	// Leave space for terminator
+	while (*in && out <= lastValidCharacter)
 	{
-		if (*in <= 255)
-			*out++ = *in;
-		else {
-			*out++ = wc2koi(*in);
-		}
-		in++;
+		out += TextEncodingEncode(out, *in, lastValidCharacter - out + 1);
+		++in;
 	}
-	*out++ = '`';
-	*out++ = '=';
-	*out++ = 0;
+	strlcat(buf, TextEncodingSuffix(), sizeof(buf));
 	return buf;
 }
 
-/* koi2wc_table is also used in vid_glx.c */
-char koi2wc_table[64] = {
-0x4e,0x30,0x31,0x46,0x34,0x35,0x44,0x33,0x45,0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,
-0x3f,0x4f,0x40,0x41,0x42,0x43,0x36,0x32,0x4c,0x4b,0x37,0x48,0x4d,0x49,0x47,0x4a,
-0x2e,0x10,0x11,0x26,0x14,0x15,0x24,0x13,0x25,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,
-0x1f,0x2f,0x20,0x21,0x22,0x23,0x16,0x12,0x2c,0x2b,0x17,0x28,0x2d,0x29,0x27,0x2a };
+//
+// Decoding functions
+//
 
 static wchar koi2wc (char c)
 {
+	static char koi2wc_table[64] = {
+		0x4e,0x30,0x31,0x46,0x34,0x35,0x44,0x33,0x45,0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,
+		0x3f,0x4f,0x40,0x41,0x42,0x43,0x36,0x32,0x4c,0x4b,0x37,0x48,0x4d,0x49,0x47,0x4a,
+		0x2e,0x10,0x11,0x26,0x14,0x15,0x24,0x13,0x25,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,
+		0x1f,0x2f,0x20,0x21,0x22,0x23,0x16,0x12,0x2c,0x2b,0x17,0x28,0x2d,0x29,0x27,0x2a
+	};
+
 	unsigned char uc = c;
 
 	if (uc >= 192 /* && (unsigned char)c <= 255 */)
@@ -160,6 +242,67 @@ wchar *decode_cp1251 (char *str) {
 	return buf;
 };
 
+wchar TextEncodingDecodeUTF8(char* str, int* index)
+{
+	static const int masks[3] = { 0x7F, 0x1F, 0xF };
+	int stringLength = strlen(str);
+	int extraBytes = 0;
+	int i = 0;
+	wchar result = 0;
+
+	if (!(str[*index] & 0x80))
+	{
+		// Standard ASCII
+		result = str[*index];
+	}
+	else
+	{
+		char valueMask = 0x7F;
+		char lengthBits = (str[*index] << 1);
+
+		// First character is 1<length in set bits><value>
+		while (lengthBits & 0x80)
+		{
+			++extraBytes;
+			lengthBits = (lengthBits << 1);
+
+			valueMask >>= 1;
+		}
+
+		// Extract value from first character
+		result = str[*index] & valueMask;
+
+		while (extraBytes--)
+		{
+			*index = *index + 1;
+
+			// Extra characters must be 10xx xxxx
+			if (*index >= stringLength || (str[*index] & 0xC0) != 0x80)
+				return 0;
+
+			result <<= 6;
+			result += str[*index] & 0x3F;
+		}
+	}
+
+	return result;
+}
+
+wchar* decode_utf8(char* str) {
+	wchar *buf, *out;
+	int length = strlen(str);
+	int i = 0;
+
+	buf = out = Q_malloc((length + 1)*sizeof(wchar));	// This size would be worst case scenario
+	for (i = 0; i < length; ++i)
+	{
+		*out = TextEncodingDecodeUTF8(str, &i);
+		out++;
+	}
+	*out = 0;
+	return buf;
+};
+
 typedef wchar *(*decodeFUNC) (char *);
 
 static struct {
@@ -171,8 +314,71 @@ static struct {
 	{"k8", decode_koi8q},
 	{"cp1251", decode_cp1251},
 	{"wr", decode_cp1251},	// wc = Windows Cyrillic wr = Windows Russian
+	{"utf8", decode_utf8},
 	{NULL, NULL}
 };
+
+qbool ishex(char ch)
+{
+	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+}
+
+qbool wc_ishex(wchar ch)
+{
+	return ch < 127 && ishex(ch);
+}
+
+int wc_hextodec(wchar ch)
+{
+	return ch < 127 ? HexToInt(ch) : 0;
+}
+
+void decode_fte_string(wchar* s)
+{
+	while (s[0] && s[1])
+	{
+		if (s[0] == '^' && s[1] == '^')
+		{
+			// ^^ => ^
+			qwcscpy(s + 1, s + 2);
+		}
+		else if (s[0] == '^' && s[1] == 'U' && s[2] && s[3] && s[4] && s[5] && wc_ishex(s[2]) && wc_ishex(s[3]) && wc_ishex(s[4]) && wc_ishex(s[5]))
+		{
+			// ^UXXXX, XXXX is hex for wchar
+			s[0] = (wc_hextodec(s[2]) << 12) + (wc_hextodec(s[3]) << 8) + (wc_hextodec(s[4]) << 4) + wc_hextodec(s[5]);
+
+			qwcscpy(s + 1, s + 6);
+		}
+		else if (s[0] == '^' && s[1] == '{')
+		{
+			// ^U{XXX...}, XXX.. is hex for wchar
+			wchar* num = s + 2;
+			wchar result = 0;
+
+			while (*num && wc_ishex(*num))
+			{
+				result = result * 16 + wc_hextodec(*num);
+
+				++num;
+			}
+
+			if (*num == '}')
+			{
+				if (result)
+					s[0] = result;
+				else
+					s[0] = '?';
+
+				qwcscpy(s + 1, num + 1);
+			}
+			else
+			{
+				s[0] = '?';
+			}
+		}
+		++s;
+	}
+}
 
 wchar *decode_string (const char *s)
 {
@@ -226,6 +432,7 @@ wchar *decode_string (const char *s)
 
 		if (!decode_table[i].name) {
 			// unknown encoding
+			Con_DPrintf("Unknown encoding %s\n", encoding);
 			p = r + 2;
 			continue;	
 		}
@@ -238,6 +445,10 @@ wchar *decode_string (const char *s)
 
 	// copy remainder as is
 	qwcslcat (buf, str2wcs(s), sizeof(buf)/sizeof(buf[0]));
+
+	// FTE encodes strings differently. Decoded is always smaller, can execute in-place
+	decode_fte_string(buf);
+
 	return maybe_transliterate(buf);
 }
 

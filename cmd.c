@@ -445,6 +445,7 @@ void Cmd_StuffCmds_f (void)
 void Cmd_Exec_f (void)
 {
 	char *f, name[MAX_OSPATH];
+	char reset_bindphysical[128];
 	int mark;
 
 	if (Cmd_Argc () != 2) {
@@ -471,14 +472,20 @@ void Cmd_Exec_f (void)
 		Com_Printf("execing %s/%s\n", FS_Locate_GetPath(name), name);
 	}
 
+	// All config files default to con_bindphysical 1, and would have to over-ride if they
+	//   want different behaviour.
+	sprintf(reset_bindphysical, "\ncon_bindphysical %d\n", con_bindphysical.integer);
 	if (cbuf_current == &cbuf_svc) {
+		Cbuf_AddTextEx (&cbuf_main, "con_bindphysical 1\n");
 		Cbuf_AddTextEx (&cbuf_main, f);
-		Cbuf_AddTextEx (&cbuf_main, "\n");
-	} else
-	{
-		Cbuf_InsertText ("\n");
-		Cbuf_InsertText (f);
+		Cbuf_AddTextEx (&cbuf_main, reset_bindphysical);
 	}
+	else {
+		Cbuf_InsertTextEx (&cbuf_main, reset_bindphysical);
+		Cbuf_InsertTextEx (&cbuf_main, f);
+		Cbuf_InsertTextEx (&cbuf_main, "con_bindphysical 1\n");
+	}
+	
 	Hunk_FreeToLowMark (mark);
 }
 
