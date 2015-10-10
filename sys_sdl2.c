@@ -24,12 +24,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // I currently just clear the ringbuffer when inactive - dimman
 cvar_t sys_inactivesound = {"sys_inactivesound", "0", CVAR_ARCHIVE};
 cvar_t sys_inactivesleep = {"sys_inactivesleep", "1"};
+cvar_t sys_disable_alt_enter = {"sys_disable_alt_enter", "0"};
 
 void Sys_CvarInit(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
 	Cvar_Register(&sys_inactivesound);
 	Cvar_Register(&sys_inactivesleep);
+	Cvar_Register(&sys_disable_alt_enter);
 	Cvar_ResetCurrentGroup();
 }
 

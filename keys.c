@@ -43,6 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qtv.h"
 #include "utils.h"
 
+extern cvar_t sys_disable_alt_enter;
+
 //key up events are sent even if in console mode
 
 cvar_t cl_chatmode					= {"cl_chatmode", "2"};
@@ -2090,7 +2092,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	}
 
 	// switch windowed<->fullscreen if pressed alt+enter, I succeed only with left alt, dunno why...
-	if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
+	if (key == K_ENTER && !sys_disable_alt_enter.integer && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
 	{
 		Key_ClearStates(); // Zzzz
 		con_suppress = true;
