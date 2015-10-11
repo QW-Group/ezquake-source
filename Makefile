@@ -1,6 +1,10 @@
 ### ezQuake Makefile based on Q2PRO ###
 
--include .config
+ifdef EZ_CONFIG_FILE
+    -include $(EZ_CONFIG_FILE)
+else
+    -include .config
+endif
 
 ifdef CONFIG_WINDOWS
     CPU ?= x86
