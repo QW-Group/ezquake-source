@@ -40,6 +40,11 @@ typedef struct
 
 beam_t cl_beams[MAX_BEAMS];
 
+#define ISDEAD(i) ((i) >= 41 && (i) <= 102)		// FIXME: copied from TP
+static const vec3_t playerHullMin = { -16, -16, -24 };
+static const vec3_t playerHullMax = { 16,  16,  32 };
+#define SUPPRESS_FAKESHAFT_BLOOD_DISTANCE 40
+
 static vec3_t playerbeam_end;
 static qbool playerbeam_update;
 
@@ -135,12 +140,70 @@ void CL_FreeExplosion(explosion_t *ex)
 	cl_free_explosions = ex;
 }
 
-static void CL_ParseBeam(int type) 
+qbool CL_CreateBeam(int ent, vec3_t start, vec3_t end, int type)
+{
+	int i;
+	beam_t *b;
+	struct model_s *m;
+
+	switch (type)
+	{
+	case 1:
+		if (!cl_bolt1_mod)
+			cl_bolt1_mod = Mod_ForName("progs/bolt.mdl", true);
+		m = cl_bolt1_mod;
+		break;
+	case 2:
+		if (!cl_bolt2_mod)
+			cl_bolt2_mod = Mod_ForName("progs/bolt2.mdl", true);
+		m = cl_bolt2_mod;
+		break;
+	case 3:
+		if (!cl_bolt3_mod)
+			cl_bolt3_mod = Mod_ForName("progs/bolt3.mdl", true);
+		m = cl_bolt3_mod;
+		break;
+	case 4: default:
+		if (!cl_beam_mod)
+			cl_beam_mod = Mod_ForName("progs/beam.mdl", true);
+		m = cl_beam_mod;
+		break;
+	}
+
+	// Override any beam with the same entity.
+	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++)
+	{
+		if (b->entity == ent)
+		{
+			b->model = m;
+			b->endtime = cl.time + 0.2;
+			VectorCopy(start, b->start);
+			VectorCopy(end, b->end);
+			return true;
+		}
+	}
+
+	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++)
+	{
+		if (!b->model || b->endtime < cl.time)
+		{
+			b->entity = ent;
+			b->model = m;
+			b->endtime = cl.time + 0.2;
+			VectorCopy(start, b->start);
+			VectorCopy(end, b->end);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static void CL_ParseBeam(int type)
 {
 	int ent, i;
 	vec3_t start, end;
 	beam_t *b;
-	struct model_s *m;
 
 	ent = MSG_ReadShort();
 
@@ -155,146 +218,108 @@ static void CL_ParseBeam(int type)
 	if (cls.demoseeking)
 		return;
 
-    // an experimental protocol extension:
-    // TE_LIGHTNING1 with entity num in -512..-1 range is a rail trail
-    if (type == 1 && (ent >= -512 && ent <= -1)) 
+	// an experimental protocol extension:
+	// TE_LIGHTNING1 with entity num in -512..-1 range is a rail trail
+	if (type == 1 && (ent >= -512 && ent <= -1))
 	{
-        int colors[8] = { 6 /* white (change to something else?) */,
-                208 /* blue */,
-                180 /* green */, 35 /* light blue */, 224 /* red */,
-                133 /* magenta... kinda */, 192 /* yellow */, 6 /* white */};
-        int color;
-        int pnum, cnum;
+		int colors[8] = { 
+			6 /* white (change to something else?) */,
+			208 /* blue */,
+			180 /* green */, 
+			35 /* light blue */, 
+			224 /* red */,
+			133 /* magenta... kinda */, 
+			192 /* yellow */, 
+			6 /* white */ 
+		};
+		int color;
+		int pnum, cnum;
 
-        // -512..-257 are colored trails assigned to a specific
-        // player, so overrides can be applied; encoded as follows:
-        // 7654321076543210
-        // 1111111nnnnnnccc  (n = player num, c = color code)
-        cnum = ent & 7;
-        pnum = (ent >> 3) & 63;
-        if (pnum < MAX_CLIENTS)
-        {
+		// -512..-257 are colored trails assigned to a specific
+		// player, so overrides can be applied; encoded as follows:
+		// 7654321076543210
+		// 1111111nnnnnnccc  (n = player num, c = color code)
+		cnum = ent & 7;
+		pnum = (ent >> 3) & 63;
+		if (pnum < MAX_CLIENTS)
+		{
 			// TODO: apply team/enemy overrides
-        }
-        color = colors[cnum];
+		}
+		color = colors[cnum];
 
 		//color is ignored by most of trails
-		switch(r_instagibtrail.integer)
+		switch (r_instagibtrail.integer)
 		{
-			case 1:
+		case 1:
 			R_ParticleTrail(start, end, &start, GRENADE_TRAIL);
 			break;
 
-			case 2:
+		case 2:
 			R_ParticleTrail(start, end, &start, ROCKET_TRAIL);
 			break;
 
-			case 3:
+		case 3:
 			R_ParticleTrail(start, end, &start, ALT_ROCKET_TRAIL);
 			break;
 
-			case 4:
+		case 4:
 			R_ParticleTrail(start, end, &start, BLOOD_TRAIL);
 			break;
 
-			case 5:
+		case 5:
 			R_ParticleTrail(start, end, &start, BIG_BLOOD_TRAIL);
 			break;
 
-			case 6:
+		case 6:
 			R_ParticleTrail(start, end, &start, TRACER1_TRAIL);
 			break;
 
-			case 7:
+		case 7:
 			R_ParticleTrail(start, end, &start, TRACER2_TRAIL);
 			break;
 
-			case 8:
+		case 8:
 			R_ParticleTrail(start, end, &start, VOOR_TRAIL);
 			break;
 
-			case 9:
+		case 9:
 			Classic_ParticleRailTrail(start, end, color);
 			break;
 
-			case 10:
+		case 10:
 			R_ParticleTrail(start, end, &start, RAIL_TRAIL);
 			break;
 
-			case 11:
+		case 11:
 			QMB_ParticleRailTrail(start, end, color);
 			break;
 
-			case 12:
+		case 12:
 			R_ParticleTrail(start, end, &start, LAVA_TRAIL);
 			break;
 
-			case 13:
+		case 13:
 			R_ParticleTrail(start, end, &start, AMF_ROCKET_TRAIL);
 			break;
 
-			default: break;
+		default: 
+			break;
 		}
 
-        return;
-    }
-
-	switch (type) 
-	{
-		case 1:
-			if (!cl_bolt1_mod)
-				cl_bolt1_mod = Mod_ForName("progs/bolt.mdl", true);
-			m = cl_bolt1_mod;
-			break;
-		case 2:
-			if (!cl_bolt2_mod)
-				cl_bolt2_mod = Mod_ForName("progs/bolt2.mdl", true);
-			m = cl_bolt2_mod;
-			break;
-		case 3:
-			if (!cl_bolt3_mod)
-				cl_bolt3_mod = Mod_ForName("progs/bolt3.mdl", true);
-			m = cl_bolt3_mod;
-			break;
-		case 4: default:
-			if (!cl_beam_mod)
-				cl_beam_mod = Mod_ForName("progs/beam.mdl", true);
-			m = cl_beam_mod;
-			break;
+		return;
 	}
-	
+
 	if (ent == cl.viewplayernum + 1) {
 		VectorCopy(end, playerbeam_end); // for cl_fakeshaft
 		playerbeam_update = true;
-	}
 
-	// Override any beam with the same entity.
-	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++) 
-	{
-		if (b->entity == ent) 
-		{
-			b->model = m;
-			b->endtime = cl.time + 0.2;
-			VectorCopy(start, b->start);
-			VectorCopy(end, b->end);
+		if (FakeshaftClientsideBeamsEnabled())
 			return;
-		}
 	}
 
 	// Find a free beam.
-	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++)
-	{
-		if (!b->model || b->endtime < cl.time) 
-		{
-			b->entity = ent;
-			b->model = m;
-			b->endtime = cl.time + 0.2;
-			VectorCopy(start, b->start);
-			VectorCopy(end, b->end);
-			return;
-		}
-	}
-	Com_DPrintf ("beam list overflow!\n");
+	if (!CL_CreateBeam(ent, start, end, type))
+		Com_DPrintf("beam list overflow!\n");
 }
 
 void CL_ExplosionSprite(vec3_t pos) 
@@ -604,6 +629,17 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(void)
 
 		if (cls.demoseeking)
 			return;
+		
+		// If point is sufficiently close to our faked point, ignore
+		if (FakeshaftClientsideDamageEnabled() && cl.fakeshaft.nextBloodTime > cl.time) {
+			float distance = (cl.fakeshaft.bloodPoint[0] - pos[0]) * (cl.fakeshaft.bloodPoint[0] - pos[0]) +
+							 (cl.fakeshaft.bloodPoint[1] - pos[1]) * (cl.fakeshaft.bloodPoint[1] - pos[1]) +
+							 (cl.fakeshaft.bloodPoint[2] - pos[2]) * (cl.fakeshaft.bloodPoint[2] - pos[2]);
+			
+			if (distance <= SUPPRESS_FAKESHAFT_BLOOD_DISTANCE)
+				return;
+		}
+		
 		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value?225:r_lgblood.value, 50); // 225 default
 	}
 }
@@ -734,6 +770,176 @@ static float fakeshaft_policy (void)
 			bound(0, Q_atof(p), 1) : 1;
 }
 
+qbool InBox(vec3_t Hit, vec3_t B1, vec3_t B2, int Axis);
+qbool GetIntersection(float fDst1, float fDst2, vec3_t P1, vec3_t P2, vec3_t Hit);
+
+qbool CheckLineBox(vec3_t B1, vec3_t B2, vec3_t L1, vec3_t L2, vec3_t Hit)
+{
+	if (L2[0] < B1[0] && L1[0] < B1[0]) return false;
+	if (L2[0] > B2[0] && L1[0] > B2[0]) return false;
+	if (L2[1] < B1[1] && L1[1] < B1[1]) return false;
+	if (L2[1] > B2[1] && L1[1] > B2[1]) return false;
+	if (L2[2] < B1[2] && L1[2] < B1[2]) return false;
+	if (L2[2] > B2[2] && L1[2] > B2[2]) return false;
+	if (L1[0] > B1[0] && L1[0] < B2[0] &&
+		L1[1] > B1[1] && L1[1] < B2[1] &&
+		L1[2] > B1[2] && L1[2] < B2[2])
+	{
+		Hit = L1;
+		return true;
+	}
+	
+	if ((GetIntersection(L1[0] - B1[0], L2[0] - B1[0], L1, L2, Hit) && InBox(Hit, B1, B2, 1))
+			|| (GetIntersection(L1[1] - B1[1], L2[1] - B1[1], L1, L2, Hit) && InBox(Hit, B1, B2, 2))
+			|| (GetIntersection(L1[2] - B1[2], L2[2] - B1[2], L1, L2, Hit) && InBox(Hit, B1, B2, 3))
+			|| (GetIntersection(L1[0] - B2[0], L2[0] - B2[0], L1, L2, Hit) && InBox(Hit, B1, B2, 1))
+			|| (GetIntersection(L1[1] - B2[1], L2[1] - B2[1], L1, L2, Hit) && InBox(Hit, B1, B2, 2))
+			|| (GetIntersection(L1[2] - B2[2], L2[2] - B2[2], L1, L2, Hit) && InBox(Hit, B1, B2, 3)))
+		return true;
+
+	return false;
+}
+
+qbool GetIntersection(float fDst1, float fDst2, vec3_t P1, vec3_t P2, vec3_t Hit)
+{
+	vec3_t diff;
+	
+	if ((fDst1 * fDst2) >= 0.0f) return false;
+	if (fDst1 == fDst2) return false;
+	VectorSubtract(P2, P1, diff);
+	VectorScale(diff, (-fDst1 / (fDst2 - fDst1)), diff);
+	VectorAdd(P1, diff, Hit);
+	return true;
+}
+
+qbool InBox(vec3_t Hit, vec3_t B1, vec3_t B2, int Axis)
+{
+	if (Axis == 1 && Hit[2] > B1[2] && Hit[2] < B2[2] && Hit[1] > B1[1] && Hit[1] < B2[1]) return true;
+	if (Axis == 2 && Hit[2] > B1[2] && Hit[2] < B2[2] && Hit[0] > B1[0] && Hit[0] < B2[0]) return true;
+	if (Axis == 3 && Hit[0] > B1[0] && Hit[0] < B2[0] && Hit[1] > B1[1] && Hit[1] < B2[1]) return true;
+	return false;
+}
+
+qbool FakeshaftClientsideDamageEnabled(void)
+{
+	return cl_fakeshaft.value == 3 && cl_fakeshaft_clientside_damage.value && !cl.spectator && !cls.nqdemoplayback;
+}
+
+qbool FakeshaftClientsideBeamsEnabled(void)
+{
+	return cl_fakeshaft.value == 3 && cl_fakeshaft_clientside_beams.value && !cl.spectator && !cls.nqdemoplayback;
+}
+
+void FakeshaftClientsideBeamNoise(vec3_t origin) {
+	if (cl.fakeshaft.nextSoundTime < cl.time && cl.fakeshaft.soundIndex != 0) {
+		cl.fakeshaft.nextSoundTime = cl.time + 0.6f;
+		S_StartSound(cl.viewplayernum + 1, 1, cl.sound_precache[cl.fakeshaft.soundIndex], origin, 1.0f, 1.0f);
+	}
+}
+
+void FakeshaftClientsideBeams() {
+	int i = 0;
+	beam_t* b = NULL;
+	frame_t *frame = &cl.frames[(cls.netchan.outgoing_sequence - 2) & UPDATE_MASK];
+
+	// Was +attack held down?
+	if ((frame->cmd.buttons & 1) && cl.stats[STAT_WEAPON] == cl_modelindices[mi_weapon8]) {
+		// If there's no beam for the current player, add it
+		qbool foundPlayerBeam = false;
+		for (i = 0, b = cl_beams; i < MAX_BEAMS && !foundPlayerBeam; ++i, ++b) {
+			if (b->entity == cl.viewplayernum + 1) {
+				b->endtime = max(b->endtime, cl.time + 0.2);
+				FakeshaftClientsideBeamNoise(frame->playerstate[cl.viewplayernum].origin);
+				foundPlayerBeam = true;
+			}
+		}
+		if (!foundPlayerBeam) {
+			CL_CreateBeam(cl.viewplayernum + 1, frame->playerstate[cl.viewplayernum].origin, frame->playerstate[cl.viewplayernum].origin, 2);
+			FakeshaftClientsideBeamNoise(frame->playerstate[cl.viewplayernum].origin);
+		}
+	}
+	else if (!(frame->cmd.buttons & 1)) {
+		// Player has stopped firing
+		for (i = 0, b = cl_beams; i < MAX_BEAMS; ++i, ++b) {
+			if (b->entity == cl.viewplayernum + 1) {
+				b->endtime = min(b->endtime, cl.time + 0.2);
+				break;
+			}
+		}
+		cl.fakeshaft.nextSoundTime = 0;
+		cl.fakeshaft.nextBloodTime = cl.time - 1;
+	}
+}
+
+void FakeshaftClientsideDamage(vec3_t traceLineEndPoint, beam_t* b) {
+	// traceLineEndPoint will be b->end if firing into mid-air, or the point on the map the beam collided with
+	//   by setting distanceToClosestHit to that point we stop any artificial damage indicator behind walls/barriers
+
+	int j;
+	qbool playerHitDetected = false;
+	vec3_t closestPoint;
+	float distanceToClosestHit = (traceLineEndPoint[0] - b->start[0]) * (traceLineEndPoint[0] - b->start[0]) +
+								 (traceLineEndPoint[1] - b->start[1]) * (traceLineEndPoint[1] - b->start[1]) +
+								 (traceLineEndPoint[2] - b->start[2]) * (traceLineEndPoint[2] - b->start[2]);
+	player_state_t* states = cl.frames[(cls.netchan.outgoing_sequence - 2) & UPDATE_MASK].playerstate;
+	extern cvar_t cl_physfps;
+	
+	VectorCopy(b->start, closestPoint);
+	
+	for (j = 0; j < MAX_CLIENTS; ++j)
+	{
+		vec3_t playerMinBounds;
+		vec3_t playerMaxBounds;
+		vec3_t intersectionPoint;
+		
+		// Don't attempt to hit a player not sent in that packet, ourselves, or a spectator
+		if (states[j].messagenum != (cls.netchan.outgoing_sequence - 2) || j == cl.playernum || cl.players[j].spectator)
+			continue;
+		
+		// Corpses don't generate blood
+		if (
+			(states[j].modelindex == cl_modelindices[mi_player] && ISDEAD(states[j].frame)) ||
+			(states[j].modelindex == cl_modelindices[mi_h_player])
+		)
+			continue;
+		
+		// Check that our beam intersects the bounding box of the player - would love to use TP_Point for this but it's far too forgiving
+		VectorCopy(states[j].origin, playerMinBounds);
+		VectorAdd(playerMinBounds, playerHullMin, playerMinBounds);
+		VectorCopy(states[j].origin, playerMaxBounds);
+		VectorAdd(playerMaxBounds, playerHullMax, playerMaxBounds);
+		
+		if (CheckLineBox(playerMinBounds, playerMaxBounds, b->start, b->end, intersectionPoint)) {
+			// Don't need to bother with square root, just for comparison
+			float distance = (intersectionPoint[0] - b->start[0]) * (intersectionPoint[0] - b->start[0]) +
+							 (intersectionPoint[1] - b->start[1]) * (intersectionPoint[1] - b->start[1]) +
+							 (intersectionPoint[2] - b->start[2]) * (intersectionPoint[2] - b->start[2]);
+			
+			// Shaft has range 600 units, 600^2 = 360000... if further than that then something has gone wrong
+			if (distance >= 360000)
+				continue;
+			
+			if (distance < distanceToClosestHit) {
+				// We have more than one candidate, we want the one closest to the player
+				distanceToClosestHit = distance;
+				VectorCopy(intersectionPoint, closestPoint);
+				playerHitDetected = true;
+			}
+		}
+	}
+
+	// If we hit another player, create lightning blood at that point
+	if (playerHitDetected) {
+		// Don't generate too much blood or we'll very quickly run out of particles
+		if (cl.fakeshaft.nextBloodTime < cl.time)
+		{
+			R_RunParticleEffect(closestPoint, vec3_origin, gl_part_blood.value ? 225 : r_lgblood.value, 50); // 225 default
+			VectorCopy(closestPoint, cl.fakeshaft.bloodPoint);
+			cl.fakeshaft.nextBloodTime = cl.time + 1 / bound(30, cl_physfps.value, 77);
+		}
+	}
+}
+
 void CL_UpdateBeams(void) 
 {
 	int i;
@@ -753,6 +959,10 @@ void CL_UpdateBeams(void)
 	ent.colormap = vid.colormap;
 
 	fakeshaft = bound(0, cl_fakeshaft.value, fakeshaft_policy());
+
+	// if using fakeshaft 3, create beam if it is missing from this frame
+	if (FakeshaftClientsideBeamsEnabled())
+		FakeshaftClientsideBeams();
 
 	// Update lightning.
 	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++)	
@@ -775,7 +985,7 @@ void CL_UpdateBeams(void)
 
 				playerbeam_update = false;
 
-				if (cl_fakeshaft.value == 2 && !cl.spectator) { // try to simulate 13 ms ping
+				if (cl_fakeshaft.value >= 2 && !cl.spectator && !cls.nqdemoplayback) { // try to simulate 13 ms ping
 					frame_t *frame = &cl.frames[(cls.netchan.outgoing_sequence - 2) & UPDATE_MASK];
 					VectorCopy(frame->cmd.angles, target_angles);
 					VectorCopy(frame->playerstate[cl.viewplayernum].origin, target_origin);
@@ -812,6 +1022,9 @@ void CL_UpdateBeams(void)
 				trace = PM_TraceLine (org, b->end);
 				if (trace.fraction < 1)
 					VectorCopy (trace.endpos, b->end);
+
+				if (FakeshaftClientsideDamageEnabled())
+					FakeshaftClientsideDamage(trace.endpos, b);
 			}
 		}
 
