@@ -11,32 +11,61 @@ gameplay.
 ## Features
 
  * Modern graphics
- * QuakeTV support
- * Rich Menus
+ * [QuakeTV][qtv] support
+ * Rich menus
  * Multiview support
  * Tons of features to serve latest pro-gaming needs
- * Inbuilt Server Browser & MP3 player control
- * Recorded Games Browser
- * Customization of all possible graphics elements of the game including Head Up Display
+ * Built in server browser & MP3 player control
+ * Recorded games browser
+ * Customization of all possible graphics elements of the game including Heads Up Display
  * All sorts of scripting possibilities
  * Windows, Linux, MacOSX and FreeBSD platforms supported (SDL2).
 
-Note: To play QuakeWorld you need files from original Quake game. Check
-Installation manual page for further info.
-
 Our client comes only with bare minimum of game media. If you want to
-experience modern graphics and other additional media in the game including
-custom configurations, try [nQuake][nQuake].
+experience ezQuake with modern graphics and other additional media including
+custom configurations, maps, textures and more, try using the [nQuake][nQuake]-installer.
 
 ## Support
 
 Need help with using ezQuake? Visit us on IRC at QuakeNet, channel #ezQuake:
 [webchat][webchat] or [IRC][IRC].
 
-Sometimes help of other users of ezQuake might be more usefull to you so you
-can also try visiting [ezQuake Forum][forum].
+Sometimes help from other users of ezQuake might be more useful to you so you
+can also try visiting the [quakeworld.nu Client Talk-forums][forum].
+
+If you have found a bug, please report it [here][issues]
+
+## Installation guide
+
+To play Quakeworld you need the files *pak0.pak* and *pak1.pak* from the original Quake-game.
+
+### Install ezQuake to an existing Quake-installation
+If you have an existing Quake-installation simply extract the ezQuake executable into your Quake-directory.
+
+A typical error message when installing ezQuake into a pre-existing directory is about *glide2x.dll* missing.
+To get rid of this error, remove the file *opengl32.dll* from your Quake directory.
+
+### Upgrade an nQuake-installation
+If you have a version of [nQuake][nQuake] already installed you can upgrade ezQuake by extracting the new executable into the nQuake-directory.
+
+### Minimal clean installation
+If you want to make a clean installation of ezQuake you can do this by following these steps:
+
+1. Create a new directory
+2. Extract the ezQuake-executable into this directory
+3. Create a subdirectory called *id1*
+4. Copy *pak0.pak* and *pak1.pak* into this subdirectory
+
+## Nightly builds
+
+Nightly builds for Windows can be found [here][nightly]
+
 
  [nQuake]: http://nquake.com/
  [webchat]: http://webchat.quakenet.org/?channels=#ezquake
  [IRC]: irc://irc.quakenet.org/#ezquake
- [forum]: http://ezquake.sourceforge.net/forum/
+ [forum]: http://www.quakeworld.nu/forum/8
+ [qtv]: http://qtv.quakeworld.nu/
+ [nightly]: http://uttergrottan.localghost.net/ezquake/dev/nightlybuilds/win32/
+ [releases]: https://github.com/ezQuake/ezquake-source/releases
+ [issues]: https://github.com/ezQuake/ezquake-source/issues
