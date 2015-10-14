@@ -58,14 +58,17 @@ else
         LDFLAGS_c += -Wl,--no-undefined
     endif
 
-	# Make sure we can relink dynamic libraries
-	ifeq ($(SYS),Darwin)
-		LDFLAGS_c += -headerpad_max_install_names
+    ifeq ($(SYS),Darwin)
+        # 10.11 El Capitan does not search for header files here by default
+        CFLAGS_c += -I/usr/local/include
 
-		# Also on OS X 10.10 at least, expat is a system library
-		EXPAT_CFLAGS =
-		EXPAT_LIBS = -lexpat
-	endif
+        # For re-link/deploy dynamic libraries
+        LDFLAGS_c += -headerpad_max_install_names
+
+        # From  10.10 at least, expat is a system library
+        EXPAT_CFLAGS =
+        EXPAT_LIBS = -lexpat
+    endif
 endif
 
 BUILD_DEFS := -DCPUSTRING='"$(CPU)"'
