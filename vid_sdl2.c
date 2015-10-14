@@ -93,7 +93,7 @@ cvar_t r_stencilbits          = {"vid_stencilbits",       "8",   CVAR_LATCH };
 cvar_t r_depthbits            = {"vid_depthbits",         "0",   CVAR_LATCH };
 cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
 cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH };
-cvar_t vid_displayNumber	  = {"vid_displaynumber",     "0",   CVAR_LATCH };
+cvar_t vid_displayNumber      = {"vid_displaynumber",     "0",   CVAR_LATCH };
 cvar_t vid_usedesktopres      = {"vid_usedesktopres",     "1",   CVAR_LATCH };
 cvar_t vid_win_borderless     = {"vid_win_borderless",    "0",   CVAR_LATCH };
 cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH };
@@ -723,7 +723,7 @@ static void VID_SDL_Init(void)
 		}
 		else
 		{
-			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n");
+			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
 		}
 
 		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
