@@ -101,6 +101,11 @@ PNG_LIBS ?= $(shell pkg-config libpng --libs)
 CFLAGS_c += $(PNG_CFLAGS)
 LIBS_c += $(PNG_LIBS)
 
+JPEG_CFLAGS ?= -DWITH_JPEG
+JPEG_LIBS ?= -ljpeg
+CFLAGS_c += $(JPEG_CFLAGS)
+LIBS_c += $(JPEG_LIBS)
+
 CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
 CURL_LIBS ?= $(shell pkg-config libcurl --libs)
 CFLAGS_c += $(CURL_CFLAGS)
@@ -333,13 +338,6 @@ ifdef CONFIG_OGG
     OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
     CFLAGS_c += $(OGG_CFLAGS)
     LIBS_c += $(OGG_LIBS)
-endif
-
-ifdef CONFIG_JPEG
-    JPEG_CFLAGS ?= -DWITH_JPEG
-    JPEG_LIBS ?= -ljpeg
-    CFLAGS_c += $(JPEG_CFLAGS)
-    LIBS_c += $(JPEG_LIBS)
 endif
 
 ### Targets ###
