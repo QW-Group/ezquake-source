@@ -55,6 +55,9 @@ static void GrabMouse(qbool grab, qbool raw);
 static void GfxInfo_f(void);
 static void HandleEvents();
 static void VID_UpdateConRes(void);
+static int VID_DisplayNumber(qbool fullscreen);
+static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display);
+static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display);
 void IN_Restart_f(void);
 
 static SDL_Window       *sdl_window;
@@ -90,6 +93,7 @@ cvar_t r_stencilbits          = {"vid_stencilbits",       "8",   CVAR_LATCH };
 cvar_t r_depthbits            = {"vid_depthbits",         "0",   CVAR_LATCH };
 cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
 cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH };
+cvar_t vid_displayNumber      = {"vid_displaynumber",     "0",   CVAR_LATCH };
 cvar_t vid_usedesktopres      = {"vid_usedesktopres",     "1",   CVAR_LATCH };
 cvar_t vid_win_borderless     = {"vid_win_borderless",    "0",   CVAR_LATCH };
 cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH };
@@ -107,6 +111,7 @@ cvar_t r_win_save_pos         = {"vid_win_save_pos",      "1",   CVAR_SILENT };
 cvar_t r_win_save_size        = {"vid_win_save_size",     "1",   CVAR_SILENT };
 cvar_t vid_xpos               = {"vid_xpos",              "3",   CVAR_SILENT };
 cvar_t vid_ypos               = {"vid_ypos",              "39",  CVAR_SILENT };
+cvar_t vid_win_displayNumber  = {"vid_win_displaynumber", "0",   CVAR_SILENT };
 cvar_t r_conwidth             = {"vid_conwidth",          "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t r_conscale             = {"vid_conscale",          "2.0", CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
@@ -263,8 +268,15 @@ static void window_event(SDL_WindowEvent *event)
 
 		case SDL_WINDOWEVENT_MOVED:
 			if (!(flags & SDL_WINDOW_FULLSCREEN) && r_win_save_pos.integer) {
-				Cvar_SetValue(&vid_ypos, event->data2);
-				Cvar_SetValue(&vid_xpos, event->data1);
+				int displayNumber = 0;
+				int x = event->data1;
+				int y = event->data2;
+
+				VID_RelativePositionFromAbsolute(&x, &y, &displayNumber);
+
+				Cvar_SetValue(&vid_win_displayNumber, displayNumber);
+				Cvar_SetValue(&vid_xpos, x);
+				Cvar_SetValue(&vid_ypos, y);
 			}
 			break;
 
@@ -310,17 +322,54 @@ static const byte scantokey[128] = {
 #endif
 };
 
+byte Key_ScancodeToQuakeCode(int scancode)
+{
+	if (scancode < 120)
+		return scantokey[scancode];
+	if (scancode >= 224 && scancode < 224 + 8)
+		return scantokey[scancode - 104];
+	return 0;
+}
+
+byte Key_CharacterToQuakeCode(char ch)
+{
+	// Uses fact that SDLK_a == 'a'... is this okay?
+	
+	// Convert from key-code to scan-code to see what physical button they pressed
+	int scancode = SDL_GetScancodeFromKey(ch);
+
+	return Key_ScancodeToQuakeCode(scancode);
+}
+
+wchar Key_Event_TextInput(wchar unichar);
+
+static void keyb_textinputevent(char* text)
+{
+	int i = 0;
+	int len = 0;
+	wchar unichar = 0;
+
+	// Only process text input messages here
+	if (key_dest != key_console && key_dest != key_message)
+		return;
+
+	if (!*text)
+		return;
+
+	len = strlen(text);
+	for (i = 0; i < len; ++i)
+	{
+		unichar = TextEncodingDecodeUTF8(text, &i);
+
+		if (unichar)
+			Key_Event_TextInput(unichar);
+	}
+}
+
 static void keyb_event(SDL_KeyboardEvent *event)
 {
-	byte result;
-
-	if (event->keysym.scancode < 120)
-		result = scantokey[event->keysym.scancode];
-	else if (event->keysym.scancode >= 224 && event->keysym.scancode < 224 + 8)
-		result = scantokey[event->keysym.scancode - 104];
-	else
-		result = 0;
-
+	byte result = Key_ScancodeToQuakeCode(event->keysym.scancode);
+	
 	if (result == 0) {
 		Com_Printf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
 		return;
@@ -386,6 +435,9 @@ static void HandleEvents()
 		case SDL_KEYUP:
 			keyb_event(&event.key);
 			break;
+		case SDL_TEXTINPUT:
+			keyb_textinputevent(event.text.text);
+			break;
 		case SDL_MOUSEMOTION:
 	                if (mouse_active && !SDL_GetRelativeMouseMode()) {
                             mx = old_x - event.motion.x;
@@ -412,6 +464,8 @@ void VID_Shutdown(void)
 {
 	IN_DeactivateMouse();
 
+	SDL_StopTextInput();
+
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
 		sdl_context = NULL;
@@ -429,7 +483,6 @@ void VID_Shutdown(void)
 
 	Q_free(modelist);
 	modelist_count = 0;
-
 }
 
 static int VID_SDL_InitSubSystem(void)
@@ -440,6 +493,8 @@ static int VID_SDL_InitSubSystem(void)
 			return -1;
 		}
 	}
+
+	SDL_StartTextInput();
 
 	return 0;
 }
@@ -461,6 +516,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_usedesktopres);
 	Cvar_Register(&vid_win_borderless);
 	Cvar_Register(&gl_multisamples);
+	Cvar_Register(&vid_displayNumber);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -482,6 +538,7 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&r_conscale);
 	Cvar_Register(&vid_flashonactivity);
 	Cvar_Register(&r_showextensions);
+	Cvar_Register(&vid_win_displayNumber);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -506,7 +563,7 @@ static void VID_SetupResolution(void)
 
 	if (r_fullscreen.integer == 1) {
 		if (vid_usedesktopres.integer == 1) {
-			if (SDL_GetDesktopDisplayMode(0, &display_mode) == 0) {
+			if (SDL_GetDesktopDisplayMode(VID_DisplayNumber(true), &display_mode) == 0) {
 				glConfig.vidWidth = display_mode.w;
 				glConfig.vidHeight = display_mode.h;
 				glConfig.displayFrequency = display_mode.refresh_rate;
@@ -642,9 +699,34 @@ static void VID_SDL_Init(void)
 	VID_SetupResolution();
 
 	if (r_fullscreen.integer == 0) {
-		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, vid_xpos.integer, vid_ypos.integer, glConfig.vidWidth, glConfig.vidHeight, flags);
+		int displayNumber = VID_DisplayNumber(false);
+		int xpos = vid_xpos.integer;
+		int ypos = vid_ypos.integer;
+
+		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
+
+		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
 	} else {
-		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, glConfig.vidWidth, glConfig.vidHeight, flags);
+		int windowWidth = glConfig.vidWidth;
+		int windowHeight = glConfig.vidHeight;
+		int windowX = SDL_WINDOWPOS_CENTERED;
+		int windowY = SDL_WINDOWPOS_CENTERED;
+		int displayNumber = VID_DisplayNumber(true);
+		SDL_Rect bounds;
+
+		if (SDL_GetDisplayBounds(displayNumber, &bounds) == 0)
+		{
+			windowX = bounds.x;
+			windowY = bounds.y;
+			windowWidth = bounds.w;
+			windowHeight = bounds.h;
+		}
+		else
+		{
+			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
+		}
+
+		sdl_window = SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
 	}
 
 	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
@@ -898,7 +980,7 @@ static void GfxInfo_f(void)
 
 	Com_Printf_State(PRINT_ALL, "PIXELFORMAT: color(%d-bits) Z(%d-bit)\n             stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
 
-	if (SDL_GetCurrentDisplayMode(0, &current) != 0) {
+	if (SDL_GetCurrentDisplayMode(VID_DisplayNumber(r_fullscreen.value), &current) != 0) {
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
 	}
 
@@ -916,7 +998,7 @@ static void GfxInfo_f(void)
 
 static void VID_ParseCmdLine(void)
 {
-	int i, w = 0, h = 0;
+	int i, w = 0, h = 0, display = 0;
 
 	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed")) {
 		Cvar_LatchedSetValue(&r_fullscreen, 0);
@@ -932,6 +1014,15 @@ static void VID_ParseCmdLine(void)
 
 	w = ((i = COM_CheckParm("-width"))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
 	h = ((i = COM_CheckParm("-height")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+
+	display = ((i = COM_CheckParm("-display")) && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
+	if (i) {
+		if (COM_CheckParm("-window")) {
+			Cvar_LatchedSetValue(&vid_win_displayNumber, display);
+		} else {
+			Cvar_LatchedSetValue(&vid_displayNumber, display);
+		}
+	}
 
 	if (w && h) {
 		if (COM_CheckParm("-window")) {
@@ -1067,3 +1158,61 @@ void VID_Init(unsigned char *palette) {
 	GL_Init(); // Real OpenGL stuff, vid_common_gl.c
 }
 
+// Returns valid display number
+static int VID_DisplayNumber(qbool fullscreen)
+{
+	int displayNumber = (fullscreen ? vid_displayNumber.value : vid_win_displayNumber.value);
+	int displays = SDL_GetNumVideoDisplays();
+
+	return max(0, min(displays - 1, displayNumber));
+}
+
+// Converts co-ordinates for the whole desktop to co-ordinates for a specific display
+static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
+{
+	int displays = SDL_GetNumVideoDisplays();
+	int i = 0;
+
+	for (i = 0; i < displays; ++i)
+	{
+		SDL_Rect bounds;
+
+		if (SDL_GetDisplayBounds(i, &bounds) == 0)
+		{
+			if (*x >= bounds.x && *x < bounds.x + bounds.w && *y >= bounds.y && *y < bounds.y + bounds.h)
+			{
+				*x = *x - bounds.x;
+				*y = *y - bounds.y;
+				*display = i;
+				return;
+			}
+		}
+	}
+
+	*display = 0;
+}
+
+// Converts co-ordinates for a specific display to those for whole desktop
+static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
+{
+	SDL_Rect bounds;
+	int width = 0;
+	int height = 0;
+	
+	// Try and get bounds for the specified display - default back to main display if there's an issue
+	if (SDL_GetDisplayBounds(*display, &bounds))
+	{
+		*display = 0;
+		if (SDL_GetDisplayBounds(*display, &bounds))
+		{
+			// Still an issue - reset back to top-left of screen
+			Com_Printf("Error detecting resolution...\n");
+			*x = *y = 0;
+			return;
+		}
+	}
+
+	// Adjust co-ordinates, making sure some of the window will always be visible
+	*x = bounds.x + min(*x, bounds.w - 30);
+	*y = bounds.y + min(*y, bounds.h - 30);
+}

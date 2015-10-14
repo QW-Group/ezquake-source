@@ -54,6 +54,7 @@ cvar_t con_tilde_mode				= {"con_tilde_mode", "0"};
 cvar_t con_completion_format		= {"con_completion_format", "2"};
 cvar_t con_hide_chat_input			= {"con_hide_chat_input", "1"};
 cvar_t con_completion_changed_mark	= {"con_completion_changed_mark", "1"};
+cvar_t con_bindphysical				= {"con_bindphysical", "0" };
 
 char* escape_regex(char* string);
 void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
@@ -101,6 +102,10 @@ int		keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
 int		key_repeats[UNKNOWN + 256];	// if > 1, it is autorepeating
 qbool	keydown[UNKNOWN + 256];
 qbool	keyactive[UNKNOWN + 256];
+
+// SDL2 sends a KEYDOWN event and then an optional TEXTINPUT event for the actual character generated
+// This stores the last quake key (K_*) from the KEYDOWN, or 0 if any subsequent TEXTINPUT event should be ignored.
+static int lastKeyDown = 0;
 
 typedef struct
 {
@@ -821,6 +826,14 @@ void Key_ClearTyping (void)
 	key_linepos = 1;
 }
 
+void Key_Console_Backspace(void)
+{
+	if (key_linepos > 1)
+	{
+		qwcscpy(key_lines[edit_line] + key_linepos - 1, key_lines[edit_line] + key_linepos);
+		key_linepos--;
+	}
+}
 
 //
 // Interactive line editing and console scrollback.
@@ -988,11 +1001,7 @@ void Key_Console (int key, int unichar)
 			}
 			else
 			{
-				if(key_linepos > 1)
-				{
-					qwcscpy(key_lines[edit_line] + key_linepos - 1, key_lines[edit_line] + key_linepos);
-					key_linepos--;
-				}
+				Key_Console_Backspace();
 			}
 
 			// disable red chars mode if the last character was deleted
@@ -1508,6 +1517,9 @@ void Key_Message (int key, wchar unichar) {
 //Returns a key number to be used to index keybindings[] by looking at the given string.
 //Single ascii characters return themselves, while the K_* names are matched up.
 #define UNKNOWN_S "UNKNOWN"
+
+int Key_CharacterToQuakeCode(char ch);
+
 int Key_StringToKeynum (const char *str)
 {
 	keyname_t *kn;
@@ -1515,12 +1527,20 @@ int Key_StringToKeynum (const char *str)
 	if (!str || !str[0])
 		return -1;
 
+	if (!str[1] && !con_bindphysical.value)
+	{
+		int value = Key_CharacterToQuakeCode(str[0]);
+
+		if (value != 0)
+			return value;
+	}
+
 	if (!str[1])
 		return (int)(unsigned char)str[0];
 
 	for (kn = keynames; kn->name; kn++) {
 		if (!strcasecmp (str,kn->name))
-		return kn->keynum;
+			return kn->keynum;
 	}
 
 	return -1;
@@ -1858,6 +1878,7 @@ void Key_Init (void) {
 	Cvar_Register(&con_completion_padding);
 	Cvar_Register(&con_completion_color_title);
 	Cvar_Register(&con_completion_changed_mark);
+	Cvar_Register(&con_bindphysical);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -2175,6 +2196,9 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 
 void Key_Event (int key, qbool down)
 {
+	qbool processTextInput = (key_dest == key_console || key_dest == key_message);
+	qbool consoleToggle = (key == '`' || key == '~') && !con_tilde_mode.integer;
+
 	assert (key >= 0 && key <= 255);
 
     if (key >= K_MOUSE1 && key <= K_MOUSE8)
@@ -2197,7 +2221,30 @@ void Key_Event (int key, qbool down)
 		unichar = keydown[K_SHIFT] ? keyshift[key] : key;
 		if (unichar < 32 || unichar > 127)
 			unichar = 0;
+
 		Key_EventEx (key, unichar, down);
+	}
+
+	// Store this as we may need it for subsequent SDL_TextInput event
+	lastKeyDown = 0;
+	if (down && processTextInput && !consoleToggle)
+		lastKeyDown = key;
+}
+
+void Key_Event_TextInput(wchar unichar)
+{
+	if (!lastKeyDown)
+		return;
+
+	if (key_dest == key_message)
+	{
+		Key_Message(K_BACKSPACE, K_BACKSPACE);
+		Key_Message(lastKeyDown, unichar);
+	}
+	else if (key_dest == key_console)
+	{
+		Key_Console_Backspace();
+		Key_Console(lastKeyDown, unichar);
 	}
 }
 

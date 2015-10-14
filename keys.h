@@ -227,6 +227,8 @@ extern int		key_linepos;
 extern int		edit_line;
 extern qbool	con_redchars;
 
+extern cvar_t	con_bindphysical;
+
 #define CONSOLE_LINE_EMPTY() (!key_lines[edit_line][1])
 
 // }

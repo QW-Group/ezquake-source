@@ -1165,7 +1165,7 @@ wchar *TP_ParseWhiteText (const wchar *s, qbool team, int offset)
 				continue;
 			}
 		}
-		if (*p != 10 && *p != 13 && !(p==s && (*p==1 || *p==2)))
+		if (*p != 10 && *p != 13 && !(p==s && (*p==1 || *p==2)) && *p <= 0x7F)
 			*out++ = *p | 128;	// convert to red
 		else
 			*out++ = *p;

@@ -444,6 +444,13 @@ extern clientPersistent_t	cls;
 #define PAUSED_SERVER		1
 #define PAUSED_DEMO			2
 
+// Settings to support cl_fakeshaft 3
+typedef struct fakeshaft_s {
+	int soundIndex;						// Index for weapons/lhit.wav
+	int nextBloodTime;					// Used to limit blood instances, or we quickly run out of particles
+	vec3_t bloodPoint;					// Where last blood point was generated - filter server blood by proximity
+	float nextSoundTime;				// If we're generating beams, create sounds every 0.6 seconds
+} fakeshaft_t;
 
 /// a structure that is wiped completely at every server signon
 typedef struct {
@@ -586,6 +593,8 @@ typedef struct {
 	int			minlight;
 
 	interpolate_t	int_projectiles[MAX_PROJECTILES];
+
+	fakeshaft_t	fakeshaft;
 } clientState_t;
 
 extern	clientState_t	cl;
@@ -642,6 +651,9 @@ extern  cvar_t  cl_backpackfilter;
 extern	cvar_t	cl_muzzleflash;
 extern	cvar_t	cl_fakeshaft;
 extern	cvar_t	cl_fakeshaft_extra_updates;
+extern  cvar_t  cl_fakeshaft_clientside_beams;
+extern  cvar_t  cl_fakeshaft_clientside_damage;
+
 
 extern cvar_t r_rockettrail;
 extern cvar_t r_grenadetrail;
@@ -999,3 +1011,7 @@ qbool CL_QueInputPacket(void);
 void CL_UnqueOutputPacket(qbool sendall);
 
 // ===================================================================================
+
+// cl_fakeshaft 3 toggles
+qbool FakeshaftClientsideBeamsEnabled(void);
+qbool FakeshaftClientsideDamageEnabled(void);

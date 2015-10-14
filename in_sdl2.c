@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	m_filter        = {"m_filter",       "0", CVAR_SILENT};
 cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
-cvar_t	m_showrate      = {"m_showrate",     "0", CVAR_SILENT};
 
 extern int mx, my;
 extern qbool mouseinitialized;
@@ -105,10 +104,6 @@ void IN_MouseMove (usercmd_t *cmd)
 
 void IN_Move (usercmd_t *cmd)
 {
-	if (m_showrate.value && (mx || my)) {
-		Com_Printf("Not implemented.\n");
-	}
-
 	IN_MouseMove (cmd);
 }
 
@@ -116,7 +111,6 @@ void IN_Init (void)
 {
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_MOUSE);
 	Cvar_Register (&m_filter);
-	Cvar_Register (&m_showrate);
 
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register (&cl_keypad);

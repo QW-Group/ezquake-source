@@ -1624,6 +1624,10 @@ void CL_ParseSoundlist (void)
 			if (str[0] == '/')
 				str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
 			strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
+
+			// Store index to lg firing sound for cl_fakeshaft 3
+			if (!strcmp(str, "weapons/lhit.wav"))
+				cl.fakeshaft.soundIndex = numsounds;
 		}
 
 		n = MSG_ReadByte();
@@ -1652,6 +1656,10 @@ void CL_ParseSoundlist (void)
 				Host_Error ("Server sent too many sound_precache");
 			str = MSG_ReadString ();
 			strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
+
+			// Store index to lg firing sound for cl_fakeshaft 3
+			if (!strcmp(str, "weapons/lhit.wav"))
+				cl.fakeshaft.soundIndex = numsounds;
 		} while (*str);
 	}
 
@@ -1922,6 +1930,12 @@ void CL_ParseStartSoundPacket(void)
 
 	if (cls.demoseeking)
 		return;
+
+	if (FakeshaftClientsideBeamsEnabled()) {
+		// If generating client-side beams, we will have created the sound ourselves
+		if (ent == cl.playernum + 1 && sound_num == cl.fakeshaft.soundIndex && channel == 1)
+			return;
+	}
 
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 

@@ -689,6 +689,7 @@ static int Draw_LoadCharset(const char *name)
 {
 	int flags = TEX_ALPHA | TEX_NOCOMPRESS | TEX_NOSCALE | TEX_NO_TEXTUREMODE;
 	int texnum;
+	int i = 0;
 	qbool loaded = false;
 
 	//
@@ -716,9 +717,21 @@ static int Draw_LoadCharset(const char *name)
 		return 1;
 	}
 
-	// Load cyrillic charset if available
-	Load_Locale_Charset(name, "cyr", 1, 0x0400, flags);
+	// Load alternate charsets if available
+	for (i = 1; i < MAX_CHARSETS; ++i)
+	{
+		char charsetName[10];
+		int textureNumber;
+		
+		snprintf(charsetName, sizeof(charsetName), "%03d", i);
 
+		textureNumber = Load_Locale_Charset(name, charsetName, i, i << 8, flags);
+
+		// 2.2 only supported -cyr suffix
+		if (i == 4 && !textureNumber)
+			Load_Locale_Charset(name, "cyr", 4, 0x0400, flags);
+	}
+	
 	// apply gl_smoothfont
 	Apply_OnChange_gl_smoothfont(gl_smoothfont.integer);
 
