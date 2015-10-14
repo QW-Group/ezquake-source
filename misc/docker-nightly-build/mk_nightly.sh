@@ -1,11 +1,17 @@
 #!/bin/sh
-cd ezquake-source
 
-OREV=$(git rev-parse HEAD)
+if [ ! -d /source/ezquake-source ]; then
+	# We need to initialize the build environment
+	cd /source && git clone https://github.com/ezQuake/ezquake-source.git
+fi
+
+cd /source/ezquake-source
+
+OLD_REV=$(git rev-parse HEAD)
 git pull
-NREV=$(git rev-parse HEAD)
+NEW_REV=$(git rev-parse HEAD)
 
-if [ "$OREV" = "$NREV" ]; then
+if [ "$OLD_REV" = "$NEW_REV" ]; then
 	echo "No new build needed"
 	if [ -z "$FORCEBUILD" ]; then 
 		exit 0
@@ -15,14 +21,24 @@ fi
 DATE=$(date +"%F")
 SHORTREV=$(git rev-parse --short HEAD)
 
-EZQUAKE_FNAME="ezquake-$SHORTREV.exe"
+EZQUAKE_FNAME=ezquake-$SHORTREV
 ARCHIVE_FNAME="$DATE-$SHORTREV-ezquake.7z"
 
+
 build() {
-	echo "Building ezquake $NREV" | tee -a build.log
-	EZ_CONFIG_FILE=.config_windows make |& tee -a build.log
+	echo "Building ezquake $NEW_REV" | tee -a build.log
+	if [ "$TARGET_PLATFORM" = "WINDOWS" ]; then
+		EZ_CONFIG_FILE=.config_windows make |& tee -a build.log
+	else
+		make |& tee -a build.log
+	fi
+
 	if [ -e ezquake.exe ]; then
+		EZQUAKE_FNAME+=".exe"
 		mv ezquake.exe $EZQUAKE_FNAME
+	elif [ -e ezquake-linux-x86_64 ]; then
+		EZQUAKE_FNAME+="-linux-x86_64"
+		mv ezquake-linux-x86_64 $EZQUAKE_FNAME
 	else
 		echo "No output file"
 		make clean
@@ -39,7 +55,7 @@ make_readme() {
 
 		Changes from last nightly build:
 	EOM
-	git log $NREV...$OREV >> README_nightly.txt
+	git log $NEW_REV...$OLD_REV >> README_nightly.txt
 }
 
 make_archive() {
@@ -57,7 +73,7 @@ make_archive() {
 
 cleanup() {
 	make clean
-	rm build.log README_nightly.txt
+	rm build.log README_nightly.txt $EZQUAKE_FNAME
 }
 
 build
