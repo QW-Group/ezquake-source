@@ -55,9 +55,6 @@ static void GrabMouse(qbool grab, qbool raw);
 static void GfxInfo_f(void);
 static void HandleEvents();
 static void VID_UpdateConRes(void);
-static int VID_DisplayNumber(qbool fullscreen);
-static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display);
-static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display);
 void IN_Restart_f(void);
 
 static SDL_Window       *sdl_window;
@@ -244,6 +241,57 @@ void IN_Restart_f(void)
 	if (old_mouse_active) {
 		IN_ActivateMouse();
 	}
+}
+
+
+// Converts co-ordinates for the whole desktop to co-ordinates for a specific display
+static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
+{
+	int displays = SDL_GetNumVideoDisplays();
+	int i = 0;
+
+	for (i = 0; i < displays; ++i)
+	{
+		SDL_Rect bounds;
+
+		if (SDL_GetDisplayBounds(i, &bounds) == 0)
+		{
+			if (*x >= bounds.x && *x < bounds.x + bounds.w && *y >= bounds.y && *y < bounds.y + bounds.h)
+			{
+				*x = *x - bounds.x;
+				*y = *y - bounds.y;
+				*display = i;
+				return;
+			}
+		}
+	}
+
+	*display = 0;
+}
+
+// Converts co-ordinates for a specific display to those for whole desktop
+static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
+{
+	SDL_Rect bounds;
+	int width = 0;
+	int height = 0;
+	
+	// Try and get bounds for the specified display - default back to main display if there's an issue
+	if (SDL_GetDisplayBounds(*display, &bounds))
+	{
+		*display = 0;
+		if (SDL_GetDisplayBounds(*display, &bounds))
+		{
+			// Still an issue - reset back to top-left of screen
+			Com_Printf("Error detecting resolution...\n");
+			*x = *y = 0;
+			return;
+		}
+	}
+
+	// Adjust co-ordinates, making sure some of the window will always be visible
+	*x = bounds.x + min(*x, bounds.w - 30);
+	*y = bounds.y + min(*y, bounds.h - 30);
 }
 
 static void window_event(SDL_WindowEvent *event)
@@ -541,6 +589,15 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_win_displayNumber);
 
 	Cvar_ResetCurrentGroup();
+}
+
+// Returns valid display number
+static int VID_DisplayNumber(qbool fullscreen)
+{
+	int displayNumber = (fullscreen ? vid_displayNumber.value : vid_win_displayNumber.value);
+	int displays = SDL_GetNumVideoDisplays();
+
+	return max(0, min(displays - 1, displayNumber));
 }
 
 static void VID_SetupModeList(void)
@@ -1158,61 +1215,3 @@ void VID_Init(unsigned char *palette) {
 	GL_Init(); // Real OpenGL stuff, vid_common_gl.c
 }
 
-// Returns valid display number
-static int VID_DisplayNumber(qbool fullscreen)
-{
-	int displayNumber = (fullscreen ? vid_displayNumber.value : vid_win_displayNumber.value);
-	int displays = SDL_GetNumVideoDisplays();
-
-	return max(0, min(displays - 1, displayNumber));
-}
-
-// Converts co-ordinates for the whole desktop to co-ordinates for a specific display
-static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
-{
-	int displays = SDL_GetNumVideoDisplays();
-	int i = 0;
-
-	for (i = 0; i < displays; ++i)
-	{
-		SDL_Rect bounds;
-
-		if (SDL_GetDisplayBounds(i, &bounds) == 0)
-		{
-			if (*x >= bounds.x && *x < bounds.x + bounds.w && *y >= bounds.y && *y < bounds.y + bounds.h)
-			{
-				*x = *x - bounds.x;
-				*y = *y - bounds.y;
-				*display = i;
-				return;
-			}
-		}
-	}
-
-	*display = 0;
-}
-
-// Converts co-ordinates for a specific display to those for whole desktop
-static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
-{
-	SDL_Rect bounds;
-	int width = 0;
-	int height = 0;
-	
-	// Try and get bounds for the specified display - default back to main display if there's an issue
-	if (SDL_GetDisplayBounds(*display, &bounds))
-	{
-		*display = 0;
-		if (SDL_GetDisplayBounds(*display, &bounds))
-		{
-			// Still an issue - reset back to top-left of screen
-			Com_Printf("Error detecting resolution...\n");
-			*x = *y = 0;
-			return;
-		}
-	}
-
-	// Adjust co-ordinates, making sure some of the window will always be visible
-	*x = bounds.x + min(*x, bounds.w - 30);
-	*y = bounds.y + min(*y, bounds.h - 30);
-}
