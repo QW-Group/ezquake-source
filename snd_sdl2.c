@@ -45,8 +45,7 @@ static void Filler(void *userdata, Uint8 *stream, int len)
 		shm->samplepos = wrapped >> 1;
 	}
 
-	if ((!sys_inactivesound.integer == 1 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized))
-	{
+	if ((sys_inactivesound.integer == 0 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized)) {
 		SDL_memset(stream, 0, len);
 	}
 }
