@@ -2254,6 +2254,9 @@ void Key_ClearStates (void)
 
 	for (i = 0; i < sizeof(keydown) / sizeof(*keydown); i++) 
 	{
+		if (keydown[i])
+			Key_Event(i, false);
+
 		keydown[i] = false;
 		key_repeats[i] = false;
 	}
