@@ -331,67 +331,6 @@ void SCR_HUD_DrawVidLag(hud_t *hud)
     }
 }
 
-void SCR_HUD_DrawMouserate(hud_t *hud)
-{
-	int x, y;
-	static int lastresult = 0;
-	int newresult;
-	char st[80];	// string buffer
-#ifdef WIN32
-	double t;		// current time
-	static double lastframetime;	// last refresh
-#endif
-
-    static cvar_t *hud_mouserate_title = NULL,
-#ifdef WIN32
-		*hud_mouserate_interval,
-#endif
-		*hud_mouserate_style;
-
-    if (hud_mouserate_title == NULL) // first time called
-    {
-		hud_mouserate_style    = HUD_FindVar(hud, "style");
-        hud_mouserate_title    = HUD_FindVar(hud, "title");
-#ifdef WIN32
-		hud_mouserate_interval = HUD_FindVar(hud, "interval");
-#endif
-    }
-
-#ifdef WIN32
-	t = Sys_DoubleTime();
-	if ((t - lastframetime) >= hud_mouserate_interval->value) {
-		newresult = IN_GetMouseRate();
-		lastframetime = t;
-	} else
-		newresult = 0;
-#else
-	newresult = -1;
-#endif
-
-	if (newresult > 0) {
-		snprintf(st, sizeof(st), "%4d", newresult);
-		lastresult = newresult;
-	} else if (!newresult)
-		snprintf(st, sizeof(st), "%4d", lastresult);
-	else
-		snprintf(st, sizeof(st), "n/a");
-
-    if (hud_mouserate_title->value)
-        strlcat(st, " Hz", sizeof (st));
-
-    if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
-    {
-		if (hud_mouserate_style->value)
-		{
-			Draw_Alt_String(x, y, st);
-		}
-		else
-		{
-			Draw_String(x, y, st);
-		}
-    }
-}
-
 #define MAX_TRACKING_STRING		512
 
 void SCR_HUD_DrawTracking(hud_t *hud)
@@ -7260,14 +7199,6 @@ void CommonDraw_Init(void)
         "0", "top", "right", "top", "0", "0", "0", "0 0 0", NULL,
 		"style",	"0",
         NULL);
-
-	HUD_Register("mouserate", NULL, "Show your current mouse input rate", HUD_PLUSMINUS, ca_active, 9,
-		SCR_HUD_DrawMouserate,
-		"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
-		"title", "1",
-		"interval", "1",
-		"style",	"0",
-		NULL);
 
     // init clock
 	HUD_Register("clock", NULL, "Shows current local time (hh:mm:ss).",

@@ -186,12 +186,6 @@ void IN_DeactivateMouse(void)
 	GrabMouse(false, in_raw.integer);
 }
 
-int IN_GetMouseRate(void)
-{
-    /* can we implement this with SDL? */
-    return -1;
-}
-
 void IN_Frame(void)
 {
 	if (!sdl_window)
