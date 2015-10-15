@@ -1,5 +1,6 @@
 /*
    Copyright (C) 2007-2008 Andrey Nazarov
+   Copyright (C) 2014-2015 ezQuake team
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
