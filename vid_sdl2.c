@@ -45,6 +45,7 @@
 #include "utils.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "textencoding.h"
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 

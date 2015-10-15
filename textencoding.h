@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2011 ezQuake team
+Copyright (C) 2011-2015 ezQuake team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,10 +15,11 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-// textencoding.h
 
 wchar *decode_string (const char *s);
 char *encode_say (wchar *in);
+
+wchar TextEncodingDecodeUTF8(char* str, int* index);
 
 // Make sure the renderer can display all Unicode chars in the string,
 // otherwise try to replace them with Latin equivalents
