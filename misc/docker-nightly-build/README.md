@@ -2,7 +2,11 @@ This method of building ezQuake requires *Docker*. You can read more about it an
 
 Initialization
 ==============
-First, you need to create the docker image. To do this, run `build_image.sh`.
+First, you need to create the docker image. You can do this by running
+```shell
+docker build -t localghost/ezquake_nightly .
+```
+or using the [`build_image.sh`](build_image.sh)-script.
 This will create a docker image based on Arch Linux that contains the libraries and tools required to compile linux and windows versions of ezQuake.
 
 Now that we have the image ready we can use it to start containers to build ezQuake.
