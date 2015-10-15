@@ -201,9 +201,8 @@ qbool CL_CreateBeam(int ent, vec3_t start, vec3_t end, int type)
 
 static void CL_ParseBeam(int type)
 {
-	int ent, i;
+	int ent;
 	vec3_t start, end;
-	beam_t *b;
 
 	ent = MSG_ReadShort();
 
