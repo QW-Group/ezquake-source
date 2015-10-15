@@ -273,8 +273,6 @@ static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
 static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 {
 	SDL_Rect bounds;
-	int width = 0;
-	int height = 0;
 	
 	// Try and get bounds for the specified display - default back to main display if there's an issue
 	if (SDL_GetDisplayBounds(*display, &bounds))
