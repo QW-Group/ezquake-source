@@ -1,4 +1,4 @@
-== How to create Windows binaries using mingw33 (compiling Windows binaries on Linux system):
+== How to create Windows binaries using mingw32 (compiling Windows binaries on Linux system):
 
 NOTE: This does not explain how you build Windows binaries on Windows host.
 
