@@ -1,16 +1,21 @@
-# A sample config file for crosscompiling using mingw
-
-CFLAGS=-m32 -O2 -g0 -D_DEBUG -D_WIN32_WINNT=0x0501 -D__USE_MINGW_ANSI_STDIO -DWITH_WINAMP
+CFLAGS=-m32 -O2 -g0 -D_DEBUG -D_WIN32_WINNT=0x0501 -D__USE_MINGW_ANSI_STDIO -DWITH_WINAMP -Imingw32-libs/include
+LDFLAGS=-Lmingw32-libs/lib -static
 ZLIB_LIBS=-lz
-SDL2_CFLAGS=-I/usr/i686-w64-mingw32/include/SDL2
+SDL2_CFLAGS=-Imingw32-libs/include/SDL2
 SDL2_LIBS=-lSDL2 -lole32 -limm32 -lcomctl32 -lversion -loleaut32
 PCRE_CFLAGS=-DPCRE_STATIC
 PCRE_LIBS=-lpcre
 CURL_CFLAGS=-DCURL_STATICLIB
 CURL_LIBS=-lcurl
 SPEEX_LIBS=
+EXPAT_CFLAGS=
 EXPAT_LIBS=-lexpat
-LDFLAGS=-static
+PNG_CFLAGS=-DWITH_PNG -DWITH_PNG_STATIC -D__Q_PNG14__ -Imingw32-libs/include/libpng16
+PNG_LIBS=-lpng16
+JPEG_CFLAGS=-DWITH_JPEG -DWITH_JPEG_STATIC
+JPEG_LIBS=-ljpeg
+JANSSON_CFLAGS=
+JANSSON_LIBS=-ljansson
 CONFIG_WINDOWS=y
 CC=i686-w64-mingw32-gcc
 WINDRES=i686-w64-mingw32-windres

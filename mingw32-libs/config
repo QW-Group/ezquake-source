@@ -1,0 +1,16 @@
+CFLAGS=-m32 -O2 -g0 -Wall -D_DEBUG -D_WIN32_WINNT=0x0501 -D__USE_MINGW_ANSI_STDIO -DWITH_WINAMP -Imingw32-libs/include
+LDFLAGS=-Lmingw32-libs/lib
+ZLIB_LIBS=-lz
+SDL2_CFLAGS=-Imingw32-libs/include/SDL2
+SDL2_LIBS=-lSDL2 -lole32 -limm32 -lcomctl32 -lversion -loleaut32
+PCRE_CFLAGS=-DPCRE_STATIC
+PCRE_LIBS=-lpcre
+CURL_CFLAGS=-DCURL_STATICLIB
+CURL_LIBS=-lcurl
+SPEEX_LIBS=
+EXPAT_LIBS=-lexpat
+LDFLAGS=-static
+CONFIG_WINDOWS=y
+CC=i686-w64-mingw32-gcc
+WINDRES=i686-w64-mingw32-windres
+STRIP=i686-w64-mingw32-strip
