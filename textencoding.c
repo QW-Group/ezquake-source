@@ -244,10 +244,8 @@ wchar *decode_cp1251 (char *str) {
 
 wchar TextEncodingDecodeUTF8(char* str, int* index)
 {
-	static const int masks[3] = { 0x7F, 0x1F, 0xF };
 	int stringLength = strlen(str);
 	int extraBytes = 0;
-	int i = 0;
 	wchar result = 0;
 
 	if (!(str[*index] & 0x80))
