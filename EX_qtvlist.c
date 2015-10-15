@@ -31,7 +31,7 @@ static SDL_mutex *qtvlist_mutex;
 
 extern char *CL_QTV_GetCurrentStream(void);
 
-static int qtvlist_curl_callback(char *content, size_t size, size_t nmemb, void *userp)
+static size_t qtvlist_curl_callback(char *content, size_t size, size_t nmemb, void *userp)
 {
         size_t realsize = nmemb * size;
         struct str_buf *buf = (struct str_buf *)userp;
