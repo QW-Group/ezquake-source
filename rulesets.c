@@ -417,9 +417,7 @@ void Rulesets_OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel)
 
 
  	if (!cl.spectator && cls.state != ca_disconnected) {
-		if (fakeshaft == 3)
-			Cbuf_AddText("say fakeshaft 3 (fakeshaft 0 for antilag, and extra client-side prediction)\n");
-		else if (fakeshaft == 2)
+		if (fakeshaft == 2)
 			Cbuf_AddText("say fakeshaft 2 (emulation of fakeshaft 0 for servers with antilag feature)\n");
 		else if (fakeshaft > 0.999)
 			Cbuf_AddText ("say fakeshaft on\n");
