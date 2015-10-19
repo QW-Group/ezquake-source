@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2001-2002       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -18,11 +17,42 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-void Rulesets_Init(void);
-char *Rulesets_Ruleset(void);
+#include "quakedef.h"
 
 #define BANNED_BY_MTFL "banned by MTFL ruleset"
 
+typedef struct locked_cvar_s {
+	cvar_t *var;
+	char *value;
+} locked_cvar_t;
+
+typedef struct limited_cvar_max_s {
+	cvar_t *var;
+	char *maxrulesetvalue;
+} limited_cvar_max_t;
+
+typedef struct limited_cvar_min_s {
+	cvar_t *var;
+	char *minrulesetvalue;
+} limited_cvar_min_t;
+
+typedef enum {
+	rs_default,
+	rs_smackdown,
+	rs_thunderdome,
+	rs_mtfl
+} ruleset_t;
+
+typedef struct rulesetDef_s {
+	ruleset_t ruleset;
+	float maxfps;
+	qbool restrictTriggers;
+	qbool restrictPacket;
+	qbool restrictParticles;
+} rulesetDef_t;
+
+void  Rulesets_Init(void);
+const char* Rulesets_Ruleset(void);
 qbool Rulesets_AllowTimerefresh(void);
 float Rulesets_MaxFPS(void);
 qbool Rulesets_RestrictTriggers(void);
