@@ -2036,23 +2036,29 @@ void CL_NewTranslation (int slot)
 	R_TranslatePlayerSkin(slot);
 }
 
-void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) 
+void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 {
 	extern cvar_t cl_name_as_skin;
 	qbool update_skin;
 	int mynum;
 
-	strlcpy (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
-	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) 
-	{
-		// Somebody's trying to hide himself by overloading userinfo.
-		strlcpy (player->name, " ", sizeof (player->name));
-	}
-	player->real_topcolor = atoi(Info_ValueForKey (player->userinfo, "topcolor"));
-	player->real_bottomcolor = atoi(Info_ValueForKey (player->userinfo, "bottomcolor"));
-	strlcpy (player->team, Info_ValueForKey (player->userinfo, "team"), sizeof (player->team));
+	strlcpy(player->name, Info_ValueForKey(player->userinfo, "name"), sizeof(player->name));
 
-	player->spectator = (Info_ValueForKey (player->userinfo, "*spectator")[0]) ? true : false;
+	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) {
+		// Somebody's trying to hide himself by overloading userinfo.
+		strlcpy(player->name, " ", sizeof(player->name));
+	}
+
+	player->real_topcolor = atoi(Info_ValueForKey(player->userinfo, "topcolor"));
+	player->real_bottomcolor = atoi(Info_ValueForKey(player->userinfo, "bottomcolor"));
+
+	strlcpy(player->team, Info_ValueForKey(player->userinfo, "team"), sizeof(player->team));
+
+	if (atoi(Info_ValueForKey(player->userinfo, "*spectator"))) {
+		player->spectator = true;
+	} else {
+		player->spectator = false;
+	}
 
 	if (slot == cl.playernum && player->name[0]) {
 		if (cl.spectator != player->spectator) {
@@ -2063,18 +2069,19 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key)
 
 	Sbar_Changed();
 
-	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1)
+	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1) {
 		mynum = cl.playernum;
+	}
 
-	update_skin = !key ||	(!player->spectator && ( !strcmp(key, "skin") || !strcmp(key, "topcolor") ||
-													 !strcmp(key, "bottomcolor") || !strcmp(key, "team") ||
-													 (!strcmp(key, "name") && cl_name_as_skin.value) )
-							);
+	update_skin = !key || (!player->spectator && (!strcmp(key, "skin") || !strcmp(key, "topcolor") ||
+				!strcmp(key, "bottomcolor") || !strcmp(key, "team") ||
+				(!strcmp(key, "name") && cl_name_as_skin.value)));
 
-	if (slot == mynum && TP_NeedRefreshSkins() && strcmp(player->team, player->_team))
+	if (slot == mynum && TP_NeedRefreshSkins() && strcmp(player->team, player->_team)) {
 		TP_RefreshSkins();
-	else if (update_skin)
+	} else if (update_skin) {
 		TP_RefreshSkin(slot);
+	}
 
 	strlcpy(player->_team, player->team, sizeof (player->_team));
 }
