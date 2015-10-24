@@ -258,6 +258,7 @@ void DumpVariablesDefaults_f(void)
 	cvar_group_t *group;
     char filepath[MAX_PATH];
     FILE *f;
+	qbool anyUngrouped = false;
 
     snprintf(filepath, sizeof(filepath), "%s/ezquake/configs/cvar_defaults.cfg", com_basedir);
 
@@ -273,6 +274,16 @@ void DumpVariablesDefaults_f(void)
 
         for (var = group->head; var; var = var->next_in_group) {
 			fprintf(f, "%s \"%s\"\n", var->name, var->defaultvalue);
+		}
+	}
+
+	// Add those without
+	for (var = cvar_vars; var; var = var->next) {
+		if (!var->group && !(var->flags & (CVAR_USER_CREATED | CVAR_ROM | CVAR_INIT))) {
+			if (!anyUngrouped)
+				fprintf(f, "\n//\n");
+			fprintf(f, "%s \"%s\"\n", var->name, var->defaultvalue);
+			anyUngrouped = true;
 		}
 	}
 
