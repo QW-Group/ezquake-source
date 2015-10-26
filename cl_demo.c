@@ -106,6 +106,7 @@ static vec3_t rewind_pos;
 
 char Demos_Get_Trackname(void);
 static void CL_DemoPlaybackInit(void);
+void CL_ProcessUserInfo(int slot, player_info_t *player, char *key);
 
 char *CL_DemoDirectory(void);
 void CL_Demo_Jump_Status_Check (void);
@@ -4973,6 +4974,80 @@ double Demo_GetSpeed(void)
 	return bound(0, cl_demospeed.value, 20);
 }
 
+// 
+void CL_QTVFixUser_f(void) {
+	int uid, i;
+	char newuserinfo[MAX_INFO_STRING] = { 0 };
+	char* newName = NULL;
+	char* newTeam = NULL;
+	int topcolor = 0;
+	int bottomcolor = 0;
+	qbool isSpectator = (Cmd_Argc() >= 3 && !strcmp(Cmd_Argv(2), "spectator"));
+	qbool isPlayer = (Cmd_Argc() >= 3 && !strcmp(Cmd_Argv(2), "player"));
+
+	if (!cls.demoplayback || cls.mvdplayback != QTV_PLAYBACK) {
+		Com_Printf("Only valid when viewing QTV streams.", Cmd_Argv(0));
+		return;
+	}
+
+	if (Cmd_Argc() <= 3 || !(isSpectator || isPlayer)) {
+		Com_Printf("Usage: %s <userid> <spectator | player> <name> [team] [topcolor] [bottomcolor]\n", Cmd_Argv(0));
+		Com_Printf("This allows you to directly set user info fields on bugged QTV streams.\n");
+		Com_Printf("------ ----- ----\n");
+		Com_Printf("userid frags name\n");
+		Com_Printf("------ ----- ----\n");
+		for (i = 0; i < MAX_CLIENTS; i++) {
+			if (cl.players[i].name[0] || cl.players[i].userinfo[0] || cl.players[i].frags) {
+				Com_Printf("%6i %4i %s\n", cl.players[i].userid, cl.players[i].frags, cl.players[i].name);
+			}
+		}
+		return;
+	}
+
+	uid = atoi(Cmd_Argv(1));
+	newName = Cmd_Argv(3);
+	newTeam = Cmd_Argc() <= 4 ? "" : Cmd_Argv(4);
+	topcolor = Cmd_Argc() <= 5 ? 0 : atoi(Cmd_Argv(5));
+	bottomcolor = Cmd_Argc() <= 6 ? topcolor : atoi(Cmd_Argv(6));
+
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		if (!cl.players[i].name[0] && !cl.players[i].userinfo[0] && !cl.players[i].frags)
+			continue;
+
+		if (cl.players[i].userid == uid) {
+			player_info_t* player = &cl.players[i];
+
+			strcpy(newuserinfo, "\\*client\\QTVBug");
+			strlcat(newuserinfo, "\\name\\", MAX_INFO_STRING);
+			strlcat(newuserinfo, newName, MAX_INFO_STRING);
+
+			if (isSpectator) {
+				strlcat(newuserinfo, "\\*spectator\\1", MAX_INFO_STRING);
+			}
+
+			if (*newTeam) {
+				strlcat(newuserinfo, "\\team\\", MAX_INFO_STRING);
+				strlcat(newuserinfo, newTeam, MAX_INFO_STRING);
+			}
+
+			strlcat(newuserinfo, "\\topcolor\\", MAX_INFO_STRING);
+			strlcat(newuserinfo, va("%d", topcolor), MAX_INFO_STRING);
+			strlcat(newuserinfo, "\\bottomcolor\\", MAX_INFO_STRING);
+			strlcat(newuserinfo, va("%d", bottomcolor), MAX_INFO_STRING);
+
+			// Our scoreboard will set spectators to -999 frags for sorting, so reset and wait for server update
+			if (player->spectator && player->frags == -999 && isPlayer)
+				player->frags = 0;
+
+			memset(player->userinfo, 0, sizeof(player->userinfo));
+			strlcpy(player->userinfo, newuserinfo, MAX_INFO_STRING);
+			CL_ProcessUserInfo(i, player, NULL);
+			return;
+		}
+	}
+	Com_Printf("User not in server.\n");
+}
+
 //
 // Inits the demo cache and adds demo commands.
 //
@@ -5031,6 +5106,7 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand ("qtv_query_sourcelist", CL_QTVList_f);
 	Cmd_AddCommand ("qtv_query_demolist", CL_QTVList_f);
 	Cmd_AddCommand ("qtvreconnect", CL_QTVReconnect_f);
+	Cmd_AddCommand ("qtv_fixuser", CL_QTVFixUser_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 #ifdef _WIN32
