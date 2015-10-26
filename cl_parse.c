@@ -129,7 +129,6 @@ char *svc_strings[] = {
 
 const int num_svc_strings = sizeof(svc_strings)/sizeof(svc_strings[0]);
 
-int	oldparsecountmod;
 int	parsecountmod;
 double	parsecounttime;
 
@@ -1937,8 +1936,6 @@ void CL_ParseClientdata (void)
 	frame_t *frame;
 
 	// calculate simulated time of message
-	oldparsecountmod = parsecountmod;
-
 	newparsecount = cls.netchan.incoming_acknowledged;
 
 	cl.oldparsecount = (cls.mvdplayback) ? newparsecount - 1 : cl.parsecount;
@@ -3179,7 +3176,7 @@ void CL_MuzzleFlash (void)
 		return;
 
 	dl = CL_AllocDlight(-i);
-	state = &cl.frames[cls.mvdplayback ? oldparsecountmod : parsecountmod].playerstate[i - 1];
+	state = &cl.frames[cls.mvdplayback ? (cl.oldparsecount & UPDATE_MASK) : parsecountmod].playerstate[i - 1];
 
 	if ((i - 1) == cl.viewplayernum)
 	{
