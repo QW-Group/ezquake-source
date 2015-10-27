@@ -5573,23 +5573,31 @@ void SCR_HUD_DrawScoresPosition(hud_t *hud)
 */
 void SCR_HUD_DrawScoresBar(hud_t *hud)
 {
-	static	cvar_t *scale = NULL, *style, *format_big, *format_small;
+	static	cvar_t *scale = NULL, *style, *format_big, *format_small, *fixed_order, *frag_length, *reversed_big, *reversed_small;
 	int		width = 0, height = 0, x, y;
 	int		i = 0;
 
 	int		s_team = 0, s_enemy = 0, s_difference = 0;
 	char	*n_team = "T", *n_enemy = "E";
+	qbool   swappedOrder = false;
 
 	char	buf[MAX_MACRO_STRING];
 	char	c, *out, *temp,	*in;
+	int     frag_digits = 1;
 
     if (scale == NULL)  // first time called
     {
-        scale		= HUD_FindVar(hud, "scale");
-        style		= HUD_FindVar(hud, "style");
-		format_big	= HUD_FindVar(hud, "format_big");
-		format_small= HUD_FindVar(hud, "format_small");
-    }
+		scale          = HUD_FindVar(hud, "scale");
+		style          = HUD_FindVar(hud, "style");
+		format_big     = HUD_FindVar(hud, "format_big");
+		format_small   = HUD_FindVar(hud, "format_small");
+		fixed_order    = HUD_FindVar(hud, "fixed_order");
+		frag_length    = HUD_FindVar(hud, "frag_length");
+		reversed_big   = HUD_FindVar(hud, "format_reversed_big");
+		reversed_small = HUD_FindVar(hud, "format_reversed_small");
+	}
+
+	frag_digits = max(1, min(frag_length->value, 4));
 
 	//
 	// AAS: nightmare comes back
@@ -5600,7 +5608,8 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 		{
 			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
 				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
-				(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) )
+				(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
+				((cls.demoplayback || cl.spectator) && Cam_TrackNum() < 0))
 			{
 				s_team = sorted_teams[i].frags;
 				n_team = sorted_teams[i].name;
@@ -5608,6 +5617,8 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 				{
 					s_enemy = sorted_teams[i == 0 ? 1 : 0].frags;
 					n_enemy = sorted_teams[i == 0 ? 1 : 0].name;
+
+					swappedOrder = fixed_order->value && (cls.demoplayback || cl.spectator) && strcmp(n_team, n_enemy) < 0;
 				}
 				s_difference = s_team - s_enemy;
 				break;
@@ -5616,30 +5627,50 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 	}
 	else if(cl.deathmatch)
 	{
-		for(i = 0; i < n_players; i++)
+		for (i = 0; i < n_players; i++)
 		{
-			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
+			if ((cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
 				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
-				(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) )
+				(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
+				((cls.demoplayback || cl.spectator) && Cam_TrackNum() < 0))
 			{
+				// This is the current player
 				s_team = cl.players[sorted_players[i].playernum].frags;
-				if(n_players > 1)
+				n_team = cl.players[sorted_players[i].playernum].name;
+
+				if (n_players > 1)
 				{
 					s_enemy = cl.players[sorted_players[i == 0 ? 1 : 0].playernum].frags;
+					n_enemy = cl.players[sorted_players[i == 0 ? 1 : 0].playernum].name;
+					
+					swappedOrder = fixed_order->value && (cls.demoplayback || cl.spectator) && sorted_players[i].playernum > sorted_players[i == 0 ? 1 : 0].playernum;
 				}
+
 				s_difference = s_team - s_enemy;
+
 				break;
 			}
 		}
 	}
 
+	if (swappedOrder)
+	{
+		// switch names & scores, leave difference correct
+		int tempScore = s_team;
+		char* tempName = n_team;
+
+		s_team = s_enemy;
+		n_team = n_enemy;
+		s_enemy = tempScore;
+		n_enemy = tempName;
+	}
 
 	// two pots of delicious customized copypasta from math_tools.c
 	switch(style->integer)
 	{
 		// Big
 		case 1:
-			in = TP_ParseFunChars(format_big->string, false);
+			in = TP_ParseFunChars(swappedOrder && reversed_big->string[0] ? reversed_big->string : format_big->string, false);
 			buf[0] = 0;
 			out = buf;
 
@@ -5725,7 +5756,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 		// Small
 		case 0:	
 		default:
-			in = TP_ParseFunChars(format_small->string, false);
+			in = TP_ParseFunChars(swappedOrder && reversed_small->string[0] ? reversed_small->string : format_small->string, false);
 			buf[0] = 0;
 			out = buf;
 
@@ -5739,10 +5770,10 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 							temp = "%";
 							break;
 						case 't':
-							temp = va("%d", s_team);
+							temp = va("%*d", frag_digits, s_team);
 							break;
 						case 'e':
-							temp = va("%d", s_enemy);
+							temp = va("%*d", frag_digits, s_enemy);
 							break;
 						case 'd':
 							temp = va("%d", s_difference);
@@ -7838,7 +7869,10 @@ void CommonDraw_Init(void)
         "scale", "1",
 		"format_small", "&c69f%T&r:%t &cf10%E&r:%e $[%D$]",
 		"format_big", "%t:%e:%Z",
-
+		"fixed_order", "0",
+		"format_reversed_big", "",
+		"format_reversed_small", "",
+		"frag_length", "0",
         NULL
 		);
 
