@@ -1137,11 +1137,26 @@ static void VID_Restart_f(void)
 	CL_UpdateCaption(true);
 }
 
+static void VID_DisplayList_f(void)
+{
+	int displays = SDL_GetNumVideoDisplays();
+	int i;
+
+	for (i = 0; i < displays; i++) {
+		const char *displayname = SDL_GetDisplayName(i);
+		if (displayname == NULL) {
+			displayname = "Unknown";
+		}
+		Com_Printf("%d: %s\n", i, displayname);
+	}
+}
+
 void VID_RegisterCommands(void) 
 {
 	if (!host_initialized) {
 		Cmd_AddCommand("vid_gfxinfo", GfxInfo_f);
 		Cmd_AddCommand("vid_restart", VID_Restart_f);
+		Cmd_AddCommand("vid_displaylist", VID_DisplayList_f);
 	}
 }
 
