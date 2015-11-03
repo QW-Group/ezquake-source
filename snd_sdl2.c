@@ -83,20 +83,23 @@ qbool SNDDMA_Init(void)
 	switch (s_khz.integer) {
 		case 48:
 			desired.freq = 48000;
+			desired.samples = 2048;
 			break;
 		case 44:
 			desired.freq = 44100;
+			desired.samples = 1024;
 			break;
 		case 22:
 			desired.freq = 22050;
+			desired.samples = 512;
 			break;
 		default:
 			desired.freq = 11025;
+			desired.samples = 256;
 			break;
 	}
 
 	desired.format = AUDIO_S16LSB;
-	desired.samples = 1024;
 	desired.channels = 2;
 	desired.callback = Filler;
 	ret = SDL_OpenAudio(&desired, &obtained);
