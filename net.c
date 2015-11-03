@@ -23,6 +23,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 
 
+
+typedef struct packet_queue_s {
+	cl_delayed_packet_t packets[CL_MAX_DELAYED_PACKETS];
+	int head;
+	int tail;
+} packet_queue_t;
+
+static packet_queue_t delay_queue_get;
+static packet_queue_t delay_queue_send;
+
 netadr_t	net_local_cl_ipadr;
 netadr_t	net_local_sv_ipadr;
 netadr_t	net_local_sv_tcpipadr;
@@ -49,6 +59,75 @@ WSADATA winsockdata;
 #endif
 
 loopback_t	loopbacks[2];
+
+//=============================================================================
+void NET_PacketQueueAdvance(int* index)
+{
+	*index = (*index + 1) % CL_MAX_DELAYED_PACKETS;
+}
+
+qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, netadr_t* from_address)
+{
+	cl_delayed_packet_t* next = &queue->packets[queue->head];
+	double time = Sys_DoubleTime();
+
+	// Empty queue
+	if (!next->time)
+		return false;
+
+	// Not time yet
+	if (next->time > time)
+		return false;
+
+	SZ_Clear(buffer);
+	SZ_Write(buffer, next->data, next->length);
+	*from_address = next->addr;
+	next->time = 0;
+
+	NET_PacketQueueAdvance(&queue->head);
+	return true;
+}
+
+qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t addr)
+{
+	cl_delayed_packet_t* next = &queue->packets[queue->tail];
+	double time = Sys_DoubleTime();
+
+	// If buffer is full, can't prevent packet loss - drop this packet
+	if (next->time && queue->head == queue->tail)
+		return false;
+
+	memmove(next->data, data, size);
+	next->length = size;
+	next->addr = addr;
+	next->time = time + 0.001 * bound(0, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
+
+	NET_PacketQueueAdvance(&queue->tail);
+	return true;
+}
+
+cl_delayed_packet_t* NET_PacketQueuePeek(packet_queue_t* queue)
+{
+	cl_delayed_packet_t* next = &queue->packets[queue->head];
+
+	// Empty queue
+	if (!next->time)
+		return NULL;
+
+	return next;
+}
+
+void NET_PacketQueueSkip(packet_queue_t* queue)
+{
+	cl_delayed_packet_t* head = NET_PacketQueuePeek(queue);
+
+	if (head != NULL)
+	{
+		head->time = 0;
+
+		NET_PacketQueueAdvance(&queue->head);
+	}
+}
 
 //=============================================================================
 
@@ -236,8 +315,6 @@ void NET_ClearLoopback (void)
 	loopbacks[1].send = loopbacks[1].get = 0;
 }
 
-static cl_delayed_packet_t cl_delayed_packets_get[CL_MAX_DELAYED_PACKETS];
-
 qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 {
 	int ret, socket, err, i;
@@ -245,28 +322,7 @@ qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 	socklen_t fromlen;
 
 	if (delay)
-	{
-		double time = Sys_DoubleTime();
-
-		for (i = 0; i < CL_MAX_DELAYED_PACKETS; i++)
-		{
-			if (!cl_delayed_packets_get[i].time)
-				continue; // unused slot
-			if (cl_delayed_packets_get[i].time > time)
-				continue; // we are not yet ready to get this
-
-			// ok, we got something
-			SZ_Clear(&net_message);
-			SZ_Write(&net_message, cl_delayed_packets_get[i].data, cl_delayed_packets_get[i].length);
-			net_from = cl_delayed_packets_get[i].addr;
-
-			cl_delayed_packets_get[i].time = 0; // mark as free slot
-
-			return true;
-		}
-
-		return false;
-	}
+		return NET_PacketQueueRemove(&delay_queue_get, &net_message, &net_from);
 
 	if (NET_GetLoopPacket(netsrc, &net_from, &net_message))
 		return true;
@@ -516,28 +572,10 @@ closesvstream:
 
 qbool CL_QueInputPacket(void)
 {
-	int i;
-
 	if (!NET_GetPacketEx(NS_CLIENT, false))
 		return false;
-	
-	for (i = 0; i < CL_MAX_DELAYED_PACKETS; i++)
-	{
-		if (cl_delayed_packets_get[i].time)
-			continue; // busy slot
 
-		// we found unused slot, copy packet, get it later, later depends of cl_delay_packet
-		memmove(cl_delayed_packets_get[i].data, net_message.data, net_message.cursize);
-		cl_delayed_packets_get[i].length = net_message.cursize;
-		cl_delayed_packets_get[i].addr = net_from;
-		cl_delayed_packets_get[i].time = Sys_DoubleTime() + 0.001 * bound(0, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
-
-		return true;
-	}
-
-	Com_DPrintf("CL_QueInputPacket: cl_delayed_packets_get overflowed\n");
-
-	return false;
+	return NET_PacketQueueAdd(&delay_queue_get, net_message.data, net_message.cursize, net_from);
 }
 
 qbool NET_GetPacket (netsrc_t netsrc)
@@ -549,8 +587,6 @@ qbool NET_GetPacket (netsrc_t netsrc)
 
 //=============================================================================
 
-static cl_delayed_packet_t cl_delayed_packets_send[CL_MAX_DELAYED_PACKETS];
-
 void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbool delay)
 {
 	struct sockaddr_storage addr;
@@ -560,22 +596,7 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 
 	if (delay)
 	{
-		int i;
-
-		for (i = 0; i < CL_MAX_DELAYED_PACKETS; i++)
-		{
-			if (cl_delayed_packets_send[i].time)
-				continue; // busy slot
-			// we found unused slot, copy packet, send it later, later depends of cl_delay_packet
-			memmove(cl_delayed_packets_send[i].data, data, length);
-			cl_delayed_packets_send[i].length = length;
-			cl_delayed_packets_send[i].addr = to;
-			cl_delayed_packets_send[i].time = Sys_DoubleTime() + 0.001 * bound(0, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
-
-			return;
-		}
-
-		Com_DPrintf("NET_SendPacketEx: cl_delayed_packets_send overflowed\n");
+		NET_PacketQueueAdd(&delay_queue_send, data, length, to);
 		return;
 	}
 
@@ -653,24 +674,20 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 
 void CL_UnqueOutputPacket(qbool sendall)
 {
-	int i;
 	double time = Sys_DoubleTime();
+	cl_delayed_packet_t* packet = NULL;
 
-	for (i = 0; i < CL_MAX_DELAYED_PACKETS; i++)
+	while ((packet = NET_PacketQueuePeek(&delay_queue_send)))
 	{
-		if (!cl_delayed_packets_send[i].time)
-			continue; // unused slot
-		if (cl_delayed_packets_send[i].time > time && !sendall)
-			continue; // we are not yet ready for send
+		// Not yet ready to send
+		if (packet->time > time && !sendall)
+			break;
 
 		// ok, send it
-		NET_SendPacketEx(NS_CLIENT, cl_delayed_packets_send[i].length, 
-			cl_delayed_packets_send[i].data, cl_delayed_packets_send[i].addr, false);
+		NET_SendPacketEx(NS_CLIENT, packet->length, packet->data, packet->addr, false);
 
-		cl_delayed_packets_send[i].time = 0; // mark as unused slot
-
-// perhaps there other packets should be sent
-//		return;
+		// mark as unused slot
+		NET_PacketQueueSkip(&delay_queue_send);
 	}
 }
 
