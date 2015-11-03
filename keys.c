@@ -47,14 +47,15 @@ extern cvar_t sys_disable_alt_enter;
 
 //key up events are sent even if in console mode
 
-cvar_t cl_chatmode					= {"cl_chatmode", "2"};
-cvar_t con_funchars_mode			= {"con_funchars_mode", "0"};
-cvar_t con_tilde_mode				= {"con_tilde_mode", "0"};
+cvar_t cl_chatmode                  = {"cl_chatmode", "2"};
+cvar_t con_funchars_mode            = {"con_funchars_mode", "0"};
+cvar_t con_tilde_mode               = {"con_tilde_mode", "0"};
 // values: old style, current + default values , current only, default only, current + default if changed, none.
-cvar_t con_completion_format		= {"con_completion_format", "2"};
-cvar_t con_hide_chat_input			= {"con_hide_chat_input", "1"};
-cvar_t con_completion_changed_mark	= {"con_completion_changed_mark", "1"};
-cvar_t con_bindphysical				= {"con_bindphysical", "0" };
+cvar_t con_completion_format        = {"con_completion_format", "2"};
+cvar_t con_hide_chat_input          = {"con_hide_chat_input", "1"};
+cvar_t con_completion_changed_mark  = {"con_completion_changed_mark", "1"};
+cvar_t con_bindphysical             = {"con_bindphysical", "0"};
+cvar_t in_builtinkeymap             = {"in_builtinkeymap", "0"};
 
 char* escape_regex(char* string);
 void OnChange_con_prompt_charcode(cvar_t *var, char *string, qbool *cancel);
@@ -106,6 +107,7 @@ qbool	keyactive[UNKNOWN + 256];
 // SDL2 sends a KEYDOWN event and then an optional TEXTINPUT event for the actual character generated
 // This stores the last quake key (K_*) from the KEYDOWN, or 0 if any subsequent TEXTINPUT event should be ignored.
 static int lastKeyDown = 0;
+static qbool lastKeyGeneratedCharacter = false;
 
 typedef struct
 {
@@ -1355,6 +1357,7 @@ void Key_Console (int key, int unichar)
 	key_lines[edit_line][key_linepos] = unichar;
 	key_linepos++;
 	CompleteCommandNew_Reset ();
+	lastKeyGeneratedCharacter = true;
 }
 
 //============================================================================
@@ -1510,6 +1513,7 @@ void Key_Message (int key, wchar unichar) {
 	// This also moves the ending \0
 	memmove (chat_buffer+chat_linepos+1, chat_buffer+chat_linepos, (len - chat_linepos + 1)*sizeof(wchar));
 	chat_buffer[chat_linepos++] = unichar;
+	lastKeyGeneratedCharacter = true;
 }
 
 //============================================================================
@@ -1879,6 +1883,7 @@ void Key_Init (void) {
 	Cvar_Register(&con_completion_color_title);
 	Cvar_Register(&con_completion_changed_mark);
 	Cvar_Register(&con_bindphysical);
+	Cvar_Register(&in_builtinkeymap);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -2198,6 +2203,7 @@ void Key_Event (int key, qbool down)
 {
 	qbool processTextInput = (key_dest == key_console || key_dest == key_message);
 	qbool consoleToggle = (key == '`' || key == '~') && !con_tilde_mode.integer;
+	wchar unichar = 0;
 
 	assert (key >= 0 && key <= 255);
 
@@ -2216,14 +2222,12 @@ void Key_Event (int key, qbool down)
 			return;
 	}
 
-	{
-		wchar unichar;
-		unichar = keydown[K_SHIFT] ? keyshift[key] : key;
-		if (unichar < 32 || unichar > 127)
-			unichar = 0;
+	lastKeyGeneratedCharacter = false;
+	unichar = keydown[K_SHIFT] ? keyshift[key] : key;
+	if (unichar < 32 || unichar > 127)
+		unichar = 0;
 
-		Key_EventEx (key, unichar, down);
-	}
+	Key_EventEx (key, unichar, down);
 
 	// Store this as we may need it for subsequent SDL_TextInput event
 	lastKeyDown = 0;
@@ -2233,17 +2237,21 @@ void Key_Event (int key, qbool down)
 
 void Key_Event_TextInput(wchar unichar)
 {
+	if (in_builtinkeymap.value)
+		return;
 	if (!lastKeyDown)
 		return;
 
 	if (key_dest == key_message)
 	{
-		Key_Message(K_BACKSPACE, K_BACKSPACE);
+		if (lastKeyGeneratedCharacter)
+			Key_Message(K_BACKSPACE, K_BACKSPACE);
 		Key_Message(lastKeyDown, unichar);
 	}
 	else if (key_dest == key_console)
 	{
-		Key_Console_Backspace();
+		if (lastKeyGeneratedCharacter)
+			Key_Console_Backspace();
 		Key_Console(lastKeyDown, unichar);
 	}
 }
