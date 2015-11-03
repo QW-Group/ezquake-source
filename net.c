@@ -61,7 +61,7 @@ WSADATA winsockdata;
 loopback_t	loopbacks[2];
 
 //=============================================================================
-void NET_PacketQueueAdvance(int* index)
+void NET_PacketQueueSetNextIndex(int* index)
 {
 	*index = (*index + 1) % CL_MAX_DELAYED_PACKETS;
 }
@@ -84,7 +84,7 @@ qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, netadr_t* 
 	*from_address = next->addr;
 	next->time = 0;
 
-	NET_PacketQueueAdvance(&queue->head);
+	NET_PacketQueueSetNextIndex(&queue->head);
 	return true;
 }
 
@@ -102,7 +102,7 @@ qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t a
 	next->addr = addr;
 	next->time = time + 0.001 * bound(0, 0.5 * cl_delay_packet.value, CL_MAX_PACKET_DELAY);
 
-	NET_PacketQueueAdvance(&queue->tail);
+	NET_PacketQueueSetNextIndex(&queue->tail);
 	return true;
 }
 
@@ -117,7 +117,7 @@ cl_delayed_packet_t* NET_PacketQueuePeek(packet_queue_t* queue)
 	return next;
 }
 
-void NET_PacketQueueSkip(packet_queue_t* queue)
+void NET_PacketQueueAdvance(packet_queue_t* queue)
 {
 	cl_delayed_packet_t* head = NET_PacketQueuePeek(queue);
 
@@ -125,7 +125,7 @@ void NET_PacketQueueSkip(packet_queue_t* queue)
 	{
 		head->time = 0;
 
-		NET_PacketQueueAdvance(&queue->head);
+		NET_PacketQueueSetNextIndex(&queue->head);
 	}
 }
 
@@ -687,7 +687,7 @@ void CL_UnqueOutputPacket(qbool sendall)
 		NET_SendPacketEx(NS_CLIENT, packet->length, packet->data, packet->addr, false);
 
 		// mark as unused slot
-		NET_PacketQueueSkip(&delay_queue_send);
+		NET_PacketQueueAdvance(&delay_queue_send);
 	}
 }
 
