@@ -550,7 +550,7 @@ void Startup_Place(void)
 		else if (!strcmp(cl_onload.string, "browser"))
 			Cbuf_AddText("menu_slist\n");
 		else if (!strcmp(cl_onload.string, "console"))
-			; // donothing
+			key_dest = key_console; 
 		else Cbuf_AddText(va("%s\n", cl_onload.string));
 	}
 }
