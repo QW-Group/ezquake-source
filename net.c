@@ -61,12 +61,12 @@ WSADATA winsockdata;
 loopback_t	loopbacks[2];
 
 //=============================================================================
-void NET_PacketQueueSetNextIndex(int* index)
+static inline void NET_PacketQueueSetNextIndex(int* index)
 {
 	*index = (*index + 1) % CL_MAX_DELAYED_PACKETS;
 }
 
-qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, netadr_t* from_address)
+static qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, netadr_t* from_address)
 {
 	cl_delayed_packet_t* next = &queue->packets[queue->head];
 	double time = Sys_DoubleTime();
@@ -88,7 +88,7 @@ qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, netadr_t* 
 	return true;
 }
 
-qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t addr)
+static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t addr)
 {
 	cl_delayed_packet_t* next = &queue->packets[queue->tail];
 	double time = Sys_DoubleTime();
@@ -106,7 +106,7 @@ qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t a
 	return true;
 }
 
-cl_delayed_packet_t* NET_PacketQueuePeek(packet_queue_t* queue)
+static cl_delayed_packet_t* NET_PacketQueuePeek(packet_queue_t* queue)
 {
 	cl_delayed_packet_t* next = &queue->packets[queue->head];
 
@@ -117,7 +117,7 @@ cl_delayed_packet_t* NET_PacketQueuePeek(packet_queue_t* queue)
 	return next;
 }
 
-void NET_PacketQueueAdvance(packet_queue_t* queue)
+static void NET_PacketQueueAdvance(packet_queue_t* queue)
 {
 	cl_delayed_packet_t* head = NET_PacketQueuePeek(queue);
 
