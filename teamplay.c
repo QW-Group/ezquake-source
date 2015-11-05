@@ -2910,6 +2910,25 @@ void TP_ParsePlayerInfo(player_state_t *oldstate, player_state_t *state, player_
 	}
 }
 
+static qbool TP_DetectWeaponPickup(void)
+{
+	if (vars.items & ~vars.olditems & IT_LIGHTNING)
+		ExecTookTrigger(tp_name_lg.string, it_lg, cl.simorg);
+	else if (vars.items & ~vars.olditems & IT_ROCKET_LAUNCHER)
+		ExecTookTrigger(tp_name_rl.string, it_rl, cl.simorg);
+	else if (vars.items & ~vars.olditems & IT_GRENADE_LAUNCHER)
+		ExecTookTrigger(tp_name_gl.string, it_gl, cl.simorg);
+	else if (vars.items & ~vars.olditems & IT_SUPER_NAILGUN)
+		ExecTookTrigger(tp_name_sng.string, it_sng, cl.simorg);
+	else if (vars.items & ~vars.olditems & IT_NAILGUN)
+		ExecTookTrigger(tp_name_ng.string, it_ng, cl.simorg);
+	else if (vars.items & ~vars.olditems & IT_SUPER_SHOTGUN)
+		ExecTookTrigger(tp_name_ssg.string, it_ssg, cl.simorg);
+	else
+		return false;
+	return true;
+}
+
 void TP_CheckPickupSound (char *s, vec3_t org)
 {
 	item_t *item;
@@ -2942,18 +2961,10 @@ more:
 		if (FindNearestItem (it_weapons, &item)) {
 			ExecTookTrigger (item->cvar->string, item->itemflag, org);
 		} else if (vars.stat_framecounts[STAT_ITEMS] == cls.framecount) {
-			if (vars.items & ~vars.olditems & IT_LIGHTNING)
-				ExecTookTrigger (tp_name_lg.string, it_lg, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_ROCKET_LAUNCHER)
-				ExecTookTrigger (tp_name_rl.string, it_rl, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_GRENADE_LAUNCHER)
-				ExecTookTrigger (tp_name_gl.string, it_gl, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_SUPER_NAILGUN)
-				ExecTookTrigger (tp_name_sng.string, it_sng, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_NAILGUN)
-				ExecTookTrigger (tp_name_ng.string, it_ng, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_SUPER_SHOTGUN)
-				ExecTookTrigger (tp_name_ssg.string, it_ssg, cl.simorg);
+			if (! TP_DetectWeaponPickup())
+				cl.last_weapon_pickup = cls.framecount;
+		} else {
+			cl.last_weapon_pickup = cls.framecount;
 		}
 		return;
 	}
@@ -2971,14 +2982,18 @@ more:
 			ExecTookTrigger (tp_name_ya.string, it_ya, org);
 		else if (armortype == 3 || (!armortype && armor_updated && cl.stats[STAT_ARMOR] == 200))
 			ExecTookTrigger (tp_name_ra.string, it_ra, org);
+		else 
+			cl.last_armor_pickup = cls.framecount;
 		return;
 	}
 
 	// backpack, ammo or runes
 	if (!strcmp (s, "weapons/lock4.wav")) {
-		if (!FindNearestItem (it_ammo|it_pack|it_runes, &item))
-			return;
-		ExecTookTrigger (item->cvar->string, item->itemflag, org);
+		if (FindNearestItem(it_ammo | it_pack | it_runes, &item))
+			ExecTookTrigger(item->cvar->string, item->itemflag, org);
+		else
+			cl.last_ammo_pickup = cls.framecount;
+		return;
 	}
 }
 
@@ -3296,7 +3311,7 @@ void TP_StatChanged (int stat, int value)
 	effects = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[cl.playernum].effects;
 
 	switch (stat) {
-			case STAT_HEALTH:
+		case STAT_HEALTH:
 			if (value > 0) {
 				if (vars.health <= 0) {
 					extern cshift_t	cshift_empty;
@@ -3327,7 +3342,7 @@ void TP_StatChanged (int stat, int value)
 			}
 			vars.health = value;
 			break;
-			case STAT_ITEMS:
+		case STAT_ITEMS:
 			if (value & ~vars.items & (IT_KEY1|IT_KEY2)) {
 				if (cl.teamfortress && !cl.spectator)
 					ExecTookTrigger (tp_name_flag.string, it_flag, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
@@ -3336,10 +3351,32 @@ void TP_StatChanged (int stat, int value)
 				vars.lastdrop_time = cls.realtime;
 				strlcpy (vars.lastdroploc, Macro_Location(), sizeof (vars.lastdroploc));
 			}
+
 			vars.olditems = vars.items;
 			vars.items = value;
+
+			// If we have received a sound previously, update 
+			if (cl.last_weapon_pickup == cls.framecount)
+				TP_DetectWeaponPickup();
+			else if (cl.last_ammo_pickup == cls.framecount)
+				ExecTookTrigger(tp_name_backpack.string, it_pack, cl.simorg);
+			cl.last_weapon_pickup = 0;
+
 			break;
-			case STAT_ACTIVEWEAPON:
+		case STAT_ARMOR:
+			if (cl.last_armor_pickup == cls.framecount)
+			{
+				if (value == 100)
+					ExecTookTrigger(tp_name_ga.string, it_ga, cl.simorg);
+				else if (value == 150)
+					ExecTookTrigger(tp_name_ya.string, it_ya, cl.simorg);
+				else if (value == 200)
+					ExecTookTrigger(tp_name_ra.string, it_ra, cl.simorg);
+
+				cl.last_armor_pickup = 0;
+			}
+			break;
+		case STAT_ACTIVEWEAPON:
 			if (cl.stats[STAT_ACTIVEWEAPON] != vars.activeweapon) {
 				TP_ExecTrigger ("f_weaponchange");
 				vars.activeweapon = cl.stats[STAT_ACTIVEWEAPON];
