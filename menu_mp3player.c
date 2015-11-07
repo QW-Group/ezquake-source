@@ -446,11 +446,8 @@ void M_Menu_MP3_Playlist_Read(void) {
 void M_Menu_MP3_Playlist_Draw(void) {
 	int		index, print_time, i, count;
 	char 	name[PLAYLIST_MAXTITLE], *s;
-	float 	realtime;
 
 	static int last_status,last_elapsed, last_total, last_current;
-
-	realtime = Sys_DoubleTime();
 
 	last_status = MP3_GetStatus();
 

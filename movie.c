@@ -377,8 +377,6 @@ short* Movie_SoundBuffer(void)
 }
 
 void Movie_TransferStereo16(void) {
-	int val, i;
-
 	if (!movie_is_avi || !Movie_IsCapturing())
 		return;
 
