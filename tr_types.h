@@ -61,11 +61,8 @@ extern glconfig_t	glConfig;
 // latched variables that can only change over a restart
 //
 
-extern cvar_t	r_allowExtensions;
 extern cvar_t	r_colorbits;
 extern cvar_t	r_stereo;
-extern cvar_t	r_stencilbits;
-extern cvar_t	r_depthbits;
 extern cvar_t	r_fullscreen;
 extern cvar_t	vid_width;
 extern cvar_t	vid_height;

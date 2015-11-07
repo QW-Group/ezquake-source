@@ -84,11 +84,8 @@ static int modelist_count;
 extern cvar_t sys_inactivesleep;
 
 // latched variables that can only change over a restart
-cvar_t r_allowExtensions      = {"vid_allowExtensions",   "1",   CVAR_LATCH };
 cvar_t r_colorbits            = {"vid_colorbits",         "0",   CVAR_LATCH };
 cvar_t r_stereo               = {"vid_stereo",            "0",   CVAR_LATCH };
-cvar_t r_stencilbits          = {"vid_stencilbits",       "8",   CVAR_LATCH };
-cvar_t r_depthbits            = {"vid_depthbits",         "0",   CVAR_LATCH };
 cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
 cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH };
 cvar_t vid_displayNumber      = {"vid_displaynumber",     "0",   CVAR_LATCH };
@@ -548,10 +545,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_height);
 	Cvar_Register(&vid_win_width);
 	Cvar_Register(&vid_win_height);
-	Cvar_Register(&r_allowExtensions);
 	Cvar_Register(&r_colorbits);
-	Cvar_Register(&r_stencilbits);
-	Cvar_Register(&r_depthbits);
 	Cvar_Register(&r_fullscreen);
 	Cvar_Register(&r_displayRefresh);
 	Cvar_Register(&vid_usedesktopres);
