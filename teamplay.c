@@ -44,7 +44,10 @@ cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
 cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
 cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"}; // FIXME: buggy
-
+cvar_t  tp_fixedLocLength = {"tp_fixedloclength", "0"};
+cvar_t  tp_fixedLocCentered = {"tp_fixedloccentered", "0"};
+cvar_t  tp_tooktimeout = {"tp_tooktimeout", "15"};
+cvar_t  tp_pointtimeout = {"tp_pointtimeout", "15"};
 
 cvar_t  cl_teamtopcolor = {"teamtopcolor", "-1", 0, OnChangeColorForcing};
 cvar_t  cl_teambottomcolor = {"teambottomcolor", "-1", 0, OnChangeColorForcing};
@@ -496,7 +499,7 @@ char *Macro_Took (void)
 // returns location of the last item picked up
 char *Macro_TookLoc (void)
 {
-	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
+	if (TOOK_EMPTY())
 		strlcpy (macro_buf, tp_name_someplace.string, sizeof(macro_buf));
 	else
 		strlcpy (macro_buf, vars.tookloc, sizeof(macro_buf));
@@ -506,7 +509,7 @@ char *Macro_TookLoc (void)
 // %i macro - last item picked up in "name at location" style
 char *Macro_TookAtLoc (void)
 {
-	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
+	if (TOOK_EMPTY())
 		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else {
 		strlcpy (macro_buf, va("%s %s %s", vars.tookname, tp_name_at.string, vars.tookloc), sizeof(macro_buf));
@@ -536,7 +539,7 @@ char *Macro_PointLocation (void)
 
 char *Macro_LastPointAtLoc (void)
 {
-	if (!vars.pointtime || cls.realtime - vars.pointtime > TP_POINT_EXPIRE_TIME)
+	if (!vars.pointtime || cls.realtime - vars.pointtime > tp_pointtimeout.value)
 		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
 		snprintf (macro_buf, sizeof(macro_buf), "%s %s %s", vars.pointname, tp_name_at.string, vars.pointloc[0] ? vars.pointloc : Macro_Location());
@@ -2185,6 +2188,7 @@ char *TP_LocationName(vec3_t location)
 	cvar_t *cvar;
 	static qbool recursive;
 	static char	buf[1024], newbuf[MAX_LOC_NAME];
+	int maxlength = MAX_LOC_NAME - 1;
 
 	if (!locdata || cls.state != ca_active)
 		return tp_name_someplace.string;
@@ -2204,38 +2208,57 @@ char *TP_LocationName(vec3_t location)
 		}
 	}
 
+	if (tp_fixedLocLength.integer)
+		maxlength = min(tp_fixedLocLength.integer, maxlength);
 
 	newbuf[0] = 0;
 	out = newbuf;
 	in = best->name;
-	while (*in && out - newbuf < sizeof(newbuf) - 1) {
+	while (*in && out - newbuf < maxlength) {
 		if (!strncasecmp(in, "$loc_name_", 10)) {
+			int remaining_space = maxlength - (out - newbuf);
+
 			in += 10;
 			for (i = 0; i < NUM_LOCMACROS; i++) {
 				if (!strncasecmp(in, locmacros[i].macro, strlen(locmacros[i].macro))) {
+
 					if ((cvar = Cvar_Find(va("loc_name_%s", locmacros[i].macro))))
 						value = cvar->string;
 					else
 						value = locmacros[i].val;
-					if (out - newbuf >= sizeof(newbuf) - strlen(value) - 1)
-						goto done_locmacros;
-					strcpy(out, value);
-					out += strlen(value);
+					strncpy(out, value, min(remaining_space, strlen(value)));
+					out += min(remaining_space, strlen(value));
 					in += strlen(locmacros[i].macro);
 					break;
 				}
 			}
 			if (i == NUM_LOCMACROS) {
-				if (out - newbuf >= sizeof(newbuf) - 10 - 1)
-					goto done_locmacros;
-				strcpy(out, "$loc_name_");
-				out += 10;
+				strncpy(out, "$loc_name_", min(remaining_space, 10));
+				out += min(remaining_space, 10);
 			}
 		} else {
 			*out++ = *in++;
 		}
 	}
-done_locmacros:
+
+	if (tp_fixedLocLength.integer)
+	{
+		int i = 0;
+		int padding = maxlength - (out - newbuf);
+
+		// Pad left hand side
+		if (tp_fixedLocCentered.value && padding > 1)
+		{
+			memmove(newbuf + padding / 2, newbuf, out - newbuf);
+			out += padding / 2;
+			for (i = 0; i < padding / 2; ++i)
+				newbuf[i] = ' ';
+		}
+
+		// Pad right hand side
+		while (out - newbuf < maxlength)
+			*out++ = ' ';
+	}
 	*out = 0;
 
 	buf[0] = 0;
@@ -3526,8 +3549,12 @@ void TP_Init (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
 	Cvar_Register (&tp_loadlocs);
+	Cvar_Register (&tp_fixedLocLength);
+	Cvar_Register (&tp_fixedLocCentered);
 	Cvar_Register (&tp_pointpriorities);
 	Cvar_Register (&tp_weapon_order);
+	Cvar_Register (&tp_tooktimeout);
+	Cvar_Register (&tp_pointtimeout);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_ITEM_NAMES);
 	Cvar_Register (&tp_name_separator);

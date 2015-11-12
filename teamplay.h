@@ -217,11 +217,10 @@ extern tvars_t vars;
 
 extern char *TP_PlayerName (void);
 
-#define	TP_TOOK_EXPIRE_TIME		15
-#define	TP_POINT_EXPIRE_TIME	TP_TOOK_EXPIRE_TIME
+extern cvar_t tp_tooktimeout;
 
 extern void TP_FindPoint (void);
-#define TOOK_EMPTY() (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
+#define TOOK_EMPTY() (!vars.tooktime || cls.realtime > vars.tooktime + tp_tooktimeout.value)
 
 // updates the state of vars.needflags
 void TP_GetNeed(void);
