@@ -159,6 +159,7 @@ const char* coloredtext_enum[] = { "off", "simple", "frag messages" };
 const char* autorecord_enum[] = { "off", "don't save", "auto save" };
 const char* hud_enum[] = { "classic", "new", "combined" };
 const char* ignorespec_enum[] = { "off", "on (as player)", "on (always)" };
+const char* gender_enum[] = { "Male", "0", "Female", "1", "Neutral", "2", "Not specified", "" };
 
 const char* scr_sshot_format_enum[] = {
 	"JPG", "jpg", "PNG", "png", "TGA", "tga" };
@@ -827,6 +828,7 @@ setting settplayer_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_STRING	("Teamchat Name Suffix", cl_fakename_suffix),
 	ADDSET_BASIC_SECTION(),
+	ADDSET_ENUM     ("Gender", gender, gender_enum),
 	ADDSET_STRING	("Team", team),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SKIN		("Skin", skin),
