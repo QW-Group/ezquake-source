@@ -419,9 +419,29 @@ char *Macro_Powerups (void)
 	return macro_buf;
 }
 
+static void TP_SetLocationText(char* output, int max_length, const char* text)
+{
+	if (!tp_fixedLocLength.integer || !text[0]) {
+		strlcpy(output, text, max_length);
+	}
+	else {
+		int location_length = min(max_length - 1, tp_fixedLocLength.integer);
+		int string_length = strlen(text);
+		int padLeft = (location_length - string_length) / 2;
+		int padRight = (location_length - string_length) - padLeft;
+
+		memset(output, 0, max_length);
+		if (!tp_fixedLocCentered.integer || padLeft <= 0)
+			snprintf(output, max_length - 1, "%-*.*s", location_length, location_length, text);
+		else
+			snprintf(output, max_length - 1, "%*s%s%*s", padLeft, " ", text, padRight, " ");
+	}
+}
+
 char *Macro_Location (void)
 {
-	strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
+	TP_SetLocationText(vars.lastreportedloc, sizeof(vars.lastreportedloc), TP_LocationName(cl.simorg));
+
 	return vars.lastreportedloc;
 }
 
@@ -433,9 +453,9 @@ char *Macro_LastDeath (void)
 char *Macro_Last_Location (void)
 {
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5)
-		strlcpy(vars.lastreportedloc, vars.lastdeathloc, sizeof(vars.lastreportedloc));
+		TP_SetLocationText(vars.lastreportedloc, sizeof(vars.lastreportedloc), vars.lastdeathloc);
 	else
-		strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
+		TP_SetLocationText(vars.lastreportedloc, sizeof(vars.lastreportedloc), TP_LocationName(cl.simorg));
 	return vars.lastreportedloc;
 }
 
@@ -2188,7 +2208,6 @@ char *TP_LocationName(vec3_t location)
 	cvar_t *cvar;
 	static qbool recursive;
 	static char	buf[1024], newbuf[MAX_LOC_NAME];
-	int maxlength = MAX_LOC_NAME - 1;
 
 	if (!locdata || cls.state != ca_active)
 		return tp_name_someplace.string;
@@ -2208,57 +2227,39 @@ char *TP_LocationName(vec3_t location)
 		}
 	}
 
-	if (tp_fixedLocLength.integer)
-		maxlength = min(tp_fixedLocLength.integer, maxlength);
 
 	newbuf[0] = 0;
 	out = newbuf;
 	in = best->name;
-	while (*in && out - newbuf < maxlength) {
+	while (*in && out - newbuf < sizeof(newbuf) - 1) {
 		if (!strncasecmp(in, "$loc_name_", 10)) {
-			int remaining_space = maxlength - (out - newbuf);
-
 			in += 10;
 			for (i = 0; i < NUM_LOCMACROS; i++) {
 				if (!strncasecmp(in, locmacros[i].macro, strlen(locmacros[i].macro))) {
-
 					if ((cvar = Cvar_Find(va("loc_name_%s", locmacros[i].macro))))
 						value = cvar->string;
 					else
 						value = locmacros[i].val;
-					strncpy(out, value, min(remaining_space, strlen(value)));
-					out += min(remaining_space, strlen(value));
+					if (out - newbuf >= sizeof(newbuf) - strlen(value) - 1)
+						goto done_locmacros;
+					strcpy(out, value);
+					out += strlen(value);
 					in += strlen(locmacros[i].macro);
 					break;
 				}
 			}
 			if (i == NUM_LOCMACROS) {
-				strncpy(out, "$loc_name_", min(remaining_space, 10));
-				out += min(remaining_space, 10);
+				if (out - newbuf >= sizeof(newbuf) - 10 - 1)
+					goto done_locmacros;
+				strcpy(out, "$loc_name_");
+				out += 10;
 			}
-		} else {
+		}
+		else {
 			*out++ = *in++;
 		}
 	}
-
-	if (tp_fixedLocLength.integer)
-	{
-		int i = 0;
-		int padding = maxlength - (out - newbuf);
-
-		// Pad left hand side
-		if (tp_fixedLocCentered.value && padding > 1)
-		{
-			memmove(newbuf + padding / 2, newbuf, out - newbuf);
-			out += padding / 2;
-			for (i = 0; i < padding / 2; ++i)
-				newbuf[i] = ' ';
-		}
-
-		// Pad right hand side
-		while (out - newbuf < maxlength)
-			*out++ = ' ';
-	}
+done_locmacros:
 	*out = 0;
 
 	buf[0] = 0;
@@ -2827,7 +2828,7 @@ static int FindNearestItem (int flags, item_t **pitem)
 	}
 
 	if (bestent)
-		strlcpy(vars.nearestitemloc, TP_LocationName(bestent->origin), sizeof(vars.nearestitemloc));
+		TP_SetLocationText(vars.nearestitemloc, sizeof(vars.nearestitemloc), TP_LocationName(bestent->origin));
 	else
 		vars.nearestitemloc[0] = 0;
 
@@ -2893,7 +2894,7 @@ static void ExecTookTrigger (char *s, int flag, vec3_t org)
 	vars.tooktime = cls.realtime;
     vars.tookflag = flag;
 	strlcpy (vars.tookname, s, sizeof (vars.tookname));
-	strlcpy (vars.tookloc, TP_LocationName (org), sizeof (vars.tookloc));
+	TP_SetLocationText(vars.tookloc, sizeof(vars.tookloc), TP_LocationName(org));
 
 	if ((tookflags_dmm & flag) && CheckTrigger())
 		TP_ExecTrigger ("f_took");
@@ -3282,8 +3283,8 @@ void TP_FindPoint (void)
 		strlcat (buf, va("%s%s", buf[0] ? " " : "", name), sizeof (buf) - strlen (buf));
 		strlcpy (vars.pointname, buf, sizeof (vars.pointname));
         vars.pointflag = flag;
-		strlcpy (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));
-
+		TP_SetLocationText(vars.pointloc, sizeof(vars.pointloc), TP_LocationName(beststate->origin));
+		
 		vars.pointtype = (teammate && !eyes) ? POINT_TYPE_TEAMMATE : POINT_TYPE_ENEMY;
 	} else if (best >= 0) {
 		char *p;
@@ -3303,7 +3304,7 @@ void TP_FindPoint (void)
 
 		vars.pointtype = (bestitem->itemflag & (it_powerups|it_flag)) ? POINT_TYPE_POWERUP : POINT_TYPE_ITEM;
 		strlcpy (vars.pointname, p, sizeof(vars.pointname));
-		strlcpy (vars.pointloc, TP_LocationName (bestent->origin), sizeof(vars.pointloc));
+		TP_SetLocationText(vars.pointloc, sizeof(vars.pointloc), TP_LocationName(bestent->origin));
 	} else {
 	nothing:
 		strlcpy (vars.pointname, tp_name_nothing.string, sizeof(vars.pointname));
