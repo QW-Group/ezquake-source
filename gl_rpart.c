@@ -988,7 +988,11 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 	if (!qmb_initialized)
 		Sys_Error("QMB particle added without initialization");
 
-	assert(size > 0 && time > 0);
+	if (size <= 0 || time <= 0)
+	{
+		Con_DPrintf("AddParticle() failed, type %d, size %f, time %f\n", type, size, time);
+		return;
+	}
 
 	if (type < 0 || type >= num_particletypes)
 		Sys_Error("AddParticle: Invalid type (%d)", type);
@@ -2922,7 +2926,7 @@ void VX_TeslaCharge (vec3_t org)
 void VX_LightningBeam (vec3_t start, vec3_t end)
 {
 	//col_t color={120,140,255,255};
-	AddParticle(p_lightningbeam, start, 1, 100, cls.frametime*2, amf_lightning_color.color, end);
+	AddParticle(p_lightningbeam, start, 1, 100, min(0.013, cls.frametime*2), amf_lightning_color.color, end);
 }
 
 //VULT PARTICLES

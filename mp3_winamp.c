@@ -229,10 +229,8 @@ void MP3_WINAMP_Execute_f(void)
 
 #define WINAMP_COMMAND(Name, Param)									\
 	void MP3_WINAMP_##Name##_f(void) {								\
-		int ret;													\
-																	\
 		if (MP3_WINAMP_IsPlayerRunning())							\
-			ret = SendMessage(mp3_hwnd, WM_COMMAND, Param, 0);		\
+			SendMessage(mp3_hwnd, WM_COMMAND, Param, 0);		\
 		else														\
 			Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps); \
 	}
@@ -510,7 +508,7 @@ void MP3_WINAMP_GetSongTitle(int track_num, char *song, size_t song_len) {
 
 void MP3_WINAMP_PrintPlaylist_f(void) 
 {
-	int i, current;
+	int i, current = 0;
 
 	/* Force a cache refill */
 	if (MP3_WINAMP_CachePlaylist())
@@ -526,7 +524,7 @@ void MP3_WINAMP_PrintPlaylist_f(void)
 
 void MP3_WINAMP_PlayTrackNum_f(void) 
 {
-	int pos, length;
+	int pos, length = 0;
 
 	if (!MP3_WINAMP_IsPlayerRunning()) {
 		Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);

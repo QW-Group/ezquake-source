@@ -586,6 +586,10 @@ typedef struct {
 	int			minlight;
 
 	interpolate_t	int_projectiles[MAX_PROJECTILES];
+
+	int         last_armor_pickup;
+	int         last_weapon_pickup;
+	int         last_ammo_pickup;
 } clientState_t;
 
 extern	clientState_t	cl;

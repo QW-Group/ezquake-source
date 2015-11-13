@@ -758,7 +758,6 @@ void CopyToClipboard(const char *text)
 #ifdef _WIN32
     if (OpenClipboard(NULL))
     {
-        HANDLE i;
         LPTSTR  lptstrCopy;
         HGLOBAL hglbCopy;
 
@@ -767,7 +766,7 @@ void CopyToClipboard(const char *text)
         lptstrCopy = GlobalLock(hglbCopy);
         strcpy((char *)lptstrCopy, text);
         GlobalUnlock(hglbCopy);
-        i = SetClipboardData(CF_TEXT, hglbCopy);
+        SetClipboardData(CF_TEXT, hglbCopy);
 
         CloseClipboard();
     }

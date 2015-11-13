@@ -5609,7 +5609,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			if(	(cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
 				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].team, sorted_teams[i].name) == 0) && (Cam_TrackNum() >= 0))) ||
 				(strcmp(sorted_teams[i].name, cl.players[cl.playernum].team) == 0) ||
-				((cls.demoplayback || cl.spectator) && Cam_TrackNum() < 0))
+				((cls.mvdplayback || cl.spectator) && Cam_TrackNum() < 0))
 			{
 				s_team = sorted_teams[i].frags;
 				n_team = sorted_teams[i].name;
@@ -5632,7 +5632,7 @@ void SCR_HUD_DrawScoresBar(hud_t *hud)
 			if ((cls.demoplayback && !cl.spectator && !cls.mvdplayback && strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
 				((cls.demoplayback || cl.spectator) && ((strcmp(cl.players[spec_track].name, cl.players[sorted_players[i].playernum].name) == 0) && (Cam_TrackNum() >= 0))) ||
 				(strcmp(cl.players[sorted_players[i].playernum].name, cl.players[cl.playernum].name) == 0) ||
-				((cls.demoplayback || cl.spectator) && Cam_TrackNum() < 0))
+				((cls.mvdplayback || cl.spectator) && Cam_TrackNum() < 0))
 			{
 				// This is the current player
 				s_team = cl.players[sorted_players[i].playernum].frags;
