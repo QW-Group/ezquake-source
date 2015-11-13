@@ -2104,6 +2104,8 @@ char *shortinfotbl[] =
 	"skin",
 	"topcolor",
 	"bottomcolor",
+	"gender",
+	"g",
 #ifdef CHAT_ICON_EXPERIMENTAL
 	"chat",
 #endif

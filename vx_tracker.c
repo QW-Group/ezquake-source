@@ -622,14 +622,20 @@ void VX_TrackerStreakEnd(int player, int killer, int count)
 
 	if (player == killer) // streak ends due to suicide
 	{
+		char* userinfo_gender = Info_ValueForKey(cl.players[player].userinfo, "gender");
+		if (! *userinfo_gender)
+			userinfo_gender = Info_ValueForKey(cl.players[player].userinfo, "g");
+
 		if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 			snprintf(outstring, sizeof(outstring), "&c940You were looking good until you killed yourself (%i kills)", count);
-		else if (!strcmp(Info_ValueForKey(cl.players[player].userinfo, "g") , "female") || !strcmp(Info_ValueForKey(cl.players[player].userinfo, "g") , "1") || !strcmp(Info_ValueForKey(cl.players[player].userinfo, "gender") , "female") || !strcmp(Info_ValueForKey(cl.players[player].userinfo, "gender") , "1"))
-			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until she killed herself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
-		else if (!strcmp(Info_ValueForKey(cl.players[player].userinfo, "g") , "none") || !strcmp(Info_ValueForKey(cl.players[player].userinfo, "g") , "2") || !strcmp(Info_ValueForKey(cl.players[player].userinfo, "none") , "female") || !strcmp(Info_ValueForKey(cl.players[player].userinfo, "gender") , "2"))
-			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until it killed itself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
-		else
+		else if (!strcmp(userinfo_gender, "male") || !strcmp(userinfo_gender, "0"))
 			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until he killed himself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
+		else if (!strcmp(userinfo_gender, "female") || !strcmp(userinfo_gender, "1"))
+			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until she killed herself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
+		else if (!strcmp(userinfo_gender, "none") || !strcmp(userinfo_gender, "2"))
+			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until it killed itself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
+		else 
+			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good, then committed suicide (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
 	}
 	else // non suicide
 	{

@@ -183,34 +183,35 @@ cvar_t r_telesplash				= {"r_telesplash", "1"}; // disconnect
 cvar_t r_shaftalpha				= {"r_shaftalpha", "1"};
 
 // info mirrors
-cvar_t	password				= {"password", "", CVAR_USERINFO};
-cvar_t	spectator				= {"spectator", "", CVAR_USERINFO};
+cvar_t  password                = {"password", "", CVAR_USERINFO};
+cvar_t  spectator               = {"spectator", "", CVAR_USERINFO};
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
-cvar_t	name					= {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};
-cvar_t	team					= {"team", "", CVAR_USERINFO};
-cvar_t	topcolor				= {"topcolor","", CVAR_USERINFO};
-cvar_t	bottomcolor				= {"bottomcolor","", CVAR_USERINFO};
-cvar_t	skin					= {"skin", "", CVAR_USERINFO};
-cvar_t	rate					= {"rate", "5760", CVAR_USERINFO};
+cvar_t  name                    = {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};
+cvar_t  team                    = {"team", "", CVAR_USERINFO};
+cvar_t  topcolor                = {"topcolor","", CVAR_USERINFO};
+cvar_t  bottomcolor             = {"bottomcolor","", CVAR_USERINFO};
+cvar_t  skin                    = {"skin", "", CVAR_USERINFO};
+cvar_t  rate                    = {"rate", "5760", CVAR_USERINFO};
 void OnChange_AppliedAfterReconnect (cvar_t *var, char *value, qbool *cancel);
-cvar_t	mtu						= {"mtu", "", CVAR_USERINFO, OnChange_AppliedAfterReconnect};
-cvar_t	msg						= {"msg", "1", CVAR_USERINFO};
-cvar_t  noaim					= {"noaim", "1", CVAR_USERINFO};
-cvar_t	w_switch				= {"w_switch", "", CVAR_USERINFO};
-cvar_t	b_switch				= {"b_switch", "", CVAR_USERINFO};
-cvar_t	railcolor				= {"railcolor", "", CVAR_USERINFO};
+cvar_t  mtu                     = {"mtu", "", CVAR_USERINFO, OnChange_AppliedAfterReconnect};
+cvar_t  msg                     = {"msg", "1", CVAR_USERINFO};
+cvar_t  noaim                   = {"noaim", "1", CVAR_USERINFO};
+cvar_t  w_switch                = {"w_switch", "", CVAR_USERINFO};
+cvar_t  b_switch                = {"b_switch", "", CVAR_USERINFO};
+cvar_t  railcolor               = {"railcolor", "", CVAR_USERINFO};
+cvar_t  gender                  = {"gender", "", CVAR_USERINFO};
 
-cvar_t  cl_mediaroot			= {"cl_mediaroot", "0"};
+cvar_t  cl_mediaroot            = {"cl_mediaroot", "0"};
 
-cvar_t  msg_filter				= {"msg_filter", "0"};
+cvar_t  msg_filter              = {"msg_filter", "0"};
 
-cvar_t cl_onload				= {"cl_onload", "menu"};
+cvar_t  cl_onload               = {"cl_onload", "menu"};
 
 #ifdef WIN32
-cvar_t cl_verify_qwprotocol		= {"cl_verify_qwprotocol", "1"};
+cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
 #endif // WIN32
 
-cvar_t demo_autotrack			= {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
+cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 /// persistent client state
 clientPersistent_t	cls;
@@ -1874,6 +1875,7 @@ void CL_InitLocal (void)
 	Cvar_Register (&w_switch);
 	Cvar_Register (&b_switch);
 	Cvar_Register (&railcolor);
+	Cvar_Register (&gender);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register (&cl_predict_players);
