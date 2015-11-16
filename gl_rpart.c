@@ -2926,7 +2926,7 @@ void VX_TeslaCharge (vec3_t org)
 void VX_LightningBeam (vec3_t start, vec3_t end)
 {
 	//col_t color={120,140,255,255};
-	AddParticle(p_lightningbeam, start, 1, 100, min(0.013, cls.frametime*2), amf_lightning_color.color, end);
+	AddParticle(p_lightningbeam, start, 1, 100, cls.frametime ? cls.frametime*2 : 0.013, amf_lightning_color.color, end);
 }
 
 //VULT PARTICLES
