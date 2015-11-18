@@ -1438,7 +1438,7 @@ void CL_Reconnect_f (void)
 	}
 
 	// remember what's the type of this new connection
-	connected_via_proxy = cl_proxyaddr.string[0];
+	connected_via_proxy = cl_proxyaddr.string[0] ? true : false;
 }
 
 extern double qstat_senttime;

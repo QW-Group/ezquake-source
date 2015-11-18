@@ -253,6 +253,7 @@ static void qtvlist_qtv_cmd(void)
 	char tmp[256] = {0};
 	char *port;
 	const char *qtvaddress;
+	extern qbool connected_via_proxy;
 
 	if (qtvlist_mutex == NULL) {
 		Com_Printf("error: cannot read QTV list, mutex not initialized\n");
@@ -265,7 +266,31 @@ static void qtvlist_qtv_cmd(void)
 			Com_Printf("error: not connected to a server\n");
 			return;
 		}
-		strlcpy(&tmp[0], NET_AdrToString(cls.server_adr), sizeof(tmp));
+
+		/* FIXME: It's pretty ugly, refactor all this so that we can for sure
+		 * keep track of where we are connected, what kind of endpoint it is and
+		 * also which server we asked the proxy to connect to...
+		 */
+		if (connected_via_proxy) {
+			/* If connected through proxy, the target server is 
+			 * hopefully still in userinfo/prx
+			 */
+			char *prx = Info_ValueForKey(cls.userinfo, "prx");
+			char *srv = strrchr(prx, '@');
+			if (srv) {
+				srv++;
+			} else {
+				srv = prx;
+			}
+
+			if (!prx[0]) {
+				Com_Printf("error: connected through proxy but missing 'prx' userinfo, can't find QTV stream\n");
+				return;
+			}
+			strlcpy(&tmp[0], srv, sizeof(tmp));
+		} else {
+			strlcpy(&tmp[0], NET_AdrToString(cls.server_adr), sizeof(tmp));
+		}
 	} else if (Cmd_Argc() == 2) {
 		/* User provided which qwserver to find a QTV stream address for */
 		strlcpy(&tmp[0], Cmd_Argv(1), sizeof(tmp));
