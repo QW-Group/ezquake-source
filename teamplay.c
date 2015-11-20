@@ -1466,34 +1466,33 @@ qbool TP_TeamLockSpecified()
 {
 	// 1 => return 1st team (doesn't matter which, just locks colours)
 	// non-blank string => use that teamname as the client's team
-	return cl_teamlock.integer != 0 || (cl_teamlock.string[0] && strcmp(cl_teamlock.string, "0"));
+	return cl.spectator && (cl_teamlock.integer != 0 || (cl_teamlock.string[0] && strcmp(cl_teamlock.string, "0")));
 }
 
 char *TP_SkinForcingTeam()
 {
 	int tracknum;
 
-	if (cl_teamlock.integer == 1) {
+	if (!cl.spectator)
+	{
+		// Normal player.
+		return cl.players[cl.playernum].team;
+	}
+	else if (cl_teamlock.integer == 1) {
 		int i;
 		for (i = 0; i < MAX_CLIENTS; i++) {
 			if (cl.players[i].name[0] && !cl.players[i].spectator && cl.players[i].team[0]) {
 				return cl.players[i].team;
-				break;
 			}
 		}
 	}
 	else if (cl_teamlock.string[0] && strcmp(cl_teamlock.string, "0")) {
 		return cl_teamlock.string;
 	}
-	else if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
+	else if ((tracknum = Cam_TrackNum()) != -1)
 	{
 		// Spectating and tracking someone (not free flying).
 		return cl.players[tracknum].team;
-	}
-	else if (!cl.spectator)
-	{
-		// Normal player.
-		return cl.players[cl.playernum].team;
 	}
 
 	return "";
