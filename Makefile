@@ -313,8 +313,8 @@ else
     LIBS_c += -lm
 
     ifeq ($(SYS),Darwin)
-        LIBS_c += -framework OpenGL -framework IOKit -framework CoreServices -ldl
-	OBJS_c += in_osx.o
+        LIBS_c += -framework Foundation -framework OpenGL -framework IOKit -framework CoreServices -ldl
+        OBJS_c += in_osx.o sys_osx.o
     else
         LIBS_c += -lGL
     endif
@@ -383,6 +383,11 @@ strip: $(TARG_c)
 # ------
 
 $(BUILD_c)/%.o: %.c
+	$(E) [CC] $@
+	$(Q)$(MKDIR) $(@D)
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $<
+
+$(BUILD_c)/%.o: %.m
 	$(E) [CC] $@
 	$(Q)$(MKDIR) $(@D)
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $<

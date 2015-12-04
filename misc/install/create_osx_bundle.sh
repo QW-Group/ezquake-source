@@ -48,5 +48,12 @@ chmod u+x $BUNDLE_NAME/Contents/MacOS/ezquake
 /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string \"net.sf.ezquake\"" $BUNDLE_NAME/Contents/Info.plist
 /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string \"3.0.0\"" $BUNDLE_NAME/Contents/Info.plist
 
+# qw:// protocol support
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string QW" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string qw" $BUNDLE_NAME/Contents/Info.plist
+
 sh $(dirname $0)/fixbundle.sh $BUNDLE_NAME $BUNDLE_NAME/Contents/MacOS/$BINARY
 ditto -c -k --keepParent --arch x86_64 $BUNDLE_NAME ezquake.zip

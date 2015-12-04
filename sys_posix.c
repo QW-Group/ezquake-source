@@ -97,6 +97,12 @@ void Sys_Quit(void)
 
 void Sys_Init(void)
 {
+#ifdef __APPLE__
+       extern void init_url_handler();
+       
+       init_url_handler();
+#endif
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
 	Cvar_Register (&sys_yieldcpu);
 	Cvar_ResetCurrentGroup();
