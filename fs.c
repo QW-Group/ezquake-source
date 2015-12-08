@@ -616,11 +616,13 @@ void FS_SetGamedir (char *dir)
 	// Flush all data, so it will be forced to reload.
 	Cache_Flush ();
 
-	snprintf (com_gamedir, sizeof (com_gamedir), "%s/%s", com_basedir, dir);
+	snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", com_basedir, dir);
 
-	FS_AddGameDirectory(va("%s/%s", com_basedir, dir), FS_LOAD_FILE_ALL);
+	FS_AddGameDirectory(com_gamedir, FS_LOAD_FILE_ALL);
 	if (*com_homedir) {
-		FS_AddHomeDirectory(va("%s/%s", com_homedir, dir), FS_LOAD_FILE_ALL);
+		char tmp[MAX_OSPATH];
+		snprintf(&tmp[0], sizeof(tmp), "%s/%s", com_homedir, dir);
+		FS_AddHomeDirectory(tmp, FS_LOAD_FILE_ALL);
 	}
 
 	// Reload gamedir specific conback as its not flushed
@@ -683,6 +685,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #ifndef _WIN32
 	char *ev;
 #endif
+	char tmp_path[MAX_OSPATH];
 
 	FS_ShutDown();
 
@@ -731,19 +734,17 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		com_basedir[i] = 0;
 
 #ifdef _WIN32
-    // gets "C:\documents and settings\johnny\my documents" path
-    if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0)) 
-	{
+	// gets "C:\documents and settings\johnny\my documents" path
+	if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0)) {
 		*com_homedir = 0;
 	}
 
 	// <Cokeman> yea, but it shouldn't be in My Documents
 	// <Cokeman> it should be in the application data dir
 	// c:\documents and settings\<user>\application data
-    //if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_APPDATA, 0))
-    //{
-    //    *com_homedir = 0;
-    //}
+	//if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_APPDATA, 0)) {
+	//	*com_homedir = 0;
+	//}
 #else
 	ev = getenv("HOME");
 	if (ev)
@@ -766,23 +767,27 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	}
 
 	// start up with id1 by default
-	FS_AddGameDirectory(va("%s/%s", com_basedir, "id1"),     FS_LOAD_FILE_ALL);
-	FS_AddGameDirectory(va("%s/%s", com_basedir, "ezquake"), FS_LOAD_FILE_ALL);
-	FS_AddGameDirectory(va("%s/%s", com_basedir, "qw"),      FS_LOAD_FILE_ALL);
-	if (*com_homedir)
+	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "id1");
+	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "ezquake");
+	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "qw");
+	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	if (*com_homedir) {
 	        FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
+	}
 
-	//
 	// -data <datadir>
 	// Adds datadirs similar to "-game"
 	//
-    //Tei: original code from qbism.
+	//Tei: original code from qbism.
+
 	i = 1;
-	while((i = COM_CheckParmOffset ("-data", i)))
-	{
-		if (i && i < COM_Argc()-1)
-		{
-			FS_AddGameDirectory(va("%s%s", com_basedir, COM_Argv(i+1)), FS_LOAD_FILE_ALL);
+	while((i = COM_CheckParmOffset ("-data", i))) {
+		if (i && i < COM_Argc()-1) {
+			char tmp_path[MAX_OSPATH];
+			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", com_basedir, COM_Argv(i+1)); /* FIXME: No slash?? Intentional?? */
+			FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 		}
 		i++;
 	}
@@ -1387,9 +1392,10 @@ int FS_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 	}
 
 	// Append the extension if any.
-	if (append_extension != NULL)
-	{
-		strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
+	if (append_extension != NULL) {
+		char tmp_path[MAX_OSPATH];
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, append_extension);
+		strlcpy (unpack_path, tmp_path, unpack_path_size);
 	}
 
 	// Unpack the file.
@@ -1554,7 +1560,9 @@ int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 	// Append the extension if any.
 	if (append_extension != NULL)
 	{
-		strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
+		char tmp_path[MAX_OSPATH];
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, append_extension);
+		strlcpy (unpack_path, tmp_path, unpack_path_size);
 	}
 
 	// Unpack the file.
@@ -1614,9 +1622,10 @@ int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
 	// Unpack the file
 	retval = FS_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, true, password);
 
-	if (retval == UNZ_OK)
-	{
-		strlcpy (unpack_path, va("%s%s", unpack_path, filename_inzip), unpack_path_size);
+	if (retval == UNZ_OK) {
+		char tmp_path[MAX_OSPATH];
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, filename_inzip);
+		strlcpy (unpack_path, tmp_path, unpack_path_size);
 	}
 	else
 	{
@@ -1638,7 +1647,7 @@ int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the
 	char regexp[MAX_PATH];
 	int result_length = 0;
 
-	strlcpy (regexp, va("(.*?\\.%s)(\\\\|/)(.*)", archive_extension), sizeof(regexp));
+	snprintf(regexp, sizeof(regexp), "(.*?\\.%s)(\\\\|/)(.*)", archive_extension);
 
 	// Get the archive path.
 	if (Utils_RegExpGetGroup (regexp, path, (const char **) &archive_path_found, &result_length, 1))
@@ -1877,20 +1886,23 @@ int FS_ZipUnpackCurrentFile (unzFile zip_file,
 	// Check if the file already exists and create the path if needed.
 	//
 	{
+		char tmp_path[MAX_OSPATH];
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", destination_path, filename);
+
 		// Check if the file exists.
-		if (COM_FileExists (va("%s/%s", destination_path, filename)) && !overwrite)
-		{
+		if (COM_FileExists(tmp_path) && !overwrite) {
 			error = UNZ_ERRNO;
 			goto finish;
 		}
 
 		// Create the destination dir if it doesn't already exist.
-		FS_CreatePath (va("%s%c", destination_path, PATH_SEPARATOR));
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%c", destination_path, PATH_SEPARATOR);
+		FS_CreatePath(tmp_path);
 
 		// Create the relative path before extracting.
-		if (keep_path)
-		{
-			FS_CreatePath (va("%s%c%s", destination_path, PATH_SEPARATOR, filename));
+		if (keep_path) {
+			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%c%s", destination_path, PATH_SEPARATOR, filename);
+			FS_CreatePath(tmp_path);
 		}
 	}
 
@@ -1921,7 +1933,9 @@ int FS_ZipUnpackCurrentFile (unzFile zip_file,
 		// Open the destination file for writing.
 		//
 		{
-			fout = fopen (va("%s/%s", destination_path, filename), "wb");
+			char tmp_path[MAX_OSPATH];
+			snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", destination_path, filename);
+			fout = fopen(tmp_path, "wb");
 
 			// Failure.
 			if (fout == NULL)
@@ -2343,7 +2357,9 @@ char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 	{
 		for (search = fs_purepaths ; search ; search = search->nextpure)
 		{
-			strlcat (buffer, va("%i ", search->crc_check), buffersize);
+			char tmp[64];
+			snprintf(&tmp[0], sizeof(tmp), "%i ", search->crc_check);
+			strlcat(buffer, tmp, buffersize);
 		}
 		return buffer;
 	}
@@ -2355,7 +2371,9 @@ char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
 				search->crc_check = search->funcs->GeneratePureCRC(search->handle, 0, 0);
 			if (search->crc_check)
 			{
-				strlcat (buffer, va("%i ", search->crc_check), buffersize);
+				char tmp[64];
+				snprintf(&tmp[0], sizeof(tmp), "%i ", search->crc_check);
+				strlcat(buffer, tmp, buffersize);
 			}
 		}
 		return buffer;
@@ -2845,6 +2863,7 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 	size_t size;
 	searchpath_t *search;
 	char *p;
+	char tmp_path[MAX_OSPATH];
 
 	if ((p = strrchr(dir, '/')) != NULL)
 		strlcpy (com_gamedirfile, ++p, sizeof (com_gamedirfile));
@@ -2866,7 +2885,8 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 	size = strlen (dir) + 1;
 	p = Q_malloc (size);
 	strlcpy (p, dir, size);
-	FS_AddPathHandle (va ("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
+	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/", dir);
+	FS_AddPathHandle (tmp_path, &osfilefuncs, p, false, false, loadstuff);
 }
 
 /*
@@ -2882,6 +2902,7 @@ void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
 	size_t size;
 	searchpath_t *search;
 	char *p;
+	char tmp_path[MAX_OSPATH];
 
 	for (search = fs_searchpaths; search; search = search->next)
 	{
@@ -2897,7 +2918,8 @@ void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
 	p = Q_malloc (size);
 	strlcpy (p, dir, size);
 
-	FS_AddPathHandle (va ("%s/", dir), &osfilefuncs, p, false, false, loadstuff);
+	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/", dir);
+	FS_AddPathHandle (tmp_path, &osfilefuncs, p, false, false, loadstuff);
 }
 
 //space-seperate pk3 names followed by space-seperated crcs
@@ -2979,29 +3001,36 @@ char *FS_GenerateClientPacksList(char *buffer, int maxlen, int basechecksum)
 	flocation_t loc;
 	int numpaks = 0;
 	searchpath_t *sp;
+	char tmp[64];
 
 	FS_FLocateFile("vm/cgame.qvm", FSLFRT_LENGTH, &loc);
-	strlcat(buffer, va("%i ", loc.search->crc_reply), maxlen);
+	
+	snprintf(&tmp[0], sizeof(tmp), "%i ", loc.search->crc_reply);
+	strlcat(buffer, tmp, maxlen);
+
 	basechecksum ^= loc.search->crc_reply;
 
 	FS_FLocateFile("vm/ui.qvm", FSLFRT_LENGTH, &loc);
-	strlcat(buffer, va("%i ", loc.search->crc_reply), maxlen);
+
+	snprintf(&tmp[0], sizeof(tmp), "%i ", loc.search->crc_reply);
+	strlcat(buffer, tmp, maxlen);
+
 	basechecksum ^= loc.search->crc_reply;
 
 	strlcat(buffer, "@ ", maxlen);
 
-	for (sp = fs_purepaths; sp; sp = sp->nextpure)
-	{
-		if (sp->crc_reply)
-		{
-			strlcat(buffer, va("%i ", sp->crc_reply), maxlen);
+	for (sp = fs_purepaths; sp; sp = sp->nextpure) {
+		if (sp->crc_reply) {
+			snprintf(&tmp[0], sizeof(tmp), "%i ", sp->crc_reply);
+			strlcat(buffer, tmp, maxlen);
 			basechecksum ^= sp->crc_reply;
 			numpaks++;
 		}
 	}
 
 	basechecksum ^= numpaks;
-	strlcat (buffer, va("%i ", basechecksum), maxlen);
+	snprintf(&tmp[0], sizeof(tmp), "%i ", basechecksum);
+	strlcat (buffer, tmp, maxlen);
 
 	return buffer;
 }
