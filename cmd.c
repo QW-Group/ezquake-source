@@ -1499,7 +1499,8 @@ void Cmd_MacroList_f (void)
 	Com_Printf ("------------\n%i/%i macros\n", m, macro_count);
 }
 
-
+void TP_SetDefaultMacroFormat(char* cvar_lookup, int* fixed_width, int* alignment);
+char* TP_AlignMacroText(char* text, int fixed_width, int alignment);
 
 //Expands all $cvar expressions to cvar values
 //Also expands $macro expressions
@@ -1549,6 +1550,13 @@ void Cmd_ExpandString (const char *data, char *dest)
 			}
 
 			if (str) {
+				int fixed_width = 0;
+				int alignment = 0;
+
+				TP_SetDefaultMacroFormat(buf, &fixed_width, &alignment);
+				if (fixed_width != 0)
+					str = TP_AlignMacroText(str, fixed_width, alignment);
+
 				// check buffer size
 				if (len + strlen (str) >= 1024 - 1)
 					break;

@@ -44,8 +44,6 @@ cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
 cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
 cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"}; // FIXME: buggy
-cvar_t  tp_fixedLocLength = {"tp_fixedloclength", "0"};
-cvar_t  tp_fixedLocCentered = {"tp_fixedloccentered", "0"};
 cvar_t  tp_tooktimeout = {"tp_tooktimeout", "15"};
 cvar_t  tp_pointtimeout = {"tp_pointtimeout", "15"};
 
@@ -145,6 +143,10 @@ void R_TranslatePlayerSkin (int playernum);
 #define POINT_TYPE_POWERUP		2
 #define POINT_TYPE_TEAMMATE		3
 #define	POINT_TYPE_ENEMY		4
+
+#define TP_MACRO_ALIGNMENT_LEFT     0
+#define TP_MACRO_ALIGNMENT_RIGHT    1
+#define TP_MACRO_ALIGNMENT_CENTERED 2
 
 tvars_t vars;
 
@@ -419,28 +421,9 @@ char *Macro_Powerups (void)
 	return macro_buf;
 }
 
-static void TP_SetLocationText(char* output, int max_length, const char* text)
-{
-	if (!tp_fixedLocLength.integer || !text[0]) {
-		strlcpy(output, text, max_length);
-	}
-	else {
-		int location_length = min(max_length - 1, tp_fixedLocLength.integer);
-		int string_length = strlen(text);
-		int padLeft = (location_length - string_length) / 2;
-		int padRight = (location_length - string_length) - padLeft;
-
-		memset(output, 0, max_length);
-		if (!tp_fixedLocCentered.integer || padLeft <= 0)
-			snprintf(output, max_length - 1, "%-*.*s", location_length, location_length, text);
-		else
-			snprintf(output, max_length - 1, "%*s%s%*s", padLeft, " ", text, padRight, " ");
-	}
-}
-
 char *Macro_Location (void)
 {
-	TP_SetLocationText(vars.lastreportedloc, sizeof(vars.lastreportedloc), TP_LocationName(cl.simorg));
+	strlcpy(vars.lastreportedloc, TP_LocationName(cl.simorg), sizeof(vars.lastreportedloc));
 
 	return vars.lastreportedloc;
 }
@@ -453,9 +436,9 @@ char *Macro_LastDeath (void)
 char *Macro_Last_Location (void)
 {
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5)
-		TP_SetLocationText(vars.lastreportedloc, sizeof(vars.lastreportedloc), vars.lastdeathloc);
+		strlcpy(vars.lastreportedloc, vars.lastdeathloc, sizeof(vars.lastreportedloc));
 	else
-		TP_SetLocationText(vars.lastreportedloc, sizeof(vars.lastreportedloc), TP_LocationName(cl.simorg));
+		strlcpy(vars.lastreportedloc, TP_LocationName(cl.simorg), sizeof(vars.lastreportedloc));
 	return vars.lastreportedloc;
 }
 
@@ -1197,6 +1180,129 @@ wchar *TP_ParseWhiteText (const wchar *s, qbool team, int offset)
 	return buf;
 }
 
+static int TP_MacroStringLength(char* output, const char* text, int buffer_length, int printable_length)
+{
+	extern cvar_t cl_parseWhiteText;
+	qbool in_colour = false;
+	qbool in_braces = false;
+	int printed_length = 0;
+	int buffered_length = 0;
+	const char* s = 0;
+
+	memset(output, 0, buffer_length);
+	buffer_length -= 1;
+	for (s = text; *s && printed_length < printable_length && buffered_length < buffer_length - (in_braces ? 1 : 0) - (in_colour ? 2 : 0); ++s) {
+		if (*s == '&') {
+			if (s[1] == 'c' && s[2] && s[3] && s[4]) {
+				if (HexToInt(s[2]) >= 0 && HexToInt(s[3]) >= 0 && HexToInt(s[4]) >= 0) {
+					if (buffer_length - buffered_length <= 5)
+						break;
+					memcpy(output + buffered_length, s, 5);
+					buffered_length += 5;
+					in_colour = HexToInt(s[2]) != 15 || HexToInt(s[3]) != 15 || HexToInt(s[4]) != 15;	// &cFFF used instead of &r...
+					s += 4;
+					continue; 
+				}
+			}
+			else if (s[1] == 'r') {
+				if (buffer_length - buffered_length <= 2)
+					break;
+				output[buffered_length++] = '&';
+				output[buffered_length++] = 'r';
+				++s;
+				in_colour = false;
+				continue; 
+			}
+		}
+		else if (cl_parseWhiteText.value) {
+			// We don't really know if the other clients have this set, presume same settings on all machines
+			if ((s[0] == '{' && s[1] != '{') || (s[0] == '}' && s[1] != '}')) {
+				output[buffered_length++] = s[0];
+				in_braces = (s[0] == '{');
+				continue;
+			}
+		}
+
+		output[buffered_length++] = s[0];
+		++printed_length;
+	}
+
+	if (in_colour && buffered_length < buffer_length - 2) {
+		output[buffered_length++] = '&';
+		output[buffered_length++] = 'r';
+	}
+	if (in_braces && buffered_length < buffer_length - 1) {
+		output[buffered_length++] = '}';
+	}
+	output[buffer_length - 1] = 0;
+
+	return printed_length;
+}
+
+char* TP_AlignMacroText(char* text, int fixed_width, int alignment)
+{
+	static char output[MAX_MACRO_STRING];
+	static char content[MAX_MACRO_STRING];
+	int string_length = 0;
+	int spaces = 0;
+
+	if (fixed_width == 0)
+		return text;
+
+	string_length = TP_MacroStringLength(content, text, MAX_MACRO_STRING, fixed_width);
+	spaces = max(fixed_width - string_length, 0);
+
+	memset(output, 0, sizeof(output));
+	switch (alignment)
+	{
+	case TP_MACRO_ALIGNMENT_RIGHT:
+		snprintf(output, MAX_MACRO_STRING - 1, "%*s%s", spaces, "", content);
+		break;
+	case TP_MACRO_ALIGNMENT_CENTERED:
+		snprintf(output, MAX_MACRO_STRING - 1, "%*s%s%*s", spaces / 2, "", content, (spaces + 1) / 2, "");
+		break;
+	case TP_MACRO_ALIGNMENT_LEFT:
+	default:
+		snprintf(output, MAX_MACRO_STRING - 1, "%s%*s", content, spaces, "");
+		break;
+	}
+
+	return output;
+}
+
+void TP_SetDefaultMacroFormat(char* cvar_ext, int* fixed_width, int* alignment)
+{
+	char cvar_name[128] = { 0 };
+	cvar_t* width_cvar; 
+	cvar_t* alignment_cvar;
+
+	snprintf(cvar_name, sizeof(cvar_name) - 1, "tp_length_%s", cvar_ext);
+	width_cvar = Cvar_Find(cvar_name);
+
+	*fixed_width = 0;
+	*alignment = TP_MACRO_ALIGNMENT_LEFT;
+
+	if (width_cvar) {
+		*fixed_width = max(0, min(width_cvar->integer, 40));
+
+		snprintf(cvar_name, sizeof(cvar_name) - 1, "tp_align_%s", cvar_ext);
+		alignment_cvar = Cvar_Find(cvar_name);
+		if (alignment_cvar && tolower(alignment_cvar->string[0]) == 'r')
+			*alignment = TP_MACRO_ALIGNMENT_RIGHT;
+		else if (alignment_cvar && tolower(alignment_cvar->string[0]) == 'c')
+			*alignment = TP_MACRO_ALIGNMENT_CENTERED;
+	}
+}
+
+static void TP_SetDefaultMacroCharFormat(qbool extended, char character, int* fixed_width, int* alignment)
+{
+	char cvar_ext[128] = { 0 };
+
+	snprintf(cvar_ext, sizeof(cvar_ext) - 1, "%s%s%c", extended ? "ext_" : "", isupper(character) ? "caps_" : "", character);
+
+	TP_SetDefaultMacroFormat(cvar_ext, fixed_width, alignment);
+}
+
 //Parses %a-like expressions
 char *TP_ParseMacroString (char *s)
 {
@@ -1218,12 +1324,50 @@ char *TP_ParseMacroString (char *s)
 	pn = pN = 0;
 
 	while (*s && i < MAX_MACRO_STRING - 1) {
+		qbool is_macro_indicator = (*s == '%');
+		int fixed_width = 0;
+		int alignment = 0;
+		qbool explicit_format = false;
+
+		// check for %<size[alignment]>
+		if (is_macro_indicator && s[1] == '<') {
+			char* start = s;
+
+			s += 2;
+			
+			while (s[0] && s[0] != '>')
+			{
+				if (s[0] >= '0' && s[0] <= '9')
+					fixed_width = fixed_width * 10 + (s[0] - '0');
+				else if ((s[0] == 'l' || s[0] == 'L') && s[1] == '>')
+					alignment = TP_MACRO_ALIGNMENT_LEFT;
+				else if ((s[0] == 'r' || s[0] == 'R') && s[1] == '>')
+					alignment = TP_MACRO_ALIGNMENT_RIGHT;
+				else if ((s[0] == 'c' || s[0] == 'C') && s[1] == '>')
+					alignment = TP_MACRO_ALIGNMENT_CENTERED;
+				else
+					break;
+
+				++s;
+			}
+
+			// not valid string
+			if (s[0] != '>') {
+				s = start;
+				buf[i++] = *s++;
+				continue;
+			}
+
+			explicit_format = true;
+		}
+
 		// check %[P], etc
-		if (*s == '%' && s[1]=='[' && s[2] && s[3]==']') {
+		if (is_macro_indicator && s[1]=='[' && s[2] && s[3]==']') {
 			static char mbuf[MAX_MACRO_VALUE];
+			char cvar_lookup_char = s[2];
 
 			switch (s[2]) {
-					case 'a':
+				case 'a':
 					macro_string = Macro_ArmorType();
 					if (!strcmp(macro_string, tp_name_none.string))
 						macro_string = "a";
@@ -1234,7 +1378,7 @@ char *TP_ParseMacroString (char *s)
 					macro_string = mbuf;
 					break;
 
-					case 'h':
+				case 'h':
 					if (cl.stats[STAT_HEALTH] >= 50)
 						snprintf (macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
 					else
@@ -1242,8 +1386,8 @@ char *TP_ParseMacroString (char *s)
 					macro_string = macro_buf;
 					break;
 
-					case 'p':
-					case 'P':
+				case 'p':
+				case 'P':
 					macro_string = Macro_Powerups();
 					if (strcmp(macro_string, tp_name_none.string))
 						snprintf (mbuf, sizeof(mbuf), "\x10%s\x11", macro_string);
@@ -1252,10 +1396,17 @@ char *TP_ParseMacroString (char *s)
 					macro_string = mbuf;
 					break;
 
-					default:
+				default:
 					buf[i++] = *s++;
 					continue;
 			}
+
+			if (!explicit_format)
+				TP_SetDefaultMacroCharFormat(true, cvar_lookup_char, &fixed_width, &alignment);
+
+			if (fixed_width)
+				macro_string = TP_AlignMacroText(macro_string, fixed_width, alignment);
+
 			if (i + strlen(macro_string) >= MAX_MACRO_STRING - 1)
 				Sys_Error("TP_ParseMacroString: macro string length > MAX_MACRO_STRING)");
 			strlcpy (&buf[i], macro_string, MAX_MACRO_STRING - i);
@@ -1265,48 +1416,60 @@ char *TP_ParseMacroString (char *s)
 		}
 
 		// check %a, etc
-		if (*s == '%') {
+		if (is_macro_indicator) {
+			char cvar_lookup_char = s[1];
+
 			switch (s[1]) {
-					//case '\x7f': macro_string = ""; break;// skip cause we use this to hide mesgs
-					//case '\xff': macro_string = ""; break;
-					case 'n':   pn = 1; macro_string = ""; break;
-					case 'N':   pN = 1; macro_string = ""; break;
-					case 'a':	macro_string = Macro_Armor(); break;
-					case 'A':	macro_string = Macro_ArmorType(); break;
-					case 'b':	macro_string = Macro_BestWeaponAndAmmo(); break;
-					case 'c':	macro_string = Macro_Cells(); break;
-					case 'd':	macro_string = Macro_LastDeath(); break;
-					case 'h':	macro_string = Macro_Health(); break;
-					case 'i':	macro_string = Macro_TookAtLoc(); break;
-					case 'j':	macro_string = Macro_LastPointAtLoc(); break;
-					case 'k':	macro_string = Macro_LastTookOrPointed(); break;
-					case 'l':	macro_string = Macro_Location(); break;
-					case 'L':	macro_string = Macro_Last_Location(); break;
-					case 'm':	macro_string = Macro_LastTookOrPointed(); break;
+				//case '\x7f': macro_string = ""; break;// skip cause we use this to hide mesgs
+				//case '\xff': macro_string = ""; break;
+				case 'n':   pn = 1; macro_string = ""; break;
+				case 'N':   pN = 1; macro_string = ""; break;
+				case 'a':	macro_string = Macro_Armor(); break;
+				case 'A':	macro_string = Macro_ArmorType(); break;
+				case 'b':	macro_string = Macro_BestWeaponAndAmmo(); break;
+				case 'c':	macro_string = Macro_Cells(); break;
+				case 'd':	macro_string = Macro_LastDeath(); cvar_lookup_char = 'l'; break;
+				case 'h':	macro_string = Macro_Health(); break;
+				case 'i':	macro_string = Macro_TookAtLoc(); cvar_lookup_char = 'l'; break;
+				case 'j':	macro_string = Macro_LastPointAtLoc(); cvar_lookup_char = 'l'; break;
+				case 'k':	macro_string = Macro_LastTookOrPointed(); break;
+				case 'l':	macro_string = Macro_Location(); cvar_lookup_char = 'l'; break;
+				case 'L':	macro_string = Macro_Last_Location(); cvar_lookup_char = 'l'; break;
+				case 'm':	macro_string = Macro_LastTookOrPointed(); break;
 
-					case 'o':	macro_string = Macro_CountNearbyFriendlyPlayers(); break;
-					case 'e':	macro_string = Macro_CountNearbyEnemyPlayers(); break;
-					case 'O':	macro_string = Macro_Count_Last_NearbyFriendlyPlayers(); break;
-					case 'E':	macro_string = Macro_Count_Last_NearbyEnemyPlayers(); break;
+				case 'o':	macro_string = Macro_CountNearbyFriendlyPlayers(); break;
+				case 'e':	macro_string = Macro_CountNearbyEnemyPlayers(); break;
+				case 'O':	macro_string = Macro_Count_Last_NearbyFriendlyPlayers(); break;
+				case 'E':	macro_string = Macro_Count_Last_NearbyEnemyPlayers(); break;
 
-					case 'P':
-					case 'p':	macro_string = Macro_Powerups(); break;
-					case 'q':	macro_string = Macro_LastSeenPowerup(); break;
-					case 'r':	macro_string = Macro_LastReportedLoc(); break;
-					case 'R':	macro_string = Macro_Rune(); break;
-					case 's':	macro_string = Macro_EnemyStatus_LED(); break;
-					case 'S':	macro_string = Macro_TF_Skin(); break;
-					case 't':	macro_string = Macro_PointNameAtLocation(); break;
-					case 'u':	macro_string = Macro_Need(); break;
-					case 'w':	macro_string = Macro_WeaponAndAmmo(); break;
-					case 'x':	macro_string = Macro_PointName(); break;
-					case 'X':	macro_string = Macro_Took(); break;
-					case 'y':	macro_string = Macro_PointLocation(); break;
-					case 'Y':	macro_string = Macro_TookLoc(); break;
-					default:
-					buf[i++] = *s++;
+				case 'P':
+				case 'p':	macro_string = Macro_Powerups(); cvar_lookup_char = 'p'; break;
+				case 'q':	macro_string = Macro_LastSeenPowerup(); break;
+				case 'r':	macro_string = Macro_LastReportedLoc(); cvar_lookup_char = 'l'; break;
+				case 'R':	macro_string = Macro_Rune(); break;
+				case 's':	macro_string = Macro_EnemyStatus_LED(); break;
+				case 'S':	macro_string = Macro_TF_Skin(); break;
+				case 't':	macro_string = Macro_PointNameAtLocation(); break;
+				case 'u':	macro_string = Macro_Need(); break;
+				case 'w':	macro_string = Macro_WeaponAndAmmo(); break;
+				case 'x':	macro_string = Macro_PointName(); break;
+				case 'X':	macro_string = Macro_Took(); cvar_lookup_char = 'x'; break;
+				case 'y':	macro_string = Macro_PointLocation(); cvar_lookup_char = 'l'; break;
+				case 'Y':	macro_string = Macro_TookLoc(); cvar_lookup_char = 'l'; break;
+				case '%': 
+					++s;	// deliberate fall-through, skip this % and print the next
+				default:
+					buf[i++] = '%';
+					++s;
 					continue;
 			}
+
+			if (!explicit_format)
+				TP_SetDefaultMacroCharFormat(false, cvar_lookup_char, &fixed_width, &alignment);
+
+			if (fixed_width)
+				macro_string = TP_AlignMacroText(macro_string, fixed_width, alignment);
+
 			if (i + strlen(macro_string) >= MAX_MACRO_STRING - 1)
 				Sys_Error("TP_ParseMacroString: macro string length > MAX_MACRO_STRING)");
 			strlcpy (&buf[i], macro_string, MAX_MACRO_STRING - i);
@@ -2827,7 +2990,7 @@ static int FindNearestItem (int flags, item_t **pitem)
 	}
 
 	if (bestent)
-		TP_SetLocationText(vars.nearestitemloc, sizeof(vars.nearestitemloc), TP_LocationName(bestent->origin));
+		strlcpy(vars.nearestitemloc, TP_LocationName(bestent->origin), sizeof(vars.nearestitemloc));
 	else
 		vars.nearestitemloc[0] = 0;
 
@@ -2893,7 +3056,7 @@ static void ExecTookTrigger (char *s, int flag, vec3_t org)
 	vars.tooktime = cls.realtime;
     vars.tookflag = flag;
 	strlcpy (vars.tookname, s, sizeof (vars.tookname));
-	TP_SetLocationText(vars.tookloc, sizeof(vars.tookloc), TP_LocationName(org));
+	strlcpy (vars.tookloc, TP_LocationName(org), sizeof(vars.tookloc));
 
 	if ((tookflags_dmm & flag) && CheckTrigger())
 		TP_ExecTrigger ("f_took");
@@ -3282,7 +3445,7 @@ void TP_FindPoint (void)
 		strlcat (buf, va("%s%s", buf[0] ? " " : "", name), sizeof (buf) - strlen (buf));
 		strlcpy (vars.pointname, buf, sizeof (vars.pointname));
         vars.pointflag = flag;
-		TP_SetLocationText(vars.pointloc, sizeof(vars.pointloc), TP_LocationName(beststate->origin));
+		strlcpy (vars.pointloc, TP_LocationName(beststate->origin), sizeof(vars.pointloc));
 		
 		vars.pointtype = (teammate && !eyes) ? POINT_TYPE_TEAMMATE : POINT_TYPE_ENEMY;
 	} else if (best >= 0) {
@@ -3303,7 +3466,7 @@ void TP_FindPoint (void)
 
 		vars.pointtype = (bestitem->itemflag & (it_powerups|it_flag)) ? POINT_TYPE_POWERUP : POINT_TYPE_ITEM;
 		strlcpy (vars.pointname, p, sizeof(vars.pointname));
-		TP_SetLocationText(vars.pointloc, sizeof(vars.pointloc), TP_LocationName(bestent->origin));
+		strlcpy (vars.pointloc, TP_LocationName(bestent->origin), sizeof(vars.pointloc));
 	} else {
 	nothing:
 		strlcpy (vars.pointname, tp_name_nothing.string, sizeof(vars.pointname));
@@ -3549,8 +3712,6 @@ void TP_Init (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
 	Cvar_Register (&tp_loadlocs);
-	Cvar_Register (&tp_fixedLocLength);
-	Cvar_Register (&tp_fixedLocCentered);
 	Cvar_Register (&tp_pointpriorities);
 	Cvar_Register (&tp_weapon_order);
 	Cvar_Register (&tp_tooktimeout);
