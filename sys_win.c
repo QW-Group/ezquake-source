@@ -580,7 +580,7 @@ void Sys_Init_ (void)
 		if (!qwclsemaphore)
 		{
 			int qwurl_parm = COM_CheckParm("+qwurl");
-			char cmd[1024];
+			char cmd[1024] = { 0 };
 
 			if (COM_CheckArgsForPlayableFiles(cmd, sizeof(cmd)))
 			{

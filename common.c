@@ -1561,6 +1561,14 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
 			{
 				snprintf(commandbuf_out, commandbuf_size, "playdemo \"%s\"\n", infile);
 			}
+			else if (!strncasecmp(infile, "qw://", sizeof("qw://") - 1))
+			{
+				snprintf(commandbuf_out, commandbuf_size, "qwurl \"%s\"\n", infile);
+			}
+			else 
+			{
+				return false;
+			}
 
 			return true;
 		}
