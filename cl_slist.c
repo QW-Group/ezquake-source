@@ -33,13 +33,16 @@ void SList_Init(void) {
 }
 
 void SList_Shutdown(void) {  
+	char filename[MAX_OSPATH] = {0};
 	FILE *f;
 
 	if (!slist_initialised)
-		return;	
+		return;
 
-	if (!(f = fopen(va("%s/servers.txt", com_basedir), "w"))) {
-		Com_DPrintf ("Couldn't open servers.txt.\n");
+	snprintf(&filename[0], sizeof(filename), "%s/servers.txt", com_basedir);
+
+	if (!(f = fopen(filename, "w"))) {
+		Com_DPrintf("Couldn't open %s\n", filename);
 		return;
 	}
 	SList_Save(f);
@@ -103,12 +106,15 @@ int SList_Length (void) {
 }
 
 void SList_Load (void) {
+	char line[128];
+	char filename[MAX_OSPATH] = {0};
+	char *desc, *addr;
 	unsigned int len;
 	int c, argc, count;
-	char line[128], *desc, *addr;
 	FILE *f;
 
-	if (!(f = fopen (va("%s/servers.txt", com_basedir), "r")))
+	snprintf(&filename[0], sizeof(filename), "%s/servers.txt", com_basedir);
+	if (!(f = fopen(filename, "r")))
 		return;
 
 	count = len = 0;
