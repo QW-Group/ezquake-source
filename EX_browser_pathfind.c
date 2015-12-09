@@ -218,9 +218,11 @@ static qbool SB_PingTree_IsProxyFiltered(const server_data *data)
 		return false;
 	}
 	else {
+		char ip_str[32];
 		const byte *ip = data->address.ip;
 		int port = (int) ntohs(data->address.port);
-		const char *ip_str = va("%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], port);
+		
+		snprintf(&ip_str[0], sizeof(ip_str), "%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], port);
 
 		return strstr(sb_ignore_proxy.string, ip_str) != NULL;
 	}
@@ -285,18 +287,19 @@ static void SB_Proxy_ParseReply(const byte *buf, int buflen, proxy_ping_report_c
 
 void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callback callback)
 {
-	socket_t sock;
-	char packet[] = PROXY_PINGLIST_QUERY;
 	byte buf[PROXY_REPLY_BUFFER_SIZE];
+	char packet[] = PROXY_PINGLIST_QUERY;
+	char adrstr[32];
 	struct sockaddr_in addr_to, addr_from;
 	struct timeval timeout;
 	fd_set fd;
+	socket_t sock;
 	int i, ret;
 	socklen_t inaddrlen;
-	const char *adrstr = va("%d.%d.%d.%d",
-		(int) address->ip[0], (int) address->ip[1], (int) address->ip[2], (int) address->ip[3]);
 
-	addr_to.sin_addr.s_addr = inet_addr(adrstr);
+	snprintf(&adrstr[0], sizeof(adrstr), "%d.%d.%d.%d", (int) address->ip[0], (int) address->ip[1], (int) address->ip[2], (int) address->ip[3]);
+
+	addr_to.sin_addr.s_addr = inet_addr((const char *)adrstr);
 	if (addr_to.sin_addr.s_addr == INADDR_NONE) {
 		return;
 	}
@@ -527,7 +530,10 @@ static void SB_PingTree_ScanProxies(void)
 	}
 
 	if (sb_listcache.value) {
-		f = fopen(va("%s/%s", com_homedir, "proxies_data"), "wb");
+		char prx_data_path[MAX_OSPATH] = {0};
+
+		snprintf(&prx_data_path[0], sizeof(prx_data_path), "%s/%s", com_homedir, "proxies_data");
+		f = fopen(prx_data_path, "wb");
 		if (f)
 			SB_Proxylist_Serialize_Start(f);
 	}
@@ -724,7 +730,9 @@ void SB_PingTree_ConnectBestPath(const netadr_t *addr)
 
 		while (current != startnode_id && current != INVALID_NODE) {
 			byte *ip = ping_nodes[current].ipaddr.data;
-			char *newval = va("%d.%d.%d.%d:%d%s%s", (int) ip[0], (int) ip[1], (int) ip[2],
+			char newval[2048]; /* va() used 2048b buffer..*/
+
+			snprintf(&newval[0], sizeof(newval), "%d.%d.%d.%d:%d%s%s", (int) ip[0], (int) ip[1], (int) ip[2],
 				(int) ip[3], (int) ntohs(ping_nodes[current].proxport), *proxylist_buf ? "@" : "", proxylist_buf);
 			strlcpy(proxylist_buf, newval, 32*MAX_NONLEAVES);
 
@@ -737,7 +745,10 @@ void SB_PingTree_ConnectBestPath(const netadr_t *addr)
 		Cvar_Set(&cl_proxyaddr, proxylist_buf);
 	}
 
-	Cbuf_AddText(va("connect %s\n", NET_AdrToString(*addr)));
+	/* FIXME: Create a Cbuf_AddTextFmt? */
+	Cbuf_AddText("connect ");
+	Cbuf_AddText(NET_AdrToString(*addr));
+	Cbuf_AddText("\n");
 }
 
 int SB_Proxylist_Unserialize(FILE *f)
@@ -784,12 +795,14 @@ int SB_Proxylist_Unserialize(FILE *f)
 
 void SB_Proxylist_Unserialize_f(void)
 {
+	char filename[MAX_OSPATH] = {0};
 	FILE *f;
-	char *filename = va("%s/%s", com_homedir, "proxies_data");
 	int err;
+	
+	snprintf(&filename[0], sizeof(filename), "%s/%s", com_homedir, "proxies_data");
 
-	if (!(f	= fopen	(filename, "rb"))) {
-		Com_Printf ("Couldn't read %s.\n", filename);
+	if (!(f	= fopen(filename, "rb"))) {
+		Com_Printf("Couldn't read %s.\n", filename);
 		return;
 	}
 
