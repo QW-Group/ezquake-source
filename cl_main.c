@@ -2616,6 +2616,7 @@ void CL_Shutdown (void)
 	History_Shutdown();
 	Sys_CloseIPC();
 	SB_Shutdown();
+	Help_Shutdown();
 }
 
 int CL_IncrLoop(int cview, int max)

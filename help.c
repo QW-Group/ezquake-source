@@ -24,16 +24,36 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // for QuakeWorld Tutorial menu, look into help_files.c
 
 #include "quakedef.h"
+#include <jansson.h>
 #include "expat.h"
 #include "xsd.h"
 
 #define CONSOLE_HELP_MARGIN 2
+static json_t *variables_root;
+static json_t *command_root;
 
-void Help_DescribeCmd(xml_command_t *cmd)
+typedef struct json_variable_s
 {
-    command_argument_t *arg;
+	const char *name;
+	const char *description;
+	cvartype_t value_type;
+	const json_t* values;
+	const char *remarks;
+} json_variable_t;
 
-	if (!cmd) return;
+typedef struct json_command_s
+{
+	const char *name;
+	const char *description;
+	const char *syntax;
+	const json_t* arguments;
+	const char *remarks;
+} json_command_t;
+
+static void Help_DescribeCmd(const json_command_t *cmd)
+{
+	if (!cmd) 
+		return;
 
     // description
     con_margin = CONSOLE_HELP_MARGIN;
@@ -52,21 +72,24 @@ void Help_DescribeCmd(xml_command_t *cmd)
     // arguments
     if (cmd->arguments)
     {
+		int i = 0;
+		int argCount = json_array_size(cmd->arguments);
+
         Com_Printf("\n");
         con_ormask = 128;
         Com_Printf("arguments\n");
         con_ormask = 0;
-        arg = cmd->arguments;
-        while (arg)
-        {
+
+		for (i = 0; i < argCount; ++i) { 
+			json_t* arg = json_array_get(cmd->arguments, i);
+
             con_ormask = 128;
             con_margin = CONSOLE_HELP_MARGIN;
-            Com_Printf("%s", arg->name);
+            Com_Printf("%s", json_string_value(json_object_get(arg, "name")));
             con_ormask = 0;
             con_margin += CONSOLE_HELP_MARGIN;
-            Com_Printf(" - %s\n", arg->description);
+            Com_Printf(" - %s\n", json_string_value(json_object_get(arg, "description")));
             con_margin = 0;
-            arg = arg->next;
         }
     }
 
@@ -83,82 +106,70 @@ void Help_DescribeCmd(xml_command_t *cmd)
     }
 }
 
-void Help_DescribeVar(xml_variable_t *var)
+static void Help_DescribeVar(const json_variable_t *var)
 {
-	variable_enum_value_t *val;
-
-	if (!var) return;
+	if (!var) 
+		return;
 
 	// description
-    con_margin = CONSOLE_HELP_MARGIN;
-    Com_Printf("%s\n", var->description);
-    con_margin = 0;
+	if (var->description && strlen(var->description))
+	{
+		con_margin = CONSOLE_HELP_MARGIN;
+		Com_Printf("%s\n", var->description);
+		con_margin = 0;
+	}
 
     // value
-    Com_Printf("\n");
-    con_ormask = 128;
-    Com_Printf("value\n");
-    con_ormask = 0;
-    con_margin = CONSOLE_HELP_MARGIN;
-    switch (var->value_type)
-    {
-    case t_string:
-        Com_Printf("%s\n", var->value.string_description);
-        break;
+	if (var->values)
+	{
+		int valueCount = json_array_size(var->values);
+		int i = 0;
 
-    case t_integer:
-        Com_Printf("%s\n", var->value.integer_description);
-        break;
+		Com_Printf("\n");
+		con_ormask = 128;
+		Com_Printf("value\n");
+		con_ormask = 0;
+		con_margin = CONSOLE_HELP_MARGIN;
+		for (i = 0; i < valueCount; ++i) {
+			const json_t* value = json_array_get(var->values, i);
+			const char*   name = json_string_value(json_object_get(value, "name"));
+			const char*   description = json_string_value(json_object_get(value, "description"));
 
-    case t_float:
-		Com_Printf("%s\n", var->value.float_description);
-        break;
-
-    case t_boolean:
-		if (var->value.boolean_value.false_description && var->value.boolean_value.true_description
-			&&
-			(strlen(var->value.boolean_value.false_description) || strlen(var->value.boolean_value.true_description)))
-		{
-			con_ormask = 128;
-			Com_Printf("0");
-			con_ormask = 0;
-			con_margin += CONSOLE_HELP_MARGIN;
-			Com_Printf(" - %s\n", var->value.boolean_value.false_description);
-			con_margin -= CONSOLE_HELP_MARGIN;
-			con_ormask = 128;
-			Com_Printf("1");
-			con_ormask = 0;
-			con_margin += CONSOLE_HELP_MARGIN;
-			Com_Printf(" - %s\n", var->value.boolean_value.true_description);
-			con_margin -= CONSOLE_HELP_MARGIN;
+			switch (var->value_type)
+			{
+			case t_string:
+			case t_integer:
+			case t_float:
+				Com_Printf("%s\n", description);
+				break;
+			case t_boolean:
+			case t_enum:
+				con_ormask = 128;
+				if (var->value_type == t_boolean && !strcmp(name, "false"))
+					Com_Printf("0");
+				else if (var->value_type == t_boolean && !strcmp(name, "true"))
+					Com_Printf("1");
+				else
+					Com_Printf("%s", name);
+				con_ormask = 0;
+				con_margin += CONSOLE_HELP_MARGIN;
+				Com_Printf(" - %s\n", description);
+				con_margin -= CONSOLE_HELP_MARGIN;
+				break;
+			}
 		}
-		else	// johnnycz - many cvar doc pages has been made by an automatic process and they have boolean as their type as a default
-		{
-			con_margin += CONSOLE_HELP_MARGIN;
-			Com_Printf("Boolean value. Use ");
-			con_ormask = 128;
-			Com_Printf("0 or 1");
-			con_ormask = 0;
-			Com_Printf(" as a value.\n");
-			con_margin -= CONSOLE_HELP_MARGIN;
-		}
-        break;
-
-    case t_enum:
-        val = var->value.enum_value;
-        while (val)
-        {
-            con_ormask = 128;
-            Com_Printf("%s", val->name);
-            con_ormask = 0;
-            con_margin += CONSOLE_HELP_MARGIN;
-            Com_Printf(" - %s\n", val->description);
-            con_margin -= CONSOLE_HELP_MARGIN;
-            val = val->next;
-        }
-        break;
-    }
-    con_margin = 0;
+		con_margin = 0;
+	}
+	else if (var->value_type == t_boolean)
+	{
+		con_margin += CONSOLE_HELP_MARGIN;
+		Com_Printf("Boolean value. Use ");
+		con_ormask = 128;
+		Com_Printf("0 or 1");
+		con_ormask = 0;
+		Com_Printf(" as a value.\n");
+		con_margin -= CONSOLE_HELP_MARGIN;
+	}
 
     // remarks
 	if (var->remarks && strlen(var->remarks))
@@ -171,23 +182,79 @@ void Help_DescribeVar(xml_variable_t *var)
         Com_Printf("%s\n", var->remarks);
         con_margin = 0;
     }
+}
 
+static const json_command_t* JSON_Command_Load(const char* name)
+{
+	static json_command_t result;
+	const json_t* command = NULL;
+
+	command = json_object_get(command_root, name);
+	if (command == NULL)
+		return NULL;
+
+	memset(&result, 0, sizeof(result));
+	result.name = name;
+	result.description = json_string_value(json_object_get(command, "description"));
+	result.syntax = json_string_value(json_object_get(command, "syntax"));
+	result.remarks = json_string_value(json_object_get(command, "remarks"));
+	result.arguments = json_object_get(command, "arguments");
+	if (!json_is_array(result.arguments))
+		result.arguments = NULL;
+
+	return &result;
+}
+
+static const json_variable_t* JSON_Variable_Load(const char* name)
+{
+	static json_variable_t result;
+	const json_t* varsObj = NULL;
+	const json_t* variable = NULL;
+	const char* variableType = NULL;
+
+	varsObj = json_object_get(variables_root, "vars");
+	if (varsObj == NULL)
+		return NULL;
+
+	variable = json_object_get(varsObj, name);
+	if (variable == NULL)
+		return NULL;
+
+	variableType = json_string_value(json_object_get(variable, "type"));
+
+	memset(&result, 0, sizeof(result));
+	result.description = json_string_value(json_object_get(variable, "desc"));
+	result.name = name;
+	result.remarks = json_string_value(json_object_get(variable, "remarks"));
+	if (!strcmp(variableType, "string"))
+		result.value_type = t_string;
+	else if (!strcmp(variableType, "integer"))
+		result.value_type = t_integer;
+	else if (!strcmp(variableType, "float"))
+		result.value_type = t_float;
+	else if (!strcmp(variableType, "boolean"))
+		result.value_type = t_boolean;
+	else if (!strcmp(variableType, "enum"))
+		result.value_type = t_enum;
+	result.values = json_object_get(variable, "values");
+	if (!json_is_array(result.values))
+		result.values = NULL;
+
+	return &result;
 }
 
 void Help_DescribeCvar (cvar_t *v)
 {
-	xml_variable_t *var = XSD_Variable_Load(va("help/variables/%s.xml", v->name));
-	Help_DescribeVar(var);
+	Help_DescribeVar(JSON_Variable_Load(v->name));
 }
 
 void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 {
 	extern void CharsToBrown(char*, char*);
 	extern cvar_t menu_advanced;
-	xml_variable_t *var;
-	variable_enum_value_t *cv;
+	const json_variable_t *var;
 
-	var = XSD_Variable_Load (va ("help/variables/%s.xml", varname));
+	var = JSON_Variable_Load (varname);
 	
 	if(menu_advanced.integer && strlen(varname)){
 		strlcat(buf, "Variable name: ", bufsize);
@@ -210,71 +277,127 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 		strlcat (buf, "\n", bufsize);
 	}
 
-	switch (var->value_type) {
-	case t_boolean:
-		if (var->value.boolean_value.false_description) {
-			strlcat (buf, "0: ", bufsize);
-			strlcat (buf, var->value.boolean_value.false_description, bufsize);
-			strlcat (buf, "\n", bufsize);
-		}
+	if (var->values)
+	{
+		int valueCount = json_array_size(var->values);
+		int i = 0;
 
-		if (var->value.boolean_value.true_description) {
-			strlcat (buf, "1: ", bufsize);
-			strlcat (buf, var->value.boolean_value.true_description, bufsize);
-			strlcat (buf, "\n", bufsize);
-		}
+		strlcat (buf, "\n", bufsize);
+		strlcat (buf, "value\n", bufsize);
+		for (i = 0; i < valueCount; ++i) {
+			const json_t* value = json_array_get(var->values, i);
+			const char*   name = json_string_value(json_object_get(value, "name"));
+			const char*   description = json_string_value(json_object_get(value, "description"));
 
-		break;
-
-	case t_float:
-		if (var->value.float_description) {
-			strlcat (buf, var->value.float_description, bufsize);
-			strlcat (buf, "\n", bufsize);
-		}
-
-		break;
-
-	case t_integer:
-		if (var->value.integer_description) {
-			strlcat (buf, var->value.integer_description, bufsize);
-			strlcat (buf, "\n", bufsize);
-		}
-
-		break;
-
-	case t_string:
-		if (var->value.string_description) {
-			strlcat (buf, var->value.string_description, bufsize);
-			strlcat (buf, "\n", bufsize);
-		}
-
-		break;
-
-	case t_enum:
-		cv = var->value.enum_value;
-		while(cv) {
-			if (cv->name && cv->description) {
-				strlcat (buf, cv->name, bufsize);
-				strlcat (buf, ":", bufsize);
-				strlcat (buf, cv->description, bufsize);
+			switch (var->value_type)
+			{
+			case t_string:
+			case t_integer:
+			case t_float:
+				strlcat (buf, description, bufsize);
 				strlcat (buf, "\n", bufsize);
+				break;
+			case t_boolean:
+			case t_enum:
+				if (var->value_type == t_boolean && !strcmp(name, "false"))
+					strlcat (buf, "0", bufsize);
+				else if (var->value_type == t_boolean && !strcmp(name, "true"))
+					strlcat (buf, "1", bufsize);
+				else
+					strlcat (buf, name, bufsize);
+
+				strlcat (buf, ": ", bufsize);
+				strlcat (buf, description, bufsize);
+				strlcat (buf, "\n", bufsize);
+				break;
 			}
-
-			cv = cv->next;
 		}
+	}
+}
 
-		break;
+static void Help_UnloadVariablesDoc(void)
+{
+	if (variables_root != NULL) {
+		json_decref(variables_root);
+		variables_root = NULL;
+	}
+}
+
+static void Help_UnloadCommandDoc(void)
+{
+	if (command_root != NULL) {
+		json_decref(command_root);
+		command_root = NULL;
+	}
+}
+
+static void Help_UnloadDocs(void)
+{
+	Help_UnloadVariablesDoc();
+	Help_UnloadCommandDoc();
+}
+
+extern unsigned char help_variables_json[];
+extern unsigned int help_variables_json_len;
+extern unsigned char help_commands_json[];
+extern unsigned int help_commands_json_len;
+
+static void Help_LoadVariablesDoc(void)
+{
+	json_error_t error;
+
+	Help_UnloadVariablesDoc();
+
+	variables_root = json_loadb((char*)help_variables_json, help_variables_json_len, 0, &error);
+
+	if (variables_root == NULL) {
+		Com_Printf("error: JSON error on line %d: %s\n", error.line, error.text);
+	}
+	else if (!json_is_object(variables_root)) {
+		Com_Printf("error: invalid JSON, root is not an object\n");
+	}
+	else {
+		Com_DPrintf("help_loadDocs: variables okay\n");
+		return;
 	}
 
-	XSD_Variable_Free ((xml_t *) var);
+	Help_UnloadVariablesDoc();
+}
+
+static void Help_LoadCommandDoc(void)
+{
+	json_error_t error;
+	
+	Help_UnloadCommandDoc();
+
+	command_root = json_loadb((char*)help_commands_json, help_commands_json_len, 0, &error);
+
+	if (command_root == NULL) {
+		Com_Printf("error: JSON error on line %d: %s\n", error.line, error.text);
+	}
+	else if (!json_is_object(variables_root)) {
+		Com_Printf("error: invalid JSON, root is not an object\n");
+	}
+	else {
+		Com_DPrintf("help_loadDocs: commands okay\n");
+		return;
+	}
+
+	Help_UnloadCommandDoc();
+}
+
+static void Help_LoadDocs(void)
+{
+	Help_LoadVariablesDoc();
+	Help_LoadCommandDoc();
 }
 
 void Help_Describe_f(void)
 {
     qbool found = false;
     char *name;
-    xml_command_t *cmd;
-    xml_variable_t *var;
+    const json_command_t *cmd;
+    const json_variable_t *var;
 
     if (Cmd_Argc() != 2)
     {
@@ -285,7 +408,7 @@ void Help_Describe_f(void)
     name = Cmd_Argv(1);
     
     // check for command
-    cmd = XSD_Command_Load(va("help/commands/%s.xml", name));
+	cmd = JSON_Command_Load(name);
     if (cmd)
     {
         found = true;
@@ -296,12 +419,10 @@ void Help_Describe_f(void)
         con_ormask = 0;
 
 		Help_DescribeCmd(cmd);
-
-        XSD_Command_Free( (xml_t *)cmd );
     }
 
     // check for variable
-    var = XSD_Variable_Load(va("help/variables/%s.xml", name));
+	var = JSON_Variable_Load(name);
     if (var)
     {
         if (found)
@@ -315,8 +436,6 @@ void Help_Describe_f(void)
         con_ormask = 0;
 
 		Help_DescribeVar(var);
-
-        XSD_Variable_Free( (xml_t *)var );
     }
 
     // if no found
@@ -324,7 +443,86 @@ void Help_Describe_f(void)
         Com_Printf("Nothing found.\n");
 }
 
+void Help_Missing_Commands(void)
+{
+	extern int Cmd_CommandCompare(const void *, const void *);
+	extern cmd_function_t *cmd_functions;
+
+	cmd_function_t *sorted_commands[4096];
+	cmd_function_t *cmd_func = 0;
+	int cmd_count = 0;
+
+	for (cmd_func = cmd_functions; cmd_func && cmd_count < sizeof(sorted_commands) / sizeof(sorted_commands[0]); cmd_func = cmd_func->next) {
+		const json_command_t* help_cmd = JSON_Command_Load(cmd_func->name);
+		if (!help_cmd)
+			sorted_commands[cmd_count++] = cmd_func;
+	}
+
+	if (cmd_count) {
+		int i = 0;
+
+		qsort(sorted_commands, cmd_count, sizeof(cmd_function_t *), Cmd_CommandCompare);
+
+		Com_Printf("Commands missing documentation entries:\n");
+		con_margin = CONSOLE_HELP_MARGIN;
+		for (i = 0; i < cmd_count; ++i) {
+			Com_Printf("%s\n", sorted_commands[i]->name);
+		}
+		con_margin = 0;
+	}
+	else {
+		Com_Printf("All commands have entries in documentation.\n");
+	}
+}
+
+void Help_Missing_Variables(void)
+{
+	extern int Cvar_CvarCompare(const void*, const void*);
+	extern cvar_t *cvar_vars;
+
+	cvar_t *sorted_cvars[4096];
+	cvar_t *cvar = 0;
+	int cvar_count = 0;
+
+	for (cvar = cvar_vars; cvar && cvar_count < sizeof(sorted_cvars) / sizeof(sorted_cvars[0]); cvar = cvar->next) {
+		const json_variable_t* help_cvar = JSON_Variable_Load(cvar->name);
+		if (! help_cvar)
+			sorted_cvars[cvar_count++] = cvar;
+	}
+
+	if (cvar_count) {
+		int i = 0;
+
+		qsort(sorted_cvars, cvar_count, sizeof(cvar_t *), Cvar_CvarCompare);
+
+		Com_Printf("Variables missing documentation entries:\n");
+		con_margin = CONSOLE_HELP_MARGIN;
+		for (i = 0; i < cvar_count; ++i) {
+			Com_Printf("%s\n", sorted_cvars[i]->name);
+		}
+		con_margin = 0;
+	}
+	else {
+		Com_Printf("All variables have entries in documentation.\n");
+	}
+}
+
+// Returns list of commands and variables that are missing from documentation
+void Help_Missing_f(void)
+{
+	Help_Missing_Commands();
+	Help_Missing_Variables();
+}
+
 void Help_Init(void)
 {
-    Cmd_AddCommand("describe", Help_Describe_f);
+	Cmd_AddCommand("describe", Help_Describe_f);
+	Cmd_AddCommand("help_missing", Help_Missing_f);
+
+	Help_LoadDocs();
+}
+
+void Help_Shutdown(void)
+{
+	Help_UnloadDocs();
 }
