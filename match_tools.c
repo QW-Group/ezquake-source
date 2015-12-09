@@ -1638,8 +1638,13 @@ char *Macro_MatchType(void) {
 	return matchcvars[matchinfo->matchtype].nickname;
 }
 
-void MT_Init(void) {
-	Sys_mkdir(va("%s/ezquake/temp", com_basedir));
+void MT_Init(void)
+{
+	char *tmp_path[MAX_OSPATH] = {0};
+
+	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/ezquake/temp", com_basedir);
+	Sys_mkdir(tmp_path);
+
 	MT_ClearClientState();
 
 	Cmd_AddMacro("matchname", Macro_MatchName);
