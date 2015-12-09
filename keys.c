@@ -1722,7 +1722,10 @@ void History_Init (void)
 
 	if (cl_savehistory.value)
 	{
-		if ((hf = fopen(va("%s/" HISTORY_FILE_NAME, com_basedir), "rt")))
+		char filename[MAX_OSPATH] = {0};
+
+		snprintf(&filename[0], sizeof(filename), "%s/" HISTORY_FILE_NAME, com_basedir);
+		if ((hf = fopen(filename, "rt")))
 		{
 			do
 			{
@@ -1751,7 +1754,10 @@ void History_Shutdown (void)
 
 	if (cl_savehistory.value)
 	{
-		if ((hf = fopen(va("%s/" HISTORY_FILE_NAME, com_basedir), "wt")))
+		char filename[MAX_OSPATH] = {0};
+
+		snprintf(&filename[0], sizeof(filename), "%s/" HISTORY_FILE_NAME, com_basedir);
+		if ((hf = fopen(filename, "wt")))
 		{
 			i = edit_line;
 			do
