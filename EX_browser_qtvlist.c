@@ -317,7 +317,10 @@ static void QTVList_Resolve_Hostnames(void)
 	sb_qtventry_t *cur = sb_qtvlist_cache.sb_qtventries;
 
 	while (cur) {
-		NET_StringToAdr(va("%s:%d", cur->hostname, cur->port), &cur->addr);
+		char fulladdr[MAX_QTV_ENTRY_TEXTLEN+6]; /* :xxxxx */
+
+		snprintf(&fulladdr[0], sizeof(fulladdr), "%s:%d", cur->hostname, cur->port);
+		NET_StringToAdr(fulladdr, &cur->addr);
 		cur->addr.type = NA_IP;
 		cur = cur->next;
 	}
@@ -325,12 +328,13 @@ static void QTVList_Resolve_Hostnames(void)
 
 static qbool QTVList_Cache_File_Is_Old(void)
 {
+	char cache_path[MAX_OSPATH] = {0};
 	SYSTEMTIME cache_time;
 	SYSTEMTIME min_time; // minimum required time
 	int diff;
 
-	GetFileLocalTime(va("%s/%s/%s", com_basedir,
-		QTVLIST_CACHE_FILE_DIR, QTVLIST_CACHE_FILE), &cache_time);
+	snprintf(&cache_path[0], sizeof(cache_path), "%s/%s/%s", com_basedir, QTVLIST_CACHE_FILE_DIR, QTVLIST_CACHE_FILE);
+	GetFileLocalTime(cache_path, &cache_time);
 
 	GetLocalTime(&min_time);
 
@@ -358,10 +362,12 @@ static qbool QTVList_Cache_File_Is_Old(void)
 
 void QTVList_Refresh_Cache(qbool force_redownload)
 {
+	char cache_dir[MAX_OSPATH] = {0};
 	vfsfile_t *cache_file;
 	sb_qtvlist_parse_state_t *sb_qtvparse;
 
-	Sys_mkdir(va("%s/" QTVLIST_CACHE_FILE_DIR, com_basedir));
+	snprintf(&cache_dir[0], sizeof(cache_dir), "%s/" QTVLIST_CACHE_FILE_DIR, com_basedir);
+	Sys_mkdir(cache_dir);
 
 	if (force_redownload
 		|| !(cache_file = QTVList_Cache_File_Open("rb"))
@@ -550,7 +556,9 @@ void QTVList_Observeqtv_f(void)
 
 		while (cur) {
 			if (cur->addr.port == addr.port && memcmp(cur->addr.ip, addr.ip, sizeof (addr.ip)) == 0) {
-				Cbuf_AddText(va("qtvplay %s\n", cur->link));
+				Cbuf_AddText("qtvplay ");
+				Cbuf_AddText(cur->link);
+				Cbuf_AddText("\n");
 				return;
 			}
 
