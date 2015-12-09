@@ -25,6 +25,7 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize);
 
 // initialize help system
 void Help_Init (void);
+void Help_Shutdown (void);
 
 // help menu
 void Menu_Help_Init (void);

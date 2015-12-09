@@ -32,6 +32,7 @@ STRIP ?= strip
 RM ?= rm -f
 RMDIR ?= rm -rf
 MKDIR ?= mkdir -p
+XXD ?= xxd -i
 
 CFLAGS ?= -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -g -MMD $(INCLUDES)
 RCFLAGS ?=
@@ -179,9 +180,14 @@ SERVER_OBJS := \
     sv_login.o \
     sv_mod_frags.o
 
+HELP_OBJS := \
+    help_variables.o \
+    help_commands.o
+
 OBJS_c := \
     $(COMMON_OBJS) \
     $(SERVER_OBJS) \
+    $(HELP_OBJS) \
     ioapi.o \
     unzip.o \
     Ctrl.o \
@@ -386,6 +392,11 @@ strip: $(TARG_c)
 	$(Q)$(STRIP) $(TARG_c)
 
 # ------
+
+$(BUILD_c)/%.o: %.json
+	$(E) [JS] $@
+	$(Q)$(XXD) $< > $(BUILD_c)/$*.c
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
 
 $(BUILD_c)/%.o: %.c
 	$(E) [CC] $@
