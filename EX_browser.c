@@ -1198,7 +1198,9 @@ void Serverinfo_Help_Draw(int x, int y, int wPixels)
 			UI_Print(x, y, "Route: 1 hop " "\xDB" "n\xDD direct connect", false);
 		}
 		else if (pathlen > 1) {
-			UI_Print(x, y, va("Route: %d hops, " "\xDB" "n\xDD direct connect", pathlen), false);
+			char tmp[64];
+			snprintf(&tmp[0], sizeof(tmp), "Route: %d hops, " "\xDB" "n\xDD direct connect", pathlen);
+			UI_Print(x, y, tmp, false);
 		}
 	}
 }
@@ -2200,9 +2202,11 @@ void Serverinfo_Key(int key)
             serverinfo_pos--; break;
         case K_RIGHTARROW:
             serverinfo_pos++; break;
-		case 'q':
-			Cbuf_AddText(va("observeqtv %s\n", NET_AdrToString(show_serverinfo->address)));
-			break;
+	case 'q':
+		Cbuf_AddText("observeqtv ");
+		Cbuf_AddText(NET_AdrToString(show_serverinfo->address));
+		Cbuf_AddText("\n");
+		break;
         case 'j':
         case 'p':
             Join_Server(show_serverinfo);
@@ -2358,8 +2362,11 @@ int SB_Sources_Key(int key)
             break;
         case K_DEL:
         case 'd':       // remove source
-            if (sources[Sources_pos]->type != type_dummy)
-                SB_Confirmation(va("Remove %-.20s", sources[Sources_pos]->name), SB_RemoveSourceProc);
+            if (sources[Sources_pos]->type != type_dummy) {
+	        char tmp[64];
+	        snprintf(&tmp[0], sizeof(tmp), "Remove %-.20s", sources[Sources_pos]->name);
+                SB_Confirmation(tmp, SB_RemoveSourceProc);
+	    }
             break;
         case 'u':
             Update_Source(sources[Sources_pos]); break;
@@ -3065,7 +3072,9 @@ int SB_Serverlist_Unserialize(FILE *f)
 void SB_Serverlist_Serialize_f(void)
 {
 	FILE *f;
-	char *filename = va("%s/%s", com_homedir, "servers_data");
+	char filename[MAX_OSPATH] = {0};
+	
+	snprintf(&filename[0], sizeof(filename), "%s/%s", com_homedir, "servers_data");
 
 	if (!(f	= fopen	(filename, "wb"))) {
 		FS_CreatePath(filename);
@@ -3084,8 +3093,10 @@ void SB_Serverlist_Serialize_f(void)
 void SB_Serverlist_Unserialize_f(void)
 {
 	FILE *f;
-	char *filename = va("%s/%s", com_homedir, "servers_data");
 	int err;
+	char filename[MAX_OSPATH] = {0};
+	
+	snprintf(&filename[0], sizeof(filename), "%s/%s", com_homedir, "servers_data");
 
 	if (!(f	= fopen	(filename, "rb"))) {
 		Com_Printf ("Couldn't read %s.\n", filename);
