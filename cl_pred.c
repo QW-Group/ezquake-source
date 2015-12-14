@@ -165,7 +165,7 @@ static void CL_LerpMove (qbool angles_lerp)
 	static qbool	nolerp[2];
 	static double	demo_latency = 0.01;
 	float	frac;
-	float	simtime;
+	double	simtime;
 	int		i;
 	int		from, to;
 	extern cvar_t cl_nolerp;
