@@ -180,6 +180,12 @@
   "calendar": {
     "description": "Same as \"date\" but also shows a small calendar of the month. Nice :)"
   },
+  "calc_fov": {
+    "description": "Convert (ezq2) wideaspect fov to new fov",
+    "arguments": [
+      { "name": "old_fov", "description": "The old wideaspect fov used in v2.x" }
+    ]
+  },
   "cam_angles": {
     "description": "Set new angles",
     "syntax": "cam_angles pitch yaw or cam_angles \"pitch yaw\"",

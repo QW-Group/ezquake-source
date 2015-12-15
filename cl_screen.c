@@ -3959,6 +3959,24 @@ mpic_t *SCR_LoadCursorImage(char *cursorimage)
 	return image;
 }
 
+/************************************ TEMPORARY *******************************/
+
+/* FIXME: Remove this when most people have upgraded to 3.0 */
+static void tmp_calc_fov(void)
+{
+	float fov;
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: calc_fov <old_fov>\n");
+		return;
+	}
+
+	fov = Q_atof(Cmd_Argv(1));
+	fov = atan(((tan((fov/2)*M_PI/180))/1.2))*360/M_PI;
+
+	Com_Printf("Use fov %d (%f)\n", (int)(fov+0.5), fov);
+}
+
+
 /************************************ INIT ************************************/
 
 void SCR_Init (void)
@@ -4065,6 +4083,8 @@ void SCR_Init (void)
 
 	Cmd_AddCommand ("+cl_wp_stats", SCR_MvdWeaponStatsOn_f);
 	Cmd_AddCommand ("-cl_wp_stats", SCR_MvdWeaponStatsOff_f);
+
+	Cmd_AddCommand("calc_fov", tmp_calc_fov);
 	
 	Cvar_Register (&scr_coloredText);
 
