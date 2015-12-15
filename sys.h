@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sys.h -- non-portable functions
 
 #ifdef _WIN32
-#define PATH_SEPARATOR '\\'
+#define PATH_SEPARATOR "\\"
 #else
-#define PATH_SEPARATOR '/'
+#define PATH_SEPARATOR "/"
 #endif
 
 #ifdef _WIN32

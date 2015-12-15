@@ -1896,12 +1896,12 @@ int FS_ZipUnpackCurrentFile (unzFile zip_file,
 		}
 
 		// Create the destination dir if it doesn't already exist.
-		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%c", destination_path, PATH_SEPARATOR);
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", destination_path, PATH_SEPARATOR);
 		FS_CreatePath(tmp_path);
 
 		// Create the relative path before extracting.
 		if (keep_path) {
-			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%c%s", destination_path, PATH_SEPARATOR, filename);
+			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s%s", destination_path, PATH_SEPARATOR, filename);
 			FS_CreatePath(tmp_path);
 		}
 	}

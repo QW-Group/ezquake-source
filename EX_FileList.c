@@ -625,7 +625,7 @@ void FL_ReadArchive (filelist_t *fl)
 		f->is_directory = ent.directory;
 
 		// Get the full path for the file.
-		snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, ent.fname);
+		snprintf (f->name, sizeof(f->name), "%s%s%s", fl->current_archive, PATH_SEPARATOR, ent.fname);
 
 		f->size = ent.size;
 		memcpy(&f->time, &ent.time, sizeof(f->time));
@@ -713,7 +713,7 @@ int FL_EnumerateArchive(char *desc, int size, void *param)
 	f->is_directory = 0; //ent.directory;
 
 	// Get the full path for the file.
-	snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_archive, PATH_SEPARATOR, desc);
+	snprintf (f->name, sizeof(f->name), "%s%s%s", fl->current_archive, PATH_SEPARATOR, desc);
 
 	f->size = size;
 	//memcpy(&f->time, &ent.time, sizeof(f->time));
@@ -1368,7 +1368,7 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 
     if (key == '\\'  ||  key == '/')
     {
-        FL_ChangeDir(fl, va("%c", PATH_SEPARATOR));
+        FL_ChangeDir(fl, PATH_SEPARATOR);
         return true;
     }
 
