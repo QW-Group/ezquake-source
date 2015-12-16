@@ -191,7 +191,7 @@ void IN_Frame(void)
 
 	HandleEvents();
 
-	if (!ActiveApp || Minimized || (!r_fullscreen.integer && (key_dest != key_game || cls.state != ca_active))) {
+	if (!ActiveApp || Minimized || (!r_fullscreen.integer && ((cls.state != ca_active && key_dest != key_menu) || (cls.state == ca_active && key_dest == key_console)))) {
 		IN_DeactivateMouse();
 		return;
 	} else {
