@@ -198,6 +198,78 @@ static const char *qtvlist_get_qtvaddress(const char *qwserver, short port)
 	return NULL;
 }
 
+static void qtvlist_find_player(const char *name)
+{
+	json_t *server_array, *server_entry, *gs_array, *gs_entry;
+	json_t *players_array, *player_entry;
+	const char *player_name;
+	int i,j,k;
+	unsigned short found = 0;
+
+	
+	if (name == NULL) {
+		return;
+	}
+
+	if (root == NULL) {
+		Com_Printf("error: qtvlist data not initialized\n");
+		return;
+	}
+
+	server_array = json_object_get(root, "Servers");
+
+	if (server_array == NULL) {
+		Com_Printf("error: invalid qtvlist json data\n");
+		return;
+	}
+
+	for (i = 0; i < json_array_size(server_array); i++) {
+		server_entry = json_array_get(server_array, i);
+		if (server_entry == NULL) {
+			Com_Printf("error: invalid qtvlist json data\n");
+			return;
+		}
+
+		gs_array = json_object_get(server_entry, "GameStates");
+		if (gs_array == NULL || !json_is_array(gs_array)) {
+			Com_Printf("error: malformed qtvlist json data\n"); /* FIXME: Make better error prints */
+			return;
+		}
+
+		for (j = 0; j < json_array_size(gs_array); j++) {
+			gs_entry = json_array_get(gs_array, j);
+			if (gs_entry == NULL) {
+				continue;
+			}
+
+			players_array = json_object_get(gs_entry, "Players");
+			if (players_array == NULL || !json_is_array(players_array)) {
+				continue;
+				/* FIXME: Print some debug stuff atleast ?? */
+			}
+
+			for (k = 0; k < json_array_size(players_array); k++) {
+				player_entry = json_array_get(players_array, k);
+				if (player_entry == NULL) {
+					continue;
+				}
+
+				player_name = json_string_value(json_object_get(player_entry, "Name"));
+				if (player_name) {
+					if (strstr(player_name, name) != NULL) {
+						found++;
+						Com_Printf("&cff4%15s&r - %s:%" JSON_INTEGER_FORMAT "\n", player_name, json_string_value(json_object_get(gs_entry, "Hostname")), json_integer_value(json_object_get(gs_entry, "Port")));
+					}
+				}
+			}
+		}
+	}
+
+	if (found == 0) {
+		Com_Printf("Found no players matching: \"%s\"\n", name);
+	}
+}
+
 static void qtvlist_get_gameaddress(const char *qtvaddress, char *out_addr, size_t out_addr_len)
 {
 	int i, j;
@@ -215,6 +287,11 @@ static void qtvlist_get_gameaddress(const char *qtvaddress, char *out_addr, size
 	}
 
 	server_array = json_object_get(root, "Servers");
+
+	if (server_array == NULL) {
+		Com_Printf("error: invalid qtvlist json data\n");
+		goto err;
+	}
 	
 	for (i = 0; i < json_array_size(server_array); i++) {
 		server_entry = json_array_get(server_array, i);
@@ -313,13 +390,16 @@ static void qtvlist_qtv_cmd(void)
 	}
 
 	qtvaddress = qtvlist_get_qtvaddress((const char*)&tmp[0], Q_atoi(port));
-	SDL_UnlockMutex(qtvlist_mutex);
 
 	if (qtvaddress != NULL) {
-		Cbuf_AddText(va("qtvplay %s\n", qtvaddress));
+		Cbuf_AddText("qtvplay");
+		Cbuf_AddText(qtvaddress);
+		Cbuf_AddText("\n");
 	} else {
 		Com_Printf("No QTV stream address found for '%s:%s'\n", &tmp[0], port);
 	}
+
+	SDL_UnlockMutex(qtvlist_mutex);
 }
 
 static int qtvlist_update(void *unused)
@@ -357,6 +437,28 @@ out:
 		SDL_UnlockMutex(qtvlist_mutex);
 	}
 	return ret;
+}
+
+static void qtvlist_find_player_cmd(void)
+{
+	if (qtvlist_mutex == NULL) {
+		Com_Printf("error: cannot read QTV list, mutex not initialized\n");
+		return;
+	}
+
+	if (Cmd_Argc() != 2) {
+		Com_Printf("usage: find nickname\n");
+		return;
+	}
+
+	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+		Com_Printf("Player list is being updated, please try again soon\n");
+		return;
+	}
+
+	qtvlist_find_player(Cmd_Argv(1));
+
+	SDL_UnlockMutex(qtvlist_mutex);
 }
 
 static void qtvlist_spawn_updater(void)
@@ -420,6 +522,8 @@ void qtvlist_joinfromqtv_cmd(void)
 void qtvlist_init(void)
 {
 	Cmd_AddCommand("qtv", qtvlist_qtv_cmd);
+	Cmd_AddCommand("find", qtvlist_find_player_cmd);
+	Cmd_AddCommand("find_update", qtvlist_spawn_updater);
 	Cmd_AddCommand("observeqtv", qtvlist_qtv_cmd); /* For backwards compat */
 	Cmd_AddCommand("qtv_update", qtvlist_spawn_updater);
 
