@@ -198,7 +198,7 @@ static const char *qtvlist_get_qtvaddress(const char *qwserver, short port)
 	return NULL;
 }
 
-static void qtvlist_find_player(const char *name)
+static void qtvlist_find_player(const char *name, qbool list_all)
 {
 	json_t *server_array, *server_entry, *gs_array, *gs_entry;
 	json_t *players_array, *player_entry;
@@ -256,7 +256,7 @@ static void qtvlist_find_player(const char *name)
 
 				player_name = json_string_value(json_object_get(player_entry, "Name"));
 				if (player_name) {
-					if (strstr(player_name, name) != NULL) {
+					if (list_all || strstr(player_name, name) != NULL) {
 						found++;
 						Com_Printf("&cff4%15s&r - %s:%" JSON_INTEGER_FORMAT "\n", player_name, json_string_value(json_object_get(gs_entry, "Hostname")), json_integer_value(json_object_get(gs_entry, "Port")));
 					}
@@ -265,7 +265,9 @@ static void qtvlist_find_player(const char *name)
 		}
 	}
 
-	if (found == 0) {
+	if (list_all) {
+		Com_Printf("Listing all players\n");
+	} else if (found == 0) {
 		Com_Printf("Found no players matching: \"%s\"\n", name);
 	}
 }
@@ -441,13 +443,17 @@ out:
 
 static void qtvlist_find_player_cmd(void)
 {
+	qbool list_all = false;
+
 	if (qtvlist_mutex == NULL) {
 		Com_Printf("error: cannot read QTV list, mutex not initialized\n");
 		return;
 	}
 
-	if (Cmd_Argc() != 2) {
-		Com_Printf("usage: find nickname\n");
+	if (Cmd_Argc() == 1) {
+		list_all = true;
+	} else if (Cmd_Argc() > 2) {
+		Com_Printf("usage: find [nickname] (empty arg lists all)\n");
 		return;
 	}
 
@@ -456,7 +462,11 @@ static void qtvlist_find_player_cmd(void)
 		return;
 	}
 
-	qtvlist_find_player(Cmd_Argv(1));
+	if (list_all) {
+		qtvlist_find_player("", true);
+	} else {
+		qtvlist_find_player(Cmd_Argv(1), false);
+	}
 
 	SDL_UnlockMutex(qtvlist_mutex);
 }
