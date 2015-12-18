@@ -394,7 +394,7 @@ static void qtvlist_qtv_cmd(void)
 	qtvaddress = qtvlist_get_qtvaddress((const char*)&tmp[0], Q_atoi(port));
 
 	if (qtvaddress != NULL) {
-		Cbuf_AddText("qtvplay");
+		Cbuf_AddText("qtvplay ");
 		Cbuf_AddText(qtvaddress);
 		Cbuf_AddText("\n");
 	} else {
