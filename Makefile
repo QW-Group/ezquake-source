@@ -61,10 +61,10 @@ else
 
     ifeq ($(SYS),Darwin)
         # 10.11 El Capitan does not search for header files here by default
-        CFLAGS_c += -I/usr/local/include
+        CFLAGS_c += -I/usr/local/include -mmacosx-version-min=10.8
 
         # For re-link/deploy dynamic libraries
-        LDFLAGS_c += -headerpad_max_install_names
+        LDFLAGS_c += -headerpad_max_install_names -mmacosx-version-min=10.8
 
         # From  10.10 at least, expat is a system library
         EXPAT_CFLAGS =
