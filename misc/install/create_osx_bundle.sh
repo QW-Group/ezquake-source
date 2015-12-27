@@ -55,5 +55,14 @@ chmod u+x $BUNDLE_NAME/Contents/MacOS/ezquake
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" $BUNDLE_NAME/Contents/Info.plist
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string qw" $BUNDLE_NAME/Contents/Info.plist
 
+# .mvd file type support
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes array" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0 dict" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeName string MVD demo" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeRole string Viewer" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeIconFile string $ICON_FILE" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions array" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions:0 string mvd" $BUNDLE_NAME/Contents/Info.plist
+
 sh $(dirname $0)/fixbundle.sh $BUNDLE_NAME $BUNDLE_NAME/Contents/MacOS/$BINARY
 ditto -c -k --keepParent --arch x86_64 $BUNDLE_NAME ezquake.zip
