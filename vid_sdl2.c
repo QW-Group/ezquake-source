@@ -67,6 +67,7 @@ static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
 static int old_x = 0, old_y = 0;
+extern double cursor_x, cursor_y;
 
 qbool ActiveApp = true;
 qbool Minimized = false;
@@ -120,6 +121,25 @@ cvar_t gl_multisamples        = {"gl_multisamples",       "0",   CVAR_LATCH }; /
 // function declaration
 //
 
+// True if we're in a mode where we need to keep track of mouse movement
+qbool IN_MouseTrackingRequired(void)
+{
+	return (key_dest == key_menu || key_dest == key_hudeditor || key_dest == key_demo_controls);
+}
+
+// True if we need to display the internal Quake cursor to track the mouse
+qbool IN_QuakeMouseCursorRequired(void)
+{
+	return mouse_active && (r_fullscreen.value || in_grab_windowed_mouse.value) && IN_MouseTrackingRequired();
+}
+
+// True if we need to release the mouse and let the OS show cursor again
+static qbool IN_OSMouseCursorRequired(void)
+{
+	// Windowed & (not-grabbing mouse | at_console | not_connected)
+	return (!r_fullscreen.value && (!in_grab_windowed_mouse.value || key_dest == key_console || cls.state != ca_active));
+}
+
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
 	if (var == &in_raw)
@@ -154,7 +174,14 @@ static void GrabMouse(qbool grab, qbool raw)
 	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
 	SDL_SetRelativeMouseMode((raw && grab) ? SDL_TRUE : SDL_FALSE);
 	SDL_GetRelativeMouseState(NULL, NULL);
-	SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
+
+	// never show real cursor in fullscreen
+	if (r_fullscreen.integer) {
+		SDL_ShowCursor(SDL_DISABLE);
+	} else {
+		SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
+	}
+
 	SDL_SetCursor(NULL); /* Force rewrite of it */
 
 	mouse_active = grab;
@@ -191,7 +218,7 @@ void IN_Frame(void)
 
 	HandleEvents();
 
-	if (!ActiveApp || Minimized || (!r_fullscreen.integer && ((cls.state != ca_active && key_dest != key_menu) || (cls.state == ca_active && key_dest == key_console)))) {
+	if (!ActiveApp || Minimized || IN_OSMouseCursorRequired()) {
 		IN_DeactivateMouse();
 		return;
 	} else {
@@ -478,13 +505,19 @@ static void HandleEvents()
 			keyb_textinputevent(event.text.text);
 			break;
 		case SDL_MOUSEMOTION:
-	                if (mouse_active && !SDL_GetRelativeMouseMode()) {
-                            mx = old_x - event.motion.x;
-                            my = old_y - event.motion.y;
-			    old_x = event.motion.x;
-			    old_y = event.motion.y;
-			    SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-                        }
+			if (mouse_active && !SDL_GetRelativeMouseMode()) {
+				mx = old_x - event.motion.x;
+				my = old_y - event.motion.y;
+				old_x = event.motion.x;
+				old_y = event.motion.y;
+				cursor_x = min(max(0, cursor_x + event.motion.x - glConfig.vidWidth / 2), glConfig.vidWidth);
+				cursor_y = min(max(0, cursor_y + event.motion.y - glConfig.vidHeight / 2), glConfig.vidHeight);
+				SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+			}
+			else {
+				cursor_x = event.motion.x;
+				cursor_y = event.motion.y;
+			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:

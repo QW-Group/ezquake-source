@@ -75,8 +75,8 @@ void VID_Update (vrect_t *rects);
 // sets the mode; only used by the Quake engine for resetting to mode 0 (the
 // base mode) on memory allocation failures
 
-void VID_LockBuffer (void);
-void VID_UnlockBuffer (void);
+qbool IN_QuakeMouseCursorRequired (void);
+qbool IN_MouseTrackingRequired (void);
 
 void VID_NotifyActivity(void);
 
