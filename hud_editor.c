@@ -160,6 +160,22 @@ float				hud_hoverlist_y;					// The y position of the hover list.
 hud_grephandle_t	hud_containers[MAX_HUD_ELEMENTS];	// List of HUDs which have been hovered.
 
 //
+// Change in cursor's X position since last frame
+//
+static float HUD_CursorDeltaX(void)
+{
+	return (scr_pointer_state.x - scr_pointer_state.x_old);
+}
+
+//
+// Change in cursor's Y position since last frame
+//
+static float HUD_CursorDeltaY(void)
+{
+	return (scr_pointer_state.y - scr_pointer_state.y_old);
+}
+
+//
 // Adds a new HUD to the list of HUDs that are being hovered.
 //
 static void HUD_Editor_AddHoverHud(hud_grephandle_t *hud_container)
@@ -979,7 +995,6 @@ static void HUD_EditorScaleDelta(cvar_t *scale, float delta_scale, hud_alignmode
 //
 static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 {
-	extern float mouse_x, mouse_y;		// in_win.c, delta mouse.
 	int i					= 0;
 	qbool found_handle		= false;	// Did we find any handle under the cursor?
 	static cvar_t *width	= NULL;
@@ -987,6 +1002,9 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 	static cvar_t *scale	= NULL;
 	hud_resize_handle_t *resize_handles[HUD_RESIZEHANDLE_COUNT];
 	static int last_resize_handle = HUD_RESIZEHANDLE_NONE;
+
+	float mouse_x = HUD_CursorDeltaX();
+	float mouse_y = HUD_CursorDeltaY();
 
 	// Is this mode turned on?
 	if(!hud_editor_allowresize.value)
@@ -1211,8 +1229,9 @@ static qbool hud_editor_finding_lockaxis = false;	// Are we in the process of fi
 //
 static qbool HUD_Editor_Moving(hud_t *hud_hover)
 {
-	// Mouse delta (in_win.c)
-	extern float mouse_x, mouse_y;
+	// Mouse delta
+	float mouse_x = HUD_CursorDeltaX();
+	float mouse_y = HUD_CursorDeltaY();
 
 	// Is this mode allowed?
 	if(!hud_editor_allowmove.value)

@@ -35,8 +35,6 @@ extern void IN_StartupMouse(void);
 extern void IN_DeactivateMouse(void);
 extern void IN_Restart_f(void);
 
-float mouse_x, mouse_y;
-
 void IN_MouseMove (usercmd_t *cmd)
 {
 	static int old_mouse_x = 0, old_mouse_y = 0;
@@ -48,14 +46,10 @@ void IN_MouseMove (usercmd_t *cmd)
 	// Do not move the player if we're in HUD editor or menu mode.
 	// And don't apply ingame sensitivity, since that will make movements jerky.
 	//
-	if(key_dest == key_hudeditor || key_dest == key_menu || key_dest == key_demo_controls)
-	{
-		old_mouse_x = mouse_x = mx * cursor_sensitivity.value;
-		old_mouse_y = mouse_y = my * cursor_sensitivity.value;
-	}
-	else
+	if (! IN_MouseTrackingRequired())
 	{
 		// Normal game mode.
+		float mouse_x, mouse_y;
 
 		if (m_filter.value) {
 			float filterfrac = bound (0.0f, m_filter.value, 1.0f) / 2.0f;

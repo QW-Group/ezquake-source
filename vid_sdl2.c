@@ -121,6 +121,25 @@ cvar_t gl_multisamples        = {"gl_multisamples",       "0",   CVAR_LATCH }; /
 // function declaration
 //
 
+// True if we're in a mode where we need to keep track of mouse movement
+qbool IN_MouseTrackingRequired(void)
+{
+	return (key_dest == key_menu || key_dest == key_hudeditor || key_dest == key_demo_controls);
+}
+
+// True if we need to display the internal Quake cursor to track the mouse
+qbool IN_QuakeMouseCursorRequired(void)
+{
+	return mouse_active && (r_fullscreen.value || in_grab_windowed_mouse.value) && IN_MouseTrackingRequired();
+}
+
+// True if we need to release the mouse and let the OS show cursor again
+static qbool IN_OSMouseCursorRequired(void)
+{
+	// Windowed & (not-grabbing mouse | at_console | not_connected)
+	return (!r_fullscreen.value && (!in_grab_windowed_mouse.value || key_dest == key_console || cls.state != ca_active));
+}
+
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
 	if (var == &in_raw)
@@ -199,7 +218,7 @@ void IN_Frame(void)
 
 	HandleEvents();
 
-	if (!ActiveApp || Minimized || (key_dest != key_game || cls.state != ca_active)) {
+	if (!ActiveApp || Minimized || IN_OSMouseCursorRequired()) {
 		IN_DeactivateMouse();
 		return;
 	} else {
@@ -491,10 +510,13 @@ static void HandleEvents()
 				my = old_y - event.motion.y;
 				old_x = event.motion.x;
 				old_y = event.motion.y;
+				cursor_x = min(max(0, cursor_x + event.motion.x - glConfig.vidWidth / 2), glConfig.vidWidth);
+				cursor_y = min(max(0, cursor_y + event.motion.y - glConfig.vidHeight / 2), glConfig.vidHeight);
 				SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-			} else {
-				cursor_x = event.motion.x * ((double)vid.width / glConfig.vidWidth);
-				cursor_y = event.motion.y * ((double)vid.height / glConfig.vidHeight);
+			}
+			else {
+				cursor_x = event.motion.x;
+				cursor_y = event.motion.y;
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
