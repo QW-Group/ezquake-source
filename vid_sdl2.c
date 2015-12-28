@@ -493,8 +493,11 @@ static void HandleEvents()
 		case SDL_MOUSEWHEEL:
 			mouse_wheel_event(&event.wheel);
 			break;
-		case SDL_DROPFILE: /* OS X only */
-			Cbuf_AddText(va("playdemo %s\n", event.drop.file));
+		case SDL_DROPFILE:
+			/* TODO: Add handling for different file types */
+			Cbuf_AddText("playdemo ");
+			Cbuf_AddText(event.drop.file);
+			Cbuf_AddText("\n");
 			SDL_free(event.drop.file);
 			break;
 		}   
