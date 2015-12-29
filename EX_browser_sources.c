@@ -894,27 +894,48 @@ int rebuild_servers_list = 0;
 void Rebuild_Servers_List(void)
 {
     int i;
+    int suppressed_servers = 0;
+    int server_limit = sizeof(servers) / sizeof(servers[0]);
     serversn = 0;
 	
     rebuild_servers_list = 0;
 	Sys_SemWait(&serverlist_semaphore);
 
     for (i=0; i < sourcesn; i++)
+    {
         if (sources[i]->checked)
         {
             int j;
             for (j=0; j < sources[i]->serversn; j++)
             {
                 int k;
-                for (k=0; k < serversn; k++)
-                    if (!memcmp(&(servers[k]->address),
-                        &(sources[i]->servers[j]->address),
-                        sizeof(netadr_t)))
+                qbool found_duplicate = false;
+
+                // Try and find a matching address
+                for (k = 0; k < serversn && k < server_limit; k++) {
+                    if (!memcmp(&(servers[k]->address), &(sources[i]->servers[j]->address), sizeof(netadr_t))) {
+                        found_duplicate = true;
                         break;
-                if (k == serversn)  // if not on list yet
-                    servers[serversn++] = sources[i]->servers[j];
+                    }
+                }
+
+                if (! found_duplicate) {
+                    // if not on list yet
+                    if (serversn < server_limit) {
+                        servers[serversn++] = sources[i]->servers[j];
+                    }
+                    else {
+                        ++suppressed_servers;
+                    }
+                }
             }
         }
+    }
+
+    if (suppressed_servers) {
+        Con_Printf("Warning: suppressed %d servers\n", suppressed_servers);
+    }
+
     resort_servers = 1;
     rebuild_all_players = 1;
     Servers_pos = 0;
