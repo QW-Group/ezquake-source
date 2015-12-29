@@ -103,6 +103,7 @@ cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH };
 cvar_t vid_height             = {"vid_height",            "0",   CVAR_LATCH };
 cvar_t vid_win_width          = {"vid_win_width",         "640", CVAR_LATCH };
 cvar_t vid_win_height         = {"vid_win_height",        "480", CVAR_LATCH };
+cvar_t vid_hwgammacontrol     = {"vid_hwgammacontrol",    "2",   CVAR_LATCH };
 
 // TODO: Move the in_* cvars
 cvar_t in_raw                 = {"in_raw",                "1",   CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
@@ -594,6 +595,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_height);
 	Cvar_Register(&vid_win_width);
 	Cvar_Register(&vid_win_height);
+	Cvar_Register(&vid_hwgammacontrol);
 	Cvar_Register(&r_colorbits);
 	Cvar_Register(&r_24bit_depth);
 	Cvar_Register(&r_fullscreen);
@@ -975,10 +977,31 @@ void VID_NotifyActivity(void)
 #endif
 }
 
-void VID_SetDeviceGammaRamp (unsigned short *ramps)
+static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 {
+	if (!sdl_window) {
+		return;
+	}
+
 	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
 	vid_hwgamma_enabled = true;
+}
+
+void VID_SetDeviceGammaRamp(unsigned short *ramps)
+{
+	if (COM_CheckParm("-nohwgamma")) {
+		return;
+	}
+
+	if (r_fullscreen.integer > 0) {
+		if (vid_hwgammacontrol.integer > 0) {
+			VID_SetDeviceGammaRampReal(ramps);
+		}
+	} else {
+		if (vid_hwgammacontrol.integer == 2) {
+			VID_SetDeviceGammaRampReal(ramps);
+		}
+	}
 }
 
 void VID_Minimize (void) 
