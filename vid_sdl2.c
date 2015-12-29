@@ -571,6 +571,7 @@ void VID_Shutdown(void)
 
 	Q_free(modelist);
 	modelist_count = 0;
+	vid_hwgamma_enabled = false;
 }
 
 static int VID_SDL_InitSubSystem(void)
