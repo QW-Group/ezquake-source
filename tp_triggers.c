@@ -77,6 +77,7 @@ f_trigger_t f_triggers[] = {
 	{"f_captureframe", false, false},
 	{"f_sbrefreshdone", false, false},
 	{"f_sbupdatesourcesdone", false, false},
+	{"f_focusgained", false, false},
 
 	{"f_freeflyspectate", false, false},
 	{"f_trackspectate", false, false},

@@ -49,6 +49,12 @@
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
+/* FIXME: This should be in a header file and it probably shouldn't be called TP_
+ *        since there are a lot of triggers that has nothing to do with teamplay.
+ *        Should probably split them
+ */
+extern void TP_ExecTrigger(const char *);
+
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
@@ -325,8 +331,10 @@ static void window_event(SDL_WindowEvent *event)
 			ActiveApp = false;
 			break;
 
-		case SDL_WINDOWEVENT_RESTORED:
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
+			TP_ExecTrigger("f_focusgained");
+			/* Fall through */
+		case SDL_WINDOWEVENT_RESTORED:
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
