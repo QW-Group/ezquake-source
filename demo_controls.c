@@ -65,11 +65,20 @@ static void DemoControls_SetTimeLabelText(ez_label_t *label, double time)
 	EZ_label_SetText(label, va("%02d:%02d", Q_rint(time / 60), Q_rint((int)time % 60)));
 }
 
+static void DemoControls_Destroy(void)
+{
+	democontrols_on = false;
+	key_dest = key_game;
+	key_dest_beforecon = key_game;
+	EZ_tree_Destroy(&democontrol_tree);
+}
+
 void DemoControls_Draw(void)
 {
 	if (democontrols_on)
 	{
 		// Position the slider based on the current demo time.
+		if (cls.demoplayback)
 		{
 			float demo_length = CL_GetDemoLength();
 			float current_demotime = cls.demotime - demostarttime; // TODO: Make a function for this in cl_demo.c
@@ -81,6 +90,10 @@ void DemoControls_Draw(void)
 			slider_updating = true;
 			EZ_slider_SetPosition(demo_slider, pos);
 			slider_updating = false;
+		}
+		else
+		{
+			DemoControls_Destroy();
 		}
 	}
 
@@ -129,6 +142,15 @@ static int DemoControls_Slider_OnMouseHover(ez_control_t *self, void *payload, m
 	return 0;
 }
 
+static void DemoControls_SetSpeedLabel()
+{
+	char label_text[20] = { 0 };
+
+	snprintf(label_text, sizeof(label_text) - 1, "%4i%%", Q_rint(Demo_GetSpeed() * 100));
+
+	EZ_label_SetText(speed_label, label_text);
+}
+
 static void DemoControls_SetDemoSpeed(double speed)
 {
 	speed = bound(0.0, speed, 10.0);
@@ -138,8 +160,8 @@ static void DemoControls_SetDemoSpeed(double speed)
 		previous_demospeed = Demo_GetSpeed();
 	}
 
-	Cvar_SetValue(&cl_demospeed, speed);	
-	EZ_label_SetText(speed_label, va("%i%%", Q_rint(Demo_GetSpeed() * 100)));
+	Cvar_SetValue(&cl_demospeed, speed);
+	DemoControls_SetSpeedLabel();
 }
 
 static int DemoControls_SpeedButton_OnMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
@@ -175,6 +197,7 @@ static int DemoControls_PauseButton_OnMouseClick(ez_control_t *self, void *paylo
 static int DemoControls_StopButton_OnMouseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
 {
 	Cbuf_AddText("disconnect\n");
+	DemoControls_Destroy();
 	return 1;
 }
 
@@ -189,14 +212,6 @@ static int DemoControls_Window_OnMouseLeave(ez_control_t *self, void *payload, m
 {
 	EZ_control_SetOpacity(self, 0.5);
 	return 0;
-}
-
-static void DemoControls_Destroy(void)
-{
-	democontrols_on = false;
-	key_dest = key_game;
-	key_dest_beforecon = key_game;
-	EZ_tree_Destroy(&democontrol_tree);
 }
 
 static int DemoControls_Window_OnCloseClick(ez_control_t *self, void *payload, mouse_state_t *ms)
@@ -267,7 +282,7 @@ static void DemoControls_Init(void)
 	// Demo speed title label.
 	{
 		speed_title_label = EZ_label_Create(&democontrol_tree, root, 
-			"Demo speed title label", "", -(15 + 24), 15, 64, 16,  
+			"Demo speed title label", "", -(15 + 32), 15, 64, 16,
 			control_contained | control_resizeable, 
 			0, "");
 
@@ -282,12 +297,12 @@ static void DemoControls_Init(void)
 	// Demo speed label.
 	{
 		speed_label = EZ_label_Create(&democontrol_tree, root, 
-			"Demo speed label", "", -5, 15, 24, 16,  
+			"Demo speed label", "", -7, 15, 32, 16,
 			control_contained | control_resizeable, 
 			0, "");
 
 		EZ_label_SetAutoSize(speed_label, true);
-		EZ_label_SetText(speed_label, va("%i%%", Q_rint(Demo_GetSpeed() * 100)));
+		DemoControls_SetSpeedLabel();
 		EZ_label_SetReadOnly(speed_label, true);
 		EZ_label_SetTextSelectable(speed_label, false);
 		EZ_control_SetAnchor((ez_control_t *)speed_label, anchor_right | anchor_top);
@@ -431,6 +446,12 @@ qbool DemoControls_KeyEvent(int key, int unichar, qbool down)
 
 void DemoControls_f(void)
 {
+	if (!cls.demoplayback && !democontrols_on)
+	{
+		Com_Printf("Error: not playing a demo\n");
+		return;
+	}
+
 	DemoControls_Toggle();
 }
 
