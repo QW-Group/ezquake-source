@@ -331,10 +331,14 @@ else
     LIBS_c += -lm
 
     ifeq ($(SYS),Darwin)
-        LIBS_c += -framework Foundation -framework OpenGL -framework IOKit -framework CoreServices -ldl
+        LIBS_c += -framework Foundation -framework OpenGL -framework IOKit -framework CoreServices
         OBJS_c += in_osx.o sys_osx.o
     else
-        LIBS_c += -lGL
+        LIBS_c += -lGL -lpthread
+    endif
+
+    ifeq ($(SYS),Linux)
+        LIBS_c += -lXxf86vm
     endif
 
     ifneq ($(SYS),FreeBSD)

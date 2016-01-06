@@ -24,10 +24,14 @@
 #include "quakedef.h"
 
 #include <SDL.h>
+#include <SDL_syswm.h>
+
+#ifdef __linux__
+#include <X11/extensions/xf86vmode.h>
+#endif
 
 #ifdef _WIN32
 #include <windows.h>
-#include <SDL_syswm.h>
 #endif
 
 #ifdef __APPLE__
@@ -83,6 +87,10 @@ double vid_last_swap_time;
 
 static SDL_DisplayMode *modelist;
 static int modelist_count;
+
+#ifdef __linux__
+static unsigned short sysramps[768];
+#endif
 
 //
 // cvars
@@ -319,6 +327,53 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 	*y = bounds.y + min(*y, bounds.h - 30);
 }
 
+static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
+{
+#ifdef __linux__
+	SDL_SysWMinfo info;
+	Display *display;
+	int screen;
+	static short once=1;
+
+	SDL_VERSION(&info.version);
+	screen = SDL_GetWindowDisplayIndex(sdl_window);
+
+	if (SDL_GetWindowWMInfo(sdl_window, &info) != SDL_TRUE) {
+		Com_DPrintf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
+		return;
+	}
+
+	if (info.subsystem != SDL_SYSWM_X11) {
+		Com_DPrintf("error: not x11, gamma won't work\n");
+		return;
+	}
+
+	display = info.info.x11.display;
+
+	if (once) {
+		if (!XF86VidModeGetGammaRamp(display, screen, 256, sysramps, sysramps+256, sysramps+512)) {
+			Com_DPrintf("error: cannot get system gamma ramps, gamma won't work\n");
+			return;
+		}
+		once = 0;
+	}
+
+	/* It returns true unconditionally ... */
+	XF86VidModeSetGammaRamp(display, screen, 256, ramps, ramps+256, ramps+512);
+#else
+	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
+#endif
+
+	vid_hwgamma_enabled = true;
+}
+
+#ifdef __linux__
+static void VID_RestoreSystemGamma(void)
+{
+	VID_SetDeviceGammaRampReal(sysramps);
+}
+#endif
+
 static void window_event(SDL_WindowEvent *event)
 {
 	extern qbool scr_skipupdate;
@@ -330,6 +385,10 @@ static void window_event(SDL_WindowEvent *event)
 
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			ActiveApp = false;
+#ifdef __linux__
+			/* Restore system gamma while client is out of focus/minimized */
+			VID_RestoreSystemGamma();
+#endif
 			break;
 
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
@@ -339,6 +398,9 @@ static void window_event(SDL_WindowEvent *event)
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
+#ifdef __linux__
+			v_gamma.modified = true;
+#endif
 			break;
 
 		case SDL_WINDOWEVENT_MOVED:
@@ -553,6 +615,10 @@ void VID_Shutdown(void)
 	IN_DeactivateMouse();
 
 	SDL_StopTextInput();
+
+#ifdef __linux__
+	VID_RestoreSystemGamma();
+#endif
 
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
@@ -978,19 +1044,9 @@ void VID_NotifyActivity(void)
 #endif
 }
 
-static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
-{
-	if (!sdl_window) {
-		return;
-	}
-
-	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
-	vid_hwgamma_enabled = true;
-}
-
 void VID_SetDeviceGammaRamp(unsigned short *ramps)
 {
-	if (COM_CheckParm("-nohwgamma")) {
+	if (!sdl_window || COM_CheckParm("-nohwgamma")) {
 		return;
 	}
 
