@@ -44,7 +44,7 @@ static void Sys_BatteryInfo_f(void)
 			Com_Printf("No battery available\n");
 			break;
 		case SDL_POWERSTATE_CHARGING:
-			Com_Printf("Plugged in, charging battery\n");
+			Com_Printf("Plugged in, charging battery (%d%%)\n", percent);
 			break;
 		case SDL_POWERSTATE_CHARGED:
 			Com_Printf("Plugged in, battery is fully charged\n");

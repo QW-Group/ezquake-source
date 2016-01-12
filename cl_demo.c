@@ -4054,7 +4054,7 @@ void CL_QTVList_f (void)
 {
 	char *connrequest;
 	vfsfile_t *newf;
-	qbool qtvlist = !strcmp("qtvlist", Cmd_Argv(0));
+	qbool qtvlist = !strcmp("qtv_query_sourcelist", Cmd_Argv(0));
 
 	if (Cmd_Argc() < 2) {
 		Com_Printf("Usage: %s hostname[:port] [password]\n", Cmd_Argv(0));
