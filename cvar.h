@@ -81,6 +81,8 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags);
 
 // equivalent to "<name> <variable>" typed at the console
 void Cvar_Set (cvar_t *var, char *value);
+void Cvar_SetIgnoreCallback(cvar_t *var, char *value);
+
 // same but silent for latched var
 void Cvar_LatchedSet (cvar_t *var, char *value);
 

@@ -92,6 +92,8 @@ static int modelist_count;
 static unsigned short sysramps[768];
 #endif
 
+qbool vid_initialized = false;
+
 //
 // cvars
 //
@@ -508,7 +510,7 @@ static void keyb_event(SDL_KeyboardEvent *event)
 	byte result = Key_ScancodeToQuakeCode(event->keysym.scancode);
 	
 	if (result == 0) {
-		Com_Printf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
+		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
 		return;
 	}
 
@@ -638,6 +640,7 @@ void VID_Shutdown(void)
 	Q_free(modelist);
 	modelist_count = 0;
 	vid_hwgamma_enabled = false;
+	vid_initialized = false;
 }
 
 static int VID_SDL_InitSubSystem(void)
@@ -710,9 +713,13 @@ static void VID_SetupModeList(void)
 {
 	int i;
 
-	Q_free(modelist);
+	modelist_count = SDL_GetNumDisplayModes(VID_DisplayNumber(r_fullscreen.integer == 1));
 
-	modelist_count = SDL_GetNumDisplayModes(0);
+	if (modelist_count <= 0) {
+		Com_Printf("error getting display modes: %s\n", SDL_GetError());
+		modelist_count = 0;
+	}
+
 	modelist = Q_calloc(modelist_count, sizeof(*modelist));
 
 	for (i = 0; i < modelist_count; i++) {
@@ -771,16 +778,26 @@ int VID_GetCurrentModeIndex(void)
 {
 	int i;
 
+	int best_freq = 0;
+	int best_idx = -1;
+
 	for (i = 0; i < modelist_count; i++) {
-		if (modelist[i].w == vid_width.integer &&
-		    modelist[i].h == vid_height.integer &&
-		    modelist[i].refresh_rate == r_displayRefresh.integer) {
-			Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, modelist[i].refresh_rate);
-			return i;
+		if (modelist[i].w == vid_width.integer && modelist[i].h == vid_height.integer) {
+			if (r_displayRefresh.integer != 0) {
+				if (modelist[i].refresh_rate == r_displayRefresh.integer) {
+					Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, modelist[i].refresh_rate);
+					return i;
+				}
+			} else {
+				if (modelist[i].refresh_rate > best_freq) {
+					best_freq = modelist[i].refresh_rate;
+					best_idx = i;
+				}
+			}
 		}
 	}
 
-	return -1;
+	return best_idx >= 0 ? best_idx : -1;
 }
 
 int VID_GetModeIndexCount(void) {
@@ -1213,11 +1230,11 @@ static void VID_ParseCmdLine(void)
 	} // else if (w || h) { Sys_Error("Must specify both -width and -height\n"); }
 
 	if ((i = COM_CheckParm("-conwidth")) && i + 1 < COM_Argc()) {
-		Cvar_SetValue(&r_conwidth, (float)Q_atoi(COM_Argv(i + 1)));
+		Cvar_SetIgnoreCallback(&r_conwidth, COM_Argv(i + 1));
 	}
 
 	if ((i = COM_CheckParm("-conheight")) && i + 1 < COM_Argc()) {
-		Cvar_SetValue(&r_conheight, (float)Q_atoi(COM_Argv(i + 1)));
+		Cvar_SetIgnoreCallback(&r_conheight, COM_Argv(i + 1));
 	}
 }
 
@@ -1279,12 +1296,27 @@ static void VID_DisplayList_f(void)
 	}
 }
 
+static void VID_ModeList_f(void)
+{
+	int i = 0;
+
+	if (modelist == NULL || modelist_count <= 0) {
+		Com_Printf("error: no modes available\n");
+		return;
+	}
+	
+	for (; i < modelist_count; i++) {
+		Com_Printf("%dx%d@%dHz\n", (&modelist[i])->w, (&modelist[i])->h, (&modelist[i])->refresh_rate);
+	}
+}
+
 void VID_RegisterCommands(void) 
 {
 	if (!host_initialized) {
 		Cmd_AddCommand("vid_gfxinfo", GfxInfo_f);
 		Cmd_AddCommand("vid_restart", VID_Restart_f);
 		Cmd_AddCommand("vid_displaylist", VID_DisplayList_f);
+		Cmd_AddCommand("vid_modelist", VID_ModeList_f);
 	}
 }
 
@@ -1309,6 +1341,10 @@ static void VID_UpdateConRes(void)
 
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel)
 {
+	/* Cvar_SetValue won't trigger a recursive callback since we're in the callback,
+	 * but it's required to set the values here first to make them apply, and then cancel
+	 * set to true will force the caller to return immediatly when this callback returns...
+	 */
 	if (var == &r_conwidth) {
 		Cvar_SetValue(&r_conwidth, Q_atoi(string));
 	} else if (var == &r_conheight) {
@@ -1349,5 +1385,7 @@ void VID_Init(unsigned char *palette) {
 	VID_UpdateConRes();
 
 	GL_Init(); // Real OpenGL stuff, vid_common_gl.c
+
+	vid_initialized = true;
 }
 

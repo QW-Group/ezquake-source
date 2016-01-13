@@ -224,7 +224,7 @@ void Cvar_RulesetSet(cvar_t *var, char *val, int m)
 	}
 }
 
-void Cvar_Set (cvar_t *var, char *value)
+void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 {
 	extern cvar_t cl_warncmd;
 	extern cvar_t re_subi[10];
@@ -304,7 +304,7 @@ void Cvar_Set (cvar_t *var, char *value)
 		return;
 	}
 
-	if (var->OnChange && !changing) {
+	if (!ignore_callback && var->OnChange && !changing) {
 		qbool cancel = false;
 		changing = true;
 		var->OnChange(var, value, &cancel);
@@ -331,6 +331,16 @@ void Cvar_Set (cvar_t *var, char *value)
 
 	if (var->flags & CVAR_USERINFO)
 		CL_UserinfoChanged (var->name, var->string);
+}
+
+void Cvar_SetIgnoreCallback(cvar_t *var, char *value)
+{
+	Cvar_SetEx(var, value, true);
+}
+
+void Cvar_Set(cvar_t *var, char *value)
+{
+	Cvar_SetEx(var, value, false);
 }
 
 void Cvar_ForceSet (cvar_t *var, char *value)
