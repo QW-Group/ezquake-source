@@ -9365,6 +9365,21 @@
       "desc": "If set, will grab mouse input when not fullscreen",
       "type": "boolean"
     },
+    "in_release_mouse_modes": {
+      "group-id": "11",
+      "desc": "Controls under which mode(s) the cursor will be released back to the operating system when not fullscreen.",
+      "remarks":  "To specify more then one mode, add the values together.\n\nTo always release the cursor, set in_grab_windowed_mouse 0",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Never release mouse cursor" },
+        { "name": "1", "description": "Release when playing (demo playback only)" },
+        { "name": "2", "description": "Release when console is down" },
+        { "name": "4", "description": "Release when using /messagemode" },
+        { "name": "8", "description": "Release when menu on-screen" },
+        { "name": "16", "description": "Release when using hud editor" },
+        { "name": "32", "description": "Release when using demo controls" }
+      ]
+    },
     "in_m_os_parameters": {
       "group-id": "28",
       "desc": "Allows you to use your system mouse settings in the client",
