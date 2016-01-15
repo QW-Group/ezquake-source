@@ -118,6 +118,7 @@ cvar_t vid_hwgammacontrol     = {"vid_hwgammacontrol",    "2",   CVAR_LATCH };
 // TODO: Move the in_* cvars
 cvar_t in_raw                 = {"in_raw",                "1",   CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse","1",   CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
+cvar_t in_release_mouse_modes = {"in_release_mouse_modes","2"};
 cvar_t vid_vsync_lag_fix      = {"vid_vsync_lag_fix",     "0"};
 cvar_t vid_vsync_lag_tweak    = {"vid_vsync_lag_tweak",   "1.0"};
 cvar_t r_swapInterval         = {"vid_vsync",             "0",   CVAR_SILENT };
@@ -138,6 +139,16 @@ cvar_t gl_multisamples        = {"gl_multisamples",       "0",   CVAR_LATCH }; /
 // function declaration
 //
 
+// True if we need to release the mouse and let the OS show cursor again
+static qbool IN_OSMouseCursorRequired(void)
+{
+	// Explicit check here for key_game... really setting all modes is equivalent to "in_grab_windowed_mouse 0"
+	qbool in_os_cursor_mode = (key_dest != key_game || cls.demoplayback) && (in_release_mouse_modes.integer & (1 << key_dest));
+
+	// Windowed & (not-grabbing mouse | in OS cursor mode)
+	return (!r_fullscreen.value && (!in_grab_windowed_mouse.value || in_os_cursor_mode));
+}
+
 // True if we're in a mode where we need to keep track of mouse movement
 qbool IN_MouseTrackingRequired(void)
 {
@@ -147,14 +158,7 @@ qbool IN_MouseTrackingRequired(void)
 // True if we need to display the internal Quake cursor to track the mouse
 qbool IN_QuakeMouseCursorRequired(void)
 {
-	return mouse_active && (r_fullscreen.value || in_grab_windowed_mouse.value) && IN_MouseTrackingRequired();
-}
-
-// True if we need to release the mouse and let the OS show cursor again
-static qbool IN_OSMouseCursorRequired(void)
-{
-	// Windowed & (not-grabbing mouse | at_console | not_connected)
-	return (!r_fullscreen.value && (!in_grab_windowed_mouse.value || key_dest == key_console || cls.state != ca_active));
+	return mouse_active && IN_MouseTrackingRequired() && !IN_OSMouseCursorRequired();
 }
 
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
@@ -212,6 +216,7 @@ void IN_StartupMouse(void)
 {
 	Cvar_Register(&in_raw);
 	Cvar_Register(&in_grab_windowed_mouse);
+	Cvar_Register(&in_release_mouse_modes);
 
 	mouseinitialized = true;
 
