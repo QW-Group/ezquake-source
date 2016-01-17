@@ -118,9 +118,9 @@ cvar_t vid_hwgammacontrol     = {"vid_hwgammacontrol",    "2",   CVAR_LATCH };
 // TODO: Move the in_* cvars
 cvar_t in_raw                 = {"in_raw",                "1",   CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse = {"in_grab_windowed_mouse","1",   CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
-cvar_t in_release_mouse_modes = {"in_release_mouse_modes","2"};
-cvar_t vid_vsync_lag_fix      = {"vid_vsync_lag_fix",     "0"};
-cvar_t vid_vsync_lag_tweak    = {"vid_vsync_lag_tweak",   "1.0"};
+cvar_t in_release_mouse_modes = {"in_release_mouse_modes","2",   CVAR_SILENT };
+cvar_t vid_vsync_lag_fix      = {"vid_vsync_lag_fix",     "0"                };
+cvar_t vid_vsync_lag_tweak    = {"vid_vsync_lag_tweak",   "1.0"              };
 cvar_t r_swapInterval         = {"vid_vsync",             "0",   CVAR_SILENT };
 cvar_t r_win_save_pos         = {"vid_win_save_pos",      "1",   CVAR_SILENT };
 cvar_t r_win_save_size        = {"vid_win_save_size",     "1",   CVAR_SILENT };
