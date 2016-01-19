@@ -94,6 +94,12 @@ static unsigned short sysramps[768];
 
 qbool vid_initialized = false;
 
+static int last_working_width;
+static int last_working_height;
+static int last_working_hz;
+static int last_working_display;
+static qbool last_working_values = false;
+
 //
 // cvars
 //
@@ -105,12 +111,12 @@ cvar_t r_colorbits            = {"vid_colorbits",         "0",   CVAR_LATCH };
 cvar_t r_24bit_depth          = {"vid_24bit_depth",       "1",   CVAR_LATCH };
 cvar_t r_stereo               = {"vid_stereo",            "0",   CVAR_LATCH };
 cvar_t r_fullscreen           = {"vid_fullscreen",        "1",   CVAR_LATCH };
-cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH };
-cvar_t vid_displayNumber      = {"vid_displaynumber",     "0",   CVAR_LATCH };
-cvar_t vid_usedesktopres      = {"vid_usedesktopres",     "1",   CVAR_LATCH };
+cvar_t r_displayRefresh       = {"vid_displayfrequency",  "0",   CVAR_LATCH | CVAR_AUTO };
+cvar_t vid_displayNumber      = {"vid_displaynumber",     "0",   CVAR_LATCH | CVAR_AUTO };
+cvar_t vid_usedesktopres      = {"vid_usedesktopres",     "1",   CVAR_LATCH | CVAR_AUTO };
 cvar_t vid_win_borderless     = {"vid_win_borderless",    "0",   CVAR_LATCH };
-cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH };
-cvar_t vid_height             = {"vid_height",            "0",   CVAR_LATCH };
+cvar_t vid_width              = {"vid_width",             "0",   CVAR_LATCH | CVAR_AUTO };
+cvar_t vid_height             = {"vid_height",            "0",   CVAR_LATCH | CVAR_AUTO };
 cvar_t vid_win_width          = {"vid_win_width",         "640", CVAR_LATCH };
 cvar_t vid_win_height         = {"vid_win_height",        "480", CVAR_LATCH };
 cvar_t vid_hwgammacontrol     = {"vid_hwgammacontrol",    "2",   CVAR_LATCH };
@@ -127,8 +133,8 @@ cvar_t r_win_save_size        = {"vid_win_save_size",     "1",   CVAR_SILENT };
 cvar_t vid_xpos               = {"vid_xpos",              "3",   CVAR_SILENT };
 cvar_t vid_ypos               = {"vid_ypos",              "39",  CVAR_SILENT };
 cvar_t vid_win_displayNumber  = {"vid_win_displaynumber", "0",   CVAR_SILENT };
-cvar_t r_conwidth             = {"vid_conwidth",          "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
-cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
+cvar_t r_conwidth             = {"vid_conwidth",          "0",   CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
+cvar_t r_conheight            = {"vid_conheight",         "0",   CVAR_NO_RESET | CVAR_SILENT | CVAR_AUTO, conres_changed_callback };
 cvar_t r_conscale             = {"vid_conscale",          "2.0", CVAR_NO_RESET | CVAR_SILENT, conres_changed_callback };
 cvar_t vid_flashonactivity    = {"vid_flashonactivity",   "1",   CVAR_SILENT };
 cvar_t r_verbose              = {"vid_verbose",           "0",   CVAR_SILENT };
@@ -736,13 +742,20 @@ static void VID_SetupModeList(void)
 static void VID_SetupResolution(void)
 {
 	SDL_DisplayMode display_mode;
+	int display_nbr;
 
 	if (r_fullscreen.integer == 1) {
+		display_nbr = VID_DisplayNumber(true);
 		if (vid_usedesktopres.integer == 1) {
-			if (SDL_GetDesktopDisplayMode(VID_DisplayNumber(true), &display_mode) == 0) {
-				glConfig.vidWidth = display_mode.w;
-				glConfig.vidHeight = display_mode.h;
-				glConfig.displayFrequency = display_mode.refresh_rate;
+			if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
+				glConfig.vidWidth = last_working_width = display_mode.w;
+				glConfig.vidHeight = last_working_height = display_mode.h;
+				glConfig.displayFrequency = last_working_hz = display_mode.refresh_rate;
+				last_working_display = display_nbr;
+				last_working_values = true;
+				Cvar_AutoSetInt(&vid_width, display_mode.w);
+				Cvar_AutoSetInt(&vid_height, display_mode.h);
+				Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
 				return;
 			} else {
 				Com_Printf("warning: failed to get desktop resolution\n");
@@ -789,21 +802,24 @@ int VID_GetCurrentModeIndex(void)
 
 	for (i = 0; i < modelist_count; i++) {
 		if (modelist[i].w == vid_width.integer && modelist[i].h == vid_height.integer) {
-			if (r_displayRefresh.integer != 0) {
-				if (modelist[i].refresh_rate == r_displayRefresh.integer) {
-					Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, modelist[i].refresh_rate);
-					return i;
-				}
-			} else {
-				if (modelist[i].refresh_rate > best_freq) {
-					best_freq = modelist[i].refresh_rate;
-					best_idx = i;
-				}
+			if (modelist[i].refresh_rate == r_displayRefresh.integer) {
+				Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, modelist[i].refresh_rate);
+				return i;
+			}
+
+			if (modelist[i].refresh_rate > best_freq) {
+				best_freq = modelist[i].refresh_rate;
+				best_idx = i;
 			}
 		}
 	}
 
-	return best_idx >= 0 ? best_idx : -1;
+	/* width/height matched but not hz, using the best available */
+	if (best_idx >= 0) {
+		Cvar_AutoSetInt(&r_displayRefresh, modelist[best_idx].refresh_rate);
+	}
+
+	return best_idx;
 }
 
 int VID_GetModeIndexCount(void) {
@@ -920,16 +936,35 @@ static void VID_SDL_Init(void)
 	}
 
 	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
-		int index;
+		int index = VID_GetCurrentModeIndex();
 
-		index = VID_GetCurrentModeIndex();
-
-		/* FIXME: Make a pre-check if the values render a valid video mode before attempting to switch (when vid_usedesktopres != 1) !! */
 		if (index < 0) {
 			Com_Printf("Couldn't find a matching video mode for the selected values, check video settings!\n");
+			if (last_working_values == true) {
+				Com_Printf("Using last known working settings: %dx%d@%dHz\n", last_working_width, last_working_height, last_working_hz);
+				Cvar_LatchedSetValue(&vid_width, (float)last_working_width);
+				Cvar_LatchedSetValue(&vid_height, (float)last_working_height);
+				Cvar_LatchedSetValue(&r_displayRefresh, (float)last_working_hz);
+				Cvar_LatchedSetValue(&vid_displayNumber, (float)last_working_display);
+				Cvar_AutoSetInt(&vid_width, last_working_width);
+				Cvar_AutoSetInt(&vid_height, last_working_height);
+				Cvar_AutoSetInt(&r_displayRefresh, last_working_hz);
+				Cvar_AutoSetInt(&vid_displayNumber, last_working_display);
+			} else {
+				Com_Printf("Using desktop resolution as fallback\n");
+				Cvar_LatchedSet(&vid_usedesktopres, "1");
+				Cvar_AutoSet(&vid_usedesktopres, "1");
+			}
+			VID_SetupResolution();
 		} else {
 			if (SDL_SetWindowDisplayMode(sdl_window, &modelist[index]) != 0) {
 				Com_Printf("sdl error: %s\n", SDL_GetError());
+			} else {
+				last_working_width = (&modelist[index])->w;
+				last_working_height = (&modelist[index])->h;
+				last_working_hz = (&modelist[index])->refresh_rate;
+				last_working_display = vid_displayNumber.integer;
+				last_working_values = true;
 			}
 		}
 
@@ -1329,13 +1364,30 @@ void VID_RegisterCommands(void)
 static void VID_UpdateConRes(void)
 {
 	// Default
-	if (r_conwidth.integer == 0 || r_conheight.integer == 0) {
-		vid.width = vid.conwidth = bound(320, (int)(glConfig.vidWidth/r_conscale.value), glConfig.vidWidth);
-		vid.height = vid.conheight = bound(200, (int)(glConfig.vidHeight/r_conscale.value), glConfig.vidHeight);;
+	if (r_conwidth.integer == 0 && r_conheight.integer == 0) {
+		vid.width   = vid.conwidth  = bound(320, (int)(glConfig.vidWidth  / r_conscale.value), glConfig.vidWidth);
+		vid.height  = vid.conheight = bound(200, (int)(glConfig.vidHeight / r_conscale.value), glConfig.vidHeight);
+		Cvar_AutoSetInt(&r_conwidth, vid.conwidth);
+		Cvar_AutoSetInt(&r_conheight, vid.conheight);
+
+	} else if (r_conwidth.integer == 0) {
+		double ar_w = (double)glConfig.vidWidth/(double)glConfig.vidHeight;
+
+		vid.height  = vid.conheight = bound(200, r_conheight.integer, glConfig.vidHeight);
+		vid.width   = vid.conwidth  = bound(320, (int)(r_conheight.integer*ar_w + 0.5), glConfig.vidWidth);
+		Cvar_AutoSetInt(&r_conwidth, vid.conwidth);
+
+	} else if (r_conheight.integer == 0) {
+		double ar_h = (double)glConfig.vidHeight/(double)glConfig.vidWidth;
+
+		vid.height  = vid.conheight = bound(200, (int)(r_conwidth.integer*ar_h + 0.5), glConfig.vidHeight);
+		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer, glConfig.vidWidth);
+		Cvar_AutoSetInt(&r_conheight, vid.conheight);
+
 	} else {
 		// User specified, use that but check boundaries
-		vid.width  = vid.conwidth  = bound(320, r_conwidth.integer, glConfig.vidWidth);
-		vid.height = vid.conheight = bound(200, r_conheight.integer, glConfig.vidHeight);
+		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer,  glConfig.vidWidth);
+		vid.height  = vid.conheight = bound(200, r_conheight.integer, glConfig.vidHeight);
 		Cvar_SetValue(&r_conwidth, vid.conwidth);
 		Cvar_SetValue(&r_conheight, vid.conheight);
 	}
