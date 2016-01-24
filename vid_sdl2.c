@@ -393,8 +393,9 @@ static void window_event(SDL_WindowEvent *event)
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			ActiveApp = false;
 #ifdef __linux__
-			/* Restore system gamma while client is out of focus/minimized */
-			VID_RestoreSystemGamma();
+			if (Minimized || vid_hwgammacontrol.integer != 3) {
+				VID_RestoreSystemGamma();
+			}
 #endif
 			break;
 
@@ -1077,7 +1078,7 @@ void VID_SetDeviceGammaRamp(unsigned short *ramps)
 			VID_SetDeviceGammaRampReal(ramps);
 		}
 	} else {
-		if (vid_hwgammacontrol.integer == 2) {
+		if (vid_hwgammacontrol.integer >= 2) {
 			VID_SetDeviceGammaRampReal(ramps);
 		}
 	}

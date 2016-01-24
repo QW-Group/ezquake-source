@@ -13910,9 +13910,10 @@
       "group-id": "52",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Disables hardware gamma control." },
-        { "name": "1", "description": "Enables hardware gamma control." },
-        { "name": "2", "description": "Enables hwgamma in windowed mode." }
+        { "name": "0", "description": "Disables hwgamma control." },
+        { "name": "1", "description": "Enables hwgamma control for fullscreen mode." },
+        { "name": "2", "description": "Enables hwgamma control for fullscreen and windowed mode." },
+        { "name": "3", "description": "Enables hwgamma even when window focus is lost but not minimized (Xorg only)" }
       ]
     },
     "vid_mode": {
