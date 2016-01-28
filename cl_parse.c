@@ -2519,8 +2519,12 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 	memset (zomfg, 0, sizeof (zomfg));
 	qwcslcpy (zomfg, str2wcs(mark), sizeof (zomfg) / sizeof (wchar));
 	qwcslcpy (zomfg + qwcslen (zomfg), text, sizeof (zomfg) / sizeof (wchar) - qwcslen (zomfg));
-	if (cl_showFragsMessages.value || !cff.isFragMsg)
+	if (cl_showFragsMessages.value || !cff.isFragMsg) {
+		if (cl_showFragsMessages.integer == 2 && cff.isFragMsg) {
+			Print_flags[Print_current] |= PR_NONOTIFY;
+		}
 		Con_PrintW(zomfg); // FIXME logging
+	}
 
 	if (level >= 4)
 		return;

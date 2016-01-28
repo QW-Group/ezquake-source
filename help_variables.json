@@ -1674,10 +1674,11 @@
       "group-id": "47",
       "desc": "Controls whether frag messages should be printed into console and notification area.",
       "remarks": "Requires cl_loadfragfiles and cl_parsefrags variables to be set to 1.",
-      "type": "boolean",
+      "type": "enum",
       "values": [
-        { "name": "false", "description": "Will not print frag messages" },
-        { "name": "true", "description": "Will print frag messages (QW default)." }
+        { "name": "0", "description": "Do not print frag messages" },
+        { "name": "1", "description": "Print frag messages to console and notification area (QW default)." },
+        { "name": "2", "description": "Print frag messages to console only" }
       ]
     },
     "con_funchars_mode": {

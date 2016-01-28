@@ -512,8 +512,9 @@ void Con_Linefeed (void) {
 	Con_SetColor(idx, con_linewidth, COLOR_WHITE);
 
 	// mark time for transparent overlay
-	if (con.current >= 0)
-		con_times[con.current % NUM_CON_TIMES] = cls.realtime;
+	if (con.current >= 0) {
+		con_times[con.current % NUM_CON_TIMES] = (Print_flags[Print_current] & PR_NONOTIFY ? 0 : cls.realtime);
+	}
 }
 
 /*
@@ -704,6 +705,25 @@ static void Con_DrawInput(void) {
 	Draw_StringW (8, con_vislines-22 + bound(0, con_shift.value, 8), text);
 }
 
+// Returns first line to start printing from in order to fill up notify area
+static int Con_FirstNotifyLine (void) {
+	int maxlines = bound(0, _con_notifylines.value, NUM_CON_TIMES - 1);
+	int first_line = con.current;
+	float threshold_time = cls.realtime - con_notifytime.value;
+
+	// Work backwards to skip non-ignored lines
+	while (first_line >= 0 && first_line > (con.current - NUM_CON_TIMES + 1) && maxlines) {
+		float line_time = con_times[first_line % NUM_CON_TIMES];
+		if (line_time && line_time > threshold_time) {
+			--maxlines;
+		}
+		if (maxlines)
+			--first_line;
+	}
+
+	return first_line;
+}
+
 //Draws the last few lines of output transparently over the game top
 void Con_DrawNotify (void) {
 	int x, v, skip = 0, maxlines, i, idx;
@@ -711,18 +731,13 @@ void Con_DrawNotify (void) {
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
+	int first_line = Con_FirstNotifyLine();
 
 	if (!con_notify.value)
 		return;
 
-	maxlines = _con_notifylines.value;
-	if (maxlines > NUM_CON_TIMES)
-		maxlines = NUM_CON_TIMES;
-	if (maxlines < 0)
-		maxlines = 0;
-
 	v = 0;
-	for (i = con.current-maxlines + 1; i <= con.current; i++) {
+	for (i = first_line; i <= con.current; i++) {
 		if (i < 0)
 			continue;
 		time = con_times[i % NUM_CON_TIMES];
@@ -814,6 +829,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
+	int first_line = Con_FirstNotifyLine();
 
 	if (notifyCols > (con_linewidth))
 		notifyCols = con_linewidth;
@@ -821,17 +837,8 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	if (notifyCols < 10)
 		notifyCols = 10;
 
-	maxlines = notifyLines;
-
-	if (maxlines > NUM_CON_TIMES)
-		maxlines = NUM_CON_TIMES;
-	if (maxlines < 0)
-		maxlines = 0;
-
 	v = 0;
-
-	for (i = con.current - maxlines + 1; i <= con.current; i++)
-	{
+	for (i = first_line; i <= con.current; i++) {
 		if (i < 0)
 			continue;
 

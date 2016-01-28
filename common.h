@@ -319,10 +319,11 @@ void Com_Printf_State(int state, const char *fmt, ...);
 extern unsigned	Print_flags[16];
 extern int	Print_current;
 
-#define		PR_SKIP		1
-#define		PR_LOG_SKIP	2
-#define		PR_TR_SKIP	4
-#define		PR_IS_CHAT	8
+#define     PR_SKIP     1
+#define     PR_LOG_SKIP 2
+#define     PR_TR_SKIP  4
+#define     PR_IS_CHAT  8
+#define     PR_NONOTIFY 16
 
 //============================================================================
 
