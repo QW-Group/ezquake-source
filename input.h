@@ -69,6 +69,9 @@ extern cvar_t	m_yaw;
 extern cvar_t	m_forward;
 extern cvar_t	m_side;
 extern cvar_t	m_accel;
+extern cvar_t	m_accel_power;
+extern cvar_t	m_accel_senscap;
+extern cvar_t	m_accel_offset;
 extern cvar_t	m_filter;
 extern cvar_t	_windowed_mouse;
 

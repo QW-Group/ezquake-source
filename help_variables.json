@@ -9513,7 +9513,22 @@
     },
     "m_accel": {
       "group-id": "11",
-      "desc": "Sets mouse acceleration like in q3.",
+      "desc": "Values >0 will amplify mouse movement proportional to velocity. Small values have great effect. A lot of good Quake Live players use around the 0.1-0.2 mark, but this depends on your mouse CPI and polling rate.",
+      "type": "float"
+    },
+    "m_accel_power": {
+      "group-id": "11",
+      "desc": "Values 1 or below are dumb. 2 is linear and the default. Above 2 begins to amplify exponentially and you will get more acceleration at higher velocities. Great if you want low accel for slow movements, and high accel for fast movements. Good in combination with a sensitivity cap (m_accel_senscap)",
+      "type": "float"
+    },
+    "m_accel_senscap": {
+      "group-id": "11",
+      "desc": "Sets an upper limit on the amplified mouse movement. Great for tuning acceleration around lower velocities while still remaining in control of fast motion such as flicking.",
+      "type": "float"
+    },
+    "m_accel_offset": {
+      "group-id": "11",
+      "desc": "Acceleration will not be active until the mouse movement exceeds this speed (counts per millisecond). Negative values are supported, which has the effect of causing higher rates of acceleration to happen at lower velocities.",
       "type": "float"
     },
     "m_filter": {

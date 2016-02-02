@@ -64,9 +64,24 @@ void IN_MouseMove (usercmd_t *cmd)
 		old_mouse_y = my;
 
 		if (m_accel.value) {
+			float accelsens = sensitivity.value;
 			float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float) cls.trueframetime);
-			mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
-			mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
+
+			mousespeed -= m_accel_offset.value;
+			if (mousespeed > 0) {
+				mousespeed *= m_accel.value;
+				if (m_accel_power.value > 1) {
+					accelsens += exp((m_accel_power.value - 1) * log(mousespeed));
+				} else {
+					accelsens = 1;
+				}
+			}
+			if (m_accel_senscap.value > 0 && accelsens > m_accel_senscap.value) {
+				accelsens = m_accel_senscap.value;
+			}
+
+			mouse_x *= accelsens;
+			mouse_y *= accelsens;
 		} else {
 			mouse_x *= sensitivity.value;
 			mouse_y *= sensitivity.value;

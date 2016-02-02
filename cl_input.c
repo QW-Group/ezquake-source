@@ -56,6 +56,9 @@ cvar_t m_yaw                = {"m_yaw","0.022"};
 cvar_t m_forward            = {"m_forward","1"};
 cvar_t m_side               = {"m_side","0.8"};
 cvar_t m_accel              = {"m_accel", "0"};
+cvar_t m_accel_offset       = {"m_accel_offset", "0"};
+cvar_t m_accel_power        = {"m_accel_power", "2"};
+cvar_t m_accel_senscap      = {"m_accel_senscap", "0"};
 
 #ifdef JSS_CAM
 cvar_t cam_zoomspeed = {"cam_zoomspeed", "300"};
@@ -1120,6 +1123,10 @@ void CL_InitInput(void)
 	Cvar_Register(&m_forward);
 	Cvar_Register(&m_side);
 	Cvar_Register(&m_accel);
+	Cvar_Register(&m_accel_power);
+	Cvar_Register(&m_accel_offset);
+	Cvar_Register(&m_accel_senscap);
+
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nodelta);
