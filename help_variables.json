@@ -13204,13 +13204,13 @@
       "group-id": "23",
       "type": ""
     },
-    "sys_yieldcpu": {
+    "sys_wastecpucycles": {
       "group-id": "48",
-      "desc": "Controls CPU sharing when client is waiting to draw a frame. When disabled, client will run a loop, actively waiting for the time to draw a new frame. When enabled, client will call system sleep function during the waiting, which will cause the thread to be deactivated for a while - leading to significantly lower CPU usage in most cases.",
+      "desc": "Controls CPU sharing when client is waiting to draw a frame. When enabled, client will do a busy-wait loop (causing 100% CPU). When disabled, client will call system sleep function during the waiting, which will cause the thread to be deactivated while not needed - which can lead to lower CPU usage, less heat, less fan noise, longer battery life for laptops, simply a happier user",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Do not sleep between frames, use CPU as much as possible." },
-        { "name": "true", "description": "Sleep between frames, make CPU available for other processes." }
+        { "name": "false", "description": "Do not cause unnecessary 100% CPU usage (default)" },
+        { "name": "true", "description": "Do not sleep between frames, will cause 100% CPU (only use if absolutely necessary)" }
       ]
     },
     "team": {

@@ -22,9 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // TODO: implement (SDL_PauseAudio func)
 // I currently just clear the ringbuffer when inactive - dimman
-cvar_t sys_inactivesound = {"sys_inactivesound", "0", CVAR_ARCHIVE};
-cvar_t sys_inactivesleep = {"sys_inactivesleep", "1"};
-cvar_t sys_disable_alt_enter = {"sys_disable_alt_enter", "0"};
+
+cvar_t sys_inactivesound     = {"sys_inactivesound",     "0", CVAR_ARCHIVE };
+cvar_t sys_inactivesleep     = {"sys_inactivesleep",     "1" };
+cvar_t sys_disable_alt_enter = {"sys_disable_alt_enter", "0" };
+cvar_t sys_wastecpucycles    = {"sys_wastecpucycles",    "0" };
 
 static void Sys_BatteryInfo_f(void)
 {
@@ -60,6 +62,7 @@ void Sys_CvarInit(void)
 	Cvar_Register(&sys_inactivesound);
 	Cvar_Register(&sys_inactivesleep);
 	Cvar_Register(&sys_disable_alt_enter);
+	Cvar_Register(&sys_wastecpucycles);
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand("batteryinfo", Sys_BatteryInfo_f);

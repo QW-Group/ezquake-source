@@ -59,7 +59,6 @@ int noconinput = 0;
 qbool stdin_ready;
 int do_stdin = 1;
 
-cvar_t sys_yieldcpu = {"sys_yieldcpu", "0"};
 cvar_t sys_nostdout = {"sys_nostdout", "0"};
 cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
 
@@ -102,10 +101,6 @@ void Sys_Init(void)
        
        init_url_handler();
 #endif
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
-	Cvar_Register (&sys_yieldcpu);
-	Cvar_ResetCurrentGroup();
 }
 
 void Sys_Error(char *error, ...)
