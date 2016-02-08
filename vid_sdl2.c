@@ -270,10 +270,14 @@ void Sys_SendKeyEvents(void)
         if (sys_inactivesleep.integer > 0) {
                 // Yield the CPU a little
                 if ((ISPAUSED && (!ActiveApp)) || Minimized || block_drawing) {
-                        SDL_Delay(50);
+			if (!cls.download) {
+	                        SDL_Delay(50);
+			}
                         scr_skipupdate = 1; // no point to draw anything
                 } else if (!ActiveApp) { // Delay a bit less if just not active window
-                        SDL_Delay(20);
+			if (!cls.download) {
+	                        SDL_Delay(20);
+			}
                 }
         }
 }

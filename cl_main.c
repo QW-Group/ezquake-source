@@ -2147,7 +2147,7 @@ static double CL_MinFrameTime (void)
 	if (cls.timedemo || Movie_IsCapturing())
 		return 0;
 
-	if (Minimized || cls.state == ca_disconnected)
+	if (cls.state == ca_disconnected || (Minimized && !cls.download))
 		return 1 / 30.0;
 
 	if (cls.demoplayback)
