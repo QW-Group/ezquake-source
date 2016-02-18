@@ -1195,9 +1195,9 @@ qbool VID_VSyncLagFix(void)
 	time_left -= avg_rendertime;
 	time_left -= vid_vsync_lag_tweak.value * 0.001;
 	if (time_left > 0) {
-		extern cvar_t sys_wastecpucycles;
+		extern cvar_t sys_yieldcpu;
 
-		if (time_left > 0.001 && !sys_wastecpucycles.integer) {
+		if (time_left > 0.001 && sys_yieldcpu.integer) {
 			Sys_MSleep(min(time_left * 1000, 500));
 		}
 
