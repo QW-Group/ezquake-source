@@ -61,7 +61,6 @@ int do_stdin = 1;
 
 cvar_t sys_yieldcpu = {"sys_yieldcpu", "1"};
 cvar_t sys_nostdout = {"sys_nostdout", "0"};
-cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
 
 void Sys_Printf (char *fmt, ...)
 {
