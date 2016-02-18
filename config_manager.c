@@ -1090,7 +1090,7 @@ void Config_TroubleShoot_f(void)
 {
 	unsigned problems = 0;
 	extern cvar_t r_novis, r_swapInterval;
-	extern cvar_t m_filter, sys_wastecpucycles, cl_maxfps, hud_planmode;
+	extern cvar_t m_filter, sys_yieldcpu, cl_maxfps, hud_planmode;
 	extern cvar_t in_raw;
 
 	if (r_novis.value) {
@@ -1108,19 +1108,19 @@ void Config_TroubleShoot_f(void)
 		problems++;
 	}
 
-	if (cl_maxfps.integer == 0 && sys_wastecpucycles.value == 1 && r_swapInterval.value == 0) {
-		Config_TroubleShoot_Tip("cl_maxfps, sys_wastecpucycles, and vid_vsync are all 0",
-			"unlimited FPS with wasting CPU cycles typically leads to interruptions "
+	if (cl_maxfps.integer == 0 && sys_yieldcpu.value == 0 && r_swapInterval.value == 0) {
+		Config_TroubleShoot_Tip("cl_maxfps, sys_yieldcpu, and vid_vsync are all 0",
+			"unlimited FPS with CPU yielding disabled typically leads to interruptions "
 			"in reading input devices (keyboard, mouse)",
-			"either set sys_wastecpucycles 0, vid_vsync 1, or or limit your FPS with cl_maxfps", 1);
+			"either set sys_yieldcpu 1, vid_vsync 1, or or limit your FPS with cl_maxfps", 1);
 		problems++;
 	}
 
-	if (cl_maxfps.integer == 0 && sys_wastecpucycles.value == 1) {
-		Config_TroubleShoot_Tip("cl_maxfps is 0 and sys_wastecpucycles is 1",
-			"unlimited FPS with CPU spinning 100% typically leads to interruptions "
+	if (cl_maxfps.integer == 0 && sys_yieldcpu.value == 0) {
+		Config_TroubleShoot_Tip("cl_maxfps and sys_yieldcpu are 0",
+			"unlimited FPS with CPU yielding disabled typically leads to interruptions "
 			"in reading input devices (keyboard, mouse)",
-			"either set sys_wastecpucycles 0 or limit your FPS with cl_maxfps", 1);
+			"either set sys_yieldcpu 1 or or limit your FPS with cl_maxfps", 1);
 		problems++;
 	}
 

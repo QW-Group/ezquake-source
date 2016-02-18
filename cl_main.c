@@ -2246,8 +2246,8 @@ void CL_Frame (double time)
 
 	if (extratime < minframetime) 
 	{
-		extern cvar_t sys_wastecpucycles;
-		if (!sys_wastecpucycles.integer || Minimized)
+		extern cvar_t sys_yieldcpu;
+		if (sys_yieldcpu.integer || Minimized)
 		{
 			#ifdef _WIN32
 			Sys_MSleep(0);
