@@ -1322,7 +1322,6 @@ void M_Draw (void) {
 
 		if (SCR_NEED_CONSOLE_BACKGROUND) {
 			Draw_ConsoleBackground (scr_con_current);
-			CL_S_ExtraUpdate ();
 		} else {
 			// if you don't like fade in ingame menu, uncomment this
 			// if (m_state != m_ingame && m_state != m_democtrl)
@@ -1382,7 +1381,6 @@ void M_Draw (void) {
 		S_LocalSound ("misc/menu2.wav");
 		m_entersound = false;
 	}
-	CL_S_ExtraUpdate ();
 }
 
 void M_Keydown (int key, wchar unichar) {

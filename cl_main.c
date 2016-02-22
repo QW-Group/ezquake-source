@@ -2097,12 +2097,6 @@ void CL_Init (void)
 
 //============================================================================
 
-// wrapper function to deal with inactivesound
-void CL_S_ExtraUpdate()
-{
-	S_ExtraUpdate();
-}
-
 void CL_BeginLocalConnection (void) 
 {
 	S_StopAllSounds (true);

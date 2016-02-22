@@ -2058,8 +2058,6 @@ void R_RenderScene(void)
 
 	R_DrawWorld ();		// adds static entities to the list
 
-	CL_S_ExtraUpdate ();	// don't let sound get messed up if going slow
-
 	R_DrawEntitiesOnList (&cl_visents);
 	R_DrawEntitiesOnList (&cl_alphaents);	
 

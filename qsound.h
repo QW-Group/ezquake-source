@@ -53,7 +53,7 @@ typedef struct dma_s {
 	int		samples;		// mono samples in buffer
 	int		samplepos;		// in mono samples
 	unsigned char	*buffer;
-	int		bufferlength;		// used only by certain drivers
+	unsigned long long    snd_sent;
 } dma_t;
 
 typedef struct channel_s {

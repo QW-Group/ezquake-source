@@ -28,24 +28,17 @@
 extern qbool ActiveApp, Minimized;
 extern cvar_t sys_inactivesound;
 
+SDL_mutex *smutex;
+
+extern void S_MixerThread(void);
 static void Filler(void *userdata, Uint8 *stream, int len)
 {
-	int size = shm->samples << 1;
-	int pos = shm->samplepos << 1;
-	int wrapped = pos + len - size;
+	shm->buffer = stream;
+	shm->samples = len / 2;
+	S_MixerThread();
+	shm->snd_sent += len;
 
 	// Implicit Minimized in first case
-
-	if (wrapped < 0) {
-		memcpy(stream, shm->buffer + pos, len);
-		shm->samplepos += len >> 1;
-	} else {
-		int remaining = size - pos;
-		memcpy(stream, shm->buffer + pos, remaining);
-		memcpy(stream + remaining, shm->buffer, wrapped);
-		shm->samplepos = wrapped >> 1;
-	}
-
 	if ((sys_inactivesound.integer == 0 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized)) {
 		SDL_memset(stream, 0, len);
 	}
@@ -57,13 +50,18 @@ void SNDDMA_Shutdown(void)
 
 	SDL_CloseAudio();
 
-	if (SDL_WasInit(SDL_INIT_AUDIO != 0))
+	if (SDL_WasInit(SDL_INIT_AUDIO) != 0)
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
-	if (shm->buffer) {
-		Q_free(shm->buffer);
-		shm->buffer = NULL;
+#if 0
+	if (smutex) {
+		SDL_DestroyMutex(smutex);
+		smutex = NULL;
 	}
+#endif
+
+	shm->snd_sent = 0;
+	shm->samples = 0;
 }
 
 qbool SNDDMA_Init(void)
@@ -79,23 +77,27 @@ qbool SNDDMA_Init(void)
 		return false;
 	}
 
+	if (!smutex) {
+		smutex = SDL_CreateMutex();
+	}
+
 	memset(&desired, 0, sizeof(desired));
 	switch (s_khz.integer) {
 		case 48:
 			desired.freq = 48000;
-			desired.samples = 2048;
+			desired.samples = 512;
 			break;
 		case 44:
 			desired.freq = 44100;
-			desired.samples = 1024;
+			desired.samples = 512;
 			break;
 		case 22:
 			desired.freq = 22050;
-			desired.samples = 512;
+			desired.samples = 256;
 			break;
 		default:
 			desired.freq = 11025;
-			desired.samples = 256;
+			desired.samples = 128;
 			break;
 	}
 
@@ -121,10 +123,12 @@ qbool SNDDMA_Init(void)
 	shm->format.speed = obtained.freq;
 	shm->format.channels = obtained.channels;
 	shm->format.width = 2;
-	shm->samples = 0x4000 * obtained.channels;
-	shm->buffer = Q_malloc(shm->samples * 2);
+	shm->samples = 32768; // * obtained.channels;
+	shm->buffer = NULL; //Q_malloc(shm->samples * 2);
 	shm->samplepos = 0;
 	shm->sampleframes = shm->samples / shm->format.channels;
+	shm->snd_sent = 0;
+	soundtime = paintedtime = 0;
 
 	Com_Printf("Using SDL audio driver: %s @ %d Hz\n", SDL_GetCurrentAudioDriver(), obtained.freq);
 
@@ -149,5 +153,6 @@ void SNDDMA_Submit(void)
 
 int SNDDMA_GetDMAPos()
 {
-	return shm->samplepos;
+	shm->samplepos = shm->snd_sent/2;
+	return shm->samplepos;;
 }
