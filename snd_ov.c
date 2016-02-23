@@ -199,7 +199,7 @@ sfxcache_t *S_LoadSound(sfx_t *s)
 		return NULL;
 	}
 
-	len = (int) ((double) info.samples * (double) shm->format.speed / (double) info.rate);
+	len = (int) ((double) info.samples * (double) shw->khz / (double) info.rate);
 	len = len * info.width * info.channels;
 
 	if (!(sc = (sfxcache_t *) Cache_Alloc (&s->cache, len + sizeof(sfxcache_t), s->name)))
@@ -234,7 +234,7 @@ sfxcache_t *S_LoadSound(sfx_t *s)
 	if (info.loopstart < 0)
 		sc->loopstart = -1;
 	else
-		sc->loopstart = (int)((double)info.loopstart * (double)shm->format.speed / (double)sc->format.speed);
+		sc->loopstart = (int)((double)info.loopstart * (double)shw->khz / (double)sc->format.speed);
 
 //	ResampleSfx (s, data + info.dataofs, info.samples, &sc->format, sc->data);
 	return sc;

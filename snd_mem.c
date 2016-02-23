@@ -549,7 +549,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insam
 	int outwidth;
 	int outchannels = 1; // inchannels;
 
-	scale = shm->format.speed / (double)inrate;
+	scale = shw->khz / (double)inrate;
 	outsamps = insamps * scale;
 	if (s_loadas8bit.integer < 0)
 		outwidth = 2;
@@ -567,7 +567,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insam
 
 	sc->format.channels = outchannels;
 	sc->format.width = outwidth;
-	sc->format.speed = shm->format.speed;
+	sc->format.speed = shw->khz;
 	sc->total_length = outsamps;
 	if (inloopstart == -1)
 		sc->loopstart = inloopstart;

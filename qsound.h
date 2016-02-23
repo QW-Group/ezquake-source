@@ -15,9 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-    $Id: qsound.h,v 1.8 2007-05-28 10:47:34 johnnycz Exp $
-
 */
 // qsound.h -- client sound i/o functions
 
@@ -28,17 +25,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "zone.h"
 #include "cvar.h"
 
-typedef struct snd_format_s
-{
-	unsigned int	speed;
-	unsigned int	width;
-	unsigned int	channels;
-} snd_format_t;
-
 typedef struct sfx_s {
 	char  name[MAX_QPATH];
 	cache_user_t cache;
 } sfx_t;
+
+// FIXME: REMOVE ME PLZ
+typedef struct snd_format_s {
+	unsigned int speed;
+	unsigned int width;
+	unsigned int channels;
+} snd_format_t;
 
 typedef struct sfxcache_s {
 	snd_format_t	format;
@@ -47,14 +44,22 @@ typedef struct sfxcache_s {
 	unsigned char	data[1];
 } sfxcache_t;
 
-typedef struct dma_s {
-	snd_format_t	format;
-	int		sampleframes;		// frames in buffer (frame = samples for all speakers)
-	int		samples;		// mono samples in buffer
-	int		samplepos;		// in mono samples
-	unsigned char	*buffer;
-	unsigned long long    snd_sent;
-} dma_t;
+typedef struct soundhw_s {
+	unsigned int  numchannels;
+	unsigned int  samples;
+	unsigned int  samplepos;
+	unsigned int  samplebits;
+	unsigned int  khz;
+	unsigned long snd_sent;
+	unsigned char *buffer;
+	/* qw related */
+	int paintedtime;
+	int oldsamplepos;
+	int numwraps;
+	int queuelen;
+} soundhw_t;
+
+extern soundhw_t *shw;
 
 typedef struct channel_s {
 	sfx_t		*sfx;			// sfx number
@@ -134,10 +139,7 @@ extern qbool		snd_started;
 
 extern int		snd_blocked;
 
-extern int		paintedtime;
 extern int		soundtime;
-extern volatile dma_t	*shm;
-extern volatile dma_t	sn;
 
 extern cvar_t		s_loadas8bit;
 extern cvar_t		s_khz;

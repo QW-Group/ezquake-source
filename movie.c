@@ -381,10 +381,10 @@ void Movie_TransferStereo16(void) {
 		return;
 
 	// Copy last audio chunk written into our temporary buffer
-	// memcpy (capture_audio_samples + (captured_audio_samples << 1), snd_out, snd_linear_count * shm->format.channels);
+	// memcpy (capture_audio_samples + (captured_audio_samples << 1), snd_out, snd_linear_count * shw->numchannels);
 	captured_audio_samples += (snd_linear_count >> 1);
 
-	if (captured_audio_samples >= (int)(0.5 + cls.frametime * shm->format.speed)) {
+	if (captured_audio_samples >= (int)(0.5 + cls.frametime * shw->khz)) {
 		// We have enough audio samples to match one frame of video
 		Capture_WriteAudio (captured_audio_samples, (byte *)capture_audio_samples);
 		captured_audio_samples = 0;
@@ -403,7 +403,7 @@ qbool Movie_GetSoundtime(void) {
 		views = cl_multiview.value;
 	}
 
-	soundtime += (int)(0.5 + cls.frametime * shm->format.speed * views * (1.0 / demospeed)); //joe: fix for slowmo/fast forward
+	soundtime += (int)(0.5 + cls.frametime * shw->khz * views * (1.0 / demospeed)); //joe: fix for slowmo/fast forward
 	return true;
 }
 #endif
