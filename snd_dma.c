@@ -42,9 +42,6 @@ static void S_Update_ ();
 static void S_StopAllSounds_f (void);
 static void S_Register_LatchCvars(void);
 
-void S_RawClear(void);
-void S_RawAudio(int sourceid, byte *data, unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
-
 // =======================================================================
 // Internal sound data & structures
 // =======================================================================
@@ -72,7 +69,7 @@ static vec3_t	listener_up;
 
 #define MAX_SFX (MAX_SOUNDS*2) // 256 * 2 = 512
 
-static sfx_t	*known_sfx = NULL; // hunk allocated [MAX_SFX]
+static sfx_t	*known_sfx;
 static int	num_sfx;
 
 static qbool	sound_spatialized = false;
@@ -247,7 +244,6 @@ static qbool S_Startup (void)
 	if (!snd_initialized)
 		return false;
 
-////////S_RawClear();
 	S_Register_LatchCvars();
 
 	if (!S_SDL_Init()) {
@@ -270,8 +266,14 @@ void S_Shutdown (void)
 	if (!shw)
 		return;
 
-	Cache_Flush(); // dimman: Moved this line and next here from S_Restart_f
-	S_StopAllSounds (true);
+	/* FIXME: this one free's sfx->buf's in channels array, is that correct ?? */
+	S_StopAllSounds(true);
+
+	if (known_sfx != NULL) {
+		Q_free(known_sfx);
+	}
+
+	num_sfx = 0;
 
 	S_SDL_Shutdown();
 
@@ -357,7 +359,7 @@ void S_Init (void)
 	S_Register_LatchCvars();
 	SND_InitScaletable ();
 
-	known_sfx = (sfx_t *) Hunk_AllocName (MAX_SFX * sizeof(sfx_t), "sfx_t");
+	known_sfx = Q_malloc(MAX_SFX * sizeof(sfx_t));
 	num_sfx = 0;
 
 	snd_initialized = true;
@@ -593,8 +595,12 @@ void S_StopAllSounds (qbool clear)
 
 	S_LockMixer();
 	for (i = 0; i < MAX_CHANNELS; i++) {
-		if (channels[i].sfx)
+		if (channels[i].sfx) {
+			if (channels[i].sfx->buf) {
+				Q_free(channels[i].sfx->buf);
+			}
 			channels[i].sfx = NULL;
+		}
 	}
 
 	memset(channels, 0, MAX_CHANNELS * sizeof(channel_t));
@@ -602,7 +608,7 @@ void S_StopAllSounds (qbool clear)
 	S_UnlockMixer();
 }
 
-static void S_StopAllSounds_f (void)
+static void S_StopAllSounds_f(void)
 {
 	S_StopAllSounds (true);
 }
@@ -900,7 +906,7 @@ static void S_SoundList_f (void)
 	S_LockMixer();
 
 	for (sfx = known_sfx, i = 0; i < num_sfx; i++, sfx++) {
-		sc = (sfxcache_t *) Cache_Check (&sfx->cache);
+		sc = (sfxcache_t *) sfx->buf;
 		if (!sc)
 			continue;
 		size = sc->total_length * sc->format.width * (sc->format.channels);
@@ -948,299 +954,3 @@ void S_LocalSoundWithVol(char *sound, float volume)
 	S_StartSound (cl.playernum+1, -1, sfx, vec3_origin, volume, 1);
 }
 
-//===================================================================
-// Streaming audio.
-// This is useful when there is one source, and the sound is to be played with no attenuation.
-//===================================================================
-
-#define MAX_RAW_CACHE (1024 * 32) // have no idea which size it actually should be.
-
-typedef struct
-{
-	qbool			inuse;
-	int				id;
-	sfx_t			sfx;
-} streaming_t;
-
-static void S_RawClearStream(streaming_t *s);
-
-#define MAX_RAW_SOURCES (MAX_CLIENTS+1)
-
-streaming_t s_streamers[MAX_RAW_SOURCES] = {{0}};
-
-void S_RawClear(void)
-{
-	int i;
-	streaming_t *s;
-
-	for (s = s_streamers, i = 0; i < MAX_RAW_SOURCES; i++, s++)
-	{
-		S_RawClearStream(s);
-	}
-
-	memset(s_streamers, 0, sizeof(s_streamers));
-}
-
-// Stop playing particular stream and make it free.
-static void S_RawClearStream(streaming_t *s)
-{
-	int i;
-	sfxcache_t *currentcache;
-
-	if (!s)
-		return;
-
-	// get current cache if any.
-	currentcache = (sfxcache_t *)Cache_Check(&s->sfx.cache);
-	if (currentcache)
-	{
-		currentcache->loopstart = -1;	//stop mixing it
-	}
-
-	// remove link on sfx from the channels array.
-	for (i = 0; i < total_channels; i++)
-	{
-		if (channels[i].sfx == &s->sfx)
-		{
-			channels[i].sfx = NULL;
-			break;
-		}
-	}
-
-	// free cache.
-	if (s->sfx.cache.data)
-		Cache_Free(&s->sfx.cache);
-
-	// clear whole struct.
-	memset(s, 0, sizeof(*s));
-}
-
-// Searching for free slot or re-use previous one with the same sourceid.
-static streaming_t * S_RawGetFreeStream(int sourceid)
-{
-	int i;
-	streaming_t *s, *free = NULL;
-
-	for (s = s_streamers, i = 0; i < MAX_RAW_SOURCES; i++, s++)
-	{
-		if (!s->inuse)
-		{
-			if (!free)
-			{
-				free = s;	// found free stream slot.
-			}
-
-			continue;
-		}
-
-		if (s->id == sourceid)
-		{
-			return s; // re-using slot.
-		}
-	}
-
-	return free;
-}
-
-// Streaming audio.
-// This is useful when there is one source, and the sound is to be played with no attenuation.
-void S_RawAudio(int sourceid, byte *data, 
-				unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width)
-{
-	unsigned int	i;
-	int				newsize;
-	int				prepadl;
-	int				spare;
-	int				outsamples;
-	double			speedfactor;
-	sfxcache_t *	currentcache;
-	streaming_t *	s;
-
-	S_LockMixer();
-
-	// search for free slot or re-use previous one with the same sourceid.
-	s = S_RawGetFreeStream(sourceid);
-
-	if (!s)
-	{
-		Com_DPrintf("No free audio streams or stream not found\n");
-		return;
-	}
-
-	// empty data mean someone tell us to shut up particular slot.
-	if (!data)
-	{
-		S_RawClearStream(s);
-		S_UnlockMixer();
-		return;
-	}
-
-	// attempting to add new stream
-	if (!s->inuse)
-	{
-		sfxcache_t * newcache;
-
-		// clear whole struct.
-		memset(s, 0, sizeof(*s));
-		// allocate cache.
-		newsize = MAX_RAW_CACHE; //sizeof(sfxcache_t)
-
-		if (newsize < sizeof(sfxcache_t)) {
-			S_UnlockMixer();
-			Sys_Error("MAX_RAW_CACHE too small %d", newsize);
-		}
-
-		newcache = Cache_Alloc(&s->sfx.cache, newsize, "rawaudio");
-		if (!newcache)
-		{
-			Com_DPrintf("Cache_Alloc failed\n");
-			S_UnlockMixer();
-			return;
-		}
-
-		s->inuse = true;
-		s->id = sourceid;
-//		strcpy(s->sfx.name, ""); // FIXME: probably we should put some specific tag name here?
-		s->sfx.cache.data = newcache;
-		newcache->format.speed = shw->khz;
-		newcache->format.channels = channelsnum;
-		newcache->format.width = width;
-		newcache->loopstart = -1;
-		newcache->total_length = 0;
-		newcache = NULL;
-
-//		Com_Printf("Added new raw stream\n");
-	}
-
-	// get current cache if any.
-	currentcache = (sfxcache_t *)Cache_Check(&s->sfx.cache);
-	if (!currentcache)
-	{
-		Com_DPrintf("Cache_Check failed\n");
-		S_RawClearStream(s);
-		S_UnlockMixer();
-		return;
-	}
-
-	if (currentcache->format.speed != shw->khz
-		|| currentcache->format.channels != channelsnum
-		|| currentcache->format.width != width)
-	{
-		currentcache->format.speed = shw->khz;
-		currentcache->format.channels = channelsnum;
-		currentcache->format.width = width;
-//		newcache->loopstart = -1;
-		currentcache->total_length = 0;
-//		Com_Printf("Restarting raw stream\n");
-	}
-
-	speedfactor = (double)speed/shw->khz;
-	outsamples = samples/speedfactor;
-
-	prepadl = 0x7fffffff;
-	// FIXME: qqshka: I have no idea that spike is doing here, really. WTF is prepadl??? PITCHSHIFT ???
-	// spike: make sure that we have a prepad.
-	for (i = 0; i < total_channels; i++)
-	{
-		if (channels[i].sfx == &s->sfx)
-		{
-			if (prepadl > (channels[i].pos/*>>PITCHSHIFT*/))
-				prepadl = (channels[i].pos/*>>PITCHSHIFT*/);
-			break;
-		}
-	}
-
-	if (prepadl == 0x7fffffff)
-	{
-		if (s_show.integer)
-			Com_Printf("Wasn't playing\n");
-		prepadl = 0;
-		spare = 0;
-		if (spare > shw->khz)
-		{
-			Com_DPrintf("Sacrificed raw sound stream\n");
-			spare = 0;	//too far out. sacrifice it all
-		}
-	}
-	else
-	{
-		if (prepadl < 0)
-			prepadl = 0;
-		spare = currentcache->total_length - prepadl;
-		if (spare < 0)	//remaining samples since last time
-			spare = 0;
-
-		if (spare > shw->khz * 2) // more than 2 seconds of sound
-		{
-			Com_DPrintf("Sacrificed raw sound stream\n");
-			spare = 0;	//too far out. sacrifice it all
-		}
-	}
-
-	newsize = sizeof(sfxcache_t) + (spare + outsamples) * currentcache->format.channels * currentcache->format.width;
-	if (newsize >= MAX_RAW_CACHE)
-	{
-		Com_DPrintf("Cache buffer overflowed\n");
-		S_RawClearStream(s);
-		S_UnlockMixer();
-		return;
-	}
-	// move along spare/remaning samples in the begging of the buffer.
-	memmove(currentcache->data, 
-		currentcache->data + prepadl * currentcache->format.channels * currentcache->format.width,
-							   spare * currentcache->format.channels * currentcache->format.width);
-
-	currentcache->total_length = spare + outsamples;
-
-	// resample.
-	{
-		extern cvar_t s_linearresample_stream;
-		short *outpos = (short *)(currentcache->data + spare * currentcache->format.channels * currentcache->format.width);
-		SND_ResampleStream(data,
-			speed,
-			width,
-			channelsnum,
-			samples,
-			outpos,
-			shw->khz,
-			currentcache->format.width,
-			currentcache->format.channels,
-			s_linearresample_stream.integer
-			);
-	}
-
-	currentcache->loopstart = -1;//currentcache->total_length;
-
-	for (i = 0; i < total_channels; i++)
-	{
-		if (channels[i].sfx == &s->sfx)
-		{
-#if 0
-			// FIXME: qqshka: hrm, should it be just like this all the time??? I think it should.
-			channels[i].pos = 0;
-			channels[i].end = shw->paintedtime + currentcache->total_length;
-#else
-			channels[i].pos -= prepadl; // * channels[i].rate;
-			channels[i].end += outsamples;
-			channels[i].master_vol = (int) (s_raw_volume.value * 255); // this should changed volume on alredy playing sound.
-
-			if (channels[i].end < shw->paintedtime)
-			{
-				channels[i].pos = 0;
-				channels[i].end = shw->paintedtime + currentcache->total_length;
-			}
-#endif
-			break;
-		}
-	}
-
-	//this one wasn't playing, lets start it then.
-	if (i == total_channels)
-	{
-//		Com_DPrintf("start sound\n");
-		/*slight delay to try to avoid frame rate/etc stops/starts*/
-//		S_StartSoundCard(si, -1, 0, &s->sfx, r_origin, 1, 32767, -shw->khz*0.02, 0);
-		S_StartSound(SELF_SOUND, 0, &s->sfx, r_origin, s_raw_volume.value, 0);
-	}
-	S_UnlockMixer();
-}

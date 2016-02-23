@@ -559,7 +559,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insam
 		outwidth = inwidth;
 	len = outsamps * outwidth * outchannels;
 
-	sc = Cache_Alloc (&sfx->cache, len + sizeof(sfxcache_t), sfx->name);
+	sc = sfx->buf = Q_malloc(len + sizeof(sfxcache_t));
 	if (!sc)
 	{
 		return;
@@ -773,9 +773,9 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	wavinfo_t info;
 	int filesize;
 
-	// see if still in memory
-	if ((sc = (sfxcache_t *) Cache_Check (&s->cache)))
-		return sc;
+	// see if allocated
+	if (s->buf)
+		return (sfxcache_t*)s->buf;
 
 	// load it in
 	snprintf (namebuffer, sizeof (namebuffer), "sound/%s", s->name);
@@ -802,7 +802,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	ResampleSfx (s, info.rate, info.channels, info.width, info.samples, info.loopstart, data + info.dataofs);
 
-	return Cache_Check(&s->cache);
+	return s->buf;
 }
 #endif // WITH_OGG_VORBIS
 

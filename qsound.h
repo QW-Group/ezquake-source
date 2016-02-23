@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct sfx_s {
 	char  name[MAX_QPATH];
-	cache_user_t cache;
+	void *buf;
 } sfx_t;
 
 // FIXME: REMOVE ME PLZ
