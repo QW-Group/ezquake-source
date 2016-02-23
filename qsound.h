@@ -89,25 +89,11 @@ void S_Shutdown (void);
 void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol,  float attenuation);
 void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation);
 void S_StopSound (int entnum, int entchannel);
-void S_StopAllSounds(qbool clear);
-void S_ClearBuffer (void);
+void S_StopAllSounds(void);
 void S_Update (vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
-void S_ExtraUpdate (void);
 
 sfx_t *S_PrecacheSound (char *sample);
 void S_PaintChannels(int endtime);
-
-/////////////////////////////////
-
-qbool SNDDMA_Init(void);
-int SNDDMA_GetDMAPos(void);
-void SNDDMA_Shutdown(void);
-
-void SNDDMA_BeginPainting(void);
-void SNDDMA_Submit(void);
-
-///////////////////////////////
-
 
 void S_LocalSound (char *s);
 void S_LocalSoundWithVol(char *sound, float volume);

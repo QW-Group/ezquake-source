@@ -539,7 +539,7 @@ void SND_ResampleStream (void *in, int inrate, int inwidth, int inchannels, int 
 ResampleSfx
 ================
 */
-void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insamps, int inloopstart, byte *data)
+static void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insamps, int inloopstart, byte *data)
 {
 	extern cvar_t s_linearresample;
 	double scale;
@@ -778,9 +778,9 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return (sfxcache_t*)s->buf;
 
 	// load it in
-	snprintf (namebuffer, sizeof (namebuffer), "sound/%s", s->name);
+	snprintf(namebuffer, sizeof(namebuffer), "sound/%s", s->name);
 
-	if (!(data = FS_LoadTempFile (namebuffer, &filesize))) {
+	if (!(data = FS_LoadTempFile(namebuffer, &filesize))) {
 		Com_Printf ("Couldn't load %s\n", namebuffer);
 		return NULL;
 	}

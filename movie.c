@@ -138,7 +138,7 @@ void Movie_Stop (void) {
 		avifile = NULL;
 	}
 	if (!avi_restarting) {
-		S_StopAllSounds(true);
+		S_StopAllSounds();
 		Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
 	}
 #endif

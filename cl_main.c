@@ -1212,7 +1212,7 @@ void CL_ClearState (void)
 	extern cshift_t	cshift_empty;
 	extern void CL_ProcessServerInfo (void);
 
-	S_StopAllSounds (true);
+	S_StopAllSounds();
 
 	Com_DPrintf ("Clearing memory\n");
 
@@ -1297,7 +1297,7 @@ void CL_Disconnect (void)
 	bExitmultiview = false;
 
 	// Stop sounds (especially looping!)
-	S_StopAllSounds (true);
+	S_StopAllSounds();
 
 	MT_Disconnect();
 
@@ -1392,7 +1392,7 @@ void CL_Reconnect_f (void)
 	if (cls.download)
 		return; // Don't change when downloading.
 
-	S_StopAllSounds (true);
+	S_StopAllSounds();
 
 	if (cls.mvdplayback == QTV_PLAYBACK) 
 	{
@@ -2055,6 +2055,7 @@ void CL_Init (void)
 	CL_InitInput ();
 	CL_InitEnts ();
 	CL_InitTEnts ();
+	CL_InitTEntsCvar();
 	CL_InitPrediction ();
 	CL_InitCam ();
 	TP_Init ();
@@ -2099,7 +2100,7 @@ void CL_Init (void)
 
 void CL_BeginLocalConnection (void) 
 {
-	S_StopAllSounds (true);
+	S_StopAllSounds();
 
 	// make sure we're not connected to an external server,
 	// and demo playback is stopped

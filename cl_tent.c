@@ -64,7 +64,7 @@ sfx_t	*cl_sfx_wizhit, *cl_sfx_knighthit, *cl_sfx_tink1, *cl_sfx_ric1, *cl_sfx_ri
 cvar_t r_lgblood = {"r_lgbloodColor", "225"};
 cvar_t r_shiftbeam = {"r_shiftbeam", "0"};
 
-void CL_InitTEnts (void)
+void CL_InitTEnts(void)
 {
 	cl_sfx_wizhit = S_PrecacheSound ("wizard/hit.wav");
 	cl_sfx_knighthit = S_PrecacheSound ("hknight/hit.wav");
@@ -73,7 +73,10 @@ void CL_InitTEnts (void)
 	cl_sfx_ric2 = S_PrecacheSound ("weapons/ric2.wav");
 	cl_sfx_ric3 = S_PrecacheSound ("weapons/ric3.wav");
 	cl_sfx_r_exp3 = S_PrecacheSound ("weapons/r_exp3.wav");
-	
+}
+
+void CL_InitTEntsCvar(void)
+{
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register(&r_lgblood);
 	Cvar_Register(&r_shiftbeam);

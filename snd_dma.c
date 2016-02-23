@@ -99,15 +99,16 @@ cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default s
 SDL_mutex *smutex;
 soundhw_t *shw;
 
-void S_LockMixer(void)
+static void S_LockMixer(void)
 {
 	SDL_LockMutex(smutex);
 }
 
-void S_UnlockMixer(void)
+static void S_UnlockMixer(void)
 {
 	SDL_UnlockMutex(smutex);
 }
+
 static void S_SoundInfo_f (void)
 {
 	if (!shw) {
@@ -137,7 +138,7 @@ static void S_SDL_callback(void *userdata, Uint8 *stream, int len)
 	}
 }
 
-void S_SDL_Shutdown(void)
+static void S_SDL_Shutdown(void)
 {
 	Con_Printf("Shutting down SDL audio.\n");
 
@@ -157,7 +158,7 @@ void S_SDL_Shutdown(void)
 	}
 }
 
-qbool S_SDL_Init(void)
+static qbool S_SDL_Init(void)
 {
 	SDL_AudioSpec desired, obtained;
 	soundhw_t *shw_tmp = NULL;
@@ -246,6 +247,11 @@ static qbool S_Startup (void)
 
 	S_Register_LatchCvars();
 
+	if (known_sfx == NULL) {
+		known_sfx = Q_malloc(MAX_SFX * sizeof(sfx_t));
+	}
+	num_sfx = 0;
+
 	if (!S_SDL_Init()) {
 		Com_Printf ("S_Startup: S_Init failed.\n");
 		snd_started = false;
@@ -253,11 +259,13 @@ static qbool S_Startup (void)
 		return false;
 	}
 
+	snd_started = true;
+
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound("ambience/wind2.wav");
-	S_StopAllSounds(true);
 
-	snd_started = true;
+	S_StopAllSounds();
+
 	return true;
 }
 
@@ -267,15 +275,20 @@ void S_Shutdown (void)
 		return;
 
 	/* FIXME: this one free's sfx->buf's in channels array, is that correct ?? */
-	S_StopAllSounds(true);
-
-	if (known_sfx != NULL) {
-		Q_free(known_sfx);
-	}
-
-	num_sfx = 0;
+	S_StopAllSounds();
 
 	S_SDL_Shutdown();
+
+	if (known_sfx != NULL) {
+		int i;
+		for (i = 0; i < num_sfx; i++) {
+			if (known_sfx[i].buf != NULL) {
+				Q_free(known_sfx[i].buf);
+			}
+		}
+	}
+	Q_free(known_sfx);
+	num_sfx = 0;
 
 	snd_started = false;
 	sound_spatialized = false;
@@ -283,9 +296,20 @@ void S_Shutdown (void)
 
 static void S_Restart_f (void)
 {
+	int i;
+
 	Com_DPrintf("Restarting sound system....\n");
 	S_Shutdown();
 	S_Startup();
+
+	CL_InitTEnts();
+	for (i=1; i < MAX_SOUNDS; i++) {
+
+		if (!cl.sound_name[i][0])
+			break;
+		cl.sound_precache[i] = S_PrecacheSound(cl.sound_name[i]);
+	}
+
 }
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel) {
@@ -584,7 +608,7 @@ void S_StopSound (int entnum, int entchannel)
 	S_UnlockMixer();
 }
 
-void S_StopAllSounds (qbool clear)
+void S_StopAllSounds(void)
 {
 	int i;
 
@@ -594,14 +618,6 @@ void S_StopAllSounds (qbool clear)
 	total_channels = MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS; // no statics
 
 	S_LockMixer();
-	for (i = 0; i < MAX_CHANNELS; i++) {
-		if (channels[i].sfx) {
-			if (channels[i].sfx->buf) {
-				Q_free(channels[i].sfx->buf);
-			}
-			channels[i].sfx = NULL;
-		}
-	}
 
 	memset(channels, 0, MAX_CHANNELS * sizeof(channel_t));
 
@@ -610,7 +626,7 @@ void S_StopAllSounds (qbool clear)
 
 static void S_StopAllSounds_f(void)
 {
-	S_StopAllSounds (true);
+	S_StopAllSounds();
 }
 
 void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
