@@ -710,7 +710,7 @@ void CL_ParseTEnt (void)
 				break;
 
 			default:
-				Host_Error("CL_ParseTEnt: bad type");
+				Host_Error("CL_ParseTEnt: unknown type %d", type);
 		}
 	}
 
