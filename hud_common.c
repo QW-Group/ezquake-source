@@ -7138,6 +7138,114 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 #endif // WITH_PNG
 
+//---------------------
+//
+// draw HUD static text
+//
+void SCR_HUD_DrawStaticText(hud_t *hud)
+{
+	int x, y;
+	const char *line_start;
+	char *line_end;
+	const char *in;
+	int lines = 1;
+	int max_length = 0;
+	int alignment = 0;
+	int character_width = 8;
+	int character_height = 8;
+
+	static cvar_t
+		*hud_statictext_big = NULL,
+		*hud_statictext_style,
+		*hud_statictext_scale,
+		*hud_statictext_text,
+		*hud_statictext_textalign;
+
+	if (hud_statictext_big == NULL) {
+		// first time
+		hud_statictext_big = HUD_FindVar(hud, "big");
+		hud_statictext_style = HUD_FindVar(hud, "style");
+		hud_statictext_scale = HUD_FindVar(hud, "scale");
+		hud_statictext_text = HUD_FindVar(hud, "text");
+		hud_statictext_textalign = HUD_FindVar(hud, "textalign");
+	}
+
+	// Static text valid for demos/qtv only
+	if (!cls.demoplayback) {
+		HUD_PrepareDraw(hud, 0, 0, &x, &y);
+		return;
+	}
+
+	alignment = 0;
+	if (!strcmp(hud_statictext_textalign->string, "right"))
+		alignment = 1;
+	else if (!strcmp(hud_statictext_textalign->string, "center"))
+		alignment = 2;
+
+	// convert special characters
+	in = hud_statictext_text->string;
+	if (strlen(in) >= MAX_MACRO_STRING) {
+		in = "error: input string too long";
+	}
+	in = TP_ParseFunChars(in, false);
+
+	// find carriage returns
+	line_start = in;
+	max_length = strlen_color_by_terminator(line_start, '\r');
+	while (line_end = strchr(line_start, '\r')) {
+		line_start = line_end + 1;
+		max_length = max(max_length, strlen_color_by_terminator(line_start, '\r'));
+
+		++lines;
+	}
+
+	// collapse to invisible if nothing to display
+	if (max_length == 0) {
+		lines = 0;
+	}
+
+	character_width = 8 * hud_statictext_scale->value;
+	character_height = 8 * hud_statictext_scale->value;
+	if (hud_statictext_style->integer == 1) {
+		character_width = 24 * hud_statictext_scale->value;
+		character_height = 24 * hud_statictext_scale->value;
+	}
+
+	if (HUD_PrepareDraw(hud, max_length * character_width, lines * character_height, &x, &y)) {
+		for (line_start = in; *line_start; line_start = line_end + 1) {
+			line_end = strchr(line_start, '\r');
+			int diff = max_length - strlen_color(line_start);
+			int line_x = x;
+
+			if (line_end) {
+				*line_end = '\0';
+			}
+
+			// Left pad string depending on alignment
+			if (alignment == 1) {
+				line_x += (max_length - strlen_color(line_start)) * character_width;
+			}
+			else if (alignment == 2) {
+				if (diff % 2 == 1) {
+					line_x += 0.5 * character_width;
+				}
+				line_x += (max_length - strlen_color(line_start)) / 2 * character_width;
+			}
+
+			if (hud_statictext_style->integer == 1) {
+				SCR_DrawWadString(line_x, y, hud_statictext_scale->value, line_start); 
+			}
+			else {
+				Draw_SString(line_x, y, line_start, hud_statictext_scale->value);
+			}
+
+			y += character_height;
+			if (!line_end)
+				break;
+		}
+	}
+}
+
 //
 // Run before HUD elements are drawn.
 // Place stuff that is common for HUD elements here.
@@ -7905,6 +8013,16 @@ void CommonDraw_Init(void)
 		"color_unnatural", "255 255 255 128",
         NULL
 		);
+
+	HUD_Register("static_text", NULL, "Static text (demos only).",
+		0, ca_active, 0, SCR_HUD_DrawStaticText,
+		"0", "screen", "left", "top", "0", "0", "0", "0 0 0", NULL,
+		"big", "0",
+		"style", "0",
+		"scale", "1",
+		"text", "",
+		"textalign", "left"
+	);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef _DEBUG

@@ -42,6 +42,7 @@ int ParseFloats(char *s, float *f, int *f_size);
 
 // don't count ezquake color sequence
 int strlen_color(const char *str);
+int strlen_color_by_terminator(const char *str, char terminator);
 // skip ezquake color sequence
 void Util_SkipEZColors(char *dst, const char *src, size_t size);
 void Util_SkipChars(const char *src, const char *chars, char *dst, size_t dstsize);
