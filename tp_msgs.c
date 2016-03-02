@@ -578,7 +578,7 @@ GLOBAL void TP_Msg_YouTake_f (void)
 	TP_FindPoint();
 	if (INPOINT(teammate)) {
 			point = va ("{&c0b0%s&cfff} ", Macro_PointName()); // Saying teammate take isn't much help. Only report if you can say e.g. Up2 take!
-			take = "take $[{%%l}$]";
+			take = "take $[{%l}$]";
 	}
 
 	TP_Send_TeamSay("%s%s", point, take);

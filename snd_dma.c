@@ -94,7 +94,7 @@ cvar_t s_swapstereo = {"s_swapstereo", "0"};
 cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
-cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_LATCH};
+cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_LATCH | CVAR_AUTO };
 cvar_t s_audiodevice = {"s_audiodevice", "0", CVAR_LATCH};
 
 SDL_mutex *smutex;
@@ -279,6 +279,7 @@ static qbool S_SDL_Init(void)
 	shw_tmp->samples = 32768;
 
 	//soundtime = paintedtime = 0; FIXME: Does soundtime need to be reset?
+	Cvar_AutoSetInt(&s_desiredsamples, obtained.samples);
 
 	shw = shw_tmp;
 
