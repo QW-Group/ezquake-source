@@ -94,10 +94,22 @@ cvar_t s_swapstereo = {"s_swapstereo", "0"};
 cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
-cvar_t s_desiredsamples = {"s_desiredsamples", "0"};
+cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_LATCH};
 
 SDL_mutex *smutex;
 soundhw_t *shw;
+
+static void S_ListDrivers(void)
+{
+	int i = 0, numdrivers;
+
+	numdrivers = SDL_GetNumAudioDrivers();
+
+	Com_Printf("Audio driver support compiled into SDL:\n");
+	for (; i < numdrivers; i++) {
+		Com_Printf("%s\n", SDL_GetAudioDriver(i));
+	}
+}
 
 static void S_LockMixer(void)
 {
@@ -370,6 +382,7 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
 	Cmd_AddCommand("soundlist", S_SoundList_f);
 	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
+	Cmd_AddCommand("s_listdrivers", S_ListDrivers);
 }
 
 static void S_Register_LatchCvars(void)
