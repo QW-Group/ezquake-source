@@ -68,7 +68,7 @@ extern cvar_t cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybot
 char *TP_GetSkyGroupName(char *mapname, qbool *system);
 char *TP_GetMapGroupName(char *mapname, qbool *system);
 char *TP_ParseMacroString (char *s);
-char *TP_ParseFunChars (char *s, qbool chat);
+char *TP_ParseFunChars (const char *s, qbool chat);
 void TP_NewMap (void);
 
 

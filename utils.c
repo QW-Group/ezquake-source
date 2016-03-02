@@ -199,15 +199,14 @@ int ParseFloats(char *s, float *f, int *f_size) {
 	return (f_size[0] = argc);
 }
 
-// don't count ezquake color sequence
-int strlen_color(const char *str)
+int strlen_color_by_terminator(const char *str, char terminator)
 {
 	int len = 0;
 
 	if ( !str )
 		return 0;
 
-	while ( str[0] )
+	while ( str[0] && str[0] != terminator )
 	{
 		if (str[0] == '&')
 		{
@@ -228,6 +227,12 @@ int strlen_color(const char *str)
 	}
 
 	return len;
+}
+
+// don't count ezquake color sequence
+int strlen_color(const char *str)
+{
+	return strlen_color_by_terminator(str, 0);
 }
 
 // skip ezquake color sequence

@@ -1545,14 +1545,16 @@ char *TP_ParseMacroString (char *s)
 }
 
 //Doesn't check for overflows, so strlen(s) should be < MAX_MACRO_STRING
-char *TP_ParseFunChars (char *s, qbool chat)
+char *TP_ParseFunChars (const char *s, qbool chat)
 {
 	static char	 buf[MAX_MACRO_STRING];
 	char		*out = buf;
 	int			 c;
 
-	if (!cl_parseFunChars.value)
-		return s;
+	if (!cl_parseFunChars.value) {
+		strlcpy(buf, s, sizeof(buf));
+		return buf;
+	}
 
 	while (*s) {
 		if (*s == '$' && s[1] == 'x') {
