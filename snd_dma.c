@@ -95,9 +95,11 @@ cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
 cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_LATCH};
+cvar_t s_audiodevice = {"s_audiodevice", "0", CVAR_LATCH};
 
 SDL_mutex *smutex;
 soundhw_t *shw;
+static SDL_AudioDeviceID audiodevid;
 
 static void S_ListDrivers(void)
 {
@@ -108,6 +110,18 @@ static void S_ListDrivers(void)
 	Com_Printf("Audio driver support compiled into SDL:\n");
 	for (; i < numdrivers; i++) {
 		Com_Printf("%s\n", SDL_GetAudioDriver(i));
+	}
+}
+
+static void S_ListAudioDevices(void)
+{
+	int i = 0, numdevices;
+
+	numdevices = SDL_GetNumAudioDevices(0); /* arg is iscapture */
+
+	Com_Printf(" id  device name\n-------------------------\n");
+	for (; i < numdevices; i++) {
+		Com_Printf(" %d  %s\n", i, SDL_GetAudioDeviceName(i, 0));
 	}
 }
 
@@ -162,7 +176,8 @@ static void S_SDL_Shutdown(void)
 {
 	Con_Printf("Shutting down SDL audio.\n");
 
-	SDL_CloseAudio();
+	SDL_CloseAudioDevice(audiodevid);
+	audiodevid = 0;
 
 	if (SDL_WasInit(SDL_INIT_AUDIO) != 0)
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
@@ -228,9 +243,17 @@ static qbool S_SDL_Init(void)
 		desired.samples = desired_samples;
 	}
 	desired.callback = S_SDL_callback;
-	ret = SDL_OpenAudio(&desired, &obtained);
-	if (ret == -1) {
-		Com_Printf("Couldn't open SDL audio: %s\n", SDL_GetError());
+
+	if ((audiodevid = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(s_audiodevice.integer, 0), 0, &desired, &obtained, 0)) <= 0) {
+		Com_Printf("sound: couldn't open SDL audio: %s\n", SDL_GetError());
+		if (s_audiodevice.integer != 0) {
+			Com_Printf("sound: retrying with audio device 0\n");
+			if ((audiodevid = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0)) <= 0) {
+				Com_Printf("sound: failure again, aborting...\n");
+				return false;
+			}
+			Cvar_LatchedSet(&s_audiodevice, "0");
+		}
 		return false;
 	}
 
@@ -261,7 +284,7 @@ static qbool S_SDL_Init(void)
 
 	Com_Printf("Using SDL audio driver: %s @ %d Hz\n", SDL_GetCurrentAudioDriver(), obtained.freq);
 
-	SDL_PauseAudio(0);
+	SDL_PauseAudioDevice(audiodevid, 0);
 
 	return true;
 
@@ -362,7 +385,6 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cvar_Register(&s_show);
 	Cvar_Register(&s_swapstereo);
 	Cvar_Register(&s_linearresample_stream);
-	Cvar_Register(&s_desiredsamples);
 
 	Cvar_ResetCurrentGroup();
 
@@ -383,6 +405,9 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cmd_AddCommand("soundlist", S_SoundList_f);
 	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
 	Cmd_AddCommand("s_listdrivers", S_ListDrivers);
+
+	/* Naming it like this to be seen together with s_audiodevice cvar */
+	Cmd_AddCommand("s_audiodevicelist", S_ListAudioDevices);
 }
 
 static void S_Register_LatchCvars(void)
@@ -390,6 +415,8 @@ static void S_Register_LatchCvars(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 
 	Cvar_Register(&s_linearresample);
+	Cvar_Register(&s_desiredsamples);
+	Cvar_Register(&s_audiodevice);
 
 	Cvar_ResetCurrentGroup();
 }
