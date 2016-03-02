@@ -3889,7 +3889,7 @@ void SCR_AutoScreenshot(char *matchname)
 void SCR_Movieshot(char *name)
 {
 	#ifdef _WIN32
-	if (movie_is_avi)
+	if (Movie_IsCapturingAVI())
 	{
 		int size = 0;
 		// Capturing a movie.

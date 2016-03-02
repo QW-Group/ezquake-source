@@ -70,51 +70,32 @@ static void S_TransferStereo16 (int endtime)
 {
 	int lpaintedtime, lpos, clientVolume;
 	DWORD *pbuf;
-#ifdef _WIN32
-	short* movieBuffer;
-#endif
 
 	clientVolume = snd_vol = (s_volume.value * voicevolumemod) * 256;
 
 	snd_p = (int *) paintbuffer;
-	lpaintedtime = paintedtime;
+	lpaintedtime = shw->paintedtime;
 
-	pbuf = (DWORD *)shm->buffer;
-
+	pbuf = (DWORD *)shw->buffer;
 	while (lpaintedtime < endtime) {
 
 		// handle recirculating buffer issues
+		// FIXME: Look into below ..
 #if defined(__linux__) || defined(__FreeBSD__)
 		// dimman modified, taken from fodquake, accept buffers that arent a power of 2
-		lpos = lpaintedtime % ((shm->samples>>1));
+		lpos = lpaintedtime % ((shw->samples>>1));
 #else
-		lpos = lpaintedtime & ((shm->samples>>1) - 1); //original
+		lpos = lpaintedtime & ((shw->samples>>1) - 1); //original
 #endif
-
 		snd_out = (short *) pbuf + (lpos << 1);
 
-		snd_linear_count = (shm->samples>>1) - lpos;
+		snd_linear_count = (shw->samples>>1) - lpos;
 		if (lpaintedtime + snd_linear_count > endtime)
 			snd_linear_count = endtime - lpaintedtime;
 
 		snd_linear_count <<= 1;
 
 		// write a linear blast of samples
-#ifdef _WIN32
-		movieBuffer = Movie_SoundBuffer();	
-		if (movieBuffer != NULL) 
-		{
-			if (s_swapstereo.value)	// keeping it consistent, but why would we store it like this in the video?
-				Snd_WriteLinearBlastStereo16_SwapStereo (snd_p, movieBuffer, snd_vol);
-			else
-				Snd_WriteLinearBlastStereo16 (snd_p, movieBuffer, snd_vol);
-			Movie_TransferStereo16();
-
-			if (movie_quietcapture.value)
-				clientVolume = 0;
-		}
-#endif
-
 		if (s_swapstereo.value)
 			Snd_WriteLinearBlastStereo16_SwapStereo (snd_p, snd_out, clientVolume);
 		else
@@ -127,24 +108,30 @@ static void S_TransferStereo16 (int endtime)
 
 static void S_TransferPaintBuffer(int endtime)
 {
-	int out_idx, out_mask, count, step, val, snd_vol, *p;
 	DWORD *pbuf;
+	int *p;
+	int out_idx;
+	int out_mask;
+	int count;
+	int step;
+	int val;
+	int snd_vol;
 
-	if (shm->format.width == 2 && shm->format.channels == 2) {
-		S_TransferStereo16 (endtime);
+	if (shw->samplebits == 16 && shw->numchannels == 2) {
+		S_TransferStereo16(endtime);
 		return;
 	}
 
 	p = (int *) paintbuffer;
-	count = (endtime - paintedtime) * shm->format.channels;
-	out_mask = shm->samples - 1;
-	out_idx = paintedtime * shm->format.channels & out_mask;
-	step = 3 - shm->format.channels;
+	count = (endtime - shw->paintedtime) * shw->numchannels;
+	out_mask = shw->samples - 1;
+	out_idx = shw->paintedtime * shw->numchannels & out_mask;
+	step = 3 - shw->numchannels;
 	snd_vol = (s_volume.value * voicevolumemod) * 256;
 
-	pbuf = (DWORD *)shm->buffer;
+	pbuf = (DWORD *)shw->buffer;
 
-	if (shm->format.width == 2) {
+	if (shw->samplebits == 16) {
 		short *out = (short *) pbuf;
 		while (count--) {
 			val = (*p * snd_vol) >> 8;
@@ -156,7 +143,7 @@ static void S_TransferPaintBuffer(int endtime)
 			out[out_idx] = val;
 			out_idx = (out_idx + 1) & out_mask;
 		}
-	} else if (shm->format.width == 1) {
+	} else if (shw->samplebits == 8) {
 		unsigned char *out = (unsigned char *) pbuf;
 		while (count--) {
 			val = (*p * snd_vol) >> 8;
@@ -169,7 +156,6 @@ static void S_TransferPaintBuffer(int endtime)
 			out_idx = (out_idx + 1) & out_mask;
 		}
 	}
-
 }
 
 
@@ -232,21 +218,21 @@ void SND_InitScaletable (void)
 			snd_scaletable[i][j] = ((j < 128) ? j : j - 0xff) * i * 8;
 }
 
-void S_PaintChannels (int endtime)
+void S_PaintChannels(int endtime)
 {
 	int ltime, count, end;
 	unsigned int i;
 	sfxcache_t *sc;
 	channel_t *ch;
 
-	while (paintedtime < endtime) {
+	while (shw->paintedtime < endtime) {
 		// if paintbuffer is smaller than DMA buffer
 		end = endtime;
-		if (endtime - paintedtime > PAINTBUFFER_SIZE)
-			end = paintedtime + PAINTBUFFER_SIZE;
+		if (endtime - shw->paintedtime > PAINTBUFFER_SIZE)
+			end = shw->paintedtime + PAINTBUFFER_SIZE;
 
 		// clear the paint buffer
-		memset (paintbuffer, 0, (end - paintedtime) * sizeof(portable_samplepair_t));
+		memset (paintbuffer, 0, (end - shw->paintedtime) * sizeof(portable_samplepair_t));
 
 		// paint in the channels.
 		ch = channels;
@@ -259,7 +245,7 @@ void S_PaintChannels (int endtime)
 			if (!sc)
 				continue;
 
-			ltime = paintedtime;
+			ltime = shw->paintedtime;
 
 			while (ltime < end) { // paint up to end
 				count = (ch->end < end) ? (ch->end - ltime) : (end - ltime);
@@ -284,11 +270,10 @@ void S_PaintChannels (int endtime)
 					}
 				}
 			}
-
 		}
 
 		// transfer out according to DMA format
 		S_TransferPaintBuffer(end);
-		paintedtime = end;
+		shw->paintedtime = end;
 	}
 }

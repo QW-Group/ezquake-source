@@ -103,6 +103,7 @@ static int rewind_duel_track2 = 0;
 static int rewind_spec_track = 0;
 static vec3_t rewind_angle;
 static vec3_t rewind_pos;
+static double qtv_demospeed = 1;
 
 char Demos_Get_Trackname(void);
 static void CL_DemoPlaybackInit(void);
@@ -3156,7 +3157,7 @@ void CL_StopPlayback (void)
 
 	// Capturing to avi/images, stop that.
 	if (Movie_IsCapturing())
-		Movie_Stop();
+		Movie_Stop(false);
 
 	// Close the playback file.
 	if (playbackfile)
@@ -4939,6 +4940,15 @@ void CL_Demo_Jump(double seconds, int relative, demoseekingtype_t seeking)
 
 double Demo_GetSpeed(void)
 {
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		return qtv_demospeed;
+	}
+
+	return bound(0, cl_demospeed.value, 20);
+}
+
+void Demo_AdjustSpeed(void)
+{
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
 		if (qtv_adjustbuffer.integer)
@@ -4964,14 +4974,17 @@ double Demo_GetSpeed(void)
 			// bound demospeed
 			demospeed = bound(qtv_adjustminspeed.value, demospeed, qtv_adjustmaxspeed.value);
 
-			return demospeed;
+			qtv_demospeed = demospeed;
+			return;
 		}
 
-		if (!qtv_allow_pause.value)
-			return 1;
+		if (!qtv_allow_pause.value) {
+			qtv_demospeed = 1;
+			return;
+		}
 	}
 	
-	return bound(0, cl_demospeed.value, 20);
+	qtv_demospeed = bound(0, cl_demospeed.value, 20);
 }
 
 // 

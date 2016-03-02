@@ -7792,6 +7792,7 @@ void CommonDraw_Init(void)
 		"itemfilter", "quad ra ya ga mega pent rl quad",
         NULL);
 
+#ifdef WITH_PNG
     HUD_Register("ownfrags" /* jeez someone give me a better name please */, NULL, "Highlights your own frags",
         0, ca_active, 1, SCR_HUD_DrawOwnFrags,
         "1", "screen", "center", "top", "0", "50", "0.2", "0 0 100", NULL,
@@ -7809,6 +7810,7 @@ void CommonDraw_Init(void)
 		"scale", "2",
 		NULL
 		);
+#endif
 
 	HUD_Register("itemsclock", NULL, "Displays upcoming item respawns",
 		0, ca_active, 1, SCR_HUD_DrawItemsClock,

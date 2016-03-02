@@ -1264,9 +1264,9 @@ static void FS_PakOper_Process(pak_operation_t op)
 void FS_PakAdd_f(void) { FS_PakOper_Process(PAKOP_ADD); }
 void FS_PakRem_f(void) { FS_PakOper_Process(PAKOP_REM); }
 
-#ifdef WITH_ZLIB
-
 #define CHUNK 16384
+
+#ifdef WITH_ZLIB
 
 int FS_GZipPack (char *source_path,
 				  char *destination_path,

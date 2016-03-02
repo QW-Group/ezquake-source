@@ -55,14 +55,13 @@ cvar_t   movie_codec		= {"demo_capture_codec", "0"};	// Capturing to avi
 cvar_t   movie_mp3			= {"demo_capture_mp3", "0"};
 cvar_t   movie_mp3_kbps		= {"demo_capture_mp3_kbps", "128"};
 cvar_t   movie_vid_maxlen   = {"demo_capture_vid_maxlen", "0"};
-cvar_t   movie_quietcapture = {"demo_capture_quiet", "0"};
-char movie_avi_filename[MAX_OSPATH];	// Stores the user's requested filename
+static char movie_avi_filename[MAX_OSPATH];	// Stores the user's requested filename
 static void Movie_Start_AVI_Capture(qbool split);
-int avi_number = 0;
-static qbool avi_restarting = false;
+static int avi_number = 0;
+static unsigned char aviSoundBuffer[256] = { 0 };
 #endif
 
-static qbool movie_is_capturing = false;
+static volatile qbool movie_is_capturing = false;
 static double movie_start_time, movie_len;
 static double movie_fragment_start_time;
 static int movie_frame_count;
@@ -70,7 +69,8 @@ static char	image_ext[4];
 
 //joe: capturing to avi
 #ifdef _WIN32
-qbool movie_is_avi = false, movie_avi_loaded, movie_acm_loaded;
+static qbool movie_is_avi = false;
+qbool movie_avi_loaded = false, movie_acm_loaded = false;
 static char avipath[256];
 static FILE *avifile = NULL;
 #endif
@@ -85,6 +85,12 @@ qbool Movie_IsCapturing(void) {
 	return cls.demoplayback && !cls.timedemo && movie_is_capturing;
 }
 
+float Movie_Frametime(void) {
+	if (movie_steadycam.value)
+		return movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
+	return cls.trueframetime;
+}
+
 static void Movie_Start(double _time) 
 {
 	extern cvar_t scr_sshot_format;
@@ -96,7 +102,6 @@ static void Movie_Start(double _time)
 	#else
 	GetLocalTime(&movie_start_date);
 	#endif
-	movie_is_capturing = true;
 	#ifdef _WIN32
 	movie_is_avi = !!avifile; //joe: capturing to avi
 	#endif
@@ -126,22 +131,24 @@ static void Movie_Start(double _time)
 		{
 			strlcpy (image_ext, "tga", sizeof (image_ext));
 		}
+		movie_is_capturing = true;
 	}
 }
 
-void Movie_Stop (void) {
-	movie_is_capturing = false;
+void Movie_Stop (qbool restarting) {
 #ifdef _WIN32
 	if (movie_is_avi) { //joe: capturing to avi
 		Capture_Close ();
 		fclose (avifile);
 		avifile = NULL;
 	}
-	if (!avi_restarting) {
-		S_StopAllSounds(true);
+	if (!restarting) {
+		S_StopAllSounds();
+
 		Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
 	}
 #endif
+	movie_is_capturing = false;
 }
 
 void Movie_Demo_Capture_f(void) {
@@ -150,10 +157,10 @@ void Movie_Demo_Capture_f(void) {
 	char *error;
 	
 #ifdef _WIN32
-	error = va("Usage: %s <start time [avifile] | stop>\n", Cmd_Argv(0));
+	error = va("Usage: %s (\"start\" time [avifile]) | \"stop\">\n", Cmd_Argv(0));
 	if ((argc = Cmd_Argc()) != 2 && argc != 3 && argc != 4) {
 #else
-	error = va("Usage: %s <start time | stop>\n", Cmd_Argv(0));
+	error = va("Usage: %s (\"start\" time) | \"stop\">\n", Cmd_Argv(0));
 	if ((argc = Cmd_Argc()) != 2 && argc != 3) {
 #endif
 		Com_Printf(error);
@@ -163,7 +170,7 @@ void Movie_Demo_Capture_f(void) {
 		if (strncasecmp("stop", Cmd_Argv(1), 4))
 			Com_Printf(error);
 		else if (Movie_IsCapturing()) 
-			Movie_Stop();
+			Movie_Stop(false);
 		else
 			Com_Printf("%s : Not capturing\n", Cmd_Argv(0));
 		return;
@@ -247,7 +254,6 @@ void Movie_Init(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 	Cvar_Register(&movie_codec);
 	Cvar_Register(&movie_vid_maxlen);
-	Cvar_Register(&movie_quietcapture);
 
 	Cvar_ResetCurrentGroup();
 
@@ -306,11 +312,9 @@ void Movie_FinishFrame(void)
 			double original_start_time = movie_start_time;
 
 			// Close existing, and start again
-			avi_restarting = true;
-			Movie_Stop();
+			Movie_Stop(true);
 			Movie_Start_AVI_Capture(true);
 			Movie_Start(movie_len);
-			avi_restarting = false;
 
 			// keep track of original start time so we know when to stop for good
 			movie_start_time = original_start_time;
@@ -363,48 +367,38 @@ void Movie_FinishFrame(void)
 	}
 
 	if (cls.realtime >= movie_start_time + movie_len)
-		Movie_Stop();
+		Movie_Stop(false);
 }
 
 //joe: capturing audio
 #ifdef _WIN32
-short* Movie_SoundBuffer(void) 
-{
-	if (!movie_is_avi || !Movie_IsCapturing())
-		return NULL;
-
-	return capture_audio_samples + (captured_audio_samples << 1);
+qbool Movie_IsCapturingAVI(void) {
+	return movie_is_avi && Movie_IsCapturing();
 }
 
-void Movie_TransferStereo16(void) {
-	if (!movie_is_avi || !Movie_IsCapturing())
-		return;
+void Movie_PrepareSound(void) {
+	memset(aviSoundBuffer, 0, sizeof(aviSoundBuffer));
 
-	// Copy last audio chunk written into our temporary buffer
-	// memcpy (capture_audio_samples + (captured_audio_samples << 1), snd_out, snd_linear_count * shm->format.channels);
+	shw->buffer = (unsigned char*)aviSoundBuffer;
+	shw->samples = sizeof(aviSoundBuffer) / shw->numchannels;
+}
+
+qbool Movie_TransferSound(void) {
+	int samples_per_frame = (int)(0.5 + cls.frametime * shw->khz);
+
+	// Write one frame of sound
+	memcpy(capture_audio_samples + (captured_audio_samples << 1), snd_out, snd_linear_count * shw->numchannels);
 	captured_audio_samples += (snd_linear_count >> 1);
+	shw->snd_sent += sizeof(aviSoundBuffer);
 
-	if (captured_audio_samples >= (int)(0.5 + cls.frametime * shm->format.speed)) {
+	if (captured_audio_samples >= samples_per_frame) {
 		// We have enough audio samples to match one frame of video
-		Capture_WriteAudio (captured_audio_samples, (byte *)capture_audio_samples);
+		Capture_WriteAudio(captured_audio_samples, (byte *)capture_audio_samples);
 		captured_audio_samples = 0;
-	}
-}
-
-qbool Movie_GetSoundtime(void) {
-	int views = 1;
-	float demospeed = Demo_GetSpeed();
-
-	if (!movie_is_avi || !Movie_IsCapturing() || !demospeed)
-		return false;
-
-	if (cl_multiview.value)
-	{
-		views = cl_multiview.value;
+		return true;
 	}
 
-	soundtime += (int)(0.5 + cls.frametime * shm->format.speed * views * (1.0 / demospeed)); //joe: fix for slowmo/fast forward
-	return true;
+	return false;
 }
 #endif
 

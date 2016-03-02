@@ -710,6 +710,7 @@ void CL_Demo_Jump_Status_Check (void);
 void CL_Demo_Check_For_Rewind(float nextdemotime);
 void CL_Demo_Stop_Rewinding(void);
 double Demo_GetSpeed(void);
+void Demo_AdjustSpeed(void);
 qbool CL_IsDemoExtension(const char *filename);
 
 void CL_AutoRecord_StopMatch(void);
@@ -816,10 +817,9 @@ void	CL_SendChunkDownloadReq(void);
 
 #endif // FTE_PEXT_CHUNKEDDOWNLOADS
 
-void CL_S_ExtraUpdate (void);
-
 // cl_tent.c
 void CL_InitTEnts (void);
+void CL_InitTEntsCvar(void);
 void CL_ClearTEnts (void);
 void CL_ParseTEnt (void);
 void CL_ExplosionSprite (vec3_t);

@@ -605,10 +605,9 @@ void CL_AdjustAngles(void)
 {
 	float basespeed, speed, up, down, frametime;
 
-	if (Movie_IsCapturing() && movie_steadycam.value) {
-		frametime = movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
-	} else {
-		frametime = cls.trueframetime;
+	frametime = cls.trueframetime;
+	if (Movie_IsCapturing()) {
+		frametime = Movie_Frametime();
 	}
 
 	basespeed = ((in_speed.state & 1) ? cl_anglespeedkey.value : 1);
@@ -794,10 +793,9 @@ void CL_FinishMove(usercmd_t *cmd)
 	static double extramsec = 0;
 	extern cvar_t allow_scripts;
 
-	if (Movie_IsCapturing() && movie_steadycam.value) {
-		frametime = movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
-	} else {
-		frametime = cls.trueframetime;
+	frametime = cls.trueframetime;
+	if (Movie_IsCapturing()) {
+		frametime = Movie_Frametime();
 	}
 
 	// figure button bits

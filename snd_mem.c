@@ -539,7 +539,7 @@ void SND_ResampleStream (void *in, int inrate, int inwidth, int inchannels, int 
 ResampleSfx
 ================
 */
-void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insamps, int inloopstart, byte *data)
+static void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insamps, int inloopstart, byte *data)
 {
 	extern cvar_t s_linearresample;
 	double scale;
@@ -549,7 +549,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insam
 	int outwidth;
 	int outchannels = 1; // inchannels;
 
-	scale = shm->format.speed / (double)inrate;
+	scale = shw->khz / (double)inrate;
 	outsamps = insamps * scale;
 	if (s_loadas8bit.integer < 0)
 		outwidth = 2;
@@ -559,7 +559,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insam
 		outwidth = inwidth;
 	len = outsamps * outwidth * outchannels;
 
-	sc = Cache_Alloc (&sfx->cache, len + sizeof(sfxcache_t), sfx->name);
+	sc = sfx->buf = Q_malloc(len + sizeof(sfxcache_t));
 	if (!sc)
 	{
 		return;
@@ -567,7 +567,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, int insam
 
 	sc->format.channels = outchannels;
 	sc->format.width = outwidth;
-	sc->format.speed = shm->format.speed;
+	sc->format.speed = shw->khz;
 	sc->total_length = outsamps;
 	if (inloopstart == -1)
 		sc->loopstart = inloopstart;
@@ -773,14 +773,14 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	wavinfo_t info;
 	int filesize;
 
-	// see if still in memory
-	if ((sc = (sfxcache_t *) Cache_Check (&s->cache)))
-		return sc;
+	// see if allocated
+	if (s->buf)
+		return (sfxcache_t*)s->buf;
 
 	// load it in
-	snprintf (namebuffer, sizeof (namebuffer), "sound/%s", s->name);
+	snprintf(namebuffer, sizeof(namebuffer), "sound/%s", s->name);
 
-	if (!(data = FS_LoadTempFile (namebuffer, &filesize))) {
+	if (!(data = FS_LoadTempFile(namebuffer, &filesize))) {
 		Com_Printf ("Couldn't load %s\n", namebuffer);
 		return NULL;
 	}
@@ -802,7 +802,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	ResampleSfx (s, info.rate, info.channels, info.width, info.samples, info.loopstart, data + info.dataofs);
 
-	return Cache_Check(&s->cache);
+	return s->buf;
 }
 #endif // WITH_OGG_VORBIS
 

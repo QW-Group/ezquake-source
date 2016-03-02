@@ -293,7 +293,9 @@ void R_NewMap (qbool vid_restart) {
 	}
 	else {
 		Mod_ReloadModelsTextures(); // reload textures for brush models
+#if defined(WITH_PNG)
 		HUD_NewRadarMap();			// Need to reload the radar picture.
+#endif
 	}
 
 	GL_BuildLightmaps ();

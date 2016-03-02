@@ -26,15 +26,10 @@ void Movie_Init(void);
 double Movie_StartFrame(void);
 void Movie_FinishFrame(void);
 qbool Movie_IsCapturing(void);
-void Movie_Stop(void);
-void Movie_TransferStereo16(void);
-qbool Movie_GetSoundtime(void);
-short* Movie_SoundBuffer(void);
-
-extern cvar_t movie_fps;
-extern cvar_t movie_steadycam;
-extern cvar_t movie_quietcapture;
-
-extern qbool	movie_is_avi;	//joe: capturing to avi
+qbool Movie_IsCapturingAVI(void);
+void Movie_Stop(qbool restarting);
+float Movie_Frametime(void);
+void Movie_PrepareSound(void);
+qbool Movie_TransferSound(void);
 
 #endif

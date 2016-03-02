@@ -11455,6 +11455,15 @@
       "remarks": "See cl_voip_play.",
       "type": "float"
     },
+    "s_desiredsamples": {
+      "group-id": "45",
+      "desc": "Indicates how large the audio buffer should be, in samples.",
+      "type": "float",
+      "values": [
+        { "name": "0", "description": "ezQuake will choose a sensible default, based on value of s_khz" }
+      ],
+      "remarks": "This is a suggestion only, the driver is free to choose a different value.  Smaller buffer sizes generally result in lower latency, but higher CPU usage."
+    },
     "s_show": {
       "group-id": "45",
       "desc": "Toggles displaying how many and/or which sound files are currently being played.",

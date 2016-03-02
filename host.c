@@ -744,7 +744,7 @@ void Host_Shutdown (void)
 
 	// on low-end systems quit process may last long time (was about 1 minute for me on old compo),
 	// at the same time may repeats repeats repeats some sounds, trying preventing this
-	S_StopAllSounds (true);
+	S_StopAllSounds();
 	S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 
 	SV_Shutdown ("Server quit\n");

@@ -309,7 +309,6 @@ OBJS_c := \
     vid_common_gl.o \
     cd_null.o \
     vid_sdl2.o \
-    snd_sdl2.o \
     sys_sdl2.o \
     in_sdl2.o
 

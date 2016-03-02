@@ -19,7 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "input.h"
 #include "keys.h"
 
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 
 #ifdef __APPLE__
 #include "in_osx.h"
