@@ -706,8 +706,8 @@ static void Con_DrawInput(void) {
 }
 
 // Returns first line to start printing from in order to fill up notify area
-static int Con_FirstNotifyLine (void) {
-	int maxlines = bound(0, _con_notifylines.value, NUM_CON_TIMES - 1);
+static int Con_FirstNotifyLine (int notification_lines) {
+	int maxlines = bound(0, notification_lines, NUM_CON_TIMES - 1);
 	int first_line = con.current;
 	float threshold_time = cls.realtime - con_notifytime.value;
 
@@ -731,38 +731,39 @@ void Con_DrawNotify (void) {
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
-	int first_line = Con_FirstNotifyLine();
+	int first_line = Con_FirstNotifyLine(_con_notifylines.integer);
 
 	if (!con_notify.value)
 		return;
 
 	v = 0;
-	for (i = first_line; i <= con.current; i++) {
-		if (i < 0)
-			continue;
-		time = con_times[i % NUM_CON_TIMES];
-		if (time == 0)
-			continue;
-		time = cls.realtime - time;
-		if (time > con_notifytime.value)
-			continue;
-		idx = (i % con_totallines)*con_linewidth;
-		text = con.text + idx;
+	if (_con_notifylines.integer) {
+		for (i = first_line; i <= con.current; i++) {
+			if (i < 0)
+				continue;
+			time = con_times[i % NUM_CON_TIMES];
+			if (time == 0)
+				continue;
+			time = cls.realtime - time;
+			if (time > con_notifytime.value)
+				continue;
+			idx = (i % con_totallines)*con_linewidth;
+			text = con.text + idx;
 
-		clearnotify = 0;
-		scr_copytop = 1;
+			clearnotify = 0;
+			scr_copytop = 1;
 
-		// copy current line to buffer
-		for(x = 0; x < con_linewidth; x++) {
-			buf[x] = text[x];
-			clr[x] = con.clr[idx + x]; // copy whole color struct
-			clr[x].i = x; // set proper index
+			// copy current line to buffer
+			for (x = 0; x < con_linewidth; x++) {
+				buf[x] = text[x];
+				clr[x] = con.clr[idx + x]; // copy whole color struct
+				clr[x].i = x; // set proper index
+			}
+			buf[x] = '\0';
+			Draw_ColoredString3W(8, v + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
+			v += 8;
 		}
-		buf[x] = '\0';
-		Draw_ColoredString3W (8, v + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
-		v += 8;
 	}
-
 
 	if (key_dest == key_message) {
 		wchar temp[MAXCMDLINE + 1];
@@ -829,7 +830,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
-	int first_line = Con_FirstNotifyLine();
+	int first_line = Con_FirstNotifyLine(notifyLines);
 
 	if (notifyCols > (con_linewidth))
 		notifyCols = con_linewidth;
@@ -838,86 +839,88 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 		notifyCols = 10;
 
 	v = 0;
-	for (i = first_line; i <= con.current; i++) {
-		if (i < 0)
-			continue;
+	if (notifyLines) {
+		for (i = first_line; i <= con.current; i++) {
+			if (i < 0)
+				continue;
 
-		time = con_times[i % NUM_CON_TIMES];
-		if (time == 0)
-			continue;
+			time = con_times[i % NUM_CON_TIMES];
+			if (time == 0)
+				continue;
 
-		time = cls.realtime - time;
-		if (time > notifyTime)
-			continue;
+			time = cls.realtime - time;
+			if (time > notifyTime)
+				continue;
 
-		idx = (i % con_totallines)*con_linewidth;
-		text = con.text + idx;
+			idx = (i % con_totallines)*con_linewidth;
+			text = con.text + idx;
 
-		clearnotify = 0;
-		scr_copytop = 1;
+			clearnotify = 0;
+			scr_copytop = 1;
 
-		// Copy current line to buffer
-		offset = 0;
-		draw = 0;
-		for(j = 0; j < con_linewidth; j++)
-		{
-			// each new line of a notify hud element
-			if ((j % notifyCols) == 0 && j != 0)
+			// Copy current line to buffer
+			offset = 0;
+			draw = 0;
+			for (j = 0; j < con_linewidth; j++)
 			{
-				for (k = 0; k < (j - offset); ++k)
+				// each new line of a notify hud element
+				if ((j % notifyCols) == 0 && j != 0)
 				{
-					if (buf[k] != ' ')
+					for (k = 0; k < (j - offset); ++k)
 					{
-						draw = 1;
-						break;
+						if (buf[k] != ' ')
+						{
+							draw = 1;
+							break;
+						}
 					}
+
+					buf[j - offset] = '\0';
+					offset = j;
+				}
+				else if (j == (con_linewidth - 1)) // Ending of the string.
+				{
+					for (k = 0; k < (j - offset); ++k)
+					{
+						if (buf[k] != ' ')
+						{
+							draw = 1;
+							break;
+						}
+					}
+
+					buf[j - offset] = '\0';
 				}
 
-				buf[j - offset] = '\0';
-				offset = j;
-			}
-			else if (j == (con_linewidth - 1)) // Ending of the string.
-			{
-				for (k = 0; k < (j - offset); ++k)
+				// Output.
+				if (draw)
 				{
-					if (buf[k] != ' ')
-					{
-						draw = 1;
-						break;
-					}
+					if (!draw)
+						continue;
+
+					Draw_SColoredString(
+						posX,
+						v + posY,
+						buf,
+						clr,
+						notifyCols,
+						0,
+						scale
+						);
+
+					// move text down
+					v += (8 * scale);
+
+					if (v > (notifyLines * scale))
+						notifyLines = v;
+
+					draw = 0;
 				}
 
-				buf[j - offset] = '\0';
+				buf[j - offset] = text[j];
+				clr[j - offset] = con.clr[idx + j]; // copy whole color struct
+				clr[j - offset].i = j; // set proper index
 			}
-
-			// Output.
-			if (draw)
-			{
-				if (!draw)
-					continue;
-
-				Draw_SColoredString (
-					posX,
-					v + posY,
-					buf,
-					clr,
-					notifyCols,
-					0,
-					scale
-					);
-
-				// move text down
-				v += (8 * scale);
-
-				if (v > (notifyLines * scale))
-					notifyLines = v;
-
-				draw = 0;
-			}
-
-			buf[j - offset] = text[j];
-			clr[j - offset] = con.clr[idx + j]; // copy whole color struct
-			clr[j - offset].i = j; // set proper index
 		}
 	}
 
