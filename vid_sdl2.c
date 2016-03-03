@@ -350,33 +350,54 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 	SDL_SysWMinfo info;
 	Display *display;
 	int screen;
-	static short once=1;
+	static short once = 1;
+	static short gamma_works = 0;
 
 	SDL_VERSION(&info.version);
 	screen = SDL_GetWindowDisplayIndex(sdl_window);
 
+	if (screen < 0) {
+		Com_Printf("error: couldn't get screen number to set gamma\n");
+		return;
+	}
+
 	if (SDL_GetWindowWMInfo(sdl_window, &info) != SDL_TRUE) {
-		Com_DPrintf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
+		Com_Printf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
 		return;
 	}
 
 	if (info.subsystem != SDL_SYSWM_X11) {
-		Com_DPrintf("error: not x11, gamma won't work\n");
+		Com_Printf("error: not x11, gamma won't work\n");
 		return;
 	}
 
 	display = info.info.x11.display;
 
 	if (once) {
+		int size;
+		size = XF86VidModeGetGammaRampSize(display, screen, &size);
+
+		if (size != 256) {
+			Com_Printf("error: gamma size (%d) not supported, gamma wont work!\n", size);
+			once = 0;
+			return;
+		}
+
 		if (!XF86VidModeGetGammaRamp(display, screen, 256, sysramps, sysramps+256, sysramps+512)) {
 			Com_DPrintf("error: cannot get system gamma ramps, gamma won't work\n");
+			once = 0;
 			return;
 		}
 		once = 0;
+		gamma_works = 1;
 	}
 
-	/* It returns true unconditionally ... */
-	XF86VidModeSetGammaRamp(display, screen, 256, ramps, ramps+256, ramps+512);
+	if (gamma_works) {
+		/* It returns true unconditionally ... */
+		XF86VidModeSetGammaRamp(display, screen, 256, ramps, ramps+256, ramps+512);
+		vid_hwgamma_enabled = true;
+	}
+	return;
 #else
 	SDL_SetWindowGammaRamp(sdl_window, ramps, ramps+256,ramps+512);
 #endif

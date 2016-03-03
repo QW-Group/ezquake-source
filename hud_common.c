@@ -7192,7 +7192,7 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 	// find carriage returns
 	line_start = in;
 	max_length = strlen_color_by_terminator(line_start, '\r');
-	while (line_end = strchr(line_start, '\r')) {
+	while ((line_end = strchr(line_start, '\r'))) {
 		line_start = line_end + 1;
 		max_length = max(max_length, strlen_color_by_terminator(line_start, '\r'));
 
