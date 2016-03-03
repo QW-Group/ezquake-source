@@ -375,7 +375,7 @@ static void VID_SetDeviceGammaRampReal(unsigned short *ramps)
 
 	if (once) {
 		int size;
-		size = XF86VidModeGetGammaRampSize(display, screen, &size);
+		XF86VidModeGetGammaRampSize(display, screen, &size);
 
 		if (size != 256) {
 			Com_Printf("error: gamma size (%d) not supported, gamma wont work!\n", size);

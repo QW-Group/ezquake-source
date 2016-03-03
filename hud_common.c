@@ -8021,7 +8021,8 @@ void CommonDraw_Init(void)
 		"style", "0",
 		"scale", "1",
 		"text", "",
-		"textalign", "left"
+		"textalign", "left",
+		NULL
 	);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
