@@ -623,18 +623,27 @@ void VX_TrackerStreakEnd(int player, int killer, int count)
 	if (player == killer) // streak ends due to suicide
 	{
 		char* userinfo_gender = Info_ValueForKey(cl.players[player].userinfo, "gender");
+		char gender;
 		if (! *userinfo_gender)
 			userinfo_gender = Info_ValueForKey(cl.players[player].userinfo, "g");
 
+		gender = userinfo_gender[0];
+		if (gender == '0' || gender == 'M')
+			gender = 'm';
+		else if (gender == '1' || gender == 'F')
+			gender = 'f';
+		else if (gender == '2' || gender == 'N')
+			gender = 'n';
+
 		if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 			snprintf(outstring, sizeof(outstring), "&c940You were looking good until you killed yourself (%i kills)", count);
-		else if (!strcmp(userinfo_gender, "male") || !strcmp(userinfo_gender, "0"))
+		else if (gender == 'm')
 			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until he killed himself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
-		else if (!strcmp(userinfo_gender, "female") || !strcmp(userinfo_gender, "1"))
+		else if (gender == 'f')
 			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until she killed herself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
-		else if (!strcmp(userinfo_gender, "none") || !strcmp(userinfo_gender, "2"))
+		else if (gender == 'n')
 			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until it killed itself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
-		else 
+		else
 			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good, then committed suicide (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
 	}
 	else // non suicide
