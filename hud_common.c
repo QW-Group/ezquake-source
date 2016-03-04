@@ -2125,6 +2125,22 @@ mpic_t *hud_pic_group7;
 mpic_t *hud_pic_group8;
 mpic_t *hud_pic_group9;
 
+/* FIXME: Rewrite all this... Temporary workaround to reload pics on vid_restart
+ *        since cache (where they are stored) is flushed
+ */
+void HUD_Common_Reset_Group_Pics(void)
+{
+	hud_pic_group1 = NULL;
+	hud_pic_group2 = NULL;
+	hud_pic_group3 = NULL;
+	hud_pic_group4 = NULL;
+	hud_pic_group5 = NULL;
+	hud_pic_group6 = NULL;
+	hud_pic_group7 = NULL;
+	hud_pic_group8 = NULL;
+	hud_pic_group9 = NULL;
+}
+
 void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_scalemode, float pic_alpha)
 {
 	#define HUD_GROUP_SCALEMODE_TILE		1
@@ -2307,257 +2323,185 @@ void SCR_HUD_OnChangePic_Group9(cvar_t *var, char *newpic, qbool *cancel)
 	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group9, newpic);
 }
 
+/* FIXME: Rewrite this ...... */
 void SCR_HUD_Group1(hud_t *hud)
 {
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width				= HUD_FindVar(hud, "width");
-        height				= HUD_FindVar(hud, "height");
-        picture				= HUD_FindVar(hud, "picture");
-		pic_alpha			= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode		= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group1;
+		picture->OnChange = SCR_HUD_OnChangePic_Group1;
+	}
+	if (!hud_pic_group1) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group1, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group1,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group1, pic_scalemode->value, pic_alpha->value);
 }
 
 void SCR_HUD_Group2(hud_t *hud)
 {
-	extern void DrawNewText(int x, int y, char *text);
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width			= HUD_FindVar(hud, "width");
-        height			= HUD_FindVar(hud, "height");
-        picture			= HUD_FindVar(hud, "picture");
-		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group2;
+		picture->OnChange = SCR_HUD_OnChangePic_Group2;
+	}
+	if (!hud_pic_group2) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group2, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group2,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group2, pic_scalemode->value, pic_alpha->value);
 }
 
 void SCR_HUD_Group3(hud_t *hud)
 {
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width			= HUD_FindVar(hud, "width");
-        height			= HUD_FindVar(hud, "height");
-        picture			= HUD_FindVar(hud, "picture");
-		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group3;
+		picture->OnChange = SCR_HUD_OnChangePic_Group3;
+	}
+	if (!hud_pic_group3) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group3, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group3,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group3, pic_scalemode->value, pic_alpha->value);
 }
 
 void SCR_HUD_Group4(hud_t *hud)
 {
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width			= HUD_FindVar(hud, "width");
-        height			= HUD_FindVar(hud, "height");
-        picture			= HUD_FindVar(hud, "picture");
-		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group4;
+		picture->OnChange = SCR_HUD_OnChangePic_Group4;
+	}
+	if (!hud_pic_group4) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group4, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group4,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group4, pic_scalemode->value, pic_alpha->value);
 }
 
 void SCR_HUD_Group5(hud_t *hud)
 {
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width			= HUD_FindVar(hud, "width");
-        height			= HUD_FindVar(hud, "height");
-        picture			= HUD_FindVar(hud, "picture");
-		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group5;
+		picture->OnChange = SCR_HUD_OnChangePic_Group5;
+	}
+	if (!hud_pic_group5) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group5, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group5,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group5, pic_scalemode->value, pic_alpha->value);
 }
 
 void SCR_HUD_Group6(hud_t *hud)
 {
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width			= HUD_FindVar(hud, "width");
-        height			= HUD_FindVar(hud, "height");
-        picture			= HUD_FindVar(hud, "picture");
-		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group6;
+		picture->OnChange = SCR_HUD_OnChangePic_Group6;
+	}
+	if (!hud_pic_group6) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group6, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group6,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group6, pic_scalemode->value, pic_alpha->value);
 }
 
 void SCR_HUD_Group7(hud_t *hud)
 {
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width			= HUD_FindVar(hud, "width");
-        height			= HUD_FindVar(hud, "height");
-        picture			= HUD_FindVar(hud, "picture");
-		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group7;
+		picture->OnChange = SCR_HUD_OnChangePic_Group7;
+	}
+	if (!hud_pic_group7) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group7, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group7,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group7, pic_scalemode->value, pic_alpha->value);
 }
 
 void SCR_HUD_Group8(hud_t *hud)
 {
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width			= HUD_FindVar(hud, "width");
-        height			= HUD_FindVar(hud, "height");
-        picture			= HUD_FindVar(hud, "picture");
-		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group8;
+		picture->OnChange = SCR_HUD_OnChangePic_Group8;
+	}
+	if (!hud_pic_group8) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group8, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group8,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group8, pic_scalemode->value, pic_alpha->value);
 }
 
 void SCR_HUD_Group9(hud_t *hud)
 {
-    static cvar_t *width = NULL,
-		*height,
-		*picture,
-		*pic_alpha,
-		*pic_scalemode;
+	static cvar_t *width = NULL, *height, *picture, *pic_alpha, *pic_scalemode;
 
-    if (width == NULL)  // first time called
-    {
-        width			= HUD_FindVar(hud, "width");
-        height			= HUD_FindVar(hud, "height");
-        picture			= HUD_FindVar(hud, "picture");
-		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
-        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+	if (width == NULL) { // first time called
+		width = HUD_FindVar(hud, "width");
+		height = HUD_FindVar(hud, "height");
+		picture = HUD_FindVar(hud, "picture");
+		pic_alpha = HUD_FindVar(hud, "pic_alpha");
+		pic_scalemode = HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group9;
+		picture->OnChange = SCR_HUD_OnChangePic_Group9;
+	}
+	if (!hud_pic_group9) {
 		SCR_HUD_LoadGroupPic(picture, &hud_pic_group9, picture->string);
-    }
+	}
 
-	SCR_HUD_DrawGroup(hud,
-		width->value,
-		height->value,
-		hud_pic_group9,
-		pic_scalemode->value,
-		pic_alpha->value);
+	SCR_HUD_DrawGroup(hud, width->value, height->value, hud_pic_group9, pic_scalemode->value, pic_alpha->value);
 }
 
 // player sorting

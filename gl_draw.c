@@ -785,6 +785,7 @@ void Draw_InitConback (void);
 
 void Draw_Init (void)
 {
+	extern void HUD_Common_Reset_Group_Pics(void);
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
@@ -810,6 +811,7 @@ void Draw_Init (void)
 
 	W_LoadWadFile("gfx.wad"); // Safe re-init.
 	CachePics_DeInit();
+	HUD_Common_Reset_Group_Pics();
 
 	GL_Texture_Init();  // Probably safe to re-init now.
 
