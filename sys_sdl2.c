@@ -73,7 +73,7 @@ wchar *Sys_GetClipboardTextW(void)
 	if (SDL_HasClipboardText()) {
 		tmp = SDL_GetClipboardText();
 		wtmp = str2wcs(tmp);
-		free(tmp);
+		SDL_free(tmp);
 	}
 
 	return wtmp;
