@@ -1935,7 +1935,7 @@ void Parse_TeamInfo(char *s)
 	strlcpy(ti_clients[ client ].nick, Cmd_Argv( 8 ), TEAMINFO_NICKLEN); // nick is optional
 }
 
-void Update_TeamInfo()
+void Update_TeamInfo(void)
 {
 	int		i;
 	int		*st;
@@ -4118,7 +4118,7 @@ void SCR_Init (void)
     ScrollBars_Init();
 }
 
-void SCR_DrawMultiviewBorders()
+void SCR_DrawMultiviewBorders(void)
 {
 	//
 	// Draw black borders around the views.
@@ -4208,7 +4208,7 @@ mpic_t *SCR_GetWeaponIconByWeaponNumber (int num)
 	return NULL;
 }
 
-mpic_t *SCR_GetActiveWeaponIcon()
+mpic_t *SCR_GetActiveWeaponIcon(void)
 {
 	return SCR_GetWeaponIconByFlag (cl.stats[STAT_ACTIVEWEAPON]);
 }

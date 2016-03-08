@@ -581,7 +581,7 @@ static char *Sys_PipeFile(void) {
 	return pipe;
 }
 
-void Sys_InitIPC()
+void Sys_InitIPC(void)
 {
 	int fd;
 	mode_t old;
@@ -606,7 +606,7 @@ void Sys_InitIPC()
 	}
 }
 
-void Sys_CloseIPC()
+void Sys_CloseIPC(void)
 {
 	if (fifo_pipe) {
 		fclose(fifo_pipe);
@@ -614,7 +614,7 @@ void Sys_CloseIPC()
 	}
 }
 
-void Sys_ReadIPC()
+void Sys_ReadIPC(void)
 {
 	char buf[PIPE_BUFFERSIZE] = {0};
 	int num_bytes_read = 0;

@@ -501,7 +501,7 @@ int Servers_disp;   // server# at the top of the list
 int Sources_disp;   // source# at the top of the list
 int Players_disp;   // player# at the top of the list
 
-void Serverinfo_Draw ();
+void Serverinfo_Draw (void);
     void Serverinfo_Players_Draw(int x, int y, int w, int h);
     void Serverinfo_Rules_Draw(int x, int y, int w, int h);
     void Serverinfo_Sources_Draw(int x, int y, int w, int h);
@@ -1205,7 +1205,7 @@ void Serverinfo_Help_Draw(int x, int y, int wPixels)
 	}
 }
 
-void Serverinfo_Draw ()
+void Serverinfo_Draw (void)
 {
     extern int server_during_update;
     char buf[512];
@@ -1820,7 +1820,7 @@ void SB_Source_Add_f(void)
 	SB_Source_Add(Cmd_Argv(1), Cmd_Argv(2), type);
 }
 
-static void SB_NewSource_Shift()
+static void SB_NewSource_Shift(void)
 {
 	// excluding dummy, presuming dummy is last
 	newsource_type = (newsource_type + 1) % (type_dummy);

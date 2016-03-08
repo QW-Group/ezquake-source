@@ -149,7 +149,7 @@ typedef struct cl_message_s
 static cl_message_t cl_messages[NUMMSG];
 
 static void CL_Messages_f(void);
-static void CL_InitialiseDemoMessageIfRequired();
+static void CL_InitialiseDemoMessageIfRequired(void);
 
 void Cl_Messages_Init(void)
 {
@@ -2689,7 +2689,7 @@ extern qbool TP_SuppressMessage (wchar *);
 extern cvar_t cl_chatsound, msg_filter;
 extern cvar_t ignore_qizmo_spec;
 
-void CL_ParsePrint ()
+void CL_ParsePrint (void)
 {
 	qbool suppress_talksound;
 	wchar *s, str[2048], *p, check_flood;
@@ -3741,7 +3741,7 @@ void CL_ParseServerMessage (void)
 	CL_SetSolidEntities ();
 }
 
-static void CL_InitialiseDemoMessageIfRequired()
+static void CL_InitialiseDemoMessageIfRequired(void)
 {
 	if (!cls.demomessage.cursize)
 	{

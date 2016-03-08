@@ -36,7 +36,7 @@ void ED2_PrintEdicts (void);
 void PR2_Profile_f (void);
 void ED2_PrintEdict_f (void);
 void ED_Count (void);
-void PR_CleanLogText_Init();
+void PR_CleanLogText_Init(void);
 void PR2_Init(void)
 {
 	int p;
@@ -155,7 +155,7 @@ void PR2_LoadEnts(char *data)
 //===========================================================================
 // GameStartFrame
 //===========================================================================
-void PR2_GameStartFrame()
+void PR2_GameStartFrame(void)
 {
 	VM_Call(sv_vm, GAME_START_FRAME, (int) (sv.time * 1000), 0, 0, 0, 0, 0, 0, 0, 0,
 	        0, 0, 0);
@@ -204,7 +204,7 @@ void PR2_GameClientPostThink(int spec)
 //===========================================================================
 // ClientCmd return false on unknown command
 //===========================================================================
-qbool PR2_ClientCmd()
+qbool PR2_ClientCmd(void)
 {
 	return VM_Call(sv_vm, GAME_CLIENT_COMMAND, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -221,7 +221,7 @@ qbool PR2_ClientSay(int isTeamSay)
 //===========================================================================
 // GameSetNewParms
 //===========================================================================
-void PR2_GameSetNewParms()
+void PR2_GameSetNewParms(void)
 {
 	VM_Call(sv_vm, GAME_SETNEWPARMS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -229,7 +229,7 @@ void PR2_GameSetNewParms()
 //===========================================================================
 // GameSetNewParms
 //===========================================================================
-void PR2_GameSetChangeParms()
+void PR2_GameSetChangeParms(void)
 {
 	VM_Call(sv_vm, GAME_SETCHANGEPARMS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -238,7 +238,7 @@ void PR2_GameSetChangeParms()
 //===========================================================================
 // EdictTouch
 //===========================================================================
-void PR2_EdictTouch()
+void PR2_EdictTouch(void)
 {
 	VM_Call(sv_vm, GAME_EDICT_TOUCH, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -246,7 +246,7 @@ void PR2_EdictTouch()
 //===========================================================================
 // EdictThink
 //===========================================================================
-void PR2_EdictThink()
+void PR2_EdictThink(void)
 {
 	VM_Call(sv_vm, GAME_EDICT_THINK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -254,7 +254,7 @@ void PR2_EdictThink()
 //===========================================================================
 // EdictBlocked
 //===========================================================================
-void PR2_EdictBlocked()
+void PR2_EdictBlocked(void)
 {
 	VM_Call(sv_vm, GAME_EDICT_BLOCKED, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -262,7 +262,7 @@ void PR2_EdictBlocked()
 //===========================================================================
 // UserInfoChanged
 //===========================================================================
-qbool PR2_UserInfoChanged()
+qbool PR2_UserInfoChanged(void)
 {
 	return VM_Call(sv_vm, GAME_CLIENT_USERINFO_CHANGED, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -270,7 +270,7 @@ qbool PR2_UserInfoChanged()
 //===========================================================================
 // UserInfoChanged
 //===========================================================================
-void PR2_GameShutDown()
+void PR2_GameShutDown(void)
 {
 	VM_Call(sv_vm, GAME_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }

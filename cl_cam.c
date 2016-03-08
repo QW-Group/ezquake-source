@@ -1044,20 +1044,20 @@ int WhoIsSpectated (void)
     return -1;
 }
 
-void CL_TrackMV1_f() 
+void CL_TrackMV1_f(void)
 {
 	CL_Track(MV_VIEW1);	
 }
 
-void CL_TrackMV2_f() 
+void CL_TrackMV2_f(void)
 {
 	CL_Track(MV_VIEW2);
 }
-void CL_TrackMV3_f() 
+void CL_TrackMV3_f(void)
 {
 	CL_Track(MV_VIEW3);
 }
-void CL_TrackMV4_f() 
+void CL_TrackMV4_f(void)
 {
 	CL_Track(MV_VIEW4);
 }

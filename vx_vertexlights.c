@@ -83,7 +83,7 @@ float VLight_LerpLight(int index1, int index2, float ilerp, float apitch, float 
 }
 
 
-void VLight_ResetAnormTable()
+void VLight_ResetAnormTable(void)
 {
 	int i,j;
 	vec3_t tempanorms[162] = {

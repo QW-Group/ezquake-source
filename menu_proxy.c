@@ -85,7 +85,7 @@ void Menu_Proxy_Key(int key)
 	}
 }
 
-void Menu_Proxy_Draw() { 
+void Menu_Proxy_Draw(void) { 
 // proxy menu is usually drawn by centerprint messages
 // but ofc this can be changed later .. don't forget to hack SCR_CheckDrawCenterString() then again
 } 

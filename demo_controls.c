@@ -142,7 +142,7 @@ static int DemoControls_Slider_OnMouseHover(ez_control_t *self, void *payload, m
 	return 0;
 }
 
-static void DemoControls_SetSpeedLabel()
+static void DemoControls_SetSpeedLabel(void)
 {
 	char label_text[20] = { 0 };
 

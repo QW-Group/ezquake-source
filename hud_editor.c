@@ -1595,7 +1595,7 @@ static char *HUD_Editor_GetGrepArrow(hud_grephandle_t *grep)
 //
 // Draws the grephandles.
 //
-static void HUD_Editor_DrawGreps()
+static void HUD_Editor_DrawGreps(void)
 {
 	clrinfo_t color, highlight;
 	hud_grephandle_t *greps_it = NULL;
@@ -1746,7 +1746,7 @@ static void HUD_Editor_DestroyGrep(hud_grephandle_t *grep)
 //
 // Finds a HUD element associated with the grephandle under the mouse cursor.
 //
-static hud_t *HUD_Editor_FindHudByGrep()
+static hud_t *HUD_Editor_FindHudByGrep(void)
 {
 	hud_grephandle_t *greps_it = NULL;
 	greps_it = hud_greps;
@@ -2200,7 +2200,7 @@ static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 //
 // Draws a help window.
 //
-static void HUD_Editor_DrawHelp()
+static void HUD_Editor_DrawHelp(void)
 {
 	#define HUD_EDITOR_HELP_BORDER	32
 	#define HUD_EDITOR_HELP_WIDTH	min(vid.conwidth - (2 * HUD_EDITOR_HELP_BORDER), 500)

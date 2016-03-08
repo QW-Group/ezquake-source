@@ -326,13 +326,13 @@ static int MVD_FindBestPlayerSimple(void) {
 	return b;
 }
 
-static qbool MVD_TrackedHasNoWeapon() {
+static qbool MVD_TrackedHasNoWeapon(void) {
 	int stat = cl.players[cl.viewplayernum].stats[STAT_ITEMS];
 	if ((stat & IT_ROCKET_LAUNCHER) || (stat & IT_LIGHTNING)) return false;
 	else return true;
 }
 
-static qbool MVD_SomeoneHasWeapon() {
+static qbool MVD_SomeoneHasWeapon(void) {
 	int i, stats;
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
 		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
@@ -341,13 +341,13 @@ static qbool MVD_SomeoneHasWeapon() {
 	return false;
 }
 
-static qbool MVD_TrackedHasNoPowerup() {
+static qbool MVD_TrackedHasNoPowerup(void) {
 	int stats = cl.players[cl.viewplayernum].stats[STAT_ITEMS];
 	if ((stats & IT_QUAD) || (stats & IT_INVULNERABILITY)) return false;
 	else return true;
 }
 
-static qbool MVD_SomeoneHasPowerup() {
+static qbool MVD_SomeoneHasPowerup(void) {
 	int i, stats;
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
 		stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];

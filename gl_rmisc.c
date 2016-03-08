@@ -270,7 +270,7 @@ void R_NewMap (qbool vid_restart) {
 	int	i, waterline;
 
 	extern int R_SetSky(char *skyname);
-	extern void HUD_NewRadarMap(); // hud_common.c
+	extern void HUD_NewRadarMap(void); // hud_common.c
 
 	R_SetSky (r_skyname.string);
 

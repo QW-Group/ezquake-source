@@ -2267,7 +2267,7 @@ void PF2_FS_ReadFile(byte* base, unsigned int mask, pr2val_t* stack, pr2val_t*re
 #endif
 }
 
-void PR2_FS_Restart()
+void PR2_FS_Restart(void)
 {
 	int i;
 
@@ -3025,7 +3025,7 @@ extern field_t *fields;
 
 #define GAME_API_VERSION_MIN 8
 
-void PR2_InitProg()
+void PR2_InitProg(void)
 {
 	PR2_FS_Restart();
 

@@ -38,7 +38,7 @@ static void S_Play_f (void);
 static void S_PlayVol_f (void);
 static void S_MuteSound_f (void);
 static void S_SoundList_f (void);
-static void S_Update_ ();
+static void S_Update_ (void);
 static void S_StopAllSounds_f (void);
 static void S_Register_LatchCvars(void);
 
@@ -903,7 +903,7 @@ static void GetSoundtime(void)
 	}
 }
 
-static void S_Update_()
+static void S_Update_(void)
 {
 	unsigned int endtime;
 	int samps;

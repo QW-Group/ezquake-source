@@ -64,7 +64,7 @@ static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *can
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
 static void GrabMouse(qbool grab, qbool raw);
 static void GfxInfo_f(void);
-static void HandleEvents();
+static void HandleEvents(void);
 static void VID_UpdateConRes(void);
 void IN_Restart_f(void);
 
@@ -595,7 +595,7 @@ static void mouse_wheel_event(SDL_MouseWheelEvent *event)
 	}
 }
 
-static void HandleEvents()
+static void HandleEvents(void)
 {
 	SDL_Event event;
 

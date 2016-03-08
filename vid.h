@@ -89,12 +89,12 @@ extern qbool vid_hwgamma_enabled;
 #define VID_ConsoleX(x) ((x) * vid.conwidth / glwidth)
 #define VID_ConsoleY(y) ((y) * vid.conheight / glheight)
 
-void VID_Minimize();
-void VID_Restore();
+void VID_Minimize(void);
+void VID_Restore(void);
 
-qbool VID_VSyncIsOn();
-qbool VID_VSyncLagFix();
-void VID_CvarInit();
+qbool VID_VSyncIsOn(void);
+qbool VID_VSyncLagFix(void);
+void VID_CvarInit(void);
 
 const SDL_DisplayMode *VID_GetDisplayMode(int index);
 int VID_GetCurrentModeIndex(void);

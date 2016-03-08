@@ -764,7 +764,7 @@ char* SCR_GetGameTime(int t)
 	return str;
 }
 
-char* SCR_GetDemoTime()
+char* SCR_GetDemoTime(void)
 {
 	static char str[9]; // '01:02:03\0'
 	strlcpy (str, SecondsToMinutesString((int) (cls.demotime - demostarttime)), sizeof(str));

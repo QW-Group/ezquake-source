@@ -33,25 +33,25 @@ extern cvar_t sv_progtype;
 extern vm_t* sv_vm;
 
 
-void		PR2_Init();
-void		PR2_UnLoadProgs();
-void		PR2_LoadProgs();
-void		PR2_GameStartFrame();
+void		PR2_Init(void);
+void		PR2_UnLoadProgs(void);
+void		PR2_LoadProgs(void);
+void		PR2_GameStartFrame(void);
 void		PR2_LoadEnts(char *data);
 void		PR2_GameClientConnect(int spec);
 void		PR2_GamePutClientInServer(int spec);
 void		PR2_GameClientDisconnect(int spec);
 void		PR2_GameClientPreThink(int spec);
 void		PR2_GameClientPostThink(int spec);
-qbool		PR2_ClientCmd();
+qbool		PR2_ClientCmd(void);
 qbool		PR2_ClientSay(int isTeamSay);
-void		PR2_GameSetNewParms();
-void		PR2_GameSetChangeParms();
-void		PR2_EdictTouch();
-void		PR2_EdictThink();
-void		PR2_EdictBlocked();
-qbool 		PR2_UserInfoChanged();
-void 		PR2_GameShutDown();
+void		PR2_GameSetNewParms(void);
+void		PR2_GameSetChangeParms(void);
+void		PR2_EdictTouch(void);
+void		PR2_EdictThink(void);
+void		PR2_EdictBlocked(void);
+qbool 		PR2_UserInfoChanged(void);
+void 		PR2_GameShutDown(void);
 void 		PR2_GameConsoleCommand(void);
 void		PR2_PausedTic(float duration);
 
@@ -59,10 +59,10 @@ char*		PR2_GetString(int);
 int			PR2_SetString(char*s);
 void		PR2_RunError(char *error, ...);
 void		ED2_Free(edict_t *ed);
-edict_t*	ED2_Alloc();
+edict_t*	ED2_Alloc(void);
 void		ED2_ClearEdict(edict_t *e);
 eval_t*		PR2_GetEdictFieldValue(edict_t *ed, char *field);
 int			ED2_FindFieldOffset(char *field);
-void 		PR2_InitProg();
+void 		PR2_InitProg(void);
 
 #endif /* !__PR2_H__ */

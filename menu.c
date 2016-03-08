@@ -328,7 +328,7 @@ void M_ToggleMenu_f (void) {
 	else M_ToggleHeadMenus(m_main);
 }
 
-void M_EnterProxyMenu () {
+void M_EnterProxyMenu (void) {
 	M_EnterMenu(m_proxy);
 }
 

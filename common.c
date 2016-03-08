@@ -42,8 +42,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tp_triggers.h"
 #include "fs.h"
 
-void Draw_BeginDisc ();
-void Draw_EndDisc ();
+void Draw_BeginDisc (void);
+void Draw_EndDisc (void);
 
 #define MAX_NUM_ARGVS	50
 

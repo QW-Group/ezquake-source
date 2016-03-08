@@ -97,11 +97,11 @@ void StatsGrid_Change(stats_weight_grid_t *grid,
 							int grid_width,
 							int grid_height);
 void StatsGrid_DecreaseWeight(cell_weight_t *weight, stats_weight_grid_t *grid);
-void StatsGrid_Gather();
-void StatsGrid_ResetHoldItems();
-void StatsGrid_SortHoldItems();
+void StatsGrid_Gather(void);
+void StatsGrid_ResetHoldItems(void);
+void StatsGrid_SortHoldItems(void);
 void StatsGrid_SetHoldItemOrder(const char *item_name, int order);
-void StatsGrid_ResetHoldItemsOrder();
+void StatsGrid_ResetHoldItemsOrder(void);
 
 extern stats_weight_grid_t	*stats_grid;			// The weight grid for all the statistics.
 extern stats_entities_t		*stats_important_ents;	// A list of "important" entities on the map, and counts on what team holds it.

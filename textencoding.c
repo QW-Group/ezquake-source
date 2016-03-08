@@ -103,7 +103,7 @@ static int fteEncoder(char* out, wchar in, int maxCharacters) {
 	return 6;
 }
 
-static int TextEncodingMethod()
+static int TextEncodingMethod(void)
 {
 	return bound(0, cl_textEncoding.value, sizeof(encodingFunctions) / sizeof(encodingFunctions[0]));
 }
@@ -113,12 +113,12 @@ int TextEncodingEncode(char* out, wchar input, int maxBytes)
 	return (*encodingFunctions[TextEncodingMethod()])(out, input, maxBytes);
 }
 
-const char* TextEncodingPrefix()
+const char* TextEncodingPrefix(void)
 {
 	return encodingStrings[TextEncodingMethod()];
 }
 
-const char* TextEncodingSuffix()
+const char* TextEncodingSuffix(void)
 {
 	return encodingSuffixes[TextEncodingMethod()];
 }

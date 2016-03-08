@@ -1036,7 +1036,7 @@ svcmd_t svcmds[] = {
 };
 
 //Called by Cmd_ExecuteString if cbuf_current == &cbuf_svc
-qbool CL_CheckServerCommand () {
+qbool CL_CheckServerCommand (void) {
 	svcmd_t	*cmd;
 	char *s;
 

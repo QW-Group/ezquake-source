@@ -4151,7 +4151,7 @@ static float map_height_diff = 0.0;
 //
 // Is run when a new map is loaded.
 //
-void HUD_NewRadarMap()
+void HUD_NewRadarMap(void)
 {
 	int i = 0;
 	int len = 0;
@@ -4339,7 +4339,7 @@ void OnAutoHudChange(cvar_t *var, char *value, qbool *cancel) {
 }
 
 // Is run when a new map is loaded.
-void HUD_NewMap() {
+void HUD_NewMap(void) {
 #if defined(WITH_PNG)
 	HUD_NewRadarMap();
 #endif // WITH_PNG
@@ -7194,7 +7194,7 @@ void SCR_HUD_DrawStaticText(hud_t *hud)
 // Run before HUD elements are drawn.
 // Place stuff that is common for HUD elements here.
 //
-void HUD_BeforeDraw()
+void HUD_BeforeDraw(void)
 {
 	// Only sort once per draw.
 	HUD_Sort_Scoreboard (HUD_SCOREBOARD_ALL);
@@ -7204,7 +7204,7 @@ void HUD_BeforeDraw()
 // Run after HUD elements are drawn.
 // Place stuff that is common for HUD elements here.
 //
-void HUD_AfterDraw()
+void HUD_AfterDraw(void)
 {
 }
 

@@ -124,7 +124,7 @@ void SB_Server_SetBestPing(server_data *s, int bestping)
     s->bestping = bestping;
 }
 
-qbool SB_AllServersDead()
+qbool SB_AllServersDead(void)
 {
 	int i;
 	
@@ -558,7 +558,7 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
 	unsigned int SB_Sources_Marked_Count(void);
 	extern cvar_t sb_listcache;
-	extern void SB_Serverlist_Serialize_f();
+	extern void SB_Serverlist_Serialize_f(void);
 
 	int full = (int) lpParameter;
     abort_ping = 0;
@@ -636,7 +636,7 @@ void GetServerPingsAndInfos(int full)
 	Sys_CreateThread (GetServerPingsAndInfosProc, (void *) full);
 }
 
-void GetServerPingsAndInfos_f()
+void GetServerPingsAndInfos_f(void)
 {
 	qbool full = true;
 	if (Cmd_Argc() > 0 && strcmp(Cmd_Argv(1), "info") == 0) {

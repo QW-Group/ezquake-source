@@ -479,7 +479,7 @@ CTabPage_Handlers_t sb_creategame_handlers = {
 	CreateGame_Mouse_Event
 };
 
-void Menu_MultiPlayer_Init()
+void Menu_MultiPlayer_Init(void)
 {
 	Settings_Page_Init(sbsettings, sbsettings_arr);
 	Settings_Page_Init(create_game_options, create_game_options_arr);

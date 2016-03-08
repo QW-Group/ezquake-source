@@ -38,8 +38,8 @@ void SCR_HUD_DrawGun7 (hud_t *hud);
 void SCR_HUD_DrawGun8 (hud_t *hud);
 void SCR_HUD_DrawGunCurrent (hud_t *hud);
 
-void HUD_NewMap();
-void HUD_NewRadarMap();
+void HUD_NewMap(void);
+void HUD_NewRadarMap(void);
 void SCR_HUD_DrawRadar(hud_t *hud);
 
 void HudCommon_Init(void);

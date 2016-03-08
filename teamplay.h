@@ -97,8 +97,8 @@ void TP_RefreshSkins(void);
 qbool TP_NeedRefreshSkins(void);
 
 extern char *skinforcing_team;
-char *TP_SkinForcingTeam();
-qbool TP_TeamLockSpecified();
+char *TP_SkinForcingTeam(void);
+qbool TP_TeamLockSpecified(void);
 
 void TP_Init (void);
 

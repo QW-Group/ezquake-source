@@ -56,7 +56,7 @@ extern	qbool		scr_skipupdate;
 extern	qbool		block_drawing;
 
 // QW262 HUD
-typedef char* (*Hud_Func)();
+typedef char* (*Hud_Func)(void);
 
 #define		HUD_CVAR		1
 #define		HUD_FUNC		2

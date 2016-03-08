@@ -38,7 +38,7 @@ static mpic_t *scrbar_up, *scrbar_down, *scrbar_bg, *scrbar_slider;
 int scrollbar_width;
 int slider_height;
 
-void ScrollBars_Init()
+void ScrollBars_Init(void)
 {
 	scrbar_bg = Draw_CachePicSafe("textures/scrollbars/slidebg", false, true);
 	scrbar_up = Draw_CachePicSafe("textures/scrollbars/arrow_up", false, true);

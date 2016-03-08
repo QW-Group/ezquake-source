@@ -31,7 +31,7 @@ CleanName_Init
 sets chararcter table for quake text->filename translation
 ====================
 */
-void CleanName_Init ()
+void CleanName_Init (void)
 {
 	int i;
 
@@ -944,7 +944,7 @@ void SV_LastScores_f (void)
 
 // easyrecord helpers
 
-int Dem_CountPlayers ()
+int Dem_CountPlayers (void)
 {
 	int	i, count;
 

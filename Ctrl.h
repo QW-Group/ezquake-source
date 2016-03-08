@@ -52,7 +52,7 @@ qbool UI_PrintTextBlock(int x, int y, int w, int h, const char* text, qbool red)
 // if this part gets too big, it might be moved to own header (Ctrl_*.h)
 //
 
-void ScrollBars_Init();
+void ScrollBars_Init(void);
 
 typedef void (*ScrollPos_setter) (double);
 

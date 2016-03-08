@@ -644,12 +644,12 @@ typedef struct challenge_data_s {
 
 static challenge_data_t *last_challenge = NULL;
 
-qbool MT_Challenge_IsOn()
+qbool MT_Challenge_IsOn(void)
 {
 	return last_challenge != NULL;
 }
 
-const char *MT_Challenge_GetLadderId()
+const char *MT_Challenge_GetLadderId(void)
 {
 	if (last_challenge == NULL) {
 		return "";
@@ -658,7 +658,7 @@ const char *MT_Challenge_GetLadderId()
 	return last_challenge->ladderid;
 }
 
-const char *MT_Challenge_GetHash()
+const char *MT_Challenge_GetHash(void)
 {
 	if (last_challenge == NULL) {
 		return "";
@@ -667,7 +667,7 @@ const char *MT_Challenge_GetHash()
 	return last_challenge->hash;
 }
 
-const char *MT_Challenge_GetToken()
+const char *MT_Challenge_GetToken(void)
 {
 	if (last_challenge == NULL) {
 		return "";
@@ -835,7 +835,7 @@ DWORD WINAPI MT_Challenge_StartSend_Thread(void *arg)
 	return 0;
 }
 
-static void MT_Challenge_BreakSend()
+static void MT_Challenge_BreakSend(void)
 {
 	challenge_data_t *thread_data;
 
@@ -859,7 +859,7 @@ static void MT_Challenge_BreakSend()
 	Sys_CreateThread(MT_Challenge_StartSend_Thread, thread_data);
 }
 
-static void MT_Challenge_StartSend()
+static void MT_Challenge_StartSend(void)
 {
 	challenge_data_t *thread_data;
 

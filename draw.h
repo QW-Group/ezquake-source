@@ -124,7 +124,7 @@ qbool R_CharAvailable (wchar num);
 
 void Draw_EnableScissorRectangle(int x, int y, int width, int height);
 void Draw_EnableScissor(int left, int right, int top, int bottom);
-void Draw_DisableScissor();
+void Draw_DisableScissor(void);
 
 void InitTracker(void);
 

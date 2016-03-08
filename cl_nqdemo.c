@@ -860,7 +860,7 @@ static void NQD_LerpPlayerinfo (float f)
 	VectorCopy (cl.simangles, cl.viewangles);
 }
 
-static int NQD_FirstPersonCamera()
+static int NQD_FirstPersonCamera(void)
 {
 	return !Cvar_Value("cam_thirdperson") && !Cvar_Value("cl_camera_tpp");
 }

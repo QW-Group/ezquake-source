@@ -1123,7 +1123,7 @@ SV_NextUpload
 ==================
 */
 void SV_ReplaceChar(char *s, char from, char to);
-void SV_CancelUpload()
+void SV_CancelUpload(void)
 {
 	SV_ClientPrintf(sv_client, PRINT_HIGH, "Upload denied\n");
 	ClientReliableWrite_Begin (sv_client, svc_stufftext, 8);

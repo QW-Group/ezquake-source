@@ -26,5 +26,5 @@ extern	float	vlight_pitch;   // RIOT - Vertex lighting
 extern	float	vlight_yaw;
 extern	float	vlight_lowcut;
 extern	float	vlight_highcut;
-void VLight_ResetAnormTable();
-void Init_VLights();
+void VLight_ResetAnormTable(void);
+void Init_VLights(void);

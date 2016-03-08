@@ -216,7 +216,7 @@ void FChecks_RulesetFeatureAppend(qbool on, const char *code, char *feat_on_buf,
 // constructs a string telling which extra features are enabled
 // besides those covered by the current ruleset)
 // format: [+<enabled features>][-<disabled features>]
-const char* FChecks_RulesetAdditionString()
+const char* FChecks_RulesetAdditionString(void)
 {
 	char feat_on_buf[16] = "+";
 	char feat_off_buf[16] = "-";

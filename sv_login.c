@@ -70,7 +70,7 @@ Writes account list to disk
 =================
 */
 
-static void WriteAccounts()
+static void WriteAccounts(void)
 {
 	int c;
 	FILE *f;

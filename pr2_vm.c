@@ -72,7 +72,7 @@ profile_t* ProfileEnterFunction(int adress)
 symbols_t* QVM_FindName( qvm_t * qvm, int off);
 #endif
 
-void PR2_Profile_f()
+void PR2_Profile_f(void)
 {
 #ifdef QVM_PROFILE
 	profile_t	*f, *best;

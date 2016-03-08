@@ -80,8 +80,8 @@ void SCR_DrawWordWrapString(int x, int y,
 							double scroll_delay, 
 							char *txt);
 
-void HUD_BeforeDraw();
-void HUD_AfterDraw();
+void HUD_BeforeDraw(void);
+void HUD_AfterDraw(void);
 
 qbool Draw_BigFontAvailable(void);
 

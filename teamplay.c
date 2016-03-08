@@ -1627,14 +1627,14 @@ char *TP_ParseFunChars (const char *s, qbool chat)
 }
 
 /************************* SKIN FORCING & REFRESHING *************************/
-qbool TP_TeamLockSpecified()
+qbool TP_TeamLockSpecified(void)
 {
 	// 1 => return 1st team (doesn't matter which, just locks colours)
 	// non-blank string => use that teamname as the client's team
 	return cl.spectator && (cl_teamlock.integer != 0 || (cl_teamlock.string[0] && strcmp(cl_teamlock.string, "0")));
 }
 
-char *TP_SkinForcingTeam()
+char *TP_SkinForcingTeam(void)
 {
 	int tracknum;
 
@@ -1663,7 +1663,7 @@ char *TP_SkinForcingTeam()
 	return "";
 }
 
-void MV_UpdateSkins()
+void MV_UpdateSkins(void)
 {
 	//
 	// Multiview
@@ -2483,7 +2483,7 @@ qbool TP_ThisPOV_IsHisTeam(const char* team)
 
 // returns the team of the player in the current POV
 // if no player tracked in the POV, returns NULL pointer
-static char* TP_ThisPOV_Team() {
+static char* TP_ThisPOV_Team(void) {
 	int n = TP_CurrentTrackNum();
 	if (n >= 0 && n < MAX_CLIENTS)
 		return cl.players[n].team;

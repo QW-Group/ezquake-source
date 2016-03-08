@@ -316,7 +316,7 @@ void Draw_EnableScissor(int left, int right, int top, int bottom)
 	Draw_EnableScissorRectangle(left, top, (right - left), (bottom - top));
 }
 
-void Draw_DisableScissor()
+void Draw_DisableScissor(void)
 {
 	glDisable(GL_SCISSOR_TEST);
 }
@@ -980,7 +980,7 @@ static void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool appl
 	glEnd();
 }
 
-static void Draw_ResetCharGLState()
+static void Draw_ResetCharGLState(void)
 {
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);

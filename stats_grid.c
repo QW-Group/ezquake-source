@@ -148,7 +148,7 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 
 #define STATS_MAX_IMPORTANT_ENTS	16
 
-void StatsGrid_ResetHoldItemsOrder()
+void StatsGrid_ResetHoldItemsOrder(void)
 {
 	int i;
 
@@ -196,7 +196,7 @@ void StatsGrid_SetHoldItemName(char *dst_name, const char *src_name, int count)
 	}
 }
 
-void StatsGrid_InitHoldItems()
+void StatsGrid_InitHoldItems(void)
 {
 	int i;
 	int ents_count = 0;
@@ -376,7 +376,7 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 	}
 }
 
-void StatsGrid_ValidateTeamColors()
+void StatsGrid_ValidateTeamColors(void)
 {
 	// This is needed to handle when a user switches the player being tracked
 	// and has "teamcolor" and "enemycolor" set. When you switch to a player
@@ -466,7 +466,7 @@ void StatsGrid_DecreaseWeight(cell_weight_t *weight, stats_weight_grid_t *grid)
 	}
 }
 
-void StatsGrid_ResetHoldItems()
+void StatsGrid_ResetHoldItems(void)
 {
 	// Nothing to reset.
 	if(stats_important_ents == NULL)
@@ -484,7 +484,7 @@ void StatsGrid_ResetHoldItems()
 	Q_free(stats_important_ents);
 }
 
-void StatsGrid_ResetHoldItemCounts()
+void StatsGrid_ResetHoldItemCounts(void)
 {
 	int i = 0;
 
@@ -508,7 +508,7 @@ static int StatsGrid_CompareHoldItems(const void *it1, const void *it2)
 	return ent1->order - ent2->order;
 }
 
-void StatsGrid_SortHoldItems()
+void StatsGrid_SortHoldItems(void)
 {
 	if (stats_important_ents == NULL)
 	{
@@ -792,7 +792,7 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	}
 }
 
-void StatsGrid_Gather()
+void StatsGrid_Gather(void)
 {
 	int i;
 	int row, col;

@@ -391,7 +391,7 @@ extern cvar_t	developer;
 extern cvar_t	host_mapname;
 
 extern qbool	com_serveractive; // true if sv.state != ss_dead
-extern int	CL_ClientState (); // returns cls.state
+extern int	CL_ClientState (void); // returns cls.state
 
 extern double	curtime; // not bounded or scaled, shared by local client and server
 
@@ -401,7 +401,7 @@ extern qbool host_everything_loaded;
 extern int host_memsize;
 
 void Host_Init (int argc, char **argv, int default_memsize);
-void Host_ClearMemory ();
+void Host_ClearMemory (void);
 void Host_Shutdown (void);
 void Host_Frame (double time);
 void Host_Abort (void);	 // longjmp() to Host_Frame
@@ -412,7 +412,7 @@ void Host_Quit (void);
 void CL_Init (void);
 void CL_Shutdown (void);
 void CL_Frame (double time);
-void CL_Disconnect ();
+void CL_Disconnect(void);
 void CL_BeginLocalConnection (void);
 void CL_UpdateCaption(qbool force);
 void Con_Init (void);

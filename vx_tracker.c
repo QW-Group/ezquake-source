@@ -120,7 +120,7 @@ void InitTracker(void)
 	Cvar_Register (&amf_tracker_positive_enemy_suicide);
 }
 
-void VX_TrackerClear()
+void VX_TrackerClear(void)
 {
 	int i;
 
@@ -136,7 +136,7 @@ void VX_TrackerClear()
 }
 
 //When a message fades away, this moves all the other messages up a slot
-void VX_TrackerThink()
+void VX_TrackerThink(void)
 {
 	int i;
 
@@ -358,7 +358,7 @@ static char *OddFragColor(int killer)
 	return (!VX_TrackerIsEnemy(killer) ? empty_is_000(amf_tracker_color_good.string) : empty_is_000(amf_tracker_color_bad.string));
 }
 
-static char *EnemyColor()
+static char *EnemyColor(void)
 {
 	return empty_is_000(amf_tracker_color_bad.string);
 }

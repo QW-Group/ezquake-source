@@ -98,9 +98,9 @@ void Sys_CopyToClipboard(char *);
 void Sys_GetFullExePath(char *path, unsigned int path_length, int long_name);
 
 // Inter Process Call functions.
-void Sys_InitIPC();
-void Sys_ReadIPC();
-void Sys_CloseIPC();
+void Sys_InitIPC(void);
+void Sys_ReadIPC(void);
+void Sys_CloseIPC(void);
 unsigned int Sys_SendIPC(const char *buf);
 
 // Semaphore functions

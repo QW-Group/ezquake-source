@@ -676,7 +676,7 @@ void V_UpdatePalette (void) {
 }
 
 // BorisU -->
-void V_TF_ClearGrenadeEffects ()
+void V_TF_ClearGrenadeEffects (void)
 {
 	cbuf_t *cbuf_tmp;
 	extern cvar_t scr_fov, default_fov;

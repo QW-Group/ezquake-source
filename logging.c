@@ -43,10 +43,10 @@ static char       logfilename[LOG_FILENAME_MAXSIZE];
 static qbool autologging = false;
 
 extern cvar_t match_challenge;
-const char *MT_Challenge_GetToken();
-const char *MT_Challenge_GetLadderId();
-const char *MT_Challenge_GetHash();
-qbool MT_Challenge_IsOn();
+const char *MT_Challenge_GetToken(void);
+const char *MT_Challenge_GetLadderId(void);
+const char *MT_Challenge_GetHash(void);
+qbool MT_Challenge_IsOn(void);
 
 typedef struct log_upload_job_s {
 	qbool challenge_mode;
