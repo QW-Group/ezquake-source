@@ -41,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 cvar_t	sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
-cvar_t	sys_yieldcpu = {"sys_yieldcpu", "0"};
 
 static HANDLE	qwclsemaphore;
 static HANDLE	tevent;
@@ -541,7 +540,6 @@ void Sys_Init (void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
 	Cvar_Register(&sys_highpriority);
-	Cvar_Register(&sys_yieldcpu);
 #ifndef WITHOUT_WINKEYHOOK
 	Cvar_Register(&sys_disableWinKeys);	
 #endif
