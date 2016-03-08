@@ -270,7 +270,7 @@ OBJS_c := \
     settings_page.o \
     sha1.o \
     skin.o \
-    snd_dma.o \
+    snd_main.o \
     snd_mem.o \
     snd_mix.o \
     snd_ov.o \

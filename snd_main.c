@@ -276,9 +276,8 @@ static qbool S_SDL_Init(void)
 	shw_tmp->khz = obtained.freq;
 	shw_tmp->numchannels = obtained.channels;
 	shw_tmp->samplebits = obtained.format & 0xFF;
-	shw_tmp->samples = 32768;
+	shw_tmp->samples = 65536;
 
-	//soundtime = paintedtime = 0; FIXME: Does soundtime need to be reset?
 	Cvar_AutoSetInt(&s_desiredsamples, obtained.samples);
 
 	shw = shw_tmp;
