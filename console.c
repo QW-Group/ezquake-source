@@ -726,7 +726,7 @@ static int Con_FirstNotifyLine (int notification_lines) {
 
 //Draws the last few lines of output transparently over the game top
 void Con_DrawNotify (void) {
-	int x, v, skip = 0, maxlines, i, idx;
+	int x, v, skip = 0, i, idx;
 	wchar *text, *s;
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
@@ -825,7 +825,7 @@ void Con_DrawNotify (void) {
 // Draws the last few lines of output as a custom HUD element.
 void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols)
 {
-	int v, skip, maxlines, i, j, k, idx, draw, offset;
+	int v, skip, i, j, k, idx, draw, offset;
 	wchar *text, *s;
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];

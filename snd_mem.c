@@ -769,7 +769,6 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 {
 	char namebuffer[256];
 	unsigned char *data;
-	sfxcache_t *sc;
 	wavinfo_t info;
 	int filesize;
 
