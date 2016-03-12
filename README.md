@@ -1,4 +1,5 @@
 # ezQuake — Modern QuakeWorld Client
+[![Build Status](https://travis-ci.org/ezQuake/ezquake-source.svg?branch=master)](https://travis-ci.org/ezQuake/ezquake-source)
 
 This is the right place to start playing QuakeWorld&reg; — the fastest first
 person shooter action game ever.
