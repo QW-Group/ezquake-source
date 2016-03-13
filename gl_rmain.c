@@ -89,6 +89,7 @@ float     ayaw;
 float     clearColor[3] = {0, 0, 0};
 qbool     r_cache_thrash;                     // compatability
 qbool     full_light;
+qbool     drawing_lg;
 int       lastposenum;
 int       shelltexture = 0;
 int       r_visframecount;                    // bumped when going to a new PVS
@@ -217,6 +218,11 @@ cvar_t gl_gammacorrection                  = {"gl_gammacorrection", "0", CVAR_LA
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
+
+cvar_t gl_custom_lg_color_enabled           = {"gl_custom_lg_color_enabled", "0"};
+cvar_t gl_custom_lg_color_r                 = {"gl_custom_lg_color_r", "140"};
+cvar_t gl_custom_lg_color_g                 = {"gl_custom_lg_color_g", "140"};
+cvar_t gl_custom_lg_color_b                 = {"gl_custom_lg_color_b", "150"};
 
 
 void GL_PolygonOffset(float factor, float units)
@@ -468,6 +474,37 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 	GL_PolygonOffset(0, 0);
 }
 
+void GL_CustomLGColor_f(void)
+{
+	byte r, g, b;
+
+	if (Cmd_Argc() == 1) {
+		if (gl_custom_lg_color_enabled.integer != 1) {
+			Com_Printf("Custom lg color is not enabled, enable by setting gl_custom_lg_color_enabled 1\n");
+			return;
+		}
+		Com_Printf("Current colors: r:%d g:%d b%d\n", gl_custom_lg_color_r.integer, gl_custom_lg_color_g.integer, gl_custom_lg_color_b.integer);
+		return;
+	}
+
+	if (Cmd_Argc() != 4) {
+		Com_Printf("wrong usage: \"%s r g b\" (rgb values 0-255)\n", Cmd_Argv(0));
+		return;
+	}
+
+	r = Q_atoi(Cmd_Argv(1));
+	g = Q_atoi(Cmd_Argv(2));
+	b = Q_atoi(Cmd_Argv(3));
+
+	r = bound(0, r, 255);
+	g = bound(0, g, 255);
+	b = bound(0, b, 255);
+
+	Cvar_SetValue(&gl_custom_lg_color_r, (float) r);
+	Cvar_SetValue(&gl_custom_lg_color_g, (float) g);
+	Cvar_SetValue(&gl_custom_lg_color_b, (float) b);
+}
+
 void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir)
 {
 	int *order, count;
@@ -563,6 +600,10 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 		if (r_modelalpha < 1)
 			glEnable(GL_BLEND);
 
+		if (drawing_lg) {
+			glDisable(GL_TEXTURE_2D);
+			glColor3ub(gl_custom_lg_color_r.integer, gl_custom_lg_color_g.integer, gl_custom_lg_color_b.integer);
+		}
 		for ( ;; )
 		{
 			count = *order++;
@@ -615,12 +656,13 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 					else
 						glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
 				}
-				else
+				else if (!drawing_lg)
 				{
-					if (r_modelcolor[0] < 0)
+					if (r_modelcolor[0] < 0) {
 						glColor4f(l, l, l, r_modelalpha); // normal color
-					else
+					} else {
 						glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
+					}
 				}
 
 				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
@@ -636,6 +678,10 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 
 		if (r_modelalpha < 1)
 			glDisable(GL_BLEND);
+
+		if (drawing_lg) {
+			drawing_lg = false;
+		}
 	}
 }
 
@@ -724,6 +770,9 @@ void R_AliasSetupLighting(entity_t *ent)
 		ambientlight = 60 + 150 * bound(0, gl_shaftlight.value, 1);
 		shadelight = 0;
 		full_light = true;
+		if (gl_custom_lg_color_enabled.integer == 1 && amf_lightning.integer == 0) {
+			drawing_lg = true;
+		}
 		return;
 	} else if (clmodel->modhint == MOD_FLAME) {
 		ambientlight = 255;
@@ -1843,6 +1892,7 @@ void R_Init(void)
 {
 	Cmd_AddCommand ("loadsky", R_LoadSky_f);
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);
+	Cmd_AddCommand ("lg_color", GL_CustomLGColor_f);
 #ifndef CLIENTONLY
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
 #endif
@@ -1962,6 +2012,10 @@ void R_Init(void)
 	Cvar_Register (&r_wallcolor);
 	Cvar_Register (&r_floorcolor);
 	Cvar_Register (&gl_textureless); //Qrack
+	Cvar_Register (&gl_custom_lg_color_enabled);
+	Cvar_Register (&gl_custom_lg_color_r);
+	Cvar_Register (&gl_custom_lg_color_g);
+	Cvar_Register (&gl_custom_lg_color_b);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 	Cvar_Register (&r_farclip);
