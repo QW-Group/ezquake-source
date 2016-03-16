@@ -89,8 +89,16 @@ static const int sound_items_r_item1_wav_FMOD_DM_FMOD_TF[5]     = {0xdde12941, 0
 static const int sound_items_r_item2_wav_FMOD_DM_FMOD_TF[5]     = {0xd9da4047, 0x5a7b191a, 0xc02d860d, 0x18f679de, 0xc47bd93a};
 static const int sound_misc_water1_wav_FMOD_DM_FMOD_TF[5]		= {0x8625dbc7, 0xbaf30ae6, 0xfdb53965, 0x2d7eb9d6, 0xf9fd9304};
 static const int sound_misc_water2_wav_FMOD_DM_FMOD_TF[5]		= {0xccda75ec, 0xfb5cd780, 0xe2d73b5b, 0x9f3560ad, 0x4e116b85};
+
+static const int sound_misc_menu1_wav_FMOD_DM_FMOD_TF[5]		= {0x2e19b817, 0x0c0e1c5f, 0xd7a0ecf8, 0xb278c27e, 0xb0e1923c};
+static const int sound_misc_menu2_wav_FMOD_DM_FMOD_TF[5]		= {0xd6719ab1, 0x0a407e2b, 0xb03a053b, 0x2a4bc2cb, 0x61cd7ff3};
+static const int sound_misc_menu3_wav_FMOD_DM_FMOD_TF[5]		= {0xae120b9a, 0x3a217d2e, 0xc34f0990, 0x2d4332ed, 0x97c18f76};
+static const int sound_misc_talk_wav_FMOD_DM_FMOD_TF[5]			= {0x5b15321c, 0x1af2d826, 0xb0228e9f, 0x49c06f56, 0xa8355e8b};
+static const int sound_misc_basekey_wav_FMOD_DM_FMOD_TF[5]		= {0x926134ce, 0x22806dd3, 0x1952624a, 0x8f43f7e9, 0xa6fdfe64};
+static const int sound_doors_runeuse_wav_FMOD_DM_FMOD_TF[5]		= {0xf41d6d59, 0xe99b93e8, 0x15edfd25, 0x668a499c, 0x1ac62572};
+
 static const int gfx_colormap_lmp_FMOD_DM_FMOD_TF[5]			= {0xa93b3795, 0x17016397, 0x0a761d38, 0x4866e67d, 0x3c2a2a75};
-static const int gfx_palette_lmp_FMOD_DM_FMOD_TF[5]				= {0xa6a2e242, 0xbad0f7da, 0xe263351f, 0x6d51f8ad, 0x49a45d4a};
+static const int gfx_palette_lmp_FMOD_DM_FMOD_TF[5]			= {0xa6a2e242, 0xbad0f7da, 0xe263351f, 0x6d51f8ad, 0x49a45d4a};
 
 // Primevil deathmatch pack
 static check_models_hashes_entry_t mdlhash_pdp_g_nail = { {0x86dd1964, 0xebe66f85, 0xf27e5b4c, 0x3230aeda, 0x10c13860}, NULL };
@@ -194,7 +202,7 @@ static check_models_hashes_entry_t sound_items_mindgrid_r_item2 = { {0xd2d0de39,
 static check_models_hashes_entry_t sound_misc_mindgrid_water1 = { {0x838a0318, 0x0805e53e, 0x6ebf4065, 0xaa5fb9a0, 0xe1cad807}, NULL };
 static check_models_hashes_entry_t sound_misc_mindgrid_water2 = { {0xfb0a6b17, 0x065fbc33, 0x5fab7cc5, 0x110c01aa, 0x278b612e}, NULL };
 
-#define MAX_CHECK_MODELS 128
+#define MAX_CHECK_MODELS 256
 #define	FMOD_DM 1
 #define FMOD_TF 2
 
@@ -466,6 +474,13 @@ void FMod_Init (void)
 		FMod_AddModelAlt(lastid, &sound_misc_mindgrid_water1);
 	lastid = FMod_AddModel ("sound/misc/water2.wav",		FMOD_DM | FMOD_TF,	sound_misc_water2_wav_FMOD_DM_FMOD_TF);
 		FMod_AddModelAlt(lastid, &sound_misc_mindgrid_water2);
+
+	FMod_AddModel("sound/misc/menu1.wav", FMOD_DM | FMOD_TF, sound_misc_menu1_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModel("sound/misc/menu2.wav", FMOD_DM | FMOD_TF, sound_misc_menu2_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModel("sound/misc/menu3.wav", FMOD_DM | FMOD_TF, sound_misc_menu3_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModel("sound/misc/talk.wav", FMOD_DM | FMOD_TF, sound_misc_talk_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModel("sound/misc/basekey.wav", FMOD_DM | FMOD_TF, sound_misc_basekey_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModel("sound/doors/runeuse.wav", FMOD_DM | FMOD_TF, sound_doors_runeuse_wav_FMOD_DM_FMOD_TF);
 
 	FMod_AddModel ("gfx/colormap.lmp",			FMOD_DM | FMOD_TF,	gfx_colormap_lmp_FMOD_DM_FMOD_TF);
 	FMod_AddModel ("gfx/palette.lmp",			FMOD_DM | FMOD_TF,	gfx_palette_lmp_FMOD_DM_FMOD_TF);
