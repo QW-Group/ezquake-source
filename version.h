@@ -14,9 +14,8 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: version.h,v 1.7 2007-10-04 15:18:20 johnnycz Exp $
 */
+
 // version.h
 
 #ifndef __VERSION_H__
@@ -70,7 +69,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 
-#define VERSION_NUMBER "3.0 alpha"
+#define VERSION_NUMBER "3.0 qcon-alpha"
 
 int build_number(void);
 void CL_Version_f(void);
