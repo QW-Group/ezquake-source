@@ -1,4 +1,4 @@
-CFLAGS=-m32 -O2 -g0 -D_DEBUG -D_WIN32_WINNT=0x0501 -D__USE_MINGW_ANSI_STDIO -DWITH_WINAMP -Imingw32-libs/include
+CFLAGS=-m32 -O2 -g0 -D_DEBUG -D_WIN32_WINNT=0x0501 -D__USE_MINGW_ANSI_STDIO -Imingw32-libs/include
 LDFLAGS=-Lmingw32-libs/lib -static
 ZLIB_LIBS=-lz
 SDL2_CFLAGS=-Imingw32-libs/include/SDL2
