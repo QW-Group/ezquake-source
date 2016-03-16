@@ -2317,6 +2317,7 @@
     },
     "gl_brush_polygonoffset": {
       "group-id": "35",
+      "remarks": "disabled for qcon (feature makes it possible to fix z-fighting causing flickering areas on Intel cards most often)",
       "type": "float",
       "desc": "Value in range 0-25.  Offset drawing of entity models, to stop z-fighting."
     },
