@@ -147,7 +147,7 @@ cvar_t gl_textureless                      = {"gl_textureless", "0", 0, OnChange
 cvar_t r_farclip                           = {"r_farclip", "8192"}; // previous default was 4096. 8192 helps some TF players in big maps
 cvar_t r_skyname                           = {"r_skyname", "", 0, OnChange_r_skyname};
 cvar_t gl_detail                           = {"gl_detail","0"};
-cvar_t gl_brush_polygonoffset              = {"gl_brush_polygonoffset", "2.0"}; // This is the one to adjust if you notice flicker on lift @ e1m1 for instance, for z-fighting
+cvar_t gl_brush_polygonoffset              = {"gl_brush_polygonoffset", "0.0", CVAR_ROM}; // This is the one to adjust if you notice flicker on lift @ e1m1 for instance, for z-fighting
 cvar_t gl_caustics                         = {"gl_caustics", "0"}; // 1
 cvar_t gl_waterfog                         = {"gl_turbfog", "0"}; // 2
 cvar_t gl_waterfog_density                 = {"gl_turbfogDensity", "1"};
@@ -1470,7 +1470,8 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 
 				// Get rid of Z-fighting for textures by offsetting the
 				// drawing of entity models compared to normal polygons.
-				if(gl_brush_polygonoffset.value > 0) {
+				// dimman: disabled for qcon
+				if(false && gl_brush_polygonoffset.value > 0) {
 					GL_PolygonOffset(0.05, bound(0, (float)gl_brush_polygonoffset.value, 25.0));
 					R_DrawBrushModel(currententity);
 					GL_PolygonOffset(0, 0);
