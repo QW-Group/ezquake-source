@@ -40,6 +40,7 @@ typedef enum {
 	rs_default,
 	rs_smackdown,
 	rs_thunderdome,
+	rs_qcon,
 	rs_mtfl
 } ruleset_t;
 
@@ -49,6 +50,7 @@ typedef struct rulesetDef_s {
 	qbool restrictTriggers;
 	qbool restrictPacket;
 	qbool restrictParticles;
+	qbool restrictSound;
 } rulesetDef_t;
 
 void  Rulesets_Init(void);
@@ -60,6 +62,7 @@ qbool Rulesets_RestrictPacket(void);
 qbool Rulesets_RestrictParticles(void);
 qbool Rulesets_AllowNoShadows(void);
 qbool Rulesets_RestrictTCL(void);
+qbool Rulesets_RestrictSound(void);
 
 // OnChange functions controling when a variable value changes
 void Rulesets_OnChange_indphys (cvar_t *var, char *value, qbool *cancel);
