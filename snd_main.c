@@ -35,7 +35,6 @@ extern cvar_t sys_inactivesound;
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
 static void S_Play_f (void);
-static void S_PlayVol_f (void);
 static void S_MuteSound_f (void);
 static void S_SoundList_f (void);
 static void S_Update_ (void);
@@ -407,7 +406,7 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cmd_AddCommand("s_restart", S_Restart_f); // dimman: made s_restart the actual command
 	Cmd_AddCommand("mutesound", S_MuteSound_f);
 	Cmd_AddCommand("play", S_Play_f);
-	Cmd_AddCommand("playvol", S_PlayVol_f);
+	Cmd_AddCommand("playvol", S_Play_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
 	Cmd_AddCommand("soundlist", S_SoundList_f);
 	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
@@ -939,37 +938,25 @@ console functions
 
 static void S_Play_f (void)
 {
-	int i;
 	char name[256];
 	sfx_t *sfx;
+	int i;
+	qbool playvol = false;
 
 	if (!snd_initialized || !snd_started || s_nosound.value)
 		return;
 
-	for (i = 1; i < Cmd_Argc(); i++) {
-		strlcpy (name, Cmd_Argv(i), sizeof (name));
-		COM_DefaultExtension (name, ".wav");
-		sfx = S_PrecacheSound(name);
-		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, 1.0, 0.0);
+	if (strcmp(Cmd_Argv(0), "playvol") == 0) {
+		playvol = true;
 	}
-}
-
-static void S_PlayVol_f (void)
-{
-	int i;
-	float vol;
-	char name[256];
-	sfx_t *sfx;
-
-	if (!snd_initialized || !snd_started || s_nosound.value)
-		return;
-
-	for (i = 1; i < Cmd_Argc(); i += 2) {
-		strlcpy (name, Cmd_Argv(i), sizeof (name));
+	for (i = 1; i < Cmd_Argc(); i = i + 1 + (playvol ? 1 : 0)) {
+		float vol = 1.0;
+		strlcpy (name, Cmd_Argv(i), sizeof(name));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
-		vol = Q_atof(Cmd_Argv(i + 1));
-		// ezhfan:
+		if (playvol)
+			vol = Q_atof(Cmd_Argv(i+1));
+		// ezhfan
 		// pnum+1 changed to SELF_SOUND to make sound not to disappear
 		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, vol, 0.0);
 	}
