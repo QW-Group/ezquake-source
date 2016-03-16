@@ -43,7 +43,7 @@ qbool RuleSets_DisallowExternalTexture(model_t *mod)
 		case MOD_EYES:
 			return true;
 		case MOD_BACKPACK:
-			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome;
+			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome || rulesetDef.ruleset == rs_qcon;
 		default:
 			return false;
 	}
@@ -57,7 +57,7 @@ qbool RuleSets_DisallowModelOutline(model_t *mod)
 		case MOD_THUNDERBOLT:
 			return true;
 		case MOD_BACKPACK:
-			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome;
+			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome || rulesetDef.ruleset == rs_qcon;
 		default:
 			return false;
 	}
@@ -67,8 +67,8 @@ qbool Rulesets_AllowTimerefresh(void)
 {
 	switch(rulesetDef.ruleset) {
 		case rs_smackdown:
-			return (cl.standby || cl.spectator || cls.demoplayback);
 		case rs_thunderdome:
+		case rs_qcon:
 			return (cl.standby || cl.spectator || cls.demoplayback);
 		default:
 			return true;
@@ -79,10 +79,9 @@ qbool Rulesets_AllowNoShadows(void)
 {
 	switch(rulesetDef.ruleset) {
 		case rs_mtfl:
-			return false;
 		case rs_smackdown:
-			return false;
 		case rs_thunderdome:
+		case rs_qcon:
 			return false;
 		default:
 			return true;
@@ -102,6 +101,12 @@ qbool Rulesets_RestrictTriggers(void)
 	return rulesetDef.restrictTriggers;
 }
 
+qbool Rulesets_RestrictSound(void)
+{
+	return rulesetDef.restrictSound;
+}
+
+
 qbool Rulesets_RestrictPacket(void)
 {
 	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
@@ -115,12 +120,11 @@ qbool Rulesets_RestrictParticles(void)
 qbool Rulesets_RestrictTCL(void)
 {
 	switch(rulesetDef.ruleset) {
-		case rs_mtfl:
-			return false;
 		case rs_smackdown:
-			return true;
 		case rs_thunderdome:
+		case rs_qcon:
 			return true;
+		case rs_mtfl:
 		default:
 			return false;
 	}
@@ -135,6 +139,8 @@ const char *Rulesets_Ruleset(void)
 			return "smackdown";
 		case rs_thunderdome:
 			return "thunderdome";
+		case rs_qcon:
+			return "qcon";
 		default:
 			return "default";
 	}
@@ -190,6 +196,57 @@ static void Rulesets_Smackdown(qbool enable)
 	}
 }
 
+static void Rulesets_Qcon(qbool enable)
+{
+	extern cvar_t cl_independentPhysics, cl_c2spps;
+	extern cvar_t cl_hud;
+	extern cvar_t cl_rollalpha;
+	extern cvar_t r_shiftbeam;
+	extern cvar_t allow_scripts;
+	extern cvar_t cl_iDrive;
+	int i;
+
+	locked_cvar_t disabled_cvars[] = {
+		{&allow_scripts, "0"},  // disable movement scripting
+		{&cl_iDrive, "0"},      // disable strafing aid
+		{&cl_hud, "0"},         // allows you place any text on the screen & filter incoming messages (hud strings)
+		{&cl_rollalpha, "20"},  // allows you to not dodge while seeing enemies dodging
+		{&r_shiftbeam, "0"}     // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
+	};
+
+	if (enable) {
+		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
+			Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
+			Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
+			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
+		}
+
+		if (cl_independentPhysics.value) {
+			Cvar_Set(&cl_c2spps, "0"); // people were complaining that player move is jerky with this. however this has not much to do with independent physics, but people are too paranoid about it
+			Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
+		}
+
+		rulesetDef.maxfps = 77;
+		rulesetDef.restrictTriggers = true;
+		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
+		rulesetDef.restrictParticles = true;
+		rulesetDef.restrictSound = true;
+		rulesetDef.ruleset = rs_qcon;
+	} else {
+		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
+			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
+
+		if (cl_independentPhysics.value)
+			Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) & ~CVAR_ROM);
+
+		rulesetDef.maxfps = 72.0;
+		rulesetDef.restrictTriggers = false;
+		rulesetDef.restrictPacket = false;
+		rulesetDef.restrictParticles = false;
+		rulesetDef.restrictSound = false;
+		rulesetDef.ruleset = rs_default;
+	}
+}
 static void Rulesets_Thunderdome(qbool enable)
 {
 	extern cvar_t cl_independentPhysics, cl_c2spps;
@@ -320,6 +377,9 @@ void Rulesets_Init(void)
 			return;
 		} else if (!strcasecmp(COM_Argv(temp + 1), "mtfl")) {
 			Cvar_Set(&ruleset, "mtfl");
+			return;
+		} else if (strcasecmp(COM_Argv(temp + 1), "qcon")) {
+			Cvar_Set(&ruleset, "qcon");
 			return;
 		} else if (strcasecmp(COM_Argv(temp + 1), "default")){
 			Cvar_Set(&ruleset, "default");
@@ -476,6 +536,7 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 	if (strncasecmp(value, "smackdown", sizeof("smackdown")) &&
 			strncasecmp(value, "thunderdome", sizeof("thunderdome")) &&
 			strncasecmp(value, "mtfl", sizeof("mtfl")) &&
+			strncasecmp(value, "qcon", sizeof("qcon")) &&
 			strncasecmp(value, "default", sizeof("default"))) {
 		Com_Printf_State(PRINT_INFO, "Unknown ruleset \"%s\"\n", value);
 		*cancel = true;
@@ -489,6 +550,9 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 			break;
 		case rs_smackdown:
 			Rulesets_Smackdown(false);
+			break;
+		case rs_qcon:
+			Rulesets_Qcon(false);
 			break;
 		case rs_thunderdome:
 			Rulesets_Thunderdome(false);
@@ -510,7 +574,10 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 		Com_Printf_State(PRINT_OK, "Ruleset MTFL initialized\n");
 	} else if (!strncasecmp(value, "thunderdome", sizeof("thunderdome"))) {
 		Rulesets_Thunderdome(true);
-		Com_Printf_State(PRINT_OK, "Ruleset MTFL initialized\n");
+		Com_Printf_State(PRINT_OK, "Ruleset Thunderdome initialized\n");
+	} else if (!strncasecmp(value, "qcon", sizeof("qcon"))) {
+		Rulesets_Qcon(true);
+		Com_Printf_State(PRINT_OK, "Ruleset Qcon initialized\n");
 	} else if (!strncasecmp(value, "default", sizeof("default"))) {
 		Rulesets_Default();
 		Com_Printf_State(PRINT_OK, "Ruleset default initialized\n");
