@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "qsound.h"
 #include "utils.h"
+#include "rulesets.h"
 #define SELF_SOUND 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
 
 #ifdef _WIN32
@@ -945,6 +946,10 @@ static void S_Play_f (void)
 
 	if (!snd_initialized || !snd_started || s_nosound.value)
 		return;
+
+	if (Rulesets_RestrictSound() == true) {
+		return;
+	}
 
 	if (strcmp(Cmd_Argv(0), "playvol") == 0) {
 		playvol = true;
