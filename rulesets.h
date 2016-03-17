@@ -64,6 +64,7 @@ qbool Rulesets_AllowNoShadows(void);
 qbool Rulesets_RestrictTCL(void);
 qbool Rulesets_RestrictSound(void);
 int Rulesets_MaxSequentialWaitCommands(void);
+qbool Ruleset_BlockHudPicChange(void);
 
 // OnChange functions controling when a variable value changes
 void Rulesets_OnChange_indphys (cvar_t *var, char *value, qbool *cancel);
