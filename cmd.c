@@ -128,6 +128,7 @@ static void Cbuf_Register (cbuf_t *cbuf, int maxsize)
 	cbuf->text_buf = (char *) Hunk_Alloc(maxsize);
 	cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
 	cbuf->wait = false;
+	cbuf->waitCount = 0;
 }
 
 void Cbuf_Init (void)
@@ -325,10 +326,20 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 			cbuf->runAwayLoop = 0;
 		}
 
+		if (cbuf->wait && cbuf->waitCount >= Rulesets_MaxSequentialWaitCommands())
+		{
+			Com_Printf("\x02" "Max number of wait commands detected.\n");
+			cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
+			cbuf->wait = false;
+			cbuf->waitCount = 0;
+		}
+
 		if (cbuf->wait)
 		{
 			// skip out while text still remains in buffer, leaving it for next frame
 			cbuf->wait = false;
+			++cbuf->waitCount;
+
 			cbuf->runAwayLoop += Q_rint (0.5 * cls.frametime * MAX_RUNAWAYLOOP);
 
 			if (cbuf == &cbuf_safe)
@@ -341,6 +352,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		gtf--;
 
 	cbuf->runAwayLoop = 0;
+	cbuf->waitCount = 0;
 
 	return;
 }
