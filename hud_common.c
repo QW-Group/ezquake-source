@@ -2280,47 +2280,47 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t **hud_pic, char *newpic)
 
 void SCR_HUD_OnChangePic_Group1(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group1, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group1, newpic);
 }
 
 void SCR_HUD_OnChangePic_Group2(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group2, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group2, newpic);
 }
 
 void SCR_HUD_OnChangePic_Group3(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group3, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group3, newpic);
 }
 
 void SCR_HUD_OnChangePic_Group4(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group4, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group4, newpic);
 }
 
 void SCR_HUD_OnChangePic_Group5(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group5, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group5, newpic);
 }
 
 void SCR_HUD_OnChangePic_Group6(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group6, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group6, newpic);
 }
 
 void SCR_HUD_OnChangePic_Group7(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group7, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group7, newpic);
 }
 
 void SCR_HUD_OnChangePic_Group8(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group8, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group8, newpic);
 }
 
 void SCR_HUD_OnChangePic_Group9(cvar_t *var, char *newpic, qbool *cancel)
 {
-	*cancel = SCR_HUD_LoadGroupPic(var, &hud_pic_group9, newpic);
+	*cancel = Ruleset_BlockHudPicChange() || SCR_HUD_LoadGroupPic(var, &hud_pic_group9, newpic);
 }
 
 /* FIXME: Rewrite this ...... */

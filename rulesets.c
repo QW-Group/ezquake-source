@@ -600,3 +600,13 @@ int Rulesets_MaxSequentialWaitCommands(void)
 		return 32768;
 	}
 }
+
+qbool Ruleset_BlockHudPicChange(void)
+{
+	switch (rulesetDef.ruleset) {
+	case rs_qcon:
+		return cls.state != ca_disconnected && !(cl.standby || cl.spectator || cls.demoplayback);
+	default:
+		return false;
+	}
+}
