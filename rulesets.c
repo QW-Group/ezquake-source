@@ -590,3 +590,13 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 
 	Cmd_ReInitAllMacro();
 }
+
+int Rulesets_MaxSequentialWaitCommands(void)
+{
+	switch (rulesetDef.ruleset) {
+	case rs_qcon:
+		return 10;
+	default:
+		return 32768;
+	}
+}

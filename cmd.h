@@ -38,6 +38,7 @@ typedef struct cbuf_s {
 	int		text_start;
 	int		text_end;
 	qbool	wait;
+	int     waitCount;
 	int		runAwayLoop;
 } cbuf_t;
 
