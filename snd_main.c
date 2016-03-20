@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "utils.h"
 #include "rulesets.h"
+#include "fmod.h"
 #define SELF_SOUND 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
 
 #ifdef _WIN32
@@ -299,6 +300,31 @@ fail:
 	S_SDL_Shutdown();
 	return false;
 }
+
+static void S_FModCheckExtraSounds(void)
+{
+	char *soundlist[] = {
+		"sound/misc/menu1.wav",
+		"sound/misc/menu2.wav",
+		"sound/misc/menu3.wav",
+		"sound/misc/basekey.wav",
+		"sound/misc/talk.wav",
+		"sound/doors/runeuse.wav",
+	};
+	byte *data;
+	int filesize;
+	int i;
+
+	for (i = 0; i < (sizeof(soundlist)/sizeof(*soundlist)); i++) {
+		if (!(data = FS_LoadTempFile(soundlist[i], &filesize))) {
+			Com_Printf("Couldn't load file, ignoring FMod check for '%s'\n", soundlist[i]);
+			continue;
+		}
+
+		FMod_CheckModel(soundlist[i], data, filesize);
+	}
+}
+
 static qbool S_Startup (void)
 {
 	if (!snd_initialized)
@@ -322,6 +348,9 @@ static qbool S_Startup (void)
 
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound("ambience/wind2.wav");
+
+	/* Make sure all extra sounds are processed through FMod checks */
+	S_FModCheckExtraSounds();
 
 	S_StopAllSounds();
 
