@@ -51,13 +51,17 @@ qbool RuleSets_DisallowExternalTexture(model_t *mod)
 
 qbool RuleSets_DisallowModelOutline(model_t *mod)
 {
+	if (rulesetDef.ruleset == rs_qcon) {
+		return true;
+	}
+
 	switch (mod->modhint) {
 		case MOD_EYES:
 			return true;
 		case MOD_THUNDERBOLT:
 			return true;
 		case MOD_BACKPACK:
-			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome || rulesetDef.ruleset == rs_qcon;
+			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome;
 		default:
 			return false;
 	}

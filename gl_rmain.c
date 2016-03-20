@@ -216,8 +216,8 @@ cvar_t gl_motion_blur_hurt                 = {"gl_motion_blur_hurt", "0.5"};
 cvar_t gl_motion_blur_dead                 = {"gl_motion_blur_dead", "0.5"};
 cvar_t gl_gammacorrection                  = {"gl_gammacorrection", "0", CVAR_LATCH};
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
-cvar_t gl_outline                          = {"gl_outline", "0"};
-cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
+cvar_t gl_outline                          = {"gl_outline", "0", CVAR_ROM};
+cvar_t gl_outline_width                    = {"gl_outline_width", "0", CVAR_ROM};
 
 cvar_t gl_custom_lg_color_enabled           = {"gl_custom_lg_color_enabled", "0"};
 cvar_t gl_custom_lg_color_r                 = {"gl_custom_lg_color_r", "140"};
