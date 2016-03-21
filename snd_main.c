@@ -120,8 +120,9 @@ static void S_ListAudioDevices(void)
 	numdevices = SDL_GetNumAudioDevices(0); /* arg is iscapture */
 
 	Com_Printf(" id  device name\n-------------------------\n");
+	Com_Printf("  0  system default\n");
 	for (; i < numdevices; i++) {
-		Com_Printf(" %d  %s\n", i, SDL_GetAudioDeviceName(i, 0));
+		Com_Printf(" %2d  %s\n", i+1, SDL_GetAudioDeviceName(i, 0));
 	}
 }
 
@@ -198,6 +199,7 @@ static qbool S_SDL_Init(void)
 	SDL_AudioSpec desired, obtained;
 	soundhw_t *shw_tmp = NULL;
 	int ret = 0;
+	const char *requested_device = NULL;
 
 	if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
 		ret = SDL_InitSubSystem(SDL_INIT_AUDIO);
@@ -244,10 +246,15 @@ static qbool S_SDL_Init(void)
 	}
 	desired.callback = S_SDL_callback;
 
-	if ((audiodevid = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(s_audiodevice.integer, 0), 0, &desired, &obtained, 0)) <= 0) {
+	/* Make audiodevice list start from index 1 so that 0 can be system default */
+	if (s_audiodevice.integer > 0) {
+		requested_device = SDL_GetAudioDeviceName(s_audiodevice.integer - 1, 0);
+	}
+
+	if ((audiodevid = SDL_OpenAudioDevice(requested_device, 0, &desired, &obtained, 0)) <= 0) {
 		Com_Printf("sound: couldn't open SDL audio: %s\n", SDL_GetError());
-		if (s_audiodevice.integer != 0) {
-			Com_Printf("sound: retrying with audio device 0\n");
+		if (requested_device != NULL) {
+			Com_Printf("sound: retrying with default audio device\n");
 			if ((audiodevid = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0)) <= 0) {
 				Com_Printf("sound: failure again, aborting...\n");
 				return false;
