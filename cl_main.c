@@ -2669,10 +2669,6 @@ static void CL_Multiview(void)
 {
 	static int playernum = 0;
 
-	extern cvar_t gl_polyblend;
-	extern cvar_t gl_clear;
-	extern cvar_t r_lerpframes;
-
 	if (!cls.mvdplayback)
 	{
 		return;
