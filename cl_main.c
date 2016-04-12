@@ -230,7 +230,6 @@ visentlist_t	cl_firstpassents, cl_visents, cl_alphaents;
 
 double		connect_time = 0;		// for connection retransmits
 qbool		connected_via_proxy = false;
-float nViewsizeExit=100;
 
 qbool	host_skipframe;			// used in demo playback
 
@@ -240,7 +239,11 @@ byte		*host_colormap = NULL;
 int		fps_count;
 double		lastfps;
 
-void CL_Multiview(void);
+static void CL_Multiview(void);
+static void CL_MultiviewSaveValues (void);
+static void CL_MultiviewRestoreValues (void);
+static void CL_MultiviewOverrideValues (void);
+static qbool CL_MultiviewCvarResetRequired (void);
 
 // emodel and pmodel are encrypted to prevent llamas from easily hacking them
 char emodel_name[] = { 'e'^0xe5, 'm'^0xe5, 'o'^0xe5, 'd'^0xe5, 'e'^0xe5, 'l'^0xe5, 0 };
@@ -1271,9 +1274,6 @@ void CL_ClearState (void)
 // This is also called on Host_Error, so it shouldn't cause any errors
 void CL_Disconnect (void) 
 {
-	extern cvar_t r_lerpframes, cl_fakeshaft;
-	extern cvar_t gl_polyblend, gl_clear;
-
 	byte final[10];
 
 	connect_time = 0;
@@ -1284,17 +1284,11 @@ void CL_Disconnect (void)
 	cl.teamfortress = false;
 
 	// Reset values changed by Multiview.
-	CURRVIEW = 0;
-	scr_viewsize.value		= nViewsizeExit;
-	v_contrast.value		= nContrastExit;
-	cl_fakeshaft.value		= nfakeshaft;
-
-	gl_polyblend.value		= nPolyblendExit;
-	gl_clear.value			= nGlClearExit;
-
-	r_lerpframes.value		= nLerpframesExit;
-	nTrack1duel = nTrack2duel = 0;
-	bExitmultiview = false;
+	if (CL_MultiviewCvarResetRequired()) {
+		CL_MultiviewRestoreValues ();
+		nTrack1duel = nTrack2duel = 0;
+		CURRVIEW = 0;
+	}
 
 	// Stop sounds (especially looping!)
 	S_StopAllSounds();
@@ -2236,9 +2230,6 @@ void CL_Frame (double time)
 	double minframetime;
 	static double	extraphysframetime;	//#fps
 
-	extern cvar_t r_lerpframes;
-	extern cvar_t gl_clear;
-	extern cvar_t gl_polyblend;
 	extern double render_frame_start;
 
 	extratime += time;
@@ -2508,30 +2499,13 @@ void CL_Frame (double time)
 		CL_EmitEntities();
 	}
 
-	//
-	// Multiview is enabled so save some values for effects that
-	// needs to be turned off.
-	//
-	if (!bExitmultiview)
+	if (!CL_MultiviewCvarResetRequired())
 	{
-		nContrastExit		= v_contrast.value;
-		nViewsizeExit		= scr_viewsize.value;
-		nfakeshaft			= cl_fakeshaft.value;
-		nPolyblendExit		= gl_polyblend.value;
-		nGlClearExit		= gl_clear.value;
-		nLerpframesExit		= r_lerpframes.value;
-		CURRVIEW = 0;
+		CL_MultiviewSaveValues ();
 	}
-
-	if (bExitmultiview && !cl_multiview.value)
+	if (CL_MultiviewCvarResetRequired() && !cl_multiview.value)
 	{
-		scr_viewsize.value =  nViewsizeExit;
-		v_contrast.value = nContrastExit;
-		cl_fakeshaft.value = nfakeshaft;
-		gl_polyblend.value = nPolyblendExit;
-		gl_clear.value = nGlClearExit;
-		r_lerpframes.value = nLerpframesExit;
-		bExitmultiview = false;
+		CL_MultiviewRestoreValues ();
 	}
 
 	if (cl_multiview.value > 0 && cls.mvdplayback)
@@ -2691,26 +2665,7 @@ int		nSwapPov;					// Change in POV positive for next, negative for previous.
 int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
 int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
 
-//
-// Original values saved between frames for effects that are
-// turned off during multiview mode.
-//
-float	nContrastExit;				// v_contrast
-float	nCrosshairExit;
-float	nfakeshaft;					// cl_fakeshaft
-int		nPolyblendExit;				// gl_polyblend
-float	nGlClearExit;				// gl_clear
-int		nLerpframesExit;
-int		nWaterwarp;					// r_waterwarp
-int		nContentblend;				// v_contentblend
-float	nQuadshift;					// v_quadcshift
-float	nPentshift;					// v_pentcshift
-float	nRingshift;					// v_ringcshift
-float	nDamageshift;				// v_damagecshift
-float	nSuitshift;					// v_suitcshift
-int		nBonusflash;				// v_bonusflash
-
-void CL_Multiview(void)
+static void CL_Multiview(void)
 {
 	static int playernum = 0;
 
@@ -2733,37 +2688,7 @@ void CL_Multiview(void)
 		TP_RefreshSkins();
 	}
 
-	// contrast was disabled for OpenGL build with the note "blanks all but 1 view"
-	// this was due to gl_ztrick in R_Clear(void) that would clear these. FIXED
-	// v_contrast.value = 1;
-
-	// stop fakeshaft as it lerps with the other views
-	if (cl_fakeshaft.value < 1 && cl_fakeshaft.value > 0)
-	{
-		cl_fakeshaft.value = 0;
-	}
-
-	// allow mvinset 1 to use viewsize value
-	if ((!cl_mvinset.value && cl_multiview.value == 2) || cl_multiview.value != 2)
-	{
-		scr_viewsize.value = 120;
-	}
-	else
-	{
-		scr_viewsize.value = nViewsizeExit;
-	}
-
-	// stop small screens
-	if (cl_mvinset.value && cl_multiview.value == 2 && scr_viewsize.value < 100)
-	{
-		scr_viewsize.value = 100;
-	}
-
-	gl_polyblend.value = 0;
-	gl_clear.value = 0;
-
-	// stop weapon model lerping as it lerps with the other view
-	r_lerpframes.value = 0;
+	CL_MultiviewOverrideValues ();
 
 	nPlayernum = playernum;
 
@@ -2932,6 +2857,78 @@ void CL_Multiview(void)
 
 	// Make sure we reset variables we suppressed during multiview drawing.
 	bExitmultiview = true;
+}
+
+typedef struct mv_temp_cvar_s {
+	cvar_t* cvar;
+	float   value;
+} mv_temp_cvar_t;
+
+extern cvar_t r_lerpframes;
+
+static mv_temp_cvar_t multiviewCvars[] = {
+	{ &scr_viewsize,      100.0f },
+	{ &cl_fakeshaft,        0.0f },
+	{ &gl_polyblend,        1.0f },
+	{ &gl_clear,            0.0f },
+	{ &r_lerpframes,        1.0f }
+};
+#define MV_CVAR_VIEWSIZE 0                 // we reference saved value when cl_mvinset specified
+
+static void CL_MultiviewSaveValues (void)
+{
+	int i = 0;
+
+	for (i = 0; i < sizeof (multiviewCvars) / sizeof (multiviewCvars[0]); ++i) {
+		multiviewCvars[i].value = multiviewCvars[i].cvar->value;
+	}
+
+	CURRVIEW = 0;
+}
+
+static void CL_MultiviewRestoreValues (void)
+{
+	int i = 0;
+
+	for (i = 0; i < sizeof (multiviewCvars) / sizeof (multiviewCvars[0]); ++i) {
+		Cvar_SetValue(multiviewCvars[i].cvar, multiviewCvars[i].value);
+	}
+
+	bExitmultiview = false;
+}
+
+static void CL_MultiviewOverrideValues (void)
+{
+	// contrast was disabled for OpenGL build with the note "blanks all but 1 view"
+	// this was due to gl_ztrick in R_Clear(void) that would clear these. FIXED
+	// v_contrast.value = 1;
+
+	// stop fakeshaft as it lerps with the other views
+	if (cl_fakeshaft.value < 1 && cl_fakeshaft.value > 0) {
+		cl_fakeshaft.value = 0;
+	}
+
+	// allow mvinset 1 to use viewsize value
+	scr_viewsize.value = multiviewCvars[MV_CVAR_VIEWSIZE].value;
+	if ((!cl_mvinset.value && cl_multiview.value == 2) || cl_multiview.value != 2) {
+		scr_viewsize.value = 120;
+	}
+
+	// stop small screens
+	if (cl_mvinset.value && cl_multiview.value == 2 && scr_viewsize.value < 100) {
+		scr_viewsize.value = 100;
+	}
+
+	gl_polyblend.value = 0;
+	gl_clear.value = 0;
+
+	// stop weapon model lerping as it lerps with the other view
+	r_lerpframes.value = 0;
+}
+
+static qbool CL_MultiviewCvarResetRequired (void)
+{
+	return bExitmultiview;
 }
 
 void CL_UpdateCaption(qbool force)
