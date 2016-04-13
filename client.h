@@ -946,7 +946,6 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec);
 
 extern int		CURRVIEW;					// The current view being drawn in multiview mode.
 extern int		nNumViews;					// The number of views in multiview mode.
-extern qbool	bExitmultiview;				// Used when saving effect values on each frame.
 
 extern qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume
 											// that the "teammates" should all be colored in the same color as the
