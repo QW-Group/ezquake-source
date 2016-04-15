@@ -179,7 +179,8 @@
     },
     "auth_timeout": {
       "group-id": "43",
-      "type": "float"
+      "type": "float",
+      "desc": "Not currently used."
     },
     "auth_validate": {
       "group-id": "27",
@@ -239,15 +240,29 @@
     "bottomcolor": {
       "group-id": "37",
       "desc": "Sets the pants color.",
-      "type": "enum"
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "White" },
+        { "name": "1", "description": "Brown" },
+        { "name": "2", "description": "Lavender" },
+        { "name": "3", "description": "Khaki" },
+        { "name": "4", "description": "Red" },
+        { "name": "5", "description": "Lt Brown" },
+        { "name": "6", "description": "Peach" },
+        { "name": "7", "description": "Lt Peach" },
+        { "name": "8", "description": "Purple" },
+        { "name": "9", "description": "Dk Purple" },
+        { "name": "10", "description": "Tan" },
+        { "name": "11", "description": "Green" },
+        { "name": "12", "description": "Yellow" },
+        { "name": "13", "description": "Blue" }
+      ]
     },
     "cam_dist": {
       "group-id": "46",
-      "desc": "for use with cam_thirdperson. Use +forward/+back to adjust it smoothly",
-      "type": "float",
-      "values": [
-        { "name": "*", "description": "Value = distantion" }
-      ]
+      "desc": "Distance from player. Use +forward/+back to adjust it smoothly",
+      "remarks": "For use with cam_thirdperson",
+      "type": "float"
     },
     "cam_lockdir": {
       "group-id": "46",
@@ -550,21 +565,15 @@
     },
     "cl_camera_tpp_distance": {
       "group-id": "46",
-      "desc": "Sets distance of 3rd person camera from tracked player.",
-      "remarks": "Set cl_camera_tpp 1 first. See cl_camera_tpp_height too.",
-      "type": "float",
-      "values": [
-        { "name": "*", "description": "You can use negative values too." }
-      ]
+      "desc": "Sets distance of 3rd person camera from tracked player.  You can use negative values too.",
+      "remarks": "For use with cl_camera_tpp. See cl_camera_tpp_height too.",
+      "type": "float"
     },
     "cl_camera_tpp_height": {
       "group-id": "46",
-      "desc": "Sets vertical position of 3rd person camera.",
+      "desc": "Sets vertical position of 3rd person camera.  You can use negative values too.",
       "remarks": "Set cl_camera_tpp 1 first.",
-      "type": "float",
-      "values": [
-        { "name": "*", "description": "You can use negative values too." }
-      ]
+      "type": "float"
     },
     "cl_chasecam": {
       "group-id": "46",
@@ -602,12 +611,9 @@
     },
     "cl_clock_format": {
       "group-id": "40",
-      "desc": "Changes the format of the clock which is displayed if cl_clock is non-zero.",
+      "desc": "Changes the format of the clock which is displayed if cl_clock is non-zero.  Special chars are prefixed with %",
       "remarks": "%H represents hours, %M minutes, %S seconds. There are many other flags you can use. See strftime (C language) documentation for closer info.",
-      "type": "string",
-      "values": [
-        { "name": "*", "description": "Special chars are prefixed with the % sign in here" }
-      ]
+      "type": "string"
     },
     "cl_clock_x": {
       "group-id": "40",
@@ -660,7 +666,7 @@
     },
     "cl_deadbodyFilter": {
       "group-id": "8",
-      "type": "boolean",
+      "type": "integer",
       "values": [
         { "name": "0", "description": "Don\u0027t filter dead bodies." },
         { "name": "1", "description": "Filter dead bodies after they fall on the ground." },
@@ -670,12 +676,9 @@
     },
     "cl_delay_packet": {
       "group-id": "21",
-      "desc": "Client will delay incoming and outgoing packets allowing user to increase his ping in the game.",
-      "remarks": "Players can use this to get equivalent pings on server. If you enter delay of 20 miliseconds, incoming packets will be delayed by 10 miliseconds, outgoing packets too. It\u0027s preferred to use the least value that gives you your desired ping.",
-      "type": "integer",
-      "values": [
-        { "name": "*", "description": "milliseconds to delay packets" }
-      ]
+      "desc": "Client will delay incoming and outgoing packets, allowing user to increase his ping in the game.",
+      "remarks": "Specified in ms.  If delay is 20ms, incoming packets will be delayed by 10ms, outgoing packets too. It\u0027s preferred to use the least value that gives the desired ping.",
+      "type": "integer"
     },
     "cl_democlock": {
       "group-id": "40",
@@ -701,16 +704,15 @@
       "desc": "How often to request ping updates when recording demos. This variable doesn\u0027t \naffect ping updates when the scoreboard is shown (they are always one update per 2 seconds).",
       "type": "integer",
       "values": [
-        { "name": "0", "description": "Disable automatic ping requests." }
+        { "name": "0", "description": "Disable automatic ping requests." },
+        { "name": "5", "description": "Request every 5 seconds (default)." }
       ]
     },
     "cl_demoplay_flash": {
       "group-id": "39",
       "desc": "Reduces flash grenade effect when watching demos.",
-      "type": "float",
-      "values": [
-        { "name": "*", "description": "Values from 0 to 1 are possible. 0 - flash effects disabled, 1 - original." }
-      ]
+      "remarks": "Values from 0 to 1 are possible. 0 - flash effects disabled, 1 - original.",
+      "type": "float"
     },
     "cl_demospeed": {
       "group-id": "7",
@@ -735,10 +737,7 @@
       "group-id": "3",
       "desc": "Automatically prefixes all team messages with a shorter version of your nick unless the message has a \"fake\" part already (so no configs are broken).",
       "remarks": "Applies for say_team and messagemode2",
-      "type": "string",
-      "values": [
-        { "name": "*", "description": "prefix for team messages" }
-      ]
+      "type": "string"
     },
     "cl_fakename_suffix": {
       "group-id": "3",
@@ -993,7 +992,7 @@
       "group-id": "40",
       "desc": "Sets the position of the multiview mini-HUDs.",
       "remarks": "This only applies to the mini-HUD when cl_mvdisplayhud has a value greater than 1. Otherwise old mini-HUD will be used (just strings).",
-      "type": "string",
+      "type": "enum",
       "values": [
         { "name": "bottom center/bc", "description": "" },
         { "name": "bottom left/bl", "description": "" },
@@ -1055,11 +1054,8 @@
     "cl_newlerp": {
       "group-id": "8",
       "desc": "Experimental rockets/grenades/spikes smoothing code.\n\nDefault value 0.1 means: use 90% of our \u0027vision\u0027 and 10% of server \u0027vision\u0027. Should be OK for most case, but floating ping (see remarks)",
-      "remarks": "This smoothing algorithm works good only with stable ping.",
-      "type": "float",
-      "values": [
-        { "name": "*", "description": "[0..1]" }
-      ]
+      "remarks": "Range between 0 and 1.  This smoothing algorithm works well only with stable ping.",
+      "type": "float"
     },
     "cl_nodelta": {
       "group-id": "21",
@@ -1116,11 +1112,12 @@
     "cl_onload": {
       "group-id": "40",
       "desc": "Tells what will be the start-up screen of the client",
-      "type": "string",
+      "type": "enum",
       "values": [
         { "name": "browser", "description": "Server browser will be your start-up screen" },
         { "name": "console", "description": "After start-up you can immediately type into the console" },
-        { "name": "menu", "description": "You\u0027ll see the main menu after the start-up" }
+        { "name": "menu", "description": "You\u0027ll see the main menu after the start-up" },
+        { "name": "<other>", "description": "A command/script to be executed on start-up" }
       ]
     },
     "cl_parseFrags": {
@@ -1261,11 +1258,8 @@
     "cl_rollalpha": {
       "group-id": "53",
       "desc": "You can turn off the \u0027dodging\u0027 or \u0027rolling\u0027 effect for your own point of view while still see other player models affected by cl_rollangle.",
-      "remarks": "-ruleset smackdown disables it and sets the value to default",
-      "type": "integer",
-      "values": [
-        { "name": "*", "description": "By using 0 you will not get affected by cl_rollangle setting" }
-      ]
+      "remarks": "0 disables, 1 is standard.  Disabled by ruleset smackdown",
+      "type": "integer"
     },
     "cl_rollangle": {
       "group-id": "53",
@@ -1351,7 +1345,8 @@
     },
     "cl_solid_players": {
       "group-id": "21",
-      "type": ""
+      "type": "boolean",
+      "desc": "If not set then client will not perform collision detection against other players."
     },
     "cl_startupdemo": {
       "group-id": "7",
@@ -1491,7 +1486,8 @@
     },
     "cl_warnexec": {
       "group-id": "5",
-      "type": ""
+      "type": "boolean",
+      "desc": "If set, the names of script files will be printed to console as they are executed."
     },
     "cl_weaponforgetorder": {
       "group-id": "9",
@@ -1726,20 +1722,15 @@
       "remarks": "Notification area is the place where chat and game messages are displayed",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "" },
-        { "name": "true", "description": "" }
+        { "name": "false", "description": "hide notification area" },
+        { "name": "true", "description": "show notification area" }
       ]
     },
     "con_notifylines": {
       "group-id": "5",
-      "desc": "This variable sets the number of notify lines (default 4, max 20) to be used at the top of the screen.",
-      "remarks": "...",
-      "type": "integer",
-      "values": [
-        { "name": "0", "description": "Use no notify lines at all." },
-        { "name": "1", "description": "Use one notify line." },
-        { "name": "20", "description": "Use 20 notify lines." }
-      ]
+      "desc": "This variable sets the maximum number of notify lines (default 4, max 15) to be used at the top of the screen.",
+      "remarks": "Only affects con_notify",
+      "type": "integer"
     },
     "con_notifytime": {
       "group-id": "5",
@@ -2074,7 +2065,7 @@
       "group-id": "7",
       "desc": "Specifies the demo file format used when recording demo with Match tools.",
       "remarks": "See qwdtools_dir, qizmo_dir, match_auto_record.",
-      "type": "string",
+      "type": "enum",
       "values": [
         { "name": "mvd", "description": "MultiView Demo, usually contains less frames per second." },
         { "name": "qwd", "description": "Original QuakeWorld demo format." },
@@ -2126,9 +2117,9 @@
       "group-id": "44",
       "desc": "Determines the color of the pants of the enemies you see. Overrides player\u0027s skin settings.",
       "remarks": "To be able to use RGB 24bit colors, look for r_enemyskincolor variable.",
-      "type": "integer",
+      "type": "enum",
       "values": [
-        { "name": "*", "description": "-1 to turn this off, values from 0 to 13 for standard Quake colors" }
+        { "name": "-1", "description": "disabled" }
       ]
     },
     "enemyforceskins": {
@@ -2169,51 +2160,69 @@
     },
     "file_browser_archive_color": {
       "group-id": "17",
-      "type": "string"
+      "type": "string",
+      "desc": "Color of archive files when "
     },
     "file_browser_dir_color": {
       "group-id": "17",
-      "type": "string"
+      "type": "string",
+      "desc": "Color of directories in the file browser."
     },
     "file_browser_file_color": {
       "group-id": "17",
-      "type": "string"
+      "type": "string",
+      "desc": "Color of files in the file browser."
     },
     "file_browser_interline": {
       "group-id": "17",
-      "type": ""
+      "type": "string",
+      "desc": "Spacing between each row in the file browser.  0-6"
     },
     "file_browser_scrollnames": {
       "group-id": "17",
-      "type": ""
+      "type": "boolean",
+      "desc": "If set, the currently selected file will scroll to let you see the full name"
     },
     "file_browser_selected_color": {
       "group-id": "17",
-      "type": "string"
+      "type": "string",
+      "desc": "Color of the current selection in the file browser."
     },
     "file_browser_show_date": {
       "group-id": "17",
-      "type": ""
+      "type": "boolean",
+      "desc": "Toggles whether the file modified date is shown in the file browser"
     },
     "file_browser_show_size": {
       "group-id": "17",
-      "type": ""
+      "type": "boolean",
+      "desc": "Toggles whether the filesize is shown in the file browser"
     },
     "file_browser_show_status": {
       "group-id": "17",
-      "type": ""
+      "type": "boolean",
+      "desc": "Toggles whether a statusbar is shown in the file browser"
     },
     "file_browser_show_time": {
       "group-id": "17",
-      "type": ""
+      "type": "boolean",
+      "desc": "Toggles whether the file modified time is shown in the file browser"
     },
     "file_browser_sort_mode": {
       "group-id": "17",
-      "type": ""
+      "type": "string",
+      "desc": "Determines sort order of files in the file browser.",
+      "values": [
+        { "name": "1", "desc": "name" },
+        { "name": "2", "desc": "size" },
+        { "name": "3", "desc": "date/time" },
+        { "name": "4", "desc": "type" }
+      ]
     },
     "file_browser_strip_names": {
       "group-id": "17",
-      "type": ""
+      "type": "boolean",
+      "desc": "If set, strips extra spaces from filenames in the file browser."
     },
     "filterban": {
       "group-id": "43",
@@ -2262,6 +2271,18 @@
         { "name": "true", "description": "" }
       ]
     },
+    "gender": {
+      "group-id": "37",
+      "desc": "Indicates the gender of the player.",
+      "remarks": "This relies on server/mod support to function correctly",
+      "type": "enum",
+      "values": [
+        { "name": "(empty)", "description": "Not specified (use gender-neutral language)" },
+        { "name": "0", "description": "Male (he, his)" },
+        { "name": "1", "description": "Female (she, her)" },
+        { "name": "2", "description": "None (it, its)" }
+      ]
+    },
     "gl_affinemodels": {
       "group-id": "35",
       "desc": "Makes texture rendering quality better if set to 1.\nNote: 3dfx thing, not sure. //fuh check this.",
@@ -2296,7 +2317,8 @@
     },
     "gl_brush_polygonoffset": {
       "group-id": "35",
-      "type": "float"
+      "type": "float",
+      "desc": "Value in range 0-25.  Offset drawing of entity models, to stop z-fighting."
     },
     "gl_buildingsparks": {
       "group-id": "35",
@@ -2403,7 +2425,7 @@
     },
     "gl_ext_arb_texture_non_power_of_two": {
       "group-id": "50",
-      "type": ""
+      "type": "boolean"
     },
     "gl_ext_texture_compression": {
       "group-id": "50",
@@ -2514,7 +2536,7 @@
     },
     "gl_gammacorrection": {
       "group-id": "35",
-      "type": ""
+      "type": "boolean"
     },
     "gl_hwblend": {
       "group-id": "39",
@@ -2635,27 +2657,33 @@
     },
     "gl_modulate": {
       "group-id": "35",
-      "type": ""
+      "type": "float",
+      "desc": "Affects lightmap.  Values from 0.5 to 3 are valid."
     },
     "gl_motion_blur": {
       "group-id": "8",
-      "type": ""
+      "type": "boolean",
+      "desc": "Enables motion blur effect (set gl_motion_blur_* variables to configure)"
     },
     "gl_motion_blur_dead": {
       "group-id": "8",
-      "type": "float"
+      "type": "float",
+      "desc": "Level of blending of current scene with previous, when the player is dead"
     },
     "gl_motion_blur_fps": {
       "group-id": "8",
-      "type": ""
+      "type": "integer",
+      "desc": "How often to copy the current frame to apply motion blur effect.  Defaults to 77."
     },
     "gl_motion_blur_hurt": {
       "group-id": "8",
-      "type": "float"
+      "type": "float",
+      "desc": "Level of blending of current scene with previous, when the player has recently been hurt"
     },
     "gl_motion_blur_norm": {
       "group-id": "8",
-      "type": "float"
+      "type": "float",
+      "desc": "Level of blending of current scene with previous, when the player is alive and not recently hurt"
     },
     "gl_motiontrails": {
       "group-id": "35",
@@ -2669,7 +2697,8 @@
     },
     "gl_multisamples": {
       "group-id": "52",
-      "type": ""
+      "type": "integer",
+      "desc": "The number of samples used around each pixel for anti-aliasing.  Range 0-16"
     },
     "gl_nailtrail": {
       "group-id": "35",
@@ -2813,11 +2842,15 @@
     },
     "gl_part_tracer1_size": {
       "group-id": "36",
-      "type": "float"
+      "type": "float",
+      "desc": "Changes the size of the tracer1 trail, which allows you to customize the rockettrail size (see remarks).",
+      "remarks": "If you set r_rockettrail 6 and gl_part_trails 1, this variable will change your rockettrail size"
     },
     "gl_part_tracer1_time": {
       "group-id": "36",
-      "type": "float"
+      "type": "float",
+      "desc": "Changes the duration of the tracer1 trail, which allows you to customize the rockettrail (see remarks).",
+      "remarks": "If you set r_rockettrail 6 and gl_part_trails 1, this variable will change your rockettrail duration"
     },
     "gl_part_tracer2_color": {
       "group-id": "36",
@@ -2830,11 +2863,15 @@
     },
     "gl_part_tracer2_size": {
       "group-id": "36",
-      "type": "float"
+      "type": "float",
+      "desc": "Changes the size of the tracer2 trail, which allows you to customize the rockettrail size (see remarks).",
+      "remarks": "If you set r_rockettrail 7 and gl_part_trails 1, this variable will change your rockettrail size"
     },
     "gl_part_tracer2_time": {
       "group-id": "36",
-      "type": "float"
+      "type": "float",
+      "desc": "Changes the duration of the tracer2 trail, which allows you to customize the rockettrail (see remarks).",
+      "remarks": "If you set r_rockettrail 7 and gl_part_trails 1, this variable will change your rockettrail duration"
     },
     "gl_part_trails": {
       "group-id": "36",
@@ -2846,11 +2883,13 @@
     },
     "gl_particle_blobs": {
       "group-id": "36",
-      "type": "float"
+      "type": "float",
+      "desc": "Determines size of blob explosions.  If set to 0, standard non-particle explosions will be used instead."
     },
     "gl_particle_blood": {
       "group-id": "36",
-      "type": "float"
+      "type": "float",
+      "desc": "Determines size of blood effect.  If set to 0, standard blood effect will be used instead."
     },
     "gl_particle_blood_color": {
       "group-id": "36",
@@ -2864,7 +2903,13 @@
     },
     "gl_particle_deatheffect": {
       "group-id": "36",
-      "type": "float"
+      "type": "enum",
+      "desc": "Adds extra blood effects to gibs",
+      "values": [
+        { "name": "0", "desc": "No extra effects" },
+        { "name": "1", "desc": "" },
+        { "name": "2", "desc": "No extra effects" }
+      ]
     },
     "gl_particle_explosions": {
       "group-id": "36",
@@ -2873,7 +2918,8 @@
     },
     "gl_particle_fasttrails": {
       "group-id": "36",
-      "type": "float"
+      "type": "float",
+      "desc": "Changes particle trails indicating motion"
     },
     "gl_particle_fire": {
       "group-id": "36",
@@ -2888,11 +2934,7 @@
     "gl_particle_fulldetail": {
       "group-id": "36",
       "desc": "Allows full detail depth for gl_particle_* effects",
-      "type": "boolean",
-      "values": [
-        { "name": "false", "description": "" },
-        { "name": "true", "description": "" }
-      ]
+      "type": "boolean"
     },
     "gl_particle_gibtrails": {
       "group-id": "36",
@@ -2939,7 +2981,12 @@
     },
     "gl_particle_style": {
       "group-id": "36",
-      "type": ""
+      "type": "boolean",
+      "description": "Style of particles.",
+      "values": [
+        { "name": "false", "description": "Round particles" },
+        { "name": "true", "description": "Square particles (software style)" }
+      ]
     },
     "gl_particle_trail_detail": {
       "group-id": "36",
@@ -2957,7 +3004,7 @@
     },
     "gl_particle_trail_type": {
       "group-id": "36",
-      "type": "float"
+      "type": "integer"
     },
     "gl_particle_trail_width": {
       "group-id": "36",
@@ -3064,21 +3111,28 @@
       "desc": "Instead of 3D item models in the game display 2D images representing them.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "" },
-        { "name": "true", "description": "" }
+        { "name": "false", "description": "Draw 3D item models" },
+        { "name": "true", "description": "Draw 2D sprites" }
       ]
     },
     "gl_simpleitems_orientation": {
       "group-id": "8",
-      "type": ""
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Orientation based on player's view" },
+        { "name": "1", "description": "Facing the player, horizontally only" },
+        { "name": "2", "description": "Directly facing the player" },
+        { "name": "3", "description": "Items rotate" }
+      ]
     },
     "gl_simpleitems_size": {
       "group-id": "8",
-      "type": ""
+      "type": "integer",
+      "desc": "Size of simple items.  Max size 16."
     },
     "gl_smoothfont": {
       "group-id": "5",
-      "desc": "Smoothens out the font (which = good). But in some cases the font wasn\u0027t designed to be smoothened (sometimes the case of custom console fonts etc).",
+      "desc": "Smooths out the font (which = good). But in some cases the font wasn\u0027t designed to be smoothed (sometimes the case of custom console fonts etc).",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off." },
@@ -3104,7 +3158,7 @@
     "gl_squareparticles": {
       "group-id": "36",
       "desc": "Toggles between circle and square particles",
-      "type": ""
+      "type": "boolean"
     },
     "gl_strings": {
       "group-id": "22",
@@ -3153,7 +3207,7 @@
     "gl_texturemode": {
       "group-id": "50",
       "remarks": "GL_NEAREST* modes are often used with gl_miptexlevel 3",
-      "type": "string",
+      "type": "enum",
       "values": [
         { "name": "GL_LINEAR", "description": "Linear filtering, no blending." },
         { "name": "GL_LINEAR_MIPMAP_LINEAR", "description": "Trilinear interpolation. Highest quality, lowest performance." },
@@ -7731,16 +7785,42 @@
       "group-id": "19",
       "type": "string"
     },
+    "hud_score_bar_fixed_order": {
+      "group-id": "19",
+      "type": "boolean",
+      "desc": "If set, order of player names is fixed, irrespective of who is currently being tracked.",
+      "values": [
+        { "name": "0", "description": "Current player is always %t" },
+        { "name": "1", "description": "When spectating, leading player is always %t" }
+      ]
+    },
+    "hud_score_bar_frag_length": {
+      "group-id": "19",
+      "type": "integer",
+      "desc": "Minimum number of characters to use when displaying frags."
+    },
     "hud_score_bar_format_big": {
       "group-id": "19",
       "desc": "Format string for score_bar HUD element.",
       "remarks": "%d - score difference between you and enemy.\n%D - score difference between you and enemy, red chars.\n%t - team score.\n%T - your (team) score, red chars.\n%e - enemy (team) score.\n%E - enemy (team) score, red chars.\n%d - score (team) difference.\n%D - score (team) difference, red chars.\n%p - your (team) position on scoreboard.\n%z - score difference between you and enemy, unsigned. Red chars used for negative difference.\n%z - score difference between you and enemy, unsigned. Red chars used for positive difference.",
       "type": "string"
     },
+    "hud_score_bar_format_reversed_big": {
+      "group-id": "19",
+      "desc": "Format string for score_bar HUD element, used when hud_score_bar_fixed_order has taken effect.\nIf not set, hud_score_bar_format_big will be used instead.",
+      "remarks": "See hud_score_bar_format_big for format codes.",
+      "type": "string"
+    },
     "hud_score_bar_format_small": {
       "group-id": "19",
       "desc": "Format string for score_bar HUD element.",
       "remarks": "%d - score difference between you and enemy.\n%D - score difference between you and enemy, always signed.\n%t - your (team) score.\n%T - your (team) name.\n%e - enemy (team) score.\n%E - enemy (team) name.\n%d - score difference.\n%D - score difference, always signed.\n%p - Your (team) position on scoreboard.\n\nAlso, you could use color codes.",
+      "type": "string"
+    },
+    "hud_score_bar_format_reversed_small": {
+      "group-id": "19",
+      "desc": "Format string for score_bar HUD element, used when hud_score_bar_fixed_order has taken effect.\nIf not set, hud_score_bar_format_reversed_small will be used instead.",
+      "remarks": "See hud_score_bar_format_reversed_small for format codes.",
       "type": "string"
     },
     "hud_score_bar_frame": {
@@ -9792,7 +9872,7 @@
     "match_ladder_id": {
       "group-id": "16",
       "desc": "Identification of the current duel ladder. Not used right now, always 1.",
-      "type": ""
+      "type": "string"
     },
     "match_name_and": {
       "group-id": "16",
@@ -9923,7 +10003,8 @@
     },
     "mtu": {
       "group-id": "37",
-      "type": "string"
+      "type": "integer",
+      "desc": "Maximum transmission unit size.  Suggests maximum packet size to server, if supported"
     },
     "mumble_enabled": {
       "group-id": "32",
@@ -10142,7 +10223,7 @@
     "mvd_pc_view_1": {
       "group-id": "20",
       "desc": "Sets the powerup camera for viewport 1",
-      "type": "string",
+      "type": "enum",
       "values": [
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
@@ -10155,7 +10236,7 @@
     "mvd_pc_view_2": {
       "group-id": "20",
       "desc": "Sets the powerup camera for viewport 2",
-      "type": "string",
+      "type": "enum",
       "values": [
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
@@ -10168,7 +10249,7 @@
     "mvd_pc_view_3": {
       "group-id": "20",
       "desc": "Sets the powerup camera for viewport 3",
-      "type": "string",
+      "type": "enum",
       "values": [
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
@@ -10181,7 +10262,7 @@
     "mvd_pc_view_4": {
       "group-id": "20",
       "desc": "Sets the powerup camera for viewport 4",
-      "type": "string",
+      "type": "enum",
       "values": [
         { "name": "p1", "description": "mvd_pc_pent_1" },
         { "name": "p2", "description": "mvd_pc_pent_2" },
@@ -10254,7 +10335,8 @@
     },
     "not_auth_timeout": {
       "group-id": "43",
-      "type": ""
+      "type": "integer",
+      "desc": "Not currently used."
     },
     "password": {
       "group-id": "43",
@@ -10419,7 +10501,8 @@
     },
     "qtv_maxstreams": {
       "group-id": "43",
-      "type": ""
+      "type": "integer",
+      "desc": "Maximum number of simultaneous QTV connections."
     },
     "qtv_password": {
       "group-id": "43",
@@ -10428,7 +10511,8 @@
     },
     "qtv_pendingtimeout": {
       "group-id": "43",
-      "type": ""
+      "type": "float",
+      "desc": "Number of seconds to wait before timing out a pending QTV connection."
     },
     "qtv_say_team": {
       "group-id": "38",
@@ -10453,7 +10537,8 @@
     },
     "qtv_streamtimeout": {
       "group-id": "43",
-      "type": ""
+      "type": "float",
+      "desc": "Number of seconds to wait before timing out a QTV stream."
     },
     "qwdtools_dir": {
       "group-id": "7",
@@ -10581,12 +10666,12 @@
     },
     "r_drawviewmodel": {
       "group-id": "54",
-      "remarks": "Note: Transparency works in GL only.",
       "type": "float",
+      "desc": "Controls transparency level of the currently-held weapon.",
+      "remarks": "Example: 0.5 = 50% transparency.",
       "values": [
-        { "name": "0", "description": "Do not display the weapon model." },
-        { "name": "0.5", "description": "50% transparented." },
-        { "name": "1", "description": "Display the weapon model." }
+        { "name": "0", "description": "Fully transparent." },
+        { "name": "1", "description": "Fully opaque." }
       ]
     },
     "r_drawvweps": {
@@ -10723,15 +10808,10 @@
     "r_grenadeTrail": {
       "group-id": "8",
       "desc": "Customizable grenade trails.\n",
-      "remarks": "trails 8-13 are gl only.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "No grenade trail." },
         { "name": "1", "description": "Smoke (grenade) trail." },
-        { "name": "10", "description": "Green Fuel Rod Gun trail. *GL ONLY*" },
-        { "name": "11", "description": "Orange/Yellow Plasma Rocket Mk II trail. *GL ONLY*" },
-        { "name": "12", "description": "Similar to 3, but with a white line and less smoke. *GL ONLY*" },
-        { "name": "13", "description": "Motion trail rocket. Need gl_motiontrails 1. *GL ONLY*" },
         { "name": "2", "description": "Normal (rocket) trail." },
         { "name": "3", "description": "Alternative normal trail." },
         { "name": "4", "description": "Slight blood trail." },
@@ -10739,12 +10819,33 @@
         { "name": "6", "description": "Green Tracer trail." },
         { "name": "7", "description": "Orange/Yellow Tracer trail." },
         { "name": "8", "description": "Blue/White Plasma trail." },
-        { "name": "9", "description": "Lavaball trail. *GL ONLY*" }
+        { "name": "9", "description": "Lavaball trail." },
+        { "name": "10", "description": "Green Fuel Rod Gun trail." },
+        { "name": "11", "description": "Orange/Yellow Plasma Rocket Mk II trail." },
+        { "name": "12", "description": "Similar to 3, but with a white line and less smoke." },
+        { "name": "13", "description": "Motion trail rocket. Need gl_motiontrails 1." }
       ]
     },
     "r_instagibTrail": {
       "group-id": "8",
-      "type": ""
+      "type": "enum",
+      "desc": "Type of trail to use when viewing trails left in /instagib mode",
+      "values": [
+        { "name": "0", "description": "No railtrail." },
+        { "name": "1", "description": "Normal grenade trail." },
+        { "name": "2", "description": "Normal rocket trail." },
+        { "name": "3", "description": "Alternative rocket trail." },
+        { "name": "4", "description": "Slight blood trail." },
+        { "name": "5", "description": "Big blood trail." },
+        { "name": "6", "description": "Green Tracer trail." },
+        { "name": "7", "description": "Orange/Yellow Tracer trail." },
+        { "name": "8", "description": "Vore trail." },
+        { "name": "9", "description": "Classic railtrail." },
+        { "name": "10", "description": "New railtrail." },
+        { "name": "11", "description": "Particle railtrail." },
+        { "name": "12", "description": "Lava trail" },
+        { "name": "13", "description": "Particle rocket trail" }
+      ]
     },
     "r_lavacolor": {
       "group-id": "51",
@@ -10926,15 +11027,10 @@
     "r_rocketTrail": {
       "group-id": "8",
       "desc": "Customizable rocket trails.\n",
-      "remarks": "trails  8 - 13 are GL only",
       "type": "enum",
       "values": [
         { "name": "0", "description": "No rocket trail." },
         { "name": "1", "description": "Normal (rocket) trail." },
-        { "name": "10", "description": "Green Fuel Rod Gun trail. *GL ONLY*" },
-        { "name": "11", "description": "Orange/Yellow Plasma Rocket Mk II trail. *GL ONLY*" },
-        { "name": "12", "description": "Similar to 3, but with a white line and less smoke. *GL ONLY*" },
-        { "name": "13", "description": "Motion trail rocket. Need gl_motiontrails 1. *GL ONLY*" },
         { "name": "2", "description": "Smoke (grenade) trail." },
         { "name": "3", "description": "Alternative normal trail." },
         { "name": "4", "description": "Slight blood trail." },
@@ -10942,7 +11038,11 @@
         { "name": "6", "description": "Green Tracer trail." },
         { "name": "7", "description": "Orange/Yellow Tracer trail." },
         { "name": "8", "description": "Blue/White Plasma trail." },
-        { "name": "9", "description": "Lavaball trail. *GL ONLY*" }
+        { "name": "9", "description": "Lavaball trail." },
+        { "name": "10", "description": "Green Fuel Rod Gun trail." },
+        { "name": "11", "description": "Orange/Yellow Plasma Rocket Mk II trail." },
+        { "name": "12", "description": "Similar to 3, but with a white line and less smoke." },
+        { "name": "13", "description": "Motion trail rocket. Need gl_motiontrails 1." }
       ]
     },
     "r_shadows": {
@@ -11040,31 +11140,38 @@
     },
     "r_tracker_color_bad": {
       "group-id": "40",
-      "type": ""
+      "type": "string",
+      "description": "Color to use when reporting a frag by opponent's team"
     },
     "r_tracker_color_fragonme": {
       "group-id": "40",
-      "type": ""
+      "type": "string",
+      "desc": "Color to use when reporting an opponent killed the current player"
     },
     "r_tracker_color_good": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Color to use when reporting a kill by current player's team"
     },
     "r_tracker_color_myfrag": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Color to use when reporting a frag by current player"
     },
     "r_tracker_color_suicide": {
       "group-id": "40",
-      "type": ""
+      "type": "string",
+      "desc": "Color to use when reporting a suicide"
     },
     "r_tracker_color_tkbad": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Color to use when reporting a teamkill by current player's team"
     },
     "r_tracker_color_tkgood": {
       "group-id": "40",
-      "type": ""
+      "type": "string",
+      "desc": "Color to use when reporting an opponent's teamkill"
     },
     "r_tracker_flags": {
       "group-id": "40",
@@ -11098,11 +11205,14 @@
     },
     "r_tracker_images_scale": {
       "group-id": "40",
-      "type": ""
+      "type": "float",
+      "desc": "Controls the size of images when using the tracker.  Valid range 0.1-10"
     },
     "r_tracker_inconsole": {
       "group-id": "40",
-      "type": ""
+      "type": "boolean",
+      "desc": "If set, tracker messages will also appear in the console",
+      "remarks": "To see full death messages in the console, use con_fragmessages 2"
     },
     "r_tracker_messages": {
       "group-id": "40",
@@ -11112,15 +11222,19 @@
     },
     "r_tracker_name_remove_prefixes": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Space-separated list of prefixes to remove from player names before displaying in the tracker",
+      "remarks": "Useful if one team has clan prefixes that stop the names appearing fully"
     },
     "r_tracker_name_width": {
       "group-id": "40",
-      "type": ""
+      "type": "integer",
+      "desc": "Maximum length of player names in the tracker"
     },
     "r_tracker_own_frag_prefix": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Text to show before frag messages relating to the current player"
     },
     "r_tracker_positive_enemy_suicide": {
       "group-id": "40",
@@ -11140,11 +11254,15 @@
     },
     "r_tracker_string_died": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Text appearing in the tracker when a player dies (typically lava, slime, drowning etc)",
+      "remarks": "Relates to PLAYER_DEATH rules in fragfile.dat"
     },
     "r_tracker_string_enemy": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Text appearing in the tracker when a player earns a frag",
+      "remarks": "Relates to X_FRAGS_UNKNOWN rules in fragfile.dat"
     },
     "r_tracker_string_suicides": {
       "group-id": "40",
@@ -11244,8 +11362,18 @@
     "railcolor": {
       "group-id": "37",
       "desc": "Player\u0027s rail color",
-      "remarks": "Possible values are: 1 - 7",
-      "type": "enum"
+      "remarks": "Possible values are: 1 - 7.  Sent to server, requires mod support",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "White" },
+        { "name": "1", "description": "Blue" },
+        { "name": "2", "description": "Green" },
+        { "name": "3", "description": "Light Blue" },
+        { "name": "4", "description": "Red" },
+        { "name": "5", "description": "Magenta" },
+        { "name": "6", "description": "Yellow" },
+        { "name": "7", "description": "White" }
+      ]
     },
     "rate": {
       "group-id": "37",
@@ -11308,6 +11436,11 @@
       "desc": "Volume level of ambient sounds (produced by liquid and sky brushes).",
       "type": "float"
     },
+    "s_audiodevice": {
+      "group-id": "45",
+      "desc": "Audio device to use.",
+      "type": "integer"
+    },
     "s_bits": {
       "group-id": "26",
       "desc": "This defines how many sampling bits should be used, when using 16 bits the interpolation quality will be better.",
@@ -11321,7 +11454,12 @@
     "s_chat_custom": {
       "group-id": "3",
       "desc": "Controls usage of s_mm*, s_chat_*, s_otherchat_* and s_spec_* variables. ",
-      "type": "enum"
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "No chat sounds played" },
+        { "name": "1", "description": "Chat sounds played for mm1 & mm2" },
+        { "name": "2", "description": "Chat sounds played for mm2 only " }
+      ]
     },
     "s_device": {
       "group-id": "26",
@@ -11346,21 +11484,28 @@
       "group-id": "45",
       "desc": "The client includes \"sound interpolation\" which allows it to play sounds at higher frequencies, than the default 11025 Hz with perfect quality. In addition to \"s_khz\" also \"s_bits\" (linux only) will have an influence on interpolation quality. This variable allows you to choose the frequency you want to interpolate the sounds to. You will quickly discover, that the shaft sound is different at increased sampling rate. That\u0027s because shaft sounds were recorded at 22050 kHz, so probably that\u0027s how they should sound from the beginning. If you don\u0027t like it, you can always convert them to 11025.",
       "remarks": "Also you can change it \u0027on fly\u0027 - just do snd_restart after you change s_khz",
-      "type": "integer",
+      "type": "enum",
       "values": [
         { "name": "11", "description": "11khz sound (default)" },
         { "name": "22", "description": "22khz sound" },
         { "name": "44", "description": "44khz sound" },
-        { "name": "48", "description": "48khz sound (Linux only)" }
+        { "name": "48", "description": "48khz sound" }
       ]
     },
     "s_linearresample": {
       "group-id": "45",
-      "type": ""
+      "type": "enum",
+      "desc": "Controls whether or not to resample sounds as they are loaded",
+      "values": [
+        { "name": "0", "description": "Do not perform resampling" },
+        { "name": "1", "description": "Upscale sounds as they are loaded" },
+        { "name": "2", "description": "Upscale & downscale sounds as they loaded, as appropriate" }
+      ]
     },
     "s_linearresample_stream": {
-      "group-id": "45",
-      "type": ""
+      "group-id": "26",
+      "type": "integer",
+      "desc": "This variable is no longer used, and has no effect."
     },
     "s_loadas8bit": {
       "group-id": "45",
@@ -11458,11 +11603,8 @@
     },
     "s_desiredsamples": {
       "group-id": "45",
-      "desc": "Indicates how large the audio buffer should be, in samples.",
-      "type": "float",
-      "values": [
-        { "name": "0", "description": "ezQuake will choose a sensible default, based on value of s_khz" }
-      ],
+      "desc": "Indicates how large the audio buffer should be, in samples.  If 0, ezQuake will choose a sensible default, based on value of s_khz",
+      "type": "integer",
       "remarks": "This is a suggestion only, the driver is free to choose a different value.  Smaller buffer sizes generally result in lower latency, but higher CPU usage."
     },
     "s_show": {
@@ -11680,15 +11822,18 @@
     },
     "sb_proxinfopersec": {
       "group-id": "42",
-      "type": ""
+      "type": "float",
+      "desc": "Number of proxies to contact per second\nUsed when finding fastest path to a server."
     },
     "sb_proxretries": {
       "group-id": "42",
-      "type": ""
+      "type": "integer",
+      "desc":  "Number of times to attempt contact with a proxy before "
     },
     "sb_proxtimeout": {
       "group-id": "42",
-      "type": ""
+      "type": "integer",
+      "desc": "Timeout period (in ms) before a proxy connection times out."
     },
     "sb_showaddress": {
       "group-id": "42",
@@ -11756,7 +11901,12 @@
     "sb_showproxies": {
       "group-id": "42",
       "desc": "Toggle display of proxy servers (QWFwd and Qizmo) in the Server Browser.",
-      "type": "enum"
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Hide proxies in the server browser" },
+        { "name": "1", "description": "Show proxies in the server browser" },
+        { "name": "2", "description": "Only show proxies in the server browser" }
+      ]
     },
     "sb_showtimelimit": {
       "group-id": "42",
@@ -11822,7 +11972,9 @@
     },
     "scr_autoid_barlength": {
       "group-id": "40",
-      "type": ""
+      "type": "integer",
+      "desc": "Sets a fixed length of the bar for autoid functionality.",
+      "remarks": "If 0, length will be based on scr_autoid_namelength and/or length of individual player's name"
     },
     "scr_autoid_drawname": {
       "group-id": "31",
@@ -11835,19 +11987,36 @@
     },
     "scr_autoid_namelength": {
       "group-id": "40",
-      "type": ""
+      "type": "integer",
+      "desc": "Maximum number of characters in a player name above player's head with autoid"
     },
     "scr_autoid_scale": {
       "group-id": "40",
-      "type": ""
+      "type": "float",
+      "desc": "Sets relative size of scr_autoid display"
     },
     "scr_autoid_weaponicon": {
       "group-id": "40",
-      "type": ""
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Player's weapon is indicated by text (RL, etc)" },
+        { "name": "true", "description": "Player's weapon is indicated by an icon" }
+      ]
     },
     "scr_autoid_weapons": {
       "group-id": "40",
-      "type": ""
+      "type": "enum",
+      "desc": "When scr_autoid is > 4, this determines when the player's best weapon will appear",
+      "values": [
+        { "name": "1", "description": "Shotgun or better" },
+        { "name": "2", "description": "Super-shotgun or better" },
+        { "name": "4", "description": "Nailgun or better" },
+        { "name": "8", "description": "Super nailgun or better" },
+        { "name": "16", "description": "Grenade launcher or better" },
+        { "name": "32", "description": "Rocket launcher or better" },
+        { "name": "64", "description": "Lightning gun or better" }
+      ],
+      "remarks": "The order of 'best' weapon can be controlled via the 'tp_weapon_order' variable"
     },
     "scr_centerMenu": {
       "group-id": "17",
@@ -11950,10 +12119,7 @@
     "scr_consize": {
       "group-id": "5",
       "type": "float",
-      "values": [
-        { "name": "0", "description": "Minimal console height." },
-        { "name": "1", "description": "Maximum console height." }
-      ]
+      "desc": "Range from 0 (minimum console height) to 1 (maximum)"
     },
     "scr_conspeed": {
       "group-id": "5",
@@ -12044,7 +12210,11 @@
     },
     "scr_notifyalways": {
       "group-id": "40",
-      "type": ""
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "The notify area is hidden during intermission (chat messages go to console but not to screen)" },
+        { "name": "true", "description": "The notify area is always shown" }
+      ]
     },
     "scr_printspeed": {
       "group-id": "5",
@@ -12181,11 +12351,16 @@
     },
     "scr_scoreboard_afk": {
       "group-id": "47",
-      "type": ""
+      "type": "boolean",
+      "desc": "If set, indicate players who are AFK (don't have Quake active)"
     },
     "scr_scoreboard_afk_style": {
       "group-id": "47",
-      "type": ""
+      "type": "integer",
+      "values": [
+        { "name": "1", "description": "If user is AFK, time replaced with AFK" },
+        { "name": "2", "description": "If user is AFK, time value shown in red" }
+      ]
     },
     "scr_scoreboard_borderless": {
       "group-id": "47",
@@ -12311,23 +12486,28 @@
     },
     "scr_shownick_frame_color": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "If using '/shownick 1' in KTX, this determines the color of the frame around the on-screen information"
     },
     "scr_shownick_name_width": {
       "group-id": "40",
-      "type": ""
+      "type": "integer",
+      "desc": "Maximum length of player's name when using '/shownick 1' in KTX"
     },
     "scr_shownick_order": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Format string for results of '/shownick 1' in KTX"
     },
     "scr_shownick_scale": {
       "group-id": "40",
-      "type": ""
+      "type": "float",
+      "desc": "Adjusts relative size of text when showing results of '/shownick 1' in KTX"
     },
     "scr_shownick_time": {
       "group-id": "40",
-      "type": "float"
+      "type": "float",
+      "desc": "Number of seconds to show results of '/shownick 1' command in KTX"
     },
     "scr_shownick_x": {
       "group-id": "40",
@@ -12421,7 +12601,13 @@
     },
     "scr_teaminfo_powerup_style": {
       "group-id": "40",
-      "type": ""
+      "type": "enum",
+      "desc": "Controls how powerup indicators are displayed in scr_teaminfo",
+      "values": [
+        { "name": "1", "description": "Powerup icons" },
+        { "name": "2", "description": "Player face" },
+        { "name": "3", "description": "Coloured text" }
+      ]
     },
     "scr_teaminfo_scale": {
       "group-id": "40",
@@ -12496,11 +12682,16 @@
     },
     "scr_weaponstats_align_right": {
       "group-id": "40",
-      "type": ""
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Displays weapon stats on the left hand side of the screen" },
+        { "name": "true", "description": "Displays weapon stats on the right hand side of the screen" }
+      ]
     },
     "scr_weaponstats_frame_color": {
       "group-id": "40",
-      "type": "string"
+      "type": "string",
+      "desc": "Sets the color of the frame around scr_weaponstats display"
     },
     "scr_weaponstats_order": {
       "group-id": "40",
@@ -12509,7 +12700,8 @@
     },
     "scr_weaponstats_scale": {
       "group-id": "40",
-      "type": ""
+      "type": "float",
+      "desc": "Controls size of scr_weaponstats display.  1 = Normal text size"
     },
     "scr_weaponstats_x": {
       "group-id": "40",
@@ -13237,9 +13429,23 @@
       "group-id": "44",
       "desc": "Determines the color of the pants of the teammates you see. Overrides player\u0027s skin settings.",
       "remarks": "To be able to use RGB 24bit colors, look for r_teamskincolor variable.",
-      "type": "integer",
+      "type": "enum",
       "values": [
-        { "name": "*", "description": "-1 to turn this off, values from 0 to 13 for standard Quake colors" }
+        { "name": "-1", "description": "Disabled" },
+        { "name": "0", "description": "White" },
+        { "name": "1", "description": "Brown" },
+        { "name": "2", "description": "Lavender" },
+        { "name": "3", "description": "Khaki" },
+        { "name": "4", "description": "Red" },
+        { "name": "5", "description": "Lt Brown" },
+        { "name": "6", "description": "Peach" },
+        { "name": "7", "description": "Lt Peach" },
+        { "name": "8", "description": "Purple" },
+        { "name": "9", "description": "Dk Purple" },
+        { "name": "10", "description": "Tan" },
+        { "name": "11", "description": "Green" },
+        { "name": "12", "description": "Yellow" },
+        { "name": "13", "description": "Blue" }
       ]
     },
     "teamforceskins": {
@@ -13287,9 +13493,23 @@
       "group-id": "44",
       "desc": "Determines the color of the shirt of the teammates you see. Overrides player\u0027s skin settings.",
       "remarks": "To be able to use RGB 24bit colors, look for r_teamskincolor variable.",
-      "type": "integer",
+      "type": "enum",
       "values": [
-        { "name": "*", "description": "-1 to turn this off, values from 0 to 13 for standard Quake colors" }
+        { "name": "-1", "description": "Disabled" },
+        { "name": "0", "description": "White" },
+        { "name": "1", "description": "Brown" },
+        { "name": "2", "description": "Lavender" },
+        { "name": "3", "description": "Khaki" },
+        { "name": "4", "description": "Red" },
+        { "name": "5", "description": "Lt Brown" },
+        { "name": "6", "description": "Peach" },
+        { "name": "7", "description": "Lt Peach" },
+        { "name": "8", "description": "Purple" },
+        { "name": "9", "description": "Dk Purple" },
+        { "name": "10", "description": "Tan" },
+        { "name": "11", "description": "Green" },
+        { "name": "12", "description": "Yellow" },
+        { "name": "13", "description": "Blue" }
       ]
     },
     "telnet_log_level": {
@@ -13298,7 +13518,8 @@
     },
     "telnet_password": {
       "group-id": "43",
-      "type": "string"
+      "type": "string",
+      "desc": "Password for login via telnet.  Not currently used."
     },
     "timelimit": {
       "group-id": "43",
@@ -13312,7 +13533,23 @@
     "topcolor": {
       "group-id": "37",
       "desc": "Sets the shirt color.",
-      "type": "enum"
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "White" },
+        { "name": "1", "description": "Brown" },
+        { "name": "2", "description": "Lavender" },
+        { "name": "3", "description": "Khaki" },
+        { "name": "4", "description": "Red" },
+        { "name": "5", "description": "Lt Brown" },
+        { "name": "6", "description": "Peach" },
+        { "name": "7", "description": "Lt Peach" },
+        { "name": "8", "description": "Purple" },
+        { "name": "9", "description": "Dk Purple" },
+        { "name": "10", "description": "Tan" },
+        { "name": "11", "description": "Green" },
+        { "name": "12", "description": "Yellow" },
+        { "name": "13", "description": "Blue" }
+      ]
     },
     "tp_forceTriggers": {
       "group-id": "49",
@@ -13402,7 +13639,8 @@
     },
     "tp_name_filter": {
       "group-id": "13",
-      "type": "string"
+      "type": "string",
+      "desc": "TF only - added to end of tp_msgtfconced message"
     },
     "tp_name_flag": {
       "group-id": "13",
@@ -13663,10 +13901,20 @@
         { "name": "true", "description": "Object with highest priority will be chosen. First items in tp_point have highest priorities." }
       ]
     },
+    "tp_pointtimeout": {
+      "group-id": "49",
+      "type": "float",
+      "desc": "Time (in seconds) before the last pointed item (%j) is cleared."
+    },
     "tp_soundtrigger": {
       "group-id": "49",
       "desc": "SoundTrigger like proxys.\nA SoundTrigger must be terminated by either a CR, LF or filter. The .wav extension is not required at the end. Trigger is a character before the sound file.\nExample:\nfilter #a\nsay_team I\u0027m at %l ~location.wav\"\nsay_team ~location.wav$\\me: I\u0027m at %l #a\"\nsay_team ~location$\\me: I\u0027m at %l #a\"\nsay_team I\u0027m at %l ~location #a\"",
       "type": "string"
+    },
+    "tp_tooktimeout": {
+      "group-id": "49",
+      "type": "float",
+      "desc": "Time (in seconds) before the last item taken (%X) is cleared."
     },
     "tp_triggers": {
       "group-id": "49",
@@ -13708,10 +13956,7 @@
       "group-id": "39",
       "desc": "Turning this variable on will temporarily change the hue of your screen when inside liquid (water/slime/lava) (requires gl_polyblend 1)",
       "type": "float",
-      "values": [
-        { "name": "0", "description": "Off" },
-        { "name": "1", "description": "On" }
-      ]
+      "remarks": "Specify a percentage value, between 0 and 1.  0 turns the effect off."
     },
     "v_damagecshift": {
       "group-id": "39",
@@ -13735,10 +13980,7 @@
     "v_idlescale": {
       "group-id": "53",
       "desc": "This variable controls the amount that the screen should sway automatically.\nWhen this variable is set to a value above \"0\" the screen will start swaying in \nall directions, similar as if the player was drunk of had a concussion. If you \nwant to have some real fun, set this variable to a value of \"100\" and run around \nsome maps. The larger the value for this variable the more the screen will sway \nfrom side to side.",
-      "type": "integer",
-      "values": [
-        { "name": "0", "description": "Disable automatic swaying." }
-      ]
+      "type": "integer"
     },
     "v_ipitch_cycle": {
       "group-id": "53",
@@ -13811,6 +14053,15 @@
       "group-id": "53",
       "desc": "New variable v_viewheight can be used to get the effect of negative/zero values \nof cl_bobcycle etc in qw 2.33 . Negative values of v_viewheight = lower viewheight, \npositive = higher. Can\u0027t go below -7 or above 4 because that\u0027s the range you can get \nwith qw 2.33 by exploiting the bob cycle bug. Using v_viewheight automatically \nturns off weapon model bobbing (cl_bob*).",
       "type": "float"
+    },
+    "vid_24bit_depth": {
+      "group-id": "52",
+      "type": "boolean",
+      "remarks": "Visual artifacts may be visible if using a 16-bit depth-buffer (e.g. entities disappearing at distance)",
+      "values": [
+        { "name": "false", "description": "Size of depth-buffer will be system default" },
+        { "name": "true", "description": "Request 24-bit depth-buffer" }
+      ]
     },
     "vid_allowExtensions": {
       "group-id": "31",
@@ -13892,9 +14143,7 @@
       "group-id": "52",
       "desc": "Display/screen to use when in fullscreen mode.",
       "type": "integer",
-      "values": [
-        { "name": "*", "description": "Use vid_displaylist command to enumerate displays." }
-      ]
+      "remarks": "Use vid_displaylist command to enumerate displays."
     },
     "vid_flashonactivity": {
       "group-id": "52",
@@ -14034,9 +14283,7 @@
       "group-id": "52",
       "desc": "Display/screen to use when in windowed mode.",
       "type": "integer",
-      "values": [
-        { "name": "*", "description": "Use vid_displaylist command to enumerate displays." }
-      ]
+      "remarks": "Use vid_displaylist command to enumerate displays."
     },
     "vid_win_height": {
       "group-id": "52",
@@ -14086,13 +14333,13 @@
     "viewsize": {
       "group-id": "53",
       "desc": "This variable determines how large the viewable screen size is.",
-      "remarks": "...",
-      "type": "integer",
+      "remarks": "Value range is 30-120.  Values 100 & 110 are affected by cl_sbar",
+      "type": "enum",
       "values": [
+        { "name": "30", "description": "Minimum screen size" },
         { "name": "100", "description": "Normal screen size." },
         { "name": "110", "description": "Large screen size, without the weapons status bar." },
-        { "name": "120", "description": "Maximum screen size, without any status bars." },
-        { "name": "30", "description": "Minimum screen size" }
+        { "name": "120", "description": "Maximum screen size, without any status bars." }
       ]
     },
     "vip_password": {
