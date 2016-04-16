@@ -27,7 +27,8 @@ typedef enum
     t_enum,         // "value1, value2, value_wih_spaces"
     t_integer,      // "min max"
     t_float,        // "min max"
-    t_string        // "max length"
+    t_string,       // "max length"
+    t_unknown       // (missing from docs)
 }
 cvartype_t; 
 

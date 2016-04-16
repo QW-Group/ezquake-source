@@ -144,6 +144,7 @@ static void Help_DescribeVar(const json_variable_t *var)
 				break;
 			case t_boolean:
 			case t_enum:
+			case t_unknown:
 				con_ormask = 128;
 				if (var->value_type == t_boolean && !strcmp(name, "false"))
 					Com_Printf("0");
@@ -236,6 +237,8 @@ static const json_variable_t* JSON_Variable_Load(const char* name)
 		result.value_type = t_boolean;
 	else if (!strcmp(variableType, "enum"))
 		result.value_type = t_enum;
+	else
+		result.value_type = t_unknown;
 	result.values = json_object_get(variable, "values");
 	if (!json_is_array(result.values))
 		result.values = NULL;
@@ -299,6 +302,7 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 				break;
 			case t_boolean:
 			case t_enum:
+			default:
 				if (var->value_type == t_boolean && !strcmp(name, "false"))
 					strlcat (buf, "0", bufsize);
 				else if (var->value_type == t_boolean && !strcmp(name, "true"))
@@ -486,6 +490,10 @@ void Help_Missing_Variables(void)
 
 	for (cvar = cvar_vars; cvar && cvar_count < sizeof(sorted_cvars) / sizeof(sorted_cvars[0]); cvar = cvar->next) {
 		const json_variable_t* help_cvar = JSON_Variable_Load(cvar->name);
+
+		if (Cvar_GetFlags(cvar) & CVAR_USER_CREATED)
+			continue;
+
 		if (! help_cvar)
 			sorted_cvars[cvar_count++] = cvar;
 	}
@@ -514,10 +522,161 @@ void Help_Missing_f(void)
 	Help_Missing_Variables();
 }
 
+void Help_Issues_Commands(void)
+{
+	// TODO: documentation for commands generally comes from .c functions, not really
+	//       enough information to validate against documentation
+}
+
+void Help_Issues_Variables(void)
+{
+	static const char* validTypes[] = {
+		"string", "integer", "float", "boolean", "enum"
+	};
+	extern cvar_t *cvar_vars;
+
+	json_t* varsObj = NULL;
+	json_t* groupsObj = NULL;
+	cvar_t *cvar = NULL;
+	int i = 0;
+	int num_errors = 0;
+	const char* name = NULL;
+	json_t* variable = NULL;
+
+	if (!variables_root) {
+		return;
+	}
+
+	varsObj = json_object_get(variables_root, "vars");
+	if (!varsObj) {
+		return;
+	}
+
+	groupsObj = json_object_get(variables_root, "groups");
+	if (!groupsObj)
+		return;
+
+	json_object_foreach(varsObj, name, variable) {
+		const char* group_id = json_string_value(json_object_get(variable, "group-id"));
+		const char* type     = json_string_value(json_object_get(variable, "type"));
+		const char* desc     = json_string_value(json_object_get(variable, "desc"));
+		json_t* examples     = json_object_get(variable, "values");
+		qbool valid_type     = (type && strlen(type));
+		qbool valid_desc     = (desc && strlen(desc));
+		qbool num_examples   = examples && json_is_array(examples) ? json_array_size(examples) : 0;
+
+		qbool enum_without_examples = type && !strcmp(type, "enum") && num_examples == 0;
+		qbool non_enum_with_examples = type && strcmp(type, "enum") && num_examples;
+
+		if (non_enum_with_examples) {
+			if (!strcmp(type, "boolean")) {
+				// booleans can have true/false in value section
+				non_enum_with_examples = num_examples != 2;
+			}
+			else {
+				// other types can have * as single example
+				json_t* example   = json_array_get(examples, 0);
+				const char* value = json_string_value(json_object_get(example, "name"));
+
+				if (value && !strcmp(value, "*")) {
+					non_enum_with_examples = false;
+				}
+			}
+		}
+
+		// old variables might still be in documentation, allows "/describe <var>" to explain why it is removed
+		{
+			qbool in_client = false;
+
+			for (cvar = cvar_vars; cvar && !in_client; cvar = cvar->next) {
+				in_client = !strcasecmp(cvar->name, name);
+			}
+			if (!in_client) {
+				continue;
+			}
+		}
+
+		// ignore documentation for server variables (tighten this in future)
+		{
+			qbool obselete_or_server_only = false;
+
+			for (i = 0; i < json_array_size(groupsObj); ++i) {
+				const char* id = json_string_value(json_object_get(json_array_get(groupsObj, i), "id"));
+				const char* major_group = json_string_value(json_object_get(json_array_get(groupsObj, i), "major-group"));
+
+				if (id && group_id && !strcmp(id, group_id)) {
+					if (major_group && (!strcmp(major_group, "Server") || !strcmp(major_group, "Obselete"))) {
+						obselete_or_server_only = true;
+					}
+				}
+			}
+
+			if (obselete_or_server_only) {
+				continue;
+			}
+		}
+
+		// don't expect complete documentation right now (tighten this in future)
+		if (!strncmp(name, "hud_", 4) || !strncmp(name, "sv_", 3)) {
+			continue;
+		}
+
+		if (valid_type) {
+			valid_type = false;
+			for (i = 0; i < sizeof(validTypes) / sizeof(validTypes[0]); ++i) {
+				valid_type |= !strcmp(validTypes[i], type);
+			}
+		}
+
+		if (!valid_type  || !(valid_desc || num_examples) || enum_without_examples || non_enum_with_examples) {
+			if (num_errors == 0) {
+				Con_Printf("Variables with issues:\n");
+				con_margin = CONSOLE_HELP_MARGIN;
+			}
+
+			con_ormask = 128;
+			Con_Printf("%s", name);
+			con_ormask = 0;
+			Con_Printf(": ");
+			con_margin = CONSOLE_HELP_MARGIN * 2;
+			if (!valid_type) {
+				Con_Printf("invalid type (\"%s\")", type ? type : "");
+			}
+			else if (enum_without_examples || non_enum_with_examples) {
+				Con_Printf("invalid examples for type \"%s\" (%d)", type, num_examples);
+			}
+			else {
+				if (!valid_desc && num_examples == 0) {
+					Con_Printf("invalid description/examples", name);
+				}
+				else if (!valid_desc) {
+					Con_Printf("invalid description", name);
+				}
+				else {
+					Con_Printf("invalid examples", name);
+				}
+			}
+			con_margin = CONSOLE_HELP_MARGIN;
+			Con_Printf("\n");
+			++num_errors;
+		}
+	}
+
+	con_margin = 0;
+	Con_Printf("%d variables with issues.\n", num_errors);
+}
+
+void Help_Issues_f(void)
+{
+	Help_Issues_Commands();
+	Help_Issues_Variables();
+}
+
 void Help_Init(void)
 {
 	Cmd_AddCommand("describe", Help_Describe_f);
 	Cmd_AddCommand("help_missing", Help_Missing_f);
+	Cmd_AddCommand("help_issues", Help_Issues_f);
 
 	Help_LoadDocs();
 }
