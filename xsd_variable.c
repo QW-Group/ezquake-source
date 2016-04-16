@@ -70,6 +70,9 @@ void XSD_Variable_Free(xml_t *doc)
             document->value.enum_value = next;
         }
         break;
+	case t_unknown:
+		// handled to prevent compiler warning...
+		break;
     }
 
     if (document->document_type)
