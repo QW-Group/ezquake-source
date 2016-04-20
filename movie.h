@@ -29,7 +29,7 @@ qbool Movie_IsCapturing(void);
 qbool Movie_IsCapturingAVI(void);
 void Movie_Stop(qbool restarting);
 float Movie_Frametime(void);
-void Movie_PrepareSound(void);
-qbool Movie_TransferSound(void);
+qbool Movie_TransferSound(void* data, int snd_linear_count);
+void Movie_MixFrameSound(void (*mixFunction)(void));
 
 #endif

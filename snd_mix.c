@@ -36,11 +36,11 @@ typedef struct portable_samplepair_s {
 portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
 int snd_scaletable[32][256];
 int snd_vol, *snd_p;
-short *snd_out;
 
 float voicevolumemod = 1; // voice volume modifier.
 
-int snd_linear_count;
+static int snd_linear_count;
+static short *snd_out;
 
 static void Snd_WriteLinearBlastStereo16 (int* input_buffer, short* output_buffer, int snd_vol)
 {
@@ -80,13 +80,7 @@ static void S_TransferStereo16 (int endtime)
 	while (lpaintedtime < endtime) {
 
 		// handle recirculating buffer issues
-		// FIXME: Look into below ..
-#if defined(__linux__) || defined(__FreeBSD__)
-		// dimman modified, taken from fodquake, accept buffers that arent a power of 2
 		lpos = lpaintedtime % ((shw->samples>>1));
-#else
-		lpos = lpaintedtime & ((shw->samples>>1) - 1); //original
-#endif
 		snd_out = (short *) pbuf + (lpos << 1);
 
 		snd_linear_count = (shw->samples>>1) - lpos;
@@ -100,6 +94,12 @@ static void S_TransferStereo16 (int endtime)
 			Snd_WriteLinearBlastStereo16_SwapStereo (snd_p, snd_out, clientVolume);
 		else
 			Snd_WriteLinearBlastStereo16 (snd_p, snd_out, clientVolume);
+
+#ifdef _WIN32
+		if (Movie_IsCapturingAVI ()) {
+			Movie_TransferSound (snd_out, snd_linear_count);
+		}
+#endif
 
 		snd_p += snd_linear_count;
 		lpaintedtime += (snd_linear_count>>1);

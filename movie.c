@@ -36,9 +36,6 @@ void SCR_Movieshot (char *);	//joe: capturing to avi
 
 //joe: capturing audio
 #ifdef _WIN32
-extern short *snd_out;
-extern int snd_linear_count;
-
 // Variables for buffering audio
 short capture_audio_samples[44100];	// big enough buffer for 1fps at 44100Hz
 int captured_audio_samples;
@@ -58,7 +55,7 @@ cvar_t   movie_vid_maxlen   = {"demo_capture_vid_maxlen", "0"};
 static char movie_avi_filename[MAX_OSPATH];	// Stores the user's requested filename
 static void Movie_Start_AVI_Capture(qbool split);
 static int avi_number = 0;
-static unsigned char aviSoundBuffer[256] = { 0 };
+static unsigned char aviSoundBuffer[4096] = { 0 };
 #endif
 
 static volatile qbool movie_is_capturing = false;
@@ -148,7 +145,7 @@ void Movie_Stop (qbool restarting) {
 		Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
 	}
 #endif
-	movie_is_capturing = false;
+	movie_is_capturing = restarting;
 }
 
 void Movie_Demo_Capture_f(void) {
@@ -157,10 +154,10 @@ void Movie_Demo_Capture_f(void) {
 	char *error;
 	
 #ifdef _WIN32
-	error = va("Usage: %s (\"start\" time [avifile]) | \"stop\">\n", Cmd_Argv(0));
+	error = va("Usage: %s (\"start\" time [avifile]) | \"stop\"\n", Cmd_Argv(0));
 	if ((argc = Cmd_Argc()) != 2 && argc != 3 && argc != 4) {
 #else
-	error = va("Usage: %s (\"start\" time) | \"stop\">\n", Cmd_Argv(0));
+	error = va("Usage: %s (\"start\" time) | \"stop\"\n", Cmd_Argv(0));
 	if ((argc = Cmd_Argc()) != 2 && argc != 3) {
 #endif
 		Com_Printf(error);
@@ -269,6 +266,12 @@ void Movie_Init(void) {
 #endif
 }
 
+double Movie_FrameTime (void)
+{
+	// Default to 30 fps.
+	return (movie_fps.value > 0) ? (1.0 / movie_fps.value) : (1 / 30.0);
+}
+
 double Movie_StartFrame(void) 
 {
 	double time;
@@ -284,8 +287,7 @@ double Movie_StartFrame(void)
 		Cbuf_AddTextEx (&cbuf_main, "f_captureframe\n");
 	}
 
-	// Default to 30 fps.
-	time = (movie_fps.value > 0) ? (1.0 / movie_fps.value) : (1 / 30.0);
+	time = Movie_FrameTime();
 	return bound(1.0 / 1000, time / views, 1.0);
 }
 
@@ -372,33 +374,43 @@ void Movie_FinishFrame(void)
 
 //joe: capturing audio
 #ifdef _WIN32
+static qbool frame_has_sound = false;
+
 qbool Movie_IsCapturingAVI(void) {
 	return movie_is_avi && Movie_IsCapturing();
 }
 
-void Movie_PrepareSound(void) {
-	memset(aviSoundBuffer, 0, sizeof(aviSoundBuffer));
+void Movie_MixFrameSound (void (*mixFunction)(void))
+{
+	int samples_required = (int)(0.5 + Movie_FrameTime() * shw->khz) * shw->numchannels;
 
+	memset(aviSoundBuffer, 0, sizeof(aviSoundBuffer));
 	shw->buffer = (unsigned char*)aviSoundBuffer;
-	shw->samples = sizeof(aviSoundBuffer) / shw->numchannels;
+	shw->samples = min(samples_required, sizeof(aviSoundBuffer) / 2);
+	frame_has_sound = false;
+
+	do {
+		mixFunction();
+	} while (! frame_has_sound);
 }
 
-qbool Movie_TransferSound(void) {
-	int samples_per_frame = (int)(0.5 + cls.frametime * shw->khz);
+void Movie_TransferSound(void* data, int snd_linear_count)
+{
+	int samples_per_frame = (int)(0.5 + Movie_FrameTime() * shw->khz);
 
-	// Write one frame of sound
-	memcpy(capture_audio_samples + (captured_audio_samples << 1), snd_out, snd_linear_count * shw->numchannels);
+	// Write some sound
+	memcpy(capture_audio_samples + (captured_audio_samples << 1), data, snd_linear_count * shw->numchannels);
 	captured_audio_samples += (snd_linear_count >> 1);
-	shw->snd_sent += sizeof(aviSoundBuffer);
+	shw->snd_sent += snd_linear_count * shw->numchannels;
 
 	if (captured_audio_samples >= samples_per_frame) {
 		// We have enough audio samples to match one frame of video
-		Capture_WriteAudio(captured_audio_samples, (byte *)capture_audio_samples);
-		captured_audio_samples = 0;
-		return true;
-	}
+		Capture_WriteAudio(samples_per_frame, (byte *)capture_audio_samples);
+		memcpy (capture_audio_samples, capture_audio_samples + (samples_per_frame << 1), (captured_audio_samples - samples_per_frame) * 2 * shw->numchannels);
+		captured_audio_samples -= samples_per_frame;
 
-	return false;
+		frame_has_sound = true;
+	}
 }
 #endif
 
