@@ -1031,7 +1031,7 @@ void SCR_SetupAutoID (void) {
 	if (!scr_autoid.value)
 		return;
 
-	if (cls.state != ca_active || !cl.validsequence)
+	if (cls.state != ca_active || !cl.validsequence || cl.intermission)
 		return;
 
 	if (!cls.demoplayback && !cl.spectator)
@@ -1260,7 +1260,7 @@ void SCR_DrawAutoID (void)
 	int i, x, y;
 	float scale;
 
-	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator))
+	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator) || cl.intermission)
 		return;
 
 	for (i = 0; i < autoid_count; i++)
@@ -1393,7 +1393,7 @@ void SCR_SetupCI (void) {
 	if (!bound(0, r_chaticons_alpha.value, 1))
 		return;
 
-	if (cls.state != ca_active || !cl.validsequence)
+	if (cls.state != ca_active || !cl.validsequence || cl.intermission)
 		return;
 
 	if (cl.spectator)
