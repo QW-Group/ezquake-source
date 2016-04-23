@@ -94,7 +94,6 @@ void VID_Restore(void);
 
 qbool VID_VSyncIsOn(void);
 qbool VID_VSyncLagFix(void);
-void VID_CvarInit(void);
 
 const SDL_DisplayMode *VID_GetDisplayMode(int index);
 int VID_GetCurrentModeIndex(void);

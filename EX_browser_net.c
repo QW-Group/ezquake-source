@@ -40,7 +40,6 @@ int oldPingHost(char *host_to_ping, int count);
 int oldPingHosts(server_data *servs[], int servsn, int count);
 int PingHost(char *host_to_ping, unsigned short port, int count, int time_out);
 int PingHosts(server_data *servs[], int servsn, int count);
-void TP_ExecTrigger (const char *s);
 
 extern sem_t serverinfo_semaphore;
 // To prevent several Serverinfo threads to be started at the same time
@@ -595,8 +594,8 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
     rebuild_all_players = 1;
     ping_phase = 0;
 
-	TP_ExecTrigger("f_sbrefreshdone");
-	
+	sb_queuedtriggers |= SB_TRIGGER_REFRESHDONE;
+
 	if (sb_listcache.integer) {
 		SB_Serverlist_Serialize_f();
 	}

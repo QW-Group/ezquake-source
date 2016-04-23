@@ -42,19 +42,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 source_data *sources[MAX_SOURCES];
 int sourcesn;
 
-extern sem_t serverlist_semaphore;
-
 source_data * Create_Source(void)
 {
-    source_data *s;
-    s = (source_data *) Q_malloc(sizeof(source_data));
-    s->serversn = 0;
-    s->last_update.wYear = 0;
-    s->name[0] = 0;
-    s->checked = 0;
-    s->servers = NULL;
-    s->unique = source_unique++;
-    return s;
+	source_data *s;
+	s = (source_data *) Q_malloc(sizeof(source_data));
+	s->serversn = 0;
+	s->servers_allocated = 0;
+	s->last_update.wYear = 0;
+	s->name[0] = 0;
+	s->checked = 0;
+	s->servers = NULL;
+	s->unique = source_unique++;
+	return s;
 }
 
 void Reset_Source(source_data *s)
@@ -66,8 +65,9 @@ void Reset_Source(source_data *s)
             Q_free(s->servers[i]);
         Q_free(s->servers);
     }
-    s->serversn = 0;
-    s->last_update.wYear = 0;
+	s->serversn = 0;
+	s->servers_allocated = 0;
+	s->last_update.wYear = 0;
     //s->name[0] = 0;
 }
 
@@ -146,7 +146,7 @@ static size_t SB_URL_To_Filename_Length(const char *s)
 	return strlen(s)*3+1;
 }
 
-void Precache_Source(source_data *s)
+static void Precache_Source(source_data *s)
 {
     int i;
     char name[1024];
@@ -174,26 +174,27 @@ void Precache_Source(source_data *s)
 
 	Update_Source_From_File(s, name, servers, &serversn);
 
-    if (serversn > 0)
-    {
-        SYSTEMTIME tm;
-	char tmp_path[MAX_OSPATH] = {0};
+	if (serversn > 0)
+	{
+		SYSTEMTIME tm;
+		char tmp_path[MAX_OSPATH] = {0};
 
-	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/ezquake/%s", com_basedir, name);
-        if (GetFileLocalTime(tmp_path, &tm))
-        {
-            Reset_Source(s);
-            s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
-            for (i=0; i < serversn; i++)
-                s->servers[i] = servers[i];
-            s->serversn = serversn;
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s/ezquake/%s", com_basedir, name);
+		if (GetFileLocalTime(tmp_path, &tm))
+		{
+			Reset_Source(s);
+			s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
+			for (i=0; i < serversn; i++)
+				s->servers[i] = servers[i];
+			s->serversn = serversn;
+			s->servers_allocated = serversn;
 
-            if (s->checked)
-                rebuild_servers_list = 1;
+			if (s->checked)
+				rebuild_servers_list = 1;
 
-            memcpy(&s->last_update, &tm, sizeof(SYSTEMTIME));
-        }
-    }
+			memcpy(&s->last_update, &tm, sizeof(SYSTEMTIME));
+		}
+	}
 }
 
 static void SB_Process_URL_Buffer(FILE *f, server_data *servers[],
@@ -366,7 +367,7 @@ void Update_Source(source_data *s)
         
     }
 
-	Sys_SemWait(&serverlist_semaphore);
+	SB_ServerList_Lock();
     // copy all servers to source list
     if (serversn > 0)
     {
@@ -375,6 +376,7 @@ void Update_Source(source_data *s)
 		for (i=0; i < serversn; i++)
 			s->servers[i] = servers[i];
         s->serversn = serversn;
+		s->servers_allocated = serversn + (s->type == type_file ? MAX_UNBOUND : 0);
 
         if (s->checked)
             rebuild_servers_list = 1;
@@ -392,7 +394,7 @@ void Update_Source(source_data *s)
             Reset_Source(s);
             s->servers = (server_data **) Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
         }
-    Sys_SemPost(&serverlist_semaphore);
+	SB_ServerList_Unlock();
     if (should_dump)
         DumpSource(s);
     //Com_Printf ("Updating %15.15s: %d servers\n", s->name, serversn);
@@ -409,7 +411,6 @@ typedef struct infohost_s
 
 source_data **psources;
 int psourcesn;
-void TP_ExecTrigger (const char *s);
 
 DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 {
@@ -554,16 +555,20 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
         if (serversn > 0)
         {
 			updated++;
+
+			SB_ServerList_Lock();
+
             Reset_Source(s);
             s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
             for (i=0; i < serversn; i++)
                 s->servers[i] = servers[i];
             s->serversn = serversn;
-
+			s->servers_allocated = serversn;
             if (s->checked)
                 rebuild_servers_list = 1;
-
             GetLocalTime(&(s->last_update));
+
+			SB_ServerList_Unlock();
 
             if (sb_mastercache.value)
                 DumpSource(s);
@@ -580,8 +585,8 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
     //Sys_MSleep(100);
 
     updating_sources = 0;
-	TP_ExecTrigger("f_sbupdatesourcesdone");
-    return 0;    
+	sb_queuedtriggers |= SB_TRIGGER_SOURCESUPDATED;
+    return 0;
 }
 
 void Update_Init(source_data *s[], int sn)
@@ -796,6 +801,7 @@ void Reload_Sources(void)
 	char ln[2048];
     source_data *s;
 
+	SB_ServerList_Lock();
     for (i=0; i < sourcesn; i++)
         Delete_Source(sources[i]);
     sourcesn = 0;
@@ -805,6 +811,8 @@ void Reload_Sources(void)
     sources[0]->type = type_dummy;
     strlcpy (sources[0]->name, "Unbound", sizeof (sources[0]->name));
     sources[0]->servers = (server_data **) Q_malloc(MAX_UNBOUND*sizeof(server_data *));
+	sources[0]->serversn = 0;
+	sources[0]->servers_allocated = MAX_UNBOUND;
 
 	sourcesn = 1;
 
@@ -812,6 +820,7 @@ void Reload_Sources(void)
 	if (!f) 
 	{
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
+		SB_ServerList_Unlock();
 		return;
 	}
 
@@ -887,6 +896,7 @@ void Reload_Sources(void)
 
     rebuild_servers_list = 1;
     resort_sources = 1;
+	SB_ServerList_Unlock();
 }
 
 int rebuild_servers_list = 0;
@@ -899,7 +909,7 @@ void Rebuild_Servers_List(void)
     serversn = 0;
 	
     rebuild_servers_list = 0;
-	Sys_SemWait(&serverlist_semaphore);
+	SB_ServerList_Lock();
 
     for (i=0; i < sourcesn; i++)
     {
@@ -910,6 +920,9 @@ void Rebuild_Servers_List(void)
             {
                 int k;
                 qbool found_duplicate = false;
+
+				if (sources[i]->servers[j] == NULL)
+					continue;
 
                 // Try and find a matching address
                 for (k = 0; k < serversn && k < server_limit; k++) {
@@ -922,6 +935,8 @@ void Rebuild_Servers_List(void)
                 if (! found_duplicate) {
                     // if not on list yet
                     if (serversn < server_limit) {
+						if (sources[i]->servers[j]->ping < -1)
+							serversn = serversn;
                         servers[serversn++] = sources[i]->servers[j];
                     }
                     else {
@@ -932,16 +947,12 @@ void Rebuild_Servers_List(void)
         }
     }
 
-    if (suppressed_servers) {
-        Con_Printf("Warning: suppressed %d servers\n", suppressed_servers);
-    }
-
     resort_servers = 1;
     rebuild_all_players = 1;
     Servers_pos = 0;
     serversn_passed = serversn;
 
-	Sys_SemPost(&serverlist_semaphore);
+	SB_ServerList_Unlock();
 }
 
 void DumpSource(source_data *s)
@@ -978,7 +989,7 @@ void DumpSource(source_data *s)
     fclose(f);
 }
 
-void AddUnbound(server_data *s)
+static void AddUnbound(server_data *s)
 {
     if (sources[0]->serversn >= MAX_UNBOUND)
         return;
@@ -1001,8 +1012,14 @@ void RemoveFromFileSource(source_data *source, server_data *serv)
     for (i=0; i < source->serversn; i++)
         if (!memcmp(&source->servers[i]->address, &serv->address, 6))
         {
-            // add to unbound
-            AddUnbound(serv);
+			// Only add to unbound if not in any other sources...
+			int j = 0;
+			qbool in_other_source = false;
+			for (j = 0; j < sourcesn; ++j) {
+				if (source != sources[j]) {
+					in_other_source |= IsInSource(sources[j], serv);
+				}
+			}
 
             // remove from source
             if (i != source->serversn - 1)
@@ -1011,22 +1028,40 @@ void RemoveFromFileSource(source_data *source, server_data *serv)
                         source->servers+i+1,
                         (source->serversn - i - 1) * sizeof(source_data *));
             }
-            (source->serversn) --;
+            --source->serversn;
             DumpSource(source);
-            Mark_Source(sources[0]);
+			if (!in_other_source) {
+				// add to unbound
+				AddUnbound(serv);
+				Mark_Source(sources[0]);
+			}
             return;
         }
 }
 
 void AddToFileSource(source_data *source, server_data *serv)
 {
-    if (IsInSource(source, serv))
-        return;
+	if (IsInSource(source, serv))
+		return;
 
-    source->servers[source->serversn] = serv;
-    (source->serversn) ++;
-    rebuild_servers_list = true;
+	SB_ServerList_Lock();
 
-    DumpSource(source);
-    Mark_Source(sources[0]);
+    // reallocate buffer if we've run out of space
+	if (source->serversn >= source->servers_allocated) {
+		int new_size = source->servers_allocated + 4;
+		server_data** newlist = Q_malloc(new_size * sizeof(server_data*));
+
+		memcpy(newlist, source->servers, sizeof(server_data*) * source->servers_allocated);
+		Q_free(source->servers);
+		source->servers = newlist;
+		source->servers_allocated = new_size;
+	}
+
+	source->servers[source->serversn++] = Clone_Server(serv);
+	rebuild_servers_list = true;
+
+	SB_ServerList_Unlock();
+
+	DumpSource(source);
+	Mark_Source(sources[0]);
 }

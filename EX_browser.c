@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "menu_multiplayer.h"
 #include "qsound.h"
-
+#include "teamplay.h"
 
 int source_unique = 0;
 
@@ -139,6 +139,9 @@ int ping_phase = 0;
 double ping_pos;
 int abort_ping;
 
+// allow background threads to fire triggers
+int sb_queuedtriggers = 0;
+
 // mouse and server list columns
 static qbool mouse_in_header_row = false;
 static int mouse_header_pos_y = 0;
@@ -146,7 +149,7 @@ static unsigned int mouse_hovered_column;
 
 extern cvar_t cl_proxyaddr;
 
-sem_t serverlist_semaphore;
+static SDL_mutex* serverlist_mutex = NULL;
 sem_t serverinfo_semaphore;
 
 typedef struct sb_column_t {
@@ -172,12 +175,12 @@ void Serverinfo_Stop(void);
 
 void SB_ServerList_Lock(void)
 {
-	Sys_SemWait(&serverlist_semaphore);
+	SDL_LockMutex(serverlist_mutex);
 }
 
 void SB_ServerList_Unlock(void)
 {
-	Sys_SemPost(&serverlist_semaphore);
+	SDL_UnlockMutex(serverlist_mutex);
 }
 
 static qbool SB_Is_Selected_Proxy(const server_data *s)
@@ -390,6 +393,40 @@ server_data * Create_Server (char *ip)
 			ntohs(s->address.port));
 
 	return s;
+}
+
+server_data* Clone_Server(server_data* source)
+{
+	int i = 0;
+
+	server_data* new_server = Create_Server2(source->address);
+
+	new_server->bestping = source->bestping;
+	memcpy(&new_server->display, &source->display, sizeof(source->display));
+	new_server->keysn = source->keysn;
+	for (i = 0; i < new_server->keysn; ++i) {
+		new_server->keys[i] = Q_strdup(source->keys[i]);
+		new_server->values[i] = Q_strdup(source->values[i]);
+	}
+	new_server->occupancy = source->occupancy;
+	new_server->passed_filters = source->passed_filters;
+	new_server->ping = source->ping;
+
+	new_server->playersn = source->playersn;
+	for (i = 0; i < sizeof(source->players) / sizeof(source->players[0]); ++i) {
+		if (source->players[i]) {
+			new_server->players[i] = Q_malloc(sizeof(playerinfo));
+
+			memcpy(new_server->players[i], source->players[i], sizeof(playerinfo));
+		}
+	}
+
+	new_server->qizmo = source->qizmo;
+	new_server->qwfwd = source->qwfwd;
+	new_server->spectatorsn = source->spectatorsn;
+	new_server->support_teams = source->support_teams;
+
+	return new_server;
 }
 
 server_data * Create_Server2 (netadr_t n)
@@ -975,6 +1012,11 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 	char line[1024];
 	int i, pos, listsize;
 
+	if (updating_sources) {
+		UI_Print_Center(x, y + 8, w, "Updating, please wait", false);
+		return;
+	}
+
 	if (rebuild_servers_list)
 		Rebuild_Servers_List();
 
@@ -989,7 +1031,7 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 
 	if (serversn_passed > 0)
 	{
-		Sys_SemWait(&serverlist_semaphore);
+		SB_ServerList_Lock();
 
         Servers_pos = max(Servers_pos, 0);
         Servers_pos = min(Servers_pos, serversn_passed-1);
@@ -1010,7 +1052,7 @@ void SB_Servers_Draw (int x, int y, int w, int h)
             Servers_disp = Servers_pos;
 
 		if (updating_sources) {
-			Sys_SemPost(&serverlist_semaphore);
+			SB_ServerList_Unlock();
 			return;
 		}
 
@@ -1100,7 +1142,7 @@ void SB_Servers_Draw (int x, int y, int w, int h)
 				Draw_Server_Statusbar(x, y, w, h, servers[Servers_pos], Servers_pos, serversn_passed);
 			}
 		}
-		Sys_SemPost(&serverlist_semaphore);
+		SB_ServerList_Unlock();
 	} else if (!adding_server) {
 		UI_Print_Center(x, y+8, w, "No servers filtered", false);
 		UI_Print_Center(x, y+24, w, "Press [space] to refresh the list", true);
@@ -2852,10 +2894,10 @@ void Filter_Servers(void)
 
 void Sort_Servers (void)
 {
-	Sys_SemWait(&serverlist_semaphore);
+	SB_ServerList_Lock();
     Filter_Servers();
     qsort(servers, serversn, sizeof(servers[0]), Servers_Compare_Func);
-	Sys_SemPost(&serverlist_semaphore);
+	SB_ServerList_Unlock();
 }
 
 
@@ -3232,10 +3274,22 @@ void Browser_Init2 (void)
     serversn = serversn_passed = 0;
     sourcesn = 0;
 
-	Sys_SemInit(&serverlist_semaphore, 1, 1);
+	serverlist_mutex = SDL_CreateMutex();
 	SB_PingTree_Init();
 
     // read sources from SOURCES_PATH
 	Reload_Sources();
 	MarkDefaultSources();
+}
+
+void SB_ExecuteQueuedTriggers(void) {
+	if (sb_queuedtriggers & SB_TRIGGER_REFRESHDONE) {
+		TP_ExecTrigger("f_sbrefreshdone");
+		sb_queuedtriggers &= ~SB_TRIGGER_REFRESHDONE;
+	}
+
+	if (sb_queuedtriggers & SB_TRIGGER_SOURCESUPDATED) {
+		TP_ExecTrigger("f_sbupdatesourcesdone");
+		sb_queuedtriggers &= ~SB_TRIGGER_SOURCESUPDATED;
+	}
 }
