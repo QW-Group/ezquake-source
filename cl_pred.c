@@ -172,9 +172,8 @@ static void CL_LerpMove (qbool angles_lerp)
 	extern int cmdtime_msec;
 	extern double physframetime;
 	extern qbool cl_nolerp_on_entity_flag;
-	extern float prevtime;
 	double  current_time = cls.demoplayback ? cls.demotime : cls.realtime;
-	double  current_lerp_time = cls.demoplayback ? prevtime : (cmdtime_msec * 0.001);
+	double  current_lerp_time = cls.demoplayback ? cls.demopackettime : (cmdtime_msec * 0.001);
 	qbool   physframe = cls.netchan.outgoing_sequence != lastsequence;
 
 	if ((cl_nolerp.value || cl_nolerp_on_entity_flag)) 

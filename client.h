@@ -315,12 +315,13 @@ typedef struct
 	//
 	// Time vars.
 	//
-	int			framecount;				///< Incremented every frame, never reset.
-	double		realtime;				///< Scaled by cl_demospeed.
-	double		demotime;				///< Scaled by cl_demospeed, reset when starting a demo.
-	double		demo_rewindtime;		///< The time that we should jump to when rewinding.
-	double		trueframetime;			///< Time since last frame.
-	double		frametime;				///< Time since last frame, scaled by cl_demospeed.
+	int         framecount;       ///< Incremented every frame, never reset.
+	double      realtime;         ///< Scaled by cl_demospeed.
+	double      demotime;         ///< Scaled by cl_demospeed, reset when starting a demo.
+	double      demo_rewindtime;  ///< The time that we should jump to when rewinding.
+	double      trueframetime;    ///< Time since last frame.
+	double      frametime;        ///< Time since last frame, scaled by cl_demospeed.
+	double      demopackettime;   ///< Timestamp of current demo packet, whether seeking or not
 
 	//
 	// Network stuff.

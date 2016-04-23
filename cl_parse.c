@@ -1934,7 +1934,6 @@ void CL_ParseClientdata (void)
 	int newparsecount, i;
 	float latency;
 	frame_t *frame;
-	extern float prevtime;
 
 	// calculate simulated time of message
 	newparsecount = cls.netchan.incoming_acknowledged;
@@ -1949,7 +1948,7 @@ void CL_ParseClientdata (void)
 		frame->senttime = cls.realtime - cls.frametime;
 	}
 	else if (cls.demoplayback) {
-		frame->receivedtime = prevtime;
+		frame->receivedtime = cls.demopackettime;
 	}
 
 	parsecounttime = cl.frames[parsecountmod].senttime;
