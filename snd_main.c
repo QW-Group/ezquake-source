@@ -168,7 +168,7 @@ static void S_SDL_callback(void *userdata, Uint8 *stream, int len)
 	S_UnlockMixer();
 
 	// Implicit Minimized in first case
-	if ((sys_inactivesound.integer == 0 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized)) {
+	if ((sys_inactivesound.integer == 0 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized) || cls.demoseeking) {
 		SDL_memset(stream, 0, len);
 	}
 }
