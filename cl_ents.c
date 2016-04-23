@@ -1580,23 +1580,27 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	return true;
 }
 
+static double CL_PlayerTime (void)
+{
+	double current_time = (cls.demoplayback && !cls.mvdplayback) ? cls.demotime : cls.realtime;
+	double playertime = current_time - cls.latency + 0.02;
+
+	return min (playertime, current_time);
+}
+
 // Create visible entities in the correct position for all current players
 void CL_LinkPlayers (void) 
 {
 	int j, msec, i, flicker, oldphysent;
 	float *org;
 	vec3_t	tmp;
-	double playertime;
+	double playertime = CL_PlayerTime();
 	player_info_t *info;
 	player_state_t *state, exact;
 	entity_t ent;
 	centity_t *cent;
 	frame_t *frame;
 	customlight_t cst_lt = {0};
-
-	playertime = cls.realtime - cls.latency + 0.02;
-	if (playertime > cls.realtime)
-		playertime = cls.realtime;
 
 	frame = &cl.frames[cl.parsecount & UPDATE_MASK];
 	memset (&ent, 0, sizeof(entity_t));
@@ -1884,17 +1888,13 @@ void CL_SetUpPlayerPrediction(qbool dopred)
 {
 	int j, msec;
 	player_state_t *state, exact;
-	double playertime;
+	double playertime = CL_PlayerTime();
 	frame_t *frame;
 	struct predicted_player *pplayer;
 
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 	extern qbool flag_player_pmove;
 #endif
-
-	playertime = cls.realtime - cls.latency + 0.02;
-	if (playertime > cls.realtime)
-		playertime = cls.realtime;
 
 	frame = &cl.frames[cl.parsecount & UPDATE_MASK];
 

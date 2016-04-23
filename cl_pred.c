@@ -172,6 +172,10 @@ static void CL_LerpMove (qbool angles_lerp)
 	extern int cmdtime_msec;
 	extern double physframetime;
 	extern qbool cl_nolerp_on_entity_flag;
+	extern float prevtime;
+	double  current_time = cls.demoplayback ? cls.demotime : cls.realtime;
+	double  current_lerp_time = cls.demoplayback ? prevtime : (cmdtime_msec * 0.001);
+	qbool   physframe = cls.netchan.outgoing_sequence != lastsequence;
 
 	if ((cl_nolerp.value || cl_nolerp_on_entity_flag)) 
 	{
@@ -195,7 +199,7 @@ static void CL_LerpMove (qbool angles_lerp)
 		// move along
 		lerp_times[2] = lerp_times[1];
 		lerp_times[1] = lerp_times[0];
-		lerp_times[0] = cmdtime_msec * 0.001;
+		lerp_times[0] = current_lerp_time;
 
 		VectorCopy (lerp_origin[1], lerp_origin[2]);
 		VectorCopy (lerp_origin[0], lerp_origin[1]);
@@ -223,18 +227,18 @@ static void CL_LerpMove (qbool angles_lerp)
 		}
 	}
 
-	simtime = cls.realtime - demo_latency;
+	simtime = current_time - demo_latency;
 
 	// Adjust latency
 	if (simtime > lerp_times[0]) 
 	{
 		// High clamp
-		demo_latency = cls.realtime - lerp_times[0];
+		demo_latency = current_time - lerp_times[0];
 	}
 	else if (simtime < lerp_times[2]) 
 	{
 		// Low clamp
-		demo_latency = cls.realtime - lerp_times[2];
+		demo_latency = current_time - lerp_times[2];
 	} 
 	else
 	{
@@ -293,12 +297,7 @@ static void check_standing_on_entity(void)
 void CL_PredictMove (void) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
-	double playertime;
 	qbool angles_lerp = false;
-
-	playertime = cls.realtime - cls.latency;
-	if (playertime > cls.realtime)
-		playertime = cls.realtime;
 
 	if (cl.paused)
 		return;
@@ -377,8 +376,9 @@ void CL_PredictMove (void) {
 		check_standing_on_entity();
 	}
 
-	if (!cls.demoplayback && cl_independentPhysics.value != 0)
-		CL_LerpMove (angles_lerp);
+	if (!cls.mvdplayback && cl_independentPhysics.value != 0) {
+		CL_LerpMove (angles_lerp || cls.demoplayback);
+	}
     CL_CalcCrouch ();
 
 #ifdef JSS_CAM

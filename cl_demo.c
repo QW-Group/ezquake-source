@@ -1644,7 +1644,7 @@ qbool pb_ensure(void)
 	return false;
 }
 
-static float prevtime = 0; // TODO: Put in a demo struct.
+float prevtime = 0; // TODO: Put in a demo struct.
 
 //
 // Peeks the demo time.
@@ -1719,6 +1719,7 @@ static void CL_ConsumeDemoTime(void)
 static void CL_DemoReadDemCmd(void)
 {			
 	// User cmd read.
+	extern int cmdtime_msec;
 
 	// Get which frame we should read the cmd into from the demo.
 	int i = cls.netchan.outgoing_sequence & UPDATE_MASK;
@@ -1734,10 +1735,11 @@ static void CL_DemoReadDemCmd(void)
 	pcmd->forwardmove = LittleShort(pcmd->forwardmove);
 	pcmd->sidemove = LittleShort(pcmd->sidemove);
 	pcmd->upmove = LittleShort(pcmd->upmove);
+	cmdtime_msec += pcmd->msec;
 
 	// Set the time time this cmd was sent and increase
 	// how many net messages have been sent.
-	cl.frames[i].senttime = cls.realtime;
+	cl.frames[i].senttime = prevtime;
 	cl.frames[i].receivedtime = -1;		// We haven't gotten a reply yet.
 	cls.netchan.outgoing_sequence++;
 
