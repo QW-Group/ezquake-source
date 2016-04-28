@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "mp3_player.h"
 #include "utils.h"
+#include "rulesets.h"
 
 #ifdef WITH_MP3_PLAYER
 
@@ -211,6 +212,12 @@ static int MP3_CheckFunction(qbool PrintWarning) {
 	} else if (mp3_player->Type == MP3_NONE) {
 		if (PrintWarning) {
 			Com_Printf("%s is not running\n", mp3_player->PlayerName_LeadingCaps);
+		}
+		return -1;
+	}
+	else if (Rulesets_RestrictSound()) {
+		if (PrintWarning) {
+			Com_Printf("MP3 functionality disabled by ruleset\n");
 		}
 		return -1;
 	}
