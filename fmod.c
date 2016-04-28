@@ -202,6 +202,9 @@ static check_models_hashes_entry_t sound_items_mindgrid_r_item2 = { {0xd2d0de39,
 static check_models_hashes_entry_t sound_misc_mindgrid_water1 = { {0x838a0318, 0x0805e53e, 0x6ebf4065, 0xaa5fb9a0, 0xe1cad807}, NULL };
 static check_models_hashes_entry_t sound_misc_mindgrid_water2 = { {0xfb0a6b17, 0x065fbc33, 0x5fab7cc5, 0x110c01aa, 0x278b612e}, NULL };
 
+// CapnBub's new player model, see http://www.quakeworld.nu/forum/topic/6073/new-quake-models/page/1
+static check_models_hashes_entry_t mdlhash_player_mdl_CapNBubs_FMOD_DM = { {0xC0223459, 0x42B97D8D, 0xC52FF472, 0xF3EE0710, 0x41E21132}, NULL };
+
 #define MAX_CHECK_MODELS 256
 #define	FMOD_DM 1
 #define FMOD_TF 2
@@ -408,7 +411,8 @@ void FMod_Init (void)
 	lastid = FMod_AddModel ("progs/suit.mdl",			FMOD_DM | FMOD_TF,	progs_suit_mdl_FMOD_DM_FMOD_TF);
 	FMod_AddModelAlt(lastid, &mdlhash_ruohis_suit);
 
-	FMod_AddModel ("progs/player.mdl",			FMOD_DM,			progs_player_mdl_FMOD_DM);
+	lastid = FMod_AddModel ("progs/player.mdl",			FMOD_DM,			progs_player_mdl_FMOD_DM);
+	FMod_AddModelAlt (lastid, &mdlhash_player_mdl_CapNBubs_FMOD_DM);
 	FMod_AddModel ("progs/player.mdl",			FMOD_TF,			progs_player_mdl_FMOD_TF);
 
 	FMod_AddModel ("progs/tf_flag.mdl",			FMOD_TF,			progs_tf_flag_mdl_FMOD_TF);
