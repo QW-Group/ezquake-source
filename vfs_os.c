@@ -239,11 +239,16 @@ static qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, 
 void FSOS_ReadFile(void *handle, flocation_t *loc, char *buffer)
 {
 	FILE *f;
+	int read;
+
 	f = fopen(loc->rawname, "rb");
 	if (!f)	//err...
 		return;
 	fseek(f, loc->offset, SEEK_SET);
-	fread(buffer, 1, loc->len, f);
+	read = fread(buffer, 1, loc->len, f);
+	if (read != loc->len) {
+		Com_Printf ("Can't read file \"%s\" (%d bytes, expected %d)\n", loc->rawname, read, loc->len);
+	}
 	fclose(f);
 }
 

@@ -50,8 +50,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define COL_DATE        8
 #define COL_TIME        5
 
-extern void _splitpath (const char *path, char *drive, char *dir, char *file, char *ext);
-
 #define FL_SEARCH_TIMEOUT	2.0
 static double last_search_enter_time = 0.0;
 

@@ -2844,7 +2844,7 @@ void PF2_SetUserInfo( byte * base, unsigned int mask, pr2val_t * stack, pr2val_t
 
 	// tokenize
 
-	snprintf( s, sizeof(s), "PF2_SetUserInfo \"%-.*s\" \"%-.*s\"", sizeof(key), k, sizeof(value), v );
+	snprintf( s, sizeof(s), "PF2_SetUserInfo \"%-.*s\" \"%-.*s\"", (int) sizeof(key), k, (int) sizeof(value), v );
 
 	Cmd_TokenizeString( s );
 

@@ -47,7 +47,7 @@ static void S_Register_LatchCvars(void);
 // Internal sound data & structures
 // =======================================================================
 
-channel_t	channels[MAX_CHANNELS] = {0};
+channel_t	channels[MAX_CHANNELS] = { {0} };
 unsigned int	total_channels;
 
 int		snd_blocked = 0;
