@@ -168,7 +168,7 @@ void Skin_Find_Ex (player_info_t *sc, char *skin_name) {
 	}
 
 	strlcpy(name, skin_name, sizeof(name));
-	COM_StripExtension(name, name);
+	COM_StripExtension(name, name, sizeof(name));
 
 	for (i = 0; i < numskins; i++)
 	{

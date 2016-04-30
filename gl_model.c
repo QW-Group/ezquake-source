@@ -216,7 +216,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 		(namelen >= 9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp (mod->name + namelen - 4, ".bsp"))))
 	{
 		char newname[MAX_QPATH];
-		COM_StripExtension (mod->name, newname);
+		COM_StripExtension (mod->name, newname, sizeof(newname));
 		COM_DefaultExtension (newname, ".md3");
 		buf = (unsigned *) FS_LoadTempFile (newname, &filesize);
 	}
@@ -1723,7 +1723,7 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
 
 	s = pheader->skinwidth * pheader->skinheight;
 
-	COM_StripExtension(COM_SkipPath(loadmodel->name), basename);
+	COM_StripExtension(COM_SkipPath(loadmodel->name), basename, sizeof(basename));
 
 	texmode = TEX_MIPMAP;
 	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel)
@@ -1991,7 +1991,7 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel)
 		texmode |= TEX_NOSCALE;
 
-	COM_StripExtension(COM_SkipPath(loadmodel->name), basename);
+	COM_StripExtension(COM_SkipPath(loadmodel->name), basename, sizeof(basename));
 
 	pinframe = (dspriteframe_t *) pin;
 
@@ -2315,7 +2315,7 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	if ( (mod->modhint != MOD_BACKPACK) && !Mod_IsLumaAllowed(mod) )
 		return 0;
 
-	COM_StripExtension(COM_SkipPath(mod->name), basename);
+	COM_StripExtension(COM_SkipPath(mod->name), basename, sizeof(basename));
 
 	texmode = TEX_MIPMAP | TEX_ALPHA;
 	if (!gl_scaleModelTextures.value)

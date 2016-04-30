@@ -512,7 +512,7 @@ qbool CL_CheckOrDownloadFile (char *filename)
 	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 	cls.downloadstarttime = Sys_DoubleTime();
 
-	COM_StripExtension (cls.downloadname, cls.downloadtempname);
+	COM_StripExtension (cls.downloadname, cls.downloadtempname, sizeof(cls.downloadtempname));
 	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK) 
@@ -722,7 +722,7 @@ void Model_NextDownload (void)
 	}
 
 	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
-	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
 	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
 
 	for (i = 1; i < MAX_MODELS; i++) 
@@ -1706,7 +1706,7 @@ void CL_ParseModellist (qbool extended)
 				if (!com_serveractive) 
 				{
 					char mapname[MAX_QPATH];
-					COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+					COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
 					Cvar_ForceSet (&host_mapname, mapname);
 				}
 		}
@@ -1746,7 +1746,7 @@ void CL_ParseModellist (qbool extended)
 				if (!com_serveractive) 
 				{
 					char mapname[MAX_QPATH];
-					COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+					COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
 					Cvar_ForceSet (&host_mapname, mapname);
 				}
 		} while (*str);

@@ -143,7 +143,7 @@ sfxcache_t *S_LoadSound(sfx_t *s)
 		vorbis_LoadLibrary();
 
 	// load it in
-	COM_StripExtension(s->name, extionless);
+	COM_StripExtension(s->name, extionless, sizeof(extionless));
 	snprintf (namebuffer, sizeof (namebuffer), "sound/%s.ogg", extionless);
 
 /*	if (!(data = FS_LoadTempFile (namebuffer, &filesize))) {

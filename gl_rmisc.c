@@ -104,7 +104,7 @@ void R_TranslatePlayerSkin (int playernum) {
 		return;
 
 	strlcpy(s, Skin_FindName(player), sizeof(s));
-	COM_StripExtension(s, s);
+	COM_StripExtension(s, s, sizeof(s));
 
 	if (player->skin && strcasecmp(s, player->skin->name))
 		player->skin = NULL;

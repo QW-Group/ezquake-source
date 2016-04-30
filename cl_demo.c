@@ -2440,7 +2440,7 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 		//
 
 		// Get rid of the extension again.
-		COM_StripExtension(name, strippedname);
+		COM_StripExtension(name, strippedname, sizeof(strippedname));
 		fullname = va("%s/%s", dir, strippedname);
 
 		// Find a unique filename in the specified dir.
@@ -3584,7 +3584,7 @@ void CL_Play_f (void)
 		{
 			// Strip the extension from the specified filename and append
 			// the one we're currently checking for.
-			COM_StripExtension(real_name, name);
+			COM_StripExtension(real_name, name, sizeof(name));
 			strlcpy(name, va("%s.%s", name, *s), sizeof(name));
 
 			playbackfile = CL_Open_Demo_File(name, true, NULL);

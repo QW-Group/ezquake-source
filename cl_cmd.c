@@ -664,7 +664,7 @@ void CL_Download_f (void){
 	cls.downloadstarttime = Sys_DoubleTime();
 
 	snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
-	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	COM_StripExtension(cls.downloadname, cls.downloadtempname, sizeof(cls.downloadtempname));
 	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK)

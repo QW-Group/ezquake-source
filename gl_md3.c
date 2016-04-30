@@ -264,17 +264,17 @@ int Mod_ReadFlagsFromMD1(char *name, int md3version)
 {
 	mdl_t				*pinmodel;
 	char fname[MAX_QPATH];
-	COM_StripExtension(name, fname);
+	COM_StripExtension(name, fname, sizeof(fname));
 	COM_DefaultExtension(fname, ".md3");
 
 	if (!strcmp(name, fname))	//md3 renamed as mdl
 	{
-		COM_StripExtension(name, fname);	//seeing as the md3 is named over the mdl,
+		COM_StripExtension(name, fname, sizeof(fname));	//seeing as the md3 is named over the mdl,
 		COM_DefaultExtension(fname, ".md1");//read from a file with md1 (one, not an ell)
 	}
 	else
 	{
-		COM_StripExtension(name, fname);
+		COM_StripExtension(name, fname, sizeof(fname));
 		COM_DefaultExtension(fname, ".mdl");
 	}
 
@@ -430,13 +430,13 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer, int filesize)
 
 				//hmm. Look in skin file.
 				strlcpy (sinf->name, mod->name, sizeof (sinf->name));
-				COM_StripExtension(sinf->name, sinf->name);
+				COM_StripExtension(sinf->name, sinf->name, sizeof(sinf->name));
 				strlcat (sinf->name, "_default.skin", sizeof (sinf->name));
 
 				sfile = sfilestart = (char *) FS_LoadHunkFile(sinf->name, NULL);
 
 				strlcpy (sinf->name, mod->name, sizeof (sinf->name)); //backup
-				COM_StripExtension(sinf->name, sinf->name);
+				COM_StripExtension(sinf->name, sinf->name, sizeof(sinf->name));
 				strlcat (sinf->name, "_skin.tga", sizeof (sinf->name));
 
 				len = strlen(surf->name);

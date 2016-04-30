@@ -187,19 +187,17 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 	return dest;
 }
 
-// TODO: This is not safe.
-void COM_StripExtension (const char *in, char *out)
+void COM_StripExtension (const char *in, char *out, int out_size)
 {
 	char *dot;
 
-	if (!(dot = strrchr(in, '.'))) {
-		if (in != out)
-			strlcpy(out, in, strlen(in) + 1);
-		return;
+	if (in != out)
+		strlcpy (out, in, out_size);
+
+	dot = strrchr (out, '.');
+	if (dot) {
+		*dot = 0;
 	}
-	while (*in && in != dot)
-		*out++ = *in++;
-	*out = 0;
 }
 
 

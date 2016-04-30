@@ -305,7 +305,7 @@ static void *FSGZIP_LoadGZipFile(vfsfile_t *gziphandle, const char *desc)
 	base = COM_SkipPath(desc);
 	ext = COM_FileExtension(desc);
 	if (strcmp(ext, "gz") == 0) {
-		COM_StripExtension(base, gzip->file.name);
+		COM_StripExtension(base, gzip->file.name, sizeof(gzip->file.name));
 	} else {
 		strlcpy(gzip->file.name, base, sizeof(gzip->file.name));
 	}

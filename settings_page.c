@@ -580,7 +580,7 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
             return;
         }
         c = skinfile + strlen(com_basedir) + QWDIRLEN + 1;
-        COM_StripExtension(c, buf);
+        COM_StripExtension(c, buf, sizeof(buf));
 
         curpic = Draw_CachePicSafe(buf, false, true);
         strlcpy(lastpicname, skinfile, sizeof(lastpicname));
@@ -652,7 +652,7 @@ qbool Settings_Key(settings_page* tab, int key, wchar unichar)
 			char buf[MAX_PATH];
 			skinpath = FL_GetCurrentPath(&skins_filelist);
 			if (skinpath) {
-				COM_StripExtension(COM_SkipPath(skinpath), buf);
+				COM_StripExtension(COM_SkipPath(skinpath), buf, sizeof(buf));
                 if (strcmp(buf, "."))
 				    Cvar_Set(tab->settings[tab->marked].cvar, buf);
 			}

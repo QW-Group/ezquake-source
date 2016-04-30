@@ -504,7 +504,7 @@ mpic_t *Draw_CachePicSafe (const char *path, qbool crash, qbool only24bit)
 		return fpic;
 
 	// Get the filename without extension.
-	COM_StripExtension(path, stripped_path);
+	COM_StripExtension(path, stripped_path, sizeof(stripped_path));
 	snprintf(lmp_path, MAX_PATH, "%s.lmp", stripped_path);
 	snprintf(png_path, MAX_PATH, "%s.png", stripped_path);
 
@@ -669,7 +669,7 @@ static int Load_Locale_Charset (const char *name, const char *locale, unsigned i
 
 	char_range[num] = 0;
 
-	COM_StripExtension(name, basename);
+	COM_StripExtension(name, basename, sizeof(basename));
 	snprintf(texture, sizeof(texture), "textures/charsets/%s-%s", basename, locale);
 	snprintf(id, sizeof(id), "pic:charset-%s", locale);
 	snprintf(lmp, sizeof(lmp), "conchars-%s", locale);

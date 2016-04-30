@@ -673,7 +673,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	byte *c, *data = NULL;
 	vfsfile_t *f;
 
-	COM_StripExtension(filename, basename);
+	COM_StripExtension(filename, basename, sizeof(basename));
 	for (c = (byte *) basename; *c; c++)
 	{
 		if (*c == '*')

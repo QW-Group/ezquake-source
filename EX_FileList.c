@@ -279,7 +279,7 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 		}
 
 		// Remove extension from the name.
-		COM_StripExtension(namebuf, namebuf); 
+		COM_StripExtension(namebuf, namebuf, sizeof(namebuf));
 	}
 
     if (file_browser_strip_names.value && !f->is_directory)
@@ -1168,7 +1168,7 @@ void FL_DecompressFile (filelist_t *fl)
 	char *gzip_path = FL_GetCurrentPath(fl);
 	char file_path[MAX_PATH];
 
-	COM_StripExtension(gzip_path, file_path);
+	COM_StripExtension(gzip_path, file_path, sizeof(file_path));
 
 	ret = FS_GZipUnpack(gzip_path, file_path, false); 
 

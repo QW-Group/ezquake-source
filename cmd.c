@@ -1708,7 +1708,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", Cmd_Argv(0));
 				goto done;
 			}
-		} else if ((cbuf_current == &cbuf_formatted_comms)) {
+		} else if (cbuf_current == &cbuf_formatted_comms) {
 			if (!Cmd_IsCommandAllowedInTeamPlayMacros(Cmd_Argv(0))) {
 				Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
 				goto done;
@@ -1728,7 +1728,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check cvars
 	if ((v = Cvar_Find(Cmd_Argv(0)))) {
-		if ((cbuf_current == &cbuf_formatted_comms)) {
+		if (cbuf_current == &cbuf_formatted_comms) {
 			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
 			goto done;
 		}

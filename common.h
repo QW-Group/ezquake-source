@@ -179,7 +179,7 @@ const char *COM_SkipPath (const char *pathname);
 char *COM_SkipPathWritable (char *pathname);
 char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);
 char *COM_FileExtension (const char *in);
-void COM_StripExtension (const char *in, char *out);
+void COM_StripExtension (const char *in, char *out, int out_size);
 void COM_FileBase (const char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
 // If path doesn't have an extension or has a different extension, append(!) specified extension.

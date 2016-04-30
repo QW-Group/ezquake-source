@@ -504,7 +504,7 @@ static void NQD_ParseServerData (void)
 		Mod_TouchModel (str);
 
 		if (nummodels == 1)
-			COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+			COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
 	}
 
 	// precache sounds
@@ -523,7 +523,7 @@ static void NQD_ParseServerData (void)
 	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
 	if (!com_serveractive)
 		Cvar_ForceSet (&host_mapname, mapname);
-	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
 	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
 
 	for (i = 1; i < nummodels; i++)
