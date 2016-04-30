@@ -403,7 +403,7 @@ int MVD_ClockList_GetLongestName(void)
 	return longest;
 }
 
-void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *width, int *height)
+void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *width, int *height, float scale)
 {
 	int lines = 0;
 	mvd_clock_t *current = mvd_clocklist;
@@ -415,14 +415,14 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 
 	// the longest possible string
 	if (style == 1)
-		*width = LETTERWIDTH * (MVD_ClockList_GetLongestName() + sizeof(" spawn") - 1);
+		*width = LETTERWIDTH * (MVD_ClockList_GetLongestName () + sizeof (" spawn") - 1) * scale;
 	else
-		*width = LETTERWIDTH * (sizeof ("QUAD spawn") - 1);
+		*width = LETTERWIDTH * (sizeof ("QUAD spawn") - 1) * scale;
 
-	*height = LETTERHEIGHT * lines;
+	*height = LETTERHEIGHT * lines * scale;
 }
 
-void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y)
+void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale)
 {
 	mvd_clock_t *current = mvd_clocklist;
 	char *clockitem;
@@ -444,11 +444,10 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y)
 		else
 			clockitem = va("%s spawn", clockitem);
 
-		Draw_String(x, y, clockitem);
-
+		Draw_SString (x, y, clockitem, scale);
 
 		current = current->next;
-		y += LETTERHEIGHT;
+		y += LETTERHEIGHT * scale;
 	}
 }
 
