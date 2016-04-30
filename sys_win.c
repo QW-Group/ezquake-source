@@ -64,17 +64,31 @@ cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableW
 
 extern qbool ActiveApp, Minimized;
 
+static void ReleaseKeyHook (void)
+{
+	if (WinKeyHook_isActive) {
+		UnhookWindowsHookEx (WinKeyHook);
+		WinKeyHook_isActive = false;
+	}
+}
+
+static qbool RegisterKeyHook (void)
+{
+	if (!WinKeyHook_isActive) {
+		WinKeyHook = SetWindowsHookEx (13, LLWinKeyHook, global_hInstance, 0);
+		WinKeyHook_isActive = (WinKeyHook != NULL);
+	}
+
+	return WinKeyHook_isActive;
+}
+
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel) 
 {
 	if (Q_atof(string)) 
 	{
 		if (!WinKeyHook_isActive) 
 		{
-			if ((WinKeyHook = SetWindowsHookEx(13, LLWinKeyHook, global_hInstance, 0))) 
-			{
-				WinKeyHook_isActive = true;
-			} 
-			else 
+			if (! RegisterKeyHook())
 			{
 				Com_Printf("Failed to install winkey hook.\n");
 				Com_Printf("Microsoft Windows NT 4.0, 2000 or XP is required.\n");
@@ -85,11 +99,7 @@ void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel)
 	} 
 	else 
 	{
-		if (WinKeyHook_isActive)
-		{
-			UnhookWindowsHookEx(WinKeyHook);
-			WinKeyHook_isActive = false;
-		}
+		ReleaseKeyHook ();
 	}
 }
 
@@ -99,26 +109,42 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam)
 
 	p = (PKBDLLHOOKSTRUCT) lParam;
 
-	if (ActiveApp) 
+	switch(p->vkCode)
 	{
-		switch(p->vkCode) 
-		{
-			case VK_LWIN: 
-				Key_Event (K_LWIN, !(p->flags & LLKHF_UP)); 
-				return 1;
-			case VK_RWIN: 
-				Key_Event (K_RWIN, !(p->flags & LLKHF_UP)); 
-				return 1;
-			case VK_APPS: 
-				Key_Event (K_MENU, !(p->flags & LLKHF_UP)); 
-				return 1;
-			case VK_SNAPSHOT: 
-				Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP)); 
-				return 1;
-		}
+		case VK_LWIN:
+			Key_Event (K_LWIN, !(p->flags & LLKHF_UP));
+			return 1;
+		case VK_RWIN:
+			Key_Event (K_RWIN, !(p->flags & LLKHF_UP));
+			return 1;
+		case VK_APPS:
+			Key_Event (K_MENU, !(p->flags & LLKHF_UP));
+			return 1;
+		case VK_SNAPSHOT:
+			Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP));
+			return 1;
 	}
 
 	return CallNextHookEx(NULL, Code, wParam, lParam);
+}
+
+void Sys_ActiveAppChanged (void)
+{
+	static qbool appWasActive = true;
+	static qbool hookWasActive = false;
+
+	if (appWasActive == ActiveApp)
+		return;
+
+	appWasActive = ActiveApp;
+	if (ActiveApp && hookWasActive) {
+		RegisterKeyHook ();
+	}
+	else if (!ActiveApp) {
+		hookWasActive = WinKeyHook_isActive;
+
+		ReleaseKeyHook ();
+	}
 }
 
 #endif

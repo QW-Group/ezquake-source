@@ -32,6 +32,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+
+void Sys_ActiveAppChanged (void);
 #endif
 
 #ifdef __APPLE__
@@ -428,6 +430,9 @@ static void window_event(SDL_WindowEvent *event)
 				VID_RestoreSystemGamma();
 			}
 #endif
+#ifdef _WIN32
+			Sys_ActiveAppChanged ();
+#endif
 			break;
 
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
@@ -439,6 +444,9 @@ static void window_event(SDL_WindowEvent *event)
 			scr_skipupdate = 0;
 #ifdef __linux__
 			v_gamma.modified = true;
+#endif
+#ifdef _WIN32
+			Sys_ActiveAppChanged ();
 #endif
 			break;
 
