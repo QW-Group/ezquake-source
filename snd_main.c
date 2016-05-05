@@ -26,7 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "rulesets.h"
 #include "fmod.h"
-#define SELF_SOUND 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
+#define SELF_SOUND_ENTITY 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
+#define PLAY_SOUND_ENTITY 0xFFEFFFFE // /play or /playvol command, take distance & direction into account
 
 #ifdef _WIN32
 #include "movie.h" //joe: capturing audio
@@ -587,7 +588,7 @@ static void SND_Spatialize (channel_t *ch)
 	vec3_t source_vec;
 
 	// anything coming from the view entity will always be full volume
-	if ((ch->entnum == cl.playernum + 1) || (ch->entnum == SELF_SOUND)) {
+	if ((ch->entnum == cl.playernum + 1) || (ch->entnum == SELF_SOUND_ENTITY)) {
 		ch->leftvol = ch->master_vol;
 		ch->rightvol = ch->master_vol;
 		return;
@@ -954,7 +955,7 @@ static void S_Play_f (void)
 	char name[256];
 	sfx_t *sfx;
 	int i;
-	qbool playvol = false;
+	qbool playvol = (strcmp(Cmd_Argv(0), "playvol") == 0);
 
 	if (!snd_initialized || !snd_started || s_nosound.value)
 		return;
@@ -963,19 +964,30 @@ static void S_Play_f (void)
 		return;
 	}
 
-	if (strcmp(Cmd_Argv(0), "playvol") == 0) {
-		playvol = true;
-	}
-	for (i = 1; i < Cmd_Argc(); i = i + 1 + (playvol ? 1 : 0)) {
-		float vol = 1.0;
+	for (i = 1; i < Cmd_Argc(); ++i) {
+		float vol = 1.0f;                 // Set by playvol command
+		float attenuation = 0.0f;         // full volume regardless of distance
+		vec3_t sound_origin;
+		int entity = SELF_SOUND_ENTITY;   // ezhfan: pnum+1 changed to SELF_SOUND to make sound not to disappear
+
+		VectorCopy (listener_origin, sound_origin);
+
 		strlcpy (name, Cmd_Argv(i), sizeof(name));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
 		if (playvol)
-			vol = Q_atof(Cmd_Argv(i+1));
-		// ezhfan
-		// pnum+1 changed to SELF_SOUND to make sound not to disappear
-		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, vol, 0.0);
+			vol = Q_atof(Cmd_Argv(++i));
+
+		// Allow sounds to be created elsewhere on the map, to hear what spawns sound like
+		if (i < Cmd_Argc () - 4 && strcmp (Cmd_Argv (i + 1), "@") == 0) {
+			sound_origin[0] = Q_atof (Cmd_Argv (i + 2));
+			sound_origin[1] = Q_atof (Cmd_Argv (i + 3));
+			sound_origin[2] = Q_atof (Cmd_Argv (i + 4));
+			i += 4;
+			entity = PLAY_SOUND_ENTITY;
+			attenuation = 1.0f;                 // distance should matter
+		}
+		S_StartSound(entity, 0, sfx, sound_origin, vol, attenuation);
 	}
 }
 
