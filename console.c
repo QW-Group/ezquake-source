@@ -706,10 +706,11 @@ static void Con_DrawInput(void) {
 }
 
 // Returns first line to start printing from in order to fill up notify area
-static int Con_FirstNotifyLine (int notification_lines) {
+static int Con_FirstNotifyLine (int notification_lines, float notification_timelimit)
+{
 	int maxlines = bound(0, notification_lines, NUM_CON_TIMES - 1);
 	int first_line = con.current;
-	float threshold_time = cls.realtime - con_notifytime.value;
+	float threshold_time = cls.realtime - notification_timelimit;
 
 	// Work backwards to skip non-ignored lines
 	while (first_line >= 0 && first_line > (con.current - NUM_CON_TIMES + 1) && maxlines) {
@@ -731,7 +732,7 @@ void Con_DrawNotify (void) {
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
-	int first_line = Con_FirstNotifyLine(_con_notifylines.integer);
+	int first_line = Con_FirstNotifyLine(_con_notifylines.integer, con_notifytime.value);
 
 	if (!con_notify.value)
 		return;
@@ -830,7 +831,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
-	int first_line = Con_FirstNotifyLine(notifyLines);
+	int first_line = Con_FirstNotifyLine(notifyLines, notifyTime);
 
 	if (notifyCols > (con_linewidth))
 		notifyCols = con_linewidth;
