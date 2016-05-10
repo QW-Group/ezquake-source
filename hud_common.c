@@ -630,6 +630,7 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 	int y;
 	int width;
 	int height;
+	int chars_per_line;
 
 	if (hud_notify_rows == NULL) // First time.
 	{
@@ -639,12 +640,13 @@ void SCR_HUD_DrawNotify(hud_t* hud)
        hud_notify_time  = HUD_FindVar(hud, "time");
 	}
 
-	height = Q_rint((con_linewidth / hud_notify_cols->integer) * hud_notify_rows->integer * 8 * hud_notify_scale->value);
-	width  = 8 * hud_notify_cols->integer * hud_notify_scale->value;
+	chars_per_line = (hud_notify_cols->integer > 0 ? hud_notify_cols->integer : con_linewidth);
+	height = Q_rint ((con_linewidth / chars_per_line) * hud_notify_rows->integer * 8 * hud_notify_scale->value);
+	width = 8 * chars_per_line * hud_notify_scale->value;
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y))
 	{
-		SCR_DrawNotify(x, y, hud_notify_scale->value, hud_notify_time->integer, hud_notify_rows->integer, hud_notify_cols->integer);
+		SCR_DrawNotify(x, y, hud_notify_scale->value, hud_notify_time->integer, hud_notify_rows->integer, chars_per_line);
 	}
 }
 
