@@ -52,19 +52,15 @@ qbool RuleSets_DisallowExternalTexture(model_t *mod)
 
 qbool RuleSets_DisallowModelOutline(model_t *mod)
 {
-	if (rulesetDef.ruleset == rs_qcon) {
-		return true;
-	}
-
 	switch (mod->modhint) {
 		case MOD_EYES:
 			return true;
 		case MOD_THUNDERBOLT:
 			return true;
 		case MOD_BACKPACK:
-			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome;
+			return rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome;
 		default:
-			return false;
+			return rulesetDef.ruleset == rs_qcon;
 	}
 }
 
@@ -615,5 +611,17 @@ qbool Ruleset_BlockHudPicChange(void)
 		return cls.state != ca_disconnected && !(cl.standby || cl.spectator || cls.demoplayback);
 	default:
 		return false;
+	}
+}
+
+qbool Ruleset_AllowPolygonOffset(entity_t* ent)
+{
+	switch (rulesetDef.ruleset) {
+	case rs_qcon:
+		return false;
+	case rs_default:
+		return true;
+	default:
+		return ent->model && ent->model->isworldmodel;
 	}
 }
