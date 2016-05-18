@@ -104,9 +104,8 @@ qbool Rulesets_RestrictTriggers(void)
 
 qbool Rulesets_RestrictSound(void)
 {
-	return rulesetDef.restrictSound;
+	return rulesetDef.restrictSound && cbuf_current != &cbuf_svc;
 }
-
 
 qbool Rulesets_RestrictPacket(void)
 {
