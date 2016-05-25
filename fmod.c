@@ -205,6 +205,9 @@ static check_models_hashes_entry_t sound_misc_mindgrid_water2 = { {0xfb0a6b17, 0
 // CapnBub's new player model, see http://www.quakeworld.nu/forum/topic/6073/new-quake-models/page/1
 static check_models_hashes_entry_t mdlhash_player_mdl_CapNBubs_FMOD_DM = { {0xC0223459, 0x42B97D8D, 0xC52FF472, 0xF3EE0710, 0x41E21132}, NULL };
 
+// gpl_maps.pk3 include a small wav file to allow map to load
+static check_models_hashes_entry_t sound_gpl_maps_silence_wav = { {0xc99871d4, 0xc60e0fef, 0x14e64bf9, 0xbaf43934, 0x5376df18}, NULL };
+
 #define MAX_CHECK_MODELS 256
 #define	FMOD_DM 1
 #define FMOD_TF 2
@@ -483,7 +486,8 @@ void FMod_Init (void)
 	FMod_AddModel("sound/misc/menu2.wav", FMOD_DM | FMOD_TF, sound_misc_menu2_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel("sound/misc/menu3.wav", FMOD_DM | FMOD_TF, sound_misc_menu3_wav_FMOD_DM_FMOD_TF);
 	FMod_AddModel("sound/misc/talk.wav", FMOD_DM | FMOD_TF, sound_misc_talk_wav_FMOD_DM_FMOD_TF);
-	FMod_AddModel("sound/misc/basekey.wav", FMOD_DM | FMOD_TF, sound_misc_basekey_wav_FMOD_DM_FMOD_TF);
+	lastid = FMod_AddModel("sound/misc/basekey.wav", FMOD_DM | FMOD_TF, sound_misc_basekey_wav_FMOD_DM_FMOD_TF);
+	FMod_AddModelAlt (lastid, &sound_gpl_maps_silence_wav);
 	FMod_AddModel("sound/doors/runeuse.wav", FMOD_DM | FMOD_TF, sound_doors_runeuse_wav_FMOD_DM_FMOD_TF);
 
 	FMod_AddModel ("gfx/colormap.lmp",			FMOD_DM | FMOD_TF,	gfx_colormap_lmp_FMOD_DM_FMOD_TF);
