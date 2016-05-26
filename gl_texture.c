@@ -664,6 +664,7 @@ typedef byte* (*ImageLoadFunction)(vfsfile_t *fin, const char *filename, int mat
 typedef struct image_load_format_s {
 	const char* extension;
 	ImageLoadFunction function;
+	int filter_mask;
 } image_load_format_t;
 
 byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height) 
@@ -736,20 +737,23 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	}
 
 	image_load_format_t formats[] = {
-		{ "tga", Image_LoadTGA },
+		{ "tga", Image_LoadTGA, 0 },
 #ifdef WITH_PNG
-		{ "png", Image_LoadPNG },
+		{ "png", Image_LoadPNG, 0 },
 #endif
 #ifdef WITH_JPEG
-		{ "jpg", Image_LoadJPEG },
+		{ "jpg", Image_LoadJPEG, 0 },
 #endif
-		{ "pcx", Image_LoadPCX_As32Bit }
+		{ "pcx", Image_LoadPCX_As32Bit, TEX_NO_PCX }
 	};
 	int i = 0;
 
 	image_load_format_t* best = NULL;
 	for (i = 0; i < sizeof (formats) / sizeof (formats[0]); ++i) {
 		vfsfile_t *file = NULL;
+
+		if (mode & formats[i].filter_mask)
+			continue;
 
 		snprintf (name, sizeof (name), "%s.%s", basename, formats[i].extension);
 		if (file = FS_OpenVFS (name, "rb", FS_ANY)) {
@@ -767,6 +771,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	}
 
 	if (best && f) {
+		CHECK_TEXTURE_ALREADY_LOADED;
 		snprintf (name, sizeof (name), "%s.%s", basename, best->extension);
 		if (data = best->function (f, name, matchwidth, matchheight, real_width, real_height)) {
 			return data;
