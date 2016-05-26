@@ -76,6 +76,7 @@ cvar_t      con_sound_other_volume  = {"s_otherchat_volume",  "1"};
 cvar_t      con_timestamps          = {"con_timestamps", "0"};
 cvar_t      con_shift               = {"con_shift", "-10"};
 cvar_t      cl_textEncoding         = {"cl_textencoding", "0"};
+cvar_t      con_mm2_only            = {"con_mm2_only", "0"};
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated
@@ -452,6 +453,7 @@ void Con_Init (void) {
 
 	Cvar_Register (&con_timestamps); 
 	Cvar_Register (&con_shift); 
+	Cvar_Register (&con_mm2_only);
 
 	Cvar_ResetCurrentGroup();
 

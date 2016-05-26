@@ -2475,6 +2475,10 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 
 	cfrags_format cff = {0, 0, 0, 0, 0, 0, false}; // Stats_ParsePrint stuff
 
+	// During gametime, use notify for team messages only
+	if (con_mm2_only.integer && !team && !(cl.standby || cl.countdown))
+		Print_flags[Print_current] |= PR_NONOTIFY;
+
 	s0 = wcs2str (s);
 	f = strstr (s0, name.string);
 	CL_SearchForReTriggers (s0, 1<<level); // re_triggers, s0 not modified

@@ -85,6 +85,7 @@ extern cvar_t con_sound_spec_file;
 extern cvar_t con_sound_spec_volume;
 extern cvar_t con_sound_other_file;
 extern cvar_t con_sound_other_volume;
+extern cvar_t con_mm2_only;
 extern  int         con_margin;         // kazik: margin on the left side
 
 #endif		//_CONSOLE_H_

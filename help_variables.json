@@ -1737,6 +1737,11 @@
       "desc": "How long console messages stay on screen.",
       "type": "float"
     },
+    "con_mm2_only": {
+      "group-id": "5",
+      "desc": "If set, during gametime only team messages will appear in notification area.",
+      "type": "boolean"
+    },
     "con_particles_alpha": {
       "group-id": "31",
       "desc": "Sets the transparency of con_particles_images.",
