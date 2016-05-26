@@ -660,6 +660,12 @@ static qbool CheckTextureLoaded(int mode)
 	return false;
 }
 
+typedef byte* (*ImageLoadFunction)(vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height);
+typedef struct image_load_format_s {
+	const char* extension;
+	ImageLoadFunction function;
+} image_load_format_t;
+
 byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height) 
 {
 	char basename[MAX_QPATH], name[MAX_QPATH];
@@ -729,42 +735,42 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 		}
 	}
 
-	snprintf (name, sizeof(name), "%s.tga", basename);
-	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
-	{
-		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadTGA (f, name, matchwidth, matchheight, real_width, real_height)))
-			return data;
+	image_load_format_t formats[] = {
+		{ "tga", Image_LoadTGA },
+#ifdef WITH_PNG
+		{ "png", Image_LoadPNG },
+#endif
+#ifdef WITH_JPEG
+		{ "jpg", Image_LoadJPEG },
+#endif
+		{ "pcx", Image_LoadPCX_As32Bit }
+	};
+	int i = 0;
+
+	image_load_format_t* best = NULL;
+	for (i = 0; i < sizeof (formats) / sizeof (formats[0]); ++i) {
+		vfsfile_t *file = NULL;
+
+		snprintf (name, sizeof (name), "%s.%s", basename, formats[i].extension);
+		if (file = FS_OpenVFS (name, "rb", FS_ANY)) {
+			if (f == NULL || (f->copyprotected && !file->copyprotected)) {
+				if (f) {
+					VFS_CLOSE (f);
+				}
+				f = file;
+				best = &formats[i];
+			}
+			else {
+				VFS_CLOSE (file);
+			}
+		}
 	}
 
-	#ifdef WITH_PNG
-	snprintf (name, sizeof(name), "%s.png", basename);
-	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
-	{
-		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadPNG (f, name, matchwidth, matchheight, real_width, real_height)))
+	if (best && f) {
+		snprintf (name, sizeof (name), "%s.%s", basename, best->extension);
+		if (data = best->function (f, name, matchwidth, matchheight, real_width, real_height)) {
 			return data;
-	}
-	#endif // WITH_PNG
-
-	#ifdef WITH_JPEG
-	snprintf (name, sizeof(name), "%s.jpg", basename);
-	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) 
-	{
-		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadJPEG (f, name, matchwidth, matchheight, real_width, real_height)))
-			return data;
-	}
-	#endif // WITH_JPEG
-
-	snprintf (name, sizeof(name), "%s.pcx", basename);
-	
-	// TEX_NO_PCX - preventing loading skins here.
-	if (!(mode & TEX_NO_PCX) && (f = FS_OpenVFS(name, "rb", FS_ANY))) 
-	{
-		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight, real_width, real_height)))
-			return data;
+		}
 	}
 
 	if (mode & TEX_COMPLAIN) 

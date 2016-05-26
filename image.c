@@ -2299,7 +2299,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 }
 
 // This does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture.
-byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
+byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 {
 	int image_width, image_height;
 	unsigned *out;
