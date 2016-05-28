@@ -680,6 +680,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 			glDisable(GL_BLEND);
 
 		if (drawing_lg) {
+			glEnable(GL_TEXTURE_2D);
 			drawing_lg = false;
 		}
 	}
