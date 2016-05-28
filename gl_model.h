@@ -349,7 +349,8 @@ typedef enum
 	MOD_SHAMBLER, 
 	MOD_TELEPORTDESTINATION,
 	MOD_GIB,
-	MOD_VMODEL
+	MOD_VMODEL,
+	MOD_ROCKET
 } modhint_t;
 
 #define	EF_ROCKET	1			// leave a trail

@@ -2296,6 +2296,10 @@ void Mod_AddModelFlags(model_t *mod)
 		mod->modhint = MOD_GIB;
 	else if (!strncasecmp(mod->name, "progs/v_", 8))
 		mod->modhint = MOD_VMODEL;
+	else if (!strcmp(mod->name, "progs/missile.mdl"))
+		mod->modhint = MOD_ROCKET;
+	else if (!strcmp(mod->name, "progs/grenade.mdl"))
+		mod->modhint = MOD_GRENADE;
 	else
 		mod->modhint = MOD_NORMAL;
 }
