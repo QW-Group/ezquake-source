@@ -40,9 +40,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "irc.h"
 
 
-#define		MINIMUM_CONBUFSIZE	(1 << 15)
-#define		DEFAULT_CONBUFSIZE	(1 << 16)
-#define		MAXIMUM_CONBUFSIZE	(1 << 22)
+#define     MINIMUM_CONBUFSIZE     (1 << 15)
+#define     DEFAULT_CONBUFSIZE     (1 << 16)
+#define     MAXIMUM_CONBUFSIZE     (1 << 22)
+#define     MAX_NOTIFICATION_TIME  10
 
 console_t	con;
 int         con_margin=0;       // kazik: margin on the left side
@@ -734,7 +735,8 @@ void Con_DrawNotify (void) {
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
-	int first_line = Con_FirstNotifyLine(_con_notifylines.integer, con_notifytime.value);
+	float timeout = bound (0, con_notifytime.value, MAX_NOTIFICATION_TIME);
+	int first_line = Con_FirstNotifyLine(_con_notifylines.integer, timeout);
 
 	if (!con_notify.value)
 		return;
@@ -748,7 +750,7 @@ void Con_DrawNotify (void) {
 			if (time == 0)
 				continue;
 			time = cls.realtime - time;
-			if (time > con_notifytime.value)
+			if (time > timeout)
 				continue;
 			idx = (i % con_totallines)*con_linewidth;
 			text = con.text + idx;
@@ -833,7 +835,8 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
-	int first_line = Con_FirstNotifyLine(notifyLines, notifyTime);
+	float timeout = bound (0, notifyTime, MAX_NOTIFICATION_TIME);
+	int first_line = Con_FirstNotifyLine(notifyLines, timeout);
 
 	if (notifyCols > (con_linewidth))
 		notifyCols = con_linewidth;
@@ -852,7 +855,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 				continue;
 
 			time = cls.realtime - time;
-			if (time > notifyTime)
+			if (time > timeout)
 				continue;
 
 			idx = (i % con_totallines)*con_linewidth;
