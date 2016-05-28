@@ -2425,6 +2425,54 @@
       "desc": "When a shambler is preparing to throw lightning, or a tesla coil (TF) is charging to fire, a particle effect is generated.",
       "type": "float"
     },
+    "gl_custom_grenade_color": {
+      "group-id": "35",
+      "desc": "Allows color of grenades to be set without requiring a texture change.",
+      "type": "color",
+      "remarks": "Leave blank to disable.  See gl_custom_grenade_fullbright."
+    },
+    "gl_custom_grenade_fullbright": {
+      "group-id": "35",
+      "desc": "Determines if gl_custom_grenade_color refers to a fullbright color or standard.",
+      "type": "boolean",
+      "remarks": "Has no effect if gl_custom_grenade_color is blank."
+    },
+    "gl_custom_lg_color": {
+      "group-id": "35",
+      "desc": "Allows color of lightning shaft to be set without requiring a texture change.",
+      "type": "color",
+      "remarks": "Leave blank to disable.  Has no effect if particle shaft is enabled."
+    },
+    "gl_custom_lg_fullbright": {
+      "group-id": "35",
+      "desc": "Determines if gl_custom_lg_color refers to a fullbright color or standard.",
+      "type": "boolean",
+      "remarks": "Has no effect if gl_custom_lg_color is blank."
+    },
+    "gl_custom_rocket_color": {
+      "group-id": "35",
+      "desc": "Allows color of rockets to be set without requiring a texture change.",
+      "type": "color",
+      "remarks": "Leave blank to disable.  See gl_custom_rocket_fullbright."
+    },
+    "gl_custom_rocket_fullbright": {
+      "group-id": "35",
+      "desc": "Determines if gl_custom_rocket_color refers to a fullbright color or standard.",
+      "type": "boolean",
+      "remarks": "Has no effect if gl_custom_rocket_color is blank."
+    },
+    "gl_custom_spike_color": {
+      "group-id": "35",
+      "desc": "Allows color of spikes/nails to be set without requiring a texture change.",
+      "type": "color",
+      "remarks": "Leave blank to disable.  See gl_custom_spike_fullbright."
+    },
+    "gl_custom_spike_fullbright": {
+      "group-id": "35",
+      "desc": "Determines if gl_custom_spike_color refers to a fullbright color or standard.",
+      "type": "boolean",
+      "remarks": "Has no effect if gl_custom_spike_color is blank."
+    },
     "gl_detail": {
       "group-id": "8",
       "desc": "Turns on/off fine detailed textures.",

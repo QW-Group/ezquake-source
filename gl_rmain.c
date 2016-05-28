@@ -89,7 +89,6 @@ float     ayaw;
 float     clearColor[3] = {0, 0, 0};
 qbool     r_cache_thrash;                     // compatability
 qbool     full_light;
-qbool     drawing_lg;
 int       lastposenum;
 int       shelltexture = 0;
 int       r_visframecount;                    // bumped when going to a new PVS
@@ -105,7 +104,6 @@ int       playernmtextures[MAX_CLIENTS];
 int       playerfbtextures[MAX_CLIENTS];
 int       skyboxtextures[MAX_SKYBOXTEXTURES];
 int       underwatertexture, detailtexture;
-
 
 cvar_t cl_multiview                        = {"cl_multiview", "0" };
 cvar_t cl_mvdisplayhud                     = {"cl_mvdisplayhud", "1"};
@@ -169,7 +167,7 @@ cvar_t gl_nocolors                         = {"gl_nocolors", "0"};
 cvar_t gl_finish                           = {"gl_finish", "0"};
 cvar_t gl_fb_bmodels                       = {"gl_fb_bmodels", "1"};
 cvar_t gl_fb_models                        = {"gl_fb_models", "1"};
-cvar_t gl_lightmode                        = {"gl_lightmode", "1"};
+cvar_t gl_lightmode                        = {"gl_lightmode", "2"};
 cvar_t gl_loadlitfiles                     = {"gl_loadlitfiles", "1"};
 cvar_t gl_colorlights                      = {"gl_colorlights", "1"};
 cvar_t gl_solidparticles                   = {"gl_solidparticles", "0"}; // 1
@@ -219,11 +217,45 @@ cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 
-cvar_t gl_custom_lg_color_enabled           = {"gl_custom_lg_color_enabled", "0"};
-cvar_t gl_custom_lg_color_r                 = {"gl_custom_lg_color_r", "140"};
-cvar_t gl_custom_lg_color_g                 = {"gl_custom_lg_color_g", "140"};
-cvar_t gl_custom_lg_color_b                 = {"gl_custom_lg_color_b", "150"};
+typedef struct custom_model_color_s {
+	cvar_t color_cvar;
+	cvar_t fullbright_cvar;
+	cvar_t* amf_cvar;
+	int model_hint;
+} custom_model_color_t;
 
+custom_model_color_t custom_model_colors[] = {
+	// LG beam
+	{
+		{ "gl_custom_lg_color", "", CVAR_COLOR },
+		{ "gl_custom_lg_fullbright", "1" },
+		&amf_lightning,
+		MOD_THUNDERBOLT
+	},
+	// Rockets
+	{
+		{ "gl_custom_rocket_color", "", CVAR_COLOR },
+		{ "gl_custom_rocket_fullbright", "1" },
+		NULL,
+		MOD_ROCKET
+	},
+	// Grenades
+	{
+		{ "gl_custom_grenade_color", "", CVAR_COLOR },
+		{ "gl_custom_grenade_fullbright", "1" },
+		NULL,
+		MOD_GRENADE
+	},
+	// Spikes
+	{
+		{ "gl_custom_spike_color", "", CVAR_COLOR },
+		{ "gl_custom_spike_fullbright", "1" },
+		&amf_part_spikes,
+		MOD_SPIKE
+	}
+};
+
+custom_model_color_t* custom_model = NULL;
 
 void GL_PolygonOffset(float factor, float units)
 {
@@ -474,37 +506,6 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 	GL_PolygonOffset(0, 0);
 }
 
-void GL_CustomLGColor_f(void)
-{
-	byte r, g, b;
-
-	if (Cmd_Argc() == 1) {
-		if (gl_custom_lg_color_enabled.integer != 1) {
-			Com_Printf("Custom lg color is not enabled, enable by setting gl_custom_lg_color_enabled 1\n");
-			return;
-		}
-		Com_Printf("Current colors: r:%d g:%d b%d\n", gl_custom_lg_color_r.integer, gl_custom_lg_color_g.integer, gl_custom_lg_color_b.integer);
-		return;
-	}
-
-	if (Cmd_Argc() != 4) {
-		Com_Printf("wrong usage: \"%s r g b\" (rgb values 0-255)\n", Cmd_Argv(0));
-		return;
-	}
-
-	r = Q_atoi(Cmd_Argv(1));
-	g = Q_atoi(Cmd_Argv(2));
-	b = Q_atoi(Cmd_Argv(3));
-
-	r = bound(0, r, 255);
-	g = bound(0, g, 255);
-	b = bound(0, b, 255);
-
-	Cvar_SetValue(&gl_custom_lg_color_r, (float) r);
-	Cvar_SetValue(&gl_custom_lg_color_g, (float) g);
-	Cvar_SetValue(&gl_custom_lg_color_b, (float) b);
-}
-
 void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir)
 {
 	int *order, count;
@@ -600,10 +601,11 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 		if (r_modelalpha < 1)
 			glEnable(GL_BLEND);
 
-		if (drawing_lg) {
+		if (custom_model) {
 			glDisable(GL_TEXTURE_2D);
-			glColor3ub(gl_custom_lg_color_r.integer, gl_custom_lg_color_g.integer, gl_custom_lg_color_b.integer);
+			glColor3ubv(custom_model->color_cvar.color);
 		}
+
 		for ( ;; )
 		{
 			count = *order++;
@@ -656,7 +658,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 					else
 						glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
 				}
-				else if (!drawing_lg)
+				else if (custom_model == NULL)
 				{
 					if (r_modelcolor[0] < 0) {
 						glColor4f(l, l, l, r_modelalpha); // normal color
@@ -679,9 +681,9 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 		if (r_modelalpha < 1)
 			glDisable(GL_BLEND);
 
-		if (drawing_lg) {
+		if (custom_model) {
 			glEnable(GL_TEXTURE_2D);
-			drawing_lg = false;
+			custom_model = NULL;
 		}
 	}
 }
@@ -766,14 +768,29 @@ void R_AliasSetupLighting(entity_t *ent)
 
 	clmodel = ent->model;
 
+	custom_model = NULL;
+	for (i = 0; i < sizeof (custom_model_colors) / sizeof (custom_model_colors[0]); ++i) {
+		custom_model_color_t* test = &custom_model_colors[i];
+		if (test->model_hint == clmodel->modhint) {
+			if (test->color_cvar.string[0] && (test->amf_cvar == NULL || test->amf_cvar->integer == 0)) {
+				custom_model = &custom_model_colors[i];
+			}
+			break;
+		}
+	}
+
+	if (custom_model && custom_model->fullbright_cvar.integer) {
+		ambientlight = 4096;
+		shadelight = 0;
+		full_light = true;
+		return;
+	}
+
 	// make thunderbolt and torches full light
 	if (clmodel->modhint == MOD_THUNDERBOLT) {
 		ambientlight = 60 + 150 * bound(0, gl_shaftlight.value, 1);
 		shadelight = 0;
 		full_light = true;
-		if (gl_custom_lg_color_enabled.integer == 1 && amf_lightning.integer == 0) {
-			drawing_lg = true;
-		}
 		return;
 	} else if (clmodel->modhint == MOD_FLAME) {
 		ambientlight = 255;
@@ -1892,9 +1909,10 @@ void R_SetupGL(void)
 
 void R_Init(void)
 {
+	int i;
+
 	Cmd_AddCommand ("loadsky", R_LoadSky_f);
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);
-	Cmd_AddCommand ("lg_color", GL_CustomLGColor_f);
 #ifndef CLIENTONLY
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
 #endif
@@ -2017,10 +2035,11 @@ void R_Init(void)
 	Cvar_Register (&r_wallcolor);
 	Cvar_Register (&r_floorcolor);
 	Cvar_Register (&gl_textureless); //Qrack
-	Cvar_Register (&gl_custom_lg_color_enabled);
-	Cvar_Register (&gl_custom_lg_color_r);
-	Cvar_Register (&gl_custom_lg_color_g);
-	Cvar_Register (&gl_custom_lg_color_b);
+
+	for (i = 0; i < sizeof (custom_model_colors) / sizeof (custom_model_colors[0]); ++i) {
+		Cvar_Register (&custom_model_colors[i].color_cvar);
+		Cvar_Register (&custom_model_colors[i].fullbright_cvar);
+	}
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 	Cvar_Register (&r_farclip);
