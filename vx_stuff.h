@@ -154,6 +154,8 @@ void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col
 void DrawMuzzleflash (vec3_t start, vec3_t angle, vec3_t vel);
 void VXNailhit (vec3_t org, float count);
 void InfernoFire_f (void);
+void CheckModels_f (void);
+void Amf_SetMode_f (void);
 void CL_FakeExplosion (vec3_t pos);
 void CL_FakeRocketLight(vec3_t org);
 void FuelRodExplosion (vec3_t org);

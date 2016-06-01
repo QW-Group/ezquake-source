@@ -2585,10 +2585,14 @@ void FuelRodExplosion (vec3_t org)
 //VULT PARTICLES
 void InfernoFire_f (void)
 {
-
 	vec3_t	forward, right, up;
 	vec3_t	ang, dir;
 	vec3_t	org;
+
+	if (!qmb_initialized) {
+		Com_Printf ("Particle system not initialized\n");
+		return;
+	}
 
 	ang[0] = cl.simangles[0];
 	ang[1] = cl.simangles[1];

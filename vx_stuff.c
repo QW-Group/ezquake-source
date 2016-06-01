@@ -342,9 +342,14 @@ void Amf_SetMode_f(void)
 	char mode[32];
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("Usage: %s [modename]\n", Cmd_Argv(0));
+		Com_Printf("Usage: %s [modename: newtrails or vultwah]\n", Cmd_Argv(0));
 		return;
 	}
+	if (!qmb_initialized) {
+		Com_Printf ("Particle system not initialized\n");
+		return;
+	}
+
 	snprintf(mode, sizeof (mode), "%s", Cmd_Argv(1));
 	if (!strcmp(mode, "newtrails"))
 	{
@@ -492,9 +497,6 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_inferno_speed);
 	Cvar_Register (&amf_cutf_tesla_effect);
 	Cvar_ResetCurrentGroup();
-	Cmd_AddCommand ("gl_checkmodels", CheckModels_f);
-	Cmd_AddCommand ("gl_inferno", InfernoFire_f);
-	Cmd_AddCommand ("gl_setmode", Amf_SetMode_f);
 }
 
 
