@@ -1,7 +1,6 @@
 {
   "groups": [
-    { "id": "1", "name": "", "major-group": "Miscellaneous" },
-    { "id": "2", "name": "#No Group#", "major-group": "Miscellaneous" },
+    { "id": "2", "name": "Other", "major-group": "Miscellaneous" },
     { "id": "3", "name": "Chat Settings", "major-group": "HUD" },
     { "id": "4", "name": "Config Management", "major-group": "Miscellaneous" },
     { "id": "5", "name": "Console Settings", "major-group": "HUD" },
@@ -423,11 +422,10 @@
     },
     "cfg_save_cmdline": {
       "group-id": "4",
-      "remarks": "course).",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Won\u0027t save command line." },
-        { "name": "true", "description": "Writes your command line in configs made with cfg_save (commented out of" }
+        { "name": "true", "description": "Writes your command line in configs made with cfg_save (commented out of course)" }
       ]
     },
     "cfg_save_cmds": {
@@ -1310,7 +1308,7 @@
       ]
     },
     "cl_showkeycodes": {
-      "group-id": "1",
+      "group-id": "28",
       "desc": "This variable enables/disables the output of informations to the currently pressed and/or released keys.",
       "type": "enum",
       "values": [
@@ -1736,11 +1734,6 @@
       "group-id": "5",
       "desc": "How long console messages stay on screen.",
       "type": "float"
-    },
-    "con_mm2_only": {
-      "group-id": "5",
-      "desc": "If set, during gametime only team messages will appear in notification area.",
-      "type": "boolean"
     },
     "con_particles_alpha": {
       "group-id": "31",
@@ -2218,10 +2211,10 @@
       "type": "string",
       "desc": "Determines sort order of files in the file browser.",
       "values": [
-        { "name": "1", "desc": "name" },
-        { "name": "2", "desc": "size" },
-        { "name": "3", "desc": "date/time" },
-        { "name": "4", "desc": "type" }
+        { "name": "1", "description": "name" },
+        { "name": "2", "description": "size" },
+        { "name": "3", "description": "date/time" },
+        { "name": "4", "description": "type" }
       ]
     },
     "file_browser_strip_names": {
@@ -2912,9 +2905,9 @@
       "type": "enum",
       "desc": "Adds extra blood effects to gibs",
       "values": [
-        { "name": "0", "desc": "No extra effects" },
-        { "name": "1", "desc": "" },
-        { "name": "2", "desc": "No extra effects" }
+        { "name": "0", "description": "No extra effects" },
+        { "name": "1", "description": "Death effect enabled for all corpses" },
+        { "name": "2", "description": "Death effect for gibbed players only" }
       ]
     },
     "gl_particle_explosions": {
@@ -9414,8 +9407,8 @@
       "type": "float"
     },
     "in_builtinkeymap": {
-      "group-id": "1",
-      "desc": "Allows you tu use old Quake keyboard mapping",
+      "group-id": "9",
+      "desc": "Allows you to use old Quake keyboard mapping",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Use your operating system keyboard layout" },
@@ -9511,8 +9504,13 @@
     },
     "in_raw": {
       "group-id": "11",
-      "desc": "If set, ",
-      "type": "boolean"
+      "desc": "Whether or not ezQuake will use raw input to sample mouse events",
+      "remarks": "It is recommended to leave this set",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Disabled, correlates to /in_mouse 1 in ezQuake 2.2" },
+        { "name": "true", "description": "Enabled, correlates to /in_mouse 3 in ezQuake 2.2" }
+      ]
     },
     "in_raw_allbuttons": {
       "group-id": "28",
@@ -9563,7 +9561,7 @@
       ]
     },
     "keymap_name": {
-      "group-id": "1",
+      "group-id": "28",
       "desc": "This holds the name of the current keymappings; it has (currently) only informational purposes. If no keymapping is active, it will contain the name \"Default\". If a keymapping will be active and no name has been set, \"Custom\" will be used as name. It can easily be set with \"keymap_name \u003clayoutname\u003e\"",
       "type": "float"
     },
@@ -10419,7 +10417,7 @@
     },
     "qtv_adjustbuffer": {
       "group-id": "38",
-      "desc": "Enables balancing of the buffer lenght of the QTV stream. When turned on, the size of the stream buffer (the delay from the actual action) will be auto-adjusted (by changing the playback speed when necessary) so that it stays on the same level most of the time.",
+      "desc": "Enables balancing of the buffer length of the QTV stream. When turned on, the size of the stream buffer (the delay from the actual action) will be auto-adjusted (by changing the playback speed when necessary) so that it stays on the same level most of the time.",
       "remarks": "When turned on, the speed of the playback may change sometimes - that\u0027s how the buffer lenght is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.",
       "type": "boolean",
       "values": [
