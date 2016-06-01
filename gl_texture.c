@@ -756,7 +756,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 			continue;
 
 		snprintf (name, sizeof (name), "%s.%s", basename, formats[i].extension);
-		if (file = FS_OpenVFS (name, "rb", FS_ANY)) {
+		if ((file = FS_OpenVFS (name, "rb", FS_ANY))) {
 			if (f == NULL || (f->copyprotected && !file->copyprotected)) {
 				if (f) {
 					VFS_CLOSE (f);
@@ -773,7 +773,7 @@ byte *GL_LoadImagePixels (const char *filename, int matchwidth, int matchheight,
 	if (best && f) {
 		CHECK_TEXTURE_ALREADY_LOADED;
 		snprintf (name, sizeof (name), "%s.%s", basename, best->extension);
-		if (data = best->function (f, name, matchwidth, matchheight, real_width, real_height)) {
+		if ((data = best->function (f, name, matchwidth, matchheight, real_width, real_height))) {
 			return data;
 		}
 	}
