@@ -396,14 +396,14 @@ void IN_RememberWpOrder (void)
 		weapon_order[i] = (i < c) ? Q_atoi(Cmd_Argv(i+1)) : 0;
 }
 
-static int IN_BestWeapon_Common(int best);
+static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool persist);
 
 // picks the best available (carried & having some ammunition) weapon according to users current preference
 // or if the intersection (whished * carried) is empty
 // select the top wished weapon
 int IN_BestWeapon(void)
 {
-	return IN_BestWeapon_Common(weapon_order[0]);
+	return IN_BestWeapon_Common(weapon_order[0], weapon_order, cl_weaponforgetorder.integer != 1);
 }
 
 // picks the best available (carried & having some ammunition) weapon according to users current preference
@@ -411,11 +411,11 @@ int IN_BestWeapon(void)
 // select the current weapon
 int IN_BestWeaponReal(void)
 {
-	return IN_BestWeapon_Common(in_impulse);
+	return IN_BestWeapon_Common(in_impulse, weapon_order, cl_weaponforgetorder.integer != 1);
 }
 
 // finds the best weapon from the carried weapons; if none is found, returns implicit
-static int IN_BestWeapon_Common(int implicit)
+static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool persist)
 {
 	int i, imp, items;
 	int best = implicit;
@@ -467,7 +467,7 @@ static int IN_BestWeapon_Common(int implicit)
 	/* If weapon order shouldn't persist, set the first element
 	 * of the order to the most recently selected weapon
 	 */
-	if (cl_weaponforgetorder.integer == 1) {
+	if (! persist) {
 		weapon_order[0] = best;
 	}
 
@@ -492,16 +492,52 @@ void IN_Impulse (void)
 // This is the same command as impulse but cl_weaponpreselect can be used in here, while for impulses cannot be used.
 void IN_Weapon(void)
 {
-	int c, best, mode;
+	int c, best, mode, first;
+
 	if ((c = Cmd_Argc() - 1) < 1) {
 		Com_Printf("Usage: %s w1 [w2 [w3..]]\nWill pre-select best available weapon from given sequence.\n", Cmd_Argv(0));
 		return;
 	}
 
-	// read user input
-	IN_RememberWpOrder();
+	first = Q_atoi (Cmd_Argv (1));
+	if (first == 10) {
+		int temp_order[10] = {
+			IN_BestWeapon () % 8 + 1,
+			(IN_BestWeapon () + 1) % 8 + 1,
+			(IN_BestWeapon () + 2) % 8 + 1,
+			(IN_BestWeapon () + 3) % 8 + 1,
+			(IN_BestWeapon () + 4) % 8 + 1,
+			(IN_BestWeapon () + 5) % 8 + 1,
+			(IN_BestWeapon () + 6) % 8 + 1,
+			(IN_BestWeapon () + 7) % 8 + 1,
+			0,
+			0
+		};
 
-	best = IN_BestWeapon();
+		weapon_order[0] = best = IN_BestWeapon_Common (1, temp_order, false);
+	}
+	else if (first == 12) {
+		int temp_order[10] = {
+			8 - ((8 - IN_BestWeapon() + 1) % 8),
+			8 - ((8 - IN_BestWeapon() + 2) % 8),
+			8 - ((8 - IN_BestWeapon() + 3) % 8),
+			8 - ((8 - IN_BestWeapon() + 4) % 8),
+			8 - ((8 - IN_BestWeapon() + 5) % 8),
+			8 - ((8 - IN_BestWeapon() + 6) % 8),
+			8 - ((8 - IN_BestWeapon() + 7) % 8),
+			8 - ((8 - IN_BestWeapon() + 8) % 8),
+			0,
+			0
+		};
+
+		weapon_order[0] = best = IN_BestWeapon_Common (1, temp_order, false);
+	}
+	else {
+		// read user input
+		IN_RememberWpOrder ();
+
+		best = IN_BestWeapon();
+	}
 
 	mode = (int) cl_weaponpreselect.value;
 

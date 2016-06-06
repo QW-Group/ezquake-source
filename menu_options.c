@@ -1110,8 +1110,8 @@ setting settbinds_arr[] = {
 	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Weapons"),
-	ADDSET_BIND("Previous Weapon", "impulse 12"),
-	ADDSET_BIND("Next Weapon", "impulse 10"),
+	ADDSET_BIND("Previous Weapon", "weapon 12"),
+	ADDSET_BIND("Next Weapon", "weapon 10"),
 	ADDSET_BIND("Axe", "weapon 1"),
 	ADDSET_BIND("Shotgun", "weapon 2"),
 	ADDSET_BIND("Super Shotgun", "weapon 3"),
