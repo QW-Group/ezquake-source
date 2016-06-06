@@ -12,7 +12,7 @@ matrix:
       compiler: gcc
       env: EZ_CONFIG_FILE=.config_windows
     - os: osx
-      osx_image: xcode7.2
+      osx_image: beta-xcode6.2
       compiler: gcc
 
 before_install:
