@@ -170,7 +170,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename, cl_fakename_suffix,
-	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
+	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz, s_desiredsamples,
 	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
 	enemyforceskins, teamforceskins, vid_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
 	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, menu_ingame, sys_inactivesound
@@ -218,6 +218,10 @@ const char* s_khz_enum[] = {
 	,"48 kHz", "48"
 #endif
 };
+const char* s_desired_samples_enum[] = {
+	"(default)", "0", "128", "128", "256", "256", "512", "512", "1024", "1024"
+};
+
 const char* cl_nolerp_enum[] = {"on", "off"};
 const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smackdown", "Thunderdome", "thunderdome", "Moscow TF League", "mtfl", "QuakeCon", "qcon" };
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
@@ -1251,6 +1255,7 @@ setting settsystem_arr[] = {
 	ADDSET_BOOL		("Sounds When Minimized", sys_inactivesound),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
+	ADDSET_ENUM 	("Buffer size", s_desiredsamples, s_desired_samples_enum),
 
 	//Connection
 	ADDSET_SEPARATOR("Connection"),

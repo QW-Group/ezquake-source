@@ -37,6 +37,7 @@ extern qbool ActiveApp, Minimized;
 extern cvar_t sys_inactivesound;
 
 static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel);
+static void OnChange_s_desiredsamples (cvar_t *var, char *string, qbool *cancel);
 static void S_Play_f (void);
 static void S_MuteSound_f (void);
 static void S_SoundList_f (void);
@@ -96,7 +97,7 @@ cvar_t s_swapstereo = {"s_swapstereo", "0"};
 cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH};
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
-cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_LATCH | CVAR_AUTO };
+cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_AUTO, OnChange_s_desiredsamples };
 cvar_t s_audiodevice = {"s_audiodevice", "0", CVAR_LATCH};
 
 SDL_mutex *smutex;
@@ -407,6 +408,12 @@ static void OnChange_s_khz (cvar_t *var, char *string, qbool *cancel) {
 	}
 }
 
+static void OnChange_s_desiredsamples (cvar_t *var, char *string, qbool *cancel) {
+	if (atoi (string) != var->integer) {
+		Cbuf_AddText("s_restart\n");
+	}
+}
+
 static void S_Register_RegularCvarsAndCommands(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
@@ -422,6 +429,7 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cvar_Register(&s_show);
 	Cvar_Register(&s_swapstereo);
 	Cvar_Register(&s_linearresample_stream);
+	Cvar_Register(&s_desiredsamples);
 
 	Cvar_ResetCurrentGroup();
 
@@ -452,7 +460,6 @@ static void S_Register_LatchCvars(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 
 	Cvar_Register(&s_linearresample);
-	Cvar_Register(&s_desiredsamples);
 	Cvar_Register(&s_audiodevice);
 
 	Cvar_ResetCurrentGroup();
