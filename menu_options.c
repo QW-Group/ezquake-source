@@ -219,7 +219,7 @@ const char* s_khz_enum[] = {
 #endif
 };
 const char* cl_nolerp_enum[] = {"on", "off"};
-const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smackdown", "Thunderdome", "thunderdome", "Moscow TF League", "mtfl" };
+const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smackdown", "Thunderdome", "thunderdome", "Moscow TF League", "mtfl", "QuakeCon", "qcon" };
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
 const char *teamforceskins_enum[] = { "off", "use player's name", "use player's userid", "set t1, t2, t3, ..." };
 const char *enemyforceskins_enum[] = { "off", "use player's name", "use player's userid", "set e1, e2, e3, ..." };
