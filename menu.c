@@ -1383,6 +1383,31 @@ void M_Draw (void) {
 	}
 }
 
+// Return true if the system should execute the key, false if we want it to pass to M_Keydown
+qbool Menu_ExecuteKey (int key) {
+	// This always turns into /togglemenu anyway
+	if (key == K_ESCAPE) {
+		return true;
+	}
+
+	// Capture all keypresses when binding
+	if (Menu_Options_IsBindingKey ()) {
+		return false;
+	}
+
+	// Capture F1 in menus that have help boxes
+	if (key == K_F1 && m_state != m_ingame) {
+		return false;
+	}
+
+	// Other function keys should execute
+	if (key >= K_F1 && key <= K_F12)
+		return true;
+
+	// Capture everything else
+	return false;
+}
+
 void M_Keydown (int key, wchar unichar) {
 	switch (m_state) {
 		case m_none: return;

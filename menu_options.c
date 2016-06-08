@@ -1359,3 +1359,12 @@ void Menu_Options_Init(void) {
 	CTab_AddPage(&options_tab, "Config", OPTPG_CONFIG, &options_config_handlers);
 	CTab_SetCurrentId(&options_tab, OPTPG_PLAYER);
 }
+
+qbool Menu_Options_IsBindingKey (void)
+{
+	// Options/Binds, and waiting for a keypress
+	return m_state == m_options && (
+		(CTab_GetCurrentId (&options_tab) == OPTPG_BINDS && settbinds.mode == SPM_BINDING) ||
+		(CTab_GetCurrentId (&options_tab) == OPTPG_SYSTEM && settsystem.mode == SPM_BINDING)
+	);
+}

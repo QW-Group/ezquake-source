@@ -98,7 +98,6 @@ char	*keybindings[UNKNOWN + 256];
 qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
 qbool	hudeditorkeys[UNKNOWN + 256];	// if true, can't be rebound while in hud editor
 qbool	democontrolskey[UNKNOWN + 256];
-qbool	menubound[UNKNOWN + 256];		// if true, can't be rebound while in menu
 int		keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
 int		key_repeats[UNKNOWN + 256];	// if > 1, it is autorepeating
 qbool	keydown[UNKNOWN + 256];
@@ -1860,10 +1859,6 @@ void Key_Init (void) {
 	hudeditorkeys[K_MOUSE2] = true;
 	hudeditorkeys[K_MOUSE3] = true;
 
-	menubound[K_ESCAPE] = true;
-	for (i = 1; i < 12; i++)
-		menubound[K_F1 + i] = true;
-
     memset(&scr_pointer_state, 0, sizeof(mouse_state_t));
 
 	// register our functions
@@ -1969,7 +1964,7 @@ static qbool Key_ConsoleKey(int key)
     qbool hud_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : hudeditorkeys[key];
 	qbool demo_controls_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : democontrolskey[key];
 
-    if (key_dest == key_menu && menubound[key])
+    if (key_dest == key_menu && Menu_ExecuteKey(key))
         return false;
     
     if ((key_dest == key_console || key_dest == key_message) && !con_key)

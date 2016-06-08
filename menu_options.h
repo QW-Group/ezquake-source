@@ -30,6 +30,8 @@ void Menu_Options_Key(int key, wchar unichar);
 // process request to draw the demo menu
 void Menu_Options_Draw (void);
 
+qbool Menu_Options_IsBindingKey (void);
+
 // process mouse move
 qbool Menu_Options_Mouse_Event(const mouse_state_t *);
 // </interface>
