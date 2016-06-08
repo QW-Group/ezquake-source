@@ -1929,6 +1929,12 @@ void Draw_AdjustConback (void)
 {
 	conback.width  = vid.conwidth;
 	conback.height = vid.conheight;
+
+	if (last_lvlshot) {
+		// Resize.
+		last_lvlshot->width = conback.width;
+		last_lvlshot->height = conback.height;
+	}
 }
 
 void Draw_InitConback (void)
