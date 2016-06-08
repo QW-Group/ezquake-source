@@ -53,6 +53,7 @@ void M_FindKeysForCommand (const char *command, int *twokeys);
 void M_BuildTranslationTable(int top, int bottom);
 void M_Unscale_Menu(void);
 qbool Menu_Mouse_Event(const mouse_state_t* ms);
+qbool Menu_ExecuteKey(int key);
 
 extern int m_yofs;
 
