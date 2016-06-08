@@ -89,6 +89,18 @@ qbool Rulesets_AllowNoShadows(void)
 	}
 }
 
+qbool Rulesets_AllowAlternateModel (const char* modelName)
+{
+	switch(rulesetDef.ruleset) {
+	case rs_qcon:
+		if (! strcmp (modelName, "progs/player.mdl"))
+			return false;
+		return true;
+	default:
+		return true;
+	}
+}
+
 float Rulesets_MaxFPS(void)
 {
 	if (cl_multiview.value && cls.mvdplayback)
