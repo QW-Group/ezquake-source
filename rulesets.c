@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "rulesets.h"
 #include "mp3_player.h"
+#include "input.h"
 
 /* FIXME: Figure out a nicer way to do all this */
 
@@ -447,6 +448,8 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel)
 		return;
 	}
 
+	IN_ClearProtectedKeys ();
+
 	if (!cl.spectator && cls.state != ca_disconnected) {
 		if (val < 1) {
 			Cbuf_AddText("say not using scripts\n");
@@ -603,6 +606,7 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 	}
 
 	Cmd_ReInitAllMacro();
+	IN_ClearProtectedKeys();
 }
 
 int Rulesets_MaxSequentialWaitCommands(void)

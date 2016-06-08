@@ -1141,3 +1141,17 @@ void CL_InitInput(void)
 	#endif // JSS_CAM
 }
 
+void IN_ClearProtectedKeys (void)
+{
+	// Pretend the user entered -moveleft etc at the console
+	KeyUp_common(&in_up, VOID_KEY);
+	KeyUp_common(&in_down, VOID_KEY);
+	KeyUp_common(&in_left, VOID_KEY);
+	KeyUp_common(&in_right, VOID_KEY);
+	KeyUp_common(&in_forward, VOID_KEY);
+	KeyUp_common(&in_back, VOID_KEY);
+	KeyUp_common(&in_lookup, VOID_KEY);
+	KeyUp_common(&in_lookdown, VOID_KEY);
+	KeyUp_common(&in_moveleft, VOID_KEY);
+	KeyUp_common(&in_moveright, VOID_KEY);
+}
