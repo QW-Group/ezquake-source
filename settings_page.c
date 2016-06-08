@@ -369,7 +369,7 @@ static void M_UnbindCommand (const char *command) {
 	int j, l;
 	char *b;
 
-	l = strlen(command);
+	l = strlen(command) + 1;
 
 	for (j = 0; j < (sizeof(keybindings) / sizeof(*keybindings)); j++) {
 		b = keybindings[j];
