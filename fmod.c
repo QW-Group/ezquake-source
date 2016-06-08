@@ -22,6 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "fmod.h"
 #include "sha1.h"
+#include "rulesets.h"
+
+typedef qbool (*pRulesetFilter)(const char* modelName);
 
 typedef struct check_models_hashes_entry_s {
 	const unsigned int hash[5];
@@ -265,7 +268,6 @@ static qbool FMod_IsModelModified (const char *name, const int flags, const byte
 	SHA1_CTX context;
 	qbool found = false;
 
-
 	SHA1Init (&context);
 	SHA1Update (&context, (unsigned char *) buf, len);
 	SHA1Final (hash, &context);
@@ -287,7 +289,7 @@ static qbool FMod_IsModelModified (const char *name, const int flags, const byte
 		else {
 			check_models_hashes_entry_t *cur = check_models[i].hash_alt;
 			while (cur) {
-				if (memcmp(cur->hash, hash, DIGEST_SIZE) == 0) {
+				if (memcmp(cur->hash, hash, DIGEST_SIZE) == 0 && Rulesets_AllowAlternateModel(name)) {
 					// alternative legal model
 					return false;
 				}
