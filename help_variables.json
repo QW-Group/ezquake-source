@@ -1405,10 +1405,11 @@
       "group-id": "40",
       "desc": "Enables the check on client startup for handling URLs starting with qw://",
       "remarks": "When enabled and the client is not associated with handling of qw:// URLs, user will be prompted if he wishes to associate the client with the protocol",
-      "type": "boolean",
+      "type": "enum",
       "values": [
-        { "name": "false", "description": "" },
-        { "name": "true", "description": "" }
+        { "name": "0", "description": "Do not check if client is associated with qw:// URLs" },
+        { "name": "1", "description": "Check if client is associated, prompt if not" },
+        { "name": "2", "description": "Always associate client with qw:// URLs" }
       ]
     },
     "cl_voip_capturingvol ": {
@@ -11468,7 +11469,7 @@
     "s_device": {
       "group-id": "26",
       "desc": "Allows you to choose from multiple sound devices.\n",
-      "remarks": "Linux only.\nUse snd_restart after you change it.\n\nFor OSS you should use \"/dev/dsp\", \"/dev/dsp0\", \"/dev/dsp1\", etc\nFor ALSA use \"default\", \"dmix\", etc",
+      "remarks": "Linux only.\nUse s_restart after you change it.\n\nFor OSS you should use \"/dev/dsp\", \"/dev/dsp0\", \"/dev/dsp1\", etc\nFor ALSA use \"default\", \"dmix\", etc",
       "type": "string",
       "values": [
         { "name": "*", "description": "device name" }
@@ -11487,7 +11488,7 @@
     "s_khz": {
       "group-id": "45",
       "desc": "The client includes \"sound interpolation\" which allows it to play sounds at higher frequencies, than the default 11025 Hz with perfect quality. In addition to \"s_khz\" also \"s_bits\" (linux only) will have an influence on interpolation quality. This variable allows you to choose the frequency you want to interpolate the sounds to. You will quickly discover, that the shaft sound is different at increased sampling rate. That\u0027s because shaft sounds were recorded at 22050 kHz, so probably that\u0027s how they should sound from the beginning. If you don\u0027t like it, you can always convert them to 11025.",
-      "remarks": "Also you can change it \u0027on fly\u0027 - just do snd_restart after you change s_khz",
+      "remarks": "Also you can change it \u0027on fly\u0027 - just do s_restart after you change s_khz",
       "type": "enum",
       "values": [
         { "name": "11", "description": "11khz sound (default)" },
