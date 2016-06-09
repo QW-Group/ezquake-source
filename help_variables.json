@@ -664,7 +664,7 @@
     },
     "cl_deadbodyFilter": {
       "group-id": "8",
-      "type": "integer",
+      "type": "enum",
       "values": [
         { "name": "0", "description": "Don\u0027t filter dead bodies." },
         { "name": "1", "description": "Filter dead bodies after they fall on the ground." },
@@ -2577,7 +2577,8 @@
     },
     "gl_lightmode": {
       "group-id": "15",
-      "type": "enum",
+      "type": "bool",
+      "remarks": "Takes effect when the map reloads.",
       "values": [
         { "name": "0", "description": "Makes the map lighter, but fullbrights don\u0027t look as good. (0% overbrights)" },
         { "name": "1", "description": "Makes the map darker, but makes fullbrights stand out more (looks better). (33% overbrights)" }
