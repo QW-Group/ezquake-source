@@ -543,15 +543,18 @@ void Startup_Place(void)
 		Cbuf_AddText(va("playdemo %s\n", cl_startupdemo.string));
 		key_dest = key_startupdemo;
 	}
-	else
-	{
-		if (!strcmp(cl_onload.string, "menu"))
-			Cbuf_AddText("togglemenu\n");
-		else if (!strcmp(cl_onload.string, "browser"))
-			Cbuf_AddText("menu_slist\n");
-		else if (!strcmp(cl_onload.string, "console"))
-			key_dest = key_console; 
-		else Cbuf_AddText(va("%s\n", cl_onload.string));
+	else if (!strcmp (cl_onload.string, "menu")) {
+		Cbuf_AddText ("togglemenu\n");
+	}
+	else if (!strcmp (cl_onload.string, "browser")) {
+		Cbuf_AddText ("menu_slist\n");
+	}
+	else if (!strcmp (cl_onload.string, "console")) {
+		key_dest = key_console;
+	}
+	else {
+		key_dest = key_console;
+		Cbuf_AddText (va ("%s\n", cl_onload.string));
 	}
 }
 
