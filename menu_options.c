@@ -965,7 +965,7 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
 	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Light Mode", gl_lightmode, 0, 2, 1),
+	ADDSET_BOOL		("Darken Map", gl_lightmode),
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 	ADDSET_BASIC_SECTION(),
 };
