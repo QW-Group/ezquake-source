@@ -1102,10 +1102,12 @@ archive_fail:
 
 	case FS_GAME_OS:	//OS access only, no paks
 		//sss: check userdir first
-		snprintf(fullname, sizeof(fullname), "%s/%s", com_userdir, filename);
-		vfs = VFSOS_Open(fullname, mode);
-		if (vfs) {
+		if (*com_userdir) {
+			snprintf (fullname, sizeof (fullname), "%s/%s", com_userdir, filename);
+			vfs = VFSOS_Open (fullname, mode);
+			if (vfs) {
 				return vfs;
+			}
 		}
 
 		if (*com_homedir)
@@ -2269,7 +2271,6 @@ int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation
 	searchpath_t	*search;
 
 	void *pf;
-//Com_Printf("Finding %s: ", filename);
 
  	if (fs_cache.value)
 	{
