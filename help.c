@@ -62,12 +62,14 @@ static void Help_DescribeCmd(const json_command_t *cmd)
 
     // syntax
     Com_Printf("\n");
-    con_ormask = 128;
-    Com_Printf("syntax\n");
-    con_ormask = 0;
-    con_margin = CONSOLE_HELP_MARGIN;
-    Com_Printf("%s %s\n", cmd->name, cmd->syntax);
-    con_margin = 0;
+	if (cmd->syntax) {
+		con_ormask = 128;
+		Com_Printf ("syntax\n");
+		con_ormask = 0;
+		con_margin = CONSOLE_HELP_MARGIN;
+		Com_Printf ("%s %s\n", cmd->name, cmd->syntax);
+		con_margin = 0;
+	}
 
     // arguments
     if (cmd->arguments)
@@ -131,20 +133,11 @@ static void Help_DescribeVar(const json_variable_t *var)
 		con_ormask = 0;
 		con_margin = CONSOLE_HELP_MARGIN;
 		for (i = 0; i < valueCount; ++i) {
-			const json_t* value = json_array_get(var->values, i);
-			const char*   name = json_string_value(json_object_get(value, "name"));
+			const json_t* value       = json_array_get(var->values, i);
+			const char*   name        = json_string_value(json_object_get(value, "name"));
 			const char*   description = json_string_value(json_object_get(value, "description"));
-
-			switch (var->value_type)
-			{
-			case t_string:
-			case t_integer:
-			case t_float:
-				Com_Printf("%s\n", description);
-				break;
-			case t_boolean:
-			case t_enum:
-			case t_unknown:
+			// if value is *, just show basic description
+			if (strcmp (name, "*")) {
 				con_ormask = 128;
 				if (var->value_type == t_boolean && !strcmp(name, "false"))
 					Com_Printf("0");
@@ -156,7 +149,9 @@ static void Help_DescribeVar(const json_variable_t *var)
 				con_margin += CONSOLE_HELP_MARGIN;
 				Com_Printf(" - %s\n", description);
 				con_margin -= CONSOLE_HELP_MARGIN;
-				break;
+			}
+			else {
+				Com_Printf("%s\n", description);
 			}
 		}
 		con_margin = 0;
@@ -566,23 +561,6 @@ void Help_Issues_Variables(void)
 		qbool num_examples   = examples && json_is_array(examples) ? json_array_size(examples) : 0;
 
 		qbool enum_without_examples = type && !strcmp(type, "enum") && num_examples == 0;
-		qbool non_enum_with_examples = type && strcmp(type, "enum") && num_examples;
-
-		if (non_enum_with_examples) {
-			if (!strcmp(type, "boolean")) {
-				// booleans can have true/false in value section
-				non_enum_with_examples = num_examples != 2;
-			}
-			else {
-				// other types can have * as single example
-				json_t* example   = json_array_get(examples, 0);
-				const char* value = json_string_value(json_object_get(example, "name"));
-
-				if (value && !strcmp(value, "*")) {
-					non_enum_with_examples = false;
-				}
-			}
-		}
 
 		// old variables might still be in documentation, allows "/describe <var>" to explain why it is removed
 		{
@@ -628,7 +606,7 @@ void Help_Issues_Variables(void)
 			}
 		}
 
-		if (!valid_type  || !(valid_desc || num_examples) || enum_without_examples || non_enum_with_examples) {
+		if (!valid_type  || !(valid_desc || num_examples) || enum_without_examples) {
 			if (num_errors == 0) {
 				Con_Printf("Variables with issues:\n");
 				con_margin = CONSOLE_HELP_MARGIN;
@@ -642,19 +620,17 @@ void Help_Issues_Variables(void)
 			if (!valid_type) {
 				Con_Printf("invalid type (\"%s\")", type ? type : "");
 			}
-			else if (enum_without_examples || non_enum_with_examples) {
+			else if (enum_without_examples) {
 				Con_Printf("invalid examples for type \"%s\" (%d)", type, num_examples);
 			}
+			else if (!valid_desc && num_examples == 0) {
+				Con_Printf("invalid description/examples", name);
+			}
+			else if (!valid_desc) {
+				Con_Printf("invalid description", name);
+			}
 			else {
-				if (!valid_desc && num_examples == 0) {
-					Con_Printf("invalid description/examples", name);
-				}
-				else if (!valid_desc) {
-					Con_Printf("invalid description", name);
-				}
-				else {
-					Con_Printf("invalid examples", name);
-				}
+				Con_Printf("invalid examples", name);
 			}
 			con_margin = CONSOLE_HELP_MARGIN;
 			Con_Printf("\n");

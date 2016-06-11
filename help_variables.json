@@ -37,7 +37,7 @@
     { "id": "36", "name": "Particle Effects", "major-group": "Graphics" },
     { "id": "37", "name": "Player Settings", "major-group": "Multiplayer" },
     { "id": "38", "name": "QTV Settings", "major-group": "Multiplayer" },
-    { "id": "39", "name": "Screen \u0026 Powerup Blends", "major-group": "Graphics" },
+    { "id": "39", "name": "Screen & Powerup Blends", "major-group": "Graphics" },
     { "id": "40", "name": "Screen Settings", "major-group": "Graphics" },
     { "id": "41", "name": "Screenshot Settings", "major-group": "Graphics" },
     { "id": "42", "name": "Server Browser", "major-group": "Multiplayer" },
@@ -167,8 +167,8 @@
     },
     "allow_scripts": {
       "group-id": "9",
-      "desc": "Possibility to prove, that you do NOT use scripts. Of course, values 0 and 1 will block \u0027rotate\u0027 command.",
-      "remarks": "Your current \u0027allow_scripts\u0027 setting will be reported to \u0027f_scripts\u0027 query and anyone will be able to check it. If anyone said \u0027f_scripts\u0027 since last mapchange, the client will also autoreport any change of allow_scripts. So if you don\u0027t use scripts, turn them off to prove you don\u0027t use them. And remember - scripts _are allowed_, so don\u0027t call ppl who use them \u0027cheaters\u0027.\n\nThis variable will be set to 0 on startup if a command line switches -norjscripts or -noscripts are used",
+      "desc": "Possibility to prove, that you do NOT use scripts. Of course, values 0 and 1 will block 'rotate' command.",
+      "remarks": "Your current 'allow_scripts' setting will be reported to 'f_scripts' query and anyone will be able to check it. If anyone said 'f_scripts' since last mapchange, the client will also autoreport any change of allow_scripts. So if you don't use scripts, turn them off to prove you don't use them. And remember - scripts _are allowed_, so don't call ppl who use them 'cheaters'.\n\nThis variable will be set to 0 on startup if a command line switches -norjscripts or -noscripts are used",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Same as 1, but also block fast +lookdown/+lookup, so even simple rjump will be impossible. Blocks KTPro /kfjump and /krjump aliases." },
@@ -183,11 +183,11 @@
     },
     "auth_validate": {
       "group-id": "27",
-      "remarks": "If you have \n\u0027auth_warninvalid 1\u0027 and someone gives a dirty hash in a version response \n(because they are using a hacked client that can\u0027t work out the right \nresponse), the client will print something like \n\u0027Warning Invalid Client: playername (userid)\u0027 in your console (\u0027auth_warninvalid 0\u0027 is default).",
+      "remarks": "If you have \n'auth_warninvalid 1' and someone gives a dirty hash in a version response \n(because they are using a hacked client that can't work out the right \nresponse), the client will print something like \n'Warning Invalid Client: playername (userid)' in your console ('auth_warninvalid 0' is default).",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "If you don\u0027t want your client to validate other ezQuake clients." },
-        { "name": "true", "description": "which performs the validation (but you need to use \u0027validate_clients\u0027" }
+        { "name": "false", "description": "If you don't want your client to validate other ezQuake clients." },
+        { "name": "true", "description": "which performs the validation (but you need to use 'validate_clients'" }
       ]
     },
     "auth_viewcrc": {
@@ -220,7 +220,7 @@
     },
     "baseskin": {
       "group-id": "44",
-      "desc": "Defines what skin you see other people using if you don\u0027t have their skin and don\u0027t have skin forcing on.",
+      "desc": "Defines what skin you see other people using if you don't have their skin and don't have skin forcing on.",
       "type": "string"
     },
     "bgmvolume": {
@@ -408,7 +408,7 @@
       "group-id": "4",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Won\u0027t save aliases." },
+        { "name": "false", "description": "Won't save aliases." },
         { "name": "true", "description": "cfg_save saves aliases." }
       ]
     },
@@ -416,7 +416,7 @@
       "group-id": "4",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Won\u0027t save binds." },
+        { "name": "false", "description": "Won't save binds." },
         { "name": "true", "description": "Toggles whether cfg_save saves binds." }
       ]
     },
@@ -424,7 +424,7 @@
       "group-id": "4",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Won\u0027t save command line." },
+        { "name": "false", "description": "Won't save command line." },
         { "name": "true", "description": "Writes your command line in configs made with cfg_save (commented out of course)" }
       ]
     },
@@ -432,7 +432,7 @@
       "group-id": "4",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Won\u0027t save commands." },
+        { "name": "false", "description": "Won't save commands." },
         { "name": "true", "description": "Saves commands." }
       ]
     },
@@ -440,7 +440,7 @@
       "group-id": "4",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Won\u0027t save variables." },
+        { "name": "false", "description": "Won't save variables." },
         { "name": "true", "description": "Saves variables." }
       ]
     },
@@ -470,7 +470,7 @@
     },
     "cfg_save_userinfo": {
       "group-id": "4",
-      "remarks": "Note: \u0027cfg_save_userinfo 1\u0027 is best for teamfortress so you don\u0027t get kicked for changing bottom color. cfg_save will never save the password variable, even though technically it is a userinfo variable.",
+      "remarks": "Note: 'cfg_save_userinfo 1' is best for teamfortress so you don't get kicked for changing bottom color. cfg_save will never save the password variable, even though technically it is a userinfo variable.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Do not save userinfo variables." },
@@ -480,17 +480,17 @@
     },
     "cfg_use_gamedir": {
       "group-id": "4",
-      "desc": "If set \u0026 gamedir is not \u0027qw\u0027, configurations will be saved to subdirectory based on gamedir.\nUseful if configurations differ depending on gametype (e.g. team fortress)",
+      "desc": "If set & gamedir is not 'qw', configurations will be saved to subdirectory based on gamedir.\nUseful if configurations differ depending on gametype (e.g. team fortress)",
       "type": "boolean"
     },
     "cfg_use_home": {
       "group-id": "4",
-      "desc": "When turned on, configutaion will be saved into user\u0027s profile (home) directory.",
+      "desc": "When turned on, configutaion will be saved into user's profile (home) directory.",
       "remarks": "This affects only cfg_save and cfg_load commands.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Save the configuration into \u003cquake\u003e/ezquake/configs" },
-        { "name": "true", "description": "Save the configuration into user\u0027s home dir" }
+        { "name": "false", "description": "Save the configuration into <quake>/ezquake/configs" },
+        { "name": "true", "description": "Save the configuration into user's home dir" }
       ]
     },
     "cl_anglespeedkey": {
@@ -502,7 +502,7 @@
       "group-id": "8",
       "type": "boolean",
       "values": [
-        { "name": "0", "description": "Don\u0027t filter backpacks." },
+        { "name": "0", "description": "Don't filter backpacks." },
         { "name": "1", "description": "Filter backpacks." }
       ]
     },
@@ -537,12 +537,12 @@
     },
     "cl_c2sImpulseBackup": {
       "group-id": "21",
-      "desc": "Used with cl_c2spps, it controls how many backup copies of packets with non-zero \nimpulses are to be sent to the server. The recommended value is 3, \nbut you can try 2 or even 1 to reduce traffic if you don\u0027t have any packet loss.",
+      "desc": "Used with cl_c2spps, it controls how many backup copies of packets with non-zero \nimpulses are to be sent to the server. The recommended value is 3, \nbut you can try 2 or even 1 to reduce traffic if you don't have any packet loss.",
       "type": "integer"
     },
     "cl_c2spps": {
       "group-id": "21",
-      "desc": "Packet filtering (a la Qizmo\u0027s .c2spps command). Use this to reduce network traffic\nif you\u0027re playing on a 28800 (or worse) connection and can\u0027t set cl_maxfps 72 \nbecause it causes lag.  Also consider use of FPS independent physics in conjunction with cl_physfps.",
+      "desc": "Packet filtering (a la Qizmo's .c2spps command). Use this to reduce network traffic\nif you're playing on a 28800 (or worse) connection and can't set cl_maxfps 72 \nbecause it causes lag.  Also consider use of FPS independent physics in conjunction with cl_physfps.",
       "type": "integer"
     },
     "cl_camera_death": {
@@ -603,7 +603,7 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Off." },
-        { "name": "1", "description": "Shows the time you spent on server (you\u0027ll also see it in the status bar when you press TAB)." },
+        { "name": "1", "description": "Shows the time you spent on server (you'll also see it in the status bar when you press TAB)." },
         { "name": "2", "description": "Shows the time of day." }
       ]
     },
@@ -620,7 +620,7 @@
     },
     "cl_clock_y": {
       "group-id": "40",
-      "desc": "Vertical coordinates of the clock.\nIf \u003c 0, the coordinates are calculated from bottom up, e.g. -1 means the screen line just above the scoreboard.",
+      "desc": "Vertical coordinates of the clock.\nIf < 0, the coordinates are calculated from bottom up, e.g. -1 means the screen line just above the scoreboard.",
       "type": "float"
     },
     "cl_cmdline": {
@@ -634,7 +634,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not ask for confirmation on quit." },
-        { "name": "true", "description": "Ask for confirmation on quit. This will display the \u0027About\u0027 message box where you have to press [Y] to quit." }
+        { "name": "true", "description": "Ask for confirmation on quit. This will display the 'About' message box where you have to press [Y] to quit." }
       ]
     },
     "cl_crossx": {
@@ -666,7 +666,7 @@
       "group-id": "8",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Don\u0027t filter dead bodies." },
+        { "name": "0", "description": "Don't filter dead bodies." },
         { "name": "1", "description": "Filter dead bodies after they fall on the ground." },
         { "name": "2", "description": "Instantly filter dead bodies." },
         { "name": "3", "description": "Filter dead bodies (instantly) unless you are playing a TeamFortress game." }
@@ -675,7 +675,7 @@
     "cl_delay_packet": {
       "group-id": "21",
       "desc": "Client will delay incoming and outgoing packets, allowing user to increase his ping in the game.",
-      "remarks": "Specified in ms.  If delay is 20ms, incoming packets will be delayed by 10ms, outgoing packets too. It\u0027s preferred to use the least value that gives the desired ping.",
+      "remarks": "Specified in ms.  If delay is 20ms, incoming packets will be delayed by 10ms, outgoing packets too. It's preferred to use the least value that gives the desired ping.",
       "type": "integer"
     },
     "cl_democlock": {
@@ -699,7 +699,7 @@
     },
     "cl_demoPingInterval": {
       "group-id": "7",
-      "desc": "How often to request ping updates when recording demos. This variable doesn\u0027t \naffect ping updates when the scoreboard is shown (they are always one update per 2 seconds).",
+      "desc": "How often to request ping updates when recording demos. This variable doesn't affect ping updates when the scoreboard is shown (they are always one update per 2 seconds).",
       "type": "integer",
       "values": [
         { "name": "0", "description": "Disable automatic ping requests." },
@@ -744,7 +744,7 @@
     },
     "cl_fakeshaft": {
       "group-id": "8",
-      "desc": "Smoothes out shaft movement, 0 means no smoothing at all, 1 = 100% smoothing;\na value of about 0.5 is recommended for modem players.  Note that this only affects the visual display of the shaft beam; the \u0027true\u0027 beam remains in the original location.",
+      "desc": "Smoothes out shaft movement, 0 means no smoothing at all, 1 = 100% smoothing;\na value of about 0.5 is recommended for modem players.  Note that this only affects the visual display of the shaft beam; the 'true' beam remains in the original location.",
       "type": "float"
     },
     "cl_fakeshaft_extra_updates": {
@@ -811,7 +811,7 @@
     },
     "cl_gameclock_offset": {
       "group-id": "40",
-      "desc": "Allows using gameclock in custom mods that don\u0027t support standard KT-like clock synchronization",
+      "desc": "Allows using gameclock in custom mods that don't support standard KT-like clock synchronization",
       "remarks": "Some Capture The Flag or Team Fortress mods can take a use of this.",
       "type": "integer"
     },
@@ -880,7 +880,7 @@
     "cl_independentPhysics": {
       "group-id": "8",
       "desc": "This enables independent physics. This means that you can achieve more FPS in the game than allowed by the server. The amount of FPS used to communicate with the server is set by /cl_physfps and the amount of graphics FPS is set by /cl_maxfps. Note that you must have vid_vsync 0.",
-      "remarks": "This variable can only be switched from 0\u003c-\u003e1 when disconnected from a server (Qizmo/eztv are also servers).",
+      "remarks": "This variable can only be switched from 0<->1 when disconnected from a server (Qizmo/eztv are also servers).",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Disable independent physics," },
@@ -968,7 +968,7 @@
       "remarks": "Also see cl_mvhudpos and cl_mvhudvertical when this is set to a value greater than 1.",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Don\u0027t draw mini-HUDs when in multiview." },
+        { "name": "0", "description": "Don't draw mini-HUDs when in multiview." },
         { "name": "1", "description": "Draw original mini-HUDs when in multiview. (Only strings)" },
         { "name": "2", "description": "Draw names only." },
         { "name": "3", "description": "Draw graphics. Icons for weapons, healthbar, armorbar." },
@@ -982,7 +982,7 @@
       "remarks": "This only works when cl_mvdisplayhud is greater than 1. See also cl_mvhudvertical and cl_mvhudpos.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t flip the mini-HUD drawing." },
+        { "name": "false", "description": "Don't flip the mini-HUD drawing." },
         { "name": "true", "description": "Flip the mini-HUD drawing." }
       ]
     },
@@ -1040,24 +1040,24 @@
     },
     "cl_name_as_skin": {
       "group-id": "44",
-      "desc": "Allows you to override user skin settings and use player\u0027s name or ID as a his (her) skin",
+      "desc": "Allows you to override user skin settings and use player's name or ID as a his (her) skin",
       "remarks": "There are many other skin settings that can override, e.g. all enemy*skin, team*skin settings override this setting.",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Use player\u0027s skin setting" },
-        { "name": "1", "description": "Use player\u0027s name as his skin" },
-        { "name": "2", "description": "Use player\u0027s ID as his skin" }
+        { "name": "0", "description": "Use player's skin setting" },
+        { "name": "1", "description": "Use player's name as his skin" },
+        { "name": "2", "description": "Use player's ID as his skin" }
       ]
     },
     "cl_newlerp": {
       "group-id": "8",
-      "desc": "Experimental rockets/grenades/spikes smoothing code.\n\nDefault value 0.1 means: use 90% of our \u0027vision\u0027 and 10% of server \u0027vision\u0027. Should be OK for most case, but floating ping (see remarks)",
+      "desc": "Experimental rockets/grenades/spikes smoothing code.\n\nDefault value 0.1 means: use 90% of our 'vision' and 10% of server 'vision'. Should be OK for most case, but floating ping (see remarks)",
       "remarks": "Range between 0 and 1.  This smoothing algorithm works well only with stable ping.",
       "type": "float"
     },
     "cl_nodelta": {
       "group-id": "21",
-      "desc": "Control the network packet delta compression. When you get blue lines\nin your netgraph, you should set \u0027cl_nodelta 1\u0027.",
+      "desc": "Control the network packet delta compression. When you get blue lines\nin your netgraph, you should set 'cl_nodelta 1'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Enable delta compression." },
@@ -1076,7 +1076,7 @@
     },
     "cl_nolerp": {
       "group-id": "8",
-      "desc": "Allows you to disable the linear interpolation (lerp) of objects in the game. Information about objects\u0027 states arrive periodically via the net connection. By default between these moments the client tries to interpolate where the object are. After the new packet arrives client corrects the position of the object. If the interpolation is disabled, client will leave object in the state described in the last received packet until a new one arrives.",
+      "desc": "Allows you to disable the linear interpolation (lerp) of objects in the game. Information about objects' states arrive periodically via the net connection. By default between these moments the client tries to interpolate where the object are. After the new packet arrives client corrects the position of the object. If the interpolation is disabled, client will leave object in the state described in the last received packet until a new one arrives.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Interpolate objects" },
@@ -1099,7 +1099,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Predict movement" },
-        { "name": "true", "description": "Don\u0027t predict movement" }
+        { "name": "true", "description": "Don't predict movement" }
       ]
     },
     "cl_novweps": {
@@ -1114,7 +1114,7 @@
       "values": [
         { "name": "browser", "description": "Server browser will be your start-up screen" },
         { "name": "console", "description": "After start-up you can immediately type into the console" },
-        { "name": "menu", "description": "You\u0027ll see the main menu after the start-up" },
+        { "name": "menu", "description": "You'll see the main menu after the start-up" },
         { "name": "<other>", "description": "A command/script to be executed on start-up" }
       ]
     },
@@ -1128,11 +1128,11 @@
     },
     "cl_parseFunChars": {
       "group-id": "3",
-      "remarks": "Full list:\n$R - red lamp\n$G - green lamp\n$B - blue lamp\n$Y - yellow lamp\n$\\ - carridge return\n$( - big left bracket\n$= - big equal sign\n$) - big right bracket\n$. - red middle dot\n$, - white dot (names only)\n$\u003c - small left bracket\n$- - small equal sign\n$\u003e - small right bracket\n$a - big grey block\n$: - line feed\n$b - filled red block\n$d - right pointing red arrow\n$[ - gold left square bracket\n$] - gold right square bracket\n$^ - white ^ (names only)\n^x - red x (names only)\n$0-9 - yellow number\n$xyy - char with hex code yy\n(In order to use the lamps, you\u0027ll need the Ocrana pak).",
+      "remarks": "Full list:\n$R - red lamp\n$G - green lamp\n$B - blue lamp\n$Y - yellow lamp\n$\\ - carridge return\n$( - big left bracket\n$= - big equal sign\n$) - big right bracket\n$. - red middle dot\n$, - white dot (names only)\n$< - small left bracket\n$- - small equal sign\n$> - small right bracket\n$a - big grey block\n$: - line feed\n$b - filled red block\n$d - right pointing red arrow\n$[ - gold left square bracket\n$] - gold right square bracket\n$^ - white ^ (names only)\n^x - red x (names only)\n$0-9 - yellow number\n$xyy - char with hex code yy\n(In order to use the lamps, you'll need the Ocrana pak).",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off." },
-        { "name": "true", "description": "You can use Ocrana LED\u0027s by hand right out of the console and chat anonymously through \"$\\\" without showing your name (chat messages that are seen without your name at the beginning)." }
+        { "name": "true", "description": "You can use Ocrana LED's by hand right out of the console and chat anonymously through \"$\\\" without showing your name (chat messages that are seen without your name at the beginning)." }
       ]
     },
     "cl_parseSay": {
@@ -1155,7 +1155,7 @@
     },
     "cl_pext": {
       "group-id": "21",
-      "desc": "If set, enable support for FTE\u0027s protocol extensions",
+      "desc": "If set, enable support for FTE's protocol extensions",
       "type": "boolean"
     },
     "cl_pext_256packetentities": {
@@ -1169,7 +1169,7 @@
     },
     "cl_pext_alpha": {
       "group-id": "21",
-      "desc": "If set, enable support for FTE\u0027s alpha attribute protocol extension",
+      "desc": "If set, enable support for FTE's alpha attribute protocol extension",
       "type": "boolean"
     },
     "cl_pext_chunkeddownloads": {
@@ -1183,7 +1183,7 @@
     },
     "cl_pext_floatcoords": {
       "group-id": "21",
-      "desc": "If set, enable support for FTE\u0027s floating point coordinate protocol extension.",
+      "desc": "If set, enable support for FTE's floating point coordinate protocol extension.",
       "type": "boolean"
     },
     "cl_pext_other": {
@@ -1213,16 +1213,16 @@
     },
     "cl_predict_half": {
       "group-id": "21",
-      "remarks": "The new default eliminates player models\u0027 jittering when independent physics is enabled; a possible downside is larger prediction errors of modem players\u0027 movement, hence the option to revert to old behavior.",
+      "remarks": "The new default eliminates player models' jittering when independent physics is enabled; a possible downside is larger prediction errors of modem players' movement, hence the option to revert to old behavior.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Full prediction of players\u0027 movement (ezQuake default)" },
+        { "name": "false", "description": "Full prediction of players' movement (ezQuake default)" },
         { "name": "true", "description": "Predicting half the move (QW 2.30 default)" }
       ]
     },
     "cl_predict_players": {
       "group-id": "21",
-      "desc": "This toggles the prediction for other players\u0027 movement. Unless you are having \nproblems this variable should be left at \"1\".",
+      "desc": "This toggles the prediction for other players' movement. Unless you are having \nproblems this variable should be left at \"1\".",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "" },
@@ -1255,7 +1255,7 @@
     },
     "cl_rollalpha": {
       "group-id": "53",
-      "desc": "You can turn off the \u0027dodging\u0027 or \u0027rolling\u0027 effect for your own point of view while still see other player models affected by cl_rollangle.",
+      "desc": "You can turn off the 'dodging' or 'rolling' effect for your own point of view while still see other player models affected by cl_rollangle.",
       "remarks": "0 disables, 1 is standard.  Disabled by ruleset smackdown",
       "type": "integer"
     },
@@ -1274,7 +1274,7 @@
       "desc": "Save console commands history to .ezquake_history.\nLoads history from this file while starting ezquake.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "don\u0027t save" },
+        { "name": "false", "description": "don't save" },
         { "name": "true", "description": "save" }
       ]
     },
@@ -1325,7 +1325,7 @@
       "values": [
         { "name": "0", "description": "Do not display any information." },
         { "name": "1", "description": "Print current incoming packet size in byte." },
-        { "name": "2", "description": "Print information about the current in coming packet and it\u0027s size." }
+        { "name": "2", "description": "Print information about the current in coming packet and it's size." }
       ]
     },
     "cl_sidespeed": {
@@ -1348,7 +1348,7 @@
     },
     "cl_startupdemo": {
       "group-id": "7",
-      "desc": "Demo that should be played on client\u0027s startup.",
+      "desc": "Demo that should be played on client's startup.",
       "type": "string",
       "values": [
         { "name": "*", "description": "File name of the demo." }
@@ -1369,7 +1369,7 @@
       "values": [
         { "name": "0", "description": "Use KOI8-R encoding (ezQuake 2.2 compatible)" },
         { "name": "1", "description": "Use UTF8 encoding (larger range of characters)" },
-        { "name": "2", "description": "Use FTE\u0027s ^Uxxxx encoding" }
+        { "name": "2", "description": "Use FTE's ^Uxxxx encoding" }
       ]
     },
     "cl_timeout": {
@@ -1499,7 +1499,7 @@
     "cl_weaponhide": {
       "group-id": "9",
       "desc": "On -attack will cause your weapon to be automatically switched back to the shotgun or axe.",
-      "remarks": "This is used in majority of teamplay games. If you don\u0027t have ammo for shotgun the axe gets selected.",
+      "remarks": "This is used in majority of teamplay games. If you don't have ammo for shotgun the axe gets selected.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Weapon will not be automatically hidden" },
@@ -1520,7 +1520,7 @@
     "cl_weaponpreselect": {
       "group-id": "9",
       "desc": "When using the weapon command, this variable allows weapon preselection instead of standard immediate weapon selection. Preselection means that the preselected weapon will be switch right before +attack command, that is right before you shoot from your weapon.",
-      "remarks": "Usefull in most teamplay games where you don\u0027t want to carry your best weapon in your hands but want to be ready to instantly shoot from it. Note: Doesn\u0027t work for impulse command, you have to use new weapon command.",
+      "remarks": "Usefull in most teamplay games where you don't want to carry your best weapon in your hands but want to be ready to instantly shoot from it. Note: Doesn't work for impulse command, you have to use new weapon command.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Immediate weapon selection" },
@@ -1533,11 +1533,11 @@
     "cl_window_caption": {
       "group-id": "40",
       "desc": "Choose different window caption formats for your taskbar when you play in windowed mode or when the client is minimized in the taskbar.",
-      "remarks": "The caption doesn\u0027t refresh regularly on some configurations. We recommend to use vid_flashonactivity 1 as well.",
+      "remarks": "The caption doesn't refresh regularly on some configurations. We recommend to use vid_flashonactivity 1 as well.",
       "type": "boolean",
       "values": [
         { "name": "0", "description": "Format: ezQuake: address" },
-        { "name": "1", "description": "Format: \u003cserver state\u003e - pl: \u003cnumber of players\u003e - \u003cmap\u003e" }
+        { "name": "1", "description": "Format: <server state> - pl: <number of players> - <map>" }
       ]
     },
     "cl_yawspeed": {
@@ -1551,8 +1551,8 @@
       "remarks": "con_bindphysical will always be set to 1 at start of executing a script, and be reset after.",
       "type": "boolean",
       "values": [
-        { "name": "0", "description": "\u0027bind x y\u0027 will bind y to the key used to produce character x at the console (layout-aware)" },
-        { "name": "1", "description": "\u0027bind x y\u0027 will bind y to physical key x, as if using an American keyboard layout (layout independent)" }
+        { "name": "0", "description": "'bind x y' will bind y to the key used to produce character x at the console (layout-aware)" },
+        { "name": "1", "description": "'bind x y' will bind y to physical key x, as if using an American keyboard layout (layout independent)" }
       ]
     },
     "con_clearnotify": {
@@ -1560,13 +1560,13 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Messages stay even when you toggle console." },
-        { "name": "true", "description": "Messages won\u0027t say when you toggle console." }
+        { "name": "true", "description": "Messages won't say when you toggle console." }
       ]
     },
     "con_completion_changed_mark": {
       "group-id": "5",
       "desc": "Whether add or not asterisk before variables which values were changed.",
-      "remarks": "Works only with con_completion_format \u003e 0.",
+      "remarks": "Works only with con_completion_format > 0.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "" },
@@ -1662,7 +1662,7 @@
     "con_completion_padding": {
       "group-id": "5",
       "desc": "Number of spaces to pad command completion variants.",
-      "remarks": "con_completion_format must be \u003e 1",
+      "remarks": "con_completion_format must be > 1",
       "type": "integer"
     },
     "con_fragmessages": {
@@ -1713,6 +1713,15 @@
       "type": "string",
       "values": [
         { "name": "*", "description": "This text will be used on the beginning of the highlighted line" }
+      ]
+    },
+    "con_mm2_only": {
+      "group-id": "47",
+      "desc": "If set, notification area is limited to mm2 (/say_team) messages",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "All messages" },
+        { "name": "true", "description": "MM2 messages only" }
       ]
     },
     "con_notify": {
@@ -1831,7 +1840,7 @@
     },
     "crosshairimage": {
       "group-id": "6",
-      "desc": "To load the crosshair use \"crosshairimage image_name\" where\n\u0027image_name\u0027 is the name of the crosshair image you put in the above directory.\nExample, if I have c:\\quake\\ezQuake\\crosshairs\\cross.png I\u0027d use\n\"crosshairimage cross\" to load it.",
+      "desc": "To load the crosshair use \"crosshairimage image_name\" where\n'image_name' is the name of the crosshair image you put in the above directory.\nExample, if I have c:\\quake\\ezQuake\\crosshairs\\cross.png I'd use\n\"crosshairimage cross\" to load it.",
       "type": "string"
     },
     "crosshairsize": {
@@ -1841,7 +1850,7 @@
     },
     "cvar_viewdefault": {
       "group-id": "5",
-      "desc": "When you type a cvar name into console (like \u0027gl_gamma\u0027 or \u0027r_rocketlight\u0027), the client will tell you the default value of the cvar.",
+      "desc": "When you type a cvar name into console (like 'gl_gamma' or 'r_rocketlight'), the client will tell you the default value of the cvar.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off." },
@@ -1859,11 +1868,11 @@
     },
     "cvar_viewlatched": {
       "group-id": "5",
-      "desc": "When you type a variable name in the console, you\u0027ll be able to see it\u0027s latched value if this is turned on.",
+      "desc": "When you type a variable name in the console, you'll be able to see it's latched value if this is turned on.",
       "remarks": "Latched values are used for example for renderer settings. Variable value is latched until the renderer is restarted, in that moment the latched value becomes the actuall value of the variable.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t display latched value" },
+        { "name": "false", "description": "Don't display latched value" },
         { "name": "true", "description": "Display latched value (if any)" }
       ]
     },
@@ -2114,7 +2123,7 @@
     },
     "enemybottomcolor": {
       "group-id": "44",
-      "desc": "Determines the color of the pants of the enemies you see. Overrides player\u0027s skin settings.",
+      "desc": "Determines the color of the pants of the enemies you see. Overrides player's skin settings.",
       "remarks": "To be able to use RGB 24bit colors, look for r_enemyskincolor variable.",
       "type": "enum",
       "values": [
@@ -2128,8 +2137,8 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Disabled" },
-        { "name": "1", "description": "Use player\u0027s name as the name of the skin to be used" },
-        { "name": "2", "description": "Use player\u0027s userid number (only useful for video capturing)" },
+        { "name": "1", "description": "Use player's name as the name of the skin to be used" },
+        { "name": "2", "description": "Use player's userid number (only useful for video capturing)" },
         { "name": "3", "description": "Assign skins \"e1\", \"e2\", \"e3\", etc. to the enemies." }
       ]
     },
@@ -2150,7 +2159,7 @@
     },
     "enemytopcolor": {
       "group-id": "44",
-      "desc": "Determines the color of the shirt of the enemies you see. Overrides player\u0027s skin settings.",
+      "desc": "Determines the color of the shirt of the enemies you see. Overrides player's skin settings.",
       "remarks": "To be able to use RGB 24bit colors, look for r_enemyskincolor variable.",
       "type": "integer",
       "values": [
@@ -2209,13 +2218,14 @@
     },
     "file_browser_sort_mode": {
       "group-id": "17",
-      "type": "string",
+      "type": "enum",
       "desc": "Determines sort order of files in the file browser.",
       "values": [
-        { "name": "1", "description": "name" },
-        { "name": "2", "description": "size" },
-        { "name": "3", "description": "date/time" },
-        { "name": "4", "description": "type" }
+        { "name": "1", "description": "sort by name" },
+        { "name": "2", "description": "sort by size" },
+        { "name": "3", "description": "sort by date/time" },
+        { "name": "4", "description": "sort by type" },
+        { "name": "14", "description": "sort by name, then by type" }
       ]
     },
     "file_browser_strip_names": {
@@ -2249,7 +2259,7 @@
     "fraglimit": {
       "group-id": "43",
       "desc": "Amount of frags any player has to reach before the match is over",
-      "remarks": "When set to 0, there won\u0027t be any limit",
+      "remarks": "When set to 0, there won't be any limit",
       "type": "integer"
     },
     "freelook": {
@@ -2353,7 +2363,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Disable." },
-        { "name": "true", "description": "this will limit the number of blended particles close to you. This gives a big FPS increase when blended particles take up a big proportion of your screen and challenge your video card\u0027s fillrate." }
+        { "name": "true", "description": "this will limit the number of blended particles close to you. This gives a big FPS increase when blended particles take up a big proportion of your screen and challenge your video card's fillrate." }
       ]
     },
     "gl_colorlights": {
@@ -2378,7 +2388,7 @@
     },
     "gl_coronas": {
       "group-id": "15",
-      "desc": "Adds coronas to some effects:Explosions - Basically just a bright flash since the default explosions didn\u0027t feel powerful enough.\nMuzzleflashes.\nLightning.\nFire - Torches have glows.\nRocket Lights.",
+      "desc": "Adds coronas to some effects:Explosions - Basically just a bright flash since the default explosions didn't feel powerful enough.\nMuzzleflashes.\nLightning.\nFire - Torches have glows.\nRocket Lights.",
       "type": "float"
     },
     "gl_coronas_tele": {
@@ -2397,11 +2407,11 @@
     },
     "gl_cull": {
       "group-id": "35",
-      "desc": "This variable toggles the use of internal OpenGL functions for removing covered \nobjects. When this variable is set to \"1\" the game will depend on the OpenGL \ndriver to use it\u0027s culling functions to remove certain objects from the \ncalculations because they are covered up and would not be seen anyways. It is a \ngood idea to leave this toggle enabled because it will increase rendering \nperformance.",
+      "desc": "This variable toggles the use of internal OpenGL functions for removing covered \nobjects. When this variable is set to \"1\" the game will depend on the OpenGL \ndriver to use it's culling functions to remove certain objects from the \ncalculations because they are covered up and would not be seen anyways. It is a \ngood idea to leave this toggle enabled because it will increase rendering \nperformance.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not use culling to increase rendering performance." },
-        { "name": "true", "description": "Use the OpenGL driver\u0027s culling functions." }
+        { "name": "true", "description": "Use the OpenGL driver's culling functions." }
       ]
     },
     "gl_cutf_tesla_effect": {
@@ -2415,7 +2425,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off." },
-        { "name": "true", "description": "On (Looks awesome, but you will take a giant FPS hit if you don\u0027t have a good video card)." }
+        { "name": "true", "description": "On (Looks awesome, but you will take a giant FPS hit if you don't have a good video card)." }
       ]
     },
     "gl_detpacklights": {
@@ -2438,7 +2448,7 @@
     },
     "gl_externalTextures_bmodels": {
       "group-id": "50",
-      "remarks": "non-world .bsp models (any .bsp that isn\u0027t the actual map.  Ex. health and ammo boxes).",
+      "remarks": "non-world .bsp models (any .bsp that isn't the actual map.  Ex. health and ammo boxes).",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Disable loading of external 24bit textures for" },
@@ -2577,11 +2587,11 @@
     },
     "gl_lightmode": {
       "group-id": "15",
-      "type": "bool",
+      "type": "boolean",
       "remarks": "Takes effect when the map reloads.",
       "values": [
-        { "name": "0", "description": "Makes the map lighter, but fullbrights don\u0027t look as good. (0% overbrights)" },
-        { "name": "1", "description": "Makes the map darker, but makes fullbrights stand out more (looks better). (33% overbrights)" }
+        { "name": "false", "description": "Makes the map lighter, but fullbrights don't look as good. (0% overbrights)" },
+        { "name": "true", "description": "Makes the map darker, but makes fullbrights stand out more (looks better). (33% overbrights)" }
       ]
     },
     "gl_lightning": {
@@ -2644,7 +2654,7 @@
     },
     "gl_maxtmu2": {
       "group-id": "35",
-      "desc": "Allow only two texturing units. Sometimes usefull for buggy ATI cards. If you don\u0027t need this, don\u0027t use it. Lowers the performance.",
+      "desc": "Allow only two texturing units. Sometimes usefull for buggy ATI cards. If you don't need this, don't use it. Lowers the performance.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "" },
@@ -2653,7 +2663,7 @@
     },
     "gl_miptexLevel": {
       "group-id": "50",
-      "desc": "It is essentially a GL \u0027equivalent\u0027\nto d_mipcap in software.  It has no affect when loading external 24bit textures.",
+      "desc": "It is essentially a GL 'equivalent'\nto d_mipcap in software.  It has no affect when loading external 24bit textures.",
       "type": "float"
     },
     "gl_modulate": {
@@ -2744,7 +2754,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Normal." },
-        { "name": "true", "description": "Don\u0027t use top/bottom colors." }
+        { "name": "true", "description": "Don't use top/bottom colors." }
       ]
     },
     "gl_outline": {
@@ -2762,7 +2772,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Disable." },
-        { "name": "true", "description": "Determines particles used for blob explosions (EMP\u0027s)" }
+        { "name": "true", "description": "Determines particles used for blob explosions (EMP's)" }
       ]
     },
     "gl_part_blood": {
@@ -2828,8 +2838,8 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Use classic quake teleport particles" },
-        { "name": "1", "description": "Use \u0027new/eye-candy\u0027 teleport particles: \u0027dots\u0027 and \u0027rays\u0027" },
-        { "name": "2", "description": "Use \u0027new/eye-candy\u0027 teleport particles: \u0027dots\u0027 only" }
+        { "name": "1", "description": "Use 'new/eye-candy' teleport particles: 'dots' and 'rays'" },
+        { "name": "2", "description": "Use 'new/eye-candy' teleport particles: 'dots' only" }
       ]
     },
     "gl_part_tracer1_color": {
@@ -2965,7 +2975,7 @@
     },
     "gl_particle_sparks": {
       "group-id": "36",
-      "desc": "Trails appear more beam-like and don\u0027t look stupid when they bounce. This applies for wizards and knights only.",
+      "desc": "Trails appear more beam-like and don't look stupid when they bounce. This applies for wizards and knights only.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Particle sparks off" },
@@ -3014,7 +3024,7 @@
     },
     "gl_picmip": {
       "group-id": "50",
-      "desc": "This variable determines the the level of detail for textures used on walls. You\ncan use this variable to lower the texture detail used on walls thus increasing\nthe game\u0027s performance.",
+      "desc": "This variable determines the the level of detail for textures used on walls. You\ncan use this variable to lower the texture detail used on walls thus increasing\nthe game's performance.",
       "remarks": "X = etc..",
       "type": "enum",
       "values": [
@@ -3133,7 +3143,7 @@
     },
     "gl_smoothfont": {
       "group-id": "5",
-      "desc": "Smooths out the font (which = good). But in some cases the font wasn\u0027t designed to be smoothed (sometimes the case of custom console fonts etc).",
+      "desc": "Smooths out the font (which = good). But in some cases the font wasn't designed to be smoothed (sometimes the case of custom console fonts etc).",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off." },
@@ -3220,7 +3230,7 @@
     },
     "gl_texturemode2d": {
       "group-id": "50",
-      "desc": "Texture mode used for objects in the head up display, such as font, image of armor, player\u0027s face or crosshair.",
+      "desc": "Texture mode used for objects in the head up display, such as font, image of armor, player's face or crosshair.",
       "remarks": "See gl_texturemode for possible values.",
       "type": "string"
     },
@@ -3342,10 +3352,10 @@
     },
     "help_files_scrollnames": {
       "group-id": "25",
-      "desc": "Should the filenames in the help browser get scrolled if they don\u0027t fit when the file is selected?",
+      "desc": "Should the filenames in the help browser get scrolled if they don't fit when the file is selected?",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t scroll names" },
+        { "name": "false", "description": "Don't scroll names" },
         { "name": "true", "description": "Scroll names" }
       ]
     },
@@ -3948,7 +3958,7 @@
     "hud_bar_armor_direction": {
       "group-id": "19",
       "desc": "Direction of colored part inside HUD element that designates amount of armor.",
-      "remarks": "0 - left-\u003eright\n1 - right-\u003eleft\n2 - down -\u003e up\n3 - up -\u003e down",
+      "remarks": "0 - left->right\n1 - right->left\n2 - down -> up\n3 - up -> down",
       "type": "integer"
     },
     "hud_bar_armor_frame": {
@@ -4022,7 +4032,7 @@
     "hud_bar_health_direction": {
       "group-id": "19",
       "desc": "Direction of colored part inside HUD element that designates amount of health.",
-      "remarks": "0 - left-\u003eright\n1 - right-\u003eleft\n2 - down -\u003e up\n3 - up -\u003e down",
+      "remarks": "0 - left->right\n1 - right->left\n2 - down -> up\n3 - up -> down",
       "type": "integer"
     },
     "hud_bar_health_frame": {
@@ -4229,7 +4239,7 @@
     "hud_digits_trim": {
       "group-id": "19",
       "desc": "Changes how large numbers are treated in Head Up Display",
-      "remarks": "Applies to all HUD elements with \u0027digits\u0027 property.",
+      "remarks": "Applies to all HUD elements with 'digits' property.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "10030 will be displayed as \"999\" with hud_*_digits 3" },
@@ -4407,7 +4417,7 @@
       "values": [
         { "name": "0", "description": "white text" },
         { "name": "1", "description": "brown text" },
-        { "name": "2", "description": "white text, fps will show only if the client\u0027s fps is less than or equal to hud_fps_drop value" },
+        { "name": "2", "description": "white text, fps will show only if the client's fps is less than or equal to hud_fps_drop value" },
         { "name": "3", "description": "brown text, same as 2" }
       ]
     },
@@ -4431,7 +4441,7 @@
       "desc": "Changes the scale of the fragcount number.",
       "type": "float",
       "values": [
-        { "name": "*", "description": "If this is 0 the fragcount will use the normal charset. If it\u0027s above 0 it will scale a big number character instead." }
+        { "name": "*", "description": "If this is 0 the fragcount will use the normal charset. If it's above 0 it will scale a big number character instead." }
       ]
     },
     "hud_frags_cell_height": {
@@ -4461,7 +4471,7 @@
       "values": [
         { "name": "0", "description": "No extra information is shown." },
         { "name": "1", "description": "Show RL, powerups armor and health." },
-        { "name": "2", "description": "Show powerups, armor and health. (No RL\u0027s)" },
+        { "name": "2", "description": "Show powerups, armor and health. (No RL's)" },
         { "name": "3", "description": "Show RL, powerups and health. (No armor)" },
         { "name": "4", "description": "Show RL, powerups and armor. (No health)" },
         { "name": "5", "description": "Show RL, armor and health. (No powerups)" },
@@ -4474,7 +4484,7 @@
     "hud_frags_fliptext": {
       "group-id": "19",
       "desc": "Toggles alignment of players nick and team name in frags HUD element.",
-      "remarks": "Use \u0027frags shownames 1\u0027 and/or \u0027frags showteams 1\u0027 to show names and team names of players.",
+      "remarks": "Use 'frags shownames 1' and/or 'frags showteams 1' to show names and team names of players.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Rows aligned to the left side, names and team tags are on the right side of frag counts." },
@@ -4511,8 +4521,8 @@
     },
     "hud_frags_padtext": {
       "group-id": "19",
-      "desc": "Toggles text padding in \u0027frags\u0027 HUD element.",
-      "remarks": "Use \u0027frags shownames 1\u0027 and/or \u0027frags showteams 1\u0027.",
+      "desc": "Toggles text padding in 'frags' HUD element.",
+      "remarks": "Use 'frags shownames 1' and/or 'frags showteams 1'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "No spaces between text fields." },
@@ -4546,11 +4556,11 @@
     },
     "hud_frags_shownames": {
       "group-id": "19",
-      "desc": "Draws players names next to frag counts in \u0027frags\u0027 HUD element.",
+      "desc": "Draws players names next to frag counts in 'frags' HUD element.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t display players\u0027 names." },
-        { "name": "true", "description": "Display players\u0027 names." }
+        { "name": "false", "description": "Don't display players' names." },
+        { "name": "true", "description": "Display players' names." }
       ]
     },
     "hud_frags_showself_always": {
@@ -4564,11 +4574,11 @@
     },
     "hud_frags_showteams": {
       "group-id": "19",
-      "desc": "Draws players\u0027 team tags next to frag counts in \u0027frags\u0027 HUD element.",
+      "desc": "Draws players' team tags next to frag counts in 'frags' HUD element.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Do not display players\u0027 team tags." },
-        { "name": "true", "description": "Display players\u0027 team tags." }
+        { "name": "false", "description": "Do not display players' team tags." },
+        { "name": "true", "description": "Display players' team tags." }
       ]
     },
     "hud_frags_space_x": {
@@ -4588,16 +4598,16 @@
     },
     "hud_frags_style": {
       "group-id": "19",
-      "desc": "Sets drawing style of \u0027frags\u0027 HUD element.",
+      "desc": "Sets drawing style of 'frags' HUD element.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Golden brackets around your own frags field." },
         { "name": "1", "description": "Arrow pointing to your own frags field." },
         { "name": "2", "description": "Red rectangle around your own frags fiels." },
         { "name": "3", "description": "Similar to 1." },
-        { "name": "4", "description": "Sets background color for your own field to \u0027teamcolor\u0027." },
+        { "name": "4", "description": "Sets background color for your own field to 'teamcolor'." },
         { "name": "5", "description": "Sets background color for all field to teamcolors enemycolors, all fields 50% transparent, your own field not transparent. Red rectangle around your own field including name and team tag." },
-        { "name": "6", "description": "Red rectangle around your own field including name and team tag. Background color only for your own field and set to \u0027teamcolor\u0027." },
+        { "name": "6", "description": "Red rectangle around your own field including name and team tag. Background color only for your own field and set to 'teamcolor'." },
         { "name": "7", "description": "Background color for whole table 50% transparent red, your own field not transparent." },
         { "name": "8", "description": "Red background color only for your own field including name and team tag." }
       ]
@@ -4637,7 +4647,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Blink the colon." },
-        { "name": "true", "description": "Don\u0027t blink the colon." }
+        { "name": "true", "description": "Don't blink the colon." }
       ]
     },
     "hud_gameclock_countdown": {
@@ -4665,7 +4675,7 @@
     },
     "hud_gameclock_offset": {
       "group-id": "19",
-      "desc": "Allows using gameclock in custom mods that don\u0027t support standard KT-like clock synchronization",
+      "desc": "Allows using gameclock in custom mods that don't support standard KT-like clock synchronization",
       "remarks": "Some Capture The Flag or Team Fortress mods can take a use of this.",
       "type": "integer"
     },
@@ -5479,7 +5489,7 @@
     },
     "hud_gun_style": {
       "group-id": "19",
-      "desc": "Switches graphical style of the current weapon\u0027s icon",
+      "desc": "Switches graphical style of the current weapon's icon",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Picture" },
@@ -6556,6 +6566,11 @@
       "group-id": "19",
       "type": ""
     },
+    "hud_itemsclock_scale": {
+      "group-id": "19",
+      "desc": "Sets size of items clock items relative to standard font size",
+      "type": "float"
+    },
     "hud_itemsclock_show": {
       "group-id": "19",
       "type": ""
@@ -6816,7 +6831,7 @@
     },
     "hud_mp3_time_on_scoreboard": {
       "group-id": "19",
-      "desc": "Toggles whether HUD element \u0027mp3_time\u0027 will be drawn even if scoreboard is displayed.",
+      "desc": "Toggles whether HUD element 'mp3_time' will be drawn even if scoreboard is displayed.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Hides mp3_time HUD element when scoreboard is ON." },
@@ -6858,7 +6873,7 @@
     },
     "hud_mp3_time_style": {
       "group-id": "19",
-      "desc": "Changes displayed informations for \u0027mp3_time\u0027 HUD element.",
+      "desc": "Changes displayed informations for 'mp3_time' HUD element.",
       "remarks": "Note that display of seconds is disabled in ruleset smackdown.",
       "type": "enum",
       "values": [
@@ -6905,7 +6920,7 @@
     },
     "hud_mp3_title_height": {
       "group-id": "19",
-      "desc": "Sets height of \u0027mp3_title\u0027 HUD element.",
+      "desc": "Sets height of 'mp3_title' HUD element.",
       "type": "integer",
       "values": [
         { "name": "*", "description": "8, 16, 24, 32 - one, two, three, four rows of text usually." }
@@ -6917,7 +6932,7 @@
     },
     "hud_mp3_title_on_scoreboard": {
       "group-id": "19",
-      "desc": "Toggles whether HUD element \u0027mp3_title\u0027 will be drawn even if scoreboard is displayed.",
+      "desc": "Toggles whether HUD element 'mp3_title' will be drawn even if scoreboard is displayed.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Hides mp3_title HUD element when scoreboard is ON." },
@@ -6960,7 +6975,7 @@
     "hud_mp3_title_scroll_delay": {
       "group-id": "19",
       "desc": "Sets speed of text scrolling in mp3_title HUD element.",
-      "remarks": "Use \u0027hud mp3_title scroll 1\u0027.",
+      "remarks": "Use 'hud mp3_title scroll 1'.",
       "type": "float",
       "values": [
         { "name": "*", "description": "The lower the value is the faster scrolling you get." }
@@ -6977,12 +6992,12 @@
     },
     "hud_mp3_title_style": {
       "group-id": "19",
-      "desc": "Sets format of text of \u0027mp3_title\u0027 HUD element.",
+      "desc": "Sets format of text of 'mp3_title' HUD element.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Shows just winamp song information." },
-        { "name": "1", "description": "Same as 0 but shows \u0027Playing: \u0027 before the song information." },
-        { "name": "2", "description": "Same as 0 but shows \u0027Playing\u0027 in golden brackets before the song information." }
+        { "name": "1", "description": "Same as 0 but shows 'Playing: ' before the song information." },
+        { "name": "2", "description": "Same as 0 but shows 'Playing' in golden brackets before the song information." }
       ]
     },
     "hud_mp3_title_width": {
@@ -6996,10 +7011,10 @@
     "hud_mp3_title_wordwrap": {
       "group-id": "19",
       "desc": "Toggles word wrapping inside mp3_title element.",
-      "remarks": "See \u0027mp3_title height\u0027.",
+      "remarks": "See 'mp3_title height'.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t wrap words, scroll if necessary and allowed." },
+        { "name": "false", "description": "Don't wrap words, scroll if necessary and allowed." },
         { "name": "true", "description": "Wrap words if more lines are allowed." }
       ]
     },
@@ -7094,7 +7109,7 @@
     },
     "hud_netgraph_inframes": {
       "group-id": "19",
-      "desc": "setting this to \"1\" lets you measure your latency in an alternate way every level of netgraph will mean one frame of delay, between sending it to server and getting answer. On local/lan server you\u0027ll always get one frame of delay, even with low FPS.",
+      "desc": "setting this to \"1\" lets you measure your latency in an alternate way every level of netgraph will mean one frame of delay, between sending it to server and getting answer. On local/lan server you'll always get one frame of delay, even with low FPS.",
       "type": "float"
     },
     "hud_netgraph_item_opacity": {
@@ -7564,7 +7579,7 @@
       "remarks": "Change the color of the higlight using the hud_radar_highlight_color variable.",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Don\u0027t highlight the tracked player." },
+        { "name": "0", "description": "Don't highlight the tracked player." },
         { "name": "1", "description": "Only highlight the name of the player (show_names needs to be on)" },
         { "name": "2", "description": "Draw a variably sized circle outline around the tracked player." },
         { "name": "3", "description": "Draw a fixed sized circle outline around the tracked player." },
@@ -7673,10 +7688,10 @@
     "hud_radar_show_hold": {
       "group-id": "19",
       "desc": "This will show the name of all the important items on the map (RL, LG, GL, SNG, Quad, Pent, Ring, Suit, Mega, Armors). A circle is drawn around the items, the team who has the highest weight inside this area is considered to be holding that particular item. See the teamholdinfo hud item.",
-      "remarks": "It is not recommended to have this visible at all times. Instead it\u0027s meant for a  quick glance to know which item is named what when using the Teamholdbarinfo hud item. For instance if the map has two YA\u0027s, one is named YA and the other YA2. Use this feature to see which is which.",
+      "remarks": "It is not recommended to have this visible at all times. Instead it's meant for a  quick glance to know which item is named what when using the Teamholdbarinfo hud item. For instance if the map has two YA's, one is named YA and the other YA2. Use this feature to see which is which.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t show the items and circles on the radar." },
+        { "name": "false", "description": "Don't show the items and circles on the radar." },
         { "name": "true", "description": "Show the item names and circle on the radar." }
       ]
     },
@@ -7694,7 +7709,7 @@
       "desc": "Highlight players with powerups on the radar hud item with a colored circle around them, depending on what type of powerup.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t highlight players with powerups." },
+        { "name": "false", "description": "Don't highlight players with powerups." },
         { "name": "true", "description": "Highlight players with powerups." }
       ]
     },
@@ -8378,7 +8393,7 @@
     },
     "hud_speed_color_stopped": {
       "group-id": "19",
-      "desc": "The color that the fill part of the speed hud item has when the player isn\u0027t moving. Default is green.",
+      "desc": "The color that the fill part of the speed hud item has when the player isn't moving. Default is green.",
       "remarks": "Use the quake pallete colors to set this (0-255).",
       "type": "integer"
     },
@@ -8443,7 +8458,7 @@
       "desc": "Sets how the text on the speed hud item should be aligned.",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Don\u0027t draw the text at all." },
+        { "name": "0", "description": "Don't draw the text at all." },
         { "name": "1", "description": "Draw the text left aligned (or at the top when in vertical mode)." },
         { "name": "2", "description": "Draw the text center aligned." },
         { "name": "3", "description": "Draw the text left aligned (or at the bottom when in vertical mode)." }
@@ -8467,7 +8482,7 @@
     "hud_speed_vertical_text": {
       "group-id": "19",
       "desc": "Sets whetever the text on the speed hud item should be drawn vertically when the hud item itself is being drawn vertically.",
-      "remarks": "This has no effect if the hud item isn\u0027t drawn vertically.",
+      "remarks": "This has no effect if the hud item isn't drawn vertically.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Draw the text horizontally." },
@@ -8693,12 +8708,12 @@
       "desc": "Changes the scale of the fragcount number.",
       "type": "float",
       "values": [
-        { "name": "*", "description": "If this is 0 the fragcount will use the normal charset. If it\u0027s above 0 it will scale a big number character instead." }
+        { "name": "*", "description": "If this is 0 the fragcount will use the normal charset. If it's above 0 it will scale a big number character instead." }
       ]
     },
     "hud_teamfrags_cell_height": {
       "group-id": "19",
-      "desc": "Sets cell height for cells in \u0027teamfrags\u0027 HUD element.",
+      "desc": "Sets cell height for cells in 'teamfrags' HUD element.",
       "type": "integer",
       "values": [
         { "name": "*", "description": "Use positive values." }
@@ -8706,7 +8721,7 @@
     },
     "hud_teamfrags_cell_width": {
       "group-id": "19",
-      "desc": "Sets cell width for cells in \u0027teamfrags\u0027 HUD element.",
+      "desc": "Sets cell width for cells in 'teamfrags' HUD element.",
       "type": "integer",
       "values": [
         { "name": "*", "description": "Use positive values." }
@@ -8719,7 +8734,7 @@
     },
     "hud_teamfrags_cols": {
       "group-id": "19",
-      "desc": "Sets number of columns used to draw table in \u0027teamfrags\u0027 HUD element.",
+      "desc": "Sets number of columns used to draw table in 'teamfrags' HUD element.",
       "type": "integer",
       "values": [
         { "name": "*", "description": "Use positive values." }
@@ -8738,7 +8753,7 @@
         { "name": "13", "description": "Show only RL." },
         { "name": "14", "description": "Show only RL.  Show weapons as text instead of a picture." },
         { "name": "2", "description": "Show RL, powerups armor and health.  Show weapons as text instead of a picture." },
-        { "name": "3", "description": "Show powerups, armor and health. (No RL\u0027s)" },
+        { "name": "3", "description": "Show powerups, armor and health. (No RL's)" },
         { "name": "4", "description": "Show RL, powerups and health. (No armor)" },
         { "name": "5", "description": "Show RL, powerups and health. (No armor)  Show weapons as text instead of a picture." },
         { "name": "6", "description": "Show RL, powerups and armor. (No health)" },
@@ -8749,8 +8764,8 @@
     },
     "hud_teamfrags_fliptext": {
       "group-id": "19",
-      "desc": "Toggles alignment of team names in \u0027teamfrags\u0027 HUD element.",
-      "remarks": "Use \u0027teamfrags shownames 1\u0027 to show names of teams.",
+      "desc": "Toggles alignment of team names in 'teamfrags' HUD element.",
+      "remarks": "Use 'teamfrags shownames 1' to show names of teams.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Rows aligned to the left side, team tags are on the right side of frag counts." },
@@ -8795,8 +8810,8 @@
     },
     "hud_teamfrags_padtext": {
       "group-id": "19",
-      "desc": "Toggles text padding in \u0027frags\u0027 HUD element.",
-      "remarks": "Use \u0027teamfrags shownames 1\u0027.",
+      "desc": "Toggles text padding in 'frags' HUD element.",
+      "remarks": "Use 'teamfrags shownames 1'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "No spaces between text fields." },
@@ -8824,7 +8839,7 @@
     },
     "hud_teamfrags_rows": {
       "group-id": "19",
-      "desc": "Sets number of rows used to draw table in \u0027teamfrags\u0027 HUD element.",
+      "desc": "Sets number of rows used to draw table in 'teamfrags' HUD element.",
       "type": "integer",
       "values": [
         { "name": "*", "description": "Use positive values." }
@@ -8841,7 +8856,7 @@
     },
     "hud_teamfrags_shownames": {
       "group-id": "19",
-      "desc": "Draws players\u0027 team tags next to frag counts in \u0027teamfrags\u0027 HUD element.",
+      "desc": "Draws players' team tags next to frag counts in 'teamfrags' HUD element.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not display team tags." },
@@ -8875,16 +8890,16 @@
     },
     "hud_teamfrags_style": {
       "group-id": "19",
-      "desc": "Sets drawing style of \u0027teamfrags\u0027 HUD element.",
+      "desc": "Sets drawing style of 'teamfrags' HUD element.",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Golden brackets around field with your team frags." },
         { "name": "1", "description": "Arrow pointing to your own team frags field." },
         { "name": "2", "description": "Red rectangle around your own team frags field." },
         { "name": "3", "description": "Similar to 1." },
-        { "name": "4", "description": "Sets background color for your own team field to \u0027teamcolor\u0027." },
+        { "name": "4", "description": "Sets background color for your own team field to 'teamcolor'." },
         { "name": "5", "description": "Sets background color for fields to teamcolors and enemycolors. Red rectangle around your own field including name and team tag." },
-        { "name": "6", "description": "Red rectangle around your own team field including team tag. Background color only for your own team field and set to \u0027teamcolor\u0027." },
+        { "name": "6", "description": "Red rectangle around your own team field including team tag. Background color only for your own team field and set to 'teamcolor'." },
         { "name": "7", "description": "Background color for whole table 50% transparent red, your own team field not transparent." },
         { "name": "8", "description": "Red background color only for your own team field including team tag." }
       ]
@@ -8978,7 +8993,7 @@
       "remarks": "vertical_text can be used when vertical mode is set to draw the text vertically also.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t show the percentages." },
+        { "name": "false", "description": "Don't show the percentages." },
         { "name": "true", "description": "Show the percentages for the teams." }
       ]
     },
@@ -9208,7 +9223,7 @@
     "hud_tp_need": {
       "group-id": "19",
       "desc": "Toggles connection of tp_need_* variables with hud elements.",
-      "remarks": "E.g.: Use with \u0027tp_need_health 40\u0027 and your health indicator will display red numbers if your health is 40 or lower.",
+      "remarks": "E.g.: Use with 'tp_need_health 40' and your health indicator will display red numbers if your health is 40 or lower.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Numbers in HUD elements get red when below standard values." },
@@ -9235,10 +9250,10 @@
     },
     "hud_tracking_format": {
       "group-id": "19",
-      "desc": "Changes the format of descriptive text displayed when you are tracking someone as spectator or watching a demo where you can see player\u0027s team and name.",
+      "desc": "Changes the format of descriptive text displayed when you are tracking someone as spectator or watching a demo where you can see player's team and name.",
       "type": "string",
       "values": [
-        { "name": "*", "description": "Pattern %n will be replaced with tracked player\u0027s name, %t will be replaced with player\u0027s team." }
+        { "name": "*", "description": "Pattern %n will be replaced with tracked player's name, %t will be replaced with player's team." }
       ]
     },
     "hud_tracking_frame": {
@@ -9344,18 +9359,18 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Off." },
-        { "name": "1", "description": "Ignores repeated \u0027say\u0027 and spectator messages." },
-        { "name": "2", "description": "Ignores repeated \u0027say\u0027, \u0027say_team\u0027 and spectator messages." }
+        { "name": "1", "description": "Ignores repeated 'say' and spectator messages." },
+        { "name": "2", "description": "Ignores repeated 'say', 'say_team' and spectator messages." }
       ]
     },
     "ignore_flood_duration": {
       "group-id": "3",
-      "desc": "You can change the 4 second cooldown with the \u0027ignore_flood_duration\u0027 variable.",
+      "desc": "You can change the 4 second cooldown with the 'ignore_flood_duration' variable.",
       "type": "float"
     },
     "ignore_mode": {
       "group-id": "3",
-      "desc": "Someone is on your ignore list, you won\u0027t see any messagemode (/say hello) messages from them \n(even if they are a spec).",
+      "desc": "Someone is on your ignore list, you won't see any messagemode (/say hello) messages from them \n(even if they are a spec).",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Ignore say only." },
@@ -9400,12 +9415,12 @@
     },
     "image_jpeg_quality_level": {
       "group-id": "41",
-      "desc": "You can set quality of jpeg screenshots with \u0027image_jpeg_quality_level x\u0027 \nwhere x is an integer from 0 to 100 inclusive. The larger x is, \nthe better the quality of a jpeg screenshot, but also the bigger the size.",
+      "desc": "You can set quality of jpeg screenshots with 'image_jpeg_quality_level x' \nwhere x is an integer from 0 to 100 inclusive. The larger x is, \nthe better the quality of a jpeg screenshot, but also the bigger the size.",
       "type": "float"
     },
     "image_png_compression_level": {
       "group-id": "41",
-      "desc": "You can set the amount of png compression with \u0027image_png_compression_level x\u0027 \nwhere x is an integer from 0 to 9 inclusive. 0 gives no compression and 9 gives \nmaximum compression (and slowest writing time).",
+      "desc": "You can set the amount of png compression with 'image_png_compression_level x' \nwhere x is an integer from 0 to 9 inclusive. 0 gives no compression and 9 gives \nmaximum compression (and slowest writing time).",
       "type": "float"
     },
     "in_builtinkeymap": {
@@ -9564,7 +9579,7 @@
     },
     "keymap_name": {
       "group-id": "28",
-      "desc": "This holds the name of the current keymappings; it has (currently) only informational purposes. If no keymapping is active, it will contain the name \"Default\". If a keymapping will be active and no name has been set, \"Custom\" will be used as name. It can easily be set with \"keymap_name \u003clayoutname\u003e\"",
+      "desc": "This holds the name of the current keymappings; it has (currently) only informational purposes. If no keymapping is active, it will contain the name \"Default\". If a keymapping will be active and no name has been set, \"Custom\" will be used as name. It can easily be set with \"keymap_name <layoutname>\"",
       "type": "float"
     },
     "localid": {
@@ -9581,7 +9596,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off." },
-        { "name": "true", "description": "Will convert all non printable characters to printable characters in your log. This makes your log readable because all the weird ascii characters that usually occur because of different coloured text in the client (and because of weird symbols - ocrana led\u0027s etc) are converted into printable characters." }
+        { "name": "true", "description": "Will convert all non printable characters to printable characters in your log. This makes your log readable because all the weird ascii characters that usually occur because of different coloured text in the client (and because of weird symbols - ocrana led's etc) are converted into printable characters." }
       ]
     },
     "lookspring": {
@@ -9620,7 +9635,7 @@
     },
     "m_filter": {
       "group-id": "11",
-      "desc": "This variable toggles mouse input filtering. When set to \"1\", the values which\nare received from the mouse\u0027s input will first be averaged together and then \nthat value will be used in the game. \nThe reason for this command is that some mice had problems with sending sporadic\ncoordinates which make the input from the mouse jerky, also when using a serial \nor PS/2 mouse, the Windows operating system will only sample mouse input every \n25ms, that is 40 times a second (for USB mice the sample rate is 125 Hz, that is\nevery 8 ms). When set to \"1\" this variable will smooth out the input but it will \ncause latency between the movement of the mouse and the actual response in the \ngame. When using a PS/2 mouse it is thus first recommended to try to increase \nthe sampling rate either by changing it via your mouse driver or by using the \nps2rate program which can be downloaded at ps2rate homepage . \nIf you are playing the game at frame rates above 40 FPS and if you can\u0027t \nincrease the sampling rate of your PS/2 rate or if you are playing with a serial \nmouse it is recommended that you enable this toggle.",
+      "desc": "This variable toggles mouse input filtering. When set to \"1\", the values which\nare received from the mouse's input will first be averaged together and then \nthat value will be used in the game. \nThe reason for this command is that some mice had problems with sending sporadic\ncoordinates which make the input from the mouse jerky, also when using a serial \nor PS/2 mouse, the Windows operating system will only sample mouse input every \n25ms, that is 40 times a second (for USB mice the sample rate is 125 Hz, that is\nevery 8 ms). When set to \"1\" this variable will smooth out the input but it will \ncause latency between the movement of the mouse and the actual response in the \ngame. When using a PS/2 mouse it is thus first recommended to try to increase \nthe sampling rate either by changing it via your mouse driver or by using the \nps2rate program which can be downloaded at ps2rate homepage . \nIf you are playing the game at frame rates above 40 FPS and if you can't \nincrease the sampling rate of your PS/2 rate or if you are playing with a serial \nmouse it is recommended that you enable this toggle.",
       "type": "float"
     },
     "m_forcewheel": {
@@ -9676,7 +9691,7 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Do not auto-log console." },
-        { "name": "1", "description": "Auto record console but requires manuall saving. See \u0027match_save\u0027." },
+        { "name": "1", "description": "Auto record console but requires manuall saving. See 'match_save'." },
         { "name": "2", "description": "Automatically saves the console log after the match is completed." }
       ]
     },
@@ -9699,7 +9714,7 @@
     },
     "match_auto_minlength": {
       "group-id": "16",
-      "desc": "When using \u0027match_auto_record 2\u0027, temp demo\u0027s auto recorded won\u0027t be saved automatically if they are shorter than the number of seconds match_auto_minlength\u0027 is set to.",
+      "desc": "When using 'match_auto_record 2', temp demo's auto recorded won't be saved automatically if they are shorter than the number of seconds match_auto_minlength' is set to.",
       "remarks": "If a temp demo is too short to autosave, you can still save it manually with \"match_save\".",
       "type": "integer",
       "values": [
@@ -9721,7 +9736,7 @@
       "desc": "When set to 1, auto recording will also occur when in spectator mode.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t auto record demos in spectator mode." },
+        { "name": "false", "description": "Don't auto record demos in spectator mode." },
         { "name": "true", "description": "Auto record demos even in spectator mode." }
       ]
     },
@@ -9760,8 +9775,8 @@
     },
     "match_format_2on2": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"qw\", 2 teams with at least 1 team having 2 people)" }
@@ -9769,8 +9784,8 @@
     },
     "match_format_3on3": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"qw\", 2 teams with at least 1 team having 3 people)" }
@@ -9778,8 +9793,8 @@
     },
     "match_format_4on4": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"qw\", 2 teams with at least 1 team having 4 people)" }
@@ -9787,8 +9802,8 @@
     },
     "match_format_arena": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"arena\")" }
@@ -9796,8 +9811,8 @@
     },
     "match_format_coop": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"qw\", at least 2 people, deathmatch is off)" }
@@ -9805,8 +9820,8 @@
     },
     "match_format_duel": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"qw\", 2 players)" }
@@ -9814,8 +9829,8 @@
     },
     "match_format_ffa": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"qw\", more than 2 players, teamplay off)" }
@@ -9823,8 +9838,8 @@
     },
     "match_format_multiteam": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"qw\", 3 or more teams)" }
@@ -9832,8 +9847,8 @@
     },
     "match_format_race": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = qw, serverinfo \"race\" key present and equal to mapname)" }
@@ -9841,8 +9856,8 @@
     },
     "match_format_solo": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (any gamedir, 1 player on a server, not in race mode)" }
@@ -9850,8 +9865,8 @@
     },
     "match_format_tdm": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"qw\", 2 teams with at least 1 team having 5 people)" }
@@ -9859,8 +9874,8 @@
     },
     "match_format_tf_clanwar": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"fortress\", at least 2 teams)" }
@@ -9868,8 +9883,8 @@
     },
     "match_format_tf_duel": {
       "group-id": "16",
-      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_\u003ccategory\u003e. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro\u0027s that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
-      "remarks": "See \u0027match_format_macrolist\u0027 command and Match tools manual for more info.",
+      "desc": "Each match category has a name format variable associated with it. This variable is called match_format_<category>. For example, there is match_format_duel, match_format_2on2, etc, etc. All these variables can contain macro's that are expanded according to the macro list given below.  You can also use the \"match_format_macrolist\" command inside the client to display a list of the macros and their meaning.",
+      "remarks": "See 'match_format_macrolist' command and Match tools manual for more info.",
       "type": "string",
       "values": [
         { "name": "*", "description": "This pattern will be used in following situation: (gamedir = \"fortress\", 2 players)" }
@@ -10027,7 +10042,7 @@
       "desc": "Will load different Head Up Display settings when watching MultiView Demos.",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Won\u0027t do anything" },
+        { "name": "0", "description": "Won't do anything" },
         { "name": "1", "description": "Will load appropriate config according to current match type. Possible types: 1on1, 4on4, custom. Config is like cfg/mvdhud_4on4.cfg" },
         { "name": "2", "description": "Will always load cfg/mvdhud_custom.cfg" }
       ]
@@ -10110,7 +10125,7 @@
     },
     "mvd_info": {
       "group-id": "20",
-      "desc": "When watching Multi View Demo (.mvd) you can show a table on the screen with full info about players\u0027 status.",
+      "desc": "When watching Multi View Demo (.mvd) you can show a table on the screen with full info about players' status.",
       "remarks": "See mvd_info_setup for setting up displayed informations.",
       "type": "boolean",
       "values": [
@@ -10133,13 +10148,13 @@
     },
     "mvd_info_x": {
       "group-id": "20",
-      "desc": "You can adjust horizontal placement of Players\u0027 info table",
+      "desc": "You can adjust horizontal placement of Players' info table",
       "remarks": "See scr_mvdinfo and scr_mvdinfo_setup description for more details.",
       "type": "float"
     },
     "mvd_info_y": {
       "group-id": "20",
-      "desc": "You can adjust vertical placement of Players\u0027 info table",
+      "desc": "You can adjust vertical placement of Players' info table",
       "remarks": "See scr_mvdinfo and scr_mvdinfo_setup description for more details.",
       "type": "float"
     },
@@ -10318,7 +10333,7 @@
     },
     "name": {
       "group-id": "37",
-      "desc": "Player\u0027s name.",
+      "desc": "Player's name.",
       "type": "string"
     },
     "noaim": {
@@ -10380,13 +10395,13 @@
     },
     "pm_pground": {
       "group-id": "34",
-      "desc": "Enables \u0027persistent onground flag\u0027 physics tweak.  Its only use is that it makes pm_airstep work better.",
-      "remarks": "This extension makes use of Z_EXT_PF_ONGROUND to ensure correct movement prediction by clients. Prediction errors shouldn\u0027t be very noticeable anyway even with old clients.",
+      "desc": "Enables 'persistent onground flag' physics tweak.  Its only use is that it makes pm_airstep work better.",
+      "remarks": "This extension makes use of Z_EXT_PF_ONGROUND to ensure correct movement prediction by clients. Prediction errors shouldn't be very noticeable anyway even with old clients.",
       "type": "integer"
     },
     "pm_slidefix": {
       "group-id": "34",
-      "desc": "When set to 1, Upon decsension from a sloped surface, the player doesn\u0027t \"drop\" (which is a bug in QW), but smoothly slides, as it was in NQ.",
+      "desc": "When set to 1, Upon decsension from a sloped surface, the player doesn't \"drop\" (which is a bug in QW), but smoothly slides, as it was in NQ.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Disable" },
@@ -10420,7 +10435,7 @@
     "qtv_adjustbuffer": {
       "group-id": "38",
       "desc": "Enables balancing of the buffer length of the QTV stream. When turned on, the size of the stream buffer (the delay from the actual action) will be auto-adjusted (by changing the playback speed when necessary) so that it stays on the same level most of the time.",
-      "remarks": "When turned on, the speed of the playback may change sometimes - that\u0027s how the buffer lenght is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.",
+      "remarks": "When turned on, the speed of the playback may change sometimes - that's how the buffer lenght is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not adjust buffer size, always play at 100% speed" },
@@ -10429,7 +10444,7 @@
     },
     "qtv_adjusthighstart": {
       "group-id": "38",
-      "desc": "The level on which QTV buffer auto-adjusting will start. E.g. when set to 1.5, (and qtv_adjustbuffer is 1), QTV buffer auto-adjusting will start when buffer length reached 150% of it\u0027s normal length (determined by qtv_buffertime setting)",
+      "desc": "The level on which QTV buffer auto-adjusting will start. E.g. when set to 1.5, (and qtv_adjustbuffer is 1), QTV buffer auto-adjusting will start when buffer length reached 150% of it's normal length (determined by qtv_buffertime setting)",
       "type": "float",
       "values": [
         { "name": "*", "description": "Only values higher than 1.0 make sense" }
@@ -10437,7 +10452,7 @@
     },
     "qtv_adjustlowstart": {
       "group-id": "38",
-      "desc": "The bottom level on which QTV buffer auto-adjusting will start. E.g. when set to 0.5, (and qtv_adjustbuffer is 1), QTV buffer auto-adjusting will start when buffer length reached 50% of it\u0027s normal length (determined by qtv_buffertime setting)",
+      "desc": "The bottom level on which QTV buffer auto-adjusting will start. E.g. when set to 0.5, (and qtv_adjustbuffer is 1), QTV buffer auto-adjusting will start when buffer length reached 50% of it's normal length (determined by qtv_buffertime setting)",
       "type": "float",
       "values": [
         { "name": "*", "description": "Only values lower than 1.0 make sense" }
@@ -10533,7 +10548,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "QTV chat messages will have prefix detailing userIDs and proxy addresses" },
-        { "name": "true", "description": "QTV chat messages will be in simpler form \u003cname\u003e: \u003cmessage\u003e" }
+        { "name": "true", "description": "QTV chat messages will be in simpler form <name>: <message>" }
       ]
     },
     "qtv_streamport": {
@@ -10663,7 +10678,7 @@
     "r_draworder": {
       "group-id": "31",
       "desc": "Allows you to see through object - for development purposes only.",
-      "remarks": "Not allowed in multiplayer. See \u0027developer 1\u0027 too.",
+      "remarks": "Not allowed in multiplayer. See 'developer 1' too.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Standard behaviour - first draws object far from you then closer to you." },
@@ -10674,7 +10689,7 @@
       "group-id": "54",
       "type": "float",
       "desc": "Controls transparency level of the currently-held weapon.",
-      "remarks": "Example: 0.5 = 50% transparency.",
+      "remarks": "Example: 0.5 = 50% transparency.\nr_drawviewmodel 2 will cause weapon to be hidden when fov > 90",
       "values": [
         { "name": "0", "description": "Fully transparent." },
         { "name": "1", "description": "Fully opaque." }
@@ -10682,8 +10697,8 @@
     },
     "r_drawvweps": {
       "group-id": "8",
-      "desc": "Whether to draw vweps (other players\u0027 weapon models).",
-      "remarks": "In order for vweps to work, you must have the appropriate models (vwplayer.mdl and w_*.mdl), and the server you\u0027re playing on must have vwep support enabled.",
+      "desc": "Whether to draw vweps (other players' weapon models).",
+      "remarks": "In order for vweps to work, you must have the appropriate models (vwplayer.mdl and w_*.mdl), and the server you're playing on must have vwep support enabled.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "" },
@@ -10715,6 +10730,7 @@
     "r_explosionLight": {
       "group-id": "8",
       "type": "float",
+      "desc": "Size of the light effect around explosions.",
       "values": [
         { "name": "0", "description": "No explosion light." },
         { "name": "0.5", "description": "50% explosion light." },
@@ -10922,7 +10938,7 @@
     },
     "r_netgraph": {
       "group-id": "40",
-      "desc": "Setting r_netgraph 1 is a diagnostic tool to help you tweak your rate. If you find that you suffer from short pauses in the game and you see red spikes in your netgraph, you should try setting the rate down a bit.\nThe height of the pink lines towards the bottom is your latency on received packets.\nRed lines are lost packets. (bad)\nYellow lines are from the rate command kicking in, it\u0027s data that wasn\u0027t sent to you because you didn\u0027t have the bandwidth for it. (OK)\nBlue lines are very bad, they invalid delta\u0027s, and are related to the U_REMOVE warnings.",
+      "desc": "Setting r_netgraph 1 is a diagnostic tool to help you tweak your rate. If you find that you suffer from short pauses in the game and you see red spikes in your netgraph, you should try setting the rate down a bit.\nThe height of the pink lines towards the bottom is your latency on received packets.\nRed lines are lost packets. (bad)\nYellow lines are from the rate command kicking in, it's data that wasn't sent to you because you didn't have the bandwidth for it. (OK)\nBlue lines are very bad, they invalid delta's, and are related to the U_REMOVE warnings.",
       "remarks": "If during your play, you frequently see a string of messages with the term \"U_REMOVE\" in them, and your play seems to freeze for serveral seconds, use the console command cl_nodelta 1. This is a slightly less efficient way for QuakeWorld to work, but if your ISP is overloaded or has some configuration problems, it may not pass packets to QuakeWorld properly and cause difficulty.",
       "type": "boolean",
       "values": [
@@ -10932,7 +10948,7 @@
     },
     "r_netstats": {
       "group-id": "40",
-      "desc": "Shows information about ping, packetloss, average packet size and incoming/outgoing traffic. Equivalent with \u0027net\u0027 HUD element.",
+      "desc": "Shows information about ping, packetloss, average packet size and incoming/outgoing traffic. Equivalent with 'net' HUD element.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw network statistics." },
@@ -10941,7 +10957,7 @@
     },
     "r_novis": {
       "group-id": "51",
-      "desc": "This variable toggles the use of VIS information from the map data. When this \nvariable is set to \"1\" the game will calculate it\u0027s own VIS information on the \nfly instead of using the information stored in the map data, this will cause \na severe performance penalty in the game. When \"r_novis\" is set to \"1\", the \nvariable \"gl_turbalpha\" has a value lower than \"1\" and the server allows the\nclient to display liquid transparently the player will be able to see through \nliquids. This is a nice effect to see but it is not recommended to keep this \nvariable set to \"1\" because of the huge performance penalty. \nIt is possible to enable transparent liquids and still keep this variable set to\n\"0\" (and thus not experience such a severe performance drop) by using maps that\nare VISed accordingly. You can visit the official Water VIS site at \n\"http://www.sod.net/\" and download the vispatch program along with the patch \ndata files which you would use to update the VIS data for all of your game maps.\nThere are also map packs available that contain VISed versions of the original\nID maps.",
+      "desc": "This variable toggles the use of VIS information from the map data. When this \nvariable is set to \"1\" the game will calculate it's own VIS information on the \nfly instead of using the information stored in the map data, this will cause \na severe performance penalty in the game. When \"r_novis\" is set to \"1\", the \nvariable \"gl_turbalpha\" has a value lower than \"1\" and the server allows the\nclient to display liquid transparently the player will be able to see through \nliquids. This is a nice effect to see but it is not recommended to keep this \nvariable set to \"1\" because of the huge performance penalty. \nIt is possible to enable transparent liquids and still keep this variable set to\n\"0\" (and thus not experience such a severe performance drop) by using maps that\nare VISed accordingly. You can visit the official Water VIS site at \n\"http://www.sod.net/\" and download the vispatch program along with the patch \ndata files which you would use to update the VIS data for all of your game maps.\nThere are also map packs available that contain VISed versions of the original\nID maps.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not calculate VIS information for unVISed maps." },
@@ -10992,7 +11008,25 @@
     },
     "r_railTrail": {
       "group-id": "8",
-      "type": ""
+      "desc": "Customizable rail trails.",
+      "remarks": "See /r_instagibTrail for customising /instagib mode in KTX.",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "No rail trail." },
+        { "name": "1", "description": "Smoke trail." },
+        { "name": "2", "description": "Normal (rocket) trail." },
+        { "name": "3", "description": "Alternative normal trail." },
+        { "name": "4", "description": "Slight blood trail." },
+        { "name": "5", "description": "Big blood trail." },
+        { "name": "6", "description": "Green Tracer trail." },
+        { "name": "7", "description": "Orange/Yellow Tracer trail." },
+        { "name": "8", "description": "Blue/White Plasma trail." },
+        { "name": "9", "description": "Lavaball trail." },
+        { "name": "10", "description": "Green Fuel Rod Gun trail." },
+        { "name": "11", "description": "Orange/Yellow Plasma Rocket Mk II trail." },
+        { "name": "12", "description": "Similar to 3, but with a white line and less smoke." },
+        { "name": "13", "description": "Motion trail rocket. Need gl_motiontrails 1." }
+      ]
     },
     "r_reportedgeout": {
       "group-id": "31",
@@ -11004,7 +11038,7 @@
     },
     "r_reportsurfout": {
       "group-id": "31",
-      "desc": "Toggle the display of how many surfaces where not displayed. This\nshouldn\u0027t happen during normal game play, only when in noclip mode.",
+      "desc": "Toggle the display of how many surfaces where not displayed. This\nshouldn't happen during normal game play, only when in noclip mode.",
       "type": "float"
     },
     "r_rocketLight": {
@@ -11071,7 +11105,7 @@
     "r_shiftbeam": {
       "group-id": "8",
       "desc": "Shift start of the shaft lights.",
-      "remarks": "Doesn\u0027t work with smackdown ruleset. Intended for movies.",
+      "remarks": "Doesn't work with smackdown ruleset. Intended for movies.",
       "type": "float"
     },
     "r_skincolormode": {
@@ -11094,7 +11128,7 @@
     },
     "r_skyname": {
       "group-id": "51",
-      "desc": "If you wan\u0027t to use skybox name snow type r_skyname snow, disable skybox with r_skyname \"\"",
+      "desc": "If you wan't to use skybox name snow type r_skyname snow, disable skybox with r_skyname \"\"",
       "type": "string"
     },
     "r_slimecolor": {
@@ -11206,7 +11240,7 @@
       "remarks": "See other r_tracker_* variables description for further info.",
       "type": "string",
       "values": [
-        { "name": "*", "description": "\u003cr g b\u003e\u003ca\u003e = red, green, blue and alpha values 0..255" }
+        { "name": "*", "description": "<r g b><a> = red, green, blue and alpha values 0..255" }
       ]
     },
     "r_tracker_images_scale": {
@@ -11281,7 +11315,7 @@
     "r_tracker_time": {
       "group-id": "40",
       "desc": "Number of seconds the tracker information is drawn on the screen.",
-      "remarks": "See other \u0027r_tracker_*\u0027 variables too.",
+      "remarks": "See other 'r_tracker_*' variables too.",
       "type": "float",
       "values": [
         { "name": "*", "description": "Use positive numbers." }
@@ -11367,7 +11401,7 @@
     },
     "railcolor": {
       "group-id": "37",
-      "desc": "Player\u0027s rail color",
+      "desc": "Player's rail color",
       "remarks": "Possible values are: 1 - 7.  Sent to server, requires mod support",
       "type": "enum",
       "values": [
@@ -11488,8 +11522,8 @@
     },
     "s_khz": {
       "group-id": "45",
-      "desc": "The client includes \"sound interpolation\" which allows it to play sounds at higher frequencies, than the default 11025 Hz with perfect quality. In addition to \"s_khz\" also \"s_bits\" (linux only) will have an influence on interpolation quality. This variable allows you to choose the frequency you want to interpolate the sounds to. You will quickly discover, that the shaft sound is different at increased sampling rate. That\u0027s because shaft sounds were recorded at 22050 kHz, so probably that\u0027s how they should sound from the beginning. If you don\u0027t like it, you can always convert them to 11025.",
-      "remarks": "Also you can change it \u0027on fly\u0027 - just do s_restart after you change s_khz",
+      "desc": "The client includes \"sound interpolation\" which allows it to play sounds at higher frequencies, than the default 11025 Hz with perfect quality. In addition to \"s_khz\" also \"s_bits\" (linux only) will have an influence on interpolation quality. This variable allows you to choose the frequency you want to interpolate the sounds to. You will quickly discover, that the shaft sound is different at increased sampling rate. That's because shaft sounds were recorded at 22050 kHz, so probably that's how they should sound from the beginning. If you don't like it, you can always convert them to 11025.",
+      "remarks": "Also you can change it 'on fly' - just do s_restart after you change s_khz",
       "type": "enum",
       "values": [
         { "name": "11", "description": "11khz sound (default)" },
@@ -11562,7 +11596,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Makes Quake update its sound buffers more often to avoid choppy sound when your fps is really low (20 or worse)" },
-        { "name": "true", "description": "Don\u0027t use extra sound updates.  Gives a slight fps boost, but may lead to choppy sound on low-end machines" }
+        { "name": "true", "description": "Don't use extra sound updates.  Gives a slight fps boost, but may lead to choppy sound on low-end machines" }
       ]
     },
     "s_nosound": {
@@ -11682,8 +11716,8 @@
     },
     "sb_autoupdate": {
       "group-id": "42",
-      "desc": "Enabled auto-updates (pings \u0026 refreshes status) servers from actually marked server sources in Server Browser.",
-      "remarks": "Usefull with sb_starttab 1 and \u0027+cfg_load myconfig +menu_slist\u0027 in command-line.",
+      "desc": "Enabled auto-updates (pings & refreshes status) servers from actually marked server sources in Server Browser.",
+      "remarks": "Usefull with sb_starttab 1 and '+cfg_load myconfig +menu_slist' in command-line.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "do not refresh server list automatically" },
@@ -11705,7 +11739,7 @@
       "desc": "This toggles whether ezQuake should hide dead servers.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "don\u0027t hide dead servers" },
+        { "name": "false", "description": "don't hide dead servers" },
         { "name": "true", "description": "hide dead servers" }
       ]
     },
@@ -11714,7 +11748,7 @@
       "desc": "This toggles whether ezQuake should hide empty servers.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "don\u0027t hide empty servers" },
+        { "name": "false", "description": "don't hide empty servers" },
         { "name": "true", "description": "hide empty servers" }
       ]
     },
@@ -11723,7 +11757,7 @@
       "desc": "This toggles whether ezQuake should hide full servers.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "don\u0027t hide full servers" },
+        { "name": "false", "description": "don't hide full servers" },
         { "name": "true", "description": "hide full servers" }
       ]
     },
@@ -11741,7 +11775,7 @@
       "desc": "This toggles whether ezQuake should hide empty servers.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "don\u0027t hide empty servers" },
+        { "name": "false", "description": "don't hide empty servers" },
         { "name": "true", "description": "hide empty servers" }
       ]
     },
@@ -11780,11 +11814,11 @@
     },
     "sb_mastercache": {
       "group-id": "42",
-      "desc": "This toggles whether ezQuake should cache the results of queries to master server \n(in directory qw/sb/cache). If you restart ezQuake and don\u0027t update sources or if \na master server is down, ezQuake will use the cache.",
+      "desc": "This toggles whether ezQuake should cache the results of queries to master server \n(in directory qw/sb/cache). If you restart ezQuake and don't update sources or if \na master server is down, ezQuake will use the cache.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "don\u0027t use cache for master servers" },
-        { "name": "true", "description": "use the cache for master servers when they are down or haven\u0027t been refreshed" }
+        { "name": "false", "description": "don't use cache for master servers" },
+        { "name": "true", "description": "use the cache for master servers when they are down or haven't been refreshed" }
       ]
     },
     "sb_masterretries": {
@@ -11938,7 +11972,7 @@
       "desc": "Ordering instructions for server browser sources list are stored in this variable. You can order source server in Server browser by pressing Ctrl+1, Ctrl+2 and Ctrl+3. Sequence of your desired combination will be stored in this variable, newest keys first.",
       "type": "string",
       "values": [
-        { "name": "*", "description": "E.g.: 3-21 means you\u0027ve pressed Ctrl+1, Ctrl+2, Ctrl+2 and Ctrl+3 so your sources are now ordered by server count, last update time and source name." }
+        { "name": "*", "description": "E.g.: 3-21 means you've pressed Ctrl+1, Ctrl+2, Ctrl+2 and Ctrl+3 so your sources are now ordered by server count, last update time and source name." }
       ]
     },
     "sb_sourcevalidity": {
@@ -11970,7 +12004,7 @@
       "values": [
         { "name": "0", "description": "Hide players nick as spectator." },
         { "name": "1", "description": "Show players nick as spectator." },
-        { "name": "2", "description": "Show health and armor over players\u0027 heads." },
+        { "name": "2", "description": "Show health and armor over players' heads." },
         { "name": "3", "description": "2 + Show armor name." },
         { "name": "4", "description": "3 + Show if the user has RL (icon)." },
         { "name": "5", "description": "3 + Show the users best weapon (icon)." }
@@ -11984,11 +12018,11 @@
     },
     "scr_autoid_drawname": {
       "group-id": "31",
-      "desc": "Controls if the player name should be drawn when using scr_autoid \u003e0.",
+      "desc": "Controls if the player name should be drawn when using scr_autoid >0.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Player name is not drawn above player when scr_autoid \u003e0" },
-        { "name": "true", "description": "Player name is drawn above player when scr_autoid \u003e0" }
+        { "name": "false", "description": "Player name is not drawn above player when scr_autoid >0" },
+        { "name": "true", "description": "Player name is drawn above player when scr_autoid >0" }
       ]
     },
     "scr_autoid_namelength": {
@@ -12029,7 +12063,7 @@
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off." },
-        { "name": "true", "description": "Centers the menu vertically (has no effect if you\u0027re playing in 320x200 mode, same applies to scr_centersbar)." }
+        { "name": "true", "description": "Centers the menu vertically (has no effect if you're playing in 320x200 mode, same applies to scr_centersbar)." }
       ]
     },
     "scr_centerSbar": {
@@ -12087,7 +12121,7 @@
         { "name": "1", "description": "Will display armour/health/ammo/weapons *very* compactly." },
         { "name": "2", "description": "Will display armour/health/ammo *very* compactly." },
         { "name": "3", "description": "Displays only health/armour." },
-        { "name": "4", "description": "Is just like \"2\" except it also displays your current weapon\u0027s ammo in big numbers." }
+        { "name": "4", "description": "Is just like \"2\" except it also displays your current weapon's ammo in big numbers." }
       ]
     },
     "scr_compactHudAlign": {
@@ -12101,9 +12135,10 @@
     "scr_conalpha": {
       "group-id": "5",
       "type": "float",
+      "desc": "Opacity of the console background.",
       "values": [
         { "name": "0", "description": "Transparent." },
-        { "name": "1", "description": "Normal." }
+        { "name": "1", "description": "Opaque." }
       ]
     },
     "scr_conback": {
@@ -12160,7 +12195,7 @@
     "scr_drawHFrags": {
       "group-id": "47",
       "desc": "Displays horizontal bar with frag stats (4 cells) in the old hud.",
-      "remarks": "Required settings for this to work: scr_newhud 0 or 2, viewsize below 110, cl_sbar 1 or cl_sbar 0 but vid_conwidth below 512; if you migrated from FuhQuake and can\u0027t get this to work, check these settings, the feature should work the same as in FuhQuake",
+      "remarks": "Required settings for this to work: scr_newhud 0 or 2, viewsize below 110, cl_sbar 1 or cl_sbar 0 but vid_conwidth below 512; if you migrated from FuhQuake and can't get this to work, check these settings, the feature should work the same as in FuhQuake",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Turns frag display off." },
@@ -12191,6 +12226,7 @@
     "scr_menualpha": {
       "group-id": "40",
       "type": "float",
+      "desc": "Opacity of the main menu's background.",
       "values": [
         { "name": "0", "description": "Transparent mainmenu." },
         { "name": "1", "description": "Black mainmenu." }
@@ -12201,7 +12237,7 @@
       "desc": "Draw HUD elements/crosshair/etc in background of main menu. Useful when HUD distracting you in server browser.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Don\u0027t draw HUD elements when in menus." },
+        { "name": "false", "description": "Don't draw HUD elements when in menus." },
         { "name": "true", "description": "Draw HUD elements when in menus." }
       ]
     },
@@ -12259,7 +12295,7 @@
     "scr_sbar_drawammo": {
       "group-id": "47",
       "desc": "Turns drawing amount of ammo on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw ammo." },
@@ -12269,7 +12305,7 @@
     "scr_sbar_drawammocounts": {
       "group-id": "47",
       "desc": "Turns drawing amounts of ammo on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw countrs of ammo." },
@@ -12279,7 +12315,7 @@
     "scr_sbar_drawammoicon": {
       "group-id": "47",
       "desc": "Turns drawing of ammo icon on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw ammo icon." },
@@ -12289,7 +12325,7 @@
     "scr_sbar_drawarmor": {
       "group-id": "47",
       "desc": "Turns drawing of armor count on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw armor count." },
@@ -12299,7 +12335,7 @@
     "scr_sbar_drawarmoricon": {
       "group-id": "47",
       "desc": "Turns drawing of armor icon on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw armor icon." },
@@ -12309,7 +12345,7 @@
     "scr_sbar_drawfaceicon": {
       "group-id": "47",
       "desc": "Turns drawing of face icon on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw face icon." },
@@ -12319,7 +12355,7 @@
     "scr_sbar_drawguns": {
       "group-id": "47",
       "desc": "Turns drawing of available guns on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw available guns." },
@@ -12329,7 +12365,7 @@
     "scr_sbar_drawhealth": {
       "group-id": "47",
       "desc": "Turns drawing of health amount on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw health amount." },
@@ -12339,7 +12375,7 @@
     "scr_sbar_drawitems": {
       "group-id": "47",
       "desc": "Turns drawing of items (powerups and keys) in status bar on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw items in status bar." },
@@ -12349,7 +12385,7 @@
     "scr_sbar_drawsigils": {
       "group-id": "47",
       "desc": "Turns drawing of sigils on/off.",
-      "remarks": "This variable applies for old HUD \u003c= \u0027scr_newhud 0\u0027.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Do not draw sigils." },
@@ -12371,7 +12407,8 @@
     },
     "scr_scoreboard_afk_style": {
       "group-id": "47",
-      "type": "integer",
+      "desc": "Affects how a player being away from the game is reflected in scoreboard.",
+      "type": "enum",
       "values": [
         { "name": "1", "description": "If user is AFK, time replaced with AFK" },
         { "name": "2", "description": "If user is AFK, time value shown in red" }
@@ -12397,7 +12434,7 @@
     },
     "scr_scoreboard_death_color": {
       "group-id": "47",
-      "desc": "Changes the color of the \"dths\" (deaths) column in your scoreboard when \u003e0. Uses RGB values.",
+      "desc": "Changes the color of the \"dths\" (deaths) column in your scoreboard when >0. Uses RGB values.",
       "type": "string"
     },
     "scr_scoreboard_drawfps": {
@@ -12445,7 +12482,7 @@
     },
     "scr_scoreboard_kill_color": {
       "group-id": "47",
-      "desc": "Changes the color of the \"kills\" column in your scoreboard when \u003e0. Uses RGB values.",
+      "desc": "Changes the color of the \"kills\" column in your scoreboard when >0. Uses RGB values.",
       "type": "string"
     },
     "scr_scoreboard_posx": {
@@ -12474,7 +12511,7 @@
     },
     "scr_scoreboard_spectator_name": {
       "group-id": "47",
-      "desc": "This variable will change what spectators are called in the scoreboard. When teamplay is not on, this variable is cut to 4 characters. \u0026cRGB values are not accepted.",
+      "desc": "This variable will change what spectators are called in the scoreboard. When teamplay is not on, this variable is cut to 4 characters. &cRGB values are not accepted.",
       "type": "string"
     },
     "scr_scoreboard_teamsort": {
@@ -12487,7 +12524,7 @@
     },
     "scr_scoreboard_tk_color": {
       "group-id": "47",
-      "desc": "Changes the color of the \"tks\" column in your scoreboard when \u003e0. Uses RGB values.",
+      "desc": "Changes the color of the \"tks\" column in your scoreboard when >0. Uses RGB values.",
       "type": "string"
     },
     "scr_showcrosshair": {
@@ -12567,15 +12604,15 @@
       "desc": "Changes %a to different styles.",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "Does not display teammates\u0027 armor" },
-        { "name": "1", "description": "Displays teammates\u0027 armor always in white." },
-        { "name": "2", "description": "Displays teammates\u0027 armor in white with the icon of the armor they have next to it." },
-        { "name": "3", "description": "Displays teammates\u0027 armor in the color of the armor they have." }
+        { "name": "0", "description": "Does not display teammates' armor" },
+        { "name": "1", "description": "Displays teammates' armor always in white." },
+        { "name": "2", "description": "Displays teammates' armor in white with the icon of the armor they have next to it." },
+        { "name": "3", "description": "Displays teammates' armor in the color of the armor they have." }
       ]
     },
     "scr_teaminfo_frame_color": {
       "group-id": "40",
-      "desc": "Changes the color and transparency of scr_teaminfo\u0027s frame.",
+      "desc": "Changes the color and transparency of scr_teaminfo's frame.",
       "type": "string",
       "values": [
         { "name": "*", "description": "R G B alpha, each 0-255" }
@@ -12602,7 +12639,7 @@
       "desc": "Sets name width in scr_teaminfo",
       "type": "integer",
       "values": [
-        { "name": "*", "description": "From 0 (don\u0027t display name) to 20" }
+        { "name": "*", "description": "From 0 (don't display name) to 20" }
       ]
     },
     "scr_teaminfo_order": {
@@ -12657,8 +12694,8 @@
       "desc": "Changes %w to different styles.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Displays teammates\u0027 weapon as an icon" },
-        { "name": "true", "description": "Displays teammates\u0027 weapon as a word (rl, lg, etc..)" }
+        { "name": "false", "description": "Displays teammates' weapon as an icon" },
+        { "name": "true", "description": "Displays teammates' weapon as a word (rl, lg, etc..)" }
       ]
     },
     "scr_teaminfo_x": {
@@ -12679,11 +12716,11 @@
     },
     "scr_tracking": {
       "group-id": "40",
-      "desc": "Changes the format of descriptive text displayed when you are tracking someone as spectator or watching a demo where you can see player\u0027s team and name.",
+      "desc": "Changes the format of descriptive text displayed when you are tracking someone as spectator or watching a demo where you can see player's team and name.",
       "remarks": "This variable affects scr_newhud 0. To change same text in new HUD (scr_newhud 1) use /tracking format (hud_tracking_format) settings.",
       "type": "string",
       "values": [
-        { "name": "*", "description": "Pattern %n will be replaced with tracked player\u0027s name, %t will be replaced with player\u0027s team." }
+        { "name": "*", "description": "Pattern %n will be replaced with tracked player's name, %t will be replaced with player's team." }
       ]
     },
     "scr_weaponstats": {
@@ -12753,7 +12790,7 @@
     },
     "show_speed": {
       "group-id": "40",
-      "desc": "Displays a speed counter in the top right corner in the client\u0027s units (Horizontal velocity). (320 - Normal walking speed, 440 - Accel jump, 450 - Bunnyhopping)",
+      "desc": "Displays a speed counter in the top right corner in the client's units (Horizontal velocity). (320 - Normal walking speed, 440 - Accel jump, 450 - Bunnyhopping)",
       "type": "enum",
       "values": [
         { "name": "0", "description": "Off." },
@@ -13185,7 +13222,7 @@
       "remarks": "EZQuake and ZQuake (may be some other) clients understand this physics change, old clients will be clamped at [-70~80] (quakeworld default) view angles.",
       "type": "integer",
       "values": [
-        { "name": "*", "description": "By default, in quakeworld maximum viewangle is \u002780\u0027. You can set for example \u002790\u0027 then you will be able look directly to sky. q3 players should like it" }
+        { "name": "*", "description": "By default, in quakeworld maximum viewangle is '80'. You can set for example '90' then you will be able look directly to sky. q3 players should like it" }
       ]
     },
     "sv_maxrate": {
@@ -13222,7 +13259,7 @@
       "remarks": "EZQuake and ZQuake (may be some other) clients understand this physics change, old clients will be clamped at [-70~80] (quakeworld default) view angles.",
       "type": "integer",
       "values": [
-        { "name": "*", "description": "By default, in quakeworld minimum viewangle is \u0027-70\u0027. You can set for example \u0027-90\u0027 then you will be able look directly to floor. q3 players should like it." }
+        { "name": "*", "description": "By default, in quakeworld minimum viewangle is '-70'. You can set for example '-90' then you will be able look directly to floor. q3 players should like it." }
       ]
     },
     "sv_mintic": {
@@ -13257,7 +13294,7 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "pause is off" },
-        { "name": "1", "description": "normal pause that can be set by \u0027pause\u0027 command" },
+        { "name": "1", "description": "normal pause that can be set by 'pause' command" },
         { "name": "2", "description": "auto pause (single player only) when going into menus" },
         { "name": "3", "description": "both (normal pause + auto pause)" }
       ]
@@ -13311,7 +13348,7 @@
       "group-id": "43",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Players can\u0027t hear spectators." },
+        { "name": "false", "description": "Players can't hear spectators." },
         { "name": "true", "description": "Players can hear spectators." }
       ]
     },
@@ -13442,7 +13479,7 @@
     },
     "teambottomcolor": {
       "group-id": "44",
-      "desc": "Determines the color of the pants of the teammates you see. Overrides player\u0027s skin settings.",
+      "desc": "Determines the color of the pants of the teammates you see. Overrides player's skin settings.",
       "remarks": "To be able to use RGB 24bit colors, look for r_teamskincolor variable.",
       "type": "enum",
       "values": [
@@ -13470,8 +13507,8 @@
       "type": "enum",
       "values": [
         { "name": "0", "description": "Disabled" },
-        { "name": "1", "description": "Use player\u0027s name as the name of the skin to be used" },
-        { "name": "2", "description": "Use player\u0027s userid number (only useful for video capturing)" },
+        { "name": "1", "description": "Use player's name as the name of the skin to be used" },
+        { "name": "2", "description": "Use player's userid number (only useful for video capturing)" },
         { "name": "3", "description": "Assign skins \"t1\", \"t2\", \"t3\", etc. to your teammates." }
       ]
     },
@@ -13506,7 +13543,7 @@
     },
     "teamtopcolor": {
       "group-id": "44",
-      "desc": "Determines the color of the shirt of the teammates you see. Overrides player\u0027s skin settings.",
+      "desc": "Determines the color of the shirt of the teammates you see. Overrides player's skin settings.",
       "remarks": "To be able to use RGB 24bit colors, look for r_teamskincolor variable.",
       "type": "enum",
       "values": [
@@ -13568,7 +13605,7 @@
     },
     "tp_forceTriggers": {
       "group-id": "49",
-      "desc": "Controls whether f_took, f_death etc are forced to execute even if the game isn\u0027t a team game.",
+      "desc": "Controls whether f_took, f_death etc are forced to execute even if the game isn't a team game.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off." },
@@ -13587,7 +13624,7 @@
     "tp_msgtriggers": {
       "group-id": "49",
       "desc": "Switches on/off message triggers",
-      "remarks": "For ruleset \u0027Smackdown\u0027 message triggers always are off.",
+      "remarks": "For ruleset 'Smackdown' message triggers always are off.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Message triggers are off" },
@@ -13649,7 +13686,7 @@
       "desc": "Sets the name for ring (invisibility) powerup for teamplay messages.",
       "type": "string",
       "values": [
-        { "name": "*", "description": "common values are \u0027eyes\u0027 or \u0027ring\u0027" }
+        { "name": "*", "description": "common values are 'eyes' or 'ring'" }
       ]
     },
     "tp_name_filter": {
@@ -13777,7 +13814,7 @@
       "desc": "Sets the name for sentry tower in teamplay messages.",
       "type": "string",
       "values": [
-        { "name": "*", "description": "common values are \u0027sentry\u0027 or \u0027sentry gun\u0027." }
+        { "name": "*", "description": "common values are 'sentry' or 'sentry gun'." }
       ]
     },
     "tp_name_separator": {
@@ -13923,7 +13960,7 @@
     },
     "tp_soundtrigger": {
       "group-id": "49",
-      "desc": "SoundTrigger like proxys.\nA SoundTrigger must be terminated by either a CR, LF or filter. The .wav extension is not required at the end. Trigger is a character before the sound file.\nExample:\nfilter #a\nsay_team I\u0027m at %l ~location.wav\"\nsay_team ~location.wav$\\me: I\u0027m at %l #a\"\nsay_team ~location$\\me: I\u0027m at %l #a\"\nsay_team I\u0027m at %l ~location #a\"",
+      "desc": "SoundTrigger like proxys.\nA SoundTrigger must be terminated by either a CR, LF or filter. The .wav extension is not required at the end. Trigger is a character before the sound file.\nExample:\nfilter #a\nsay_team I'm at %l ~location.wav\"\nsay_team ~location.wav$\\me: I'm at %l #a\"\nsay_team ~location$\\me: I'm at %l #a\"\nsay_team I'm at %l ~location #a\"",
       "type": "string"
     },
     "tp_tooktimeout": {
@@ -13949,12 +13986,12 @@
       "desc": "userdir [dir [type]]\nAddition of the given directory to the list searched files",
       "type": "enum",
       "values": [
-        { "name": "0", "description": "\u003cquake_dir\u003e/\u003cgamedir\u003e/\u003cdir\u003e" },
-        { "name": "1", "description": "\u003cquake_dir\u003e/\u003cdir\u003e/\u003cgamedir\u003e" },
-        { "name": "2", "description": "\u003cquake_dir\u003e/qw/\u003cdir\u003e/\u003cgamedir\u003e" },
-        { "name": "3", "description": "\u003cquake_dir\u003e/qw/\u003cdir\u003e" },
-        { "name": "4", "description": "\u003cquake_dir\u003e/\u003cdir\u003e" },
-        { "name": "5", "description": "$HOME/qw/\u003cdir\u003e" }
+        { "name": "0", "description": "<quake_dir>/<gamedir>/<dir>" },
+        { "name": "1", "description": "<quake_dir>/<dir>/<gamedir>" },
+        { "name": "2", "description": "<quake_dir>/qw/<dir>/<gamedir>" },
+        { "name": "3", "description": "<quake_dir>/qw/<dir>" },
+        { "name": "4", "description": "<quake_dir>/<dir>" },
+        { "name": "5", "description": "$HOME/qw/<dir>" }
       ]
     },
     "v_centermove": {
@@ -13975,12 +14012,12 @@
     },
     "v_damagecshift": {
       "group-id": "39",
-      "desc": "This variable (0..1) will temporarily add a red hue to your screen when you\u0027ve taken damage. Needs gl_polyblend 1.",
+      "desc": "This variable (0..1) will temporarily add a red hue to your screen when you've taken damage. Needs gl_polyblend 1.",
       "type": "float"
     },
     "v_dlightcshift": {
       "group-id": "39",
-      "desc": "Turning this variable on will blend light when you\u0027re inside a light bubble. Also need to set gl_flashblend 1",
+      "desc": "Turning this variable on will blend light when you're inside a light bubble. Also need to set gl_flashblend 1",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Off" },
@@ -14030,13 +14067,13 @@
     "v_kickpitch": {
       "group-id": "53",
       "desc": "This variable controls the distance that the screen should move up or down when \nthe player is shot. Most players set this variable to \"0\" in order to remove the \nscreen tilting effect when they are injured by a shot. This allows them to keep \na perfect aim while being fired upon.",
-      "remarks": "v_kicktime must be \u003e0 for this to take effect.",
+      "remarks": "v_kicktime must be >0 for this to take effect.",
       "type": "float"
     },
     "v_kickroll": {
       "group-id": "53",
       "desc": "This variable controls the distance that the screen should roll clockwise or \ncounter clockwise when the player is shot. Most players set this variable to \"0\"\nin order to remove the screen tilting effect when they are injured by a shot. \nThis allows them to keep a perfect aim while being fired upon.",
-      "remarks": "v_kicktime must be \u003e0 for this to take effect.",
+      "remarks": "v_kicktime must be >0 for this to take effect.",
       "type": "float"
     },
     "v_kicktime": {
@@ -14066,7 +14103,7 @@
     },
     "v_viewheight": {
       "group-id": "53",
-      "desc": "New variable v_viewheight can be used to get the effect of negative/zero values \nof cl_bobcycle etc in qw 2.33 . Negative values of v_viewheight = lower viewheight, \npositive = higher. Can\u0027t go below -7 or above 4 because that\u0027s the range you can get \nwith qw 2.33 by exploiting the bob cycle bug. Using v_viewheight automatically \nturns off weapon model bobbing (cl_bob*).",
+      "desc": "New variable v_viewheight can be used to get the effect of negative/zero values \nof cl_bobcycle etc in qw 2.33 . Negative values of v_viewheight = lower viewheight, \npositive = higher. Can't go below -7 or above 4 because that's the range you can get \nwith qw 2.33 by exploiting the bob cycle bug. Using v_viewheight automatically \nturns off weapon model bobbing (cl_bob*).",
       "type": "float"
     },
     "vid_24bit_depth": {
@@ -14124,13 +14161,13 @@
     },
     "vid_conscale": {
       "group-id": "52",
-      "desc": "If vid_conwidth \u0026 vid_conheight are set to 0, vid_conheight will be scaled by the value of this variable",
+      "desc": "If vid_conwidth & vid_conheight are set to 0, vid_conheight will be scaled by the value of this variable",
       "type": "float"
     },
     "vid_conwidth": {
       "group-id": "52",
       "desc": "Height of the text layer",
-      "remarks": "Can\\\u0027t be higher than the height of the current game resolution",
+      "remarks": "Can\\'t be higher than the height of the current game resolution",
       "type": "integer"
     },
     "vid_customheight": {
@@ -14162,7 +14199,7 @@
     },
     "vid_flashonactivity": {
       "group-id": "52",
-      "desc": "When there is activity in the server, ezQuake\u0027s taskbar window will flash. Activity includes chat, high priority messages, disconnection from server.",
+      "desc": "When there is activity in the server, ezQuake's taskbar window will flash. Activity includes chat, high priority messages, disconnection from server.",
       "type": "float"
     },
     "vid_forcerestoregamma": {
@@ -14212,7 +14249,7 @@
     },
     "vid_nopageflip": {
       "group-id": "52",
-      "desc": "This variable toggles the use of page-flipping during supported video modes. By \ndefault the game will allow for page-flipping for video modes that support this \nfeature. For example if a given VESA mode can support page flipping, then it \ndefaults to page-flipped operation.  A VESA mode can be forced to \nnon-page-flipped operation by setting the \"vid_nopageflip\" variable to \"1\", then\nsetting the mode (note that \"vid_nopageflip\" takes operation on the next, \nnot the current video mode, and note that it then stays in effect permanently, \neven when the client is exited and restarted, unless it is manually set back to \"0\").\nIf there is not enough memory for two pages in a VESA mode, or if the adapter \ndoesn\u0027t support page flipping, then the mode will automatically be \nnon-page-flipped.  \nPage-flipping works by drawing multiple virtual game screens at the same time in \nthe video memory and then switching among them to display the current \ngamescreen. Page-flipped modes thus use less system memory than non-page-flipped \nmodes, but require more video memory. When using page-flipping, visual quality \nmay be higher, but performance of the game can change to better or worse, \ndepending on the graphics adapter and other hardware (see the discussion of the \nPentium Pro below, for a discussion of why page flipping can be faster but is \nsometimes much slower on that processor). However in most cases the performance \n(and thus frame rate) will be increased, but for people with hardware that has \nproblems with page-flipping \"vid_nopageflip 1\" may help.\nThe Pentium Pro is an example for such a hardware: it is an okay client platform (sniff!), \nbut it has one weak spot, it is by default very slow on writes to video memory.  \nThis means that in default hardware configurations, you are usually much better \noff setting \"vid_nopageflip\" to \"1\" if you use VESA modes, so drawing is done to \nsystem memory instead of to video memory. Remember that you must set the mode\nafter setting \"vid_nopageflip\" to \"1\" in order to get \"vid_nopageflip\" to take\neffect. \"vid_nopageflip 1\" can sometimes be faster on a Pentium too, but not by \nnearly as much in general, and it\u0027s often slower.",
+      "desc": "This variable toggles the use of page-flipping during supported video modes. By \ndefault the game will allow for page-flipping for video modes that support this \nfeature. For example if a given VESA mode can support page flipping, then it \ndefaults to page-flipped operation.  A VESA mode can be forced to \nnon-page-flipped operation by setting the \"vid_nopageflip\" variable to \"1\", then\nsetting the mode (note that \"vid_nopageflip\" takes operation on the next, \nnot the current video mode, and note that it then stays in effect permanently, \neven when the client is exited and restarted, unless it is manually set back to \"0\").\nIf there is not enough memory for two pages in a VESA mode, or if the adapter \ndoesn't support page flipping, then the mode will automatically be \nnon-page-flipped.  \nPage-flipping works by drawing multiple virtual game screens at the same time in \nthe video memory and then switching among them to display the current \ngamescreen. Page-flipped modes thus use less system memory than non-page-flipped \nmodes, but require more video memory. When using page-flipping, visual quality \nmay be higher, but performance of the game can change to better or worse, \ndepending on the graphics adapter and other hardware (see the discussion of the \nPentium Pro below, for a discussion of why page flipping can be faster but is \nsometimes much slower on that processor). However in most cases the performance \n(and thus frame rate) will be increased, but for people with hardware that has \nproblems with page-flipping \"vid_nopageflip 1\" may help.\nThe Pentium Pro is an example for such a hardware: it is an okay client platform (sniff!), \nbut it has one weak spot, it is by default very slow on writes to video memory.  \nThis means that in default hardware configurations, you are usually much better \noff setting \"vid_nopageflip\" to \"1\" if you use VESA modes, so drawing is done to \nsystem memory instead of to video memory. Remember that you must set the mode\nafter setting \"vid_nopageflip\" to \"1\" in order to get \"vid_nopageflip\" to take\neffect. \"vid_nopageflip 1\" can sometimes be faster on a Pentium too, but not by \nnearly as much in general, and it's often slower.",
       "type": "float"
     },
     "vid_resetonswitch": {
@@ -14254,7 +14291,7 @@
     },
     "vid_vsync": {
       "group-id": "52",
-      "desc": "Syncs your FPS with your monitor\u0027s vertical refresh rate. This will override cl_maxfps.",
+      "desc": "Syncs your FPS with your monitor's vertical refresh rate. This will override cl_maxfps.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "Disable vsync." },
@@ -14389,11 +14426,11 @@
     "watervis": {
       "group-id": "34",
       "desc": "This server-side cvar is mirrored to serverinfo as a hint to clients on whether the server is using the so-called watervised maps.",
-      "remarks": "It\u0027s a bad idea to use watervis 1 if the maps the server is using are not watervised. Liquids will appear \u0027transparent\u0027 but you won\u0027t be able to see any items/players/etc through it.  And it is a bad idea anyway because Quake maps were not designed for transparent water (or other liquids); enabling it changes gameplay, decreases fps and produces more network traffic and puts non-GL players at a disadvantage because the software renderer doesn\u0027t support transparent water (yet).\nNot saved to config with cfg_save command.",
+      "remarks": "It's a bad idea to use watervis 1 if the maps the server is using are not watervised. Liquids will appear 'transparent' but you won't be able to see any items/players/etc through it.  And it is a bad idea anyway because Quake maps were not designed for transparent water (or other liquids); enabling it changes gameplay, decreases fps and produces more network traffic and puts non-GL players at a disadvantage because the software renderer doesn't support transparent water (yet).\nNot saved to config with cfg_save command.",
       "type": "boolean",
       "values": [
         { "name": "false", "description": "No watervis." },
-        { "name": "true", "description": "GLQuake users can see through liquids if they set gl_turbalpha to a value \u003c 1." }
+        { "name": "true", "description": "GLQuake users can see through liquids if they set gl_turbalpha to a value < 1." }
       ]
     },
     "zombietime": {
