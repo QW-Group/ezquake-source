@@ -191,6 +191,8 @@ cvar_t	scr_cursor_alpha		= {"scr_cursor_alpha", "1"};
 cvar_t  scr_showcrosshair       = {"scr_showcrosshair", "1"}; // so crosshair does't affected by +showscores, or vice versa
 cvar_t  scr_notifyalways        = {"scr_notifyalways", "0"}; // don't hide notification messages in intermission
 
+cvar_t  scr_fovmode             = {"scr_fovmode", "0"}; // When using reduced viewsize, reduce vertical fov or letterbox the screen
+
 qbool	scr_initialized;	// Ready to draw.
 
 mpic_t	*scr_ram;
@@ -398,7 +400,7 @@ void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel)
 	}
 }
 
-static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float height)
+static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float height, float view_width, float view_height, qbool reduce_vertfov)
 {
 	float t;
 	float fovx;
@@ -422,6 +424,12 @@ static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float he
 		fovy = atan (3.0 / t) * 360 / M_PI;
 		t = height / tan(fovy / 360 * M_PI);
 		fovx = atan (width / t) * 360 / M_PI;
+
+		if (reduce_vertfov) {
+			// Crop vertically when viewsize decreased
+			t = view_width / tan (fovx / 360 * M_PI);
+			fovy = atan (view_height / t) * 360 / M_PI;
+		}
 	}
 
 	if (fovx < 10 || fovx > 140)
@@ -455,9 +463,13 @@ static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float he
 
 //Must be called whenever vid changes
 static void SCR_CalcRefdef (void) {
-	float  size;
+	float size        = 0;
+	qbool full        = false;
 	int h;
-	qbool full = false;
+	float aspectratio = vid.height ? (float)vid.width / vid.height : 1;
+	float virtual_height = 0;
+	qbool letterbox = scr_fovmode.integer == 1;
+	qbool height_reduced = false;
 
 	scr_fullupdate = 0;             // force a background redraw
 	vid.recalc_refdef = 0;
@@ -507,18 +519,27 @@ static void SCR_CalcRefdef (void) {
 
 	r_refdef.vrect.height = vid.height * size;
 	if (cl_sbar.value || !full) {
-  		if (r_refdef.vrect.height > vid.height - sb_lines)
-  			r_refdef.vrect.height = vid.height - sb_lines;
+		if (r_refdef.vrect.height > vid.height - sb_lines) {
+			r_refdef.vrect.height = vid.height - sb_lines;
+			height_reduced = true;
+		}
 	} else if (r_refdef.vrect.height > vid.height) {
-			r_refdef.vrect.height = vid.height;
+		r_refdef.vrect.height = vid.height;
 	}
+
+	// Reduce width to keep aspect ratio constant with monitor
+	if (letterbox) {
+		r_refdef.vrect.width = min (r_refdef.vrect.width, r_refdef.vrect.height * aspectratio);
+		height_reduced = false;
+	}
+
 	r_refdef.vrect.x = (vid.width - r_refdef.vrect.width) / 2;
 	if (full)
 		r_refdef.vrect.y = 0;
 	else
 		r_refdef.vrect.y = (h - r_refdef.vrect.height) / 2;
 
-	CalcFov (scr_fov.value, &r_refdef.fov_x, &r_refdef.fov_y, r_refdef.vrect.width, r_refdef.vrect.height);
+	CalcFov (scr_fov.value, &r_refdef.fov_x, &r_refdef.fov_y, vid.width, vid.height, r_refdef.vrect.width, r_refdef.vrect.height, height_reduced);
 
 	scr_vrect = r_refdef.vrect;
 }
@@ -3344,6 +3365,7 @@ void SCR_UpdateScreen (void)
 {
 	static hud_t *hud_netstats = NULL;
 	extern qbool Minimized;
+	static int oldfovmode = 0;
 
 	if (hud_netstats == NULL) // first time
 		hud_netstats = HUD_Find("net");
@@ -3397,6 +3419,11 @@ void SCR_UpdateScreen (void)
 	if (oldsbar != cl_sbar.value) 
 	{
 		oldsbar = cl_sbar.value;
+		vid.recalc_refdef = true;
+	}
+
+	if (oldfovmode != scr_fovmode.integer) {
+		oldfovmode = scr_fovmode.integer;
 		vid.recalc_refdef = true;
 	}
 
@@ -3984,6 +4011,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_fov);
 	Cvar_Register (&default_fov);
 	Cvar_Register (&scr_viewsize);
+	Cvar_Register (&scr_fovmode);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&scr_newHud);

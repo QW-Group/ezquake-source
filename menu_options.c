@@ -899,7 +899,7 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),
 	ADDSET_NUMBER	("Kick Roll", v_kickroll, 0, 10, 0.5),
 	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
-	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
+	ADDSET_NUMBER	("View Height", v_viewheight, -7, 4, 0.5),
 	ADDSET_BASIC_SECTION(),
 
 	ADDSET_ADVANCED_SECTION(),	
