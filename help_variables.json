@@ -12179,6 +12179,15 @@
         { "name": "2", "description": "Teamfrags in teamplay mode." }
       ]
     },
+    "scr_fovmode": {
+      "group-id": "53",
+      "desc": "Determines how to keep aspect ratio correct when viewsize is reduced.",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Standard QWCL behaviour - reduce vertical fov, cropping image" },
+        { "name": "1", "description": "Reduce horizontal size, keeping aspect ratio correct" }
+      ]
+    },
     "scr_menualpha": {
       "group-id": "40",
       "type": "float",

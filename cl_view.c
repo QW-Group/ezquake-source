@@ -814,7 +814,7 @@ void V_AddViewWeapon (float bob) {
 	vec3_t forward, right, up;
 	centity_t *cent;
 	int gunmodel = V_CurrentWeaponModel();
-	extern cvar_t scr_fov;
+	extern cvar_t scr_fov, scr_fovmode, scr_newHud;
 
 	cent = &cl.viewent;
 	TP_ParseWeaponModel(cl.model_precache[gunmodel]);
@@ -848,15 +848,16 @@ void V_AddViewWeapon (float bob) {
 	}
 
 	// fudge position around to keep amount of weapon visible roughly equal with different FOV
-	if (cl_sbar.value && scr_viewsize.value == 110)
-		cent->current.origin[2] += 1;
-	else if (cl_sbar.value && scr_viewsize.value == 100)
-		cent->current.origin[2] += 2;
-	else if (scr_viewsize.value == 90)
-		cent->current.origin[2] += 1;
-	else if (scr_viewsize.value == 80)
-		cent->current.origin[2] += 0.5;
-
+	if (!scr_fovmode.value) {
+		if (cl_sbar.value && scr_newHud.value == 0 && scr_viewsize.value == 110)
+			cent->current.origin[2] += 1;
+		else if (cl_sbar.value && scr_newHud.value == 0 && scr_viewsize.value == 100)
+			cent->current.origin[2] += 2;
+		else if (scr_viewsize.value == 90)
+			cent->current.origin[2] += 1;
+		else if (scr_viewsize.value == 80)
+			cent->current.origin[2] += 0.5;
+	}
 
 	if (cent->current.modelindex != gunmodel) {
 		cl.viewent.frametime = -1;
