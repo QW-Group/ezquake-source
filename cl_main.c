@@ -961,6 +961,9 @@ void CL_Connect_BestRoute_f(void)
 			return;
 		}
 
+		if (adr.port == 0)
+			adr.port = htons(27500);
+
 		SB_PingTree_DumpPath(&adr);
 		SB_PingTree_ConnectBestPath(&adr);
 	}
