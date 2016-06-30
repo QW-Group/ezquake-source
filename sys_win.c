@@ -1343,3 +1343,19 @@ void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname)
 		return NULL;
 	return GetProcAddress((HINSTANCE)module, exportname);
 }
+
+// ===========================================================================
+
+// Fakes a backspace character to take Windows out of deadkey mode
+// See: https://github.com/ezQuake/ezquake-source/issues/101
+// Bug is due to SDL not handling deadkeys correctly - this can probably
+//     be removed in future, once library updated
+// See: https://github.com/flibitijibibo/FNA-MGHistory/issues/277
+void Sys_CancelDeadKey (void)
+{
+	INPUT input[2] = { { 0 } };
+	input[0].type = input[1].type = INPUT_KEYBOARD;
+	input[0].ki.wVk = input[1].ki.wVk = VK_BACK;
+	input[1].ki.dwFlags = KEYEVENTF_KEYUP;
+	SendInput (2, input, sizeof (INPUT));
+}

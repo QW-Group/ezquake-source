@@ -135,6 +135,9 @@ void Sys_TimerResolution_RequestMinimum(timerresolution_session_t * s);
 // lets timer device use lower resolution
 // always call this after you don't need precise Sleep anymore!
 void Sys_TimerResolution_Clear(timerresolution_session_t * s);
+
+// Cancel deadkey combination for keyboards where console toggle is also deadkey
+void Sys_CancelDeadKey (void);
 #else
 
 // not implemented on other platforms
