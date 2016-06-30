@@ -930,6 +930,9 @@ static void VID_SDL_Init(void)
 	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
 	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 #endif
+#if defined(__linux__) || defined(__FreeBSD__)
+	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, "1");
+#endif
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
 
 	VID_SDL_InitSubSystem();
