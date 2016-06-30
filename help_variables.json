@@ -1665,6 +1665,12 @@
       "remarks": "con_completion_format must be > 1",
       "type": "integer"
     },
+    "con_deadkey": {
+      "group-id": "5",
+      "desc": "Set this if the console toggle button is also a deadkey.  The operating system will be sent a backspace character as the console is toggled.",
+      "remarks": "Windows only",
+      "type": "boolean"
+    },
     "con_fragmessages": {
       "group-id": "47",
       "desc": "Controls whether frag messages should be printed into console and notification area.",

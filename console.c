@@ -60,7 +60,6 @@ cvar_t		_con_notifylines = {"con_notifylines","4"};
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
 cvar_t		con_wordwrap = {"con_wordwrap","1"};
 cvar_t		con_clearnotify = {"con_clearnotify","1"};
-//cvar_t	    xyzh                = {"x", "$x", CVAR_ROM};
 
 cvar_t		con_highlight  		= {"con_highlight","0"};
 cvar_t		con_highlight_mark 	= {"con_highlight_mark",""};
@@ -78,6 +77,10 @@ cvar_t      con_timestamps          = {"con_timestamps", "0"};
 cvar_t      con_shift               = {"con_shift", "-10"};
 cvar_t      cl_textEncoding         = {"cl_textencoding", "0"};
 cvar_t      con_mm2_only            = {"con_mm2_only", "0"};
+
+#ifdef _WIN32
+cvar_t      con_toggle_deadkey      = {"con_deadkey", "1"};
+#endif
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated
@@ -230,6 +233,12 @@ void Con_ToggleConsole_f (void) {
 	} else {
 		key_dest_beforecon = key_dest;
 		key_dest = key_console;
+
+#ifdef _WIN32
+		if (con_toggle_deadkey.integer) {
+			Sys_CancelDeadKey ();
+		}
+#endif
 	}
 
 	if (con_clearnotify.value)
@@ -445,7 +454,9 @@ void Con_Init (void) {
 	Cvar_Register (&con_wordwrap);
 	Cvar_Register (&con_clearnotify);
 	Cvar_Register (&con_notify);
-	//Cvar_Register (&xyzh);
+#ifdef _WIN32
+	Cvar_Register (&con_toggle_deadkey);
+#endif
 
 	// added by jogi start
 	Cvar_Register (&con_highlight);
