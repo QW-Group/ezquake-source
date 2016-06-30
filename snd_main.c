@@ -777,20 +777,32 @@ void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 
 static void S_UpdateAmbientSounds (void)
 {
+	static double last_adjusted = 0;
 	struct cleaf_s *leaf;
 	int vol;
 	int ambient_channel;
 	channel_t *chan;
+	double frametime = (last_adjusted ? cls.realtime - last_adjusted : cls.frametime);
+	int adjustment = Q_rint (frametime * s_ambientfade.value);
 
-	if (cls.state != ca_active)
+	if (cls.state != ca_active) {
+		last_adjusted = 0;
 		return;
+	}
 
 	leaf = CM_PointInLeaf (listener_origin);
 	if (!CM_Leafnum(leaf) || !s_ambientlevel.value) {
 		for (ambient_channel = 0 ; ambient_channel< NUM_AMBIENTS ; ambient_channel++)
 			channels[ambient_channel].sfx = NULL;
+		last_adjusted = cls.realtime;
 		return;
 	}
+
+	if (!adjustment) {
+		return;
+	}
+
+	last_adjusted = cls.frametime;
 
 	for (ambient_channel = 0 ; ambient_channel< NUM_AMBIENTS ; ambient_channel++) {
 		chan = &channels[ambient_channel];
@@ -802,11 +814,11 @@ static void S_UpdateAmbientSounds (void)
 
 		// don't adjust volume too fast
 		if (chan->master_vol < vol) {
-			chan->master_vol += Q_rint (cls.frametime * s_ambientfade.value);
+			chan->master_vol += adjustment;
 			if (chan->master_vol > vol)
 				chan->master_vol = vol;
 		} else if (chan->master_vol > vol) {
-			chan->master_vol -= Q_rint (cls.frametime * s_ambientfade.value);
+			chan->master_vol -= adjustment;
 			if (chan->master_vol < vol)
 				chan->master_vol = vol;
 		}
