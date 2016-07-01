@@ -226,6 +226,7 @@ static void SB_Update_Source_From_URL(const source_data *s, server_data *servers
 	curl = curl_easy_init();
 	if (curl) {
 		curl_easy_setopt(curl, CURLOPT_URL, s->address.url);
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 	}
 	else {
 		Com_Printf_State(PRINT_FAIL, "SB_Update_Source_From_URL() Can't init cURL\n");
