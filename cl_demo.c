@@ -3524,6 +3524,12 @@ void CL_Play_f (void)
 	// Save the name the user specified.
 	real_name = Cmd_Argv(1);
 
+	// Quick check for buffer overrun on COM_StripExtension below...
+	if (strlen (real_name) > MAX_OSPATH - 4) {
+		Com_Printf ("Path is too long (%d characters, max is %d)\n", strlen (real_name), MAX_OSPATH - 4);
+		return;
+	}
+
 	// Disconnect any current game.
 	Host_EndGame();
 
