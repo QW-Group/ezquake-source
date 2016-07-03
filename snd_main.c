@@ -802,7 +802,7 @@ static void S_UpdateAmbientSounds (void)
 		return;
 	}
 
-	last_adjusted = cls.frametime;
+	last_adjusted = cls.realtime;
 
 	for (ambient_channel = 0 ; ambient_channel< NUM_AMBIENTS ; ambient_channel++) {
 		chan = &channels[ambient_channel];
