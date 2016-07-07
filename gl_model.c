@@ -743,7 +743,7 @@ static byte *LoadColoredLighting(char *name, char **litfilename, int *filesize) 
 	char *groupname, *mapname;
 	extern cvar_t gl_loadlitfiles;
 
-	if (!gl_loadlitfiles.value)
+	if (! (gl_loadlitfiles.integer == 1 || gl_loadlitfiles.integer == 2))
 		return NULL;
 
 	mapname = TP_MapName();
@@ -783,6 +783,7 @@ void Mod_LoadLighting (lump_t *l) {
 	byte *in, *out, *data;
 	char *litfilename;
 	int filesize;
+	extern cvar_t gl_loadlitfiles;
 
 	loadmodel->lightdata = NULL;
 	if (!l->filelen)
@@ -794,7 +795,7 @@ void Mod_LoadLighting (lump_t *l) {
 		return;
 	}
 
-	if (!Cvar_Value("gl_noinlinergb")) {
+	if (gl_loadlitfiles.integer == 1 || gl_loadlitfiles.integer == 3) {
 		int threshold = (lightmode == 1 ? 255 : lightmode == 2 ? 170 : 128);
 		int lumpsize;
 		byte *rgb = Mod_BSPX_FindLump("RGBLIGHTING", &lumpsize);
