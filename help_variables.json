@@ -2633,10 +2633,13 @@
     },
     "gl_loadlitfiles": {
       "group-id": "15",
-      "type": "boolean",
+      "type": "enum",
+      "desc": "Controls when external 24-bit lighting will be used.  24-bit/colored lighting is either embedded in newer .bsp files, or loaded from external .lit files.",
       "values": [
-        { "name": "false", "description": "Disable lit files." },
-        { "name": "true", "description": "Load lit files." }
+        { "name": "0", "description": "Disable 24-bit lighting." },
+        { "name": "1", "description": "Load lit files & use inline colored lighting." },
+        { "name": "2", "description": "Load lit files only." },
+        { "name": "3", "description": "Use inline colored lighting only." }
       ]
     },
     "gl_luma_level": {
