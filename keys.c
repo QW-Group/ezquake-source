@@ -309,11 +309,14 @@ void PaddedPrint (char *s)
 {
 	extern int con_linewidth;
 	extern char *str_repeat (char *str, int amount);
+	char *pad = NULL;
 	int nextcolx = 0;
 
 	if (con_completion_format.integer)  // plain list
 	{
-		Com_Printf ("%s&c%s%s&r\n", str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s);
+		pad = str_repeat(" ", con_completion_padding.integer);
+		Com_Printf ("%s&c%s%s&r\n", pad, con_completion_color_name.string, s);
+		Q_free(pad);
 	}
 	else
 	{
@@ -331,20 +334,36 @@ void PaddedPrint (char *s)
 	}
 }
 
-void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default value
+void PaddedPrintMarkAndPad (qbool mark)
 {
 	extern char *str_repeat (char *str, int amount);
 
+	char* s;
+	int padding = con_completion_padding.integer;
+
+	if (mark)
+	{
+		Com_Printf ("&c%s*", con_completion_color_changed_mark.string);
+		padding -= 1;
+	}
+
+	s = str_repeat(" ", padding);
+	Com_Printf ("%s", s);
+	Q_free(s);
+}
+
+void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default value
+{
 	qbool changed = (strcmp(s, dv) != 0) && (strcmp(dv, v) != 0);
 	qbool add_mark = (con_completion_changed_mark.integer > 0) && changed;
 
 	switch (con_completion_format.integer)
 	{
-		case 1:	// current + deafault
+		case 1:	// current + default
 			if (strcmp(s, dv))
 			{
-				Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-					(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+				PaddedPrintMarkAndPad (add_mark);
+				Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
 					con_completion_color_name.string, s , con_completion_color_colon.string,
 					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 					con_completion_color_quotes_current.string, con_completion_color_colon.string,
@@ -353,36 +372,37 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 			}
 			else
 			{
-				Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-					str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
+				PaddedPrintMarkAndPad (false);
+				Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
+					con_completion_color_name.string, s , con_completion_color_colon.string,
 					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 					con_completion_color_quotes_current.string);
 			}
 			break;
 
 		case 2:	// current only
-			Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-				(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+			PaddedPrintMarkAndPad (add_mark);
+			Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
 				con_completion_color_name.string, s , con_completion_color_colon.string,
 				con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 				con_completion_color_quotes_current.string);
 			break;
 
 		case 3:	// default only
-			Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-				(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+			PaddedPrintMarkAndPad (add_mark);
+			Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
 				con_completion_color_name.string, s, con_completion_color_colon.string,
 				con_completion_color_quotes_default.string, con_completion_color_value_default.string,
 				dv, con_completion_color_quotes_default.string);
 			break;
 
-		case 4:	// current+default if changed
+		case 4:	// current + default if changed
 			if(changed)
 			{
 				if (strcmp(s, dv))
 				{
-					Com_Printf ("%s&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
-						(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+					PaddedPrintMarkAndPad (add_mark);
+					Com_Printf ("&c%s%s &c%s:&r &c%s\"&c%s%s&c%s\"&r &c%s:&r &c%s\"&c%s%s&c%s\"&r\n",
 						con_completion_color_name.string, s , con_completion_color_colon.string,
 						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 						con_completion_color_quotes_current.string, con_completion_color_colon.string,
@@ -391,16 +411,17 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 				}
 				else
 				{
-					Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-						str_repeat(" ",con_completion_padding.integer), con_completion_color_name.string, s , con_completion_color_colon.string,
+					PaddedPrintMarkAndPad (false);
+					Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
+						con_completion_color_name.string, s , con_completion_color_colon.string,
 						con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 						con_completion_color_quotes_current.string);
 				}
 			}
 			else
 			{
-				Com_Printf ("%s&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
-					(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+				PaddedPrintMarkAndPad (add_mark);
+				Com_Printf ("&c%s%s &c%s: &c%s\"&c%s%s&c%s\"&r\n",
 					con_completion_color_name.string, s , con_completion_color_colon.string,
 					con_completion_color_quotes_current.string, con_completion_color_value_current.string, v,
 					con_completion_color_quotes_current.string);
@@ -408,8 +429,8 @@ void PaddedPrintValue (char *s, char *v, char *dv)  // name, value, default valu
 			break;
 
 		case 5:	// none
-			Com_Printf ("%s&c%s%s&r\n",
-				(add_mark) ? va("&c%s*%s", con_completion_color_changed_mark.string, str_repeat(" ",con_completion_padding.integer - 1)) : str_repeat(" ",con_completion_padding.integer),
+			PaddedPrintMarkAndPad (add_mark);
+			Com_Printf ("&c%s%s&r\n",
 				con_completion_color_name.string, s);
 			break;
 

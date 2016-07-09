@@ -60,7 +60,7 @@ char *str_repeat (char *str, int amount)
         return NULL;
 
     if (amount <= 0)
-        return "";
+        amount = 0;
 
     ret = (char *) Q_calloc(strlen(str) * amount + 1, sizeof(char)); 
 
