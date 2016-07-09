@@ -354,7 +354,8 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
 
 int  Sys_CreateThread(DWORD WINAPI (*func)(void *), void *param)
 {
-	SDL_CreateThread((SDL_ThreadFunction)func, NULL, param);
+	SDL_Thread *thread = SDL_CreateThread((SDL_ThreadFunction)func, NULL, param);
+	SDL_DetachThread(thread);
 	return 1;
 }
 
