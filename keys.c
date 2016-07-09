@@ -448,7 +448,7 @@ extern cvar_t *cvar_vars;
 
 void CompleteCommandNew (void)
 {
-	char *cmd, token[MAXCMDLINE], *s;
+	char *cmd, token[MAXCMDLINE], *s, *escaped;
 	wchar temp[MAXCMDLINE];
 	int c, a, v, start, end, i, diff_len, size, my_string_length;
 
@@ -532,7 +532,9 @@ void CompleteCommandNew (void)
 					sorted_cmds[s_count] = s_c;
 
 				qsort(sorted_cmds, s_count, sizeof (cmd_function_t *), Cmd_CommandCompare);
-				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
+				escaped = escape_regex(s);
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escaped);
+				Q_free(escaped);
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_cmds[i]->name))
@@ -561,7 +563,9 @@ void CompleteCommandNew (void)
 					sorted_cvars[s_count] = s_v;
 
 				qsort(sorted_cvars, s_count, sizeof (cvar_t *), Cvar_CvarCompare);
-				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));
+				escaped = escape_regex(s);
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escaped);
+				Q_free(escaped);
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_cvars[i]->name))
@@ -590,7 +594,9 @@ void CompleteCommandNew (void)
 					sorted_aliases[s_count] = s_a;
 
 				qsort(sorted_aliases, s_count, sizeof (cmd_alias_t *), Cmd_AliasCompare);				
-				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escape_regex(s));				
+				escaped = escape_regex(s);
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escaped);				
+				Q_free(escaped);
 
 				for (i = 0; i < s_count; i++) {
 					if (Utils_RegExpMatch(completebuff, sorted_aliases[i]->name))
