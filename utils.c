@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "utils.h"
 #include "qtv.h"
+#include "teamplay.h"
 
 
 int TP_CategorizeMessage (const char *s, int *offset);
@@ -824,8 +825,10 @@ qbool Util_F_Match (const char *_msg, char *f_request) {
 	msg = Q_strdup(_msg);
 	flags = TP_CategorizeMessage(msg, &offset);
 
-	if (flags != 1 && flags != 4)
+	if (flags != msgtype_normal && flags != msgtype_spec) {
+		Q_free(msg);
 		return false;
+	}
 
 	for (i = 0, s = msg + offset; i < strlen(s); i++)
 		s[i] = s[i] & ~128;		
