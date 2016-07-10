@@ -3958,12 +3958,12 @@ typedef struct fwd_params
 
 qbool FWD_proxy_load(void)
 {
-	static	void *hInst;	
-	static  fwd_params_t params;
-	static	DWORD (WINAPI *FWD_proc)(void *);
+	static void *hInst;	
+	static fwd_params_t params;
+	static int (*FWD_proc)(void *);
 
-	char    name[MAX_OSPATH];
-	char   *gpath = NULL;
+	char name[MAX_OSPATH];
+	char *gpath = NULL;
 
 	if (hInst)
 		return false; // alredy loaded
@@ -3992,7 +3992,7 @@ qbool FWD_proxy_load(void)
 		return false;
 	}
 
-	FWD_proc = (DWORD (WINAPI *)(void *)) Sys_DLProc( (DL_t) hInst, "FWD_proc" );
+	FWD_proc = (int (*)(void *)) Sys_DLProc( (DL_t) hInst, "FWD_proc" );
 	if ( !FWD_proc )
 	{
 		if ( !Sys_DLClose( (DL_t) hInst ) )
@@ -4007,13 +4007,10 @@ qbool FWD_proxy_load(void)
 	memset(&params, 0, sizeof(params));
 	params.port = (int)sv_qwfwd_port.value;
 
-	if (Sys_CreateThread(FWD_proc, &params))
-	{
+	if (Sys_CreateDetachedThread(FWD_proc, &params) == 0) {
 		Con_DPrintf("QWFWD proxy: initialized\n");
 		return true;
-	}
-	else
-	{
+	} else {
 		Con_DPrintf("QWFWD proxy: failed to initialize\n");
 		return false;
 	}

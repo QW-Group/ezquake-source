@@ -477,14 +477,14 @@ static void QTVList_Print(void)
 	}
 }
 
-DWORD WINAPI QTVList_Refresh_Cache_Thread(void *userData)
+int QTVList_Refresh_Cache_Thread(void *userData)
 {
 	QTVList_Refresh_Cache((qbool) userData);
 	sb_qtvlist_cache.status = QTVLIST_READY;
 	return 0;
 }
 
-DWORD WINAPI QTVList_Download_And_Print_Thread(void *userData)
+int QTVList_Download_And_Print_Thread(void *userData)
 {
 	Com_Printf("QuakeTV list downloading...\n");
 	QTVList_Refresh_Cache(true);
@@ -503,7 +503,9 @@ void QTVList_Print_Global(void)
 	}
 
 	sb_qtvlist_cache.status = QTVLIST_PROCESSING;
-	Sys_CreateThread(QTVList_Download_And_Print_Thread, NULL);
+	if (Sys_CreateDetachedThread(QTVList_Download_And_Print_Thread, NULL) < 0) {
+		Com_Printf("Failed to create QTVList Download_And_Print thread\n");
+	}
 }
 
 void QTVList_Initialize_Streammap(void)
@@ -514,7 +516,9 @@ void QTVList_Initialize_Streammap(void)
 	}
 
 	sb_qtvlist_cache.status = QTVLIST_PROCESSING;
-	Sys_CreateThread(QTVList_Refresh_Cache_Thread, (void *) false);
+	if (Sys_CreateDetachedThread(QTVList_Refresh_Cache_Thread, NULL) < 0) {
+		Com_Printf("Failed to create QTVList Refresh_Cache thread\n");
+	}
 }
 
 static netadr_t QTVList_Current_IP(void)

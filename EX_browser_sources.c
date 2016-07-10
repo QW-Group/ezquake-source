@@ -413,7 +413,7 @@ typedef struct infohost_s
 source_data **psources;
 int psourcesn;
 
-DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
+int Update_Multiple_Sources_Proc(void * lpParameter)
 {
     // get servers from master server
     SYSTEMTIME lt;
@@ -604,7 +604,9 @@ void Update_Init(source_data *s[], int sn)
 void Update_Multiple_Sources_Begin(source_data *s[], int sn)
 {
 	Update_Init(s, sn);
-    Sys_CreateThread(Update_Multiple_Sources_Proc, NULL);
+	if (Sys_CreateDetachedThread(Update_Multiple_Sources_Proc, NULL) < 0) {
+		Com_Printf("Failed to create Update_Multiple_Sources_Proc thread\n");
+	}
 }
 
 // starts synchronous sources update

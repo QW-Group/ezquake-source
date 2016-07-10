@@ -646,11 +646,7 @@ void PingSendParrallelMultiHosts(pinghost_t *phosts, int nelms, int count) {
 /**
  * Thread entry point for parrallel recving of ping responses
  */
-#ifdef _WIN32
-DWORD WINAPI PingRecvProc(void *lpParameter)
-#else
-unsigned int PingRecvProc(void *lpParameter)
-#endif
+int PingRecvProc(void *lpParameter)
 {
 	socklen_t inaddrlen;
 	struct sockaddr_in from;
@@ -753,7 +749,8 @@ _select:
 
 /**
  * Send several ping requests at once, start another thread to recieve
- * the responses. 
+ * the responses.
+ * FIXME: error handling is in rly bad shape
  */
 int PingHosts(server_data *servs[], int servsn, int count)
 {
@@ -780,7 +777,9 @@ int PingHosts(server_data *servs[], int servsn, int count)
 
 	Sys_SemInit(&ping_semaphore, 0, 1);
 
-	Sys_CreateThread(PingRecvProc, (void *)&host_list);
+	if (Sys_CreateDetachedThread(PingRecvProc, (void *)&host_list) < 0) {
+		Com_Printf("Failed to create Ping receiver thread\n");
+	}
 
 	PingSendParrallelMultiHosts(host_list.hosts, host_list.nelms, count);
 
