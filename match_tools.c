@@ -760,7 +760,7 @@ challenge_data_t *MT_Challenge_Copy(const challenge_data_t *orig)
 			orig->server, orig->map, orig->url, orig->hash);
 }
 
-DWORD WINAPI MT_Challenge_StartSend_Thread(void *arg)
+int MT_Challenge_StartSend_Thread(void *arg)
 {
 	challenge_data_t *challenge_data = (challenge_data_t *) arg;
 
@@ -856,7 +856,9 @@ static void MT_Challenge_BreakSend(void)
 		thread_data = MT_Challenge_Init(challenge_end);
 	}
 
-	Sys_CreateThread(MT_Challenge_StartSend_Thread, thread_data);
+	if (Sys_CreateDetachedThread(MT_Challenge_StartSend_Thread, thread_data) < 0) {
+		Com_Printf("Failed to create MT Challenge BreakSend thread\n");
+	}
 }
 
 static void MT_Challenge_StartSend(void)
@@ -867,7 +869,9 @@ static void MT_Challenge_StartSend(void)
 
 	thread_data = MT_Challenge_Copy(last_challenge);
 
-	Sys_CreateThread(MT_Challenge_StartSend_Thread, thread_data);
+	if (Sys_CreateDetachedThread(MT_Challenge_StartSend_Thread, thread_data) < 0) {
+		Com_Printf("Failed to create MT Challenge StartSend thread\n");
+	}
 }
 
 #define MT_SCOREBOARD_SHOWIME	4

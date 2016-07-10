@@ -373,7 +373,7 @@ static void Log_Upload_Job_Free(log_upload_job_t *job)
 	Q_free(job);
 }
 
-DWORD WINAPI Log_AutoLogging_Upload_Thread(void *vjob)
+int Log_AutoLogging_Upload_Thread(void *vjob)
 {
 	log_upload_job_t *job = (log_upload_job_t *) vjob;
 	CURL *curl;
@@ -454,7 +454,9 @@ void Log_AutoLogging_Upload(const char *filename)
 		MT_Challenge_GetLadderId());
 
 	Com_Printf("Uploading match log...\n");
-	Sys_CreateThread(Log_AutoLogging_Upload_Thread, (void *) job);
+	if (Sys_CreateDetachedThread(Log_AutoLogging_Upload_Thread, (void *) job) < 0) {
+		Com_Printf("Failed to create AutoLogging_Upload thread\n");
+	}
 }
 
 void Log_AutoLogging_SaveMatch(qbool allow_upload) {

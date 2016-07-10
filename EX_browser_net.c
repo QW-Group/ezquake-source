@@ -376,7 +376,7 @@ void GetServerInfo(server_data *serv)
 // Gets multiple server info simultaneously
 //
 
-DWORD WINAPI GetServerInfosProc(void * lpParameter)
+int GetServerInfosProc(void * lpParameter)
 {
     infohost *hosts;   // 0 if not sent yet, -1 if data read
     double interval, lastsenttime;
@@ -553,7 +553,7 @@ void GetServerPing(server_data *serv)
         SetPing(serv, p-1);
 }
 
-DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
+int GetServerPingsAndInfosProc(void * lpParameter)
 {
 	unsigned int SB_Sources_Marked_Count(void);
 	extern cvar_t sb_listcache;
@@ -616,23 +616,25 @@ void GetServerPingsAndInfos(int full)
 	}
 
 	serverinfo_lock = 1;
-	
+
 	if (rebuild_servers_list)
-        Rebuild_Servers_List();
+		Rebuild_Servers_List();
 
 	if (rebuild_all_players  &&  show_serverinfo == NULL)
-        Rebuild_All_Players();
+		Rebuild_All_Players();
 
 	if (serversn <= 0 || (sb_hidedead.integer == 0 && SB_AllServersDead())) {
 		// there's a possibility that sources hasn't been queried yet
 		// so let's do a full update, that ensures sources are updated
-        full = true;
+		full = true;
 	}
 
-    ping_phase = 1;
-    ping_pos = 0;
+	ping_phase = 1;
+	ping_pos = 0;
 
-	Sys_CreateThread (GetServerPingsAndInfosProc, (void *) full);
+	if (Sys_CreateDetachedThread (GetServerPingsAndInfosProc, (void *) full) < 0) {
+		Com_Printf("Failed to create GetServerPingsAndInfosProc thread\n");
+	}
 }
 
 void GetServerPingsAndInfos_f(void)
@@ -648,7 +650,7 @@ void GetServerPingsAndInfos_f(void)
 // autoupdate serverinfo
 //
 
-DWORD WINAPI AutoupdateProc(void * lpParameter)
+int AutoupdateProc(void * lpParameter)
 {
     double lastupdatetime = -1;
 
@@ -680,7 +682,9 @@ DWORD WINAPI AutoupdateProc(void * lpParameter)
 void Start_Autoupdate(server_data *s)
 {
     autoupdate_server = s;
-    Sys_CreateThread(AutoupdateProc, (void *) s);
+    if (Sys_CreateDetachedThread(AutoupdateProc, (void *) s) < 0) {
+	    Com_Printf("Failed to create AutoupdateProc thread\n");
+    }
 }
 
 void Alter_Autoupdate(server_data *s)

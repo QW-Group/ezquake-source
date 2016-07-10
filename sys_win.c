@@ -1039,25 +1039,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     return TRUE;	/* return success of application */
 }
 
-int Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param)
-{
-    DWORD threadid;
-    HANDLE thread;
-
-    thread = CreateThread (
-        NULL,               // pointer to security attributes
-        0,                  // initial thread stack size
-        func,               // pointer to thread function
-        param,              // argument for new thread
-        CREATE_SUSPENDED,   // creation flags
-        &threadid);         // pointer to receive thread ID
-
-    SetThreadPriority(thread, THREAD_PRIORITY_HIGHEST);
-    ResumeThread(thread);
-
-    return 1;
-}
-
 void MakeDirent(sys_dirent *ent, WIN32_FIND_DATA *data)
 {
     FILETIME ft1;

@@ -361,7 +361,7 @@ static netadr_t SB_NodeNetadr_Get(nodeid_t id)
 	return ret;
 }
 
-DWORD WINAPI SB_PingTree_SendQueryThread(void *thread_arg)
+int SB_PingTree_SendQueryThread(void *thread_arg)
 {
 	proxy_request_queue *queue = (proxy_request_queue *) thread_arg;
 	int i, ret;
@@ -540,7 +540,9 @@ static void SB_PingTree_ScanProxies(void)
 
 	for (i = 0; i < sb_proxretries.integer; i++) {
 		queue.sending_done = false;
-		Sys_CreateThread(SB_PingTree_SendQueryThread, (void *) &queue);
+		if (Sys_CreateDetachedThread(SB_PingTree_SendQueryThread, (void *) &queue) < 0) {
+			Com_Printf("Failed to create SB_PingTree_SendQueryThread thread\n");
+		}
 		SB_PingTree_RecvQuery(&queue, f);
 		if (queue.allrecved) {
 			break;
@@ -625,7 +627,7 @@ static void SB_PingTree_UpdateServerList(void)
 	SB_ServerList_Unlock();
 }
 
-DWORD WINAPI SB_PingTree_Phase2(void *ignored_arg)
+int SB_PingTree_Phase2(void *ignored_arg)
 {
 	SB_PingTree_ScanProxies();
 	SB_PingTree_Dijkstra();
@@ -661,7 +663,9 @@ void SB_PingTree_Build(void)
 	SB_PingTree_Phase1();
 	// second longer phase is querying the proxies for their ping data + dijkstra algo
 	Sys_SemWait(&phase2thread_lock);
-	Sys_CreateThread(SB_PingTree_Phase2, NULL);
+	if (Sys_CreateDetachedThread(SB_PingTree_Phase2, NULL) < 0) {
+		Com_Printf("Failed to create SB_PingTree_Phase2 thread\n");
+	}
 }
 
 /// Prints the shortest path to given IP address

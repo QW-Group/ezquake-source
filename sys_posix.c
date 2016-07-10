@@ -352,13 +352,6 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
     		Sys_Error("Protection change failed");
 }
 
-int  Sys_CreateThread(DWORD WINAPI (*func)(void *), void *param)
-{
-	SDL_Thread *thread = SDL_CreateThread((SDL_ThreadFunction)func, NULL, param);
-	SDL_DetachThread(thread);
-	return 1;
-}
-
 // kazik -->
 // directory listing functions
 int CopyDirent(sys_dirent *ent, struct dirent *tmpent)

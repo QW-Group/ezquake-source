@@ -46,8 +46,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "localtime.h"
 
-// create thread (process under linux)
-int  Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param);
+// create detached thread
+int  Sys_CreateDetachedThread(int (*func)(void *), void *data);
 
 #define MAX_PATH_LENGTH 1024
 

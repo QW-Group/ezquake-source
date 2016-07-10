@@ -84,3 +84,17 @@ void Sys_CopyToClipboard(char *text)
 	SDL_SetClipboardText(text);
 }
 
+int Sys_CreateDetachedThread(int (*func)(void *), void *data)
+{
+	SDL_Thread *thread;
+	
+	thread = SDL_CreateThread((SDL_ThreadFunction)func, NULL, data);
+	if (!thread) {
+		return -1;
+	}
+
+	SDL_DetachThread(thread);
+
+	return 0;
+}
+
