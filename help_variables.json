@@ -891,8 +891,8 @@
       "group-id": "9",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "QW compatibility where the keypad keys act the same key name, eg KP_8 acts like uparrow would." },
-        { "name": "true", "description": "You will be able to bind such keys as capslock, numlock, and all numpad keys." }
+        { "name": "false", "description": "QW compatibility: all keypad keys treated as though equivalent button pushed, eg KP_8 acts like uparrow would." },
+        { "name": "true", "description": "You will be able to bind all numpad keys independently of standard keys.  Use kp_enter, kp_8 etc to differentiate from standard keys." }
       ]
     },
     "cl_lerp_monsters": {

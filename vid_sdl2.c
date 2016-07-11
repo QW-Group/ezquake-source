@@ -508,11 +508,38 @@ static const byte scantokey[128] = {
 
 byte Key_ScancodeToQuakeCode(int scancode)
 {
+	byte quakeCode = 0;
 	if (scancode < 120)
-		return scantokey[scancode];
-	if (scancode >= 224 && scancode < 224 + 8)
-		return scantokey[scancode - 104];
-	return 0;
+		quakeCode = scantokey[scancode];
+	else if (scancode >= 224 && scancode < 224 + 8)
+		quakeCode = scantokey[scancode - 104];
+
+	if (!cl_keypad.integer) {
+		// compatibility mode without knowledge about keypad-keys:
+		switch (quakeCode)
+		{
+		case KP_NUMLOCK:     quakeCode = K_PAUSE;          break;
+		case KP_SLASH:       quakeCode = '/';              break;
+		case KP_STAR:        quakeCode = '*';              break;
+		case KP_MINUS:       quakeCode = '-';              break;
+		case KP_HOME:        quakeCode = K_HOME;           break;
+		case KP_UPARROW:     quakeCode = K_UPARROW;        break;
+		case KP_PGUP:        quakeCode = K_PGUP;           break;
+		case KP_LEFTARROW:   quakeCode = K_LEFTARROW;      break;
+		case KP_5:           quakeCode = '5';              break;
+		case KP_RIGHTARROW:  quakeCode = K_RIGHTARROW;     break;
+		case KP_PLUS:        quakeCode = '+';              break;
+		case KP_END:         quakeCode = K_END;            break;
+		case KP_DOWNARROW:   quakeCode = K_DOWNARROW;      break;
+		case KP_PGDN:        quakeCode = K_PGDN;           break;
+		case KP_INS:         quakeCode = K_INS;            break;
+		case KP_DEL:         quakeCode = K_DEL;            break;
+		case KP_ENTER:       quakeCode = K_ENTER;          break;
+		default:                                           break;
+		}
+	}
+
+	return quakeCode;
 }
 
 byte Key_CharacterToQuakeCode(char ch)
